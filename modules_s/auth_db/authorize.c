@@ -47,7 +47,7 @@
 #define MESSAGE_500 "Server Internal Error"
 
 
-static inline int get_ha1(str* _user, str* _domain, int use_ha1b, char* _table, char* _ha1)
+static inline int get_ha1(struct username* _username, str* _domain, char* _table, char* _ha1)
 {
 	db_key_t keys[2];
 	db_val_t vals[2];
@@ -57,13 +57,13 @@ static inline int get_ha1(str* _user, str* _domain, int use_ha1b, char* _table, 
 
 	keys[0] = user_column;
 	keys[1] = domain_column;
-	col[0] = (use_ha1b && !calc_ha1) ? (pass_column_2) : (pass_column);	
+	col[0] = (_username->domain.len && !calc_ha1) ? (pass_column_2) : (pass_column);	
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
 	
-	VAL_STR(vals).s = _user->s;
-	VAL_STR(vals).len = _user->len;
+	VAL_STR(vals).s = _username->user.s;
+	VAL_STR(vals).len = _username->user.len;
 
 	VAL_STR(vals + 1).s = _domain->s;
 	VAL_STR(vals + 1).len = _domain->len;
@@ -76,7 +76,7 @@ static inline int get_ha1(str* _user, str* _domain, int use_ha1b, char* _table, 
 
 	if (RES_ROW_N(res) == 0) {
 		DBG("get_ha1(): no result for user \'%.*s@%.*s\'\n", 
-		    _user->len, ZSW(_user->s), (use_domain ? (_domain->len) : 0), ZSW(_domain->s));
+		    _username->user.len, ZSW(_username->user.s), (use_domain ? (_domain->len) : 0), ZSW(_domain->s));
 		db_free_query(db_handle, res);
 		return 1;
 	}
@@ -87,7 +87,7 @@ static inline int get_ha1(str* _user, str* _domain, int use_ha1b, char* _table, 
 	if (calc_ha1) {
 		     /* Only plaintext passwords are stored in database,
 		      * we have to calculate HA1 */
-		calc_HA1(HA_MD5, _user, _domain, &result, 0, 0, _ha1);
+		calc_HA1(HA_MD5, &_username->whole, _domain, &result, 0, 0, _ha1);
 		DBG("HA1 string calculated: %s\n", _ha1);
 	} else {
 		memcpy(_ha1, result.s, result.len);
@@ -166,7 +166,7 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 
 	cred = (auth_body_t*)h->parsed;
 
-	res = get_ha1(&cred->digest.username.user, &domain, cred->digest.username.domain.len, _table, ha1);
+	res = get_ha1(&cred->digest.username, &domain, _table, ha1);
         if (res < 0) {
 		     /* Error while accessing the database */
 		if (sl_reply(_m, (char*)500, MESSAGE_500) == -1) {
