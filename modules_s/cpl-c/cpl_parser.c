@@ -38,6 +38,7 @@
 
 #include "../../dprint.h"
 #include "../../str.h"
+#include "../../ut.h"
 #include "CPL_tree.h"
 #include "sub_list.h"
 
@@ -49,6 +50,7 @@ struct node *list = 0;
 #define FOR_ALL_ATTR(_node,_attr) \
 	for( (_attr)=(_node)->properties ; (_attr) ; (_attr)=(_attr)->next)
 
+enum {EMAIL_TO,EMAIL_HDR_NAME,EMAIL_KNOWN_HDR_BODY,EMAIL_UNKNOWN_HDR_BODY};
 
 
 unsigned char encode_node_name(char *node_name)
@@ -164,6 +166,164 @@ unsigned char encode_node_name(char *node_name)
 
 
 
+#define MAX_EMAIL_HDR_SIZE   7 /*we are looking only for SUBJECT and BODY ;-)*/
+#define MAX_EMAIL_BODY_SIZE    512
+#define MAX_EMAIL_SUBJECT_SIZE 32
+
+static inline unsigned char *decode_mail_url(unsigned char *p, char *url,
+																int *nr_attr)
+{
+	static char buf[ MAX_EMAIL_HDR_SIZE ];
+	char c;
+	char foo;
+	unsigned short hdr_len;
+	unsigned short *len;
+	int max_len;
+	int status;
+
+	/* init */
+	hdr_len = 0;
+	max_len = 0;
+	status = EMAIL_TO;
+	(*nr_attr) ++;
+	*(p++) = TO_ATTR; /* attr type */
+	len = ((unsigned short*)(p));  /* attr val's len */
+	*len = 0; /* init the len */
+	p += 2;
+
+	/* parse the whole url */
+	do {
+		/* extract a char from the encoded url */
+		if (*url=='+') {
+			/* substitute a blank for a plus */
+			c=' ';
+			url++;
+		/* Look for a hex encoded character */
+		} else if ( (*url=='%') && *(url+1) && *(url+2) ) {
+			/* hex encoded - convert to a char */
+			c = hex2int(url[1]);
+			foo = hex2int(url[2]);
+			if (c==-1 || foo==-1) {
+				LOG(L_ERR, "ERROR:cpl_c:decode_mail_url: non-ASCII escaped "
+					"character in mail url [%.*s]\n", 3, url);
+				goto error;
+			}
+			c = c<<4 | foo;
+			url += 3;
+		} else {
+			/* normal character - just copy it without changing */
+			c = *url;
+			url++;
+		}
+
+		/* finally we got a character !! */
+		switch (c) {
+			case '?':
+				switch (status) {
+					case EMAIL_TO:
+						if (*len==0) {
+							LOG(L_ERR,"ERROR:cpl_c:cpl_parser: empty TO "
+								"address found in MAIL node!\n");
+							goto error;
+						}
+						hdr_len = 0;
+						status = EMAIL_HDR_NAME;
+						break;
+					default: goto parse_error;
+				}
+				break;
+			case '=':
+				switch (status) {
+					case EMAIL_HDR_NAME:
+						DBG("DEBUG:cpl_c:decode_mail_url: hdr [%.*s] found\n",
+							hdr_len,buf);
+						if ( hdr_len==BODY_EMAILHDR_LEN &&
+						strncasecmp(buf,BODY_EMAILHDR_STR,hdr_len)==0 ) {
+							/* BODY hdr found */
+							*(p++) = BODY_ATTR; /* attr type */
+							max_len = MAX_EMAIL_BODY_SIZE;
+						} else if ( hdr_len==SUBJECT_EMAILHDR_LEN &&
+						strncasecmp(buf,SUBJECT_EMAILHDR_STR,hdr_len)==0 ) {
+							/* SUBJECT hdr found */
+							*(p++) = SUBJECT_ATTR; /* attr type */
+							max_len = MAX_EMAIL_SUBJECT_SIZE;
+						} else {
+							DBG("DEBUG:cpl_c:decode_mail_url: unknown hdr ->"
+								" ignoring\n");
+							status = EMAIL_UNKNOWN_HDR_BODY;
+							break;
+						}
+						(*nr_attr) ++;
+						len = ((unsigned short*)(p));  /* attr val's len */
+						*len = 0; /* init the len */
+						p += 2;
+						status = EMAIL_KNOWN_HDR_BODY;
+						break;
+					default: goto parse_error;
+				}
+				break;
+			case '&':
+				switch (status) {
+					case EMAIL_KNOWN_HDR_BODY:
+					case EMAIL_UNKNOWN_HDR_BODY:
+						hdr_len = 0;
+						status = EMAIL_HDR_NAME;
+						break;
+					default: goto parse_error;
+				}
+				break;
+			case 0:
+				switch (status) {
+					case EMAIL_TO:
+						if (*len==0) {
+							LOG(L_ERR,"ERROR:cpl_c:decode_mail_url: empty TO "
+								"address found in MAIL node!\n");
+							goto error;
+						}
+					case EMAIL_KNOWN_HDR_BODY:
+					case EMAIL_UNKNOWN_HDR_BODY:
+						break;
+					default: goto parse_error;
+				}
+				break;
+			default:
+				switch (status) {
+					case EMAIL_TO:
+						(*len)++;
+						*(p++) = c;
+						if (*len==URL_MAILTO_LEN &&
+						!strncasecmp(p-(*len),URL_MAILTO_STR,(*len)) ) {
+							DBG("DEBUG:cpl_c:decode_mail_url: MAILTO: found at"
+								" the begining of TO -> removed\n");
+							p -= (*len);
+							*len = 0;
+						}
+						break;
+					case EMAIL_KNOWN_HDR_BODY:
+						if ((*len)<max_len) (*len)++;
+						*(p++) = c;
+						break;
+					case EMAIL_HDR_NAME:
+						if (hdr_len<MAX_EMAIL_HDR_SIZE) hdr_len++;
+						buf[hdr_len-1] = c;
+						break;
+					case EMAIL_UNKNOWN_HDR_BODY:
+						/* do nothing */
+						break;
+					default : goto parse_error;
+				}
+		}
+	}while(c!=0);
+
+	return p;
+parse_error:
+	LOG(L_ERR,"ERROR:cpl_c:decode_mail_url: unexpected char [%c] in state %d"
+		" in email url \n",*url,status);
+error:
+	return 0;
+}
+
+
 
 int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 					unsigned int type, unsigned char *ptr,int *nr_of_attr)
@@ -180,7 +340,7 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 	p = ptr;
 
 	switch (type) {
-		case CPL_NODE:
+			case CPL_NODE:
 		case INCOMING_NODE:
 		case OUTGOING_NODE:
 		case OTHERWISE_NODE:
@@ -620,15 +780,11 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 		/* enconding attributes and values for MAIL node */
 		case MAIL_NODE:
 			FOR_ALL_ATTR(node,attr) {
-				nr_attr++;
 				val = (char*)xmlGetProp(node,attr->name);
 				if (attr->name[0]=='u' || attr->name[0]=='U') {
-					*(p++) = URL_ATTR;
-					foo = strlen(val);
-					*((unsigned short*)(p)) = (unsigned short)foo;
-					p += 2;
-					memcpy(p,val,foo);
-					p += foo;
+					p = decode_mail_url( p, val, &nr_attr);
+					if (p==0)
+						goto error;
 				} else goto error;
 			}
 			break;

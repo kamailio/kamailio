@@ -55,15 +55,18 @@
 #include "cpl_nonsig.h"
 
 
-static char *DB_URL       = 0;  /* database url */
-static char *DB_TABLE     = 0;  /* */
-char *dtd_file     = 0;
-db_con_t* db_hdl   = 0;   /* this should be static !!!!*/
+static char *DB_URL      = 0;  /* database url */
+static char *DB_TABLE    = 0;  /* */
+static pid_t aux_process = 0;  /* pid of the private aux. process */
+
 int  cache_timeout = 5;
 cmd_function sl_send_rpl = 0;
 char *log_dir     = 0;    /*directory where the user log should be dumped*/
 int   cpl_cmd_pipe[2];
-static pid_t aux_process = 0;
+
+/* this vars are used outside only for loading scripts */
+char *dtd_file     = 0;
+db_con_t* db_hdl   = 0;   /* this should be static !!!!*/
 
 
 MODULE_VERSION
@@ -114,20 +117,20 @@ struct module_exports exports = {
 
 static int fixup_cpl_run_script(void** param, int param_no)
 {
-	int type;
+	int flag;
 
 	if (param_no==1) {
 		if (!strcasecmp( "incoming", *param))
-			type = CPL_INCOMING_TYPE;
+			flag = CPL_RUN_INCOMING;
 		else if (!strcasecmp( "outgoing", *param))
-			type = CPL_OUTGOING_TYPE;
+			flag = CPL_RUN_OUTGOING;
 		else {
 			LOG(L_ERR,"ERROR:fixup_cpl_run_script: script directive \"%s\""
 				" unknown!\n",(char*)*param);
 			return E_UNSPEC;
 		}
 		pkg_free(*param);
-		*param=(void*)type;
+		*param=(void*)flag;
 		return 0;
 	}
 	return 0;
@@ -331,7 +334,7 @@ static int cpl_run_script(struct sip_msg* msg, char* str1, char* str2)
 	cpl_intr = 0;
 
 	/* get the user_name */
-	if ( (unsigned int)str1==CPL_INCOMING_TYPE ) {
+	if ( ((unsigned int)str1)&CPL_RUN_INCOMING ) {
 		/* if it's incoming -> get the user_name from new_uri/RURI/To */
 		DBG("DEBUG:cpl_run_script: tring to get user from new_uri\n");
 		if ( !msg->new_uri.s||parse_uri( msg->new_uri.s,msg->new_uri.len,&uri)
@@ -374,8 +377,10 @@ static int cpl_run_script(struct sip_msg* msg, char* str1, char* str2)
 		goto error;
 
 	/* build a new script interpreter */
-	if ( (cpl_intr=build_cpl_interpreter(msg,&script,(unsigned int)str1))==0 )
+	if ( (cpl_intr=new_cpl_interpreter(msg,&script))==0 )
 		goto error;
+	/* set the flags */
+	cpl_intr->flags = (unsigned int)str1;
 	/* attache the user */
 	cpl_intr->user = uri.user;
 

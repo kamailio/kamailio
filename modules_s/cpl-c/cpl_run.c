@@ -44,10 +44,12 @@
 
 
 #define EO_SCRIPT            ((unsigned char*)0xffffffff)
+#define DEFAULT_ACTION       ((unsigned char*)0xfffffffe)
+#define CPL_SCRIPT_ERROR     ((unsigned char*)0xfffffffd)
+#define CPL_RUNTIME_ERROR    0//((unsigned char*)0xfffffffc)
+
 #define HDR_NOT_FOUND        ((char*)0xffffffff)
 #define UNDEF_CHAR           (0xff)
-#define LOG_SEPARATOR        ": "
-#define LOG_SEPARATOR_LEN    (sizeof(LOG_SEPARATOR)-1)
 
 #define check_overflow_by_ptr(_ptr_,_intr_,_error_) \
 	do {\
@@ -68,6 +70,9 @@
 		} \
 	}while(0)
 
+#define get_first_child(_node_) \
+	((NR_OF_KIDS(_node_)==0)?DEFAULT_ACTION:(_node_)+KID_OFFSET(_node_,0))
+
 
 extern int (*sl_send_rpl)(struct sip_msg*, char*, char*);
 extern char *log_dir;
@@ -78,8 +83,7 @@ extern char *log_dir;
 
 
 
-struct cpl_interpreter* build_cpl_interpreter( struct sip_msg *msg,
-											str *script, unsigned int type)
+struct cpl_interpreter* new_cpl_interpreter( struct sip_msg *msg, str *script)
 {
 	struct cpl_interpreter *intr = 0;
 
@@ -96,7 +100,6 @@ struct cpl_interpreter* build_cpl_interpreter( struct sip_msg *msg,
 	intr->recv_time = time(0);
 	intr->ip = script->s;
 	intr->msg = msg;
-	intr->type = (type==CPL_INCOMING_TYPE)?INCOMING_NODE:OUTGOING_NODE;
 
 	/* check the begining of the script */
 	if ( NODE_TYPE(intr->ip)!=CPL_NODE ) {
@@ -126,27 +129,31 @@ void free_cpl_interpreter(struct cpl_interpreter *intr)
 inline unsigned char *run_cpl_node( struct cpl_interpreter *intr )
 {
 	unsigned char *kid;
+	unsigned char start;
 	int i;
 
+	start = (intr->flags&CPL_RUN_INCOMING)?INCOMING_NODE:OUTGOING_NODE;
+	/* look for the starting node (incoming or outgoing) */
 	for(i=0;i<NR_OF_KIDS(intr->ip);i++) {
 		kid= intr->ip + KID_OFFSET(intr->ip,i);
-		if ( NODE_TYPE(kid)==intr->type ) {
-			return ((NR_OF_KIDS(kid)==0)?EO_SCRIPT:kid+KID_OFFSET(kid,0));
-		} else if (NODE_TYPE(kid)==SUBACTION_NODE ||
-		NODE_TYPE(kid)==ANCILLARY_NODE || NODE_TYPE(kid)==INCOMING_NODE ||
+		if ( NODE_TYPE(kid)==start ) {
+			return get_first_child(kid);
+		} else
+		if (NODE_TYPE(kid)==SUBACTION_NODE ||
+		NODE_TYPE(kid)==ANCILLARY_NODE ||
+		NODE_TYPE(kid)==INCOMING_NODE  ||
 		NODE_TYPE(kid)==OUTGOING_NODE ) {
 			continue;
 		} else {
 			LOG(L_ERR,"ERROR:run_cpl_node: unknown child type (%d) "
 				"for CPL node!!\n",NODE_TYPE(kid));
-			goto error;
+			return CPL_SCRIPT_ERROR;
 		}
 	}
 
-	LOG(L_ERR,"ERROR:run_cpl_node: bad CPL node - subnode %d not found",
-		intr->type);
-error:
-	return 0;
+	DBG("DEBUG:cpl_c:run_cpl_node: CPL node has no %d subnode -> default\n",
+		start);
+	return DEFAULT_ACTION;
 }
 
 
@@ -167,14 +174,14 @@ inline unsigned char *run_location( struct cpl_interpreter *intr )
 	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
 		switch (*p) {
 			case URL_ATTR:
-				check_overflow_by_ptr( p+2, intr, error);
+				check_overflow_by_ptr( p+2, intr, script_error);
 				url.len = *((unsigned short*)(p+1));
-				check_overflow_by_ptr( p+2+url.len, intr, error);
+				check_overflow_by_ptr( p+2+url.len, intr, script_error);
 				url.s = ((url.len)?(p+3):0);
 				p += 3+url.len;
 				break;
 			case PRIORITY_ATTR:
-				check_overflow_by_ptr( p+1, intr, error);
+				check_overflow_by_ptr( p+1, intr, script_error);
 				n = (unsigned char)(*(p+1));
 				if ( n>10)
 					LOG(L_WARN,"WARNING:run_location: invalid value (%u) found"
@@ -185,7 +192,7 @@ inline unsigned char *run_location( struct cpl_interpreter *intr )
 				p += 2;
 				break;
 			case CLEAR_ATTR:
-				check_overflow_by_ptr( p+1, intr, error);
+				check_overflow_by_ptr( p+1, intr, script_error);
 				n = (unsigned char)(*(p+1));
 				if (n!=YES_VAL && n!=NO_VAL)
 					LOG(L_WARN,"WARNING:run_location: invalid value (%u) found"
@@ -198,26 +205,27 @@ inline unsigned char *run_location( struct cpl_interpreter *intr )
 			default:
 				LOG(L_ERR,"ERROR:run_location: unknown attribute (%d) in"
 					"LOCATION node\n",*p);
-				goto error;
+				goto script_error;
 		}
 	}
 
 	if (url.s==(char*)UNDEF_CHAR) {
 		LOG(L_ERR,"ERROR:run_location: param. URL missing in LOCATION node\n");
-		goto error;
+		goto script_error;
 	}
 
 	if (clear)
 		empty_location_set( &(intr->loc_set) );
 	if (add_location( &(intr->loc_set), url.s, url.len, prio )==-1) {
 		LOG(L_ERR,"ERROR:run_location: unable to add location to set :-(\n");
-		goto error;
+		goto runtime_error;
 	}
 
-	return ((NR_OF_KIDS(intr->ip)==0)?EO_SCRIPT:
-		(intr->ip+KID_OFFSET(intr->ip,0)));
-error:
-	return 0;
+	return get_first_child(intr->ip);
+runtime_error:
+	return CPL_RUNTIME_ERROR;
+script_error:
+	return CPL_SCRIPT_ERROR;
 }
 
 
@@ -233,16 +241,16 @@ inline unsigned char *run_remove_location( struct cpl_interpreter *intr )
 	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
 		switch (*p) {
 			case LOCATION_ATTR:
-				check_overflow_by_ptr( p+2, intr, error);
+				check_overflow_by_ptr( p+2, intr, script_error);
 				url.len = *((unsigned short*)(p+1));
-				check_overflow_by_ptr( p+2+url.len, intr, error);
+				check_overflow_by_ptr( p+2+url.len, intr, script_error);
 				url.s = ((url.len)?(p+3):0);
 				p += 3+url.len;
 				break;
 			default:
-				LOG(L_WARN,"WARNING:run_remove_location: unknown attribute "
-					"(%d) in REMOVE_LOCATION node -> ignoring..\n",*p);
-				goto error;
+				LOG(L_ERR,"ERROR:run_remove_location: unknown attribute "
+					"(%d) in REMOVE_LOCATION node\n",*p);
+				goto script_error;
 		}
 	}
 
@@ -253,10 +261,9 @@ inline unsigned char *run_remove_location( struct cpl_interpreter *intr )
 		remove_location( &(intr->loc_set), url.s, url.len );
 	}
 
-	return ((NR_OF_KIDS(intr->ip)==0)?EO_SCRIPT:
-		(intr->ip+KID_OFFSET(intr->ip,0)));
-error:
-	return 0;
+	return get_first_child(intr->ip);
+script_error:
+	return CPL_SCRIPT_ERROR;
 }
 
 
@@ -272,15 +279,15 @@ inline unsigned char *run_sub( struct cpl_interpreter *intr )
 	if (i!=1) {
 		LOG(L_ERR,"ERROR:cpl_c:run_sub: incorrect nr. of attr. %d (<>1) in "
 			"SUB node\n",i);
-		goto error;
+		goto script_error;
 	}
 	/* get attr's name */
 	p = ATTR_PTR(intr->ip);
-	check_overflow_by_ptr( p+2, intr, error);
+	check_overflow_by_ptr( p+2, intr, script_error);
 	if (*p!=REF_ATTR) {
 		LOG(L_ERR,"ERROR:cpl_c:run_sub: invalid attr. %d (expected %d)in "
 			"SUB node\n", *p, REF_ATTR);
-		goto error;
+		goto script_error;
 	}
 	/* get the attr's value */
 	offset = *((unsigned short*)(p+1));
@@ -290,23 +297,23 @@ inline unsigned char *run_sub( struct cpl_interpreter *intr )
 	if (((char*)p)<intr->script.s) {
 		LOG(L_ERR,"ERROR:cpl_c:run_sub: jump offset lower than the script "
 			"beginning -> underflow!\n");
-		goto error;
+		goto script_error;
 	}
-	check_overflow_by_ptr( p+SIMPLE_NODE_SIZE(intr->ip), intr, error);
+	check_overflow_by_ptr( p+SIMPLE_NODE_SIZE(intr->ip), intr, script_error);
 	/* check to see if we hit a subaction node */
 	if ( NODE_TYPE(p)!=SUBACTION_NODE ) {
 		LOG(L_ERR,"ERROR:cpl_c:run_sub: sub. jump hit a nonsubaction node!\n");
-		goto error;
+		goto script_error;
 	}
 	if (NR_OF_KIDS(p)!=1 || NR_OF_ATTR(p)!=0 ) {
 		LOG(L_ERR,"ERROR:cpl_c:run_sub: inavlid subaction node reached "
 		"(kids=%d,attrs=%d); expected (1,0)!\n",NR_OF_KIDS(p),NR_OF_ATTR(p));
-		goto error;
+		goto script_error;
 	}
 
-	return ((NR_OF_KIDS(p)==0)?EO_SCRIPT:(p+KID_OFFSET(p,0)));
-error:
-	return 0;
+	return get_first_child(p);
+script_error:
+	return CPL_SCRIPT_ERROR;
 }
 
 
@@ -326,27 +333,27 @@ inline unsigned char *run_reject( struct cpl_interpreter *intr )
 	if (NR_OF_KIDS(intr->ip)!=0) {
 		LOG(L_ERR,"ERROR:run_reject: REJECT node doesn't suppose to have any "
 			"sub-nodes. Found %d!\n",NR_OF_KIDS(intr->ip));
-		goto error;
+		goto script_error;
 	}
 
 	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
 		switch (*p) {
 			case STATUS_ATTR:
-				check_overflow_by_ptr( p+2, intr, error);
+				check_overflow_by_ptr( p+2, intr, script_error);
 				status = *((unsigned short*)(p+1));
 				p += 3;
 				break;
 			case REASON_ATTR:
-				check_overflow_by_ptr( p+2, intr, error);
+				check_overflow_by_ptr( p+2, intr, script_error);
 				reason_len = *((unsigned short*)(p+1));
-				check_overflow_by_ptr( p+2+reason_len, intr, error);
+				check_overflow_by_ptr( p+2+reason_len, intr, script_error);
 				reason_s = p+3;
 				p += 3+reason_len;
 				break;
 			default:
 				LOG(L_ERR,"ERROR:run_reject: unknown attribute "
 					"(%d) in REJECT node\n",*p);
-				goto error;
+				goto script_error;
 		}
 	}
 
@@ -366,18 +373,20 @@ inline unsigned char *run_reject( struct cpl_interpreter *intr )
 			default:
 				LOG(L_ERR,"ERROR:run_reject: unknown value (%d) for attribute"
 					" STATUS in reject node\n",status);
-				goto error;
+				goto script_error;
 		}
 	}
 
 	if (sl_send_rpl( intr->msg, (char*)(int)status, reason_s )<0) {
 		LOG(L_ERR,"ERROR:run_reject: unable to send reject reply!\n");
-		goto error;
+		goto runtime_error;
 	}
 
 	return EO_SCRIPT;
-error:
-	return 0;
+runtime_error:
+	return CPL_RUNTIME_ERROR;
+script_error:
+	return CPL_SCRIPT_ERROR;
 }
 
 
@@ -398,26 +407,26 @@ inline unsigned char *run_redirect( struct cpl_interpreter *intr )
 	if (NR_OF_KIDS(intr->ip)!=0) {
 		LOG(L_ERR,"ERROR:run_redirect: REDIRECT node doesn't suppose to have "
 			"any sub-nodes. Found %d!\n",NR_OF_KIDS(intr->ip));
-		goto error;
+		goto script_error;
 	}
 
 	/* read the attributes of the REDIRECT node*/
 	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
 		switch (*p) {
 			case PERMANENT_ATTR:
-				check_overflow_by_ptr( p+1, intr, error);
+				check_overflow_by_ptr( p+1, intr, script_error);
 				permanent = *(p+1);
 				if (permanent!=YES_VAL && permanent!=NO_VAL) {
 					LOG(L_ERR,"ERROR:run_redirect: unsupported value (%d) "
 						"in attribute PERMANENT for REDIRECT node",permanent);
-					goto error;
+					goto script_error;
 				}
 				p += 2;
 				break;
 			default:
 				LOG(L_ERR,"ERROR:run_redirect: unknown attribute "
 					"(%d) in REDIRECT node\n",*p);
-				goto error;
+				goto script_error;
 		}
 	}
 
@@ -430,8 +439,8 @@ inline unsigned char *run_redirect( struct cpl_interpreter *intr )
 
 	lump_str.s = pkg_malloc( lump_str.len );
 	if(!lump_str.s) {
-		LOG(L_ERR,"ERROR:cpl_redirect: out of pkg memory!\n");
-		goto error;
+		LOG(L_ERR,"ERROR:cpl_c:cpl_redirect: out of pkg memory!\n");
+		goto runtime_error;
 	}
 	cp = lump_str.s;
 	memcpy( cp , "Contact: " , 9);
@@ -457,7 +466,7 @@ inline unsigned char *run_redirect( struct cpl_interpreter *intr )
 	if(!lump) {
 		LOG(L_ERR,"ERROR:cpl_redirect: unable to build lump_rpl! \n");
 		pkg_free( lump_str.s );
-		goto error;
+		goto runtime_error;
 	}
 	add_lump_rpl( intr->msg , lump );
 
@@ -468,12 +477,14 @@ inline unsigned char *run_redirect( struct cpl_interpreter *intr )
 		i = sl_send_rpl( intr->msg, (char*)302, "Moved temporarily" );
 	if (i<0) {
 		LOG(L_ERR,"ERROR:run_redirect: unable to send redirect reply!\n");
-		goto error;
+		goto runtime_error;
 	}
 
 	return EO_SCRIPT;
-error:
-	return 0;
+runtime_error:
+	return CPL_RUNTIME_ERROR;
+script_error:
+	return CPL_SCRIPT_ERROR;
 }
 
 
@@ -481,21 +492,21 @@ error:
 inline unsigned char *run_log( struct cpl_interpreter *intr )
 {
 	unsigned char *p;
+	unsigned char *attr_ptr;
 	str buf;
 	str name;
 	str comment;
-	str cur_time;
-	time_t now;
+	str user;
 	int i;
 
-	name.s = comment.s = 0;
-	name.len = comment.len = 0;
+	buf.s = name.s = comment.s = 0;
+	buf.len = name.len = comment.len = 0;
 
 	/* sanity check */
 	if (NR_OF_KIDS(intr->ip)>1) {
 		LOG(L_ERR,"ERROR:run_log: LOG node suppose to have max one child, "
 			"not %d!\n",NR_OF_KIDS(intr->ip));
-		goto error;
+		goto script_error;
 	}
 
 	/* is loging enabled? */
@@ -503,74 +514,155 @@ inline unsigned char *run_log( struct cpl_interpreter *intr )
 		goto done;
 
 	/* read the attributes of the LOG node*/
-	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
+	attr_ptr = ATTR_PTR(intr->ip);
+	for( i=NR_OF_ATTR(intr->ip),p=attr_ptr ; i>0 ; i-- ) {
 		switch (*p) {
 			case NAME_ATTR:
-				check_overflow_by_ptr( p+2, intr, error);
+				check_overflow_by_ptr( p+2, intr, script_error);
 				name.len = *((unsigned short*)(p+1));
-				check_overflow_by_ptr( p+2+name.len, intr, error);
-				name.s = p+3;
+				check_overflow_by_ptr( p+2+name.len, intr, script_error);
+				name.s = name.len?((char*)0 + (p-attr_ptr) + 3):0;
 				p += 3+name.len;
 				break;
 			case COMMENT_ATTR:
-				check_overflow_by_ptr( p+2, intr, error);
+				check_overflow_by_ptr( p+2, intr, script_error);
 				comment.len = *((unsigned short*)(p+1));
-				check_overflow_by_ptr( p+2+comment.len, intr, error);
-				comment.s = p+3;
+				check_overflow_by_ptr( p+2+comment.len, intr, script_error);
+				comment.s = comment.len?((char*)0 + (p-attr_ptr) + 3):0;
 				p += 3+comment.len;
 				break;
 			default:
 				LOG(L_ERR,"ERROR:run_log: unknown attribute "
 					"(%d) in LOG node\n",*p);
-				goto error;
+				goto script_error;
 		}
 	}
 
-	if (comment.len==0)
+	if (comment.len==0) {
+		LOG(L_WARN,"WARNING:cpl_c:run_log: LOG node has no comment attr -> "
+			"skipping\n");
 		goto done;
-
-	/* if no log name -> set the default one */
-	if (!name.len) {
-		name.s = "default_log";
-		name.len = 11;
 	}
 
-	/* get current date+time */
-	time( &now );
-	cur_time.s = ctime( &now );
-	cur_time.len = strlen( cur_time.s )-1; /* ctime_r adds a \n at the end */
-
-	buf.len =  intr->user.len + cur_time.len + 1/*' '*/ + name.len +
-		LOG_SEPARATOR_LEN + comment.len + 1/*'\n'*/;
+	buf.len = intr->user.len + (p - attr_ptr);
+	/* duplicate the attrs in shm memory */
 	buf.s = (char*)shm_malloc( buf.len );
 	if (!buf.s) {
 		LOG(L_ERR,"ERROR:cpl_c:run_log: no more shm memory!\n");
-		goto error;
+		goto runtime_error;
 	}
+	memcpy( buf.s, intr->user.s, intr->user.len);
+	memcpy( buf.s+intr->user.len, attr_ptr, buf.len );
 
-	/* compose the buffer */
-	p = buf.s;
-	memcpy( p, intr->user.s, intr->user.len );
-	p += intr->user.len;
-	memcpy( p, cur_time.s, cur_time.len);
-	p +=  cur_time.len;
-	*(p++) = ' ';
-	memcpy( p, name.s, name.len);
-	p +=  name.len;
-	memcpy( p, LOG_SEPARATOR, LOG_SEPARATOR_LEN);
-	p +=  LOG_SEPARATOR_LEN;
-	memcpy( p, comment.s, comment.len);
-	p += comment.len;
-	*(p++) = '\n';
+	/* updates the pointer inside the new buffer */
+	user.len = intr->user.len;
+	user.s = buf.s;
+	comment.s += (buf.s-(char*)0) + user.len;
+	if (name.s) name.s += (buf.s-(char*)0) + user.len;
 
 	/* send the command */
-	write_cpl_cmd( CPL_LOG_CMD, buf.s, intr->user.len, buf.len-intr->user.len);
+	write_cpl_cmd( CPL_LOG_CMD, &user, &name, &comment );
 
 done:
-	return ((NR_OF_KIDS(intr->ip)==0)?EO_SCRIPT:
-		(intr->ip+KID_OFFSET(intr->ip,0)));
-error:
-	return 0;
+	return get_first_child(intr->ip);
+runtime_error:
+	return CPL_RUNTIME_ERROR;
+script_error:
+	return CPL_SCRIPT_ERROR;
+}
+
+
+
+inline unsigned char *run_mail( struct cpl_interpreter *intr )
+{
+	unsigned char *p;
+	str buf;
+	str subject;
+	str body;
+	str to;
+	int i;
+
+	buf.s = to.s = subject.s = body.s = 0;
+	buf.len = to.len = subject.len = body.len = 0;
+
+	/* sanity check */
+	if (NR_OF_KIDS(intr->ip)>1) {
+		LOG(L_ERR,"ERROR:cpl_c:run_mail: MAIL node suppose to have max one"
+			" child, not %d!\n",NR_OF_KIDS(intr->ip));
+		goto script_error;
+	}
+
+	/* read the attributes of the MAIL node*/
+	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
+		switch (*p) {
+			case TO_ATTR:
+				check_overflow_by_ptr( p+2, intr, script_error);
+				to.len = *((unsigned short*)(p+1));
+				check_overflow_by_ptr( p+2+to.len, intr, script_error);
+				to.s = to.len?(p+3):0;
+				p += 3+to.len;
+				break;
+			case SUBJECT_ATTR:
+				check_overflow_by_ptr( p+2, intr, script_error);
+				subject.len = *((unsigned short*)(p+1));
+				check_overflow_by_ptr( p+2+subject.len, intr, script_error);
+				subject.s = subject.len?(p+3):0;
+				p += 3+subject.len;
+				break;
+			case BODY_ATTR:
+				check_overflow_by_ptr( p+2, intr, script_error);
+				body.len = *((unsigned short*)(p+1));
+				check_overflow_by_ptr( p+2+body.len, intr, script_error);
+				body.s = body.len?(p+3):0;
+				p += 3+body.len;
+				break;
+			default:
+				LOG(L_ERR,"ERROR:run_mail: unknown attribute "
+					"(%d) in MAIL node\n",*p);
+				goto script_error;
+		}
+	}
+
+	if (to.len==0) {
+		LOG(L_ERR,"ERROR:cpl_c:run_mail: email has an empty TO hdr!\n");
+		goto script_error;
+	}
+	if (body.len==0 && subject.len) {
+		LOG(L_WARN,"WARNINGLcpl_c:run_mail: I refuse to send email with no "
+			"body and subject -> skipping...\n");
+		goto done;
+	}
+
+	buf.len = to.len + subject.len + body.len;
+	/* duplicate the attrs in shm memory */
+	buf.s = (char*)shm_malloc( buf.len );
+	if (!buf.s) {
+		LOG(L_ERR,"ERROR:cpl_c:run_mail: no more shm memory!\n");
+		goto runtime_error;
+	}
+	p = buf.s;
+	/* copy the TO */
+	memcpy( p, to.s, to.len );
+	to.s = p;
+	p += to.len;
+	/* copy the subject */
+	memcpy( p, subject.s, subject.len );
+	subject.s = p;
+	p += subject.len;
+	/* copy the body */
+	memcpy( p, body.s, body.len );
+	body.s = p;
+	p += body.len;
+
+	/* send the command */
+	write_cpl_cmd( CPL_MAIL_CMD, &to, &subject, &body);
+
+done:
+	return get_first_child(intr->ip);
+runtime_error:
+	return CPL_RUNTIME_ERROR;
+script_error:
+	return CPL_SCRIPT_ERROR;
 }
 
 
@@ -621,6 +713,10 @@ int run_cpl_script( struct cpl_interpreter *intr )
 				DBG("DEBUG:run_cpl_script: processing log node\n");
 				intr->ip = run_log( intr );
 				break;
+			case MAIL_NODE:
+				DBG("DEBUG:run_cpl_script: processing mail node\n");
+				intr->ip = run_mail( intr );
+				break;
 			case SUB_NODE:
 				DBG("DEBUG:run_cpl_script: processing sub node\n");
 				intr->ip = run_sub( intr );
@@ -630,13 +726,22 @@ int run_cpl_script( struct cpl_interpreter *intr )
 					NODE_TYPE(intr->ip));
 				goto error;
 		}
-		if (intr->ip==0)
-			goto error;
-	}while(intr->ip!=EO_SCRIPT);
 
-	DBG("DEBUG:run_cpl_script: script interpretation done!\n");
-	return SCRIPT_END;
+		if (intr->ip==CPL_RUNTIME_ERROR) {
+			LOG(L_ERR,"ERROR:cpl_c:run_cpl_script: runtime error\n");
+			goto error;
+		} else if (intr->ip==CPL_SCRIPT_ERROR) {
+			LOG(L_ERR,"ERROR:cpl_c:run_cpl_script: script error\n");
+			goto error;
+		} else if (intr->ip==DEFAULT_ACTION) {
+			DBG("DEBUG:cpl_c:run_cpl_script: running default action\n");
+			return SCRIPT_END; /* TO DO */
+		} else if (intr->ip==EO_SCRIPT) {
+			DBG("DEBUG:cpl_c:run_cpl_script: script interpretation done!\n");
+			return SCRIPT_END;
+		}
+	}while(1);
+
 error:
-	LOG(L_ERR,"ERROR:run_cpl_script: generic error\n");
 	return -1;
 }

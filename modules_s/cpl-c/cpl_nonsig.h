@@ -34,11 +34,13 @@
 
 #include <unistd.h>
 
+#include "../../str.h"
+
 struct cpl_cmd {
 	unsigned int code;
-	char *s;
-	int len1;
-	int len2;
+	str s1;
+	str s2;
+	str s3;
 };
 
 
@@ -54,14 +56,14 @@ extern int cpl_cmd_pipe[2];
 void cpl_aux_process( int cmd_out, char *log_dir);
 
 
-static inline void write_cpl_cmd(unsigned int code, char *s, int len1,int len2)
+static inline void write_cpl_cmd(unsigned int code, str *s1, str *s2, str *s3)
 {
 	static struct cpl_cmd cmd;
 
 	cmd.code = code;
-	cmd.s = s;
-	cmd.len1 = len1;
-	cmd.len2 = len2;
+	cmd.s1 = *s1;
+	cmd.s2 = *s2;
+	cmd.s3 = *s3;
 
 	if (write( cpl_cmd_pipe[1], &cmd, sizeof(struct cpl_cmd) )==-1)
 		LOG(L_ERR,"ERROR:cpl_c:write_cpl_cmd: write ret: %s\n",

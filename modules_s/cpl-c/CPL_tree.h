@@ -183,6 +183,17 @@
 #define  COMMENT_ATTR                1
 #define  MAX_COMMENT_SIZE            128
 
+/* attributes and values for EMAIL node */
+#define  TO_ATTR                     0
+#define  SUBJECT_ATTR                1
+#define  SUBJECT_EMAILHDR_STR        "subject"
+#define  SUBJECT_EMAILHDR_LEN        (sizeof(SUBJECT_EMAILHDR_STR)-1)
+#define  BODY_ATTR                   2
+#define  BODY_EMAILHDR_STR           "body"
+#define  BODY_EMAILHDR_LEN           (sizeof(BODY_EMAILHDR_STR)-1)
+#define  URL_MAILTO_STR              "mailto:"
+#define  URL_MAILTO_LEN              (sizeof(URL_MAILTO_STR)-1)
+
 /* attributs and values for SUB node */
 #define  REF_ATTR                    0
 
