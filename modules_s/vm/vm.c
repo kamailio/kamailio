@@ -31,7 +31,7 @@
  * 2003-03-06 vm_{start|stop} changed to use a single fifo 
  *            function; new module parameters introduced;
  *            db now initialized only on start-up; MULTI_DOMAIN
- *            support introduced; sprintf removed;
+ *            support introduced; snprintf removed;
  *
  */
 
@@ -42,6 +42,7 @@
 #include "../../config.h"
 #include "../tm/tm_load.h"
 #include "../../parser/parse_from.h"
+#include "../../parser/parse_rr.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../db/db.h"
 
@@ -79,12 +80,14 @@
 #define SQL_EQUAL      " = "
 #define SQL_EQUAL_LEN  3
 
-#define VM_FIFO_PARAMS 14
+#define VM_FIFO_PARAMS 15
 
 #define VM_INVITE      "invite"
 #define VM_BYE         "bye"
 
-static str empty_str={0,0};
+#define ROUTE_BUFFER_MAX 512
+
+static str empty_param={".",1};
 
 static int write_to_vm_fifo(char *fifo, str *lines, int cnt );
 static int init_tmb();
@@ -154,11 +157,6 @@ static int vm_mod_init(void)
   		return -1; 
         } 
 
-        if (register_fifo_cmd(fifo_uac_dlg, "vm_uac_dlg", 0)<0) { 
-  		LOG(L_CRIT, "cannot register fifo vm_uac_dlg\n"); 
-  		return -1; 
-        } 
-
 	if (init_tmb()==-1) {
 		LOG(L_ERR, "Error: vm_mod_init: cann't load tm\n");
 		return -1;
@@ -194,7 +192,9 @@ static int vm_init_child(int rank)
     return 0;
 }
 
+#ifdef _OBSO
 static int vm_extract_body(struct sip_msg *msg, str *body );
+#endif
 
 static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 {
@@ -212,10 +212,23 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	int             int_buflen, l;
 	char*           i2s;
 	char*           s;
+	rr_t*           record_route;
+	char            fproxy_lr;
+	//param_t*        route_param;
+	char            route_buffer[ROUTE_BUFFER_MAX];
+	str             route;
+	struct hdr_field* rr_hdr;
+	param_hooks_t     hooks;
+	str               tmp_str;
+
+	if(msg->first_line.type != SIP_REQUEST){
+	    LOG(L_ERR, "ERROR: vm() has been passed something else as a SIP request\n");
+	    goto error;
+	}
 
 	/* parse all -- we will need every header field for a UAS */
 	if (parse_headers(msg, HDR_EOH, 0)==-1) {
-		LOG(L_ERR, "ERROR; vm_start: parse_headers failed\n");
+		LOG(L_ERR, "ERROR: vm: parse_headers failed\n");
 		goto error;
 	}
 
@@ -223,18 +236,18 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	 * to refcounting till script completes)
 	 */
         if( (*_tmb.t_get_trans_ident)(msg,&hash_index,&label) == -1 ) {
-		LOG(L_ERR,"ERROR: vm_start: t_get_trans_ident failed\n");
+		LOG(L_ERR,"ERROR: vm: t_get_trans_ident failed\n");
 		goto error;
         }
 
         if(parse_from_header(msg) == -1){
-		LOG(L_ERR,"ERROR: %s : vm_start: "
+		LOG(L_ERR,"ERROR: %s : vm: "
 				"while parsing <From:> header\n",exports.name);
 		goto error;
         }
 
 	if (parse_sip_msg_uri(msg)<0) {
-  		LOG(L_ERR,"ERROR: %s : vm_start: uri has not been parsed\n",
+  		LOG(L_ERR,"ERROR: %s : vm: uri has not been parsed\n",
 				exports.name);
   		goto error;
         }
@@ -242,26 +255,26 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
         if(msg->contact){
 
 		if(parse_contact(msg->contact) == -1){
-	    	LOG(L_ERR,"ERROR: %s : vm_start: "
-						"while parsing <Contact:> header\n",exports.name);
-	    	goto error;
+		    LOG(L_ERR,"ERROR: %s : vm: "
+			"while parsing <Contact:> header\n",exports.name);
+		    goto error;
 		}
 	
 #ifdef EXTRA_DEBUG
-		DBG("DEBUG: vm_start: ******* contacts: *******\n");
+		DBG("DEBUG: vm: ******* contacts: *******\n");
 #endif
 		cb = msg->contact->parsed;
 
 		if(cb && (c=cb->contacts)) {
 		    str_uri = &c->uri;
 #ifdef EXTRA_DEBUG
-		    print_contacts(c);
+		    /*print_contacts(c);*/
 		    for(; c; c=c->next)
 			DBG("DEBUG:           %.*s\n",c->uri.len,c->uri.s);
 #endif
 		}
 #ifdef EXTRA_DEBUG
-		DBG("DEBUG: vm_start: **** end of contacts ****\n");
+		DBG("DEBUG: vm: **** end of contacts ****\n");
 #endif
         }
 
@@ -269,10 +282,121 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	 * for backwards compatibility with pre-3261 */
         if(!str_uri || !str_uri->len)
 	    str_uri = &(get_from(msg)->uri);
+
+	//if(parse_nameaddr(str* _s, name_addr_t* _a)){
+	//    LOG(L_ERR,"ERROR: parse_nameaddr failed\n");
+	//}
+
+	route.s = route_buffer; route.len = 0;
+	s = route_buffer;
+
+	rr_hdr = msg->record_route;
+	if(!rr_hdr->parsed && parse_rr(rr_hdr)){
+	  LOG(L_ERR,"ERROR: vm: while parsing 'Record-Route:' header\n");
+	  goto error;
+	}
+	    
+	DBG("rr_hdr = 0x%X; rr_hdr->parsed = 0x%X\n",(unsigned int)rr_hdr,(unsigned int)rr_hdr->parsed);
+	record_route = rr_hdr ? rr_hdr->parsed : 0;
 	
-	if(msg->route)
-	    DBG("DEBUG: vm_start: route:%.*s\n",
-		msg->route->body.len,msg->route->body.s);
+	fproxy_lr = 0;
+
+	DBG("vm: ############# record route header ##############\n");
+	DBG("rr_hdr && record_route = %X && %X\n",(unsigned int)rr_hdr,(unsigned int)record_route);
+
+	if(rr_hdr && record_route){
+
+#define copy_route(s,len,rs,rlen) \
+   do {\
+     if(rlen+len+3 >= ROUTE_BUFFER_MAX){\
+       LOG(L_ERR,"vm: buffer overflow while copying new route");\
+       goto error;\
+     }\
+     if(len){\
+       append_str(s,",",1);len++;\
+     }\
+     append_str(s,"<",1);len++;\
+     append_str(s,rs,rlen);\
+     len += rlen; \
+     append_str(s,">",1);len++;\
+   } while(0);
+
+	  if(rr_hdr->body.len){
+	      
+	    /* Parse all parameters */
+	    DBG("record_route->nameaddr.uri (before parse_params): %.*s\n",record_route->nameaddr.uri.len,record_route->nameaddr.uri.s);
+	    tmp_str = record_route->nameaddr.uri;
+	    if (parse_params(&tmp_str, CLASS_RR, &hooks, &record_route->params) < 0) {
+	      LOG(L_ERR, "vm: Error while parsing record route uri params\n");
+	      goto error;
+	    }
+	    
+	    //for(route_param=record_route->params; route_param; route_param=route_param->next)
+	    fproxy_lr = (hooks.rr.lr != 0);//|= (route_param->type == P_LR);
+	    
+	    DBG("record_route->nameaddr.uri: %.*s\n",record_route->nameaddr.uri.len,record_route->nameaddr.uri.s);
+	    if(fproxy_lr){
+	      copy_route(s,route.len,record_route->nameaddr.uri.s,record_route->nameaddr.uri.len);
+	    }
+	  }
+	  rr_hdr = rr_hdr->next;
+
+	  for(;;rr_hdr = rr_hdr->next){
+
+	    if(rr_hdr && (rr_hdr->type == HDR_RECORDROUTE) && rr_hdr->body.len){
+	      
+	      if(!rr_hdr->parsed && parse_rr(rr_hdr)){
+		LOG(L_ERR,"ERROR: %s : vm: "
+		  "while parsing <Record-route:> header\n",exports.name);
+		goto error;
+	      }
+	      
+	      for(record_route = rr_hdr->parsed; record_route; record_route = record_route->next){
+		DBG("record_route->nameaddr.uri: %.*s\n",record_route->nameaddr.uri.len,record_route->nameaddr.uri.s);
+		copy_route(s,route.len,record_route->nameaddr.uri.s,record_route->nameaddr.uri.len);
+	      }
+	    } 
+
+	    if(rr_hdr == msg->last_header)
+	      break;
+	  }
+
+	  if(!fproxy_lr){
+	    copy_route(s,route.len,str_uri->s,str_uri->len);
+	    str_uri = &((rr_t*)msg->record_route->parsed)->nameaddr.uri;
+	  }
+
+//  	const char* cur = route.c_str();
+//  	const char* end = cur + route.length();
+
+//  	bool is_uri=false;
+//  	while(cur<end){
+
+//  	    if(*cur == '<')
+//  		is_uri = true;
+//  	    else if(*cur == '>')
+//  		is_uri = false;
+//  	    else if(*cur == ';' && !is_uri) 
+//  		break;
+//  	    cur++;
+//  	}
+
+//  	string first_route(route,0,cur-route.c_str());
+//  	if(first_route.find(";lr") >= first_route.length()) {
+
+//  	    // 1st proxy doesn't support loose-routing
+//  	    route = string(cur+1, route.length() + route.c_str() - (cur+1)) + ";" + ruri;
+//  	    ruri = first_route;
+//  	}
+	  
+	}
+
+	DBG("vm: route: %.*s\n",route.len,route.s);
+	DBG("vm: ############# record route header - end ##############\n");
+	
+/* 	if(msg->route) */
+/* 	    DBG("DEBUG: vm: route:%.*s\n", */
+/* 		msg->route->body.len,msg->route->body.s); */
 
 
 	email.s = 0; email.len = 0;
@@ -280,10 +404,19 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 
 	if(!strcmp(action,VM_INVITE)){
 
-	    if(vm_extract_body(msg,&body)==-1) {
-		LOG(L_ERR, "ERROR: vm_start: extract_body failed\n");
+	    if( (body.s = get_body(msg)) == 0 ){
+		LOG(L_ERR, "ERROR: vm: get_body failed\n");
 		goto error;
 	    }
+
+	    body.len = strlen(body.s);
+
+#ifdef _OBSO
+	    if(vm_extract_body(msg,&body)==-1) {
+		LOG(L_ERR, "ERROR: vm: extract_body failed\n");
+		goto error;
+	    }
+#endif
 
 	    email_query.len = SQL_SELECT_LEN
 		+ strlen(email_column)
@@ -352,13 +485,14 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	lines[2]=email;			        /* email address from db */
 	lines[3].s=ip_addr2a(&msg->rcv.dst_ip);	/* dst ip */
 	lines[3].len=strlen(lines[3].s);
-	lines[4]=*str_uri;			/* contact (from if c absent) */
-	lines[5]=get_from(msg)->body;		/* from */
-	lines[6]=msg->to->body;			/* to */
-	lines[7]=msg->callid->body;		/* callid */
-	lines[8]=get_from(msg)->tag_value;	/* from tag */
-	lines[9]=get_to(msg)->tag_value;	/* to tag */
-	lines[10]=get_cseq(msg)->number;	/* cseq number */
+	lines[4]=empty_param/*msg->first_line.u.request.uri*/;   /* r_uri ('Contact:' for next requests) */
+	lines[5]=*str_uri;			/* r_uri for subsequent requests */
+	lines[6]=get_from(msg)->body;		/* from */
+	lines[7]=msg->to->body;			/* to */
+	lines[8]=msg->callid->body;		/* callid */
+	lines[9]=get_from(msg)->tag_value;	/* from tag */
+	lines[10]=get_to(msg)->tag_value;	/* to tag */
+	lines[11]=get_cseq(msg)->number;	/* cseq number */
 
 	i2s=int2str(hash_index, &l);		/* hash:label */
 	if (l+1>=IDBUF_LEN) {
@@ -372,10 +506,10 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 		goto error;
 	}
 	memcpy(id_buf+int_buflen, i2s, l);int_buflen+=l;
-	lines[11].s=id_buf;lines[11].len=int_buflen;
+	lines[12].s=id_buf;lines[12].len=int_buflen;
 
-	lines[12]=msg->route ? msg->route->body : empty_str;
-	lines[13].s=body.s; lines[13].len=body.len;
+	lines[13]=route.len ? route : empty_param;
+	lines[14].s=body.s; lines[14].len=body.len;
 
 	if ( write_to_vm_fifo(vm_fifo, &lines[0], 
 			     body.len ? VM_FIFO_PARAMS : VM_FIFO_PARAMS-1)
@@ -400,61 +534,6 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 }
 
 #ifdef _OBSO
-static int vm_stop(struct sip_msg* msg, char* vm_fifo, char* str2)
-{
-
-    int  is_local;
-	str lines[VM_FIFO_PARAMS];
-
-	/* parse all -- we will need every header field for a UAS */
-	if (parse_headers(msg, HDR_EOH, 0)==-1) {
-		LOG(L_ERR, "ERROR; vm_stop: parse_headers failed\n");
-		goto error;
-	}
-
-	/* REVIEW/jiri: what is this good for? incoming requests  should
-	 * never match transactions which were created localy, should
-	 * they?  --- just look it up and ignore "is_local" */
-
-	if( (is_local = (*_tmb.t_is_local)(msg)) == -1 ) { 
-	        LOG(L_ERR,"ERROR: vm_start: t_is_local failed\n"); 
-	        goto error; 
-	} 
-    
-	if(parse_from_header(msg) == -1){
-		LOG(L_ERR,"ERROR: %s : vm_stop: while parsing <From> header\n",
-						exports.name);
-		goto error;
-	}
-
-	lines[0].s="bye";lines[0].len=3;
-	lines[1]=msg->parsed_uri.user;			/* user from r-uri */
-	lines[2]=empty_str;						/* email */
-	lines[3].s=ip_addr2a(&msg->rcv.dst_ip);	/* dst ip */
-	lines[3].len=strlen(lines[3].s);
-	lines[4]=get_from(msg)->uri;			/* from uri */
-	lines[5]=get_from(msg)->body;			/* from */
-	lines[6]=msg->to->body;					/* to */
-	lines[7]=msg->callid->body;				/* callid */
-	lines[8]=get_from(msg)->tag_value;		/* from-tag (optional) */
-	lines[9]=get_to(msg)->tag_value;		/* to-tag (optional) */
-	lines[10]=get_cseq(msg)->number;		/* cseq number */
-	lines[11]=empty_str;					/* no hash:index */
-	lines[12]=msg->route ? msg->route->body : empty_str;	/* route */
-
-    if (write_to_vm_fifo(vm_fifo, &lines[0], 13 )==-1) {
-		LOG(L_ERR, "ERROR: vm_stop: write_to_fifo failed\n");
-		goto error;
-	}
-
-	return 1;
-
- error:
-    return -1; /* !OK */
-
-}
-#endif
-
 static int im_get_body_len( struct sip_msg* msg)
 {
 	int x,err;
@@ -518,6 +597,7 @@ static int vm_extract_body(struct sip_msg *msg, str *body )
 error:
 	return -1;
 }
+#endif
 
 static int init_tmb()
 {
