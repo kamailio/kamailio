@@ -129,4 +129,11 @@ static inline size_t print_q(char* p, qvalue_t q)
 	return Q_PREFIX_LEN + 3;
 }
 
+
+/*
+ * Convert string representation of q parameter in qvalue_t
+ */
+int str2q(qvalue_t* q, char* s, int len);
+
+
 #endif /* _QVALUE_H */

@@ -1432,8 +1432,14 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| STRIP error { $$=0; yyerror("missing '(' or ')' ?"); }
 		| STRIP LPAREN error RPAREN { $$=0; yyerror("bad argument, "
 														"number expected"); }
-                | APPEND_BRANCH LPAREN STRING COMMA NUMBER RPAREN { $$=mk_action( APPEND_BRANCH_T,
-										                        STRING_ST, NUMBER_ST, $3, (void *)$5) ; }
+                | APPEND_BRANCH LPAREN STRING COMMA STRING RPAREN { 
+		    {   qvalue_t q;
+			if (str2q(&q, $5, strlen($5)) < 0) {
+				yyerror("bad arqument, q value expected");
+			}
+			$$=mk_action(APPEND_BRANCH_T, STRING_ST, NUMBER_ST, $3, (void *)q); } 
+		}
+	
 		| APPEND_BRANCH LPAREN STRING RPAREN { $$=mk_action( APPEND_BRANCH_T,
 													STRING_ST, NUMBER_ST, $3, (void *)Q_UNSPECIFIED) ; }
 		| APPEND_BRANCH LPAREN RPAREN { $$=mk_action( APPEND_BRANCH_T,

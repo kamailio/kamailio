@@ -86,6 +86,27 @@ int err2reason_phrase(
 			error_txt="Forking capacity exceeded";
 			*sip_error=-E_BAD_SERVER;
 			break;
+
+	        case E_Q_INV_CHAR:
+			error_txt="Invalid character in q parameter";
+			*sip_error=-E_BAD_REQ;
+			break;
+
+	        case E_Q_EMPTY:
+			error_txt="Empty q parameter";
+			*sip_error=-E_BAD_REQ;
+			break;;
+
+	        case E_Q_TOO_BIG:
+			error_txt="q parameter too big";
+			*sip_error=-E_BAD_REQ;
+			break;
+
+	        case E_Q_DEC_MISSING:
+			error_txt="Decimal part missing in q";
+			*sip_error=-E_BAD_REQ;
+			break;
+
 		case E_OUT_OF_MEM:
 		/* dont disclose lack of mem in release mode */
 #ifdef DEBUG
