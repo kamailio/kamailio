@@ -73,8 +73,8 @@ static inline int connect_db(db_con_t* _h, const char* _db_url)
 	}
 	memcpy(buf, _db_url, l + 1);
 
-	res = parse_sql_url(buf, &user, &password, &host, &port, &database);
-	if (port) {
+	res = parse_mysql_url(buf, &user, &password, &host, &port, &database);
+	if (port && *port) {
 		p = atoi(port);
 	} else {
 		p = 0;

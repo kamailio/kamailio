@@ -6,7 +6,6 @@ include ../../Makefile.defs
 auto_gen=
 NAME=mysql.so
 
-
 # mysql.h locations (freebsd,openbsd  solaris)
 DEFS +=-I$(LOCALBASE)/include -I$(LOCALBASE)/include/mysql \
 		-I$(LOCALBASE)/mysql/include -I/usr/pkg/include \

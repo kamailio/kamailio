@@ -34,39 +34,10 @@
 
 #define _XOPEN_SOURCE
 
+#include <strings.h>
 #include <string.h>
 #include "defs.h"
 #include "utils.h"
-
-/* FIXME: to be removed */
-
-/*
- * Remove any tabs and spaces from the begining and the end of
- * a string
- */
-char* trim(char* _s)
-{
-	int len;
-	char* end;
-
-	     /* Null pointer, there is nothing to do */
-	if (!_s) return _s;
-
-	     /* Remove spaces and tabs from the begining of string */
-	while ((*_s == ' ') || (*_s == '\t')) _s++;
-
-	len = strlen(_s);
-
-        end = _s + len - 1;
-
-	     /* Remove trailing spaces and tabs */
-	while ((*end == ' ') || (*end == '\t')) end--;
-	if (end != (_s + len - 1)) {
-		*(end+1) = '\0';
-	}
-
-	return _s;
-}
 
 
 /*
@@ -108,70 +79,141 @@ time_t mysql2time(const char* _str)
 }
 
 
-/* FIXME */
 /*
- * SQL URL parser
+ * Parse a mysql database URL of form 
+ * mysql://[username[:password]@]hostname[:port]/database
+ *
+ * Returns 0 if parsing was sucessful and -1 otherwise
  */
-int parse_sql_url(char* _url, char** _user, char** _pass, 
-		  char** _host, char** _port, char** _db)
+int parse_mysql_url(char* _url, char** _user, char** _pass,
+		    char** _host, char** _port, char** _db)
 {
-	char* slash, *dcolon, *at, *db_slash;
+#define SHORTEST_MYSQL_URL "mysql://a/b"
+#define SHORTEST_MYSQL_URL_LEN (sizeof(SHORTEST_MYSQL_URL) - 1)
 
+#define MYSQL_URL_PREFIX "mysql://"
+#define MYSQL_URL_PREFIX_LEN (sizeof(MYSQL_URL_PREFIX) - 1)
+
+	enum state {
+		ST_USER_HOST,  /* Username or hostname */
+		ST_PASS_PORT,  /* Password or port part */
+		ST_HOST,       /* Hostname part */
+		ST_PORT,       /* Port part */
+		ST_DB          /* Database part */
+	};
+
+	enum state st;
+	int len, i;
+	char* begin, *prev_begin;
+
+	if (!_url || !_user || !_pass || !_host || !_port || !_db) {
+		return -1;
+	}
+	
+	len = strlen(_url);
+	if (len < SHORTEST_MYSQL_URL_LEN) {
+		return -1;
+	}
+	
+	if (strncasecmp(_url, MYSQL_URL_PREFIX, MYSQL_URL_PREFIX_LEN)) {
+		return -1;
+	}
+
+	     /* Skip the prefix part */
+	_url += MYSQL_URL_PREFIX_LEN;
+	len -= MYSQL_URL_PREFIX_LEN;
+	
+	     /* Initialize all variables */
 	*_user = '\0';
 	*_pass = '\0';
 	*_host = '\0';
 	*_port = '\0';
 	*_db   = '\0';
 
-	     /* Remove any leading and trailing spaces and tab */
-	_url = trim(_url);
+	st = ST_USER_HOST;
+	begin = _url;
+	prev_begin = 0;
 
-	if (strlen(_url) < 6) return -1;
+	for(i = 0; i < len; i++) {
+		switch(st) {
+		case ST_USER_HOST:
+			switch(_url[i]) {
+			case '@':
+				st = ST_HOST;
+				*_user = begin;
+				begin = _url + i + 1;
+				_url[i] = '\0';
+				break;
 
-	if (*_url == '\0') return -2; /* Empty string */
+			case ':':
+				st = ST_PASS_PORT;
+				prev_begin = begin;
+				begin = _url + i + 1;
+				_url[i] = '\0';
+				break;
 
-	slash = strchr(_url, '/');
-	if (!slash) return -3;   /* Invalid string, slashes not found */
+			case '/':
+				*_host = begin;
+				_url[i] = '\0';
 
-	if ((*(++slash)) != '/') {  /* Invalid URL, 2nd slash not found */
-		return -4;
-	}
-
-	slash++;
-
-	at = strchr(slash, '@');
-
-	db_slash = strchr(slash, '/');
-	if (db_slash) {
-		*db_slash++ = '\0';
-		*_db = trim(db_slash);
-	}
-
-	if (!at) {
-		dcolon = strchr(slash, ':');
-		if (dcolon) {
-			*dcolon++ = '\0';
-			*_port = trim(dcolon);
-		}
-		*_host = trim(slash);
-	} else {
-		dcolon = strchr(slash, ':');
-	        *at++ = '\0';
-		if (dcolon) {
-			*dcolon++ = '\0';
-			if (dcolon < at) {   /* user:passwd */
-				*_pass = trim(dcolon);
-				dcolon = strchr(at, ':');
-				if (dcolon) {  /* host:port */
-					*dcolon++ = '\0';
-					*_port = trim(dcolon);
-				}
-			} else {            /* host:port */
-				*_port = trim(dcolon);
+				*_db = _url + i + 1;
+				return 0;
 			}
+
+		case ST_PASS_PORT:
+			switch(_url[i]) {
+			case '@':
+				st = ST_HOST;
+				*_user = prev_begin;
+				*_pass = begin;
+				begin = _url + i + 1;
+				_url[i] = '\0';
+				break;
+
+			case '/':
+				*_host = prev_begin;
+				*_port = begin;
+				_url[i] = '\0';
+
+				*_db = _url + i + 1;
+				return 0;
+			}
+
+		case ST_HOST:
+			switch(_url[i]) {
+			case ':':
+				st = ST_PORT;
+				*_host = begin;
+				begin = _url + i + 1;
+				_url[i] = '\0';
+				break;
+
+			case '/':
+				*_host = begin;
+				_url[i] = '\0';
+
+				*_db = _url + i + 1;
+				return 0;
+			}
+
+		case ST_PORT:
+			switch(_url[i]) {
+			case '/':
+				*_port = begin;
+				_url[i] = '\0';
+
+				*_db = _url + i + 1;
+				return 0;
+			}
+			break;
+			
+		case ST_DB:
+			break;
 		}
-		*_host = trim(at);
-		*_user = trim(slash);
+	}
+
+	if (st != ST_DB) {
+		return -1;
 	}
 
 	return 0;
