@@ -63,7 +63,7 @@ int check_address(struct ip_addr* ip, char *name, int resolver)
 		DBG("check_address: doing dns lookup\n");
 		/* try all names ips */
 		he=resolvehost(name);
-		if (ip->af==he->h_addrtype){
+		if (he && ip->af==he->h_addrtype){
 			for(i=0;he && he->h_addr_list[i];i++){
 				if ( memcmp(&he->h_addr_list[i], ip->u.addr, ip->len)==0)
 					return 0;
