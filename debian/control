@@ -9,6 +9,7 @@ Package: ser
 Architecture: any
 Depends: ${shlibs:Depends}
 Suggests: ser-mysql-module, ser-jabber-module
+Conflicts: ser-mysql-module (< ${Source-Version}), ser-jabber-module (< ${Source-Version}), ser-radius-modules (< ${Source-Version})
 Description: Sip Express Router, very fast and configurable SIP proxy
  ser or SIP Express Router is a very fast and flexible SIP (RFC3621)
  proxy server. Written entirely in C, ser can handle thousands calls

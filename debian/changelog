@@ -1,3 +1,11 @@
+ser (0.8.11-pre30) unstable; urgency=low
+
+  * minor bugfixes
+
+  * debian packaging changes (added conflicts)
+
+ -- Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.fraunhofer.de>  Fri, 06 Jun 2003 14:03:29 +0200
+
 ser (0.8.11-pre29) unstable; urgency=low
 
   * RFC3261 support (TCP, loose routing)

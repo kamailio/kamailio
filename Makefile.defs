@@ -23,6 +23,7 @@
 #  2003-05-23  check if this makefile was already included (andrei)
 #              removed -DDIGEST_DOMAIN (andrei)
 #  2003-05-30  added extra_defs (andrei)
+#  2003-06-06  moved compiler detection before DEFS (andrei)
 
 
 # check if already included/exported
@@ -122,6 +123,63 @@ LEX  := $(shell echo "$${LEX}")
 YACC := $(shell echo "$${YACC}")
 
 
+
+
+# find compiler name & version
+ifeq ($(CC),)
+	CC=gcc
+endif
+LD= $(CC)
+CC_LONGVER=$(shell if  $(CC) -v 2>/dev/null; then \
+						$(CC) -v 2>&1 ;\
+					else \
+						$(CC) -V 2>&1 ; \
+					fi )
+MKTAGS=ctags -R .
+
+#find-out the compiler's name
+
+ifneq (,$(findstring gcc, $(CC_LONGVER)))
+	CC_NAME=gcc
+	CC_VER=$(CC) $(shell $(CC) --version|head -1| \
+				 sed -e 's/.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/' -e 's/[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
+	# sun sed is a little brain damaged => this complicated expression
+	MKDEP=$(CC) -MM 
+	#transform gcc version into 2.9x or 3.0
+	CC_SHORTVER=$(shell echo "$(CC_VER)" | cut -d" " -f 2| \
+				 sed -e 's/[^0-9]*-\(.*\)/\1/'| \
+				 sed -e 's/2\.9.*/2.9x/' -e 's/3\..\..*/3.0/' -e \
+				 	's/3\../3.0/')
+endif
+
+ifneq (, $(findstring Sun, $(CC_LONGVER)))
+	CC_NAME=suncc
+	CC_SHORTVER=$(shell echo "$(CC_LONGVER)"|head -1| \
+					sed -e 's/.*\([0-9]\.[0-9]\).*/\1/g' )
+	CC_VER=$(CC) $(CC_SHORTVER)
+	MKDEP=$(CC) -xM1 
+endif
+
+ifneq (, $(findstring Intel(R) C++ Compiler, $(CC_LONGVER)))
+	# very nice: gcc compatible
+	CC_NAME=icc
+	CC_FULLVER=$(shell echo "$(CC_LONGVER)"|head -1| \
+					sed -e 's/.*Version \([0-9]\.[0-9]\.[0-9]*\).*/\1/g' )
+	CC_SHORTVER=$(shell echo "$(CC_FULLVER)" | cut -d. -f1,2 )
+	CC_VER=$(CC) $(CC_FULLVER)
+	MKDEP=$(CC) -MM 
+endif
+
+
+ifeq (,$(CC_NAME))
+#not found
+	CC_NAME=$(CC)
+	CC_SHORTVER=unknown
+	CC_VER=unknown
+	MKDEP=gcc -MM 
+$(warning	Unknown compiler $(CC)\; supported compilers: \
+			gcc, sun cc, intel icc )
+endif
 
 
 # compile-time options
@@ -238,63 +296,6 @@ ifeq ($(mode),debug)
 endif
 
 # platform dependent settings
-
-
-#common
-ifeq ($(CC),)
-	CC=gcc
-endif
-LD= $(CC)
-CC_LONGVER=$(shell if  $(CC) -v 2>/dev/null; then \
-						$(CC) -v 2>&1 ;\
-					else \
-						$(CC) -V 2>&1 ; \
-					fi )
-MKTAGS=ctags -R .
-
-#find-out the compiler's name
-
-ifneq (,$(findstring gcc, $(CC_LONGVER)))
-	CC_NAME=gcc
-	CC_VER=$(CC) $(shell $(CC) --version|head -1| \
-				 sed -e 's/.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/' -e 's/[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
-	# sun sed is a little brain damaged => this complicated expression
-	MKDEP=$(CC) -MM 
-	#transform gcc version into 2.9x or 3.0
-	CC_SHORTVER=$(shell echo "$(CC_VER)" | cut -d" " -f 2| \
-				 sed -e 's/[^0-9]*-\(.*\)/\1/'| \
-				 sed -e 's/2\.9.*/2.9x/' -e 's/3\..\..*/3.0/' -e \
-				 	's/3\../3.0/')
-endif
-
-ifneq (, $(findstring Sun, $(CC_LONGVER)))
-	CC_NAME=suncc
-	CC_SHORTVER=$(shell echo "$(CC_LONGVER)"|head -1| \
-					sed -e 's/.*\([0-9]\.[0-9]\).*/\1/g' )
-	CC_VER=$(CC) $(CC_SHORTVER)
-	MKDEP=$(CC) -xM1 
-endif
-
-ifneq (, $(findstring Intel(R) C++ Compiler, $(CC_LONGVER)))
-	# very nice: gcc compatible
-	CC_NAME=icc
-	CC_FULLVER=$(shell echo "$(CC_LONGVER)"|head -1| \
-					sed -e 's/.*Version \([0-9]\.[0-9]\.[0-9]*\).*/\1/g' )
-	CC_SHORTVER=$(shell echo "$(CC_FULLVER)" | cut -d. -f1,2 )
-	CC_VER=$(CC) $(CC_FULLVER)
-	MKDEP=$(CC) -MM 
-endif
-
-
-ifeq (,$(CC_NAME))
-#not found
-	CC_NAME=$(CC)
-	CC_SHORTVER=unknown
-	CC_VER=unknown
-	MKDEP=gcc -MM 
-$(warning	Unknown compiler $(CC)\; supported compilers: \
-			gcc, sun cc, intel icc )
-endif
 
 # find ld & as name (gnu or solaris)
 ifeq ($(ARCH), sparc64)
