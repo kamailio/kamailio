@@ -116,7 +116,7 @@ int add_rule(struct cfg_line* cl, struct route_elem** head)
 	/* start copying the host entry.. */
 	/* copy h_name */
 	len=strlen(he->h_name)+1;
-	re->host.h_name=(char*)malloc(len);
+	re->host.h_name=(char*)malloc(sizeof(char) * len);
 	if (re->host.h_name) strncpy(re->host.h_name, he->h_name, len);
 	else{
 		ret=E_OUT_OF_MEM;
@@ -125,7 +125,7 @@ int add_rule(struct cfg_line* cl, struct route_elem** head)
 
 	/* copy h_aliases */
 	for (len=0;he->h_aliases[len];len++);
-	re->host.h_aliases=(char**)malloc(len+1);
+	re->host.h_aliases=(char**)malloc(sizeof(char*)*(len+1));
 	if (re->host.h_aliases==0){
 		ret=E_OUT_OF_MEM;
 		goto error;
@@ -133,7 +133,7 @@ int add_rule(struct cfg_line* cl, struct route_elem** head)
 	memset((void*)re->host.h_aliases, 0, sizeof(char*) * (len+1) );
 	for (i=0;i<len;i++){
 		len2=strlen(he->h_aliases[i])+1;
-		re->host.h_aliases[i]=(char*)malloc(len2);
+		re->host.h_aliases[i]=(char*)malloc(sizeof(char)*len2);
 		if (re->host.h_aliases==0){
 			ret=E_OUT_OF_MEM;
 			goto error;
@@ -142,20 +142,21 @@ int add_rule(struct cfg_line* cl, struct route_elem** head)
 	}
 	/* copy h_addr_list */
 	for (len=0;he->h_addr_list[len];len++);
-	re->host.h_addr_list=(char**)malloc(len+1);
+	re->host.h_addr_list=(char**)malloc(sizeof(char*)*(len+1));
 	if (re->host.h_addr_list==0){
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
 	memset((void*)re->host.h_addr_list, 0, sizeof(char*) * (len+1) );
 	for (i=0;i<len;i++){
-		re->host.h_addr_list[i]=(char*)malloc(he->h_length+1);
-		if (re->host.h_addr_list==0){
+		re->host.h_addr_list[i]=(char*)malloc(sizeof(char)*he->h_length);
+		if (re->host.h_addr_list[i]==0){
 			ret=E_OUT_OF_MEM;
 			goto error;
 		}
-		memcpy(re->host.h_addr_list[i], he->h_addr_list[i], he->h_length+1);
+		memcpy(re->host.h_addr_list[i], he->h_addr_list[i], he->h_length);
 	}
+
 	/* copy h_addr_type & length */
 	re->host.h_addrtype=he->h_addrtype;
 	re->host.h_length=he->h_length;
@@ -213,15 +214,16 @@ void print_rl()
 		DPrint("%2d.to=%s ; route ok=%d\n", i,
 				t->host.h_name, t->ok);
 		DPrint("   ips: ");
-		for (j=0; t->host.h_addr_list[j]; j++)
-			DPrint("%d.%d.%d.%d ",
+		for (j=0; t->host.h_addr_list[j]; j++){
+			DPrint("%d.%d.%d.%d ", 
 				(unsigned char) t->host.h_addr_list[j][0],
 				(unsigned char) t->host.h_addr_list[j][1],
 			    (unsigned char) t->host.h_addr_list[j][2],
 				(unsigned char) t->host.h_addr_list[j][3]
 				  );
-				
-		DPrint("\n   port:%d\n", (unsigned short)t->port);
+		}
+		DPrint("\n");
+		DPrint("   port:%d\n", (unsigned short)t->port);
 		DPrint("   Statistics: tx=%d, errors=%d, tx_bytes=%d, idx=%d\n",
 				t->tx, t->errors, t->tx_bytes, t->current_addr_idx);
 	}

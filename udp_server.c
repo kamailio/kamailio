@@ -24,6 +24,7 @@ unsigned short our_port;
 int udp_init(unsigned long ip, unsigned short port)
 {
 	struct sockaddr_in addr;
+	int optval;
 
 	addr.sin_family=AF_INET;
 	addr.sin_port=htons(port);
@@ -34,13 +35,20 @@ int udp_init(unsigned long ip, unsigned short port)
 		DPrint("ERROR: udp_init: socket: %s\n", strerror());
 		goto error;
 	}
-
-	if (bind(udp_sock, (struct sockaddr*) &addr, sizeof(addr))==-1){
-		DPrint("ERROR: udp_init: socket: %s\n", strerror());
+	/* set sock opts? */
+	optval=1;
+	if (setsockopt(udp_sock, SOL_SOCKET, SO_REUSEPORT,
+					&optval, sizeof(optval)) ==-1)
+	{
+		DPrint("ERROR: udp_init: setsockopt: %s\n", strerror());
 		goto error;
 	}
 
-	/* set sock opts? */
+	if (bind(udp_sock, (struct sockaddr*) &addr, sizeof(addr))==-1){
+		DPrint("ERROR: udp_init: bind: %s\n", strerror());
+		goto error;
+	}
+
 
 	return 0;
 

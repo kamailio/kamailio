@@ -31,7 +31,7 @@ void receive_stdin_loop()
 }
 */
 
-#define NAME "dorian.fokus.gmd.de"
+#define NAME "0.0.0.0"
 
 
 int main(int argc, char** argv)
