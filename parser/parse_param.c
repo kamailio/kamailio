@@ -144,7 +144,21 @@ static inline void parse_uri_class(param_hooks_t* _h, param_t* _p)
 			_h->uri.maddr = _p;
 		}
 		break;
+		
+	case 'd':
+	case 'D':
+		if ((_p->name.len == 5) &&
+		    (!strncasecmp(_p->name.s + 1, "stip", 4))) {
+			_p->type = P_DSTIP;
+			_h->uri.dstip = _p;
+		} else if ((_p->name.len == 7) &&
+			   (!strncasecmp(_p->name.s + 1, "stport", 6))) {
+			_p->type = P_DSTPORT;
+			_h->uri.dstport = _p;
+		}
+		break;
 	}
+
 }
 
 
@@ -475,6 +489,8 @@ static inline void print_param(FILE* _o, param_t* _p)
 	case P_MADDR:     type = "P_MADDR";     break;
 	case P_TTL:       type = "P_TTL";       break;
 	case P_RECEIVED:  type = "P_RECEIVED";  break;
+	case P_DSTIP:     type = "P_DSTIP";     break;
+	case P_DSTPORT:   type = "P_DSTPORT";   break;
 	default:          type = "UNKNOWN";     break;
 	}
 	
