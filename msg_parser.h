@@ -199,6 +199,7 @@ struct sip_msg{
 
 	struct lump* add_rm;      /* used for all the forwarded messages */
 	struct lump* repl_add_rm; /* only for localy generated replies !!!*/
+	struct lump_rpl *reply_lump;
 
 	/* str add_to_branch; */ /* whatever whoever want to append to branch comes here */
 	char add_to_branch_s[MAX_BRANCH_PARAM_LEN];

@@ -97,6 +97,9 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
       lump_chain = lump_chain->next;
    }
 
+   /**/
+
+
    p=(char *)sh_malloc(len);foo=p;
    if (!p)
    {

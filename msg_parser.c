@@ -13,6 +13,7 @@
 #include "ut.h"
 #include "error.h"
 #include "dprint.h"
+#include "data_lump_rpl.h"
 #include "mem/mem.h"
 
 #ifdef DEBUG_DMALLOC
@@ -771,7 +772,16 @@ void free_uri(struct sip_uri* u)
 	}
 }
 
-
+void free_reply_lump( struct lump_rpl *lump)
+{
+	struct lump_rpl *foo, *bar;
+	for(foo=lump;foo;)
+	{
+		bar=foo->next;
+		free_lump_rpl(foo);
+		foo = bar;
+	}
+}
 
 void free_via_param_list(struct via_param* vp)
 {
@@ -855,6 +865,7 @@ void free_sip_msg(struct sip_msg* msg)
 	if (msg->headers)     free_hdr_field_lst(msg->headers);
 	if (msg->add_rm)      free_lump_list(msg->add_rm);
 	if (msg->repl_add_rm) free_lump_list(msg->repl_add_rm);
+	if (msg->reply_lump)   free_reply_lump(msg->reply_lump);
 	pkg_free(msg->orig);
 	/* don't free anymore -- now a pointer to a static buffer */
 #	ifdef DYN_BUF

@@ -10,6 +10,7 @@
 #include "dprint.h"
 #include "config.h"
 #include "md5utils.h"
+#include "data_lump_rpl.h"
 #include <netdb.h>
 
 
@@ -550,6 +551,7 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	char                    *buf, *p;
 	unsigned int       len,foo;
 	struct hdr_field  *hdr;
+	struct lump_rpl  *lump;
 	int                       i;
 	str                        *tag_str;
 
@@ -579,6 +581,9 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 			case HDR_CSEQ:
 				len += ((hdr->body.s+hdr->body.len )-hdr->name.s )+CRLF_LEN;
 		}
+	/*lumps length*/
+	for(lump=msg->reply_lump;lump;lump=lump->next)
+		len += lump->text.len;
 	/*content length header*/
 	len +=CONTENT_LEN_LEN + CRLF_LEN;
 	/* end of message */
@@ -588,7 +593,8 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	buf = (char*) malloc( len+1 );
 	if (!buf)
 	{
-		LOG(L_ERR, "ERROR: build_res_buf_from_sip_req: out of memory\n");
+		LOG(L_ERR, "ERROR: build_res_buf_from_sip_req: out of memory "
+			" ; needs %d\n",len);
 		goto error;
 	}
 
@@ -640,7 +646,12 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 					((hdr->body.s+hdr->body.len )-hdr->name.s ),msg);
 				append_str( p, CRLF,CRLF_LEN,msg);
 		}
-
+	/*lumps*/
+	for(lump=msg->reply_lump;lump;lump=lump->next)
+	{
+		memcpy(p,lump->text.s,lump->text.len);
+		p += lump->text.len;
+	}
 	/* content length header*/
 	memcpy( p, CONTENT_LEN , CONTENT_LEN_LEN );
 	p+=CONTENT_LEN_LEN;
