@@ -29,6 +29,7 @@
  * History:
  * --------
  * 2003-02-26: checks and group moved to separate modules (janakj)
+ * 2003-03-10: New module interface (janakj)
  */
 
 #include <stdio.h>
@@ -83,43 +84,35 @@ char* sec_rand = 0;
 
 
 /*
+ * Exported functions 
+ */
+static cmd_export_t cmds[] = {
+	{"www_challenge",       www_challenge,           2, challenge_fixup},
+	{"proxy_challenge",     proxy_challenge,         2, challenge_fixup},
+	{"consume_credentials", consume_credentials,     0, 0              },
+	{"~pre_auth",           (cmd_function)pre_auth,  0, 0              },
+	{"~post_auth",          (cmd_function)post_auth, 0, 0              },
+	{0, 0, 0,0}
+};
+
+
+/*
+ * Exported parameters
+ */
+static param_export_t params[] = {
+	{"secret",       STR_PARAM, &sec_param   },
+	{"nonce_expire", INT_PARAM, &nonce_expire},
+	{0, 0, 0}
+};
+
+
+/*
  * Module interface
  */
 struct module_exports exports = {
 	"auth", 
-	(char*[]) { 
-		"www_challenge",
-		"proxy_challenge",
-		"consume_credentials",
-		"~pre_auth",
-		"~post_auth"
-	},
-	(cmd_function[]) {
-		www_challenge,
-		proxy_challenge,
-		consume_credentials,
-		(cmd_function)pre_auth,
-		(cmd_function)post_auth
-	},
-	(int[]) {2, 2, 0, 0, 0},
-	(fixup_function[]) {
-		challenge_fixup, challenge_fixup, 0, 0, 0
-	},
-	5,
-	
-	(char*[]) {
-		"secret",              /* Secret phrase used to generate nonce */
-		"nonce_expire",        /* After how many seconds nonce expires */
-	},                             /* Module parameter names */
-	(modparam_t[]) {
-		STR_PARAM,
-		INT_PARAM
-	},   /* Module parameter types */
-	(void*[]) {
-		&sec_param,
-		&nonce_expire,
-	},          /* Module parameter variable pointers */
-	2,          /* Number of module paramers */
+	cmds,
+	params,
 	mod_init,   /* module initialization function */
 	0,          /* response function */
 	destroy,    /* destroy function */
