@@ -1,3 +1,7 @@
+/*
+ * $Id:
+ */
+
 /* sipsak written by nils ohlmeier (ohlmeier@fokus.gmd.de).
 based up on a modifyed version of shoot.
 set DEBUG on compile will produce much more output, primary
