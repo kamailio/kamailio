@@ -49,7 +49,6 @@
 static struct node *list = 0;
 static xmlDtdPtr     dtd;     /* DTD file */
 static xmlValidCtxt  cvp;     /* validating context */
-static xmlSAXHandler sax_hdl; /* SAX handler */
 
 
 typedef unsigned short length_type ;
@@ -1466,7 +1465,6 @@ int encodeCPL( str *xml, str *bin, str *log)
 
 	/* parse the xml */
 	doc = xmlParseDoc( (unsigned char*)xml->s );
-	//doc = xmlSAXParseDoc( &sax_hdl, (unsigned char*)xml->s, 0/*recovery*/);
 	if (!doc) {
 		append_log( 1, ERR BAD_XML LF, ERR_LEN+BAD_XML_LEN+LF_LEN);
 		LOG(L_ERR,"ERROR:cpl:encodeCPL:CPL script not parsed successfully\n");
@@ -1520,8 +1518,8 @@ static void err_print(void *ctx, const char *msg, ...)
 	//while ( (t=va_arg(ap, char *))!=0) {
 	//	LOG(L_ERR,"   -> <%s>\n",t);
 	//}
-	printf(msg,ap);
-	append_log( 2, ERR, ERR_LEN, msg, strlen(msg) );
+	vfprintf(stderr,msg,ap);
+	//append_log( 2, ERR, ERR_LEN, msg, strlen(msg) );
 	va_end(ap);
 }
 
@@ -1530,18 +1528,14 @@ static void err_print(void *ctx, const char *msg, ...)
 /* loads and parse the dtd file; a validating context is created */
 int init_CPL_parser( char* DTD_filename )
 {
-	/* build a new context for the parser */
-	memset( &sax_hdl, 0, sizeof(xmlSAXHandler));
-	sax_hdl.error = (errorSAXFunc)err_print;
-
 	dtd = xmlParseDTD( NULL, (unsigned char*)DTD_filename);
 	if (!dtd) {
 		LOG(L_ERR,"ERROR:cpl-c:init_CPL_parser: DTD not parsed successfully\n");
 		return -1;
 	}
 	cvp.userData = (void *) stderr;
-	cvp.error    = (xmlValidityErrorFunc) fprintf;
-	cvp.warning  = (xmlValidityWarningFunc) fprintf;
+	cvp.error    = (xmlValidityErrorFunc) /*err_print*/ fprintf;
+	cvp.warning  = (xmlValidityWarningFunc) /*err_print*/ fprintf;
 
 	return 1;
 }
