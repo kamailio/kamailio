@@ -10,7 +10,7 @@ auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
 #include  source related defs
 include Makefile.sources
 
-exclude_modules=CVS mysql auth cpl jabber acc pike ext 
+exclude_modules=CVS mysql pike
 static_modules=
 static_modules_path=$(addprefix modules/, $(static_modules))
 extra_sources=$(wildcard $(addsuffix /*.c, $(static_modules_path)))
@@ -22,6 +22,8 @@ DEFS+=$(static_defs)
 modules=$(filter-out $(addprefix modules/, \
 			$(exclude_modules) $(static_modules)), \
 			$(wildcard modules/*))
+modules_names=$(patsubst modules/%/, %.so, $(modules))
+modules_full_path=$(join $(modules), $(modules_names))
 
 NAME=ser
 
@@ -82,5 +84,45 @@ dbg: ser
 
 tar: mantainer-clean 
 	tar -C .. -zcf ../$(NAME)-$(RELEASE)_src.tar.gz  $(notdir $(CURDIR)) 
+
+
+install: all mk-install-dirs install-cfg install-bin install-modules \
+	install-doc
+
+
+mk-install-dirs: $(cfg-prefix)/$(cfg-dir) $(bin-prefix)/$(bin-dir) \
+			$(modules-prefix)/$(modules-dir) $(doc-prefix)/$(doc-dir)
+
+$(cfg-prefix)/$(cfg-dir): 
+		mkdir -p $(cfg-prefix)/$(cfg-dir)
+
+$(bin-prefix)/$(bin-dir):
+		mkdir -p $(bin-prefix)/$(bin-dir)
+
+$(modules-prefix)/$(modules-dir):
+		mkdir -p $(modules-prefix)/$(modules-dir)
+
+
+$(doc-prefix)/$(doc-dir):
+		mkdir -p $(doc-prefix)/$(doc-dir)
+
+
+install-cfg:
+		$(INSTALL-CFG) ser.cfg $(cfg-prefix)/$(cfg-dir)
+
+install-bin:
+		$(INSTALL-BIN) ser $(bin-prefix)/$(bin-dir)
+
+
+install-modules:
+	-@for r in $(modules_full_path) "" ; do \
+		if [ -n "$$r" ]; then \
+			$(INSTALL-MODULES)  $$r  $(modules-prefix)/$(modules-dir) ; \
+		fi ; \
+	done 
+
+
+install-doc:
+	$(INSTALL-DOC) README $(doc-prefix)/$(doc-dir)
 
 

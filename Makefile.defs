@@ -8,11 +8,30 @@
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL = 7
-EXTRAVERSION = -5-ipv6
+EXTRAVERSION = -6-ipv6
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s)
 ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/ )
+
+prefix = /usr/local
+cfg-prefix = $(prefix)
+bin-prefix = $(prefix)
+modules-prefix= $(prefix)
+doc-prefix = $(prefix)
+
+# dirs
+cfg-dir = etc/ser/
+bin-dir = sbin/
+modules-dir = lib/ser/modules/
+doc-dir = doc/ser/
+
+INSTALL = install -b
+INSTALL-CFG = $(INSTALL) -m 644
+INSTALL-BIN = $(INSTALL) -m 755
+INSTALL-MODULES = $(INSTALL) -m 755
+INSTALL-DOC = $(INSTALL) -m 644
+
 
 # compile-time options
 #
