@@ -9,7 +9,7 @@
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL = 6
-EXTRAVERSION = -4
+EXTRAVERSION = -5
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s)
@@ -77,7 +77,7 @@ ifeq ($(ARCH), i386)
 endif
 
 ifeq ($(ARCH), sparc64)
-#	DEFS+= -DFAST_LOCK
+	DEFS+= -DFAST_LOCK
 endif
 
 
