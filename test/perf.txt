@@ -4,7 +4,7 @@
 
 date: 20.09.2002
 
-hardware: dorian 2*Athlon 1200 (ser) <=gigabit=> mobile34 2*PIII 900 (turbosip)
+hardware: dorian 2*Athlon 1200 (ser) <=gigabit=> mobile34 2*PIII 900 (stress)
 
 version: ser 0.8.7-14-gpl (i386/Linux)
 flags: STATS:Off, USE_IPV6, NO_DEBUG, SHM_MEM, SHM_MMAP, PKG_MALLOC, F_MALLOC,
