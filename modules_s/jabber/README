@@ -3,7 +3,7 @@ eXtended JABber module
 ======================
 
 This is new version of Jabber module that integrates XODE XML parser for
-parsing Jabber messages. That introduces a new module dependece: expat library.
+parsing Jabber messages. That introduces a new module dependence: expat library.
 
 Expat is a common XML library and is the fastest available for Linux/Unix, 
 the second over all, after msxml library. It is integrated in most of well known
@@ -12,8 +12,8 @@ Linux distributions.
 New features
 ------------
 - SIP to Jabber conference support
-- posibility to manage all kinds of Jabber messages (message/presence/iq)
-- aliases - posibility to set host aliases for addresses (see parameter's desc.)
+- possibility to manage all kinds of Jabber messages (message/presence/iq)
+- aliases - possibility to set host aliases for addresses (see parameter's desc.)
 - gateways detection - ability to see whether an IM gateway is up or down
 
 Features
