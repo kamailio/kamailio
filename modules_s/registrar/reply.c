@@ -29,27 +29,21 @@
  * History:
  * --------
  * 2003-01-18: buffer overflow patch committed (Jan on behalf of Maxim)
+ * 2003-01-21: Errors reported via Error-Info header field - janakj
  */
 
-
-#include "reply.h"
 #include <stdio.h>
 #include "../../parser/msg_parser.h"
 #include "../../data_lump_rpl.h"
 #include "rerrno.h"
 #include "reg_mod.h"
 #include "regtime.h"
-
+#include "reply.h"
 
 #define MAX_CONTACT_BUFFER 1024
 
 static char b[MAX_CONTACT_BUFFER];
 static int l;
-
-
-#define MSG_200 "OK"
-#define MSG_400 "Bad Request"
-#define MSG_500 "Internal Server Error"
 
 
 /*
@@ -59,7 +53,7 @@ void build_contact(ucontact_t* _c)
 {
 	char *lastgoodend;
 	int nummissed;
-
+	
 	l = 0;
 	lastgoodend = b;
 	while(_c) {
@@ -112,38 +106,91 @@ void build_contact(ucontact_t* _c)
 }
 
 
-/*
- * Convert rerrno to code and message
- */
-static inline void rerrno2msg(int* _c, char** _m)
-{
-	switch(rerrno) {
-	case R_FINE:         *_c = 200; *_m = MSG_200;                                     break;
-	case R_UL_DEL_R:   *_c = 500; *_m = MSG_500 " - Usrloc_record_delete failed";      break;
-	case R_UL_GET_R:   *_c = 500; *_m = MSG_500 " - Usrloc_record_get failed";         break;
-	case R_UL_NEW_R:   *_c = 500; *_m = MSG_500 " - Usrloc_record_new failed";         break;
-	case R_INV_CSEQ:   *_c = 400; *_m = MSG_400 " - Invalid CSeq number";              break;
-	case R_UL_INS_C:   *_c = 500; *_m = MSG_500 " - Usrloc_contact_insert failed";     break;
-	case R_UL_INS_R:   *_c = 500; *_m = MSG_500 " - Usrloc_record_insert failed ";     break;
-	case R_UL_DEL_C:   *_c = 500; *_m = MSG_500 " - Usrloc_contact_delete failed";     break;			
-	case R_UL_UPD_C:   *_c = 500; *_m = MSG_500 " - Usrloc_contact_update failed";     break;
-	case R_TO_USER:    *_c = 400; *_m = MSG_400 " - No username in To URI";            break;
-	case R_AOR_LEN:    *_c = 500; *_m = MSG_500 " - Address Of Record too long";       break;
-	case R_AOR_PARSE:  *_c = 400; *_m = MSG_400 " - Error while parsing AOR";          break;
-	case R_INV_EXP:    *_c = 400; *_m = MSG_400 " - Invalid expires param in contact"; break;
-	case R_INV_Q:      *_c = 400; *_m = MSG_400 " - Invalid q param in contact";       break;
-	case R_PARSE:      *_c = 400; *_m = MSG_400 " - Message parse error";              break;
-	case R_TO_MISS:    *_c = 400; *_m = MSG_400 " - To header not found";              break;
-	case R_CID_MISS:   *_c = 400; *_m = MSG_400 " - Call-ID header not found";         break;
-	case R_CS_MISS:    *_c = 400; *_m = MSG_400 " - CSeq header not found";            break;
-	case R_PARSE_EXP:  *_c = 400; *_m = MSG_400 " - Expires parse error";              break;
-	case R_PARSE_CONT: *_c = 400; *_m = MSG_400 " - Contact parse error";              break;
-	case R_STAR_EXP:   *_c = 400; *_m = MSG_400 " - star and expires not zero";        break;
-	case R_STAR_CONT:  *_c = 400; *_m = MSG_400 " - star and more contacts";           break;
-	case R_OOO:        *_c = 200; *_m = MSG_200 " - Out Of Order";                     break;
-	case R_RETRANS:    *_c = 200; *_m = MSG_200 " - Retransmission";                   break;
-	}
-}
+
+#define MSG_200 "OK"
+#define MSG_400 "Bad Request"
+#define MSG_500 "Internal Server Error"
+
+#define EI_R_FINE       "No problem"                                /* R_FINE */
+#define EI_R_UL_DEL_R   "usrloc_record_delete failed"               /* R_UL_DEL_R */
+#define	EI_R_UL_GET_R   "usrloc_record_get failed"                  /* R_UL_GET */
+#define	EI_R_UL_NEW_R   "usrloc_record_new failed"                  /* R_UL_NEW_R */
+#define	EI_R_INV_CSEQ   "Invalid CSeq number"                       /* R_INV_CSEQ */
+#define	EI_R_UL_INS_C   "usrloc_contact_insert failed"              /* R_UL_INS_C */
+#define	EI_R_UL_INS_R   "usrloc_record_insert failed"               /* R_UL_INS_R */
+#define	EI_R_UL_DEL_C   "usrloc_contact_delete failed"              /* R_UL_DEL_C */
+#define	EI_R_UL_UPD_C   "usrloc_contact_update failed"              /* R_UL_UPD_C */
+#define	EI_R_TO_USER    "No username in To URI"                     /* R_TO_USER */
+#define	EI_R_AOR_LEN    "Address Of Record too long"                /* R_AOR_LEN */
+#define	EI_R_AOR_PARSE  "Error while parsing AOR"                   /* R_AOR_PARSE */
+#define	EI_R_INV_EXP    "Invalid expires param in contact"          /* R_INV_EXP */
+#define	EI_R_INV_Q      "Invalid q param in contact"                /* R_INV_Q */
+#define	EI_R_PARSE      "Message parse error"                       /* R_PARSE */
+#define	EI_R_TO_MISS    "To header not found"                       /* R_TO_MISS */
+#define	EI_R_CID_MISS   "Call-ID header not found"                  /* R_CID_MISS */
+#define	EI_R_CS_MISS    "CSeq header not found"                     /* R_CS_MISS */ 
+#define	EI_R_PARSE_EXP	"Expires parse error"                       /* R_PARSE_EXP */
+#define	EI_R_PARSE_CONT	"Contact parse error"                       /* R_PARSE_CONT */
+#define	EI_R_STAR_EXP	"* used in contact and expires != 0"        /* R_STAR__EXP */
+#define	EI_R_STAR_CONT	"* used in contact and no. of contacts > 1" /* R_STAR_CONT */
+#define	EI_R_OOO	"Out of order request"                      /* R_OOO */
+#define	EI_R_RETRANS	"Retransmission"                            /* R_RETRANS */
+
+
+str error_info[] = {
+	{EI_R_FINE,       sizeof(EI_R_FINE) - 1},
+	{EI_R_UL_DEL_R,   sizeof(EI_R_UL_DEL_R) - 1},
+	{EI_R_UL_GET_R,   sizeof(EI_R_UL_GET_R) - 1},
+	{EI_R_UL_NEW_R,   sizeof(EI_R_UL_NEW_R) - 1},
+	{EI_R_INV_CSEQ,   sizeof(EI_R_INV_CSEQ) - 1},
+	{EI_R_UL_INS_C,   sizeof(EI_R_UL_INS_C) - 1},
+	{EI_R_UL_INS_R,   sizeof(EI_R_UL_INS_R) - 1},
+	{EI_R_UL_DEL_C,   sizeof(EI_R_UL_DEL_C) - 1},
+	{EI_R_UL_UPD_C,   sizeof(EI_R_UL_UPD_C) - 1},
+	{EI_R_TO_USER,    sizeof(EI_R_TO_USER) - 1},
+	{EI_R_AOR_LEN,    sizeof(EI_R_AOR_LEN) - 1},
+	{EI_R_AOR_PARSE,  sizeof(EI_R_AOR_PARSE) - 1},
+	{EI_R_INV_EXP,    sizeof(EI_R_INV_EXP) - 1},
+	{EI_R_INV_Q,      sizeof(EI_R_INV_Q) - 1},
+	{EI_R_PARSE,      sizeof(EI_R_PARSE) - 1},
+	{EI_R_TO_MISS,    sizeof(EI_R_TO_MISS) - 1},
+	{EI_R_CID_MISS,   sizeof(EI_R_CID_MISS) - 1},
+	{EI_R_CS_MISS,    sizeof(EI_R_CS_MISS) - 1},
+	{EI_R_PARSE_EXP,  sizeof(EI_R_PARSE_EXP) - 1},
+	{EI_R_PARSE_CONT, sizeof(EI_R_PARSE_CONT) - 1},
+	{EI_R_STAR_EXP,   sizeof(EI_R_STAR_EXP) - 1},
+	{EI_R_STAR_CONT,  sizeof(EI_R_STAR_CONT) - 1},
+	{EI_R_OOO,        sizeof(EI_R_OOO) - 1},
+	{EI_R_RETRANS,    sizeof(EI_R_RETRANS) - 1}
+};
+
+int codes[] = {
+	200, /* R_FINE */
+     	500, /* R_UL_DEL_R */
+	500, /* R_UL_GET */
+	500, /* R_UL_NEW_R */
+	400, /* R_INV_CSEQ */
+	500, /* R_UL_INS_C */
+	500, /* R_UL_INS_R */
+	500, /* R_UL_DEL_C */
+	500, /* R_UL_UPD_C */
+	400, /* R_TO_USER */
+	500, /* R_AOR_LEN */
+	400, /* R_AOR_PARSE */
+	400, /* R_INV_EXP */
+	400, /* R_INV_Q */
+	400, /* R_PARSE */
+	400, /* R_TO_MISS */
+	400, /* R_CID_MISS */
+	400, /* R_CS_MISS */
+	400, /* R_PARSE_EXP */
+	400, /* R_PARSE_CONT */
+	400, /* R_STAR_EXP */
+	400, /* R_STAR_CONT */
+	200, /* R_OOO */
+	200  /* R_RETRANS */
+};
+
 
 
 /*
@@ -152,9 +199,9 @@ static inline void rerrno2msg(int* _c, char** _m)
 int send_reply(struct sip_msg* _m)
 {
 	int code;
-	char* msg;
+	char* msg = MSG_200; /* makes gcc shut up */
 
-	struct lump_rpl* p;
+	struct lump_rpl* p, *ei;
 
 	if (l > 0) {
 		p = build_lump_rpl(b, l);
@@ -162,8 +209,18 @@ int send_reply(struct sip_msg* _m)
 		l = 0;
 	}
 
-	rerrno2msg(&code, &msg);
+	code = codes[rerrno];
+	switch(code) {
+	case 200: msg = MSG_200; break;
+	case 400: msg = MSG_400; break;
+	case 500: msg = MSG_500; break;
+	}
 	
+	if (code != 200) {
+		ei = build_lump_rpl(error_info[rerrno].s, error_info[rerrno].len);
+		add_lump_rpl(_m, ei);
+	}
+
 	if (sl_reply(_m, (char*)code, msg) == -1) {
 		LOG(L_ERR, "send_reply(): Error while sending %d %s\n", code, msg);
 		return -1;
