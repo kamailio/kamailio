@@ -530,7 +530,7 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	/*computes the lenght of the new response buffer*/
 	len = 0;
 	/* first line */
-	len += 3/*code*/ + 1/*space*/ + strlen(text) + CRLF_LEN/*new line*/;
+	len += SIP_VERSION_LEN + 1/*space*/ + 3/*code*/ + 1/*space*/ + strlen(text) + CRLF_LEN/*new line*/;
 	/*headers that will be copied (TO, FROM, CSEQ,CALLID,VIA)*/
 	for ( hdr=msg->headers ; hdr ; hdr=hdr->next )
 		if ( hdr->type==HDR_VIA || hdr->type==HDR_FROM ||
@@ -552,6 +552,10 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	/* filling the buffer*/
 	p=buf;
 	/* first line */
+	memcpy( p , SIP_VERSION , SIP_VERSION_LEN );
+	p += SIP_VERSION_LEN;
+	*(p++) = ' ' ;
+	/*code*/
 	for ( i=2 , foo = code  ;  i>=0  ;  i-- , foo=foo/10 )
 		*(p+i) = '0' + foo - ( foo/10 )*10;
 	p += 3;
