@@ -161,6 +161,31 @@ start_ser() {
 	fi
 }
 
+### Check
+check_run() {
+	### Checking if Jabber server is running
+	if [ `ps auxw | grep ${JABBERD} | head --lines=1 | awk '{print $11}'` = ${JABBERD} ]
+	then
+		echo "Jabber server:           [[   RUNNING   ]]"
+	else
+		echo "Jabber server:           [[ NOT RUNNING ]]"
+	fi
+	### Checking if ICQ transport is running
+	if [ `ps auxw | grep ${JICQEXT} | head --lines=1 | awk '{print $11}'` != "grep" ]
+	then
+		echo "ICQ transport:           [[   RUNNING   ]]"
+	else
+		echo "ICQ transport:           [[ NOT RUNNING ]]"
+	fi
+	### Checking if SIP router is running
+	if [ `ps auxw | grep ${HM}/${BIN} | head --lines=1 | awk '{print $11}'` = ${HM}/${BIN} ]
+	then
+		echo "SIP router:              [[   RUNNING   ]]"
+	else
+		echo "SIP router:              [[ NOT RUNNING ]]"
+	fi
+}
+
 case "$1" in
 	start)
 		start_jab
@@ -179,9 +204,12 @@ case "$1" in
 		start_jab
 		start_ser
 	;;
+	check)
+		check_run
+	;;
 	*)
 		N=$0
-		echo "Usage: $N {start|stop|restart}" >&2
+		echo "Usage: $N {start|stop|restart|check}" >&2
 		exit 1
 	;;
 esac
