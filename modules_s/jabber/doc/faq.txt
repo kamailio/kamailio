@@ -1,6 +1,8 @@
 Jabber module (SIP*IM Gateway) FAQ
 ==================================
 
+[   OBSOLETED   ]
+
 1. Description
 --------------
 
