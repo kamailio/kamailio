@@ -138,7 +138,7 @@ static int mod_init(void)
 {
 	DBG("uri - initializing\n");
 
-	if (bind_dbmod()) {
+	if (bind_dbmod(db_url)) {
 		LOG(L_ERR, "uri:mod_init(): No database module found\n");
 		return -1;
 	}

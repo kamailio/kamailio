@@ -282,7 +282,7 @@ static int mod_init( void )
 		return -1;
 
 #ifdef SQL_ACC
-	if (bind_dbmod()) {
+	if (bind_dbmod(db_url)) {
 		LOG(L_ERR, "ERROR: acc: init_child bind_db failed..."
 				"did you load a database module?\n");
 		return -1;

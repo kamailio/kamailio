@@ -155,7 +155,7 @@ static int vm_mod_init(void)
 		return -1;
 	}
 
-	if (bind_dbmod()) {
+	if (bind_dbmod(vm_db_url)) {
 		LOG(L_ERR, "ERROR: vm_mod_init: unable to bind db\n");
 		return -1;
 	}

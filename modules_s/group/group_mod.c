@@ -141,7 +141,7 @@ static int mod_init(void)
 	DBG("group module - initializing\n");
 	
 	     /* Find a database module */
-	if (bind_dbmod()) {
+	if (bind_dbmod(db_url)) {
 		LOG(L_ERR, "mod_init(): Unable to bind database module\n");
 		return -1;
 	}

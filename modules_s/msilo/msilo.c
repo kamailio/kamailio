@@ -203,7 +203,7 @@ static int mod_init(void)
 	DBG("MSILO: initializing ...\n");
 
 	/* binding to mysql module  */
-	if (bind_dbmod())
+	if (bind_dbmod(db_url))
 	{
 		DBG("MSILO: ERROR: Database module not found\n");
 		return -1;

@@ -170,6 +170,31 @@ db_res_t* new_result(void)
 
 
 /*
+ * Fill the structure with data from database
+ */
+int convert_result(db_con_t* _h, db_res_t* _r)
+{
+	if ((!_h) || (!_r)) {
+#ifdef DBT_EXTRA_DEBUG
+		LOG(L_ERR, "DBT:convert_result: Invalid parameter\n");
+#endif
+		return -1;
+	}
+	if (get_columns(_h, _r) < 0) {
+		LOG(L_ERR, "DBT:convert_result: Error while getting column names\n");
+		return -2;
+	}
+
+	if (convert_rows(_h, _r) < 0) {
+		LOG(L_ERR, "DBT:convert_result: Error while converting rows\n");
+		free_columns(_r);
+		return -3;
+	}
+	return 0;
+}
+
+
+/*
  * Retrieve result set
  */
 int get_result(db_con_t* _h, db_res_t** _r)
@@ -203,30 +228,6 @@ int get_result(db_con_t* _h, db_res_t** _r)
 		return -4;
 	}
 	
-	return 0;
-}
-
-/*
- * Fill the structure with data from database
- */
-int convert_result(db_con_t* _h, db_res_t* _r)
-{
-	if ((!_h) || (!_r)) {
-#ifdef DBT_EXTRA_DEBUG
-		LOG(L_ERR, "DBT:convert_result: Invalid parameter\n");
-#endif
-		return -1;
-	}
-	if (get_columns(_h, _r) < 0) {
-		LOG(L_ERR, "DBT:convert_result: Error while getting column names\n");
-		return -2;
-	}
-
-	if (convert_rows(_h, _r) < 0) {
-		LOG(L_ERR, "DBT:convert_result: Error while converting rows\n");
-		free_columns(_r);
-		return -3;
-	}
 	return 0;
 }
 
@@ -410,6 +411,12 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 				VAL_STR(&(ROW_VALUES(_r)[i])).len =
 						DBT_CON_ROW(_h)->fields[i].val.str_val.len;
 				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_STR;
+			break;
+
+		        case DB_BITMAP:
+				VAL_BITMAP(&(ROW_VALUES(_r)[i])) =
+					DBT_CON_ROW(_h)->fields[i].val.bitmap_val;
+				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_BITMAP;
 			break;
 		}
 	}

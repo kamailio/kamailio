@@ -40,6 +40,8 @@
 
 #include "../../db/db_op.h"
 #include "../../db/db_res.h"
+#include "../../db/db_con.h"
+#include "../../db/db_row.h"
 
 int free_columns(db_res_t* _r);
 
@@ -77,5 +79,8 @@ int convert_rows(db_con_t* _h, db_res_t* _r);
  * Convert a row from result into db API representation
  */
 int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r);
+
+
+int use_table(db_con_t* _h, const char* _t);
 
 #endif

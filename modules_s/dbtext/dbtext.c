@@ -42,6 +42,7 @@
 #include "../../sr_module.h"
 #include "dbtext.h"
 #include "dbt_lib.h"
+#include "dbt_api.h"
 
 MODULE_VERSION
 

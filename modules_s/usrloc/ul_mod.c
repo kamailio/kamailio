@@ -166,7 +166,7 @@ static int mod_init(void)
 
 	     /* Shall we use database ? */
 	if (db_mode != NO_DB) { /* Yes */
-		if (bind_dbmod() < 0) { /* Find database module */
+		if (bind_dbmod(db_url) < 0) { /* Find database module */
 			LOG(L_ERR, "mod_init(): Can't bind database module\n");
 			return -1;
 		}

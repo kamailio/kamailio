@@ -112,7 +112,7 @@ static int mod_init(void)
 	DBG("domain - initializing\n");
 	
 	/* Check if database module has been loaded */
-	if (bind_dbmod()) {
+	if (bind_dbmod(db_url)) {
 		LOG(L_ERR, "domain:mod_init(): Unable to bind database module\n");
 		return -1;
 	}
