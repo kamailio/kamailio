@@ -331,7 +331,7 @@ int im_send_message(str *to, str *from, str *contact, str *msg)
 		"To: <%.*s>%s"
 		"Call-ID: d2d4%04d-e803-%08X-b036-%X@%.*s%s"
 		"CSeq: %d MESSAGE%s"
-		"Contact: %.*s%s"
+		"%s%.*s%s"
 		"Content-Type: text/plain; charset=UTF-8%s"
 		"Content-Length: %d%s"
 		"%s"
@@ -343,7 +343,7 @@ int im_send_message(str *to, str *from, str *contact, str *msg)
 		pids?pids[process_no]:0,rand(),call_id++,
 			sock_info[0].address_str.len,sock_info[0].address_str.s,CRLF,
 		1/*cseq_nr++*/,CRLF,
-		contact->len,contact->s,CRLF,
+		contact->s?"Contact: ":"",contact->len,contact->s,contact->s?CRLF:"",
 		CRLF,
 		msg->len,CRLF,
 		CRLF,

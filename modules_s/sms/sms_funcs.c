@@ -6,6 +6,7 @@
 #include "../../globals.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
+#include "../../data_lump_rpl.h"
 #include "../im/im_funcs.h"
 #include "sms_funcs.h"
 #include "libsms_modem.h"
@@ -21,6 +22,7 @@ int nr_of_networks;
 int nr_of_modems;
 int max_sms_parts;
 int *queued_msgs;
+int use_contact;
 
 
 
@@ -57,6 +59,46 @@ int *queued_msgs;
 
 
 
+int add_contact(struct sip_msg* msg , str* user)
+{
+	struct lump_rpl *lump;
+	char *buf, *p;
+	int len;
+	int i;
+
+	len = 9 /*"Contact: "*/ + user->len/*user*/ + 1 /*"@"*/
+		+ domain.len/*host*/ + 6/*"<sip:>"*/ + CRLF_LEN;
+
+	buf = pkg_malloc( len );
+	if(!buf) {
+		LOG(L_ERR,"ERROR:sms_add_contact: out of memory! \n");
+		return -1;
+	}
+
+	p = buf;
+	append_str( p, "Contact: " , 9);
+	append_str( p, "<sip:" , 5);
+	append_str( p, user->s, user->len);
+	*(p++) = '@';
+	append_str( p, domain.s, domain.len);
+	*(p++) = '>';
+	append_str( p, CRLF, CRLF_LEN);
+
+	lump = build_lump_rpl( buf , len );
+	if(!buf) {
+		LOG(L_ERR,"ERROR:sms_add_contact: unable to build lump_rpl! \n");
+		pkg_free( buf );
+		return -1;
+	}
+	add_lump_rpl( msg , lump );
+
+	pkg_free(buf);
+	return 1;
+}
+
+
+
+
 int push_on_network(struct sip_msg *msg, int net)
 {
 	str    body;
@@ -66,10 +108,6 @@ int push_on_network(struct sip_msg *msg, int net)
 	struct to_param *foo,*bar;
 	char   *p;
 	int    flag;
-
-	if (*queued_msgs>MAX_QUEUED_MESSAGES)
-		return -1;
-	(*queued_msgs)++;
 
 	if ( im_extract_body(msg,&body)==-1 )
 	{
@@ -88,16 +126,19 @@ int push_on_network(struct sip_msg *msg, int net)
 	   we go for "to" header
 	*/
 	flag = 0;
+	DBG("DEBUG:sms_push_on_net: tring to get user from new_uri\n");
 	if ( !msg->new_uri.s || parse_uri( msg->new_uri.s,msg->new_uri.len,&uri)
 	|| (flag=1)!=1 || !uri.user.len )
 	{
 		if (flag) free_uri(&uri);
 		flag = 0;
+		DBG("DEBUG:sms_push_on_net: tring to get user from R_uri\n");
 		if ( parse_uri( msg->first_line.u.request.uri.s,
 		msg->first_line.u.request.uri.len ,&uri)||(flag=1)!=1||!uri.user.len )
 		{
 			if (flag) free_uri(&uri);
 			flag = 0;
+			DBG("DEBUG:sms_push_on_net: tring to get user from To\n");
 			if (!msg->to || !get_to(msg) ||
 			parse_uri( get_to(msg)->uri.s, get_to(msg)->uri.len, &uri)
 			|| (flag=1)!=1 ||!uri.user.len)
@@ -122,6 +163,11 @@ int push_on_network(struct sip_msg *msg, int net)
 	for(foo=from_parsed.param_lst ; foo ; foo=bar){
 		bar = foo->next;
 		pkg_free(foo);
+	}
+
+	if (use_contact && add_contact(msg,&(uri.user))==-1) {
+		LOG(L_ERR,"ERROR:sms_push_on_net:can't build contact for reply\n");
+		goto error;
 	}
 
 	/* copy "from" into sms struct */
@@ -158,11 +204,16 @@ int push_on_network(struct sip_msg *msg, int net)
 	sms_messg.udh = 1;
 	sms_messg.cs_convert = 1;
 
+	if (*queued_msgs>MAX_QUEUED_MESSAGES)
+		goto error;
+	(*queued_msgs)++;
+
 	if (write(net_pipes_in[net], &sms_messg, sizeof(sms_messg))!=
 	sizeof(sms_messg) )
 	{
 		LOG(L_ERR,"ERROR:sms_push_on_net: error when writting to pipe\n");
 		shm_free(sms_messg.text);
+		(*queued_msgs)--;
 		goto error;
 	}
 
@@ -171,7 +222,6 @@ int push_on_network(struct sip_msg *msg, int net)
 error:
 	free_uri(&uri);
 error1:
-	(*queued_msgs)--;
 	return -1;
 }
 
@@ -187,6 +237,7 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 	char *p;
 
 	from.s = contact.s = 0;
+	from.len = contact.len = 0;
 
 	/* From header */
 	from.len = 5 /*"<sip:"*/ +  from_user->len/*user*/ + 1/*"@"*/
@@ -203,17 +254,19 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 	append_str(p,SMS_FROM_TAG,SMS_FROM_TAG_LEN);
 
 	/* Contact header */
-	contact.len = 5 /*"<sip:"*/ + from_user->len/*user*/ + 1/*"@"*/
-		+ domain.len/*host*/ + 1 /*">"*/;
-	contact.s = (char*)pkg_malloc(contact.len);
-	if (!contact.s)
-		goto error;
-	p=contact.s;
-	append_str(p,"<sip:",5);
-	append_str(p,from_user->s,from_user->len);
-	*(p++)='@';
-	append_str(p,domain.s,domain.len);
-	*(p++)='>';
+	if (use_contact) {
+		contact.len = 5 /*"<sip:"*/ + from_user->len/*user*/ + 1/*"@"*/
+			+ domain.len/*host*/ + 1 /*">"*/;
+		contact.s = (char*)pkg_malloc(contact.len);
+		if (!contact.s)
+			goto error;
+		p=contact.s;
+		append_str(p,"<sip:",5);
+		append_str(p,from_user->s,from_user->len);
+		*(p++)='@';
+		append_str(p,domain.s,domain.len);
+		*(p++)='>';
+	}
 
 	foo = im_send_message(to, &from, &contact, body);
 	if (from.s) pkg_free(from.s);

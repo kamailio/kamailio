@@ -45,6 +45,7 @@ int  default_net   = 0;
 int  max_sms_parts = MAX_SMS_PARTS;
 str  domain;
 int  *queued_msgs  = 0;
+int  use_contact   = 0;
 
 
 struct module_exports exports= {
@@ -73,7 +74,8 @@ struct module_exports exports= {
 		"links",
 		"default_net",
 		"max_sms_parts",
-		"domain"
+		"domain",
+		"use_contact"
 	},
 	(modparam_t[]) {   /* Module parameter types */
 		STR_PARAM,
@@ -81,7 +83,8 @@ struct module_exports exports= {
 		STR_PARAM,
 		STR_PARAM,
 		INT_PARAM,
-		STR_PARAM
+		STR_PARAM,
+		INT_PARAM
 	},
 	(void*[]) {   /* Module parameter variable pointers */
 		&networks_config,
@@ -89,9 +92,10 @@ struct module_exports exports= {
 		&links_config,
 		&default_net_str,
 		&max_sms_parts,
-		&domain_str
+		&domain_str,
+		&use_contact
 	},
-	6,      /* Number of module paramers */
+	7,      /* Number of module paramers */
 
 	sms_init,   /* module initialization function */
 	(response_function) 0,
