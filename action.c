@@ -337,11 +337,18 @@ int do_action(struct action* a, struct sip_msg* msg)
 						LOG(L_WARN,"WARNING: do_action:"
 									"error in expression\n");
 					}
+#if 0
+					/*andrei: totally wrong, it will bail out at the first 
+					 * false expression and if w/o else!!!!!!*/
+
 					/* jku ret=1;  default is continue */
 					ret=( v!=0); /* stop if things went wrong,
 								  continue if FALSE (<0) or
 								  TRUE (>0) returned */
 					/* jku: if (v==1){ */
+#endif
+
+					ret=1;  /*default is continue */
 					if (v>0) {
 						if ((a->p2_type==ACTIONS_ST)&&a->p2.data){
 							ret=run_actions((struct action*)a->p2.data, msg);
