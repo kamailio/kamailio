@@ -82,7 +82,7 @@ static struct unixsock_cmd* cmd_list = 0;
 static char reply_buf[UNIXSOCK_BUF_SIZE];
 static str reply_pos;
 static struct sockaddr_un reply_addr;
-static int reply_addr_len;
+static unsigned int reply_addr_len;
 
 static time_t up_since;
 static char up_since_ctime[MAX_CTIME_LEN];

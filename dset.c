@@ -186,7 +186,8 @@ int append_branch(struct sip_msg* msg, char* uri, int uri_len, char* dst_uri, in
  */
 char* print_dset(struct sip_msg* msg, int* len) 
 {
-	int cnt, i, qlen;
+	int cnt, i;
+	unsigned int qlen;
 	qvalue_t q;
 	str uri;
 	char* p, *qbuf;

@@ -42,7 +42,7 @@ extern int tm_unix_tx_timeout;
 
 int fixup_t_write( void** param, int param_no);
 
-int parse_tw_append( modparam_t type, param_func_param_t param_val);
+int parse_tw_append( modparam_t type, void* val);
 
 int init_twrite_lines();
 

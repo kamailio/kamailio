@@ -115,12 +115,12 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 /*
  * Get the FR_{INV}_TIMER from corresponding AVP
  */
-int avp2timer(int* timer, int_str param);
+int avp2timer(unsigned int* timer, int_str param);
 
 
 static void inline _set_fr_retr( struct retr_buf *rb, int retr )
 {
-	int timer;
+	unsigned int timer;
 
 	if (retr) {
 		rb->retr_list=RT_T1_TO_1;

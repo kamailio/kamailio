@@ -1208,7 +1208,7 @@ int reply_received( struct sip_msg  *p_msg )
 	struct cell *t;
 	str next_hop;
 	struct usr_avp **backup_list;
-	int timer;
+	unsigned int timer;
 
 	/* make sure we know the associated transaction ... */
 	if (t_check( p_msg  , &branch )==-1)

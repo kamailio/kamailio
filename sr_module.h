@@ -36,6 +36,8 @@
  *  2004-03-12  extra flag USE_FUNC_PARAM added to modparam type -
  *              instead of copying the param value, a func is called (bogdan)
  *  2004-09-19  switched to version.h for the module versions checks (andrei)
+ *  2004-12-03  changed param_func_t to (modparam_t, void*), killed
+ *               param_func_param_t   (andrei)
  */
 
 
@@ -55,19 +57,14 @@ typedef int (*init_function)(void);
 typedef int (*child_init_function)(int rank);
 
 
-#define STR_PARAM        (1<<0)  /* String parameter type */
-#define INT_PARAM        (1<<1)  /* Integer parameter type */
-#define USE_FUNC_PARAM   (1<<(8*sizeof(int)-1))
+#define STR_PARAM        (1U<<0)  /* String parameter type */
+#define INT_PARAM        (1U<<1)  /* Integer parameter type */
+#define USE_FUNC_PARAM   (1U<<(8*sizeof(int)-1))
 #define PARAM_TYPE_MASK(_x)   ((_x)&(~USE_FUNC_PARAM))
 
-typedef int modparam_t;
+typedef unsigned int modparam_t;
 
-typedef union {
-	int integer;
-	char *string;
-} param_func_param_t;
-
-typedef int (*param_func_t)( modparam_t type, param_func_param_t param_val);
+typedef int (*param_func_t)( modparam_t type, void* val);
 
 #define REQUEST_ROUTE 1  /* Function can be used in request route blocks */
 #define FAILURE_ROUTE 2  /* Function can be used in reply route blocks */

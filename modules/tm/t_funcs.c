@@ -347,7 +347,7 @@ void init_avp_params(void)
 /*
  * Get the FR_{INV}_TIMER from corresponding AVP
  */
-int avp2timer(int* timer, int_str param)
+int avp2timer(unsigned int* timer, int_str param)
 {
 	struct usr_avp *avp;
 	int_str val_istr;

@@ -757,7 +757,7 @@ static int parse_phostport(char* s, char** host, int* hlen, int* port,
 		return 0;
 	}
 	if (second){ /* 2 ':' found => check if valid */
-		if (parse_proto(s, first-s, proto)<0) goto error_proto;
+		if (parse_proto((unsigned char*)s, first-s, proto)<0) goto error_proto;
 		*port=strtol(second+1, &tmp, 10);
 		if ((tmp==0)||(*tmp)||(tmp==second+1)) goto error_port;
 		*host=first+1;
@@ -768,7 +768,7 @@ static int parse_phostport(char* s, char** host, int* hlen, int* port,
 	*port=strtol(first+1, &tmp, 10);
 	if ((tmp==0)||(*tmp)||(tmp==first+1)){
 		/* invalid port => it's proto:host */
-		if (parse_proto(s, first-s, proto)<0) goto error_proto;
+		if (parse_proto((unsigned char*)s, first-s, proto)<0) goto error_proto;
 		*port=0;
 		*host=first+1;
 		*hlen=(int)(p-*host);

@@ -101,7 +101,7 @@ error:
 
 
 
-inline void free_lump_rpl(struct lump_rpl* lump)
+void free_lump_rpl(struct lump_rpl* lump)
 {
 	if (lump) {
 		if (!((lump->flags)&LUMP_RPL_NOFREE) && ((lump->flags)&LUMP_RPL_NODUP)

@@ -383,9 +383,9 @@ static inline int get_avps( FILE *fifo , db_key_t *keys, db_op_t *ops,
 		/* we have a new avp */
 		if (*nr<max_nr) {
 			/* parse the line key|op|val */
-			c = line.s;
+			c = (unsigned char*)line.s;
 			/* parse the key name */
-			for( key.s=c ; *c && (isalnum((int)*c)||*c=='_') ; c++ );
+			for( key.s=(char*)c ; *c && (isalnum((int)*c)||*c=='_') ; c++ );
 			if (!*c) goto parse_error;
 			key.len = (char*)c-key.s;
 			if (key.len==0) goto parse_error;
@@ -393,7 +393,7 @@ static inline int get_avps( FILE *fifo , db_key_t *keys, db_op_t *ops,
 			for( sp_found=0 ; *c && isspace((int)*c) ; c++,sp_found=1 );
 			if (!*c) goto parse_error;
 			/* parse the operator */
-			op.s = c;
+			op.s = (char*)c;
 			switch (*c) {
 				case '<':
 				case '>':
@@ -417,24 +417,24 @@ static inline int get_avps( FILE *fifo , db_key_t *keys, db_op_t *ops,
 			for( ; *c && isspace((int)*c) ; c++ );
 			if (!*c) goto parse_error;
 			/* get value */
-			val.s = c;
+			val.s = (char*)c;
 			val.len = line.len - ((char*)c-line.s);
 			if (val.len==0) goto parse_error;
 			if (parse_db_value( &val, &vals[*nr], &p_val)!=0)
 				goto error;
 			/* duplicate the avp -> make all null terminated */
-			c = (char*)pkg_malloc(key.len+op.len+2+(p_val?p_val->len+1:0));
+			c = pkg_malloc(key.len+op.len+2+(p_val?p_val->len+1:0));
 			if (c==0) {
 				semidouble_log("no more pkg memory");
 				goto error;
 			}
 			/*copy the key */
-			keys[*nr] = c;
+			keys[*nr] = (char*)c;
 			memcpy( c, key.s, key.len);
 			c[key.len] = 0;
 			c += key.len + 1;
 			/*copy the op */
-			ops[*nr] = c;
+			ops[*nr] = (char*)c;
 			memcpy( c, op.s, op.len);
 			c[op.len] = 0;
 			c += op.len + 1;
@@ -442,7 +442,7 @@ static inline int get_avps( FILE *fifo , db_key_t *keys, db_op_t *ops,
 			if (p_val) {
 				memcpy( c, p_val->s, p_val->len);
 				c[p_val->len] = 0;
-				p_val->s = c;
+				p_val->s = (char*)c;
 			}
 			/* done */
 			(*nr)++;

@@ -115,8 +115,7 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 						name, t->exports->name, t->path);
 
 					if (param->type&USE_FUNC_PARAM) {
-						n = ((param_func_t)(param->param_pointer))
-							(type, (param_func_param_t)(char*)val );
+						n = ((param_func_t)(param->param_pointer))(type, val );
 						if (n<0)
 							return -4;
 					} else {

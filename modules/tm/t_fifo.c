@@ -182,7 +182,7 @@ static void print_tw_append( struct tw_append *append)
  * tw_append = name:element[;element]
  * element   = [title=]value 
  * value     = avp[avp_spec] | hdr[hdr_name] | msg[body] */
-int parse_tw_append( modparam_t type, param_func_param_t param_val)
+int parse_tw_append( modparam_t type, void* val)
 {
 	struct hdr_field hdr;
 	struct hdr_avp *last;
@@ -194,9 +194,9 @@ int parse_tw_append( modparam_t type, param_func_param_t param_val)
 	str foo;
 	int n;
 	
-	if (param_val.string==0 || param_val.string[0]==0)
+	if (val==0 || ((char*)val)[0]==0)
 		return 0;
-	s = param_val.string;
+	s = (char*)val;
 
 	/* start parsing - first the name */
 	while( *s && isspace((int)*s) )  s++;
@@ -405,11 +405,11 @@ int parse_tw_append( modparam_t type, param_func_param_t param_val)
 
 	print_tw_append( app );
 	/* free the old string */
-	pkg_free( param_val.string );
+	pkg_free(val);
 	return 0;
 parse_error:
 	LOG(L_ERR,"ERROR:tm:parse_tw_append: parse error in <%s> around "
-		"position %ld\n", param_val.string, (long)(s-param_val.string));
+		"position %ld\n", (char*)val, (long)(s-(char*)val));
 error:
 	return -1;
 }
@@ -580,6 +580,7 @@ static inline char* append2buf( char *buf, int len, struct sip_msg *req,
 	struct hdr_field *hdr;
 	struct usr_avp   *avp;
 	int_str          avp_val;
+	int_str          avp_name;
 	char  *end;
 	str   foo;
 	int   msg_parsed;
@@ -591,11 +592,11 @@ static inline char* append2buf( char *buf, int len, struct sip_msg *req,
 		if (ha->type==ELEM_IS_AVP) {
 			/* search for the AVP */
 			if (ha->sval.s) {
-				avp = search_first_avp( AVP_NAME_STR, (int_str)&ha->sval,
-					&avp_val);
+				avp_name.s=&ha->sval;
+				avp = search_first_avp( AVP_NAME_STR, avp_name, &avp_val);
 			} else {
-				avp = search_first_avp( 0, (int_str)ha->ival,
-					&avp_val);
+				avp_name.n=ha->ival;
+				avp = search_first_avp( 0, avp_name, &avp_val);
 			}
 			if (avp) {
 				if (avp->flags&AVP_VAL_STR) {
