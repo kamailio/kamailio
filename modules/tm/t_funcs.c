@@ -340,7 +340,7 @@ void init_avp_params(void)
 	fr_inv_timer_avp.s = &fr_inv_timer_param;
 
 	fr_timer_param.len = strlen(fr_timer_param.s);
-	fr_inv_timer_param.len = strlen(fr_timer_param.s);
+	fr_inv_timer_param.len = strlen(fr_inv_timer_param.s);
 }
 
 
