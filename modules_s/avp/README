@@ -1,0 +1,9 @@
+AVP modules reads AVP values for usr_preferences table in SIP-DB.
+
+use is as follows:
+   avp_load("caller_uuid");
+
+The parameter is either called_uuid or callee_uuid. It identifies
+AVP which stores user's UUID. Then database is dipped with this
+UUID.
+
