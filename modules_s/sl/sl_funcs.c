@@ -120,6 +120,7 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	}
 
 	send_sock=get_send_socket(&to);
+	DBG("cucu bau\n");
 	if (send_sock!=0)
 	{
 		udp_send( send_sock,
@@ -141,11 +142,11 @@ int sl_reply_error(struct sip_msg *msg )
 {
 	char err_buf[MAX_REASON_LEN];
 	int sip_error;
-	int ret;
 
 	err2reason_phrase( prev_ser_error, &sip_error, 
 		err_buf, sizeof(err_buf), "SL");
 	sl_send_reply( msg, sip_error, err_buf );
+	return 1;
 }
 
 
