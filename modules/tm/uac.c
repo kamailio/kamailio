@@ -113,9 +113,6 @@ int t_uac( str *msg_type, str *dst,
 	struct retr_buf *request;
 	str dummy_from;
 
-	/* be optimist -- assume success for return value */
-	ret=1;
-
 	proxy=uri2proxy( dst );
 	if (proxy==0) {
 		ser_error=ret=E_BAD_ADDRESS;
@@ -149,13 +146,17 @@ int t_uac( str *msg_type, str *dst,
 	new_cell->is_invite=msg_type->len==INVITE_LEN 
 		&& memcmp(msg_type->s, INVITE, INVITE_LEN)==0;
 	new_cell->local=1;
-	LOCK_HASH(new_cell->hash_index);
-	insert_into_hash_table_unsafe(  new_cell );
-	UNLOCK_HASH(new_cell->hash_index);
+	new_cell->kr=REQ_FWDED;
+
 
 	request=&new_cell->uac[branch].request;
 	request->to=to;
 	request->send_sock=send_sock;
+
+	/* need to put in table to calculate label which is needed for printing */
+	LOCK_HASH(new_cell->hash_index);
+	insert_into_hash_table_unsafe(  new_cell );
+	UNLOCK_HASH(new_cell->hash_index);
 
 	if (from) dummy_from=*from; else { dummy_from.s=0; dummy_from.len=0; }
 	buf=build_uac_request(  *msg_type, *dst, dummy_from, *headers, *body, branch,
@@ -169,9 +170,11 @@ int t_uac( str *msg_type, str *dst,
     }      
 	new_cell->method.s=buf;new_cell->method.len=msg_type->len;
 
+
 	request->buffer = buf;
 	request->buffer_len = req_len;
 	new_cell->nr_of_outgoings++;
+
 
 	proxy->tx++;
 	proxy->tx_bytes+=req_len;
@@ -181,22 +184,17 @@ int t_uac( str *msg_type, str *dst,
 			dst->len, dst->s );
 		proxy->errors++;
 		proxy->ok=0;
-		ser_error=ret=E_SEND;
-		goto error01;
 	}
-	new_cell->kr=REQ_FWDED;
 	start_retr( request );
 
 	/* success */
-	goto done;
+	return 1;
 
-error01: 
-	/* this is the safest way (though not the cheapest) to
-	   make a transaction disappear; we may appreciate the
-	   safety later when we add more complexity
-	*/
-	cleanup_uac_timers(new_cell);
-	put_on_wait(new_cell);
+error01:
+	LOCK_HASH(new_cell->hash_index);
+	remove_from_hash_table_unsafe( new_cell );
+	UNLOCK_HASH(new_cell->hash_index);
+	free_cell(new_cell);
 error00:
 	free_proxy( proxy );
 	free( proxy );
@@ -241,64 +239,70 @@ int fifo_uac( FILE *stream, char *response_file )
 	str sm, sh, sb, sd;
 	char *shmem_file;
 	int fn_len;
+	int ret;
+	int sip_error;
+	char err_buf[MAX_REASON_LEN];
 
 	sm.s=method; sh.s=header; sb.s=body; sd.s=dst;
-	while(1) {
-		if (!read_line(method, MAX_METHOD, stream,&sm.len)||sm.len==0) {
-			/* line breaking must have failed -- consume the rest
-			   and proceed to a new request
-			*/
-			LOG(L_ERR, "ERROR: fifo_uac: method expected\n");
-			fifo_reply(response_file, 
-				"ERROR: fifo_uac: method expected");
-			return -1;
-		}
-		DBG("DEBUG: fifo_uac: method: %.*s\n", sm.len, method );
-		if (!read_line(dst, MAX_DST, stream, &sd.len)||sd.len==0) {
-			fifo_reply(response_file, 
-				"ERROR: fifo_uac: destination expected\n");
-			LOG(L_ERR, "ERROR: fifo_uac: destination expected\n");
-			return -1;
-		}
-		DBG("DEBUG: fifo_uac:  dst: %.*s\n", sd.len, dst );
-		/* now read header fields line by line */
-		if (!read_line_set(header, MAX_HEADER, stream, &sh.len)) {
-			fifo_reply(response_file, 
-				"ERROR: fifo_uac: HFs expected\n");
-			LOG(L_ERR, "ERROR: fifo_uac: header fields expected\n");
-			return -1;
-		}
-		DBG("DEBUG: fifo_uac: header: %.*s\n", sh.len, header );
-		/* and eventually body */
-		if (!read_body(body, MAX_BODY, stream, &sb.len)) {
-			fifo_reply(response_file, 
-				"ERROR: fifo_uac: body expected\n");
-			LOG(L_ERR, "ERROR: fifo_uac: body expected\n");
-			return -1;
-		}
-		DBG("DEBUG: fifo_uac: body: %.*s\n", sb.len, body );
-		DBG("DEBUG: fifo_uac: EoL -- proceeding to transaction creation\n");
-		/* we got it all, initiate transaction now! */
-		if (response_file) {
-			fn_len=strlen(response_file)+1;
-			shmem_file=shm_malloc(fn_len);
-			if (shmem_file==0) {
-				LOG(L_ERR, "ERROR: fifo_uac: no shmem\n");
-				return -1;
-			}
-			memcpy(shmem_file, response_file, fn_len );
-		} else {
-			shmem_file=0;
-		}
-		/* HACK: there is yet a shortcoming -- if t_uac fails, callback
-		   will not be triggered and no feedback will be printed
-		   to shmem_file
+	if (!read_line(method, MAX_METHOD, stream,&sm.len)||sm.len==0) {
+		/* line breaking must have failed -- consume the rest
+		   and proceed to a new request
 		*/
-		t_uac(&sm,&sd,&sh,&sb, 0 /* default from */,
-			fifo_callback,shmem_file,0 /* no dialog */);
-		return 1;
-
+		LOG(L_ERR, "ERROR: fifo_uac: method expected\n");
+		fifo_reply(response_file, 
+			"ERROR: fifo_uac: method expected");
+		return -1;
 	}
+	DBG("DEBUG: fifo_uac: method: %.*s\n", sm.len, method );
+	if (!read_line(dst, MAX_DST, stream, &sd.len)||sd.len==0) {
+		fifo_reply(response_file, 
+			"ERROR: fifo_uac: destination expected\n");
+		LOG(L_ERR, "ERROR: fifo_uac: destination expected\n");
+		return -1;
+	}
+	DBG("DEBUG: fifo_uac:  dst: %.*s\n", sd.len, dst );
+	/* now read header fields line by line */
+	if (!read_line_set(header, MAX_HEADER, stream, &sh.len)) {
+		fifo_reply(response_file, 
+			"ERROR: fifo_uac: HFs expected\n");
+		LOG(L_ERR, "ERROR: fifo_uac: header fields expected\n");
+		return -1;
+	}
+	DBG("DEBUG: fifo_uac: header: %.*s\n", sh.len, header );
+	/* and eventually body */
+	if (!read_body(body, MAX_BODY, stream, &sb.len)) {
+		fifo_reply(response_file, 
+			"ERROR: fifo_uac: body expected\n");
+		LOG(L_ERR, "ERROR: fifo_uac: body expected\n");
+		return -1;
+	}
+	DBG("DEBUG: fifo_uac: body: %.*s\n", sb.len, body );
+	DBG("DEBUG: fifo_uac: EoL -- proceeding to transaction creation\n");
+	/* we got it all, initiate transaction now! */
+	if (response_file) {
+		fn_len=strlen(response_file)+1;
+		shmem_file=shm_malloc(fn_len);
+		if (shmem_file==0) {
+			LOG(L_ERR, "ERROR: fifo_uac: no shmem\n");
+			return -1;
+		}
+		memcpy(shmem_file, response_file, fn_len );
+	} else {
+		shmem_file=0;
+	}
+	ret=t_uac(&sm,&sd,&sh,&sb, 0 /* default from */,
+		fifo_callback,shmem_file,0 /* no dialog */);
+	if (ret>0) {
+		if (err2reason_phrase(ret, &sip_error, err_buf,
+				sizeof(err_buf), "FIFO/UAC" ) > 0 ) 
+		{
+			fifo_reply(response_file, "FIFO/UAC error: %d\n",
+				ret );
+		} else {
+			fifo_reply(response_file, err_buf );
+		}
+	}
+	return 1;
 }
 
 /* syntax:
@@ -324,69 +328,83 @@ int fifo_uac_from( FILE *stream, char *response_file )
 	str sm, sh, sb, sd, sf;
 	char *shmem_file;
 	int fn_len;
+	int ret;
+	int sip_error;
+	char err_buf[MAX_REASON_LEN];
+	int err_ret;
 
 	sm.s=method; sh.s=header; sb.s=body; sd.s=dst;sf.s=from;
-	while(1) {
-		if (!read_line(method, MAX_METHOD, stream,&sm.len)||sm.len==0) {
-			/* line breaking must have failed -- consume the rest
-			   and proceed to a new request
-			*/
-			LOG(L_ERR, "ERROR: fifo_uac: method expected\n");
-			fifo_reply(response_file, 
-				"ERROR: fifo_uac: method expected");
-			return -1;
-		}
-		DBG("DEBUG: fifo_uac: method: %.*s\n", sm.len, method );
-		if (!read_line(from, MAX_FROM, stream, &sf.len)) {
-			fifo_reply(response_file, 
-				"ERROR: fifo_uac: from expected\n");
-			LOG(L_ERR, "ERROR: fifo_uac: from expected\n");
-			return -1;
-		}
-		DBG("DEBUG: fifo_uac:  from: %.*s\n", sf.len, from);
-		if (!read_line(dst, MAX_DST, stream, &sd.len)||sd.len==0) {
-			fifo_reply(response_file, 
-				"ERROR: fifo_uac: destination expected\n");
-			LOG(L_ERR, "ERROR: fifo_uac: destination expected\n");
-			return -1;
-		}
-		DBG("DEBUG: fifo_uac:  dst: %.*s\n", sd.len, dst );
-		/* now read header fields line by line */
-		if (!read_line_set(header, MAX_HEADER, stream, &sh.len)) {
-			fifo_reply(response_file, 
-				"ERROR: fifo_uac: HFs expected\n");
-			LOG(L_ERR, "ERROR: fifo_uac: header fields expected\n");
-			return -1;
-		}
-		DBG("DEBUG: fifo_uac: header: %.*s\n", sh.len, header );
-		/* and eventually body */
-		if (!read_body(body, MAX_BODY, stream, &sb.len)) {
-			fifo_reply(response_file, 
-				"ERROR: fifo_uac: body expected\n");
-			LOG(L_ERR, "ERROR: fifo_uac: body expected\n");
-			return -1;
-		}
-		DBG("DEBUG: fifo_uac: body: %.*s\n", sb.len, body );
-		DBG("DEBUG: fifo_uac: EoL -- proceeding to transaction creation\n");
-		/* we got it all, initiate transaction now! */
-		if (response_file) {
-			fn_len=strlen(response_file)+1;
-			shmem_file=shm_malloc(fn_len);
-			if (shmem_file==0) {
-				LOG(L_ERR, "ERROR: fifo_uac: no shmem\n");
-				return -1;
-			}
-			memcpy(shmem_file, response_file, fn_len );
-		} else {
-			shmem_file=0;
-		}
-		/* HACK: there is yet a shortcoming -- if t_uac fails, callback
-		   will not be triggered and no feedback will be printed
-		   to shmem_file
-		*/
-		t_uac(&sm,&sd,&sh,&sb, sf.len==0 ? 0 : &sf /* default from */,
-			fifo_callback,shmem_file,0 /* no dialog */);
-		return 1;
 
+	if (!read_line(method, MAX_METHOD, stream,&sm.len)||sm.len==0) {
+		/* line breaking must have failed -- consume the rest
+		   and proceed to a new request
+		*/
+		LOG(L_ERR, "ERROR: fifo_uac: method expected\n");
+		fifo_reply(response_file, 
+			"ERROR: fifo_uac: method expected");
+		return -1;
 	}
+	DBG("DEBUG: fifo_uac: method: %.*s\n", sm.len, method );
+	if (!read_line(from, MAX_FROM, stream, &sf.len)) {
+		fifo_reply(response_file, 
+			"ERROR: fifo_uac: from expected\n");
+		LOG(L_ERR, "ERROR: fifo_uac: from expected\n");
+		return -1;
+	}
+	DBG("DEBUG: fifo_uac:  from: %.*s\n", sf.len, from);
+	if (!read_line(dst, MAX_DST, stream, &sd.len)||sd.len==0) {
+		fifo_reply(response_file, 
+			"ERROR: fifo_uac: destination expected\n");
+		LOG(L_ERR, "ERROR: fifo_uac: destination expected\n");
+		return -1;
+	}
+	DBG("DEBUG: fifo_uac:  dst: %.*s\n", sd.len, dst );
+	/* now read header fields line by line */
+	if (!read_line_set(header, MAX_HEADER, stream, &sh.len)) {
+		fifo_reply(response_file, 
+			"ERROR: fifo_uac: HFs expected\n");
+		LOG(L_ERR, "ERROR: fifo_uac: header fields expected\n");
+		return -1;
+	}
+	DBG("DEBUG: fifo_uac: header: %.*s\n", sh.len, header );
+	/* and eventually body */
+	if (!read_body(body, MAX_BODY, stream, &sb.len)) {
+		fifo_reply(response_file, 
+			"ERROR: fifo_uac: body expected\n");
+		LOG(L_ERR, "ERROR: fifo_uac: body expected\n");
+		return -1;
+	}
+	DBG("DEBUG: fifo_uac: body: %.*s\n", sb.len, body );
+	DBG("DEBUG: fifo_uac: EoL -- proceeding to transaction creation\n");
+	/* we got it all, initiate transaction now! */
+	if (response_file) {
+		fn_len=strlen(response_file)+1;
+		shmem_file=shm_malloc(fn_len);
+		if (shmem_file==0) {
+			LOG(L_ERR, "ERROR: fifo_uac: no shmem\n");
+			return -1;
+		}
+		memcpy(shmem_file, response_file, fn_len );
+	} else {
+		shmem_file=0;
+	}
+	/* HACK: there is yet a shortcoming -- if t_uac fails, callback
+	   will not be triggered and no feedback will be printed
+	   to shmem_file
+	*/
+	ret=t_uac(&sm,&sd,&sh,&sb, sf.len==0 ? 0 : &sf /* default from */,
+		fifo_callback,shmem_file,0 /* no dialog */);
+	if (ret<=0) {
+		err_ret=err2reason_phrase(ret, &sip_error, err_buf,
+				sizeof(err_buf), "FIFO/UAC" ) ;
+		if (err_ret > 0 )
+		{
+			fifo_reply(response_file, err_buf );
+		} else {
+			fifo_reply(response_file, "FIFO/UAC error: %d\n",
+				ret );
+		}
+	}
+	return 1;
+
 }
