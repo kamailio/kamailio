@@ -1,0 +1,662 @@
+2002-11-14 11:18  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/jabber/README (1.8): XJAB module	- readme file
+	updated
+
+2002-11-14 03:58  Jan Janak <J.Janak@sh.cvut.cz>
+
+	* rpm/ser.spec (1.18): See changelog in the spec.
+
+2002-11-14 03:45  Nils Ohlmeier <nils@ohlmeier.de>
+
+	* gentoo/ser-0.8.10.ebuild (1.2): Fixed gen_ha1 and ser_myqsl.sh
+	installation.
+
+2002-11-13 02:31  Nils Ohlmeier <nils@ohlmeier.de>
+
+	* gentoo/ser-0.8.10.ebuild (1.1): New release = new ebuild
+
+2002-11-12 23:58  Nils Ohlmeier <nils@ohlmeier.de>
+
+	* rpm/ser.spec.SuSE (1.13): - Replaced nonexisting expat-devel with
+	expat.	- Rmoved leading + from some lines.
+
+====================== 2002-09-27 Release 0.8.10 ==============================
+
+2002-11-12 17:21  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* Makefile.defs (1.156), debian/changelog (1.8), debian/control
+	(1.5), debian/rules (1.4), rpm/ser.spec (1.17), rpm/ser.spec.SuSE
+	(1.12), solaris/prototype (1.2): ser 0.8.10 release
+	
+	- update ver. no in Makefile - modified debian, rh & suse (build a
+	separate jabber module due to expat dependency) - modified sun
+	package (added some missing files)
+	
+	Warning: I did a little rpm/*.spec cleanup (e.g make install
+	installs all the binaries a.s.o).  RH stuff works, Suse not tested.
+
+2002-11-12 16:10  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* freebsd/: Makefile (1.3), distinfo (1.2), pkg-plist (1.2):  -
+	freebsd package suport
+	 ( copy ser-0.8.10_src.tar.gz to /usr/ports/distfiles; cd freebsd;
+	    make makesum; make package)
+
+2002-11-12 12:32  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* modules/mysql/Makefile (1.15):  - added the proper libmysqlclient
+	dir for FreeBSD
+
+2002-11-12 12:31  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* Makefile (1.96), freebsd/Makefile (1.2): - changed install-doc
+	target	to install also all the modules READMEs
+
+2002-11-12 11:46  Bogdan Iancu <iancu@fokus.gmd.de>
+
+	* modules/pike/pike_funcs.c (1.14): Fixed warning in a DBG on
+	Free-BSD
+
+2002-11-12 11:39  Bogdan Iancu <iancu@fokus.gmd.de>
+
+	* modules/sms/sms_report.c (1.6): Fixed warning in a LOG on
+	Free-BSD
+
+2002-11-12 09:18  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/jabber/jabber.c (1.20): XJAB module	- fixed unused
+	variable j
+
+2002-11-11 23:26  Jan Janak <J.Janak@sh.cvut.cz>
+
+	* modules/usrloc/ucontact.c (1.9): conversion warning fixed.
+
+2002-11-11 23:11  Jan Janak <J.Janak@sh.cvut.cz>
+
+	* modules/registrar/: reply.c (1.4), rerrno.h (1.3), save.c (1.8):
+	R_OK changed to R_FINE
+
+2002-11-11 22:36  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* INSTALL (1.24), Makefile (1.95), Makefile.defs (1.155), main.c
+	(1.126): - fixed a few openbsd warnings - changed intall doc & man
+	path for non-linux systems (which are non LSB compliant)
+
+2002-11-11 21:34  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* Makefile.defs (1.154), Makefile.rules (1.12), data_lump.c (1.10),
+	fastlock.h (1.17), sr_module.c (1.22), modules/jabber/Makefile
+	(1.4), modules/mysql/Makefile (1.14), modules/textops/textops.c
+	(1.14), modules/tm/h_table.h (1.62), modules/tm/t_hooks.c (1.5),
+	test/test2.cfg (1.3): 
+	- openbsd (3.2) support [ changes in fastlock.h, ser_module.c,
+	tm/t_hooks.c,	Makefiles ] - texops replace/search_append bugs
+	fixed
+
+2002-11-11 20:23  Karel Kozlik <kozlik@kufr.cz>
+
+	* modules/acc/: acc_mod.c (1.11), acc_mod.h (1.4): mysql-specific
+	options are now compilable only when ACC_SQL is enabled
+
+2002-11-11 16:31  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/jabber/: jabber.c (1.19), xjab_worker.c (1.7),
+	xjab_worker.h (1.5): XJAB module:      - added display name in From
+	header when a Jabber message is delivered to	     SIP user -
+	that is Jabber user name for user-to-user chat or room name for    
+	 user-to-conference
+
+2002-11-11 16:26  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/jabber/xjab_wlist.c (1.1): XJAB module	-
+	xjab_worker.c was getting too big - splitted
+
+2002-11-09 11:54  Jan Janak <J.Janak@sh.cvut.cz>
+
+	* modules/auth/authorize.c (1.6): Modified authorize(),
+	authentication of CANCEL will be always OK when ACK_CANCEL_HACK is
+	defined.
+
+2002-11-08 19:00  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* freebsd/: Makefile (1.1), distinfo (1.1), pkg-comment (1.1),
+	pkg-descr (1.1), pkg-plist (1.1):  -preliminary freebsd port
+	(package) support
+
+2002-11-08 17:30  Nils Ohlmeier <nils@ohlmeier.de>
+
+	* mem/q_malloc.h (1.7): Fixed a typo in ROUNDTO with DBG_QM_MALLOC.
+
+2002-11-08 16:16  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* Makefile.defs (1.153), mem/f_malloc.h (1.4), mem/q_malloc.h
+	(1.6), modules/tm/sip_msg.c (1.54): - hopefully fixed the
+	sip_msg_cloner mem. bug - more strict mem. checking when compiling
+	with DBG_QM_MALLOC (might catch other off by 1-7 alloc. boundary
+	violations)
+
+2002-11-08 15:58  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/jabber/: jabber.c (1.18), xjab_base.h (1.2), xjab_jcon.c
+	(1.5), xjab_jcon.h (1.3), xjab_worker.c (1.6), xjab_worker.h (1.4):
+	XJAB module	 - some bugs fixed	 - added a monitoring
+	process for Jabber GW workers	   - confirmation message when
+	someone leaves a conference or Jabber network
+
+2002-11-07 15:26  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* ccopts.sh (1.1), ccver.sh (1.1): - added test cc ver & options
+	scripts
+
+2002-11-07 13:30  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/jabber/xjab_worker.c (1.5): XJAB module
+
+2002-11-06 12:45  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/jabber/xjab_jconf.c (1.2): XJAB modules
+
+2002-11-05 13:14  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/jabber/doc/xjab.cfg (1.3): XJAB module - sample cfg file
+
+2002-11-05 13:14  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/jabber/: README (1.5), README (1.6): XJAB module - readme
+	file
+
+2002-11-05 13:13  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/jabber/: xjab_jconf.c (1.1), xjab_jconf.h (1.1),
+	xjab_base.c (1.1), xjab_base.h (1.1), jabber.c (1.17), xjab_jcon.c
+	(1.3), xjab_jcon.h (1.2), xjab_util.c (1.2), xjab_util.h (1.2),
+	xjab_worker.c (1.4), xjab_worker.h (1.3), README (1.7), xjab_jcon.c
+	(1.4): XJAB module
+
+2002-11-04 17:28  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* Makefile.defs (1.152): - updated ver. no & added netbsd support
+
+2002-11-04 17:23  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* debian/changelog (1.7), rpm/ser.spec (1.16), rpm/ser.spec.SuSE
+	(1.11), solaris/pkginfo (1.4): - update version no
+
+2002-11-04 17:05  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* INSTALL (1.23), Makefile.defs (1.151), fastlock.h (1.16),
+	ip_addr.h (1.14), main.c (1.125), resolve.h (1.14), sr_module.c
+	(1.21), mem/shm_mem.c (1.18), modules/mysql/Makefile (1.13): -
+	converted to autoconf compatible format (replaced some os specific
+	ifdefs with HAVE_xxx a.s.o)
+
+2002-11-02 01:35  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* INSTALL (1.22), Makefile.defs (1.150), TODO (1.25), cfg.y (1.36),
+	main.c (1.124), modules/mysql/Makefile (1.12), modules/tm/uac.c
+	(1.16): - fixed cfg.y for icc (hack) - many other small fixes
+
+2002-11-01 17:22  Nils Ohlmeier <nils@ohlmeier.de>
+
+	* AUTHORS (1.4): Added Nils fingerprint
+
+2002-10-30 11:48  Bogdan Iancu <iancu@fokus.gmd.de>
+
+	* modules/sms/README (1.6):  Update
+
+2002-10-29 22:36  Nils Ohlmeier <nils@ohlmeier.de>
+
+	* rpm/: ser.init.SuSE (1.2), ser.spec.SuSE (1.10): Changes and
+	improvements for SuSE 8.1.
+
+2002-10-29 10:31  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/jabber/doc/xjab.cfg (1.2): XJAB cfg file sample
+
+2002-10-28 17:44  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/jabber/README (1.4): XJAB readme
+
+2002-10-28 11:50  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/jabber/xjab_worker.c (1.3): XJA module
+
+2002-10-28 11:47  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/jabber/: jabber.c (1.16), xjab_jcon.c (1.2),
+	xjab_worker.c (1.2), xjab_worker.h (1.2): XJAB module
+
+2002-10-26 19:07  Nils Ohlmeier <nils@ohlmeier.de>
+
+	* gentoo/ser-0.8.7.ebuild (1.3): obsolete
+
+2002-10-26 19:05  Nils Ohlmeier <nils@ohlmeier.de>
+
+	* gentoo/ser-0.8.9.ebuild (1.1): Initial new version.
+
+2002-10-25 12:28  Bogdan Iancu <iancu@fokus.gmd.de>
+
+	* modules/sms/: libsms_getsms.c (1.13), libsms_modem.c (1.17),
+	libsms_modem.h (1.9), libsms_putsms.c (1.11), libsms_sms.h (1.4),
+	sms.c (1.24), sms_funcs.c (1.43), sms_funcs.h (1.19), sms_report.c
+	(1.5), sms_report.h (1.4): Added SMS report support for SMS
+	confirmation.
+
+2002-10-24 15:30  Jiri Kuthan <jiri@iptel.org>
+
+	* modules/acc/acc_mod.c (1.10): log by default to syslog
+
+2002-10-24 15:26  Jiri Kuthan <jiri@iptel.org>
+
+	* modules/acc/Makefile (1.3): MYSQL accounting disabled by default
+	for the standard didstribution to avoid dependency
+
+2002-10-24 15:03  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* Makefile.defs (1.149), modules/tm/lock.c (1.39): - fixed a typo
+	preventing compilation - fixed a warning in tm
+
+2002-10-24 14:21  Bogdan Iancu <iancu@fokus.gmd.de>
+
+	* forward.c (1.67): Line 321 - a comma was missing! ;-)
+
+2002-10-24 12:43  Jiri Kuthan <jiri@iptel.org>
+
+	* Makefile.defs (1.148): NO__DEBUG and NO_LOG turned off -- not
+	good for distribution ;-)
+
+2002-10-23 15:12  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* action.c (1.36), cfg.y (1.35), forward.c (1.66), forward.h
+	(1.13), ip_addr.h (1.13), main.c (1.123), name_alias.h (1.3),
+	route.c (1.22), parser/msg_parser.h (1.17), parser/parse_uri.c
+	(1.5), test/test-throughput.cfg (1.6): - myself matches now also
+	the uri port - modified check_self, add_alias & grep_alias to
+	accept port numbers - added loopback check - modified
+	get_send_socket to return the first non loopback ipv4 interface if
+	bind_address==0
+
+2002-10-22 20:40  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* hash_func.h (1.5): - T_TABLE_POWER set to 16
+
+2002-10-22 20:37  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* ISSUES (1.8): - updated ISSUES
+
+2002-10-22 20:37  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* Makefile (1.94), Makefile.defs (1.147), fifo_server.c (1.25),
+	hash_func.c (1.5), hash_func.h (1.4), main.c (1.122),
+	modules/rr/utils.c (1.9), modules/rr/utils.h (1.7),
+	modules/tm/uac.c (1.14), parser/parse_hname2.c (1.10),
+	test/perf.txt (1.5), test/th-uri-fast.cfg (1.6): - added  new_hash2
+	(faster & better distrib. hash) - added rev . dns startup 
+	interface ip lookups (aliases) - lots of cleanups
+
+2002-10-22 19:24  Karel Kozlik <kozlik@kufr.cz>
+
+	* modules/acc/: Makefile (1.2), acc.c (1.9), acc_mod.c (1.9),
+	acc_mod.h (1.3): added SQL support
+
+2002-10-21 21:24  Jiri Kuthan <jiri@iptel.org>
+
+	* tags.h (1.2), modules/tm/config.h (1.20), modules/tm/t_reply.c
+	(1.36), modules/tm/t_reply.h (1.5), modules/tm/tm.c (1.62): to_tags
+	now generated all the time from TM
+
+2002-10-21 20:30  Jiri Kuthan <jiri@iptel.org>
+
+	* tags.h (1.1), modules/sl/sl_funcs.c (1.36), modules/sl/sl_funcs.h
+	(1.12): tags generation moved to core
+
+2002-10-21 19:42  Jiri Kuthan <jiri@iptel.org>
+
+	* modules/sl/sl_funcs.c (1.35): rfc3261 update: we add now to-tags
+	whereever we can
+
+2002-10-21 19:21  Jiri Kuthan <jiri@iptel.org>
+
+	* config.h (1.37), msg_translator.c (1.75), modules/tm/config.h
+	(1.19), modules/tm/t_fwd.c (1.32), modules/tm/t_lookup.c (1.50),
+	modules/tm/t_msgbuilder.c (1.13), modules/tm/t_msgbuilder.h (1.7),
+	parser/msg_parser.h (1.16): tid/branch generation a la RFC 3261
+	introduced; hash==0 oddity fixed
+
+2002-10-21 15:46  Jiri Kuthan <jiri@iptel.org>
+
+	* modules/tm/config.h (1.18), modules/tm/sip_msg.c (1.53),
+	modules/tm/t_funcs.c (1.147), modules/tm/t_lookup.c (1.49),
+	modules/tm/timer.c (1.39), parser/msg_parser.h (1.15),
+	parser/parse_via.h (1.6): - request matching using tid (RFC3216)
+	introduced
+
+2002-10-21 11:46  Jiri Kuthan <jiri@iptel.org>
+
+	* modules/tm/: README (1.5), t_lookup.c (1.48): relaxed CANCEL
+	matching (no to-tags included) introduced
+
+2002-10-21 03:08  Jiri Kuthan <jiri@iptel.org>
+
+	* config.h (1.36), msg_translator.c (1.74), modules/tm/config.h
+	(1.17), modules/tm/h_table.c (1.72), modules/tm/t_msgbuilder.c
+	(1.12), modules/tm/t_msgbuilder.h (1.6), modules/tm/t_stats.c
+	(1.12), modules/tm/t_stats.h (1.6), modules/tm/tm.c (1.61),
+	modules/tm/uac.c (1.13), modules/tm/uac.h (1.9): bugfix: Call-ID
+	generation repaired, from_tags introduced, stats allocation bug
+	(process_cnt-related) fixed
+
+2002-10-21 02:40  Jiri Kuthan <jiri@iptel.org>
+
+	* etc/ser.cfg (1.12): print module removed
+
+2002-10-21 00:55  Jiri Kuthan <jiri@iptel.org>
+
+	* modules/sl/sl.c (1.11): cleanup: destroying SL now releases stats
+	too
+
+2002-10-21 00:46  Jiri Kuthan <jiri@iptel.org>
+
+	* modules/sl/sl_stats.c (1.8): hack: malloc uses
+	process_count()+1(!) during init
+
+2002-10-20 23:50  Jiri Kuthan <jiri@iptel.org>
+
+	* scripts/sc (1.37): fix: allow anyone to write to reply fifo
+	(then, root can use sc for non-root ser)
+
+2002-10-20 20:20  Jiri Kuthan <jiri@iptel.org>
+
+	* modules/sl/sl_funcs.c (1.34): beautification: internal SL vars
+	made static
+
+2002-10-20 18:32  Jiri Kuthan <jiri@iptel.org>
+
+	* modules/tm/README (1.4): typos and aligment to t_uac_from
+
+2002-10-18 11:17  Jiri Kuthan <jiri@iptel.org>
+
+	* scripts/harv_ser.sh (1.12): CSCO server added
+
+2002-10-18 02:32  Jiri Kuthan <jiri@iptel.org>
+
+	* modules/tm/: README (1.3), h_table.c (1.71), h_table.h (1.61),
+	t_lookup.c (1.47), t_reply.c (1.35): change: to-tags no more
+	compared in ACK lookups -- that eliminates an unlikely race
+	conditions (reading transactional to-tag on ACK lookup whereas
+	writing a new to tag from 200/OK) and helps UACs who screw up
+	to-tags
+
+2002-10-18 00:15  Jiri Kuthan <jiri@iptel.org>
+
+	* modules/acc/acc.c (1.8): bug_fix: reporting wrong status for ACKs
+
+2002-10-17 12:09  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* action.c (1.35):  - fixed SET_URI bug (parsed_uri_ok not always
+	reseted)
+
+2002-10-17 10:22  Jiri Kuthan <jiri@iptel.org>
+
+	* config.h (1.35): fixed a minor typo in server name (missing LWS
+	prior to comment)
+
+2002-10-16 14:17  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/jabber/: Makefile (1.3), README (1.3): eXtended JABber
+	module -
+
+2002-10-16 14:16  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/jabber/doc/: faq.txt (1.1), gateways.txt (1.1), xjab.cfg
+	(1.1), xjab.sql (1.1): eXtended JABber module - docs
+
+2002-10-16 14:15  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/jabber/doc/web/: libjab.php (1.1), subscribe.php (1.1):
+	eXtended JABber module - IM subscription scripts
+
+2002-10-16 14:12  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/jabber/: jabber.c (1.15), lock.c (1.7), lock.h (1.5),
+	mdefines.h (1.6), sha.c (1.5), tree234.c (1.5), tree234.h (1.4),
+	xjab_jcon.c (1.1), xjab_jcon.h (1.1), xjab_util.c (1.1),
+	xjab_util.h (1.1), xjab_worker.c (1.1), xjab_worker.h (1.1), xode.c
+	(1.1), xode.h (1.1), xode_from.c (1.1), xode_str.c (1.1), xpool.c
+	(1.1), xsnprintf.c (1.1), xstream.c (1.1): eXtended JABber module
+
+2002-10-16 10:50  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/msilo/msilo.c (1.8): MSILO module
+
+2002-10-15 15:36  Bogdan Iancu <iancu@fokus.gmd.de>
+
+	* modules/sms/: sms.c (1.23), sms_funcs.c (1.42), sms_funcs.h
+	(1.18): SMS loads dinamicly the IM module
+
+2002-10-15 15:35  Bogdan Iancu <iancu@fokus.gmd.de>
+
+	* modules/im/: im.c (1.3), im_load.c (1.1), im_load.h (1.1): IM
+	module can be linked dinamicly by other modules
+
+2002-10-15 15:23  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* ISSUES (1.7): - update
+
+2002-10-15 15:12  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* main.c (1.121): - fixed my own bug (skipped fd 3instead of 2,
+	closed also syslog fd by mistake).
+
+2002-10-15 06:36  Jiri Kuthan <jiri@iptel.org>
+
+	* INSTALL (1.21): added a note on broken MSN authenticaton
+	(realm=hostname)
+
+2002-10-15 06:14  Jiri Kuthan <jiri@iptel.org>
+
+	* scripts/harv_ser.sh (1.11): 489 added
+
+2002-10-15 04:02  Jiri Kuthan <jiri@iptel.org>
+
+	* modules/acc/acc.c (1.7): typo fixed
+
+2002-10-15 03:56  Jiri Kuthan <jiri@iptel.org>
+
+	* scripts/harv_ser.sh (1.10): new UAs introduced
+
+2002-10-15 02:34  Jiri Kuthan <jiri@iptel.org>
+
+	* examples/weather/wm918/ws.sh (1.3): added more checks
+
+2002-10-15 02:29  Jiri Kuthan <jiri@iptel.org>
+
+	* scripts/sc (1.36): usrloc and aliases completely FIFO-ized
+
+2002-10-15 00:12  Jiri Kuthan <jiri@iptel.org>
+
+	* scripts/sc (1.35): changed look of usage
+
+2002-10-14 23:54  Jiri Kuthan <jiri@iptel.org>
+
+	* ISSUES (1.6): aliases issue and Solaris memory leak introduced
+
+2002-10-14 23:34  Jiri Kuthan <jiri@iptel.org>
+
+	* INSTALL (1.20), scripts/sc (1.34): sc: default host changed to
+	localhost
+
+2002-10-14 16:47  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* ISSUES (1.5): - added sndto freebsd problem
+
+2002-10-14 16:42  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* ip_addr.h (1.12): - added init_su alias: ip_addr2su
+
+2002-10-14 16:39  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* forward.c (1.65): - fixed bug in update_sock_struct_from_ip
+
+2002-10-10 16:28  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* ISSUES (1.4): - added the ipv6 address parsing bug
+
+2002-10-10 15:48  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* resolve.h (1.13): - fixed str2ip6 bug (ipv6 addresses w/o '::' =>
+	0)
+
+2002-10-09 13:37  Jan Janak <J.Janak@sh.cvut.cz>
+
+	* modules/sl/sl_funcs.c (1.33): Fixed 'missing To HF' bug.
+
+====================== 2002-10-07 Release 0.8.9 ==============================
+
+2002-10-07 16:14  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* Makefile (1.93), debian/changelog (1.6), modules/mysql/Makefile
+	(1.10), rpm/ser.spec (1.15): - fixed some bad entries in
+	debian/changelog & rpm spec - added -I & -L in mysql Makefile
+
+2002-10-07 14:57  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* Makefile.defs (1.146), debian/changelog (1.5), rpm/ser.spec
+	(1.14), rpm/ser.spec.SuSE (1.9), solaris/pkginfo (1.3): - update
+	ver number (new release) & packaging info
+
+2002-10-04 21:40  Jiri Kuthan <jiri@iptel.org>
+
+	* etc/: iptel.cfg (1.38), ser.cfg (1.11): sl_filter_ACK obsolted
+	and removed from scripts
+
+2002-10-04 21:38  Jiri Kuthan <jiri@iptel.org>
+
+	* ISSUES (1.3): added missing exec module in distro
+
+2002-10-04 21:37  Jiri Kuthan <jiri@iptel.org>
+
+	* examples/: exec.cfg (1.4), onr.cfg (1.5), redirect.cfg (1.4),
+	uas.cfg (1.5): examples simplified and aligned to latest ser
+	version
+
+2002-10-04 21:30  Jiri Kuthan <jiri@iptel.org>
+
+	* rpm/ser.spec (1.13): exec module introduced
+
+2002-10-04 21:22  Jiri Kuthan <jiri@iptel.org>
+
+	* doc/seruser/seruser.sgml (1.15): examples are included now
+	(better than copy'n'paste)
+
+2002-10-04 14:47  Daniel Constantin Mierla <mierla@fokus.gmd.de>
+
+	* modules/msilo/: msfuncs.c (1.6), msfuncs.h (1.4), msilo.c (1.7):
+	MSILO sources
+
+2002-10-03 21:04  Jiri Kuthan <jiri@iptel.org>
+
+	* fifo_server.c (1.24): bug_fix: reply_fifo name (as opposed to
+	request_fifo) printed in a LOG
+
+2002-10-03 20:06  Jiri Kuthan <jiri@iptel.org>
+
+	* receive.c (1.37), script_cb.c (1.3), script_cb.h (1.3),
+	sr_module.c (1.20), modules/sl/README (1.4), modules/sl/sl.c
+	(1.10), modules/sl/sl_funcs.c (1.32), modules/sl/sl_funcs.h (1.11):
+	sl_filter_ACK no more exported and called on beginning of every
+	script instead
+
+2002-10-03 20:02  Jiri Kuthan <jiri@iptel.org>
+
+	* modules/acc/README (1.2): notes on multiple INVITE/2xx added
+
+2002-10-03 18:49  Jiri Kuthan <jiri@iptel.org>
+
+	* examples/weather/wm918/ws.sh (1.2): minor beautifications
+
+2002-10-03 17:17  Jiri Kuthan <jiri@iptel.org>
+
+	* INSTALL (1.19): A) now reiterates that installers must proceed to
+	B if they wish MySQL
+
+2002-10-02 21:28  Jiri Kuthan <jiri@iptel.org>
+
+	* doc/seruser/seruser.sgml (1.14): note on order of module loading
+	introduced
+
+2002-10-02 11:18  Jiri Kuthan <jiri@iptel.org>
+
+	* INSTALL (1.18): secret line removed
+
+2002-09-30 22:30  Jiri Kuthan <jiri@iptel.org>
+
+	* modules/auth/README (1.8): added clarification on ACK/CANCEL
+
+2002-09-30 22:26  Jiri Kuthan <jiri@iptel.org>
+
+	* doc/seruser/seruser.sgml (1.13): ser command reference classified
+	by command purposed, clarifications added to listen/fork config
+	file options
+
+2002-09-30 21:44  Jiri Kuthan <jiri@iptel.org>
+
+	* modules/sl/README (1.3): spellchecker used
+
+2002-09-30 21:44  Jiri Kuthan <jiri@iptel.org>
+
+	* modules/sl/README (1.2): some clarifications added
+
+2002-09-30 20:02  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* ISSUES (1.2), modules/jabber/Makefile (1.2),
+	modules/msilo/Makefile (1.4), modules/sms/Makefile (1.5): - removed
+	LIBS= ....im.so from jabber, msilo & sms Makefiles
+
+2002-09-30 19:06  Jiri Kuthan <jiri@iptel.org>
+
+	* ISSUES (1.1): initial version committed
+
+2002-09-30 18:43  Jiri Kuthan <jiri@iptel.org>
+
+	* scripts/sc (1.33): bug_fix (#374):  'sc add' didn't work because
+	of not filling in phplib_id; now we put the authentication hash
+	value in it
+
+2002-09-30 18:38  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+
+	* main.c (1.120): - if log_stderr & fork close all FDs except 3
+	(stderror) - until now it didn't close any of them (BUG!)
+
+2002-09-29 21:15  Jiri Kuthan <jiri@iptel.org>
+
+	* doc/seruser/seruser.sgml (1.12): added bug-URL to Known
+	Limitations and mentioned precedence of config file over command
+	line options
+
+2002-09-29 16:12  Jiri Kuthan <jiri@iptel.org>
+
+	* etc/iptel.cfg (1.37): private IP in Contacts now allowed if RR
+	present
+
+2002-09-29 12:40  Jiri Kuthan <jiri@iptel.org>
+
+	* scripts/harv_ser.sh (1.9): new UAs introduced: IMS, LeaderSIP;
+	new reply: 476
+
+2002-09-29 10:44  Jan Janak <J.Janak@sh.cvut.cz>
+
+	* doc/seruser/seruser.sgml (1.11): spell-checked using aspell
+
+2002-09-29 10:33  Jan Janak <J.Janak@sh.cvut.cz>
+
+	* doc/serdev/serdev.sgml (1.12): spell-checked using aspell.
+
+2002-09-29 10:13  Jiri Kuthan <jiri@iptel.org>
+
+	* msg_translator.c (1.73): bug_fix(372): printing of incorrect IP
+	address in warnings
+
+====================== 2002-09-27 Release 0.8.8 ==============================
+	
