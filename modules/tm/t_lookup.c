@@ -133,7 +133,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 			&& /*callid length*/ EQ_LEN(callid)
 			&& get_cseq(t_msg)->number.len==get_cseq(p_msg)->number.len
 			&& /*from length*/ EQ_LEN(from)
-			&& /*to body*/get_to(t_msg)->body.len==get_to(p_msg)->body.len
+			&& /*to uri*/get_to(t_msg)->uri.len==get_to(p_msg)->uri.len
 			&& /*to tag*/p_cell->tag->len==get_to(p_msg)->tag_value.len
 			&& /*req URI*/(p_cell->status==200 || EQ_REQ_URI_LEN )
 			&& /*VIA*/(p_cell->status==200 || EQ_VIA_LEN(via1)) )
@@ -144,8 +144,8 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 				&& /*cseq nr*/!memcmp(get_cseq(t_msg)->number.s,
 					get_cseq(p_msg)->number.s,get_cseq(p_msg)->number.len)
 				&& /*from*/EQ_STR(from)
-				&& /*to body*/!memcmp(get_to(t_msg)->body.s,
-					get_to(p_msg)->body.s,get_to(t_msg)->body.len)
+				&& /*to uri*/!memcmp(get_to(t_msg)->uri.s,
+					get_to(p_msg)->uri.s,get_to(t_msg)->uri.len)
 				&& /*to tag*/!memcmp(p_cell->tag->s,
 					get_to(p_msg)->tag_value.s,p_cell->tag->len)
 				&& /*req URI*/(p_cell->status==200 || EQ_REQ_URI_STR)

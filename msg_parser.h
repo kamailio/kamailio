@@ -156,6 +156,7 @@ struct to_param{
 struct to_body{
 	int error;
 	str body;
+	str uri;
 	str tag_value;
 	struct to_param *param_lst;
 	struct to_param *last_param;

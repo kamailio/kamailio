@@ -149,29 +149,32 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
       new_msg->first_line.u.reply.reason.s =  translate_pointer( new_msg->buf , org_msg->buf , org_msg->first_line.u.reply.reason.s );
     }
 
-   /*headers list*/
-   new_msg->via1=0;
-   new_msg->via2=0;
-   for( hdr=org_msg->headers,last_hdr=0 ; hdr ; hdr=hdr->next )
-   {
-      new_hdr = (struct hdr_field*)p;
-      memcpy(new_hdr, hdr, sizeof(struct hdr_field) );
-      p += ROUND4(sizeof( struct hdr_field));
-      new_hdr->name.s =  translate_pointer( new_msg->buf , org_msg->buf , hdr->name.s );
-      new_hdr->body.s =  translate_pointer( new_msg->buf , org_msg->buf , hdr->body.s );
+	/*headers list*/
+	new_msg->via1=0;
+	new_msg->via2=0;
+	for( hdr=org_msg->headers,last_hdr=0 ; hdr ; hdr=hdr->next )
+	{
+		new_hdr = (struct hdr_field*)p;
+		memcpy(new_hdr, hdr, sizeof(struct hdr_field) );
+		p += ROUND4(sizeof( struct hdr_field));
+		new_hdr->name.s = translate_pointer(new_msg->buf, org_msg->buf,
+			hdr->name.s);
+		new_hdr->body.s = translate_pointer(new_msg->buf, org_msg->buf,
+			hdr->body.s);
 
-     switch (hdr->type)
-      {
-         case HDR_VIA:
-                if ( !new_msg->via1 )
-                   {
-                       new_msg->h_via1 = new_hdr;
-                       new_msg->via1 = via_body_cloner_2( new_msg->buf , org_msg->buf , (struct via_body*)hdr->parsed , &p);
-                       new_hdr->parsed  = (void*)new_msg->via1;
-                   if ( new_msg->via1->next )
-                            new_msg->via2 = new_msg->via1->next;
-                   }
-                else if ( !new_msg->via2 && new_msg->via1 )
+		switch (hdr->type)
+		{
+			case HDR_VIA:
+				if ( !new_msg->via1 )
+				{
+					new_msg->h_via1 = new_hdr;
+					new_msg->via1 = via_body_cloner_2(new_msg->buf,
+						org_msg->buf, (struct via_body*)hdr->parsed, &p);
+					new_hdr->parsed  = (void*)new_msg->via1;
+					if ( new_msg->via1->next )
+						new_msg->via2 = new_msg->via1->next;
+				}
+				else if ( !new_msg->via2 && new_msg->via1 )
                    {
                        new_msg->h_via2 = new_hdr;
                        if ( new_msg->via1->next )
@@ -181,35 +184,41 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
                            new_hdr->parsed  = (void*)new_msg->via2;
                        }
                    }
-                else if ( new_msg->via2 && new_msg->via1 )
+				else if ( new_msg->via2 && new_msg->via1 )
                    {
                        new_hdr->parsed  = new_msg->via1 = via_body_cloner_2( new_msg->buf , org_msg->buf , (struct via_body*)hdr->parsed , &p);
                    }
                    break;
-         case HDR_CSEQ:
-                   new_hdr->parsed = p;
-                   p +=ROUND4(sizeof(struct cseq_body));
-                   memcpy( new_hdr->parsed , hdr->parsed , sizeof(struct cseq_body) );
-                   ((struct cseq_body*)new_hdr->parsed)->number.s =  translate_pointer( new_msg->buf , org_msg->buf , ((struct cseq_body*)hdr->parsed)->number.s );
-                   ((struct cseq_body*)new_hdr->parsed)->method.s =  translate_pointer( new_msg->buf , org_msg->buf , ((struct cseq_body*)hdr->parsed)->method.s );
-                   new_msg->cseq = new_hdr;
-                   break;
-         case HDR_TO:
-                   new_hdr->parsed = p;
-                   p +=ROUND4(sizeof(struct to_body));
-                   memcpy( new_hdr->parsed , hdr->parsed ,
-                    sizeof(struct to_body) );
-                   ((struct to_body*)new_hdr->parsed)->body.s =
-                        translate_pointer( new_msg->buf , org_msg->buf ,
-                        ((struct to_body*)hdr->parsed)->body.s );
-                   if ( ((struct to_body*)hdr->parsed)->tag_value.s )
-                         ((struct to_body*)new_hdr->parsed)->tag_value.s
-                         = translate_pointer( new_msg->buf , org_msg->buf ,
-                            ((struct to_body*)hdr->parsed)->tag_value.s );
-                    /*to params*/
-                   to_prm = ((struct to_body*)(hdr->parsed))->param_lst;
-                   for(;to_prm;to_prm=to_prm->next)
-                   {
+			case HDR_CSEQ:
+				new_hdr->parsed = p;
+				p +=ROUND4(sizeof(struct cseq_body));
+				memcpy(new_hdr->parsed, hdr->parsed, sizeof(struct cseq_body));
+				((struct cseq_body*)new_hdr->parsed)->number.s =
+					translate_pointer(new_msg->buf ,org_msg->buf,
+					((struct cseq_body*)hdr->parsed)->number.s );
+				((struct cseq_body*)new_hdr->parsed)->method.s =
+					translate_pointer(new_msg->buf ,org_msg->buf,
+					((struct cseq_body*)hdr->parsed)->method.s );
+				new_msg->cseq = new_hdr;
+				break;
+			case HDR_TO:
+				new_hdr->parsed = p;
+				p +=ROUND4(sizeof(struct to_body));
+				memcpy(new_hdr->parsed, hdr->parsed, sizeof(struct to_body));
+				((struct to_body*)new_hdr->parsed)->body.s =
+					translate_pointer( new_msg->buf , org_msg->buf ,
+					((struct to_body*)hdr->parsed)->body.s );
+				((struct to_body*)new_hdr->parsed)->uri.s =
+					translate_pointer( new_msg->buf , org_msg->buf ,
+					((struct to_body*)hdr->parsed)->uri.s );
+				if ( ((struct to_body*)hdr->parsed)->tag_value.s )
+					((struct to_body*)new_hdr->parsed)->tag_value.s =
+						translate_pointer( new_msg->buf , org_msg->buf ,
+						((struct to_body*)hdr->parsed)->tag_value.s );
+				/*to params*/
+				to_prm = ((struct to_body*)(hdr->parsed))->param_lst;
+				for(;to_prm;to_prm=to_prm->next)
+				{
                       /*alloc*/
                       new_to_prm = (struct to_param*)p;
                       p +=ROUND4(sizeof(struct to_param ));
@@ -229,22 +238,22 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
                             = new_to_prm;
                       ((struct to_body*)new_hdr->parsed)->last_param
                          = new_to_prm;
-                   }
-                   new_msg->to = new_hdr;
-                   break;
-         case HDR_CALLID:
-                   new_msg->callid = new_hdr;
-                   break;
-         case HDR_FROM:
+				}
+				new_msg->to = new_hdr;
+				break;
+			case HDR_CALLID:
+				new_msg->callid = new_hdr;
+				break;
+			case HDR_FROM:
                    new_msg->from = new_hdr;
                    break;
-         case HDR_CONTACT:
+			case HDR_CONTACT:
                    new_msg->contact = new_hdr;
                    break;
-         case HDR_MAXFORWARDS :
+			case HDR_MAXFORWARDS :
                   new_msg->maxforwards = new_hdr;
                break;
-        case HDR_ROUTE :
+			case HDR_ROUTE :
                   new_msg->route = new_hdr;
                break;
       }
