@@ -17,6 +17,7 @@ LOCKFILE=serresponse
 LOCK_TIMEOUT=240
 TMP=/tmp/serresponse.$$
 MAILCOMMAND=/bin/mail
+HOSTN=`hostname`
 
 ############################
 
@@ -50,12 +51,20 @@ if [ ! -e $LOCKF ] ; then
 				echo "but the test with IPs in Via succeeded." >> $TMP
 				echo "  => DNS PROBLEM !?!" >> $TMP
 				echo "" >> $TMP
+				echo "Sending this alert is stopped for $LOCK_TIMEOUT minutes." >>$TMP
+				echo "If you want to re-enable alerts sooner, please remove the lock file" >> $TMP
+				echo "$LOCKF @ $HOSTN (you presumably need to be root to do this)" >> $TMP
+				echo "" >> $TMP
 				echo "command output of sipsak with fqdn follows:" >> $TMP
 				cat $TMP2 >> $TMP
 			else
 				echo "ser did not responses (fast enough) on requests with fqdn in Via" >> $TMP
 				echo "but also requests with IPs in Via failed." >> $TMP
 				echo "  => DNS IS NOT THE PROBLEM !!" >> $TMP
+				echo "" >> $TMP
+				echo "Sending this alert is stopped for $LOCK_TIMEOUT minutes." >>$TMP
+				echo "If you want to re-enable alerts sooner, please remove the lock file" >> $TMP
+				echo "$LOCKF @ $HOSTN (you presumably need to be root to do this)" >> $TMP
 				echo "" >> $TMP
 				echo "first command output with fqdn follows then with IPs:" >> $TMP
 				cat $TMP2 >> $TMP
