@@ -527,7 +527,13 @@ CREATE TABLE server_monitoring (
 ) $TABLE_TYPE;
 
 
-
+CREATE TABLE preferences (
+  $USERCOL varchar(50) NOT NULL default '',
+  domain varchar(100) NOT NULL default '',
+  attribute varchar(50) NOT NULL default '',
+  value varchar(100) NOT NULL default '',
+  PRIMARY KEY ($USERCOL, domain, attribute)
+) $TABLE_TYPE;
 
 #
 # Table structure for table 'server_monitoring_ul'
