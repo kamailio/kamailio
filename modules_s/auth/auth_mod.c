@@ -74,6 +74,12 @@ static int str_fixup(void** param, int param_no);
 
 
 /*
+ * Convert both parameters to str* representation
+ */
+static int rpid_fixup(void** param, int param_no);
+
+
+/*
  * Pointer to reply function in stateless module
  */
 int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
@@ -112,6 +118,7 @@ static cmd_export_t cmds[] = {
 	{"consume_credentials", consume_credentials,     0, 0,               REQUEST_ROUTE},
 	{"is_rpid_user_e164",   is_rpid_user_e164,       0, 0,               REQUEST_ROUTE},
         {"append_rpid_hf",      append_rpid_hf,          0, 0,               REQUEST_ROUTE},
+	{"appned_rpid_hf",      append_rpid_hf_p,        2, rpid_fixup,      REQUEST_ROUTE},
 	{"pre_auth",            (cmd_function)pre_auth,  0, 0,               0            },
 	{"post_auth",           (cmd_function)post_auth, 0, 0,               0            },
 	{0, 0, 0, 0, 0}
@@ -259,4 +266,18 @@ static int str_fixup(void** param, int param_no)
 	}
 	
 	return 0;
+}
+
+
+/*
+ * Convert both parameters to str* representation
+ */
+static int rpid_fixup(void** param, int param_no)
+{
+       if (param_no == 1) {
+               return str_fixup(param, 1);
+       } else if (param_no == 2) {
+               return str_fixup(param, 1);
+       }
+       return 0;
 }

@@ -187,7 +187,7 @@ if (www_authorize("iptel.org", "subscriber")) {
 			still some user agents that cannot handle request without qop parameter too.
 		    </para>
 		</listitem>
-	    </itemizedlist>
+	    </itemizedlis>
 	    <example>
 		<title>proxy_challenge usage</title>
 		<programlisting format="linespecific">
@@ -241,7 +241,7 @@ if (is_rpid_user_e164()) {
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="append_rpid">
 	    <title><function moreinfo="none">append_rpid_hf</function></title>
 	    <para>
 		Appends to the message a Remote-Party-ID header that contains header
@@ -254,6 +254,38 @@ if (is_rpid_user_e164()) {
 		<programlisting format="linespecific">
 ...
 append_rpid_hf();  # Append Remote-Party-ID header field
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><function moreinfo="none">append_rpid_hf(prefix, suffix)</function></title>
+	    <para>
+		This function is the same as <xref linkend="append_rpid">. The only difference is
+		that it accepts two parameters--prefix and suffix to be added to Remote-Party-ID
+		header field. This function ignores rpid_prefix and rpid_suffix parameters, instead
+		of that allows to set them in every call.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>prefix</emphasis> - Prefix of the Remote-Party-ID URI. The
+			string will be added at the begining of body of the header field, just
+			before the URI.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>suffix</emphasis> - Suffix of the Remote-Party-ID header
+			field. The string will be appended at the end of the header field. It can be
+			used to set various URI parameters, for example.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title>append_rpid_hf(prefix, suffix)</title>
+		<programlisting format="linespecific">
+...
+append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");  # Append Remote-Party-ID header field
 ...
 </programlisting>
 	    </example>

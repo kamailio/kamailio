@@ -149,6 +149,51 @@ int append_rpid_hf(struct sip_msg* _m, char* _s1, char* _s2)
 
 
 /*
+ * Append RPID header field to the message with parameters
+ */
+int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix)
+{
+	str rpid_hf;
+	char* at;
+	str* p, *s;
+
+	if (!rpid.len) {
+		DBG("append_rpid_hf_p(): rpid is empty, nothing to append\n");
+		return 1;
+	}
+	
+	p = (str*)_prefix;
+	s = (str*)_suffix;
+
+	rpid_hf.len = RPID_HF_NAME_LEN + p->len + rpid.len + s->len + CRLF_LEN;
+	rpid_hf.s = pkg_malloc(rpid_hf.len);
+	if (!rpid_hf.s) {
+		LOG(L_ERR, "append_rpid_hf_p(): No memory left\n");
+		return -1;
+	}
+
+	at = rpid_hf.s;
+	memcpy(at, RPID_HF_NAME, RPID_HF_NAME_LEN);
+	at += RPID_HF_NAME_LEN;
+
+	memcpy(at, p->s, p->len);
+	at += p->len;
+
+	memcpy(at, rpid.s, rpid.len);
+	at += rpid.len;
+
+	memcpy(at, s->s, s->len);
+	at += s->len;
+
+	memcpy(at, CRLF, CRLF_LEN);
+
+	append_rpid_helper(_m, &rpid_hf);
+	pkg_free(rpid_hf.s);
+	return 1;
+}
+
+
+/*
  * Check if SIP URI in rpid contains an e164 user part
  */
 int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
