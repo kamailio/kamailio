@@ -80,7 +80,6 @@ static int rewriteFromRoute(struct sip_msg* _m, char* _s1, char* _s2)
 		return -2;
 	}
 #endif
-
 	if (findRouteHF(_m) != FALSE) {
 		if (parseRouteHF(_m, &first_uri, &next_uri) == FALSE) {
 			LOG(L_ERR, "rewriteFromRoute(): Error while parsing Route HF\n");
