@@ -32,6 +32,7 @@
  *  2003-03-10  changed module exports interface: added struct cmd_export
  *               and param_export (andrei)
  *  2003-03-16  Added flags field to cmd_export_ (janakj)
+ *  2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
  */
 
 
@@ -55,8 +56,9 @@ typedef enum {
 	INT_PARAM,  /* Integer parameter type */
 } modparam_t;       /* Allowed types of parameters */
 
-#define REQUEST_ROUTE 1         /* Function can be used in request route blocks */
-#define REPLY_ROUTE 2           /* Function can be used in reply route blocks */
+#define REQUEST_ROUTE 1  /* Function can be used in request route blocks */
+#define FAILURE_ROUTE 2  /* Function can be used in reply route blocks */
+#define ONREPLY_ROUTE 4  /* Function can be used in on_reply */
 
 /* Macros - used as rank in child_init function */
 #define PROC_MAIN      0  /* Main ser process */

@@ -41,6 +41,7 @@
  *  2003-03-16  removed _TOTAG (jiri)
  *  2003-03-31  200 for INVITE/UAS resent even for UDP (jiri)
  *  2003-03-31  removed msg->repl_add_rm (andrei)
+ *  2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
  */
 
 
@@ -82,6 +83,8 @@ static char *tm_tag_suffix;
 
 /* where to go if there is no positive reply */
 static int goto_on_negative=0;
+/* where to go on receipt of reply */
+static int goto_on_reply=0;
 
 
 /* we store the reply_route # in private memory which is
@@ -94,16 +97,24 @@ static int goto_on_negative=0;
 */
   
   
-int t_on_negative( unsigned int go_to )
+void t_on_negative( unsigned int go_to )
 {
 	goto_on_negative=go_to;
-	return 1;
+}
+
+void t_on_reply( unsigned int go_to )
+{
+	goto_on_reply=go_to;
 }
 
 
 unsigned int get_on_negative()
 {
 	return goto_on_negative;
+}
+unsigned int get_on_reply()
+{
+	return goto_on_reply;
 }
 
 void tm_init_tags()
@@ -139,6 +150,16 @@ int unmatched_totag(struct cell *t, struct sip_msg *ack)
 	}
 	/* surprising: to-tag never sighted before */
 	return 1;
+}
+
+static inline void update_local_tags(struct cell *trans, 
+				struct bookmark *bm, char *dst_buffer,
+				char *src_buffer /* to which bm refers */)
+{
+	if (bm->to_tag_val.s) {
+		trans->uas.local_totag.s=bm->to_tag_val.s-src_buffer+dst_buffer;
+		trans->uas.local_totag.len=bm->to_tag_val.len;
+	}
 }
 
 
@@ -212,371 +233,6 @@ static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
     return build_local( trans, branch, ret_len,
         ACK, ACK_LEN, &to );
 }
-
-
-/* create a temporary faked message environment in which a conserved
- * t->uas.request in shmem is partially duplicated to pkgmem
- * to allow pkg-based actions to use it; 
- *
- * if restore parameter is set, the environment is restored to the
- * original setting and return value is unsignificant (always 0); 
- * otherwise  a faked environment if created; if that fails,
- * false is returned
- */
-static int faked_env(struct sip_msg *fake, 
-				struct cell *_t,
-				struct sip_msg *shmem_msg,
-				int _restore )
-{
-	static enum route_mode backup_mode;
-	static struct cell *backup_t;
-	static unsigned int backup_msgid;
-
-	if (_restore) goto restore;
-
-	/* 
-     on_negative_reply faked msg now copied from shmem msg (as opposed
-     to zero-ing) -- more "read-only" actions (exec in particular) will 
-     work from reply_route as they will see msg->from, etc.; caution, 
-     rw actions may append some pkg stuff to msg, which will possibly be 
-     never released (shmem is released in a single block)
-    */
-	memcpy( fake, shmem_msg, sizeof(struct sip_msg));
-
-	/* if we set msg_id to something different from current's message
-       id, the first t_fork will properly clean new branch URIs
-	*/
-	fake->id=shmem_msg->id-1;
-	/* set items, which will be duped to pkg_mem, to zero, so that
-	 * "restore" called on error does not free the original items */
-	fake->add_rm=0;
-	fake->new_uri.s=0; fake->new_uri.len=0; 
-
-	/* remember we are back in request processing, but process
-	 * a shmem-ed replica of the request; advertise it in rmode;
-	 * for example t_reply needs to know that
-	 */
-	backup_mode=rmode;
-	rmode=MODE_ONREPLY_REQUEST;
-	/* also, tm actions look in beginning whether tranaction is
-	 * set -- whether we are called from a reply-processing 
-	 * or a timer process, we need to set current transaction;
-	 * otherwise the actions would attempt to look the transaction
-	 * up (unnecessary overhead, refcounting)
-	 */
-	/* backup */
-	backup_t=get_t();
-	backup_msgid=global_msg_id;
-	/* fake transaction and message id */
-	global_msg_id=fake->id;
-	set_t(_t);
-
-	/* environment is set up now, try to fake the message */
-
-	/* new_uri can change -- make a private copy */
-	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
-		fake->new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
-		if (!fake->new_uri.s) {
-			LOG(L_ERR, "ERROR: faked_env: no uri/pkg mem\n");
-			goto restore;
-		}
-		fake->new_uri.len=shmem_msg->new_uri.len;
-		memcpy( fake->new_uri.s, shmem_msg->new_uri.s, 
-			fake->new_uri.len);
-		fake->new_uri.s[fake->new_uri.len]=0;
-	} 
-
-	/* create a duplicated lump list to which actions can add
-	 * new pkg items 
-	 */
-	if (shmem_msg->add_rm) {
-		fake->add_rm=dup_lump_list(shmem_msg->add_rm);
-		if (!fake->add_rm) { /* non_emty->empty ... failure */
-			LOG(L_ERR, "ERROR: on_negative_reply: lump dup failed\n");
-			goto restore;
-		}
-	}
-	/* success */
-	return 1;
-
-restore:
-	/* restore original environment and destroy faked message */
-	free_duped_lump_list(fake->add_rm);
-	if (fake->new_uri.s) pkg_free(fake->new_uri.s);
-	set_t(backup_t);
-	global_msg_id=backup_msgid;
-	rmode=backup_mode;
-	return 0;
-}
-
-
-
-/* the main code of stateful replying */
-static int _reply( struct cell *t, struct sip_msg* p_msg, unsigned int code,
-    char * text, int lock );
-
-/* This is the neuralgical point of reply processing -- called
- * from within a REPLY_LOCK, t_should_relay_response decides
- * how a reply shall be processed and how transaction state is
- * affected.
- *
- * Checks if the new reply (with new_code status) should be sent or not
- *  based on the current
- * transactin status.
- * Returns 	- branch number (0,1,...) which should be relayed
- *         -1 if nothing to be relayed
- */
-static enum rps t_should_relay_response( struct cell *Trans , int new_code,
-	int branch , int *should_store, int *should_relay,
-	branch_bm_t *cancel_bitmap, struct sip_msg *reply )
-{
-	int b, lowest_b, lowest_s, dummy;
-	struct sip_msg faked_msg, *origin_rq;
-	unsigned int on_neg;
-
-	/* note: this code never lets replies to CANCEL go through;
-	   we generate always a local 200 for CANCEL; 200s are
-	   not relayed because it's not an INVITE transaction;
-	   >= 300 are not relayed because 200 was already sent
-	   out
-	*/
-	DBG("->>>>>>>>> T_code=%d, new_code=%d\n",Trans->uas.status,new_code);
-	/* if final response sent out, allow only INVITE 2xx  */
-	if ( Trans->uas.status >= 200 ) {
-		if (new_code>=200 && new_code < 300  && 
-#ifdef _BUG_FIX /* t may be local, in which case there is no request */
-			Trans->uas.request->REQ_METHOD==METHOD_INVITE) {
-#endif
-			Trans->is_invite ) {
-			DBG("DBG: t_should_relay: 200 INV after final sent\n");
-			*should_store=0;
-			Trans->uac[branch].last_received=new_code;
-			*should_relay=branch;
-			return RPS_PUSHED_AFTER_COMPLETION;
-		} else {
-			/* except the exception above, too late  messages will
-			   be discarded */
-			*should_store=0;
-			*should_relay=-1;
-			return RPS_DISCARDED;
-		}
-	} 
-
-	/* no final response sent yet */
-	/* negative replies subject to fork picking */
-	if (new_code >=300 ) {
-		/* negative reply received after we have received
-		   a final reply previously -- discard , unless
-		   a recoverable error occured, in which case
-		   retry
-	    */
-		if (Trans->uac[branch].last_received>=200) {
-			/* then drop! */
-			*should_store=0;
-			*should_relay=-1;
-			return RPS_DISCARDED;
-		}
-
-		Trans->uac[branch].last_received=new_code;
-		/* if all_final return lowest */
-		lowest_b=-1; lowest_s=999;
-		for ( b=0; b<Trans->nr_of_outgoings ; b++ ) {
-			/* "fake" for the currently processed branch */
-			if (b==branch) {
-				if (new_code<lowest_s) {
-					lowest_b=b;
-					lowest_s=new_code;
-				}
-				continue;
-			}
-			/* skip 'empty branches' */
-			if (!Trans->uac[b].request.buffer) continue;
-			/* there is still an unfinished UAC transaction; wait now! */
-			if ( Trans->uac[b].last_received<200 ) {
-				*should_store=1;	
-				*should_relay=-1;
-				return RPS_STORE;
-			}
-			if ( Trans->uac[b].last_received<lowest_s )
-			{
-				lowest_b =b;
-				lowest_s = Trans->uac[b].last_received;
-			}
-		} /* find lowest branch */
-		if (lowest_b==-1) {
-			LOG(L_CRIT, "ERROR: t_should_relay_response: lowest==-1\n");
-		}
-		/* no more pending branches -- try if that changes after
-		   a callback
-		*/
-		callback_event( TMCB_ON_FAILURE, Trans, 
-			lowest_b==branch?reply:Trans->uac[lowest_b].reply, 
-			lowest_s );
-
-		/* here, we create a faked environment, from which we
-		 * return to request processing, if marked to do so */
-		origin_rq=Trans->uas.request;
-		on_neg=Trans->on_negative;
-		if (on_neg) {
-			DBG("DBG: on_negative_reply processed for transaction %p\n", 
-					Trans);
-			if (faked_env(&faked_msg, Trans, Trans->uas.request, 
-									0 /* create fake */ )) 
-			{
-				/* use the faked message later in forwarding */
-				origin_rq=&faked_msg;
-	  		 	/* run a reply_route action if some was marked */
-				if (run_actions(reply_rlist[on_neg], &faked_msg )<0)
-					LOG(L_ERR, "ERROR: on_negative_reply: "
-						"Error in do_action\n");
-			} else { /* faked_env creation error */
-				LOG(L_ERR, "ERROR: on_negative_reply: faked_env failed\n");
-				on_neg=0;
-			} 
-		} /* if (on_neg) */
-
-
-		/* look if the callback perhaps replied transaction; it also
-		   covers the case in which a transaction is replied localy
-		   on CANCEL -- then it would make no sense to proceed to
-		   new branches bellow
-		*/
-		if (Trans->uas.status >= 200) {
-			*should_store=0;
-			*should_relay=-1;
-			/* this might deserve an improvement -- if something
-			   was already replied, it was put on wait and then,
-			   returning RPS_COMPLETED will make t_on_reply
-			   put it on wait again; perhaps splitting put_on_wait
-			   from send_reply or a new RPS_ code would be healthy
-			*/
-			if (on_neg) faked_env(&faked_msg, 0, 0, 1 );
-			return RPS_COMPLETED;
-		}
-		/* look if the callback introduced new branches ... */
-		init_branch_iterator();
-		if (next_branch(&dummy)) {
-			if (t_forward_nonack(Trans, origin_rq,
-						(struct proxy_l *) 0,
-						Trans->uas.response.dst.proto)<0) {
-				/* error ... behave as if we did not try to
-				   add a new branch */
-				*should_store=0;
-				*should_relay=lowest_b;
-				if (on_neg) faked_env(&faked_msg, 0, 0, 1 );
-				return RPS_COMPLETED;
-			}
-			/* we succeded to launch new branches -- await
-			   result
-			*/
-			*should_store=1;
-			*should_relay=-1;
-			if (on_neg) faked_env(&faked_msg, 0, 0, 1 );
-			return RPS_STORE;
-		}
-		/* really no more pending branches -- return lowest code */
-		*should_store=0;
-		*should_relay=lowest_b;
-		if (on_neg) faked_env(&faked_msg, 0, 0, 1 );
-		/* we dont need 'which_cancel' here -- all branches 
-		   known to have completed */
-		/* which_cancel( Trans, cancel_bitmap ); */
-		return RPS_COMPLETED;
-	} 
-
-	/* not >=300 ... it must be 2xx or provisional 1xx */
-	if (new_code>=100) {
-		/* 1xx and 2xx except 100 will be relayed */
-		Trans->uac[branch].last_received=new_code;
-		*should_store=0;
-		*should_relay= new_code==100? -1 : branch;
-		if (new_code>=200 ) {
-			which_cancel( Trans, cancel_bitmap );
-			return RPS_COMPLETED;
-		} else return RPS_PROVISIONAL;
-	}
-
-	/* reply_status didn't match -- it must be something weird */
-	LOG(L_CRIT, "ERROR: Oh my gooosh! We don't know whether to relay %d\n",
-		new_code);
-	*should_store=0;
-	*should_relay=-1;
-	return RPS_DISCARDED;
-}
-
-/* Retransmits the last sent inbound reply.
- * input: p_msg==request for which I want to retransmit an associated reply
- * Returns  -1 - error
- *           1 - OK
- */
-int t_retransmit_reply( struct cell *t )
-{
-	static char b[BUF_SIZE];
-	int len;
-
-	/* first check if we managed to resolve topmost Via -- if
-	   not yet, don't try to retransmit
-	*/
-	if (!t->uas.response.dst.send_sock) {
-		LOG(L_WARN, "WARNING: t_retransmit_reply: "
-			"no resolved dst to retransmit\n");
-		return -1;
-	}
-
-	/* we need to lock the transaction as messages from
-	   upstream may change it continuously
-	*/
-	LOCK_REPLIES( t );
-
-	if (!t->uas.response.buffer) {
-		DBG("DBG: t_retransmit_reply: nothing to retransmit\n");
-		goto error;
-	}
-
-	len=t->uas.response.buffer_len;
-	if ( len==0 || len>BUF_SIZE )  {
-		DBG("DBG: t_retransmit_reply: "
-			"zero length or too big to retransmit: %d\n", len);
-		goto error;
-	}
-	memcpy( b, t->uas.response.buffer, len );
-	UNLOCK_REPLIES( t );
-	SEND_PR_BUFFER( & t->uas.response, b, len );
-	DBG("DEBUG: reply retransmitted. buf=%p: %.9s..., shmem=%p: %.9s\n", 
-		b, b, t->uas.response.buffer, t->uas.response.buffer );
-	return 1;
-
-error:
-	UNLOCK_REPLIES(t);
-	return -1;
-}
-
-
-
-
-int t_reply( struct cell *t, struct sip_msg* p_msg, unsigned int code, 
-	char * text )
-{
-	return _reply( t, p_msg, code, text, 1 /* lock replies */ );
-}
-
-int t_reply_unsafe( struct cell *t, struct sip_msg* p_msg, unsigned int code, 
-	char * text )
-{
-	return _reply( t, p_msg, code, text, 0 /* don't lock replies */ );
-}
-
-
-static inline void update_local_tags(struct cell *trans, 
-				struct bookmark *bm, char *dst_buffer,
-				char *src_buffer /* to which bm refers */)
-{
-	if (bm->to_tag_val.s) {
-		trans->uas.local_totag.s=bm->to_tag_val.s-src_buffer+dst_buffer;
-		trans->uas.local_totag.len=bm->to_tag_val.len;
-	}
-}
-
 
 static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 			 unsigned int code, char * text, 
@@ -678,6 +334,7 @@ error:
 	return -1;
 }
 
+
 /* send a UAS reply
  * returns 1 if everything was OK or -1 for error
  */
@@ -711,6 +368,375 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 				    lock, &bm);
 	}
 }
+
+
+/* create a temporary faked message environment in which a conserved
+ * t->uas.request in shmem is partially duplicated to pkgmem
+ * to allow pkg-based actions to use it; 
+ *
+ * if restore parameter is set, the environment is restored to the
+ * original setting and return value is unsignificant (always 0); 
+ * otherwise  a faked environment if created; if that fails,
+ * false is returned
+ */
+static int faked_env(struct sip_msg *fake, 
+				struct cell *_t,
+				struct sip_msg *shmem_msg,
+				int _restore )
+{
+	static enum route_mode backup_mode;
+	static struct cell *backup_t;
+	static unsigned int backup_msgid;
+
+	if (_restore) goto restore;
+
+	/* 
+     on_negative_reply faked msg now copied from shmem msg (as opposed
+     to zero-ing) -- more "read-only" actions (exec in particular) will 
+     work from reply_route as they will see msg->from, etc.; caution, 
+     rw actions may append some pkg stuff to msg, which will possibly be 
+     never released (shmem is released in a single block)
+    */
+	memcpy( fake, shmem_msg, sizeof(struct sip_msg));
+
+	/* if we set msg_id to something different from current's message
+       id, the first t_fork will properly clean new branch URIs
+	*/
+	fake->id=shmem_msg->id-1;
+	/* set items, which will be duped to pkg_mem, to zero, so that
+	 * "restore" called on error does not free the original items */
+	fake->add_rm=0;
+	fake->new_uri.s=0; fake->new_uri.len=0; 
+
+	/* remember we are back in request processing, but process
+	 * a shmem-ed replica of the request; advertise it in rmode;
+	 * for example t_reply needs to know that
+	 */
+	backup_mode=rmode;
+	rmode=MODE_ONFAILURE;
+	/* also, tm actions look in beginning whether tranaction is
+	 * set -- whether we are called from a reply-processing 
+	 * or a timer process, we need to set current transaction;
+	 * otherwise the actions would attempt to look the transaction
+	 * up (unnecessary overhead, refcounting)
+	 */
+	/* backup */
+	backup_t=get_t();
+	backup_msgid=global_msg_id;
+	/* fake transaction and message id */
+	global_msg_id=fake->id;
+	set_t(_t);
+
+	/* environment is set up now, try to fake the message */
+
+	/* new_uri can change -- make a private copy */
+	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
+		fake->new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
+		if (!fake->new_uri.s) {
+			LOG(L_ERR, "ERROR: faked_env: no uri/pkg mem\n");
+			goto restore;
+		}
+		fake->new_uri.len=shmem_msg->new_uri.len;
+		memcpy( fake->new_uri.s, shmem_msg->new_uri.s, 
+			fake->new_uri.len);
+		fake->new_uri.s[fake->new_uri.len]=0;
+	} 
+
+	/* create a duplicated lump list to which actions can add
+	 * new pkg items 
+	 */
+	if (shmem_msg->add_rm) {
+		fake->add_rm=dup_lump_list(shmem_msg->add_rm);
+		if (!fake->add_rm) { /* non_emty->empty ... failure */
+			LOG(L_ERR, "ERROR: on_negative_reply: lump dup failed\n");
+			goto restore;
+		}
+	}
+	/* success */
+	return 1;
+
+restore:
+	/* restore original environment and destroy faked message */
+	free_duped_lump_list(fake->add_rm);
+	if (fake->new_uri.s) pkg_free(fake->new_uri.s);
+	set_t(backup_t);
+	global_msg_id=backup_msgid;
+	rmode=backup_mode;
+	return 0;
+}
+
+/* return 1 if a failure_route processes */
+int failure_route(struct cell *t)
+{
+	struct sip_msg faked_msg;
+
+	/* don't do anything if we don't have to */
+	if (!t->on_negative) return 0;
+
+	/* if fake message creation failes, return error too */
+	if (!faked_env(&faked_msg, t, t->uas.request, 0 /* create fake */ )) {
+		LOG(L_ERR, "ERROR: on_negative_reply: faked_env failed\n");
+		return 0;
+	}
+
+	/* avoid recursion -- if failure_route forwards, and does not 
+	 * set next failure route, failure_route will not be rentered
+	 * on failure */
+	t_on_negative(0);
+	/* run a reply_route action if some was marked */
+	if (run_actions(failure_rlist[t->on_negative], &faked_msg)<0)
+		LOG(L_ERR, "ERROR: on_negative_reply: "
+			"Error in do_action\n");
+	/* restore original environment */
+	faked_env(&faked_msg, 0, 0, 1 );
+	return 1;
+}
+
+
+/* select a branch for forwarding; returns:
+ * 0..X ... branch number
+ * -1   ... error
+ * -2   ... can't decide yet -- incomplete branches present
+ */
+static int pick_branch( int inc_branch, int inc_code, 
+			struct cell *t, int *res_code)
+{
+	int lowest_b, lowest_s, b;
+
+	lowest_b=-1; lowest_s=999;
+	for ( b=0; b<t->nr_of_outgoings ; b++ ) {
+		/* "fake" for the currently processed branch */
+		if (b==inc_branch) {
+			if (inc_code<lowest_s) {
+				lowest_b=b;
+				lowest_s=inc_code;
+			}
+			continue;
+		}
+		/* skip 'empty branches' */
+		if (!t->uac[b].request.buffer) continue;
+		/* there is still an unfinished UAC transaction; wait now! */
+		if ( t->uac[b].last_received<200 ) 
+			return -2;
+		if ( t->uac[b].last_received<lowest_s ) {
+			lowest_b =b;
+			lowest_s = t->uac[b].last_received;
+		}
+	} /* find lowest branch */
+
+	*res_code=lowest_s;
+	return lowest_b;
+}
+
+/* This is the neuralgical point of reply processing -- called
+ * from within a REPLY_LOCK, t_should_relay_response decides
+ * how a reply shall be processed and how transaction state is
+ * affected.
+ *
+ * Checks if the new reply (with new_code status) should be sent or not
+ *  based on the current
+ * transactin status.
+ * Returns 	- branch number (0,1,...) which should be relayed
+ *         -1 if nothing to be relayed
+ */
+static enum rps t_should_relay_response( struct cell *Trans , int new_code,
+	int branch , int *should_store, int *should_relay,
+	branch_bm_t *cancel_bitmap, struct sip_msg *reply )
+{
+	
+	int branch_cnt;
+	int picked_branch;
+	int picked_code;
+
+	/* note: this code never lets replies to CANCEL go through;
+	   we generate always a local 200 for CANCEL; 200s are
+	   not relayed because it's not an INVITE transaction;
+	   >= 300 are not relayed because 200 was already sent
+	   out
+	*/
+	DBG("->>>>>>>>> T_code=%d, new_code=%d\n",Trans->uas.status,new_code);
+	/* if final response sent out, allow only INVITE 2xx  */
+	if ( Trans->uas.status >= 200 ) {
+		if (new_code>=200 && new_code < 300  && 
+#ifdef _BUG_FIX /* t may be local, in which case there is no request */
+			Trans->uas.request->REQ_METHOD==METHOD_INVITE) {
+#endif
+			Trans->is_invite ) {
+			DBG("DBG: t_should_relay: 200 INV after final sent\n");
+			*should_store=0;
+			Trans->uac[branch].last_received=new_code;
+			*should_relay=branch;
+			return RPS_PUSHED_AFTER_COMPLETION;
+		} else {
+			/* except the exception above, too late  messages will
+			   be discarded */
+			*should_store=0;
+			*should_relay=-1;
+			return RPS_DISCARDED;
+		}
+	} 
+
+	/* no final response sent yet */
+	/* negative replies subject to fork picking */
+	if (new_code >=300 ) {
+		/* negative reply received after we have received
+		   a final reply previously -- discard , unless
+		   a recoverable error occured, in which case
+		   retry
+	    */
+		if (Trans->uac[branch].last_received>=200) {
+			/* then drop! */
+			*should_store=0;
+			*should_relay=-1;
+			return RPS_DISCARDED;
+		}
+
+		Trans->uac[branch].last_received=new_code;
+
+
+		/* if all_final return lowest */
+		picked_branch=pick_branch(branch,new_code, Trans, &picked_code);
+		if (picked_branch==-2) { /* branches open yet */
+			*should_store=1;	
+			*should_relay=-1;
+			return RPS_STORE;
+		}
+		if (picked_branch==-1) {
+			LOG(L_CRIT, "ERROR: t_should_relay_response: lowest==-1\n");
+			goto error;
+		}
+
+		/* no more pending branches -- try if that changes after
+		   a callback; save banch count to be able to determine
+		   later if new branches were initiated
+		*/
+		branch_cnt=Trans->nr_of_outgoings;
+		callback_event( TMCB_ON_FAILURE, Trans, 
+			picked_branch==branch?reply:Trans->uac[picked_branch].reply, 
+			picked_code);
+		/* here, we create a faked environment, from which we
+		 * return to request processing, if marked to do so */
+		failure_route(Trans);
+
+		/* look if the callback perhaps replied transaction; it also
+		   covers the case in which a transaction is replied localy
+		   on CANCEL -- then it would make no sense to proceed to
+		   new branches bellow
+		*/
+		if (Trans->uas.status >= 200) {
+			*should_store=0;
+			*should_relay=-1;
+			/* this might deserve an improvement -- if something
+			   was already replied, it was put on wait and then,
+			   returning RPS_COMPLETED will make t_on_reply
+			   put it on wait again; perhaps splitting put_on_wait
+			   from send_reply or a new RPS_ code would be healthy
+			*/
+			return RPS_COMPLETED;
+		}
+		/* look if the callback/failure_route introduced new branches ... */
+		if (branch_cnt<Trans->nr_of_outgoings)  {
+			/* await then result of new branches */
+			*should_store=1;
+			*should_relay=-1;
+			return RPS_STORE;
+		}
+
+		/* really no more pending branches -- return lowest code */
+		*should_store=0;
+		*should_relay=picked_branch;
+		/* we dont need 'which_cancel' here -- all branches 
+		   known to have completed */
+		/* which_cancel( Trans, cancel_bitmap ); */
+		return RPS_COMPLETED;
+	} 
+
+	/* not >=300 ... it must be 2xx or provisional 1xx */
+	if (new_code>=100) {
+		/* 1xx and 2xx except 100 will be relayed */
+		Trans->uac[branch].last_received=new_code;
+		*should_store=0;
+		*should_relay= new_code==100? -1 : branch;
+		if (new_code>=200 ) {
+			which_cancel( Trans, cancel_bitmap );
+			return RPS_COMPLETED;
+		} else return RPS_PROVISIONAL;
+	}
+
+error:
+	/* reply_status didn't match -- it must be something weird */
+	LOG(L_CRIT, "ERROR: Oh my gooosh! We don't know whether to relay %d\n",
+		new_code);
+	*should_store=0;
+	*should_relay=-1;
+	return RPS_DISCARDED;
+}
+
+/* Retransmits the last sent inbound reply.
+ * input: p_msg==request for which I want to retransmit an associated reply
+ * Returns  -1 - error
+ *           1 - OK
+ */
+int t_retransmit_reply( struct cell *t )
+{
+	static char b[BUF_SIZE];
+	int len;
+
+	/* first check if we managed to resolve topmost Via -- if
+	   not yet, don't try to retransmit
+	*/
+	if (!t->uas.response.dst.send_sock) {
+		LOG(L_WARN, "WARNING: t_retransmit_reply: "
+			"no resolved dst to retransmit\n");
+		return -1;
+	}
+
+	/* we need to lock the transaction as messages from
+	   upstream may change it continuously
+	*/
+	LOCK_REPLIES( t );
+
+	if (!t->uas.response.buffer) {
+		DBG("DBG: t_retransmit_reply: nothing to retransmit\n");
+		goto error;
+	}
+
+	len=t->uas.response.buffer_len;
+	if ( len==0 || len>BUF_SIZE )  {
+		DBG("DBG: t_retransmit_reply: "
+			"zero length or too big to retransmit: %d\n", len);
+		goto error;
+	}
+	memcpy( b, t->uas.response.buffer, len );
+	UNLOCK_REPLIES( t );
+	SEND_PR_BUFFER( & t->uas.response, b, len );
+	DBG("DEBUG: reply retransmitted. buf=%p: %.9s..., shmem=%p: %.9s\n", 
+		b, b, t->uas.response.buffer, t->uas.response.buffer );
+	return 1;
+
+error:
+	UNLOCK_REPLIES(t);
+	return -1;
+}
+
+
+
+
+int t_reply( struct cell *t, struct sip_msg* p_msg, unsigned int code, 
+	char * text )
+{
+	return _reply( t, p_msg, code, text, 1 /* lock replies */ );
+}
+
+int t_reply_unsafe( struct cell *t, struct sip_msg* p_msg, unsigned int code, 
+	char * text )
+{
+	return _reply( t, p_msg, code, text, 0 /* don't lock replies */ );
+}
+
+
+
+
 
 void set_final_timer( /* struct s_table *h_table, */ struct cell *t )
 {
@@ -1017,7 +1043,7 @@ error:
   *  Returns :   0 - core router stops
   *              1 - core router relay statelessly
   */
-int t_on_reply( struct sip_msg  *p_msg )
+int reply_received( struct sip_msg  *p_msg )
 {
 
 	int msg_status;
@@ -1067,6 +1093,13 @@ int t_on_reply( struct sip_msg  *p_msg )
 	/* stop final response timer only if I got a final response */
 	if ( msg_status >= 200 )
 		reset_timer( &uac->request.fr_timer);
+
+	/* processing of on_reply block */
+	if (t->on_reply) {
+		rmode=MODE_ONREPLY;
+	 	if (run_actions(onreply_rlist[t->on_reply], p_msg)<0) 
+			LOG(L_ERR, "ERROR: on_reply processing failed\n");
+	}
 
 	LOCK_REPLIES( t );
 	if (t->local) {

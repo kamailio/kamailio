@@ -35,6 +35,7 @@
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-04-01  added dst_port, proto, af; renamed comp_port to comp_no,
  *               inlined all the comp_* functions (andrei)
+ *  2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
  */
 
  
@@ -63,7 +64,8 @@
 /* main routing script table  */
 struct action* rlist[RT_NO];
 /* reply routing table */
-struct action* reply_rlist[REPLY_RT_NO];
+struct action* onreply_rlist[ONREPLY_RT_NO];
+struct action* failure_rlist[FAILURE_RT_NO];
 
 
 static int fix_actions(struct action* a); /*fwd declaration*/
@@ -559,9 +561,16 @@ int fix_rls()
 			}
 		}
 	}
-	for(i=0;i<REPLY_RT_NO;i++){
-		if(reply_rlist[i]){
-			if ((ret=fix_actions(reply_rlist[i]))!=0){
+	for(i=0;i<ONREPLY_RT_NO;i++){
+		if(onreply_rlist[i]){
+			if ((ret=fix_actions(onreply_rlist[i]))!=0){
+				return ret;
+			}
+		}
+	}
+	for(i=0;i<FAILURE_RT_NO;i++){
+		if(failure_rlist[i]){
+			if ((ret=fix_actions(failure_rlist[i]))!=0){
 				return ret;
 			}
 		}
@@ -587,13 +596,22 @@ void print_rl()
 		}
 		DBG("\n");
 	}
-	for(j=0; j<REPLY_RT_NO; j++){
-		if (reply_rlist[j]==0){
-			if (j==0) DBG("WARNING: the main reply routing table is empty\n");
+	for(j=0; j<ONREPLY_RT_NO; j++){
+		if (onreply_rlist[j]==0){
 			continue;
 		}
-		DBG("routing table %d:\n",j);
-		for (t=reply_rlist[j],i=0; t; i++, t=t->next){
+		DBG("onreply routing table %d:\n",j);
+		for (t=onreply_rlist[j],i=0; t; i++, t=t->next){
+			print_action(t);
+		}
+		DBG("\n");
+	}
+	for(j=0; j<FAILURE_RT_NO; j++){
+		if (failure_rlist[j]==0){
+			continue;
+		}
+		DBG("failure routing table %d:\n",j);
+		for (t=failure_rlist[j],i=0; t; i++, t=t->next){
 			print_action(t);
 		}
 		DBG("\n");

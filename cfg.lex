@@ -32,6 +32,7 @@
  *  2003-01-23  mhomed added (jiri)
  *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-04-01  added dst_port, proto (tcp, udp, tls), af(inet, inet6) (andrei)
+ *  2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
  */
 
 
@@ -78,7 +79,8 @@ SEND_TCP	send_tcp
 LOG		log
 ERROR	error
 ROUTE	route
-REPL_ROUTE reply_route
+FAILURE_ROUTE failure_route
+ONREPLY_ROUTE onreply_route
 EXEC	exec
 SETFLAG		setflag
 RESETFLAG	resetflag
@@ -106,7 +108,11 @@ MAX_LEN			"max_len"
 
 /* condition keywords */
 METHOD	method
-URI		uri
+/* hack -- the second element in first line is referrable
+   as either uri or status; it only would makes sense to
+   call it "uri" from route{} and status from onreply_route{}
+*/
+URI		"uri"|"status"
 SRCIP	src_ip
 SRCPORT	src_port
 DSTIP	dst_ip
@@ -206,7 +212,8 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{ISFLAGSET}	{ count(); yylval.strval=yytext; return ISFLAGSET; }
 <INITIAL>{LEN_GT}	{ count(); yylval.strval=yytext; return LEN_GT; }
 <INITIAL>{ROUTE}	{ count(); yylval.strval=yytext; return ROUTE; }
-<INITIAL>{REPL_ROUTE}	{ count(); yylval.strval=yytext; return REPL_ROUTE; }
+<INITIAL>{ONREPLY_ROUTE}	{ count(); yylval.strval=yytext; return ONREPLY_ROUTE; }
+<INITIAL>{FAILURE_ROUTE}	{ count(); yylval.strval=yytext; return FAILURE_ROUTE; }
 <INITIAL>{EXEC}	{ count(); yylval.strval=yytext; return EXEC; }
 <INITIAL>{SET_HOST}	{ count(); yylval.strval=yytext; return SET_HOST; }
 <INITIAL>{SET_HOSTPORT}	{ count(); yylval.strval=yytext; return SET_HOSTPORT; }

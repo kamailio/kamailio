@@ -51,7 +51,7 @@ enum rps {
 	RPS_PROVISIONAL
 };
 
-enum route_mode { MODE_REQUEST=1, MODE_ONREPLY_REQUEST };
+enum route_mode { MODE_REQUEST=1, MODE_ONREPLY, MODE_ONFAILURE };
 extern enum route_mode rmode;
 
 /* has this to-tag been never seen in previous 200/INVs? */
@@ -74,7 +74,7 @@ typedef int (*treply_wb_f)( struct cell* trans,
  * Returns :   0 - core router stops
  *             1 - core router relay statelessly
  */
-int t_on_reply( struct sip_msg  *p_msg ) ;
+int reply_received( struct sip_msg  *p_msg ) ;
 
 
 /* Retransmits the last sent inbound reply.
@@ -126,8 +126,10 @@ void on_negative_reply( struct cell* t, struct sip_msg* msg,
 /* set which 'reply' structure to take if only negative
    replies arrive 
 */
-int t_on_negative( unsigned int go_to );
+void t_on_negative( unsigned int go_to );
 unsigned int get_on_negative();
+void t_on_reply( unsigned int go_to );
+unsigned int get_on_reply();
 
 int t_retransmit_reply( struct cell *t );
 

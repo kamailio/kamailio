@@ -35,6 +35,7 @@
  * 2003-03-19  Added support for route type in find_export (janakj)
  * 2003-03-20  Regex support in modparam (janakj)
  * 2003-04-01  added dst_port, proto , af (andrei)
+ * 2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
  */
 
 
@@ -106,7 +107,8 @@ int rt;  /* Type of route block for find_export */
 %token LOG_TOK
 %token ERROR
 %token ROUTE
-%token REPL_ROUTE
+%token FAILURE_ROUTE
+%token ONREPLY_ROUTE
 %token EXEC
 %token SET_HOST
 %token SET_HOSTPORT
@@ -221,7 +223,8 @@ statements:	statements statement {}
 statement:	assign_stm 
 		| module_stm
 		| {rt=REQUEST_ROUTE;} route_stm 
-		| {rt=REPLY_ROUTE;} reply_route_stm
+		| {rt=FAILURE_ROUTE;} failure_route_stm
+		| {rt=ONREPLY_ROUTE;} onreply_route_stm
 
 		| CR	/* null statement*/
 	;
@@ -463,15 +466,26 @@ route_stm:  ROUTE LBRACE actions RBRACE { push($3, &rlist[DEFAULT_RT]); }
 		| ROUTE error { yyerror("invalid  route  statement"); }
 	;
 
-reply_route_stm: REPL_ROUTE LBRACK NUMBER RBRACK LBRACE actions RBRACE {
-										if (($3<REPLY_RT_NO)&&($3>=1)){
-											push($6, &reply_rlist[$3]);
+failure_route_stm: FAILURE_ROUTE LBRACK NUMBER RBRACK LBRACE actions RBRACE {
+										if (($3<FAILURE_RT_NO)&&($3>=1)){
+											push($6, &failure_rlist[$3]);
 										} else {
 											yyerror("invalid reply routing"
 												"table number");
 											YYABORT; }
 										}
-		| REPL_ROUTE error { yyerror("invalid reply_route statement"); }
+		| FAILURE_ROUTE error { yyerror("invalid failure_route statement"); }
+	;
+
+onreply_route_stm: ONREPLY_ROUTE LBRACK NUMBER RBRACK LBRACE actions RBRACE {
+										if (($3<ONREPLY_RT_NO)&&($3>=1)){
+											push($6, &onreply_rlist[$3]);
+										} else {
+											yyerror("invalid reply routing"
+												"table number");
+											YYABORT; }
+										}
+		| ONREPLY_ROUTE error { yyerror("invalid failure_route statement"); }
 	;
 /*
 rules:	rules rule { push($2, &$1); $$=$1; }

@@ -35,10 +35,13 @@ New features
 - improved tm/FIFO (external applications, such as
   click-to-dial can now better initiate transactions)
   [tm module]
+- nathelper utility for Cisco/ATA NAT traversal
 - powerpc fast locking support
 - netbsd support
 - 64 bits arch. support (e.g. netbsd/sparc64).
 - tcp2udp and udp2tcp stateless forwarding (see forward_udp & forward_tcp)
+- rich access control lists [module permissions]
+
 
 Changes to use of ser scripts
 =============================
@@ -47,6 +50,8 @@ Changes to use of ser scripts
 core
 ----
 XXX TCP
+- reply_route has been renamed to failure_route -- the old name caused
+  too much confusion
 
 acc module:
 -----------
@@ -94,4 +99,26 @@ tm module:
 ----------
 - t_reply_unsafe, used in former versions within reply_routes,
   is deprecated; now t_reply is used from any places in script
-- XXX t_uac/FIFO
+- t_on_negative is renamed to t_on_failure -- the old name just
+  caused too much confusion
+- FIFO t_uac used by some applications (like serweb) has been
+  replaced with t_uac_dlg (which allows easier use by dialog-
+  oriented applications, like click-to-dial) 
+- if you wish to do forward to another destination from 
+  failure_route (reply_route formerly), you need to call t_relay
+  or t_relay_to explicitely now
+
+List of new modules:
+--------------------
+- dbtext -- flat-file database
+- domain -- automated domain management
+- enum -- ENUM support
+- nathelper -- utility for NAT traversal for Cisco ATAs
+- pa -- presence agent
+- permissions -- ACLs
+- vm -- voicemail interface
+
+List of deprecated modules:
+---------------------------
+- im (t_uac_dlg is used for sending messages)
+- radius_acc (radius accounting now part of acc module)

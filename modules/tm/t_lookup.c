@@ -67,6 +67,8 @@
  * 2003-03-30  set_kr for requests only (jiri)
  * 2003-04-04  bug_fix: RESPONSE_IN callback not called for local
  *             UAC transactions (jiri)
+ * 2003-04-07  new transactions inherit on_negative and on_relpy from script
+ *             variables on instatntiation (jiri)
  */
 
 
@@ -1023,6 +1025,8 @@ int t_newtran( struct sip_msg* p_msg )
 
 				new_cell->method=new_cell->uas.request->first_line.u.request.method;
 				new_cell->is_invite=p_msg->REQ_METHOD==METHOD_INVITE;
+				new_cell->on_negative=get_on_negative();
+				new_cell->on_reply=get_on_reply();
 
 			}
 

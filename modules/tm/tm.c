@@ -62,6 +62,7 @@
  *  2003-03-16  flags export parameter added (janakj)
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-03-30  set_kr for requests only (jiri)
+ *  2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
  */
 
 
@@ -125,6 +126,7 @@ inline static int w_t_forward_nonack_udp(struct sip_msg* msg, char* str,char*);
 inline static int w_t_forward_nonack_tcp(struct sip_msg* msg, char* str,char*);
 inline static int fixup_hostport2proxy(void** param, int param_no);
 inline static int w_t_on_negative( struct sip_msg* msg, char *go_to, char *foo );
+inline static int w_t_on_reply( struct sip_msg* msg, char *go_to, char *foo );
 
 
 static int mod_init(void);
@@ -135,23 +137,29 @@ static int child_init(int rank);
 static cmd_export_t cmds[]={
 	{"t_newtran",          w_t_newtran,             0, 0,                    REQUEST_ROUTE},
 	{"t_lookup_request",   w_t_check,               0, 0,                    REQUEST_ROUTE},
-	{T_REPLY,              w_t_reply,               2, fixup_t_send_reply,   REQUEST_ROUTE},
+	{T_REPLY,              w_t_reply,               2, fixup_t_send_reply,   
+			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"t_retransmit_reply", w_t_retransmit_reply,    0, 0,                    REQUEST_ROUTE},
 	{"t_release",          w_t_release,             0, 0,                    REQUEST_ROUTE},
-	{T_RELAY_TO,           w_t_relay_to,            2, fixup_hostport2proxy, REQUEST_ROUTE},
+	{T_RELAY_TO,           w_t_relay_to,            2, fixup_hostport2proxy, 
+			REQUEST_ROUTE | FAILURE_ROUTE },
 	{T_RELAY_TO_UDP,       w_t_relay_to_udp,        2, fixup_hostport2proxy, REQUEST_ROUTE},
 	{T_RELAY_TO_TCP,       w_t_relay_to_tcp,        2, fixup_hostport2proxy, REQUEST_ROUTE},
 	{"t_replicate",        w_t_replicate,           2, fixup_hostport2proxy, REQUEST_ROUTE},
 	{"t_replicate_udp",    w_t_replicate_udp,       2, fixup_hostport2proxy, REQUEST_ROUTE},
 	{"t_replicate_tcp",    w_t_replicate_tcp,       2, fixup_hostport2proxy, REQUEST_ROUTE},
-	{T_RELAY,              w_t_relay,               0, 0,                    REQUEST_ROUTE},
+	{T_RELAY,              w_t_relay,               0, 0,                    
+			REQUEST_ROUTE | FAILURE_ROUTE },
 	{T_RELAY_UDP,          w_t_relay_udp,           0, 0,                    REQUEST_ROUTE},
 	{T_RELAY_TCP,          w_t_relay_tcp,           0, 0,                    REQUEST_ROUTE},
 	{T_FORWARD_NONACK,     w_t_forward_nonack,      2, fixup_hostport2proxy, REQUEST_ROUTE},
 	{T_FORWARD_NONACK_UDP, w_t_forward_nonack_udp,  2, fixup_hostport2proxy, REQUEST_ROUTE},
 	{T_FORWARD_NONACK_TCP, w_t_forward_nonack_tcp,  2, fixup_hostport2proxy, REQUEST_ROUTE},
-	{"t_on_negative",      w_t_on_negative,         1, fixup_str2int,        REQUEST_ROUTE},
-	/* not applicable from the script -- ugly hack */
+	{"t_on_failure",       w_t_on_negative,         1, fixup_str2int,
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+	{"t_on_reply",         w_t_on_reply,            1, fixup_str2int,
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+	/* not applicable from the script */
 	{"register_tmcb",      (cmd_function)register_tmcb,     NO_SCRIPT,     0, 0},
 	{T_UAC_DLG,            (cmd_function)t_uac_dlg,         NO_SCRIPT,     0, 0},
 	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,     0, 0},
@@ -191,7 +199,7 @@ struct module_exports exports= {
 	params,
 	
 	mod_init, /* module initialization function */
-	(response_function) t_on_reply,
+	(response_function) reply_received,
 	(destroy_function) tm_shutdown,
 	0, /* w_onbreak, */
 	child_init /* per-child init function */
@@ -234,9 +242,12 @@ static int script_init( struct sip_msg *foo, void *bar)
 	   		message's t_on_negative value
 		*/
 		t_on_negative( 0 );
-
+		t_on_reply(0);
 		/* reset the kr status */
 		set_kr(0);
+		/* set request mode so that multiple-mode actions know
+		 * how to behave */
+		rmode=MODE_REQUEST;
 	}
 
 	return 1;
@@ -456,11 +467,14 @@ inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2)
 	 * is called; we are already in a mutex and another mutex in
 	 * the safe version would lead to a deadlock
 	 */
-	if (rmode==MODE_ONREPLY_REQUEST) { 
+	if (rmode==MODE_ONFAILURE) { 
 		DBG("DEBUG: t_reply_unsafe called from w_t_reply\n");
 		return t_reply_unsafe(t, msg, (unsigned int)(long) str, str2);
-	} else {
+	} else if (rmode==MODE_REQUEST) {
 		return t_reply( t, msg, (unsigned int)(long) str, str2);
+	} else {
+		LOG(L_CRIT, "BUG: w_t_reply entered in unsupported mode\n");
+		return -1;
 	}
 }
 
@@ -516,15 +530,74 @@ inline static int w_t_newtran( struct sip_msg* p_msg, char* foo, char* bar )
 
 inline static int w_t_on_negative( struct sip_msg* msg, char *go_to, char *foo )
 {
-	return t_on_negative( (unsigned int )(long) go_to );
+	struct cell *t;
+
+	if (rmode==MODE_REQUEST || rmode==MODE_ONFAILURE) {
+		t_on_negative( (unsigned int )(long) go_to );
+		return 1;
+	}
+	if (rmode==MODE_ONREPLY ) {
+		/* transaction state is established */
+		t=get_t();
+		if (!t || t==T_UNDEFINED) {
+			LOG(L_CRIT, "BUG: w_t_on_negative entered without t\n");
+			return -1;
+		}
+		t->on_negative=(unsigned int)(long)go_to;
+		return 1;
+	}
+	LOG(L_CRIT, "BUG: w_t_on_negative entered in unsupported mode\n");
+	return -1;
+}
+inline static int w_t_on_reply( struct sip_msg* msg, char *go_to, char *foo )
+{
+	struct cell *t;
+
+	if (rmode==MODE_REQUEST) {
+		/* it's still in initial request processing stage, transaction
+		 * state is not estabslihed yet, store it in private memory ...
+		 * it will be copied to transaction state when it is set up */
+		t_on_reply( (unsigned int )(long) go_to );
+		return 1;
+	}
+	if (rmode==MODE_ONREPLY || rmode==MODE_ONFAILURE) {
+		/* transaction state is established */
+		t=get_t();
+		if (!t || t==T_UNDEFINED) {
+			LOG(L_CRIT, "BUG: w_t_on_reply entered without t\n");
+			return -1;
+		}
+		t->on_reply=(unsigned int) (long)go_to;
+		return 1;
+	}
+	LOG(L_CRIT, "BUG: w_t_on_reply entered in unsupported mode\n");
+	return -1;
 }
 
 inline static int w_t_relay_to( struct sip_msg  *p_msg , 
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
-	return t_relay_to( p_msg, ( struct proxy_l *) proxy, p_msg->rcv.proto,
-	0 /* no replication */ );
+	struct cell *t;
+
+	if (rmode==MODE_ONFAILURE) { 
+		t=get_t();
+		if (!t || t==T_UNDEFINED) {
+			LOG(L_CRIT, "BUG: w_t_relay_to: undefined T\n");
+			return -1;
+		}
+		if (t_forward_nonack(t, p_msg, 
+				( struct proxy_l *) proxy, p_msg->rcv.proto)<=0 ) {
+			LOG(L_ERR, "ERROR: failure_route: t_relay_to failed\n");
+			return -1;
+		}
+		return 1;
+	}
+	if (rmode==MODE_REQUEST) 
+		return t_relay_to( p_msg, ( struct proxy_l *) proxy, p_msg->rcv.proto,
+			0 /* no replication */ );
+	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported mode: %d\n", rmode);
+	return 0;
 }
 
 inline static int w_t_relay_to_udp( struct sip_msg  *p_msg , 
@@ -571,9 +644,26 @@ inline static int w_t_replicate_tcp( struct sip_msg  *p_msg ,
 inline static int w_t_relay( struct sip_msg  *p_msg , 
 						char *_foo, char *_bar)
 {
-	return t_relay_to( p_msg, 
+	struct cell *t;
+
+	if (rmode==MODE_ONFAILURE) { 
+		t=get_t();
+		if (!t || t==T_UNDEFINED) {
+			LOG(L_CRIT, "BUG: w_t_relay: undefined T\n");
+			return -1;
+		} 
+		if (t_forward_nonack(t, p_msg, ( struct proxy_l *) 0, p_msg->rcv.proto)<=0) {
+			LOG(L_ERR, "ERROR: w_t_relay (failure mode): forwarding failed\n");
+			return -1;
+		}
+		return 1;
+	}
+	if (rmode==MODE_REQUEST) 
+		return t_relay_to( p_msg, 
 		(struct proxy_l *) 0 /* no proxy */, p_msg->rcv.proto,
 		0 /* no replication */ );
+	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported mode: %d\n", rmode);
+	return 0;
 }
 
 

@@ -322,6 +322,9 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 				|| !to || !to->s ) {
 		LOG(L_ERR, "ERROR: t_uac_dlg: invalid parameters\n");
 		ser_error = ret = E_INVALID_PARAMS;
+#ifdef XL_DEBUG
+		abort();
+#endif
 		goto done;
 	}
 

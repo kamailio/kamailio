@@ -44,7 +44,8 @@
 /* main "script table" */
 extern struct action* rlist[RT_NO];
 /* main reply route table */
-extern struct action* reply_rlist[RT_NO];
+extern struct action* onreply_rlist[RT_NO];
+extern struct action* failure_rlist[RT_NO];
 
 
 void push(struct action* a, struct action** head);

@@ -386,6 +386,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	int i;
 	struct cell *t_invite;
 	int success_branch;
+	int try_new;
 
 	/* make -Wall happy */
 	current_uri.s=0;
@@ -414,15 +415,17 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	   is in additional branches (which may be continuously refilled
 	*/
 	if (first_branch==0) {
+		try_new=1;
 		branch_ret=add_uac( t, p_msg, &GET_RURI(p_msg), &GET_NEXT_HOP(p_msg), proxy, proto );
 		if (branch_ret>=0) 
 			added_branches |= 1<<branch_ret;
 		else
 			lowest_ret=branch_ret;
-	}
+	} else try_new=0;
 
 	init_branch_iterator();
 	while((current_uri.s=next_branch( &current_uri.len))) {
+		try_new++;
 		branch_ret=add_uac( t, p_msg, &current_uri, 
 				    (p_msg->dst_uri.len) ? (&p_msg->dst_uri) : &current_uri, 
 				    proxy, proto);
@@ -444,10 +447,19 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	/* don't forget to clear all branches processed so far */
 
 	/* things went wrong ... no new branch has been fwd-ed at all */
-	if (added_branches==0)
+	if (added_branches==0) {
+		if (try_new==0) {
+			LOG(L_ERR, "ERROR: t_forward_nonack: no branched for fwding\n");
+			return -1;
+		}
+		LOG(L_ERR, "ERROR: t_forward_nonack: failure to add branches\n");
 		return lowest_ret;
+	}
 
-	/* if someone set on_negative, store in in T-context */
+	/* store script processing value of failure route to transactional
+	   context; if currently 0, this forwarding attempt will no longer 
+	   result in failure_route on error
+	*/
 	t->on_negative=get_on_negative();
 
 	/* send them out now */
