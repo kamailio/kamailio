@@ -151,7 +151,12 @@ static int search_append_f(struct sip_msg* msg, char* key, char* str)
 			return -1;
 		}
 		memcpy(s, str, len); 
-		return insert_new_lump_after(l, s, len, 0)?1:-1;
+		if (insert_new_lump_after(l, s, len, 0)==0){
+			LOG(L_ERR, "ERROR: could not insert new lump\n");
+			pkg_free(s);
+			return -1;
+		}
+		return 1;
 	}
 	return -1;
 }
@@ -177,7 +182,13 @@ static int replace_f(struct sip_msg* msg, char* key, char* str)
 			return -1;
 		}
 		memcpy(s, str, len); 
-		return insert_new_lump_after(l, s, strlen(str), 0)?1:-1;
+		if (insert_new_lump_after(l, s, strlen(str), 0)==0){
+			LOG(L_ERR, "ERROR: could not insert new lump\n");
+			pkg_free(s);
+			return -1;
+		}
+		
+		return 1;
 	}
 	return -1;
 }
@@ -256,9 +267,9 @@ static int append_hf_helper(struct sip_msg* msg, str *str1, str *str2)
 
 	if (insert_new_lump_before(anchor, s, len, 0) == 0) {
 		LOG(L_ERR, "append_hf(): Can't insert lump\n");
+		pkg_free(s);
 		return -1;
 	}
-
 	return 1;
 }
 
