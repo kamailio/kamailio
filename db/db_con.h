@@ -37,7 +37,7 @@
  * handle
  */
 typedef struct {
-	char* table;           /* Default table to use */
+	const char* table;     /* Default table to use */
 	unsigned long tail;    /* Variable length tail
 				* database module specific */    
 } db_con_t;
