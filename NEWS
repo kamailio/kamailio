@@ -6,6 +6,22 @@ $Id$
 ***********************************************
 * Changes/fixes introduced in 0.8.14
 ***********************************************
++--------------------------------------------------------+
+| WARNING: if you are using 0.8.12 you need to:          |
+|          - update the database: ser_mysql.sh reinstall |
+|            (but make a backup copy first)              |
+|          - if you are using enum, replace              |
+|            enum_query("") with enum_query()            |
+|          - if you are using nathelper, switch to the   |
+|             latest rtpproxy (cvs  co rtpproxy)         |
+|          - if you are using one of the radius modules  |
+|            you need to upgrade the radiusclient library|
+|            to at least version 0.4.1                   |
++--------------------------------------------------------+
+
+0.8.14 is mainly a bug-fix release. It doesn't introduce many new features. It
+was created from the cvs stable tree (rel_0_8_12), so if you have an up-to-date
+0.8.12 from cvs  you don't need to upgrade to 0.8.14.
 
 New Features
 ============
@@ -15,6 +31,22 @@ core:
 tm:
  - avp list inherit by transaction and made available in failure and onreply
    routes;
+enum:
+ - support for multiple private enum trees, e.g.: 
+      enum_query("foo.bar.", "voice");
+nathelper:
+ - lots of improvements, new flags, bridge mode a.s.o
+ - requires the latest rtpproxy
+ (cvs -d:pserver:anonymous@cvs.ser.berlios.de:/cvsroot/ser co rtpproxy)
+usrloc:
+ - database format changed (user agent field added); if you are upgrading
+   from an older ser version you need to run ser_mysql.sh reinstall to
+   update the location and alias tables
+*_radius:
+ - switched to radiusclient-ng, use at least version 0.4.1
+  (http://developer.berlios.de/projects/radiusclient-ng)
+mediaproxy:
+ - nathelper like nat traversal module
 
 
 

@@ -258,6 +258,20 @@ Maturity:   beta
 Depends on: -
 Purpose:    support for maintenance of multiple domains
 
+Name:       mediaproxy
+Owner:      danp, agprojects
+Use:        regular
+Maturity:   stable
+Depends on: mediaproxy media relay
+Purpose:    nat traversal
+
+Name:       nathelper
+Owner:      sobomax
+Use:        regular
+Maturity:   stable
+Depends on: rtpproxy
+Purpose:    nat traversal
+
 Name:		permissions
 Owner:		tirpi
 Use:		experimental

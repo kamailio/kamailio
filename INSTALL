@@ -32,10 +32,10 @@ TOC
 
 
 +--------------------------------------------------------+
-| CAUTION: the 0.8.11 release include changes which      |
+| CAUTION: the 0.8.14 release include changes which      |
 | are incompatible with scripts and databases used       |
 | in previous versions. Care is advised when upgrading   |
-| from previous releases to 0.8.11.                      |
+| from previous releases to 0.8.14.                      |
 +--------------------------------------------------------+
 
 
@@ -71,9 +71,6 @@ OS Notes:
 - FreeBSD/OpenBSD/NetBSD: make sure gmake, bison or yacc & flex are installed
 - Solaris: as above; you can use Solaris's yacc instead of bison. You might
   need also gtar and ginstall.
-- Windows: it works in windows (only the core, w/o shared mem. support) but you
-  must install a recent cygwin version (http://www.cygwin.com/) and also 
-  install a newer regex library version (>=0.12). 
     
 
 2. Howto Build ser From Source Distribution

@@ -45,7 +45,7 @@ export makefile_defs
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   14
-EXTRAVERSION = -rc1
+EXTRAVERSION = -rc2
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -154,8 +154,8 @@ MKTAGS=ctags -R .
 
 ifneq (,$(findstring gcc, $(CC_LONGVER)))
 	CC_NAME=gcc
-	CC_VER=$(CC) $(shell $(CC) --version|head -1| \
-				 sed -e 's/.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/' -e 's/[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
+	CC_VER=$(CC) $(shell $(CC) --version|head -n 1| \
+				 sed -e 's/^[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/' -e 's/^[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
 	# sun sed is a little brain damaged => this complicated expression
 	MKDEP=$(CC) -MM 
 	#transform gcc version into 2.9x or 3.0
@@ -167,7 +167,7 @@ endif
 
 ifneq (, $(findstring Sun, $(CC_LONGVER)))
 	CC_NAME=suncc
-	CC_SHORTVER=$(shell echo "$(CC_LONGVER)"|head -1| \
+	CC_SHORTVER=$(shell echo "$(CC_LONGVER)"|head -n 1| \
 					sed -e 's/.*\([0-9]\.[0-9]\).*/\1/g' )
 	CC_VER=$(CC) $(CC_SHORTVER)
 	MKDEP=$(CC) -xM1 
@@ -176,7 +176,7 @@ endif
 ifneq (, $(findstring Intel(R) C++ Compiler, $(CC_LONGVER)))
 	# very nice: gcc compatible
 	CC_NAME=icc
-	CC_FULLVER=$(shell echo "$(CC_LONGVER)"|head -1| \
+	CC_FULLVER=$(shell echo "$(CC_LONGVER)"|head -n 1| \
 					sed -e 's/.*Version \([0-9]\.[0-9]\.[0-9]*\).*/\1/g' )
 	CC_SHORTVER=$(shell echo "$(CC_FULLVER)" | cut -d. -f1,2 )
 	CC_VER=$(CC) $(CC_FULLVER)
