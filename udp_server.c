@@ -123,7 +123,7 @@ int udp_init(unsigned long ip, unsigned short port)
 	}
 	/* set sock opts? */
 	optval=1;
-	if (setsockopt(udp_sock, SOL_SOCKET, SO_REUSEADDR,
+	if (setsockopt(udp_sock, SOL_SOCKET, SO_REUSEADDR ,
 					(void*)&optval, sizeof(optval)) ==-1)
 	{
 		LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", strerror(errno));

@@ -1,0 +1,40 @@
+
+
+			nolock		flock		sysv		posix		pmutex		fastl
+
+Linux 2* Athlon 1200, 2.4.16:
+real		0.044/		 14.713		  9.330		  2.670		  1.730		 0.400
+user		0.040		  2.610		  2.950		  2.670		  1.720		 0.400
+sys			0.000		 12.110		  6.370		  0.000		  0.010		 0.000
+*			1			334.386		212.045		 60.681		 39.318		 9.090
+
+Linux 2*PIII, 2.4.17:
+real		0.056		 17.771		 14.476		  3.099		  1.902		 0.603
+user		0.050		  4.130		  5.120		  3.100		  1.900		 0.600
+sys			0.000		 13.650		  9.350		  0.000		  0.000		 0.000
+*			1			317.339		258.500		 55.339		 33.964		10.767
+
+Solaris 8:
+real		0.105		n/a			 48.490		 27.492		  3.602		 1.284
+user		0.090		n/a			 29.330		 27.410		  3.590		 1.270
+sys			0.010		n/a			 19.110		 0.010		  0.010		 0.020
+*			1			n/a			461.809		257.142		 34.304		12.228
+
+FreeBSD, PII 333:
+real:		0.147		 43.952		  54.428	 37.385		 15.706		 1.863
+user:		0.121		 12.761		  13.131	 31.958		 13.402		 1.606
+sys:		0.001		 25.149		  33.732	  0.017		  0.017		 0.001
+*			1  			299.061		 370.258	254.319		106.843		12.673
+
+
+nolock= no locking, just a loop
+flock= using flock
+sysv = using SYSV semaphores
+posix = using POSIX1003.1b semaphores (sem_wait, sem_post)
+pmutex = using pthread_mutex*
+fastl = using fastlock.h from ser (hand made assembler locks)
+
+Test: time ./locking_test* -c 10000000
+(sip_router/test/locking/*)
+
+
