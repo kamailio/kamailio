@@ -53,7 +53,7 @@ int acc_request( struct sip_msg *rq, char * comment, char  *foo)
 	   
 	if ( parse_headers(rq, HDR_FROM | HDR_CALLID, 0)==-1 
 				|| !(rq->from && rq->callid) ) {
-		LOG(L_ERR, "ERROR: acc_missed: From not dounf\n");
+		LOG(L_ERR, "ERROR: acc_missed: From not found\n");
 		return -1;
 	}
 	LOG( log_level,
