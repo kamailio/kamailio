@@ -33,20 +33,16 @@
  *  2003-03-16  flags export parameter added (janakj)
  */
 
-#include <stdio.h>
-#include "../../sr_module.h"
+#include <sr_module.h>
 #include "dbase.h"
 
+
 MODULE_VERSION
-
-
-static int mod_init(void);
 
 
 /*
  * MySQL database module interface
  */
-
 
 static cmd_export_t cmds[]={
 	{"db_use_table",  (cmd_function)use_table,     2, 0, 0},
@@ -62,22 +58,14 @@ static cmd_export_t cmds[]={
 };
 
 
-
 struct module_exports exports = {	
 	"mysql",
 	cmds,
 	0,   /*  module paramers */
 
-	mod_init, /* module initialization function */
-	0,        /* response function*/
-	0,        /* destroy function */
-	0,        /* oncancel function */
-	0         /* per-child init function */
+	0,   /* module initialization function */
+	0,   /* response function*/
+	0,   /* destroy function */
+	0,   /* oncancel function */
+	0    /* per-child init function */
 };
-
-
-static int mod_init(void)
-{
-	DBG("mysql - initializing\n");
-	return 0;
-}

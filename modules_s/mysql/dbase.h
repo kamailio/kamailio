@@ -31,11 +31,11 @@
 #ifndef DBASE_H
 #define DBASE_H
 
-#include "../../db/db_con.h"
-#include "../../db/db_res.h"
-#include "../../db/db_key.h"
-#include "../../db/db_op.h"
-#include "../../db/db_val.h"
+#include <db_con.h>
+#include <db_res.h>
+#include <db_key.h>
+#include <db_op.h>
+#include <db_val.h>
 
 
 /*
@@ -92,6 +92,13 @@ int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
  */
 int db_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	      db_key_t* _uk, db_val_t* _uv, int _n, int _un);
+
+
+/*
+ * Store name of table that will be used by
+ * subsequent database functions
+ */
+int use_table(db_con_t* _h, const char* _t);
 
 
 #endif /* DBASE_H */

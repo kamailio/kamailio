@@ -27,13 +27,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <stdlib.h>
-#include <mysql/mysql.h>
-#include "../../db/db_res.h"
-#include "../../dprint.h"
-#include "../../mem/mem.h"
+
+#include <mysql.h>
+#include <mem.h>
+#include <dprint.h>
+#include "row.h"
 #include "defs.h"
 #include "con_mysql.h"
+#include "res.h"
 
 
 /*

@@ -27,17 +27,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
+#include <stdio.h>
+#include <mem.h>
+#include <mysql.h>
+#include <dprint.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "db_utils.h"
 #include "defs.h"
-#include "dbase.h"
+#include "utils.h"
+#include "val.h"
 #include "con_mysql.h"
-
+#include "res.h"
+#include "dbase.h"
 
 static char sql_buf[SQL_BUF_LEN];
 
