@@ -36,6 +36,7 @@
  * 2003-04-04  grand acc cleanup (jiri)
  * 2003-04-06: Opens database connection in child_init only (janakj)
  * 2003-04-24  parameter validation (0 t->uas.request) added (jiri)
+ * 2003-11-04  multidomain support for mysql introduced (jiri)
  */
 
 
@@ -123,6 +124,7 @@ char* acc_i_uri_col         = "i_uri";
 char* acc_o_uri_col         = "o_uri";
 char* acc_totag_col			= "totag";
 char* acc_fromtag_col		= "fromtag";
+char* acc_domain_col		= "domain";
 char* acc_from_uri			= "from_uri";
 char* acc_to_uri			= "to_uri";
 char* acc_sip_callid_col    = "sip_callid";
@@ -188,6 +190,7 @@ static param_export_t params[] = {
 	{"acc_to_uri_column",		STR_PARAM, &acc_to_uri },
 	{"acc_totag_column",		STR_PARAM, &acc_totag_col },
 	{"acc_fromtag_column", 		STR_PARAM, &acc_fromtag_col },
+	{"acc_domain_column", 		STR_PARAM, &acc_domain_col },
 #endif
 	{0,0,0}
 };

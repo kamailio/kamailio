@@ -27,6 +27,7 @@
  * History:
  * ---------
  * 2003-04-04  grand acc cleanup (jiri)
+ * 2003-11-04  multidomain support for mysql introduced (jiri)
  */
 
 #ifndef _ACC_DEFS_H
@@ -34,17 +35,19 @@
 
 /* method, in-uri, out-uri, callid, from, status */
 #define DEFAULT_LOG_FMT "miocfs"
-/* Callid, to-tag (Dst), From, In-uri, Method, Out-uri, 
- * fRom-tag, Status,  To, digest User_id, userPart in-uri,
- * From Uri Userpart 0, To Uri Userpart 1, From uri , To uri,
- * User (digest, from-uri otherwise), 3-digit Status code, 
- * cseq Number  */ 
-#define ALL_LOG_FMT "cdfimorstup01FTUSn"
+/* c: Callid, d: to-tag (Dst), f: From, i: In-uri, m: Method, o: Out-uri, 
+ * r: fRom-tag, s: Status,  t: To, u: digest User_id, p: userPart in-uri,
+ * 0: From Uri Userpart, 1: To Uri Userpart, F: From uri , T: To uri,
+ * U: User (digest, from-uri otherwise), S: 3-digit Status code, 
+ * n: cseq Number, D: domain  */ 
+#define ALL_LOG_FMT "cdfimorstup01FTUSnDX"
 #define ALL_LOG_FMT_LEN (sizeof(ALL_LOG_FMT)-1)
 
 #ifdef SQL_ACC
-#	define SQL_ACC_FMT "FTmiofcts0dr"
-#	define SQL_MC_FMT  "FTmiofctspdr"
+/* username and domain taken from From header-field (0X) */
+#	define SQL_ACC_FMT "FTmiofcts0drX"
+/* username and domain taken from request-uri (pD) */
+#	define SQL_MC_FMT  "FTmiofctspdrD"
 #endif
 
 /* caution: keep consistent with definition of rad_attr */

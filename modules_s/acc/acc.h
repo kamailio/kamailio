@@ -27,6 +27,7 @@
  * History:
  * --------
  * 2003-04-04  grand acc cleanup (jiri)
+ * 2003-11-04  multidomain support for mysql introduced (jiri)
  */
 
 #ifndef _ACC_H
@@ -59,6 +60,8 @@
 #define A_FROM_LEN (sizeof(A_FROM)-1)
 #define A_FROMUSER "fromuser"
 #define A_FROMUSER_LEN (sizeof(A_FROMUSER)-1)
+#define A_FROMDOMAIN "fromdomain"
+#define A_FROMDOMAIN_LEN (sizeof (A_FROMDOMAIN)-1)
 #define A_IURI "i-uri"
 #define A_IURI_LEN (sizeof(A_IURI)-1)
 #define A_METHOD "method"
@@ -85,6 +88,8 @@
 #define A_CODE_LEN (sizeof(A_CODE)-1)
 #define A_REALM "realm"
 #define A_REALM_LEN (sizeof(A_REALM)-1)
+#define A_RURI_DOMAIN "domain"
+#define A_RURI_DOMAIN_LEN (sizeof(A_RURI_DOMAIN)-1)
 
 #define A_SEPARATOR ", " /* must be shorter than ACC! */
 #define A_SEPARATOR_LEN (sizeof(A_SEPARATOR)-1)
