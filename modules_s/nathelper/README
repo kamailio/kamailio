@@ -4,7 +4,15 @@
 
 
 
-This is a module to help with NAT traversal.
+This is a module to help with NAT traversal. In particular , it helps
+symmetric UAs that don't advertise they are symmetric and are not able
+to determine their public address. fix_nated_contact rewrites Contact
+header field with request's source address:port pair. 
+add_direction_active adds the active direction indication to SDP (flag
+0x01) and updates source IP address too (flag 0x02).
+
+Known devices that get along over NATs with nathelper are ATAs
+(as clients) and Cisco Gateways (since 12.2(T)) as servers.
 
 
 Exported Functions:
