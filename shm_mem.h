@@ -38,7 +38,7 @@ inline static void shm_lock()
 	sop.sem_op=-1; /*down*/
 	sop.sem_flg=0 /*SEM_UNDO*/;
 again:
-//	semop(shm_semid, &sop, 1);
+	semop(shm_semid, &sop, 1);
 #if 0
 	switch(ret){
 		case 0: /*ok*/
@@ -63,7 +63,7 @@ inline static void shm_unlock()
 	sop.sem_op=1; /*up*/
 	sop.sem_flg=0 /*SEM_UNDO*/;
 again:
-//	semop(shm_semid, &sop, 1);
+	semop(shm_semid, &sop, 1);
 #if 0
 	/*should ret immediately*/
 	switch(ret){

@@ -1,0 +1,232 @@
+/* $Id$ */
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <ctype.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#ifdef FLOCK
+#include <sys/file.h>
+
+static int lock_fd;
+#endif
+
+#ifdef LIN_SEM
+#include <semaphore.h>
+
+static sem_t sem;
+#endif
+
+#ifdef SYSV_SEM
+#include <sys/ipc.h>
+#include <sys/sem.h>
+
+
+#if defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)
+	/* union semun is defined by including <sys/sem.h> */
+#else
+	/* according to X/OPEN we have to define it ourselves */
+	union semun {
+		int val;                    /* value for SETVAL */
+		struct semid_ds *buf;       /* buffer for IPC_STAT, IPC_SET */
+		unsigned short int *array;  /* array for GETALL, SETALL */
+		struct seminfo *__buf;      /* buffer for IPC_INFO */
+	};
+#endif
+
+static int semid=-1;
+
+#endif
+
+
+#ifdef NO_LOCK
+	#define LOCK()
+	#define UNLOCK()
+#elif defined SYSV_SEM
+	#define LOCK() \
+	{\
+		struct sembuf sop; \
+		sop.sem_num=0; \
+		sop.sem_op=-1; /*down*/ \
+		sop.sem_flg=0 /*SEM_UNDO*/; \
+		semop(semid, &sop, 1); \
+	}
+
+	#define UNLOCK()	\
+	{\
+		struct sembuf sop;\
+		sop.sem_num=0;\
+		sop.sem_op=1; /*up*/\
+		sop.sem_flg=0 /*SEM_UNDO*/;\
+		semop(semid, &sop, 1);\
+	}
+#elif defined FLOCK
+
+	#define LOCK() \
+		flock(lock_fd, LOCK_EX)
+	#define  UNLOCK() \
+		flock(lock_fd, LOCK_UN)
+#elif defined LIN_SEM
+	#define LOCK() \
+		sem_wait(&sem)
+	#define UNLOCK() \
+		sem_post(&sem);
+#endif
+
+
+
+
+static char *id="$Id$";
+static char *version="locking_test 0.1-"
+#ifdef NO_LOCK
+ "nolock"
+#elif defined SYSV_SEM
+ "sysv_sem"
+#elif defined FLOCK
+ "flock"
+#elif defined LIN_SEM
+ "lin_sem";
+#endif
+;
+static char* help_msg="\
+Usage: locking_test -n address [-c count] [-v]\n\
+Options:\n\
+    -c count      how many times to try lock/unlock \n\
+    -v            increase verbosity level\n\
+    -V            version number\n\
+    -h            this help message\n\
+";
+
+
+
+int main (int argc, char** argv)
+{
+	char c;
+	struct hostent* he;
+	int r;
+	char *tmp;
+	
+	int count;
+	int verbose;
+	char *address;
+#ifdef SYSV_SEM
+	union semun su;
+#endif
+	
+	/* init */
+	count=0;
+	verbose=0;
+	address=0;
+
+
+	opterr=0;
+	while ((c=getopt(argc,argv, "c:vhV"))!=-1){
+		switch(c){
+			case 'v':
+				verbose++;
+				break;
+			case 'c':
+				count=strtol(optarg, &tmp, 10);
+				if ((tmp==0)||(*tmp)){
+					fprintf(stderr, "bad count: -c %s\n", optarg);
+					goto error;
+				}
+				break;
+			case 'V':
+				printf("version: %s\n", version);
+				printf("%s\n",id);
+				exit(0);
+				break;
+			case 'h':
+				printf("version: %s\n", version);
+				printf("%s", help_msg);
+				exit(0);
+				break;
+			case '?':
+				if (isprint(optopt))
+					fprintf(stderr, "Unknown option `-%c´\n", optopt);
+				else
+					fprintf(stderr, "Unknown character `\\x%x´\n", optopt);
+				goto error;
+			case ':':
+				fprintf(stderr, "Option `-%c´ requires an argument.\n",
+						optopt);
+				goto error;
+				break;
+			default:
+					abort();
+		}
+	}
+	
+	/* check if all the required params are present */
+	if(count==0){
+		fprintf(stderr, "Missing count (-c number)\n");
+		exit(-1);
+	}else if(count<0){
+		fprintf(stderr, "Invalid count (-c %d)\n", count);
+		exit(-1);
+	}
+
+#ifdef SYSV_SEM
+	/*init*/
+	puts("Initializing SYS V semaphores\n");
+	semid=semget(IPC_PRIVATE,1,0700);
+	if(semid==-1){
+		fprintf(stderr, "ERROR: could not init sempahore: %s\n",
+				strerror(errno));
+		goto error;
+	}
+	/*set init value to 1 (mutex)*/
+	su.val=1;
+	if (semctl(semid, 0, SETVAL, su)==-1){
+		fprintf(stderr, "ERROR: could not set initial sempahore value: %s\n",
+				strerror(errno));
+		shmctl(semid, IPC_RMID, (union semun)0);
+		goto error;
+	}
+#elif defined FLOCK
+	puts("Initializing flock\n");
+	lock_fd=open("/dev/zero", O_RDONLY);
+	if (lock_fd==-1){
+		fprintf(stderr, "ERROR: could not open file: %s\n", strerror(errno));
+		goto error;
+	}
+#elif defined LIN_SEM
+	puts("Initializing sempahores\n");
+	if (sem_init(&sem, 0, 1)<0){
+		fprintf(stderr, "ERROR: could not initialize sempahore: %s\n",
+				strerror(errno));
+		goto error;
+	}
+#endif
+
+
+	/*  loop */
+	for (r=0; r<count; r++){
+		LOCK();
+		if ((verbose>1)&&(r%1000))  putchar('.');
+		UNLOCK();
+	}
+
+	printf("%d loops\n", count);
+
+#ifdef SYSV_SEM
+	shmctl(semid, IPC_RMID, (union semun)0);
+#elif defined LIN_SEM
+	sem_destroy(&sem);
+#endif
+
+	exit(0);
+
+error:
+	exit(-1);
+}
