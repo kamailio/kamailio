@@ -175,10 +175,6 @@ MODULE_VERSION
 #define	SUP_CPROTOVER	20040107
 #define	CPORT		"22222"
 
-/* Anti foot-shooting flags to be set after altering SDP */
-#define	SDP_IP_AFS	250
-#define	SDP_PORT_AFS	251
-
 static int nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2);
 static int fix_nated_contact_f(struct sip_msg *, char *, char *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
@@ -913,7 +909,7 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 	 * messages that have been altered and check it when
 	 * another request comes.
 	 */
-	if (isflagset(msg, SDP_IP_AFS)) {
+	if (msg->msg_flags & FL_SDP_IP_AFS) {
 		LOG(L_ERR, "ERROR: alter_mediaip: you can't rewrite the same "
 		  "SDP twice, check your config!\n");
 		return -1;
@@ -982,7 +978,8 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 		pkg_free(nip.s);
 		return -1;
 	}
-	setflag(msg, SDP_IP_AFS);
+
+	msg->msg_flags |= FL_SDP_IP_AFS;
 
 	if (insert_new_lump_after(anchor, nip.s, nip.len, 0) == 0) {
 		LOG(L_ERR, "ERROR: alter_mediaip: insert_new_lump_after failed\n");
@@ -1011,7 +1008,7 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 	 * messages that have been altered and check it when
 	 * another request comes.
 	 */
-	if (isflagset(msg, SDP_PORT_AFS)) {
+	if (msg->msg_flags & FL_SDP_PORT_AFS) {
 		LOG(L_ERR, "ERROR: alter_mediaip: you can't rewrite the same "
 		  "SDP twice, check your config!\n");
 		return -1;
@@ -1057,7 +1054,8 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 		pkg_free(buf);
 		return -1;
 	}
-	setflag(msg, SDP_PORT_AFS);
+
+	msg->msg_flags |= FL_SDP_PORT_AFS;
 	return 0;
 }
 
