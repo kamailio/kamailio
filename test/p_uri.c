@@ -64,7 +64,7 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 					/* sctp */
 					VS_S, VS_C, VS_T, VS_P_FIN
 	};
-	enum states state;
+	register enum states state;
 	char* s;
 	char* b; /* param start */
 	char *v; /* value start */
@@ -73,7 +73,7 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 	str user;
 	str password;
 	int port_no;
-	char* p;
+	register char* p;
 	char* end;
 	char* pass;
 	int found_user;

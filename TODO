@@ -22,6 +22,8 @@ x (different way) add request header bitmap field for the modules
 - BUG:?? ipv6 only and try to send to ipv4 => getsendsocket=>0 (send_ipv6=0)
   the reverse is also true
 - resolver should resolve [ipv6]
+- remove parse_uri debugging info
+- fix DBG("<%.*s>", len, _null_)
 
 
 High priority:
