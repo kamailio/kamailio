@@ -12,42 +12,42 @@
 #include "sl_funcs.h"
 
 
-char               sl_tag[32];
+char           sl_tag[32];
 unsigned int  *sl_timeout;
 
 int sl_startup()
 {
-   str  src[5];
+	str  src[5];
 
-   /*some fix string*/
-   src[0].s="one two three four -> testing!" ;
-   src[0].len=30;
-   /*some fix string*/
-   src[1].s="Sip Express router - sex" ;
-   src[1].len=24;
-   /*some fix string*/
-   src[2].s="I love you men!!!! (Jiri's idea :))";
-   src[2].len=35;
-   /*proxy's IP*/
-   src[3].s=(char*)addresses ;
-   src[3].len=4;
-   /*proxy's port*/
-   src[4].s=port_no_str;
-   src[4].len=port_no_str_len;
+	/*some fix string*/
+	src[0].s="one two three four -> testing!" ;
+	src[0].len=30;
+	/*some fix string*/
+	src[1].s="Sip Express router - sex" ;
+	src[1].len=24;
+	/*some fix string*/
+	src[2].s="I love you men!!!! (Jiri's idea :))";
+	src[2].len=35;
+	/*proxy's IP*/
+	src[3].s=(char*)addresses ;
+	src[3].len=4;
+	/*proxy's port*/
+	src[4].s=port_no_str;
+	src[4].len=port_no_str_len;
+	MDStringArray ( sl_tag, src, 5 );
 
-   MDStringArray ( sl_tag, src, 5 );
+	/*timeout*/
+	sl_timeout = (unsigned int*)shm_malloc(sizeof(unsigned int));
+	if (!sl_timeout)
+	{
+		LOG(L_ERR,"ERROR:sl_startup: no more free memory!\n");
+		return -1;
+	}
+	*(sl_timeout)=get_ticks();
 
-   /*timeout*/
-   sl_timeout = (unsigned int*)shm_malloc(sizeof(unsigned int));
-   if (!sl_timeout)
-   {
-      LOG(L_ERR,"ERROR:sl_startup: no more free memory!\n");
-      return -1;
-   }
-   *(sl_timeout)=get_ticks();
-
-   return 1;
+	return 1;
 }
+
 
 
 
@@ -64,7 +64,11 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 			msg->via1->host.s );
 		goto error;
 	}
-	buf = build_res_buf_from_sip_req(code,text,sl_tag,32,msg ,&len);
+	/* to:tag is added only for INVITE in order to be able to capture the ACK*/
+	if ( msg->first_line.u.request.method_value==METHOD_INVITE)
+		buf = build_res_buf_from_sip_req(code,text,sl_tag,32,msg ,&len);
+	else
+		buf = build_res_buf_from_sip_req(code,text,0,0,msg ,&len);
 	if (!buf)
 	{
 		DBG("DEBUG: sl_send_reply: response building failed\n");
