@@ -73,7 +73,7 @@
 #endif
 
 	
-	extern lock_t* mem_lock;
+	extern gen_lock_t* mem_lock;
 
 
 int shm_mem_init();

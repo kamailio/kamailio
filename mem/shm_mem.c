@@ -51,7 +51,7 @@
 static int shm_shmid=-1; /*shared memory id*/
 #endif
 
-lock_t* mem_lock=0;
+gen_lock_t* mem_lock=0;
 
 static void* shm_mempool=(void*)-1;
 #ifdef VQ_MALLOC
@@ -224,7 +224,8 @@ int shm_mem_init()
 		shm_mem_destroy();
 		return -1;
 	}
-	mem_lock=shm_malloc_unsafe(sizeof(lock_t)); /* skip lock_alloc, race cond*/
+	mem_lock=shm_malloc_unsafe(sizeof(gen_lock_t)); /* skip lock_alloc, 
+													   race cond*/
 	if (mem_lock==0){
 		LOG(L_CRIT, "ERROR: shm_mem_init: could not allocate lock\n");
 		shm_mem_destroy();

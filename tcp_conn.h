@@ -84,7 +84,7 @@ struct tcp_req{
 struct tcp_connection{
 	int s; /*socket, used by "tcp main" */
 	int fd; /* used only by "children", don't modify it! private data! */
-	lock_t write_lock;
+	gen_lock_t write_lock;
 	int id; /* id (unique!) used to retrieve a specific connection when
 	           reply-ing*/
 	struct receive_info rcv; /* src & dst ip, ports, proto a.s.o*/

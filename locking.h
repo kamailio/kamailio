@@ -28,17 +28,18 @@
 /*
  *   ser locking library
  *
- *  2002-12-16 created by andrei
- *
+ *  2002-12-16  created by andrei
+ *  2003-02-20  s/gen_lock_t/gen_lock_t/ to avoid a type conflict 
+ *               on solaris  (andrei)
  *
 Implements:
 
-	lock_t* lock_alloc();                    - allocates a lock in shared mem.
-	lock_t* lock_init(lock_t* lock);         - inits the lock
-	void    lock_destroy(lock_t* lock);      - removes the lock (e.g sysv rmid)
-	void    lock_dealloc(lock_t* lock);      - deallocates the lock's shared m.
-	void    lock_get(lock_t* lock);          - lock (mutex down)
-	void    lock_release(lock_t* lock);      - unlock (mutex up)
+	gen_lock_t* lock_alloc();               - allocates a lock in shared mem.
+	gen_lock_t* lock_init(gen_lock_t* lock);    - inits the lock
+	void    lock_destroy(gen_lock_t* lock); - removes the lock (e.g sysv rmid)
+	void    lock_dealloc(gen_lock_t* lock); - deallocates the lock's shared m.
+	void    lock_get(gen_lock_t* lock);     - lock (mutex down)
+	void    lock_release(gen_lock_t* lock); - unlock (mutex up)
 */
 
 #ifndef _locking_h
@@ -48,13 +49,13 @@ Implements:
 #ifdef FAST_LOCK
 #include "fastlock.h"
 
-typedef fl_lock_t lock_t;
+typedef fl_lock_t gen_lock_t;
 
-#define lock_alloc() shm_malloc(sizeof(lock_t))
+#define lock_alloc() shm_malloc(sizeof(gen_lock_t))
 #define lock_destroy(lock) /* do nothing */ 
 #define lock_dealloc(lock) shm_free(lock)
 
-inline static lock_t* lock_init(lock_t* lock)
+inline static gen_lock_t* lock_init(gen_lock_t* lock)
 {
 	init_lock(*lock);
 	return lock;
@@ -68,13 +69,13 @@ inline static lock_t* lock_init(lock_t* lock)
 #elif defined USE_PTHREAD_MUTEX
 #include <pthread.h>
 
-typedef pthread_mutex_t lock_t;
+typedef pthread_mutex_t gen_lock_t;
 
-#define lock_alloc() shm_malloc(sizeof(lock_t))
+#define lock_alloc() shm_malloc(sizeof(gen_lock_t))
 #define lock_destroy(lock) /* do nothing */ 
 #define lock_dealloc(lock) shm_free(lock)
 
-inline static lock_t* lock_init(lock_t* lock)
+inline static gen_lock_t* lock_init(gen_lock_t* lock)
 {
 	if (pthread_mutex_init(lock, 0)==0) return lock;
 	else return 0;
@@ -88,13 +89,13 @@ inline static lock_t* lock_init(lock_t* lock)
 #elif defined USE_POSIX_SEM
 #include <semaphore.h>
 
-typedef sem_t lock_t;
+typedef sem_t gen_lock_t;
 
-#define lock_alloc() shm_malloc(sizeof(lock_t))
+#define lock_alloc() shm_malloc(sizeof(gen_lock_t))
 #define lock_destroy(lock) /* do nothing */ 
 #define lock_dealloc(lock) shm_free(lock)
 
-inline static lock_t* lock_init(lock_t* lock)
+inline static gen_lock_t* lock_init(gen_lock_t* lock)
 {
 	if (sem_init(lock, 1, 1)<0) return 0;
 	return lock;
@@ -121,13 +122,13 @@ inline static lock_t* lock_init(lock_t* lock)
 	};
 #endif
 
-typedef int lock_t;
+typedef int gen_lock_t;
 
-#define lock_alloc() shm_malloc(sizeof(lock_t))
+#define lock_alloc() shm_malloc(sizeof(gen_lock_t))
 #define lock_dealloc(lock) shm_free(lock)
 
 
-inline static lock_t* lock_init(lock_t* lock)
+inline static gen_lock_t* lock_init(gen_lock_t* lock)
 {
 	union semun su;
 	
@@ -141,14 +142,14 @@ inline static lock_t* lock_init(lock_t* lock)
 	return lock;
 }
 
-inline static void lock_destroy(lock_t* lock)
+inline static void lock_destroy(gen_lock_t* lock)
 {
 	semctl(*lock, 0, IPC_RMID, (union semun)(int)0);
 }
 
 #define lock_dealloc(lock) shm_free(lock)
 
-inline static void lock_get(lock_t* lock)
+inline static void lock_get(gen_lock_t* lock)
 {
 	struct sembuf sop;
 
@@ -158,7 +159,7 @@ inline static void lock_get(lock_t* lock)
 	semop(*lock, &sop, 1);
 }
 
-inline static void lock_release(lock_t* lock)
+inline static void lock_release(gen_lock_t* lock)
 {
 	struct sembuf sop;
 	
