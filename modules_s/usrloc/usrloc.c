@@ -35,7 +35,8 @@ static struct module_exports print_exports= {	"usrloc",
 						(fixup_function[]){0, 0},
 						2,
 						0,
-						destroy
+						destroy,
+						0 /* oncancel function */
 };
 
 

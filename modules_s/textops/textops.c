@@ -35,7 +35,8 @@ static struct module_exports my_exports= {	"textops",
 	(fixup_function[]){fixup_regex, fixup_regex,  fixup_regex},
 	3,
 	0, /* response function */
-	0  /* destroy function */
+	0,  /* destroy function */
+	0 /* on_cancel function */
 };
 
 

@@ -50,7 +50,8 @@ static struct module_exports auth_exports = {"auth",
 					     },
 					     3,
 					     0,       /* response function */
-					     destroy  /* destroy function */
+					     destroy , /* destroy function */
+						0 /* oncancel function */
 };
 
 

@@ -40,7 +40,8 @@ static struct module_exports mysql_exports = {
 	},
 	8, /* number of functions*/
 	0, /* response function*/
-	0  /* destroy function */
+	0,  /* destroy function */
+	0	/* oncancel function */
 };
 
 

@@ -18,7 +18,8 @@ static struct module_exports print_exports= {	"print_stdout",
 												(fixup_function[]){0},
 												1, /* number of fucntions*/
 												0, /* response function*/
-												0  /* destroy function */
+												0,  /* destroy function */
+												0   /* oncancel function */
 											};
 
 
