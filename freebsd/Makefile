@@ -28,11 +28,14 @@ WRKSRC= ${WRKDIR}/${PORTNAME}-${PORTVERSION}
 # build by default mysql and jabber
 MAKE_ENV= include_modules="mysql jabber"
 
+
+
+
 # depends on mysql and libexpat because of the above modules
-BUILD_DEPENDS= ${LOCALBASE}/include/expat.h:${PORTSDIR}/textproc/expat \
-               ${LOCALBASE}/include/mysql/mysql.h:${PORTSDIR}/databases/mysql322-client
-LIB_DEPENDS=   expat:${PORTSDIR}/textproc/expat \
-               mysqlclient.10:${PORTSDIR}/databases/mysql322-client
+BUILD_DEPENDS= ${LOCALBASE}/include/expat.h:${PORTSDIR}/textproc/expat* \
+               ${LOCALBASE}/include/mysql/mysql.h:${PORTSDIR}/databases/mysql32*-client
+LIB_DEPENDS=   expat:${PORTSDIR}/textproc/expat* \
+               mysqlclient.10:${PORTSDIR}/databases/mysql32*-client
 
 pre-fetch:
 
