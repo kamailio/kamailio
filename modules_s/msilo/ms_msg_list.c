@@ -64,10 +64,7 @@ msg_list_el msg_list_el_new()
 void msg_list_el_free(msg_list_el mle)
 {
 	if(mle)
-	{
 		shm_free(mle);
-		mle = NULL;
-	}
 }
 
 /**
@@ -87,7 +84,6 @@ void msg_list_el_free_all(msg_list_el mle)
 		p0 = p0->next;
 		msg_list_el_free(p1);
 	}
-
 }
 
 /**

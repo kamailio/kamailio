@@ -26,14 +26,19 @@
  */
 
 /**
+ * History
+ * -------
  *
- * 2003-02-28  protocolization of t_uac_dlg completed (jiri)
- * 2003-01-23  switched from t_uac to t_uac_dlg, by dcm
- * 2003-03-11  updated to the new module interface (andrei)
+ * 2003-01-23: switched from t_uac to t_uac_dlg (dcm)
+ * 2003-02-28: protocolization of t_uac_dlg completed (jiri)
+ * 2003-03-11: updated to the new module interface (andrei)
  *             removed non-constant intializers to some strs (andrei)
- * 2003-03-16  flags parameter added (janakj)
+ * 2003-03-16: flags parameter added (janakj)
  * 2003-04-05: default_uri #define used (jiri)
- * 2003-04-06: db_init removed from mod_init, will be called from child_init now (janakj)
+ * 2003-04-06: db_init removed from mod_init, will be called from child_init
+ *             now (janakj)
+ * 2003-04-07: m_dump takes a parameter which sets the way the outgoing URI
+ *             is computed (dcm)
  */
 
 #include <stdio.h>
@@ -150,7 +155,7 @@ static void m_tm_callback( struct cell *t, struct sip_msg *msg,
 	int code, void *param);
 
 static cmd_export_t cmds[]={
-	{"m_store",  m_store, 0, 0, REQUEST_ROUTE},
+	{"m_store",  m_store, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"m_dump",   m_dump,  0, 0, REQUEST_ROUTE},
 	{0,0,0,0,0}
 };
@@ -241,8 +246,11 @@ static int child_init(int rank)
 
 /**
  * store message
+ * mode = "0" -- look for outgoing URI starting with new_uri
+ * 		= "1" -- look for outgoing URI starting with r-uri
+ * 		= "2" -- look for outgoing URI only at to header
  */
-static int m_store(struct sip_msg* msg, char* str1, char* str2)
+static int m_store(struct sip_msg* msg, char* mode, char* str2)
 {
 	str body, str_hdr, sruri, ctaddr;
 	struct to_body to, *pto, *pfrom;
@@ -253,7 +261,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	char buf[512], buf1[1024], *p;
 
 	DBG("MSILO: m_store: ------------ start ------------\n");
-		
+
 	// extract message body - after that whole SIP MESSAGE is parsed
 	/* get the message's body */
 	body.s = get_body( msg );
@@ -365,7 +373,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 
 	// chech for RURI
 	sruri.len = 0;
-	if(msg->new_uri.len > 0)
+	if(mode && mode[0]=='0' && msg->new_uri.len > 0)
 	{
 		DBG("MSILO:m_store: NEW R-URI found - check if is AoR!\n");
 		p = msg->new_uri.s;
@@ -375,11 +383,15 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 		{
 			DBG("MSILO:m_store: NEW R-URI used\n");
 			sruri.s = msg->new_uri.s;
-			sruri.len = msg->new_uri.len;
+			// check for parameters
+			while((p < msg->new_uri.s+msg->new_uri.len) && *p!=';')
+				p++;
+			sruri.len = p - msg->new_uri.s;
 		}
 	}
 	
-	if(sruri.len == 0 && msg->first_line.u.request.uri.len > 0 )
+	if(mode && mode[0]<='1' && sruri.len == 0 
+			&& msg->first_line.u.request.uri.len > 0 )
 	{
 		DBG("MSILO:m_store: R-URI found - check if is AoR!\n");
 		p = msg->first_line.u.request.uri.s;
@@ -391,7 +403,11 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 		{
 			DBG("MSILO:m_store: R-URI used\n");
 			sruri.s = msg->first_line.u.request.uri.s;
-			sruri.len = msg->first_line.u.request.uri.len;
+			// check for parameters
+			while((p < msg->first_line.u.request.uri.s
+					+ msg->first_line.u.request.uri.len) && *p!=';')
+				p++;
+			sruri.len = p - msg->first_line.u.request.uri.s;
 		}
 	}
 	

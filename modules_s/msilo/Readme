@@ -25,8 +25,14 @@ Methods
 -------
 
 Name: 	m_store
-Params:	none
-Desc:	store current message (should be called when a user is offline)
+Params:	mode - the way to save the outgoing URI
+		"0" - start with new_uri then r-uri and then to header
+		"1" - start with r-uri and then to header
+		"2" - look only at to header
+Desc:	store current message (should be called when a user is offline or his UA
+		does not support MESSAGE requests). If the user is registered with a UA
+		which does not support MESSAGE requests you should not use mode="0" if
+		you have changed the request uri with the address from UA contact.
 
 Name: 	m_dump
 Params:	none
