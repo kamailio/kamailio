@@ -25,6 +25,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-03-27 Adapted to new RR parser (janakj)
  */
 
 
@@ -69,14 +73,6 @@ int find_first_route(struct sip_msg* _m);
 
 
 /*
- * Extracts URI from the topmost Route header field.
- *
- * Returns 0 on success, negative number on an error.
- */
-int parse_first_route(struct hdr_field* _route, str* _s);
-
-
-/*
  * Rewrites Request-URI with string given in _s parameter
  *
  * Reuturn 0 on success, negative number on error
@@ -87,10 +83,8 @@ int rewrite_RURI(struct sip_msg* _m, str* _s);
 /*
  * Remove Top Most Route URI
  * Returns 0 on success, negative number on failure
- * If there is another URI in the Route header field, it will
- * be stored in _uri parameter
  */
-int remove_TMRoute(struct sip_msg* _m, struct hdr_field* _route, str* _uri);
+int remove_first_route(struct sip_msg* _m, struct hdr_field* _route);
 
 
 /*
@@ -103,7 +97,7 @@ int insert_RR(struct sip_msg* _m, str* _l);
 /*
  * Insert a new Record-Route header field
  */
-int record_route(struct sip_msg* _m, char* _lr, char* _s);
+int record_route(struct sip_msg* _m, char* _s1, char* _s2);
 
 
 #endif /* COMMON_H */

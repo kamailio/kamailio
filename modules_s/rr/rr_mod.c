@@ -58,9 +58,9 @@ static int int_fixup(void** param, int param_no);
  * Exported functions
  */
 static cmd_export_t cmds[]={
-	{"loose_route",  loose_route,   0, 0,         REQUEST_ROUTE},
-	{"strict_route", strict_route,  0, 0,         REQUEST_ROUTE},
-	{"record_route", record_route,  0, 0,         REQUEST_ROUTE},
+	{"loose_route",  loose_route,   0, 0, REQUEST_ROUTE},
+	{"strict_route", strict_route,  0, 0, REQUEST_ROUTE},
+	{"record_route", record_route,  0, 0, REQUEST_ROUTE},
 	{0,0,0,0,0}
 };
 
@@ -69,8 +69,8 @@ static cmd_export_t cmds[]={
  * Exported parameters
  */
 static param_export_t params[]={
-	{"use_fast_cmp",   INT_PARAM,  &use_fast_cmp  },
-	{"append_fromtag", INT_PARAM,  &append_fromtag},
+	{"use_fast_cmp",   INT_PARAM, &use_fast_cmp  },
+	{"append_fromtag", INT_PARAM, &append_fromtag},
 	{0,0,0}
 };
 

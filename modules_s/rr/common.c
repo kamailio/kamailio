@@ -37,7 +37,6 @@
 
 #include "common.h"
 #include <string.h>
-#include "../../comp_defs.h"
 #include "../../md5utils.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
@@ -46,7 +45,7 @@
 #include "../../globals.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
-#include "../../parser/parser_f.h"
+#include "../../parser/parse_rr.h"
 #include "rr_mod.h"
 
 
@@ -126,48 +125,16 @@ int find_first_route(struct sip_msg* _m)
 		return -1;
 	} else {
 		if (_m->route) {
+			if (parse_rr(_m->route) < 0) {
+				LOG(L_ERR, "find_first_route(): Error while parsing Route HF\n");
+				return -1;
+			}
 			return 0;
 		} else {
 			DBG("find_first_route(): No Route headers found\n");
 			return 1;
 		}
 	}
-}
-
-
-/*
- * Extracts URI from the topmost Route header field.
- *
- * Returns 0 on success, negative number on an error.
- */
-int parse_first_route(struct hdr_field* _route, str* _s)
-{
-        str r;
-	char* uri_end;
-	
-	r.s = _route->body.s;
-	r.len = _route->body.len;
-
-	_s->s = find_not_quoted(&r, '<'); 
-	if (_s->s) {
-		_s->s++; /* We will skip < character */
-	} else {
-		LOG(L_ERR, "parse_first_route(): Malformed Route HF (no < found)\n");
-		return -1;
-	}
-	
-	r.len -= _s->s - r.s;
-	r.s = _s->s;
-
-	uri_end = find_not_quoted(&r, '>');
-
-	if (!uri_end) {
-		LOG(L_ERR, "parse_first_route(): Malformed Route HF (no > found)\n");
-		return -2;
-	}
-
-	_s->len = uri_end - _s->s;
-	return 0;
 }
 
 
@@ -210,58 +177,23 @@ int rewrite_RURI(struct sip_msg* _m, str* _s)
 /*
  * Remove Top Most Route URI
  * Returns 0 on success, negative number on failure
- * If there is another URI in the Route header field, it will
- * be stored in _uri parameter
  */
-int remove_TMRoute(struct sip_msg* _m, struct hdr_field* _route, str* _uri)
+int remove_first_route(struct sip_msg* _m, struct hdr_field* _route)
 {
 	int offset, len;
-	char* next;
-	str rest;
 
-	rest.s = _uri->s + _uri->len; /* Just after > */
-	rest.len = _route->body.s + _route->body.len - rest.s;
-
-	next = find_not_quoted(&rest, ',');
-	
-	if (next) {
-		rest.len -= next - rest.s;
-		rest.s = next;
-
-		next = find_not_quoted(&rest, '<');
-		if (next == 0) {
-			LOG(L_ERR, "remove_TMRoute(): Found \',\' but no \'<\' after the comma\n");
-			return -1;
-		}
-
-		DBG("remove_TMRoute(): next URI found: \'%.*s\'\n", rest.len - (next - rest.s), next);
+	if (((rr_t*)_route->parsed)->next) {
+		DBG("remove_first_route(): Next URI found in the same header found\n");
 		offset = _route->body.s - _m->buf;
-		len = next - _route->body.s;
-		
-		     /* Extract next URI */
-		_uri->s = next + 1;
-
-		     /* Shift rest just behind the < */
-		rest.len -= next - rest.s;
-		rest.s = next;
-		next = find_not_quoted(&rest, '>');  /* Find closing > */
-		if (!next) {
-			LOG(L_ERR, "remove_TMRoute(): No > found\n");
-			return -2;
-		}
-
-		_uri->len = next - _uri->s;  /* Update length */
+		len = ((rr_t*)_route->parsed)->next->nameaddr.name.s - _route->body.s;
 	} else {
-		DBG("remove_TMRoute(): No next URI in the same Route found\n");
+		DBG("remove_first_route(): No next URI found, removing the whole header\n");
 		offset = _route->name.s - _m->buf;
 		len = _route->len;
-
-		_uri->s = 0;
-		_uri->len = 0;
 	}
 	
      	if (del_lump(&_m->add_rm, offset, len, 0) == 0) {
-		LOG(L_ERR, "remove_TMRoute(): Can't remove Route HF\n");
+		LOG(L_ERR, "remove_first_route(): Can't remove Route HF\n");
 		return -3;
 	}
 
@@ -310,6 +242,19 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 		user = puri.user;
 	}
 	len+=user.len+1 /* '@' */;
+
+	switch(bind_address->address.af) {
+	case AF_INET:
+		len += bind_address->address_str.len;
+		break;
+
+	case AF_INET6:
+		len += bind_address->address_str.len + 2;
+		break;
+
+	default:
+		LOG(L_ERR, "buildRRLine(): Unsupported PF type: %d\n", bind_address->address.af);
+	}
 	
 	if (_lr && use_fast_cmp) {
 		len+=MD5_LEN;
@@ -346,6 +291,24 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 		memcpy(p, user.s, user.len);p+=user.len;
 	}
 	*p='@';p++;
+
+	switch(bind_address->address.af) {
+	case AF_INET:
+		memcpy(p, bind_address->address_str.s, bind_address->address_str.len);
+		p += bind_address->address_str.len;
+		break;
+
+	case AF_INET6:
+		*p = '[';
+		p++;
+		memcpy(p, bind_address->address_str.s, bind_address->address_str.len);
+		p += bind_address->address_str.len;
+		*p = ']';
+		break;
+
+	default:
+		LOG(L_ERR, "buildRRLine(): Unsupported PF type: %d\n", bind_address->address.af);
+	}
 
 	memcpy(p, rr_suffix.s, rr_suffix.len);p+=rr_suffix.len;
 	if (append_fromtag && from->tag_value.s) {
@@ -392,7 +355,7 @@ int insert_RR(struct sip_msg* _m, str* _l)
 /*
  * Insert a new Record-Route header field
  */
-int record_route(struct sip_msg* _m, char* _lr, char* _s)
+int record_route(struct sip_msg* _m, char* _s1, char* _s2)
 {
 	str b;
 	static unsigned int last_rr_msg;
@@ -402,7 +365,7 @@ int record_route(struct sip_msg* _m, char* _lr, char* _s)
 			return -1;
 	}
 	
-	b.s=build_RR(_m, &b.len, (int) _lr);	
+	b.s = build_RR(_m, &b.len, 0);	
 	if (!b.s) {
 		LOG(L_ERR, "add_rr(): Error while building Record-Route line\n");
 		return -2;
