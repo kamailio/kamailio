@@ -201,6 +201,8 @@ static inline void su2ip_addr(struct ip_addr* ip, union sockaddr_union* su)
 }
 
 
+/* ip_addr2su -> the same as init_su*/
+#define ip_addr2su init_su
 
 /* inits a struct sockaddr_union from a struct ip_addr and a port no 
  * returns 0 if ok, -1 on error (unknown address family) */
