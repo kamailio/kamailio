@@ -50,9 +50,6 @@
 #include "utils.h"
 #include "common.h"
 
-MODULE_VERSION
-
-
 #ifdef DEMO
 
 #include "../tm/t_hooks.h"
@@ -64,7 +61,6 @@ struct tm_binds tmb;
 
 
 MODULE_VERSION
-
 
 
 /*
