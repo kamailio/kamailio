@@ -24,7 +24,7 @@ Elena-Ramona Modroiu
         1.3. Exported Parameters
 
               1.3.1. diameter_client_host (string)
-              1.3.2. diameter_client_port (string)
+              1.3.2. diameter_client_port (int)
               1.3.3. use_domain (int)
 
         1.4. Exported Functions
@@ -110,7 +110,7 @@ modparam("auth_diameter", "diameter_client_host", "10.10.10.10")
 ...
      _________________________________________________________
 
-1.3.2. diameter_client_port (string)
+1.3.2. diameter_client_port (int)
 
    Port number where the DIAMETER Client is listening.
 
@@ -118,7 +118,7 @@ modparam("auth_diameter", "diameter_client_host", "10.10.10.10")
 
    Example 1-3. Set diameter_client_port parameter
 ...
-modparam("auth_diameter", "diameter_client_port", "3000")
+modparam("auth_diameter", "diameter_client_port", 3000)
 ...
      _________________________________________________________
 
