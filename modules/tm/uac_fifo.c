@@ -398,8 +398,9 @@ static inline int fifo_check_msg(struct sip_msg* msg, str* method, char* resp, s
 		*cseq_is = 1;
 		for (i = 0; i < parsed_cseq->number.len; i++) {
 			c = parsed_cseq->number.s[i];
-			if (c >= '0' && c < '9' ) *cseq = (*cseq) * 10 + c - '0';
+			if (c >= '0' && c <= '9' ) *cseq = (*cseq) * 10 + c - '0';
 			else {
+			        DBG("found non-numerical in CSeq: <%i>='%c'\n",(unsigned int)c,c);
 				fifo_uac_error(resp, 400, "non-nummerical CSeq");
 				return -6;
 			}
