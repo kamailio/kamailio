@@ -52,42 +52,43 @@ db_con_t* db_handle;   /* Database connection handle */
 
 /* ----- Parameter variables ----------- */
 
-/* Flag if we are using a database or log facilities, default is log */
-int use_db = 0;
-
-/* Database url */
-char *db_url;
-
 /* name of user id (==digest uid) column */
 char *uid_column="uid";
 
-/* name of database table, default=="acc" */
-char *db_table_acc="acc";
+#ifdef SQL_ACC
 
-/* names of columns in table acc*/
-char* acc_sip_from_col      = "sip_from";
-char* acc_sip_to_col        = "sip_to";
-char* acc_sip_status_col    = "sip_status";
-char* acc_sip_method_col    = "sip_method";
-char* acc_i_uri_col         = "i_uri";
-char* acc_o_uri_col         = "o_uri";
-char* acc_sip_callid_col    = "sip_callid";
-char* acc_user_col          = "user";
-char* acc_time_col          = "time";
+    /* Database url */
+    char *db_url;
 
-/* name of missed calls table, default=="missed_calls" */
-char *db_table_mc="missed_calls";
+    /* name of database table, default=="acc" */
+    char *db_table_acc="acc";
 
-/* names of columns in table missed calls*/
-char* mc_sip_from_col      = "sip_from";
-char* mc_sip_to_col        = "sip_to";
-char* mc_sip_status_col    = "sip_status";
-char* mc_sip_method_col    = "sip_method";
-char* mc_i_uri_col         = "i_uri";
-char* mc_o_uri_col         = "o_uri";
-char* mc_sip_callid_col    = "sip_callid";
-char* mc_user_col          = "user";
-char* mc_time_col          = "time";
+    /* names of columns in table acc*/
+    char* acc_sip_from_col      = "sip_from";
+    char* acc_sip_to_col        = "sip_to";
+    char* acc_sip_status_col    = "sip_status";
+    char* acc_sip_method_col    = "sip_method";
+    char* acc_i_uri_col         = "i_uri";
+    char* acc_o_uri_col         = "o_uri";
+    char* acc_sip_callid_col    = "sip_callid";
+    char* acc_user_col          = "user";
+    char* acc_time_col          = "time";
+
+    /* name of missed calls table, default=="missed_calls" */
+    char *db_table_mc="missed_calls";
+
+    /* names of columns in table missed calls*/
+    char* mc_sip_from_col      = "sip_from";
+    char* mc_sip_to_col        = "sip_to";
+    char* mc_sip_status_col    = "sip_status";
+    char* mc_sip_method_col    = "sip_method";
+    char* mc_i_uri_col         = "i_uri";
+    char* mc_o_uri_col         = "o_uri";
+    char* mc_sip_callid_col    = "sip_callid";
+    char* mc_user_col          = "user";
+    char* mc_time_col          = "time";
+
+#endif
 
 /* noisiness level logging facilities are used */
 int log_level=L_NOTICE;
@@ -134,18 +135,10 @@ struct module_exports exports= {
 
 	/* exported variables */
 	(char *[]) { /* variable names */
-		"use_database",
+#ifdef SQL_ACC
         "db_table_acc",
         "db_table_missed_calls",
 		"db_url",
-		"uid_column",
-		"log_level",
-		"early_media",
-		"failed_transactions",
-		"acc_flag",
-		"report_ack",
-        "missed_flag",
-        "usesyslog",
         "acc_sip_from_column",
         "acc_sip_to_column",
         "acc_sip_status_column",
@@ -163,55 +156,57 @@ struct module_exports exports= {
         "mc_o_uri_column",
         "mc_sip_callid_column",
         "mc_user_column",
-        "mc_time_column"
+        "mc_time_column",
+#endif
+		"uid_column",
+		"log_level",
+		"early_media",
+		"failed_transactions",
+		"acc_flag",
+		"report_ack",
+        "missed_flag",
+        "usesyslog"
 	},
 
 	(modparam_t[]) { /* variable types */
+#ifdef SQL_ACC
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+        STR_PARAM,
+#endif
+		STR_PARAM,
 		INT_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
 		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
-		INT_PARAM,
-        INT_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-        STR_PARAM
+        INT_PARAM
 	},
 
 	(void *[]) { /* variable pointers */
-		&use_db,
+#ifdef SQL_ACC
         &db_table_acc,
         &db_table_mc,
 		&db_url,
-		&uid_column,
-		&log_level,
-		&early_media,
-		&failed_transactions,
-		&acc_flag,
-		&report_ack,
-        &missed_flag,
-        &usesyslog,
         &acc_sip_from_col,
         &acc_sip_to_col,
         &acc_sip_status_col,
@@ -229,10 +224,23 @@ struct module_exports exports= {
         &mc_o_uri_col,
         &mc_sip_callid_col,
         &mc_user_col,
-        &mc_time_col
+        &mc_time_col,
+#endif
+		&uid_column,
+		&log_level,
+		&early_media,
+		&failed_transactions,
+		&acc_flag,
+		&report_ack,
+        &missed_flag,
+        &usesyslog
 	},
 
-    30,         /* number of variables */
+#ifdef SQL_ACC
+    29,         /* number of variables */
+#else
+    8,          /* number of variables */
+#endif
 
 	mod_init, 	/* initialization module */
 	0,			/* response function */
@@ -283,8 +291,8 @@ static int child_init(int rank)
         LOG(L_ERR, "acc:init_child(): Unable to connect database\n");
 		return -1;
 	}
-	return 0;
 #endif
+	return 0;
 }
 
 static void destroy(void)

@@ -34,11 +34,7 @@
 #include "../../db/db.h"
 
 /* module parameter declaration */
-extern int use_db;
-extern char *db_url;
 extern char *uid_column;
-extern char *db_table_acc;
-extern char *db_table_mc;
 extern int log_level;
 extern int early_media;
 extern int failed_transactions;
@@ -47,24 +43,30 @@ extern int usesyslog;
 
 extern db_con_t* db_handle; /* Database connection handle */
 
-extern char* acc_sip_from_col;
-extern char* acc_sip_to_col;
-extern char* acc_sip_status_col;
-extern char* acc_sip_method_col;
-extern char* acc_i_uri_col;
-extern char* acc_o_uri_col;
-extern char* acc_sip_callid_col;
-extern char* acc_user_col;
-extern char* acc_time_col;
+#ifdef SQL_ACC
+    extern char *db_url;
+    extern char *db_table_acc;
+    extern char *db_table_mc;
 
-extern char* mc_sip_from_col;
-extern char* mc_sip_to_col;
-extern char* mc_sip_status_col;
-extern char* mc_sip_method_col;
-extern char* mc_i_uri_col;
-extern char* mc_o_uri_col;
-extern char* mc_sip_callid_col;
-extern char* mc_user_col;
-extern char* mc_time_col;
+    extern char* acc_sip_from_col;
+    extern char* acc_sip_to_col;
+    extern char* acc_sip_status_col;
+    extern char* acc_sip_method_col;
+    extern char* acc_i_uri_col;
+    extern char* acc_o_uri_col;
+    extern char* acc_sip_callid_col;
+    extern char* acc_user_col;
+    extern char* acc_time_col;
+
+    extern char* mc_sip_from_col;
+    extern char* mc_sip_to_col;
+    extern char* mc_sip_status_col;
+    extern char* mc_sip_method_col;
+    extern char* mc_i_uri_col;
+    extern char* mc_o_uri_col;
+    extern char* mc_sip_callid_col;
+    extern char* mc_user_col;
+    extern char* mc_time_col;
+#endif
 
 #endif
