@@ -528,6 +528,11 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 		return -1;
 	if (uri.proto != PROTO_UDP && uri.proto != PROTO_NONE)
 		return -1;
+	if ((c->uri.s < msg->buf) || (c->uri.s > (msg->buf + msg->len))) {
+		LOG(L_ERR, "ERROR: you can't call fix_nated_contact twice, "
+		    "check your config!\n");
+		return -1;
+	}
 	if (uri.port.len == 0)
 		uri.port.s = uri.host.s + uri.host.len;
 
