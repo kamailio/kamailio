@@ -5,6 +5,7 @@
  * search_insert("key", "txt") -  insert "txt" before "key"
  * replace("txt1", "txt2")
  * search("txt")
+ * append_hf("P-foo: bar\r\n");
  *
  * 
  */
