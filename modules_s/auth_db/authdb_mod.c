@@ -29,6 +29,7 @@
  * History:
  * --------
  * 2003-02-26: checks and group moved to separate modules (janakj)
+ * 2003-03-11: New module interface (janakj)
  */
 
 #include <stdio.h>
@@ -84,51 +85,36 @@ db_con_t* db_handle;   /* Database connection handle */
 
 
 /*
+ * Exported functions
+ */
+static cmd_export_t cmds[] = {
+	{"www_authorize",   www_authorize,   2, str_fixup},
+	{"proxy_authorize", proxy_authorize, 2, str_fixup},
+	{0, 0, 0, 0}
+};
+
+
+/*
+ * Exported parameters
+ */
+static param_export_t params[] = {
+	{"db_url", STR_PARAM, &db_url},
+	{"username_column",   STR_PARAM, &username_column},
+	{"domain_column",     STR_PARAM, &domain_column  },
+	{"password_column",   STR_PARAM, &pass_column    },
+	{"password_column_2", STR_PARAM, &pass_column_2  },
+	{"calculate_ha1",     INT_PARAM, &calc_ha1       },
+	{0, 0, 0}
+};
+
+
+/*
  * Module interface
  */
 struct module_exports exports = {
 	"auth_db", 
-	(char*[]) { 
-		"www_authorize",
-		"proxy_authorize",
-	},
-	(cmd_function[]) {
-		www_authorize,
-		proxy_authorize,
-	},
-	(int[]) {2, 2},
-	(fixup_function[]) {
-		str_fixup, str_fixup
-	},
-	2,
-	
-	(char*[]) {
-		"db_url",              /* Database URL */
-		"username_column",     /* User column name */
-		"domain_column",       /* Domain column name */
-		"password_column",     /* HA1/password column name */
-		"password_column_2",
-		"calculate_ha1",       /* If set to yes, instead of ha1 value auth module will
-                                        * fetch plaintext password from database and calculate
-                                        * ha1 value itself */
-	},   /* Module parameter names */
-	(modparam_t[]) {
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-	        INT_PARAM
-	},   /* Module parameter types */
-	(void*[]) {
-		&db_url,
-		&username_column,
-		&domain_column,
-		&pass_column,
-		&pass_column_2,
-		&calc_ha1
-	},   /* Module parameter variable pointers */
-	6,          /* Numberof module parameters */
+	cmds,
+	params,
 	mod_init,   /* module initialization function */
 	0,          /* response function */
 	destroy,    /* destroy function */
