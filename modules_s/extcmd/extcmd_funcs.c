@@ -420,16 +420,10 @@ int send_sip_req(str* msg_type, str *msg, int client_fd)
 	*pcbp = client_fd;
 
 	/* send the message */
-	ret = tmb.t_uac_dlg(  msg_type,   /* request type */
-			0,                        /* Real destination */
-			PROTO_UDP,
-			&to,                      /* Request-URI */
+	ret = tmb.t_request(  msg_type,   /* request type */
+			0,                      /* Request-URI */
 			&to,                      /* To */
 			&from,                    /* From */
-			0,                        /* To tag */
-			0,                        /* From tag */
-			0,                        /* CSeq */
-			0,                        /* Call-ID */
 			&hdrs,                    /* Additional headers including CRLF */
 			&body,                    /* Message body */
 			tuac_callback,           /* Callback function */
