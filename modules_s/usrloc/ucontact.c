@@ -261,11 +261,11 @@ int st_delete_ucontact(ucontact_t* _c)
 			return 1;
 
 	case CS_SYNC:
-			/* If the contact is marked for replication we
-			 * turn it into zombie state, but because the
-			 * contact is in the DB we can not remove
-			 * it from memory anyway
-			 * because of the state change it is dirty
+			/* Contact is in the database so we can not
+			 * remove it from memory. Instead we turn it
+			 * into a zombie (which should be ignored by 
+			 * normal functions) and let the timer process 
+			 * decide how to proceed.
 			 */
 		_c->state = CS_ZOMBIE_D;
 			/* to synchronyse the state change in db mode 1
