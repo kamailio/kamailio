@@ -11,7 +11,7 @@
 
 /* returns string beginning and length without insignificant chars */
 #define trim_len( _len, _begin, _mystr ) \
-	({ 	static char _c; \
+	do{ 	static char _c; \
 		(_len)=(_mystr).len; \
 		while ((_len) && ((_c=(_mystr).s[(_len)-1])==0 || _c=='\r' || _c=='\n' || _c==' ' || _c=='\t' )) \
 			(_len)--; \
@@ -20,13 +20,13 @@
 			(_len)--;\
 			(_begin)++; \
 		} \
-	})
+	}while(0)
 
 #define trim_r( _mystr ) \
-	({	static _c; \
+	do{	static _c; \
 		while( ((_mystr).len) && ((_c=(_mystr).s[(_mystr).len-1]))==0 || _c=='\r' || _c=='\n') \
 			(_mystr).len--; \
-	})
+	}while(0)
 
 
 #define  translate_pointer( _new_buf , _org_buf , _p) \
@@ -36,7 +36,7 @@
 
 /* converts a str to an u. short, returns the u. short and sets *err on
  * error and if err!=null
- * */
+  */
 static inline unsigned short str2s(unsigned char* str, unsigned int len,
 									int *err)
 {

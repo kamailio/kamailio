@@ -57,13 +57,16 @@ static void* shm_mempool=(void*)-1;
 	struct qm_block* shm_block;
 #endif
 
-#define sh_realloc(_p, _size) ({ \
-		char *_c; \
-		shm_lock(); \
-		shm_free_unsafe( (_p) ); \
-		_c=shm_malloc_unsafe( (_size) ); \
-		shm_unlock(); \
-		_c; })
+
+inline static void* sh_realloc(void* p, unsigned int size)
+{
+	void *r;
+	shm_lock(); 
+	shm_free_unsafe(p);
+	r=shm_malloc_unsafe(size);
+	shm_unlock();
+	return r;
+}
 
 /* look at a buffer if there is perhaps enough space for the new size
    (It is benefitial to do so because vq_malloc is pretty stateful
@@ -83,7 +86,11 @@ void* _shm_resize( void* p , unsigned int s)
 #ifdef VQ_MALLOC
 	struct vqm_frag *f;
 #else
-#	warning shm_resize performs suboptimally without VQ_MALLOC!
+	#ifdef __SUNPRO_C
+		/*no warning support on Sun cc */
+	#else
+		#warning shm_resize performs suboptimally without VQ_MALLOC!
+	#endif
 #endif
 
 	if (p==0) {
@@ -214,6 +221,9 @@ void shm_mem_destroy()
 #ifndef SHM_MMAP
 	struct shmid_ds shm_info;
 #endif
+#ifndef FAST_LOCK
+	union semun zero_un;
+#endif
 	
 	DBG("shm_mem_destroy\n");
 	if (shm_mempool && (shm_mempool!=(void*)-1)) {
@@ -232,7 +242,8 @@ void shm_mem_destroy()
 #endif
 #ifndef FAST_LOCK
 	if (shm_semid!=-1) {
-		semctl(shm_semid, 0, IPC_RMID, (union semun)0);
+		zero_un.val=0;
+		semctl(shm_semid, 0, IPC_RMID, zero_un);
 		shm_semid=-1;
 	}
 #endif

@@ -157,11 +157,11 @@ int udp_rcv_loop()
 	static char buf [BUF_SIZE+1];
 #endif
 
-	struct sockaddr* from;
+	struct sockaddr_in* from;
 	int fromlen;
 
 
-	from=(struct sockaddr*) malloc(sizeof(struct sockaddr));
+	from=(struct sockaddr_in*) malloc(sizeof(struct sockaddr_in));
 	if (from==0){
 		LOG(L_ERR, "ERROR: udp_rcv_loop: out of memory\n");
 		goto error;
@@ -176,8 +176,9 @@ int udp_rcv_loop()
 			goto error;
 		}
 #endif
-		fromlen=sizeof(struct sockaddr);
-		len=recvfrom(udp_sock, buf, BUF_SIZE, 0, from, &fromlen);
+		fromlen=sizeof(struct sockaddr_in);
+		len=recvfrom(udp_sock, buf, BUF_SIZE, 0, (struct sockaddr*)from,
+						&fromlen);
 		if (len==-1){
 			LOG(L_ERR, "ERROR: udp_rcv_loop:recvfrom: %s\n",
 						strerror(errno));
@@ -188,14 +189,15 @@ int udp_rcv_loop()
 		buf[len+1]=0;
 		
 		/* receive_msg must free buf too!*/
-		receive_msg(buf, len, ((struct sockaddr_in*)from)->sin_addr.s_addr);
+		receive_msg(buf, len, from->sin_addr.s_addr);
 		
 	/* skip: do other stuff */
 		
 	}
-	
+	/*
 	if (from) free(from);
 	return 0;
+	*/
 	
 error:
 	if (from) free(from);

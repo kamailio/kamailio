@@ -33,7 +33,7 @@ enum{ S_PARA_NAME=20, PARA_NAME, S_EQUAL, S_PARA_VALUE, TAG1, TAG2, TAG3
 
 
 char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
-								unsigned int *returned_status)
+								int *returned_status)
 {
 	struct to_param *param=0;
 	int status =PARA_START;

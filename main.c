@@ -388,7 +388,7 @@ int main_loop()
 		for(;;) sleep(LONG_SLEEP);
 	}
 	
-	return 0;
+	/*return 0; */
  error:
 	return -1;
 
@@ -748,7 +748,8 @@ int main(int argc, char** argv)
 			DPrint("ERROR: could not resolve %s\n", names[r]);
 			goto error;
 		}
-		addresses[r]=*((long*)he->h_addr_list[0]);
+		memcpy(&addresses[r], he->h_addr_list[0], sizeof(int));
+		/*addresses[r]=*((long*)he->h_addr_list[0]);*/
 		printf("%s [%s] : %d\n",names[r],
 				inet_ntoa(*(struct in_addr*)&addresses[r]),
 				(unsigned short)port_no);

@@ -1699,7 +1699,7 @@ endofpacket:
 	vb->error=VIA_PARSE_OK;
 	vb->bsize=tmp-buffer;
 	if (vb->port_str.s){
-		vb->port=str2s(vb->port_str.s, vb->port_str.len, &err);
+		vb->port=str2s((unsigned char*)vb->port_str.s, vb->port_str.len, &err);
 		if (err){
 					LOG(L_ERR, "ERROR: parse_via: invalid port number <%s>\n",
 						vb->port_str.s);
@@ -1712,7 +1712,7 @@ nextvia:
 	vb->error=VIA_PARSE_OK;
 	vb->bsize=tmp-buffer;
 	if (vb->port_str.s){
-		vb->port=str2s(vb->port_str.s, vb->port_str.len, &err);
+		vb->port=str2s((unsigned char*)vb->port_str.s, vb->port_str.len, &err);
 		if (err){
 					LOG(L_ERR, "ERROR: parse_via: invalid port number <%s>\n",
 						vb->port_str.s);

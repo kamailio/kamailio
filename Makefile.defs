@@ -8,7 +8,7 @@
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL = 7
-EXTRAVERSION = -2
+EXTRAVERSION = -3-suncc
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s)
@@ -76,9 +76,12 @@ ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/ )
 
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"'\
-	 -DDNS_IP_HACK  -DPKG_MALLOC -DSHM_MEM  -DSHM_MMAP \
+	 -DDNS_IP_HACK  -DPKG_MALLOC \
 	 -DF_MALLOC  -DUSE_SYNONIM\
-	 -DWAIT -DNEW_HNAME -DNOISY_REPLIES -DBOGDAN_TRIFLE \
+	 -DSHM_MEM  -DSHM_MMAP \
+	 -DNO_DEBUG \
+	 -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 \
+	 -DWAIT -DNEW_HNAME # -DNOISY_REPLIES -DBOGDAN_TRIFLE \
 	 #-DNO_DEBUG \
 	 #-DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=0 \
 	 #-DNOSMP \
@@ -95,7 +98,9 @@ ifeq ($(ARCH), i386)
 endif
 
 ifeq ($(ARCH), sparc64)
-	DEFS+= -DFAST_LOCK
+ifeq 	($(CC_NAME), gcc)
+		DEFS+= -DFAST_LOCK
+endif
 endif
 
 
@@ -109,34 +114,51 @@ mode = release
 #common
 CC=gcc
 LD= $(CC)
-CC_VER= $(CC) $(shell $(CC) --version)
-CC_LONGVER=$(shell $(CC) -v 2>&1)
-MKDEP=gcc -MM $(DEFS)
+CC_LONGVER=$(shell if  $(CC) -v 2>/dev/null; then \
+						$(CC) -v 2>&1 ;\
+					else \
+						$(CC) -V 2>&1 ; \
+					fi )
 MKTAGS=ctags -R .
 
 #find-out the compiler's name
 
 ifneq (,$(findstring gcc, $(CC_LONGVER)))
 	CC_NAME=gcc
+	CC_VER=$(CC) $(shell $(CC) --version)
+	MKDEP=$(CC) -MM $(DEFS)
 	#transform gcc version into 2.9x or 3.0
 	CC_SHORTVER=$(shell $(CC) --version | \
 				 sed -e 's/[^0-9]*-\(.*\)/\1/'| \
 				 sed -e 's/2\.9.*/2.9x/' -e 's/3\..\..*/3.0/')
-else
+endif
+
+ifneq (, $(findstring Sun, $(CC_LONGVER)))
+	CC_NAME=suncc
+	CC_SHORTVER=$(shell echo $(CC_LONGVER)|head -1| \
+					sed -e 's/.*\([0-9]\.[0-9]\).*/\1/g' )
+	CC_VER=$(CC) $(CC_SHORTVER)
+	MKDEP=$(CC) -xM1 $(DEFS)
+endif
+
+ifeq (,$(CC_NAME))
+#not found
 	CC_NAME=$(CC)
 	CC_SHORTVER=unknown
+	CC_VER=unknown
+	MKDEP=gcc -MM $(DEFS)
 endif
 
 
 # setting CFLAGS
 ifeq ($(mode), release)
-	#common stuff
-	CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) -Winline\
-			#-Wmissing-prototypes \
 	#if i386
 ifeq	($(ARCH), i386)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
+				#common stuff
+				CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) -Winline\
+					#-Wmissing-prototypes \
 			#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
 					CFLAGS+=-minline-all-stringops -malign-double \
@@ -169,6 +191,9 @@ endif	#ARCH, i386
 ifeq	($(ARCH), sparc64)
 			#if gcc
 ifeq		($(CC_NAME), gcc)
+				#common stuff
+				CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) -Winline\
+					#-Wmissing-prototypes \
 				#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
 					#use 32bit for now
@@ -193,27 +218,52 @@ endif			#CC_SHORTVER, 2.9x
 endif			#CC_SHORTVER, 3.0
 
 else		#CC_NAME, gcc
+ifeq		($(CC_NAME), suncc)
+			CFLAGS+=-xO5 -fast -native -xarch=v8plusa -xCC \
+					-xc99 # C99 support
+			# -Dinline="" # add this if cc < 5.3 (define inline as null)
+else
 				#other compilers
 $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
+endif		#CC_NAME, suncc
 endif		#CC_NAME, gcc
 endif	#ARCH, sparc64
 
 
 
 # setting LDFLAGS
+ifeq	($(CC_NAME), gcc)
+	#gcc and maybe others
 	LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE) 
+endif
+ifeq	($(CC_NAME), suncc)
+	LDFLAGS+=-xO5 $(PROFILE)
+endif
 	# we need -fPIC -DPIC only for shared objects, we don't need them for
 	# the executable file, because it's always loaded at a fixed address
 	# -andrei
 else	#mode,release
-	CFLAGS=-g -Wcast-align -Winline $(PROFILE)
-	LDFLAGS+=-g -Wl,-E $(PROFILE)
+ifeq	($(CC_NAME), gcc)
+		CFLAGS=-g -Wcast-align -Winline $(PROFILE)
+		LDFLAGS+=-g -Wl,-E $(PROFILE)
+endif
+ifeq	($(CC_NAME), suncc)
+		CFLAGS= -g $(PROFILE)
+		LDFLAGS+=-g $(PROFILE)
+endif
+
 endif #mode=release
 
 
 #*FLAGS used for compiling the modules
+ifeq	($(CC_NAME), gcc)
 MOD_CFLAGS=-fPIC -DPIC $(CFLAGS)
 MOD_LDFLAGS=-shared $(LDFLAGS)
+endif
+ifeq	($(CC_NAME), suncc)
+MOD_CFLAGS=-Kpic  $(CFLAGS)
+MOD_LDFLAGS=-G $(LDFLAGS)
+endif
 
 LEX=flex
 YACC=bison
@@ -239,8 +289,12 @@ ifeq  ($(OS), SunOS)
 	endif
 
 	YACC=yacc
-	LIBS+=-L/usr/local/lib -lxnet -lrt # or -lnsl -lsocket or -lglibc ?
-	# -lrt needed for sched_yield; some systems may require -lposix4
+
+ifeq ($(CC_NAME), suncc)
+	LIBS=-lfast
+endif
+	LIBS+=-ldl -L/usr/local/lib -lfl -lxnet -lrt
+	# -lrt needed for sched_yield
 endif
 
 ifeq ($(OS), FreeBSD)

@@ -128,7 +128,7 @@ int load_module(char* path)
 		}
 	}
 	/* launch register */
-	mod_register = dlsym(handle, "mod_register");
+	mod_register = (module_register)dlsym(handle, "mod_register");
 	if ( (error =dlerror())!=0 ){
 		LOG(L_ERR, "ERROR: load_module: %s\n", error);
 		goto error1;
@@ -176,7 +176,7 @@ struct sr_module* find_module(void* f, int *i)
 	int r;
 	for (t=modules;t;t=t->next){
 		for(r=0;r<t->exports->cmd_no;r++) 
-			if (f==t->exports->cmd_pointers[r]) {
+			if (f==(void*)t->exports->cmd_pointers[r]) {
 				if (i) *i=r;
 				return t;
 			}

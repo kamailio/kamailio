@@ -324,7 +324,7 @@ char* parse_hostport(char* buf, str* host, short int* port)
 		*port=0;
 	}else{
 		*tmp=0;
-		*port=str2s(tmp+1, strlen(tmp+1), &err);
+		*port=str2s((unsigned char*)(tmp+1), strlen(tmp+1), &err);
 		if (err ){
 			LOG(L_INFO, 
 					"ERROR: hostport: trailing chars in port number: %s\n",

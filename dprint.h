@@ -30,18 +30,35 @@
 void dprint (char* format, ...);
 
 #ifdef NO_DEBUG
-	#define DPrint(fmt, args...)
+	#ifdef __SUNPRO_C
+		#define DPrint(...)
+	#else
+		#define DPrint(fmt, args...)
+	#endif
 #else
-	#define DPrint(fmt,args...) \
-		do{ \
-			if (debug>=DPRINT_LEV){ \
-				if (log_stderr){ \
-					dprint (fmt, ## args); \
-				}else{ \
-					syslog(DPRINT_LEV|L_FAC, fmt, ## args); \
-				}\
-			} \
-		}while(0)
+	#ifdef __SUNPRO_C
+		#define DPrint( ...) \
+			do{ \
+				if (debug>=DPRINT_LEV){ \
+					if (log_stderr){ \
+						dprint (__VA_ARGS__); \
+					}else{ \
+						syslog(DPRINT_LEV|L_FAC,  __VA_ARGS__); \
+					}\
+				} \
+			}while(0)
+	#else
+			#define DPrint(fmt,args...) \
+			do{ \
+				if (debug>=DPRINT_LEV){ \
+					if (log_stderr){ \
+						dprint (fmt, ## args); \
+					}else{ \
+						syslog(DPRINT_LEV|L_FAC, fmt, ## args); \
+					}\
+				} \
+			}while(0)
+	#endif
 
 #endif
 
@@ -50,10 +67,46 @@ void dprint (char* format, ...);
 #endif
 
 #ifdef NO_LOG
-	#define LOG(lev, fmt, args...)
+	#ifdef __SUNPRO_C
+		#define LOG(lev, ...)
+	#else
+		#define LOG(lev, fmt, args...)
+	#endif
 #else
-
-	#define LOG(lev, fmt, args...) \
+	#ifdef __SUNPRO_C
+		#define LOG(lev, ...) \
+			do { \
+				if (debug>=(lev)){ \
+					if (log_stderr) dprint (__VA_ARGS__); \
+					else { \
+						switch(lev){ \
+							case L_CRIT: \
+								syslog(LOG_CRIT | L_FAC, __VA_ARGS__); \
+								break; \
+							case L_ALERT: \
+								syslog(LOG_ALERT | L_FAC, __VA_ARGS__); \
+								break; \
+							case L_ERR: \
+								syslog(LOG_ERR | L_FAC, __VA_ARGS__); \
+								break; \
+							case L_WARN: \
+								syslog(LOG_WARNING | L_FAC, __VA_ARGS__);\
+								break; \
+							case L_NOTICE: \
+								syslog(LOG_NOTICE | L_FAC, __VA_ARGS__); \
+								break; \
+							case L_INFO: \
+								syslog(LOG_INFO | L_FAC, __VA_ARGS__); \
+								break; \
+							case L_DBG: \
+								syslog(LOG_DEBUG | L_FAC, __VA_ARGS__); \
+								break; \
+						} \
+					} \
+				} \
+			}while(0)
+	#else
+		#define LOG(lev, fmt, args...) \
 			do { \
 				if (debug>=(lev)){ \
 					if (log_stderr) dprint (fmt, ## args); \
@@ -84,13 +137,22 @@ void dprint (char* format, ...);
 					} \
 				} \
 			}while(0)
+	#endif /*SUN_PRO_C*/
 #endif
 
 
 #ifdef NO_DEBUG
-	#define DBG(fmt, args...)
+	#ifdef __SUNPRO_C
+		#define DBG(...)
+	#else
+		#define DBG(fmt, args...)
+	#endif
 #else
-	#define DBG(fmt, args...) LOG(L_DBG, fmt, ## args)
+	#ifdef __SUNPRO_C
+		#define DBG(...) LOG(L_DBG, __VA_ARGS__)
+	#else
+		#define DBG(fmt, args...) LOG(L_DBG, fmt, ## args)
+	#endif
 #endif
 
 #endif /* ifndef dprint_h */

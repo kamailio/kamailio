@@ -176,7 +176,7 @@ struct proxy_l* mk_proxy(char* name, unsigned short port)
 	p->port=port;
 #ifdef DNS_IP_HACK
 	len=strlen(name);
-	ip=str2ip(name, len, &err);
+	ip=str2ip((unsigned char*)name, len, &err);
 	if (err==0){
 		p->host.h_name=malloc(len+1);
 		if (p->host.h_name==0) goto error;

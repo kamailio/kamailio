@@ -71,8 +71,8 @@ int do_action(struct action* a, struct sip_msg* msg)
 					case URIPORT_ST:
 									if (uri.port.s){
 									 /*port=strtol(uri.port.s,&end,10);*/
-										port=str2s(uri.port.s, uri.port.len,
-													&err);
+										port=str2s((unsigned char*)uri.port.s, 
+													uri.port.len, &err);
 										/*if ((end)&&(*end)){*/
 										if (err){
 											LOG(L_ERR, "ERROR: do_action: "
@@ -140,7 +140,11 @@ int do_action(struct action* a, struct sip_msg* msg)
 					p->addr_idx=0;
 				p->ok=1;
 			}
+			memcpy(&(to->sin_addr.s_addr), p->host.h_addr_list[p->addr_idx],
+					sizeof(to->sin_addr.s_addr));
+			/*
 			to->sin_addr.s_addr=*((long*)p->host.h_addr_list[p->addr_idx]);
+			*/
 			p->tx++;
 			p->tx_bytes+=msg->len;
 			ret=udp_send(msg->orig, msg->len, (struct sockaddr*)to,
