@@ -490,7 +490,9 @@ EAT_ABLE	[\ \t\b\r]
 <STRING1>\\\\		{ count(); addchar(&s_buf, '\\'); } 
 <STRING1>\\x{HEX}{1,2}	{ count(); addchar(&s_buf, 
 											(char)strtol(yytext+2, 0, 16)); }
-<STRING1>\\[0-7]{1,3}	{ count(); addchar(&s_buf, 
+ /* don't allow \[0-7]{1}, it will eat the backreferences from
+    subst_uri if allowed (although everybody should use '' in subt_uri) */
+<STRING1>\\[0-7]{2,3}	{ count(); addchar(&s_buf, 
 											(char)strtol(yytext+1, 0, 8));  }
 <STRING1>\\{CR}		{ count(); } /* eat escaped CRs */
 <STRING1>.|{EAT_ABLE}|{CR}	{ addchar(&s_buf, *yytext); }
