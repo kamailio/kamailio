@@ -26,12 +26,18 @@
 #define JB_ID_BASE	"SJ"
 
 #define JB_CLIENT_OPEN_STREAM	"<stream:stream to='%s' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams'>"
-#define JB_IQ_AUTH_REQ	"<iq id='%s%d' type='get'><query xmlns='jabber:iq:auth'><username>%s</username></query></iq>"
-#define JB_IQ_AUTH_PL_SEND	"<iq id='%s%d' type='set'><query xmlns='jabber:iq:auth'><username>%s</username><password>%s</password><resource>%s</resource></query></iq>"
-#define JB_IQ_AUTH_DG_SEND	"<iq id='%s%d' type='set'><query xmlns='jabber:iq:auth'><username>%s</username><digest>%s</digest><resource>%s</resource></query></iq>"
-#define JB_IQ_ROSTER_GET	"<iq type='get'><query xmlns='jabber:iq:roster'/></iq>"
-#define JB_MSG_NORMAL	"<message to='%s' type='normal'><body>%s</body></message>"
-#define JB_MSG_CHAT		"<message to='%s' type='chat'><body>%s</body></message><message to='%s' type='chat'><body>%s</body></message>"
+
+#define JB_IQ_AUTH_REQ			"<iq id='%s%d' type='get'><query xmlns='jabber:iq:auth'><username>%s</username></query></iq>"
+
+#define JB_IQ_AUTH_PL_SEND		"<iq id='%s%d' type='set'><query xmlns='jabber:iq:auth'><username>%s</username><password>%s</password><resource>%s</resource></query></iq>"
+
+#define JB_IQ_AUTH_DG_SEND		"<iq id='%s%d' type='set'><query xmlns='jabber:iq:auth'><username>%s</username><digest>%s</digest><resource>%s</resource></query></iq>"
+
+#define JB_IQ_ROSTER_GET		"<iq type='get'><query xmlns='jabber:iq:roster'/></iq>"
+
+#define JB_MSG_NORMAL			"<message to='%s' type='normal'><body>%s</body></message>"
+
+#define JB_MSG_CHAT				"<message to='%s' type='chat'><body>%s</body></message><message to='%s' type='chat'><body>%s</body></message>"
 
 
 /**
@@ -75,7 +81,7 @@ int jb_connect_to_server(jbconnection jbc)
     he=gethostbyname(jbc->hostname);
     if(he == NULL)
     {
-    	_M_PRINTF("S2JB: Error to get the information about Jabber server address\n");
+    	_M_PRINTF("S2JB: Error getting info about Jabber server address\n");
         return -1;
     }
 
@@ -137,7 +143,8 @@ int jb_disconnect(jbconnection jbc)
 /**
  * authentication to the JABBER server
  */
-int jb_user_auth_to_server(jbconnection jbc, char *username, char *passwd, char *resource)
+int jb_user_auth_to_server(jbconnection jbc, char *username, char *passwd,
+				char *resource)
 {
 	char msg_buff[4096];
 	int n;
@@ -180,11 +187,13 @@ int jb_user_auth_to_server(jbconnection jbc, char *username, char *passwd, char 
 		sprintf(msg_buff, "%s%s", jbc->stream_id, passwd);
 		DBG("JABBER: JB_USER_AUTH_TO_SERVER: [%s:%s]\n", jbc->stream_id, passwd);
 		p0 = shahash(msg_buff);
-		sprintf(msg_buff, JB_IQ_AUTH_DG_SEND, JB_ID_BASE, jbc->seq_nr, username, p0, resource);
+		sprintf(msg_buff, JB_IQ_AUTH_DG_SEND, JB_ID_BASE, jbc->seq_nr, username,
+						p0, resource);
 	}
 	else
 	{ // plaint text authentication
-		sprintf(msg_buff, JB_IQ_AUTH_PL_SEND, JB_ID_BASE, jbc->seq_nr, username, passwd, resource);
+		sprintf(msg_buff, JB_IQ_AUTH_PL_SEND, JB_ID_BASE, jbc->seq_nr, username,
+						passwd, resource);
 	}
 
 	send(jbc->sock, msg_buff, strlen(msg_buff), 0);
@@ -201,12 +210,6 @@ int jb_user_auth_to_server(jbconnection jbc, char *username, char *passwd, char 
 	if(p0 != NULL)
 		return -3;
 		
-    /**************
-	jbc->username = (char*)_M_MALLOC(strlen(username));
-	strcpy(jbc->username, username);
-	jbc->passwd = (char*)_M_MALLOC(strlen(passwd));
-	strcpy(jbc->passwd, passwd);
-	*/
 	jbc->resource = (char*)_M_MALLOC(strlen(resource));
 	strcpy(jbc->resource, resource);
 	
@@ -244,13 +247,15 @@ int jb_send_msg(jbconnection jbc, char *to, int tol, char *msg, int msgl)
 	p = msg_buff + l;
 	if((i = xml_escape(msg, msgl, p, 4096-l)) < 0)
 	{
-		DBG("JABBER: JB_SEND_MSG: error: message not sent - output buffer too small\n");
+		DBG("JABBER: JB_SEND_MSG: error: message not sent"
+			" - output buffer too small\n");
 		return -2;
 	}
 
 	if(l+i > 4076)
 	{
-		DBG("JABBER: JB_SEND_MSG: error: message not sent -- output buffer too small\n");
+		DBG("JABBER: JB_SEND_MSG: error: message not sent"
+			" - output buffer too small\n");
 		return -2;
 	}
 	strcat(msg_buff, "</body></message>");
@@ -270,7 +275,8 @@ int jb_send_msg(jbconnection jbc, char *to, int tol, char *msg, int msgl)
  * send a signed message through a JABBER connection
  * params are pairs (buffer, len)
  */
-int jb_send_sig_msg(jbconnection jbc, char *to, int tol, char *msg, int msgl, char *sig, int sigl)
+int jb_send_sig_msg(jbconnection jbc, char *to, int tol, char *msg, int msgl,
+				char *sig, int sigl)
 {
 	char msg_buff[4096], *p;
 	int i, l;
@@ -283,7 +289,8 @@ int jb_send_sig_msg(jbconnection jbc, char *to, int tol, char *msg, int msgl, ch
 	p = msg_buff + l;
 	if((i = xml_escape(msg, msgl, p, 4096-l)) < 0)
 	{
-		DBG("JABBER: JB_SEND_SIG_MSG: error: message not sent - output buffer too small\n");
+		DBG("JABBER: JB_SEND_SIG_MSG: error: message not sent"
+			" - output buffer too small\n");
 		return -2;
 	}
 	
@@ -294,7 +301,8 @@ int jb_send_sig_msg(jbconnection jbc, char *to, int tol, char *msg, int msgl, ch
 	p = msg_buff + l;
 	if((i=xml_escape(sig, sigl, p, 4096-l)) < 0)
 	{
-		DBG("JABBER: JB_SEND_SIG_MSG: error: message not sent -- output buffer too small\n");
+		DBG("JABBER: JB_SEND_SIG_MSG: error: message not sent"
+			" -- output buffer too small\n");
 		return -2;
 	}
 
@@ -328,9 +336,9 @@ int jb_recv_msg(jbconnection jbc, char *from, char *msg)
  * status - "online", "away", "unavailable" ...
  * priority - "0", "1", ...
  */
-int jb_send_presence(jbconnection jbc, char *type, char *status, char *priority)
+int jb_send_presence(jbconnection jbc, char *type, char *status,
+				char *priority)
 {
-	//JB_PRESENCE		"<presence type='%s'><status>%s</status><priority>%d</priority></presence>"
 	char msg_buff[4096];
 	int n;
 	if(jbc == NULL)
@@ -405,3 +413,4 @@ int jb_free_jbconnection(jbconnection jbc)
 	DBG("JABBER: JB_FREE_JBCONNECTION ---END---\n");
 	return 0;
 }
+

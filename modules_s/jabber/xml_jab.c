@@ -13,69 +13,92 @@
 
 #include "../../dprint.h"
 
-#define EAT_SPACES_R(_p, _e)	while((*(_p)) && ((_p) <= (_e)) && (*(_p)==' ' || *(_p)=='\t')) (_p)++; \
-								if((_p)>(_e)) return -2
+#define EAT_SPACES_R(_p, _e)	\
+			while((*(_p)) && ((_p) <= (_e)) && (*(_p)==' '\
+					|| *(_p)=='\t')) (_p)++; \
+				if((_p)>(_e)) return -2
 
 #define EAT_SPACES(_p)	while((*(_p)) && (*(_p)==' ' || *(_p)=='\t')) (_p)++
-#define NEXT_ALCHAR(_p, _pos)	(_pos) = 0; \
-							while((*((_p)+(_pos))) && (*((_p)+(_pos))<'A' || *((_p)+(_pos))>'Z') \
-								&& (*((_p)+(_pos))<'a' || *((_p)+(_pos))>'z')) (_pos)++
-#define NEXT_ALCHARX(_p, _pos, _e)	(_pos) = 0; \
-							while((*((_p)+(_pos))) && ((_p)+(_pos) <= (_e)) && (*((_p)+(_pos))<'A' || *((_p)+(_pos))>'Z') \
-								&& (*((_p)+(_pos))<'a' || *((_p)+(_pos))>'z') && (*((_p)+(_pos))!='>') \
-								 && (*((_p)+(_pos))!='<') && (*((_p)+(_pos))!='/')) (_pos)++; \
-							if((_p)+(_pos) > (_e)) return -2
 
-#define NEXT_CHAR(_p, _c, _pos) (_pos) = 0; \
-							while((*((_p)+(_pos))) && *((_p)+(_pos))!=(_c)) (_pos)++
-#define NEXT_CHAR_R(_p, _c, _pos, _e) (_pos) = 0; \
-							while( (*((_p)+(_pos))) && ((_p)+(_pos) <= (_e)) && (*((_p)+(_pos)) != (_c)) ) (_pos)++; \
-							if((_p)+(_pos) > (_e)) return -2
+#define NEXT_ALCHAR(_p, _pos)	\
+			(_pos) = 0; \
+			while((*((_p)+(_pos))) && \
+						(*((_p)+(_pos))<'A' || *((_p)+(_pos))>'Z') \
+						&& (*((_p)+(_pos))<'a' || *((_p)+(_pos))>'z')) \
+				(_pos)++
 
-#define NEXT_TAGSEP_R(_p, _pos, _e) (_pos) = 0; \
-							while( (*((_p)+(_pos))) && ((_p)+(_pos) <= (_e)) && (*((_p)+(_pos)) != ' ') \
-							&& (*((_p)+(_pos)) != '\t') && (*((_p)+(_pos)) != '>')  && (*((_p)+(_pos)) != '/') ) (_pos)++; \
-							if((_p)+(_pos) > (_e)) return -2
+#define NEXT_ALCHARX(_p, _pos, _e)	\
+			(_pos) = 0; \
+			while((*((_p)+(_pos))) && ((_p)+(_pos) <= (_e)) && \
+						(*((_p)+(_pos))<'A' || *((_p)+(_pos))>'Z') \
+						&& (*((_p)+(_pos))<'a' || *((_p)+(_pos))>'z') \
+						&& (*((_p)+(_pos))!='>') \
+						&& (*((_p)+(_pos))!='<') && (*((_p)+(_pos))!='/')) \
+				(_pos)++; \
+			if((_p)+(_pos) > (_e)) return -2
+
+#define NEXT_CHAR(_p, _c, _pos) \
+			(_pos) = 0; \
+			while((*((_p)+(_pos))) && *((_p)+(_pos))!=(_c)) (_pos)++
+
+#define NEXT_CHAR_R(_p, _c, _pos, _e) \
+			(_pos) = 0; \
+			while( (*((_p)+(_pos))) && ((_p)+(_pos) <= (_e)) && \
+					(*((_p)+(_pos)) != (_c)) ) (_pos)++; \
+			if((_p)+(_pos) > (_e)) return -2
+
+#define NEXT_TAGSEP_R(_p, _pos, _e) \
+			(_pos) = 0; \
+			while( (*((_p)+(_pos))) && ((_p)+(_pos) <= (_e)) && \
+					(*((_p)+(_pos)) != ' ') \
+					&& (*((_p)+(_pos)) != '\t') && (*((_p)+(_pos)) != '>') \
+					&& (*((_p)+(_pos)) != '/') ) \
+				(_pos)++; \
+			if((_p)+(_pos) > (_e)) return -2
 
 #define SKIP_CHARS(_p, _n)	(_p) += (_n)
-#define SKIP_CHARS_R(_p, _n, _e) if( (_p)+(_n) < (_e) ) (_p) += (_n); else return -2
+#define SKIP_CHARS_R(_p, _n, _e) \
+			if( (_p)+(_n) < (_e) ) (_p) += (_n); else return -2
 
-#define IGNORE_TAG(_p, _p1, _l1, _e, _s)  (_s) = 0;\
-							while(1)\
-							{\
-								while( (*(_p)) && ((_p)+2<=(_e)) && (*(_p) != '<') && (*(_p) != '>') ) (_p)++; \
-								if( !(*(_p)) || ((_p)+(_l1)>(_e)) ) \
+#define IGNORE_TAG(_p, _p1, _l1, _e, _s)  \
+			(_s) = 0;\
+			while(1)\
+			{\
+				while( (*(_p)) && ((_p)+2<=(_e)) && (*(_p) != '<') && \
+						(*(_p) != '>') ) \
+					(_p)++; \
+				if( !(*(_p)) || ((_p)+(_l1)>(_e)) ) \
 									return -2; \
-								if((_s)==0 && *(_p)=='>') \
-								{ \
-									if(*((_p)-1) == '/') \
-									{ \
-										(_p)++; \
-										break; \
-									} \
-									else \
-										(_p)++; \
-									(_s) = 1; \
-								} else if(*(_p) == '<' && *((_p)+1)=='/') \
-								{ \
-									(_p) += 2; \
-									if(!strncasecmp((_p), (_p1), (_l1)) ) \
-									{ \
-										(_p) += (_l1); \
-										if(*(_p) == '>') \
-										{ \
-											(_p)++; \
-											break; \
-										} \
-										else \
-											return -2; \
-									} \
-									else \
-										(_p)++; \
-								} \
-								else \
-									(_p)++; \
-							}
+				if((_s)==0 && *(_p)=='>') \
+				{ \
+					if(*((_p)-1) == '/') \
+					{ \
+						(_p)++; \
+							break; \
+					} \
+					else \
+					(_p)++; \
+					(_s) = 1; \
+				} else if(*(_p) == '<' && *((_p)+1)=='/') \
+				{ \
+					(_p) += 2; \
+					if(!strncasecmp((_p), (_p1), (_l1)) ) \
+					{ \
+					(_p) += (_l1); \
+					if(*(_p) == '>') \
+					{ \
+						(_p)++; \
+						break; \
+					} \
+					else \
+						return -2; \
+				} \
+				else \
+					(_p)++; \
+			} \
+			else \
+				(_p)++; \
+		}
 
 /*****  XML Escaping  *****/
 /**
@@ -285,7 +308,8 @@ int j2s_parse_jmsgx(const char *msg, int len, jab_jmsg jmsg)
 					SKIP_CHARS(p0, pos);
 					if(attrf)
 					{
-						if((jmsg->from.len == 0) && !strncasecmp(p0, "from", 4))
+						if((jmsg->from.len == 0) 
+							&& !strncasecmp(p0, "from", 4))
 						{
 							SKIP_CHARS_R(p0, 4, end);
 							DBG("JABBER: j2s_parse_jmsg: from\n");
@@ -296,14 +320,16 @@ int j2s_parse_jmsgx(const char *msg, int len, jab_jmsg jmsg)
 								SKIP_CHARS(p0, pos+1);
 								jmsg->from.s = p0;
 								NEXT_CHAR_R(p0, '\'', pos, end);
-								DBG("JABBER: j2s_parse_jmsg: from %d,%d\n", (int)(jmsg->from.s - msg), pos-1);
+								DBG("JABBER: j2s_parse_jmsg: from %d,%d\n",
+									(int)(jmsg->from.s - msg), pos-1);
 								jmsg->from.len = pos;
 								SKIP_CHARS(p0, pos+1);
 							}
 							else
 								return -2;
 						}
-						else if((jmsg->to.len == 0) && !strncasecmp(p0, "to", 2))
+						else if((jmsg->to.len == 0) 
+								&& !strncasecmp(p0, "to", 2))
 						{
 							SKIP_CHARS(p0, 2);
 							DBG("JABBER: j2s_parse_jmsg: to\n");
@@ -314,14 +340,16 @@ int j2s_parse_jmsgx(const char *msg, int len, jab_jmsg jmsg)
 								SKIP_CHARS(p0, pos+1);
 								jmsg->to.s = p0;
 								NEXT_CHAR_R(p0, '\'', pos, end);
-								DBG("JABBER: j2s_parse_jmsg: to %d,%d\n", (int)(jmsg->to.s - msg), pos-1);
+								DBG("JABBER: j2s_parse_jmsg: to %d,%d\n", 
+									(int)(jmsg->to.s - msg), pos-1);
 								jmsg->to.len = pos;
 								SKIP_CHARS(p0, pos+1);
 							}
 							else
 								return -2;
 						}
-						else if((jmsg->id.len == 0) && !strncasecmp(p0, "id", 2))
+						else if((jmsg->id.len == 0) 
+								&& !strncasecmp(p0, "id", 2))
 						{
 							SKIP_CHARS(p0, 2);
 							DBG("JABBER: j2s_parse_jmsg: id\n");
@@ -338,7 +366,8 @@ int j2s_parse_jmsgx(const char *msg, int len, jab_jmsg jmsg)
 							else
 								return -2;
 						}
-						else if((jmsg->type.len == 0) && !strncasecmp(p0, "type", 4))
+						else if((jmsg->type.len == 0) 
+								&& !strncasecmp(p0, "type", 4))
 						{
 							DBG("JABBER: j2s_parse_jmsg: type\n");
 							SKIP_CHARS(p0, 4);
@@ -359,7 +388,8 @@ int j2s_parse_jmsgx(const char *msg, int len, jab_jmsg jmsg)
 						{
 							SKIP_CHARS(p0, 1);
 							attrf = 0;
-							DBG("JABBER: j2s_parse_jmsg: message attributes parsed\n");
+							DBG("JABBER: j2s_parse_jmsg: message attributes \
+								parsed\n");
 						}
 						else if(!strncasecmp(p0, "/>", 2))
 						{
@@ -368,13 +398,15 @@ int j2s_parse_jmsgx(const char *msg, int len, jab_jmsg jmsg)
 						else
 						{
 							NEXT_CHAR_R(p0, '=', pos, end);
-							DBG("JABBER: j2s_parse_jmsg: unknow message attribute [%.*s]\n", pos, p0);
+							DBG("JABBER: j2s_parse_jmsg: unknow message \
+								attribute [%.*s]\n", pos, p0);
 							SKIP_CHARS(p0, pos+1);
 							NEXT_CHAR_R(p0, '\'', pos, end);
 							SKIP_CHARS(p0, pos+1);
 							NEXT_CHAR_R(p0, '\'', pos, end);
 							SKIP_CHARS(p0, pos+1);
-							DBG("JABBER: j2s_parse_jmsg: unknow message attribute was skipped\n");
+							DBG("JABBER: j2s_parse_jmsg: unknow message \
+								attribute was skipped\n");
 							// return -2;
 						}
 					}
@@ -408,9 +440,11 @@ int j2s_parse_jmsgx(const char *msg, int len, jab_jmsg jmsg)
 								p1 = p0;
 								l1 = pos;
 								SKIP_CHARS(p0, pos);
-								DBG("JABBER: j2s_parse_jmsg: ignoring tag <%.*s>\n", l1, p1);
+								DBG("JABBER: j2s_parse_jmsg: ignoring tag \
+									<%.*s>\n", l1, p1);
 								IGNORE_TAG(p0, p1, l1, end, sflag);
-								DBG("JABBER: j2s_parse_jmsg: tag <%.*s> ignored\n", l1, p1);
+								DBG("JABBER: j2s_parse_jmsg: tag <%.*s> \
+									ignored\n", l1, p1);
 							}
 						}
 						else
@@ -428,7 +462,8 @@ int j2s_parse_jmsgx(const char *msg, int len, jab_jmsg jmsg)
 						SKIP_CHARS(p0, pos+1);
 						if(!strncasecmp(p0, "/body", 5))
 						{
-							DBG("JABBER: j2s_parse_jmsg: body %d,%d\n", (int)(jmsg->body.s - msg), pos-1);
+							DBG("JABBER: j2s_parse_jmsg: body %d,%d\n", 
+								(int)(jmsg->body.s - msg), pos-1);
 							jmsg->body.len = pos;
 							SKIP_CHARS(p0, 5);
 							EAT_SPACES_R(p0, end);
@@ -541,7 +576,8 @@ int j2s_parse_jmsg(const char *msg, int len, jab_jmsg jmsg)
 				SKIP_CHARS(p0, pos+1);
 				if(!strncasecmp(p0, "/body", 5))
 				{
-					DBG("JABBER: j2s_parse_jmsg: body %d,%d\n", (int)(jmsg->body.s - msg), pos-1);
+					DBG("JABBER: j2s_parse_jmsg: body %d,%d\n", 
+						(int)(jmsg->body.s - msg), pos-1);
 					jmsg->body.len = pos;
 					SKIP_CHARS(p0, 5);
 				}
@@ -560,7 +596,8 @@ int j2s_parse_jmsg(const char *msg, int len, jab_jmsg jmsg)
 				SKIP_CHARS(p0, pos+1);
 				jmsg->from.s = p0;
 				NEXT_CHAR(p0, '\'', pos);
-				DBG("JABBER: j2s_parse_jmsg: from %d,%d\n", (int)(jmsg->from.s - msg), pos-1);
+				DBG("JABBER: j2s_parse_jmsg: from %d,%d\n", 
+					(int)(jmsg->from.s - msg), pos-1);
 				jmsg->from.len = pos;
 				SKIP_CHARS(p0, pos);
 			}
@@ -636,3 +673,4 @@ int j2s_parse_jmsg(const char *msg, int len, jab_jmsg jmsg)
 	}
 	return 0;
 }
+

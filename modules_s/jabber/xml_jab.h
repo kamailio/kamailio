@@ -70,5 +70,5 @@ int xml_unescape(char *, int, char *, int);
 int j2s_parse_jmsgx(const char *, int, jab_jmsg);
 int j2s_parse_jmsg(const char *, int, jab_jmsg);
 
-
 #endif
+

@@ -22,9 +22,6 @@
 #include "xml_jab.h"
 #include "mdefines.h"
 
-#define SEM_KEY		(key_t)ftok("/etc/passwd", 'A')
-//#define SIP_MESSAGE "MESSAGE %s SIP/2.0\r\nVia: SIP/2.0/UDP 193.175.135.68:7895\r\nFrom: <sip:%s>;tag=xwer-gfshs-2537-yui\r\nTo: <%s>\r\nCall-ID: asd88asd77a@193.175.135.68\r\nContact: <sip:193.175.135.68:7895>\r\nCSeq: %d MESSAGE\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s"
-#define SIP_MESSAGE "MESSAGE %.*s SIP/2.0\r\nVia: SIP/2.0/UDP 193.175.135.68:9\r\nFrom: <sip:%s>;tag=xwer-gfshs-2537-yuQi\r\nTo: <%.*s>\r\n%sCall-ID: %s_%d@193.175.135.68\r\nCSeq: %d MESSAGE\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s"
 
 /**
  * function used to compare two elements in B-Tree
@@ -36,7 +33,8 @@ int k_cmp(void *a, void *b)
 	    return -1;
 	if(a == NULL)
 	    return 1;
-	// DBG("JABBER: k_kmp: comparing <%.*s> / <%.*s>\n", ((str *)a)->len, ((str *)a)->s, ((str *)b)->len, ((str *)b)->s);
+	// DBG("JABBER: k_kmp: comparing <%.*s> / <%.*s>\n", ((str *)a)->len,
+	// 		((str *)a)->s, ((str *)b)->len, ((str *)b)->s);
 	if(((str *)a)->len != ((str *)b)->len)
 		return -1;
 	n = strncmp(((str *)a)->s, ((str *)b)->s, ((str *)a)->len);
@@ -99,7 +97,6 @@ jab_wlist jab_wlist_init(int **pipes, int size, int max)
 	jwl->len = size;
 	jwl->maxj = max;
 	jwl->contact_h = NULL;
-	//jwl->semid = init_mutex(SEM_KEY);
 	if((jwl->sems = create_semaphores(size)) == NULL)
 	{
 		_M_SHM_FREE(jwl);
@@ -139,7 +136,7 @@ int jab_wlist_init_contact(jab_wlist jwl, char *ch)
 	if((jwl->contact_h = (str*)_M_SHM_MALLOC(sizeof(str))) == NULL)
 		return -1;
 	jwl->contact_h->len = strlen(ch);
-	if((jwl->contact_h->s = (char*)_M_SHM_MALLOC(jwl->contact_h->len+1)) == NULL)
+	if((jwl->contact_h->s=(char*)_M_SHM_MALLOC(jwl->contact_h->len+1))==NULL)
 	{
 		_M_SHM_FREE(jwl->contact_h);
 		return -2;
@@ -199,9 +196,11 @@ void jab_wlist_free(jab_wlist jwl)
 }
 
 /**
- * return communication pipe with the worker that will process the message for the id 'sid', or -1 if error
+ * return communication pipe with the worker that will process the message for
+ * 		the id 'sid', or -1 if error
  * - jwl : pointer to the workers list
- * - sid : id of the entity (connection to Jabber - usually SHOULD be FROM header of the incomming SIP message)
+ * - sid : id of the entity (connection to Jabber - usually SHOULD be FROM 
+ *   header of the incomming SIP message)
  * - p : will point to the SHM location of the 'sid' in jwl
  */
 int jab_wlist_get(jab_wlist jwl, str *sid, str **p)
@@ -224,7 +223,8 @@ int jab_wlist_get(jab_wlist jwl, str *sid, str **p)
 			if(pos >= 0)
 				s_unlock_at(jwl->sems, pos);
 			s_unlock_at(jwl->sems, i);
-			DBG("JABBER: JC_WLIST_GET: entry already exists for <%.*s> in the pool of <%d> [%d]\n", sid->len, sid->s, jwl->workers[i].pid, i);
+			DBG("JABBER: JC_WLIST_GET: entry already exists for <%.*s> in the" 
+				" pool of <%d> [%d]\n",sid->len, sid->s,jwl->workers[i].pid,i);
 			return jwl->workers[i].pipe;
 		}
 		if(min > jwl->workers[i].nr)
@@ -243,14 +243,17 @@ int jab_wlist_get(jab_wlist jwl, str *sid, str **p)
 		jwl->workers[pos].nr++;
 		
 		msid = (str*)_M_SHM_MALLOC(sizeof(str));
-		if((msid != NULL) && (*p = add234(jwl->workers[pos].sip_ids, msid)) != NULL)
+		if((msid != NULL) && 
+			(*p = add234(jwl->workers[pos].sip_ids, msid)) != NULL)
 		{
 			msid->s = (char*)_M_SHM_MALLOC(sid->len);
 			msid->len = sid->len;
 			memcpy(msid->s, sid->s, sid->len);
 			s_unlock_at(jwl->sems, pos);
 			//mutex_unlock(jwl->semid);
-			DBG("JABBER: JC_WLIST_GET: new entry for <%.*s> in the pool of <%d> - [%d]\n", sid->len, sid->s,  jwl->workers[pos].pid, pos);
+			DBG("JABBER: JC_WLIST_GET: new entry for <%.*s> in the pool of"
+				" <%d> - [%d]\n", sid->len, sid->s,
+				jwl->workers[pos].pid, pos);
 			return jwl->workers[pos].pipe;
 		}
 	}
@@ -265,7 +268,8 @@ int jab_wlist_get(jab_wlist jwl, str *sid, str **p)
 /**
  * delete an entity from working list of a worker
  * - jwl : pointer to the workers list
- * - sid : id of the entity (connection to Jabber - usually SHOULD be FROM header of the incomming SIP message
+ * - sid : id of the entity (connection to Jabber - usually SHOULD be FROM
+ *   header of the incomming SIP message
  * - _pid : process id of the worker
  */
 void jab_wlist_del(jab_wlist jwl, str *sid, int _pid)
@@ -279,10 +283,12 @@ void jab_wlist_del(jab_wlist jwl, str *sid, int _pid)
 			break;
 	if(i >= jwl->len)
 	{
-		DBG("JABBER: jab_wlist_del:%d: key <%.*s> not found in [%d]...\n", _pid, sid->len, sid->s, i);		
+		DBG("JABBER: jab_wlist_del:%d: key <%.*s> not found in [%d]...\n", 
+			_pid, sid->len, sid->s, i);		
 		return;
 	}
-	DBG("JABBER: jab_wlist_del:%d: trying to delete entry for <%.*s>...\n", _pid, sid->len, sid->s);
+	DBG("JABBER: jab_wlist_del:%d: trying to delete entry for <%.*s>...\n", 
+		_pid, sid->len, sid->s);
 	
 	s_lock_at(jwl->sems, i);
 	p = del234(jwl->workers[i].sip_ids, (void*)sid);	
@@ -291,7 +297,8 @@ void jab_wlist_del(jab_wlist jwl, str *sid, int _pid)
 	{
 		jwl->workers[i].nr--;
 		
-		DBG("JABBER: jab_wlist_del:%d: sip id <%.*s> deleted\n", _pid, sid->len, sid->s);
+		DBG("JABBER: jab_wlist_del:%d: sip id <%.*s> deleted\n", _pid, 
+			sid->len, sid->s);
 		free_str_p(p);
 	}
 		
@@ -314,28 +321,28 @@ int jab_send_sip_msg(str *to, str *from, str *contact, str *msg)
 	strcpy(buf, "<sip:");
 	strncat(buf, from->s, from->len);
 	tfrom.len = from->len;
-	if(strstr(buf+4, "sip:") == NULL)
+	if(strstr(buf+5, "sip:") == NULL)
 	{
 		tfrom.len += 5;
 		buf[tfrom.len++] = '>';
 		tfrom.s = buf;
 	}
 	else
-		tfrom.s = buf+4;
+		tfrom.s = buf+5;
 	if(contact != NULL && contact->len > 2)
 	{
 	    // contact correction
 	    strcpy(buf1, "<sip:");
 	    strncat(buf1, contact->s, contact->len);
 	    tcontact.len = contact->len;
-	    if(strstr(buf1+4, "sip:") == NULL)
+	    if(strstr(buf1+5, "sip:") == NULL)
 	    {
-		tcontact.len += 5;
-		buf1[tcontact.len++] = '>';
-		tcontact.s = buf1;
+			tcontact.len += 5;
+			buf1[tcontact.len++] = '>';
+			tcontact.s = buf1;
 	    }
 	    else
-		tcontact.s = buf1+4;
+			tcontact.s = buf1+5;
 	    return im_send_message(to, to, &tfrom, &tcontact, msg);
 	}
 	else
@@ -357,9 +364,11 @@ int jab_send_sip_msgz(str *to, str *from, str *contact, char *msg)
 	tstr.s = msg;
 	tstr.len = strlen(msg);
 	if((n = jab_send_sip_msg(to, from, contact, &tstr)) < 0)
-		DBG("JABBER: jab_send_sip_msgz: ERROR SIP MESSAGE was not sent to [%.*s]...\n", tstr.len, tstr.s);
+		DBG("JABBER: jab_send_sip_msgz: ERROR SIP MESSAGE wasn't sent to"
+			" [%.*s]...\n", tstr.len, tstr.s);
 	else
-		DBG("JABBER: jab_send_sip_msgz: SIP MESSAGE was sent to [%.*s]...\n", tstr.len, tstr.s);
+		DBG("JABBER: jab_send_sip_msgz: SIP MESSAGE was sent to [%.*s]...\n", 
+			tstr.len, tstr.s);
 	return n;
 }
 
@@ -376,7 +385,8 @@ int jab_send_sip_msgz(str *to, str *from, str *contact, char *msg)
  * - db_con : connection to database
  * #return : 0 on success or <0 on error
  */
-int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size, int ctime, int wtime, int dtime, db_con_t* db_con)
+int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe,
+		int size, int ctime, int wtime, int dtime, db_con_t* db_con)
 {
 	int ret, i, n, maxfd, error, cseq;
 	jc_pool jcp;
@@ -396,7 +406,8 @@ int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size,
 	db_key_t col[] = {"jab_id", "jab_passwd"};
 	db_res_t* res = NULL;
 	
-	DBG("JABBER: WORKER_PROCESS:%d: started - pipe=<%d> : 1st message delay <%d>\n", _pid, pipe, dtime);
+	DBG("JABBER: WORKER_PROCESS:%d: started - pipe=<%d> : 1st message delay"
+		" <%d>\n", _pid, pipe, dtime);
 	
 	if((jcp = jc_pool_init(size, 10)) == NULL)
 	{
@@ -416,17 +427,24 @@ int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size,
 		mset = set;
 			
 		tmv.tv_sec = (jcp->jmqueue.size == 0)?wtime:1;
-		DBG("JABBER: worker_process:%d: select waiting %dsec\n", _pid, (int)tmv.tv_sec);
+		DBG("JABBER: worker_process:%d: select waiting %dsec\n", _pid, 
+						(int)tmv.tv_sec);
 		tmv.tv_usec = 0;
 		
 		ret = select(maxfd+1, &mset, NULL, NULL, &tmv);
 		/** check the queue AND conecction of head element is ready */
-		while(jcp->jmqueue.size != 0 && jcp->jmqueue.ojc[jcp->jmqueue.head]->ready < get_ticks())
+		while(jcp->jmqueue.size != 0 
+			&& jcp->jmqueue.ojc[jcp->jmqueue.head]->ready < get_ticks())
 		{
 			/** send message from queue */
-			DBG("JABBER: worker_process:%d: SENDING AS JABBER MESSAGE FROM LOCAL QUEUE ...\n", _pid);
-			jb_send_msg(jcp->jmqueue.ojc[jcp->jmqueue.head]->jbc, jcp->jmqueue.jsm[jcp->jmqueue.head]->to.s, jcp->jmqueue.jsm[jcp->jmqueue.head]->to.len,
-				jcp->jmqueue.jsm[jcp->jmqueue.head]->msg.s, jcp->jmqueue.jsm[jcp->jmqueue.head]->msg.len);
+			DBG("JABBER: worker_process:%d: SENDING AS JABBER MESSAGE FROM "
+				" LOCAL QUEUE ...\n", _pid);
+			jb_send_msg(jcp->jmqueue.ojc[jcp->jmqueue.head]->jbc, 
+						jcp->jmqueue.jsm[jcp->jmqueue.head]->to.s, 
+						jcp->jmqueue.jsm[jcp->jmqueue.head]->to.len,
+						jcp->jmqueue.jsm[jcp->jmqueue.head]->msg.s, 
+						jcp->jmqueue.jsm[jcp->jmqueue.head]->msg.len);
+			
 			jab_sipmsg_free(jcp->jmqueue.jsm[jcp->jmqueue.head]);
 			
 			/** delete message from queue */
@@ -441,8 +459,9 @@ int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size,
 			{ // new job from ser
 				read(pipe, &jsmsg, sizeof(jsmsg));
 
-				DBG("JABBER: worker_process <%d>: job <%p> from SER\n", _pid, jsmsg);
-				if( jsmsg== NULL || jsmsg->from == NULL)
+				DBG("JABBER: worker_process <%d>: job <%p> from SER\n", 
+								_pid, jsmsg);
+				if( jsmsg == NULL || jsmsg->from == NULL)
 					continue;
 				
 				strncpy(buff, jsmsg->from->s, jsmsg->from->len);
@@ -451,8 +470,9 @@ int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size,
 				ojc = jc_pool_get(jcp, jsmsg->from);
 				if(ojc == NULL)
 				{ // NO OPEN CONNECTION FOR THIS SIP ID
-					DBG("JABBER:worker_process:%d: new connection for <%s> ...\n", _pid, buff);
-					if (db_query(db_con, keys, vals, col, 1, 2, NULL, &res) == 0)
+					DBG("JABBER:worker_process:%d: new connection for <%s>.\n",
+									_pid, buff);
+					if(db_query(db_con, keys, vals, col, 1, 2, NULL, &res)==0)
 					{
 
 						if (RES_ROW_N(res) != 0)
@@ -462,61 +482,91 @@ int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size,
     	        		
 							if(!jb_connect_to_server(jbc))
                             {
-								DBG("JABBER: auth to jabber as: [%s] / [%s]\n", (char*)(ROW_VALUES(RES_ROWS(res))[0].val.string_val), (char*)(ROW_VALUES(RES_ROWS(res))[1].val.string_val));
-								if(jb_user_auth_to_server(jbc,(char*)(ROW_VALUES(RES_ROWS(res))[0].val.string_val), (char*)(ROW_VALUES(RES_ROWS(res))[1].val.string_val), "jbcl") == 0)
+								DBG("JABBER: auth to jabber as: [%s] / [%s]\n",
+									(char*)(ROW_VALUES(RES_ROWS(res))[0].val.string_val), 
+									(char*)(ROW_VALUES(RES_ROWS(res))[1].val.string_val));
+								if(jb_user_auth_to_server(jbc,
+									(char*)(ROW_VALUES(RES_ROWS(res))[0].val.string_val),
+									(char*)(ROW_VALUES(RES_ROWS(res))[1].val.string_val), "jbcl") == 0)
 	        		            {
-									ojc = open_jc_create(jsmsg->from, jbc, ctime, dtime);
-									if((ojc != NULL) && (jc_pool_add( jcp, ojc) == 0))
+									ojc = open_jc_create(jsmsg->from, jbc, 
+													ctime, dtime);
+									if((ojc != NULL) 
+										&& (jc_pool_add( jcp, ojc) == 0))
 		                            {
 										/** add socket descriptor to select */
-										DBG("JABBER: worker_process <%d>: add connection on <%d> \n", _pid, jbc->sock);
+										DBG("JABBER: worker_process <%d>: add"
+											" connection on <%d> \n", _pid, 
+											jbc->sock);
 										if(jbc->sock > maxfd)
 											maxfd = jbc->sock;
 										FD_SET(jbc->sock, &set);
 										
 										jb_get_roster(jbc);
-										jb_send_presence(jbc, NULL, "Online", "9");
+										jb_send_presence(jbc, NULL,
+											"Online", "9");
 										/** wait for a while - SER is tired */
 										//sleep(3);
 									}
 									else
 									{
-										DBG("JABBER:worker_process:%d: Keeping connection to Jabber server failed! Not enough memory ...\n", _pid);
+										DBG("JABBER:worker_process:%d: Keeping"
+											" connection to Jabber server"
+											" failed! Not enough memory ...\n", 
+											_pid);
 										jb_disconnect(jbc);
 										jb_free_jbconnection(jbc);
 										if(ojc != NULL)
 											open_jc_free(ojc);
-										jab_send_sip_msgz(jsmsg->from, &jsmsg->to, jwl->contact_h, "ERROR: Your message was not sent. SIP-2-JABBER gateway is full.");
+										jab_send_sip_msgz(jsmsg->from, 
+											&jsmsg->to,	jwl->contact_h,	
+											"ERROR:Your message was	not"
+											" sent. SIP-2-JABBER"
+											" gateway is full.");
 										error = 1;
 									}	
 								}
 								else
 								{
-									DBG("JABBER:worker_process:%d: Authentication to the Jabber server failed ...\n", _pid);
+									DBG("JABBER:worker_process:%d: "
+										" Authentication to the Jabber server"
+										" failed ...\n", _pid);
 									jb_disconnect(jbc);
 									jb_free_jbconnection(jbc);
-									jab_send_sip_msgz(jsmsg->from, &jsmsg->to, jwl->contact_h, "ERROR: Your message was not sent. Authentication to the Jabber server failed.");
+									jab_send_sip_msgz(jsmsg->from, &jsmsg->to,
+										jwl->contact_h, "ERROR: Your message"
+										" was not sent. Authentication to the"
+										" Jabber server failed.");
 									error = 1;
 								}
 
 							}
 							else
 							{
-								DBG("JABBER:worker_process:%d: Cannot connect to the Jabber server ...\n", _pid);
-								jab_send_sip_msgz(jsmsg->from, &jsmsg->to, jwl->contact_h, "ERROR: Your message was not sent. Cannot connect to the Jabber server.");
+								DBG("JABBER:worker_process:%d: Cannot connect"
+									" to the Jabber server ...\n", _pid);
+								jab_send_sip_msgz(jsmsg->from, &jsmsg->to, 
+									jwl->contact_h, "ERROR: Your message was"
+									" not sent. Cannot connect to the Jabber"
+									" server.");
 								error = 1;
 							}
 
 						}
 						else
 						{
-							DBG("JABBER:worker_process:%d: no database result\n", _pid);
-							jab_send_sip_msgz(jsmsg->from, &jsmsg->to, jwl->contact_h, "ERROR: Your message was not sent. You do not have permision to use the gateway.");
+							DBG("JABBER:worker_process:%d: no database"
+								" result\n", _pid);
+							jab_send_sip_msgz(jsmsg->from, &jsmsg->to, 
+								jwl->contact_h, "ERROR: Your message was not"
+								" sent. You do not have permision to use the"
+								" gateway.");
 							error = 1;
 						}
-						if ((res != NULL) && (db_free_query(db_con, res) < 0))
+						if ((res != NULL) && (db_free_query(db_con,res) < 0))
 						{
-							DBG("JABBER:worker_process:%d: Error while freeing SQL result\n", _pid);
+							DBG("JABBER:worker_process:%d:Error while freeing"
+								" SQL result\n", _pid);
 							return -1;
 						}
 						else
@@ -525,7 +575,8 @@ int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size,
 				}
 				else
 				{
-					DBG("JABBER:worker_process:%d: connection already exists for <%s> ...\n", _pid, buff);
+					DBG("JABBER:worker_process:%d: connection already exists"
+						" for <%s> ...\n", _pid, buff);
 					open_jc_update(ojc, ctime);
 				}
 				
@@ -533,18 +584,25 @@ int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size,
 				{
 					if(ojc->ready < get_ticks())
 					{
-						DBG("JABBER: worker_process:%d: SENDING AS JABBER MESSAGE ...\n", _pid);
-						if(jb_send_msg(ojc->jbc, jsmsg->to.s, jsmsg->to.len, jsmsg->msg.s, jsmsg->msg.len)<0)
-							jab_send_sip_msgz(jsmsg->from, &jsmsg->to, jwl->contact_h, "ERROR: Your message was not sent. Something wrong during transmition to Jabber.");
+						DBG("JABBER: worker_process:%d: SENDING AS JABBER"
+							" MESSAGE ...\n", _pid);
+						if(jb_send_msg(ojc->jbc, jsmsg->to.s, jsmsg->to.len,
+								jsmsg->msg.s, jsmsg->msg.len)<0)
+							jab_send_sip_msgz(jsmsg->from, &jsmsg->to,
+								jwl->contact_h, "ERROR: Your message was not"
+								" sent. Something wrong during transmition to"
+								" Jabber.");
 						
 						jab_sipmsg_free(jsmsg);
 					}
 					else
 					{
-						DBG("JABBER: worker_process:%d: SCHEDULING THE MESSAGE ...\n", _pid);
+						DBG("JABBER:worker_process:%d:SCHEDULING THE MESSAGE."
+							"\n", _pid);
 						if(jc_pool_add_jmsg(jcp, jsmsg, ojc) < 0)
 						{
-							DBG("JABBER: worker_process:%d: SCHEDULING THE MESSAGE FAILED. Message was droped.\n", _pid);
+							DBG("JABBER: worker_process:%d: SCHEDULING THE"
+								" MESSAGE FAILED. Message was droped.\n",_pid);
 							jab_sipmsg_free(jsmsg);
 						}
 					}
@@ -558,57 +616,77 @@ int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size,
 				{
 					if(jcp->ojc[i] != NULL && jcp->ojc[i]->jbc != NULL)
 					{
-						DBG("JABBER: worker_process:%d: checking socket <%d> ...\n", _pid, jcp->ojc[i]->jbc->sock);
+						DBG("JABBER: worker_process:%d: checking socket <%d>"
+							" ...\n", _pid, jcp->ojc[i]->jbc->sock);
 						if(FD_ISSET(jcp->ojc[i]->jbc->sock, &mset))
 						{
-							if((n = read(jcp->ojc[i]->jbc->sock, recv_buff, sizeof(recv_buff))) > 0)
+							if((n = read(jcp->ojc[i]->jbc->sock, recv_buff,
+										sizeof(recv_buff))) > 0)
 							{
 								open_jc_update(jcp->ojc[i], ctime);
 								
-								write(1, "JABBER: JMSG START ----------\n", 30);
-								write(1, recv_buff, n);
-								write(1, "\nJABBER: JMSG END ----------\n", 29);
+								DBG("JABBER: JMSG START ----------\n%.*s\n"
+									" JABBER: JMSG END ----------\n", 
+									n, recv_buff);
+								
 								recv_buff[n] = 0;
 								if(strstr(recv_buff, "<message ") != NULL)
 								{
-									if(j2s_parse_jmsgx(recv_buff, n, &tjmsg) >=0)
+									if(j2s_parse_jmsgx(recv_buff,n,&tjmsg)>=0)
 									{
-										DBG("JABBER: worker_process:%d: sending as SIP ...\n", _pid);
+										DBG("JABBER: worker_process:%d:"
+											" sending as SIP ...\n", _pid);
 										buff[0] = 0;
 										if(tjmsg.error.len > 0)
 										{
 											strcpy(buff, "{Error: ");
 											if(tjmsg.errcode.len > 0)
 											{
-												strncat(buff, tjmsg.errcode.s, tjmsg.errcode.len);
+												strncat(buff, tjmsg.errcode.s, 
+													tjmsg.errcode.len);
 												strncat(buff, " - ", 3);
 											}
-											strncat(buff, tjmsg.error.s, tjmsg.error.len);
-											strcat(buff, ". The following message was NOT sent}: ");
+											strncat(buff, tjmsg.error.s, 
+												tjmsg.error.len);
+											strcat(buff, ". The following"
+												" message was NOT sent}: ");
 										}
-										strncat(buff, tjmsg.body.s, tjmsg.body.len);
-										if((n= xml_unescape(buff, strlen(buff), tbuff, 1024)) > 0)
+										strncat(buff, tjmsg.body.s, 
+											tjmsg.body.len);
+										if((n=xml_unescape(buff, strlen(buff),
+													tbuff, 1024)) > 0)
 										{
 											tstr.s = tbuff;
 											tstr.len = n;
-											// if(jab_send_sip_msg(jcp->ojc[i]->id, &tjmsg.from, &tjmsg.from, &tstr) < 0)
-											if(jab_send_sip_msg(jcp->ojc[i]->id, &tjmsg.from, jwl->contact_h, &tstr) < 0)
-												DBG("JABBER: worker_process:%d: ERROR SIP MESSAGE was not sent ...\n", _pid);
+											if(jab_send_sip_msg(jcp->ojc[i]->id,
+													&tjmsg.from,jwl->contact_h,
+													&tstr) < 0)
+												DBG("JABBER:worker_process:%d:"
+													" ERROR SIP MESSAGE was not"
+													" sent ...\n", _pid);
 											else
-												DBG("JABBER: worker_process:%d: SIP MESSAGE was sent ...\n", _pid);
+												DBG("JABBER:worker_process:%d:"
+													" SIP MESSAGE was sent.\n",
+													_pid);
 										}
 										else
 										{
-											DBG("JABBER: worker_process:%d: ERROR sending as sip: output buffer too small ...\n", _pid);
+											DBG("JABBER: worker_process:%d:"
+												" ERROR sending as sip: output"
+												" buffer too small.\n", _pid);
 										}
 									}
 									else
-										DBG("JABBER: worker_process:%d: ERROR parsing jabber message ...\n", _pid);
+										DBG("JABBER: worker_process:%d: ERROR"
+											" parsing jabber message ...\n",
+											_pid);
 								}
 							}
 							else
 							{
-								DBG("JABBER: worker_process:%d: ERROR - connection to jabber lost on socket <%d> ...\n", _pid, jcp->ojc[i]->jbc->sock);
+								DBG("JABBER: worker_process:%d: ERROR -"
+									" connection to jabber lost on socket <%d>"
+									" ...\n", _pid, jcp->ojc[i]->jbc->sock);
 								jcp->ojc[i]->expire = ltime = 0;
 							}
 						}
@@ -619,7 +697,7 @@ int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size,
 		
 		if(ret < 0)
 		{
-			DBG("JABBER: worker_process:%d: SIGNAL received!!!!!!!!!!!!!!!!!!\n", _pid);
+			DBG("JABBER: worker_process:%d: SIGNAL received!!!!!!!!\n", _pid);
 			maxfd = pipe;
 			FD_ZERO(&set);
 			FD_SET(pipe, &set);
@@ -633,20 +711,21 @@ int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size,
 				}
 			}
 		}
-		//if(ret == 0)
-			//DBG("JABBER: worker_process:%d: select <%d> timeout <%d>\n", _pid, maxfd, wtime);
 		
 		if(ltime + wtime <= get_ticks())
 		{
 			ltime = get_ticks();
-			DBG("JABBER: worker_process:%d: scanning for expired connection\n", _pid);
+			DBG("JABBER: worker_process:%d: scanning for expired connection\n",
+				_pid);
 			for(i = 0; i < jcp->len; i++)
 			{
 				if((jcp->ojc[i] != NULL) && (jcp->ojc[i]->expire <= ltime))
 				{
-					DBG("JABBER: worker_process:%d: connection expired for <%.*s>\n", _pid, jcp->ojc[i]->id->len, jcp->ojc[i]->id->s);
+					DBG("JABBER: worker_process:%d: connection expired for"
+						" <%.*s>\n", _pid, jcp->ojc[i]->id->len, 
+						jcp->ojc[i]->id->s);
 					
-					// CLEAR JAB_WLIST
+					// CLEAN JAB_WLIST
 					jab_wlist_del(jwl, jcp->ojc[i]->id, _pid);
 					
 					FD_CLR(jcp->ojc[i]->jbc->sock, &set);
@@ -655,7 +734,6 @@ int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size,
 					jcp->ojc[i] = NULL;
 				}
 			}
-			//DBG("JABBER: worker_process:%d: scanning finished ...\n", _pid);
 		}
 				
 	} // END while
@@ -790,10 +868,12 @@ open_jc  jc_pool_get(jc_pool jcp, str *id)
 	if(jcp == NULL || id == NULL)
 		return NULL;
 	
-	DBG("JABBER: JC_POOL_GET: looking for the connection of <%.*s> into the pool\n", id->len, id->s);
+	DBG("JABBER: JC_POOL_GET: looking for the connection of <%.*s>"
+		" into the pool\n", id->len, id->s);
 	while(i < jcp->len)
 	{
-	 	if((jcp->ojc[i]!=NULL) && (!strncmp(jcp->ojc[i]->id->s, id->s, id->len)))
+	 	if((jcp->ojc[i]!=NULL) && (!strncmp(jcp->ojc[i]->id->s, id->s, 
+				id->len)))
 	 	{
 	 		_ojc = jcp->ojc[i];
 	 		//jcp->ojc[i] = NULL;
@@ -822,7 +902,8 @@ int jc_pool_del(jc_pool jcp, str *id)
 	
 	while(i < jcp->len)
 	{
-	 	if((jcp->ojc[i]!=NULL) && (!strncmp(jcp->ojc[i]->id->s, id->s, id->len)))
+	 	if((jcp->ojc[i]!=NULL) && (!strncmp(jcp->ojc[i]->id->s, id->s, 
+			id->len)))
 	 	{
 	 		open_jc_free(jcp->ojc[i]);
 	 		jcp->ojc[i] = NULL;
@@ -871,7 +952,8 @@ void jc_pool_free(jc_pool jcp)
  * - delay_time : time needed to became an active connection
  * #return : pointer to the structure or NULL on error
  */
-open_jc open_jc_create(str *id, jbconnection jbc, int cache_time, int delay_time)
+open_jc open_jc_create(str *id, jbconnection jbc, int cache_time, 
+				int delay_time)
 {
 	open_jc ojc;
 	int t;
@@ -922,3 +1004,4 @@ void open_jc_free(open_jc ojc)
 	_M_FREE(ojc);
 	DBG("JABBER: OPEN_JC_FREE ---END---\n");
 }
+

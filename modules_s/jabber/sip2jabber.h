@@ -47,3 +47,4 @@ int jb_send_sig_msg(jbconnection, char*, int, char*, int, char*, int);
 char *shahash(const char *);
 
 #endif
+

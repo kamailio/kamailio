@@ -25,9 +25,10 @@
 #include "jc_pool.h"
 #include "../../db/db.h"
 
+/** workers list */
 jab_wlist jwl = NULL;
 
-/* Structure that represents database connection */
+/** Structure that represents database connection */
 db_con_t** db_con;
 
 /** parameters */
@@ -57,17 +58,17 @@ void destroy(void);
 struct module_exports exports= {
 	"jabber",
 	(char*[]){
-				"jab_send_message"
-			},
+		"jab_send_message"
+	},
 	(cmd_function[]){
-					jab_send_message
-					},
+		jab_send_message
+	},
 	(int[]){
-				0
-			},
+		0
+	},
 	(fixup_function[]){
-				0
-		},
+		0
+	},
 	1,
 
 	(char*[]) {   /* Module parameter names */
@@ -119,7 +120,7 @@ static int mod_init(void)
 {
 	int  i;
 
-	DBG("JABBER: initializing\n");
+	DBG("JABBER: initializing ...\n");
 	
 	if (bind_dbmod())
 	{
@@ -175,7 +176,8 @@ static int mod_init(void)
 			DBG("JABBER: ERROR: mod_init: cannot create pipe!\n");
 			return -4;
 		}
-		DBG("JABBER: INIT: pipe[%d] = <%d>-<%d>\n", i, pipes[i][0], pipes[i][1]);
+		DBG("JABBER: INIT: pipe[%d] = <%d>-<%d>\n", i, pipes[i][0],
+			pipes[i][1]);
 	}
 	
 	if((jwl = jab_wlist_init(pipes, nrw, max_jobs)) == NULL)
@@ -190,7 +192,7 @@ static int mod_init(void)
 		return -1;
 	}
 	
-	
+	DBG("JABBER: mod_init: initialized ...\n");	
 	return 0;
 }
 
@@ -222,7 +224,8 @@ static int child_init(int rank)
 			if (pids[i] == 0)
 			{
 				close(pipes[i][1]);
-				worker_process(jwl, jaddress, jport, pipes[i][0], max_jobs, cache_time, sleep_time, delay_time, db_con[i]);
+				worker_process(jwl, jaddress, jport, pipes[i][0], max_jobs,
+					cache_time,	sleep_time, delay_time, db_con[i]);
 				exit(0);
 			}
 		}
@@ -240,9 +243,6 @@ static int child_init(int rank)
 	{
 		for(i=0;i<nrw;i++)
 			close(pipes[i][0]);
-		//for(i = 0; i < nrw; i++)
-		//	pkg_free(pipes[i]);
-		//pkg_free(pipes);
 	}
 	return 0;
 }
@@ -268,7 +268,8 @@ static int jab_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 	if(msg->from != NULL)
 	{
 		memset( &from , 0, sizeof(from) );
-		parse_to(msg->from->body.s, msg->from->body.s + msg->from->body.len + 1, &from);
+		parse_to(msg->from->body.s, msg->from->body.s + msg->from->body.len+1,
+						&from);
 		if(from.error == PARSE_OK)
 			DBG("JABBER: jab_send_message: From parsed OK.\n");
 		else
@@ -299,9 +300,10 @@ static int jab_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 	} else if ( msg->first_line.u.request.uri.len > 0 )
 	{
 		DBG("JABBER: jab_send_message: parsing URI from first line\n");
-		if(parse_uri(msg->first_line.u.request.uri.s, msg->first_line.u.request.uri.len, &_uri) < 0)
+		if(parse_uri(msg->first_line.u.request.uri.s,
+					msg->first_line.u.request.uri.len, &_uri) < 0)
 		{
-			DBG("JABBER: jab_send_message: ERROR parsing URI from first line\n");
+			DBG("JABBER:jab_send_message:ERROR parsing URI from first line\n");
 			goto error;
 		}
 		if(_uri.user.len > 0)
@@ -315,10 +317,12 @@ static int jab_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 	if(dst.len == 0 && msg->to != NULL)
 	{
 		memset( &to , 0, sizeof(to) );
-		parse_to(msg->to->body.s, msg->to->body.s + msg->to->body.len + 1, &to);
+		parse_to(msg->to->body.s, msg->to->body.s + msg->to->body.len + 1,
+				&to);
 		if(to.uri.len > 0) // to.error == PARSE_OK)
 		{
-			DBG("JABBER: jab_send_message: TO parsed OK <%.*s>.\n", to.uri.len, to.uri.s);
+			DBG("JABBER: jab_send_message: TO parsed OK <%.*s>.\n",
+				to.uri.len, to.uri.s);
 			dst.s = to.uri.s;
 			dst.len = to.uri.len;
 		}
@@ -330,7 +334,7 @@ static int jab_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 	}
 	if(dst.len == 0)
 	{
-		DBG("JABBER: jab_send_message: destination not found in SIP message\n");
+		DBG("JABBER:jab_send_message: destination not found in SIP message\n");
 		goto error;
 	}
 	
@@ -355,7 +359,7 @@ static int jab_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 		DBG("JABBER: DESTINATION corrected <%.*s>.\n", dst.len, dst.s);
 	}
 	
-	// putting the SIP message parts in share memory to be accessible by workers
+	//putting the SIP message parts in share memory to be accessible by workers
     jsmsg = (jab_sipmsg)shm_malloc(sizeof(t_jab_sipmsg));
     if(jsmsg == NULL)
     	return -1;
@@ -380,11 +384,12 @@ static int jab_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 	
 	jsmsg->from = p;
 	
-	DBG("JABBER: jab_send_message[%d]: sending <%p> to worker through <%d>\n", getpid(), jsmsg, pipe);
+	DBG("JABBER: jab_send_message[%d]: sending <%p> to worker through <%d>\n",
+			getpid(), jsmsg, pipe);
 	// sending the SHM pointer of SIP message to the worker
 	if(write(pipe, &jsmsg, sizeof(jsmsg)) != sizeof(jsmsg))
 	{
-		DBG("JABBER: jab_send_message: error when writting to worker pipe!!!\n");
+		DBG("JABBER: jab_send_message: error when writting to worker pipe!\n");
 		goto error;
 	}
 	
@@ -406,6 +411,7 @@ void destroy(void)
 			pkg_free(pipes[i]);
 		pkg_free(pipes);
 	}
+	// cleaning MySQL connections
 	if(db_con != NULL)
 	{
 		for(i = 0; i<nrw; i++)
