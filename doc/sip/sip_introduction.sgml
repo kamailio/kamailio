@@ -958,7 +958,7 @@ Warning: 392 195.37.77.101:5060 "Noisy feedback tells:
 		    <title>Strict versus Loose Routing</title>
 		    <simpara>
 			The way how record routing works has evolved. Record routing according to
-			&rfc2643; rewrote the Request-URI. That means the Request-URI always
+			&rfc2543; rewrote the Request-URI. That means the Request-URI always
 			contained &uri; of the next hop (which can be either next proxy server which
 			inserted Record-Route header field or destination user agent). Because of
 			that it was necesarry to save the original Request-URI as the last Route
