@@ -241,7 +241,6 @@ int init_cell_lock( struct cell *cell )
 {
 #ifdef GEN_LOCK_T_PREFERED
 	lock_init(&cell->reply_mutex);
-	return 0;
 #else
 	cell->reply_mutex.semaphore_set=reply_semaphore;
 	cell->reply_mutex.semaphore_index = cell->hash_index % sem_nr;

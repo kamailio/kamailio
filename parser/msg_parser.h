@@ -88,8 +88,8 @@ if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
  * 3) first_line.u.request.uri
  */
 #define GET_NEXT_HOP(m) \
-(((m)->dst_uri.s && (m)->dst_uri.len) ? ((m)->dst_uri) : \
-(((m)->new_uri.s && (m)->new_uri.len) ? ((m)->new_uri) : ((m)->first_line.u.request.uri)))
+(((m)->dst_uri.s && (m)->dst_uri.len) ? (&(m)->dst_uri) : \
+(((m)->new_uri.s && (m)->new_uri.len) ? (&(m)->new_uri) : (&(m)->first_line.u.request.uri)))
 
 
 /*
@@ -99,7 +99,7 @@ if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
  * 2) first_line.u.request.uri
  */
 #define GET_RURI(m) \
-(((m)->new_uri.s && (m)->new_uri.len) ? ((m)->new_uri) : ((m)->first_line.u.request.uri))
+(((m)->new_uri.s && (m)->new_uri.len) ? (&(m)->new_uri) : (&(m)->first_line.u.request.uri))
 
 
 #if 0

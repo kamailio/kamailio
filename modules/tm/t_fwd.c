@@ -419,7 +419,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	*/
 	if (first_branch==0) {
 		try_new=1;
-		branch_ret=add_uac( t, p_msg, &GET_RURI(p_msg), &GET_NEXT_HOP(p_msg), proxy, proto );
+		branch_ret=add_uac( t, p_msg, GET_RURI(p_msg), GET_NEXT_HOP(p_msg), proxy, proto );
 		if (branch_ret>=0) 
 			added_branches |= 1<<branch_ret;
 		else

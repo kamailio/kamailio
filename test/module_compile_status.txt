@@ -19,47 +19,49 @@ o - ok
 P - possible proto problems (tcp)
 D - dead/not finished
 
-
+checked: 
+7 - 2003-05-06
+8 - 2003-05-09
 
 
 module_name       1  2  3  4  5  6  7  8
-core                                o
-acc                                 I  o
+core                                o  
+acc                                 I  I
 auth                                o  o
 auth_db                             o  o
 auth_radius                         I  I
 cpl             P                   o  o
-cpl-c           D                   E  E
-dbtext                              o  E
+cpl-c           D                   I  I
+dbtext                              o  o
 domain                              o  o
 enum                                o  o
 exec                                o  o
 ext                                 o  o
 extcmd                              o  o
 group                               o  o
-group_radius                        I
-jabber                              W  o
-mangler                             W
+group_radius                        I  I
+jabber                              Wm W
+mangler                             W  o
 maxfwd                              o  o
 msilo                               o  o
 mysql                               o  o
-nathelper                           o
+nathelper                           o  o
 pa                                  o  o
-pdt                                 o
-persmissions                        o
+pdt                                 o  o
+persmissions                        o  o
 pike                                o  o
-postgress                           I
+postgress                           I  I
 print                               o  o
 registrar                           o  o
 rr                                  o  o
 sl                                  o  o
 sms                                 o  o
-snmp      D                         I
+snmp      D                         I  I
 textops                             o  o
 tm                                  o  o
 uri                                 o  o
-uri_radius                          I
-usrloc                              o  E
+uri_radius                          I  I
+usrloc                              o  W
 vm                                  o  o
 
 

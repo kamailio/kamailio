@@ -233,7 +233,8 @@ static inline int assemble_via(str* dest, struct cell* t, struct socket_info* so
 {
 	static char branch_buf[MAX_BRANCH_PARAM_LEN];
 	char* via;
-	int len, via_len;
+	int len;
+	unsigned int via_len;
 	str branch_str;
 
 	if (!t_calc_branch(t, branch, branch_buf, &len)) {
