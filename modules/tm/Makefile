@@ -14,11 +14,12 @@ NAME=tm.so
 
 SHLIB_LD_FLAGS= -shared
 LIBS= -lpthread
+CFLAGS+= -fPIC -DPIC
 
 ALLDEP=Makefile ../../Makefile
 
 ifeq ($(ARCH), SunOS)
-LDFLAGS=-O2 -G
+LDFLAGS=-O2 -G -fPIC -DPIC
 endif
 
 #implicit rules
