@@ -1,0 +1,69 @@
+#!/bin/sh 
+#
+# 3w-xxxx:      Starts the sip_router process
+#
+# Version:      @(#) /etc/rc.d/init.d/3w-xxxx
+#
+# chkconfig: 2345 20 80
+# description: controls execution of SIP router
+# processname: sip_router
+# config: /etc/sip_router.cfg
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+#BIN=sip_router
+#ETC=sip_router.cfg
+
+# we use a ser symlink -- that allows us to have a different name
+# in process table so that killalls does not start other sers
+# run from somewhere else
+
+BIN=sr
+ETC=sr.cfg
+HM=/home/srouter
+USR=510
+GRP=510
+
+RETVAL=0
+
+MYDIR=$HM/core
+CORE=$MYDIR/core
+cd $MYDIR
+
+# See how we were called.
+case "$1" in
+  start)
+	echo -n "Starting SIP router: "
+	if [ -f $CORE ] ; then
+		chmod a+r $CORE
+		DATE=`date "+%Y-%m-%d--%H-%M"`
+		mv $CORE $CORE.$DATE
+		( cd ../sip_router; tar cf - . ) | gzip > ser.$DATE.tgz
+	fi
+	$HM/bin/$BIN -f $HM/etc/$ETC -w $MYDIR
+	# man setuid: If uid is different from the old effective uid, 
+    # the process will be forbidden from eaving core dumps.
+	# -> don't set uid, we want to collect core dumps
+	# -u $USR -g $GRP 
+	RETVAL=$?
+	echo
+	;;
+  stop)
+	echo "Stopping SIP router: "
+	killproc $BIN
+	RETVAL=$?
+        echo
+	;;
+  restart)
+	$0 stop
+	$0 start
+	RETVAL=$?
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $RETVAL
+

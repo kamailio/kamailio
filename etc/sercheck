@@ -1,0 +1,27 @@
+#!/bin/sh
+
+NOTIFY=sr@iptel.org
+SERDIR=/home/srouter/sip_router
+BIN=./ser
+CORE=../core/core
+
+PROCCNT=`ps -C sr --no-headers -o pid | wc -l`
+CH=`grep "^children" /etc/sr.cfg | awk -F= ' { print $2 } '`
+ALL=`expr $CH + 1`
+TMP=/tmp/seralert.$$
+
+if [ $PROCCNT -ne $ALL ] ; then 
+
+	echo "Alarm: ser restart occured on `date` at $HOSTNAME" > $TMP
+	cd $SERDIR
+	if [ -r $BIN -a -r $CORE ] ; then
+		echo "----------------------------------" >> $TMP
+		gdb $BIN $CORE -f test/bt.gdb -batch >> $TMP
+	else
+		echo "no core found" >> $TMP
+	fi
+
+	/etc/init.d/sr restart
+	mail -s "ser restart occured" $NOTIFY < $TMP
+	rm $TMP
+fi
