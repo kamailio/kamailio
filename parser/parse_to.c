@@ -213,7 +213,7 @@ char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
 					case S_EQUAL:
 					case S_PARA_VALUE:
 						if (param->type==TAG_PARAM)
-							param->value.s = tmp-1;
+							param->value.s = tmp;
 						else {
 							LOG( L_ERR , "ERROR: parse_to_param : unexpected "
 								"char [%c] in status %d: <<%.*s>> .\n",
@@ -222,7 +222,7 @@ char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
 						}
 #endif
 					case PARA_VALUE_TOKEN:
-						param->value.len=tmp-param->value.s-1;
+						param->value.len=tmp-param->value.s;
 						add_param(param,to_b);
 					case PARA_START:
 						*tmp=0;
@@ -413,15 +413,11 @@ char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
 
 endofheader:
 #ifdef PINGTEL_TAG_HACK
-	if (param->type==TAG_PARAM ) {
-		if (saved_status==S_EQUAL||saved_status==S_PARA_VALUE) {
+	if (param->type==TAG_PARAM 
+	&& (saved_status==S_EQUAL||saved_status==S_PARA_VALUE) ) {
 			saved_status = E_PARA_VALUE;
 			param->value.s=(char*)param->value.len=0;
 			add_param(param, to_b);
-		} else {
-			DBG("HELLO\n");
-			goto error;
-		}
 	}
 #endif
 	*returned_status=saved_status;
@@ -674,7 +670,6 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 	}/*for*/
 
 endofheader:
-	DBG("DEBUG: status = %d \n",status);
 	status=saved_status;
 	DBG("end of header reached, state=%d\n", status);
 	/* check if error*/
