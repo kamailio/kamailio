@@ -239,7 +239,8 @@ extern int yyparse();
 
 static int is_main=0; /* flag = is this the  "main" process? */
 
-char* pid_file = 0;
+char* pid_file = 0; /* filename as asked by use */
+char *pid_fn = 0; /* and with port number appended */
 
 /* daemon init, return 0 on success, -1 on error */
 int daemonize(char*  name)
@@ -247,6 +248,8 @@ int daemonize(char*  name)
 	FILE *pid_stream;
 	pid_t pid;
 	int r, p;
+
+	int pid_fn_len;
 
 	p=-1;
 
@@ -300,25 +303,41 @@ int daemonize(char*  name)
 
 	/* added by noh: create a pid file for the main process */
 	if (pid_file!=0){
-		if ((pid_stream=fopen(pid_file, "r"))!=NULL){
+
+		/* added port number; -jiri */
+		pid_fn_len = strlen(pid_file) + 5 /* long port number */ 
+			+ 1 /* dot */ + 1 /* ZT */ ;
+		pid_fn = malloc( pid_fn_len );
+		if (!pid_fn) {
+			LOG(L_ERR, "ERROR: There is really no memory for ser\n");
+			goto error;
+		}
+		if (snprintf(pid_fn, pid_fn_len, "%s.%d", pid_file, port_no )==-1) {
+			LOG(L_ERR, "ERROR: pidfile printig failed -- perhaps too high port?\n");
+			goto error;
+		}
+		
+			
+		if ((pid_stream=fopen(pid_fn, "r"))!=NULL){
 			fscanf(pid_stream, "%d", &p);
 			fclose(pid_stream);
 			if (p==-1){
 				LOG(L_CRIT, "pid file %s exists, but doesn't contain a valid"
-					" pid number\n", pid_file);
+					" pid number\n", pid_fn);
 				goto error;
 			}
 			if (kill((pid_t)p, 0)==0 || errno==EPERM){
 				LOG(L_CRIT, "running process found in the pid file %s\n",
-					pid_file);
+					pid_fn);
 				goto error;
 			}else{
 				LOG(L_WARN, "pid file contains old pid, replacing pid\n");
 			}
 		}
 		pid=getpid();
-		if ((pid_stream=fopen(pid_file, "w"))==NULL){
-			LOG(L_WARN, "unable to create pid file: %s\n", strerror(errno));
+		if ((pid_stream=fopen(pid_fn, "w"))==NULL){
+			LOG(L_WARN, "unable to create pid file %s: %s\n", 
+				pid_fn, strerror(errno));
 			goto error;
 		}else{
 			fprintf(pid_stream, "%i\n", (int)pid);
@@ -490,7 +509,10 @@ static void sig_usr(int signo)
 #ifdef STATS
 			dump_all_statistic();
 #endif
-			if (pid_file) unlink(pid_file);
+			if (pid_fn) {
+				unlink(pid_fn);
+				free(pid_fn);
+			}
 		}
 		exit(0);
 	} else if (signo==SIGUSR1) { /* statistic */
