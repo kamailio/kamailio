@@ -456,11 +456,11 @@ static inline int build_userhost(struct sip_uri *uri, str *uh, int flg)
 			do_strip = 1;
 	}
 
-	/* calculate the len */
+	/* calculate the len (without terminating \0) */
 	uh->len = 4*((flg&BUILD_UH_ADDSIP)!=0) + uri->user.len + 1 +
-		uri->host.len - do_strip*cpl_env.realm_prefix.len + 1;
+		uri->host.len - do_strip*cpl_env.realm_prefix.len;
 	if (flg&BUILD_UH_SHM) {
-		uh->s = (char*)shm_malloc( uh->len );
+		uh->s = (char*)shm_malloc( uh->len + 1 );
 		if (!uh->s) {
 			LOG(L_ERR,"ERROR:cpl-c:build_userhost: no more shm memory.\n");
 			return -1;
@@ -495,7 +495,7 @@ static inline int build_userhost(struct sip_uri *uri, str *uh, int flg)
 	*(p++) = 0;
 
 	/* sanity check */
-	if (p-uh->s!=uh->len) {
+	if (p-uh->s!=uh->len+1) {
 		LOG(L_CRIT,"BUG:cpl-c:build_userhost: buffer overflow l=%d,w=%d\n",
 			uh->len,p-uh->s);
 		return -1;
