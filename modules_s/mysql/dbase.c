@@ -612,3 +612,46 @@ int db_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	LOG(L_ERR, "db_update: Error in snprintf\n");
 	return -1;
 }
+
+
+/*
+ * Just like insert, but replace the row if it exists
+ */
+int db_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n)
+{
+	int off, ret;
+
+	if (!handle || !keys || !vals) {
+		LOG(L_ERR, "db_replace: Invalid parameter value\n");
+		return -1;
+	}
+
+	ret = snprintf(sql_buf, SQL_BUF_LEN, "replace %s (", CON_TABLE(handle));
+	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
+	off = ret;
+
+	ret = print_columns(sql_buf + off, SQL_BUF_LEN - off, keys, n);
+	if (ret < 0) return -1;
+	off += ret;
+
+	ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, ") values (");
+	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
+	off += ret;
+
+	ret = print_values(CON_CONNECTION(handle), sql_buf + off, SQL_BUF_LEN - off, vals, n);
+	if (ret < 0) return -1;
+	off += ret;
+
+	*(sql_buf + off++) = ')';
+	*(sql_buf + off) = '\0';
+
+	if (submit_query(handle, sql_buf) < 0) {
+	        LOG(L_ERR, "db_replace: Error while submitting query\n");
+		return -2;
+	}
+	return 0;
+
+ error:
+	LOG(L_ERR, "db_replace: Error in snprintf\n");
+	return -1;
+}
