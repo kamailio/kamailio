@@ -145,6 +145,8 @@ struct cell*  build_cell( struct sip_msg* p_msg )
       new_cell->tl->payload = new_cell;
 
    /* inbound request */
+   /* force parsing all the needed headers*/
+   parse_headers(p_msg, HDR_VIA|HDR_TO|HDR_FROM|HDR_CALLID|HDR_CSEQ );
    new_cell->inbound_request =  sip_msg_cloner(p_msg) ;
    /* inbound response is NULL*/
    /* status is 0 */

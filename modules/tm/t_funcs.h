@@ -3,7 +3,9 @@
 
 #include <errno.h>
 #include <netinet/in.h>
+#include <netdb.h>
 #include "../../msg_parser.h"
+#include "../../globals.h"
 
 struct s_table;
 struct timer;
@@ -66,7 +68,7 @@ int t_put_on_wait(  struct sip_msg  *p_msg  );
 
 /* Retransmits the last sent inbound reply.
   */
-int t_retransmit_reply( struct s_table * , struct sip_msg *  );
+int t_retransmit_reply( struct sip_msg *  );
 
 
 #endif

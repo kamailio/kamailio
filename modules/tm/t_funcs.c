@@ -11,9 +11,10 @@ int t_store_incoming_reply( struct cell* , unsigned int , struct sip_msg* );
 int t_relay_reply( struct cell* , unsigned int , struct sip_msg* );
 int t_check( struct s_table* , struct sip_msg*  );
 int t_all_final( struct cell * );
-int t_cancel_branch(unsigned int branch);
+int t_build_and_send_ACK( struct cell *Trans , unsigned int brach );
 int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg );
 int push_reply_from_uac_to_uas( struct sip_msg * , unsigned int );
+int t_cancel_branch(unsigned int branch); //TO DO
 
 int send_udp_to( char *buf, unsigned buflen, struct sockaddr_in*  to, unsigned tolen );
 
@@ -221,7 +222,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       unsigned int dest_ip     = dest_ip_param;
       unsigned int dest_port  = dest_port_param;
       unsigned int len;
-      char              *buf;
+      char               *buf;
 
       /* allocates a new retrans_buff for the outbound request */
       T->outbound_request[0] = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
@@ -254,11 +255,13 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       T->outbound_request[0]->dest_port      = dest_port;
       T->outbound_request[0]->to.sin_family = AF_INET;
       T->outbound_request[0]->to.sin_port     = htonl( dest_port ) ;
-      T->outbound_request[0]->to.sin_addr.s_addr = ntohl( dest_port ) ;
+      T->outbound_request[0]->to.sin_addr.s_addr = ntohl( dest_ip ) ;
 
       // buf = build_message( p_mesg , &len );      TO DO!!
       // T->outbound_request[0]->bufflen     = len ;
+      // T->outbound_request[0]->buffer = (struct retans_buff*)sh_malloc( len );
       // memcpy( T->outbound_request[0]->buffer , buf , len );
+      // free( buf ) ;
    }/* end for the first time */
 
 
@@ -294,7 +297,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    /* on a non-200 reply to INVITE, generate local ACK and stop retransmission of the INVITE */
    if ( T->inbound_request->first_line.u.request.method_value==METHOD_INVITE && p_msg->first_line.u.reply.statusclass>2 )
    {
-      // sendACK   TO DO !!!!!!!!!!
+      t_build_and_send_ACK( T , branch );
       remove_from_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
       t_store_incoming_reply( T , branch , p_msg );
    }
@@ -391,7 +394,7 @@ int t_put_on_wait(  struct sip_msg  *p_msg  )
   * Returns  -1 -error
   *                0 - OK
   */
-int t_retransmit_reply( struct s_table *hash_table , struct sip_msg* p_msg )
+int t_retransmit_reply( struct sip_msg* p_msg )
 {
    t_check( hash_table, p_msg );
 
@@ -556,6 +559,8 @@ int t_store_incoming_reply( struct cell* Trans, unsigned int branch, struct sip_
    /* if there is a previous reply, replace it */
    if ( Trans->outbound_response[branch] )
       free_sip_msg( Trans->outbound_response[branch] ) ;
+   /* force parsing all the needed headers*/
+   parse_headers(p_msg, HDR_VIA|HDR_TO|HDR_FROM|HDR_CALLID|HDR_CSEQ );
    Trans->outbound_response[branch] = sip_msg_cloner( p_msg );
 }
 
@@ -653,10 +658,114 @@ int push_reply_from_uac_to_uas( struct sip_msg *p_msg , unsigned int branch )
    if ( T->inbound_response )
    {
       sh_free( T->inbound_response->buffer );
-      //release_retransmision.... ????
+   }
+   else
+   {
+      struct hostent  *nhost;
+     char foo,*buf;
+      unsigned int len;
+
+      T->inbound_response = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
+      memset( T->inbound_response , 0 , sizeof (struct retrans_buff) );
+      T->inbound_response->tl[RETRASMISSIONS_LIST].payload = &(T->inbound_response);
+      /*some dirty trick to get the port and ip of destination */
+      foo = *((p_msg->via2->host.s)+(p_msg->via2->host.len));
+      *((p_msg->via2->host.s)+(p_msg->via2->host.len)) = 0;
+      nhost = gethostbyname( p_msg->via2->host.s );
+      *((p_msg->via2->host.s)+(p_msg->via2->host.len)) = foo;
+      if ( !nhost )
+         return -1;
+      memcpy( &(T->inbound_response->to.sin_addr) , &(nhost->h_addr) , nhost->h_length );
+      T->inbound_response->dest_ip         = htonl(T->inbound_response->to.sin_addr.s_addr);
+      T->inbound_response->dest_port      = ntohl(T->inbound_response->to.sin_port);
+      T->inbound_response->to.sin_family = AF_INET;
    }
 
+   /*  */
+   // buf = build_message( p_mesg , &len );      TO DO!!
+   // T->inbound_request->bufflen     = len ;
+   // T->outbound_request[0]->buffer = (struct retans_buff*)sh_malloc( len );
+   // memcpy( T->inbound_request->buffer , buf , len );
+   // free( buf ) ;
 
+   /* make sure that if we send something final upstream, everything else will be cancelled */
+   if (T->outbound_response[branch]->first_line.u.reply.statusclass>=2 )
+      t_put_on_wait( p_msg );
+
+   t_retransmit_reply( p_msg );
+}
+
+
+
+
+/* Builds an ACK request based on an INVITE request. ACK is send
+  * to same address
+  */
+int t_build_and_send_ACK( struct cell *Trans, unsigned int branch)
+{
+    struct sip_msg* p_msg = T->inbound_request;
+    struct via_body *via;
+    struct hdr_field *hdr;
+   char *ack_buf, *p;
+    unsigned int len;
+
+   ack_buf = (char *)malloc( 1024 * 10 );
+   p = ack_buf;
+
+   /* first line */
+   memcpy( p , "ACK " , 4);
+   p += 4;
+   memcpy( p , p_msg->first_line.u.request.uri.s , p_msg->first_line.u.request.uri.len );
+   p += p_msg->first_line.u.request.uri.len+1;
+   *(p++)=' ';
+   memcpy( p , p_msg->first_line.u.request.version.s , p_msg->first_line.u.request.version.len );
+   p += p_msg->first_line.u.request.version.len;
+   *(p++) = '\n';
+
+   /* insert our via */
+   memcpy( p , "Via: SIP/2.0/UDP " , 17);
+   p += 17;
+   memcpy( p , names[0] , names_len[0] );
+   p += names_len[0];
+   *(p++) = ':';
+   memcpy( p , port_no_str , port_no_str_len );
+   p += port_no_str_len;
+
+   /* VIA (first we have to find the header) */
+   for( hdr=p_msg->headers ; hdr ; hdr=hdr->next  )
+      if ( hdr->type==HDR_VIA || hdr->type==HDR_FROM || hdr->type==HDR_CALLID )
+      {
+         len = (hdr->body.s+hdr->body.len) - hdr->name.s;
+         memcpy( p , p_msg->orig+(hdr->name.s-p_msg->buf) , len );
+         p += len;
+         *(p++) = '\n';
+      }
+      else if ( hdr->type==HDR_CSEQ )
+      {
+         len = (get_cseq(p_msg)->number.s+get_cseq(p_msg)->number.len) - hdr->name.s;
+         memcpy( p , p_msg->orig+(hdr->name.s-p_msg->buf) , len );
+         p += len;
+         memcpy( p , " ACK\n" , 5);
+         p += 5;
+      }
+      if ( hdr->type==HDR_TO )
+      {
+         len = (T->outbound_response[branch]->to->body.s+T->outbound_response[branch]->to->body.len) - T->outbound_response[branch]->to->name.s;
+         memcpy( p , T->outbound_response[branch]->orig+(T->outbound_response[branch]->to->name.s-T->outbound_response[branch]->buf) , len );
+         p += len;
+         *(p++) = '\n';
+      }
+
+   /* end of message*/
+   *(p++) = '\n';
+
+   /* sends the ACK message to the same destination as the INVITE */
+   send_udp_to( ack_buf, p-ack_buf, &(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
+
+   /* free mem*/
+   free( ack_buf );
+
+   return 0;
 }
 
 
