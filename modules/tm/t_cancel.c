@@ -24,6 +24,12 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ----------
+ * 2003-04-14  checking if a reply sent before cancel is initiated
+ *             moved here (jiri)
+ *
  */
 
 
@@ -85,6 +91,12 @@ void cancel_branch( struct cell *t, int branch )
 		abort();
 	}
 #	endif
+
+	if (t->uac[branch].last_received<100) {
+		DBG("DEBUG: cancel_branch: no response ever received: "
+			"giving up on cancel\n");
+		return;
+	}
 
 	cancel=build_cancel(t, branch, &len);
 	if (!cancel) {

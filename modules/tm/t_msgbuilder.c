@@ -29,9 +29,12 @@
  *
  * History:
  * ----------
- * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2003-02-13  build_uac_request uses proto (andrei)
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
+ * 2003-04-14  build_local no longer checks reply status as it
+ *             is now called before reply status is updated to
+ *             avoid late ACK sending (jiri)
  */
 
 #include "defs.h"
@@ -76,12 +79,14 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	int branch_len;
 	str branch_str;
 
+#ifdef _OBSO
 	if ( Trans->uac[branch].last_received<100)
 	{
 		DBG("DEBUG: build_local: no response ever received"
 			" : dropping local request! \n");
 		goto error;
 	}
+#endif
 
 	/* method, separators, version: "CANCEL sip:p2@iptel.org SIP/2.0" */
 	*len=SIP_VERSION_LEN + method_len + 2 /* spaces */ + CRLF_LEN;
