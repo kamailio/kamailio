@@ -76,14 +76,14 @@ static inline int rwrite(struct sip_msg* _m, str* _s)
 int lookup(struct sip_msg* _m, char* _t, char* _s)
 {
 	urecord_t* r;
-	str aor;
+	str aor, uri;
 	ucontact_t* ptr;
 	int res;
 	
-	if (_m->new_uri.s) aor = _m->new_uri;
-	else aor = _m->first_line.u.request.uri;
+	if (_m->new_uri.s) uri = _m->new_uri;
+	else uri = _m->first_line.u.request.uri;
 	
-	if (extract_aor(_m, &aor) < 0) {
+	if (extract_aor(&uri, &aor) < 0) {
 		LOG(L_ERR, "lookup(): Error while extracting address of record\n");
 		return -1;
 	}

@@ -50,7 +50,7 @@ int get_username(str* _s);
 /*
  * Extract Address Of Record
  */
-int extract_aor(struct sip_msg* _m, str* _a);
+int extract_aor(str* _uri, str* _a);
 
 
 #endif /* COMMON_H */

@@ -332,7 +332,7 @@ int save(struct sip_msg* _m, char* _t, char* _s)
 	get_act_time();
 	c = get_first_contact(_m);
 
-	if (extract_aor(_m, &aor) < 0) {
+	if (extract_aor(&get_to(_m)->uri, &aor) < 0) {
 		LOG(L_ERR, "save(): Error while extracting Address Of Record\n");
 		goto error;
 	}

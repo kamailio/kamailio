@@ -100,15 +100,13 @@ static inline void strlower(str* _s)
 /*
  * Extract Address Of Record
  */
-int extract_aor(struct sip_msg* _m, str* _a)
+int extract_aor(str* _uri, str* _a)
 {
 	str aor;
 	struct sip_uri puri;
 
-	aor = ((struct to_body*)_m->to->parsed)->uri;
-
 	if (use_domain) {
-		if (parse_uri(aor.s, aor.len, &puri) < 0) {
+		if (parse_uri(_uri->s, _uri->len, &puri) < 0) {
 			rerrno = R_AOR_PARSE;
 			LOG(L_ERR, "extract_aor(): Error while parsing AOR, sending 400\n");
 			return -1;
@@ -135,6 +133,8 @@ int extract_aor(struct sip_msg* _m, str* _a)
 			strlower(_a);
 		}
 	} else {
+	        aor = *_uri;
+		
 		if (get_username(&aor) < 0) {
 			rerrno = R_TO_USER;
 			LOG(L_ERR, "extract_aor(): Can't extract username part from To URI, sending 400\n");
@@ -158,3 +158,4 @@ int extract_aor(struct sip_msg* _m, str* _a)
 
 	return 0;
 }
+
