@@ -2,6 +2,8 @@ $Id$
 
 ( - todo, x - done)
 
+- WARNING: tm fr_timer fixup is not in HEAD (should it be? is it the
+ rigth fix?)
 x update AUTHORS, debian/copyright, ser.8, ser.cfg.5 from stable
 x update Makefile*  from stable
 x update all package specs from stable

@@ -49,6 +49,9 @@ ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/  \
 
 # TLS support
 TLS ?=
+ifneq ($(TLS),)
+	RELEASE:=$(RELEASE)-tls
+endif
 # extra CC command line options (e.g  -march=athlon-mp)
 CC_EXTRA_OPTS ?=
  # install location
