@@ -39,6 +39,7 @@ typedef enum paerr {
 	PA_EVENT_PARSE,   /* Error while parsing Event header field */
 	PA_EXPIRES_PARSE, /* Error while parsing Expires header field */
 	PA_EVENT_UNSUPP,  /* Unsupported event package */
+	PA_WRONG_ACCEPTS, /* Accepts does not match event package */
 	PA_NO_MEMORY,     /* No memory left */
 	PA_TIMER_ERROR,   /* Error in timer */
 	PA_EXTRACT_USER,  /* Error while extracting username from R-URI */

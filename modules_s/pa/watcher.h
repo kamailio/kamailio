@@ -42,9 +42,9 @@ typedef enum doctype {
 	DOC_PIDF = 2,
 	DOC_WINFO = 3,
 	DOC_XCAP_CHANGE = 4,
-	DOC_LOCATION =5
+	DOC_LOCATION = 5,
+	N_DOCTYPES
 } doctype_t;
-
 
 typedef enum watcher_status {
 	WS_PENDING = 0,
