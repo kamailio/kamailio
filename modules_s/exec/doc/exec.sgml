@@ -1,9 +1,9 @@
 <!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
 
-<!ENTITY user SYSTEM "module_user.sgml">
-<!ENTITY devel SYSTEM "module_devel.sgml">
-<!ENTITY faq SYSTEM "module_faq.sgml">
+<!ENTITY user SYSTEM "exec_user.sgml">
+<!ENTITY devel SYSTEM "exec_devel.sgml">
+<!ENTITY faq SYSTEM "exec_faq.sgml">
 
 <!-- Include general SER documentation entities -->
 <!ENTITY % serentities SYSTEM "../../ser_entities.sgml">
