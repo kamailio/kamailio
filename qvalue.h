@@ -102,31 +102,41 @@ static inline size_t len_q(qvalue_t q)
 
 
 /*
- * Print the q parameter
+ * Convert q value to string
  */
-static inline size_t print_q(char* p, qvalue_t q)
+static inline char* q2str(qvalue_t q, unsigned int* len)
 {
+	static char buf[sizeof("0.123")];
+	char* p;
+
+	p = buf;
 	if (q == Q_UNSPECIFIED) {
-		return 0;
+		     /* Do nothing */
 	} else if (q >= MAX_Q) {
 		memcpy(p, MAX_Q_STR, MAX_Q_STR_LEN);
-		return MAX_Q_STR_LEN;
+		p += MAX_Q_STR_LEN;
 	} else if (q <= MIN_Q) {
 		memcpy(p, MIN_Q_STR, MIN_Q_STR_LEN);
-		return MIN_Q_STR_LEN;
-	}
-	
-	memcpy(p, Q_PREFIX, Q_PREFIX_LEN);
-	p += Q_PREFIX_LEN;
+		p += MIN_Q_STR_LEN;
+	} else {
+		memcpy(p, Q_PREFIX, Q_PREFIX_LEN);
+		p += Q_PREFIX_LEN;
+		
+		*p++ = q / 100 + '0';
+		q %= 100;
+		if (!q) goto end;
 
-	*p++ = q / 100 + '0';
-	q %= 100;
-	if (!q) return Q_PREFIX_LEN + 1;
-	*p++ = q / 10 + '0';
-	q %= 10;
-	if (!q) return Q_PREFIX_LEN + 2;
-	*p = q + '0';
-	return Q_PREFIX_LEN + 3;
+		*p++ = q / 10 + '0';
+		q %= 10;
+		if (!q) goto end;
+
+		*p = q + '0';
+		*len = Q_PREFIX_LEN + 3;
+	}
+ end:
+	*p = '\0';
+	*len = p - buf;
+	return buf;
 }
 
 
