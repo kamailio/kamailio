@@ -172,6 +172,13 @@ inline unsigned char *run_location( struct cpl_interpreter *intr )
 	prio = 10;
 	url.s = (char*)UNDEF_CHAR;
 
+	/* sanity check */
+	if (NR_OF_KIDS(intr->ip)>1) {
+		LOG(L_ERR,"ERROR:run_location: LOCATION node suppose to have max "
+			"one child, not %d!\n",NR_OF_KIDS(intr->ip));
+		goto script_error;
+	}
+
 	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
 		switch (*p) {
 			case URL_ATTR:
@@ -241,6 +248,14 @@ inline unsigned char *run_remove_location( struct cpl_interpreter *intr )
 
 	url.s = (char*)UNDEF_CHAR;
 
+	/* sanity check */
+	if (NR_OF_KIDS(intr->ip)>1) {
+		LOG(L_ERR,"ERROR:cpl_c:run_remove_location: REMOVE_LOCATION node "
+			"suppose to have max one child, not %d!\n",
+			NR_OF_KIDS(intr->ip));
+		goto script_error;
+	}
+
 	/* dirty hack to speed things up in when loc set is already empty */
 	if (intr->loc_set==0)
 		goto done;
@@ -283,6 +298,13 @@ inline unsigned char *run_sub( struct cpl_interpreter *intr )
 	unsigned char  *p;
 	unsigned short offset;
 	int i;
+
+	/* sanity check */
+	if (NR_OF_KIDS(intr->ip)!=0) {
+		LOG(L_ERR,"ERROR:cpl_c:run_sub: SUB node doesn't suppose to have any "
+			"sub-nodes. Found %d!\n",NR_OF_KIDS(intr->ip));
+		goto script_error;
+	}
 
 	/* check the number of attr */
 	i = NR_OF_ATTR( intr->ip );
@@ -740,6 +762,10 @@ int run_cpl_script( struct cpl_interpreter *intr )
 			case TIME_SWITCH_NODE:
 				DBG("DEBUG:run_cpl_script: processing time-switch node\n");
 				intr->ip = run_time_switch( intr );
+				break;
+			case LANGUAGE_SWITCH_NODE:
+				DBG("DEBUG:run_cpl_script: processing language-switch node\n");
+				intr->ip = run_language_switch( intr );
 				break;
 			case LOCATION_NODE:
 				DBG("DEBUG:run_cpl_script: processing location node\n");

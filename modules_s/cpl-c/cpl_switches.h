@@ -225,6 +225,7 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 			default:
 				LOG(L_ERR,"ERROR:run_address_switch: unknown output node type "
 					"(%d) for ADDRESS_SWITCH node\n",NODE_TYPE(kid));
+				goto script_error;
 		}
 	}
 
@@ -713,6 +714,7 @@ inline unsigned char *run_time_switch( struct cpl_interpreter *intr )
 			default:
 				LOG(L_ERR,"ERROR:run_priority_switch: unknown output node type"
 					" (%d) for PRIORITY_SWITCH node\n",NODE_TYPE(kid));
+				goto script_error;
 		} /* end switch for NODE_TYPE */
 	} /* end for for all kids */
 
@@ -731,6 +733,38 @@ parse_err:
 script_error:
 	ac_tm_free( &att );
 	tmrec_free( &trt );
+	return CPL_SCRIPT_ERROR;
+}
+
+
+
+
+inline unsigned char *run_language_switch( struct cpl_interpreter *intr )
+{
+	unsigned char  *kid;
+	int i;
+
+	for( i=0 ; i<NR_OF_KIDS(intr->ip) ; i++ ) {
+		kid = intr->ip + KID_OFFSET(intr->ip,i);
+		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, script_error);
+		switch ( NODE_TYPE(kid) ) {
+			case OTHERWISE_NODE :
+				DBG("DEBUG:run_language_switch: matching on OTHERWISE node\n");
+				return get_first_child(kid);
+			case TIME_NODE :
+				LOG(L_ERR,"ERROR:cpl_c:run_language_switch: branch doesn't "
+					"matche\n");
+				break;
+			default:
+				LOG(L_ERR,"ERROR:cpl_c:run_language_switch: unknown output "
+					"node type (%d) for LANGUAGE_SWITCH node\n",
+					NODE_TYPE(kid));
+				goto script_error;
+		} /* end switch for NODE_TYPE */
+	} /* end for for all kids */
+
+	return DEFAULT_ACTION;
+script_error:
 	return CPL_SCRIPT_ERROR;
 }
 
