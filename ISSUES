@@ -25,11 +25,21 @@ Workaround: either use serweb for addding new users or update
 Bug reason: phplib_id ignored in sc
 CVS Status: fixed
 ---------------------------------------------------------------
-Desc: SMS module fails to load because of unresolved dependency
-      on im.so
+Desc: SMS, MSILO & JABBER modules fail to load because of unresolved
+dependency on im.so
 BugId: 375
-Workaround: ? use source distribution, change modules/sms/Makefile
-      line with LIBS to "LIBS=" and recompile using make modules ?
-Bug reason: ? historical left-over in sms/Makefile?
-CVS status: not fixed yet
+Workaround: change the makefiles & recompile  
+Bug reason: removal of RTLD_GLOBAL from dlopen.
+CVS status: fixed 
 ---------------------------------------------------------------
+Desc: when forking & std_error=yes no open FD is closed
+BugId: 376
+CVS status: fixed
+---------------------------------------------------------------
+Desc: when debug=3 & iptel.cfg is used mysql module fails in submit_query.
+Workaround: use debug=9 or use log_stderr
+Reason: unknown
+BugId: 377
+Cvs status: not fixed
+
+
