@@ -95,22 +95,6 @@ static int parse_hfs(struct sip_msg* _m)
 
 
 /*
- * Check if a message received has been constructed properly
- */
-static int check_message(struct sip_msg* _m)
-{
-	if (_m->event) {
-		if (((event_t*)(_m->event->parsed))->parsed != EVENT_PRESENCE) {
-			paerrno = PA_EVENT_UNSUPP;
-			LOG(L_ERR, "check_message(): Unsupported event package\n");
-			return -1;
-		}
-	}
-
-	return 0;
-}
-
-/*
  * Create a new presentity but no watcher list
  */
 int create_presentity_only(struct sip_msg* _m, struct pdomain* _d, str* _puri, 

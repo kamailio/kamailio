@@ -233,12 +233,20 @@ static int parse_hfs(struct sip_msg* _m)
 /*
  * Check if a message received has been constructed properly
  */
-static int check_message(struct sip_msg* _m)
+int check_message(struct sip_msg* _m)
 {
 	if (_m->event) {
-		if (((event_t*)(_m->event->parsed))->parsed != EVENT_PRESENCE) {
+		event_t *event;
+		
+		if (!_m->event->parsed)
+			parse_event(_m->event);
+		event = (event_t*)(_m->event->parsed);
+
+		if ((event->parsed != EVENT_PRESENCE)
+		    && (event->parsed != EVENT_PRESENCE_WINFO)) {
 			paerrno = PA_EVENT_UNSUPP;
-			LOG(L_ERR, "check_message(): Unsupported event package\n");
+			LOG(L_ERR, "check_message(): Unsupported event package event=%p et=%d len=%d\n",
+			    event, event->parsed, event->text.len);
 			return -1;
 		}
 	}
@@ -256,6 +264,11 @@ static int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 	time_t e;
 	dlg_t* dialog;
 	str watch_uri;
+	event_t *event = (event_t*)(_m->event->parsed);
+	int et = 0;
+	if (_m->event) {
+		et = event->parsed;
+	}
 
 	if (_m->expires) {
 		e = ((exp_body_t*)_m->expires->parsed)->val;
@@ -270,7 +283,7 @@ static int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 		return 0;
 	}
 
-	     /* Convert to absolute time */
+	/* Convert to absolute time */
 	e += act_time;
 
 	if (get_watch_uri(_m, &watch_uri) < 0) {
@@ -290,13 +303,21 @@ static int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 		return -3;
 	}
 
-	if (add_watcher(*_p, &watch_uri, e, acc, dialog, _w) < 0) {
-		LOG(L_ERR, "create_presentity(): Error while adding a watcher\n");
-		tmb.free_dlg(dialog);
-		free_presentity(*_p);
-		return -4;
+	if (et == EVENT_PRESENCE) {
+		if (add_watcher(*_p, &watch_uri, e, acc, dialog, _w) < 0) {
+			LOG(L_ERR, "create_presentity(): Error while adding a watcher\n");
+			tmb.free_dlg(dialog);
+			free_presentity(*_p);
+			return -4;
+		}
+	} else if (et == EVENT_PRESENCE_WINFO) {
+		if (add_winfo_watcher(*_p, &watch_uri, e, acc, dialog, _w) < 0) {
+			LOG(L_ERR, "create_presentity(): Error while adding a winfo watcher\n");
+			tmb.free_dlg(dialog);
+			free_presentity(*_p);
+			return -5;
+		}
 	}
-
 	add_presentity(_d, *_p);
 
 	_d->reg(&watch_uri, _puri, (void*)callback, *_p);
@@ -313,6 +334,11 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 	time_t e;
 	dlg_t* dialog;
 	str watch_uri;
+	event_t *event = (event_t*)(_m->event->parsed);
+	int et = 0;
+	if (_m->event) {
+		et = event->parsed;
+	}
 
 	if (_m->expires) {
 		e = ((exp_body_t*)_m->expires->parsed)->val;
@@ -327,13 +353,20 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 
 	if (find_watcher(_p, &watch_uri, _w) == 0) {
 		if (e == 0) {
-			if (remove_watcher(_p, *_w) < 0) {
-				LOG(L_ERR, "update_presentity(): Error while deleting presentity\n");
-				return -2;
+			if (et == EVENT_PRESENCE) {
+				if (remove_watcher(_p, *_w) < 0) {
+					LOG(L_ERR, "update_presentity(): Error while deleting winfo watcher\n");
+					return -2;
+				} 
+			} else {
+				if (remove_winfo_watcher(_p, *_w) < 0) {
+					LOG(L_ERR, "update_presentity(): Error while deleting winfo watcher\n");
+					return -2;
+				} 
 			}
 			
 			(*_w)->expires = 0;   /* The watcher will be freed after NOTIFY is sent */
-			if (!_p->watchers) {
+			if (!_p->watchers && !_p->winfo_watchers) {
 				remove_presentity(_d, _p);
 			}
 		} else {
@@ -353,11 +386,19 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 				return -4;
 			}
 
-			if (add_watcher(_p, &watch_uri, e, acc, dialog, _w) < 0) {
-				LOG(L_ERR, "update_presentity(): Error while creating presentity\n");
-				tmb.free_dlg(dialog);
-				return -5;
-			}			
+			if (et == EVENT_PRESENCE) {
+				if (add_watcher(_p, &watch_uri, e, acc, dialog, _w) < 0) {
+					LOG(L_ERR, "update_presentity(): Error while creating presentity\n");
+					tmb.free_dlg(dialog);
+					return -5;
+				}
+			} else {
+				if (add_winfo_watcher(_p, &watch_uri, e, acc, dialog, _w) < 0) {
+					LOG(L_ERR, "update_presentity(): Error while creating winfo watcher\n");
+					tmb.free_dlg(dialog);
+					return -5;
+				}			
+			}
 		} else {
 			DBG("update_presentity(): expires = 0 but no watcher found\n");
 			*_w = 0;
@@ -425,6 +466,8 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 			      */
 			goto error2;
 		}
+
+		notify_winfo_watchers(p);
 
 		     /* We remove it here because a notify needs to be send first */
 		if (w->expires == 0) free_watcher(w);

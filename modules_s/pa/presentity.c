@@ -225,6 +225,12 @@ void free_presentity(presentity_t* _p)
 		_p->watchers = _p->watchers->next;
 		free_watcher(ptr);
 	}
+
+	while(_p->winfo_watchers) {
+		ptr = _p->winfo_watchers;
+		_p->winfo_watchers = _p->winfo_watchers->next;
+		free_watcher(ptr);
+	}
 	
 	shm_free(_p);
 }
@@ -242,6 +248,14 @@ void print_presentity(FILE* _f, presentity_t* _p)
 	
 	if (_p->watchers) {
 		ptr = _p->watchers;
+		while(ptr) {
+			print_watcher(_f, ptr);
+			ptr = ptr->next;
+		}
+	}
+
+	if (_p->winfo_watchers) {
+		ptr = _p->winfo_watchers;
 		while(ptr) {
 			print_watcher(_f, ptr);
 			ptr = ptr->next;
@@ -267,6 +281,24 @@ int timer_presentity(presentity_t* _p)
 			t = ptr;
 			ptr = ptr->next;
 			remove_watcher(_p, t);
+			free_watcher(t);
+			continue;
+		}
+		
+		ptr = ptr->next;
+	}
+
+	ptr = _p->winfo_watchers;
+
+	print_presentity(stdout, _p);
+	while(ptr) {
+	        if (ptr->expires <= act_time) {
+		  LOG(L_ERR, "Removing watcher %.*s\n", ptr->uri.len, ptr->uri.s);
+			ptr->expires = 0;
+			send_notify(_p, ptr);
+			t = ptr;
+			ptr = ptr->next;
+			remove_winfo_watcher(_p, t);
 			free_watcher(t);
 			continue;
 		}
@@ -339,6 +371,68 @@ int notify_watchers(presentity_t* _p)
 	return 0;
 }
 
+/*
+ * Notify all winfo watchers in the list
+ */
+int notify_winfo_watchers(presentity_t* _p)
+{
+	struct watcher* ptr;
+
+	ptr = _p->winfo_watchers;
+
+	while(ptr) {
+		send_notify(_p, ptr);
+		ptr = ptr->next;
+	}
+	return 0;
+}
+
+
+/*
+ * Add a new watcher to the winfo_watcher list
+ */
+int add_winfo_watcher(presentity_t* _p, str* _uri, time_t _e, doctype_t _a, dlg_t* _dlg, 
+		      struct watcher** _w)
+{
+	if (new_watcher(_uri, _e, _a, _dlg, _w) < 0) {
+		LOG(L_ERR, "add_winfo_watcher(): Error while creating new watcher structure\n");
+		return -1;
+	}
+
+	(*_w)->next = _p->winfo_watchers;
+	_p->winfo_watchers = *_w;
+	return 0;
+}
+
+
+/*
+ * Remove a watcher from the list
+ */
+int remove_winfo_watcher(presentity_t* _p, watcher_t* _w)
+{
+	watcher_t* ptr, *prev;
+
+	ptr = _p->winfo_watchers;
+	prev = 0;
+	
+	while(ptr) {
+		if (ptr == _w) {
+			if (prev) {
+				prev->next = ptr->next;
+			} else {
+				_p->winfo_watchers = ptr->next;
+			}
+			return 0;
+		}
+
+		prev = ptr;
+		ptr = ptr->next;
+	}
+	
+	     /* Not found */
+	DBG("remove_winfo_watcher(): Watcher not found in the list\n");
+	return 1;
+}
 
 /*
  * Find a given watcher in the list
@@ -347,7 +441,22 @@ int find_watcher(struct presentity* _p, str* _uri, watcher_t** _w)
 {
 	watcher_t* ptr;
 
+	/* first look for watchers */
 	ptr = _p->watchers;
+
+	while(ptr) {
+		if ((_uri->len == ptr->uri.len) &&
+		    (!memcmp(_uri->s, ptr->uri.s, _uri->len))) {
+
+			*_w = ptr;
+			return 0;
+		}
+			
+		ptr = ptr->next;
+	}
+
+	/* now look for winfo watchers */
+	ptr = _p->winfo_watchers;
 
 	while(ptr) {
 		if ((_uri->len == ptr->uri.len) &&
