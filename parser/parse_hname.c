@@ -17,7 +17,7 @@
 
 
 #include "msg_parser.h"
-#include "dprint.h"
+#include "../dprint.h"
 
 enum { INITIAL=0,
 		VIA1, VIA2,

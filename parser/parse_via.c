@@ -19,10 +19,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "dprint.h"
+#include "../dprint.h"
 #include "msg_parser.h"
-#include "ut.h"
-#include "mem/mem.h"
+#include "../ut.h"
+#include "../mem/mem.h"
 
 
 

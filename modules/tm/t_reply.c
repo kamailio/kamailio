@@ -8,9 +8,11 @@
 #include "t_funcs.h"
 #include "../../dprint.h"
 #include "../../config.h"
-#include "../../parser_f.h"
+#include "../../parser/parser_f.h"
 #include "../../ut.h"
 #include "../../timer.h"
+
+#include "t_hooks.h"
 
 
 
@@ -38,11 +40,11 @@ int t_retransmit_reply( /* struct sip_msg* p_msg    */ )
 	int len;
 
 	if (!T->uas.response.buffer)
-		return 0;
+		return -1;
 
 	if ( (len=T->uas.response.buffer_len)==0 || len>BUF_SIZE ) {
 		UNLOCK_REPLIES( T );
-		return -1;
+		return -2;
 	}
 	memcpy( b, T->uas.response.buffer, len );
 	UNLOCK_REPLIES( T );
@@ -370,6 +372,7 @@ int t_on_reply( struct sip_msg  *p_msg )
 	if (relay >= 0) {
 		SEND_PR_BUFFER( rb, buf, res_len );
 		t_update_timers_after_sending_reply( rb );
+		callback_event( TMCB_REPLY, p_msg );
 	}
 
 	/* *** ACK handling *** */
@@ -378,6 +381,7 @@ int t_on_reply( struct sip_msg  *p_msg )
 		{   /*retransmit*/
 			/* I don't need any additional syncing here -- after ack
 			   is introduced it's never changed */
+			DBG("DEBUG: localy cached ACK retranmitted\n");
 			SEND_ACK_BUFFER( &(T->uac[branch].request) );
 		} else if (msg_class>2 ) {
 			/*on a non-200 reply to INVITE*/

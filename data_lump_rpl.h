@@ -6,7 +6,7 @@
 #ifndef data_lump_rpl_h
 #define data_lump_rpl_h
 
-#include "msg_parser.h"
+#include "parser/msg_parser.h"
 
 
 struct lump_rpl

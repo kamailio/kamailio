@@ -14,7 +14,7 @@
 
 #include "forward.h"
 #include "config.h"
-#include "msg_parser.h"
+#include "parser/msg_parser.h"
 #include "route.h"
 #include "dprint.h"
 #include "udp_server.h"

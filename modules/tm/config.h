@@ -20,7 +20,7 @@ enum fork_type { DEFAULT, NO_RESPONSE };
 /* FINAL_RESPONSE_TIMER ... tells how long should the transaction engine
    wait if no final response comes back*/
 #define FR_TIME_OUT       30
-#define INV_FR_TIME_OUT   60
+#define INV_FR_TIME_OUT   120
 
 /* WAIT timer ... tells how long state should persist in memory after
    a transaction was finalized*/

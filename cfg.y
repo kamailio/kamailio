@@ -62,7 +62,9 @@ void* f_tmp;
 %token ELSE
 %token URIHOST
 %token URIPORT
-
+%token SETFLAG
+%token RESETFLAG
+%token ISFLAGSET
 %token METHOD
 %token URI
 %token SRCIP
@@ -557,13 +559,21 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| LOG_TOK error { $$=0; yyerror("missing '(' or ')' ?"); }
 		| LOG_TOK LPAREN error RPAREN { $$=0; yyerror("bad log"
 									"argument"); }
+		| SETFLAG LPAREN NUMBER RPAREN {$$=mk_action( SETFLAG_T, NUMBER_ST, 0,
+													(void *)$3, 0 ); }
+		| SETFLAG error { $$=0; yyerror("missing '(' or ')'?"); }
+		| RESETFLAG LPAREN NUMBER RPAREN {$$=mk_action(	RESETFLAG_T, NUMBER_ST, 0,
+													(void *)$3, 0 ); }
+		| RESETFLAG error { $$=0; yyerror("missing '(' or ')'?"); }
+		| ISFLAGSET LPAREN NUMBER RPAREN {$$=mk_action(	ISFLAGSET_T, NUMBER_ST, 0,
+													(void *)$3, 0 ); }
+		| ISFLAGSET error { $$=0; yyerror("missing '(' or ')'?"); }
 		| ERROR LPAREN STRING COMMA STRING RPAREN {$$=mk_action(ERROR_T,
 																STRING_ST, 
 																STRING_ST,
 																$3,
 																$5);
 												  }
-												
 		| ERROR error { $$=0; yyerror("missing '(' or ')' ?"); }
 		| ERROR LPAREN error RPAREN { $$=0; yyerror("bad error"
 														"argument"); }

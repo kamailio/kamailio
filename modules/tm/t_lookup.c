@@ -6,7 +6,7 @@
 #include <assert.h>
 #include "../../dprint.h"
 #include "../../config.h"
-#include "../../parser_f.h"
+#include "../../parser/parser_f.h"
 #include "../../ut.h"
 #include "../../timer.h"
 #include "hash_func.h"
@@ -131,55 +131,55 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 		{ /* it's a ACK request*/
 			/* first only the length are checked */
 			if ( t_msg->first_line.u.request.method_value==METHOD_INVITE
-			&& (fprintf(stderr,"------Method name OK->testing callid len...\n"))
+			/* && (fprintf(stderr,"------Method name OK->testing callid len...\n")) */
 			&& /*callid length*/ EQ_LEN(callid)
-			&& (fprintf(stderr,"------CallID OK -> testing cseq nr len\n"))
+			/* && (fprintf(stderr,"------CallID OK -> testing cseq nr len\n")) */
 			&& get_cseq(t_msg)->number.len==get_cseq(p_msg)->number.len
-			&& (fprintf(stderr,"------Cseq nr OK -> testing from len\n"))
+			/* && (fprintf(stderr,"------Cseq nr OK -> testing from len\n")) */
 			&& /*from length*/ EQ_LEN(from)
-			&& (fprintf(stderr,"------from OK -> testing To uri len\n"))
+			/* && (fprintf(stderr,"------from OK -> testing To uri len\n")) */
 			&& /*to uri*/get_to(t_msg)->uri.len==get_to(p_msg)->uri.len
-			&& (fprintf(stderr,"------To uri OK -> testing To tag len\n"))
+			/* && (fprintf(stderr,"------To uri OK -> testing To tag len\n")) */
 			&& /*to tag*/p_cell->uas.tag->len==get_to(p_msg)->tag_value.len
-			&& (fprintf(stderr,"------To tag OK -> testing uri len\n"))
+			/* && (fprintf(stderr,"------To tag OK -> testing uri len\n")) */
 			&& /*req URI*/(p_cell->uas.status==200 || EQ_REQ_URI_LEN )
-			&& (fprintf(stderr,"------uri OK -> testing via len\n"))
+			/* && (fprintf(stderr,"------uri OK -> testing via len\n")) */
 			&& /*VIA*/(p_cell->uas.status==200 || EQ_VIA_LEN(via1)) )
 				/* so far the lengths are the same
 				-> let's check the contents */
-				if ( fprintf(stderr,"------callid |%.*s| |%.*s|\n",
+				if ( /* fprintf(stderr,"------callid |%.*s| |%.*s|\n",
 					p_msg->callid->body.len,p_msg->callid->body.s,
 					t_msg->callid->body.len,t_msg->callid->body.s)
-				&& /*callid*/!memcmp( t_msg->callid->body.s,
+				&& */ /*callid*/!memcmp( t_msg->callid->body.s,
 					p_msg->callid->body.s,p_msg->callid->body.len)
-				&& fprintf(stderr,"------cseq |%.*s| |%.*s|\n",
+				/* && fprintf(stderr,"------cseq |%.*s| |%.*s|\n",
 					get_cseq(p_msg)->number.len,get_cseq(p_msg)->number.s,
-					get_cseq(t_msg)->number.len,get_cseq(t_msg)->number.s)
+					get_cseq(t_msg)->number.len,get_cseq(t_msg)->number.s) */
 				&& /*cseq nr*/!memcmp(get_cseq(t_msg)->number.s,
 					get_cseq(p_msg)->number.s,get_cseq(p_msg)->number.len)
-				&& fprintf(stderr,"------from |%.*s| |%.*s|\n",
+				/* &&  fprintf(stderr,"------from |%.*s| |%.*s|\n",
 					p_msg->from->body.len, translate_pointer(p_msg->orig,
 						p_msg->buf,p_msg->from->body.s),
-					t_msg->from->body.len,t_msg->from->body.s)
+					t_msg->from->body.len,t_msg->from->body.s) */
 				&& /*from*/EQ_STR(from)
-				&& fprintf(stderr,"------to uri |%.*s| |%.*s|\n",
+				/* && fprintf(stderr,"------to uri |%.*s| |%.*s|\n",
 					get_to(p_msg)->uri.len,get_to(p_msg)->uri.s,
-					get_to(t_msg)->uri.len,get_to(t_msg)->uri.s)
+					get_to(t_msg)->uri.len,get_to(t_msg)->uri.s) */
 				&& /*to uri*/!memcmp(get_to(t_msg)->uri.s,
 					get_to(p_msg)->uri.s,get_to(t_msg)->uri.len)
-				&& fprintf(stderr,"------to tag |%.*s| |%.*s|\n",
+				/* && fprintf(stderr,"------to tag |%.*s| |%.*s|\n",
                     get_to(p_msg)->tag_value.len,get_to(p_msg)->tag_value.s,
-                    p_cell->uas.tag->len, p_cell->uas.tag->s)
+                    p_cell->uas.tag->len, p_cell->uas.tag->s) */
 				&& /*to tag*/!memcmp(p_cell->uas.tag->s,
 					get_to(p_msg)->tag_value.s,p_cell->uas.tag->len)
-				&& fprintf(stderr,"------URI %d |%.*s| |%.*s|\n",
+				/* && fprintf(stderr,"------URI %d |%.*s| |%.*s|\n",
 					p_cell->uas.status,p_msg->first_line.u.request.uri.len,
 					translate_pointer(p_msg->orig, p_msg->buf,
 						p_msg->first_line.u.request.uri.s),
 					t_msg->first_line.u.request.uri.len,
-					t_msg->first_line.u.request.uri.s)
+					t_msg->first_line.u.request.uri.s) */
 				&& /*req URI*/(p_cell->uas.status==200 || EQ_REQ_URI_STR)
-				&& fprintf(stderr,"------VIA %d |%.*s| |%.*s|\n",
+				/* && fprintf(stderr,"------VIA %d |%.*s| |%.*s|\n",
 					p_cell->uas.status, 
 					(p_msg->via1->bsize-(p_msg->via1->name.s-
 						(p_msg->via1->hdr.s+p_msg->via1->hdr.len))),
@@ -187,7 +187,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 						p_msg->via1->name.s),
                     (t_msg->via1->bsize-(t_msg->via1->name.s-
 						(t_msg->via1->hdr.s+t_msg->via1->hdr.len))),
-					t_msg->via1->name.s)
+					t_msg->via1->name.s) */
 				&& /*VAI*/(p_cell->uas.status==200 ||EQ_VIA_STR(via1)) )
 					{ /* WE FOUND THE GOLDEN EGG !!!! */
 						goto found;
@@ -245,67 +245,67 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table ,
 
 		/* is it the wanted transaction ? */
 		/* first only the length are checked */
-		if ( fprintf(stderr,"starting\n") && p_cell->uas.request->REQ_METHOD!=METHOD_CANCEL
-			&& fprintf(stderr,"checking callid length....\n")
+		if ( /* fprintf(stderr,"starting\n")  && */ p_cell->uas.request->REQ_METHOD!=METHOD_CANCEL
+			/* && fprintf(stderr,"checking callid length....\n") */
 			&& /*callid length*/ EQ_LEN(callid)
-			&& fprintf(stderr,"OK. checking cseg nr len....\n")	
+			/* && fprintf(stderr,"OK. checking cseg nr len....\n")	 */
 			&& get_cseq(t_msg)->number.len==get_cseq(p_msg)->number.len
-			&& fprintf(stderr,"OK. checking REQ_URI len.... \n")
+			/* && fprintf(stderr,"OK. checking REQ_URI len.... \n") */
 			&& EQ_REQ_URI_LEN
-			&& fprintf(stderr,"OK. checking VIA %d %d....\n",
+			/* && fprintf(stderr,"OK. checking VIA %d %d....\n",
 				(p_msg->via1->bsize-(p_msg->via1->name.s-
 					(p_msg->via1->hdr.s+p_msg->via1->hdr.len))),
 				(t_msg->via1->bsize-(t_msg->via1->name.s-
-					(t_msg->via1->hdr.s+t_msg->via1->hdr.len))))
-            && fprintf(stderr,"OK. VIA |%.*s| |%.*s|\n",
+					(t_msg->via1->hdr.s+t_msg->via1->hdr.len)))) */
+            /* && fprintf(stderr,"OK. VIA |%.*s| |%.*s|\n",
                 (p_msg->via1->bsize-(p_msg->via1->name.s-
                      (p_msg->via1->hdr.s+p_msg->via1->hdr.len))),
                 translate_pointer(p_msg->orig,p_msg->buf,
                        p_msg->via1->name.s),
                 (t_msg->via1->bsize-(t_msg->via1->name.s-
                       (t_msg->via1->hdr.s+t_msg->via1->hdr.len))),
-                t_msg->via1->name.s)
+                t_msg->via1->name.s) */
 			&& EQ_VIA_LEN(via1) 
-			&& fprintf(stderr,"OK. checking FROM len... \n")
+			/* && fprintf(stderr,"OK. checking FROM len... \n") */
 			&& EQ_LEN(from)
-			&& fprintf(stderr,"OK. checking TO len... \n")
+			/* && fprintf(stderr,"OK. checking TO len... \n") */
 			&& EQ_LEN(to)
-			&& fprintf(stderr,"OK\n") )
+			/* && fprintf(stderr,"OK\n") */ )
 				/* so far the lengths are the same
 				 let's check the contents */
 				if (
-                	fprintf(stderr,"checking callid |%.*s| |%.*s|\n",
+                	/* fprintf(stderr,"checking callid |%.*s| |%.*s|\n",
                     	p_msg->callid->body.len, translate_pointer(p_msg->orig,
                         	p_msg->buf,p_msg->callid->body.s),
-                    	t_msg->callid->body.len,t_msg->callid->body.s)
-					&& /*callid*/ EQ_STR(callid)
-					&& fprintf(stderr,"OK. cseq nr |%.*s| |%.*s|\n",
+                    	t_msg->callid->body.len,t_msg->callid->body.s) 
+					&& *//*callid*/ EQ_STR(callid)
+					/* && fprintf(stderr,"OK. cseq nr |%.*s| |%.*s|\n",
 						get_cseq(p_msg)->number.len,get_cseq(p_msg)->number.s,
-						get_cseq(t_msg)->number.len,get_cseq(t_msg)->number.s)
+						get_cseq(t_msg)->number.len,get_cseq(t_msg)->number.s) */
 					&& /*cseq_nr*/ !memcmp(get_cseq(t_msg)->number.s,
 						get_cseq(p_msg)->number.s,get_cseq(p_msg)->number.len)
-	                && fprintf(stderr,"OK. URI %d |%.*s| |%.*s|\n",
+	                /* && fprintf(stderr,"OK. URI %d |%.*s| |%.*s|\n",
                     	p_cell->uas.status,p_msg->first_line.u.request.uri.len,
                     	translate_pointer(p_msg->orig, p_msg->buf,
                         	p_msg->first_line.u.request.uri.s),
                     	t_msg->first_line.u.request.uri.len,
-                    	t_msg->first_line.u.request.uri.s)
+                    	t_msg->first_line.u.request.uri.s) */
 					&& EQ_REQ_URI_STR
-	                && fprintf(stderr,"OK. VIA |%.*s| |%.*s|\n",
+	                /* && fprintf(stderr,"OK. VIA |%.*s| |%.*s|\n",
         	            (p_msg->via1->bsize-(p_msg->via1->name.s-
             	            (p_msg->via1->hdr.s+p_msg->via1->hdr.len))),
                 	    translate_pointer(p_msg->orig,p_msg->buf,
                     	    p_msg->via1->name.s),
            				(t_msg->via1->bsize-(t_msg->via1->name.s-
                     	    (t_msg->via1->hdr.s+t_msg->via1->hdr.len))),
-						t_msg->via1->name.s)
+						t_msg->via1->name.s) */
 					&& EQ_VIA_STR(via1)
-	                && fprintf(stderr,"OK. from |%.*s| |%.*s|\n",
+	                /* && fprintf(stderr,"OK. from |%.*s| |%.*s|\n",
                         p_msg->from->body.len, translate_pointer(p_msg->orig,
                             p_msg->buf,p_msg->from->body.s),
-                        t_msg->from->body.len,t_msg->from->body.s)
+                        t_msg->from->body.len,t_msg->from->body.s) */
 					&& EQ_STR(from)
-					&& fprintf(stderr,"OK\n") )
+					/* && fprintf(stderr,"OK\n") */ )
 					{ /* WE FOUND THE GOLDEN EGG !!!! */
 						DBG("DEBUG: t_lookupOriginalT: canceled transaction"
 							" found (%p)! \n",p_cell );
@@ -559,9 +559,13 @@ enum addifnew_status t_addifnew( struct sip_msg* p_msg )
 	struct cell *new_cell;
 
 	/* is T still up-to-date ? */
-	DBG("DEBUG: t_check_new_request: msg id=%d , global msg id=%d ,"
+	DBG("DEBUG: t_addifnew: msg id=%d , global msg id=%d ,"
 		" T on entrance=%p\n",p_msg->id,global_msg_id,T);
-	if ( p_msg->id != global_msg_id || T==T_UNDEFINED )
+	if ( p_msg->id != global_msg_id || T==T_UNDEFINED 
+		/* if someone tried to do something previously by mistake with
+		   a transaction which did not exist yet, try to look-up
+		   the transacion too */
+		|| T==T_NULL)
 	{
 		global_msg_id = p_msg->id;
 		T = T_UNDEFINED;
@@ -604,7 +608,7 @@ enum addifnew_status t_addifnew( struct sip_msg* p_msg )
 		}
 	} else {
 		if (T)
-			LOG(L_ERR, "ERROR: t_check_new_request: already "
+			LOG(L_ERR, "ERROR: t_addifnew: already "
 			"processing this message, T found!\n");
 		else
 			LOG(L_ERR, "ERROR: t_check_new_request: already "

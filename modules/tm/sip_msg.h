@@ -6,7 +6,7 @@
 #ifndef _SIP_MSG_H
 #define _SIP_MSG_H
 
-#include "../../msg_parser.h"
+#include "../../parser/msg_parser.h"
 
 #include "sh_malloc.h"
 

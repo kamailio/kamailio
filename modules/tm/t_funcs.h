@@ -10,7 +10,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-#include "../../msg_parser.h"
+#include "../../parser/msg_parser.h"
 #include "../../globals.h"
 #include "../../udp_server.h"
 #include "../../msg_translator.h"
@@ -313,9 +313,7 @@ static inline void set_timer( struct s_table *hash_table,
 {
 	unsigned int timeout;
 	struct timer* list;
-	static enum lists to_table[NR_OF_TIMER_LISTS] = {
-		FR_TIME_OUT, INV_FR_TIME_OUT, WT_TIME_OUT, DEL_TIME_OUT,
-		RETR_T1, RETR_T1 << 1, RETR_T1 << 2, RETR_T2 };
+
 
 	if (list_id<FR_TIMER_LIST || list_id>=NR_OF_TIMER_LISTS) {
 		LOG(L_CRIT, "ERROR: set_timer: unkown list: %d\n", list_id);
@@ -324,7 +322,7 @@ static inline void set_timer( struct s_table *hash_table,
 #endif
 		return;
 	}
-	timeout = to_table[ list_id ];
+	timeout = timer_id2timeout[ list_id ];
 	list= &(hash_table->timers[ list_id ]);
 
 	lock(list->mutex);

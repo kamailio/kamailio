@@ -11,10 +11,10 @@
 #include <pthread.h>
 #include <arpa/inet.h>
 
-#include "../../msg_parser.h"
+#include "../../parser/msg_parser.h"
 #include "../../types.h"
 #include "config.h"
-#include "t_flags.h"
+/*#include "t_flags.h"*/
 
 struct s_table;
 struct entry;
@@ -132,7 +132,7 @@ typedef struct cell
 	/* protection against concurrent ACK processing */
 	ser_lock_t	ack_mutex;
 
-	tflags_t	flags;
+/*	tflags_t	flags; */
 
 #ifdef WAIT
 	/* protection against reentering WAIT state */

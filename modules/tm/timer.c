@@ -17,7 +17,20 @@ int timer_group[NR_OF_TIMER_LISTS] =
 	TG_RT, TG_RT, TG_RT, TG_RT
 };
 
-
+/* default values of timeouts for all the timer list
+   (see timer.h for enumeration of timer lists)
+*/
+unsigned int timer_id2timeout[NR_OF_TIMER_LISTS] = {
+	FR_TIME_OUT, 		/* FR_TIMER_LIST */
+	INV_FR_TIME_OUT, 	/* FR_INV_TIMER_LIST */
+	WT_TIME_OUT, 		/* WT_TIMER_LIST */
+	DEL_TIME_OUT,		/* DELETE_LIST */
+	RETR_T1, 			/* RT_T1_TO_1 */
+	RETR_T1 << 1, 		/* RT_T1_TO_2 */
+	RETR_T1 << 2, 		/* RT_T1_TO_3 */
+	RETR_T2 			/* RT_T2 */
+						/* NR_OF_TIMER_LISTS */
+};
 
 
 void reset_timer_list( struct s_table* hash_table, enum lists list_id)

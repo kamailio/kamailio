@@ -7,7 +7,7 @@
 #ifndef sr_module_h
 #define sr_module_h
 
-#include "msg_parser.h" /* for sip_msg */
+#include "parser/msg_parser.h" /* for sip_msg */
 
 typedef  struct module_exports* (*module_register)();
 typedef  int (*cmd_function)(struct sip_msg*, char*, char*);

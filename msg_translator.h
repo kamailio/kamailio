@@ -8,7 +8,7 @@
 #define MY_HF_SEP ": "
 #define MY_HF_SEP_LEN 2
 
-#include "msg_parser.h"
+#include "parser/msg_parser.h"
 
 char * build_req_buf_from_sip_req (	struct sip_msg* msg, 
 				unsigned int *returned_len);

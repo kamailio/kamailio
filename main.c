@@ -30,7 +30,7 @@
 #endif
 #include "sr_module.h"
 #include "timer.h"
-#include "msg_parser.h"
+#include "parser/msg_parser.h"
 
 
 #include <signal.h>

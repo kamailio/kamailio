@@ -9,7 +9,7 @@
 #include "receive.h"
 #include "dprint.h"
 #include "route.h"
-#include "msg_parser.h"
+#include "parser/msg_parser.h"
 #include "forward.h"
 #include "action.h"
 #include "mem/mem.h"

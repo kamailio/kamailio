@@ -10,11 +10,11 @@
 
 #include "msg_parser.h"
 #include "parser_f.h"
-#include "ut.h"
-#include "error.h"
-#include "dprint.h"
-#include "data_lump_rpl.h"
-#include "mem/mem.h"
+#include "../ut.h"
+#include "../error.h"
+#include "../dprint.h"
+#include "../data_lump_rpl.h"
+#include "../mem/mem.h"
 
 #ifdef DEBUG_DMALLOC
 #include <mem/dmalloc.h>

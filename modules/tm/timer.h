@@ -25,7 +25,10 @@ enum lists
 
 
 #define is_in_timer_list2(_tl) ( (_tl)->timer_list )
+
 extern int timer_group[NR_OF_TIMER_LISTS];
+extern unsigned int timer_id2timeout[NR_OF_TIMER_LISTS];
+
 struct timer;
 
 #include "lock.h"

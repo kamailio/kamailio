@@ -6,7 +6,7 @@
  */
 
 #include  "parser_f.h"
-#include "ut.h"
+#include "../ut.h"
 
 /* returns pointer to next line or after the end of buffer */
 char* eat_line(char* buffer, unsigned int len)

@@ -6,7 +6,7 @@
 #ifndef forward_h
 #define forward_h
 
-#include "msg_parser.h"
+#include "parser/msg_parser.h"
 #include "route.h"
 #include "proxy.h"
 

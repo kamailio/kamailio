@@ -12,7 +12,7 @@
 #include "config.h"
 #include "error.h"
 #include "route_struct.h"
-#include "msg_parser.h"
+#include "parser/msg_parser.h"
 
 /*#include "cfg_parser.h" */
 

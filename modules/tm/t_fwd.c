@@ -7,9 +7,11 @@
 #include "t_funcs.h"
 #include "../../dprint.h"
 #include "../../config.h"
-#include "../../parser_f.h"
+#include "../../parser/parser_f.h"
 #include "../../ut.h"
 #include "../../timer.h"
+
+#include "t_hooks.h"
 
 
 #define shm_free_lump( _lmp) \
@@ -172,7 +174,8 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 			get_ticks() );
 		/*sets and starts the FINAL RESPONSE timer */
 		set_timer( hash_table, &(T->uac[branch].request.fr_timer),
-			FR_TIMER_LIST );
+			/* p_msg->REQ_METHOD==METHOD_INVITE ? FR_INV_TIMER_LIST : FR_TIMER_LIST ); */
+			FR_TIMER_LIST ); 
 		/* sets and starts the RETRANS timer */
 		T->uac[branch].request.retr_list = RT_T1_TO_1;
 		set_timer( hash_table, &(T->uac[branch].request.retr_timer),
@@ -269,6 +272,7 @@ int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 
 	T->uas.isACKed = 1;
 	SEND_PR_BUFFER( &(T->uac[branch].request), ack, len );
+	callback_event( TMCB_E2EACK, p_msg );
 	return attach_ack( T, branch, ack , len );
 
 #ifdef _DON_USE
@@ -354,7 +358,9 @@ int forward_serial_branch(struct cell* Trans,int branch)
 	DBG("DEBUG: t_forward_serial_branch:starting timers (retrans and FR) %d\n",
 		get_ticks() );
 	/*sets and starts the FINAL RESPONSE timer */
-	set_timer( hash_table, &(T->uac[branch].request.fr_timer), FR_TIMER_LIST );
+	set_timer( hash_table, &(T->uac[branch].request.fr_timer), 
+			FR_TIMER_LIST ); 
+			/* p_msg->REQ_METHOD==METHOD_INVITE ? FR_INV_TIMER_LIST : FR_TIMER_LIST ); */
 	/* sets and starts the RETRANS timer */
 	T->uac[branch].request.retr_list = RT_T1_TO_1;
 	set_timer( hash_table, &(T->uac[branch].request.retr_timer), RT_T1_TO_1 );

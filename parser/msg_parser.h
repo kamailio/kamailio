@@ -5,8 +5,9 @@
 #ifndef msg_parser_h
 #define msg_parser_h
 
-#include "str.h"
-#include "data_lump.h"
+#include "../str.h"
+#include "../data_lump.h"
+#include "../flags.h"
 
 #define SIP_REQUEST 1
 #define SIP_REPLY   2
@@ -215,6 +216,11 @@ struct sip_msg{
 
 	/* index to TM hash table; stored in core to avoid unnecessary calcs */
 	unsigned int  hash_index;
+
+	/* allows to set various flags on the message; may be used for 
+	   simple inter-module communication or remembering processing state
+	   reached */
+	flag_t flags;
 
 	
 };
