@@ -18,8 +18,8 @@ Subject: [Sr] sms faq
 
 The gateway accepts and advertises phone numbers in international format, more
 specific like: +(international code)(area code)(number).
-Ex:   Germany, D1 = +49 170 5678181
-   Romania, Connex = +40 722 123456
+Ex:   Germany, D1     = +49 170 5678181
+      Romania, Connex = +40 722 123456
 A number in this format is expected to be placed as username into RURI or in
 the To header; if RURI misses the username, the To header will be consider.
 Also, the gateway will advertise in this format the username in Contact
@@ -59,8 +59,8 @@ p=pin (optional) - SIM's pin - default NULL;
 m=mode (optional) - modem working mode ("ASCII","OLD","DIGICOM","NEW")
    default value is "NEW";
 b=baudrate (optional) - default 19600
-r=retry (optional) - sec to wait before retrying a command that prev failed!
-   default is 10 sec
+r=retry (optional) - how many time to try to re-send a SMS that reported error
+   default is twice
 l=looping (optional) - time for modem to wait before performing a new check
    for incomimg/outgoing SMS/SIP_MSG - default=20
 EXAMPLES:
