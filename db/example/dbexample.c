@@ -102,6 +102,10 @@ static int print_res(db_res_t* _r)
 				       RES_ROWS(_r)[i].values[j].val.blob_val.len,
 				       RES_ROWS(_r)[i].values[j].val.blob_val.s);
 				break;
+
+			case DB_BITMAP:
+				printf("%d ", RES_ROWS(_r)[i].values[j].val.bitmap_val);
+				break;
 			}
 			
 		}
@@ -120,7 +124,7 @@ struct module_exports* mod_register()
 	     /*
 	      * Column names of table location
 	      */
-	db_key_t keys1[] = {"username", "contact", "q", "expire", "opaque" };
+	db_key_t keys1[] = {"username", "contact", "q", "expire", "opaque", "flags" };
 	db_key_t keys2[] = {"username", "q"};
 	db_key_t keys3[] = {"username", "contact"};
 	db_key_t keys4[] = {"contact", "q"};
@@ -130,7 +134,8 @@ struct module_exports* mod_register()
 		{ DB_STR     , 0, { .str_val    = { "real@foo.bar.com", 18 } } },
 		{ DB_DOUBLE  , 0, { .double_val = 1.2 }                        },
 		{ DB_DATETIME, 0, { .time_val   = 439826493 }                  },
-		{ DB_BLOB    , 0, { .blob_val   = { "hdslgkhas\0glksf", 17 } } }
+		{ DB_BLOB    , 0, { .blob_val   = { "hdslgkhas\0glksf", 17 } } },
+		{ DB_BITMAP  , 0, { .bitmap_val = FLAG_NAT | FLAG_INVITE }     }
 	};
 
 	db_val_t vals2[] = { 
@@ -138,7 +143,8 @@ struct module_exports* mod_register()
 		{ DB_STR     , 0, { .str_val    = { "real2@foo.bar2.com", 18 } } },
 		{ DB_DOUBLE  , 0, { .double_val = 1.3 }                          },
 		{ DB_DATETIME, 0, { .time_val   = 12345 }                        },
-		{ DB_BLOB    , 0, { .blob_val   = { "\0a\0balkdfj", 10 }       } }
+		{ DB_BLOB    , 0, { .blob_val   = { "\0a\0balkdfj", 10 }       } },
+                { DB_BITMAP  , 0, { .bitmap_val = FLAG_NAT, FLAG_NOT_INVITE }    }
 	};
 
 	db_val_t vals3[] = { 
@@ -146,7 +152,8 @@ struct module_exports* mod_register()
 		{ DB_STR     , 0, { .str_val    = { "real3@foo.bar3.com", 18 } } },
 		{ DB_DOUBLE  , 0, { .double_val = 1.5 }                          },
 		{ DB_DATETIME, 0, { .time_val   = 123456 }                       },
-		{ DB_BLOB    , 0, { .blob_val   = { "halgkasdg\'", 10 }        } }
+		{ DB_BLOB    , 0, { .blob_val   = { "halgkasdg\'", 10 }        } },
+                { DB_BITMAP  , 0, { .blob_val   = FLAG_NAT }                     }
 	};
 
 	db_val_t vals4[] = {
@@ -208,17 +215,17 @@ struct module_exports* mod_register()
 		return &dbex_exports;
 	}
 
-	if (db_insert(h, keys1, vals1, 5) < 0) {
+	if (db_insert(h, keys1, vals1, 6) < 0) {
 		fprintf(stderr, "Error while inserting line 1\n");
 		return &dbex_exports;
 	}
 
-	if (db_insert(h, keys1, vals2, 5) < 0) {
+	if (db_insert(h, keys1, vals2, 6) < 0) {
 		fprintf(stderr, "Error while inserting line 2\n");
 		return &dbex_exports;
 	}
 
-	if (db_insert(h, keys1, vals3, 5) < 0) {
+	if (db_insert(h, keys1, vals3, 6) < 0) {
 		fprintf(stderr, "Error while inserting line 3\n");
 		return &dbex_exports;
 	}

@@ -82,6 +82,7 @@ information, see the next section.
        DB_STR,       /* str structure */
        DB_DATETIME   /* Date and time */
        DB_BLOB       /* Binary large object */
+       DB_BITMAP     /* Bitmap, one-dimensional array of flags */
    } db_type_t;
 
 1.3.3 Macros
@@ -102,6 +103,7 @@ DB_STRING   - Value in the database represents a string
 DB_STR      - Value in the database represents a string
 DB_DATETIME - Value in the database represents date and time
 DB_BLOB     - Value in the database represents binary large object
+DB_BITMAP   - Value in the database represents an array of flags
 
 These datatypes are automaticaly recognized, converted from internal database
 representation and stored in the variable of corresponding type.
@@ -118,6 +120,7 @@ representation and stored in the variable of corresponding type.
              const char* string_val;  /* Zero terminated string */
 	     str str_val;             /* str structure */
              str blob_val;            /* Structure describing blob */
+             unsigned int bitmap_val; /* Array of flags */
          } val;
     } db_val_t;
 
@@ -190,6 +193,14 @@ Use this macro if you need to access blob value in the db_val_t structure.
 Example: if (VAL_TYPE(val) == DB_BLOB) {
 	     printf("%.*s", VAL_BLOB(val).len, VAL_BLOB(val).s);
          }
+
+1.4.3.9 VAL_BITMAP(value) Macro
+
+Use this macro if you need to access bitmap value in the db_val_t structure.
+
+Example: if (VAL_TYPE(val) == DB_BITMAP) {
+	    printf("%d", VAL_BITMAP(val));
+	 }
 
 1.5 Type db_row_t
 

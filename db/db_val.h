@@ -42,7 +42,8 @@ typedef enum {
 	DB_STRING,
 	DB_STR,
 	DB_DATETIME,
-	DB_BLOB
+	DB_BLOB,
+	DB_BITMAP
 } db_type_t;
 
 
@@ -52,15 +53,17 @@ typedef enum {
 typedef struct {
 	db_type_t type;                /* Type of the value */
 	int nul;                       /* Means that the column in database
-									  has no value */
+					* has no value 
+					*/
 	union {
-		int          int_val;    /* integer value */
-		double       double_val; /* double value */
-		time_t       time_val;   /* unix time value */
-		const char*  string_val; /* NULL terminated string */
-		str          str_val;    /* str string value */
-		str          blob_val;   /* Blob data */
-	} val;                       /* union of all possible types */
+		int           int_val;    /* integer value */
+		double        double_val; /* double value */
+		time_t        time_val;   /* unix time value */
+		const char*   string_val; /* NULL terminated string */
+		str           str_val;    /* str string value */
+		str           blob_val;   /* Blob data */
+		unsigned int  bitmap_val; /* Bitmap data type, 32 flags, should be enough */ 
+	} val;                            /* union of all possible types */
 } db_val_t;
 
 
@@ -76,6 +79,7 @@ typedef struct {
 #define VAL_STRING(dv) ((dv)->val.string_val)
 #define VAL_STR(dv)    ((dv)->val.str_val)
 #define VAL_BLOB(dv)   ((dv)->val.blob_val)
+#define VAL_BITMAP(dv) ((dv)->val.bitmap_val)
 
 
 /*
