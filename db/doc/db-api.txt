@@ -38,7 +38,7 @@ of db_con_t type serves as a handle for a particular database connection.
         void* con;       /* Database connection */
         void* res;       /* Result of previous operation */
         void* row;       /* Internal, not for public use */
-        int connected;   /* TRUE if connection is established */
+        int connected;   /* 1 if connection is established */
    } db_con_t;
 
 1.1.3 Macros
@@ -314,8 +314,8 @@ The function takes no parameters.
 
 2.1.4 Return Value
 
-The function returns TRUE if it was able to find addresses of all other 
-functions, otherwise FALSE is returned.
+The function returns 0 if it was able to find addresses of all other 
+functions, otherwise value < 0 is returned.
 
 
 2.2 Function db_init
@@ -349,7 +349,7 @@ database: If the database server supports multiple databases, you must specify
 2.2.4 Return Value
 
 The function returns pointer to db_con_t* representing the connection if it was
-successful, otherwise NULL is returned.
+successful, otherwise 0 is returned.
 
 
 2.3 Function db_close
@@ -411,7 +411,7 @@ You must call db_free_query _BEFORE_ you can call db_query again !
 
 2.4.4 Return Value
 
-The function returns TRUE if everything is OK, otherwise FALSE is returned.
+The function returns 0 if everything is OK, otherwise value < 0 is returned.
 
 
 2.5 Function db_free_query
@@ -435,8 +435,8 @@ _r: Pointer to db_res_t structure to destroy
 
 2.5.4 Return Value
 
-The function returns TRUE if everything is OK, otherwise the function returns
-FALSE.
+The function returns 0 if everything is OK, otherwise the function returns
+value < 0.
 
 
 2.6 Function db_insert
@@ -460,8 +460,8 @@ _n: Number of keys-value pairs int _k and _v parameters
 
 2.6.4 Return Value
 
-The function returns TRUE if everything is OK, otherwise the function returns
-FALSE.
+The function returns 0 if everything is OK, otherwise the function returns
+value < 0.
 
 
 2.7 Function db_delete
@@ -488,8 +488,8 @@ be empty).
 
 2.7.4 Return Value
 
-The function returns TRUE fi everything is OK, otherwise the function returns
-FALSE.
+The function returns 0 if everything is OK, otherwise the function returns
+value < 0.
 
 
 2.8 Function db_update
@@ -517,8 +517,8 @@ _un: Number of key-value pairs in _uk and _uv parameters
 
 2.8.4 Return Value
 
-The function returns TRUE if everything is OK, otherwise the function returns
-FALSE.
+The function returns 0 if everything is OK, otherwise the function returns
+value < 0.
 
 
 2.9 Function db_use_table
@@ -541,6 +541,6 @@ _t: Table name
 
 2.9.4 Return Value
 
-The function returns TRUE if everything is OK, otherwise the function returns
-FALSE.
+The function returns 0 if everything is OK, otherwise the function returns
+value < 0.
 
