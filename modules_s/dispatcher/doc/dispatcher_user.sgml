@@ -1,0 +1,193 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    This modules implements a dispatcher for destination addresses. It 
+		computes hashes over parts of the request and selects an address from
+		a destination set. The selected address is used then as outbound
+		proxy.
+	</para>
+	<para>
+		The module can be used as a stateless load balancer, having no
+		guarantee of fair distribution.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>none</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External libraries or applications</title>
+	    <para>
+		The following libraries or applications must be installed before
+		running &ser; with this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>none</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>list_file</varname> (string)</title>
+	    <para>
+		Path to the file with destination sets.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>/etc/ser/dispatcher.list</quote> or
+			<quote>/usr/local/etc/ser/dispatcher.list</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set the <quote>list_file</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dispatcher", "list_file", "/var/run/ser/dispatcher.list")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>force_dst</varname> (int)</title>
+	    <para>
+		If set to 1, force overwriting of destination address when that is
+		already set.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set the <quote>force_dst</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "force_dst", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">ds_select_dst(set, alg)</function>
+		</title>
+	    <para>
+		The method selects a destination from addresses set.
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>set</emphasis> - the id of the set from where to pick
+			up destination address. It is the first column in destination
+			list file.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>alg</emphasis> - the algorithm used to select the
+			destination address.
+		    </para>
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				<quote>0</quote> - hash over callid
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<quote>1</quote> - hash over from uri.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<quote>X</quote> - if the algorithm is not implemented, the
+				first entry in set is chosen.
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>ds_select_dst</function> usage</title>
+		<programlisting format="linespecific">
+...
+ds_select_dst("1", "0");
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+    <section>
+	<title>Installation & Running</title>
+	<section>
+	    <title>Destination List File</title>
+	    <para>
+		Each destination point must be on one line. First token is the set
+		id and next is destination address. The set id must be an integer
+		value. Destination address must be a valid SIP URI. Empty lines or
+		lines starting with <quote>#</quote> are ignored.
+		</para>
+	    <example>
+		<title>dispatcher list file</title>
+		<programlisting format="linespecific">
+...
+&dispatcherlist;
+...
+</programlisting>
+		</example>
+    	</section>
+	
+    	<section>
+	    <title>&ser; config file</title>
+	    <para>
+		Next picture displays a sample usage of dispatcher.
+	    </para>
+	    <example>
+		<title>&ser; config script - sample dispatcher usage</title>
+		<programlisting format="linespecific">
+...
+&dispatchercfg;
+...
+		</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("dispatcher.sgml" "Book" "chapter")
+End:
+-->
