@@ -104,6 +104,7 @@ extern char* working_dir;
 
 #ifdef USE_MCAST
 extern int mcast_loopback;
+extern int mcast_ttl;
 #endif /* USE_MCAST */
 
 /*

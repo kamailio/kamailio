@@ -53,6 +53,8 @@
  * 2004-02-24  added LOAD_AVP_T and AVP_TO_URI_T (bogdan)
  * 2004-03-30  added DISABLE_CORE and OPEN_FD_LIMIT (andrei)
  * 2004-04-29  added SOCK_MODE, SOCK_USER & SOCK_GROUP (andrei)
+ * 2004-05-03  applied multicast support patch (MCAST_LOOPBACK) from janakj
+               added MCAST_TTL (andrei)
  */
 
 
@@ -243,6 +245,7 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token DISABLE_CORE
 %token OPEN_FD_LIMIT
 %token MCAST_LOOPBACK
+%token MCAST_TTL
 
 
 
@@ -665,8 +668,15 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 									warn("no multicast support compiled in");
 								#endif
 		  }
-                | MCAST_LOOPBACK EQUAL error { yyerror("boolean value expected"); }
-
+		| MCAST_LOOPBACK EQUAL error { yyerror("boolean value expected"); }
+		| MCAST_TTL EQUAL NUMBER {
+								#ifdef USE_MCAST
+										mcast_ttl=$3;
+								#else
+									warn("no multicast support compiled in");
+								#endif
+		  }
+		| MCAST_TTL EQUAL error { yyerror("number expected"); }
 		| error EQUAL { yyerror("unknown config variable"); }
 	;
 

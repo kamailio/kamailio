@@ -23,6 +23,9 @@ core:
  - new parts:
        UNIX domain socket server implemented
  - changes: 
+    -  multicast support added (see mcast_loopback & mcast_ttl)
+    -  saving of procces group id enabled, if the -G option is specified
+       (a safe way to quickly kill all ser processes)
     -  core dump-ing is enabled by default, see also disable_core_dump
     -  protocol and port can be specified in the alias and listen lines, e.g.:
         alias= tcp:foo.bar:* udp:test.bar:5080 foo.com
@@ -31,6 +34,8 @@ core:
                               ==, !=, ~= for strings
                               ==, !=, >, <, >=, <= for integers
  - new config variables:
+   mcast_loopback = <yes/no> - loopback sent multicast datagram, default no.
+   mcast_ttl = number - set multicast ttl, default OS specific (usually 1).
    sock_mode = <permissions> (e.g. sock_mode=0600:  default value = 0660)
        ser unix sockets and fifo will be created with this permissions
        (old name fifo_mode is still supported, but deprecated)

@@ -31,7 +31,7 @@
  *  2004-02-20  removed from ser main.c into its own file (andrei)
  *  2004-03-04  moved setuid/setgid in do_suid() (andrei)
  *  2004-03-25  added increase_open_fds & set_core_dump (andrei)
- *  2004-04-04  applied pgid patch from janakj
+ *  2004-05-03  applied pgid patch from janakj
  */
 
 #define _XOPEN_SOURCE

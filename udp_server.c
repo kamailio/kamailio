@@ -30,6 +30,8 @@
  *  2003-02-10  undoed the above changes (andrei)
  *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-04-14  set sockopts to TOS low delay (andrei)
+ *  2004-05-03  applied multicast support patch from janakj
+ *              added set multicast ttl support (andrei)
  */
 
 
@@ -237,6 +239,14 @@ static int setup_mcast_rcvr(int sock, union sockaddr_union* addr)
 			    strerror(errno));
 			return -1;
 		}
+		if (mcast_ttl>=0){
+			if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_TTL, &mcast_ttl,
+						sizeof(mcast_ttl))==-1){
+				LOG(L_ERR, "ERROR: setup_mcast_rcvr: setosckopt (ttl):"
+						" %s\n", strerror(errno));
+				return -1;
+			}
+		}
 #ifdef USE_IPV6
 	} else if (addr->s.sa_family==AF_INET6){
 		memcpy(&mreq6.ipv6mr_multiaddr, &addr->sin6.sin6_addr, 
@@ -255,6 +265,14 @@ static int setup_mcast_rcvr(int sock, union sockaddr_union* addr)
 			LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", 
 			    strerror(errno));
 			return -1;
+		}
+		if (mcast_ttl>=0){
+			if (setsockopt(sock, IPPROTO_IP, IPV6_MULTICAST_HOPS, &mcast_ttl,
+						sizeof(mcast_ttl))==-1){
+				LOG(L_ERR, "ERROR: setup_mcast_rcvr: setosckopt (ttlv6):"
+						" %s\n", strerror(errno));
+				return -1;
+			}
 		}
 #endif /* USE_IPV6 */
 	} else {

@@ -143,6 +143,9 @@ static char flags[]=
 #ifdef DISABLE_NAGLE
 ", DISABLE_NAGLE"
 #endif
+#ifdef USE_MCAST
+", USE_MCAST"
+#endif
 #ifdef NO_DEBUG
 ", NO_DEBUG"
 #endif
@@ -348,6 +351,7 @@ int reply_to_via=0;
 
 #ifdef USE_MCAST
 int mcast_loopback = 0;
+int mcast_ttl = -1; /* if -1, don't touch it, use the default (usually 1) */
 #endif /* USE_MCAST */
 
 #if 0
