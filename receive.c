@@ -29,6 +29,8 @@
  * 2003-01-29 transport-independent message zero-termination in
  *            receive_msg (jiri)
  * 2003-02-07 undoed jiri's zero term. changes (they break tcp) (andrei)
+ * 2003-02-10 moved zero-term in the calling functions (udp_receive &
+ *            tcp_read_req)
  */
 
 
@@ -56,6 +58,10 @@
 
 unsigned int msg_no=0;
 
+
+/* WARNING: buf must be 0 terminated (buf[len]=0) or some things might 
+ * break (e.g.: modules/textops)
+ */
 int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info) 
 {
 	struct sip_msg* msg;
@@ -92,9 +98,6 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		goto error01;
 	}
 	memcpy(msg->orig, buf, len);
-	/* WARNING: zero term removed! */
-	/* msg->orig[len]=0; */ /* null terminate it,good for using str* functions
-						 on it*/
 #endif
 	
 	if (parse_msg(buf,len, msg)!=0){

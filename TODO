@@ -70,4 +70,5 @@ x generic locking lib
 - convert tm to use new locking lib
 - tcp disable nagle & other socket stuff (close()?)
 - force add rport (setflag(rport)???)
+- kill all the fprintf
 

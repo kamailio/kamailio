@@ -24,6 +24,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ * 2002-12-??  created by andrei.
+ * 2003-02-10  zero term before calling receive_msg & undo afterwards (andrei)
+ */
 
 #ifdef USE_TCP
 
@@ -351,6 +357,7 @@ int tcp_read_req(struct tcp_connection* con)
 	long size;
 	struct tcp_req* req;
 	int s;
+	char c;
 		
 		resp=CONN_RELEASE;
 		s=con->fd;
@@ -409,10 +416,16 @@ again:
 					req->start, (int)(req->parsed-req->start));
 			bind_address=sendipv4; /*&tcp_info[con->sock_idx];*/
 			con->rcv.proto_reserved1=con->id; /* copy the id */
+			c=*req->parsed; /* ugly hack: zero term the msg & save the
+							   previous char, req->parsed should be ok
+							   because we always alloc BUF_SIZE+1 */
+			*req->parsed=0;
 			if (receive_msg(req->start, req->parsed-req->start, &con->rcv)<0){
+				*req->parsed=c;
 				resp=CONN_ERROR;
 				goto end_req;
 			}
+			*req->parsed=c;
 			
 			/* prepare for next request */
 			size=req->pos-req->parsed;
