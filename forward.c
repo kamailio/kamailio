@@ -280,7 +280,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p, int proto)
 	}
 	
 	hostent2su(to, &p->host, p->addr_idx, 
-				(p->port)?htons(p->port):htons(SIP_PORT));
+				(p->port)?p->port:SIP_PORT);
 	p->tx++;
 	p->tx_bytes+=len;
 	
@@ -410,7 +410,7 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 		return -1;
 	}
 		
-	hostent2su(to, he, 0, htons(port));
+	hostent2su(to, he, 0, port);
 	return 1;
 }
 

@@ -204,7 +204,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	}
 
 	hostent2su( &to, &proxy->host, proxy->addr_idx, 
-		proxy->port ? htons(proxy->port):htons(SIP_PORT));
+		proxy->port ? proxy->port:SIP_PORT);
 
 	send_sock=get_send_socket( &to , proto);
 	if (send_sock==0) {

@@ -190,7 +190,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				p->ok=1;
 			}
 			ret=hostent2su(	to, &p->host, p->addr_idx,
-						(p->port)?htons(p->port):htons(SIP_PORT) );
+						(p->port)?p->port:SIP_PORT );
 			if (ret==0){
 				p->tx++;
 				p->tx_bytes+=msg->len;

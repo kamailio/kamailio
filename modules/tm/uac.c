@@ -217,7 +217,7 @@ static struct socket_info *uri2sock( str *uri, union sockaddr_union *to_su,
 	}
 
 	hostent2su(to_su, &proxy->host, proxy->addr_idx, 
-			(proxy->port) ? htons(proxy->port) : htons(SIP_PORT));
+			(proxy->port) ? proxy->port : SIP_PORT);
 	send_sock=get_out_socket(to_su, proto);
 	if (send_sock == 0) {
 		LOG(L_ERR, "ERROR: uri2sock: no corresponding socket for af %d\n", 

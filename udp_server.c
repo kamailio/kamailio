@@ -217,7 +217,7 @@ int udp_init(struct socket_info* sock_info)
 	}
 */
 	sock_info->proto=PROTO_UDP;
-	if (init_su(addr, &sock_info->address, htons(sock_info->port_no))<0){
+	if (init_su(addr, &sock_info->address, sock_info->port_no)<0){
 		LOG(L_ERR, "ERROR: udp_init: could not init sockaddr_union\n");
 		goto error;
 	}
