@@ -698,7 +698,7 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 
 	if (port != 0) {
 	    port_string = int2str(port, &port_len);
-	    port_len = port_len + 1;
+	    port_len = port_len;
 	} else {
 	    port_string = (char *)0;
 	    port_len = 0;
@@ -714,7 +714,11 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 
 	uri_user = _m->parsed_uri.user;
 
-	uri.len = 4 + uri_user.len + 1 + addr_str.len + port_len + 1;
+	if (port != 0) {
+	    uri.len = 4 + uri_user.len + 1 + addr_str.len + 1 + port_len + 1;
+	} else {
+	    uri.len = 4 + uri_user.len + 1 + addr_str.len + 1;
+	}	    
 	if (uri.len > MAX_URI_SIZE) {
 	    LOG(L_ERR, "next_gw(): URI is too long\n");
 	    return -1;
@@ -737,10 +741,10 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	if (port != 0) {
 	    *at = ':';
 	    at = at + 1;
-	    memcpy(at, port_string, port_len + 1);
-	} else {
-	    *at = '\0';
+	    memcpy(at, port_string, port_len);
+	    at = at + port_len;
 	}
+	*at = '\0';
 
 	act.type = APPEND_BRANCH_T;
 	act.p1_type = STRING_ST;
