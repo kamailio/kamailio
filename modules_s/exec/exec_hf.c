@@ -444,7 +444,7 @@ static int append_fixed_vars(struct sip_msg *msg, struct hf_wrapper **list)
 {
 	static char tid[MD5_LEN];
 	str *uri;
-	struct sip_uri parsed_uri;
+	struct sip_uri parsed_uri, oparsed_uri;
 	char *val;
 	int val_len;
 
@@ -476,6 +476,18 @@ static int append_fixed_vars(struct sip_msg *msg, struct hf_wrapper **list)
 		LOG(L_ERR, "ERROR: append_var O-URI failed\n");
 		goto error;
 	}
+	/* userpart of request URI */
+	if (parse_uri(msg->first_line.u.request.uri.s, 
+				msg->first_line.u.request.uri.len, 
+				&oparsed_uri)<0) {
+		LOG(L_WARN, "WARNING: append_var: orig URI not parsed\n");
+	} else {
+		if (!append_var(EV_OUSER, oparsed_uri.user.s, 
+					oparsed_uri.user.len, list)) {
+			LOG(L_ERR, "ERROR: append_var OUSER failed\n");
+			goto error1;
+		}
+	}
 	/* tid, transaction id == via/branch */
 	if (!char_msg_val(msg, tid)) {
 		LOG(L_WARN, "WARNING: no tid can be determined\n");
@@ -485,7 +497,7 @@ static int append_fixed_vars(struct sip_msg *msg, struct hf_wrapper **list)
 	}
 	if (!append_var(EV_TID, val,val_len, list)) {
 		LOG(L_ERR, "ERROR: append_var TID failed\n");
-		goto error;
+		goto error1;
 	}
 
 	/* did, dialogue id == To-tag */
@@ -498,10 +510,13 @@ static int append_fixed_vars(struct sip_msg *msg, struct hf_wrapper **list)
 	}
 	if (!append_var(EV_DID, val, val_len, list)) {
 		LOG(L_ERR, "ERROR: append_var DID failed\n");
-		goto error;
+		goto error1;
 	}
+	free_uri(&oparsed_uri);
 	free_uri(&parsed_uri);
 	return 1;
+error1:
+	free_uri(&oparsed_uri);
 error:
 	free_uri(&parsed_uri);
 	return 0;

@@ -41,6 +41,7 @@
 #define EV_RURI SIP "RURI"
 #define EV_ORURI SIP "ORUI"
 #define EV_USER SIP "USER"
+#define EV_OUSER SIP "OUSER"
 #define EV_TID SIP "TID"
 #define EV_DID SIP "DID"
 /* env var assignment operator */
