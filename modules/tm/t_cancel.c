@@ -205,7 +205,7 @@ int unixsock_uac_cancel(str* msg)
 	}
 
 	     /* second param cseq read */
-	if (unixsock_read_line(&callid, msg) != 0) {
+	if (unixsock_read_line(&cseq, msg) != 0) {
 		unixsock_reply_asciiz("400 CSeq Expected\n");
 		unixsock_reply_send();
 		return -1;
