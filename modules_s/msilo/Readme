@@ -7,6 +7,17 @@ MSILO - offline messages service - SER module
 This module stores received messages for offline users and sends them next time
 when they became online.
 
+The module sores for each message R-URI, if it is a complete address of record
+(user@hostname), To address, From address, incoming time, expiration time
+and body. If R-URI is not AoF (it might be contact address for current SIP
+session), To address will be used as R-URI.
+
+After expiration time, the message will be discarded from database.
+
+When a user registers with SER, the module is looking in database for stored
+messages of that user. All of them will be send to contact address provided in 
+REGISTER message.
+
 
 2.Exported symbols
 ------------------
@@ -41,9 +52,12 @@ Desc:		table name
 
 Name:		registrar
 Type:		string
-Default:	sip:registrar@iptel.org
-Desc:		the SIP address used to inform users that destination of their
-			message is not online
+Default:	NULL
+Desc:		ex: sip:registrar@iptel.org
+			the SIP address used to inform users that destination of their
+			message is not online and the message will be delivered next time
+			when the destination goes online. If the parameter is not set, the
+			module will not send info messages.
 
 
 Name:		expire_time
