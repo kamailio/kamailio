@@ -26,6 +26,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-10  module export interface updated to the new format (andrei)
+ */
 
 
 
@@ -40,18 +45,17 @@ static int mod_init(void);
 char* str_param;
 int int_param;
 
+
+static cmd_export_t cmds[]={ {"print", print_f, 1, 0}, {0, 0, 0, 0} };
+
+static param_export_t params[]={ {"str_param", STR_PARAM, &str_param},
+		                         {"int_param", INT_PARAM, &int_param},
+		                         {0,0,0} };
+
 struct module_exports exports = {
 	"print_stdout", 
-	(char*[]){"print"},
-	(cmd_function[]){print_f},
-	(int[]){1},
-	(fixup_function[]){0},
-	1, /* number of functions*/
-
-	(char*[]){"str_param", "int_param"},
-	(modparam_t[]){STR_PARAM, INT_PARAM},
-	(void*[]){&str_param, &int_param},
-	2,
+	cmds,
+	params,
 	
 	mod_init, /* module initialization function */
 	0,        /* response function*/

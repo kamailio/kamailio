@@ -35,14 +35,15 @@
  *
  * History:
  * -------
- * 2003-02-28 scratchpad compatibility abandoned (jiri)
+ * 2003-02-28  scratchpad compatibility abandoned (jiri)
  * 2003-01-29: - rewriting actions (replace, search_append) now begin
  *               at the second line -- previously, they could affect
  *               first line too, which resulted in wrong calculation of
  *               forwarded requests and an error consequently
  *             - replace_all introduced
- * 2003-01-28 scratchpad removed (jiri)
- * 2003-01-18: append_urihf introduced (jiri)
+ * 2003-01-28  scratchpad removed (jiri)
+ * 2003-01-18  append_urihf introduced (jiri)
+ * 2003-03-10  module export interface updated to the new format (andrei)
  */
 
 
@@ -75,51 +76,24 @@ static int str_fixup(void** param, int param_no);
 static int mod_init(void);
 
 
+
+static cmd_export_t cmds[]={
+		{"search",           search_f,          1, fixup_regex},
+		{"search_append",    search_append_f,   2, fixup_regex},
+		{"replace",          replace_f,         2, fixup_regex},
+		{"replace_all",      replace_all_f,     2, fixup_regex},
+		{"append_to_reply",  append_to_reply_f, 1, 0          },
+		{"append_hf",        append_hf,         1, str_fixup  },
+		{"append_urihf",     append_urihf,      2, str_fixup  },
+		{0,0,0,0}
+};
+
+static param_export_t params[]={ {0,0,0} }; /* no params */
+
 struct module_exports exports= {
 	"textops",
-	(char*[])	{
-			"search",
-			"search_append",
-			"replace",
-			"replace_all",
-			"append_to_reply",
-			"append_hf",
-			"append_urihf"
-	},
-	(cmd_function[]) {
-			search_f,
-			search_append_f,
-			replace_f,
-			replace_all_f,
-			append_to_reply_f,
-			append_hf,
-			append_urihf
-	},
-	(int[]) {
-			1,
-			2,
-			2,
-			2,
-			1,
-			1,
-			2
-	},
-	(fixup_function[]){
-			fixup_regex,
-			fixup_regex,
-			fixup_regex,
-			fixup_regex,
-			0,
-			str_fixup,
-			str_fixup
-	},
-	7,
-
-	0,      /* Module parameter names */
-	0,      /* Module parameter types */
-	0,      /* Module parameter variable pointers */
-	0,      /* Number of module paramers */
-
+	cmds,
+	params,
 	mod_init, /* module initialization function */
 	0, /* response function */
 	0,  /* destroy function */
