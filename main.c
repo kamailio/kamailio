@@ -460,6 +460,16 @@ int main_loop()
 {
 	int r, i;
 	pid_t pid;
+#ifdef WITH_SNMP_MOD
+	int (*snmp_start)();
+
+	/* initialize snmp module */
+	snmp_start = (int(*)())find_export("snmp_start", 0);
+	if(snmp_start)
+		if(snmp_start() == -1)
+			LOG(L_ERR, "ERROR: Couldn't start snmp agent\n");
+#endif
+		
 
 	/* one "main" process and n children handling i/o */
 
@@ -906,10 +916,7 @@ int main(int argc, char** argv)
 		goto error;
 	}
 
-#ifdef STATS
-	if (init_stats(  dont_fork ? 1 : children_no  )==-1) goto error;
-#endif
-	
+
 
 	print_rl();
 
@@ -1047,6 +1054,10 @@ int main(int argc, char** argv)
 		goto error;
 	};
 
+#ifdef STATS
+	if (init_stats(  dont_fork ? 1 : children_no  )==-1) goto error;
+#endif
+	
 	return main_loop();
 
 
