@@ -552,16 +552,10 @@ static int m_store(struct sip_msg* msg, char* mode, char* str2)
 		}
 		
 		// tmb.t_uac(&msg_type,&pfrom->uri,&str_hdr,&body,&reg_addr,0,0,0);
-		tmb.t_uac_dlg(&msg_type,  /* Type of the message */
-				(ctaddr.s)?&ctaddr:0,              /* Real destination */
-				PROTO_UDP,
+		tmb.t_request(&msg_type,  /* Type of the message */
 				(ctaddr.s)?&ctaddr:&pfrom->uri,    /* Request-URI */
 				&pfrom->uri,      /* To */
 				&reg_addr,        /* From */
-				NULL,             /* To tag */
-				NULL,             /* From tag */
-				NULL,             /* CSeq */
-				NULL,             /* Call-ID */
 				&str_hdr,         /* Optional headers including CRLF */
 				&body,            /* Message body */
 				NULL,             /* Callback function */
@@ -745,16 +739,10 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			//	m_tm_callback, (void*)msg_id, 0
 			//);
 			
-			tmb.t_uac_dlg(&msg_type,  /* Type of the message */
-					(ctaddr.s)?&ctaddr:0,    /* Real destination */
-					PROTO_UDP,
+			tmb.t_request(&msg_type,  /* Type of the message */
 					&pto->uri,               /* Request-URI */
 					&str_vals[STR_IDX_TO],   /* To */
 					&str_vals[STR_IDX_FROM], /* From */
-					NULL,             /* To tag */
-					NULL,             /* From tag */
-					NULL,             /* CSeq */
-					NULL,             /* Call-ID */
 					&hdr_str,         /* Optional headers including CRLF */
 					(n<0)?&str_vals[STR_IDX_BODY]:&body_str, /* Message body */
 					m_tm_callback,    /* Callback function */

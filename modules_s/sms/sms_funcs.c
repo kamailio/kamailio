@@ -340,16 +340,10 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 	}
 
 	/* sending the request */
-	foo = tmb.t_uac_dlg( &msg_type,   /* request type */
-			0,                        /* Real destination */
-			PROTO_UDP,
-			to,                       /* Request-URI */
+	foo = tmb.t_request( &msg_type,   /* request type */
+			0,                        /* Request-URI */
 			to,                       /* To */
 			&from,                    /* From */
-			0,                        /* To tag */
-			0,                        /* From tag */
-			0,                        /* CSeq */
-			0,                        /* Call-ID */
 			&hdrs,                    /* Additional headers including CRLF */
 			body,                     /* Message body */
 			0,                        /* Callback function */

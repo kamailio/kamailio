@@ -1352,41 +1352,11 @@ int xj_send_sip_msg(str *proxy, str *to, str *from, str *msg, int *cbp)
 		if((pcbp = (int**)shm_malloc(sizeof(int*))) == NULL)
 			return -1;
 		*pcbp = cbp;
-		//return tmb.t_uac( &msg_type, to, &str_hdr , msg, &tfrom,
-		//			xj_tuac_callback, (void*)pcbp, 0);
-		return tmb.t_uac_dlg(&msg_type, /* Type of the message */
-					proxy,              /* Real destination */
-					PROTO_UDP,
-					to,                 /* Request-URI */
-					to,                 /* To */
-					&tfrom,             /* From */
-					NULL,               /* To tag */
-					NULL,               /* From tag */
-					NULL,               /* CSeq */
-					NULL,               /* Call-ID */
-					&str_hdr,           /* Optional headers including CRLF */
-					msg,                /* Message body */
-					xj_tuac_callback,   /* Callback function */
-					(void*)pcbp         /* Callback parameter */
-			);
+		return tmb.t_request(&msg_type, 0, to, &tfrom, &str_hdr, msg, 
+					     xj_tuac_callback, (void*)pcbp);
 	}
 	else
-		//return tmb.t_uac( &msg_type, to, &str_hdr , msg, &tfrom, 0 , 0, 0);
-		return tmb.t_uac_dlg(&msg_type, /* Type of the message */
-					proxy,              /* Real destination */
-					PROTO_UDP,
-					to,                 /* Request-URI */
-					to,                 /* To */
-					&tfrom,             /* From */
-					NULL,               /* To tag */
-					NULL,               /* From tag */
-					NULL,               /* CSeq */
-					NULL,               /* Call-ID */
-					&str_hdr,           /* Optional headers including CRLF */
-					msg,                /* Message body */
-					0,                  /* Callback function */
-					0                   /* Callback parameter */
-			);
+		return tmb.t_request(&msg_type, 0, to, &tfrom, &str_hdr, msg, 0, 0);
 }
 
 /**
