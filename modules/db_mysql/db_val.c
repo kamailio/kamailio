@@ -63,6 +63,12 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s)
 		VAL_TYPE(_v) = DB_STRING;
 		return TRUE;
 
+	case DB_STR:
+		VAL_STR(_v).s = (char*)_s;
+		VAL_STR(_v).len = strlen(_s);
+		VAL_TYPE(_v) = DB_STR;
+		return TRUE;
+
 	case DB_DATETIME:
 		if (str2time(_s, &VAL_TIME(_v)) == FALSE) {
 			LOG(L_ERR, "str2val(): Error while converting datetime value from string\n");
@@ -120,6 +126,21 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 			memcpy(_s, VAL_STRING(_v), l);
 			*(_s + l) = '\'';
 			*(_s + l + 1) = '\0'; /* FIXME */
+			*_len = l + 2;
+			return TRUE;
+		}
+		break;
+
+	case DB_STR:
+		l = VAL_STR(_v).len;
+		if (*_len < l) {
+			LOG(L_ERR, "val2str(): Destination buffer too short\n");
+			return FALSE;
+		} else {
+			*_s++ = '\'';
+			memcpy(_s, VAL_STR(_v).s, l);
+			*(_s + l) = '\'';
+			*(_s + l + 1) = '\0';
 			*_len = l + 2;
 			return TRUE;
 		}
