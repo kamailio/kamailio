@@ -372,7 +372,6 @@ struct fis_param* parse_check_value(char *s)
 	{
 		if (*(++p)==0 || (--len)==0)
 			goto parse_error;
-		flags |= AVPOPS_VAL_NONE;
 		/* struct for value */
 		vp = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
 		if (vp==0) {
