@@ -131,7 +131,7 @@ int get_username(str* _s)
 }
 
 
-#ifdef AUTO_REAL
+#ifdef AUTO_REALM
 
 /* 
  * Return parsed To or From, host part of the parsed uri is realm
