@@ -8,7 +8,7 @@
 auto_gen=
 NAME=jabber.so
 # expat.h location
-DEFS+=-I/usr/local/include
-LIBS=-L/usr/local/lib -lexpat
+DEFS+=-I/usr/local/include -I/usr/pkg/include
+LIBS=-L/usr/local/lib -L/usr/pkg/lib -lexpat
 
 include ../../Makefile.modules
