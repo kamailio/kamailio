@@ -100,6 +100,8 @@ static int parse_digest_param(char* _s, cred_t* _c)
 	char* ptr;
 	char* name, *body;
 	int id, body_len;
+	char* at;
+
 #ifdef PARANOID
 	if ((!_s) || (!_c)) {
 		LOG(L_ERR, "parse_digest_param(): Invalid parameter value\n");
@@ -125,8 +127,14 @@ static int parse_digest_param(char* _s, cred_t* _c)
 
 	switch(id) {
 	case USERNAME_ID:
+		at = memchr(body, '@', body_len);
 		_c->username.s = body;
-		_c->username.len = body_len;
+		if (at) {
+			*at = '\0';
+			_c->username.len = at - body;
+		} else {
+			_c->username.len = body_len;
+		}
 		break;
 
 	case REALM_ID:
