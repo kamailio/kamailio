@@ -398,35 +398,4 @@ static inline int str2int(str* _s, unsigned int* _r)
 	return 0;
 }
 
-
-/*
- * Convert a str to float
- */
-static inline int str2float(str* _s, float* _r)
-{
-	int i, dot = 0;
-	float order = 0.1;
-
-	*_r = 0;
-	for(i = 0; i < _s->len; i++) {
-		if (_s->s[i] == '.') {
-			if (dot) return -1;
-			dot = 1;
-			continue;
-		}
-		if ((_s->s[i] >= '0') && (_s->s[i] <= '9')) {
-			if (dot) {
-				*_r += (_s->s[i] - '0') * order;
-				order /= 10;
-			} else {
-				*_r *= 10;
-				*_r += _s->s[i] - '0';
-			}
-		} else {
-			return -2;
-		}
-	}
-	return 0;
-}
-
 #endif
