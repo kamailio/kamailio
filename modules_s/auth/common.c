@@ -19,7 +19,7 @@ int send_resp(struct sip_msg* _m, int _code, char* _reason, char* _hdr, int _hdr
 	struct lump_rpl* ptr;
 	
 	     /* Add new headers if there are any */
-	if (_hdr) {
+	if ((_hdr) && (_hdr_len)) {
 		ptr = build_lump_rpl(_hdr, _hdr_len);
 		add_lump_rpl(_m, ptr);
 	}
