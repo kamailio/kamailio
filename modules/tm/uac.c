@@ -292,6 +292,7 @@ int request(str* m, str* ruri, str* to, str* from, str* h, str* b, transaction_c
 	}
 
 	res = t_uac(m, h, b, dialog, c, cp);
+	dialog->rem_target.s = 0;
 	free_dlg(dialog);
 	return res;
 
