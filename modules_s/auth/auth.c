@@ -23,7 +23,7 @@
 #include "group.h"
 #include "nonce.h"
 #include "../../ut.h"
-#include "../../parser/hf.h" /* HDR_WWWAUTH & HDR_PROXYAUTH */
+#include "../../parser/hf.h" /* HDR_AUTHORIZATION & HDR_PROXYAUTH */
 
 
 /*
@@ -394,5 +394,5 @@ int proxy_authorize(struct sip_msg* _msg, char* _realm, char* _table)
 
 int www_authorize(struct sip_msg* _msg, char* _realm, char* _table)
 {
-	return authorize(_msg, _realm, _table, HDR_WWWAUTH);
+	return authorize(_msg, _realm, _table, HDR_AUTHORIZATION);
 }
