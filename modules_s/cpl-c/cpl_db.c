@@ -84,7 +84,7 @@ int write_to_db( char *usr, char *bin_s, int bin_len, char *xml_s, int xml_len)
 	vals[0].type = DB_STRING;
 	vals[0].nul  = 0;
 	vals[0].val.string_val = usr;
-	if (db_query(db_con, keys, vals, keys, 1, 1, NULL, &res) < 0) {
+	if (db_query(db_con, keys, 0, vals, keys, 1, 1, NULL, &res) < 0) {
 		LOG(L_ERR,"ERROR:cpl:write_to_db: db_query failed\n");
 		goto error;
 	}
