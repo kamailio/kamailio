@@ -287,6 +287,10 @@ static int subst_f(struct sip_msg* msg, char*  subst, char* ignored)
 	ret=-1;
 	if ((lst=subst_run(se, begin, msg))==0) goto error; /* not found */
 	for (rpl=lst; rpl; rpl=rpl->next){
+		DBG(" %s: subst_f: replacing at offset %d [%.*s] with [%.*s]\n",
+				exports.name, rpl->offset+off,
+				rpl->size, rpl->offset+off+msg->buf,
+				rpl->rpl.len, rpl->rpl.s);
 		if ((l=del_lump(&msg->add_rm, rpl->offset+off, rpl->size, 0))==0)
 			goto error;
 		/* hack to avoid re-copying rpl, possible because both 
