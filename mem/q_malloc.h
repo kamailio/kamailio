@@ -34,7 +34,7 @@
 
 /* defs*/
 #ifdef DBG_QM_MALLOC
-	#define ROUNDTO		 4 /* minimum possible ROUNDTO ->heavy debugging*/
+	#define ROUNDTO		 8 /* minimum possible ROUNDTO ->heavy debugging*/
 #else
 	#define ROUNDTO		16 /* size we round to, must be = 2^n  and also
 							 sizeof(qm_frag)+sizeof(qm_frag_end)
@@ -60,27 +60,27 @@
  * +1 .... end -  size = 2^k, big buckets */
 
 struct qm_frag{
-	unsigned int size;
+	unsigned long size;
 	union{
 		struct qm_frag* nxt_free;
-		int is_free;
+		long is_free;
 	}u;
 #ifdef DBG_QM_MALLOC
 	char* file;
 	char* func;
-	unsigned int line;
-	unsigned int check;
+	unsigned long line;
+	unsigned long check;
 #endif
 };
 
 struct qm_frag_end{
 #ifdef DBG_QM_MALLOC
-	unsigned int check1;
-	unsigned int check2;
-	unsigned int reserved1;
-	unsigned int reserved2;
+	unsigned long check1;
+	unsigned long check2;
+	unsigned long reserved1;
+	unsigned long reserved2;
 #endif
-	unsigned int size;
+	unsigned long size;
 	struct qm_frag* prev_free;
 };
 
@@ -93,10 +93,10 @@ struct qm_frag_full{
 
 
 struct qm_block{
-	unsigned int size; /* total size */
-	unsigned int used; /* alloc'ed size*/
-	unsigned int real_used; /* used+malloc overhead*/
-	unsigned int max_real_used;
+	unsigned long size; /* total size */
+	unsigned long used; /* alloc'ed size*/
+	unsigned long real_used; /* used+malloc overhead*/
+	unsigned long max_real_used;
 	
 	struct qm_frag* first_frag;
 	struct qm_frag_end* last_frag_end;

@@ -77,7 +77,7 @@ struct vqm_frag {
 	/* total chunk size including all overhead/bellowfoot/roundings/etc */
 	/* useless as otherwise size implied by bucket (if I really want to save 
        bytes, I'll remove it  from here */
-	unsigned int size;
+	unsigned long size;
 	union{
 		/* pointer to next chunk in a bucket if free */
 		struct vqm_frag* nxt_free; 
@@ -90,18 +90,18 @@ struct vqm_frag {
 	/* source code info */
 	char* file;
 	char* func;
-	unsigned int line;
+	unsigned long line;
 	/* your safety is important to us! safety signatures */
-	unsigned int check;
+	unsigned long check;
 	char *end_check;
 	/* the size user was originally asking for */
-	unsigned int demanded_size;
+	unsigned long demanded_size;
 #endif
 };
 
 struct vqm_frag_end{
 	/* total chunk size including all overhead/bellowfoot/roundings/etc */
-	unsigned int size; 
+	unsigned long size; 
 	/* XXX */
 	/* used only for variable-size chunks; might have different
            data structures for variable/fixed length chunks */
@@ -121,7 +121,7 @@ struct vqm_block{
 	/* ... and its available net amount; note that there's lot of
            free memory in buckets too -- this just tells about memory
 	   which has not been assigned to chunks  */
-	unsigned int free_core;
+	unsigned long free_core;
 	/* we allocate huge chunks from the end on; this is the
 	   pointer to big chunks
     */

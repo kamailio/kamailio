@@ -46,9 +46,11 @@
 #include "../../ut.h"
 
 
-
+/* rounds to the first 4 byte multiple on 32 bit archs 
+ * and to the first 8 byte mutlipe on 64 bit archs */
 #define ROUND4(s) \
-	(((s)+3)&(~(3UL)))
+	(((s)+(sizeof(char*)-1))&(~(sizeof(char*)-1)))
+
 #define lump_len( _lump) \
 	(ROUND4(sizeof(struct lump)) +\
 	ROUND4(((_lump)->op==LUMP_ADD)?(_lump)->len:0))

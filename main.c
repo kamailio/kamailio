@@ -38,8 +38,9 @@
 #include <arpa/inet.h>
 #include <sys/utsname.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/mman.h>
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <pwd.h>
@@ -747,9 +748,10 @@ static void sig_usr(int signo)
 int add_interfaces(char* if_name, int family, unsigned short port)
 {
 	struct ifconf ifc;
-	struct ifreq* ifr;
+	struct ifreq ifr;
 	struct ifreq ifrcopy;
 	char*  last;
+	char* p;
 	int size;
 	int lastlen;
 	int s;
@@ -787,27 +789,30 @@ int add_interfaces(char* if_name, int family, unsigned short port)
 	}
 	
 	last=(char*)ifc.ifc_req+ifc.ifc_len;
-	for(ifr=ifc.ifc_req; (char*)ifr<last;
-			ifr=(struct ifreq*)((char*)ifr+sizeof(ifr->ifr_name)+
+	for(p=(char*)ifc.ifc_req; p<last;
+			p+=(sizeof(ifr.ifr_name)+
 			#ifdef  HAVE_SOCKADDR_SA_LEN
-				MAX(ifr->ifr_addr.sa_len, sizeof(struct sockaddr))
+				MAX(ifr.ifr_addr.sa_len, sizeof(struct sockaddr))
 			#else
-				( (ifr->ifr_addr.sa_family==AF_INET)?
+				( (ifr.ifr_addr.sa_family==AF_INET)?
 					sizeof(struct sockaddr_in):
-					((ifr->ifr_addr.sa_family==AF_INET6)?
+					((ifr.ifr_addr.sa_family==AF_INET6)?
 						sizeof(struct sockaddr_in6):sizeof(struct sockaddr)) )
 			#endif
 				)
 		)
 	{
-		if (ifr->ifr_addr.sa_family!=family){
+		/* copy contents into ifr structure
+		 * warning: it might be longer (e.g. ipv6 address) */
+		memcpy(&ifr, p, sizeof(ifr));
+		if (ifr.ifr_addr.sa_family!=family){
 			/*printf("strange family %d skipping...\n",
 					ifr->ifr_addr.sa_family);*/
 			continue;
 		}
 		
 		/*get flags*/
-		memcpy(&ifrcopy, ifr, sizeof(ifrcopy));
+		ifrcopy=ifr;
 		if (ioctl(s, SIOCGIFFLAGS,  &ifrcopy)!=-1){ /* ignore errors */
 			/* ignore down ifs only if listening on all of them*/
 			if (if_name==0){ 
@@ -819,11 +824,12 @@ int add_interfaces(char* if_name, int family, unsigned short port)
 		
 		
 		if ((if_name==0)||
-			(strncmp(if_name, ifr->ifr_name, sizeof(ifr->ifr_name))==0)){
+			(strncmp(if_name, ifr.ifr_name, sizeof(ifr.ifr_name))==0)){
 			
 				/*add address*/
 			if (sock_no<MAX_LISTEN){
-				sockaddr2ip_addr(&addr, &ifr->ifr_addr);
+				sockaddr2ip_addr(&addr, 
+					(struct sockaddr*)(p+(long)&((struct ifreq*)0)->ifr_addr));
 				if ((tmp=ip_addr2a(&addr))==0) goto error;
 				/* fill the strings*/
 				sock_info[sock_no].name.s=(char*)malloc(strlen(tmp)+1);

@@ -12,7 +12,7 @@ EXTRAVERSION =
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
-ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc/  \
+ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/  \
 			-e s/armv4l/arm/)
 
  # install location
@@ -220,11 +220,13 @@ $(warning	Unknown compiler $(CC)\; supported compilers: \
 			gcc, sun cc, intel icc )
 endif
 
-# find ldname (gnu or solaris)
-ifeq ($(ARCH), sparc)
+# find ld & as name (gnu or solaris)
+ifeq ($(ARCH), sparc64)
 ifeq ($(CC_NAME), gcc)
 		LDGCC=$(shell $(CC) -v 2>&1 | grep with-ld| \
 				   sed -e 's/.*--with-ld=\([^ ][^ ]*\).*/\1/' )
+		ASGCC=$(shell $(CC) -v 2>&1 | grep with-as| \
+				   sed -e 's/.*--with-as=\([^ ][^ ]*\).*/\1/' )
 		LDPATH=$(shell  if [ -z "$(LDGCC)" ] ; then echo "ld" ;\
 						else \
 						if $(LDGCC) -V 2>/dev/null 1>/dev/null; then \
@@ -232,7 +234,14 @@ ifeq ($(CC_NAME), gcc)
 						else echo "ld" ; \
 						fi\
 						fi)
-						
+		ASPATH=$(shell  if [ -z "$(ASGCC)" ] ; then echo "as" ;\
+						else \
+						if $(ASGCC) -V 2>/dev/null 1>/dev/null; then \
+							echo $(ASGCC); \
+						else echo "as" ; \
+						fi\
+						fi)
+							
 		LDTYPE=$(shell if $(LDPATH) -V 1>/dev/null  2>/dev/null; then \
 							if $(LDPATH) -V 2>&1|grep GNU >/dev/null; \
 							then echo gnu; \
@@ -244,6 +253,20 @@ ifeq ($(CC_NAME), gcc)
 							fi \
 							fi \
 						fi)
+		ASTYPE=$(shell if $(ASPATH) -V 1>/dev/null  2>/dev/null </dev/null; \
+						then \
+							if $(ASPATH) -V 2>&1 </dev/null |grep GNU >/dev/null; \
+							then echo gnu; \
+							else \
+							if $(ASPATH) -V 2>&1 </dev/null |grep Sun >/dev/null;\
+							then echo solaris; \
+							else \
+								echo unknown ; \
+							fi \
+							fi \
+						fi)
+#$(warning "using ld=$(LDPATH)/$(LDTYPE), as=$(ASPATH)/$(ASTYPE)")
+
 endif
 endif
 
@@ -252,7 +275,7 @@ ifeq ($(ARCH), i386)
 	DEFS+= -DFAST_LOCK
 endif
 
-ifeq ($(ARCH), sparc)
+ifeq ($(ARCH), sparc64)
 ifeq 	($(CC_NAME), gcc)
 		DEFS+= -DFAST_LOCK
 endif
@@ -310,11 +333,11 @@ endif	#ARCH, i386
 
 
 	#if sparc
-ifeq	($(ARCH), sparc)
+ifeq	($(ARCH), sparc64)
 			#if gcc
 ifeq		($(CC_NAME), gcc)
 				#common stuff
-				CFLAGS=-O9 -funroll-loops  $(PROFILE) \
+				CFLAGS=-g -O9 -funroll-loops  $(PROFILE) \
 					-Wall\
 					#-Wcast-align \
 					#-Wmissing-prototypes 
@@ -330,14 +353,24 @@ else			# CC_SHORTVER, 3.0
 ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
 $(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc >= 3.1 \
 					for better results)
-					
-					CFLAGS+= -mv8 -Wa,-xarch=v8plus
+ifneq				($(OS), netbsd)
+						# on netbsd/sparc64,  gcc 2.95.3 does not compile
+						# ser with -mv8
+						CFLAGS+= -mv8 
+endif
+ifeq					($(ASTYPE), solaris)
+							CFLAGS+= -Wa,-xarch=v8plus
+endif					
 else			#CC_SHORTVER, 2.9x
 				#really old version
 $(warning			You are using an old and unsupported gcc \
 					 version ($(CC_SHORTVER)), compile at your own risk!)
 					
-					CFLAGS+= -mv8 -Wa,-xarch=v8plus
+					CFLAGS+= -mv8 
+ifeq					($(ASTYPE), solaris)
+							CFLAGS+= -Wa,-xarch=v8plus
+endif					
+	
 endif			#CC_SHORTVER, 2.9x
 endif			#CC_SHORTVER, 3.0
 
@@ -390,7 +423,7 @@ endif	#ARCH, i386
 LDFLAGS=
 # setting LDFLAGS
 ifeq	($(CC_NAME), gcc)
-ifeq		($(ARCH), sparc)
+ifeq		($(ARCH), sparc64)
 ifeq			($(LDTYPE), solaris)
 					# solaris ld
 					LDFLAGS+=-O2 $(PROFILE)
@@ -421,7 +454,7 @@ endif
 else	#mode,release
 ifeq	($(CC_NAME), gcc)
 		CFLAGS=-g -Wcast-align $(PROFILE)
-ifeq		($(ARCH), sparc)
+ifeq		($(ARCH), sparc64)
 			CFLAGS+= -mcpu=ultrasparc 
 endif
 ifeq		($(LDTYPE), solaris)
@@ -469,21 +502,14 @@ YACC_FLAGS=-d -b cfg
 # on solaris add -lxnet (e.g. LIBS= -lxnet)
 LIBS= -lfl -ldl -lresolv
 
-ifneq ($(OS), solaris)
-	DEFS+=-DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN
-endif
-ifneq ($(OS), openbsd)
-	DEFS+=-DHAVE_SCHED_YIELD
-endif
-
 
 #os specific stuff
 ifeq ($(OS), linux)
-	#same as common
+	DEFS+=-DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD
 endif
 
 ifeq  ($(OS), solaris)
-	DEFS+= -DHAVE_GETIPNODEBYNAME -DHAVE_SYS_SOCKIO_H
+	DEFS+= -DHAVE_GETIPNODEBYNAME -DHAVE_SYS_SOCKIO_H -DHAVE_SCHED_YIELD
 	ifeq ($(mode), release)
 		#use these only if you're using gcc with Solaris ld
 		#LDFLAGS=-O2 $(PROFILE)
@@ -503,13 +529,14 @@ endif
 endif
 
 ifeq ($(OS), freebsd)
-	DEFS+=-DHAVE_SOCKADDR_SA_LEN
+	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN \
+		-DHAVE_SCHED_YIELD
 	YACC=yacc
 	LIBS= -lfl  #dlopen is in libc
 endif
 
 ifeq ($(OS), openbsd)
-	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DDLSYM_PREFIX='"_"'
+	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DDLSYM_PREFIX='"_"' -DHAVE_GETHOSTBYNAME2 
 	# (symbols on openbsd are prefixed by "_")
 	YACC=yacc
 	# no sched_yield on openbsd unless linking with c_r (not recommended)
@@ -518,9 +545,9 @@ ifeq ($(OS), openbsd)
 endif
 	
 ifeq ($(OS), netbsd)
-	DEFS+=-DHAVE_SOCKADDR_SA_LEN
+	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DHAVE_GETHOSTBYNAME2 
 	YACC=yacc
-	LIBS= -lfl  -lc_r
+	LIBS= -lfl 
 endif
 
 ifneq (,$(findstring CYGWIN, $(OS)))

@@ -72,7 +72,7 @@ inline static int tsl(fl_lock_t* lock)
 		" xchg %b1, %0" : "=q" (val), "=m" (*lock) : "0" (val) : "memory"
 	);
 #endif /*NOSMP*/
-#elif defined __CPU_sparc
+#elif defined __CPU_sparc64
 	asm volatile(
 			"ldstub [%1], %0 \n\t"
 #ifndef NOSMP
@@ -125,7 +125,7 @@ inline static void release_lock(fl_lock_t* lock)
 		" movb $0, (%0)" : /*no output*/ : "r"(lock): "memory"
 		/*" xchg %b0, %1" : "=q" (val), "=m" (*lock) : "0" (val) : "memory"*/
 	); 
-#elif defined __CPU_sparc
+#elif defined __CPU_sparc64
 	asm volatile(
 #ifndef NOSMP
 			"membar #LoadStore | #StoreStore \n\t" /*is this really needed?*/
