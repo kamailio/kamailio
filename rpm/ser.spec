@@ -11,10 +11,9 @@ Copyright:    GPL
 Group:        Applications/Internet
 Source:       ftp://ser.iptel.org/stable/%{name}-%{ver}.tar.gz
 URL:          http://ser.iptel.org
+Vendor:       Fhg Fokus
 BuildRoot:    /var/tmp/%{name}-%{ver}-root
 BuildPrereq:  make flex bison rpm-devel >= 4 
-
-Source0: %{name}-%{ver}.tar.gz
 
 
 %description
@@ -33,8 +32,10 @@ Module, Registrar and User Location.
 - First version of the spec file.
 
 %prep
+%setup
 
 %build
+make all
 
 %configure
 
