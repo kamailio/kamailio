@@ -14,19 +14,23 @@
 struct sr_module* modules=0;
 
 #ifdef STATIC_TM
-	extern struct module_exports* tm_mod_register();
+	extern struct module_exports* tm_exports();
 #endif
+
 #ifdef STATIC_MAXFWD
-	extern struct module_exports* maxfwd_mod_register();
+	extern struct module_exports* maxfwd_exports();
 #endif
+
 #ifdef STATIC_AUTH
-        extern struct module_exports* auth_mod_register();
+        extern struct module_exports* auth_exports();
 #endif
+
 #ifdef STATIC_RR
-        extern struct module_exports* rr_mod_register();
+        extern struct module_exports* rr_exports();
 #endif
+
 #ifdef STATIC_USRLOC
-        extern struct module_exports* usrloc_mod_register();
+        extern struct module_exports* usrloc_exports();
 #endif
 
 
@@ -36,28 +40,29 @@ int register_builtin_modules()
 	int ret;
 
 	ret=0;
-	#ifdef STATIC_TM
-		ret=register_module(tm_exports,"built-in", 0); 
-		if (ret<0) return ret;
-	#endif
-	#ifdef STATIC_MAXFWD
-		ret=register_module(maxfwd_exports, "built-in", 0);
-		if (ret<0) return ret;
-	#endif
+#ifdef STATIC_TM
+	ret=register_module(tm_exports,"built-in", 0); 
+	if (ret<0) return ret;
+#endif
+
+#ifdef STATIC_MAXFWD
+	ret=register_module(maxfwd_exports, "built-in", 0);
+	if (ret<0) return ret;
+#endif
 
 #ifdef STATIC_AUTH
-		ret=register_module(auth_exports, "built-in", 0); 
-		if (ret<0) return ret;
+	ret=register_module(auth_exports, "built-in", 0); 
+	if (ret<0) return ret;
 #endif
-
+	
 #ifdef STATIC_RR
-		ret=register_module(rr_exports, "built-in", 0);
-		if (ret<0) return ret;
+	ret=register_module(rr_exports, "built-in", 0);
+	if (ret<0) return ret;
 #endif
-
+	
 #ifdef STATIC_USRLOC
-		ret=register_module(usrloc_exports, "built-in", 0);
-		if (ret<0) return ret;
+	ret=register_module(usrloc_exports, "built-in", 0);
+	if (ret<0) return ret;
 #endif
 	
 	return ret;
