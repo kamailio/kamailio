@@ -134,8 +134,8 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DDNS_IP_HACK \
 	 -DUSE_IPV6 \
 	 -DF_MALLOC \
-	 -DNO_DEBUG \
-	 -DNO_LOG
+	 #-DNO_DEBUG \
+	 #-DNO_LOG
 	 #-DEXTRA_DEBUG \
 	 #-DDBG_QM_MALLOC \
 	 #-DVQ_MALLOC  
@@ -149,7 +149,7 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 #-DNO_LOG
 
 #PROFILE=  -pg #set this if you want profiling
-#mode = debug
+mode = debug
 ifeq ($(mode),)
 	mode = release
 endif
