@@ -1,86 +1,5 @@
 # $Id$
 
-List of currently available ser modules
-----------------------------------------------------------
-Name	Use		 	 Maturity	Purpose/Depends on
-(owner)
-----------------------------------------------------------
-acc		regular		 stable		transaction accounting
-(jku)	/example				(the module servers also
-							    as example of how to bind
-								to transaction management)
-								-tm
-
-auth	regular		 stable		digest authentication
-(jja)							-sl
-								-mysql
-
-cpl		experimental alpha		Call Processing Language
-(bia)
-
-ext		experimental alpha		Execution of external URI
-(bia)							processing logic
-
-exec	experimental beta		Execution of external URI
-(jku)							processing logic
-
-im		temporary	 alpha		Stateless instant messaging	
-(bia)							client
-
-jabber	experimental beta		SIP2Jabber gateway
-(dcm)
-
-maxfwd	regular		 stable		Max-Forwards check
-(bia)
-
-msilo	experimental beta		Message store
-(dcm)							-tm
-								-mysql
-
-mysql	regular		 stable		supporting MySql interface
-(jja)
-
-pa		experimental alpha		presence agent
-(jja)
-
-pike	experimental alpha		excessive load detection
-(bia)
-
-print	example		 stable		Printing Message to stdout
-(ape)
-
-radius_acc exper.	beta		Reporting to radius server
-(ssi)
-
-radius_auth exper.  beta		Authentication by a radius server
-(ssi)
-
-registrar regular	stable		User Registrar
-(jja)							-mysql, sl
-
-rr		regular		 stable		Record-Routing
-(jja)
-
-sl		regular		 stable		Stateless Replies
-(bia)
-
-snmp	experimental alpha		SNMP Management
-(rba)
-
-sms		regular		 stable		SMS gateway
-(bia)							-tm
-
-textops regular		 stable		Message Textual Operations
-(ape)
-
-tm		regular		 beta		Transaction Management
-(jku)
-
-usrloc	regular		 stable		User Location
-(jja)								-sl
-								-mysql (optionally)
-
-
 Use tells how deployable a module is. Regular indicates
 we deploy and use this feature in our infrastructure.
 Experimental tells we are still gaining operation experience.
@@ -97,3 +16,174 @@ Modules underway include presence server functionality,
 firewall control, message store and more. If you are
 interested in any of these or other modules, write us
 to info@iptel.org.
+
+List of currently available ser modules:
+
+Name:       acc
+Owner:      jiri
+Use:        regular
+Maturity:   stable
+Depends on: tm
+Purpose:    Transaction accounting/example (the module server also as an
+            example of how to bind to transaction management)
+
+Name:       auth
+Owner:      janakj
+Use:        regular
+Maturity:   stable
+Depends on: sl mysql
+Purpose:    Digest authentication and related things
+
+Name:       cpl
+Owner:      bogdan
+Use:        experimental
+Maturity:   alpha
+Depends on: -
+Purpose:    Call Processing Language
+
+Name:       domain
+Owner:      jih
+Use:        experimental
+Maturity:   beta
+Depends on: mysql
+Purpose:    Local domain lists and related functions
+
+Name:       enum
+Owner:      jih
+Use:        experimental
+Maturity:   beta
+Depends on: -
+Purpose:    Enum support
+
+Name:       ext
+Owner:      bogdan
+Use:        experimental
+Maturity:   alpha
+Depends on: -
+Purpose:    Execution of external URI processing logic
+
+Name:       exec
+Owner:      jiri
+Use:        experimental
+Maturity:   beta
+Depends on: -
+Purpose:    Execution of external URI processing logic
+
+Name:       jabber
+Owner:      dcm
+Use:        experimental
+Maturity:   beta
+Depends on: mysql tm
+Purpose:    SIMPLE 2 Jabber gateway
+
+Name:       maxfwd
+Owner:      bogdan
+Use:        regular
+Maturity:   stable
+Depends on: -
+Purpose:    Max-Forwards check
+
+Name:       msilo
+Owner:      dcm
+Use:        experimental
+Maturity:   beta
+Depends on: mysql tm
+Purpose:    Message store
+
+Name:       mysql
+Owner:      janakj
+Use:        regular
+Maturity:   stable
+Depends on: -
+Purpose:    supporting MySQL interface
+
+Name:       pa
+Owner:      janakj
+Use:        experimental
+Maturity:   alpha
+Depends on: tm (usrloc jabber)
+Purpose:    Presence agent
+
+Name:       pike
+Owner:      bogdan
+Use:        experimental
+Maturity:   alpha
+Depends on: -
+Purpose:    Excessive load detection
+
+Name:       print
+Owner:      andrei
+Use:        example
+Maturity:   stable
+Depends on: -
+Purpose:    Printing messages to stdout
+
+Name:       radius_acc
+Owner:      ssi
+Use:        experimental
+Maturity:   beta
+Depends on: tm
+Purpose:    radius accounting
+
+Name:       radius_auth
+Owner:      ssi
+Use:        experimental
+Maturity:   beta
+Depends on: auth
+Purpose:    radius authentication
+
+Name:       registrar
+Owner:      janakj
+Use:        regular
+Maturity:   stable
+Depends on: usrloc sl
+Purpose:    Registrar
+
+Name:       rr
+Owner:      janakj
+Use:        regular
+Maturity:   stable
+Depends on: -
+Purpose:    Routing and Record-Routing
+
+Name:       sl
+Owner:      bogdan
+Use:        regular
+Maturity:   stable
+Depends on: -
+Purpose:    Stateless replies
+
+Name:       snmp
+Owner:      ric
+Use:        experimental
+Maturity:   alpha
+Depends on: -
+Purpose:    SNMP Management
+
+Name:       sms
+Owner:      bogdan
+Use:        regular
+Maturity:   stable
+Depends on: tm
+Purpose:    SMS gateway
+
+Name:       textops
+Owner:      andrei
+Use:        regular
+Maturity:   stable
+Depends on: -
+Purpose:    Message Textual Operations
+
+Name:       tm
+Owner:      jiri
+Use:        regular
+Maturity:   beta
+Depends on: -
+Purpose:    Transaction Management
+
+Name:       usrloc
+Owner:      janakj
+Use:        regular
+Maturity:   stable
+Depends on: mysql sl
+Purpose:    User location support
