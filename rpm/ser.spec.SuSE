@@ -11,7 +11,7 @@ Copyright:    GPL
 Group:        Networking/Daemons
 Source:       http://iptel.org/ser/stable/%{name}-%{ver}_src.tar.gz
 Source2:      ser.init.SuSE
-URL:          http://iptel.org/ser
+URL:          http://www.iptel.org/ser
 Vendor:       FhG Fokus
 BuildRoot:    /var/tmp/%{name}-%{ver}-root
 BuildPrereq:  make flex bison 
@@ -43,7 +43,7 @@ entries.
 Summary:  sip jabber message translation support for the SIP Express Router.
 Group:    System Environment/Daemons
 Requires: ser
-BuildPrereq:  expat-devel
+BuildPrereq:  expat
 
 %description jabber
 The ser-jabber package contains a sip to jabber message translator.
@@ -134,7 +134,7 @@ sbin/insserv etc/init.d/
 
 %{_sbindir}/ser
 %{_sbindir}/serctl
-+%{_sbindir}/gen_ha1
+%{_sbindir}/gen_ha1
 
 %{_mandir}/man5/*
 %{_mandir}/man8/*
@@ -146,12 +146,16 @@ sbin/insserv etc/init.d/
 %{_libdir}/ser/modules/mysql.so
 %{_sbindir}/ser_mysql.sh
 
-+%files jabber
-+%defattr(-,root,root)
-+%{_libdir}/ser/modules/jabber.so
+%files jabber
+%defattr(-,root,root)
+%{_libdir}/ser/modules/jabber.so
 
 
 %changelog
+* Tue Nov 12 2002 Nils Ohlmeier <ohlmeier@fokus.fhg.de>
+- replaced expat-devel with expat
+- removed leading + from a few lines
+
 * Tue Nov 12 2002 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.gmd.de>
 - added a separate rpm for the jabber modules
 - moved all the binaries to sbin
