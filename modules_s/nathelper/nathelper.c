@@ -55,7 +55,6 @@
 #define strnstr(_a,_b,_c) 0
 
 
-static int add_rport_f(struct sip_msg*, char*, char*);
 static int fix_nated_contact_f(struct sip_msg*, char*, char*);
 static int fix_nated_sdp_f(struct sip_msg*, char*, char*);
 
@@ -64,9 +63,8 @@ inline static int fixup_str2int(void**, int);
 static int mod_init(void);
 
 static cmd_export_t cmds[]={
-		{"add_rport", add_rport_f, 0, 0, REQUEST_ROUTE },
-		{"fix_nated_contact", fix_nated_contact_f, 0, 0, REQUEST_ROUTE },
-		{"fix_nated_sdp", fix_nated_sdp_f, 1, fixup_str2int, REQUEST_ROUTE },
+		{"fix_nated_contact", fix_nated_contact_f, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE },
+		{"fix_nated_sdp", fix_nated_sdp_f, 1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE },
 		{0,0,0,0,0}
 	};
 
@@ -89,39 +87,6 @@ static int
 mod_init(void)
 {
 	return 0;
-}
-
-/*
- * Adds `rport' parameter into the first Via header if it isn't
- * there. It doesn't modify actual message, just adds a blank
- * parameter into the msg->via1->rport leaving task of updating
- * message itself to the core engine.
- */
-static int
-add_rport_f(struct sip_msg* msg, char* str1, char* str2)
-{
-
-	if (msg->via1 == 0) {
-		if (parse_headers(msg, HDR_VIA1, 0) == -1)
-			LOG(L_ERR, "add_rport(): Error while parsing headers\n");
-		/* Return if no Via field or if it already contains rport */
-		if (msg->via1 == 0 || msg->via1->rport)
-			return -1;
-	}
-	msg->via1->rport = pkg_malloc(sizeof(struct via_param));
-	if (msg->via1->rport == 0) {
-		LOG(L_ERR, "ERROR: add_rport: out of memory\n");
-		return -1;
-	}
-	bzero(msg->via1->rport, (sizeof(struct via_param)));
-	/*add param to the list*/
-	if (msg->via1->last_param)
-		msg->via1->last_param->next = msg->via1->rport;
-	else
-		msg->via1->param_lst = msg->via1->rport;
-	msg->via1->last_param = msg->via1->rport;
-
-	return 1;
 }
 
 /*
