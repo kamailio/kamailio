@@ -180,7 +180,7 @@ CREATE TABLE aliases (
   callid varchar(255) default NULL,
   cseq int(11) default NULL,
   last_modified timestamp(14) NOT NULL,
-  KEY user (user,contact)
+  KEY user (user, contact)
 ) $TABLE_TYPE;
 
 
@@ -232,7 +232,7 @@ CREATE TABLE location (
   callid varchar(255) default NULL,
   cseq int(11) default NULL,
   last_modified timestamp(14) NOT NULL,
-  KEY user (user,contact)
+  KEY user (user, contact)
 ) $TABLE_TYPE;
 
 
