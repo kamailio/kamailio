@@ -25,7 +25,6 @@
 #define SEM_KEY		(key_t)ftok("/etc/passwd", 'A')
 //#define SIP_MESSAGE "MESSAGE %s SIP/2.0\r\nVia: SIP/2.0/UDP 193.175.135.68:7895\r\nFrom: <sip:%s>;tag=xwer-gfshs-2537-yui\r\nTo: <%s>\r\nCall-ID: asd88asd77a@193.175.135.68\r\nContact: <sip:193.175.135.68:7895>\r\nCSeq: %d MESSAGE\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s"
 #define SIP_MESSAGE "MESSAGE %.*s SIP/2.0\r\nVia: SIP/2.0/UDP 193.175.135.68:9\r\nFrom: <sip:%s>;tag=xwer-gfshs-2537-yuQi\r\nTo: <%.*s>\r\n%sCall-ID: %s_%d@193.175.135.68\r\nCSeq: %d MESSAGE\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s"
-#define TIME_2BE_READY 3
 
 /**
  * function used to compare two elements in B-Tree
@@ -339,8 +338,9 @@ void jab_wlist_del(jab_wlist jwl, str *sid, int _pid)
  */
 int jab_send_sip_msg(str *to, str *from, str *contact, str *msg)
 {
-	char buf[512];
-	str tfrom;
+	char buf[512], buf1[512];
+	str tfrom, tcontact;
+	// from correction
 	strcpy(buf, "<sip:");
 	strncat(buf, from->s, from->len);
 	tfrom.len = from->len;
@@ -352,7 +352,24 @@ int jab_send_sip_msg(str *to, str *from, str *contact, str *msg)
 	}
 	else
 		tfrom.s = buf+4;
-	return im_send_message(to, to, &tfrom, contact, msg);
+	if(contact != NULL && contact->len > 2)
+	{
+	    // contact correction
+	    strcpy(buf1, "<sip:");
+	    strncat(buf1, contact->s, contact->len);
+	    tcontact.len = contact->len;
+	    if(strstr(buf1+4, "sip:") == NULL)
+	    {
+		tcontact.len += 5;
+		buf1[tcontact.len++] = '>';
+		tcontact.s = buf1;
+	    }
+	    else
+		tcontact.s = buf1+4;
+	    return im_send_message(to, to, &tfrom, &tcontact, msg);
+	}
+	else
+	    return im_send_message(to, to, &tfrom, &tfrom, msg);
 }
 
 /**
@@ -385,10 +402,11 @@ int jab_send_sip_msgz(str *to, str *from, str *contact, char *msg)
  * - size : maximun number of jobs - open connections to Jabber server
  * - ctime : cache time for a connection to Jabber
  * - wtime : wait time between cache checking
+ * - dtime : delay time for first message
  * - db_con : connection to database
  * #return : 0 on success or <0 on error
  */
-int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size, int ctime, int wtime, db_con_t* db_con)
+int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size, int ctime, int wtime, int dtime, db_con_t* db_con)
 {
 	int ret, i, n, maxfd, error, cseq;
 	jc_pool jcp;
@@ -408,7 +426,7 @@ int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size,
 	db_key_t col[] = {"jab_id", "jab_passwd"};
 	db_res_t* res = NULL;
 	
-	DBG("JABBER: WORKER_PROCESS:%d: started - pipe=<%d>\n", _pid, pipe);
+	DBG("JABBER: WORKER_PROCESS:%d: started - pipe=<%d> : 1st message delay <%d>\n", _pid, pipe, dtime);
 	
 	if((jcp = jc_pool_init(size, 10)) == NULL)
 	{
@@ -436,6 +454,7 @@ int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size,
 		while(jcp->jmqueue.size != 0 && jcp->jmqueue.ojc[jcp->jmqueue.head]->ready < get_ticks())
 		{
 			/** send message from queue */
+			DBG("JABBER: worker_process:%d: SENDING AS JABBER MESSAGE FROM LOCAL QUEUE ...\n", _pid);
 			jb_send_msg(jcp->jmqueue.ojc[jcp->jmqueue.head]->jbc, jcp->jmqueue.jsm[jcp->jmqueue.head]->to.s, jcp->jmqueue.jsm[jcp->jmqueue.head]->to.len,
 				jcp->jmqueue.jsm[jcp->jmqueue.head]->msg.s, jcp->jmqueue.jsm[jcp->jmqueue.head]->msg.len);
 			jab_sipmsg_free(jcp->jmqueue.jsm[jcp->jmqueue.head]);
@@ -476,7 +495,7 @@ int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size,
 								DBG("JABBER: auth to jabber as: [%s] / [%s]\n", (char*)(ROW_VALUES(RES_ROWS(res))[0].val.string_val), (char*)(ROW_VALUES(RES_ROWS(res))[1].val.string_val));
 								if(jb_user_auth_to_server(jbc,(char*)(ROW_VALUES(RES_ROWS(res))[0].val.string_val), (char*)(ROW_VALUES(RES_ROWS(res))[1].val.string_val), "jbcl") == 0)
 	        		            {
-									ojc = open_jc_create(jsmsg->from, jbc, ctime);
+									ojc = open_jc_create(jsmsg->from, jbc, ctime, dtime);
 									if((ojc != NULL) && (jc_pool_add( jcp, ojc) == 0))
 		                            {
 										/** add socket descriptor to select */
@@ -604,6 +623,7 @@ int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size,
 											{
 												tstr.s = tbuff;
 												tstr.len = n;
+												// if(jab_send_sip_msg(jcp->ojc[i]->id, &tjmsg.from, &tjmsg.from, &tstr) < 0)
 												if(jab_send_sip_msg(jcp->ojc[i]->id, &tjmsg.from, jwl->contact_h, &tstr) < 0)
 													DBG("JABBER: worker_process:%d: ERROR SIP MESSAGE was not sent ...\n", _pid);
 												else
@@ -895,9 +915,10 @@ void jc_pool_free(jc_pool jcp)
  * - id : id of the connection
  * - jbc : pointer to Jabber connection
  * - cache_time : life time of the connection
+ * - delay_time : time needed to became an active connection
  * #return : pointer to the structure or NULL on error
  */
-open_jc open_jc_create(str *id, jbconnection jbc, int cache_time)
+open_jc open_jc_create(str *id, jbconnection jbc, int cache_time, int delay_time)
 {
 	open_jc ojc;
 	int t;
@@ -908,7 +929,7 @@ open_jc open_jc_create(str *id, jbconnection jbc, int cache_time)
 	ojc->id = id;
 	t = get_ticks();
 	ojc->expire = t + cache_time;
-	ojc->ready = t + TIME_2BE_READY;
+	ojc->ready = t + delay_time;
 	ojc->jbc = jbc;
 	return ojc;
 }

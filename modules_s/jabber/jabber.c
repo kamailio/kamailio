@@ -38,12 +38,13 @@ char *db_table = "jusers";
 int nrw = 2;
 int max_jobs = 10;
 
-char *contact = "sip:193.175.135.68:5060";
+char *contact = "-";
 char *jaddress = "127.0.0.1";
 int jport = 5222;
 
+int delay_time = 10;
 int sleep_time = 20;
-int cache_time = 200;
+int cache_time = 600;
 
 int **pipes = NULL;
 
@@ -77,12 +78,14 @@ struct module_exports exports= {
 		"workers",
 		"max_jobs",
 		"cache_time",
+		"delay_time",
 		"sleep_time"
 	},
 	(modparam_t[]) {   /* Module parameter types */
 		STR_PARAM,
 		STR_PARAM,
 		STR_PARAM,
+		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
@@ -97,9 +100,10 @@ struct module_exports exports= {
 		&nrw,
 		&max_jobs,
 		&cache_time,
+		&delay_time,
 		&sleep_time
 	},
-	7,      /* Number of module paramers */
+	9,      /* Number of module paramers */
 	
 	mod_init,   /* module initialization function */
 	(response_function) 0,
@@ -218,7 +222,7 @@ static int child_init(int rank)
 			if (pids[i] == 0)
 			{
 				close(pipes[i][1]);
-				worker_process(jwl, jaddress, jport, pipes[i][0], max_jobs, cache_time, sleep_time, db_con[i]);
+				worker_process(jwl, jaddress, jport, pipes[i][0], max_jobs, cache_time, sleep_time, delay_time, db_con[i]);
 				exit(0);
 			}
 		}
