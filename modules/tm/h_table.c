@@ -70,7 +70,7 @@ unsigned int transaction_count( void )
 
 	count=0;	
 	for (i=0; i<TABLE_ENTRIES; i++) 
-		count+=tm_table->entrys[i].entries;
+		count+=tm_table->entrys[i].cur_entries;
 	return count;
 }
 
@@ -321,7 +321,8 @@ void insert_into_hash_table_unsafe( struct cell * p_cell )
 	p_entry->last_cell = p_cell;
 
 	/* update stats */
-	p_entry->entries++;
+	p_entry->cur_entries++;
+	p_entry->acc_entries++;
 	cur_stats->transactions++;
 	acc_stats->transactions++;
 	if (p_cell->local) {
@@ -361,7 +362,13 @@ void remove_from_hash_table_unsafe( struct cell * p_cell)
 	else
 		p_entry->last_cell = p_cell->prev_cell;
 	/* update stats */
-	/* p_entry->entries--; */
+#	ifdef EXTRA_DEBUG
+	if (p_entry->cur_entries==0) {
+		LOG(L_BUG, "BUG: bad things happened: cur_entries=0\n");
+		abort();
+	}
+#	endif
+	p_entry->cur_entries--;
 	cur_stats->transactions--;
 	if (p_cell->local) cur_stats->client_transactions--;
 	cur_stats->waiting--;
@@ -381,9 +388,11 @@ int fifo_hash( FILE *stream, char *response_file )
 			response_file);
 		return -1;
 	}
-	fputs( "200 ok\n", reply_file);
+	fputs( "200 ok\n\tcurrent\ttotal\n", reply_file);
 	for (i=0; i<TABLE_ENTRIES; i++) {
-		fprintf(reply_file, "%d.\t%ld\n", i, tm_table->entrys[i].entries );
+		fprintf(reply_file, "%d.\t%lu\t%lu\n", 
+			i, tm_table->entrys[i].cur_entries ,
+			tm_table->entrys[i].acc_entries );
 	}
 	fclose(reply_file);
 	return 1;

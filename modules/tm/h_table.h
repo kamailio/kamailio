@@ -237,7 +237,8 @@ typedef struct entry
 	unsigned int    next_label;
 	/* sync mutex */
 	ser_lock_t      mutex;
-	unsigned long entries;
+	unsigned long acc_entries;
+	unsigned long cur_entries;
 }entry_type;
 
 
