@@ -95,7 +95,22 @@
 	    </listitem>
 	    <listitem>
 		<para>
+		    %mb : whole SIP message buffer
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %mf : flags set for current SIP request
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
 		    %mi : SIP message id
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ml : SIP message length
 		</para>
 	    </listitem>
 	    <listitem>

@@ -348,6 +348,47 @@ static int xl_get_cseq(struct sip_msg *msg, str *res)
 	return 0;
 }
 
+static int xl_get_msg_buf(struct sip_msg *msg, str *res)
+{
+	if(msg==NULL || res==NULL)
+		return -1;
+	
+	res->s = msg->buf;
+	res->len = msg->len;
+
+	return 0;
+}
+
+static int xl_get_msg_len(struct sip_msg *msg, str *res)
+{
+	int l = 0;
+	char *ch = NULL;
+
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	ch = int2str(msg->len, &l);
+	res->s = ch;
+	res->len = l;
+
+	return 0;
+}
+
+static int xl_get_flags(struct sip_msg *msg, str *res)
+{
+	int l = 0;
+	char *ch = NULL;
+
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	ch = int2str(msg->flags, &l);
+	res->s = ch;
+	res->len = l;
+
+	return 0;
+}
+
 static int xl_get_callid(struct sip_msg *msg, str *res)
 {
 	if(msg==NULL || res==NULL)
@@ -419,14 +460,14 @@ int xl_parse_format(char *s, xl_elog_p *el)
 				p++;
 				switch(*p)
 				{
-					case 't':
-						e->itf = xl_get_contact;
-					break;
 					case 'i':
 						e->itf = xl_get_callid;
 					break;
 					case 's':
 						e->itf = xl_get_cseq;
+					break;
+					case 't':
+						e->itf = xl_get_contact;
 					break;
 					default:
 						e->itf = xl_get_null;
@@ -450,8 +491,17 @@ int xl_parse_format(char *s, xl_elog_p *el)
 				p++;
 				switch(*p)
 				{
+					case 'b':
+						e->itf = xl_get_msg_buf;
+					break;
+					case 'f':
+						e->itf = xl_get_flags;
+					break;
 					case 'i':
 						e->itf = xl_get_msgid;
+					break;
+					case 'l':
+						e->itf = xl_get_msg_len;
 					break;
 					default:
 						e->itf = xl_get_null;
