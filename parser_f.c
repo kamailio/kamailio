@@ -6,6 +6,7 @@
  */
 
 #include  "parser_f.h"
+#include "ut.h"
 
 /* returns pointer to next line or after the end of buffer */
 char* eat_line(char* buffer, unsigned int len)
@@ -17,7 +18,7 @@ char* eat_line(char* buffer, unsigned int len)
  		  as I do not care about CR
 	*/
 #ifdef NOCR
-	nl=(char *)memchr( buffer, '\n', len );
+	nl=(char *)q_memchr( buffer, '\n', len );
 	if ( nl ) { 
 		c=* nl;
 		if ( nl + 1 < buffer+len)  nl++;

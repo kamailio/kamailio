@@ -189,7 +189,7 @@ char* get_hdr_field(char* buf, unsigned int len, struct hdr_field* hdr)
 		/* just skip over it*/
 		hdr->body.s=tmp;
 		/* find lf*/
-		match=memchr(tmp, '\n', end-tmp);
+		match=q_memchr(tmp, '\n', end-tmp);
 		if (match){
 			/* null terminate*/
 			*match=0;
@@ -328,7 +328,7 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 	end=buf+len;
 	memset(uri, 0, sizeof(struct sip_uri)); /* zero it all, just to be sure */
 	/* look for "sip:"*/;
-	next=memchr(buf, ':',  len);
+	next=q_memchr(buf, ':',  len);
 	if ((next==0)||(strncmp(buf,"sip",next-buf)!=0)){
 		LOG(L_DBG, "ERROR: parse_uri: bad sip uri\n");
 		ret=E_UNSPEC;
@@ -341,7 +341,7 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 		goto error;
 	}
 	/*look for '@' */
-	next=memchr(buf,'@', end-buf);
+	next=q_memchr(buf,'@', end-buf);
 	if (next==0){
 		/* no '@' found, => no userinfo */
 		uri->user.s=0;
@@ -351,7 +351,7 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 		/* found it */
 		user=buf;
 		/* try to find passwd */
-		passwd=memchr(user,':', next-user);
+		passwd=q_memchr(user,':', next-user);
 		if (passwd==0){
 			/* no ':' found => no password */
 			uri->passwd.s=0;
@@ -394,9 +394,9 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 		ret=E_UNSPEC;
 		goto error;
 	}
-	headers=memchr(host,'?',end-host);
-	params=memchr(host,';',end-host);
-	port=memchr(host,':',end-host);
+	headers=q_memchr(host,'?',end-host);
+	params=q_memchr(host,';',end-host);
+	port=q_memchr(host,':',end-host);
 	host_len=(port)?port-host:(params)?params-host:(headers)?headers-host:end-host;
 	/* get host */
 	uri->host.s=malloc(host_len+1);
