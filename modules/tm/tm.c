@@ -94,7 +94,8 @@ static struct module_exports nm_exports= {
 	(response_function) t_on_reply_received,
 #endif
 	(destroy_function) tm_shutdown,
-	w_onbreak
+	w_onbreak,
+	0  /* per-child init function */
 };
 
 
