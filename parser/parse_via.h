@@ -2,8 +2,8 @@
  * $Id$
  */
 
-#ifndef PARSE_VIA
-#define PARSE_VIA
+#ifndef PARSE_VIA_H
+#define PARSE_VIA_H
 
 #include "../str.h"
 
@@ -62,4 +62,4 @@ char* parse_via(char* buffer, char* end, struct via_body *vb);
 void free_via_list(struct via_body *vb);
 
 
-#endif
+#endif /* PARSE_VIA_H */

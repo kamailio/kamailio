@@ -20,4 +20,4 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr);
 void init_hfname_parser(void);
 
 
-#endif
+#endif /* PARSE_HNAME2_H */

@@ -16,9 +16,7 @@ typedef struct auth_body {
 	     /* This is pointer to header field containing
 	      * parsed authorized digest credentials. This
 	      * pointer is set in sip_msg->{authorization,proxy_auth}
-	      * hooks if the authorized credentials are in another
-	      * header field (a SIP message may contain many digest
-	      * credentials with different realms).
+	      * hooks.
 	      *
 	      * This is necessary for functions called after
 	      * {www,proxy}_authorize, these functions need to know

@@ -73,4 +73,4 @@ static inline void trim(str* _s)
 }
 
 
-#endif
+#endif /* TRIM_H */

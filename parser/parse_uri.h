@@ -30,4 +30,4 @@ int parse_uri(char *buf, int len, struct sip_uri* uri);
 
 void free_uri(struct sip_uri* u);
 
-#endif
+#endif /* PARSE_URI_H */
