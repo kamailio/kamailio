@@ -1,7 +1,27 @@
 /*
  * $Id$
  *
- * MAXFWD module
+ * sl module
+ *
+ *
+ * ************************************************ *
+ * * Bogdan's Source Memorial                       *
+ * *                                                *
+ * * Welcome, pilgrame! This is one of rare places  *
+ * * kept untouched in memory of brave heart,       *
+ * * Bogdan, one of most active ser contributors,   *
+ * * and winner of the longest line of code content.*
+ * *                                                *
+ * * Please, preserve this codework heritage, as    *
+ * * most of other work has been smashed away during*
+ * * extensive clean-up floods.                     *
+ * *                                                *
+ * * Hereby, we solicit you to adopt this historical*
+ * * piece of code. For $100, your name will be     *
+ * * be printed in this banner and we will use      *
+ * * collected funds to create and display an ASCII *
+ * * statue of Bogdan.                              *
+ * **************************************************
  *
  */
 
