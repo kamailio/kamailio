@@ -421,6 +421,24 @@ static int xl_get_srcip(struct sip_msg *msg, str *res)
     return 0;
 }
 
+static int xl_get_useragent(struct sip_msg *msg, str *res)
+{
+	if(msg==NULL || res==NULL) 
+		return -1;
+	if(msg->user_agent==NULL && ((parse_headers(msg, HDR_USERAGENT, 0)==-1)
+			 || (msg->user_agent==NULL)))
+	{
+		LOG(L_ERR, "XLOG: xl_get_useragent: ERROR cannot parse User-Agent header\n");
+		return xl_get_null(msg, res);
+	}
+	
+	res->s = msg->user_agent->body.s;
+	res->len = msg->user_agent->body.len;
+	trim(res);
+	
+	return 0;
+}
+
 int xl_parse_format(char *s, xl_elog_p *el)
 {
 	char *p;
@@ -488,6 +506,17 @@ int xl_parse_format(char *s, xl_elog_p *el)
 					break;
 					default:
 						e->itf = xl_get_null;
+				}
+			break;
+			case 'i':
+				p++;
+				switch(*p)
+				{
+					case 's':
+						e->itf = xl_get_srcip;
+					break;
+					default:
+					e->itf = xl_get_null; 			
 				}
 			break;
 			case 'm':
@@ -569,15 +598,15 @@ int xl_parse_format(char *s, xl_elog_p *el)
 						e->itf = xl_get_null;
 				}
 			break;
-			case 'i':
+			case 'u':
 				p++;
 				switch(*p)
 				{
-					case 's':
-						e->itf = xl_get_srcip;
+					case 'a':
+						e->itf = xl_get_useragent;
 					break;
 					default:
-					e->itf = xl_get_null; 			
+						e->itf = xl_get_null;
 				}
 			break;
 			case '%':

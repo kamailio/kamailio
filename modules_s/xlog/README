@@ -49,25 +49,26 @@ Overview
 Implemented Specifiers
 
      * %% : '%'
-     * %Ts : unix time stamp
-     * %Tf : string formatted time
      * %ci : call-id
      * %cs : cseq
      * %ct : contact header
      * %fu : 'From' uri
      * %ft : 'From' tag
+     * %is : IP source address
+     * %mb : whole SIP message buffer
+     * %mf : flags set for current SIP request
+     * %mi : SIP message id
+     * %ml : SIP message length
+     * %pp : process id (pid)
      * %rm : request's method
      * %ru : request's r-uri
      * %rr : reply's reason
      * %rs : reply's status
      * %tu : 'To' uri
      * %tt : 'To' tag
-     * %mb : whole SIP message buffer
-     * %mf : flags set for current SIP request
-     * %mi : SIP message id
-     * %ml : SIP message length
-     * %pp : process id (pid)
-     * %is : IP source address
+     * %Ts : unix time stamp
+     * %Tf : string formatted time
+     * %ua : User agent header field
      _________________________________________________________
 
 Dependencies
