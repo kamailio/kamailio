@@ -17,6 +17,7 @@
 #include "globals.h"
 #include "route.h"
 #include "dprint.h"
+#include "sr_module.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -24,6 +25,7 @@
 
 void yyerror(char* s);
 char* tmp;
+void* f_tmp;
 
 %}
 
@@ -71,6 +73,7 @@ char* tmp;
 %token PORT
 %token CHILDREN
 %token CHECK_VIA
+%token LOADMODULE
 
 
 
@@ -125,6 +128,7 @@ statements:	statements statement {}
 	;
 
 statement:	assign_stm 
+		| module_stm
 		| route_stm 
 		| CR	/* null statement*/
 	;
@@ -204,6 +208,14 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 						"expected"); }
 		| error EQUAL { yyerror("unknown config variable"); }
 	;
+
+module_stm:	LOADMODULE STRING	{ DBG("loading module %s", $2);
+		  						  if (load_module($2)!=0){
+								  		yyerror("failed to load module");
+								  }
+								}
+		 |	LOADMODULE error	{ yyerror("string expected");  }
+		 ;
 
 
 ipv4:	NUMBER DOT NUMBER DOT NUMBER DOT NUMBER { 
@@ -542,6 +554,22 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| SET_URI error { $$=0; yyerror("missing '(' or ')' ?"); }
 		| SET_URI LPAREN error RPAREN { $$=0; yyerror("bad argument, "
 										"string expected"); }
+		| ID LPAREN STRING RPAREN { DBG(" %s - doing nothing", $1);
+									f_tmp=find_export($1);
+									if (f_tmp==0){
+										yyerror("unknown command %s, missing"
+										" loadmodule?\n");
+										$$=0;
+									}else{
+										$$=mk_action(	MODULE_T,
+														CMDF_ST,
+														STRING_ST,
+														f_tmp,
+														$3
+													);
+									}
+								  }
+		| ID LPAREN error RPAREN { $$=0; yyerror("bad arguments"); }
 		| if_cmd		{ $$=$1; }
 	;
 

@@ -57,6 +57,7 @@ struct action* mk_action(int type, int p1_type, int p2_type, void* p1, void* p2)
 	struct action* a;
 	a=(struct action*)malloc(sizeof(struct action));
 	if (a==0) goto  error;
+	memset(a,0,sizeof(struct action));
 	a->type=type;
 	a->p1_type=p1_type;
 	a->p2_type=p2_type;
@@ -279,6 +280,9 @@ void print_action(struct action* a)
 			case IF_T:
 					DBG("if (");
 					break;
+			case MODULE_T:
+					DBG(" external_module_call(");
+					break;
 			default:
 					DBG("UNKNOWN(");
 		}
@@ -297,6 +301,9 @@ void print_action(struct action* a)
 					break;
 			case ACTIONS_ST:
 					print_action((struct action*)t->p1.data);
+					break;
+			case CMDF_ST:
+					DBG("f_ptr<%x>",t->p1.data);
 					break;
 			default:
 					DBG("type<%d>", t->p1_type);

@@ -13,6 +13,7 @@
 #include "udp_server.h"
 #include "route.h"
 #include "msg_parser.h"
+#include "sr_module.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -273,6 +274,14 @@ int do_action(struct action* a, struct sip_msg* msg)
 							ret=run_actions((struct action*)a->p3.data, msg);
 					}
 				}
+			break;
+		case MODULE_T:
+			if ( ((a->p1_type==CMDF_ST)&&a->p1.data)&&
+					((a->p2_type==STRING_ST)&&a->p2.data) ){
+				ret=((cmd_function)(a->p1.data))(msg, (char*)a->p2.data);
+			}else{
+				LOG(L_CRIT,"BUG: do_action: bad module call\n");
+			}
 			break;
 		default:
 			LOG(L_CRIT, "BUG: do_action: unknown type %d\n", a->type);

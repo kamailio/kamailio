@@ -80,13 +80,15 @@ PORT	port
 CHILDREN children
 CHECK_VIA	check_via
 
+LOADMODULE	loadmodule
+
 /* values */
 YES			"yes"|"true"|"on"|"enable"
 NO			"no"|"false"|"off"|"disable"
 
 LETTER		[a-zA-Z]
 DIGIT		[0-9]
-ALPHANUM	{LETTER}|{DIGIT}
+ALPHANUM	{LETTER}|{DIGIT}|[_]
 NUMBER		{DIGIT}+
 ID			{LETTER}{ALPHANUM}*
 QUOTES		\"
@@ -146,6 +148,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{PORT}	{ count(); yylval.strval=yytext; return PORT; }
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
 <INITIAL>{CHECK_VIA}	{ count(); yylval.strval=yytext; return CHECK_VIA; }
+<INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
 
 <INITIAL>{EQUAL}	{ count(); return EQUAL; }
 <INITIAL>{EQUAL_T}	{ count(); return EQUAL_T; }

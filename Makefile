@@ -35,7 +35,7 @@ YACC=bison
 YACC_FLAGS=-d -b cfg
 # on linux and freebsd keep it empty (e.g. LIBS= )
 # on solaris add -lxnet (e.g. LIBS= -lxnet)
-LIBS=-lfl
+LIBS=-lfl -ldl
 
 endif 
 ifeq  ($(ARCH), SunOS)
@@ -46,7 +46,7 @@ CFLAGS=-O2 -Wcast-align
 LEX=flex
 YACC=yacc
 YACC_FLAGS=-d -b cfg
-LIBS=-lfl -L/usr/local/lib -lxnet # or -lnsl -lsocket or -lglibc ?
+LIBS=-lfl -ldl -L/usr/local/lib -lxnet # or -lnsl -lsocket or -lglibc ?
 
 endif
 ifeq ($(ARCH), FreeBSD)
@@ -57,7 +57,7 @@ CFLAGS=-O2 -Wcast-align
 LEX=flex
 YACC=yacc
 YACC_FLAGS=-d -b cfg
-LIBS=-lfl
+LIBS=-lfl -ldl
 
 endif
 
@@ -70,7 +70,7 @@ YACC=bison
 YACC_FLAGS=-d -b cfg
 # on linux and freebsd keep it empty (e.g. LIBS= )
 # on solaris add -lxnet (e.g. LIBS= -lxnet)
-LIBS=-lfl
+LIBS=-lfl -ldl
 
 endif
 
