@@ -123,7 +123,11 @@ static param_export_t params[] = {
 };
 
 
+#ifdef STATIC_USRLOC
+struct module_exports usrloc_exports = {
+#else
 struct module_exports exports = {
+#endif
 	"usrloc",
 	cmds,       /* Exported functions */
 	params,     /* Export parameters */
