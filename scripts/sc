@@ -6,18 +6,32 @@
 #
 
 # ser's FIFO server
-SER_FIFO=/tmp/ser_fifo
+if [ -z "$SER_FIFO" ]; then
+	SER_FIFO=/tmp/ser_fifo
+fi
 # period in which stats are reprinted
-WATCH_PERIOD=2
+if [ -z "$WATCH_PERIOD" ] ; then
+	WATCH_PERIOD=2
+fi
 
 # SQL config
-SQL_DB=ser
-SQL_HOST=localhost
-SQL_USER=ser
+if [ -z "$SQL_DB" ] ; then
+	SQL_DB=ser
+fi
+if [ -z "$SQL_HOST" ] ; then
+	SQL_HOST=localhost
+fi
+if [ -z "$SQL_USER" ] ; then
+	SQL_USER=ser
+fi
 
 # the read-only user for whom password may be stored here
-RO_USER=serro
-RO_PW=47serro11
+if [ -z "$RO_USER" ] ; then
+	RO_USER=serro
+fi
+if [ -z "$RO_PW" ] ; then
+	RO_PW=47serro11
+fi
 
 # binaries
 GENHA1='gen_ha1'
