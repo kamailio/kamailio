@@ -1,9 +1,9 @@
 #include "sip_msg.h"
 #include "../../dprint.h"
 
+
 char*   translate_pointer( char* new_buf , char *org_buf , char* p);
 struct via_body* via_body_cloner( char* new_buf , char *org_buf , struct via_body *org_via);
-
 struct hdr_field* header_cloner( struct sip_msg *new_msg , struct sip_msg *org_msg, struct hdr_field *hdr);
 
 
@@ -161,6 +161,29 @@ struct via_body* via_body_cloner( char* new_buf , char *org_buf , struct via_bod
     /* comment (str type) */
     new_via->comment.s = translate_pointer( new_buf , org_buf , org_via->comment.s );
 
+    if ( new_via->param_lst )
+    {
+       struct via_param *vp, *new_vp, *last_new_vp;
+       for( vp=new_via->param_lst, last_new_vp=0 ; vp ; vp=vp->next )
+       {
+          new_vp = (struct via_param*)sh_malloc(sizeof(struct via_param));
+          memcpy( new_vp , vp , sizeof(struct via_param));
+          new_vp->name.s = translate_pointer( new_buf , org_buf , vp->name.s );
+          new_vp->value.s = translate_pointer( new_buf , org_buf , vp->value.s );
+
+          if (new_vp->type==PARAM_BRANCH)
+             new_via->branch = new_vp;
+
+        if (last_new_vp)
+             last_new_vp->next = new_vp;
+          else
+             new_via->param_lst = new_vp;
+
+          last_new_vp = new_vp;
+       }
+       new_via->last_param = new_vp;
+    }
+
     if ( new_via->next )
 	new_via->next = via_body_cloner( new_buf , org_buf , org_via->next );
 }
@@ -191,6 +214,115 @@ char*   translate_pointer( char* new_buf , char *org_buf , char* p)
 	return 0;
     else
 	return new_buf + (p-org_buf);
+}
+
+
+
+
+/* Frees the memory occupied by a SIP message
+  */
+void free_uri(struct sip_uri* u)
+{
+   if (u)
+   {
+     if (u->user.s)
+         sh_free(u->user.s);
+     if (u->passwd.s)
+         sh_free(u->passwd.s);
+     if (u->host.s)
+         sh_free(u->host.s);
+     if (u->port.s)
+         sh_free(u->port.s);
+     if (u->params.s)
+         sh_free(u->params.s);
+     if (u->headers.s)
+         sh_free(u->headers.s);
+   }
+}
+
+
+
+void free_via_param_list(struct via_param* vp)
+{
+   struct via_param* foo;
+   while(vp)
+    {
+       foo=vp;
+       vp=vp->next;
+       sh_free(foo);
+    }
+}
+
+
+
+void free_via_list(struct via_body* vb)
+{
+   struct via_body* foo;
+   while(vb)
+    {
+      foo=vb;
+      vb=vb->next;
+     if (foo->param_lst)
+        free_via_param_list(foo->param_lst);
+      sh_free(foo);
+    }
+}
+
+
+/* frees a hdr_field structure,
+ * WARNING: it frees only parsed (and not name.s, body.s)*/
+void clean_hdr_field(struct hdr_field* hf)
+{
+   if (hf->parsed)
+   {
+      switch(hf->type)
+      {
+         case HDR_VIA:
+               free_via_list(hf->parsed);
+             break;
+         case HDR_CSEQ:
+                sh_free(hf->parsed);
+             break;
+         default:
+      }
+   }
+}
+
+
+
+/* frees a hdr_field list,
+ * WARNING: frees only ->parsed and ->next*/
+void free_hdr_field_lst(struct hdr_field* hf)
+{
+   struct hdr_field* foo;
+
+   while(hf)
+    {
+       foo=hf;
+       hf=hf->next;
+       clean_hdr_field(foo);
+       pkg_free(foo);
+    }
+}
+
+
+
+/*only the content*/
+void sip_msg_free(struct sip_msg* msg)
+{
+   if (msg->new_uri.s)
+   {
+      sh_free(msg->new_uri.s);
+      msg->new_uri.len=0;
+   }
+   if (msg->headers)
+      free_hdr_field_lst(msg->headers);
+   if (msg->add_rm)
+      free_lump_list(msg->add_rm);
+   if (msg->repl_add_rm)
+      free_lump_list(msg->repl_add_rm);
+   sh_free( msg->orig );
+   sh_free( msg->buf );
 }
 
 
