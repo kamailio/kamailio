@@ -296,6 +296,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
     str             next_hop;
     char            hdrs_buf[HDRS_BUFFER_MAX];
     str             hdrs;
+    int             msg_flags_size;
     char            cmd_buf[CMD_BUFFER_MAX];
     str             cmd;
     struct hdr_field* p_hdr;
@@ -387,7 +388,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 #define copy_route(s,len,rs,rlen) \
    do {\
      if(rlen+len+3 >= ROUTE_BUFFER_MAX){\
-       LOG(L_ERR,"vm: buffer overflow while copying new route");\
+       LOG(L_ERR,"vm: buffer overflow while copying new route\n");\
        goto error;\
      }\
      if(len){\
@@ -473,33 +474,49 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
     hdrs.s=hdrs_buf; hdrs.len=0;
     s = hdrs_buf;
 
-    if( !strncmp(REQ_LINE(msg).method.s,"REFER",REQ_LINE(msg).method.len) ){
-	
-	for(p_hdr = msg->headers;;p_hdr = p_hdr->next){
+    if(hdrs.len+12+sizeof(flag_t)+1 >= HDRS_BUFFER_MAX){
+        LOG(L_ERR,"vm: buffer overflow while copying optional header\n");
+	goto error;
+    }
+    append_str(s,"P-MsgFlags: ",12); hdrs.len += 12;
+    msg_flags_size = sizeof(flag_t);
+    int2reverse_hex(&s, &msg_flags_size, (int)msg->msg_flags);
+    hdrs.len += sizeof(flag_t) - msg_flags_size;
+    append_str(s,"\n",1); hdrs.len++;
 
-	    if( p_hdr->type & HDR_OTHER ){
-		append_str(s,p_hdr->name.s,p_hdr->name.len);
-		hdrs.len += p_hdr->name.len;
-		append_str(s,": ",2); hdrs.len+=2;
-		append_str(s,p_hdr->body.s,p_hdr->body.len);
-		hdrs.len += p_hdr->body.len;
-		if(*(s-1) != '\n'){
-		    append_str(s,"\n",1);
-		    hdrs.len++;
-		}
+    for(p_hdr = msg->headers;;p_hdr = p_hdr->next){
+
+        if( p_hdr->type & HDR_OTHER ){
+
+	    if(hdrs.len+p_hdr->name.len+p_hdr->body.len+4 >= HDRS_BUFFER_MAX){
+	        LOG(L_ERR,"vm: buffer overflow while copying optional header\n");
+		goto error;
 	    }
-
-	    if(p_hdr==msg->last_header){
-		append_str(s,".",1);
+	    append_str(s,p_hdr->name.s,p_hdr->name.len);
+	    hdrs.len += p_hdr->name.len;
+	    append_str(s,": ",2); hdrs.len+=2;
+	    append_str(s,p_hdr->body.s,p_hdr->body.len);
+	    hdrs.len += p_hdr->body.len;
+	    if(*(s-1) != '\n'){
+	        append_str(s,"\n",1);
 		hdrs.len++;
-		break;
 	    }
 	}
+
+	if(p_hdr==msg->last_header)
+	    break;
     }
+
+    append_str(s,".",1);
+    hdrs.len++;
 
     lines[0].s=VM_FIFO_VERSION; lines[0].len=strlen(VM_FIFO_VERSION);
 
     s=cmd_buf; cmd.s=s;
+    if(strlen(action)+12 >= CMD_BUFFER_MAX){
+        LOG(L_ERR,"vm: buffer overflow while copying command name\n");
+	goto error;
+    }
     append_str(s,"sip_request.",12);
     append_str(s,action,strlen(action));
     cmd.len = s-cmd.s;
@@ -542,10 +559,10 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
     memcpy(id_buf+int_buflen, i2s, l);int_buflen+=l;
     lines[16].s=id_buf;lines[16].len=int_buflen;
 
-    lines[17]=route.len ? route : empty_param;
-    lines[18]=next_hop;
-    lines[19]=hdrs.len ? hdrs : empty_param;
-    lines[20]=body;
+    lines[17] = route.len ? route : empty_param;
+    lines[18] = next_hop;
+    lines[19] = hdrs;
+    lines[20] = body;
 
     if ( write_to_vm_fifo(vm_fifo, &lines[0],VM_FIFO_PARAMS)
 	 ==-1 ) {
