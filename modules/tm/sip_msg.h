@@ -40,7 +40,7 @@
 #define  sip_msg_free_unsafe(_p_msg) shm_free_unsafe( (_p_msg) )
 
 
-struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg );
+struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len );
 
 
 #endif

@@ -124,6 +124,7 @@ typedef struct retr_buf
 typedef struct ua_server
 {
 	struct sip_msg   *request;
+	char             *end_request;
 	struct retr_buf  response;
 	unsigned int     status;
 	/* keep to-tags for local 200 replies for INVITE -- 

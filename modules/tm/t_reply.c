@@ -443,6 +443,7 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 	}
 }
 
+
 static inline int fake_req(struct sip_msg *faked_req, 
 				struct sip_msg *shmem_msg)
 {
@@ -470,6 +471,7 @@ static inline int fake_req(struct sip_msg *faked_req,
 		faked_req->new_uri.s[faked_req->new_uri.len]=0;
 	}
 
+#if 0
 	/* create a duplicated lump list to which actions can add
 	 * new pkg items  */
 	if (shmem_msg->add_rm) {
@@ -487,27 +489,51 @@ static inline int fake_req(struct sip_msg *faked_req,
 			goto error02;
 		}
 	}
-
+#endif
 	return 1;
 
+#if 0
 error02:
 	free_duped_lump_list(faked_req->add_rm);
 error01:
 	if (faked_req->new_uri.s) pkg_free(faked_req->new_uri.s);
+#endif
 error00:
 	return 0;
 }
 
-void inline static free_faked_req(struct sip_msg *faked_req)
+void inline static free_faked_req(struct sip_msg *faked_req, struct cell *t)
 {
+	struct hdr_field *hdr;
+
+#if 0
 	free_duped_lump_list(faked_req->add_rm);
 	free_duped_lump_list(faked_req->body_lumps);
 	faked_req->add_rm = faked_req->body_lumps = 0;
+#endif
 	if (faked_req->new_uri.s) {
 		pkg_free(faked_req->new_uri.s);
 		faked_req->new_uri.s = 0;
 	}
+
+	/* free all types of lump that were added in failure handlers */
+	del_nonshm_lump( &(faked_req->add_rm) );
+	del_nonshm_lump( &(faked_req->body_lumps) );
 	del_nonshm_lump_rpl( &(faked_req->reply_lump) );
+
+	/* free header's parsed structures that were added by failure handlers */
+	for( hdr=faked_req->headers ; hdr ; hdr=hdr->next ) {
+		if ( hdr->parsed && hdr_allocs_parse(hdr) &&
+		(hdr->parsed<(void*)t->uas.request ||
+		hdr->parsed>=(void*)t->uas.end_request)) {
+			/* header parsed filed doesn't point inside uas.request memory
+			 * chunck -> it was added by failure funcs.-> free it as pkg */
+			DBG("DBG:run_failure_handlers: removing hdr->parsed %d\n",
+					hdr->type);
+			clean_hdr_field(hdr);
+			hdr->parsed = 0;
+		}
+	}
 }
 
 
@@ -557,7 +583,7 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 
 	/* restore original environment and free the fake msg */
 	faked_env( t, 0);
-	free_faked_req(&faked_req);
+	free_faked_req(&faked_req,t);
 
 	/* if failure handler changed flag, update transaction context */
 	shmem_msg->flags = faked_req.flags;
@@ -865,7 +891,7 @@ static int store_reply( struct cell *trans, int branch, struct sip_msg *rpl)
 		if (rpl==FAKED_REPLY)
 			trans->uac[branch].reply=FAKED_REPLY;
 		else
-			trans->uac[branch].reply = sip_msg_cloner( rpl );
+			trans->uac[branch].reply = sip_msg_cloner( rpl, 0 );
 
 		if (! trans->uac[branch].reply ) {
 			LOG(L_ERR, "ERROR: store_reply: can't alloc' clone memory\n");
