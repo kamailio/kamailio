@@ -194,7 +194,6 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 	unsigned int  len;
 	char                          *buf, *shbuf;
 	struct retrans_buff  *rb;
-	struct cell                *T_tmp;
 
 	buf=NULL;
 	shbuf = NULL;
@@ -222,7 +221,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 	 * when forwarding an ACK, this condition will be all the time false because
 	 * the forwarded INVITE is in the retransmission buffer */
 	if ( T->outbound_request[branch]==NULL )
-	{
+{
 		DBG("DEBUG: t_forward: first time forwarding\n");
 		/* special case : CANCEL */
 		if ( p_msg->REQ_METHOD==METHOD_CANCEL  )
@@ -230,12 +229,13 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 			DBG("DEBUG: t_forward: it's CANCEL\n");
 			/* find original cancelled transaction; if found, use its
 			   next-hops; otherwise use those passed by script */
-			T->T_canceled = t_lookupOriginalT( hash_table , p_msg );
+			if (T->T_canceled==T_UNDEFINED)
+				T->T_canceled = t_lookupOriginalT( hash_table , p_msg );
 			/* if found */
 			if ( T->T_canceled!=T_NULL )
 			{
 				/* if in 1xx status, send to the same destination */
-				if ( (T_tmp->status/100)==1 )
+				if ( (T->T_canceled->status/100)==1 )
 				{
 					DBG("DEBUG: t_forward: it's CANCEL and I will send "
 						"to the same place where INVITE went\n");

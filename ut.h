@@ -28,7 +28,7 @@
 			(_mystr).len--; \
 	})
 
-/* converts a str to an u. short, returns the u. short and sets *err on 
+/* converts a str to an u. short, returns the u. short and sets *err on
  * error and if err!=null
  * */
 static inline unsigned short str2s(unsigned char* str, unsigned int len,
@@ -38,12 +38,12 @@ static inline unsigned short str2s(unsigned char* str, unsigned int len,
 	int i;
 	unsigned char *limit;
 	unsigned char *init;
-	
+
 	/*init*/
 	ret=i=0;
 	limit=str+len;
 	init=str;
-	
+
 	for(;str<limit ;str++){
 		if ( (*str <= '9' ) && (*str >= '0') ){
 				ret=ret*10+*str-'0';
@@ -56,7 +56,7 @@ static inline unsigned short str2s(unsigned char* str, unsigned int len,
 	}
 	if (err) *err=0;
 	return ret;
-	
+
 error_digits:
 	DBG("str2s: ERROR: too many letters in [%s]\n", init);
 	if (err) *err=1;
@@ -84,7 +84,7 @@ static inline unsigned int str2ip(unsigned char* str, unsigned int len,
 	ret=i=0;
 	limit=str+len;
 	init=str;
-	
+
 	for(;str<limit ;str++){
 		if (*str=='.'){
 				i++;
@@ -99,7 +99,7 @@ static inline unsigned int str2ip(unsigned char* str, unsigned int len,
 	}
 	if (err) *err=0;
 	return ret;
-	
+
 error_dots:
 	DBG("str2ip: ERROR: too many dots in [%s]\n", init);
 	if (err) *err=1;
@@ -112,8 +112,22 @@ error_char:
 
 
 
-/* faster memchr version */
+static inline int btostr( char *p,  unsigned char val)
+{
+	unsigned int a,b,i =0;
 
+	if ( (a=val/100)!=0 )
+		*(p+(i++)) = a+'0';         /*first digit*/
+	if ( (b=val%100/10)!=0 || a)
+		*(p+(i++)) = b+'0';        /*second digit*/
+	*(p+(i++)) = '0'+val%10;              /*third digit*/
+
+	return i;
+}
+
+
+
+/* faster memchr version */
 static inline char* q_memchr(char* p, int c, unsigned int size)
 {
 	char* end;

@@ -11,12 +11,27 @@
 #include "hash_func.h"
 #include "t_funcs.h"
 #include "config.h"
+#include "sip_msg.h"
 
 
 #define EQ_LEN(_hf) (t_msg->_hf->body.len==p_msg->_hf->body.len)
 #define EQ_STR(_hf) (memcmp(t_msg->_hf->body.s, p_msg->_hf->body.s, \
-		p_msg->_hf->body.len)==0)
+	p_msg->_hf->body.len)==0)
+#define EQ_REQ_URI_LEN\
+	(p_msg->first_line.u.request.uri.len==t_msg->first_line.u.request.uri.len)
+#define EQ_REQ_URI_STR\
+	( memcmp( t_msg->first_line.u.request.uri.s,\
+	translate_pointer(p_msg->orig,p_msg->buf, p_msg->first_line.u.request.uri.s),\
+	p_msg->first_line.u.request.uri.len)==0)
+#define EQ_VIA_LEN(_via)\
+	( (p_msg->via1->bsize-(p_msg->_via->name.s-(p_msg->_via->hdr.s+p_msg->_via->hdr.len)))==\
+	(t_msg->via1->bsize-(t_msg->_via->name.s-(t_msg->_via->hdr.s+t_msg->_via->hdr.len))) )
 
+#define EQ_VIA_STR(_via)\
+	( memcmp( t_msg->_via->name.s,\
+	 translate_pointer(p_msg->orig,p_msg->buf,p_msg->_via->name.s),\
+	 (t_msg->via1->bsize-(t_msg->_via->name.s-(t_msg->_via->hdr.s+t_msg->_via->hdr.len)))\
+	)==0 )
 
 
 static int reverse_hex2int( char *c, int len )
@@ -78,7 +93,6 @@ int t_lookup_request( struct sip_msg* p_msg )
       /* stop processing */
       return 0;
    }
-
    /* start searching into the table */
    hash_index = hash( p_msg->callid->body , get_cseq(p_msg)->number ) ;
    isACK = p_msg->REQ_METHOD==METHOD_ACK;
@@ -92,72 +106,47 @@ int t_lookup_request( struct sip_msg* p_msg )
    tmp_cell = 0;
    while( p_cell )
    {
-/*
-		int abba;
-
-		t_msg = p_cell->inbound_request;
-
-
-
-		if ( EQ_LEN(from) && EQ_LEN(callid) &&
-		  EQ_STR(callid) && EQ_STR(callid) &&
-		  /* we compare only numerical parts of CSEQ ...
-		     the method name should be the same as in first line
-		  memcmp( get_cseq(t_msg)->number.s , get_cseq(p_msg)->number.s ,
-				get_cseq(p_msg)->number.len ) ==0 )
-		{
-			if (!isACK) {
-				if (t_msg->REQ_METHOD == p_msg->REQ_METHOD &&
-					EQ_LEN(to) && EQ_STR(to))
-					goto found;
-			} else { /* ACK
-				if (t_msg->REQ_METHOD == METHOD_INVITE  &&
-					//p_cell->tag &&  p_cell->tag->len==p_msg->tag->body.len &&
-            		//if ( /*tag memcmp( p_cell->tag->s , p_msg->tag->body.s ,
-					// p_msg->tag->body.len ) ==0 )
-					EQ_STR( to ) ) {
-					goto found;
-				}
-			} /* ACK
-		} /* common HFs equal
-*/
      t_msg = p_cell->inbound_request;
 
       /* is it the wanted transaction ? */
       if ( !isACK )
       { /* is not an ACK request */
          /* first only the length are checked */
-         if ( /*from length*/ EQ_LEN(from) )
-            if ( /*to length*/ EQ_LEN(to) )
-               if ( /*callid length*/ EQ_LEN(callid) )
-                  if ( /*cseq length*/ EQ_LEN(cseq) )
+         if ( EQ_LEN(callid) && EQ_LEN(cseq) )
+            if ( EQ_REQ_URI_LEN )
+                if ( EQ_VIA_LEN(via1) )
+                   if ( EQ_LEN(from) && EQ_LEN(to) )
                      /* so far the lengths are the same -> let's check the contents */
-                        if ( /*from*/ EQ_STR(from) )
-                           if ( /*to*/ EQ_STR(to) )
-                               if ( /*callid*/ EQ_STR(callid) )
-                                  if ( /*cseq*/ EQ_STR(cseq) )
-                                     { /* WE FOUND THE GOLDEN EGG !!!! */
-                                        goto found;
-                                     }
+                     if ( EQ_STR(callid) && EQ_STR(cseq) )
+                      if ( EQ_REQ_URI_STR )
+                          if ( EQ_VIA_STR(via1) )
+                             if ( EQ_STR(from) && EQ_STR(to) )
+                              { /* WE FOUND THE GOLDEN EGG !!!! */
+                                 goto found;
+                              }
       }
       else
       { /* it's a ACK request*/
          /* first only the length are checked */
-         if ( /*from length*/ EQ_LEN(from) )
-            //if ( /*to length*/ p_cell->inbound_request->to->body.len == p_msg->to->body.len )
-               if ( /*callid length*/ EQ_LEN(callid) )
-                  if ( /*cseq_nr length*/ get_cseq(t_msg)->number.len == get_cseq(p_msg)->number.len )
-                      if ( /*cseq_method type*/ t_msg->first_line.u.request.method_value == METHOD_INVITE  )
-                         //if ( /*tag length*/ p_cell->tag &&  p_cell->tag->len==p_msg->tag->body.len )
+         if ( t_msg->first_line.u.request.method_value==METHOD_INVITE)
+            if ( /*callid length*/ EQ_LEN(callid) )
+               if ( get_cseq(t_msg)->number.len==get_cseq(p_msg)->number.len )
+                  if ( EQ_REQ_URI_LEN )
+                     if (/*VIA1 len*/ EQ_VIA_LEN(via1) )
+                       if ( /*from length*/ EQ_LEN(from) )
+                         //if ( /*to length*/ p_cell->inbound_request->to->body.len == p_msg->to->body.len )
+                            //if ( /*tag length*/ p_cell->tag &&  p_cell->tag->len==p_msg->tag->body.len )
                             /* so far the lengths are the same -> let's check the contents */
-                            if ( /*from*/ EQ_STR(from) )
-                               //if ( /*to*/ !memcmp( p_cell->inbound_request->to->body.s , p_msg->to->body.s , p_msg->to->body.len)  )
-                                  //if ( /*tag*/ !memcmp( p_cell->tag->s , p_msg->tag->body.s , p_msg->tag->body.len ) )
-                                     if ( /*callid*/ !memcmp( t_msg->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
-                                        if ( /*cseq_nr*/ !memcmp( get_cseq(t_msg)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len ) )
-                                           { /* WE FOUND THE GOLDEN EGG !!!! */
-                                              goto found;
-                                           }
+                                if ( /*callid*/ !memcmp( t_msg->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
+                                   if ( /*cseq_nr*/ !memcmp( get_cseq(t_msg)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len ) )
+                                      if (/*URI len*/ EQ_REQ_URI_STR )
+                                         if (/*VIA1*/ EQ_VIA_STR(via1) )
+                                            if ( /*from*/ EQ_STR(from) )
+                                            //if ( /*to*/ !memcmp( p_cell->inbound_request->to->body.s , p_msg->to->body.s , p_msg->to->body.len)  )
+                                              //if ( /*tag*/ !memcmp( p_cell->tag->s , p_msg->tag->body.s , p_msg->tag->body.len ) )
+                                              { /* WE FOUND THE GOLDEN EGG !!!! */
+                                                 goto found;
+                                              }
       }
       /* next transaction */
       tmp_cell = p_cell;
@@ -188,9 +177,10 @@ found:
  */
 struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_msg )
 {
-   struct cell      *p_cell;
-   struct cell      *tmp_cell;
-   unsigned int  hash_index=0;
+   struct cell         *p_cell;
+   struct cell         *tmp_cell;
+   unsigned int       hash_index=0;
+   struct sip_msg	*t_msg;
 
    /* it's a CANCEL request for sure */
 
@@ -203,23 +193,26 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
    tmp_cell = 0;
    while( p_cell )
    {
+     t_msg = p_cell->inbound_request;
+
       /* is it the wanted transaction ? */
       /* first only the length are checked */
-      if ( /*from length*/ p_cell->inbound_request->from->body.len == p_msg->from->body.len )
-         if ( /*to length*/ p_cell->inbound_request->to->body.len == p_msg->to->body.len )
-            //if ( /*tag length*/ (!p_cell->inbound_request->tag && !p_msg->tag) || (p_cell->inbound_request->tag && p_msg->tag && p_cell->inbound_request->tag->body.len == p_msg->tag->body.len) )
-               if ( /*callid length*/ p_cell->inbound_request->callid->body.len == p_msg->callid->body.len )
-                  if ( /*cseq_nr length*/ get_cseq(p_cell->inbound_request)->number.len == get_cseq(p_msg)->number.len )
-                      if ( /*cseq_method type*/ p_cell->inbound_request->REQ_METHOD!=METHOD_CANCEL )
-                         if ( /*req_uri length*/ p_cell->inbound_request->first_line.u.request.uri.len == p_msg->first_line.u.request.uri.len )
-                             /* so far the lengths are the same -> let's check the contents */
-                             if ( /*from*/ memcmp( p_cell->inbound_request->from->body.s , p_msg->from->body.s , p_msg->from->body.len )==0 )
-                                if ( /*to*/ memcmp( p_cell->inbound_request->to->body.s , p_msg->to->body.s , p_msg->to->body.len)==0  )
-                                   //if ( /*tag*/ (!p_cell->inbound_request->tag && !p_msg->tag) || (p_cell->inbound_request->tag && p_msg->tag && memcmp( p_cell->inbound_request->tag->body.s , p_msg->tag->body.s , p_msg->tag->body.len )==0) )
-                                      if ( /*callid*/ memcmp( p_cell->inbound_request->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len )==0 )
-                                          if ( /*cseq_nr*/ memcmp( get_cseq(p_cell->inbound_request)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len )==0 )
-                                             if ( /*req_uri*/ memcmp( p_cell->inbound_request->first_line.u.request.uri.s , p_msg->first_line.u.request.uri.s , p_msg->first_line.u.request.uri.len )==0 )
-                                             { /* WE FOUND THE GOLDEN EGG !!!! */
+      if ( p_cell->inbound_request->REQ_METHOD!=METHOD_CANCEL )
+         if ( /*callid length*/ EQ_LEN(callid) )
+            if ( get_cseq(t_msg)->number.len==get_cseq(p_msg)->number.len )
+               if ( EQ_REQ_URI_LEN )
+                   if ( EQ_VIA_LEN(via1) )
+                  if ( EQ_LEN(from) && EQ_LEN(to) )
+                        //if ( /*tag length*/ (!p_cell->inbound_request->tag && !p_msg->tag) || (p_cell->inbound_request->tag && p_msg->tag && p_cell->inbound_request->tag->body.len == p_msg->tag->body.len) )
+                           /* so far the lengths are the same -> let's check the contents */
+                            if ( /*callid*/ EQ_STR(callid) )
+                               if ( /*cseq_nr*/ memcmp( get_cseq(t_msg)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len )==0 )
+                                  if ( EQ_REQ_URI_STR )
+                                  if ( EQ_VIA_STR(via1) )
+                                  if ( EQ_STR(from) && EQ_STR(to) )
+                                            //if ( /*tag*/ (!p_cell->inbound_request->tag && !p_msg->tag) || (p_cell->inbound_request->tag && p_msg->tag && memcmp( p_cell->inbound_request->tag->body.s , p_msg->tag->body.s , p_msg->tag->body.len )==0) )
+                                              { /* WE FOUND THE GOLDEN EGG !!!! */
+                                                DBG("DEBUG: t_lookupOriginalT: canceled transaction found (%x)! \n",p_cell );
                                                 return p_cell;
                                              }
       /* next transaction */
@@ -228,6 +221,7 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
    }
 
    /* no transaction found */
+   DBG("DEBUG: t_lookupOriginalT: no CANCEL maching found! \n" );
    return 0;
 }
 

@@ -11,7 +11,6 @@
 
 #define ROUND4(s) ((s)%4)?((s)+4)/4*4:(s)
 
-char*   translate_pointer( char* new_buf , char *org_buf , char* p);
 struct via_body* via_body_cloner( char* new_buf , char *org_buf , struct via_body *org_via);
 struct hdr_field* header_cloner( struct sip_msg *new_msg , struct sip_msg *org_msg, struct hdr_field *hdr);
 
@@ -308,7 +307,7 @@ struct hdr_field* header_cloner( struct sip_msg *new_msg , struct sip_msg *org_m
 }
 
 
-
+ /*
 char*   translate_pointer( char* new_buf , char *org_buf , char* p)
 {
     if (!p)
@@ -316,7 +315,7 @@ char*   translate_pointer( char* new_buf , char *org_buf , char* p)
     else
 	return new_buf + (p-org_buf);
 }
-
+*/
 
 
 
@@ -532,7 +531,7 @@ struct sip_msg*  sip_msg_cloner_2( struct sip_msg *org_msg )
                    break;
       }
    }
-   /* length of the data lump structures */
+   /* length of the data lump structures
    if (org_msg->first_line.type==SIP_REQUEST)
       lump_chain = org_msg->add_rm;
    else
@@ -553,7 +552,7 @@ struct sip_msg*  sip_msg_cloner_2( struct sip_msg *org_msg )
          lump_tmp = lump_tmp->after;
       }
       lump_chain = lump_chain->next;
-   }
+   }  */
 
    p=(char *)sh_malloc(len);
    if (!p)
@@ -678,7 +677,7 @@ struct sip_msg*  sip_msg_cloner_2( struct sip_msg *org_msg )
 
    }
 
-   /* clonning data lump */
+   /* clonning data lump
    if (org_msg->first_line.type==SIP_REQUEST) {
       lump_chain = org_msg->add_rm;
       lump_anchor = &(new_msg->add_rm);
@@ -689,7 +688,7 @@ struct sip_msg*  sip_msg_cloner_2( struct sip_msg *org_msg )
    while (lump_chain)
    {
       lump_clone( (*lump_anchor) , lump_chain , p );
-      /*before list*/
+      /*before list/
       lump_tmp = lump_chain->before;
       lump_anchor2 = &((*lump_anchor)->before);
       while ( lump_tmp )
@@ -698,7 +697,7 @@ struct sip_msg*  sip_msg_cloner_2( struct sip_msg *org_msg )
          lump_anchor2 = &((*lump_anchor2)->before);
          lump_tmp = lump_tmp->before;
       }
-      /*after list*/
+      /*after list/
       lump_tmp = lump_chain->after;
       lump_anchor2 = &((*lump_anchor)->after);
       while ( lump_tmp )
@@ -709,7 +708,7 @@ struct sip_msg*  sip_msg_cloner_2( struct sip_msg *org_msg )
       }
       lump_anchor = &((*lump_anchor)->next);
       lump_chain = lump_chain->next;
-   }     
+   }           */
 
    return new_msg;
 }
