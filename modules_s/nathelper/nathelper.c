@@ -153,8 +153,8 @@ static int rtpproxy_disable = 0;
 
 static cmd_export_t cmds[]={
 	{"fix_nated_contact", fix_nated_contact_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"fix_nated_sdp",     fix_nated_sdp_f,        1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"unforce_rtp_proxy", unforce_rtp_proxy_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"fix_nated_sdp",     fix_nated_sdp_f,        1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
+	{"unforce_rtp_proxy", unforce_rtp_proxy_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 	{"force_rtp_proxy",   force_rtp_proxy_f,      0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"force_rtp_proxy",   force_rtp_proxy_from_f, 1, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"nat_uac_test",      nat_uac_test_f,         1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
