@@ -31,6 +31,7 @@
  * 2003-03-19  fixed set* len calculation bug & simplified a little the code
  *              (should be a little faster now) (andrei)
  *             replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ * 2003-04-01  Added support for loose routing in forward (janakj)
  */
 
 
@@ -82,7 +83,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 	char *new_uri, *end, *crt;
 	int len;
 	int user;
-	struct sip_uri uri;
+	struct sip_uri uri, next_hop;
 	struct sip_uri* u;
 	unsigned short port;
 	int proto;
@@ -112,13 +113,21 @@ int do_action(struct action* a, struct sip_msg* msg)
 			else proto=msg->rcv.proto;
 			if (a->p1_type==URIHOST_ST){
 				/*parse uri*/
-				ret=parse_sip_msg_uri(msg);
+
+				if (msg->dst_uri.len) {
+					ret = parse_uri(msg->dst_uri.s, msg->dst_uri.len, &next_hop);
+					u = &next_hop;
+				} else {
+					ret = parse_sip_msg_uri(msg);
+					u = &msg->parsed_uri;
+				}
+
 				if (ret<0) {
 					LOG(L_ERR, "ERROR: do_action: forward: bad_uri "
 								" dropping packet\n");
 					break;
 				}
-				u=&msg->parsed_uri;
+				
 				switch (a->p2_type){
 					case URIPORT_ST:
 									port=u->port_no;
