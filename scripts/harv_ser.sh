@@ -49,6 +49,7 @@ BEGIN {
         rpl406=0;rpl407=0;rpl408=0;rpl410=0;
         rpl481=0;rpl483=0;rpl486=0;rpl478=0;rpl487=0;
         rpl4xx=0;
+	rpl479=0;
     rpl500=0;rpl501=0;rpl502=0;rpl503=0;rpl5xx=0;
     rpl603=0;rpl6xx=0;
 
@@ -342,6 +343,10 @@ reply==0 && request=0 {
     rpl487++
     next
 }
+/SIP\/2\.0 479/ {
+    rpl479++
+    next
+}
 /SIP\/2\.0 4[0-9][0-9]/ {
     print
     rpl4xx++
@@ -445,6 +450,7 @@ END {
 	print "408 (Request Timeout): " rpl408  
 	print "410 (Gone): " rpl410
 	print "478 (Unresolveable): " rpl478 
+	print "479 (private IP): " rpl479 
 	print "481 (Call/Transaction does not exist): " rpl481 
 	print "483 (Too Many Hops): " rpl483 
 	print "486 (Busy Here): " rpl486 
