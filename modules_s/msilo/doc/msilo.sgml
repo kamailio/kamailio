@@ -1,0 +1,61 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+<!ENTITY parentsgml "msilo.sgml">
+<!ENTITY copyrightholder "FhG FOKUS">
+<!ENTITY ser "SER">
+<!ENTITY sername "SIP Express Router">
+<!ENTITY serhomeweb "http://www.iptel.org/ser/">
+<!ENTITY serbugsweb "http://www.iptel.org/ser/bugs/">
+<!ENTITY serhelpmail "serhelp@iptel.org">
+<!ENTITY serusersmail "serusers@iptel.org">
+<!ENTITY serusersweb "http://mail.iptel.org/mailman/listinfo/serusers/">
+<!ENTITY serdevmail "serdev@iptel.org">
+<!ENTITY serdevweb "http://mail.iptel.org/mailman/listinfo/serdev/">
+<!ENTITY user SYSTEM "msilo_user.sgml">
+<!ENTITY devel SYSTEM "msilo_devel.sgml">
+<!ENTITY faq SYSTEM "msilo_faq.sgml">
+<!ENTITY msilosql SYSTEM "msilo.sql">
+<!ENTITY msilocfg SYSTEM "msilo.cfg">
+
+]>
+
+<book>
+    <bookinfo>
+	<title>MSILO Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+		<address>
+		<email>mierla@fokus.fraunhofer.de</email>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<address>
+		<email>mierla@fokus.fraunhofer.de</email>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <year>2004</year>
+	    <holder>&copyrightholder;</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+
+</book>
