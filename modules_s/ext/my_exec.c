@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <signal.h>
 #define  _MY_POPEN_NO_INLINE
 
 #include "../../dprint.h"
