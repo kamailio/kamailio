@@ -376,13 +376,13 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 						DBT_CON_ROW(_h)->fields[i].val.int_val;
 				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_INT;
 			break;
-	
+
 			case DB_DOUBLE:
 				VAL_DOUBLE(&(ROW_VALUES(_r)[i])) = 
 						DBT_CON_ROW(_h)->fields[i].val.double_val;
 				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_DOUBLE;
 			break;
-	
+
 			case DB_STRING:
 				VAL_STR(&(ROW_VALUES(_r)[i])).s = 
 						DBT_CON_ROW(_h)->fields[i].val.str_val.s;
@@ -390,7 +390,7 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 						DBT_CON_ROW(_h)->fields[i].val.str_val.len;
 				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_STR;
 			break;
-	
+
 			case DB_STR:
 				VAL_STR(&(ROW_VALUES(_r)[i])).s = 
 						DBT_CON_ROW(_h)->fields[i].val.str_val.s;
@@ -413,10 +413,10 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_STR;
 			break;
 
-		        case DB_BITMAP:
-				VAL_BITMAP(&(ROW_VALUES(_r)[i])) =
+			case DB_BITMAP:
+				VAL_INT(&(ROW_VALUES(_r)[i])) =
 					DBT_CON_ROW(_h)->fields[i].val.bitmap_val;
-				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_BITMAP;
+				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_INT;
 			break;
 		}
 	}
