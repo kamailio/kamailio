@@ -24,6 +24,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-09-12  timer_link.tg exists only if EXTRA_DEBUG (andrei)
+ */
 
 
 #ifndef _TIMER_H
@@ -39,7 +44,6 @@
 #define TIMER_DELETED	1
 
 
-#define is_in_timer_list2(_tl) ( (_tl)->timer_list )
 
 /* identifiers of timer lists;*/
 /* fixed-timer retransmission lists (benefit: fixed timer$
@@ -63,7 +67,9 @@ typedef struct timer_link
 	volatile unsigned int       time_out;
 	void              *payload;
 	struct timer      *timer_list;
+#ifdef EXTRA_DEBUG
 	enum timer_groups  tg;
+#endif
 }timer_link_type ;
 
 

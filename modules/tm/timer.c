@@ -120,6 +120,12 @@
 
 
 static struct timer_table *timertable=0;
+static struct timer detached_timer; /* just to have a value to compare with*/
+
+#define DETACHED_LIST (&detached_timer)
+
+#define is_in_timer_list2(_tl) ( (_tl)->timer_list &&  \
+									((_tl)->timer_list!=DETACHED_LIST) )
 
 int noisy_ctimer=0;
 
@@ -299,7 +305,9 @@ inline static void retransmission_handler( void *attr)
 
 	id = r_buf->retr_list;
 	r_buf->retr_list = id < RT_T2 ? id + 1 : RT_T2;
-
+	
+	r_buf->retr_timer.timer_list= NULL; /* set to NULL so that set_timer
+										   will work */
 	set_timer(&(r_buf->retr_timer),id < RT_T2 ? id + 1 : RT_T2 );
 
 	DBG("DEBUG: retransmission_handler : done\n");
@@ -646,7 +654,7 @@ struct timer_link  *check_and_split_time_list( struct timer *timer_list,
 	end = &timer_list->last_tl;
 	tl = timer_list->first_tl.next_tl;
 	while( tl!=end && tl->time_out <= time) {
-		tl->timer_list = NULL;
+		tl->timer_list = DETACHED_LIST;
 		tl=tl->next_tl;
 	}
 
@@ -677,7 +685,11 @@ struct timer_link  *check_and_split_time_list( struct timer *timer_list,
 
 
 
-/* stop timer */
+/* stop timer
+ * WARNING: a reset'ed timer will be lost forever
+ *  (succesive set_timer won't work unless you're lucky
+ *   an catch the race condition, the ideea here is there is no
+ *   guarantee you can do anything after a timer_reset)*/
 void reset_timer( struct timer_link* tl )
 {
 	/* disqualify this timer from execution by setting its time_out
@@ -695,7 +707,14 @@ void reset_timer( struct timer_link* tl )
 
 
 
-/* determine timer length and put on a correct timer list */
+/* determine timer length and put on a correct timer list
+ * WARNING: - don't try to use it to "move" a timer from one list
+ *            to another, you'll run into races
+ *          - reset_timer; set_timer might not work, a reset'ed timer
+ *             has no set_timer guarantee, it might be lost;
+ *             same for an expired timer: only it's handler can
+ *             set it again, an external set_timer has no guarantee
+ */
 void set_timer( struct timer_link *new_tl, enum lists list_id )
 {
 	unsigned int timeout;
@@ -713,9 +732,19 @@ void set_timer( struct timer_link *new_tl, enum lists list_id )
 	list= &(timertable->timers[ list_id ]);
 
 	lock(list->mutex);
+	/* check first if we are on the "detached" timer_routine list,
+	 * if so do nothing, the timer is not valid anymore
+	 * (sideffect: reset_timer ; set_timer is not safe, a reseted timer
+	 *  might be lost, depending on this race condition ) */
+	if (new_tl->timer_list==DETACHED_LIST){
+		LOG(L_CRIT, "WARNING: set_timer called on a \"detached\" timer"
+				" -- ignoring: %p\n", new_tl);
+		goto end;
+	}
 	/* make sure I'm not already on a list */
 	remove_timer_unsafe( new_tl );
 	add_timer_unsafe( list, new_tl, get_ticks()+timeout);
+end:
 	unlock(list->mutex);
 }
 
