@@ -211,7 +211,8 @@ int push_on_network(struct sip_msg *msg, int net)
 	if (write(net_pipes_in[net], &sms_messg, sizeof(sms_messg))!=
 	sizeof(sms_messg) )
 	{
-		LOG(L_ERR,"ERROR:sms_push_on_net: error when writting to pipe\n");
+		LOG(L_ERR,"ERROR:sms_push_on_net: error when writting to pipe :%s\n",
+			strerror(errno) );
 		shm_free(sms_messg.text);
 		(*queued_msgs)--;
 		goto error;
