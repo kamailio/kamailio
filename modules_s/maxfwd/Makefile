@@ -7,6 +7,6 @@
 
 auto_gen=
 NAME=maxfwd.so
-LIBS= #-lpthread
+LIBS= 
 
 include ../../Makefile.modules

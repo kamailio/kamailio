@@ -7,6 +7,6 @@
 
 auto_gen=
 NAME=cpl-c.so
-LIBS= -L/usr/lib -lxml
+LIBS= -L$(LOCALBASE)/lib -L/usr/pkg/lib -lxml
 
 include ../../Makefile.modules
