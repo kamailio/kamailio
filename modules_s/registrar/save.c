@@ -50,6 +50,7 @@
 #include "regtime.h"
 #include "save.h"
 
+static int mem_only = 0;
 
 void remove_cont(urecord_t* _r, ucontact_t* _c)
 {
@@ -94,8 +95,22 @@ void move_on_top(urecord_t* _r, ucontact_t* _c)
 static inline int star(udomain_t* _d, str* _a)
 {
 	urecord_t* r;
+	ucontact_t* c;
 	
 	ul.lock_udomain(_d);
+
+	if (!ul.get_urecord(_d, _a, &r)) {
+		c = r->contacts;
+		while(c) {
+			if (mem_only) {
+				c->flags |= FL_MEM;
+			} else {
+				c->flags &= ~FL_MEM;
+			}
+			c = c->next;
+		}
+	}
+
 	if (ul.delete_urecord(_d, _a) < 0) {
 		LOG(L_ERR, "star(): Error while removing record from usrloc\n");
 		
@@ -162,6 +177,8 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 
 	if (isflagset(_m, nat_flag) == 1) flags = FL_NAT;
 	else flags = FL_NONE;
+
+	flags |= mem_only;
 
 	while(_c) {
 		if (calc_contact_expires(_m, _c->expires, &e) < 0) {
@@ -294,9 +311,21 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 					LOG(L_ERR, "update(): Error while inserting contact\n");
 					return -4;
 				}
+
+				if (mem_only) {
+					c2->flags |= FL_MEM;
+				} else {
+					c2->flags &= ~FL_MEM;
+				}
 			}
 		} else {
 			if (e == 0) {
+				if (mem_only) {
+					c->flags |= FL_MEM;
+				} else {
+					c->flags &= ~FL_MEM;
+				}
+
 				if (ul.delete_ucontact(_r, c) < 0) {
 					rerrno = R_UL_DEL_C;
 					LOG(L_ERR, "update(): Error while deleting contact\n");
@@ -335,6 +364,11 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 					rerrno = R_UL_UPD_C;
 					LOG(L_ERR, "update(): Error while updating contact\n");
 					return -8;
+				}
+				if (mem_only) {
+					c->flags |= FL_MEM;
+				} else {
+					c->flags &= ~FL_MEM;
 				}
 
 				if (desc_time_order) {
@@ -463,4 +497,14 @@ int save(struct sip_msg* _m, char* _t, char* _s)
 int save_noreply(struct sip_msg* _m, char* _t, char* _s)
 {
 	return save_real(_m, (udomain_t*)_t, _s, 0);
+}
+
+
+/*
+ * Update memory cache only
+ */
+int save_memory(struct sip_msg* _m, char* _t, char* _s)
+{
+	mem_only = FL_MEM;
+	return save_real(_m, (udomain_t*)_t, _s, 1);
 }
