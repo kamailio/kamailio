@@ -178,7 +178,6 @@ static inline struct ip_addr* str2ip6(unsigned char* str, unsigned int len)
 	limit=str+len;
 	memset(addr_start, 0 , 8*sizeof(unsigned short));
 	memset(addr_end, 0 , 8*sizeof(unsigned short));
-	
 	for (; str<limit; str++){
 		if (*str==':'){
 			no_colons++;
@@ -206,8 +205,19 @@ static inline struct ip_addr* str2ip6(unsigned char* str, unsigned int len)
 		addr[i]=htons(addr[i]);
 		i++; 
 	}
-	rest=8-i-idx1;
-	memcpy(addr_start+idx1+rest, addr_end, i*sizeof(unsigned short));
+	/* if address contained '::' fix it */
+	if (addr==addr_end){
+		rest=8-i-idx1;
+		memcpy(addr_start+idx1+rest, addr_end, i*sizeof(unsigned short));
+	}
+/*
+	DBG("str2ip6: idx1=%d, rest=%d, no_colons=%d, hex=%x\n",
+			idx1, rest, no_colons, hex);
+	DBG("str2ip6: address %x:%x:%x:%x:%x:%x:%x:%x\n", 
+			addr_start[0], addr_start[1], addr_start[2],
+			addr_start[3], addr_start[4], addr_start[5],
+			addr_start[6], addr_start[7] );
+*/
 	return &ip;
 
 error_too_many_colons:
