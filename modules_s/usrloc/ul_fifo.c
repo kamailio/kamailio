@@ -342,7 +342,7 @@ int static ul_rm( FILE *pipe, char *response_file )
 		fifo_reply(response_file, "user (%s, %s) deleted\n", table, user);
 		return 1;
 	} else {
-		fifo_reply(response_file, "table (%s) not found\n", table);
+		fifo_reply(response_file, "ERROR: table (%s) not found\n", table);
 		return -1;
 	}
 }
@@ -401,7 +401,7 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 		}
 		
 		if (res > 0) {
-			fifo_reply(response_file, "Username %s in table %s not found\n", user, table);
+			fifo_reply(response_file, "ERROR: Username %s in table %s not found\n", user, table);
 			unlock_udomain(d);
 			return -1;
 		}
@@ -415,7 +415,7 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 		}			
 
 		if (res > 0) {
-			fifo_reply(response_file, "Contact %s in table %s not found\n", contact, table);
+			fifo_reply(response_file, "ERROR: Contact %s in table %s not found\n", contact, table);
 			unlock_udomain(d);
 			return -1;
 		}
@@ -431,7 +431,7 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 		fifo_reply(response_file, "Contact (%s, %s) deleted from table %s\n", user, contact, table);
 		return 1;
 	} else {
-		fifo_reply(response_file, "table (%s) not found\n", table);
+		fifo_reply(response_file, "ERROR: table (%s) not found\n", table);
 		return -1;
 	}
 
