@@ -411,7 +411,7 @@ done:
 		fclose(fin);
 	return dtp;
 clean:
-	/// ????? FILL IT IN
+	/// ????? FILL IT IN - incomlete row/column
 	DBG("DBT:dbt_load_file: error at row=%d col=%d c=%c\n", crow+1, ccol+1, c);
 	if(dtp)
 		dbt_table_free(dtp);
