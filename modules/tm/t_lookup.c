@@ -70,6 +70,8 @@
  * 2003-04-07  new transactions inherit on_negative and on_relpy from script
  *             variables on instatntiation (jiri)
  * 2003-04-30  t_newtran clean up (jiri)
+ * 2003-08-21  request lookups fixed to skip UAC transactions, 
+ *             thanks Ed (jiri)
  */
 
 
@@ -290,8 +292,8 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 		p_cell; p_cell = p_cell->next_cell ) 
 	{
 		t_msg=p_cell->uas.request;
-		if (skip_method & t_msg->REQ_METHOD)
-			continue;
+		if (!t_msg) continue;  /* don't try matching UAC transactions */
+		if (skip_method & t_msg->REQ_METHOD) continue;
 
 		/* dialog matching needs to be applied for ACK/200s */
 		if (is_ack && p_cell->uas.status<300) {
@@ -404,6 +406,8 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 		  p_cell; p_cell = p_cell->next_cell ) 
 	{
 		t_msg = p_cell->uas.request;
+
+		if (!t_msg) continue; /* skip UAC transactions */
 
 		if (!isACK) {	
 			/* compare lengths first */ 
@@ -553,8 +557,10 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 	{
 		t_msg = p_cell->uas.request;
 
+		if (!t_msg) continue; /* skip UAC transactions */
+
 		/* we don't cancel CANCELs ;-) */
-		if (p_cell->uas.request->REQ_METHOD==METHOD_CANCEL)
+		if (t_msg->REQ_METHOD==METHOD_CANCEL)
 			continue;
 
 		/* check lengths now */	
