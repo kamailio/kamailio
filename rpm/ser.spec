@@ -7,7 +7,7 @@ Summary:      SIP Express Router, very fast and flexible SIP Proxy
 Name:         %name
 Version:      %ver
 Release:      %rel
-Packager:     Jan Janak <J.Janak@sh.cvut.cz>
+Packager:     Jan Janak <jan@iptel.org>
 Copyright:    GPL
 Group:        System Environment/Daemons
 Source:       http://iptel.org/ser/stable/%{name}-%{ver}_src.tar.gz
