@@ -53,9 +53,10 @@
 
 enum _hdr_types_t {
 	HDR_ERROR_T					= -1   /* Error while parsing */,
-	HDR_VIA_T					=  0   /* Via header field */,
-	HDR_VIA1_T					=  0   /* First Via header field */,
-	HDR_VIA2_T					=  1   /* only used as flag */,
+	HDR_OTHER_T                                     =  0   /* Some other header field */,
+	HDR_VIA_T					=  1   /* Via header field */,
+	HDR_VIA1_T					=  1   /* First Via header field */,
+	HDR_VIA2_T					=  2   /* only used as flag */,
 	HDR_TO_T					       /* To header field */,
 	HDR_FROM_T					       /* From header field */,
 	HDR_CSEQ_T					       /* CSeq header field */,
@@ -85,8 +86,7 @@ enum _hdr_types_t {
 	HDR_DIVERSION_T				       /* Diversion header field */,
 	HDR_RPID_T					       /* Remote-Party-ID header field */,
 	HDR_REFER_TO_T				       /* Refer-To header fiels */,
-	HDR_OTHER_T					       /* Some other header field */,
-	HDR_EOH_T					       /* end of headers */
+	HDR_EOH_T				       /* Some other header field */
 };
 
 

@@ -33,6 +33,7 @@
  *  2003-04-01  added opt (condition) lumps (andrei)
  *  2003-04-02  added more subst lumps: SUBST_{SND,RCV}_ALL  
  *              => ip:port;transport=proto (andrei)
+ *  2005-03-22  the type of type attribute changed to enum _hdr_types_t (janakj)
  *
  */
 
@@ -42,33 +43,34 @@
 
 #include "lump_struct.h"
 #include "parser/msg_parser.h"
+#include "parser/hf.h"
 
 /* adds a header to the end */
 struct lump* append_new_lump(struct lump** list, char* new_hdr,
-							 int len, int type);
+							 int len, enum _hdr_types_t type);
 /* inserts a header to the beginning */
 struct lump* insert_new_lump(struct lump** list, char* new_hdr,
-							  int len, int type);
+							  int len, enum _hdr_types_t type);
 struct lump* insert_new_lump_after(struct lump* after,
-									char* new_hdr, int len, int type);
+									char* new_hdr, int len, enum _hdr_types_t type);
 struct lump* insert_new_lump_before(struct lump* before, char* new_hdr,
-									int len,int type);
+									int len,enum _hdr_types_t type);
 /* substitutions (replace with ip address, port etc) */
 struct lump* insert_subst_lump_after(struct lump* after,  enum lump_subst subst,
-									int type);
+									enum _hdr_types_t type);
 struct lump* insert_subst_lump_before(struct lump* before,enum lump_subst subst,
-									int type);
+									enum _hdr_types_t type);
 
 /* conditional lumps */
 struct lump* insert_cond_lump_after(struct lump* after, enum lump_conditions c,
-									int type);
+									enum _hdr_types_t type);
 struct lump* insert_cond_lump_before(struct lump* after, enum lump_conditions c,
-									int type);
+									enum _hdr_types_t type);
 
 /* removes an already existing header */
-struct lump* del_lump(struct sip_msg* msg, int offset, int len, int type);
+struct lump* del_lump(struct sip_msg* msg, int offset, int len, enum _hdr_types_t type);
 /* set an anchor */
-struct lump* anchor_lump(struct sip_msg* msg, int offset, int len, int type);
+struct lump* anchor_lump(struct sip_msg* msg, int offset, int len, enum _hdr_types_t type);
 
 
 

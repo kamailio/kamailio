@@ -32,6 +32,7 @@
  *  2003-10-20  anchor_lump & del_lump will automatically choose the lump list
  *              based on  msg->eoh comparisons (andrei)
  *  2003-10-28  added extra checks (paranoia) for {anchor,del}_lump (andrei)
+ *  2005-03-24  the type of type attribute changed to enum _hdr_types_t (janakj)
  */
 
 
@@ -56,7 +57,7 @@ enum lump_dir { LD_NEXT, LD_BEFORE, LD_AFTER };
 /* adds a header to the end
  * returns  pointer on success, 0 on error */
 struct lump* append_new_lump(struct lump** list, char* new_hdr,
-							 int len, int type)
+							 int len, enum _hdr_types_t type)
 {
 	struct lump** t;
 	struct lump* tmp;
@@ -83,7 +84,7 @@ struct lump* append_new_lump(struct lump** list, char* new_hdr,
 /* inserts a header to the beginning 
  * returns pointer if success, 0 on error */
 struct lump* insert_new_lump(struct lump** list, char* new_hdr,
-								int len, int type)
+								int len, enum _hdr_types_t type)
 {
 	struct lump* tmp;
 
@@ -107,7 +108,7 @@ struct lump* insert_new_lump(struct lump** list, char* new_hdr,
 /* inserts a  header/data lump immediately after hdr 
  * returns pointer on success, 0 on error */
 struct lump* insert_new_lump_after( struct lump* after, char* new_hdr,
-							int len, int type)
+							int len, enum _hdr_types_t type)
 {
 	struct lump* tmp;
 
@@ -132,7 +133,7 @@ struct lump* insert_new_lump_after( struct lump* after, char* new_hdr,
 /* inserts a  header/data lump immediately before "before" 
  * returns pointer on success, 0 on error */
 struct lump* insert_new_lump_before( struct lump* before, char* new_hdr,
-							int len, int type)
+							int len, enum _hdr_types_t type)
 {
 	struct lump* tmp;
 
@@ -157,7 +158,7 @@ struct lump* insert_new_lump_before( struct lump* before, char* new_hdr,
 /* inserts a  subst lump immediately after hdr 
  * returns pointer on success, 0 on error */
 struct lump* insert_subst_lump_after( struct lump* after, enum lump_subst subst,
-										int type)
+										enum _hdr_types_t type)
 {
 	struct lump* tmp;
 	
@@ -183,7 +184,7 @@ struct lump* insert_subst_lump_after( struct lump* after, enum lump_subst subst,
  * returns pointer on success, 0 on error */
 struct lump* insert_subst_lump_before(	struct lump* before, 
 										enum lump_subst subst,
-										int type)
+										enum _hdr_types_t type)
 {
 	struct lump* tmp;
 	
@@ -208,7 +209,7 @@ struct lump* insert_subst_lump_before(	struct lump* before,
 /* inserts a  cond lump immediately after hdr 
  * returns pointer on success, 0 on error */
 struct lump* insert_cond_lump_after( struct lump* after, enum lump_conditions c,
-										int type)
+										enum _hdr_types_t type)
 {
 	struct lump* tmp;
 	
@@ -234,7 +235,7 @@ struct lump* insert_cond_lump_after( struct lump* after, enum lump_conditions c,
  * returns pointer on success, 0 on error */
 struct lump* insert_cond_lump_before(	struct lump* before, 
 										enum lump_conditions c,
-										int type)
+										enum _hdr_types_t type)
 {
 	struct lump* tmp;
 	
@@ -261,7 +262,7 @@ struct lump* insert_cond_lump_before(	struct lump* before,
  * msg->body_lumps list, depending on the offset being greater than msg->eoh,
  * so msg->eoh must be parsed (parse with HDR_EOH) if you think your lump
  *  might affect the body!! */
-struct lump* del_lump(struct sip_msg* msg, int offset, int len, int type)
+struct lump* del_lump(struct sip_msg* msg, int offset, int len, enum _hdr_types_t type)
 {
 	struct lump* tmp;
 	struct lump* prev, *t;
@@ -317,7 +318,7 @@ struct lump* del_lump(struct sip_msg* msg, int offset, int len, int type)
  * msg->body_lumps list, depending on the offset being greater than msg->eoh,
  * so msg->eoh must be parsed (parse with HDR_EOH) if you think your lump
  *  might affect the body!! */
-struct lump* anchor_lump(struct sip_msg* msg, int offset, int len, int type)
+struct lump* anchor_lump(struct sip_msg* msg, int offset, int len, enum _hdr_types_t type)
 {
 	struct lump* tmp;
 	struct lump* prev, *t;
