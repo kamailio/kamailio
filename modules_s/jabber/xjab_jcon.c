@@ -518,7 +518,7 @@ int xj_jcon_update(xj_jcon jbc, int cache_time)
 	return 0;	
 }
 
-int xj_jcon_is_ready(xj_jcon jbc, char *to, int tol)
+int xj_jcon_is_ready(xj_jcon jbc, char *to, int tol, char dl)
 {
 	char *p;
 	str sto;
@@ -528,11 +528,11 @@ int xj_jcon_is_ready(xj_jcon jbc, char *to, int tol)
 	
 	sto.s = to;
 	sto.len = tol;
-	if(!xj_jconf_check_addr(&sto))
+	if(!xj_jconf_check_addr(&sto, dl))
 	{
 		DBG("XJAB: xj_jcon_is_ready: destination=conference\n");
 		
-		if((jcf=xj_jcon_get_jconf(jbc, &sto))!=NULL)
+		if((jcf=xj_jcon_get_jconf(jbc, &sto, dl))!=NULL)
 			return (jcf->status & XJ_JCONF_READY)?0:3;
 		
 		DBG("XJAB: xj_jcon_is_ready: conference does not exist\n");
@@ -561,7 +561,7 @@ int xj_jcon_is_ready(xj_jcon jbc, char *to, int tol)
 	return 0;
 }
 
-xj_jconf  xj_jcon_get_jconf(xj_jcon jbc, str* sid)
+xj_jconf  xj_jcon_get_jconf(xj_jcon jbc, str* sid, char dl)
 {
 	xj_jconf jcf = NULL, p;
 
@@ -571,7 +571,7 @@ xj_jconf  xj_jcon_get_jconf(xj_jcon jbc, str* sid)
 	
 	if((jcf = xj_jconf_new(sid))==NULL)
 		return NULL;
-	if(xj_jconf_init_sip(jcf, jbc->jkey->id))
+	if(xj_jconf_init_sip(jcf, jbc->jkey->id, dl))
 		goto clean;
 	if(jbc->nrjconf && (p = find234(jbc->jconf, (void*)jcf, NULL)) != NULL)
 	{
@@ -643,7 +643,7 @@ int xj_jcon_jconf_presence(xj_jcon jbc, xj_jconf jcf, char* type,
 	return xj_jcon_send_presence(jbc,buff,type,status,NULL);
 }
 
-int  xj_jcon_del_jconf(xj_jcon jbc, str *sid, int flag)
+int  xj_jcon_del_jconf(xj_jcon jbc, str *sid, char dl, int flag)
 {
 	xj_jconf jcf = NULL, p = NULL;
 	
@@ -655,7 +655,7 @@ int  xj_jcon_del_jconf(xj_jcon jbc, str *sid, int flag)
 	
 	if((jcf = xj_jconf_new(sid))==NULL)
 		return -1;
-	if(xj_jconf_init_sip(jcf, jbc->jkey->id))
+	if(xj_jconf_init_sip(jcf, jbc->jkey->id, dl))
 	{
 		xj_jconf_free(jcf);
 		return -1;

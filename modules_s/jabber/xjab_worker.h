@@ -42,9 +42,11 @@
 /**********             ***/
 typedef struct _xj_jalias
 {
-	int size;
-	str *jdm;
-	str *a;
+	int size;	// number of aliases
+	str *jdm;	// Jabber domain
+	char dlm;	// user part delimitator
+	str *a;		// aliases
+	char *d;	// user part delimitator for aliases
 } t_xj_jalias, *xj_jalias;
 
 typedef struct _xj_worker
@@ -64,7 +66,7 @@ typedef struct _xj_wlist
 	int delayt;
 	int sleept;
 	str *contact_h;		// contact header
-    smart_lock	*sems;	 // semaphores
+	smart_lock	*sems;	 // semaphores
 	xj_jalias	aliases; // addess aliases
 	xj_worker	workers; // the list of workers
 } t_xj_wlist, *xj_wlist;

@@ -76,7 +76,7 @@ xj_jconf xj_jconf_new(str *u)
 	return jcf;
 }
 
-int xj_jconf_init_sip(xj_jconf jcf, str *sid)
+int xj_jconf_init_sip(xj_jconf jcf, str *sid, char dl)
 {
 	char *p, *p0;
 	int n = 0;
@@ -96,7 +96,7 @@ int xj_jconf_init_sip(xj_jconf jcf, str *sid)
 	while(p0 > jcf->uri.s)
 	{
 		p0--;
-		if(*p0 == '%')
+		if(*p0 == dl)
 		{
 			switch(n)
 			{
@@ -120,7 +120,7 @@ int xj_jconf_init_sip(xj_jconf jcf, str *sid)
 	if(n != 2 || p0 != jcf->uri.s)
 		goto bad_format;
 
-	if(p0 == jcf->uri.s && *p0 != '%')
+	if(p0 == jcf->uri.s && *p0 != dl)
 	{
 		jcf->nick.s = p0;
 		jcf->nick.len = p - jcf->nick.s;
@@ -294,7 +294,7 @@ int xj_jconf_hash(str *x, str *y)
 	return (h)?h:1;
 }
 
-int xj_jconf_check_addr(str *addr)
+int xj_jconf_check_addr(str *addr, char dl)
 {
 	char *p;
 	int i;
@@ -306,7 +306,7 @@ int xj_jconf_check_addr(str *addr)
 	i= 0;
 	while((p < addr->s+addr->len) && *p != '@')
 	{
-		if(*p=='%')
+		if(*p==dl)
 			i++;
 		p++;
 	}

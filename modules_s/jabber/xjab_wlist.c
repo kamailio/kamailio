@@ -38,6 +38,8 @@
 #include "xjab_worker.h"
 #include "mdefines.h"
 
+#define XJ_DEF_JDELIM '*'
+
 /**
  * init a workers list
  * - pipes : communication pipes
@@ -192,6 +194,9 @@ void xj_wlist_free(xj_wlist jwl)
 
 	if(jwl->aliases != NULL)
 	{
+		if(jwl->aliases->d)
+			_M_SHM_FREE(jwl->aliases->d);
+
 		if(jwl->aliases->jdm != NULL)
 		{
 			_M_SHM_FREE(jwl->aliases->jdm->s);
@@ -352,8 +357,8 @@ error:
 
 int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd)
 {
-	char *p, *p0;
-	int i;
+	char *p, *p0, *p1;
+	int i, n;
 	
 	DBG("XJAB:xj_wlist_set_aliases\n");
 	if(jwl == NULL)
@@ -368,11 +373,21 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd)
 	}
 	
 	jwl->aliases->jdm = NULL;
+	jwl->aliases->dlm = XJ_DEF_JDELIM; // default user part delimitator
 	jwl->aliases->size = 0;
 	jwl->aliases->a = NULL;
-	
-	if(jd != NULL && strlen(jd)>2)
+	jwl->aliases->d = NULL;
+
+	if(jd != NULL && (n=strlen(jd))>2)
 	{
+		p = jd;
+		while(p < jd+n && *p!='=')
+			p++;
+		if(p<jd+n-1)
+		{
+			jwl->aliases->dlm = *(p+1);
+			n = p - jd;
+		}
 		if((jwl->aliases->jdm = (str*)_M_SHM_MALLOC(sizeof(str)))== NULL)
 		{
 			DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory!?\n");
@@ -380,7 +395,7 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd)
 			jwl->aliases = NULL;
 			return -1;		
 		}
-		jwl->aliases->jdm->len = strlen(jd);
+		jwl->aliases->jdm->len = n;
 		if((jwl->aliases->jdm->s=(char*)_M_SHM_MALLOC(jwl->aliases->jdm->len))
 				== NULL)
 		{
@@ -390,6 +405,8 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd)
 			jwl->aliases = NULL;
 		}
 		strncpy(jwl->aliases->jdm->s, jd, jwl->aliases->jdm->len);
+		DBG("XJAB:xj_wlist_set_aliases: jdomain=%.*s delim=%c\n",
+			jwl->aliases->jdm->len, jwl->aliases->jdm->s, jwl->aliases->dlm);
 	}
 	
 	if(!als || strlen(als)<2)
@@ -407,18 +424,19 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd)
 		return 0;
 	}
 	
-	if((jwl->aliases->a = (str*)_M_SHM_MALLOC(jwl->aliases->size*sizeof(str)))
-			== NULL)
+	jwl->aliases->d = (char*)_M_SHM_MALLOC(jwl->aliases->size*sizeof(char));
+	if(jwl->aliases->d == NULL)
 	{
 		DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory..\n");
-		if(jwl->aliases->jdm)
-		{
-			_M_SHM_FREE(jwl->aliases->jdm->s);
-			_M_SHM_FREE(jwl->aliases->jdm);
-		}
-		_M_SHM_FREE(jwl->aliases);
-		jwl->aliases = NULL;
-		return -1;
+		goto clean2;
+	}
+	memset(jwl->aliases->d, 0, jwl->aliases->size);
+	
+	jwl->aliases->a = (str*)_M_SHM_MALLOC(jwl->aliases->size*sizeof(str));
+	if(jwl->aliases->a == NULL)
+	{
+		DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory..\n");
+		goto clean1;
 	}
 	
 	p++;
@@ -429,7 +447,14 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd)
 			DBG("XJAB:xj_wlist_set_aliases: bad parameter value format\n");
 			goto clean;
 		}
-		jwl->aliases->a[i].len = p0 - p;
+		n = p0 - p;
+		p1 = strchr(p, '=');
+		if(p1 && p1<p0-1)
+		{
+			jwl->aliases->d[i] = *(p1+1);
+			n = p1 - p;
+		}
+		jwl->aliases->a[i].len = n;
 		if((jwl->aliases->a[i].s = (char*)_M_SHM_MALLOC(jwl->aliases->a[i].len))
 				== NULL)
 		{
@@ -438,25 +463,31 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd)
 		}
 			
 		strncpy(jwl->aliases->a[i].s, p, jwl->aliases->a[i].len);
-		DBG("XJAB:xj_wlist_set_aliases: alias[%d/%d]=%.*s\n", 
-				i+1, jwl->aliases->size, jwl->aliases->a[i].len, 
-				jwl->aliases->a[i].s);
+		DBG("XJAB:xj_wlist_set_aliases: alias[%d/%d]=%.*s delim=%c\n", 
+			i+1, jwl->aliases->size, jwl->aliases->a[i].len, 
+			jwl->aliases->a[i].s, jwl->aliases->d[i]?jwl->aliases->d[i]:'X');
 		p = p0 + 1;
 	}
 	return 0;
 
 clean:
-	if(jwl->aliases->jdm)
-	{
-		_M_SHM_FREE(jwl->aliases->jdm->s);
-		_M_SHM_FREE(jwl->aliases->jdm);
-	}
 	while(i>0)
 	{
 		_M_SHM_FREE(jwl->aliases->a[i-1].s);
 		i--;
 	}
 	_M_SHM_FREE(jwl->aliases->a);
+
+clean1:
+	if(jwl->aliases->d)
+		_M_SHM_FREE(jwl->aliases->d);
+
+clean2:
+	if(jwl->aliases->jdm)
+	{
+		_M_SHM_FREE(jwl->aliases->jdm->s);
+		_M_SHM_FREE(jwl->aliases->jdm);
+	}
 	_M_SHM_FREE(jwl->aliases);
 	jwl->aliases = NULL;
 	return -1;

@@ -71,27 +71,6 @@ int main_loop = 1;
 static str jab_gw_name = {"sip_to_jabber_gateway", 21};
 
 /**
- * send disconnected info to all SIP users associated with worker idx
- */
-int xj_wlist_send_info(xj_wlist jwl, int idx)
-{
-	int i;
-	xj_jkey p;
-	if(jwl==NULL || idx < 0 || idx >= jwl->len || !jwl->workers[idx].sip_ids)
-		return -1;
-	s_lock_at(jwl->sems, idx);
-	for(i=0; (p=(xj_jkey)index234(jwl->workers[idx].sip_ids, i))!=NULL; i++)
-	{
-		DBG("XJAB:xj_wlist_send_info: sending disconnect message to <%.*s>\n",
-			p->id->len, p->id->s);
-		xj_send_sip_msgz(p->id, &jab_gw_name, NULL, XJ_DMSG_INF_DISCONNECTED,
-			NULL);
-	}
-	s_unlock_at(jwl->sems, idx);
-	return 0;
-}
-
-/**
  * address corection
  * alias A~B: flag == 0 => A->B, otherwise B->A
  */
@@ -120,10 +99,41 @@ int xj_address_translation(str *src, str *dst, xj_jalias als, int flag)
 	
 	/*** checking aliases */
 	if(als->size > 0)
+	{
 		for(i=0; i<als->size; i++)
 			if(!strncasecmp(p, als->a[i].s, als->a[i].len))
+			{
+				if(als->d[i])
+				{
+					if(flag & XJ_ADDRTR_A2B)
+					{
+						strncpy(dst->s, src->s, src->len);
+						p0 = dst->s;
+						while(p0 < dst->s + (p-src->s)) 
+						{
+							if(*p0 == als->dlm)
+								*p0 = als->d[i];
+							p0++;
+						}
+						return 0;
+					}
+					if(flag & XJ_ADDRTR_B2A)
+					{
+						strncpy(dst->s, src->s, src->len);
+						p0 = dst->s;
+						while(p0 < dst->s + (p-src->s)) 
+						{
+							if(*p0 == als->d[i])
+								*p0 = als->dlm;
+							p0++;
+						}						
+						return 0;
+					}
+				}
 				goto done;
-	
+			}
+	}
+
 	DBG("XJAB:xj_address_translation:%d: - doing address corection\n", 
 			_xj_pid);	
 
@@ -140,22 +150,22 @@ int xj_address_translation(str *src, str *dst, xj_jalias als, int flag)
 			DBG("XJAB:xj_address_translation:%d: - that is for"
 				" Jabber conference\n", _xj_pid);
 			p0 = p-1;
-			while(p0 > src->s && *p0 != '%')
+			while(p0 > src->s && *p0 != als->dlm)
 				p0--;
 			if(p0 <= src->s)
 				return -1;
 			p0--;
-			while(p0 > src->s && *p0 != '%')
+			while(p0 > src->s && *p0 != als->dlm)
 				p0--;
-			if(*p0 != '%')
+			if(*p0 != als->dlm)
 				return -1;
 			dst->len = p - p0 - 2;
 			strncpy(dst->s, p0+1, dst->len);
 			dst->s[dst->len]=0;
 			p = dst->s;
-			while(p < (dst->s + dst->len) && *p!='%')
+			while(p < (dst->s + dst->len) && *p!=als->dlm)
 				p++;
-			if(*p=='%')
+			if(*p==als->dlm)
 				*p = '@';
 			return 0;
 		}
@@ -165,7 +175,7 @@ int xj_address_translation(str *src, str *dst, xj_jalias als, int flag)
 		dst->len = p - src->s - 1;
 		strncpy(dst->s, src->s, dst->len);
 		dst->s[dst->len]=0;
-		if((p = strchr(dst->s, '%')) != NULL)
+		if((p = strchr(dst->s, als->dlm)) != NULL)
 			*p = '@';
 		else
 		{
@@ -177,7 +187,7 @@ int xj_address_translation(str *src, str *dst, xj_jalias als, int flag)
 	}
 	if(flag & XJ_ADDRTR_B2A)
 	{
-		*(p-1) = '%';
+		*(p-1) = als->dlm;
 		p0 = src->s + src->len;
 		while(p0 > p)
 		{
@@ -238,7 +248,8 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 	//signal(SIGQUIT, xj_sig_handler);
 	signal(SIGSEGV, xj_sig_handler);
 
-	if(!jwl || !jaddress || rank >= jwl->len)
+	if(!jwl || !jwl->aliases || !jwl->aliases->jdm 
+			|| !jaddress || rank >= jwl->len)
 	{
 		DBG("XJAB:xj_worker[%d]:%d: exiting - wrong parameters\n",
 				rank, _xj_pid);
@@ -313,13 +324,13 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 					jcp->jmqueue.jsm[i]->to.len,jcp->jmqueue.jsm[i]->to.s,
 					jcp->jmqueue.jsm[i]->msg.len,jcp->jmqueue.jsm[i]->msg.s,
 					jcp->jmqueue.expire[i]);
-			if(xj_jcon_is_ready(jcp->jmqueue.ojc[i], 
-					jcp->jmqueue.jsm[i]->to.s, jcp->jmqueue.jsm[i]->to.len))
+			if(xj_jcon_is_ready(jcp->jmqueue.ojc[i], jcp->jmqueue.jsm[i]->to.s,
+					jcp->jmqueue.jsm[i]->to.len, jwl->aliases->dlm))
 				continue;
 
 			/*** address corection ***/
 			flag = XJ_ADDRTR_A2B;
-			if(!xj_jconf_check_addr(&jcp->jmqueue.jsm[i]->to))
+			if(!xj_jconf_check_addr(&jcp->jmqueue.jsm[i]->to,jwl->aliases->dlm))
 				flag |= XJ_ADDRTR_CON;
 			
 			sto.s = buff; 
@@ -376,8 +387,8 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 		switch(jsmsg->type)
 		{
 			case XJ_SEND_MESSAGE:
-				if(!xj_jconf_check_addr(&jsmsg->to) &&
-					(!jbc || !xj_jcon_get_jconf(jbc, &jsmsg->to) ) )
+				if(!xj_jconf_check_addr(&jsmsg->to, jwl->aliases->dlm) &&
+				(!jbc||!xj_jcon_get_jconf(jbc,&jsmsg->to,jwl->aliases->dlm)))
 				{
 					xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
 						jwl->contact_h, XJ_DMSG_ERR_NOTJCONF, NULL);
@@ -393,8 +404,9 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 				// close the conference session here
 				if(jbc->nrjconf <= 0)
 					goto step_w;
-				if(!xj_jconf_check_addr(&jsmsg->to))
-					xj_jcon_del_jconf(jbc, &jsmsg->to, XJ_JCMD_UNSUBSCRIBE);
+				if(!xj_jconf_check_addr(&jsmsg->to, jwl->aliases->dlm))
+					xj_jcon_del_jconf(jbc, &jsmsg->to, jwl->aliases->dlm,
+						XJ_JCMD_UNSUBSCRIBE);
 				xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
 					jwl->contact_h, XJ_DMSG_INF_JCONFEXIT, NULL);
 				goto step_w;
@@ -500,9 +512,10 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 		
 step_z:
 		flag = 0;
-		if(!xj_jconf_check_addr(&jsmsg->to))
+		if(!xj_jconf_check_addr(&jsmsg->to, jwl->aliases->dlm))
 		{
-			if((jcf = xj_jcon_get_jconf(jbc, &jsmsg->to)) != NULL)
+			if((jcf = xj_jcon_get_jconf(jbc, &jsmsg->to, jwl->aliases->dlm))
+					!= NULL)
 			{
 				if((jsmsg->type == XJ_JOIN_JCONF) &&
 					!(jcf->status & XJ_JCONF_READY || 
@@ -535,7 +548,7 @@ step_z:
 			goto step_w;
 		
 		// here will come only XJ_SEND_MESSAGE
-		switch(xj_jcon_is_ready(jbc, jsmsg->to.s, jsmsg->to.len))
+		switch(xj_jcon_is_ready(jbc,jsmsg->to.s,jsmsg->to.len,jwl->aliases->dlm))
 		{
 			case 0:
 				DBG("XJAB:xj_worker:%d: SENDING THE MESSAGE TO JABBER"
@@ -1005,6 +1018,9 @@ ready:
 	return err;
 }
 
+/**
+ *
+ */
 void xj_sig_handler(int s) 
 {
 	//signal(SIGTERM, xj_sig_handler);
@@ -1034,7 +1050,10 @@ int xj_send_sip_msg(str *to, str *from, str *contact, str *msg, int *cbp)
 	int **pcbp = NULL, beg, end, crt;
 	char buf1[1024];
 
-	if(!to || !from || !msg || (cbp && *cbp!=0))
+	if( !to || !to->s || to->len <= 0 
+			|| !from || !from->s || from->len <= 0 
+			|| !msg || !msg->s || msg->len <= 0
+			|| (cbp && *cbp!=0) )
 		return -1;
 
 	// from correction
@@ -1114,6 +1133,31 @@ int xj_send_sip_msgz(str *to, str *from, str *contact, char *msg, int *cbp)
 	return n;
 }
 
+/**
+ * send disconnected info to all SIP users associated with worker idx
+ */
+int xj_wlist_send_info(xj_wlist jwl, int idx)
+{
+	int i;
+	xj_jkey p;
+	if(jwl==NULL || idx < 0 || idx >= jwl->len || !jwl->workers[idx].sip_ids)
+		return -1;
+	s_lock_at(jwl->sems, idx);
+	for(i=0; (p=(xj_jkey)index234(jwl->workers[idx].sip_ids, i))!=NULL; i++)
+	{
+		DBG("XJAB:xj_wlist_send_info: sending disconnect message to <%.*s>\n",
+			p->id->len, p->id->s);
+		xj_send_sip_msgz(p->id, &jab_gw_name, NULL, XJ_DMSG_INF_DISCONNECTED,
+			NULL);
+	}
+	s_unlock_at(jwl->sems, idx);
+	return 0;
+}
+
+
+/**
+ *
+ */
 void xj_tuac_callback( struct cell *t, struct sip_msg *msg,
 			int code, void *param)
 {

@@ -51,14 +51,14 @@ typedef struct _xj_jconf
 } t_xj_jconf, *xj_jconf;
 
 xj_jconf xj_jconf_new(str *u);
-int xj_jconf_init_sip(xj_jconf jcf, str *sid);
+int xj_jconf_init_sip(xj_jconf jcf, str *sid, char dl);
 int xj_jconf_init_jab(xj_jconf jcf);
 
 int xj_jconf_set_status(xj_jconf jcf, int s);
 
 int xj_jconf_cmp(void *a, void *b);
 int xj_jconf_free(xj_jconf jcf);
-int xj_jconf_check_addr(str *addr);
+int xj_jconf_check_addr(str *addr, char dl);
 
 #endif
 

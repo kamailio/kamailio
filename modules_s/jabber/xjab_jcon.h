@@ -97,11 +97,11 @@ int xj_jcon_send_presence(xj_jcon, char*, char*, char*, char*);
 int xj_jcon_send_msg(xj_jcon, char*, int, char*, int, int);
 int xj_jcon_send_sig_msg(xj_jcon, char*, int, char*, int, char*, int);
 
-int xj_jcon_is_ready(xj_jcon, char *, int);
+int xj_jcon_is_ready(xj_jcon, char *, int, char);
 
-xj_jconf xj_jcon_get_jconf(xj_jcon, str*);
+xj_jconf xj_jcon_get_jconf(xj_jcon, str*, char);
 xj_jconf xj_jcon_check_jconf(xj_jcon, char*);
-int xj_jcon_del_jconf(xj_jcon, str*, int);
+int xj_jcon_del_jconf(xj_jcon, str*, char, int);
 int xj_jcon_jconf_presence(xj_jcon, xj_jconf, char*, char*);
 
 /**********             ***/
