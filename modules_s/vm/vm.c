@@ -1,5 +1,4 @@
 /*
- * $Id$
  *
  * $Id$
  *
@@ -87,7 +86,7 @@ static int vm_init_child(int rank);
 
 struct tm_binds _tmb;
 
-char* vm_db_url = "sql://ser:heslo@localhost/ser";    /* Database URL */
+char* vm_db_url = "mysql://ser:heslo@localhost/ser";    /* Database URL */
 char* email_column = "email_address";
 char* subscriber_table = "subscriber" ;
 
@@ -155,7 +154,7 @@ static int vm_mod_init(void)
 		return -1;
 	}
 
-	if (bind_dbmod(vm_db_url)) {
+	if (bind_dbmod()) {
 		LOG(L_ERR, "ERROR: vm_mod_init: unable to bind db\n");
 		return -1;
 	}
