@@ -1184,15 +1184,19 @@ int t_reply_with_body( struct cell *trans, unsigned int code,
 	}
 	add_lump_rpl( trans->uas.request, hdr_lump);
 	/* body lump */
-	body_lump = build_lump_rpl( body , strlen(body) , LUMP_RPL_BODY );
-	if (body_lump==0) {
+	if(body && strlen(body)) {
+	    body_lump = build_lump_rpl( body , strlen(body) , LUMP_RPL_BODY );
+	    if (body_lump==0) {
 		LOG(L_ERR,"ERROR:tm:t_reply_with_body: cannot create body lump\n");
 		goto error_1;
-	}
-	if (add_lump_rpl( trans->uas.request, body_lump)==-1) {
+	    }
+	    if (add_lump_rpl( trans->uas.request, body_lump)==-1) {
 		LOG(L_ERR,"ERROR:tm:t_reply_with_body: cannot add body lump\n");
 		goto error_1;
+	    }
 	}
+	else
+	    body_lump = 0;
 
 	rpl.s = build_res_buf_from_sip_req(
 			code, text, &s_to_tag,
@@ -1202,9 +1206,11 @@ int t_reply_with_body( struct cell *trans, unsigned int code,
 	 * memory leak or crashing (lumps are create in private memory) I will
 	 * remove the lumps by myself here (bogdan) */
 	unlink_lump_rpl( trans->uas.request, hdr_lump);
-	unlink_lump_rpl( trans->uas.request, body_lump);
 	pkg_free( hdr_lump );
-	pkg_free( body_lump );
+	if( body_lump ) {
+	    unlink_lump_rpl( trans->uas.request, body_lump);
+	    pkg_free( body_lump );
+	}
 
 	if (rpl.s==0) {
 		LOG(L_ERR,"ERROR:tm:t_reply_with_body: failed in doing "
