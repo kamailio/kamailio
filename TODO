@@ -5,7 +5,7 @@ $Id$
 - change len_gt into and expr (e.g msg:len).
 - sipit: uri == myself doesn't match tls port = 5061
 - sipit: fix check_self & *_alias to work with tcp & tls
-- sipit: fix ipv6 references in check_self
+x sipit: fix ipv6 references in check_self
 - regex subst on uris?
 x port receive.c pre_script_cb fix from stable
 - extend alias to include port numbers :

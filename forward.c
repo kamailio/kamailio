@@ -266,14 +266,19 @@ int check_self(str* host, unsigned short port)
 				     sock_info[r].name.len)==0) /*slower*/)
 			/* comp. must be case insensitive, host names
 			 * can be written in mixed case, it will also match
-			 * ipv6 addresses */
+			 * ipv6 addresses if we are lucky*/
 			break;
 	/* check if host == ip address */
 #ifdef USE_IPV6
 		/* ipv6 case is uglier, host can be [3ffe::1] */
 		ip6=str2ip6(host);
-		if ((ip6) && ip_addr_cmp(ip6, &sock_info[r].address))
-			break; /* match */
+		if (ip6){
+			if (ip_addr_cmp(ip6, &sock_info[r].address))
+				break; /* match */
+			else
+				continue; /* no match, but this is an ipv6 address
+							 so no point in trying ipv4 */
+		}
 #endif
 		/* ipv4 */
 		if ( 	(!sock_info[r].is_ip) &&
