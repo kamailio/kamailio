@@ -78,13 +78,13 @@ struct msg_start{
 			str method;
 			str uri;
 			str version;
-			short method_value;
+			int method_value;
 		}request;
 		struct {
 			str version;
 			str status;
 			str reason;
-			unsigned short /* statusclass,*/ statuscode;
+			unsigned int /* statusclass,*/ statuscode;
 		}reply;
 	}u;
 };
