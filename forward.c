@@ -69,9 +69,16 @@ int forward_request(char * orig, char* buf,
 	char received_buf[MAX_RECEIVED_SIZE];
 	char* new_buf;
 	int offset, s_offset, size;
-	struct sockaddr_in to;
+	struct sockaddr_in* to;
 
 	received_len=0;
+	new_buf=0;
+	to=0;
+	to=(struct sockaddr_in*)malloc(sizeof(struct sockaddr));
+	if (to==0){
+		DPrint("ERROR: forward_reply: out of memory\n");
+		goto error;
+	}
 
 	via_len=snprintf(line_buf, MAX_VIA_LINE_SIZE, "Via: SIP/2.0/UDP %s:%d\r\n",
 						names[0], port_no);
@@ -86,7 +93,7 @@ int forward_request(char * orig, char* buf,
 	new_buf=(char*)malloc(new_len+1);
 	if (new_buf==0){
 		DPrint("ERROR: forward_request: out of memory\n");
-		goto error1;
+		goto error;
 	}
 /* copy msg till first via */
 	offset=s_offset=0;
@@ -123,8 +130,8 @@ int forward_request(char * orig, char* buf,
 	printf("orig. len=%d, new_len=%d, via_len=%d, received_len=%d\n",
 			len, new_len, via_len, received_len);
 
-	to.sin_family = AF_INET;
-	to.sin_port = (re->port)?htons(re->port):htons(SIP_PORT);
+	to->sin_family = AF_INET;
+	to->sin_port = (re->port)?htons(re->port):htons(SIP_PORT);
 	/* if error try next ip address if possible */
 	if (re->ok==0){
 		if (re->host.h_addr_list[re->current_addr_idx+1])
@@ -132,21 +139,22 @@ int forward_request(char * orig, char* buf,
 		re->ok=1;
 	}
 	/* ? not 64bit clean?*/
-	to.sin_addr.s_addr=*((long*)re->host.h_addr_list[re->current_addr_idx]);
+	to->sin_addr.s_addr=*((long*)re->host.h_addr_list[re->current_addr_idx]);
 
 	re->tx++;
 	re->tx_bytes+=new_len;
-	if (udp_send(new_buf, new_len, &to, sizeof(to))==-1){
+	if (udp_send(new_buf, new_len, to, sizeof(struct sockaddr))==-1){
 			re->errors++;
 			re->ok=0;
 			goto error;
 	}
 
 	free(new_buf);
+	free(to);
 	return 0;
 error:
-	free(new_buf);
-error1:
+	if (new_buf) free(new_buf);
+	if (to) free(to);
 	return -1;
 
 }
@@ -164,9 +172,15 @@ int forward_reply(char * orig, char* buf,
 	char* new_buf;
 	int offset, s_offset, size;
 	struct hostent* he;
-	struct sockaddr_in to;
+	struct sockaddr_in* to;
 
 	new_buf=0;
+	to=0;
+	to=(struct sockaddr_in*)malloc(sizeof(struct sockaddr));
+	if (to==0){
+		DPrint("ERROR: forward_reply: out of memory\n");
+		goto error;
+	}
 
 	/*check if first via host = us */
 	if (check_via){
@@ -209,17 +223,19 @@ int forward_reply(char * orig, char* buf,
 		DPrint("ERROR:forward_reply:gethostbyname failure\n");
 		goto error;
 	}
-	to.sin_family = AF_INET;
-	to.sin_port = (msg->via2.port)?htons(msg->via2.port):htons(SIP_PORT);
-	to.sin_addr.s_addr=*((long*)he->h_addr_list[0]);
+	to->sin_family = AF_INET;
+	to->sin_port = (msg->via2.port)?htons(msg->via2.port):htons(SIP_PORT);
+	to->sin_addr.s_addr=*((long*)he->h_addr_list[0]);
 	
 	if (udp_send(new_buf,new_len, &to, sizeof(to))==-1)
 		goto error;
 	
 	free(new_buf);
+	free(to);
 	return 0;
 
 error:
 	if (new_buf) free(new_buf);
+	if (to) free(to);
 	return -1;
 }

@@ -19,12 +19,17 @@ int udp_sock;
 
 int udp_init(unsigned long ip, unsigned short port)
 {
-	struct sockaddr_in addr;
+	struct sockaddr_in* addr;
 	int optval;
 
-	addr.sin_family=AF_INET;
-	addr.sin_port=htons(port);
-	addr.sin_addr.s_addr=ip;
+	addr=(struct sockaddr_in*)malloc(sizeof(struct sockaddr));
+	if (addr==0){
+		DPrint("ERROR: udp_init: out of memory\n");
+		goto error;
+	}
+	addr->sin_family=AF_INET;
+	addr->sin_port=htons(port);
+	addr->sin_addr.s_addr=ip;
 
 	udp_sock = socket(PF_INET, SOCK_DGRAM, 0);
 	if (udp_sock==-1){
@@ -40,15 +45,16 @@ int udp_init(unsigned long ip, unsigned short port)
 		goto error;
 	}
 
-	if (bind(udp_sock, (struct sockaddr*) &addr, sizeof(addr))==-1){
+	if (bind(udp_sock, (struct sockaddr*) addr, sizeof(struct sockaddr))==-1){
 		DPrint("ERROR: udp_init: bind: %s\n", strerror());
 		goto error;
 	}
 
-
+	free(addr);
 	return 0;
 
 error:
+	if (addr) free(addr);
 	return -1;
 }
 
