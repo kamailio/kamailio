@@ -1129,7 +1129,7 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 
 	n=snprintf( p_msg->add_to_branch_s+p_msg->add_to_branch_len, 
 		  MAX_BRANCH_PARAM_LEN - p_msg->add_to_branch_len,
-		 "\.%h\.%h\.%h",
+		 "%.%h%.%h%.%h",
 		 trans->hash_index, trans->label, branch );
 	DBG("DEBUG: branch created now: %s (%d)\n", p_msg->add_to_branch_s, p_msg->add_to_branch_len );
 	if (n==-1) {
