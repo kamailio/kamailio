@@ -2,6 +2,7 @@
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../parser_f.h"
+#include "../../ut.h"
 
 
 #define stop_RETR_and_FR_timers(h_table,p_cell)    \
@@ -347,9 +348,9 @@ int t_forward_uri( struct sip_msg* p_msg, char* foo, char* bar  )
 {
    struct hostent  *nhost;
    unsigned int     ip, port;
-   char                  backup;
+   struct sip_uri    parsed_uri;
    str                      uri;
-
+   int                      err;
 
    /* it's about the same transaction or not? */
    if ( global_msg_id != p_msg->id )
@@ -372,20 +373,37 @@ int t_forward_uri( struct sip_msg* p_msg, char* foo, char* bar  )
    else
      uri = p_msg->new_uri;
 
-   /*some dirty trick to get the port and ip of destination */
-   backup = *((uri.s)+(uri.len));
-   *((uri.s)+(uri.len)) = 0;
-   nhost = gethostbyname( uri.s );
-   *((uri.s)+(uri.len)) = backup;
+   /* parsing the request uri in order to get host and port */
+   if (parse_uri( uri.s , uri.len , &parsed_uri )<0)
+   {
+        LOG(L_ERR, "ERROR: t_forward_uri: unable to parse destination uri\n");
+        return  -1;
+   }
+
+   /* getting host address*/
+   nhost = gethostbyname( parsed_uri.host.s );
    if ( !nhost )
    {
-      DBG("DEBUG: t_forward_uri: cannot resolve host\n");
+      LOG(L_ERR, "ERROR: t_forward_uri: cannot resolve host\n");
       return -1;
    }
-   /*IP address*/
    memcpy(&ip, nhost->h_addr_list[0], sizeof(unsigned int));
-   /* port */
-   port = 5060;
+
+   /* getting the port */
+   if ( parsed_uri.port.s==0 || parsed_uri.port.len==0 )
+      port = SIP_PORT;
+   else
+   {
+       port = str2s( parsed_uri.port.s , parsed_uri.port.len , &err );
+       if ( err<0 )
+       {
+           LOG(L_ERR, "ERROR: t_forward_uri: converting port from str to int failed; using default SIP port\n");
+           port = SIP_PORT;
+       }
+   }
+   port = htons( port );
+
+   free_uri( &parsed_uri );
 
    return t_forward( p_msg , ip , port );
 }

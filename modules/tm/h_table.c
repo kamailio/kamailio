@@ -89,7 +89,6 @@ struct s_table* init_hash_table()
 
    /*allocs the table*/
    hash_table = (struct s_table*)sh_malloc(  sizeof( struct s_table ) );
-    printf("XXXXXXXXXXXXXXXXXXXXXXXXXXXX\n");
    if ( !hash_table )
       goto error;
 
