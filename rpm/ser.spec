@@ -12,7 +12,7 @@ Copyright:    GPL
 Group:        System Environment/Daemons
 Source:       http://iptel.org/ser/stable/%{name}-%{ver}.tar.gz
 Source2:      ser.init
-URL:          http://ser.iptel.org
+URL:          http://iptel.org/ser
 Vendor:       FhG Fokus
 BuildRoot:    /var/tmp/%{name}-%{ver}-root
 BuildPrereq:  make flex bison 
