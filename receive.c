@@ -33,6 +33,8 @@
  * 2003-02-10 moved zero-term in the calling functions (udp_receive &
  *            tcp_read_req)
  * 2003-08-13 fixed exec_pre_cb returning 0 (backported from stable) (andrei)
+ * 2004-04-30 exec_pre_cb is called after basic sanity checks (at least one
+ *            via present & parsed ok)  (andrei)
  */
 
 
@@ -52,8 +54,6 @@
 #include "ip_addr.h"
 #include "script_cb.h"
 #include "dset.h"
-
-#include "tcp_server.h" /* for tcpconn_add_alias */
 
 
 #ifdef DEBUG_DMALLOC
@@ -110,17 +110,8 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	}
 	DBG("After parse_msg...\n");
 
-	/* execute pre-script callbacks, if any; -jiri */
-	/* if some of the callbacks said not to continue with
-	   script processing, don't do so
-	*/
-	ret=exec_pre_cb(msg);
-	if (ret<=0){
-		if (ret<0) goto error;
-		else goto end; /* drop the message -- no error -- andrei */
-	}
 
-	/* ... and clear branches from previous message */
+	/* ... clear branches from previous message */
 	clear_branches();
 
 	if (msg->first_line.type==SIP_REQUEST){
@@ -131,30 +122,25 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 			goto error;
 		}
 		/* check if neccesarry to add receive?->moved to forward_req */
-		/* check for the alias stuff */
-#ifdef USE_TCP
-		if (msg->via1->alias && tcp_accept_aliases && 
-				(((rcv_info->proto==PROTO_TCP) && !tcp_disable)
-#ifdef USE_TLS
-					|| ((rcv_info->proto==PROTO_TLS) && !tls_disable)
-#endif
-				)
-			){
-			if (tcpconn_add_alias(rcv_info->proto_reserved1, msg->via1->port,
-									rcv_info->proto)!=0){
-				LOG(L_ERR, " ERROR: receive_msg: tcp alias failed\n");
-				/* continue */
-			}
-		}
-#endif
 
-		/* exec routing script */
 		DBG("preparing to run routing scripts...\n");
 #ifdef  STATS
 		gettimeofday( & tvb, &tz );
 #endif
+		/* execute pre-script callbacks, if any; -jiri */
+		/* if some of the callbacks said not to continue with
+		   script processing, don't do so
+		   if we are here basic sanity checks are already done
+		   (like presence of at least one via), so you can count
+		   on via1 being parsed in a pre-script callback --andrei
+		*/
+		ret=exec_pre_cb(msg);
+		if (ret<=0){
+			if (ret<0) goto error;
+			else goto end; /* drop the message -- no error -- andrei */
+		}
+		/* exec the routing script */
 		if (run_actions(rlist[0], msg)<0){
-
 			LOG(L_WARN, "WARNING: receive_msg: "
 					"error while trying script\n");
 			goto error;
@@ -190,6 +176,19 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		STATS_RX_RESPONSE ( msg->first_line.u.reply.statuscode / 100 );
 #endif
 		
+		/* execute pre-script callbacks, if any; -jiri */
+		/* if some of the callbacks said not to continue with
+		   script processing, don't do so
+		   if we are here basic sanity checks are already done
+		   (like presence of at least one via), so you can count
+		   on via1 being parsed in a pre-script callback --andrei
+		*/
+		ret=exec_pre_cb(msg);
+		if (ret<=0){
+			if (ret<0) goto error;
+			else goto end; /* drop the message -- no error -- andrei */
+		}
+
 		/* send the msg */
 		forward_reply(msg);
 

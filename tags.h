@@ -48,7 +48,6 @@
 #include "globals.h"
 #include "crc.h"
 #include "str.h"
-#include "socket_info.h"
 
 #define TOTAG_VALUE_LEN (MD5_LEN+CRC16_LEN+1)
 
@@ -61,6 +60,7 @@ static inline void calc_crc_suffix( struct sip_msg *msg, char *tag_suffix)
 	str suffix_source[3];
 
 	ss_nr=2;
+	if (msg->via1==0) return; /* no via, bad message */
 	suffix_source[0]=msg->via1->host;
 	suffix_source[1]=msg->via1->port_str;
 	if (msg->via1->branch)
@@ -72,15 +72,12 @@ static void inline init_tags( char *tag, char **suffix,
 		char *signature, char separator )
 {
 	str src[3];
-	struct socket_info* si;
-	
-	si=get_first_socket();
+
 	src[0].s=signature; src[0].len=strlen(signature);
-	/* if we are not listening on anything we shouldn't be here */
-	src[1].s=si?si->address_str.s:"";
-	src[1].len=si?si->address_str.len:0;
-	src[2].s=si?si->port_no_str.s:"";
-	src[2].len=si?si->port_no_str.len:0;
+	src[1].s=sock_info[0].address_str.s;
+	src[1].len=sock_info[0].address_str.len;
+	src[2].s=sock_info[0].port_no_str.s;
+	src[2].len=sock_info[0].port_no_str.len;
 
 	MDStringArray( tag, src, 3 );
 
