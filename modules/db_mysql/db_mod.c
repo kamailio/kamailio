@@ -37,6 +37,8 @@
 #include "../../sr_module.h"
 #include "dbase.h"
 
+MODULE_VERSION
+
 
 static int mod_init(void);
 
