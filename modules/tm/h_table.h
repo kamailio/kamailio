@@ -28,7 +28,8 @@ struct cell;
 #define MAX_FORK           20
 
 
-extern  struct cell* T;
+extern  struct cell      *T;
+extern  unsigned int  global_msg_id;
 
 /* all you need to put a cell in a timer list:
    links to neighbours and timer value         */
@@ -117,8 +118,11 @@ struct s_table
 
 
 void free_cell( struct cell* dead_cell );
-
 struct s_table* init_hash_table();
+
+void ref_transaction( struct cell* p_cell);
+void unref_transaction( struct cell* p_cell);
+
 void free_hash_table( struct s_table* hash_table );
 
 
@@ -130,7 +134,11 @@ void free_hash_table( struct s_table* hash_table );
 int                t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg );
 
 
-struct cell*  t_lookup_request( struct s_table* hash_table , struct sip_msg* p_msg );
+/* function returns:
+ *       0 - transaction wasn't found
+ *       1 - transaction found
+ */
+int  t_lookup_request( struct s_table* hash_table , struct sip_msg* p_msg );
 
 
 

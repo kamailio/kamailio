@@ -139,6 +139,22 @@ struct s_table* init_hash_table()
 
 
 
+void ref_transaction( struct cell* p_cell)
+{
+   lock( p_cell->mutex );
+   p_cell->ref_counter++;
+   unlock( p_cell->mutex );
+}
+
+
+void unref_transaction( struct cell* p_cell)
+{
+   lock( p_cell->mutex );
+   p_cell->ref_counter--;
+   unlock( p_cell->mutex );
+}
+
+
 /* function returns:
  *       0 - a new transaction was created -> the proxy core don't have to release the p_msg structure
  *      -1 - retransmission
@@ -150,14 +166,18 @@ int t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg )
    struct entry* match_entry;
    int                  hash_index;
 
+   /* it's about the same transaction or not?*/
+   if ( global_msg_id != p_msg->msg_id )
+   {
+      T = (struct cell*)-1;
+      global_msg_id = p_msg->msg_id;
+   }
 
     /* if the transaction is not found yet we are tring to look for it*/
    if ( (int)T==-1 )
-      T = t_lookup_request( hash_table , p_msg );
-
-   /* if T is not 0 means that it's a retransmission */
-   if ( T )
-      return -1;
+      /* if the lookup's result is not 0 means that it's a retransmission */
+      if ( t_lookup_request( hash_table , p_msg ) )
+         return -1;
 
    /* creates a new transaction */
    hash_index   = hash( p_msg->call_id , p_msg->cseq_nr );
@@ -201,6 +221,62 @@ int t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg )
    T = new_cell;
    return 0;
 }
+
+
+/* function returns:
+ *       0 - transaction wasn't found
+ *       1 - transaction found
+ */
+int t_lookup_request(  struct s_table* hash_table , struct sip_msg* p_msg )
+{
+   struct cell*  p_cell;
+   struct cell* tmp_cell;
+   int                hash_index=0;
+
+   /* it's about the same transaction or not?*/
+   if ( global_msg_id != p_msg->msg_id )
+   {
+      T = (struct cell*)-1;
+      global_msg_id = p_msg->msg_id;
+   }
+
+    /* if  T is previous found -> return found */
+   if ( (int)T !=-1 && T )
+      return 1;
+
+    /* if T was previous searched and not found -> return not found*/
+   if ( !T )
+      return 0;
+
+   /* start searching into the table */
+   hash_index = hash( p_msg->call_id , p_msg->cseq_nr ) ;
+
+   /* all the transactions from the entry are compared */
+   p_cell     = hash_table->entrys[hash_index].first_cell;
+   tmp_cell = 0;
+   while( p_cell )
+   {
+      /* the transaction is referenceted for reading */
+      ref_transaction( p_cell );
+
+      /* is the wanted transaction ? */
+     // if ( p_cell->from_length == from_len && p_cell->to_length == to_len && p_cell->req_tag_length == tag_len && p_cell->call_id_length == call_id_len && p_cell->cseq_nr_length == cseq_nr_len && p_cell->cseq_method_length == cseq_method_len  )
+      //   if ( !strcmp(p_cell->from,from) && !strcmp(p_cell->to,to) && !strncmp(p_cell->req_tag,tag,tag_len) && !strcmp(p_cell->call_id,call_id) && !strcmp(p_cell->cseq_nr,cseq_nr) && !strcmp(p_cell->cseq_method,cseq_method)  )
+       //       return p_cell;
+      /* next transaction */
+      tmp_cell = p_cell;
+      p_cell = p_cell->next_cell;
+
+      /* the transaction is dereferenceted */
+      unref_transaction ( tmp_cell );
+   }
+
+   /* no transaction found */
+   return 0;
+}
+
+
+
 
 
 
