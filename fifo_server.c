@@ -425,6 +425,31 @@ int open_fifo_server()
 	return 1;
 }
 
+static int print_version_cmd( FILE *stream, char *response_file )
+{
+	int file;
+
+	if (response_file) {
+		file=open( response_file, O_WRONLY );
+		if (file<0) {
+			LOG(L_ERR, "ERROR: print_version_cmd: open error (%s): %s\n",
+				response_file, strerror(errno));
+			return -1;
+		}
+		if (write(file, SERVER_HDR CRLF, SERVER_HDR_LEN+CRLF_LEN)<0) {
+			LOG(L_ERR, "ERROR: print_version_cmd: write error: %s\n",
+				strerror(errno));
+			close(file);
+			return -1;
+		}
+		close(file);
+	} else {
+		LOG(L_ERR, "ERROR: no file for print_version_cmd\n");
+	}
+	return 1;
+}
+	
+
 /* diagnostic and hello-world FIFO command */
 static int print_fifo_cmd( FILE *stream, char *response_file )
 {
@@ -493,6 +518,10 @@ int register_core_fifo()
 	}
 	if (register_fifo_cmd(uptime_fifo_cmd, FIFO_UPTIME, 0)<0) {
 		LOG(L_CRIT, "unable to register 'print' FIFO cmd\n");
+		return -1;
+	}
+	if (register_fifo_cmd(print_version_cmd, FIFO_VERSION, 0)<0) {
+		LOG(L_CRIT, "unable to register 'version' FIFO cmd\n");
 		return -1;
 	}
 	return 1;

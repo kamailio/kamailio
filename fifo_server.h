@@ -13,6 +13,7 @@
 /* core FIFO command set */
 #define FIFO_PRINT "print"
 #define FIFO_UPTIME "uptime"
+#define FIFO_VERSION "version"
 
 typedef int (fifo_cmd)( FILE *fifo_stream, char *response_file );
 
