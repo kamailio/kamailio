@@ -1038,7 +1038,7 @@ rtpp_test(int isdisabled, int force)
 	if (force == 0) {
 		if (isdisabled == 0)
 			return 0;
-		if (recheck_ticks < get_ticks())
+		if (recheck_ticks > get_ticks())
 			return 1;
 	}
 	cp = send_rtpp_command(v, 2);
