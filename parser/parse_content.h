@@ -51,7 +51,7 @@
 /*
  * returns the content-type value of a sip_msg as an integer
  */
-#define get_content_type(_msg_)   ((long)((_msg_)->content_type->parsed))
+#define get_content_type(_msg_)   ((int)(long)((_msg_)->content_type->parsed))
 
 
 
