@@ -129,7 +129,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 	LOCK_HASH(p_msg->hash_index);
 
 	/* all the transactions from the entry are compared */
-	for ( p_cell = hash_table->entrys[p_msg->hash_index].first_cell;
+	for ( p_cell = get_tm_table()->entrys[p_msg->hash_index].first_cell;
 		  p_cell; p_cell = p_cell->next_cell ) 
 	{
 		t_msg = p_cell->uas.request;
@@ -239,8 +239,7 @@ found:
  *       0 - transaction wasn't found
  *       T - transaction found
  */
-struct cell* t_lookupOriginalT(  struct s_table* hash_table ,
-	struct sip_msg* p_msg )
+struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 {
 	struct cell     *p_cell;
 	unsigned int     hash_index;
@@ -253,7 +252,7 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table ,
 	DBG("DEBUG: t_lookupOriginalT: searching on hash entry %d\n",hash_index );
 
 	/* all the transactions from the entry are compared */
-	for (p_cell=hash_table->entrys[hash_index].first_cell;
+	for (p_cell=get_tm_table()->entrys[hash_index].first_cell;
 		p_cell; p_cell = p_cell->next_cell )
 	{
 		t_msg = p_cell->uas.request;
@@ -407,7 +406,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 	is_cancel=cseq_method.len==CANCEL_LEN 
 		&& memcmp(cseq_method.s, CANCEL, CANCEL_LEN)==0;
 	LOCK_HASH(hash_index);
-	for (p_cell = hash_table->entrys[hash_index].first_cell; p_cell; 
+	for (p_cell = get_tm_table()->entrys[hash_index].first_cell; p_cell; 
 		p_cell=p_cell->next_cell) {
 
 		/* first look if branch matches */
@@ -631,7 +630,7 @@ int t_newtran( struct sip_msg* p_msg )
 				LOG(L_ERR, "ERROR: t_addifnew: out of mem:\n");
 				ret = E_OUT_OF_MEM;
 			} else {
-				insert_into_hash_table_unsafe( hash_table , new_cell );
+				insert_into_hash_table_unsafe( new_cell );
 				T=new_cell;
 				INIT_REF_UNSAFE(T);
 				/* init pointers to headers needed to construct local

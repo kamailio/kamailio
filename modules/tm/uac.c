@@ -150,7 +150,7 @@ int t_uac( str *msg_type, str *dst,
 		&& memcmp(msg_type->s, INVITE, INVITE_LEN)==0;
 	new_cell->local=1;
 	LOCK_HASH(new_cell->hash_index);
-	insert_into_hash_table_unsafe( hash_table , new_cell );
+	insert_into_hash_table_unsafe(  new_cell );
 	UNLOCK_HASH(new_cell->hash_index);
 
 	request=&new_cell->uac[branch].request;

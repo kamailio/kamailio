@@ -23,11 +23,17 @@ struct timer;
 struct retr_buf;
 
 #include "../../mem/shm_mem.h"
-#include "timer.h" 
 #include "lock.h"
 #include "sip_msg.h"
 #include "t_reply.h"
 #include "t_hooks.h"
+#include "timer.h"
+
+#define LOCK_HASH(_h) lock_hash((_h))
+#define UNLOCK_HASH(_h) unlock_hash((_h))
+
+void lock_hash(int i);
+void unlock_hash(int i);
 
 
 #define NO_CANCEL       ( (char*) 0 )
@@ -218,22 +224,21 @@ struct s_table
 {
 	/* table of hash entries; each of them is a list of synonyms  */
 	struct entry   entrys[ TABLE_ENTRIES ];
+#ifdef _OBSOLETED
 	/* table of timer lists */
 	struct timer   timers[ NR_OF_TIMER_LISTS ];
+#endif
 };
 
 
-
+struct s_table* get_tm_table();
 struct s_table* init_hash_table();
-void   free_hash_table( struct s_table* hash_table );
+void   free_hash_table( );
 void   free_cell( struct cell* dead_cell );
 struct cell*  build_cell( struct sip_msg* p_msg );
-void   remove_from_hash_table_unsafe(struct s_table *hash_table,
-	struct cell * p_cell);
-void   insert_into_hash_table(struct s_table *hash_table,
-	struct cell * p_cell);
-void   insert_into_hash_table_unsafe( struct s_table *hash_table,
-		struct cell * p_cell );
+void   remove_from_hash_table_unsafe( struct cell * p_cell);
+void   insert_into_hash_table( struct cell * p_cell);
+void   insert_into_hash_table_unsafe( struct cell * p_cell );
 
 unsigned int transaction_count( void );
 

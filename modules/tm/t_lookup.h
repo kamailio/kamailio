@@ -20,8 +20,7 @@ extern unsigned int     global_msg_id;
 
 void init_t();
 int init_rb( struct retr_buf *rb, struct sip_msg *msg );
-struct cell* t_lookupOriginalT(  struct s_table* hash_table,
-	struct sip_msg* p_msg );
+struct cell* t_lookupOriginalT( struct sip_msg* p_msg );
 int t_reply_matching( struct sip_msg* , int* );
 int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked );
 int t_newtran( struct sip_msg* p_msg );

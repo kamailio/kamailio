@@ -198,7 +198,7 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 	if (code>=200) {
 		cleanup_uac_timers( trans );
 		if (trans->is_invite) cancel_uacs( trans, cancel_bitmap );
-		set_final_timer( /* hash_table, */ trans );
+		set_final_timer(  trans );
 	}
 
 	/* send it out */
@@ -244,8 +244,8 @@ void cleanup_uac_timers( struct cell *t )
 
 	/* reset FR/retransmission timers */
 	for (i=0; i<t->nr_of_outgoings; i++ )  {
-		reset_timer( hash_table, &t->uac[i].request.retr_timer );
-		reset_timer( hash_table, &t->uac[i].request.fr_timer );
+		reset_timer( &t->uac[i].request.retr_timer );
+		reset_timer( &t->uac[i].request.fr_timer );
 	}
 	DBG("DEBUG: cleanup_uacs: RETR/FR timers reset\n");
 }
@@ -538,9 +538,9 @@ int t_on_reply( struct sip_msg  *p_msg )
 		/* .. which is not e2e ? ... */
 		&& t->is_invite ) {
 			/* ... then just stop timers */
-			reset_timer( hash_table, &uac->local_cancel.retr_timer);
+			reset_timer( &uac->local_cancel.retr_timer);
 			if ( msg_status >= 200 )
-				reset_timer( hash_table, &uac->local_cancel.fr_timer);
+				reset_timer( &uac->local_cancel.fr_timer);
 			DBG("DEBUG: reply to local CANCEL processed\n");
 			goto done;
 	}
@@ -548,10 +548,10 @@ int t_on_reply( struct sip_msg  *p_msg )
 
 	/* *** stop timers *** */
 	/* stop retransmission */
-	reset_timer( hash_table, &uac->request.retr_timer);
+	reset_timer( &uac->request.retr_timer);
 	/* stop final response timer only if I got a final response */
 	if ( msg_status >= 200 )
-		reset_timer( hash_table, &uac->request.fr_timer);
+		reset_timer( &uac->request.fr_timer);
 
 	LOCK_REPLIES( t );
 	if (t->local) {
@@ -581,7 +581,7 @@ int t_on_reply( struct sip_msg  *p_msg )
 		cleanup_uac_timers( t );	
 		if (t->is_invite) cancel_uacs( t, cancel_bitmap );
 		/* FR for negative INVITES, WAIT anything else */
-		set_final_timer( /* hash_table,*/ t );
+		set_final_timer(  t );
 	} 
 
 	/* update FR/RETR timers on provisional replies */
@@ -590,13 +590,12 @@ int t_on_reply( struct sip_msg  *p_msg )
 			/* invite: change FR to longer FR_INV, do not
 			   attempt to restart retransmission any more
 			*/
-			set_timer( hash_table, & uac->request.fr_timer,
+			set_timer( & uac->request.fr_timer,
 				FR_INV_TIMER_LIST );
 		} else {
 			/* non-invite: restart retransmisssions (slow now) */
 			uac->request.retr_list=RT_T2;
-			set_timer( hash_table, 
-				& uac->request.retr_timer, RT_T2 );
+			set_timer(  & uac->request.retr_timer, RT_T2 );
 		}
 	} /* provisional replies */
 

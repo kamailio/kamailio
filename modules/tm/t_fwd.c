@@ -317,7 +317,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	t->kr|=REQ_FWDED;
 
 	if (p_msg->REQ_METHOD==METHOD_CANCEL) {
-		t_invite=t_lookupOriginalT( hash_table, p_msg );
+		t_invite=t_lookupOriginalT(  p_msg );
 		if (t_invite!=T_NULL) {
 			e2e_cancel( p_msg, t, t_invite );
 			UNREF(t_invite);

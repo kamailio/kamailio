@@ -66,8 +66,7 @@ static int init_semaphore_set( int size );
 
 
 int init_cell_lock( struct cell *cell );
-int init_entry_lock( struct s_table* hash_table, struct entry *entry );
-int init_timerlist_lock( struct s_table* hash_table, enum lists timerlist_id);
+int init_entry_lock( struct s_table* ht, struct entry *entry );
 
 
 int release_cell_lock( struct cell *cell );
@@ -118,6 +117,8 @@ static inline int _unlock( ser_lock_t* s )
 	return change_semaphore( s, +1 );
 #endif
 }
+
+int init_timerlist_lock(  enum lists timerlist_id);
 
 
 #endif

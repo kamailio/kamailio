@@ -35,25 +35,8 @@ struct timer;
 struct entry;
 struct cell;
 
-extern struct s_table*  hash_table;
 extern int noisy_ctimer;
 
-
-#define LOCK_HASH(_h) lock(&(hash_table->entrys[(_h)].mutex))
-#define UNLOCK_HASH(_h) unlock(&(hash_table->entrys[(_h)].mutex))
-
-#ifdef _OBSOLETED
-#define LOCK_ACK(_t) lock(&(_t)->ack_mutex )
-#define UNLOCK_ACK(_t) unlock(&(_t)->ack_mutex )
-#endif
-
-#ifdef _XWAIT
-	#define LOCK_WAIT(_t) lock(&(_t)->wait_mutex )
-	#define UNLOCK_WAIT(_t) unlock(&(_t)->wait_mutex )
-#else
-	#define LOCK_WAIT(_t)
-	#define UNLOCK_WAIT(_t)
-#endif
 
 /* send a private buffer: utilize a retransmission structure
    but take a separate buffer not refered by it; healthy
@@ -108,8 +91,6 @@ int t_put_on_wait(  struct cell  *Trans  );
 int get_ip_and_port_from_uri( str* uri , unsigned int *param_ip,
 	unsigned int *param_port);
 
-
-void timer_routine(unsigned int, void*);
 
 int t_newtran( struct sip_msg* p_msg );
 

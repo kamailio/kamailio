@@ -364,7 +364,7 @@ int init_cell_lock( struct cell *cell )
 	return 0;
 }
 
-int init_entry_lock( struct s_table* hash_table, struct entry *entry )
+int init_entry_lock( struct s_table* ht, struct entry *entry )
 {
 #ifdef FAST_LOCK
 	init_lock(entry->mutex);
@@ -374,21 +374,9 @@ int init_entry_lock( struct s_table* hash_table, struct entry *entry )
 	   many partitions as number of available semaphors allows
         */
 	entry->mutex.semaphore_set=entry_semaphore;
-	entry->mutex.semaphore_index = ( ((void *)entry - (void *)(hash_table->entrys ) )
+	entry->mutex.semaphore_index = ( ((void *)entry - (void *)(ht->entrys ) )
                / sizeof(struct entry) ) % sem_nr;
 #endif
-	return 0;
-}
-
-int init_timerlist_lock( struct s_table* hash_table, enum lists timerlist_id)
-{
-	/* each timer list has its own semaphore */
-	/*
-	hash_table->timers[timerlist_id].mutex.semaphore_set=timer_semaphore;
-	hash_table->timers[timerlist_id].mutex.semaphore_index=timer_group[timerlist_id];
-	*/
-
-	hash_table->timers[timerlist_id].mutex=&(timer_group_lock[ timer_group[timerlist_id] ]);
 	return 0;
 }
 
@@ -418,5 +406,12 @@ int release_entry_lock( struct entry *entry )
 int release_timerlist_lock( struct timer *timerlist )
 {
 	/* the same as above */
+	return 0;
+}
+
+int init_timerlist_lock( enum lists timerlist_id)
+{
+	get_timertable()->timers[timerlist_id].mutex=
+		&(timer_group_lock[ timer_group[timerlist_id] ]);
 	return 0;
 }

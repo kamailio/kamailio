@@ -15,6 +15,29 @@
 #include "t_cancel.h"
 #include "t_stats.h"
 
+/* pointer to the big table where all the transaction data
+   lives
+*/
+
+static struct s_table*  tm_table;
+
+void lock_hash(int i) 
+{
+	lock(&tm_table->entrys[i].mutex);
+}
+
+void unlock_hash(int i) 
+{
+	unlock(&tm_table->entrys[i].mutex);
+}
+
+
+struct s_table* get_tm_table()
+{
+	return tm_table;
+}
+
+
 unsigned int transaction_count( void )
 {
 	unsigned int i;
@@ -22,7 +45,7 @@ unsigned int transaction_count( void )
 
 	count=0;	
 	for (i=0; i<TABLE_ENTRIES; i++) 
-		count+=hash_table->entrys[i].entries;
+		count+=tm_table->entrys[i].entries;
 	return count;
 }
 
@@ -186,20 +209,20 @@ error:
 
 /* Release all the data contained by the hash table. All the aux. structures
  *  as sems, lists, etc, are also released */
-void free_hash_table( struct s_table *hash_table )
+void free_hash_table(  )
 {
 	struct cell* p_cell;
 	struct cell* tmp_cell;
 	int    i;
 
-	if (hash_table)
+	if (tm_table)
 	{
 		/* remove the data contained by each entry */
 		for( i = 0 ; i<TABLE_ENTRIES; i++)
 		{
-			release_entry_lock( (hash_table->entrys)+i );
+			release_entry_lock( (tm_table->entrys)+i );
 			/* delete all synonyms at hash-collision-slot i */
-			p_cell=hash_table->entrys[i].first_cell;
+			p_cell=tm_table->entrys[i].first_cell;
 			for( ; p_cell; p_cell = tmp_cell )
 			{
 				tmp_cell = p_cell->next_cell;
@@ -207,11 +230,6 @@ void free_hash_table( struct s_table *hash_table )
 			}
 		}
 
-		/* the mutexs for sync the lists are released*/
-		for ( i=0 ; i<NR_OF_TIMER_LISTS ; i++ )
-			release_timerlist_lock( &(hash_table->timers[i]) );
-
-		shm_free( hash_table );
 	}
 }
 
@@ -222,36 +240,37 @@ void free_hash_table( struct s_table *hash_table )
  */
 struct s_table* init_hash_table()
 {
-	struct s_table*  hash_table;
 	int              i;
 
 	/*allocs the table*/
-	hash_table = (struct s_table*)shm_malloc( sizeof( struct s_table ) );
-	if ( !hash_table )
-		goto error;
+	tm_table= (struct s_table*)shm_malloc( sizeof( struct s_table ) );
+	if ( !tm_table) {
+		LOG(L_ERR, "ERROR: init_hash_table: no shmem for TM table\n");
+		goto error0;
+	}
 
-	memset( hash_table, 0, sizeof (struct s_table ) );
+	memset( tm_table, 0, sizeof (struct s_table ) );
 
 	/* try first allocating all the structures needed for syncing */
 	if (lock_initialize()==-1)
-		goto error;
+		goto error1;
 
 	/* inits the entrys */
 	for(  i=0 ; i<TABLE_ENTRIES; i++ )
 	{
-		init_entry_lock( hash_table , (hash_table->entrys)+i );
-		hash_table->entrys[i].next_label = rand();
+		init_entry_lock( tm_table, (tm_table->entrys)+i );
+		tm_table->entrys[i].next_label = rand();
 	}
 
-	/* inits the timers*/
-	for(  i=0 ; i<NR_OF_TIMER_LISTS ; i++ )
-		init_timer_list( hash_table, i );
+	return  tm_table;
 
-	return  hash_table;
-
-error:
-	free_hash_table( hash_table );
+#ifdef _OBSO
+error2:
 	lock_cleanup();
+#endif
+error1:
+	free_hash_table( );
+error0:
 	return 0;
 }
 
@@ -260,13 +279,12 @@ error:
 
 /*  Takes an already created cell and links it into hash table on the
  *  appropiate entry. */
-void insert_into_hash_table_unsafe( struct s_table *hash_table,
-											struct cell * p_cell )
+void insert_into_hash_table_unsafe( struct cell * p_cell )
 {
 	struct entry* p_entry;
 
 	/* locates the apropiate entry */
-	p_entry = &hash_table->entrys[ p_cell->hash_index ];
+	p_entry = &tm_table->entrys[ p_cell->hash_index ];
 
 	p_cell->label = p_entry->next_label++;
 	if ( p_entry->last_cell )
@@ -290,10 +308,10 @@ void insert_into_hash_table_unsafe( struct s_table *hash_table,
 
 
 
-void insert_into_hash_table(struct s_table *hash_table,  struct cell * p_cell)
+void insert_into_hash_table( struct cell * p_cell)
 {
 	LOCK_HASH(p_cell->hash_index);
-	insert_into_hash_table_unsafe( hash_table,  p_cell );
+	insert_into_hash_table_unsafe(  p_cell );
 	UNLOCK_HASH(p_cell->hash_index);
 }
 
@@ -301,10 +319,9 @@ void insert_into_hash_table(struct s_table *hash_table,  struct cell * p_cell)
 
 
 /*  Un-link a  cell from hash_table, but the cell itself is not released */
-void remove_from_hash_table_unsafe(struct s_table *hash_table,  
- struct cell * p_cell)
+void remove_from_hash_table_unsafe( struct cell * p_cell)
 {
-	struct entry*  p_entry  = &(hash_table->entrys[p_cell->hash_index]);
+	struct entry*  p_entry  = &(tm_table->entrys[p_cell->hash_index]);
 
 	/* unlink the cell from entry list */
 	/* lock( &(p_entry->mutex) ); */

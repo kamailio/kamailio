@@ -16,10 +16,6 @@
 #include "t_lookup.h"
 #include "config.h"
 
-/* pointer to the big table where all the transaction data
-   lives
-*/
-struct s_table*  hash_table;
 
 /* ----------------------------------------------------- */
 
@@ -39,65 +35,25 @@ int send_pr_buffer( struct retr_buf *rb,
 void start_retr( struct retr_buf *rb )
 {
 	rb->retr_list=RT_T1_TO_1;
-	set_timer( hash_table, &rb->retr_timer, RT_T1_TO_1 );
-	set_timer( hash_table, &rb->fr_timer, FR_TIMER_LIST );
+	set_timer( &rb->retr_timer, RT_T1_TO_1 );
+	set_timer( &rb->fr_timer, FR_TIMER_LIST );
 }
 
-int tm_startup()
-{
-	/* building the hash table*/
-	hash_table = init_hash_table();
-	if (!hash_table)
-		return -1;
-
-	/* init. timer lists */
-	hash_table->timers[RT_T1_TO_1].id = RT_T1_TO_1;
-	hash_table->timers[RT_T1_TO_2].id = RT_T1_TO_2;
-	hash_table->timers[RT_T1_TO_3].id = RT_T1_TO_3;
-	hash_table->timers[RT_T2].id      = RT_T2;
-	hash_table->timers[FR_TIMER_LIST].id     = FR_TIMER_LIST;
-	hash_table->timers[FR_INV_TIMER_LIST].id = FR_INV_TIMER_LIST;
-	hash_table->timers[WT_TIMER_LIST].id     = WT_TIMER_LIST;
-	hash_table->timers[DELETE_LIST].id       = DELETE_LIST;
-
-
-	/* fork table */
-	/* nr_forks = 0; */	
-
-	/* init static hidden values */
-	init_t();
-
-	return 0;
-}
 
 
 
 
 void tm_shutdown()
 {
-	struct timer_link  *tl, *end, *tmp;
-	int i;
 
 	DBG("DEBUG: tm_shutdown : start\n");
-	/* remember the DELETE LIST */
-	tl = hash_table->timers[DELETE_LIST].first_tl.next_tl;
-	end = & hash_table->timers[DELETE_LIST].last_tl;
-	/* unlink the timer lists */
-	for( i=0; i<NR_OF_TIMER_LISTS ; i++ )
-		reset_timer_list( hash_table, i );
-
-	DBG("DEBUG: tm_shutdown : empting DELETE list\n");
-	/* deletes all cells from DELETE_LIST list
-	(they are no more accessible from enrys) */
-	while (tl!=end) {
-		tmp=tl->next_tl;
-		free_cell((struct cell*)tl->payload);
-		tl=tmp;
-	}
+	unlink_timer_lists();
 
 	/* destroy the hash table */
 	DBG("DEBUG: tm_shutdown : empting hash table\n");
-	free_hash_table( hash_table );
+	free_hash_table( );
+	DBG("DEBUG: tm_shutdown: releasing timers\n");
+	free_timer_table();
 	DBG("DEBUG: tm_shutdown : removing semaphores\n");
 	lock_cleanup();
 	DBG("DEBUG: tm_shutdown : done\n");
@@ -110,8 +66,8 @@ int t_release_transaction( struct cell *trans )
 {
 	trans->kr|=REQ_RLSD;
 
-	reset_timer( hash_table, & trans->uas.response.fr_timer );
-	reset_timer( hash_table, & trans->uas.response.retr_timer );
+	reset_timer( & trans->uas.response.fr_timer );
+	reset_timer( & trans->uas.response.retr_timer );
 
 	cleanup_uac_timers( trans );
 	
@@ -161,7 +117,7 @@ void put_on_wait(  struct cell  *Trans  )
 		4.									WAIT timer executed,
 											transaction deleted
 	*/
-	set_1timer( hash_table, &(Trans->wait_tl), WT_TIMER_LIST );
+	set_1timer( &Trans->wait_tl, WT_TIMER_LIST );
 }
 
 
