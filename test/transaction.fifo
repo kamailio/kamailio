@@ -1,5 +1,6 @@
-:t_uac:hh
+:t_uac_from:hh
 MESSAGE
+sip:faker@foo.bar
 sip:gh@iptel.org
 foo: bar
 x: y
