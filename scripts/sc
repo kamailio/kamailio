@@ -1,12 +1,9 @@
-#!/bin/sh
+#!/bin/sh 
 #
 # $Id$
 #
 # sc: ser control; tool for maintaining ser's databases
 #
-
-# realm
-DOMAIN=iptel.org
 
 # ser's FIFO server
 SER_FIFO=/tmp/ser_fifo
@@ -358,7 +355,7 @@ acl() {
 # output: false if exists, true otherwise
 is_user() {
 	QUERY="select count(*) from $TABLE \
-		where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$DOMAIN';"
+		where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$SIP_DOMAIN';"
 	CNT=`sql_ro_query "$QUERY" | grep -v ERROR | tail -n1`
 	if [ "0$CNT" -eq 0 ] ; then
 		false
@@ -373,12 +370,12 @@ is_user() {
 # output: HA1, HA1B
 credentials()
 {
-	HA1=`$GENHA1 $1 $DOMAIN $2`
+	HA1=`$GENHA1 $1 $SIP_DOMAIN $2`
 	if [ $? -ne 0 ] ; then
 		echo "HA1 calculation failed"
 		exit 1
 	fi
-	HA1B=`$GENHA1 "$1@$DOMAIN" $DOMAIN $2`
+	HA1B=`$GENHA1 "$1@$SIP_DOMAIN" $SIP_DOMAIN $2`
 	if [ $? -ne 0 ] ; then
 		echo "HA1B calculation failed"
 		exit 1
@@ -386,6 +383,13 @@ credentials()
 }
 
 #================================================================
+
+if [ -z "$SIP_DOMAIN" ] ; then
+	echo "You need to set environment variable SIP_DOMAIN (e.g. to 'foobar.com') first"
+	echo
+	usage
+	exit 1
+fi
 
 # if the script calls itself ...
 export PW
@@ -409,7 +413,7 @@ case $1 in
 		QUERY="update $TABLE \
 			set $HA1_COLUMN='$HA1', $HA1B_COLUMN='$HA1B', $PASSWORD_COLUMN='$2' \
 			, $SUB_MODIFIED_COLUMN=now() \
-			WHERE $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$DOMAIN';"
+			WHERE $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$SIP_DOMAIN';"
 		sql_query "$QUERY"
 		if [ $? -ne 0 ] ; then
 			echo "password change failed"
@@ -438,7 +442,7 @@ case $1 in
 		QUERY="insert into $TABLE \
 				($SUBSCRIBER_COLUMN,$REALM_COLUMN,$HA1_COLUMN,\
 				$HA1B_COLUMN,$PASSWORD_COLUMN,$EMAIL_COLUMN, $SUB_CREATED_COLUMN) \
-				values ('$1','$DOMAIN','$HA1','$HA1B','$2', '$3', now() );";
+				values ('$1','$SIP_DOMAIN','$HA1','$HA1B','$2', '$3', now() );";
 		sql_query "$QUERY"
 		if [ $? -ne 0 ] ; then
 			echo "introducing a new user to the database failed"
@@ -523,7 +527,7 @@ case $1 in
 			exit 1
 		fi
 		echo "Write email to $1: $EA now ..."
-		mail -s "Message from $DOMAIN SIP admin" $EA
+		mail -s "Message from $SIP_DOMAIN SIP admin" $EA
 		if [ $? -eq 0 ] ; then
 			echo message sent
 		else
