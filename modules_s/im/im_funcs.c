@@ -33,8 +33,20 @@ error:
 
 
 
-int im_check_content_type(struct sip_msg *msg)
+int inline im_check_content_type(struct sip_msg *msg)
 {
+	char type1[4]="text";
+
+	if (!msg->content_type)
+	{
+		LOG(L_WARN,"WARNING: im_get_body_len: Content-TYPE header absent!"
+			"let's assume the content is text/plain ;-)\n");
+		goto done;
+	}
+
+	
+
+done:
 	return 1;
 }
 
@@ -96,7 +108,7 @@ int im_get_user(struct sip_msg *msg, str *user, str *host)
 	}
 	user = &uri.user;
 	host = &uri.user;
-	return -1;
+	return 1;
 
 }
 
