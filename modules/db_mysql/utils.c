@@ -32,10 +32,11 @@
  *            guess daylight saving (janakj)
  */
 
-#define _XOPEN_SOURCE
+#define _XOPEN_SOURCE 4
 
 #include <strings.h>
 #include <string.h>
+#include <time.h>  /*strptime, XOPEN issue must be >=4 */
 #include "utils.h"
 
 
