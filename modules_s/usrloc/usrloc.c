@@ -17,6 +17,7 @@
 #include "../../data_lump_rpl.h"
 #include "../../timer.h"
 #include "../../config.h"
+#include "ul_fifo.h"
 
 
 
@@ -206,6 +207,11 @@ static int mod_init(void)
 	sl_reply = find_export("sl_send_reply", 2);
 	if (!sl_reply) {
 		ERR("This module requires sl module");
+		return -1;
+	}
+
+	if (init_ul_fifo()<0) {
+		ERR("UsrLoc FIFO Command set failure\n");
 		return -1;
 	}
 	

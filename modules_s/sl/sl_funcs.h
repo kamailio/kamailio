@@ -3,7 +3,7 @@
  */
 
 #ifndef _SL_FUNCS_H
-#define SL_FUNCS_H
+#define _SL_FUNCS_H
 
 #include "../../parser/msg_parser.h"
 
