@@ -123,7 +123,7 @@ struct s_table* init_hash_table();
 void                  free_hash_table( struct s_table* hash_table );
 
 void                free_cell( struct cell* dead_cell );
-struct cell*  build_cell( struct s_table* hash_table , struct sip_msg* p_msg );
+struct cell*  build_cell( struct sip_msg* p_msg );
 
 void remove_from_hash_table( struct s_table *hash_table,  struct cell * p_cell );
 void    insert_into_hash_table( struct s_table *hash_table,  struct cell * p_cell );

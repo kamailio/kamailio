@@ -44,7 +44,7 @@ int t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg )
          return -1;
 
    /* creates a new transaction */
-   new_cell = build_cell( hash_table , p_msg ) ;
+   new_cell = build_cell( p_msg ) ;
    if  ( !new_cell )
       return -2;
    insert_into_hash_table( hash_table , new_cell );

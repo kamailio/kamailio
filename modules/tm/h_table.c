@@ -119,7 +119,7 @@ error:
 
 
 
-struct cell*  build_cell( struct s_table* hash_table , struct sip_msg* p_msg )
+struct cell*  build_cell( struct sip_msg* p_msg )
 {
    struct cell*  new_cell;
    int                i;
