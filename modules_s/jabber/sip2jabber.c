@@ -15,7 +15,12 @@
 #include<sys/un.h>
 #include <string.h>
 
+#include "../../mem/mem.h"
+#include "../../mem/shm_mem.h"
+#include "../../dprint.h"
+
 #include "sip2jabber.h"
+#include "xml_jab.h"
 #include "mdefines.h"
 
 #define JB_ID_BASE	"SJ"
@@ -29,54 +34,25 @@
 #define JB_MSG_CHAT		"<message to='%s' type='chat'><body>%s</body></message><message to='%s' type='chat'><body>%s</body></message>"
 
 
-#define _msg_transform(_dst, _src, _len, _i) \
-	for((_i)=0; (_i) < (_len); (_i)++) \
-	{ \
-		if(*((_src)+(_i)) == '<') \
-		{ \
-			*(_dst)++ = '&'; \
-			*(_dst)++ = 'l'; \
-			*(_dst)++ = 't'; \
-			*(_dst)++ = ';'; \
-		} \
-		else \
-		{ \
-			if(*((_src)+(_i)) == '>') \
-			{ \
-				*(_dst)++ = '&'; \
-				*(_dst)++ = 'g'; \
-				*(_dst)++ = 't'; \
-				*(_dst)++ = ';'; \
-			} \
-			else \
-			{ \
-				if(*((_src)+(_i)) == '&') \
-				{ \
-					*(_dst)++ = '&'; \
-					*(_dst)++ = 'a'; \
-					*(_dst)++ = 'm'; \
-					*(_dst)++ = 'p'; \
-					*(_dst)++ = ';'; \
-				} \
-				else \
-				{ \
-					*(_dst)++ = *((_src)+(_i)); \
-				} \
-			} \
-		} \
-	} \
-	*(_dst) = 0;
-
 /**
  * init a JABBER connection
  */
 jbconnection jb_init_jbconnection(char *hostname, int port)
 {
 	jbconnection jbc = (jbconnection)_M_MALLOC(sizeof(struct _jbconnection));
+	if(jbc == NULL)
+		return NULL;
 	jbc->sock=-1;
     jbc->port = port;
+    jbc->juid = -1;
 	jbc->seq_nr = 0;
-    jbc->hostname = strdup(hostname);
+    jbc->hostname = (char*)_M_MALLOC(strlen(hostname));
+	if(jbc->hostname == NULL)
+	{
+		_M_FREE(jbc);
+		return NULL;
+	}
+    strcpy(jbc->hostname, hostname);
     return jbc;
 }
 
@@ -95,6 +71,7 @@ int jb_connect_to_server(jbconnection jbc)
     	_M_PRINTF("S2JB: Error to create the socket\n");
         return -1;
     }
+    DBG("JABBER: JB_CONNECT_TO_SERVER: socket [%d]\n", sock);
     he=gethostbyname(jbc->hostname);
     if(he == NULL)
     {
@@ -119,13 +96,41 @@ int jb_connect_to_server(jbconnection jbc)
 }
 
 /**
+ * set the Jabber internal ID
+ */
+void jb_set_juid(jbconnection jbc, int _juid)
+{
+	if(jbc == NULL)
+		return;
+	jbc->juid = _juid;
+}
+
+/**
+ * return the Jabber internal ID
+ */
+int  jb_get_juid(jbconnection jbc)
+{
+	if(jbc == NULL)
+		return -1;
+	return jbc->juid;
+}
+
+/**
  * disconnect from JABBER server
  */
 int jb_disconnect(jbconnection jbc)
 {
+	if(jbc == NULL || jbc->sock < 0)
+		return -1;
+	DBG("JABBER: JB_DISCONNECT ----------\n");
+    DBG("JABBER: JB_DISCONNECT: socket [%d]\n", jbc->sock);
 	jb_send_presence(jbc, "unavailable", NULL, NULL);
-	send(jbc->sock, "</stream:stream>", 16, 0);
-	close(jbc->sock);
+	if(send(jbc->sock, "</stream:stream>", 16, 0) < 16)
+		DBG("JABBER: JB_DISCONNECT: error closing stream\n");
+	if(close(jbc->sock) == -1)
+		DBG("JABBER: JB_DISCONNECT: error closing socket\n");
+	jbc->sock = -1;
+	DBG("JABBER: JB_DISCONNECT --END--\n");
 	return 0;
 }
 
@@ -153,6 +158,7 @@ int jb_user_auth_to_server(jbconnection jbc, char *username, char *passwd, char 
 
 	jbc->stream_id = (char*)_M_MALLOC(p1-p0+1);
 	strncpy(jbc->stream_id, p0, p1-p0);
+    jbc->stream_id[p1-p0] = 0;
 
 	sprintf(msg_buff, JB_IQ_AUTH_REQ, JB_ID_BASE, jbc->seq_nr, username);
 	send(jbc->sock, msg_buff, strlen(msg_buff), 0);
@@ -172,6 +178,7 @@ int jb_user_auth_to_server(jbconnection jbc, char *username, char *passwd, char 
 	if((p0 = strstr(msg_buff, "<digest/>")) != NULL)
 	{ // digest authentication
 		sprintf(msg_buff, "%s%s", jbc->stream_id, passwd);
+		DBG("JABBER: JB_USER_AUTH_TO_SERVER: [%s:%s]\n", jbc->stream_id, passwd);
 		p0 = shahash(msg_buff);
 		sprintf(msg_buff, JB_IQ_AUTH_DG_SEND, JB_ID_BASE, jbc->seq_nr, username, p0, resource);
 	}
@@ -193,11 +200,16 @@ int jb_user_auth_to_server(jbconnection jbc, char *username, char *passwd, char 
 	p0 = strstr(msg_buff, "type='error'");
 	if(p0 != NULL)
 		return -3;
-
-	jbc->username = strdup(resource);
-	jbc->passwd = strdup(resource);
-	jbc->resource = strdup(resource);
-
+		
+    /**************
+	jbc->username = (char*)_M_MALLOC(strlen(username));
+	strcpy(jbc->username, username);
+	jbc->passwd = (char*)_M_MALLOC(strlen(passwd));
+	strcpy(jbc->passwd, passwd);
+	*/
+	jbc->resource = (char*)_M_MALLOC(strlen(resource));
+	strcpy(jbc->resource, resource);
+	
 	return 0;
 }
 
@@ -208,6 +220,7 @@ int jb_get_roster(jbconnection jbc)
 {
 	char msg_buff[4096];
 	int n;
+	DBG("JABBER: JB_GET_ROSTER -------\n");
 	send(jbc->sock, JB_IQ_ROSTER_GET, strlen(JB_IQ_ROSTER_GET), 0);
 	n = recv(jbc->sock, msg_buff, 4096, 0);
 	msg_buff[n] = 0;
@@ -221,48 +234,79 @@ int jb_get_roster(jbconnection jbc)
 int jb_send_msg(jbconnection jbc, char *to, int tol, char *msg, int msgl)
 {
 	char msg_buff[4096], *p;
-	int i;
+	int i, l;
 
 	strcpy(msg_buff, "<message to='");
 	strncat(msg_buff, to, tol);
 	strcat(msg_buff, "' type='normal'><body>");
 
-	p = msg_buff + strlen(msg_buff);
-	_msg_transform(p, msg, msgl, i);
+	l = strlen(msg_buff);
+	p = msg_buff + l;
+	if((i = xml_escape(msg, msgl, p, 4096-l)) < 0)
+	{
+		DBG("JABBER: JB_SEND_MSG: error: message not sent - output buffer too small\n");
+		return -2;
+	}
 
+	if(l+i > 4076)
+	{
+		DBG("JABBER: JB_SEND_MSG: error: message not sent -- output buffer too small\n");
+		return -2;
+	}
 	strcat(msg_buff, "</body></message>");
 
 	//sprintf(msg_buff, JB_MSG_NORMAL, to, msg);
-	send(jbc->sock, msg_buff, strlen(msg_buff), 0);
+	i = strlen(msg_buff);
+	if(send(jbc->sock, msg_buff, i, 0) < i)
+	{
+		DBG("JABBER: JB_SEND_MSG: error: message not sent\n");
+		return -2;
+    }
 
 	return 0;
 }
 
 /**
  * send a signed message through a JABBER connection
+ * params are pairs (buffer, len)
  */
 int jb_send_sig_msg(jbconnection jbc, char *to, int tol, char *msg, int msgl, char *sig, int sigl)
 {
 	char msg_buff[4096], *p;
-	int i;
+	int i, l;
 
 	strcpy(msg_buff, "<message to='");
 	strncat(msg_buff, to, tol);
 	strcat(msg_buff, "' type='normal'><body>");
 
-	p = msg_buff + strlen(msg_buff);
-	_msg_transform(p, msg, msgl, i);
+	l = strlen(msg_buff);
+	p = msg_buff + l;
+	if((i = xml_escape(msg, msgl, p, 4096-l)) < 0)
+	{
+		DBG("JABBER: JB_SEND_SIG_MSG: error: message not sent - output buffer too small\n");
+		return -2;
+	}
+	
 
 	strncat(msg_buff, "\n[From:  ", 8);
 
-	p = msg_buff + strlen(msg_buff);
-	_msg_transform(p, sig, sigl, i);
+	l = strlen(msg_buff);
+	p = msg_buff + l;
+	if((i=xml_escape(sig, sigl, p, 4096-l)) < 0)
+	{
+		DBG("JABBER: JB_SEND_SIG_MSG: error: message not sent -- output buffer too small\n");
+		return -2;
+	}
 
 	strcat(msg_buff, "]</body></message>");
 
 	//sprintf(msg_buff, JB_MSG_NORMAL, to, msg);
-	send(jbc->sock, msg_buff, strlen(msg_buff), 0);
-
+	i = strlen(msg_buff);
+	if(send(jbc->sock, msg_buff, i, 0) < i)
+	{
+		DBG("JABBER: JB_SEND_SIG_MSG: error: message not sent\n");
+		return -2;
+    }
 	return 0;
 }
 
@@ -280,12 +324,18 @@ int jb_recv_msg(jbconnection jbc, char *from, char *msg)
 
 /**
  * send presence
+ * type - "unavailable", "subscribe", "subscribed" ....
  * status - "online", "away", "unavailable" ...
+ * priority - "0", "1", ...
  */
 int jb_send_presence(jbconnection jbc, char *type, char *status, char *priority)
 {
 	//JB_PRESENCE		"<presence type='%s'><status>%s</status><priority>%d</priority></presence>"
 	char msg_buff[4096];
+	int n;
+	if(jbc == NULL)
+		return -1;
+	DBG("JABBER: JB_SEND_PRESENCE -------\n");
 	strcpy(msg_buff, "<presence");
 	if(type != NULL)
 	{
@@ -317,7 +367,12 @@ int jb_send_presence(jbconnection jbc, char *type, char *status, char *priority)
 	}
 
 	//sprintf(msg_buff, JB_PRESENCE, status, priority);
-	send(jbc->sock, msg_buff, strlen(msg_buff), 0);
+	n = strlen(msg_buff);
+	if(send(jbc->sock, msg_buff, n, 0) < n)
+	{
+		DBG("JABBER: JB_SEND_PRESENCE: error: presence not sent\n");
+		return -2;
+	}
 
 	return 0;
 }
@@ -327,19 +382,26 @@ int jb_send_presence(jbconnection jbc, char *type, char *status, char *priority)
  */
 int jb_free_jbconnection(jbconnection jbc)
 {
+	if(jbc == NULL)
+		return -1;
+	DBG("JABBER: JB_FREE_JBCONNECTION ----------\n");
+	//if(jbc->sock != -1)
+	//	jb_disconnect(jbc);
+		
 	if(jbc->hostname != NULL)
 		_M_FREE(jbc->hostname);
 	if(jbc->stream_id != NULL)
 		_M_FREE(jbc->stream_id);
-
+    /*******
 	if(jbc->username != NULL)
 		_M_FREE(jbc->username);
 	if(jbc->passwd != NULL)
 		_M_FREE(jbc->passwd);
+	*/
 	if(jbc->resource != NULL)
 		_M_FREE(jbc->resource);
 
-	if(jbc != NULL)
-		_M_FREE(jbc);
+	_M_FREE(jbc);
+	DBG("JABBER: JB_FREE_JBCONNECTION ---END---\n");
 	return 0;
 }
