@@ -30,6 +30,7 @@
  *             ACK/200 tag matching
  *
  * 2003-03-01 VOICE_MAIL defs removed (jiri)
+ * 2003-10-08 receive_test function-alized (jiri)
  */
 
 
@@ -113,5 +114,7 @@ int branch_builder( unsigned int hash_index,
 	/* output value: string and actual length */
 	char *branch_str, int *len );
 
+/* check if IP address in Via != source IP address of signaling */
+int received_test( struct sip_msg *msg );
 
 #endif

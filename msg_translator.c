@@ -53,6 +53,7 @@
  *             build_req_fomr_sip_req no longer adds 1 for ipv6 via parameter
  *              position calculations ([] are part of host.s now) (andrei)
  * 2003-10-02  via+lump dst address/port can be set to preset values (andrei)
+ * 2003-10-08 receive_test function-alized (jiri)
  *
  */
 /* Via special params:
@@ -209,6 +210,22 @@ static int check_via_address(struct ip_addr* ip, str *name,
 		}
 	}
 	return -1;
+}
+
+
+/* check if IP address in Via != source IP address of signaling */
+int received_test( struct sip_msg *msg )
+{
+	char backup;
+	int rcvd;
+
+	/* zero-terminate hostname temporarily in case DNS resolver is used */
+	backup = msg->via1->host.s[msg->via1->host.len];
+	rcvd=msg->via1->received
+			|| check_via_address(&msg->rcv.src_ip, &msg->via1->host,
+							msg->via1->port, received_dns);
+	msg->via1->host.s[msg->via1->host.len] = backup;
+	return rcvd;
 }
 
 
@@ -1264,9 +1281,7 @@ skip_clen:
 		goto error00;
 	}
 	/* check if received needs to be added */
-	if ( msg->via1->received || 
-			check_via_address(&msg->rcv.src_ip, &msg->via1->host, 
-									msg->via1->port, received_dns) ){
+	if ( received_test(msg) ) { 
 		if ((received_buf=received_builder(msg,&received_len))==0){
 			LOG(L_ERR, "ERROR: build_req_buf_from_sip_req:"
 							" received_builder failed\n");
@@ -1540,7 +1555,6 @@ error:
 }
 
 
-
 char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 		struct sip_msg* msg, unsigned int *returned_len, struct bookmark *bmark)
 {
@@ -1559,7 +1573,6 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	char *after_body;
 	str  to_tag;
 	char *totags;
-	int rcvd;
 
 	body = 0;
 	buf=0;
@@ -1580,14 +1593,8 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	len = 0;
 
 	/* check if received needs to be added */
-	backup = msg->via1->host.s[msg->via1->host.len];
-	msg->via1->host.s[msg->via1->host.len] = 0;
-	rcvd=msg->via1->received 
-			|| check_via_address(&msg->rcv.src_ip, &msg->via1->host, 
-						msg->via1->port, received_dns);
-	msg->via1->host.s[msg->via1->host.len] = backup;
-	if (rcvd) {
-		if ((received.s=received_builder(msg,&received.len))==0) {
+	if (received_test(msg)) {
+		if ((received_buf=received_builder(msg,&received_len))==0) {
 			LOG(L_ERR, "ERROR: build_res_buf_from_sip_req: "
 				"alas, received_builder failed\n");
 			goto error00;
