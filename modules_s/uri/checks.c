@@ -105,10 +105,6 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 	auth_body_t* c;
 	struct sip_uri puri;
 
-#ifdef USER_CAN_CONTAIN_DOMAIN
-	char* ptr;
-#endif
-
 	int len;
 
 	if (!_uri) {
@@ -136,13 +132,6 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 	if (!puri.user.len) return -4;
 
 	len = c->digest.username.len;
-
-#ifdef USER_CAN_CONTAIN_DOMAIN
-	ptr = q_memchr(c->digest.username.s, '@', len);
-	if (ptr) {
-		len = ptr - c->digest.username.s;
-	}
-#endif
 
 	if (puri.user.len == len) {
 		if (!strncasecmp(puri.user.s, c->digest.username.s, len)) {
