@@ -34,6 +34,10 @@ USRLOC=location
 PASSWORD_COLUMN=password
 SUBSCRIBER_COLUMN='user_id'
 EMAIL_COLUMN=email_address
+# acl table
+ACL_TABLE=grp
+ACL_USER_COLUMN=user
+ACL_GROUP_COLUMN=grp
 
 
 
@@ -47,9 +51,100 @@ usage() {
 	echo "   $0 rm <name> ... delete a user (*)"
 	echo "   $0 passwd <user> <passwd> ... change user's password (*)"
 	echo "   $0 stat ... show runnig processes + $0 show"
+	echo "   $0 acl show [<user>] ... show user membership"
+	echo "   $0 acl grant <user> <group> ... grant user memberhsip (*)"
+	echo "   $0 acl revoke <user> [<group>] ... grant user memberhsip(s) (*)"
 	echo 
 	echo "   commands labeled with (*) will prompt for a MySQL password"
+	echo
 }
+
+acl() {
+	case $1 in
+		show)
+			if [ $# -eq 2 ] ; then
+				CLAUSE=" WHERE $ACL_USER_COLUMN='$2' "
+			elif [ $# -ne 1 ] ; then
+				usage
+				exit 1
+			fi
+			QUERY="select * FROM $ACL_TABLE $CLAUSE ; "
+			$MYSQL -h $SQL_HOST -u $RO_USER "-p$RO_PW" \
+				-e "$QUERY ;" $SQL_DB
+			;;
+
+		grant)
+			if [ $# -ne 3 ] ; then
+				usage
+				exit 1
+			fi
+
+        	$MYSQL -h $SQL_HOST -u $SQL_USER -p$PW \
+            	-e "use $SQL_DB; insert into $ACL_TABLE \
+                ($ACL_USER_COLUMN,$ACL_GROUP_COLUMN) \
+                values ('$2','$3');";
+
+			;;
+
+		revoke)
+			if [ $# -eq 3 ] ; then
+				CLAUSE=" and $ACL_GROUP_COLUMN='$3' "
+			elif [ $# -ne 2 ] ; then
+				usage
+				exit 1
+			fi	
+
+			QUERY="delete from $ACL_TABLE where \
+				$ACL_TABLE.$ACL_USER_COLUMN='$2' $CLAUSE"
+			$MYSQL -h $SQL_HOST -u $SQL_USER "-p$PW" -e "$QUERY ;" $SQL_DB
+
+			;;
+
+		*)
+			usage
+			exit 1
+			;;
+	esac
+}
+
+# params: user
+# output: false if exists, true otherwise
+is_user() {
+	CNT=`$MYSQL -B -h $SQL_HOST -u $SQL_USER -p$PW \
+		-e "use $SQL_DB; select count(*) from $TABLE \
+		where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$DOMAIN';" \
+		| grep -v ERROR | tail -n1`
+	if [ "0$CNT" -eq 0 ] ; then
+		false
+	else
+		true
+	fi
+
+}
+
+#params: none
+# output: PW
+prompt_pw() {
+	read -s -p "MySql Password: " PW
+	echo 
+}
+
+# params: user, password
+# output: HA1, HA1B
+credentials()
+{
+	HA1=`$GENHA1 $1 $DOMAIN $2`
+	if [ $? -ne 0 ] ; then
+		echo "HA1 calculation failed"
+		exit 1
+	fi
+	HA1B=`$GENHA1 "$1@$DOMAIN" $DOMAIN $2`
+	if [ $? -ne 0 ] ; then
+		echo "HA1B calculation failed"
+		exit 1
+	fi
+}
+
 
 
 case $1 in
@@ -60,25 +155,12 @@ case $1 in
 			exit 1
 		fi
 		shift
+		credentials
 
-		HA1=`$GENHA1 $1 $DOMAIN $2`
+		prompt_pw
+		is_user $1
 		if [ $? -ne 0 ] ; then
-			echo "HA1 calculation failed"
-			exit 1
-		fi
-		HA1B=`$GENHA1 "$1@$DOMAIN" $DOMAIN $2`
-		if [ $? -ne 0 ] ; then
-			echo "HA1B calculation failed"
-			exit 1
-		fi
-		read -s -p "MySql Password: " PW
-		echo 
-		CNT=`$MYSQL -B -h $SQL_HOST -u $SQL_USER -p$PW \
-			-e "use $SQL_DB; select count(*) from $TABLE \
-			where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$DOMAIN';" \
-			| tail -n1`
-		if [ $CNT -eq 0 ] ; then
-			echo "No such user exists"
+			echo non-existent user
 			exit 1
 		fi
 		$MYSQL -h $SQL_HOST -u $SQL_USER -p$PW \
@@ -101,29 +183,14 @@ case $1 in
 			exit 1
 		fi
 		shift
+		credentials
+		prompt_pw
+        is_user $1
+        if [ $? -eq 0 ] ; then
+            echo user already exists
+            exit 1
+        fi
 
-		HA1=`$GENHA1 $1 $DOMAIN $2`
-		if [ $? -ne 0 ] ; then
-			echo "HA1 calculation failed"
-			exit 1
-		fi
-		HA1B=`$GENHA1 "$1@$DOMAIN" $DOMAIN $2`
-		if [ $? -ne 0 ] ; then
-			echo "HA1B calculation failed"
-			exit 1
-		fi
-
-		read -s -p "MySql Password: " PW
-		echo
-		
-		CNT=`$MYSQL -B -h $SQL_HOST -u $SQL_USER -p$PW \
-			-e "use $SQL_DB; select count(*) from $TABLE \
-			where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$DOMAIN';" \
-			| tail -n1`
-		if [ $CNT -ne 0 ] ; then
-			echo "user '$1' already exists"
-			exit 1
-		fi
 		$MYSQL -h $SQL_HOST -u $SQL_USER -p$PW \
 			-e "use $SQL_DB; insert into $TABLE \
 				($SUBSCRIBER_COLUMN,$REALM_COLUMN,$HA1_COLUMN,\
@@ -142,17 +209,16 @@ case $1 in
 			usage
 			exit 1
 		fi
-		read -s -p "MySql Password: " PW
-		echo
+		prompt_pw
 		CNT=`$MYSQL -B -h $SQL_HOST -u $SQL_USER -p$PW \
 			 -e "use $SQL_DB; select count(*) from $USRLOC \
-			where $USRLOC.$USER_COLUMN='$2';" | tail -n1`
-		if [ $CNT -eq 0 ] ; then
+			where $USRLOC.$USER_COLUMN='$2';" | grep -v ERROR | tail -n1`
+		if [ "0$CNT" -eq 0 ] ; then
 			echo Nothing to delete
 			exit 1
 		fi
 		QUERY="delete from $USRLOC where $USRLOC.$USER_COLUMN='$2'"
-		mysql -h $SQL_HOST -u $SQL_USER "-p$PW" -e "$QUERY ;" $SQL_DB
+		$MYSQL -h $SQL_HOST -u $SQL_USER "-p$PW" -e "$QUERY ;" $SQL_DB
 		if [ $? -ne 0 ] ; then
 			echo "database operation failed"
 		else
@@ -169,8 +235,8 @@ case $1 in
 		shift
 		QUERY="select $TABLE.$EMAIL_COLUMN from $TABLE where  \
 			$TABLE.$SUBSCRIBER_COLUMN='$1'"
-		EA=`mysql -B -h $SQL_HOST -u $RO_USER "-p$RO_PW" \
-			-e "$QUERY ;" $SQL_DB|tail -n1`
+		EA=`$MYSQL -B -h $SQL_HOST -u $RO_USER "-p$RO_PW" \
+			-e "$QUERY ;" $SQL_DB| grep -v ERROR | tail -n1`
 		if [ $? -ne 0 ] ; then
 			echo "MySql query failed"
 			exit 1
@@ -194,16 +260,19 @@ case $1 in
 
 		shift
 
-		QUERY1="select $TABLE.$EMAIL_COLUMN from $TABLE where  $TABLE.$SUBSCRIBER_COLUMN='$1'"
-		QUERY2="select $USRLOC.* from $USRLOC where $USRLOC.$USER_COLUMN='$1' order by expires desc"
-		QUERY3="select $USRLOC.$USER_COLUMN, $TABLE.$EMAIL_COLUMN from $TABLE, $USRLOC where  \
+		QUERY1="select $TABLE.$EMAIL_COLUMN from $TABLE where  \
+			$TABLE.$SUBSCRIBER_COLUMN='$1'"
+		QUERY2="select $USRLOC.* from $USRLOC where \
+			$USRLOC.$USER_COLUMN='$1' order by expires desc"
+		QUERY3="select $USRLOC.$USER_COLUMN, $TABLE.$EMAIL_COLUMN \
+			from $TABLE, $USRLOC where  \
 			$TABLE.$SUBSCRIBER_COLUMN=$USRLOC.$USER_COLUMN" 
 
 		if [ $# -eq 1 ] ; then
-			mysql -h $SQL_HOST -u $RO_USER "-p$RO_PW" -e "$QUERY1 ;" $SQL_DB
-			mysql -h $SQL_HOST -u $RO_USER "-p$RO_PW" -e "$QUERY2 ;" $SQL_DB
+			$MYSQL -h $SQL_HOST -u $RO_USER "-p$RO_PW" -e "$QUERY1 ;" $SQL_DB
+			$MYSQL -h $SQL_HOST -u $RO_USER "-p$RO_PW" -e "$QUERY2 ;" $SQL_DB
 		else
-			mysql -h $SQL_HOST -u $RO_USER "-p$RO_PW" -e "$QUERY3 ;" $SQL_DB
+			$MYSQL -h $SQL_HOST -u $RO_USER "-p$RO_PW" -e "$QUERY3 ;" $SQL_DB
 		fi
 
 		;;
@@ -213,8 +282,16 @@ case $1 in
             usage
             exit 1
         fi
-        QUERY="delete from $TABLE where $TABLE.$SUBSCRIBER_COLUMN='$2'"
-        mysql -h $SQL_HOST -u $SQL_USER "-p" -e "$QUERY ;" $SQL_DB
+		shift 
+		prompt_pw
+        is_user $1
+        if [ $? -ne 0 ] ; then
+            echo non-existent user
+            exit 1
+        fi
+
+        QUERY="delete from $TABLE where $TABLE.$SUBSCRIBER_COLUMN='$1'"
+        $MYSQL -h $SQL_HOST -u $SQL_USER "-p$PW" -e "$QUERY ;" $SQL_DB
         ;;
 			
 	stat)
@@ -225,6 +302,11 @@ case $1 in
 		ps -o "pid,user,args" $i -C $SER
 		$0 show
 
+		;;
+
+	acl)
+		shift
+		acl "$@"
 		;;
 		
 	*)
