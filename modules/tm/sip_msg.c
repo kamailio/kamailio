@@ -385,5 +385,6 @@ void sip_msg_free(struct sip_msg* msg)
    if (msg->orig) sh_free( msg->orig );
    if (msg->buf) sh_free( msg->buf );
 
+   sh_free(msg);
    DBG("DEBUG: sip_msg_free : done\n");
 }
