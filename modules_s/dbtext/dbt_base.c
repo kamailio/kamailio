@@ -113,10 +113,6 @@ void dbt_close(db_con_t* _h)
 	if (DBT_CON_RESULT(_h)) 
 		dbt_result_free(DBT_CON_RESULT(_h));
 	
-	//if (DBT_CON_CONNECTION(_h)) {
-	//	 
-	//}
-	
 	pkg_free(_h);
     return;
 }
