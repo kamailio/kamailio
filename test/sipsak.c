@@ -301,7 +301,7 @@ void create_msg(char *buff, int action){
 			sprintf(buff, "%s sip:%s%s%s%s:9\r\n%s<sip:sipsak@%s:9>\r\n%s<sip:%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sipsak@%s:9>\r\n\r\n", FLOOD_METH, domainname, SIP20_STR, VIA_STR, fqdn, FROM_STR, fqdn, TO_STR, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, FLOOD_METH, CONT_STR, fqdn);
 			break;
 		case REQ_RAND:
-			sprintf(buff, "%s sip:%s%s%s%s:%i\r\n%s<sip:sipsak@%s:%i>\r\n%s<sip:%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sipsak@%s:%i>\r\n\r\n", OPT_STR, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, fqdn, lport, TO_STR, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, FLOOD_METH, CONT_STR, fqdn, lport);
+			sprintf(buff, "%s sip:%s%s%s%s:%i\r\n%s<sip:sipsak@%s:%i>\r\n%s<sip:%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sipsak@%s:%i>\r\n\r\n", OPT_STR, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, fqdn, lport, TO_STR, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, OPT_STR, CONT_STR, fqdn, lport);
 			break;
 		default:
 			printf("error: unknown request type to create\n");
@@ -503,6 +503,10 @@ void shoot(char *buff)
 		trash_random(buff);
 	}
 	else {
+		if (!file_b) {
+			namebeg=1;
+			create_msg(buff, REQ_OPT);
+		}
 		retryAfter = 500;
 		if(maxforw!=-1)
 			set_maxforw(buff);
@@ -1119,7 +1123,7 @@ int main(int argc, char *argv[])
 			exit(2);
 		}
 		if (!uri_b) {
-			printf("error: we need at least a sip uri for random\n");
+			printf("error: need at least a sip uri for random\n");
 			exit(2);
 		}
 		if (redirects) {
@@ -1130,9 +1134,16 @@ int main(int argc, char *argv[])
 			printf("warning: random characters may destroy your terminal output\n");
 		}
 	}
-	else if (!(file_b && uri_b)) {
-		printf("error: you have to give the file to send and the sip:uri at least.\n\n");
-		print_help();
+	else {
+		if (!uri_b) {
+			printf("error: a spi uri is needed at least\n");
+			exit(2);
+		}
+		if (!(username || file_b)) {
+			printf("error: ether a file or an username in the sip uri is required\n");
+			exit(2);
+		}
+		
 	}
 	/* determine our hostname */
 	get_fqdn();
