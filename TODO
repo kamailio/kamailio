@@ -58,3 +58,7 @@ x the same for rpm
 x jku: branch hash computation over canonical values
 0 jku: loop checking
 - jku: try CRC as opposed to MD5
+
+
+- freopen stdin, stdou to /dev/null
+

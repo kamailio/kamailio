@@ -383,9 +383,26 @@ int daemonize(char*  name)
 		}
 	}
 	
+	/* try to replace stdin, stdout & stderr with /dev/null */
+	if (freopen("/dev/null", "r", stdin)==0){
+		LOG(L_ERR, "unable to replace stdin with /dev/null: %s\n",
+				strerror(errno));
+		/* continue, leave it open */
+	};
+	if (freopen("/dev/null", "w", stdout)==0){
+		LOG(L_ERR, "unable to replace stdout with /dev/null: %s\n",
+				strerror(errno));
+		/* continue, leave it open */
+	};
+	/* close stderr only if log_stderr=0 */
+	if ((!log_stderr) &&(freopen("/dev/null", "r", stderr)==0)){
+		LOG(L_ERR, "unable to replace stderr with /dev/null: %s\n",
+				strerror(errno));
+		/* continue, leave it open */
+	};
+	
 	/* close any open file descriptors */
-	for (r=0;r<MAX_FD; r++){
-			if ((r==2) && log_stderr)  continue;
+	for (r=3;r<MAX_FD; r++){
 			close(r);
 	}
 	
