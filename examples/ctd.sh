@@ -43,6 +43,7 @@
 # --------
 # 2003-03-01 bug_fix: route set reversed
 # 2003-02-27 dialog support completed (jiri)
+# 2003-04-28 dialog info precomputed in SER (jiri)
 
 #--------------------------------
 # config: who with whom
@@ -64,7 +65,7 @@ fi
 
 #---------------------------------
 # fixed config data
-FIFO="/tmp/ser_fifox"
+FIFO="/tmp/ser_fifo"
 # address of controller
 FROM="<sip:controller@foo.bar>"
 CSEQ="1"
@@ -85,51 +86,13 @@ filter_fl()
 {
 
 gawk -F ' ' '
-BEGIN { IGNORECASE=1; rri=0; line=0; ret=1;eoh=0 }
-END { # print dialog information a la RFC3261, S. 12.2.1.1
-	# calculate route set 
-	sr=0
-	if (rri>0) { # route set not empty
-		# next-hop loose router?
-		if (match(rr[rri], ";lr")) {
-			ruri=rcontact
-			nexthop=rr[rri]
-			rre=rri # begin from first
-		} else { # next-hop strict router
-			ruri=rr[rri]
-			rre=rri-1 # skip last
-			sr=1
-			#rri++
-			#rr[rri]=rcontact
-			nexthop="." # t_uac_dlg value for "use ruri"
-		}
-	} else { # no record-routing
-			ruri=rcontact
-			nexthop="."
-			rre=0 # do not enter the loop
-	}
-	# print the FIFO request header
-	print ruri
-	print nexthop
-	print to
-	for(i=rre; i>=1; i-- ) { # reverse
-		if (i==rre) printf "Route: "; else printf ", "
-		printf("%s", rr[i])
-		if (i==1) {
-			printf("\n")
-		}
-	}
-	if (sr==1) { 
-		printf "Route: "
-		printf  rcontact
-		printf "\n" 
-	}
-	exit ret
-}
+BEGIN { IGNORECASE=1; line=0; eoh=0;ret=1 }
+END { exit ret; }
 
-# set true (0) to return value if transaction completed succesfully
 {line++; }
-line==1 && /^2[0-9][0-9] / { ret=0; next; }
+
+# line 1: status code
+line==1 && /^2[0-9][0-9] / { ret=0;next; }
 line==1 && /^[3-6][0-9][0-9] / { print; print $0 > "/dev/stderr"; next; }
 line==1 { print "reply error"; print; next; } 
 
@@ -137,37 +100,16 @@ line==1 { print "reply error"; print; next; }
 /^$/ { eoh=1 }
 eoh==1 { next }
 
-# collect dialog state: contact, rr, to
-/^(Contact|m):/ { 
-	# contact is <>-ed; fails if < within quotes
-	if (match($0, "^(Contact|m):[^<]*<([^>]*)>", arr)) {
-		rcontact=arr[2]
-		next
-	# contact without any extras and without <>, just uri
-	} else if (match($0, "^(Contact|m):[ \t]*([^ ;\t]*)", arr)) {
-		rcontact=arr[2]
-		next
-	} else {
-		# contact parsing error
-		ret=1
-	}
-}
-
-/^Record-Route:/ {
-	# rr is always <>-ed; fails if <> within quotes
-	srch=$0
-	while (match(srch, "[^<]*<([^>]*)>", arr )) {
-		rri++
-		rr[rri]=arr[1]
-		srch=substr(srch,RLENGTH)
-	}
-}
-
-/^(To|t):/ {
-	to=$0;
-}
-
-{next} # do not print uninteresting header fields
+# uri and outbound uri at line 2,3: copy and paste
+line==2 || line==3 { print $0; next; }
+# line 4: Route; empty if ".", copy and paste otherwise
+line==4 && /^\.$/ { next; }
+# if non-empty, copy and paste it
+line==4 { print $0; next; }
+# filter out to header field for use in next requests
+/^(To|t):/ { print $0; next; }
+# anything else will be ignored
+{next} 
 	' # end of awk script
 } # end of filter_fl
 
