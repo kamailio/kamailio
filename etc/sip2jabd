@@ -75,7 +75,7 @@ start_jab() {
 	then
 		#### Run by root
 		echo "Starting Jabber server ..."
-		su - ${JUID} -B -c "cd ${JDIR}; ${JABBERD} -c ${CONF} > /dev/null 2>&1"  > /dev/null 2>&1
+		su - ${JUID} -c "cd ${JDIR}; ${JABBERD} -B -c ${CONF} > /dev/null 2>&1"  > /dev/null 2>&1
 		# echo
 		sleep 2
 		echo "Starting ICQ transport - external component ..."
