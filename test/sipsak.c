@@ -85,7 +85,7 @@ bouquets and brickbats to farhan@hotfoon.com
 #define FLOOD_METH "OPTIONS"
 
 long address;
-int verbose, nameend, namebeg, expires_t, flood;
+int verbose, nameend, namebeg, expires_t, flood, warning_ext;
 int maxforw, lport, rport, randtrash, trashchar, numeric;
 int file_b, uri_b, trace, via_ins, usrloc, redirects;
 char *username, *domainname;
@@ -356,8 +356,6 @@ void set_maxforw(char *mes){
 	}
 }
 
-
-
 /* replaces the uri in first line of mes with the other uri */
 void uri_replace(char *mes, char *uri)
 {
@@ -392,6 +390,33 @@ void trash_random(char *message)
 #ifdef DEBUG
 	printf("request:\n%s\n", message);
 #endif
+}
+
+/* tryes to find the warning header filed and prints out the IP */
+void warning_extract(char *message)
+{
+	char *warning, *end, *mid, *server;
+	int srvsize;
+	struct hostent* he, re;
+	struct in_addr in;
+
+	warning=strstr(message, "Warning");
+	if (warning) {
+		end=strchr(warning, '"');
+		end--;
+		warning=strchr(warning, '3');
+		warning=warning+4;
+		mid=strchr(warning, ':');
+		if (mid) end=mid;
+		srvsize=end - warning + 1;
+		server=malloc(srvsize);
+		memset(server, 0, srvsize);
+		server=strncpy(server, warning, srvsize - 1);
+		printf("%s\n", server);
+	}
+	else {
+		printf("no Warning header found\n");
+	}
 }
 
 /*
@@ -628,7 +653,12 @@ void shoot(char *buff)
 				{
 					reply[ret] = 0;
 					if (redirects && regexec((regex_t*)redexp, reply, 0, 0, 0)==0) {
-						printf("** received redirect **\n");
+						printf("** received redirect ");
+						if (warning_ext) {
+							printf("from ");
+							warning_extract(reply);
+						}
+						else printf("\n");
 						/* we'll try to handle 301 and 302 here, other 3xx are to complex */
 						regcomp(redexp, "^SIP/[0-9]\\.[0-9] 30[1-2] ", REG_EXTENDED|REG_NOSUB|REG_ICASE);
 						if (regexec((regex_t*)redexp, reply, 0, 0, 0)==0) {
@@ -695,7 +725,8 @@ void shoot(char *buff)
 						   treated as the final reply*/
 						printf("%i: ", i);
 						if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
-							printf("* (483) \n");
+							printf("* (483) ");
+							warning_extract(reply);
 #ifdef DEBUG
 							printf("%s\n", reply);
 #endif
@@ -801,7 +832,12 @@ void shoot(char *buff)
 #ifdef DEBUG
 							printf("received:\n%s\n", reply);
 #endif
-							if (verbose) printf("received expected 4xx\n");
+							if (verbose) printf("received expected 4xx ");
+							if (warning_ext) {
+								printf ("from ");
+								warning_extract(reply);
+							}
+							else printf("\n");
 						}
 						else {
 							printf("warning: did not received 4xx\n");
@@ -865,7 +901,7 @@ void print_help() {
 		" flood : sipsak -F [-c number] -s sip:uri\n"
 		" random: sipsak -R [-T number] -s sip:uri\n\n"
 		" additional parameter in every modus:\n"
-		"                [-d] [-i] [-l port] [-m number] [-n] [-r port] [-v]\n"
+		"                [-d] [-i] [-l port] [-m number] [-n] [-r port] [-v] [-w]\n"
 		"   -h           displays this help message\n"
 		"   -f filename  the file which contains the SIP message to send\n"
 		"   -s sip:uri   the destination server uri in form sip:[user@]servername[:port]\n"
@@ -887,7 +923,8 @@ void print_help() {
 		"   -n           use IPs instead of fqdn in the Via-Line\n"
 		"   -i           deactivate the insertion of a Via-Line\n"
 		"   -d           ignore redirects\n"
-		"   -v           be more verbose\n\n"
+		"   -v           be more verbose\n"
+		"   -w           extract IP from the warning in reply\n\n"
 		"The manupulation function are only tested with nice RFC conform SIP-messages,\n"
 		"so don't expect them to work with ugly or malformed messages.\n");
 	exit(0);
@@ -902,7 +939,7 @@ int main(int argc, char *argv[])
 
 	/* some initialisation to be shure */
 	file_b=uri_b=trace=lport=usrloc=flood=verbose=randtrash=trashchar = 0;
-	numeric = 0;
+	numeric=warning_ext = 0;
 	namebeg=nameend=maxforw = -1;
 	via_ins=redirects = 1;
 	username = NULL;
@@ -918,7 +955,7 @@ int main(int argc, char *argv[])
 	if (argc==1) print_help();
 
 	/* lots of command line switches to handle*/
-	while ((c=getopt(argc,argv,"b:c:dE:e:Ff:hil:m:nr:Rs:tT:uv")) != EOF){
+	while ((c=getopt(argc,argv,"b:c:dE:e:Ff:hil:m:nr:Rs:tT:uvw")) != EOF){
 		switch(c){
 			case 'b':
 				//namebeg=atoi(optarg);
@@ -1053,6 +1090,9 @@ int main(int argc, char *argv[])
 			case 'v':
 				verbose=1;
 				break;
+			case 'w':
+				warning_ext=1;
+				break;
 			default:
 				printf("error: unknown parameter %c\n", c);
 				exit(2);
@@ -1080,6 +1120,10 @@ int main(int argc, char *argv[])
 		if (!via_ins){
 			printf("warning: Via-Line is needed for tracing. Ignoring -i\n");
 			via_ins=1;
+		}
+		if (!warning_ext) {
+			printf("warning: IP extract from waring activated to be more informational\n");
+			warning_ext=1;
 		}
 		if (maxforw==-1) maxforw=0;
 	}
