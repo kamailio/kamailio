@@ -29,6 +29,7 @@
  * History:
  * --------
  *  2003-02-13  added struct dest_info (andrei)
+ *  2003-04-06  all ports are stored/passed in host byte order now (andrei)
  */
 
 #ifndef ip_addr_h
