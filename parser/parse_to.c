@@ -206,6 +206,21 @@ char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
 				{
 					case PARA_VALUE_QUOTED:
 						break;
+#ifdef PINGTEL_TAG_HACK
+					case TAG3:
+						param->type = TAG_PARAM;
+						param->name.len = 3;
+					case S_EQUAL:
+					case S_PARA_VALUE:
+						if (param->type==TAG_PARAM)
+							param->value.s = tmp-1;
+						else {
+							LOG( L_ERR , "ERROR: parse_to_param : unexpected "
+								"char [%c] in status %d: <<%.*s>> .\n",
+								*tmp,status, tmp-buffer, buffer);
+							goto error;
+						}
+#endif
 					case PARA_VALUE_TOKEN:
 						param->value.len=tmp-param->value.s-1;
 						add_param(param,to_b);
@@ -397,6 +412,18 @@ char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
 
 
 endofheader:
+#ifdef PINGTEL_TAG_HACK
+	if (param->type==TAG_PARAM ) {
+		if (saved_status==S_EQUAL||saved_status==S_PARA_VALUE) {
+			saved_status = E_PARA_VALUE;
+			param->value.s=(char*)param->value.len=0;
+			add_param(param, to_b);
+		} else {
+			DBG("HELLO\n");
+			goto error;
+		}
+	}
+#endif
 	*returned_status=saved_status;
 	return tmp;
 
@@ -665,6 +692,7 @@ endofheader:
 					"end of header in state %d\n", status);
 			goto error;
 	}
+	DBG("TO_PARSE done: char = [%c]\n",*tmp);
 	return tmp;
 
 error:
