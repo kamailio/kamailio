@@ -34,6 +34,7 @@
 #include "../../db/db_con.h"
 #include "../../db/db_res.h"
 #include "../../db/db_key.h"
+#include "../../db/db_op.h"
 #include "../../db/db_val.h"
 
 
@@ -64,8 +65,14 @@ int db_free_query(db_con_t* _h, db_res_t* _r);
 /*
  * Do a query
  */
-int db_query(db_con_t* _h, db_key_t* _k, db_val_t* _v, db_key_t* _c, int _n, int _nc,
+int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, db_key_t* _c, int _n, int _nc,
 	     db_key_t _o, db_res_t** _r);
+
+
+/*
+ * Raw SQL query
+ */
+int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r);
 
 
 /*
@@ -77,13 +84,13 @@ int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
 /*
  * Delete a row from table
  */
-int db_delete(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
 
 
 /*
  * Update a row in table
  */
-int db_update(db_con_t* _h, db_key_t* _k, db_val_t* _v,
+int db_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	      db_key_t* _uk, db_val_t* _uv, int _n, int _un);
 
 

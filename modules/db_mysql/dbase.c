@@ -199,7 +199,7 @@ static inline int print_values(char* _b, int _l, db_val_t* _v, int _n)
 }
 
 
-static inline int print_where(char* _b, int _l, db_key_t* _k, db_val_t* _v, int _n)
+static inline int print_where(char* _b, int _l, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 {
 	int i;
 	int res = 0;
@@ -211,7 +211,11 @@ static inline int print_where(char* _b, int _l, db_key_t* _k, db_val_t* _v, int 
 	}
 #endif
 	for(i = 0; i < _n; i++) {
-		res += snprintf(_b + res, _l - res, "%s=", _k[i]);
+		if (_o) {
+			res += snprintf(_b + res, _l - res, "%s%s", _k[i], _o[i]);
+		} else {
+			res += snprintf(_b + res, _l - res, "%s=", _k[i]);
+		}
 		l = _l - res;
 		val2str(&(_v[i]), _b + res, &l);
 		res += l;
@@ -365,13 +369,14 @@ int db_free_query(db_con_t* _h, db_res_t* _r)
  * Query table for specified rows
  * _h: structure representing database connection
  * _k: key names
+ * _op: operators
  * _v: values of the keys that must match
  * _c: column names to return
  * _n: nmber of key=values pairs to compare
  * _nc: number of columns to return
  * _o: order by the specified column
  */
-int db_query(db_con_t* _h, db_key_t* _k, 
+int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 	     db_val_t* _v, db_key_t* _c, int _n, int _nc,
 	     db_key_t _o, db_res_t** _r)
 {
@@ -391,20 +396,40 @@ int db_query(db_con_t* _h, db_key_t* _k,
 	}
 	if (_n) {
 		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, "where ");
-		off += print_where(sql_buf + off, SQL_BUF_LEN - off, _k, _v, _n);
+		off += print_where(sql_buf + off, SQL_BUF_LEN - off, _k, _op, _v, _n);
 	}
 	if (_o) {
 		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, "order by %s", _o);
 	}
 
 	if (submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "query_table(): Error while submitting query\n");
+		LOG(L_ERR, "submit_query(): Error while submitting query\n");
 		return -2;
 	}
 
 	return get_result(_h, _r);
 }
 
+
+/*
+ * Raw SQL query
+ */
+int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
+{
+#ifdef PARANOID
+	if ((!_h) || (!_r) || (!_s)) {
+		LOG(L_ERR, "db_raw_query(): Invalid parameter value\n");
+		return -1;
+	}
+#endif
+
+	if (submit_query(_h, _s) < 0) {
+		LOG(L_ERR, "submit_query(): Error while submitting query\n");
+		return -2;
+	}
+
+	return get_result(_h, _r);
+}
 
 
 /*
@@ -442,10 +467,11 @@ int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
  * Delete a row from the specified table
  * _h: structure representing database connection
  * _k: key names
+ * _o: operators
  * _v: values of the keys that must match
  * _n: number of key=value pairs
  */
-int db_delete(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
+int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 {
 	int off;
 #ifdef PARANOID
@@ -457,7 +483,7 @@ int db_delete(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	off = snprintf(sql_buf, SQL_BUF_LEN, "delete from %s", CON_TABLE(_h));
 	if (_n) {
 		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
-		off += print_where(sql_buf + off, SQL_BUF_LEN - off, _k, _v, _n);
+		off += print_where(sql_buf + off, SQL_BUF_LEN - off, _k, _o, _v, _n);
 	}
 	if (submit_query(_h, sql_buf) < 0) {
 		LOG(L_ERR, "delete_row(): Error while submitting query\n");
@@ -471,13 +497,14 @@ int db_delete(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
  * Update some rows in the specified table
  * _h: structure representing database connection
  * _k: key names
+ * _o: operators
  * _v: values of the keys that must match
  * _uk: updated columns
  * _uv: updated values of the columns
  * _n: number of key=value pairs
  * _un: number of columns to update
  */
-int db_update(db_con_t* _h, db_key_t* _k, db_val_t* _v,
+int db_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	      db_key_t* _uk, db_val_t* _uv, int _n, int _un)
 {
 	int off;
@@ -491,7 +518,7 @@ int db_update(db_con_t* _h, db_key_t* _k, db_val_t* _v,
 	off += print_set(sql_buf + off, SQL_BUF_LEN - off, _uk, _uv, _un);
 	if (_n) {
 		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
-		off += print_where(sql_buf + off, SQL_BUF_LEN - off, _k, _v, _n);
+		off += print_where(sql_buf + off, SQL_BUF_LEN - off, _k, _o, _v, _n);
 		*(sql_buf + off) = '\0';
 	}
 
