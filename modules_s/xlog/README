@@ -39,11 +39,13 @@ Methods
 -------
 
 Name:   xlog
-Params: - level: the level that will be used in LOG function
+Params: - level: the level that will be used in LOG function. It can be:
+			"L_ALERT", "L_CRIT", "L_ERR", "L_WARN", "L_NOTICE", "L_INFO",
+			"L_DBG". What really matters is the third letter of the value :-)
         - format: the id of the format to be used to print the message (the
 		  digit after the 'f' of the module parameter name that represents the
-		  format to be used, e.g, 'xlog("1", "0")' will use the 'f0' format and
-		  will print the message with LOG(1, <log message>))
+		  format to be used, e.g, 'xlog("L_ERR", "0")' will use the 'f0' format
+		  and will print the message with LOG(L_ERR, <log message>))
 Desc:   print a formated message using LOG function
 
 Name:   xdbg

@@ -189,10 +189,15 @@ static int xl_get_contact(struct sip_msg* msg, str* res)
 	if(msg==NULL || res==NULL)
 		return -1;
 
-	if(msg->contact==NULL || parse_headers(msg, HDR_CONTACT, 0)==-1 
-		|| !msg->contact->body.s || msg->contact->body.len<=0)
+	if(msg->contact==NULL && parse_headers(msg, HDR_CONTACT, 0)==-1) 
 	{
 		DBG("XLOG: xl_get_contact: no contact header\n");
+		return xl_get_null(msg, res);
+	}
+	
+	if(!msg->contact || !msg->contact->body.s || msg->contact->body.len<=0)
+    {
+		DBG("XLOG: xl_get_contact: no contact header!\n");
 		return xl_get_null(msg, res);
 	}
 	
@@ -242,8 +247,8 @@ static int xl_get_from_tag(struct sip_msg *msg, str *res)
 	if(msg->from==NULL || get_from(msg)==NULL || get_from(msg)->tag_value.s==NULL)
 		return xl_get_null(msg, res);
 
-	res->s = get_from(msg)->uri.s;
-	res->len = get_from(msg)->uri.len; 
+	res->s = get_from(msg)->tag_value.s;
+	res->len = get_from(msg)->tag_value.len; 
 
 	return 0;
 }
