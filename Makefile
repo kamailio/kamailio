@@ -48,7 +48,7 @@ skip_modules?=
 exclude_modules?= 			cpl ext extcmd \
 							postgres snmp \
 							im \
-							jabber \
+							jabber mysql \
 							cpl-c \
 							auth_radius group_radius uri_radius \
 							pa

@@ -31,6 +31,7 @@
  *  2003-03-12  split shm_mem_init in shm_getmem & shm_mem_init_mallocs
  *               (andrei)
  *  2004-07-27  ANON mmap support, needed on darwin (andrei)
+ *  2004-09-19  shm_mem_destroy: destroy first the lock & then unmap (andrei)
  */
 
 
@@ -223,6 +224,10 @@ void shm_mem_destroy()
 #endif
 	
 	DBG("shm_mem_destroy\n");
+	if (mem_lock){
+		DBG("destroying the shared memory lock\n");
+		lock_destroy(mem_lock); /* we don't need to dealloc it*/
+	}
 	if (shm_mempool && (shm_mempool!=(void*)-1)) {
 #ifdef SHM_MMAP
 		munmap(shm_mempool, /* SHM_MEM_SIZE */ shm_mem_size );
@@ -237,10 +242,6 @@ void shm_mem_destroy()
 		shm_shmid=-1;
 	}
 #endif
-	if (mem_lock){
-		DBG("destroying the shared memory lock\n");
-		lock_destroy(mem_lock); /* we don't need to dealloc it*/
-	}
 }
 
 

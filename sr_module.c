@@ -32,6 +32,7 @@
  *  2003-03-19  Support for flags in find_export (janakj)
  *  2003-03-29  cleaning pkg_mallocs introduced (jiri)
  *  2003-04-24  module version checking introduced (jiri)
+ *  2004-09-19  compile flags are checked too (andrei)
  */
 
 
@@ -156,6 +157,7 @@ error:
 static inline int version_control(void *handle, char *path)
 {
 	char **m_ver;
+	char **m_flags;
 	char* error;
 
 	m_ver=(char **)dlsym(handle, DLSYM_PREFIX "module_version");
@@ -164,14 +166,33 @@ static inline int version_control(void *handle, char *path)
 			path, error );
 		return 0;
 	}
+	m_flags=(char **)dlsym(handle, DLSYM_PREFIX "module_flags");
+	if ((error=(char *)dlerror())!=0) {
+		LOG(L_ERR, "ERROR: no compile flags info in module <%s>: %s\n",
+			path, error );
+		return 0;
+	}
 	if (!m_ver || !(*m_ver)) {
 		LOG(L_ERR, "ERROR: no version in module <%s>\n", path );
 		return 0;
 	}
-	if (strcmp(VERSION,*m_ver)==0)
-		return 1;
+	if (!m_flags || !(*m_flags)) {
+		LOG(L_ERR, "ERROR: no compile flags in module <%s>\n", path );
+		return 0;
+	}
+	
+	if (strcmp(SER_FULL_VERSION, *m_ver)==0){
+		if (strcmp(SER_COMPILE_FLAGS, *m_flags)==0)
+			return 1;
+		else {
+			LOG(L_ERR, "ERROR: module compile flags mismatch for %s "
+						" \ncore: %s \nmodule: %s\n",
+						path, SER_COMPILE_FLAGS, *m_flags);
+			return 0;
+		}
+	}
 	LOG(L_ERR, "ERROR: module version mismatch for %s; "
-		"core: %s; module: %s\n", path, VERSION, *m_ver );
+		"core: %s; module: %s\n", path, SER_FULL_VERSION, *m_ver );
 	return 0;
 }
 

@@ -63,6 +63,7 @@
  *  2004-03-09  open_fifo_server split into init_ and start_ (andrei)
  *  2004-04-29  added chown(sock_user, sock_group)  (andrei)
  *  2004-06-06  updated to the new DB interface  & init_db_fifo (andrei)
+ *  2004-09-19  fifo is deleted on exit (destroy_fifo)  (andrei)
  */
 
 
@@ -156,6 +157,17 @@ void destroy_fifo()
 		foo=c->next;
 		pkg_free(c);
 		c=foo;
+	}
+	if (fifo_stream){
+			fclose(fifo_stream);
+			fifo_stream=0;
+		/* if  FIFO was created, delete it */
+		if (fifo && strlen(fifo)){
+			if (unlink(fifo)<0){
+				LOG(L_ERR, "WARNING: destroy_fifo: cannot delete fifo (%s):"
+							" %s\n", fifo, strerror(errno));
+			}
+		}
 	}
 }
 

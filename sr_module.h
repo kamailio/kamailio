@@ -35,6 +35,7 @@
  *  2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
  *  2004-03-12  extra flag USE_FUNC_PARAM added to modparam type -
  *              instead of copying the param value, a func is called (bogdan)
+ *  2004-09-19  switched to version.h for the module versions checks (andrei)
  */
 
 
@@ -42,6 +43,7 @@
 #define sr_module_h
 
 #include "parser/msg_parser.h" /* for sip_msg */
+#include "version.h"
 
 typedef  struct module_exports* (*module_register)();
 typedef  int (*cmd_function)(struct sip_msg*, char*, char*);
@@ -78,7 +80,9 @@ typedef int (*param_func_t)( modparam_t type, param_func_param_t param_val);
 #define PROC_TCP_MAIN -4  /* TCP main process */
 #define PROC_UNIXSOCK -5  /* Unix domain socket server processes */
 
-#define MODULE_VERSION char *module_version=VERSION;
+#define MODULE_VERSION \
+	char *module_version=SER_FULL_VERSION; \
+	char *module_flags=SER_COMPILE_FLAGS;
 
 struct cmd_export_ {
 	char* name;             /* null terminated command name */

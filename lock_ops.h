@@ -123,6 +123,13 @@ inline static gen_lock_t* lock_init(gen_lock_t* lock)
 #include <sys/ipc.h>
 #include <sys/sem.h>
 
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include "dprint.h"
+#include "globals.h" /* uid */
+
 #if ((defined(HAVE_UNION_SEMUN) || defined(__GNU_LIBRARY__) )&& !defined(_SEM_SEMUN_UNDEFINED)) 
 	
 	/* union semun is defined by including sem.h */
@@ -144,8 +151,14 @@ typedef int gen_lock_t;
 inline static gen_lock_t* lock_init(gen_lock_t* lock)
 {
 	union semun su;
+	int euid;
 	
+	euid=geteuid();
+	if (uid && uid!=euid)
+		seteuid(uid); /* set euid to the cfg. requested one */
 	*lock=semget(IPC_PRIVATE, 1, 0700);
+	if (uid && uid!=euid)
+		seteuid(euid); /* restore it */
 	if (*lock==-1) return 0;
 	su.val=1;
 	if (semctl(*lock, 0, SETVAL, su)==-1){
@@ -245,11 +258,18 @@ inline static gen_lock_set_t* lock_set_init(gen_lock_set_t* s)
 {
 	union semun su;
 	int r;
-	
+	int euid;
+
+	euid=geteuid();
+	if (uid && uid!=euid)
+		seteuid(uid); /* set euid to the cfg. requested one */
 	s->semid=semget(IPC_PRIVATE, s->size, 0700);
+	if (uid && uid!=euid)
+		seteuid(euid); /* restore euid */
 	if (s->semid==-1){
-		LOG(L_CRIT, "ERROR: lock_set_init (SYSV): semget failed: %s\n",
-				strerror(errno));
+		LOG(L_CRIT, "ERROR: lock_set_init (SYSV): semget (..., %d, 0700)"
+				" failed: %s\n",
+				s->size, strerror(errno));
 		return 0;
 	}
 	su.val=1;

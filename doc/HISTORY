@@ -1,0 +1,40 @@
+# $Id$
+# A short history of ser beginnings
+#
+# by Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.fraunhofer.de>
+
+This is a short ser history based mainly on my memory and my old mail archive. I've tried to mention only the important events. I'm sure I have missed a lot of things and/or people. If this is your case, please don't feel offended, send me an email and I will straighten things up.
+
+
+
+Three years ago on 4 September 2001 I committed the first working ser version on a private cvs. In fact I started writting ser 2 days before, on 2nd September.
+ I was supposed to write some kind of sip glue for a Cisco PSTN gateway in 1 week, but of course I did it in the last 2 days :-)
+
+At that time the config looked like:
+
+#  method_re   sip_uri_re      dest_host
+# (warning: re cannot contain space)
+
+^R.*        ^sip:.*@dorian.*   ekina.fokus.gmd.de
+^INVITE     .*                 ape:5061             # my laptop
+.           .                  192.168.46.55
+
+A short time after this Jiri began testing the code and requesting new features.2 weeks later I completely changed the config format bringing it pretty close to what we have today. At the time Jiri stronlgy disagreed with the ideea arguing that the new config would increase code complexity too much and would severely 
+ impact performance. The final argument was: I already wrote the code and it works :-)
+In Octomber 2001 I made some changes to ser routing language bringing it to what we still use today.
+In the next months I've created the module interface, the first two modules (print and textops) and I've added the shared memory support (this involved the creation of ser's own malloc library which proved to be much faster for ser's memory usage patterns than standards malloc implementations).
+During the same period Bogdan and Jan joined me and Jiri also began writing code.
+In December 2001 Bogdan announced that tm was up an running (after a sleepless night).
+At the beginning of 2002 we were joined by Daniel. Jan introduced the mysql, usrloc and auth modules.
+Ser first public appearance was at the April 2002 Sipit. We ran it on a pda an still managed to be faster than the testing tools that were used against us :-)
+
+In May 2002 ser got ipv6 support.
+In August 2002 Nils commited sipsak to berlios (very usefull testing tool).
+In September 2002 ser went public: it was GPL'ed and the cvs tree was moved to berlios. During the same month Jiri introduced  the FIFO interface, Karel committed serweb and we had the first GPL'ed release: ser 0.8.8.
+In December 2002 ser got its first big external contribution: the enum module, written by  Juha Heinanen.
+In January 2003 Raphael commited sems on berlios.
+In February 2003 ser got tcp support.
+Sometime during the 2003 spring ser got the permissions module from Miklos Tirpak and nathelper from  Maxim Sobolev.
+In August 2003, Uli commited isdngw to sems.
+
+All the rest is too new to be in the history :-)

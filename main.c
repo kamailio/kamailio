@@ -122,90 +122,13 @@
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
 #endif
+#include "version.h"
 
 static char id[]="@(#) $Id$";
-static char version[]=  NAME " " VERSION " (" ARCH "/" OS ")" ;
-static char compiled[]= __TIME__ " " __DATE__ ;
-static char flags[]=
-"STATS:"
-#ifdef STATS
-"On"
-#else
-"Off"
-#endif
-#ifdef USE_IPV6
-", USE_IPV6"
-#endif
-#ifdef USE_TCP
-", USE_TCP"
-#endif
-#ifdef USE_TLS
-", USE_TLS"
-#endif
-#ifdef DISABLE_NAGLE
-", DISABLE_NAGLE"
-#endif
-#ifdef USE_MCAST
-", USE_MCAST"
-#endif
-#ifdef NO_DEBUG
-", NO_DEBUG"
-#endif
-#ifdef NO_LOG
-", NO_LOG"
-#endif
-#ifdef EXTRA_DEBUG
-", EXTRA_DEBUG"
-#endif
-#ifdef DNS_IP_HACK
-", DNS_IP_HACK"
-#endif
-#ifdef SHM_MEM
-", SHM_MEM"
-#endif
-#ifdef SHM_MMAP
-", SHM_MMAP"
-#endif
-#ifdef PKG_MALLOC
-", PKG_MALLOC"
-#endif
-#ifdef VQ_MALLOC
-", VQ_MALLOC"
-#endif
-#ifdef F_MALLOC
-", F_MALLOC"
-#endif
-#ifdef USE_SHM_MEM
-", USE_SHM_MEM"
-#endif
-#ifdef DBG_QM_MALLOC
-", DBG_QM_MALLOC"
-#endif
-#ifdef DEBUG_DMALLOC
-", DEBUG_DMALLOC"
-#endif
-#ifdef FAST_LOCK
-", FAST_LOCK"
-#ifdef BUSY_WAIT
-"-BUSY_WAIT"
-#endif
-#ifdef USE_PTHREAD_MUTEX
-", USE_PTHREAD_MUTEX"
-#endif
-#ifdef USE_POSIX_SEM
-", USE_POSIX_SEM"
-#endif
-#ifdef USE_SYSV_SEM
-", USE_SYSV_SEM"
-#endif
-#ifdef ADAPTIVE_WAIT
-"-ADAPTIVE_WAIT"
-#endif
-#ifdef NOSMP
-"-NOSMP"
-#endif
-#endif /*FAST_LOCK*/
-;
+static char* version=SER_FULL_VERSION;
+static char* flags=SER_COMPILE_FLAGS;
+char compiled[]= __TIME__ " " __DATE__ ;
+
 
 static char help_msg[]= "\
 Usage: " NAME " -l address [-p port] [-l address [-p port]...] [options]\n\
@@ -423,7 +346,8 @@ char* pgid_file = 0;
 void cleanup(show_status)
 {
 	/*clean-up*/
-	shm_unlock(); /* hack: force-unlock the shared memory lock in case
+	if (mem_lock) 
+		shm_unlock(); /* hack: force-unlock the shared memory lock in case
 					 some process crashed and let it locked; this will 
 					 allow an almost gracious shutdown */
 	destroy_modules();
@@ -1124,6 +1048,9 @@ int main_loop()
 	
 	/*return 0; */
  error:
+	is_main=1;  /* if we are here, we are the "main process",
+				  any forked children should exit with exit(-1) and not
+				  ever use return */
 	return -1;
 
 }
@@ -1345,20 +1272,6 @@ try_again:
 	DBG("test random number %u\n", rand());
 	
 	
-
-
-	/*init shm mallocs (before parsing cfg !)
-	 *  this must be here to allow setting shm mem size from the command line
-	 *  and it must also be before init_timer and init_tcp
-	 *  => if shm_mem should be settable from the cfg file move everything
-	 *  after --andrei */
-	if (init_shm_mallocs()==-1)
-		goto error;
-	/*init timer, before parsing the cfg!*/
-	if (init_timer()<0){
-		LOG(L_CRIT, "could not initialize timer, exiting...\n");
-		goto error;
-	}
 	
 	/* register a diagnostic FIFO command  - moved to fifo server - bogdan
 	if (register_core_fifo()<0) {
@@ -1442,6 +1355,24 @@ try_again:
 	}
 	if (config_check){
 		fprintf(stderr, "config file ok, exiting...\n");
+		goto error;
+	}
+
+
+	/*init shm mallocs
+	 *  this must be here 
+	 *     -to allow setting shm mem size from the command line
+	 *       => if shm_mem should be settable from the cfg file move
+	 *       everything after
+	 *     -it must be also before init_timer and init_tcp
+	 *     -it must be after we know uid (so that in the SYSV sems case,
+	 *        the sems will have the correct euid)
+	 * --andrei */
+	if (init_shm_mallocs()==-1)
+		goto error;
+	/*init timer, before parsing the cfg!*/
+	if (init_timer()<0){
+		LOG(L_CRIT, "could not initialize timer, exiting...\n");
 		goto error;
 	}
 	

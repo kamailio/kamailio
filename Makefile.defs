@@ -49,7 +49,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   99
-EXTRAVERSION = -dev5
+EXTRAVERSION = -dev6
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -282,7 +282,7 @@ endif
 
 
 DEFS+= $(extra_defs) \
-	 -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
+	 -DNAME='"$(MAIN_NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"' -D__CPU_$(ARCH) -D__OS_$(OS) \
 	 -DCFG_DIR='"$(cfg-target)"'\
 	 -DPKG_MALLOC \
