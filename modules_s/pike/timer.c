@@ -10,7 +10,6 @@ void append_to_timer(struct pike_timer_head *pth, struct pike_timer_link *pt)
 {
 	if (is_in_timer_list(pth,pt))
 		remove_from_timer(pth,pt);
-	DBG("APPEND APPEND APPEND !!!\n");
 	if (pth->first) {
 		pth->last->next = pt;
 		pt->prev = pth->last;
@@ -35,7 +34,6 @@ void remove_from_timer(struct pike_timer_head *pth, struct pike_timer_link *pt)
 {
 	if ( !is_in_timer_list(pth,pt) )
 		return;
-	DBG("REMOVE REMOVE REMOVE !!!\n");
 	if (pt->next)
 		pt->next->prev = pt->prev;
 	else

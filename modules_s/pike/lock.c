@@ -124,9 +124,9 @@ void destroy_semaphores(pike_lock *sem_set)
 
 	if (sem_set && semctl( sem_set[0].entry_semaphore,0,IPC_RMID,0)==-1)
 		LOG(L_ERR, "ERROR: lock_cleanup, entry_semaphore cleanup failed\n");
-	shm_free(pike_lock);
-	pike_lock = 0;
 #endif
+	shm_free((void*)sem_set);
+	sem_set = 0;
 }
 
 

@@ -89,20 +89,20 @@ static int pike_init(void)
 	/* init semaphore */
 	if ((locks = create_semaphores(PIKE_NR_LOCKS))==0) {
 		LOG(L_ERR,"ERROR:pike_init: create sem failed!\n");
-		goto error;
+		goto error1;
 	}
 	/* init the IP tree */
 	tree = init_ip_tree(max_reqs);
 	if (!tree) {
 		LOG(L_ERR,"ERROR:pike_init: ip_tree creation failed!\n");
-		goto error;
+		goto error2;
 	}
 	/* setting up timers */
 	timer = (struct pike_timer_head*)
 		shm_malloc(sizeof(struct pike_timer_head));
 	if (!timer) {
 		LOG(L_ERR,"ERROR:pike_init: no free shm mem\n");
-		goto error;
+		goto error3;
 	}
 	memset(timer,0,sizeof(struct pike_timer_head));
 	timer->sem = &(locks[TIMER_LOCK]);
@@ -112,7 +112,11 @@ static int pike_init(void)
 
 
 	return 0;
-error:
+error3:
+	destroy_ip_tree(tree);
+error2:
+	destroy_semaphores(locks);
+error1:
 	return -1;
 
 }
@@ -122,9 +126,10 @@ error:
 
 static int pike_exit(void)
 {
-	/* empty the timer list*/
+	/* lock the timer list */
 	lock( timer->sem );
-	// empty here the list
+	/* free the tmer list head */
+	shm_free(timer);
 	/* destroy the IP tree */
 	lock( &locks[TREE_LOCK] );
 	destroy_ip_tree(tree);
