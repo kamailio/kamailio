@@ -423,7 +423,7 @@ int check_to(struct sip_msg* _msg, char* _str1, char* _str2)
 		return 1;
 	} else {
 		DBG("check_to(): auth id and To username differ\n");
-		return 0;
+		return -1;
 	}
 }
 
