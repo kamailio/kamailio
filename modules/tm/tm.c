@@ -225,9 +225,9 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_check_status",     t_check_status,          1, fixup_str2regexp,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
-	{"t_write_req",       t_write_req,              2, 0,
+	{"t_write_req",       t_write_req,              2, fixup_t_write,
 			REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_write_unix",      t_write_unix,             2, 0,
+	{"t_write_unix",      t_write_unix,             2, fixup_t_write,
 	                REQUEST_ROUTE | FAILURE_ROUTE },
 
 	/* not applicable from the script */
@@ -253,22 +253,23 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{"ruri_matching",         INT_PARAM, &ruri_matching                         },
-	{"via1_matching",         INT_PARAM, &via1_matching                         },
-	{"fr_timer",              INT_PARAM, &(timer_id2timeout[FR_TIMER_LIST])     },
-	{"fr_inv_timer",          INT_PARAM, &(timer_id2timeout[FR_INV_TIMER_LIST]) },
-	{"wt_timer",              INT_PARAM, &(timer_id2timeout[WT_TIMER_LIST])     },
-	{"delete_timer",          INT_PARAM, &(timer_id2timeout[DELETE_LIST])       },
-	{"retr_timer1p1",         INT_PARAM, &(timer_id2timeout[RT_T1_TO_1])        },
-	{"retr_timer1p2",         INT_PARAM, &(timer_id2timeout[RT_T1_TO_2])        },
-	{"retr_timer1p3",         INT_PARAM, &(timer_id2timeout[RT_T1_TO_3])        },
-	{"retr_timer2",           INT_PARAM, &(timer_id2timeout[RT_T2])             },
-	{"noisy_ctimer",          INT_PARAM, &noisy_ctimer                          },
-	{"uac_from",              STR_PARAM, &uac_from                              },
-	{"unix_tx_timeout",       INT_PARAM, &tm_unix_tx_timeout                    },
+	{"ruri_matching",       INT_PARAM, &ruri_matching                        },
+	{"via1_matching",       INT_PARAM, &via1_matching                        },
+	{"fr_timer",            INT_PARAM, &(timer_id2timeout[FR_TIMER_LIST])    },
+	{"fr_inv_timer",        INT_PARAM, &(timer_id2timeout[FR_INV_TIMER_LIST])},
+	{"wt_timer",            INT_PARAM, &(timer_id2timeout[WT_TIMER_LIST])    },
+	{"delete_timer",        INT_PARAM, &(timer_id2timeout[DELETE_LIST])      },
+	{"retr_timer1p1",       INT_PARAM, &(timer_id2timeout[RT_T1_TO_1])       },
+	{"retr_timer1p2",       INT_PARAM, &(timer_id2timeout[RT_T1_TO_2])       },
+	{"retr_timer1p3",       INT_PARAM, &(timer_id2timeout[RT_T1_TO_3])       },
+	{"retr_timer2",         INT_PARAM, &(timer_id2timeout[RT_T2])            },
+	{"noisy_ctimer",        INT_PARAM, &noisy_ctimer                         },
+	{"uac_from",            STR_PARAM, &uac_from                             },
+	{"unix_tx_timeout",     INT_PARAM, &tm_unix_tx_timeout                   },
 	{"restart_fr_on_each_reply", INT_PARAM, &restart_fr_on_each_reply        },
-	{"fr_timer_avp",          STR_PARAM, &fr_timer_param.s                      },
-	{"fr_inv_timer_avp",      STR_PARAM, &fr_inv_timer_param.s                  },
+	{"fr_timer_avp",        STR_PARAM, &fr_timer_param.s                     },
+	{"fr_inv_timer_avp",    STR_PARAM, &fr_inv_timer_param.s                 },
+	{"tw_append",           STR_PARAM|USE_FUNC_PARAM, parse_tw_append        },
 	{0,0,0}
 };
 
