@@ -458,7 +458,7 @@ char *build_uac_request_dlg(str* msg,           /* Method */
 
 	     /* To */
 	t->to.s = w;
-	t->to.len= TO_LEN+to->len;
+	t->to.len= TO_LEN+to->len+CRLF_LEN;
 	memapp(w, TO, TO_LEN);
 	memapp(w, to->s, to->len);
 	if (totag && totag->len ) {
@@ -470,7 +470,7 @@ char *build_uac_request_dlg(str* msg,           /* Method */
 
 	     /* From */
 	t->from.s = w;
-	t->from.len = FROM_LEN + from->len;
+	t->from.len = FROM_LEN + from->len + CRLF_LEN;
 	memapp(w, FROM, FROM_LEN);
 	memapp(w, from->s, from->len);
   	if (fromtag && fromtag->len ) { 
@@ -482,7 +482,9 @@ char *build_uac_request_dlg(str* msg,           /* Method */
 	
 	     /* CSeq */
 	t->cseq_n.s = w; 
-	t->cseq_n.len = CSEQ_LEN + cseq_str_len;
+	/* don't include method name and CRLF -- subsequent
+	 * local reuqests ACK/CANCEl will add their own */
+	t->cseq_n.len = CSEQ_LEN + cseq_str_len; 
 
 	memapp(w, CSEQ, CSEQ_LEN);
 	memapp(w, cseq_str, cseq_str_len);
@@ -491,7 +493,7 @@ char *build_uac_request_dlg(str* msg,           /* Method */
 
 	     /* Call-ID */
 	t->callid.s = w + CRLF_LEN; 
-	t->callid.len = callid->len;
+	t->callid.len = CALLID_LEN + callid->len + CRLF_LEN;
 	memapp(w, CRLF CALLID, CRLF_LEN + CALLID_LEN);
 	memapp(w, callid->s, callid->len);
 	memapp(w, CRLF, CRLF_LEN);
