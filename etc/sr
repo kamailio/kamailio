@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/sh
 #
 # $Id$
 #
@@ -10,7 +10,7 @@
 # chkconfig: 2345 20 80
 # description: controls execution of SIP router
 # processname: sr
-# config: /etc/sip_router.cfg
+# config: /etc/ser/iptel.cfg
 
 # Source function library.
 . /etc/rc.d/init.d/functions
@@ -22,7 +22,7 @@
 BINNAME=sr
 HM=/home/srouter
 SERDIR=$HM/sip_router
-ETC=$SERDIR/etc/iptel.cfg
+ETC=/etc/ser/iptel.cfg
 PIDFILE=/var/run/sr.pid
 NOTIFY=sr@iptel.org
 USR=510
@@ -30,7 +30,6 @@ GRP=510
 
 MONIT=/usr/local/bin/monit
 MONITRC=/usr/local/etc/monitrc
-MONITPID=/var/run/monit.pid
 
 RETVAL=0
 
@@ -55,55 +54,59 @@ ser_start() {
 	fi
 	cd $MYDIR
 	#ulimit -c 1000000
+	echo "Starting SIP router: "
 	$BIN -f $ETC -w $MYDIR -P $PIDFILE
 	RETVAL=$?
+	echo
+}
+
+ser_stop() {
+	echo "Stopping SIP router: "
+	killproc $BINNAME
+	RETVAL=$?
+	echo
+}
+
+monit_start() {
+   echo "Command Monit to start Ser..."
+   ${MONIT} -c ${MONITRC} start ser
+   RETVAL=$?
+   echo
+}
+
+monit_stop() {
+   echo "Command Monit to stop Ser..."
+   ${MONIT} -c ${MONITRC} stop ser
+   RETVAL=$?
+   echo
 }
 
 # See how we were called.
 case "$1" in
   serstart)
-	echo "Starting SIP router only: "
 	ser_start
-	RETVAL=$?
-	echo
 	;;
   serstop)
-	echo "Stopping SIP router only: "
-	killproc $BINNAME
-	RETVAL=$?
-	echo
+    ser_stop
 	;;
   serrestart)
-	$0 serstop
-	$0 serstart
-	RETVAL=$?
+	ser_stop
+	echo
+	ser_start
 	;;
   start)
-	echo -n "Starting SIP router and monit: "
-	ser_start
-	RETVAL=$?
-	# ser needs some time to listen
-	# but monit test on startup so give ser a little time
-	sleep 2
-	$MONIT -v -c $MONITRC
-	echo
+    monit_start
 	;;
   stop)
-	echo "Stopping SIP router and monit: "
-	killall monit
-	killproc $BINNAME
-	RETVAL=$?
-	echo
+    monit_stop
 	;;
   restart)
-	$0 stop
-	$0 start
-	RETVAL=$?
+	monit_stop
+	sleep 1
+	monit_start
 	;;
   *)
-	echo "Usage: $0 {start|stop|restart|serstart|serstop|serrestart}"
-	echo "  serstart, serstop and serrestart influence only ser."
-	echo "  start, stop and restart influence monit and ser."
+	echo "Usage: $0 {start|stop|restart}"
 	exit 1
 esac
 
