@@ -5,7 +5,8 @@
 #ifndef udp_server_h
 #define udp_server_h
 
-
+#include <sys/types.h>
+#include <sys/socket.h>
 
 extern int udp_sock;
 

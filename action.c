@@ -13,6 +13,8 @@
 #include "udp_server.h"
 #include "route.h"
 
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <netdb.h>
 #include <stdlib.h>
 
@@ -41,7 +43,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 			if (ret>=0) ret=1;
 			break;
 		case SEND_T:
-			to=(struct sockaddr_in*) malloc(sizeof(struct sockaddr));
+			to=(struct sockaddr_in*) malloc(sizeof(struct sockaddr_in));
 			if (to==0){
 				LOG(L_ERR, "ERROR: do_action: "
 							"memory allocation failure\n");
