@@ -184,7 +184,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	}
 
 	/* add the callback the the transaction for LOCAL_COMPLETED event */
-	if (insert_tmcb( &(new_cell->tmcb_hl), TMCB_LOCAL_COMPLETED, cb, cbp)!=1) {
+	if(cb && insert_tmcb(&(new_cell->tmcb_hl),TMCB_LOCAL_COMPLETED,cb,cbp)!=1){
 		ret=E_OUT_OF_MEM;
 		LOG(L_ERR, "t_uac: short of tmcb shmem\n");
 		goto error2;
