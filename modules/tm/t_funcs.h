@@ -22,11 +22,19 @@ struct timer;
 struct entry;
 struct cell;
 
+struct fork
+{
+	unsigned int ip,port;
+	str uri;
+};
+
+
 extern struct cell      *T;
 extern unsigned int     global_msg_id;
 extern struct s_table*  hash_table;
-extern unsigned int     t_forks[MAX_FORK+1][2];
+extern struct fork      t_forks[MAX_FORK+1];
 extern unsigned int     nr_forks;
+
 
 #include "sh_malloc.h"
 
@@ -245,13 +253,13 @@ int t_update_timers_after_sending_reply( struct retr_buf *rb );
 int t_put_on_wait(  struct cell  *Trans  );
 int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg );
 int add_branch_label( struct cell *Trans, struct sip_msg *p_msg , int branch );
-int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip,
+int get_ip_and_port_from_uri( str* uri , unsigned int *param_ip,
 	unsigned int *param_port);
 int t_build_and_send_CANCEL(struct cell *Trans, unsigned int branch);
 char *build_ack( struct sip_msg* rpl, struct cell *trans, int branch ,
 	int *ret_len);
 enum addifnew_status t_addifnew( struct sip_msg* p_msg );
-int t_add_fork( unsigned int ip , unsigned int port);
+int t_add_fork( unsigned int ip , unsigned int port, str* uri);
 int t_clear_forks( );
 
 

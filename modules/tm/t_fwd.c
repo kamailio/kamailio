@@ -27,8 +27,10 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 
 	buf    = 0;
 	shbuf  = 0;
-	t_forks[0][0] = dest_ip_param;
-	t_forks[0][1] = dest_port_param;
+	t_forks[0].ip = dest_ip_param;
+	t_forks[0].port = dest_port_param;
+	t_forks[0].uri.s = p_msg->new_uri.s;
+	t_forks[0].uri.len = p_msg->new_uri.len;
 
 	/* are we forwarding for the first time? */
 	if ( T->uac[0].request.buffer )
@@ -60,9 +62,9 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 				nr_forks = T->T_canceled->nr_of_outgoings-1;
 				for(i=0;i<T->T_canceled->nr_of_outgoings;i++)
 				{
-					t_forks[i][0] =
+					t_forks[i].ip =
 						T->T_canceled->uac[i].request.to.sin_addr.s_addr;
-					t_forks[i][1] =
+					t_forks[i].port =
 						T->T_canceled->uac[i].request.to.sin_port;
 				}
 #ifdef USE_SYNONIM
@@ -105,6 +107,9 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 						else p_msg->add_rm = b->next;
 					free_lump(b);
 				}
+		/* updates the new uri*/
+		p_msg->new_uri.s = t_forks[branch].uri.s;
+		p_msg->new_uri.len = t_forks[branch].uri.len;
 		if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len)))
 			goto error;
 		/* allocates a new retrans_buff for the outbound request */
@@ -119,10 +124,17 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 		T->uac[branch].request.buffer = shbuf;
 		T->uac[branch].request.buffer_len = len ;
 		memcpy( T->uac[branch].request.buffer , buf , len );
+		/* keeps a hooker to uri inside buffer*/
+		T->uac[branch].uri.s = T->uac[branch].request.buffer +
+			(p_msg->first_line.u.request.uri.s - p_msg->buf);
+		T->uac[branch].uri.len=t_forks[branch].uri.s?(t_forks[branch].uri.len)
+			:(p_msg->first_line.u.request.uri.len);
+		DBG("DEBUG: uri= |%.*s| \n",T->uac[branch].uri.len,
+			T->uac[branch].uri.s);
 		T->nr_of_outgoings++ ;
 		/* send the request */
-		T->uac[branch].request.to.sin_addr.s_addr = t_forks[branch][0];
-		T->uac[branch].request.to.sin_port = t_forks[branch][1];
+		T->uac[branch].request.to.sin_addr.s_addr = t_forks[branch].ip;
+		T->uac[branch].request.to.sin_port = t_forks[branch].port;
 		T->uac[branch].request.to.sin_family = AF_INET;
 		SEND_BUFFER( &(T->uac[branch].request) );
 
@@ -140,12 +152,16 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 			RT_T1_TO_1 );
 	}
 
+	p_msg->new_uri.s = t_forks[0].uri.s;
+	p_msg->new_uri.len = t_forks[0].uri.len;
+	nr_forks = 0;
 	return 1;
 
 error:
 	if (shbuf) shm_free(shbuf);
 	T->uac[branch].request.buffer=NULL;
 	if (buf) pkg_free( buf );
+	nr_forks = 0;
 	return -1;
 }
 

@@ -27,7 +27,7 @@ struct cell      *T;
 unsigned int     global_msg_id;
 struct s_table*  hash_table;
 unsigned int     nr_forks;
-unsigned int     t_forks[MAX_FORK+1][2];
+struct fork      t_forks[MAX_FORK+1];
 
 
 void timer_routine(unsigned int, void*);
@@ -353,8 +353,8 @@ int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
 	len += ( req_line(p_msg).version.s+req_line(p_msg).version.len)-
 		req_line(p_msg).method.s+CRLF_LEN;
 	/*check if the REQ URI was override */
-	if (p_msg->new_uri.s)
-		len += p_msg->new_uri.len - req_line(p_msg).uri.len;
+	if (Trans->uac[branch].uri.s)
+		len += Trans->uac[branch].uri.len - req_line(p_msg).uri.len;
 	/*via*/
 	if ( add_branch_label(Trans,p_msg,branch)==-1 )
 		goto error;
@@ -387,18 +387,19 @@ int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
 	p = cancel_buf;
 
 	/* first line -> do we have a new URI? */
-	if (p_msg->new_uri.s)
+	if (Trans->uac[branch].uri.s)
 	{
 		append_mem_block(p,req_line(p_msg).method.s,
 			req_line(p_msg).uri.s-req_line(p_msg).method.s);
-		append_mem_block(p,p_msg->new_uri.s,p_msg->new_uri.len);
+		append_mem_block(p,Trans->uac[branch].uri.s,
+			Trans->uac[branch].uri.len);
 		append_mem_block(p,req_line(p_msg).uri.s+req_line(p_msg).uri.len,
 			req_line(p_msg).version.s+req_line(p_msg).version.len-
 			(req_line(p_msg).uri.s+req_line(p_msg).uri.len))
 	}else{
-	append_mem_block(p,req_line(p_msg).method.s,
-		req_line(p_msg).version.s+req_line(p_msg).version.len-
-		req_line(p_msg).method.s);
+		append_mem_block(p,req_line(p_msg).method.s,
+			req_line(p_msg).version.s+req_line(p_msg).version.len-
+			req_line(p_msg).method.s);
 	}
 	/* changhing method name*/
 	memcpy(cancel_buf,"CANCEL",6);
@@ -524,28 +525,21 @@ void delete_cell( struct cell *p_cell )
 /* Returns  -1 = error
                     0 = OK
 */
-int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip, unsigned int *param_port)
+int get_ip_and_port_from_uri( str *uri , unsigned int *param_ip, unsigned int *param_port)
 {
 	struct hostent  *nhost;
 	unsigned int    ip, port;
 	struct sip_uri  parsed_uri;
-	str             uri;
 	int             err;
 #ifdef DNS_IP_HACK
 	int             len;
 #endif
 
-	/* the original uri has been changed? */
-	if (p_msg->new_uri.s==0 || p_msg->new_uri.len==0)
-		uri = p_msg->first_line.u.request.uri;
-	else
-		uri = p_msg->new_uri;
-
 	/* parsing the request uri in order to get host and port */
-	if (parse_uri( uri.s , uri.len , &parsed_uri )<0)
+	if (parse_uri( uri->s , uri->len , &parsed_uri )<0)
 	{
 		LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: "
-		   "unable to parse destination uri: %.*s\n", uri.len, uri.s );
+		   "unable to parse destination uri: %.*s\n", uri->len, uri->s );
 		goto error;
 	}
 
@@ -558,7 +552,7 @@ int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip, un
 		if ( err<0 ){
 			LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: converting port "
 				"from str to int failed; using default SIP port\n\turi:%.*s\n",
-				uri.len, uri.s );
+				uri->len, uri->s );
 			port = SIP_PORT;
 		}
 	}
@@ -576,7 +570,7 @@ int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip, un
 	if ( !nhost )
 	{
 		LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: "
-		  "cannot resolve host in uri: %.*s\n", uri.len, uri.s );
+		  "cannot resolve host in uri: %.*s\n", uri->len, uri->s );
 		free_uri(&parsed_uri);
 		goto error;
 	}
@@ -598,7 +592,7 @@ error:
 
 
 
-int t_add_fork( unsigned int ip , unsigned int port)
+int t_add_fork( unsigned int ip , unsigned int port, str* uri)
 {
 	if (nr_forks+1>=MAX_FORK)
 	{
@@ -608,8 +602,16 @@ int t_add_fork( unsigned int ip , unsigned int port)
 	}
 
 	nr_forks++;
-	t_forks[nr_forks][0] = ip;
-	t_forks[nr_forks][1] = port;
+	t_forks[nr_forks].ip = ip;
+	t_forks[nr_forks].port = port;
+	if (uri && uri->s && uri->len)
+	{
+		t_forks[nr_forks].uri.len = uri->len;
+		t_forks[nr_forks].uri.s = uri->s;
+	}else{
+		t_forks[nr_forks].uri.s = 0;
+		t_forks[nr_forks].uri.len = 0;
+	}
 
 	return 1;
 }
@@ -862,8 +864,8 @@ char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,int *ret_len)
 	len += 4/*reply code and one space*/+
 		p_msg->first_line.u.request.version.len+CRLF_LEN;
 	/*uri's len*/
-	if (p_msg->new_uri.s)
-		len += p_msg->new_uri.len +1;
+	if (trans->uac[branch].uri.s)
+		len += trans->uac[branch].uri.len +1;
 	else
 		len += p_msg->first_line.u.request.uri.len +1;
 	/*adding branch param*/
@@ -902,9 +904,9 @@ char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,int *ret_len)
 	memcpy( p , "ACK " , 4);
 	p += 4;
 	/* uri */
-	if ( p_msg->new_uri.s )
+	if ( trans->uac[branch].uri.s )
 	{
-		memcpy(p,p_msg->orig+(p_msg->new_uri.s-p_msg->buf),p_msg->new_uri.len);
+		memcpy(p,trans->uac[branch].uri.s,trans->uac[branch].uri.len);
 		p +=p_msg->new_uri.len;
 	}else{
 		memcpy(p,p_msg->orig+(p_msg->first_line.u.request.uri.s-p_msg->buf),

@@ -32,7 +32,9 @@ static int t_relay_to( struct sip_msg *p_msg, char *str_ip, char *str_port);
 static int t_relay( struct sip_msg  *p_msg ,  char* foo, char* bar  );
 static int w_t_forward_ack(struct sip_msg* msg, char* str, char* str2);
 static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* str2);
-static int w_t_add_fork(struct sip_msg* msg, char* str, char* str2);
+static int w_t_add_fork_ip(struct sip_msg* msg, char* str, char* str2);
+static int w_t_add_fork_uri(struct sip_msg* msg, char* str, char* str2);
+static int fixup_t_add_fork_uri(void** param, int param_no);
 static int w_t_clear_forks(struct sip_msg* msg, char* str, char* str2);
 static void w_onbreak(struct sip_msg* msg) { t_unref(); }
 
@@ -51,7 +53,8 @@ struct module_exports exports= {
 				"t_relay",
 				"t_forward_nonack",
 				"t_forward_ack",
-				"t_fork_to",
+				"t_fork_to_ip",
+				"t_fork_to_uri",
 				"t_clear_forks"
 			},
 	(cmd_function[]){
@@ -65,7 +68,8 @@ struct module_exports exports= {
 					t_relay,
 					w_t_forward_nonack,
 					w_t_forward_ack,
-					w_t_add_fork,
+					w_t_add_fork_ip,
+					w_t_add_fork_uri,
 					w_t_clear_forks
 					},
 	(int[]){
@@ -79,7 +83,8 @@ struct module_exports exports= {
 				0, /* t_relay */
 				2, /* t_forward_nonack */
 				2, /* t_forward_ack */
-				2, /* t_fork_to */
+				2, /* t_fork_to_ip */
+				1, /* t_fork_to_uri */
 				0  /* t_clear_forks */
 			},
 	(fixup_function[]){
@@ -93,10 +98,11 @@ struct module_exports exports= {
 				0,						/* t_relay */
 				fixup_t_forward,		/* t_forward_nonack */
 				fixup_t_forward,		/* t_forward_ack */
-				fixup_t_forward,		/* t_fork_to */
+				fixup_t_forward,		/* t_fork_to_ip */
+				fixup_t_add_fork_uri,   /* t_fork_to_uri */
 				0						/* t_clear_forks */
 		},
-	12,
+	13,
 
 	NULL,   /* Module parameter names */
 	NULL,   /* Module parameter types */
@@ -292,9 +298,54 @@ static int w_t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar ) {
 
 
 
-static int w_t_add_fork(struct sip_msg* msg, char* str, char* str2)
+static int w_t_add_fork_ip(struct sip_msg* msg, char* str, char* str2)
 {
-	return t_add_fork((unsigned int)str, (unsigned int)str2);
+	return t_add_fork((unsigned int)str, (unsigned int)str2, 0);
+}
+
+
+
+
+static int fixup_t_add_fork_uri(void** param, int param_no)
+{
+	unsigned int ip, port;
+	struct fork* fork_pack;
+				 
+	if (param_no==1)
+	{
+		fork_pack = (struct fork*)pkg_malloc(sizeof(struct fork));
+		if (!fork_pack)
+		{
+			LOG(L_ERR, "TM module:fixup_t_add_fork_uri: \
+				cannot allocate memory!\n");
+			return E_UNSPEC;
+		}
+		fork_pack->uri.s = *param;
+		fork_pack->uri.len = strlen(*param);
+		if ( get_ip_and_port_from_uri(&(fork_pack->uri), &ip, &port)==0 )
+		{
+			printf("ip = %d, port =%d\n",ip,port);
+			fork_pack->ip = ip;
+			fork_pack->port = port;
+			*param=(void*)fork_pack;
+			return 0;
+		}else{
+			LOG(L_ERR, "TM module:fixup_t_add_fork_uri: bad uri <%s>\n",
+			(char*)(*param));
+			return E_UNSPEC;
+		}
+	}
+	/* second param => no conversion*/
+    return 0;
+}
+
+
+
+
+static int w_t_add_fork_uri(struct sip_msg* msg, char* str, char* str2)
+{
+    return t_add_fork( ((struct fork*)str)->ip,
+		((struct fork*)str)->port, &((struct fork*)str)->uri );
 }
 
 
@@ -389,9 +440,16 @@ static int t_relay_to( struct sip_msg  *p_msg , char *str_ip , char *str_port)
 
 static int t_relay( struct sip_msg  *p_msg , char* foo, char* bar)
 {
-	unsigned int     ip, port;
+	unsigned int  ip, port;
+	str           *uri;
 
-	if ( get_ip_and_port_from_uri( p_msg , &ip, &port)<0 )
+	/* the original uri has been changed? */
+	if (p_msg->new_uri.s==0 || p_msg->new_uri.len==0)
+		uri = &(p_msg->first_line.u.request.uri);
+	else
+		uri = &(p_msg->new_uri);
+	/* extracts ip and port from uri */		
+	if ( get_ip_and_port_from_uri( uri , &ip, &port)<0 )
 	{
 		LOG( L_ERR , "ERROR: t_on_request_received_uri: unable"
 			" to extract ip and port from uri!\n" );
