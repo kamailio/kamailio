@@ -10,6 +10,7 @@ $Id$
  - full nathelper support (backported from HEAD)
  - openbsd 3.4 support
  - group fixed (ser crashed when started with a group)
+ - cpl-c (fast cpl interpreter) introduced
 
 
 

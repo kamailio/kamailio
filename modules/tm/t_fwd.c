@@ -103,7 +103,7 @@ char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 		other branches  and for  shmem i_req they would mix up
 	 	shmem with pkg_mem
 	*/
-	free_via_lump(&i_req->add_rm);
+	free_via_clen_lump(&i_req->add_rm);
 
 	shbuf=(char *)shm_malloc(*len);
 	if (!shbuf) {
