@@ -112,7 +112,7 @@ int process_ins_list(str* _d)
 		VAL_INT(vals + 5) = p->cseq;
 
 		if (db_insert(db, keys, vals, 6) < 0) {
-			LOG(L_ERR, "process_ins_list(): Error while deleting from database\n");
+			LOG(L_ERR, "process_ins_list(): Error while inserting into database\n");
 			return -1;
 		}
 
