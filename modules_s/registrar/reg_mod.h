@@ -40,7 +40,6 @@ extern int default_expires;
 extern qvalue_t default_q;
 extern int append_branches;
 extern int case_sensitive;
-extern int desc_time_order;
 extern int nat_flag;
 extern int min_expires;
 extern int max_expires;

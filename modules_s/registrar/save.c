@@ -68,25 +68,6 @@ void remove_cont(urecord_t* _r, ucontact_t* _c)
 }
 
 
-void move_on_top(urecord_t* _r, ucontact_t* _c)
-{
-	ucontact_t* prev;
-
-	if (!_r->contacts) return;
-	if (_c->prev == 0) return;
-
-	prev = _c->prev;
-
-	remove_cont(_r, _c);
-	
-	_c->next = _r->contacts;
-	_c->prev = 0;
-
-	_r->contacts->prev = _c;
-	_r->contacts = _c;
-}
-
-
 /*
  * Process request that contained a star, in that case, 
  * we will remove all bindings with the given username 
@@ -434,10 +415,6 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 					c->flags |= FL_MEM;
 				} else {
 					c->flags &= ~FL_MEM;
-				}
-
-				if (desc_time_order) {
-					move_on_top(_r, c);
 				}
 			}
 		}
