@@ -422,7 +422,7 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 
 
 endofheader:
-#ifdef PINGTEL_TAG_HACK
+#ifndef NO_PINGTEL_TAG_HACK
 	if (param->type==TAG_PARAM 
 	&& (saved_status==S_EQUAL||saved_status==S_PARA_VALUE) ) {
 			saved_status = E_PARA_VALUE;
