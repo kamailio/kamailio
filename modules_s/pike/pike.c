@@ -107,11 +107,12 @@ error:
 static int pike_exit(void)
 {
 	/* empty the timer list*/
-
-	/* empty the B trees */
-
+	lock(PTL_lock);
 	/* destroy the B trees - ipv4 and ipv6 */
-
+	lock(BT4_lock);
+	lock(BT6_lock);
+	freetree234(ipv4_bt,free_elem);
+	freetree234(ipv6_bt,free_elem);
 	/* detroy semaphore */
 	destroy_semaphores(pike_locks);
 	return 0;

@@ -31,7 +31,7 @@ void destroy_semaphores(ser_lock_t *sem_set);
 
 
 /* lock semaphore s */
-static inline int _lock( ser_lock_t* s )
+static inline int lock( ser_lock_t* s )
 {
 #ifdef FAST_LOCK
 	get_lock(s);
@@ -43,7 +43,7 @@ static inline int _lock( ser_lock_t* s )
 
 
 
-static inline int _unlock( ser_lock_t* s )
+static inline int unlock( ser_lock_t* s )
 {
 #ifdef FAST_LOCK
 	release_lock(s);

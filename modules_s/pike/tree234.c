@@ -71,17 +71,21 @@ tree234 *newtree234(cmpfn234 cmp) {
 /*
  * Free a 2-3-4 tree (not including freeing the elements).
  */
-static void freenode234(node234 *n) {
+static void freenode234(node234 *n, void (*free_elem)(void*)) {
+	int i;
     if (!n)
 	return;
-    freenode234(n->kids[0]);
-    freenode234(n->kids[1]);
-    freenode234(n->kids[2]);
-    freenode234(n->kids[3]);
+    freenode234(n->kids[0],free_elem);
+    freenode234(n->kids[1],free_elem);
+    freenode234(n->kids[2],free_elem);
+    freenode234(n->kids[3],free_elem);
+	if (free_elem)
+		for(i=0;i<3;i++)
+			free_elem(n->elems[i]);
     sfree(n);
 }
-void freetree234(tree234 *t) {
-    freenode234(t->root);
+void freetree234(tree234 *t, void (*free_elem)(void*)) {
+    freenode234(t->root, free_elem);
     sfree(t);
 }
 

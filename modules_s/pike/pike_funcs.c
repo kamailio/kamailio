@@ -3,7 +3,19 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "../../mem/shm_mem.h"
 #include "pike_funcs.h"
+
+
+
+
+void free_elem(void *elem)
+{
+	if (elem)
+		shm_free(elem);
+}
+
+
 
 
 int cmp_ipv4(void* ip41, void *ip42)

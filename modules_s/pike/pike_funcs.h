@@ -14,9 +14,9 @@ extern ser_lock_t  *pike_locks;
 
 enum pike_locks{BT4_INDEX_LOCK,BT6_INDEX_LOCK,PTL_INDEX_LOCK,PIKE_NR_LOCKS};
 
-#define BT4_lock pike_locks[BT4_INDEX_LOCK]
-#define BT6_lock pike_locks[BT6_INDEX_LOCK]
-#define PTL_lock pike_locks[PTL_INDEX_LOCK]
+#define BT4_lock &(pike_locks[BT4_INDEX_LOCK])
+#define BT6_lock &(pike_locks[BT6_INDEX_LOCK])
+#define PTL_lock &(pike_locks[PTL_INDEX_LOCK])
 
 struct ip_v4 {
 	int ip;
@@ -29,6 +29,7 @@ struct ip_v6 {
 
 int cmp_ipv4(void*,void*);
 int cmp_ipv6(void*,void*);
+void free_elem(void *elem);
 
 
 
