@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/sh -x
 #
 # $Id$
 #
@@ -13,12 +13,13 @@
 #################################################################
 # config vars
 #################################################################
-DBNAME=ser
+DBNAME=ser2
 USERNAME=ser
 DEFAULT_PW=heslo
 ROUSER=serro
 RO_PW=47serro11
 CMD="mysql -p -u "
+BACKUP_CMD="mysqldump -p -c -t -u "
 TABLE_TYPE="TYPE=MyISAM"
 SQL_USER="root"
 
@@ -30,7 +31,10 @@ COMMAND=`basename $0`
 cat <<EOF
 usage: $COMMAND create
        $COMMAND drop   (!!entirely deletes tables)
-       $COMMAND reinit (!!entirely deletes and than re-creates tables)
+       $COMMAND reinit (!!entirely deletes and than re-creates tables
+       $COMMAND backup (dumps current database to stdout)
+	   $COMMAND restore <file> (restores tables from a file)
+       $COMMAND copy <new_db> (creates a new db from an existing one)
 
        if you want to manipulate database as other MySql user than
        root, want to change database name from default value "$DBNAME",
@@ -39,6 +43,24 @@ usage: $COMMAND create
 
 EOF
 } #usage
+
+ser_backup()  # pars: <database name> <sql_user>
+{
+if [ $# -ne 2 ] ; then
+	echo "ser_drop function takes two params"
+	exit 1
+fi
+$BACKUP_CMD $2 $1
+}
+
+ser_restore() #pars: <database name> <sql_user> <filename>
+{
+if [ $# -ne 3 ] ; then
+	echo "ser_drop function takes two params"
+	exit 1
+fi
+$CMD $2 $1 < $3
+}
 
 ser_drop()  # pars: <database name> <sql_user>
 {
@@ -298,6 +320,43 @@ EOF
 
 
 case $1 in
+	copy)
+		shift
+		if [ $# -ne 1 ]; then
+			usage
+			exit 1
+		fi
+		tmp_file=/tmp/ser_mysql.$$
+		ser_backup $DBNAME $SQL_USER > $tmp_file
+		ret=$?
+		if [ "$ret" -ne 0 ]; then
+			rm $tmp_file
+			exit $ret
+		fi
+		ser_create $1 $SQL_USER
+		ret=$?
+		if [ "$ret" -ne 0 ]; then
+			rm $tmp_file
+			exit $ret
+		fi
+		ser_restore $1 $SQL_USER $tmp_file
+		ret=$?
+		rm $tmp_file
+		exit $ret
+		;;
+	backup)
+		ser_backup $DBNAME $SQL_USER
+		exit $?
+		;;
+	restore)
+		shift
+		if [ $# -ne 1 ]; then
+			usage
+			exit 1
+		fi
+		ser_restore $DBNAME $SQL_USER $1
+		exit $?
+		;;
 	create)
 		ser_create $DBNAME $SQL_USER
 		exit $?
