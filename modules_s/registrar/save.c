@@ -170,7 +170,6 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 	int cseq, e;
 	float q;
 
-	LOG(L_ERR, "update()\n"); /*d*/
 
 	while(_c) {
 		if (calc_contact_expires(_m, _c->expires, &e) < 0) {
@@ -183,10 +182,8 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 		get_raw_uri(&uri);
 		
 		if (ul_get_ucontact(_r, &uri, &c) > 0) {
-			LOG(L_ERR, "contact not found\n"); /*d*/
 			     /* Contact not found */
 			if (e != 0) {
-				LOG(L_ERR, "expires != 0\n"); /*d*/
 				     /* Calculate q value of the contact */
 				if (calc_contact_q(_c->q, &q) < 0) {
 					LOG(L_ERR, "update(): Error while calculating q\n");
@@ -204,7 +201,6 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 					return -3;
 				}
 				
-				LOG(L_ERR, "inserting\n"); /*d*/
 				if (ul_insert_ucontact(_r, &uri, e, q, &callid, cseq, &c2) < 0) {
 					rerrno = R_UL_INS_C;
 					LOG(L_ERR, "update(): Error while inserting contact\n");
@@ -212,9 +208,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 				}
 			}
 		} else {
-			LOG(L_ERR, "contact found\n"); /*d*/
 			if (e == 0) {
-				LOG(L_ERR, "deleting\n"); /*d*/
 				if (ul_delete_ucontact(_r, c) < 0) {
 					rerrno = R_UL_DEL_C;
 					LOG(L_ERR, "update(): Error while deleting contact\n");
@@ -238,7 +232,6 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 					return -7;
 				}
 				
-				LOG(L_ERR, "updating\n"); /*d*/
 				if (ul_update_ucontact(c, e, q, &callid, cseq) < 0) {
 					rerrno = R_UL_UPD_C;
 					LOG(L_ERR, "update(): Error while updating contact\n");
@@ -261,7 +254,6 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 {
 	int res;
 	urecord_t* r;
-	LOG(L_ERR, "contacts()\n"); /*d*/
 
 	ul_lock_udomain(_d);
 	res = ul_get_urecord(_d, _u, &r);
@@ -317,7 +309,6 @@ int save(struct sip_msg* _m, char* _t, char* _s)
 	c = get_first_contact(_m);
 	str_copy(&user, &((struct to_body*)_m->to->parsed)->uri);
 
-	LOG(L_ERR, "user = \'%.*s\'\n", user.len, user.s);
 	if (ul_get_user(&user) < 0) {
 		rerrno = R_TO_USER;
 		LOG(L_ERR, "save(): Can't extract username part from To URI, sending 400\n");
