@@ -53,6 +53,7 @@ ifeq ($(ARCH), FreeBSD)
 
 MAKE=gmake
 YACC=yacc
+LIBS= -lfl  #dlopen is in libc
 
 endif
 ifneq (,$(findstring CYGWIN, $(ARCH)))
