@@ -77,9 +77,6 @@ union sockaddr_union{
 };
 
 
-
-enum si_flags { SI_NONE=0, SI_IS_IP=1, SI_IS_LO=2 };
-
 struct socket_info{
 	int socket;
 	str name; /* name - eg.: foo.bar or 10.0.0.1 */
@@ -87,11 +84,10 @@ struct socket_info{
 	str address_str;        /* ip address converted to string -- optimization*/
 	unsigned short port_no;  /* port number */
 	str port_no_str; /* port number converted to string -- optimization*/
-	enum si_flags flags; /* SI_IS_IP | SI_IS_LO */
+	int is_ip; /* 1 if name is an ip address, 0 if not  -- optimization*/
+	int is_lo; /* 1 if is a loopback, 0 if not */
 	union sockaddr_union su; 
 	int proto; /* tcp or udp*/
-	struct socket_info* next;
-	struct socket_info* prev;
 };
 
 
@@ -381,15 +377,15 @@ static inline int hostent2su( union sockaddr_union* su,
 	return 0;
 }
 
-
-
+/* maximum size of a str returned by ip_addr2a (including \0) */
+#define IP_ADDR_MAX_STR_SIZE 40 /* 1234:5678:9012:3456:7890:1234:5678:9012\0 */
 /* fast ip_addr -> string convertor;
  * it uses an internal buffer
  */
 static inline char* ip_addr2a(struct ip_addr* ip)
 {
 
-	static char buff[40];/* 1234:5678:9012:3456:7890:1234:5678:9012\0 */
+	static char buff[IP_ADDR_MAX_STR_SIZE];
 	int offset;
 	register unsigned char a,b,c;
 #ifdef USE_IPV6
