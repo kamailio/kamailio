@@ -616,7 +616,7 @@ error3:
 		free_rr( ((rr_t**)&msg->record_route->parsed) );
 error2:
 	if (parse_flags&VM_CONTACT_PARSED)
-		free_contact( ((contact_body_t**)&msg->from->parsed) );
+		free_contact( ((contact_body_t**)&msg->contact->parsed) );
 error1:
 	if (parse_flags&VM_FROM_PARSED) {
 		free_from( msg->from->parsed );
