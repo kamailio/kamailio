@@ -10,7 +10,8 @@ There are various configuration options defined in the Makefile.
 Requirements:
 
 
-- gcc
+- gcc >= 2.9x; 3.0.x recommended (it will work with older version but it might
+ require some options tweaking for best performance)
 - bison or yacc (Berkley yacc)
 - flex
 - gmake (on Linux this is the standard "make")

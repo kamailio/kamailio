@@ -104,38 +104,106 @@ mode = release
 CC=gcc
 LD= $(CC)
 CC_VER= $(CC) $(shell $(CC) --version)
+CC_LONGVER=$(shell $(CC) -v 2>&1)
 MKDEP=gcc -MM $(DEFS)
 MKTAGS=ctags -R .
 
-ifeq ($(mode), release)
-	CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) -Winline\
-			-malign-loops=4
-			#-Wmissing-prototypes \
-	
-ifneq (,$(findstring 3.0, $(CC_VER)))
-# gcc 3.0.x specific optimizations
-	ifeq ($(ARCH), i386)
-		CFLAGS+=-minline-all-stringops -malign-double -march=athlon \
-				#-mcpu=athlon
-	endif
-	ifeq ($(ARCH), sparc64)
-		# sparc64 specific options, using 32bit for now
-		CFLAGS+= -mcpu=v9 -mtune=ultrasparc  -m32  \
-				# -mcpu=v9 or ultrasparc? # -mtune implied by -mcpu
-				#-mno-epilogue #try to inline function exit code
-				#-mflat # omit save/restore
-				#-,faster-structs #faster non Sparc ABI structure copy ops
-				
-	endif
+#find-out the compiler's name
+
+ifneq (,$(findstring gcc, $(CC_LONGVER)))
+	CC_NAME=gcc
+	#transform gcc version into 2.9x or 3.0
+	CC_SHORTVER=$(shell $(CC) --version | \
+				 sed -e 's/[^0-9]*-\(.*\)/\1/'| \
+				 sed -e 's/2\.9.*/2.9x/' -e 's/3\..\..*/3.0/')
+else
+	CC_NAME=$(CC)
+	CC_SHORTVER=unknown
 endif
+
+
+# setting CFLAGS
+ifeq ($(mode), release)
+	#common stuff
+	CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) -Winline\
+			#-Wmissing-prototypes \
+	#if i386
+ifeq	($(ARCH), i386)
+		# if gcc 
+ifeq		($(CC_NAME), gcc)
+			#if gcc 3.0
+ifeq			($(CC_SHORTVER), 3.0)
+					CFLAGS+=-minline-all-stringops -malign-double \
+							-malign-loops=4 \
+							-march=athlon \
+							#-mcpu=athlon
+else
+ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
+$(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc 3.0.x \
+					for better results)
+					
+					CFLAGS+=-m486 \
+							-malign-loops=4
+else
+				#really old version
+$(warning			You are using an old and unsupported gcc \
+					 version ($(CC_SHORTVER)), compile at your own risk!)
+
+endif			# CC_SHORTVER, 2.9x
+endif			# CC_SHORTVER, 3.0
+
+else		# CC_NAME, gcc
+				#other compilers
+$(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
+endif		#CC_NAME, gcc
+endif	#ARCH, i386
+
+
+	#if sparc64
+ifeq	($(ARCH), sparc64)
+			#if gcc
+ifeq		($(CC_NAME), gcc)
+				#if gcc 3.0
+ifeq			($(CC_SHORTVER), 3.0)
+					#use 32bit for now
+					CFLAGS+= -mcpu=v9 -mtune=ultrasparc  -m32  \
+					# -mcpu=v9 or ultrasparc? # -mtune implied by -mcpu
+					#-mno-epilogue #try to inline function exit code
+					#-mflat # omit save/restore
+					#-,faster-structs #faster non Sparc ABI structure copy ops
+else			# CC_SHORTVER, 3.0
+ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
+$(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc 3.0.x \
+					for better results)
+					
+					CFLAGS+= -mv8 -Wa,-xarch=v8plus
+else			#CC_SHORTVER, 2.9x
+				#really old version
+$(warning			You are using an old and unsupported gcc \
+					 version ($(CC_SHORTVER)), compile at your own risk!)
+					
+					CFLAGS+= -mv8 -Wa,-xarch=v8plus
+endif			#CC_SHORTVER, 2.9x
+endif			#CC_SHORTVER, 3.0
+
+else		#CC_NAME, gcc
+				#other compilers
+$(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
+endif		#CC_NAME, gcc
+endif	#ARCH, sparc64
+
+
+
+# setting LDFLAGS
 	LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE)
 	# we need -fPIC -DPIC only for shared objects, we don't need them for
 	# the executable file, because it's always loaded at a fixed address
 	# -andrei
-else
+else	#mode,release
 	CFLAGS=-g -Wcast-align -Winline $(PROFILE)
 	LDFLAGS+=-g -Wl,-E $(PROFILE)
-endif
+endif #mode=release
+
 
 #*FLAGS used for compiling the modules
 MOD_CFLAGS=-fPIC -DPIC $(CFLAGS)
@@ -149,10 +217,11 @@ YACC_FLAGS=-d -b cfg
 LIBS=-lfl -ldl
 
 
-#arch specific stuff
+#os specific stuff
 ifeq ($(OS), Linux)
-
+	#same as common
 endif
+
 ifeq  ($(OS), SunOS)
 	ifeq ($(mode), release)
 		LDFLAGS=-O2 $(PROFILE)
@@ -161,24 +230,20 @@ ifeq  ($(OS), SunOS)
 		LDFLAGS=-g $(PROFILE)
 		MOD_LDFLAGS=-g -G
 	endif
-	ifeq ($(ARCH), sparc64)
-		CFLAGS+= -mv8 -Wa,-xarch=v8plus
-	endif
 
-YACC=yacc
-LIBS+=-L/usr/local/lib -lxnet -lrt # or -lnsl -lsocket or -lglibc ?
-# -lrt needed for sched_yield
-
+	YACC=yacc
+	LIBS+=-L/usr/local/lib -lxnet -lrt # or -lnsl -lsocket or -lglibc ?
+	# -lrt needed for sched_yield
 endif
+
 ifeq ($(OS), FreeBSD)
 
-YACC=yacc
-LIBS= -lfl  #dlopen is in libc
+	YACC=yacc
+	LIBS= -lfl  #dlopen is in libc
 
 endif
+
 ifneq (,$(findstring CYGWIN, $(OS)))
-
-#cygwin is the same as common
-
+	#cygwin is the same as common
 endif
 
