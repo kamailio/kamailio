@@ -30,6 +30,7 @@
  */
 
 #include "../tm/h_table.h"
+#include "../../parser/contact/parse_contact.h"
 
 
 #define duplicate_str( _orig_ , _new_ ) \
@@ -64,6 +65,77 @@
 		}\
 	}while(0)
 
+
+static inline int parse_q(str *q, unsigned int *prio)
+{
+	if (q->s[0]=='0')
+		*prio=0;
+	else if (q->s[0]=='1')
+		*prio=10;
+	else
+		goto error;
+	if (q->s[1]!='.')
+		goto error;
+	if (q->s[2]<'0' || q->s[2]>'9')
+		goto error;
+	*prio += q->s[2] - '0';
+	if (*prio>10)
+		goto error;
+
+	return 0;
+error:
+	LOG(L_ERR,"ERROR:cpl-c:parse_q:bad q param <%.*s>\n",q->len,q->s);
+	return -1;
+}
+
+
+
+static inline int add_contacts_to_loc_set(struct sip_msg* msg,
+													struct location **loc_set)
+{
+	struct contact* contacts;
+	unsigned int prio;
+
+	/* we need to have the contact header */
+	if (msg->contact==0) {
+		/* find and parse the Contact header */
+		if ((parse_headers(msg, HDR_CONTACT, 0)==-1) || (msg->contact==0) ) {
+			LOG(L_ERR,"ERROR:cpl-c:add_contacts_to_loc_set: error parsing or "
+				"no Contact hdr found!\n");
+			goto error;
+		}
+	}
+
+	/* extract from contact header the all the addresses */
+	if (parse_contact( msg->contact )!=0) {
+		LOG(L_ERR,"ERROR:cpl-c:add_contacts_to_loc_set: unable to parse "
+			"Contact hdr!\n");
+		goto error;
+	}
+
+	/* in contact hdr, in parsed attr, we should have a list of contacts */
+	if ( msg->contact->parsed ) {
+		contacts = ((struct contact_body*)msg->contact->parsed)->contacts;
+		for( ; contacts ; contacts=contacts->next) {
+			/* convert the q param to int value (if any) */
+			if (contacts->q) {
+				if (parse_q( &(contacts->q->body), &prio )!=0)
+					continue;
+			} else {
+				prio = 10; /* set default to minimum */
+			}
+			/* add the uri to location set */
+			if (add_location( loc_set, &contacts->uri,prio, 1/*dup*/)!=0) {
+				LOG(L_ERR,"ERROR:cpl-c:add_contacts_to_loc_set: unable to add "
+				"<%.*s>\n",contacts->uri.len,contacts->uri.s);
+			}
+		}
+	}
+
+	return 0;
+error:
+	return -1;
+}
 
 
 
@@ -122,8 +194,12 @@ static void failed_reply( struct cell* t, struct sip_msg* msg, int code,
 			intr->ip = intr->proxy.noanswer;
 		} else if ((code/100)==3) {
 			/* redirection */
+			/* add to the location list all the addresses from Contact */
+			add_contacts_to_loc_set( msg, &(intr->loc_set));
+			print_location_set( intr->loc_set );
 			intr->ip = intr->proxy.redirect;
 		} else {
+			/* generic failure */
 			intr->ip = intr->proxy.failure;
 		}
 
@@ -171,7 +247,6 @@ static void final_reply( struct cell* t, struct sip_msg* msg, int code,
 	if (code>=200)
 		free_cpl_interpreter( (struct cpl_interpreter*)param );
 }
-
 
 
 

@@ -60,20 +60,27 @@ static inline void free_location( struct location *loc)
 /* insert a new location into the set mantaining order by the prio val - the
  * list starts with the smallest prio!
  * For locations having the same prio val, the adding orser will be keept */
-static inline int add_location(struct location **loc_set, char *uri_s,
-											int uri_len, unsigned int prio)
+static inline int add_location(struct location **loc_set, str *uri,
+											unsigned int prio, int dup)
 {
 	struct location *loc;
 	struct location *foo, *bar;
 
-	loc = (struct location*)shm_malloc( sizeof(struct location) );
+	loc = (struct location*)shm_malloc(
+		sizeof(struct location)+(dup?uri->len+1:0) );
 	if (!loc) {
 		LOG(L_ERR,"ERROR:add_location: no more free shm memory!\n");
 		return -1;
 	}
 
-	loc->addr.uri.s = uri_s;
-	loc->addr.uri.len = uri_len;
+	if (dup) {
+		loc->addr.uri.s = ((char*)loc)+sizeof(struct location);
+		memcpy(loc->addr.uri.s,uri->s,uri->len);
+		loc->addr.uri.s[uri->len] = 0;
+	} else {
+		loc->addr.uri.s = uri->s;
+	}
+	loc->addr.uri.len = uri->len;
 	loc->addr.priority = prio;
 
 	/* find the proper place for the new location */
@@ -160,7 +167,8 @@ static inline void empty_location_set(struct location **loc_set)
 static inline void print_location_set(struct location *loc_set)
 {
 	while (loc_set) {
-		DBG("DEBUG:cpl_c:print_loc_set: uri=<%s>\n",loc_set->addr.uri.s);
+		DBG("DEBUG:cpl_c:print_loc_set: uri=<%s> q=%d\n",loc_set->addr.uri.s,
+			loc_set->addr.priority);
 		loc_set=loc_set->next;
 	}
 }

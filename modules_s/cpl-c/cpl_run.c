@@ -297,7 +297,7 @@ static inline char *run_location( struct cpl_interpreter *intr )
 
 	if (clear)
 		empty_location_set( &(intr->loc_set) );
-	if (add_location( &(intr->loc_set), url.s, url.len, prio )==-1) {
+	if (add_location( &(intr->loc_set), &url, prio, 0/*no dup*/ )==-1) {
 		LOG(L_ERR,"ERROR:run_location: unable to add location to set :-(\n");
 		goto runtime_error;
 	}
