@@ -1,5 +1,5 @@
 /* 
- * $Id$ 
+ * $Id$
  *
  * Digest Authentication Module
  *
@@ -174,7 +174,7 @@ static int mod_init(void)
 
 static void destroy(void)
 {
-	db_close(db_handle);
+	if (db_handle) db_close(db_handle);
 }
 
 
