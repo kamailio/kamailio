@@ -226,7 +226,11 @@ inline static int validate_db_row(struct db_row *row, unsigned int *val_type,
 		memcpy( _p_, (_ss_).s, (_ss_).len);\
 		(_p_) += (_ss_).len;\
 	}while(0)
-
+/*
+ * Returns:   -1 : error
+ *             0 : sucess and avp(s) loaded
+ *             1 : sucess but no avp loaded
+ */
 int load_avp( struct sip_msg *msg, int uri_type, char *attr, int use_dom)
 {
 	db_res_t          *res;
@@ -238,10 +242,6 @@ int load_avp( struct sip_msg *msg, int uri_type, char *attr, int use_dom)
 	unsigned int      uint_val;
 	int               len;
 	char              *p;
-
-	/*
-	DBG("----load_avp:%d,%s,%d\n",uri_type,attr?attr:"NULL",use_dom);
-	*/
 
 	/* featch the user name [and domain] */
 	switch (uri_type) {
@@ -291,44 +291,47 @@ int load_avp( struct sip_msg *msg, int uri_type, char *attr, int use_dom)
 		DBG("DEBUG:load_avp: no avp found for %.*s@%.*s <%s>\n",
 			uri.user.len,uri.user.s,(use_dom!=0)*uri.host.len,uri.host.s,
 			attr?attr:"NULL");
-	} else {
-		for( n=0 ; n<res->n ; n++) {
-			/* validate row */
-			if (validate_db_row( &res->rows[n] ,&val_type, &uint_val) < 0 )
-				continue;
-			/* what do we have here?! */
-			DBG("DEBUG:load_avp: found avp: <%s,%s,%d>\n",
-				res->rows[n].values[0].val.string_val,
-				res->rows[n].values[1].val.string_val,
-				res->rows[n].values[2].val.int_val);
-			/* build a new avp struct */
-			len = sizeof(struct usr_avp);
-			len += res->rows[n].values[0].val.str_val.len ;
-			if (val_type==AVP_TYPE_STR)
-				len += res->rows[n].values[1].val.str_val.len ;
-			avp = (struct usr_avp*)pkg_malloc( len );
-			if (avp==0) {
-				LOG(L_ERR,"ERROR:load_avp: no more pkg mem\n");
-				continue;
-			}
-			/* fill the structure in */
-			p = ((char*)avp) + sizeof(struct usr_avp);
-			avp->id = compute_ID( &res->rows[n].values[0].val.str_val );
-			avp->val_type = val_type;
-			/* attribute name */
-			copy_str( p, avp->attr, res->rows[n].values[0].val.str_val);
-			if (val_type==AVP_TYPE_INT) {
-				/* INT */
-				avp->val.uint_val = uint_val;
-			} else {
-				/* STRING */
-				copy_str( p, avp->val.str_val,
-					res->rows[n].values[1].val.str_val);
-			}
-			/* add avp to internal list */
-			avp->next = users_avps;
-			users_avps = avp;
+		db_free_query( avp_db_con, res);
+		/*no avp found*/
+		return 1;
+	}
+
+	for( n=0 ; n<res->n ; n++) {
+		/* validate row */
+		if (validate_db_row( &res->rows[n] ,&val_type, &uint_val) < 0 )
+			continue;
+		/* what do we have here?! */
+		DBG("DEBUG:load_avp: found avp: <%s,%s,%d>\n",
+			res->rows[n].values[0].val.string_val,
+			res->rows[n].values[1].val.string_val,
+		res->rows[n].values[2].val.int_val);
+		/* build a new avp struct */
+		len = sizeof(struct usr_avp);
+		len += res->rows[n].values[0].val.str_val.len ;
+		if (val_type==AVP_TYPE_STR)
+			len += res->rows[n].values[1].val.str_val.len ;
+		avp = (struct usr_avp*)pkg_malloc( len );
+		if (avp==0) {
+			LOG(L_ERR,"ERROR:load_avp: no more pkg mem\n");
+			continue;
 		}
+		/* fill the structure in */
+		p = ((char*)avp) + sizeof(struct usr_avp);
+		avp->id = compute_ID( &res->rows[n].values[0].val.str_val );
+		avp->val_type = val_type;
+		/* attribute name */
+		copy_str( p, avp->attr, res->rows[n].values[0].val.str_val);
+		if (val_type==AVP_TYPE_INT) {
+			/* INT */
+			avp->val.uint_val = uint_val;
+		} else {
+			/* STRING */
+			copy_str( p, avp->val.str_val,
+				res->rows[n].values[1].val.str_val);
+		}
+		/* add avp to internal list */
+		avp->next = users_avps;
+		users_avps = avp;
 	}
 
 	db_free_query( avp_db_con, res);
