@@ -8,7 +8,7 @@
 #include "h_table.h"
 
 /* Uni*x permissions for IPC */
-#define IPC_PERMISSIONS
+#define IPC_PERMISSIONS 0666
 
 /* typedef to structure we use for mutexing; 
    currently, index to a semaphore set identifier now */
