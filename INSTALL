@@ -260,6 +260,7 @@ proceed, you need to make sure MySQL is installed on your box.
     dpkg -i <package_name>
 3) create MySQL tables
     /usr/sbin/ser_mysql.sh create
+   (you will be promted for password of MySql "root" user)
 4) configure ser to use SQL
     uncomment all lines in configuration file ser.cfg which are related to 
     authentication:
