@@ -239,10 +239,10 @@ INSERT INTO version VALUES ( 'reserved', '1');
 INSERT INTO version VALUES ( 'phonebook', '1');
 INSERT INTO version VALUES ( 'pending', '4');
 INSERT INTO version VALUES ( 'missed_calls', '2');
-INSERT INTO version VALUES ( 'location', '5');
+INSERT INTO version VALUES ( 'location', '6');
 INSERT INTO version VALUES ( 'grp', '2');
 INSERT INTO version VALUES ( 'event', '1');
-INSERT INTO version VALUES ( 'aliases', '5');
+INSERT INTO version VALUES ( 'aliases', '6');
 INSERT INTO version VALUES ( 'active_sessions', '1');
 INSERT INTO version VALUES ( 'acc', '2');
 INSERT INTO version VALUES ( 'config', '1');
@@ -312,6 +312,7 @@ CREATE TABLE aliases (
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   contact varchar(255) NOT NULL default '',
+  received varchar(255) default NULL,
   expires datetime NOT NULL default '$DEFAULT_ALIASES_EXPIRES',
   q float(10,2) NOT NULL default '$DEFAULT_Q',
   callid varchar(255) NOT NULL default '$DEFAULT_CALLID',
@@ -368,6 +369,7 @@ CREATE TABLE location (
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   contact varchar(255) NOT NULL default '',
+  received varchar(255) default NULL,
   expires datetime NOT NULL default '$DEFAULT_LOCATION_EXPIRES',
   q float(10,2) NOT NULL default '$DEFAULT_Q',
   callid varchar(255) NOT NULL default '$DEFAULT_CALLID',
