@@ -4,6 +4,21 @@ Release notes for SIP Express Router (ser)
 $Id$
 
 ***********************************************
+* Changes/fixes introduced in 0.8.14
+***********************************************
+
+New Features
+============
+
+core:
+ - basic avp support (no db conectivity yet)
+tm:
+ - avp list inherit by transaction and made available in failure and onreply
+   routes;
+
+
+
+ ***********************************************
 * Changes/fixes introduced in 0.8.12-r1
 ***********************************************
 
