@@ -72,22 +72,26 @@ static int init_semaphore_set( int size )
 		return -1;
 	}
 	for (i=0; i<size; i++) {
-                union semun {
-                        int val;
-                        struct semid_ds *buf;
-                        ushort *array;
-                } argument;
-                /* binary lock */
-                argument.val = +1;
-                if (semctl( new_semaphore, i , SETVAL , argument )==-1) {
+
+ 		union semun {
+			int val;
+			struct semid_ds *buf;
+			ushort *array;
+		} argument;
+
+		/* binary lock */
+		argument.val = +1;
+   		if (semctl( new_semaphore, i , SETVAL , argument )==-1) {
 			DBG("DEBUG: init_semaphore_set:  failure to "
-						"initialize a semaphore: %s\n", strerror(errno));
-			if (semctl( entry_semaphore, 0 , IPC_RMID , 0 )==-1)
+				"initialize a semaphore: %s\n", strerror(errno));
+			/* bug cought -- courtesy of Bogdan; -Jiri */
+			/* if (semctl( entry_semaphore, 0 , IPC_RMID , 0 )==-1) */
+			if (semctl( new_semaphore, 0 , IPC_RMID , 0 )==-1) 
 				DBG("DEBUG: init_semaphore_set:  failure to release"
-						" a semaphore\n");
+					" a semaphore\n");
 			return -2;
-                }
-        }
+		}
+	} /* for cycle */
 	return new_semaphore;
 }
 
