@@ -7,7 +7,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=uri.so
+NAME=uri_db.so
 LIBS=
 
 include ../../Makefile.modules
