@@ -110,10 +110,32 @@
  *
  * 2004-03-22	Fix get_body position (should be called before get_callid)
  * 				(andrei)
+ *
  * 2004-03-24	Fix newport for null ip address case (e.g onhold re-INVITE)
  * 				(andrei)
- * 2004-09-30	added received port != via port test (andrei) 
+ *
+ * 2004-09-30	added received port != via port test (andrei)
+ *
  * 2004-10-10   force_socket option introduced (jiri)
+ *
+ * 2005-02-24	Added support for using more than one rtp proxy, in which
+ *		case traffic will be distributed evenly among them. In addition,
+ *		each such proxy can be assigned a weight, which will specify
+ *		which share of the traffic should be placed to this particular
+ *		proxy.
+ *
+ *		Introduce failover mechanism, so that if SER detects that one
+ *		of many proxies is no longer available it temporarily decreases
+ *		its weight to 0, so that no traffic will be assigned to it.
+ *		Such "disabled" proxies are periodically checked to see if they
+ *		are back to normal in which case respective weight is restored
+ *		resulting in traffic being sent to that proxy again.
+ *
+ *		Those features can be enabled by specifying more than one "URI"
+ *		in the rtpproxy_sock parameter, optionally followed by the weight,
+ *		which if absent is assumed to be 1, for example:
+ *
+ *		rtpproxy_sock="unix:/foo/bar=4 udp:1.2.3.4:3456=3 udp:5.6.7.8:5432=1"
  *
  */
 
@@ -178,6 +200,9 @@ MODULE_VERSION
 #define	SUP_CPROTOVER	20040107
 #define	CPORT		"22222"
 
+struct rtpp_head;
+struct rtpp_node;
+
 static int nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2);
 static int fix_nated_contact_f(struct sip_msg *, char *, char *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
@@ -186,8 +211,8 @@ static int extract_mediaport(str *, str *);
 static int alter_mediaip(struct sip_msg *, str *, str *, int, str *, int, int);
 static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
 static char *gencookie();
-static int rtpp_test(int, int);
-static char *send_rtpp_command(struct iovec *, int);
+static int rtpp_test(struct rtpp_node*, int, int);
+static char *send_rtpp_command(struct rtpp_node*, struct iovec *, int);
 static int unforce_rtp_proxy_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy0_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy1_f(struct sip_msg *, char *, char *);
@@ -231,17 +256,36 @@ static str sup_ptypes[] = {
  */
 static int ping_nated_only = 0;
 static const char sbuf[4] = {0, 0, 0, 0};
-static char *rtpproxy_sock = "unix:/var/run/rtpproxy.sock";
+static char *rtpproxy_sock = "unix:/var/run/rtpproxy.sock"; /* list */
 static char *force_socket_str = 0;
 static int rtpproxy_disable = 0;
 static int rtpproxy_disable_tout = 60;
 static int rtpproxy_retr = 5;
 static int rtpproxy_tout = 1;
-static int umode = 0;
-static int controlfd;
 static pid_t mypid;
 static unsigned int myseqn = 0;
-static int rcv_avp_no=42;
+static int rcv_avp_no = 42;
+
+struct rtpp_head {
+	struct rtpp_node	*rn_first;
+	struct rtpp_node	*rn_last;
+};
+
+struct rtpp_node {
+	char			*rn_url;	/* unparsed, deletable */
+	int			rn_umode;
+	char			*rn_address;	/* substring of rn_url */
+	int			rn_fd;		/* control fd */
+	int			rn_disabled;	/* found unaccessible? */
+	unsigned		rn_weight;	/* for load balancing */
+	int			rn_recheck_ticks;
+	struct rtpp_head	*rn_head;
+	struct rtpp_node	*rn_next;
+};
+
+/* RTP proxy balancing list */
+static struct rtpp_head rtpp_list;
+static int rtpp_node_count = 0;
 
 static cmd_export_t cmds[] = {
 	{"fix_nated_contact",  fix_nated_contact_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
@@ -284,7 +328,6 @@ static int
 mod_init(void)
 {
 	int i;
-	char *cp;
 	bind_usrloc_t bind_usrloc;
 	struct in_addr addr;
 	str socket_str;
@@ -316,25 +359,72 @@ mod_init(void)
 		nets_1918[i].netaddr = ntohl(addr.s_addr) & nets_1918[i].mask;
 	}
 
+	memset(&rtpp_list, 0, sizeof(rtpp_list));
+	rtpp_node_count = 0;
 	if (rtpproxy_disable == 0) {
-		/* Make rtpproxy_sock writable */
-		cp = pkg_malloc(strlen(rtpproxy_sock) + 1);
-		if (cp == NULL) {
-			LOG(L_ERR, "nathelper: Can't allocate memory\n");
-			return -1;
-		}
-		strcpy(cp, rtpproxy_sock);
-		rtpproxy_sock = cp;
+		/* Make rtp proxies list. */
+		char *p, *p1, *p2, *plim;
 
-		if (strncmp(rtpproxy_sock, "udp:", 4) == 0) {
-			umode = 1;
-			rtpproxy_sock += 4;
-		} else if (strncmp(rtpproxy_sock, "udp6:", 5) == 0) {
-			umode = 6;
-			rtpproxy_sock += 5;
-		} else if (strncmp(rtpproxy_sock, "unix:", 5) == 0) {
-			umode = 0;
-			rtpproxy_sock += 5;
+		p = rtpproxy_sock;
+		plim = p + strlen(p);
+		for(;;) {
+			struct rtpp_node *pnode;
+			int weight;
+
+			weight = 1;
+			while (*p && isspace(*p))
+				++p;
+			if (p >= plim)
+				break;
+			p1 = p;
+			while (*p && !isspace(*p))
+				++p;
+			if (p <= p1)
+				break; /* may happen??? */
+			/* Have weight specified? If yes, scan it */
+			p2 = memchr(p1, '=', p - p1);
+			if (p2 != NULL) {
+				weight = strtoul(p2 + 1, NULL, 10);
+			} else {
+				p2 = p;
+			}
+			pnode = pkg_malloc(sizeof(struct rtpp_node));
+			if (pnode == NULL) {
+				LOG(L_ERR, "nathelper: Can't allocate memory\n");
+				return -1;
+			}
+			memset(pnode, 0, sizeof(*pnode));
+			pnode->rn_recheck_ticks = 0;
+			pnode->rn_weight = weight;
+			pnode->rn_umode = 0;
+			pnode->rn_fd = -1;
+			pnode->rn_disabled = 0;
+			pnode->rn_url = pkg_malloc(p2 - p1 + 1);
+			if (pnode->rn_url == NULL) {
+				LOG(L_ERR, "nathelper: Can't allocate memory\n");
+				return -1;
+			}
+			memmove(pnode->rn_url, p1, p2 - p1);
+			pnode->rn_url[p2 - p1] = 0;
+			if (rtpp_list.rn_first == NULL) {
+				rtpp_list.rn_first = pnode;
+			} else {
+				rtpp_list.rn_last->rn_next = pnode;
+			}
+			rtpp_list.rn_last = pnode;
+			++rtpp_node_count;
+			/* Leave only address in rn_address */
+			pnode->rn_address = pnode->rn_url;
+			if (strncmp(pnode->rn_address, "udp:", 4) == 0) {
+				pnode->rn_umode = 1;
+				pnode->rn_address += 4;
+			} else if (strncmp(pnode->rn_address, "udp6:", 5) == 0) {
+				pnode->rn_umode = 6;
+				pnode->rn_address += 5;
+			} else if (strncmp(pnode->rn_address, "unix:", 5) == 0) {
+				pnode->rn_umode = 0;
+				pnode->rn_address += 5;
+			}
 		}
 	}
 
@@ -347,47 +437,61 @@ child_init(int rank)
 	int n;
 	char *cp;
 	struct addrinfo hints, *res;
+	struct rtpp_node *pnode;
 
-	if (rtpproxy_disable == 0) {
-		mypid = getpid();
-		if (umode != 0) {
-			cp = strrchr(rtpproxy_sock, ':');
-			if (cp != NULL) {
-				*cp = '\0';
-				cp++;
-			}
-			if (cp == NULL || *cp == '\0')
-				cp = CPORT;
+	/* Iterate known RTP proxies - create sockets */
+	mypid = getpid();
+	for (pnode = rtpp_list.rn_first; pnode != NULL; pnode = pnode->rn_next) {
+		char *old_colon;
 
-			memset(&hints, 0, sizeof(hints));
-			hints.ai_flags = 0;
-			hints.ai_family = (umode == 6) ? AF_INET6 : AF_INET;
-			hints.ai_socktype = SOCK_DGRAM;
-			if ((n = getaddrinfo(rtpproxy_sock, cp, &hints, &res)) != 0) {
-				LOG(L_ERR, "nathelper: getaddrinfo: %s\n", gai_strerror(n));
-				return -1;
-			}
+		if (pnode->rn_umode == 0)
+			goto rptest;
+		/*
+		 * This is UDP or UDP6. Detect host and port; lookup host;
+		 * do connect() in order to specify peer address
+		 */
+		old_colon = cp = strrchr(pnode->rn_address, ':');
+		if (cp != NULL) {
+			old_colon = cp;
+			*cp = '\0';
+			cp++;
+		}
+		if (cp == NULL || *cp == '\0')
+			cp = CPORT;
 
-			controlfd = socket((umode == 6) ? AF_INET6 : AF_INET, SOCK_DGRAM, 0);
-			if (controlfd == -1) {
-				LOG(L_ERR, "nathelper: can't create socket\n");
-				freeaddrinfo(res);
-				return -1;
-			}
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_flags = 0;
+		hints.ai_family = (pnode->rn_umode == 6) ? AF_INET6 : AF_INET;
+		hints.ai_socktype = SOCK_DGRAM;
+		if ((n = getaddrinfo(pnode->rn_address, cp, &hints, &res)) != 0) {
+			LOG(L_ERR, "nathelper: getaddrinfo: %s\n", gai_strerror(n));
+			return -1;
+		}
+		if (old_colon)
+			*old_colon = ':'; /* restore rn_address */
 
-			if (connect(controlfd, res->ai_addr, res->ai_addrlen) == -1) {
-				LOG(L_ERR, "nathelper: can't connect to a RTP proxy\n");
-				close(controlfd);
-				freeaddrinfo(res);
-				return -1;
-			}
+		pnode->rn_fd = socket((pnode->rn_umode == 6)
+		    ? AF_INET6 : AF_INET, SOCK_DGRAM, 0);
+		if (pnode->rn_fd == -1) {
+			LOG(L_ERR, "nathelper: can't create socket\n");
 			freeaddrinfo(res);
+			return -1;
 		}
 
-		rtpproxy_disable = rtpp_test(0, 1);
-	} else {
-		rtpproxy_disable_tout = -1;
+		if (connect(pnode->rn_fd, res->ai_addr, res->ai_addrlen) == -1) {
+			LOG(L_ERR, "nathelper: can't connect to a RTP proxy\n");
+			close(pnode->rn_fd);
+			pnode->rn_fd = -1;
+			freeaddrinfo(res);
+			return -1;
+		}
+		freeaddrinfo(res);
+rptest:
+		pnode->rn_disabled = rtpp_test(pnode, 0, 1);
 	}
+
+	if (rtpproxy_disable)
+		rtpproxy_disable_tout = -1;
 
 	return 0;
 }
@@ -998,7 +1102,7 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 	 * another request comes.
 	 */
 #if 0
-	/* disabled: 
+	/* disabled:
 	 *  - alter_mediaip is called twice if 2 c= lines are present
 	 *    in the sdp (and we want to allow it)
 	 *  - the message flags are propagated in the on_reply_route
@@ -1176,45 +1280,45 @@ gencookie()
 }
 
 static int
-rtpp_test(int isdisabled, int force)
+rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 {
 	int rtpp_ver;
-	static int recheck_ticks = 0;
 	char *cp;
 	struct iovec v[2] = {{NULL, 0}, {"V", 1}};
 
 	if (force == 0) {
 		if (isdisabled == 0)
 			return 0;
-		if (recheck_ticks > get_ticks())
+		if (node->rn_recheck_ticks > get_ticks())
 			return 1;
 	}
-	cp = send_rtpp_command(v, 2);
+	cp = send_rtpp_command(node, v, 2);
 	if (cp == NULL) {
 		LOG(L_WARN,"WARNING: rtpp_test: can't get version of "
 		    "the RTP proxy\n");
 	} else {
 		rtpp_ver = atoi(cp);
 		if (rtpp_ver == SUP_CPROTOVER) {
-			LOG(L_INFO, "rtpp_test: RTP proxy found, support for "
-			    "it %senabled\n", force == 0 ? "re-" : "");
+			LOG(L_INFO, "rtpp_test: RTP proxy <%s> found, support for "
+			    "it %senabled\n",
+			    node->rn_url, force == 0 ? "re-" : "");
 			return 0;
 		}
 		LOG(L_WARN, "WARNING: rtpp_test: unsupported "
 		    "version of RTP proxy found: %d supported, "
 		    "%d present\n", SUP_CPROTOVER, rtpp_ver);
 	}
-	LOG(L_WARN, "WARNING: rtpp_test: support for RTP proxy "
-	    "has been disabled%s\n",
+	LOG(L_WARN, "WARNING: rtpp_test: support for RTP proxy <%s>"
+	    "has been disabled%s\n", node->rn_url,
 	    rtpproxy_disable_tout < 0 ? "" : " temporarily");
 	if (rtpproxy_disable_tout >= 0)
-		recheck_ticks = get_ticks() + rtpproxy_disable_tout;
+		node->rn_recheck_ticks = get_ticks() + rtpproxy_disable_tout;
 
 	return 1;
 }
 
 static char *
-send_rtpp_command(struct iovec *v, int vcnt)
+send_rtpp_command(struct rtpp_node *node, struct iovec *v, int vcnt)
 {
 	struct sockaddr_un addr;
 	int fd, len, i;
@@ -1224,10 +1328,10 @@ send_rtpp_command(struct iovec *v, int vcnt)
 
 	len = 0;
 	cp = buf;
-	if (umode == 0) {
+	if (node->rn_umode == 0) {
 		memset(&addr, 0, sizeof(addr));
 		addr.sun_family = AF_LOCAL;
-		strncpy(addr.sun_path, rtpproxy_sock,
+		strncpy(addr.sun_path, node->rn_address,
 		    sizeof(addr.sun_path) - 1);
 #ifdef HAVE_SOCKADDR_SA_LEN
 		addr.sun_len = strlen(addr.sun_path);
@@ -1236,12 +1340,12 @@ send_rtpp_command(struct iovec *v, int vcnt)
 		fd = socket(AF_LOCAL, SOCK_STREAM, 0);
 		if (fd < 0) {
 			LOG(L_ERR, "ERROR: send_rtpp_command: can't create socket\n");
-			return NULL;
+			goto badproxy;
 		}
 		if (connect(fd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
 			close(fd);
 			LOG(L_ERR, "ERROR: send_rtpp_command: can't connect to RTP proxy\n");
-			return NULL;
+			goto badproxy;
 		}
 
 		do {
@@ -1250,7 +1354,7 @@ send_rtpp_command(struct iovec *v, int vcnt)
 		if (len <= 0) {
 			close(fd);
 			LOG(L_ERR, "ERROR: send_rtpp_command: can't send command to a RTP proxy\n");
-			return NULL;
+			goto badproxy;
 		}
 		do {
 			len = read(fd, buf, sizeof(buf) - 1);
@@ -1258,38 +1362,38 @@ send_rtpp_command(struct iovec *v, int vcnt)
 		close(fd);
 		if (len <= 0) {
 			LOG(L_ERR, "ERROR: send_rtpp_command: can't read reply from a RTP proxy\n");
-			return NULL;
+			goto badproxy;
 		}
 	} else {
-		fds[0].fd = controlfd;
+		fds[0].fd = node->rn_fd;
 		fds[0].events = POLLIN;
 		fds[0].revents = 0;
 		/* Drain input buffer */
 		while ((poll(fds, 1, 0) == 1) &&
 		    ((fds[0].revents & POLLIN) != 0)) {
-			recv(controlfd, buf, sizeof(buf) - 1, 0);
+			recv(node->rn_fd, buf, sizeof(buf) - 1, 0);
 			fds[0].revents = 0;
 		}
 		v[0].iov_base = gencookie();
 		v[0].iov_len = strlen(v[0].iov_base);
 		for (i = 0; i < rtpproxy_retr; i++) {
 			do {
-				len = writev(controlfd, v, vcnt);
+				len = writev(node->rn_fd, v, vcnt);
 			} while (len == -1 && (errno == EINTR || errno == ENOBUFS));
 			if (len <= 0) {
 				LOG(L_ERR, "ERROR: send_rtpp_command: "
 				    "can't send command to a RTP proxy\n");
-				return NULL;
+				goto badproxy;
 			}
 			while ((poll(fds, 1, rtpproxy_tout * 1000) == 1) &&
 			    (fds[0].revents & POLLIN) != 0) {
 				do {
-					len = recv(controlfd, buf, sizeof(buf) - 1, 0);
+					len = recv(node->rn_fd, buf, sizeof(buf) - 1, 0);
 				} while (len == -1 && errno == EINTR);
 				if (len <= 0) {
 					LOG(L_ERR, "ERROR: send_rtpp_command: "
 					    "can't read reply from a RTP proxy\n");
-					return NULL;
+					goto badproxy;
 				}
 				if (len >= (v[0].iov_len - 1) &&
 				    memcmp(buf, v[0].iov_base, (v[0].iov_len - 1)) == 0) {
@@ -1307,28 +1411,97 @@ send_rtpp_command(struct iovec *v, int vcnt)
 		if (i == rtpproxy_retr) {
 			LOG(L_ERR, "ERROR: send_rtpp_command: "
 			    "timeout waiting reply from a RTP proxy\n");
-			return NULL;
+			goto badproxy;
 		}
 	}
 
 out:
 	cp[len] = '\0';
 	return cp;
+badproxy:
+	LOG(L_ERR, "send_rtpp_command(): proxy <%s> does not responding, disable it\n", node->rn_url);
+	node->rn_disabled = 1;
+	node->rn_recheck_ticks = get_ticks() + rtpproxy_disable_tout;
+	return NULL;
+}
+
+/*
+ * Main balancing routine. This does not try to keep the same proxy for
+ * the call if some proxies were disabled or enabled; proxy death considered
+ * too rare. Otherwise we should implement "mature" HA clustering, which is
+ * too expensive here.
+ */
+static struct rtpp_node *
+select_rtpp_node(str callid, int do_test)
+{
+	unsigned sum, sumcut, weight_sum;
+	struct rtpp_node* node;
+	int was_forced;
+
+	/* Most popular case: 1 proxy, nothing to calculate */
+	if (rtpp_node_count == 1) {
+		node = rtpp_list.rn_first;
+		return node->rn_disabled ? NULL : node;
+	}
+
+	/* XXX Use quick-and-dirty hashing algo */
+	for(sum = 0; callid.len > 0; callid.len--)
+		sum += callid.s[callid.len - 1];
+	sum &= 0xff;
+
+	was_forced = 0;
+retry:
+	weight_sum = 0;
+	for (node = rtpp_list.rn_first; node != NULL; node = node->rn_next) {
+		if (node->rn_disabled) {
+			/* Try to enable if it's time to try. */
+			if (node->rn_recheck_ticks <= get_ticks())
+				node->rn_disabled = rtpp_test(node, 1, 0);
+		}
+		if (!node->rn_disabled)
+			weight_sum += node->rn_weight;
+	}
+	if (weight_sum == 0) {
+		/* No proxies? Force all to be redetected, if not yet */
+		if (was_forced)
+			return NULL;
+		was_forced = 1;
+		for (node = rtpp_list.rn_first; node != NULL; node = node->rn_next) {
+			node->rn_disabled = rtpp_test(node, 1, 1);
+		}
+		goto retry;
+	}
+	sumcut = sum % weight_sum;
+	/*
+	 * sumcut here lays from 0 to weight_sum-1.
+	 * Scan proxy list and decrease until appropriate proxy is found.
+	 */
+	for (node = rtpp_list.rn_first; node != NULL; node = node->rn_next) {
+		if (node->rn_disabled)
+			continue;
+		if (sumcut < node->rn_weight)
+			goto found;
+		sumcut -= node->rn_weight;
+	}
+	/* No node list */
+	return NULL;
+found:
+	if (do_test) {
+		node->rn_disabled = rtpp_test(node, node->rn_disabled, 0);
+		if (node->rn_disabled)
+			goto retry;
+	}
+	return node;
 }
 
 static int
 unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	str callid, from_tag, to_tag;
+	struct rtpp_node *node;
 	struct iovec v[1 + 4 + 3] = {{NULL, 0}, {"D", 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
 						/* 1 */   /* 2 */   /* 3 */    /* 4 */   /* 5 */    /* 6 */   /* 1 */
 
-	rtpproxy_disable = rtpp_test(rtpproxy_disable, 0);
-	if (rtpproxy_disable != 0) {
-		LOG(L_ERR, "ERROR: unforce_rtp_proxy: support for RTP proxy "
-		    "is disabled\n");
-		return -1;
-	}
 	if (get_callid(msg, &callid) == -1 || callid.len == 0) {
 		LOG(L_ERR, "ERROR: unforce_rtp_proxy: can't get Call-Id field\n");
 		return -1;
@@ -1344,7 +1517,12 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 	STR2IOVEC(callid, v[3]);
 	STR2IOVEC(from_tag, v[5]);
 	STR2IOVEC(to_tag, v[7]);
-	send_rtpp_command(v, (to_tag.len > 0) ? 8 : 6);
+	node = select_rtpp_node(callid, 1);
+	if (!node) {
+		LOG(L_ERR, "ERROR: unforce_rtp_proxy: no available proxies\n");
+		return -1;
+	}
+	send_rtpp_command(node, v, (to_tag.len > 0) ? 8 : 6);
 
 	return 1;
 }
@@ -1361,6 +1539,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	char  *cpend, *next;
 	char **ap, *argv[10];
 	struct lump* anchor;
+	struct rtpp_node *node;
 	struct iovec v[1 + 6 + 5] = {{NULL, 0}, {NULL, 0}, {" ", 1}, {NULL, 0},
 		{" ", 1}, {NULL, 7}, {" ", 1}, {NULL, 1}, {" ", 1}, {NULL, 0},
 		{" ", 1}, {NULL, 0}};
@@ -1409,13 +1588,6 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			LOG(L_ERR, "ERROR: force_rtp_proxy2: unknown option `%c'\n", *cp);
 			return -1;
 		}
-	}
-
-	rtpproxy_disable = rtpp_test(rtpproxy_disable, 0);
-	if (rtpproxy_disable != 0) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy2: support for RTP proxy "
-		    "is disabled\n");
-		return -1;
 	}
 
 	if (msg->first_line.type == SIP_REQUEST &&
@@ -1504,9 +1676,14 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	STR2IOVEC(oldport, v[7]);
 	STR2IOVEC(from_tag, v[9]);
 	STR2IOVEC(to_tag, v[11]);
-	cp = send_rtpp_command(v, (to_tag.len > 0) ? 12 : 10);
-	if (cp == NULL)
-		return -1;
+	do {
+		node = select_rtpp_node(callid, 1);
+		if (!node) {
+			LOG(L_ERR, "ERROR: force_rtp_proxy2: no available proxies\n");
+			return -1;
+		}
+		cp = send_rtpp_command(node, v, (to_tag.len > 0) ? 12 : 10);
+	} while (cp == NULL);
 	argc = 0;
 	memset(argv, 0, sizeof(argv));
 	cpend=cp+strlen(cp);
