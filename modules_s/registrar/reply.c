@@ -53,32 +53,57 @@ static int l;
  */
 void build_contact(ucontact_t* _c)
 {
+	char *lastgoodend;
+	int nummissed;
+
 	l = 0;
+	lastgoodend = b;
 	while(_c) {
 		if (_c->expires > act_time) {
+			if (l + 10 >= MAX_CONTACT_BUFFER)
+				break;
 			memcpy(b + l, "Contact: <", 10);
 			l += 10;
 			
+			if (l + _c->c.len >= MAX_CONTACT_BUFFER)
+				break;
 			memcpy(b + l, _c->c.s, _c->c.len);
 			l += _c->c.len;
 			
+			if (l + 4 >= MAX_CONTACT_BUFFER)
+				break;
 			memcpy(b + l, ">;q=", 4);
 			l += 4;
 			
-			l += sprintf(b + l, "%-3.2f", _c->q);
+			l += snprintf(b + l, MAX_CONTACT_BUFFER - l, "%-3.2f", _c->q);
+			if (l >= MAX_CONTACT_BUFFER)
+				break;
 			
+			if (l + 9 >= MAX_CONTACT_BUFFER)
+				break;
 			memcpy(b + l, ";expires=", 9);
 			l += 9;
 			
-			l += sprintf(b + l, "%d", (int)(_c->expires - act_time));
-			
+			l += snprintf(b + l, MAX_CONTACT_BUFFER - l, "%d", (int)(_c->expires - act_time));
+			if (l >= MAX_CONTACT_BUFFER)
+				break;
+
+			if (l + 2 >= MAX_CONTACT_BUFFER)
+				break;
 			*(b + l++) = '\r';
 			*(b + l++) = '\n';
+			lastgoodend = b + l;
 		}
 
 		_c = _c->next;
 	}
-	
+	if (lastgoodend - b != l) {
+		l = lastgoodend - b;
+		for(nummissed = 0; _c; _c = _c->next)
+			nummissed++;
+		LOG(L_ERR, "build_contact(): Contact list buffer exhaused, %d contact(s) ignored\n", nummissed);
+	}
+
 	DBG("build_contact(): Created Contact HF: %.*s\n", l, b);
 }
 
