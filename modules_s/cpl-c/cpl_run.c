@@ -589,6 +589,13 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 		i = cpl_tmb.t_reply( intr->msg, (int)301, "Moved permanently" );
 	else
 		i = cpl_tmb.t_reply( intr->msg, (int)302, "Moved temporarily" );
+
+	/* msg which I'm working with can be in private memory or is a clone into
+	 * shared memory (if I'm after a failed proxy); So, it's better to removed
+	 * by myself the lump that I added previosly */
+	unlink_lump_rpl( intr->msg, lump);
+	free_lump_rpl( lump );
+
 	if (i!=1) {
 		LOG(L_ERR,"ERROR:cpl-c:run_redirect: unable to send redirect reply!\n");
 		goto runtime_error;
