@@ -1,9 +1,21 @@
 <!-- $Id$ -->
-<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN">
-<!-- DOCTYPE Book SYSTEM "/usr/share/sgml/docbook/dtd-4.2/docbook.dtd" -->
+<!-- DOCTYPE Book SYSTEM "/usr/share/sgml/docbook/dtd-4.2/docbook.dtd" [ -->
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [ 
+
+
+<!ENTITY execexample SYSTEM "../../examples/exec.cfg">
+<!ENTITY redirectexample SYSTEM "../../examples/redirect.cfg">
+<!ENTITY replyexample SYSTEM "../../examples/onr.cfg">
+<!ENTITY statefuluaexample SYSTEM "../../examples/uas.cfg">
+
+]>
+
 
 <book label="seruser" id="seruser" lang="EN">
+
 <?dbhtml filename="index.html">
+
+
     <title>iptel.org SIP Express Router v0.8.8 -- User's Guide</title>
     <bookinfo>
 	<authorgroup>
@@ -821,84 +833,9 @@ t_relay_to("192.168.99.100", "5060");
 		<example>
 		    <title>Stateful UA</title>
 		    <programlisting format="linespecific">
-#
-# $Id$
-#
-# this example shows usage of ser as user agent
-# server which does some functionality (in this
-# example, 'log' is used to print a notification
-# on a new transaction) and behaves statefully
-# (e.g., it retransmits replies on request
-# retransmissions)
-
-# ----------- global configuration parameters ------------------------
-
-debug=3
-fork=no
-#children=2
-log_stderror=yes        # (cmd line: -E)
-check_via=yes     # (cmd. line: -v)
-dns=0           # (cmd. line: -r)
-rev_dns=0      # (cmd. line: -R)
-port=5068
-reply_to_via=no
-
-
-# ------------------ module loading ----------------------------------
-
-loadmodule "/usr/lib/ser/modules/sl.so"
-loadmodule "/usr/lib/ser/modules/print.so"
-loadmodule "/usr/lib/ser/modules/tm.so"
-loadmodule "/usr/lib/ser/modules/usrloc.so"
-
-# ----------------- setting module-specific parameters ---------------
-
-# -- usrloc params --
-
-modparam("usrloc", "use_database",   0)
-modparam("usrloc", "flush_interval", 3600)
-# -------------------------  request routing logic -------------------
-
-# main routing logic
-
-route {
-    # for testing purposes, simply okay all REGISTERs
-    if (method=="REGISTER") {
-        log("REGISTER");
-        sl_send_reply("200", "ok");
-        #t_replicate("localhost", "9");
-        break;
-    };
-		
-    # print a message if a call was missed
-
-    if ( t_newtran())
-    {
-        if (method=="ACK") {
-            log("oops--ACK to a non-existent transaction");
-            drop;
-        };
-
-        log("New Transaction Arrived\n");
-        # do what you want to do as a sever
-        if (uri=~"a@") {
-            if (!t_reply("409", "Bizzar Error")) {
-                sl_reply_error();
-            };
-        } else if (uri=~"b@") {
-            if (!t_reply("979", "You did not expect this did you")) {
-                sl_reply_error();
-            };
-        } else {
-            if (!t_reply("699", "I don't want to chat with you")) {
-                sl_reply_error();
-            };
-        } ;
-    } else {
-        sl_reply_error();
-    };
-}
-</programlisting>
+			<!-- ../../examples/uas.cfg -->
+			&statefuluaexample;
+		    </programlisting>
 		</example>
 	    </section> <!-- Stateful UAS -->
 
@@ -929,44 +866,9 @@ route {
 		<example>
 		    <title>Redirect Server</title>
 		    <programlisting format="linespecific">
-#
-# $Id$
-#
-# this example shows use of ser as stateless redirect server
-#
-
-# ----------- global configuration parameters ------------------------
-
-debug=3
-fork=no
-log_stderror=yes        # (cmd line: -E)
-check_via=no # (cmd. line: -v)
-dns=no # (cmd. line: -r)
-syn_branch=1
-reply_to_via=0
-
-# ------------------ module loading ----------------------------------
-
-loadmodule "/usr/lib/ser/modules/sl.so"
-loadmodule "/usr/lib/ser/modules/print.so"
-
-
-# -------------------------  request routing logic -------------------
-
-# main routing logic
-
-route{
-    # for testing purposes, simply okay all REGISTERs
-    if (method=="REGISTER") {
-        log("REGISTER");
-        sl_send_reply("200", "ok");
-        break;
-    };
-    append_branch("sip:parallel@iptel.org:9");
-    append_branch("sip:redirect@iptel.org:9");
-    sl_send_reply("300", "Redirect");
-}
-</programlisting>
+			<!-- ../../examples/redirect.cfg -->
+			&redirectexample;
+		    </programlisting>
 		</example>
 	    </section> <!-- redirect server-->
 	    
@@ -1004,56 +906,9 @@ route{
 		<example>
 		    <title>Executing External Script</title>
 		    <programlisting format="linespecific">
-#
-# $Id$
-#
-# this example shows use of ser as stateless redirect server
-# which rewrites URIs using an external utility
-#
-
-# ----------- global configuration parameters ------------------------
-
-debug=4
-fork=1
-log_stderror=yes        # (cmd line: -E)
-check_via=no # (cmd. line: -v)
-dns=no # (cmd. line: -r)
-syn_branch=1
-reply_to_via=0
-
-# ------------------ module loading ----------------------------------
-
-loadmodule "/usr/lib/ser/modules/sl.so"
-loadmodule "/usr/lib/ser/modules/print.so"
-loadmodule "/usr/lib/ser/modules/exec_mod.so"
-loadmodule "/usr/lib/ser/modules/ext.so"
-
-# -------------------------  request routing logic -------------------
-
-# main routing logic
-
-route{
-    # for testing purposes, simply okay all REGISTERs
-    if (method=="REGISTER") {
-        log("REGISTER");
-        sl_send_reply("200", "ok");
-        break;
-    };
-
-    # first dump the message to a file using cat command
-    exec_msg("printenv SRCIP > /tmp/exectest.txt; cat >> /tmp/exectest.txt")
-    # and then rewrite URI using external utility
-    # note that the last echo command trashes input parameter
-    if (exec_uri("echo sip:mra@iptel.org;echo sip:mrb@iptel.org;echo>/dev/null")) {
-
-    if (exec_uri("/tmp/sh.sh")) {
-        sl_send_reply("300", "Redirect");
-    } else {
-        sl_reply_error();
-        log(1, "alas, rewriting failed\n");
-    };
-}
-</programlisting>
+			<!-- ../../examples/exec.cfg -->
+			&execexample;
+		    </programlisting>
 		</example>
 	    </section> <!-- exec example -->
 	    
@@ -1073,74 +928,9 @@ route{
 		<example>
 		    <title>Reply Processing</title>
 		    <programlisting format="linespecific">
-#
-# example script showing both types of forking;
-# incoming message is forked in parallel to
-# 'nobody' and 'parallel', if no positive reply
-# appears with final_response timer, nonsense
-# is retried (serial forking); than, destination
-# 'foo' is given last chance
-
-# ----------- global configuration parameters ------------------------
-
-debug=3
-fork=no
-log_stderror=yes        # (cmd line: -E)
-check_via=no # (cmd. line: -v)
-dns=no # (cmd. line: -r)
-syn_branch=1
-reply_to_via=0
-
-
-# ------------------ module loading ----------------------------------
-
-loadmodule "/usr/lib/ser/modules/sl.so"
-loadmodule "/usr/lib/ser/modules/print.so"
-loadmodule "/usr/lib/ser/modules/tm.so"
-
-# ----------------- setting module-specific parameters ---------------
-
-# -- tm params --
-modparam("tm", "fr_timer", 10 )
-modparam("tm", "fr_inv_timer", 5 )
-
-# -------------------------  request routing logic -------------------
-
-# main routing logic
-
-route {
-    # for testing purposes, simply okay all REGISTERs
-    if (method=="REGISTER") {
-        log("REGISTER");
-        sl_send_reply("200", "ok");
-        break;
-    };
-    # print a message if a call was missed
-    seturi("sip:nobody@iptel.org");
-    /* parallel branch to sink port -- that will make it
-       wait until timer hits
-     */
-
-    append_branch("sip:parallel@iptel.org:9");
-    t_on_negative("1");
-    # start parallel forking to nobody and wer.xmla 
-    log(1,"about to relay\n");
-    t_relay();
-}
-
-reply_route[1] {
-    rewriteuri("sip:nonsense@iptel.org");
-    append_branch();
-    log(1,"first redirection\n");
-    t_on_negative("2");
-}
-
-reply_route[2] {
-    rewriteuri("sip:foo@iptel.org");
-    log(1, "second redirection\n");
-    append_branch();
-}
-</programlisting>
+			<!-- ../../examples/onr.cfg -->
+			&replyexample;
+		    </programlisting>
 
 		</example>
 	    </section> <!-- reply processing -->
@@ -2326,9 +2116,6 @@ Domain Registered Expired
     
     <!-- TODO
 
-
-    INCLUDING
-    - the examples and license should be better included
 
     MISSING
     - route
