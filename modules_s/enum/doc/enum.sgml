@@ -1,0 +1,38 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+<!ENTITY ser "SIP Express Router">
+<!ENTITY user SYSTEM "user.sgml">
+<!ENTITY devel SYSTEM "devel.sgml">
+<!ENTITY faq SYSTEM "faq.sgml">
+
+]>
+
+<book>
+    <bookinfo>
+	<title>Enum Module</title>
+	<authorgroup>
+	    <author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<email>jh@song.fi</email>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2002</year>
+	    <year>2003</year>
+	    <holder>Juha Heinanen</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+
+</book>
