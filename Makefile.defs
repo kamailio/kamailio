@@ -66,25 +66,24 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 #-DNO_LOG
 
 #PROFILE=  -pg #set this if you want profiling
-mode = debug
-#mode = release
+#mode = debug
+mode = release
 
 # platform dependent settings
 
 
 #common
-CC=gcc #-3.0
-LD=gcc #-3.0
+CC=gcc
+LD=gcc
 MKDEP=gcc -MM $(DEFS)
 MKTAGS=ctags-exuberant -R .
 
 ifeq ($(mode), release)
 	CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) -Winline\
-			-malign-double -malign-loops=4 -minline-all-stringops \
-			-march=athlon -mcpu=athlon
+	#		-malign-double -malign-loops=4 -minline-all-stringops \
+	#		-march=athlon -mcpu=athlon
 	#-Wmissing-prototypes
 	LDFLAGS=-Wl,-O2 -Wl,-E $(PROFILE)\
-			 -march=athlon
 	# we need -fPIC -DPIC only for shared objects, we don't need them for
 	# the executable file, because it's always loaded at a fixed address
 	# -andrei
