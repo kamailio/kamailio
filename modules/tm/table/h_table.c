@@ -1,8 +1,6 @@
 #include "h_table.h"
 
-#include "hash_func.c"
-#include "semaphore.c"
-#include "timer.c"
+int table_entries;
 
 
 void free_cell( struct cell* dead_cell )
@@ -21,38 +19,39 @@ void free_cell( struct cell* dead_cell )
 }
 
 
-void free_hash_table( table hash_table )
+void free_hash_table( struct s_table *hash_table )
 {
    struct cell* p_cell;
+   struct cell* tmp_cell;
    int   i;
 
    if (hash_table)
    {
       if ( hash_table->entrys )
       {
-         for( i = 0 ; i<TABLE_ENTRYS ; i++)
+
+	 /* remove the hash table entry by entry */
+         for( i = 0 ; i<table_entries; i++)
           {
              remove_sem( hash_table->entrys[i].sem );
-             p_cell = hash_table->entrys[i].first_cell;
-             while( p_cell )
-              {
-                 /* free the cell*/
-                 free_cell( p_cell );
-                 p_cell = p_cell->next_cell;
+	     /* delete all synonyms at hash-collision-slot i */
+	     for( p_cell = hash_table->entrys[i].first_cell; p_cell; p_cell = tmp_cell )
+	     {
+		tmp_cell = p_cell->next_cell;
+                free_cell( p_cell );
               }
           }
           sh_free( hash_table->entrys );
       }
-      if ( hash_table->first_del_hooker )
-      {
-         p_cell = hash_table->first_del_hooker;
-         while (p_cell)
-         {
-            /*free the cell */
-            free_cell( p_cell );
-            p_cell = p_cell->timer_next_cell;
-         }
-      }
+
+	/* delete all cells on the to-be-deleted list */
+       for( p_cell = hash_table->timers[DELETE_LIST].first_cell; p_cell; p_cell = tmp_cell )
+        {
+                tmp_cell = p_cell->tl[DELETE_LIST].timer_next_cell;
+                remove_timer_from_head( hash_table, p_cell, DELETE_LIST );
+                free_cell( p_cell );
+       }
+	
       if ( hash_table->timers)
       {
          sh_free( hash_table->timers );
@@ -63,7 +62,7 @@ void free_hash_table( table hash_table )
 
 
 
-table  init_hash_table()
+struct s_table* init_hash_table()
 {
    struct s_table*  hash_table;
    int       i;
@@ -80,7 +79,8 @@ table  init_hash_table()
    hash_table->time = 0;
 
    /* allocs the entry's table */
-    hash_table->entrys  = sh_malloc( TABLE_ENTRYS * sizeof( struct entry )  );
+    table_entries = TABLE_ENTRIES;
+    hash_table->entrys  = sh_malloc( table_entries * sizeof( struct entry )  );
     if ( !hash_table->entrys )
     {
         free_hash_table( hash_table );
@@ -88,19 +88,15 @@ table  init_hash_table()
     }
 
    /* allocs the timer's table */
-    hash_table->timers  = sh_malloc( 2 * sizeof( struct timer )  );
+    hash_table->timers  = sh_malloc( NR_OF_TIMER_LISTS * sizeof( struct timer )  );
     if ( !hash_table->timers )
     {
         free_hash_table( hash_table );
        return 0;
     }
 
-    /* inits the deleted cells list*/
-    hash_table->first_del_hooker = 0;
-    hash_table->last_del_hooker = 0;
-
     /* inits the entrys */
-    for(  i=0 ; i<TABLE_ENTRYS ; i++ )
+    for(  i=0 ; i<table_entries; i++ )
     {
        hash_table->entrys[i].first_cell = 0;
        hash_table->entrys[i].last_cell = 0;
@@ -109,15 +105,17 @@ table  init_hash_table()
     }
 
    /* inits the timers*/
-    for(  i=0 ; i<2 ; i++ )
+    for(  i=0 ; i<NR_OF_TIMER_LISTS ; i++ )
     {
        hash_table->timers[i].first_cell = 0;
        hash_table->timers[i].last_cell = 0;
        hash_table->timers[i].sem = create_sem( SEM_KEY , 1 ) ;
     }
 
+#ifdef THREAD
    /* starts the timer thread/ process */
    pthread_create( &(hash_table->timer_thread_id), NULL, timer_routine, hash_table );
+#endif
 
    return  hash_table;
 }
@@ -125,20 +123,27 @@ table  init_hash_table()
 
 
 
-struct cell* add_Transaction( table hash_table, char* incoming_req_uri, char* from, char* to, char* tag, char* call_id, char* cseq_nr ,char* cseq_method )
+struct cell* add_Transaction( struct s_table* hash_table, 
+	char* incoming_req_uri, char* from, char* to, char* tag, 
+	char* call_id, char* cseq_nr ,char* cseq_method )
 {
    struct cell*    new_cell;
    struct entry* match_entry;
    char*              via_label;
    int                  hash_index;
 
-   hash_index   = hash( call_id , cseq_nr ) % TABLE_ENTRYS;
+   hash_index   = hash( call_id , cseq_nr );
    /*will it be faster to repolace  x % 256   with   x - (x>>8)<<8  ?  */
    match_entry = &hash_table->entrys[hash_index];
 
    new_cell = sh_malloc( sizeof( struct cell ) );
    if  ( !new_cell )
       return 0;
+
+   memset( new_cell, 0, sizeof( struct cell ) );
+
+   /* remember hash entry where the cell lives */
+   new_cell->hash_index = hash_index;
 
    //incoming_req_uri
    new_cell->incoming_req_uri_length = strlen( incoming_req_uri );
@@ -159,11 +164,6 @@ struct cell* add_Transaction( table hash_table, char* incoming_req_uri, char* fr
       new_cell->req_tag = sh_malloc( new_cell->req_tag_length+1 );
       strcpy( new_cell->req_tag , tag );
    }
-   else
-   {
-      new_cell->req_tag_length = 0;
-      new_cell->req_tag             = 0;
-   }
    //cseq_nr
    new_cell->cseq_nr_length = strlen( cseq_nr );
    new_cell->cseq_nr = sh_malloc( new_cell->cseq_nr_length+1 );
@@ -176,24 +176,10 @@ struct cell* add_Transaction( table hash_table, char* incoming_req_uri, char* fr
    new_cell->call_id_length = strlen( call_id );
    new_cell->call_id = sh_malloc( new_cell->call_id_length+1 );
    strcpy( new_cell->call_id , call_id );
-   //outgoing_req_uri
-   new_cell->outgoing_req_uri = 0;
-   //res_tag
-   new_cell->res_tag_length = 0;
-   new_cell->res_tag             = 0;
    //status
-   new_cell->status = 100;
-   //ref_counter
-   new_cell->ref_counter =  0;
+   /* new_cell->status = 100; */
    //cell semaphore
    new_cell->sem = create_sem( SEM_KEY , 1 ) ;
-   //time_out
-   new_cell ->time_out          = 0;
-   new_cell->timer_prev_cell = 0;
-   new_cell->timer_next_cell = 0;
-   //next cell
-   new_cell -> next_cell = 0;
-   new_cell -> prev_cell = 0;
 
    // critical region - inserting the cell at the end of the list
    change_sem( match_entry->sem , -1  );
@@ -245,7 +231,8 @@ void unref_Cell( struct cell* p_cell)
  *  different than ACK -> perfect To matche is performed.
  *  WARNING : in case of a returned transaction, this transaction is NOT  unref !!!
  */
-struct cell* lookup_for_Transaction_by_req( table hash_table, char* from, char* to, char* tag, char* call_id , char* cseq_nr ,char* cseq_method )
+struct cell* lookup_for_Transaction_by_req( struct s_table* hash_table, char* from, 
+	char* to, char* tag, char* call_id , char* cseq_nr ,char* cseq_method )
 {
    struct cell*  p_cell;
    struct cell* tmp_cell;
@@ -253,7 +240,7 @@ struct cell* lookup_for_Transaction_by_req( table hash_table, char* from, char* 
    int                call_id_len, from_len, to_len, tag_len, cseq_nr_len, cseq_method_len;
 
    /* The lenght of the fields that will be comp */
-   hash_index         = hash( call_id , cseq_nr ) % TABLE_ENTRYS;
+   hash_index         = hash( call_id , cseq_nr ) ;
    call_id_len           = strlen(call_id);
    from_len              = strlen(from);
    to_len                   = strlen(to);
@@ -294,7 +281,8 @@ struct cell* lookup_for_Transaction_by_req( table hash_table, char* from, char* 
  *  is nor used, only standard search. Being a ACK, a special matching for the tag attr from To header is performed.
  *  WARNING : in case of a returned transaction, this transaction is NOT  unref !!!
  */
-struct cell* lookup_for_Transaction_by_ACK( table hash_table, char* from, char* to, char* tag, char* call_id, char* cseq_nr )
+struct cell* lookup_for_Transaction_by_ACK( struct s_table* hash_table, 
+	char* from, char* to, char* tag, char* call_id, char* cseq_nr )
 {
    struct cell*  p_cell;
    struct cell*  tmp_cell;
@@ -304,7 +292,7 @@ struct cell* lookup_for_Transaction_by_ACK( table hash_table, char* from, char* 
    int                trans_tag_len;
 
    /* The lenght of the fields that will be comp */
-   hash_index         = hash( call_id , cseq_nr ) % TABLE_ENTRYS;
+   hash_index         = hash( call_id , cseq_nr ) ;
    call_id_len           = strlen(call_id);
    from_len              = strlen(from);
    to_len                   = strlen(to);
@@ -354,7 +342,8 @@ struct cell* lookup_for_Transaction_by_ACK( table hash_table, char* from, char* 
  *  different than ACK -> perfect To match is performed.
  *  WARNING : in case of a returned transaction, this transaction is NOT  unref !!!
  */
-struct cell* lookup_for_Transaction_by_CANCEL( table hash_table,char *req_uri, char* from, char* to, char* tag, char* call_id, char* cseq_nr )
+struct cell* lookup_for_Transaction_by_CANCEL( struct s_table* hash_table,
+	char *req_uri, char* from, char* to, char* tag, char* call_id, char* cseq_nr )
 {
    struct cell*  p_cell;
    struct cell* tmp_cell;
@@ -362,7 +351,7 @@ struct cell* lookup_for_Transaction_by_CANCEL( table hash_table,char *req_uri, c
    int                req_uri_len, call_id_len, from_len, to_len, tag_len, cseq_nr_len;
 
    /* The lenght of the fields that will be comp */
-   hash_index         = hash( call_id , cseq_nr ) % TABLE_ENTRYS;
+   hash_index         = hash( call_id , cseq_nr ) ;
    req_uri_len          = strlen(req_uri);
    call_id_len           = strlen(call_id);
    from_len              = strlen(from);
@@ -403,7 +392,8 @@ struct cell* lookup_for_Transaction_by_CANCEL( table hash_table,char *req_uri, c
  *  request had a tag.
  *  WARNING : in case of a returned transaction, this transaction is NOT  unref !!!
  */
-struct cell* lookup_for_Transaction_by_res( table hash_table, char* label, char* from, char* to, char* tag, char* call_id, char* cseq_nr ,char* cseq_method )
+struct cell* lookup_for_Transaction_by_res( struct s_table* hash_table, char* label, 
+	char* from, char* to, char* tag, char* call_id, char* cseq_nr ,char* cseq_method )
 {
    struct cell*  p_cell;
    struct cell* tmp_cell;
@@ -422,7 +412,7 @@ struct cell* lookup_for_Transaction_by_res( table hash_table, char* label, char*
          hash_index = hash_index * 10 + (*p - '0')  ;
 
       //if the hash index is corect
-      if  ( p && p!=label && hash_index<TABLE_ENTRYS-1 )
+      if  ( p && p!=label && hash_index<table_entries-1 )
       {
          //looking for the entry label value
          for( tmp=++p ; p && *p>='0' && *p<='9' ; p++ )
@@ -453,7 +443,7 @@ struct cell* lookup_for_Transaction_by_res( table hash_table, char* label, char*
    }
 
    //the message doesnot containe a label  or  the label is incorect-> normal seq. search.
-   hash_index         = hash( call_id , cseq_nr ) % TABLE_ENTRYS;
+   hash_index         = hash( call_id , cseq_nr ) ;
    call_id_len           = strlen(call_id);
    from_len              = strlen(from);
    to_len                   = strlen(to);

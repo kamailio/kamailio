@@ -1,4 +1,4 @@
-
+#include "semaphore.h"
 
 int create_sem( key_t key , int val)
 {
@@ -36,7 +36,3 @@ int remove_sem( int id )
 {
    return  semctl( id , 0 , IPC_RMID , 0 ) ;
 }
-
-
-
-

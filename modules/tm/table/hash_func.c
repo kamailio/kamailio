@@ -1,4 +1,4 @@
-
+#include "hash_func.h"
 
 int hash( char* call_id , char* cseq_nr )
 {
@@ -10,6 +10,6 @@ int hash( char* call_id , char* cseq_nr )
     if ( cseq_nr )
       for( p=cseq_nr ; *p!=0 ; hash_code+=*p , p++ );
 
-   return hash_code ;
+   hash_code %= table_entries;
 }
 
