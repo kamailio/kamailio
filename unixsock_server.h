@@ -31,6 +31,7 @@
 #define _UNIXSOCK_SERVER_H
 
 
+#include <sys/types.h>
 #include <sys/un.h>
 #include <unistd.h>
 #include "str.h"

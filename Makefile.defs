@@ -588,7 +588,7 @@ ifeq	($(ARCH), mips2)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
 				#common stuff
-				CFLAGS= -mips2 -O9 -funroll-loops  -Wcast-align $(PROFILE) \
+				CFLAGS= -mips2 -O9 -funroll-loops $(PROFILE) \
 					-Wall   \
 			#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
