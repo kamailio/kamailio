@@ -24,6 +24,9 @@
 #include "udp_server.h"
 #include "globals.h"
 #include "mem.h"
+#ifdef SHM_MEM
+#include "shm_mem.h"
+#endif
 
 
 #include <signal.h>
@@ -294,15 +297,25 @@ static void sig_usr(int signo)
 #ifdef PKG_MALLOC
 		pkg_status();
 #endif
+#ifdef SHM_MEM
+		sh_status();
+#endif
 		DPrint("INT received, program terminates\n");
 		DPrint("Thank you for flying ser\n");
+		/* WARNING: very dangerous, might be unsafe*/
+#ifdef SHM_MEM
+		shm_mem_destroy();
 		exit(0);
+#endif
 	} else if (signo==SIGUSR1) { /* statistic */
 #ifdef STATS
 		dump_all_statistic();
 #endif
 #ifdef PKG_MALLOC
 		pkg_status();
+#endif
+#ifdef SHM_MEM
+		sh_status();
 #endif
 	}
 }
@@ -319,16 +332,15 @@ int main(int argc, char** argv)
 	char *options;
 
 	/* added by jku: add exit handler */
-        if (signal(SIGINT, sig_usr) == SIG_ERR ) {
- 		DPrint("ERROR: no SIGINT signal handler can be installed\n");
-                goto error;
-        }
-#ifdef STATS
+	if (signal(SIGINT, sig_usr) == SIG_ERR ) {
+		DPrint("ERROR: no SIGINT signal handler can be installed\n");
+		goto error;
+	}
+
 	if (signal(SIGUSR1, sig_usr)  == SIG_ERR ) {
-                DPrint("ERROR: no SIGUSR1 signal handler can be installed\n");
-                goto error;
-        }
-#endif
+		DPrint("ERROR: no SIGUSR1 signal handler can be installed\n");
+		goto error;
+	}
 
 	/* process command line (get port no, cfg. file path etc) */
 	opterr=0;
@@ -529,7 +541,13 @@ int main(int argc, char** argv)
 		goto error;
 	}
 #endif
-
+	
+#ifdef SHM_MEM
+	if (shm_mem_init()==-1) {
+		LOG(L_CRIT, "could not initialize shared memory pool, exiting...\n");
+		goto error;
+	}
+#endif
 	
 	return main_loop();
 

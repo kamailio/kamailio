@@ -19,7 +19,16 @@ extern struct qm_block* mem_block;
 #define pkg_free(p)   qm_free(mem_block, p)
 #define pkg_status()  qm_status(mem_block)
 
+#elif defined(SHM_MEM) && defined(USE_SHM_MEM)
+
+#include "shm_mem.h"
+
+#define pkg_malloc(s) sh_malloc(s)
+#define pkg_free(p)   sh_free(p)
+#define pkg_status()  sh_status()
+
 #else
+
 #include <stdlib.h>
 
 #define pkg_malloc(s) \

@@ -28,7 +28,14 @@ NAME=ser
 # DEBUG compiles in some extra debugging code
 # OLD_PARSER uses the old and stable parser (from ser 8.3.2)
 # DNS_IP_HACK faster ip address resolver for ip strings (e.g "127.0.0.1")
-DEFS=-DNOCR -DMACROEATER -DDNS_IP_HACK -DPKG_MALLOC #-DNO_DEBUG#-DSTATS -DNO_DEBUG 
+# SHM_MEM    compiles in shared mem. support, needed by some modules and
+#            by USE_SHM_MEM
+# PKG_MALLOC uses a faster malloc (exclusive w/ USE_SHM_MEM)
+# USE_SHM_MEM all pkg_malloc => sh_malloc (most mallocs use a common sh. mem.
+#           segment); don't define PKG_MALLOC!
+DEFS=-DNOCR -DMACROEATER -DDNS_IP_HACK  -DSHM_MEM -DUSE_SHM_MEM -DNO_DEBUG 
+#-DPKG_MALLOC
+#-DNO_DEBUG#-DSTATS -DNO_DEBUG 
 #-DNO_LOG
 
 PROFILE=  # -pg #set this if you want profiling
@@ -84,7 +91,7 @@ ifneq (,$(findstring CYGWIN, $(ARCH)))
 endif
 
 
-MKDEP=gcc -M 
+MKDEP=gcc -M $(DEFS)
 
 ALLDEP=Makefile
 

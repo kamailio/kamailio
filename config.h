@@ -44,5 +44,8 @@
 /*used only if PKG_MALLOC is defined*/
 #define PKG_MEM_POOL_SIZE 1024*1024
 
+/*used is SH_MEM is defined*/
+#define SHM_MEM_SIZE 1024*1024
+
 
 #endif
