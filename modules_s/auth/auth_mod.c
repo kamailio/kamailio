@@ -98,6 +98,9 @@ int   calc_ha1     = 0;
 int   nonce_expire = 300;
 int   retry_count  = 5;
 
+char* realm_realm_col = "realm";
+
+
 str secret;
 db_con_t* db_handle;   /* Database connection handle */
 
@@ -121,7 +124,10 @@ struct module_exports exports = {
 		"check_to",
 		"check_from",
 		"consume_credentials",
-		"is_user_in"
+		"is_user_in",
+		"is_from_local",
+		"is_uri_host_local",
+		"does_uri_exist"
 	},
 	(cmd_function[]) {
 		www_authorize,
@@ -133,16 +139,19 @@ struct module_exports exports = {
 		check_to,
 		check_from,
 		consume_credentials,
-		is_user_in
+		is_user_in,
+		is_from_local,
+		is_uri_host_local,
+		does_uri_exist
 	},
-	(int[]) {2, 2, 2, 2, 1, 1, 0, 0, 0, 2},
+	(int[]) {2, 2, 2, 2, 1, 1, 0, 0, 0, 2, 1, 1, 1},
 	(fixup_function[]) {
 		str_fixup, str_fixup, 
 		challenge_fixup, challenge_fixup, 
 		str_fixup, str_fixup, 0, 0,
-		0, hf_fixup
+		0, hf_fixup, 0, 0, 0
 	},
-	10,
+	13,
 	
 	(char*[]) {
 		"db_url",              /* Database URL */
@@ -161,8 +170,8 @@ struct module_exports exports = {
                                         * fetch plaintext password from database and calculate
                                         * ha1 value itself */
 		"nonce_expire",        /* After how many seconds nonce expires */
-		"retry_count"          /* How many times a client is allowed to retry */
-		
+		"retry_count",         /* How many times a client is allowed to retry */
+		"realm_realm_col"      /* Realm column in table of local realms */
 		
 	},   /* Module parameter names */
 	(modparam_t[]) {
@@ -179,7 +188,8 @@ struct module_exports exports = {
 		STR_PARAM,
 	        INT_PARAM,
 		INT_PARAM,
-		INT_PARAM
+		INT_PARAM,
+		STR_PARAM
 	},   /* Module parameter types */
 	(void*[]) {
 		&db_url,
@@ -195,13 +205,14 @@ struct module_exports exports = {
 		&grp_grp_col,
 		&calc_ha1,
 		&nonce_expire,
-		&retry_count
+		&retry_count,
+		&realm_realm_col
 		
 	},   /* Module parameter variable pointers */
 #ifdef USER_DOMAIN_HACK
-	12,      /* Numberof module parameters */
+	13,      /* Numberof module parameters */
 #else
-	11,      /* Number of module paramers */
+	12,      /* Number of module paramers */
 #endif					     
 	mod_init,   /* module initialization function */
 	NULL,       /* response function */
