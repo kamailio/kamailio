@@ -1,0 +1,58 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+
+<!ENTITY user SYSTEM "speeddial_user.sgml">
+<!ENTITY devel SYSTEM "speeddial_devel.sgml">
+<!ENTITY faq SYSTEM "speeddial_faq.sgml">
+
+<!ENTITY speeddialsql SYSTEM "speeddial.sql">
+<!ENTITY speeddialcfg SYSTEM "speeddial.cfg">
+
+<!-- Include general SER documentation entities -->
+<!ENTITY % serentities SYSTEM "../../../doc/ser_entities.sgml">
+%serentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>SpeedDial Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Elena-Ramona</firstname>
+		<surname>Modroiu</surname>
+		<affiliation><orgname>Voice Sistem</orgname></affiliation>
+		<address>
+		<email>ramona@voice-system.ro</email>
+		<otheraddr>
+		<ulink url="http://www.voice-system.ro">http://www.voice-system.ro</ulink>
+		</otheraddr>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>Elena-Ramona</firstname>
+		<surname>Modroiu</surname>
+		<address>
+		    <email>ramona@voice-system.ro</email>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2004</year>
+	    <holder>Voice Sistem</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+    
+</book>

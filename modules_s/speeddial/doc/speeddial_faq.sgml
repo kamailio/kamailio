@@ -1,0 +1,58 @@
+<!-- Module FAQ -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>Frequently Asked Questions</title>
+    <qandaset defaultlabel="number">
+	<qandaentry>
+	    <question>
+		<para>Where can I post a question about this module?</para>
+	    </question>
+	    <answer>
+		<para>
+		    Sent an email to <email>support@voice-system.ro</email> or,
+			if you want to keep the mail private, send it to
+			<email>ramona@voice-system.ro</email>.
+		</para>
+		<para>
+		    Remember: first at all, check if your question was already
+			answered on one of &ser; mailing lists: 
+		</para>
+		<itemizedlist>
+		    <listitem>
+			<para>&seruserslink;</para>
+		    </listitem>
+		    <listitem>
+			<para>&serdevlink;</para>
+		    </listitem>
+		</itemizedlist>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<para>How can I report a bug?</para>
+	    </question>
+	    <answer>
+		<para>
+		    Accumulate as much as possible information (&ser; version,
+			ser -V output, your OS (uname -a), &ser; logs, network dumps,
+			core dump files, configuration file)
+			and send a mail to <email>support@voice-system.ro</email>
+		</para>
+	    </answer>
+	</qandaentry>
+    </qandaset>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("xlog.sgml" "Book" "chapter")
+End:
+-->

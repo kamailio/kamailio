@@ -1,0 +1,384 @@
+
+SpeedDial Module
+
+Elena-Ramona Modroiu
+
+   Voice Sistem
+
+Edited by
+
+Elena-Ramona Modroiu
+
+   Copyright © 2004 Voice Sistem
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. SER Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. db_url (string)
+              1.3.2. user_column (string)
+              1.3.3. domain_column (string)
+              1.3.4. sd_user_column (string)
+              1.3.5. sd_domain_column (string)
+              1.3.6. new_uri_column (string)
+              1.3.7. domain_prefix (string)
+              1.3.8. use_domain (int)
+
+        1.4. Exported Functions
+
+              1.4.1. sd_lookup(table)
+
+        1.5. Installation & Running
+
+              1.5.1. Database setup
+              1.5.2. SER config file
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set db_url parameter
+   1-2. Set user_column parameter
+   1-3. Set domain_column parameter
+   1-4. Set sd_user_column parameter
+   1-5. Set sd_domain_column parameter
+   1-6. Set new_uri_column parameter
+   1-7. Set domain_prefix parameter
+   1-8. Set use_domain parameter
+   1-9. sd_lookup usage
+   1-10. speeddial sql script
+   1-11. SER config script - sample speeddial usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   This module provides on-server speed dial facilities. An user
+   can store records consisting of pairs short numbers (2 digits)
+   and SIP addresses into a table of SER. Then it can dial the
+   two digits whenever he wants to call the SIP address
+   associated with those digits.
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. SER Modules
+
+   The following modules must be loaded before this module:
+
+     * database module (mysql, dbtext, ...).
+     * sl - stateless module.
+     _________________________________________________________
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running SER with this module loaded:
+
+     * None.
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. db_url (string)
+
+   The URL of database where the table containing speed dial
+   records.
+
+   Default value is DEFAULT_RODB_URL. 
+
+   Example 1-1. Set db_url parameter
+...
+modparam("speeddial", "db_url", "mysql://ser:xxx@localhost/ser")
+...
+     _________________________________________________________
+
+1.3.2. user_column (string)
+
+   The name of column storing the user name of the owner of the
+   speed dial record.
+
+   Default value is "username". 
+
+   Example 1-2. Set user_column parameter
+...
+modparam("speeddial", "user_column", "userid")
+...
+     _________________________________________________________
+
+1.3.3. domain_column (string)
+
+   The name of column storing the domain of the owner of the
+   speed dial record.
+
+   Default value is "domain". 
+
+   Example 1-3. Set domain_column parameter
+...
+modparam("speeddial", "domain_column", "userdomain")
+...
+     _________________________________________________________
+
+1.3.4. sd_user_column (string)
+
+   The name of the column storing the user part of the short dial
+   address.
+
+   Default value is "sd_username". 
+
+   Example 1-4. Set sd_user_column parameter
+...
+modparam("speeddial", "sd_user_column", "short_user")
+...
+     _________________________________________________________
+
+1.3.5. sd_domain_column (string)
+
+   The name of the column storing the domain of the short dial
+   address.
+
+   Default value is "sd_domain". 
+
+   Example 1-5. Set sd_domain_column parameter
+...
+modparam("speeddial", "sd_domain_column", "short_domain")
+...
+     _________________________________________________________
+
+1.3.6. new_uri_column (string)
+
+   The name of the column containing the URI that will be use to
+   replace the short dial URI.
+
+   Default value is "new_uri". 
+
+   Example 1-6. Set new_uri_column parameter
+...
+modparam("speeddial", "new_uri_column", "real_uri")
+...
+     _________________________________________________________
+
+1.3.7. domain_prefix (string)
+
+   If the domain of the owner (From URI) starts with the value of
+   this parameter, then it is stripped before performing the
+   lookup of the short number.
+
+   Default value is NULL. 
+
+   Example 1-7. Set domain_prefix parameter
+...
+modparam("speeddial", "domain_prefix", "mysql://ser:xxx@localhost/ser")
+...
+     _________________________________________________________
+
+1.3.8. use_domain (int)
+
+   The parameter specifies wheter or not to use the domain when
+   searching a speed dial record (0 - false, 1 - true).
+
+   Default value is 0. 
+
+   Example 1-8. Set use_domain parameter
+...
+modparam("speeddial", "use_domain", 1)
+...
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. sd_lookup(table)
+
+   Print a formated message using LOG function.
+
+   Meaning of the parameters is as follows:
+
+     * table - The name of the table storing the speed dial
+       records.
+
+   Example 1-9. sd_lookup usage
+...
+if(uri=~"sip:[0-9]{2}@.*")
+    sd_lookup("speeddial");
+...
+     _________________________________________________________
+
+1.5. Installation & Running
+
+1.5.1. Database setup
+
+   Before using speeddial module, you have to create the database
+   table where the short dial addresses are stored. If the table
+   was not created at the installation time, you can use the
+   following SQL script (tested with MySQL) as template.
+   Database, the table name, and column names can be set with
+   module parameters so they can be changed.
+
+   Example 1-10. speeddial sql script
+...
+CREATE TABLE speed_dial (
+  username varchar(64) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
+  sd_username varchar(64) NOT NULL default '',
+  sd_domain varchar(128) NOT NULL default '',
+  new_uri varchar(192) NOT NULL default '',
+  description varchar(64) NOT NULL default '',
+  PRIMARY KEY (username, domain, sd_domain, sd_username)
+);
+
+...
+     _________________________________________________________
+
+1.5.2. SER config file
+
+   Next picture displays a sample usage of speeddial.
+
+   Example 1-11. SER config script - sample speeddial usage
+...
+#
+# $Id$
+#
+# sample config script to use speeddial module
+#
+
+# ----------- global configuration parameters ------------------------
+
+check_via=no    # (cmd. line: -v)
+dns=no          # (cmd. line: -r)
+rev_dns=no      # (cmd. line: -R)
+fifo="/tmp/ser_fifo"
+
+# ------------------ module loading ----------------------------------
+
+loadmodule "/usr/local/lib/ser/modules/sl.so"
+loadmodule "/usr/local/lib/ser/modules/tm.so"
+loadmodule "/usr/local/lib/ser/modules/rr.so"
+loadmodule "/usr/local/lib/ser/modules/maxfwd.so"
+loadmodule "/usr/local/lib/ser/modules/usrloc.so"
+loadmodule "/usr/local/lib/ser/modules/registrar.so"
+loadmodule "/usr/local/lib/ser/modules/textops.so"
+loadmodule "/usr/local/lib/ser/modules/mysql.so"
+loadmodule "/usr/local/lib/ser/modules/speeddial.so"
+
+# ----------------- setting module-specific parameters ---------------
+
+# -- usrloc params --
+
+modparam("usrloc", "db_mode",   0)
+
+# -- rr params --
+# add value to ;lr param to make some broken UAs happy
+modparam("rr", "enable_full_lr", 1)
+
+# -------------------------  request routing logic -------------------
+
+# main routing logic
+route{
+
+        # initial sanity checks
+        if (!mf_process_maxfwd_header("10"))
+        {
+                sl_send_reply("483","Too Many Hops");
+                break;
+        };
+        if (msg:len >=  max_len )
+        {
+                sl_send_reply("513", "Message too big");
+                break;
+        };
+
+        if (!method=="REGISTER") record_route();
+
+        if (loose_route())
+        {
+                if (!t_relay())
+                {
+                        sl_reply_error();
+                };
+                break;
+        };
+
+        if (!uri==myself)
+        {
+                if (!t_relay())
+                {
+                        sl_reply_error();
+                };
+                break;
+        };
+
+        if (uri==myself)
+        {
+                if (method=="REGISTER")
+                {
+                        save("location");
+                        break;
+                };
+
+                if(uri=~"sip:[0-9]{2}@.*")
+                        sd_lookup("speeddial");
+
+                lookup("aliases");
+                if (!uri==myself)
+                {
+                        if (!t_relay())
+                        {
+                                sl_reply_error();
+                        };
+                        break;
+                };
+
+                if (!lookup("location"))
+                {
+                        sl_send_reply("404", "Not Found");
+                        break;
+                };
+        };
+
+        if (!t_relay())
+        {
+                sl_reply_error();
+        };
+}
+
+
+...
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any sort of API to use in other
+   SER modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I post a question about this module?
+   3.2. How can I report a bug?
+
+   3.1. Where can I post a question about this module?
+
+   Sent an email to <support@voice-system.ro> or, if you want to
+   keep the mail private, send it to <ramona@voice-system.ro>.
+
+   Remember: first at all, check if your question was already
+   answered on one of SER mailing lists:
+
+     * http://mail.iptel.org/mailman/listinfo/serusers
+     * http://mail.iptel.org/mailman/listinfo/serdev
+
+   3.2. How can I report a bug?
+
+   Accumulate as much as possible information (SER version, ser
+   -V output, your OS (uname -a), SER logs, network dumps, core
+   dump files, configuration file) and send a mail to
+   <support@voice-system.ro>
