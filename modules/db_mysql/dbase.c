@@ -60,12 +60,14 @@ static int submit_query(db_con_t* _h, const char* _s)
 		return -1;
 	}
 
-	t = time(0);
-	if ((t - CON_TIMESTAMP(_h)) > ping_interval) {
-		if (mysql_ping(CON_CONNECTION(_h))) {
-			LOG(L_ERR, "submit_query(): mysql_ping failed\n");
-		} else {
-			CON_TIMESTAMP(_h) = t;
+	if (ping_interval) {
+		t = time(0);
+		if ((t - CON_TIMESTAMP(_h)) > ping_interval) {
+			if (mysql_ping(CON_CONNECTION(_h))) {
+				LOG(L_ERR, "submit_query(): mysql_ping failed\n");
+			} else {
+				CON_TIMESTAMP(_h) = t;
+			}
 		}
 	}
 
