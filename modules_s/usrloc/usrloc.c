@@ -126,5 +126,12 @@ int bind_usrloc(usrloc_api_t* api)
 		return -1;
 	}
 
+	api->register_ulcb = (register_ulcb_t)
+		find_export("ul_register_ulcb", 1, 0);
+	if (api->register_ulcb == 0) {
+		LOG(L_ERR, "bind_usrloc(): Can't bind register_ulcb\n");
+		return -1;
+	}
+
 	return 0;
 }

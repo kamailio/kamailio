@@ -36,7 +36,7 @@
 #include "ucontact.h"
 
 
-#define UL_CONTACT_ADD         (1<<0)
+#define UL_CONTACT_INSERT      (1<<0)
 #define UL_CONTACT_UPDATE      (1<<1)
 #define UL_CONTACT_DELETE      (1<<2)
 #define UL_CONTACT_EXPIRE      (1<<3)
@@ -45,7 +45,7 @@
 /* callback function prototype */
 typedef void (ul_cb) (ucontact_t *c, int type, void *param);
 /* register callback function prototype */
-typedef int (*register_ulcb_f)( int cb_types, ul_cb f, void *param);
+typedef int (*register_ulcb_t)( int cb_types, ul_cb f, void *param);
 
 
 struct ul_callback {
@@ -65,13 +65,13 @@ struct ulcb_head_list {
 extern struct ulcb_head_list*  ulcb_list;
 
 
-#define exists_ulcb_type(_T_, _types_) \
+#define exists_ulcb_type(_types_) \
 	( (ulcb_list->reg_types)|(_types_) )
 
 
-int init_tmcb_lists();
+int init_ulcb_list();
 
-void destroy_tmcb_lists();
+void destroy_ulcb_list();
 
 
 /* register a callback for several types of events */

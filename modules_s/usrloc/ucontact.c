@@ -29,6 +29,7 @@
  * History:
  * ---------
  * 2003-03-12 added replication mark and three zombie states (nils)
+ * 2004-03-17 generic callbacks added (bogdan)
  */
 
 
@@ -40,6 +41,7 @@
 #include "../../dprint.h"
 #include "../../db/db.h"
 #include "ul_mod.h"
+#include "ul_callback.h"
 
 
 /*
@@ -660,6 +662,10 @@ int update_ucontact_rep(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs,
 int update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs,
 		    unsigned int _set, unsigned int _res)
 {
+	/* run callbacks for UPDATE event */
+	if (exists_ulcb_type(UL_CONTACT_UPDATE))
+		run_ul_callbacks( UL_CONTACT_UPDATE, _c);
+
 	/* we have to update memory in any case, but database directly
 	 * only in db_mode 1 */
 	if (mem_update_ucontact(_c, _e, _q, _cid, _cs, _set, _res) < 0) {

@@ -29,6 +29,7 @@
  * History:
  * ---------
  * 2003-03-12 added replication mark and zombie state support (nils)
+ * 2004-03-17 generic callbacks added (bogdan)
  */
 
 
@@ -43,6 +44,7 @@
 /* #include "del_list.h" */
 /* #include "ins_list.h" */
 #include "notify.h"
+#include "ul_callback.h"
 
 
 /*
@@ -203,6 +205,10 @@ static inline int nodb_timer(urecord_t* _r)
 
 	while(ptr) {
 		if ((ptr->expires < act_time) && !(ptr->flags & FL_PERMANENT)) {
+			/* run callbacks for EXPIRE event */
+			if (exists_ulcb_type(UL_CONTACT_EXPIRE))
+				run_ul_callbacks( UL_CONTACT_EXPIRE, ptr);
+
 			if (ptr->replicate != 0) {
 				LOG(L_NOTICE, "Keeping binding '%.*s','%.*s' for replication\n", 
 				    ptr->aor->len, ZSW(ptr->aor->s), ptr->c.len, ZSW(ptr->c.s));
@@ -266,6 +272,10 @@ static inline int wt_timer(urecord_t* _r)
 	
 	while(ptr) {
 		if ((ptr->expires < act_time) && !(ptr->flags & FL_PERMANENT)) {
+			/* run callbacks for EXPIRE event */
+			if (exists_ulcb_type(UL_CONTACT_EXPIRE))
+				run_ul_callbacks( UL_CONTACT_EXPIRE, ptr);
+
 			if (ptr->replicate != 0) {
 				LOG(L_NOTICE, "Keeping binding '%.*s','%.*s' for "
 					"replication\n", ptr->aor->len, ZSW(ptr->aor->s),
@@ -336,6 +346,10 @@ static inline int wb_timer(urecord_t* _r)
 
 	while(ptr) {
 		if ((ptr->expires < act_time) && !(ptr->flags & FL_PERMANENT)) {
+			/* run callbacks for EXPIRE event */
+			if (exists_ulcb_type(UL_CONTACT_EXPIRE))
+				run_ul_callbacks( UL_CONTACT_EXPIRE, ptr);
+
 			if (ptr->replicate != 0) {
 				LOG(L_NOTICE, "Keeping binding '%.*s','%.*s' for "
 					"replication\n", ptr->aor->len, ZSW(ptr->aor->s),
@@ -483,7 +497,10 @@ int insert_ucontact_rep(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid,
 	}
 
 	notify_watchers(_r, PRES_ONLINE);
-	
+
+	if (exists_ulcb_type(UL_CONTACT_INSERT))
+		run_ul_callbacks( UL_CONTACT_INSERT, *_con);
+
 	if (db_mode == WRITE_THROUGH) {
 		if (db_insert_ucontact(*_con) < 0) {
 			LOG(L_ERR, "insert_ucontact(): Error while inserting in database\n");
@@ -513,6 +530,9 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 {
 	struct ucontact* ptr;
 
+	if (exists_ulcb_type(UL_CONTACT_DELETE))
+		run_ul_callbacks( UL_CONTACT_DELETE, _c);
+
 	if (st_delete_ucontact(_c) > 0) {
 		if (db_mode == WRITE_THROUGH) {
 			if (db_delete_ucontact(_c) < 0) {
@@ -528,6 +548,7 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 		if (ptr->state < CS_ZOMBIE_N) return 0;
 		ptr = ptr->next;
 	}
+
 	notify_watchers(_r, PRES_OFFLINE);
 
 	return 0;

@@ -35,6 +35,7 @@
  * 2003-03-16 flags export parameter added (janakj)
  * 2003-04-05: default_uri #define used (jiri)
  * 2003-04-21 failed fifo init stops init process (jiri)
+ * 2004-03-17 generic callbacks added (bogdan)
  */
 
 #include <stdio.h>
@@ -49,6 +50,7 @@
 #include "ucontact.h"        /* update_ucontact */
 #include "ul_fifo.h"
 #include "ul_unixsock.h"
+#include "ul_callback.h"
 #include "notify.h"
 #include "usrloc.h"
 
@@ -138,6 +140,7 @@ static cmd_export_t cmds[] = {
 	{"ul_register_watcher",   (cmd_function)register_watcher,   1, 0, 0},
 	{"ul_unregister_watcher", (cmd_function)unregister_watcher, 1, 0, 0},
 	{"ul_bind_usrloc",        (cmd_function)bind_usrloc,        1, 0, 0},
+	{"ul_register_ulcb",      (cmd_function)register_ulcb,      1, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 
@@ -213,7 +216,13 @@ static int mod_init(void)
 		return -1;
 	}
 
-	     /* Shall we use database ? */
+	/* init the callbacks list */
+	if ( init_ulcb_list() < 0) {
+		LOG(L_ERR, "ERROR: usrloc/callbacks initialization failed\n");
+		return -1;
+	}
+
+	/* Shall we use database ? */
 	if (db_mode != NO_DB) { /* Yes */
 		if (bind_dbmod(db_url.s) < 0) { /* Find database module */
 			LOG(L_ERR, "mod_init(): Can't bind database module\n");
@@ -245,9 +254,8 @@ static int child_init(int _rank)
  */
 static void destroy(void)
 {
-	     /* Parent only, synchronize the world
-	      * and then nuke it
-	      */
+	/* Parent only, synchronize the world
+	* and then nuke it */
 	if (is_main) {
 		if (synchronize_all_udomains() != 0) {
 			LOG(L_ERR, "timer(): Error while flushing cache\n");
@@ -255,8 +263,11 @@ static void destroy(void)
 		free_all_udomains();
 	}
 	
-	     /* All processes close database connection */
+	/* All processes close database connection */
 	if (db) db_close(db);
+
+	/* free callbacks list */
+	destroy_ulcb_list();
 }
 
 
