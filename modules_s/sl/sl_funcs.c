@@ -24,6 +24,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+ /*
+  * History:
+  * -------
+  * 2003-02-11  modified sl_send_reply to use the transport independend
+  *              msg_send  (andrei)
+  */
 
 
 #include "../../globals.h"
@@ -104,7 +110,6 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	char               *buf;
 	unsigned int       len;
 	union sockaddr_union to;
-	struct socket_info* send_sock;
 	char *dset;
 	struct lump_rpl *dset_lump;
 	int dset_len;
@@ -157,13 +162,12 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 		DBG("DEBUG: sl_send_reply: response building failed\n");
 		goto error;
 	}
+	
 
-	send_sock=get_send_socket(&to, msg->rcv.proto);
-	if (send_sock!=0)
-	{
-		udp_send( send_sock, buf, len,  &to);
-		*(sl_timeout) = get_ticks() + SL_RPL_WAIT_TIME;
-	}
+	if (msg_send(0, msg->rcv.proto, &to, msg->rcv.proto_reserved1, buf, len)<0)
+		goto error;
+	
+	*(sl_timeout) = get_ticks() + SL_RPL_WAIT_TIME;
 	pkg_free(buf);
 
 	update_sl_stats(code);
