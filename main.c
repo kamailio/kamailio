@@ -79,6 +79,7 @@
 
 #include "config.h"
 #include "dprint.h"
+#include "daemonize.h"
 #include "route.h"
 #include "udp_server.h"
 #include "globals.h"
@@ -430,125 +431,6 @@ void cleanup(show_status)
 
 
 
-/* daemon init, return 0 on success, -1 on error */
-int daemonize(char*  name)
-{
-	FILE *pid_stream;
-	pid_t pid;
-	int r, p;
-
-
-	p=-1;
-
-
-	if (chroot_dir&&(chroot(chroot_dir)<0)){
-		LOG(L_CRIT, "Cannot chroot to %s: %s\n", chroot_dir, strerror(errno));
-		goto error;
-	}
-	
-	if (chdir(working_dir)<0){
-		LOG(L_CRIT,"cannot chdir to %s: %s\n", working_dir, strerror(errno));
-		goto error;
-	}
-
-	if (gid&&(setgid(gid)<0)){
-		LOG(L_CRIT, "cannot change gid to %d: %s\n", gid, strerror(errno));
-		goto error;
-	}
-	
-	if(uid&&(setuid(uid)<0)){
-		LOG(L_CRIT, "cannot change uid to %d: %s\n", uid, strerror(errno));
-		goto error;
-	}
-
-	/* fork to become!= group leader*/
-	if ((pid=fork())<0){
-		LOG(L_CRIT, "Cannot fork:%s\n", strerror(errno));
-		goto error;
-	}else if (pid!=0){
-		/* parent process => exit*/
-		exit(0);
-	}
-	/* become session leader to drop the ctrl. terminal */
-	if (setsid()<0){
-		LOG(L_WARN, "setsid failed: %s\n",strerror(errno));
-	}else{
-		own_pgid=1; /* we have our own process group */
-	}
-	/* fork again to drop group  leadership */
-	if ((pid=fork())<0){
-		LOG(L_CRIT, "Cannot  fork:%s\n", strerror(errno));
-		goto error;
-	}else if (pid!=0){
-		/*parent process => exit */
-		exit(0);
-	}
-
-	/* added by noh: create a pid file for the main process */
-	if (pid_file!=0){
-		
-		if ((pid_stream=fopen(pid_file, "r"))!=NULL){
-			fscanf(pid_stream, "%d", &p);
-			fclose(pid_stream);
-			if (p==-1){
-				LOG(L_CRIT, "pid file %s exists, but doesn't contain a valid"
-					" pid number\n", pid_file);
-				goto error;
-			}
-			if (kill((pid_t)p, 0)==0 || errno==EPERM){
-				LOG(L_CRIT, "running process found in the pid file %s\n",
-					pid_file);
-				goto error;
-			}else{
-				LOG(L_WARN, "pid file contains old pid, replacing pid\n");
-			}
-		}
-		pid=getpid();
-		if ((pid_stream=fopen(pid_file, "w"))==NULL){
-			LOG(L_WARN, "unable to create pid file %s: %s\n", 
-				pid_file, strerror(errno));
-			goto error;
-		}else{
-			fprintf(pid_stream, "%i\n", (int)pid);
-			fclose(pid_stream);
-		}
-	}
-	
-	/* try to replace stdin, stdout & stderr with /dev/null */
-	if (freopen("/dev/null", "r", stdin)==0){
-		LOG(L_ERR, "unable to replace stdin with /dev/null: %s\n",
-				strerror(errno));
-		/* continue, leave it open */
-	};
-	if (freopen("/dev/null", "w", stdout)==0){
-		LOG(L_ERR, "unable to replace stdout with /dev/null: %s\n",
-				strerror(errno));
-		/* continue, leave it open */
-	};
-	/* close stderr only if log_stderr=0 */
-	if ((!log_stderr) &&(freopen("/dev/null", "w", stderr)==0)){
-		LOG(L_ERR, "unable to replace stderr with /dev/null: %s\n",
-				strerror(errno));
-		/* continue, leave it open */
-	};
-	
-	/* close any open file descriptors */
-	closelog();
-	for (r=3;r<MAX_FD; r++){
-			close(r);
-	}
-	
-	if (log_stderr==0)
-		openlog(name, LOG_PID|LOG_CONS, log_facility);
-		/* LOG_CONS, LOG_PERRROR ? */
-	return  0;
-
-error:
-	return -1;
-}
-
-
-
 /* tries to send a signal to all our processes
  * if daemonized  is ok to send the signal to all the process group,
  * however if not daemonized we might end up sending the signal also
@@ -788,7 +670,7 @@ int main_loop()
 			LOG(L_WARN, "WARNING: using only the first listen address"
 						" (no fork)\n");
 		}
-
+		if (do_suid()==-1) goto error; /* try to drop priviledges */
 		/* process_no now initialized to zero -- increase from now on
 		   as new processes are forked (while skipping 0 reserved for main 
 		*/
@@ -917,6 +799,7 @@ int main_loop()
 #endif /* USE_TCP */
 			/* all procs should have access to all the sockets (for sending)
 			 * so we open all first*/
+		if (do_suid()==-1) goto error; /* try to drop priviledges */
 		/* udp processes */
 		for(si=udp_listen; si; si=si->next){
 			for(i=0;i<children_no;i++){
