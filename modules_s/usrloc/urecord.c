@@ -12,6 +12,8 @@
 #include "../../fastlock.h"
 #include "ul_mod.h"
 #include "utime.h"
+#include "del_list.h"
+#include "ins_list.h"
 
 
 /*
@@ -128,9 +130,9 @@ int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q,
 
 
 /*
- * Remove contact from the list
+ * Remove the contact from lists
  */
-void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c)
+void mem_remove_ucontact(urecord_t* _r, ucontact_t* _c)
 {
 	if (_c->prev) {
 		_c->prev->next = _c->next;
@@ -143,7 +145,16 @@ void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c)
 			_c->next->prev = 0;
 		}
 	}
-	
+}	
+
+
+
+/*
+ * Remove contact from the list and delete
+ */
+void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c)
+{
+	mem_remove_ucontact(_r, _c);
 	free_ucontact(_c);
 }
 
@@ -233,10 +244,17 @@ static inline int wb_timer(urecord_t* _r)
 
 			     /* Should we remove the contact from the database ? */
 			if (st_expired_ucontact(t) == 1) {
+				if (put_on_del_list(t) < 0) {
+					LOG(L_ERR, "wb_timer(): Can't put on delete list\n");
+				}
+
+				     /*
 				if (db_delete_ucontact(t) < 0) {
 					LOG(L_ERR, "wb_timer(): Error while deleting contact from database\n");
 				}
+				     */
 			}
+
 			if (t->expires != 0) {
 				_r->slot->d->expired++;
 			}
@@ -251,12 +269,23 @@ static inline int wb_timer(urecord_t* _r)
 				break;
 
 			case 1: /* insert */
+				if (put_on_ins_list(ptr) < 0) {
+					LOG(L_ERR, "wb_timer(): Error while putting on ins_list\n");
+				}
+
+				     /*
 				if (db_insert_ucontact(ptr) < 0) {
 					LOG(L_ERR, "wb_timer(): Error while inserting contact in db\n");
 				}
+				     */
 				break;
 
 			case 2: /* update */
+				/*
+				if (put_on_upd_list(ptr) < 0) {
+					LOG(L_ERR, "wb_timer(): Error while putting on del_list\n");
+				}
+				*/
 				if (db_update_ucontact(ptr) < 0) {
 					LOG(L_ERR, "wb_timer(): Error while updating contact in db\n");
 				}

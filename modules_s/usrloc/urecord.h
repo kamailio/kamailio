@@ -59,8 +59,15 @@ int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q,
 			str* _cid, int _cs, struct ucontact** _con);
 
 
+
 /*
- * Remove contact from the list
+ * Remove the contact from lists
+ */
+void mem_remove_ucontact(urecord_t* _r, ucontact_t* _c);
+
+
+/*
+ * Remove contact from the list and delete 
  */
 void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c);
 

@@ -8,6 +8,8 @@
 #include "../../dprint.h"
 #include "../../db/db.h"
 #include "ul_mod.h"            /* usrloc module parameters */
+#include "del_list.h"
+#include "ins_list.h"
 
 
 /*
@@ -242,77 +244,6 @@ int preload_udomain(udomain_t* _d)
 
 
 /*
-int preload_udomain(udomain_t* _d)
-{
-	char b[256];
-	db_key_t columns[6] = {user_col, contact_col, expires_col, q_col, callid_col, cseq_col};
-	db_res_t* res;
-	db_row_t* row;
-	int i, cseq;
-	urecord_t* rec = 0;
-	const char* user, *aor = 0;
-        double q;
-	time_t expires;
-	str s, contact, callid;
-
-	memcpy(b, _d->name->s, _d->name->len);
-	b[_d->name->len] = '\0';
-	db_use_table(db, b);
-	if (db_query(db, 0, 0, columns, 0, 6, user_col, &res) < 0) {
-		LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
-		return -1;
-	}
-	
-	if (!RES_ROW_N(res)) {
-		DBG("preload_udomain(): Table is empty\n");
-		db_free_query(db, res);
-		return 0;
-	}
-	
-	for(i = 0; i < RES_ROW_N(res); i++) {
-		row = RES_ROWS(res) + i;
-		user = VAL_STRING(ROW_VALUES(row));
-		if (i == 0) aor = user;
-
-		if (strcmp(user, aor) || !i) {
-			DBG("preload_udomain(): Preloading contacts for username \'%s\'\n", user);
-			aor = user;
-
-			if (rec) release_urecord(rec);
-
-			s.s = (char*)user;
-			s.len = strlen(user);
-
-			if (insert_urecord(_d_d->name, &s, &rec) < 0) {
-				LOG(L_ERR, "preload_udomain(): Can't create new record\n");
-				db_free_query(db, res);
-				return -3;
-			}
-		}
-		
-
-		if (ins(rec, &contact, expires, q, &callid, cseq) < 0) {
-			LOG(L_ERR, "preload_udomain(): Error while adding contact\n");
-			db_free_query(db, res);
-			free_urecord(rec);
-			return -3;
-		}
-	}
-
-	if (rec && (insert_urecord(_d, rec) < 0)) {
-		LOG(L_ERR, "preload_udomain(): Error while inserting record 2\n");
-		free_urecord(rec);
-		db_free_query(db, res);
-		return -4;
-	}
-
-	db_free_query(db, res);
-	return 0;
-}
-*/
-
-
-/*
  * Insert a new record into domain
  */
 int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
@@ -372,6 +303,8 @@ int timer_udomain(udomain_t* _d)
 	}
 	
 	unlock_udomain(_d);
+	process_del_list(_d->name);
+	process_ins_list(_d->name);
 	return 0;
 }
 
