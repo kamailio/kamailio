@@ -20,57 +20,63 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../dprint.h"
-#include "msg_parser.h"
 #include "../ut.h"
 #include "../mem/mem.h"
+#include "parse_via.h"
+#include "parse_def.h"
 
 
 
 /* main via states (uri:port ...) */
-enum{	         F_HOST,    P_HOST,
-		L_PORT,  F_PORT,    P_PORT,
-		L_PARAM, F_PARAM,   P_PARAM,
-		L_VIA,   F_VIA,
-		         F_COMMENT, P_COMMENT,
-				 F_IP6HOST, P_IP6HOST,
-				 F_CRLF,
-				 F_LF,
-				 F_CR,
-				 END_OF_HEADER
-	};
+enum {	         
+	F_HOST, P_HOST,
+	L_PORT, F_PORT, P_PORT,
+	L_PARAM, F_PARAM, P_PARAM,
+	L_VIA, F_VIA,
+	F_COMMENT, P_COMMENT,
+	F_IP6HOST, P_IP6HOST,
+	F_CRLF,
+	F_LF,
+	F_CR,
+	END_OF_HEADER
+};
+
 
 /* first via part state */
-enum{	         F_SIP=100,
-		SIP1, SIP2, FIN_SIP,
-		L_VER, F_VER,
-		VER1, VER2, FIN_VER,
-		L_PROTO, F_PROTO, P_PROTO
-	};
+enum {
+	F_SIP = 100,
+	SIP1, SIP2, FIN_SIP,
+	L_VER, F_VER,
+	VER1, VER2, FIN_VER,
+	L_PROTO, F_PROTO, P_PROTO
+};
+
 
 /* param related states
  * WARNING: keep the FIN*, GEN_PARAM & PARAM_ERROR in sync w/ PARAM_* from
  * msg_parser.h !*/
-enum{	L_VALUE=200,   F_VALUE, P_VALUE, P_STRING,
-		HIDDEN1,   HIDDEN2,   HIDDEN3,   HIDDEN4,   HIDDEN5,
-		TTL1,      TTL2,
-		BRANCH1,   BRANCH2,   BRANCH3,   BRANCH4,   BRANCH5,
-		MADDR1,    MADDR2,    MADDR3,    MADDR4,
-		RECEIVED1, RECEIVED2, RECEIVED3, RECEIVED4, RECEIVED5, RECEIVED6,
-		RECEIVED7,
-		/* fin states (227-...)*/
-		FIN_HIDDEN=230, FIN_TTL, FIN_BRANCH, FIN_MADDR, FIN_RECEIVED,
-		/*GEN_PARAM,
-		PARAM_ERROR*/ /* declared in msg_parser.h*/
-	};
-
+enum {	
+	L_VALUE = 200, F_VALUE, P_VALUE, P_STRING,
+	HIDDEN1, HIDDEN2, HIDDEN3, HIDDEN4, HIDDEN5,
+	TTL1, TTL2,
+	BRANCH1, BRANCH2, BRANCH3, BRANCH4, BRANCH5,
+	MADDR1, MADDR2, MADDR3, MADDR4,
+	RECEIVED1, RECEIVED2, RECEIVED3, RECEIVED4, RECEIVED5, RECEIVED6,
+	RECEIVED7,
+	     /* fin states (227-...)*/
+	FIN_HIDDEN = 230, FIN_TTL, FIN_BRANCH, FIN_MADDR, FIN_RECEIVED,
+	     /*GEN_PARAM,
+	       PARAM_ERROR*/ /* declared in msg_parser.h*/
+};
 
 
 /* entry state must be F_PARAM, or saved_state=F_PARAM and
  * state=F_{LF,CR,CRLF}!
  * output state = L_PARAM or F_PARAM or END_OF_HEADER
- * (and saved_state= last state); everything else => error */
-char* parse_via_param(	char* p, char* end, int* pstate, 
-								int* psaved_state, struct via_param* param)
+ * (and saved_state= last state); everything else => error 
+ */
+static inline char* parse_via_param(char* p, char* end, int* pstate, 
+				    int* psaved_state, struct via_param* param)
 {
 	char* tmp;
 	register int state;
@@ -609,12 +615,12 @@ char* parse_via_param(	char* p, char* end, int* pstate,
 		}
 	}/* for tmp*/
 
-/* end of packet? => error, no cr/lf,',' found!!!*/
-saved_state=state;
-state=END_OF_HEADER;
-goto error;
-
-find_value:
+	/* end of packet? => error, no cr/lf,',' found!!!*/
+	saved_state=state;
+	state=END_OF_HEADER;
+	goto error;
+	
+ find_value:
 	tmp++;
 	for(;*tmp;tmp++){
 		switch(*tmp){
@@ -797,22 +803,22 @@ find_value:
 	} /* for2 tmp*/
 
 	/* end of buff and no CR/LF =>error*/
-saved_state=state;
-state=END_OF_HEADER;
-goto error;
-
-endofparam:
-endofvalue:
+	saved_state=state;
+	state=END_OF_HEADER;
+	goto error;
+	
+ endofparam:
+ endofvalue:
 	param->size=tmp-p;
 	*pstate=state;
 	*psaved_state=saved_state;
 	DBG("Found param type %d, <%s> = <%s>; state=%d\n", param->type,
 			param->name.s, param->value.s, state);
 	return tmp;
-
-end_via:
-	/* if we are here we found an "unexpected" end of via
-	 *  (cr/lf). This is valid only if the param type is GEN_PARAM*/
+	
+ end_via:
+	     /* if we are here we found an "unexpected" end of via
+	      *  (cr/lf). This is valid only if the param type is GEN_PARAM*/
 	if (param->type==GEN_PARAM){
 		saved_state=L_PARAM; /* change the saved_state, we have an unknown
 		                        param. w/o a value */
@@ -823,7 +829,7 @@ end_via:
 	DBG("Error on  param type %d, <%s>, state=%d, saved_state=%d\n",
 		param->type, param->name.s, state, saved_state);
 
-error:
+ error:
 	LOG(L_ERR, "error: parse_via_param\n");
 	param->type=PARAM_ERROR;
 	*pstate=PARAM_ERROR;
@@ -835,7 +841,6 @@ error:
 
 char* parse_via(char* buffer, char* end, struct via_body *vb)
 {
-
 	char* tmp;
 	int state;
 	int saved_state;
@@ -1123,21 +1128,21 @@ parse_again:
 		}
 	} /* for tmp*/
 
-/* we should not be here! if everything is ok > main_via*/
+	/* we should not be here! if everything is ok > main_via*/
 	LOG(L_ERR, "ERROR: parse_via: bad via: end of packet on state=%d\n",
 			state);
 	goto error;
 
-main_via:
-/* inc tmp to point to the next char*/
+ main_via:
+	/* inc tmp to point to the next char*/
 	tmp++;
 	c_nest=0;
 	/*state should always be F_HOST here*/;
 	for(;*tmp;tmp++){
 		switch(*tmp){
-			case ' ':
-			case '\t':
-				switch(state){
+		case ' ':
+		case '\t':
+			switch(state){
 					case F_HOST:/*eat the spaces*/
 						break;
 					case P_HOST:
@@ -1776,3 +1781,24 @@ error:
 }
 
 
+static inline void free_via_param_list(struct via_param* vp)
+{
+	struct via_param* foo;
+	while(vp){
+		foo=vp;
+		vp=vp->next;
+		pkg_free(foo);
+	}
+}
+
+
+void free_via_list(struct via_body* vb)
+{
+	struct via_body* foo;
+	while(vb){
+		foo=vb;
+		vb=vb->next;
+		if (foo->param_lst) free_via_param_list(foo->param_lst);
+		pkg_free(foo);
+	}
+}

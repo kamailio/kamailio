@@ -14,6 +14,7 @@
 #include "msg_parser.h"
 #include "../strs.h"
 #include "../dprint.h"
+#include "../ut.h"  /* q_memchr */
 
 /*
  * Size of hash table, this is magic value
@@ -66,25 +67,10 @@ static struct ht_entry *hash_table;
 /*
  * Declarations
  */
-static inline char* q_memchr    (char* p, int c, unsigned int size);
 static inline char* skip_ws     (char* p, unsigned int size);
 void         init_htable (void);
 static void         set_entry   (unsigned int key, unsigned int val);
 static inline int   unify       (int key);
-
-/*
- * Fast replacement of standard memchr function
- */
-static inline char* q_memchr(char* p, int c, unsigned int size)
-{
-	char* end;
-
-	end=p+size;
-	for(;p<end;p++){
-		if (*p==(unsigned char)c) return p;
-	}
-	return 0;
-}
 
 
 /*

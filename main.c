@@ -34,7 +34,7 @@
 #include "parser/msg_parser.h"
 #include "ip_addr.h"
 #include "resolve.h"
-
+#include "parser/parse_hname2.h"
 
 
 #include "stats.h"

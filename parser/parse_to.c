@@ -1,5 +1,8 @@
+/*
+ * $Id$
+ */
 
-
+#include "parse_to.h"
 #include <stdlib.h>
 #include <string.h>
 #include "../dprint.h"
@@ -7,16 +10,22 @@
 #include "../ut.h"
 #include "../mem/mem.h"
 
+enum {
+	TAG_PARAM = 400, GENERAL_PARAM
+};
 
-enum{ START_TO, DISPLAY_QUOTED, E_DISPLAY_QUOTED, DISPLAY_TOKEN
-	, S_URI_ENCLOSED, URI_ENCLOSED, E_URI_ENCLOSED
-	, URI_OR_TOKEN, MAYBE_URI_END
-	, END, F_CR, F_LF, F_CRLF
-	};
 
-enum{ S_PARA_NAME=20, PARA_NAME, S_EQUAL, S_PARA_VALUE, TAG1, TAG2, TAG3
-	, PARA_VALUE_TOKEN , PARA_VALUE_QUOTED, E_PARA_VALUE, PARA_START
-	};
+enum { 
+	START_TO, DISPLAY_QUOTED, E_DISPLAY_QUOTED, DISPLAY_TOKEN, 
+	S_URI_ENCLOSED, URI_ENCLOSED, E_URI_ENCLOSED, 
+	URI_OR_TOKEN, MAYBE_URI_END, END, F_CR, F_LF, F_CRLF
+};
+
+
+enum { 
+	S_PARA_NAME=20, PARA_NAME, S_EQUAL, S_PARA_VALUE, TAG1, TAG2, 
+	TAG3, PARA_VALUE_TOKEN , PARA_VALUE_QUOTED, E_PARA_VALUE, PARA_START
+};
 
 
 
@@ -35,8 +44,8 @@ enum{ S_PARA_NAME=20, PARA_NAME, S_EQUAL, S_PARA_VALUE, TAG1, TAG2, TAG3
 
 
 
-char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
-								int *returned_status)
+static inline char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
+				   int *returned_status)
 {
 	struct to_param *param;
 	int status;
@@ -695,4 +704,19 @@ error:
 	return tmp;
 
 }
+
+
+void free_to(struct to_body* tb)
+{
+	struct to_param *tp=tb->param_lst;
+	struct to_param *foo;
+	while (tp){
+		foo = tp->next;
+		pkg_free(tp);
+		tp=foo;
+	}
+	pkg_free(tb);
+}
+
+
 
