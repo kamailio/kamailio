@@ -31,6 +31,7 @@
 #include "domain_mod.h"
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
+#include "../../ut.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -108,7 +109,7 @@ void hash_table_print (struct domain_list **hash_table, FILE *reply_file)
 	for (i = 0; i < HASH_SIZE; i++) {
 		np = hash_table[i];
 		while (np) {
-			fprintf(reply_file, "%4d %.*s\n", i, np->domain.len, np->domain.s);
+			fprintf(reply_file, "%4d %.*s\n", i, np->domain.len, ZSW(np->domain.s));
 			np = np->next;
 		}
 	}

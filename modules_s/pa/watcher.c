@@ -110,14 +110,14 @@ void free_watcher(watcher_t* _w)
 void print_watcher(FILE* _f, watcher_t* _w)
 {
 	fprintf(_f, "~~~Watcher~~~\n");
-	fprintf(_f, "from   : \'%.*s\'\n", _w->from.len, _w->from.s);
-	fprintf(_f, "contact: \'%.*s\'\n", _w->contact.len, _w->contact.s);
+	fprintf(_f, "from   : '%.*s'\n", _w->from.len, ZSW(_w->from.s));
+	fprintf(_f, "contact: '%.*s'\n", _w->contact.len, ZSW(_w->contact.s));
 	fprintf(_f, "expires: %d\n", (int)(_w->expires - time(0)));
 	fprintf(_f, "accept : %s\n", (_w->accept == DOC_XPIDF) ? ("DOC_XPIDF") : ("DOC_LPIDF"));
 	fprintf(_f, "next   : %p\n", _w->next);
-	fprintf(_f, "dialog.callid: \'%.*s\'\n", _w->dialog.callid.len, _w->dialog.callid.s);
-	fprintf(_f, "dialog.from_tag: \'%.*s\'\n", _w->dialog.from_tag.len, _w->dialog.from_tag.s);
-	fprintf(_f, "dialog.to: \'%.*s\'\n", _w->dialog.to.len, _w->dialog.to.s);
+	fprintf(_f, "dialog.callid: '%.*s'\n", _w->dialog.callid.len, ZSW(_w->dialog.callid.s));
+	fprintf(_f, "dialog.from_tag: '%.*s'\n", _w->dialog.from_tag.len, ZSW(_w->dialog.from_tag.s));
+	fprintf(_f, "dialog.to: '%.*s'\n", _w->dialog.to.len, ZSW(_w->dialog.to.s));
 
 	fprintf(_f, "~~~/Watcher~~~\n");
 }

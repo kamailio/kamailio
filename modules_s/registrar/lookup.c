@@ -34,6 +34,7 @@
 
 #include "lookup.h"
 #include <string.h>
+#include "../../ut.h"
 #include "../../dset.h"
 #include "../../str.h"
 #include "../../config.h"
@@ -103,7 +104,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	}
 	
 	if (res > 0) {
-		DBG("lookup(): \'%.*s\' Not found in usrloc\n", aor.len, aor.s);
+		DBG("lookup(): '%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
 		ul_unlock_udomain((udomain_t*)_t);
 		return -3;
 	}

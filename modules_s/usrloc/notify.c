@@ -3,6 +3,7 @@
  */
 
 #include "notify.h"
+#include "../../ut.h"
 #include "../../mem/shm_mem.h"
 #include "dlist.h"
 #include "udomain.h"
@@ -67,7 +68,7 @@ int register_watcher(str* _f, str* _t, notcb_t _c, void* _data)
 	urecord_t* r;
 
 	if (find_domain(&dom, &d) > 0) {
-		LOG(L_ERR, "register_watcher(): Domain \'%.*s\' not found\n", dom.len, dom.s);
+		LOG(L_ERR, "register_watcher(): Domain '%.*s' not found\n", dom.len, ZSW(dom.s));
 		return -1;
 	}
 
@@ -99,7 +100,7 @@ int unregister_watcher(str* _f, str* _t, notcb_t _c, void* _data)
 	urecord_t* r;
 
 	if (find_domain(&dom, &d) > 0) {
-		LOG(L_ERR, "unregister_watcher(): Domain \'%.*s\' not found\n", dom.len, dom.s);
+		LOG(L_ERR, "unregister_watcher(): Domain '%.*s' not found\n", dom.len, ZSW(dom.s));
 		return -1;
 	}
 	

@@ -175,13 +175,13 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 		      * and thus this combination is allowed and the function will match
 		      */
 		if (RES_ROW_N(res) == 0) {
-			DBG("check_username(): From/To user \'%.*s\' is spoofed\n", 
-			    puri.user.len, puri.user.s);
+			DBG("check_username(): From/To user '%.*s' is spoofed\n", 
+			    puri.user.len, ZSW(puri.user.s));
 			db_free_query(db_handle, res);
 			return -8;
 		} else {
-			DBG("check_username(): From/To user \'%.*s\' and auth user match\n", 
-			    puri.user.len, puri.user.s);
+			DBG("check_username(): From/To user '%.*s' and auth user match\n", 
+			    puri.user.len, ZSW(puri.user.s));
 			db_free_query(db_handle, res);
 			return 1;
 		}

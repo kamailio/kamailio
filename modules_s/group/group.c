@@ -36,6 +36,7 @@
 #include <string.h>
 #include "../../dprint.h"               /* Logging */
 #include "../../db/db.h"                /* Generic database API */
+#include "../../ut.h"
 #include "../../parser/digest/digest.h" /* get_authorized_cred */
 #include "../../parser/hf.h"            /* Header Field types */
 #include "../../parser/parse_from.h"    /* From parser */
@@ -178,13 +179,13 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 	}
 	
 	if (RES_ROW_N(res) == 0) {
-		DBG("is_user_in(): User is not in group \'%.*s\'\n", 
-		    ((str*)_grp)->len, ((str*)_grp)->s);
+		DBG("is_user_in(): User is not in group '%.*s'\n", 
+		    ((str*)_grp)->len, ZSW(((str*)_grp)->s));
 		db_free_query(db_handle, res);
 		return -6;
 	} else {
-		DBG("is_user_in(): User is in group \'%.*s\'\n", 
-		    ((str*)_grp)->len, ((str*)_grp)->s);
+		DBG("is_user_in(): User is in group '%.*s'\n", 
+		    ((str*)_grp)->len, ZSW(((str*)_grp)->s));
 		db_free_query(db_handle, res);
 		return 1;
 	}

@@ -33,6 +33,7 @@
  */
 
 #include <stdio.h>
+#include "../../ut.h"
 #include "../../parser/msg_parser.h"
 #include "../../data_lump_rpl.h"
 #include "rerrno.h"
@@ -103,7 +104,7 @@ void build_contact(ucontact_t* _c)
 	}
 
 	if (_c) {
-		DBG("build_contact(): Created Contact HF: %.*s\n", l, b);
+		DBG("build_contact(): Created Contact HF: %.*s\n", l, ZSW(b));
 	}
 }
 

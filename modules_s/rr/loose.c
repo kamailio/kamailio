@@ -34,6 +34,7 @@
 
 
 #include <string.h>
+#include "../../ut.h"
 #include "../../str.h"
 #include "../../action.h"
 #include "../../dprint.h"
@@ -488,7 +489,7 @@ static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 	rt = (rr_t*)hdr->parsed;
 
 	if (enable_double_rr && is_2rr(&_ruri->params)) {
-		DBG("ras(): Removing 2nd URI of mine: '%.*s'\n", rt->nameaddr.uri.len, rt->nameaddr.uri.s);
+		DBG("ras(): Removing 2nd URI of mine: '%.*s'\n", rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
  		if (!rt->next) {
 			     /* No next route in the same header, remove the whole header
 			      * field immediately
@@ -517,7 +518,7 @@ static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 	}
 
 	if (is_strict(&puri.params)) {
-		DBG("ras(): Next hop: '%.*s' is strict router\n", uri->len, uri->s);
+		DBG("ras(): Next hop: '%.*s' is strict router\n", uri->len, ZSW(uri->s));
 		     /* Previous hop was a strict router and the next hop is strict
 		      * router too. There is no need to save R-URI again because it
 		      * is saved already. In fact, in this case we will behave exactly
@@ -546,7 +547,7 @@ static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 			return -5;
 		}
 	} else {
-		DBG("ras(): Next hop: '%.*s' is loose router\n", uri->len, uri->s);
+		DBG("ras(): Next hop: '%.*s' is loose router\n", uri->len, ZSW(uri->s));
 		_m->dst_uri = *uri;
 
 		     /* Next hop is a loose router - Which means that is is not endpoint yet
@@ -584,7 +585,7 @@ static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 		     /* The first character if uri will be either '<' when it is the only URI in a
 		      * Route header field or ',' if there is more than one URI in the header field
 		      */
-		DBG("ras(): The last route URI: '%.*s'\n", rt->nameaddr.uri.len, rt->nameaddr.uri.s);
+		DBG("ras(): The last route URI: '%.*s'\n", rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
 
 		if (prev) {
 			rem_off = prev->nameaddr.name.s + prev->len;
@@ -622,7 +623,7 @@ static inline int route_after_loose(struct sip_msg* _m)
 
 	     /* IF the URI was added by me, remove it */
 	if (is_myself(&puri.host, puri.port_no)) {
-		DBG("ral(): Topmost route URI: '%.*s' is me\n", uri->len, uri->s);
+		DBG("ral(): Topmost route URI: '%.*s' is me\n", uri->len, ZSW(uri->s));
 		if (!rt->next) {
 			     /* No next route in the same header, remove the whole header
 			      * field immediately
@@ -674,7 +675,7 @@ static inline int route_after_loose(struct sip_msg* _m)
 		DBG("ral(): Topmost URI is NOT myself\n");
 	}
 	
-	DBG("ral(): URI to be processed: '%.*s'\n", uri->len, uri->s);
+	DBG("ral(): URI to be processed: '%.*s'\n", uri->len, ZSW(uri->s));
 	if (is_strict(&puri.params)) {
 		DBG("ral(): Next URI is a strict router\n");
 		if (handle_strict_router(_m, hdr, rt) < 0) {

@@ -98,8 +98,8 @@ void print_urecord(FILE* _f, urecord_t* _r)
 	ucontact_t* ptr;
 
 	fprintf(_f, "...Record(%p)...\n", _r);
-	fprintf(_f, "domain: \'%.*s\'\n", _r->domain->len, _r->domain->s);
-	fprintf(_f, "aor   : \'%.*s\'\n", _r->aor.len, _r->aor.s);
+	fprintf(_f, "domain: '%.*s'\n", _r->domain->len, ZSW(_r->domain->s));
+	fprintf(_f, "aor   : '%.*s'\n", _r->aor.len, ZSW(_r->aor.s));
 	
 	if (_r->contacts) {
 		ptr = _r->contacts;
@@ -204,8 +204,8 @@ static inline int nodb_timer(urecord_t* _r)
 	while(ptr) {
 		if (ptr->expires < act_time) {
 			if (ptr->replicate != 0) {
-				LOG(L_NOTICE, "Keeping binding \'%.*s\',\'%.*s\' for replication\n", 
-				    ptr->aor->len, ptr->aor->s, ptr->c.len, ptr->c.s);
+				LOG(L_NOTICE, "Keeping binding '%.*s','%.*s' for replication\n", 
+				    ptr->aor->len, ZSW(ptr->aor->s), ptr->c.len, ZSW(ptr->c.s));
 
 					/* keep it for replication, but it expired normaly
 					 * and was the last contact, so notify */
@@ -214,9 +214,9 @@ static inline int nodb_timer(urecord_t* _r)
 				ptr = ptr->next;
 			}
 			else {
-				LOG(L_NOTICE, "Binding '%.*s\',\'%.*s\' has expired\n",
-				    ptr->aor->len, ptr->aor->s,
-				    ptr->c.len, ptr->c.s);
+				LOG(L_NOTICE, "Binding '%.*s','%.*s' has expired\n",
+				    ptr->aor->len, ZSW(ptr->aor->s),
+				    ptr->c.len, ZSW(ptr->c.s));
 
 				t = ptr;
 				ptr = ptr->next;
@@ -236,9 +236,9 @@ static inline int nodb_timer(urecord_t* _r)
 				 * for replication so remove it, but the notify was
 				 * done during unregister */
 			if (ptr->state == CS_ZOMBIE_N && ptr->replicate == 0) {
-				LOG(L_NOTICE, "removing spare zombie \'%.*s\',\'%.*s\'\n",
-				    ptr->aor->len, ptr->aor->s,
-				    ptr->c.len, ptr->c.s);
+				LOG(L_NOTICE, "removing spare zombie '%.*s','%.*s'\n",
+				    ptr->aor->len, ZSW(ptr->aor->s),
+				    ptr->c.len, ZSW(ptr->c.s));
 				t = ptr;
 				ptr = ptr->next;
 				mem_delete_ucontact(_r, t);
@@ -267,9 +267,9 @@ static inline int wt_timer(urecord_t* _r)
 	while(ptr) {
 		if (ptr->expires < act_time) {
 			if (ptr->replicate != 0) {
-				LOG(L_NOTICE, "Keeping binding \'%.*s\',\'%.*s\' for "
-					"replication\n", ptr->aor->len, ptr->aor->s,
-				    ptr->c.len, ptr->c.s);
+				LOG(L_NOTICE, "Keeping binding '%.*s','%.*s' for "
+					"replication\n", ptr->aor->len, ZSW(ptr->aor->s),
+				    ptr->c.len, ZSW(ptr->c.s));
 					
 					/* keep it for replication, but it expired normaly
 					 * and was the last contact, so notify */
@@ -278,9 +278,9 @@ static inline int wt_timer(urecord_t* _r)
 				ptr = ptr->next;
 			}
 			else {
-				LOG(L_NOTICE, "Binding \'%.*s\',\'%.*s\' has expired\n",
-				    ptr->aor->len, ptr->aor->s,
-				    ptr->c.len, ptr->c.s);
+				LOG(L_NOTICE, "Binding '%.*s','%.*s' has expired\n",
+				    ptr->aor->len, ZSW(ptr->aor->s),
+				    ptr->c.len, ZSW(ptr->c.s));
 
 				t = ptr;
 				ptr = ptr->next;
@@ -302,9 +302,9 @@ static inline int wt_timer(urecord_t* _r)
 				 * for replication so remove it, but the notify was
 				 * allready done during unregister */
 			if (ptr->state == CS_ZOMBIE_S && ptr->replicate == 0) {
-				LOG(L_NOTICE, "removing spare zombie \'%.*s\',\'%.*s\'\n",
-				    ptr->aor->len, ptr->aor->s,
-				    ptr->c.len, ptr->c.s);
+				LOG(L_NOTICE, "removing spare zombie '%.*s','%.*s'\n",
+				    ptr->aor->len, ZSW(ptr->aor->s),
+				    ptr->c.len, ZSW(ptr->c.s));
 				t = ptr;
 				ptr = ptr->next;
 				if (db_delete_ucontact(t) < 0) {
@@ -337,9 +337,9 @@ static inline int wb_timer(urecord_t* _r)
 	while(ptr) {
 		if (ptr->expires < act_time) {
 			if (ptr->replicate != 0) {
-				LOG(L_NOTICE, "Keeping binding \'%.*s\',\'%.*s\' for "
-					"replication\n", ptr->aor->len, ptr->aor->s,
-				    ptr->c.len, ptr->c.s);
+				LOG(L_NOTICE, "Keeping binding '%.*s','%.*s' for "
+					"replication\n", ptr->aor->len, ZSW(ptr->aor->s),
+				    ptr->c.len, ZSW(ptr->c.s));
 
 					/* keep it for replication, but it expired normaly
 					 * and was the last contact, so notify */
@@ -350,9 +350,9 @@ static inline int wb_timer(urecord_t* _r)
 			else {
 					/* state == ZOMBIE the contact was remove by user */
 				if (ptr->state < CS_ZOMBIE_N) { 
-					LOG(L_NOTICE, "Binding \'%.*s\',\'%.*s\' has expired\n",
-					    ptr->aor->len, ptr->aor->s,
-					    ptr->c.len, ptr->c.s);
+					LOG(L_NOTICE, "Binding '%.*s','%.*s' has expired\n",
+					    ptr->aor->len, ZSW(ptr->aor->s),
+					    ptr->c.len, ZSW(ptr->c.s));
 					if (ptr->next == 0) not=1;
 					_r->slot->d->expired++;
 				}

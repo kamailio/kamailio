@@ -32,6 +32,7 @@
 #include "enum.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
+#include "../../ut.h"
 #include "../../resolve.h"
 #include "../../mem/mem.h"
 
@@ -204,11 +205,11 @@ int enum_query(struct sip_msg* _msg, char* _service, char* _s2)
 			free_rdata_list(head);
 			return -1;
 		}
-		DBG("enum_query(): order %u, pref %u, flen %u, flags \'%.*s\', slen %u, "
-		    "services \'%.*s\', rlen %u, regexp \'%.*s\'\n", naptr->order, naptr->pref,
-		    naptr->flags_len, (int)(naptr->flags_len), naptr->flags, naptr->services_len,
-		    (int)(naptr->services_len), naptr->services, naptr->regexp_len,
-		    (int)(naptr->regexp_len), naptr->regexp);
+		DBG("enum_query(): order %u, pref %u, flen %u, flags '%.*s', slen %u, "
+		    "services '%.*s', rlen %u, regexp '%.*s'\n", naptr->order, naptr->pref,
+		    naptr->flags_len, (int)(naptr->flags_len), ZSW(naptr->flags), naptr->services_len,
+		    (int)(naptr->services_len), ZSW(naptr->services), naptr->regexp_len,
+		    (int)(naptr->regexp_len), ZSW(naptr->regexp));
 		if (sip_match(naptr, service) != 0) {
 			len = naptr->regexp_len;
 			if (len > 0) {
@@ -220,7 +221,7 @@ int enum_query(struct sip_msg* _msg, char* _service, char* _s2)
 						if (len > 0) {
 							third = memchr(second + 1, '!', len);
 							if (third) {
-								DBG("enum_query(): resulted in uri: \'%.*s\'\n", third - second - 1, second + 1);
+								DBG("enum_query(): resulted in uri: '%.*s'\n", third - second - 1, ZSW(second + 1));
 								result = set_uri(_msg, second + 1, third - second - 1);
 								free_rdata_list(head); /*clean up*/
 								return result;

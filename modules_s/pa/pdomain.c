@@ -35,6 +35,7 @@
 
 #include "pdomain.h"
 #include "paerrno.h"
+#include "../../ut.h"
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
 
@@ -128,7 +129,7 @@ void print_pdomain(FILE* _f, pdomain_t* _d)
 {
 	struct presentity* p;
 	fprintf(_f, "---pdomain---\n");
-	fprintf(_f, "name : \'%.*s\'\n", _d->name->len, _d->name->s);
+	fprintf(_f, "name : '%.*s'\n", _d->name->len, ZSW(_d->name->s));
 	fprintf(_f, "size : %d\n", _d->size);
 	fprintf(_f, "table: %p\n", _d->table);
 	fprintf(_f, "first: %p\n", _d->first);

@@ -28,6 +28,7 @@
  */
 
 #include "presentity.h"
+#include "../../ut.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "paerrno.h"
@@ -87,7 +88,7 @@ void print_presentity(FILE* _f, presentity_t* _p)
 	watcher_t* ptr;
 
 	fprintf(_f, "...Presentity...\n");
-	fprintf(_f, "to: \'%.*s\'\n", _p->to.len, _p->to.s);
+	fprintf(_f, "to: '%.*s'\n", _p->to.len, ZSW(_p->to.s));
 	
 	if (_p->watchers) {
 		ptr = _p->watchers;

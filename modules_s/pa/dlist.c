@@ -34,6 +34,7 @@
 #include <string.h>
 #include "../../mem/shm_mem.h"
 #include "../../sr_module.h"
+#include "../../ut.h"
 #include "ptime.h"
 
 /*
@@ -127,7 +128,7 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 			return -6;
 		}
 	} else {
-		LOG(L_ERR, "new_dlist(): Unknown module to bind: %.*s\n", _n->len, _n->s);
+		LOG(L_ERR, "new_dlist(): Unknown module to bind: %.*s\n", _n->len, ZSW(_n->s));
 			return -7;
 	}
 

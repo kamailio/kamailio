@@ -35,6 +35,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
 #include "../../db/db.h"
+#include "../../ut.h"
 #include "ul_mod.h"            /* usrloc module parameters */
 #include "del_list.h"
 #include "ins_list.h"
@@ -175,7 +176,7 @@ void print_udomain(FILE* _f, udomain_t* _d)
 {
 	struct urecord* r;
 	fprintf(_f, "---Domain---\n");
-	fprintf(_f, "name : \'%.*s\'\n", _d->name->len, _d->name->s);
+	fprintf(_f, "name : '%.*s'\n", _d->name->len, ZSW(_d->name->s));
 	fprintf(_f, "size : %d\n", _d->size);
 	fprintf(_f, "table: %p\n", _d->table);
 	fprintf(_f, "d_ll {\n");
@@ -249,7 +250,7 @@ int preload_udomain(udomain_t* _d)
 
 		if (use_domain) {
 			domain    = (char*)VAL_STRING(ROW_VALUES(row) + 8);
-			snprintf(b, 256, "%.*s@%s", user.len, user.s, domain);
+			snprintf(b, 256, "%.*s@%s", user.len, ZSW(user.s), domain);
 			user.s = b;
 			user.len = strlen(b);
 		}
