@@ -1,8 +1,13 @@
 $Id$
 
 
-Installation Notes
-===================
+     ===========================================
+
+     SIP Express Router (ser) Installation Notes
+
+             http://www.iptel.org/ser/
+
+     ===========================================
 
 TOC
 
@@ -13,7 +18,7 @@ TOC
    B) Disclaimers
    C) Quick Start
    D) ser with Persistent Data Storage
-   E) Troubleshooting
+4. Troubleshooting
 
 
 
@@ -241,7 +246,7 @@ Solaris:
 
 
 D) ser with Persistent Data Storage
-----------------------------------------------
+
 The default configuration is very simple and features many simplifications. 
 In particular, it does not authenticate users and loses User Location 
 database on reboot. To provide persistency, keep user credentials and remember 
@@ -291,3 +296,30 @@ proceed, you need to make sure MySQL is installed on your box.
    b) try to login with your SIP client as user 'admin' with password 'heslo'
    c) try adding new users using 
        'serctl add <name> <password> <email>'
+
+4. Troubleshooting
+------------------
+
+Q: Windows Messenger authentication fails. 
+
+A: The most likely reason for this problem is a bug in Windows Messenger. 
+WM only authenticates if server name in request URI equals authentication 
+realm. After a challenge is sent by SIP server, WM does not resubmit the 
+challenged request at all and pops up authentication window again. If you 
+want to authenticate WM, you need to set up your realm value to equal server 
+name. If your server has no name, IP address can be used as realm too.
+
+Q: SIP requests are replied by ser with "483 Too Many Hops" or 
+   "513 Message Too Large"
+
+A: In both cases, the reason is probably an error in request routing script 
+   which caused an infinite loop. You can easily verify whether this happens 
+   by watching SIP traffic on loopback interface. A typical reason for misrouting 
+   is a failure to match local domain correctly. If a server fails to recognize 
+   a request for itself, it will try to forward it to current URI in believe it 
+   would forward them to a foreign domain. Alas, it forwards the request to itself 
+   again. This continues to happen until value of max_forwards header field reaches 
+   zero or the request grows too big. Solutions is easy: make sure that domain matching 
+   is correctly configured. A quick way to achieve that is to introduce a config
+   option to ser.cfg: alias=domainname, where domainname shall be replaced with
+   name of domain, which you wish to server and which appears in request-URIs.
