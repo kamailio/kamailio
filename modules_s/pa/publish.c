@@ -204,114 +204,140 @@ int location_package_location_del_user(pdomain_t *pdomain, str *site, str *floor
  */
 static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struct presentity* presentity, int *pchanged)
 {
-	char *body = get_body(_m);
-	presence_tuple_t *tuple = NULL;
-	str contact = { NULL, 0 };
-	str basic = { NULL, 0 };
-	str location = { NULL, 0 };
-	str site = { NULL, 0 };
-	str floor = { NULL, 0 };
-	str room = { NULL, 0 };
-	str packet_loss = { NULL, 0 };
-	double x=0, y=0, radius=0;
-	int changed = 0;
-	int ret = 0;
+     char *body = get_body(_m);
+     presence_tuple_t *tuple = NULL;
+     str contact = { NULL, 0 };
+     str basic = { NULL, 0 };
+     str status = { NULL, 0 };
+     str location = { NULL, 0 };
+     str site = { NULL, 0 };
+     str floor = { NULL, 0 };
+     str room = { NULL, 0 };
+     str packet_loss = { NULL, 0 };
+     double x=0, y=0, radius=0;
+     int flags = 0;
+     int changed = 0;
+     int ret = 0;
 
-	parse_pidf(body, &contact, &basic, &location, &site, &floor, &room, &x, &y, &radius, &packet_loss);
-	if (contact.len) {
-		find_presence_tuple(&contact, presentity, &tuple);
-		if (!tuple) {
-			new_presence_tuple(&contact, presentity, &tuple);
-			add_presence_tuple(presentity, tuple);
-		}
-	} else {
-		tuple = presentity->tuples;
-	}
-	if (!tuple) {
-		LOG(L_ERR, "publish_presentity: no tuple for %.*s\n", 
-		    presentity->uri.len, presentity->uri.s);
-		return -1;
-	}
+     flags = parse_pidf(body, &contact, &basic, &status, &location, &site, &floor, &room, &x, &y, &radius, &packet_loss);
+     if (contact.len) {
+	  find_presence_tuple(&contact, presentity, &tuple);
+	  if (!tuple) {
+	       new_presence_tuple(&contact, presentity, &tuple);
+	       add_presence_tuple(presentity, tuple);
+	  }
+     } else {
+	  tuple = presentity->tuples;
+     }
+     if (!tuple) {
+	  LOG(L_ERR, "publish_presentity: no tuple for %.*s\n", 
+	      presentity->uri.len, presentity->uri.s);
+	  return -1;
+     }
 
-	LOG(L_INFO, "publish_presentity: -1-\n");
-	if (basic.len && basic.s) {
-		int origstate = tuple->state;
-		tuple->state =
-			(strcmp(basic.s, "online") == 0) ? PS_ONLINE : PS_OFFLINE;
-		if (tuple->state != origstate)
-			changed = 1;
-	}
-	LOG(L_INFO, "publish_presentity: -2-\n");
-	if (location.len && location.s) {
-		if (tuple->location.loc.len && strcmp(tuple->location.loc.s, location.s) != 0)
-			changed = 1;
-		tuple->location.loc.len = location.len;
-		strncpy(tuple->location.loc.s, location.s, location.len);
-		tuple->location.loc.s[location.len] = 0;
-	}
-	if (site.len && site.s) {
-		if (tuple->location.site.len && strcmp(tuple->location.site.s, site.s) != 0)
-			changed = 1;
-		tuple->location.site.len = site.len;
-		strncpy(tuple->location.site.s, site.s, site.len);
-		tuple->location.site.s[site.len] = 0;
-	}
-	if (floor.len && floor.s) {
-		if (tuple->location.floor.len && strcmp(tuple->location.floor.s, floor.s) != 0)
-			changed = 1;
-		tuple->location.floor.len = floor.len;
-		strncpy(tuple->location.floor.s, floor.s, floor.len);
-		tuple->location.floor.s[floor.len] = 0;
-	}
-	if (room.len && room.s) {
-		if (tuple->location.room.len && strcmp(tuple->location.room.s, room.s) != 0)
-			changed = 1;
-		tuple->location.room.len = room.len;
-		strncpy(tuple->location.room.s, room.s, room.len);
-		tuple->location.room.s[room.len] = 0;
-	}
-	if (packet_loss.len && packet_loss.s) {
-		if (tuple->location.packet_loss.len && strcmp(tuple->location.packet_loss.s, packet_loss.s) != 0)
-			changed = 1;
-		tuple->location.packet_loss.len = packet_loss.len;
-		strncpy(tuple->location.packet_loss.s, packet_loss.s, packet_loss.len);
-		tuple->location.packet_loss.s[packet_loss.len] = 0;
-	}
-	if (x) {
-		if (tuple->location.x != x)
-			changed = 1;
-		tuple->location.x = x;
-	}
-	if (y) {
-		if (tuple->location.y != y)
-			changed = 1;
-		tuple->location.y = y;
-	}
-	if (radius) {
-		if (tuple->location.radius != radius)
-			changed = 1;
-		tuple->location.radius = radius;
-	}
+     LOG(L_INFO, "publish_presentity_pidf: -1-\n");
+     if (basic.len && basic.s) {
+	  int origstate = tuple->state;
+	  tuple->state =
+	       (strcmp(basic.s, "online") == 0) ? PS_ONLINE : PS_OFFLINE;
+	  if (tuple->state != origstate)
+	       changed = 1;
+     }
+     if (status.len && status.s) {
+	  if (tuple->status.len && strcmp(tuple->status.s, status.s) != 0)
+	       changed = 1;
+	  tuple->status.len = status.len;
+	  strncpy(tuple->status.s, status.s, status.len);
+	  tuple->status.s[status.len] = 0;
+     }
+     LOG(L_INFO, "publish_presentity: -2-\n");
+     if (location.len && location.s) {
+	  if (tuple->location.loc.len && strcmp(tuple->location.loc.s, location.s) != 0)
+	       changed = 1;
+	  tuple->location.loc.len = location.len;
+	  strncpy(tuple->location.loc.s, location.s, location.len);
+	  tuple->location.loc.s[location.len] = 0;
+     } else if (flags & PARSE_PIDF_LOCATION_MASK) {
+	  tuple->location.loc.len = 0;
+     }
+     if (site.len && site.s) {
+	  if (tuple->location.site.len && strcmp(tuple->location.site.s, site.s) != 0)
+	       changed = 1;
+	  tuple->location.site.len = site.len;
+	  strncpy(tuple->location.site.s, site.s, site.len);
+	  tuple->location.site.s[site.len] = 0;
+     } else if (flags & PARSE_PIDF_LOCATION_MASK) {
+	  tuple->location.site.len = 0;
+     }
+     if (floor.len && floor.s) {
+	  if (tuple->location.floor.len && strcmp(tuple->location.floor.s, floor.s) != 0)
+	       changed = 1;
+	  tuple->location.floor.len = floor.len;
+	  strncpy(tuple->location.floor.s, floor.s, floor.len);
+	  tuple->location.floor.s[floor.len] = 0;
+     }else if (flags & PARSE_PIDF_LOCATION_MASK) {
+	  tuple->location.floor.len = 0;
+     }
+     if (room.len && room.s) {
+	  if (tuple->location.room.len && strcmp(tuple->location.room.s, room.s) != 0)
+	       changed = 1;
+	  tuple->location.room.len = room.len;
+	  strncpy(tuple->location.room.s, room.s, room.len);
+	  tuple->location.room.s[room.len] = 0;
+     } else if (flags & PARSE_PIDF_LOCATION_MASK) {
+	  tuple->location.room.len = 0;
+     }
+     if (packet_loss.len && packet_loss.s) {
+	  if (tuple->location.packet_loss.len && strcmp(tuple->location.packet_loss.s, packet_loss.s) != 0)
+	       changed = 1;
+	  tuple->location.packet_loss.len = packet_loss.len;
+	  strncpy(tuple->location.packet_loss.s, packet_loss.s, packet_loss.len);
+	  tuple->location.packet_loss.s[packet_loss.len] = 0;
+     } else if (flags & PARSE_PIDF_LOCATION_MASK) {
+	  tuple->location.packet_loss.len = 0;
+     }
+     if (x) {
+	  if (tuple->location.x != x)
+	       changed = 1;
+	  tuple->location.x = x;
+     } else if (flags & PARSE_PIDF_LOCATION_MASK) {
+	  tuple->location.x = 0;
+     }
+     if (y) {
+	  if (tuple->location.y != y)
+	       changed = 1;
+	  tuple->location.y = y;
+     } else if (flags & PARSE_PIDF_LOCATION_MASK) {
+	  tuple->location.y = 0;
+     }
+     if (radius) {
+	  if (tuple->location.radius != radius)
+	       changed = 1;
+	  tuple->location.radius = radius;
+     } else if (flags & PARSE_PIDF_LOCATION_MASK) {
+	  tuple->location.radius = 0;
+     }
 
-	if (use_location_package)
-		if (site.len && floor.len && room.len && changed) {
-			location_package_location_add_user(_d, &site, &floor, &room, presentity);
-		}
+     if (use_location_package)
+	  if (site.len && floor.len && room.len && changed) {
+	       location_package_location_add_user(_d, &site, &floor, &room, presentity);
+	  }
 
-	if (changed)
-		presentity->flags |= PFLAG_PRESENCE_CHANGED;
+     changed = 1;
+     if (changed)
+	  presentity->flags |= PFLAG_PRESENCE_CHANGED;
 
-	LOG(L_INFO, "publish_presentity: -3-\n");
-	if (pchanged && changed) {
-		*pchanged = 1;
-	}
+     LOG(L_INFO, "publish_presentity: -3-: changed=%d\n", changed);
+     if (pchanged && changed) {
+	  *pchanged = 1;
+     }
 
-	if ((ret = db_update_presentity(presentity)) < 0) {
-		return ret;
-	}
+     if ((ret = db_update_presentity(presentity)) < 0) {
+	  return ret;
+     }
 
-	LOG(L_INFO, "publish_presentity: -4-\n");
-	return 0;
+     LOG(L_INFO, "publish_presentity: -4-\n");
+     return 0;
 }
 
 /*
@@ -359,7 +385,7 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 {
 	struct pdomain* d;
 	struct presentity *p;
-	str p_uri = { 0, NULL };
+	str p_uri = { NULL, 0 };
 	int changed;
 
 	get_act_time();
@@ -437,11 +463,11 @@ int fifo_pa_presence(FILE *fifo, char *response_file)
 	char pdomain_s[MAX_P_URI];
 	char p_uri_s[MAX_P_URI];
 	char presence_s[MAX_PRESENCE];
-	pdomain_t *pdomain = NULL;
-	presentity_t *presentity = NULL;
+	// pdomain_t *pdomain = NULL;
+	// presentity_t *presentity = NULL;
 	str pdomain_name, p_uri, presence;
-	int origstate, newstate;
-	int allocated_presentity = 0;
+	// int origstate, newstate;
+	// int allocated_presentity = 0;
 
 	if (!read_line(pdomain_s, MAX_PDOMAIN, fifo, &pdomain_name.len) || pdomain_name.len == 0) {
 		fifo_reply(response_file,
@@ -522,77 +548,87 @@ int fifo_pa_presence(FILE *fifo, char *response_file)
 #define MAX_PDOMAIN 256
 int fifo_pa_location(FILE *fifo, char *response_file)
 {
-	char pdomain_s[MAX_P_URI];
-	char p_uri_s[MAX_P_URI];
-	char location_s[MAX_LOCATION];
-	pdomain_t *pdomain = NULL;
-	presentity_t *presentity = NULL;
-	str pdomain_name, p_uri, location;
-	int changed = 0;
+     char pdomain_s[MAX_P_URI];
+     char p_uri_s[MAX_P_URI];
+     char location_s[MAX_LOCATION];
+     pdomain_t *pdomain = NULL;
+     presentity_t *presentity = NULL;
+     presence_tuple_t *tuple = NULL;
+     str pdomain_name, p_uri, location;
+     int changed = 0;
 
-	if (!read_line(pdomain_s, MAX_PDOMAIN, fifo, &pdomain_name.len) || pdomain_name.len == 0) {
-		fifo_reply(response_file,
-			   "400 pa_location: pdomain expected\n");
-		LOG(L_ERR, "ERROR: pa_location: pdomain expected\n");
-		return 1;
-	}
-	pdomain_name.s = pdomain_s;
+     if (!read_line(pdomain_s, MAX_PDOMAIN, fifo, &pdomain_name.len) || pdomain_name.len == 0) {
+	  fifo_reply(response_file,
+		     "400 pa_location: pdomain expected\n");
+	  LOG(L_ERR, "ERROR: pa_location: pdomain expected\n");
+	  return 1;
+     }
+     pdomain_name.s = pdomain_s;
 
-	if (!read_line(p_uri_s, MAX_P_URI, fifo, &p_uri.len) || p_uri.len == 0) {
-		fifo_reply(response_file,
-			   "400 pa_location: p_uri expected\n");
-		LOG(L_ERR, "ERROR: pa_location: p_uri expected\n");
-		return 1;
-	}
-	p_uri.s = p_uri_s;
+     if (!read_line(p_uri_s, MAX_P_URI, fifo, &p_uri.len) || p_uri.len == 0) {
+	  fifo_reply(response_file,
+		     "400 pa_location: p_uri expected\n");
+	  LOG(L_ERR, "ERROR: pa_location: p_uri expected\n");
+	  return 1;
+     }
+     p_uri.s = p_uri_s;
 
-	if (!read_line(location_s, MAX_LOCATION, fifo, &location.len) || location.len == 0) {
-		fifo_reply(response_file,
-			   "400 pa_location: location expected\n");
-		LOG(L_ERR, "ERROR: pa_location: location expected\n");
-		return 1;
-	}
-	location.s = location_s;
+     if (!read_line(location_s, MAX_LOCATION, fifo, &location.len) || location.len == 0) {
+	  fifo_reply(response_file,
+		     "400 pa_location: location expected\n");
+	  LOG(L_ERR, "ERROR: pa_location: location expected\n");
+	  return 1;
+     }
+     location.s = location_s;
 
-#if 0
-	register_pdomain(pdomain_s, &pdomain);
-	if (!pdomain) {
-		fifo_reply(response_file, "400 could not register pdomain\n");
-		LOG(L_ERR, "ERROR: pa_location: could not register pdomain %.*s\n",
-		    pdomain_name.len, pdomain_name.s);
-		return 1;
-	}
+#if 1
+     register_pdomain(pdomain_s, &pdomain);
+     if (!pdomain) {
+	  fifo_reply(response_file, "400 could not register pdomain\n");
+	  LOG(L_ERR, "ERROR: pa_location: could not register pdomain %.*s\n",
+	      pdomain_name.len, pdomain_name.s);
+	  return 1;
+     }
 
-	find_presentity(pdomain, &p_uri, &presentity);
-	if (!presentity) {
-		new_presentity(pdomain, &p_uri, &presentity);
-		add_presentity(pdomain, presentity);
-		changed = 1;
-	}
-	if (!presentity) {
-		fifo_reply(response_file, "400 could not find presentity\n");
-		LOG(L_ERR, "ERROR: pa_location: could not find presentity %.*s\n",
-		    p_uri.len, p_uri.s);
-		return 1;
-	}
+     find_presentity(pdomain, &p_uri, &presentity);
+     if (!presentity) {
+	  new_presentity(pdomain, &p_uri, EVENT_PRESENCE, &presentity);
+	  add_presentity(pdomain, presentity);
+	  changed = 1;
+     }
+     if (!presentity) {
+	  fifo_reply(response_file, "400 could not find presentity\n");
+	  LOG(L_ERR, "ERROR: pa_location: could not find presentity %.*s\n",
+	      p_uri.len, p_uri.s);
+	  return 1;
+     }
 
-	if (presentity->location.loc.len && strcmp(presentity->location.loc.s, location.s) != 0)
-		changed = 1;
+     changed = 1;
+     for (tuple = presentity->tuples; tuple; tuple = tuple->next) {
+	  if (tuple->location.loc.len && strcmp(tuple->location.room.s, location.s) != 0)
+	       changed = 1;
 
-	strncpy(presentity->location.loc.s, location.s, location.len);
-	presentity->location.loc.len = location.len;
+	  LOG(L_ERR, "Setting room of contact=%.*s to %.*s\n",
+	      tuple->contact.len, tuple->contact.s,
+	      tuple->location.room.len, tuple->location.room.s);
+	  strncpy(tuple->location.room.s, location.s, location.len);
+	  tuple->location.room.len = location.len;
 
-	if (changed) {
-		presentity->flags |= PFLAG_PRESENCE_CHANGED;
-	}
+	  strncpy(tuple->location.loc.s, location.s, location.len);
+	  tuple->location.loc.len = location.len;
+     }
 
-	db_update_presentity(presentity);
+     if (changed) {
+	  presentity->flags |= PFLAG_PRESENCE_CHANGED;
+     }
+
+     db_update_presentity(presentity);
 
 #endif
 
-	fifo_reply(response_file, "200 published\n",
-		   "(%.*s %.*s)\n",
-		   p_uri.len, ZSW(p_uri.s),
-		   location.len, ZSW(location.s));
-	return 1;
+     fifo_reply(response_file, "200 published\n",
+		"(%.*s %.*s)\n",
+		p_uri.len, ZSW(p_uri.s),
+		location.len, ZSW(location.s));
+     return 1;
 }

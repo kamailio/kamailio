@@ -67,21 +67,20 @@ static doctype_t acc;
  * contact will be NULL if user is offline
  * fixme:locking
  */
-void callback(str* _user, int state, void* data)
+void callback(str* _user, str *_contact, int state, void* data)
 {
      presentity_t *presentity;
 
      presentity = (struct presentity*)data;
-     LOG(L_ERR, "callback: presentity=%p uri=%.*s\n",
-	 presentity, presentity->uri.len, presentity->uri.s);
+     LOG(L_ERR, "callback: presentity=%p uri=%.*s contact=%.*s\n",
+	 presentity, presentity->uri.len, presentity->uri.s, _contact->len, _contact->s);
 
-#if 0 /* if we have usrloc call us with _contact, execute this code */
-     {
+     if (callback_update_db) {
 	  presence_tuple_t *tuple = NULL;
 	  int orig;
-	  LOG(L_ERR, "callback: contact=%p:%.*s\n",
+	  LOG(L_ERR, "callback: contact=%p:%.*s \n",
 	      _contact, (_contact ? _contact->len : 0), (_contact ? _contact->s : ""));
-	  if (0 && _contact) {
+	  if (_contact) {
 	       // lock_pdomain(presentity->pdomain);
 
 	       find_presence_tuple(_contact, presentity, &tuple);
@@ -107,7 +106,6 @@ void callback(str* _user, int state, void* data)
 	       // unlock_pdomain(presentity->pdomain);
 	  }
      }
-#endif
 }
 
 /*
@@ -226,7 +224,7 @@ int parse_accept(struct hdr_field* _h, doctype_t* _a)
  * Parse all header fields that will be needed
  * to handle a SUBSCRIBE request
  */
-static int parse_hfs(struct sip_msg* _m)
+static int parse_hfs(struct sip_msg* _m, int accept_header_required)
 {
 	if (parse_headers(_m, HDR_FROM | HDR_EVENT | HDR_EXPIRES | HDR_ACCEPT, 0) == -1) {
 		paerrno = PA_PARSE_ERR;
@@ -262,7 +260,7 @@ static int parse_hfs(struct sip_msg* _m)
 			LOG(L_ERR, "parse_hfs(): Error while parsing Accept header field\n");
 			return -10;
 		}
-	} else {
+	} else if (accept_header_required) {
 		LOG(L_ERR, "no accept header\n");
 		acc = DOC_XPIDF;
 	}
@@ -285,6 +283,7 @@ int check_message(struct sip_msg* _m)
 
 		if ((event->parsed != EVENT_PRESENCE)
 		    && (event->parsed != EVENT_PRESENCE_WINFO)
+		    && (event->parsed != EVENT_LOCATION)
 		    && (event->parsed != EVENT_XCAP_CHANGE)) {
 			paerrno = PA_EVENT_UNSUPP;
 			LOG(L_ERR, "check_message(): Unsupported event package event=%p et=%d len=%d\n",
@@ -387,6 +386,7 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 		event = (event_t*)(_m->event->parsed);
 		et = event->parsed;
 	} else {
+		LOG(L_ERR, "update_presentity defaulting to EVENT_PRESENCE\n");
 		et = EVENT_PRESENCE;
 	}
 
@@ -402,8 +402,9 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 	}
 
 	if (find_watcher(_p, &watch_uri, et, _w) == 0) {
+		LOG(L_ERR, "update_presentity() found watcher\n");
 		if (e == 0) {
-			if (et == EVENT_PRESENCE) {
+			if (et != EVENT_PRESENCE_WINFO) {
 				if (remove_watcher(_p, *_w) < 0) {
 					LOG(L_ERR, "update_presentity(): Error while deleting winfo watcher\n");
 					return -2;
@@ -460,6 +461,107 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 
 
 /*
+ * Handle a registration request -- make sure aor exists in presentity table
+ */
+/*
+ * Extract Address of Record
+ */
+#define MAX_AOR_LEN 256
+
+int pa_extract_aor(str* _uri, str* _a)
+{
+	static char aor_buf[MAX_AOR_LEN];
+	struct sip_uri puri;
+	int user_len;
+
+	if (parse_uri(_uri->s, _uri->len, &puri) < 0) {
+		LOG(L_ERR, "pa_extract_aor(): Error while parsing Address of Record\n");
+		return -1;
+	}
+	
+	if ((puri.user.len + puri.host.len + 1) > MAX_AOR_LEN) {
+		LOG(L_ERR, "pa_extract_aor(): Address Of Record too long\n");
+		return -2;
+	}
+
+	_a->s = aor_buf;
+	_a->len = puri.user.len;
+
+	user_len = _a->len;
+
+	memcpy(aor_buf, puri.user.s, puri.user.len);
+	aor_buf[_a->len] = '@';
+	memcpy(aor_buf + _a->len + 1, puri.host.s, puri.host.len);
+	_a->len += 1 + puri.host.len;
+
+#if 0
+	if (case_sensitive) {
+		tmp.s = _a->s + user_len + 1;
+		tmp.len = puri.host.len;
+		strlower(&tmp);
+	} else {
+		strlower(_a);
+	}
+#endif
+
+	return 0;
+}
+
+int pa_handle_registration(struct sip_msg* _m, char* _domain, char* _s2)
+{
+	struct pdomain* d = (struct pdomain*)_domain;
+	struct presentity *p;
+	str p_uri;
+	str from;
+
+	LOG(L_ERR, "handle_registration() entered\n");
+	paerrno = PA_OK;
+
+	d = (struct pdomain*)_domain;
+
+	if (parse_hfs(_m, 0) < 0) {
+		paerrno = PA_PARSE_ERR;
+		LOG(L_ERR, "pa_handle_registration(): Error while parsing headers\n");
+		return -1;
+	}
+
+	from = get_from(_m)->uri;
+	if (pa_extract_aor(&from, &p_uri) < 0) {
+		LOG(L_ERR, "pa_handle_registration(): Error while extracting Address Of Record\n");
+		goto error;
+	}
+
+	LOG(L_ERR, "pa_handle_registration: from=%.*s p_uri=%.*s\n", 
+	    from.len, from.s, p_uri.len, p_uri.s);
+
+	lock_pdomain(d);
+	
+	if (find_presentity(d, &p_uri, &p) > 0) {
+	     LOG(L_ERR, "pa_handle_registration: find_presentity did not find presentity\n");
+		if (create_presentity_only(_m, d, &p_uri, &p) < 0) {
+			LOG(L_ERR, "pa_handle_registration(): Error while creating new presentity\n");
+			goto error2;
+		}
+	}
+
+	LOG(L_ERR, "pa_handle_registration about to call d->reg p=%p", p);
+	if (p)
+	     d->reg(&p->uri, &p->uri, (void*)callback, p);
+
+	LOG(L_ERR, "pa_handle_registration about to return 1");
+	unlock_pdomain(d);
+	return 1;
+	
+ error2:
+	LOG(L_ERR, "pa_handle_registration about to return -1\n");
+	unlock_pdomain(d);
+	return -1;
+ error:
+	LOG(L_ERR, "pa_handle_registration about to return -2\n");
+	return -1;
+}
+
+/*
  * Handle a subscribe Request
  */
 int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
@@ -473,7 +575,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	get_act_time();
 	paerrno = PA_OK;
 
-	if (parse_hfs(_m) < 0) {
+	if (parse_hfs(_m, 1) < 0) {
 		LOG(L_ERR, "handle_subscription(): Error while parsing message header\n");
 		goto error;
 	}
@@ -555,6 +657,7 @@ int existing_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 		event_t *event = (event_t*)(_m->event->parsed);
 		et = event->parsed;
 	} else {
+		LOG(L_ERR, "existing_subscription defaulting to EVENT_PRESENCE\n");
 		et = EVENT_PRESENCE;
 	}
 
@@ -582,6 +685,7 @@ int existing_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	
 	if (find_presentity(d, &p_uri, &p) == 0) {
 		if (find_watcher(p, &w_uri, et, &w) == 0) {
+			LOG(L_ERR, "existing_subscription() found watcher\n");
 			unlock_pdomain(d);
 			return 1;
 		}

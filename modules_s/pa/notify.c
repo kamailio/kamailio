@@ -409,6 +409,8 @@ static int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 	 * from will be put in to including tag
 	 */
 
+	LOG(L_ERR, "  send_pidf_notify\n");
+
 	if (start_pidf_doc(&body, BUF_LEN) < 0) {
 		LOG(L_ERR, "send_pidf_notify(): start_pidf_doc failed\n");
 		return -1;
@@ -512,8 +514,9 @@ static int send_xcap_change_notify(struct presentity* _p, struct watcher* _w)
 	int len = 0;
 	int presence_list_changed = _p->flags & PFLAG_PRESENCE_LISTS_CHANGED;
 	int watcherinfo_changed = _p->flags & PFLAG_WATCHERINFO_CHANGED;
-	/* clear the flag */
-	_p->flags &= ~(PFLAG_PRESENCE_LISTS_CHANGED | PFLAG_WATCHERINFO_CHANGED);
+
+	
+	LOG(L_ERR, "  send_xcap_change flags=%x\n", _p->flags);
 
 	len += sprintf(body.s + len, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n");
 	len += sprintf(body.s + len, "<documents xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n");
@@ -545,8 +548,7 @@ int send_location_notify(struct presentity* _p, struct watcher* _w)
 {
 	resource_list_t *user = _p->location_package.users;
 
-	LOG(L_ERR, "xcap_change_notify should be sent to watcher %.*s\n", 
-	    _w->uri.len, _w->uri.s);
+	LOG(L_ERR, "send_location_notify to watcher %.*s\n", _w->uri.len, _w->uri.s);
 
 	if (location_doc_start(&body, BUF_LEN) < 0) {
 		LOG(L_ERR, "send_location_notify(): start_location_doc failed\n");
@@ -614,9 +616,9 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 			return 0;
 
 		case DOC_PIDF:
+		default:
 			return send_pidf_notify(_p, _w);
 			return 0;
-		default:
 			/* inapplicable */
 		  ;
 		}

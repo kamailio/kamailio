@@ -68,16 +68,19 @@ str db_url;
 int use_place_table = 0;
 str pa_domain;
 char *presentity_table = "presentity";
+char *presentity_contact_table = "presentity_contact";
 char *watcherinfo_table = "watcherinfo";
 char *place_table = "place";
 int use_bsearch = 0;
 int use_location_package = 0;
 int new_watcher_pending = 0;
+int callback_update_db = 0;
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[]={
+	{"pa_handle_registration", pa_handle_registration,   1, subscribe_fixup, REQUEST_ROUTE },
 	{"handle_subscription",   handle_subscription,   1, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"handle_publish",        handle_publish,        1, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"existing_subscription", existing_subscription, 1, subscribe_fixup, REQUEST_ROUTE                },
@@ -99,9 +102,11 @@ static param_export_t params[]={
 	{"db_url",               STR_PARAM, &db_url.s             },
 	{"pa_domain",            STR_PARAM, &pa_domain.s          },
 	{"presentity_table",     STR_PARAM, &presentity_table     },
+	{"presentity_contact_table", STR_PARAM, &presentity_contact_table     },
 	{"watcherinfo_table",    STR_PARAM, &watcherinfo_table    },
 	{"place_table",          STR_PARAM, &place_table          },
 	{"new_watcher_pending",  INT_PARAM, &new_watcher_pending  },
+	{"callback_update_db",   INT_PARAM, &callback_update_db   },
 	{0, 0, 0}
 };
 
@@ -183,17 +188,7 @@ static int pa_mod_init(void)
 			LOG(L_ERR, "pa_mod_init(): Can't bind database module via url %s\n", db_url.s);
 			return -1;
 		}
-		
-		     /* Open database connection in parent */
-		pa_db = db_init(db_url.s);
-		if (!pa_db) {
-			LOG(L_ERR, "pa_mod_init(): Error while connecting database\n");
-			return -1;
-		} else {
-			LOG(L_ERR, "pa_mod_init(): Database connection opened successfuly\n");
-		}
 	}
-	pa_location_init();
 
 	LOG(L_CRIT, "pa_mod_init done\n");
 	return 0;
@@ -204,12 +199,14 @@ static int pa_child_init(int _rank)
 {
  	     /* Shall we use database ? */
 	if (use_db) { /* Yes */
-		if (pa_db) db_close(pa_db); /* Close connection previously opened by parent */
 		pa_db = db_init(db_url.s); /* Initialize a new separate connection */
 		if (!pa_db) {
 			LOG(L_ERR, "pa_child_init(%d): Error while connecting database\n", _rank);
 			return -1;
 		}
+
+		pa_location_init();
+
 	}
 
 	signal(SIGSEGV, pa_sig_handler);

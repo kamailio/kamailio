@@ -43,6 +43,7 @@ typedef enum paerr {
 	PA_TIMER_ERROR,   /* Error in timer */
 	PA_EXTRACT_USER,  /* Error while extracting username from R-URI */
 	PA_FROM_ERR,      /* From malformed or missing */
+	PA_TO_ERR,        /* To malformed or missing */
 	PA_SMALL_BUFFER,  /* Buffer too small */
 	PA_UNSUPP_DOC,    /* Unsupported presence document format */
 	PA_ACCEPT_PARSE,  /* Error while parsing Accept header field */

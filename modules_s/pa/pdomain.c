@@ -160,6 +160,7 @@ int timer_pdomain(pdomain_t* _d)
 
 	ptr = _d->first;
 
+	if (0) LOG(L_ERR, "timer_pdomain: _d=%s d->first=%p\n", _d->name->s, ptr);
 	while(ptr) {
 		if (timer_presentity(ptr) < 0) {
 			LOG(L_ERR, "timer_pdomain(): Error in timer_pdomain\n");

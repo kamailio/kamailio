@@ -365,7 +365,7 @@ xmlAttrPtr xmlNodeGetAttrByName(xmlNodePtr node, const char *name)
 {
 	xmlAttrPtr attr = node->properties;
 	while (attr) {
-		if (xmlStrcmp(attr->name, name) == 0)
+		if (xmlStrcasecmp(attr->name, name) == 0)
 			return attr;
 		attr = attr->next;
 	}
@@ -385,7 +385,7 @@ xmlNodePtr xmlNodeGetChildByName(xmlNodePtr node, const char *name)
 {
 	xmlNodePtr cur = node->children;
 	while (cur) {
-		if (xmlStrcmp(cur->name, name) == 0)
+		if (xmlStrcasecmp(cur->name, name) == 0)
 			return cur;
 		cur = cur->next;
 	}
@@ -397,8 +397,8 @@ xmlNodePtr xmlNodeGetNodeByName(xmlNodePtr node, const char *name, const char *n
 	xmlNodePtr cur = node;
 	while (cur) {
 		xmlNodePtr match = NULL;
-		if (xmlStrcmp(cur->name, name) == 0) {
-			if (!ns || (cur->ns && xmlStrcmp(cur->ns->prefix, ns) == 0))
+		if (xmlStrcasecmp(cur->name, name) == 0) {
+			if (!ns || (cur->ns && xmlStrcasecmp(cur->ns->prefix, ns) == 0))
 				return cur;
 		}
 		match = xmlNodeGetNodeByName(cur->children, name, ns);
@@ -432,8 +432,8 @@ void xmlNodeMapByName(xmlNodePtr node, const char *name, const char *ns,
 	if (!f)
 		return;
 	while (cur) {
-		if (xmlStrcmp(cur->name, name) == 0) {
-			if (!ns || (cur->ns && xmlStrcmp(cur->ns->prefix, ns) == 0))
+		if (xmlStrcasecmp(cur->name, name) == 0) {
+			if (!ns || (cur->ns && xmlStrcasecmp(cur->ns->prefix, ns) == 0))
 				f(cur, data);
 		}
 		/* visit children */
@@ -450,17 +450,19 @@ void xmlDocMapByName(xmlDocPtr doc, const char *name, const char *ns,
 	xmlNodeMapByName(cur, name, ns, f, data);
 }
 
-void parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *location_str,
-		str *site_str, str *floor_str, str *room_str,
-		double *xp, double *yp, double *radiusp,
-		str *packet_loss_str)
+int parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *status_str, 
+	       str *location_str, str *site_str, str *floor_str, str *room_str,
+	       double *xp, double *yp, double *radiusp,
+	       str *packet_loss_str)
 {
+     int flags = 0;
      xmlDocPtr doc = NULL;
      xmlNodePtr presenceNode = NULL;
      char *presence = NULL;
      char *sipuri = NULL;
      char *contact = NULL;
      char *basic = NULL;
+     char *status = NULL;
      char *location = NULL;
      char *site = NULL;
      char *floor = NULL;
@@ -476,6 +478,7 @@ void parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *location
      presence = xmlDocGetNodeContentByName(doc, "presence", NULL);
      contact = xmlDocGetNodeContentByName(doc, "contact", NULL);
      basic = xmlDocGetNodeContentByName(doc, "basic", NULL);
+     status = xmlDocGetNodeContentByName(doc, "status", NULL);
      location = xmlDocGetNodeContentByName(doc, "loc", NULL);
      site = xmlDocGetNodeContentByName(doc, "site", NULL);
      floor = xmlDocGetNodeContentByName(doc, "floor", NULL);
@@ -500,38 +503,54 @@ void parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *location
      if (contact_str && contact) {
 	  contact_str->len = strlen(contact);
 	  contact_str->s = strdup(contact);
+	  flags |= PARSE_PIDF_CONTACT;
      }
      if (basic_str && basic) {
 	  basic_str->len = strlen(basic);
 	  basic_str->s = strdup(basic);
+	  flags |= PARSE_PIDF_BASIC;
+     }
+     if (status_str && status) {
+	  status_str->len = strlen(status);
+	  status_str->s = strdup(status);
+	  flags |= PARSE_PIDF_STATUS;
      }
      if (location_str && location) {
 	  location_str->len = strlen(location);
 	  location_str->s = strdup(location);
+	  flags |= PARSE_PIDF_LOC;
      }
      if (site_str && site) {
 	  site_str->len = strlen(site);
 	  site_str->s = strdup(site);
+	  flags |= PARSE_PIDF_SITE;
      }
      if (floor_str && floor) {
 	  floor_str->len = strlen(floor);
 	  floor_str->s = strdup(floor);
+	  flags |= PARSE_PIDF_FLOOR;
      }
      if (room_str && room) {
 	  room_str->len = strlen(room);
 	  room_str->s = strdup(room);
+	  flags |= PARSE_PIDF_ROOM;
      }
      if (xp && x) {
 	  *xp = strtod(x, NULL);
+	  flags |= PARSE_PIDF_X;
      }
      if (yp && y) {
 	  *yp = strtod(y, NULL);
+	  flags |= PARSE_PIDF_Y;
      }
      if (radiusp && radius) {
 	  *radiusp = strtod(radius, NULL);
+	  flags |= PARSE_PIDF_RADIUS;
      }
      if (packet_loss_str && packet_loss) {
 	  packet_loss_str->len = strlen(packet_loss);
 	  packet_loss_str->s = strdup(packet_loss);
+	  flags |= PARSE_PIDF_PACKET_LOSS;
      }
+     return flags;
 }

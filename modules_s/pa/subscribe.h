@@ -50,6 +50,11 @@ int existing_subscription(struct sip_msg* _m, char* _domain, char* _s2);
 
 
 /*
+ * Handle a REGISTER Request: ensures AOR is in presentity table.
+ */
+int pa_handle_registration(struct sip_msg* _m, char* _domain, char* _s2);
+
+/*
  * Returns 1 if possibly a user agent can handle SUBSCRIBE
  * itself, 0 if it cannot for sure
  */

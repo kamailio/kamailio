@@ -164,7 +164,7 @@ int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_type, doctype_
 		int n_result_cols = 0;
 		char *package = event_package_name[watcher->event_type];
 
-		LOG(L_ERR, "db_update_presentity starting\n");
+		LOG(L_ERR, "db_new_watcher starting\n");
 		query_cols[n_query_cols] = "r_uri";
 		query_ops[n_query_cols] = OP_EQ;
 		query_vals[n_query_cols].type = DB_STR;
@@ -212,7 +212,7 @@ int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_type, doctype_
 			db_val_t *row_vals = ROW_VALUES(row);
 			str s_id = row_vals[0].val.str_val;
 			str status = row_vals[1].val.str_val;
-			str display_name = row_vals[2].val.str_val;
+			// str display_name = row_vals[2].val.str_val;
 			if (strcmp(status.s, "pending") == 0) {
 				watcher->status = WS_PENDING;
 			} else {
@@ -276,6 +276,7 @@ int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_type, doctype_
 /*
  * Read watcherinfo table from database for presentity _p
  */
+#if 0
 int db_read_watcherinfo(presentity_t *_p)
 {
 	if (use_db) {
@@ -341,7 +342,7 @@ int db_read_watcherinfo(presentity_t *_p)
 			if (!row_vals[3].nul)
 				display_name.len = strlen(display_name.s);
 
-#warning fix event type here
+#error fix event type here
 			if (find_watcher(_p, &w_uri, EVENT_PRESENCE, &watcher) == 0) {
 				if (strcmp(status.s, "pending") == 0) {
 					watcher->status = WS_PENDING;
@@ -362,6 +363,7 @@ int db_read_watcherinfo(presentity_t *_p)
 	}
 	return 0;
 }
+#endif
 
 /*
  * Release a watcher structure

@@ -49,23 +49,33 @@
 -- 
 
 drop table if exists presentity;
-create table presentity (
-	presid    int(10) unsigned NOT NULL auto_increment,
-	uri       varchar(128) NOT NULL,
-	contact   varchar(128),
-	basic     varchar(32) NOT NULL default 'offline',
-	status    varchar(32) NOT NULL default '',
-	location  varchar(128),
-	site      varchar(32),
-	floor     varchar(32),
-	room      varchar(64),
-	x         float(5,2),
-	y         float(5,2),
-	radius    float(5,2),
-	primary key(presid),
-	index uri_index (uri),
-	index location_index (location)
-);
+CREATE TABLE presentity (
+  presid int(10) unsigned NOT NULL auto_increment,
+  uri varchar(128) NOT NULL default '',
+  PRIMARY KEY  (presid),
+  KEY uri_index (uri)
+) TYPE=MyISAM;
+
+drop table if exists presentity_contact;
+CREATE TABLE presentity_contact (
+  contactid int(10) unsigned NOT NULL auto_increment,
+  presid int(10) unsigned NOT NULL,
+  basic varchar(32) NOT NULL default 'offline',
+  status varchar(32) NOT NULL default '',
+  location varchar(128) NOT NULL default '',
+  placeid int(10) default NULL,
+  site varchar(32) default NULL,
+  floor varchar(32) default NULL,
+  room varchar(64) default NULL,
+  x float(5,2) default NULL,
+  y float(5,2) default NULL,
+  radius float(5,2) default NULL,
+  contact varchar(128) default NULL,
+  PRIMARY KEY  (contactid),
+  KEY presid_index (presid),
+  KEY location_index (location),
+  KEY placeid_index (placeid)
+) TYPE=MyISAM;
 
 drop table if exists watcherinfo;
 create table watcherinfo (
@@ -127,6 +137,7 @@ create table place(
 	site                    varchar(40),
 	nestedid                int(10),
 	contains                varchar(255),
+	bugged                  int(10),
 	session_name            varchar(128),
 	session_end             datetime,
 	upstream_packet_loss    float,

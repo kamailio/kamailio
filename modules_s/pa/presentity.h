@@ -37,6 +37,7 @@
 #include "pstate.h"
 
 
+#define TUPLE_STATUS_STR_LEN (128)
 #define TUPLE_LOCATION_STR_LEN (128 + 32 + 32 + 64 + 32)
 #define TUPLE_LOCATION_LOC_OFFSET 0
 #define TUPLE_LOCATION_SITE_OFFSET 128
@@ -68,6 +69,7 @@ typedef struct location_package {
 
 typedef struct presence_tuple {
 	str contact;
+	str status;
 	pstate_t state;
 	location_t location;
 	struct presence_tuple *next;
@@ -87,6 +89,7 @@ typedef enum pflag {
 typedef struct presentity {
 	str uri;                 /* URI of presentity */
 	int event_package;       /* parsed event package */
+	int presid;              /* presid of the record in the presentity table */
 	presence_tuple_t *tuples;
 	location_package_t location_package;
 	watcher_t* watchers;     /* List of watchers */
@@ -155,7 +158,7 @@ int remove_watcher(presentity_t* _p, watcher_t* _w);
 /*
  * Find a watcher on the watcher list
  */
-int find_watcher(presentity_t* _p, str* _uri, int etc, struct watcher** _w);
+int find_watcher(presentity_t* _p, str* _uri, int _et, struct watcher** _w);
 
 /*
  * Notify all watchers on the list

@@ -76,8 +76,23 @@ int end_pidf_tuple(str* _b, int _l);
  */
 int end_pidf_doc(str* _b, int _l);
 
-void parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *location_str,
-		str *site_str, str *floor_str, str *room_str,
-		double *xp, double *yp, double *radiusp, str *packet_loss);
+/* returns flags indicating which fields were parsed */
+int parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *status_str,
+	       str *location_str,
+	       str *site_str, str *floor_str, str *room_str,
+	       double *xp, double *yp, double *radiusp, str *packet_loss);
+#define PARSE_PIDF_CONTACT (1 << 0)
+#define PARSE_PIDF_BASIC (1 << 1)
+#define PARSE_PIDF_STATUS (1 << 2)
+#define PARSE_PIDF_LOC (1 << 3)
+#define PARSE_PIDF_SITE (1 << 4)
+#define PARSE_PIDF_FLOOR (1 << 5)
+#define PARSE_PIDF_ROOM (1 << 6)
+#define PARSE_PIDF_X (1 << 7)
+#define PARSE_PIDF_Y (1 << 8)
+#define PARSE_PIDF_RADIUS (1 << 9)
+#define PARSE_PIDF_PACKET_LOSS (1 << 10)
+
+#define PARSE_PIDF_LOCATION_MASK 0x3FC
 
 #endif /* PIDF_H */
