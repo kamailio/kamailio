@@ -81,6 +81,7 @@ LISTEN		listen
 DNS		 dns
 REV_DNS	 rev_dns
 PORT	port
+MAXBUFFER maxbuffer
 CHILDREN children
 CHECK_VIA	check_via
 
@@ -153,6 +154,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{DNS}	{ count(); yylval.strval=yytext; return DNS; }
 <INITIAL>{REV_DNS}	{ count(); yylval.strval=yytext; return REV_DNS; }
 <INITIAL>{PORT}	{ count(); yylval.strval=yytext; return PORT; }
+<INITIAL>{MAXBUFFER}	{ count(); yylval.strval=yytext; return MAXBUFFER; }
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
 <INITIAL>{CHECK_VIA}	{ count(); yylval.strval=yytext; return CHECK_VIA; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }

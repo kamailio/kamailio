@@ -16,6 +16,7 @@
 
 extern char * cfg_file;
 extern unsigned short port_no;
+extern unsigned int maxbuffer;
 extern char * names[];
 extern unsigned long addresses[];
 extern int addresses_no;

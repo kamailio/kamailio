@@ -72,6 +72,8 @@ Options:\n\
     -E           Log to stderr\n\
     -V           Version number\n\
     -h           This help message\n\
+    -b nr        Maximum receive buffer size which will not be exceeded by\n\
+                 auto-probing procedure even if  OS allows\n\
 ";
 
 
@@ -96,6 +98,9 @@ void receive_stdin_loop()
 
 char* cfg_file = 0;
 unsigned short port_no = 0; /* port on which we listen */
+unsigned int maxbuffer = 128*1024; /* maximum buffer size we do not want to exceed
+				      durig the auto-probing procedure; may be
+				      re-configured */
 int children_no = 0;           /* number of children processing requests */
 int debug = 0;
 int dont_fork = 0;
@@ -260,7 +265,7 @@ int main(int argc, char** argv)
 
 	/* process command line (get port no, cfg. file path etc) */
 	opterr=0;
-	while((c=getopt(argc,argv,"f:p:l:n:rRvdDEVh"))!=-1){
+	while((c=getopt(argc,argv,"f:p:b:l:n:rRvdDEVh"))!=-1){
 		switch(c){
 			case 'f':
 					cfg_file=optarg;
@@ -272,6 +277,14 @@ int main(int argc, char** argv)
 						goto error;
 					}
 					break;
+
+			case 'b':
+					maxbuffer=strtol(optarg, &tmp, 10);
+					if (tmp &&(*tmp)){
+                                                fprintf(stderr, "bad max buffer size number: -p %s\n", optarg);
+                                                goto error;
+                                        }
+                                        break;
 			case 'l':
 					/* add a new addr. to out address list */
 					if (addresses_no < MAX_LISTEN){
