@@ -18,6 +18,15 @@ struct sr_module* modules=0;
 #ifdef STATIC_MAXFWD
 	extern struct module_exports* maxfwd_mod_register();
 #endif
+#ifdef STATIC_AUTH
+        extern struct module_exports* auth_mod_register();
+#endif
+#ifdef STATIC_RR
+        extern struct module_exports* rr_mod_register();
+#endif
+#ifdef STATIC_USRLOC
+        extern struct module_exports* usrloc_mod_register();
+#endif
 
 
 /* initializes statically built (compiled in) modules*/
@@ -29,6 +38,18 @@ int init_builtin_modules()
 	#ifdef STATIC_MAXFWD
 		register_module(maxfwd_mod_register, "built-in", 0);
 	#endif
+
+#ifdef STATIC_AUTH
+		register_module(tm_mod_register, "built-in", 0);
+#endif
+
+#ifdef STATIC_RR
+		register_module(rr_mod_register, "built-in", 0);
+#endif
+
+#ifdef STATIC_USRLOC
+		register_module(usrloc_mod_register, "built-in", 0);
+#endif
 }
 
 
@@ -62,6 +83,24 @@ int register_module(module_register register_f, char* path, void* handle)
 	return 0;
 error:
 	return ret;
+}
+
+/*
+ * per-child initialization
+ */
+int init_child(int rank)
+{
+	struct sr_module* t;
+
+	for(t = modules; t; t = t->next) {
+		if (t->exports->init_child_f) {
+			if ((t->exports->init_child_f(rank)) < 0) {
+				LOG(L_ERR, "init_child(): Initialization of child with rank %d failed\n");
+				return -1;
+			}
+		}
+	}
+	return 0;
 }
 
 

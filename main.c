@@ -330,6 +330,15 @@ int main_loop()
 		pids[0]=getpid();
 		process_bit = 1;
 		process_no=0; /*main process number*/
+		
+		     /* We will call child_init even if we
+		      * do not fork
+		      */
+		if (init_child(0) < 0) {
+			LOG(L_ERR, "init_child failed\n");
+			goto error;
+		}
+		
 		return udp_rcv_loop();
 	}else{
 		for(r=0;r<addresses_no;r++){
@@ -341,7 +350,11 @@ int main_loop()
 					goto error;
 				}
 				if (pid==0){
-					/* child */
+					     /* child */
+					if (init_child(i) < 0) {
+						LOG(L_ERR, "init_child failed\n");
+						goto error;
+					}
 					process_no=i+1; /*0=main*/
 					process_bit = 1 << i;
 #ifdef STATS
