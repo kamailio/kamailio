@@ -104,6 +104,7 @@ BEGIN {
 	ua_edgeaccess=0;
 	ua_tkc=0;
 	ua_eyep=0;
+	ua_sipimp=0;
 	ua_xx=0;
 
 	server_cisco=0
@@ -126,6 +127,22 @@ BEGIN {
 
 {ua=0; request=0;reply=0;server=0}
 
+ua==0 && /User-Agent:.*Windows RTC/ {
+	ua_msn++
+	ua=1
+}
+ua==0 && /User-Agent:.*Sip EXpress/ {
+	ua_ser++
+	ua=1
+}
+ua==0 && /User-Agent:.*Pingtel/ {
+	ua_pingtel++
+	ua=1
+}
+ua==0 && /User-Agent:.*Cisco/ {
+	ua_cisco++
+	ua=1
+}
 ua==0 && /User-Agent:.*snom/ {
 	ua_snom++
 	ua=1
@@ -134,20 +151,8 @@ ua==0 && /User-Agent:.*tkcPhone/ {
 	ua_tkc++
 	ua=1
 }
-ua==0 && /User-Agent:.*Windows RTC/ {
-	ua_msn++
-	ua=1
-}
 ua==0 && /User-Agent:.*Mitel/ {
 	ua_mitel++
-	ua=1
-}
-ua==0 && /User-Agent:.*Pingtel/ {
-	ua_pingtel++
-	ua=1
-}
-ua==0 && /User-Agent:.*Sip EXpress/ {
-	ua_ser++
 	ua=1
 }
 ua==0 && /User-Agent:.*oSIP-ua/ {
@@ -176,10 +181,6 @@ ua==0 && /User-Agent:.*EPYGI/ {
 }
 ua==0 && /User-Agent:.*Jasomi/ {
 	ua_jasomi++
-	ua=1
-}
-ua==0 && /User-Agent:.*Cisco/ {
-	ua_cisco++
 	ua=1
 }
 ua==0 && /User-Agent:.*Insipid/ {
@@ -264,6 +265,10 @@ ua==0 && /User-Agent:.*SIP EyeP Phone/ {
 }
 ua==0 && /User-Agent:.*EdgEAccEss/ {
 	ua_edgeaccess++
+	ua=1
+}
+ua==0 && /User-Agent:.*SIPimp\.org/ {
+	ua_sipimp++
 	ua=1
 }
 
@@ -660,6 +665,7 @@ END {
 	print "tkcPhone: " ua_tkc
 	print "EdgeAccess: " ua_edgeaccess
 	print "EyeP: " ua_eyep
+	print "SIPimp: " ua_sipimp
 	print "UFO: " ua_xx
 
 	print "## Servers"
