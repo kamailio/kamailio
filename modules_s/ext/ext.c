@@ -24,10 +24,11 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-03-11: New module interface (janakj)
  */
-
-
-
 
 #include <stdio.h>
 #include <string.h>
@@ -57,37 +58,31 @@ static int fixup_ext_rewrite(void** param, int param_no);
 
 
 
+/*
+ * Exported functions
+ */
+static cmd_export_t cmds[] = {
+	{"ext_rewriteuser", ext_rewriteuser, 1, fixup_ext_rewrite},
+	{"ext_rewriteuri",  ext_rewriteuri,  1, fixup_ext_rewrite},
+	{0, 0, 0, 0}
+};
 
 
+/*
+ * Exported parameters
+ */
+static param_export_t params[] = {
+	{0, 0, 0}
+};
 
-struct module_exports exports= {
+
+struct module_exports exports = {
 	"ext",
-	(char*[]){
-				"ext_rewriteuser",
-				"ext_rewriteuri"
-			},
-	(cmd_function[]){
-					ext_rewriteuser,
-					ext_rewriteuri
-					},
-	(int[]){
-				1,
-				1
-			},
-	(fixup_function[]){
-				fixup_ext_rewrite,
-				fixup_ext_rewrite
-		},
-	2,
-
-	0,    /* Module parameter names */
-	0,    /* Module parameter types */
-	0,
-	0,    /* Number of module paramers */
-
-	0,   /* module initialization function */
-	0,   /* response function */
-	0,   /* module exit function */
+	cmds,   /* Exported functions */
+	params, /* Exported parameters */
+	0,      /* module initialization function */
+	0,      /* response function */
+	0,      /* module exit function */
 	0,
 	(child_init_function) ext_child_init  /* per-child init function */
 };

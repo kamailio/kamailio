@@ -25,6 +25,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-03-11: New module interface (janakj)
  */
 
 
@@ -49,42 +53,39 @@ inline static int w_exec_msg(struct sip_msg* msg, char* cmd, char* foo);
 
 inline static void exec_shutdown();
 
+/*
+ * Exported functions
+ */
+static cmd_export_t cmds[] = {
+	{"exec_dset", w_exec_dset, 1, 0},
+	{"exec_msg",  w_exec_msg,  1, 0},
+	{0, 0, 0, 0}
+};
+
+
+/*
+ * Exported parameters
+ */
+static param_export_t params[] = {
+	{"time_to_kill", INT_PARAM, &time_to_kill},
+	{"setvars",      INT_PARAM, &setvars     },
+	{0, 0, 0}
+};
+
+
 #ifdef STATIC_EXEC
 struct module_exports exec_exports = {
 #else
 struct module_exports exports= {
 #endif
 	"exec",
-
-	/* exported functions */
-	( char*[] ) { "exec_dset", "exec_msg" },
-	( cmd_function[] ) { w_exec_dset, w_exec_msg },
-	( int[] ) { 1, 1 /* params == cmd name */ }, 
-	( fixup_function[]) { 0, 0 },
-	2, /* number of exported functions */
-
-	/* exported variables */
-	(char *[]) { /* variable names */
-		"time_to_kill", "setvars"
-	},
-
-	(modparam_t[]) { /* variable types */
-		INT_PARAM, /* time_to_kill */
-		INT_PARAM, /* set vars */
-	},
-
-	(void *[]) { /* variable pointers */
-		&time_to_kill,
-		&setvars,
-	},
-
-	2,			/* number of variables */
-
+	cmds,           /* Exported functions */
+	params,         /* Exported parameters */
 	mod_init, 	/* initialization module */
-	0,			/* response function */
+	0,		/* response function */
 	exec_shutdown,	/* destroy function */
-	0,			/* oncancel function */
-	0			/* per-child init function */
+	0,		/* oncancel function */
+	0		/* per-child init function */
 };
 
 void exec_shutdown()
