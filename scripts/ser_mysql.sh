@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh 
 #
 # $Id$
 #
@@ -13,7 +13,7 @@
 #################################################################
 # config vars
 #################################################################
-DBNAME=ser2
+DBNAME=ser
 USERNAME=ser
 DEFAULT_PW=heslo
 ROUSER=serro
@@ -259,7 +259,7 @@ CREATE TABLE pending (
 
 
 CREATE TABLE phonebook (
-  id int(10) unsigned NOT NULL increment,
+  id int(10) unsigned NOT NULL auto_increment,
   user varchar(50) NOT NULL default '',
   fname varchar(32) NOT NULL default '',
   lname varchar(32) NOT NULL default '',
