@@ -75,7 +75,7 @@ MODULE_VERSION
 
 
 
-static int cpl_run_script(struct sip_msg* msg, char* str, char* str2);
+static int cpl_invoke_script(struct sip_msg* msg, char* str, char* str2);
 static int cpl_process_register(struct sip_msg* msg, char* str, char* str2);
 static int fixup_cpl_run_script(void** param, int param_no);
 static int cpl_init(void);
@@ -87,7 +87,7 @@ static int cpl_exit(void);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"cpl_run_script", cpl_run_script, 1, fixup_cpl_run_script, REQUEST_ROUTE},
+	{"cpl_run_script", cpl_invoke_script,1,fixup_cpl_run_script,REQUEST_ROUTE},
 	{"cpl_process_register", cpl_process_register, 0, 0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
@@ -333,7 +333,9 @@ static int cpl_exit(void)
 
 
 
-static int cpl_run_script(struct sip_msg* msg, char* str1, char* str2)
+/* Params: str1 - as unsigned int - can be CPL_RUN_INCOMING
+ * or CPL_RUN_OUTGOING */
+static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 {
 	struct cpl_interpreter  *cpl_intr;
 	struct to_body          *from;
@@ -346,20 +348,20 @@ static int cpl_run_script(struct sip_msg* msg, char* str1, char* str2)
 	/* get the user_name */
 	if ( ((unsigned int)str1)&CPL_RUN_INCOMING ) {
 		/* if it's incoming -> get the user_name from new_uri/RURI/To */
-		DBG("DEBUG:cpl_run_script: tring to get user from new_uri\n");
+		DBG("DEBUG:cpl_invoke_script: tring to get user from new_uri\n");
 		if ( !msg->new_uri.s||parse_uri( msg->new_uri.s,msg->new_uri.len,&uri)
 		|| !uri.user.len )
 		{
-			DBG("DEBUG:cpl_run_script: tring to get user from R_uri\n");
+			DBG("DEBUG:cpl_invoke_script: tring to get user from R_uri\n");
 			if ( parse_uri( msg->first_line.u.request.uri.s,
 			msg->first_line.u.request.uri.len ,&uri)||!uri.user.len )
 			{
-				DBG("DEBUG:cpl_run_script: tring to get user from To\n");
+				DBG("DEBUG:cpl_invoke_script: tring to get user from To\n");
 				if (!msg->to || !get_to(msg) ||
 				parse_uri( get_to(msg)->uri.s, get_to(msg)->uri.len, &uri)
 				||!uri.user.len)
 				{
-					LOG(L_ERR,"ERROR:cpl_run_script: unable to extract user"
+					LOG(L_ERR,"ERROR:cpl_invoke_script: unable to extract user"
 					" name from RURI or To header!\n");
 					goto error;
 				}
@@ -368,15 +370,16 @@ static int cpl_run_script(struct sip_msg* msg, char* str1, char* str2)
 	} else {
 		/* if it's outgoing -> get the user_name from From */
 		/* parsing from header */
+		DBG("DEBUG:cpl_invoke_script: tring to get user from From\n");
 		if ( parse_from_header( msg )==-1 ) {
-			LOG(L_ERR,"ERROR:cpl_run_script: unable to extract URI "
+			LOG(L_ERR,"ERROR:cpl_invoke_script: unable to extract URI "
 				"from FROM header\n");
 			goto error;
 		}
 		from = (struct to_body*)msg->from->parsed;
 		/* parse the extracted uri from From */
 		if (parse_uri( from->uri.s, from->uri.len, &uri)||!uri.user.len) {
-			LOG(L_ERR,"ERROR:cpl_run_script: unable to extract user name "
+			LOG(L_ERR,"ERROR:cpl_invoke_script: unable to extract user name "
 				"from URI (From header)\n");
 			goto error;
 		}
@@ -386,6 +389,11 @@ static int cpl_run_script(struct sip_msg* msg, char* str1, char* str2)
 	if (get_user_script( db_hdl, &uri.user, &script)==-1)
 		goto error;
 
+	/* has the user a non-empty script? if not, return normaly, allowing ser to
+	 * continue its script */
+	if ( !script.s || !script.len )
+		return 1;
+
 	/* build a new script interpreter */
 	if ( (cpl_intr=new_cpl_interpreter(msg,&script))==0 )
 		goto error;
@@ -394,8 +402,15 @@ static int cpl_run_script(struct sip_msg* msg, char* str1, char* str2)
 	/* attache the user */
 	cpl_intr->user = uri.user;
 
+	/* since the script interpretation can take some time, it will be better to
+	 * send a 100 back to prevent the UAC to retransmit */
+	if ( cpl_tmb.t_reply( msg, (int)100, "Running cpl script" )!=1 ) {
+		LOG(L_ERR,"ERROR:cpl_invoke_script: unable to send 100 reply!\n");
+		goto error;
+	}
+
 	/* run the script */
-	switch (run_cpl_script( cpl_intr )) {
+	switch (cpl_run_script( cpl_intr )) {
 		case SCRIPT_DEFAULT:
 			free_cpl_interpreter( cpl_intr );
 			return 1; /* execution of ser's script will continue */

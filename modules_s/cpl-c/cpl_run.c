@@ -823,91 +823,91 @@ static inline int run_default( struct cpl_interpreter *intr )
 
 
 
-int run_cpl_script( struct cpl_interpreter *intr )
+int cpl_run_script( struct cpl_interpreter *intr )
 {
 	do {
 		check_overflow_by_offset( SIMPLE_NODE_SIZE(intr->ip), intr, error);
 		switch ( NODE_TYPE(intr->ip) ) {
 			case CPL_NODE:
-				DBG("DEBUG:run_cpl_script: processing CPL node \n");
+				DBG("DEBUG:cpl_run_script: processing CPL node \n");
 				intr->ip = run_cpl_node( intr );
 				break;
 			case ADDRESS_SWITCH_NODE:
-				DBG("DEBUG:run_cpl_script: processing address-switch node\n");
+				DBG("DEBUG:cpl_run_script: processing address-switch node\n");
 				intr->ip = run_address_switch( intr );
 				break;
 			case STRING_SWITCH_NODE:
-				DBG("DEBUG:run_cpl_script: processing string-switch node\n");
+				DBG("DEBUG:cpl_run_script: processing string-switch node\n");
 				intr->ip = run_string_switch( intr );
 				break;
 			case PRIORITY_SWITCH_NODE:
-				DBG("DEBUG:run_cpl_script: processing priority-switch node\n");
+				DBG("DEBUG:cpl_run_script: processing priority-switch node\n");
 				intr->ip = run_priority_switch( intr );
 				break;
 			case TIME_SWITCH_NODE:
-				DBG("DEBUG:run_cpl_script: processing time-switch node\n");
+				DBG("DEBUG:cpl_run_script: processing time-switch node\n");
 				intr->ip = run_time_switch( intr );
 				break;
 			case LANGUAGE_SWITCH_NODE:
-				DBG("DEBUG:run_cpl_script: processing language-switch node\n");
+				DBG("DEBUG:cpl_run_script: processing language-switch node\n");
 				intr->ip = run_language_switch( intr );
 				break;
 			case LOOKUP_NODE:
-				DBG("DEBUG:run_cpl_script: processing lookup node\n");
+				DBG("DEBUG:cpl_run_script: processing lookup node\n");
 				intr->ip = run_lookup( intr );
 				break;
 			case LOCATION_NODE:
-				DBG("DEBUG:run_cpl_script: processing location node\n");
+				DBG("DEBUG:cpl_run_script: processing location node\n");
 				intr->ip = run_location( intr );
 				break;
 			case REMOVE_LOCATION_NODE:
-				DBG("DEBUG:run_cpl_script: processing remove_location node\n");
+				DBG("DEBUG:cpl_run_script: processing remove_location node\n");
 				intr->ip = run_remove_location( intr );
 				break;
 			case PROXY_NODE:
-				DBG("DEBUG:run_cpl_script: processing proxy node\n");
+				DBG("DEBUG:cpl_run_script: processing proxy node\n");
 				intr->ip = run_proxy( intr );
 				break;
 			case REJECT_NODE:
-				DBG("DEBUG:run_cpl_script: processing reject node\n");
+				DBG("DEBUG:cpl_run_script: processing reject node\n");
 				intr->ip = run_reject( intr );
 				break;
 			case REDIRECT_NODE:
-				DBG("DEBUG:run_cpl_script: processing redirect node\n");
+				DBG("DEBUG:cpl_run_script: processing redirect node\n");
 				intr->ip = run_redirect( intr );
 				break;
 			case LOG_NODE:
-				DBG("DEBUG:run_cpl_script: processing log node\n");
+				DBG("DEBUG:cpl_run_script: processing log node\n");
 				intr->ip = run_log( intr );
 				break;
 			case MAIL_NODE:
-				DBG("DEBUG:run_cpl_script: processing mail node\n");
+				DBG("DEBUG:cpl_run_script: processing mail node\n");
 				intr->ip = run_mail( intr );
 				break;
 			case SUB_NODE:
-				DBG("DEBUG:run_cpl_script: processing sub node\n");
+				DBG("DEBUG:cpl_run_script: processing sub node\n");
 				intr->ip = run_sub( intr );
 				break;
 			default:
-				LOG(L_ERR,"ERROR:run_cpl_script: unknown type node (%d)\n",
+				LOG(L_ERR,"ERROR:cpl_run_script: unknown type node (%d)\n",
 					NODE_TYPE(intr->ip));
 				goto error;
 		}
 
 		if (intr->ip==CPL_RUNTIME_ERROR) {
-			LOG(L_ERR,"ERROR:cpl_c:run_cpl_script: runtime error\n");
+			LOG(L_ERR,"ERROR:cpl_c:cpl_run_script: runtime error\n");
 			return SCRIPT_RUN_ERROR;
 		} else if (intr->ip==CPL_SCRIPT_ERROR) {
-			LOG(L_ERR,"ERROR:cpl_c:run_cpl_script: script error\n");
+			LOG(L_ERR,"ERROR:cpl_c:cpl_run_script: script error\n");
 			return SCRIPT_FORMAT_ERROR;
 		} else if (intr->ip==DEFAULT_ACTION) {
-			DBG("DEBUG:cpl_c:run_cpl_script: running default action\n");
+			DBG("DEBUG:cpl_c:cpl_run_script: running default action\n");
 			return run_default(intr);
 		} else if (intr->ip==EO_SCRIPT) {
-			DBG("DEBUG:cpl_c:run_cpl_script: script interpretation done!\n");
+			DBG("DEBUG:cpl_c:cpl_run_script: script interpretation done!\n");
 			return SCRIPT_END;
 		} else if (intr->ip==CPL_TO_CONTINUE) {
-			DBG("DEBUG:cpl_c:run_cpl_script: done for the moment; waiting "
+			DBG("DEBUG:cpl_c:cpl_run_script: done for the moment; waiting "
 				"after signaling!\n");
 			return SCRIPT_TO_BE_CONTINUED;
 		}

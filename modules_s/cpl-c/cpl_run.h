@@ -93,7 +93,7 @@ struct cpl_interpreter* new_cpl_interpreter( struct sip_msg *msg, str *script);
 
 void free_cpl_interpreter(struct cpl_interpreter *intr);
 
-int run_cpl_script( struct cpl_interpreter *cpl_intr );
+int cpl_run_script( struct cpl_interpreter *cpl_intr );
 
 #endif
 

@@ -32,6 +32,12 @@
 
 
 
+
+/* gets from database the cpl script in binary format; the returned script is
+ * allocated in shared memory
+ * Returns:  1 - success
+ *          -1 - error
+ */
 int get_user_script( db_con_t *db_hdl, str *user, str *script)
 {
 	db_key_t   keys_cmp[] = {"user"};
@@ -40,7 +46,7 @@ int get_user_script( db_con_t *db_hdl, str *user, str *script)
 	db_res_t   *res = 0 ;
 	char       tmp;
 
-	/* it shouldn't be aproblem verwriting a \0 at the end of user name; the
+	/* it shouldn't be aproblem overwriting a \0 at the end of user name; the
 	 * user name is part of the sip_msg struct received -  that is allocated in
 	 * process private mem - no sync problems; also there is all the time some
 	 * extra characters after the user name - at least the EOH */
@@ -57,26 +63,27 @@ int get_user_script( db_con_t *db_hdl, str *user, str *script)
 	user->s[user->len] = tmp;
 
 	if (res->n==0) {
-		LOG(L_ERR,"ERROR:get_user_script: user <%.*s> not found in databse\n",
-			user->len, user->s);
-		goto error;
-	}
-
-	if (res->rows[0].values[0].nul) {
-		DBG("DEBUG:get_user_script: user <%.*s> has a NULL script\n",
-			user->len, user->s);
+		DBG("DEBUG:get_user_script: user <%.*s> not found in db -> probably "
+			"he has no script\n",user->len, user->s);
 		script->s = 0;
 		script->len = 0;
 	} else {
-		DBG("DEBUG:get_user_script: we got the script len=%d\n",
-			res->rows[0].values[0].val.blob_val.len);
-		script->len = res->rows[0].values[0].val.blob_val.len;
-		script->s = shm_malloc( script->len );
-		if (!script->s) {
-			LOG(L_ERR,"ERROR:cpl-c:get_user_script: no more free memory\n");
-			goto error;
+		if (res->rows[0].values[0].nul) {
+			DBG("DEBUG:get_user_script: user <%.*s> has a NULL script\n",
+				user->len, user->s);
+			script->s = 0;
+			script->len = 0;
+		} else {
+			DBG("DEBUG:get_user_script: we got the script len=%d\n",
+				res->rows[0].values[0].val.blob_val.len);
+			script->len = res->rows[0].values[0].val.blob_val.len;
+			script->s = shm_malloc( script->len );
+			if (!script->s) {
+				LOG(L_ERR,"ERROR:cpl-c:get_user_script: no more free sh_mem\n");
+				goto error;
+			}
+			memcpy(script->s,res->rows[0].values[0].val.blob_val.s,script->len);
 		}
-		memcpy(script->s,res->rows[0].values[0].val.blob_val.s,script->len);
 	}
 
 	db_free_query( db_hdl, res);
@@ -152,6 +159,7 @@ error:
 }
 
 
+
 /* delete from database the entiry record for a given user - if a user has no
  * script, he will be removed complitly from db; users without script are not
  * allowed into db ;-)
@@ -176,3 +184,4 @@ int rmv_from_db(db_con_t *db_con, char *usr)
 
 	return 1;
 }
+
