@@ -57,6 +57,7 @@ static struct module_exports mf_exports= {
 struct module_exports* mod_register()
 {
 	fprintf(stderr, "maxfwd - registering\n");
+	mf_startup();
 	return &mf_exports;
 }
 
@@ -70,6 +71,11 @@ static int fixup_add_maxfwd_header(void** param, int param_no)
 	if (param_no==1){
 		code=str2s(*param, strlen(*param), &err);
 		if (err==0){
+			if (code>255){
+				LOG(L_ERR, "MAXFWD module:fixup_add_maxfwd_header: "
+					"number to big <%d> (max=255)\n",code);
+				return E_UNSPEC;
+			}
 			free(*param);
 			*param=(void*)code;
 			return 0;

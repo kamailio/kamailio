@@ -1,41 +1,101 @@
 #include "mf_funcs.h"
 #include "../../mem/mem.h"
+#include "../../ut.h"
+
+
+#define MF_UNDEFINE  (struct hdr_field*)-1
+#define MF_NULL           (struct hdr_field*)0
+
+
+
+int                mf_global_id;
+int                mf_hdr_value;
+
+
+
+#define search_for_mf_hdr( _msg , _error ) \
+	do{\
+		if ( mf_global_id!=(_msg)->id ||\
+		(_msg)->maxforwards==MF_UNDEFINE) {\
+			mf_global_id = (_msg)->id;\
+			(_msg)->maxforwards = MF_UNDEFINE;\
+			if  ( parse_headers( _msg , HDR_MAXFORWARDS )==-1 ){\
+				LOG( L_ERR , "ERROR: search_for_mf_header :"\
+				  " parsing MAX_FORWARD header failed!\n");\
+				(_msg)->maxforwards = MF_NULL;\
+				goto _error;\
+			}\
+			if ( (_msg)->maxforwards==MF_UNDEFINE )\
+				(_msg)->maxforwards=MF_NULL;\
+		}\
+	}while(0);
+
+
+
+
+int mf_startup()
+{
+	mf_global_id = 0;
+	return 1;
+}
+
+
+
+
+
 
 
 int decrement_maxfed( struct sip_msg* msg )
 {
-   return 1;
+	char    c;
+	str mf_s;
+
+	search_for_mf_hdr( msg , error );
+	/*did we found the header after parsing?*/
+	if ( msg->maxforwards==MF_NULL )
+	{
+		LOG( L_ERR , "ERROR: decrement_maxfwd :"
+		  " MAX_FORWARDS header not found !\n");
+		goto error;
+	}
+
+	mf_s.s    = msg->maxforwards.s;
+	mf_s.len = msg->maxforwards.len;
+	/*left trimming*/
+	while( mf_s.len && ( (c=mf_s.s[0])==0||c==' '||c=='\n'||c=='\r'||c=='\t') )
+	{
+		mf_s.len--;
+		mf_s.s++;
+	}
+	/*right trimming*/
+	while( mf_s.len && ( (c=mf_s.s[mf_s.len-1])==0||c==' '||c=='\n'||c=='\r'||c=='\t') )
+		mf_s.len--;
+	
+
+	return 1;
+error:
+	return -1;
 }
 
 
 
 int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
 {
-	unsigned int len, val_len, foo;
-	char               *buf, *bar;
+	unsigned int  len,a,b,c;
+	char               *buf;
 	struct lump* anchor;
-               int                   i;
 
-	/* is there another MAX_FORWARD header? */
-	if  ( parse_headers( msg , HDR_MAXFORWARDS )==-1 )
-	{
-		LOG( L_ERR , "ERROR: add_maxfwd_header :"
-		  " parsing MAX_FORWARD header failed!\n");
-		goto error;
-	}
-
+	search_for_mf_hdr( msg , error );
 	/*did we found the header after parsing?*/
-	if ( msg->maxforwards!=0 )
+	if ( msg->maxforwards!=MF_NULL )
 	{
 		LOG( L_ERR , "ERROR: add_maxfwd_header :"
-		  " MAX_FORWARDS header already exists !\n");
+		  " MAX_FORWARDS header already exists (%x) !\n",msg->maxforwards);
 		goto error;
 	}
 
 	/* constructing the header */
-	val_len = 1;
-	len = 14 /*"MAX-FORWARDS: "*/+ CRLF_LEN + 1;
-	for(foo=val;foo>=10; len++,foo=foo/10,val_len++);
+	len = 14 /*"MAX-FORWARDS: "*/+ CRLF_LEN + 3/*val max on 3 digits*/;
 
 	buf = (char*)pkg_malloc( len );
 	if (!buf) {
@@ -43,14 +103,12 @@ int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
 		  "No memory left\n");
 		return -1;
 	}
-	bar = buf;
-	memcpy( bar , "Max-Forwards: ", 14 );
-               DBG("DEBUG: MAX_FORWARD: len=%d\n",val_len);
-	bar += 14 ;
-	for(foo=val,i=0;i<val_len; foo=foo/10,i++  )
-		*(bar+val_len-i-1) = '0' + foo - 10*(foo/10);
-	bar += val_len;
-	memcpy( bar , CRLF , CRLF_LEN );
+	memcpy( buf , "Max-Forwards: ", 14 );
+	len = 14 ;
+	len += btostr( buf+len , val );
+	memcpy( buf+len , CRLF , CRLF_LEN );
+	len +=CRLF_LEN;
+
 
 	/*inserts the header at the begining of the message*/
 	anchor = anchor_lump(&msg->add_rm, msg->headers->name.s - msg->buf, 0 , 0);
@@ -66,7 +124,7 @@ int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
 		goto error1;
 	}
 
-
+	mf_hdr_value = val;
 	return 1;
 
 error1:
