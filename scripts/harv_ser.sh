@@ -33,7 +33,8 @@ if [ "$1" = "all" ] ; then
 else
 	CURRENT=`ls -t $LOGDIR/sip.* | head -1`
 fi
-echo "Log: $CURRENT"
+echo "Log: `ls -l $CURRENT`"
+echo "Date: `date`"
 
 #cat $CURRENT | ./ser_harvest.awk 
 
@@ -82,7 +83,7 @@ BEGIN {
 	ua_jasomi=0;
 	ua_cisco=0;
 	ua_insipid=0;
-	ua_hostip=0;
+	ua_hotsip=0;
 	ua_mxsf=0;
 	ua_grandstream=0;
 	ua_tellme=0;
@@ -94,6 +95,10 @@ BEGIN {
 	ua_polycom=0;
 	ua_csco=0;
 	ua_leader=0;
+	ua_nebula=0;
+	ua_yamaha=0;
+	ua_magicppc=0;
+	ua_scs=0;
 	ua_xx=0;
 
 	server_cisco=0
@@ -213,6 +218,22 @@ ua==0 && /User-Agent:.*CSCO/ {
 }
 ua==0 && /User-Agent:.*LeaderSIP/ {
 	ua_leader++
+	ua=1
+}
+ua==0 && /User-Agent:.*Nebula/ {
+	ua_nebula++
+	ua=1
+}
+ua==0 && /User-Agent:.*YAMAHA/ {
+	ua_yamaha++
+	ua=1
+}
+ua==0 && /User-Agent:.*MagicPPC/ {
+	ua_magicppc++
+	ua=1
+}
+ua==0 && /User-Agent:.*SCS/ {
+	ua_scs++
 	ua=1
 }
 
@@ -582,7 +603,9 @@ END {
 	print "Tellme: " ua_tellme " PocketSipM: " ua_pocketsipm 
 	print "eStara: " ua_estara " Vovida: " ua_vovida 
 	print "jSIP: " ua_jsip " Nortel: " ua_nortel " Polycom: " ua_polycom
-	print "Leader: " ua_leader " csco: " ua_csco
+	print "Leader: " ua_leader " csco: " ua_csco " Nebula: " ua_nebula
+	print "MagicPPC: " ua_magicppc " SCS: " ua_scs 
+	print "Yamaha: " ua_yamaha 
 	print "UFO: " ua_xx
 
 	print "## Servers"
