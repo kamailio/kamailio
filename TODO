@@ -1,0 +1,20 @@
+$Id$
+
+- better Via parsing (handle ' ' in uri, eg: foo.bar : 1234 ; received=) and
+ ipv6 addresses ([fec0:aa::01]).
+
+High priority:
+- reply ("response line")
+- default route ?
+- add To-tag
+- add User-Agent
+- drop ACKs for our replies
+- icmp error handling
+- ipv6 support
+
+Low priority:
+- loop detection
+- cfg. file reload
+- flags for using names or ip adresses in Via ?
+
+
