@@ -44,7 +44,7 @@
 
 #define MAX_CONTACT_BUFFER 1024
 
-#define E_INFO "Warning: "
+#define E_INFO "P-Registrar-Error: "
 #define E_INFO_LEN (sizeof(E_INFO) - 1)
 
 static char b[MAX_CONTACT_BUFFER];
