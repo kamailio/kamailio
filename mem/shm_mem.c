@@ -89,7 +89,7 @@ void* _shm_resize( void* p , unsigned int s)
 	#ifdef __SUNPRO_C
 		/*no warning support on Sun cc */
 	#else
-		#ifdef 0
+		#ifdef _NO_NO_NO
 			#warning shm_resize performs suboptimally without VQ_MALLOC!
 		#endif
 	#endif
