@@ -6,6 +6,14 @@ This is a collection of issues which have shown up
 since the version 0.8.8 was released.
 
 ---------------------------------------------------------------
+Desc: sendto problems on FreeBSD
+      (when using tm sendto fails because of bad sockaddr len passed
+        to it)
+BugId: n/a
+Workaround:  update from cvs or  apply the following patch: 
+      http://www.mobile-ip.de/~andrei/ser/update_sock_struct_from_ip.patch
+CVS status:  fixed
+---------------------------------------------------------------
 Desc: full ipv6 addresses (w/o ::) are converted to 0:0:0:0:0:0:0
       (ser will listen on :: instead of the specified address)
 BugId: n/a
