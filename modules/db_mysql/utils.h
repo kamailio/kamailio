@@ -46,14 +46,4 @@ int time2mysql(time_t _time, char* _result, int _res_len);
 time_t mysql2time(const char* _str);
 
 
-/*
- * Parse a mysql database URL of form 
- * mysql://[username[:password]@]hostname[:port]/database
- *
- * Returns 0 if parsing was successful and -1 otherwise
- */
-int parse_mysql_url(char* _url, char** _user, char** _pass,
-		    char** _host, char** _port, char** _db);
-
-
 #endif /* UTILS_H */
