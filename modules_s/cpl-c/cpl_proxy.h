@@ -149,9 +149,15 @@ error:
 
 static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 {
-	struct cpl_interpreter *intr = (struct cpl_interpreter*)(ps->param);
+	struct cpl_interpreter *intr = (struct cpl_interpreter*)(*(ps->param));
 	struct location        *loc  = 0;
 	int rez;
+
+	if (intr==0) {
+		LOG(L_WARN,"WARNING:cpl-c:reply_callback: param=0 for callback %d,"
+			" transaction=%p \n",type,t);
+		return;
+	}
 
 	if (type&TMCB_RESPONSE_OUT) {
 		/* the purpose of the final reply is to trash down the interpreter
@@ -163,6 +169,8 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 			ps->code);
 			/* CPL interpretation done, call established -> destroy */
 			free_cpl_interpreter( intr );
+			/* set to zero the param callback*/
+			*(ps->param) = 0;
 		}
 		return;
 	} else if (!type&TMCB_ON_FAILURE) {
@@ -282,6 +290,8 @@ error:
 	/* in case of error the default response choosed by ser at the last
 	 * proxying will be forwarded to the UAC */
 	free_cpl_interpreter( intr );
+	/* set to zero the param callback*/
+	*(ps->param) = 0;
 	return;
 }
 
