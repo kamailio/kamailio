@@ -110,8 +110,11 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 		_dcache = _dcache->next;
 	}
 	if(!dbt_is_database(_s))
+	{
+		DBG("DBT:dbt_cache_get_db: database [%.*s] does not exists!\n", 
+				_s->len, _s->s);
 		goto done;
-
+	}
 	DBG("DBT:dbt_cache_get_db: new db!\n");
 	
 	_dcache = (dbt_cache_p)shm_malloc(sizeof(dbt_cache_t));

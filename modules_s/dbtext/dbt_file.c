@@ -151,17 +151,17 @@ dbt_table_p dbt_load_file(str *tbn, str *dbn)
 					case 's':
 					case 'S':
 						colp->type = DB_STR;
-						DBG("DBT: column is STR!\n");
+						DBG("DBT: column[%d] is STR!\n", ccol+1);
 					break;
 					case 'i':
 					case 'I':
 						colp->type = DB_INT;
-						DBG("DBT: column is INT!\n");
+						DBG("DBT: column[%d] is INT!\n", ccol+1);
 					break;
 					case 'd':
 					case 'D':
 						colp->type = DB_DOUBLE;
-						DBG("DBT: column is DOUBLE!\n");
+						DBG("DBT: column[%d] is DOUBLE!\n", ccol+1);
 					break;
 					default:
 						DBG("DBT: wrong column type!\n");
@@ -261,7 +261,9 @@ dbt_table_p dbt_load_file(str *tbn, str *dbn)
 						dtval.val.int_val = 0;
 						dtval.type = DB_INT;
 
-						if(c==DBT_DELIM)
+						if(c==DBT_DELIM || 
+								(ccol==dtp->nrcols-1
+								 && (c==DBT_DELIM_R || c==EOF)))
 							dtval.nul = 1;
 						else
 						{
@@ -297,7 +299,9 @@ dbt_table_p dbt_load_file(str *tbn, str *dbn)
 						dtval.val.double_val = 0.0;
 						dtval.type = DB_DOUBLE;
 
-						if(c==DBT_DELIM)
+						if(c==DBT_DELIM || 
+								(ccol==dtp->nrcols-1
+								 && (c==DBT_DELIM_R || c==EOF)))
 							dtval.nul = 1;
 						else
 						{
@@ -345,7 +349,9 @@ dbt_table_p dbt_load_file(str *tbn, str *dbn)
 						dtval.type = DB_STR;
 						
 						bp = 0;
-						if(c==DBT_DELIM)
+						if(c==DBT_DELIM || 
+								(ccol == dtp->nrcols-1
+								 && (c == DBT_DELIM_R || c==EOF)))
 							dtval.nul = 1;
 						else
 						{
