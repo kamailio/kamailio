@@ -48,6 +48,9 @@ rr		regular		 stable		Record-Routing
 sl		regular		 stable		Stateless Replies
 (bia)
 
+snmp	experimental alpha		SNMP Management
+(rba)
+
 sms		regular		 stable		SMS gateway
 (bia)								-tm
 
