@@ -104,7 +104,7 @@ static int print_ul_stats(FILE *reply_file)
 int static ul_stats_cmd( FILE *pipe, char *response_file )
 {
 	FILE *reply_file;
-
+	
 	reply_file=open_reply_pipe(response_file);
 	if (reply_file==0) {
 		LOG(L_ERR, "ERROR: ul_stats: file not opened\n");
@@ -315,7 +315,7 @@ int static ul_rm( FILE *pipe, char *response_file )
 		LOG(L_ERR, "ERROR: ul_rm: table name expected\n");
 		return -1;
 	}
-	if (!read_line(user, MAX_TABLE, pipe, &aor.len) || aor.len==0) {
+	if (!read_line(user, MAX_USER, pipe, &aor.len) || aor.len==0) {
 		fifo_reply(response_file, 
 			   "ERROR: ul_rm: user name expected\n");
 		LOG(L_ERR, "ERROR: ul_rm: user name expected\n");
@@ -365,7 +365,7 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 		LOG(L_ERR, "ERROR: ul_rm_contact: table name expected\n");
 		return -1;
 	}
-	if (!read_line(user, MAX_TABLE, pipe, &aor.len) || aor.len==0) {
+	if (!read_line(user, MAX_USER, pipe, &aor.len) || aor.len==0) {
 		fifo_reply(response_file, 
 			   "ERROR: ul_rm_contact: user name expected\n");
 		LOG(L_ERR, "ERROR: ul_rm_contact: user name expected\n");
@@ -438,6 +438,100 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 }
 
 
+/*
+ * Build Contact HF for reply
+ */
+static inline int print_contacts(FILE* _o, ucontact_t* _c)
+{
+	int ok = 0;
+
+	while(_c) {
+		if (_c->expires > act_time) {
+			ok = 1;
+			fprintf(_o, "<%.*s>;q=%-3.2f;expires=%d\n",
+				_c->c.len, _c->c.s,
+				_c->q, (int)(_c->expires - act_time));
+		}
+
+		_c = _c->next;
+	}
+
+	return ok;
+}
+
+
+static inline int ul_show_contact(FILE* pipe, char* response_file)
+{
+	char table[MAX_TABLE];
+	char user[MAX_USER];
+	FILE* reply_file;
+	udomain_t* d;
+	urecord_t* r;
+	int res;
+	str t, aor;
+
+	if (!read_line(table, MAX_TABLE, pipe, &t.len) || t.len ==0) {
+		fifo_reply(response_file, 
+			   "ERROR: ul_show_contact: table name expected\n");
+		LOG(L_ERR, "ERROR: ul_show_contact: table name expected\n");
+		return -1;
+	}
+	if (!read_line(user, MAX_USER, pipe, &aor.len) || aor.len==0) {
+		fifo_reply(response_file, 
+			   "ERROR: ul_show_contact: user name expected\n");
+		LOG(L_ERR, "ERROR: ul_show_contact: user name expected\n");
+		return -1;
+	}
+
+	aor.s = user;
+	t.s = table;
+	
+	find_domain(&t, &d);
+
+	if (d) {
+		lock_udomain(d);	
+
+		res = get_urecord(d, &aor, &r);
+		if (res < 0) {
+			fifo_reply(response_file, "ERROR: Error while looking for username %s in table %s\n", user, table);
+			LOG(L_ERR, "ERROR: ul_show_contact: Error while looking for username %s in table %s\n", user, table);
+			unlock_udomain(d);
+			return -1;
+		}
+		
+		if (res > 0) {
+			fifo_reply(response_file, "Username %s in table %s not found\n", user, table);
+			unlock_udomain(d);
+			return -1;
+		}
+		
+		get_act_time();
+
+		reply_file=open_reply_pipe(response_file);
+		if (reply_file==0) {
+			LOG(L_ERR, "ERROR: ul_show_contact: file not opened\n");
+			unlock_udomain(d);
+			return -1;
+		}
+
+		if (!print_contacts(reply_file, r->contacts)) {
+			unlock_udomain(d);
+			fprintf(reply_file, "No registered contacts found\n");
+			fclose(reply_file);
+			return -1;
+		}
+
+		fclose(reply_file);
+		unlock_udomain(d);
+		return 1;
+	} else {
+		fifo_reply(response_file, "table (%s) not found\n", table);
+		return -1;
+	}
+}
+
+
+
 int init_ul_fifo( void ) 
 {
 	if (register_fifo_cmd(ul_stats_cmd, UL_STATS, 0) < 0) {
@@ -470,6 +564,12 @@ int init_ul_fifo( void )
 		LOG(L_CRIT, "cannot register ul_add\n");
 		return -1;
 	}
+
+	if (register_fifo_cmd(ul_show_contact, UL_SHOW_CONTACT, 0) < 0) {
+		LOG(L_CRIT, "cannot register ul_show_contact\n");
+		return -1;
+	}
+
 
 	return 1;
 }
