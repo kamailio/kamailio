@@ -1,2 +1,19 @@
-This directory contains short memos documenting design decisions
-made in ser or accompanying applications.
+This directory contains short technical memos documenting 
+technical decisions made or planned to be made in ser or 
+accompanying applications. The memos serve as requests
+for comments in the literal sense (not to be confused
+with IETF's RFCs).
+
+The documents here are drafts, for whose technical maturity
+no guarantee can be provided.  They may advocate non-workable
+design ideas, frequently change, or be replaced by better
+technology suggestions. They may or may not be implemented.
+
+The memo texts follows IETF traditions: they are encoded
+in plain ASCII. Their filenames consists of
+ - tmemo (=technical memo -- to avoid confusion with IETF prefixes)
+ - author id
+ - text id
+For example: tmemo-johndoe-backtobackua.txt
+No version numbers are used in filename -- these are displayed 
+in text and assigned by CVS server. 

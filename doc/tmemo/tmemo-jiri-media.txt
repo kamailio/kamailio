@@ -1,0 +1,395 @@
+$Id$
+
+
+Draft Distributed Media Server Architecture
+===========================================
+
+Jiri Kuthan, iptel.org, January 2003
+
+
+Abstract
+--------
+
+We describe design considerations made when expanding voicemail 
+application to a more general media server. The objective of
+media server is to bind voice to SIP applications with optional
+support of other tools (SIP SUB/NOT, mysql, TTS, etc.) It has
+to be configurable in such a way it can act in different component
+roles: click-to-dial server, voicemail server, conferencing server, 
+text-to-speech anouncement server, etc.
+
+TOC
+---
+
+Section 1, Scenarios and Component Models, explains background 
+assumptions on how services can be composed using Rosenberg-advocated 
+model. This section is essential to understanding how a media
+server can be plugged-in in a SIP network consisting of multiple
+components, each delivering a part of a complex service. The section 
+also suggests a decentralized architectural improvement for connecting 
+SIP components without a need for a B2BUA, a technology we consider 
+suboptimal.  (This network architecture puts only very little addition
+requirements on the media server.)
+
+
+Section 2, Media Server Requirements, explains basic requirements
+a media server needs to fulful to make a good job in the component
+architecture. Design ideas for server's key part, a programming
+script, are explained in section 3.
+
+Related work, references and example scripts are attached in
+appendices.
+
+
+
+1) Targeted Scenarios and Component Model
+--------------------------------------
+Many application scenarios can provide a pleasant experience to users 
+when users are played explanatory messages or users' voice feedback 
+can affect service logic. That is what media servers are basically
+good for. The whole service logic may be complex and composed of multiple 
+stages (initial anouncement, PIN verification, text-to-speech) which 
+form together a longer conversation. The individual stages may be 
+implemented as parts of a single media server or distributed accross 
+specialized (or specially configured instances of the same) media servers.
+
+Examples of such multi-stage conversations are voicemail, conferencing, 
+click-to-dial, and prepaid calls. Some of these scenarios have been 
+addressed in J. Rosenberg's disseration and an almost identical Internet 
+Draft co-authored by P. Mataga [components]. (See also [featureinteraction]). 
+They proposed a component model, in which a B2BUA faces a caller on its 
+UAS part, and connects to different SIP devices on its UAC part. This 
+B2BUA, so-call call controller, acts as a glue: it connects all possible 
+SIP-enabled application components together. It maintains a "service 
+state machines" which defines how to link components with each other 
+as a session proceeds. It uses HTTP as a complementary protocol for 
+the components to report on their progress to the controller. For example, 
+the controller may first connect on caller's behalf to a "pre-paid prompt 
+component", which queries user's PIN and reports it to the controller. 
+On success, the controller can then hand-off the call to a PSTN gateway.
+
+This architecture is extremelly good in that it introduces distributed 
+components. Decomposition, an imporant design principle, is performed 
+in a fair, peer-2-peer manner that allows linking SIP devices in
+a very flexible way.
+
+The biggest shortcoming of this architecture is imho its central piece, 
+the controller. It is simply too central. A B2BUA design  inherently causes 
+many concerns: security, scalability, and reliability ones. B2BUA solutions 
+proposed in 3pcc draft [3pcc] by Rosenberg have several signaling drawbacks 
+too: tricky media matching (flow III), backwards compatibility
+(flow IV), etc. There is also the economical aspect: a B2BUA
+costs money or development effort.
+
+We believe it is beneficial to avoid such B2BUA constructs. The mechanism
+we are advocating is distributing the service state machine accross 
+participating components. With such a scheme, it is the current component
+that decides what to do next, i.e., when to proceed to which next component.
+A caller contacts an initial component (say a PIN prompting media server) 
+identified by an URI, which is in fact an identifier of the initial service 
+state. An initial conversation is carried out then ("give me your PIN: 
+1-2-3-4"). The component collects the PIN and when finished, it passes 
+over to the next component. There is a choice to verify the PIN in the 
+first component and pass over the final authorization status ("no" or 
+"yes" or "yes but no longer than 5 mintues call") or to pass the PIN 
+and leave its authorization to the next component. 
+
+This construct is more distributed: the controller permanently involved
+in caller's conversation is gone. It is always the current component
+that decides what to do next. There are alway only two parties in 
+a relationship: caller and the current component. "middlebox" B2BUA
+is away.
+
+Another benefit of this more e2e-oriented approach is a better way
+of dealing with caller's preferences. Caller preferences are about the 
+ability to gain user's consent with transitions in conversation -- e.g., 
+is it acceptable for a caller to be transferred to a CIA server? With
+the REFER approach, all transition decisions are actually made
+by client, which is good. Other solutions, in which a downstream
+entity decides on caller's behalf are imho too limiting. They
+require the caller to upload his preferences in a standardized
+format to the upstream client. As the preference space is almost
+infinitely big, the way of standardizing caller's preferences does
+not seem too beneficial to us. There may be always some preferences,
+which the preference format does not capture. Make it simple and
+allow caller to decide on his own behalf. He is responsible, know
+what he wants and possibly does not trust the upstream client
+to interpret his preferences as desired.
+
+Mechanically, the transition to the next component can be easily
+achieved using REFER[refer]. When current component completes, it hints
+caller to proceed to the next one using REFER. The URI in Refer-To 
+represents the next component (a PSTN proxy) as well as some
+service attributes ("pin ok, 5 minutes permitted") with which
+the component can begin. When like in this case the URI carries
+security-sensitive information, the information may be encrypted
+or a message integrity check may be attached. Note that this mechanism
+eliminates a need for the "HTTP reporting hack" in jdr's architecture. 
+Session status is reported in SIP URIs. Cooperating components just 
+need to agree on a scheme for URI usage. That should be easy for SIP 
+servers as URI processing is a primary SIP ability.
+
+A simple application of this more distributed approach is REFER-based 
+"click-to-dial" service. In this scenario, a media component gets somehow 
+instructed to initiate a call. It first calls the first party, optionaly 
+plays a short anouncement ("you will be transfered now") and than transfers 
+this initial call to the other call party. It then completely disappers
+from sebsequent conversation.
+
+The "pre-paid verification component" referred to in this section is another 
+example use of this model. It establishes a call with caller, looks at 
+desired destination, processes PIN in media stream, and makes a decision 
+to hand-over to a gateway. It than disappears from the conversation.
+
+Note that the application call-control framework [ccframework] by Mahy et al. 
+explicitely mentions a more peer-2-peer oriented approach based on REFER as 
+a good alternative to a centralized B2BUA approach. 
+
+
+
+2) Media Server Requirements: Flexibility and Extensibility
+-----------------------------------------------------------
+
+In all such application scenarios, a media component has a central
+role. It plays anouncements, records messages, and interacts with
+caller via signaling too: it can terminate or transfer a call. 
+
+There are two major requirements on its design to make it useful
+for applications as mentioned above: it needs to be flexible 
+and extensible.
+
+Flexibility is desired to be able to configure the media server
+for its particular purpose without having to rewrite it each time. 
+It should be possible to configure whether on receipt of a 
+specific URI, the server plays or records a message. It should 
+be possible to dictate maximum call length and define what happens 
+when the length timer really strikes:  should the call be transferred 
+to another component (and if so, to which) or simply bye-d? Etc.
+
+We suggest, that like in SER this flexibility is achieved
+by a scripting language (see bellow).
+
+The other requirement is exensibility. The media server scripts
+should be able to leverage other available tools. A particular
+example is coupling of script logic with MySql databases --
+feature that made PHP an ultimate success. In context of the
+previous prepaid examples, it can be used to verify user's PIN and
+maximum possible call length. Text-to-speech software such as
+festival [festival], AT&T's Natural Voices [nv] or CMU
+speech software  [cmuspeech] (!!!) including Sphinx, festvox,
+openvxi are examples of other pieces of work worth intergrating
+with.
+
+3) On Scripting Language
+---------------------
+
+scope)
+
+The scripting language should be able to define call processing:
+establish, transfer, terminate a call, provide media processing
+and use external libraries (php, tts, etc.) in an extensible manner.
+It should stay open to integration with Internet services and
+allow things like HTTP queries or SIP instant messaging.
+
+call/transaction abstractions)
+
+The language should hide well protocols detail to make programming
+easy. While access to lower-level features should not be precluded, 
+abstraction and simplicity are the key for application programming. 
+
+The primary living space of the media server programming language
+should be calls. Scripts should be able to deal with calls:
+initiate, terminate and transfer them. ([ccframework] coins
+"replace", "join", "fork").
+
+An important lower-level escape way should be the ability to initiate
+in-call (in-dialogue) transaction. That is what allows the server
+to go beyond simple VoIP/media services. An example of use of
+such an ability would be sending notifications on some events
+(like when a new party joins a multi-party call conference)
+or subscribing to some call-related events:
+  ret=$call.new_transaction("INFO", 
+     "headerfield: value\n\hf2: ".$some_var."\n", "two USD");
+
+
+events)
+
+All of us have agreed that event-oriented approach is a good
+abstraction. The event system should be very universal and
+accept events from a variety of sources in a unified manner.
+The sources include but are not limited to SIP messsages, timers 
+(so that for example voicemail app can set the longest possible 
+recording), external events from local apps (perhaps via FIFO), 
+media events (DTMF), SIP notifications.
+
+There was a proposal too, to introduce notion of SUB/NOT and presence
+to the language. Examples of use are "initiate a conference call when all 
+invited  users are on-line", "repeat a call when called party is
+no longer busy" [dialogpackage], "query participant list in a multi-party
+conversation", etc. We haven't discussed yet whether, and if so
+how such scenarios should be reflected in the language.
+
+requriement summary)
+
+So far, we have identified the following requirements:
+    - programming effectivity (easy and intutitive to use)
+    - parallelism (mutltiple scripts processed at the same time, 
+      multiple calls refered from a single script)     
+    - variables (refering to multiple calls)
+    - event processing
+    - ability to change script without rebooting the server
+    - extensibility (i.e., the ability of the environment to link 
+      external binary libs and refer to them from scripts)
+
+Some design options mentioned so far (nice but not required)
+    - have some casting from input to variables (e.g, $request.header.callid)
+    - use OO -- there are many people for whom OO is easier
+    - exceptions to group error processing
+
+main-loop language)
+
+We have not made any determination yet on whether to resuse an
+existing scripting language (and bind SIP code or any other code
+to it from C/C++ librariries) or design our own from scratch.
+
+Proponents of language reuse (Python may be a reasonable option)
+are primarily concerned about too much unnecessary development 
+and debugging effort for both the basic language and especially 
+for its extensions.
+
+Opponents were concerned about difficulties with integration of
+the scripting languages with code libraries. Other cons are
+bigger image size and dependency on third-party software.
+However, risks of bugs and unability to tweak things are rather 
+low with well-established open-source software like python.
+Possibly, syntax of an own language might better capture
+semantics of the media server.
+
+As said, no determination has been made yet. Author of this
+memo is little a bit uncomfortable with current amount of
+development work put on ser team and hopes that use of an
+off-the-shelve language would save work cycles. (Hopefuly,
+this hope will not be broken by tremendous effort spent
+in integration with supporting libraries.)
+
+
+see more )
+
+Appendixes include pseudo-examples of scripts written in such
+languages. (An XML-based language was discussed too, but its
+proponent gave up on it since it was really big and difficult
+to read.)
+
+
+A) Related Work
+------------
+There has been a whole bunch of related work. Traditional IVRs
+were programmable decades ago. Related technologies include 
+[kpml], [mscl]*, [vxml], Cisco's use of TCL [ciscotcl]. 
+[Bayonne] has some too.  snom uses an xml-based language, 
+there is a voicemail system based on JavaScript and NIST SIP stack.
+
+* one of the differences between kpml and mscml is kpml uses HTTP
+  for reporting (similarly to [components]), MSCML uses SIP
+
+
+B) References
+----------
+[3pcc] http://www.iptel.org/ietf/callprocessing/3pcc/#draft-ietf-sipping-3pcc
+[bayonne] http://www.gnu.org/software/bayonne
+[ciscotcl] http://www.cisco.com/univercd/cc/td/doc/product/access/acs_serv/vapp_dev/tclivrv2/chapter1.htm
+[cmuspeech] http://www.speech.cs.cmu.edu/speech/
+[components] http://www.iptel.org/ietf/callprocessing/apps/#draft-rosenberg-sip-app-components-01
+[ccframework] http://www.iptel.org/ietf/callprocessing/#draft-ietf-sipping-cc-framework
+[dialogpackage] http://www.iptel.org/ietf/callprocessing/#draft-ietf-sipping-dialog-package
+[featureinteraction] http://www.iptel.org/ietf/callprocessing/apps/#draft-rosenberg-sipping-app-interaction-framework
+[festival] http://www.cstr.ed.ac.uk/projects/festival
+[mscml] http://www.iptel.org/ietf/callprocessing/apps/#draft-vandyke-mscml
+[kpml] http://www.iptel.org/ietf/callprocessing/apps/#draft-burger-sipping-kpml
+[nv] http://www.naturalvoices.att.com/
+[refer] http://www.iptel.org/ietf/callprocessing/refer/#draft-ietf-sip-refer
+        (recently approved by IESG for publication as RFC)
+[vxml] http://www.iptel.org/ietf/callprocessing/apps/#draft-rosenberg-sip-vxml-00
+
+
+C) Appendix: pseudo-scripting language
+------------------------------------
+
+/* voicemail */
+event{new_call}(call $c) {
+   $c.play("welcome"); /* play blocking */
+   new_timer(too_long, 200 sec, $c, terminate_call);
+   $c.record("/var/spool/voicemail/"+$c.callee; /* record non blocking */
+}
+event{eo_call}(call $c) {
+   // do nothing; by default, all what has been started is closed 
+}
+event{too_long}(call $c) {
+   $c.terminate();
+}
+
+/* 3pcc a la call transfer */
+event{click_to_dial} (uri $to, uri $from) {
+    $c=new_call("sip:webcaller@foo.bar" /*our daemon invites caller */, $from /* caller */);
+    $c.play("you will be transfered now");
+    $c.refer($to); /* refer creates an event ... NOTIFY */
+}
+event{notify}(call $c) {
+    /* great, caller has established conversation with the other party --
+       we can hang-up now */
+    $c.terminate();
+}
+
+
+
+D) Appendix: use of python
+-----------------------
+
+
+class App(SIPApplication):
+    def doInvite(req):
+        trans = req.transaction()
+dlg = req.dialog()
+app = dlg.application()
+
+if (req.uri().domain() == "voicemail.org"):
+    try:
+        media = req.sdp.negotiate()
+trans.reply(200)
+    except:
+trans.reply(500)
+
+    file = "/home" + req.uri().username() + "/ann.au"
+    if !file.exists():
+    file = "/ann.au"
+    media < file
+
+    file = "/home" + req.uri().username() + "/msg.au"
+    media.maxlength(200) > file
+
+    def doBye(req):
+        trans = req.transaction()
+trans.reply(200)
+req.dialog().media.stop()
+
+    def doHTTP(req):
+try:
+    dlg = placeCall(req.uri1)
+    dlg.media() < tts("just a moment")
+    dlg.refer(req.referto)
+    dlg.application().click = true
+
+except:
+    log "error"
+
+    def doNotify(req):
+        dlg = req.dialog();
+if dlg.application().click:
+    req.transaction.reply(200)
+    dlg.bye()
+else:
+    req.transaction.reply(...)
+
+    def doTimeout(app):
+        dlg = app.dialog("caller")
+        dlg.bye
