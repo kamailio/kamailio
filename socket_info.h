@@ -40,6 +40,7 @@
 
 #include "ip_addr.h" 
 #include "dprint.h"
+#include "globals.h"
 /* struct socket_info is defined in ip_addr.h */
 
 struct socket_info* udp_listen;
