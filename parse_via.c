@@ -1603,6 +1603,7 @@ main_via:
 								state=saved_state;
 								goto endofheader;
 							case PARAM_ERROR:
+								pkg_free(param);
 								goto error;
 							default:
 								LOG(L_ERR, "ERROR: parse_via after"

@@ -77,6 +77,7 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 					"error while trying script\n");
 			goto error;
 		}
+		DBG("succesfully ran routing scripts...\n");
 #ifdef STATS
 		/* jku -- update request statistics  */
 		else update_received_request(msg->first_line.u.request.method_value );
@@ -115,6 +116,7 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 skip:
 	DBG("skip:...\n");
 */
+	DBG("receive_msg: cleaning up\n");
 	free_sip_msg(msg);
 	pkg_free(msg);
 #ifdef STATS

@@ -79,8 +79,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 													"forward: bad port in "
 													"uri: <%s>\n", uri.port);
 											ret=E_UNSPEC;
-											free_uri(&uri);
-											goto skip;
+											goto error_fwd_uri;
 										}
 									}else port=SIP_PORT;
 									break;
@@ -90,11 +89,17 @@ int do_action(struct action* a, struct sip_msg* msg)
 					default:
 							LOG(L_CRIT, "BUG: do_action bad forward 2nd"
 										" param type (%d)\n", a->p2_type);
-							free_uri(&uri);
-							goto skip;
+							ret=E_UNSPEC;
+							goto error_fwd_uri;
 				}
 				/* create a temporary proxy*/
 				p=mk_proxy(uri.host.s, port);
+				if (p==0){
+					LOG(L_ERR, "ERROR:  bad host name in uri,"
+							" dropping packet\n");
+					ret=E_BAD_ADDRESS;
+					goto error_fwd_uri;
+				}
 				ret=forward_request(msg, p);
 				free_uri(&uri);
 				free_proxy(p); /* frees only p content, not p itself */
@@ -362,6 +367,9 @@ error_uri:
 	free_uri(&uri);
 	if (new_uri) free(new_uri);
 	return E_UNSPEC;
+error_fwd_uri:
+	free_uri(&uri);
+	return ret;
 }
 
 

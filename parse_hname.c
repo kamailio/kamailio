@@ -488,6 +488,11 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 								goto error;
 						}
 						break;
+						
+			case '\n':
+			case '\r': /*not allowed in hname*/
+						goto error;
+			
 			default:
 					switch(state){
 						case INITIAL:

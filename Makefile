@@ -35,7 +35,7 @@ NAME=ser
 #                  twice, trying to free a pointer alloc'ed with a different
 #                  malloc etc.)
 DEFS=-DTHREAD -DNOCR -DMACROEATER -DDNS_IP_HACK  -DSHM_MEM \
-	 -DPKG_MALLOC #-DDBG_QM_MALLOC -DNO_DEBUG
+	 -DPKG_MALLOC -DDBG_QM_MALLOC #-DNO_DEBUG
 # -DUSE_SHM_MEM
 #-DNO_DEBUG 
 #-DPKG_MALLOC
@@ -43,8 +43,8 @@ DEFS=-DTHREAD -DNOCR -DMACROEATER -DDNS_IP_HACK  -DSHM_MEM \
 #-DNO_LOG
 
 PROFILE=  # -pg #set this if you want profiling
-mode = debug
-#mode = release
+#mode = debug
+mode = release
 
 # platform dependent settings
 

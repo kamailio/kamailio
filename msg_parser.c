@@ -315,7 +315,7 @@ char* parse_hostport(char* buf, str* host, short int* port)
 /*BUGGY*/
 char * parse_cseq(char *buf, char* end, struct cseq_body* cb)
 {
-	char *t;
+	char *t, *m, *m_end;
 	char c;
 
 	cb->error=PARSE_ERROR;
@@ -325,17 +325,24 @@ char * parse_cseq(char *buf, char* end, struct cseq_body* cb)
 	cb->number.s=t;
 	t=eat_token_end(t, end);
 	if (t>=end) goto error;
+	m=eat_space_end(t, end);
+	m_end=eat_token_end(m, end);
 	*t=0; /*null terminate it*/
 	cb->number.len=t-cb->number.s;
-	t++;
-	t=eat_space_end(t, end);
-	if (t>=end) goto error;
-	cb->method.s=t;
-	t=eat_token_end(t, end);
-	if (t>=end) goto error;
+	DBG("parse_cseq: found number %s\n", cb->number.s);
+	
+	if (m_end>=end) goto error;
+	if (m_end==m){
+		/* null method*/
+		LOG(L_ERR,  "ERROR:parse_cseq: no method found\n");
+		goto error;
+	}
+	cb->method.s=m;
+	t=m_end;
 	c=*t;
 	*t=0; /*null terminate it*/
 	cb->method.len=t-cb->method.s;
+	DBG("parse_cseq: found method %s\n", cb->method.s);
 	t++;
 	/*check if the header ends here*/
 	if (c=='\n') goto check_continue;
@@ -513,6 +520,7 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 	
 	return ret;
 error:
+	free_uri(uri);
 	return ret;
 }
 
@@ -542,11 +550,11 @@ int parse_headers(struct sip_msg* msg, int flags)
 	DBG("parse_headers: flags=%d\n", flags);
 	while( tmp<end && (flags & msg->parsed_flag) != flags){
 		hf=pkg_malloc(sizeof(struct hdr_field));
-		memset(hf,0, sizeof(struct hdr_field));
 		if (hf==0){
 			LOG(L_ERR, "ERROR:parse_headers: memory allocation error\n");
 			goto error;
 		}
+		memset(hf,0, sizeof(struct hdr_field));
 		hf->type=HDR_ERROR;
 		rest=get_hdr_field(tmp, msg->buf+msg->len, hf);
 		switch (hf->type){
