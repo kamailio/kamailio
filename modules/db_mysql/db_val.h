@@ -9,7 +9,7 @@
  */
 typedef enum {
 	DB_INT,
-        DB_FLOAT,
+        DB_DOUBLE,
 	DB_STRING,
 	DB_DATETIME
 } db_type_t;
@@ -20,18 +20,27 @@ typedef enum {
  */
 typedef struct {
 	db_type_t type;                  /* Type of the value */
+	int nul;                         /* Means that the column in database has no value */
 	union {
 		int          int_val;    /* integer value */
-		float        float_val;  /* float value */
+		double       double_val; /* double value */
 		time_t       time_val;   /* unix time value */
 		const char*  string_val; /* NULL terminated string */
 	} val;                           /* union of all possible types */
 } db_val_t;
 
 
-#define SET_TYPE(val, t) do {                \
-                              val->type = t; \
-                            } while(0)
+/*
+ * Useful macros for accessing attributes of db_val structure
+ */
+
+#define VAL_TYPE(dv)   ((dv)->type)
+#define VAL_NULL(dv)   ((dv)->nul)
+#define VAL_INT(dv)    ((dv)->val.int_val)
+#define VAL_DOUBLE(dv) ((dv)->val.double_val)
+#define VAL_TIME(dv)   ((dv)->val.time_val)
+#define VAL_STRING(dv) ((dv)->val.string_val)
+
 
 /*
  * Convert string to given type
