@@ -26,16 +26,15 @@ DISTNAME= ${PORTNAME}-${PORTVERSION}_src
 WRKSRC= ${WRKDIR}/${PORTNAME}-${PORTVERSION}
 
 # build by default mysql and jabber
-MAKE_ENV='include_modules="mysql jabber"'
+MAKE_ENV= include_modules="mysql jabber"
 
 # depends on mysql and libexpat because of the above modules
 BUILD_DEPENDS= ${LOCALBASE}/include/expat.h:${PORTSDIR}/textproc/expat \
                ${LOCALBASE}/include/mysql/mysql.h:${PORTSDIR}/databases/mysql322-client
 LIB_DEPENDS=   expat:${PORTSDIR}/textproc/expat \
-               mysqlclient.6:${PORTSDIR}/databases/mysql322-client
+               mysqlclient.10:${PORTSDIR}/databases/mysql322-client
 
 pre-fetch:
-	@echo "DEBUG: distfile=${DISTFILE}, distname=${DISTNAME}, w=${WRKSRC}"
 
 
 .include <bsd.port.mk>
