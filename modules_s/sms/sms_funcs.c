@@ -511,8 +511,6 @@ int send_as_sms(struct sms_msg *sms_messg, struct modem *mdm)
 	}
 	return 1;
 error:
-	if (!(--(sms_messg->ref)))
-		shm_free(sms_messg);
 	if (ret_code==-1)
 		/* bad number */
 		send_error(sms_messg, sms_messg->to.s, sms_messg->to.len,
@@ -523,6 +521,9 @@ error:
 			text.s+SMS_HDR_BF_ADDR_LEN+sms_messg->from.len+SMS_HDR_AF_ADDR_LEN,
 			text.len-SMS_FOOTER_LEN-SMS_HDR_BF_ADDR_LEN-sms_messg->from.len-
 			SMS_HDR_AF_ADDR_LEN );
+
+	if (!(--(sms_messg->ref)))
+		shm_free(sms_messg);
 	return -1;
 }
 
