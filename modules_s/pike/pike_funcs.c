@@ -25,6 +25,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/* History:
+ * --------
+ *  2003-03-11  converted to the new locking interface: locking.h --
+ *               major changes (andrei)
+ */
+
 
 
 #include <stdio.h>
@@ -61,7 +67,7 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 	char   flag;
 	int    ret;
 
-	lock( &locks[TREE_LOCK] );
+	lock_get(tree_lock);
 	node = add_node( tree, msg->rcv.src_ip.u.addr,
 			 msg->rcv.src_ip.len,&father,&flag);
 
@@ -70,7 +76,7 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 		node->hits,node->leaf_hits,flag);
 
 	/* do all the job with the timer */
-	lock( &locks[TIMER_LOCK]);
+	lock_get(timer_lock);
 	if ( flag&NEW_NODE ) {
 		/* put this node into the timer list and remove from list its
 		   father, if this is not a LEAF_NODE */
@@ -84,12 +90,12 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 		node->tl.timeout = get_ticks() + timeout;
 		append_to_timer(timer,&(node->tl));
 	}
-	unlock(&locks[TIMER_LOCK]);
+	lock_release(timer_lock);
 
 	/*DEBUG - print_timer_list(timer);*/
 
 	ret = ( (flag&LEAF_NODE)&&(flag&RED_NODE) )?-1:1;
-	unlock( &locks[TREE_LOCK] );
+	lock_release(tree_lock);
 
 	if (ret==-1)
 		LOG(L_WARN,"DEBUG:pike_check_req:---RED ALARM<->TOO MANY HITS---!!\n");
@@ -106,12 +112,12 @@ void clean_routine(unsigned int ticks , void *param)
 
 	if ( !is_empty(timer) ) {
 		/* get the expired elements */
-		lock( &locks[TIMER_LOCK] );
+		lock_get(timer_lock);
 		tl = check_and_split_timer( timer, ticks);
-		unlock( &locks[TIMER_LOCK] );
+		lock_release(timer_lock);
 		/* process them */
 		if (tl) {
-				lock( &locks[TREE_LOCK] );
+				lock_get(tree_lock);
 				for(;tl;tl=tl->next) {
 					node = (struct ip_node*)tl;
 					DBG("DEBUG:pike:clean_routine: del node [%X] \n",
@@ -132,17 +138,17 @@ void clean_routine(unsigned int ticks , void *param)
 						/* put it in the list 
 						   (only if it isnot the tree root) */
 						if (dad!=tree) {
-							lock(&locks[TIMER_LOCK]);
+							lock_get(timer_lock);
 							dad->tl.timeout = get_ticks() + timeout;
 							append_to_timer(timer,&(dad->tl));
-							unlock(&locks[TIMER_LOCK]);
+							lock_release(timer_lock);
 						}
 						/* del the node */
 						remove_node( tree, node);
 					}
 					/*DEBUG - print_timer_list(timer); */
 				}
-				unlock( &locks[TREE_LOCK] );
+				lock_release(tree_lock);
 		}
 	}
 }
@@ -172,12 +178,12 @@ void refresh_node( struct ip_node *node)
 
 void swap_routine( unsigned int ticks, void *param)
 {
-	lock( &locks[TREE_LOCK] );
+	lock_get(tree_lock);
 
 	if (tree)
 		refresh_node( tree );
 
-	unlock( &locks[TREE_LOCK] );
+	lock_release(tree_lock);
 }
 
 

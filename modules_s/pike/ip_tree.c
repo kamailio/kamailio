@@ -143,7 +143,6 @@ struct ip_node* add_node(struct ip_node *root,unsigned char *ip,int ip_len,
 			return node;
 		}
 	}
-	return 0;
 }
 
 

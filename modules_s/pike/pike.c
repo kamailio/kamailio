@@ -30,6 +30,8 @@
 /* History:
  * --------
  *  2003-03-11  updated to the new module exports interface (andrei)
+ *  2003-03-11  converted to the new locking interface: locking.h --
+ *               major changes (andrei)
  */
 
 
@@ -62,7 +64,8 @@ static int timeout   = 120;
 
 /* global variables */
 struct ip_node          *tree;
-pike_lock               *locks;
+gen_lock_t*             timer_lock=0;
+gen_lock_t*             tree_lock=0;
 struct pike_timer_head  *timer;
 
 
@@ -74,7 +77,7 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"sampling_time_unit",    INT_PARAM,  &time_unit},
 	{"reqs_density_per_unit", INT_PARAM,  &max_reqs},
-	{"remove_latency",        INT_PARAM,  &timeouts},
+	{"remove_latency",        INT_PARAM,  &timeout},
 	{0,0,0}
 };
 
@@ -97,11 +100,24 @@ struct module_exports exports= {
 static int pike_init(void)
 {
 	printf("pike - initializing\n");
-	/* init semaphore */
-	if ((locks = create_semaphores(PIKE_NR_LOCKS))==0) {
-		LOG(L_ERR,"ERROR:pike_init: create sem failed!\n");
+	/* alloc the locks */
+	timer_lock=lock_alloc();
+	tree_lock=lock_alloc();
+	if ((timer_lock==0)||(tree_lock==0)) {
+		LOG(L_ERR,"ERROR:pike_init: alloc locks failed!\n");
 		goto error1;
 	}
+	/* init the locks */
+	if (lock_init(timer_lock)==0){
+		LOG(L_ERR, "ERROR:pike_init: init lock failed\n");
+		goto error1;
+	}
+	if (lock_init(tree_lock)==0){
+		LOG(L_ERR, "ERROR:pike_init: init lock failed\n");
+		lock_destroy(timer_lock);
+		goto error1;
+	}
+	
 	/* init the IP tree */
 	tree = init_ip_tree(max_reqs);
 	if (!tree) {
@@ -116,7 +132,6 @@ static int pike_init(void)
 		goto error3;
 	}
 	memset(timer,0,sizeof(struct pike_timer_head));
-	timer->sem = &(locks[TIMER_LOCK]);
 	/* registering timeing functions  */
 	register_timer( clean_routine , 0, 1 );
 	register_timer( swap_routine , 0, time_unit );
@@ -126,26 +141,32 @@ static int pike_init(void)
 error3:
 	destroy_ip_tree(tree);
 error2:
-	destroy_semaphores(locks);
+	lock_destroy(timer_lock);
+	lock_destroy(tree_lock);
 error1:
+	if (timer_lock) lock_dealloc(timer_lock);
+	if (tree_lock)  lock_dealloc(tree_lock);
 	return -1;
-
 }
-
 
 
 
 static int pike_exit(void)
 {
 	/* lock the timer list */
-	lock( &locks[TIMER_LOCK] );
-	/* free the tmer list head */
+	lock_get(timer_lock);
+	/* free the timer list head */
 	shm_free(timer);
 	/* destroy the IP tree */
-	lock( &locks[TREE_LOCK] );
+	lock_get(tree_lock);
 	destroy_ip_tree(tree);
 	/* destroy semaphore */
-	destroy_semaphores(locks);
+	lock_release(timer_lock);
+	lock_release(tree_lock);
+	lock_destroy(timer_lock);
+	lock_destroy(tree_lock);
+	lock_dealloc(timer_lock);
+	lock_dealloc(tree_lock);
 	return 0;
 }
 

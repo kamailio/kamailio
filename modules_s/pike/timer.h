@@ -30,7 +30,6 @@
 #ifndef _PIKE_TIMER_H
 #define _PIKE_TIMER_H
 
-#include "lock.h"
 
 
 struct pike_timer_link {
@@ -42,7 +41,6 @@ struct pike_timer_link {
 struct pike_timer_head {
 	struct pike_timer_link *first;
 	struct pike_timer_link *last;
-	pike_lock              *sem;
 };
 
 void append_to_timer(struct pike_timer_head*, struct pike_timer_link* );

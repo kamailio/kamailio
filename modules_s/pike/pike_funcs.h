@@ -32,23 +32,17 @@
 
 #include "../../parser/msg_parser.h"
 #include "ip_tree.h"
-#include "lock.h"
+#include "../../locking.h"
 #include "timer.h"
 #include "ip_tree.h"
-
-
-enum pike_locks {
-	TREE_LOCK,
-	TIMER_LOCK,
-	PIKE_NR_LOCKS
-};
 
 
 extern int                     time_unit;
 extern int                     max_value;
 extern int                     timeout;
 extern struct ip_node          *tree;
-extern pike_lock               *locks;
+extern gen_lock_t              *timer_lock;
+extern gen_lock_t              *tree_lock;
 extern struct pike_timer_head  *timer;
 
 
