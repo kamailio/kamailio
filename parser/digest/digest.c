@@ -115,7 +115,7 @@ dig_err_t check_dig_cred(dig_cred_t* _c)
 	dig_err_t res = E_DIG_OK;
 
 	     /* Username must be present */
-	if (_c->username.s == 0) res |= E_DIG_USERNAME;
+	if (_c->username.whole.s == 0) res |= E_DIG_USERNAME;
 
 	     /* Realm must be present */
 	if (_c->realm.s == 0) res |= E_DIG_REALM;
@@ -151,10 +151,10 @@ void print_cred(dig_cred_t* _c)
 {
 	printf("===Digest credentials===\n");
 	if (_c) {
-		printf("Username  = \'%.*s\'\n", _c->username.len, _c->username.s);
-#ifdef DIGEST_DOMAIN
-		printf("Domain    = \'%.*s\'\n", _c->domain.len, _c->domain.s);
-#endif
+		printf("Username\n");
+		printf("+--whole  = \'%.*s\'\n", _c->username.whole.len, _c->username.whole.s);
+		printf("+--user   = \'%.*s\'\n", _c->username.user.len, _c->username.user.s);
+		printf("\\--domain = \'%.*s\'\n", _c->username.domain.len, _c->username.domain.s);
 		printf("Realm     = \'%.*s\'\n", _c->realm.len, _c->realm.s);
 		printf("Nonce     = \'%.*s\'\n", _c->nonce.len, _c->nonce.s);
 		printf("URI       = \'%.*s\'\n", _c->uri.len, _c->uri.s);
