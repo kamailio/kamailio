@@ -486,7 +486,9 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	unsigned int res_len;
 	int relayed_code;
 	struct sip_msg *relayed_msg;
+#ifdef TOTAG
 	str	to_tag;
+#endif
 	enum rps reply_status;
 	/* retransmission structure of outbound reply and request */
 	struct retr_buf *uas_rb;
@@ -569,6 +571,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		}
 		uas_rb->buffer_len = res_len;
 		memcpy( uas_rb->buffer, buf, res_len );
+#ifdef TOTAG
 		/* to tag now */
 		if (relayed_code>=300 && t->is_invite) {
 			if (relayed_msg!=FAKED_REPLY) {
@@ -587,6 +590,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				t->uas.to_tag.len=0;
 			}
 		}
+#endif
 
 		/* update the status ... */
 		t->uas.status = relayed_code;
@@ -607,9 +611,11 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	/* success */
 	return reply_status;
 
+#ifdef TOTAG
 error04:
 	shm_free( uas_rb->buffer );
 	uas_rb->buffer=0;
+#endif
 error03:
 	pkg_free( buf );
 error02:

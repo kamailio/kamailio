@@ -256,31 +256,29 @@ Note the the request write must be atomic, otherwise the request
 might get intermixes with writes from other writers.
 You can easily use it via Unix command-line tools, see the following
 example:
----
-[jiri@bat jiri]$ cat > /tmp/fifo
-:t_uac:xxx
-MESSAGE
-sip:mrx@iptel.org
-header:value
-foo:bar
-bznk:hjhjk
-p_header: p_value
 
-body body body
-yet body
-end of body
+cat test/transaction.fifo > /tmp/ser_fifo
+--
 
+Defines
+-------
+- TOTAG enables matching of acknowledgemnts including to-tags;
+  it is disabled by default for two reasons:
+  a) it eliminates an unlikely race condition in which
+     transaction's to-tag is being rewritten by a 200 OK
+     whereas an ACK is being looked up by to-tag
+  b) it makes UACs happy who set wrong to-tags
 
+  It should not make a difference, as there may be only one
+  negative reply sent upstream and 200/ACKs are not matched
+  as they consititute another transaction. It will make no
+  difference at all when the new magic cookie matching is
+  enabled.
 
----
-or use an example file and call cat test/transaction.fifo > /tmp/fifo
 
 
 Known Issues
 -----------
-- need to revisit profiling again
-- review whether there is not potential for to-tag
-  rewriting and ACK matching
 - we don't have authentication merging on forking
 - branch tid is not used yet
 - local ACK/CANCELs copy'n'pastes Route and ignores deleted

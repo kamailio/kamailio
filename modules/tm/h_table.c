@@ -90,8 +90,10 @@ void free_cell( struct cell* dead_cell )
 		sip_msg_free_unsafe( dead_cell->uas.request );
 	if ( dead_cell->uas.response.buffer )
 		shm_free_unsafe( dead_cell->uas.response.buffer );
+#ifdef TOTAG
 	if (dead_cell->uas.to_tag.s)
 		shm_free_unsafe(dead_cell->uas.to_tag.s);
+#endif
 
 	/* completion callback */
 	if (dead_cell->cbp) shm_free_unsafe(dead_cell->cbp);

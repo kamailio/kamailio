@@ -106,7 +106,9 @@ typedef struct ua_server
 	struct sip_msg   *request;
 	struct retr_buf  response;
 	unsigned int     status;
+#ifdef TOTAG
 	str              to_tag;
+#endif
 	unsigned int     isACKed;
 }ua_server_type;
 
