@@ -23,6 +23,8 @@ src_compile() {
 		sed -e "s/-DUSE_IPV6//g" Makefile.defs.orig > Makefile.defs;
 	fi
 	make CFLAGS="${CFLAGS}" all || die
+	cd utils/gen_ha1
+	make || die
 }
 
 src_install () {
@@ -39,4 +41,10 @@ src_install () {
 		doc-dir=${P} || die
 	exeinto /etc/init.d
 	newexe gentoo/ser.init ser
+	exeinto /usr/bin
+	newexe utils/gen_ha1/gen_ha1 gen_ha1
+	exeinto /usr/sbin
+	newexe scripts/harv_ser.sh harv_ser.sh
+	newexe scripts/sc serctl
+	newexe scripts/ser_mysql.sh ser_mysql.sh
 }
