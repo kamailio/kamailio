@@ -44,9 +44,17 @@ int cpl_db_bind(char* db_url)
 {
 	if (bind_dbmod(db_url, &cpl_dbf )) {
 		LOG(L_CRIT, "ERROR:cpl_db_bind: cannot bind to database module! "
-		"Did you forget to load a database module ?\n");
+		    "Did you forget to load a database module ?\n");
 		return -1;
 	}
+	
+	     /* CPL module uses all database functions */
+	if (!DB_CAPABILITY(cpl_dbf, DB_CAP_ALL)) {
+		LOG(L_CRIT, "ERROR:cpl_db_bind: Database modules does not "
+		    "provide all functions needed by cpl-c module\n");
+		return -1;
+	}
+
 	return 0;
 }
 
