@@ -20,6 +20,7 @@ im		temporary	 alpha		Stateless instant messaging
 jabber	experimental beta		SIP2Jabber gateway
 maxfwd	regular		 stable		Max-Forwards check
 mysql	regular		 stable		supporting MySql interface
+pike	experimental alpha		excessive load detection
 print	example		 stable		Printing Message to stdout
 rr		regular		 stable		Record-Routing
 sl		regular		 stable		Stateless Replies
