@@ -31,7 +31,6 @@
  *  2003-03-25 Adapted to use new parameter parser (janakj)
  */
 
-#include <stdio.h>         /* printf */
 #include <string.h>        /* memset */
 #include "../../mem/mem.h" /* pkg_malloc, pkg_free */
 #include "../../dprint.h"
@@ -224,22 +223,22 @@ void free_contacts(contact_t** _c)
 /*
  * Print list of contacts, just for debugging
  */
-void print_contacts(contact_t* _c)
+void print_contacts(FILE* _o, contact_t* _c)
 {
 	contact_t* ptr;
 
 	ptr = _c;
 
 	while(ptr) {
-		printf("---Contact---\n");
-		printf("URI    : \'%.*s\'\n", ptr->uri.len, ptr->uri.s);
-		printf("q      : %p\n", ptr->q);
-		printf("expires: %p\n", ptr->expires);
-		printf("method : %p\n", ptr->method);
+		fprintf(_o, "---Contact---\n");
+		fprintf(_o, "URI    : \'%.*s\'\n", ptr->uri.len, ptr->uri.s);
+		fprintf(_o, "q      : %p\n", ptr->q);
+		fprintf(_o, "expires: %p\n", ptr->expires);
+		fprintf(_o, "method : %p\n", ptr->method);
 		if (ptr->params) {
-			print_params(ptr->params);
+			print_params(_o, ptr->params);
 		}
-		printf("---/Contact---\n");
+		fprintf(_o, "---/Contact---\n");
 		ptr = ptr->next;
 	}
 }

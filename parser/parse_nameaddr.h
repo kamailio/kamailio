@@ -32,6 +32,7 @@
 #ifndef PARSE_NAMEADDR_H
 #define PARSE_NAMEADDR_H
 
+#include <stdio.h>
 #include "../str.h"
 
 /*
@@ -54,7 +55,7 @@ int parse_nameaddr(str* _s, name_addr_t* _a);
 /*
  * Print a name-addr structure, just for debugging
  */
-void print_nameaddr(name_addr_t* _a);
+void print_nameaddr(FILE* _o, name_addr_t* _a);
 
 
 #endif /* PARSE_NAMEADDR_H */

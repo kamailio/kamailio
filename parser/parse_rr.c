@@ -27,7 +27,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <stdio.h>
 #include <string.h>
 #include "parse_rr.h"
 #include "../mem/mem.h"
@@ -181,20 +180,20 @@ void shm_free_rr(rr_t** _r)
 /*
  * Print list of RRs, just for debugging
  */
-void print_rr(rr_t* _r)
+void print_rr(FILE* _o, rr_t* _r)
 {
 	rr_t* ptr;
 
 	ptr = _r;
 
 	while(ptr) {
-		printf("---RR---\n");
-		print_nameaddr(&ptr->nameaddr);
-		printf("r2 : %p\n", ptr->r2);
+		fprintf(_o, "---RR---\n");
+		print_nameaddr(_o, &ptr->nameaddr);
+		fprintf(_o, "r2 : %p\n", ptr->r2);
 		if (ptr->params) {
-			print_params(ptr->params);
+			print_params(_o, ptr->params);
 		}
-		printf("---/RR---\n");
+		fprintf(_o, "---/RR---\n");
 		ptr = ptr->next;
 	}
 }

@@ -35,6 +35,7 @@
 #ifndef CONTACT_H
 #define CONTACT_H
 
+#include <stdio.h>
 #include "../../str.h"
 #include "../parse_param.h"
 
@@ -68,7 +69,7 @@ void free_contacts(contact_t** _c);
 /*
  * Print list of contacts, just for debugging
  */
-void print_contacts(contact_t* _c);
+void print_contacts(FILE* _o, contact_t* _c);
 
 
 #endif /* CONTACT_H */

@@ -33,7 +33,6 @@
  * 2003-04-07 URI class added (janakj)
  */
 
-#include <stdio.h>
 #include <string.h>
 #include "../str.h"
 #include "../ut.h"
@@ -422,11 +421,11 @@ void shm_free_params(param_t* _p)
 /*
  * Print a parameter structure, just for debugging
  */
-static inline void print_param(param_t* _p)
+static inline void print_param(FILE* _o, param_t* _p)
 {
 	char* type;
 
-	printf("---param(%p)---\n", _p);
+	fprintf(_o, "---param(%p)---\n", _p);
 	
 	switch(_p->type) {
 	case P_OTHER:     type = "P_OTHER";     break;
@@ -440,24 +439,24 @@ static inline void print_param(param_t* _p)
 	default:          type = "UNKNOWN";     break;
 	}
 	
-	printf("type: %s\n", type);
-	printf("name: \'%.*s\'\n", _p->name.len, _p->name.s);
-	printf("body: \'%.*s\'\n", _p->body.len, _p->body.s);
-	printf("len : %d\n", _p->len);
-	printf("---/param---\n");
+	fprintf(_o, "type: %s\n", type);
+	fprintf(_o, "name: \'%.*s\'\n", _p->name.len, _p->name.s);
+	fprintf(_o, "body: \'%.*s\'\n", _p->body.len, _p->body.s);
+	fprintf(_o, "len : %d\n", _p->len);
+	fprintf(_o, "---/param---\n");
 }
 
 
 /*
  * Print linked list of parameters, just for debugging
  */
-void print_params(param_t* _p)
+void print_params(FILE* _o, param_t* _p)
 {
 	param_t* ptr;
 	
 	ptr = _p;
 	while(ptr) {
-		print_param(ptr);
+		print_param(_o, ptr);
 		ptr = ptr->next;
 	}
 }

@@ -31,6 +31,7 @@
 #ifndef PARSE_RR_H
 #define PARSE_RR_H
 
+#include <stdio.h>
 #include "msg_parser.h"
 #include "parse_nameaddr.h"
 #include "parse_param.h"
@@ -72,7 +73,7 @@ void shm_free_rr(rr_t** _r);
 /*
  * Print list of rrs, just for debugging
  */
-void print_rr(rr_t* _r);
+void print_rr(FILE* _o, rr_t* _r);
 
 
 /*

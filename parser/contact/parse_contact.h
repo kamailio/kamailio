@@ -35,6 +35,7 @@
 #ifndef PARSE_CONTACT_H
 #define PARSE_CONTACT_H
 
+#include <stdio.h>
 #include "../hf.h"
 #include "../../str.h"
 #include "contact.h"
@@ -61,7 +62,7 @@ void free_contact(contact_body_t** _c);
 /*
  * Print structure, for debugging only
  */
-void print_contact(contact_body_t* _c);
+void print_contact(FILE* _o, contact_body_t* _c);
 
 
 #endif /* PARSE_CONTACT_H */

@@ -36,6 +36,8 @@
 #ifndef PARSE_PARAM_H
 #define PARSE_PARAM_H
 
+#include <stdio.h>
+
 
 /*
  * Supported types of parameters
@@ -129,12 +131,10 @@ void free_params(param_t* _p);
 void shm_free_params(param_t* _p);
 
 
-
-
 /*
  * Print linked list of parameters, just for debugging
  */
-void print_params(param_t* _p);
+void print_params(FILE* _o, param_t* _p);
 
 
 /*
