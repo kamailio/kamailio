@@ -76,6 +76,8 @@ BEGIN {
 	ua_ser=0;
 	ua_osip=0;
 	ua_linphone=0;
+	ua_kphone=0;
+	ua_sjphone=0;
 	ua_ubiquity=0;
 	ua_3com=0;
 	ua_ipdialog=0;
@@ -230,6 +232,14 @@ ua==0 && /User-Agent:.*YAMAHA/ {
 }
 ua==0 && /User-Agent:.*MagicPPC/ {
 	ua_magicppc++
+	ua=1
+}
+ua==0 && /User-Agent:.*SJPhone/ {
+	ua_sjphone++
+	ua=1
+}
+ua==0 && /User-Agent:.*KPhone/ {
+	ua_kphone++
 	ua=1
 }
 ua==0 && /User-Agent:.*SCS/ {
@@ -605,6 +615,7 @@ END {
 	print "jSIP: " ua_jsip " Nortel: " ua_nortel " Polycom: " ua_polycom
 	print "Leader: " ua_leader " csco: " ua_csco " Nebula: " ua_nebula
 	print "MagicPPC: " ua_magicppc " SCS: " ua_scs 
+	print "SJPhone: " ua_sjphone " KPhone: " ua_kphone
 	print "Yamaha: " ua_yamaha 
 	print "UFO: " ua_xx
 
