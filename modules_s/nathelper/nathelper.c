@@ -111,8 +111,8 @@
  * 2004-03-22	Fix get_body position (should be called before get_callid)
  * 				(andrei)
  * 2004-03-24	Fix newport for null ip address case (e.g onhold re-INVITE)
-* 				(andrei)
- * 
+ * 				(andrei)
+ * 2004-09-30	added received port != via port test (andrei) 
  *
  */
 
@@ -167,6 +167,7 @@ MODULE_VERSION
 #define	NAT_UAC_TEST_RCVD	0x02
 #define	NAT_UAC_TEST_V_1918	0x04
 #define	NAT_UAC_TEST_S_1918	0x08
+#define	NAT_UAC_TEST_RPORT	0x10
 
 /* Handy macros */
 #define	STR2IOVEC(sx, ix)	{(ix).iov_base = (sx).s; (ix).iov_len = (sx).len;}
@@ -678,6 +679,11 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 
 	/* return true if any of the NAT-UAC tests holds */
 
+	/* test if the source port is different from the port in Via */
+	if ((tests & NAT_UAC_TEST_RPORT) &&
+		 (msg->rcv.src_port!=(msg->via1->port?msg->via1->port:SIP_PORT)) ){
+		return 1;
+	}
 	/*
 	 * test if source address of signaling is different from
 	 * address advertised in Via
