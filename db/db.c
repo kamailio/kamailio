@@ -31,6 +31,7 @@
 #include "../sr_module.h"
 #include "../mem/mem.h"
 #include "../str.h"
+#include "../ut.h"
 
 db_func_t dbf;
 
@@ -129,7 +130,7 @@ int table_version(db_con_t* connection, const str* table)
 	}
 
 	if (RES_ROW_N(res) == 0) {
-		DBG("table_version(): No row for table %s found\n", table->len, ZSW(table->s));
+		DBG("table_version(): No row for table %.*s found\n", table->len, ZSW(table->s));
 		return 0;
 	}
 
