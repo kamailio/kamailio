@@ -670,7 +670,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 
 error3:
 #ifdef _TOTAG
-	if (totag) {
+	if (to_tag) {
 		shm_free(trans->uas.to_tag.s);
 		trans->uas.to_tag.s=0;
 	}
