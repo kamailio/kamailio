@@ -654,37 +654,12 @@ static int init_tmb()
 static int write_to_vm_fifo(char *fifo, str *lines, int cnt )
 {
 	int   fd_fifo,i;
-#if 0
-	char *buf, *p;
-	int len;
-	int i;
-#endif
+	str   *lines_eol[2*VM_FIFO_PARAMS];
+	str   eol={"\n",1};
 
-#if 0
-	/* contruct buffer first */
-	len=0;
-	for (i=0; i<cnt; i++) {
-	    if (!lines[i].s)
-		lines[i]=empty_param;
-	    len+=lines[i].len+1;
-	}
-
-	buf=pkg_malloc(len+1);
-	if (!buf) {
-		LOG(L_ERR, "ERROR: write_to_vm_fifo: no mem (size=%i)\n",len+1);
-		return -1;
-	}
-	p=buf;
 	for (i=0; i<cnt; i++ ) {
-		memcpy(p, lines[i].s, lines[i].len);
-		p+=lines[i].len;
-		*p='\n';
-		p++;
-	}
-#endif
-	for (i=0; i<cnt; i++ ) {
-		DBG("vm param %d : len=%d <%.*s>\n",i,lines[i].len,
-				lines[i].len,lines[i].s);
+		lines_eol[2*i] = lines[i];
+		lines_eol[2*i+1] = &eol;
 	}
 
 	/* open FIFO file stream */
@@ -708,7 +683,7 @@ static int write_to_vm_fifo(char *fifo, str *lines, int cnt )
 	}
 #else
 repeat:
-	if (writev(fd_fifo, (struct iovec*)lines, cnt)<0) {
+	if (writev(fd_fifo, (struct iovec*)lines_eol, 2*cnt)<0) {
 		if (errno!=EINTR) {
 			LOG(L_ERR, "ERROR: write_to_vm_fifo: writev failed: %s\n",
 				strerror(errno));
