@@ -28,6 +28,8 @@
  * History:
  * -------
  * 2003-03-20  regex support in modparam (janakj)
+ * 2004-03-12  extra flag USE_FUNC_PARAM added to modparam type -
+ *             instead of copying the param value, a func is called (bogdan)
  */
 
 
@@ -80,6 +82,7 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 	regex_t preg;
 	int mod_found, len;
 	char* reg;
+	int n;
 
 	len = strlen(regex);
 	reg = pkg_malloc(len + 2 + 1);
@@ -102,22 +105,31 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 
 	for(t = modules; t; t = t->next) {
 		if (regexec(&preg, t->exports->name, 0, 0, 0) == 0) {
-			DBG("set_mod_param_regex: %s matches module %s\n", regex, t->exports->name);
+			DBG("set_mod_param_regex: %s matches module %s\n",
+					regex, t->exports->name);
 			mod_found = 1;
 			for(param=t->exports->params;param && param->name ; param++) {
 				if ((strcmp(name, param->name) == 0) &&
-				    (param->type == type)) {
+				( PARAM_TYPE_MASK(param->type) == type)) {
 					DBG("set_mod_param_regex: found <%s> in module %s [%s]\n",
-					    name, t->exports->name, t->path);
+						name, t->exports->name, t->path);
 
-					switch(type) {
-					case STR_PARAM:
-						*((char**)(param->param_pointer)) = strdup((char*)val);
-						break;
-						
-					case INT_PARAM:
-						*((int*)(param->param_pointer)) = (int)(long)val;
-						break;
+					if (param->type&USE_FUNC_PARAM) {
+						n = ((param_func_t)(param->param_pointer))
+							(type, (param_func_param_t)(char*)val );
+						if (n<0)
+							return -4;
+					} else {
+						switch(type) {
+							case STR_PARAM:
+								*((char**)(param->param_pointer)) =
+									strdup((char*)val);
+								break;
+							case INT_PARAM:
+								*((int*)(param->param_pointer)) =
+									(int)(long)val;
+								break;
+						}
 					}
 
 					break;
