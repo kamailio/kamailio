@@ -34,6 +34,7 @@
 #include <regex.h>
 #include "../../mem/mem.h"
 #include "../../sr_module.h"
+#include "../../mem/mem.h"
 #include "rule.h"
 
 
