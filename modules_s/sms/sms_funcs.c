@@ -167,27 +167,27 @@ int push_on_network(struct sip_msg *msg, int net)
 	 * calls of parse_headers function for FROM, CONTENT_LENGTH, TO hdrs  */
 	body.s = get_body( msg );
 	if (body.s==0) {
-		LOG(L_ERR,"ERROR:extcmd:dump_msg: cannot extract body from msg!\n");
+		LOG(L_ERR,"ERROR:sms_push_on_net: cannot extract body from msg!\n");
 		goto error;
 	}
 
 	/* content-length (if present) must be already parsed */
 	if (!msg->content_length) {
-		LOG(L_ERR,"ERROR:extcmd:dump_msg: no Content-Length header found!\n");
+		LOG(L_ERR,"ERROR:sms_push_on_net: no Content-Length header found!\n");
 		goto error;
 	}
 	body.len = get_content_length( msg );
 
 	/* parse the content-type header */
 	if ( (mime=parse_content_type_hdr(msg))<1 ) {
-		LOG(L_ERR,"ERROR:extcmd:dump_msg:cannot parse Content-Type header\n");
+		LOG(L_ERR,"ERROR:sms_push_on_net:cannot parse Content-Type header\n");
 		goto error;
 	}
 
 	/* check the content-type value */
 	if ( mime!=(TYPE_TEXT<<16)+SUBTYPE_PLAIN
 	&& mime!=(TYPE_MESSAGE<<16)+SUBTYPE_CPIM ) {
-		LOG(L_ERR,"ERROR:extcmd:dump_msg: invalid content-type for a "
+		LOG(L_ERR,"ERROR:sms_push_on_net: invalid content-type for a "
 			"message request! type found=%d\n",mime);
 		goto error;
 	}
