@@ -111,10 +111,10 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 	struct hdr_field* h;
 	struct auth_body* c = 0; /* Makes gcc happy */
 
-	keys[0] = user_column;
-	keys[1] = group_column;
-	keys[2] = domain_column;
-	col[0] = group_column;
+	keys[0] = user_column.s;
+	keys[1] = group_column.s;
+	keys[2] = domain_column.s;
+	col[0] = group_column.s;
 	
 	hf_type = (long)_hf;
 
@@ -172,7 +172,7 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 
 	VAL_STR(vals + 1) = *((str*)_grp);
 	
-	db_use_table(db_handle, table);
+	db_use_table(db_handle, table.s);
 	if (db_query(db_handle, keys, 0, vals, col, (use_domain) ? (3): (2), 1, 0, &res) < 0) {
 		LOG(L_ERR, "is_user_in(): Error while querying database\n");
 		return -5;

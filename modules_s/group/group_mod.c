@@ -49,6 +49,7 @@
 
 MODULE_VERSION
 
+#define TABLE_VERSION 2
 
 /*
  * Module destroy function prototype
@@ -72,16 +73,28 @@ static int mod_init(void);
 static int hf_fixup(void** param, int param_no);
 
 
+#define TABLE "grp"
+#define TABLE_LEN (sizeof(TABLE) - 1)
+
+#define USER_COL "username"
+#define USER_COL_LEN (sizeof(USER_COL) - 1)
+
+#define DOMAIN_COL "domain"
+#define DOMAIN_COL_LEN (sizeof(DOMAIN_COL) - 1)
+
+#define GROUP_COL "grp"
+#define GROUP_COL_LEN (sizeof(GROUP_COL) - 1)
+
+
 /*
  * Module parameter variables
  */
-char* db_url       = DEFAULT_RODB_URL;
-
-char* table         = "grp";    /* Table name where group definitions are stored */
-char* user_column   = "username";
-char* domain_column = "domain";
-char* group_column  = "grp";
-int   use_domain    = 0;
+str db_url        = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
+str table         = {TABLE, TABLE_LEN};         /* Table name where group definitions are stored */
+str user_column   = {USER_COL, USER_COL_LEN};
+str domain_column = {DOMAIN_COL, DOMAIN_COL_LEN};
+str group_column  = {GROUP_COL, GROUP_COL_LEN};
+int use_domain    = 0;
 
 db_con_t* db_handle = 0;   /* Database connection handle */
 
@@ -99,11 +112,11 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",        STR_PARAM, &db_url       },
-	{"table",         STR_PARAM, &table        },
-	{"user_column",   STR_PARAM, &user_column  },
-	{"domain_column", STR_PARAM, &domain_column},
-	{"group_column",  STR_PARAM, &group_column },
+	{"db_url",        STR_PARAM, &db_url.s       },
+	{"table",         STR_PARAM, &table.s        },
+	{"user_column",   STR_PARAM, &user_column.s  },
+	{"domain_column", STR_PARAM, &domain_column.s},
+	{"group_column",  STR_PARAM, &group_column.s },
 	{"use_domain",    INT_PARAM, &use_domain},
 	{0, 0, 0}
 };
@@ -126,7 +139,7 @@ struct module_exports exports = {
 
 static int child_init(int rank)
 {
-	db_handle = db_init(db_url);
+	db_handle = db_init(db_url.s);
 	if (!db_handle) {
 		LOG(L_ERR, "group:init_child(): Unable to connect database\n");
 		return -1;
@@ -138,14 +151,41 @@ static int child_init(int rank)
 
 static int mod_init(void)
 {
+	int ver;
+
 	DBG("group module - initializing\n");
-	
+
+	     /* Calculate lengths */
+	db_url.len = strlen(db_url.s);
+	table.len = strlen(table.s);
+	user_column.len = strlen(user_column.s);
+	domain_column.len = strlen(domain_column.s);
+	group_column.len = strlen(group_column.s);
+
 	     /* Find a database module */
-	if (bind_dbmod(db_url)) {
+	if (bind_dbmod(db_url.s)) {
 		LOG(L_ERR, "mod_init(): Unable to bind database module\n");
 		return -1;
 	}
 
+	db_handle = db_init(db_url.s);
+	if (!db_handle) {
+		LOG(L_ERR, "group:mod_init(): Unable to connect database\n");
+		return -1;
+	}
+
+	ver = table_version(db_handle, &table);
+	if (ver < 0) {
+		LOG(L_ERR, "group:mod_init(): Error while querying table version\n");
+		db_close(db_handle);
+		return -1;
+	} else if (ver < TABLE_VERSION) {
+		LOG(L_ERR, "group:mod_init(): Invalid table version (use ser_mysql.sh reinstall)\n");
+		db_close(db_handle);
+		return -1;
+	}
+	
+	db_close(db_handle);
 	return 0;
 }
 
