@@ -117,7 +117,14 @@ int init_sl_stats( void )
 {
 	int len;
 
-	len=sizeof(struct sl_stats)*process_count();
+	/* hack: we better allocate memory like if we had one
+	   more process to be safe in case some other module
+	   will crank the timer process later; otherwise we
+	   would allocate less than the stats collector
+	   iterates through using process_count()
+	*/
+
+	len=sizeof(struct sl_stats)*(process_count()+1);
 	sl_stats=shm_malloc(len);
 	if (sl_stats==0) {
 		LOG(L_ERR, "ERROR: init_sl_stats: no shmem\n");
