@@ -27,6 +27,10 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/* History:
+ * --------
+ *  2003-03-11  updated to the new module exports interface (andrei)
+ */
 
 
 #include <stdio.h>
@@ -52,9 +56,9 @@ static int pike_exit(void);
 
 
 /* parameters */
-int time_unit = 2;
-int max_reqs  = 30;
-int timeout   = 120;
+static int time_unit = 2;
+static int max_reqs  = 30;
+static int timeout   = 120;
 
 /* global variables */
 struct ip_node          *tree;
@@ -62,41 +66,24 @@ pike_lock               *locks;
 struct pike_timer_head  *timer;
 
 
+static cmd_export_t cmds[]={
+	{"pike_check_req",  pike_check_req,  0,  0},
+	{0,0,0,0}
+};
+
+static param_export_t params[]={
+	{"sampling_time_unit",    INT_PARAM,  &time_unit},
+	{"reqs_density_per_unit", INT_PARAM,  &max_reqs},
+	{"remove_latency",        INT_PARAM,  &timeouts},
+	{0,0,0}
+};
 
 
 struct module_exports exports= {
 	"pike",
-	(char*[]){
-				"pike_check_req"
-			},
-	(cmd_function[]){
-				pike_check_req
-			},
-	(int[]){
-				0
-			},
-	(fixup_function[]){
-				0
-		},
-	1,
-
-	(char*[]) {   /* Module parameter names */
-		"sampling_time_unit",
-		"reqs_density_per_unit",
-		"removel_latency"
-	},
-	(modparam_t[]) {   /* Module parameter types */
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM
-	},
-	(void*[]) {   /* Module parameter variable pointers */
-		&time_unit,
-		&max_reqs,
-		&timeout
-	},
-	3,      /* Number of module paramers */
-
+	cmds,
+	params,
+	
 	pike_init,   /* module initialization function */
 	(response_function) 0,
 	(destroy_function) pike_exit,   /* module exit function */
