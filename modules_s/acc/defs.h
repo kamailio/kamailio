@@ -32,21 +32,25 @@
 #ifndef _ACC_DEFS_H
 #define _ACC_DEFS_H
 
-/* how many columns may an accouting report have at most? */
-#define MAX_ACC_COLUMNS 16
 /* method, in-uri, out-uri, callid, from, status */
 #define DEFAULT_LOG_FMT "miocfs"
 /* Callid, to-tag (Dst), From, In-uri, Method, Out-uri, 
  * fRom-tag, Status,  To, digest User_id, userPart in-uri,
- * From Uri Userpart 0, To Uri Userpart 1, From uri , To uri  */ 
-#define ALL_LOG_FMT "cdfimorstup01FT"
+ * From Uri Userpart 0, To Uri Userpart 1, From uri , To uri,
+ * User (digest, from-uri otherwise), 3-digit Status code, 
+ * cseq Number  */ 
+#define ALL_LOG_FMT "cdfimorstup01FTUSn"
 #define ALL_LOG_FMT_LEN (sizeof(ALL_LOG_FMT)-1)
 
 #ifdef SQL_ACC
 #	define SQL_ACC_FMT "FTmiofcts0"
-#	define SQL_ACC_FMT_LEN (sizeof(SQL_ACC_FMT)-1)
 #	define SQL_MC_FMT "FTmiofctsp"
-#	define SQL_MC_FMT_LEN (sizeof(SQL_MC_FMT)-1)
 #endif
+
+/* caution: keep consistent with definition of rad_attr */
+#ifdef RAD_ACC
+#	define RAD_ACC_FMT "UFTocdrn"
+#endif
+
 
 #endif

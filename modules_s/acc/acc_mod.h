@@ -47,13 +47,16 @@ extern char *log_fmt;
 extern int report_cancels;
 extern int log_flag;
 extern int log_missed_flag;
-extern int db_flag;
-extern int db_missed_flag;
 
 
-
+#ifdef RAD_ACC
+extern int radius_flag;
+extern int radius_missed_flag;
+#endif
 
 #ifdef SQL_ACC
+extern int db_flag;
+extern int db_missed_flag;
 
 extern db_con_t* db_handle; /* Database connection handle */
 
@@ -73,17 +76,6 @@ extern char* acc_time_col;
 extern char* acc_from_uri;
 extern char* acc_to_uri;
 
-extern char* mc_sip_from_col;
-extern char* mc_sip_to_col;
-extern char* mc_sip_status_col;
-extern char* mc_sip_method_col;
-extern char* mc_i_uri_col;
-extern char* mc_o_uri_col;
-extern char* mc_sip_callid_col;
-extern char* mc_user_col;
-extern char* mc_time_col;
-
-extern char *uid_column;
 #endif /* SQL_ACC */
 
 static inline int is_log_acc_on(struct sip_msg *rq)
@@ -96,12 +88,21 @@ static inline int is_db_acc_on(struct sip_msg *rq)
 	return db_flag && isflagset(rq, db_flag)==1;
 }   
 #endif
+#ifdef RAD_ACC
+static inline int is_rad_acc_on(struct sip_msg *rq)
+{   
+	return radius_flag && isflagset(rq, radius_flag)==1;
+}   
+#endif
     
 static inline int is_acc_on(struct sip_msg *rq)
 {   
 	if (is_log_acc_on(rq)) return 1;
 #ifdef SQL_ACC
 	if (is_db_acc_on(rq)) return 1;
+#endif
+#ifdef RAD_ACC
+	if (is_rad_acc_on(rq)) return 1;
 #endif
 	return 0;
 }
@@ -117,6 +118,12 @@ static inline int is_db_mc_on(struct sip_msg *rq)
 	return db_missed_flag && isflagset(rq, db_missed_flag)==1;
 }
 #endif
+#ifdef RAD_ACC
+static inline int is_rad_mc_on(struct sip_msg *rq)
+{
+	return radius_missed_flag && isflagset(rq, radius_missed_flag)==1;
+}
+#endif
 
 
 static inline int is_mc_on(struct sip_msg *rq)
@@ -124,6 +131,9 @@ static inline int is_mc_on(struct sip_msg *rq)
 	if (is_log_mc_on(rq)) return 1;
 #ifdef SQL_ACC
 	if (is_db_mc_on(rq)) return 1;
+#endif
+#ifdef RAD_ACC
+	if (is_rad_mc_on(rq)) return 1;
 #endif
 	return 0;
 }

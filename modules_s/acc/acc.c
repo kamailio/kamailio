@@ -45,12 +45,25 @@
 #include "../tm/t_funcs.h"
 #include "acc_mod.h"
 #include "acc.h"
+#include "dict.h"
+#ifdef RAD_ACC
+#include <radiusclient.h>
+#endif
 
 
 #define ATR(atr)  atr_arr[cnt].s=A_##atr;\
 				atr_arr[cnt].len=A_##atr##_LEN;
 
 static str na={NA, NA_LEN};
+
+#ifdef RAD_ACC
+/* caution: keep these aligned to RAD_ACC_FMT !! */
+static int rad_attr[] = {PW_USER_NAME, 
+	PW_CALLING_STATION_ID, PW_CALLED_STATION_ID,
+	PW_SIP_TRANSLATED_REQ_URI, PW_ACCT_SESSION_ID, PW_SIP_TO_TAG, 
+	PW_SIP_FROM_TAG, PW_SIP_CSEQ };
+#endif
+
 
 static inline struct hdr_field *valid_to( struct cell *t, 
 				struct sip_msg *reply)
@@ -60,8 +73,24 @@ static inline struct hdr_field *valid_to( struct cell *t,
 	return reply->to;
 }
 
+static inline str *cred(struct sip_msg *rq)
+{
+	struct hdr_field* h;
+	auth_body_t* cred;
 
-/* create an array of str's for accounting using a formatting string */
+	get_authorized_cred(rq->proxy_auth, &h);
+	if (!h) get_authorized_cred(rq->authorization, &h);
+	if (!h) return 0;
+	cred=(auth_body_t*)(h->parsed);
+	if (!cred || !cred->digest.username.user.len) 
+			return 0;
+	return &cred->digest.username.user;
+}
+
+/* create an array of str's for accounting using a formatting string;
+ * this is the heart of the accounting module -- it prints whatever
+ * requested in a way, that can be used for syslog, radius, 
+ * sql, whatsoever */
 static int fmt2strar( char *fmt, /* what would you like to account ? */
 		struct sip_msg *rq, /* accounted message */
 		struct hdr_field *to, 
@@ -73,9 +102,10 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 {
 	int cnt, tl, al;
 	struct to_body* from, *pto;
-	struct hdr_field* h;
-	auth_body_t* cred;
 	static struct sip_uri from_uri, to_uri;
+	static str mycode;
+	str *cr;
+	struct cseq_body *cseq;
 
 	cnt=tl=al=0;
 
@@ -88,26 +118,33 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 
 
 	while(*fmt) {
-		if (cnt==MAX_ACC_COLUMNS) {
+		if (cnt==ALL_LOG_FMT_LEN) {
 			LOG(L_ERR, "ERROR: fmt2strar: too long formatting string\n");
 			return 0;
 		}
 		switch(*fmt) {
-			case 'c':	
+			case 'n': /* CSeq number */
+				if (rq->cseq && (cseq=get_cseq(rq)) && cseq->number.len) 
+					val_arr[cnt]=&cseq->number;
+				else val_arr[cnt]=&na;
+				ATR(CSEQ);
+				break;
+			case 'c':	/* Callid */
 				val_arr[cnt]=rq->callid && rq->callid->body.len
 						? &rq->callid->body : &na;
 				ATR(CALLID);
 				break;
-			case 'i':
+			case 'i': /* incoming uri */
 				val_arr[cnt]=&rq->first_line.u.request.uri;
 				ATR(IURI);
 				break;
-			case 'm':
+			case 'm': /* method */
 				val_arr[cnt]=&rq->first_line.u.request.method;
 				ATR(METHOD);
 				break;
 			case 'o':
-				val_arr[cnt]=rq->new_uri.len ? &rq->new_uri : &na;
+				if (rq->new_uri.len) val_arr[cnt]=&rq->new_uri;
+				else val_arr[cnt]=&rq->first_line.u.request.uri;
 				ATR(OURI);
 				break;
 			case 'f':
@@ -122,6 +159,14 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 				} else val_arr[cnt]=&na;
 				ATR(FROMTAG);
 				break;
+			case 'U': /* digest, from-uri otherwise */
+				cr=cred(rq);
+				if (cr) {
+					ATR(UID);
+					val_arr[cnt]=cr;
+					break;
+				}
+				/* fallback to from-uri if digest unavailable ... */
 			case 'F': /* from-uri */
 				if (rq->from && (from=get_from(rq))
 							&& from->uri.len) {
@@ -166,16 +211,20 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 				} 
 				ATR(TOUSER);
 				break;
+			case 'S':
+				if (phrase->len>=3) {
+					mycode.s=phrase->s;mycode.len=3;
+					val_arr[cnt]=&mycode;
+				} else val_arr[cnt]=&na;
+				ATR(CODE);
+				break;
 			case 's':
 				val_arr[cnt]=phrase;
 				ATR(STATUS);
 				break;
 			case 'u':
-				get_authorized_cred(rq->proxy_auth, &h);
-				if (!h) get_authorized_cred(rq->authorization, &h);
-				cred=h?(auth_body_t*)(h->parsed):0;
-				val_arr[cnt]=(cred && cred->digest.username.user.len) 
-						? &cred->digest.username.user:&na;
+				cr=cred(rq);
+				val_arr[cnt]=cr?cr:&na;
 				ATR(UID);
 				break;
 			case 'p':
@@ -214,8 +263,8 @@ int acc_log_request( struct sip_msg *rq, struct hdr_field *to,
 	char *p;
 	int attr_cnt;
 	int attr_len;
-	str* val_arr[MAX_ACC_COLUMNS];
-	str atr_arr[MAX_ACC_COLUMNS];
+	str* val_arr[ALL_LOG_FMT_LEN];
+	str atr_arr[ALL_LOG_FMT_LEN];
 	int i;
 
 	if (skip_cancel(rq)) return 1;
@@ -418,6 +467,138 @@ void acc_db_reply(  struct cell* t , struct sip_msg *reply,
 	code_str.s=int2str(code, &code_str.len);
 	acc_db_request(t->uas.request, valid_to(t,reply), &code_str,
 				db_table_acc, SQL_ACC_FMT);
+}
+#endif
+
+/**************** RADIUS Support *************************/
+
+#ifdef RAD_ACC
+inline static UINT4 phrase2code(str *phrase)
+{
+	UINT4 code;
+	int i;
+
+	if (phrase->len<3) return 0;
+	code=0;
+	for (i=0;i<3;i++) {
+		if (!(phrase->s[i]>='0' && phrase->s[i]<'9'))
+				return 0;
+		code=code*10+phrase->s[i]-'0';
+	}
+	return code;
+}
+
+inline UINT4 rad_status(struct sip_msg *rq, str *phrase)
+{
+	int code;
+
+	code=phrase2code(phrase);
+	if (code==0)
+		return PW_STATUS_FAILED;
+	if ((rq->REQ_METHOD==METHOD_INVITE || rq->REQ_METHOD==METHOD_ACK)
+				&& code>=200 && code<300) 
+		return PW_STATUS_START;
+	if ((rq->REQ_METHOD==METHOD_BYE 
+					|| rq->REQ_METHOD==METHOD_CANCEL)) 
+		return PW_STATUS_STOP;
+	return PW_STATUS_FAILED;
+}
+
+int acc_rad_request( struct sip_msg *rq, struct hdr_field *to, 
+				str *phrase )
+{
+	str* val_arr[ALL_LOG_FMT_LEN+1];
+	str atr_arr[ALL_LOG_FMT_LEN+1];
+	int attr_cnt;
+	VALUE_PAIR *send;
+	UINT4 av_type;
+	int i;
+	int dummy_len;
+#ifdef _OBSO
+	char nullcode="00000";
+	char ccode[6];
+	char *c;
+#endif
+
+	send=NULL;
+
+	if (skip_cancel(rq)) return 1;
+
+	attr_cnt=fmt2strar( RAD_ACC_FMT, rq, to, phrase, 
+					&dummy_len, &dummy_len, val_arr, atr_arr);
+	if (attr_cnt!=(sizeof(RAD_ACC_FMT)-1)) {
+		LOG(L_ERR, "ERROR: acc_rad_request: fmt2strar failed\n");
+		goto error;
+	}
+
+	av_type=rad_status(rq, phrase);
+	if (!rc_avpair_add(&send, PW_ACCT_STATUS_TYPE, &av_type,0)) {
+		LOG(L_ERR, "ERROR: acc_rad_request: add STATUS_TYPE\n");
+		goto error;
+	}
+	av_type=SIP_SERVICE_TYPE;
+	if (!rc_avpair_add(&send, PW_SERVICE_TYPE, &av_type,0)) {
+		LOG(L_ERR, "ERROR: acc_rad_request: add STATUS_TYPE\n");
+		goto error;
+	}
+	av_type=phrase2code(phrase); /* status=integer */
+	/* if (phrase.len<3) c=nullcode;
+	else { memcpy(ccode, phrase.s, 3); ccode[3]=0;c=nullcode;} */
+	if (!rc_avpair_add(&send, PW_SIP_RESPONSE_CODE, &av_type,0)) {
+		LOG(L_ERR, "ERROR: acc_rad_request: add RESPONSE_CODE\n");
+		goto error;
+	}
+	av_type=rq->REQ_METHOD;
+	if (!rc_avpair_add(&send, PW_SIP_METHOD, &av_type,0)) {
+		LOG(L_ERR, "ERROR: acc_rad_request: add SIP_METHOD\n");
+		goto error;
+	}
+
+	for(i=0; i<attr_cnt; i++) {
+		if (!rc_avpair_add(&send, rad_attr[i], 
+					val_arr[i]->s,val_arr[i]->len)) {
+			LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
+					"failed for %d\n", rad_attr[i] );
+			goto error;
+		}
+	}
+		
+	if (rc_acct(SIP_PORT, send)!=OK_RC) {
+		LOG(L_ERR, "ERROR: acc_rad_request: radius-ing failed\n");
+		goto error;
+	}
+	rc_avpair_free(send);
+	return 1;
+
+error:
+	rc_avpair_free(send);
+	return -1;
+}
+
+void acc_rad_missed( struct cell* t, struct sip_msg *reply,
+	unsigned int code )
+{
+	str acc_text;
+
+	get_reply_status(&acc_text, reply, code);
+	acc_rad_request(t->uas.request, valid_to(t,reply), &acc_text);
+}
+void acc_rad_ack(  struct cell* t , struct sip_msg *ack )
+{
+	str code_str;
+
+	code_str.s=int2str(t->uas.status, &code_str.len);
+	acc_rad_request(ack, ack->to ? ack->to : t->uas.request->to,
+			&code_str);
+}
+
+void acc_rad_reply(  struct cell* t , struct sip_msg *reply,
+	unsigned int code )
+{
+	str code_str;
+
+	code_str.s=int2str(code, &code_str.len);
+	acc_rad_request(t->uas.request, valid_to(t,reply), &code_str);
 }
 #endif
 

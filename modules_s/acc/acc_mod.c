@@ -52,6 +52,10 @@
 #include "acc.h"
 #include "../tm/tm_load.h"
 
+#ifdef RAD_ACC
+#include <radiusclient.h>
+#endif
+
 struct tm_binds tmb;
 
 static int mod_init( void );
@@ -82,10 +86,15 @@ int log_missed_flag = 2;
 /* noisiness level logging facilities are used */
 int log_level=L_NOTICE;
 char *log_fmt=DEFAULT_LOG_FMT;
+#ifdef RAD_ACC
+char *radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
+int radius_flag = 1;
+int radius_missed_flag = 2;
+#endif
 
 
 #ifdef SQL_ACC
-char *db_url; /* Database url */
+char *db_url=DEFAULT_DB_URL; /* Database url */
 
 /* sql flags, that need to be set for a transaction to 
  * be reported; 0=any, 1..MAX_FLAG otherwise; by default
@@ -98,7 +107,6 @@ int db_missed_flag = 2;
 char *db_table_acc="acc"; /* name of database table> */
 
 /* names of columns in tables acc/missed calls*/
-char *uid_column="uid"; /* name of user id (==digest uid) column */
 char* acc_sip_from_col      = "sip_from";
 char* acc_sip_to_col        = "sip_to";
 char* acc_sip_status_col    = "sip_status";
@@ -119,11 +127,17 @@ static int w_acc_log_request(struct sip_msg *rq, char *comment, char *foo);
 #ifdef SQL_ACC
 static int w_acc_db_request(struct sip_msg *rq, char *comment, char *foo);
 #endif
+#ifdef RAD_ACC
+static int w_acc_rad_request(struct sip_msg *rq, char *comment, char *foo);
+#endif
 
 static cmd_export_t cmds[] = {
 	{"acc_log_request", w_acc_log_request, 1, 0, REQUEST_ROUTE},
 #ifdef SQL_ACC
 	{"acc_db_request", w_acc_db_request, 2, 0, REQUEST_ROUTE},
+#endif
+#ifdef RAD_ACC
+	{"acc_rad_request", w_acc_rad_request, 1, 0, REQUEST_ROUTE},
 #endif
 	{0, 0, 0, 0, 0}
 };
@@ -138,6 +152,11 @@ static param_export_t params[] = {
 	{"log_missed_flag",		INT_PARAM, &log_missed_flag		},
 	{"log_level",			INT_PARAM, &log_level            },
 	{"log_fmt",				STR_PARAM, &log_fmt				},
+#ifdef RAD_ACC
+	{"radius_config",		STR_PARAM, &radius_config		},
+	{"radius_flag",				INT_PARAM, &radius_flag			},
+	{"radius_missed_flag",		INT_PARAM, &radius_missed_flag		},
+#endif
 	/* db-specific */
 #ifdef SQL_ACC
 	{"db_flag",				INT_PARAM, &db_flag			},
@@ -156,7 +175,6 @@ static param_export_t params[] = {
 	{"acc_time_column",       STR_PARAM, &acc_time_col      },
 	{"acc_from_uri_column",		STR_PARAM, &acc_from_uri },
 	{"acc_to_uri_column",		STR_PARAM, &acc_to_uri },
-	{"uid_column",            STR_PARAM, &uid_column           },
 #endif
 	{0,0,0}
 };
@@ -199,7 +217,7 @@ static int verify_fmt(char *fmt) {
 		LOG(L_ERR, "ERROR: verify_fmt: formatting string empty\n");
 		return -1;
 	}
-	if (strlen(fmt)>MAX_ACC_COLUMNS) {
+	if (strlen(fmt)>ALL_LOG_FMT_LEN) {
 		LOG(L_ERR, "ERROR: verify_fmt: formatting string too long\n");
 		return -1;
 	}
@@ -268,6 +286,22 @@ static int mod_init( void )
 		return -1;
 	} 
 	DBG("DEbug: mod_init(acc): db opened \n");
+#endif
+
+#ifdef RAD_ACC
+	/* open log */
+	rc_openlog("ser");
+	/* read config */
+	if (rc_read_config(radius_config)!=0) {
+		LOG(L_ERR, "ERROR: acc: error opening radius config file: %s\n", 
+			radius_config );
+		return -1;
+	}
+	/* read dictionary */
+	if (rc_read_dictionary(rc_conf_str("dictionary"))!=0) {
+		LOG(L_ERR, "ERROR: acc: error reading radius dictionary\n");
+		return -1;
+	}
 #endif
 
 	return 0;
@@ -361,6 +395,9 @@ static void on_missed(struct cell *t, struct sip_msg *reply,
 #ifdef SQL_ACC
 	int reset_dmf;
 #endif
+#ifdef RAD_ACC
+	int reset_rmf;
+#endif
 
 	if (t->is_invite && code>=300) {
 		if (is_log_mc_on(t->uas.request)) {
@@ -373,6 +410,12 @@ static void on_missed(struct cell *t, struct sip_msg *reply,
 			reset_dmf=1;
 		} else reset_dmf=0;
 #endif
+#ifdef RAD_ACC
+		if (is_rad_mc_on(t->uas.request)) {
+			acc_rad_missed(t, reply, code );
+			reset_rmf=1;
+		} else reset_rmf=0;
+#endif
 		/* we report on missed calls when the first
 		 * forwarding attempt fails; we do not wish to
 		 * report on every attempt; so we clear the flags; 
@@ -382,6 +425,9 @@ static void on_missed(struct cell *t, struct sip_msg *reply,
 		if (reset_lmf) resetflag(t->uas.request, log_missed_flag);
 #ifdef SQL_ACC
 		if (reset_dmf) resetflag(t->uas.request, db_missed_flag);
+#endif
+#ifdef RAD_ACC
+		if (reset_rmf) resetflag(t->uas.request, radius_missed_flag);
 #endif
 	}
 }
@@ -404,6 +450,10 @@ static void acc_onreply( struct cell* t, struct sip_msg *reply,
 	if (is_db_acc_on(t->uas.request))
 		acc_db_reply(t, reply, code);
 #endif
+#ifdef RAD_ACC
+	if (is_rad_acc_on(t->uas.request))
+		acc_rad_reply(t, reply, code);
+#endif
 }
 
 
@@ -423,6 +473,12 @@ static void acc_onack( struct cell* t , struct sip_msg *ack,
 	if (is_db_acc_on(t->uas.request)) {
 		acc_preparse_req(ack);
 		acc_db_ack(t, ack);
+	}
+#endif
+#ifdef RAD_ACC
+	if (is_rad_acc_on(t->uas.request)) {
+		acc_preparse_req(ack);
+		acc_rad_ack(t,ack);
 	}
 #endif
 	
@@ -452,5 +508,17 @@ static int w_acc_db_request(struct sip_msg *rq, char *comment, char *table)
 	phrase.len=strlen(comment);	/* fix_param would be faster! */
 	acc_preparse_req(rq);
 	return acc_db_request(rq, rq->to,&phrase,table, SQL_MC_FMT );
+}
+#endif
+#ifdef RAD_ACC
+static int w_acc_rad_request(struct sip_msg *rq, char *comment, 
+				char *foo)
+{
+	str phrase;
+
+	phrase.s=comment;
+	phrase.len=strlen(comment);	/* fix_param would be faster! */
+	acc_preparse_req(rq);
+	return acc_rad_request(rq, rq->to,&phrase);
 }
 #endif

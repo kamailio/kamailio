@@ -33,7 +33,11 @@ Note that
   needs to correlate INVITEs with BYEs for example for purpose of billing, 
   then it is better done in the entity which collects accounting infromation. 
   Otherwise, SIP server would have to become sessions-stateful, which
-  would very baldy impact its scalability.
+  would very badly impact its scalability.
+- if a UA fails in middle of conversation, a proxy will never learn it;
+  in general, a better practice is to account from an end-device
+  (such as PSTN gateway), which best knows about call status
+  (including media status and PSTN status in case of the gateway)
 
 Support for SQL and RADIUS works analogously. You need to enable it
 by recompiling the module with properly set defines. Uncomment the 
@@ -43,13 +47,17 @@ compile RADIUS support, you need to have radiusclient installed
 on your system (http://www.mcs-cityline.net/~lf/radius/). The
 radius client needs to be configured properly. To do so, use
 the template at etc/radiusclient.conf and make sure that module's
-CONFIG_FILE points to its location.  In particular, accounting
-secret must match that one configured in server. Uses along with 
-FreeRadius and Radiator (http://www.open.com.au/radiator/) servers 
-have been reported to us.
+radius_config parameter points to its location.  In particular, 
+accounting secret must match that one configured in server. Uses along 
+with FreeRadius (http://www.freeradius.org/) and Radiator 
+(http://www.open.com.au/radiator/) servers have been reported to us.
+
+Both mysql and radius libraries must be dynamically linkable. You
+need to configure your OS so that SER, when started, will find 
+them. Typically, you do so by manipulating LD_LIBRARY_PATH
+environment variable or condiguring ld.so.
 
 
-- XX CONFIG_FILE -- make it module option
 
 Example:
 --------
@@ -126,6 +134,29 @@ Default: 0
 Desc:    By default, CANCEL reporting is disabled -- most accounting
  		 applications are happy to see INVITE's cancellation status.
 		 Turn on if you explicitely want to account CANCEL transactions.
+
+Radius-specific:
+
+Name:	radius_config
+Type:	string
+Default: /usr/local/etc/radiusclient/radiusclient.conf
+Desc:	path to radius client configuration file; set the referred config
+		file correctly and specify there address of server, shared
+		secret (should equal that in /usr/local/etc/raddb/clients for
+		freeRadius servers) and dictionary; see etc for an example of
+		config file and dictionary
+
+Name:	radius_missed_flag, radius_flag -- analogous to syslog flags
+
+
+Db-specific:
+
+Name:	db_url
+Tye:	string
+Default: sql://ser:heslo@localhost/ser
+Desc:	sql address
+
+Name: db_flag, db_missed_flag -- analogous to syslog flags
 		
 
 Name:    use_db, db_url, uid_column, db_table
@@ -144,11 +175,15 @@ Desc: 	acc_request reports on a request; for example, it can be used
 		to avoid multiple reports on UDP request retranmission, you would
 		need to embed the action in stateful processing
 
+Name:	acc_db_request
+Params:	comment, table
+		like acc_log_request, acc_db_request reports on a request; the
+		report is sent to database at 'db_url', in the table referred to
+		in the second action parameter
 
-Known Issues:
--------------
-there are some issues with accounting from proxy servers:
-- if a UA fails in middle of conversation, a proxy will never learn it;
-  in general, a better practice is to account from an end-device
-  (such as PSTN gateway), which best knows about call status
-  (including media status and PSTN status in case of the gateway)
+Name:	acc_rad_request
+Params:	comment
+		like acc_log_request, acc_rad_requsts reports on a request; it
+		reports to radius server as configured in "radius_config"
+
+
