@@ -145,7 +145,6 @@ int fifo_vm_reply( FILE* stream, char *response_file )
 		fifo_reply(response_file, "400 fifo_t_reply: while reading new headers");
 		return -1;
     }
-    trim_r(snh);
     snh.s[snh.len]='\0';
     DBG("DEBUG: fifo_t_reply: new headers: %.*s\n", snh.len, snh.s);
 
