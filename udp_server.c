@@ -70,7 +70,7 @@ static int dbg_msg_qa(char *buf, int len)
 
 	/* is there a zero character inthere ? */	
 	if (memchr(buf, 0, len)) {
-		LOG(L_CRIT, "BUG: message being sent with 0 in it\n");
+		LOG(L_CRIT, "BUG: message with 0 in it\n");
 		return 0;
 	}
 
