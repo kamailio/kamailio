@@ -1,0 +1,146 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    The module keeps trace of all (or selected ones) incoming requests's &ip; source
+	    and blocks the ones that exceeded some limit. Works simultaneous for IPv4 and
+	    IPv6 addresses.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>No dependencies on other &ser; modules</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>sampling_time_unit</varname> (integer)</title>
+	    <para>
+		Time period used for sampling (or the sampling accuracy ;-) ). The smaller the
+		better, but slower. If you want to detect peeks, use a small one. To limit the
+		access (like total number of requests on a long period of time) to a proxy resource
+		(a gateway for ex), use a bigger value of this parameter.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 2.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>sampling_time_unit</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pike", "sampling_time_unit", 10)
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>reqs_density_per_unit</varname> (integer)</title>
+	    <para>
+		How many requests should be allowed per sampling_time_unit before blocking all the
+		incoming request from that &ip;. Practically, the blocking limit is between ( let's
+		have x=reqs_density_per_unit) x and 3*x for IPv4 addresses and between x and 8*x for
+		ipv6 addresses.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 30.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>reqs_density_per_unit</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pike", "reqs_density_per_unit", 30)
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>remove_latency</varname> (integer)</title>
+	    <para>
+		For how long the &ip; address will be kept in memory after the last request from
+		that &ip; address. It's a sord of timeout value.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 120.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>remove_latency</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pike", "remove_latency", 130)
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">pike_check_req()</function>
+	    </title>
+	    <para>
+		Process the source &ip; of the current request and returns false if the &ip; was
+		exceeded the blocking limit.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <example>
+		<title><function>pike_check_req</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!pike_check_req()) { break; };
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("pike.sgml" "Book" "chapter")
+End:
+-->
