@@ -52,13 +52,6 @@ Maturity:   beta
 Depends on: auth
 Purpose:    Radius support for digest authentication
 
-Name:       cpl
-Owner:      bogdan
-Use:        experimental
-Maturity:   alpha
-Depends on: -
-Purpose:    Call Processing Language
-
 Name:       cpl-c
 Owner:      bogdan
 Use:        experimental
@@ -234,6 +227,13 @@ Use:        experimental
 Maturity:   alpha
 Depends on: tm
 Purpose:    Voicemail interface
+
+Name:       xlog
+Owner:      ramona
+Use:        regular
+Maturity:   stable
+Depends on: 
+Purpose:    formatted logging (printf style)
 
 Contributions
 -------------
