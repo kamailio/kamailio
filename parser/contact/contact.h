@@ -49,6 +49,7 @@ typedef struct contact {
 	param_t* q;             /* q parameter hook */
 	param_t* expires;       /* expires parameter hook */
 	param_t* method;        /* method parameter hook */
+	param_t* received;      /* received parameter hook */
 	param_t* params;        /* List of all parameters */
         struct contact* next; /* Next contact in the list */
 } contact_t;
