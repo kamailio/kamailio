@@ -32,19 +32,25 @@ struct str_list {
 )
 
 
-static int unixsock_get_method(str* method, str* msg)
+/*
+ * Read the method from the request
+ */
+static int get_method(str* method, str* msg)
 {
 	if (unixsock_read_line(method, msg) != 0) {
 		unixsock_reply_asciiz("400 Method expected");
 		unixsock_reply_send();
 		return -1;
 	}
-	DBG("unixsock_get_method: method: '%.*s'\n", method->len, ZSW(method->s));
+	DBG("get_method: method: '%.*s'\n", method->len, ZSW(method->s));
 	return 0;
 }
 
 
-static int unixsock_get_ruri(str* ruri, struct sip_uri* puri, str* msg)
+/*
+ * Read the Request-URI and parse it
+ */
+static int get_ruri(str* ruri, struct sip_uri* puri, str* msg)
 {
 	if (unixsock_read_line(ruri, msg) != 0) {
 		unixsock_reply_asciiz("400 Request-URI expected");
@@ -57,12 +63,15 @@ static int unixsock_get_ruri(str* ruri, struct sip_uri* puri, str* msg)
 		unixsock_reply_send();
 		return -1;
 	}
-	DBG("unixsock_get_ruri: '%.*s'\n", ruri->len, ZSW(ruri->s));
+	DBG("get_ruri: '%.*s'\n", ruri->len, ZSW(ruri->s));
 	return 0;
 }
 
 
-static int unixsock_get_nexthop(str* nexthop, struct sip_uri* pnexthop, str* msg)
+/*
+ * Read and parse the next hop
+ */
+static int get_nexthop(str* nexthop, struct sip_uri* pnexthop, str* msg)
 {
 	if (unixsock_read_line(nexthop, msg) != 0) {
 		unixsock_reply_asciiz("400 Next-hop URI expected\n");
@@ -71,7 +80,7 @@ static int unixsock_get_nexthop(str* nexthop, struct sip_uri* pnexthop, str* msg
 	}
 
 	if (nexthop->len == 1 && nexthop->s[0] == '.' ) {
-		DBG("unixsock_get_nexthop: next hop empty\n");
+		DBG("get_nexthop: next hop empty\n");
 		nexthop->s = 0; 
 		nexthop->len = 0;
 	} else if (parse_uri(nexthop->s, nexthop->len, pnexthop) < 0 ) {
@@ -79,13 +88,18 @@ static int unixsock_get_nexthop(str* nexthop, struct sip_uri* pnexthop, str* msg
 		unixsock_reply_send();
 		return -1;
 	} else {
-		DBG("unixsock_get_nexthop: '%.*s'\n", nexthop->len, ZSW(nexthop->s));
+		DBG("get_nexthop: '%.*s'\n", nexthop->len, ZSW(nexthop->s));
 	}
 	return 0;
 }
 
 
-static int unixsock_get_headers(str* headers, str* msg)
+/*
+ * Read header into a static buffer (it is necessary because
+ * the unixsock_read_lineset performs CRLF recovery and thus
+ * the resul may be longer than the original
+ */
+static int get_headers(str* headers, str* msg)
 {
 	static char headers_buf[MAX_HEADER];
 
@@ -99,19 +113,22 @@ static int unixsock_get_headers(str* headers, str* msg)
 		return -1;
 	}
 
-	DBG("unixsock_get_headers: %.*s\n", headers->len, ZSW(headers->s));
+	DBG("get_headers: %.*s\n", headers->len, ZSW(headers->s));
 	return 0;
 }
 
 
-static int unixsock_get_body(str* body, str* msg)
+/*
+ * Read the message body
+ */
+static int get_body_lines(str* body, str* msg)
 {
 	if (unixsock_read_body(body, msg) < 0) {
 		unixsock_reply_asciiz("400 Body expected\n");
 		unixsock_reply_send();
 		return -1;
 	}
-	DBG("unixsock_get_body: body: %.*s\n", body->len,  ZSW(body->s));
+	DBG("get_body: %.*s\n", body->len,  ZSW(body->s));
 	return 0;
 }
 
@@ -120,8 +137,8 @@ static int unixsock_get_body(str* body, str* msg)
  * Make sure that the FIFO user created the message
  * correctly
  */
-static int unixsock_check_msg(struct sip_msg* msg, str* method, str* body, 
-			      int* fromtag, int *cseq_is, int* cseq, str* callid)
+static int check_msg(struct sip_msg* msg, str* method, str* body, 
+		     int* fromtag, int *cseq_is, int* cseq, str* callid)
 {
 	struct to_body* parsed_from;
 	struct cseq_body *parsed_cseq;
@@ -162,9 +179,10 @@ static int unixsock_check_msg(struct sip_msg* msg, str* method, str* body,
 		*cseq_is = 1;
 		for (i = 0; i < parsed_cseq->number.len; i++) {
 			c = parsed_cseq->number.s[i];
-			if (c >= '0' && c <= '9' ) *cseq = (*cseq) * 10 + c - '0';
-			else {
-			        DBG("found non-numerical in CSeq: <%i>='%c'\n",(unsigned int)c,c);
+			if (c >= '0' && c <= '9' ) {
+				*cseq = (*cseq) * 10 + c - '0';
+			} else {
+			        DBG("check_msg: Found non-numerical in CSeq: <%i>='%c'\n", (unsigned int)c, c);
 				unixsock_reply_asciiz("400 Non-numberical CSeq");
 				goto err;
 			}
@@ -197,121 +215,110 @@ static int unixsock_check_msg(struct sip_msg* msg, str* method, str* body,
 static inline struct str_list *new_str(char *s, int len, struct str_list **last, int *total)
 {
 	struct str_list *new;
-	new=pkg_malloc(sizeof(struct str_list));
+	new = pkg_malloc(sizeof(struct str_list));
 	if (!new) {
-		LOG(L_ERR, "ERROR: get_hfblock: not enough mem\n");
+		LOG(L_ERR, "new_str: Not enough mem\n");
 		return 0;
 	}
-	new->s.s=s;
-	new->s.len=len;
-	new->next=0;
+	new->s.s = s;
+	new->s.len = len;
+	new->next = 0;
 
-	(*last)->next=new;
-	*last=new;
-	*total+=len;
-
+	(*last)->next = new;
+	*last = new;
+	*total += len;
 	return new;
 }
 
 
 static char *get_hfblock(str *uri, struct hdr_field *hf, int *l, int proto) 
 {
-	struct str_list sl, *last, *new, *i, *foo;
-	int hf_avail, frag_len, total_len;
+	struct str_list sl, *last, *i, *foo;
+	int p, frag_len, total_len;
 	char *begin, *needle, *dst, *ret, *d;
 	str *sock_name, *portname;
 	union sockaddr_union to_su;
 	struct socket_info* send_sock;
 
-	ret=0; /* pesimist: assume failure */
-	total_len=0;
-	last=&sl;
-	last->next=0;
-	portname=sock_name=0;
+	ret = 0; /* pesimist: assume failure */
+	total_len = 0;
+	last = &sl;
+	last->next = 0;
+	portname = sock_name = 0;
 
-	for (; hf; hf=hf->next) {
+	for (; hf; hf = hf->next) {
 		if (skip_hf(hf)) continue;
 
-		begin=needle=hf->name.s; 
-		hf_avail=hf->len;
+		begin = needle = hf->name.s; 
+		p = hf->len;
 
-		/* substitution loop */
-		while(hf_avail) {
-			d=memchr(needle, SUBST_CHAR, hf_avail);
-			if (!d || d+1>=needle+hf_avail) { /* nothing to substitute */
-				new=new_str(begin, hf_avail, &last, &total_len); 
-				if (!new) goto error;
+		     /* substitution loop */
+		while(p) {
+			d = q_memchr(needle, SUBST_CHAR, p);
+			if (!d || d + 1 >= needle + p) { /* nothing to substitute */
+				if (!new_str(begin, p, &last, &total_len)) goto error;
 				break;
 			} else {
-				frag_len=d-begin;
+				frag_len = d - begin;
 				d++; /* d not at the second substitution char */
 				switch(*d) {
-					case SUBST_CHAR:	/* double SUBST_CHAR: IP */
-						/* string before substitute */
-						new=new_str(begin, frag_len, &last, &total_len); 
-						if (!new) goto error;
-						/* substitute */
-						if (!sock_name) {
-							send_sock=uri2sock( uri, &to_su, proto );
-							if (!send_sock) {
-								LOG(L_ERR, "ERROR: get_hf_block: send_sock failed\n");
-								goto error;
-							}
-							sock_name=&send_sock->address_str;
-							portname=&send_sock->port_no_str;
+				case SUBST_CHAR: /* double SUBST_CHAR: IP */
+					     /* string before substitute */
+					if (!new_str(begin, frag_len, &last, &total_len)) goto error;
+					     /* substitute */
+					if (!sock_name) {
+						send_sock = uri2sock(uri, &to_su, proto);
+						if (!send_sock) {
+							LOG(L_ERR, "ERROR: get_hf_block: send_sock failed\n");
+							goto error;
 						}
-						new=new_str(sock_name->s, sock_name->len,
-								&last, &total_len );
-						if (!new) goto error;
-						/* inefficient - FIXME --andrei*/
-						new=new_str(":", 1, &last, &total_len);
-						if (!new) goto error;
-						new=new_str(portname->s, portname->len,
-								&last, &total_len );
-						if (!new) goto error;
-						/* keep going ... */
-						begin=needle=d+1;hf_avail-=frag_len+2;
-						continue;
-					default:
-						/* no valid substitution char -- keep going */
-						hf_avail-=frag_len+1;
-						needle=d;
+						sock_name = &send_sock->address_str;
+						portname = &send_sock->port_no_str;
+					}
+					if (!new_str(sock_name->s, sock_name->len, &last, &total_len)) goto error;
+					     /* inefficient - FIXME --andrei*/
+					if (!new_str(":", 1, &last, &total_len)) goto error;
+					if (!new_str(portname->s, portname->len, &last, &total_len)) goto error;
+					     /* keep going ... */
+					begin = needle = d + 1;
+					p -= frag_len + 2;
+					continue;
+				default:
+					     /* no valid substitution char -- keep going */
+					p -= frag_len + 1;
+					needle = d;
 				}
 			} /* possible substitute */
 		} /* substitution loop */
-		/* proceed to next header */
-		/* new=new_str(CRLF, CRLF_LEN, &last, &total_len );
-		if (!new) goto error; */
-		DBG("DEBUG: get_hf_block: one more hf processed\n");
+		DBG("get_hf_block: one more hf processed\n");
 	} /* header loop */
-
-
-	/* construct a single header block now */
-	ret=pkg_malloc(total_len);
+	
+	     /* construct a single header block now */
+	ret = pkg_malloc(total_len);
 	if (!ret) {
-		LOG(L_ERR, "ERROR: get_hf_block no pkg mem for hf block\n");
+		LOG(L_ERR, "get_hf_block: no pkg mem for hf block\n");
 		goto error;
 	}
-	i=sl.next;
-	dst=ret;
+	i = sl.next;
+	dst = ret;
 	while(i) {
-		foo=i;
-		i=i->next;
+		foo = i;
+		i = i->next;
 		memcpy(dst, foo->s.s, foo->s.len);
-		dst+=foo->s.len;
+		dst += foo->s.len;
 		pkg_free(foo);
 	}
-	*l=total_len;
+	*l = total_len;
 	return ret;
-
-error:
-	i=sl.next;
+	
+ error:
+	i = sl.next;
 	while(i) {
-		foo=i;
-		i=i->next;
+		foo = i;
+		i = i->next;
 		pkg_free(foo);
 	}
-	*l=0;
+	*l = 0;
 	return 0;
 }
 
@@ -360,13 +367,13 @@ static int print_uris(struct sip_msg* reply)
 	
 	dlg = (dlg_t*)shm_malloc(sizeof(dlg_t));
 	if (!dlg) {
-		LOG(L_ERR, "print_uris(): No memory left\n");
+		LOG(L_ERR, "print_uris: No memory left\n");
 		return -1;
 	}
 
 	memset(dlg, 0, sizeof(dlg_t));
 	if (dlg_response_uac(dlg, reply) < 0) {
-		LOG(L_ERR, "print_uris(): Error while creating dialog structure\n");
+		LOG(L_ERR, "print_uris: Error while creating dialog structure\n");
 		free_dlg(dlg);
 		return -2;
 	}
@@ -392,7 +399,8 @@ static int print_uris(struct sip_msg* reply)
 	return 0;
 }
 
-static void unixsock_callback(struct cell *t, int type, struct tmcb_params *ps )
+
+static void callback(struct cell *t, int type, struct tmcb_params *ps)
 {
 	struct sockaddr_un* to;
 	str text;
@@ -402,14 +410,14 @@ static void unixsock_callback(struct cell *t, int type, struct tmcb_params *ps )
 		return;
 	}
 	
-	to = (struct sockaaddr_un*)(*ps->param);
+	to = (struct sockaddr_un*)(*ps->param);
 	unixsock_reply_reset();
 
 	if (ps->rpl == FAKED_REPLY) {
 		get_reply_status(&text, ps->rpl, ps->code);
 		if (text.s == 0) {
-			LOG(L_ERR, "unixsock_callback: get_reply_status failed\n");
-			unixsock_reply_asciiz("500 fifo_callback: get_reply_status failed\n");
+			LOG(L_ERR, "callback: get_reply_status failed\n");
+			unixsock_reply_asciiz("500 callback: get_reply_status failed\n");
 			goto done;
 		}
 		unixsock_reply_printf("%.*s\n", text.len, text.s);
@@ -420,7 +428,7 @@ static void unixsock_callback(struct cell *t, int type, struct tmcb_params *ps )
 
 		     /* FIXME: check for return values here */
 		unixsock_reply_printf("%d %.*s\n", ps->rpl->first_line.u.reply.statuscode, text.len, text.s);
-		print_uris( ps->rpl);
+		print_uris(ps->rpl);
 		unixsock_reply_printf("%s\n", ps->rpl->headers->name.s);
 	}
 done:
@@ -429,11 +437,10 @@ done:
 }
 
 
-
 /*
  * Create shm_copy of filename
  */
-static int unixsock_cbp(char** dest, struct sockaddr_un* addr)
+static int duplicate_addr(struct sockaddr_un** dest, struct sockaddr_un* addr)
 {
 	if (addr) {
 		*dest = shm_malloc(sizeof(*addr));
@@ -454,18 +461,17 @@ int unixsock_uac(str* msg)
 	str method, ruri, nexthop, headers, body, hfb, callid;
 	struct sip_uri puri, pnexthop;
 	struct sip_msg faked_msg;
-	int ret, sip_error, err_ret;
-	int fromtag, cseq_is, cseq;
+	int ret, sip_error, err_ret, fromtag, cseq_is, cseq;
 	char err_buf[MAX_REASON_LEN];
-	char* shm_sockaddr;
+	struct sockaddr_un* shm_sockaddr;
 	dlg_t dlg;
 
-	if (unixsock_get_method(&method, msg) < 0) return -1;
-	if (unixsock_get_ruri(&ruri, &puri, msg) < 0) return -1;
-	if (unixsock_get_nexthop(&nexthop, &pnexthop, msg) < 0) return -1;
-	if (unixsock_get_headers(&headers, msg) < 0) return -1;
+	if (get_method(&method, msg) < 0) return -1;
+	if (get_ruri(&ruri, &puri, msg) < 0) return -1;
+	if (get_nexthop(&nexthop, &pnexthop, msg) < 0) return -1;
+	if (get_headers(&headers, msg) < 0) return -1;
 
-	/* use SIP parser to look at what is in the FIFO request */
+	     /* use SIP parser to look at what is in the FIFO request */
 	memset(&faked_msg, 0, sizeof(struct sip_msg));
 	faked_msg.len = headers.len; 
 	faked_msg.buf = faked_msg.unparsed = headers.s;
@@ -475,12 +481,12 @@ int unixsock_uac(str* msg)
 		goto error;
 	}
 
-	if (unixsock_get_body(&body, msg) < 0) goto error;
+	if (get_body_lines(&body, msg) < 0) goto error;
 	
 	     /* at this moment, we collected all the things we got, let's
 	      * verify user has not forgotten something */
-	if (unixsock_check_msg(&faked_msg, &method, &body, &fromtag, 
-			       &cseq_is, &cseq, &callid) < 0) goto error;
+	if (check_msg(&faked_msg, &method, &body, &fromtag, 
+		      &cseq_is, &cseq, &callid) < 0) goto error;
 
 	hfb.s = get_hfblock(nexthop.len ? &nexthop : &ruri, 
 			    faked_msg.headers, &hfb.len, PROTO_UDP);
@@ -505,7 +511,7 @@ int unixsock_uac(str* msg)
 	if (!fromtag) {
 		generate_fromtag(&dlg.id.loc_tag, &dlg.id.call_id);
 	}
-
+	
 	     /* Fill in CSeq */
 	if (cseq_is) dlg.loc_seq.value = cseq;
 	else dlg.loc_seq.value = DEFAULT_CSEQ;
@@ -515,30 +521,33 @@ int unixsock_uac(str* msg)
 	dlg.rem_uri = faked_msg.to->body;
 	dlg.hooks.request_uri = &ruri;
 	dlg.hooks.next_hop = (nexthop.len ? &nexthop : &ruri);
+	
+	     /* we got it all, initiate transaction now! */
+	if (duplicate_addr(&shm_sockaddr, unixsock_sender_addr()) < 0) goto error01;
 
-	/* we got it all, initiate transaction now! */
-	if (unixsock_cbp(&shm_sockaddr, unixsock_sender_addr()) < 0) goto error01;
-
-	ret = t_uac(&method, &hfb, &body, &dlg, unixsock_callback, shm_sockaddr);
-
+	ret = t_uac(&method, &hfb, &body, &dlg, callback, shm_sockaddr);
 	if (ret <= 0) {
-		err_ret = err2reason_phrase(ret, &sip_error, err_buf,
-			sizeof(err_buf), "FIFO/UAC") ;
+		err_ret = err2reason_phrase(ret, &sip_error, err_buf, sizeof(err_buf), "FIFO/UAC");
 		if (err_ret > 0) {
 			unixsock_reply_printf("%d %s", sip_error, err_buf);
 		} else {
 			unixsock_reply_asciiz("500 UNIXSOCK/UAC error");
 		}
 		unixsock_reply_send();
+		shm_free(shm_sockaddr);
+		goto error01;
 	}
 
+	     /* Do not free shm_sockaddr here, it will be used
+	      * by the callback
+	      */
+	pkg_free(hfb.s);
+	if (faked_msg.headers) free_hdr_field_lst(faked_msg.headers);
 	return 0;
 	
  error01:
 	pkg_free(hfb.s);
-	
  error:
-	     /* free_sip_msg(&faked_msg); */
 	if (faked_msg.headers) free_hdr_field_lst(faked_msg.headers);
 	return -1;
 }
