@@ -56,6 +56,8 @@
 
 char* unixsock_name = 0;
 int unixsock_children = 1;
+int unixsock_tx_timeout = 2000; /* Timeout for sending replies in miliseconds */
+
 
 static int rx_sock, tx_sock;
 static struct unixsock_cmd* cmd_list;
@@ -671,17 +673,10 @@ int unixsock_add_to_reply(const char* buf, size_t len)
  */
 ssize_t unixsock_reply_send(void)
 {
-	int ret;
-
-	ret = sendto(tx_sock, reply_buf, reply_pos.s - reply_buf, MSG_DONTWAIT, 
-		     (struct sockaddr*)&reply_addr, reply_addr_len);
-
-	if (ret == -1) {
-		LOG(L_ERR, "unixsock_reply_send: sendto: %s\n", 
-		    strerror(errno));
-	}
-
-	return ret;
+	return tsend_dgram(tx_sock, 
+			   reply_buf, reply_pos.s - reply_buf,
+			   (struct sockaddr*)&reply_addr, reply_addr_len, 
+			   unixsock_tx_timeout);
 }
 
 
@@ -690,22 +685,15 @@ ssize_t unixsock_reply_send(void)
  */
 ssize_t unixsock_reply_sendto(struct sockaddr_un* to)
 {
-	int ret;
-
 	if (!to) {
 		LOG(L_ERR, "unixsock_reply_sendto: Invalid parameter value\n");
 		return -1;
 	}
 
-	ret = sendto(tx_sock, reply_buf, reply_pos.s - reply_buf, MSG_DONTWAIT, 
-		     (struct sockaddr*)to, SUN_LEN(to));
-
-	if (ret == -1) {
-		LOG(L_ERR, "unixsock_reply_sendto: sendto: %s\n", 
-		    strerror(errno));
-	}
-
-	return ret;
+	return tsend_dgram(tx_sock, 
+			   reply_buf, reply_pos.s - reply_buf, 
+			   (struct sockaddr*)to, SUN_LEN(to), 
+			   unixsock_tx_timeout);
 }
 
 
