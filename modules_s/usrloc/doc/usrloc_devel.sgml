@@ -1,0 +1,339 @@
+<!-- Module Developer's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>Developer's Guide</title>
+    <section>
+	<title>Available Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">ul_register_domain(name)</function>
+	    </title>
+	    <para>
+		The function registers a new domain. Domain is just another name for table used in
+		registrar. The function is called from fixups in registrar. It gets name of the
+		domain as a parameter and returns pointer to a new domain structure. The fixup than
+		'fixes' the parametr in registrar so that it will pass the pointer instead of the
+		name every time save() or lookup() is called. Some usrloc functions get the pointer
+		as parameter when called. For more details see implementation of save function in
+		registrar.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>const char* name</emphasis> - Name of the domain (also called
+                            table) to be registered.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">ul_insert_urecord(domain, aor, rec)</function>
+	    </title>
+	    <para>
+		The function creates a new record structure and inserts it in the specified
+		domain. The record is structure that contains all the contacts for belonging to the
+		specified username.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>udomain_t* domain</emphasis> - Pointer to domain returned by ul_register_udomain.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>str* aor</emphasis> - Address of Record (aka username) of the
+                            new record (at this time the record will contain no contacts yet).
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>urecord_t** rec</emphasis> - The newly created record structure.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+
+
+	<section>
+	    <title>
+		<function moreinfo="none">ul_delete_urecord(domain, aor)</function>
+	    </title>
+	    <para>
+		The function deletes all the contacts bound with the given Address Of Record.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>udomain_t* domain</emphasis> - Pointer to domain returned by ul_register_udomain.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>str* aor</emphasis> - Address of record (aka username) of the
+                            record, that should be deleted.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">ul_get_urecord(domain, aor)</function>
+	    </title>
+	    <para>
+		The function returns pointer to record with given Address of Record.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>udomain_t* domain</emphasis> - Pointer to domain returned by ul_register_udomain.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>str* aor</emphasis> - Address of Record of request record.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">ul_lock_udomain(domain)</function>
+	    </title>
+	    <para>
+		The function lock the specified domain, it means, that no other processes will be
+		able to access during the time. This prevents race conditions. Scope of the lock is
+		the specified domain, that means, that multiple domain can be accessed
+		simultaneously, they don't block each other.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>udomain_t* domain</emphasis> - Domain to be locked.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">ul_unlock_udomain(domain)</function>
+	    </title>
+	    <para>
+		Unlock the specified domain previously locked by ul_lock_udomain.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>udomain_t* domain</emphasis> - Domain to be unlocked.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">ul_release_urecord(record)</function>
+	    </title>
+	    <para>
+		Do some sanity checks - if all contacts have been removed, delete the entire record
+		structure.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>urecord_t* record</emphasis> - Record to be released.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">ul_insert_ucontact(record, contact, expires, q, callid,
+		cseq, cont)</function>
+	    </title>
+	    <para>
+		The function inserts a new contact in the given record with specified parameters.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>urecord_t* record</emphasis> - Record in which the contact should be inserted.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>str* contact</emphasis> - Contact &uri;.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>time_t expires</emphasis> - Expires of the contact in absolute value.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>float q</emphasis> - q value of the contact.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>str* callid</emphasis> - Call-ID of the REGISTER message that contained the contact.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>int cseq</emphasis> - CSeq of the REGISTER message that contained the contact.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>ucontact_t* cont</emphasis> - Pointer to newly created structure.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">ul_delete_ucontact(record, contact)</function>
+	    </title>
+	    <para>
+		The function deletes given contact from record.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>urecord_t* record</emphasis> - Record from which the contact should be removed.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>ucontact_t* contact</emphasis> - Contact to be deleted.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">ul_get_ucontact(record, contact)</function>
+	    </title>
+	    <para>
+		The function tries to find contact with given Contact &uri; and returns pointer to
+		structure representing the contact.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>urecord_t* record</emphasis> - Record to be searched for the contact.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>str_t* contact</emphasis> - &uri; of the request contact.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">ul_get_all_ucontacts(buf, len)</function>
+	    </title>
+	    <para>
+		The function retrieves all contacts of all registered users and returns them in the
+		caller-supplied buffer. If the buffer is too small, the function returns positive
+		value indicating how much additional space would be necessary to accomodate all of
+		them. Please note that the positive return value should be used only as a
+		<quote>hint</quote>, as there is no gurantee that during the time between two
+		subsequent calls number of registered contacts will remain the same.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>void* buf</emphasis> - Buffer for returning contacts.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>int len</emphasis> - Length of the buffer.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">ul_update_ucontact(contact, expires, q, callid,
+		cseq)</function>
+	    </title>
+	    <para>
+		The function updates contact with new values.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>ucontact_t* contact</emphasis> - Contact &uri;.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>time_t expires</emphasis> - Expires of the contact in absolute value.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>float q</emphasis> - q value of the contact.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>str* callid</emphasis> - Call-ID of the REGISTER message that contained the contact.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>int cseq</emphasis> - CSeq of the REGISTER message that contained the contact.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("usrloc.sgml" "book" "chapter")
+End:
+-->

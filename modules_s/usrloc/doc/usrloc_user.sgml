@@ -1,0 +1,307 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    User location module. The module keeps a user location table and provides access to the
+	    table to other modules. The module exports no functions that could be used directly from
+	    scripts.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>Optionally a database module</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>user_column</varname> (string)</title>
+	    <para>
+		Name of column containing usernames.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>username</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>user_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "user_column", "username")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>contact_column</varname> (string)</title>
+	    <para>
+		Name of column containing contacts.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>contact</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>contact_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "contact_column", "contact")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>expires_column</varname> (string)</title>
+	    <para>
+		Name of column containing expires value.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>expires</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>expires_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "expires_column", "expires")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>q_column</varname> (string)</title>
+	    <para>
+		Name of column containing q values.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>q</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>q_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "q_column", "q")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>callid_column</varname> (string)</title>
+	    <para>
+		Name of column containing callid values.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>callid</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>callid_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "callid_column", "callid")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>cseq_column</varname> (string)</title>
+	    <para>
+		Name of column containing cseq numbers.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>cseq</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>cseq_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "cseq_column", "cseq")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>method_column</varname> (string)</title>
+	    <para>
+		Name of column containing supported methods.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>method</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>method_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "method_column", "method")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>db_url</varname> (string)</title>
+	    <para>
+		&url; of the database that should be used.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>sql://ser:heslo@localhost/ser</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "db_url", "sql://username:password@localhost/ser")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>timer_interval</varname> (integer)</title>
+	    <para>
+		Number of seconds between two timer runs. The module uses timer to delete expired
+		contacts, synchronize with database and other tasks, that need to be run
+		periodically.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 60.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>timer_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "timer_interval", 120)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>db_mode</varname> (integer)</title>
+	    <para>
+		The usrloc module can utilize database for persistent contact storage. If you use
+		database, your contacts will survive machine restarts or sw crashes. The
+		disadvantage is that accessing database can be very time consuming. Therefore,
+		usrloc module implements three database accessing modes:
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			0 - This disables database completely. Only memory will be used. Contacts
+			will not survive restart. Use this value if you need a really fast usrloc
+			and contact persistence is not necessarry or is provided by other means.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			1 - Write-Through scheme. All changes to usrloc are immediately reflected in
+			database too. This is very slow, but very reliable. Use this scheme if speed
+			is not your priority but need to make sure that no registered contacts will
+			be lost during crash or reboot.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			2 - Write-Back scheme. This is a combination of previous two schemes. All
+			changes are made to memory and database synchronization is done in the
+			timer. The timer deletes all expired contacts and flushes all modified or
+			new contacts to database.  Use this scheme if you encounter high-load peaks
+			and want them to process as fast as possible. The mode will not help at all
+			if the load is high all the time.  Also, latency of this mode is much lower
+			than latency of mode 1, but slightly higher than latency of mode 0.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <warning>
+		<para>
+		    In case of crash or restart contacts that are in memory only and haven't been
+		    flushed yet will get lost. If you want minimize the risk, use shorter timer
+		    interval.
+		</para>
+	    </warning>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "db_mode", 2)
+...
+</programlisting>
+	    </example>
+	</section>
+
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<para>
+	    There are no exported functions that could be used in scripts.
+	</para>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("usrloc.sgml" "Book" "chapter")
+End:
+-->
