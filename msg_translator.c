@@ -1514,6 +1514,7 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 	char *after_body;
 	str  to_tag;
 	char *totags;
+	int rcvd;
 
 	received_buf=0;
 	received_len=0;
@@ -1540,10 +1541,11 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 	/* check if received needs to be added */
 	backup = msg->via1->host.s[msg->via1->host.len];
 	msg->via1->host.s[msg->via1->host.len] = 0;
-	if (msg->via1->received || 
-			check_via_address(&msg->rcv.src_ip, &msg->via1->host, 
-								msg->via1->port, received_dns)) {
+	rcvd=msg->via1->received 
+			|| check_via_address(&msg->rcv.src_ip, &msg->via1->host, 
+						msg->via1->port, received_dns);
 	msg->via1->host.s[msg->via1->host.len] = backup;
+	if (rcvd) {
 		if ((received_buf=received_builder(msg,&received_len))==0) {
 			LOG(L_ERR, "ERROR: build_res_buf_from_sip_req: "
 				"alas, received_builder failed\n");
