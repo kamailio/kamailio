@@ -38,7 +38,7 @@ transaction module, registrar and user location.
 %package  mysql
 Summary:  MySQL connectivity for the SIP Express Router.
 Group:    System Environment/Daemons
-Requires: ser
+Requires: ser = %ver
 BuildPrereq:  mysql-devel zlib-devel
 
 %description mysql
@@ -49,7 +49,7 @@ entries.
 %package  jabber
 Summary:  sip jabber message translation support for the SIP Express Router.
 Group:    System Environment/Daemons
-Requires: ser
+Requires: ser = %ver
 BuildPrereq:  expat-devel
 
 %description jabber
@@ -58,7 +58,7 @@ The ser-jabber package contains a sip to jabber message translator.
 %package  radius
 Summary:  ser radius authentication, group and uri check modules.
 Group:    System Environment/Daemons
-Requires: ser
+Requires: ser = %ver
 BuildPrereq:  radiusclient-devel
 
 %description radius
