@@ -10,6 +10,7 @@
 #include "../../globals.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
+#include "../../parser/parse_uri.h"
 #include "../../data_lump_rpl.h"
 #include "../im/im_funcs.h"
 #include "sms_funcs.h"
