@@ -125,4 +125,7 @@
 #define __id2_ 0x2064692d   /* "-id " */
 #define __id1_ 0x3a64692d   /* "-id:" */
 
+#define _refe_ 0x65666572   /* "refe" */
+#define _r_to_ 0x6f742d72   /* "r-to" */
+
 #endif /* KEYS_H */

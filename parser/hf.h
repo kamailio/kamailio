@@ -73,14 +73,15 @@
 #define HDR_CONTENTDISPOSITION (1 << 27)  /* Content-Disposition hdr field */
 #define HDR_DIVERSION          (1 << 28)  /* Diversion header field */
 #define HDR_RPID               (1 << 29)  /* Remote-Party-ID header field */
-#define HDR_OTHER              (1 << 30)  /* Some other header field */
+#define HDR_REFER_TO           (1 << 30)  /* Remote-Party-ID header field */
+#define HDR_OTHER              (1 << 31)  /* Some other header field */
 
 
 /* returns true if the header links allocated memory on parse field */
 #define hdr_allocs_parse( _hdr ) \
 	(((_hdr)->type)&(HDR_VIA|HDR_TO|HDR_FROM|HDR_CONTACT|HDR_ROUTE|\
 		HDR_RECORDROUTE|HDR_AUTHORIZATION|HDR_EXPIRES|HDR_PROXYAUTH|\
-		HDR_EVENT|HDR_ACCEPT|HDR_CONTENTDISPOSITION|HDR_DIVERSION|HDR_RPID))
+		HDR_EVENT|HDR_ACCEPT|HDR_CONTENTDISPOSITION|HDR_DIVERSION|HDR_RPID|HDR_REFER_TO))
 
 
 
