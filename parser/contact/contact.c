@@ -25,15 +25,18 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ *  2003-03-25 Adapted to use new parameter parser (janakj)
  */
 
-
-#include "contact.h"
+#include <stdio.h>         /* printf */
+#include <string.h>        /* memset */
 #include "../../mem/mem.h" /* pkg_malloc, pkg_free */
 #include "../../dprint.h"
-#include <string.h>        /* memset */
 #include "../../trim.h"    /* trim_leading, trim_trailing */
-#include <stdio.h>         /* printf */
+#include "contact.h"
 
 
 #define ST1 1 /* Basic state */
@@ -126,6 +129,7 @@ static inline int skip_uri(str* _s)
 int parse_contacts(str* _s, contact_t** _c)
 {
 	contact_t* c;
+	param_hooks_t hooks;
 
 	while(1) {
 		     /* Allocate and clear contact stucture */
@@ -160,10 +164,15 @@ int parse_contacts(str* _s, contact_t** _c)
 				goto error;
 			}
 
-			if (parse_cparams(_s, &(c->params), &(c->q), &(c->expires), &(c->method)) < 0) {
-				LOG(L_ERR, "parse_contacts(): Error while parsing params\n");
+			if (parse_params(_s, CLASS_CONTACT, &hooks, &c->params) < 0) {
+				LOG(L_ERR, "parse_contacts(): Error while parsing parameters\n");
 				goto error;
 			}
+
+			c->q = hooks.contact.q;
+			c->expires = hooks.contact.expires;
+			c->expires = hooks.contact.expires;
+			c->method = hooks.contact.method;
 
 			if (_s->len == 0) goto ok;
 		}
@@ -206,7 +215,7 @@ void free_contacts(contact_t** _c)
 		ptr = *_c;
 		*_c = (*_c)->next;
 		if (ptr->params) {
-			free_cparams(&(ptr->params));
+			free_params(ptr->params);
 		}
 		pkg_free(ptr);
 	}
@@ -229,7 +238,7 @@ void print_contacts(contact_t* _c)
 		printf("expires: %p\n", ptr->expires);
 		printf("method : %p\n", ptr->method);
 		if (ptr->params) {
-			print_cparams(ptr->params);
+			print_params(ptr->params);
 		}
 		printf("---/Contact---\n");
 		ptr = ptr->next;

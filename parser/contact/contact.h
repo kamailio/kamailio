@@ -25,15 +25,18 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ *  2003-030-25 Adapted to use new parameter parser (janakj)
  */
 
 
 #ifndef CONTACT_H
 #define CONTACT_H
 
-
-#include "cparam.h"    /* cparam_t */
 #include "../../str.h"
+#include "../parse_param.h"
 
 
 /*
@@ -41,10 +44,10 @@
  */
 typedef struct contact {
 	str uri;                /* contact uri */
-	cparam_t* q;            /* q parameter hook */
-	cparam_t* expires;      /* expires parameter hook */
-	cparam_t* method;       /* method parameter hook */
-	cparam_t* params;       /* List of all parameters */
+	param_t* q;             /* q parameter hook */
+	param_t* expires;       /* expires parameter hook */
+	param_t* method;        /* method parameter hook */
+	param_t* params;        /* List of all parameters */
         struct contact* next; /* Next contact in the list */
 } contact_t;
 
