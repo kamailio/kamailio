@@ -13,6 +13,7 @@ Bug fixes
   user@domain and calculate_ha1 was set to yes (modules/auth_db)
 - tm reply processing race condition (modules/tm), special thanks go to
  Dong Liu
+- Many bugs in pa module fixed, works with registrar again.
 
 Security updates
 ================
