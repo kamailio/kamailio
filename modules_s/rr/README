@@ -1,0 +1,30 @@
+#
+# $Id$
+#
+# Record Routing module
+#
+
+Module depends on: None
+
+
+Exported Parameters:
+-------------------
+
+The module exports no parameters.
+
+
+Exported Functions:
+------------------
+
+Name:   rewriteFromRoute
+Params: -
+Desc:   If there are any Route HFs in the message, the function
+        takes the first one, rewrites Request-URI with it's value
+        and removes the first URI from Route HFs.
+
+
+Name:   addRecordRoute
+Params: -
+Desc:   The function adds a new Record-Route header field. The
+        header field will be inserted in the message before any
+        other Record-Route header fields.

@@ -1,0 +1,204 @@
+#
+# $Id$
+#
+# Usrloc - User location support
+#
+
+Module depends on: Optionally mysql - if used
+
+
+Exported Parameters:
+-------------------
+
+Name:    user_col
+Type:    string
+Default: "user"
+Desc:    Name of column containing usernames.
+
+
+Name:    contact_col
+Type:    string
+Default: "contact"
+Desc:    Name of column containing contacts.
+
+
+Name:    expires_col
+Type:    string
+Default: "expires"
+Desc:    Name of column containing expires.
+
+
+Name:    q_col
+Type:    string
+Default: "q"
+Desc:    Name of column containing q values.
+
+
+Name:    callid_col
+Type:    string
+Default" "callid"
+Desc:    Name of column containing callids.
+
+
+Name:    cseq_col
+Type:    string
+Default: "cseq"
+Desc:    Name of column containing cseq numbers.
+
+
+Name:    method_col
+Type:    string
+Default: "method"
+Desc:    Name of column containing supported methods
+
+
+Name:    db_url
+Type:    string
+Default: "sql://ser:heslo@localhost/ser"
+Desc:    URL of the database that should be used.
+
+
+Name:    timer_interval
+Type:    integer
+Default: 60
+Desc:    Number of seconds between two timer runs. The
+         module uses timer to delete expired contacts,
+         synchronize with database and other tasks, that
+         need to be run periodically.
+
+
+Name:    db_mode
+Type:    integer
+Default: 0
+Desc:    The usrloc module can utilize database for persistent
+         contact storage. If you use database, your contacts
+         will survive machine restarts or sw crashes. The
+         disadvantage is that accessing database can be very
+         time consuming. Therefore, usrloc module implements
+         three database accessing modes:
+         0 - This disables database completely. Only memory
+             will be used. Contacts will not survive restart.
+             Use this value if you need a really fast usrloc
+             and contact persistence is not necessarry or is
+             provided by other means.
+
+         1 - Write-Through scheme. All changes to usrloc are
+             immediately reflected in database too. This is
+             very slow, but very reliable. Use this scheme
+             if speed is not your priority but need to make
+             sure that no registered contacts will be lost
+             during crash or reboot.
+
+         2 - Write-Back scheme. This is a combination of
+             previous two schemes. All changes are made to
+             memory and database synchronization is done
+             in the timer. The timer deletes all expired contacts
+             and flushes all modified or new contacts to database.
+             Use this scheme if you encounter high-load peaks and
+             want them to process as fast as possible. The mode
+             will not help at all if the load is high all the time.
+             Also, latency of this mode is much lower than latency
+             of mode 1, but slightly higher than latency of mode 0.
+             WARNING: In case of crash or restart contacts that
+                      are in memory only and haven't been flushed
+                      yet will get lost. If you want minimize the
+                      risk, use shorter timer interval.
+
+
+
+Exported Functions:
+------------------
+
+IMPORTANT: Usrloc is convenient module only. It's functions cannot
+           be called from scripts directly (hence the ~ at the 
+           beginning) but are used by registrar module internally.
+           This module will be utilized by more modules in the future
+           and therefore it is standalone. Use registrar module functions
+           if you need usrloc support in your scripts.
+
+
+Name:   ~ul_register_domain
+Params: const char* name; - Name of the domain (also called table) to be
+                            registerd.
+Desc:   The function registers a new domain. Domain is just another name
+        for table used in registrar. The function is called from fixups
+        in registrar. It gets name of the domain as a parameter and returns
+        pointer to a new domain structure. The fixup than 'fixes' the
+        parametr in registrar so that it will pass the pointer instead of
+        the name every time save() or lookup() is called. Some usrloc functions
+        get the pointer as parameter when called. For more details see 
+        implementation of save function in registrar.
+
+Name:   ~ul_insert_urecord
+Params: udomain_t* domain - Pointer to domain returned by ul_register_udomain
+        str* aor          - Address of Record (aka username) of the new record
+                            (at this time the record will contain no contacts yet).
+        urecord_t** rec   - The newly created record structure
+Desc:   The function creates a new record structure and inserts it in the specified
+        domain. The record is structure that contains all the contacts for belonging
+        to the specified username.
+
+
+Name:   ~ul_delete_urecord
+Params: udomain_t* domain - Pointer to domain returned by ul_register_udomain
+        str* aor          - Address of record (aka username) of the record, that should
+                            be deleted.
+Desc:   The function deletes all the contacts bound with the given Address Of Record.
+
+
+Name:   ~ul_get_urecord
+Params: udomain_t* domain - Pointer to domain returned by ul_register_udomain
+	str* aor          - Address of Record of request record
+Desc:   The function returns pointer to record with given Address of Record.
+
+
+Name:   ~ul_lock_udomain
+Params: udomain_t* domain - Domain to be locked
+Desc:   The function lock the specified domain, it means, that no other processes
+        will be able to access during the time. This prevents race conditions. Scope
+        of the lock is the specified domain, that means, that multiple domain can be
+        accessed simultaneously, they don't block each other.
+
+
+Name:   ~ul_unlock_udomain
+Params: udomain_t* domain - Domain to be unlocked
+Desc:   Unlock the specified domain previously locked by ul_lock_udomain
+
+
+Name:   ~ul_release_urecord
+Params: urecord_t* record - Record to be released
+Desc:   Do some sanity checks - if all contacts have been removed, delete the entire
+        record structure.
+
+
+Name:   ~ul_insert_ucontact
+Params: urecord_t* record - Record in which the contact should be inserted
+        str* contact      - Contact URL
+        time_t expires    - Expires of the contact in absolute value
+        float q           - q value of the contact
+        str* callid       - Call-ID of the REGISTER message that contained the contact
+        int cseq          - CSeq of the REGISTER message that contained the contact
+   	ucontact_t* cont  - Pointer to newly created structure
+Desc:   The function inserts a new contact in the given record with specified parameters
+
+
+Name:   ~ul_delete_ucontact
+Params: urecord_t* record   - Record from which the contact should be removed
+        ucontact_t* contact - Contact to be deleted
+Desc:   The function deletes given contact from record
+
+
+Name:   ~ul_get_ucontact
+Params: urecord_t* record - Record to be searched for the contact
+        str* contact      - URI of the request contact
+Desc:   The function tries to find contact with given Contact URI and returns
+        pointer to structure representing the contact
+
+
+Name:   ~ul_update_ucontact
+Params: ucontact_t* contact - Contact to be updated
+        time_t expires      - New expires value
+        float q             - New q value
+        str* callid         - New Call-ID
+        int cseq            - New CSeq
+Desc:   The function updates contact with new values
