@@ -39,8 +39,7 @@
 
 #include "../../str.h"
 #include "../../db/db_val.h"
-
-#include "lock.h"
+#include "../../locking.h"
 
 #define DBT_FLAG_UNSET  0
 #define DBT_FLAG_NULL   1
@@ -107,7 +106,7 @@ typedef struct _dbt_table
 
 typedef struct _tbl_cache
 {
-	smart_lock *sem;
+	gen_lock_t sem;
 	dbt_table_p dtp;
 	struct _tbl_cache *prev;
 	struct _tbl_cache *next;	
@@ -121,7 +120,7 @@ typedef struct _dbt_database
 
 typedef struct _dbt_cache 
 {
-	smart_lock *sem;
+	gen_lock_t sem;
 	dbt_db_p dbp;
 	struct _dbt_cache *prev;
 	struct _dbt_cache *next;

@@ -177,7 +177,7 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		return -1;
 	}
 
-	s_lock_at(_tbc->sem, 0);
+	lock_get(&_tbc->sem);
 	_dtp = _tbc->dtp;
 	if(!_dtp || _dtp->nrcols < _nc)
 	{
@@ -226,7 +226,7 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 
 	dbt_table_update_flags(_dtp, DBT_TBFL_ZERO, DBT_FL_IGN, 1);
 	
-	s_unlock_at(_tbc->sem, 0);
+	lock_release(&_tbc->sem);
 
 #ifdef DBT_EXTRA_DEBUG
 	dbt_result_print(_dres);
@@ -237,11 +237,11 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
     return get_result(_h, _r);
 
 error:
-	s_unlock_at(_tbc->sem, 0);
+	lock_release(&_tbc->sem);
 	DBG("DBT:db_query: error while quering table!\n");
     return -1;
 clean:
-	s_unlock_at(_tbc->sem, 0);
+	lock_release(&_tbc->sem);
 	DBG("DBT:db_query: make clean\n");
 	if(lkey)
 		pkg_free(lkey);
@@ -298,7 +298,7 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 		return -1;
 	}
 
-	s_lock_at(_tbc->sem, 0);
+	lock_get(&_tbc->sem);
 	_dtp = _tbc->dtp;
 	if(!_dtp)
 	{
@@ -348,18 +348,18 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	dbt_print_table(_dtp, NULL);
 #endif
 	
-	s_unlock_at(_tbc->sem, 0);
+	lock_release(&_tbc->sem);
 
 	DBG("DBT:db_insert: done!\n");
 
     return 0;
 	
 error:
-	s_unlock_at(_tbc->sem, 0);
+	lock_release(&_tbc->sem);
 	DBG("DBT:db_insert: error inserting row in table!\n");
     return -1;
 clean:
-	s_unlock_at(_tbc->sem, 0);
+	lock_release(&_tbc->sem);
 	
 	if(_drp)
 	{
@@ -403,7 +403,7 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 		return -1;
 	}
 
-	s_lock_at(_tbc->sem, 0);
+	lock_get(&_tbc->sem);
 	_dtp = _tbc->dtp;
 	if(!_dtp)
 	{
@@ -417,7 +417,7 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 		LOG(L_ERR, "DBT:dbt_delete: delete all values\n");
 #endif
 		dbt_table_free_rows(_dtp);
-		s_unlock_at(_tbc->sem, 0);
+		lock_release(&_tbc->sem);
 		return 0;
 	}
 
@@ -458,12 +458,12 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 	dbt_print_table(_dtp, NULL);
 #endif
 	
-	s_unlock_at(_tbc->sem, 0);
+	lock_release(&_tbc->sem);
 	
 	return 0;
 	
 error:
-	s_unlock_at(_tbc->sem, 0);
+	lock_release(&_tbc->sem);
 	DBG("DBT:db_delete: error deleting from table!\n");
     return -1;
 }
@@ -499,7 +499,7 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 		return -1;
 	}
 
-	s_lock_at(_tbc->sem, 0);
+	lock_get(&_tbc->sem);
 	_dtp = _tbc->dtp;
 	if(!_dtp || _dtp->nrcols < _un)
 	{
@@ -551,12 +551,12 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	dbt_print_table(_dtp, NULL);
 #endif
 	
-	s_unlock_at(_tbc->sem, 0);
+	lock_release(&_tbc->sem);
 	
     return 0;
 
 error:
-	s_unlock_at(_tbc->sem, 0);
+	lock_release(&_tbc->sem);
 	DBG("DBT:dbt_update: error while updating table!\n");
     return -1;
 }

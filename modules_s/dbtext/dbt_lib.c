@@ -43,12 +43,11 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 
-#include "lock.h"
 #include "dbt_util.h"
 #include "dbt_lib.h"
 
 static dbt_cache_p _cachedb = NULL;
-static smart_lock *_cachesem = NULL;
+static gen_lock_t *_cachesem = NULL;
 
 /**
  *
@@ -57,13 +56,20 @@ int dbt_init_cache()
 {
 	if(!_cachesem)
 	{
-		_cachesem = create_semaphores(1);
+	/* init locks */
+		_cachesem = lock_alloc();
 		if(!_cachesem)
+		{
+			LOG(L_CRIT,"dbtext:dbt_init_cache: could not alloc a lock\n");
 			return -1;
+		}
+		if (lock_init(_cachesem)==0)
+		{
+			LOG(L_CRIT,"dbtext:dbt_init_cache: could not intialize a lock\n");
+			lock_dealloc(_cachesem);
+			return -1;
+		}
 	}
-	//s_lock_at(_cachesem, 0);
-	//_cachedb = NULL;
-	//s_unlock_at(_cachesem, 0);
 	
 	return 0;
 }
@@ -84,22 +90,22 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 
 	DBG("DBT:dbt_cache_get_db: looking for db!\n");
 
-	s_lock_at(_cachesem, 0);
+	lock_get(_cachesem);
 	
 	_dcache = _cachedb;
 	while(_dcache)
 	{
-		s_lock_at(_dcache->sem, 0);
+		lock_get(&_dcache->sem);
 		if(_dcache->dbp)
 		{
 			if(_dcache->dbp->name.len==_s->len 
 					&& strncasecmp(_dcache->dbp->name.s, _s->s, _s->len))
 			{
-				s_unlock_at(_dcache->sem, 0);
+				lock_release(&_dcache->sem);
 				goto done;
 			}
 		}
-		s_unlock_at(_dcache->sem, 0);
+		lock_release(&_dcache->sem);
 		
 		_dcache = _dcache->next;
 	}
@@ -137,8 +143,7 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 	_dcache->dbp->name.len = _s->len;
 	_dcache->dbp->tables = NULL;
 	
-	_dcache->sem = create_semaphores(1);
-	if(!_dcache->sem)
+	if(!lock_init(&_dcache->sem))
 	{
 		DBG("DBT:dbt_cache_get_db: no sems!\n");
 		shm_free(_dcache->dbp->name.s);
@@ -161,7 +166,7 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 	_cachedb = _dcache;
 
 done:
-	s_unlock_at(_cachesem, 0);
+	lock_release(_cachesem);
 	return _dcache;
 }
 
@@ -174,7 +179,7 @@ int dbt_cache_check_db(str *_s)
 	if(!_cachesem || !_cachedb || !_s || !_s->s || _s->len<=0)
 		return -1;
 	
-	s_lock_at(_cachesem, 0);
+	lock_get(_cachesem);
 	
 	_dcache = _cachedb;
 	while(_dcache)
@@ -184,14 +189,14 @@ int dbt_cache_check_db(str *_s)
 			if(_dcache->dbp->name.len == _s->len &&
 				strncasecmp(_dcache->dbp->name.s, _s->s, _s->len))
 			{
-				s_unlock_at(_cachesem, 0);
+				lock_release(_cachesem);
 				return 0;
 			}
 		}
 		_dcache = _dcache->next;
 	}
 	
-	s_unlock_at(_cachesem, 0);
+	lock_release(_cachesem);
 	return -1;
 }
 
@@ -204,7 +209,7 @@ int dbt_cache_del_db(str *_s)
 	if(!_cachesem || !_cachedb || !_s || !_s->s || _s->len<=0)
 		return -1;
 	
-	s_lock_at(_cachesem, 0);
+	lock_get(_cachesem);
 	
 	_dcache = _cachedb;
 	while(_dcache)
@@ -220,7 +225,7 @@ int dbt_cache_del_db(str *_s)
 	}
 	if(!_dcache)
 	{
-		s_unlock_at(_cachesem, 0);
+		lock_release(_cachesem);
 		return 0;
 	}
 	
@@ -232,7 +237,7 @@ int dbt_cache_del_db(str *_s)
 	if(_dcache->next)
 		(_dcache->next)->prev = _dcache->prev;
 	
-	s_unlock_at(_cachesem, 0);
+	lock_release(_cachesem);
 	
 	dbt_cache_free(_dcache);
 	
@@ -251,11 +256,11 @@ tbl_cache_p dbt_db_get_table(dbt_cache_p _dc, str *_s)
 	if(!_dc || !_s || !_s->s || _s->len<=0)
 		return NULL;
 
-	s_lock_at(_dc->sem, 0);
+	lock_get(&_dc->sem);
 	if(!_dc->dbp)
 	{
 		if(_dc->sem)
-			s_unlock_at(_dc->sem, 0);
+			lock_release(&_dc->sem);
 		return NULL;
 	}
 	
@@ -264,15 +269,15 @@ tbl_cache_p dbt_db_get_table(dbt_cache_p _dc, str *_s)
 	{
 		if(_tbc->dtp)
 		{
-			s_lock_at(_tbc->sem, 0);
+			lock_get(&_tbc->sem);
 			if(_tbc->dtp->name.len == _s->len 
 				&& !strncasecmp(_tbc->dtp->name.s, _s->s, _s->len ))
 			{
-				s_unlock_at(_tbc->sem, 0);
-				s_unlock_at(_dc->sem, 0);
+				lock_release(&_tbc->sem);
+				lock_release(&_dc->sem);
 				return _tbc;
 			}
-			s_unlock_at(_tbc->sem, 0);
+			lock_release(&_tbc->sem);
 		}
 		_tbc = _tbc->next;
 	}
@@ -281,7 +286,7 @@ tbl_cache_p dbt_db_get_table(dbt_cache_p _dc, str *_s)
 	_tbc = tbl_cache_new();
 	if(!_tbc)
 	{
-		s_unlock_at(_dc->sem, 0);
+		lock_release(&_dc->sem);
 		return NULL;
 	}
 	
@@ -294,7 +299,7 @@ tbl_cache_p dbt_db_get_table(dbt_cache_p _dc, str *_s)
 
 	if(!_dtp)
 	{
-		s_unlock_at(_dc->sem, 0);
+		lock_release(&_dc->sem);
 		return NULL;
 	}
 	_tbc->dtp = _dtp;
@@ -304,7 +309,7 @@ tbl_cache_p dbt_db_get_table(dbt_cache_p _dc, str *_s)
 	_tbc->next = _dc->dbp->tables;
 	_dc->dbp->tables = _tbc;
 		
-	s_unlock_at(_dc->sem, 0);
+	lock_release(&_dc->sem);
 
 	return _tbc;
 }
@@ -318,11 +323,11 @@ int dbt_db_del_table(dbt_cache_p _dc, str *_s)
 	if(!_dc || !_s || !_s->s || _s->len<=0)
 		return -1;
 
-	s_lock_at(_dc->sem, 0);
+	lock_get(&_dc->sem);
 	if(!_dc->dbp)
 	{
 		if(_dc->sem)
-			s_unlock_at(_dc->sem, 0);
+			lock_release(&_dc->sem);
 		return -1;
 	}
 
@@ -331,7 +336,7 @@ int dbt_db_del_table(dbt_cache_p _dc, str *_s)
 	{
 		if(_tbc->dtp)
 		{
-			s_lock_at(_tbc->sem, 0);
+			lock_get(&_tbc->sem);
 			if(_tbc->dtp->name.len == _s->len 
 				&& !strncasecmp(_tbc->dtp->name.s, _s->s, _s->len))
 			{
@@ -344,12 +349,12 @@ int dbt_db_del_table(dbt_cache_p _dc, str *_s)
 					(_tbc->next)->prev = _tbc->prev;
 				break;
 			}
-			s_lock_at(_tbc->sem, 0);
+			lock_release(&_tbc->sem);
 		}
 		_tbc = _tbc->next;
 	}
 
-	s_unlock_at(_dc->sem, 0);
+	lock_release(&_dc->sem);
 
 	tbl_cache_free(_tbc);
 	
@@ -366,7 +371,7 @@ int dbt_cache_destroy()
 	if(!_cachesem)
 		return -1;
 	
-	s_lock_at(_cachesem, 0);
+	lock_get(_cachesem);
 	
 	_dc = _cachedb;
 	while(_dc)
@@ -375,7 +380,8 @@ int dbt_cache_destroy()
 		_dc = _dc->next;
 		dbt_cache_free(_dc0);
 	}
-	destroy_semaphores(_cachesem);
+	lock_destroy(_cachesem);
+	lock_dealloc(_cachesem);
 
 	return 0;
 }
@@ -391,12 +397,12 @@ int dbt_cache_print(int _f)
 	if(!_cachesem)
 		return -1;
 	
-	s_lock_at(_cachesem, 0);
+	lock_get(_cachesem);
 	
 	_dc = _cachedb;
 	while(_dc)
 	{
-		s_lock_at(_dc->sem, 0);
+		lock_get(&_dc->sem);
 		if(_dc->dbp)
 		{
 			if(_f)
@@ -406,7 +412,7 @@ int dbt_cache_print(int _f)
 			_tbc = _dc->dbp->tables;
 			while(_tbc)
 			{
-				s_lock_at(_tbc->sem, 0);
+				lock_get(&_tbc->sem);
 				if(_tbc->dtp)
 				{
 					if(_f)
@@ -428,16 +434,16 @@ int dbt_cache_print(int _f)
 						}
 					}
 				}
-				s_unlock_at(_tbc->sem, 0);
+				lock_release(&_tbc->sem);
 				_tbc = _tbc->next;
 			}
 		}
-		s_unlock_at(_dc->sem, 0);
+		lock_release(&_dc->sem);
 		
 		_dc = _dc->next;
 	}
 	
-	s_unlock_at(_cachesem, 0);
+	lock_release(_cachesem);
 	
 	return 0;
 }
@@ -450,12 +456,12 @@ int dbt_cache_free(dbt_cache_p _dc)
 	if(!_dc)
 		return -1;
 
-	s_lock_at(_dc->sem, 0);
+	lock_get(&_dc->sem);
 
 	if(_dc->dbp)
 		dbt_db_free(_dc->dbp);
 	
-	destroy_semaphores(_dc->sem);
+	lock_destroy(&_dc->sem);
 
 	shm_free(_dc);
 
@@ -497,8 +503,7 @@ tbl_cache_p tbl_cache_new()
 	_tbc = (tbl_cache_p)shm_malloc(sizeof(tbl_cache_t));
 	if(!_tbc)
 		return NULL;
-	_tbc->sem = create_semaphores(1);
-	if(!_tbc->sem)
+	if(!lock_init(&_tbc->sem))
 	{
 		shm_free(_tbc);
 		return NULL;
@@ -514,12 +519,12 @@ int tbl_cache_free(tbl_cache_p _tbc)
 	// FILL IT IN ?????????????
 	if(!_tbc)
 		return -1;
-	s_lock_at(_tbc->sem, 0);
+	lock_get(&_tbc->sem);
 
 	if(_tbc->dtp)
 		dbt_table_free(_tbc->dtp);
 	
-	destroy_semaphores(_tbc->sem);
+	lock_destroy(&_tbc->sem);
 	
 	return 0;
 }

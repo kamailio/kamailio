@@ -43,7 +43,6 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 
-#include "lock.h"
 #include "dbt_util.h"
 #include "dbt_lib.h"
 
