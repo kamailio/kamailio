@@ -153,7 +153,7 @@ EOF
 # quite simplified now -- it captures just very basic
 # errors
 check_uri() {
-	echo "$1" | $EGREP "^sip:([a-zA-Z0-9_]+@)?.*\..*" 
+	echo "$1" | $EGREP "^sip(s)?:([a-zA-Z0-9_]+@)?.*\..*" 
 }
 
 
