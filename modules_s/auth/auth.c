@@ -255,7 +255,9 @@ static inline int authorize(struct sip_msg* _msg, char* _realm, char* _table, ch
 	state.nonce_retries = 0;
 
 #ifdef ACK_CANCEL_HACK
-	if (!memcmp(_msg->first_line.u.request.method.s, "ACK", 3)) {
+	/* the method is parsed; -jiri
+	if (!memcmp(_msg->first_line.u.request.method.s, "ACK", 3)) { */
+	if (_msg->REQ_METHOD==METHOD_ACK) {
 	        return 1;
 	}
 #endif
@@ -304,8 +306,10 @@ static inline int authorize(struct sip_msg* _msg, char* _realm, char* _table, ch
 
 	if (res == 1) {  /* response was OK */
 		if (nonce_is_stale(state.cred.nonce.s)) {
+			/* method is parsed; -Jiri 
 			if (!(memcmp(_msg->first_line.u.request.method.s, "ACK", 3)) &&
-			    (memcmp(_msg->first_line.u.request.method.s, "CANCEL", 6))) {
+			    (memcmp(_msg->first_line.u.request.method.s, "CANCEL", 6))) { */
+			if (_msg->REQ_METHOD==METHOD_ACK || _msg->REQ_METHOD==METHOD_CANCEL ) {
 				     /* Method is ACK or CANCEL, we must accept stale
 				      * nonces because there is no way how to challenge
 				      * with new nonce (ACK and CANCEL have no responses
