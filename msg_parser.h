@@ -177,7 +177,7 @@ struct sip_msg{
 
 	/* str add_to_branch; */ /* whatever whoever want to append to branch comes here */
 	char add_to_branch_s[MAX_BRANCH_PARAM_LEN];
-	short add_to_branch_len;
+	int add_to_branch_len;
 
 	
 };

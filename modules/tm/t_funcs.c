@@ -268,6 +268,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       T->outbound_request[branch]->to.sin_family = AF_INET;
 
       if (add_branch_label( T, p_msg , branch )==-1) return -1;
+      DBG("DEBUG: XXX: branch_size after call to add_branch_label: %d\n", p_msg->add_to_branch_len );
       buf = build_req_buf_from_sip_req  ( p_msg, &len);
       if (!buf)
          return -1;
@@ -1017,7 +1018,7 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch)
    p+=n;
 
    if (!check_transaction_quadruple( p_msg )) {
-	LOG(L_ERR, "ERROR: t_build_and_send_ACK: can't generate a HBH ACK if key HFs in INVITE missing\n");
+	LOG(L_ERR, "ERROR: t_build_and_send_ACK: cannot generate a HBH ACK if key HFs in INVITE missing\n");
 	goto error;
    }
 
@@ -1157,7 +1158,7 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 		return -1;
 	} else {
 		p_msg->add_to_branch_len += n;
-		DBG("DEBUG: branch label created now: %*s (%d)\n", p_msg->add_to_branch_len, 
+		DBG("DEBUG: XXX branch label created now: %*s (%d)\n", p_msg->add_to_branch_len, 
 			p_msg->add_to_branch_s );
 		return 0;
 	}

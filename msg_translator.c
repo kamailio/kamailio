@@ -156,6 +156,7 @@ char * build_req_buf_from_sip_req(	struct sip_msg* msg,
 	/* jku: if we compute branches using MD5 it will take 32 bytes */
 	branch_len= (loop_checks ? MY_BRANCH_LEN : MY_BRANCH_LEN -1 + MD5_LEN)+
 					msg->add_to_branch_len;
+	DBG("DEBUG: XXX via building entered; ( branch len %d)\n", msg->add_to_branch_len );
 
 	if ((via_len+port_no_str_len+branch_len+CRLF_LEN)<MAX_VIA_LINE_SIZE){
 		memcpy(line_buf, MY_VIA, MY_VIA_LEN);
@@ -195,7 +196,7 @@ char * build_req_buf_from_sip_req(	struct sip_msg* msg,
 			} else DBG("DEBUG: build_req_buf_from_sip_req: required HFs for "
 					"loop checking missing\n");
 		}
-		DBG("DEBUG: will add branch now: %s (%d)\n", msg->add_to_branch_s, msg->add_to_branch_len );
+		DBG("DEBUG: XXX will add branch now: %s (%d)\n", msg->add_to_branch_s, msg->add_to_branch_len );
 		/* someone wants me to add something to branch here ? */
 		memcpy(line_buf+via_len, msg->add_to_branch_s,
 				msg->add_to_branch_len );
@@ -204,7 +205,6 @@ char * build_req_buf_from_sip_req(	struct sip_msg* msg,
 		memcpy(line_buf+via_len, CRLF, CRLF_LEN);
 		via_len+=CRLF_LEN;
 		line_buf[via_len]=0; /* null terminate the string*/
-		DBG("DEBUG: via branch building finished\n");
 	}else{
 		LOG(L_ERR, "build_req_buf_from_sip_req: ERROR: via too long (%d)\n",
 				via_len);
