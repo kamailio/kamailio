@@ -692,13 +692,13 @@ int fix_all_socket_lists()
 		goto error;
 	}
 #ifdef USE_TCP
-	if (fix_socket_list(&tcp_listen)!=0){
+	if (!tcp_disable && (fix_socket_list(&tcp_listen)!=0)){
 		LOG(L_ERR, "ERROR: fix_all_socket_lists: fix_socket_list"
 				" tcp failed\n");
 		goto error;
 	}
 #ifdef USE_TLS
-	if (fix_socket_list(&tls_listen)!=0){
+	if (!tls_disable && (fix_socket_list(&tls_listen)!=0)){
 		LOG(L_ERR, "ERROR: fix_all_socket_lists: fix_socket_list"
 				" tls failed\n");
 		goto error;
