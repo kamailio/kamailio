@@ -79,12 +79,13 @@ int  xj_wlist_check(xj_wlist, xj_jkey, xj_jkey*);
 void xj_wlist_del(xj_wlist, xj_jkey, int);
 void xj_wlist_free(xj_wlist);
 int  xj_wlist_set_aliases(xj_wlist, char *, char *);
- 
+int  xj_wlist_send_info(xj_wlist, int); 
+
 int xj_worker_process(xj_wlist, char*, int, int, db_con_t*);
 
 int xj_address_translation(str *src, str *dst, xj_jalias als, int flag);
-int xj_manage_jab(char *buf, int len, int *pos, str *sid,
-		str *sct, xj_jalias als, xj_jcon jbc);
+int xj_manage_jab(char *buf, int len, int *pos, str *sct, 
+			xj_jalias als, xj_jcon jbc);
 
 void xj_sig_handler(int s);
 

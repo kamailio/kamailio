@@ -649,7 +649,7 @@ void destroy(void)
 
 void xjab_check_workers(int mpid)
 {
-	int i, n, stat;
+	int i, j, n, stat;
 	DBG("XJAB:%d:xjab_check_workers: time=%d\n", mpid, get_ticks());
 	if(!jwl || jwl->len <= 0)
 		return;
@@ -662,12 +662,13 @@ void xjab_check_workers(int mpid)
 		if(n == 0)
 			continue;
 		
-		DBG("XJAB:xjab_check_workers: worker[%d][pid=%d] has exited"
-			" - status %d err=%d errno=%d\n", i, 
-			jwl->workers[i].pid, stat, n, errno);
+		LOG(L_ERR,"XJAB:xjab_check_workers: worker[%d][pid=%d] has exited"
+			" - status=%d err=%d errno=%d\n", i, jwl->workers[i].pid, 
+			stat, n, errno);
 		if(n==jwl->workers[i].pid)
 		{
 			DBG("XJAB:%d:xjab_check_workers: create a new worker\n", mpid);
+			xj_wlist_send_info(jwl, i);
 			xj_wlist_set_pid(jwl, -1, i);
 			if ( (stat=fork())<0 )
 			{
