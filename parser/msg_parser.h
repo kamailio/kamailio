@@ -31,6 +31,7 @@
  *  2003-02-28  scratchpad compatibility abandoned (jiri)
  *  2003-01-28  removed scratchpad (jiri)
  *  2003-03-31  removed sip_msg->repl_add_rm (andrei)
+ *  2003-04-01  2 macros added: GET_NEXT_HOP and GET_RURI (janakj)
  */
 
 
@@ -73,6 +74,27 @@ if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
                 tmp=buffer+methodname##_LEN;                              \
 }
 
+
+/*
+ * Return a URI to which the message should be really sent (not what should
+ * be in the Request URI. The following fields are tried in this order:
+ * 1) dst_uri
+ * 2) new_uri
+ * 3) first_line.u.request.uri
+ */
+#define GET_NEXT_HOP(m) \
+(((m)->dst_uri.s && (m)->dst_uri.len) ? ((m)->dst_uri) : \
+(((m)->new_uri.s && (m)->new_uri.len) ? ((m)->new_uri) : ((m)->first_line.u.request.uri)))
+
+
+/*
+ * Return the Reqeust URI of a message.
+ * The following fields are tried in this order:
+ * 1) new_uri
+ * 2) first_line.u.request.uri
+ */
+#define GET_RURI(m) \
+(((m)->new_uri.s && (m)->new_uri.len) ? ((m)->new_uri) : ((m)->first_line.u.request.uri))
 
 
 struct sip_uri {
