@@ -1,71 +1,199 @@
-#	$Id$	
-#
-# VM Module README
-#
-# Module depends on: tm and one of the database module
-#
 
-VM module enables the communication between Ser and Sems 
-through FIFO calls and server functions.
+vm Module
 
+Raphael Coeffic
 
-Exported parameters:
---------------------
+   FhG FOKUS
 
-Name:		db_url
-Type:		char*
-Default:	sql://ser:heslo@localhost/ser
-Desc:		URL of the mysql database used to users' 
-email.
+Edited by
 
-Name:		email_column
-Type:		char *
-Default:	email_address
-Desc:		column name in subscriber table
+Raphael Coeffic
 
-Name:		subscriber_table
-Type:		char*
-Default:	subscriber
-Desc:		table name of subscriber profiles
+   Copyright © 2003 FhG FOKUS
+     _________________________________________________________
 
-Name:		user_column
-Type:		char *
-Default:	user_id
-Desc:		column name of user id in subscriber profile
+   Table of Contents
+   1. User's Guide
 
-Name:		domain_column
-Type:		char *
-Default:	domain
-Desc:		column name of domain in subscriber profile; enable
-			only with MULTI_DOMAIN def
+        1.1. Overview
+        1.2. Dependencies
 
+              1.2.1. SER Modules
+              1.2.2. External Libraries or Applications
 
-Exported Functions:
--------------------
+        1.3. Exported Parameters
 
-Both functions should only get called within a transaction.
+              1.3.1. db_url (string)
+              1.3.2. email_column (string)
+              1.3.3. subscriber_table (string)
+              1.3.4. user_column (string)
+              1.3.5. domain_column (string)
 
-Name: 	vm
-Params:	voicemail fifo path (Ex. "/tmp/am_fifo"),
-	application name to execute on Sems (Ex. "voicemail").
-Desc:	relays an SIP request to the voicemail system
+        1.4. Exported Functions
 
-FIFO Functions:
----------------
+              1.4.1. vm(path, appname)
 
-You should not use directly this function.
+   2. Developer's Guide
+   3. Frequently Asked Questions
 
-Name:   vm_reply
-Params: see vm_fifo.c
-Desc:   enables voicemail to reply a transaction.
+   List of Examples
+   1-1. Set db_url parameter
+   1-2. Set email_column parameter
+   1-3. Set subscriber_table parameter
+   1-4. Set user_column parameter
+   1-5. Set domain_column parameter
+   1-6. vm usage
+     _________________________________________________________
 
-About Voicemail:
-----------------
-The voicemail application is available at
-http://developer.berlios.de/projects/sems/
+Chapter 1. User's Guide
 
-See its README for details on how to couple it with
-vm module.
+1.1. Overview
 
-If you need some help or just to report some bug,
-email the author at raphael.coeffic@iptel.org.
+   VM module enables the communication between SER and Sems
+   through FIFO calls and server functions.
+
+   The voicemail application is available at
+   http://developer.berlios.de/projects/sems/
+
+   See its README for details on how to couple it with vm module.
+
+   If you need some help or just to report some bug, email the
+   author at raphael.coeffic@iptel.org.
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. SER Modules
+
+   The following modules must be loaded before this module:
+
+     * tm - Transaction Module.
+     * A SER database module.
+     _________________________________________________________
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running SER with this module loaded:
+
+     * None.
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. db_url (string)
+
+   URL of the mysql database used to retrieve users.
+
+   Default value is "sql://ser:heslo@localhost/ser". 
+
+   Example 1-1. Set db_url parameter
+...
+modparam("vm", "db_url", "sql://username:password@localhost/ser")
+...
+     _________________________________________________________
+
+1.3.2. email_column (string)
+
+   Column name in subscriber table.
+
+   Default value is "email_address". 
+
+   Example 1-2. Set email_column parameter
+...
+modparam("vm", "email_column", "email")
+...
+     _________________________________________________________
+
+1.3.3. subscriber_table (string)
+
+   Table name of subscriber profiles.
+
+   Default value is "subscriber". 
+
+   Example 1-3. Set subscriber_table parameter
+...
+modparam("vm", "subscriber_table", "subscriber")
+...
+     _________________________________________________________
+
+1.3.4. user_column (string)
+
+   Column name of user id in subscriber profile.
+
+   Default value is "username". 
+
+   Example 1-4. Set user_column parameter
+...
+modparam("vm", "user_column", "username")
+...
+     _________________________________________________________
+
+1.3.5. domain_column (string)
+
+   Column name of domain in subscriber profile. Enable only with
+   MULTI_DOMAIN def.
+
+   Default value is "domain". 
+
+   Example 1-5. Set domain_column parameter
+...
+modparam("vm", "domain_column", "domain")
+...
+     _________________________________________________________
+
+1.4. Exported Functions
+
+   The function should only get called within a transaction.
+     _________________________________________________________
+
+1.4.1. vm(path, appname)
+
+   Relays a SIP request to the voicemail system.
+
+   Meaning of the parameters is as follows:
+
+     * path - Voicemail fifo path.
+     * appname - Application name to execute on Sems.
+
+   Example 1-6. vm usage
+...
+vm("/tmp/vm_fifo", "voicemail");
+...
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any sort of API to use in other
+   SER modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about SER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about SER?
+
+   Take a look at http://iptel.org/ser.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * http://mail.iptel.org/mailman/listinfo/serusers
+     * http://mail.iptel.org/mailman/listinfo/serdev
+
+   E-mails regarding any stable version should be sent to
+   <serusers@iptel.org> and e-mail regarding development versions
+   or CVS snapshots should be send to <serdev@iptel.org>.
+
+   If you want to keep the mail private, send it to
+   <serhelp@iptel.org>.
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://iptel.org/ser/bugs
