@@ -150,9 +150,6 @@ int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q,
 		_r->contacts = *_con;
 	}
 
-	     /* FIXME: Watchers should be notify only if this is the first contact */
-	notify_watchers(_r);
-
 	return 0;
 }
 
@@ -208,6 +205,9 @@ static inline int nodb_timer(urecord_t* _r)
 
 			mem_delete_ucontact(_r, t);
 			_r->slot->d->expired++;
+
+			     /* Last contact expired, notify watchers */
+			if (!ptr) notify_watchers(_r, PRES_OFFLINE);
 		} else {
 			ptr = ptr->next;
 		}
@@ -237,6 +237,8 @@ static inline int wt_timer(urecord_t* _r)
 			t = ptr;
 			ptr = ptr->next;
 			
+			if (!ptr) notify_watchers(_r, PRES_OFFLINE);
+
 			if (db_delete_ucontact(t) < 0) {
 				LOG(L_ERR, "wt_timer(): Error while deleting contact from database\n");
 			}
@@ -268,6 +270,7 @@ static inline int wb_timer(urecord_t* _r)
 				LOG(L_NOTICE, "Binding '\%.*s\',\'%.*s\' has expired\n",
 				    ptr->aor->len, ptr->aor->s,
 				    ptr->c.len, ptr->c.s);
+				if (ptr->next == 0) notify_watchers(_r, PRES_OFFLINE);
 			}
 			t = ptr;
 			ptr = ptr->next;
@@ -277,12 +280,6 @@ static inline int wb_timer(urecord_t* _r)
 				if (put_on_del_list(t) < 0) {
 					LOG(L_ERR, "wb_timer(): Can't put on delete list\n");
 				}
-
-				     /*
-				if (db_delete_ucontact(t) < 0) {
-					LOG(L_ERR, "wb_timer(): Error while deleting contact from database\n");
-				}
-				     */
 			}
 
 			if (t->expires != 0) {
@@ -302,20 +299,9 @@ static inline int wb_timer(urecord_t* _r)
 				if (put_on_ins_list(ptr) < 0) {
 					LOG(L_ERR, "wb_timer(): Error while putting on ins_list\n");
 				}
-
-				     /*
-				if (db_insert_ucontact(ptr) < 0) {
-					LOG(L_ERR, "wb_timer(): Error while inserting contact in db\n");
-				}
-				     */
 				break;
 
 			case 2: /* update */
-				/*
-				if (put_on_upd_list(ptr) < 0) {
-					LOG(L_ERR, "wb_timer(): Error while putting on del_list\n");
-				}
-				*/
 				if (db_update_ucontact(ptr) < 0) {
 					LOG(L_ERR, "wb_timer(): Error while updating contact in db\n");
 				}
@@ -402,6 +388,8 @@ int insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int 
 		LOG(L_ERR, "insert_ucontact(): Error while inserting contact\n");
 		return -1;
 	}
+
+	notify_watchers(_r, PRES_ONLINE);
 	
 	if (db_mode == WRITE_THROUGH) {
 		if (db_insert_ucontact(*_con) < 0) {
@@ -420,26 +408,34 @@ int insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int 
  */
 int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 {
-	notify_watchers(_r);
+	struct ucontact* ptr;
 
 	switch(db_mode) {
 	case NO_DB:
 		mem_delete_ucontact(_r, _c);
-		return 0;
+		break;
 
 	case WRITE_THROUGH:
 		if (db_delete_ucontact(_c) < 0) {
 			LOG(L_ERR, "delete_ucontact(): Can't remove contact from database\n");
 		}
 		mem_delete_ucontact(_r, _c);
-		return 0;
+		break;
 
 	case WRITE_BACK:
 		if (st_delete_ucontact(_c) > 0) {
 			mem_delete_ucontact(_r, _c);
 		}
-		return 0;
+		break;
 	}
+
+	ptr = _r->contacts;
+	while(ptr) {
+		if (ptr->expires) return 0;
+		ptr = ptr->next;
+	}
+	notify_watchers(_r, PRES_OFFLINE);
+
 	return 0;
 }
 

@@ -31,7 +31,7 @@ typedef struct notify_cb {
 } notify_cb_t;
 
 
-void notify_watchers(struct urecord* _r);
+void notify_watchers(struct urecord* _r, int state);
 
 int add_watcher(struct urecord* _r, notcb_t _c, void* _d);
 

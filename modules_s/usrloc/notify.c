@@ -8,13 +8,16 @@
 #include "udomain.h"
 
 
-void notify_watchers(struct urecord* _r)
+str dom = {"location", 8};
+
+
+void notify_watchers(struct urecord* _r, int state)
 {
 	notify_cb_t* n;
-
+       
 	n = _r->watchers;
         while(n) {
-		n->cb(&_r->aor, (_r->contacts) ? (PRES_ONLINE) : (PRES_OFFLINE), n->data);
+		n->cb(&_r->aor, state, n->data);
 		n = n->next;
 	}
 }
@@ -58,20 +61,20 @@ int remove_watcher(struct urecord* _r, notcb_t _c, void* _d)
 }
 
 
-int register_watcher(str* _d, str* _a, notcb_t _c, void* _data)
+int register_watcher(str* _f, str* _t, notcb_t _c, void* _data)
 {
 	udomain_t* d;
 	urecord_t* r;
 
-	if (find_domain(_d, &d) > 0) {
-		LOG(L_ERR, "register_watcher(): Domain \'%.*s\' not found\n", _d->len, _d->s);
+	if (find_domain(&dom, &d) > 0) {
+		LOG(L_ERR, "register_watcher(): Domain \'%.*s\' not found\n", dom.len, dom.s);
 		return -1;
 	}
 
 	lock_udomain(d);
 
-	if (get_urecord(d, _a, &r) > 0) {
-		if (insert_urecord(d, _a, &r) < 0) {
+	if (get_urecord(d, _t, &r) > 0) {
+		if (insert_urecord(d, _t, &r) < 0) {
 			LOG(L_ERR, "register_watcher(): Error while creating a new record\n");
 			return -2;
 		}
@@ -90,19 +93,19 @@ int register_watcher(str* _d, str* _a, notcb_t _c, void* _data)
 }
 
 
-int unregister_watcher(str* _d, str* _a, notcb_t _c, void* _data)
+int unregister_watcher(str* _f, str* _t, notcb_t _c, void* _data)
 {
 	udomain_t* d;
 	urecord_t* r;
 
-	if (find_domain(_d, &d) > 0) {
-		LOG(L_ERR, "unregister_watcher(): Domain \'%.*s\' not found\n", _d->len, _d->s);
+	if (find_domain(&dom, &d) > 0) {
+		LOG(L_ERR, "unregister_watcher(): Domain \'%.*s\' not found\n", dom.len, dom.s);
 		return -1;
 	}
 	
 	lock_udomain(d);
 	
-	if (get_urecord(d, _a, &r) > 0) {
+	if (get_urecord(d, _t, &r) > 0) {
 		DBG("unregister_watcher(): Record not found\n");
 		return 0;
 	}
@@ -114,4 +117,3 @@ int unregister_watcher(str* _d, str* _a, notcb_t _c, void* _data)
 
 	return 0;
 }
-
