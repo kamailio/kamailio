@@ -49,7 +49,4 @@ typedef struct {
 #define CON_TAIL(cn)       ((cn)->tail)
 
 
-int use_table(db_con_t* _h, const char* _t);
-
-
 #endif /* DB_CON_H */

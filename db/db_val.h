@@ -34,16 +34,16 @@
 
 
 /*
- * Accepted column types
+ * Accepted value types
  */
 typedef enum {
-	DB_INT,
-        DB_DOUBLE,
-	DB_STRING,
-	DB_STR,
-	DB_DATETIME,
-	DB_BLOB,
-	DB_BITMAP
+	DB_INT,        /* 32-bit integer */
+        DB_DOUBLE,     /* double data type */
+	DB_STRING,     /* Zero-terminated string */
+	DB_STR,        /* str structure */
+	DB_DATETIME,   /* Date and time */
+	DB_BLOB,       /* Large binary object */
+	DB_BITMAP      /* Bitmap of flags */
 } db_type_t;
 
 
@@ -70,7 +70,6 @@ typedef struct {
 /*
  * Useful macros for accessing attributes of db_val structure
  */
-
 #define VAL_TYPE(dv)   ((dv)->type)
 #define VAL_NULL(dv)   ((dv)->nul)
 #define VAL_INT(dv)    ((dv)->val.int_val)
@@ -80,18 +79,6 @@ typedef struct {
 #define VAL_STR(dv)    ((dv)->val.str_val)
 #define VAL_BLOB(dv)   ((dv)->val.blob_val)
 #define VAL_BITMAP(dv) ((dv)->val.bitmap_val)
-
-
-/*
- * Convert string to given type
- */
-int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l);
-
-
-/*
- * Convert given type to string
- */
-int val2str(db_val_t* _v, char* _s, int* _len);
 
 
 #endif /* DB_VAL_H */
