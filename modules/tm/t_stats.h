@@ -73,7 +73,7 @@ inline void static t_stats_deleted( int local )
 	tm_stats->deleted++;
 }
 
-static void update_reply_stats( int code ) {
+inline static void update_reply_stats( int code ) {
 	if (code>=600) {
 		tm_stats->completed_6xx++;
 	} else if (code>=500) {

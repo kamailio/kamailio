@@ -1,7 +1,7 @@
 
 
 1 linux-i386/gcc2.96
-2 linux-i386/gcc3.2
+2 linux-i386/gcc3.3
 3 linux-i386/icc
 4 freebsd-i386/gcc
 5 openbsd-i386/gcc
@@ -25,44 +25,44 @@ checked:
 
 
 module_name       1  2  3  4  5  6  7  8
-core                                o  
-acc                                 I  I
-auth                                o  o
-auth_db                             o  o
-auth_radius                         I  I
-cpl             P                   o  o
-cpl-c           D                   I  I
-dbtext                              o  o
-domain                              o  o
-enum                                o  o
-exec                                o  o
-ext                                 o  o
-extcmd                              o  o
-group                               o  o
-group_radius                        I  I
-jabber                              Wm W
-mangler                             W  o
-maxfwd                              o  o
-msilo                               o  o
-mysql                               o  o
-nathelper                           o  o
-pa                                  o  o
-pdt                                 o  o
-persmissions                        o  o
-pike                                o  o
-postgress                           I  I
-print                               o  o
-registrar                           o  o
-rr                                  o  o
-sl                                  o  o
-sms                                 o  o
-snmp      D                         I  I
-textops                             o  o
-tm                                  o  o
-uri                                 o  o
-uri_radius                          I  I
-usrloc                              o  W
-vm                                  o  o
+core                 o              o  
+acc                  I              I  I
+auth                 o              o  o
+auth_db              o              o  o
+auth_radius          I              I  I
+cpl             P    o              o  o
+cpl-c           D    I              I  I
+dbtext               o              o  o
+domain               o              o  o
+enum                 o              o  o
+exec                 o              o  o
+ext                  o              o  o
+extcmd               o              o  o
+group                o              o  o
+group_radius         I              I  I
+jabber               o              Wm W
+mangler              o              W  o
+maxfwd               o              o  o
+msilo                W              o  o
+mysql                o              o  o
+nathelper            o              o  o
+pa                   o              o  o
+pdt                  o              o  o
+persmissions         o              o  o
+pike                 o              o  o
+postgress            I              I  I
+print                o              o  o
+registrar            o              o  o
+rr                   o              o  o
+sl                   o              o  o
+sms                  o              o  o
+snmp      D          I              I  I
+textops              o              o  o
+tm                   o              o  o
+uri                  o              o  o
+uri_radius           I              I  I
+usrloc               o              o  W
+vm                   o              o  o
 
 
 
