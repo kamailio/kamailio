@@ -7,13 +7,13 @@
  * ***************************************************
  * * Jiri's Source Memorial                          *
  * *                                                 *
- * * Welcome, pilgrame! This is the greatest place   *
- * * where dramatic changes happend. Maybe there are *
- * * not so many original big pieces of code of him, *
- * * but Jiri, one of the ser fathers, brought       *
- * * everywhere the wind of change, the flood of     *
- * * clean-up. We all felt the his fatherly eye      *
- * * watching over us day and night.                 *
+ * * Welcome, pilgrim ! This is the greatest place   *
+ * * where dramatic changes happend. There are not   *
+ * * many places with a history like this, as there  *
+ * * are not so many people like Jiri, one of the    *
+ * * ser's fathers, who brought everywhere the wind  *
+ * * of change, the flood of clean-up. We all felt   *
+ * * his fatherly eye watching over us day and night.*
  * *                                                 *
  * * Please, preserve this codework heritage, as     *
  * * it's unlikly for fresh, juicy pices of code to  *
@@ -21,7 +21,7 @@
  * * demonstrate his clean-up and improvement skills.*
  * *                                                 *
  * * Hereby, we solicit you to adopt this historical *
- * * piece of code. For $50, your name will be       *
+ * * piece of code. For $100, your name will be      *
  * * be printed in this banner and we will use       *
  * * collected funds to create and display an ASCII  *
  * * statue of Jiri  .                               *
