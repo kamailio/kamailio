@@ -122,7 +122,9 @@ unsigned int timer_id2timeout[NR_OF_TIMER_LISTS] = {
 static void delete_cell( struct cell *p_cell, int unlock )
 {
 
+#ifdef EXTRA_DEBUG
 	int i;
+#endif
 
 	/* there may still be FR/RETR timers, which have been reset
 	   (i.e., time_out==TIMER_DELETED) but are stilled linked to
@@ -192,6 +194,42 @@ static void delete_cell( struct cell *p_cell, int unlock )
 	}
 }
 
+static void fake_reply(struct cell *t, int branch, int code )
+{
+	branch_bm_t cancel_bitmap;
+	short do_cancel_branch;
+	enum rps reply_status;
+
+	do_cancel_branch=t->is_invite && should_cancel_branch(t, branch);
+
+	cancel_bitmap=do_cancel_branch ? 1<<branch : 0;
+	if (t->local) {
+		reply_status=local_reply( t, FAKED_REPLY, branch, 
+			code, &cancel_bitmap );
+	} else {
+		reply_status=relay_reply( t, FAKED_REPLY, branch, code,
+			&cancel_bitmap );
+	}
+	/* now when out-of-lock do the cancel I/O */
+	if (do_cancel_branch) cancel_branch(t, branch );
+	/* it's cleaned up on error; if no error occured and transaction
+	   completed regularly, I have to clean-up myself
+	*/
+	if (reply_status==RPS_COMPLETED) {
+		/* don't need to cleanup uac_timers -- they were cleaned
+		   branch by branch and this last branch's timers are
+		   reset now too
+		*/
+		/* don't need to issue cancels -- local cancels have been
+		   issued branch by branch and this last branch was
+		   cancelled now too
+		*/
+		/* then the only thing to do now is to put the transaction
+		   on FR/wait state 
+		*/
+		set_final_timer(  t );
+	}
+}
 
 
 inline static void retransmission_handler( void *attr)
@@ -212,10 +250,13 @@ inline static void retransmission_handler( void *attr)
 	/* retransmision */
 	if ( r_buf->activ_type==TYPE_LOCAL_CANCEL 
 		|| r_buf->activ_type==0 ) {
-			SEND_BUFFER( r_buf );
 			DBG("DEBUG: retransmission_handler : "
 				"request resending (t=%p, %.9s ... )\n", 
 				r_buf->my_T, r_buf->buffer);
+			if (SEND_BUFFER( r_buf )<=0) {
+				fake_reply(r_buf->my_T, r_buf->branch, 503 );
+				return;
+			}
 	} else {
 			DBG("DEBUG: retransmission_handler : "
 				"reply resending (t=%p, %.9s ... )\n", 
@@ -238,10 +279,7 @@ inline static void final_response_handler( void *attr)
 {
 	int silent;
 	struct retr_buf* r_buf;
-	enum rps reply_status;
 	struct cell *t;
-	branch_bm_t cancel_bitmap;
-	short do_cancel_branch;
 
 	r_buf = (struct retr_buf*)attr;
 	t=r_buf->my_T;
@@ -309,42 +347,8 @@ inline static void final_response_handler( void *attr)
 	}
 
 	DBG("DEBUG: FR_handler:stop retr. and send CANCEL (%p)\n", t);
-	do_cancel_branch=t->is_invite && 
-		should_cancel_branch(t, r_buf->branch);
+	fake_reply(t, r_buf->branch, 408 );
 
-#ifdef _OBSOLETED
-	/* set global environment for currently processed transaction */
-	T=t;
-	global_msg_id=T->uas.request->id;
-#endif 
-
-	cancel_bitmap=do_cancel_branch ? 1<<r_buf->branch : 0;
-	if (t->local) {
-		reply_status=local_reply( t, FAKED_REPLY, r_buf->branch, 
-			408, &cancel_bitmap );
-	} else {
-		reply_status=relay_reply( t, FAKED_REPLY, r_buf->branch, 408, 
-			&cancel_bitmap );
-	}
-	/* now when out-of-lock do the cancel I/O */
-	if (do_cancel_branch) cancel_branch(t, r_buf->branch );
-	/* it's cleaned up on error; if no error occured and transaction
-	   completed regularly, I have to clean-up myself
-	*/
-	if (reply_status==RPS_COMPLETED) {
-		/* don't need to cleanup uac_timers -- they were cleaned
-		   branch by branch and this last branch's timers are
-		   reset now too
-		*/
-		/* don't need to issue cancels -- local cancels have been
-		   issued branch by branch and this last branch was
-		   cancelled now too
-		*/
-		/* then the only thing to do now is to put the transaction
-		   on FR/wait state 
-		*/
-		set_final_timer(  t );
-	}
 	DBG("DEBUG: final_response_handler : done\n");
 }
 
