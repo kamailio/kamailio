@@ -8,6 +8,7 @@ Jan Janak
 Edited by
 
 Jan Janak
+Jamey Hicks
 
    Copyright © 2003 FhG FOKUS
      _________________________________________________________
@@ -24,10 +25,16 @@ Jan Janak
         1.3. Exported Parameters
 
               1.3.1. default_expires (integer)
+	      1.3.2. default_priority_percentage (integer)
+	      1.3.3. db_url (string)
+	      1.3.4. pa_domain (string)
+	      
 
         1.4. Exported Functions
 
               1.4.1. handle_subscription(domain)
+              1.4.2. handle_publish(domain)
+              1.4.3. pa_handle_registration(domain)
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -45,7 +52,9 @@ Chapter 1. User's Guide
    receives SUBSCRIBE messages and sends NOTIFY when presence
    status of a user changes. Currently the presence server can be
    connected to registrar and jabber module so SIP users can see
-   presence of jabber users.
+   presence of jabber users.  This module also acts as a presence
+   aggregator, receiving PUBLISH messages to update extended status
+   and generating NOTIFY messages.
 
    This module currently cannot work as a B2BUA, i.e. it cannot
    subscribe to presence of users using SIP. We are currently
@@ -82,6 +91,37 @@ Chapter 1. User's Guide
 ...
 modparam("pa", "default_expires", 3600)
 ...
+
+1.3.2. default_priority_percentage (integer)
+
+   Default priority value to be used when not included in a PUBLISH
+   message, expressed as a percentage.
+
+   Default value is "50". 
+
+   Example 1-2. Set default_expires parameter
+...
+modparam("pa", "default_expires", 50)
+...
+
+1.3.3. db_url (string)
+
+   URL of the database containing presence-agent data.
+
+   Example 1-3. Set db_url parameter
+...
+modparam("pa", "db_url", "mysql:ser:heslo@localhost/ser")
+...
+
+1.3.4. pa_domain (string)
+
+   Hostname of xcap server associated with presence agent.
+
+   Example 1-4. Set default_expires parameter
+...
+modparam("pa", "pa_domain", "ser.example.com")
+...
+
      _________________________________________________________
 
 1.4. Exported Functions
@@ -94,10 +134,42 @@ modparam("pa", "default_expires", 3600)
 
      * domain - This can be either "registrar" or "jabber".
 
-   Example 1-2. handle_subscription usage
+   Example 1-5. handle_subscription usage
 ...
-handle_subscription("jabber");
+if (method=="SUBSCRIBE") {
+    if (!t_newtran()) {
+       log(1, "newtran error\n");
+       sl_reply_error();
+    };
+    handle_subscription("registrar");
+    break;
+};
 ...
+
+1.4.2. handle_publish(domain)
+
+   This function processes PUBLISH and generates NOTIFY.
+
+   Meaning of the parameters is as follows:
+
+     * domain - This can be either "registrar" or "jabber".
+
+   Example 1-6. handle_publish usage
+...
+if (method=="PUBLISH") {
+    if (!t_newtran()) {
+       log(1, "newtran error\n");
+       sl_reply_error();
+    };
+    handle_publish("registrar");
+    break;
+};
+...
+
+1.4.3. pa_handle_registration(domain)
+
+   This function is no longer used.
+
      _________________________________________________________
 
 Chapter 2. Developer's Guide
