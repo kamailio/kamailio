@@ -100,6 +100,11 @@ Type:		integer (seconds)
 Default:	20
 Desc:		time between expired Jabber connections checking
 
+Name:		check_time
+Type:		integer (seconds)
+Default:	20
+Desc:		time between checking the status of JabberGW workers
+
 4. Exported Functions
 ---------------------
 
