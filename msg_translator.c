@@ -53,8 +53,7 @@
  *             build_req_fomr_sip_req no longer adds 1 for ipv6 via parameter
  *              position calculations ([] are part of host.s now) (andrei)
  * 2003-10-02  via+lump dst address/port can be set to preset values (andrei)
- * 2003-10-08  receive_test function-alized (jiri)
- * 2003-10-20  added body_lump list (sip_msg), adjust_clen (andrei & jan)
+ * 2003-10-08 receive_test function-alized (jiri)
  *
  */
 /* Via special params:
@@ -122,7 +121,6 @@
 #include "dprint.h"
 #include "config.h"
 #include "md5utils.h"
-#include "data_lump.h"
 #include "data_lump_rpl.h"
 #include "ip_addr.h"
 #include "resolve.h"
@@ -218,11 +216,15 @@ static int check_via_address(struct ip_addr* ip, str *name,
 /* check if IP address in Via != source IP address of signaling */
 int received_test( struct sip_msg *msg )
 {
+	char backup;
 	int rcvd;
 
+	/* zero-terminate hostname temporarily in case DNS resolver is used */
+	backup = msg->via1->host.s[msg->via1->host.len];
 	rcvd=msg->via1->received
 			|| check_via_address(&msg->rcv.src_ip, &msg->via1->host,
 							msg->via1->port, received_dns);
+	msg->via1->host.s[msg->via1->host.len] = backup;
 	return rcvd;
 }
 
@@ -392,7 +394,7 @@ char* id_builder(struct sip_msg* msg, unsigned int *id_len)
 
 
 
-char* clen_builder(struct sip_msg* msg, unsigned int *clen_len, int diff)
+char* clen_builder(struct sip_msg* msg, unsigned int *clen_len)
 {
 	char* buf;
 	int len;
@@ -409,7 +411,7 @@ char* clen_builder(struct sip_msg* msg, unsigned int *clen_len, int diff)
 					" (missing crlf?)");
 		return 0;
 	}
-	value=msg->len-(int)(body-msg->buf)+diff;
+	value=msg->len-(int)(body-msg->buf);
 	value_s=int2str(value, &value_len);
 	DBG("clen_builder: content-length: %d (%s)\n", value, value_s);
 		
@@ -497,7 +499,7 @@ static inline int lump_check_opt(	enum lump_conditions cond,
 
 /* computes the "unpacked" len of a lump list,
    code moved from build_req_from_req */
-static inline int lumps_len(struct sip_msg* msg, struct lump* lumps, struct socket_info* send_sock)
+static inline int lumps_len(struct sip_msg* msg, struct socket_info* send_sock)
 {
 	int s_offset;
 	int new_len;
@@ -670,7 +672,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps, struct sock
 		send_port_str=&(send_sock->port_no_str);
 	
 	
-	for(t=lumps;t;t=t->next){
+	for(t=msg->add_rm;t;t=t->next){
 		/* skip if this is an OPT lump and the condition is not satisfied */
 		if ((t->op==LUMP_ADD_OPT) && !lump_check_opt(t->u.cond, msg, send_sock))
 			continue;
@@ -761,8 +763,7 @@ skip_after:
 /* another helper functions, adds/Removes the lump,
 	code moved form build_req_from_req  */
 
-static inline void process_lumps(	struct sip_msg* msg,
-					                                struct lump* lumps,
+static inline void process_lumps(	struct sip_msg* msg,	
 									char* new_buf, 
 									unsigned int* new_buf_offs, 
 									unsigned int* orig_offs,
@@ -1026,7 +1027,7 @@ static inline void process_lumps(	struct sip_msg* msg,
 	offset=*new_buf_offs;
 	s_offset=*orig_offs;
 	
-	for (t=lumps;t;t=t->next){
+	for (t=msg->add_rm;t;t=t->next){
 		switch(t->op){
 			case LUMP_ADD:
 			case LUMP_ADD_SUBST:
@@ -1183,109 +1184,12 @@ skip_nop_after:
 }
 
 
-/*
- * Adjust/insert Content-Length if necesarry
- */
-static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
-{
-	struct lump* anchor;
-	char* clen_buf;
-	int clen_len;
-
-	/* Calculate message length difference caused by lumps modifying message
-	 * body, from this point on the message body must not be modified. Zero
-	 * value indicates that the body hasn't been modified
-	*/
-
-	clen_buf = 0;
-	anchor=0;
-	
-	/* check to see if we need to add clen */
-#ifdef USE_TCP
-	if (proto == PROTO_TCP
-#ifdef USE_TLS
-	    || proto == PROTO_TLS
-#endif
-	    ) {
-		if (parse_headers(msg, HDR_CONTENTLENGTH, 0)==-1){
-			LOG(L_ERR, "adjust_clen: error parsing content-length\n");
-			goto error;
-		}
-		if (msg->content_length==0){
-			/* not present, we need to add it */
-			/* msg->unparsed should point just before the final crlf
-			 * - whole message was parsed by the above parse_headers
-			 *   which did not find content-length */
-			anchor=anchor_lump(msg, msg->unparsed-msg->buf, 0,
-												HDR_CONTENTLENGTH);
-			if (anchor==0){
-				LOG(L_ERR, "adjust_clen: cannot set clen anchor\n");
-				goto error;
-			}
-		}
-	}
-#endif
-	
-	
-	if ((anchor==0) && body_delta){
-		if (parse_headers(msg, HDR_CONTENTLENGTH, 0) == -1) {
-			LOG(L_ERR, "adjust_clen: Error parsing Content-Length\n");
-			goto error;
-		}
-		
-		/* The body has been changed, try to find
-		 * existing Content-Length
-		 */
-		/* no need for Content-Length if it's and UDP packet and
-		 * it hasn't Content-Lentgh already */
-		if ((msg->content_length==0)){
-		    /* content-length doesn't exist, append it */
-			/* msg->unparsed should point just before the final crlf
-			 * - whole message was parsed by the above parse_headers
-			 *   which did not find content-length */
-			if (proto!=PROTO_UDP){
-				anchor=anchor_lump(msg, msg->unparsed-msg->buf, 0,
-													HDR_CONTENTLENGTH);
-				if (anchor==0){
-					LOG(L_ERR, "adjust_clen: cannot set clen anchor\n");
-					goto error;
-				}
-			}else{
-				DBG("add_clen: UDP packet with no clen => not adding one \n");
-			}
-		}else{
-			/* Content-Length has been found, remove it */
-			anchor = del_lump(	msg, msg->content_length->name.s - msg->buf,
-								msg->content_length->len, HDR_CONTENTLENGTH);
-			if (anchor==0) {
-				LOG(L_ERR, "adjust_clen: Can't remove original"
-							" Content-Length\n");
-				goto error;
-			}
-		}
-	}
-	
-	if (anchor){
-		clen_buf = clen_builder(msg, &clen_len, body_delta);
-		if (!clen_buf) goto error;
-		if (insert_new_lump_after(anchor, clen_buf, clen_len,
-					HDR_CONTENTLENGTH) == 0)
-			goto error;
-	}
-
-	return 0;
-error:
-	if (clen_buf) pkg_free(clen_buf);
-	return -1;
-}
-
-
 
 char * build_req_buf_from_sip_req( struct sip_msg* msg,
 								unsigned int *returned_len,
 								struct socket_info* send_sock, int proto)
 {
-	unsigned int len, new_len, received_len, rport_len, uri_len, via_len, body_delta;
+	unsigned int len, new_len, received_len, rport_len, uri_len, via_len;
 	char* line_buf;
 	char* received_buf;
 	char* rport_buf;
@@ -1297,14 +1201,18 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	str branch;
 	str extra_params;
 	struct hostport hp;
-
+	
 #ifdef USE_TCP
 	char* id_buf;
 	unsigned int id_len;
+	char* clen_buf;
+	unsigned int clen_len;
 	
 	
 	id_buf=0;
 	id_len=0;
+	clen_buf=0;
+	clen_len=0;
 #endif
 	via_insert_param=0;
 	extra_params.len=0;
@@ -1318,6 +1226,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	received_buf=0;
 	rport_buf=0;
 	line_buf=0;
+
 	
 #ifdef USE_TCP
 	/* add id if tcp */
@@ -1337,17 +1246,31 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		extra_params.s=id_buf;
 		extra_params.len=id_len;
 	}
+	/* if sending proto == tcp, check if Content-Length needs to be added*/
+	if (proto==PROTO_TCP
+#ifdef USE_TLS
+			|| proto==PROTO_TLS
 #endif
-	     /* Calculate message body difference and adjust
-	      * Content-Length
-	      */
-	body_delta = lumps_len(msg, msg->body_lumps, send_sock);
-	if (adjust_clen(msg, body_delta, proto) < 0) {
-		LOG(L_ERR, "ERROR: build_req_buf_from_sip_req: Error while adjusting"
-				" Content-Length\n");
-		goto error00;
+			){
+		DBG("build_req_from_req: checking for clen; proto=%d,"
+			" rcv->proto=%d\n", proto, msg->rcv.proto);
+		/* first of all parse content-length */
+		if (parse_headers(msg, HDR_CONTENTLENGTH, 0)==-1){
+			LOG(L_ERR, "build_req_buf_from_sip_req:"
+							" error parsing content-length\n");
+			goto skip_clen;
+		}
+		if (msg->content_length==0){
+			/* we need to add it */
+			if ((clen_buf=clen_builder(msg, &clen_len))==0){
+				LOG(L_ERR, "build_req_buf_from_sip_req:" 
+								" clen_builder failed\n");
+				goto skip_clen;
+			}
+		}
 	}
-
+skip_clen:
+#endif
 	branch.s=msg->add_to_branch_s;
 	branch.len=msg->add_to_branch_len;
 	set_hostport(&hp, msg);
@@ -1383,7 +1306,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	/* add via header to the list */
 	/* try to add it before msg. 1st via */
 	/* add first via, as an anchor for second via*/
-	anchor=anchor_lump(msg, msg->via1->hdr.s-buf, 0, HDR_VIA);
+	anchor=anchor_lump(&(msg->add_rm), msg->via1->hdr.s-buf, 0, HDR_VIA);
 	if (anchor==0) goto error01;
 	if (insert_new_lump_before(anchor, line_buf, via_len, HDR_VIA)==0)
 		goto error01;
@@ -1409,11 +1332,11 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	 * overwrite the previous one if already present */
 	if (received_len){
 		if (msg->via1->received){ /* received already present => overwrite it*/
-			via_insert_param=del_lump(msg,
+			via_insert_param=del_lump(&(msg->add_rm),
 								msg->via1->received->start-buf-1, /*;*/
 								msg->via1->received->size+1, /*;*/ HDR_VIA);
 		}else if (via_insert_param==0){ /* receive not present, ok */
-			via_insert_param=anchor_lump(msg,
+			via_insert_param=anchor_lump(&(msg->add_rm),
 										msg->via1->hdr.s-buf+size,0, HDR_VIA);
 		}
 		if (via_insert_param==0) goto error02; /* free received_buf */
@@ -1423,12 +1346,12 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	/* if rport needs to be updated, delete it if present and add it's value */
 	if (rport_len){
 		if (msg->via1->rport){ /* rport already present */
-			via_insert_param=del_lump(msg,
+			via_insert_param=del_lump(&(msg->add_rm),
 								msg->via1->rport->start-buf-1, /*';'*/
 								msg->via1->rport->size+1 /* ; */, HDR_VIA);
 		}else if (via_insert_param==0){ /*force rport, no rport present */
 			/* no rport, add it */
-			via_insert_param=anchor_lump(msg,
+			via_insert_param=anchor_lump(&(msg->add_rm),
 										msg->via1->hdr.s-buf+size,0, HDR_VIA);
 		}
 		if (via_insert_param==0) goto error03; /* free rport_buf */
@@ -1437,9 +1360,22 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 			goto error03; /* free rport_buf */
 			
 	}
+#ifdef USE_TCP
+	/* if clen needs to be added, add it */
+	if (clen_len){
+		/* msg->unparsed should point just before the final crlf,
+		 * parse_headers is called from clen_builder */
+		anchor=anchor_lump(&(msg->add_rm), msg->unparsed-buf, 0,
+							 HDR_CONTENTLENGTH);
+		if (anchor==0) goto error04; /* free clen_buf */
+		if (insert_new_lump_after(anchor, clen_buf, clen_len,
+					HDR_CONTENTLENGTH)==0)
+			goto error04; /* free clen_buf*/
+	}
+#endif
 
 	/* compute new msg len and fix overlapping zones*/
-	new_len=len+body_delta+lumps_len(msg, msg->add_rm, send_sock);
+	new_len=len+lumps_len(msg, send_sock);
 #ifdef XL_DEBUG
 	LOG(L_ERR, "DEBUG: new_len(%d)=len(%d)+lumps_len\n", new_len, len);
 #endif
@@ -1469,8 +1405,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	}
 	new_buf[new_len]=0;
 	/* copy msg adding/removing lumps */
-	process_lumps(msg, msg->add_rm, new_buf, &offset, &s_offset, send_sock);
-	process_lumps(msg, msg->body_lumps, new_buf, &offset, &s_offset,send_sock);
+	process_lumps(msg, new_buf, &offset, &s_offset, send_sock);
 	/* copy the rest of the message */
 	memcpy(new_buf+offset, buf+s_offset, len-s_offset);
 	new_buf[new_len]=0;
@@ -1496,6 +1431,10 @@ error02:
 	if (received_buf) pkg_free(received_buf);
 error03:
 	if (rport_buf) pkg_free(rport_buf);
+#ifdef USE_TCP
+error04:
+	if (clen_buf) pkg_free(clen_buf);
+#endif
 error00:
 #ifdef USE_TCP
 	if (id_buf) pkg_free(id_buf);
@@ -1509,12 +1448,19 @@ error00:
 char * build_res_buf_from_sip_res( struct sip_msg* msg,
 				unsigned int *returned_len)
 {
-	unsigned int new_len, via_len, body_delta;
+	unsigned int new_len, via_len;
 	char* new_buf;
 	unsigned offset, s_offset, via_offset;
 	char* buf;
 	unsigned int len;
-
+#ifdef USE_TCP
+	struct lump* anchor;
+	char* clen_buf;
+	unsigned int clen_len;
+	
+	clen_buf=0;
+	clen_len=0;
+#endif
 	buf=msg->buf;
 	len=msg->len;
 	new_buf=0;
@@ -1527,26 +1473,57 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 		via_offset=msg->h_via1->name.s-buf;
 	}
 
-	     /* Calculate message body difference and adjust
-	      * Content-Length
-	      */
-	body_delta = lumps_len(msg, msg->body_lumps, 0);
-	if (adjust_clen(msg, body_delta, (msg->via2? msg->via2->proto:PROTO_UDP))
-			< 0) {
-		LOG(L_ERR, "ERROR: build_req_buf_from_sip_req: Error while adjusting"
-				" Content-Length\n");
-		goto error;
-	}
+#ifdef USE_TCP
 
+	/* if sending proto == tcp, check if Content-Length needs to be added*/
+	if (msg->via2 && ((msg->via2->proto==PROTO_TCP)
+#ifdef USE_TLS
+				|| (msg->via2->proto==PROTO_TLS)
+#endif
+				)){
+		DBG("build_res_from_sip_res: checking content-length for \n%.*s\n",
+				(int)msg->len, msg->buf);
+		/* first of all parse content-length */
+		if (parse_headers(msg, HDR_CONTENTLENGTH, 0)==-1){
+			LOG(L_ERR, "build_res_buf_from_sip_res:"
+							" error parsing content-length\n");
+			goto skip_clen;
+		}
+		if (msg->content_length==0){
+			DBG("build_res_from_sip_res: no content_length hdr found\n");
+			/* we need to add it */
+			if ((clen_buf=clen_builder(msg, &clen_len))==0){
+				LOG(L_ERR, "build_res_buf_from_sip_res:" 
+								" clen_builder failed\n");
+				goto skip_clen;
+			}
+		}
+	}
+skip_clen:
+#endif
+	
 	/* remove the first via*/
-	if (del_lump( msg, via_offset, via_len, HDR_VIA)==0){
+	if (del_lump( &(msg->add_rm), via_offset, via_len, HDR_VIA)==0){
 		LOG(L_ERR, "build_res_buf_from_sip_res: error trying to remove first"
 					"via\n");
 		goto error;
 	}
-
-	new_len=len+body_delta+lumps_len(msg, msg->add_rm, 0); /*FIXME: we don't
-														know the send sock */
+#ifdef USE_TCP
+	/* if clen needs to be added, add it */
+	if (clen_len){
+		/* msg->unparsed should point just before the final crlf,
+		 * parse_headers is called from clen_builder */
+		anchor=anchor_lump(&(msg->add_rm), msg->unparsed-buf, 0, 
+							HDR_CONTENTLENGTH);
+		DBG("build_res_from_sip_res: adding content-length: %.*s\n",
+				(int)clen_len, clen_buf);
+		if (anchor==0) goto error_clen; /* free clen_buf*/
+		if (insert_new_lump_after(anchor, clen_buf, clen_len,
+					HDR_CONTENTLENGTH)==0)
+			goto error_clen; /* free clen_buf*/
+	}
+#endif
+	new_len=len+lumps_len(msg, 0); /*FIXME: we don't know the send sock */
 	
 	DBG(" old size: %d, new size: %d\n", len, new_len);
 	new_buf=(char*)pkg_malloc(new_len+1); /* +1 is for debugging 
@@ -1557,9 +1534,7 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 	}
 	new_buf[new_len]=0; /* debug: print the message */
 	offset=s_offset=0;
-	/*FIXME: no send sock*/
-	process_lumps(msg, msg->add_rm, new_buf, &offset, &s_offset, 0);/*FIXME:*/
-	process_lumps(msg, msg->body_lumps, new_buf, &offset, &s_offset, 0);
+	process_lumps(msg, new_buf, &offset, &s_offset, 0); /*FIXME: no send sock*/
 	/* copy the rest of the message */
 	memcpy(new_buf+offset,
 		buf+s_offset, 
@@ -1570,6 +1545,10 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 
 	*returned_len=new_len;
 	return new_buf;
+#ifdef USE_TCP
+error_clen:
+	if (clen_buf) pkg_free(clen_buf);
+#endif
 error:
 	*returned_len=0;
 	return 0;
@@ -1585,10 +1564,14 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	struct lump_rpl   *lump;
 	struct lump_rpl   *body;
 	int               i;
-	str               received = {0,0};
-	str               rport = {0,0};
-	str               warning = {0,0};
-	str               content_len = {0,0};
+	char*             received_buf;
+	unsigned int      received_len;
+	char*             rport_buf;
+	unsigned int      rport_len;
+	char*             warning_buf;
+	unsigned int      warning_len;
+	char*             content_len_buf;
+	unsigned int      content_len_len;
 	unsigned int      text_len;
 	char *after_body;
 	str  to_tag;
@@ -1596,9 +1579,11 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 
 	body = 0;
 	buf=0;
-
+	received_buf=rport_buf=warning_buf=content_len_buf=0;
+	received_len=rport_len=warning_len=content_len_len=0;
+	
 	text_len=strlen(text);
-
+	
 	/* force parsing all headers -- we want to return all
 	Via's in the reply and they may be scattered down to the
 	end of header (non-block Vias are a really poor property
@@ -1614,7 +1599,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 
 	/* check if received needs to be added */
 	if (received_test(msg)) {
-		if ((received.s=received_builder(msg,&received.len))==0) {
+		if ((received_buf=received_builder(msg,&received_len))==0) {
 			LOG(L_ERR, "ERROR: build_res_buf_from_sip_req: "
 				"alas, received_builder failed\n");
 			goto error00;
@@ -1623,7 +1608,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	/* check if rport needs to be updated */
 	if ( (msg->msg_flags&FL_FORCE_RPORT)||
 		(msg->via1->rport /*&& msg->via1->rport->value.s==0*/)){
-		if ((rport.s=rport_builder(msg, &rport.len))==0){
+		if ((rport_buf=rport_builder(msg, &rport_len))==0){
 			LOG(L_ERR, "ERROR: build_res_buf_from_sip_req:"
 							" rport_builder failed\n");
 			goto error01; /* free everything */
@@ -1651,7 +1636,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 			case HDR_VIA:
 				/* we always add CRLF to via*/
 				len+=(hdr->body.s+hdr->body.len)-hdr->name.s+CRLF_LEN;
-				if (hdr==msg->h_via1) len += received.len+rport.len;
+				if (hdr==msg->h_via1) len += received_len+rport_len;
 				break;
 			case HDR_RECORDROUTE:
 				/* RR only for 1xx and 2xx replies */
@@ -1675,14 +1660,14 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 		len += SERVER_HDR_LEN + CRLF_LEN;
 	/* warning hdr */
 	if (sip_warning) {
-		warning.s = warning_builder(msg,&warning.len);
-		if (warning.s) len += warning.len + CRLF_LEN;
+		warning_buf = warning_builder(msg,&warning_len);
+		if (warning_buf) len += warning_len + CRLF_LEN;
 		else LOG(L_WARN, "WARNING: warning skipped -- too big\n");
 	}
 	/* content length hdr */
 	if (body) {
-		content_len.s = int2str(body->text.len, &content_len.len);
-		len += CONTENT_LENGTH_LEN + content_len.len + CRLF_LEN;
+		content_len_buf = int2str(body->text.len, (int*)&content_len_len);
+		len += CONTENT_LENGTH_LEN + content_len_len + CRLF_LEN;
 	} else {
 		len += CONTENT_LENGTH_LEN + 1/*0*/ + CRLF_LEN;
 	}
@@ -1719,13 +1704,13 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 		{
 			case HDR_VIA:
 				if (hdr==msg->h_via1){
-					if (rport.s){
+					if (rport_buf){
 						if (msg->via1->rport){ /* delete the old one */
 							/* copy until rport */
 							append_str_trans( p, hdr->name.s ,
 								msg->via1->rport->start-hdr->name.s-1,msg);
 							/* copy new rport */
-							append_str(p, rport.s, rport.len);
+							append_str(p, rport_buf, rport_len);
 							/* copy the rest of the via */
 							append_str_trans(p, msg->via1->rport->start+
 												msg->via1->rport->size, 
@@ -1736,15 +1721,15 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 							/* normal whole via copy */
 							append_str_trans( p, hdr->name.s , 
 								(hdr->body.s+hdr->body.len)-hdr->name.s, msg);
-							append_str(p, rport.s, rport.len);
+							append_str(p, rport_buf, rport_len);
 						}
 					}else{
 						/* normal whole via copy */
 						append_str_trans( p, hdr->name.s , 
 								(hdr->body.s+hdr->body.len)-hdr->name.s, msg);
 					}
-					if (received.s)
-						append_str( p, received.s, received.len);
+					if (received_buf)
+						append_str( p, received_buf, received_len);
 				}else{
 					/* normal whole via copy */
 					append_str_trans( p, hdr->name.s,
@@ -1807,17 +1792,17 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 		p+=CRLF_LEN;
 	}
 	/* content_length hdr */
-	if (content_len.len) {
+	if (content_len_len) {
 		append_str( p, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
-		append_str( p, content_len.s, content_len.len );
+		append_str( p, content_len_buf, content_len_len );
 		append_str( p, CRLF, CRLF_LEN );
 	} else {
 		append_str( p, CONTENT_LENGTH"0"CRLF,CONTENT_LENGTH_LEN+1+CRLF_LEN);
 	}
 	/* warning header */
-	if (warning.s) {
-		memcpy( p, warning.s, warning.len);
-		p+=warning.len;
+	if (warning_buf) {
+		memcpy( p, warning_buf, warning_len);
+		p+=warning_len;
 		memcpy( p, CRLF, CRLF_LEN);
 		p+=CRLF_LEN;
 	}
@@ -1838,13 +1823,13 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	/* in req2reply, received_buf is not introduced to lumps and
 	   needs to be deleted here
 	*/
-	if (received.s) pkg_free(received.s);
-	if (rport.s) pkg_free(rport.s);
+	if (received_buf) pkg_free(received_buf);
+	if (rport_buf) pkg_free(rport_buf);
 	return buf;
 
 error01:
-	if (received.s) pkg_free(received.s);
-	if (rport.s) pkg_free(rport.s);
+	if (received_buf) pkg_free(received_buf);
+	if (rport_buf) pkg_free(rport_buf);
 error00:
 	*returned_len=0;
 	return 0;
