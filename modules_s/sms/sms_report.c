@@ -112,7 +112,7 @@ void set_gettime_function()
 
 
 
-inline void free_cell(struct report_cell *cell)
+inline void free_report_cell(struct report_cell *cell)
 {
 	if (!cell)
 		return;
@@ -149,7 +149,7 @@ void destroy_report_queue()
 
 	for(i=0;i<NR_CELLS;i++)
 		if (report_queue[i].sms)
-			free_cell(&(report_queue[i]));
+			free_report_cell(&(report_queue[i]));
 	if (report_queue)
 		shm_free(report_queue);
 	report_queue = 0;
@@ -163,7 +163,7 @@ void add_sms_into_report_queue(int id, struct sms_msg *sms, char *p, int l)
 	if (report_queue[id].sms){
 		LOG(L_INFO,"INFO:sms:add_sms_into_report_queue: old message still "
 			"waiting for report at location %d -> discarding\n",id);
-		free_cell(&(report_queue[id]));
+		free_report_cell(&(report_queue[id]));
 	}
 
 	sms->ref++;
@@ -199,7 +199,7 @@ int  relay_report_to_queue(int id, char *phone, int status)
 	cell->status = status;
 	if (status>=0 && status<32) {
 		/* means OK -> trash the cell */
-		free_cell(cell);
+		free_report_cell(cell);
 		DBG("DEBUG:sms:relay_report_to_queue:sms %d confirmed with code %d\n",
 			id, status);
 		goto done;
@@ -235,7 +235,7 @@ void check_timeout_in_report_queue()
 			LOG(L_INFO,"INFO:sms:check_timeout_in_report_queue: [%lu,%lu] "
 				"record %d is discarded (timeout), having status %d\n",
 				current_time,report_queue[i].timeout,i,report_queue[i].status);
-			free_cell(&(report_queue[i]));
+			free_report_cell(&(report_queue[i]));
 		}
 }
 
@@ -244,7 +244,7 @@ void check_timeout_in_report_queue()
 
 void remove_sms_from_report_queue(int id)
 {
-	free_cell(&(report_queue[id]));
+	free_report_cell(&(report_queue[id]));
 }
 
 

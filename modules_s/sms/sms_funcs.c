@@ -57,7 +57,7 @@ int max_sms_parts;
 int *queued_msgs;
 int use_contact;
 int use_sms_report;
-
+struct tm_binds tmb;
 
 
 #define ERR_NUMBER_TEXT " is an invalid number! Please resend your SMS "\
@@ -320,7 +320,7 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 	/** sending SIP MSG using IM - deprecated **/
 	/*foo = im_send_message(to, to, &from, &contact, body); */
 	/** sending with TM **/
-	foo = t_uac( &msg_type, to, &hdrs, body, &from, 0, 0, 0);
+	foo = tmb.t_uac( &msg_type, to, &hdrs, body, &from, 0);
 	if (from.s) pkg_free(from.s);
 	if (hdrs.s) pkg_free(hdrs.s);
 	return foo;

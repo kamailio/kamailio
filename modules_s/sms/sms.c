@@ -41,6 +41,7 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../im/im_funcs.h"
+#include "../tm/tm_load.h"
 #include "sms_funcs.h"
 #include "sms_report.h"
 #include "libsms_modem.h"
@@ -64,13 +65,13 @@ char *default_net_str = 0;
 char *domain_str      = 0;
 
 /*global vaiables*/
-int  default_net    = 0;
-int  max_sms_parts  = MAX_SMS_PARTS;
-str  domain;
-int  *queued_msgs   = 0;
-int  use_contact    = 0;
-int  use_sms_report = 0;
-
+int    default_net    = 0;
+int    max_sms_parts  = MAX_SMS_PARTS;
+str    domain;
+int    *queued_msgs   = 0;
+int    use_contact    = 0;
+int    use_sms_report = 0;
+struct tm_binds tmb;
 
 struct module_exports exports= {
 	"sms",
@@ -527,8 +528,18 @@ error:
 
 int global_init()
 {
-	int  i, net_pipe[2], foo;
-	char *p;
+	load_tm_f  load_tm;
+	int        i, net_pipe[2], foo;
+	char       *p;
+
+	/* import the TM auto-loading function */
+	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT))) {
+		LOG(L_ERR, "ERROR: acc: mod_init: can't import load_tm\n");
+		goto error;
+	}
+	/* let the auto-loading function load all TM stuff */
+	if (load_tm( &tmb )==-1) 
+		goto error;
 
 	/*fix domain lenght*/
 	if (domain_str) {
