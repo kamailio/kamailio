@@ -49,7 +49,7 @@ static int init_semaphore_set( int size )
 
 	new_semaphore=semget ( IPC_PRIVATE, size, IPC_CREAT | IPC_PERMISSIONS );
 	if (new_semaphore==-1) {
-		DBG("DEBUG: init_semaphore_set(%d):  failure to allocate a"
+		DBG("DEBUG:init_semaphore_set(%d):  failure to allocate a"
 					" semaphore: %s\n", size, strerror(errno));
 		return -1;
 	}
@@ -62,10 +62,10 @@ static int init_semaphore_set( int size )
 		/* binary lock */
 		argument.val = +1;
 		if (semctl( new_semaphore, i , SETVAL , argument )==-1) {
-			DBG("DEBUG: init_semaphore_set:  failure to "
+			DBG("DEBUG:init_semaphore_set:  failure to "
 				"initialize a semaphore: %s\n", strerror(errno));
 			if (semctl( entry_semaphore, 0 , IPC_RMID , 0 )==-1)
-				DBG("DEBUG: init_semaphore_set:  failure to release"
+				DBG("DEBUG:init_semaphore_set:  failure to release"
 					" a semaphore\n");
 			return -2;
 		}
@@ -92,7 +92,7 @@ tryagain:
 			DBG("signal received in a semaphore\n");
 			goto tryagain;
 		} else {
-			LOG(L_CRIT, "ERROR: change_semaphore_pike(%x, %x, 1) : %s\n",
+			LOG(L_CRIT, "ERROR:change_semaphore_pike(%x, %x, 1) : %s\n",
 					s->semaphore_set, &pbuf,
 					strerror(errno));
 		}
@@ -115,7 +115,7 @@ smart_lock* create_semaphores(int nr)
 
 	lock_set = (smart_lock*)shm_malloc(nr*sizeof(smart_lock));
 	if (lock_set==0){
-		LOG(L_CRIT, "ERROR: create_semaphores: out of pkg mem\n");
+		LOG(L_CRIT, "ERROR:create_semaphores: out of pkg mem\n");
 		goto error;
 	}
 #ifdef FAST_LOCK
@@ -123,7 +123,7 @@ smart_lock* create_semaphores(int nr)
 		init_lock(lock_set[i]);
 #else
 	if ((sem_set=init_semaphore_set(nr))<0) {
-		LOG(L_CRIT, "ERROR: create_semaphores: semaphores "
+		LOG(L_CRIT, "ERROR:create_semaphores: semaphores "
 			"initialization failure: %s\n",strerror(errno));
 		goto error;
 	}
@@ -144,10 +144,10 @@ void destroy_semaphores(smart_lock *sem_set)
 {
 #ifdef FAST_LOCK
 	/* must check if someone uses them, for now just leave them allocated*/
-	LOG(L_INFO, "INFO: lock_cleanup:  clean-up still not implemented"
+	LOG(L_INFO, "INFO:lock_cleanup:  clean-up still not implemented"
 		" properly \n");
 #else
-	LOG(L_INFO, "INFO: lock_cleanup:  clean-up still not implemented"
+	LOG(L_INFO, "INFO:lock_cleanup:  clean-up still not implemented"
 		" properly (no sibling check)\n");
 	/* sibling double-check missing here; install a signal handler */
 

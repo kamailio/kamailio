@@ -36,7 +36,7 @@
 #include "ms_msg_list.h"
 
 /**
- *
+ * create a new element
  */
 msg_list_el msg_list_el_new()
 {
@@ -54,7 +54,7 @@ msg_list_el msg_list_el_new()
 }
 
 /**
- *
+ * free an element
  */
 void msg_list_el_free(msg_list_el mle)
 {
@@ -66,7 +66,7 @@ void msg_list_el_free(msg_list_el mle)
 }
 
 /**
- *
+ * free a list of elements
  */
 void msg_list_el_free_all(msg_list_el mle)
 {
@@ -86,7 +86,7 @@ void msg_list_el_free_all(msg_list_el mle)
 }
 
 /**
- *
+ * init a list
  */
 msg_list msg_list_init()
 {
@@ -110,7 +110,7 @@ clean:
 }
 
 /**
- *
+ * free a list
  */
 void msg_list_free(msg_list ml)
 {
@@ -152,7 +152,7 @@ void msg_list_free(msg_list ml)
 }
 
 /**
- *
+ * check if a message is in list
  */
 int msg_list_check_msg(msg_list ml, int mid)
 {
@@ -208,7 +208,7 @@ errorx:
 }
 
 /**
- *
+ * set flag for message with mid
  */
 int msg_list_set_flag(msg_list ml, int mid, int fl)
 {
@@ -239,7 +239,7 @@ errorx:
 }
 
 /**
- *
+ * check if the messages from list were sent
  */
 int msg_list_check(msg_list ml)
 {
@@ -292,7 +292,8 @@ errorx:
 }
 
 /**
- *
+ * reset a list
+ * return old list
  */
 msg_list_el msg_list_reset(msg_list ml)
 {

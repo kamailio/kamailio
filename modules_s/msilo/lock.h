@@ -86,6 +86,11 @@ static inline int s_unlock( smart_lock *s )
 /* lock semaphore s */
 static inline int s_lock_at(smart_lock *s, int i)
 {
+	if(!s)
+	{
+		LOG(L_ERR, "ERROR: sem set is null!!!\n");
+		return -1;
+	}
 	DBG("INFO: sem_lock_at: <%d>\n", i);
 #ifdef FAST_LOCK
 	get_lock(&s[i]);
@@ -99,6 +104,11 @@ static inline int s_lock_at(smart_lock *s, int i)
 /* ulock semaphore */
 static inline int s_unlock_at(smart_lock *s, int i)
 {
+	if(!s)
+	{
+		LOG(L_ERR, "ERROR: sem set is null!!!\n");
+		return -1;
+	}
 	DBG("INFO: sem_unlock_at: <%d>\n", i);
 #ifdef FAST_LOCK
 	release_lock(&s[i]);
