@@ -25,6 +25,8 @@
 #define SMS_TRUNCATED        "(truncated)"
 #define SMS_TRUNCATED_LEN    (sizeof(SMS_TRUNCATED)-1)
 
+#define TIME_LEN   8          /* xx-xx-xx */
+#define DATE_LEN   TIME_LEN
 
 struct network {
 	char name[MAX_CHAR_BUF+1];
@@ -61,8 +63,8 @@ struct sms_msg {
 struct incame_sms {
 	char sender[31];
 	char name[64];
-	char date[9];
-	char time[9];
+	char date[DATE_LEN];
+	char time[TIME_LEN];
 	char ascii[500];
 	char smsc[31];
 	int  userdatalength;

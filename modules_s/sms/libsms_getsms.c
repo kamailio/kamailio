@@ -28,6 +28,26 @@ mailto:s.frings@mail.isis.de
 
 
 
+#define set_date(_date,_Pointer) {\
+	(_date)[0] = (_Pointer)[3];\
+	(_date)[1] = (_Pointer)[2];\
+	(_date)[2] = '-';\
+	(_date)[3] = (_Pointer)[5];\
+	(_date)[4] = (_Pointer)[4];\
+	(_date)[5] = '-';\
+	(_date)[6] = (_Pointer)[1];\
+	(_date)[7] = (_Pointer)[0];}
+
+#define set_time( _time , _Pointer) {\
+	(_time)[0] = (_Pointer)[1];\
+	(_time)[1] = (_Pointer)[0];\
+	(_time)[2] = ':';\
+	(_time)[3] = (_Pointer)[3];\
+	(_time)[4] = (_Pointer)[2];\
+	(_time)[5] = ':';\
+	(_time)[6] = (_Pointer)[5];\
+	(_time)[7] = (_Pointer)[4];}
+
 
 
 
@@ -116,7 +136,7 @@ int pdu2binary(char* pdu, char* binary)
 int fetchsms(struct modem *mdm, int sim, char* pdu)
 {
 	char command[16];
-	char answer[256];
+	char answer[512];
 	char* position;
 	char* beginning;
 	char* end;
@@ -335,11 +355,9 @@ int split_type_0(struct sms_msg *sms_messg, char* Pointer,
 	else
 		sms_messg->is_binary=0;
 	Pointer++;
-	sprintf(sms->date,"%c%c-%c%c-%c%c",Pointer[3],Pointer[2],Pointer[5],
-		Pointer[4],Pointer[1],Pointer[0]);
+	set_date(sms->date,Pointer);
 	Pointer=Pointer+6;
-	sprintf(sms->time,"%c%c:%c%c:%c%c",Pointer[1],Pointer[0],Pointer[3],
-		Pointer[2],Pointer[5],Pointer[4]);
+	set_time(sms->time,Pointer);
 	Pointer=Pointer+8;
 	if (sms_messg->is_binary)
 		sms->userdatalength = pdu2binary(Pointer,sms->ascii);
@@ -362,7 +380,7 @@ int split_type_2(struct sms_msg *sms_messg, char* position,
 	int status;
 	char temp[32];
 
-	strcat(sms->ascii,"SMS STATUS REPORT\n");
+	strcpy(sms->ascii,"SMS STATUS REPORT\n");
 	// get recipient address
 	position+=2;
 	length=octet2bin(position);
@@ -374,15 +392,14 @@ int split_type_2(struct sms_msg *sms_messg, char* position,
 	strcat(sms->ascii,"\nDischarge_timestamp: ");
 	// get SMSC timestamp
 	position+=length+padding;
-	sprintf(sms->date,"%c%c-%c%c-%c%c",position[3],position[2],position[5],
-		position[4],position[1],position[0]);
-	sprintf(sms->time,"%c%c:%c%c:%c%c",position[7],position[6],position[9],
-		position[8],position[11],position[10]);
+	set_date(sms->date,position);
+	set_time(sms->time,position+6);
 	// get Discharge timestamp
 	position+=14;
-	sprintf(temp,"%c%c-%c%c-%c%c %c%c:%c%c:%c%c",position[3],position[2],
-		position[5],position[4],position[1],position[0],position[7],
-		position[6],position[9],position[8],position[11],position[10]);
+	set_date(temp,position);
+	*(temp+DATE_LEN) = ' ';
+	set_time(temp+DATE_LEN+1,position+6);
+	temp[DATE_LEN+1+TIME_LEN] = 0;
 	strcat(sms->ascii,temp);
 	strcat(sms->ascii,"\nStatus: ");
 	// get Status
@@ -511,7 +528,7 @@ int splitpdu(struct modem *mdm, struct sms_msg *sms_messg, char* pdu,
 	if (Type==0) // SMS Deliver
 		return split_type_0(sms_messg, Pointer, sms);
 	else if (Type==2)  // Status Report
-		return -1;//split_type_2(Pointer,sendr,date,time,ascii);
+		return split_type_2(sms_messg, Pointer, sms);
 	// Unsupported type
 	foo = sprintf(sms->ascii,"Message format (%i) is not supported. "
 		"Cannot decode.\n%s\n",Type,pdu);
@@ -551,7 +568,7 @@ int getsms( struct incame_sms *sms, struct modem *mdm, int sim)
 	DBG("DEBUG:getsms: from %s, sent on %s %s\n",sms->sender,sms->date,
 		sms->time);
 
-	//deletesms(mdm,found);
+	deletesms(mdm,found);
 
 	return 1;
 error:

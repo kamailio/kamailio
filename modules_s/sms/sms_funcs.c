@@ -45,7 +45,14 @@ int *queued_msgs;
 	{memcpy((_p),(_s),(_l));\
 	(_p) += (_l);}
 
+#define is_in_sip_addr(_p) \
+	((_p)!=' ' && (_p)!='\t' && (_p)!='(' && (_p)!='[' && (_p)!='<' \
+	&& (_p)!='>' && (_p)!=']' && (_p)!=')' && (_p)!='?' && (_p)!='!' \
+	&& (_p)!=';' && (_p)!=',')
 
+#define no_sip_addr_begin(_p) \
+	( (_p)!=' ' && (_p)!='\t' && (_p)!='-' && (_p)!='=' && (_p)!='\r'\
+	&& (_p)!='\n' && (_p)!=';' && (_p)!=',')
 
 
 int push_on_network(struct sip_msg *msg, int net)
@@ -354,6 +361,146 @@ error:
 
 
 
+int send_sms_as_sip( struct incame_sms *sms )
+{
+	str  sip_addr;
+	str  sip_body;
+	str  sip_from;
+	int  is_pattern;
+	int  in_address;
+	int  k;
+	char *p;
+
+	/* first we have to parse the body ot try to get out
+	   the sip destination address;
+	   The sms body can to be in the following two formats:
+	   1. The entire or part of the sent header still exists - we will
+	      pars it and consider the start of the sip messge the first
+	      character that doesn't match the header!
+	   2. The sms body is totaly different of the send sms -> search for a
+	      sip address inside; everything before it is ignored, only the
+	      part followind the address being send as sip
+	*/
+	in_address = 0;
+	sip_addr.len = 0;
+	sip_body.len = 0;
+	p = sms->ascii;
+
+	/* is our logo (or a part of it) still there? */
+	if (*p==SMS_HDR_BF_ADDR[0]) {
+		is_pattern = 1;
+		/* try to match SMS_HDR_BF_ADDR */
+		k=0;
+		while( is_pattern && p<sms->ascii+sms->userdatalength
+		&& k<SMS_HDR_BF_ADDR_LEN)
+			if (*(p++)!=SMS_HDR_BF_ADDR[k++])
+				is_pattern = 0;
+		if (!is_pattern) {
+			/* first header part is broken -> let's give it a chance
+			   and pars for the first word delimitator */
+			while(p<sms->ascii+sms->userdatalength && no_sip_addr_begin(*p))
+				p++;
+			if (p+9>=sms->ascii+sms->userdatalength) {
+				LOG(L_ERR,"ERROR:send_sms_as_sip: unable to find sip_address"
+					" start in sms body [%s]!\n",sms->ascii);
+				goto error;
+			}
+			
+		}
+		/* lets get the address */
+		if (p[0]!='s' || p[1]!='i' || p[2]!='p' || p[3]!=':') {
+			LOG(L_ERR,"ERROR:send_sms_as_sip: wrong sip address fromat in"
+				" sms body [%s]!\n",sms->ascii);
+			goto error;
+		}
+		sip_addr.s = p;
+		/* goes to the end of the address */
+		while(p<sms->ascii+sms->userdatalength && is_in_sip_addr(*p) )
+			p++;
+		if (p==sms->ascii+sms->userdatalength) {
+			LOG(L_ERR,"ERROR:send_sms_as_sip: cannot find sip address end in"
+				"sms body [%s]!\n",sms->ascii);
+		}
+		sip_addr.len = p-sip_addr.s;
+		DBG("DEBUG:send_sms_as_sip: sip address found [%.*s]\n",
+			sip_addr.len,sip_addr.s);
+		/* try to match SMS_HDR_AF_ADDR */
+		k=0;
+		while( is_pattern && p<sms->ascii+sms->userdatalength
+		&& k<SMS_HDR_AF_ADDR_LEN)
+			if (*(p++)!=SMS_HDR_AF_ADDR[k++])
+				is_pattern = 0;
+	} else {
+		/* no trace of the pattern sent along with the orig sms*/
+		do {
+			if ((p[0]=='s'||p[0]=='S') && (p[1]=='i'||p[1]=='I') 
+			&& (p[2]=='p'||p[2]=='P') && p[3]==':') {
+				/* we got the address beginning */
+				sip_addr.s = p;
+				/* goes to the end of the address */
+				while(p<sms->ascii+sms->userdatalength && is_in_sip_addr(*p) )
+					p++;
+				if (p==sms->ascii+sms->userdatalength) {
+					LOG(L_ERR,"ERROR:send_sms_as_sip: cannot find sip"
+						" address end in sms body [%s]!\n",sms->ascii);
+					goto error;
+				}
+				sip_addr.len = p-sip_addr.s;
+			} else {
+				/* parse to the next word */
+				while(p<sms->ascii+sms->userdatalength && no_sip_addr_begin(*p))
+					p++;
+				if (p+9>=sms->ascii+sms->userdatalength) {
+					LOG(L_ERR,"ERROR:send_sms_as_sip: unable to find sip "
+						"address start in sms body [%s]!\n",sms->ascii);
+					goto error;
+				}
+			}
+		}while (!sip_addr.len);
+	}
+
+	/* the rest of the sms (if any ;-)) is the body! */
+	sip_body.s = p;
+	sip_body.len = sms->ascii + sms->userdatalength - p;
+	/* let's trim out all \n an \r from begining */
+	while ( sip_body.len && sip_body.s
+	&& (sip_body.s[0]=='\n' || sip_body.s[0]=='\r') ) {
+		sip_body.s++;
+		sip_body.len--;
+	}
+	if (sip_body.len==0) {
+		LOG(L_WARN,"WARNING:send_sms_as_sip: empty body for sms [%s]",
+			sms->ascii);
+		goto error;
+	}
+	DBG("DEBUG:send_sms_as_sip: extracted body is: [%.*s]\n",
+		sip_body.len, sip_body.s);
+
+	/* finally, let's send it as sip message */
+	sip_from.s = sms->sender;
+	sip_from.len = strlen(sms->sender);
+	/* patch the body with date and time */
+	if (sms->userdatalength + CRLF_LEN + 1 /*'('*/ + DATE_LEN
+	+ 1 /*','*/ + TIME_LEN + 1 /*')'*/< sizeof(sms->ascii)) {
+		p = sip_body.s + sip_body.len;
+		append_str( p, CRLF, CRLF_LEN);
+		*(p++) = '(';
+		append_str( p, sms->date, DATE_LEN);
+		*(p++) = ',';
+		append_str( p, sms->time, TIME_LEN);
+		*(p++) = ')';
+		sip_body.len += CRLF_LEN + DATE_LEN + TIME_LEN + 3;
+	}
+	send_sip_msg_request( &sip_addr, &sip_from, &sip_body);
+
+	return 1;
+error:
+	return -1;
+}
+
+
+
+
 void modem_process(struct modem *mdm)
 {
 	struct sms_msg sms_messg;
@@ -455,9 +602,11 @@ void modem_process(struct modem *mdm)
 					k++;
 					DBG("SMS Get from location %d\n",i);
 					/*for test ;-) ->  to be remove*/
-					DBG("SMS RECEIVED:\n\rFrom: %s %s\n\r%s %s"
-						"\n\r\"%s\"\n\r",sms.sender,sms.name,
-						sms.date,sms.time,sms.ascii);
+					DBG("SMS RECEIVED:\n\rFrom: %s %s\n\r%.*s %.*s"
+						"\n\r\"%.*s\"\n\r",sms.sender,sms.name,
+						DATE_LEN,sms.date,TIME_LEN,sms.time,
+						sms.userdatalength,sms.ascii);
+					send_sms_as_sip(&sms);
 				}
 			}
 

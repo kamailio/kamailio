@@ -55,7 +55,7 @@ int put_command(int fd, char* command, int clen, char* answer, int max,
 		}
 	}
 
-	//DBG("DEBUG: put_command: ->%.*s \n",clen,command);
+	//DBG("DEBUG: put_command: -<%d>-->[%.*s] \n",clen,clen,command);
 	write(fd,command,clen);
 	tcdrain(fd);
 
@@ -67,6 +67,7 @@ int put_command(int fd, char* command, int clen, char* answer, int max,
 		// how many bytes are available to read?
 		if (available<1)  // if 0 then wait a little bit and retry
 		{
+			//DBG("nothing to read-> wait\n");
 			usleep(100000);
 			timeoutcounter++;
 			ioctl(fd,FIONREAD,&available);
@@ -81,11 +82,13 @@ int put_command(int fd, char* command, int clen, char* answer, int max,
 			// And how many bytes are available?
 			if (available<toread)
 				toread=available;
+			//DBG("available=%d , reading %d bytes!\n",available,toread);
 			// read data
 			readcount=read(fd,tmp,toread);
 			if (readcount<0)
 				readcount=0;
 			tmp[readcount]=0;
+			//DBG("read [%s]\n",tmp);
 			// add read bytes to the output buffer
 			if (readcount) {
 				strcat(answer,tmp);
