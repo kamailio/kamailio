@@ -194,10 +194,11 @@ char* chroot_dir = 0;
 int uid = 0;
 int gid = 0;
 
-char* names[MAX_LISTEN];               /* our names */
-int names_len[MAX_LISTEN];    /* lengths of the names*/
-unsigned long addresses[MAX_LISTEN];   /* our ips */
-int addresses_no=0;                    /* number of names/ips */
+char* names[MAX_LISTEN];              /* our names */
+int names_len[MAX_LISTEN];            /* lengths of the names*/
+unsigned int addresses[MAX_LISTEN];   /* our ips */
+int addresses_no=0;                   /* number of names/ips */
+unsigned int bind_address=0;          /* listen address of the crt. process */
 
 /* ipc related globals */
 int process_no = 0;

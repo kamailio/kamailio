@@ -120,6 +120,7 @@ int udp_init(unsigned long ip, unsigned short port)
 	addr->sin_port=htons(port);
 	addr->sin_addr.s_addr=ip;
 
+	
 	udp_sock = socket(PF_INET, SOCK_DGRAM, 0);
 	if (udp_sock==-1){
 		LOG(L_ERR, "ERROR: udp_init: socket: %s\n", strerror(errno));
@@ -135,7 +136,7 @@ int udp_init(unsigned long ip, unsigned short port)
 	}
 
 	if ( probe_max_receive_buffer(udp_sock)==-1) goto error;
-
+	bind_address=ip;
 
 	if (bind(udp_sock, (struct sockaddr*) addr, sizeof(struct sockaddr))==-1){
 		LOG(L_ERR, "ERROR: udp_init: bind: %s\n", strerror(errno));

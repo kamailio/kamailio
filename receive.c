@@ -41,6 +41,7 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 	msg->buf=buf;
 	msg->len=len;
 	msg->src_ip=src_ip;
+	msg->dst_ip=bind_address; /* won't work if listening on 0.0.0.0 */
 	msg->id=msg_no;
 	/* make a copy of the message */
 	msg->orig=(char*) pkg_malloc(len+1);
