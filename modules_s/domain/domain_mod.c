@@ -134,7 +134,7 @@ static int mod_init(void)
 	if (domain_db_bind(db_url.s)<0)  return -1;
 
 	/* Check if cache needs to be loaded from domain table */
-	if (db_mode == 1) {
+	if (db_mode != 0) {
 		if (domain_db_init(db_url.s)<0) return -1;
 		     /* Check table version */
 		ver = domain_db_ver(&domain_table);
@@ -195,7 +195,7 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	/* Check if database is needed by child */
-	if (((db_mode == 0) && (rank > 0)) || ((db_mode == 1) && (rank == PROC_FIFO))) {
+	if (((db_mode == 0) && (rank > 0)) || ((db_mode != 0) && (rank == PROC_FIFO))) {
 		if (domain_db_init(db_url.s)<0) {
 			LOG(L_ERR, "ERROR: domain:child_init():"
 					" Unable to connect to the database\n");
