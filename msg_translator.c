@@ -643,8 +643,9 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	char              backup;
 	char              *received_buf;
 	char              *rport_buf;
-	unsigned int               received_len;
-	unsigned int               rport_len;
+	unsigned int      received_len;
+	unsigned int      rport_len;
+	unsigned int      delete_len;
 	char              *warning;
 	unsigned int      warning_len;
 	int r;
@@ -654,6 +655,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	received_len=0;
 	rport_buf=0;
 	rport_len=0;
+	delete_len=0;
 	buf=0;
 	/* make -Wall happy */
 	warning=0;
@@ -687,6 +689,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 							" rport_builder failed\n");
 			goto error01; /* free everything */
 		}
+		delete_len=msg->via1->rport->size+1; /* include ';' */
 	}
 
 	/*computes the lenght of the new response buffer*/
@@ -706,7 +709,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 					len+=new_tag_len+TOTAG_TOKEN_LEN/*";tag="*/;
 			}
 		} else if (hdr->type==HDR_VIA) {
-				if (hdr==msg->h_via1) len += received_len+rport_len-RPORT_LEN;
+				if (hdr==msg->h_via1) len += received_len+rport_len;
 		} else if (hdr->type==HDR_RECORDROUTE) {
 				/* RR only for 1xx and 2xx replies */
 				if (code<180 || code>=300) continue;
@@ -717,6 +720,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 		}
 		len += ((hdr->body.s+hdr->body.len )-hdr->name.s )+CRLF_LEN;
 	}
+	len-=delete_len;
 	/*lumps length*/
 	for(lump=msg->reply_lump;lump;lump=lump->next)
 		len += lump->text.len;
