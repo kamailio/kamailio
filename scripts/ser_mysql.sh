@@ -179,12 +179,18 @@ if [ $# -eq 1 ] ; then
 	INITIAL_USER="INSERT INTO subscriber
 		($USERCOL, password, first_name, last_name, phone,
 		email_address, datetime_created, datetime_modified, confirmation,
-		flag, sendnotification, greeting, ha1, domain, ha1b, phplib_id, perms )
+    flag, sendnotification, greeting, ha1, domain, ha1b, phplib_id )
 		VALUES ( 'admin', 'heslo', 'Initial', 'Admin', '123',
 		'root@localhost', '2002-09-04 19:37:45', '0000-00-00 00:00:00',
 		'57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53', 'o', '', '',
 		'$HA1', '$SIP_DOMAIN', '$HA1B',
-		'65e397cda0aa8e3202ea22cbd350e4e9', 'admin' );"
+    '65e397cda0aa8e3202ea22cbd350e4e9' );
+
+    INSERT INTO admin_privileges ($USERCOL, domain, priv_name, priv_value)
+    VALUES ('admin', '$SIP_DOMAIN', 'is_admin', '1');
+
+    INSERT INTO admin_privileges ($USERCOL, domain, priv_name, priv_value)
+    VALUES ('admin', '$SIP_DOMAIN', 'change_privileges', '1');"
 elif [ $# -eq 2 ] ; then
 	# if 3rd param set, don't create any initial user
 	INITIAL_USER=""
@@ -219,10 +225,10 @@ CREATE TABLE version (
 # Dumping data for table 'version'
 #
 
-INSERT INTO version VALUES ( 'subscriber', '3');
+INSERT INTO version VALUES ( 'subscriber', '4');
 INSERT INTO version VALUES ( 'reserved', '1');
 INSERT INTO version VALUES ( 'phonebook', '1');
-INSERT INTO version VALUES ( 'pending', '3');
+INSERT INTO version VALUES ( 'pending', '4');
 INSERT INTO version VALUES ( 'missed_calls', '2');
 INSERT INTO version VALUES ( 'location', '4');
 INSERT INTO version VALUES ( 'grp', '2');
@@ -417,7 +423,6 @@ CREATE TABLE pending (
   greeting varchar(50) NOT NULL default '',
   ha1 varchar(128) NOT NULL default '',
   ha1b varchar(128) NOT NULL default '',
-  perms varchar(32) default NULL,
   allow_find char(1) NOT NULL default '0',
   timezone varchar(128) default NULL,
   rpid varchar(128) default NULL,
@@ -483,7 +488,6 @@ CREATE TABLE subscriber (
   greeting varchar(50) NOT NULL default '',
   ha1 varchar(128) NOT NULL default '',
   ha1b varchar(128) NOT NULL default '',
-  perms varchar(32) default NULL,
   allow_find char(1) NOT NULL default '0',
   timezone varchar(128) default NULL,
   rpid varchar(128) default NULL,
