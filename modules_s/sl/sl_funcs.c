@@ -120,7 +120,6 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	}
 
 	send_sock=get_send_socket(&to);
-	DBG("cucu bau\n");
 	if (send_sock!=0)
 	{
 		udp_send( send_sock,
