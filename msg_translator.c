@@ -9,6 +9,7 @@
 #include <netdb.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "msg_translator.h"
 #include "globals.h"
