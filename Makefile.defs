@@ -55,10 +55,22 @@ ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/ )
 # -DFAST_LOCK
 #		uses fast arhitecture specific locking (see the arh. specific section)
 #
+# -DBUSY_WAIT
+#		uses busy waiting on the lock
+# -DADAPTIVE_WAIT
+#		try busy waiting for a while and if the lock is still held go to
+#		force reschedule
+# -DADAPTIVE_WAIT_LOOPS=number
+#		number of loops we busy wait, after "number" loops have elapsed we 
+#		force a reschedule
+# -DNOSMP
+#		don't use smp compliant locking (faster but won't work on SMP machines)
+#		(not yet enabled)
 
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"'\
 	 -DDNS_IP_HACK  -DPKG_MALLOC -DSHM_MEM  -DSHM_MMAP \
+	 -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 \
 	 -DF_MALLOC  -DUSE_SYNONIM\
 	 -DNO_DEBUG
 	 #-DEXTRA_DEBUG 

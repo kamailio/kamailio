@@ -29,6 +29,7 @@ typedef  volatile int fl_lock_t;
 inline static int tsl(fl_lock_t* lock)
 {
 	volatile int val;
+
 #ifdef __i386
 	
 	val=1;
@@ -51,9 +52,18 @@ inline static int tsl(fl_lock_t* lock)
 
 inline static void get_lock(fl_lock_t* lock)
 {
+#ifdef ADAPTIVE_WAIT
+	int i=ADAPTIVE_WAIT_LOOPS;
+#endif
 	
 	while(tsl(lock)){
+#ifdef BUSY_WAIT
+#elif defined ADAPTIVE_WAIT
+		if (i>0) i--;
+		else sched_yield();
+#else
 		sched_yield();
+#endif
 	}
 }
 

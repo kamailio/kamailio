@@ -88,7 +88,16 @@ static char flags[]=
 #endif
 #ifdef FAST_LOCK
 ", FAST_LOCK"
+#ifdef BUSY_WAIT
+"-BUSY_WAIT"
 #endif
+#ifdef ADAPTIVE_WAIT
+"-ADAPTIVE_WAIT"
+#endif
+#ifdef NOSMP
+"-NOSMP"
+#endif
+#endif /*FAST_LOCK*/
 ;
 
 static char help_msg[]= "\
@@ -129,7 +138,14 @@ Options:\n\
 /* print compile-time constants */
 void print_ct_constants()
 {
-	printf("MAX_RECV_BUFFER_SIZE %d, MAX_LISTEN %d, MAX_URI_SIZE %d, MAX_PROCESSES %d\n",
+#ifdef ADAPTIVE_WAIT
+	printf("ADAPTIVE_WAIT_LOOPS=%d, ", ADAPTIVE_WAIT_LOOPS);
+#endif
+#ifdef SHM_MEM
+	printf("SHM_MEM_SIZE=%d, ", SHM_MEM_SIZE);
+#endif
+	printf("MAX_RECV_BUFFER_SIZE %d, MAX_LISTEN %d,"
+			" MAX_URI_SIZE %d, MAX_PROCESSES %d\n",
 		MAX_RECV_BUFFER_SIZE, MAX_LISTEN, MAX_URI_SIZE, MAX_PROCESSES );
 }
 
