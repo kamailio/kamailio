@@ -152,6 +152,9 @@ void print_cred(dig_cred_t* _c)
 	printf("===Digest credentials===\n");
 	if (_c) {
 		printf("Username  = \'%.*s\'\n", _c->username.len, _c->username.s);
+#ifdef DIGEST_DOMAIN
+		printf("Domain    = \'%.*s\'\n", _c->domain.len, _c->domain.s);
+#endif
 		printf("Realm     = \'%.*s\'\n", _c->realm.len, _c->realm.s);
 		printf("Nonce     = \'%.*s\'\n", _c->nonce.len, _c->nonce.s);
 		printf("URI       = \'%.*s\'\n", _c->uri.len, _c->uri.s);

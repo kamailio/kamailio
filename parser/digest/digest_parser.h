@@ -72,6 +72,9 @@ struct qp {
  */
 typedef struct dig_cred {
 	str username;         /* Username */
+#ifdef DIGEST_DOMAIN
+	str domain;           /* Domain contained in username */
+#endif
 	str realm;            /* Realm */
 	str nonce;            /* Nonce value */
 	str uri;              /* URI */

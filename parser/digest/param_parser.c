@@ -230,4 +230,3 @@ int parse_param_name(str* _s, dig_par_t* _type)
 		return 0;
 	}
 }
-

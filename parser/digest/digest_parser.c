@@ -25,6 +25,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ * 2003-03-02: Added parse_domain function (janakj)
  */
 
 
@@ -260,6 +264,29 @@ static inline void parse_algorithm(struct algorithm* _a)
 	}	
 }
 
+#ifdef DIGEST_DOMAIN
+/*
+ * Parse username for domain
+ */
+static inline void parse_domain(struct dig_cred* _c)
+{
+	char* d;
+
+	if (_c->username.len <= 2) return;
+
+	d = q_memchr(_c->username.s, '@', _c->username.len);
+
+	if (d) {
+		_c->domain.s = d;
+		_c->domain.len = _c->username.len - (d - _c->username.s) - 1;
+		_c->username.len = d - _c->username.s;
+	}
+}
+
+#endif
+
+
+
 
 /*
  * Parse Digest credentials parameter, one by one
@@ -297,6 +324,10 @@ static inline int parse_digest_params(str* _s, dig_cred_t* _c)
 	if (_c->alg.alg_str.s != 0) {
 		parse_algorithm(&(_c->alg));
 	}
+
+#ifdef DIGEST_DOMAIN
+	parse_domain(_c);
+#endif
 
 	return 0;
 }
