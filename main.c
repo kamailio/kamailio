@@ -614,6 +614,8 @@ int main_loop()
 		/* only one address, we ignore all the others */
 		if (udp_init(&sock_info[0])==-1) goto error;
 		bind_address=&sock_info[0];
+		sendipv4=bind_address;
+		sendipv6=bind_address; /*FIXME*/
 		bind_idx=0;
 		if (sock_no>1){
 			LOG(L_WARN, "WARNING: using only the first listen address"
