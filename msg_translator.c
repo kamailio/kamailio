@@ -1160,6 +1160,9 @@ skip_clen:
 
 	/* compute new msg len and fix overlapping zones*/
 	new_len=len+lumps_len(msg, send_sock);
+#ifdef XL_DEBUG
+	LOG(L_ERR, "DEBUG: new_len(%d)=len(%d)+lumps_len\n", new_len, len);
+#endif
 
 	if (msg->new_uri.s){
 		uri_len=msg->new_uri.len;
