@@ -43,6 +43,7 @@
  *  2003-02-28  scratchpad compatibility abandoned (jiri)
  *  2003-04-26  ZSW (jiri)
  *  2003-06-23  fixed  parse_via_param [op].* param. parsing bug (andrei)
+ *  2003-07-02  added support for TLS parsing in via (andrei)
  */
 
 
@@ -81,7 +82,8 @@ enum {
 	L_VER, F_VER,
 	VER1, VER2, FIN_VER,
 	UDP1, UDP2, FIN_UDP,
-	TCP1, TCP2, FIN_TCP,
+	TCP_TLS1, TCP2, FIN_TCP,
+	          TLS2, FIN_TLS,
 	L_PROTO, F_PROTO
 };
 
@@ -985,6 +987,12 @@ parse_again:
 						vb->proto=PROTO_TCP;
 						state=F_HOST; /* start looking for host*/
 						goto main_via;
+					case FIN_TLS:
+						/* finished proto parsing */
+						vb->transport.len=tmp-vb->transport.s;
+						vb->proto=PROTO_TLS;
+						state=F_HOST; /* start looking for host*/
+						goto main_via;
 					case FIN_SIP:
 						vb->name.len=tmp-vb->name.s;
 						state=L_VER;
@@ -1023,6 +1031,12 @@ parse_again:
 					case FIN_TCP:
 						vb->transport.len=tmp-vb->transport.s;
 						vb->proto=PROTO_TCP;
+						state=F_LF;
+						saved_state=F_HOST; /* start looking for host*/
+						goto main_via;
+					case FIN_TLS:
+						vb->transport.len=tmp-vb->transport.s;
+						vb->proto=PROTO_TLS;
 						state=F_LF;
 						saved_state=F_HOST; /* start looking for host*/
 						goto main_via;
@@ -1068,6 +1082,12 @@ parse_again:
 					case FIN_TCP:
 						vb->transport.len=tmp-vb->transport.s;
 						vb->proto=PROTO_TCP;
+						state=F_CR;
+						saved_state=F_HOST;
+						goto main_via;
+					case FIN_TLS:
+						vb->transport.len=tmp-vb->transport.s;
+						vb->proto=PROTO_TLS;
 						state=F_CR;
 						saved_state=F_HOST;
 						goto main_via;
@@ -1122,6 +1142,9 @@ parse_again:
 					case F_SIP:
 						state=SIP1;
 						vb->name.s=tmp;
+						break;
+					case TLS2:
+						state=FIN_TLS;
 						break;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
@@ -1189,7 +1212,7 @@ parse_again:
 			case 't':
 				switch(state){
 					case F_PROTO:
-						state=TCP1;
+						state=TCP_TLS1;
 						vb->transport.s=tmp;
 						break;
 					default:
@@ -1201,8 +1224,20 @@ parse_again:
 			case 'C':
 			case 'c':
 				switch(state){
-					case TCP1:
+					case TCP_TLS1:
 						state=TCP2;
+						break;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
+								" state %d\n", *tmp, state);
+						goto error;
+				}
+				break;
+			case 'L':
+			case 'l':
+				switch(state){
+					case TCP_TLS1:
+						state=TLS2;
 						break;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
