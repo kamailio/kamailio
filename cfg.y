@@ -581,7 +581,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 										"string expected"); }
 		| ID LPAREN RPAREN			{ f_tmp=find_export($1, 0);
 									   if (f_tmp==0){
-										yyerror("unknown command %s, missing"
+										yyerror("unknown command, missing"
 										" loadmodule?\n");
 										$$=0;
 									   }else{
@@ -595,7 +595,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 									}
 		| ID LPAREN STRING RPAREN { f_tmp=find_export($1, 1);
 									if (f_tmp==0){
-										yyerror("unknown command %s, missing"
+										yyerror("unknown command, missing"
 										" loadmodule?\n");
 										$$=0;
 									}else{
@@ -610,7 +610,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| ID LPAREN STRING  COMMA STRING RPAREN 
 								  { f_tmp=find_export($1, 2);
 									if (f_tmp==0){
-										yyerror("unknown command %s, missing"
+										yyerror("unknown command, missing"
 										" loadmodule?\n");
 										$$=0;
 									}else{
