@@ -5,6 +5,14 @@ $Id$
 
 0.8.13 changes
 
+modules:
+ - VM functionality was transfered into TM module. Instead of fetching the
+   email value from DB (as VM), TM looks for the "email" attribute to get the
+   value.
+   vm() function was replaced with t_write_req()
+   vm_reply() fifo functions was replcaed by TM with t_reply() fifo function
+   NOTE!! because current version of SEMS/AA try to send reply via vm_reply,
+   it will not work with the TM version.
 new modules:
  - answer server options requests [options]
 core:
@@ -29,6 +37,12 @@ core:
        (host aliases are too dangerous IMHO, involve extra DNS
         lookups and the need for them is questionable)
        See force_tcp_alias for more details.
+   avp_db_url = "DataBase URL"
+       DAtabse to be used for user preferences (AVPs).
+   log_facility = LOG_LOCAL0
+       if ser logs to syslog, you can control the facility for logging. Very
+       useful when you want to divert all ser logs to a different log file.
+       See man page syslog(3) for more detailes.
  - new script commands:
    force_tcp_alias()
    force_tcp_alias(port)
@@ -46,6 +60,14 @@ core:
        3 port aliases to a connection (you shouldn't need more than one).
        To change this redefine TCP_CON_MAX_ALIASES in the same file
        (set it to you desired value + 1; 1 is needed for the real port).
+   load_avp( "uri_type", "attribute", use_domain)
+   load_avp( "uri_type", use_domain)
+       load from database one or more attributes; uri_type tells from where
+       the username should be taken (can be "ruri", "from", "to"); use_domain
+       can be 0 or non-zero - if non-zero, domain will be used along the
+       username for identifing the attribute into DB; if no attribute is given,
+       all atributes for the given user will be loaded.
+       Functions return false is they failed (error) or if no avp was loaded.
 
 
 
