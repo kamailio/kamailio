@@ -44,9 +44,9 @@
 #include "../../error.h"
 
 
-//#define DEBUG
-/* DEBUGING */
-#ifdef DEBUG
+#define DEMO
+/* DEMOING */
+#ifdef DEMO
 
 #include "../tm/t_hooks.h"
 #include "../tm/tm_load.h"
@@ -87,7 +87,14 @@ static int fixup_char2int (void **param, int param_no);
 static int fixup_char2uint (void **param, int param_no);
 
 
-static param_export_t params[] = { {0, 0, 0} };	/*no params exported,perhaps I should add precompiled expressions */
+char *contact_flds_separator = DEFAULT_SEPARATOR;
+
+
+
+static param_export_t params[] = { 
+								{"contact_flds_separator",STR_PARAM,&contact_flds_separator},
+								{0, 0, 0} 
+								};	/*no params exported,perhaps I should add precompiled expressions */
 
 
 
@@ -99,7 +106,7 @@ static cmd_export_t cmds[] =
 	{"sdp_mangle_ip", sdp_mangle_ip, 2,0, REQUEST_ROUTE}, // fixup_char2str?
 	{"sdp_mangle_port",sdp_mangle_port, 1, fixup_char2int, REQUEST_ROUTE},
 	{"encode_contact",encode_contact,2,0,REQUEST_ROUTE},//fixup_char2str
-	{"decode_contact",decode_contact,1,fixup_char2int,REQUEST_ROUTE},
+	{"decode_contact",decode_contact,0,0,REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -108,7 +115,7 @@ static cmd_export_t cmds[] =
  * Module interface
  */
 struct module_exports exports = {
-	"sdp_mangler",
+	"mangler",
 	cmds,			/* Exported functions */
 	params,			/* Exported parameters */
 	mod_init,		/* module initialization function */
@@ -124,7 +131,7 @@ child_init (int rank)
 	return 0;
 }
 
-#ifdef DEBUG
+#ifdef DEMO
 /* MANGLING EXAMPLE */
 /* ================================================================= */
 static void func_invite(struct cell *t,struct sip_msg *msg,int code,void *param)
@@ -169,7 +176,7 @@ prepare ()
 	/* using precompiled expressions to speed things up*/
 	compile_expresions(PORT_REGEX,IP_REGEX);
 	
-#ifdef DEBUG
+#ifdef DEMO
 	load_tm_f load_tm;
 	
 	
@@ -209,7 +216,7 @@ destroy (void)
 {
 	/*free some compiled regex expressions */
 	free_compiled_expresions();	
-#ifdef DEBUG
+#ifdef DEMO
 	fprintf(stdout,"Freeing precompiled expressions\n");
 #endif
 

@@ -38,10 +38,12 @@
 #include "../../str.h"
 #include "../../parser/msg_parser.h"	/* struct sip_msg */
 #include "sdp_mangler.h"
+#include "contact_ops.h"
+
 
 extern regex_t *portExpression;
 extern regex_t *ipExpression;
-
+extern char *contact_flds_separator;
 
 
 #endif

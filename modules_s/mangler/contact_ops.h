@@ -1,5 +1,5 @@
 /*
- * Sdp mangler module
+ *  mangler module
  *
  * $Id$
  *
@@ -36,10 +36,13 @@
 #ifndef CONTACT_OPS_H
 #define CONTACT_OPS_H
 
-#define DEFAULT_SEPARATOR '*'
+#define DEFAULT_SEPARATOR "*"
 
 
 #include "../../parser/msg_parser.h"	/* struct sip_msg */
+
+char *contact_flds_separator;
+
 
 struct uri_format
 {
@@ -52,8 +55,11 @@ struct uri_format
 	int second;
 };
 
+typedef struct uri_format contact_fields_t;
+
+
 int encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip);
-int decode_contact (struct sip_msg *msg, char *separator,char *unused);
+int decode_contact (struct sip_msg *msg, char *unused1,char *unused2);
 
 
 int free_uri_format (struct uri_format *format);

@@ -57,6 +57,7 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 	str uri;
 	str newUri;
 	int res;
+	char separator;
 	/*
 	 * I have a list of contacts in contact->parsed which is of type contact_body_t 
 	 * inside i have a contact->parsed->contact which is the head of the list of contacts
@@ -71,7 +72,12 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 	if (msg->contact == NULL)
 		return -1;
 
-
+	separator = DEFAULT_SEPARATOR[0];
+	if (contact_flds_separator != NULL)
+		if (strlen(contact_flds_separator)>=1)
+			separator = contact_flds_separator[0];
+	
+	
 	if (msg->contact->parsed == NULL)
 		parse_contact (msg->contact);
 	if (msg->contact->parsed != NULL)
@@ -84,7 +90,7 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 #ifdef DEBUG
 		fprintf (stdout, "olduri.s=[%.*s]\n", uri.len, uri.s);
 #endif
-		res = encode_uri (uri, encoding_prefix, public_ip,DEFAULT_SEPARATOR, &newUri);
+		res = encode_uri (uri, encoding_prefix, public_ip,separator, &newUri);
 		
 		if (res != 0)
 			{
@@ -108,9 +114,7 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 			c = c->next;
 			uri = c->uri;
 			
-			res = encode_uri (uri, encoding_prefix,
-					      public_ip, DEFAULT_SEPARATOR,
-					      &newUri);
+			res = encode_uri (uri, encoding_prefix,public_ip,separator,&newUri);
 			if (res != 0)
 				{
 #ifdef DEBUG
@@ -135,7 +139,7 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 
 
 int
-decode_contact (struct sip_msg *msg, char *sep,char *unused)
+decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 {
 
 	contact_body_t *cb;
@@ -153,8 +157,7 @@ decode_contact (struct sip_msg *msg, char *sep,char *unused)
 	 * I just have to visit each uri and encode each uri according to a scheme
 	 */
 	
-	res = (int)sep;
-	separator = (char)res; /* for warning */
+	
 #ifdef DEBUG
 	fprintf (stdout,"---START--------DECODE CONTACT TEXTOPS-----------------\n");
 #endif
@@ -165,6 +168,10 @@ decode_contact (struct sip_msg *msg, char *sep,char *unused)
 		return -1;
 		}
 
+	separator = DEFAULT_SEPARATOR[0];
+	if (contact_flds_separator != NULL)
+		if (strlen(contact_flds_separator)>=1)
+			separator = contact_flds_separator[0];
 
 	if (msg->contact->parsed == NULL)	
 		parse_contact (msg->contact);
