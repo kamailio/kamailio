@@ -149,6 +149,7 @@ int main (int argc, char** argv)
 	address=0;
 
 
+
 	opterr=0;
 	while ((c=getopt(argc,argv, "c:vhV"))!=-1){
 		switch(c){
@@ -187,6 +188,7 @@ int main (int argc, char** argv)
 					abort();
 		}
 	}
+
 	
 	/* check if all the required params are present */
 	if(count==0){
@@ -196,6 +198,7 @@ int main (int argc, char** argv)
 		fprintf(stderr, "Invalid count (-c %d)\n", count);
 		exit(-1);
 	}
+
 
 #ifdef SYSV_SEM
 	/*init*/
