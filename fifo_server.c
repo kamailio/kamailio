@@ -345,7 +345,7 @@ static int fifo_check(int fd, char* fname)
 	/* check if hard-linked */
 	if (fst.st_nlink>1){
 		LOG(L_ERR, "ERROR: security: fifo_check: %s is hard-linked %d times\n",
-				fname, fst.st_nlink);
+				fname, (unsigned)fst.st_nlink);
 		return -1;
 	}
 	

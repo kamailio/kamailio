@@ -451,7 +451,7 @@ static inline int get_avps( FILE *fifo , db_key_t *keys, db_op_t *ops,
 	}
 parse_error:
 	LOG(L_ERR,"ERROR:get_avps: parse error in \"%.*s\" at char [%d][%c] "
-		"offset %d\n",line.len,line.s,*c,*c,c-line.s);
+		"offset %d\n",line.len,line.s,*c,*c, (unsigned)(c-line.s));
 	double_log("Broken AVP(attr|op|val) in DB command");
 error:
 	for(;*nr;(*nr)--)

@@ -349,7 +349,7 @@ int udp_init(struct socket_info* sock_info)
 	if (bind(sock_info->socket,  &addr->s, sockaddru_len(*addr))==-1){
 		LOG(L_ERR, "ERROR: udp_init: bind(%x, %p, %d) on %s: %s\n",
 				sock_info->socket, &addr->s, 
-				sockaddru_len(*addr),
+				(unsigned)sockaddru_len(*addr),
 				sock_info->address_str.s,
 				strerror(errno));
 	#ifdef USE_IPV6

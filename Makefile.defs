@@ -33,6 +33,7 @@
 #  2003-11-24  openbsd 3.4 (elf) fixes (andrei)
 #  2004-07-27  darwin (mac os x) port  (andrei)
 #  2004-09-12  mips2 & cobalt support introduced (andrei)
+#  2004-09-28  x86_64 support introduced (andrei)
 
 
 # check if already included/exported
@@ -49,7 +50,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   99
-EXTRAVERSION = -dev6
+EXTRAVERSION = -dev7
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -385,6 +386,10 @@ ifeq ($(ARCH), i386)
 	use_fast_lock=yes
 endif
 
+ifeq ($(ARCH), x86_64)
+	use_fast_lock=yes
+endif
+
 ifeq ($(ARCH), sparc64)
 ifeq 	($(CC_NAME), gcc)
 	use_fast_lock=yes
@@ -462,6 +467,49 @@ endif		#CC_NAME, icc
 endif		#CC_NAME, gcc
 endif	#ARCH, i386
 
+#x86_64
+ifeq	($(ARCH), x86_64)
+		# if gcc 
+ifeq		($(CC_NAME), gcc)
+				#common stuff
+				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE) \
+					-Wall   \
+			#if gcc 3.0
+ifeq			($(CC_SHORTVER), 3.0)
+					CPU ?= athlon64
+					CFLAGS+=-minline-all-stringops \
+							-falign-loops \
+							-mcpu=$(CPU) \
+							#-mcpu=athlon
+else
+ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
+$(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc >= 3.1 \
+					for better results)
+					
+					CFLAGS+=-m486 \
+							-malign-loops=4
+else
+				#really old version
+$(warning			You are using an old and unsupported gcc \
+					 version  ($(CC_SHORTVER)), compile at your own risk!)
+
+endif			# CC_SHORTVER, 2.9x
+endif			# CC_SHORTVER, 3.0
+
+else		# CC_NAME, gcc
+ifeq		($(CC_NAME), icc)
+			CFLAGS=-g -O3  -ipo -ipo_obj -unroll  $(PROFILE) \
+					 -tpp6 -xK  #-openmp  #optimize for PIII 
+				# -prefetch doesn't seem to work
+				#( ty to inline acroos files, unroll loops,prefetch,
+				# optimize for PIII, use PIII instructions & vect.,
+				# mutlithread loops)
+else
+				#other compilers
+$(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
+endif		#CC_NAME, icc
+endif		#CC_NAME, gcc
+endif	#ARCH, x86_64
 
 	#if sparc
 ifeq	($(ARCH), sparc64)
