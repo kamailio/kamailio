@@ -3481,16 +3481,33 @@ print
 		<example>
 		    <title>FIFO Errors</title>
 		    <programlisting format="linespecific">
-[jiri@cat sip_router]$ sc fifo foobar
+[jiri@cat sip_router]$ serctl fifo foobar
 500 command 'foobar' not available
 		    </programlisting>
 		</example>
+
+		<example>
+			<title>Showing User Contacts Using serctl</title>
+			<para>
+			Another example of use of FIFO is accessing server's
+			in-memory user location database. That's a very powerful
+			feature: web applications and other tools can use it
+			to gain users access to the database. They can add new
+			contacts (like permanent gateway destinations), remove
+			and review their whereabouts. The example here utilizes
+			FIFO command <command>ul_show_contact</command> to
+			retrieve current whereabouts of user "jiri".
+			<programlisting>
+[jiri@fox ser]$ serctl fifo ul_show_contact location jiri
+<sip:195.37.78.160:14519>;q=0.00;expires=1012
+			</programlisting>
+		</example>
 	    </para>
 	    <para>
-		A powerful feature of the FIFO server is the ability to
-		export new commands from modules
-		for use by external 
-		applications. Currently, usrloc module exports FIFO
+		The user location example demonstrates an essential feature
+		of the FIFO server: extensibility. It is able to export new 
+		commands implemented in new modules.
+		Currently, usrloc module exports FIFO
 		commands for maintaining in-memory user location
 		database and tm module exports FIFO commands for
 		management of SIP transactions. See the 
@@ -3535,7 +3552,7 @@ EOF
 	    <example>
 		<title>Manipulation of User Contacts</title>
 		<para>
-		    The following example shows use of FIFO server to manipulate
+		    The following example shows use of FIFO server to change 
 		    user's contacts. This may be very practical, if for example
 		    a user wishes to set up his cell phone number as his temporary
 		    contact. The cell phone, which is behind a PSTN gateway, cannot
