@@ -37,6 +37,10 @@
 #include "loose.h"
 #include "common.h"
 
+
+int use_fast_cmp = 0;
+
+
 static int mod_init(void);
 static int child_init(int rank);
 static int int_fixup(void** param, int param_no);
@@ -66,10 +70,16 @@ struct module_exports exports = {
 	},
 	3, /* number of functions*/
 
-	0,   /* Module parameter names */
-	0,   /* Module parameter types */
-	0,   /* Module parameter variable pointers */
-	0,      /* Number of module paramers */
+	(char*[]) { /* Module parameter names */
+		"use_fast_cmp"
+	},
+	(modparam_t[]) {   /* Module parameter types */
+		INT_PARAM
+	},
+	(void*[]) {   /* Module parameter variable pointers */
+		&use_fast_cmp
+	},
+	1,         /* Number of module paramers */
 
 	mod_init,  /* initialize module */
 	0,         /* response function*/
