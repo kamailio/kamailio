@@ -238,7 +238,6 @@ your box.
     - loadmodule "/usr/lib/ser/modules/mysql.so"
     - loadmodule "/usr/lib/ser/modules/auth.so"
     - modparam("usrloc", "db_mode", 2)
-    - modparam("auth", "secret", "alsdkhglaksdhfkloiwr")
     - modparam("auth", "calculate_ha1", yes)
     - if (!www_authorize("iptel.org", "subscriber")) {
         www_challenge("iptel.org", "0"); 
