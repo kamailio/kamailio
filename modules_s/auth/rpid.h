@@ -56,10 +56,4 @@ int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix);
 int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2);
 
 
-/*
- * Store rpid
- */
-void save_rpid(str* _rpid);
-
-
 #endif /* RPID_H */

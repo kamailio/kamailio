@@ -53,6 +53,12 @@ MODULE_VERSION
 
 #define RAND_SECRET_LEN 32
 
+#define DEF_RPID_PREFIX ""
+#define DEF_RPID_SUFFIX ";party=calling;id-type=subscriber;screen=yes"
+#define DEF_STRIP_REALM ""
+#define DEF_RPID_AVP "rpid"
+
+
 /*
  * Module destroy function prototype
  */
@@ -94,25 +100,10 @@ str secret;
 char* sec_rand = 0;
 
 
-/*
- * Default Remote-Party-ID prefix
- */
-char* rpid_prefix_param = "";
-str rpid_prefix;
-
-
-/*
- * Default Remote-Party-ID suffix
- */
-char* rpid_suffix_param = ";party=calling;id-type=subscriber;screen=yes";
-str rpid_suffix;
-
-
-/*
- * head of auto-generated realm to be stripped if present
- */
-static char* realm_prefix_param = "";
-str realm_prefix;
+str rpid_prefix = {DEF_RPID_PREFIX, sizeof(DEF_RPID_PREFIX) - 1}; /* Default Remote-Party-ID prefix */
+str rpid_suffix = {DEF_RPID_SUFFIX, sizeof(DEF_RPID_SUFFIX) - 1}; /* Default Remote-Party-IDD suffix */
+str realm_prefix = {DEF_STRIP_REALM, sizeof(DEF_STRIP_REALM) - 1}; /* Prefix to strip from realm */
+str rpid_avp = {DEF_RPID_AVP, sizeof(DEF_RPID_AVP) - 1}; /* Name of AVP containing rpid value */
 
 
 /*
@@ -125,8 +116,7 @@ static cmd_export_t cmds[] = {
 	{"is_rpid_user_e164",   is_rpid_user_e164,       0, 0,               REQUEST_ROUTE},
         {"append_rpid_hf",      append_rpid_hf,          0, 0,               REQUEST_ROUTE},
 	{"append_rpid_hf",      append_rpid_hf_p,        2, rpid_fixup,      REQUEST_ROUTE},
-	{"pre_auth",            (cmd_function)pre_auth,  0, 0,               0            },
-	{"post_auth",           (cmd_function)post_auth, 0, 0,               0            },
+	{"bind_auth",           (cmd_function)bind_auth, 0, 0,               0            },
 	{0, 0, 0, 0, 0}
 };
 
@@ -135,11 +125,12 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"secret",       STR_PARAM, &sec_param         },
-	{"nonce_expire", INT_PARAM, &nonce_expire      },
-	{"rpid_prefix",  STR_PARAM, &rpid_prefix_param },
-	{"rpid_suffix",  STR_PARAM, &rpid_suffix_param },
-	{"realm_prefix", STR_PARAM, &realm_prefix_param},
+	{"secret",          STR_PARAM, &sec_param      },
+	{"nonce_expire",    INT_PARAM, &nonce_expire   },
+	{"rpid_prefix",     STR_PARAM, &rpid_prefix.s  },
+	{"rpid_suffix",     STR_PARAM, &rpid_suffix.s  },
+	{"realm_prefix",    STR_PARAM, &realm_prefix.s },
+	{"rpid_avp",        STR_PARAM, &rpid_avp.s     },
 	{0, 0, 0}
 };
 
@@ -212,14 +203,10 @@ static int mod_init(void)
 		secret.len = strlen(secret.s);
 	}
 	
-	rpid_prefix.s = rpid_prefix_param;
 	rpid_prefix.len = strlen(rpid_prefix.s);
-
-	rpid_suffix.s = rpid_suffix_param;
 	rpid_suffix.len = strlen(rpid_suffix.s);
-
-	realm_prefix.s = realm_prefix_param;
-	realm_prefix.len = strlen(realm_prefix_param);
+	realm_prefix.len = strlen(realm_prefix.s);
+	rpid_avp.len = strlen(rpid_avp.s);
 
 	return 0;
 }

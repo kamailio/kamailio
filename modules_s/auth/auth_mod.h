@@ -46,6 +46,7 @@ extern int nonce_expire;      /* nonce expire interval */
 extern str rpid_prefix;       /* Remote-Party-ID prefix */
 extern str rpid_suffix;       /* Remote-Party-ID suffix */
 extern str realm_prefix;      /* strip off auto-generated realm */
+extern str rpid_avp;          /* The name of AVP containing the rpid value */
 
 
 /* Stateless reply function pointer */

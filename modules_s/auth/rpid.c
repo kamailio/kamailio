@@ -41,18 +41,14 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parser_f.h"
 #include "../../ut.h"
+#include "../../usr_avp.h"
 #include "auth_mod.h"
 #include "api.h"
 #include "rpid.h"
 
 
 #define RPID_HF_NAME "Remote-Party-ID: "
-#define RPID_HF_NAME_LEN (sizeof(RPID_HF_NAME)-1)
-
-
-static char rpid_buffer[MAX_RPID_LEN];
-static str rpid = {.s = rpid_buffer, .len = 0};                /* rpid, stored in a backend authentication module */
-static int rpid_is_e164;        /* 1 - yes, 0 - unknown, -1 - no */
+#define RPID_HF_NAME_LEN (sizeof(RPID_HF_NAME) - 1)
 
 
 /*
@@ -80,7 +76,6 @@ static inline int is_e164(str* _user)
 static inline int append_rpid_helper(struct sip_msg* _m, str *_s)
 {
 	struct lump* anchor;
-	char *s;
 	
 	if (parse_headers(_m, HDR_EOH, 0) == -1) {
 		LOG(L_ERR, "append_rpid(): Error while parsing message\n");
@@ -93,15 +88,8 @@ static inline int append_rpid_helper(struct sip_msg* _m, str *_s)
 		return -2;
 	}
 	
-	s = pkg_malloc(_s->len);
-	if (!s) {
-		LOG(L_ERR, "append_rpid(): No memory left\n");
-	}
-	
-	memcpy(s, _s->s, _s->len);
-	if (!insert_new_lump_before(anchor, s, _s->len, 0)) {
+	if (!insert_new_lump_before(anchor, _s->s, _s->len, 0)) {
 		LOG(L_ERR, "append_rpid(): Can't insert lump\n");
-		pkg_free(s);
 		return -3;
 	}
 
@@ -114,15 +102,23 @@ static inline int append_rpid_helper(struct sip_msg* _m, str *_s)
  */
 int append_rpid_hf(struct sip_msg* _m, char* _s1, char* _s2)
 {
-	str rpid_hf;
+	str rpid_hf, rpid;
 	char *at;
+	int_str rcv_avp, val;
 
-	     /* No remote party ID, just return */
-	if (!rpid.len) {
-		DBG("append_rpid_hf(): rpid is empty, nothing to append\n");
+	rcv_avp.s = &rpid_avp;
+	if (!search_first_avp(AVP_NAME_STR | AVP_VAL_STR, rcv_avp, &val)) {
+		DBG("append_rpid_hf: No rpid AVP\n");
+		return -1;
+	}
+
+	if (!val.s->s || !val.s->len) {
+		DBG("append_rpid_hf: Empty rpid, nothing to append\n");
 		return 1;
 	}
-	
+
+	rpid = *val.s;
+
 	rpid_hf.len = RPID_HF_NAME_LEN + rpid_prefix.len + rpid.len + rpid_suffix.len + CRLF_LEN;
 	rpid_hf.s = pkg_malloc(rpid_hf.len);
 	if (!rpid_hf.s) {
@@ -145,8 +141,11 @@ int append_rpid_hf(struct sip_msg* _m, char* _s1, char* _s2)
 
 	memcpy(at, CRLF, CRLF_LEN);
 
-	append_rpid_helper(_m, &rpid_hf);
-	pkg_free(rpid_hf.s);
+	if (append_rpid_helper(_m, &rpid_hf) < 0) {
+		pkg_free(rpid_hf.s);
+		return -1;
+	}
+
 	return 1;
 }
 
@@ -156,15 +155,25 @@ int append_rpid_hf(struct sip_msg* _m, char* _s1, char* _s2)
  */
 int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix)
 {
-	str rpid_hf;
+	str rpid_hf, rpid;
 	char* at;
 	str* p, *s;
 
-	if (!rpid.len) {
-		DBG("append_rpid_hf_p(): rpid is empty, nothing to append\n");
+	int_str rcv_avp, val;
+
+	rcv_avp.s = &rpid_avp;
+	if (!search_first_avp(AVP_NAME_STR | AVP_VAL_STR, rcv_avp, &val)) {
+		DBG("append_rpid_hf: No rpid AVP\n");
+		return -1;
+	}
+
+	if (!val.s->s || !val.s->len) {
+		DBG("append_rpid_hf: Empty rpid, nothing to append\n");
 		return 1;
 	}
-	
+
+	rpid = *val.s;
+
 	p = (str*)_prefix;
 	s = (str*)_suffix;
 
@@ -190,8 +199,11 @@ int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix)
 
 	memcpy(at, CRLF, CRLF_LEN);
 
-	append_rpid_helper(_m, &rpid_hf);
-	pkg_free(rpid_hf.s);
+	if (append_rpid_helper(_m, &rpid_hf) < 0) {
+		pkg_free(rpid_hf.s);
+		return -1;
+	}
+
 	return 1;
 }
 
@@ -202,15 +214,23 @@ int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix)
 int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
 {
 	name_addr_t parsed;
-	str tmp, user;
+	str tmp, user, rpid;
 	struct sip_uri uri;
+	
+	int_str rcv_avp, val;
 
-	if (rpid_is_e164) return rpid_is_e164;
+	rcv_avp.s = &rpid_avp;
+	if (!search_first_avp(AVP_NAME_STR | AVP_VAL_STR, rcv_avp, &val)) {
+		DBG("is_rpid_user_e164: No rpid AVP\n");
+		goto err;
+	}
 
-	if (!rpid.len) {
+	if (!val.s->s || !val.s->len) {
 		DBG("is_rpid_user_e164(): Empty rpid\n");
 		goto err;
 	}
+
+	rpid = *val.s;
 
 	if (find_not_quoted(&rpid, '<')) {
 		if (parse_nameaddr(&rpid, &parsed) < 0) {
@@ -232,28 +252,9 @@ int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
 	        user = tmp;
         }
 
-	rpid_is_e164 = ((is_e164(&user) == 1) ? 1 : -1);
-	return rpid_is_e164;
+	return ((is_e164(&user) == 1) ? 1 : -1);
 
  err:
-	rpid_is_e164 = -1;
 	return -1;
 }
 
-
-/*
- * Process rpid
- * Will be alway called upon an authentication attempt
- */
-void save_rpid(str* _rpid)
-{
-	rpid.len = rpid_is_e164 = 0;
-
-	if (!_rpid) {
-		return;
-	}
-
-	memcpy(rpid.s, _rpid->s, _rpid->len);
-	rpid.len = _rpid->len;
-	DBG("save_rpid(): rpid value is '%.*s'\n", _rpid->len, ZSW(_rpid->s));
-}

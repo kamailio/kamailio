@@ -35,7 +35,6 @@
 #include "../../parser/hf.h"
 #include "../../str.h"
 
-#define MAX_RPID_LEN 1024  /* Size of the buffer */
 
 typedef enum auth_result {
 	ERROR = -2 ,        /* Error occurred, a reply has been sent out -> return 0 to the ser core */
@@ -51,8 +50,7 @@ typedef enum auth_result {
  * we should really authenticate (there must be no authentication for
  * ACK and CANCEL
  */
-typedef auth_result_t (*pre_auth_f)(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_field** _h);
-
+typedef auth_result_t (*pre_auth_t)(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_field** _h);
 auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_field** _h);
 
 
@@ -60,10 +58,26 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_
  * Purpose of this function is to do post authentication steps like
  * marking authorized credentials and so on.
  */
-typedef auth_result_t (*post_auth_f)(struct sip_msg* _m, struct hdr_field* _h, str* _rpid);
+typedef auth_result_t (*post_auth_t)(struct sip_msg* _m, struct hdr_field* _h);
+auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h);
 
-auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h, str* _rpid);
-
+/*
+ * Strip the beginning of realm
+ */
 void strip_realm(str *_realm);
+
+
+/*
+ * Auth module API
+ */
+typedef struct auth_api {
+	str rpid_avp;           /* Name of AVP containing Remote-Party-ID */
+	pre_auth_t pre_auth;    /* The function to be called before authentication */
+	post_auth_t post_auth;  /* The function to be called after authentication */
+} auth_api_t;
+
+typedef int (*bind_auth_t)(auth_api_t* api);
+int bind_auth(auth_api_t* api);
+
 
 #endif /* API_H */

@@ -31,10 +31,10 @@
 #include "api.h"
 #include "../../dprint.h"
 #include "../../parser/digest/digest.h"
+#include "../../sr_module.h"
 #include "auth_mod.h"
 #include "nonce.h"
 #include "common.h"
-#include "rpid.h"
 
 
 /*
@@ -205,7 +205,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_
  * Purpose of this function is to do post authentication steps like
  * marking authorized credentials and so on.
  */
-auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h, str* _rpid)
+auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h)
 {
 	int res = AUTHORIZED;
 	auth_body_t* c;
@@ -236,6 +236,21 @@ auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h, str* _rpid)
 		res = ERROR;
 	}
 
-	save_rpid(_rpid);
 	return res;
+}
+
+
+int bind_auth(auth_api_t* api)
+{
+	if (!api) {
+		LOG(L_ERR, "bind_auth: Invalid parameter value\n");
+		return -1;
+	}
+
+	api->pre_auth = pre_auth;
+	api->post_auth = post_auth;
+
+	api->rpid_avp = rpid_avp;
+
+	return 0;
 }
