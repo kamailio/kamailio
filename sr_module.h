@@ -4,7 +4,8 @@
  *
  */
 
-#ifndef sr_module
+#ifndef sr_module_h
+#define sr_module_h
 
 #include "msg_parser.h" /* for sip_msg */
 
