@@ -48,6 +48,7 @@ bouquets and brickbats to farhan@hotfoon.com
 #define REQ_REG 2
 #define REQ_OPT 3
 #define REQ_FLOOD 4
+#define REQ_RAND 5
 #define VIA_STR "Via: SIP/2.0/UDP "
 #define VIA_STR_LEN 17
 #define MAX_FRW_STR "Max-Forwards: "
@@ -85,7 +86,7 @@ bouquets and brickbats to farhan@hotfoon.com
 
 long address;
 int verbose, nameend, namebeg, expires_t, flood;
-int	maxforw, lport, rport;
+int maxforw, lport, rport, randtrash, trashchar;
 int file_b, uri_b, trace, via_ins, usrloc, redirects;
 char *username, *domainname;
 char fqdn[FQDN_SIZE];
@@ -275,6 +276,9 @@ void create_msg(char *buff, int action){
 		case REQ_FLOOD:
 			sprintf(buff, "%s sip:%s%s%s%s:9\r\n%s<sip:sipsak@%s:9>\r\n%s<sip:%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sipsak@%s:9>\r\n\r\n", FLOOD_METH, domainname, SIP20_STR, VIA_STR, fqdn, FROM_STR, fqdn, TO_STR, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, FLOOD_METH, CONT_STR, fqdn);
 			break;
+		case REQ_RAND:
+			sprintf(buff, "%s sip:%s%s%s%s:%i\r\n%s<sip:sipsak@%s:%i>\r\n%s<sip:%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sipsak@%s:%i>\r\n\r\n", OPT_STR, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, fqdn, lport, TO_STR, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, FLOOD_METH, CONT_STR, fqdn, lport);
+			break;
 		default:
 			printf("error: unknown request type to create\n");
 			exit(2);
@@ -349,6 +353,23 @@ void uri_replace(char *mes, char *uri)
 #endif
 }
 
+/* trashes one character in buff radnomly */
+void trash_random(char *message)
+{
+	int r;
+	float t;
+	char *position;
+
+	t=(float)rand()/RAND_MAX;
+	r=t * (float)strlen(message);
+	position=message+r;
+	r=t*(float)255;
+	*position=(char)r;
+#ifdef DEBUG
+	printf("request:\n%s\n", message);
+#endif
+}
+
 /*
 shoot:
 takes:
@@ -377,7 +398,7 @@ void shoot(char *buff)
 
 	redirected = 1;
 	nretries = 5;
-	retryAfter = 500;
+	retryAfter = 5000;
 	usrlocstep = 0;
 
 	/* create a sending socket */
@@ -416,6 +437,8 @@ void shoot(char *buff)
 		regcomp(regexp, "^SIP/[0-9]\\.[0-9] 483 ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
 	else if (usrloc)
 		regcomp(regexp, "^SIP/[0-9]\\.[0-9] 200 ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
+	else if (randtrash)
+		regcomp(regexp, "^SIP/[0-9]\\.[0-9] 4[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
 	else
 		regcomp(regexp, "^SIP/[0-9]\\.[0-9] 1[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
 	/* catching redirects */
@@ -425,7 +448,6 @@ void shoot(char *buff)
 	if (usrloc){
 		nretries=3*(nameend-namebeg)+3;
 		create_msg(buff, REQ_REG);
-		retryAfter = 5000;
 	}
 	else if (trace){
 		if (maxforw!=-1)
@@ -442,7 +464,21 @@ void shoot(char *buff)
 		namebeg=1;
 		create_msg(buff, REQ_FLOOD);
 	}
+	else if (randtrash){
+		namebeg=1;
+		create_msg(buff, REQ_RAND);
+		nameend=strlen(buff);
+		if (trashchar){
+			if (trashchar < nameend)
+				nameend=trashchar;
+			else
+				printf("warning: number of trashed chars to big. setting to request lenght\n");
+		}
+		nretries=nameend-1;
+		trash_random(buff);
+	}
 	else {
+		retryAfter = 500;
 		if(maxforw!=-1)
 			set_maxforw(buff);
 		if(via_ins)
@@ -486,9 +522,15 @@ void shoot(char *buff)
 				}
 			}
 			else if (flood && verbose) {
-				printf("flood %i\n", i+1);
+				printf("flooding message number %i\n", i+1);
 			}
-			else if (!trace && !usrloc && !flood){
+			else if (randtrash && verbose) {
+				printf("message with %i randomized chars\n", i+1);
+#ifdef DEBUG
+				printf("request:\n%s\n", buff);
+#endif
+			}
+			else if (!trace && !usrloc && !flood && !randtrash){
 				printf("** request **\n%s\n", buff);
 			}
 
@@ -515,24 +557,26 @@ void shoot(char *buff)
 							printf("send failure: ");
 							recv(sock, reply, strlen(reply), 0);
 							perror("");
+							if (randtrash && verbose) 
+								printf ("last message before send failure:\n%s\n", buff);
 							exit(1);
 						}
 					}
-					printf("** timeout **\n");
+					if (verbose) printf("** timeout **\n");
+					if (randtrash) {
+						printf("did not get a response on this request:\n%s\n", buff);
+						if (i+1 < nameend) printf("resending it without additional random changes...\n\n");
+					}
 					retryAfter = retryAfter * 2;
 					if (retryAfter > 5000)
 						retryAfter = 5000;
-					/* we should have retrieved the error code and displayed
-					we are not doing that because there is a great variation
-					in the process of retrieveing error codes between
-					micro$oft and *nix world*/
 					continue;
 				} else if ( ret == -1 ) {
 					perror("select error");
 					exit(2);
 				} /* no timeout, no error ... something has happened :-) */
 				else if (FD_ISSET(ssock, &fd)) {
-				 	if (!trace && !usrloc)
+				 	if (!trace && !usrloc && !randtrash)
 						printf ("\nmessage received\n");
 				} else {
 					puts("\nselect returned succesfuly, nothing received\n");
@@ -625,7 +669,6 @@ void shoot(char *buff)
 						else {
 							crlf=strchr(reply,'\n');
 							sprintf(crlf, "\0");
-//						printf("%s\n", reply);
 							crlf++;
 							contact=strstr(crlf, "Contact");
 							if (contact){
@@ -713,6 +756,25 @@ void shoot(char *buff)
 							break;
 						}
 					}
+					else if (randtrash) {
+						/* in randomzing trash we are expexting 4?? error codes
+						 * everything should not be normal */
+						if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
+#ifdef DEBUG
+							printf("received:\n%s\n", reply);
+#endif
+							if (verbose) printf("received expected 4xx\n");
+						}
+						else {
+							printf("warning: did not received 4xx\n");
+							if (verbose) printf("sended:\n%s\nreceived:\n%s\n");
+						}
+						if (nameend==(i+1)) {
+							printf("random end reached. server survived :) respect!\n");
+							exit(0);
+						}
+						else trash_random(buff);
+					}
 					else {
 						/* in the normal send and reply case anything other then 
 						   1xx will be treated as final response*/
@@ -726,7 +788,7 @@ void shoot(char *buff)
 						}
 					}
 		
-				} 
+				} /* ret > 0 */
 				else {
 					perror("recv error");
 					exit(2);
@@ -743,8 +805,8 @@ void shoot(char *buff)
 		} /* for nretries */
 
 	} /* while redirected */
-	/* after all the retries, nothing has come back :-( */
-	puts("** I give up retransmission....");
+	if (randtrash) exit(0);
+	printf("** I give up retransmission....\n");
 	exit(1);
 }
 
@@ -757,7 +819,8 @@ void print_help() {
 		" shoot : sipsak -f filename -s sip:uri\n"
 		" trace : sipsak -t [-f filename] -s sip:uri\n"
 		" USRLOC: sipsak -u [-b number] -e number [-E number] -s sip:uri\n"
-		" flood : sipsak -F [-c number] -s sip:uri\n\n"
+		" flood : sipsak -F [-c number] -s sip:uri\n"
+		" random: sipsak -R [-T number] -s sip:uri\n\n"
 		" additional parameter in every modus:\n"
 		"                [-d] [-i] [-l port] [-m number] [-r port] [-v]\n"
 		"   -h           displays this help message\n"
@@ -771,7 +834,10 @@ void print_help() {
 		"                modus\n"
 		"   -E number    the expires header field value (default: 15)\n"
 		"   -F           activates the flood modus\n"
-		"   -c number    the maximum CSeq number for flood modus\n"
+		"   -c number    the maximum CSeq number for flood modus (default: 2^31)\n"
+		"   -R           activates the random modues (dangerous)\n"
+		"   -T number    the maximum number of trashed character in random modus\n"
+		"                (default: request length)\n"
 		"   -l port      the local port to use (default: any)\n"
 		"   -r port      the remote port to use (default: 5060)\n"
 		"   -m number    the value for the max-forwards header field\n"
@@ -791,7 +857,7 @@ int main(int argc, char *argv[])
 	char	*delim, *delim2;
 
 	/* some initialisation to be shure */
-	file_b=uri_b=trace=lport=usrloc=flood=verbose = 0;
+	file_b=uri_b=trace=lport=usrloc=flood=verbose=randtrash=trashchar = 0;
 	namebeg=nameend=maxforw = -1;
 	via_ins=redirects = 1;
 	username = NULL;
@@ -806,7 +872,7 @@ int main(int argc, char *argv[])
 	if (argc==1) print_help();
 
 	/* lots of command line switches to handle*/
-	while ((c=getopt(argc,argv,"b:c:dE:e:Ff:hil:m:r:s:tuv")) != EOF){
+	while ((c=getopt(argc,argv,"b:c:dE:e:Ff:hil:m:r:Rs:tT:uv")) != EOF){
 		switch(c){
 			case 'b':
 				//namebeg=atoi(optarg);
@@ -881,6 +947,9 @@ int main(int argc, char *argv[])
 					exit(2);
 				}
 				break;
+			case 'R':
+				randtrash=1;
+				break;
 			case 's':
 				if (!strncmp(optarg,"sip",3)){
 					if ((delim=strchr(optarg,':'))!=NULL){
@@ -922,6 +991,13 @@ int main(int argc, char *argv[])
 			case 't':
 				trace=1;
 				break;
+			case 'T':
+				trashchar=atoi(optarg);
+				if (!trashchar) {
+					printf("error: non-numerical number of trashed character\n");
+					exit(2);
+				}
+				break;
 			case 'u':
 				usrloc=1;
 				break;
@@ -937,8 +1013,8 @@ int main(int argc, char *argv[])
 
 	/* lots of conditions to check */
 	if (trace) {
-		if (usrloc || flood) {
-			printf("error: trace can't be combined with usrloc or flood\n");
+		if (usrloc || flood || randtrash) {
+			printf("error: trace can't be combined with usrloc, random or flood\n");
 			exit(2);
 		}
 		if (!uri_b) {
@@ -959,8 +1035,8 @@ int main(int argc, char *argv[])
 		if (maxforw==-1) maxforw=0;
 	}
 	else if (usrloc) {
-		if (trace || flood) {
-			printf("error: usrloc can't be combined with trace or flood\n");
+		if (trace || flood || randtrash) {
+			printf("error: usrloc can't be combined with trace, random or flood\n");
 			exit(2);
 		}
 		if (!username || !uri_b || nameend==-1) {
@@ -979,13 +1055,34 @@ int main(int argc, char *argv[])
 			namebeg=0;
 	}
 	else if (flood) {
-		if (trace || usrloc) {
-			printf("error: flood can't be combined with trace or usrloc\n");
+		if (trace || usrloc || randtrash) {
+			printf("error: flood can't be combined with trace, random or usrloc\n");
 			exit(2);
 		}
 		if (!uri_b) {
 			printf("error: we need at least a sip uri for flood\n");
 			exit(2);
+		}
+		if (redirects) {
+			printf("warning: redirects are not expected in flood. Disableing\n");
+			redirects=0;
+		}
+	}
+	else if (randtrash) {
+		if (trace || usrloc || flood) {
+			printf("error: random can't be combined with trace, flood or usrloc\n");
+			exit(2);
+		}
+		if (!uri_b) {
+			printf("error: we need at least a sip uri for random\n");
+			exit(2);
+		}
+		if (redirects) {
+			printf("warning: redirects are not expected in random. Disableing\n");
+			redirects=0;
+		}
+		if (verbose) {
+			printf("warning: random characters may destroy your terminal output\n");
 		}
 	}
 	else if (!(file_b && uri_b)) {
