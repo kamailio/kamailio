@@ -21,6 +21,8 @@ MAILCOMMAND=/bin/mail
 ############################
 
 LOCKF=$LOCKDIR/$LOCKFILE
+TMP2=$TMP.dns
+TMP3=$TMP.ips
 
 if [ -e $LOCKF ] ; then
 	find $LOCKDIR -name $LOCKFILE -amin +$LOCK_TIMEOUT -exec rm {} ';'
@@ -36,11 +38,33 @@ if [ ! -e $LOCKF ] ; then
 	if [ ! -x $BIN ] ; then
 		echo "serresponse did not find the required sipsak executable $BIN" >> $TMP
 	else
-		echo "The execution of this command:" >> $TMP
-		echo "  $BIN -s $SIPURI" >> $TMP
-		echo "produced this output:" >> $TMP
-		$BIN -s $SIPURI >> $TMP 2>&1
-		if [ $? -eq 0 ] ; then
+		echo "  $BIN -s $SIPURI" >> $TMP2
+		echo "produced this output:" >> $TMP2
+		$BIN -s $SIPURI >> $TMP2 2>&1
+		if [ $? -ne 0 ] ; then
+			echo "  $BIN -n -s $SIPURI" >> $TMP3
+			echo "produced this output:" >> $TMP3
+			$BIN -n -s $SIPURI >> $TMP3 2>&1
+			if [ $? -eq 0 ] ; then
+				echo "ser did not responses (fast enough) on the sipsak requests with fqdn in Via" >> $TMP
+				echo "but the test with IPs in Via succeeded." >> $TMP
+				echo "  => DNS PROBLEM !?!" >> $TMP
+				echo "" >> $TMP
+				echo "command output of sipsak with fqdn follows:" >> $TMP
+				cat $TMP2 >> $TMP
+			else
+				echo "ser did not responses (fast enough) on requests with fqdn in Via" >> $TMP
+				echo "but also requests with IPs in Via failed." >> $TMP
+				echo "  => DNS IS NOT THE PROBLEM !!" >> $TMP
+				echo "" >> $TMP
+				echo "first command output with fqdn follows then with IPs:" >> $TMP
+				cat $TMP2 >> $TMP
+				cat $TMP3 >> $TMP
+			fi
+			rm -f $TMP3
+			rm -f $TMP2
+		else
+			rm -f $TMP2
 			rm -f $TMP
 		fi
 	fi
