@@ -59,7 +59,7 @@ static inline int rewrite(struct sip_msg* _m, str* _s)
 	}
 
 	memcpy(buf, _s->s, _s->len);
-	_s->s[_s->len] = '\0';
+	buf[_s->len] = '\0';
 
 	_m->parsed_uri_ok = 0;
 	if (_m->new_uri.s) {
