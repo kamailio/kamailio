@@ -56,6 +56,7 @@
                added MCAST_TTL (andrei)
  * 2004-07-05  src_ip & dst_ip will detect ip addresses between quotes
  *              (andrei)
+ * 2004-10-19  added FROM_URI, TO_URI (andrei)
  */
 
 
@@ -173,6 +174,8 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token ISFLAGSET
 %token METHOD
 %token URI
+%token FROM_URI
+%token TO_URI
 %token SRCIP
 %token SRCPORT
 %token DSTIP
@@ -299,6 +302,7 @@ static struct id_list* mk_listen_id(char*, int, int);
 %type <intval> proto port
 %type <intval> equalop strop intop
 %type <strval> host_sep
+%type <intval> uri_type
 /*%type <route_el> rules;
   %type <route_el> rule;
 */
@@ -840,6 +844,11 @@ strop:	equalop	{$$=$1; }
 		| MATCH	{$$=MATCH_OP; }
 		;
 
+uri_type:	URI			{$$=URI_O;}
+		|	FROM_URI	{$$=FROM_URI_O;}
+		|	TO_URI		{$$=TO_URI_O;}
+		;
+
 exp_elem:	METHOD strop STRING	{$$= mk_elem(	$2, STRING_ST, 
 													METHOD_O, $3);
 									}
@@ -850,17 +859,17 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem(	$2, STRING_ST,
 		| METHOD error	{ $$=0; yyerror("invalid operator,"
 										"== , !=, or =~ expected");
 						}
-		| URI strop STRING 	{$$ = mk_elem(	$2, STRING_ST,
-												URI_O, $3); 
+		| uri_type strop STRING	{$$ = mk_elem(	$2, STRING_ST,
+												$1, $3); 
 				 				}
-		| URI strop host 	{$$ = mk_elem(	$2, STRING_ST,
-											URI_O, $3); 
+		| uri_type strop host 	{$$ = mk_elem(	$2, STRING_ST,
+											$1, $3); 
 				 			}
-		| URI equalop MYSELF    { $$=mk_elem(	$2, MYSELF_ST,
-												URI_O, 0);
+		| uri_type equalop MYSELF	{ $$=mk_elem(	$2, MYSELF_ST,
+													$1, 0);
 								}
-		| URI strop error { $$=0; yyerror("string or MYSELF expected"); }
-		| URI error	{ $$=0; yyerror("invalid operator,"
+		| uri_type strop error { $$=0; yyerror("string or MYSELF expected"); }
+		| uri_type error	{ $$=0; yyerror("invalid operator,"
 									" == , != or =~ expected");
 					}
 		| SRCPORT intop NUMBER	{ $$=mk_elem(	$2, NUMBER_ST,
@@ -941,8 +950,8 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem(	$2, STRING_ST,
 						 			"expected" ); }
 		| DSTIP error { $$=0; 
 						yyerror("invalid operator, ==, != or =~ expected");}
-		| MYSELF equalop URI    { $$=mk_elem(	$2, MYSELF_ST,
-												URI_O, 0);
+		| MYSELF equalop uri_type	{ $$=mk_elem(	$2, MYSELF_ST,
+													$3, 0);
 								}
 		| MYSELF equalop SRCIP  { $$=mk_elem(	$2, MYSELF_ST,
 												SRCIP_O, 0);

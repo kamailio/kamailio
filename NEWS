@@ -41,6 +41,9 @@ core:
  - new parts:
        UNIX domain socket server implemented
  - changes: 
+    - added from_uri & to_uri: behave exactly like uri but use the
+	   "From:"/"To:" uris
+       (e.g.: if (from_uri==myself) ..., if (to_uri=~"^sip:test@")... )
     - config: better escape support in strings (e.g. \", \<cr>, \x0a, \012)
     - bad network addresses are now automatically fixed
       (e.g. 192.168.1.80/27 => 192.168.1.64/27)

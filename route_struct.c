@@ -146,6 +146,12 @@ void print_expr(struct expr* exp)
 			case URI_O:
 				DBG("uri");
 				break;
+			case FROM_URI_O:
+				DBG("from_uri");
+				break;
+			case TO_URI_O:
+				DBG("to_uri");
+				break;
 			case SRCIP_O:
 				DBG("srcip");
 				break;

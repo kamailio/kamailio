@@ -39,6 +39,7 @@
  *  2003-05-23  comp_ip fixed, now it will resolve its operand and compare
  *              the ip with all the addresses (andrei)
  *  2003-10-10  added more operators support to comp_* (<,>,<=,>=,!=) (andrei)
+ *  2004-10-19  added from_uri & to_uri (andrei)
  */
 
  
@@ -61,6 +62,8 @@
 #include "ip_addr.h"
 #include "resolve.h"
 #include "parser/parse_uri.h"
+#include "parser/parse_from.h"
+#include "parser/parse_to.h"
 #include "mem/mem.h"
 
 
@@ -482,6 +485,7 @@ error_op:
 static int eval_elem(struct expr* e, struct sip_msg* msg)
 {
 
+	struct sip_uri uri;
 	int ret;
 	ret=E_BUG;
 	
@@ -515,6 +519,46 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 						ret=comp_strstr(&msg->first_line.u.request.uri,
 										 e->r.param, e->op, e->subtype);
 					}
+				}
+				break;
+		case FROM_URI_O:
+				if (parse_from_header(msg)!=0){
+					LOG(L_ERR, "ERROR: eval_elem: bad or missing"
+								" From: header\n");
+					goto error;
+				}
+				if (e->subtype==MYSELF_ST){
+					if (parse_uri(get_from(msg)->uri.s, get_from(msg)->uri.len,
+									&uri) < 0){
+						LOG(L_ERR, "ERROR: eval_elem: bad uri in From:\n");
+						goto error;
+					}
+					ret=check_self_op(e->op, &uri.host,
+										uri.port_no?uri.port_no:SIP_PORT);
+				}else{
+					ret=comp_strstr(&get_from(msg)->uri,
+							e->r.param, e->op, e->subtype);
+				}
+				break;
+		case TO_URI_O:
+				if ((msg->to==0) && ((parse_headers(msg, HDR_TO, 0)==-1) ||
+							(msg->to==0))){
+					LOG(L_ERR, "ERROR: eval_elem: bad or missing"
+								" To: header\n");
+					goto error;
+				}
+				/* to content is parsed automatically */
+				if (e->subtype==MYSELF_ST){
+					if (parse_uri(get_to(msg)->uri.s, get_to(msg)->uri.len,
+									&uri) < 0){
+						LOG(L_ERR, "ERROR: eval_elem: bad uri in To:\n");
+						goto error;
+					}
+					ret=check_self_op(e->op, &uri.host,
+										uri.port_no?uri.port_no:SIP_PORT);
+				}else{
+					ret=comp_strstr(&get_to(msg)->uri,
+										e->r.param, e->op, e->subtype);
 				}
 				break;
 		case SRCIP_O:
