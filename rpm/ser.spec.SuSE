@@ -9,7 +9,7 @@ Version:      %ver
 Release:      %rel
 Packager:     Nils Ohlmeier <ohlmeier@fokus.fhg.de>
 Copyright:    GPL
-Group:        System Environment/Daemons
+Group:        Networking/Daemons
 Source:       http://iptel.org/ser/stable/%{name}-%{ver}_src.tar.gz
 Source2:      ser.init.SuSE
 URL:          http://iptel.org/ser
@@ -44,6 +44,7 @@ entries.
 
 %build
 make all cfg-target=/%{_sysconfdir}/ser/ exclude_modules="%exclude"
+make modules modules=modules/mysql cfg-target=/%{_sysconfdir}/ser/
 cd utils/gen_ha1
 make
 
@@ -64,6 +65,20 @@ make install cfg-prefix=$RPM_BUILD_ROOT/%{_sysconfdir} \
 		 cfg-target=/%{_sysconfdir}/ser/ \
 		 modules-target=/%{_libdir}/ser/modules/ \
 	     exclude_modules="%exclude"
+
+make install-modules modules=modules/mysql \
+	     cfg-prefix=$RPM_BUILD_ROOT/%{_sysconfdir} \
+             cfg-dir=ser/ \
+	     bin-prefix=$RPM_BUILD_ROOT/%{_sbindir} \
+	     bin-dir="" \
+	     modules-prefix=$RPM_BUILD_ROOT/%{_libdir}/ser \
+	     modules-dir=modules/ \
+	     doc-prefix=$RPM_BUILD_ROOT/%{_docdir} \
+	     doc-dir=ser/ \
+	     man-prefix=$RPM_BUILD_ROOT/%{_mandir} \
+	     man-dir="" \
+	     cfg-target=/%{_sysconfdir}/ser/ \
+	     modules-target=/%{_libdir}/ser/modules/
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/init.d
 install -m755 $RPM_SOURCE_DIR/ser.init.SuSE \
@@ -110,8 +125,6 @@ sbin/insserv etc/init.d/
 %dir %{_libdir}/ser/modules
 %{_libdir}/ser/modules/acc.so
 %{_libdir}/ser/modules/auth.so
-%{_libdir}/ser/modules/cpl.so
-%{_libdir}/ser/modules/ext.so
 %{_libdir}/ser/modules/im.so
 %{_libdir}/ser/modules/jabber.so
 %{_libdir}/ser/modules/maxfwd.so
@@ -141,6 +154,9 @@ sbin/insserv etc/init.d/
 
 
 %changelog
+* Thu Sep 26 2002 Nils Ohlmeier <ohlmeier@fokus.fhg.de>
+- Added 'make [modules|modules-install]' to adapted Makefile changes
+
 * Wed Sep 25 2002 Andrei Pelinescu - Onciul  <pelinescu-onciul@fokus.gmd.de>
 - modified make install & make: added cfg-target & modules-target
 
