@@ -649,7 +649,7 @@ void destroy(void)
 
 void xjab_check_workers(int mpid)
 {
-	int i, j, n, stat;
+	int i, n, stat;
 	DBG("XJAB:%d:xjab_check_workers: time=%d\n", mpid, get_ticks());
 	if(!jwl || jwl->len <= 0)
 		return;
