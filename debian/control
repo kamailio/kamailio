@@ -40,7 +40,7 @@ Description: contains the jabber module (sip-jabber message translation)
 Package: ser-radius-modules
 Architecture: any
 Depends: ${shlibs:Depends}, ser (= ${Source-Version})
-Description: contains the jabber module (sip-jabber message translation)
+Description: contains the ser radius modules 
  This has been split out of the main ser package, so that ser will not
  depend upon libradius1. This modules will enable you to authenticate, 
  do group membership checking or check the messages uris using radius.
