@@ -10,7 +10,7 @@
 
 /* we implement mutex here using System V semaphores; as number of
    sempahores is limited and number of synchronized elements
-   high, we partition the sync'ed SER elements and share semaphores 
+   high, we partition the sync'ed SER elements and share semaphores
    in each of the partitions; we try to use as many semaphores as OS
    gives us for finest granularity; perhaps later we will
    add some arch-dependent mutex code that will not have
@@ -38,7 +38,7 @@ int entry_semaphore=0, transaction_timer_semaphore=0, retrasmission_timer_semaph
 int sem_nr;
 
 
-/* intitialize the locks; return 0 on success, -1 otherwise 
+/* intitialize the locks; return 0 on success, -1 otherwise
 */
 
 
@@ -61,8 +61,8 @@ int lock_initialize()
                 DBG("retransmission timer semaphore initialization failure\n");
                 goto error;
         }
-	
-	
+
+
 	i=SEM_MIN;
 	/* probing phase: 0=initial, 1=after the first failure */
 	probe_run=0;
@@ -205,7 +205,7 @@ int init_cell_lock( struct cell *cell )
 	   shared with its entry lock
         */
 	cell->mutex.semaphore_set=entry_semaphore, 
-	cell->mutex.semaphore_index=cell->transaction.hash_index / sem_nr;
+	cell->mutex.semaphore_index=cell->hash_index / sem_nr;
 }
 
 int init_entry_lock( struct s_table* hash_table, struct entry *entry )

@@ -30,6 +30,8 @@ struct cell;
 #define TABLE_ENTRIES  256
 #define MAX_FORK           20
 
+
+
 /* all you need to put a cell in a timer list:
    links to neighbours and timer value         */
 typedef struct timer_link
@@ -39,8 +41,8 @@ typedef struct timer_link
 }timer_link_type ;
 
 
-/* timer list: includes head, tail and protection semaphore */
 
+/* timer list: includes head, tail and protection semaphore */
 typedef struct  timer
 {
    struct cell*    first_cell;
@@ -50,9 +52,9 @@ typedef struct  timer
 } timer_type;
 
 
+
 typedef struct retrans_buff
 {
-   unsigned int type;
    char               *buffer;
    int                  bufflen;
    unsigned int dest_ip;
@@ -60,8 +62,10 @@ typedef struct retrans_buff
 
    struct sockaddr *to;
    socklen_t tolen;
-
+   /* a message can be linked just to one retransmission list */
+   struct timer_link tl[1];
 }retrans_buff_type;
+
 
 
 typedef struct cell
@@ -75,36 +79,26 @@ typedef struct cell
    int       ref_counter;
 
    /* cell payload data */
-   union {
-	/* transactions */
-	struct {
-   		/* tells in which hash table entry the cell lives */
-   		unsigned int  hash_index;
-   		/* sequence number within hash collision slot */
-   		unsigned int  label;
+   /* tells in which hash table entry the cell lives */
+   unsigned int  hash_index;
+   /* sequence number within hash collision slot */
+   unsigned int  label;
 
-   		/* bindings to all timer links in which a cell may be located */
-   		struct timer_link tl[NR_OF_TIMER_LISTS];
+   /* bindings to all timer links in which a cell may be located */
+   struct timer_link tl[NR_OF_TIMER_LISTS];
 
-   		/* usefull data */
-   		/* incoming request and its response*/
-   		struct sip_msg         *inbound_request;
-   		struct retrans_buff   *inbound_response;
-   		unsigned int             status;
-   		str*                             tag;
-   		/* array of outgoing requests and its responses */
-   		int                               nr_of_outgoings;
-   		struct retrans_buff   *outbound_request[ MAX_FORK ];
-   		struct sip_msg          *outbound_response[ MAX_FORK ];
-	} transaction;
-	/* retransmission buffer */
-	struct {
-		struct retrans_buffer *retr_buffer;
-		/* a message can be linked just to one retransmission list */
-		struct timer_link retransmission_timer_list;
-	} retransmission;
-   }; /* cell payload */
+   /* usefull data */
+   /* incoming request and its response*/
+   struct sip_msg         *inbound_request;
+   struct retrans_buff   *inbound_response;
+   unsigned int             status;
+   str*                             tag;
+   /* array of outgoing requests and its responses */
+   int                               nr_of_outgoings;
+   struct retrans_buff   *outbound_request[ MAX_FORK ];
+   struct sip_msg          *outbound_response[ MAX_FORK ];
 }cell_type;
+
 
 
 /* double-linked list of cells with hash synonyms */
@@ -117,6 +111,7 @@ typedef struct entry
    /* sync mutex */
    ser_lock_t                 mutex;
 }entry_type;
+
 
 
 /* hash table */
@@ -136,6 +131,7 @@ struct s_table
 };
 
 
+
 void free_cell( struct cell* dead_cell );
 struct s_table* init_hash_table();
 
@@ -146,7 +142,7 @@ void free_hash_table( struct s_table* hash_table );
 
 
 /* function returns:
- *       0 - a new transaction was created 
+ *       0 - a new transaction was created
  *      -1 - retransmission
  *      -2 - error
  */

@@ -12,11 +12,13 @@
    set initial timeout
 */
 
+
+
 void put_in_tail_of_timer_list( struct s_table* hash_table, struct cell* p_cell,
 		  int list_id, unsigned int time_out )
 {
 	struct timer* timer_list = &(hash_table->timers[ list_id ]);
-	struct timer_link* tl = &(p_cell->transaction.tl[ list_id ]);
+	struct timer_link* tl = &(p_cell->tl[ list_id ]);
 
 	/* the entire timer list is locked now -- noone else can
            manipulate it */
@@ -26,7 +28,7 @@ void put_in_tail_of_timer_list( struct s_table* hash_table, struct cell* p_cell,
 	{
 		tl->timer_next_cell= 0;
 		tl->timer_prev_cell=timer_list->last_cell;
-		timer_list->last_cell->transaction.tl[list_id].timer_next_cell=p_cell;
+		timer_list->last_cell->tl[list_id].timer_next_cell=p_cell;
 		timer_list->last_cell = p_cell;
 	} else {
 		tl->timer_prev_cell = 0;
@@ -45,7 +47,7 @@ void remove_timer( struct s_table* hash_table, struct cell* p_cell,
 		  int list_id)
 {
    struct timer* timers=&(hash_table->timers[ list_id ]);
-   struct timer_link* tl = &(p_cell->transaction.tl[ list_id ]);
+   struct timer_link* tl = &(p_cell->tl[ list_id ]);
 
    if (tl->timer_next_cell || tl->timer_prev_cell ||
 	(!tl->timer_next_cell && !tl->timer_prev_cell &&
@@ -53,11 +55,11 @@ void remove_timer( struct s_table* hash_table, struct cell* p_cell,
    {
       lock( timers->mutex );
       if ( tl->timer_prev_cell )
-         tl->timer_prev_cell->transaction.tl[list_id].timer_next_cell = tl->timer_next_cell;
+         tl->timer_prev_cell->tl[list_id].timer_next_cell = tl->timer_next_cell;
       else
          timers->first_cell = tl->timer_next_cell;
       if ( tl->timer_next_cell )
-         tl->timer_next_cell->transaction.tl[list_id].timer_prev_cell = tl->timer_prev_cell;
+         tl->timer_next_cell->tl[list_id].timer_prev_cell = tl->timer_prev_cell;
       else
          timers->last_cell = tl->timer_prev_cell;
       unlock( timers->mutex );
@@ -67,11 +69,11 @@ void remove_timer( struct s_table* hash_table, struct cell* p_cell,
 void remove_timer_from_head( struct s_table* hash_table, struct cell* p_cell, int list_id )
 {
 	struct timer* timers=&(hash_table->timers[ list_id ]);
-	struct timer_link* tl = &(p_cell->transaction.tl[ list_id ]);
+	struct timer_link* tl = &(p_cell->tl[ list_id ]);
 	lock( timers->mutex  );
 	timers->first_cell = tl->timer_next_cell;
 	if (!timers->first_cell) timers->last_cell=0;
-	else tl->timer_next_cell->transaction.tl[list_id].timer_prev_cell = NULL;
+	else tl->timer_next_cell->tl[list_id].timer_prev_cell = NULL;
                unlock( timers->mutex );
 }
 
@@ -112,7 +114,7 @@ void start_WT_timer( struct s_table* hash_table, struct cell* p_cell )
 
 void remove_from_hash_table( struct s_table *hash_table,  struct cell * p_cell )
 {
-	struct entry*  p_entry  = &(hash_table->entrys[p_cell->transaction.hash_index]);
+	struct entry*  p_entry  = &(hash_table->entrys[p_cell->hash_index]);
 	lock( p_entry->mutex );
     	if ( p_cell->prev_cell )
          	p_cell->prev_cell->next_cell = p_cell->next_cell;
@@ -187,7 +189,7 @@ void * timer_routine(void * attr)
          	ref_counter = p_cell->ref_counter;
          	unlock( p_cell->mutex  );
 
-       		tmp_cell = p_cell->transaction.tl[DELETE_LIST].timer_next_cell;
+       		tmp_cell = p_cell->tl[DELETE_LIST].timer_next_cell;
          	/*if the ref counter is 0 (nobody is reading the cell any more) ->
 		  remove from list and del*/
         	if (ref_counter==0)
@@ -202,12 +204,12 @@ void * timer_routine(void * attr)
 		/* jku: list is time-ordered; if I "get in the future"
 		   I can stop processing
 		*/
-		if (p_cell->transaction.tl[FR_TIMER_LIST].time_out > *time) break;
+		if (p_cell->tl[FR_TIMER_LIST].time_out > *time) break;
 		/* otherwise the timer is due */
            	/* -> send a 408, remove the cell from FR_TIMER_LIST,
 		   put it on WT_TIMER_LIST (transaction is over) */
        		printf("FR timeout !!!\n");
-		tmp_cell = p_cell->transaction.tl[FR_TIMER_LIST].timer_next_cell;
+		tmp_cell = p_cell->tl[FR_TIMER_LIST].timer_next_cell;
 		remove_timer_from_head( hash_table, p_cell, FR_TIMER_LIST );
 		start_WT_timer( hash_table, p_cell );
 	}
@@ -219,11 +221,11 @@ void * timer_routine(void * attr)
 		/* jku: list is time-ordered; if I "get in the future"
 		   I can stop processing
 		*/
-		if (p_cell->transaction.tl[WT_TIMER_LIST].time_out > *time) break;
+		if (p_cell->tl[WT_TIMER_LIST].time_out > *time) break;
           	/* if the timeout expired - > release the tranzactin*/
               	printf("WT timeout !!!\n");
               	/* next cell in WT list */
-		tmp_cell = p_cell->transaction.tl[WT_TIMER_LIST].timer_next_cell;
+		tmp_cell = p_cell->tl[WT_TIMER_LIST].timer_next_cell;
 		/* jku: could be optimized here -- I'm sure to be at
 		   list's head; simply call 'remove_from_head'  */
 		remove_timer_from_head( hash_table, p_cell, WT_TIMER_LIST );

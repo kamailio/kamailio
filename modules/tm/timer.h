@@ -2,6 +2,7 @@
 #define _TIMER_H
 
 enum lists { FR_TIMER_LIST, WT_TIMER_LIST, DELETE_LIST, NR_OF_TIMER_LISTS };
+#define RETRASMISSIONS_LIST  0
 
 /* we maintain separate retransmission lists for each of retransmission
    periods; that allows us to keep the lists ordered while just adding
