@@ -171,7 +171,8 @@ int new_dlg_uac(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _rur
 		LOG(L_ERR, "new_dlg_uac(): No memory left\n");
 		return -2;
 	}
-	     /* Clear everything */
+
+	     /* Clear everything */	
 	memset(res, 0, sizeof(dlg_t));
 	
 	     /* Make a copy of Call-ID */
@@ -194,7 +195,7 @@ int new_dlg_uac(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _rur
 		shm_free(res);
 		return -2;
 	}
-
+	
 	return 0;
 }
 
