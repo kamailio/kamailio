@@ -121,12 +121,12 @@ static inline int check_params(str* method, str* to, str* from, dlg_t** dialog)
 	}
 
 	if (!to->s || !to->len) {
-		LOG(L_ERR, "check_params(): Invalid request method\n");
+		LOG(L_ERR, "check_params(): Invalid To URI\n");
 		return -4;
 	}
 
 	if (!from->s || !from->len) {
-		LOG(L_ERR, "check_params(): Invalid request method\n");
+		LOG(L_ERR, "check_params(): Invalid From URI\n");
 		return -5;
 	}
 	return 0;
