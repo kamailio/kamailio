@@ -36,7 +36,6 @@ NAME=ser
 #                  malloc etc.)
 DEFS=-DNOCR -DMACROEATER -DDNS_IP_HACK  -DSHM_MEM \
 	 -DPKG_MALLOC #-DDBG_QM_MALLOC
->>>>>>> 1.50
 #-DEXTRA_DEBUG
 # -DUSE_SHM_MEM
 #-DNO_DEBUG 
