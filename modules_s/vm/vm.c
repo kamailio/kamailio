@@ -68,7 +68,7 @@ struct tm_binds _tmb;
 char* vm_db_url = "sql://ser:heslo@localhost/ser";    /* Database URL */
 char* email_column = "email_address";
 char* subscriber_table = "subscriber" ;
-char* user_column = "user_id";
+char* user_column = "username";
 #ifdef MULTI_DOMAIN
 char* domain_column = "domain";
 #endif

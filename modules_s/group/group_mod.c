@@ -74,7 +74,7 @@ static int hf_fixup(void** param, int param_no);
 char* db_url       = "sql://serro:47serro11@localhost/ser";
 
 char* table        = "grp";    /* Table name where group definitions are stored */
-char* user_col     = "user";
+char* user_col     = "username";
 char* domain_col   = "domain";
 char* grp_col      = "grp";
 int   use_domain   = 0;

@@ -41,7 +41,7 @@
  */
 
 extern char* db_url;          /* Database URL */
-extern char* username_column; /* 'username' column name */
+extern char* user_column;     /* 'username' column name */
 extern char* domain_column;   /* 'domain' column name */
 extern char* pass_column;     /* 'password' column name */
 extern char* pass_column_2;   /* Column containg HA1 string constructed

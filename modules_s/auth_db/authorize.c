@@ -54,7 +54,7 @@ static inline int get_ha1(str* _user, str* _domain, int use_ha1b, char* _table, 
 	db_res_t* res;
 	str result;
 
-	keys[0] = username_column;
+	keys[0] = user_column;
 	keys[1] = domain_column;
 	col[0] = (use_ha1b && !calc_ha1) ? (pass_column_2) : (pass_column);	
 

@@ -61,7 +61,7 @@ char* uri_user_col          = "username";   /* Name of username column in URI ta
 char* uri_domain_col        = "domain";     /* Name of domain column in URI table */
 char* uri_uriuser_col       = "uri_user";   /* Name of uri_user column in URI table */
 char* subscriber_table      = "subscriber"; /* Name of subscriber table */
-char* subscriber_user_col   = "user";       /* Name of user column in subscriber table */
+char* subscriber_user_col   = "username";   /* Name of user column in subscriber table */
 char* subscriber_domain_col = "domain";     /* Name of domain column in subscriber table */
 
 int use_uri_table = 0;     /* Should uri table be used */

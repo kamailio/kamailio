@@ -76,7 +76,7 @@ int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
  * Module parameter variables
  */
 char* db_url           = "sql://serro:47serro11@localhost/ser";
-char* username_column  = "username";
+char* user_column      = "username";
 char* domain_column    = "domain";
 char* pass_column      = "ha1";
 char* pass_column_2    = "ha1b";
@@ -100,11 +100,11 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"db_url", STR_PARAM, &db_url},
-	{"username_column",   STR_PARAM, &username_column},
-	{"domain_column",     STR_PARAM, &domain_column  },
-	{"password_column",   STR_PARAM, &pass_column    },
-	{"password_column_2", STR_PARAM, &pass_column_2  },
-	{"calculate_ha1",     INT_PARAM, &calc_ha1       },
+	{"user_column",       STR_PARAM, &user_column  },
+	{"domain_column",     STR_PARAM, &domain_column},
+	{"password_column",   STR_PARAM, &pass_column  },
+	{"password_column_2", STR_PARAM, &pass_column_2},
+	{"calculate_ha1",     INT_PARAM, &calc_ha1     },
 	{0, 0, 0}
 };
 
