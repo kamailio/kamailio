@@ -450,6 +450,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 		/* release previously hold message */
 		backup = T->inbound_response[branch];
 		T->inbound_response[branch] = clone;
+		T->tag=&(get_to(clone)->tag_value);
 	} else {
 		backup = NULL;
 		sip_msg_free( clone );

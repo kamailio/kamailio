@@ -15,7 +15,8 @@
 
 
 #define EQ_LEN(_hf) (t_msg->_hf->body.len==p_msg->_hf->body.len)
-#define EQ_STR(_hf) (memcmp(t_msg->_hf->body.s, p_msg->_hf->body.s, \
+#define EQ_STR(_hf) (memcmp(t_msg->_hf->body.s,\
+	translate_pointer(p_msg->orig,p_msg->buf,p_msg->_hf->body.s), \
 	p_msg->_hf->body.len)==0)
 #define EQ_REQ_URI_LEN\
 	(p_msg->first_line.u.request.uri.len==t_msg->first_line.u.request.uri.len)
@@ -115,15 +116,16 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
          if ( EQ_LEN(callid) && EQ_LEN(cseq) )
             if ( EQ_REQ_URI_LEN )
                 if ( EQ_VIA_LEN(via1) )
-                   if ( EQ_LEN(from) && EQ_LEN(to) )
-                     /* so far the lengths are the same -> let's check the contents */
+                   if ( EQ_LEN(from) && EQ_LEN(to)  )
+                     /* so far the lengths are the same
+                     -> let's check the contents */
                      if ( EQ_STR(callid) && EQ_STR(cseq) )
-                      if ( EQ_REQ_URI_STR )
-                          if ( EQ_VIA_STR(via1) )
-                             if ( EQ_STR(from) && EQ_STR(to) )
-                              { /* WE FOUND THE GOLDEN EGG !!!! */
-                                 goto found;
-                              }
+                        if ( EQ_REQ_URI_STR )
+                           if ( EQ_VIA_STR(via1) )
+                              if ( EQ_STR(from) && EQ_STR(to) )
+                               { /* WE FOUND THE GOLDEN EGG !!!! */
+                                  goto found;
+                               }
       }
       else
       { /* it's a ACK request*/
@@ -134,16 +136,16 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
                   if ( EQ_REQ_URI_LEN )
                      if (/*VIA1 len*/ EQ_VIA_LEN(via1) )
                        if ( /*from length*/ EQ_LEN(from) )
-                         //if ( /*to length*/ p_cell->inbound_request->to->body.len == p_msg->to->body.len )
-                            //if ( /*tag length*/ p_cell->tag &&  p_cell->tag->len==p_msg->tag->body.len )
+                         if (get_to(t_msg)->body.len==get_to(p_msg)->body.len)
+                            if (p_cell->tag->len==get_to(p_msg)->tag_value.len )
                             /* so far the lengths are the same -> let's check the contents */
                                 if ( /*callid*/ !memcmp( t_msg->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
                                    if ( /*cseq_nr*/ !memcmp( get_cseq(t_msg)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len ) )
                                       if (/*URI len*/ EQ_REQ_URI_STR )
                                          if (/*VIA1*/ EQ_VIA_STR(via1) )
                                             if ( /*from*/ EQ_STR(from) )
-                                            //if ( /*to*/ !memcmp( p_cell->inbound_request->to->body.s , p_msg->to->body.s , p_msg->to->body.len)  )
-                                              //if ( /*tag*/ !memcmp( p_cell->tag->s , p_msg->tag->body.s , p_msg->tag->body.len ) )
+                                               if (!memcmp(get_to(t_msg)->body.s,get_to(p_msg)->body.s,get_to(t_msg)->body.len))
+                                                 if (!memcmp(p_cell->tag->s,get_to(p_msg)->tag_value.s , p_cell->tag->len))
                                               { /* WE FOUND THE GOLDEN EGG !!!! */
                                                  goto found;
                                               }

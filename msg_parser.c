@@ -167,11 +167,11 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	*tmp=0;
 	fl->u.request.version.s=third;
 	fl->u.request.version.len=tmp-third;
-	
+
 	return nl;
 
 error:
-	LOG(L_INFO, "ERROR:parse_first_line: bad %s first line\n", 
+	LOG(L_INFO, "ERROR:parse_first_line: bad %s first line\n",
 		(fl->type==SIP_REPLY)?"reply(status)":"request");
 error1:
 	fl->type=SIP_INVALID;
@@ -192,6 +192,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 	char *match;
 	struct via_body *vb;
 	struct cseq_body* cseq_b;
+	struct to_body* to_b;
 
 	if ((*buf)=='\n' || (*buf)=='\r'){
 		/* double crlf or lflf or crcr */
@@ -246,6 +247,24 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 					hdr->name.s, cseq_b->number.s, cseq_b->method.s);
 			break;
 		case HDR_TO:
+			to_b=pkg_malloc(sizeof(struct to_body));
+			if (to_b==0){
+				LOG(L_ERR, "get_hdr_field: out of memory\n");
+				goto error;
+			}
+			memset(to_b, 0, sizeof(struct to_body));
+			hdr->body.s=tmp;
+			tmp=parse_to(tmp, end,to_b);
+			if (to_b->error==PARSE_ERROR){
+				LOG(L_ERR, "ERROR: get_hdr_field: bad to header\n");
+				pkg_free(to_b);
+				goto error;
+			}
+			hdr->parsed=to_b;
+			hdr->body.len=tmp-hdr->body.s;
+			DBG("get_hdr_field: to <%s>: <%s> %c [%d]\n",
+				hdr->name.s, to_b->body.s,*tmp,hdr->body.len);
+			break;
 		case HDR_FROM:
 		case HDR_CALLID:
 		case HDR_CONTACT:
@@ -256,7 +275,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			/* just skip over it */
 			hdr->body.s=tmp;
 			/* find end of header */
-			
+
 			/* find lf */
 			do{
 				match=q_memchr(tmp, '\n', end-tmp);
@@ -295,7 +314,7 @@ char* parse_hostport(char* buf, str* host, short int* port)
 {
 	char *tmp;
 	int err;
-	
+
 	host->s=buf;
 	for(tmp=buf;(*tmp)&&(*tmp!=':');tmp++);
 	host->len=tmp-buf;
@@ -334,7 +353,7 @@ char * parse_cseq(char *buf, char* end, struct cseq_body* cb)
 	*t=0; /*null terminate it*/
 	cb->number.len=t-cb->number.s;
 	DBG("parse_cseq: found number %s\n", cb->number.s);
-	
+
 	if (m_end>=end) goto error;
 	if (m_end==m){
 		/* null method*/
@@ -776,8 +795,19 @@ void free_via_list(struct via_body* vb)
 	}
 }
 
+void free_to(struct to_body* tb)
+{
+	struct to_param *tp=tb->param_lst;
+	struct to_param *foo;
+	while (tp){
+		foo = tp->next;
+		pkg_free(tp);
+		tp=foo;
+	}
+	pkg_free(tb);
+}
 
-/* frees a hdr_field structure, 
+/* frees a hdr_field structure,
  * WARNING: it frees only parsed (and not name.s, body.s)*/
 void clean_hdr_field(struct hdr_field* hf)
 {
@@ -785,6 +815,9 @@ void clean_hdr_field(struct hdr_field* hf)
 		switch(hf->type){
 			case HDR_VIA:
 				free_via_list(hf->parsed);
+				break;
+			case HDR_TO:
+				free_to(hf->parsed);
 				break;
 			case HDR_CSEQ:
 				pkg_free(hf->parsed);

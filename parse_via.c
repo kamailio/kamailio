@@ -1,4 +1,4 @@
-/* 
+/*
  * $Id$ 
  *
  * via parsing automaton
@@ -64,21 +64,21 @@ enum{	L_VALUE=200,   F_VALUE, P_VALUE, P_STRING,
 
 
 
-/* entry state must be F_PARAM, or saved_state=F_PARAM and 
+/* entry state must be F_PARAM, or saved_state=F_PARAM and
  * state=F_{LF,CR,CRLF}!
- * output state = L_PARAM or F_PARAM or END_OF_HEADER 
+ * output state = L_PARAM or F_PARAM or END_OF_HEADER
  * (and saved_state= last state); everything else => error */
-__inline char* parse_via_param(	char* p, char* end, int* pstate, 
+__inline char* parse_via_param(	char* p, char* end, int* pstate,
 								int* psaved_state, struct via_param* param)
 {
 	char* tmp;
 	register int state;
 	int saved_state;
-	
+
 	state=*pstate;
 	saved_state=*psaved_state;
 	param->type=PARAM_ERROR;
-	
+
 	for (tmp=p;tmp<end;tmp++){
 		switch(*tmp){
 			case ' ':
@@ -253,7 +253,7 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 						goto endofparam;
 				}
 				break;
-				
+
 				/* param names */
 			case 'h':
 			case 'H':
@@ -618,7 +618,7 @@ find_value:
 					case P_STRING:
 						saved_state=state;
 						state=F_LF;
-						break; 
+						break;
 					case P_VALUE:
 						*tmp=0;
 						saved_state=L_PARAM;
@@ -645,7 +645,7 @@ find_value:
 					case P_STRING:
 						saved_state=state;
 						state=F_CR;
-						break; 
+						break;
 					case P_VALUE:
 						*tmp=0;
 						param->value.len=tmp-param->value.s;
@@ -775,17 +775,17 @@ endofvalue:
 	param->size=tmp-p;
 	*pstate=state;
 	*psaved_state=saved_state;
-	DBG("Found param type %d, <%s> = <%s>; state=%d\n", param->type, 
+	DBG("Found param type %d, <%s> = <%s>; state=%d\n", param->type,
 			param->name.s, param->value.s, state);
 	return tmp;
-	
+
 end_via:
 	/* if we are here we found an "unexpected" end of via
 	 *  (cr/lf). This is valid only if the param type is GEN_PARAM*/
 	if (param->type==GEN_PARAM) goto endofparam;
 	*pstate=state;
 	*psaved_state=saved_state;
-	DBG("Error on  param type %d, <%s>, state=%d, saved_state=%d\n", 
+	DBG("Error on  param type %d, <%s>, state=%d, saved_state=%d\n",
 		param->type, param->name.s, state, saved_state);
 
 error:
@@ -1587,7 +1587,7 @@ main_via:
 						memset(param,0, sizeof(struct via_param));
 						tmp=parse_via_param(tmp, end, &state, &saved_state,
 											param);
-						
+
 						switch(state){
 							case L_PARAM:
 							case F_PARAM:
@@ -1655,9 +1655,9 @@ main_via:
 							*tmp, state);
 						goto error;
 				}
-				
-					
-		}			
+
+
+		}
 	}
 
 	DBG("end of packet reached, state=%d\n", state);
@@ -1684,7 +1684,7 @@ endofpacket:
 					" state %d\n", state);
 			goto error;
 	}
-	
+
 
 	/*
 	if (proto) printf("<SIP/2.0/%s>\n", proto);
@@ -1695,7 +1695,7 @@ endofpacket:
 	if(next_via) printf("next_via= <%s>\n", next_via);
 	*/
 	/*DBG("parse_via: rest=<%s>\n", tmp);*/
-	
+
 	vb->error=VIA_PARSE_OK;
 	vb->bsize=tmp-buffer;
 	if (vb->port_str.s){

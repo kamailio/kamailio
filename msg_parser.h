@@ -44,8 +44,13 @@ enum{
 		PARAM_ERROR
 };
 
+enum{
+		TAG_PARAM=400, GENERAL_PARAM
+};
+
 /* casting macro for accessing CSEQ body */
-#define get_cseq( p_msg)    ((struct cseq_body*)(p_msg)->cseq->parsed)
+#define get_cseq( p_msg)  ((struct cseq_body*)(p_msg)->cseq->parsed)
+#define get_to( p_msg)      ((struct to_body*)(p_msg)->to->parsed)
 
 
 
@@ -127,13 +132,27 @@ struct via_body{  /* format: name/version/transport host:port;params comment */
 	struct via_param* last_param; /*last via parameter, internal use*/
 	/* shortcuts to "important" params*/
 	struct via_param* branch;
-	
+
 	struct via_body* next; /* pointer to next via body string if
-							  compact via or null */
+         compact via or null */
 };
 
 
 
+struct to_param{
+	int type;
+	str name;
+	str value;
+	struct to_param* next;
+};
+
+struct to_body{
+	int error;
+	str body;
+	str tag_value;
+	struct to_param *param_lst;
+	struct to_param *last_param;
+};
 
 
 struct cseq_body{
@@ -165,7 +184,6 @@ struct sip_msg{
 	struct hdr_field* route;
 	struct hdr_field* record_route;
 	char* eoh; /* pointer to the end of header (if found) or null */
-
 	char* unparsed; /* here we stopped parsing*/
 
 	unsigned int src_ip;
@@ -216,6 +234,7 @@ void free_uri(struct sip_uri* u);
 
 char* parse_hname(char* buf, char* end, struct hdr_field* hdr);
 char* parse_via(char* buffer, char* end, struct via_body *vb);
+char* parse_to(char* buffer, char* end, struct to_body *to_b);
 char* parse_cseq(char* buffer, char* end, struct cseq_body *cb);
 
 void free_via_param_list(struct via_param *vp);

@@ -170,6 +170,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	goto error;
    new_cell->relaied_reply_branch   = -1;
    new_cell->T_canceled = T_UNDEFINED;
+   new_cell->tag=&(get_to(new_cell->inbound_request)->tag_value);
 #ifndef USE_SYNONIM
    src[0]= p_msg->from->body;
    src[1]= p_msg->to->body;
