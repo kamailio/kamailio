@@ -133,11 +133,11 @@ int get_user_script(str *user, str *script, const char* key)
 		}
 	}
 
-	cpl_dbf.free_query( db_hdl, res);
+	cpl_dbf.free_result( db_hdl, res);
 	return 1;
 error:
 	if (res)
-		cpl_dbf.free_query( db_hdl, res);
+		cpl_dbf.free_result( db_hdl, res);
 	script->s = 0;
 	script->len = 0;
 	return -1;

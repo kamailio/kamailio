@@ -286,7 +286,7 @@ int pa_location_init(void)
 			row_vals[room_col].nul);
 	       }
 	  }
-	  pa_dbf.free_query(pa_db, res);
+	  pa_dbf.free_result(pa_db, res);
 	  if (use_bsearch)
 	       qsort(location_placeid_table, location_placeid_n_rows,
 		     sizeof(struct location_placeid_row),

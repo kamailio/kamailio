@@ -325,12 +325,12 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 		}
 
 		if (RES_ROW_N(res) == 0) {
-			perm_dbf.free_query(db_handle, res);
+			perm_dbf.free_result(db_handle, res);
 			return -1;
 		}
 		
 		result = match_res(_msg, res);
-		perm_dbf.free_query(db_handle, res);
+		perm_dbf.free_result(db_handle, res);
 		return result;
 	} else if (db_mode == ENABLE_CACHE) {
 		return match_hash_table(*hash_table, _msg);
@@ -397,7 +397,7 @@ int reload_trusted_table(void)
 					       (char *)VAL_STRING(val + 2)) == -1) {
 				LOG(L_ERR, "ERROR: permissions: "
 						"trusted_reload(): Hash table problem\n");
-				perm_dbf.free_query(db_handle, res);
+				perm_dbf.free_result(db_handle, res);
 				perm_dbf.close(db_handle);
 				return -1;
 			}
@@ -406,13 +406,13 @@ int reload_trusted_table(void)
 		} else {
 			LOG(L_ERR, "ERROR: permissions: trusted_reload():"
 					" Database problem\n");
-			perm_dbf.free_query(db_handle, res);
+			perm_dbf.free_result(db_handle, res);
 			perm_dbf.close(db_handle);
 			return -1;
 		}
 	}
 
-	perm_dbf.free_query(db_handle, res);
+	perm_dbf.free_result(db_handle, res);
 
 	*hash_table = new_hash_table;
 

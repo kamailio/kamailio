@@ -325,7 +325,7 @@ static int mod_init(void)
 		
 
 		/* free up the space allocated for response */
-		if(pdt_dbf.free_query(db_con, db_res)<0)
+		if(pdt_dbf.free_result(db_con, db_res)<0)
 		{
 			LOG(L_ERR, "PDT: mod_init: error when freeing"
 				" up the response space\n");

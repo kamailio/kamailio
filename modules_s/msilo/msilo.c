@@ -779,7 +779,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 				str_vals[0]/*from*/) < 0)
 		{
 			DBG("MSILO:m_dump: headers bulding failed!!!\n");
-			if (msilo_dbf.free_query(db_con, db_res) < 0)
+			if (msilo_dbf.free_result(db_con, db_res) < 0)
 				DBG("MSILO:m_dump: Error while freeing result of"
 					" query\n");
 			msg_list_set_flag(ml, mid, MS_MSG_ERRO);
@@ -815,7 +815,7 @@ done:
 	 * Free the result because we don't need it
 	 * anymore
 	 */
-	if (db_res!=NULL && msilo_dbf.free_query(db_con, db_res) < 0)
+	if (db_res!=NULL && msilo_dbf.free_result(db_con, db_res) < 0)
 		DBG("MSILO:m_dump: Error while freeing result of query\n");
 
 	return 1;

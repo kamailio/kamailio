@@ -192,12 +192,12 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 	if (RES_ROW_N(res) == 0) {
 		DBG("is_user_in(): User is not in group '%.*s'\n", 
 		    ((str*)_grp)->len, ZSW(((str*)_grp)->s));
-		group_dbf.free_query(db_handle, res);
+		group_dbf.free_result(db_handle, res);
 		return -6;
 	} else {
 		DBG("is_user_in(): User is in group '%.*s'\n", 
 		    ((str*)_grp)->len, ZSW(((str*)_grp)->s));
-		group_dbf.free_query(db_handle, res);
+		group_dbf.free_result(db_handle, res);
 		return 1;
 	}
 }

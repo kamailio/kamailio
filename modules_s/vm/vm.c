@@ -332,7 +332,7 @@ static int vm_get_user_info( str* user,   /*[in]*/
 	}
 
 	if(email_res)
-		vm_dbf.free_query(db_handle, email_res);
+		vm_dbf.free_result(db_handle, email_res);
 
 	return 0;
 error:

@@ -93,7 +93,7 @@ static inline int get_ha1(struct username* _username, str* _domain, char* _table
 	if (RES_ROW_N(res) == 0) {
 		DBG("get_ha1(): no result for user \'%.*s@%.*s\'\n", 
 		    _username->user.len, ZSW(_username->user.s), (use_domain ? (_domain->len) : 0), ZSW(_domain->s));
-		auth_dbf.free_query(db_handle, res);
+		auth_dbf.free_result(db_handle, res);
 		return 1;
 	}
 
@@ -116,7 +116,7 @@ static inline int get_ha1(struct username* _username, str* _domain, char* _table
 		memcpy(_rpid->s, result.s, _rpid->len);
 	}
 
-	auth_dbf.free_query(db_handle, res);
+	auth_dbf.free_result(db_handle, res);
 	return 0;
 }
 

@@ -492,7 +492,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 		/** wait for a while - the worker is tired */
 		//sleep(3);
 		
-		if ((res != NULL) && (dbf->free_query(db_con,res) < 0))
+		if ((res != NULL) && (dbf->free_result(db_con,res) < 0))
 		{
 			DBG("XJAB:xj_worker:%d:Error while freeing"
 				" SQL result - worker terminated\n", _xj_pid);
@@ -610,7 +610,7 @@ step_v: // error connecting to Jabber server
 		xj_wlist_del(jwl, jsmsg->jkey, _xj_pid);
 
 		// cleaning db_query
-		if ((res != NULL) && (dbf->free_query(db_con,res) < 0))
+		if ((res != NULL) && (dbf->free_result(db_con,res) < 0))
 		{
 			DBG("XJAB:xj_worker:%d:Error while freeing"
 				" SQL result - worker terminated\n", _xj_pid);

@@ -201,7 +201,7 @@ int new_presentity(struct pdomain *pdomain, str* _uri, presentity_t** _p)
 			 return -1;
 		    }
 	       }
-	       pa_dbf.free_query(pa_db, res);
+	       pa_dbf.free_result(pa_db, res);
 	  }
      }
 
@@ -945,7 +945,7 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 			 presentity->presid = presid;
 		    }
 	       }
-	       pa_dbf.free_query(pa_db, res);
+	       pa_dbf.free_result(pa_db, res);
 	  }
 	  
 	  { 

@@ -247,7 +247,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 
 	if (RES_ROW_N(res) == 0) {
 		DBG("preload_udomain(): Table is empty\n");
-		ul_dbf.free_query(_c, res);
+		ul_dbf.free_result(_c, res);
 		return 0;
 	}
 
@@ -307,7 +307,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		if (get_urecord(_d, &user, &r) > 0) {
 			if (mem_insert_urecord(_d, &user, &r) < 0) {
 				LOG(L_ERR, "preload_udomain(): Can't create a record\n");
-				ul_dbf.free_query(_c, res);
+				ul_dbf.free_result(_c, res);
 				unlock_udomain(_d);
 				return -2;
 			}
@@ -315,7 +315,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		
 		if (mem_insert_ucontact(r, &contact, expires, q, &callid, cseq, flags, rep, &c, &ua) < 0) {
 			LOG(L_ERR, "preload_udomain(): Error while inserting contact\n");
-			ul_dbf.free_query(_c, res);
+			ul_dbf.free_result(_c, res);
 			unlock_udomain(_d);
 			return -3;
 		}
@@ -331,7 +331,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			c->state = CS_SYNC;
 	}
 
-	ul_dbf.free_query(_c, res);
+	ul_dbf.free_result(_c, res);
 	unlock_udomain(_d);
 	return 0;
 }
