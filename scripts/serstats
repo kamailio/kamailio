@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh  
 #
 # examples for gaining some interesting values from SIP DB
 #
@@ -14,8 +14,17 @@ DBHOST=localhost
 usage() {
 COMMAND=`basename $0`
 cat <<EOF
-usage: $COMMAND logged_cnt
-       $COMMAND natted_cnt
+usage: $COMMAND logged_cnt       # number of logged-in users
+       $COMMAND natted_cnt       # number of natted users
+       $COMMAND contact_cnt      # number of registered contacts
+	   $COMMAND calls_lh		 # number of calls in last hour
+	   $COMMAND calls_cnt		 # number of calls 
+	   $COMMAND subs_1d			 # new subscribers in last day
+	   $COMMAND subs_cnt		 # number of subscriber
+	   $COMMAND minutes_cnt		 # number of minutes
+	   $COMMAND minutes_1d 		 # number of minutes in last days
+	   $COMMAND top_calls [dst] [ago]	 # longest calls
+	   $COMMAND top_callers [dst] [ago]  # most active callers
 
 EOF
 } #usage
@@ -34,7 +43,83 @@ case $1 in
 		query "select count(distinct username,domain) from location 
 			where flags>0;"
 		;;
+	contact_cnt)
+		query "select count(*) from location;"
+		;;
+	calls_lh)
+		query "select count(*) from acc where sip_method='INVITE' and 
+			sip_status='200' and
+			(DATE_SUB(CURDATE(), INTERVAL 1 hour) <= timestamp);"
+		;;
+	calls_cnt)
+		query "select count(*) from acc where sip_method='INVITE' 
+			and sip_status='200';"
+		;;
+	subs_1d)
+		query "select count(*) from subscriber where 
+	             (DATE_SUB(CURDATE(), INTERVAL 1 day) <= datetime_created);"
+		;;
+	subs_cnt)
+		query "select count(*) from subscriber;"
+		;;
+	minutes_cnt)
+		query "select sum(unix_timestamp(t2.time)-unix_timestamp(t1.time))/60 
+			as length from acc t1, acc t2 
+			where t1.sip_method='INVITE' and t1.sip_status='200' 
+			and t2.sip_method='BYE' and t1.sip_callid=t2.sip_callid  
+			and ((t1.totag=t2.totag and t1.fromtag=t2.fromtag) 
+			or (t1.totag=t2.fromtag and t1.fromtag=t2.totag));"
+		;;
+	minutes_1d)
+		query "select 
+			sum(unix_timestamp(t2.time)-unix_timestamp(t1.time))/60 as length 
+			from acc t1, acc t2 
+			where t1.sip_method='INVITE' and t1.sip_status='200' 
+			and (DATE_SUB(CURDATE(), INTERVAL 1 hour) <= t1.timestamp) 
+			and t2.sip_method='BYE' and t1.sip_callid=t2.sip_callid  
+			and ((t1.totag=t2.totag and t1.fromtag=t2.fromtag) 
+			or (t1.totag=t2.fromtag and t1.fromtag=t2.totag));"
+		;;
+	top_calls)
+		if [ -n "$2" ] ; then
+			LIKE="and t1.i_uri like '%$2%'"
+		fi
+		if [ -n "$3" ] ; then
+			AGO="and (DATE_SUB(CURDATE(), INTERVAL $3 day) <= t1.timestamp)"
+		fi
+		query "select t1.time,
+		    ((unix_timestamp(t2.time)-unix_timestamp(t1.time))/60) as min,
+			t1.username, t1.domain, t1.i_uri
+			from acc t1, acc t2 
+			where t1.sip_method='INVITE' and t1.sip_status='200' 
+			and t2.sip_method='BYE' and t1.sip_callid=t2.sip_callid  
+			and ((t1.totag=t2.totag and t1.fromtag=t2.fromtag) 
+			or (t1.totag=t2.fromtag and t1.fromtag=t2.totag))
+			$LIKE
+			$AGO
+			ORDER by min desc limit 20;"
+		;;
+	top_callers)
+		if [ -n "$2" ] ; then
+			LIKE="and t1.i_uri like '%$2%'"
+		fi
+		if [ -n "$3" ] ; then
+			AGO="and (DATE_SUB(CURDATE(), INTERVAL $3 day) <= t1.timestamp)"
+		fi
+		query "select 
+		    sum((unix_timestamp(t2.time)-unix_timestamp(t1.time))/60) as min,
+			t1.username, t1.domain
+			from acc t1, acc t2 
+			where t1.sip_method='INVITE' and t1.sip_status='200' 
+			and t2.sip_method='BYE' and t1.sip_callid=t2.sip_callid  
+			and ((t1.totag=t2.totag and t1.fromtag=t2.fromtag) 
+			or (t1.totag=t2.fromtag and t1.fromtag=t2.totag))
+			$LIKE
+			$AGO
+			GROUP by t1.username,t1.domain
+			ORDER by min desc limit 20;"
 
+		;;
 	*)
 		usage
 		exit 1
