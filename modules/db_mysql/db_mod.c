@@ -19,14 +19,14 @@ static int mod_init(void);
 struct module_exports exports = {	
 	"mysql",
 	(char*[]) {
-		"db_use_table",
-		"db_init",
-		"db_close",
-		"db_query",
-		"db_free_query",
-		"db_insert",
-		"db_delete",
-		"db_update"
+		"~db_use_table",
+		"~db_init",
+		"~db_close",
+		"~db_query",
+		"~db_free_query",
+		"~db_insert",
+		"~db_delete",
+		"~db_update"
 	},
 	(cmd_function[]) {
 		(cmd_function)use_table,

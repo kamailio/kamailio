@@ -9,7 +9,7 @@
 #include <mysql/mysql.h>
 #include "../../dprint.h"
 #include "../../mem/mem.h"
-
+#include "con_mysql.h"
 
 int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 {

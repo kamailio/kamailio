@@ -10,6 +10,7 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include <mysql/mysql.h>
+#include "con_mysql.h"
 
 
 static inline int get_columns(db_con_t* _h, db_res_t* _r)

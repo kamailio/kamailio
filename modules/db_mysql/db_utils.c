@@ -4,12 +4,13 @@
  * MySQL module useful functions
  */
 
+#define _GNU_SOURCE /* To avoid strptime warning */
+
 #include "db_utils.h"
 #include <string.h>
 #include "utils.h"
 #include "defs.h"
 
-#define _XOPEN_SOURCE
 #include <time.h>
 
 
