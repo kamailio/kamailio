@@ -51,7 +51,7 @@ struct mime_type {
 #define SUBTYPE_PLAIN        1
 #define SUBTYPE_CPIM         2
 #define SUBTYPE_SDP          3
-#define SUBTYPE_CPL          4
+#define SUBTYPE_CPLXML       4
 #define SUBTYPE_ALL          0xfe
 #define SUBTYPE_UNKNOWN      0xff
 
