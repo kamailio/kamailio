@@ -73,9 +73,9 @@ static int single_fixup(void** param, int param_no);
 
 
 int allow_routing_0(struct sip_msg* msg, char* str1, char* str2);
-int allow_routing_1(struct sip_msg* msg, char* file, char* str2);
+int allow_routing_1(struct sip_msg* msg, char* basename, char* str2);
 int allow_routing_2(struct sip_msg* msg, char* allow_file, char* deny_file);
-int allow_register_1(struct sip_msg* msg, char* file, char* s);
+int allow_register_1(struct sip_msg* msg, char* basename, char* s);
 int allow_register_2(struct sip_msg* msg, char* allow_file, char* deny_file);
 
 /* Exported functions */
@@ -537,9 +537,9 @@ int allow_routing_0(struct sip_msg* msg, char* str1, char* str2)
 }
 
 
-int allow_routing_1(struct sip_msg* msg, char* file, char* s)
+int allow_routing_1(struct sip_msg* msg, char* basename, char* s)
 {
-	return check_routing(msg, (int)file);
+	return check_routing(msg, (int)basename);
 }
 
 
@@ -641,9 +641,9 @@ static int check_register(struct sip_msg* msg, int idx)
 }
 
 
-int allow_register_1(struct sip_msg* msg, char* file, char* s)
+int allow_register_1(struct sip_msg* msg, char* basename, char* s)
 {
-	return check_register(msg, (int)file);
+	return check_register(msg, (int)basename);
 }
 
 
