@@ -164,7 +164,32 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 </programlisting>
 	    </example>
 	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">force_rtp_proxy(ip_address)</function>
+	    </title>
+	    <para>
+		Rewrites &sdp; body with given IP address to ensure that media is passed through an
+		&rtp; proxy.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>ip_address</emphasis> - new SDP IP address.
+		    </para>
+		</listitem>
+	    </itemizedlist>
 
+	    <example>
+		<title><function>force_rtp_proxy</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("1.2.3.4");};
+...
+</programlisting>
+	    </example>
+	</section>
 	<section>
 		<title>
 			<function>nat_uac_test(mode)</function>

@@ -49,6 +49,8 @@
  *		  proxied and ignores sessions with such flag.
  *		o Added run-time check for version of command protocol
  *		  supported by the RTP proxy.
+ * 2004-01-16   Integrated slightly modified patch from Tristan Colgate,
+ *              force_rtp_proxy function with IP as a parameter (janakj)
  */
 
 #include "nhelpr_funcs.h"
@@ -112,6 +114,7 @@ static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
 static char *send_rtpp_command(const struct iovec *, int, int);
 static int unforce_rtp_proxy_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy_f(struct sip_msg *, char *, char *);
+static int force_rtp_proxy_from_f(struct sip_msg *, char *, char *);
 
 static void timer(unsigned int, void *);
 inline static int fixup_str2int(void**, int);
@@ -135,11 +138,12 @@ static int rtpproxy_disable = 0;
 static regex_t* key_m1918;
 
 static cmd_export_t cmds[]={
-	{"fix_nated_contact", fix_nated_contact_f, 0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"fix_nated_sdp",     fix_nated_sdp_f,     1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"unforce_rtp_proxy", unforce_rtp_proxy_f, 0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"force_rtp_proxy",   force_rtp_proxy_f,   0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"nat_uac_test",      nat_uac_test_f,      1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
+	{"fix_nated_contact", fix_nated_contact_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"fix_nated_sdp",     fix_nated_sdp_f,        1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"unforce_rtp_proxy", unforce_rtp_proxy_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"force_rtp_proxy",   force_rtp_proxy_f,      0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"force_rtp_proxy",   force_rtp_proxy_from_f, 1, 0,             REQUEST_ROUTE | ONREPLY_ROUTE }, 
+	{"nat_uac_test",      nat_uac_test_f,         1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 	{0, 0, 0, 0, 0}
 };
 
@@ -804,9 +808,9 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 }
 
 static int
-force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
+do_force_rtp_proxy(struct sip_msg* msg, str* newip)
 {
-	str body, body1, oldport, oldip, oldip1, newport, newip;
+	str body, body1, oldport, oldip, oldip1, newport, tmpip;
 	str callid, from_tag, to_tag;
 	int create, port, len;
 	char buf[16];
@@ -820,6 +824,7 @@ force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 		    "is disabled\n");
 		return -1;
 	}
+
 	if (msg->first_line.type == SIP_REQUEST &&
 	    msg->first_line.u.request.method_value == METHOD_INVITE) {
 		create = 1;
@@ -873,12 +878,12 @@ force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 		    "from the message\n");
 		return -1;
 	}
-	newip.s = ip_addr2a(&msg->rcv.src_ip);
-	newip.len = strlen(newip.s);
+	tmpip.s = ip_addr2a(&msg->rcv.src_ip);
+	tmpip.len = strlen(tmpip.s);
 	if (create == 0)
 		v[0].iov_base = "L";
 	STR2IOVEC(callid, v[2]);
-	STR2IOVEC(newip, v[4]);
+	STR2IOVEC(tmpip, v[4]);
 	STR2IOVEC(oldport, v[6]);
 	STR2IOVEC(from_tag, v[8]);
 	STR2IOVEC(to_tag, v[10]);
@@ -891,13 +896,11 @@ force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 
 	newport.s = buf;
 	newport.len = sprintf(buf, "%d", port);
-	newip.s = ip_addr2a(&msg->rcv.dst_ip);
-	newip.len = strlen(newip.s);
 
-	if (alter_mediaip(msg, &body, &oldip, &newip, 0) == -1)
+	if (alter_mediaip(msg, &body, &oldip, newip, 0) == -1)
 		return -1;
 	if (oldip1.len > 0 &&
-	    alter_mediaip(msg, &body1, &oldip1, &newip, 0) == -1)
+	    alter_mediaip(msg, &body1, &oldip1, newip, 0) == -1)
 		return -1;
 	if (alter_mediaport(msg, &body, &oldport, &newport, 0) == -1)
 		return -1;
@@ -916,6 +919,25 @@ force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 
 	return 1;
 }
+
+static int
+force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
+{
+	str newip;
+	newip.s = ip_addr2a(&msg->rcv.dst_ip);
+	newip.len = strlen(newip.s);
+	return do_force_rtp_proxy(msg, &newip);
+}
+
+static int
+force_rtp_proxy_from_f(struct sip_msg* msg, char* ip, char* str2)
+{
+	str newip;
+	newip.s = ip;
+	newip.len = strlen(newip.s);	
+	return do_force_rtp_proxy(msg, &newip);
+}
+
 
 static void
 timer(unsigned int ticks, void *param)
