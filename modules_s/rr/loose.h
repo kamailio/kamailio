@@ -1,7 +1,7 @@
-/* 
- * Route & Record-Route module, helper functions
+/*
+ * Route & Record-Route module, loose routing support
  *
- * $Id$ 
+ * $Id$
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -27,23 +27,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "utils.h"
+
+#ifndef LOOSE_H
+#define LOOSE_H
+
+#include "../../parser/msg_parser.h"
 
 
 /*
- * Find a character occurence that is not quoted
+ * Do loose routing as defined in RFC3621
  */
-char* find_not_quoted(str* _s, char _c)
-{
-	int quoted = 0, i;
-	
-	for(i = 0; i < _s->len; i++) {
-		if (!quoted) {
-			if (_s->s[i] == '\"') quoted = 1;
-			else if (_s->s[i] == _c) return _s->s + i;
-		} else {
-			if ((_s->s[i] == '\"') && (_s->s[i - 1] != '\\')) quoted = 0;
-		}
-	}
-	return 0;
-}
+int loose_route(struct sip_msg* _m, char* _s1, char* _s2);
+
+
+#endif /* LOOSE_H */

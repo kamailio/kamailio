@@ -1,4 +1,6 @@
 /* 
+ * Route & Record-Route module, helper functions
+ *
  * $Id$ 
  *
  * Copyright (C) 2001-2003 Fhg Fokus
@@ -29,69 +31,11 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "../../parser/msg_parser.h"
-
-#define PARANOID
-
-
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
-#define SUCCESS 1
-#define FAILURE 0
+#include "../../str.h"
 
 /*
- * Remove any leading white chars
+ * Find a character occurence that is not quoted
  */
-char* trim_leading(char* _s);
-
-/*
- * Remove any trailing white chars
- */
-char* trim_trailing(char* _s);
-
-/*
- * Remove all leading and trailing white chars
- */
-char* trim(char* _s);
-
-
-
-/*
- * Substitute \r or \n with spaces
- */
-struct hdr_field* remove_crlf(struct hdr_field* _hf);
-
-/*
- * Convert string to lower case
- */
-char* strlower(char* _s, int len);
-
-/*
- * Convert string to upper case
- */
-char* strupper(char* _s, int len);
-
-/*
- * Find a character that is not quoted
- */
-char* find_not_quoted(char* _b, char c);
-
-/*
- * Skip the name part of a URL if any
- */
-char* eat_name(char* _b);
-
-
-/*
- * Converts binary array into its hex representation
- * Size of _hex must be _blen * 2
- */
-void bin2hex(unsigned char* _hex, unsigned char* _bin, int _blen);
+char* find_not_quoted(str* _s, char _c);
 
 #endif

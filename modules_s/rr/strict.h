@@ -1,5 +1,5 @@
 /*
- * Route & Record-Route module
+ * Route & Record-Route module, strict routing support
  *
  * $Id$
  *
@@ -28,51 +28,15 @@
  */
 
 
-#ifndef __RR_H__
-#define __RR_H__
+#ifndef STRICT_H
+#define STRICT_H
 
 #include "../../parser/msg_parser.h"
-#include "../../str.h"
 
 /*
- * Finds Route header field in a SIP message
+ * Do strict routing as defined in RFC2584
  */
-int findRouteHF(struct sip_msg* _m);
+int strict_route(struct sip_msg* _m, char* _s1, char* _s2);
 
 
-/*
- * Gets the first URI from the first Route
- * header field in a message
- */
-int parseRouteHF(struct sip_msg* _m, str* _s, char** _next);
-
-
-/*
- * Rewrites Request URI from Route HF
- */
-int rewriteReqURI(struct sip_msg* _m, str* _s);
-
-
-/*
- * Removes the first URI from the first Route header
- * field, if there is only one URI in the Route header
- * field, remove the whole header field
- */
-int remFirstRoute(struct sip_msg* _m, char* _next);
-
-
-/*
- * Builds Record-Route line
- */
-int buildRRLine(struct sip_msg* _m, str* _l);
-
-
-/*
- * Add a new Record-Route line in SIP message
- */
-int addRRLine(struct sip_msg* _m, str* _l);
-
-
-
-
-#endif
+#endif /* STRICT_H */

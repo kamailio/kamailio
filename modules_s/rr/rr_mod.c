@@ -30,131 +30,96 @@
 
 #include "../../sr_module.h"
 #include <stdio.h>
-#include "utils.h"
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "rr.h"
-
-#define MAX_RR_LEN 80
+#include "../../ut.h"
+#include <stdlib.h>
+#include "../../error.h"
+#include "strict.h"
+#include "loose.h"
+#include "common.h"
 
 static int mod_init(void);
+static int child_init(int rank);
+static int int_fixup(void** param, int param_no);
 
-/*
- * Rewrites request URI from Route HF if any
- */
-static int rewriteFromRoute(struct sip_msg* _m, char* _s1, char* _s2);
 
-/*
- * Adds a Record Route entry for this proxy
- */
-static int addRecordRoute(struct sip_msg* _m, char* _s1, char* _s2);
-
-#ifdef STATIC_RR
-struct module_exports rr_exports = {
-#else
-struct module_exports exports= {
-#endif
+struct module_exports exports = {
 	"rr",
 	(char*[]) {
-		"rewriteFromRoute",
-		"addRecordRoute"
+		"loose_route",
+		"strict_route",
+		"record_route"
 	},
 	(cmd_function[]) {
-		rewriteFromRoute,
-		addRecordRoute
+		loose_route,
+		strict_route,
+		record_route
 	},
 	(int[]) {
 		0,
-		0
+		0,
+		1
 	},
 	(fixup_function[]) {
 		0,
-		0
+		0,
+		int_fixup
 	},
-	2, /* number of functions*/
+	3, /* number of functions*/
 
-	NULL,   /* Module parameter names */
-	NULL,   /* Module parameter types */
-	NULL,   /* Module parameter variable pointers */
+	0,   /* Module parameter names */
+	0,   /* Module parameter types */
+	0,   /* Module parameter variable pointers */
 	0,      /* Number of module paramers */
 
-	mod_init, /* initialize module */
-	0,        /* response function*/
-	0,        /* destroy function */
-	0,        /* oncancel function */
-	0         /* per-child init function */
+	mod_init,  /* initialize module */
+	0,         /* response function*/
+	0,         /* destroy function */
+	0,         /* oncancel function */
+	child_init /* per-child init function */
 };
 
 
 static int mod_init(void)
 {
-	fprintf(stderr, "rr - initializing\n");
+	fprintf(stderr, "Record Route - initializing\n");
 	return 0;
 }
 
 
-/*
- * Rewrites request URI from Route HF if any
- */
-
-static int rewriteFromRoute(struct sip_msg* _m, char* _s1, char* _s2)
+static int child_init(int rank)
 {
-	str first_uri;
-	char* next_uri;
-#ifdef PARANOID
-	if (!_m) {
-		LOG(L_ERR, "rewriteFromRoute(): Invalid parameter _m\n");
-		return -2;
+	     /* Different children may be listening on
+	      * different IPs or ports and therefore we
+	      * must generate hash in every child
+	      */
+	generate_hash();
+
+	if (generate_rr_suffix()) {
+		LOG(L_ERR, "child_init: Error while generating RR suffix\n");
+		return -1;
 	}
-#endif
-	if (findRouteHF(_m) != FALSE) {
-		if (parseRouteHF(_m, &first_uri, &next_uri) == FALSE) {
-			LOG(L_ERR, "rewriteFromRoute(): Error while parsing Route HF\n");
-			return -1;
-		}
-		if (rewriteReqURI(_m, &first_uri) == FALSE) {
-			LOG(L_ERR, "rewriteFromRoute(): Error while rewriting request URI\n");
-			return -1;
-		}
-		if (remFirstRoute(_m, next_uri) == FALSE) {
-			LOG(L_ERR, "rewriteFromRoute(): Error while removing the first Route URI\n");
-			return -1;
-		}
-		return 1;
-	}
-	DBG("rewriteFromRoute(): There is no Route HF\n");
-	return -1;
+
+	return 0;
 }
 
 
-/*
- * Adds a Record Route entry for this proxy
- */
-static int addRecordRoute(struct sip_msg* _m, char* _s1, char* _s2)
+static int int_fixup(void** param, int param_no)
 {
-	str b;
-#ifdef PARANOID
-	if (!_m) {
-		LOG(L_ERR, "addRecordRoute(): Invalid parameter _m\n");
-		return -2;
-	}
-#endif
-	b.s = (char*)pkg_malloc(MAX_RR_LEN);
-	if (!b.s) {
-		LOG(L_ERR, "addRecordRoute(): No memory left\n");
-		return -1;
+	unsigned int qop;
+	int err;
+	
+	if (param_no == 1) {
+		qop = str2s(*param, strlen(*param), &err);
+
+		if (err == 0) {
+			free(*param);
+			*param=(void*)qop;
+		} else {
+			LOG(L_ERR, "int_fixup(): Bad number <%s>\n",
+			    (char*)(*param));
+			return E_UNSPEC;
+		}
 	}
 
-	if (buildRRLine(_m, &b) == FALSE) {
-		LOG(L_ERR, "addRecordRoute(): Error while building Record-Route line\n");
-		pkg_free(b.s);
-		return -1;
-	}
-
-	if (addRRLine(_m, &b) == FALSE) {
-		LOG(L_ERR, "addRecordRoute(): Error while adding Record-Route line\n");
-		pkg_free(b.s);
-		return -1;
-	}
-	return 1;
+	return 0;
 }

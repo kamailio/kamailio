@@ -1,7 +1,7 @@
-/* 
- * Route & Record-Route module, helper functions
+/*
+ * Route & Record-Route module, strict routing support
  *
- * $Id$ 
+ * $Id$
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -27,23 +27,35 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "utils.h"
 
+#include "strict.h"
+#include "common.h"
+#include "../../dprint.h"
 
 /*
- * Find a character occurence that is not quoted
+ * Do strict routing as defined in RFC2584
  */
-char* find_not_quoted(str* _s, char _c)
+int strict_route(struct sip_msg* _m, char* _s1, char* _s2)
 {
-	int quoted = 0, i;
+	str first_uri;
 	
-	for(i = 0; i < _s->len; i++) {
-		if (!quoted) {
-			if (_s->s[i] == '\"') quoted = 1;
-			else if (_s->s[i] == _c) return _s->s + i;
-		} else {
-			if ((_s->s[i] == '\"') && (_s->s[i - 1] != '\\')) quoted = 0;
+	if (find_first_route(_m) == 0) {
+		if (parse_first_route(_m->route,  &first_uri) < 0) {
+			LOG(L_ERR, "strict_route(): Error while parsing Route HF\n");
+			return -1;
 		}
+		if (rewrite_RURI(_m, &first_uri) < 0) {
+			LOG(L_ERR, "strict_route(): Error while rewriting request URI\n");
+			return -2;
+		}
+		if (remove_TMRoute(_m, _m->route, &first_uri) < 0) {
+			LOG(L_ERR, "strict_route(): Error while removing the topmost Route URI\n");
+			return -3;
+		}
+		return 1;
 	}
-	return 0;
+	
+	DBG("strict_route(): There is no Route HF\n");
+	return -1;
 }
+

@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# Record Routing module
+# Route & Record-Route module
 #
 
 Module depends on: None
@@ -16,15 +16,22 @@ The module exports no parameters.
 Exported Functions:
 ------------------
 
-Name:   rewriteFromRoute
+Name:   loose_route
+Params: -
+Desc:   The function performs loose routing as defined in RFC3261.
+	See the RFC for more details.
+
+
+Name:   strict_route
 Params: -
 Desc:   If there are any Route HFs in the message, the function
         takes the first one, rewrites Request-URI with it's value
         and removes the first URI from Route HFs.
 
 
-Name:   addRecordRoute
-Params: -
+Name:   record_route
+Params: lr - if set to 1, the function adds also lr parameter which
+             indicates loose routing support.
 Desc:   The function adds a new Record-Route header field. The
         header field will be inserted in the message before any
         other Record-Route header fields.
