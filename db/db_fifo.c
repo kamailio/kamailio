@@ -42,7 +42,6 @@
 #include "../fifo_server.h"
 #include "../dprint.h"
 #include "../str.h"
-//#include "../ut.h"
 #include "db.h"
 
 #define MAX_SIZE_LINE 512
@@ -281,11 +280,11 @@ static inline int parse_db_value( str *s, db_val_t *val, str **ret_s)
 		/* get seconds */
 		get_int( p, end, td.tm_sec, n,"Missing seconds in date format",error);
 		if (p!=end) goto date_error;
-		td.tm_isdst = daylight;
+		td.tm_isdst = -1 ; /*daylight*/
 		/* fill the val struct */
 		val->type = DB_DATETIME;
 		val->val.time_val = mktime( &td );
-		DBG("DBG: <%.*s> is %s\n",s->len,s->s,ctime(&val->val.time_val));
+		/*DBG("DBG: <%.*s> is %s\n",s->len,s->s,ctime(&val->val.time_val));*/
 	} else if ( (*(p=s->s)=='+') || (*p=='-') || isdigit(*p) ) {
 		/* can be a DB_INT / DB_DOUBLE / DB_BITMAP value */
 		if (sgn_str2float( s, &nr, &nr_type)!=0) {
