@@ -194,7 +194,7 @@ static int in_pdomain = 0; /* this only works with single or multiprocess execut
  */
 void lock_pdomain(pdomain_t* _d)
 {
-	LOG(L_INFO, "lock_pdomain\n");
+	DBG("lock_pdomain\n");
 	if (!in_pdomain++)
 	     lock_get(&_d->lock);
 }
@@ -205,7 +205,7 @@ void lock_pdomain(pdomain_t* _d)
  */
 void unlock_pdomain(pdomain_t* _d)
 {
-	LOG(L_INFO, "unlock_pdomain\n");
+	DBG("unlock_pdomain\n");
 	in_pdomain--;
 	if (!in_pdomain)
 	     lock_release(&_d->lock);
