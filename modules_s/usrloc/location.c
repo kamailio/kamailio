@@ -680,8 +680,8 @@ int clean_location(location_t* _l, db_con_t* _c, time_t _t)
 			DBG("Contact removed from cache\n");
 		} else {
 			DBG("Contact is still fresh");
-			ptr = ptr->next;
 			prev = ptr;
+			ptr = ptr->next;
 		}
 	}
 	return TRUE;

@@ -348,7 +348,7 @@ int cache_remove(cache_t* _c, db_con_t* _con, str* _aor)
 }
 
 
-
+/* BEWARE: _el must be obtained using cache_get !!! (because of locking) */
 int cache_update_unsafe(cache_t* _c, db_con_t* _con, c_elem_t** _el, location_t* _loc, int* _sr)
 {
 	if (update_location(_con, ELEM_LOC((*_el)), _loc, _sr) == FALSE) {
@@ -359,6 +359,7 @@ int cache_update_unsafe(cache_t* _c, db_con_t* _con, c_elem_t** _el, location_t*
 	if (!(ELEM_LOC((*_el))->contacts)) {
 		slot_rem_elem((*_el));
 		cache_rem_elem(_c, (*_el));
+		release_lock(&CACHE_LOCK(_c));
 		free_element((*_el));
 		*_el = NULL;
 	}
