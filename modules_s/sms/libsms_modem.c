@@ -147,12 +147,6 @@ int initmodem(struct modem *mdm)
 	int success=0;
 	int clen=0;
 
-	/*if (initstring[0])
-	{
-		writelogfile(LOG_INFO,"Initializing modem");
-		put_command(initstring,answer,sizeof(answer),100,0);
-	}*/
-
 	if (mdm->pin[0]) {
 		LOG(L_INFO,"INFO:initmodem: let's check if modem wants the PIN\n");
 		/* Checking if modem needs PIN */
@@ -225,26 +219,17 @@ int initmodem(struct modem *mdm)
 		goto error;
 	}
 
-	if (mdm->mode==MODE_ASCII || mdm->mode==MODE_DIGICOM) {
-		//LOG(L_INFO,"INFO:initmodem:Selecting ASCII mode 1\n");
+	if (mdm->mode==MODE_ASCII || mdm->mode==MODE_DIGICOM)
 		strcpy(command,"AT+CMGF=1\r");
-	} else {
-		//LOG(L_INFO,"INFO:initmodem:Selecting PDU mode 0\n");
+	else
 		strcpy(command,"AT+CMGF=0\r");
-	}
 
 	retries=0;
 	success=0;
 	do {
 		retries++;
 		/*quering the modem*/
-		if (mdm->mode==MODE_ASCII || mdm->mode==MODE_DIGICOM) {
-			//LOG(L_INFO,"INFO:initmodem:Selecting ASCII mode 1\n");
-			put_command(mdm->fd,"AT+CMGF=1\r",10,answer,sizeof(answer),50,0);
-		} else {
-			//LOG(L_INFO,"INFO:initmodem:Selecting PDU mode 0\n");
-			put_command(mdm->fd,"AT+CMGF=0\r",10,answer,sizeof(answer),50,0);
-		}
+		put_command(mdm->fd,command,10,answer,sizeof(answer),50,0);
 		/*dealing with the answer*/
 		if (strstr(answer,"ERROR")) {
 			LOG(L_NOTICE,"NOTICE:initmodem: Waiting %i sec. before to"
@@ -258,6 +243,11 @@ int initmodem(struct modem *mdm)
 		LOG(L_ERR,"ERROR:initmodem: Modem did not accept PDU mode\n");
 		goto error;
 	}
+
+	/* added for probing */
+	put_command(mdm->fd,"AT+CSMP=49,167,0,242\r",21,answer,
+		sizeof(answer),50,0);
+	put_command(mdm->fd,"AT+CNMI=1,1,0,1,0\r",18,answer,sizeof(answer),50,0);
 
 	return 0;
 error:
