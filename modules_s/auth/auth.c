@@ -102,7 +102,7 @@ static int find_auth_hf(struct sip_msg* _msg, char* _realm, cred_t* _c, int _hf_
 	}
 #endif
 	switch(_hf_name) {
-	case HDR_WWWAUTH:   ptr = _msg->www_auth;   break;
+	case HDR_AUTHORIZATION: ptr = _msg->authorization; break;
 	case HDR_PROXYAUTH: ptr = _msg->proxy_auth; break;
 	}
 	
