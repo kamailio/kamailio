@@ -177,7 +177,7 @@ struct tcp_connection* tcpconn_connect(union sockaddr_union* server)
 	int s;
 	struct socket_info* si;
 	union sockaddr_union my_name;
-	int my_name_len;
+	socklen_t my_name_len;
 	int optval;
 #ifdef DISABLE_NAGLE
 	int flag;
