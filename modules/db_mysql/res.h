@@ -30,8 +30,8 @@
 #ifndef RES_H
 #define RES_H
 
-#include <db_res.h>
-#include <db_con.h>
+#include "../../db/db_res.h"
+#include "../../db/db_con.h"
 
 
 /*

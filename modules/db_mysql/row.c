@@ -28,8 +28,8 @@
  */
 
 
-#include <dprint.h>
-#include <mem.h>
+#include "../../dprint.h"
+#include "../../mem/mem.h"
 #include <mysql/mysql.h>
 #include "val.h"
 #include "con_mysql.h"
@@ -43,12 +43,11 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 {
 	unsigned long* lengths;
 	int i;
-#ifndef PARANOID
+
 	if ((!_h) || (!_res) || (!_r)) {
 		LOG(L_ERR, "convert_row(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
 
 	ROW_VALUES(_r) = (db_val_t*)pkg_malloc(sizeof(db_val_t) * RES_COL_N(_res));
 	ROW_N(_r) = RES_COL_N(_res);
@@ -76,12 +75,11 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
  */
 int free_row(db_row_t* _r)
 {
-#ifndef PARANOID
 	if (!_r) {
 		LOG(L_ERR, "free_row(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
+
 	if (ROW_VALUES(_r)) pkg_free(ROW_VALUES(_r));
 	return 0;
 }

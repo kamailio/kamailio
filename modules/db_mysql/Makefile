@@ -11,9 +11,6 @@ DEFS +=-I$(LOCALBASE)/include -I$(LOCALBASE)/include/mysql \
 		-I$(LOCALBASE)/mysql/include -I/usr/pkg/include \
 		-I/usr/include/mysql
 
-# Database API, standard includes
-DEFS +=-I../../db -I../.. -I../../mem
-
 # libmysqlclient locations on RH/Suse, Solaris /OpenBSD, FreeBSD
 # (Debian does the right thing and puts it in /usr/lib)
 LIBS=-L/usr/lib/mysql -L$(LOCALBASE)/lib -L$(LOCALBASE)/lib/mysql \

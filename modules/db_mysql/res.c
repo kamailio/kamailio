@@ -28,11 +28,10 @@
  */
 
 
-#include <mysql.h>
-#include <mem.h>
-#include <dprint.h>
+#include <mysql/mysql.h>
+#include "../../mem/mem.h"
+#include "../../dprint.h"
 #include "row.h"
-#include "defs.h"
 #include "con_mysql.h"
 #include "res.h"
 
@@ -44,12 +43,12 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 {
 	int n, i;
 	MYSQL_FIELD* fields;
-#ifdef PARANOID
+
 	if ((!_h) || (!_r)) {
 		LOG(L_ERR, "get_columns(): Invalid parameter\n");
 		return -1;
 	}
-#endif
+
 	n = mysql_field_count(CON_CONNECTION(_h));
 	if (!n) {
 		LOG(L_ERR, "get_columns(): No columns\n");
@@ -118,12 +117,12 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 static inline int free_rows(db_res_t* _r)
 {
 	int i;
-#ifdef PARANOID
+
 	if (!_r) {
 		LOG(L_ERR, "free_rows(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
+
 	for(i = 0; i < RES_ROW_N(_r); i++) {
 		free_row(&(RES_ROWS(_r)[i]));
 	}
@@ -138,12 +137,12 @@ static inline int free_rows(db_res_t* _r)
 static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 {
 	int n, i;
-#ifdef PARANOID
+
 	if ((!_h) || (!_r)) {
 		LOG(L_ERR, "convert_rows(): Invalid parameter\n");
 		return -1;
 	}
-#endif
+
 	n = mysql_num_rows(CON_RESULT(_h));
 	RES_ROW_N(_r) = n;
 	if (!n) {
@@ -180,12 +179,11 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
  */
 static inline int free_columns(db_res_t* _r)
 {
-#ifdef PARANOID
 	if (!_r) {
 		LOG(L_ERR, "free_columns(): Invalid parameter\n");
 		return -1;
 	}
-#endif
+
 	if (RES_NAMES(_r)) pkg_free(RES_NAMES(_r));
 	if (RES_TYPES(_r)) pkg_free(RES_TYPES(_r));
 	return 0;
@@ -217,12 +215,11 @@ db_res_t* new_result(void)
  */
 int convert_result(db_con_t* _h, db_res_t* _r)
 {
-#ifdef PARANOID
 	if ((!_h) || (!_r)) {
 		LOG(L_ERR, "convert_result(): Invalid parameter\n");
 		return -1;
 	}
-#endif
+
 	if (get_columns(_h, _r) < 0) {
 		LOG(L_ERR, "convert_result(): Error while getting column names\n");
 		return -2;
@@ -242,12 +239,11 @@ int convert_result(db_con_t* _h, db_res_t* _r)
  */
 int free_result(db_res_t* _r)
 {
-#ifdef PARANOID
 	if (!_r) {
 		LOG(L_ERR, "free_result(): Invalid parameter\n");
 		return -1;
 	}
-#endif
+
 	free_columns(_r);
 	free_rows(_r);
 	pkg_free(_r);

@@ -36,7 +36,6 @@
 
 #include <strings.h>
 #include <string.h>
-#include "defs.h"
 #include "utils.h"
 
 
