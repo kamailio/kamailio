@@ -37,6 +37,7 @@
  *  2003-02-13  modified send_pr_buffer to use msg_send & rb->dst (andrei)
  *  2003-04-14  use protocol from uri (jiri)
  *  2003-04-25  do it (^) really everywhere (jiri)
+ *  2003-04-26  do it (^) really really really everywhere (jiri)
  */
 
 
@@ -246,7 +247,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 				p_msg->new_uri=ack_uri;
 				proxy=uri2proxy(&GET_NEXT_HOP(p_msg), proto);
 				if (proxy==0) continue;
-				forward_request(p_msg, proxy, proto->proto);
+				forward_request(p_msg, proxy, proxy->proto);
 				free_proxy( proxy );	
 				pkg_free( proxy );
 			}
@@ -259,7 +260,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 			init_branch_iterator();
 			while((ack_uri.s=next_branch(&ack_uri.len))) {
 				p_msg->new_uri=ack_uri;
-				forward_request(p_msg, proxy, proto);
+				forward_request(p_msg, proxy, proxy->proto);
 			}
 			p_msg->new_uri=backup_uri;
 #endif
