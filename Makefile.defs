@@ -36,7 +36,7 @@ ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/  \
 CC_EXTRA_OPTS ?=
  # install location
 DESTDIR ?= /usr/local
-PREFIX = $(DESTDIR) 
+PREFIX ?= $(DESTDIR)
 LOCALBASE ?= /usr/local
 prefix = $(PREFIX)
 # install path is $(basedir) $(prefix) 
