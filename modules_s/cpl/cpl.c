@@ -57,7 +57,8 @@ static struct module_exports cpl_exports= {
 	5,
 	(response_function) 0,
 	(destroy_function) 0,
-	0
+	0,
+	0 /* per-child init function */
 };
 
 
