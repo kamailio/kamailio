@@ -47,6 +47,8 @@
  *  2003-10-27  added support for alias via param parsing [see
  *               draft-ietf-sip-connect-reuse-00.txt.]  (andrei)
  *  2004-03-31  fixed rport set instead of i bug (andrei)
+ *  2005-03-02  if via has multiple bodies, and one of them is bad set
+ *               also the first one as bad (andrei)
  */
 
 
@@ -987,7 +989,12 @@ normal_exit:
 
 
 
-char* parse_via(char* buffer, char* end, struct via_body *vb)
+/*
+ * call it with a vb initialized to 0
+ * returns: pointer after the parsed parts and sets vb->error
+ * WARNING: don't forget to cleanup on error with free_via_list(vb)!
+ */
+char* parse_via(char* buffer, char* end, struct via_body *vbody)
 {
 	char* tmp;
 	char* param_start;
@@ -995,9 +1002,11 @@ char* parse_via(char* buffer, char* end, struct via_body *vb)
 	unsigned char saved_state;
 	int c_nest;
 	int err;
-
+	struct via_body* vb;
 	struct via_param* param;
 
+	vb=vbody; /* keep orignal vbody value, needed to set the error member
+				 in case of multiple via bodies in the same header */
 parse_again:
 	vb->error=PARSE_ERROR;
 	/* parse start of via ( SIP/2.0/UDP    )*/
@@ -1996,6 +2005,8 @@ error:
 		LOG(L_ERR, "ERROR: parse_via: via parse error\n");
 	}
 	vb->error=PARSE_ERROR;
+	vbody->error=PARSE_ERROR; /* make sure the first via body is marked
+								 as bad also */
 	return tmp;
 }
 
