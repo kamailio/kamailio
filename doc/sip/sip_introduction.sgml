@@ -19,11 +19,11 @@
 	</authorgroup>
 	<copyright>
 	    <year>2003</year>
-	    <holder>FhG FOKUS</holder>
+	    <holder>&fhg;</holder>
 	</copyright>
 	<abstract>
 	    <para>
-		A brief overview of SIP describing all important aspects of the Session Initiation
+		A brief overview of &sip; describing all important aspects of the Session Initiation
 		Protocol.
 	    </para>
 	</abstract>
@@ -345,7 +345,7 @@
 		    redirection.
 		</simpara>
 		<figure id="fig-redirect" float="0">
-		    <title>SIP Redirection</title>
+		    <title>&sip; Redirection</title>
 		    <mediaobject>
 			<imageobject>
 			    <imagedata align="center" scale="40" fileref="figures/redirect.eps" format="EPS">
@@ -361,7 +361,7 @@
 	    </section>
 	</section>
 	<section id="sec-sip-messages">
-	    <title>SIP Messages</title>
+	    <title>&sip; Messages</title>
 	    <simpara>
 		Communication using &sip; (often called signalling) comprises of series of
 		<emphasis>messages</emphasis>. Messages can be transported independently by the
@@ -450,7 +450,7 @@ a=fmtp:101 0-16
 		&sdp;.
 	    </simpara>
 	    <section id="sec-sip-requests">
-		<title>SIP Requests</title>
+		<title>&sip; Requests</title>
 		<simpara>
 		    We have described how an INVITE request looks like and said that the request is
 		    used to invite a callee to a session. Other important requests are:
@@ -501,7 +501,7 @@ a=fmtp:101 0-16
 		</simpara>
 	    </section>
 	    <section id="sec-sip-responses">
-		<title>SIP Responses</title>
+		<title>&sip; Responses</title>
 		<simpara>
 		    When a user agent or proxy server receives a request it send a reply. Each
 		    request must be replied except ACK requests which trigger no replies.
@@ -721,7 +721,7 @@ Warning: 392 195.37.77.101:5060 "Noisy feedback tells:
 		linkend="fig-transactions"> to show which messages belong to the same dialog.
 	    </simpara>
 	    <figure id="fig-dialog" float="0">
-		<title>SIP Dialog</title>
+		<title>&sip; Dialog</title>
 		<mediaobject>
 		    <imageobject>
 			<imagedata align="center" scale="40" fileref="figures/dialog.eps" format="EPS">
@@ -787,7 +787,7 @@ Warning: 392 195.37.77.101:5060 "Noisy feedback tells:
 		    within a dialog (BYE) that bypasses the proxies.
 		</simpara>
 		<figure id="fig-trapezoid" float="0">
-		    <title>SIP Trapezoid</title>
+		    <title>&sip; Trapezoid</title>
 		    <mediaobject>
 			<imageobject>
 			    <imagedata align="center" scale="40" fileref="figures/trapezoid.eps" format="EPS">
