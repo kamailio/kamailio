@@ -125,7 +125,7 @@
    avoid terror of excessively huge messages; they are
    useless anyway
 */
-#define BUF_SIZE 3040
+#define BUF_SIZE 65535
 
 /* forwarding  -- Via buffer dimensioning */
 #define MAX_VIA_LINE_SIZE	240
