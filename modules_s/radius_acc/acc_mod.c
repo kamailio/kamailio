@@ -20,7 +20,7 @@
 #include <radiusclient.h>
 
 /* Defines for radiusclient library */
-#define CONFIG_FILE 	 "/home/ssi/work/client/radiusclient.conf"
+#define CONFIG_FILE 	 "etc/radiusclient.conf"
 
 struct tm_binds tmb;
 
