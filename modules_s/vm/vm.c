@@ -1,4 +1,5 @@
 /*
+ *
  * $Id$
  *
  * Copyright (C) 2001-2003 Fhg Fokus
@@ -484,7 +485,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	}
     }
 
-    lines[0].s=FIFO_VERSION; lines[0].len=strlen(FIFO_VERSION);
+    lines[0].s=VM_FIFO_VERSION; lines[0].len=strlen(VM_FIFO_VERSION);
     lines[1].s=action; lines[1].len=strlen(action);
 
     lines[2]=REQ_LINE(msg).method;
