@@ -13,13 +13,13 @@ Exported parameters:
 
 Name:    db_url
 Type:    string
-Default: "sql://janakj:heslo@localhost/ser"
+Default: "sql://serro:47serro11@localhost/ser"
 Desc:    Database url string in form "sql://<user>:<pass>@host/database"
 
 
 Name:    user_column
 Type:    string
-Default: "user"
+Default: "user_id"
 Desc:    Name of column containing usernames in subscriber table
 
 
@@ -104,7 +104,7 @@ Exported Functions:
 
 Name:   www_authorize
 Params: realm - realm string
-        table - subscriber database table name
+        table - subscriber table name
 Desc:   Checks credentials in Authorization header field
 Example:	if (!www_authorize( "iptel.org", "subscriber" )) {
 				www_challenge(  "iptel.org", "0"; break; }
@@ -126,7 +126,6 @@ Desc:   Challenges a user agent using WWW-Authenticate header
 	 have a brokn qop implementation, particularly M$ Messenger 4.6).
 
 
-
 Name:   proxy_challenge
 Params: realm - realm string
         qop   - qop string, "1" means use qop parameter
@@ -135,7 +134,7 @@ Desc:   Challenges a user agent using Proxy-Authenticate header
         field. The second parameter specifies if qop parameter
         (according to rfc2617) should be used or not.
 	(Turning off is useful primarly to make UAC happy, which
-	 have a brokn qop implementation, particularly M$ Messenger 4.6).
+	 have a broken qop implementation, particularly M$ Messenger 4.6).
 
 
 
@@ -143,7 +142,7 @@ Name:   is_user
 Params: username - username string
 Desc:   Checks if the specified username and matches the username
         in credentials. 
-	Call after *_authorize, otherwise the username is unverified.
+	Call after *_authorize, otherwise an error will be issued.
 
 
 
@@ -151,7 +150,7 @@ Name:   is_in_group
 Params: group - group name
 Desc:   Checks if the user specified in credentials is member of
         given group
-	Call after *_authorize, otherwise the username is unverified.
+	Call after *_authorize, otherwise an error will be issued.
 
 
 
@@ -159,7 +158,7 @@ Name:   check_to
 Params: -
 Desc:   Checks if the username given in credentials and username in
         To header field are equal
-	Call after *_authorize, otherwise the username is unverified.
+	Call after *_authorize, otherwise an error will be issued.
 Example: if (method=="REGISTER" & proxy_authorize("iptel.org", "subscriber" ) {
 	     if (!check_to) { 
 	         sl_send_reply("403", "cheating: user!=to");
@@ -172,7 +171,7 @@ Name:   check_from
 Params: -
 Desc:   Checks if the username given in credentials and username in
         From header field are equal
-	Call after *_authorize, otherwise the username is unverified.
+	Call after *_authorize, otherwise an error will be issued.
 
 
 Name:   consume_credentials
@@ -182,5 +181,11 @@ Desc:   Removes previously authorized credentials from the message.
 
 
 Name:   is_user_in
-Params: -
+Params: hf - Use username in this header field, the following values
+             are recognized:
+             "From"        - Extract username from From URI
+             "To"          - Extract username from To URI
+             "Request-URI" - Extract username from Request URI
+             "credentials" - Use username digest parameter
+        group - grooup name
 Desc:   Checks, if the user is in specified table
