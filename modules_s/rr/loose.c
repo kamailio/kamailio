@@ -504,7 +504,7 @@ static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 			}
 			if (res > 0) { /* No next route found */
 				DBG("ras(): No next URI found\n");
-				return 0;
+				return 1;
 			}
 			rt = (rr_t*)hdr->parsed;
 		} else rt = rt->next;
@@ -633,7 +633,7 @@ static inline int route_after_loose(struct sip_msg* _m)
 			}
 			if (res > 0) { /* No next route found */
 				DBG("ral(): No next URI found\n");
-				return 0;
+				return 1;
 			}
 			rt = (rr_t*)hdr->parsed;
 		} else rt = rt->next;
@@ -654,7 +654,7 @@ static inline int route_after_loose(struct sip_msg* _m)
 				}
 				if (res > 0) { /* No next route found */
 					DBG("ral(): No next URI found\n");
-					return 0;
+					return 1;
 				}
 				rt = (rr_t*)hdr->parsed;
 			} else rt = rt->next;
@@ -703,10 +703,11 @@ static inline int route_after_loose(struct sip_msg* _m)
 int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
 {
 	struct sip_uri puri;
+	int ret;
 
 	if (find_first_route(_m) != 0) {
 		DBG("loose_route(): There is no Route HF\n");
-		return 1;
+		return -1;
 	}
 		
 	if (parse_uri(_m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len, &puri) < 0) {
@@ -715,16 +716,19 @@ int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
 	}
 
 	if (is_myself(&puri.host, puri.port_no)) {
-		if (route_after_strict(_m, &puri) < 0) {
+		ret = route_after_strict(_m, &puri);
+		if (ret < 0) {
 			LOG(L_ERR, "loose_route(): Error in route_after_strict\n");
 			return -1;
 		}
 	} else {
-		if (route_after_loose(_m) < 0) {
+		ret = route_after_loose(_m);
+		if (ret < 0) {
 			LOG(L_ERR, "loose_route(): Error in route_after_loose\n");
 			return -1;
 		}
 	}
 
-	return 1;
+	if (ret) return -1;
+	else return 1;
 }
