@@ -652,7 +652,7 @@ int update_location(db_con_t* _c, location_t* _dst, location_t* _src)
 
 
 
-
+/*
 int clean_location(location_t* _l, db_con_t* _c, time_t _t)
 {
 	contact_t* ptr, *prev;
@@ -684,6 +684,51 @@ int clean_location(location_t* _l, db_con_t* _c, time_t _t)
 		}		
 		ptr = ptr->next;
 		prev = ptr;
+	}
+	return TRUE;
+}
+*/
+
+
+
+
+
+int clean_location(location_t* _l, db_con_t* _c, time_t _t)
+{
+	contact_t* ptr, *prev, *tmp;
+
+#ifdef PARANOID
+	if (!_l) {
+		LOG(L_ERR, "clean_location(): Invalid parameter value\n");
+		return FALSE;
+	}
+#endif
+
+	ptr = _l->contacts;
+	prev = NULL;
+
+	while(ptr) {
+		if (ptr->expires < _t) {
+			DBG("clean_location(): Contact %s,%s expired, removing\n", ptr->aor->s, ptr->c.s);
+			if (_c) {
+				if (db_remove_contact(_c, ptr) == FALSE) {
+					LOG(L_ERR, "clean_location(): Error while removing contact from db\n");
+					return FALSE;
+				}
+			}
+			if (prev) {
+				prev->next = ptr->next;
+			} else {
+				_l->contacts = ptr->next;
+			}
+
+			tmp = ptr;
+			ptr = ptr->next;
+			free_contact(tmp);
+		} else {
+			ptr = ptr->next;
+			prev = ptr;
+		}
 	}
 	return TRUE;
 }
