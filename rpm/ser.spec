@@ -44,6 +44,7 @@ entries.
 
 %build
 make all exclude_modules="%exclude" cfg-target=/%{_sysconfdir}/ser/
+make modules modules=modules/mysql cfg-target=/%{_sysconfdir}/ser/
 cd utils/gen_ha1
 make
 
@@ -61,9 +62,16 @@ make install cfg-prefix=$RPM_BUILD_ROOT/%{_sysconfdir} \
 	     doc-dir=ser/ \
 	     man-prefix=$RPM_BUILD_ROOT/%{_mandir} \
 	     man-dir="" \
-		 cfg-target=/%{_sysconfdir}/ser/ \
-		 modules-target=/%{_libdir}/ser/modules/ \
+	     cfg-target=/%{_sysconfdir}/ser/ \
+	     modules-target=/%{_libdir}/ser/modules/ \
 	     exclude_modules="%exclude"
+make install-modules modules=modules/mysql \
+	    modules-prefix=$RPM_BUILD_ROOT/%{_libdir}/ser \
+	    modules-dir=modules/ \
+	    doc-prefix=$RPM_BUILD_ROOT/%{_docdir} \
+	    doc-dir=ser/ \
+	    cfg-target=/%{_sysconfdir}/ser/ \
+	    modules-target=/%{_libdir}/ser/modules/ 
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 $RPM_SOURCE_DIR/ser.init \
@@ -109,8 +117,6 @@ fi
 %dir %{_libdir}/ser/modules
 %{_libdir}/ser/modules/acc.so
 %{_libdir}/ser/modules/auth.so
-%{_libdir}/ser/modules/cpl.so
-%{_libdir}/ser/modules/ext.so
 %{_libdir}/ser/modules/im.so
 %{_libdir}/ser/modules/jabber.so
 %{_libdir}/ser/modules/maxfwd.so
