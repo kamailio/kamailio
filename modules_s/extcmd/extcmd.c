@@ -58,7 +58,6 @@
 
 static int extcmd_init(void);
 static int extcmd_child_init(int rank);
-//static int dump_message(struct sip_msg*, char*, char* );
 
 
 
