@@ -290,6 +290,7 @@ CREATE TABLE aliases (
   replicate int(10) unsigned default NULL,
   state tinyint(1) unsigned default NULL,
   flags int(11) NOT NULL default '0',
+  user_agent varchar(50) NOT NULL default '',
   PRIMARY KEY($USERCOL, domain, contact)
 ) $TABLE_TYPE;
 
@@ -344,6 +345,7 @@ CREATE TABLE location (
   replicate int(10) unsigned default NULL,
   state tinyint(1) unsigned default NULL,
   flags int(11) NOT NULL default '0',
+  user_agent varchar(50) NOT NULL default '',
   PRIMARY KEY($USERCOL, domain, contact)
 ) $TABLE_TYPE;
 
