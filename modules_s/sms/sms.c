@@ -611,8 +611,6 @@ static int sms_init(void)
 
 static int sms_exit(void)
 {
-	int i;
-
 	if (!domain_str)
 		pkg_free(domain.s);
 

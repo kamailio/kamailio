@@ -84,7 +84,7 @@ int add_contact(struct sip_msg* msg , str* user)
 	append_str( p, CRLF, CRLF_LEN);
 
 	lump = build_lump_rpl( buf , len );
-	if(!buf) {
+	if(!lump) {
 		LOG(L_ERR,"ERROR:sms_add_contact: unable to build lump_rpl! \n");
 		pkg_free( buf );
 		return -1;
@@ -276,7 +276,7 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 		*(p++)='>';
 	}
 
-	foo = im_send_message(to, &from, &contact, body);
+	foo = im_send_message(to, to, &from, &contact, body);
 	if (from.s) pkg_free(from.s);
 	if (contact.s) pkg_free(contact.s);
 	return foo;

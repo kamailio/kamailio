@@ -316,7 +316,7 @@ error:
 
 
 
-int im_send_message(str *to, str *from, str *contact, str *msg)
+int im_send_message(str *uri, str *to, str *from, str *contact, str *msg)
 {
 	static char buf[2048];
 	static int call_id = 0x4f8a1b49;
@@ -329,7 +329,7 @@ int im_send_message(str *to, str *from, str *contact, str *msg)
 		"MESSAGE %.*s SIP/2.0%s"
 		"Via: SIP/2.0/UDP %.*s:9%s"
 		"From: %.*s%s"
-		"To: <%.*s>%s"
+		"To: %.*s%s"
 		"Call-ID: d2d4%04d-e803-%08X-b036-%X@%.*s%s"
 		"CSeq: %d MESSAGE%s"
 		"%s%.*s%s"
@@ -337,7 +337,7 @@ int im_send_message(str *to, str *from, str *contact, str *msg)
 		"Content-Length: %d%s"
 		"%s"
 		"%.*s", /*msg*/
-		to->len,to->s,CRLF,
+		uri->len,uri->s,CRLF,
 		sock_info[0].name.len,sock_info[0].name.s,CRLF,
 		from->len,from->s,CRLF,
 		to->len,to->s,CRLF,
@@ -353,7 +353,7 @@ int im_send_message(str *to, str *from, str *contact, str *msg)
 	if (buf_len<=0)
 		goto error;
 
-	if (set_sock_struct( &to_addr, to)==-1)
+	if (set_sock_struct( &to_addr, uri)==-1)
 		goto error;
 
 	send_sock = get_send_socket(&to_addr);
