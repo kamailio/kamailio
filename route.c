@@ -235,6 +235,7 @@ static int comp_ip(unsigned a, void* param, int op, int subtype)
 			ret=(a&((struct net*)param)->mask)==((struct net*)param)->ip;
 			break;
 		case STRING_ST:
+		case RE_ST:
 			/* 1: compare with ip2str*/
 			ret=comp_str(inet_ntoa(*(struct in_addr*)&a), param, op,
 						subtype);

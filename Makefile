@@ -5,7 +5,10 @@
 # WARNING: requires gmake (GNU Make)
 #
 
-sources= $(wildcard *.c)
+lex_f=lex.yy.c
+yacc_f=cfg.tab.c
+sources= $(filter-out $(lex_f) $(yacc_f), $(wildcard *.c)) $(lex_f) \
+$(yacc_f) 
 objs= $(sources:.c=.o)
 depends= $(sources:.c=.d)
 
@@ -15,8 +18,8 @@ NAME=sip_router
 CC=gcc
 CFLAGS=-O2 -Wcast-align  #-Wmissing-prototypes  -Wall
 LEX=lex
-YACC=bison
-YACC_FLAGS=-d
+YACC=yacc
+YACC_FLAGS=-d -b cfg
 # on linux and freebsd keep it empty (e.g. LIBS= )
 # on solaris add -lxnet (e.g. LIBS= -lxnet)
 LIBS=-lfl -L/usr/local/lib
