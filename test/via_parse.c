@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 
+/* main via states (uri:port ...) */
 enum{	         F_HOST,    P_HOST,
 		L_PORT,  F_PORT,    P_PORT,
 		L_PARAM, F_PARAM,   P_PARAM,
@@ -24,9 +25,16 @@ enum{	         F_HOST,    P_HOST,
 		         F_COMMENT, P_COMMENT,
 				 F_IP6HOST, P_IP6HOST,
 				 F_CRLF,
-				 F_LF
+				 F_LF,
+				 F_CR
 	};
-enum{
+
+/* first via part state */
+enum{	         F_SIP=100,
+		SIP1, SIP2, FIN_SIP,
+		L_VER, F_VER,
+		VER1, VER2, FIN_VER,
+		L_PROTO, F_PROTO, P_PROTO
 	};
 
 #define LOG(lev, fmt, args...) fprintf(stderr, fmt, ## args)
@@ -45,8 +53,9 @@ int main(int argc, char** argv)
 	char* param;
 	char* comment;
 	char* next_via;
+	char *proto; /* in fact transport*/
 
-	host=port_str=param=comment=next_via=0;
+	host=port_str=param=comment=next_via=proto=0;
 
 	printf(" %s (%d)\n", argv[0], argc);
 	if (argc<2){
@@ -61,22 +70,27 @@ int main(int argc, char** argv)
 			case ' ':
 			case'\t':
 				switch(state){
-					case L_SIP: /*eat space*/
-					case L_SLASH1:
-					case L_SLASH2:
-					case L_VER:
+					case L_VER: /* eat space */
 					case L_PROTO:
 					case F_SIP:
 					case F_VER:
 					case F_PROTO:
 						break;
 					case P_PROTO:
+						*tmp=0;  /* finished proto parsing */
+						state=F_HOST; /* start looking for host*/
+						goto main_via;
+					case FIN_SIP:
 						*tmp=0;
-						state=F_HOST;
+						state=L_VER;
+						break;
+					case FIN_VER:
+						*tmp=0;
+						state=L_PROTO;
 						break;
 					case F_LF:
 					case F_CRLF:
-					case F_CR:
+					case F_CR: /* header continues on this line */
 						state=saved_state;
 						break;
 					default:
@@ -87,20 +101,28 @@ int main(int argc, char** argv)
 				break;
 			case '\n':
 				switch(state){
-					case L_SIP:
-					case L_SLASH1:
-					case L_SLASH2:
 					case L_VER:
 					case F_SIP:
 					case F_VER:
 					case F_PROTO:
+					case L_PROTO:
 						saved_state=state;
 						state=F_LF;
 						break;
 					case P_PROTO:
 						*tmp=0;
 						state=F_LF;
-						saved_state=;
+						saved_state=F_HOST; /* start looking for host*/
+						goto main_via;
+					case FIN_SIP:
+						*tmp=0;
+						state=F_LF;
+						saved_state=L_VER;
+						break;
+					case FIN_VER:
+						*tmp=0;
+						state=F_LF;
+						saved_state=L_PROTO;
 						break;
 					case F_CR:
 						state=F_CRLF;
@@ -117,20 +139,28 @@ int main(int argc, char** argv)
 				break;
 			case '\r':
 				switch(state){
-					case L_SIP:
-					case L_SLASH1:
-					case L_SLASH2:
 					case L_VER:
 					case F_SIP:
 					case F_VER:
 					case F_PROTO:
+					case L_PROTO:
 						saved_state=state;
 						state=F_CR;
 						break;
 					case P_PROTO:
 						*tmp=0;
 						state=F_CR;
-						saved_state=;
+						saved_state=F_HOST;
+						goto main_via;
+					case FIN_SIP:
+						*tmp=0;
+						state=F_CR;
+						saved_state=L_VER;
+						break;
+					case FIN_VER:
+						*tmp=0;
+						state=F_CR;
+						saved_state=L_PROTO;
 						break;
 					case F_LF: /*end of line ?next header?*/
 					case F_CR:
@@ -144,29 +174,169 @@ int main(int argc, char** argv)
 				}
 				break;
 			
-			case '\\':
+			case '/':
 				switch(state){
-					case L_VER:
+					case FIN_SIP:
 						*tmp=0;
 						state=F_VER;
 						break;
-					case L_PROTO:
+					case FIN_VER:
 						*tmp=0;
 						state=F_PROTO;
 						break;
-					case L_
-
-
-						
-				
-								
-								
-
+					case L_VER:
+						state=F_VER;
+						break;
+					case L_PROTO:
+						state=F_PROTO;
+						break;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
+								" state %d\n", *tmp, state);
+						goto error;
+				}
+				break;
+				/* match SIP*/
+			case 'S':
+			case 's':
+				switch(state){
+					case F_SIP:
+						state=SIP1;
+						break;
+					/* allow S in PROTO */
+					case F_PROTO:
+						proto=tmp;
+						state=P_PROTO;
+						break;
+					case P_PROTO:
+						break;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
+								" state %d\n", *tmp, state);
+						goto error;
+				}
+				break;
+			case 'I':
+			case 'i':
+				switch(state){
+					case SIP1:
+						state=SIP2;
+						break;
+					/* allow i in PROTO */
+					case F_PROTO:
+						proto=tmp;
+						state=P_PROTO;
+						break;
+					case P_PROTO:
+						break;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
+								" state %d\n", *tmp, state);
+						goto error;
+				}
+				break;
+			case 'p':
+			case 'P':
+				switch(state){
+					case SIP2:
+						state=FIN_SIP;
+						break;
+					/* allow p in PROTO */
+					case F_PROTO:
+						proto=tmp;
+						state=P_PROTO;
+						break;
+					case P_PROTO:
+						break;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
+								" state %d\n", *tmp, state);
+						goto error;
+				}
+				break;
+			/*match 2.0*/
+			case '2':
+				switch(state){
+					case F_VER:
+						state=VER1;
+						break;
+					/* allow 2 in PROTO*/
+					case F_PROTO:
+						proto=tmp;
+						state=P_PROTO;
+						break;
+					case P_PROTO:
+						break;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
+								" state %d\n", *tmp, state);
+						goto error;
+				}
+				break;
+			case '.':
+				switch(state){
+					case VER1:
+						state=VER2;
+						break;
+					/* allow . in PROTO */
+					case F_PROTO:
+						proto=tmp;
+						state=P_PROTO;
+						break;
+					case P_PROTO:
+						break;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
+								" state %d\n", *tmp, state);
+						goto error;
+				}
+				 break;
+			case '0':
+				switch(state){
+					case VER2:
+						state=FIN_VER;
+						break;
+					/* allow 0 in PROTO*/
+					case F_PROTO:
+						proto=tmp;
+						state=P_PROTO;
+						break;
+					case P_PROTO:
+						break;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
+								" state %d\n", *tmp, state);
+						goto error;
+				}
+				break;
 			
-	}
+			default:
+				switch(state){
+					case F_PROTO:
+						proto=tmp;
+						state=P_PROTO;
+						break;
+					case P_PROTO:
+						break;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
+								" state %d\n", *tmp, state);
+						goto error;
+				}
+				break;
+		}
+	} /* for tmp*/
 
+/* we should not be here! if everything is ok > main_via*/
+	LOG(L_ERR, "ERROR: parse_via: bad via: end of packet on state=%d\n",
+			state);
+	goto error;
+
+main_via:
+/* inc tmp to point to the next char*/
+	tmp++;
 	c_nest=0;
-	state=F_HOST;
+	/*state should always be F_HOST here*/;
 	for(;*tmp;tmp++){
 		switch(*tmp){
 			case ' ':
@@ -327,8 +497,6 @@ int main(int argc, char** argv)
 					case L_PARAM:
 					case F_PARAM:
 					case P_PARAM:
-					case F_COMMENT:
-					case P_COMMENT:
 						LOG(L_ERR, "ERROR:parse_via:"
 						" bad char <%c> in state %d\n",
 							*tmp,state);
@@ -343,7 +511,10 @@ int main(int argc, char** argv)
 					case F_CR:
 						/*previous=crlf and now !=' '*/
 						goto endofheader;
-					case F_COMMENT:
+					case F_COMMENT:/*everything is allowed in a comment*/
+						comment=tmp;
+						state=P_COMMENT;
+						break;
 					case P_COMMENT: /*everything is allowed in a comment*/
 						break;
 					default:
@@ -371,8 +542,6 @@ int main(int argc, char** argv)
 						state=F_PARAM;
 						break;
 					case F_PORT:
-					case F_COMMENT:
-					case P_COMMENT:
 						LOG(L_ERR, "ERROR:parse_via:"
 						" bad char <%c> in state %d\n",
 							*tmp,state);
@@ -396,7 +565,10 @@ int main(int argc, char** argv)
 					case F_CR:
 						/*previous=crlf and now !=' '*/
 						goto endofheader;
-					case F_COMMENT:
+					case F_COMMENT:/*everything is allowed in a comment*/
+						comment=tmp;
+						state=P_COMMENT;
+						break;
 					case P_COMMENT: /*everything is allowed in a comment*/
 						break;
 					
@@ -428,8 +600,6 @@ int main(int argc, char** argv)
 						break;
 					case F_PORT:
 					case F_PARAM:
-					case F_COMMENT:
-					case P_COMMENT:
 						LOG(L_ERR, "ERROR:parse_via:"
 						" invalid char <%c> in state"
 						" %d\n", *tmp,state);
@@ -442,7 +612,10 @@ int main(int argc, char** argv)
 					case F_CR:
 						/*previous=crlf and now !=' '*/
 						goto endofheader;
-					case F_COMMENT:
+					case F_COMMENT:/*everything is allowed in a comment*/
+						comment=tmp;
+						state=P_COMMENT;
+						break;
 					case P_COMMENT: /*everything is allowed in a comment*/
 						break;
 					default:
@@ -547,7 +720,10 @@ int main(int argc, char** argv)
 					case F_HOST:
 						state=F_IP6HOST;
 						break;
-					case F_COMMENT:
+					case F_COMMENT:/*everything is allowed in a comment*/
+						comment=tmp;
+						state=P_COMMENT;
+						break;
 					case P_COMMENT:
 						break;
 					case F_CRLF:
@@ -573,6 +749,12 @@ int main(int argc, char** argv)
 					case F_CR:
 						/*previous=crlf and now !=' '*/
 						goto endofheader;
+					case F_COMMENT:/*everything is allowed in a comment*/
+						comment=tmp;
+						state=P_COMMENT;
+						break;
+					case P_COMMENT:
+						break;
 					default:
 						LOG(L_ERR,"ERROR:parse_via"
 							" on <%c> state %d\n",
@@ -605,7 +787,7 @@ int main(int argc, char** argv)
 					case F_VIA:
 						next_via=tmp;
 						printf("found new via on <%c>\n", *tmp);
-						goto skip;
+						goto nextvia;
 					case L_PORT:
 					case L_PARAM:
 					case L_VIA:
@@ -642,21 +824,42 @@ int main(int argc, char** argv)
 					
 		}			
 	}
-goto endofheader;
-error:
-	fprintf(stderr, "error\n");
+
+	printf("end of packet reached, state=%d\n", state);
+	goto endofpacket; /*end of packet, probably should be goto error*/
 	
-skip:
-	printf("skipping\n");
 endofheader:
+	state=saved_state;
 	printf("end of header reached, state=%d\n", state);
-	if (host) printf("host=%s\n", host);
-	if (port) printf("port=%s\n", port_str);
-	if (param) printf("params=%s\n", param);
-	if (comment) printf("comment=%s\n", comment);
-	if(next_via) printf("next_via=%s\n", next_via);
+endofpacket:
+	/* check if error*/
+	switch(state){
+		case P_HOST:
+		case L_PORT:
+		case P_PORT:
+		case L_PARAM:
+		case P_PARAM:
+		case L_VIA:
+			break;
+		default:
+			LOG(L_ERR, "ERROR: parse_via: invalid via - end of header in"
+					" state %d\n", state);
+			goto error;
+	}
+		
+nextvia:
+	if (proto) printf("<SIP/2.0/%s<\n", proto);
+	if (host) printf("host= <%s>\n", host);
+	if (port_str) printf("port= <%s>\n", port_str);
+	if (param) printf("params= <%s>\n", param);
+	if (comment) printf("comment= <%s>\n", comment);
+	if(next_via) printf("next_via= <%s>\n", next_via);
 	printf("rest=<%s>\n", tmp);
 	
 	exit(0);
+
+error:
+	fprintf(stderr, "via parse error\n");
+	exit(-1);
 }
 
