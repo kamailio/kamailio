@@ -85,7 +85,7 @@ static inline int get_request_uri(struct sip_msg* m, str* u)
 static inline int get_to_uri(struct sip_msg* m, str* u)
 {
      // check that the header field is there and is parsed
-	if (!m->to && ((parse_headers(m, HDR_TO, 0) == -1) )) 
+	if (!m->to && ((parse_headers(m, HDR_TO, 0) == -1)|| (!m->to))) 
 	{
 		LOG(L_ERR, "get_to_uri(): Can't get To header field\n");
 		return -1;

@@ -316,7 +316,8 @@ static int xl_get_to_tag(struct sip_msg* msg, str* res)
 	if(msg==NULL || res==NULL)
 		return -1;
 
-	if(msg->to==NULL && parse_headers(msg, HDR_TO, 0)==-1)
+	if(msg->to==NULL && ((parse_headers(msg, HDR_TO, 0)==-1) || 
+				(msg->to==NULL)) )
 	{
 		LOG(L_ERR, "XLOG: xl_get_to: ERROR cannot parse TO header\n");
 		return xl_get_null(msg, res);
@@ -336,7 +337,8 @@ static int xl_get_cseq(struct sip_msg *msg, str *res)
 	if(msg==NULL || res==NULL)
 		return -1;
 	
-	if(msg->cseq==NULL && parse_headers(msg, HDR_CSEQ, 0)==-1)
+	if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ, 0)==-1) || 
+				(msg->cseq==NULL)) )
 	{
 		LOG(L_ERR, "XLOG: xl_get_cseq: ERROR cannot parse CSEQ header\n");
 		return xl_get_null(msg, res);
@@ -394,7 +396,8 @@ static int xl_get_callid(struct sip_msg *msg, str *res)
 	if(msg==NULL || res==NULL)
 		return -1;
 	
-	if(msg->callid==NULL && parse_headers(msg, HDR_CALLID, 0)==-1)
+	if(msg->callid==NULL && ((parse_headers(msg, HDR_CALLID, 0)==-1) ||
+				(msg->callid==NULL)) )
 	{
 		LOG(L_ERR, "XLOG: xl_get_cseq: ERROR cannot parse Call-Id header\n");
 		return xl_get_null(msg, res);

@@ -299,7 +299,7 @@ int get_uri(struct sip_msg* m, str** uri)
 	if ((REQ_LINE(m).method.len == 8) && 
 					(memcmp(REQ_LINE(m).method.s, "REGISTER", 8) == 0)) 
 	{/* REGISTER */
-		if (!m->to && (parse_headers(m, HDR_TO, 0) == -1)/* || !m->to*/) 
+		if (!m->to && ((parse_headers(m, HDR_TO, 0) == -1) || !m->to )) 
 		{
 			LOG(L_ERR, M_NAME": To header field not found or malformed\n");
 			return -1;

@@ -519,7 +519,7 @@ static inline int get_dest_user(struct sip_msg *msg, str *uh, int flg)
 		msg->first_line.u.request.uri.len ,&uri)==-1 || !uri.user.len )
 		{
 			DBG("DEBUG:cpl-c:get_dest_user: tring to get user from To\n");
-			if ( ((!msg->to&&parse_headers(msg,HDR_TO,0)==-1) || !msg->to ) ||
+			if ( (!msg->to&&( (parse_headers(msg,HDR_TO,0)==-1) || !msg->to))||
 			parse_uri( get_to(msg)->uri.s, get_to(msg)->uri.len, &uri)==-1
 			|| !uri.user.len)
 			{
@@ -679,8 +679,8 @@ static inline int do_script_action(struct sip_msg *msg, int action)
 	str  log  = {0,0};
 
 	/* content-length (if present) */
-	if ( (!msg->content_length && parse_headers(msg,HDR_CONTENTLENGTH,0)==-1)
-	|| !msg->content_length) {
+	if ( !msg->content_length && ((parse_headers(msg,HDR_CONTENTLENGTH,0)==-1)
+	|| !msg->content_length) ) {
 		LOG(L_ERR,"ERROR:cpl-c:do_script_action: no Content-Length "
 			"hdr found!\n");
 		goto error;

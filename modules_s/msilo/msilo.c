@@ -251,7 +251,7 @@ static int child_init(int rank)
 	else
 	{
 		if (msilo_dbf.use_table(db_con, db_table) < 0) {
-			LOG(L_ERR, "MSILO: child %d: Error in use_table\n");
+			LOG(L_ERR, "MSILO: child %d: Error in use_table\n", rank);
 			return -1;
 		}
 		

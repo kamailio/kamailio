@@ -73,7 +73,8 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
         fprintf (stdout,"%.*s\n",50,msg->buf);
 #endif
 	
-	if ((msg->contact == NULL)&&((parse_headers(msg,HDR_CONTACT,0) == -1)))
+	if ((msg->contact == NULL)&&((parse_headers(msg,HDR_CONTACT,0) == -1) ||
+				(msg->contact == NULL) ))
 		{
 		LOG(L_ERR,"ERROR: encode_contact: no Contact header present\n");
 		return -1;
@@ -239,7 +240,8 @@ decode_contact_header (struct sip_msg *msg,char *unused1,char *unused2)
 	fprintf (stdout,"---START--------DECODE CONTACT HEADER-----------------\n");
 #endif
 
-	if ((msg->contact == NULL)&&((parse_headers(msg,HDR_CONTACT,0) == -1)))
+	if ((msg->contact == NULL)&&((parse_headers(msg,HDR_CONTACT,0) == -1) || 
+				(msg->contact== NULL) ))
 		{
 		LOG(L_ERR,"ERROR: decode_contact_header: no Contact header present\n");
 		return -1;
