@@ -459,7 +459,7 @@ endif
 YACC_FLAGS=-d -b cfg
 # on linux and freebsd keep it empty (e.g. LIBS= )
 # on solaris add -lxnet (e.g. LIBS= -lxnet)
-LIBS=-lfl -ldl -lresolv
+LIBS= -lfl -ldl -lresolv
 
 
 #os specific stuff
@@ -480,9 +480,9 @@ ifeq  ($(OS), solaris)
 	YACC=yacc
 
 ifeq ($(CC_NAME), suncc)
-	LIBS+= -lfast 
+	LIBS= -lfast -ldl -lresolv
 endif
-	LIBS+= -L/usr/local/lib -L/usr/lib/mysql -lxnet -lrt -lnsl
+	LIBS+= -L/usr/local/lib -lfl -L/usr/lib/mysql -lxnet -lrt -lnsl 
 	# -lrt needed for sched_yield
 endif
 

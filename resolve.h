@@ -256,7 +256,7 @@ static inline struct hostent* resolvehost(const char* name)
 #endif
 		){
 		/* we are lucky, this is an ip address */
-		return ip_addr2he((unsigned char*)name, len, ip);
+		return ip_addr2he(( char*)name, len, ip);
 	}
 	
 #endif
