@@ -42,7 +42,6 @@
  */
 typedef struct rr {
 	name_addr_t nameaddr; /* Name-addr part */
-	param_t* lr;          /* Hook to lr parameter */
 	param_t* r2;          /* Hook to r2 parameter */
 	param_t* params;      /* Linked list of other parameters */
         struct rr* next;      /* Next RR in the list */

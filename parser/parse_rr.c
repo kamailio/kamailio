@@ -97,7 +97,6 @@ int parse_rr(struct hdr_field* _h)
 			}
 
 			     /* Copy hooks */
-			r->lr = hooks.rr.lr;
 			r->r2 = hooks.rr.r2;
 
 			if (s.len == 0) goto ok;
@@ -125,6 +124,7 @@ int parse_rr(struct hdr_field* _h)
 	return -1;
 
  ok:
+	if (!_h->parsed) (rr_t*)_h->parsed = r;
 	if (last) last->next = r;
 	return 0;
 }
@@ -161,7 +161,6 @@ void print_rr(rr_t* _r)
 	while(ptr) {
 		printf("---RR---\n");
 		print_nameaddr(&ptr->nameaddr);
-		printf("lr : %p\n", ptr->lr);
 		printf("r2 : %p\n", ptr->r2);
 		if (ptr->params) {
 			print_params(ptr->params);
