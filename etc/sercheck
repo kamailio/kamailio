@@ -23,7 +23,7 @@ if [ $PROCCNT -ne $ALL ] ; then
 	cd $SERDIR
 	if [ -r $BIN -a -r $CORE ] ; then
 		echo "----------------------------------" >> $TMP
-		gdb $BIN $CORE -f test/bt.gdb -batch >> $TMP
+		gdb $BIN $CORE -x test/bt.gdb -batch >> $TMP
 	else
 		echo "no core found" >> $TMP
 	fi
