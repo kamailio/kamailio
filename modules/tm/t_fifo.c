@@ -457,10 +457,10 @@ int fixup_t_write( void** param, int param_no)
 					"<%s>\n",s);
 				return E_CFG;
 			}
-			*param=(void*)twi;
 		} else {
 			twi->action.len = strlen(twi->action.s);
 		}
+		*param=(void*)twi;
 	}
 
 	return 0;

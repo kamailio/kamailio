@@ -50,7 +50,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   99
-EXTRAVERSION = -dev17
+EXTRAVERSION = -dev18
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")

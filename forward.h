@@ -66,7 +66,7 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 /* use src_ip, port=src_port if rport, via port if via port, 5060 otherwise */
 #define update_sock_struct_from_ip(  to, msg ) \
 	init_su((to), &(msg)->rcv.src_ip, \
-			(((msg)->via1->rport)||((msg)->msg_flags&&FL_FORCE_RPORT))? \
+			(((msg)->via1->rport)||((msg)->msg_flags&FL_FORCE_RPORT))? \
 							(msg)->rcv.src_port: \
 							((msg)->via1->port)?(msg)->via1->port: SIP_PORT )
 
