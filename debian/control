@@ -2,7 +2,7 @@ Source: ser
 Section: net
 Priority: optional
 Maintainer: Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
-Build-Depends: debhelper (>> 3.0.0), libmysqlclient-dev, libexpat1-dev
+Build-Depends: debhelper (>> 3.0.0), libmysqlclient-dev, libexpat1-dev, zlibg1-dev
 Standards-Version: 3.5.2
 
 Package: ser
