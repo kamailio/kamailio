@@ -1298,7 +1298,7 @@ rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 	int rtpp_ver;
 	char *cp;
 	struct iovec v[2] = {{NULL, 0}, {"V", 1}};
-	struct iovec vf[4] = {{NULL, 0}, {"VF", 1}, {" ", 1},
+	struct iovec vf[4] = {{NULL, 0}, {"VF", 2}, {" ", 1},
 	    {REQ_CPROTOVER, 8}};
 
 	if (force == 0) {
