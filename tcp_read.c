@@ -139,7 +139,7 @@ int tcp_read_headers(struct tcp_req *r, int fd)
 	p=r->parsed;
 	
 	while(p<r->pos && r->error==TCP_REQ_OK){
-		switch(r->state){
+		switch((unsigned char)r->state){
 			case H_BODY: /* read the body*/
 				remaining=r->pos-p;
 				if (remaining>r->bytes_to_go) remaining=r->bytes_to_go;
@@ -214,7 +214,25 @@ int tcp_read_headers(struct tcp_req *r, int fd)
 				}
 				p++;
 				break;
-			
+			case H_SKIP_EMPTY:
+				switch (*p){
+					case '\n':
+					case '\r':
+					case ' ':
+					case '\t':
+						/* skip empty lines */
+						break;
+					case 'C': 
+					case 'c': 
+						r->state=H_CONT_LEN1; 
+						r->start=p;
+						break;
+					default:
+						r->state=H_SKIP;
+						r->start=p;
+				};
+				p++;
+				break;
 			change_state_case(H_CONT_LEN1,  'O', 'o', H_CONT_LEN2);
 			change_state_case(H_CONT_LEN2,  'N', 'n', H_CONT_LEN3);
 			change_state_case(H_CONT_LEN3,  'T', 't', H_CONT_LEN4);
@@ -277,6 +295,7 @@ int tcp_read_headers(struct tcp_req *r, int fd)
 					case '6':
 					case '7':
 					case '8':
+					case '9':
 						r->content_len=r->content_len*10+(*p-'0');
 						break;
 					case '\r':
@@ -364,24 +383,25 @@ int tcp_read_req(struct tcp_connection* con)
 			resp=CONN_RELEASE;
 			/* just for debugging use sendipv4 as receiving socket */
 			DBG("calling receive_msg(%p, %d, )\n",
-					req->buf, (int)(req->parsed-req->buf));
+					req->buf, (int)(req->parsed-req->start));
 			bind_address=sendipv4; /*&tcp_info[con->sock_idx];*/
 			con->rcv.proto_reserved1=con->id; /* copy the id */
-			if (receive_msg(req->buf, req->parsed-req->buf, &con->rcv)<0){
+			if (receive_msg(req->start, req->parsed-req->start, &con->rcv)<0){
 				resp=CONN_ERROR;
 				goto end_req;
 			}
 			
 			/* prepare for next request */
-			size=req->pos-req->body;
-			if (size) memmove(req->buf, req->body, size);
+			size=req->pos-req->parsed;
+			if (size) memmove(req->buf, req->parsed, size);
 			DBG("tcp_read_req: preparing for new request, kept %ld bytes\n",
 					size);
 			req->pos=req->buf+size;
 			req->parsed=req->buf;
+			req->start=req->buf;
 			req->body=0;
 			req->error=TCP_REQ_OK;
-			req->state=H_STARTWS;
+			req->state=H_SKIP_EMPTY;
 			req->complete=req->content_len=req->has_content_len=0;
 			req->bytes_to_go=0;
 			

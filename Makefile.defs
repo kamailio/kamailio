@@ -143,7 +143,7 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DDNS_IP_HACK \
 	 -DUSE_IPV6 \
 	 -DDBG_QM_MALLOC \
-	 #-DUSE_TCP \
+	 # -DUSE_TCP \
 	 #-DF_MALLOC \
 	 #-DNO_DEBUG \
 	 #-DNO_LOG

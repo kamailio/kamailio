@@ -43,7 +43,7 @@
 
 enum tcp_req_errors {	TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR,
 						TCP_REQ_OVERRUN, TCP_REQ_BAD_LEN };
-enum tcp_req_states {	H_SKIP, H_LF, H_LFCR,  H_BODY, H_STARTWS,
+enum tcp_req_states {	H_SKIP_EMPTY, H_SKIP, H_LF, H_LFCR,  H_BODY, H_STARTWS,
 		H_CONT_LEN1, H_CONT_LEN2, H_CONT_LEN3, H_CONT_LEN4, H_CONT_LEN5,
 		H_CONT_LEN6, H_CONT_LEN7, H_CONT_LEN8, H_CONT_LEN9, H_CONT_LEN10,
 		H_CONT_LEN11, H_CONT_LEN12, H_CONT_LEN13, H_L_COLON, 
@@ -58,6 +58,8 @@ struct tcp_req{
 	struct tcp_req* next;
 	/* sockaddr ? */
 	char buf[TCP_BUF_SIZE]; /* bytes read so far*/
+	char* start; /* where the message starts, after alll the empty lines are
+					skipped*/
 	char* pos; /* current position in buf */
 	char* parsed; /* last parsed position */
 	char* body; /* body position */
@@ -99,9 +101,9 @@ struct tcp_connection{
 #define init_tcp_req( r) \
 	do{ \
 		memset( (r), 0, sizeof(struct tcp_req)); \
-		(r)->parsed=(r)->pos=(r)->buf; \
+		(r)->parsed=(r)->pos=(r)->start=(r)->buf; \
 		(r)->error=TCP_REQ_OK;\
-		(r)->state=H_STARTWS; \
+		(r)->state=H_SKIP_EMPTY; \
 	}while(0)
 
 
