@@ -52,6 +52,7 @@
 #include "../../parser/digest/digest.h" 		/*digest parser*/
 #include "../../parser/digest/digest_parser.h"  /*digest struct*/
 #include "../../parser/parse_from.h"			/*from parser*/
+#include "dict.h"
 #include "utils.h"								/*auth_get_username*/
 #define SIP_SERVICE_TYPE 15
 #define TMP_SIZE		 256
@@ -70,7 +71,7 @@ int radius_log_reply(struct cell* t, struct sip_msg* msg)
   	int result;                           	/* Acct request status */
   	VALUE_PAIR *send = NULL;              	/* Radius Value pairs */
   	UINT4 client_port;                    	/* sip port */
-  	int len, ret;							/* parse uri variables */
+  	int len;							/* parse uri variables */
 	char *tmp;								/* Temporary buffer */
 	char *buf;								/* ibid */
 	int stop = 0;                         	/* Acount status STOP flag */
@@ -358,7 +359,7 @@ int radius_log_ack(struct cell* t, struct sip_msg* msg)
   	int result;                           	/* Acct request status */
   	VALUE_PAIR *send = NULL;              	/* Radius Value pairs */
   	UINT4 client_port;                    	/* sip port */
-  	int len, ret;							/* parse uri variables */
+  	int len ;							/* parse uri variables */
 	char *tmp;								/* Temporary buffer */
 	char *buf;								/* ibid */
   	int stop = 0;                         	/* Acount status STOP flag */
@@ -636,13 +637,16 @@ int rad_acc_request( struct sip_msg *rq, char * comment, char  *foo)
   	int result;                           	/* Acct request status */
   	VALUE_PAIR *send = NULL;              	/* Radius Value pairs */
   	UINT4 client_port;                    	/* sip port */
-  	int len, ret;							/* parse uri variables */
+  	int len ;							/* parse uri variables */
 	char *tmp;								/* Temporary buffer */
 	char *buf;								/* ibid */
 	int stop = 0;                         	/* Acount status STOP flag */
  	struct to_body *to;						/* Structs containing tags */
 //  	struct sip_msg *rq;					  	/* Reply structure */
-	struct to_body *from;
+	struct to_body *from;	/* !!! MIGHT BE USED unititialized 
+							   	**** *** *** ***
+								**** *** *** ***
+							*/
 	struct cseq_body *cseq;					/* Cseq body--for Numeric */
 	auth_body_t *cred;						/* Digital Credentials*/
 	str	username;							/* Username string */
@@ -701,11 +705,11 @@ int rad_acc_request( struct sip_msg *rq, char * comment, char  *foo)
 	}
 
 	/* Add calling station ID, URL in FROM string */
-	if ( parse_from_header( msg )==-1 ) {
+	if ( parse_from_header( rq )==-1 ) {
 		DBG("radius_log_request(): Error getting from body \n");
 		return(ERROR_RC);
 	}
-	from = (struct to_body *)msg->from->parsed;
+	from = (struct to_body *)rq->from->parsed;
 	tmp = cleanbody(from->uri);
 
 	/*If the parsing's OK then we can safely add the tags */
