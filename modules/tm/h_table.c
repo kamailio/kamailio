@@ -103,6 +103,7 @@ void free_hash_table( struct s_table *hash_table )
 struct s_table* init_hash_table()
 {
    struct s_table*  hash_table;
+   pthread_t *thread;
    int       i;
 
    /*allocs the table*/
@@ -146,10 +147,10 @@ struct s_table* init_hash_table()
        init_timerlist_lock( hash_table, i );
     }
 
-#ifdef THREAD
+//#ifdef THREAD
    /* starts the timer thread/ process */
-   pthread_create( &(hash_table->timer_thread_id), NULL, timer_routine, hash_table );
-#endif
+   pthread_create( thread, NULL, timer_routine, hash_table );
+//#endif
 
    return  hash_table;
 
@@ -617,7 +618,7 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
             while( p_cell )
              {
                 /* the transaction is referenceted for reading */
-                ref_Transaction( p_cell );
+                ref_transaction( p_cell );
                 /* is it the cell with the wanted entry_label? */
                 if ( p_cell->label = entry_label )
                    /* has the transaction the wanted branch? */
@@ -625,7 +626,7 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
                     {/* WE FOUND THE GOLDEN EGG !!!! */
                        p_Trans = &p_cell;
                        *p_branch = branch_id;
-                       unref_Transaction( p_cell );
+                       unref_transaction( p_cell );
                        return 1;
                     }
 
@@ -634,7 +635,7 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
                p_cell = p_cell->next_cell;
 
                /* the transaction is dereferenceted */
-               unref_Transaction( tmp_cell );
+               unref_transaction( tmp_cell );
              }
           }
       }
@@ -655,7 +656,7 @@ int t_store_incoming_reply( struct cell* Trans, unsigned int branch, struct sip_
 {
    /* if there is a previous reply, replace it */
    if ( Trans->outbound_response[branch] )
-      free_sip_msg( Trans->outbound_response[branch] );
+      /*free_sip_msg( Trans->outbound_response[branch] ) TO DO*/ ;
    Trans->outbound_response[branch] = sip_msg_cloner( p_msg );
 }
 
@@ -779,7 +780,7 @@ void start_FR_timer( struct s_table* hash_table, struct cell* p_cell )
 {
 
    /* adds the cell int FINAL RESPONSE timer list*/
-   put_in_tail_of_timer_list( hash_table, p_cell, FR_TIMER_LIST, FR_TIME_OUT + hash_table->time );
+   add_to_tail_of_timer_list( hash_table, &(p_cell->tl[FR_TIMER_LIST]), FR_TIMER_LIST, FR_TIME_OUT);
 
 }
 
@@ -796,10 +797,10 @@ void start_WT_timer( struct s_table* hash_table, struct cell* p_cell )
    	struct timer* timers= hash_table->timers;
 
    	//if is in FR list -> first it must be removed from there
-	remove_timer( hash_table, p_cell, FR_TIMER_LIST );
+	remove_from_timer_list( hash_table, &(p_cell->tl[FR_TIMER_LIST]), FR_TIMER_LIST );
 
    	/* adds the cell int WAIT timer list*/
-   	put_in_tail_of_timer_list( hash_table, p_cell, WT_TIMER_LIST, WT_TIME_OUT + hash_table->time );
+   	add_to_tail_of_timer_list( hash_table, &(p_cell->tl[WT_TIMER_LIST]), WT_TIMER_LIST, WT_TIME_OUT );
 }
 
 
@@ -843,7 +844,7 @@ void del_Transaction( struct s_table *hash_table , struct cell * p_cell )
     if ( ref_counter==0 )
        free_cell( p_cell );
      /* else it's added to del hooker list for future del */
-    else put_in_tail_of_timer_list( hash_table, p_cell, DELETE_LIST, 0 );
+    else add_to_tail_of_timer_list( hash_table, &(p_cell->tl[DELETE_LIST]), DELETE_LIST, 0 );
 }
 
 

@@ -13,7 +13,7 @@ depends= $(sources:.c=.d)
 NAME=tm.so
 
 LDFLAGS=-O2 -shared
-LIBS=
+LIBS= -lpthread
 
 ifeq ($(ARCH), SunOS)
 LDFLAGS=-O2 -G

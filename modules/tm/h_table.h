@@ -113,7 +113,7 @@ struct s_table
 
 
 
-void free_cell( struct cell* dead_cell );
+void free_cell( struct cell* dead_cell );                    
 struct s_table* init_hash_table();
 
 void ref_transaction( struct cell* p_cell);

@@ -9,8 +9,6 @@
 */
 
 
-void * timer_routine(void * attr);
-
 
 /* put a new cell into a list nr. list_id within a hash_table;
   * set initial timeout
@@ -71,6 +69,8 @@ void insert_into_timer_list( struct s_table* hash_table , struct timer_link* new
       tl->prev_tl = new_tl;
       if ( new_tl->prev_tl )
          new_tl->prev_tl->next_tl = new_tl;
+      else
+         timer_list->first_tl = new_tl;
       new_tl->next_tl = tl;
    }
    else
@@ -159,7 +159,7 @@ void * timer_routine(void * attr)
       printf("%d\n", *time);
 
       for( id=0 ; id<NR_OF_TIMER_LISTS ; id++ )
-         while ( timers[ id ].first_tl->time_out >= *time )
+         while ( timers[ id ].first_tl && timers[ id ].first_tl->time_out <= *time )
          {
             tl = remove_from_timer_list_from_head( hash_table, id );
             timers[id].timeout_handler( tl->payload );
