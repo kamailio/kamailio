@@ -198,10 +198,13 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 		}
 
 		if (_c->received) {
+			DBG("Received: %.*s\n", _c->received->body.len, _c->received->body.s);
 			recv = &_c->received->body;
 		} else {
+			DBG("No recieved\n");
 			recv = 0;
 		}
+
 
 		if (ul.insert_ucontact(r, &_c->uri, e, q, &callid, cseq, flags, &c, ua, recv) < 0) {
 			rerrno = R_UL_INS_C;
@@ -277,8 +280,10 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 				}
 				
 				if (_c->received) {
+					DBG("Received: %.*s\n", _c->received->body.len, _c->received->body.s);
 					recv = &_c->received->body;
 				} else {
+					DBG("No recieved\n");
 					recv = 0;
 				}
 
@@ -316,8 +321,10 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 				}
 				
 				if (_c->received) {
+					DBG("Received: %.*s\n", _c->received->body.len, _c->received->body.s);
 					recv = &_c->received->body;
 				} else {
+					DBG("No recieved\n");
 					recv = 0;
 				}
 

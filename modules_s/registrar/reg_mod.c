@@ -146,7 +146,7 @@ static int mod_init(void)
 	realm_prefix.s = realm_pref;
 	realm_prefix.len = strlen(realm_pref);
 	
-	rcv_param.len = sizeof(rcv_param.s);
+	rcv_param.len = strlen(rcv_param.s);
 
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 	if (!bind_usrloc) {
