@@ -734,23 +734,40 @@ t_relay_to("192.168.99.100", "5060");
 		<itemizedlist>
 		    <listitem>
 			<para>
-			    global configuration parameters
+			    <emphasis>global configuration parameters</emphasis> --
+			    these value affect behaviour of the server such as port
+			    number at which it listens, number of spawened children
+			    processes, and log-level
 			</para>
 		    </listitem>
 
 		    <listitem>
 			<para>
-			    module loading
+			    <emphasis>module loading</emphasis> -- these statements
+			    link external modules, such as transaction management
+			    (tm) or stateless UA server (sl)  dynamically
+			</para>
+			<note>
+				<para>
+					If modules depend on each other, than the depending
+					modules must be loaded after modules on which they
+					depend. We recommend to load first modules
+					<command>tm</command> and <command>sl</command>
+					because many other modules (authentication, user
+					location, accounting, etc.) depend on these.
+				</para>
+			</note>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>module-specific parameters</emphasis> -- determine
+			    how modules behave; for example, it is possible to set
+			    timers which the transaction modules uses.
 			</para>
 		    </listitem>
 		    <listitem>
 			<para>
-			    module-specific parameters
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
-			    one or more route blocks containing the
+			    one or more <emphasis>route blocks</emphasis> containing the
 			    request processing logic
 			</para>
 		    </listitem>
@@ -758,7 +775,7 @@ t_relay_to("192.168.99.100", "5060");
 			<para>
 			    optionally, if modules supporting reply
 			    processing (currently only TM) are loaded,
-			    one or more reply_route blocks containing
+			    one or more <emphasis>reply_route blocks</emphasis> containing
 			    logic triggered by received replies
 			</para>
 		    </listitem>
@@ -2317,6 +2334,7 @@ Domain Registered Expired
     - route
     - modules
     - installation
+    - comparing URIs; myself
 
     FAQ: 
     - bandwidth, FW/NATs
