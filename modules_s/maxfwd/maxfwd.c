@@ -150,7 +150,7 @@ static int w_process_maxfwd_header(struct sip_msg* msg, char* str1,char* str2)
 			return -1;
 		default:
 			if (max_limit && val>max_limit){
-				LOG(L_NOTICE, "NOTICE:maxfwd:process_maxfwd_header: "
+				DBG("DBG:maxfwd:process_maxfwd_header: "
 					"value %d decreased to %d\n", val, max_limit);
 				val = max_limit+1;
 			}
