@@ -32,6 +32,7 @@
 #define _CPL_C_ENV_H
 
 #include "../../str.h"
+#include "../../usr_avp.h"
 #include "../usrloc/usrloc.h"
 #include "../tm/tm_load.h"
 
@@ -48,6 +49,8 @@ struct cpl_enviroment {
                              * used only by run_time_switch */
 	udomain_t*  lu_domain;  /* domain used for lookup */
 	int lu_append_branches; /* how many branches lookup should add */
+	int timer_avp_type;     /* specs - type and name - of the timer AVP */
+	int_str timer_avp;
 };
 
 

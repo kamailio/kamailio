@@ -55,6 +55,7 @@
 #include "../../dprint.h"
 #include "../../data_lump_rpl.h"
 #include "../../fifo_server.h"
+#include "../../usr_avp.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_content.h"
@@ -79,6 +80,7 @@ static char *DB_TABLE      = 0;  /* */
 static char *dtd_file      = 0;  /* name of the DTD file for CPL parser */
 static char *lookup_domain = 0;
 static pid_t aux_process   = 0;  /* pid of the private aux. process */
+static char *timer_avp     = 0;  /* name of variable timer AVP */
 
 
 struct cpl_enviroment    cpl_env = {
@@ -92,6 +94,8 @@ struct cpl_enviroment    cpl_env = {
 		{0,0},   /* original TZ \0 terminated "TZ=value" format */
 		0, /* udomain */
 		0, /* no branches on lookup */
+		0, /* timer avp type */
+		(int_str)0  /* timer avp name/ID */
 };
 
 struct cpl_functions  cpl_fct;
@@ -136,6 +140,7 @@ static param_export_t params[] = {
 	{"realm_prefix",   STR_PARAM, &cpl_env.realm_prefix.s },
 	{"lookup_domain",  STR_PARAM, &lookup_domain          },
 	{"lookup_append_branches", INT_PARAM, &cpl_env.lu_append_branches},
+	{"timer_avp",      STR_PARAM, &timer_avp   },
 	{0, 0, 0}
 };
 
@@ -197,6 +202,7 @@ static int cpl_init(void)
 	struct stat   stat_t;
 	char *ptr;
 	int val;
+	str foo;
 
 	LOG(L_INFO,"CPL - initializing\n");
 
@@ -218,6 +224,24 @@ static int cpl_init(void)
 			"the maximum safety value (%d)\n",
 			cpl_env.proxy_recurse,MAX_PROXY_RECURSE);
 		goto error;
+	}
+
+	/* fix the timer_avp name */
+	if (timer_avp) {
+		foo.s = timer_avp;
+		foo.len = strlen(foo.s);
+		if (parse_avp_spec(&foo,&cpl_env.timer_avp_type,&cpl_env.timer_avp)<0){
+			LOG(L_CRIT,"ERROR:cpl_init: invalid timer AVP specs \"%s\"\n",
+				timer_avp);
+			goto error;
+		}
+		if (cpl_env.timer_avp_type&AVP_NAME_STR && cpl_env.timer_avp.s==&foo) {
+			if ( (cpl_env.timer_avp.s=(str*)pkg_malloc(sizeof(str)))==0 ) {
+				LOG(L_ERR, "ERROR:cpl_init: no more pkg mem\n");
+				goto error;
+			}
+			*(cpl_env.timer_avp.s) = foo;
+		}
 	}
 
 	if (dtd_file==0) {
