@@ -989,7 +989,7 @@ static inline int new_t(struct sip_msg *p_msg)
 */
 int t_newtran( struct sip_msg* p_msg )
 {
-	int lret, my_err;
+	int lret, my_err, ret;
 
 	ret=1;
 
