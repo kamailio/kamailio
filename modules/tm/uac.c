@@ -41,6 +41,10 @@
  *    there is a new FIFO UAC.
  *
  * ****************************************************
+ *
+ * History:
+ * --------
+ * 2003-01-23 t_uac_dlg now uses get_out_socket (jiri)
  */
 
 
@@ -58,6 +62,8 @@
 #include <signal.h>
 #include <limits.h>
 #include <string.h>
+#include "../../parser/parse_from.h"
+#include "../../parser/msg_parser.h"
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../hash_func.h"
@@ -221,7 +227,8 @@ int t_uac( str *msg_type, str *dst,
 	/* T->uac[branch].request.to_len=sizeof(union sockaddr_union); */
 	hostent2su(&to, &proxy->host, proxy->addr_idx, 
 		(proxy->port)?htons(proxy->port):htons(SIP_PORT));
-	send_sock=get_send_socket( &to, PROTO_UDP );
+	/* send_sock=get_send_socket( &to, PROTO_UDP ); */
+	send_sock=get_out_socket( &to, PROTO_UDP );
 	if (send_sock==0) {
 		LOG(L_ERR, "ERROR: t_uac: no corresponding listening socket "
 			"for af %d\n", to.s.sa_family );
@@ -409,8 +416,8 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 				|| !ruri || !ruri->s
 				|| !from || !from->s
 				|| !to || !to->s
-				|| !totag || !totag->s ) {
-		LOG(L_ERR, "ERROR: t_uac_dlg: invalud parameters\n");
+				|| !totag ) {
+		LOG(L_ERR, "ERROR: t_uac_dlg: invalid parameters\n");
 		ser_error = ret = E_INVALID_PARAMS;
 		goto done;
 	}
@@ -424,7 +431,7 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 
 	branch=0;
 	hostent2su(&to_su, &proxy->host, proxy->addr_idx, (proxy->port) ? htons(proxy->port) : htons(SIP_PORT));
-	send_sock=get_send_socket(&to_su, PROTO_UDP);
+	send_sock=get_out_socket(&to_su, PROTO_UDP);
 	if (send_sock == 0) {
 		LOG(L_ERR, "ERROR: t_uac_dlg: no corresponding listening socket for af %d\n", to_su.s.sa_family );
 		ret = E_NO_SOCKET;
@@ -820,7 +827,7 @@ int fifo_uac_dlg( FILE *stream, char *response_file )
 		fifo_uac_error(response_file, 400, "ruri expected");
 		return 1;
 	}
-	if (!parse_uri(ruri_buf, ruri.len, &parsed_ruri) < 0 ) {
+	if (parse_uri(ruri_buf, ruri.len, &parsed_ruri) < 0 ) {
 		fifo_uac_error(response_file, 400, "ruri invalid\n");
 		return 1;
 	}
@@ -829,13 +836,13 @@ int fifo_uac_dlg( FILE *stream, char *response_file )
 
 	if (!read_line(outbound_buf, MAX_URI_SIZE, stream, &outbound.len)
 					||outbound.len==0) {
-		fifo_uac_error(response_file, 400, "outbound address expected");
+		fifo_uac_error(response_file, 400, "outbound address expected\n");
 		return 1;
 	}
 	if (outbound.len==1 && outbound_buf[0]=='.' ) {
-		DBG("DEBUG: fifo_uac: outbound empty");
+		DBG("DEBUG: fifo_uac: outbound empty\n");
 		outbound.s=0; outbound.len=0;
-	} else if (!parse_uri(outbound_buf, outbound.len, 
+	} else if (parse_uri(outbound_buf, outbound.len, 
 							&parsed_outbound) < 0 ) {
 		fifo_uac_error(response_file, 400, "outbound uri invalid\n");
 		return 1;
@@ -855,11 +862,14 @@ int fifo_uac_dlg( FILE *stream, char *response_file )
 	DBG("DEBUG: fifo_uac: header: %.*s\n", header.len, header.s );
 	/* use SIP parser to look at what is in the FIFO request */
 	memset(&faked_msg, 0, sizeof(struct sip_msg));
-	faked_msg.len=header.len; faked_msg.unparsed=header_buf;
+	faked_msg.len=header.len; 
+	faked_msg.buf=faked_msg.orig=faked_msg.unparsed=header_buf;
 	if (parse_headers(&faked_msg, HDR_EOH, 0)==-1 ) {
+			DBG("DEBUG: fifo_uac: parse_headers failed\n");
 			fifo_uac_error(response_file, 400, "HFs unparseable");
 			goto error;
 	}
+	DBG("DEBUG: fifo_uac: parse_headers succeeded\n");
 
 	/* and eventually body */
 	if (!read_body(body_buf, MAX_BODY, stream, &body.len)) {
@@ -969,6 +979,7 @@ int fifo_uac_dlg( FILE *stream, char *response_file )
 	}
 
 error:
-	free_sip_msg(&faked_msg);
+	/* free_sip_msg(&faked_msg); */
+	if (faked_msg.headers) free_hdr_field_lst(faked_msg.headers);
 	return 1;
 }
