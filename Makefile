@@ -224,6 +224,7 @@ sunpkg:
 	rm -rf tmp/ser_sun_pkg
 
 
+.PHONY: install
 install: all mk-install-dirs install-cfg install-bin install-modules \
 	install-doc install-man
 

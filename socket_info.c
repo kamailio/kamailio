@@ -381,16 +381,21 @@ int add_interfaces(char* if_name, int family, unsigned short port,
 	
 	last=(char*)ifc.ifc_req+ifc.ifc_len;
 	for(p=(char*)ifc.ifc_req; p<last;
-			p+=(sizeof(ifr.ifr_name)+
-			#ifdef  HAVE_SOCKADDR_SA_LEN
-				MAX(ifr.ifr_addr.sa_len, sizeof(struct sockaddr))
+			p+=
+			#ifdef __OS_linux
+				sizeof(ifr) /* works on x86_64 too */
 			#else
-				( (ifr.ifr_addr.sa_family==AF_INET)?
-					sizeof(struct sockaddr_in):
-					((ifr.ifr_addr.sa_family==AF_INET6)?
+				(sizeof(ifr.ifr_name)+
+				#ifdef  HAVE_SOCKADDR_SA_LEN
+					MAX(ifr.ifr_addr.sa_len, sizeof(struct sockaddr))
+				#else
+					( (ifr.ifr_addr.sa_family==AF_INET)?
+						sizeof(struct sockaddr_in):
+						((ifr.ifr_addr.sa_family==AF_INET6)?
 						sizeof(struct sockaddr_in6):sizeof(struct sockaddr)) )
-			#endif
+				#endif
 				)
+			#endif
 		)
 	{
 		/* copy contents into ifr structure
