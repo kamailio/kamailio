@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh 
 #
 # $Id$
 #
@@ -29,9 +29,8 @@ VERIFY_ACL=1
 ACL_GROUPS="local ld int voicemail free-pstn"
 
 # expiration time for alias table
-if [ -z "$FOREVER" ]; then 
-	FOREVER='2020-05-28 21:32:15'
-fi
+FOREVER='2020-05-28 21:32:15'
+FOREVER_REL=1073741823
 
 #### SQL names
 
@@ -68,6 +67,7 @@ A_CALLID_COLUMN=callid
 A_CSEQ_COLUMN=cseq
 A_LAST_MODIFIED_COLUMN=last_modified
 
+FIFO_DBG=0
 #===================================================================
 
 
@@ -80,37 +80,45 @@ cat <<EOF
 sc $Revision$
 usage: 
            * subscribers *
- $CMD add <name> <password> <email> ... add a new subscriber (*)
- $CMD mail <name> ..................... send an email to a user
- $CMD rm <name> ....................... delete a user (*)
- $CMD alias show [<alias>] ............ show aliases
- $CMD alias rm <alias> ................ remove an alias
- $CMD alias add <alias> <uri> ......... show aliases
+ $CMD add <username> <password> <email> .. add a new subscriber (*)
+ $CMD passwd <username> <passwd> ......... change user's password (*)
+ $CMD rm <username> ...................... delete a user (*)
+ $CMD mail <username> .................... send an email to a user
+ $CMD alias show [<alias>] ............... show aliases
+ $CMD alias rm <alias> ................... remove an alias
+ $CMD alias add <alias> <uri> ............ add an aliases 
 
            * access control lists *
- $CMD acl show [<user>] ............... show user membership
- $CMD acl grant <user> <group> ........ grant user membership (*)
- $CMD acl revoke <user> [<group>] ..... grant user membership(s) (*)
+ $CMD acl show [<username>] .............. show user membership
+ $CMD acl grant <username> <group> ....... grant user membership (*)
+ $CMD acl revoke <username> [<group>] .... grant user membership(s) (*)
 
            * usrloc *
- $CMD dul <table> <name> .............. delete user's UsrLoc entries
- $CMD show ............................ show online users
- $CMD showdb [<name>] ................. show online users flushed in DB
- $CMD passwd <user> <passwd> .......... change user's password (*)
- $CMD perm <user> <uri> ............... introduce a permanent UrLoc entry
+ $CMD ul show [<username>]................ show in-RAM online users
+ $CMD ul rm <username> ................... delete user's UsrLoc entries
+ $CMD ul add <username> <uri> ............ introduce a permanent UrLoc entry
+ $CMD showdb [<username>] ................ show online users flushed in DB
 
            * server health *
- $CMD monitor ......................... show internal status
- $CMD ps .............................. show runnig processes 
- $CMD fifo ............................ send raw commands to FIFO
+ $CMD monitor ............................ show internal status
+ $CMD ps ................................. show runnig processes 
+ $CMD fifo ............................... send raw commands to FIFO
 
-   commands labeled with (*) will prompt for a MySQL password
-   if the variable PW is set, the password will not be prompted
+   Commands labeled with (*) will prompt for a MySQL password.
+   If the variable PW is set, the password will not be prompted.
 
      $EXTRA_TEXT
 
 EOF
 }
+
+# check the parameter if it is a valid SIP URI
+# quite simplified now -- it captures just very basic
+# errors
+check_uri() {
+	echo "$1" | grep -E "^sip:([a-zA-Z0-9_]+@)?.*\..*" 
+}
+
 
 #params: none
 # output: PW
@@ -137,8 +145,11 @@ filter_fl()
 
 fifo_cmd()
 {
-	if [ "$#" -lt 1 -o "$#" -gt 3 ]; then
-		echo "ERROR: fifo_cmd takes 1..3 parameters and not $#"
+	if [ "0${FIFO_DBG}" -eq 1 ] ; then
+		echo "entering fifo_cmd $*"
+	fi
+	if [ "$#" -lt 1 ]; then
+		echo "ERROR: fifo_cmd must take at least command name as parameter"
 		exit
 	fi
 	name=ser_receiver_$$
@@ -154,33 +165,29 @@ fifo_cmd()
 		exit 1
 	fi
 
+	# construct the command now
+	CMD=":$1:$name\n";
+	shift
+	while [ -n "$1" ] ; do
+		CMD="${CMD}${1}\n"
+		shift
+	done
+	CMD="${CMD}\n"
+
 	# start reader now so that it is ready for replies
 	# immediately after a request was sent out
 	cat < $path | filter_fl &
 
-	# issue request
-	if [ "$#" -eq 1 ] ; then
-		cat > $SER_FIFO <<EOF 
-:$1:$name
+	# issue FIFO request
+	echo -e $CMD > $SER_FIFO
 
-EOF
-	elif [ "$#" -eq 2 ] ; then 
-		cat > $SER_FIFO <<EOF
-:$1:$name
-$2
-
-EOF
-	elif [ "$#" -eq 3 ] ; then 
-		cat > $SER_FIFO <<EOF
-:$1:$name
-$2
-$3
-
-EOF
-	fi
 	# wait for the reader to complete
 	wait
 	rm $path
+
+	if [ "0${FIFO_DBG}" -eq 1 ] ; then
+		echo -e "FIFO command was:\n$CMD"
+	fi
 }
 
 
@@ -249,41 +256,56 @@ sql_ro_query() {
 }
 
 
-ser_alias() {
+usrloc() {
+	if [ "$#" -lt 2 ] ; then
+		echo "usrloc: too few parameters"
+		exit 1
+	fi
+	if [ "$1" = "alias" ] ; then
+		TABLE="$A_TABLE"
+	elif [ "$1" = "ul" ] ; then
+		TABLE="$USRLOC"
+	else
+		echo "usrloc: unknown table name"
+		exit 1
+	fi
+	shift
+
 	case $1 in 
 		show)
 			if [ $# -eq 2 ] ; then
-				CLAUSE=" WHERE $A_USER_COLUMN='$2' "
-			elif [ $# -ne 1 ] ; then
+				fifo_cmd ul_show_contact $TABLE $2
+			elif [ $# -eq 1 ] ; then
+				fifo_cmd ul_dump
+			else
+				echo "wrong number of params for usrloc show"
 				usage
 				exit 1
 			fi
-			QUERY="select * FROM $A_TABLE $CLAUSE ; "
-			sql_ro_query "$QUERY"
+			exit $?
 			;;
 		add)
 			if [ $# -ne 3 ] ; then
 				usage
 				exit 1
 			fi
-			QUERY="insert into $A_TABLE \
-				($A_USER_COLUMN, $A_CONTACT_COLUMN, $A_EXPIRES_COLUMN, \
-				$A_Q_COLUMN, $A_CALLID_COLUMN, $A_CSEQ_COLUMN, \
-				$A_LAST_MODIFIED_COLUMN) \
-				values ( '$2', '$3', '$FOREVER', \
-				'1.00', 'call-id-for-ever', '1',
-				now() );"
-			sql_query "$QUERY"
+			shift
+			check_uri "$2"
+			if [ "$?" -ne "0" ] ; then
+				echo "$2 is not a valid URI"
+				exit 1
+			fi
+
+			fifo_cmd ul_add "$TABLE" "$1" "$2" "$FOREVER_REL" "1.00"
+			exit $?
 			;;
 		rm)
             if [ $# -ne 2 ] ; then
                 usage
                 exit 1
             fi
-
-            QUERY="delete from $A_TABLE where \
-                $A_TABLE.$A_USER_COLUMN='$2' "
-			sql_query "$QUERY"
+			shift
+			fifo_cmd ul_rm $TABLE $1
 
             ;;
 
@@ -337,7 +359,7 @@ acl() {
 						fi
 					done	
 					if [ $found -eq 0 ] ; then
-						echo "Invalid privilege: $1 (ignored)"
+						echo "Invalid privilege: $1 ignored"
 						shift
 						continue
 					fi
@@ -483,40 +505,6 @@ case $1 in
 
 		;;
 
-	# add a permanent UsrLoc entry
-	perm)
-		if [ $# -ne 3 ] ; then
-			usage
-			exit 1
-		fi
-		prompt_pw
-		is_user $2
-		if [ $? -ne 0 ] ; then
-			echo non-existent user
-			exit 1;
-		fi
-		QUERY="insert into $USRLOC \
-			($A_USER_COLUMN, $A_CONTACT_COLUMN, $A_EXPIRES_COLUMN, \
-			$A_Q_COLUMN, $A_CALLID_COLUMN, $A_CSEQ_COLUMN, \
-			$A_LAST_MODIFIED_COLUMN) \
-			values ( '$2', '$3', '$FOREVER', \
-			'1.00', 'call-id-for-ever', '1',
-			now() );"
-			sql_query "$QUERY"
-		echo "Changes do not take effect until server restarted"
-		;;
-
-
-	dul)
-		shift
-		if [ $# -ne 2 ] ; then
-			usage
-			exit 1
-		fi
-		fifo_cmd ul_rm $1 $2
-		exit $?
-		;;
-
 	monitor|console|moni|con)
 		name=ser_receiver_$$
 		path=/tmp/$name
@@ -567,15 +555,8 @@ case $1 in
 
 		;;
 
-	show)
-		shift
-	
-		if [ $# -eq 1 ] ; then
-			fifo_cmd ul_show_contact $USRLOC $1
-		else
-			fifo_cmd ul_dump
-		fi
-		exit $?
+	alias|ul)
+		usrloc "$@"
 		;;
 
 	online)
@@ -647,11 +628,6 @@ case $1 in
 		acl "$@"
 		;;
 
-	alias)
-		shift
-		ser_alias "$@"
-		;;
-	
 	fifo)
 		shift
 		fifo_cmd "$@"
