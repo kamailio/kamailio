@@ -475,13 +475,8 @@ getToDomain(struct sip_msg* msg)
 }
 
 /* Get destination domain */
-/*
- This function only works when called for an INVITE request
- although its information is more reliable than that returned
- by the getToDomain function. But we need to know the to domain
- for both an INVITE as well as for an OK reply
- */
-/*
+// This function only works when called for a request although it's more
+// reliable than the getToDomain function.
 static str
 getDestinationDomain(struct sip_msg* msg)
 {
@@ -496,7 +491,7 @@ getDestinationDomain(struct sip_msg* msg)
     }
 
     return msg->parsed_uri.host;
-}*/
+}
 
 
 /* Get From tag */
@@ -1330,14 +1325,10 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
         type = MSG_UNKNOWN;
     }
 
-    fromType = (isFromLocal(msg, NULL, NULL)>0) ? "local" : "remote";
-
     if (type==MSG_INVITE || type==MSG_ACK) {
         request = True;
-        toType = (isDestinationLocal(msg, NULL, NULL)>0) ? "local" : "remote";
     } else if (type==MSG_REPLY) {
         request = False;
-        toType = "unknown";
     } else {
         return -1;
     }
@@ -1373,13 +1364,19 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
     }
 
     fromDomain = getFromDomain(msg);
-    toDomain   = getToDomain(msg);
-    //toDomain   = getDestinationDomain(msg); // can be called only for request(invite)
+    fromType   = (isFromLocal(msg, NULL, NULL)>0) ? "local" : "remote";
     fromAddr   = getFromAddress(msg);
     toAddr     = getToAddress(msg);
     fromTag    = getFromTag(msg);
     toTag      = getToTag(msg);
     userAgent  = getUserAgent(msg);
+    if (request) {
+        toDomain = getDestinationDomain(msg); // call only for requests
+        toType = (isDestinationLocal(msg, NULL, NULL)>0) ? "local" : "remote";
+    } else {
+        toDomain = getToDomain(msg);
+        toType = "unknown"; //there's no function to check if To domain is local
+    }
 
     clientIP = ip_addr2a(&msg->rcv.src_ip);
 
