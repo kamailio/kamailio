@@ -175,7 +175,6 @@ int timer_handler(void)
 		ptr = ptr->next;
 	}
 	
-	print_all_udomains();
 	return res;
 }
 
