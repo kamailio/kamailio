@@ -2,9 +2,13 @@
 #
 # $Id$
 #
-# use to check whether ser is still responding; if not mail an alert
+# PLEASE configure before use !!!
 #
-
+# This script uses sipsak (http://sipsak.berlios.de) to test if a
+# SIP server is still responding to requests and will send messages
+# to the developers. It is configured for the iptel.org enviroment.
+# PLEASE adapt it to your local enviroment.
+#
 
 NOTIFY=sr@iptel.org
 SIPSAK=/home/srouter/sipsak/sipsak
@@ -15,9 +19,10 @@ LOCK_TIMEOUT=240
 TMP=/tmp/serresponse.$$
 MAILCOMMAND=/bin/mail
 HOSTN=`hostname`
+RUNHOST=bat.iptel.org
 SMSSEND=/home/sms/smstools/bin/putsms
 SMSDEVICE=/dev/ttyS0
-SMSNUMBERS="491795061546"
+SMSNUMBERS=""
 
 ############################
 
@@ -41,6 +46,8 @@ fi
 if [ ! -e $LOCKF ] ; then
 	if [ ! -x $SIPSAK ] ; then
 		echo "serresponse did not find the required sipsak executable $SIPSAK" >> $TMP
+	elif [ ! -x $SMSSEND ]; then
+		echo "serresponse did not find the required SMS send executable $SMSSEND" >> $TMP
 	else
 		date >> $TMP2
 		echo "  $SIPSAKCMD" >> $TMP2
@@ -102,11 +109,23 @@ if [ ! -e $LOCKF ] ; then
 	fi
 	
 	if [ -e $TMP ] ; then
-		$MAILCOMMAND -s "serresponse failed" $NOTIFY < $TMP
-		rm -f $TMP
-		touch $LOCKF
-		for i in $SMSNUMBERS; do
-			$SMSCMD $i "serresponse failed. please check your emails for details"
-		done
+		if [ $HOSTN = $RUNHOST ] ; then
+			$MAILCOMMAND -s "serresponse failed" $NOTIFY < $TMP
+			rm -f $TMP
+			touch $LOCKF
+			for i in $SMSNUMBERS; do
+				$SMSCMD $i "serresponse failed. please check your emails for details"
+			done
+		else
+			echo "unconfigured serresponse executed on ${HOSTN}." > $TMP
+			echo "Warning: This script if configured for the iptel.org enviroment."
+			echo "         Please configure it to your local settings first."
+			echo
+			echo "If you do not press CTRL-C within 2 seconds an informational message"
+			echo "with your hostname will be send to the ser developers."
+			sleep 2
+			$MAILCOMMAND -s "serresponse executed on ${HOSTN}" $NOTIFY < $TMP
+			rm -f $TMP
+		fi
 	fi
 fi
