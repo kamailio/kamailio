@@ -123,10 +123,7 @@ void dbt_close(db_con_t* _h)
 #endif
 		return;
 	}
-	if (CON_TABLE(_h)) 
-	{
-		pkg_free(CON_TABLE(_h));
-	}
+	
 	if (DBT_CON_RESULT(_h)) 
 		dbt_result_free(DBT_CON_RESULT(_h));
 	
@@ -196,7 +193,7 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		return -1;
 	}
 	
-	stbl.s = CON_TABLE(_h);
+	stbl.s = (char*)CON_TABLE(_h);
 	stbl.len = strlen(CON_TABLE(_h));
 
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), &stbl);
@@ -323,7 +320,7 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 		return -1;
 	}
 	
-	stbl.s = CON_TABLE(_h);
+	stbl.s = (char*)CON_TABLE(_h);
 	stbl.len = strlen(CON_TABLE(_h));
 
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), &stbl);
@@ -433,7 +430,7 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 #endif
 		return -1;
 	}
-	stbl.s = CON_TABLE(_h);
+	stbl.s = (char*)CON_TABLE(_h);
 	stbl.len = strlen(CON_TABLE(_h));
 
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), &stbl);
@@ -528,7 +525,7 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 		return -1;
 	}
 	
-	stbl.s = CON_TABLE(_h);
+	stbl.s = (char*)CON_TABLE(_h);
 	stbl.len = strlen(CON_TABLE(_h));
 
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), &stbl);

@@ -14,7 +14,7 @@
 <!ENTITY user SYSTEM "dbtext_user.sgml">
 <!ENTITY devel SYSTEM "dbtext_devel.sgml">
 <!ENTITY faq SYSTEM "dbtext_faq.sgml">
-
+<!ENTITY developeremail "dcm@users.berlios.de">
 ]>
 
 <book>

@@ -123,9 +123,6 @@ int dbt_free_result(db_res_t* _r)
 
 int dbt_use_table(db_con_t* _h, const char* _t)
 {
-	char* ptr;
-	int l;
-			
 	if ((!_h) || (!_t))
 	{
 #ifdef DBT_EXTRA_DEBUG
@@ -133,19 +130,9 @@ int dbt_use_table(db_con_t* _h, const char* _t)
 #endif
 		return -1;
 	}
-
-	l = strlen(_t) + 1;
-	ptr = (char*)pkg_malloc(l);
-	if (!ptr) 
-	{
-		LOG(L_ERR, "DBT:dbt_use_table: No memory left\n");
-		return -2;
-	}
-	memcpy(ptr, _t, l);
-
-	if (CON_TABLE(_h))
-		pkg_free(CON_TABLE(_h));
-	CON_TABLE(_h) = ptr;
+	
+	CON_TABLE(_h) = _t;
+	
 	return 0;
 }
 
