@@ -1,8 +1,13 @@
-#!/bin/bash
-
-############ ==== #############
-#  SIP2JABBER gateway script  #
-############ ==== #############
+#!/bin/sh
+#
+# 3w-xxxx:      Starts the sip2jab process
+#
+# Version:      @(#) /etc/rc.d/init.d/3w-xxxx
+#
+# chkconfig: 2345 20 85
+# description: controls execution of SIP2Jabber gateway
+# processname: sip2jab
+# config: /etc/use_jabs.cfg
 
 # User "dcm" is used if is the script is run by root
 
@@ -50,6 +55,7 @@ stop_jab() {
 	# echo
 	echo "Stopping Jabber server ..."
 	killproc ${JABBERD}
+	RETVAL=$? 
 	# echo
 	# kill `cat ${JPID}`
 	# echo " OK."
@@ -74,6 +80,7 @@ start_jab() {
 		sleep 2
 		echo "Starting ICQ transport - external component ..."
 		su - ${JUID} -c "cd ${JDIR}; ${JICQEXT} > /dev/null 2>&1 &" > /dev/null 2>&1
+		RETVAL=$? 
 		# echo
 	else
 		### Run by other users
@@ -84,6 +91,7 @@ start_jab() {
 		sleep 2
 		echo "Starting ICQ transport - external component ..."
 		${JICQEXT} > /dev/null 2>&1 &
+		RETVAL=$?
 		# echo
 	fi
 }
@@ -92,6 +100,7 @@ start_jab() {
 stop_ser() {
 	echo -n "Stopping SIP router ..."
 	killproc ${BIN}
+	RETVAL=$?
 	echo
 	# killall ser
 	# echo " [ OK ]"
@@ -104,6 +113,7 @@ start_ser() {
 	then
 		#### Run by root
 		su - ${USR} -c "cd ${HM}; ${HM}/${BIN} -f ${ETC} -w ${MYDIR}"  > /dev/null 2>&1
+		RETVAL=$?
 	else
 		#### Run by other users
 		#cd $MYDIR
@@ -118,6 +128,7 @@ start_ser() {
 
 		cd ${HM}
 		${HM}/${BIN} -f ${ETC} -w ${MYDIR}
+		RETVAL=$?
 
 		# man setuid: If uid is different from the old effective uid,
 		# the process will be forbidden from eaving core dumps.
@@ -152,4 +163,4 @@ case "$1" in
 	;;
 esac
 echo
-exit $?
+exit $RETVAL
