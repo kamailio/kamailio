@@ -248,7 +248,7 @@ int preload_udomain(udomain_t* _d)
 		callid.len  = strlen(callid.s);
 
 		if (use_domain) {
-			domain    = (char*)VAL_STRING(ROW_VALUES(row) + 7);
+			domain    = (char*)VAL_STRING(ROW_VALUES(row) + 8);
 			snprintf(b, 256, "%.*s@%s", user.len, user.s, domain);
 			user.s = b;
 			user.len = strlen(b);
