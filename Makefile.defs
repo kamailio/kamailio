@@ -7,7 +7,7 @@
 #version number
 VERSION = 0
 PATCHLEVEL = 8
-SUBLEVEL = 9
+SUBLEVEL =   10-pre3
 EXTRAVERSION = 
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
@@ -505,6 +505,11 @@ ifeq ($(OS), openbsd)
 	LIBS= -lfl  -lc_r
 endif
 	
+ifeq ($(OS), netbsd)
+	DEFS+=-DHAVE_SOCKADDR_SA_LEN
+	YACC=yacc
+	LIBS= -lfl  -lc_r
+endif
 
 ifneq (,$(findstring CYGWIN, $(OS)))
 	#cygwin is the same as common
