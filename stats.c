@@ -1,3 +1,10 @@
+/* 
+ * $Id $
+ *
+ * Stats reporting code. It reports through SIG_USR1 and if loaded
+ * through the SNMP module
+ */
+
 #ifdef STATS
 #include "stats.h"
 #include <stdio.h>
@@ -297,8 +304,8 @@ int stats_register()
 	f.new_func = (void*) find_export("snmp_new_handler", 1);
 	f.free_func = (void*) find_export("snmp_free_handler", 1);
 	if(!f.reg_func || !f.new_func || !f.free_func) {
-		LOG(L_WARN, "%s: Couldn't find necessary SNMP functions. Is the "
-			"module loaded?\n", func);
+		LOG(L_INFO, "%s: Couldn't find SNMP module\n");
+		LOG(L_INFO, "%s: Not reporting stats through SNMP\n", func);
 		return 0;
 	}
 
