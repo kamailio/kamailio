@@ -156,7 +156,6 @@ struct module_exports exports = {
 static int child_init(int rank)
 {
 	     /* Close connection opened in mod_init */
-	db_close(db_handle);
 	db_handle = db_init(db_url.s);
 	if (!db_handle) {
 		LOG(L_ERR, "auth_db:init_child(): Unable to connect database\n");
@@ -184,28 +183,17 @@ static int mod_init(void)
 		return -1;
 	}
 
-	     /* Open database connection in parent */
-	db_handle = db_init(db_url.s);
-	if (!db_handle) {
-		LOG(L_ERR, "auth_db:mod_init(): Error while connecting database\n");
-		return -1;
-	} else {
-		LOG(L_INFO, "auth_db:mod_init(): Database connection opened successfuly\n");
-	}
-
 	pre_auth_func = (pre_auth_f)find_export("pre_auth", 0, 0);
 	post_auth_func = (post_auth_f)find_export("post_auth", 0, 0);
 
 	if (!(pre_auth_func && post_auth_func)) {
 		LOG(L_ERR, "auth_db:mod_init(): This module requires auth module\n");
-		db_close(db_handle);
 		return -2;
 	}
 
 	sl_reply = find_export("sl_send_reply", 2, 0);
 	if (!sl_reply) {
 		LOG(L_ERR, "auth_db:mod_init(): This module requires sl module\n");
-		db_close(db_handle);
 		return -2;
 	}
 
@@ -243,7 +231,16 @@ static int str_fixup(void** param, int param_no)
 		name.s = (char*)*param;
 		name.len = strlen(name.s);
 
+		db_handle = db_init(db_url.s);
+		if (!db_handle) {
+			LOG(L_ERR, "auth_db:str_fixup(): Unable to open database connection\n");
+			return -1;
+		}
+
 		ver = table_version(db_handle, &name);
+
+		db_close(db_handle);
+		db_handle = 0;
 
 		if (ver < 0) {
 			LOG(L_ERR, "auth_db:str_fixup(): Error while querying table version\n");
