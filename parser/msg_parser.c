@@ -409,12 +409,13 @@ returns: fills uri & returns <0 on error or 0 if ok */
 int parse_uri(char *buf, int len, struct sip_uri* uri)
 {
 	char* next, *end;
-	char *user, *passwd, *host, *port, *params, *headers;
+	char *user, *passwd, *host, *port, *params, *headers, *ipv6;
 	int host_len, port_len, params_len, headers_len;
 	int ret;
 	
 
 	ret=0;
+	host_len=0;
 	end=buf+len;
 	memset(uri, 0, sizeof(struct sip_uri)); /* zero it all, just to be sure */
 	/* look for "sip:"*/;
@@ -484,11 +485,34 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 		ret=E_UNSPEC;
 		goto error;
 	}
-	headers=q_memchr(host,'?',end-host);
-	params=q_memchr(host,';',end-host);
-	port=q_memchr(host,':',end-host);
-	host_len=(port)?port-host:(params)?params-host:(headers)?headers-host:
-		end-host;
+	next=host;
+	ipv6=q_memchr(host, '[', end-host);
+	if (ipv6){
+		host=ipv6+1; /* skip '[' in "[3ffe::abbcd]" */
+		if (host>=end){
+			LOG(L_DBG, "ERROR: parse_uri: bad ipv6 uri\n");
+			ret=E_UNSPEC;
+			goto error;
+		}
+		ipv6=q_memchr(host, ']', end-host);
+		if ((ipv6==0)||(ipv6==host)){
+			LOG(L_DBG, "ERROR: parse_uri: bad ipv6 uri - null address"
+					" or missing ']'\n");
+			ret=E_UNSPEC;
+			goto error;
+		}
+		host_len=ipv6-host;
+		next=ipv6;
+	}
+
+		
+	headers=q_memchr(next,'?',end-next);
+	params=q_memchr(next,';',end-next);
+	port=q_memchr(next,':',end-next);
+	if (host_len==0){ /* host not ipv6 addr */
+		host_len=(port)?port-host:(params)?params-host:(headers)?headers-host:
+				end-host;
+	}
 	/* get host */
 	uri->host.s=pkg_malloc(host_len+1);
 	if (uri->host.s==0){
