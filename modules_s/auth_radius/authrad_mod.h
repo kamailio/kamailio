@@ -1,8 +1,7 @@
 /*
  * $Id$
  *
- * Common function needed by authorize
- * and challenge related functions
+ * Digest Authentication - Radius support
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -29,36 +28,18 @@
  */
 
 
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef AUTHRAD_MOD_H
+#define AUTHRAD_MOD_H
 
-#include "../../parser/msg_parser.h"
-#include "../../str.h"
+#include "../auth/api.h"
 
 
-/*
- * Send a response
- */
-int send_resp(struct sip_msg* _m, int _code, char* _reason, char* _hdr, int _hdr_len);
-
-char* auth_fnq(str* _b, char _c);
+extern pre_auth_f pre_auth_func;
+extern post_auth_f post_auth_func;
 
 /*
- * Cut username part of a URL
+ * Module parameter variables
  */
-int auth_get_username(str* _s);
-
-/*
- * Check that To header is properly parsed and if so,
- * return pointer to parsed To header.  Otherwise return NULL.
- */
-struct to_body *get_parsed_to_body(struct sip_msg *_msg);
-
-/*
- * Check that From header is properly parsed and if so,
- * return pointer to parsed From header.  Otherwise return NULL.
- */
-struct to_body *get_parsed_from_body(struct sip_msg *_msg);
-
-
-#endif /* COMMON_H */
+extern char* radius_config; /* radiusclient configuration file */
+ 
+#endif /* AUTHRAD_MOD_H */

@@ -1,8 +1,7 @@
-/* domain.h v 0.1 2003/1/20
+/*
+ * Include file for Radius digest.
  *
- * Header file for readius based checks
- *
- * Copyright (C) 2002-2003 Juha Heinanen
+ * Copyright (C) 2001-2003 Fhg Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -26,24 +25,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "../../str.h"
+#include "../../parser/digest/digest_parser.h"
 
-#ifndef CHECKS_H
-#define CHECKS_H
-
-
-#include "../../parser/msg_parser.h"
-
-
-/*
- * Check from radius if Request URI exists
- */
-int radius_does_uri_exist(struct sip_msg* _msg,  char* _str1, char* _str2);
-
-
-/*
- * Check from radius if digest user belongs to a give group
- */
-int radius_is_in_group(struct sip_msg* _msg,  char* _group, char* _str2);
-
-
-#endif /* CHECKS_H */
+int radius_authorize_sterman(dig_cred_t* cred, str* method, str* uri); 
