@@ -33,6 +33,8 @@
  *  2003-03-11  updated to the new module interface (andrei)
  *  2003-03-16  flags export parameter added (janakj)
  *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
+ *  2004-08-15  max value of max-fwd header is configurable via max_limit
+ *              module param (bogdan)
  */
 
 
@@ -49,6 +51,7 @@
 
 MODULE_VERSION
 
+static int max_limit = 16;
 
 static int fixup_maxfwd_header(void** param, int param_no);
 static int w_process_maxfwd_header(struct sip_msg* msg,char* str,char* str2);
@@ -60,15 +63,21 @@ static cmd_export_t cmds[]={
 	{0,0,0,0,0}
 };
 
+static param_export_t params[]={
+	{"max_limit",    INT_PARAM,  &max_limit},
+	{0,0,0}
+};
+
+
 
 #ifdef STATIC_MAXFWD
 struct module_exports maxfwd_exports = {
 #else
 struct module_exports exports= {
 #endif
-	"maxfwd_module",
+	"maxfwd",
 	cmds,
-	0, /* no parameters */
+	params,
 	mod_init,
 	(response_function) 0,
 	(destroy_function) 0,
@@ -78,13 +87,16 @@ struct module_exports exports= {
 
 
 
-
 static int mod_init(void)
 {
-	fprintf(stderr, "Maxfwd module- initializing\n");
+	LOG(L_NOTICE, "Maxfwd module- initializing\n");
+	if ( max_limit>255 ) {
+		LOG(L_ERR,"ERROR:maxfwd:init: max limit (%d) to high (<255)\n",
+			max_limit);
+		return -1;
+	}
 	return 0;
 }
-
 
 
 
@@ -97,15 +109,21 @@ static int fixup_maxfwd_header(void** param, int param_no)
 		code=str2s(*param, strlen(*param), &err);
 		if (err==0){
 			if (code>255){
-				LOG(L_ERR, "MAXFWD module:fixup_maxfwd_header: "
+				LOG(L_ERR, "ERROR:maxfwd:fixup_maxfwd_header: "
 					"number to big <%ld> (max=255)\n",code);
+				return E_UNSPEC;
+			}
+			if ( max_limit && code>max_limit) {
+				LOG(L_ERR, "ERROR:maxfwd:fixup_maxfwd_header: "
+					"default value <%ld> bigger than max limit(%d)\n",
+					code, max_limit);
 				return E_UNSPEC;
 			}
 			pkg_free(*param);
 			*param=(void*)code;
 			return 0;
 		}else{
-			LOG(L_ERR, "MAXFWD module:fixup_maxfwd_header: bad  number <%s>\n",
+			LOG(L_ERR, "ERROR:maxfwd:fixup_maxfwd_header: bad  number <%s>\n",
 					(char*)(*param));
 			return E_UNSPEC;
 		}
@@ -122,8 +140,7 @@ static int w_process_maxfwd_header(struct sip_msg* msg, char* str1,char* str2)
 	str mf_value;
 
 	val=is_maxfwd_present(msg, &mf_value);
-	switch (val)
-	{
+	switch (val) {
 		case -1:
 			add_maxfwd_header( msg, (unsigned int)(unsigned long)str1 );
 			break;
@@ -132,8 +149,14 @@ static int w_process_maxfwd_header(struct sip_msg* msg, char* str1,char* str2)
 		case 0:
 			return -1;
 		default:
+			if (max_limit && val>max_limit){
+				LOG(L_NOTICE, "NOTICE:maxfwd:process_maxfwd_header: "
+					"value %d decreased to %d\n", val, max_limit);
+				val = max_limit+1;
+			}
 			if ( decrement_maxfwd(msg, val, &mf_value)!=1 )
-				LOG( L_ERR,"ERROR: MAX_FWD module : error on decrement!\n");
+				LOG( L_ERR,"ERROR:maxfwd:process_maxfwd_header: "
+					"decrement failed!\n");
 	}
 	return 1;
 }

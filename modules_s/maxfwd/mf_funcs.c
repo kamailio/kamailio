@@ -28,6 +28,7 @@
  * ----------
  * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2002-01-28 scratchpad removed (jiri)
+ * 2004-08-15 max value of max-fwd header is configurable (bogdan)
  */
 
 
@@ -47,14 +48,11 @@
 int is_maxfwd_present( struct sip_msg* msg , str *foo)
 {
 	int x, err;
-	/* hey man, run -Wall before committing ... -jiri
-	char c; */
 
 	/* lookup into the message for MAX FORWARDS header*/
 	if ( !msg->maxforwards ) {
-		DBG("DEBUG : is_maxfwd_present: searching for max_forwards header\n");
 		if  ( parse_headers( msg , HDR_MAXFORWARDS, 0 )==-1 ){
-			LOG( L_ERR , "ERROR: is_maxfwd_present :"
+			LOG( L_ERR , "ERROR:maxfwd:is_maxfwd_present :"
 				" parsing MAX_FORWARD header failed!\n");
 			return -2;
 		}
@@ -62,8 +60,6 @@ int is_maxfwd_present( struct sip_msg* msg , str *foo)
 			DBG("DEBUG: is_maxfwd_present: max_forwards header not found!\n");
 			return -1;
 		}
-	}else{
-		DBG("DEBUG : is_maxfwd_present: max_forward header already found!\n");
 	}
 
 	/* if header is present, trim to get only the string containing numbers */
@@ -72,15 +68,11 @@ int is_maxfwd_present( struct sip_msg* msg , str *foo)
 	/* convert from string to number */
 	x = str2s( foo->s,foo->len,&err);
 	if (err){
-		LOG(L_ERR, "ERROR: is_maxfwd_zero :"
+		LOG(L_ERR, "ERROR:maxfwd:is_maxfwd_present:"
 			" unable to parse the max forwards number !\n");
 		return -2;
 	}
-	if (x > 255){
-		LOG(L_NOTICE, "is_maxfwd_present: value %d decreased to 255\n", x);
-		x = 255;
-	}
-	DBG("DEBUG: is_maxfwd_present: value = %d \n",x);
+	DBG("DEBUG:maxfwd:is_maxfwd_present: value = %d \n",x);
 	return x;
 }
 
@@ -90,21 +82,21 @@ int is_maxfwd_present( struct sip_msg* msg , str *foo)
 int decrement_maxfwd( struct sip_msg* msg , int x, str *mf_val)
 {
 	int n;
+	int i;
 
 	/* double check */
-	if ( !msg->maxforwards )
-	{
+	if ( !msg->maxforwards ) {
 		LOG( L_ERR , "ERROR: decrement_maxfwd :"
-		  " MAX_FORWARDS header not found !\n");
+			" MAX_FORWARDS header not found !\n");
 		goto error;
 	}
 
 	/*rewritting the max-fwd value in the message (buf and orig)*/
 	n = btostr(mf_val->s,x-1);
-	if ( n<mf_val->len )
-		mf_val->s[n] = ' ';
-	return 1;
+	for( i=n ; i<mf_val->len ; i++ )
+		mf_val->s[i] = ' ';
 
+	return 1;
 error:
 	return -1;
 }
@@ -119,8 +111,7 @@ int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
 	struct lump*  anchor;
 
 	/* double check just to be sure */
-	if ( msg->maxforwards )
-	{
+	if ( msg->maxforwards ) {
 		LOG( L_ERR , "ERROR: add_maxfwd_header :"
 			" MAX_FORWARDS header already exists (%p) !\n",msg->maxforwards);
 		goto error;
@@ -131,8 +122,7 @@ int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
 
 	buf = (char*)pkg_malloc( len );
 	if (!buf) {
-		LOG(L_ERR, "ERROR : add_maxfwd_header : "
-		  "No memory left\n");
+		LOG(L_ERR, "ERROR : add_maxfwd_header : No memory left\n");
 		return -1;
 	}
 	memcpy( buf , "Max-Forwards: ", 14 );
