@@ -127,7 +127,7 @@ void shm_mem_destroy();
 
 
 inline static void* _shm_malloc(unsigned int size, 
-	char *file, char *function, int line )
+	const char *file, const char *function, int line )
 {
 	void *p;
 	
@@ -168,7 +168,8 @@ do { \
 
 
 
-void* _shm_resize(void* ptr, unsigned int size, char* f, char* fn, int line);
+void* _shm_resize(void* ptr, unsigned int size, const char* f, const char* fn,
+					int line);
 #define shm_resize(_p, _s ) _shm_resize((_p), (_s), \
 		__FILE__, __FUNCTION__, __LINE__ )
 /*#define shm_resize(_p, _s ) shm_realloc( (_p), (_s))*/

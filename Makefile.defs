@@ -50,7 +50,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   99
-EXTRAVERSION = -dev24
+EXTRAVERSION = -dev25
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -778,7 +778,14 @@ endif
 ifeq ($(CC_NAME), suncc)
 	LIBS= -lfast -ldl -lresolv
 endif
-	LIBS+= -L/usr/local/lib -lfl -lxnet -lrt -lnsl 
+	OLD_SOLARIS= $(shell echo "$(OSREL)" | \
+				sed -e 's/^5\.[0-6][^0-9]*$$/yes/' )
+	LIBS+= -L/usr/local/lib -lfl -lxnet -lnsl 
+ifeq	($(OLD_SOLARIS), yes)
+		LIBS+=-lposix4
+else
+		LIBS+=-lrt
+endif
 	# -lrt needed for sched_yield
 endif
 

@@ -301,7 +301,7 @@ static inline struct qm_frag* qm_find_free(struct qm_block* qm,
 static inline
 #ifdef DBG_QM_MALLOC
 int split_frag(struct qm_block* qm, struct qm_frag* f, unsigned long new_size,
-				char* file, char* func, unsigned int line)
+				const char* file, const char* func, unsigned int line)
 #else
 int split_frag(struct qm_block* qm, struct qm_frag* f, unsigned long new_size)
 #endif
@@ -348,7 +348,7 @@ int split_frag(struct qm_block* qm, struct qm_frag* f, unsigned long new_size)
 
 #ifdef DBG_QM_MALLOC
 void* qm_malloc(struct qm_block* qm, unsigned long size,
-					char* file, char* func, unsigned int line)
+					const char* file, const char* func, unsigned int line)
 #else
 void* qm_malloc(struct qm_block* qm, unsigned long size)
 #endif
@@ -411,7 +411,7 @@ void* qm_malloc(struct qm_block* qm, unsigned long size)
 
 
 #ifdef DBG_QM_MALLOC
-void qm_free(struct qm_block* qm, void* p, char* file, char* func, 
+void qm_free(struct qm_block* qm, void* p, const char* file, const char* func, 
 				unsigned int line)
 #else
 void qm_free(struct qm_block* qm, void* p)
@@ -496,7 +496,7 @@ void qm_free(struct qm_block* qm, void* p)
 
 #ifdef DBG_QM_MALLOC
 void* qm_realloc(struct qm_block* qm, void* p, unsigned long size,
-					char* file, char* func, unsigned int line)
+					const char* file, const char* func, unsigned int line)
 #else
 void* qm_realloc(struct qm_block* qm, void* p, unsigned long size)
 #endif

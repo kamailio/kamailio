@@ -140,7 +140,7 @@ static inline
 #ifdef DBG_F_MALLOC 
 void fm_split_frag(struct fm_block* qm, struct fm_frag* frag,
 					unsigned long size,
-					char* file, char* func, unsigned int line)
+					const char* file, const char* func, unsigned int line)
 #else
 void fm_split_frag(struct fm_block* qm, struct fm_frag* frag,
 					unsigned long size)
@@ -234,7 +234,7 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size)
 
 #ifdef DBG_F_MALLOC
 void* fm_malloc(struct fm_block* qm, unsigned long size,
-					char* file, char* func, unsigned int line)
+					const char* file, const char* func, unsigned int line)
 #else
 void* fm_malloc(struct fm_block* qm, unsigned long size)
 #endif
@@ -297,7 +297,7 @@ found:
 
 
 #ifdef DBG_F_MALLOC
-void fm_free(struct fm_block* qm, void* p, char* file, char* func, 
+void fm_free(struct fm_block* qm, void* p, const char* file, const char* func, 
 				unsigned int line)
 #else
 void fm_free(struct fm_block* qm, void* p)
@@ -338,7 +338,7 @@ void fm_free(struct fm_block* qm, void* p)
 
 #ifdef DBG_F_MALLOC
 void* fm_realloc(struct fm_block* qm, void* p, unsigned long size,
-					char* file, char* func, unsigned int line)
+					const char* file, const char* func, unsigned int line)
 #else
 void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 #endif
