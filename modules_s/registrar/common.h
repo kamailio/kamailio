@@ -36,18 +36,6 @@
 
 
 /*
- * Find a character occurence that is not quoted
- */
-char* find_not_quoted(str* _s, char _c);
-
-
-/*
- * Extract username part from URI
- */
-int get_username(str* _s);
-
-
-/*
  * Extract Address Of Record
  */
 int extract_aor(str* _uri, str* _a);
