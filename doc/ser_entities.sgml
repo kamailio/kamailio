@@ -31,6 +31,7 @@
 <!ENTITY pstn "<acronym>PSTN</acronym>">
 <!ENTITY http "<acronym>HTTP</acronym>">
 <!ENTITY uri "<acronym>URI</acronym>">
+<!ENTITY url "<acronym>URL</acronym>">
 <!ENTITY uac "<acronym>UAC</acronym>">
 <!ENTITY uas "<acronym>UAS</acronym>">
 <!ENTITY nat "<acronym>NAT</acronym>">
