@@ -214,8 +214,8 @@ static int avp_query_db(str* key)
     VAL_NULL(&(vals[0])) = 0;
     VAL_STR(&(vals[0]))  = *key;
 
-    db_use_table(db_handle,avp_table);
-    err = db_query(db_handle,keys,ops,vals,cols,1,2,0,&res);
+    dbf.use_table(db_handle,avp_table);
+    err = dbf.query(db_handle,keys,ops,vals,cols,1,2,0,&res);
     if(err){
 	LOG(L_ERR,"ERROR: avp: db_query() failed.");
 	err=-1;
@@ -254,7 +254,7 @@ static int avp_query_db(str* key)
     err = 1;
 
  error:
-    db_free_query(db_handle,res);
+    dbf.free_result(db_handle,res);
     return err;
 }
 
