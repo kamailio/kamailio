@@ -56,7 +56,9 @@ Chapter 1. User's Guide
    perform some sanity checks over the credentials to make sure
    that only well formed credentials will get to the server. We
    have implemented radius authentication according to
-   draft-sterman-aaa-sip-00
+   draft-sterman-aaa-sip-00. This module requires radiusclient
+   library version 0.4.1 or higher which is available from
+   http://developer.berlios.de/projects/radiusclient-ng/.
 
    How to configure radius server -- more detailed description --
    TBD.
@@ -97,7 +99,7 @@ modparam("auth_radius", "radius_config", "/etc/radiusclient.conf")
    radius client include files for numbers to be put in this
    parameter if you need to change it.
 
-   Default value is "PW_SIP (15)".
+   Default value is "15".
 
    Example 1-2. radius_config usage
 modparam("auth_radius", "service_type", 15)
@@ -134,7 +136,7 @@ modparam("auth_radius", "service_type", 15)
 
    Example 1-3. radius_www_authorize usage
 ...
-if (radius_www_authorize("iptel.org")) {
+if (!radius_www_authorize("iptel.org")) {
     www_challenge("iptel.org", "1");
 };
 ...
