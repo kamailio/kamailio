@@ -303,7 +303,7 @@ Known Issues
 - we don't have authentication merging on forking
 - local ACK/CANCELs copy'n'pastes Route and ignores deleted
   Routes
-- 6xx should be delayed 
+- 6xx should be delayed
 - possibly, performance could be improved by not parsing non-INVITEs,
   as they do not be replied with 100, and do not result in ACK/CANCELs,
   and other things which take parsing. However, we need to rethink
@@ -314,14 +314,10 @@ Known Issues
   CSeq in replies until reply branch matches branch of an INVITE/CANCEL
   in transaction table
 - t_replicate should be done more cleanly -- Vias, Routes, etc. should
-  be removed from a message prior to replicating it
-- SNMP support
-- lookup fails to recognize subsequent requests which have additional 
-  leading spaces in header field values
-- make UAC session-aware (as opposed to just transaction aware) -- needed
-  for keeing SUB-NOT dialog state, etc. Currently, there are only
-  place-holders for in in TM.
-- places labeled with "HACK" strongly deserve beautification
+  be removed from a message prior to replicating it (well, does not matter
+  any longer so much as there is a new replication module)
+- SNMP support (as nobody cares about SNMP, in particular for TM, I will
+  drop this item soon)
 
 
  * ***************************************************
