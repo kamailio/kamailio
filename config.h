@@ -67,7 +67,7 @@
 #define MAX_URI_SIZE 1024	/* used when rewriting URIs */
 
 #define MY_VIA "Via: SIP/2.0/UDP "
-#define MY_VIA_LEN 17
+#define MY_VIA_LEN (sizeof(MY_VIA) - 1)
 
 #define CONTENT_LENGTH "Content-Length: "
 #define CONTENT_LENGTH_LEN (sizeof(CONTENT_LENGTH)-1)
@@ -83,35 +83,37 @@
 #define MAX_WARNING_LEN  256
 		
 #define MY_BRANCH ";branch="
-#define MY_BRANCH_LEN 8
-
+#define MY_BRANCH_LEN (sizeof(MY_BRANCH) - 1)
 
 #define MAX_PORT_LEN 7 /* ':' + max 5 letters + \0 */
 #define CRLF "\r\n"
-#define CRLF_LEN 2
+#define CRLF_LEN (sizeof(CRLF) - 1)
 
 #define RECEIVED        ";received="
-#define RECEIVED_LEN 10
+#define RECEIVED_LEN (sizeof(RECEIVED) - 1)
 
 #define TRANSPORT_PARAM ";transport="
-#define TRANSPORT_PARAM_LEN 11
+#define TRANSPORT_PARAM_LEN (sizeof(TRANSPORT_PARAM) - 1)
 
 #define TOTAG_TOKEN ";tag="
 #define TOTAG_TOKEN_LEN (sizeof(TOTAG_TOKEN)-1)
 
 #define RPORT ";rport="
-#define RPORT_LEN 7
+#define RPORT_LEN (sizeof(RPORT) - 1)
 
 #define ID_PARAM ";i="
-#define ID_PARAM_LEN 3
+#define ID_PARAM_LEN (sizeof(ID_PARAM) - 1)
 
 #define SRV_UDP_PREFIX "_sip._udp."
+#define SRV_UDP_PREFIX_LEN (sizeof(SRV_UDP_PREFIX) - 1)
+
 #define SRV_TCP_PREFIX "_sip._tcp."
+#define SRV_TCP_PREFIX_LEN (sizeof(SRV_TCP_PREFIX) - 1)
+
 #define SRV_TLS_PREFIX "_sips._tcp."
-#define SRV_UDP_PREFIX_LEN 10
-#define SRV_TCP_PREFIX_LEN 10
-#define SRV_TLS_PREFIX_LEN 11
-#define SRV_MAX_PREFIX_LEN 11
+#define SRV_TLS_PREFIX_LEN (sizeof(SRV_TLS_PREFIX) - 1)
+
+#define SRV_MAX_PREFIX_LEN SRV_TLS_PREFIX_LEN
 
 /*used only if PKG_MALLOC is defined*/
 #define PKG_MEM_POOL_SIZE 1024*1024
