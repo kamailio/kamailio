@@ -45,7 +45,7 @@ int free_row(db_row_t* _r)
 		return FALSE;
 	}
 #endif
-	pkg_free(ROW_VALUES(_r));
+	if (ROW_VALUES(_r)) pkg_free(ROW_VALUES(_r));
 	return TRUE;
 }
 

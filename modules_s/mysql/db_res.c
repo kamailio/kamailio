@@ -179,8 +179,8 @@ static int free_columns(db_res_t* _r)
 		return FALSE;
 	}
 #endif
-	pkg_free(RES_NAMES(_r));
-	pkg_free(RES_TYPES(_r));
+	if (RES_NAMES(_r)) pkg_free(RES_NAMES(_r));
+	if (RES_TYPES(_r)) pkg_free(RES_TYPES(_r));
 	return TRUE;
 }
 
@@ -197,6 +197,6 @@ static int free_rows(db_res_t* _r)
 	for(i = 0; i < RES_ROW_N(_r); i++) {
 		free_row(&(RES_ROWS(_r)[i]));
 	}
-	pkg_free(RES_ROWS(_r));
+	if (RES_ROWS(_r)) pkg_free(RES_ROWS(_r));
 	return TRUE;
 }

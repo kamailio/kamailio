@@ -41,7 +41,8 @@ static struct module_exports sl_exports= {
 	2,
 	(response_function) 0,
 	(destroy_function) 0,
-	0
+	0,
+	0  /* per-child init function */
 };
 
 

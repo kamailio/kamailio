@@ -13,25 +13,25 @@
 #include "to_parser.h"
 #include "db.h"
 #include "../../action.h"
+#include "defs.h"
 
 #define TABLE_NAME "location"
 
 
-#define HDR_FROM 10
-#define HDR_CONTACT 11
-#define HDR_EXPIRES 12
-
 #define DB_URL "sql://janakj:heslo@localhost/ser"
-
 
 static int save_contact(struct sip_msg*, char*, char*);
 static int lookup_contact(struct sip_msg*, char*, char*);
 static int rwrite(struct sip_msg* _msg, char* _c);
+static int child_init(int rank);
 
 void destroy(void);
 
 
 db_con_t* db_con;
+
+
+int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
 
 
 static struct module_exports usrloc_exports= {	"usrloc", 
@@ -48,18 +48,30 @@ static struct module_exports usrloc_exports= {	"usrloc",
 						2,
 						0,
 						destroy,
-						0 /* oncancel function */
+						0,          /* oncancel function */
+						0
 };
 
 
 static cache_t* c;
 
 
+#ifdef STATIC_USRLOC
+struct module_exports* usrloc_mod_register()
+#else
 struct module_exports* mod_register()
+#endif
 {
 	location_t* loc;
 	printf( "Registering user location module\n");
 
+	sl_reply = find_export("sl_send_reply", 2);
+
+	if (!sl_reply) {
+		LOG(L_ERR, "mod_register(): This module requires sl module\n");
+	}
+	
+#ifdef USE_DB
 	if (bind_dbmod()) {
 		LOG(L_ERR, "mod_register(): Unable to bind database module\n");
 	}
@@ -68,43 +80,65 @@ struct module_exports* mod_register()
 	if (!db_con) {
 		LOG(L_ERR, "mod_register(): Unable to connect database\n");
 	}
-
- 	c = create_cache(512, db_con, TABLE_NAME);
+#endif
+ 	c = create_cache(512, TABLE_NAME);
 	if (c == NULL) {
 		LOG(L_ERR, "mod_register(): Unable to create cache\n");
 	}
+
+#ifdef USE_DB
+	cache_use_connection(c, db_con);
+	printf("ahoj\n");
+
 	preload_cache(c);
+	printf("choj\n");
+
+#endif
 	return &usrloc_exports;
+}
+
+
+static int child_init(int rank)
+{
+#ifdef USE_DB
+	printf("bhoj\n");
+	if (rank != 0) {
+		printf("Initializing child %d\n", rank);
+		db_close(db_con);
+		db_con = db_init(DB_URL);
+		if (!db_con) {
+			LOG(L_ERR, "child_init(): Unable to connect database\n");
+			return -1;
+		}
+		cache_use_connection(c, db_con);
+		printf("%d OK\n", rank);
+	}
+#endif
+	return 0;
 }
 
 
 void destroy(void)
 {
 	free_cache(c);
+#ifdef USE_DB
 	db_close(db_con);
+#endif
 }
 
 
 static int send_200(struct sip_msg* _msg, location_t* _loc)
 {
-	printf("Sending 200 OK\n");
+	sl_reply(_msg, (char*)200, "OK");
 	return TRUE;
 }
 
 
 static int send_400(struct sip_msg* _msg)
 {
-	printf("Sending 400 Bad Request\n");
+	sl_reply(_msg, (char*)400, "Bad Request");
 	return TRUE;
 }
-
-
-static int send_500(struct sip_msg* _msg)
-{
-	printf("Sendig 500 Server Error response\n");
-	return TRUE;
-}
-
 
 
 static inline int process_star_loc(struct sip_msg* _msg, cache_t* _c, location_t* _loc)
@@ -162,8 +196,8 @@ static inline int process_contacts(struct sip_msg* _msg, cache_t* _c, location_t
 
 	el = cache_get(_c, _loc->user.s);
 	if (el) {
-		DBG("process_contacts(): Location found in cache\n");
-		DBG("process_contacts(): Updating location\n");
+		printf("process_contacts(): Location found in cache\n");
+		printf("process_contacts(): Updating location\n");
 		if (cache_update(_c, el, _loc) == FALSE) {
 			LOG(L_ERR, "process_contacts(): Error while updating bindings in cache\n");
 			cache_release_elem(el);
@@ -186,9 +220,11 @@ static inline int process_contacts(struct sip_msg* _msg, cache_t* _c, location_t
 			LOG(L_ERR, "process_contacts(): Error while removing zero expires contacts\n");
 			return FALSE;
 		}
-		if (cache_put(_c, _loc) == FALSE) {
-			LOG(L_ERR, "process_contacts(): Error while inserting location\n");
-			return FALSE;
+		if (_loc->contacts) {
+			if (cache_put(_c, _loc) == FALSE) {
+				LOG(L_ERR, "process_contacts(): Error while inserting location\n");
+				return FALSE;
+			}
 		}
 		DBG("process_contacts(): Sending 200 OK\n");
 		if (send_200(_msg, _loc) == FALSE) {

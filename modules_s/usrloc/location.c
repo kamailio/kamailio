@@ -14,6 +14,7 @@
 #include "to_parser.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
+#include "defs.h"
 
 /*
  * Function prototypes
@@ -22,7 +23,7 @@
 static inline int get_expires_hf(struct sip_msg* _msg);
 static inline int parse_all_headers(struct sip_msg* _msg);
 static inline int make_to_copy(char** _to, struct sip_msg* _msg);
-static inline int process_all_contacts(location_t* _loc, struct sip_msg* _msg, int expires, int* _star,
+static inline int process_all_contacts(location_t* _loc, struct sip_msg* _msg, int _expires, int* _star,
 				       const char* _callid, int _cseq);
 static inline int get_CSeq(struct sip_msg* _msg, int* _cseq);
 static inline int get_CallID(struct sip_msg* _msg, char** _callid);
@@ -77,6 +78,9 @@ static inline int parse_all_headers(struct sip_msg* _msg)
 		return FALSE;
 	}
 
+	     /* To: HF contains Addres of Record, this will be
+	      * needed
+	      */
 	if (!_msg->to) {
 		LOG(L_ERR, "parse_all_headers(): Unable to find To header field\n");
 		return FALSE;
@@ -141,8 +145,10 @@ static inline int process_all_contacts(location_t* _loc, struct sip_msg* _msg, i
 	ptr = _msg->headers;
 	while(ptr) {
 		if (ptr->type == HDR_CONTACT) {
-			     /* FIXME: Again, do I really need this ? */
+
+			/* FIXME: Again, do I really need this ? */
 			ptr = remove_crlf(ptr);
+			ptr->body.s[ptr->body.len] = '\0';
 			memcpy(contact, ptr->body.s, ptr->body.len + 1);
 			
 			if (parse_contact_hdr(contact, _loc, _expires, _star, _callid, _cseq) == FALSE) {
@@ -187,6 +193,7 @@ static inline int get_CallID(struct sip_msg* _msg, char** _callid)
 		return FALSE;
 	}
 #endif
+	_msg->callid->body.s[_msg->callid->body.len] = '\0';
 	*_callid = trim(_msg->callid->body.s);
 	len = strlen(*_callid);
 
@@ -203,7 +210,7 @@ static inline int get_CallID(struct sip_msg* _msg, char** _callid)
  */
 int msg2loc(struct sip_msg* _msg, location_t** _loc, int* _star, int* _expires)
 {
-	char* to_user, *to, *callid;
+	char* to_user, *callid;
 	struct hdr_field* ptr;
 	int cseq;
 	
@@ -219,14 +226,10 @@ int msg2loc(struct sip_msg* _msg, location_t** _loc, int* _star, int* _expires)
 		return FALSE;
 	}
 
-	     /* Make a temporary copy of To */
-	if (make_to_copy(&to, _msg) == FALSE) {
-		LOG(L_ERR, "msg2loc(): Error in make_to_copy\n");
-		return FALSE;
-	}
-
 	     /* Extract username from To URI */
-	to_user = get_to_username(to, _msg->to->body.len);
+	to_user = get_to_username(_msg->to->body.s, _msg->to->body.len);
+	     /* Not needed anymore */
+	    
 	if (!to_user) {
 		LOG(L_ERR, "msg2loc(): Error while parsing To header field \n");
 		return FALSE;
@@ -237,13 +240,10 @@ int msg2loc(struct sip_msg* _msg, location_t** _loc, int* _star, int* _expires)
 		return FALSE;
 	}
 
-	     /* Not needed anymore */
-	pkg_free(to);
-	    
 	*_expires = get_expires_hf(_msg);
 	
 	if (get_CSeq(_msg, &cseq) == FALSE) {
-		LOG(L_ERR, "msg2loc()L Unable to get CSeq value\n");
+		LOG(L_ERR, "msg2loc(): Unable to get CSeq value\n");
 		return FALSE;
 	}
 
@@ -269,17 +269,11 @@ int create_location(location_t** _loc, const char* _user)
 {
 	int len;
 #ifdef PARANOID
-	if (!_loc) {
-		LOG(L_ERR, "create_location(): Invalid _loc parameter value\n");
+	if ((!_loc) || (!_user)) {
+		LOG(L_ERR, "create_location(): Invalid parameter value\n");
 		return FALSE;
 	}
-	if (!_user) {
-		LOG(L_ERR, "create_location(): Invalid _user parameter value\n");
-		return FALSE;
-	}
-
 #endif
-
 	*_loc = (location_t*)pkg_malloc(sizeof(location_t));
 	if (!(*_loc)) {
 		LOG(L_ERR, "create_location(): No memory left\n");
@@ -410,6 +404,8 @@ void free_location(location_t* _loc)
 		_loc->contacts = ptr->next;
 		free_contact(ptr);
 	}
+
+	pkg_free(_loc);
 }
 
 
@@ -506,6 +502,7 @@ int remove_zero_expires(location_t* _loc)
  * =============== Database related functions
  */
 
+#ifdef USE_DB
 int db_insert_location(db_con_t* _c, location_t* _loc)
 {
 	contact_t* ptr;
@@ -519,45 +516,38 @@ int db_insert_location(db_con_t* _c, location_t* _loc)
 	};
 
 #ifdef PARANOID
-	if ((!_c) || (!_loc)) {
+	if (!_loc) {
 		LOG(L_ERR, "db_insert_location(): Invalid parameter value\n");
 		return FALSE;
 	}
 
 #endif
-	
 	ptr = _loc->contacts;
 
 	while(ptr) {
-		vals[0].val.string_val = ptr->aor->s;
-		vals[1].val.string_val = ptr->c.s;
-		vals[2].val.time_val = ptr->expires;
-		vals[3].val.double_val = ptr->q;
-		vals[4].val.string_val = ptr->callid;
-		vals[5].val.int_val = ptr->cseq;
-
-		if (db_insert(_c, keys, vals, 6) == FALSE) {
-			LOG(L_ERR, "db_insert_location(): Error while inserting binding\n");
+		if (db_insert_contact(_c, ptr) == FALSE) {
+			LOG(L_ERR, "db_insert_contact(): Error while inserting contact\n");
 			return FALSE;
 		}
-
 		ptr = ptr->next;
 	}
+
 	return TRUE;
 }
-
+#endif
 
 /*
  * Removes all bindings associated with the given
  * address of record
  */
+#ifdef USE_DB
 int db_remove_location(db_con_t* _c, location_t* _loc)
 {
 	db_key_t key[1] = {"user"};
 	db_val_t val[1] = {{DB_STRING,   0, {.string_val = NULL}}};
 
 #ifdef PARANOID
-	if ((!_c) || (!_loc)) {
+	if (!_loc) {
 		LOG(L_ERR, "db_remove_location(): Invalid parameter value\n");
 		return FALSE;
 	}
@@ -572,6 +562,7 @@ int db_remove_location(db_con_t* _c, location_t* _loc)
 
 	return TRUE;
 }
+#endif
 
 
 static int check_request_order(contact_t* _old, contact_t* _new)
@@ -594,9 +585,9 @@ static int check_request_order(contact_t* _old, contact_t* _new)
 int update_location(db_con_t* _c, location_t* _dst, location_t* _src)
 {
 	int res;
-	contact_t* src_ptr, *dst_ptr, *dst_ptr_prev;
+	contact_t* src_ptr, *dst_ptr, *dst_ptr_prev, *src_ptr_prev;
 #ifdef PARANOID
-	if ((!_c) || (!_dst) || (!_src)) {
+	if ((!_dst) || (!_src)) {
 		LOG(L_ERR, "update_location(): Invalid parameter value\n");
 		return FALSE;
 	}
@@ -604,6 +595,7 @@ int update_location(db_con_t* _c, location_t* _dst, location_t* _src)
 	if (!_src->contacts) return TRUE;
 
 	src_ptr = _src->contacts;
+	src_ptr_prev = NULL;
 	while(src_ptr) {
 
 		dst_ptr = _dst->contacts;
@@ -613,20 +605,24 @@ int update_location(db_con_t* _c, location_t* _dst, location_t* _src)
 				if (check_request_order(dst_ptr, src_ptr) == TRUE) {  /* FIXME */
 					DBG("update_location(): Order OK, updating\n");
 					if (src_ptr->expires == 0) {
+#ifdef USE_DB
 						if (db_remove_contact(_c, dst_ptr) == FALSE) {
 							LOG(L_ERR, "update_location(): Error while removing binding\n");
 							return FALSE;
 						}
+#endif
 						     /* FIXME */
 						if (remove_contact(_dst, dst_ptr->c.s) == FALSE) {
 							LOG(L_ERR, "update_location(): Error while removing from cache\n");
 							return FALSE;
 						}
 					} else {
+#ifdef USE_DB
 						if (db_update_contact(_c, src_ptr) == FALSE) {
 							LOG(L_ERR, "update_location(): Error while updating database\n");
 							return FALSE;
 						}
+#endif
 						if (update_contact(dst_ptr, src_ptr) == FALSE) {
 							LOG(L_ERR, "update_location(): Error while updating cache\n");
 							return FALSE;
@@ -636,14 +632,28 @@ int update_location(db_con_t* _c, location_t* _dst, location_t* _src)
 					return TRUE;
 				} else {
 					DBG("update_location(): Request for binding update is out of order\n");
+					goto skip;
 				}
 			}
+			
 			dst_ptr_prev = dst_ptr;
 			dst_ptr = dst_ptr->next;
 		}
-
+		if (src_ptr->expires != 0) {
+#ifdef USE_DB
+			if (db_insert_contact(_c, src_ptr) == FALSE) {
+				LOG(L_ERR, "update_location(): Error inserting into database\n");
+				return FALSE;
+			}
+#endif
+			if (add_contact(_dst, src_ptr->c. s, src_ptr->expires, src_ptr->q, src_ptr->callid, src_ptr->cseq) == FALSE) {
+				LOG(L_ERR, "update_location(): Error while adding contact\n");
+				return FALSE;
+			}
+		}
+	skip:
+		src_ptr_prev = src_ptr;
 		src_ptr = src_ptr->next;
 	}
 	return TRUE;
 }
-

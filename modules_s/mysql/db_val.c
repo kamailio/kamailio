@@ -118,6 +118,7 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 			*_s++ = '\'';
 			memcpy(_s, VAL_STRING(_v), l);
 			*(_s + l) = '\'';
+			*(_s + l + 1) = '\0'; /* FIXME */
 			*_len = l + 2;
 			return TRUE;
 		}

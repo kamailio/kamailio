@@ -185,7 +185,7 @@ static int submit_query(db_con_t* _h, const char* _s)
 		return FALSE;
 	}
 #endif
-	DBG("submit_query(): %s\n", _s);
+	printf("submit_query(): %s\n", _s);
 	if (mysql_query(CON_CONNECTION(_h), _s)) {
 		log(L_ERR, "submit_query(): %s\n", mysql_error(CON_CONNECTION(_h)));
 		return FALSE;
@@ -468,6 +468,7 @@ int db_update(db_con_t* _h, db_key_t* _k, db_val_t* _v,
 	if (_n) {
 		off += snprintf(update_buf + off, SQL_BUF_LEN - off, " where ");
 		off += print_where(update_buf + off, SQL_BUF_LEN - off, _k, _v, _n);
+		*(update_buf + off) = '\0';
 	}
 
 	if (submit_query(_h, update_buf) == FALSE) {

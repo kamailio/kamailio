@@ -151,7 +151,7 @@ char* eat_name(char* _b)
 {
 	int quoted = 0;
 	char* b = _b;
-	char* last_ws;
+	char* last_ws = _b - 1;
 
 	if (!_b) return NULL;
 
@@ -159,13 +159,14 @@ char* eat_name(char* _b)
 	      * separator, these two characters cannot
 	      * occur in non-quoted name string
 	      */
+
 	while(*b) {
 		if (!quoted) {
 			if ((*b == ' ') || (*b == '\t')) {
 				last_ws = b;
 			} else {
 				if (*b == '<') return b;  /* We will end here if there is a name */
-				if (*b == ':') return last_ws; /* There is no name in this case */
+				if (*b == ':') return last_ws + 1; /* There is no name in this case */
 				if (*b == '\"') quoted = 1;
 			}
 		} else {

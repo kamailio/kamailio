@@ -84,14 +84,16 @@ static inline void parse_params(char* _b, time_t* _exp, float* _q)
 	char* p, *end, *name, *body;
 
 #ifdef PARANOID
-	if ((!_b) || (!_exp) || (!_q)) {
+	if ((!_exp) || (!_q)) {
 		LOG(L_ERR, "parse_params(): Invalid parameter value\n");
 	        return;
 	}
 #endif
 
 	*_exp = (time_t)(-1);
-	*_q = (float)(-1);
+	*_q = (float)(0);
+
+	if (!_b) return;
 
 	p = trim(find_next_param(_b));
 	if (!p) return;
@@ -132,8 +134,10 @@ int parse_contact(char* _s, char** _url, time_t* _expire, float* _q)
 			*ptr++ = '\0';
 		}
 	} else {
-		ptr = _s;
 		*_url = _s;
+
+		ptr = find_not_quoted(_s, ';');
+		if (ptr) *ptr++ = '\0';
 	}
 
 	parse_params(ptr, _expire, _q);
@@ -146,6 +150,7 @@ int parse_contact(char* _s, char** _url, time_t* _expire, float* _q)
  * uzavrena v lomenych zavorkach
  */
 
+/* FIXME: automat */
 /*
  * Contact header field parser
  */
@@ -165,7 +170,7 @@ int parse_contact_hdr(char* _b, location_t* _loc, int _expires, int* _star, cons
 
 	do {
 		_b = eat_lws(_b);
-		
+
 		     /* Star contact has been found */
 		if (*_b == '*') {
 			*_star = 1;              /* Set the flag */
@@ -175,9 +180,14 @@ int parse_contact_hdr(char* _b, location_t* _loc, int _expires, int* _star, cons
 		}
 
 		_b = eat_name(_b);
+		printf("tuc:%s\n", _b);
+
 
 		comma = find_next_contact(_b);
-		if (comma) *(comma-1) = '\0';
+
+		printf("comma: %s\n", comma);
+
+		if (comma) *comma = '\0';
 
 		if (parse_contact(_b, &url, &expires, &q) == FALSE) {
 			LOG(L_ERR, "parse_contact_hdr(): Error while parsing contact\n");

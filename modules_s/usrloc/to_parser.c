@@ -24,12 +24,10 @@ char* get_to_username(char* _to, int _len)
 		return FALSE;
 	}
 #endif
-	_to = eat_lws(_to);
-	ptr = eat_name(_to);
+	dcolon = find_not_quoted(_to, ':');
 
-	dcolon = strchr(ptr, ':');
 	if (!dcolon) return NULL;
-	at = strchr(ptr, '@');
+	at = strchr(_to, '@');
 	if (!at) return NULL;
 	else *at = '\0';
 

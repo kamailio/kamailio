@@ -10,7 +10,7 @@
 #include "utils.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
-
+#include "defs.h"
 
 /*
  * Print contact, for debugging purposes only
@@ -146,6 +146,7 @@ int cmp_contact(contact_t* _c1, contact_t* _c2)
 
 
 
+#ifdef USE_DB
 int db_remove_contact(db_con_t* _c, contact_t* _con)
 {
 	db_key_t keys[2] = {"user", "contact"};
@@ -170,9 +171,9 @@ int db_remove_contact(db_con_t* _c, contact_t* _con)
 
 	return TRUE;
 }
+#endif
 
-
-
+#ifdef USE_DB
 int db_update_contact(db_con_t* _c, contact_t* _con)
 {
 	db_key_t keys1[2] = {"user", "contact"};
@@ -208,3 +209,39 @@ int db_update_contact(db_con_t* _c, contact_t* _con)
 
 	return TRUE;
 }
+#endif
+
+#ifdef USE_DB
+int db_insert_contact(db_con_t* _c, contact_t* _con)
+{
+	db_key_t keys[] = { "user", "contact", "expires", "q", "callid", "cseq"};
+	db_val_t vals[] = {{DB_STRING,   0, {.string_val = NULL}},
+			  {DB_STRING,   0, {.string_val = NULL}},
+			  {DB_DATETIME, 0, {.time_val = 0}},
+			  {DB_DOUBLE,   0, {.double_val = 0}},
+			  {DB_STRING,   0, {.string_val = NULL}},
+			  {DB_INT,      0, {.int_val = 0}}
+	};
+
+#ifdef PARANOID
+	if (!_con) {
+		LOG(L_ERR, "db_insert_contact(): Invalid parameter value\n");
+		return FALSE;
+	}
+
+#endif
+	vals[0].val.string_val = _con->aor->s;
+	vals[1].val.string_val = _con->c.s;
+	vals[2].val.time_val = _con->expires;
+	vals[3].val.double_val = _con->q;
+	vals[4].val.string_val = _con->callid;
+	vals[5].val.int_val = _con->cseq;
+	
+	if (db_insert(_c, keys, vals, 6) == FALSE) {
+		LOG(L_ERR, "db_insert_contact(): Error while inserting binding\n");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+#endif

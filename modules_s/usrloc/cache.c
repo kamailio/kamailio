@@ -9,6 +9,7 @@
 #include "utils.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
+#include "defs.h"
 
 #define DEFAULT_CACHE_SIZE 512
 
@@ -20,12 +21,12 @@ static inline void cache_use_table(cache_t* _c);
  * Create a new cache, _size is size
  * of the cache, -1 means default size
  */
-cache_t* create_cache(int _size, db_con_t* _db_con, const char* _table)
+cache_t* create_cache(int _size, const char* _table)
 {
 	cache_t* c;
 	int s, i;
 	
-	if ((!_db_con) || (!_table)) {
+	if (!_table) {
 		LOG(L_ERR, "create_cache(): Invalid parameter value\n");
 		return NULL;
 	}
@@ -59,8 +60,6 @@ cache_t* create_cache(int _size, db_con_t* _db_con, const char* _table)
 
 	memcpy(c->db_table, _table, strlen(_table) + 1);
 
-	c->db_con = _db_con;
-
 	for(i = 0; i < s; i++) {
 		init_slot(c, &c->table[i]);
 	}
@@ -72,6 +71,19 @@ cache_t* create_cache(int _size, db_con_t* _db_con, const char* _table)
 	c->c_ll.count = 0;
 
 	return c;
+}
+
+
+int cache_use_connection(cache_t* _c, db_con_t* _con)
+{
+#ifdef PARANOID
+	if ((!_c) || (!_con)) {
+		LOG(L_ERR, "cache_use_connection(): Invalid parameter value\n");
+		return FALSE;
+	}
+#endif
+	_c->db_con = _con;
+	return TRUE;
 }
 
 
@@ -156,12 +168,14 @@ int cache_put(cache_t* _c, location_t* _l)
 
 	slot = CACHE_GET_SLOT(_c, slot_num);
 
+#ifdef USE_DB
 	cache_use_table(_c);
 	if (db_insert_location(_c->db_con, _l) == FALSE) {
 		LOG(L_ERR, "cache_put(): Error while inserting bindings into database\n");
 		free_element(ptr);
 		return FALSE;
 	}
+#endif
 
 	if (add_slot_elem(slot, ptr) != TRUE) {
 		LOG(L_ERR, "cache_put(): Error while adding element to collision slot list\n");
@@ -286,6 +300,7 @@ int cache_remove(cache_t* _c, const char* _aor)
 
 	for(i = 0; i < count; i++) {
 		if (!cmp_location(el->loc, p)) {
+#ifdef USE_DB
 			cache_use_table(_c);
 			if (db_remove_location(_c->db_con, el->loc) == FALSE) {
 				LOG(L_ERR, "cache_remove(): Error while removing bindings from database\n");
@@ -293,6 +308,7 @@ int cache_remove(cache_t* _c, const char* _aor)
 				free(p);
 				return FALSE;
 			}
+#endif
 			rem_slot_elem(slot, el);
 			rem_cache_elem(_c, el);
 			free_element(el);
@@ -325,6 +341,8 @@ int cache_update(cache_t* _c, c_elem_t* _el, location_t* _loc)
 		rem_cache_elem(_c, _el);
 		free_element(_el);
 	}
+
+	free_location(_loc);
 	
 	return TRUE;
 }
@@ -350,6 +368,7 @@ int preload_cache(cache_t* _c)
 	time_t expires;
 	c_elem_t* ptr;
 	c_slot_t* slot;
+	time_t t;
 
 
 #ifdef PARANOID
@@ -368,11 +387,12 @@ int preload_cache(cache_t* _c)
 
 	if (RES_ROW_N(res) == 0) {
 		DBG("preload_cache(): Table is empty\n");
-		
+		db_free_query(_c->db_con, res);
 		return TRUE;
 	}
 
     
+	t = time(NULL);
 	for(i = 0; i < RES_ROW_N(res); i++) {
 		row = RES_ROWS(res) + i;
 		cur_user = ROW_VALUES(row)[0].val.string_val;
@@ -400,7 +420,7 @@ int preload_cache(cache_t* _c)
 		cseq = ROW_VALUES(row)[5].val.int_val;
 		
 		DBG("    contact=%s expires=%d q=%3.2f callid=%s cseq=%d\n", contact, expires, q, callid, cseq);
-		add_contact(loc, contact, expires, q, callid, cseq);
+		add_contact(loc, contact, expires + t, q, callid, cseq);
 	}
 
 	if (loc) {
@@ -411,5 +431,7 @@ int preload_cache(cache_t* _c)
 		add_slot_elem(slot, ptr);
 		add_cache_elem(_c, ptr);
 	}
+
+	db_free_query(_c->db_con, res);
 	return TRUE;
 }
