@@ -94,4 +94,7 @@
 */
 #undef ACK_FORKING_HACK
 
+/* to-tag separator for stateful processing */
+#define TM_TAG_SEPARATOR '-'
+
 #endif

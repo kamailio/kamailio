@@ -338,6 +338,8 @@ static int mod_init(void)
 	register_script_cb( script_init, PRE_SCRIPT_CB , 
 			0 /* empty param */ );
 
+	tm_init_tags();
+
 	return 0;
 }
 

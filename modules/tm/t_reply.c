@@ -38,6 +38,7 @@
 #include "../../error.h"
 #include "../../action.h"
 #include "../../dset.h"
+#include "../../tags.h"
 
 #include "t_hooks.h"
 #include "t_funcs.h"
@@ -48,6 +49,10 @@
 #include "t_fwd.h"
 #include "fix_lumps.h"
 #include "t_stats.h"
+
+/* private place where we create to-tags for replies */
+static char tm_tags[TOTAG_LEN];
+static char *tm_tag_suffix;
 
 /* where to go if there is no positive reply */
 static int goto_on_negative=0;
@@ -73,6 +78,13 @@ unsigned int get_on_negative()
 {
 	return goto_on_negative;
 }
+
+void tm_init_tags()
+{
+	init_tags(tm_tags, &tm_tag_suffix, 
+		"SER-TM/tags", TM_TAG_SEPARATOR );
+}
+
 
 static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
 	unsigned int *ret_len)
@@ -336,9 +348,19 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 		trans->uas.tag->len, trans->uas.request,&len);
 	*/
 	cancel_bitmap=0;
-	/* compute the buffer in private memory prior to entering lock */
-	buf = build_res_buf_from_sip_req(code,text, 0,0, /* no to-tag */
-		p_msg,&len);
+	/* compute the buffer in private memory prior to entering lock;
+	 * create to-tag if needed */
+	if (code>=180 && p_msg->to 
+			&& (get_to(p_msg)->tag_value.s==0 
+			    || get_to(p_msg)->tag_value.len==0)) {
+		calc_crc_suffix( p_msg, tm_tag_suffix );
+		buf = build_res_buf_from_sip_req(code,text, 
+				tm_tags, TOTAG_LEN, 
+				p_msg,&len);
+	} else {
+		buf = build_res_buf_from_sip_req(code,text, 0,0, /* no to-tag */
+			p_msg,&len);
+	}
 	DBG("DEBUG: t_reply: buffer computed\n");
 	if (!buf)
 	{
@@ -536,9 +558,22 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			tm_stats->replied_localy++;
 			relayed_code = branch==relay
 				? msg_status : t->uac[relay].last_received;
-			buf = build_res_buf_from_sip_req( relayed_code,
-				error_text(relayed_code), 0,0, /* no to-tag */
-				t->uas.request, &res_len );
+
+			if (relayed_code>=180 && t->uas.request->to 
+					&& (get_to(t->uas.request)->tag_value.s==0 
+			    		|| get_to(t->uas.request)->tag_value.len==0)) {
+				calc_crc_suffix( t->uas.request, tm_tag_suffix );
+				buf = build_res_buf_from_sip_req(
+						relayed_code,
+						error_text(relayed_code),
+						tm_tags, TOTAG_LEN, 
+						t->uas.request, &res_len );
+			} else {
+				buf = build_res_buf_from_sip_req( relayed_code,
+					error_text(relayed_code), 0,0, /* no to-tag */
+					t->uas.request, &res_len );
+			}
+
 		} else {
 			relayed_code=relayed_msg->REPLY_STATUS;
 			buf = build_res_buf_from_sip_res( relayed_msg, &res_len );

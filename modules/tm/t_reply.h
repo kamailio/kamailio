@@ -109,5 +109,7 @@ unsigned int get_on_negative();
 
 int t_retransmit_reply( struct cell *t );
 
+void tm_init_tags();
+
 #endif
 

@@ -60,7 +60,7 @@ static inline void calc_crc_suffix( struct sip_msg *msg, char *tag_suffix)
         crcitt_string_array( tag_suffix, suffix_source, ss_nr );
 }
 
-static inline init_tags( char *tag, char **suffix, 
+static void inline init_tags( char *tag, char **suffix, 
 		char *signature, char separator )
 {
 	str src[3];
