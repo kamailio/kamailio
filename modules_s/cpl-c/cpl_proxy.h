@@ -175,7 +175,7 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 		return;
 	} else if (!type&TMCB_ON_FAILURE) {
 		LOG(L_ERR,"BUG:cpl-c:reply_callback: unknown type %d\n",type);
-		goto error;
+		goto exit;
 	}
 
 	DBG("DEBUG:cpl-c:negativ_reply: ------------------------------>\n"
@@ -239,8 +239,10 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 			default:
 				LOG(L_CRIT,"BUG:cpl_c:failed_reply: unexpected ordering found "
 					"when continuing proxying (%d)\n",intr->proxy.ordering);
-				goto error;
+				goto exit;
 		}
+		/* nothing more to be done */
+		return;
 	} else {
 		/* done with proxying.... -> process the final response */
 		DBG("DEBUG:cpl-c:failed_reply:final_reply: got a final %d\n",ps->code);
@@ -274,19 +276,21 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 			rez = cpl_run_script(intr);
 		switch ( rez ) {
 			case SCRIPT_END:
+				goto exit;
 			case SCRIPT_TO_BE_CONTINUED:
 				return;
 			case SCRIPT_RUN_ERROR:
 			case SCRIPT_FORMAT_ERROR:
-				goto error;
+				goto exit;
 			default:
 				LOG(L_CRIT,"BUG:cpl-c:failed_reply: improper rezult %d\n",
 					rez);
-				goto error;
+				goto exit;
 		}
 	}
 
-error:
+	LOG(L_CRIT,"BUG:cpl-c:failed_reply: we shouldn't be here!!!!!\n");
+exit:
 	/* in case of error the default response choosed by ser at the last
 	 * proxying will be forwarded to the UAC */
 	free_cpl_interpreter( intr );
@@ -488,12 +492,19 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 			/* location set cannot be empty -> was checked before */
 			loc = remove_first_location( &(intr->loc_set) );
 			intr->proxy.last_to_proxy = 0;
-			cpl_proxy_to_loc_set(intr->msg,&loc,intr->flags );
+			/* set the new ip before proxy -> otherwise race cond with rpls */
+			intr->ip = CPL_TO_CONTINUE;
+			if (cpl_proxy_to_loc_set(intr->msg,&loc,intr->flags )==-1)
+				goto runtime_error;
 			break;
 		case PARALLEL_VAL:
 			/* forward to all location from location set */
 			intr->proxy.last_to_proxy = 0;
-			cpl_proxy_to_loc_set(intr->msg,&(intr->loc_set),intr->flags );
+			/* set the new ip before proxy -> otherwise race cond with rpls */
+			intr->ip = CPL_TO_CONTINUE;
+			if (cpl_proxy_to_loc_set(intr->msg,&(intr->loc_set),intr->flags)
+			==-1)
+				goto runtime_error;
 			break;
 		case SEQUENTIAL_VAL:
 			/* forward the request one at the time to all addresses from
@@ -504,7 +515,10 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 			intr->proxy.last_to_proxy = intr->loc_set;
 			while (intr->proxy.last_to_proxy&&intr->proxy.last_to_proxy->next)
 				intr->proxy.last_to_proxy = intr->proxy.last_to_proxy->next;
-			cpl_proxy_to_loc_set(intr->msg,&loc,intr->flags );
+			/* set the new ip before proxy -> otherwise race cond with rpls */
+			intr->ip = CPL_TO_CONTINUE;
+			if (cpl_proxy_to_loc_set(intr->msg,&loc,intr->flags)==-1)
+				goto runtime_error;
 			break;
 	}
 
