@@ -14,6 +14,18 @@
 			goto _error;\
 		(_ptr) = (_ptr) + (_n);\
 	}while(0);
+#define one_of_16( _x , _t ) \
+	(_x==_t[0]||_x==_t[15]||_x==_t[8]||_x==_t[2]||_x==_t[3]||_x==_t[4]\
+	||_x==_t[5]||_x==_t[6]||_x==_t[7]||_x==_t[1]||_x==_t[9]||_x==_t[10]\
+	||_x==_t[11]||_x==_t[12]||_x==_t[13]||_x==_t[14])
+#define one_of_15( _x , _t ) \
+	(_x==_t[15]||_x==_t[8]||_x==_t[2]||_x==_t[3]||_x==_t[4]\
+	||_x==_t[5]||_x==_t[6]||_x==_t[7]||_x==_t[1]||_x==_t[9]||_x==_t[10]\
+	||_x==_t[11]||_x==_t[12]||_x==_t[13]||_x==_t[14])
+#define one_of_8( _x , _t ) \
+	(_x==_t[0]||_x==_t[7]||_x==_t[1]||_x==_t[2]||_x==_t[3]||_x==_t[4]\
+	||_x==_t[5]||_x==_t[6])
+
 
 
 
@@ -93,24 +105,30 @@ int inline im_check_content_type(struct sip_msg *msg)
 	p = str_type.s;
 	advance(p,4,str_type,error_1);
 	x = READ(p-4);
-	if (x==text[0]) {
+	if (x==text[0])
 		mime = 1 ;
-	} else if (x==mess[0]) {
-		mime = 2;
-		
+	else if (x==mess[0]) {
+		advance(p,3,str_type,error_1);
+		x = READ(p-3);
+		x = x&0x00ffffff;
+		if ( one_of_8(x,age_) )
+			mime = 2;
+		else
+			goto other;
 	} else
-	if (x==text[15]||x==text[8]||x==text[2]||x==text[3]||x==text[4]||
-		x==text[5]||x==text[6]||x==text[7]||x==text[1]||x==text[9]||
-		x==text[10]||x==text[11]||x==text[12]||x==text[13]||x==text[14]) {
+	if ( one_of_15(x,text) )
 		mime =1;
-	}else if (x==mess[15]||x==mess[8]||x==mess[2]||x==mess[3]||x==mess[4]||
-		x==mess[5]||x==mess[6]||x==mess[7]||x==mess[1]||x==mess[9]||
-		x==mess[10]||x==mess[11]||x==mess[12]||x==mess[13]||x==mess[14]) {
-		mime = 2;
-	} else {
+	else if ( one_of_15(x,mess) ) {
+		advance(p,3,str_type,error_1);
+		x = READ(p-3);
+		x = x&0x00ffffff;
+		if ( one_of_8(x,age_) )
+			mime = 2;
+		else
+			goto other;
+	} else
 		goto other;
-	}
-	
+
 	/* skip spaces and tabs if any */
 	while (*p==' ' || *p=='\t')
 		advance(p,1,str_type,error_1);
@@ -128,22 +146,15 @@ int inline im_check_content_type(struct sip_msg *msg)
 	x = READ(p-4);
 	switch (mime) {
 		case 1:
-			if (x==plai[0]||x==plai[15]||x==plai[8]||x==plai[1]||x==plai[2]||
-				x==plai[3]||x==plai[4]||x==plai[5]||x==plai[6]||x==plai[7]||
-				x==plai[9]||x==plai[10]||x==plai[11]||x==plai[12]||x==plai[13]
-				||x==plai[14]) {
+			if ( one_of_16(x,plai) ) {
 				advance(p,1,str_type,error_1);
 				if (*(p-1)=='n' || *(p-1)=='N')
 					goto s_end;
-				}
+			}
 			goto other;
 		case 2:
-			if (x==cpim[0]||x==cpim[15]||x==cpim[8]||x==cpim[1]||x==cpim[2]||
-				x==cpim[3]||x==cpim[4]||x==cpim[5]||x==cpim[6]||x==cpim[7]||
-				x==cpim[9]||x==cpim[10]||x==cpim[11]||x==cpim[12]||x==cpim[13]
-				||x==cpim[14]) {
+			if ( one_of_16(x,cpim) )
 				goto s_end;
-				}
 			goto other;
 	}
 
@@ -155,10 +166,12 @@ other:
 	LOG(L_ERR,"ERROR:im_check_content_type: invlaid type for a message\n");
 	return -1;
 s_end:
-	if (*p==';'||*p==' '||*p=='\t'||*p=='\n'||*p=='\r'||*p==0)
+	if (*p==';'||*p==' '||*p=='\t'||*p=='\n'||*p=='\r'||*p==0) {
+		DBG("DEBUG:im_check_content_type: type <%.*s> found valid\n",
+			p-str_type.s,str_type.s);
 		return 1;
-	else {
-		LOG(L_ERR,"ERROR:im_check_content_type: bad end for type %d!\n",*p);
+	} else {
+		LOG(L_ERR,"ERROR:im_check_content_type: bad end for type!\n");
 		return -1;
 	}
 }
