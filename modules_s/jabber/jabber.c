@@ -399,10 +399,9 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 {
 	str body, dst;
 	xj_sipmsg jsmsg;
-	struct to_body to, from;
+	struct to_body to, *from;
 	struct sip_uri _uri;
 	int pipe, fl;
-	struct to_param *foo,*bar;
 	char   *cp, *buf=0;
 	t_xj_jkey jkey, *p;
 
@@ -447,30 +446,15 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 	}
 	
 	/* parsing from header */
-	memset(&from,0,sizeof(from));
-	cp = translate_pointer(msg->orig,msg->buf,msg->from->body.s);
-	buf = (char*)pkg_malloc(msg->from->body.len+1);
-	if (!buf) 
+	if ( parse_from_header( msg )==-1 ) 
 	{
-		DBG("XJAB:xjab_manage_sipmsg: error no free pkg memory\n");
+		DBG("ERROR:xjab_manage_sipmsg: cannot get FROM header\n");
 		goto error;
 	}
-	memcpy(buf,cp,msg->from->body.len+1);
-	parse_to(buf,buf+msg->from->body.len+1,&from);
-	if (from.error!=PARSE_OK ) 
-	{
-		DBG("XJAB:xjab_manage_sipmsg: error cannot parse from header\n");
-		goto error;
-	}
-	/* we are not intrested in from param-> le's free them now*/
-	for(foo=from.param_lst ; foo ; foo=bar)
-	{
-		bar = foo->next;
-		pkg_free(foo);
-	}
+	from = (struct to_body*)msg->from->parsed;
 
-	jkey.hash = xj_get_hash(&from.uri, NULL);
-	jkey.id = &from.uri;
+	jkey.hash = xj_get_hash(&from->uri, NULL);
+	jkey.id = &from->uri;
 	// get the communication pipe with the worker
 	switch(type)
 	{
@@ -489,7 +473,7 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 			if((pipe = xj_wlist_check(jwl, &jkey, &p)) < 0)
 			{
 				DBG("XJAB:xjab_manage_sipmsg: no open Jabber session for"
-						" <%.*s>!\n", from.uri.len, from.uri.s);
+						" <%.*s>!\n", from->uri.len, from->uri.s);
 				goto error;
 			}
 		break;
@@ -524,20 +508,30 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 	}
 	if(dst.len == 0 && msg->to != NULL)
 	{
-		memset( &to , 0, sizeof(to) );
-		parse_to(msg->to->body.s, msg->to->body.s + msg->to->body.len + 1,
-				&to);
-		if(to.uri.len > 0) // to.error == PARSE_OK)
+		if(msg->to->parsed)
 		{
-			DBG("XJAB:xjab_manage_sipmsg: TO parsed OK <%.*s>.\n",
-				to.uri.len, to.uri.s);
-			dst.s = to.uri.s;
-			dst.len = to.uri.len;
+			DBG("XJAB:xjab_manage_sipmsg: TO already parsed\n");
+			dst.s = ((struct to_body*)msg->to->parsed)->uri.s;
+			dst.len = ((struct to_body*)msg->to->parsed)->uri.len;
 		}
 		else
 		{
-			DBG("XJAB:xjab_manage_sipmsg: TO NOT parsed\n");
-			goto error;
+			DBG("XJAB:xjab_manage_sipmsg: TO NOT parsed -> parsing ...\n");
+			memset( &to , 0, sizeof(to) );
+			parse_to(msg->to->body.s, msg->to->body.s + msg->to->body.len + 1,
+				&to);
+			if(to.uri.len > 0) // to.error == PARSE_OK)
+			{
+				DBG("XJAB:xjab_manage_sipmsg: TO parsed OK <%.*s>.\n",
+					to.uri.len, to.uri.s);
+				dst.s = to.uri.s;
+				dst.len = to.uri.len;
+			}
+			else
+			{
+				DBG("XJAB:xjab_manage_sipmsg: error parsing TO header.\n");
+				goto error;
+			}
 		}
 	}
 	if(dst.len == 0)
@@ -570,6 +564,7 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 	
 	//putting the SIP message parts in share memory to be accessible by workers
     jsmsg = (xj_sipmsg)shm_malloc(sizeof(t_xj_sipmsg));
+	memset(jsmsg, 0, sizeof(t_xj_sipmsg));
     if(jsmsg == NULL)
     	return -1;
 	

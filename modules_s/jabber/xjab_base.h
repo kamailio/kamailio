@@ -58,6 +58,7 @@ typedef struct _xj_sipmsg
 	xj_jkey jkey;	// pointer to FROM
 	str to;			// destination
 	str msg;		// message body
+	str callid;		// call id of the message
 } t_xj_sipmsg, *xj_sipmsg;
 
 /**********   LOOK AT IMPLEMENTATION OF FUNCTIONS FOR DESCRIPTION    ***/
