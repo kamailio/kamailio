@@ -304,7 +304,7 @@ void print_action(struct action* a)
 					print_action((struct action*)t->p1.data);
 					break;
 			case CMDF_ST:
-					DBG("f_ptr<%x>",t->p1.data);
+					DBG("f_ptr<%p>",t->p1.data);
 					break;
 			default:
 					DBG("type<%d>", t->p1_type);
