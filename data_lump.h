@@ -25,8 +25,11 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * 2003-01-29 s/int/enum ... more convenient for gdb (jiri)
+ */
+/* History:
+ * --------
+ *  2003-01-29  s/int/enum ... more convenient for gdb (jiri)
+ *  2003-03-31  added subst lumps -- they expand in ip addr, port a.s.o (andrei)
  */
 
 
@@ -34,7 +37,12 @@
 #define data_lump_h
 
 
-enum lump_op { LUMP_NOP=0, LUMP_DEL, LUMP_ADD };
+enum lump_op { LUMP_NOP=0, LUMP_DEL, LUMP_ADD, LUMP_ADD_SUBST };
+enum lump_subst{ SUBST_NOP=0,
+				 SUBST_RCV_IP,    SUBST_SND_IP,
+				 SUBST_RCV_PORT,  SUBST_SND_PORT,
+				 SUBST_RCV_PROTO, SUBST_SND_PROTO
+				};
 enum lump_flag { LUMPFLAG_NONE=0, LUMPFLAG_DUPED=1, LUMPFLAG_SHMEM=2 };
 
 struct lump{
@@ -43,6 +51,7 @@ struct lump{
 	
 	union{
 		int offset; /* used for DEL, MODIFY */
+		enum lump_subst subst; /*what to subst: ip addr, port, proto*/
 		char * value; /* used for ADD */
 	}u;
 	int len; /* length of this header field */
@@ -89,6 +98,11 @@ struct lump* insert_new_lump_after(struct lump* after,
 									char* new_hdr, int len, int type);
 struct lump* insert_new_lump_before(struct lump* before, char* new_hdr,
 									int len,int type);
+/* substitutions (replace with ip address, port etc) */
+struct lump* insert_subst_lump_after(struct lump* after,  enum lump_subst subst,
+									int type);
+struct lump* insert_subst_lump_before(struct lump* before,enum lump_subst subst,
+									int type);
 
 
 /* removes an already existing header */

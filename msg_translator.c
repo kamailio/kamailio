@@ -42,6 +42,7 @@
  * 2003-01-27  more rport fixes (make use of new via_param->start)  (andrei)
  * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2003-01-29  scratchpad removed (jiri)
+ * 2003-03-31  added subst lump support (andrei)
  *
  */
 
@@ -357,30 +358,98 @@ char* clen_builder(struct sip_msg* msg, unsigned int *clen_len)
 
 /* computes the "unpacked" len of a lump list,
    code moved from build_req_from_req */
-static inline int lumps_len(struct lump* l)
+static inline int lumps_len(struct sip_msg* msg, struct socket_info* send_sock)
 {
 	int s_offset;
 	int new_len;
 	struct lump* t;
 	struct lump* r;
 
+#define SUBST_LUMP_LEN(subst_l) \
+		switch((subst_l)->u.subst){ \
+			case SUBST_RCV_IP: \
+				if (msg->rcv.bind_address){ \
+					new_len+=msg->rcv.bind_address->address_str.len; \
+					if (msg->rcv.bind_address->address.af!=AF_INET) \
+						new_len+=2; \
+				}else{ \
+					/* FIXME */ \
+					LOG(L_CRIT, "FIXME: null bind_address\n"); \
+				}; \
+				break; \
+			case SUBST_RCV_PORT: \
+				if (msg->rcv.bind_address){ \
+					new_len+=msg->rcv.bind_address->port_no_str.len; \
+				}else{ \
+					/* FIXME */ \
+					LOG(L_CRIT, "FIXME: null bind_address\n"); \
+				}; \
+				break; \
+			case SUBST_RCV_PROTO: \
+				if (msg->rcv.bind_address){ \
+					new_len+=send_sock->port_no_str.len; \
+				}else{ \
+					/* FIXME */ \
+					LOG(L_CRIT, "FIXME: null bind_address\n"); \
+				}; \
+				break; \
+			case SUBST_SND_IP: \
+				if (send_sock){ \
+					new_len+=send_sock->address_str.len; \
+					if (send_sock->address.af!=AF_INET) \
+						new_len+=2; \
+				}else{ \
+					LOG(L_CRIT, "FIXME: lumps_len called with" \
+							" null send_sock\n"); \
+				}; \
+				break; \
+			case SUBST_SND_PORT: \
+				if (send_sock){ \
+					new_len+=send_sock->port_no_str.len; \
+				}else{ \
+					LOG(L_CRIT, "FIXME: lumps_len called with" \
+							" null send_sock\n"); \
+				}; \
+				break; \
+			case SUBST_SND_PROTO: \
+				if (send_sock){ \
+					new_len+=3; /* tcp, udp or tls*/ \
+				}else{ \
+					LOG(L_CRIT, "FIXME: lumps_len called with" \
+							" null send_sock\n"); \
+				}; \
+				break; \
+			case SUBST_NOP: /* do nothing */ \
+				break; \
+			default: \
+				LOG(L_CRIT, "BUG: unknown subst type %d\n", \
+						(subst_l)->u.subst); \
+		}
+	
 	s_offset=0;
 	new_len=0;
-	for(t=l;t;t=t->next){
+	
+	for(t=msg->add_rm;t;t=t->next){
 		for(r=t->before;r;r=r->before){
 			switch(r->op){
 				case LUMP_ADD:
 					new_len+=r->len;
 					break;
+				case LUMP_ADD_SUBST:
+					SUBST_LUMP_LEN(r);
+					break;
 				default:
 					/* only ADD allowed for before/after */
-					LOG(L_CRIT, "BUG: lumps_len: invalid op "
+						LOG(L_CRIT, "BUG: lumps_len: invalid op "
 							"for data lump (%x)\n", r->op);
 			}
 		}
 		switch(t->op){
 			case LUMP_ADD:
 				new_len+=t->len;
+				break;
+			case LUMP_ADD_SUBST:
+				SUBST_LUMP_LEN(t);
 				break;
 			case LUMP_DEL:
 				/* fix overlapping deleted zones */
@@ -411,6 +480,9 @@ static inline int lumps_len(struct lump* l)
 				case LUMP_ADD:
 					new_len+=r->len;
 					break;
+				case LUMP_ADD_SUBST:
+					SUBST_LUMP_LEN(r);
+					break;
 				default:
 					/* only ADD allowed for before/after */
 					LOG(L_CRIT, "BUG:lumps_len: invalid"
@@ -426,22 +498,130 @@ static inline int lumps_len(struct lump* l)
 /* another helper functions, adds/Removes the lump,
 	code moved form build_req_from_req  */
 
-static inline void process_lumps(	struct lump* l,	char* new_buf, 
-									unsigned int* new_buf_offs, char* orig,
-									unsigned int* orig_offs)
+static inline void process_lumps(	struct sip_msg* msg,	
+									char* new_buf, 
+									unsigned int* new_buf_offs, 
+									unsigned int* orig_offs,
+									struct socket_info* send_sock)
 {
 	struct lump *t;
 	struct lump *r;
+	char* orig;
 	int size;
 	int offset;
 	int s_offset;
+
+#define SUBST_LUMP(subst_l) \
+	switch((subst_l)->u.subst){ \
+		case SUBST_RCV_IP: \
+			if (msg->rcv.bind_address){  \
+				memcpy(new_buf+offset, msg->rcv.bind_address->address_str.s, \
+						msg->rcv.bind_address->address_str.len); \
+				offset+=msg->rcv.bind_address->address_str.len; \
+			}else{  \
+				/*FIXME*/ \
+				LOG(L_CRIT, "FIXME: process_lumps: null bind_address\n"); \
+			}; \
+			break; \
+		case SUBST_RCV_PORT: \
+			if (msg->rcv.bind_address){  \
+				memcpy(new_buf+offset, msg->rcv.bind_address->port_no_str.s, \
+						msg->rcv.bind_address->port_no_str.len); \
+				offset+=msg->rcv.bind_address->port_no_str.len; \
+			}else{  \
+				/*FIXME*/ \
+				LOG(L_CRIT, "FIXME: process_lumps: null bind_address\n"); \
+			}; \
+			break; \
+		case SUBST_SND_IP: \
+			if (send_sock){  \
+				memcpy(new_buf+offset, send_sock->address_str.s, \
+									send_sock->address_str.len); \
+				offset+=send_sock->address_str.len; \
+			}else{  \
+				/*FIXME*/ \
+				LOG(L_CRIT, "FIXME: process_lumps: called with" \
+							" null send_sock\n"); \
+			}; \
+			break; \
+		case SUBST_SND_PORT: \
+			if (send_sock){  \
+				memcpy(new_buf+offset, send_sock->port_no_str.s, \
+									send_sock->port_no_str.len); \
+				offset+=send_sock->port_no_str.len; \
+			}else{  \
+				/*FIXME*/ \
+				LOG(L_CRIT, "FIXME: process_lumps: called with" \
+						" null send_sock\n"); \
+			}; \
+			break; \
+		case SUBST_RCV_PROTO: \
+			if (msg->rcv.bind_address){ \
+				switch(msg->rcv.bind_address->proto){ \
+					case PROTO_NONE: \
+					case PROTO_UDP: \
+						memcpy(new_buf+offset, "udp", 3); \
+						offset+=3; \
+						break; \
+					case PROTO_TCP: \
+						memcpy(new_buf+offset, "tcp", 3); \
+						offset+=3; \
+						break; \
+					case PROTO_TLS: \
+						memcpy(new_buf+offset, "tls", 3); \
+						offset+=3; \
+						break; \
+					default: \
+						LOG(L_CRIT, "BUG: process_lumps: unknown proto %d\n", \
+								msg->rcv.bind_address->proto); \
+				} \
+			}else{  \
+				/*FIXME*/ \
+				LOG(L_CRIT, "FIXME: process lumps: null bind_address\n"); \
+			}; \
+			break; \
+		case  SUBST_SND_PROTO: \
+			if (send_sock){ \
+				switch(send_sock->proto){ \
+					case PROTO_NONE: \
+					case PROTO_UDP: \
+						memcpy(new_buf+offset, "udp", 3); \
+						offset+=3; \
+						break; \
+					case PROTO_TCP: \
+						memcpy(new_buf+offset, "tcp", 3); \
+						offset+=3; \
+						break; \
+					case PROTO_TLS: \
+						memcpy(new_buf+offset, "tls", 3); \
+						offset+=3; \
+						break; \
+					default: \
+						LOG(L_CRIT, "BUG: process_lumps: unknown proto %d\n", \
+								send_sock->proto); \
+				} \
+			}else{  \
+				/*FIXME*/ \
+				LOG(L_CRIT, "FIXME: process_lumps: called with null" \
+							" send_sock \n"); \
+			}; \
+			break; \
+		default: \
+					LOG(L_CRIT, "BUG: process_lumps: unknown subst type %d\n", \
+							(subst_l)->u.subst); \
+	} \
+ \
 	
+	
+	
+	orig=msg->buf;
 	offset=*new_buf_offs;
 	s_offset=*orig_offs;
 	
-	for (t=l;t;t=t->next){
+	for (t=msg->add_rm;t;t=t->next){
 		switch(t->op){
 			case LUMP_ADD:
+			case LUMP_ADD_SUBST:
 				/* just add it here! */
 				/* process before  */
 				for(r=t->before;r;r=r->before){
@@ -451,6 +631,9 @@ static inline void process_lumps(	struct lump* l,	char* new_buf,
 							memcpy(new_buf+offset, r->u.value, r->len);
 							offset+=r->len;
 							break;
+						case LUMP_ADD_SUBST:
+							SUBST_LUMP(r);
+							break;
 						default:
 							/* only ADD allowed for before/after */
 							LOG(L_CRIT, "BUG:process_lumps: "
@@ -458,8 +641,12 @@ static inline void process_lumps(	struct lump* l,	char* new_buf,
 					}
 				}
 				/* copy "main" part */
-				memcpy(new_buf+offset, t->u.value, t->len);
-				offset+=t->len;
+				if(t->op==LUMP_ADD){
+					memcpy(new_buf+offset, t->u.value, t->len);
+					offset+=t->len;
+				}else{
+					SUBST_LUMP(t);
+				}
 				/* process after */
 				for(r=t->after;r;r=r->after){
 					switch (r->op){
@@ -467,6 +654,9 @@ static inline void process_lumps(	struct lump* l,	char* new_buf,
 							/*just add it here*/
 							memcpy(new_buf+offset, r->u.value, r->len);
 							offset+=r->len;
+							break;
+						case LUMP_ADD_SUBST:
+							SUBST_LUMP(r);
 							break;
 						default:
 							/* only ADD allowed for before/after */
@@ -499,6 +689,9 @@ static inline void process_lumps(	struct lump* l,	char* new_buf,
 							memcpy(new_buf+offset, r->u.value, r->len);
 							offset+=r->len;
 							break;
+						case LUMP_ADD_SUBST:
+							SUBST_LUMP(r);
+							break;
 						default:
 							/* only ADD allowed for before/after */
 							LOG(L_CRIT, "BUG:process_lumps: "
@@ -517,6 +710,9 @@ static inline void process_lumps(	struct lump* l,	char* new_buf,
 							/*just add it here*/
 							memcpy(new_buf+offset, r->u.value, r->len);
 							offset+=r->len;
+							break;
+						case LUMP_ADD_SUBST:
+							SUBST_LUMP(r);
 							break;
 						default:
 							/* only ADD allowed for before/after */
@@ -686,7 +882,7 @@ skip_clen:
 #endif
 
 	/* compute new msg len and fix overlapping zones*/
-	new_len=len+lumps_len(msg->add_rm);
+	new_len=len+lumps_len(msg, send_sock);
 
 	if (msg->new_uri.s){
 		uri_len=msg->new_uri.len;
@@ -713,7 +909,7 @@ skip_clen:
 	}
 	new_buf[new_len]=0;
 	/* copy msg adding/removing lumps */
-	process_lumps(msg->add_rm, new_buf, &offset, buf, &s_offset);
+	process_lumps(msg, new_buf, &offset, &s_offset, send_sock);
 	/* copy the rest of the message */
 	memcpy(new_buf+offset, buf+s_offset, len-s_offset);
 	new_buf[new_len]=0;
@@ -802,7 +998,7 @@ skip_clen:
 #endif
 	
 	/* remove the first via*/
-	if (del_lump( &(msg->repl_add_rm), via_offset, via_len, HDR_VIA)==0){
+	if (del_lump( &(msg->add_rm), via_offset, via_len, HDR_VIA)==0){
 		LOG(L_ERR, "build_res_buf_from_sip_res: error trying to remove first"
 					"via\n");
 		goto error;
@@ -812,7 +1008,7 @@ skip_clen:
 	if (clen_len){
 		/* msg->unparsed should point just before the final crlf,
 		 * parse_headers is called from clen_builder */
-		anchor=anchor_lump(&(msg->repl_add_rm), msg->unparsed-buf, 0, 
+		anchor=anchor_lump(&(msg->add_rm), msg->unparsed-buf, 0, 
 							HDR_CONTENTLENGTH);
 		DBG("build_res_from_sip_res: adding content-length: %.*s\n",
 				(int)clen_len, clen_buf);
@@ -822,8 +1018,8 @@ skip_clen:
 			goto error_clen; /* free clen_buf*/
 	}
 #endif
-	new_len=len+lumps_len(msg->repl_add_rm);
-
+	new_len=len+lumps_len(msg, 0); /*FIXME: we don't know the send sock */
+	
 	DBG(" old size: %d, new size: %d\n", len, new_len);
 	new_buf=(char*)pkg_malloc(new_len+1); /* +1 is for debugging 
 											 (\0 to print it )*/
@@ -833,9 +1029,7 @@ skip_clen:
 	}
 	new_buf[new_len]=0; /* debug: print the message */
 	offset=s_offset=0;
-	process_lumps(msg->repl_add_rm, new_buf, &offset, 
-		buf,
-		&s_offset);
+	process_lumps(msg, new_buf, &offset, &s_offset, 0); /*FIXME: no send sock*/
 	/* copy the rest of the message */
 	memcpy(new_buf+offset,
 		buf+s_offset, 

@@ -29,9 +29,10 @@
  *
  * History:
  * ---------
- * 2003-02-28 scratchpad compatibility abandoned (jiri)
- * 2003-01-29 scrathcpad removed (jiri)
- * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
+ *  2003-02-28  scratchpad compatibility abandoned (jiri)
+ *  2003-01-29  scrathcpad removed (jiri)
+ *  2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
+ *  2003-03-31  removed msg->repl_add_rm (andrei)
  */
 
 
@@ -553,7 +554,6 @@ void free_sip_msg(struct sip_msg* msg)
 	if (msg->new_uri.s) { pkg_free(msg->new_uri.s); msg->new_uri.len=0; }
 	if (msg->headers)     free_hdr_field_lst(msg->headers);
 	if (msg->add_rm)      free_lump_list(msg->add_rm);
-	if (msg->repl_add_rm) free_lump_list(msg->repl_add_rm);
 	if (msg->reply_lump)   free_reply_lump(msg->reply_lump);
 	/* don't free anymore -- now a pointer to a static buffer */
 #	ifdef DYN_BUF

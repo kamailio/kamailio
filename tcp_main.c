@@ -34,7 +34,10 @@
  *  2003-02-25  Nagle is disabled if -DDISABLE_NAGLE (andrei)
  *  2003-03-29  SO_REUSEADDR before calling bind to allow
  *              server restart, Nagle set on the (hopefuly) 
- *              correct socket
+ *              correct socket (jiri)
+ *  2003-03-31  always try to find the corresponding tcp listen socket for
+ *               a temp. socket and store in in *->bind_address: added
+ *               find_tcp_si, modified tcpconn_connect (andrei)
  */
 
 
@@ -149,9 +152,28 @@ error:
 
 
 
+
+struct socket_info* find_tcp_si(union sockaddr_union* s)
+{
+	int r;
+	struct ip_addr ip;
+	
+	su2ip_addr(&ip, s);
+	for (r=0; r<sock_no; r++)
+		if (ip_addr_cmp(&ip, &tcp_info[r].address)){
+			/* found it, we use first match */
+			return &tcp_info[r];
+		}
+	return 0; /* no match */
+}
+
+
 struct tcp_connection* tcpconn_connect(union sockaddr_union* server)
 {
 	int s;
+	struct socket_info* si;
+	union sockaddr_union my_name;
+	int my_name_len;
 #ifdef DISABLE_NAGLE
 	int flag;
 #endif
@@ -179,7 +201,22 @@ struct tcp_connection* tcpconn_connect(union sockaddr_union* server)
 				errno, strerror(errno));
 		goto error;
 	}
-	return tcpconn_new(s, server, 0); /*FIXME: set sock idx! */
+	my_name_len=sizeof(my_name);
+	if (getsockname(s, &my_name.s, &my_name_len)!=0){
+		LOG(L_ERR, "ERROR: tcp_connect: getsockname failed: %s(%d)\n",
+				strerror(errno), errno);
+		si=0; /* try to go on */
+	}
+	si=find_tcp_si(&my_name);
+	if (si==0){
+		LOG(L_ERR, "ERROR: tcp_connect: could not find coresponding"
+				" listening socket, using default...\n");
+		if (server->s.sa_family==AF_INET) si=sendipv4_tcp;
+#ifdef USE_IPV6
+		else si=sendipv6_tcp;
+#endif
+	}
+	return tcpconn_new(s, server, si); /*FIXME: set sock idx! */
 error:
 	return 0;
 }
