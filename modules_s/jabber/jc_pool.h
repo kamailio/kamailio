@@ -33,7 +33,6 @@ typedef struct _jab_wlist
 {
 	int len;   			// length of the list
 	int maxj;			// maximum jobs / worker
-	int ssock;			// sip response socket
 	struct sockaddr_in sserver;  // sip server address
 	str *contact_h;	// contact header
     //int semid;          // semaphore for mutual access to the list
@@ -84,7 +83,6 @@ typedef struct _jc_pool
 /**********   LOOK AT IMPLEMENTATION OF FUNCTIONS FOR DESCRIPTION    ***/
 
 jab_wlist jab_wlist_init(int **, int, int);
-int jab_wlist_init_ssock(jab_wlist, char *, int);
 int jab_wlist_init_contact(jab_wlist, char *);
 int jab_wlist_set_pids(jab_wlist, int *, int);
 int jab_wlist_get(jab_wlist, str *, str **);

@@ -98,7 +98,6 @@ jab_wlist jab_wlist_init(int **pipes, int size, int max)
 		return NULL;
 	jwl->len = size;
 	jwl->maxj = max;
-	jwl->ssock = -1;
 	jwl->contact_h = NULL;
 	//jwl->semid = init_mutex(SEM_KEY);
 	if((jwl->sems = create_semaphores(size)) == NULL)
@@ -150,36 +149,6 @@ int jab_wlist_init_contact(jab_wlist jwl, char *ch)
 	return 0;
 }
 
-/**
- * initialize the socket that will be used to send SIP messages
- * - jwl : pointer to the workers list
- * - sserv : name of the SIP server where SIP messages are sent
- * - sport : port of the SIP server where SIP messages are sent
- * #return : 0 on success or <0 on error
- */
-int jab_wlist_init_ssock(jab_wlist jwl, char *sserv, int sport)
-{
-	struct hostent *hp;
-
-	if(jwl == NULL)
-		return -1;
-	if ((jwl->ssock = socket( PF_INET, SOCK_DGRAM, 0 )) < 0)
-    {
-    	DBG("JABBER: jab_wlist_init_ssock: Problem creating socket\n");
-    	return -2;
-    }
-	
-	jwl->sserver.sin_family = AF_INET;
-	if ((hp = gethostbyname(sserv))==0)
-	{
-    	DBG("JABBER: jab_wlist_init_ssock: Invalid or unknown host\n");
-	    return -3;
-  	}
-	memcpy( &jwl->sserver.sin_addr.s_addr, hp->h_addr, hp->h_length);
-	jwl->sserver.sin_port = htons(sport);
-
-	return 0;
-}
 
 /**
  * set the p.id's of the workers
@@ -206,6 +175,7 @@ int jab_wlist_set_pids(jab_wlist jwl, int *pids, int size)
 void jab_wlist_free(jab_wlist jwl)
 {
 	int i;
+	DBG("JABBER: jab_wlist_free : freeing 'jab_wlist' memory ...\n");
 	if(jwl == NULL)
 		return;
 	
@@ -598,59 +568,42 @@ int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size,
 								write(1, "JABBER: JMSG START ----------\n", 30);
 								write(1, recv_buff, n);
 								write(1, "\nJABBER: JMSG END ----------\n", 29);
-								if(jwl->ssock > 0)
+								recv_buff[n] = 0;
+								if(strstr(recv_buff, "<message ") != NULL)
 								{
-									recv_buff[n] = 0;
-									if(strstr(recv_buff, "<message ") != NULL)
+									if(j2s_parse_jmsgx(recv_buff, n, &tjmsg) >=0)
 									{
-										if(j2s_parse_jmsgx(recv_buff, n, &tjmsg) >=0)
+										DBG("JABBER: worker_process:%d: sending as SIP ...\n", _pid);
+										buff[0] = 0;
+										if(tjmsg.error.len > 0)
 										{
-											DBG("JABBER: worker_process:%d: sending as SIP ...\n", _pid);
-											buff[0] = 0;
-											if(tjmsg.error.len > 0)
+											strcpy(buff, "{Error: ");
+											if(tjmsg.errcode.len > 0)
 											{
-												strcpy(buff, "{Error: ");
-												if(tjmsg.errcode.len > 0)
-												{
-													strncat(buff, tjmsg.errcode.s, tjmsg.errcode.len);
-													strncat(buff, " - ", 3);
-												}
-												strncat(buff, tjmsg.error.s, tjmsg.error.len);
-												strcat(buff, ". The following message was NOT sent}: ");
+												strncat(buff, tjmsg.errcode.s, tjmsg.errcode.len);
+												strncat(buff, " - ", 3);
 											}
-											strncat(buff, tjmsg.body.s, tjmsg.body.len);
-											if((n= xml_unescape(buff, strlen(buff), tbuff, 1024)) > 0)
-											{
-												tstr.s = tbuff;
-												tstr.len = n;
-												// if(jab_send_sip_msg(jcp->ojc[i]->id, &tjmsg.from, &tjmsg.from, &tstr) < 0)
-												if(jab_send_sip_msg(jcp->ojc[i]->id, &tjmsg.from, jwl->contact_h, &tstr) < 0)
-													DBG("JABBER: worker_process:%d: ERROR SIP MESSAGE was not sent ...\n", _pid);
-												else
-													DBG("JABBER: worker_process:%d: SIP MESSAGE was sent ...\n", _pid);
-/***************************											
-												tbuff[n] = 0;
-												strncpy(buff, tjmsg.from.s, tjmsg.from.len);
-												buff[tjmsg.from.len] = 0;
-												if(jwl->contact_h == NULL)
-													sprintf(send_buff, SIP_MESSAGE, jcp->ojc[i]->id->len, jcp->ojc[i]->id->s, buff, jcp->ojc[i]->id->len, jcp->ojc[i]->id->s, "", buff, _pid, cseq++, n, tbuff);
-												else
-													sprintf(send_buff, SIP_MESSAGE, jcp->ojc[i]->id->len, jcp->ojc[i]->id->s, buff, jcp->ojc[i]->id->len, jcp->ojc[i]->id->s, jwl->contact_h, buff, _pid, cseq++, n, tbuff);
-
-												write(1, "JABBER: SIPMSG START ----------\n", 32);
-												write(1, send_buff, strlen(send_buff));
-												write(1, "\nJABBER: SIPMSG END ----------\n", 31);
-												n = sendto(jwl->ssock, send_buff, strlen(send_buff) ,0, (struct sockaddr*) &jwl->sserver, sizeof(jwl->sserver));
-*******/										
-											}
+											strncat(buff, tjmsg.error.s, tjmsg.error.len);
+											strcat(buff, ". The following message was NOT sent}: ");
+										}
+										strncat(buff, tjmsg.body.s, tjmsg.body.len);
+										if((n= xml_unescape(buff, strlen(buff), tbuff, 1024)) > 0)
+										{
+											tstr.s = tbuff;
+											tstr.len = n;
+											// if(jab_send_sip_msg(jcp->ojc[i]->id, &tjmsg.from, &tjmsg.from, &tstr) < 0)
+											if(jab_send_sip_msg(jcp->ojc[i]->id, &tjmsg.from, jwl->contact_h, &tstr) < 0)
+												DBG("JABBER: worker_process:%d: ERROR SIP MESSAGE was not sent ...\n", _pid);
 											else
-											{
-												DBG("JABBER: worker_process:%d: ERROR sending as sip: output buffer too small ...\n", _pid);
-											}
+												DBG("JABBER: worker_process:%d: SIP MESSAGE was sent ...\n", _pid);
 										}
 										else
-											DBG("JABBER: worker_process:%d: ERROR parsing jabber message ...\n", _pid);
+										{
+											DBG("JABBER: worker_process:%d: ERROR sending as sip: output buffer too small ...\n", _pid);
+										}
 									}
+									else
+										DBG("JABBER: worker_process:%d: ERROR parsing jabber message ...\n", _pid);
 								}
 							}
 							else

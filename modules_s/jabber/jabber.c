@@ -184,7 +184,7 @@ static int mod_init(void)
 		return -1;
 	}
 	
-	if((jab_wlist_init_ssock(jwl, "gorn.fokus.gmd.de", 5060) < 0) || (jab_wlist_init_contact(jwl, contact) < 0))
+	if(jab_wlist_init_contact(jwl, contact) < 0)
 	{
 		DBG("JABBER: mod_init: error workers list properties\n");
 		return -1;
@@ -240,9 +240,9 @@ static int child_init(int rank)
 	{
 		for(i=0;i<nrw;i++)
 			close(pipes[i][0]);
-		for(i = 0; i < nrw; i++)
-			pkg_free(pipes[i]);
-		pkg_free(pipes);
+		//for(i = 0; i < nrw; i++)
+		//	pkg_free(pipes[i]);
+		//pkg_free(pipes);
 	}
 	return 0;
 }
@@ -412,9 +412,8 @@ void destroy(void)
 			db_close(db_con[i]);
 		shm_free(db_con);
 	}
-	if(jwl->ssock > 0)
-		close(jwl->ssock);
 			
 	jab_wlist_free(jwl);
 	DBG("JABBER: Unloaded\n");
 }
+
