@@ -113,11 +113,11 @@ Chapter 1. User's Guide
 
    Database URL.
 
-   Default value is "sql://root@localhost/msilo". 
+   Default value is "mysql://root@localhost/msilo". 
 
    Example 1-1. Set the "db_url" parameter
 ...
-modparam("msilo", "db_url", "sql://user:passwd@host.com/dbname")
+modparam("msilo", "db_url", "mysql://user:passwd@host.com/dbname")
 ...
      _________________________________________________________
 
@@ -269,8 +269,12 @@ CREATE TABLE silo(
     src_addr VARCHAR(255) NOT NULL DEFAULT "",
       -- dst address - To URI
     dst_addr VARCHAR(255) NOT NULL DEFAULT "",
-      -- Request-URI
+      -- r-uri == username@domain (for compatibility with old version)
     r_uri VARCHAR(255) NOT NULL DEFAULT "",
+      -- username
+    username VARCHAR(64) NOT NULL DEFAULT "",
+      -- domain
+    domain VARCHAR(128) NOT NULL DEFAULT "",
       -- incoming time
     inc_time INTEGER NOT NULL DEFAULT 0,
       -- expiration time
@@ -335,7 +339,7 @@ modparam("usrloc", "db_mode", 0)
 
 # -- msilo params --
 
-modparam("msilo","db_url","sql://user:xxx@127.0.0.1/msilo")
+modparam("msilo","db_url","mysql://user:xxx@127.0.0.1/msilo")
 modparam("msilo","registrar","sip:registrar@mydomain.com")
 
 # -- tm params --

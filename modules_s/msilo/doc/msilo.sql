@@ -16,8 +16,12 @@ CREATE TABLE silo(
     src_addr VARCHAR(255) NOT NULL DEFAULT "",
       -- dst address - To URI
     dst_addr VARCHAR(255) NOT NULL DEFAULT "",
-      -- Request-URI
+      -- r-uri == username@domain (for compatibility with old version)
     r_uri VARCHAR(255) NOT NULL DEFAULT "",
+      -- username
+    username VARCHAR(64) NOT NULL DEFAULT "",
+      -- domain
+    domain VARCHAR(128) NOT NULL DEFAULT "",
       -- incoming time
     inc_time INTEGER NOT NULL DEFAULT 0,
       -- expiration time
