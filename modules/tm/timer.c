@@ -395,7 +395,7 @@ inline static void wait_handler( void *attr)
 	struct cell *p_cell = (struct cell*)attr;
 
 #ifdef EXTRA_DEBUG
-	if (p_cell->damocles) {
+	if (p_cell->damocles==1) {
 		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
 			" called from WAIT timer\n",p_cell);
 		abort();
