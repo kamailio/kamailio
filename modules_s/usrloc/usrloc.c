@@ -105,7 +105,7 @@ char* cseq_col = "cseq";
 int flush_interval = 60;
 
 
-\/*
+/*
  * sl_send_reply function pointer
  */
 int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
