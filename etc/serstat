@@ -10,6 +10,11 @@ USER_COLUMN='user'
 SUBSCRIBER_COLUMN='user_id'
 QUERY='select location.*, subscriber.email_address from location, subscriber where subscriber.user_id=location.user'
 
+# username and password of a valid MySql user, preferably only with read-only
+# privilegs
+USER="serro"
+PASSWORD="47serro11"
+
 if [ $# -gt 1 ] ; then
 	echo "usage: $0 [username]"
 	exit 1
@@ -26,4 +31,4 @@ done
 #ps  -wwwwww -o "drs,pid,user,group,euser,egroup,fuser,fgroup,args" -C sr 
 
 
-mysql -h dbhost -u csps -p -e "$QUERY ;" csps107
+mysql -h dbhost -u $USER "-p$PASSWORD" -e "$QUERY ;" csps107

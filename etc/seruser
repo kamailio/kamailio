@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# $Id$
+#
+# show user information: email and UsrLoc entries if any
+
+USER_COLUMN='user'
+SUBSCRIBER_COLUMN='user_id'
+QUERY1="select subscriber.email_address from subscriber where  subscriber.user_id='$1'"
+QUERY2="select location.* from location where location.user='$1'"
+
+# username and password of a valid MySql user, preferably only with read-only
+# privilegs
+USER='serro'
+PASSWORD='47serro11'
+
+if [ $# -ne 1 ] ; then
+	echo "usage: $0 <username>"
+	exit 1
+fi
+
+#ps  -wwwwww -o "drs,pid,user,group,euser,egroup,fuser,fgroup,args" -C sr 
+
+
+mysql -h dbhost -u $USER "-p$PASSWORD" -e "$QUERY1 ;" csps107
+mysql -h dbhost -u $USER "-p$PASSWORD" -e "$QUERY2 ;" csps107
