@@ -361,6 +361,13 @@ int add_listen_iface(char* name, unsigned short port, unsigned short proto,
 			LOG(L_ERR, "ERROR: add_listen_iface: get_sock_info_list failed\n");
 			goto error;
 		}
+		if (port==0){ /* use default port */
+			port=
+#ifdef USE_TLS
+				((c_proto)==PROTO_TLS)?tls_port_no:
+#endif
+				port_no;
+		}
 		if (new_sock2list(name, port, c_proto, flags, list)<0){
 			LOG(L_ERR, "ERROR: add_listen_iface: new_sock2list failed\n");
 			goto error;

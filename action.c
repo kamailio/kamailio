@@ -36,6 +36,7 @@
  *  2003-04-22  strip_tail added (jiri)
  *  2003-10-02  added SET_ADV_ADDR_T & SET_ADV_PORT_T (andrei)
  *  2003-10-29  added FORCE_TCP_ALIAS_T (andrei)
+ *  2004-11-30  added FORCE_SEND_SOCKET_T (andrei)
  */
 
 
@@ -661,6 +662,16 @@ int do_action(struct action* a, struct sip_msg* msg)
 				}
 			}
 #endif
+			ret=1; /* continue processing */
+			break;
+		case FORCE_SEND_SOCKET_T:
+			if (a->p1_type!=SOCKETINFO_ST){
+				LOG(L_CRIT, "BUG: do_action: bad force_send_socket argument"
+						" type: %d\n", a->p1_type);
+				ret=E_BUG;
+				break;
+			}
+			msg->force_send_socket=(struct socket_info*)a->p1.data;
 			ret=1; /* continue processing */
 			break;
 		default:

@@ -61,6 +61,7 @@
 #include "sr_module.h"
 #include "ip_addr.h"
 #include "resolve.h"
+#include "socket_info.h"
 #include "parser/parse_uri.h"
 #include "parser/parse_from.h"
 #include "parser/parse_to.h"
@@ -154,6 +155,9 @@ static int fix_actions(struct action* a)
 	cmd_export_t* cmd;
 	struct sr_module* mod;
 	str s;
+	struct hostent* he;
+	struct ip_addr ip;
+	struct socket_info* si;
 	
 	if (a==0){
 		LOG(L_CRIT,"BUG: fix_actions: null pointer\n");
@@ -242,7 +246,29 @@ static int fix_actions(struct action* a)
 						}
 					}
 				}
-			
+				break;
+			case FORCE_SEND_SOCKET_T:
+				if (t->p1_type!=SOCKID_ST){
+					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
+								"%d for force_send_socket\n",
+								t->p1_type);
+					return E_BUG;
+				}
+				he=resolvehost(((struct socket_id*)t->p1.data)->name);
+				if (he==0) return E_BAD_ADDRESS;
+				hostent2ip_addr(&ip, he, 0);
+				si=find_si(&ip, ((struct socket_id*)t->p1.data)->port,
+								((struct socket_id*)t->p1.data)->proto);
+				if (si==0){
+					LOG(L_ERR, "ERROR: fix_actions: bad force_send_socket"
+							" argument: %s:%d (ser doesn't listen on it)\n",
+							((struct socket_id*)t->p1.data)->name,
+							((struct socket_id*)t->p1.data)->port);
+					return E_BAD_ADDRESS;
+				}
+				t->p1.data=si;
+				t->p1_type=SOCKETINFO_ST;
+				break;
 		}
 	}
 	return 0;

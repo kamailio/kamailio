@@ -1431,7 +1431,7 @@ try_again:
 	}
 	/* fix routing lists */
 	if ( (r=fix_rls())!=0){
-		fprintf(stderr, "ERROR: error %x while trying to fix configuration\n",
+		fprintf(stderr, "ERROR: error %d while trying to fix configuration\n",
 						r);
 		goto error;
 	};

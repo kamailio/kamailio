@@ -107,6 +107,11 @@ core:
    unix_tx_timeout = 2000
        Timeout (in ms) used when sending replies through unix sockets.
  - new script commands:
+   force_send_socket([proto:]address[:port])
+       sends the message from the specified socket (it _must_ be one of the
+       sockets ser listens on). If the protocol doesn't match (e.g. udp
+       message "forced" to a tcp socket) the closest socket of the same
+       protocol is used.
    force_tcp_alias()
    force_tcp_alias(port)
        adds a tcp port alias for the current connection (if tcp).

@@ -340,6 +340,9 @@ void print_action(struct action* a)
 			case AVP_TO_URI_T:
 					DBG("avp_to_attr");
 					break;
+			case FORCE_SEND_SOCKET_T:
+					DBG("force_send_socket");
+					break;
 			default:
 					DBG("UNKNOWN(");
 		}
@@ -362,6 +365,13 @@ void print_action(struct action* a)
 			case CMDF_ST:
 					DBG("f_ptr<%p>",t->p1.data);
 					break;
+			case SOCKID_ST:
+					DBG("%d:%s:%d",
+							((struct socket_id*)t->p1.data)->proto,
+							((struct socket_id*)t->p1.data)->name,
+							((struct socket_id*)t->p1.data)->port
+							);
+					break;
 			default:
 					DBG("type<%d>", t->p1_type);
 		}
@@ -381,6 +391,13 @@ void print_action(struct action* a)
 			case ACTIONS_ST:
 					print_action((struct action*)t->p2.data);
 					break;
+			case SOCKID_ST:
+					DBG("%d:%s:%d",
+							((struct socket_id*)t->p1.data)->proto,
+							((struct socket_id*)t->p1.data)->name,
+							((struct socket_id*)t->p1.data)->port
+							);
+					break;
 			default:
 					DBG(", type<%d>", t->p2_type);
 		}
@@ -399,6 +416,13 @@ void print_action(struct action* a)
 					break;
 			case ACTIONS_ST:
 					print_action((struct action*)t->p3.data);
+					break;
+			case SOCKID_ST:
+					DBG("%d:%s:%d",
+							((struct socket_id*)t->p1.data)->proto,
+							((struct socket_id*)t->p1.data)->name,
+							((struct socket_id*)t->p1.data)->port
+							);
 					break;
 			default:
 					DBG(", type<%d>", t->p3_type);

@@ -118,6 +118,14 @@ struct dest_info{
 };
 
 
+struct socket_id{
+	char* name;
+	int proto;
+	int port;
+	struct socket_id* next;
+};
+
+
 
 /* len of the sockaddr */
 #ifdef HAVE_SOCKADDR_SA_LEN

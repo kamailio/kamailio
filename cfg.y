@@ -57,6 +57,7 @@
  * 2004-07-05  src_ip & dst_ip will detect ip addresses between quotes
  *              (andrei)
  * 2004-10-19  added FROM_URI, TO_URI (andrei)
+ * 2004-11-30  added force_send_socket (andrei)
  */
 
 
@@ -97,26 +98,20 @@
  with no built in alloca, like icc*/
 #undef _ALLOCA_H
 
-struct id_list{
-	char* name;
-	int proto;
-	int port;
-	struct id_list* next;
-};
 
 extern int yylex();
 static void yyerror(char* s);
 static char* tmp;
 static int i_tmp;
 static void* f_tmp;
-static struct id_list* lst_tmp;
+static struct socket_id* lst_tmp;
 static int rt;  /* Type of route block for find_export */
 static str* str_tmp;
 static str s_tmp;
 static struct ip_addr* ip_tmp;
 
 static void warn(char* s);
-static struct id_list* mk_listen_id(char*, int, int);
+static struct socket_id* mk_listen_id(char*, int, int);
  
 
 %}
@@ -129,7 +124,7 @@ static struct id_list* mk_listen_id(char*, int, int);
 	struct action* action;
 	struct net* ipnet;
 	struct ip_addr* ipaddr;
-	struct id_list* idlst;
+	struct socket_id* sockid;
 }
 
 /* terminals */
@@ -166,6 +161,7 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token ELSE
 %token SET_ADV_ADDRESS
 %token SET_ADV_PORT
+%token FORCE_SEND_SOCKET
 %token URIHOST
 %token URIPORT
 %token MAX_LEN
@@ -297,8 +293,8 @@ static struct id_list* mk_listen_id(char*, int, int);
 %type <ipnet> ipnet
 %type <strval> host
 %type <strval> listen_id
-%type <idlst>  id_lst
-%type <idlst>  phostport
+%type <sockid>  id_lst
+%type <sockid>  phostport
 %type <intval> proto port
 %type <intval> equalop strop intop
 %type <strval> host_sep
@@ -1609,6 +1605,13 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| SET_ADV_PORT LPAREN error RPAREN { $$=0; yyerror("bad argument, "
 														"string expected"); }
 		| SET_ADV_PORT  error {$$=0; yyerror("missing '(' or ')' ?"); }
+		| FORCE_SEND_SOCKET LPAREN phostport RPAREN {
+										$$=mk_action(FORCE_SEND_SOCKET_T,
+														SOCKID_ST, 0, $3, 0);
+													}
+		| FORCE_SEND_SOCKET LPAREN error RPAREN { $$=0; yyerror("bad argument,"
+											" [proto:]host[:port] expected"); }
+		| FORCE_SEND_SOCKET error {$$=0; yyerror("missing '(' or ')' ?"); }
 		| ID LPAREN RPAREN			{ f_tmp=(void*)find_export($1, 0, rt);
 									   if (f_tmp==0){
 										   if (find_export($1, 0, 0)) {
@@ -1690,10 +1693,10 @@ static void yyerror(char* s)
 }
 
 
-static struct id_list* mk_listen_id(char* host, int proto, int port)
+static struct socket_id* mk_listen_id(char* host, int proto, int port)
 {
-	struct id_list* l;
-	l=pkg_malloc(sizeof(struct id_list));
+	struct socket_id* l;
+	l=pkg_malloc(sizeof(struct socket_id));
 	if (l==0){
 		LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
 	}else{

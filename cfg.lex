@@ -51,6 +51,7 @@
  *              added MCAST_TTL (andrei)
  *  2004-10-08  more escapes: \", \xHH, \nnn and minor optimizations (andrei)
  *  2004-10-19  added FROM_URI and TO_URI (andrei)
+ *  2004-11-30  added force_send_socket
  */
 
 
@@ -129,6 +130,7 @@ IF				"if"
 ELSE			"else"
 SET_ADV_ADDRESS	"set_advertised_address"
 SET_ADV_PORT	"set_advertised_port"
+FORCE_SEND_SOCKET	"force_send_socket"
 
 /*ACTION LVALUES*/
 URIHOST			"uri:host"
@@ -321,6 +323,8 @@ EAT_ABLE	[\ \t\b\r]
 										return SET_ADV_ADDRESS; }
 <INITIAL>{SET_ADV_PORT}	{ count(); yylval.strval=yytext;
 										return SET_ADV_PORT; }
+<INITIAL>{FORCE_SEND_SOCKET}	{	count(); yylval.strval=yytext;
+									return FORCE_SEND_SOCKET; }
 
 <INITIAL>{URIHOST}	{ count(); yylval.strval=yytext; return URIHOST; }
 <INITIAL>{URIPORT}	{ count(); yylval.strval=yytext; return URIPORT; }
