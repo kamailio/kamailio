@@ -551,6 +551,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	int branch_cnt;
 	int picked_branch;
 	int picked_code;
+	int inv_through;
 
 	/* note: this code never lets replies to CANCEL go through;
 	   we generate always a local 200 for CANCEL; 200s are
@@ -559,44 +560,36 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	   out
 	*/
 	DBG("->>>>>>>>> T_code=%d, new_code=%d\n",Trans->uas.status,new_code);
+	inv_through=new_code>=200 && new_code<300 && Trans->is_invite;
 	/* if final response sent out, allow only INVITE 2xx  */
 	if ( Trans->uas.status >= 200 ) {
-		if (new_code>=200 && new_code < 300  && 
-#ifdef _BUG_FIX /* t may be local, in which case there is no request */
-			Trans->uas.request->REQ_METHOD==METHOD_INVITE) {
-#endif
-			Trans->is_invite ) {
+		if (inv_through) {
 			DBG("DBG: t_should_relay: 200 INV after final sent\n");
 			*should_store=0;
 			Trans->uac[branch].last_received=new_code;
 			*should_relay=branch;
 			return RPS_PUSHED_AFTER_COMPLETION;
-		} else {
-			/* except the exception above, too late  messages will
-			   be discarded */
-			*should_store=0;
-			*should_relay=-1;
-			return RPS_DISCARDED;
-		}
+		} 
+		/* except the exception above, too late  messages will
+		   be discarded */
+		goto discard;
 	} 
+
+	/* if final response received at this branch, allow only INVITE 2xx */
+	if (Trans->uac[branch].last_received>=200
+			&& !(inv_through && Trans->uac[branch].last_received<300)) {
+		LOG(L_ERR, "ERROR: t_should_relay: status rewrite by UAS: "
+			"stored: %d, received: %d\n",
+			Trans->uac[branch].last_received, new_code );
+		goto discard;
+	}
+
 
 	/* no final response sent yet */
 	/* negative replies subject to fork picking */
 	if (new_code >=300 ) {
-		/* negative reply received after we have received
-		   a final reply previously -- discard , unless
-		   a recoverable error occured, in which case
-		   retry
-	    */
-		if (Trans->uac[branch].last_received>=200) {
-			/* then drop! */
-			*should_store=0;
-			*should_relay=-1;
-			return RPS_DISCARDED;
-		}
 
 		Trans->uac[branch].last_received=new_code;
-
 
 		/* if all_final return lowest */
 		picked_branch=pick_branch(branch,new_code, Trans, &picked_code);
@@ -671,6 +664,7 @@ error:
 	/* reply_status didn't match -- it must be something weird */
 	LOG(L_CRIT, "ERROR: Oh my gooosh! We don't know whether to relay %d\n",
 		new_code);
+discard:
 	*should_store=0;
 	*should_relay=-1;
 	return RPS_DISCARDED;
