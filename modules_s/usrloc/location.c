@@ -229,7 +229,7 @@ int msg2loc(struct sip_msg* _msg, location_t** _loc, int* _star, int* _expires)
 	     /* Extract username from To URI */
 	to.s = get_to(_msg)->uri.s;
 	to.len = get_to(_msg)->uri.len;
-	get_to_username(&to);
+	get_username(&to);
 	     /* Not needed anymore */
 	    
 	if (!to.len) {
