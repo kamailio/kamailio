@@ -45,7 +45,8 @@ ifeq  ($(ARCH), SunOS)
 
 MAKE=gmake
 YACC=yacc
-LIBS=$(LIBS) -L/usr/local/lib -lxnet # or -lnsl -lsocket or -lglibc ?
+LDFLAGS=-O2
+LIBS+=-L/usr/local/lib -lxnet # or -lnsl -lsocket or -lglibc ?
 
 endif
 ifeq ($(ARCH), FreeBSD)
