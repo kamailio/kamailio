@@ -81,7 +81,7 @@
  *		       by another nathelper in transit to indicate
  *		       that the session is already goes through another
  *		       proxy. Allows creating chain of proxies.
- *		 `d' - flags that IP address in SDP should be trusted.
+ *		 `r' - flags that IP address in SDP should be trusted.
  *		       Without this flag, nathelper ignores address in the
  *		       SDP and uses source address of the SIP message
  *		       as media address which is passed to the RTP proxy.
