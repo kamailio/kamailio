@@ -35,7 +35,7 @@ if [ $? -ne 0 ] ; then
 	echo "HA1 calculation failed"
 	exit 1
 fi
-HA1B=`$GENHA1 $1 $2 "$3@$DOMAIN"`
+HA1B=`$GENHA1 "$1@$DOMAIN" $2 $3`
 if [ $? -ne 0 ] ; then
 	echo "HA1B calculation failed"
 	exit 1
