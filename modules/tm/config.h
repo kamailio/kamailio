@@ -57,4 +57,13 @@
 #define CANCEL_DONE "ok -- no more pending branches"
 #define CANCELLED "Request cancelled"
 
+/* ACKnowledgement forking hack -- that is good for phones
+   which send ACKs to the same outbound proxy; if forking is
+   enabled, the proxy wouldn't know to which branch to forward;
+   without forking, it could forward to other branch than from
+   which a reply came back, resulting in UAS never seeing it;
+   this hack has not been tested yet
+*/
+#undef ACK_FORKING_HACK
+
 #endif
