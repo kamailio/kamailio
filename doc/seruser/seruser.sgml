@@ -1,0 +1,201 @@
+<!DOCTYPE Book SYSTEM "/usr/share/sgml/docbook/dtd-4.2/docbook.dtd">
+
+<book label="seruser" id="seruser" lang="EN">
+<?dbhtml filename="index.html">
+    <title>iptel.org SIP Express Router v0.8.8 -- User's Guide</title>
+    <bookinfo>
+	<authorgroup>
+
+	    <author>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<email>jiri@iptel.org</email>
+	    </author>
+	    <author>
+		<firstname>Yacine</firstname>
+		<surname>Rebahi</surname>
+		<email>rebahi@fokus.fhg.de</email>
+
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2001</year>
+	    <year>2002</year>
+	    <holder>FhG Fokus</holder>
+	</copyright>
+	<legalnotice>
+	    <para>
+		This documentation is free software; you can redistribute
+		it and/or modify it under the terms of the GNU General Public
+ 		License as published by the Free Software Foundation; either
+		version 2 of the License, or (at your option) any later
+		version.
+	    </para>
+	    
+	    <para>
+		This program is distributed in the hope that it will be
+		useful, but WITHOUT ANY WARRANTY; without even the implied
+		warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+		See the GNU General Public License for more details.
+	    </para>
+	    
+	    <para>
+		You should have received a copy of the GNU General Public
+		License along with this program; if not, write to the Free
+		Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+		MA 02111-1307 USA
+	    </para>
+	    
+	    <para>
+		For more details see the file COPYING in the source
+		distribution of SER.
+	    </para>	    
+	</legalnotice>
+
+	<abstract>
+	    <para>
+		The document describes the SIP Express Router and its use in
+		SIP networks. It is intended as an aid to server 
+		administrators. 
+	    </para>
+	</abstract>
+
+    </bookinfo>
+    
+    <toc></toc>
+    
+    <chapter id="general">	<title>General Information</title>	<para>	<section id="about_ser">	    <title>About SIP Express Router (ser)</title>	    <para> SIP Express Router (SER) is an industrial-strength, free VoIP server based on the session initiation protocol (SIP RFC2543-bis). It is engineered to power IP telephony infrastructures up to large scale. The server keeps track of users, sets up VoIP sessions, relays instant messages and creates space for new plug-in applications. Its proven interoperability guarantees seamless integration with components from other vendors, eliminating the risk of a single-vendor trap. It has successfully participated in various interoperability tests in which it worked with the products of other leading SIP vendors.	    </para>	    <para>The SIP Express Router enables a flexible plug-in model for new applications: Third parties can easily link their plug-ins with the server code and provide thereby advanced and customized services. In this way, plug-ins such as SNMP support, RADIUS accounting,or SMS gateway have already been developed and are provided as advanced features. Other modules are underway: Presence server,firewall control, and more.	    </para>	    <para>Its performance and robustness allows it to serve millions of users and accommodate needs of very large operators. With a $3000 dual-CPU, the SIP Express Router is able to power IP telephony services in an area as large as the Bay Area during peak hours. Even on an IPAQ PDA, the server withstands 150 calls per second (CPS)! The server has been powering our iptel.org free SIP site withstanding heavy daily load that is further increasing with the popularity of Microsoft's Messenger.  		    </para>	    <para>The SIP Express Router is extremely configurable to allow the creation of various routing and admission policies as well as setting up new and customized services. Its configurability allows it to serve many roles: network security barrier, application server, or PSTN gateway guard for example.		</para>	    	</section> 	<section id="about_iptel">
+	    <title>About iptel.org</title>
+	    <para>
+		iptel.org is a know-how company spun off from Germany's national 
+research company FhG Fokus. One of the first SIP implementations ever, 
+low-QoS enhancements, interoperability tests and VoIP-capable firewall 
+control concepts are examples of well-known FhG's work.
+
+		</para>
+	    <para>
+		iptel.org continues to keep this know-how leadership in SIP. 
+The access rate of the company's site, a well-known source of 
+technological information, is a best proof of interest. Thousands 
+of hits come every day from the whole Internet.
+		</para>
+
+	    
+	</section> <!-- iptel -->
+	<section id="ser_features">
+	    <title>Feature List</title>
+	    <para>
+Based on the latest standards, the SIP Express Router (SER) includes 
+support for registrar, proxy and redirect mode. Further it acts as 
+an application server with support for CPL, instant messaging and 
+presence (IM&P) including a 2G/SMS gateway, a call control policy 
+language, call number translation, private dial plans and accounting, 
+authorization and authentication (AAA) services. SER runs on Sun/Solaris, 
+PC/Linux, IPAQ/Linux platforms and supports  both IPv4 and IPv6. 
+Hosting multiple domains and database redundancy is supported.
+	    </para>
+	    <para>
+Other extensions are underway: presence server, firewall control and more.
+		</para>
+
+	</section>
+
+	<section id="use_cases">
+		<title>Use Cases
+		</title>
+	    <para>
+This section illustrates the most frequent uses of SIP. In all these scenarios, the SIP Express Router (SER) can be easily deployed as the glue connecting all SIP components together, be it softphones, hardphones, PSTN gateways or any other SIP-compliant devices.
+	    </para>
+	    <section>
+		<title>Added-Value ISP Services</title>
+		<para>
+		    To attract customers, ISPs frequently offer applications bundled with IP access. With SIP, the providers can conveniently offer a variety of services running on top of a single infrastructure. Particularly, deploying VoIP and instant messaging and presence services is as easy as setting up a SIP server and guiding customers to use Windows Messenger. Additionally, the ISPs may offer advanced services such as PSTN termination, user-driven call handling or unified messaging all using the same infrastructure.
+		</para>
+		<para>
+SIP Express Router has been engineered to power large scale networks: its capacity can deal with large number of customers under high load caused by modern applications. Premium performance allows deploying a low number of boxes while keeping investments and operational expenses extremely low. ISPs can start by providing instant messaging services on this standardized platform. This can be combined with the SIP-to-SMS gateway service also supported by SER. In a second step VoIP services can be added in addition to voicemail services and  UMS.
+		</para>
+	    </section> <!-- Added-value ISP -->
+	    <section>
+		<title>PC2Phone</title>
+		<para>
+		    Internet Telephony Service Providers (ITSPs) offer the service of interconnecting Internet telephony users using PC softphone or appliances to PSTN. Particularly with long-distance and international calls, substantial savings can be achieved by routing the calls over the Internet.
+		</para>
+		<para>
+		    SIP Express Router can be easily configured to serve pc2phone users, distribute calls to geographically appropriate PSTN gateway, act as a security barrier and keep track of charging. 
+		</para>
+	    </section>
+	    <section>
+		<title>PBX Replacement</title>
+		<para>
+		    Replacing a traditional PBX in an enterprise can achieve reasonable savings. Enterprises can deploy a single infrastructure for both voice and data and bridge distant locations over the Internet. Additionally, they can benefit of integration of voice and data.
+		</para>
+		<para>
+		    The SIP Express Router scales from SOHOs to large, international enterprises. Even a single installation on a common PC is able to serve VoIP signaling of any worlds enterprise.  Its policy-based routing language makes implementation of numbering plans of companies spread across the world very easy. ACL features allow for protection of PSTN gateway from unauthorized callers. 
+		</para>
+		<para>
+		    SIP Express Routers support for programmable routing and accounting efficiently allows for implementation of such a scenario.
+		</para>
+	    </section>
+	</section> <!-- Use Cases -->
+	<section id="about_sip">
+	    <title>About SIP Technology</title>
+	    <para>
+		The SIP protocol family is the technology which has succeeded in realizing the vision of the integrated services. With SIP, Internet users can easily contact each other; figure out willingness to have a conversation and couple different applications such as VoIP, video and instant messaging. Integration with added-value services is seamless and easy. Examples include integration with web (click-to-dial), E-mail (voice2email, UMS), and PSTN-like services (conditional forwarding).
+
+	    </para>
+	    <para>
+		The core piece of the technology is the Session Initiation Protocol (SIP) standardized by IETF. Its main function is to establish communication sessions between users connected to the public Internet and identified by e-mail-like addresses. One of SIPs greatest features is its transparent support for multiple applications: the same infrastructure may be used for voice, video, gaming or instant messaging as well as any other communication application.
+	    </para>
+	    <para>
+		There are numerous scenarios in which SIP is already deployed: PBX replacement allows for deployment of single inexpensive infrastructure in enterprises; PC-2-phone long-distance services (e.g., Deltathree) cut callers long-distance expenses; instant messaging offered by public severs (e.g., iptel.org) combines voice and text services with presence information. New deployment scenarios are underway: SIP is a part of UMTS networks and research publications suggest the use of SIP for virtual home environments or distributed network games.
+	    </para>
+	</section> <!-- about sip -->
+	<section id="ser_limitations">
+	    <title>Known SER Limitations</title>
+	    <para>
+		The following items are not part of current distribution and are planned for next releases:
+		<itemizedlist>
+		    <listitem>
+			TCP transport
+		    </listitem>
+		    <listitem>
+			Loose routing
+		    </listitem>
+		    <listitem>
+			Script processing of multiple branches on forking
+
+			<warning>
+			    ser's request processing language allows to make request decisions based on current URI. When a request if forked to multiple destinations, only the first branch's URI is used as input for script processing. This might lead to unexpected results. Whenever a URI resolves to multiple different next-hop URIs, only the first is processed which may result in handling not appropriate for the other branch. For example, a URI might resolve to an IP phone SIP address and PSTN gateway SIP address. If the IP phone address is the first, then script execution ignores the second branch and vice versa. That might result in ignoring of gateway admission control rules or applying them unnecessarily to non-gateway destinations.
+			</warning>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	</section> <!-- limitations -->
+	<section id="contact">
+	    <title>Contact and Licencing</title>
+For any additional information, send an inquiry to info@iptel.org. 
+Licensing conditions other than GPL are available on request. If
+you need a help with ser, send an email to serhelp@iptel.org.
+Report bugs at 
+https://developer.berlios.de/bugs/?func=addbug&group_id=480
+	</section>
+        
+	<section id="more_info">
+	    <title>More Information</title>
+	    <para>
+Most up-to-date information is always available at our website,
+                 http://www.iptel.org/ser/
+For information on how to install ser, read INSTALL.
+SGML documentation is available in the 'doc' directory.
+A SIP tutorial (slide set) is available at http://www.iptel.org/sip/ .
+	    </para>
+	</section> <!-- info -->
+    </chapter> <!-- general -->
+
+
+<!-- TODO
+FAQ: bandwidth, FW/NATs
+-->
+
+</book>
+	
