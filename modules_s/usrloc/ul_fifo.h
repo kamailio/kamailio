@@ -13,6 +13,7 @@
 #define UL_RM		"ul_rm"
 #define UL_DUMP         "ul_dump"
 #define UL_FLUSH        "ul_flush"
+#define UL_ADD          "ul_add"
 
 /* buffer dimensions */
 #define MAX_TABLE 128
