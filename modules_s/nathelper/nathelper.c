@@ -484,7 +484,7 @@ extract_mediaport(str *body, str *mediaport)
 	trim_len(mediaport->len, mediaport->s, *mediaport);
 
 	if (mediaport->len < 7 || memcmp(mediaport->s, "audio", 5) != 0 ||
-	  !isspace(mediaport->s[5])) {
+	  !isspace((int)mediaport->s[5])) {
 		LOG(L_ERR, "ERROR: extract_mediaport: can't parse `m=' in SDP\n");
 		return -1;
 	}
@@ -619,7 +619,7 @@ send_rtpp_command(str *callid, char command, int getreply)
 	addr.sun_family = AF_LOCAL;
 	strncpy(addr.sun_path, rtpproxy_sock,
 	    sizeof(addr.sun_path) - 1);
-#if !defined(__linux__) && !defined(__solaris__)
+#ifdef HAVE_SOCKADDR_SA_LEN
 	addr.sun_len = strlen(addr.sun_path);
 #endif
 
