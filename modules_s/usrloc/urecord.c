@@ -129,10 +129,13 @@ int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q,
 	}
 	
 	ptr = _r->contacts;
-	while(ptr) {
-		if (ptr->q < _q) break;
-		prev = ptr;
-		ptr = ptr->next;
+
+	if (!desc_time_order) {
+		while(ptr) {
+			if (ptr->q < _q) break;
+			prev = ptr;
+			ptr = ptr->next;
+		}
 	}
 
 	if (ptr) {

@@ -47,7 +47,43 @@
 #include "rerrno.h"
 #include "reply.h"
 #include "uri.h"
+#include "reg_mod.h"
 #include "regtime.h"
+
+
+void remove_cont(urecord_t* _r, ucontact_t* _c)
+{
+	if (_c->prev) {
+		_c->prev->next = _c->next;
+		if (_c->next) {
+			_c->next->prev = _c->prev;
+		}
+	} else {
+		_r->contacts = _c->next;
+		if (_c->next) {
+			_c->next->prev = 0;
+		}
+	}
+}
+
+
+void move_on_top(urecord_t* _r, ucontact_t* _c)
+{
+	ucontact_t* prev;
+
+	if (!_r->contacts) return;
+	if (_c->prev == 0) return;
+
+	prev = _c->prev;
+
+	remove_cont(_r, _c);
+	
+	_c->next = _r->contacts;
+	_c->prev = 0;
+
+	_r->contacts->prev = _c;
+	_r->contacts = _c;
+}
 
 
 /*
@@ -267,6 +303,10 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 					rerrno = R_UL_UPD_C;
 					LOG(L_ERR, "update(): Error while updating contact\n");
 					return -8;
+				}
+
+				if (desc_time_order) {
+					move_on_top(_r, c);
 				}
 			}
 		}

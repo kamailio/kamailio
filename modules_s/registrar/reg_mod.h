@@ -38,6 +38,7 @@ extern int default_q;
 extern int append_branches;
 extern int use_domain;
 extern int case_sensitive;
+extern int desc_time_order;
 
 extern float def_q;
 

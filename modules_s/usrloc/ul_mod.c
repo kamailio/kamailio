@@ -60,20 +60,21 @@ static int child_init(int rank);                    /* Per-child init function *
 /*
  * Module parameters and their default values
  */
-char* user_col       = "username";                         /* Name of column containing usernames */
-char* domain_col     = "domain";                           /* Name of column containing domains */
-char* contact_col    = "contact";                          /* Name of column containing contact addresses */
-char* expires_col    = "expires";                          /* Name of column containing expires values */
-char* q_col          = "q";                                /* Name of column containing q values */
-char* callid_col     = "callid";                           /* Name of column containing callid string */
-char* cseq_col       = "cseq";                             /* Name of column containing cseq values */
-char* method_col     = "method";                           /* Name of column containing supported method */
-char* replicate_col  = "replicate";                        /* Name of column containing replication mark */
-char* state_col      = "state";                            /* Name of column containing contact state */
-char* db_url         = DEFAULT_DB_URL;    					/* Database URL */
-int   timer_interval = 60;                                 /* Timer interval in seconds */
-int   db_mode        = 0;                                  /* Database sync scheme: 0-no db, 1-write through, 2-write back */
-int   use_domain     = 0;                                  /* Whether usrloc should use domain part of aor */
+char* user_col        = "username";       /* Name of column containing usernames */
+char* domain_col      = "domain";         /* Name of column containing domains */
+char* contact_col     = "contact";        /* Name of column containing contact addresses */
+char* expires_col     = "expires";        /* Name of column containing expires values */
+char* q_col           = "q";              /* Name of column containing q values */
+char* callid_col      = "callid";         /* Name of column containing callid string */
+char* cseq_col        = "cseq";           /* Name of column containing cseq values */
+char* method_col      = "method";         /* Name of column containing supported method */
+char* replicate_col   = "replicate";      /* Name of column containing replication mark */
+char* state_col       = "state";          /* Name of column containing contact state */
+char* db_url          = DEFAULT_DB_URL;   /* Database URL */
+int   timer_interval  = 60;               /* Timer interval in seconds */
+int   db_mode         = 0;                /* Database sync scheme: 0-no db, 1-write through, 2-write back */
+int   use_domain      = 0;                /* Whether usrloc should use domain part of aor */
+int   desc_time_order = 0;                /* By default do not enable timestamp ordering */                  
 
 
 db_con_t* db; /* Database connection handle */
@@ -103,20 +104,21 @@ static cmd_export_t cmds[] = {
  * Exported parameters 
  */
 static param_export_t params[] = {
-	{"user_column",       STR_PARAM, &user_col      },
-	{"domain_column",     STR_PARAM, &domain_col    },
-	{"contact_column",    STR_PARAM, &contact_col   },
-	{"expires_column",    STR_PARAM, &expires_col   },
-	{"q_column",          STR_PARAM, &q_col         },
-	{"callid_column",     STR_PARAM, &callid_col    },
-	{"cseq_column",       STR_PARAM, &cseq_col      },
-	{"method_column",     STR_PARAM, &method_col    },
-	{"replicate_column",  STR_PARAM, &replicate_col },
-	{"state_column",      STR_PARAM, &state_col     },
-	{"db_url",            STR_PARAM, &db_url        },
-	{"timer_interval",    INT_PARAM, &timer_interval},
-	{"db_mode",           INT_PARAM, &db_mode       },
-	{"use_domain",        INT_PARAM, &use_domain    },
+	{"user_column",       STR_PARAM, &user_col       },
+	{"domain_column",     STR_PARAM, &domain_col     },
+	{"contact_column",    STR_PARAM, &contact_col    },
+	{"expires_column",    STR_PARAM, &expires_col    },
+	{"q_column",          STR_PARAM, &q_col          },
+	{"callid_column",     STR_PARAM, &callid_col     },
+	{"cseq_column",       STR_PARAM, &cseq_col       },
+	{"method_column",     STR_PARAM, &method_col     },
+	{"replicate_column",  STR_PARAM, &replicate_col  },
+	{"state_column",      STR_PARAM, &state_col      },
+	{"db_url",            STR_PARAM, &db_url         },
+	{"timer_interval",    INT_PARAM, &timer_interval },
+	{"db_mode",           INT_PARAM, &db_mode        },
+	{"use_domain",        INT_PARAM, &use_domain     },
+	{"desc_time_order",   INT_PARAM, &desc_time_order},
 	{0, 0, 0}
 };
 

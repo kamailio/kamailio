@@ -63,6 +63,7 @@ extern char* db_url;
 extern int   timer_interval;
 extern int   db_mode;
 extern int   use_domain;
+extern int   desc_time_order;
 
 extern db_con_t* db;   /* Dabase connection handle */
 

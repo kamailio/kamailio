@@ -56,6 +56,7 @@ int default_q       = 0;    /* Default q value multiplied by 1000 */
 int append_branches = 1;    /* If set to 1, lookup will put all contacts found in msg structure */
 int use_domain      = 0;    /* If set to 1, domain will username@domain will be used as AOR */
 int case_sensitive  = 0;    /* If set to 1, username in aor will be case sensitive */
+int desc_time_order = 0;    /* By default do not order according to the descending modification time */
 
 float def_q;                /* default_q converted to float in mod_init */
 
@@ -85,6 +86,7 @@ static param_export_t params[] = {
 	{"append_branches", INT_PARAM, &append_branches},
 	{"use_domain",      INT_PARAM, &use_domain     },
 	{"case_sensitive",  INT_PARAM, &case_sensitive },
+	{"desc_time_order", INT_PARAM, &desc_time_order},
 	{0,0,0}
 };
 
