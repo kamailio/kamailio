@@ -112,6 +112,7 @@ BEGIN {
 	ua_commworks=0;
 	ua_sipsak=0;
 	ua_fxsgw=0;
+	ua_sxdesign=0;
 	ua_xx=0;
 
 	server_cisco=0
@@ -304,6 +305,10 @@ ua==0 && /User-Agent:.*sipsak/ {
 }
 ua==0 && /User-Agent:.*FXS_GW/ {
 	ua_fxsgw++
+	ua=1
+}
+ua==0 && /User-Agent:.*SX Des/ {
+	ua_sxdesign++
 	ua=1
 }
 ua==0 && /User-Agent:.*SIPimp\.org/ {
@@ -728,6 +733,7 @@ END {
 	print "CommWorks: " ua_commworks
 	print "sipsak: " ua_sipsak
 	print "FXSGW: " ua_fxsgw
+	print "SXDesing: " ua_sxdesign
 	print "UFO: " ua_xx
 
 	print "## Servers"
