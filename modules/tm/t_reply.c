@@ -581,7 +581,7 @@ int failure_route(struct cell *t)
 		LOG(L_ERR, "ERROR: on_negative_reply: "
 			"Error in do_action\n");
 	/* restore original environment */
-	faked_env(&faked_msg, 0, orig_request, 1 );
+	faked_env(&faked_msg, t, orig_request, 1 );
 	return 1;
 }
 
