@@ -21,11 +21,6 @@ struct timer;
 
 
 
-/* defined in msg_parser.h
-#define get_cseq( p_msg)    ((struct cseq_body*)p_msg->cseq->parsed)
-*/
-
-
 /* always use a power of 2 for hash table size */
 #define TABLE_ENTRIES  256
 #define MAX_FORK           20
@@ -47,10 +42,6 @@ typedef struct retrans_buff
 {
    char               *retr_buffer;
    int                  bufflen;
-/*
-   unsigned int dest_ip;
-   unsigned int dest_port;
-*/
 
    struct sockaddr_in to;
    /* changed in favour of Solaris to size_t
@@ -88,6 +79,9 @@ typedef struct cell
    /* bindings to wait and delete timer */
    struct timer_link wait_tl;
    struct timer_link dele_tl;
+
+   /*the transaction that is canceled (usefull only for CANCEL req)*/
+   struct cell *T_canceled;
 
    /* usefull data */
    /* UA Server */

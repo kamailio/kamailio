@@ -84,7 +84,7 @@ int t_on_reply_received( struct sip_msg  *p_msg ) ;
 
 /* returns 1 if everything was OK or -1 for error
 */
-int t_put_on_wait(  struct sip_msg  *p_msg  );
+int t_release_transaction( struct sip_msg* );
 
 
 
@@ -111,13 +111,15 @@ int t_send_reply( struct sip_msg * , unsigned int , char *  );
 struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_msg );
 int t_reply_matching( struct s_table* , struct sip_msg* , struct cell** , unsigned int*  );
 int t_store_incoming_reply( struct cell* , unsigned int , struct sip_msg* );
-int t_relay_reply( struct cell* , unsigned int , struct sip_msg* );
 int t_check( struct s_table* , struct sip_msg*  );
 int t_all_final( struct cell * );
 int t_build_and_send_ACK( struct cell *Trans , unsigned int brach , struct sip_msg* rpl);
+int t_cancel_branch(unsigned int branch); //TO DO
+int t_should_relay_response( struct cell *Trans, int new_code );
+int t_update_timers_after_sending_reply( struct retrans_buff *rb );
+int t_put_on_wait(  struct cell  *Trans  );
 int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg );
 int push_reply_from_uac_to_uas( struct cell* Trans , unsigned int );
-int t_cancel_branch(unsigned int branch); //TO DO
 int add_branch_label( struct cell *Trans, struct sip_msg *p_msg , int branch );
 
 void retransmission_handler( void *);

@@ -24,7 +24,7 @@
 static int w_t_send_reply(struct sip_msg* msg, char* str, char* str2);
 static int w_t_forward(struct sip_msg* msg, char* str, char* str2);
 static int w_t_forward_def(struct sip_msg* msg, char* str, char* str2);
-static int w_t_put_on_wait(struct sip_msg* msg, char* str, char* str2);
+static int w_t_release(struct sip_msg* msg, char* str, char* str2);
 static int fixup_t_forward(void** param, int param_no);
 static int fixup_t_forward_def(void** param, int param_no);
 static int fixup_t_send_reply(void** param, int param_no);
@@ -49,7 +49,7 @@ static struct module_exports nm_exports= {
 					t_forward_uri,
 					w_t_send_reply,
 					t_retransmit_reply,
-					w_t_put_on_wait
+					w_t_release
 					},
 	(int[]){
 				0,
@@ -216,10 +216,9 @@ static int w_t_send_reply(struct sip_msg* msg, char* str, char* str2)
 	return t_send_reply(msg, (unsigned int) str, str2);
 }
 
-
-static int w_t_put_on_wait(struct sip_msg* msg, char* str, char* str2)
+static int w_t_release(struct sip_msg* msg, char* str, char* str2)
 {
-	return t_put_on_wait(msg);
+	return t_release_transaction(msg);
 }
 
 

@@ -224,12 +224,10 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       global_msg_id = p_msg->id;
    }
 
-   DBG("t_forward: 1. T=%x\n", T);
    /* if  T hasn't been previous searched -> search for it */
    if ( T == T_UNDEFINED )
       t_lookup_request( p_msg, 0 , 0 );
 
-   DBG("t_forward: 2. T=%x\n", T);
    /*if T hasn't been found after all -> return not found (error) */
    if ( !T )
       return -1;
@@ -251,18 +249,18 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       /* special case : CANCEL */
       if ( p_msg->first_line.u.request.method_value==METHOD_CANCEL  )
       {
-         struct cell  *T2;
          DBG("DEBUG: t_forward: it's CANCEL\n");
          /* find original cancelled transaction; if found, use its next-hops; otherwise use those passed by script */
-         T2 = t_lookupOriginalT( hash_table , p_msg );
+         if (!T->T_canceled)
+            T->T_canceled = t_lookupOriginalT( hash_table , p_msg );
          /* if found */
-         if (T2)
+         if (T->T_canceled)
          {  /* if in 1xx status, send to the same destination */
-            if ( (T2->status/100)==1 )
+          if ( (T->T_canceled->status/100)==1 )
             {
                DBG("DEBUG: t_forward: it's CANCEL and I will send to the same place where INVITE went\n");
-               dest_ip    = T2->outbound_request[branch]->to.sin_addr.s_addr;
-               dest_port = T2->outbound_request[branch]->to.sin_port;
+               dest_ip    = T->T_canceled->outbound_request[branch]->to.sin_addr.s_addr;
+               dest_port = T->T_canceled->outbound_request[branch]->to.sin_port;
             }
             else
             {
@@ -316,6 +314,19 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       insert_into_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]), RETRASMISSIONS_LIST , RETR_T1 );
    }/* end for the first time */
 
+    /* if we are forwarding a CANCEL*/
+   if (  p_msg->first_line.u.request.method_value==METHOD_CANCEL )
+   {
+       /* if no transaction to CANCEL */
+      /* or if the canceled transaction has a final status -> drop the CANCEL*/
+      if ( !T->T_canceled || T->T_canceled->status>=200)
+       {
+           remove_from_timer_list( hash_table , &(T->outbound_request[branch]->tl[FR_TIMER_LIST]) , FR_TIMER_LIST);
+           remove_from_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]), RETRASMISSIONS_LIST );
+         return 1;
+       }
+   }
+
    /* send the request */
    /* known to be in network order */
    T->outbound_request[branch]->to.sin_port     =  dest_port;
@@ -324,6 +335,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 
    udp_send( T->outbound_request[branch]->retr_buffer , T->outbound_request[branch]->bufflen ,
                     (struct sockaddr*)&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
+
    return 1;
 }
 
@@ -349,12 +361,10 @@ int t_forward_uri( struct sip_msg* p_msg, char* foo, char* bar  )
       global_msg_id = p_msg->id;
    }
 
-   DBG("DEBUG: t_forward_uri: 1. T=%x\n", T);
    /* if  T hasn't been previous searched -> search for it */
    if ( T==T_UNDEFINED )
       t_lookup_request( p_msg, 0 , 0 );
 
-   DBG("DEBUG: t_forward_uri: 2. T=%x\n", T);
    /*if T hasn't been found after all -> return not found (error) */
    if ( !T )
       return -1;
@@ -408,13 +418,14 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 
    /* stop retransmission */
    remove_from_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
-   // ??? what about FR_TIMER ????
+   /* stop final response timer only if I got a final response */
+   if ( p_msg->first_line.u.reply.statusclass>1 )
+      remove_from_timer_list( hash_table , &(T->outbound_request[branch]->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
 
    /* on a non-200 reply to INVITE, generate local ACK */
    if ( T->inbound_request->first_line.u.request.method_value==METHOD_INVITE && p_msg->first_line.u.reply.statusclass>2 )
    {
       DBG("DEBUG: t_on_reply_received: >=3xx reply to INVITE: send ACK\n");
-      //t_store_incoming_reply( T , branch , p_msg );
       t_build_and_send_ACK( T , branch , p_msg );
    }
 
@@ -422,57 +433,31 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    /* skipped for the moment*/
    #endif
 
-   /*let's check the current inbound response status (is final or not) */
-   if ( T->inbound_response[branch] && (T->status/100)>1 )
-   {  /*a final reply was already sent upstream */
-      /* alway relay 2xx immediately ; drop anything else */
-      DBG("DEBUG: t_on_reply_received: something final had been relayed\n");
-      if ( p_msg->first_line.u.reply.statusclass==2 )
-          t_relay_reply( T , branch , p_msg );
-      /* nothing to do for the ser core */
+   /* if the incoming response code is not reliable->drop it*/
+   if ( !t_should_relay_response( T , p_msg->first_line.u.reply.statuscode ) )
       return 0;
+
+   /* restart retransmission if provisional response came for a non_INVITE -> retrasmit at RT_T2*/
+   if ( p_msg->first_line.u.reply.statusclass==1 && T->inbound_request->first_line.u.request.method_value!=METHOD_INVITE )
+   {
+      T->outbound_request[branch]->timeout_value = RETR_T2;
+      insert_into_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T2 );
+   }
+
+   /*store the inbound reply*/
+   t_store_incoming_reply( T , branch , p_msg );
+   if ( p_msg->first_line.u.reply.statusclass>=3 && p_msg->first_line.u.reply.statusclass<=5 )
+   {
+      if ( t_all_final(T) )
+           relay_lowest_reply_upstream( T , p_msg );
    }
    else
-   {  /* no reply sent yet or sent but not final*/
-      DBG("DEBUG: t_on_reply_received: no reply sent yet or sent but not final\n");
-
-      /* restart retransmission if provisional response came for a non_INVITE -> retrasmit at RT_T2*/
-      if ( p_msg->first_line.u.reply.statusclass==1 && T->inbound_request->first_line.u.request.method_value!=METHOD_INVITE )
-      {
-         T->outbound_request[branch]->timeout_value = RETR_T2;
-         insert_into_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T2 );
-      }
-
-
-      /* relay ringing and OK immediately */
-      if ( p_msg->first_line.u.reply.statusclass ==1 || p_msg->first_line.u.reply.statusclass ==2  )
-      {
-           DBG("DEBUG: t_on_reply_received:  relay ringing and OK immediately \n");
-           if ( p_msg->first_line.u.reply.statuscode > T->status )
-              t_relay_reply( T , branch , p_msg );
-         return 0;
-      }
-
-      /* error final responses are only stored */
-      if ( p_msg->first_line.u.reply.statusclass>=3 && p_msg->first_line.u.reply.statusclass<=5 )
-      {
-         DBG("DEBUG: t_on_reply_received:  error final responses are only stored  \n");
-         t_store_incoming_reply( T , branch , p_msg );
-         if ( t_all_final(T) )
-              relay_lowest_reply_upstream( T , p_msg );
-         /* nothing to do for the ser core */
-         return 0;
-      }
-
-      /* global failure responses relay immediately */
-     if ( p_msg->first_line.u.reply.statusclass==6 )
-      {
-	DBG("DEBUG: t_on_reply_received: global failure responses relay immediately (not 100 per cent compliant)\n");
-         t_relay_reply( T , branch , p_msg );
-         /* nothing to do for the ser core */
-         return 0;
-      }
+   {
+      push_reply_from_uac_to_uas( T , branch );
    }
+
+   /* nothing to do for the ser core */
+    return 0;
 }
 
 
@@ -480,33 +465,13 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 
 /*   returns 1 if everything was OK or -1 for error
   */
-int t_put_on_wait(  struct sip_msg  *p_msg)
+int t_release_transaction( struct sip_msg* p_msg)
 {
-   struct timer_link *tl;
-   unsigned int i;
-
    t_check( hash_table , p_msg );
-   /* do we have something to release? */
-   if (T==T_NULL)
-      return -1;
 
-  if ( is_in_timer_list( (&(T->wait_tl)) , WT_TIMER_LIST) )
-  {
-     DBG("DEBUG: t_put_on_wait: already on wait\n");
-     return -1;
-  }
+   if ( T && T!=T_UNDEFINED )
+      return t_put_on_wait( T );
 
-  DBG("DEBUG: t_put_on_wait: stopping timers (FR and RETR)\n");
-  /**/
-  for( i=0 ; i<T->nr_of_outgoings ; i++ )
-      if ( T->inbound_response[i] && T->inbound_response[i]->first_line.u.reply.statusclass==1)
-          t_cancel_branch(i);
-
-   /* make double-sure we have finished everything */
-   /* remove from  retranssmision  and  final response   list */
-   stop_RETR_and_FR_timers(hash_table,T) ;
-   /* adds to Wait list*/
-   add_to_tail_of_timer_list( hash_table, &(T->wait_tl), WT_TIMER_LIST, WT_TIME_OUT );
    return 1;
 }
 
@@ -527,7 +492,7 @@ int t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar  )
    /* if no transaction exists or no reply to be resend -> out */
    if ( T  && T->outbound_response )
    {
-      udp_send( T->outbound_response->retr_buffer , T->outbound_response->bufflen , 
+      udp_send( T->outbound_response->retr_buffer , T->outbound_response->bufflen ,
 	(struct sockaddr*)&(T->outbound_response->to) , sizeof(struct sockaddr_in) );
       return 1;
    }
@@ -561,6 +526,9 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
      return -1;
    }
 
+   /* if the incoming response code is not reliable->drop it*/
+   if ( !t_should_relay_response( T , code ) )
+      return 1;
 
    if ( T->outbound_response)
    {
@@ -615,18 +583,8 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
    free( buf ) ;
    T->status = code;
 
-   /* make sure that if we send something final upstream, everything else will be cancelled */
-   if ( code>=300 &&  p_msg->first_line.u.request.method_value==METHOD_INVITE )
-   {
-            T->outbound_response->timeout_ceiling  = RETR_T2;
-            T->outbound_response->timeout_value    = RETR_T1;
-            remove_from_timer_list( hash_table , &(T->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
-            insert_into_timer_list( hash_table , &(T->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T1 );
-            remove_from_timer_list( hash_table , &(T->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
-            insert_into_timer_list( hash_table , &(T->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST , FR_TIME_OUT );
-   }
-   else if (code>=200)
-            t_put_on_wait( p_msg );
+   /* start/stops the proper timers*/
+   t_update_timers_after_sending_reply( T->outbound_response );
 
    t_retransmit_reply( p_msg, 0 , 0);
 
@@ -708,6 +666,9 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
    return 0;
 }
 
+
+
+
 /* converts a string with positive hexadecimal number to an integer;
    if a non-hexadecimal character encountered within 'len', -1 is
    returned
@@ -727,6 +688,9 @@ int str_unsigned_hex_2_int( char *c, int len )
 	}
 	return r;
 }
+
+
+
 
 /* Returns 0 - nothing found
   *              1  - T found
@@ -861,18 +825,6 @@ int t_store_incoming_reply( struct cell* Trans, unsigned int branch, struct sip_
 
 
 
-/*  We like this incoming reply and we want ot store it and
-  *  to relay it upstream
-  */
-int t_relay_reply( struct cell* Trans, unsigned int branch, struct sip_msg* p_msg )
-{
-   t_store_incoming_reply( Trans , branch, p_msg );
-   push_reply_from_uac_to_uas( Trans , branch );
-}
-
-
-
-
 /* Functions update T (T gets either a valid pointer in it or it equals zero) if no transaction
   * for current message exists;
   * Returns 1 if T was modified or 0 if not.
@@ -963,7 +915,7 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
    {
       sh_free( trans->outbound_response->retr_buffer );
       remove_from_timer_list( hash_table , &(trans->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
-      // final response ????
+      remove_from_timer_list( hash_table , &(trans->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
    }
    else
    {
@@ -993,9 +945,7 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
    }
 
    /*  */
-   DBG("DEBUG: push_reply_from_uac_to_uas: building buf from response\n");
    buf = build_res_buf_from_sip_res ( trans->inbound_response[branch], &len);
-   DBG("DEBUG: push_reply_from_uac_to_uas: after building\n");
    if (!buf) {
 	LOG(L_ERR, "ERROR: push_reply_from_uac_to_uas: no shmem for outbound reply buffer\n");
         return -1;
@@ -1005,35 +955,117 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
    memcpy( trans->outbound_response->retr_buffer , buf , len );
    free( buf ) ;
 
-   /* make sure that if we send something final upstream, everything else will be cancelled */
-   if ( trans->status>=300 &&  trans->inbound_request->first_line.u.request.method_value==METHOD_INVITE )
-   {
-            T->outbound_response->timeout_ceiling  = RETR_T2;
-            T->outbound_response->timeout_value    = RETR_T1;
-            remove_from_timer_list( hash_table , &(T->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
-            insert_into_timer_list( hash_table , &(T->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T1 );
-            remove_from_timer_list( hash_table , &(T->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
-            insert_into_timer_list( hash_table , &(T->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST , FR_TIME_OUT );
-   }
-   else if (trans->status>=200)
-            t_put_on_wait( trans->inbound_request );
+   /* start/stops the proper timers*/
+   t_update_timers_after_sending_reply( T->outbound_response );
 
-    /*
-   // make sure that if we send something final upstream, everything else will be cancelled
-   if (trans->inbound_response[branch]->first_line.u.reply.statusclass>=2 )
-      t_put_on_wait( trans->inbound_request );
-
-   // if the code is 3,4,5,6 class for an INVITE-> starts retrans timer
-   if ( trans->inbound_request->first_line.u.request.method_value==METHOD_INVITE &&
-         trans->inbound_response[branch]->first_line.u.reply.statusclass>=300)
-         {
-            remove_from_timer_list( hash_table , &(trans->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
-            remove_from_timer_list( hash_table , &(trans->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
-            insert_into_timer_list( hash_table , &(trans->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T1 );
-            insert_into_timer_list( hash_table , &(trans->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST , FR_TIME_OUT );
-         }
-    */
+   /*send the reply*/
    t_retransmit_reply( trans->inbound_request, 0 , 0 );
+
+   return 1;
+}
+
+
+
+
+/*
+  */
+int t_update_timers_after_sending_reply( struct retrans_buff *rb )
+{
+   struct cell *Trans = rb->my_T;
+
+   /* make sure that if we send something final upstream, everything else will be cancelled */
+   if ( Trans->status>=300 &&  Trans->inbound_request->first_line.u.request.method_value==METHOD_INVITE )
+   {
+            rb->timeout_ceiling  = RETR_T2;
+            rb->timeout_value    = RETR_T1;
+            remove_from_timer_list( hash_table , &(rb->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
+            insert_into_timer_list( hash_table , &(rb->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T1 );
+            remove_from_timer_list( hash_table , &(rb->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
+            insert_into_timer_list( hash_table , &(rb->tl[FR_TIMER_LIST]) , FR_TIMER_LIST , FR_TIME_OUT );
+   }
+   else if ( Trans->inbound_request->first_line.u.request.method_value==METHOD_CANCEL )
+   {
+      if (!Trans->T_canceled)
+            Trans->T_canceled = t_lookupOriginalT( hash_table , Trans->inbound_request );
+      if ( Trans->T_canceled && Trans->T_canceled->status>=200)
+            t_put_on_wait( Trans );
+   }
+   else if (Trans->status>=200)
+            t_put_on_wait( Trans );
+
+   return 1;
+}
+
+
+
+
+/* Checks if the new reply (with new_code status) should be sent or not based on the current
+  * transactin status. Returns 1 - the response can be sent
+  *                                            0 - is not indicated to sent
+  */
+int t_should_relay_response( struct cell *Trans , int new_code )
+{
+   int T_code;
+
+   T_code = Trans->status;
+
+   /* have we already sent something? */
+   if ( !Trans->outbound_response )
+   {
+      DBG("DEBUG: t_should_relay_response: %d response relayed (no previous response sent)\n",new_code);
+      return 1;
+   }
+
+   /* have we sent a final response? */
+   if ( (T_code/100)>1 )
+   {  /*final response was sent*/
+      if ( new_code==200 && Trans->inbound_request->first_line.u.request.method_value==METHOD_INVITE )
+      {
+         DBG("DEBUG: t_should_relay_response: %d response relayed (final satus, but 200 to an INVITE)\n",new_code);
+         return 0;
+      }
+   }
+   else
+   { /* provisional response was sent */
+      if ( new_code>T_code )
+      {
+         DBG("DEBUG: t_should_relay_response: %d response relayed (higher provisional response)\n",new_code);
+         return 1;
+      }
+   }
+
+   DBG("DEBUG: t_should_relay_response: %d response not relayed\n",new_code);
+   return 0;
+}
+
+
+
+
+/*
+  */
+int t_put_on_wait(  struct cell  *Trans  )
+{
+   struct timer_link *tl;
+   unsigned int i;
+
+  if ( is_in_timer_list( (&(Trans->wait_tl)) , WT_TIMER_LIST) )
+  {
+     DBG("DEBUG: t_put_on_wait: already on wait\n");
+     return -1;
+  }
+
+   DBG("DEBUG: t_put_on_wait: stopping timers (FR and RETR)\n");
+   /**/
+   for( i=0 ; i<Trans->nr_of_outgoings ; i++ )
+      if ( Trans->inbound_response[i] && Trans->inbound_response[i]->first_line.u.reply.statusclass==1)
+          t_cancel_branch(i);
+
+   /* make double-sure we have finished everything */
+   /* remove from  retranssmision  and  final response   list */
+   stop_RETR_and_FR_timers(hash_table,Trans) ;
+   /* adds to Wait list*/
+   add_to_tail_of_timer_list( hash_table, &(Trans->wait_tl), WT_TIMER_LIST, WT_TIME_OUT );
+   return 1;
 }
 
 
@@ -1044,24 +1076,6 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
 int t_cancel_branch(unsigned int branch)
 {
 	LOG(L_ERR, "ERROR: t_cancel_branch: NOT IMPLEMENTED YET\n");
-}
-
-
-/* copy a header field to an output buffer if space allows */
-int copy_hf( char **dst, struct hdr_field* hf, char *bumper )
-{
-   int n;
-   n=hf->body.len+2+hf->name.len+CRLF_LEN;
-   if (*dst+n >= bumper ) return -1;
-   memcpy(*dst, hf->name.s, hf->name.len );
-   *dst+= hf->name.len ;
-   **dst = ':'; (*dst)++;
-   **dst = ' '; (*dst)++;
-   memcpy(*dst, hf->body.s, hf->body.len-1);
-   *dst+= hf->body.len;
-   memcpy( *dst, CRLF, CRLF_LEN );
-   *dst+=CRLF_LEN;
-   return 0;
 }
 
 
@@ -1106,14 +1120,6 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch, struct sip_ms
    /* end of message */
    len += CRLF_LEN; /*new line*/
 
-   /*
-   // enough place for first line and Via ?
-   if ( 4 + p_msg->first_line.u.request.uri.len + 1 + p_msg->first_line.u.request.version.len +
-	CRLF_LEN + MY_VIA_LEN + names_len[0] + 1 + port_no_str_len + MY_BRANCH_LEN  > MAX_ACK_LEN ) {
-		LOG( L_ERR, "ERROR: t_build_and_send_ACK: no place for FL/Via\n");
-		goto error;
-   }
-   */
    ack_buf = (char *)malloc( len +1);
    if (!ack_buf)
    {
@@ -1189,33 +1195,6 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch, struct sip_ms
 	}
     }
 
-
-/*
-   // To
-   if (copy_hf( &p, p_msg->to , ack_buf + MAX_ACK_LEN )==-1) {
-	LOG(L_ERR, "ERROR: t_build_and_send_ACK: no place for To\n");
-	goto error;
-   }
-   // From
-   if (copy_hf( &p, p_msg->from, ack_buf + MAX_ACK_LEN )==-1) {
-	LOG(L_ERR, "ERROR: t_build_and_send_ACK: no place for From\n");
-	goto error;
-   }
-   // CallId
-   if (copy_hf( &p, p_msg->callid, ack_buf + MAX_ACK_LEN )==-1) {
-	LOG(L_ERR, "ERROR: t_build_and_send_ACK: no place for callid\n");
-	goto error;
-   }
-   // CSeq, EoH
-   n=snprintf( p, ack_buf + MAX_ACK_LEN - p,
-                 "Cseq: %*s ACK%s%s", get_cseq(p_msg)->number.len,
-		get_cseq(p_msg)->number.s, CRLF, CRLF );
-   if (n==-1) {
-	LOG(L_ERR, "ERROR: t_build_and_send_ACK: no enough memory for Cseq\n");
-	goto error;
-   }
-   p+=n;
-*/
     memcpy( p , CRLF , CRLF_LEN );
     p += CRLF_LEN;
 
@@ -1274,7 +1253,7 @@ void final_response_handler( void *attr)
    {
       /* put it on WT_LIST - transaction is over */
       DBG("DEBUG: final_response_handler : cansel transaction->put on wait\n");
-      t_put_on_wait(  r_buf->my_T->inbound_request );
+      t_put_on_wait(  r_buf->my_T );
    }
 }
 

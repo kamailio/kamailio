@@ -373,6 +373,7 @@ void sip_msg_free(struct sip_msg* msg)
    if (!msg) return;
 
    DBG("DEBUG: sip_msg_free : start\n");
+   //return;
 
    if (msg->new_uri.s)
    {
