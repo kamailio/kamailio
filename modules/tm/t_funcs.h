@@ -31,7 +31,6 @@
 #define _T_FUNCS_H
 
 #include <errno.h>
-#include <netinet/in.h>
 #include <netdb.h>
 
 #include "../../mem/shm_mem.h"
