@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# $Id$
+#
+# delete a user's UsrLoc entries
+#
+
+USER_COLUMN='user'
+SUBSCRIBER_COLUMN='user_id'
+QUERY="delete from location where location.user='$1'"
+
+# username of a valid MySql user
+USER='csps'
+
+if [ $# -ne 1 ] ; then
+	echo "usage: $0 <username>"
+	exit 1
+fi
+
+#ps  -wwwwww -o "drs,pid,user,group,euser,egroup,fuser,fgroup,args" -C sr 
+
+
+mysql -h dbhost -u $USER "-p" -e "$QUERY ;" csps107
+
+echo $?
