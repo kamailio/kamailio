@@ -10,94 +10,61 @@
 #include "../../ut.h"
 
 
-int  mf_global_id;
-int  mf_hdr_value;
 
-
-#define search_for_mf_hdr( _msg , _error ) \
-	do{\
-		if ( mf_global_id!=(_msg)->id ) {\
-			mf_global_id  = (_msg)->id;\
-			if ( !(_msg)->maxforwards ) {\
-				DBG("DEBUG : search_for_mf_hdr : searching for max_forwards header\n");\
-				if  ( parse_headers( _msg , HDR_MAXFORWARDS )==-1 ){\
-					LOG( L_ERR , "ERROR: search_for_mf_header :"\
-					  " parsing MAX_FORWARD header failed!\n");\
-					goto _error;\
-				}\
-			}\
-		}\
-	}while(0);
-
-#define get_number_from_str( _mf_str, _str,_x,_err) \
-	do{\
-		static char _c;\
-		(_str)->len = (_mf_str).len;\
-		(_str)->s    = (_mf_str).s;\
-		while((_str)->len && ( (_c=(_str)->s[0])==0||_c==' '||_c=='\n'\
-			||_c=='\r'||_c=='\t') ) {\
-			(_str)->len--;\
-			(_str)->s++;\
-		}\
-		while( (_str)->len && ( (_c=(_str)->s[(_str)->len-1])==0||_c==' '\
-			||_c=='\n'||_c=='\r'||_c=='\t') ) \
-			(_str)->len--;\
-		*(_x) = str2s( (unsigned char*)(_str)->s,(_str)->len,(_err));\
-	}while(0);
-
-
-#define store_mf_hdr_value( _msg , _val ) \
-	do{\
-		mf_hdr_value = (_val);\
-		mf_global_id   = (_msg)->id;\
-	}while(0);
-
-#define recall_mf_hdr_value( _msg , _val , _err) \
-	do{\
-		static str _foo;\
-		if ( 0 && mf_global_id==(_msg)->id ){\
-			*(_val) = mf_hdr_value;\
-			*(_err) = 0;\
-		}else{\
-			DBG("going for |%.*s|\n",(_msg)->maxforwards->body.len,\
-				(_msg)->maxforwards->body.s);\
-			get_number_from_str( (_msg)->maxforwards->body, &(_foo), (_val), \
-									(_err) );\
-			mf_hdr_value = *(_val);\
-			mf_global_id   = (_msg)->id;\
-			DBG("GETTING: %d\n",*(_val));\
-		}\
-	}while(0);
-
-
-
-
-int mf_startup()
+/* looks for the MAX FORWARDS header
+   returns the its value, -1 if is not present or -2 for error */
+int is_maxfwd_present( struct sip_msg* msg , str *foo)
 {
-	mf_global_id = -1;
-	return 1;
+	int x, err;
+	char c;
+
+	/* lookup into the message for MAX FORWARDS header*/
+	if ( !msg->maxforwards ) {
+		DBG("DEBUG : is_maxfwd_present: searching for max_forwards header\n");
+		if  ( parse_headers( msg , HDR_MAXFORWARDS )==-1 ){
+			LOG( L_ERR , "ERROR: is_maxfwd_present :"
+				" parsing MAX_FORWARD header failed!\n");
+			return -2;
+		}
+		if (!msg->maxforwards) {
+			DBG("DEBUG: is_maxfwd_present: max_forwards header not found!\n");
+			return -1;
+		}
+	}else{
+		DBG("DEBUG : is_maxfwd_present: max_forward header already found!\n");
+	}
+
+	/* if header is present, trim to get only the string containing numbers */
+	foo->len = msg->maxforwards->body.len;
+	foo->s   = msg->maxforwards->body.s;
+	while (foo->len &&((c=foo->s[0])==0||c==' '||c=='\n'||c=='\r'||c=='\t'))
+	{
+		foo->len--;
+		foo->s++;
+	}
+	while(foo->len && ((c=foo->s[foo->len-1])==0||c==' '||c=='\n'||c=='\r'
+	||c=='\t') )
+		foo->len--;
+
+	/* convert from string to number */
+	x = str2s( (unsigned char*)foo->s,foo->len,&err);
+	if (err){
+		LOG(L_ERR, "ERROR: is_maxfwd_zero :"
+			" unable to parse the max forwards number !\n");
+		return -2;
+	}
+	DBG("DEBUG: is_maxfwd_present: value = %d \n",x);
+	return x;
 }
 
 
 
-int is_maxfwd_present( struct sip_msg* msg )
+
+int decrement_maxfwd( struct sip_msg* msg , int x, str *mf_val)
 {
-	search_for_mf_hdr( msg , error );
-	return ( msg->maxforwards?1:-1);
-error:
-	return -1;
-}
+	int n;
 
-
-
-int decrement_maxfwd( struct sip_msg* msg )
-{
-	int          err, n;
-	str          nr_s;
-	unsigned int x;
-
-	search_for_mf_hdr( msg , error );
-	/*did we found the header after parsing?*/
+	/* double check */
 	if ( !msg->maxforwards )
 	{
 		LOG( L_ERR , "ERROR: decrement_maxfwd :"
@@ -105,30 +72,13 @@ int decrement_maxfwd( struct sip_msg* msg )
 		goto error;
 	}
 
-	/*extrancting the number from max-fwd header*/
-	DBG("DEUBG: maxfwd=|%.*s|\n",msg->maxforwards->body.len,
-		msg->maxforwards->body.s);
-	get_number_from_str( msg->maxforwards->body, &nr_s, &x, &err);
-	if (err){
-		LOG(L_ERR, "ERROR: decrement_maxfwd :"
-		  " unable to parse the max forwards number !\n");
-		goto error;
-	}
-	store_mf_hdr_value( msg , x );
-	if (x==0){
-		LOG(L_WARN, "WARNING: decrement_maxfwd :"
-		  " unable to decrement max_fwd number -> already zero!\n");
-		goto error;
-	}
-
-	/*rewritting the max-fwd value in the massage (buf and orig)*/
-	n = btostr(nr_s.s,x-1);
-	if ( n<nr_s.len )
-		nr_s.s[n] = ' ';
-	n = btostr(translate_pointer(msg->orig,msg->buf,nr_s.s),x-1);
-	if ( n<nr_s.len )
-		*(translate_pointer(msg->orig,msg->buf,nr_s.s+n)) = ' ';
-	store_mf_hdr_value( msg , x-1 );
+	/*rewritting the max-fwd value in the message (buf and orig)*/
+	n = btostr(mf_val->s,x-1);
+	if ( n<mf_val->len )
+		mf_val->s[n] = ' ';
+	n = btostr(translate_pointer(msg->orig,msg->buf,mf_val->s),x-1);
+	if ( n<mf_val->len )
+		*(translate_pointer(msg->orig,msg->buf,mf_val->s+n)) = ' ';
 	return 1;
 
 error:
@@ -144,12 +94,11 @@ int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
 	char          *buf;
 	struct lump*  anchor;
 
-	search_for_mf_hdr( msg , error );
-	/*did we found the header after parsing?*/
+	/* double check just to be sure */
 	if ( msg->maxforwards )
 	{
 		LOG( L_ERR , "ERROR: add_maxfwd_header :"
-		  " MAX_FORWARDS header already exists (%p) !\n",msg->maxforwards);
+			" MAX_FORWARDS header already exists (%p) !\n",msg->maxforwards);
 		goto error;
 	}
 
@@ -168,7 +117,6 @@ int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
 	memcpy( buf+len , CRLF , CRLF_LEN );
 	len +=CRLF_LEN;
 
-
 	/*inserts the header at the begining of the message*/
 	anchor = anchor_lump(&msg->add_rm, msg->headers->name.s - msg->buf, 0 , 0);
 	if (anchor == 0) {
@@ -183,7 +131,6 @@ int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
 		goto error1;
 	}
 
-	store_mf_hdr_value( msg , val );
 	return 1;
 
 error1:
@@ -191,44 +138,5 @@ error1:
 error:
 	return -1;
 }
-
-
-
-
-int is_maxfwd_zero( struct sip_msg* msg )
-{
-	int err,x;
-
-	search_for_mf_hdr( msg , error );
-	/*did we found the header after parsing?*/
-	if ( !msg->maxforwards )
-	{
-		LOG( L_ERR , "ERROR: is_maxfwd_zero :"
-		  " MAX_FORWARDS header not found !\n");
-		goto error;
-	}
-
-	recall_mf_hdr_value( msg , &x , &err);
-	if (err){
-		LOG(L_ERR, "ERROR: is_maxfwd_zero :"
-		  " unable to parse the max forwards number !\n");
-		goto error;
-	}
-	DBG("DEBUG: maxfwd %d \n",x);
-	return (x==0)?1:-1;
-
-error:
-	return -1;
-
-}
-
-
-
-int reply_to_maxfwd_zero( struct sip_msg* msg )
-{
-	return 1;
-}
-
-
 
 
