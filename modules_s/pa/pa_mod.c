@@ -155,7 +155,9 @@ static struct mimetype_test {
 	{ "multipart/related", MIMETYPE(MULTIPART,RELATED) },
 	{ "text/plain", MIMETYPE(TEXT,PLAIN) },
 	{ "application/external-body", MIMETYPE(APPLICATION,EXTERNAL_BODY) },
+#ifdef SUBTYPE_XML_MSRTC_PIDF
 	{ "text/xml+msrtcp.idf", MIMETYPE(TEXT,XML_MSRTC_PIDF) },
+#endif
 	{ NULL, 0 }
 };
 
