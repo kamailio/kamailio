@@ -91,6 +91,11 @@ tar: mantainer-clean
 install: all mk-install-dirs install-cfg install-bin install-modules \
 	install-doc install-man
 
+.PHONY: dbinstall
+dbinstall:
+	-@echo "Initializing ser database"
+	scripts/ser_mysql.sh create
+	-@echo "Done"
 
 mk-install-dirs: $(cfg-prefix)/$(cfg-dir) $(bin-prefix)/$(bin-dir) \
 			$(modules-prefix)/$(modules-dir) $(doc-prefix)/$(doc-dir) \
