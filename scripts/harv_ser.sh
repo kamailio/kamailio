@@ -24,7 +24,7 @@
 #
 
 
-LOGDIR=/var/log
+LOGDIR=/var/log/sip
 
 #####################
 
@@ -48,7 +48,7 @@ BEGIN {
     rpl300=0; rpl302=0; rpl3xx=0;
     rpl400=0; rpl401=0; rpl403=0; rpl404=0; rpl405=0;
         rpl406=0;rpl407=0;rpl408=0;rpl410=0; rpl415=0;
-        rpl476=0;rpl480=0;rpl481=0;rpl483=0;rpl486=0;rpl478=0;rpl487=0;
+        rpl476=0;rpl477=0;rpl480=0;rpl481=0;rpl482=0;rpl483=0;rpl486=0;rpl478=0;rpl487=0;
 		rpl488=0;rpl489=0;
         rpl4xx=0;
 	rpl479=0;
@@ -117,6 +117,16 @@ BEGIN {
 	ua_gphone=0;
 	ua_xlite=0;
 	ua_edial=0;
+	ua_gs=0;
+	ua_sipps=0;
+	ua_i3micro=0;
+	ua_act=0;
+	ua_ibm=0;
+	ua_xpro=0;
+	ua_hearme=0;
+	ua_draytek=0;
+	ua_st280;
+	ua_dta=0;
 	ua_xx=0;
 
 	server_cisco=0
@@ -137,6 +147,10 @@ BEGIN {
 	server_starsip=0;
 	server_ipdialog=0;
 	server_edial=0;
+	server_ma=0;
+	server_fwd=0;
+	server_columbia=0;
+	server_partysip=0;
 	server_xx=0
 
 }
@@ -331,8 +345,52 @@ ua==0 && /User-Agent:.*eDial/ {
 	ua_edial++
 	ua=1
 }
+ua==0 && /User-Agent:.*Grandstream/ {
+	ua_gs++
+	ua=1
+}
+ua==0 && /User-Agent:.*Ahead SIPPS/ {
+	ua_sipps++
+	ua=1
+}
+ua==0 && /User-Agent:.*IBM user agent/ {
+	ua_ibm++
+	ua=1
+}
+ua==0 && /User-Agent:.*Vega/ {
+	ua_vega++
+	ua=1
+}
+ua==0 && /User-Agent:.*i3micro/ {
+	ua_i3micro++
+	ua=1
+}
+ua==0 && /User-Agent:.*ACT/ {
+	ua_act++
+	ua=1
+}
+ua==0 && /User-Agent:.*X-Pro/ {
+	ua_xpro++
+	ua=1
+}
+ua==0 && /User-Agent:.*HearMe/ {
+	ua_hearme++
+	ua=1
+}
+ua==0 && /User-Agent:.*DrayTek/ {
+	ua_draytek++
+	ua=1
+}
 ua==0 && /User-Agent:.*X-Lite/ {
 	ua_xlite++
+	ua=1
+}
+ua==0 && /User-Agent:.*DTA/ {
+	ua_dta++
+	ua=1
+}
+ua==0 && /User-Agent:.*ST280/ {
+	ua_st++
 	ua=1
 }
 
@@ -425,6 +483,23 @@ server==0 && /Server:.*eDial/ {
 	server_edial++
 	server=1
 }
+server==0 && /Server:.*MA/ {
+	server_ma++
+	server=1
+}
+server==0 && /Server:.*Free World/ {
+	server_fwd++
+	server=1
+}
+server==0 && /Server:.*SIPUA-Columbia-University/ {
+	server_columbia++
+	server=1
+}
+server==0 && /Server:.*partysip/ {
+	server_partysip++
+	server=1
+}
+
 server==0 && /Server:/ {
 	server_xx++
 	print
@@ -568,12 +643,20 @@ reply==0 && request=0 {
     rpl476++
     next
 }
+/SIP\/2\.0 477/ {
+    rpl477++
+    next
+}
 /SIP\/2\.0 480/ {
     rpl480++
     next
 }
 /SIP\/2\.0 481/ {
     rpl481++
+    next
+}
+/SIP\/2\.0 482/ {
+    rpl482++
     next
 }
 /SIP\/2\.0 483/ {
@@ -704,10 +787,12 @@ END {
 	print "410 (Gone): " rpl410
 	print "415 (Unsupported Media): " rpl415
 	print "476 (no recursive registrations): " rpl476 
+	print "477 (next hop error): " rpl477
 	print "478 (Unresolveable): " rpl478 
 	print "479 (private IP): " rpl479 
 	print "480 (Unavailable): " rpl480 
 	print "481 (Call/Transaction does not exist): " rpl481 
+	print "482 (Loop Detected): " rpl482 
 	print "483 (Too Many Hops): " rpl483 
 	print "486 (Busy Here): " rpl486 
 	print "487 (Request Terminated): " rpl487
@@ -723,29 +808,59 @@ END {
 	print "6xx: " rpl6xx
 
 	print "## Request Methods"
-    print "INVITE: " invite " CANCEL: " cancel " ACK: " ack
-    print "REGISTER: " register " BYE: " bye " OPTIONS: " options " INFO: " info
-    print "MESSAGE: " message " SUBSCRIBE: " subscribe " NOTIFY: " notify
+    print "INVITE: " invite 
+	print "CANCEL: " cancel 
+	print "ACK: " ack
+    print "REGISTER: " register 
+	print "BYE: " bye 
+	print "OPTIONS: " options 
+	print "INFO: " info
+    print "MESSAGE: " message 
+	print "SUBSCRIBE: " subscribe 
+	print "NOTIFY: " notify
 
 	print "## Outbound Routes"
-	print "To imgw: " hint_imgw " To voicemail: " hint_voicemail
-	print "To bat: " hint_battest " To UsrLoc: " hint_usrloc
-	print "Outbound: " hint_outbound " To SMS: " hint_sms
-	print "To PSTN: " hint_gw " To: VM on off-line" hint_off_voicemail
+	print "To imgw: " hint_imgw 
+	print "To voicemail: " hint_voicemail
+	print "To bat: " hint_battest 
+	print "To UsrLoc: " hint_usrloc
+	print "Outbound: " hint_outbound
+	print "To SMS: " hint_sms
+	print "To PSTN: " hint_gw 
+	print "To: VM on off-line" hint_off_voicemail
 
 	print "## User Agents"
-	print "Snom: " ua_snom " MSN: " ua_msn " Mitel: " ua_mitel
-	print "Pingtel: " ua_pingtel " SER: " ua_ser " osip: " ua_osip
-	print "linphone: " ua_linphone " ubiquity: " ua_ubiquity
-	print "3com: " ua_3com " IPDialog: " ua_ipdialog " Epygi: " ua_epygi
-	print "Jasomi: " ua_jasomi " Cisco: " ua_cisco " insipid: " ua_insipid
-	print "Hotsip: " ua_hotsip " mxsf: " ua_mxsf " GrandStream: " ua_grandstream
-	print "Tellme: " ua_tellme " PocketSipM: " ua_pocketsipm 
-	print "eStara: " ua_estara " Vovida: " ua_vovida 
-	print "jSIP: " ua_jsip " Nortel: " ua_nortel " Polycom: " ua_polycom
-	print "Leader: " ua_leader " csco: " ua_csco " Nebula: " ua_nebula
-	print "MagicPPC: " ua_magicppc " SCS: " ua_scs 
-	print "SJPhone: " ua_sjphone " KPhone: " ua_kphone
+	print "Snom: " ua_snom 
+	print "MSN: " ua_msn 
+	print "Mitel: " ua_mitel
+	print "Pingtel: " ua_pingtel 
+	print "SER: " ua_ser 
+	print "osip: " ua_osip
+	print "linphone: " ua_linphone 
+	print "ubiquity: " ua_ubiquity
+	print "3com: " ua_3com 
+	print "IPDialog: " ua_ipdialog 
+	print "Epygi: " ua_epygi
+	print "Jasomi: " ua_jasomi 
+	print "Cisco: " ua_cisco 
+	print "insipid: " ua_insipid
+	print "Hotsip: " ua_hotsip 
+	print "mxsf: " ua_mxsf 
+	print "GrandStream: " ua_grandstream
+	print "Tellme: "ua_tellme 
+	print "PocketSipM: " ua_pocketsipm 
+	print "eStara: " ua_estara 
+	print "Vovida: " ua_vovida 
+	print "jSIP: " ua_jsip 
+	print "Nortel: " ua_nortel 
+	print "Polycom: " ua_polycom
+	print "Leader: " ua_leader 
+	print "csco: " ua_csco 
+	print "Nebula: " ua_nebula
+	print "MagicPPC: " ua_magicppc 
+	print "SCS: " ua_scs 
+	print "SJPhone: " ua_sjphone 
+	print "KPhone: " ua_kphone
 	print "Yamaha: " ua_yamaha 
 	print "tkcPhone: " ua_tkc
 	print "EdgeAccess: " ua_edgeaccess
@@ -762,6 +877,17 @@ END {
 	print "D-link: " ua_dlink
 	print "gphone: " ua_gphone
 	print "X-lite: " ua_xlite
+	print "grandstream: " ua_gs
+	print "vegastream: " ua_vega
+	print "Ahead SIPPS: " ua_sipps
+	print "IBM user agent: " ua_ibm
+	print "i3micro: " ua_i3micro
+	print "ACT: " ua_act
+	print "X-pro: " ua_xpro
+	print "Hearme: " ua_hearme
+	print "DrayTek: " ua_draytek
+	print "ST: " ua_st
+	print "DTA: " ua_dta
 	print "UFO: " ua_xx
 
 	print "## Servers"
@@ -778,6 +904,10 @@ END {
 	print "StarSIP: " server_starsip
 	print "ipDialog: " server_ipdialog
 	print "eDial: " server_edial
+	print "FWD: " server_fwd
+	print "MA: " server_ma
+	print "Columbia: " server_columbia
+	print "PartySip: " server_partysip
 	print "UFO: " server_xx
 }
 '
