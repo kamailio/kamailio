@@ -29,14 +29,14 @@
 
 
 
-#include "sip_msg.h"
-#include "../../parser/hf.h"
-#include "../../dprint.h"
-#include "../../parser/parse_expires.h"  
-#include "../../ut.h"
+#include <parser/hf.h>
+#include <dprint.h>
+#include <parser/parse_expires.h>  
+#include <ut.h>
 #include "reg_mod.h"                     /* Module parameters */
 #include "regtime.h"                     /* act_time */
 #include "rerrno.h"
+#include "sip_msg.h"
 
 
 static struct hdr_field* act_contact;
@@ -226,11 +226,6 @@ int calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
 	} else {
 		if (str2int(&_ep->body, (unsigned int*)_e) < 0) {
 			*_e = 3600;
-			     /*
-			       rerrno = R_INV_EXP;
-			       LOG(L_ERR, "calc_contact_expires(): Invalid expires parameter\n");
-			       return -1;
-			     */
 		}
 		     /* Convert to absolute value */
 		if (*_e != 0) *_e += act_time;

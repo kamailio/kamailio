@@ -31,8 +31,7 @@
 #ifndef REPLY_H
 #define REPLY_H
 
-#include "../../parser/msg_parser.h"
-#include "../usrloc/usrloc.h"
+#include <parser/msg_parser.h>
 
 
 /*

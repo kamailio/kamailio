@@ -32,8 +32,8 @@
 #define SIP_MSG_H
 
 
-#include "../../parser/msg_parser.h"
-#include "../../parser/contact/parse_contact.h"
+#include <parser/msg_parser.h>
+#include <parser/contact/parse_contact.h>
 
 
 /*

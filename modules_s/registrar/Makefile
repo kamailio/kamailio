@@ -10,4 +10,6 @@ auto_gen=
 NAME=registrar.so
 LIBS=
 
+DEFS+=-I../.. -I../usrloc
+
 include ../../Makefile.modules

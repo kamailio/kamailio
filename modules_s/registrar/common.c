@@ -34,13 +34,13 @@
 */
 
 #include <string.h> 
-#include <ctype.h>
-#include "../../dprint.h"
-#include "../../ut.h"      /* q_memchr */
-#include "../../parser/parse_uri.h"
-#include "common.h"
+#include <dprint.h>
+#include <ut.h>      /* q_memchr */
+#include <parser/parse_uri.h>
 #include "rerrno.h"
 #include "reg_mod.h"
+#include "common.h"
+
 
 #define MAX_AOR_LEN 256
 
@@ -56,13 +56,13 @@ int extract_aor(str* _uri, str* _a)
 
 	if (parse_uri(_uri->s, _uri->len, &puri) < 0) {
 		rerrno = R_AOR_PARSE;
-		LOG(L_ERR, "extract_aor(): Error while parsing AOR, sending 400\n");
+		LOG(L_ERR, "extract_aor(): Error while parsing Address of Record\n");
 		return -1;
 	}
 	
 	if ((puri.user.len + puri.host.len + 1) > MAX_AOR_LEN) {
 		rerrno = R_AOR_LEN;
-		LOG(L_ERR, "extract_aor(): Address Of Record too long, sending 500\n");
+		LOG(L_ERR, "extract_aor(): Address Of Record too long\n");
 		return -2;
 	}
 
@@ -77,11 +77,9 @@ int extract_aor(str* _uri, str* _a)
 
 	user_len = _a->len;
 
-	if (use_domain) {
-		aor_buf[_a->len] = '@';
-		memcpy(aor_buf + _a->len + 1, puri.host.s, puri.host.len);
-		_a->len += 1 + puri.host.len;
-	}
+	aor_buf[_a->len] = '@';
+	memcpy(aor_buf + _a->len + 1, puri.host.s, puri.host.len);
+	_a->len += 1 + puri.host.len;
 
 	if (case_sensitive) {
 		tmp.s = _a->s + user_len + 1;

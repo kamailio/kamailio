@@ -37,13 +37,14 @@
 #define SAVE_H
 
 
-#include "../../parser/msg_parser.h"
+#include <parser/msg_parser.h>
 
 
 /*
  * Process REGISTER request and save it's contacts
  */
 int save(struct sip_msg* _m, char* _t, char* _s);
+
 
 /*
  * Process REGISTER request and save it's contacts, do not send any replies

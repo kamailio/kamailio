@@ -32,45 +32,44 @@
  */
 
 
-#include "lookup.h"
 #include <string.h>
-#include "../../ut.h"
-#include "../../dset.h"
-#include "../../str.h"
-#include "../../config.h"
-#include "../../action.h"
-#include "../usrloc/usrloc.h"
+#include <ut.h>
+#include <dset.h>
+#include <str.h>
+#include <config.h>
+#include <action.h>
+#include <usrloc.h>
 #include "common.h"
 #include "regtime.h"
 #include "reg_mod.h"
+#include "lookup.h"
 
 
 /*
  * Rewrite Request-URI
  */
-static inline int rwrite(struct sip_msg* _m, str* _s)
+static inline int rewrite(struct sip_msg* _m, str* _s)
 {
-	char buffer[MAX_URI_SIZE];
-	struct action act;
-	
-	if (_s->len > MAX_URI_SIZE - 1) {
-		LOG(L_ERR, "rwrite(): URI too long\n");
+	char* buf;
+
+	buf = (char*)pkg_malloc(_s->len + 1);
+	if (!buf) {
+		LOG(L_ERR, "rewrite(): No memory left\n");
 		return -1;
 	}
-	
-	memcpy(buffer, _s->s, _s->len);
-	buffer[_s->len] = '\0';
-	
-	DBG("rwrite(): Rewriting Request-URI with '%s'\n", buffer);
-	act.type = SET_URI_T;
-	act.p1_type = STRING_ST;
-	act.p1.string = buffer;
-	act.next = 0;
-	
-	if (do_action(&act, _m) < 0) {
-		LOG(L_ERR, "rwrite(): Error in do_action\n");
-		return -1;
+
+	memcpy(buf, _s->s, _s->len);
+	_s->s[_s->len] = '\0';
+
+	_m->parsed_uri_ok = 0;
+	if (_m->new_uri.s) {
+		pkg_free(_m->new_uri.s);
 	}
+
+	_m->new_uri.s = buf;
+	_m->new_uri.len = _s->len;
+
+	DBG("rewrite(): Rewriting Request-URI with '%.*s'\n", _s->len, buf);
 	return 0;
 }
 
@@ -118,7 +117,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 		ptr = ptr->next;
 	
 	if (ptr) {
-		if (rwrite(_m, &ptr->c) < 0) {
+		if (rewrite(_m, &ptr->c) < 0) {
 			LOG(L_ERR, "lookup(): Unable to rewrite Request-URI\n");
 			ul.unlock_udomain((udomain_t*)_t);
 			return -4;
@@ -135,20 +134,22 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	if (!append_branches) goto skip;
 
 	while(ptr) {
-		if (ptr->expires > act_time) {
+		if (ptr->expires > act_time && (ptr->state < CS_ZOMBIE_N)) {
 			if (append_branch(_m, ptr->c.s, ptr->c.len) == -1) {
 				LOG(L_ERR, "lookup(): Error while appending a branch\n");
-				ul.unlock_udomain((udomain_t*)_t);
-				return 1; /* Return OK here so the function succeeds */
-			}
-			nat |= ptr->flags & FL_NAT;
+				     /* Return 1 here so the function succeeds even if appending of
+				      * a branch failed
+				      */
+				goto skip; 
+			} 
+			
+			nat |= ptr->flags & FL_NAT; 
 		} 
-		ptr = ptr->next;
+		ptr = ptr->next; 
 	}
 	
  skip:
 	ul.unlock_udomain((udomain_t*)_t);
-
 	if (nat) setflag(_m, nat_flag);
 	return 1;
 }

@@ -31,8 +31,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include "../../str.h"
-#include "../../parser/msg_parser.h"
+#include <str.h>
 
 
 /*
