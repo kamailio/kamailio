@@ -111,6 +111,7 @@ extern char            *log_dir;
 extern struct tm_binds cpl_tmb;
 extern udomain_t*      cpl_domain;
 extern usrloc_api_t    cpl_ulb;
+extern int (*cpl_sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
 
 
 struct cpl_interpreter* new_cpl_interpreter( struct sip_msg *msg, str *script)
@@ -561,6 +562,11 @@ static inline char *run_reject( struct cpl_interpreter *intr )
 			"not found\n");
 		goto script_error;
 	}
+	if (status<400 || status>=700) {
+		LOG(L_ERR,"ERROR:cpl_c:run_reject: bad attribute STATUS "
+			"(%d)\n",status);
+		goto script_error;
+	}
 
 	if (reason_s==(char*)UNDEF_CHAR ) {
 		switch (status) {
@@ -581,7 +587,30 @@ static inline char *run_reject( struct cpl_interpreter *intr )
 		}
 	}
 
-	if ( cpl_tmb.t_reply(intr->msg, (int)status, reason_s )!=1 ) {
+	/* if still stateless and FORCE_STATEFUL set -> build the transaction */
+	if ( !(intr->flags&CPL_PROXY_DONE) && intr->flags&CPL_FORCE_STATEFUL) {
+		i = cpl_tmb.t_newtran( intr->msg );
+		if (i<0) {
+			LOG(L_ERR,"ERROR:cpl-c:run_reject: failed to build new "
+				"transaction!\n");
+			goto runtime_error;
+		} else if (i==0) {
+			LOG(L_ERR,"ERROR:cpl-c:run_reject: processed INVITE is a "
+				"retransmission!\n");
+			goto runtime_error;
+		}
+	}
+
+	/* send the reply */
+	if ( intr->flags&(CPL_PROXY_DONE|CPL_IS_STATEFUL|CPL_FORCE_STATEFUL) ) {
+		/* reply statefully */
+		i = cpl_tmb.t_reply(intr->msg, (int)status, reason_s );
+	} else {
+		/* reply statelessly */
+		i = cpl_sl_reply(intr->msg, (char*)(int)status, reason_s );
+	}
+
+	if ( i!=1 ) {
 		LOG(L_ERR,"ERROR:run_reject: unable to send reject reply!\n");
 		goto runtime_error;
 	}
@@ -668,6 +697,20 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 	}
 	memcpy(cp,CRLF,CRLF_LEN);
 
+	/* if still stateless and FORCE_STATEFUL set -> build the transaction */
+	if ( !(intr->flags&CPL_PROXY_DONE) && intr->flags&CPL_FORCE_STATEFUL) {
+		i = cpl_tmb.t_newtran( intr->msg );
+		if (i<0) {
+			LOG(L_ERR,"ERROR:cpl-c:run_redirect: failed to build new "
+				"transaction!\n");
+			goto runtime_error;
+		} else if (i==0) {
+			LOG(L_ERR,"ERROR:cpl-c:run_redirect: processed INVITE is a "
+				"retransmission!\n");
+			goto runtime_error;
+		}
+	}
+
 	/* add the lump to the reply */
 	lump = add_lump_rpl( intr->msg, lump_str.s , lump_str.len , LUMP_RPL_HDR);
 	if(!lump) {
@@ -677,10 +720,19 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 	}
 
 	/* send the reply */
-	if (permanent)
-		i = cpl_tmb.t_reply( intr->msg, (int)301, "Moved permanently" );
-	else
-		i = cpl_tmb.t_reply( intr->msg, (int)302, "Moved temporarily" );
+	if ( intr->flags&(CPL_PROXY_DONE|CPL_IS_STATEFUL|CPL_FORCE_STATEFUL) ) {
+		/* reply statefully */
+		if (permanent)
+			i = cpl_tmb.t_reply( intr->msg, (int)301, "Moved permanently" );
+		else
+			i = cpl_tmb.t_reply( intr->msg, (int)302, "Moved temporarily" );
+	} else {
+		/* reply statelessly */
+		if (permanent)
+			i = cpl_sl_reply( intr->msg, (char*)301, "Moved permanently" );
+		else
+			i = cpl_sl_reply( intr->msg, (char*)302, "Moved temporarily" );
+	}
 
 	/* msg which I'm working on can be in private memory or is a clone into
 	 * shared memory (if I'm after a failed proxy); So, it's better to removed
@@ -689,7 +741,8 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 	free_lump_rpl( lump );
 
 	if (i!=1) {
-		LOG(L_ERR,"ERROR:cpl-c:run_redirect: unable to send redirect reply!\n");
+		LOG(L_ERR,"ERROR:cpl-c:run_redirect: unable to send "
+			"redirect reply!\n");
 		goto runtime_error;
 	}
 
@@ -770,6 +823,7 @@ static inline char *run_log( struct cpl_interpreter *intr )
 	}
 	/* copy the comment */
 	memcpy( p, comment.s, comment.len);
+	comment.s = p;
 
 	/* send the command */
 	write_cpl_cmd( CPL_LOG_CMD, &user, &name, &comment );

@@ -88,13 +88,13 @@ str    cpl_orig_tz = {0,0}; /* a copy of the original TZ; keept as a null
 /* this vars are used outside only for loading scripts */
 db_con_t* db_hdl   = 0;   /* this should be static !!!!*/
 
-static int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
+int (*cpl_sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
 
 
 MODULE_VERSION
 
 
-static int cpl_invoke_script(struct sip_msg* msg, char* str, char* str2);
+static int cpl_invoke_script (struct sip_msg* msg, char* str, char* str2);
 static int cpl_process_register(struct sip_msg* msg, char* str, char* str2);
 static int fixup_cpl_run_script(void** param, int param_no);
 static int cpl_init(void);
@@ -106,7 +106,7 @@ static int cpl_exit(void);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"cpl_run_script", cpl_invoke_script,1,fixup_cpl_run_script,REQUEST_ROUTE},
+	{"cpl_run_script",cpl_invoke_script ,2,fixup_cpl_run_script,REQUEST_ROUTE},
 	{"cpl_process_register", cpl_process_register, 0, 0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
@@ -158,6 +158,20 @@ static int fixup_cpl_run_script(void** param, int param_no)
 		pkg_free(*param);
 		*param=(void*)flag;
 		return 0;
+	} else if (param_no==2) {
+		if ( !strcasecmp("is_stateless", *param) ) {
+			flag = 0;
+		} else if ( !strcasecmp("is_stateful", *param) ) {
+			flag = CPL_IS_STATEFUL;
+		} else if ( !strcasecmp("force_stateful", *param) ) {
+			flag = CPL_FORCE_STATEFUL;
+		} else {
+			LOG(L_ERR,"ERROR:fixup_cpl_run_script: flag \"%s\" (second param)"
+				" unknown!\n",(char*)*param);
+			return E_UNSPEC;
+		}
+		pkg_free(*param);
+		*param=(void*)flag;
 	}
 	return 0;
 }
@@ -260,7 +274,7 @@ static int cpl_init(void)
 		goto error;
 
 	/* load the send_reply function from sl module */
-	if ((sl_reply=find_export("sl_send_reply", 2, 0))==0) {
+	if ((cpl_sl_reply=find_export("sl_send_reply", 2, 0))==0) {
 		LOG(L_ERR, "ERROR:cpl_c:cpl_init: cannot import sl_send_reply; maybe "
 			"you forgot to load the sl module\n");
 		goto error;
@@ -517,8 +531,10 @@ static inline int get_orig_user(struct sip_msg *msg, str *uh, int flg)
 
 
 
-/* Params: str1 - as unsigned int - can be CPL_RUN_INCOMING
- * or CPL_RUN_OUTGOING */
+/* Params: 
+ *   str1 - as unsigned int - can be CPL_RUN_INCOMING or CPL_RUN_OUTGOING 
+ *   str2 - as unsigned int - flags regarding state(less)|(ful) 
+ */
 static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 {
 	struct cpl_interpreter  *cpl_intr;
@@ -552,7 +568,7 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	if ( (cpl_intr=new_cpl_interpreter(msg,&script))==0 )
 		goto error2;
 	/* set the flags */
-	cpl_intr->flags = ((unsigned int)str1);
+	cpl_intr->flags = ((unsigned int)str1)|((unsigned int)str2);
 	/* attache the user */
 	cpl_intr->user = user;
 	/* for OUTGOING we need also the destination user for init. with him
@@ -565,11 +581,12 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	/* since the script interpretation can take some time, it will be better to
-	 * send a 100 back to prevent the UAC to retransmit */
+	 * send a 100 back to prevent the UAC to retransmit
 	if ( cpl_tmb.t_reply( msg, (int)100, "Running cpl script" )!=1 ) {
 		LOG(L_ERR,"ERROR:cpl_invoke_script: unable to send 100 reply!\n");
 		goto error3;
 	}
+	* this should be done from script - it's much sooner ;-) */
 
 	/* run the script */
 	switch (cpl_run_script( cpl_intr )) {
@@ -813,7 +830,7 @@ static int cpl_process_register(struct sip_msg* msg, char* str1, char* str2)
 			goto error;
 		}
 		/* send a 200 OK reply back */
-		sl_reply( msg, (char*)200, "OK");
+		cpl_sl_reply( msg, (char*)200, "OK");
 		/* I send the reply and I don't want to resturn to script execution, so
 		 * I return 0 to do break */
 		goto stop_script;
@@ -845,7 +862,7 @@ static int cpl_process_register(struct sip_msg* msg, char* str1, char* str2)
 		goto error;
 
 	/* send a 200 OK reply back */
-	sl_reply( msg, (char*)200, "OK");
+	cpl_sl_reply( msg, (char*)200, "OK");
 
 stop_script:
 	return 0;
@@ -853,7 +870,7 @@ resume_script:
 	return 1;
 error:
 	/* send a error reply back */
-	sl_reply( msg, (char*)cpl_err->err_code, cpl_err->err_msg);
+	cpl_sl_reply( msg, (char*)cpl_err->err_code, cpl_err->err_msg);
 	/* I don't want to resturn to script execution, so I return 0 to do break */
 	return 0;
 }

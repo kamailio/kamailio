@@ -339,7 +339,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 	intr->proxy.busy = intr->proxy.noanswer = 0;
 	intr->proxy.redirect = intr->proxy.failure = intr->proxy.default_ = 0;
 
-	/* this is quite an "expensiv" node to run, so let's maek some checkings
+	/* this is quite an "expensiv" node to run, so let's make some checkings
 	 * before getting deeply into it */
 	for( i=0 ; i<NR_OF_KIDS(intr->ip) ; i++ ) {
 		kid = intr->ip + KID_OFFSET(intr->ip,i);
@@ -442,10 +442,28 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 				intr->flags |= CPL_PRIORITY_DUPLICATED;
 		}
 
+		/* now is the first time doing proxy, so I can still be stateless;
+		 * as proxy is done all the time stateful, I have to be switch from
+		 * stateless to stateful if necessary.
+		 * I'm still stateless if flag CPL_IS_STATELESS or CPL_FORCE_STATEFUL
+		 * are set (CPL_IS_STATEFUL means I'm already statefull) */
+		if (!(intr->flags&CPL_IS_STATEFUL)||(intr->flags&CPL_FORCE_STATEFUL)) {
+			i = cpl_tmb.t_newtran( intr->msg );
+			if (i<0) {
+				LOG(L_ERR,"ERROR:cpl-c:run_proxy: failed to build new "
+					"transaction!\n");
+				goto runtime_error;
+			} else if (i==0) {
+				LOG(L_ERR,"ERROR:cpl-c:run_proxy: processed INVITE is a "
+					"retransmission!\n");
+				goto runtime_error;
+			}
+		}
+
 		/* as I am interested in getting the responses back - I need to install
 		 * some callback functions for replies  */
-		if (cpl_tmb.register_tmcb(intr->msg,0,TMCB_ON_FAILURE|TMCB_RESPONSE_OUT,
-		reply_callback, (void*)intr) <= 0 ) {
+		if (cpl_tmb.register_tmcb(intr->msg,0,
+		TMCB_ON_FAILURE|TMCB_RESPONSE_OUT,reply_callback,(void*)intr) <= 0 ) {
 			LOG(L_ERR, "ERROR:cpl_c:run_proxy: failed to register "
 				"TMCB_RESPONSE_OUT callback\n");
 			goto runtime_error;
