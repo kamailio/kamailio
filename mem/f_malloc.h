@@ -34,7 +34,7 @@
 
 /* defs*/
 
-#define ROUNDTO		8 /* size we round to, must be = 2^n, and
+#define ROUNDTO		sizeof(void*) /* size we round to, must be = 2^n, and
                       sizeof(fm_frag) must be multiple of ROUNDTO !*/
 #define MIN_FRAG_SIZE	ROUNDTO
 

@@ -34,7 +34,8 @@
 
 /* defs*/
 #ifdef DBG_QM_MALLOC
-	#define ROUNDTO		 8 /* minimum possible ROUNDTO ->heavy debugging*/
+	#define ROUNDTO		sizeof(void*) /* minimum possible ROUNDTO ->heavy 
+										 debugging*/
 #else
 	#define ROUNDTO		16 /* size we round to, must be = 2^n  and also
 							 sizeof(qm_frag)+sizeof(qm_frag_end)
