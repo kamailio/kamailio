@@ -54,9 +54,14 @@ Chapter 1. User's Guide
    The dbtext database system architecture:
 
      * a database is represented by a directory in the local file
-       system.  NOTE: when you use dbtext in SER the database URL
+       system. NOTE: when you use dbtext in SER, the database URL
        for  modules  must  be the path to the directory where the
-       table-files are located, e.g., "/var/dbtext/ser".
+       table-files  are  located,  prefixed by "dbtext://", e.g.,
+       "dbtext:///var/dbtext/ser".  If  there  is  no  "/"  after
+       "dbtext://"  then  "CFG_DIR/" is inserted at the beginning
+       of  the  database path. So, either you provide an absolute
+       path  to database directory or a relative one to "CFG_DIR"
+       directory.
      * a  table  is  represented  by  a text file inside database
        directory.
      _________________________________________________________
@@ -68,6 +73,8 @@ Chapter 1. User's Guide
 
      * the name of column must not include white spaces.
      * the format of a column definition is: name(type,attr).
+     * between  two  column  definitions  must  be a white space,
+       e.g., "first_name(str) last_name(str)".
      * the type of a column can be:
           + int - integer numbers.
           + double - real numbers with two decimals.
@@ -140,9 +147,13 @@ suser:supasswd:xxx:iptel.org:xxx
    Compile  the  module  and load it instead of mysql or other DB
    modules.
 
-   REMINDER:  when  you  use  dbtext  in SER the database URL for
+   REMINDER:  when  you  use  dbtext in SER, the database URL for
    modules   must   be  the  path  to  the  directory  where  the
-   table-files are located, e.g., "/var/dbtext/ser".
+   table-files   are  located,  prefixed  by  "dbtext://",  e.g.,
+   "dbtext:///var/dbtext/ser".   If   there   is   no  "/"  after
+   "dbtext://"  then  "CFG_DIR/"  is inserted at the beginning of
+   the  database path. So, either you provide an absolute path to
+   database directory or a relative one to "CFG_DIR" directory.
 
    Example 1-4. Load the dbtext module
 ...

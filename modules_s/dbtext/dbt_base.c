@@ -44,9 +44,13 @@
 #include "dbt_res.h"
 #include "dbt_api.h"
 
-#define DBT_ID		"dbtext:"
-#define DBT_ID_LEN	(sizeof(DBT_ID)-1)
+#ifndef CFG_DIR
+#define CFG_DIR "/"
+#endif
 
+#define DBT_ID		"dbtext://"
+#define DBT_ID_LEN	(sizeof(DBT_ID)-1)
+#define DBT_PATH_LEN	256
 /*
  * Initialize database connection
  */
@@ -54,6 +58,8 @@ db_con_t* dbt_init(const char* _sqlurl)
 {
 	db_con_t* _res;
 	str _s;
+	char dbt_path[DBT_PATH_LEN];
+	
 	if (!_sqlurl) 
 	{
 #ifdef DBT_EXTRA_DEBUG
@@ -66,11 +72,25 @@ db_con_t* dbt_init(const char* _sqlurl)
 	if(_s.len <= DBT_ID_LEN || strncmp(_s.s, DBT_ID, DBT_ID_LEN)!=0)
 	{
 		LOG(L_ERR, "DBT:dbt_init: invalid database URL - should be:"
-			" <%s/path/to/directory>\n", DBT_ID);
+			" <%s[/]path/to/directory>\n", DBT_ID);
 		return NULL;
 	}
 	_s.s   += DBT_ID_LEN;
 	_s.len -= DBT_ID_LEN;
+	if(_s.s[0]!='/')
+	{
+		if(sizeof(CFG_DIR)+_s.len+2 > DBT_PATH_LEN)
+		{
+			LOG(L_ERR, "DBT:dbt_init: path to database is too long\n");
+			return NULL;
+		}
+		strcpy(dbt_path, CFG_DIR);
+		dbt_path[sizeof(CFG_DIR)] = '/';
+		strncpy(&dbt_path[sizeof(CFG_DIR)+1], _s.s, _s.len);
+		_s.len += sizeof(CFG_DIR);
+		_s.s = dbt_path;
+	}
+	
 	_res = pkg_malloc(sizeof(db_con_t)+sizeof(dbt_con_t));
 	if (!_res)
 	{
@@ -131,7 +151,7 @@ int dbt_free_query(db_con_t* _h, db_res_t* _r)
 		return -1;
 	}
 
-	if(free_result(_r) < 0) 
+	if(dbt_free_result(_r) < 0) 
 	{
 		LOG(L_ERR,"DBT:dbt_free_query:Unable to free result structure\n");
 		return -1;
@@ -174,7 +194,7 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	if ((!_h) || (!_r) || !CON_TABLE(_h))
 	{
 #ifdef DBT_EXTRA_DEBUG
-		LOG(L_ERR, "DBT:db_query: Invalid parameter value\n");
+		LOG(L_ERR, "DBT:dbt_query: Invalid parameter value\n");
 #endif
 		return -1;
 	}
@@ -185,7 +205,7 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), &stbl);
 	if(!_tbc)
 	{
-		DBG("DBT:db_query: table does not exist!\n");
+		DBG("DBT:dbt_query: table does not exist!\n");
 		return -1;
 	}
 
@@ -194,7 +214,7 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 
 	if(!_dtp || _dtp->nrcols < _nc)
 	{
-		DBG("DBT:db_query: table not loaded!\n");
+		DBG("DBT:dbt_query: table not loaded!\n");
 		goto error;
 	}
 	if(_k)
@@ -210,7 +230,7 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 			goto error;
 	}
 
-	DBG("DBT:db_query: new res with %d cols\n", _nc);
+	DBG("DBT:dbt_query: new res with %d cols\n", _nc);
 	_dres = dbt_result_new(_dtp, lres, _nc);
 	
 	if(!_dres)
@@ -223,7 +243,7 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		{
 			if(dbt_result_extract_fields(_dtp, _drp, lres, _dres))
 			{
-				DBG("DBT:db_query: error extracting result fields!\n");
+				DBG("DBT:dbt_query: error extracting result fields!\n");
 				goto clean;
 			}
 		}
@@ -245,7 +265,7 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	if(lres)
 		pkg_free(lres);
 
-	return get_result(_h, _r);
+	return dbt_get_result(_h, _r);
 
 error:
 	lock_release(&_tbc->sem);
@@ -253,7 +273,7 @@ error:
 		pkg_free(lkey);
 	if(lres)
 		pkg_free(lres);
-	DBG("DBT:db_query: error while quering table!\n");
+	DBG("DBT:dbt_query: error while quering table!\n");
     
 	return -1;
 
@@ -265,7 +285,7 @@ clean:
 		pkg_free(lres);
 	if(_dres)
 		dbt_result_free(_dres);
-	DBG("DBT:db_query: make clean\n");
+	DBG("DBT:dbt_query: make clean\n");
 
 	return -1;
 }
@@ -422,7 +442,7 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), &stbl);
 	if(!_tbc)
 	{
-		DBG("DBT:db_delelte: table does not exist!\n");
+		DBG("DBT:dbt_delelte: error loading table <%s>!\n", CON_TABLE(_h));
 		return -1;
 	}
 
@@ -431,7 +451,7 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 
 	if(!_dtp)
 	{
-		DBG("DBT:db_delete: table does not exist!!\n");
+		DBG("DBT:dbt_delete: table does not exist!!\n");
 		goto error;
 	}
 	
@@ -456,7 +476,7 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 		if(dbt_row_match(_dtp, _drp, lkey, _o, _v, _n))
 		{
 			// delete row
-			DBG("DBT:db_delete: deleting a row!\n");
+			DBG("DBT:dbt_delete: deleting a row!\n");
 			if(_drp->prev)
 				(_drp->prev)->next = _drp->next;
 			else
@@ -485,7 +505,7 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 	
 error:
 	lock_release(&_tbc->sem);
-	DBG("DBT:db_delete: error deleting from table!\n");
+	DBG("DBT:dbt_delete: error deleting from table!\n");
     
 	return -1;
 }
@@ -549,13 +569,13 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 			{
 				if(dbt_is_neq_type(_dtp->colv[lres[i]]->type, _uv[i].type))
 				{
-					DBG("DBT:db_update: incompatible types!\n");
+					DBG("DBT:dbt_update: incompatible types!\n");
 					goto error;
 				}
 				
 				if(dbt_row_update_val(_drp, &(_uv[i]), _uv[i].type, lres[i]))
 				{
-					DBG("DBT:db_update: cannot set v[%d] in c[%d]!\n",
+					DBG("DBT:dbt_update: cannot set v[%d] in c[%d]!\n",
 							i, lres[i]);
 					goto error;
 				}

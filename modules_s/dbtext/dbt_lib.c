@@ -306,7 +306,7 @@ tbl_cache_p dbt_db_get_table(dbt_cache_p _dc, str *_s)
 	_dtp = dbt_load_file(_s, &(_dc->dbp->name));
 
 #ifdef DBT_EXTRA_DEBUG
-	DBG("DTB:dbt_db_get_table: ---------------\n");
+	DBG("DTB:dbt_db_get_table: %.*s\n", _s->len, _s->s);
 	dbt_print_table(_dtp, NULL);
 #endif
 

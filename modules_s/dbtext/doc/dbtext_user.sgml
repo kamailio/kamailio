@@ -21,9 +21,10 @@
 	<para>
 		The module is meant for use in demos or small devices that do not
 		support other DB modules. It keeps everything in memory and if you deal
-		with large amount of data you may run quickly out of memory. Also, it has
-		not implemented all standard database facilities (like order by), it
-		includes minimal functionality to work properly (who knows ?!?) with SER.
+		with large amount of data you may run quickly out of memory. Also, it
+		has not implemented all standard database facilities (like order by),
+		it includes minimal functionality to work properly (who knows ?!?)
+		with SER.
 	</para>
 	    <section>
 		<title>Design of dbtext engine</title>
@@ -33,10 +34,17 @@
 			<listitem>
 			    <para>
 				a database is represented by a directory in the local file
-				system. NOTE: when you use <emphasis>dbtext</emphasis> in &ser;
+				system.
+				NOTE: when you use <emphasis>dbtext</emphasis> in &ser;,
 				the	database URL for modules must be the path to the directory
-				where the table-files are located, e.g., 
-				<quote>/var/dbtext/ser</quote>.
+				where the table-files are located, prefixed by 
+				<quote>dbtext://</quote>, e.g., 
+				<quote>dbtext:///var/dbtext/ser</quote>. If there is no
+				<quote>/</quote> after <quote>dbtext://</quote> then
+				<quote>CFG_DIR/</quote> is inserted at the beginning of the
+				database path. So, either you provide an absolute path to
+				database directory or a relative one to <quote>CFG_DIR</quote>
+				directory.
 				</para>
 			</listitem>
 			<listitem>
@@ -66,6 +74,12 @@
 			</listitem>
 			<listitem>
 			    <para>
+				between two column definitions must be a white space, e.g., 
+				<quote>first_name(str) last_name(str)</quote>.
+				</para>
+			</listitem>
+			<listitem>
+			    <para>
 				the type of a column can be: 
 			    	<itemizedlist>
 					<listitem>
@@ -75,7 +89,8 @@
 					</listitem>
 					<listitem>
 			    	<para>
-					<emphasis>double</emphasis> - real numbers with two decimals.
+					<emphasis>double</emphasis> - real numbers with two
+					decimals.
 					</para>
 					</listitem>
 					<listitem>
@@ -220,10 +235,15 @@ suser:supasswd:xxx:iptel.org:xxx
 		Compile the module and load it instead of mysql or other DB modules.
 		</para>
 		<para>
-		REMINDER: when you use <emphasis>dbtext</emphasis> in &ser;
+		REMINDER: when you use <emphasis>dbtext</emphasis> in &ser;,
 		the	database URL for modules must be the path to the directory
-		where the table-files are located, e.g., 
-		<quote>/var/dbtext/ser</quote>.
+		where the table-files are located, prefixed by
+		<quote>dbtext://</quote>, e.g., 
+		<quote>dbtext:///var/dbtext/ser</quote>. If there is no <quote>/</quote>
+		after <quote>dbtext://</quote> then <quote>CFG_DIR/</quote> is inserted
+		at the beginning of the database path. So, either you provide an
+		absolute path to database directory or a relative one to 
+		<quote>CFG_DIR</quote> directory.
 		</para>
 		<example>
 		<title>Load the dbtext module</title>

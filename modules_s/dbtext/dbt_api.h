@@ -43,44 +43,44 @@
 #include "../../db/db_con.h"
 #include "../../db/db_row.h"
 
-int free_columns(db_res_t* _r);
+int dbt_free_columns(db_res_t* _r);
 
 /*
  * Release memory used by row
  */
-int free_row(db_row_t* _r);
+int dbt_free_row(db_row_t* _r);
 
 /*
  * Release memory used by rows
  */
-int free_rows(db_res_t* _r);
+int dbt_free_rows(db_res_t* _r);
 
 /*
  * Release memory used by a result structure
  */
-int free_result(db_res_t* _r);
+int dbt_free_result(db_res_t* _r);
 
 /*
  * Retrieve result set
  */
-int get_result(db_con_t* _h, db_res_t** _r);
+int dbt_get_result(db_con_t* _h, db_res_t** _r);
 
 /*
  * Get and convert columns from a result
  */
-int get_columns(db_con_t* _h, db_res_t* _r);
+int dbt_get_columns(db_con_t* _h, db_res_t* _r);
 
 /*
  * Convert rows from mysql to db API representation
  */
-int convert_rows(db_con_t* _h, db_res_t* _r);
+int dbt_convert_rows(db_con_t* _h, db_res_t* _r);
 
 /*
  * Convert a row from result into db API representation
  */
-int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r);
+int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r);
 
 
-int use_table(db_con_t* _h, const char* _t);
+int dbt_use_table(db_con_t* _h, const char* _t);
 
 #endif

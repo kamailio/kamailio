@@ -47,21 +47,21 @@
 MODULE_VERSION
 
 static int mod_init(void);
-void destroy(void);
+static void destroy(void);
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"db_use_table",  (cmd_function)use_table,      2, 0, 0},
-	{"db_init", 	   (cmd_function)dbt_init,       1, 0, 0},
-	{"db_close",	   (cmd_function)dbt_close,      2, 0, 0},
-	{"db_query",	   (cmd_function)dbt_query,      2, 0, 0},
+	{"db_use_table",  (cmd_function)dbt_use_table,  2, 0, 0},
+	{"db_init",       (cmd_function)dbt_init,       1, 0, 0},
+	{"db_close",      (cmd_function)dbt_close,      2, 0, 0},
+	{"db_query",      (cmd_function)dbt_query,      2, 0, 0},
 	{"db_raw_query",  (cmd_function)dbt_raw_query,  2, 0, 0},
 	{"db_free_query", (cmd_function)dbt_free_query, 2, 0, 0},
-	{"db_insert",	   (cmd_function)dbt_insert,     2, 0, 0},
-	{"db_delete",	   (cmd_function)dbt_delete,     2, 0, 0},
-	{"db_update",	   (cmd_function)dbt_update,     2, 0, 0},
+	{"db_insert",     (cmd_function)dbt_insert,     2, 0, 0},
+	{"db_delete",     (cmd_function)dbt_delete,     2, 0, 0},
+	{"db_update",     (cmd_function)dbt_update,     2, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 
@@ -90,12 +90,12 @@ static int mod_init(void)
 {
 	if(dbt_init_cache())
 		return -1;
-	//return make_demo();
+	/*return make_demo(); */
 	
 	return 0;
 }
 
-void destroy(void)
+static void destroy(void)
 {
 	DBG("DBT:destroy ...\n");
 	dbt_cache_print(0);
