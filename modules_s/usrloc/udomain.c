@@ -110,7 +110,9 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 
 	(*_d)->size = _s;
 	init_lock((*_d)->lock);
-
+	(*_d)->users = 0;
+	(*_d)->expired = 0;
+	
 	return 0;
 }
 
@@ -326,6 +328,7 @@ int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 	sl = hash_func(_d, _aor->s, _aor->len);
 	slot_add(&_d->table[sl], *_r);
 	udomain_add(_d, *_r);
+	_d->users++;
 	return 0;
 }
 
@@ -338,6 +341,7 @@ void mem_delete_urecord(udomain_t* _d, struct urecord* _r)
 	udomain_remove(_d, _r);
 	slot_rem(_r->slot, _r);
 	free_urecord(_r);
+	_d->users--;
 }
 
 

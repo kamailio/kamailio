@@ -9,15 +9,27 @@
 #include "ul_fifo.h"
 #include <strings.h>
 #include <stdio.h>
+#include "dlist.h"
+#include "udomain.h"
 
 
 static int print_ul_stats(FILE *reply_file)
 {
+	dlist_t* ptr;
+	
+	fprintf(reply_file, "Domain Registered Expired\n");
+	
+	ptr = root;
+	while(ptr) {
 
-	/* PLACEHOLDER: fill in real things here */
-	fprintf(reply_file, "registered (now): %d, "
-		"expired (since boot time): %d\n",
-		0, 0 );
+		fprintf(reply_file, "\'%.*s\' %d %d\n",
+			ptr->d->name->len, ptr->d->name->s,
+			ptr->d->users,
+			ptr->d->expired
+			);
+		ptr = ptr->next;
+	}
+
 	return 1;
 }
 
@@ -41,6 +53,8 @@ int static ul_rm( FILE *pipe, char *response_file )
 	char user[MAX_USER];
 	int tlen, ulen;
 	FILE *reply_file;
+	dlist_t* ptr;
+	str aor, t;
 
 	if (!read_line(table, MAX_TABLE, pipe, &tlen) || tlen==0) {
 		LOG(L_ERR, "ERROR: ul_rm: table name expected\n");
@@ -51,15 +65,46 @@ int static ul_rm( FILE *pipe, char *response_file )
 		return -1;
 	}
 	/* PLACEHOLDER: fill in real things here */
+
+	aor.s = user;
+	aor.len = strlen(user);
+
+	t.s = table;
+	t.len = strlen(table);
+
+	ptr = root;
+	while(ptr) {
+		if ((ptr->name.len == t.len) &&
+		    !memcmp(ptr->name.s, t.s, t.len)) {
+			break;
+		}
+		ptr = ptr->next;
+	}
+
+
 	LOG(L_INFO, "INFO: deleting user-loc (%s,%s)\n",
-		table, user );
+	    table, user );
 	reply_file=open_reply_pipe(response_file);
 	if (reply_file==0) {
 		LOG(L_ERR, "ERROR: ul_rm: file not opened\n");
 		return -1;
 	}
-	fprintf(reply_file, "User (%s,%s) deletion not implemented\n",
-		table, user);
+
+	if (ptr) {
+		lock_udomain(ptr->d);
+		if (delete_urecord(ptr->d, &aor) < 0) {
+			LOG(L_ERR, "ul_rm(): Error while deleting user %s\n", user);
+			fprintf(reply_file, "Error while deleting user (%s, %s)\n", table, user);
+			unlock_udomain(ptr->d);
+			fclose(reply_file);
+			return -1;
+		}
+		unlock_udomain(ptr->d);
+		fprintf(reply_file, "User (%s, %s) deleted\n", table, user);
+	} else {
+		fprintf(reply_file, "Table (%s) not found\n", table);
+	}
+	
 	fclose(reply_file);
 	return 1;
 }

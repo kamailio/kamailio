@@ -17,7 +17,7 @@
 /*
  * List of all registered domains
  */
-static dlist_t* root = 0;
+dlist_t* root = 0;
 
 
 /*

@@ -13,6 +13,7 @@
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
 #include "urecord.h"         /* {insert,delete,get}_ucontact */
 #include "ucontact.h"        /* update_ucontact */
+#include "ul_fifo.h"
 
 
 static int mod_init(void);                          /* Module initialization function */
@@ -137,7 +138,8 @@ static int mod_init(void)
 	printf("usrloc module - initializing\n");
 
 	register_timer(timer, NULL, timer_interval);
-	
+	init_ul_fifo();
+
 	if (db_mode != NO_DB) {
 		if (bind_dbmod() < 0) {
 			LOG(L_ERR, "mod_init(): Can't bind database module\n");

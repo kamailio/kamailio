@@ -24,6 +24,8 @@ struct urecord; /* Usrloc record */
 typedef struct udomain {
 	str* name;                     /* Domain name */
 	int size;                      /* Hash table size */
+	int users;                     /* Number of registered users */
+	int expired;                   /* Number of expired contacts */
 	struct hslot* table;           /* Hash table - array of collision slots */
 	struct {                       /* Linked list of all elements in the domain */
 		int n;                 /* Number of element in the linked list */

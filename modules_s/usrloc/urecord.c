@@ -169,6 +169,7 @@ static inline int nodb_timer(urecord_t* _r)
 			ptr = ptr->next;
 
 			mem_delete_ucontact(_r, t);
+			_r->slot->d->expired++;
 		} else {
 			ptr = ptr->next;
 		}
@@ -202,6 +203,7 @@ static inline int wt_timer(urecord_t* _r)
 				LOG(L_ERR, "wt_timer(): Error while deleting contact from database\n");
 			}
 			mem_delete_ucontact(_r, t);
+			_r->slot->d->expired++;
 		} else {
 			ptr = ptr->next;
 		}
@@ -234,6 +236,7 @@ static inline int wb_timer(urecord_t* _r)
 				}
 			}
 			mem_delete_ucontact(_r, t);
+			_r->slot->d->expired++;
 		} else {
 			     /* Determine the operation we have to do */
 			op = st_flush_ucontact(ptr);

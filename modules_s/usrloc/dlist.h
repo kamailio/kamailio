@@ -21,6 +21,8 @@ typedef struct dlist {
 } dlist_t;
 
 
+extern dlist_t* root;
+
 /*
  * Function registers a new domain with usrloc
  * if the domain exists, pointer to existing structure
