@@ -329,7 +329,8 @@ int main_loop()
 						pids[i+1]=pid; /*should be in shared mem.*/
 				}
 			}
-			close(udp_sock); /*parent*/
+			/*parent*/
+			/*close(udp_sock)*/; /*if it's closed=>sendto invalid fd errors?*/
 		}
 	}
 	/*this is the main process*/

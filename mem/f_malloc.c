@@ -26,6 +26,11 @@
 						F_MALLOC_OPTIMIZE/ROUNDTO+big_hash_idx((s))- \
 							F_MALLOC_OPTIMIZE_FACTOR+1 )
 
+#define UN_HASH(h)	( ((h)<(F_MALLOC_OPTIMIZE/ROUNDTO))?(h)*ROUNDTO: \
+						1<<((h)-F_MALLOC_OPTIMIZE/ROUNDTO+\
+							F_MALLOC_OPTIMIZE_FACTOR-1)\
+					)
+
 
 /* computes hash number for big buckets*/
 inline static int big_hash_idx(int s)
@@ -247,6 +252,7 @@ void fm_status(struct fm_block* qm)
 	struct fm_frag* f;
 	int i,j;
 	int h;
+	int size;
 
 	LOG(L_INFO, "fm_status (%x):\n", qm);
 	if (!qm) return;
@@ -271,10 +277,15 @@ void fm_status(struct fm_block* qm)
 	}
 */
 	LOG(L_INFO, "dumping free list:\n");
-	for(h=0,i=0;h<F_HASH_SIZE;h++){
+	for(h=0,i=0,size=0;h<F_HASH_SIZE;h++){
 		
-		for (f=qm->free_hash[h],j=0; f; f=f->u.nxt_free, i++, j++)
-			if (j) LOG(L_INFO, "hash= %3d. fragments no.: %5d\n", h, j);
+		for (f=qm->free_hash[h],j=0; f; size+=f->size,f=f->u.nxt_free,i++,j++);
+		if (j) LOG(L_INFO, "hash = %3d fragments no.: %5d,\n\t\t"
+							" bucket size: %9d - %9d (first %9d)\n",
+							h, j, UN_HASH(h),
+							((h<F_MALLOC_OPTIMIZE/ROUNDTO)?1:2)*UN_HASH(h),
+							qm->free_hash[h]->size
+				);
 		/*
 		{
 			LOG(L_INFO, "   %5d.[%3d:%3d] %c  address=%x  size=%d(%x)\n",
@@ -288,7 +299,7 @@ void fm_status(struct fm_block* qm)
 		}
 	*/
 	}
-	LOG(L_INFO, "	Total: %6d fragments\n", i);
+	LOG(L_INFO, "TOTAL: %6d free fragments = %6d free bytes\n", i, size);
 	LOG(L_INFO, "-----------------------------\n");
 }
 
