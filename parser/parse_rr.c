@@ -30,30 +30,32 @@
 #include <stdio.h>
 #include <string.h>
 #include "parse_rr.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../trim.h"
+#include "../mem/mem.h"
+#include "../dprint.h"
+#include "../trim.h"
 
 
 /*
  * Parse Route and Record-Route header fields
  */
-int parse_rr(str* _s, rr_t** _r)
+int parse_rr(struct hdr_field* _h)
 {
-	rr_t* r, *res, *last;
+	rr_t* r, *last;
 	str s;
 	param_hooks_t hooks;
 
-	if (!_s || !_r) {
+	if (!_h) {
 		LOG(L_ERR, "parse_rr(): Invalid parameter value\n");
 		return -1;
 	}
 
-	     /* Make a temporary copy of the string */
-	s.s = _s->s;
-	s.len = _s->len;
 
-	res = last = 0;
+	     /* Make a temporary copy of the string */
+	s.s = _h->body.s;
+	s.len = _h->body.len;
+	trim_leading(&s);
+
+	last = 0;
 
 	while(1) {
 		     /* Allocate and clear rr stucture */
@@ -66,7 +68,7 @@ int parse_rr(str* _s, rr_t** _r)
 		memset(r, 0, sizeof(rr_t));
 		
 		     /* Parse name-addr part of the header */
-		if (parse_nameaddr(_s, &r->nameaddr) < 0) {
+		if (parse_nameaddr(&s, &r->nameaddr) < 0) {
 			LOG(L_ERR, "parse_rr(): Error while parsing name-addr\n");
 			goto error;
 		}
@@ -112,19 +114,18 @@ int parse_rr(str* _s, rr_t** _r)
 		}
 
 		     /* Append the structure as last parameter of the linked list */
-		if (!res) res = r;
+		if (!_h->parsed) (rr_t*)_h->parsed = r;
 		if (last) last->next = r;
 		last = r;
 	}
 
  error:
 	if (r) pkg_free(r);
-	free_rr(res); /* Free any contacts created so far */
+	free_rr((rr_t**)&_h->parsed); /* Free any contacts created so far */
 	return -1;
 
  ok:
 	if (last) last->next = r;
-	*_r = res;
 	return 0;
 }
 
@@ -133,13 +134,13 @@ int parse_rr(str* _s, rr_t** _r)
  * Free list of rrs
  * _r is head of the list
  */
-void free_rr(rr_t* _r)
+void free_rr(rr_t** _r)
 {
 	rr_t* ptr;
 
-	while(_r) {
-		ptr = _r;
-		_r = _r->next;
+	while(*_r) {
+		ptr = *_r;
+		*_r = (*_r)->next;
 		if (ptr->params) {
 			free_params(ptr->params);
 		}

@@ -395,7 +395,7 @@ static inline void print_param(param_t* _p)
 	printf("name: \'%.*s\'\n", _p->name.len, _p->name.s);
 	printf("body: \'%.*s\'\n", _p->body.len, _p->body.s);
 	
-	printf("---/cparam---\n");
+	printf("---/param---\n");
 }
 
 
