@@ -80,6 +80,10 @@ int synchronize_all_udomains(void);
  */
 int preload_all_udomains(void);
 
+/*
+ * Get contacts to all registered users
+ */
+int get_all_ucontacts(void *, int);
 
 /*
  * Find a particular domain

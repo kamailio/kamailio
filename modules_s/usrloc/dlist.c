@@ -29,6 +29,7 @@
 
 
 #include "dlist.h"
+#include <stdlib.h>	       /* abort */
 #include <string.h>            /* strlen, memcmp */
 #include <stdio.h>             /* printf */
 #include "../../ut.h"
@@ -68,6 +69,73 @@ static inline int find_dlist(str* _n, dlist_t** _d)
 	return 1;
 }
 
+/*
+ * Return list of all contacts for all currently registered
+ * users in all domains. Caller must provide buffer of
+ * sufficient length for fitting all those contacts. In the
+ * case when buffer was exhausted, the function returns
+ * estimated amount of additional space needed, in this
+ * case the caller is expected to repeat the call using
+ * this value as the hint.
+ *
+ * Information is packed into the buffer as follows:
+ *
+ * +------------+----------+------------+-----------
+ * |contact1.len|contact1.s|contact2.len|contact2.s|
+ * +------------+----------+------------+-----------
+ * |.......................|contactN.len|contactN.s|
+ * +------------+----------+------------+----------+
+ * |000000000000|
+ * +------------+
+ */
+int get_all_ucontacts(void *buf, int len)
+{
+	dlist_t *p;
+	urecord_t *r;
+	ucontact_t *c;
+	void *cp;
+	int shortage;
+
+	cp = buf;
+	shortage = 0;
+	/* Reserve space for terminating 0000 */
+	len -= sizeof(c->c.len);
+	for (p = root; p != NULL; p = p->next) {
+		lock_udomain(p->d);
+		if (p->d->d_ll.n <= 0) {
+			unlock_udomain(p->d);
+			continue;
+		}
+		for (r = p->d->d_ll.first; r != NULL; r = r->d_ll.next) {
+			for (c = r->contacts; c != NULL; c = c->next) {
+				if (c->c.len <= 0)
+					continue;
+				if (len >= (int)(sizeof(c->c.len) + c->c.len)) {
+					memcpy(cp, &c->c.len, sizeof(c->c.len));
+					cp += sizeof(c->c.len);
+					memcpy(cp, c->c.s, c->c.len);
+					cp += c->c.len;
+					len -= sizeof(c->c.len) + c->c.len;
+				} else {
+					shortage += sizeof(c->c.len) + c->c.len;
+				}
+			}
+		}
+		unlock_udomain(p->d);
+	}
+	/* len < 0 is possible, if size of the buffer < sizeof(c->c.len) */
+	if (len >= 0)
+		memset(cp, 0, sizeof(c->c.len));
+
+	/* Shouldn't happen */
+	if (shortage > 0 && len > shortage) {
+		abort();
+	}
+
+	shortage -= len;
+
+	return shortage > 0 ? shortage : 0;
+}
 
 /*
  * Create a new domain structure
