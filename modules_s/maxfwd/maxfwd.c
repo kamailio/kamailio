@@ -139,15 +139,16 @@ static int w_process_maxfwd_header(struct sip_msg* msg, char* str,char* str2)
 {
 	if (is_maxfwd_present(msg)==1)
 	{
-		if ( decrement_maxfwd(msg)!=1 )
-		{
-			LOG( L_ERR,"ERROR: MAX_FWD module : unable to decrement header\n");
-			goto OK;
-		}
+		DBG("DEBUG: maxfwd_process: maxfwd present!!\n");
 		if (is_maxfwd_zero(msg)==1 )
 		{
 			LOG( L_INFO,"INFO: MAX_FWD module : zero value found\n!");
 			goto error;
+		}
+		if ( decrement_maxfwd(msg)!=1 )
+		{
+			LOG( L_ERR,"ERROR: MAX_FWD module : error on decrement!\n");
+			goto OK;
 		}
 	}
 	else

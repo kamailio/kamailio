@@ -51,14 +51,17 @@ int  mf_hdr_value;
 #define recall_mf_hdr_value( _msg , _val , _err) \
 	do{\
 		static str _foo;\
-		if ( mf_global_id==(_msg)->id ){\
+		if ( 0 && mf_global_id==(_msg)->id ){\
 			*(_val) = mf_hdr_value;\
 			*(_err) = 0;\
 		}else{\
-			get_number_from_str( (_msg)->maxforwards->body, &(_foo), _val, \
+			DBG("going for |%.*s|\n",(_msg)->maxforwards->body.len,\
+				(_msg)->maxforwards->body.s);\
+			get_number_from_str( (_msg)->maxforwards->body, &(_foo), (_val), \
 									(_err) );\
 			mf_hdr_value = *(_val);\
 			mf_global_id   = (_msg)->id;\
+			DBG("GETTING: %d\n",*(_val));\
 		}\
 	}while(0);
 
@@ -67,7 +70,7 @@ int  mf_hdr_value;
 
 int mf_startup()
 {
-	mf_global_id = 0;
+	mf_global_id = -1;
 	return 1;
 }
 
@@ -99,6 +102,8 @@ int decrement_maxfwd( struct sip_msg* msg )
 	}
 
 	/*extrancting the number from max-fwd header*/
+	DBG("DEUBG: maxfwd=|%.*s|\n",msg->maxforwards->body.len,
+		msg->maxforwards->body.s);
 	get_number_from_str( msg->maxforwards->body, &nr_s, &x, &err);
 	if (err){
 		LOG(L_ERR, "ERROR: decrement_maxfwd :"
@@ -107,7 +112,7 @@ int decrement_maxfwd( struct sip_msg* msg )
 	}
 	store_mf_hdr_value( msg , x );
 	if (x==0){
-		LOG(L_ERR, "ERROR: decrement_maxfwd :"
+		LOG(L_WARN, "WARNING: decrement_maxfwd :"
 		  " unable to decrement max_fwd number -> already zero!\n");
 		goto error;
 	}
@@ -205,6 +210,7 @@ int is_maxfwd_zero( struct sip_msg* msg )
 		  " unable to parse the max forwards number !\n");
 		goto error;
 	}
+	DBG("DEBUG: maxfwd %d \n",x);
 	return (x==0)?1:-1;
 
 error:
