@@ -86,6 +86,8 @@ static void acc_onack( struct cell* t,  struct sip_msg *msg,
 	int code, void *param );
 static void acc_onreq( struct cell* t, struct sip_msg *msg,
 	int code, void *param ) ;
+static void on_missed(struct cell *t, struct sip_msg *reply,
+	int code, void *param );
 
 
 struct module_exports exports= {
@@ -171,6 +173,8 @@ static int mod_init( void )
 		return -1;
 	if (tmb.register_tmcb( TMCB_REQUEST_OUT, acc_onreq, 0 /* empty param */ ) <=0 )
 		return -1;
+	if (tmb.register_tmcb( TMCB_ON_NEGATIVE, on_missed, 0 /* empty param */ ) <=0 )
+		return -1;
 
 	return 0;
 }
@@ -189,6 +193,24 @@ static void acc_onreq( struct cell* t, struct sip_msg *msg,
 	}
 }
 
+static void on_missed(struct cell *t, struct sip_msg *reply,
+	int code, void *param )
+{
+	struct sip_msg *rq;
+
+	rq = t->uas.request;
+
+	if (t->is_invite 
+			&& missed_flag 
+			&& isflagset( rq, missed_flag)==1 
+			&& code>=300 ) 
+	{
+		acc_missed_report( t, reply, code);
+		/* don't come here again on next failed branch */
+		resetflag(rq, missed_flag );
+	}
+}
+
 static void acc_onreply( struct cell* t, struct sip_msg *reply,
 	int code, void *param ) 
 {
@@ -197,10 +219,11 @@ static void acc_onreply( struct cell* t, struct sip_msg *reply,
 
 	rq = t->uas.request;
 
-	if (t->is_invite && missed_flag && isflagset( rq, missed_flag)==1
-		&& ((code>=400 && code<500) || code>=600))
-		acc_missed_report( t, reply, code);
-
+	/* acc_onreply is bound to TMCB_REPLY which may be called
+	   from _reply, like when FR hits; we should not miss this
+	   event for missed calls either
+	*/
+	on_missed(t, reply, code, param );
 
 	/* if acc enabled for flagged transaction, check if flag matches */
 	if (acc_flag && isflagset( rq, acc_flag )==-1) return;
