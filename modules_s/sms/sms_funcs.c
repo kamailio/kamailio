@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include "../../dprint.h"
+#include "../../ut.h"
 #include "../../config.h"
 #include "../../globals.h"
 #include "../../mem/mem.h"
@@ -157,8 +158,8 @@ int push_on_network(struct sip_msg *msg, int net)
 
 	/* parsing from header */
 	memset(&from_parsed,0,sizeof(from_parsed));
-	parse_to(msg->from->body.s,msg->from->body.s+msg->from->body.len+1,
-		&from_parsed);
+	p = translate_pointer(msg->orig,msg->buf,msg->from->body.s);
+	parse_to(p,p+msg->from->body.len+1,&from_parsed);
 	if (from_parsed.error!=PARSE_OK ) {
 		LOG(L_ERR,"ERROR:sms_push_on_net: cannot parse from header\n");
 		goto error;

@@ -565,6 +565,10 @@ int getsms( struct incame_sms *sms, struct modem *mdm, int sim)
 		goto error;
 	}
 
+	if (sms->is_statusreport)
+	{
+		DBG("DEBUG:report=%s",sms->ascii);
+	}
 	deletesms(mdm,found);
 
 	return 1;
