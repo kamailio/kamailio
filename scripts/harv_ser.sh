@@ -131,6 +131,7 @@ BEGIN {
 	server_sjphone=0;
 	server_starsip=0;
 	server_ipdialog=0;
+	server_edial=0;
 	server_xx=0
 
 }
@@ -393,6 +394,10 @@ server==0 && /Server:.*StarSIP/ {
 }
 server==0 && /Server:.*ipDialog/ {
 	server_ipdialog++
+	server=1
+}
+server==0 && /Server:.*eDial/ {
+	server_edial++
 	server=1
 }
 server==0 && /Server:/ {
@@ -738,6 +743,7 @@ END {
 	print "sjphone: " server_sjphone
 	print "StarSIP: " server_starsip
 	print "ipDialog: " server_ipdialog
+	print "eDial: " server_edial
 	print "UFO: " server_xx
 }
 '
