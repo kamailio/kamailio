@@ -1,0 +1,111 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    This module implements a presence server, i.e. entity that receives SUBSCRIBE messages
+	    and sends NOTIFY when presence status of a user changes. Currently the presence server
+	    can be connected to registar and jabber module so &sip; users can see presence of jabber
+	    users.
+	</para>
+	<para>
+	    This module currently cannot work as a <acronym>B2BUA</acronym>, i.e. it cannot subsribe
+	    to presence of users using &sip;. We are currently working on that feature.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>No dependencies on other &ser; modules</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>default_expires</varname> (integer)</title>
+	    <para>
+		Default expires value to be used when the client doesn't supply one (in seconds).
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>3600</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>default_expires</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pa", "default_expires", 3600)
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">handle_subscription(domain)</function>
+	    </title>
+	    <para>
+		This function processes SUBSCRIBE and generates NOTIFY.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>domain</emphasis> - This can be either <quote>registar</quote> or <quote>jabber</quote>.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>handle_subscription</function> usage</title>
+		<programlisting format="linespecific">
+...
+handle_subscription("jabber");
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("pa.sgml" "Book" "chapter")
+End:
+-->

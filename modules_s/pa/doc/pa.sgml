@@ -1,0 +1,52 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+
+<!ENTITY user SYSTEM "pa_user.sgml">
+<!ENTITY devel SYSTEM "pa_devel.sgml">
+<!ENTITY faq SYSTEM "pa_faq.sgml">
+
+<!-- Include general SER documentation entities -->
+<!ENTITY % serentities SYSTEM "../../../doc/ser_entities.sgml">
+%serentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>pa Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>&fhg;</orgname></affiliation>
+		<address>
+		    <email>jan@iptel.org</email>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<address>
+		    <email>jan@iptel.org</email>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>&fhg;</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+    
+</book>
