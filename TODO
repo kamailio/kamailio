@@ -12,13 +12,15 @@ x better Via parsing (handle ' ' in uri, eg: foo.bar : 1234 ; received=) and
 - fix format string vulnerability in log()
 - fix alignement access problems (warning on Sun)
 x (different way) add request header bitmap field for the modules
+- introduce variables & function in the script language (cfg. file)
+
 
 High priority:
 - fix/replace T_REF/T_UNREF
 - review all the tm locking
 x if () {} else {}
 x plugin interface
-- ipv6 support
+x ipv6 support
 - reply ("response line")
 - drop ACKs for our replies
 - icmp error handling
@@ -26,9 +28,9 @@ x plugin interface
 - add User-Agent (for the replies)
 
 Low priority:
-- fix via address someday
+x fix via address someday
 - fix listen=0.0.0.0 case
-- forward to received= if present
+x forward to received= if present
 - make it easier to register a statically linkable module.
 - add support for -u user and -g group (not only -u uid, -g uid)
 - change uid/gid after opening the sockets
@@ -44,12 +46,12 @@ x handle SIGCHLD, SIGHUP
 - use a  standard lex compatible .lex format (instead of flex)
 - try & use native compiler & ld if possible
 
-- make install
+x make install
 - init.d scripts (and rc.local? for *BSD or Slackware)
-- man page
+x man page
 - autoconf scripts
-- Debian package build files
-- the same for rpm
+x Debian package build files
+x the same for rpm
 - the same for FreeBSD and Slackware
 
 
