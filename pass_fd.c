@@ -24,6 +24,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+ /*
+  * History:
+  * --------
+  *  2002-11-29  created by andrei
+  *  2003-02-20  added solaris support (! HAVE_MSGHDR_MSG_CONTROL) (andrei)
+  */
 
 #ifdef USE_TCP
 
@@ -40,8 +46,9 @@ int send_fd(int unix_socket, void* data, int data_len, int fd)
 {
 	struct msghdr msg;
 	struct iovec iov[1];
-	struct cmsghdr* cmsg;
 	int ret;
+#ifdef HAVE_MSGHDR_MSG_CONTROL
+	struct cmsghdr* cmsg;
 	union {
 		struct cmsghdr cm;
 		char control[CMSG_SPACE(sizeof(fd))];
@@ -49,6 +56,17 @@ int send_fd(int unix_socket, void* data, int data_len, int fd)
 	
 	msg.msg_control=control_un.control;
 	msg.msg_controllen=sizeof(control_un.control);
+	
+	cmsg=CMSG_FIRSTHDR(&msg);
+	cmsg->cmsg_level = SOL_SOCKET;
+	cmsg->cmsg_type = SCM_RIGHTS;
+	cmsg->cmsg_len = CMSG_LEN(sizeof(fd));
+	*(int*)CMSG_DATA(cmsg)=fd;
+	msg.msg_flags=0;
+#else
+	msg.msg_accrights=(caddr_t) &fd;
+	msg.msg_accrightslen=sizeof(fd);
+#endif
 	
 	msg.msg_name=0;
 	msg.msg_namelen=0;
@@ -58,12 +76,6 @@ int send_fd(int unix_socket, void* data, int data_len, int fd)
 	msg.msg_iov=iov;
 	msg.msg_iovlen=1;
 	
-	cmsg=CMSG_FIRSTHDR(&msg);
-	cmsg->cmsg_level = SOL_SOCKET;
-	cmsg->cmsg_type = SCM_RIGHTS;
-	cmsg->cmsg_len = CMSG_LEN(sizeof(fd));
-	*(int*)CMSG_DATA(cmsg)=fd;
-	msg.msg_flags=0;
 	
 	ret=sendmsg(unix_socket, &msg, 0);
 	
@@ -76,9 +88,10 @@ int receive_fd(int unix_socket, void* data, int data_len, int* fd)
 {
 	struct msghdr msg;
 	struct iovec iov[1];
-	struct cmsghdr* cmsg;
 	int new_fd;
 	int ret;
+#ifdef HAVE_MSGHDR_MSG_CONTROL
+	struct cmsghdr* cmsg;
 	union{
 		struct cmsghdr cm;
 		char control[CMSG_SPACE(sizeof(new_fd))];
@@ -86,6 +99,10 @@ int receive_fd(int unix_socket, void* data, int data_len, int* fd)
 	
 	msg.msg_control=control_un.control;
 	msg.msg_controllen=sizeof(control_un.control);
+#else
+	msg.msg_accrights=(caddr_t) &new_fd;
+	msg.msg_accrightslen=sizeof(int);
+#endif
 	
 	msg.msg_name=0;
 	msg.msg_namelen=0;
@@ -98,6 +115,7 @@ int receive_fd(int unix_socket, void* data, int data_len, int* fd)
 	ret=recvmsg(unix_socket, &msg, 0);
 	if (ret<=0) goto error;
 	
+#ifdef HAVE_MSGHDR_MSG_CONTROL
 	cmsg=CMSG_FIRSTHDR(&msg);
 	if ((cmsg!=0) && (cmsg->cmsg_len==CMSG_LEN(sizeof(new_fd)))){
 		if (cmsg->cmsg_type!= SCM_RIGHTS){
@@ -117,6 +135,15 @@ int receive_fd(int unix_socket, void* data, int data_len, int* fd)
 		*fd=-1;
 		/* it's not really an error */
 	}
+#else
+	if (msg.msg_accrightslen==sizeof(int)){
+		*fd=new_fd;
+	}else{
+		LOG(L_ERR, "receive_fd: no descriptor passed, accrightslen=%d\n",
+				msg.msg_accrightslen);
+		*fd=-1;
+	}
+#endif
 	
 error:
 	return ret;

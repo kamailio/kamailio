@@ -8,7 +8,7 @@
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   11
-EXTRAVERSION = pre6-tcp6-tm
+EXTRAVERSION = pre6-tcp7-tm
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -531,7 +531,7 @@ LIBS= -lfl -ldl -lresolv
 #os specific stuff
 ifeq ($(OS), linux)
 	DEFS+=-DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD \
-			-DHAVE_MSG_NOSIGNAL
+			-DHAVE_MSG_NOSIGNAL -DHAVE_MSGHDR_MSG_CONTROL
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_SYSV_SEM  # try posix sems
 		found_lock_method=yes
@@ -564,7 +564,7 @@ endif
 
 ifeq ($(OS), freebsd)
 	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN \
-		-DHAVE_SCHED_YIELD
+		-DHAVE_SCHED_YIELD -DHAVE_MSGHDR_MSG_CONTROL
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
@@ -575,7 +575,7 @@ endif
 
 ifeq ($(OS), openbsd)
 	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DDLSYM_PREFIX='"_"' -DHAVE_GETHOSTBYNAME2 \
-		-DHAVE_UNION_SEMUN
+		-DHAVE_UNION_SEMUN -DHAVE_MSGHDR_MSG_CONTROL
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
@@ -588,7 +588,8 @@ ifeq ($(OS), openbsd)
 endif
 	
 ifeq ($(OS), netbsd)
-	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DHAVE_GETHOSTBYNAME2 
+	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DHAVE_GETHOSTBYNAME2 \
+		-DHAVE_MSGHDR_MSG_CONTROL
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_SYSV_SEM  # try pthread sems
 		found_lock_method=yes

@@ -803,7 +803,7 @@ int tcp_init_children()
 	
 	/* fork children & create the socket pairs*/
 	for(r=0; r<tcp_children_no; r++){
-		if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sockfd)<0){
+		if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
 			LOG(L_ERR, "ERROR: tcp_main: socketpair failed: %s\n",
 					strerror(errno));
 			goto error;
