@@ -13,9 +13,15 @@ modules:
    vm_reply() fifo functions was replcaed by TM with t_reply() fifo function
    NOTE!! because current version of SEMS/AA try to send reply via vm_reply,
    it will not work with the TM version.
+ - TM contains new command - t_write_unix("/tmp/sems.sock", "announcement")
+   sends a message using unix socket interface instead of FIFO interface.
+ - TM contains new config variable - unix_tx_timeout -- it specifies the
+   transmit timeout of t_write_sock
 new modules:
  - answer server options requests [options]
 core:
+ - new parts:
+       UNIX domain socket server implemented
  - changes: 
        protocol and port can be specified in the alias and listen lines, e.g.:
         alias= tcp:foo.bar:* udp:test.bar:5080 foo.com
@@ -43,6 +49,12 @@ core:
        if ser logs to syslog, you can control the facility for logging. Very
        useful when you want to divert all ser logs to a different log file.
        See man page syslog(3) for more detailes.
+   unix_sock = "/tmp/ser.sock"
+       The name of the socket the unixsock server should listen on.
+   unix_sock_children = 1
+       The number of children that will listen on the unix domain socket.
+   unix_tx_timeout = 2000
+       Timeout (in ms) used when sending replies through unix sockets.
  - new script commands:
    force_tcp_alias()
    force_tcp_alias(port)
