@@ -461,6 +461,8 @@ static void callback(struct cell *t, int type, struct tmcb_params *ps)
 done:
 	unixsock_reply_sendto(to);
 	shm_free(to);
+	*ps->param=0; /* 0 it so the callback won't do anything if called
+					 for a retransmission */
 }
 
 
