@@ -101,6 +101,4 @@ Contacts
 
 Known Limitations
 -----------------
-The module does not provide message storage in case that message
-delivery for on-line users fails downstream -- it only cares of 
-off-line users.
+
