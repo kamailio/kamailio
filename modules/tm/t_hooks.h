@@ -26,8 +26,11 @@
  *
  * History:
  * --------
- * 2003-03-16 backwards-compatibility callback names introduced (jiri)
- * 2003-03-06 old callbacks renamed, new one introduced (jiri)
+ * 2003-03-16 : backwards-compatibility callback names introduced (jiri)
+ * 2003-03-06 : old callbacks renamed, new one introduced (jiri)
+ * 2003-12-04 : global callbacks moved into transaction callbacks;
+ *              multiple events per callback added; single list per
+ *              transaction for all its callbacks (bogdan)
  */
 
 
@@ -36,25 +39,20 @@
 
 #include "defs.h"
 
-
 struct sip_msg;
 struct cell;
 
-/* backwards compatibility hooks */
-#define TMCB_REPLY TMCB_RESPONSE_OUT
-#define TMCB_E2EACK TMCB_E2EACK_IN
-#define TMCB_REPLY_IN TMCB_RESPONSE_IN
-#define TMCB_REQUEST_OUT TMCB_REQUEST_FWDED
-#define TMCB_ON_NEGATIVE TMCB_ON_FAILURE
 
-typedef enum { 
-		/* input events */
-		TMCB_RESPONSE_IN=1, TMCB_REQUEST_IN, TMCB_E2EACK_IN, 
-		/* routing decisions in progress */
-		TMCB_REQUEST_FWDED, TMCB_RESPONSE_FWDED, TMCB_ON_FAILURE,
-		/* completion events */
-		TMCB_RESPONSE_OUT, TMCB_LOCAL_COMPLETED, 
-		TMCB_END } tmcb_type;
+#define TMCB_REQUEST_IN       (1<<0)
+#define TMCB_RESPONSE_IN      (1<<1)
+#define TMCB_E2EACK_IN        (1<<2)
+#define TMCB_REQUEST_FWDED    (1<<3)
+#define TMCB_RESPONSE_FWDED   (1<<4)
+#define TMCB_ON_FAILURE_RO    (1<<5)
+#define TMCB_ON_FAILURE       (1<<6)
+#define TMCB_RESPONSE_OUT     (1<<7)
+#define TMCB_LOCAL_COMPLETED  (1<<8)
+#define TMCB_MAX              ((1<<9)-1)
 
 /* 
  *  Caution: most of the callbacks work with shmem-ized messages
@@ -64,6 +62,13 @@ typedef enum {
  *  callbacks may pass the value of FAKED_REPLY messages, which
  *  is a non-dereferencable pointer indicating that no message
  *  was received and a timer hit instead.
+ *
+ *  All callbacks excepting the TMCB_REQUEST_IN are associates to a
+ *  transaction. It means they will be run only when the event will hint
+ *  the transaction the callbacks were register for.
+ *  TMCB_REQUEST_IN is a global callback - it means it will be run for
+ *  all transactions.
+ *
  *
  *  Callback description:
  *  ---------------------
@@ -97,6 +102,11 @@ typedef enum {
  *    disabled (by default) and C-timer hits. The proxy server then
  *    drops state silently, doesn't use callbacks and expects the
  *    transaction to complete statelessly.
+ *
+ *  TMCB_ON_FAILURE_RO -- called on receipt of a reply or timer;
+ *  it means all branches completed with a failure; the callback 
+ *  function MUST not change anything in the transaction (READONLY)
+ *  that's a chance for doing ACC or stuff like this
  *
  *  TMCB_ON_FAILURE -- called on receipt of a reply or timer;
  *  it means all branches completed with a failure; that's 
@@ -139,36 +149,73 @@ typedef enum {
  *  TMCB_LOCAL COMPLETED -- final reply for localy initiated
  *  transaction arrived. Message may be FAKED_REPLY.
  *
- *  TMCB_END	- just a bumper
-
-	see the 'acc' module for an example of callback usage
 
 	note that callbacks MUST be installed before forking
-    (callback lists do not live in shmem and have no access
+	(callback lists do not live in shmem and have no access
 	protection), i.e., at best from mod_init functions.
 
-	also, note: the callback param is currently not used;
-	if whoever wishes to use a callback parameter, use
-	trans->cbp
+	the callback's param MUST be in shared memory and will
+	NOT be freed by TM; you must do it yourself from the
+	callback function id necessary.
 */
 
-typedef void (transaction_cb) ( struct cell* t, struct sip_msg* msg, 
-	int code, void *param );
 
-struct tm_callback_s {
-	int id;
-	transaction_cb* callback;
-	struct tm_callback_s* next;
+/* pack structure with all params passed toa callback function */
+struct tmcb_params {
+	struct sip_msg* req;
+	struct sip_msg* rpl;
+	int code;
 	void *param;
 };
 
+/* callback function prototype */
+typedef void (transaction_cb) (struct cell* t, int type, struct tmcb_params*);
+/* register callback function prototype */
+typedef int (*register_tmcb_f)(struct sip_msg* p_msg, int cb_types,
+		transaction_cb f, void *param);
 
-extern struct tm_callback_s* callback_array[ TMCB_END ];
 
-typedef int (*register_tmcb_f)(tmcb_type cbt, transaction_cb f, void *param);
+struct tm_callback {
+	int id;                      /* id of this callback - useless */
+	int types;                   /* types of events that trigger the callback*/
+	transaction_cb* callback;    /* callback function */
+	void *param;                 /* param to be passed to callback function */
+	struct tm_callback* next;
+};
 
-int register_tmcb( tmcb_type cbt, transaction_cb f, void *param );
-void callback_event( tmcb_type cbt, struct cell *trans,
-	struct sip_msg *msg, int code );
+struct tmcb_head_list {
+	struct tm_callback *first;
+	int reg_types;
+};
+
+
+extern struct tmcb_head_list*  req_in_tmcb_hl;
+
+
+#define has_tran_tmcbs(_T_, _types_) \
+	( ((_T_)->tmcb_hl.reg_types)|(_types_) )
+#define has_reqin_tmcbs() \
+	( req_in_tmcb_hl->first!=0 )
+
+
+int init_tmcb_lists();
+
+void destroy_tmcb_lists();
+
+
+/* register a callback for several types of events */
+int register_tmcb( struct sip_msg* p_msg, int types, transaction_cb f,
+																void *param );
+
+/* inserts a callback into the a callback list */
+int insert_tmcb(struct tmcb_head_list *cb_list, int types,
+									transaction_cb f, void *param );
+
+/* run all transaction callbacks for an event type */
+void run_trans_callbacks( int type , struct cell *trans,
+						struct sip_msg *req, struct sip_msg *rpl, int code );
+
+/* run all REQUEST_IN callbacks */
+void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code );
 
 #endif

@@ -52,6 +52,8 @@
  *  2003-11-05  flag context updated from failure/reply handlers back
  *              to transaction context (jiri)
  *  2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
+ *  2003-12-04  global TM callbacks switched to per transaction callbacks
+ *              (bogdan)
  */
 
 
@@ -100,6 +102,7 @@ char *tm_tag_suffix;
 static int goto_on_negative=0;
 /* where to go on receipt of reply */
 static int goto_on_reply=0;
+
 
 
 /* we store the reply_route # in private memory which is
@@ -309,11 +312,13 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	if (code>=200) {
 		if (trans->local) {
 			DBG("DEBUG: local transaction completed from _reply\n");
-			callback_event( TMCB_LOCAL_COMPLETED, trans, FAKED_REPLY, code );
-			if (trans->completion_cb) 
-				trans->completion_cb( trans, FAKED_REPLY, code, trans->cbp);
+			if ( has_tran_tmcbs(trans, TMCB_LOCAL_COMPLETED) )
+				run_trans_callbacks( TMCB_LOCAL_COMPLETED, trans,
+					0, FAKED_REPLY, code);
 		} else {
-			callback_event( TMCB_RESPONSE_OUT, trans, FAKED_REPLY, code );
+			if ( has_tran_tmcbs(trans, TMCB_RESPONSE_OUT) )
+				run_trans_callbacks( TMCB_RESPONSE_OUT, trans,
+					trans->uas.request, FAKED_REPLY, code);
 		}
 
 		cleanup_uac_timers( trans );
@@ -380,45 +385,15 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 }
 
 
-/* create a temporary faked message environment in which a conserved
- * t->uas.request in shmem is partially duplicated to pkgmem
- * to allow pkg-based actions to use it; 
- *
- * if restore parameter is set, the environment is restored to the
- * original setting and return value is unsignificant (always 0); 
- * otherwise  a faked environment if created; if that fails,
- * false is returned
- */
-static int faked_env(struct sip_msg *fake, 
-				struct cell *_t,
-				struct sip_msg *shmem_msg,
-				int _restore )
+/*if msg is set -> it will fake the env. vars conforming with the msg; if NULL
+ * the env. will be restore to original */
+static inline void faked_env( struct cell *t,struct sip_msg *msg)
 {
 	static enum route_mode backup_mode;
 	static struct cell *backup_t;
 	static unsigned int backup_msgid;
 
-	if (_restore) goto restore;
-
-	/* 
-     on_negative_reply faked msg now copied from shmem msg (as opposed
-     to zero-ing) -- more "read-only" actions (exec in particular) will 
-     work from reply_route as they will see msg->from, etc.; caution, 
-     rw actions may append some pkg stuff to msg, which will possibly be 
-     never released (shmem is released in a single block)
-    */
-	memcpy( fake, shmem_msg, sizeof(struct sip_msg));
-
-	/* if we set msg_id to something different from current's message
-       id, the first t_fork will properly clean new branch URIs
-	*/
-	fake->id=shmem_msg->id-1;
-	/* set items, which will be duped to pkg_mem, to zero, so that
-	 * "restore" called on error does not free the original items */
-	fake->add_rm=0;
-	fake->body_lumps=0;
-	fake->new_uri.s=0; fake->new_uri.len=0; 
-
+	if (msg) {
 	/* remember we are back in request processing, but process
 	 * a shmem-ed replica of the request; advertise it in rmode;
 	 * for example t_reply needs to know that
@@ -435,90 +410,109 @@ static int faked_env(struct sip_msg *fake,
 	backup_t=get_t();
 	backup_msgid=global_msg_id;
 	/* fake transaction and message id */
-	global_msg_id=fake->id;
-	set_t(_t);
+		global_msg_id=msg->id;
+		set_t(t);
+	} else {
+		/* restore original environment */
+		set_t(backup_t);
+		global_msg_id=backup_msgid;
+		rmode=backup_mode;
+	}
+}
 
-	/* environment is set up now, try to fake the message */
+
+
+/* return 1 if a failure_route processes */
+static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
+																	int code)
+{
+	static struct sip_msg fake_req;
+	struct sip_msg *shmem_msg = t->uas.request;
+
+	/* failure_route for a local UAC? */
+	if (!shmem_msg) {
+		LOG(L_WARN, "Warning: run_failure_handlers: no UAC support\n");
+		return 0;
+	}
+
+	/* don't start faking anything if we don't have to */
+	if ( !has_tran_tmcbs( t, TMCB_ON_FAILURE) && !t->on_negative ) {
+		return 1;
+	}
+
+	/* on_negative_reply faked msg now copied from shmem msg (as opposed
+	 * to zero-ing) -- more "read-only" actions (exec in particular) will
+	 * work from reply_route as they will see msg->from, etc.; caution,
+	 * rw actions may append some pkg stuff to msg, which will possibly be
+	 * never released (shmem is released in a single block) */
+	memcpy( &fake_req, shmem_msg, sizeof(struct sip_msg));
+
+	/* if we set msg_id to something different from current's message
+	 * id, the first t_fork will properly clean new branch URIs */
+	fake_req.id=shmem_msg->id-1;
 
 	/* new_uri can change -- make a private copy */
 	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
-		fake->new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
-		if (!fake->new_uri.s) {
-			LOG(L_ERR, "ERROR: faked_env: no uri/pkg mem\n");
-			goto restore;
+		fake_req.new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
+		if (!fake_req.new_uri.s) {
+			LOG(L_ERR, "ERROR: run_failure_handlers: no uri/pkg mem\n");
+			return 0;
 		}
-		fake->new_uri.len=shmem_msg->new_uri.len;
-		memcpy( fake->new_uri.s, shmem_msg->new_uri.s, 
-			fake->new_uri.len);
-		fake->new_uri.s[fake->new_uri.len]=0;
-	} 
+		fake_req.new_uri.len=shmem_msg->new_uri.len;
+		memcpy( fake_req.new_uri.s, shmem_msg->new_uri.s, 
+			fake_req.new_uri.len);
+		fake_req.new_uri.s[fake_req.new_uri.len]=0;
+	}
 
 	/* create a duplicated lump list to which actions can add
-	 * new pkg items 
-	 */
+	 * new pkg items  */
 	if (shmem_msg->add_rm) {
-		fake->add_rm=dup_lump_list(shmem_msg->add_rm);
-		if (!fake->add_rm) { /* non_emty->empty ... failure */
-			LOG(L_ERR, "ERROR: on_negative_reply: lump dup failed\n");
-			goto restore;
+		fake_req.add_rm=dup_lump_list(shmem_msg->add_rm);
+		if (!fake_req.add_rm) { /* non_emty->empty ... failure */
+			LOG(L_ERR, "ERROR: run_failure_handlers: lump dup failed\n");
+			if (fake_req.new_uri.s) pkg_free(fake_req.new_uri.s);
+			return 0;
 		}
 	}
 
+	/* same for the body lumps */
 	if (shmem_msg->body_lumps) {
-		fake->body_lumps=dup_lump_list(shmem_msg->body_lumps);
-		if (!fake->body_lumps) { /* non_empty->empty ... failure */
-			LOG(L_ERR, "ERROR: on_negative_reply: lump dup failed\n");
-			goto restore;
+		fake_req.body_lumps=dup_lump_list(shmem_msg->body_lumps);
+		if (!fake_req.body_lumps) { /* non_empty->empty ... failure */
+			LOG(L_ERR, "ERROR: on_negative_handlers: lump dup failed\n");
+			free_duped_lump_list(fake_req.add_rm);
+			if (fake_req.new_uri.s) pkg_free(fake_req.new_uri.s);
+			return 0;
 		}
 	}
-	
-	/* success */
-	return 1;
 
-restore:
-	/* restore original environment and destroy faked message */
-	free_duped_lump_list(fake->add_rm);
-	free_duped_lump_list(fake->body_lumps);
-	if (fake->new_uri.s) pkg_free(fake->new_uri.s);
-	set_t(backup_t);
-	global_msg_id=backup_msgid;
-	rmode=backup_mode;
-	/* if failure handler changed flag, update transaction context */
-	shmem_msg->flags=fake->flags;
-	return 0;
-}
+	/* fake also the env. conforming to the fake msg */
+	faked_env( t, &fake_req);
+	/* DONE with faking ;-) -> run the failure handlers */
 
-/* return 1 if a failure_route processes */
-int failure_route(struct cell *t)
-{
-	struct sip_msg faked_msg;
-	struct sip_msg *orig_request;
-
-	/* don't do anything if we don't have to */
-	if (!t->on_negative) return 0;
-	orig_request=t->uas.request;
-	/* failure_route for a local UAC? */
-	if (!orig_request) {
-		LOG(L_WARN, "Warning: failure_route: no UAC support\n");
-		return 0;
+	if ( has_tran_tmcbs( t, TMCB_ON_FAILURE) ) {
+		run_trans_callbacks( TMCB_ON_FAILURE, t, &fake_req, rpl, code);
 	}
-
-	/* if fake message creation failes, return error too */
-	if (!faked_env(&faked_msg, t, orig_request, 0 /* create fake */ )) {
-		LOG(L_ERR, "ERROR: on_negative_reply: faked_env failed\n");
-		return 0;
-	}
-
+	if (t->on_negative) {
 	/* avoid recursion -- if failure_route forwards, and does not 
 	 * set next failure route, failure_route will not be rentered
 	 * on failure */
 	t_on_negative(0);
 	/* run a reply_route action if some was marked */
-	if (run_actions(failure_rlist[t->on_negative], &faked_msg)<0)
-		LOG(L_ERR, "ERROR: on_negative_reply: "
-			"Error in do_action\n");
-	/* restore original environment */
-	faked_env(&faked_msg, 0, orig_request, 1 );
+		if (run_actions(failure_rlist[t->on_negative], &fake_req)<0)
+			LOG(L_ERR, "ERROR: run_failure_handlers: Error in do_action\n");
+	}
+
+	/* restore original environment and free the fake msg */
+	faked_env( t, 0);
+	free_duped_lump_list(fake_req.add_rm);
+	free_duped_lump_list(fake_req.body_lumps);
+	fake_req.add_rm = fake_req.body_lumps = 0;
+	if (fake_req.new_uri.s) {
+		pkg_free(fake_req.new_uri.s);
+		fake_req.new_uri.s = 0;
+	}
+
 	return 1;
 }
 
@@ -572,7 +566,6 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	int branch , int *should_store, int *should_relay,
 	branch_bm_t *cancel_bitmap, struct sip_msg *reply )
 {
-	
 	int branch_cnt;
 	int picked_branch;
 	int picked_code;
@@ -630,15 +623,16 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 
 		/* no more pending branches -- try if that changes after
 		   a callback; save banch count to be able to determine
-		   later if new branches were initiated
-		*/
+		   later if new branches were initiated */
 		branch_cnt=Trans->nr_of_outgoings;
-		callback_event( TMCB_ON_FAILURE, Trans, 
-			picked_branch==branch?reply:Trans->uac[picked_branch].reply, 
-			picked_code);
-		/* here, we create a faked environment, from which we
-		 * return to request processing, if marked to do so */
-		failure_route(Trans);
+
+		/* run ON_FAILURE handlers ( route and callbacks) */
+		if ( has_tran_tmcbs( Trans, TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE)
+		|| Trans->on_negative ) {
+			run_failure_handlers( Trans,
+				picked_branch==branch?reply:Trans->uac[picked_branch].reply, 
+				picked_code);
+		}
 
 		/* look if the callback perhaps replied transaction; it also
 		   covers the case in which a transaction is replied localy
@@ -849,7 +843,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 
 	/* remember, what was sent upstream to know whether we are
-	   forwarding a first final reply or not */
+	 * forwarding a first final reply or not */
 
 	/* *** store and relay message as needed *** */
 	reply_status = t_should_relay_response(t, msg_status, branch, 
@@ -866,19 +860,19 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 	uas_rb = & t->uas.response;
 	if (relay >= 0 ) {
-
 		/* initialize sockets for outbound reply */
 		uas_rb->activ_type=msg_status;
 		/* only messages known to be relayed immediately will be
-		   be called on; we do not evoke this callback on messages
-		   stored in shmem -- they are fixed and one cannot change them
-		   anyway 
-        */
-		if (msg_status<300 && branch==relay) {
-			callback_event( TMCB_RESPONSE_FWDED, t, p_msg, msg_status );
+		 * be called on; we do not evoke this callback on messages
+		 * stored in shmem -- they are fixed and one cannot change them
+		 * anyway */
+		if (msg_status<300 && branch==relay
+		&& has_tran_tmcbs(t,TMCB_RESPONSE_FWDED) ) {
+			run_trans_callbacks( TMCB_RESPONSE_FWDED, t, t->uas.request,
+				p_msg, msg_status );
 		}
 		/* try bulding the outbound reply from either the current
-	       or a stored message */
+		 * or a stored message */
 		relayed_msg = branch==relay ? p_msg :  t->uac[relay].reply;
 		if (relayed_msg==FAKED_REPLY) {
 			tm_stats->replied_localy++;
@@ -942,9 +936,8 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		t->relaied_reply_branch = relay;
 
 		if (t->is_invite && relayed_msg!=FAKED_REPLY
-				&& relayed_code>=200 && relayed_code < 300
-				&& (callback_array[TMCB_RESPONSE_OUT] ||
-						callback_array[TMCB_E2EACK_IN]))  {
+		&& relayed_code>=200 && relayed_code < 300
+		&& has_tran_tmcbs( t, TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) ) {
 			totag_retr=update_totag_set(t, relayed_msg);
 		}
 	}; /* if relay ... */
@@ -956,8 +949,10 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		SEND_PR_BUFFER( uas_rb, buf, res_len );
 		DBG("DEBUG: reply relayed. buf=%p: %.9s..., shmem=%p: %.9s\n", 
 			buf, buf, uas_rb->buffer, uas_rb->buffer );
-		if (!totag_retr) 
-				callback_event( TMCB_RESPONSE_OUT, t, relayed_msg, relayed_code );
+		if (!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT) ) {
+			run_trans_callbacks( TMCB_RESPONSE_OUT, t, t->uas.request,
+				relayed_msg, relayed_code);
+		}
 		pkg_free( buf );
 	}
 
@@ -1026,22 +1021,19 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		}
 		t->uas.status = winning_code;
 		update_reply_stats( winning_code );
-		if (t->is_invite && winning_msg!=FAKED_REPLY 
-				&& winning_code>=200 && winning_code <300
-				&& (callback_array[TMCB_RESPONSE_OUT] ||
-						callback_array[TMCB_E2EACK_IN]))  {
+		if (t->is_invite && winning_msg!=FAKED_REPLY
+		&& winning_code>=200 && winning_code <300
+		&& has_tran_tmcbs(t,TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) )  {
 			totag_retr=update_totag_set(t, winning_msg);
 		}
-		
 	}
 	UNLOCK_REPLIES(t);
 	if (local_winner>=0 && winning_code>=200 ) {
 		DBG("DEBUG: local transaction completed\n");
 		if (!totag_retr) {
-			callback_event( TMCB_LOCAL_COMPLETED, t, winning_msg, 
-				winning_code );
-			if (t->completion_cb) t->completion_cb( t, winning_msg, 
-						winning_code, t->cbp);
+			if ( has_tran_tmcbs(t,TMCB_LOCAL_COMPLETED) )
+				run_trans_callbacks( TMCB_LOCAL_COMPLETED, t, 0,
+					winning_msg, winning_code );
 		}
 	}
 	return reply_status;

@@ -56,6 +56,7 @@
 #define T_RELAY              "t_relay"
 #define T_REPLY              "t_reply"
 #define T_REPLY_WB           "t_reply_with_body"
+#define T_REPLY_UNSAFE       "t_reply_unsafe"
 #define T_ADDBLIND           "t_add_blind"
 #define T_REPLY_UNSAFE       "t_reply_unsafe"
 #define T_FORWARD_NONACK     "t_forward_nonack"
@@ -68,35 +69,33 @@
 #define T_IS_LOCAL           "t_is_local"
 #define T_REQUEST_WITHIN     "request_within"
 #define T_REQUEST_OUTSIDE    "request_outside"
-#define T_GETT				 "t_gett"
+#define T_GETT               "t_gett"
 
 
 
 struct tm_binds {
-	register_tmcb_f register_tmcb;
-	cmd_function    t_relay_to_udp;
-	cmd_function    t_relay_to_tcp;
-	cmd_function    t_relay;
-	treply_f        t_reply;
-	treply_wb_f     t_reply_with_body;
-	tislocal_f      t_is_local;
-	tget_ti_f       t_get_trans_ident;
-	tlookup_ident_f t_lookup_ident;
-	taddblind_f     t_addblind;
-	treply_f        t_reply_unsafe;
-	tfwd_f          t_forward_nonack;
-	reqwith_t       t_request_within;
-	reqout_t        t_request_outside;
-	req_t           t_request;
-	
+	register_tmcb_f  register_tmcb;
+	cmd_function     t_relay_to_udp;
+	cmd_function     t_relay_to_tcp;
+	cmd_function     t_relay;
+	treply_f         t_reply;
+	treply_wb_f      t_reply_with_body;
+	tislocal_f       t_is_local;
+	tget_ti_f        t_get_trans_ident;
+	tlookup_ident_f  t_lookup_ident;
+	taddblind_f      t_addblind;
+	treply_f         t_reply_unsafe;
+	tfwd_f           t_forward_nonack;
+	reqwith_t        t_request_within;
+	reqout_t         t_request_outside;
+	req_t            t_request;
 	new_dlg_uac_f      new_dlg_uac;
 	dlg_response_uac_f dlg_response_uac;
 	new_dlg_uas_f      new_dlg_uas;
 	dlg_request_uas_f  dlg_request_uas;
 	free_dlg_f         free_dlg;
 	print_dlg_f        print_dlg;
-
-	tgett_f			t_gett;
+	tgett_f            t_gett;
 };
 
 

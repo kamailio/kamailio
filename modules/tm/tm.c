@@ -452,11 +452,11 @@ static int mod_init(void)
 		return -1;
 	}
 
+	/* building the hash table*/
 	if (!init_hash_table()) {
 		LOG(L_ERR, "ERROR: mod_init: initializing hash_table failed\n");
 		return -1;
 	}
-
 
 	/* init static hidden values */
 	init_t();
@@ -480,19 +480,23 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/* building the hash table*/
-
 	if (uac_init()==-1) {
 		LOG(L_ERR, "ERROR: mod_init: uac_init failed\n");
 		return -1;
 	}
+
+	if (init_tmcb_lists()!=1) {
+		LOG(L_CRIT, "ERROR:tm:mod_init: failed to init tmcb lists\n");
+		return -1;
+	}
+
+	tm_init_tags();
+
 	/* register post-script clean-up function */
 	register_script_cb( w_t_unref, POST_SCRIPT_CB, 
 			0 /* empty param */ );
 	register_script_cb( script_init, PRE_SCRIPT_CB , 
 			0 /* empty param */ );
-
-	tm_init_tags();
 
 	return 0;
 }

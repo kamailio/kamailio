@@ -45,6 +45,8 @@
  *  2003-07-08  appropriate log messages in check_params(...), 
  *               call calculate_hooks if next_hop==NULL in t_uac (dcm) 
  *  2003-10-24  updated to the new socket_info lists (andrei)
+ *  2003-12-03  completion filed removed from transaction and uac callbacks
+ *              merged in transaction callbacks as LOCAL_COMPLETED (bogdan)
  */
 
 #include <string.h>
@@ -148,7 +150,8 @@ static inline int check_params(str* method, str* to, str* from, dlg_t** dialog)
 /*
  * Send a request using data from the dialog structure
  */
-int t_uac(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb, void* cbp)
+int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
+												transaction_cb cb, void* cbp)
 {
 	struct socket_info* send_sock;
 	union sockaddr_union to_su;
@@ -180,13 +183,15 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb
 		goto error2;
 	}
 
-	new_cell->completion_cb = cb;
-	new_cell->cbp = cbp;
-	
-	     /* cbp is installed -- tell error handling bellow not to free it */
-	cbp = 0;
+	/* add the callback the the transaction for LOCAL_COMPLETED event */
+	if (insert_tmcb( &(new_cell->tmcb_hl), TMCB_LOCAL_COMPLETED, cb, cbp)!=1) {
+		ret=E_OUT_OF_MEM;
+		LOG(L_ERR, "t_uac: short of tmcb shmem\n");
+		goto error2;
+	}
 
-	new_cell->is_invite = method->len == INVITE_LEN && memcmp(method->s, INVITE, INVITE_LEN) == 0;
+	new_cell->is_invite =
+		method->len==INVITE_LEN && memcmp(method->s, INVITE, INVITE_LEN)==0;
 	new_cell->local= 1;
 	set_kr(REQ_FWDED);
 	
@@ -196,12 +201,13 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb
 	request->dst.proto = send_sock->proto;
 	request->dst.proto_reserved1 = 0;
 
-	     /* need to put in table to calculate label which is needed for printing */
+	/* need to put in table to calculate label which is needed for printing */
 	LOCK_HASH(new_cell->hash_index);
 	insert_into_hash_table_unsafe(new_cell);
 	UNLOCK_HASH(new_cell->hash_index);
 
-	buf = build_uac_req(method, headers, body, dialog, 0, new_cell, &buf_len, send_sock);
+	buf = build_uac_req(method, headers, body, dialog, 0, new_cell,
+		&buf_len, send_sock);
 	if (!buf) {
 		LOG(L_ERR, "t_uac: Error while building message\n");
 		ret=E_OUT_OF_MEM;
@@ -217,23 +223,19 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb
 	
 	if (SEND_BUFFER(request) == -1) {
 		LOG(L_ERR, "t_uac: Attempt to send to '%.*s' failed\n", 
-		    dialog->hooks.next_hop->len,
-		    dialog->hooks.next_hop->s
-		    );
+			dialog->hooks.next_hop->len,
+			dialog->hooks.next_hop->s);
 	}
 	
 	start_retr(request);
 	return 1;
 
- error1:
+error1:
 	LOCK_HASH(new_cell->hash_index);
 	remove_from_hash_table_unsafe(new_cell);
 	UNLOCK_HASH(new_cell->hash_index);
 	free_cell(new_cell);
-
- error2:
-	     /* if we did not install cbp, release it now */
-	if (cbp) shm_free(cbp);
+error2:
 	return ret;
 }
 

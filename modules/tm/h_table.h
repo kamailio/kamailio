@@ -29,6 +29,8 @@
  * 2003-03-16  removed _TOTAG (jiri)
  * 2003-03-06  we keep a list of 200/INV to-tags now (jiri)
  * 2003-03-01  kr set through a function now (jiri)
+ * 2003-12-04  callbacks per transaction added; completion callback
+ *             merge into them as LOCAL_COMPETED (bogdan)
  */
 
 #include "defs.h"
@@ -174,21 +176,15 @@ typedef struct cell
 	   with proxied transactions to inbound request */
 	str from, callid, cseq_n, to;
 	/* a short-cut for remember whether this transaction needs
-	   INVITE-special handling (e.g., CANCEL, ACK, FR...)
-	*/
+	   INVITE-special handling (e.g., CANCEL, ACK, FR...)  */
 	short is_invite;
 	/* method shortcut -- for local transactions, pointer to
 	   outbound buffer, for proxies transactions pointer to
-	   original message; needed for reply matching
-	*/
+	   original message; needed for reply matching */
 	str method;
 
-	/* callback and parameter on completion of local transactions */
-	transaction_cb *completion_cb;
-	/* the parameter stores a pointer to shmem -- it will be released
-	   during freeing transaction too
-	*/
-	void *cbp;
+	/* head of callback list */
+	struct tmcb_head_list tmcb_hl;
 
 	/* how many processes are currently processing this transaction ;
 	   note that only processes working on a request/reply belonging

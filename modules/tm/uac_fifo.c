@@ -1,5 +1,32 @@
 /*
  * $Id$
+ *
+ * Copyright (C) 2001-2003 Fhg Fokus
+ *
+ * This file is part of ser, a free SIP server.
+ *
+ * ser is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * For a license to use the ser software under conditions
+ * other than those described here, or to purchase support for this
+ * software, please contact iptel.org by e-mail at the following addresses:
+ *    info@iptel.org
+ *
+ * ser is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ *  2003-12-03 : fifo_callback() updated for changes in tm callbacks (bogdan)
  */
 
 #include <string.h>
@@ -31,8 +58,8 @@ struct cb_data {
 
 
 struct str_list {
-        str s;
-        struct str_list *next;
+	str s;
+	struct str_list *next;
 };
 
 
@@ -502,8 +529,7 @@ static inline int print_uris(FILE* out, struct sip_msg* reply)
 }
 
 
-static void fifo_callback(struct cell *t, struct sip_msg *reply,
-			  int code, void *param)
+static void fifo_callback( struct cell *t, int type, struct tmcb_params *ps )
 {
 	
 	char *filename;
@@ -512,35 +538,39 @@ static void fifo_callback(struct cell *t, struct sip_msg *reply,
 
 	DBG("!!!!! ref_counter: %d\n", t->ref_count);
 
-	DBG("DEBUG: fifo UAC completed with status %d\n", code);
-	if (!t->cbp) {
-		LOG(L_INFO, "INFO: fifo UAC completed with status %d\n", code);
+	DBG("DEBUG: fifo UAC completed with status %d\n", ps->code);
+	if (!ps->param) {
+		LOG(L_INFO, "INFO: fifo UAC completed with status %d\n", ps->code);
 		return;
 	}
 
-	filename=(char *)(t->cbp);
-	if (reply==FAKED_REPLY) {
-		get_reply_status(&text,reply,code);
+	filename=(char *)(ps->param);
+	if (ps->rpl==FAKED_REPLY) {
+		get_reply_status( &text, ps->rpl, ps->code);
 		if (text.s==0) {
 			LOG(L_ERR, "ERROR: fifo_callback: get_reply_status failed\n");
-			fifo_reply(filename, "500 fifo_callback: get_reply_status failed\n");
-			return;
+			fifo_reply( filename,
+				"500 fifo_callback: get_reply_status failed\n");
+			goto done;
 		}
 		fifo_reply(filename, "%.*s\n", text.len, text.s );
 		pkg_free(text.s);
 	} else {
-		text.s=reply->first_line.u.reply.reason.s;
-		text.len=reply->first_line.u.reply.reason.len;
+		text.s = ps->rpl->first_line.u.reply.reason.s;
+		text.len = ps->rpl->first_line.u.reply.reason.len;
 
 		f = fopen(filename, "wt");
-		if (!f) return;
-		fprintf(f, "%d %.*s\n", reply->first_line.u.reply.statuscode, text.len, text.s);
-		print_uris(f, reply);
-		fprintf(f, "%s\n", reply->headers->name.s);
+		if (!f) goto done;
+		fprintf(f, "%d %.*s\n", ps->rpl->first_line.u.reply.statuscode,
+			text.len, text.s);
+		print_uris(f, ps->rpl);
+		fprintf(f, "%s\n", ps->rpl->headers->name.s);
 		fclose(f);
 	}
 	DBG("DEBUG: fifo_callback sucesssfuly completed\n");
-}	
+done:
+	shm_free(ps->param);
+}
 
 
 int fifo_uac(FILE *stream, char *response_file)
@@ -624,7 +654,7 @@ int fifo_uac(FILE *stream, char *response_file)
 
 	if (ret <= 0) {
 		err_ret = err2reason_phrase(ret, &sip_error, err_buf,
-					    sizeof(err_buf), "FIFO/UAC") ;
+			sizeof(err_buf), "FIFO/UAC") ;
 		if (err_ret > 0 )
 		{
 			fifo_uac_error(response_file, sip_error, err_buf);

@@ -28,6 +28,9 @@
  * History:
  * --------
  *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2003-12-04  global callbacks moved into transaction callbacks;
+ *              multiple events per callback added; single list per
+ *              transaction for all its callbacks (bogdan)
  */
 
 #include "defs.h"
@@ -38,46 +41,150 @@
 #include "../../error.h"
 #include "../../mem/mem.h"
 #include "t_hooks.h"
+#include "t_lookup.h"
+#include "t_funcs.h"
 
-/* strange things happen if callback_array is static on openbsd */
-struct tm_callback_s* callback_array[ TMCB_END ] = { 0, 0 } ;
-static int callback_id=0;
 
-/* register a callback function 'f' of type 'cbt'; will be called
-   back whenever the event 'cbt' occurs in transaction module
-*/
-int register_tmcb( tmcb_type cbt, transaction_cb f, void *param )
+struct tmcb_head_list* req_in_tmcb_hl = 0;
+
+
+
+int init_tmcb_lists()
 {
-	struct tm_callback_s *cbs;
+	req_in_tmcb_hl = (struct tmcb_head_list*)shm_malloc
+		( sizeof(struct tmcb_head_list) );
+	if (req_in_tmcb_hl==0) {
+		LOG(L_CRIT,"ERROR:tm:init_tmcb_lists: nomore shared mem\n");
+		return -1;
+	}
+	req_in_tmcb_hl->first = 0;
+	req_in_tmcb_hl->reg_types = 0;
+	return 1;
+}
 
-	if (cbt<0 || cbt>=TMCB_END ) {
-		LOG(L_ERR, "ERROR: register_tmcb: invalid callback type: %d\n",
-			cbt );
-		return E_BUG;
+
+void destroy_tmcb_lists()
+{
+	struct tm_callback *cbp, *cbp_tmp;
+
+	if (!req_in_tmcb_hl)
+		return;
+
+	for( cbp=req_in_tmcb_hl->first; cbp ; ) {
+		cbp_tmp = cbp;
+		cbp = cbp->next;
+		if (cbp->param) shm_free( cbp->param );
+		shm_free( cbp_tmp );
 	}
 
-	if (!(cbs=pkg_malloc( sizeof( struct tm_callback_s)))) {
-		LOG(L_ERR, "ERROR: register_tmcb: out of mem\n");
+	shm_free(req_in_tmcb_hl);
+}
+
+
+inline int insert_tmcb(struct tmcb_head_list *cb_list, int types,
+									transaction_cb f, void *param )
+{
+	struct tm_callback *cbp;
+
+	/* build a new callback structure */
+	if (!(cbp=shm_malloc( sizeof( struct tm_callback)))) {
+		LOG(L_ERR, "ERROR:tm:register_tmcb: out of shm. mem\n");
 		return E_OUT_OF_MEM;
 	}
 
-	callback_id++;
-	cbs->id=callback_id;
-	cbs->callback=f;
-	cbs->next=callback_array[ cbt ];
-	cbs->param=param;
-	callback_array[ cbt ]=cbs;
+	/* link it into the proper place... */
+	cbp->next = cb_list->first;
+	cb_list->first = cbp;
+	cb_list->reg_types |= types;
+	/* ... and fill it up */
+	cbp->callback = f;
+	cbp->param = param;
+	cbp->types = types;
+	if (cbp->next)
+		cbp->id = cbp->next->id+1;
+	else
+		cbp->id = 0;
 
-	return callback_id;
+	return 1;
 }
 
-void callback_event( tmcb_type cbt , struct cell *trans,
-	struct sip_msg *msg, int code )
-{
-	struct tm_callback_s *cbs;
 
-	for (cbs=callback_array[ cbt ]; cbs; cbs=cbs->next)  {
-		DBG("DBG: callback type %d, id %d entered\n", cbt, cbs->id );
-		cbs->callback( trans, msg, code, cbs->param );
+
+/* register a callback function 'f' for 'types' mask of events;
+ * will be called back whenever one of the events occurs in transaction module
+ * (global or per transacation, depinding of event type)
+*/
+int register_tmcb( struct sip_msg* p_msg, int types, transaction_cb f,
+																void *param )
+{
+	struct cell* t;
+	struct tmcb_head_list *cb_list;
+
+	/* are the callback types valid?... */
+	if ( types<0 || types>=TMCB_MAX ) {
+		LOG(L_CRIT, "BUG:tm:register_tmcb: invalid callback types: mask=%d\n",
+			types);
+		return E_BUG;
+	}
+	if (types&TMCB_REQUEST_IN) {
+		if (types!=TMCB_REQUEST_IN) {
+			LOG(L_CRIT, "BUG:tm:register_tmcb: callback type TMCB_REQUEST_IN "
+				"can't be register along with types\n");
+			return E_BUG;
+		}
+		cb_list = req_in_tmcb_hl;
+	} else {
+		/* look for the transaction */
+		if ( t_check(p_msg,0)!=1 ){
+			LOG(L_CRIT,"BUG:tm:register_tmcb: no transaction found\n");
+			return E_BUG;
+		}
+		if ( (t=get_t())==0 ) {
+			LOG(L_CRIT,"BUG:tm:register_tmcb: transaction found is NULL\n");
+			return E_BUG;
+		}
+		cb_list = &(t->tmcb_hl);
+	}
+
+	return insert_tmcb( cb_list, types, f, param );
+}
+
+
+void run_trans_callbacks( int type , struct cell *trans,
+						struct sip_msg *req, struct sip_msg *rpl, int code )
+{
+	static struct tmcb_params params = {0,0,0,0};
+	struct tm_callback    *cbp;
+
+	params.req = req;
+	params.rpl = rpl;
+	params.code = code;
+
+	for (cbp=trans->tmcb_hl.first; cbp; cbp=cbp->next)  {
+		if ( (cbp->types)&type ) {
+			DBG("DBG: trans=%p, callback type %d, id %d entered\n",
+				trans, type, cbp->id );
+			params.param = cbp->param;
+			cbp->callback( trans, type, &params );
+		}
 	}
 }
+
+
+
+void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code )
+{
+	static struct tmcb_params params = {0,0,0,0};
+	struct tm_callback    *cbp;
+
+	params.req = req;
+	params.code = code;
+
+	for (cbp=req_in_tmcb_hl->first; cbp; cbp=cbp->next)  {
+		DBG("DBG: trans=%p, callback type %d, id %d entered\n",
+			trans, cbp->types, cbp->id );
+		params.param = cbp->param;
+		cbp->callback( trans, cbp->types, &params );
+	}
+}
+

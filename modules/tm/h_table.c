@@ -34,6 +34,8 @@
  * 2003-04-04  bug_fix: REQ_IN callback not called for local 
  *             UAC transactions (jiri)
  * 2003-09-12  timer_link->tg will be set only if EXTRA_DEBUG (andrei)
+ * 2003-12-04  global callbacks replaceed with callbacks per transaction;
+ *             completion callback merged into them as LOCAL_COMPETED (bogdan)
  */
 
 #include "defs.h"
@@ -106,6 +108,7 @@ void free_cell( struct cell* dead_cell )
 	int i;
 	struct sip_msg *rpl;
 	struct totag_elem *tt, *foo;
+	struct tm_callback *cbs, *cbs_tmp;
 
 	release_cell_lock( dead_cell );
 	shm_lock();
@@ -116,8 +119,12 @@ void free_cell( struct cell* dead_cell )
 	if ( dead_cell->uas.response.buffer )
 		shm_free_unsafe( dead_cell->uas.response.buffer );
 
-	/* completion callback */
-	if (dead_cell->cbp) shm_free_unsafe(dead_cell->cbp);
+	/* callbacks */
+	for( cbs=dead_cell->tmcb_hl.first ; cbs ; ) {
+		cbs_tmp = cbs;
+		cbs = cbs->next;
+		shm_free_unsafe( cbs_tmp );
+	}
 
 	/* UA Clients */
 	for ( i =0 ; i<dead_cell->nr_of_outgoings;  i++ )
@@ -183,15 +190,10 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	new_cell->uas.response.retr_timer.payload = &(new_cell->uas.response);
 	new_cell->uas.response.my_T=new_cell;
 
-	/* bogdan - debug */
-	/*fprintf(stderr,"before clone VIA |%.*s|\n",via_len(p_msg->via1),
-		via_s(p_msg->via1,p_msg));*/
-
 	/* enter callback, which may potentially want to parse some stuff,
-	   before the request is shmem-ized
-	*/ 
-    if (p_msg) callback_event(TMCB_REQUEST_IN, new_cell, p_msg,
-            p_msg->REQ_METHOD );
+	 * before the request is shmem-ized */
+	if ( p_msg && has_reqin_tmcbs() )
+		run_reqin_callbacks( new_cell, p_msg, p_msg->REQ_METHOD);
 
 	if (p_msg) {
 		new_cell->uas.request = sip_msg_cloner(p_msg);

@@ -72,6 +72,8 @@
  * 2003-04-30  t_newtran clean up (jiri)
  * 2003-08-21  request lookups fixed to skip UAC transactions, 
  *             thanks Ed (jiri)
+ * 2003-12-04  global TM callbacks switched to per transaction callbacks
+ *             (bogdan)
  */
 
 
@@ -784,17 +786,19 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 		 * retransmissions of multiple 200/INV or ACK/200s
 		 */
 		if (p_cell->is_invite && p_msg->REPLY_STATUS>=200 
-				&& p_msg->REPLY_STATUS<300 
-				&& ( (!p_cell->local && 
-					(callback_array[TMCB_RESPONSE_OUT]||
-						callback_array[TMCB_E2EACK_IN]))
-					|| (p_cell->local && callback_array[TMCB_LOCAL_COMPLETED]) )) {
+		&& p_msg->REPLY_STATUS<300 
+		&& ( (!p_cell->local && 
+				has_tran_tmcbs(p_cell,TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) )
+			|| (p_cell->local && has_tran_tmcbs(p_cell,TMCB_LOCAL_COMPLETED))
+		)) {
 			if (parse_headers(p_msg, HDR_TO, 0)==-1) {
 				LOG(L_ERR, "ERROR: t_reply_matching: to parsing failed\n");
 			}
 		}
-		if (!p_cell->local) 
-			callback_event(TMCB_RESPONSE_IN, T, p_msg, p_msg->REPLY_STATUS);
+		if (!p_cell->local) {
+			run_trans_callbacks( TMCB_RESPONSE_IN, T, T->uas.request, p_msg,
+				p_msg->REPLY_STATUS);
+		}
 		return 1;
 	} /* for cycle */
 
@@ -1051,21 +1055,20 @@ int t_newtran( struct sip_msg* p_msg )
 
 	if (lret==-2) { /* was it an e2e ACK ? if so, trigger a callback */
 		/* no callbacks? complete quickly */
-		if (!callback_array[TMCB_E2EACK_IN]) {
+		if ( !has_tran_tmcbs(t_ack,TMCB_E2EACK_IN) ) {
 			UNLOCK_HASH(p_msg->hash_index);
 			return 1;
 		} 
 		REF_UNSAFE(t_ack);
 		UNLOCK_HASH(p_msg->hash_index);
 		/* we don't call from within REPLY_LOCK -- that introduces
-	   	   a race condition; however, it is so unlikely and the
-	   	   impact is so small (callback called multiple times of
-           multiple ACK/200s received in parallel), that we do not
-	   	    better waste time in locks
-		 */
+		 * a race condition; however, it is so unlikely and the
+		 * impact is so small (callback called multiple times of
+		 * multiple ACK/200s received in parallel), that we do not
+		 * better waste time in locks  */
 		if (unmatched_totag(t_ack, p_msg)) {
-			callback_event( TMCB_E2EACK_IN, t_ack, p_msg, 
-				p_msg->REQ_METHOD );
+			run_trans_callbacks( TMCB_E2EACK_IN , t_ack, p_msg, 0,
+				-p_msg->REQ_METHOD );
 		}
 		UNREF(t_ack);
 		return 1;
