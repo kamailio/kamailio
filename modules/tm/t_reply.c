@@ -176,6 +176,7 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 	rb = & trans->uas.response;
 	rb->activ_type=code;
 
+	trans->uas.status = code;
 	buf_len = rb->buffer ? len : len + REPLY_OVERBUFFER_LEN;
 	rb->buffer = (char*)shm_resize( rb->buffer, buf_len );
 	/* puts the reply's buffer to uas.response */
@@ -185,7 +186,6 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 	}
 	rb->buffer_len = len ;
 	memcpy( rb->buffer , buf , len );
-	trans->uas.status = code;
 	/* needs to be protected too because what timers are set depends
 	   on current transactions status */
 	/* t_update_timers_after_sending_reply( rb ); */
@@ -422,12 +422,12 @@ error02:
 		t->uac[branch].reply = NULL;	
 	}
 error01:
+	t_reply_unsafe( t, t->uas.request, 500, "Reply processing error" );
 	UNLOCK_REPLIES(t);
 	if (t->is_invite) cancel_uacs( t, *cancel_bitmap );
 	/* a serious error occured -- attempt to send an error reply;
 	   it will take care of clean-ups 
 	*/
-	t_reply( t, t->uas.request, 500, "Reply processing error" );
 
 	/* failure */
 	return RPS_ERROR;
