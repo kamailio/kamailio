@@ -67,7 +67,7 @@ enum {
 	L_PARAM, F_PARAM, P_PARAM,
 	L_VIA, F_VIA,
 	F_COMMENT, P_COMMENT,
-	F_IP6HOST, P_IP6HOST,
+	F_IP6HOST, P_IP6HOST, 
 	F_CRLF,
 	F_LF,
 	F_CR,
@@ -1332,13 +1332,10 @@ parse_again:
 					case F_COMMENT:
 					case P_COMMENT:
 						break;
-					case F_IP6HOST: /*eat the spaces*/
-						break;
+					case F_IP6HOST: /*no spaces allowed*/
 					case P_IP6HOST:
-						/*mark end of host*/
-						vb->host.len=tmp-vb->host.s;
-						state=L_PORT; 
-						break;
+						LOG(L_ERR, "ERROR:parse_via: bad ipv6 reference\n");
+						goto error;
 					case F_CRLF:
 					case F_LF:
 					case F_CR:
@@ -1446,9 +1443,8 @@ parse_again:
 				switch(state){
 					case F_HOST:
 					case F_IP6HOST:
-						LOG(L_ERR,"ERROR:parse_via:"
-							" no host found\n");
-						goto error;
+						state=P_IP6HOST;
+						break;
 					case P_IP6HOST:
 						break;
 					case P_HOST:
@@ -1712,6 +1708,7 @@ parse_again:
 			case '[':
 				switch(state){
 					case F_HOST:
+						vb->host.s=tmp; /* mark start here (include [])*/
 						state=F_IP6HOST;
 						break;
 					case F_COMMENT:/*everything is allowed in a comment*/
@@ -1736,7 +1733,7 @@ parse_again:
 				switch(state){
 					case P_IP6HOST:
 						/*mark the end*/
-						vb->host.len=tmp-vb->host.s;
+						vb->host.len=(tmp-vb->host.s)+1; /* include "]" */
 						state=L_PORT;
 						break;
 					case F_CRLF:
@@ -1851,7 +1848,6 @@ parse_again:
 						break;
 					case F_IP6HOST:
 						state=P_IP6HOST;
-						vb->host.s=tmp;
 						break;
 					case P_IP6HOST:
 						break;
