@@ -101,7 +101,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 		p_msg->hash_index,isACK);
 
 	/* lock the hole entry*/
-	lock( hash_table->entrys[p_msg->hash_index].mutex );
+	lock(&(hash_table->entrys[p_msg->hash_index].mutex));
 
 	/* all the transactions from the entry are compared */
 	p_cell     = hash_table->entrys[p_msg->hash_index].first_cell;
@@ -162,7 +162,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 	/* no transaction found */
 	T = 0;
 	if (!leave_new_locked)
-		unlock( hash_table->entrys[p_msg->hash_index].mutex );
+		unlock(&(hash_table->entrys[p_msg->hash_index].mutex));
 	DBG("DEBUG: t_lookup_request: no transaction found\n");
 	return -1;
 
@@ -171,7 +171,7 @@ found:
 	T_REF( T );
 	DBG("DEBUG:XXXXXXXXXXXXXXXXXXXXX t_lookup_request: "
 		"transaction found ( T=%p , ref=%x)\n",T,T->ref_bitmap);
-	unlock( hash_table->entrys[p_msg->hash_index].mutex );
+	unlock(&(hash_table->entrys[p_msg->hash_index].mutex));
 	return 1;
 }
 
@@ -312,7 +312,7 @@ int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch )
 	   hash_index, entry_label, branch_id );
 
 	/* lock the hole entry*/
-	lock( hash_table->entrys[hash_index].mutex );
+	lock(&(hash_table->entrys[hash_index].mutex));
 
 	/*all the cells from the entry are scan to detect an entry_label matching */
 	p_cell     = hash_table->entrys[hash_index].first_cell;
@@ -337,7 +337,7 @@ int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch )
 				T = p_cell;
 				*p_branch = branch_id;
 				T_REF( T );
-				unlock( hash_table->entrys[hash_index].mutex );
+				unlock(&(hash_table->entrys[hash_index].mutex));
 				DBG("DEBUG:XXXXXXXXXXXXXXXXXXXXX t_reply_matching:"
 				  " reply matched (T=%p,ref=%x)!\n",T,T->ref_bitmap);
 				return 1;
@@ -350,7 +350,7 @@ int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch )
 	DBG("DEBUG: t_reply_matching: no matching transaction exists\n");
 
 nomatch:
-	unlock( hash_table->entrys[hash_index].mutex );
+	unlock(&(hash_table->entrys[hash_index].mutex));
 nomatch2:
 	DBG("DEBUG: t_reply_matching: failure to match a transaction\n");
 	*p_branch = -1;
@@ -485,7 +485,7 @@ enum addifnew_status t_addifnew( struct sip_msg* p_msg )
 					T_REF(T);
 				}
 			}
-			unlock( hash_table->entrys[p_msg->hash_index].mutex );
+			unlock(&(hash_table->entrys[p_msg->hash_index].mutex));
 			return ret;
 		} else {
 			/* tramsaction found, it's a retransmission  or ACK */

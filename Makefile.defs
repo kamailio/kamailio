@@ -7,8 +7,8 @@
 #version number
 VERSION = 0
 PATCHLEVEL = 8
-SUBLEVEL = 6
-EXTRAVERSION = -6-beer
+SUBLEVEL = 7
+EXTRAVERSION = -0-unstable
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s)
@@ -59,8 +59,8 @@ ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/ )
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"'\
 	 -DDNS_IP_HACK  -DPKG_MALLOC -DSHM_MEM  -DSHM_MMAP \
-	 -DF_MALLOC  #-DUSE_SYNONIM\
-	 #-DNO_DEBUG
+	 -DF_MALLOC  -DUSE_SYNONIM\
+	 -DNO_DEBUG
 	 #-DEXTRA_DEBUG 
 	 #-DVQ_MALLOC  -DDBG_LOCK  #-DSTATS
 	 #-DDBG_QM_MALLOC #-DNO_DEBUG

@@ -51,20 +51,23 @@ inline void set_timer( struct s_table *hash_table,
 	add_to_tail_of_timer_list( &(hash_table->timers[ list_id ]),
 		new_tl,get_ticks()+timeout);
 */
-	lock(  list->mutex );
+	lock(&(list->mutex));
 	/* make sure I'm not already on a list */
 	remove_timer_unsafe( new_tl );
 	add_timer_unsafe( list, new_tl, get_ticks()+timeout);
-	unlock( list->mutex );
+	unlock(&(list->mutex));
 }
 
 /* remove from timer list */
 inline void reset_timer( struct s_table *hash_table,
 	struct timer_link* tl )
 {
-	lock( timer_group_lock[ tl->tg ] );
+	/* lock(&(timer_group_lock[ tl->tg ])); */
+	/* hack to work arround this timer group thing*/
+	lock(&(hash_table->timers[timer_group[tl->tg]].mutex));
 	remove_timer_unsafe( tl );
-	unlock( timer_group_lock[ tl->tg ] );
+	unlock(&(hash_table->timers[timer_group[tl->tg]].mutex));
+	/*unlock(&(timer_group_lock[ tl->tg ]));*/
 }
 
 static inline void reset_retr_timers( struct s_table *h_table,
@@ -76,23 +79,23 @@ static inline void reset_retr_timers( struct s_table *h_table,
 	DBG("DEBUG:stop_RETR_and_FR_timers : start \n");
 	/* lock the first timer list of the FR group -- all other
 	   lists share the same lock*/
-	lock(  hash_table->timers[RT_T1_TO_1].mutex );
+	lock(&(hash_table->timers[RT_T1_TO_1].mutex));
 	remove_timer_unsafe( & p_cell->outbound_response.retr_timer );
 	for( ijk=0 ; ijk<(p_cell)->nr_of_outgoings ; ijk++ )  {
 			if ( rb = p_cell->outbound_request[ijk] ) {
 				remove_timer_unsafe( & rb->retr_timer );
 			}
 		}
-	unlock(  hash_table->timers[RT_T1_TO_1].mutex );
+	unlock(&(hash_table->timers[RT_T1_TO_1].mutex));
 
-	lock(  hash_table->timers[FR_TIMER_LIST].mutex );
+	lock(&(hash_table->timers[FR_TIMER_LIST].mutex));
 	remove_timer_unsafe( & p_cell->outbound_response.fr_timer );
 	for( ijk=0 ; ijk<(p_cell)->nr_of_outgoings ; ijk++ )  {
 			if ( rb = p_cell->outbound_request[ijk] ) {
 				remove_timer_unsafe( & rb->fr_timer );
 			}
 		}
-	unlock(  hash_table->timers[FR_TIMER_LIST].mutex );
+	unlock(&(hash_table->timers[FR_TIMER_LIST].mutex));
 	DBG("DEBUG:stop_RETR_and_FR_timers : stop\n");
 }
 

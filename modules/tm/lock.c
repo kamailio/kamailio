@@ -9,7 +9,12 @@
 #include "timer.h"
 #include "../../dprint.h"
 
+#ifdef FAST_LOCK
+#include "../../mem/shm_mem.h"
+#endif
 
+
+#ifndef FAST_LOCK
 /* semaphore probing limits */
 #define SEM_MIN		16
 #define SEM_MAX		4096
@@ -22,6 +27,8 @@
    add some arch-dependent mutex code that will not have
    ipc's dimensioning limitations and will provide us with
    fast unlimited (=no sharing) mutexing
+
+  UPDATE: we do have now arch-dependent locking (-DFAST_LOCK)
 
    we allocate the locks according to the following plans:
 
@@ -51,11 +58,75 @@ static int sem_nr;
 ser_lock_t timer_group_lock[TG_NR];
 
 
+/* return -1 if semget failed, -2 if semctl failed */
+static int init_semaphore_set( int size )
+{
+	int new_semaphore, i;
+
+	new_semaphore=semget ( IPC_PRIVATE, size, IPC_CREAT | IPC_PERMISSIONS );
+	if (new_semaphore==-1) {
+		DBG("DEBUG: init_semaphore_set(%d):  failure to allocate a"
+					" semaphore: %s\n", size, strerror(errno));
+		return -1;
+	}
+	for (i=0; i<size; i++) {
+                union semun {
+                        int val;
+                        struct semid_ds *buf;
+                        ushort *array;
+                } argument;
+                /* binary lock */
+                argument.val = +1;
+                if (semctl( new_semaphore, i , SETVAL , argument )==-1) {
+			DBG("DEBUG: init_semaphore_set:  failure to "
+						"initialize a semaphore: %s\n", strerror(errno));
+			if (semctl( entry_semaphore, 0 , IPC_RMID , 0 )==-1)
+				DBG("DEBUG: init_semaphore_set:  failure to release"
+						" a semaphore\n");
+			return -2;
+                }
+        }
+	return new_semaphore;
+}
+
+
+
+static int change_semaphore( ser_lock_t* s  , int val )
+{
+	struct sembuf pbuf;
+	int r;
+
+	pbuf.sem_num = s->semaphore_index ;
+	pbuf.sem_op =val;
+	pbuf.sem_flg = 0;
+
+tryagain:
+	r=semop( s->semaphore_set, &pbuf ,  1 /* just 1 op */ );
+
+	if (r==-1) {
+		if (errno==EINTR) {
+			DBG("signal received in a semaphore\n");
+			goto tryagain;
+		} else {
+			LOG(L_CRIT, "ERROR: change_semaphore(%x, %x, 1) : %s\n",
+					s->semaphore_set, &pbuf,
+					strerror(errno));
+		}
+	}
+	return r;
+}
+#endif  /* !FAST_LOCK*/
+
+
 
 /* intitialize the locks; return 0 on success, -1 otherwise
 */
-
-
+#ifdef FAST_LOCK
+int lock_initialize()
+{
+	return 0;
+}
+#else
 int lock_initialize()
 {
 	int i;
@@ -169,38 +240,16 @@ error:
 	return -1;
 }
 
-/* return -1 if semget failed, -2 if semctl failed */
-static int init_semaphore_set( int size )
-{
-	int new_semaphore, i;
+#endif /*FAST_LOCK*/
 
-	new_semaphore=semget ( IPC_PRIVATE, size, IPC_CREAT | IPC_PERMISSIONS );
-	if (new_semaphore==-1) {
-		DBG("DEBUG: init_semaphore_set(%d):  failure to allocate a"
-					" semaphore: %s\n", size, strerror(errno));
-		return -1;
-	}
-	for (i=0; i<size; i++) {
-                union semun {
-                        int val;
-                        struct semid_ds *buf;
-                        ushort *array;
-                } argument;
-                /* binary lock */
-                argument.val = +1;
-                if (semctl( new_semaphore, i , SETVAL , argument )==-1) {
-			DBG("DEBUG: init_semaphore_set:  failure to "
-						"initialize a semaphore: %s\n", strerror(errno));
-			if (semctl( entry_semaphore, 0 , IPC_RMID , 0 )==-1)
-				DBG("DEBUG: init_semaphore_set:  failure to release"
-						" a semaphore\n");
-			return -2;
-                }
-        }
-	return new_semaphore;
+#ifdef FAST_LOCK
+void lock_cleanup()
+{
+	/* must check if someone uses them, for now just leave them allocated*/
+	LOG(L_INFO, "INFO: lock_cleanup:  clean-up still not implemented properly \n");
 }
 
-
+#else
 
 /* remove the semaphore set from system */
 void lock_cleanup()
@@ -229,71 +278,66 @@ void lock_cleanup()
 	entry_semaphore = timer_semaphore = reply_semaphore = ack_semaphore = 0;
 
 }
-
+#endif /*FAST_LOCK*/
 
 
 /* lock sempahore s */
 #ifdef DBG_LOCK
-inline int _lock( ser_lock_t s , char *file, char *function, unsigned int line )
+inline int _lock( ser_lock_t* s , char *file, char *function, unsigned int line )
 #else
-inline int _lock( ser_lock_t s )
+inline int _lock( ser_lock_t* s )
 #endif
 {
 #ifdef DBG_LOCK
 	DBG("DEBUG: lock : entered from %s , %s(%d)\n", function, file, line );
 #endif
+#ifdef FAST_LOCK
+	get_lock(s);
+	return 0;
+#else
 	return change_semaphore( s, -1 );
+#endif
 }
 
 #ifdef DBG_LOCK
-inline int _unlock( ser_lock_t s, char *file, char *function, unsigned int line )
+inline int _unlock( ser_lock_t* s, char *file, char *function, unsigned int line )
 #else
-inline int _unlock( ser_lock_t s )
+inline int _unlock( ser_lock_t* s )
 #endif
 {
 #ifdef DBG_LOCK
 	DBG("DEBUG: unlock : entered from %s, %s:%d\n", file, function, line );
 #endif
-	
+#ifdef FAST_LOCK
+	release_lock(s);
+	return 0;
+#else
 	return change_semaphore( s, +1 );
+#endif
 }
 
-static int change_semaphore( ser_lock_t s  , int val )
-{
-	struct sembuf pbuf;
-	int r;
-
-	pbuf.sem_num = s.semaphore_index ;
-	pbuf.sem_op =val;
-	pbuf.sem_flg = 0;
-
-tryagain:
-	r=semop( s.semaphore_set, &pbuf ,  1 /* just 1 op */ );
-
-	if (r==-1) {
-		if (errno==EINTR) {
-			DBG("signal received in a semaphore\n");
-			goto tryagain;
-		} else {
-			LOG(L_CRIT, "ERROR: change_semaphore(%x, %x, 1) : %s\n",
-					s.semaphore_set, &pbuf,
-					strerror(errno));
-		}
-	}
-	return r;
-}
 
 
 int init_cell_lock( struct cell *cell )
 {
+#ifdef FAST_LOCK
+	init_lock(cell->reply_mutex);
+	init_lock(cell->ack_mutex);
+	return 0;
+#else
 	cell->reply_mutex.semaphore_set=reply_semaphore;
 	cell->reply_mutex.semaphore_index = cell->hash_index % sem_nr;
 	cell->ack_mutex.semaphore_set=ack_semaphore;
 	cell->ack_mutex.semaphore_index = cell->hash_index % sem_nr;
+#endif
+	return 0;
 }
 
 int init_entry_lock( struct s_table* hash_table, struct entry *entry )
 {
+#ifdef FAST_LOCK
+	init_lock(entry->mutex);
+#else
 	/* just advice which of the available semaphores to use;
 	   specifically, all entries are partitioned into as
 	   many partitions as number of available semaphors allows
@@ -301,11 +345,15 @@ int init_entry_lock( struct s_table* hash_table, struct entry *entry )
 	entry->mutex.semaphore_set=entry_semaphore;
 	entry->mutex.semaphore_index = ( ((void *)entry - (void *)(hash_table->entrys ) )
                / sizeof(struct entry) ) % sem_nr;
-
+#endif
+	return 0;
 }
 
 int init_timerlist_lock( struct s_table* hash_table, enum lists timerlist_id)
 {
+#ifdef FAST_LOCK
+	init_lock(hash_table->timers[timerlist_id].mutex);
+#else
 	/* each timer list has its own semaphore */
 	/*
 	hash_table->timers[timerlist_id].mutex.semaphore_set=timer_semaphore;
@@ -313,22 +361,35 @@ int init_timerlist_lock( struct s_table* hash_table, enum lists timerlist_id)
 	*/
 
 	hash_table->timers[timerlist_id].mutex=timer_group_lock[ timer_group[timerlist_id] ];
+#endif
+	return 0;
 }
+
+
 
 int release_cell_lock( struct cell *cell )
 {
+#ifndef FAST_LOCK
 	/* don't do anything here -- the init_*_lock procedures
 	   just advised on usage of shared semaphores but did not
 	   generate them
 	*/
+#endif
+	return 0;
 }
+
+
 
 int release_entry_lock( struct entry *entry )
 {
 	/* the same as above */
+	return 0;
 }
 
-release_timerlist_lock( struct timer *timerlist )
+
+
+int release_timerlist_lock( struct timer *timerlist )
 {
 	/* the same as above */
+	return 0;
 }

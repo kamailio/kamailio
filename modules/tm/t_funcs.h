@@ -33,10 +33,10 @@ extern struct s_table*  hash_table;
 #include "sip_msg.h"
 
 
-#define LOCK_REPLIES(_t) lock((_t)->reply_mutex )
-#define UNLOCK_REPLIES(_t) unlock((_t)->reply_mutex )
-#define LOCK_ACK(_t) lock((_t)->ack_mutex )
-#define UNLOCK_ACK(_t) unlock((_t)->ack_mutex )
+#define LOCK_REPLIES(_t) lock(&((_t)->reply_mutex) )
+#define UNLOCK_REPLIES(_t) unlock(&((_t)->reply_mutex) )
+#define LOCK_ACK(_t) lock(&((_t)->ack_mutex) )
+#define UNLOCK_ACK(_t) unlock(&((_t)->ack_mutex) )
 
 
 /* convenience short-cut macros */
@@ -103,10 +103,10 @@ extern struct s_table*  hash_table;
 #ifdef _OLD_XX
 #define unref_T(_T_cell) \
 	( {\
-		lock( hash_table->entrys[(_T_cell)->hash_index].mutex );\
+		lock( &(hash_table->entrys[(_T_cell)->hash_index].mutex) );\
 		(_T_cell)->ref_counter--;\
 		DBG_REF("unref", (_T_cell)); \
-		unlock( hash_table->entrys[(_T_cell)->hash_index].mutex );\
+		unlock( &(hash_table->entrys[(_T_cell)->hash_index].mutex) );\
 	} );
 
 /* we assume that ref_T is only called from places where

@@ -63,7 +63,7 @@ void add_timer_unsafe( struct timer *timer_list,
 {
 	/*	remove_from_timer_list( tl ); */
 	/* the entire timer list is locked now -- noone else can manipulate it */
-	/* lock( timer_list->mutex ); */
+	/* lock( &(timer_list->mutex) ); */
 	tl->time_out = time_out;
 	tl->prev_tl = timer_list->last_tl.prev_tl;
 	tl->next_tl = & timer_list->last_tl;
@@ -77,7 +77,7 @@ void add_timer_unsafe( struct timer *timer_list,
 		}
 #	endif
 	/* give the list lock away */
-	/* unlock( timer_list->mutex ); */
+	/* unlock( &(timer_list->mutex) ); */
 	DBG("DEBUG: add_to_tail_of_timer[%d]: %p\n",timer_list->id,tl);
 }
 
@@ -95,7 +95,7 @@ struct timer_link  *check_and_split_time_list( struct timer *timer_list, int tim
 			return NULL;
 
 	/* the entire timer list is locked now -- noone else can manipulate it */
-	lock( timer_list->mutex );
+	lock( &(timer_list->mutex) );
 
 	end = &timer_list->last_tl;
 	tl = timer_list->first_tl.next_tl;
@@ -118,7 +118,7 @@ struct timer_link  *check_and_split_time_list( struct timer *timer_list, int tim
 	}
 
    /* give the list lock away */
-   unlock( timer_list->mutex );
+   unlock( &(timer_list->mutex) );
 
    return ret;
 }
