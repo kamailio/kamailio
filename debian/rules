@@ -10,6 +10,8 @@
 #              some ser make options (andrei)
 #  2003-06-27  changed to DH_COMPAT 4 (debian/compat) + other filenames
 #              & small fixes (andrei)
+#  2003-08-29  replaced modules-install with modules-install-all, to 
+#               install also the modules doc (andrei)
 
 
 # Uncomment this to turn on verbose mode.
@@ -95,23 +97,26 @@ install: build
 		cfg-prefix=$(CURDIR)/debian/ser \
 		cfg-target=/etc/ser/
 	# install only the mysql module
-	$(MAKE) install-modules modules="$(MYSQL_MOD_PATH)"  \
+	$(MAKE) install-modules-all modules="$(MYSQL_MOD_PATH)"  \
 		basedir=$(CURDIR)/debian/ser-mysql-module \
 		prefix=/usr \
 		cfg-prefix=$(CURDIR)/debian/ser-mysql-module \
-		cfg-target=/etc/ser/
+		cfg-target=/etc/ser/ \
+		doc-dir=share/doc/ser-mysql-module
 	#install only the jabber module
-	$(MAKE) install-modules modules="$(JABBER_MOD_PATH)"  \
+	$(MAKE) install-modules-all modules="$(JABBER_MOD_PATH)"  \
 		basedir=$(CURDIR)/debian/ser-jabber-module \
 		prefix=/usr \
 		cfg-prefix=$(CURDIR)/debian/ser-jabber-module \
-		cfg-target=/etc/ser/
+		cfg-target=/etc/ser/ \
+		doc-dir=share/doc/ser-jabber-module
 	#install only the radius modules
-	$(MAKE) install-modules modules="$(RADIUS_MOD_PATH)"  \
+	$(MAKE) install-modules-all modules="$(RADIUS_MOD_PATH)"  \
 		basedir=$(CURDIR)/debian/ser-radius-modules \
 		prefix=/usr \
 		cfg-prefix=$(CURDIR)/debian/ser-radius-modules \
-		cfg-target=/etc/ser/
+		cfg-target=/etc/ser/ \
+		doc-dir=share/doc/ser-radius-modules
 	#dh_movefiles
 
 

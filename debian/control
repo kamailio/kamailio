@@ -2,7 +2,7 @@ Source: ser
 Section: net
 Priority: optional
 Maintainer: Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.fraunhofer.de>
-Build-Depends: debhelper (>= 4), libmysqlclient-dev, libexpat1-dev, zlib1g-dev, libradius1-dev
+Build-Depends: debhelper (>= 4), libmysqlclient-dev, libexpat1-dev, libradius1-dev
 Standards-Version: 3.5.2
 
 Package: ser
@@ -40,7 +40,7 @@ Description: contains the jabber module (sip-jabber message translation)
 Package: ser-radius-modules
 Architecture: any
 Depends: ${shlibs:Depends}, ser (= ${Source-Version})
-Description: contains the jabber module (sip-jabber message translation)
+Description: contains the ser radius modules 
  This has been split out of the main ser package, so that ser will not
  depend upon libradius1. This modules will enable you to authenticate, 
  do group membership checking or check the messages uris using radius.
