@@ -94,7 +94,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 			return -4;
 		}
 
-		if (ptr->received.s) {
+		if (ptr->received.s && ptr->received.len) {
 			if (set_dst_uri(_m, &ptr->received) < 0) {
 				ul.unlock_udomain((udomain_t*)_t);
 				return -4;

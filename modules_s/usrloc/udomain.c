@@ -312,10 +312,11 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			received.s  = (char*)VAL_STRING(ROW_VALUES(row) + 10);
 			if (received.s) {
 				received.len = strlen(received.s);
+				rec = &received;
 			} else {
 				received.len = 0;
+				rec = 0;
 			}
-			rec = &received;
 		} else {
 			rec = 0;
 		}
