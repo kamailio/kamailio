@@ -2,6 +2,12 @@
 # $Id$
 #
 
+
+radius_auth is a module used for delegating authentication
+of SIP requests to a RADIUS server. As for now, the module
+has been tested with freeradius and radiator servers. More
+information can be found in project.txt.
+
 Module depends on: mysql - Used as interface to database
                    sl    - Used for stateless replies
 
