@@ -80,6 +80,7 @@ typedef int qvalue_t;
 #define Q_PREFIX_LEN (sizeof(Q_PREFIX) - 1)
 
 
+
 /*
  * Calculate the length of printed q
  */
@@ -97,6 +98,32 @@ static inline size_t len_q(qvalue_t q)
 		return Q_PREFIX_LEN + 2;
 	} else {
 		return Q_PREFIX_LEN + 3;
+	}
+}
+
+
+/*
+ * Convert qvalue_t to double
+ */
+static inline double q2double(qvalue_t q)
+{
+	if (q == Q_UNSPECIFIED) {
+		return -1;
+	} else {
+		return (double)((double)q / (double)1000);
+	}
+}
+
+
+/*
+ * Convert double to qvalue_t
+ */
+static inline qvalue_t double2q(double q)
+{
+	if (q == -1) {
+		return Q_UNSPECIFIED;
+	} else {
+		return q * 1000;
 	}
 }
 
@@ -130,12 +157,13 @@ static inline char* q2str(qvalue_t q, unsigned int* len)
 		q %= 10;
 		if (!q) goto end;
 
-		*p = q + '0';
-		*len = Q_PREFIX_LEN + 3;
+		*p++ = q + '0';
 	}
  end:
 	*p = '\0';
-	*len = p - buf;
+	if (len) {
+		*len = p - buf;
+	}
 	return buf;
 }
 
