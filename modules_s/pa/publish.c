@@ -62,39 +62,40 @@ extern str str_strdup(str string);
 
 /*
  * Parse all header fields that will be needed
- * to handle a SUBSCRIBE request
+ * to handle a PUBLISH request
  */
-static int parse_hfs(struct sip_msg* _m)
+static int parse_publish_hfs(struct sip_msg* _m)
 {
-	if (parse_headers(_m, HDR_FROM_F | HDR_EVENT_F | HDR_EXPIRES_F |
-							HDR_ACCEPT_F, 0) == -1) {
+	int rc = 0;
+	if ((rc = parse_headers(_m, HDR_FROM_F | HDR_EVENT_F | HDR_EXPIRES_F, 0))
+	    == -1) {
 		paerrno = PA_PARSE_ERR;
-		LOG(L_ERR, "parse_hfs(): Error while parsing headers\n");
+		LOG(L_ERR, "parse_publish_hfs(): Error while parsing headers\n");
 		return -1;
 	}
 
 	if (parse_from_header(_m) < 0) {
 		paerrno = PA_FROM_ERR;
-		LOG(L_ERR, "parse_hfs(): From malformed or missing\n");
+		LOG(L_ERR, "parse_publish_hfs(): From malformed or missing\n");
 		return -6;
 	}
 
 	if (_m->event) {
 		if (parse_event(_m->event) < 0) {
 			paerrno = PA_EVENT_PARSE;
-			LOG(L_ERR, "parse_hfs(): Error while parsing Event header field\n");
+			LOG(L_ERR, "parse_publish_hfs(): Error while parsing Event header field\n");
 			return -8;
 		}
 	} else {
 		paerrno = PA_EVENT_PARSE;
-		LOG(L_ERR, "parse_hfs(): Missing Event header field\n");
+		LOG(L_ERR, "parse_publish_hfs(): Missing Event header field\n");
 		return -7;
 	}
 
 	if (_m->expires) {
 		if (parse_expires(_m->expires) < 0) {
 			paerrno = PA_EXPIRES_PARSE;
-			LOG(L_ERR, "parse_hfs(): Error while parsing Expires header field\n");
+			LOG(L_ERR, "parse_publish_hfs(): Error while parsing Expires header field\n");
 			return -9;
 		}
 	}
@@ -103,6 +104,7 @@ static int parse_hfs(struct sip_msg* _m)
 }
 
 
+#ifdef HAVE_LOCATION_PACKAGE
 int location_package_location_add_user(pdomain_t *pdomain, str *site, str *floor, str *room, presentity_t *presentity)
 {
 	str l_uri;
@@ -165,6 +167,7 @@ int location_package_location_del_user(pdomain_t *pdomain, str *site, str *floor
  error:
 	return -1;
 }
+#endif /* HAVE_LOCATION_PACKAGE */
 
 /*
  * Update existing presentity and watcher list
@@ -305,10 +308,12 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
        changed = 1;
        tuple->expires = expires;
      }
+#ifdef HAVE_LOCATION_PACKAGE
      if (use_location_package)
 	  if (site.len && floor.len && room.len && changed) {
 	       location_package_location_add_user(_d, &site, &floor, &room, presentity);
 	  }
+#endif /* HAVE_LOCATION_PACKAGE */
      if (flags & PARSE_PIDF_PRESCAPS) {
        if (tuple->prescaps != prescaps)
 	 changed = 1;
@@ -396,7 +401,7 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 	paerrno = PA_OK;
 
 	LOG(L_ERR, "handle_publish -1- _m=%p\n", _m);
-	if (parse_hfs(_m) < 0) {
+	if (parse_publish_hfs(_m) < 0) {
 		LOG(L_ERR, "handle_publish(): Error while parsing message header\n");
 		goto error;
 	}
