@@ -100,6 +100,7 @@
 #include "t_lookup.h"
 #include "t_stats.h"
 #include "callid.h"
+#include "t_cancel.h"
 
 MODULE_VERSION
 
@@ -441,6 +442,11 @@ static int mod_init(void)
 
 	if (register_fifo_cmd(fifo_uac, "t_uac_dlg", 0) < 0) {
 		LOG(L_CRIT, "cannot register fifo t_uac\n");
+		return -1;
+	}
+
+	if (register_fifo_cmd(fifo_uac_cancel, "t_uac_cancel", 0) < 0) {
+		LOG(L_CRIT, "cannot register fifo t_uac_cancel\n");
 		return -1;
 	}
 

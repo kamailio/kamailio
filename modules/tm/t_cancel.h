@@ -30,6 +30,7 @@
 #ifndef _CANCEL_H
 #define _CANCEL_H
 
+#include <stdio.h> /* just for FILE* for fifo_uac_cancel */
 #include "defs.h"
 
 
@@ -48,6 +49,8 @@
 void which_cancel( struct cell *t, branch_bm_t *cancel_bm );
 void cancel_uacs( struct cell *t, branch_bm_t cancel_bm );
 void cancel_branch( struct cell *t, int branch );
+
+int fifo_uac_cancel( FILE* stream, char *response_file );
 
 char *build_cancel(struct cell *Trans,unsigned int branch,
 	unsigned int *len );

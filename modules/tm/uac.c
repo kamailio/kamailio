@@ -44,7 +44,6 @@
  *  2003-04-02  port_no_str does not contain a leading ':' anymore (andrei)
  *  2003-07-08  appropriate log messages in check_params(...), 
  *               call calculate_hooks if next_hop==NULL in t_uac (dcm) 
- *  2003-10-24  updated to the new socket_info lists (andrei)
  */
 
 #include <string.h>
@@ -54,7 +53,6 @@
 #include "../../md5.h"
 #include "../../crc.h"
 #include "../../ip_addr.h"
-#include "../../socket_info.h"
 #include "ut.h"
 #include "h_table.h"
 #include "t_hooks.h"
@@ -77,26 +75,18 @@ char* uac_from = "sip:foo@foo.bar"; /* Module parameter */
 int uac_init(void) 
 {
 	str src[3];
-	struct socket_info *si;
 
 	if (RAND_MAX < TABLE_ENTRIES) {
 		LOG(L_WARN, "Warning: uac does not spread "
 		    "accross the whole hash table\n");
 	}
-	/* on tcp/tls bind_address is 0 so try to get the first address we listen
-	 * on no matter the protocol */
-	si=bind_address?bind_address:get_first_socket();
-	if (si==0){
-		LOG(L_CRIT, "BUG: child_init_callid: null socket list\n");
-		return -1;
-	}
 
 	/* calculate the initial From tag */
 	src[0].s = "Long live SER server";
 	src[0].len = strlen(src[0].s);
-	src[1].s = si->address_str.s;
+	src[1].s = sock_info[bind_idx].address_str.s;
 	src[1].len = strlen(src[1].s);
-	src[2].s = si->port_no_str.s;
+	src[2].s = sock_info[bind_idx].port_no_str.s;
 	src[2].len = strlen(src[2].s);
 
 	MDStringArray(from_tag, src, 3);
@@ -144,6 +134,16 @@ static inline int check_params(str* method, str* to, str* from, dlg_t** dialog)
 	return 0;
 }
 
+static inline unsigned int dlg2hash( dlg_t* dlg )
+{
+	str cseq_nr;
+	unsigned int hashid;
+
+	cseq_nr.s=int2str(dlg->loc_seq.value, &cseq_nr.len);
+	hashid=hash(dlg->id.call_id, cseq_nr);
+	DBG("DEBUG: dlg2hash: %d\n", hashid);
+	return hashid;
+}
 
 /*
  * Send a request using data from the dialog structure
@@ -196,9 +196,8 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb
 	request->dst.proto = send_sock->proto;
 	request->dst.proto_reserved1 = 0;
 
-	     /* need to put in table to calculate label which is needed for printing */
 	LOCK_HASH(new_cell->hash_index);
-	insert_into_hash_table_unsafe(new_cell);
+	insert_into_hash_table_unsafe(new_cell, dlg2hash(dialog));
 	UNLOCK_HASH(new_cell->hash_index);
 
 	buf = build_uac_req(method, headers, body, dialog, 0, new_cell, &buf_len, send_sock);
