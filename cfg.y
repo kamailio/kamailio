@@ -7,6 +7,7 @@
 %{
 
 #include <stdlib.h>
+#include <stdio.h>
 #include "route_struct.h"
 #include "globals.h"
 #include "route.h"
@@ -154,7 +155,7 @@ route_stm:	ROUTE LBRACE rules RBRACE { push($3, &rlist[DEFAULT_RT]); }
 
 rules:	rules rule { push($2, &$1); $$=$1; 
 						printf(": rules->rules(%x) rule(%x)\n", $1,$2);}
-	| rule {$$=$1; printf(": rules->rule (%x)\n",$1) }
+	| rule {$$=$1; printf(": rules->rule (%x)\n",$1); }
 	| rules error { $$=0; yyerror("invalid rule"); }
 	 ;
 
@@ -266,7 +267,7 @@ net4:	ipv4 SLASH ipv4	{ $$=mk_net($1, $3); }
 								yyerror("invalid bit number in netmask");
 								$$=0;
 							}else{
-								$$=mk_net($1, htonl((1<<$3)-1));
+								$$=mk_net($1, ((1<<$3)-1));
 							}
 						}
 	| ipv4				{ $$=mk_net($1, 0xffffffff); }
@@ -424,6 +425,7 @@ void yyerror(char* s)
 {
 	fprintf(stderr, "parse error (%d,%d-%d): %s\n", line, startcolumn, 
 			column, s);
+	cfg_errors++;
 }
 
 /*

@@ -87,6 +87,8 @@ int process_no = 0;
 #ifdef ROUTE_SRV
 #endif
 
+/* cfg parsing */
+int cfg_errors=0;
 
 
 #define MAX_FD 32 /* maximum number of inherited open file descriptors,
@@ -330,8 +332,8 @@ int main(int argc, char** argv)
 	}
 	
 	yyin=cfg_stream;
-	if (yyparse()!=0){
-		fprintf(stderr, "ERROR: config parser failure\n");
+	if ((yyparse()!=0)||(cfg_errors)){
+		fprintf(stderr, "ERROR: bad config file (%d errors)\n", cfg_errors);
 		goto error;
 	}
 	

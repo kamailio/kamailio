@@ -17,6 +17,9 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <stdlib.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 
 /* ret= 0 if action -> end of lis t(e.g DROP), >0
    and >0 on error */

@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 
 struct expr* mk_exp(int op, struct expr* left, struct expr* right)
