@@ -27,6 +27,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-11  updated to the new module interface (andrei)
+ */
 
 
 #include <stdio.h>
@@ -44,6 +49,12 @@ static int fixup_maxfwd_header(void** param, int param_no);
 static int w_process_maxfwd_header(struct sip_msg* msg,char* str,char* str2);
 static int mod_init(void);
 
+static cmd_export_t cmds[]={
+	{"mf_process_maxfwd_header", w_process_maxfwd_header, 1, 
+		fixup_maxfwd_header },
+	{0,0,0,0}
+};
+
 
 #ifdef STATIC_MAXFWD
 struct module_exports maxfwd_exports = {
@@ -51,23 +62,8 @@ struct module_exports maxfwd_exports = {
 struct module_exports exports= {
 #endif
 	"maxfwd_module",
-	(char*[]){
-				"mf_process_maxfwd_header"
-			},
-	(cmd_function[]){
-				w_process_maxfwd_header
-			},
-	(int[]){
-				1
-			},
-	(fixup_function[]){
-				fixup_maxfwd_header
-		},
-	1,		/* Number of exported functions*/
-	NULL,	/* Module parameter names */
-	NULL,	/* Module parameter types */
-	NULL,	/* Module parameter variable pointers */
-	0,		/* Number of module paramers */
+	cmds,
+	0, /* no parameters */
 	mod_init,
 	(response_function) 0,
 	(destroy_function) 0,
