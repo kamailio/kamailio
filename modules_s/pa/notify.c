@@ -577,6 +577,7 @@ static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
 	return 0;
 }
 
+#ifdef HAVE_XCAP_CHANGE_NOTIFY
 static int send_xcap_change_notify(struct presentity* _p, struct watcher* _w)
 {
 	int len = 0;
@@ -611,6 +612,7 @@ static int send_xcap_change_notify(struct presentity* _p, struct watcher* _w)
 	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
 	return 0;
 }
+#endif /* HAVE_XCAP_CHANGE_NOTIFY */
 
 int send_location_notify(struct presentity* _p, struct watcher* _w)
 {
@@ -704,6 +706,7 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 		  ;
 		}
 	}
+#ifdef HAVE_XCAP_CHANGE_NOTIFY
 	if ((_p->flags & PFLAG_XCAP_CHANGED) 
 	    && (_w->event_package == EVENT_XCAP_CHANGE)) {
 		switch(_w->preferred_mimetype) {
@@ -715,6 +718,7 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 			if (rc) LOG(L_ERR, "send_xcap_change_notify returned %d\n", rc);
 		}
 	}
+#endif /* HAVE_XCAP_CHANGE_NOTIFY */
 #ifdef PFLAG_LOCATION_CHANGED
 	if ((_p->flags & PFLAG_LOCATION_CHANGED) 
 	    && (_w->event_package == EVENT_LOCATION)) {
@@ -728,7 +732,7 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 		  ;
 		}
 	}
-#endif
+#endif /* PFLAG_LOCATION_CHANGED */
 
 	return rc;
 }
