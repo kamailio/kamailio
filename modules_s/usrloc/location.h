@@ -8,24 +8,78 @@
 #include <time.h>
 #include "contact.h"
 #include "../../msg_parser.h"
+#include "db.h"
 
 
+/*
+ * The structure holds all information
+ * associated with one Address Of Record
+ */
 typedef struct location {
-	str user;            /* Address of record */
-	unsigned char star;   /* 1 if it is * contact field */
-	contact_t* contacts; /* One or more contact fields */
-	time_t expires;      /* Expiry time of the record */
+	str user;             /* Address of record          */
+	contact_t* contacts;  /* One or more contact fields */
 } location_t;
 
-location_t* msg2loc  (struct sip_msg* _msg);
-location_t* create_location (const char* _user, int _star, time_t _expires);
-int         add_contact     (location_t* _loc, const char* _contact, time_t _expire, float _q,
-			     unsigned char _new, unsigned char _dirty);
-int         remove_contact  (location_t* _loc, const char* _contact);
-void        print_location  (const location_t* _loc);
-void        free_location   (location_t* _loc);
+/*
+ * Convert REGISTER SIP message into location
+ */
+int msg2loc(struct sip_msg* _msg, location_t** _loc, int* _star, int* _expires);
 
-int         cmp_location    (location_t* _loc, const char* _aor);
-int         merge_location (location_t* _new, const location_t* _old);
+/*
+ * Create a new location structure
+ */
+int create_location(location_t** _loc, const char* _user);
+
+/*
+ * Add a contact into existing location structure
+ */
+int add_contact(location_t* _loc, const char* _contact, time_t _expires, float _q,
+		const char* _callid, int _cseq);
+
+/*
+ * Remove contact from existing location structure
+ */
+int remove_contact(location_t* _loc, const char* _contact);
+
+/*
+ * print location structure, for debuggin purpose only
+ */
+void print_location(const location_t* _loc);
+
+/*
+ * Free all memory associated with the given location structure
+ */
+void free_location(location_t* _loc);
+
+/*
+ * Compare Address of record of a location with given string
+ */
+int cmp_location(location_t* _loc, const char* _aor);
+
+
+/*
+ * Check if the source message has been formed correctly
+ */
+int validate_location(location_t* _loc, int _expires, int _star, int* _result);
+
+
+int remove_zero_expires(location_t* _loc);
+
+
+/*
+ * ============================ DB related functions ====================
+ */
+
+
+/*
+ * Insert a location into database
+ */
+int db_insert_location(db_con_t* _c, location_t* _loc);
+
+
+int db_remove_location(db_con_t* _c, location_t* _loc);
+
+
+int update_location(db_con_t* _c, location_t* _dest, location_t* _src);
 
 #endif

@@ -19,28 +19,38 @@ typedef struct c_slot {
 	} ll;
 
 	struct cache* cache;           /* Cache we belong to */
-
-	int mutex;                /* Mutex ID if we have enought mutexes */
-	int ref;                  /* Reference counter */
 } c_slot_t;
 
 
 /* First element the collision slot */
-#define SLOT_FIRST_ELEM(slot) (slot->ll.first)
+#define SLOT_FIRST_ELEM(slot) ((slot)->ll.first)
 
 /* Number of elements in the collision slot */
-#define SLOT_ELEM_COUNT(slot) (slot->ll.count)
+#define SLOT_ELEM_COUNT(slot) ((slot)->ll.count)
 
 /* Next element in the collision slot */
-#define SLOT_ELEM_NEXT(elem) (elem->ll.next)
+#define SLOT_ELEM_NEXT(elem) ((elem)->ll.next)
 
 /* Last element in the collision slot */
-#define SLOT_ELEM_LAST(slot) (slot->ll.last)
+#define SLOT_ELEM_LAST(slot) ((slot)->ll.last)
 
 
-int            init_slot    (struct cache* _c, c_slot_t* _ent);
-void           deinit_slot  (c_slot_t* _ent);
-struct c_elem* find_elem    (c_slot_t* _sl, const char* _str);
+/*
+ * Initialize cache slot structure
+ */
+int init_slot(struct cache* _c, c_slot_t* _ent);
+
+
+/*
+ * Deinitialize given slot structure
+ */
+void deinit_slot(c_slot_t* _ent);
+
+
+/*
+ * Find an element in slot linked list
+ */
+//struct c_elem* find_elem(c_slot_t* _sl, const char* _str);
 
 
 #endif

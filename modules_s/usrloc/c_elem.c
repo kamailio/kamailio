@@ -7,6 +7,7 @@
 #include <stdio.h>   /* remove */
 #include "utils.h"
 #include "../../dprint.h"
+#include "../../mem/mem.h"
 
 /*
  * Create new element structure and initialize members
@@ -15,23 +16,15 @@ c_elem_t* create_element(location_t* _loc)
 {
 	c_elem_t* ptr;
 
-	ptr = (c_elem_t*)malloc(sizeof(c_elem_t));
+	ptr = (c_elem_t*)pkg_malloc(sizeof(c_elem_t));
 	if (!ptr) {
-		LOG(L_ERR, "create_elem(): No memory left\n");
+		LOG(L_ERR, "create_element(): No memory left\n");
 		return NULL;
 	}
 
 	ptr->ll.next = ptr->ll.prev = NULL;
-
 	ptr->loc = _loc;
-
 	ptr->ht_slot = NULL;
-
-	ptr->state.ref = 0;
-	ptr->state.mutex = 0;
-	ptr->state.garbage = FALSE;
-	ptr->state.invisible = TRUE;
-
 	ptr->c_ll.prev = ptr->c_ll.next = NULL;
 	
 	return ptr;
@@ -40,6 +33,7 @@ c_elem_t* create_element(location_t* _loc)
 
 /*
  * Dispose an element
+ * Must be removed from all linked lists !
  */
 void free_element(c_elem_t* _el)
 {
@@ -48,7 +42,7 @@ void free_element(c_elem_t* _el)
 #endif
 
 	if (_el->loc) free_location(_el->loc);
-	free(_el);
+	pkg_free(_el);
 }
 
 
@@ -58,10 +52,15 @@ void free_element(c_elem_t* _el)
 int add_slot_elem(c_slot_t* _slot, c_elem_t* _el)
 {
 #ifdef PARANOID
-	if (!_slot) return FALSE;
-	if (!_el) return FALSE;
+	if (!_slot) {
+		LOG(L_ERR, "add_slot_elem(): Invalid _slot parameter value\n");
+		return FALSE;
+	}
+	if (!_el) { 
+		LOG(L_ERR, "add_slot_elem(): Invalid _el parameter value\n");
+		return FALSE;
+	}
 #endif
-
 	if (!_slot->ll.count++) {
 		_slot->ll.first = _slot->ll.last = _el;
 	} else {
@@ -78,10 +77,15 @@ int add_slot_elem(c_slot_t* _slot, c_elem_t* _el)
 c_elem_t* rem_slot_elem(c_slot_t* _slot, c_elem_t* _el)
 {
 	c_elem_t* ptr;
-
 #ifdef PARANOID
-	if (!_slot) return NULL;
-	if (!_el) return NULL;
+	if (!_slot) {
+		LOG(L_ERR, "rem_slot_elem(): Invalid _slot parameter value\n");
+		return NULL;
+	}
+	if (!_el) {
+		LOG(L_ERR, "rem_slot_elem(): Invalid _el parameter value\n");
+		return NULL;
+	}
 	if (!_slot->ll.count) return NULL;
 #endif
 
@@ -117,8 +121,14 @@ c_elem_t* rem_slot_elem(c_slot_t* _slot, c_elem_t* _el)
 int add_cache_elem(cache_t* _c, c_elem_t* _el)
 {
 #ifdef PARANOID
-	if (!_c) return FALSE;
-	if (!_el) return FALSE;
+	if (!_c) {
+		LOG(L_ERR, "add_cache_elem(): Invalid _c parameter value\n");
+		return FALSE;
+	}
+	if (!_el) {
+		LOG(L_ERR, "add_cache_elem(): Invalid _el parameter value\n");
+		return FALSE;
+	}
 #endif
 
 	if (!_c->c_ll.count++) {
@@ -138,8 +148,14 @@ c_elem_t* rem_cache_elem(cache_t* _c, c_elem_t* _el)
 	c_elem_t* ptr;
 
 #ifdef PARANOID
-	if (!_c) return NULL;
-	if (!_el) return NULL;
+	if (!_c) {
+		LOG(L_ERR, "rem_cache_elem(): Invalid _c parameter value\n");
+		return NULL;
+	}
+	if (!_el) {
+		LOG(L_ERR, "rem_cache_elem(): Invalid _el parameter value\n");
+		return NULL;
+	}
 	if (!_c->c_ll.count) return NULL;
 #endif
 	ptr = _c->c_ll.first;
@@ -167,13 +183,19 @@ c_elem_t* rem_cache_elem(cache_t* _c, c_elem_t* _el)
 		
 
 
+/*
+ * Print an element, just for debugging purposes
+ */
 void print_element(c_elem_t* _el)
 {
 #ifdef PARANOID
-	if (!_el) return;
+	if (!_el) {
+		LOG(L_ERR, "print_element(): Invalid _el parameter value\n");
+		return;
+	}
 #endif
 
-	printf("garbage=%d invisible=%d ref=%d\n", _el->state.garbage, _el->state.invisible, _el->state.ref);
+	printf("Nothing to print right now\n");
 	printf("location:\n");
 	print_location(_el->loc);
 }

@@ -6,9 +6,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "contact_parser.h"
-#include "sipdate.h"
 #include "utils.h"
 #include "const.h"
+#include "../../dprint.h"
 
 /* Character delimiting particular contacts in Contact HF */
 #define CONTACT_DELIM ','
@@ -81,9 +81,14 @@ static inline void parse_param(char* _b, char** _name, char** _body)
 
 static inline void parse_params(char* _b, time_t* _exp, float* _q)
 {
-	char* p;
-	char* end;
-	char* name, *body;
+	char* p, *end, *name, *body;
+
+#ifdef PARANOID
+	if ((!_b) || (!_exp) || (!_q)) {
+		LOG(L_ERR, "parse_params(): Invalid parameter value\n");
+	        return;
+	}
+#endif
 
 	*_exp = (time_t)(-1);
 	*_q = (float)(-1);
@@ -95,13 +100,9 @@ static inline void parse_params(char* _b, time_t* _exp, float* _q)
 		if (end) *(end - 1) = '\0';
 		
 		parse_param(p, &name, &body);
-		if (!strcasecmp(name, "expire")) {
-			if (*body == '\"') {
-				parse_SIP_date(body, _exp);
-			} else {
-				time(_exp);
-				*_exp += atoi(body);
-			}
+		if (!strcasecmp(name, "expires")) {
+			*_exp = atoi(body);
+			if (*_exp != 0) *_exp += time(NULL);
 		} else if ((*name == 'q') || (*name == 'Q')) {
 			*_q = atof(body);
 		}
@@ -111,46 +112,90 @@ static inline void parse_params(char* _b, time_t* _exp, float* _q)
 }
 
 
-/*
- * Contact header field parser
- */
-int parse_contact_field(char* _b, location_t* _loc)
+int parse_contact(char* _s, char** _url, time_t* _expire, float* _q)
 {
-	contact_t* res = NULL, *c;
-	char* body, *url;
-	char* comma;
-	time_t expire;
-	float q;
-
+	char* ptr;
 #ifdef PARANOID
-	if (!_loc) return FALSE;
-	if (!_b) return FALSE;
+	if ((!_s) || (!_url) || (!_expire) || (!_q)) {
+		LOG(L_ERR, "parse_contact(): Invalid parameter value\n");
+		return FALSE;
+	}
 #endif
 
-	body = trim(_b);
-
-	     /* Star contact means forget all registrations and
-	      * Expires must be 0, exit immediately
-	      */
-	//	if (*body == '*') {
-	//	_loc->star = 1;
-	//	_loc->expires = 0;
-	//	return TRUE;
-	//}
-
-	do {
-		url = eat_name(body);
-
-		comma = find_next_contact(url);
-		if (comma) {
-			*(comma-1) = '\0';
+	if (*_s == '<') {
+		*_url = ++_s;
+		ptr = find_not_quoted(_s, '>');
+		if (!ptr) {
+			LOG(L_ERR, "parse_contact(): > not found\n");
+			return FALSE;
+		} else {
+			*ptr++ = '\0';
 		}
+	} else {
+		ptr = _s;
+		*_url = _s;
+	}
 
-		parse_params(url, &expire, &q);
-		add_contact(_loc, eat_lws(body), ((expire == (time_t)-1) ? DEFAULT_EXPIRES : expire), q, TRUE, FALSE);
-		body = comma;
-	} while(comma);
+	parse_params(ptr, _expire, _q);
+		
 	return TRUE;
 }
 
 
+/* FIXME: Pravdepodobne parsuje spatne pokud SIP URL neni
+ * uzavrena v lomenych zavorkach
+ */
+
+/*
+ * Contact header field parser
+ */
+int parse_contact_hdr(char* _b, location_t* _loc, int _expires, int* _star, const char* _callid, int _cseq)
+{
+	contact_t* res = NULL, *c;
+	char* body, *url;
+	char* comma;
+	time_t expires;
+	float q;
+
+#ifdef PARANOID
+	if ((!_loc) || (!_b) || (!_star) || (!_callid)) return FALSE;
+#endif
+
+	_b = trim(_b);
+
+	do {
+		_b = eat_lws(_b);
+		
+		     /* Star contact has been found */
+		if (*_b == '*') {
+			*_star = 1;              /* Set the flag */
+			_b = find_next_contact(_b);  /* And continue immediately */
+			if (_b) *(_b - 1) = '\0';
+			continue;
+		}
+
+		_b = eat_name(_b);
+
+		comma = find_next_contact(_b);
+		if (comma) *(comma-1) = '\0';
+
+		if (parse_contact(_b, &url, &expires, &q) == FALSE) {
+			LOG(L_ERR, "parse_contact_hdr(): Error while parsing contact\n");
+			return FALSE;
+		}
+
+		     /* If no binding-specific expires value has been found
+		      * use Expires HF or default value
+		      */
+		if (expires == (time_t)-1) {
+			expires = _expires;
+		}
+
+		if (add_contact(_loc, url, expires, q, _callid, _cseq) == FALSE) {
+			LOG(L_ERR, "parse_contact_hdr(): Error while adding contact\n");
+			return FALSE;
+		}
+		_b = comma;
+	} while(_b);
+	return TRUE;
+}
