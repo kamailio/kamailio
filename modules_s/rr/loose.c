@@ -633,7 +633,7 @@ static inline int after_strict(struct sip_msg* _m)
 }
 
 
-static inline int after_loose(struct sip_msg* _m)
+static inline int after_loose(struct sip_msg* _m, int preloaded)
 {
 	struct hdr_field* hdr;
 	struct sip_uri puri;
@@ -677,7 +677,7 @@ static inline int after_loose(struct sip_msg* _m)
 			}
 			if (res > 0) { /* No next route found */
 				DBG("after_loose: No next URI found\n");
-				return NOT_RR_DRIVEN;
+				return (preloaded ? NOT_RR_DRIVEN : RR_DRIVEN);
 			}
 			rt = (rr_t*)hdr->parsed;
 		} else rt = rt->next;
@@ -770,7 +770,7 @@ int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
 	if (ret < 0) {
 		return -1;
 	} else if (ret == 1) {
-		return after_loose(_m);
+		return after_loose(_m, 1);
 	} else {
 #ifdef ENABLE_USER_CHECK
 		if (is_myself(&_m->parsed_uri, &_m->parsed_uri.host, &_m->parsed_uri.port_no)) {
@@ -779,7 +779,7 @@ int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
 #endif
 			return after_strict(_m);
 		} else {
-			return after_loose(_m);
+			return after_loose(_m, 0);
 		}
 	}
 }
