@@ -223,12 +223,12 @@ static inline void xlate_pointers(rr_t* _orig, rr_t* _r)
 /*
  * Duplicate a single rr_t structure using pkg_malloc or shm_malloc
  */
-static inline int do_duplicate_rr(struct sip_msg* _m, rr_t** _new, rr_t* _r, int _shm)
+static inline int do_duplicate_rr(rr_t** _new, rr_t* _r, int _shm)
 {
 	int len, ret;
 	rr_t* res;
 
-	if (!_m || !_new || !_r) {
+	if (!_new || !_r) {
 		LOG(L_ERR, "duplicate_rr(): Invalid parameter value\n");
 		return -1;
 	}
@@ -272,16 +272,16 @@ static inline int do_duplicate_rr(struct sip_msg* _m, rr_t** _new, rr_t* _r, int
 /*
  * Duplicate a single rr_t structure using pkg_malloc
  */
-int duplicate_rr(struct sip_msg* _m, rr_t** _new, rr_t* _r)
+int duplicate_rr(rr_t** _new, rr_t* _r)
 {
-	return do_duplicate_rr(_m, _new, _r, 0);
+	return do_duplicate_rr(_new, _r, 0);
 }
 
 
 /*
  * Duplicate a single rr_t structure using pkg_malloc
  */
-int shm_duplicate_rr(struct sip_msg* _m, rr_t** _new, rr_t* _r)
+int shm_duplicate_rr(rr_t** _new, rr_t* _r)
 {
-	return do_duplicate_rr(_m, _new, _r, 1);
+	return do_duplicate_rr(_new, _r, 1);
 }
