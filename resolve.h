@@ -239,7 +239,7 @@ struct hostent* sip_resolvehost(char* name, unsigned short* port);
 static inline struct hostent* resolvehost(const char* name)
 {
 	static struct hostent* he=0;
-#ifdef __sun__
+#ifdef __sun
 	int err;
 #endif
 #ifdef DNS_IP_HACK
@@ -259,7 +259,7 @@ static inline struct hostent* resolvehost(const char* name)
 	
 #endif
 	/* ipv4 */
-#ifdef __sun__
+#ifdef __sun
 	if (he) freehostent(he);
 	he=getipnodebyname(name, AF_INET, 0, &err);
 #else
@@ -268,7 +268,7 @@ static inline struct hostent* resolvehost(const char* name)
 #ifdef USE_IPV6
 	if(he==0){
 		/*try ipv6*/
-	#ifdef __sun__
+	#ifdef __sun
 		he=getipnodebyname(name, AF_INET6, 0, &err);
 	#else
 		he=gethostbyname2(name, AF_INET6);
