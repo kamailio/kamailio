@@ -432,6 +432,11 @@ static inline int build_userhost(struct sip_uri *uri, str *uh, int flg)
 		}
 	} else {
 		uh->s = buf;
+		if (uri->user.len+1+uri->host.len+1>MAX_USERHOST_LEN) {
+			LOG(L_ERR,"ERROR:cpl-c:build_userhost: user+host longer than %d\n",
+				MAX_USERHOST_LEN);
+			return -1;
+		}
 	}
 	memcpy( uh->s, uri->user.s, uri->user.len);
 	uh->len = uri->user.len;

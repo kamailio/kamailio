@@ -42,6 +42,7 @@
 #include <sys/uio.h>
 #include <errno.h>
 #include <string.h>
+#include <ctype.h>
 #include "../../str.h"
 #include "../../dprint.h"
 #include "../../fifo_server.h"
@@ -196,6 +197,40 @@ again:
 
 
 
+static inline int check_userhost( char *p, char *end)
+{
+	char *p1;
+	int  dot;
+
+	/* parse user name */
+	p1 = p;
+	while (p<end && (isalnum(*p) || *p=='-' || *p=='_' || *p=='.' ))
+		p++;
+	if (p==p1 || p==end || *p!='@')
+		return -1;
+	p++;
+	/* parse the host part */
+	dot = 1;
+	p1 = p;
+	while (p<end) {
+		if (*p=='.') {
+			if (dot) return -1; /* dot after dot */
+			dot = 1;
+		} else if (isalnum(*p) || *p=='-' || *p=='_' ) {
+			dot = 0;
+		} else {
+			return -1;
+		}
+		p++;
+	}
+	if (p1==p || dot)
+		return -1;
+
+	return 0;
+}
+
+
+
 /* Triggered by fifo server -> implements LOAD_CPL command
  * Command format:
  * -----------------------
@@ -209,6 +244,7 @@ again:
  */
 #define FILE_LOAD_ERR "Error: Cannot read CPL file.\n"
 #define DB_SAVE_ERR   "Error: Cannot save CPL to database.\n"
+#define USRHOST_ERR   "Error: Bad user@host.\n"
 int cpl_load( FILE *fifo_stream, char *response_file )
 {
 	static char user[MAX_STATIC_BUF];
@@ -237,7 +273,7 @@ int cpl_load( FILE *fifo_stream, char *response_file )
 		goto error;
 	}
 	user[user_len] = 0;
-	DBG("DEBUG:cpl_load: user=%.*s\n",user_len,user);
+	DBG("DEBUG:cpl_load: user@host=%.*s\n",user_len,user);
 
 	/* second line must be the cpl file */
 	if (read_line( cpl_file, MAX_STATIC_BUF-1,fifo_stream,&cpl_file_len)!=1 ||
@@ -248,6 +284,15 @@ int cpl_load( FILE *fifo_stream, char *response_file )
 	}
 	cpl_file[cpl_file_len] = 0;
 	DBG("DEBUG:cpl-c:cpl_load: cpl file=%.*s\n",cpl_file_len,cpl_file);
+
+	/* check user+host */
+	if (check_userhost( user, user+user_len)!=0) {
+		LOG(L_ERR,"ERROR:cpl-c:cpl_load: invalid user@host [%.*s]\n",
+			user_len,user);
+		logs[1].s = USRHOST_ERR;
+		logs[1].len = strlen( USRHOST_ERR );
+		goto error1;
+	}
 
 	/* load the xml file - this function will allocted a buff for the loading
 	 * the cpl file and attach it to xml.s -> don't forget to free it! */
@@ -328,6 +373,15 @@ int cpl_remove( FILE *fifo_stream, char *response_file )
 	user[user_len] = 0;
 	DBG("DEBUG:cpl-c:cpl_remove: user=%.*s\n",user_len,user);
 
+	/* check user+host */
+	if (check_userhost( user, user+user_len)!=0) {
+		LOG(L_ERR,"ERROR:cpl-c:cpl_remove: invalid user@host [%.*s]\n",
+			user_len,user);
+		logs[1].s = USRHOST_ERR;
+		logs[1].len = strlen( USRHOST_ERR );
+		goto error1;
+	}
+
 	if (rmv_from_db( db_hdl, user)!=1) {
 		logs[1].s = DB_RMV_ERR;
 		logs[1].len = sizeof(DB_RMV_ERR);
@@ -357,11 +411,13 @@ error:
  * -----------------------
  * For the given user, return the CPL script in XML format
  */
+#define DB_GET_ERR   "Error: Database query failed.\n"
 int cpl_get( FILE *fifo_stream, char *response_file )
 {
 	static char user_s[MAX_STATIC_BUF];
 	str user = {user_s,0};
 	str script = {0,0};
+	str logs[2];
 
 	/* check the name of the response file */
 	if (response_file==0) {
@@ -379,9 +435,21 @@ int cpl_get( FILE *fifo_stream, char *response_file )
 	}
 	DBG("DEBUG:cpl-c:cpl_get: user=%.*s\n",user.len,user.s);
 
+	/* check user+host */
+	if (check_userhost( user.s, user.s+user.len)!=0) {
+		LOG(L_ERR,"ERROR:cpl-c:cpl_load: invalid user@host [%.*s]\n",
+			user.len,user.s);
+		logs[1].s = USRHOST_ERR;
+		logs[1].len = strlen( USRHOST_ERR );
+		goto error1;
+	}
+
 	/* get the script for this user */
-	if (get_user_script( db_hdl, &user, &script, "cpl_xml")==-1)
-		goto error;
+	if (get_user_script( db_hdl, &user, &script, "cpl_xml")==-1) {
+		logs[1].s = DB_GET_ERR;
+		logs[1].len = strlen( DB_GET_ERR );
+		goto error1;
+	}
 
 	/* write the response into response file - even if script is null */
 	write_to_file( response_file, &script, !(script.len==0) );
@@ -389,6 +457,10 @@ int cpl_get( FILE *fifo_stream, char *response_file )
 	if (script.s) shm_free( script.s );
 
 	return 1;
+error1:
+	logs[0].s = "ERROR\n";
+	logs[0].len = 6;
+	write_to_file( response_file, logs, 2);
 error:
 	return -1;
 }
