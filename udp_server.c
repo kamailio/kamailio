@@ -29,6 +29,7 @@
  *  2003-01-28  packet zero-termination moved to receive_msg (jiri)
  *  2003-02-10  undoed the above changes (andrei)
  *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2003-04-14  set sockopts to TOS low delay (andrei)
  */
 
 
@@ -37,6 +38,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
 #include <errno.h>
 #include <arpa/inet.h>
 #ifdef __linux__
@@ -233,6 +235,13 @@ int udp_init(struct socket_info* sock_info)
 					(void*)&optval, sizeof(optval)) ==-1){
 		LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", strerror(errno));
 		goto error;
+	}
+	/* tos */
+	optval=IPTOS_LOWDELAY;
+	if (setsockopt(sock_info->socket, IPPROTO_IP, IP_TOS, (void*)&optval, 
+			sizeof(optval)) ==-1){
+		LOG(L_WARN, "WARNING: udp_init: setsockopt tos: %s\n", strerror(errno));
+		/* continue since this is not critical */
 	}
 #if defined (__linux__) && defined(UDP_ERRORS)
 	optval=1;

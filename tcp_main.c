@@ -38,6 +38,7 @@
  *  2003-03-31  always try to find the corresponding tcp listen socket for
  *               a temp. socket and store in in *->bind_address: added
  *               find_tcp_si, modified tcpconn_connect (andrei)
+ *  2003-04-14  set sockopts to TOS low delay (andrei)
  */
 
 
@@ -53,6 +54,7 @@
 #include <sys/types.h>
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <sys/uio.h>  /* writev*/
 #include <netdb.h>
@@ -174,6 +176,7 @@ struct tcp_connection* tcpconn_connect(union sockaddr_union* server)
 	struct socket_info* si;
 	union sockaddr_union my_name;
 	int my_name_len;
+	int optval;
 #ifdef DISABLE_NAGLE
 	int flag;
 #endif
@@ -186,16 +189,20 @@ struct tcp_connection* tcpconn_connect(union sockaddr_union* server)
 	}
 #ifdef DISABLE_NAGLE
 	flag=1;
-	if ( (tcp_proto_no!=-1) && 
-/* fix:	I used to get here 
- * ERROR: tcp_connect: could not disable Nagle: Protocol not available	  
- * 			(setsockopt(sock_info->socket, tcp_proto_no , TCP_NODELAY, */
-			  (setsockopt(s, tcp_proto_no , TCP_NODELAY,
+	if ( (tcp_proto_no!=-1) && (setsockopt(s, tcp_proto_no , TCP_NODELAY,
 					&flag, sizeof(flag))<0) ){
 		LOG(L_ERR, "ERROR: tcp_connect: could not disable Nagle: %s\n",
 				strerror(errno));
 	}
 #endif
+	/* tos*/
+	optval=IPTOS_LOWDELAY;
+	if (setsockopt(s, IPPROTO_IP, IP_TOS, (void*)&optval, sizeof(optval)) ==-1){
+		LOG(L_WARN, "WARNING: tcpconn_connect: setsockopt tos: %s\n",
+				strerror(errno));
+		/* continue since this is not critical */
+	}
+
 	if (connect(s, &server->s, sockaddru_len(*server))<0){
 		LOG(L_ERR, "ERROR: tcpconn_connect: connect: (%d) %s\n",
 				errno, strerror(errno));
@@ -491,9 +498,7 @@ void tcpconn_timeout(fd_set* set)
 int tcp_init(struct socket_info* sock_info)
 {
 	union sockaddr_union* addr;
-#if defined(SO_REUSEADDR) && !defined(TCP_DONT_REUSEADDR) 
 	int optval;
-#endif
 #ifdef DISABLE_NAGLE
 	int flag;
 	struct protoent* pe;
@@ -531,7 +536,7 @@ int tcp_init(struct socket_info* sock_info)
 #endif
 
 
-#if defined(SO_REUSEADDR) && !defined(TCP_DONT_REUSEADDR) 
+#if  !defined(TCP_DONT_REUSEADDR) 
 	/* Stevens, "Network Programming", Section 7.5, "Generic Socket
      * Options": "...server started,..a child continues..on existing
 	 * connection..listening server is restarted...call to bind fails
@@ -549,7 +554,13 @@ int tcp_init(struct socket_info* sock_info)
 		goto error;
 	}
 #endif
-
+	/* tos */
+	optval=IPTOS_LOWDELAY;
+	if (setsockopt(sock_info->socket, IPPROTO_IP, IP_TOS, (void*)&optval, 
+				sizeof(optval)) ==-1){
+		LOG(L_WARN, "WARNING: tcp_init: setsockopt tos: %s\n", strerror(errno));
+		/* continue since this is not critical */
+	}
 	if (bind(sock_info->socket, &addr->s, sockaddru_len(*addr))==-1){
 		LOG(L_ERR, "ERROR: tcp_init: bind(%x, %p, %d) on %s: %s\n",
 				sock_info->socket, &addr->s, 
