@@ -49,6 +49,11 @@
  */
 static inline void parse_contact_class(param_hooks_t* _h, param_t* _p)
 {
+
+	if (!_p->name.s) {
+		LOG(L_ERR, "ERROR: parse_contact_class: empty value\n");
+		return;
+	}
 	switch(_p->name.s[0]) {
 	case 'q':
 	case 'Q':
@@ -85,6 +90,11 @@ static inline void parse_contact_class(param_hooks_t* _h, param_t* _p)
  */
 static inline void parse_uri_class(param_hooks_t* _h, param_t* _p)
 {
+
+	if (!_p->name.s) {
+		LOG(L_ERR, "ERROR: parse_uri_class: empty value\n");
+		return;
+	}
 	switch(_p->name.s[0]) {
 	case 't':
 	case 'T':
@@ -237,6 +247,12 @@ static inline int parse_token_param(str* _s, str* _r)
  */
 static inline void parse_param_name(str* _s, pclass_t _c, param_hooks_t* _h, param_t* _p)
 {
+
+	if (!_s->s) {
+		DBG("DEBUG: parse_param_name: empty parameter\n");
+		return;
+	}
+
 	_p->name.s = _s->s;
 
 	while(_s->len) {
@@ -312,6 +328,11 @@ int parse_params(str* _s, pclass_t _c, param_hooks_t* _h, param_t** _p)
 	memset(_h, 0, sizeof(param_hooks_t));
 	*_p = 0;
 
+	if (!_s->s) { /* no parameters at all -- we're done */
+		DBG("DEBUG: parse_params: empty uri params, skipping\n");
+		return 0;
+	}
+			
 	while(1) {
 		t = (param_t*)pkg_malloc(sizeof(param_t));
 		if (t == 0) {
