@@ -1,0 +1,46 @@
+#!/bin/sh
+#
+# examples for gaining some interesting values from SIP DB
+#
+
+SERUN=ser
+SERDB=ser
+DBHOST=localhost
+
+# ------------
+
+
+
+usage() {
+COMMAND=`basename $0`
+cat <<EOF
+usage: $COMMAND logged_cnt
+       $COMMAND natted_cnt
+
+EOF
+} #usage
+
+query() {
+	mysql -h $DBHOST -u$SERUN -p -e "$1" $SERDB
+}
+
+
+case $1 in
+
+	logged_cnt)
+		query "select count(distinct username,domain) from location;"
+		;;
+	natted_cnt)
+		query "select count(distinct username,domain) from location 
+			where flags>0;"
+		;;
+
+	*)
+		usage
+		exit 1
+		;;
+	
+esac
+
+
+
