@@ -44,7 +44,8 @@ typedef struct  timer
 {
    struct cell*    first_cell;
    struct cell*    last_cell;
-   lock_t             mutex;
+   int                  sem;
+   lock_t   mutex;
 } timer_type;
 
 
@@ -120,7 +121,15 @@ void free_cell( struct cell* dead_cell );
 struct s_table* init_hash_table();
 void free_hash_table( struct s_table* hash_table );
 
+
+/* function returns:
+ *       0 - a new transaction was created -> the proxy core don't have to release the p_msg structure
+ *      -1 - retransmission
+ *      -2 - error
+ */
 int                t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg );
+
+
 struct cell*  t_lookup_request( struct s_table* hash_table , struct sip_msg* p_msg );
 
 

@@ -139,7 +139,11 @@ struct s_table* init_hash_table()
 
 
 
-
+/* function returns:
+ *       0 - a new transaction was created -> the proxy core don't have to release the p_msg structure
+ *      -1 - retransmission
+ *      -2 - error
+ */
 int t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg )
 {
    struct cell*    new_cell;
@@ -156,15 +160,46 @@ int t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg )
       return -1;
 
    /* creates a new transaction */
-
    hash_index   = hash( p_msg->call_id , p_msg->cseq_nr );
    match_entry = &hash_table->entrys[hash_index];
 
    new_cell = sh_malloc( sizeof( struct cell ) );
    if  ( !new_cell )
-      return 0;
+      return -2;
+
+   /* filling with 0 */
+   memset( new_cell, 0, sizeof( struct cell ) );
+   /* hash index of the entry */
+   new_cell->hash_index = hash_index;
+   /* mutex */
+   init_cell_lock(  new_cell );
+   /* ref counter is 0 */
+   /* all pointers from timers list tl are NULL */
+
+   /* inbound request */
+   new_cell->inbound_request = p_msg;
+   /* inbound response is NULL*/
+   /* status is 0 */
+   /* nr of outbound requests is 0 */
+   /* all pointers from outbound_request array are NULL */
+   /* all pointers from outbound_response array are NULL */
 
 
+   /* critical region - inserting the cell at the end of the list */
+   lock( match_entry->mutex );
+   new_cell->label = match_entry->next_label++;
+   if ( match_entry->last_cell )
+   {
+      match_entry->last_cell->next_cell = new_cell;
+      new_cell->prev_cell = match_entry->last_cell;
+   }
+   else
+      match_entry->first_cell = new_cell;
+   match_entry->last_cell = new_cell;
+   unlock( match_entry->mutex );
+
+   T = new_cell;
+   return 0;
 }
 
 
