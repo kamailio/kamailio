@@ -44,10 +44,10 @@ static int mod_init(void);
 static void destroy(void);
 static int subscribe_fixup(void** param, int param_no);
 
-static int default_expires = 3600;
+int default_expires = 3600;
 
 /** TM bind */
-static struct tm_binds tmb;
+struct tm_binds tmb;
 
 static cmd_export_t cmds[]={
 	{"subscribe",  subscribe,  1, subscribe_fixup, REQUEST_ROUTE},
