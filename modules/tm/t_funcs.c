@@ -737,7 +737,9 @@ inline void final_response_handler( void *attr)
 		|| r_buf->my_T->uas.request->first_line.u.request.method_value!=
 			METHOD_INVITE                  /*if is not an INVITE */
 		|| r_buf->my_T->uac[r_buf->my_T->nr_of_outgoings].uri.s
-		                                   /*if no on no response was set*/ 
+		                                   /*if "no on no response" was set*/
+		|| r_buf->my_T->uac[r_buf->branch].rpl_received==0
+											/*if no reply was received*/
 	)
 #endif
 	)
