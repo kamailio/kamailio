@@ -213,13 +213,12 @@ error:
  *         - body->s MUST be allocated
  * #return: 0 OK ; -1 error
  * */
-int m_build_body(str *body, str from, int date, str msg)
+int m_build_body(str *body, int date, str msg)
 {
 	char *p;
 	
 	if(!body || !(body->s) || body->len <= 0 ||
-			date < 0 || from.len < 0 || msg.len < 0 ||
-			(25+from.len+msg.len>body->len) )
+			date < 0 || msg.len < 0 || (28+msg.len > body->len) )
 		goto error;
 	
 	p = body->s;
@@ -229,12 +228,14 @@ int m_build_body(str *body, str from, int date, str msg)
 	strncpy(p, ctime((const time_t*)(&date)), 25);
 	p += 25;
 
+	/**
 	if(from.len > 0)
 	{
 		*p++ = ' ';
 		strncpy(p, from.s, from.len);
 		p += from.len;
 	}
+	**/
 	
 	*p++ = ']';
 	*p++ = ' ';

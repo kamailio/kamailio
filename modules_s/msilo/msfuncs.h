@@ -33,7 +33,7 @@ int m_send_message(int mid, str *uri, str *to, str *from, str *contact,
 int m_build_headers(str *buf, str ctype);
 
 /** build MESSAGE body */
-int m_build_body(str *body, str from, int date, str msg);
+int m_build_body(str *body, int date, str msg);
 
 #endif
 

@@ -516,21 +516,22 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			//	void *cbp, struct dialog *dlg)
 
 			body_str.len = 1024;
-			if(m_build_body(&body_str, str_vals[STR_IDX_FROM],
-				RES_ROWS(db_res)[i].values[6].val.int_val,
-				str_vals[STR_IDX_BODY] ) < 0)
+			if(m_build_body(&body_str, 
+					RES_ROWS(db_res)[i].values[6].val.int_val,
+					str_vals[STR_IDX_BODY] ) < 0)
 			{
 				DBG("MSILO: m_dump: sending simple body\n");
 				t_uac(&msg_type, &to.uri, &hdr_str,
-					&str_vals[STR_IDX_BODY], m_tm_callback, 
-					(void*)msg_id, 0
+					&str_vals[STR_IDX_BODY], &str_vals[STR_IDX_FROM],
+					m_tm_callback, (void*)msg_id, 0
 				);
 			}
 			else
 			{
 				DBG("MSILO: m_dump: sending composed body\n");
 				t_uac(&msg_type, &to.uri, &hdr_str,
-					&body_str, m_tm_callback, (void*)msg_id, 0
+					&body_str, &str_vals[STR_IDX_FROM],
+					m_tm_callback, (void*)msg_id, 0
 				);
 			}
 		}
