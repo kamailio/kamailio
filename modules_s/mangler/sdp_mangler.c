@@ -145,7 +145,13 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 		pmatch.rm_eo --; /* return with one space */
 #endif
 	
-		pos = (char *) memrchr (begin + pmatch.rm_so, ' ',pmatch.rm_eo - pmatch.rm_so);
+		/* 
+                for BSD and Solaris we avoid memrchr
+                pos = (char *) memrchr (begin + pmatch.rm_so, ' ',pmatch.rm_eo - pmatch.rm_so); 
+                */
+                pos = begin+pmatch.rm_eo;
+                while (*pos != ' ') pos --; /* we should find ' ' because we matched m=audio port */
+                
 		pos++;		/* jumping over space */
 		oldlen = (pmatch.rm_eo - pmatch.rm_so) - (pos - (begin + pmatch.rm_so));	/* port length */
 
@@ -367,7 +373,13 @@ sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip)
 		pmatch.rm_eo --; /* return with one space,\n,\r */
 #endif
 	
-		pos = (char *) memrchr (begin + pmatch.rm_so, ' ',pmatch.rm_eo - pmatch.rm_so);
+		/* 
+                for BSD and Solaris we avoid memrchr
+                pos = (char *) memrchr (begin + pmatch.rm_so, ' ',pmatch.rm_eo - pmatch.rm_so); 
+                */
+                pos = begin+pmatch.rm_eo;
+                while (*pos != ' ') pos --; /* we should find ' ' because we matched c=IN IP4 ip */
+
 		pos++;		/* jumping over space */
 		oldlen = (pmatch.rm_eo - pmatch.rm_so) - (pos - (begin + pmatch.rm_so));	/* ip length */
 		if (oldlen > 15)
