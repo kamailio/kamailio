@@ -36,6 +36,7 @@
  *  2003-04-22  strip_tail added (jiri)
  *  2003-10-02  added SET_ADV_ADDR_T & SET_ADV_PORT_T (andrei)
  *  2003-10-29  added FORCE_TCP_ALIAS_T (andrei)
+ *  2004-02-24  added LOAD_AVP_T and AVP_TO_URI_T (bogdan)
  */
 
 
@@ -89,7 +90,8 @@ int do_action(struct action* a, struct sip_msg* msg)
 	int len;
 	int user;
 	struct sip_uri uri, next_hop;
-	struct sip_uri* u;
+	struct usr_avp *avp;
+	struct sip_uri *u;
 	unsigned short port;
 	int proto;
 
@@ -671,8 +673,44 @@ int do_action(struct action* a, struct sip_msg* msg)
 			(int)a->p3.number))==-1 ) {
 				LOG(L_ERR,"ERROR:do_action: load avp failed\n");
 				ret=E_UNSPEC;
+				break;
 			}
 			ret = (ret==0)?1/*success*/:E_UNSPEC/*notfound*/;
+			break;
+		case AVP_TO_URI_T:
+			if (a->p1_type!=STR_ST ) {
+				LOG(L_CRIT,"BUG: do_action: bad avp_to_uri(%d) params "
+						"types\n",a->p1_type);
+				ret=E_BUG;
+				break;
+			}
+			/* look for the attribute */
+			if ( (avp=search_avp( (str*)a->p1.string ))==0) {
+				ret=E_UNSPEC;
+				break;
+			}
+			if (avp->val_type!=AVP_TYPE_STR) {
+				LOG(L_ERR,"ERROR:do_action: in avp_to_uri attribute <%s> "
+					"doesn't has a STR value\n",((str*)a->p1.string)->s);
+				ret=E_UNSPEC;
+				break;
+			}
+			/* replace the ruri */
+			new_uri = (char*)pkg_malloc( avp->val.str_val.len+1 );
+			if (new_uri==0) {
+				LOG(L_ERR,"ERROR:tm:t_attr_to_uri: no more pkg memory\n");
+				ret = E_OUT_OF_MEM;
+				break;
+			}
+			memcpy( new_uri, avp->val.str_val.s, avp->val.str_val.len);
+			new_uri[avp->val.str_val.len] = 0;
+			if (msg->new_uri.s)
+				pkg_free( msg->new_uri.s );
+			msg->new_uri.s = new_uri;
+			msg->new_uri.len = avp->val.str_val.len;
+			msg->parsed_uri_ok=0;
+
+			ret = 1;
 			break;
 		default:
 			LOG(L_CRIT, "BUG: do_action: unknown type %d\n", a->type);

@@ -166,8 +166,6 @@ inline static int w_t_forward_nonack_tls(struct sip_msg* msg, char* str,char*);
 inline static int w_t_on_negative(struct sip_msg* msg, char *go_to, char *foo);
 inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
 inline static int t_check_status(struct sip_msg* msg, char *regexp, char *foo);
-inline static int t_flush_flags(struct sip_msg* msg, char *dir, char *foo);
-static int t_attr_to_uri(struct sip_msg* msg, char *s, char *foo);
 
 
 static cmd_export_t cmds[]={
@@ -224,10 +222,6 @@ static cmd_export_t cmds[]={
 	{"t_on_reply",         w_t_on_reply,            1, fixup_str2int,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_check_status",     t_check_status,          1, fixup_str2regexp,
-			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
-	{"t_flush_flags",     t_flush_flags,            1, fixup_str2int,
-			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
-	{"t_attr_to_uri",     t_attr_to_uri,            1, fixup_string2str,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_write_req",       t_write_req,              2, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
@@ -554,37 +548,6 @@ static int child_init(int rank) {
 
 
 /**************************** wrapper functions ***************************/
-static int t_attr_to_uri(struct sip_msg* msg, char *s, char *foo)
-{
-	struct usr_avp   *avp;
-	char             *uri;
-
-	/* look for the attribute */
-	avp = search_avp( (str*)s );
-	if (avp==0)
-		return -1;
-	if (avp->val_type!=AVP_TYPE_STR) {
-		LOG(L_ERR,"ERROR:tm:t_attr_to_uri: attribute <%.*s> doesn't has a "
-			" STR value\n", ((str*)s)->len, ((str*)s)->s);
-		return -1;
-	}
-	/* replace the ruri */
-	uri = (char*)pkg_malloc( avp->val.str_val.len+1 );
-	if (uri==0) {
-		LOG(L_ERR,"ERROR:tm:t_attr_to_uri: no more pkg memory\n");
-		return -1;
-	}
-	memcpy( uri, avp->val.str_val.s, avp->val.str_val.len);
-	uri[avp->val.str_val.len] = 0;
-	if (msg->new_uri.s)
-		pkg_free( msg->new_uri.s );
-	msg->new_uri.s = uri;
-	msg->new_uri.len = avp->val.str_val.len;
-	msg->parsed_uri_ok=0;
-	return 1;
-}
-
-
 static int t_check_status(struct sip_msg* msg, char *regexp, char *foo)
 {
 	regmatch_t pmatch;
@@ -634,34 +597,6 @@ static int t_check_status(struct sip_msg* msg, char *regexp, char *foo)
 
 	if (backup) status[msg->first_line.u.reply.status.len] = backup;
 	if (n!=0) return -1;
-	return 1;
-}
-
-
-static int t_flush_flags(struct sip_msg* msg, char *dir, char *foo)
-{
-	struct cell *t;
-
-	/* first get the transaction */
-	if (t_check( msg , 0 )==-1) return -1;
-	if ( (t=get_t())==0) {
-		LOG(L_ERR, "ERROR: t_flush_flags: cannot flush flags for a message "
-			"which has no T-state established\n");
-		return -1;
-	}
-
-	/* do the flush */
-	switch ((int)dir) {
-		case  1:
-			t->uas.request->flags = msg->flags;
-			break;
-		case  2:
-			msg->flags = t->uas.request->flags;
-			break;
-		default:
-			LOG(L_ERR,"ERROR:t_flush_flags: unknown direction %d\n",(int)dir);
-			return -1;
-	}
 	return 1;
 }
 

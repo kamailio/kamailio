@@ -32,6 +32,7 @@
  *  2003-04-22  strip_tail added (jiri)
  *  2003-10-10  >,<,>=,<=, != and MSGLEN_O added (andrei)
  *  2003-10-28  FORCE_TCP_ALIAS added (andrei)
+ *  2004-02-24  added LOAD_AVP_T and AVP_TO_URI_T (bogdan)
  */
 
 
@@ -73,7 +74,8 @@ enum { FORWARD_T=1, SEND_T, DROP_T, LOG_T, ERROR_T, ROUTE_T, EXEC_T,
 		SET_ADV_ADDR_T,
 		SET_ADV_PORT_T,
 		FORCE_TCP_ALIAS_T,
-		LOAD_AVP_T
+		LOAD_AVP_T,
+		AVP_TO_URI_T
 };
 enum { NOSUBTYPE=0, STRING_ST, NET_ST, NUMBER_ST, IP_ST, RE_ST, PROXY_ST,
 		EXPR_ST, ACTIONS_ST, CMDF_ST, MODFIXUP_ST, URIHOST_ST, URIPORT_ST,

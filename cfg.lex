@@ -44,6 +44,7 @@
  *  2003-10-13  added fifo_dir (andrei)
  *  2003-10-28  added tcp_accept_aliases (andrei)
  *  2003-11-29  added {tcp_send, tcp_connect, tls_*}_timeout (andrei)
+ *  2004-02-24  added LOAD_AVP_T and AVP_TO_URI_T (bogdan)
  */
 
 
@@ -115,6 +116,7 @@ ELSE			"else"
 SET_ADV_ADDRESS	"set_advertised_address"
 SET_ADV_PORT	"set_advertised_port"
 LOAD_AVP		"load_avp"
+AVP_TO_URI		"avp_to_uri"
 
 /*ACTION LVALUES*/
 URIHOST			"uri:host"
@@ -289,6 +291,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{FORCE_TCP_ALIAS}	{ count(); yylval.strval=yytext;
 								return FORCE_TCP_ALIAS; }
 <INITIAL>{LOAD_AVP}	{ count(); yylval.strval=yytext; return LOAD_AVP; }
+<INITIAL>{AVP_TO_URI}	{ count(); yylval.strval=yytext; return AVP_TO_URI; }
 	
 <INITIAL>{IF}	{ count(); yylval.strval=yytext; return IF; }
 <INITIAL>{ELSE}	{ count(); yylval.strval=yytext; return ELSE; }

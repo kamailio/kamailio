@@ -50,6 +50,7 @@
  * 2003-10-24  converted to the new socket_info lists (andrei)
  * 2003-10-28  added tcp_accept_aliases (andrei)
  * 2003-11-20  added {tcp_connect, tcp_send, tls_*}_timeout (andrei)
+ * 2004-02-24  added LOAD_AVP_T and AVP_TO_URI_T (bogdan)
  */
 
 
@@ -176,6 +177,7 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token TCP
 %token TLS
 %token LOAD_AVP
+%token AVP_TO_URI
 
 /* config vars. */
 %token DEBUG
@@ -1497,6 +1499,19 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 					}
 					}
 		| LOAD_AVP error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| AVP_TO_URI LPAREN STRING RPAREN {
+								$$=0;
+								if ((str_tmp=pkg_malloc(sizeof(str)))==0){
+										LOG(L_CRIT, "ERROR: cfg. parser:"
+													" out of memory.\n");
+								}else{
+										str_tmp->s=$3;
+										str_tmp->len=strlen($3);
+										$$=mk_action(AVP_TO_URI_T, STR_ST,
+											0, str_tmp, 0);
+								}
+										}
+		| AVP_TO_URI error { $$=0; yyerror("missing '(' or ')' ?"); }
 		| SET_ADV_ADDRESS LPAREN listen_id RPAREN {
 								$$=0;
 								if ((str_tmp=pkg_malloc(sizeof(str)))==0){

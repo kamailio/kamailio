@@ -32,6 +32,7 @@
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-04-12  FORCE_RPORT_T added (andrei)
  *  2003-10-02  added SET_ADV_ADDRESS & SET_ADV_PORT (andrei)
+ *  2004-02-24  added LOAD_AVP_T and AVP_TO_URI_T (bogdan)
  */
 
 
@@ -329,6 +330,9 @@ void print_action(struct action* a)
 					break;
 			case LOAD_AVP_T:
 					DBG("load_avp(");
+					break;
+			case AVP_TO_URI_T:
+					DBG("avp_to_attr");
 					break;
 			default:
 					DBG("UNKNOWN(");
