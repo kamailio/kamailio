@@ -1405,7 +1405,7 @@ if (to me):
 		    <answer>
 			<anchor id="mhomed">
 			<para>
-			    Set the configuration option <varname>mhome</varname>
+			    Set the configuration option <varname>mhomed</varname>
 			    to "1". <application moreinfo="none">ser</application>
 			    will then attempt to calculate the correct interface.
 			    It's not done by default as it degrades performance
