@@ -36,6 +36,11 @@ Desc: when forking & std_error=yes no open FD is closed
 BugId: 376
 CVS status: fixed
 ---------------------------------------------------------------
+Desc: exec module missing in binary RPM distro
+BugId: -
+CVS status: fixed
+Workaround: compile from source distribution
+---------------------------------------------------------------
 Desc: when debug=3 & iptel.cfg is used mysql module fails in submit_query.
 Workaround: use debug=9 or use log_stderr
 Reason: unknown
