@@ -87,6 +87,8 @@ BEGIN {
 	server_ser=0
 	server_xx=0
 	server_intertex=0
+	server_hotsip=0
+	server_3com=0
 
 }
 
@@ -179,6 +181,14 @@ server==0 && /Server:.*Sip EXpress/ {
 }
 server==0 && /Server:.*Intertex/ {
 	server_intertex++
+	server=1
+}
+server==0 && /Server:.*HotSip/ {
+	server_hotsip++
+	server=1
+}
+server==0 && /Server:.*3Com/ {
+	server_3com++
 	server=1
 }
 server==0 && /Server:/ {
@@ -408,6 +418,10 @@ reply==0 && request=0 {
     notify++
     next
 }
+/REGISTER sip/ {
+	register++
+	next
+}
 
 END {
 	print "## Reply Codes"
@@ -419,7 +433,7 @@ END {
 	print "202 (accepted): " rpl202 
 	print "2xx: " rpl2xx
     print "300 (Multiple Choices): " rpl300 
-	print "302 (Moved Temporartily): " rpl302 
+	print "302 (Moved Temporarily): " rpl302 
 	print "3xx: " rpl3xx
     print "400 (Bad Request): " rpl400 
 	print "401 (Unauthorized): " rpl401 
@@ -445,7 +459,7 @@ END {
 	print "6xx: " rpl6xx
 	print "## Request Methods"
     print "INVITE: " invite " CANCEL: " cancel " ACK: " ack
-    print "BYE: " bye " OPTIONS: " options " INFO: " info
+    print "REGISTER: " register " BYE: " bye " OPTIONS: " options " INFO: " info
     print "MESSAGE: " message " SUBSCRIBE: " subscribe " NOTIFY: " notify
 	print "## Outbound Routes"
 	print "To imgw: " hint_imgw " To voicemail: " hint_voicemail
@@ -461,7 +475,8 @@ END {
 	print "Hotsip: " ua_hotsip " UFO: " ua_xx
 	print "## Servers"
 	print "Cisco: " server_cisco " ser: " server_ser 
-	print "Intertex: " server_intertex " UFO: " server_xx
+	print "Intertex: " server_intertex " Hotsip: " server_hotsip
+	print "3com: " server_3com " UFO: " server_xx
 }
 '
 
