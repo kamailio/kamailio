@@ -4,12 +4,8 @@
 #
 # Version:      @(#) /etc/rc.d/init.d/3w-xxxx
 #
-# chkconfig: 2345 20 85
+# chkconfig: 2345 85 15
 # description: controls execution of SIP2Jabber gateway
-# processname: sip2jab
-# config: /etc/use_jabs.cfg
-
-# User "dcm" is used if is the script is run by root
 
 # JABBER
 JDIR="/home/sms/jabber-1.4.2"
