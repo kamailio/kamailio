@@ -81,7 +81,7 @@
 #define SQL_EQUAL      " = "
 #define SQL_EQUAL_LEN  3
 
-#define VM_FIFO_PARAMS 17
+#define VM_FIFO_PARAMS 18
 
 #define VM_INVITE      "invite"
 #define VM_BYE         "bye"
@@ -283,6 +283,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
     char            fproxy_lr;
     char            route_buffer[ROUTE_BUFFER_MAX];
     str             route;
+    str             next_hop;
     struct hdr_field* rr_hdr;
     param_hooks_t     hooks;
     str               tmp_str;
@@ -363,6 +364,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	    
     record_route = rr_hdr ? rr_hdr->parsed : 0;
     fproxy_lr = 0;
+    next_hop = empty_param;
 
     if(rr_hdr && record_route){
 
@@ -423,6 +425,9 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	if(!fproxy_lr){
 	    copy_route(s,route.len,str_uri.s,str_uri.len);
 	    str_uri = ((rr_t*)msg->record_route->parsed)->nameaddr.uri;
+	}
+	else {
+	    next_hop = ((rr_t*)msg->record_route->parsed)->nameaddr.uri;
 	}
     }
 
@@ -486,7 +491,8 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
     lines[14].s=id_buf;lines[14].len=int_buflen;
 
     lines[15]=route.len ? route : empty_param;
-    lines[16].s=body.s; lines[16].len=body.len;
+    lines[16]=next_hop;
+    lines[17].s=body.s; lines[17].len=body.len;
 
     if ( write_to_vm_fifo(vm_fifo, &lines[0],VM_FIFO_PARAMS)
 	 ==-1 ) {
