@@ -12,3 +12,10 @@ create table location (
     key(user,contact)
 );
 
+
+create table auth (
+	realm varchar(255) not null,
+	user varchar(255) not null,
+	a1 varchar(255) not null,
+	last_modified timestamp(14)
+);
