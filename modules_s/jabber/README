@@ -11,14 +11,16 @@ eXtended JABber module
 6. User guide
 7. Contacts
 
+
 1. Description
--------------
+--------------
 This is new version of Jabber module that integrates XODE XML parser for
 parsing Jabber messages. That introduces a new module dependence: expat library.
 
 Expat is a common XML library and is the fastest available for Linux/Unix, 
 the second over all, after msxml library. It is integrated in most of well known
 Linux distributions.
+
 
 2.1 New features
 ----------------
@@ -27,11 +29,13 @@ Linux distributions.
 - aliases - possibility to set host aliases for addresses (see parameter's desc.)
 - gateways detection - ability to see whether an IM gateway is up or down
 
+
 2.2 Features
 ------------
 - send received SIP MESSAGE messages to different IM networks (Jabber, ICQ,
 MSN, AIM, Yahoo) using a Jabber server
 - send as SIP MESSAGE messages incoming Jabber instant messages
+
 
 3. Exported parameters
 ----------------------
@@ -61,19 +65,36 @@ Desc:		port of Jabber server
 Name:		jdomain
 Type:		string
 Default:	none
-Desc:		Format: jabber.sipserver.com
-			If the destination is for Jabber network the URI should be as:
-			userbame%jabber_server@jdomain
+Desc:		Format: jabber.sipserver.com=<delim>
+			If the destination is for Jabber network the URI should be like:
+				username<delim>jabber_server@jdomain
+			or
+				nickname<delim>roomname<delim>conference_server@jdomain
+
+			<delim> must be a non-reserved character. By default this character
+			is * .
+			The destination will be transformed to 
+				username@jabber_server 
+			or 
+				roomname@conference_server/nickname 
+			before the message is sent to Jabber server.
 
 Name:		aliases
 Type:		string
 Default:	none
 Desc:		aliases for hostnames. 
-			Format: "N;alias1;...;aliasN;"
-			Jabber module expects destination as userid%jabber_server@jdomain,
-			only destination like '*@aliasX' could have other form. If destination
-			does not contains an alias then it will be transformed to
-			userid@jabber_server before the message is sent to Jabber server
+			Format: "N;alias1=<delim1>;...;aliasN=<delimN>;"
+			Destinations like '*@aliasX' could have other format than those 
+			specified for Jabber network. 
+			All	<delim> from user part of the destination address will be 
+			changed	to <delimX> if the destination address contains <aliasX>.
+			
+			(Ex: jdomain is 'jabber.x.com=*' and msn_alias is
+			'msn.x.com'. The destination address for MSN Network, on SIP side,
+			is like 'username*hotmail.com@msn.x.com=%'. The destination address
+			will be transformed to 'username%hotmail.com@msn.x.com'. 
+			'msn.x.com' must be the same as the JID associated with MSN
+			transport in Jabber configuration file (usually is 'jabberd.xml'))
 
 Name:		workers
 Type:		integer
@@ -105,6 +126,7 @@ Type:		integer (seconds)
 Default:	20
 Desc:		time between checking the status of JabberGW workers
 
+
 4. Exported Functions
 ---------------------
 
@@ -134,6 +156,7 @@ Name: 	jab_go_offline
 Params:	none
 Desc:	logoff from Jabber server the associated Jabber ID of the SIP user
 
+
 5. Admin guide
 -------------
 
@@ -160,7 +183,7 @@ Next is presented an usecase.
 Prologue:
 	SER is running on 'server.org'
 	Local Jabber server is running on 'jabsrv.server.org'
-	Jabber network alias is 'jabber.server.org'
+	Jabber network alias (first part of 'jdomain') is 'jabber.server.org'
 	
 The aliases for other IM networks MUST be the same as JID set in
 Jabber configuration file for each IM transport.
@@ -196,14 +219,17 @@ called  'jab_go_offline' method
 - leaving a Jabber conference room - here must be called 'jab_exit_jconf'
 
 The destination address MUST follow the next patterns:
- - for Jabber network: 'username%jabber_server@jabber_alias'
- - for Jabber conference: 'nickname%room%conference_server@jabber_alias'
+ - for Jabber network: 'username<delim>jabber_server@jabber_alias'
+ - for Jabber conference: 'nickname<delim>room<delim>conference_server@jabber_alias'
  - for AIM network: 'aim_username@aim_alias'
  - for ICQ network: 'icq_number@icq_alias'
- - for MSN network: 'msn_username%msn_server@msn_alias'. msn_server can be
+ - for MSN network: 'msn_username<delim>msn_server@msn_alias'. msn_server can be
 'msn.com' or 'hotmail.com'
  - for YAHOO network: 'yahoo_username@yahoo_alias'
+
+Note: 'jabber_alias' is the first part of 'jdomain'.
   
+
 6. User guide
 --------------
 
@@ -216,7 +242,7 @@ When you want to send a message to someone in other IM network, you must set the
 destination of the message according with the pattern corresponding to that IM
 network (see last part of 'Admin guide' chapter).
 Ex: sending a message to user@jabber.xxx.org which is in Jabber network, the
-	destination must be: user%jabber.xxx.org%jabber_alias .
+	destination must be: user<delim>jabber.xxx.org@jabber_alias .
 
 	For someone who is in Yahoo network the destination must be:
 	user@yahoo_alias
