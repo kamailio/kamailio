@@ -1,80 +1,60 @@
-/* 
- * $Id$ 
- */
+#ifndef DBASE_H
+#define DBASE_H
 
-#ifndef __DBASE_H__
-#define __DBASE_H__
-
-#include "db_con.h"
-#include "db_val.h"
-#include "db_key.h"
-#include "db_res.h"
+#include "../../db/db_con.h"
+#include "../../db/db_res.h"
+#include "../../db/db_key.h"
+#include "../../db/db_val.h"
 
 
 /*
- * Initialize database connection and
- * obtain the connection handle
+ * Initialize database connection
  */
 db_con_t* db_init(const char* _sqlurl);
 
 
 /*
- * Close a database connection and free
- * all memory used
+ * Close a database connection
  */
-void db_close (db_con_t* _h); 
+void db_close(db_con_t* _h);
 
 
 /*
- * Query table for specified rows
- * _h: structure representing database connection
- * _k: key names
- * _v: values of the keys that must match
- * _c: column names to return
- * _n: nmber of key=values pairs to compare
- * _nc: number of columns to return
- * _o: order by the specified column
- * _r: Result will be stored in this variable
- *     NULL if there is no result
+ * Return result of previous query
  */
-int db_query (db_con_t* _h, db_key_t* _k, 
-	      db_val_t* _v, db_key_t* _c, int _n, int _nc,
-	      db_key_t _o, db_res_t** _r);
-
-int db_free_query (db_con_t* _h, db_res_t* _r);
-
-/*
- * Insert a row into specified table
- * _h: structure representing database connection
- * _k: key names
- * _v: values of the keys
- * _n: number of key=value pairs
- */
-int db_insert (db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+int get_result(db_con_t* _h, db_res_t** _r);
 
 
 /*
- * Delete a row from the specified table
- * _h: structure representing database connection
- * _k: key names
- * _v: values of the keys that must match
- * _n: number of key=value pairs
+ * Free all memory allocated by get_result
  */
-int db_delete (db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+int db_free_query(db_con_t* _h, db_res_t* _r);
 
 
 /*
- * Update some rows in the specified table
- * _h: structure representing database connection
- * _k: key names
- * _v: values of the keys that must match
- * _uk: updated columns
- * _uv: updated values of the columns
- * _n: number of key=value pairs
- * _un: number of columns to update
+ * Do a query
  */
-int db_update (db_con_t* _h, db_key_t* _k, db_val_t* _v,
-	       db_key_t* _uk, db_val_t* _uv, int _n, int _un);
+int db_query(db_con_t* _h, db_key_t* _k, db_val_t* _v, db_key_t* _c, int _n, int _nc,
+	     db_key_t _o, db_res_t** _r);
+
+
+/*
+ * Insert a row into table
+ */
+int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+
+
+/*
+ * Delete a row from table
+ */
+int db_delete(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+
+
+/*
+ * Update a row in table
+ */
+int db_update(db_con_t* _h, db_key_t* _k, db_val_t* _v,
+	      db_key_t* _uk, db_val_t* _uv, int _n, int _un);
 
 
 #endif
