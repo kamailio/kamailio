@@ -43,6 +43,7 @@
 #include "../registrar/sip_msg.h"
 #include "../../msg_translator.h"
 #include "../usrloc/usrloc.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -106,7 +107,7 @@ typedef struct {
     str ip;
     str port;
     str type;    // stream type (`audio', `video', ...)
-    int localIP; // the ip is locally defined inside this media stream
+    int localIP; // true if the IP is locally defined inside this media stream
 } StreamInfo;
 
 typedef struct {
@@ -126,7 +127,7 @@ typedef struct {
 
 /* Function prototypes */
 static int ClientNatTest(struct sip_msg *msg, char *str1, char *str2);
-static int FixNatedContact(struct sip_msg *msg, char *str1, char *str2);
+static int FixContact(struct sip_msg *msg, char *str1, char *str2);
 static int UseMediaProxy(struct sip_msg *msg, char *str1, char *str2);
 static int EndMediaSession(struct sip_msg *msg, char *str1, char *str2);
 
@@ -179,7 +180,7 @@ NatTest natTests[] = {
 };
 
 static cmd_export_t commands[] = {
-    {"fix_nated_contact", FixNatedContact, 0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+    {"fix_contact",       FixContact,      0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
     {"use_media_proxy",   UseMediaProxy,   0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
     {"end_media_session", EndMediaSession, 0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
     {"client_nat_test",   ClientNatTest,   1, fixstring2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
@@ -405,7 +406,7 @@ getStrTokens(str *string, str *tokens, int limit)
 static Bool
 getCallId(struct sip_msg* msg, str *cid)
 {
-    if (msg->callid == 0) {
+    if (msg->callid == NULL) {
         return False;
     }
 
@@ -591,7 +592,6 @@ checkContentType(struct sip_msg *msg)
 static Bool
 getSDPMessage(struct sip_msg *msg, str *sdp)
 {
-
     sdp->s = get_body(msg);
     if (sdp->s==NULL) {
         LOG(L_ERR, "error: mediaproxy/getSDPMessage(): cannot get the SDP body from SIP message\n");
@@ -607,8 +607,6 @@ getSDPMessage(struct sip_msg *msg, str *sdp)
         LOG(L_ERR, "error: mediaproxy/getSDPMessage(): content type is not `application/sdp'\n");
         return False;
     }
-
-    DBG("debug: mediaproxy/getSDPMessage(): |%.*s|\n", sdp->len, sdp->s);
 
     return True;
 }
@@ -677,7 +675,7 @@ getSessionLevelMediaIP(str *sdp, str *mediaip)
 }
 
 
-// will get all media streams as well as the session-level contact IP
+// will get all media streams
 static int
 getMediaStreams(str *sdp, str *sessionIP, StreamInfo *streams, int limit)
 {
@@ -935,7 +933,7 @@ pingClients(unsigned int ticks, void *param)
     if (needed > 0) {
         // make sure we alloc more than actually we were told is missing
         // (some clients may register while we are making these calls)
-        length += needed+256;
+        length = (length + needed) * 2;
         ptr = pkg_realloc(buf, length);
         if (ptr == NULL) {
             LOG(L_ERR, "error: mediaproxy/pingClients(): out of memory\n");
@@ -944,6 +942,7 @@ pingClients(unsigned int ticks, void *param)
         } else {
             buf = ptr;
         }
+        // try again. we may fail again if _many_ clients register in between
         needed = userLocation.get_all_ucontacts(buf, length, FL_NAT);
         if (needed != 0) {
             pkg_free(buf);
@@ -1227,7 +1226,7 @@ ClientNatTest(struct sip_msg* msg, char* str1, char* str2)
 // Replace IP:Port in Contact field with the source address of the packet.
 // Preserve port for SIP asymmetric clients
 static int
-FixNatedContact(struct sip_msg* msg, char* str1, char* str2)
+FixContact(struct sip_msg* msg, char* str1, char* str2)
 {
     str beforeHost, after, agent;
     contact_t* contact;
@@ -1269,11 +1268,11 @@ FixNatedContact(struct sip_msg* msg, char* str1, char* str2)
 
     newip = ip_addr2a(&msg->rcv.src_ip);
 
-    len = beforeHost.len + strlen(newip) + 6 + after.len + 10;
+    len = beforeHost.len + strlen(newip) + after.len + 20;
 
     buf = pkg_malloc(len);
     if (buf == NULL) {
-        LOG(L_ERR, "error: fix_nated_contact(): out of memory\n");
+        LOG(L_ERR, "error: fix_contact(): out of memory\n");
         return -1;
     }
     if (asymmetric && uri.port.len==0) {
@@ -1296,7 +1295,7 @@ FixNatedContact(struct sip_msg* msg, char* str1, char* str2)
     contact->uri.len = len;
 
     if (asymmetric) {
-        LOG(L_INFO, "info: fix_nated_contact(): preserved port for SIP "
+        LOG(L_INFO, "info: fix_contact(): preserved port for SIP "
             "asymmetric client: `%.*s'\n", agent.len, agent.s);
     }
 
@@ -1306,13 +1305,14 @@ FixNatedContact(struct sip_msg* msg, char* str1, char* str2)
 static int
 EndMediaSession(struct sip_msg* msg, char* str1, char* str2)
 {
-    char *command;
+    char *command, *result;
     str callId;
 
     if (!getCallId(msg, &callId)) {
         LOG(L_ERR, "error: end_media_session(): can't get Call-Id\n");
         return -1;
     }
+
     command = pkg_malloc(callId.len + 10);
     if (command == NULL) {
         LOG(L_ERR, "error: end_media_session(): out of memory\n");
@@ -1320,13 +1320,11 @@ EndMediaSession(struct sip_msg* msg, char* str1, char* str2)
     }
 
     sprintf(command, "delete %.*s\n", callId.len, callId.s);
-    if (sendMediaproxyCommand(command) == NULL) {
-        return -1;
-    }
+    result = sendMediaproxyCommand(command);
 
     pkg_free(command);
 
-    return 1;
+    return result==NULL ? -1 : 1;
 }
 
 
