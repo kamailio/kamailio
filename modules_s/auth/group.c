@@ -98,13 +98,15 @@ int is_in_group(struct sip_msg* _msg, char* _group, char* _str2)
 	}
 	
 	if (RES_ROW_N(res) == 0) {
-		DBG("is_in_group(): User \'%.*s\' is not in group %s\n", 
-		    c->digest.username.len, c->digest.username.s, _group);
+		DBG("is_in_group(): User \'%.*s\' is not in group \'%.*s\'\n", 
+		    c->digest.username.len, c->digest.username.s,
+		    ((str*)_group)->len, ((str*)_group)->s);
 		db_free_query(db_handle, res);
 		return -1;
 	} else {
-		DBG("is_in_group(): User \'%.*s\' is member of group %s\n", 
-		    c->digest.username.len, c->digest.username.s, _group);
+		DBG("is_in_group(): User \'%.*s\' is member of group \'%.*s\'\n", 
+		    c->digest.username.len, c->digest.username.s,
+		    ((str*)_group)->len, ((str*)_group)->s);
 		db_free_query(db_handle, res);
 		return 1;
 	}
@@ -216,11 +218,11 @@ static inline int get_cred_user(struct sip_msg* _m, str* _s)
 /*
  * Check if username in specified header field is in a table
  */
-int is_user_in(struct sip_msg* _msg, char* _hf, char* _table)
+int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 {
-	db_key_t key[1] = {grp_user_col};
-	db_val_t val[1];
-	db_key_t col[1] = {grp_user_col};
+	db_key_t keys[] = {grp_user_col, grp_grp_col};
+	db_val_t vals[2];
+	db_key_t col[1] = {grp_grp_col};
 	db_res_t* res;
 	str user;
 
@@ -254,24 +256,31 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _table)
 		break;
 	}
 
-	VAL_TYPE(val) = DB_STR;
-	VAL_NULL(val) = 0;
+	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
+	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
 	
-	VAL_STR(val).s = user.s;
-	VAL_STR(val).len = user.len;
+	VAL_STR(vals).s = user.s;
+	VAL_STR(vals).len = user.len;
+
+	VAL_STR(vals + 1).s = ((str*)_grp)->s;
+	VAL_STR(vals + 1).len = ((str*)_grp)->len;
 	
-	db_use_table(db_handle, _table);
-	if (db_query(db_handle, key, val, col, 1, 1, 0, &res) < 0) {
+	db_use_table(db_handle, grp_table);
+	if (db_query(db_handle, keys, vals, col, 2, 1, 0, &res) < 0) {
 		LOG(L_ERR, "is_user_in(): Error while querying database\n");
 		return -5;
 	}
 	
 	if (RES_ROW_N(res) == 0) {
-		DBG("is_user_in(): User \'%.*s\' is not in table %s\n", user.len, user.s, _table);
+		DBG("is_user_in(): User \'%.*s\' is not in group \'%.*s\'\n", 
+		    user.len, user.s,
+		    ((str*)_grp)->len, ((str*)_grp)->s);
 		db_free_query(db_handle, res);
 		return -6;
 	} else {
-		DBG("is_user(): User \'%.*s\' is in table %s\n", user.len, user.s, _table);
+		DBG("is_user(): User \'%.*s\' is in table \'%.*s\'\n", 
+		    user.len, user.s,
+		    ((str*)_grp)->len, ((str*)_grp)->s);
 		db_free_query(db_handle, res);
 		return 1;
 	}

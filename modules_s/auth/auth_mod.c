@@ -283,10 +283,11 @@ static int str_fixup(void** param, int param_no)
 static int hf_fixup(void** param, int param_no)
 {
 	void* ptr;
+	str* s;
 
 	if (param_no == 1) {
 		ptr = *param;
-
+		
 		if (!strcasecmp((char*)*param, "Request-URI")) {
 			*param = (void*)1;
 		} else if (!strcasecmp((char*)*param, "To")) {
@@ -301,6 +302,16 @@ static int hf_fixup(void** param, int param_no)
 		}
 
 		free(ptr);
+	} else if (param_no == 2) {
+		s = (str*)malloc(sizeof(str));
+		if (!s) {
+			LOG(L_ERR, "hf_fixup(): No memory left\n");
+			return E_UNSPEC;
+		}
+
+		s->s = (char*)*param;
+		s->len = strlen(s->s);
+		*param = (void*)s;
 	}
 
 	return 0;
