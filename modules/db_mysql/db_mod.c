@@ -63,7 +63,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"ping_interval", INT_PARAM },
+	{"ping_interval", INT_PARAM, &ping_interval},
 	{0, 0, 0}
 };
 
