@@ -325,11 +325,14 @@ static int t_relay_to( struct sip_msg  *p_msg , char *str_ip , char *str_port)
 					DBG( "SER: new CANCEL\n");
 					if ( !t_send_reply( p_msg , 200, "glad to cancel") )
 						DBG( "SER:ERROR: t_send_reply\n");
-				} else {
-					DBG( "SER: new transaction\n");
-					if (!t_send_reply( p_msg , 100 , 
+				} else if (p_msg->REQ_METHOD==METHOD_INVITE)
+				{
+					DBG( "SER: new INVITE\n");
+					if (!t_send_reply( p_msg , 100 ,
 					"trying -- your call is important to us"))
 						DBG( "SER: ERROR: t_send_reply (100)\n");
+				} else {
+					DBG( "SER: new transaction\n");
 				}
 				ret = 1;
 			}
