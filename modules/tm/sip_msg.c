@@ -133,6 +133,7 @@ inline struct via_body* via_body_cloner( char* new_buf,
 				(*p) += ROUND4(sizeof(struct via_param));
 				new_vp->name.s=translate_pointer(new_buf,org_buf,vp->name.s);
 				new_vp->value.s=translate_pointer(new_buf,org_buf,vp->value.s);
+				new_vp->start=translate_pointer(new_buf,org_buf,vp->start);
 				
 				/* "translate" the shportcuts */
 				switch(new_vp->type){
