@@ -93,6 +93,35 @@
 static str   lines_eol[2*TWRITE_PARAMS];
 static str   eol={"\n",1};
 
+static int sock;
+
+int init_twrite_sock(void)
+{
+	int flags;
+
+	sock = socket(PF_LOCAL, SOCK_DGRAM, 0);
+	if (sock == -1) {
+		LOG(L_ERR, "init_twrite_sock: Unable to create socket: %s\n", strerror(errno));
+		return -1;
+	}
+
+	     /* Turn non-blocking mode on */
+	flags = fcntl(sock, F_GETFL);
+	if (flags == -1){
+		LOG(L_ERR, "init_twrite_sock: fnctl failed: %s\n",
+		    strerror(errno));
+		close(sock);
+		return -1;
+	}
+		
+	if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) == -1) {
+		LOG(L_ERR, "init_twrite_sock: fcntl: set non-blocking failed:"
+		    " %s\n", strerror(errno));
+		close(sock);
+		return -1;
+	}
+	return 0;
+}
 
 
 int init_twrite_lines()
@@ -421,11 +450,37 @@ error:
 }
 
 
-static int write_to_unixsock(int socket, int cnt)
+static int write_to_unixsock(char* sockname, int cnt)
 {
+	int len;
+	struct sockaddr_un dest;
+
+	if (!sockname) {
+		LOG(L_ERR, "write_to_unixsock: Invalid parameter\n");
+		return E_UNSPEC;
+	}
+
+	len = strlen(sockname);
+	if (len == 0) {
+		DBG("write_to_unixsock: Error - empty socket name\n");
+		return -1;
+	} else if (len > 107) {
+		LOG(L_ERR, "write_to_unixsock: Socket name too long\n");
+		return -1;
+	}
+	
+	memset(&dest, 0, sizeof(dest));
+	dest.sun_family = PF_LOCAL;
+	memcpy(dest.sun_path, sockname, len);
+	
+	if (connect(sock, (struct sockaddr*)&dest, SUN_LEN(&dest)) == -1) {
+		LOG(L_ERR, "write_to_unixsock: Error in connect: %s\n", strerror(errno));
+		return -1;
+	}
+	
 	     /* write now (unbuffered straight-down write) */
  rep:
-	if (writev(socket, (struct iovec*)lines_eol, 2 * cnt) < 0) {
+	if (writev(sock, (struct iovec*)lines_eol, 2 * cnt) < 0) {
 		if (errno != EINTR) {
 			LOG(L_ERR, "write_to_unixsock: writev failed: %s\n",
 			    strerror(errno));
@@ -467,7 +522,7 @@ int t_write_unix(struct sip_msg* msg, char* socket, char* action)
 		return -1;
 	}
 
-	if (write_to_unixsock((int)socket, TWRITE_PARAMS) == -1) {
+	if (write_to_unixsock(socket, TWRITE_PARAMS) == -1) {
 		LOG(L_ERR, "ERROR:tm:t_write_unix: write_to_unixsock failed\n");
 		return -1;
 	}
@@ -478,74 +533,5 @@ int t_write_unix(struct sip_msg* msg, char* socket, char* action)
 		LOG(L_ERR, "ERROR:tm:t_write_unix: add_blind failed\n");
 		return -1;
 	}
-	return 0;
-}
-
-
-/* 
- * Convert Unix domain socket name into socket, 
- * connect the socket and switch it over to non-blocking
- * mode
- */
-int unixsock_fixup(void** param, int param_no)
-{
-	int sock, len, flags;
-	struct sockaddr_un dest;
-	char* name;
-
-	if (param_no == 1){
-		name = (char*) param;
-		if (!name) {
-			LOG(L_ERR, "unixsock_fixup: Invalid parameter\n");
-			return E_UNSPEC;
-		}
-
-		len = strlen(name);
-		if (len == 0) {
-			DBG("unixsock_fixup: Error - empty socket name\n");
-			return -1;
-		} else if (len > 107) {
-			LOG(L_ERR, "unixsock_fixup: Socket name too long\n");
-			return -1;
-		}
-
-		memset(&dest, 0, sizeof(dest));
-		dest.sun_family = PF_LOCAL;
-		memcpy(dest.sun_path, name, len);
-		
-		sock = socket(PF_LOCAL, SOCK_DGRAM, 0);
-		if (sock == -1) {
-			LOG(L_ERR, "unixsock_fixup: Unable to create socket: %s\n", strerror(errno));
-			return E_UNSPEC;
-		}
-
-		     /* Turn non-blocking mode on */
-		flags = fcntl(sock, F_GETFL);
-		if (flags == -1){
-			LOG(L_ERR, "unixsock_fixup: fnctl failed: %s\n",
-			    strerror(errno));
-			close(sock);
-			return E_UNSPEC;
-		}
-		
-		if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) == -1) {
-			LOG(L_ERR, "unixsock_fixup: fcntl: set non-blocking failed:"
-			    " %s\n", strerror(errno));
-			close(sock);
-			return E_UNSPEC;
-		}
-
-		if (connect(sock, (struct sockaddr*)&dest, SUN_LEN(&dest)) == -1) {
-			close(sock);
-			LOG(L_ERR, "unixsock_fixup: Error in connect: %s\n", strerror(errno));
-			return E_UNSPEC;
-		}
-
-		pkg_free(*param);
-		*param = (void*)sock;
-		return 0;
-	}
-
-	     /* second param => no conversion*/
 	return 0;
 }

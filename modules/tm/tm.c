@@ -225,7 +225,7 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_write_req",       t_write_req,              2, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_write_unix",      t_write_unix,             2, unixsock_fixup,
+	{"t_write_unix",      t_write_unix,             2, 0,
 	                REQUEST_ROUTE | FAILURE_ROUTE },
 
 	/* not applicable from the script */
@@ -526,6 +526,10 @@ static int mod_init(void)
 
 	tm_init_tags();
 	init_twrite_lines();
+	if (init_twrite_sock() < 0) {
+		LOG(L_ERR, "ERROR:tm:mod_init: Unable to create socket\n");
+		return -1;
+	}
 
 	/* register post-script clean-up function */
 	register_script_cb( w_t_unref, POST_SCRIPT_CB, 
