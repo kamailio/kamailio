@@ -59,20 +59,42 @@ void free_hash_table( struct s_table *hash_table )
                 free_cell( p_cell );
               }
          }
+	/* Oooops! Error here */
          sh_free( hash_table->entrys );
       }
 
-     /* delete all cells on the to-be-deleted list */
-      for( p_cell = hash_table->timers[DELETE_LIST].first_cell; p_cell; p_cell = tmp_cell )
-      {
-          tmp_cell = p_cell->transaction.tl[DELETE_LIST].timer_next_cell;
-          //remove_timer_from_head( hash_table, p_cell, DELETE_LIST );
-          free_cell( p_cell );
-      }
+ 	if (hash_table->timers ) {
+		/* for each of the timer lists ... */
+		for( i=0; i<NR_OF_TIMER_LISTS ; i++ ) {
+     				/* ... delete all cells on the timer list */
+      				for( p_cell = hash_table->timers[i].first_cell; p_cell; p_cell = tmp_cell )
+      				{
+          				tmp_cell = p_cell->transaction.tl[i].timer_next_cell;
+          				remove_timer_from_head( hash_table, p_cell, i );
+          				free_cell( p_cell );
+				}
+				release_timerlist_lock( &(hash_table->timers[i]) );
+      		}
+		sh_free( hash_table->timers );
+	} /* if (hash_table->timers ) */
 
-     /* delete all the hash table's timers*/
-      if ( hash_table->timers)
-         sh_free( hash_table->timers );
+	if (hash_table->retr_timers){
+		/* for each of the timer lists ... */
+                for( i=0; i<NR_OF_RT_LISTS; i++)
+   		{
+			/* ... delete all cells on the timer list */
+			for( p_cell = hash_table->retr_timers[i].first_cell; p_cell; p_cell = tmp_cell )
+			{       
+				tmp_cell = p_cell->retransmission.retransmission_timer_list.timer_next_cell;
+/* XXX */			remove_timer_from_head( hash_table, p_cell, i );
+                                free_cell( p_cell );
+                        }
+                        release_timerlist_lock( &(hash_table->retr_timers[i]) );
+		}
+		sh_free( hash_table->retr_timers);
+
+	} /* if (hash_table->retr_timers) */
+
 
       sh_free( hash_table );
    }
@@ -90,6 +112,8 @@ struct s_table* init_hash_table()
    if ( !hash_table )
 	goto error;
 
+   memset( hash_table, 0, sizeof (struct s_table ) );
+
    /*inits the time*/
    hash_table->time = 0;
 
@@ -102,17 +126,6 @@ struct s_table* init_hash_table()
     hash_table->entrys  = sh_malloc( TABLE_ENTRIES * sizeof( struct entry )  );
     if ( !hash_table->entrys )
 	goto error;
-
-   /* allocs the transaction timer's table */
-    hash_table->timers  = sh_malloc( NR_OF_TIMER_LISTS * sizeof( struct timer )  );
-    if ( !hash_table->timers )
-	goto error;
-
-    /* allocs the retransmission timer's table */
-    hash_table->retr_timers = sh_malloc( NR_OF_RT_LISTS * sizeof (struct timer ) );
-    if ( !hash_table->retr_timers )
-	goto error;
-
     /* inits the entrys */
     for(  i=0 ; i<TABLE_ENTRIES; i++ )
     {
@@ -122,21 +135,34 @@ struct s_table* init_hash_table()
        init_entry_lock( hash_table , (hash_table->entrys)+i );
     }
 
+   /* allocs the transaction timer's table */
+    hash_table->timers  = sh_malloc( NR_OF_TIMER_LISTS * sizeof( struct timer )  );
+    if ( !hash_table->timers )
+	goto error;
    /* inits the timers*/
     for(  i=0 ; i<NR_OF_TIMER_LISTS ; i++ )
     {
        hash_table->timers[i].first_cell = 0;
        hash_table->timers[i].last_cell = 0;
        //init_timerlist_lock( hash_table, (hash_table->timers)+i );
+       init_timerlist_lock( hash_table, i );
     }
 
+    /* allocs the retransmission timer's table */
+    hash_table->retr_timers = sh_malloc( NR_OF_RT_LISTS * sizeof (struct timer ) );
+    if ( !hash_table->retr_timers )
+	goto error;
    /* init the retransmission timers */
    for ( i=0; i<NR_OF_RT_LISTS; i++)
    {
        hash_table->timers[i].first_cell = 0;
        hash_table->timers[i].last_cell = 0;
        //init_retr_timer_lock( hash_table, (hash_table->timers)+i );
+       init_retr_timer_lock( hash_table, i );
    }
+
+
+
 
 #ifdef THREAD
    /* starts the timer thread/ process */

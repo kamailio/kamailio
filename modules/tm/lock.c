@@ -4,6 +4,10 @@
 #include "globals.h"
 #include "timer.h"
 
+/* semaphore probing limits */
+#define SEM_MIN		16
+#define SEM_MAX		4096
+
 /* we implement mutex here using System V semaphores; as number of
    sempahores is limited and number of synchronized elements
    high, we partition the sync'ed SER elements and share semaphores 
@@ -40,43 +44,82 @@ int sem_nr;
 
 int lock_initialize()
 {
+	int i;
+	int probe_run;
+
 	/* first try allocating semaphore sets with fixed number of semaphores */
+	DBG("lock initialization started\n");
 
 	/* transaction timers */
-	if ((transaction_timer_semaphore=init_semaphore_set( NR_OF_TIMER_LISTS) )==-1) {
+	if ((transaction_timer_semaphore=init_semaphore_set( NR_OF_TIMER_LISTS) ) < 0) {
 		DBG("transaction timer semaphore allocation failure\n");
 		goto error;
 	}
 
 	/* message retransmission timers */
-        if ((retrasmission_timer_semaphore=init_semaphore_set( NR_OF_RT_LISTS) )==-1) {
+        if ((retrasmission_timer_semaphore=init_semaphore_set( NR_OF_RT_LISTS) ) < 0) {
                 DBG("retransmission timer semaphore initialization failure\n");
                 goto error;
         }
 	
-	sem_nr=12;
-	/* probing should return if too big:
-		Solaris: EINVAL
-		Linux: ENOSPC
-	*/
-        if ((entry_semaphore=init_semaphore_set( sem_nr ) )==-1) {
-                DBG("retransmission timer semaphore initialization failure\n");
-                goto error;
-        }
 	
-	/* return number of  sempahores in the set */
+	i=SEM_MIN;
+	/* probing phase: 0=initial, 1=after the first failure */
+	probe_run=0;
+	do {
+		if (entry_semaphore>0) /* clean-up previous attempt */
+			semctl( entry_semaphore, 0 , IPC_RMID , 0 );
+		entry_semaphore=init_semaphore_set( i );
+		if (entry_semaphore==-1) {
+                        printf("ERROR: entry semaphore initialization failure:  %s\n", strerror( errno ) );
+			/* Solaris: EINVAL, Linux: ENOSPC */
+                        if (errno==EINVAL || errno==ENOSPC ) {
+                                /* first time: step back and try again */
+                                if (probe_run==0) {
+					DBG("INFO: first time sempahore allocation failure\n");
+                                        i--;
+                                        probe_run=1;
+                                        continue;
+				/* failure after we stepped back; give up */
+                                } else {
+					DBG("ERROR: second time sempahore allocation failure\n");
+					goto error;
+				}
+                        }
+			/* some other error occured: give up */
+                        goto error;
+                }
+		/* allocation succeeded */
+		if (probe_run==1) { /* if ok after we stepped back, we're done */
+			break;
+		} else { /* if ok otherwiese, try again with larger set */
+			if (i==SEM_MAX) break;
+			else {
+				i++;
+				continue;
+			}
+		}
+	} while(1);
+
+	sem_nr=i;	
+	/* return success */
+	printf("INFO: %d entry semaphores allocated\n", sem_nr );
 	return 0;
 error:
 	lock_cleanup();
 	return -1;
 }
 
+/* return -1 if semget failed, -2 if semctl failed */
 int init_semaphore_set( int size )
 {
 	int new_semaphore, i;
 
 	new_semaphore=semget ( IPC_PRIVATE, size, IPC_CREAT | IPC_PERMISSIONS );
-	if (new_semaphore==-1) return new_semaphore;
+	if (new_semaphore==-1) {
+		DBG("ERROR: failure to allocate a semaphore\n");
+		return -1;
+	}
 	for (i=0; i<size; i++) {
                 union semun {
                         int val;
@@ -89,7 +132,7 @@ int init_semaphore_set( int size )
 			DBG("ERROR: failure to initialize a semaphore\n");
 			if (semctl( entry_semaphore, 0 , IPC_RMID , 0 )==-1)
 				DBG("ERROR: failure to release a semaphore\n");
-			return -1;
+			return -2;
                 }
         }
 	return new_semaphore;
@@ -105,7 +148,7 @@ void lock_cleanup()
 	   no other process lives 
 	*/
 
-	DBG("clean-up still not implemented properly\n");
+	DBG("DEBUG: clean-up still not implemented properly\n");
 	/* sibling double-check missing here; install a signal handler */
 
 	if (entry_semaphore > 0 && 
@@ -123,12 +166,12 @@ void lock_cleanup()
 /* lock sempahore s */
 int lock( lock_t s )
 {
-	return change_sem( s, -1 );
+	return change_semaphore( s, -1 );
 }
 	
 int unlock( lock_t s )
 {
-	return change_sem( s, +1 );
+	return change_semaphore( s, +1 );
 }
 
 

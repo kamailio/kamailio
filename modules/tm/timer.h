@@ -18,7 +18,7 @@ enum retransmission_lists { RT_T1_TO1, RT_T1_TO_2, RT_T1_TO_3, RT_T2, NR_OF_RT_L
 /* WAIT timer ... tells how long state should persist in memory after
    a transaction was finalized
 */
-#define WT_TIME_OUT      32
+#define WT_TIME_OUT      16
 
 void put_in_tail_of_timer_list( struct s_table* hash_table, struct cell* p_cell,
                   int list_id, unsigned int time_out );

@@ -5,6 +5,8 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 
+#include "globals.h"
+
 /* typedef to structure we use for mutexing;
    currently, index to a semaphore set identifier now */
 typedef struct {
