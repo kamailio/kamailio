@@ -165,7 +165,7 @@ int remove_first_route(struct sip_msg* _m, struct hdr_field* _route)
  * Returns 0 on success, negative number on a failure
  * if _lr is set to 1, ;lr parameter will be used
  */
-static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
+static char *build_RR(struct sip_msg* _m, int* _l, int _lr, str* _ip)
 {
 	str user;
 	int len;
@@ -202,12 +202,15 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 	}
 	len += user.len + 1; /* '@' */
 
-	if (_m->rcv.bind_address->address.af == AF_INET6) {
-		len += _m->rcv.bind_address->address_str.len + 2;
+	if (_ip) {
+		len += _ip->len;
 	} else {
-		len += _m->rcv.bind_address->address_str.len;
+		if (_m->rcv.bind_address->address.af == AF_INET6) {
+			len += _m->rcv.bind_address->address_str.len + 2;
+		} else {
+			len += _m->rcv.bind_address->address_str.len;
+		}
 	}
-
 	if (_m->rcv.bind_address->port_no != SIP_PORT) {
 		len += _m->rcv.bind_address->port_no_str.len;
 	}
@@ -249,25 +252,30 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 	*p = '@';
 	p++;
 
-	switch(_m->rcv.bind_address->address.af) {
-	case AF_INET:
-		memcpy(p, _m->rcv.bind_address->address_str.s, _m->rcv.bind_address->address_str.len);
-		p += _m->rcv.bind_address->address_str.len;
-		break;
-		
-	case AF_INET6:
-		*p = '[';
-		p++;
-		memcpy(p, _m->rcv.bind_address->address_str.s, _m->rcv.bind_address->address_str.len);
-		p += _m->rcv.bind_address->address_str.len;
-		*p = ']';
-		p++;
-		break;
-		
-	default:
-		LOG(L_ERR, "build_RR(): Unsupported PF type: %d\n", _m->rcv.bind_address->address.af);
-		pkg_free(rr);
-		return 0;
+	if (_ip) {
+		memcpy(p, _ip->s, _ip->len);
+		p += _ip->len;
+	} else {
+		switch(_m->rcv.bind_address->address.af) {
+		case AF_INET:
+			memcpy(p, _m->rcv.bind_address->address_str.s, _m->rcv.bind_address->address_str.len);
+			p += _m->rcv.bind_address->address_str.len;
+			break;
+			
+		case AF_INET6:
+			*p = '[';
+			p++;
+			memcpy(p, _m->rcv.bind_address->address_str.s, _m->rcv.bind_address->address_str.len);
+			p += _m->rcv.bind_address->address_str.len;
+			*p = ']';
+			p++;
+			break;
+			
+		default:
+			LOG(L_ERR, "build_RR(): Unsupported PF type: %d\n", _m->rcv.bind_address->address.af);
+			pkg_free(rr);
+			return 0;
+		}
 	}
 	
 	if (_m->rcv.bind_address->port_no != SIP_PORT) {
@@ -322,17 +330,17 @@ int insert_RR(struct sip_msg* _m, str* _l)
 /*
  * Insert a new Record-Route header field
  */
-static inline int do_RR(struct sip_msg* _m, int _lr)
+static inline int do_RR(struct sip_msg* _m, int _lr, str* _ip)
 {
 	str b;
 	static unsigned int last_rr_msg;
 
 	if (_m->id == last_rr_msg) {
-			LOG(L_ERR, "record_route(): double attempt to record-route\n");
+			LOG(L_ERR, "record_route(): Double attempt to record-route\n");
 			return -1;
 	}
 	
-	b.s = build_RR(_m, &b.len, _lr);	
+	b.s = build_RR(_m, &b.len, _lr, _ip);	
 	if (!b.s) {
 		LOG(L_ERR, "record_route(): Error while building Record-Route line\n");
 		return -2;
@@ -354,7 +362,16 @@ static inline int do_RR(struct sip_msg* _m, int _lr)
  */
 int record_route(struct sip_msg* _m, char* _s1, char* _s2)
 {
-	return do_RR(_m, 1);
+	return do_RR(_m, 1, 0);
+}
+
+
+/*
+ * Insert a new Record_route header field with given IP address
+ */
+int record_route_ip(struct sip_msg* _m, char* _ip, char* _s2)
+{
+	return do_RR(_m, 1, (str*)_ip);
 }
 
 
@@ -363,5 +380,5 @@ int record_route(struct sip_msg* _m, char* _s1, char* _s2)
  */
 int record_route_strict(struct sip_msg* _m, char* _s1, char* _s2)
 {
-	return do_RR(_m, 0);
+	return do_RR(_m, 0, 0);
 }

@@ -98,6 +98,12 @@ int record_route(struct sip_msg* _m, char* _s1, char* _s2);
 
 
 /*
+ * Insert a new Record_route header field with given IP address
+ */
+int record_route_ip(struct sip_msg* _m, char* _ip, char* _s2);
+
+
+/*
  * Insert a new Record-Route header field without lr parameter
  */
 int record_route_strict(struct sip_msg* _m, char* _s1, char* _s2);

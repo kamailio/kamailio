@@ -31,6 +31,7 @@
  *  2003-03-11  updated to the new module interface (andrei)
  *  2003-03-16  flags export parameter added (janakj)
  *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
+ *  2003-04-01  Added record_route with ip address parameter (janakj)
  */
 
 
@@ -51,7 +52,7 @@ int append_fromtag = 1;
 
 static int mod_init(void);
 static int child_init(int rank);
-static int int_fixup(void** param, int param_no);
+static int str_fixup(void** param, int param_no);
 
 
 /*
@@ -66,10 +67,11 @@ static int int_fixup(void** param, int param_no);
  * Oh, BTW, have I mentioned already that you shouldn't use strict routing ?
  */
 static cmd_export_t cmds[]={
-	{"loose_route",         loose_route,         0, 0, REQUEST_ROUTE},
-	{"strict_route",        strict_route,        0, 0, 0            },
-	{"record_route",        record_route,        0, 0, REQUEST_ROUTE},
-	{"record_route_strict", record_route_strict, 0, 0, 0            },
+	{"loose_route",         loose_route,         0, 0,         REQUEST_ROUTE},
+	{"strict_route",        strict_route,        0, 0,         0            },
+	{"record_route",        record_route,        0, 0,         REQUEST_ROUTE},
+	{"record_route",        record_route_ip,     1, str_fixup, REQUEST_ROUTE},
+	{"record_route_strict", record_route_strict, 0, 0,         0            },
 	{0,0,0,0,0}
 };
 
@@ -114,23 +116,24 @@ static int child_init(int rank)
 }
 
 
-static int int_fixup(void** param, int param_no)
+/*  
+ * Convert char* parameter to str* parameter   
+ */
+static int str_fixup(void** param, int param_no)
 {
-	unsigned int qop;
-	int err;
+	str* s;
 	
 	if (param_no == 1) {
-		qop = str2s(*param, strlen(*param), &err);
-
-		if (err == 0) {
-			pkg_free(*param);
-			*param=(void*)qop;
-		} else {
-			LOG(L_ERR, "int_fixup(): Bad number <%s>\n",
-			    (char*)(*param));
+		s = (str*)pkg_malloc(sizeof(str));
+		if (!s) {
+			LOG(L_ERR, "str_fixup(): No memory left\n");
 			return E_UNSPEC;
 		}
+		
+		s->s = (char*)*param;
+		s->len = strlen(s->s);
+		*param = (void*)s;
 	}
-
+	
 	return 0;
 }
