@@ -51,6 +51,7 @@
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 #include "../../ut.h"
+#include "../../parser/digest/digest.h"
 
 
 /* rounds to the first 4 byte multiple on 32 bit archs 
@@ -154,6 +155,32 @@ inline struct via_body* via_body_cloner( char* new_buf,
 }
 
 
+static inline struct auth_body* auth_body_cloner(char* new_buf, char *org_buf, struct auth_body *auth, char **p)
+{
+	struct auth_body* new_auth;
+
+	new_auth = (struct auth_body*)(*p);
+	memcpy(new_auth , auth , sizeof(struct auth_body));
+	(*p) += ROUND4(sizeof(struct auth_body));
+	
+	     /* authorized field must be cloned elsewhere */
+	new_auth->digest.username.s = translate_pointer(new_buf, org_buf, auth->digest.username.s);
+	new_auth->digest.realm.s = translate_pointer(new_buf, org_buf, auth->digest.realm.s);
+	new_auth->digest.nonce.s = translate_pointer(new_buf, org_buf, auth->digest.nonce.s);
+	new_auth->digest.uri.s = translate_pointer(new_buf, org_buf, auth->digest.uri.s);
+	new_auth->digest.response.s = translate_pointer(new_buf, org_buf, auth->digest.response.s);
+	new_auth->digest.algorithm.s = translate_pointer(new_buf, org_buf, auth->digest.algorithm.s);
+	new_auth->digest.alg.alg_str.s = translate_pointer(new_buf, org_buf, auth->digest.alg.alg_str.s);
+	new_auth->digest.cnonce.s = translate_pointer(new_buf, org_buf, auth->digest.cnonce.s);
+	new_auth->digest.opaque.s = translate_pointer(new_buf, org_buf, auth->digest.opaque.s);
+	new_auth->digest.qop.qop_str.s = translate_pointer(new_buf, org_buf, auth->digest.qop.qop_str.s);
+	new_auth->digest.nc.s = translate_pointer(new_buf, org_buf, auth->digest.nc.s);
+	return new_auth;
+}
+
+
+#define AUTH_BODY_SIZE sizeof(struct auth_body)
+
 
 
 struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
@@ -204,6 +231,13 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 					/*via param*/
 					for(prm=via->param_lst;prm;prm=prm->next)
 						len+=ROUND4(sizeof(struct via_param ));
+				}
+				break;
+
+		        case HDR_AUTHORIZATION:
+		        case HDR_PROXYAUTH:
+				if (hdr->parsed) {
+					len += ROUND4(AUTH_BODY_SIZE);
 				}
 				break;
 			
@@ -462,12 +496,18 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 				break;
 			case HDR_AUTHORIZATION :
 				new_msg->authorization = new_hdr;
+				if (hdr->parsed) {
+					new_hdr->parsed = auth_body_cloner(new_msg->buf , org_msg->buf , (struct auth_body*)hdr->parsed , &p);
+				}
 				break;
 			case HDR_EXPIRES :
 				new_msg->expires = new_hdr;
 				break;
 			case HDR_PROXYAUTH :
 				new_msg->proxy_auth = new_hdr;
+				if (hdr->parsed) {
+					new_hdr->parsed = auth_body_cloner(new_msg->buf , org_msg->buf , (struct auth_body*)hdr->parsed , &p);
+				}
 				break;
 			case HDR_WWWAUTH :
 				new_msg->www_auth = new_hdr;
