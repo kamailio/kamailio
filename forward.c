@@ -312,7 +312,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p, int proto)
 		goto error1;
 	}
 	 /* send it! */
-	DBG("Sending:\n%s.\n", buf);
+	DBG("Sending:\n%.*s.\n", (int)len, buf);
 	DBG("orig. len=%d, new_len=%d, proto=%d\n", msg->len, len, proto );
 	
 	
@@ -510,8 +510,9 @@ int forward_reply(struct sip_msg* msg)
 		STATS_TX_RESPONSE(  (msg->first_line.u.reply.statuscode/100) );
 #endif
 
-	DBG(" reply forwarded to %s:%d\n", msg->via2->host.s,
-		(unsigned short) msg->via2->port);
+	DBG(" reply forwarded to %.*s:%d\n", 
+			msg->via2->host.len, msg->via2->host.s,
+			(unsigned short) msg->via2->port);
 
 	pkg_free(new_buf);
 	free(to);

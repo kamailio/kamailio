@@ -10,7 +10,7 @@ x fix 0 parameter module f. call
 x better Via parsing (handle ' ' in uri, eg: foo.bar : 1234 ; received=) and
  ipv6 addresses ([fec0:aa::01]).
 - fix format string vulnerability in log()
-- fix alignement access problems (warning on Sun)
+- fix alignment access problems (warning on Sun)
 x (different way) add request header bitmap field for the modules
 - introduce variables & function in the script language (cfg. file)
 
@@ -69,4 +69,5 @@ x freopen stdin, stdout, stderr to /dev/null
 x generic locking lib
 - convert tm to use new locking lib
 - tcp disable nagle & other socket stuff (close()?)
+- force add rport (setflag(rport)???)
 

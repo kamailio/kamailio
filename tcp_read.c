@@ -46,9 +46,9 @@
 #include "globals.h"
 #include "receive.h"
 #include "timer.h"
+#include "ut.h"
 
 
-#define q_memchr memchr
 
 /* reads next available bytes
  * return number of bytes read, 0 on EOF or -1 on error,
@@ -77,6 +77,7 @@ again:
 			return -1;
 		}
 	}
+	DBG("tcp_read: read %d bytes:\n%.*s\n", bytes_read, bytes_read, r->pos);
 	
 	r->pos+=bytes_read;
 	return bytes_read;
@@ -133,9 +134,13 @@ int tcp_read_headers(struct tcp_req *r, int fd)
 							  break
 
 
-	
-	bytes=tcp_read(r, fd);
-	if (bytes<=0) return bytes;
+	/* if we still have some unparsed part, parse it first, don't do the read*/
+	if (r->parsed<r->pos){
+		bytes=0;
+	}else{
+		bytes=tcp_read(r, fd);
+		if (bytes<=0) return bytes;
+	}
 	p=r->parsed;
 	
 	while(p<r->pos && r->error==TCP_REQ_OK){
@@ -154,7 +159,7 @@ int tcp_read_headers(struct tcp_req *r, int fd)
 			case H_SKIP:
 				/* find lf, we are in this state if we are not interested
 				 * in anything till end of line*/
-				p=q_memchr(p, '\n', r->pos-r->parsed);
+				p=q_memchr(p, '\n', r->pos-p);
 				if (p){
 					p++;
 					r->state=H_LF;
@@ -172,14 +177,18 @@ int tcp_read_headers(struct tcp_req *r, int fd)
 					case '\n':
 						/* found LF LF */
 						r->state=H_BODY;
+						DBG("tcp_read_headers: switching to H_BODY (lflf)\n");
 						if (r->has_content_len){
 							r->body=p+1;
 							r->bytes_to_go=r->content_len;
 							if (r->bytes_to_go==0){
 								r->complete=1;
+								p++;
 								goto skip;
 							}
 						}else{
+							DBG("tcp_read_headers: ERROR: no clen, p=%X\n",
+									*p);
 							r->error=TCP_REQ_BAD_LEN;
 						}
 						break;
@@ -193,14 +202,18 @@ int tcp_read_headers(struct tcp_req *r, int fd)
 				if (*p=='\n'){
 					/* found LF CR LF */
 					r->state=H_BODY;
+					DBG("tcp_read_headers: switching to H_BODY (lfcrlf)\n");
 					if (r->has_content_len){
 						r->body=p+1;
 						r->bytes_to_go=r->content_len;
 						if (r->bytes_to_go==0){
 							r->complete=1;
+							p++;
 							goto skip;
 						}
 					}else{
+						DBG("tcp_read_headers: ERROR: no clen, p=%X\n",
+									*p);
 						r->error=TCP_REQ_BAD_LEN;
 					}
 				}else r->state=H_SKIP;
@@ -342,17 +355,21 @@ int tcp_read_req(struct tcp_connection* con)
 		resp=CONN_RELEASE;
 		s=con->fd;
 		req=&con->req;
+		size=0;
+again:
 		if(req->complete==0 && req->error==TCP_REQ_OK){
 			bytes=tcp_read_headers(req, s);
 						/* if timeout state=0; goto end__req; */
 			DBG("read= %d bytes, parsed=%d, state=%d, error=%d\n",
-					bytes, req->parsed-req->buf, req->state, req->error );
+					bytes, req->parsed-req->start, req->state, req->error );
+			DBG("tcp_read_req: last char=%X, parsed msg=\n%.*s\n",
+					*(req->parsed-1), req->parsed-req->start, req->start);
 			if (bytes==-1){
 				LOG(L_ERR, "ERROR: tcp_read_req: error reading \n");
 				resp=CONN_ERROR;
 				goto end_req;
 			}
-			if (bytes==0){
+			if ((size==0) && (bytes==0)){
 				DBG( "tcp_read_req: EOF\n");
 				resp=CONN_EOF;
 				goto end_req;
@@ -360,15 +377,21 @@ int tcp_read_req(struct tcp_connection* con)
 		
 		}
 		if (req->error!=TCP_REQ_OK){
-			LOG(L_ERR,"ERROR: tcp_read_req: bad request, state=%d, error=%d\n",
-					req->state, req->error);
+			LOG(L_ERR,"ERROR: tcp_read_req: bad request, state=%d, error=%d "
+					  "buf:\n%.*s\nparsed:\n%.*s\n", req->state, req->error,
+					  req->pos-req->buf, req->buf,
+					  req->parsed-req->start, req->start);
+			DBG("- received from: port %d, ip -", ntohs(con->rcv.src_port));
+			print_ip(&con->rcv.src_ip); DBG("-\n");
 			resp=CONN_ERROR;
 			goto end_req;
 		}
 		if (req->complete){
 			DBG("tcp_read_req: end of header part\n");
+			DBG("- received from: port %d, ip - ", ntohs(con->rcv.src_port));
+			print_ip(&con->rcv.src_ip); DBG("-\n");
 			DBG("tcp_read_req: headers:\n%.*s.\n",
-					req->body-req->buf, req->buf);
+					req->body-req->start, req->start);
 			if (req->has_content_len){
 				DBG("tcp_read_req: content-length= %d\n", req->content_len);
 				DBG("tcp_read_req: body:\n%.*s\n", req->content_len,req->body);
@@ -383,7 +406,7 @@ int tcp_read_req(struct tcp_connection* con)
 			resp=CONN_RELEASE;
 			/* just for debugging use sendipv4 as receiving socket */
 			DBG("calling receive_msg(%p, %d, )\n",
-					req->buf, (int)(req->parsed-req->start));
+					req->start, (int)(req->parsed-req->start));
 			bind_address=sendipv4; /*&tcp_info[con->sock_idx];*/
 			con->rcv.proto_reserved1=con->id; /* copy the id */
 			if (receive_msg(req->start, req->parsed-req->start, &con->rcv)<0){
@@ -404,6 +427,8 @@ int tcp_read_req(struct tcp_connection* con)
 			req->state=H_SKIP_EMPTY;
 			req->complete=req->content_len=req->has_content_len=0;
 			req->bytes_to_go=0;
+			/* if we still have some unparsed bytes, try to  parse them too*/
+			if (size) goto again;
 			
 		}
 		
@@ -496,11 +521,13 @@ void tcp_receive_loop(int unix_sock)
 					LOG(L_ERR, "ERROR: tcp_receive_loop: read_fd:"
 									"no fd read\n");
 					resp=CONN_ERROR;
+					con->bad=1;
 					release_tcpconn(con, resp, unix_sock);
 				}
 				if (con==0){
 					LOG(L_ERR, "ERROR: tcp_receive_loop: null pointer\n");
 					resp=CONN_ERROR;
+					con->bad=1;
 					release_tcpconn(con, resp, unix_sock);
 				}
 				con->timeout=get_ticks()+TCP_CHILD_TIMEOUT;
@@ -524,6 +551,7 @@ void tcp_receive_loop(int unix_sock)
 					if (resp<0){
 						FD_CLR(con->fd, &master_set);
 						tcpconn_listrm(list, con, c_next, c_prev);
+						con->bad=1;
 						release_tcpconn(con, resp, unix_sock);
 					}else{
 						/* update timeout */

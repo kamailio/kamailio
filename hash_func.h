@@ -39,7 +39,6 @@
 int new_hash( str  call_id, str cseq_nr );
 int new_hash2( str  call_id, str cseq_nr );
 
-int init_hash();
 
 #define hash( cid, cseq) new_hash2( cid, cseq )
 

@@ -154,25 +154,11 @@ void hashtest_cycle( int hits[TABLE_ENTRIES+5], char *ip )
 				}
 }
 
-int init_hash()
-{
-	if (TABLE_ENTRIES != (1<<10)) {
-		LOG(L_WARN, "WARNING: hash function optimized for %d entries\n",
-			1<<10);
-		LOG(L_WARN, "WARNING: use of %d entries may lead "
-			"to unflat distribution\n", TABLE_ENTRIES );
-	} else {
-		DBG("DEBUG: hash function initialized with optimum table size\n");
-	}
-	return 1;
-}
-
 void hashtest()
 {
 	int hits[TABLE_ENTRIES+5];
 	int i;
 
-	init_hash();	
 	memset( hits, 0, sizeof hits );
 	hashtest_cycle( hits, "192.168.99.100" );
 	hashtest_cycle( hits, "172.168.99.100" );

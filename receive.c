@@ -28,6 +28,7 @@
  * ---------
  * 2003-01-29 transport-independent message zero-termination in
  *            receive_msg (jiri)
+ * 2003-02-07 undoed jiri's zero term. changes (they break tcp) (andrei)
  */
 
 
@@ -81,7 +82,6 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	/* zero termination (termination of orig message bellow not that
 	   useful as most of the work is done with scrath-pad; -jiri  */
 	/* buf[len]=0; */ /* WARNING: zero term removed! */
-	buf[len]=0; /* transport-independent zero-termination */
 	msg->rcv=*rcv_info;
 	msg->id=msg_no;
 #ifdef SCRATCH

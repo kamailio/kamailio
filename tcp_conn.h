@@ -36,10 +36,12 @@
 #define _tcp_conn_h
 
 #include "ip_addr.h"
+#include "locking.h"
 
 
 #define TCP_BUF_SIZE 65535
 #define TCP_CON_TIMEOUT 60 /* in  seconds */
+#define TCP_CON_SEND_TIMEOUT 30 /* timeout after a send */
 #define TCP_CHILD_TIMEOUT 5 /* after 5 seconds, the child "returns" 
 							 the connection to the tcp master process */
 #define TCP_MAIN_SELECT_TIMEOUT 5 /* how often "tcp main" checks for timeout*/
@@ -82,6 +84,7 @@ struct tcp_req{
 struct tcp_connection{
 	int s; /*socket, used by "tcp main" */
 	int fd; /* used only by "children", don't modify it! private data! */
+	lock_t write_lock;
 	int id; /* id (unique!) used to retrieve a specific connection when
 	           reply-ing*/
 	struct receive_info rcv; /* src & dst ip, ports, proto a.s.o*/
@@ -92,9 +95,10 @@ struct tcp_connection{
 	union sockaddr_union su;
 #endif
 	struct tcp_req req; /* request data */
-	int refcnt;
+	volatile int refcnt;
+	int bad; /* if set this is a "bad" connection */
 	int timeout; /* connection timeout, after this it will be removed*/
-	unsigned addr_hash; /* hash indexes in thge 2 tables */
+	unsigned addr_hash; /* hash indexes in the 2 tables */
 	unsigned id_hash;
 	struct tcp_connection* next; /* next, prev in hash table, used by "main" */
 	struct tcp_connection* prev;

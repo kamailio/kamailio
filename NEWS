@@ -38,6 +38,7 @@ New features
 - powerpc fast locking support
 - netbsd support
 - 64 bits arch. support (e.g. netbsd/sparc64).
+- tcp2udp and udp2tcp stateless forwarding (see forward_udp & forward_tcp)
 
 Changes to use of ser scripts
 =============================

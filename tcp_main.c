@@ -38,6 +38,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/uio.h>  /* writev*/
 
 #include <unistd.h>
 
@@ -102,9 +103,15 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	}
 	c->s=sock;
 	c->fd=-1; /* not initialized */
+	if (lock_init(&c->write_lock)==0){
+		LOG(L_ERR, "ERROR: tcpconn_add: init lock failed\n");
+		goto error;
+	}
+	
 	c->rcv.src_su=*su;
 	
 	c->refcnt=0;
+	c->bad=0;
 	su2ip_addr(&c->rcv.src_ip, su);
 	c->rcv.src_port=su_getport(su);
 	c->rcv.proto=PROTO_TCP;
@@ -171,6 +178,16 @@ struct tcp_connection*  tcpconn_add(struct tcp_connection *c)
 }
 
 
+/* unsafe tcpconn_rm version (nolocks) */
+void _tcpconn_rm(struct tcp_connection* c)
+{
+	tcpconn_listrm(tcpconn_addr_hash[c->addr_hash], c, next, prev);
+	tcpconn_listrm(tcpconn_id_hash[c->id_hash], c, id_next, id_prev);
+	lock_destroy(&c->write_lock);
+	shm_free(c);
+}
+
+
 
 void tcpconn_rm(struct tcp_connection* c)
 {
@@ -178,6 +195,7 @@ void tcpconn_rm(struct tcp_connection* c)
 	tcpconn_listrm(tcpconn_addr_hash[c->addr_hash], c, next, prev);
 	tcpconn_listrm(tcpconn_id_hash[c->id_hash], c, id_next, id_prev);
 	TCPCONN_UNLOCK;
+	lock_destroy(&c->write_lock);
 	shm_free(c);
 }
 
@@ -198,7 +216,7 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port)
 			DBG("c=%p, c->id=%d, ip=",c, c->id);
 			print_ip(&c->rcv.src_ip);
 			DBG(" port=%d\n", ntohs(c->rcv.src_port));
-			if (id==c->id) return c;
+			if ((id==c->id)&&(!c->bad)) return c;
 		}
 	}else if (ip){
 		hash=tcp_addr_hash(ip, port);
@@ -206,7 +224,8 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port)
 			DBG("c=%p, c->id=%d, ip=",c, c->id);
 			print_ip(&c->rcv.src_ip);
 			DBG(" port=%d\n", ntohs(c->rcv.src_port));
-			if ( (port==c->rcv.src_port) && (ip_addr_cmp(ip, &c->rcv.src_ip)) )
+			if ( (!c->bad) && (port==c->rcv.src_port) &&
+					(ip_addr_cmp(ip, &c->rcv.src_ip)) )
 				return c;
 		}
 	}
@@ -215,13 +234,17 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port)
 
 
 
-/* _tcpconn_find with locks */
-struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port)
+/* _tcpconn_find with locks and timeout */
+struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port,
+									int timeout)
 {
 	struct tcp_connection* c;
 	TCPCONN_LOCK;
 	c=_tcpconn_find(id, ip, port);
-	if (c) c->refcnt++;
+	if (c){ 
+			c->refcnt++;
+			c->timeout=get_ticks()+timeout;
+	}
 	TCPCONN_UNLOCK;
 	return c;
 }
@@ -249,9 +272,9 @@ int tcp_send(char* buf, unsigned len, union sockaddr_union* to, int id)
 	if (to){
 		su2ip_addr(&ip, to);
 		port=su_getport(to);
-		c=tcpconn_get(id, &ip, port); /* lock ;inc refcnt; unlock */
+		c=tcpconn_get(id, &ip, port, TCP_CON_SEND_TIMEOUT); 
 	}else if (id){
-		c=tcpconn_get(id, 0, 0);
+		c=tcpconn_get(id, 0, 0, TCP_CON_SEND_TIMEOUT);
 	}else{
 		LOG(L_CRIT, "BUG: tcp_send called with null id & to\n");
 		return -1;
@@ -260,7 +283,8 @@ int tcp_send(char* buf, unsigned len, union sockaddr_union* to, int id)
 	if (id){
 		if (c==0) {
 			if (to){
-				c=tcpconn_get(0, &ip, port); /* try again w/o id */
+				/* try again w/o id */
+				c=tcpconn_get(0, &ip, port, TCP_CON_SEND_TIMEOUT);
 				goto no_id;
 			}else{
 				LOG(L_ERR, "ERROR: tcp_send: id %d not found, dropping\n",
@@ -323,8 +347,27 @@ get_fd:
 	
 send_it:
 	DBG("tcp_send: sending...\n");
-	n=write(fd, buf, len);
+	lock_get(&c->write_lock);
+	n=send(fd, buf, len, MSG_NOSIGNAL);
+	lock_release(&c->write_lock);
 	DBG("tcp_send: after write: c= %p n=%d fd=%d\n",c, n, fd);
+	DBG("tcp_send: buf=\n%.*s\n", (int)len, buf);
+	if (n<0){
+		LOG(L_ERR, "ERROR: tcpsend: failed to send, n=%d: %s (%d)\n",
+				n, strerror(errno), errno);
+		/* error on the connection , mark it as bad and set 0 timeout */
+		c->bad=1;
+		c->timeout=0;
+		/* tell "main" it should drop this (optional it will t/o anyway?)*/
+		response[0]=(long)c;
+		response[1]=CONN_ERROR;
+		n=write(unix_tcp_sock, response, sizeof(response));
+		if (n<0){
+			LOG(L_ERR, "BUG: tcp_send: failed to get fd(write):%s (%d)\n",
+					strerror(errno), errno);
+			goto release_c;
+		}
+	}
 end:
 	close(fd);
 release_c:
@@ -343,6 +386,7 @@ void tcpconn_timeout(fd_set* set)
 	
 	
 	ticks=get_ticks();
+	TCPCONN_LOCK; /* fixme: we can lock only on delete IMO */
 	for(h=0; h<TCP_ADDR_HASH_SIZE; h++){
 		c=tcpconn_addr_hash[h];
 		while(c){
@@ -354,11 +398,12 @@ void tcpconn_timeout(fd_set* set)
 					FD_CLR(c->s, set);
 					close(c->s);
 				}
-				tcpconn_rm(c);
+				_tcpconn_rm(c);
 			}
 			c=next;
 		}
 	}
+	TCPCONN_UNLOCK;
 }
 
 
@@ -515,8 +560,12 @@ void tcp_main_loop()
 					if(send2child(tcpconn)<0){
 						LOG(L_ERR,"ERROR: tcp_main_loop: no children "
 								"available\n");
-						close(tcpconn->s);
-						tcpconn_rm(tcpconn);
+						TCPCONN_LOCK;
+						if (tcpconn->refcnt==0){
+							close(tcpconn->s);
+							_tcpconn_rm(tcpconn);
+						}else tcpconn->timeout=0; /* force expire */
+						TCPCONN_UNLOCK;
 					}
 				}
 			}
@@ -536,8 +585,12 @@ void tcp_main_loop()
 					if (send2child(tcpconn)<0){
 						LOG(L_ERR,"ERROR: tcp_main_loop: no "
 									"children available\n");
-						close(tcpconn->s);
-						tcpconn_rm(tcpconn);
+						TCPCONN_LOCK;
+						if (tcpconn->refcnt==0){
+							close(tcpconn->s);
+							_tcpconn_rm(tcpconn);
+						}else tcpconn->timeout=0; /* force expire*/
+						TCPCONN_UNLOCK;
 					}
 				}
 			}
@@ -578,13 +631,14 @@ read_again:
 						}
 						tcpconn=(struct tcp_connection*)response[0];
 						if (tcpconn){
-							tcpconn->refcnt--;
-							DBG("tcp_main_loop: %p refcnt= %d\n", 
-									tcpconn, tcpconn->refcnt);
+								if (tcpconn->bad) goto tcpconn_destroy;
 								FD_SET(tcpconn->s, &master_set);
 								if (maxfd<tcpconn->s) maxfd=tcpconn->s;
 								/* update the timeout*/
 								tcpconn->timeout=get_ticks()+TCP_CON_TIMEOUT;
+								tcpconn_put(tcpconn);
+								DBG("tcp_main_loop: %p refcnt= %d\n", 
+									tcpconn, tcpconn->refcnt);
 						}
 						break;
 					case CONN_ERROR:
@@ -597,14 +651,23 @@ read_again:
 						}
 						tcpconn=(struct tcp_connection*)response[0];
 						if (tcpconn){
+							if (tcpconn->s!=-1)
+								FD_CLR(tcpconn->s, &master_set);
+		tcpconn_destroy:
+							TCPCONN_LOCK; /*avoid races w/ tcp_send*/
 							tcpconn->refcnt--;
-							if (tcpconn->refcnt==0){
+							if (tcpconn->refcnt==0){ 
 								DBG("tcp_main_loop: destroying connection\n");
 								close(tcpconn->s);
-								tcpconn_rm(tcpconn);
+								_tcpconn_rm(tcpconn);
 							}else{
+								/* force timeout */
+								tcpconn->timeout=0;
+								tcpconn->bad=1;
 								DBG("tcp_main_loop: delaying ...\n");
+								
 							}
+							TCPCONN_UNLOCK;
 						}
 						break;
 					case CONN_GET_FD:
