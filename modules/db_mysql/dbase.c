@@ -35,7 +35,8 @@
 #include "../../dprint.h"
 #include "utils.h"
 #include "val.h"
-#include "con_mysql.h"
+#include "my_con.h"
+#include "my_pool.h"
 #include "res.h"
 #include "dbase.h"
 
@@ -43,95 +44,6 @@
 #define SQL_BUF_LEN 65536
 
 static char sql_buf[SQL_BUF_LEN];
-
-
-/*
- * Establish a database connection,
- * returns 1 on success, 0 otherwise
- * _h is a handle used in communication with database
- *
- * URL is in form mysql://user:password@host:port/database
- */
-static int connect_db(db_con_t* _h, const char* _db_url)
-{
-	int p, l, res;
-	char* user, *password, *host, *port, *database;
-	char* buf;
-
-	if ((!_h) || (!_db_url)) {
-		LOG(L_ERR, "connect_db(): Invalid parameter value\n");
-		return -1;
-	}
-
-	CON_CONNECTED(_h) = 0;
-
-	     /* Make a scratch pad copy of given SQL URL */
-	l = strlen(_db_url);
-	buf = (char*)pkg_malloc(l + 1);
-	if (!buf) {
-		LOG(L_ERR, "connect_db(): Not enough memory\n");
-		return -2;
-	}
-	memcpy(buf, _db_url, l + 1);
-
-	res = parse_mysql_url(buf, &user, &password, &host, &port, &database);
-	if (port && *port) {
-		p = atoi(port);
-	} else {
-		p = 0;
-	}
-	
-	if (res < 0) {
-		LOG(L_ERR, "connect_db(): Error while parsing SQL URL\n");
-		pkg_free(buf);
-		return -3;
-	}
-
-	CON_CONNECTION(_h) = (MYSQL*)pkg_malloc(sizeof(MYSQL));
-	if (!CON_CONNECTION(_h)) {
-		LOG(L_ERR, "connect_db(): No enough memory\n");
-		pkg_free(buf);
-		return -4;
-	}
-
-	mysql_init(CON_CONNECTION(_h));
-
-	if (!mysql_real_connect(CON_CONNECTION(_h), host, user, password, database, p, 0, 0)) {
-		LOG(L_ERR, "connect_db(): %s\n", mysql_error(CON_CONNECTION(_h)));
-		mysql_close(CON_CONNECTION(_h));
-		pkg_free(buf);
-		pkg_free(CON_CONNECTION(_h));
-		return -5;
-	}
-
-	pkg_free(buf);
-	CON_CONNECTED(_h) = 1;
-	return 0;
-}
-
-
-/*
- * Disconnect database connection
- *
- * disconnects database connection represented by _handle
- * returns 1 on success, 0 otherwise
- */
-static int disconnect_db(db_con_t* _h)
-{
-	if (!_h) {
-		LOG(L_ERR, "disconnect_db(): Invalid parameter value\n");
-		return -1;
-	}
-
-	if (CON_CONNECTED(_h) == 1) {
-		mysql_close(CON_CONNECTION(_h));
-		CON_CONNECTED(_h) = 0;
-		pkg_free(CON_CONNECTION(_h));
-		return 0;
-	} else {
-		return -2;
-	}
-}
 
 
 /*
@@ -272,25 +184,26 @@ static int print_set(char* _b, int _l, db_key_t* _k, db_val_t* _v, int _n)
  * Initialize database module
  * No function should be called before this
  */
-db_con_t* db_init(const char* _sqlurl)
+db_con_t* db_init(const char* _url)
 {
 	db_con_t* res;
 
-	if (!_sqlurl) {
+	if (!_url) {
 		LOG(L_ERR, "db_init(): Invalid parameter value\n");
 		return 0;
 	}
 
-	res = pkg_malloc(sizeof(db_con_t) + sizeof(struct con_mysql));
+	res = pkg_malloc(sizeof(db_con_t) + sizeof(struct my_con*));
 	if (!res) {
 		LOG(L_ERR, "db_init(): No memory left\n");
 		return 0;
-	} else {
-		memset(res, 0, sizeof(db_con_t) + sizeof(struct con_mysql));
 	}
+	memset(res, 0, sizeof(db_con_t) + sizeof(struct my_con*));
 
-	if (connect_db(res, _sqlurl) < 0) {
-		LOG(L_ERR, "db_init(): Error while trying to connect database\n");
+	(struct my_con*)res->tail = get_connection(_url);
+
+	if (!res->tail) {
+		LOG(L_ERR, "db_init(): Could not create a connection\n");
 		pkg_free(res);
 		return 0;
 	}
@@ -310,13 +223,8 @@ void db_close(db_con_t* _h)
 		return;
 	}
 
-	disconnect_db(_h);
-	if (CON_RESULT(_h)) {
-		mysql_free_result(CON_RESULT(_h));
-	}
-	if (CON_TABLE(_h)) {
-		pkg_free(CON_TABLE(_h));
-	}
+	release_connection((struct my_con*)_h->tail);
+	if (CON_TABLE(_h)) pkg_free(CON_TABLE(_h));
 	pkg_free(_h);
 }
 

@@ -32,7 +32,7 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "row.h"
-#include "con_mysql.h"
+#include "my_con.h"
 #include "res.h"
 
 
