@@ -70,12 +70,14 @@
 #define AVPOPS_OP_LT        (1<<17)
 #define AVPOPS_OP_GT        (1<<18)
 #define AVPOPS_OP_RE        (1<<19)
+#define AVPOPS_OP_FM        (1<<20)
 
 /* flags for flags    24..31 */
 #define AVPOPS_FLAG_ALL     (1<<24)
 #define AVPOPS_FLAG_CI      (1<<25)
 #define AVPOPS_FLAG_USER    (1<<26)
 #define AVPOPS_FLAG_DOMAIN  (1<<27)
+#define AVPOPS_FLAG_DELETE  (1<<28)
 
 
 /* container structer for Flag+Int_Str_value parameter */
@@ -116,6 +118,9 @@ int ops_pushto_avp( struct sip_msg* msg, struct fis_param* dst,
 
 int ops_check_avp( struct sip_msg* msg, struct fis_param* param,
 								struct fis_param* check);
+
+int ops_copy_avp( struct sip_msg* msg, struct fis_param* name1,
+								struct fis_param* name2);
 
 int ops_print_avp();
 

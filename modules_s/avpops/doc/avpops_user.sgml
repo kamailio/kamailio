@@ -546,7 +546,7 @@ avp_pushto("Foo","$bar/g");
 					op_value = operator '/' value ['/'flags]
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					operator = 'eq' | 'lt' | 'gt' | 're'
+					operator = 'eq' | 'lt' | 'gt' | 're' | 'fm'
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
 					value = variable | fix_value
@@ -571,6 +571,53 @@ avp_check("i:678", "lt/i:345/g");
 avp_check("s:person","eq/$from/I");
 avp_check("s:foo","gt/$bar/g");
 avp_check("s:foo","re/sip:.*@bar.net/g");
+avp_check("s:foo","fm/$fm_avp/g");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_copy(old_name,new_name)
+				</function>
+			</title>
+			<para>
+			Copy / move an avp under a new name.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>name1</emphasis> - which AVP(s) should be 
+				copied/moved.
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = ( avp_name | avp_alias )
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>name2</emphasis> - the new name of the 
+				copied/moved AVP(s).
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = ( avp_name | avp_alias ) ['/'flags]
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					flags = 'g' | 'G' | 'd' | 'D'
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>avp_copy</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_copy("i:678", "s:345/g");
+avp_copy("$old","$new/gd");
 ...
 				</programlisting>
 			</example>

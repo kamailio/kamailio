@@ -29,6 +29,8 @@
  *  2004-10-04  first version (ramona)
  *  2004-11-15  added support for db schemes for avp_db_load (ramona)
  *  2004-11-17  aligned to new AVP core global aliases (ramona)
+ *  2005-01-30  "fm" (fast match) operator added (ramona)
+ *  2005-01-30  avp_copy (copy/move operation) added (ramona)
  */
 
 
@@ -70,6 +72,7 @@ static int fixup_write_avp(void** param, int param_no);
 static int fixup_delete_avp(void** param, int param_no);
 static int fixup_pushto_avp(void** param, int param_no);
 static int fixup_check_avp(void** param, int param_no);
+static int fixup_copy_avp(void** param, int param_no);
 
 static int w_dbload_avps(struct sip_msg* msg, char* source, char* param);
 static int w_dbstore_avps(struct sip_msg* msg, char* source, char* param);
@@ -78,6 +81,7 @@ static int w_write_avps(struct sip_msg* msg, char* source, char* param);
 static int w_delete_avps(struct sip_msg* msg, char* param, char *foo);
 static int w_pushto_avps(struct sip_msg* msg, char* destination, char *param);
 static int w_check_avps(struct sip_msg* msg, char* param, char *check);
+static int w_copy_avps(struct sip_msg* msg, char* param, char *check);
 static int w_print_avps(struct sip_msg* msg, char* foo, char *bar);
 
 
@@ -99,6 +103,8 @@ static cmd_export_t cmds[] = {
 	{"avp_pushto", w_pushto_avps, 2, fixup_pushto_avp,
 									REQUEST_ROUTE|FAILURE_ROUTE},
 	{"avp_check", w_check_avps, 2, fixup_check_avp,
+									REQUEST_ROUTE|FAILURE_ROUTE},
+	{"avp_copy",  w_copy_avps, 2,  fixup_copy_avp,
 									REQUEST_ROUTE|FAILURE_ROUTE},
 	{"avp_print", w_print_avps, 0, 0,
 									REQUEST_ROUTE|FAILURE_ROUTE},
@@ -617,7 +623,7 @@ static int fixup_check_avp(void** param, int param_no)
 		{
 			if ( (ap->flags&AVPOPS_VAL_STR)==0 )
 			{
-				LOG(L_ERR,"ERROR:avpops:fixup_check_avp: regexp operation"
+				LOG(L_ERR,"ERROR:avpops:fixup_check_avp: regexp operation "
 					"requires string value\n");
 				return E_UNSPEC;
 			}
@@ -639,6 +645,74 @@ static int fixup_check_avp(void** param, int param_no)
 			/* free the string and link the regexp */
 			pkg_free(ap->val.s);
 			ap->val.s = (str*)re;
+		} else if (ap->flags&AVPOPS_OP_FM) {
+			if ( !( ap->flags&AVPOPS_VAL_AVP ||
+			(!(ap->flags&AVPOPS_VAL_AVP) && ap->flags&AVPOPS_VAL_STR) ) )
+			{
+				LOG(L_ERR,"ERROR:avpops:fixup_check_avp: fast_match operation "
+					"requires string value or avp name/alias (%d)\n",
+					ap->flags);
+				return E_UNSPEC;
+			}
+		}
+	}
+
+	pkg_free(*param);
+	*param=(void*)ap;
+	return 0;
+}
+
+
+static int fixup_copy_avp(void** param, int param_no)
+{
+	struct fis_param *ap;
+	char *s;
+	char *p;
+
+	s = (char*)*param;
+	ap = 0;
+	p = 0;
+
+	if (param_no==2)
+	{
+		/* avp / flags */
+		if ( (p=strchr(s,'/'))!=0 )
+			*(p++)=0;
+	}
+
+	if ( (ap=get_attr_or_alias(s))==0 )
+	{
+		LOG(L_ERR,"ERROR:avpops:fixup_copy_avp: bad attribute name"
+			"/alias <%s>\n", (char*)*param);
+		return E_UNSPEC;
+	}
+	/* attr name is mandatory */
+	if (ap->flags&AVPOPS_VAL_NONE)
+	{
+		LOG(L_ERR,"ERROR:avpops:fixup_copy_avp: you must specify "
+			"a name for the AVP\n");
+		return E_UNSPEC;
+	}
+
+	if (param_no==2)
+	{
+		/* flags */
+		for( ; p&&*p ; p++ )
+		{
+			switch (*p) {
+				case 'g':
+				case 'G':
+					ap->flags|=AVPOPS_FLAG_ALL;
+					break;
+				case 'd':
+				case 'D':
+					ap->flags|=AVPOPS_FLAG_DELETE;
+					break;
+				default:
+					LOG(L_ERR,"ERROR:avpops:fixup_copy_avp: bad flag "
+						"<%c>\n",*p);
+					return E_UNSPEC;
+			}
 		}
 	}
 
@@ -693,6 +767,12 @@ static int w_check_avps(struct sip_msg* msg, char* param, char *check)
 {
 	return ops_check_avp ( msg, (struct fis_param*)param,
 								(struct fis_param*)check);
+}
+
+static int w_copy_avps(struct sip_msg* msg, char* name1, char *name2)
+{
+	return ops_copy_avp ( msg, (struct fis_param*)name1,
+								(struct fis_param*)name2);
 }
 
 static int w_print_avps(struct sip_msg* msg, char* foo, char *bar)

@@ -27,12 +27,15 @@
  * History:
  * ---------
  *  2004-10-04  first version (ramona)
+ *  2005-01-30  "fm" (fast match) operator added (ramona)
+ *  2005-01-30  avp_copy (copy/move operation) added (ramona)
  */
 
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <regex.h>
+#include <fnmatch.h>
 
 #include "../../ut.h"
 #include "../../dprint.h"
@@ -936,6 +939,9 @@ cycle2:
 		} else if (val->flags&AVPOPS_OP_RE) {
 			if (regexec((regex_t*)ck_val.s, avp_val.s->s, 1, &pmatch, 0)==0)
 				return 1;
+		} else if (val->flags&AVPOPS_OP_FM){
+			if (fnmatch( ck_val.s->s, avp_val.s->s, 0)==0)
+				return 1;
 		} else {
 			LOG(L_CRIT,"BUG:avpops:check_avp: unknown operation "
 				"(flg=%d)\n",val->flags);
@@ -975,6 +981,55 @@ next:
 
 	DBG("DEBUG:avpops:check_avp: checked failed\n");
 	return -1; /* check failed */
+error:
+	return -1;
+}
+
+
+
+int ops_copy_avp( struct sip_msg* msg, struct fis_param* name1,
+													struct fis_param* name2)
+{
+	struct usr_avp *avp;
+	struct usr_avp *prev_avp;
+	int_str         avp_val;
+	unsigned short name_type1;
+	unsigned short name_type2;
+	int n;
+
+	n = 0;
+	prev_avp = 0;
+
+	/* avp name is known ->search by name */
+	name_type1 = (((name1->flags&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
+	name_type2 = (((name2->flags&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
+
+	avp = search_first_avp( name_type1, name1->val, &avp_val);
+	while ( avp )
+	{
+		/* build a new avp with new name, but old value */
+		if ( add_avp( name_type2|(avp->flags&AVP_VAL_STR), name2->val,
+		avp_val)==-1 ) {
+			LOG(L_ERR,"ERROR:avpops:copy_avp: failed to create new avp\n");
+			goto error;
+		}
+		n++;
+		/* copy all avps? */
+		if ( !(name2->flags&AVPOPS_FLAG_ALL) ) {
+			/* delete the old one? */
+			if (name2->flags&AVPOPS_FLAG_DELETE)
+				destroy_avp( avp );
+			break;
+		} else {
+			prev_avp = avp;
+			avp = search_next_avp( prev_avp, &avp_val);
+			/* delete the old one? */
+			if (name2->flags&AVPOPS_FLAG_DELETE)
+				destroy_avp( prev_avp );
+		}
+	}
+
+	return n?1:-1;
 error:
 	return -1;
 }

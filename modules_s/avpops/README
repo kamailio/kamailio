@@ -44,7 +44,8 @@ Ramona-Elena Modroiu
               1.4.5. avp_delete(name) 
               1.4.6. avp_pushto(destination,name) 
               1.4.7. avp_check(name,op_value) 
-              1.4.8. avp_print() 
+              1.4.8. avp_copy(old_name,new_name) 
+              1.4.9. avp_print() 
 
         1.5. Installation & Running
 
@@ -70,7 +71,8 @@ Ramona-Elena Modroiu
    1-16. avp_delete usage
    1-17. avp_pushto usage
    1-18. avp_check usage
-   1-19. avp_print usage
+   1-19. avp_copy usage
+   1-20. avp_print usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -390,7 +392,7 @@ avp_pushto("Foo","$bar/g");
      * op_value - define the operator, the value and flags for
        checking. Parameter syntax is:
           + op_value = operator '/' value ['/'flags] 
-          + operator = 'eq' | 'lt' | 'gt' | 're' 
+          + operator = 'eq' | 'lt' | 'gt' | 're' | 'fm' 
           + value = variable | fix_value 
           + variable =
             '$from'|'$ruri'|'$from'|'$src_ip'|avp_alias 
@@ -403,15 +405,37 @@ avp_check("i:678", "lt/i:345/g");
 avp_check("s:person","eq/$from/I");
 avp_check("s:foo","gt/$bar/g");
 avp_check("s:foo","re/sip:.*@bar.net/g");
+avp_check("s:foo","fm/$fm_avp/g");
 ...
      _________________________________________________________
 
-1.4.8. avp_print()
+1.4.8. avp_copy(old_name,new_name)
+
+   Copy / move an avp under a new name.
+
+   Meaning of the parameters is as follows:
+
+     * name1 - which AVP(s) should be copied/moved. Parameter
+       syntax is:
+          + name = ( avp_name | avp_alias ) 
+     * name2 - the new name of the copied/moved AVP(s). Parameter
+       syntax is:
+          + name = ( avp_name | avp_alias ) ['/'flags] 
+          + flags = 'g' | 'G' | 'd' | 'D' 
+
+   Example 1-19. avp_copy usage
+...
+avp_copy("i:678", "s:345/g");
+avp_copy("$old","$new/gd");
+...
+     _________________________________________________________
+
+1.4.9. avp_print()
 
    Prints the list with all the AVPs from memory. This is only a
    helper/debug function.
 
-   Example 1-19. avp_print usage
+   Example 1-20. avp_print usage
 ...
 avp_print();
 ...

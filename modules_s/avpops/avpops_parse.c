@@ -355,6 +355,8 @@ struct fis_param* parse_check_value(char *s)
 		flags |= AVPOPS_OP_GT;
 	} else if (strncasecmp(s,"re",2)==0) {
 		flags |= AVPOPS_OP_RE;
+	} else if (strncasecmp(s,"fm",2)==0) {
+		flags |= AVPOPS_OP_FM;
 	} else {
 		LOG(L_ERR,"ERROR:avpops:parse_check_value: unknown operation "
 			"<%.*s>\n",2,s);
