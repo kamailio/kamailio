@@ -57,7 +57,7 @@ struct ip_node* init_ip_tree(int maximum_hits)
 
 
 
-struct ip_node *split_node(struct ip_node* dad, char byte)
+struct ip_node *split_node(struct ip_node* dad, unsigned char byte)
 {
 	struct ip_node *new_node;
 	struct ip_node *foo;
@@ -91,7 +91,7 @@ struct ip_node *split_node(struct ip_node* dad, char byte)
 
 
 
-struct ip_node* add_node(struct ip_node *root,char *ip,int ip_len,
+struct ip_node* add_node(struct ip_node *root,unsigned char *ip,int ip_len,
 										struct ip_node **father,char *flag)
 {
 	struct ip_node *node;
