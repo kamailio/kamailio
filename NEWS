@@ -72,6 +72,7 @@ acc module:
 - acc_flag is now called log_flag to better reflect it relates
   to the syslog mode (as opposed to sql/radius); for the same
   reasons, the accounting action is now called "acc_log_request"
+  and the option for missed calls "log_missed_calls"
 - log_fmt allows now to specify what will be printed to syslog
 
 auth module:
