@@ -1,0 +1,656 @@
+diff -ruib sip_router_orig/modules/tm/h_table.c sip_router/modules/tm/h_table.c
+--- sip_router_orig/modules/tm/h_table.c	2003-04-04 05:21:59.000000000 +0200
++++ sip_router/modules/tm/h_table.c	2003-08-12 16:25:54.000000000 +0200
+@@ -105,6 +105,7 @@
+ 	int i;
+ 	struct sip_msg *rpl;
+ 	struct totag_elem *tt, *foo;
++	struct tm_callback_s *cbs, *bar;
+ 
+ 	release_cell_lock( dead_cell );
+ 	shm_lock();
+@@ -115,8 +116,19 @@
+ 	if ( dead_cell->uas.response.buffer )
+ 		shm_free_unsafe( dead_cell->uas.response.buffer );
+ 
++#ifndef OLD_TMCB_OBSOLETE
+ 	/* completion callback */
+ 	if (dead_cell->cbp) shm_free_unsafe(dead_cell->cbp);
++#endif
++	/* callbacks */
++	for(i=1;i<TMCB_END ;i++) {
++		cbs = dead_cell->cb_array[i];
++		while(cbs) {
++			bar = cbs;
++			cbs = cbs->next;
++			shm_free_unsafe( bar );
++		}
++	}
+ 
+ 	/* UA Clients */
+ 	for ( i =0 ; i<dead_cell->nr_of_outgoings;  i++ )
+@@ -184,11 +196,13 @@
+ 	/*fprintf(stderr,"before clone VIA |%.*s|\n",via_len(p_msg->via1),
+ 		via_s(p_msg->via1,p_msg));*/
+ 
++#ifndef OLD_TMCB_OBSOLETE
+ 	/* enter callback, which may potentially want to parse some stuff,
+ 	   before the request is shmem-ized
+ 	*/ 
+     if (p_msg) callback_event(TMCB_REQUEST_IN, new_cell, p_msg,
+             p_msg->REQ_METHOD );
++#endif
+ 
+ 	if (p_msg) {
+ 		new_cell->uas.request = sip_msg_cloner(p_msg);
+diff -ruib sip_router_orig/modules/tm/h_table.h sip_router/modules/tm/h_table.h
+--- sip_router_orig/modules/tm/h_table.h	2003-04-07 08:36:56.000000000 +0200
++++ sip_router/modules/tm/h_table.h	2003-08-06 17:41:47.000000000 +0200
+@@ -189,6 +189,9 @@
+ 	   during freeing transaction too
+ 	*/
+ 	void *cbp;
++	/* callbacks and parameters; the params MUST be in shared memory and will
++	 * NOT be freed by TM  */
++	struct tm_callback_s* cb_array[ TMCB_END ];
+ 
+ 	/* how many processes are currently processing this transaction ;
+ 	   note that only processes working on a request/reply belonging
+diff -ruib sip_router_orig/modules/tm/t_fwd.c sip_router/modules/tm/t_fwd.c
+--- sip_router_orig/modules/tm/t_fwd.c	2003-07-08 14:39:13.000000000 +0200
++++ sip_router/modules/tm/t_fwd.c	2003-08-06 16:34:12.000000000 +0200
+@@ -83,8 +83,12 @@
+ 	/* ... update uri ... */
+ 	i_req->new_uri=*uri;
+ 
++#ifndef OLD_TMCB_OBSOLETE
+ 	/* ... give apps a chance to change things ... */
+ 	callback_event( TMCB_REQUEST_FWDED, t, i_req, -i_req->REQ_METHOD);
++#endif
++	/* run the specific callbacks for this transaction */
++	run_trans_callbacks( TMCB_REQUEST_FWDED , t, i_req,  -i_req->REQ_METHOD);
+ 
+ 	/* ... and build it now */
+ 	buf=build_req_buf_from_sip_req( i_req, len, send_sock, proto );
+diff -ruib sip_router_orig/modules/tm/t_hooks.c sip_router/modules/tm/t_hooks.c
+--- sip_router_orig/modules/tm/t_hooks.c	2003-03-19 19:40:09.000000000 +0100
++++ sip_router/modules/tm/t_hooks.c	2003-08-19 19:02:47.000000000 +0200
+@@ -38,6 +38,11 @@
+ #include "../../error.h"
+ #include "../../mem/mem.h"
+ #include "t_hooks.h"
++#include "t_lookup.h"
++#include "t_funcs.h"
++
++
++#ifndef OLD_TMCB_OBSOLETE
+ 
+ /* strange things happen if callback_array is static on openbsd */
+ struct tm_callback_s* callback_array[ TMCB_END ] = { 0, 0 } ;
+@@ -71,6 +76,7 @@
+ 	return callback_id;
+ }
+ 
++
+ void callback_event( tmcb_type cbt , struct cell *trans,
+ 	struct sip_msg *msg, int code )
+ {
+@@ -81,3 +87,70 @@
+ 		cbs->callback( trans, msg, code, cbs->param );
+ 	}
+ }
++
++#endif
++
++
++
++int register_req_cb( struct sip_msg* p_msg, tmcb_type cbt, transaction_cb f,
++																void *param )
++{
++	struct cell* t;
++	struct tm_callback_s *cbs;
++
++	/* is the callback type valid?... */
++	if (cbt<0 || cbt>=TMCB_END ) {
++		LOG(L_CRIT, "BUG: register_req_cb: invalid callback type: %d\n",
++			cbt );
++		return E_BUG;
++	}
++
++	/* build a new callback structure */
++	if (!(cbs=shm_malloc( sizeof( struct tm_callback_s)))) {
++		LOG(L_ERR, "ERROR:tm:register_req_cb: out of mem\n");
++		return E_OUT_OF_MEM;
++	}
++
++	/* Logically, since this function is designed to be called only when
++	 * processing a request, there is no point in calling t_check - the
++	 * transaction assoc. to the given req. is already found and set - bogdan */
++	/* ...than look for the transaction */
++	/*if ( t_check(p_msg,0)!=1 ){
++		LOG(L_CRIT,"BUG:tm:register_req_cb: no transaction found\n");
++		return E_BUG;
++	}*/
++	t = get_t();
++	if(!t){
++		LOG(L_CRIT,"BUG:tm:register_req_cb: transaction found is NULL\n");
++		return E_BUG;
++	}
++
++	/* link it into the proper place... */
++	cbs->next=t->cb_array[ cbt ];
++	t->cb_array[ cbt ]=cbs;
++	/* ... and fill it up */
++	cbs->callback=f;
++	cbs->param=param;
++	if (cbs->next)
++		cbs->id = cbs->next->id+1;
++	else
++		cbs->id = 0;
++
++	return 1;
++}
++
++
++
++void run_trans_callbacks( tmcb_type cbt , struct cell *trans,
++												struct sip_msg *msg, int code )
++{
++	struct tm_callback_s *cbs;
++
++	for (cbs=trans->cb_array[ cbt ]; cbs; cbs=cbs->next)  {
++		DBG("DBG: trans=%p, callback type %d, id %d entered\n",
++				trans, cbt, cbs->id );
++		cbs->callback( trans, msg, code, cbs->param );
++	}
++}
++
++
+diff -ruib sip_router_orig/modules/tm/t_hooks.h sip_router/modules/tm/t_hooks.h
+--- sip_router_orig/modules/tm/t_hooks.h	2003-07-08 17:24:27.000000000 +0200
++++ sip_router/modules/tm/t_hooks.h	2003-08-06 21:13:41.000000000 +0200
+@@ -36,7 +36,6 @@
+ 
+ #include "defs.h"
+ 
+-
+ struct sip_msg;
+ struct cell;
+ 
+@@ -162,13 +161,24 @@
+ 	void *param;
+ };
+ 
++typedef int (*register_tmcb_f)(tmcb_type cbt, transaction_cb f, void *param);
++typedef int (*register_req_cb_f)(struct sip_msg* p_msg, tmcb_type cbt,
++											transaction_cb f, void *param);
+ 
+-extern struct tm_callback_s* callback_array[ TMCB_END ];
+ 
+-typedef int (*register_tmcb_f)(tmcb_type cbt, transaction_cb f, void *param);
++
++#ifndef OLD_TMCB_OBSOLETE
++extern struct tm_callback_s* callback_array[ TMCB_END ];
+ 
+ int register_tmcb( tmcb_type cbt, transaction_cb f, void *param );
+ void callback_event( tmcb_type cbt, struct cell *trans,
+ 	struct sip_msg *msg, int code );
++#endif
++
++int register_req_cb( struct sip_msg* p_msg, tmcb_type cbt, transaction_cb f,
++																void *param );
++
++void run_trans_callbacks( tmcb_type cbt , struct cell *trans,
++												struct sip_msg *msg, int code );
+ 
+ #endif
+diff -ruib sip_router_orig/modules/tm/t_lookup.c sip_router/modules/tm/t_lookup.c
+--- sip_router_orig/modules/tm/t_lookup.c	2003-09-03 17:52:30.000000000 +0200
++++ sip_router/modules/tm/t_lookup.c	2003-09-03 17:52:50.000000000 +0200
+@@ -785,15 +785,29 @@
+ 		if (p_cell->is_invite && p_msg->REPLY_STATUS>=200 
+ 				&& p_msg->REPLY_STATUS<300 
+ 				&& ( (!p_cell->local && 
+-					(callback_array[TMCB_RESPONSE_OUT]||
+-						callback_array[TMCB_E2EACK_IN]))
+-					|| (p_cell->local && callback_array[TMCB_LOCAL_COMPLETED]) )) {
++				(p_cell->cb_array[TMCB_RESPONSE_OUT]||
++					p_cell->cb_array[TMCB_E2EACK_IN]
++#ifndef OLD_TMCB_OBSOLETE
++					||callback_array[TMCB_RESPONSE_OUT]
++					||callback_array[TMCB_E2EACK_IN]
++#endif
++				))
++				|| (p_cell->local && (p_cell->cb_array[TMCB_LOCAL_COMPLETED]
++#ifndef OLD_TMCB_OBSOLETE
++					|| callback_array[TMCB_LOCAL_COMPLETED]
++#endif
++				))
++			)) {
+ 			if (parse_headers(p_msg, HDR_TO, 0)==-1) {
+ 				LOG(L_ERR, "ERROR: t_reply_matching: to parsing failed\n");
+ 			}
+ 		}
+-		if (!p_cell->local) 
++		if (!p_cell->local) {
++#ifndef OLD_TMCB_OBSOLETE
+ 			callback_event(TMCB_RESPONSE_IN, T, p_msg, p_msg->REPLY_STATUS);
++#endif
++			run_trans_callbacks(TMCB_RESPONSE_IN, T, p_msg,p_msg->REPLY_STATUS);
++		}
+ 		return 1;
+ 	} /* for cycle */
+ 
+@@ -1050,7 +1064,11 @@
+ 
+ 	if (lret==-2) { /* was it an e2e ACK ? if so, trigger a callback */
+ 		/* no callbacks? complete quickly */
+-		if (!callback_array[TMCB_E2EACK_IN]) {
++		if (! t_ack->cb_array[TMCB_E2EACK_IN]
++#ifndef OLD_TMCB_OBSOLETE
++			&& !callback_array[TMCB_E2EACK_IN]
++#endif
++		) {
+ 			UNLOCK_HASH(p_msg->hash_index);
+ 			return 1;
+ 		} 
+@@ -1063,8 +1081,13 @@
+ 	   	    better waste time in locks
+ 		 */
+ 		if (unmatched_totag(t_ack, p_msg)) {
++#ifndef OLD_TMCB_OBSOLETE
+ 			callback_event( TMCB_E2EACK_IN, t_ack, p_msg, 
+ 				p_msg->REQ_METHOD );
++#endif
++			run_trans_callbacks( TMCB_E2EACK_IN , t_ack, p_msg,
++				-p_msg->REQ_METHOD );
++
+ 		}
+ 		UNREF(t_ack);
+ 		return 1;
+diff -ruib sip_router_orig/modules/tm/t_reply.c sip_router/modules/tm/t_reply.c
+--- sip_router_orig/modules/tm/t_reply.c	2003-09-12 18:18:25.000000000 +0200
++++ sip_router/modules/tm/t_reply.c	2003-09-11 22:07:39.000000000 +0200
+@@ -306,11 +306,17 @@
+ 	if (code>=200) {
+ 		if (trans->local) {
+ 			DBG("DEBUG: local transaction completed from _reply\n");
++#ifndef OLD_TMCB_OBSOLETE
+ 			callback_event( TMCB_LOCAL_COMPLETED, trans, FAKED_REPLY, code );
++#endif
++			run_trans_callbacks( TMCB_LOCAL_COMPLETED, trans,FAKED_REPLY,code);
+ 			if (trans->completion_cb) 
+ 				trans->completion_cb( trans, FAKED_REPLY, code, trans->cbp);
+ 		} else {
++#ifndef OLD_TMCB_OBSOLETE
+ 			callback_event( TMCB_RESPONSE_OUT, trans, FAKED_REPLY, code );
++#endif
++			run_trans_callbacks( TMCB_RESPONSE_OUT, trans, FAKED_REPLY, code );
+ 		}
+ 
+ 		cleanup_uac_timers( trans );
+@@ -377,44 +383,15 @@
+ }
+ 
+ 
+-/* create a temporary faked message environment in which a conserved
+- * t->uas.request in shmem is partially duplicated to pkgmem
+- * to allow pkg-based actions to use it; 
+- *
+- * if restore parameter is set, the environment is restored to the
+- * original setting and return value is unsignificant (always 0); 
+- * otherwise  a faked environment if created; if that fails,
+- * false is returned
+- */
+-static int faked_env(struct sip_msg *fake, 
+-				struct cell *_t,
+-				struct sip_msg *shmem_msg,
+-				int _restore )
++/*if msg is set -> it will fake the env. vars conforming with the msg; if NULL
++ * the env. will be restore to original */
++static inline void faked_env( struct cell *t,struct sip_msg *msg)
+ {
+ 	static enum route_mode backup_mode;
+ 	static struct cell *backup_t;
+ 	static unsigned int backup_msgid;
+ 
+-	if (_restore) goto restore;
+-
+-	/* 
+-     on_negative_reply faked msg now copied from shmem msg (as opposed
+-     to zero-ing) -- more "read-only" actions (exec in particular) will 
+-     work from reply_route as they will see msg->from, etc.; caution, 
+-     rw actions may append some pkg stuff to msg, which will possibly be 
+-     never released (shmem is released in a single block)
+-    */
+-	memcpy( fake, shmem_msg, sizeof(struct sip_msg));
+-
+-	/* if we set msg_id to something different from current's message
+-       id, the first t_fork will properly clean new branch URIs
+-	*/
+-	fake->id=shmem_msg->id-1;
+-	/* set items, which will be duped to pkg_mem, to zero, so that
+-	 * "restore" called on error does not free the original items */
+-	fake->add_rm=0;
+-	fake->new_uri.s=0; fake->new_uri.len=0; 
+-
++	if (msg) {
+ 	/* remember we are back in request processing, but process
+ 	 * a shmem-ed replica of the request; advertise it in rmode;
+ 	 * for example t_reply needs to know that
+@@ -431,71 +408,78 @@
+ 	backup_t=get_t();
+ 	backup_msgid=global_msg_id;
+ 	/* fake transaction and message id */
+-	global_msg_id=fake->id;
+-	set_t(_t);
+-
+-	/* environment is set up now, try to fake the message */
+-
+-	/* new_uri can change -- make a private copy */
+-	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
+-		fake->new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
+-		if (!fake->new_uri.s) {
+-			LOG(L_ERR, "ERROR: faked_env: no uri/pkg mem\n");
+-			goto restore;
+-		}
+-		fake->new_uri.len=shmem_msg->new_uri.len;
+-		memcpy( fake->new_uri.s, shmem_msg->new_uri.s, 
+-			fake->new_uri.len);
+-		fake->new_uri.s[fake->new_uri.len]=0;
+-	} 
+-
+-	/* create a duplicated lump list to which actions can add
+-	 * new pkg items 
+-	 */
+-	if (shmem_msg->add_rm) {
+-		fake->add_rm=dup_lump_list(shmem_msg->add_rm);
+-		if (!fake->add_rm) { /* non_emty->empty ... failure */
+-			LOG(L_ERR, "ERROR: on_negative_reply: lump dup failed\n");
+-			goto restore;
+-		}
+-	}
+-	/* success */
+-	return 1;
+-
+-restore:
+-	/* restore original environment and destroy faked message */
+-	free_duped_lump_list(fake->add_rm);
+-	if (fake->new_uri.s) pkg_free(fake->new_uri.s);
++		global_msg_id=msg->id;
++		set_t(t);
++	} else {
++		/* restore original environment */
+ 	set_t(backup_t);
+ 	global_msg_id=backup_msgid;
+ 	rmode=backup_mode;
+-	return 0;
++	}
+ }
+ 
++
+ /* return 1 if a failure_route processes */
+-int failure_route(struct cell *t)
++static inline int run_failure_route(struct cell *t)
+ {
+-	struct sip_msg faked_msg;
++	struct sip_msg fake;
++	struct sip_msg *shmem_msg = t->uas.request;
+ 
+ 	/* don't do anything if we don't have to */
+ 	if (!t->on_negative) return 0;
+ 
+-	/* if fake message creation failes, return error too */
+-	if (!faked_env(&faked_msg, t, t->uas.request, 0 /* create fake */ )) {
+-		LOG(L_ERR, "ERROR: on_negative_reply: faked_env failed\n");
+-		return 0;
++	/* on_negative_reply faked msg now copied from shmem msg (as opposed
++	 * to zero-ing) -- more "read-only" actions (exec in particular) will
++	 * work from reply_route as they will see msg->from, etc.; caution,
++	 * rw actions may append some pkg stuff to msg, which will possibly be
++	 * never released (shmem is released in a single block) */
++	memcpy( &fake, shmem_msg, sizeof(struct sip_msg));
++
++	/* if we set msg_id to something different from current's message
++	 * id, the first t_fork will properly clean new branch URIs */
++	fake.id=shmem_msg->id-1;
++
++	/* new_uri can change -- make a private copy */
++	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
++		fake.new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
++		if (!fake.new_uri.s) {
++			LOG(L_ERR, "ERROR: run_failure_route: no uri/pkg mem\n");
++			return -1;
++		}
++		fake.new_uri.len=shmem_msg->new_uri.len;
++		memcpy( fake.new_uri.s, shmem_msg->new_uri.s, 
++			fake.new_uri.len);
++		fake.new_uri.s[fake.new_uri.len]=0;
++	}
++
++	/* create a duplicated lump list to which actions can add
++	 * new pkg items  */
++	if (shmem_msg->add_rm) {
++		fake.add_rm=dup_lump_list(shmem_msg->add_rm);
++		if (!fake.add_rm) { /* non_emty->empty ... failure */
++			LOG(L_ERR, "ERROR: run_failure_route: lump dup failed\n");
++			if (fake.new_uri.s) pkg_free(fake.new_uri.s);
++			return -1;
++		}
+ 	}
+ 
++	/* fake also the env. conforming to the fake msg */
++	faked_env( t, &fake);
++	/* DONE with faking ;-) -> run the route */
++
+ 	/* avoid recursion -- if failure_route forwards, and does not 
+ 	 * set next failure route, failure_route will not be rentered
+ 	 * on failure */
+ 	t_on_negative(0);
+ 	/* run a reply_route action if some was marked */
+-	if (run_actions(failure_rlist[t->on_negative], &faked_msg)<0)
+-		LOG(L_ERR, "ERROR: on_negative_reply: "
+-			"Error in do_action\n");
+-	/* restore original environment */
+-	faked_env(&faked_msg, 0, 0, 1 );
++	if (run_actions(failure_rlist[t->on_negative], &fake)<0)
++		LOG(L_ERR, "ERROR: run_failure_route: Error in do_action\n");
++
++	/* restore original environment and free the fake msg */
++	faked_env( t, 0);
++	free_duped_lump_list(fake.add_rm);
++	if (fake.new_uri.s) pkg_free(fake.new_uri.s);
++
+ 	return 1;
+ }
+ 
+@@ -550,7 +534,6 @@
+ 	int branch , int *should_store, int *should_relay,
+ 	branch_bm_t *cancel_bitmap, struct sip_msg *reply )
+ {
+-	
+ 	int branch_cnt;
+ 	int picked_branch;
+ 	int picked_code;
+@@ -608,15 +591,32 @@
+ 
+ 		/* no more pending branches -- try if that changes after
+ 		   a callback; save banch count to be able to determine
+-		   later if new branches were initiated
+-		*/
++		   later if new branches were initiated */
+ 		branch_cnt=Trans->nr_of_outgoings;
++
++		/* run ON_FAILURE callbacks, if any */
++		if (Trans->cb_array[ TMCB_ON_FAILURE ]
++#ifndef OLD_TMCB_OBSOLETE
++		|| callback_array[ TMCB_ON_FAILURE ]
++#endif
++		) {
++#ifndef OLD_TMCB_OBSOLETE
++			/* fake the enviroment according to the orig. req. msg. - is better
++			 * to use the req. instead of rpl. because all exported TM functions
++			 * take as param a sip_msg that usually is a req. */
++			faked_env(Trans,Trans->uas.request);
+ 		callback_event( TMCB_ON_FAILURE, Trans, 
+ 			picked_branch==branch?reply:Trans->uac[picked_branch].reply, 
+ 			picked_code);
+-		/* here, we create a faked environment, from which we
+-		 * return to request processing, if marked to do so */
+-		failure_route(Trans);
++#endif
++			run_trans_callbacks( TMCB_ON_FAILURE, Trans,
++				picked_branch==branch?reply:Trans->uac[picked_branch].reply,
++				picked_code);
++			/* restore the env */
++			faked_env(Trans,0);
++		}
++		/* run failure script route, if any */
++		run_failure_route(Trans);
+ 
+ 		/* look if the callback perhaps replied transaction; it also
+ 		   covers the case in which a transaction is replied localy
+@@ -853,7 +853,10 @@
+ 		   anyway 
+         */
+ 		if (msg_status<300 && branch==relay) {
++#ifndef OLD_TMCB_OBSOLETE
+ 			callback_event( TMCB_RESPONSE_FWDED, t, p_msg, msg_status );
++#endif
++			run_trans_callbacks( TMCB_RESPONSE_FWDED, t, p_msg, msg_status );
+ 		}
+ 		/* try bulding the outbound reply from either the current
+ 	       or a stored message */
+@@ -921,8 +924,11 @@
+ 
+ 		if (t->is_invite && relayed_msg!=FAKED_REPLY
+ 				&& relayed_code>=200 && relayed_code < 300
+-				&& (callback_array[TMCB_RESPONSE_OUT] ||
+-						callback_array[TMCB_E2EACK_IN]))  {
++			&& (t->cb_array[TMCB_RESPONSE_OUT] || t->cb_array[TMCB_E2EACK_IN]
++#ifndef OLD_TMCB_OBSOLETE
++			||callback_array[TMCB_RESPONSE_OUT]||callback_array[TMCB_E2EACK_IN]
++#endif
++			)){
+ 			totag_retr=update_totag_set(t, relayed_msg);
+ 		}
+ 	}; /* if relay ... */
+@@ -934,8 +940,12 @@
+ 		SEND_PR_BUFFER( uas_rb, buf, res_len );
+ 		DBG("DEBUG: reply relayed. buf=%p: %.9s..., shmem=%p: %.9s\n", 
+ 			buf, buf, uas_rb->buffer, uas_rb->buffer );
+-		if (!totag_retr) 
++		if (!totag_retr) {
++#ifndef OLD_TMCB_OBSOLETE
+ 				callback_event( TMCB_RESPONSE_OUT, t, relayed_msg, relayed_code );
++#endif
++			run_trans_callbacks( TMCB_RESPONSE_OUT, t,relayed_msg,relayed_code);
++		}
+ 		pkg_free( buf );
+ 	}
+ 
+@@ -1006,8 +1016,11 @@
+ 		update_reply_stats( winning_code );
+ 		if (t->is_invite && winning_msg!=FAKED_REPLY 
+ 				&& winning_code>=200 && winning_code <300
+-				&& (callback_array[TMCB_RESPONSE_OUT] ||
+-						callback_array[TMCB_E2EACK_IN]))  {
++			&& (t->cb_array[TMCB_RESPONSE_OUT] || t->cb_array[TMCB_E2EACK_IN]
++#ifndef OLD_TMCB_OBSOLETE
++			||callback_array[TMCB_RESPONSE_OUT]||callback_array[TMCB_E2EACK_IN]
++#endif
++			))  {
+ 			totag_retr=update_totag_set(t, winning_msg);
+ 		}
+ 		
+@@ -1016,8 +1029,12 @@
+ 	if (local_winner>=0 && winning_code>=200 ) {
+ 		DBG("DEBUG: local transaction completed\n");
+ 		if (!totag_retr) {
++#ifndef OLD_TMCB_OBSOLETE
+ 			callback_event( TMCB_LOCAL_COMPLETED, t, winning_msg, 
+ 				winning_code );
++#endif
++			run_trans_callbacks( TMCB_LOCAL_COMPLETED, t, winning_msg, 
++				winning_code );
+ 			if (t->completion_cb) t->completion_cb( t, winning_msg, 
+ 						winning_code, t->cbp);
+ 		}
+diff -ruib sip_router_orig/modules/tm/tm.c sip_router/modules/tm/tm.c
+--- sip_router_orig/modules/tm/tm.c	2003-07-07 22:53:21.000000000 +0200
++++ sip_router/modules/tm/tm.c	2003-08-18 17:48:54.000000000 +0200
+@@ -191,9 +191,13 @@
+ 	{"t_on_reply",         w_t_on_reply,            1, fixup_str2int,
+ 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+ 	/* not applicable from the script */
++#ifndef OLD_TMCB_OBSOLETE
+ 	{"register_tmcb",      (cmd_function)register_tmcb,     NO_SCRIPT,     0, 0},
++#endif
++	{"register_req_cb",    (cmd_function)register_req_cb,   NO_SCRIPT,    0, 0},
+ 	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,     0, 0},
+ 	{T_REPLY_WB,           (cmd_function)t_reply_with_body, NO_SCRIPT,     0, 0},
++	{T_REPLY_UNSAFE,       (cmd_function)t_reply_unsafe,    NO_SCRIPT,    0, 0},
+ 	{T_IS_LOCAL,           (cmd_function)t_is_local,        NO_SCRIPT,     0, 0},
+ 	{T_GET_TI,             (cmd_function)t_get_trans_ident, NO_SCRIPT,     0, 0},
+ 	{T_LOOKUP_IDENT,       (cmd_function)t_lookup_ident,    NO_SCRIPT,     0, 0},
+diff -ruib sip_router_orig/modules/tm/tm_load.c sip_router/modules/tm/tm_load.c
+--- sip_router_orig/modules/tm/tm_load.c	2003-04-30 20:50:58.000000000 +0200
++++ sip_router/modules/tm/tm_load.c	2003-08-15 19:23:35.000000000 +0200
+@@ -40,12 +40,18 @@
+ 
+ int load_tm( struct tm_binds *tmb)
+ {
++#ifndef OLD_TMCB_OBSOLETE
+ 	if (!( tmb->register_tmcb=(register_tmcb_f) 
+ 		find_export("register_tmcb", NO_SCRIPT, 0)) ) {
+ 		LOG(L_ERR, LOAD_ERROR "'register_tmcb' not found\n");
+ 		return -1;
+ 	}
+-
++#endif
++	if (!( tmb->register_req_cb=(register_req_cb_f) 
++		find_export("register_req_cb", NO_SCRIPT, 0)) ) {
++		LOG(L_ERR, LOAD_ERROR "'register_req_cb' not found\n");
++		return -1;
++	}
+ 	if (!( tmb->t_relay_to_tcp=find_export(T_RELAY_TO_TCP, 2, 0)) ) {
+ 		LOG(L_ERR, LOAD_ERROR "'t_relay_to_tcp' not found\n");
+ 		return -1;
+@@ -66,6 +72,11 @@
+ 	        LOG( L_ERR, LOAD_ERROR "'t_reply' not found\n");
+ 		return -1;
+ 	}
++	if (!(tmb->t_reply_unsafe=(treply_f)find_export(T_REPLY_UNSAFE,
++	NO_SCRIPT, 0)) ) {
++		LOG( L_ERR, LOAD_ERROR "'%s' not found\n",T_REPLY_UNSAFE);
++		return -1;
++	}
+ 	if (!(tmb->t_is_local=(tislocal_f)find_export(T_IS_LOCAL, NO_SCRIPT, 0)) ) {
+ 	        LOG( L_ERR, LOAD_ERROR "'t_get_trans_ident' not found\n");
+ 		return -1;
+diff -ruib sip_router_orig/modules/tm/tm_load.h sip_router/modules/tm/tm_load.h
+--- sip_router_orig/modules/tm/tm_load.h	2003-07-07 22:53:21.000000000 +0200
++++ sip_router/modules/tm/tm_load.h	2003-08-15 19:21:37.000000000 +0200
+@@ -56,9 +56,10 @@
+ #define T_RELAY              "t_relay"
+ #define T_REPLY              "t_reply"
+ #define T_REPLY_WB           "t_reply_with_body"
++#define T_REPLY_UNSAFE       "t_reply_unsafe"
+ #define T_ADDBLIND           "t_add_blind"
+ #define T_REPLY_UNSAFE       "t_reply_unsafe"
+-#define T_FORWARD_NONACK     "t_forward_nonack"
++#define T_FORWARD_NONACK     "w_t_forward_nonack"
+ #define T_FORWARD_NONACK_UDP "t_forward_nonack_udp"
+ #define T_FORWARD_NONACK_TCP "t_forward_nonack_tcp"
+ #define T_FORWARD_NONACK_TLS "t_forward_nonack_tls"
+@@ -71,7 +72,10 @@
+ 
+ 
+ struct tm_binds {
++#ifndef OLD_TMCB_OBSOLETE
+ 	register_tmcb_f register_tmcb;
++#endif
++	register_req_cb_f  register_req_cb;
+ 	cmd_function    t_relay_to_udp;
+ 	cmd_function    t_relay_to_tcp;
+ 	cmd_function    t_relay;
