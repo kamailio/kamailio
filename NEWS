@@ -17,6 +17,10 @@ modules:
    sends a message using unix socket interface instead of FIFO interface.
  - TM contains new config variable - unix_tx_timeout -- it specifies the
    transmit timeout of t_write_sock
+ - msilo - explicit multidomain support -- recipient's user ID is stored in
+   the columns username and domain -- r_uri column kept for compatibility
+   reasons (will be removed in future) but not filled by this version of
+   module
 new modules:
  - answer server options requests [options]
 core:
