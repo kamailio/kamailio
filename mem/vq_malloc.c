@@ -55,6 +55,7 @@
 #include "../globals.h"
 #include "vq_malloc.h"
 #include "../dprint.h"
+#include "../globals.h"
 
 #define BIG_BUCKET(_qm) ((_qm)->max_small_bucket+1)
 #define IS_BIGBUCKET(_qm, _bucket) ((_bucket)==BIG_BUCKET(_qm)) 
@@ -401,13 +402,13 @@ void vqm_free(struct vqm_block* qm, void* p)
 
 void dump_frag( struct vqm_frag* f, int i )
 {
-	LOG(L_INFO, "    %3d. address=%p  real size=%d bucket=%d\n", i, 
+	LOG(memlog, "    %3d. address=%p  real size=%d bucket=%d\n", i, 
 		(char*)f+sizeof(struct vqm_frag), f->size, f->u.inuse.bucket);
 #ifdef DBG_QM_MALLOC
-	LOG(L_INFO, "            demanded size=%d\n", f->demanded_size );
-	LOG(L_INFO, "            alloc'd from %s: %s(%d)\n",
+	LOG(memlog, "            demanded size=%d\n", f->demanded_size );
+	LOG(memlog, "            alloc'd from %s: %s(%d)\n",
 		f->file, f->func, f->line);
-	LOG(L_INFO, "        start check=%x, end check= %.*s\n",
+	LOG(memlog, "        start check=%x, end check= %.*s\n",
 			f->check, END_CHECK_PATTERN_LEN, f->end_check );
 #endif
 }
@@ -417,16 +418,16 @@ void vqm_status(struct vqm_block* qm)
 	struct vqm_frag* f;
 	unsigned int i,on_list;
 
-	LOG(L_INFO, "vqm_status (%p):\n", qm);
+	LOG(memlog, "vqm_status (%p):\n", qm);
 	if (!qm) return;
-	LOG(L_INFO, " heap size= %d, available: %d\n", 
+	LOG(memlog, " heap size= %d, available: %d\n", 
 		qm->core_end-qm->init_core, qm->free_core );
 	
-	LOG(L_INFO, "dumping unfreed fragments:\n");
+	LOG(memlog, "dumping unfreed fragments:\n");
 	for (f=(struct vqm_frag*)qm->init_core, i=0;(char*)f<(char*)qm->core;
 		f=FRAG_NEXT(f) ,i++) if ( FRAG_ISUSED(f) ) dump_frag(f, i);
 
-	LOG(L_INFO, "dumping unfreed big fragments:\n");
+	LOG(memlog, "dumping unfreed big fragments:\n");
     for (f=(struct vqm_frag*)qm->big_chunks,i=0;(char*)f<(char*)qm->core_end;
 		f=FRAG_NEXT(f) ,i++) if ( FRAG_ISUSED(f) ) dump_frag( f, i );
 
@@ -438,7 +439,7 @@ void vqm_status(struct vqm_block* qm)
 			i, qm->usage[i], on_list );
 	}
 #endif
-	LOG(L_INFO, "-----------------------------\n");
+	LOG(memlog, "-----------------------------\n");
 }
 
 

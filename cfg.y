@@ -105,6 +105,7 @@ struct id_list* lst_tmp;
 %token CHILDREN
 %token CHECK_VIA
 %token SYN_BRANCH
+%token MEMLOG
 %token SIP_WARNING
 %token FIFO
 %token FIFO_MODE
@@ -265,6 +266,8 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| CHECK_VIA EQUAL error { yyerror("boolean value expected"); }
 		| SYN_BRANCH EQUAL NUMBER { syn_branch=$3; }
 		| SYN_BRANCH EQUAL error { yyerror("boolean value expected"); }
+		| MEMLOG EQUAL NUMBER { memlog=$3; }
+		| MEMLOG EQUAL error { yyerror("int value expected"); }
 		| SIP_WARNING EQUAL NUMBER { sip_warning=$3; }
 		| SIP_WARNING EQUAL error { yyerror("boolean value expected"); }
 		| FIFO EQUAL STRING { fifo=$3; }

@@ -8,6 +8,7 @@
 
 #include "f_malloc.h"
 #include "../dprint.h"
+#include "../globals.h"
 
 
 /*useful macros*/
@@ -262,33 +263,33 @@ void fm_status(struct fm_block* qm)
 	int h;
 	int size;
 
-	LOG(L_INFO, "fm_status (%p):\n", qm);
+	LOG(memlog, "fm_status (%p):\n", qm);
 	if (!qm) return;
 
-	LOG(L_INFO, " heap size= %d\n", qm->size);
+	LOG(memlog, " heap size= %d\n", qm->size);
 #ifdef DBG_F_MALLOC
-	LOG(L_INFO, " used= %d, used+overhead=%d, free=%d\n",
+	LOG(memlog, " used= %d, used+overhead=%d, free=%d\n",
 			qm->used, qm->real_used, qm->size-qm->real_used);
-	LOG(L_INFO, " max used (+overhead)= %d\n", qm->max_real_used);
+	LOG(memlog, " max used (+overhead)= %d\n", qm->max_real_used);
 #endif
 	/*
-	LOG(L_INFO, "dumping all fragments:\n");
+	LOG(memlog, "dumping all fragments:\n");
 	for (f=qm->first_frag, i=0;((char*)f<(char*)qm->last_frag) && (i<10);
 			f=FRAG_NEXT(f), i++){
-		LOG(L_INFO, "    %3d. %c  address=%x  size=%d\n", i, 
+		LOG(memlog, "    %3d. %c  address=%x  size=%d\n", i, 
 				(f->u.reserved)?'a':'N',
 				(char*)f+sizeof(struct fm_frag), f->size);
 #ifdef DBG_F_MALLOC
-		LOG(L_INFO, "            %s from %s: %s(%d)\n",
+		LOG(memlog, "            %s from %s: %s(%d)\n",
 				(f->u.is_free)?"freed":"alloc'd", f->file, f->func, f->line);
 #endif
 	}
 */
-	LOG(L_INFO, "dumping free list:\n");
+	LOG(memlog, "dumping free list:\n");
 	for(h=0,i=0,size=0;h<F_HASH_SIZE;h++){
 		
 		for (f=qm->free_hash[h],j=0; f; size+=f->size,f=f->u.nxt_free,i++,j++);
-		if (j) LOG(L_INFO, "hash = %3d fragments no.: %5d,\n\t\t"
+		if (j) LOG(memlog, "hash = %3d fragments no.: %5d,\n\t\t"
 							" bucket size: %9d - %9d (first %9d)\n",
 							h, j, UN_HASH(h),
 							((h<F_MALLOC_OPTIMIZE/ROUNDTO)?1:2)*UN_HASH(h),
@@ -296,7 +297,7 @@ void fm_status(struct fm_block* qm)
 				);
 		/*
 		{
-			LOG(L_INFO, "   %5d.[%3d:%3d] %c  address=%x  size=%d(%x)\n",
+			LOG(memlog, "   %5d.[%3d:%3d] %c  address=%x  size=%d(%x)\n",
 					i, h, j,
 					(f->u.reserved)?'a':'N',
 					(char*)f+sizeof(struct fm_frag), f->size, f->size);
@@ -307,8 +308,8 @@ void fm_status(struct fm_block* qm)
 		}
 	*/
 	}
-	LOG(L_INFO, "TOTAL: %6d free fragments = %6d free bytes\n", i, size);
-	LOG(L_INFO, "-----------------------------\n");
+	LOG(memlog, "TOTAL: %6d free fragments = %6d free bytes\n", i, size);
+	LOG(memlog, "-----------------------------\n");
 }
 
 

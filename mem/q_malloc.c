@@ -10,6 +10,7 @@
 
 #include "q_malloc.h"
 #include "../dprint.h"
+#include "../globals.h"
 
 
 /*useful macros*/
@@ -392,37 +393,37 @@ void qm_status(struct qm_block* qm)
 	int i,j;
 	int h;
 
-	LOG(L_INFO, "qm_status (%p):\n", qm);
+	LOG(memlog, "qm_status (%p):\n", qm);
 	if (!qm) return;
 
-	LOG(L_INFO, " heap size= %d\n", qm->size);
-	LOG(L_INFO, " used= %d, used+overhead=%d, free=%d\n",
+	LOG(memlog, " heap size= %d\n", qm->size);
+	LOG(memlog, " used= %d, used+overhead=%d, free=%d\n",
 			qm->used, qm->real_used, qm->size-qm->real_used);
-	LOG(L_INFO, " max used (+overhead)= %d\n", qm->max_real_used);
+	LOG(memlog, " max used (+overhead)= %d\n", qm->max_real_used);
 	
-	LOG(L_INFO, "dumping all allocked. fragments:\n");
+	LOG(memlog, "dumping all allocked. fragments:\n");
 	for (f=qm->first_frag, i=0;(char*)f<(char*)qm->last_frag_end;f=FRAG_NEXT(f)
 			,i++){
 		if (! f->u.is_free){
-			LOG(L_INFO, "    %3d. %c  address=%p  size=%d\n", i, 
+			LOG(memlog, "    %3d. %c  address=%p  size=%d\n", i, 
 				(f->u.is_free)?'a':'N',
 				(char*)f+sizeof(struct qm_frag), f->size);
 #ifdef DBG_QM_MALLOC
-			LOG(L_INFO, "            %s from %s: %s(%d)\n",
+			LOG(memlog, "            %s from %s: %s(%d)\n",
 				(f->u.is_free)?"freed":"alloc'd", f->file, f->func, f->line);
-			LOG(L_INFO, "        start check=%x, end check= %x, %x\n",
+			LOG(memlog, "        start check=%x, end check= %x, %x\n",
 				f->check, FRAG_END(f)->check1, FRAG_END(f)->check2);
 #endif
 		}
 	}
-	LOG(L_INFO, "dumping free list stats :\n");
+	LOG(memlog, "dumping free list stats :\n");
 	for(h=0,i=0;h<QM_HASH_SIZE;h++){
 		
 		for (f=qm->free_hash[h].head.u.nxt_free,j=0; 
 				f!=&(qm->free_hash[h].head); f=f->u.nxt_free, i++, j++);
-			if (j) LOG(L_INFO, "hash= %3d. fragments no.: %5d\n", h, j);
+			if (j) LOG(memlog, "hash= %3d. fragments no.: %5d\n", h, j);
 	}
-	LOG(L_INFO, "-----------------------------\n");
+	LOG(memlog, "-----------------------------\n");
 }
 
 
