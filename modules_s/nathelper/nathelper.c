@@ -51,7 +51,8 @@
  *		  supported by the RTP proxy.
  * 2004-01-16   Integrated slightly modified patch from Tristan Colgate,
  *		force_rtp_proxy function with IP as a parameter (janakj)
- * 2004-01-28	nat_uac_test extended to allow testing SDP body (sobomax)
+ * 2004-01-28	o nat_uac_test extended to allow testing SDP body (sobomax)
+ *		o nat_uac_test extended to allow testing top Via (sobomax)
  *
  */
 
@@ -95,11 +96,12 @@ MODULE_VERSION
 #endif
 
 /* NAT UAC test constants */
-#define	CONTACT_1918		"[@:](192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.)"
-#define	SDP_1918		"192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\."
+#define	IP_1918			"192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\."
+#define	CONTACT_1918		("[@:]" IP_1918)
 #define	NAT_UAC_TEST_C_1918	0x01
 #define	NAT_UAC_TEST_RCVD	0x02
-#define	NAT_UAC_TEST_S_1918	0x03
+#define	NAT_UAC_TEST_V_1918	0x04
+#define	NAT_UAC_TEST_S_1918	0x08
 
 /* Handy macros */
 #define	STR2IOVEC(sx, ix)	{(ix).iov_base = (sx).s; (ix).iov_len = (sx).len;}
@@ -139,7 +141,7 @@ static const char *rtpproxy_sock = "/var/run/rtpproxy.sock";
 static int rtpproxy_disable = 0;
 
 static regex_t key_contact_1918;
-static regex_t key_sdp_1918;
+static regex_t key_ip_1918;
 
 static cmd_export_t cmds[]={
 	{"fix_nated_contact", fix_nated_contact_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
@@ -194,7 +196,7 @@ mod_init(void)
 
 	/* compile 1918 address REs */
 	if (regcomp(&key_contact_1918, CONTACT_1918, REG_EXTENDED | REG_ICASE | REG_NEWLINE) ||
-	    regcomp(&key_sdp_1918, SDP_1918, REG_EXTENDED | REG_ICASE | REG_NEWLINE)) {
+	    regcomp(&key_ip_1918, IP_1918, REG_EXTENDED | REG_ICASE | REG_NEWLINE)) {
 		LOG(L_ERR, "ERROR: nathelper: failure to compule 1918 RE\n");
 		return -1;
 	}
@@ -456,8 +458,25 @@ sdp_1918(struct sip_msg* msg)
 		return 0;
 	backup = ip.s[ip.len];
 	ip.s[ip.len] = '\0';
-	fnd = regexec(&key_sdp_1918, ip.s, 1, &pmatch, 0) == 0;
-	msg->contact->body.s[msg->contact->body.len] = backup;
+	fnd = regexec(&key_ip_1918, ip.s, 1, &pmatch, 0) == 0;
+	ip.s[ip.len] = backup;
+	return fnd;
+}
+
+/*
+ * test for occurence of RFC1918 IP address in top Via
+ */
+static int
+via_1918(struct sip_msg* msg)
+{
+	regmatch_t pmatch;
+	int fnd;
+	char backup;
+
+	backup = msg->via1->host.s[msg->via1->host.len];
+	msg->via1->host.s[msg->via1->host.len] = '\0';
+	fnd = regexec(&key_ip_1918, msg->via1->host.s, 1, &pmatch, 0) == 0;
+	msg->via1->host.s[msg->via1->host.len] = backup;
 	return fnd;
 }
 
@@ -486,6 +505,11 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 	 * test for occurences of RFC1918 addresses in SDP body
 	 */
 	if ((tests & NAT_UAC_TEST_S_1918) && sdp_1918(msg))
+		return 1;
+	/*
+	 * test for occurences of RFC1918 addresses top Via
+	 */
+	if ((tests & NAT_UAC_TEST_V_1918) && via_1918(msg))
 		return 1;
 
 	/* no test succeeded */
