@@ -1,4 +1,5 @@
 INVITE sip:andrei@iptel.org SIP/2.0
+:q
 Via: SIP/2.0/UDP dorian.fokus.gmd.de 
 From: "GMD FOKUS iptlab" <sip:jiri@iptel.org>;tag=b96b0300ed30f1286-2f5d
 Call-ID: b96b0300-88d30f-66da-63aa@195.37.78.190

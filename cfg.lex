@@ -91,6 +91,7 @@ DEBUG	debug
 FORK	fork
 LOGSTDERROR	log_stderror
 LISTEN		listen
+ALIAS		alias
 DNS		 dns
 REV_DNS	 rev_dns
 PORT	port
@@ -187,6 +188,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{FORK}		{ count(); yylval.strval=yytext; return FORK; }
 <INITIAL>{LOGSTDERROR}	{ yylval.strval=yytext; return LOGSTDERROR; }
 <INITIAL>{LISTEN}	{ count(); yylval.strval=yytext; return LISTEN; }
+<INITIAL>{ALIAS}	{ count(); yylval.strval=yytext; return ALIAS; }
 <INITIAL>{DNS}	{ count(); yylval.strval=yytext; return DNS; }
 <INITIAL>{REV_DNS}	{ count(); yylval.strval=yytext; return REV_DNS; }
 <INITIAL>{PORT}	{ count(); yylval.strval=yytext; return PORT; }

@@ -28,6 +28,7 @@
 #include "stats.h"
 #include "ip_addr.h"
 #include "resolve.h"
+#include "name_alias.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -101,11 +102,15 @@ int check_self(str* host)
 			break;
 	}
 	if (r==sock_no){
-		DBG("check_self: host != me\n");
-		return 0;
+		/* try to look into the aliases*/
+		if (grep_aliases(host->s, host->len)==0){
+			DBG("check_self: host != me\n");
+			return 0;
+		}
 	}
 	return 1;
 }
+
 
 
 int forward_request( struct sip_msg* msg, struct proxy_l * p)

@@ -21,6 +21,7 @@
 #include "sr_module.h"
 #include "modparam.h"
 #include "ip_addr.h"
+#include "name_alias.h"
 
 #include "config.h"
 
@@ -88,6 +89,7 @@ void* f_tmp;
 %token FORK
 %token LOGSTDERROR
 %token LISTEN
+%token ALIAS
 %token DNS
 %token REV_DNS
 %token PORT
@@ -272,8 +274,33 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 												"(max. %d).\n", MAX_LISTEN);
 								}
 							  }
+		| LISTEN EQUAL  host {
+								if (sock_no < MAX_LISTEN){
+									sock_info[sock_no].name.s=
+										(char*)malloc(strlen($3)+1);
+									if (sock_info[sock_no].name.s==0){
+										LOG(L_CRIT, "ERROR: cfg. parser:"
+													" out of memory.\n");
+									}else{
+										strncpy(sock_info[sock_no].name.s, $3,
+												strlen($3)+1);
+										sock_info[sock_no].name.len=strlen($3);
+										sock_info[sock_no].port_no=port_no;
+										sock_no++;
+									}
+								}else{
+									LOG(L_CRIT, "ERROR: cfg. parser: "
+												"too many listen addresses"
+												"(max. %d).\n", MAX_LISTEN);
+								}
+							  }
+		
 		| LISTEN EQUAL  error { yyerror("ip address or hostname"
 						"expected"); }
+		| ALIAS  EQUAL STRING { add_alias($3, strlen($3)); }
+		| ALIAS  EQUAL ID     { add_alias($3, strlen($3)); }
+		| ALIAS  EQUAL host   { add_alias($3, strlen($3)); }
+		| ALIAS  EQUAL error  { yyerror(" hostname expected"); }
 		| error EQUAL { yyerror("unknown config variable"); }
 	;
 

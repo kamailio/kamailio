@@ -98,7 +98,7 @@ void vqm_debug_frag(struct vqm_block* qm, struct vqm_frag* f)
 		abort();
 	};
 	if (memcmp(f->end_check, END_CHECK_PATTERN, END_CHECK_PATTERN_LEN)!=0) {
-		LOG(L_CRIT, "BUG: vqm_*: fragm. %p end overwritten(%*s)!\n",
+		LOG(L_CRIT, "BUG: vqm_*: fragm. %p end overwritten(%.*s)!\n",
 				f, END_CHECK_PATTERN_LEN, f->end_check );
 		vqm_status(qm);
 		abort();

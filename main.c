@@ -37,6 +37,7 @@
 #include "parser/parse_hname2.h"
 #include "parser/digest/digest_parser.h"
 #include "fifo_server.h"
+#include "name_alias.h"
 
 
 #include "stats.h"
@@ -232,6 +233,8 @@ struct socket_info* sendipv4; /* ipv4 socket to use when msg. comes from ipv6*/
 struct socket_info* sendipv6; /* same as above for ipv6 */
 
 unsigned short port_no=0; /* default port*/
+
+struct host_alias* aliases=0; /* name aliases list */
 
 /* ipc related globals */
 int process_no = 0;
@@ -659,6 +662,8 @@ int main(int argc, char** argv)
 	struct hostent* he;
 	int c,r;
 	char *tmp;
+	char** h;
+	struct host_alias* a;
 	struct utsname myname;
 	char *options;
 	char port_no_str[MAX_PORT_LEN];
@@ -933,9 +938,9 @@ int main(int argc, char** argv)
 			fprintf(stderr, "Out of memory.\n");
 			goto error;
 		}
-		strncpy(sock_info[sock_no].name.s, myname.nodename,
-				strlen(myname.nodename)+1);
 		sock_info[sock_no].name.len=strlen(myname.nodename);
+		strncpy(sock_info[sock_no].name.s, myname.nodename,
+				sock_info[sock_no].name.len+1);
 		sock_no++;
 	}
 
@@ -947,6 +952,27 @@ int main(int argc, char** argv)
 			DPrint("ERROR: could not resolve %s\n", sock_info[r].name.s);
 			goto error;
 		}
+		/* check if we got the official name */
+		if (strcasecmp(he->h_name, sock_info[r].name.s)!=0){
+			if (add_alias(sock_info[r].name.s, sock_info[r].name.len)<0){
+				LOG(L_ERR, "ERROR: main: add_alias failed\n");
+			}
+			/* change the oficial name */
+			free(sock_info[r].name.s);
+			sock_info[r].name.s=(char*)malloc(strlen(he->h_name)+1);
+			if (sock_info[r].name.s==0){
+				fprintf(stderr, "Out of memory.\n");
+				goto error;
+			}
+			sock_info[r].name.len=strlen(he->h_name);
+			strncpy(sock_info[r].name.s, he->h_name, sock_info[r].name.len+1);
+		}
+		/* add the aliases*/
+		for(h=he->h_aliases; h && *h; h++)
+			if (add_alias(*h, strlen(*h))<0){
+				LOG(L_ERR, "ERROR: main: add_alias failed\n");
+			}
+		
 		hostent2ip_addr(&sock_info[r].address, he, 0); /*convert to ip_addr 
 														 format*/
 		tmp=ip_addr2a(&sock_info[r].address);
@@ -987,6 +1013,9 @@ int main(int argc, char** argv)
 		printf("%s [%s]:%s\n",sock_info[r].name.s, sock_info[r].address_str.s,
 				sock_info[r].port_no_str.s);
 	}
+	printf("Aliases: ");
+	for(a=aliases; a; a=a->next) printf("%.*s ", a->alias.len, a->alias.s);
+	printf("\n");
 
 
 	
