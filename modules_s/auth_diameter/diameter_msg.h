@@ -319,7 +319,7 @@ AAAMessage *AAAInMessage(
 AAAReturnCode AAAFreeMessage(
 		AAAMessage **message);
 
-AAAResultCode AAASetMessageResultCode(
+AAAReturnCode AAASetMessageResultCode(
 		AAAMessage *message,
 		AAAResultCode resultCode);
 
@@ -348,7 +348,7 @@ AAA_AVP* AAACreateAVP(
 		AAA_AVPFlag flags,
 		AAAVendorId vendorId,
 		char *data,
-		size_t length,
+		unsigned int length,
 		AVPDataStatus data_status);
 
 AAA_AVP* AAACloneAVP(
