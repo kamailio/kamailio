@@ -101,4 +101,7 @@
 #define FIFO_DIR "/tmp/"
 /* max length of the text of fifo 'print' command */
 #define MAX_PRINT_TEXT 256
+
+/* maximum length of Contact heder field in redirection replies */
+#define MAX_REDIRECTION_LEN 512
 #endif
