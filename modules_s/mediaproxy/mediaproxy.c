@@ -498,6 +498,105 @@ getDestinationDomain(struct sip_msg* msg)
     return msg->parsed_uri.host;
 }*/
 
+
+/* Get From tag */
+static str
+getFromAddress(struct sip_msg *msg)
+{
+    static char buf[16] = "unknown"; // buf is here for a reason. don't
+    static str notfound = {buf, 7};  // use the constant string directly!
+    str uri;
+
+    if (parse_from_header(msg) == -1) {
+        LOG(L_ERR, "error: mediaproxy/getFromAddress(): error parsing From: field\n");
+        return notfound;
+    }
+
+    uri = get_from(msg)->uri;
+
+    if (uri.len == 0)
+        return notfound;
+
+    if (strncmp(uri.s, "sip:", 4)==0) {
+        uri.s += 4;
+        uri.len -= 4;
+    }
+
+    return uri;
+}
+
+
+/* Get To tag */
+static str
+getToAddress(struct sip_msg *msg)
+{
+    static char buf[16] = "unknown"; // buf is here for a reason. don't
+    static str notfound = {buf, 7};  // use the constant string directly!
+    str uri;
+
+    if (!msg->to) {
+        LOG(L_ERR, "error: mediaproxy/getToAddress(): missing To: field\n");
+        return notfound;
+    }
+
+    uri = get_to(msg)->uri;
+
+    if (uri.len == 0)
+        return notfound;
+
+    if (strncmp(uri.s, "sip:", 4)==0) {
+        uri.s += 4;
+        uri.len -= 4;
+    }
+
+    return uri;
+}
+
+
+/* Get From tag */
+static str
+getFromTag(struct sip_msg *msg)
+{
+    static char buf[4] = "";        // buf is here for a reason. don't
+    static str notfound = {buf, 0}; // use the constant string directly!
+    str tag;
+
+    if (parse_from_header(msg) == -1) {
+        LOG(L_ERR, "error: mediaproxy/getFromTag(): error parsing From: field\n");
+        return notfound;
+    }
+
+    tag = get_from(msg)->tag_value;
+
+    if (tag.len == 0)
+        return notfound;
+
+    return tag;
+}
+
+
+/* Get To tag */
+static str
+getToTag(struct sip_msg *msg)
+{
+    static char buf[4] = "";        // buf is here for a reason. don't
+    static str notfound = {buf, 0}; // use the constant string directly!
+    str tag;
+
+    if (!msg->to) {
+        LOG(L_ERR, "error: mediaproxy/getToTag(): missing To: field\n");
+        return notfound;
+    }
+
+    tag = get_to(msg)->tag_value;
+
+    if (tag.len == 0)
+        return notfound;
+
+    return tag;
+}
+
+
 /* Extract User-Agent */
 static str
 getUserAgent(struct sip_msg* msg)
@@ -1172,13 +1271,13 @@ EndMediaSession(struct sip_msg* msg, char* str1, char* str2)
         return -1;
     }
 
-    command = pkg_malloc(callId.len + 10);
+    command = pkg_malloc(callId.len + 20);
     if (command == NULL) {
         LOG(L_ERR, "error: end_media_session(): out of memory\n");
         return -1;
     }
 
-    sprintf(command, "delete %.*s\n", callId.len, callId.s);
+    sprintf(command, "delete %.*s flags=\n", callId.len, callId.s);
     result = sendMediaproxyCommand(command);
 
     pkg_free(command);
@@ -1191,8 +1290,9 @@ static int
 UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
 {
     str sdp, sessionIP, callId, fromDomain, toDomain, userAgent, tokens[64];
-    char *clientIP, *ptr, *command, *result, *agent, *fromType, *toType;
-    int streamCount, i, port, count, portCount, cmdlen, success;
+    str fromAddr, toAddr, fromTag, toTag;
+    char *clientIP, *ptr, *command, *result, *agent, *fromType, *toType, *info;
+    int streamCount, i, port, count, portCount, cmdlen, infolen, success;
     StreamInfo streams[64];
     Bool request;
 
@@ -1239,12 +1339,18 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
     fromDomain = getFromDomain(msg);
     toDomain   = getToDomain(msg);
     //toDomain   = getDestinationDomain(msg); // can be called only for request(invite)
+    fromAddr   = getFromAddress(msg);
+    toAddr     = getToAddress(msg);
+    fromTag    = getFromTag(msg);
+    toTag      = getToTag(msg);
     userAgent  = getUserAgent(msg);
 
     clientIP = ip_addr2a(&msg->rcv.src_ip);
 
+    infolen = fromAddr.len + toAddr.len + fromTag.len + toTag.len + 64;
+
     cmdlen = callId.len + strlen(clientIP) + fromDomain.len + toDomain.len +
-        userAgent.len*3 + 128;
+        userAgent.len*3 + infolen + 128;
 
     for (i=0; i<streamCount; i++) {
         cmdlen += streams[i].port.len + streams[i].ip.len + 2;
@@ -1271,11 +1377,19 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
 
     agent = encodeQuopri(userAgent);
 
-    snprintf(ptr, command + cmdlen - ptr, " %s %.*s %s %.*s %s %s flags=%s\n",
-             clientIP, fromDomain.len, fromDomain.s, fromType,
-             toDomain.len, toDomain.s, toType, agent,
-             isRTPAsymmetric(userAgent) ? "asymmetric" : "");
+    info = pkg_malloc(infolen);
+    sprintf(info, "from:%.*s,to:%.*s,fromtag:%.*s,totag:%.*s",
+            fromAddr.len, fromAddr.s, toAddr.len, toAddr.s,
+            fromTag.len, fromTag.s, toTag.len, toTag.s);
+    if (isRTPAsymmetric(userAgent)) {
+        strcat(info, ",asymmetric");
+    }
 
+    snprintf(ptr, command + cmdlen - ptr, " %s %.*s %s %.*s %s %s info=%s\n",
+             clientIP, fromDomain.len, fromDomain.s, fromType,
+             toDomain.len, toDomain.s, toType, agent, info);
+
+    pkg_free(info);
     pkg_free(agent);
 
     result = sendMediaproxyCommand(command);
