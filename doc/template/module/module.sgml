@@ -1,0 +1,59 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+<!ENTITY parentsgml "module.sgml">
+<!ENTITY copyrightholder "FhG FOKUS">
+<!ENTITY ser "SER">
+<!ENTITY sername "SIP Express Router">
+<!ENTITY serhomeweb "http://www.iptel.org/ser/">
+<!ENTITY serbugsweb "http://www.iptel.org/ser/bugs/">
+<!ENTITY serhelpmail "serhelp@iptel.org">
+<!ENTITY serusersmail "serusers@iptel.org">
+<!ENTITY serusersweb "http://mail.iptel.org/mailman/listinfo/serusers/">
+<!ENTITY serdevmail "serdev@iptel.org">
+<!ENTITY serdevweb "http://mail.iptel.org/mailman/listinfo/serdev/">
+<!ENTITY user SYSTEM "module_user.sgml">
+<!ENTITY devel SYSTEM "module_devel.sgml">
+<!ENTITY faq SYSTEM "module_faq.sgml">
+
+]>
+
+<book>
+    <bookinfo>
+	<title>Module's Name</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>AuthorFirstname</firstname>
+		<surname>AuthorLastname</surname>
+		<affiliation><orgname>Organization Name</orgname></affiliation>
+		<address>
+		<email>autor@email.net</email>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>EditorFirstname</firstname>
+		<surname>EditorLastname</surname>
+		<address>
+		<email>editor@email.net</email>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <year>2004</year>
+	    <holder>&copyrightholder;</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+
+</book>
