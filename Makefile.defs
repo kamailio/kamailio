@@ -67,9 +67,9 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 #-DNO_DEBUG#-DSTATS -DNO_DEBUG
 #-DNO_LOG
 
-#PROFILE=  -pg #set this if you want profiling
-#mode = debug
-mode = release
+PROFILE=  -pg #set this if you want profiling
+mode = debug
+#mode = release
 
 # platform dependent settings
 
@@ -96,7 +96,7 @@ endif
 
 #*FLAGS used for compiling the modules
 MOD_CFLAGS=-fPIC -DPIC $(CFLAGS)
-MOD_LDFLAGS=-O2 -shared
+MOD_LDFLAGS=-shared $(LDFLAGS)
 
 LEX=flex
 YACC=bison
@@ -111,10 +111,15 @@ ifeq ($(ARCH), Linux)
 
 endif
 ifeq  ($(ARCH), SunOS)
-
+	ifeq ($(mode), release)
+		LDFLAGS=-O2 $(PROFILE)
+		MOD_LDFLAGS=-O2 -G
+	else
+		LDFLAGS=-g $(PROFILE)
+		MOD_LDFLAGS=-g -G
+	endif
+	
 YACC=yacc
-LDFLAGS=-O2 $(PROFILE)
-MOD_LDFLAGS=-O2 -G
 LIBS+=-L/usr/local/lib -lxnet # or -lnsl -lsocket or -lglibc ?
 
 endif
