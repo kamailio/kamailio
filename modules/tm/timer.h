@@ -11,13 +11,23 @@ enum lists { RETRASMISSIONS_LIST, FR_TIMER_LIST, WT_TIMER_LIST, DELETE_LIST, NR_
 
 
 /* FINAL_RESPONSE_TIMER ... tells how long should the transaction engine
-   wait if no final response comes back
-*/
+   wait if no final response comes back*/
 #define FR_TIME_OUT     16
+
 /* WAIT timer ... tells how long state should persist in memory after
-   a transaction was finalized
-*/
+   a transaction was finalized*/
 #define WT_TIME_OUT      16
+
+/* DELETE timer ... tells how long should the transaction persist in memory
+   after it was removed from the hash table and before it will be deleted */
+#define DEL_TIME_OUT      2
+
+
+#define RETR_T1  1
+#define RETR_T2  2
+
+#define MAX_INVITE_RETR           7
+#define MAX_NON_INVITE_RETR  11
 
 
 /* all you need to put a cell in a timer list:

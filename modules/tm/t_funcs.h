@@ -1,6 +1,8 @@
 #ifndef _T_FUNCS_H
 #define _T_FUNCS_H
 
+#include <errno.h>
+#include <netinet/in.h>
 #include "../../msg_parser.h"
 
 struct s_table;
@@ -18,26 +20,30 @@ struct cell;
 
 
 
+int tm_startup();
+int tm_shutdown();
+
+
 /* function returns:
  *       0 - a new transaction was created
  *      -1 - retransmission
  *      -2 - error
  */
-int  t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg );
+int  t_add_transaction( struct sip_msg* p_msg );
 
 
 /* function returns:
  *       0 - transaction wasn't found
  *       1 - transaction found
  */
-int  t_lookup_request( struct s_table* hash_table , struct sip_msg* p_msg );
+int  t_lookup_request( struct sip_msg* p_msg );
 
 
 /* function returns:
  *       0 - forward successfull
  *      -1 - error during forward
  */
-int t_forward( struct s_table* hash_table , struct sip_msg* p_msg , unsigned int dst_ip , unsigned int dst_port);
+int t_forward( struct sip_msg* p_msg , unsigned int dst_ip , unsigned int dst_port);
 
 
 
@@ -46,7 +52,15 @@ int t_forward( struct s_table* hash_table , struct sip_msg* p_msg , unsigned int
   *  Returns :   1 - core router stops
   *                    0 - core router relay statelessly
   */
-int t_on_reply_received( struct s_table  *hash_table , struct sip_msg  *p_msg ) ;
+int t_on_reply_received( struct sip_msg  *p_msg ) ;
+
+
+
+
+/*
+*/
+int t_put_on_wait(  struct sip_msg  *p_msg  );
+
 
 
 

@@ -6,9 +6,7 @@
 #ifdef THREADS
 #include <pthread.h>
 #endif
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/socket.h>
+#include <arpa/inet.h>
 
 #include "../../msg_parser.h"
 
@@ -50,10 +48,13 @@ typedef struct retrans_buff
    unsigned int dest_ip;
    unsigned int dest_port;
 
-   struct sockaddr *to;
+   struct sockaddr_in to;
    socklen_t tolen;
    /* a message can be linked just to one retransmission list */
    struct timer_link tl[1];
+   unsigned int nr_retrans;
+   unsigned int max_retrans;
+   unsigned int timeout;
 }retrans_buff_type;
 
 
