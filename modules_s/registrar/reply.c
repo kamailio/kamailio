@@ -62,7 +62,7 @@ void build_contact(ucontact_t* _c)
 	l = 0;
 	lastgoodend = b;
 	while(_c) {
-		if (_c->expires > act_time) {
+		if (_c->expires > act_time && (_c->state < CS_ZOMBIE_N)) {
 			if (l + 10 >= MAX_CONTACT_BUFFER)
 				break;
 			memcpy(b + l, "Contact: <", 10);
