@@ -379,7 +379,7 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 	r = _d->table[sl].first;
 
 	for(i = 0; i < _d->table[sl].n; i++) {
-		if ((r->aor.len == _aor->len) && !memcmp(r->aor.s, _aor->s, _aor->len)) {
+		if ((r->aor.len == _aor->len) && !strncasecmp(r->aor.s, _aor->s, _aor->len)) {
 			*_r = r;
 			return 0;
 		}
