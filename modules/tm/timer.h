@@ -27,6 +27,10 @@ enum lists { RETRASMISSIONS_LIST, FR_TIMER_LIST, WT_TIMER_LIST, DELETE_LIST, NR_
 #define RETR_T2  4
 
 
+#define is_in_timer_list(tl,id)  \
+             (tl->next_tl || tl->prev_tl || (!tl->next_tl && !tl->prev_tl && tl==hash_table->timers[id].first_tl) )
+
+
 /* all you need to put a cell in a timer list:
    links to neighbours and timer value         */
 typedef struct timer_link

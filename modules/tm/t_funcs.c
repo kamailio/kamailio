@@ -457,6 +457,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
   */
 int t_put_on_wait(  struct sip_msg  *p_msg  )
 {
+   struct timer_link *tl;
    unsigned int i;
 
    t_check( hash_table , p_msg );
@@ -464,7 +465,14 @@ int t_put_on_wait(  struct sip_msg  *p_msg  )
    if (T==0)
       return -1;
 
-   /**/
+  if ( is_in_timer_list( (&(T->wait_tl)) , WT_TIMER_LIST) )
+  {
+     DBG("DEBUG: t_put_on_wait: already on wait\n");
+     return -1;
+  }
+
+
+  /**/
   for( i=0 ; i<T->nr_of_outgoings ; i++ )
       if ( T->outbound_response[i] && T->outbound_response[i]->first_line.u.reply.statusclass==1)
           t_cancel_branch(i);
@@ -524,7 +532,6 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
       unsigned int len;
       char * buf;
 
-         DBG("DEBUG: t_send_reply: before build\n");
       buf = build_res_buf_from_sip_req( code , text , T->inbound_request , &len );
          DBG("DEBUG: t_send_reply: after build\n");
       if (!buf)
@@ -540,22 +547,36 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
       else
       {
          struct hostent  *nhost;
+         unsigned int      ip, port;
          char foo;
 
-          T->inbound_response = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
-          memset( T->inbound_response , 0 , sizeof (struct retrans_buff) );
-          T->inbound_response->tl[RETRASMISSIONS_LIST].payload = &(T->inbound_response);
-          /*some dirty trick to get the port and ip of destination */
+          /*some dirty trick to get the port from via */
           foo = *((p_msg->via1->host.s)+(p_msg->via1->host.len));
           *((p_msg->via1->host.s)+(p_msg->via1->host.len)) = 0;
           nhost = gethostbyname( p_msg->via1->host.s );
           *((p_msg->via1->host.s)+(p_msg->via1->host.len)) = foo;
           if ( !nhost )
+          {
+             DBG("ERROR: t_send_reply: resolving host failed\n");
+             free(buf);
              return -1;
-          memcpy( &(T->inbound_response->to.sin_addr) , &(nhost->h_addr) , nhost->h_length );
-          T->inbound_response->dest_ip         = htonl(T->inbound_response->to.sin_addr.s_addr);
-          T->inbound_response->dest_port      = htonl(T->inbound_response->to.sin_port);
+          }
+          memcpy( &ip , nhost->h_addr_list[0] , sizeof(unsigned int) );
+          /* port */
+          if ( !(port = p_msg->via1->port) )
+             port = SIP_PORT;
+
+          /* build a retrans_buff and fill it */
+          T->inbound_response = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
+          memset( T->inbound_response , 0 , sizeof (struct retrans_buff) );
+          T->inbound_response->tl[RETRASMISSIONS_LIST].payload = T->inbound_response;
+          T->inbound_response->tl[FR_TIMER_LIST].payload = T->inbound_response;
           T->inbound_response->to.sin_family = AF_INET;
+          T->inbound_response->my_T = T;
+          T->inbound_response->to.sin_addr.s_addr = ip;
+          T->inbound_response->to.sin_port =  htons(port);
+          T->inbound_response->dest_ip       = ip;
+          T->inbound_response->dest_port    = htons(port);
       }
       T->status = code;
       T->inbound_response->bufflen = len ;
@@ -565,18 +586,21 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 
       /* make sure that if we send something final upstream, everything else will be cancelled */
       if ( code>=200 )
-         t_put_on_wait( p_msg );
+         if ( p_msg->first_line.u.request.method_value==METHOD_INVITE )
+         {
+            T->inbound_response->timeout_ceiling  = RETR_T2;
+            T->inbound_response->timeout_value    = RETR_T1;
+            remove_from_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
+            insert_into_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T1 );
+            remove_from_timer_list( hash_table , &(T->inbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
+            insert_into_timer_list( hash_table , &(T->inbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST , FR_TIME_OUT );
+         }
+         else
+         {
+            t_put_on_wait( p_msg );
+         }
 
-      /* if the code is 3,4,5,6 class for an INVITE -> starts retrans and FR timer*/
-      if ( p_msg->first_line.u.request.method_value==METHOD_INVITE && code>=300)
-      {
-         remove_from_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
-         remove_from_timer_list( hash_table , &(T->inbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
-         insert_into_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T1 );
-         insert_into_timer_list( hash_table , &(T->inbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST , FR_TIME_OUT );
-      }
-
-      t_retransmit_reply( p_msg, 0 , 0);
+      udp_send( T->inbound_response->buffer , T->inbound_response->bufflen , (struct sockaddr*)&(T->inbound_response->to) , sizeof(struct sockaddr_in) );
    }
 
    return 1;
@@ -1100,10 +1124,18 @@ void final_response_handler( void *attr)
 
    /* the transaction is already removed from FR_LIST by the timer */
    /* send a 408 */
-   DBG("DEBUG: final_response_handler : sending 408\n");
-   t_send_reply( r_buf->my_T->inbound_request , 408 , "Request Timeout" );
-   /* put it on WT_LIST - transaction is over */
-   t_put_on_wait(  r_buf->my_T->inbound_request );
+   if ( r_buf->my_T->status<200)
+   {
+      DBG("DEBUG: final_response_handler : stop retransmission and send 408\n");
+      remove_from_timer_list( hash_table , &(r_buf->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
+      t_send_reply( r_buf->my_T->inbound_request , 408 , "Request Timeout" );
+   }
+   else
+   {
+      /* put it on WT_LIST - transaction is over */
+      DBG("DEBUG: final_response_handler : cansel transaction->put on wait\n");
+      t_put_on_wait(  r_buf->my_T->inbound_request );
+   }
 }
 
 
