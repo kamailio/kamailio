@@ -16,6 +16,7 @@
 int sl_startup();
 int sl_send_reply(struct sip_msg*,int,char*);
 int sl_filter_ACK(struct sip_msg* );
+int sl_reply_error(struct sip_msg *msg );
 
 
 #endif

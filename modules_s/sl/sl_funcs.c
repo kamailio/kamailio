@@ -16,6 +16,8 @@
 #include "../../crc.h"
 #include "sl_funcs.h"
 
+#include "../../action.h"
+
 
 /* to-tag including pre-calculated and fixed part */
 char           sl_tag[TOTAG_LEN];
@@ -136,6 +138,18 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 
 error:
 	return -1;
+}
+
+
+int sl_reply_error(struct sip_msg *msg )
+{
+	char err_buf[MAX_REASON_LEN];
+	int sip_error;
+	int ret;
+
+	err2reason_phrase( prev_ser_error, &sip_error, 
+		err_buf, sizeof(err_buf), "SL");
+	sl_send_reply( msg, sip_error, err_buf );
 }
 
 

@@ -16,7 +16,8 @@
 int is_maxfwd_present( struct sip_msg* msg , str *foo)
 {
 	int x, err;
-	char c;
+	/* hey man, run -Wall before committing ... -jiri
+	char c; */
 
 	/* lookup into the message for MAX FORWARDS header*/
 	if ( !msg->maxforwards ) {
