@@ -157,7 +157,7 @@ char* eat_name(char* _b)
 /* Finds URL without name part and parameters
  * Given string will be modified
  */
-char* parse_to(char* _to)
+char* parse_to_char(char* _to)
 {
 	char* ptr, *end;
 #ifdef PARANOID
@@ -173,7 +173,7 @@ char* parse_to(char* _to)
 				*end = '\0';
 				return ptr;
 			} else {
-				LOG(L_ERR, "parse_to(): Error while parsing, > is missing\n");
+				LOG(L_ERR, "parse_to_char(): Error while parsing, > is missing\n");
 				return NULL;
 			}
 		} else {  /* Otherwise <> was not use, so try to find the first parameter delimited by a semicolon */
