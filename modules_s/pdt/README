@@ -34,7 +34,7 @@ Elena-Ramona Modroiu
 
         1.4. Exported Functions
 
-              1.4.1. prefix2domain()
+              1.4.1. prefix2domain(mode)
 
         1.5. Installation & Running
 
@@ -221,7 +221,7 @@ modparam("pdt", "clean_time", 600)
 
 1.4. Exported Functions
 
-1.4.1. prefix2domain()
+1.4.1. prefix2domain(mode)
 
    Build a new URI if it is necessary. Returns 1 when the
    translation was made or there was nothing to translate (user
@@ -229,9 +229,18 @@ modparam("pdt", "clean_time", 600)
    parameter or there is no domain associated with a possible
    prefix from user part). Returns -1 in error cases.
 
+   The "mode" parameter specifies whether to strip or not the
+   prefix from user part. If the parameter is missing or it has
+   the value "0", then the prefix is removed along with the
+   leading prefix. If the value is "1", only the leading prefix
+   is removed. If the values is "2" the user part of the URI is
+   not changed.
+
    Example 1-10. prefix2domain usage
 ...
 prefix2domain();
+...
+prefix2domain("2");
 ...
      _________________________________________________________
 

@@ -270,7 +270,7 @@ modparam("pdt", "clean_time", 600)
 	<title>Exported Functions</title>
 	<section>
 	    <title>
-		<function moreinfo="none">prefix2domain()</function>
+		<function moreinfo="none">prefix2domain(mode)</function>
 	    </title>
 	    <para>
 		Build a new &uri; if it is necessary. Returns 1 when the translation
@@ -279,11 +279,21 @@ modparam("pdt", "clean_time", 600)
 		associated with a possible prefix from user part).
 		Returns -1 in error cases.
 	    </para>
+		<para>
+		The <quote>mode</quote> parameter specifies whether to strip or not
+		the prefix from user part. If the parameter is missing or it has the
+		value <quote>0</quote>, then the prefix is removed along with the 
+		leading prefix. If the value is <quote>1</quote>, only the leading
+		prefix is removed. If the values is <quote>2</quote> the user part
+		of the URI is not changed.
+		</para>
 	    <example>
 		<title><function>prefix2domain</function> usage</title>
 		<programlisting format="linespecific">
 ...
 prefix2domain();
+...
+prefix2domain("2");
 ...
 </programlisting>
 	    </example>

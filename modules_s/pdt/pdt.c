@@ -89,23 +89,26 @@ str prefix = {"", 0};
 int sync_time = 600;
 int clean_time = 900;
 
-static int prefix2domain(struct sip_msg*, char*, char*);
+static int w_prefix2domain(struct sip_msg* msg, char* str1, char* str2);
+static int w_prefix2domain_1(struct sip_msg* msg, char* mode, char* str2);
 static int mod_init(void);
 static void mod_destroy(void);
 static int  child_init(int r);
 
+static int prefix2domain(struct sip_msg*, int mode);
 static int get_domainprefix_unixsock(str* msg);
 static int pdt_fifo_add(FILE *stream, char *response_file);
 static int pdt_fifo_delete(FILE *stream, char *response_file);
 static int pdt_fifo_list(FILE *stream, char *response_file);
 
-int update_new_uri(struct sip_msg *msg, int plen, str *d);
+int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode);
 int pdt_load_db();
 int pdt_sync_cache();
 void pdt_clean_cache(unsigned int ticks, void *param);
 
 static cmd_export_t cmds[]={
-	{"prefix2domain", prefix2domain, 0, 0, REQUEST_ROUTE},
+	{"prefix2domain", w_prefix2domain,   0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"prefix2domain", w_prefix2domain_1, 1, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -320,8 +323,22 @@ static void mod_destroy(void)
 }
 
 
+static int w_prefix2domain(struct sip_msg* msg, char* str1, char* str2)
+{
+	return prefix2domain(msg, 0);
+}
+
+static int w_prefix2domain_1(struct sip_msg* msg, char* mode, char* str2)
+{
+	if(mode!=NULL && *mode=='1')
+		return prefix2domain(msg, 1);
+	else if(mode!=NULL && *mode=='2')
+			return prefix2domain(msg, 2);
+	else return prefix2domain(msg, 0);
+}
+
 /* change the r-uri if it is a PSTN format */
-static int prefix2domain(struct sip_msg* msg, char* str1, char* str2)
+static int prefix2domain(struct sip_msg* msg, int mode)
 {
 	str p;
 	str *d;
@@ -382,7 +399,7 @@ static int prefix2domain(struct sip_msg* msg, char* str1, char* str2)
 	}
 	
 	/* update the new uri */
-	if(update_new_uri(msg, plen, d)<0)
+	if(update_new_uri(msg, plen, d, mode)<0)
 	{
 		LOG(L_ERR, "PDT:prefix2domain: new_uri cannot be updated\n");
 		return -1;
@@ -391,7 +408,7 @@ static int prefix2domain(struct sip_msg* msg, char* str1, char* str2)
 }
 
 /* change the uri according to translation of the prefix */
-int update_new_uri(struct sip_msg *msg, int plen, str *d)
+int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 {
 	struct action act;
 	if(msg==NULL || d==NULL)
@@ -400,17 +417,23 @@ int update_new_uri(struct sip_msg *msg, int plen, str *d)
 		return -1;
 	}
 	
-	act.type = STRIP_T;
-	act.p1_type = NUMBER_ST;
-	act.p1.number = plen + prefix.len;
-	act.next = 0;
-
-	if (do_action(&act, msg) < 0)
+	if(mode==0 || (mode==1 && prefix.len>0))
 	{
-		LOG(L_ERR, "PDT:update_new_uri:Error removing prefix\n");
-		return -1;
-	}
+		act.type = STRIP_T;
+		act.p1_type = NUMBER_ST;
+		if(mode==0)
+			act.p1.number = plen + prefix.len;
+		else
+			act.p1.number = prefix.len;
+		act.next = 0;
 
+		if (do_action(&act, msg) < 0)
+		{
+			LOG(L_ERR, "PDT:update_new_uri:Error removing prefix\n");
+			return -1;
+		}
+	}
+	
 	act.type = SET_HOSTPORT_T;
 	act.p1_type = STRING_ST;
 	act.p1.string = d->s;
