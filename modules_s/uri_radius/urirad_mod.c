@@ -29,6 +29,7 @@
  * History:
  * --------
  * 2003-03-15 - created by janakj
+ * 2003-03-16 - flags export parameter added (janakj)
  */
 
 #include <radiusclient.h>
@@ -51,8 +52,8 @@ char* radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"radius_does_uri_exist", radius_does_uri_exist, 0, 0},
-	{0, 0, 0, 0}
+	{"radius_does_uri_exist", radius_does_uri_exist, 0, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0}
 };
 
 

@@ -134,18 +134,24 @@ static inline int challenge(struct sip_msg* _msg, str* _realm, int _qop,
 	struct hdr_field* h;
 	auth_body_t* cred = 0;
 	char *auth_hf;
-	int ret;
+	int ret, hftype = 0; /* Makes gcc happy */
 	struct sip_uri uri;
 
 	switch(_code) {
-	case 401: get_authorized_cred(_msg->authorization, &h); break;
-	case 407: get_authorized_cred(_msg->proxy_auth, &h);    break;
+	case 401: 
+		get_authorized_cred(_msg->authorization, &h); 
+		hftype = HDR_AUTHORIZATION;
+		break;
+	case 407: 
+		get_authorized_cred(_msg->proxy_auth, &h);
+		hftype = HDR_PROXYAUTH;
+		break;
 	}
 
 	if (h) cred = (auth_body_t*)(h->parsed);
 
 	if (_realm->len == 0) {
-		if (get_realm(_msg, &uri) < 0) {
+		if (get_realm(_msg, hftype, &uri) < 0) {
 			LOG(L_ERR, "challenge(): Error while extracting URI\n");
 			if (send_resp(_msg, 400, MESSAGE_400, 0, 0) == -1) {
 				LOG(L_ERR, "challenge(): Error while sending response\n");

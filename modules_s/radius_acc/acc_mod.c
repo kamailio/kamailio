@@ -29,6 +29,7 @@
 /* History:
  * --------
  *  2003-03-11  updated to the new module exports interface (andrei)
+ *  2003-03-16  flags export parameter added (janakj)
  */
 
 
@@ -99,8 +100,8 @@ static void rad_acc_onreq( struct cell* t, struct sip_msg *msg,
 
 
 static  cmd_exports_t cmds[]={
-	{"rad_acc_request", rad_acc_request, 1, 0 },
-	{0,0,0,0}
+	{"rad_acc_request", rad_acc_request, 1, 0, REQUEST_ROUTE},
+	{0,0,0,0,0}
 };
 
 static param_exports_t params[]={

@@ -28,6 +28,7 @@
  * History:
  * -------
  * 2003-03-11: New module interface (janakj)
+ * 2003-03-16: flags export parameter added (janakj)
  */
 
 #include <stdio.h>
@@ -62,9 +63,9 @@ static int fixup_ext_rewrite(void** param, int param_no);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"ext_rewriteuser", ext_rewriteuser, 1, fixup_ext_rewrite},
-	{"ext_rewriteuri",  ext_rewriteuri,  1, fixup_ext_rewrite},
-	{0, 0, 0, 0}
+	{"ext_rewriteuser", ext_rewriteuser, 1, fixup_ext_rewrite, REQUEST_ROUTE},
+	{"ext_rewriteuri",  ext_rewriteuri,  1, fixup_ext_rewrite, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0}
 };
 
 

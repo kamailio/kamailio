@@ -29,6 +29,7 @@
  * History:
  * -------
  * 2003-03-11: New module interface (janakj)
+ * 2003-03-16: flags export parameter added (janakj)
  */
 
 
@@ -71,11 +72,11 @@ db_con_t* db_handle = 0;   /* Database connection handle */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"is_user",        is_user,        1, str_fixup},
-	{"check_to",       check_to,       0, 0        },
-	{"check_from",     check_from,     0, 0        },
-	{"does_uri_exist", does_uri_exist, 0, 0        },
-	{0, 0, 0, 0}
+	{"is_user",        is_user,        1, str_fixup, REQUEST_ROUTE},
+	{"check_to",       check_to,       0, 0,         REQUEST_ROUTE},
+	{"check_from",     check_from,     0, 0,         REQUEST_ROUTE},
+	{"does_uri_exist", does_uri_exist, 0, 0,         REQUEST_ROUTE},
+	{0, 0, 0, 0, 0}
 };
 
 

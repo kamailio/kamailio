@@ -28,6 +28,7 @@
  */
 /*
  * 2003-03-11  updated to the new module exports interface (andrei)
+ * 2003-03-16  flags export parameter added (janakj)
  */
 
 
@@ -49,8 +50,8 @@ static int default_expires = 3600;
 static struct tm_binds tmb;
 
 static cmd_export_t cmds[]={
-	{"subscribe",  subscribe,  1, subscribe_fixup},
-	{0,0,0,0}
+	{"subscribe",  subscribe,  1, subscribe_fixup, REQUEST_ROUTE},
+	{0,0,0,0,0}
 };
 
 static param_export_t params[]={

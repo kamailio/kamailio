@@ -29,6 +29,7 @@
 /* History:
  * --------
  *  2003-03-11  updated to the new module interface (andrei)
+ *  2003-03-16  flags export parameter added (janakj)
  */
 
 
@@ -55,10 +56,10 @@ static int int_fixup(void** param, int param_no);
  * Exported functions
  */
 static cmd_export_t cmds[]={
-	{"loose_route",  loose_route,   0, 0        },
-	{"strict_route", strict_route,  0, 0        },
-	{"record_route", record_route,  1, int_fixup},
-	{0,0,0,0}
+	{"loose_route",  loose_route,   0, 0,         REQUEST_ROUTE},
+	{"strict_route", strict_route,  0, 0,         REQUEST_ROUTE},
+	{"record_route", record_route,  1, int_fixup, REQUEST_ROUTE},
+	{0,0,0,0,0}
 };
 
 

@@ -35,6 +35,7 @@
  * 2003-02-24 first version of callback functions for ihttp (dcm)
  * 2003-02-13 lot of comments enclosed in #ifdef XJ_EXTRA_DEBUG (dcm)
  * 2003-03-11 New module interface (janakj)
+ * 2003-03-16 flags export parameter added (janakj)
  *
  */
 
@@ -131,15 +132,15 @@ void destroy(void);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"jab_send_message",       xj_send_message,                     0,              0},
-	{"jab_join_jconf",         xj_join_jconf,                       0,              0},
-	{"jab_exit_jconf",         xj_exit_jconf,                       0,              0},
-	{"jab_go_online",          xj_go_online,                        0,              0},
-	{"jab_go_offline",         xj_go_offline,                       0,              0},
-	{"jab_register_watcher",   (cmd_function)xj_register_watcher,   XJ_NO_SCRIPT_F, 0},
-	{"jab_unregister_watcher", (cmd_function)xj_unregister_watcher, XJ_NO_SCRIPT_F, 0},
-	{"load_xjab",              (cmd_function)load_xjab,             XJ_NO_SCRIPT_F, 0},
-	{0, 0, 0, 0}
+	{"jab_send_message",       xj_send_message,                     0,              0, REQUEST_ROUTE},
+	{"jab_join_jconf",         xj_join_jconf,                       0,              0, REQUEST_ROUTE},
+	{"jab_exit_jconf",         xj_exit_jconf,                       0,              0, REQUEST_ROUTE},
+	{"jab_go_online",          xj_go_online,                        0,              0, REQUEST_ROUTE},
+	{"jab_go_offline",         xj_go_offline,                       0,              0, REQUEST_ROUTE},
+	{"jab_register_watcher",   (cmd_function)xj_register_watcher,   XJ_NO_SCRIPT_F, 0, 0            },
+	{"jab_unregister_watcher", (cmd_function)xj_unregister_watcher, XJ_NO_SCRIPT_F, 0, 0            },
+	{"load_xjab",              (cmd_function)load_xjab,             XJ_NO_SCRIPT_F, 0, 0            },
+	{0, 0, 0, 0, 0}
 };
 
 

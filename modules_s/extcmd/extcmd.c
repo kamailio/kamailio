@@ -28,6 +28,7 @@
  * History:
  * -------
  * 2003-03-11: New module interface (janakj)
+ * 2003-03-16: flags export parameter added (janakj)
  */
 
 
@@ -81,8 +82,8 @@ int    req_pipe[2];
  */
 
 static cmd_export_t cmds[] = {
-	{"extcmd_dump_req", dump_request, 0, 0},
-	{0, 0, 0, 0}
+	{"extcmd_dump_req", dump_request, 0, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0}
 };
 
 

@@ -27,6 +27,7 @@
  * History:
  * -------
  * 2003-03-11 New module interface (janakj)
+ * 2003-03-16 flags export parameter added (janakj)
  */
 
 #include "../../fifo_server.h"
@@ -81,9 +82,9 @@ db_con_t* db_handle = 0;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"vm_start", vm_start, 1, 0},
-	{"vm_stop",  vm_stop,  1, 0},
-	{0, 0, 0, 0}
+	{"vm_start", vm_start, 1, 0, REQUEST_ROUTE},
+	{"vm_stop",  vm_stop,  1, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0}
 };
 
 

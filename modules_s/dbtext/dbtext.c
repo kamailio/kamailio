@@ -31,6 +31,7 @@
  *  
  * 2003-01-30 created by Daniel
  * 2003-03-11 New module interface (janakj)
+ * 2003-03-16 flags export parameter added (janakj)
  * 
  */
 
@@ -48,16 +49,16 @@ void destroy(void);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"~db_use_table",  (cmd_function)use_table,      2, 0},
-	{"~db_init", 	   (cmd_function)dbt_init,       1, 0},
-	{"~db_close",	   (cmd_function)dbt_close,      2, 0},
-	{"~db_query",	   (cmd_function)dbt_query,      2, 0},
-	{"~db_raw_query",  (cmd_function)dbt_raw_query,  2, 0},
-	{"~db_free_query", (cmd_function)dbt_free_query, 2, 0},
-	{"~db_insert",	   (cmd_function)dbt_insert,     2, 0},
-	{"~db_delete",	   (cmd_function)dbt_delete,     2, 0},
-	{"~db_update",	   (cmd_function)dbt_update,     2, 0},
-	{0, 0, 0, 0}
+	{"~db_use_table",  (cmd_function)use_table,      2, 0, 0},
+	{"~db_init", 	   (cmd_function)dbt_init,       1, 0, 0},
+	{"~db_close",	   (cmd_function)dbt_close,      2, 0, 0},
+	{"~db_query",	   (cmd_function)dbt_query,      2, 0, 0},
+	{"~db_raw_query",  (cmd_function)dbt_raw_query,  2, 0, 0},
+	{"~db_free_query", (cmd_function)dbt_free_query, 2, 0, 0},
+	{"~db_insert",	   (cmd_function)dbt_insert,     2, 0, 0},
+	{"~db_delete",	   (cmd_function)dbt_delete,     2, 0, 0},
+	{"~db_update",	   (cmd_function)dbt_update,     2, 0, 0},
+	{0, 0, 0, 0, 0}
 };
 
 

@@ -29,6 +29,7 @@
  * History:
  * -------
  * 2003-03-11: New module interface (janakj)
+ * 2003-03-16: flags export parameter added (janakj)
  */
 
 
@@ -68,9 +69,9 @@ struct domain_list **hash_table_2;           /* Pointer to hash table 2 */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"is_from_local",     is_from_local,     0, 0},
-	{"is_uri_host_local", is_uri_host_local, 0, 0},
-	{0, 0, 0, 0}
+	{"is_from_local",     is_from_local,     0, 0, REQUEST_ROUTE},
+	{"is_uri_host_local", is_uri_host_local, 0, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0}
 };
 
 

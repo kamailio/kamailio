@@ -31,6 +31,7 @@
  * History:
  * --------
  *  2003-03-11  updated to the new module interface (andrei)
+ *  2003-03-16  flags export parameter added (janakj)
  */
 
 
@@ -51,8 +52,8 @@ static int mod_init(void);
 
 static cmd_export_t cmds[]={
 	{"mf_process_maxfwd_header", w_process_maxfwd_header, 1, 
-		fixup_maxfwd_header },
-	{0,0,0,0}
+		fixup_maxfwd_header, REQUEST_ROUTE},
+	{0,0,0,0,0}
 };
 
 

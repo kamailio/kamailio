@@ -30,6 +30,7 @@
  * --------
  * 2003-02-26: checks and group moved to separate modules (janakj)
  * 2003-03-11: New module interface (janakj)
+ * 2003-03-16: flags export parameter added (janakj)
  */
 
 #include <stdio.h>
@@ -88,9 +89,9 @@ db_con_t* db_handle;   /* Database connection handle */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"www_authorize",   www_authorize,   2, str_fixup},
-	{"proxy_authorize", proxy_authorize, 2, str_fixup},
-	{0, 0, 0, 0}
+	{"www_authorize",   www_authorize,   2, str_fixup, REQUEST_ROUTE},
+	{"proxy_authorize", proxy_authorize, 2, str_fixup, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0}
 };
 
 

@@ -32,6 +32,7 @@
  * 2003-01-27 timer activity printing #ifdef-ed to EXTRA_DEBUG (jiri)
  * 2003-03-11 New module interface (janakj)
  * 2003-03-12 added replication and state columns (nils)
+ * 2003-03-16 flags export parameter added (janakj)
  */
 
 
@@ -80,20 +81,20 @@ db_con_t* db; /* Database connection handle */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"~ul_register_udomain",   (cmd_function)register_udomain,   1, 0},
-	{"~ul_insert_urecord",     (cmd_function)insert_urecord,     1, 0},
-	{"~ul_delete_urecord",     (cmd_function)delete_urecord,     1, 0},
-	{"~ul_get_urecord",        (cmd_function)get_urecord,        1, 0},
-	{"~ul_lock_udomain",       (cmd_function)lock_udomain,       1, 0},
-	{"~ul_unlock_udomain",     (cmd_function)unlock_udomain,     1, 0},
-	{"~ul_release_urecord",    (cmd_function)release_urecord,    1, 0},
-	{"~ul_insert_ucontact",    (cmd_function)insert_ucontact,    1, 0},
-	{"~ul_delete_ucontact",    (cmd_function)delete_ucontact,    1, 0},
-	{"~ul_get_ucontact",       (cmd_function)get_ucontact,       1, 0},
-	{"~ul_update_ucontact",    (cmd_function)update_ucontact,    1, 0},
-	{"~ul_register_watcher",   (cmd_function)register_watcher,   1, 0},
-	{"~ul_unregister_watcher", (cmd_function)unregister_watcher, 1, 0},
-	{0, 0, 0, 0}
+	{"~ul_register_udomain",   (cmd_function)register_udomain,   1, 0, 0},
+	{"~ul_insert_urecord",     (cmd_function)insert_urecord,     1, 0, 0},
+	{"~ul_delete_urecord",     (cmd_function)delete_urecord,     1, 0, 0},
+	{"~ul_get_urecord",        (cmd_function)get_urecord,        1, 0, 0},
+	{"~ul_lock_udomain",       (cmd_function)lock_udomain,       1, 0, 0},
+	{"~ul_unlock_udomain",     (cmd_function)unlock_udomain,     1, 0, 0},
+	{"~ul_release_urecord",    (cmd_function)release_urecord,    1, 0, 0},
+	{"~ul_insert_ucontact",    (cmd_function)insert_ucontact,    1, 0, 0},
+	{"~ul_delete_ucontact",    (cmd_function)delete_ucontact,    1, 0, 0},
+	{"~ul_get_ucontact",       (cmd_function)get_ucontact,       1, 0, 0},
+	{"~ul_update_ucontact",    (cmd_function)update_ucontact,    1, 0, 0},
+	{"~ul_register_watcher",   (cmd_function)register_watcher,   1, 0, 0},
+	{"~ul_unregister_watcher", (cmd_function)unregister_watcher, 1, 0, 0},
+	{0, 0, 0, 0, 0}
 };
 
 

@@ -44,6 +44,7 @@
  * 2003-01-28  scratchpad removed (jiri)
  * 2003-01-18  append_urihf introduced (jiri)
  * 2003-03-10  module export interface updated to the new format (andrei)
+ * 2003-03-16  flags export parameter added (janakj)
  */
 
 
@@ -78,14 +79,14 @@ static int mod_init(void);
 
 
 static cmd_export_t cmds[]={
-		{"search",           search_f,          1, fixup_regex},
-		{"search_append",    search_append_f,   2, fixup_regex},
-		{"replace",          replace_f,         2, fixup_regex},
-		{"replace_all",      replace_all_f,     2, fixup_regex},
-		{"append_to_reply",  append_to_reply_f, 1, 0          },
-		{"append_hf",        append_hf,         1, str_fixup  },
-		{"append_urihf",     append_urihf,      2, str_fixup  },
-		{0,0,0,0}
+	{"search",           search_f,          1, fixup_regex, REQUEST_ROUTE},
+	{"search_append",    search_append_f,   2, fixup_regex, REQUEST_ROUTE},
+	{"replace",          replace_f,         2, fixup_regex, REQUEST_ROUTE},
+	{"replace_all",      replace_all_f,     2, fixup_regex, REQUEST_ROUTE},
+	{"append_to_reply",  append_to_reply_f, 1, 0,           REQUEST_ROUTE},
+	{"append_hf",        append_hf,         1, str_fixup,   REQUEST_ROUTE},
+	{"append_urihf",     append_urihf,      2, str_fixup,   REQUEST_ROUTE},
+	{0,0,0,0,0}
 };
 
 static param_export_t params[]={ {0,0,0} }; /* no params */

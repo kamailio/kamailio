@@ -30,6 +30,7 @@
  * --------
  * 2003-02-26: checks and group moved to separate modules (janakj)
  * 2003-03-10: New module interface (janakj)
+ * 2003-03-16: flags export parameter added (janakj)
  */
 
 #include <stdio.h>
@@ -87,12 +88,12 @@ char* sec_rand = 0;
  * Exported functions 
  */
 static cmd_export_t cmds[] = {
-	{"www_challenge",       www_challenge,           2, challenge_fixup},
-	{"proxy_challenge",     proxy_challenge,         2, challenge_fixup},
-	{"consume_credentials", consume_credentials,     0, 0              },
-	{"~pre_auth",           (cmd_function)pre_auth,  0, 0              },
-	{"~post_auth",          (cmd_function)post_auth, 0, 0              },
-	{0, 0, 0,0}
+	{"www_challenge",       www_challenge,           2, challenge_fixup, REQUEST_ROUTE},
+	{"proxy_challenge",     proxy_challenge,         2, challenge_fixup, REQUEST_ROUTE},
+	{"consume_credentials", consume_credentials,     0, 0              , REQUEST_ROUTE},
+	{"~pre_auth",           (cmd_function)pre_auth,  0, 0              , 0            },
+	{"~post_auth",          (cmd_function)post_auth, 0, 0              , 0            },
+	{0, 0, 0, 0, 0}
 };
 
 

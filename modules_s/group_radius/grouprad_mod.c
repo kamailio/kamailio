@@ -29,6 +29,7 @@
  * History:
  * --------
  * 2003-02-25 - created by janakj
+ * 2003-03-16 - flags export parameter added (janakj)
  */
 
 #include <string.h>
@@ -56,8 +57,8 @@ int use_domain = 1;  /* By default we use domain */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"radius_is_user_in", radius_is_user_in, 2, hf_fixup},
-	{0, 0, 0, 0}
+	{"radius_is_user_in", radius_is_user_in, 2, hf_fixup, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0}
 };
 
 

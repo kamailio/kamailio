@@ -30,6 +30,7 @@
  * -------
  * 2003-03-09: Based on auth_mod.c from radius_auth (janakj)
  * 2003-03-11: New module interface (janakj)
+ * 2003-03-16: flags export parameter added (janakj)
  */
 
 
@@ -60,9 +61,9 @@ char* radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"radius_www_authorize",   radius_www_authorize,   1, str_fixup},
-	{"radius_proxy_authorize", radius_proxy_authorize, 1, str_fixup},
-	{0, 0, 0, 0}
+	{"radius_www_authorize",   radius_www_authorize,   1, str_fixup, REQUEST_ROUTE},
+	{"radius_proxy_authorize", radius_proxy_authorize, 1, str_fixup, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0}
 };
 
 

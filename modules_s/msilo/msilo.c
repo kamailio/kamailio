@@ -31,6 +31,7 @@
  * 2003-01-23  switched from t_uac to t_uac_dlg, by dcm
  * 2003-03-11  updated to the new module interface (andrei)
  *             removed non-constant intializers to some strs (andrei)
+ * 2003-03-16  flags parameter added (janakj)
  */
 
 #include <stdio.h>
@@ -152,9 +153,9 @@ static void m_tm_callback( struct cell *t, struct sip_msg *msg,
 	int code, void *param);
 
 static cmd_export_t cmds[]={
-	{"m_store",  m_store, 0, 0},
-	{"m_dump",   m_dump,  0, 0},
-	{0,0,0,0}
+	{"m_store",  m_store, 0, 0, REQUEST_ROUTE},
+	{"m_dump",   m_dump,  0, 0, REQUEST_ROUTE},
+	{0,0,0,0,0}
 };
 
 

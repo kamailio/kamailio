@@ -30,6 +30,7 @@
  * History:
  * --------
  *  2003-03-10  module export interface updated to the new format (andrei)
+ *  2003-03-11  flags export parameter added (janakj)
  */
 
 
@@ -46,11 +47,16 @@ char* str_param;
 int int_param;
 
 
-static cmd_export_t cmds[]={ {"print", print_f, 1, 0}, {0, 0, 0, 0} };
+static cmd_export_t cmds[]={
+	{"print", print_f, 1, 0, REQUEST_ROUTE}, 
+	{0, 0, 0, 0, 0}
+};
 
-static param_export_t params[]={ {"str_param", STR_PARAM, &str_param},
-		                         {"int_param", INT_PARAM, &int_param},
-		                         {0,0,0} };
+static param_export_t params[]={ 
+	{"str_param", STR_PARAM, &str_param},
+	{"int_param", INT_PARAM, &int_param},
+	{0,0,0} 
+};
 
 struct module_exports exports = {
 	"print_stdout", 

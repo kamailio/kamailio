@@ -29,6 +29,7 @@
  * History:
  * --------
  *  2003-03-11 updated to the new module exports interface (andrei)
+ *  2003-03-16 flags export parameter added (janakj)
  */
 
 
@@ -79,10 +80,11 @@ struct tm_binds tmb;
 
 
 static cmd_export_t cmds[]={
-	{"sms_send_msg_to_net",  w_sms_send_msg_to_net, 1, 
-		fixup_sms_send_msg_to_net },
-	{"sms_send_msg",         w_sms_send_msg,        0,  0},
-	{0,0,0,0}
+	{"sms_send_msg_to_net", w_sms_send_msg_to_net, 1, 
+	     fixup_sms_send_msg_to_net, REQUEST_ROUTE},
+	{"sms_send_msg",        w_sms_send_msg,        0,  
+	     0,                         REQUEST_ROUTE},
+	{0,0,0,0,0}
 };
 
 

@@ -29,6 +29,7 @@
  * History:
  * -------
  * 2003-03-11: New module interface (janakj)
+ * 2003-03-16: flags export parameter added (janakj)
  */
 
 
@@ -46,9 +47,9 @@ static int mod_init(void);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"enum_query",        enum_query,        0, 0},
-	{"is_from_user_e164", is_from_user_e164, 0, 0},
-	{0, 0, 0, 0}
+	{"enum_query",        enum_query,        0, 0, REQUEST_ROUTE},
+	{"is_from_user_e164", is_from_user_e164, 0, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0}
 };
 
 
