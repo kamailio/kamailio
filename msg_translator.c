@@ -1564,7 +1564,6 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	struct lump_rpl   *lump;
 	struct lump_rpl   *body;
 	int               i;
-	char              backup;
 	str               received = {0,0};
 	str               rport = {0,0};
 	str               warning = {0,0};
@@ -1594,7 +1593,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 
 	/* check if received needs to be added */
 	if (received_test(msg)) {
-		if ((received_buf=received_builder(msg,&received_len))==0) {
+		if ((received.s=received_builder(msg,&received.len))==0) {
 			LOG(L_ERR, "ERROR: build_res_buf_from_sip_req: "
 				"alas, received_builder failed\n");
 			goto error00;
