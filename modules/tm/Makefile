@@ -19,7 +19,7 @@ CFLAGS+= -fPIC -DPIC
 ALLDEP=Makefile ../../Makefile
 
 ifeq ($(ARCH), SunOS)
-LDFLAGS=-O2 -G -fPIC -DPIC
+LDFLAGS=-O2 -G 
 endif
 
 #implicit rules
