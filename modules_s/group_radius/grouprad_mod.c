@@ -31,141 +31,74 @@
  * 2003-02-25 - created by janakj
  */
 
-
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../ut.h"
+#include <stdlib.h>
+#include <radiusclient.h>
 #include "../../error.h"
-#include "../../mem/mem.h"
-#include "group_mod.h"
+#include "../../dprint.h"
+#include "../../sr_module.h"
+#include "grouprad_mod.h"
 #include "group.h"
 
 
-/*
- * Module destroy function prototype
- */
-static void destroy(void);
-
-
-/*
- * Module child-init function prototype
- */
-static int child_init(int rank);
-
-
-/*
- * Module initialization function prototype
- */
-static int mod_init(void);
-
-
-/* Header field fixup */
-static int hf_fixup(void** param, int param_no);
+static int mod_init(void); /* Module initialization function */
+static int hf_fixup(void** param, int param_no); /* Header field fixup */
 
 
 /*
  * Module parameter variables
  */
-char* db_url       = "sql://serro:47serro11@localhost/ser";
+char* radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
 
-char* table        = "grp";    /* Table name where group definitions are stored */
-char* user_col     = "user";
-char* domain_col   = "domain";
-char* grp_col      = "grp";
-int   use_domain   = 0;
 
-db_con_t* db_handle = 0;   /* Database connection handle */
+/*
+ * Exported functions
+ */
+static cmd_export_t cmds[] = {
+	{"radius_is_user_in", radius_is_user_in, 2, hf_fixup},
+	{0, 0, 0, 0}
+};
+
+
+/*
+ * Exported parameters
+ */
+static param_export_t params[] = {
+	{"radius_config", STR_PARAM, &radius_config},
+	{0, 0, 0}
+};
 
 
 /*
  * Module interface
  */
 struct module_exports exports = {
-	"group", 
-	(char*[]) { 
-		"is_user_in"
-	},
-	(cmd_function[]) {
-		is_user_in
-	},
-	(int[]) {2},
-	(fixup_function[]) {
-		hf_fixup
-	},
-	1,
-	
-	(char*[]) {
-		"db_url",              /* Database URL */
-		"table",               /* Group table name */
-		"user_column",         /* Group table user column name */
-		"domain_column",       /* Group table domain column name */
-		"group_column",        /* Group table group column name */
-		"use_domain"   
-	},   /* Module parameter names */
-	(modparam_t[]) {
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-	        INT_PARAM
-	},   /* Module parameter types */
-	(void*[]) {
-		&db_url,
-		&table,
-		&user_column,
-		&domain_column,
-		&group_column,
-		&use_domain
-	},   /* Module parameter variable pointers */
-	6,
+	"group_radius", 
+	cmds,       /* Exported functions */
+	params,     /* Exported parameters */
 	mod_init,   /* module initialization function */
-	NULL,       /* response function */
-	destroy,    /* destroy function */
-	0,       /* oncancel function */
-	child_init  /* child initialization function */
+	0,          /* response function */
+	0,          /* destroy function */
+	0,          /* oncancel function */
+	0           /* child initialization function */
 };
-
-
-static int child_init(int rank)
-{
-	if (db_url == 0) {
-		LOG(L_ERR, "group:init_child(): Use db_url parameter\n");
-		return -1;
-	}
-
-	db_handle = db_init(db_url);
-	if (!db_handle) {
-		LOG(L_ERR, "group:init_child(): Unable to connect database\n");
-		return -1;
-	}
-
-	return 0;
-}
 
 
 static int mod_init(void)
 {
-	printf("group module - initializing\n");
+	DBG("group_radius - initializing\n");
 	
-	     /* Find a database module */
-	if (bind_dbmod()) {
-		LOG(L_ERR, "mod_init(): Unable to bind database module\n");
+	if (rc_read_config(radius_config) != 0) {
+		LOG(L_ERR, "group_radius: Error opening configuration file \n");
 		return -1;
+	}
+    
+	if (rc_read_dictionary(rc_conf_str("dictionary")) != 0) {
+		LOG(L_ERR, "group_radius: Error opening dictionary file \n");
+		return -2;
 	}
 
 	return 0;
-}
-
-
-static void destroy(void)
-{
-	if (db_handle) {
-		db_close(db_handle);
-	}
 }
 
 
