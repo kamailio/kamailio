@@ -1,7 +1,7 @@
 %define name    ser
 %define ver     0.8.10
 %define rel     1
-%define exclude CVS pike radius_acc radius_auth snmp
+%define exclude CVS radius_acc radius_auth snmp mysql jabber
 
 Summary:      SIP Express Router, very fast and flexible SIP Proxy
 Name:         %name
@@ -33,20 +33,29 @@ Module, Registrar and User Location.
 Summary:  MySQL connectivity for the SIP Express Router.
 Group:    System Environment/Daemons
 Requires: ser
+BuildPrereq:  mysql-devel
 
 %description mysql
 The ser-mysql package contains MySQL database connectivity that you
 need to use digest authentication module or persistent user location
 entries.
 
+%package  jabber
+Summary:  sip jabber message translation support for the SIP Express Router.
+Group:    System Environment/Daemons
+Requires: ser
+BuildPrereq:  expat-devel
+
+%description jabber
+The ser-jabber package contains a sip to jabber message translator.
+
 %prep
 %setup
 
 %build
 make all exclude_modules="%exclude" cfg-target=/%{_sysconfdir}/ser/
-make modules modules=modules/mysql cfg-target=/%{_sysconfdir}/ser/
-cd utils/gen_ha1
-make
+make modules modules=modules/mysql  cfg-target=/%{_sysconfdir}/ser/
+make modules modules=modules/jabber cfg-target=/%{_sysconfdir}/ser/
 
 
 %install
@@ -72,24 +81,17 @@ make install-modules modules=modules/mysql \
 	    doc-dir=ser/ \
 	    cfg-target=/%{_sysconfdir}/ser/ \
 	    modules-target=/%{_libdir}/ser/modules/ 
+make install-modules modules=modules/jabber \
+	    modules-prefix=$RPM_BUILD_ROOT/%{_libdir}/ser \
+	    modules-dir=modules/ \
+	    doc-prefix=$RPM_BUILD_ROOT/%{_docdir} \
+	    doc-dir=ser/ \
+	    cfg-target=/%{_sysconfdir}/ser/ \
+	    modules-target=/%{_libdir}/ser/modules/ 
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 $RPM_SOURCE_DIR/ser.init \
               $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d/ser
-
-mkdir -p $RPM_BUILD_ROOT/%{_bindir}
-
-install -m755 utils/gen_ha1/gen_ha1 \
-	      $RPM_BUILD_ROOT/%{_bindir}/gen_ha1
-
-install -m755 scripts/harv_ser.sh \
-	      $RPM_BUILD_ROOT/%{_sbindir}/harv_ser.sh
-
-install -m755 scripts/sc \
-	      $RPM_BUILD_ROOT/%{_sbindir}/serctl
-
-install -m755 scripts/ser_mysql.sh \
-	      $RPM_BUILD_ROOT/%{_sbindir}/ser_mysql.sh
 
 
 %clean
@@ -119,8 +121,9 @@ fi
 %{_libdir}/ser/modules/auth.so
 %{_libdir}/ser/modules/exec.so
 %{_libdir}/ser/modules/im.so
-%{_libdir}/ser/modules/jabber.so
 %{_libdir}/ser/modules/maxfwd.so
+%{_libdir}/ser/modules/msilo.so
+%{_libdir}/ser/modules/pike.so
 %{_libdir}/ser/modules/print.so
 %{_libdir}/ser/modules/registrar.so
 %{_libdir}/ser/modules/rr.so
@@ -130,10 +133,9 @@ fi
 %{_libdir}/ser/modules/tm.so
 %{_libdir}/ser/modules/usrloc.so
 
-%{_sbindir}/harv_ser.sh
 %{_sbindir}/ser
 %{_sbindir}/serctl
-%{_bindir}/*
+%{_sbindir}/gen_ha1
 
 %{_mandir}/man5/*
 %{_mandir}/man8/*
@@ -145,8 +147,17 @@ fi
 %{_libdir}/ser/modules/mysql.so
 %{_sbindir}/ser_mysql.sh
 
+%files jabber
+%defattr(-,root,root)
+
+%{_libdir}/ser/modules/jabber.so
 
 %changelog
+* Tue Nov 12 2002 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.gmd.de>
+- added a separate rpm for the jabber modules
+- moved all the binaries to sbin
+- removed obsolete installs (make install installs everything now)
+
 * Fri Oct  4 2002 Jiri Kuthan <jiri@iptel.org>
 - exec module introduced
 

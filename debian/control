@@ -2,13 +2,13 @@ Source: ser
 Section: net
 Priority: optional
 Maintainer: Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
-Build-Depends: debhelper (>> 3.0.0), libmysqlclient-dev, fakeroot
+Build-Depends: debhelper (>> 3.0.0), libmysqlclient-dev, libexpat1-dev, fakeroot
 Standards-Version: 3.5.2
 
 Package: ser
 Architecture: any
 Depends: ${shlibs:Depends}
-Suggests: ser-mysql-module
+Suggests: ser-mysql-module, ser-jabber-module
 Description: Sip Express Router, very fast and configurable SIP proxy
  ser or SIP Express Router is a very fast and flexible SIP (RFC3621)
  proxy server. Written entirely in C, ser can handle thousands calls
@@ -28,3 +28,10 @@ Description: contains the mysql database connectivity module
  depend upon mysql. This module will enable you to use the digest
  authentication module or persistent user location entries.
 
+Package: ser-jabber-module
+Architecture: any
+Depends: ${shlibs:Depends}, ser (= ${Source-Version})
+Description: contains the jabber module (sip-jabber message translation)
+ This has been split out of the main ser package, so that ser will not
+ depend upon libexpat. This module will enable you to use ser to translate
+  sip messages into jabber messages.

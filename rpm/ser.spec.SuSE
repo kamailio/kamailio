@@ -1,8 +1,7 @@
 %define name    ser
 %define ver     0.8.10
 %define rel     1
-%define exclude CVS pike radius_acc radius_auth snmp
-
+%define exclude CVS radius_acc radius_auth snmp mysql jabber
 Summary:      SIP Express Router, very fast and flexible SIP Proxy
 Name:         %name
 Version:      %ver
@@ -40,17 +39,23 @@ The ser-mysql package contains MySQL database connectivity that you
 need to use digest authentication module or persistent user location
 entries.
 
+%package  jabber
+Summary:  sip jabber message translation support for the SIP Express Router.
+Group:    System Environment/Daemons
+Requires: ser
+BuildPrereq:  expat-devel
+
+%description jabber
+The ser-jabber package contains a sip to jabber message translator.
+
+
 %prep
 %setup
 
 %build
-make all cfg-target=/%{_sysconfdir}/ser/ exclude_modules="%exclude"
-cp modules/mysql/Makefile modules/mysql/Makefile.orig
-sed -e "s/\#-L\/usr\/lib\/mysql/-L\/usr\/lib\/mysql/g" modules/mysql/Makefile.orig > modules/mysql/Makefile
-make modules modules=modules/mysql cfg-target=/%{_sysconfdir}/ser/
-cd utils/gen_ha1
-make
-
+make all exclude_modules="%exclude" cfg-target=/%{_sysconfdir}/ser/
+make modules modules=modules/mysql  cfg-target=/%{_sysconfdir}/ser/
+make modules modules=modules/jabber cfg-target=/%{_sysconfdir}/ser/
 
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
@@ -69,31 +74,23 @@ make install cfg-prefix=$RPM_BUILD_ROOT/%{_sysconfdir} \
 		 modules-target=/%{_libdir}/ser/modules/ \
 	     exclude_modules="%exclude"
 make install-modules modules=modules/mysql \
-	     modules-prefix=$RPM_BUILD_ROOT/%{_libdir}/ser \
-	     modules-dir=modules/ \
-	     doc-prefix=$RPM_BUILD_ROOT/%{_docdir} \
-	     doc-dir=ser/ \
-	     cfg-target=/%{_sysconfdir}/ser/ \
-	     modules-target=/%{_libdir}/ser/modules/
+           modules-prefix=$RPM_BUILD_ROOT/%{_libdir}/ser \
+           modules-dir=modules/ \
+           doc-prefix=$RPM_BUILD_ROOT/%{_docdir} \
+           doc-dir=ser/ \
+           cfg-target=/%{_sysconfdir}/ser/ \
+           modules-target=/%{_libdir}/ser/modules/
+make install-modules modules=modules/jabber \
+           modules-prefix=$RPM_BUILD_ROOT/%{_libdir}/ser \
+           modules-dir=modules/ \
+           doc-prefix=$RPM_BUILD_ROOT/%{_docdir} \
+           doc-dir=ser/ \
+           cfg-target=/%{_sysconfdir}/ser/ \
+           modules-target=/%{_libdir}/ser/modules/
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/init.d
 install -m755 $RPM_SOURCE_DIR/ser.init.SuSE \
               $RPM_BUILD_ROOT/%{_sysconfdir}/init.d/ser
-
-mkdir -p $RPM_BUILD_ROOT/%{_bindir}
-
-install -m755 utils/gen_ha1/gen_ha1 \
-	      $RPM_BUILD_ROOT/%{_bindir}/gen_ha1
-
-install -m755 scripts/harv_ser.sh \
-	      $RPM_BUILD_ROOT/%{_sbindir}/harv_ser.sh
-
-install -m755 scripts/sc \
-	      $RPM_BUILD_ROOT/%{_sbindir}/serctl
-
-install -m755 scripts/ser_mysql.sh \
-	      $RPM_BUILD_ROOT/%{_sbindir}/ser_mysql.sh
-
 
 %clean
 rm -rf "$RPM_BUILD_ROOT"
@@ -121,9 +118,11 @@ sbin/insserv etc/init.d/
 %dir %{_libdir}/ser/modules
 %{_libdir}/ser/modules/acc.so
 %{_libdir}/ser/modules/auth.so
+%{_libdir}/ser/modules/exec.so
 %{_libdir}/ser/modules/im.so
-%{_libdir}/ser/modules/jabber.so
 %{_libdir}/ser/modules/maxfwd.so
+%{_libdir}/ser/modules/msilo.so
+%{_libdir}/ser/modules/pike.so
 %{_libdir}/ser/modules/print.so
 %{_libdir}/ser/modules/registrar.so
 %{_libdir}/ser/modules/rr.so
@@ -133,10 +132,9 @@ sbin/insserv etc/init.d/
 %{_libdir}/ser/modules/tm.so
 %{_libdir}/ser/modules/usrloc.so
 
-%{_sbindir}/harv_ser.sh
 %{_sbindir}/ser
 %{_sbindir}/serctl
-%{_bindir}/*
++%{_sbindir}/gen_ha1
 
 %{_mandir}/man5/*
 %{_mandir}/man8/*
@@ -148,8 +146,17 @@ sbin/insserv etc/init.d/
 %{_libdir}/ser/modules/mysql.so
 %{_sbindir}/ser_mysql.sh
 
++%files jabber
++%defattr(-,root,root)
++%{_libdir}/ser/modules/jabber.so
+
 
 %changelog
+* Tue Nov 12 2002 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.gmd.de>
+- added a separate rpm for the jabber modules
+- moved all the binaries to sbin
+- removed obsolete installs (make install installs everything now)
+
 * Mon Oct 28 2002 Nils Ohlmeier <ohlmeier@fokus.fhg.de>
 - Added mysql and mysql-devel to the Req for the ser-mysql rpm.
 
