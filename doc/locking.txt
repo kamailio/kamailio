@@ -123,6 +123,12 @@ if (lock_set_init(lock_set)==0){
    goto error;
 }
 
+or
+ if ((lock_set=lock_set_alloc(100))==0) || (lock_set_init(lock_set)==0)){
+   if (lock_set) lock_set_dealloc(lock_set);
+   goto error;
+ }
+
 
 Destroying & deallocating:
 --------------------------
@@ -145,3 +151,8 @@ lock_set_get(lock_set, 2);
 lock_set_release(lock_set, 2);
 
 
+When to use lock_set_t & when to use gen_lock_t
+-----------------------------------------------
+If you use lots of semaphores and GEN_LOCK_T_PREFERED is undefined then use
+ lock_set_t. If GEN_LOCK_T_PREFERED is defined you can safely use gen_lock_t 
+ arrays instead.
