@@ -25,6 +25,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <limits.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,12 +40,20 @@
  */
 static inline int str2int(const char* _s, int* _v)
 {
+	long tmp;
+
 	if ((!_s) || (!_v)) {
 		LOG(L_ERR, "str2int: Invalid parameter value\n");
 		return -1;
 	}
 
-	*_v = atoi(_s);
+	tmp = strtol(_s, 0, 10);
+	if ((errno == ERANGE) || (tmp < INT_MIN || tmp > UINT_MAX)) {
+		LOG(L_ERR, "str2int: Value out of range\n");
+		return -1;
+	}
+
+	*_v = (int)tmp;
 	return 0;
 }
 
