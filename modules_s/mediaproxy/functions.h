@@ -1,7 +1,7 @@
 /* $Id$
  *
- * Copyright (C) 2003 Porta Software Ltd
  * Copyright (C) 2004 Dan Pascu
+ * Copyright (C) 2003 Porta Software Ltd
  *
  * This file is part of ser, a free SIP server.
  *
@@ -26,22 +26,7 @@
  *
  */
 
-#include "../../dprint.h"
-#include "../../str.h"
-#include "../../error.h"
-#include "../../forward.h"
-#include "../../mem/mem.h"
-#include "../../resolve.h"
-#include "../../parser/parse_uri.h"
-#include "../usrloc/usrloc.h"
-
-#include <stdio.h>
-#include <string.h>
-
-
-extern usrloc_api_t mpUserLocation;
-
-void
+static void
 pingClients(unsigned int ticks, void *param)
 {
     static char pingbuf[4] = "\0\0\0\0";
@@ -59,7 +44,7 @@ pingClients(unsigned int ticks, void *param)
         LOG(L_ERR, "error: mediaproxy/pingClients(): out of memory\n");
         return;
     }
-    needed = mpUserLocation.get_all_ucontacts(buf, length, FL_NAT);
+    needed = userLocation.get_all_ucontacts(buf, length, FL_NAT);
     if (needed > 0) {
         // make sure we alloc more than actually we were told is missing
         // (some clients may register while we are making these calls)
@@ -73,7 +58,7 @@ pingClients(unsigned int ticks, void *param)
             buf = ptr;
         }
         // try again. we may fail again if _many_ clients register in between
-        needed = mpUserLocation.get_all_ucontacts(buf, length, FL_NAT);
+        needed = userLocation.get_all_ucontacts(buf, length, FL_NAT);
         if (needed != 0) {
             pkg_free(buf);
             return;
@@ -109,6 +94,75 @@ pingClients(unsigned int ticks, void *param)
         udp_send(sock, pingbuf, sizeof(pingbuf), &to);
     }
     pkg_free(buf);
+}
+
+
+// Replace IP:Port in Contact field with the source address of the packet.
+// Preserve port for SIP asymmetric clients
+static int
+FixContact(struct sip_msg* msg, char* str1, char* str2)
+{
+    contact_t* contact;
+    struct lump* anchor;
+    struct sip_uri uri;
+    char *newip, *buf;
+    int len, offset;
+    Bool asymmetric;
+    str agent;
+
+    if (!getContactURI(msg, &uri, &contact))
+        return -1;
+
+    if (uri.proto != PROTO_UDP && uri.proto != PROTO_NONE)
+        return -1;
+
+    if (uri.port.len == 0)
+        uri.port.s = uri.host.s + uri.host.len;
+
+    newip = ip_addr2a(&msg->rcv.src_ip);
+
+    // first try to alloc mem. if we fail we don't want to have the lump
+    // deleted and not replaced. at least this way we keep the original.
+    buf = pkg_malloc(strlen(newip) + 20);
+    if (buf == NULL) {
+        LOG(L_ERR, "error: fix_contact(): out of memory\n");
+        return -1;
+    }
+
+    agent = getUserAgent(msg);
+    asymmetric = isSIPAsymmetric(agent);
+
+    offset = uri.host.s - msg->buf;
+    if (asymmetric)
+        len = uri.host.len;
+    else
+        len = uri.port.s + uri.port.len - uri.host.s;
+
+    anchor = del_lump(msg, offset, len, HDR_CONTACT);
+
+    if (!anchor) {
+        pkg_free(buf);
+        return -1;
+    }
+
+    if (asymmetric) {
+        len = sprintf(buf, "%s", newip);
+    } else {
+        len = sprintf(buf, "%s:%d", newip, msg->rcv.src_port);
+    }
+
+    if (insert_new_lump_after(anchor, buf, len, HDR_CONTACT) == 0) {
+        LOG(L_ERR, "error: fix_contact(): failed to fix contact\n");
+        pkg_free(buf);
+        return -1;
+    }
+
+    if (asymmetric) {
+        LOG(L_INFO, "info: fix_contact(): preserved port for SIP "
+            "asymmetric client: `%.*s'\n", agent.len, agent.s);
+    }
+
+    return 1;
 }
 
 

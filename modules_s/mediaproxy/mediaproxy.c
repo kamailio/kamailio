@@ -134,8 +134,6 @@ static int EndMediaSession(struct sip_msg *msg, char *str1, char *str2);
 static int mod_init(void);
 static int fixstring2int(void **param, int param_count);
 
-extern void pingClients(unsigned int ticks, void *param);
-
 static Bool testPrivateContact(struct sip_msg* msg);
 static Bool testSourceAddress(struct sip_msg* msg);
 static Bool testPrivateVia(struct sip_msg* msg);
@@ -146,7 +144,7 @@ static char *mediaproxySocket = "/var/run/proxydispatcher.sock";
 
 static int natpingInterval = 20; // 20 seconds
 
-usrloc_api_t mpUserLocation;
+static usrloc_api_t userLocation;
 
 static AsymmetricClients sipAsymmetrics = {
     "/etc/ser/sip-asymmetric-clients",
@@ -1135,6 +1133,7 @@ testPrivateVia(struct sip_msg* msg)
 }
 
 
+#include "functions.h"
 
 /* The public functions that are exported by this module */
 
@@ -1152,75 +1151,6 @@ ClientNatTest(struct sip_msg* msg, char* str1, char* str2)
     }
 
     return -1; // all failed
-}
-
-
-// Replace IP:Port in Contact field with the source address of the packet.
-// Preserve port for SIP asymmetric clients
-static int
-FixContact(struct sip_msg* msg, char* str1, char* str2)
-{
-    contact_t* contact;
-    struct lump* anchor;
-    struct sip_uri uri;
-    char *newip, *buf;
-    int len, offset;
-    Bool asymmetric;
-    str agent;
-
-    if (!getContactURI(msg, &uri, &contact))
-        return -1;
-
-    if (uri.proto != PROTO_UDP && uri.proto != PROTO_NONE)
-        return -1;
-
-    if (uri.port.len == 0)
-        uri.port.s = uri.host.s + uri.host.len;
-
-    newip = ip_addr2a(&msg->rcv.src_ip);
-
-    // first try to alloc mem. if we fail we don't want to have the lump
-    // deleted and not replaced. at least this way we keep the original.
-    buf = pkg_malloc(strlen(newip) + 20);
-    if (buf == NULL) {
-        LOG(L_ERR, "error: fix_contact(): out of memory\n");
-        return -1;
-    }
-
-    agent = getUserAgent(msg);
-    asymmetric = isSIPAsymmetric(agent);
-
-    offset = uri.host.s - msg->buf;
-    if (asymmetric)
-        len = uri.host.len;
-    else
-        len = uri.port.s + uri.port.len - uri.host.s;
-
-    anchor = del_lump(msg, offset, len, HDR_CONTACT);
-
-    if (!anchor) {
-        pkg_free(buf);
-        return -1;
-    }
-
-    if (asymmetric) {
-        len = sprintf(buf, "%s", newip);
-    } else {
-        len = sprintf(buf, "%s:%d", newip, msg->rcv.src_port);
-    }
-
-    if (insert_new_lump_after(anchor, buf, len, HDR_CONTACT) == 0) {
-        LOG(L_ERR, "error: fix_contact(): failed to fix contact\n");
-        pkg_free(buf);
-        return -1;
-    }
-
-    if (asymmetric) {
-        LOG(L_INFO, "info: fix_contact(): preserved port for SIP "
-            "asymmetric client: `%.*s'\n", agent.len, agent.s);
-    }
-
-    return 1;
 }
 
 
@@ -1419,7 +1349,7 @@ mod_init(void)
             return -1;
         }
 
-        if (ul_bind_usrloc(&mpUserLocation) < 0) {
+        if (ul_bind_usrloc(&userLocation) < 0) {
             LOG(L_ERR, "error: mediaproxy/mod_init(): can't access the usrloc module.\n");
             return -1;
         }
