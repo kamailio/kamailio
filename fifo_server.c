@@ -317,6 +317,7 @@ FILE *open_reply_pipe( char *pipe_name )
 
 	int fifofd;
 	FILE *file_handle;
+	int flags;
 
 	int retries=FIFO_REPLY_RETRIES;
 
@@ -326,6 +327,8 @@ FILE *open_reply_pipe( char *pipe_name )
 	}
 
 tryagain:
+	/* open non-blocking to make sure that a broken client will not 
+	 * block the FIFO server forever */
 	fifofd=open( pipe_name, O_WRONLY | O_NONBLOCK );
 	if (fifofd==-1) {
 		/* retry several times if client is not yet ready for getting
@@ -350,6 +353,20 @@ tryagain:
 			pipe_name, strerror(errno));
 		return 0;
 	}
+	/* we want server blocking for big writes */
+	if ( (flags=fcntl(fifofd, F_GETFL, 0))<0) {
+		LOG(L_ERR, "ERROR: open_reply_pipe (%s): getfl failed: %s\n",
+			pipe_name, strerror(errno));
+		return 0;
+	}
+	flags&=~O_NONBLOCK;
+	if (fcntl(fifofd, F_SETFL, flags)<0) {
+		LOG(L_ERR, "ERROR: open_reply_pipe (%s): setfl cntl failed: %s\n",
+			pipe_name, strerror(errno));
+		return 0;
+	}
+
+	/* create an I/O stream */	
 	file_handle=fdopen( fifofd, "w");
 	if (file_handle==NULL) {
 		LOG(L_ERR, "ERROR: open_reply_pipe: open error (%s): %s\n",
