@@ -273,6 +273,57 @@ modparam("registrar", "received_param", "rcv")
 </programlisting>
 	    </example>
 	</section>
+
+	<section>
+	    <title><varname>max_contacts</varname> (integer)</title>
+	    <para>
+		The parameter can be used to limit the number of contacts per AOR (Address of
+		Record) in the user location database. Value 0 disables the check.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>max_contacts</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# Allow no more than 10 contacts per AOR
+modparam("registrar", "max_contacts", 10)
+...
+		</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>retry_after</varname> (integer)</title>
+	    <para>
+		The registrar can generate 5xx reply to REGISTER in various situations. It can, for
+		example, happen when the <varname>max_contacts</varname> parameter is set and the
+		processing of REGISTER request would exceed the limit. In this case the registrar
+		would generate "503 Service Unavailable" response.
+	    </para>
+	    <para>
+		If you want to add the Retry-After header field in 5xx replies, set this parameter
+		to a value grater than zero (0 means do not add the header field). See section 
+		20.33 of RFC3261 for more details.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0 (disabled).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>retry_after</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "retry_after", 30)
+...
+		</programlisting>
+	    </example>
+	</section>
+
     </section>
     <section>
 	<title>Exported Functions</title>

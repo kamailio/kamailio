@@ -33,6 +33,8 @@ Jan Janak
               1.3.8. desc_time_order (integer)
               1.3.9. received_avp (integer)
               1.3.10. received_param (integer)
+              1.3.11. max_contacts (integer)
+              1.3.12. retry_after (integer)
 
         1.4. Exported Functions
 
@@ -55,10 +57,12 @@ Jan Janak
    1-8. Set desc_time_order parameter
    1-9. Set received_avp parameter
    1-10. Set received_param parameter
-   1-11. save usage
-   1-12. save_noreply usage
-   1-13. lookup usage
-   1-14. registered usage
+   1-11. Set max_contacts parameter
+   1-12. Set retry_after parameter
+   1-13. save usage
+   1-14. save_noreply usage
+   1-15. lookup usage
+   1-16. registered usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -241,6 +245,42 @@ modparam("registrar", "received_param", "rcv")
 ...
      _________________________________________________________
 
+1.3.11. max_contacts (integer)
+
+   The parameter can be used to limit the number of contacts per
+   AOR (Address of Record) in the user location database. Value 0
+   disables the check.
+
+   Default value is 0. 
+
+   Example 1-11. Set max_contacts parameter
+...
+# Allow no more than 10 contacts per AOR
+modparam("registrar", "max_contacts", 10)
+...
+     _________________________________________________________
+
+1.3.12. retry_after (integer)
+
+   The registrar can generate 5xx reply to REGISTER in various
+   situations. It can, for example, happen when the max_contacts
+   parameter is set and the processing of REGISTER request would
+   exceed the limit. In this case the registrar would generate
+   "503 Service Unavailable" response.
+
+   If you want to add the Retry-After header field in 5xx
+   replies, set this parameter to a value grater than zero (0
+   means do not add the header field). See section 20.33 of
+   RFC3261 for more details.
+
+   Default value is 0 (disabled). 
+
+   Example 1-12. Set retry_after parameter
+...
+modparam("registrar", "retry_after", 30)
+...
+     _________________________________________________________
+
 1.4. Exported Functions
 
 1.4.1. save(domain)
@@ -258,7 +298,7 @@ modparam("registrar", "received_param", "rcv")
        used then this must be name of the table which stores the
        contacts.
 
-   Example 1-11. save usage
+   Example 1-13. save usage
 ...
 save("location");
 ...
@@ -274,7 +314,7 @@ save("location");
        used then this must be na e of the table which stores the
        contacts.
 
-   Example 1-12. save_noreply usage
+   Example 1-14. save_noreply usage
 ...
 save_noreply("location");
 ...
@@ -294,7 +334,7 @@ save_noreply("location");
 
      * domain - Name of table that should be used for the lookup.
 
-   Example 1-13. lookup usage
+   Example 1-15. lookup usage
 ...
 lookup("location");
 ...
@@ -311,7 +351,7 @@ lookup("location");
 
      * domain - Name of table that should be used for the lookup.
 
-   Example 1-14. registered usage
+   Example 1-16. registered usage
 ...
 if (registered("location")) {
     sl_send_reply("100", "Trying");
