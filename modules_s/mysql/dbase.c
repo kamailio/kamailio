@@ -28,40 +28,41 @@
  */
 
 #include <stdio.h>
-#include <mem.h>
-#include <mysql.h>
-#include <dprint.h>
 #include <string.h>
 #include <stdlib.h>
-#include "defs.h"
+#include <mysql/mysql.h>
+#include "../../mem/mem.h"
+#include "../../dprint.h"
 #include "utils.h"
 #include "val.h"
 #include "con_mysql.h"
 #include "res.h"
 #include "dbase.h"
 
+
+#define SQL_BUF_LEN 65536
+
 static char sql_buf[SQL_BUF_LEN];
 
 
 /*
- * Establish database connection,
+ * Establish a database connection,
  * returns 1 on success, 0 otherwise
  * _h is a handle used in communication with database
  *
  * URL is in form mysql://user:password@host:port/database
  */
-static inline int connect_db(db_con_t* _h, const char* _db_url)
+static int connect_db(db_con_t* _h, const char* _db_url)
 {
 	int p, l, res;
 	char* user, *password, *host, *port, *database;
 	char* buf;
 
-#ifdef PARANOID
 	if ((!_h) || (!_db_url)) {
 		LOG(L_ERR, "connect_db(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
+
 	CON_CONNECTED(_h) = 0;
 
 	     /* Make a scratch pad copy of given SQL URL */
@@ -115,14 +116,13 @@ static inline int connect_db(db_con_t* _h, const char* _db_url)
  * disconnects database connection represented by _handle
  * returns 1 on success, 0 otherwise
  */
-static inline int disconnect_db(db_con_t* _h)
+static int disconnect_db(db_con_t* _h)
 {
-#ifdef PARANOID
 	if (!_h) {
 		LOG(L_ERR, "disconnect_db(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
+
 	if (CON_CONNECTED(_h) == 1) {
 		mysql_close(CON_CONNECTION(_h));
 		CON_CONNECTED(_h) = 0;
@@ -137,14 +137,13 @@ static inline int disconnect_db(db_con_t* _h)
 /*
  * Send an SQL query to the server
  */
-static inline int submit_query(db_con_t* _h, const char* _s)
+static int submit_query(db_con_t* _h, const char* _s)
 {	
-#ifdef PARANOID
 	if ((!_h) || (!_s)) {
 		LOG(L_ERR, "submit_query(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
+
 	/* screws up the terminal when the query contains a BLOB :-( (by bogdan)
 	 * DBG("submit_query(): %s\n", _s);
 	 */
@@ -160,16 +159,16 @@ static inline int submit_query(db_con_t* _h, const char* _s)
 /*
  * Print list of columns separated by comma
  */
-static inline int print_columns(char* _b, int _l, db_key_t* _c, int _n)
+static int print_columns(char* _b, int _l, db_key_t* _c, int _n)
 {
 	int i;
 	int res = 0;
-#ifdef PARANOID
+
 	if ((!_c) || (!_n) || (!_b) || (!_l)) {
 		LOG(L_ERR, "print_columns(): Invalid parameter value\n");
 		return 0;
 	}
-#endif
+
 	for(i = 0; i < _n; i++) {
 		if (i == (_n - 1)) {
 			res += snprintf(_b + res, _l - res, "%s ", _c[i]);
@@ -184,15 +183,14 @@ static inline int print_columns(char* _b, int _l, db_key_t* _c, int _n)
 /*
  * Print list of values separated by comma
  */
-static inline int print_values(char* _b, int _l, db_val_t* _v, int _n)
+static int print_values(char* _b, int _l, db_val_t* _v, int _n)
 {
 	int i, res = 0, l;
-#ifdef PARANOID
+
 	if ((!_b) || (!_l) || (!_v) || (!_n)) {
 		LOG(L_ERR, "print_values(): Invalid parameter value\n");
 		return 0;
 	}
-#endif
 
 	for(i = 0; i < _n; i++) {
 		l = _l - res;
@@ -213,17 +211,17 @@ static inline int print_values(char* _b, int _l, db_val_t* _v, int _n)
 /*
  * Print where clause of SQL statement
  */
-static inline int print_where(char* _b, int _l, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
+static int print_where(char* _b, int _l, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 {
 	int i;
 	int res = 0;
 	int l;
-#ifdef PARANOID
+
 	if ((!_b) || (!_l) || (!_k) || (!_v) || (!_n)) {
 		LOG(L_ERR, "print_where(): Invalid parameter value\n");
 		return 0;
 	}
-#endif
+
 	for(i = 0; i < _n; i++) {
 		if (_o) {
 			res += snprintf(_b + res, _l - res, "%s%s", _k[i], _o[i]);
@@ -244,17 +242,17 @@ static inline int print_where(char* _b, int _l, db_key_t* _k, db_op_t* _o, db_va
 /*
  * Print set clause of update SQL statement
  */
-static inline int print_set(char* _b, int _l, db_key_t* _k, db_val_t* _v, int _n)
+static int print_set(char* _b, int _l, db_key_t* _k, db_val_t* _v, int _n)
 {
 	int i;
 	int res = 0;
 	int l;
-#ifdef PARANOID
+
 	if ((!_b) || (!_l) || (!_k) || (!_v) || (!_n)) {
 		LOG(L_ERR, "print_set(): Invalid parameter value\n");
 		return 0;
 	}
-#endif
+
 	for(i = 0; i < _n; i++) {
 		res += snprintf(_b + res, _l - res, "%s=", _k[i]);
 		l = _l - res;
@@ -277,12 +275,11 @@ static inline int print_set(char* _b, int _l, db_key_t* _k, db_val_t* _v, int _n
 db_con_t* db_init(const char* _sqlurl)
 {
 	db_con_t* res;
-#ifdef PARANOID
+
 	if (!_sqlurl) {
 		LOG(L_ERR, "db_init(): Invalid parameter value\n");
 		return 0;
 	}
-#endif
 
 	res = pkg_malloc(sizeof(db_con_t) + sizeof(struct con_mysql));
 	if (!res) {
@@ -308,12 +305,11 @@ db_con_t* db_init(const char* _sqlurl)
  */
 void db_close(db_con_t* _h)
 {
-#ifdef PARANOID
 	if (!_h) {
 		LOG(L_ERR, "db_close(): Invalid parameter value\n");
 		return;
 	}
-#endif
+
 	disconnect_db(_h);
 	if (CON_RESULT(_h)) {
 		mysql_free_result(CON_RESULT(_h));
@@ -330,12 +326,10 @@ void db_close(db_con_t* _h)
  */
 int get_result(db_con_t* _h, db_res_t** _r)
 {
-#ifdef PARANOID
 	if ((!_h) || (!_r)) {
 		LOG(L_ERR, "get_result(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
 
 	*_r = new_result();
 	if (*_r == 0) {
@@ -378,12 +372,11 @@ int get_result(db_con_t* _h, db_res_t** _r)
  */
 int db_free_query(db_con_t* _h, db_res_t* _r)
 {
-#ifdef PARANOID
      if ((!_h) || (!_r)) {
 	     LOG(L_ERR, "db_free_query(): Invalid parameter value\n");
 	     return -1;
      }
-#endif
+
      if (free_result(_r) < 0) {
 	     LOG(L_ERR, "free_query(): Unable to free result structure\n");
 	     return -1;
@@ -410,12 +403,12 @@ int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 	     db_key_t _o, db_res_t** _r)
 {
 	int off;
-#ifdef PARANOID
+
 	if ((!_h) || (!_r)) {
 		LOG(L_ERR, "db_query(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
+
 	if (!_c) {
 		off = snprintf(sql_buf, SQL_BUF_LEN, "select * from %s ", CON_TABLE(_h));
 	} else {
@@ -445,12 +438,10 @@ int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
  */
 int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
 {
-#ifdef PARANOID
 	if ((!_h) || (!_s)) {
 		LOG(L_ERR, "db_raw_query(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
 
 	if (submit_query(_h, _s) < 0) {
 		LOG(L_ERR, "submit_query(): Error while submitting query\n");
@@ -473,12 +464,12 @@ int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
 int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 {
 	int off;
-#ifdef PARANOID
+
 	if ((!_h) || (!_k) || (!_v) || (!_n)) {
 		LOG(L_ERR, "db_insert(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
+
 	off = snprintf(sql_buf, SQL_BUF_LEN, "insert into %s (", CON_TABLE(_h));
 	off += print_columns(sql_buf + off, SQL_BUF_LEN - off, _k, _n);
 	off += snprintf(sql_buf + off, SQL_BUF_LEN - off, ") values (");
@@ -505,12 +496,12 @@ int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 {
 	int off;
-#ifdef PARANOID
+
 	if (!_h) {
 		LOG(L_ERR, "db_delete(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
+
 	off = snprintf(sql_buf, SQL_BUF_LEN, "delete from %s", CON_TABLE(_h));
 	if (_n) {
 		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
@@ -539,12 +530,12 @@ int db_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	      db_key_t* _uk, db_val_t* _uv, int _n, int _un)
 {
 	int off;
-#ifdef PARANOID
+
 	if ((!_h) || (!_uk) || (!_uv) || (!_un)) {
 		LOG(L_ERR, "db_update(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
+
 	off = snprintf(sql_buf, SQL_BUF_LEN, "update %s set ", CON_TABLE(_h));
 	off += print_set(sql_buf + off, SQL_BUF_LEN - off, _uk, _uv, _un);
 	if (_n) {

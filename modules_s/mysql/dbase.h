@@ -31,11 +31,12 @@
 #ifndef DBASE_H
 #define DBASE_H
 
-#include <db_con.h>
-#include <db_res.h>
-#include <db_key.h>
-#include <db_op.h>
-#include <db_val.h>
+
+#include "../../db/db_con.h"
+#include "../../db/db_res.h"
+#include "../../db/db_key.h"
+#include "../../db/db_op.h"
+#include "../../db/db_val.h"
 
 
 /*

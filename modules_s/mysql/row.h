@@ -30,9 +30,9 @@
 #ifndef ROW_H
 #define ROW_H
 
-#include <db_con.h>
-#include <db_res.h>
-#include <db_row.h>
+#include "../../db/db_con.h"
+#include "../../db/db_res.h"
+#include "../../db/db_row.h"
 
 
 /*

@@ -32,7 +32,6 @@
 #include "../../db/db.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
-#include "defs.h"
 
 
 /*
@@ -43,12 +42,12 @@ int use_table(db_con_t* _h, const char* _t)
 {
 	char* ptr;
 	int l;
-#ifdef PARANOID
+
 	if ((!_h) || (!_t)) {
 		LOG(L_ERR, "use_table(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
+
 	l = strlen(_t) + 1;
 	ptr = (char*)pkg_malloc(l);
 	if (!ptr) {

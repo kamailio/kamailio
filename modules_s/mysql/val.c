@@ -26,12 +26,11 @@
  */
 
 #include <stdio.h>
-#include <dprint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <mysql.h>
+#include "../../dprint.h"
+#include <mysql/mysql.h>
 #include "utils.h"
-#include "defs.h"
 #include "val.h"
 
 
@@ -40,12 +39,11 @@
  */
 static inline int str2int(const char* _s, int* _v)
 {
-#ifdef PARANOID
 	if ((!_s) || (!_v)) {
 		LOG(L_ERR, "str2int(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
+
 	*_v = atoi(_s);
 	return 0;
 }
@@ -56,12 +54,11 @@ static inline int str2int(const char* _s, int* _v)
  */
 static inline int str2double(const char* _s, double* _v)
 {
-#ifdef PARANOID
 	if ((!_s) || (!_v)) {
 		LOG(L_ERR, "str2double(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
+
 	*_v = atof(_s);
 	return 0;
 }
@@ -72,12 +69,11 @@ static inline int str2double(const char* _s, double* _v)
  */
 static inline int str2time(const char* _s, time_t* _v)
 {
-#ifdef PARANOID
 	if ((!_s) || (!_v)) {
 		LOG(L_ERR, "str2time(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
+
 	*_v = mysql2time(_s);
 	return 0;
 }
@@ -88,12 +84,11 @@ static inline int str2time(const char* _s, time_t* _v)
  */
 static inline int int2str(int _v, char* _s, int* _l)
 {
-#ifdef PARANOID
 	if ((!_s) || (!_l) || (!*_l)) {
 		LOG(L_ERR, "int2str(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
+
 	*_l = snprintf(_s, *_l, "%-d", _v);
 	return 0;
 }
@@ -104,12 +99,11 @@ static inline int int2str(int _v, char* _s, int* _l)
  */
 static inline int double2str(double _v, char* _s, int* _l)
 {
-#ifdef PARANOID
 	if ((!_s) || (!_l) || (!*_l)) {
 		LOG(L_ERR, "double2str(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
+
 	*_l = snprintf(_s, *_l, "%-10.2f", _v);
 	return 0;
 }
@@ -121,12 +115,12 @@ static inline int double2str(double _v, char* _s, int* _l)
 static inline int time2str(time_t _v, char* _s, int* _l)
 {
 	int l;
-#ifdef PARANOID
+
 	if ((!_s) || (!_l) || (*_l < 2))  {
 		LOG(L_ERR, "Invalid parameter value\n");
 		return -1;
 	}
-#endif
+
 	*_s++ = '\'';
 	l = time2mysql(_v, _s, *_l - 1);
 	*(_s + l) = '\'';
@@ -139,12 +133,10 @@ static inline int time2str(time_t _v, char* _s, int* _l)
  */
 int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 {
-#ifdef PARANOID
 	if (!_v) {
 		LOG(L_ERR, "str2val(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
 
 	if (!_s) {
 		VAL_TYPE(_v) = _t;
@@ -223,12 +215,11 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 	int l;
 	char* old_s;
 
-#ifdef PARANOID
 	if ((!_v) || (!_s) || (!_len) || (!*_len)) {
 		LOG(L_ERR, "val2str(): Invalid parameter value\n");
 		return -1;
 	}
-#endif
+
 	if (VAL_NULL(_v)) {
 		*_len = snprintf(_s, *_len, "NULL");
 		return 0;
