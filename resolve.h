@@ -5,9 +5,11 @@
  */
 
 
-#ifndef resolve_h
-#define resolve_h
+#ifndef __resolve_h
+#define __resolve_h
 
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <netdb.h>
 #include <arpa/nameser.h>
 
@@ -212,7 +214,10 @@ struct hostent* sip_resolvehost(char* name, unsigned short* port);
 
 static inline struct hostent* resolvehost(const char* name)
 {
-	struct hostent* he;
+	static struct hostent* he=0;
+#ifdef __sun__
+	int err;
+#endif
 #ifdef DNS_IP_HACK
 	struct ip_addr* ip;
 	int len;
@@ -229,11 +234,21 @@ static inline struct hostent* resolvehost(const char* name)
 	}
 	
 #endif
-	he=gethostbyname(name); /*ipv4*/
+	/* ipv4 */
+#ifdef __sun__
+	if (he) freehostent(he);
+	he=getipnodebyname(name, AF_INET, 0, &err);
+#else
+	he=gethostbyname(name);
+#endif
 #ifdef USE_IPV6
 	if(he==0){
 		/*try ipv6*/
+	#ifdef __sun__
+		he=getipnodebyname(name, AF_INET6, 0, &err);
+	#else
 		he=gethostbyname2(name, AF_INET6);
+	#endif
 	}
 #endif
 	return he;
