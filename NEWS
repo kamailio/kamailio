@@ -7,6 +7,13 @@ $Id$
 * Changes/fixes introduced in 0.8.12-r1
 ***********************************************
 
+ - new config variables:$
+   tcp_connect_timeout= seconds$
+       time before an ongoing connect will be aborted$
+   tcp_send_timeout= seconds$
+       time after a tcp connection will be closed if it is not available.$
+       for writing in this interval (and ser wants to sen something on it)
+
  - full nathelper support (backported from HEAD)
  - openbsd 3.4 support
  - group fixed (ser crashed when started with a group)

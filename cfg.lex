@@ -41,8 +41,7 @@
  *  2003-10-02  added {,set_}advertised_{address,port} (andrei)
  *  2003-10-07  added hex and octal numbers support (andrei)
  *  2003-10-10  replaced len_gt w/ msg:len (andrei)
- *  2003-10-13  added fifo_dir (andrei)
- *  2003-10-28  added tcp_accept_aliases (andrei)
+ *  2003-11-29  added {tcp_send, tcp_connect, tls_*}_timeout (andrei)
  */
 
 
@@ -94,7 +93,6 @@ ROUTE_FAILURE failure_route
 ROUTE_ONREPLY onreply_route
 EXEC	exec
 FORCE_RPORT		"force_rport"|"add_rport"
-FORCE_TCP_ALIAS		"force_tcp_alias"|"add_tcp_alias"
 SETFLAG		setflag
 RESETFLAG	resetflag
 ISFLAGSET	isflagset
@@ -166,8 +164,6 @@ SYN_BRANCH syn_branch
 MEMLOG		"memlog"|"mem_log"
 SIP_WARNING sip_warning
 FIFO fifo
-FIFO_DIR  fifo_dir
-FIFO_DB_URL fifo_db_url
 FIFO_MODE fifo_mode
 SERVER_SIGNATURE server_signature
 REPLY_TO_VIA reply_to_via
@@ -178,7 +174,8 @@ WDIR		"workdir"|"wdir"
 MHOMED		mhomed
 DISABLE_TCP		"disable_tcp"
 TCP_CHILDREN	"tcp_children"
-TCP_ACCEPT_ALIASES	"tcp_accept_aliases"
+TCP_SEND_TIMEOUT	"tcp_send_timeout"
+TCP_CONNECT_TIMEOUT	"tcp_connect_timeout"
 DISABLE_TLS		"disable_tls"
 TLSLOG			"tlslog"|"tls_log"
 TLS_PORT_NO		"tls_port_no"
@@ -188,6 +185,8 @@ TLS_REQUIRE_CERTIFICATE "tls_require_certificate"
 TLS_CERTIFICATE	"tls_certificate"
 TLS_PRIVATE_KEY "tls_private_key"
 TLS_CA_LIST		"tls_ca_list"
+TLS_HANDSHAKE_TIMEOUT	"tls_handshake_timeout"
+TLS_SEND_TIMEOUT	"tls_send_timeout"
 ADVERTISED_ADDRESS	"advertised_address"
 ADVERTISED_PORT		"advertised_port"
 
@@ -228,8 +227,6 @@ RBRACE		\}
 LBRACK		\[
 RBRACK		\]
 COMMA		","
-COLON		":"
-STAR		\*
 DOT			\.
 CR			\n
 
@@ -278,8 +275,6 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{APPEND_BRANCH}	{ count(); yylval.strval=yytext; 
 								return APPEND_BRANCH; }
 <INITIAL>{FORCE_RPORT}	{ count(); yylval.strval=yytext; return FORCE_RPORT; }
-<INITIAL>{FORCE_TCP_ALIAS}	{ count(); yylval.strval=yytext;
-								return FORCE_TCP_ALIAS; }
 	
 <INITIAL>{IF}	{ count(); yylval.strval=yytext; return IF; }
 <INITIAL>{ELSE}	{ count(); yylval.strval=yytext; return ELSE; }
@@ -326,8 +321,10 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{MHOMED}	{ count(); yylval.strval=yytext; return MHOMED; }
 <INITIAL>{DISABLE_TCP}	{ count(); yylval.strval=yytext; return DISABLE_TCP; }
 <INITIAL>{TCP_CHILDREN}	{ count(); yylval.strval=yytext; return TCP_CHILDREN; }
-<INITIAL>{TCP_ACCEPT_ALIASES}	{ count(); yylval.strval=yytext;
-									return TCP_ACCEPT_ALIASES; }
+<INITIAL>{TCP_SEND_TIMEOUT}		{ count(); yylval.strval=yytext;
+									return TCP_SEND_TIMEOUT; }
+<INITIAL>{TCP_CONNECT_TIMEOUT}		{ count(); yylval.strval=yytext;
+									return TCP_CONNECT_TIMEOUT; }
 <INITIAL>{DISABLE_TLS}	{ count(); yylval.strval=yytext; return DISABLE_TLS; }
 <INITIAL>{TLSLOG}		{ count(); yylval.strval=yytext; return TLS_PORT_NO; }
 <INITIAL>{TLS_PORT_NO}	{ count(); yylval.strval=yytext; return TLS_PORT_NO; }
@@ -341,9 +338,11 @@ EAT_ABLE	[\ \t\b\r]
 										return TLS_PRIVATE_KEY; }
 <INITIAL>{TLS_CA_LIST}	{ count(); yylval.strval=yytext; 
 										return TLS_CA_LIST; }
+<INITIAL>{TLS_HANDSHAKE_TIMEOUT}	{ count(); yylval.strval=yytext;
+										return TLS_HANDSHAKE_TIMEOUT; }
+<INITIAL>{TLS_SEND_TIMEOUT}	{ count(); yylval.strval=yytext;
+										return TLS_SEND_TIMEOUT; }
 <INITIAL>{FIFO}	{ count(); yylval.strval=yytext; return FIFO; }
-<INITIAL>{FIFO_DIR}	{ count(); yylval.strval=yytext; return FIFO_DIR; }
-<INITIAL>{FIFO_DB_URL}	{ count(); yylval.strval=yytext; return FIFO_DB_URL; }
 <INITIAL>{FIFO_MODE}	{ count(); yylval.strval=yytext; return FIFO_MODE; }
 <INITIAL>{SERVER_SIGNATURE}	{ count(); yylval.strval=yytext; return SERVER_SIGNATURE; }
 <INITIAL>{REPLY_TO_VIA}	{ count(); yylval.strval=yytext; return REPLY_TO_VIA; }
@@ -376,9 +375,9 @@ EAT_ABLE	[\ \t\b\r]
 							return NUMBER; }
 <INITIAL>{YES}			{ count(); yylval.intval=1; return NUMBER; }
 <INITIAL>{NO}			{ count(); yylval.intval=0; return NUMBER; }
-<INITIAL>{TCP}			{ count(); return TCP; }
-<INITIAL>{UDP}			{ count(); return UDP; }
-<INITIAL>{TLS}			{ count(); return TLS; }
+<INITIAL>{TCP}			{ count(); yylval.intval=PROTO_TCP; return NUMBER; }
+<INITIAL>{UDP}			{ count(); yylval.intval=PROTO_UDP; return NUMBER; }
+<INITIAL>{TLS}			{ count(); yylval.intval=PROTO_TLS; return NUMBER; }
 <INITIAL>{INET}			{ count(); yylval.intval=AF_INET; return NUMBER; }
 <INITIAL>{INET6}		{ count();
 						#ifdef USE_IPV6
@@ -394,8 +393,6 @@ EAT_ABLE	[\ \t\b\r]
 
 <INITIAL>{COMMA}		{ count(); return COMMA; }
 <INITIAL>{SEMICOLON}	{ count(); return SEMICOLON; }
-<INITIAL>{COLON}	{ count(); return COLON; }
-<INITIAL>{STAR}	{ count(); return STAR; }
 <INITIAL>{RPAREN}	{ count(); return RPAREN; }
 <INITIAL>{LPAREN}	{ count(); return LPAREN; }
 <INITIAL>{LBRACE}	{ count(); return LBRACE; }

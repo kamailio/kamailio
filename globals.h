@@ -46,10 +46,19 @@
 extern char * cfg_file;
 extern int config_check;
 extern char *stat_file;
+extern struct socket_info sock_info[]; /* all addresses we listen/send from*/
+#ifdef USE_TCP
+extern struct socket_info tcp_info[]; /* all tcp sockets we listen on*/
+#endif
+#ifdef USE_TLS
+extern struct socket_info tls_info[]; /* tcp-tls sockets */
+#endif
+extern int sock_no; /* number of addresses/open sockets*/
 extern unsigned short port_no;
 
 extern struct socket_info* bind_address; /* pointer to the crt. proc.
 											listening address */
+extern int bind_idx; /* same as above but index in the bound[] array */
 extern struct socket_info* sendipv4; /* ipv4 socket to use when msg.
 										comes from ipv6*/
 extern struct socket_info* sendipv6; /* same as above for ipv6 */
@@ -70,7 +79,8 @@ extern int children_no;
 #ifdef USE_TCP
 extern int tcp_children_no;
 extern int tcp_disable;
-extern int tcp_accept_aliases;
+extern int tcp_connect_timeout;
+extern int tcp_send_timeout;
 #endif
 #ifdef USE_TLS
 extern int tls_disable;
@@ -102,8 +112,6 @@ extern unsigned int shm_mem_size;
 /* FIFO server config */
 char extern *fifo; /* FIFO name */
 extern int fifo_mode;
-char extern *fifo_dir; /* dir. where  reply fifos are allowed */
-extern char *fifo_db_url;  /* db url used by db_fifo interface */
 
 /* moved to pt.h
 extern int *pids;
