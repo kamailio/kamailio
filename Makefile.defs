@@ -79,9 +79,8 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DDNS_IP_HACK  -DPKG_MALLOC \
 	 -DF_MALLOC  -DUSE_SYNONIM\
 	 -DSHM_MEM  -DSHM_MMAP \
-	 -DNO_DEBUG \
 	 -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 \
-	 -DWAIT -DNEW_HNAME  #-DNOISY_REPLIES -DBOGDAN_TRIFLE \
+	 -DWAIT -DNEW_HNAME  -DNOISY_REPLIES -DBOGDAN_TRIFLE \
 	 #-DNO_DEBUG \
 	 #-DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=0 \
 	 #-DNOSMP \
@@ -105,8 +104,8 @@ endif
 
 
 #PROFILE=  -pg #set this if you want profiling
-#mode = debug
-mode = release
+mode = debug
+#mode = release
 
 # platform dependent settings
 

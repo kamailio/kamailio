@@ -93,12 +93,14 @@ char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
 					case TAG2:
 						param->name.len = tmp-param->name.s;
 						*tmp=0;
-						status = S_EQUAL;
+						saved_status = S_EQUAL;
+						status = F_LF;
 						break;
 					case PARA_VALUE_TOKEN:
 						param->value.len = tmp-param->value.s;
 						*tmp=0;
-						status = E_PARA_VALUE;
+						saved_status = E_PARA_VALUE;
+						status = F_LF;
 						add_param( param , to_b );
 						break;
 					case F_CR:
@@ -130,12 +132,14 @@ char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
 					case TAG2:
 						param->name.len = tmp-param->name.s;
 						*tmp=0;
-						status = S_EQUAL;
+						saved_status = S_EQUAL;
+						status = F_CR;
 						break;
 					case PARA_VALUE_TOKEN:
 						param->value.len = tmp-param->value.s;
 						*tmp=0;
-						status = E_PARA_VALUE;
+						saved_status = E_PARA_VALUE;
+						status = F_CR;
 						add_param( param , to_b );
 						break;
 					case F_CRLF:
