@@ -7,7 +7,7 @@
 #include "../../fifo_server.h"
 #include "../../dprint.h"
 #include "ul_fifo.h"
-#include <strings.h>
+#include <string.h>
 #include <stdio.h>
 #include "dlist.h"
 #include "udomain.h"
