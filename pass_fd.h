@@ -32,6 +32,8 @@
 int send_fd(int unix_socket, void* data, int data_len, int fd);
 int receive_fd(int unix_socket, void* data, int data_len, int* fd);
 
+int recv_all(int socket, void* data, int data_len);
+int send_all(int socket, void* data, int data_len);
 
 
 #endif

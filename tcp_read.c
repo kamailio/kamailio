@@ -547,7 +547,8 @@ void release_tcpconn(struct tcp_connection* c, long state, int unix_sock)
 		/* errno==EINTR, EWOULDBLOCK a.s.o todo */
 		response[0]=(long)c;
 		response[1]=state;
-		write(unix_sock, response, sizeof(response));
+		if (send_all(unix_sock, response, sizeof(response))<=0)
+			LOG(L_ERR, "ERROR: release_tcpconn: send_all failed\n");
 }
 
 
@@ -625,9 +626,6 @@ void tcp_receive_loop(int unix_sock)
 					release_tcpconn(con, resp, unix_sock);
 					goto skip;
 				}
-#ifdef USE_TLS
-				if (con->type==PROTO_TLS) tls_tcpconn_update_fd(con, s);
-#endif
 				con->timeout=get_ticks()+TCP_CHILD_TIMEOUT;
 				FD_SET(s, &master_set);
 				if (maxfd<s) maxfd=s;
@@ -646,7 +644,21 @@ skip:
 					DBG("tcp receive: match, fd:isset\n");
 #endif
 					nfds--;
-					resp=tcp_read_req(con);
+#ifdef USE_TLS
+					if (con->type==PROTO_TLS){
+						/* we have to avoid to run in the same time 
+						 * with a tls_write becasue of the 
+						 * update_fd stuff  (we don't want a write
+						 * stealing the fd under us or vice versa)
+						 * => lock on con->write_lock (ugly hack) */
+						lock_get(&con->write_lock);
+						tls_tcpconn_update_fd(con, s);
+						resp=tcp_read_req(con);
+						lock_release(&con->write_lock);
+					}else
+#else
+						resp=tcp_read_req(con);
+#endif
 					if (resp<0){
 						FD_CLR(con->fd, &master_set);
 						tcpconn_listrm(list, con, c_next, c_prev);
