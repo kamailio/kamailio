@@ -1,6 +1,6 @@
 <!-- $Id$ -->
 <!-- DOCTYPE Book SYSTEM "/usr/share/sgml/docbook/dtd-4.2/docbook.dtd" [ -->
-<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [ 
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.1//EN" [ 
 
 
 <!ENTITY execexample SYSTEM "../../examples/exec.cfg">
@@ -4602,10 +4602,10 @@ Domain Registered Expired
 
 	    <itemizedlist id="routeblocks">
 		<title>Route Blocks and Process Control</title>
-		<para>
+		<!--<para>
 		    Route block and process control keywords determine
 		    the order in which SIP requests are processed.
-		</para>
+		</para>-->
 		<listitem>
 		    <para>
 			<command>route[number]{...}</command> - This marks a "route block" in configuration files.
