@@ -31,7 +31,7 @@
 
 
 struct _str{
-	char* s; /* null terminated string*/
+	char* s; /*string*/
 	int len; /*string len*/
 };
 
