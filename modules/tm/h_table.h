@@ -19,10 +19,12 @@ struct cell;
 
 #include "timer.h"
 #include "lock.h"
+#include "msg_cloner.h"
 
+#define sh_malloc( size )     malloc(size)
+#define sh_free( ptr )           free(ptr)
+#define get_cseq( p_msg)    ((struct cseq_body*)p_msg->cseq->parsed)
 
-#define sh_malloc( size )  malloc(size)
-#define sh_free( ptr )        free(ptr)
 
 /* always use a power of 2 for hash table size */
 #define TABLE_ENTRIES  256
@@ -143,7 +145,7 @@ void free_hash_table( struct s_table* hash_table );
 
 
 /* function returns:
- *       0 - a new transaction was created -> the proxy core don't have to release the p_msg structure
+ *       0 - a new transaction was created 
  *      -1 - retransmission
  *      -2 - error
  */

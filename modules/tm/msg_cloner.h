@@ -1,5 +1,5 @@
-#ifndef _SEMAPHORE_H
-#define _SEMAPHORE_H
+#ifndef _MSG_CLONER_H
+#define _MSG_CLONER_H
 
 #include "../../msg_parser.h"
 
