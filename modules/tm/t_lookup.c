@@ -228,10 +228,6 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
    }
 
    /* no transaction found */
-   T = 0;
-   return 0;
-
-
    return 0;
 }
 

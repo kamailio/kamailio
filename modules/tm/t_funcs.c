@@ -247,16 +247,14 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 						to.sin_port;
 				} else { /* transaction exists, but nothing to cancel */
                				DBG("DEBUG: t_forward: it's CANCEL but "
-						"I have nothing to cancel here\n");
-					/* continue forwarding CANCEL as a stand-alone transaction */
-					/*	return 1; */
+					"I have nothing to cancel here\n");
+				/* continue forwarding CANCEL as a stand-alone transaction */
 				}
- 			} else { /* transaction doesnot exists  */
-            			DBG("DEBUG: t_forward: canceled request not found! "
-				"nothing to CANCEL\n");
-            			return 1;
-         		}
-      	}/* end special case CANCEL*/
+			} else { /* transaction does not exists  */
+				DBG("DEBUG: t_forward: canceled request not found! "
+					"nothing to CANCEL\n");
+			}
+		}/* end special case CANCEL*/
 
 		if ( add_branch_label( T, T->inbound_request , branch )==-1)
 			goto error;
@@ -318,18 +316,18 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 	if (  p_msg->REQ_METHOD==METHOD_CANCEL )
 	{
 		DBG("DEBUG: t_forward: forwarding CANCEL\n");
-		/* if no transaction to CANCEL */
-      /* or if the canceled transaction has a final status -> drop the CANCEL*/
+		/* if no transaction to CANCEL
+		  or if the canceled transaction has a final status -> drop the CANCEL*/
 		if ( T->T_canceled==T_NULL || T->T_canceled->status>=200)
 		{
 			reset_timer( hash_table, &(rb->fr_timer ));
 			reset_timer( hash_table, &(rb->retr_timer ));
-           		return 1;
-       		}
-   	}
+		return 1;
+		}
+	}
 
 	/* send the request */
-   	/* known to be in network order */
+	/* known to be in network order */
 	rb->to.sin_port     =  dest_port;
 	rb->to.sin_addr.s_addr =  dest_ip;
 	rb->to.sin_family = AF_INET;
@@ -452,7 +450,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 		return 0;
 	}
 
-   	/* restart retransmission if provisional response came for a non_INVITE ->
+	/* restart retransmission if provisional response came for a non_INVITE ->
 		retrasmit at RT_T2*/
 	if ( msg_class==1 && T->inbound_request->REQ_METHOD!=METHOD_INVITE )
 	{
@@ -474,7 +472,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 	} else {
 		if (push_reply_from_uac_to_uas( T , branch )==-1 && clone )
 			goto error;
-   	}
+	}
 
 	/* nothing to do for the ser core */
 	/* t_unref( p_msg, NULL, NULL ); */
