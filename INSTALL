@@ -1,5 +1,15 @@
 $Id$
 
+******************************************************
+* Note well: ser has not been released yet. Tarballs *
+* available at berlios are meant for developers.     *
+* Stay tuned -- we will release ser shortly,         *
+* including RPM packages and documentation.          *
+*                                                    *
+* -Jiri, 2002-09-23                                  *
+******************************************************
+
+
 
 TODO
 --we'll probably go for mysql dependancy,
