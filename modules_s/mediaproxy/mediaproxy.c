@@ -73,7 +73,10 @@ MODULE_VERSION
 # define AF_LOCAL AF_UNIX
 #endif
 
-#define	ISANYADDR(sx) ((sx).len==7 && memcmp("0.0.0.0", (sx).s, 7) == 0)
+
+#define min(x, y)         (((x) < (y)) ? (x) : (y))
+
+#define isAnyAddress(adr) ((adr).len==7 && memcmp("0.0.0.0", (adr).s, 7)==0)
 
 
 typedef int Bool;
@@ -1188,18 +1191,19 @@ static int
 UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
 {
     str sdp, sessionIP, callId, fromDomain, toDomain, userAgent, tokens[64];
-    char *clientIP, *ptr, *command, *cmd, *result, *agent, *fromType, *toType;
-    int streamCount, i, port, count, cmdlen, success;
+    char *clientIP, *ptr, *command, *result, *agent, *fromType, *toType;
+    int streamCount, i, port, count, portCount, cmdlen, success;
     StreamInfo streams[64];
+    Bool request;
 
     fromType = (isFromLocal(msg, NULL, NULL)>0) ? "local" : "remote";
 
     if (msg->first_line.type == SIP_REQUEST &&
         msg->first_line.u.request.method_value == METHOD_INVITE) {
-        cmd    = "request";
+        request = True;
         toType = (isDestinationLocal(msg, NULL, NULL)>0) ? "local" : "remote";
     } else if (msg->first_line.type == SIP_REPLY) {
-        cmd    = "lookup";
+        request = False;
         toType = "unknown";
     } else {
         return -1;
@@ -1252,7 +1256,10 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
         return -1;
     }
 
-    count = sprintf(command, "%s %.*s", cmd, callId.len, callId.s);
+    if (request)
+        count = sprintf(command, "request %.*s", callId.len, callId.s);
+    else
+        count = sprintf(command, "lookup %.*s", callId.len, callId.s);
 
     for (i=0, ptr=command+count; i<streamCount; i++) {
         char c = (i==0 ? ' ' : ',');
@@ -1283,13 +1290,18 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
     if (count == 0) {
         LOG(L_ERR, "error: use_media_proxy(): empty response from mediaproxy\n");
         return -1;
-    } else if (count < streamCount+1) {
-        LOG(L_ERR, "error: use_media_proxy(): insufficient ports returned "
-            "from mediaproxy: got %d, expected %d\n", count-1, streamCount);
-        return -1;
+    } else if (count<streamCount+1) {
+        if (request) {
+            LOG(L_ERR, "error: use_media_proxy(): insufficient ports returned "
+                "from mediaproxy: got %d, expected %d\n", count-1, streamCount);
+            return -1;
+        } else {
+            LOG(L_WARN, "warning: use_media_proxy(): broken client. Called UA "
+                "added extra media stream(s) in the OK reply\n");
+        }
     }
 
-    if (sessionIP.s && !ISANYADDR(sessionIP)) {
+    if (sessionIP.s && !isAnyAddress(sessionIP)) {
         success = replaceElement(msg, &sessionIP, &tokens[0]);
         if (!success) {
             LOG(L_ERR, "error: use_media_proxy(): failed to replace "
@@ -1298,7 +1310,9 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
         }
     }
 
-    for (i=0; i<streamCount; i++) {
+    portCount = min(count-1, streamCount);
+
+    for (i=0; i<portCount; i++) {
         // check. is this really necessary?
         port = strtoint(&tokens[i+1]);
         if (port <= 0 || port > 65535) {
@@ -1316,7 +1330,8 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
                 return -1;
             }
         }
-        if (streams[i].localIP && !ISANYADDR(streams[i].ip)) {
+
+        if (streams[i].localIP && !isAnyAddress(streams[i].ip)) {
             success = replaceElement(msg, &(streams[i].ip), &tokens[0]);
             if (!success) {
                 LOG(L_ERR, "error: use_media_proxy(): failed to replace "
