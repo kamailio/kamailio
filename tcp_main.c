@@ -284,6 +284,7 @@ no_id:
 			response[1]=CONN_NEW;
 			n=write(unix_tcp_sock, response, sizeof(response));
 			n=send_fd(unix_tcp_sock, &c, sizeof(c), c->s);
+			fd=c->s;
 			goto send_it;
 		}
 get_fd:
