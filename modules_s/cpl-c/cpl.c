@@ -33,6 +33,9 @@
  * 2004-06-14: all global variables merged into cpl_env and cpl_fct;
  *             case_sensitive and realm_prefix added for building AORs - see
  *             build_userhost (bogdan)
+ * 2004-10-09: added process_register_norpl to allow register processing 
+ *             without sending the reply(bogdan) - based on a patch sent by
+ *             Christopher Crawford
  */
 
 
@@ -98,7 +101,9 @@ MODULE_VERSION
 
 
 static int cpl_invoke_script (struct sip_msg* msg, char* str, char* str2);
-static int cpl_process_register(struct sip_msg* msg, char* str, char* str2);
+static int w_process_register(struct sip_msg* msg, char* str, char* str2);
+static int w_process_register_norpl(struct sip_msg* msg, char* str,char* str2);
+static int cpl_process_register(struct sip_msg* msg, int no_rpl);
 static int fixup_cpl_run_script(void** param, int param_no);
 static int cpl_init(void);
 static int cpl_child_init(int rank);
@@ -109,8 +114,9 @@ static int cpl_exit(void);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"cpl_run_script",cpl_invoke_script ,2,fixup_cpl_run_script,REQUEST_ROUTE},
-	{"cpl_process_register", cpl_process_register, 0, 0, REQUEST_ROUTE},
+	{"cpl_run_script",cpl_invoke_script,2,fixup_cpl_run_script,REQUEST_ROUTE},
+	{"cpl_process_register",w_process_register,0,0,REQUEST_ROUTE},
+	{"cpl_process_register_norpl",w_process_register_norpl,0,0,REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -789,7 +795,21 @@ error:
 
 
 
-static int cpl_process_register(struct sip_msg* msg, char* str1, char* str2)
+static int w_process_register(struct sip_msg* msg, char* str, char* str2)
+{
+	return cpl_process_register( msg, 0);
+}
+
+
+
+static int w_process_register_norpl(struct sip_msg* msg, char* str,char* str2)
+{
+	return cpl_process_register( msg, 1);
+}
+
+
+
+static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 {
 	struct disposition *disp;
 	struct disposition_param *param;
@@ -857,6 +877,11 @@ static int cpl_process_register(struct sip_msg* msg, char* str1, char* str2)
 				param->body.len,param->body.s);
 			goto error;
 		}
+
+		/* do I have to send to reply? */
+		if (no_rpl)
+			goto resume_script;
+
 		/* send a 200 OK reply back */
 		cpl_fct.sl_reply( msg, (char*)200, "OK");
 		/* I send the reply and I don't want to return to script execution, so
@@ -888,6 +913,10 @@ static int cpl_process_register(struct sip_msg* msg, char* str1, char* str2)
 	 * and appended to reply */
 	if (do_script_download( msg )==-1)
 		goto error;
+
+	/* do I have to send to reply? */
+	if (no_rpl)
+		goto resume_script;
 
 	/* send a 200 OK reply back */
 	cpl_fct.sl_reply( msg, (char*)200, "OK");
