@@ -32,7 +32,7 @@ db_con_t** db_con;
 
 /** parameters */
 
-char *db_url   = "sql://root:#gorn12@gorn.fokus.gmd.de/sip_jab";
+char *db_url   = "sql://root@127.0.0.1/sip_jab";
 char *db_table = "jusers";
 
 int nrw = 2;
@@ -71,6 +71,7 @@ struct module_exports exports= {
 
 	(char*[]) {   /* Module parameter names */
 		"contact",
+		"db_url",
 		"jaddress",
 		"jport",
 		"workers",
@@ -81,6 +82,7 @@ struct module_exports exports= {
 	(modparam_t[]) {   /* Module parameter types */
 		STR_PARAM,
 		STR_PARAM,
+		STR_PARAM,
 		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
@@ -89,6 +91,7 @@ struct module_exports exports= {
 	},
 	(void*[]) {   /* Module parameter variable pointers */
 		&contact,
+		&db_url,
 		&jaddress,
 		&jport,
 		&nrw,
@@ -96,7 +99,7 @@ struct module_exports exports= {
 		&cache_time,
 		&sleep_time
 	},
-	6,      /* Number of module paramers */
+	7,      /* Number of module paramers */
 	
 	mod_init,   /* module initialization function */
 	(response_function) 0,
