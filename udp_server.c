@@ -236,6 +236,9 @@ int udp_send(struct socket_info *source, char *buf, unsigned len,
 	int n;
 
 #ifdef DBG_MSG_QA
+#define _DBG_WS_LEN 3
+#define _DBG_WS "   "
+
 	char *space;
 	int my_len;
 
@@ -249,13 +252,13 @@ int udp_send(struct socket_info *source, char *buf, unsigned len,
 		/* how much we have after the space */
 		my_len=len-(space-buf)+1;
 		/* EoM -- stop checks */
-		if (my_len<3) break;
-		if (memcmp(space+1, "   ", 3)==0) {
+		if (my_len<_DBG_WS_LEN) break;
+		if (memcmp(space+1, _DBG_WS, _DBG_WS_LEN)==0) {
 			LOG(L_CRIT, "BUG(probably): "
 				"message with four spaces in it\n");
 			abort();
 		}
-		space+=3;my_len-=3;
+		space+=_DBG_WS_LEN;my_len-=_DBG_WS_LEN;
 	}
 #endif
 
