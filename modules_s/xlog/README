@@ -1,0 +1,74 @@
+# $Id$
+ 
+XLOG - eXtended LOGging service for SER
+=======================================
+
+
+1.Description
+-------------
+This module provides the possibility to print user formatted log or debug
+messages from SER scripts. It is possible to define 10 different formats.
+Section '3.Implemented specifiers' shows what can be printed out.
+
+2.Exported symbols
+------------------
+Methods
+-------
+
+Parameters
+----------
+
+Name:		buf_size
+Type:		int
+Default:	4096
+Desc:		the max size of the log message
+
+
+Name:		f0
+Type:		string
+Default:	"XLOG{0}: [%Tf] method:<%rm> r-uri:<%ru>\n"
+Desc:		first log format
+
+
+Name:		f1, ..., f9
+Type:		string
+Default:	NULL
+Desc:		other log formats
+
+Methods
+-------
+
+Name:   xlog
+Params: - level: the level that will be used in LOG function
+        - format: the id of the format to be used to print the message (the
+		  digit after the 'f' of the module parameter name that represents the
+		  format to be used, e.g, 'xlog("1", "0")' will use the 'f0' format and
+		  will print the message with LOG(1, <log message>))
+Desc:   print a formated message using LOG function
+
+Name:   xdbg
+Params: - format: the id of the format to be used to print the message (the
+          digit after the 'f' of the module parameter name that represents the
+          format to be used, e.g, 'xdbg("0")' will use the 'f0' format and
+          will print the message with DBG(<log message>))
+Desc:   print a formatted message using DBG function
+
+		
+3.Implemented specifiers
+------------------------
+- %%  : '%'
+
+- %Ts : unix time stamp
+- %Tf : string formatted time
+
+- %ci : call-id
+- %cs : cseq
+- %ct : contact header
+- %fu : 'From' uri
+- %ft : 'From' tag
+- %rm : request's method
+- %ru : request's r-uri
+- %tu : 'To' uri
+- %tt : 'To' tag
+- %mi : SIP message id
+- %pp : process id (pid)
