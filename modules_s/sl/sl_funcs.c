@@ -99,12 +99,23 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	   -jiri
 	to.sin_family = AF_INET; */
 
-	if (update_sock_struct_from_via(  &(to),  msg->via1 )==-1)
-	{
-		LOG(L_ERR, "ERROR: sl_send_reply: cannot lookup reply dst: %s\n",
-			msg->via1->host.s );
-		goto error;
-	}
+	if (reply_to_via) {
+		if (update_sock_struct_from_via(  &(to),  msg->via1 )==-1)
+		{
+			LOG(L_ERR, "ERROR: sl_send_reply: "
+				"cannot lookup reply dst: %s\n",
+				msg->via1->host.s );
+			goto error;
+		}
+	} else update_sock_struct_from_ip( &to, msg );
+
+	/* add to tags only to invites with To without to-tag */
+	if ( msg->first_line.u.request.method_value==METHOD_INVITE 
+		&& (msg->to || (parse_headers(msg,HDR_TO, 0)!=-1 && msg->to))
+		&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) ) 
+
+/* try to send a reply even if there is no To */
+#ifdef _OBSOLETED
 	/* To header is needed (tag param in particular)*/
 	if (msg->to==0 && (parse_headers(msg,HDR_TO, 0)==-1 || msg->to==0) )
 	{
@@ -114,7 +125,9 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	/* to:tag is added only for INVITEs without To tag in order
 	to be able to capture the ACK*/
 	if ( msg->first_line.u.request.method_value==METHOD_INVITE
-	&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) ) {
+	&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) ) 
+#endif
+	{
 		ss_nr=2;
 		suffix_source[0]=msg->via1->host;
 		suffix_source[1]=msg->via1->port_str;
@@ -153,11 +166,19 @@ int sl_reply_error(struct sip_msg *msg )
 {
 	char err_buf[MAX_REASON_LEN];
 	int sip_error;
+	int ret;
 
-	err2reason_phrase( prev_ser_error, &sip_error, 
+	ret=err2reason_phrase( prev_ser_error, &sip_error, 
 		err_buf, sizeof(err_buf), "SL");
-	sl_send_reply( msg, sip_error, err_buf );
-	return 1;
+	if (ret>0) {
+		sl_send_reply( msg, sip_error, err_buf );
+		LOG(L_ERR, "ERROR: sl_reply_error used: %s\n", 
+			err_buf );
+		return 1;
+	} else {
+		LOG(L_ERR, "ERROR: sl_reply_error: err2reason failed\n");
+		return -1;
+	}
 }
 
 

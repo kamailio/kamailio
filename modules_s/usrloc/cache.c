@@ -261,28 +261,28 @@ int clean_cache(cache_t* _c, db_con_t* _con)
 	el = CACHE_FIRST_ELEM(_c);
 	t = time(NULL);
 
-	DBG("Begin cache elements traversal");
+	DBG("Begin cache elements traversal\n");
 	while(el) {
-		DBG("Running clean_location: \"%s\"", ELEM_LOC(el)->user.s);
+		DBG("Running clean_location: \"%s\"\n", ELEM_LOC(el)->user.s);
 		if (clean_location(ELEM_LOC(el), _con, t) == FALSE) {
-			ERR("Error while cleaning cache: \"%s\"", ELEM_LOC(el)->user.s);
+			ERR("Error while cleaning cache: \"%s\"\n", ELEM_LOC(el)->user.s);
 			release_lock(&CACHE_LOCK(_c));
 			return FALSE;
 		}
-		DBG("Clean location done: \"%s\"", ELEM_LOC(el)->user.s);
+		DBG("Clean location done: \"%s\"\n", ELEM_LOC(el)->user.s);
 		ptr = ELEM_CACHE_NEXT(el);
 		if (!(ELEM_LOC(el)->contacts)) {
-			DBG("Location empty, will be removed: \"%s\"", ELEM_LOC(el)->user.s);
+			DBG("Location empty, will be removed: \"%s\"\n", ELEM_LOC(el)->user.s);
 			slot_rem_elem(el);
 			cache_rem_elem(_c, el);
 			free_element(el);
 		} else {
-			DBG("Location not empty yet: \"%s\"", ELEM_LOC(el)->user.s);
+			DBG("Location not empty yet: \"%s\"\n", ELEM_LOC(el)->user.s);
 		}
 		el = ptr;
 	}
 	release_lock(&CACHE_LOCK(_c));
-        DBG("End cache elements traversal");
+	DBG("End cache elements traversal\n");
 	return TRUE;
 }
 

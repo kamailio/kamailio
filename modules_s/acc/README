@@ -1,0 +1,125 @@
+#
+# $Id$
+#
+
+Module depends on: tm -- acc registers TM callbacks
+
+acc module is used to report on transactions. 
+(Thus it needs TM for its operation.) To report
+on a transaction, use "setflag" to mark a transaction
+with a flag, load accounting module and set its
+acc_flag to the same flag. The acc module will then
+report on completed transaction to syslog. A typical
+usage of the module takes no acc-specific script command 
+-- the functionality binds invisibly through TM.
+Script writers just need to mark the transaction
+for accounting with setflag.
+
+There is no session accounting -- ser maintains no
+session. If one needs to correlate INVITEs with BYEs for example
+for purpose of billing, then it is better done in the entity
+which collects accounting infromation. Otherwise, 
+SIP server would have to become sessions-stateful, which
+would very baldy impact its scalability.
+
+
+Currently, method, i-uri, o-uri, call-id, from and code
+are printed. Note that from has only informational value
+and unless check_from is used (auth module), there is
+no relationship to user identity.
+
+Example:
+	loadmodule "../sip_router/modules/acc/acc.so"
+	modparam("acc", "log_level", 1)
+	modparam("acc", "acc_flag", 1 )
+	if (uri=~"sip:+49") /* calls to Germany */ {
+		if (!proxy_authorize(   "iptel.org" /* realm */,
+					"subscriber" /* table name */))  {
+			proxy_challenge( "iptel.org" /* realm */, "0" /* no qop */ );
+			break;
+		}
+		if (method=="INVITE" & !check_from()) {
+			log("from!=digest\n");
+			sl_send_reply("403","Forbidden");
+			break;
+		}
+		setflag(1); /* set for accounting (the same value as in acc_flag!)
+		t_relay(); 	/* enter stateful mode now */
+	};
+
+
+Exported parameters:
+------------------
+
+
+Name:    log_level
+Type:    int
+Default: L_NOTICE
+Desc:    log level at which accounting messages are issued to
+		 syslog
+
+
+Name:    early_media
+Type:    int (boolean)
+Default: 0
+Desc:    should be early media (183) accounted too?
+
+
+Name:    failed_transactions
+Type:    int (boolean)
+Default: 0
+Desc:    should be failed transactions (status>=300) accounted too?
+
+Name:    acc_flag
+Type:    int
+Default: 1
+Desc:    request flag which needs to be set to account a transaction
+
+Name:	 missed_flag
+Type:	 int
+Default: 2
+Desc:	 request flag which needs to be set to account missed calls
+
+
+Name:    report_ack
+Type:    int (boolean)
+Default: 1
+Desc:    Shall 'acc' attempt to account e2e ACKs too? Note that this
+		 is really only an attempt, as e2e ACKs may take a different
+		 path (unless RR enabled) and mismatch original INVITE
+		 (e2e ACKs are a separate transaction).
+
+
+Name:    use_db, db_url, uid_column, db_table
+Type:    not used now
+Default: 
+Desc:    planned for dumping accounting output to mysql
+
+
+Exported Functions: 
+------------------
+
+Name:	acc_request
+Params:	comment
+Desc: 	acc_request reports on a request; particularly, it can be used
+		to report on requests, which are processed statelessly, such
+		as for example usrloc's Not Found and which cannot be reported
+		on using the default stateful TM/acc mechanism; the drawback of
+		using this stateless function is it reports on every single
+		retransmission -- it is then up to the entity, to which the
+		reports are sent, to filter retransmissions
+
+Known Issues:
+-------------
+Requests processed by 'acc' are taken from TM's shared mem,
+they cannot be parsed any more. This might be an issue in
+the future, when some requests are not parsed for performance
+reasons (non-INVITEs don't need to be completely parsed as
+we don't need  to send 100 and hunt for all vias down to EoM)
+-- acc relies on parsed message and cannot parse shmem-ed
+mesages.
+
+To-DO
+-----
+- reporting to MYSQL
+- printf-like formatting of output message
