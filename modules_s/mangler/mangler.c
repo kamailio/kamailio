@@ -72,11 +72,6 @@ struct tm_binds tmb;
 static void destroy (void);
 
 
-/*
- * Module child-init function prototype
- */
-static int child_init (int rank);
-
 
 /*
  * Module initialization function prototype
@@ -130,11 +125,6 @@ struct module_exports exports = {
 	0			/* child initialization function */
 };
 
-static int
-child_init (int rank)
-{
-	return 0;
-}
 
 #ifdef DEMO
 /* MANGLING EXAMPLE */
