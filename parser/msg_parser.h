@@ -249,6 +249,8 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg);
 
 int parse_headers(struct sip_msg* msg, int flags, int next);
 
+char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr);
+
 void free_sip_msg(struct sip_msg* msg);
 
 /* make sure all HFs needed for transaction identification have been
