@@ -139,6 +139,7 @@
  *
  * 2005-02-25	Force for pinging the socket returned by USRLOC (bogdan)
  *
+ * 2005-03-22	support for multiple media streams added (netch)
  */
 
 #include "nhelpr_funcs.h"
@@ -196,10 +197,13 @@ MODULE_VERSION
 #define	NAT_UAC_TEST_RPORT	0x10
 
 /* Handy macros */
-#define	STR2IOVEC(sx, ix)	{(ix).iov_base = (sx).s; (ix).iov_len = (sx).len;}
+#define	STR2IOVEC(sx, ix)	do {(ix).iov_base = (sx).s; (ix).iov_len = (sx).len;} while(0)
+#define	SZ2IOVEC(sx, ix)	do {(ix).iov_base = (sx); (ix).iov_len = strlen(sx);} while(0)
 
 /* Supported version of the RTP proxy command protocol */
 #define	SUP_CPROTOVER	20040107
+/* Required additional version of the RTP proxy command protocol */
+#define	REQ_CPROTOVER	"20050322"
 #define	CPORT		"22222"
 
 struct rtpp_head;
@@ -221,6 +225,8 @@ static int force_rtp_proxy1_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy2_f(struct sip_msg *, char *, char *);
 static int fix_nated_register_f(struct sip_msg *, char *, char *);
 static int add_rcv_param_f(struct sip_msg *, char *, char *);
+static char *find_sdp_line(char *, char *, char);
+static char *find_next_sdp_line(char *, char *, char, char *);
 
 static void timer(unsigned int, void *);
 inline static int fixup_str2int(void**, int);
@@ -654,8 +660,8 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	int offset, len, len1;
 	char *cp, *buf, temp[2];
-	contact_t* c;
-	struct lump* anchor;
+	contact_t *c;
+	struct lump *anchor;
 	struct sip_uri uri;
 	str hostport;
 
@@ -867,8 +873,8 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 static int
 fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 {
-	str body, body1, oldip, oldip1, newip;
-	int level, pf, pf1;
+	str body, body1, oldip, newip;
+	int level, pf;
 	char *buf;
 	struct lump* anchor;
 
@@ -915,38 +921,44 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	if (level & FIX_MEDIP) {
-		if (extract_mediaip(&body, &oldip, &pf) == -1) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: can't extract media IP from the SDP\n");
-			goto finalize;
-		}
-		if (pf != AF_INET) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: "
-			    "not an IPv4 address in SDP\n");
-			goto finalize;
-		}
-		body1.s = oldip.s + oldip.len;
-		body1.len = body.s + body.len - body1.s;
-		if (extract_mediaip(&body1, &oldip1, &pf1) == -1) {
-			oldip1.len = 0;
-		}
-		if (oldip1.len > 0 && pf != pf1) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: mismatching "
-			    "address families in SDP\n");
-			return -1;
-		}
-
-		newip.s = ip_addr2a(&msg->rcv.src_ip);
-		newip.len = strlen(newip.s);
-		if (alter_mediaip(msg, &body, &oldip, pf, &newip, pf,
-		    1) == -1) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: can't alter media IP");
-			return -1;
-		}
-		if (oldip1.len > 0 && alter_mediaip(msg, &body, &oldip1, pf1,
-		    &newip, pf, 0) == -1) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: can't alter media IP");
-			return -1;
-		}
+ 		/* Iterate all c= and replace ips in them. */
+ 		unsigned hasreplaced = 0;
+ 		int pf1 = 0;
+ 		str body2;
+ 		char *bodylimit = body.s + body.len;
+ 		newip.s = ip_addr2a(&msg->rcv.src_ip);
+ 		newip.len = strlen(newip.s);
+ 		body1 = body;
+ 		for(;;) {
+ 			if (extract_mediaip(&body1, &oldip, &pf) == -1)
+ 				break;
+ 			if (pf != AF_INET) {
+ 				LOG(L_ERR, "ERROR: fix_nated_sdp: "
+ 				    "not an IPv4 address in SDP\n");
+ 				goto finalize;
+ 			}
+ 			if (!pf1)
+ 				pf1 = pf;
+ 			else if (pf != pf1) {
+ 				LOG(L_ERR, "ERROR: fix_nated_sdp: mismatching "
+ 				    "address families in SDP\n");
+ 				return -1;
+ 			}
+ 			body2.s = oldip.s + oldip.len;
+ 			body2.len = bodylimit - body2.s;
+ 			if (alter_mediaip(msg, &body1, &oldip, pf, &newip, pf,
+ 			    1) == -1)
+ 			{
+ 				LOG(L_ERR, "ERROR: fix_nated_sdp: can't alter media IP\n");
+ 				return -1;
+ 			}
+ 			hasreplaced = 1;
+ 			body1 = body2;
+ 		}
+ 		if (!hasreplaced) {
+ 			LOG(L_ERR, "ERROR: fix_nated_sdp: can't extract media IP from the SDP\n");
+ 			goto finalize;
+ 		}
 	}
 
 finalize:
@@ -1286,6 +1298,8 @@ rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 	int rtpp_ver;
 	char *cp;
 	struct iovec v[2] = {{NULL, 0}, {"V", 1}};
+	struct iovec vf[4] = {{NULL, 0}, {"VF", 1}, {" ", 1},
+	    {REQ_CPROTOVER, 8}};
 
 	if (force == 0) {
 		if (isdisabled == 0)
@@ -1293,22 +1307,33 @@ rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 		if (node->rn_recheck_ticks > get_ticks())
 			return 1;
 	}
-	cp = send_rtpp_command(node, v, 2);
-	if (cp == NULL) {
-		LOG(L_WARN,"WARNING: rtpp_test: can't get version of "
-		    "the RTP proxy\n");
-	} else {
-		rtpp_ver = atoi(cp);
-		if (rtpp_ver == SUP_CPROTOVER) {
-			LOG(L_INFO, "rtpp_test: RTP proxy <%s> found, support for "
-			    "it %senabled\n",
-			    node->rn_url, force == 0 ? "re-" : "");
-			return 0;
+	do {
+		cp = send_rtpp_command(node, v, 2);
+		if (cp == NULL) {
+			LOG(L_WARN,"WARNING: rtpp_test: can't get version of "
+			    "the RTP proxy\n");
+			break;
 		}
-		LOG(L_WARN, "WARNING: rtpp_test: unsupported "
-		    "version of RTP proxy found: %d supported, "
-		    "%d present\n", SUP_CPROTOVER, rtpp_ver);
-	}
+		rtpp_ver = atoi(cp);
+		if (rtpp_ver != SUP_CPROTOVER) {
+			LOG(L_WARN, "WARNING: rtpp_test: unsupported "
+			    "version of RTP proxy <%s> found: %d supported, "
+			    "%d present\n", node->rn_url,
+			    SUP_CPROTOVER, rtpp_ver);
+			break;
+		}
+		cp = send_rtpp_command(node, vf, 4);
+		if (cp[0] == 'E' || atoi(cp) != 1) {
+			LOG(L_WARN, "WARNING: rtpp_test: of RTP proxy <%s>"
+			    "doesn't support required protocol version %s\n",
+			    node->rn_url, REQ_CPROTOVER);
+			break;
+		}
+		LOG(L_INFO, "rtpp_test: RTP proxy <%s> found, support for "
+		    "it %senabled\n",
+		    node->rn_url, force == 0 ? "re-" : "");
+		return 0;
+	} while(0);
 	LOG(L_WARN, "WARNING: rtpp_test: support for RTP proxy <%s>"
 	    "has been disabled%s\n", node->rn_url,
 	    rtpproxy_disable_tout < 0 ? "" : " temporarily");
@@ -1528,10 +1553,60 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 	return 1;
 }
 
+/*
+ * Auxiliary for some functions.
+ * Returns pointer to first character of found line, or NULL if no such line.
+ */
+
+static char *
+find_sdp_line(char* p, char* plimit, char linechar)
+{
+	static char linehead[3] = "x=";
+	char *cp, *cp1;
+	linehead[0] = linechar;
+	/* Iterate thru body */
+	cp = p;
+	for (;;) {
+		if (cp >= plimit)
+			return NULL;
+		cp1 = ser_memmem(cp, linehead, plimit-cp, 2);
+		if (cp1 == NULL)
+			return NULL;
+		/*
+		 * As it is body, we assume it has previous line and we can
+		 * lookup previous character.
+		 */
+		if (cp1[-1] == '\n' || cp1[-1] == '\r')
+			return cp1;
+		/*
+		 * Having such data, but not at line beginning.
+		 * Skip them and reiterate. ser_memmem() will find next
+		 * occurence.
+		 */
+		if (plimit - cp1 < 2)
+			return NULL;
+		cp = cp1 + 2;
+	}
+	/*UNREACHED*/
+	return NULL;
+}
+
+/* This function assumes p points to a line of requested type. */
+
+static char *
+find_next_sdp_line(char* p, char* plimit, char linechar, char* defptr)
+{
+	char *t;
+	if (p >= plimit || plimit - p < 3)
+		return defptr;
+	t = find_sdp_line(p + 2, plimit, linechar);
+	return t ? t : defptr;
+}
+
 static int
 force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 {
-	str body, body1, oldport, oldip, oldip1, newport, newip;
+	str body, body1, oldport, oldip, newport, newip;
 	str callid, from_tag, to_tag, tmp;
 	int create, port, len, asymmetric, flookup, argc, proxied, real;
 	int oidx, pf, pf1, force;
@@ -1541,12 +1616,27 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	char **ap, *argv[10];
 	struct lump* anchor;
 	struct rtpp_node *node;
-	struct iovec v[1 + 6 + 5] = {{NULL, 0}, {NULL, 0}, {" ", 1}, {NULL, 0},
-		{" ", 1}, {NULL, 7}, {" ", 1}, {NULL, 1}, {" ", 1}, {NULL, 0},
-		{" ", 1}, {NULL, 0}};
-						/* 1 */    /* 2 */   /* 3 */    /* 4 */
-		/* 5 */    /* 6 */   /* 7 */    /* 8 */   /* 9 */    /* 10 */
-		/* 11 */
+	struct iovec v[14] = {
+		{NULL, 0},	/* command */
+		{NULL, 0},	/* options */
+		{" ", 1},	/* separator */
+		{NULL, 0},	/* callid */
+		{" ", 1},	/* separator */
+		{NULL, 7},	/* newip */
+		{" ", 1},	/* separator */
+		{NULL, 1},	/* oldport */
+		{" ", 1},	/* separator */
+		{NULL, 0},	/* from_tag */
+		{";", 1},	/* separator */
+		{NULL, 0},	/* medianum */
+		{" ", 1},	/* separator */
+		{NULL, 0}	/* to_tag */
+	};
+	char *v1p, *v2p, *c1p, *c2p, *m1p, *m2p, *bodylimit;
+	char medianum_buf[20];
+	int medianum, media_multi;
+	str medianum_str, tmpstr1;
+	int c1p_altered;
 
 	v[1].iov_base=opts;
 	asymmetric = flookup = force = real = 0;
@@ -1640,93 +1730,172 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	}
 	if (proxied != 0 && force == 0)
 		return -1;
-	if (extract_mediaip(&body, &oldip, &pf) == -1) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't extract media IP "
-		    "from the message\n");
+	/*
+	 * Parsing of SDP body.
+	 * It can contain a few session descriptions (each starts with
+	 * v-line), and each session may contain a few media descriptions
+	 * (each starts with m-line).
+	 * We have to change ports in m-lines, and also change IP addresses in
+	 * c-lines which can be placed either in session header (fallback for
+	 * all medias) or media description.
+	 * Ports should be allocated for any media. IPs all should be changed
+	 * to the same value (RTP proxy IP), so we can change all c-lines
+	 * unconditionally.
+	 */
+	bodylimit = body.s + body.len;
+	v1p = find_sdp_line(body.s, bodylimit, 'v');
+	if (v1p == NULL) {
+		LOG(L_ERR, "ERROR: force_rtp_proxy2: no sessions in SDP\n");
 		return -1;
 	}
-	if (asymmetric != 0 || real != 0) {
-		newip = oldip;
-	} else {
-		newip.s = ip_addr2a(&msg->rcv.src_ip);
-		newip.len = strlen(newip.s);
-	}
-	body1.s = oldip.s + oldip.len;
-	body1.len = body.s + body.len - body1.s;
-	if (extract_mediaip(&body1, &oldip1, &pf1) == -1) {
-		oldip1.len = 0;
-	}
-	if (oldip1.len > 0 && pf != pf1) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy2: mismatching address "
-		    "families in SDP\n");
-		return -1;
-	}
-	if (extract_mediaport(&body, &oldport) == -1) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't extract media port "
-		    "from the message\n");
-		return -1;
-	}
-	if (pf == AF_INET6) {
-		opts[oidx] = '6';
-		oidx++;
-	}
-	opts[0] = (create == 0) ? 'L' : 'U';
-	v[1].iov_len = oidx;
-	STR2IOVEC(callid, v[3]);
-	STR2IOVEC(newip, v[5]);
-	STR2IOVEC(oldport, v[7]);
-	STR2IOVEC(from_tag, v[9]);
-	STR2IOVEC(to_tag, v[11]);
-	do {
-		node = select_rtpp_node(callid, 1);
-		if (!node) {
-			LOG(L_ERR, "ERROR: force_rtp_proxy2: no available proxies\n");
+	v2p = find_next_sdp_line(v1p, bodylimit, 'v', bodylimit);
+	media_multi = (v2p != bodylimit);
+	v2p = v1p;
+	medianum = 0;
+	for(;;) {
+		/* Per-session iteration. */
+		v1p = v2p;
+		if (v1p == NULL || v1p >= bodylimit)
+			break; /* No sessions left */
+		v2p = find_next_sdp_line(v1p, bodylimit, 'v', bodylimit);
+		/* v2p is text limit for session parsing. */
+		m1p = find_sdp_line(v1p, v2p, 'm');
+		/* Have this session media description? */
+		if (m1p == NULL) {
+			LOG(L_ERR, "ERROR: force_rtp_proxy2: no m= in session\n");
 			return -1;
 		}
-		cp = send_rtpp_command(node, v, (to_tag.len > 0) ? 12 : 10);
-	} while (cp == NULL);
-	argc = 0;
-	memset(argv, 0, sizeof(argv));
-	cpend=cp+strlen(cp);
-	next=eat_token_end(cp, cpend);
-	for (ap = argv; cp<cpend; cp=next+1, next=eat_token_end(cp, cpend)){
-		*next=0;
-		if (*cp != '\0') {
-			*ap=cp;
-			argc++;
-			if ((char*)++ap >= ((char*)argv+sizeof(argv)))
+		/*
+		 * Find c1p only between session begin and first media.
+		 * c1p will give common c= for all medias.
+		 */
+		c1p = find_sdp_line(v1p, m1p, 'c');
+		c1p_altered = 0;
+		/* Have session. Iterate media descriptions in session */
+		m2p = m1p;
+		for (;;) {
+			m1p = m2p;
+			if (m1p == NULL || m1p >= v2p)
 				break;
-		}
-	}
-	if (argc < 1)
-		return -1;
-	port = atoi(argv[0]);
-	if (port <= 0 || port > 65535)
-		return -1;
+			m2p = find_next_sdp_line(m1p, v2p, 'm', v2p);
+			/* c2p will point to per-media "c=" */
+			c2p = find_sdp_line(m1p, m2p, 'c');
+			/* Extract address and port */
+			tmpstr1.s = c2p ? c2p : c1p;
+			if (tmpstr1.s == NULL) {
+				/* No "c=" */
+				LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
+				    " find media IP in the message\n");
+				return -1;
+			}
+			tmpstr1.len = v2p - tmpstr1.s; /* limit is session limit text */
+			if (extract_mediaip(&tmpstr1, &oldip, &pf) == -1) {
+				LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
+				    " extract media IP from the message\n");
+				return -1;
+			}
+			tmpstr1.s = m1p;
+			tmpstr1.len = m2p - m1p;
+			if (extract_mediaport(&tmpstr1, &oldport) == -1) {
+				LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
+				    " extract media port from the message\n");
+				return -1;
+			}
+			++medianum;
+			if (asymmetric != 0 || real != 0) {
+				newip = oldip;
+			} else {
+				newip.s = ip_addr2a(&msg->rcv.src_ip);
+				newip.len = strlen(newip.s);
+			}
+			/* XXX must compare address families in all addresses */
+			if (pf == AF_INET6) {
+				opts[oidx] = '6';
+				oidx++;
+			}
+			snprintf(medianum_buf, sizeof medianum_buf, "%d", medianum);
+			medianum_str.s = medianum_buf;
+			medianum_str.len = strlen(medianum_buf);
+			opts[0] = (create == 0) ? 'L' : 'U';
+			v[1].iov_len = oidx;
+			STR2IOVEC(callid, v[3]);
+			STR2IOVEC(newip, v[5]);
+			STR2IOVEC(oldport, v[7]);
+			STR2IOVEC(from_tag, v[9]);
+			if (1 || media_multi) /* XXX netch: can't choose now*/
+			{
+				STR2IOVEC(medianum_str, v[11]);
+			} else {
+				v[10].iov_len = v[11].iov_len = 0;
+			}
+			STR2IOVEC(to_tag, v[13]);
+			do {
+				node = select_rtpp_node(callid, 1);
+				if (!node) {
+					LOG(L_ERR, "ERROR: force_rtp_proxy2: no available proxies\n");
+					return -1;
+				}
+				cp = send_rtpp_command(node, v, (to_tag.len > 0) ? 14 : 12);
+			} while (cp == NULL);
+			LOG(L_DBG, "force_rtp_proxy2: proxy reply: %s\n", cp);
+			/* Parse proxy reply to <argc,argv> */
+			argc = 0;
+			memset(argv, 0, sizeof(argv));
+			cpend=cp+strlen(cp);
+			next=eat_token_end(cp, cpend);
+			for (ap = argv; cp<cpend; cp=next+1, next=eat_token_end(cp, cpend)){
+				*next=0;
+				if (*cp != '\0') {
+					*ap=cp;
+					argc++;
+					if ((char*)++ap >= ((char*)argv+sizeof(argv)))
+						break;
+				}
+			}
+			if (argc < 1) {
+				LOG(L_ERR, "force_rtp_proxy2: no reply from rtp proxy\n");
+				return -1;
+			}
+			port = atoi(argv[0]);
+			if (port <= 0 || port > 65535) {
+				LOG(L_ERR, "force_rtp_proxy2: incorrect port in reply from rtp proxy\n");
+				return -1;
+			}
 
-	pf1 = (argc >= 3 && argv[2][0] == '6') ? AF_INET6 : AF_INET;
+			pf1 = (argc >= 3 && argv[2][0] == '6') ? AF_INET6 : AF_INET;
 
-	if (isnulladdr(&oldip, pf)) {
-		if (pf1 == AF_INET6) {
-			newip.s = "::";
-			newip.len = 2;
-		} else {
-			newip.s = "0.0.0.0";
-			newip.len = 7;
-		}
-	} else {
-		newip.s = (argc < 2) ? str2 : argv[1];
-		newip.len = strlen(newip.s);
-	}
-	newport.s = int2str(port, &newport.len); /* beware static buffer */
-
-	if (alter_mediaip(msg, &body, &oldip, pf, &newip, pf1, 0) == -1)
-		return -1;
-	if (oldip1.len > 0 &&
-	    alter_mediaip(msg, &body1, &oldip1, pf, &newip, pf1, 0) == -1)
-		return -1;
-	if (alter_mediaport(msg, &body, &oldport, &newport, 0) == -1)
-		return -1;
+			if (isnulladdr(&oldip, pf)) {
+				if (pf1 == AF_INET6) {
+					newip.s = "::";
+					newip.len = 2;
+				} else {
+					newip.s = "0.0.0.0";
+					newip.len = 7;
+				}
+			} else {
+				newip.s = (argc < 2) ? str2 : argv[1];
+				newip.len = strlen(newip.s);
+			}
+			newport.s = int2str(port, &newport.len); /* beware static buffer */
+			/* Alter port. */
+			body1.s = m1p;
+			body1.len = bodylimit - body1.s;
+			if (alter_mediaport(msg, &body1, &oldport, &newport, 0) == -1)
+				return -1;
+			/*
+			 * Alter IP. Don't alter IP common for the session
+			 * more than once.
+			 */
+			if (c2p != NULL || !c1p_altered) {
+				body1.s = c2p ? c2p : c1p;
+				body1.len = bodylimit - body1.s;
+				if (alter_mediaip(msg, &body1, &oldip, pf, &newip, pf1, 0) == -1)
+					return -1;
+				if (!c2p)
+					c1p_altered = 1;
+			}
+		} /* Iterate medias in session */
+	} /* Iterate sessions */
 
 	if (proxied == 0) {
 		cp = pkg_malloc(ANORTPPROXY_LEN * sizeof(char));
