@@ -414,7 +414,7 @@ case $1 in
 			$USRLOC.$USER_COLUMN='$1' order by expires desc"
 		QUERY3="select $USRLOC.$USER_COLUMN, $TABLE.$EMAIL_COLUMN, $USRLOC.$CALLID_COLUMN \
 			from $TABLE, $USRLOC where  \
-			$TABLE.$SUBSCRIBER_COLUMN=$USRLOC.$USER_COLUMN" 
+			$TABLE.$SUBSCRIBER_COLUMN=$USRLOC.$USER_COLUMN  order by $USRLOC.$USER_COLUMN" 
 
 		if [ $# -eq 1 ] ; then
 			sql_ro_query "$QUERY1"
