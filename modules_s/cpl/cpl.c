@@ -6,17 +6,19 @@
 #include <string.h>
 
 #include "../../sr_module.h"
+#include "../../str.h"
+#include "../../msg_translator.h"
 #include "../../data_lump_rpl.h"
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../ut.h"
+#include "../../globals.h"
 #include "jcpli.h"
 
-#define   CPL_SERVER  "gorn.fokus.gmd.de"
-#define   CPL_PORT       18011
 
-
-char               *resp_buf;
+char           *resp_buf;
+char           *cpl_server = "127.0.0.1";
+unsigned int   cpl_port = 18011;
 unsigned int   resp_len;
 unsigned int   resp_code;
 
@@ -60,10 +62,20 @@ struct module_exports exports = {
 		},
 	5,
 
-	NULL,   /* Module parameter names */
-	NULL,   /* Module parameter types */
-	NULL,   /* Module parameter variable pointers */
-	0,      /* Number of module paramers */
+	(char*[]) {   /* Module parameter names */
+		"cpl_server",
+		"cpl_port"
+	},
+	(modparam_t[]) {   /* Module parameter types */
+		STR_PARAM,
+		INT_PARAM
+	},
+	(void*[]) {   /* Module parameter variable pointers */
+		&cpl_server,
+		&cpl_port
+	},
+	2,      /* Number of module paramers */
+
 
 	mod_init, /* Module initialization function */
 	(response_function) 0,
@@ -80,8 +92,9 @@ static int mod_init(void)
 }
 
 
-static int cpl_run_script(struct sip_msg* msg, char* str, char* str2)
+static int cpl_run_script(struct sip_msg* msg, char* str1, char* str2)
 {
+	str buf_msg;
 
 	if (resp_buf)
 	{
@@ -89,8 +102,15 @@ static int cpl_run_script(struct sip_msg* msg, char* str, char* str2)
 		resp_buf = 0;
 	}
 
-	resp_code =executeCPLForSIPMessage( msg->orig, msg->len, CPL_SERVER,
-	  CPL_PORT, &resp_buf, (int*) &resp_len);
+	buf_msg.s = build_req_buf_from_sip_req( msg, &(buf_msg.len), sock_info );
+	if (!buf_msg.s || !buf_msg.len) {
+		LOG(L_ERR,"ERROR: cpl_run_script: cannot build buffer from request\n");
+		goto error;
+	}
+	resp_code =executeCPLForSIPMessage( buf_msg.s, buf_msg.len, cpl_server,
+		cpl_port, &resp_buf, (int*) &resp_len);
+	pkg_free(buf_msg.s);
+
 	if (!resp_code)
 	{
 		LOG( L_ERR ,  "ERROR : cpl_run_script : cpl running failed!\n");
@@ -106,13 +126,13 @@ error:
 
 
 
-static int cpl_is_response_accept(struct sip_msg* msg, char* str, char* str2)
+static int cpl_is_response_accept(struct sip_msg* msg, char* str1, char* str2)
 {
 	return (resp_code==ACCEPT_CALL?1:-1);
 }
 
 
-static int cpl_is_response_reject(struct sip_msg* msg, char* str, char* str2)
+static int cpl_is_response_reject(struct sip_msg* msg, char* str1, char* str2)
 {
 	if (resp_code==REJECT_CALL && resp_buf && resp_len)
 		return 1;
@@ -120,14 +140,14 @@ static int cpl_is_response_reject(struct sip_msg* msg, char* str, char* str2)
 }
 
 
-static int cpl_is_response_redirect(struct sip_msg* msg, char* str, char* str2)
+static int cpl_is_response_redirect(struct sip_msg* msg, char* str1, char* str2)
 {
 	if (resp_code==REDIRECT_CALL && resp_buf && resp_len)
 		return 1;
 	return -1;
 }
 
-static int cpl_update_contact(struct sip_msg* msg, char* str, char* str2)
+static int cpl_update_contact(struct sip_msg* msg, char* str1, char* str2)
 {
 	TRedirectMessage  *redirect;
 	struct lump_rpl *lump;
