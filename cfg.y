@@ -201,6 +201,7 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token FIFO_DB_URL
 %token UNIX_SOCK
 %token UNIX_SOCK_CHILDREN
+%token UNIX_TX_TIMEOUT
 %token AVP_DB_URL
 %token SERVER_SIGNATURE
 %token REPLY_TO_VIA
@@ -414,6 +415,8 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
                 | UNIX_SOCK EQUAL error { yyerror("string value expected"); }
                 | UNIX_SOCK_CHILDREN EQUAL NUMBER { unixsock_children=$3; }
                 | UNIX_SOCK_CHILDREN EQUAL error { yyerror("int value expected\n"); }
+		| UNIX_TX_TIMEOUT EQUAL NUMBER { unixsock_tx_timeout=$3; }
+		| UNIX_TX_TIMEOUT EQUAL error { yyerror("int value expected\n"); }
 		| AVP_DB_URL EQUAL STRING { avp_db_url=$3; }
 		| AVP_DB_URL EQUAL error  { yyerror("string value expected"); }
 		| USER EQUAL STRING     { user=$3; }
