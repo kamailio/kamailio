@@ -100,7 +100,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	if (!Trans->local) {
 		for ( hdr=Trans->uas.request->headers ; hdr ; hdr=hdr->next )
 			 if (hdr->type==HDR_ROUTE)
-				len+=((hdr->body.s+hdr->body.len ) - hdr->name.s ) + 
+				*len+=((hdr->body.s+hdr->body.len ) - hdr->name.s ) + 
 					CRLF_LEN ;
 	}
 
