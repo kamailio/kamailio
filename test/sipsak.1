@@ -1,0 +1,166 @@
+.\" Process thif file with
+.\" groff -man -Tascii sipsak.1
+.\"
+.TH SIPSAK 1 "JULY 2002" Linux "User Manuals"
+.SH NAME
+sipsak \- a utility for various tests on sip server
+.SH SYNOPSIS
+.B sipsak [-dFhinRTUVvw] [-b
+.I number 
+.B ] [-c 
+.I number 
+.B ] [-e 
+.I number 
+.B ] [-f 
+.I filename 
+.B ] [-l 
+.I port
+.B ] [-m 
+.I number
+.B ] [-r 
+.I port
+.B ] [-t 
+.I number 
+.B ] [-x 
+.I number
+.B ] -s 
+.I sip-uri
+.SH DESCRIPTION
+.B sipsak
+is a utility which is able to create and manipulate the header of sip
+requests. This request are sended to the server within the 
+.BR sip:uri 
+and the received response is examined.
+
+.B sipsak
+can run in five different modes. The default mode sends only an OPTIONS
+request or the content of the given 
+.BR filename 
+to the server and waits on a final response. For explanation of the four
+additional mode see the description at their activating options.
+.SH OPTIONS
+.IP "-b number"
+The starting number which is appended to the username in the USRLOC mode.
+This 
+.I number
+is increased until it reaches the value given by the
+.BR -e
+parameter. If omitted the starting number will be one.
+.IP "-c number"
+This is the maximum CSeq number in the flood mode. If ommitted the maximum
+will be 2^31 (2147483647).
+.IP -d
+If this option is set all redirects will be ignored. By default without this 
+option received redirects will be respected. This option is automaticly 
+activated in the randtrash mode and in the flood mode.
+.IP "-e number"
+The ending number which is appended to the username in the USRLOC mode.
+This number is increased until it reaches this ending
+.I number.
+.IP "-f filename"
+The content of 
+.I filename
+will be readed in in binary mode and will be used as replacement for the
+alternativly created sip header. This can used in the default mode to make
+other requests than OPTIONS requests (e.g. INVITE). But be warned that
+the manipulation functions can fail on ugly requests.
+.IP -F
+This options activates the flood mode. In this mode OPTIONS requests with
+increasing CSeq numbers are sended to the server. As source port 9 (discard)
+of the localhost is specified. As consequence as much as possible packets will
+be sended to the server and all responses will be ignored.
+.IP -h
+Prints out a simple usage help message.
+.IP -i
+Deactivates the insertion of the Via line of the localhost. 
+.B Warning: 
+this probably disables the receiving of the responses from the server.
+.IP "-l port"
+The receiving socket will use the local 
+.I port.
+Usefull if a file is given by 
+.BR -f
+which contains a correct Via line.
+.IP "-m number"
+This sets the value of the Max-Forward header field. If omitted no Max-Forward
+field will be inserted. If omitted in the traceroute mode 
+.BR number
+will be 255.
+.IP -n
+In stead of the full qualified domain name in the Via line the IP of the
+local host will be used.
+.IP "-r port"
+In stead of the default sip port 5060 the 
+.BR port
+will be used. Alternativly the remote port can be given within the sip uri of
+the 
+.BR -s
+parameter.
+.IP -R
+This activates the randtrash mode. In this mode OPTIONS requests will be send
+to server with increasing numbers of randomly crashed characters within this
+request. The position within the request and the replacing character are 
+randomly choosen. Any other response than Bad request (4xx) will stop this
+mode. Also three unresponded sends will stop this mode. With the 
+.BR -t
+parameter the maximum of trashed characters can be given.
+.IP "-s sip:uri"
+This mandatory option sets the destination of the request. It depends on the
+mode if only the server name or also an username is mandatory. Example for a
+full 
+.BR sip:uri
+: 
+.I sip:test@foo.bar:123
+.IP "-t number"
+This parameter specifies the maximum of trashed characters in the randtrash 
+mode. If omitted 
+.BR number
+will be set to the length of the request.
+.IP -T
+This activates the traceroute mode. This mode works like the well known
+.BR traceroute(8) 
+command expect that not the number of network hops are counted rather
+the number of server on the way to the destination user. Also the roundtrip
+time of each request is printed out, but due to a limitation within the
+sip protocol the identity (IP or name) can only determined and printed
+out if the response from the server contains a warning header field. In this
+mode on each outgoing request the value of the Max-Forwards header field is
+increased, starting with one. The maximum of the Max-Forwards header will 255
+if no other value is given by the 
+.BR -m
+parameter. Any other response than 483 or 1xx are treated as a final response
+and will terminate this mode.
+.IP -U
+This activates the usrloc mode. First a REGISTER request for the given 
+username is sended to server. Authentication is not expected and not 
+supported. After successful registration an IM request is sended to the 
+before registerd user. After successful receiving the before sended IM the
+expected 200 is sended back. If the 200 is received successful the number
+at the end of the username is increased and the next usrloc cycle starts.
+An username is mandatory for this mode in the 
+.BR -s
+parameter. The number starting from the 
+.BR -b
+parameter to the 
+.BR -e
+paramter is appended the username.
+.IP -v
+This parameter increases the output verbosity.
+.IP -V
+Prints out only the name and version number of sipsak.
+.IP -w
+Activates the extraction of the IP or hostname from the Warning header field.
+.SH LIMITATIONS / NOT IMPLEMENTED
+Restransmitions from the server are not filtered out and can produce
+unexpected results.
+
+The short notation is not supported.
+
+IPv6 is not supported.
+.SH BUGS
+sipsak is only tested against the sip express router (ser) though their could
+be various bugs. Please feel free to mail them to the author.
+.SH AUTHOR
+Nils Ohlmeier <ohlmeier at fokus dot gmd dot de>
+.SH "SEE ALSO"
+.BR traceroute (8)
