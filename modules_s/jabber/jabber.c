@@ -34,6 +34,7 @@
  * 2003-02-28 connection management with ihttp implemented (dcm)
  * 2003-02-24 first version of callback functions for ihttp (dcm)
  * 2003-02-13 lot of comments enclosed in #ifdef XJ_EXTRA_DEBUG (dcm)
+ * 2003-03-11 New module interface (janakj)
  *
  */
 
@@ -126,86 +127,46 @@ static int xj_go_offline(struct sip_msg*, char*, char*);
 
 void destroy(void);
 
+/*
+ * Exported functions
+ */
+static cmd_export_t cmds[] = {
+	{"jab_send_message",       xj_send_message,                     0,              0},
+	{"jab_join_jconf",         xj_join_jconf,                       0,              0},
+	{"jab_exit_jconf",         xj_exit_jconf,                       0,              0},
+	{"jab_go_online",          xj_go_online,                        0,              0},
+	{"jab_go_offline",         xj_go_offline,                       0,              0},
+	{"jab_register_watcher",   (cmd_function)xj_register_watcher,   XJ_NO_SCRIPT_F, 0},
+	{"jab_unregister_watcher", (cmd_function)xj_unregister_watcher, XJ_NO_SCRIPT_F, 0},
+	{"load_xjab",              (cmd_function)load_xjab,             XJ_NO_SCRIPT_F, 0},
+	{0, 0, 0, 0}
+};
+
+
+/*
+ * Exported parameters 
+ */
+static param_export_t params[] = {
+	{"db_url",     STR_PARAM, &db_url    },
+	{"jaddress",   STR_PARAM, &jaddress  },
+	{"aliases",    STR_PARAM, &jaliases  },
+	{"proxy",      STR_PARAM, &proxy     },
+	{"jdomain",    STR_PARAM, &jdomain   },
+	{"jport",      INT_PARAM, &jport     },
+	{"workers",    INT_PARAM, &nrw       },
+	{"max_jobs",   INT_PARAM, &max_jobs  },
+	{"cache_time", INT_PARAM, &cache_time},
+	{"delay_time", INT_PARAM, &delay_time},
+	{"sleep_time", INT_PARAM, &sleep_time},
+	{"check_time", INT_PARAM, &check_time},
+	{0, 0, 0}
+};
+
+
 struct module_exports exports= {
 	"jabber",
-	(char*[]){
-		"jab_send_message",
-		"jab_join_jconf",
-		"jab_exit_jconf",
-		"jab_go_online",
-		"jab_go_offline",
-		"jab_register_watcher",
-		"jab_unregister_watcher",
-		"load_xjab"
-	},
-	(cmd_function[]){
-		xj_send_message,
-		xj_join_jconf,
-		xj_exit_jconf,
-		xj_go_online,
-		xj_go_offline,
-		(cmd_function)xj_register_watcher,
-		(cmd_function)xj_unregister_watcher,
-		(cmd_function)load_xjab
-	},
-	(int[]){
-		0, 0, 0, 0, 0,
-		XJ_NO_SCRIPT_F,
-		XJ_NO_SCRIPT_F,
-		XJ_NO_SCRIPT_F
-	},
-	(fixup_function[]){
-		0, 0, 0, 0, 0,
-		0,
-		0,
-		0
-	},
-	8,
-
-	(char*[]) {   /* Module parameter names */
-		"db_url",
-		"jaddress",
-		"aliases",
-		"proxy",
-		"jdomain",
-		"jport",
-		"workers",
-		"max_jobs",
-		"cache_time",
-		"delay_time",
-		"sleep_time",
-		"check_time"
-	},
-	(modparam_t[]) {   /* Module parameter types */
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM
-	},
-	(void*[]) {   /* Module parameter variable pointers */
-		&db_url,
-		&jaddress,
-		&jaliases,
-		&proxy,
-		&jdomain,
-		&jport,
-		&nrw,
-		&max_jobs,
-		&cache_time,
-		&delay_time,
-		&sleep_time,
-		&check_time
-	},
-	12,      /* Number of module paramers */
-	
+	cmds,       /* Exported functions */
+	params,     /* Exported parameters */
 	mod_init,   /* module initialization function */
 	(response_function) 0,
 	(destroy_function) destroy,
