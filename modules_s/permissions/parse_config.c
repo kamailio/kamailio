@@ -36,15 +36,18 @@
 
 
 /*
-parse a comma separated expression list like a, b, c
-return 0 on success, -1 on error
-parsed expressions are returned in **e
-*/
-int parse_expression_list(char *str, expression **e) {
+ * parse a comma separated expression list like a, b, c
+ * return 0 on success, -1 on error
+ * parsed expressions are returned in **e
+ */
+static int parse_expression_list(char *str, expression **e) 
+{
 	int start=0, i=-1, j=-1, apost=0;
 	char str2[EXPRESSION_LENGTH];
 	expression *e1=NULL, *e2;
 	
+	if (!str || !e) return -1;
+
 	*e = NULL;
 	do {
 		i++;
@@ -75,7 +78,7 @@ int parse_expression_list(char *str, expression **e) {
 						
 						if (e1) {
 							/* it is not the first */
-							(*e1).next = e2;
+							e1->next = e2;
 							e1 = e2;
 						} else {
 							/* it is the first */
@@ -97,14 +100,18 @@ int parse_expression_list(char *str, expression **e) {
 	return 0;
 }
 
+
 /*
-parse a complex expression list like a, b, c EXCEPT d, e
-return 0 on success, -1 on error
-parsed expressions are returned in **e, and exceptions are returned in **e_exceptions
-*/
-int parse_expression(char *str, expression **e, expression **e_exceptions) {
+ * parse a complex expression list like a, b, c EXCEPT d, e
+ * return 0 on success, -1 on error
+ * parsed expressions are returned in **e, and exceptions are returned in **e_exceptions
+ */
+static int parse_expression(char *str, expression **e, expression **e_exceptions) 
+{
 	char 	*except, str2[LINE_LENGTH];
 	int	i=0;
+
+	if (!str || !e || !e_exceptions) return -1;
 
 	except = strstr(str, " EXCEPT ");
 	if (except) {
@@ -138,15 +145,22 @@ int parse_expression(char *str, expression **e, expression **e_exceptions) {
 	return 0;
 }
 
+
 /*
-parse one line of the config file
-return the rule according to line
-*/
-rule *parse_config_line(char *line) {
-	rule	*rule1 = NULL;
+ * parse one line of the config file
+ * return the rule according to line
+ */
+static rule *parse_config_line(char *line) 
+{
+	rule	*rule1;
 	expression *left, *left_exceptions, *right, *right_exceptions;
 	int	i=-1, exit=0, apost=0, colon=-1, eval=0;
-	char	str1[LINE_LENGTH], str2[LINE_LENGTH+1];
+	static char	str1[LINE_LENGTH], str2[LINE_LENGTH+1];
+
+	if (!line) return 0;
+
+	rule1 = 0;
+	left = left_exceptions = right = right_exceptions = 0;
 
 	while (!exit) {
 		i++;
@@ -182,7 +196,7 @@ rule *parse_config_line(char *line) {
 			if (parse_expression(str1, &left, &left_exceptions)) {
 				/* error */
 				LOG(L_ERR, "ERROR parsing line: %s\n", line);
-				return NULL;
+				goto error;
 			}
 			
 			/* right expression */
@@ -190,32 +204,45 @@ rule *parse_config_line(char *line) {
 			str2[i-colon-1] = '\0';
 			if (parse_expression(str2, &right, &right_exceptions)) {
 				/* error */
-				if (left) free_expression(left);
-				if (left_exceptions) free_expression(left_exceptions);
 				LOG(L_ERR, "ERROR parsing line: %s\n", line);
-				return NULL;
+				goto error;
 			}
 			
 			rule1 = new_rule();
-			(*rule1).left = left;
-			(*rule1).left_exceptions = left_exceptions;
-			(*rule1).right = right;
-			(*rule1).right_exceptions = right_exceptions;
+			if (!rule1) {
+				LOG(L_ERR, "ERROR: Can't create new rule\n");
+				goto error;
+			}
+
+			rule1->left = left;
+			rule1->left_exceptions = left_exceptions;
+			rule1->right = right;
+			rule1->right_exceptions = right_exceptions;
+			return rule1;
 		} else {
 			/* error */
 			LOG(L_ERR, "ERROR parsing line: %s\n", line);
-			return NULL;
 		}
 	}
-	return rule1;
+	return 0;
 
+ error:
+	if (left) free_expression(left);
+	if (left_exceptions) free_expression(left_exceptions);
+
+	if (right) free_expression(right);
+	if (right_exceptions) free_expression(right_exceptions);
+	
+	return 0;
 }
 
+
 /*
-parse a config file
-return a list of rules
-*/
-rule *parse_config_file(char *filename) {
+ * parse a config file
+ * return a list of rules
+ */
+rule *parse_config_file(char *filename) 
+{
 	FILE	*file;
 	char	line[LINE_LENGTH+1];
 	rule	*start_rule = NULL, *rule1 = NULL, *rule2 = NULL;
@@ -231,7 +258,7 @@ rule *parse_config_file(char *filename) {
 		if (rule2) {
 			if (rule1) {
 				/* it is not the first rule */
-				(*rule1).next = rule2;
+				rule1->next = rule2;
 			} else {
 				/* it is the first rule */
 				start_rule = rule2;

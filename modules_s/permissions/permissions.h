@@ -37,12 +37,26 @@
 #define PERMISSIONS_H 1
 
 #include "../../sr_module.h"
+#include "rule.h"
 
-#define ALLOW_FILE CFG_DIR "permissions.allow"
-#define DENY_FILE  CFG_DIR "permissions.deny"
+#define DEFAULT_ALLOW_FILE "permissions.allow"
+#define DEFAULT_DENY_FILE  "permissions.deny"
+
+typedef struct rule_file {
+	rule* rules;    /* Parsed rule set */
+	char* filename; /* The name of the file */
+} rule_file_t;
+
+/*
+ * Maximum number if allow/deny file pairs that can be opened
+ * at any time
+ */
+#define MAX_RULE_FILES 64
 
 int mod_init(void);
 void mod_exit(void);
-int allow_routing(struct sip_msg* msg, char* str1, char* str2);
+int allow_routing_def(struct sip_msg* msg, char* str1, char* str2);
+int allow_routing(struct sip_msg* msg, char* allow_file, char* deny_file);
+int allow_register(struct sip_msg* msg, char* allow_file, char* deny_file);
 
 #endif

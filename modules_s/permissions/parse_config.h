@@ -35,4 +35,4 @@
 
 rule *parse_config_file(char *filename);
 
-#endif
+#endif /* PARSE_CONFIG_H */

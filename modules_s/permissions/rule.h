@@ -54,8 +54,8 @@ void print_expression(expression *e);
 int search_expression(expression *e, char *value);
 
 /*
-stores an expression
-value represents the string, and reg_value is the compiled string to POSIX regular expression
+ * stores an expression
+ * value represents the string, and reg_value is the compiled string to POSIX regular expression
 */
 struct expression_struct  {
 	char	value[EXPRESSION_LENGTH+1];
@@ -63,19 +63,20 @@ struct expression_struct  {
 	struct expression_struct	*next;
 };
 
-/*
-stores 4 lists of expressions in the following way:
 
-a, b, c EXCEPT d, e : f, g EXCEPT h
-left = a, b, c
-left_exceptions = d, e
-right = f, g
-right_exceptions = h
-*/
+/*
+ * stores 4 lists of expressions in the following way:
+ *
+ * a, b, c EXCEPT d, e : f, g EXCEPT h
+ * left = a, b, c
+ * left_exceptions = d, e
+ * right = f, g
+ * right_exceptions = h
+ */
 struct rule_struct {
 	expression *left, *left_exceptions, *right, *right_exceptions;
 	struct rule_struct	*next;
 };
 
 
-#endif
+#endif /* RULE_H */
