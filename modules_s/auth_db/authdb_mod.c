@@ -47,6 +47,7 @@
 
 MODULE_VERSION
 
+#define TABLE_VERSION 3
 
 /*
  * Module destroy function prototype
@@ -77,18 +78,35 @@ post_auth_f post_auth_func = 0;
  */
 int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
 
+
+#define USER_COL "username"
+#define USER_COL_LEN (sizeof(USER_COL) - 1)
+
+#define DOMAIN_COL "domain"
+#define DOMAIN_COL_LEN (sizeof(DOMAIN_COL) - 1)
+
+#define RPID_COL "rpid"
+#define RPID_COL_LEN (sizeof(RPID_COL) - 1)
+
+#define PASS_COL "ha1"
+#define PASS_COL_LEN (sizeof(PASS_COL) - 1)
+
+#define PASS_COL_2 "ha1b"
+#define PASS_COL_2_LEN (sizeof(PASS_COL_2) - 1)
+
+
 /*
  * Module parameter variables
  */
-char* db_url           = DEFAULT_RODB_URL;
-char* user_column      = "username";
-char* domain_column    = "domain";
-char* rpid_column      = "rpid";
-char* pass_column      = "ha1";
-char* pass_column_2    = "ha1b";
-int   calc_ha1         = 0;
-int   use_domain       = 1;    /* Use also domain when looking up a table row */
-int   use_rpid         = 0;    /* Fetch Remote-Party-ID */
+str db_url           = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
+str user_column      = {USER_COL, USER_COL_LEN};
+str domain_column    = {DOMAIN_COL, DOMAIN_COL_LEN};
+str rpid_column      = {RPID_COL, RPID_COL_LEN};
+str pass_column      = {PASS_COL, PASS_COL_LEN};
+str pass_column_2    = {PASS_COL_2, PASS_COL_2_LEN};
+int calc_ha1         = 0;
+int use_domain       = 1;    /* Use also domain when looking up a table row */
+int use_rpid         = 0;    /* Fetch Remote-Party-ID */
 
 db_con_t* db_handle;   /* Database connection handle */
 
@@ -107,15 +125,15 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",            STR_PARAM, &db_url       },
-	{"user_column",       STR_PARAM, &user_column  },
-	{"domain_column",     STR_PARAM, &domain_column},
-	{"rpid_column",       STR_PARAM, &rpid_column  },
-	{"password_column",   STR_PARAM, &pass_column  },
-	{"password_column_2", STR_PARAM, &pass_column_2},
-	{"calculate_ha1",     INT_PARAM, &calc_ha1     },
-	{"use_domain",        INT_PARAM, &use_domain   },
-	{"use_rpid",          INT_PARAM, &use_rpid     },
+	{"db_url",            STR_PARAM, &db_url.s       },
+	{"user_column",       STR_PARAM, &user_column.s  },
+	{"domain_column",     STR_PARAM, &domain_column.s},
+	{"rpid_column",       STR_PARAM, &rpid_column.s  },
+	{"password_column",   STR_PARAM, &pass_column.s  },
+	{"password_column_2", STR_PARAM, &pass_column_2.s},
+	{"calculate_ha1",     INT_PARAM, &calc_ha1       },
+	{"use_domain",        INT_PARAM, &use_domain     },
+	{"use_rpid",          INT_PARAM, &use_rpid       },
 	{0, 0, 0}
 };
 
@@ -137,13 +155,15 @@ struct module_exports exports = {
 
 static int child_init(int rank)
 {
-	db_handle = db_init(db_url);
+	     /* Close connection opened in mod_init */
+	db_close(db_handle);
+	db_handle = db_init(db_url.s);
 	if (!db_handle) {
 		LOG(L_ERR, "auth_db:init_child(): Unable to connect database\n");
 		return -1;
 	}
-	return 0;
 
+	return 0;
 }
 
 
@@ -151,10 +171,26 @@ static int mod_init(void)
 {
 	DBG("auth_db module - initializing\n");
 	
+	db_url.len = strlen(db_url.s);
+	user_column.len = strlen(user_column.s);
+	domain_column.len = strlen(domain_column.s);
+	rpid_column.len = strlen(rpid_column.s);
+	pass_column.len = strlen(pass_column.s);
+	pass_column_2.len = strlen(pass_column.s);
+
 	     /* Find a database module */
-	if (bind_dbmod(db_url)) {
-		LOG(L_ERR, "mod_init(): Unable to bind database module\n");
+	if (bind_dbmod(db_url.s) < 0) {
+		LOG(L_ERR, "auth_db:mod_init(): Unable to bind database module\n");
 		return -1;
+	}
+
+	     /* Open database connection in parent */
+	db_handle = db_init(db_url.s);
+	if (!db_handle) {
+		LOG(L_ERR, "auth_db:mod_init(): Error while connecting database\n");
+		return -1;
+	} else {
+		LOG(L_INFO, "auth_db:mod_init(): Database connection opened successfuly\n");
 	}
 
 	pre_auth_func = (pre_auth_f)find_export("pre_auth", 0, 0);
@@ -162,12 +198,14 @@ static int mod_init(void)
 
 	if (!(pre_auth_func && post_auth_func)) {
 		LOG(L_ERR, "auth_db:mod_init(): This module requires auth module\n");
+		db_close(db_handle);
 		return -2;
 	}
 
 	sl_reply = find_export("sl_send_reply", 2, 0);
 	if (!sl_reply) {
 		LOG(L_ERR, "auth_db:mod_init(): This module requires sl module\n");
+		db_close(db_handle);
 		return -2;
 	}
 
@@ -188,6 +226,8 @@ static void destroy(void)
 static int str_fixup(void** param, int param_no)
 {
 	str* s;
+	int ver;
+	str name;
 
 	if (param_no == 1) {
 		s = (str*)pkg_malloc(sizeof(str));
@@ -199,6 +239,19 @@ static int str_fixup(void** param, int param_no)
 		s->s = (char*)*param;
 		s->len = strlen(s->s);
 		*param = (void*)s;
+	} else if (param_no == 2) {
+		name.s = (char*)*param;
+		name.len = strlen(name.s);
+
+		ver = table_version(db_handle, &name);
+
+		if (ver < 0) {
+			LOG(L_ERR, "auth_db:str_fixup(): Error while querying table version\n");
+			return -1;
+		} else if (ver < TABLE_VERSION) {
+			LOG(L_ERR, "auth_db:str_fixup(): Invalid table version (use ser_mysql.sh reinstall)\n");
+			return -1;
+		}
 	}
 
 	return 0;
