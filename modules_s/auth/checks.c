@@ -8,7 +8,7 @@
 #include <string.h>
 #include "utils.h"
 #include "auth.h"
-
+#include "defs.h"
 
 static inline void get_username(str* _s)
 {
