@@ -299,7 +299,6 @@ static int match_res(struct sip_msg* msg, db_res_t* _r)
  */
 int allow_trusted(struct sip_msg* _msg, char* str1, char* str2) 
 {
-	db_con_t* db_handle = NULL;
 	int result;
 	db_res_t* res;
 	
@@ -323,6 +322,7 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 		}
 		
 		VAL_TYPE(vals) = DB_STRING;
+		VAL_NULL(vals) = 0;
 		VAL_STRING(vals) = ip_addr2a(&(_msg->rcv.src_ip));
 
 		if (perm_dbf.query(db_handle, keys, 0, vals, cols, 1, 2, 0, &res) < 0){
