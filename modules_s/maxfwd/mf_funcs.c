@@ -95,9 +95,10 @@ int decrement_maxfwd( struct sip_msg* msg , int x, str *s)
 
 	/*rewriting the max-fwd value in the message (buf and orig)*/
 	x--;
-	for(i = s->len - 1; x && i >= 0; i--) {
+	for(i = s->len - 1; i >= 0; i--) {
 		s->s[i] = (x % 10) + '0';
 		x /= 10;
+		if (x==0) break;
 	}
 	while(i >= 0) s->s[i--] = ' ';
 
