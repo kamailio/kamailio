@@ -425,6 +425,7 @@ int www_authorize(struct sip_msg* _m, char* _realm, char* _table)
 int consume_credentials(struct sip_msg* _m, char* _s1, char* _s2)
 {
 	struct hdr_field* h;
+	int len;
 
 	get_authorized_cred(_m->authorization, &h);
 	if (!h) {
@@ -434,8 +435,12 @@ int consume_credentials(struct sip_msg* _m, char* _s1, char* _s2)
 			return -1;
 		}
 	}
-	
-	if (del_lump(&_m->add_rm, h->name.s - _m->buf, h->name.len + h->body.len, 0) == 0) {
+
+	len = h->name.len + h->body.len;
+	if (h->body.s[h->body.len] != '\0') len++; 
+	/* FIXME: Is this necessary ?, Yes, it is */
+
+	if (del_lump(&_m->add_rm, h->name.s - _m->buf, len, 0) == 0) {
 		LOG(L_ERR, "consume_credentials(): Can't remove credentials\n");
 		return -1;
 	}
