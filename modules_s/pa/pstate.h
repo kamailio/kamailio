@@ -37,7 +37,8 @@ typedef enum pstate {
 	PS_AWAY,        /* Presentity is away */
 	PS_XAWAY,       /* Presentity is extended-away */
 	PS_DND,         /* Do Not Disturb */
-	PS_TYPING       /* Presentity is typing a message */
+	PS_TYPING,      /* Presentity is typing a message */
+	PS_NSTATES
 } pstate_t;
 
 #endif /* PSTATE_H */

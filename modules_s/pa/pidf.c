@@ -28,6 +28,9 @@
  */
 
 #include <string.h>
+#include <libxml/parser.h>
+#include <libxml/xpath.h>
+
 #include "../../dprint.h"
 #include "paerrno.h"
 #include "common.h"
@@ -225,4 +228,164 @@ int end_pidf_doc(str* _b, int _l)
 
 	str_append(_b, PRESENCE_ETAG CRLF, PRESENCE_ETAG_L + CRLF_L);
 	return 0;
+}
+
+
+
+xmlDocPtr event_body_parse(char *event_body)
+{
+	return xmlParseMemory(event_body, strlen(event_body));
+}
+
+/*
+ * apply procedure f to each xmlNodePtr in doc matched by xpath
+ */
+void xpath_map(xmlDocPtr doc, char *xpath, void (*f)(xmlNodePtr, void *), void *data)
+{
+	xmlXPathContextPtr context;
+	xmlXPathObjectPtr result;
+	xmlNodeSetPtr nodeset;
+	int i;
+
+	context = xmlXPathNewContext(doc);
+	result = xmlXPathEvalExpression(xpath, context);
+	if(!result || xmlXPathNodeSetIsEmpty(result->nodesetval)){
+		fprintf(stderr, "xpath_map: no result for xpath=%s\n", xpath);
+		return;
+	}
+	nodeset = result->nodesetval;
+	for (i=0; i < nodeset->nodeNr; i++) {
+		xmlNodePtr node = nodeset->nodeTab[i];
+		printf("name[%d]: %s\n", i, node->name);
+		f(node, data);
+	}
+	xmlXPathFreeContext(context);
+}
+
+xmlNodePtr xpath_get_node(xmlDocPtr doc, char *xpath)
+{
+	xmlXPathContextPtr context;
+	xmlXPathObjectPtr result;
+	xmlNodeSetPtr nodeset;
+	xmlNodePtr node;
+
+	context = xmlXPathNewContext(doc);
+	result = xmlXPathEvalExpression(xpath, context);
+	if(xmlXPathNodeSetIsEmpty(result->nodesetval)){
+		fprintf(stderr, "xpath_get_node: no result for xpath=%s\n", xpath);
+		return NULL;
+	}
+	nodeset = result->nodesetval;
+	node = nodeset->nodeTab[0];
+	xmlXPathFreeContext(context);
+	return node;
+}
+
+xmlAttrPtr xmlNodeGetAttrByName(xmlNodePtr node, const char *name)
+{
+	xmlAttrPtr attr = node->properties;
+	while (attr) {
+		if (xmlStrcmp(attr->name, name) == 0)
+			return attr;
+		attr = attr->next;
+	}
+	return NULL;
+}
+
+xmlNodePtr xmlNodeGetChildByName(xmlNodePtr node, const char *name)
+{
+	xmlNodePtr cur = node->children;
+	while (cur) {
+		if (xmlStrcmp(cur->name, name) == 0)
+			return cur;
+		cur = cur->next;
+	}
+	return NULL;
+}
+
+xmlNodePtr xmlNodeGetNodeByName(xmlNodePtr node, const char *name, const char *ns)
+{
+	xmlNodePtr cur = node;
+	while (cur) {
+		xmlNodePtr match = NULL;
+		if (xmlStrcmp(cur->name, name) == 0) {
+			if (!ns || (cur->ns && xmlStrcmp(cur->ns->prefix, ns) == 0))
+				return cur;
+		}
+		match = xmlNodeGetNodeByName(cur->children, name, ns);
+		if (match)
+			return match;
+		cur = cur->next;
+	}
+	return NULL;
+}
+
+xmlNodePtr xmlDocGetNodeByName(xmlDocPtr doc, const char *name, const char *ns)
+{
+	xmlNodePtr cur = doc->children;
+	return xmlNodeGetNodeByName(cur, name, ns);
+}
+
+void xmlNodeMapByName(xmlNodePtr node, const char *name, const char *ns, 
+		      void (f)(xmlNodePtr, void*), void *data)
+{
+	xmlNodePtr cur = node;
+	if (!f)
+		return;
+	while (cur) {
+		if (xmlStrcmp(cur->name, name) == 0) {
+			if (!ns || (cur->ns && xmlStrcmp(cur->ns->prefix, ns) == 0))
+				f(cur, data);
+		}
+		/* visit children */
+		xmlNodeMapByName(cur->children, name, ns, f, data);
+
+		cur = cur->next;
+	}
+}
+
+void xmlDocMapByName(xmlDocPtr doc, const char *name, const char *ns,
+			   void (f)(xmlNodePtr, void*), void *data )
+{
+	xmlNodePtr cur = doc->children;
+	xmlNodeMapByName(cur, name, ns, f, data);
+}
+
+void parse_pidf(char *pidf_body, str *basic_str, str *location_str)
+{
+	xmlDocPtr doc = NULL;
+	xmlNodePtr presence = NULL;
+	xmlAttrPtr sipuri = NULL;
+	xmlNodePtr basic = NULL;
+	xmlNodePtr location = NULL;
+	char *sipuri_text = NULL;
+	char *basic_text = NULL;
+	char *location_text = NULL;
+
+	doc = event_body_parse(pidf_body);
+
+	presence = xmlDocGetNodeByName(doc, "presence", NULL);
+	basic = xmlDocGetNodeByName(doc, "basic", NULL);
+	location = xmlDocGetNodeByName(doc, "loc", NULL);
+	LOG(L_INFO, "presence=%p basic=%p location=%p\n", presence, basic, location);
+
+	sipuri = xmlNodeGetAttrByName(presence, "entity");
+	if (sipuri)
+		sipuri_text = xmlNodeGetContent(sipuri->children);
+	if (basic)
+		basic_text = xmlNodeGetContent(basic->children);
+	if (location)
+		location_text = xmlNodeGetContent(location->children);
+
+	LOG(L_INFO, "parse_pidf: sipuri=%p:%s basic=%p:%s location=%p:%s\n",
+	    sipuri, sipuri_text, basic, basic_text, location, location_text);
+
+	if (basic_str && basic) {
+		basic_str->len = strlen(basic_text);
+		basic_str->s = strdup(basic_text);
+	}
+	if (location_str && location) {
+		location_str->len = strlen(location_text);
+		location_str->s = strdup(location_text);
+	}
 }

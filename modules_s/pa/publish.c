@@ -49,9 +49,12 @@
 #include "reply.h"
 #include "subscribe.h"
 #include "publish.h"
+#include "pidf.h"
 
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
+
+extern str str_strdup(str string);
 
 /*
  * Parse all header fields that will be needed
@@ -131,7 +134,7 @@ int create_presentity_only(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 	e += act_time;
 
 	if (new_presentity(_puri, _p) < 0) {
-		LOG(L_ERR, "create_presentity(): Error while creating presentity\n");
+		LOG(L_ERR, "create_presentity_only(): Error while creating presentity\n");
 		return -2;
 	}
 
@@ -144,12 +147,42 @@ int create_presentity_only(struct sip_msg* _m, struct pdomain* _d, str* _puri,
  * Update existing presentity and watcher list
  */
 static int publish_presentity(struct sip_msg* _m, struct pdomain* _d, 
-			     struct presentity* _p, int *pchanged)
+			     struct presentity* presentity, int *pchanged)
 {
+	char *body = get_body(_m);
+	str basic;
+	str location;
+	int changed = 0;
+	int ret = 0;
 
-	/* for now, assume all publishes cause a change */
-	if (pchanged)
+	parse_pidf(body, &basic, &location);
+
+	LOG(L_INFO, "publish_presentity: -1-\n");
+	if (basic.len && basic.s) {
+		int origstate = presentity->state;
+		presentity->state =
+			(strcmp(basic.s, "online") == 0) ? PS_ONLINE : PS_OFFLINE;
+		if (presentity->state != origstate)
+			changed = 1;
+	}
+	LOG(L_INFO, "publish_presentity: -2-\n");
+	if (location.len && location.s) {
+		if (presentity->location.len && strcmp(presentity->location.s, location.s) != 0)
+			changed = 1;
+		presentity->location.len = location.len;
+		presentity->location.s = location.s;
+	}
+
+	LOG(L_INFO, "publish_presentity: -3-\n");
+	if (pchanged && changed) {
 		*pchanged = 1;
+	}
+
+	if ((ret = db_update_presentity(presentity)) < 0) {
+		return ret;
+	}
+
+	LOG(L_INFO, "publish_presentity: -4-\n");
 	return 0;
 }
 
@@ -178,35 +211,40 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 
 	d = (struct pdomain*)_domain;
 
-	if (get_pres_uri(_m, &p_uri) < 0) {
+	if (get_pres_uri(_m, &p_uri) < 0 || p_uri.s == NULL) {
 		LOG(L_ERR, "handle_publish(): Error while extracting presentity URI\n");
 		goto error;
 	}
 
 	lock_pdomain(d);
 	
+	LOG(L_INFO, "handle_publish -4- p_uri=%*.s\n", p_uri.len, p_uri.s);
 	if (find_presentity(d, &p_uri, &p) > 0) {
 		changed = 1;
 		if (create_presentity_only(_m, d, &p_uri, &p) < 0) {
-			LOG(L_ERR, "handle_publish(): Error while creating new presentity\n");
-			unlock_pdomain(d);
-			goto error;
+			goto error2;
 		}
 	}
 
 	/* update presentity event state */
+	LOG(L_INFO, "handle_publish -5- presentity=%p\n", p);
 	if (p)
 		publish_presentity(_m, d, p, &changed);
 
-	if (send_reply(_m) < 0) return -1;
-
+	LOG(L_INFO, "handle_publish -7- changed=%d\n", changed);
 	if (p && changed) {
 		notify_watchers(p);
 	}
 
 	unlock_pdomain(d);
+
+	if (send_reply(_m) < 0) return -1;
+
+	LOG(L_INFO, "handle_publish -8- done\n");
 	return 1;
 	
+ error2:
+	unlock_pdomain(d);
  error:
 	send_reply(_m);
 	return 0;
@@ -279,6 +317,7 @@ int fifo_pa_presence(FILE *fifo, char *response_file)
 	find_presentity(pdomain, &p_uri, &presentity);
 	if (!presentity) {
 		new_presentity(&p_uri, &presentity);
+		add_presentity(pdomain, presentity);
 		allocated_presentity = 1;
 	}
 	if (!presentity) {
@@ -295,6 +334,8 @@ int fifo_pa_presence(FILE *fifo, char *response_file)
 	if (origstate != newstate || allocated_presentity) {
 		notify_watchers(presentity);
 	}
+
+	db_update_presentity(presentity);
 
 	fifo_reply(response_file, "200 published\n",
 		   "(%.*s %.*s)\n",
@@ -360,6 +401,7 @@ int fifo_pa_location(FILE *fifo, char *response_file)
 	find_presentity(pdomain, &p_uri, &presentity);
 	if (!presentity) {
 		new_presentity(&p_uri, &presentity);
+		add_presentity(pdomain, presentity);
 		changed = 1;
 	}
 	if (!presentity) {
@@ -375,13 +417,13 @@ int fifo_pa_location(FILE *fifo, char *response_file)
 	if (presentity->location.s)
 		free(presentity->location.s);
 
-	presentity->location.len = location.len;
-	presentity->location.s = shm_malloc(location.len);
-	strcpy(presentity->location.s, location_s);
+	presentity->location = str_strdup(location);
 
 	if (changed) {
 		notify_watchers(presentity);
 	}
+
+	db_update_presentity(presentity);
 
 	fifo_reply(response_file, "200 published\n",
 		   "(%.*s %.*s)\n",

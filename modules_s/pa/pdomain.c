@@ -223,7 +223,7 @@ int find_presentity(pdomain_t* _d, str* _uri, struct presentity** _p)
 		
 		p = p->next;
 	}
-	
+
 	return 1;   /* Nothing found */
 }
 

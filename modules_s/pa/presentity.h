@@ -42,6 +42,7 @@ typedef struct presentity {
 	pstate_t state;          /* State of presentity */
 	str      location;       /* Physical location of presentity */
 	watcher_t* watchers;     /* List of watchers */
+	watcher_t* winfo_watchers;  /* Watchers subscribed to winfo */
 	struct presentity* next; /* Next presentity */
 	struct presentity* prev; /* Previous presentity in list */
 	struct hslot* slot;      /* Hash table collision slot we belong to */
@@ -59,6 +60,10 @@ int new_presentity(str* _uri, presentity_t** _p);
  */
 void free_presentity(presentity_t* _p);
 
+/*
+ * Sync presentity to db if db is in use
+ */
+int db_update_presentity(presentity_t* _p);
 
 /*
  * Run a timer handler on the presentity

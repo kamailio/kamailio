@@ -76,7 +76,11 @@ void callback(str* _user, int state, void* data)
 
 	if (state == 0) {
 		ptr->state = PS_OFFLINE;
-	} else ptr->state = PS_ONLINE;
+	} else {
+		ptr->state = PS_ONLINE;
+	}
+
+	db_update_presentity(ptr);
 
 	if (orig != state) {
 		notify_watchers(ptr);
@@ -152,7 +156,7 @@ int parse_accept(struct hdr_field* _h, doctype_t* _a)
 	      * All implementation must support xpidf so make
 	      * it the default
 	      */
-	*_a = DOC_XPIDF;
+	*_a = DOC_LPIDF;
 
 	buffer = pkg_malloc(_h->body.len + 1);
 	if (!buffer) {
@@ -166,10 +170,12 @@ int parse_accept(struct hdr_field* _h, doctype_t* _a)
 	
 	if (strstr(buffer, "application/pidf+xml")) {
 		*_a = DOC_PIDF;
+	} else if (strstr(buffer, "application/xpidf+xml")) {
+		*_a = DOC_XPIDF;
 	} else if (strstr(buffer, "text/lpidf")) {
 		*_a = DOC_LPIDF;
 	} else {
-		*_a = DOC_XPIDF;
+		*_a = DOC_LPIDF;
 	}
 	
 	pkg_free(buffer);
@@ -397,27 +403,27 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	if (find_presentity(d, &p_uri, &p) > 0) {
 		if (create_presentity(_m, d, &p_uri, &p, &w) < 0) {
 			LOG(L_ERR, "handle_subscription(): Error while creating new presentity\n");
-			unlock_pdomain(d);
-			goto error;
+			goto error2;
 		}
 	} else {
 		if (update_presentity(_m, d, p, &w) < 0) {
 			LOG(L_ERR, "handle_subscription(): Error while updating presentity\n");
-			unlock_pdomain(d);
-			goto error;
+			goto error2;
 		}
 	}
 
-	if (send_reply(_m) < 0) return -1;
+	if (send_reply(_m) < 0) {
+	  LOG(L_ERR, "handle_subscription(): Error while sending reply\n");
+	  goto error2;
+	}
 
 	if (p && w) {
 		if (send_notify(p, w) < 0) {
 			LOG(L_ERR, "handle_subscription(): Error while sending notify\n");
-			unlock_pdomain(d);
 			     /* FIXME: watcher and presentity should be test for removal here
 			      * (and possibly in other error cases too
 			      */
-			goto error;
+			goto error2;
 		}
 
 		     /* We remove it here because a notify needs to be send first */
@@ -438,9 +444,12 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	unlock_pdomain(d);
 	return 1;
 	
+ error2:
+	unlock_pdomain(d);
+	return -1;
  error:
 	send_reply(_m);
-	return 0;
+	return -1;
 }
 
 

@@ -72,5 +72,6 @@ int end_pidf_tuple(str* _b, int _l);
  */
 int end_pidf_doc(str* _b, int _l);
 
+void parse_pidf(char *pidf_body, str *basic_str, str *location_str);
 
 #endif /* PIDF_H */

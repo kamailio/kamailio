@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "../../db/db.h"
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
 #include "../../ut.h"
@@ -38,13 +39,47 @@
 #include "presentity.h"
 #include "ptime.h"
 
+extern db_con_t* pa_db;
+extern int use_db;
+extern char *presentity_table;
+
+str pstate_name[PS_NSTATES] = {
+	{ "unknown", sizeof("unknown") - 1 },
+	{ "online", sizeof("online") - 1 },
+	{ "offline", sizeof("offline") - 1 },
+	{ "away", sizeof("away") - 1 },
+	{ "xaway", sizeof("xaway") - 1 },
+	{ "dnd", sizeof("dnd") - 1 },
+	{ "typing", sizeof("typing") - 1 },
+};
+
+int basic2status(str basic)
+{
+	int i;
+	for ( i= 0; i < PS_NSTATES; i++ ) {
+		if (strcmp(pstate_name[i].s, basic.s) == 0) {
+			return i;
+		}
+	}
+	return 0;
+}
+
+str str_strdup(str string)
+{
+	str new_string;
+	new_string.s = shm_malloc(string.len + 1);
+	new_string.len = string.len;
+	strncpy(new_string.s, string.s, string.len);
+	new_string.s[string.len] = 0;
+	return new_string;
+}
 
 /*
  * Create a new presentity
  */
 int new_presentity(str* _uri, presentity_t** _p)
 {
-	presentity_t* ptr;
+	presentity_t* presentity;
 
 	if (!_uri || !_p) {
 		paerrno = PA_INTERNAL_ERROR;
@@ -52,21 +87,131 @@ int new_presentity(str* _uri, presentity_t** _p)
 		return -1;
 	}
 
-	ptr = (presentity_t*)shm_malloc(sizeof(presentity_t) + _uri->len);
-	if (!ptr) {
+	presentity = (presentity_t*)shm_malloc(sizeof(presentity_t) + _uri->len);
+	if (!presentity) {
 		paerrno = PA_NO_MEMORY;
 		LOG(L_ERR, "new_presentity(): No memory left\n");
 		return -1;
 	}
-	memset(ptr, 0, sizeof(presentity_t));
+	memset(presentity, 0, sizeof(presentity_t));
 
-	ptr->uri.s = (char*)ptr + sizeof(presentity_t);
-	memcpy(ptr->uri.s, _uri->s, _uri->len);
-	ptr->uri.len = _uri->len;
-	*_p = ptr;
+	presentity->uri.s = (char*)presentity + sizeof(presentity_t);
+	memcpy(presentity->uri.s, _uri->s, _uri->len);
+	presentity->uri.len = _uri->len;
+	*_p = presentity;
+	
+	if (use_db) {
+		db_key_t query_cols[1];
+		db_op_t  query_ops[1];
+		db_val_t query_vals[1];
+
+		db_key_t result_cols[4];
+		db_res_t *res;
+		int n_query_cols = 1;
+		int n_result_cols = 0;
+		int basic_col, status_col, location_col;
+
+		LOG(L_INFO, "new_presentity: use_db starting\n");
+
+		query_cols[0] = "uri";
+		query_ops[0] = OP_EQ;
+		query_vals[0].type = DB_STR;
+		query_vals[0].nul = 0;
+		query_vals[0].val.str_val = *_uri;
+
+		result_cols[basic_col = n_result_cols++] = "basic";
+		result_cols[status_col = n_result_cols++] = "status";
+		result_cols[location_col = n_result_cols++] = "location";
+
+		db_use_table(pa_db, presentity_table);
+		if (db_query (pa_db, query_cols, query_ops, query_vals,
+			      result_cols, n_query_cols, n_result_cols, 0, &res) < 0) {
+			LOG(L_ERR, "db_new_presentity(): Error while querying presentity\n");
+			return -1;
+		}
+		LOG(L_INFO, "new_presentity: getting values: res=%p res->n=%d\n",
+		    res, (res ? res->n : 0));
+		if (res && res->n > 0) {
+			/* fill in presentity structure from database query result */
+			db_row_t *row = &res->rows[0];
+			db_val_t *row_vals = ROW_VALUES(row);
+			str basic = row_vals[basic_col].val.str_val;
+			// str status = row_vals[status_col].val.str_val;
+			str location = row_vals[location_col].val.str_val;
+			
+			LOG(L_INFO, "  basic=%s location=%s\n", basic.s, location.s);
+
+			presentity->state = basic2status(basic);
+			presentity->location = str_strdup(location);
+
+		} else {
+			/* insert new record into database */
+			LOG(L_INFO, "new_presentity: inserting into table\n");
+			if (db_insert(pa_db, query_cols, query_vals, n_query_cols) < 0) {
+				LOG(L_ERR, "db_new_presentity(): Error while inserting presentity\n");
+				return -1;
+			}
+		}
+		LOG(L_INFO, "new_presentity: use_db done\n");
+	}
+
 	return 0;
 }
 
+
+/*
+ * Sync presentity to db if db is in use
+ */
+int db_update_presentity(presentity_t* _p)
+{
+	if (use_db) {
+		db_key_t query_cols[1];
+		db_op_t query_ops[1];
+		db_val_t query_vals[1];
+		int n_selectors = sizeof(query_cols)/sizeof(db_key_t);
+
+		db_key_t update_cols[3];
+		db_val_t update_vals[3];
+		int n_updates = 1;
+
+		LOG(L_INFO, "update_presentity starting\n");
+		query_cols[0] = "uri";
+		query_ops[0] = OP_EQ;
+		query_vals[0].type = DB_STR;
+		query_vals[0].nul = 0;
+		query_vals[0].val.str_val = _p->uri;
+
+		update_cols[0] = "basic";
+		update_vals[0].type = DB_STR;
+		update_vals[0].nul = 0;
+		update_vals[0].val.str_val = pstate_name[_p->state];
+
+		if (_p->location.len && _p->location.s) {
+			update_cols[n_updates] = "location";
+			update_vals[n_updates].type = DB_STR;
+			update_vals[n_updates].nul = 0;
+			update_vals[n_updates].val.str_val = _p->location;
+			LOG(L_INFO, "  location=%s len=%d\n", _p->location.s, _p->location.len);
+			
+			n_updates++;
+		}
+
+		db_use_table(pa_db, presentity_table);
+
+		LOG(L_INFO, "n_selectors=%d, n_updates=%d dbf.update=%p\n", 
+		    n_selectors, n_updates, dbf.update);
+
+		if (db_update(pa_db, 
+			      query_cols, query_ops, query_vals, 
+			      update_cols, update_vals, n_selectors, n_updates) < 0) {
+			LOG(L_ERR, "db_update_presentity: Error while updating database\n");
+			return -1;
+		}
+
+		LOG(L_INFO, "update_presentity done\n");
+	}
+	return 0;
+}
 
 /*
  * Free all memory associated with a presentity

@@ -33,6 +33,7 @@
 
 
 #include "../../fifo_server.h"
+#include "../../db/db.h"
 #include "../../sr_module.h"
 #include "../../error.h"
 #include "subscribe.h"
@@ -44,8 +45,9 @@
 MODULE_VERSION
 
 
-static int mod_init(void);  /* Module initialization function */
-static void destroy(void);  /* Module destroy function */
+static int pa_mod_init(void);  /* Module initialization function */
+static int pa_child_init(int _rank);  /* Module child init function */
+static void pa_destroy(void);  /* Module destroy function */
 static int subscribe_fixup(void** param, int param_no); /* domain name -> domain pointer */
 static void timer(unsigned int ticks, void* param); /* Delete timer for all domains */
 
@@ -54,6 +56,12 @@ int timer_interval = 10;     /* Expiration timer interval in seconds */
 
 /** TM bind */
 struct tm_binds tmb;
+
+/** database */
+db_con_t* pa_db; /* Database connection handle */
+int use_db = 0;
+str db_url;
+char *presentity_table = "presentity";
 
 
 /*
@@ -72,25 +80,28 @@ static cmd_export_t cmds[]={
  * Exported parameters
  */
 static param_export_t params[]={
-	{"default_expires", INT_PARAM, &default_expires},
-	{"timer_interval",  INT_PARAM, &timer_interval },
+	{"default_expires", INT_PARAM, &default_expires  },
+	{"timer_interval",  INT_PARAM, &timer_interval   },
+	{"use_db",          INT_PARAM, &use_db            },
+	{"db_url",          STR_PARAM, &db_url.s          },
+	{"presentity_table", STR_PARAM, &presentity_table },
 	{0, 0, 0}
 };
 
 
 struct module_exports exports = {
 	"pa", 
-	cmds,     /* Exported functions */
-	params,   /* Exported parameters */
-	mod_init, /* module initialization function */
-	0,        /* response function*/
-	destroy,  /* destroy function */
-	0,        /* oncancel function */
-	0         /* per-child init function */
+	cmds,        /* Exported functions */
+	params,      /* Exported parameters */
+	pa_mod_init, /* module initialization function */
+	0,           /* response function*/
+	pa_destroy,  /* destroy function */
+	0,           /* oncancel function */
+	pa_child_init/* per-child init function */
 };
 
 
-static int mod_init(void)
+static int pa_mod_init(void)
 {
 	load_tm_f load_tm;
 
@@ -124,13 +135,51 @@ static int mod_init(void)
 	     /* Register cache timer */
 	register_timer(timer, 0, timer_interval);
 
+	db_url.len = strlen(db_url.s);
+	LOG(L_CRIT, "pa_mod: use_db=%d db_url.s=%s len=%d db_url=%*.s\n", use_db, db_url.s, db_url.len, 
+	    db_url.len, db_url.s);
+	if (use_db) {
+		if (bind_dbmod(db_url.s) < 0) { /* Find database module */
+			LOG(L_ERR, "pa_mod_init(): Can't bind database module via url %s\n", db_url.s);
+			return -1;
+		}
+		
+		     /* Open database connection in parent */
+		pa_db = db_init(db_url.s);
+		if (!pa_db) {
+			LOG(L_ERR, "pa_mod_init(): Error while connecting database\n");
+			return -1;
+		} else {
+			LOG(L_ERR, "pa_mod_init(): Database connection opened successfuly\n");
+		}
+	}
+
+	LOG(L_CRIT, "pa_mod_init done\n");
 	return 0;
 }
 
 
-static void destroy(void)
+static int pa_child_init(int _rank)
+{
+ 	     /* Shall we use database ? */
+	if (use_db) { /* Yes */
+		if (pa_db) db_close(pa_db); /* Close connection previously opened by parent */
+		pa_db = db_init(db_url.s); /* Initialize a new separate connection */
+		if (!pa_db) {
+			LOG(L_ERR, "pa_child_init(%d): Error while connecting database\n", _rank);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+static void pa_destroy(void)
 {
 	free_all_pdomains();
+	if (use_db) {
+		
+	}
 }
 
 
