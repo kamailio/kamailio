@@ -35,6 +35,7 @@
 #include "../../parser/parse_from.h"
 #include "../../ut.h"
 
+
 /*
  * Check that From header is properly parsed and if so,
  * return pointer to parsed From header.  Otherwise return NULL.
@@ -57,6 +58,7 @@ inline struct to_body *get_parsed_from_body(struct sip_msg *_msg)
  */
 int is_domain_local(str* _host)
 {
+	LOG(L_ERR, "is_local(): \'%.*s\'\n", _host->len, _host->s);
 	if (db_mode == 0) {
 		db_key_t keys[1];
 		db_val_t vals[1];
@@ -94,7 +96,7 @@ int is_domain_local(str* _host)
 			return 1;
 		}
 	} else {
-		return hash_table_lookup (_host->s, _host->len);
+		return hash_table_lookup (_host);
 	}
 			
 }

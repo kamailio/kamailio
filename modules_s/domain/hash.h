@@ -34,7 +34,7 @@
 #include <stdio.h>
 
 extern int hash_table_install (struct domain_list **hash_table, char *domain);
-int hash_table_lookup (char *domain, int len);
+int hash_table_lookup (str *domain);
 extern void hash_table_print (struct domain_list **hash_table, FILE *reply_file);
 extern void hash_table_free (struct domain_list **hash_table);
 

@@ -52,17 +52,17 @@ static int child_init(int rank);
  * Module parameter variables
  */
 char* db_url = "sql://serro:47serro11@localhost/ser";
-int db_mode = 0;                      /* Database usage mode: 0 = no cache, 1 = cache */
-char* domain_table = "domain";        /* Name of domain table */
-char* domain_col = "domain";          /* Name of domain column */
+int db_mode = 0;			/* Database usage mode: 0 = no cache, 1 = cache */
+char* domain_table = "domain";          /* Name of domain table */
+char* domain_col = "domain";            /* Name of domain column */
 
 /*
  * Other module variables
  */
-db_con_t* db_handle = NULL;                  /* Database connection handle */
-struct domain_list ***hash_table;            /* Pointer to current hash table pointer */
-struct domain_list **hash_table_1;           /* Pointer to hash table 1 */
-struct domain_list **hash_table_2;           /* Pointer to hash table 2 */
+db_con_t* db_handle = NULL;		/* Database connection handle */
+struct domain_list ***hash_table;	/* Pointer to current hash table pointer */
+struct domain_list **hash_table_1;	/* Pointer to hash table 1 */
+struct domain_list **hash_table_2;	/* Pointer to hash table 2 */
 
 
 /*
@@ -79,10 +79,10 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",               STR_PARAM, &db_url      },
-	{"db_mode",              INT_PARAM, &db_mode     },
-	{"domain_table",         STR_PARAM, &domain_table},
-	{"domain_column",        STR_PARAM, &domain_col  },
+	{"db_url",		STR_PARAM, &db_url	},
+	{"db_mode",             INT_PARAM, &db_mode     },
+	{"domain_table",        STR_PARAM, &domain_table},
+	{"domain_col",          STR_PARAM, &domain_col  },
 	{0, 0, 0}
 };
 

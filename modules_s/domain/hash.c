@@ -37,17 +37,23 @@
 
 
 /* String hash function */
-unsigned int hash (char *v)
+unsigned int hash (str *domain)
 {
   char *p;
   unsigned int h=0;
+  unsigned int len;
+  unsigned int i;
 
-  for (p = v; *p != '\0'; p += 1) {
-	  h = ( h << 5 ) - h + *p;
+  p = domain->s;
+  len = domain->len;
+
+  for (i = 0; i < len; i++) {
+	  h = ( h << 5 ) - h + *(p + i);
   }
 
   return h % HASH_SIZE;
 }
+
 
 /* Add domain to hash table */
 int hash_table_install (struct domain_list **hash_table, char *domain)
@@ -61,14 +67,15 @@ int hash_table_install (struct domain_list **hash_table, char *domain)
 		return -1;
 	}
 
-	np->domain = (char *) shm_malloc(strlen(domain) + 1);
-	if (np->domain == NULL) {
+	np->domain.len = strlen(domain);
+	np->domain.s = (char *) shm_malloc(np->domain.len);
+	if (np->domain.s == NULL) {
 		LOG(L_CRIT, "hash_install(): Cannot allocate memory for domain string\n");
 		return -1;
 	}
-	(void) strcpy(np->domain, domain);
+	(void) strncpy(np->domain.s, domain, np->domain.len);
 
-	hash_val = hash(np->domain);
+	hash_val = hash(&(np->domain));
 	np->next = hash_table[hash_val];
 	hash_table[hash_val] = np;
 
@@ -77,14 +84,19 @@ int hash_table_install (struct domain_list **hash_table, char *domain)
 
 
 /* Check if domain exsist in hash table */
-int hash_table_lookup (char *domain, int len)
+int hash_table_lookup (str *domain)
 {
 	struct domain_list *np;
 
-	for (np = (*hash_table)[hash(domain)]; np != NULL; np = np->next)
-		if (strncasecmp(domain, np->domain, len) == 0) return 1;
-	return -1;
+	LOG(L_ERR, "looking hash entry %d for domain \'%.*s\'\n", hash(domain), domain->len, domain->s);
 
+	for (np = (*hash_table)[hash(domain)]; np != NULL; np = np->next) {
+		if ((np->domain.len == domain->len) && 
+		    (strncasecmp(np->domain.s, domain->s, domain->len) == 0)) {
+			return 1;
+		}
+	}
+	return -1;
 }
 
 
@@ -97,7 +109,7 @@ void hash_table_print (struct domain_list **hash_table, FILE *reply_file)
 	for (i = 0; i < HASH_SIZE; i++) {
 		np = hash_table[i];
 		while (np) {
-			fprintf(reply_file, "%4d %s\n", i, np->domain);
+			fprintf(reply_file, "%4d %.*s\n", i, np->domain.len, np->domain.s);
 			np = np->next;
 		}
 	}
@@ -113,7 +125,7 @@ void hash_table_free (struct domain_list **hash_table)
 	for (i = 0; i < HASH_SIZE; i++) {
 		np = hash_table[i];
 		while (np) {
-			shm_free(np->domain);
+			shm_free(np->domain.s);
 			next = np->next;
 			shm_free(np);
 			np = next;

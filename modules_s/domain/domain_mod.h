@@ -44,23 +44,23 @@
  * Type definitions
  */
 struct domain_list {
-	char *domain;
+	str domain;
 	struct domain_list *next;
 };
 
 /*
  * Module parameters variables
  */
-extern char* db_url;        /* Database URL */
-extern int db_mode;         /* Database usage mode: 0 = no cache, 1 = cache */
-extern char* domain_table;  /* Domain table name */
-extern char* domain_col;    /* Domain column name */
+extern char* db_url;            /* Database URL */
+extern int db_mode;             /* Database usage mode: 0 = no cache, 1 = cache */
+extern char* domain_table;	/* Domain table name */
+extern char* domain_col;	/* Domain column name */
 
 
 /*
  * Other module variables
  */
-extern db_con_t* db_handle; /* Database connection handle */
+extern db_con_t* db_handle;	/* Database connection handle */
 extern struct domain_list **hash_table_1; /* Hash table for domains */
 extern struct domain_list **hash_table_2; /* Hash table for domains */
 extern struct domain_list ***hash_table;  /* Current hash table */

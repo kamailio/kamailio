@@ -45,7 +45,7 @@ Desc:    Name of table containing names of local domains that the proxy
 	 is responsible for.  Local users must have in their sip uri a
 	 host part that is equal to one of these domains.
 
-Name:	 domain_column
+Name:	 domain_col
 Type:	 string
 Default: "domain"
 Desc:	 Name of column containing domains in domain table
