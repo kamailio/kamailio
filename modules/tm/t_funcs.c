@@ -95,12 +95,16 @@ int t_lookup_request( struct sip_msg* p_msg )
    }
 
     /* if  T is previous found -> return found */
-   if ( (int)T !=-1 && T )
+   if ( (int)T !=-1 && T )	{
+      DBG("DEBUG: t_lookup_request: T already exists\n");
       return 1;
+   }
 
     /* if T was previous searched and not found -> return not found*/
-   if ( !T )
+   if ( !T )	{
+	DBG("DEBUG: t_lookup_request: T previously sought and not found\n");
       return 0;
+   }
 
    /* start searching into the table */
    hash_index = hash( p_msg->callid , get_cseq(p_msg)->number ) ;
@@ -129,6 +133,7 @@ int t_lookup_request( struct sip_msg* p_msg )
                                if ( /*callid*/ !memcmp( p_cell->inbound_request->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
                                   if ( /*cseq*/ !memcmp( p_cell->inbound_request->cseq->body.s , p_msg->cseq->body.s , p_msg->cseq->body.len ) )
                                      { /* WE FOUND THE GOLDEN EGG !!!! */
+					DBG("DEBUG: t_lookup_request: non-ACK found\n");
                                         T = p_cell;
                                         unref_cell( p_cell );
                                         return 1;
@@ -150,6 +155,7 @@ int t_lookup_request( struct sip_msg* p_msg )
                                      if ( /*callid*/ !memcmp( p_cell->inbound_request->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
                                         if ( /*cseq_nr*/ !memcmp( get_cseq(p_cell->inbound_request)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len ) )
                                            { /* WE FOUND THE GOLDEN EGG !!!! */
+						DBG("DEBUG: t_lookup_request: ACK found\n");
                                               T = p_cell;
                                               unref_cell( p_cell );
                                                return 1;
@@ -164,6 +170,7 @@ int t_lookup_request( struct sip_msg* p_msg )
    }
 
    /* no transaction found */
+   DBG("DEBUG: t_lookup_request: no transaction found\n");
    T = 0;
    return 0;
 }
@@ -193,8 +200,10 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       return -1;
 
    /*if it's an ACK and the status is not final or is final, but error the ACK is not forwarded*/
-   if ( p_msg->first_line.u.request.method_value==METHOD_ACK  && (T->status/100)!=2 )
+   if ( p_msg->first_line.u.request.method_value==METHOD_ACK  && (T->status/100)!=2 ) {
+      DBG("DEBUG: t_forward: local ACK; don't forward\n");
       return 0;
+   }
 
    /* if it's forwarded for the first time ; else the request is retransmited from the transaction buffer */
    if ( T->outbound_request[0]==NULL )
@@ -204,6 +213,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       unsigned int len;
       char               *buf;
 
+      DBG("DEBUG: t_forward: first time forwarding\n");
       /* allocates a new retrans_buff for the outbound request */
       T->outbound_request[0] = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
       memset( T->outbound_request[0] , 0 , sizeof (struct retrans_buff) );
@@ -213,6 +223,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       if ( p_msg->first_line.u.request.method_value==METHOD_CANCEL  )
       {
          struct cell  *T2;
+         DBG("DEBUG: t_forward: it's CANCEL\n");
          /* find original cancelled transaction; if found, use its next-hops; otherwise use those passed by script */
          T2 = t_lookupOriginalT( hash_table , p_msg );
          /* if found */
@@ -220,12 +231,15 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
          {  /* if in 1xx status, send to the same destination */
             if ( (T2->status/100)==1 )
             {
+               DBG("DEBUG: t_forward: it's CANCEL and I will send to the same place where INVITE went\n");
                dest_ip    = T2->outbound_request[0]->dest_ip;
                dest_port = T2->outbound_request[0]->dest_port;
             }
-            else
+            else {
                /* transaction exists, but nothing to cancel */
+               DBG("DEBUG: t_forward: it's CANCEL but I have nothing to cancel here\n");
              return 0;
+	    }
          }
       }/* end special case CANCEL*/
 
@@ -279,6 +293,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    /* on a non-200 reply to INVITE, generate local ACK and stop retransmission of the INVITE */
    if ( T->inbound_request->first_line.u.request.method_value==METHOD_INVITE && p_msg->first_line.u.reply.statusclass>2 )
    {
+      DBG("DEBUG: t_on_reply_received: >=3xx reply to INVITE: send ACK\n");
       t_build_and_send_ACK( T , branch );
       remove_from_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
       t_store_incoming_reply( T , branch , p_msg );
@@ -292,6 +307,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    if ( T->inbound_response && (T->status/100)>1 )
    {   /*a final reply was already sent upstream */
        /* alway relay 2xx immediately ; drop anything else */
+      DBG("DEBUG: t_on_reply_received: something final had been relayed\n");
       if ( p_msg->first_line.u.reply.statusclass==2 )
           t_relay_reply( T , branch , p_msg );
        /* nothing to do for the ser core */
@@ -299,6 +315,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    }
    else
    {  /* no reply sent yet or sent but not final*/
+      DBG("DEBUG: t_on_reply_received: no reply sent yet or sent but not final\n");
 
       /* stops the request's retransmission*/
       remove_from_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
@@ -313,6 +330,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
       /* relay ringing and OK immediately */
       if ( p_msg->first_line.u.reply.statusclass ==1 || p_msg->first_line.u.reply.statusclass ==2  )
       {
+	   DBG("DEBUG: t_on_reply_received:  relay ringing and OK immediately \n");
            if ( p_msg->first_line.u.reply.statuscode > T->status )
               t_relay_reply( T , branch , p_msg );
          return 1;
@@ -321,6 +339,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
       /* error final responses are only stored */
       if ( p_msg->first_line.u.reply.statusclass>=3 && p_msg->first_line.u.reply.statusclass<=5 )
       {
+	   DBG("DEBUG: t_on_reply_received:  error final responses are only stored  \n");
          t_store_incoming_reply( T , branch , p_msg );
          if ( t_all_final(T) )
               relay_lowest_reply_upstream( T , p_msg );
@@ -331,6 +350,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
       /* global failure responses relay immediately */
      if ( p_msg->first_line.u.reply.statusclass==6 )
       {
+	DBG("DEBUG: t_on_reply_received: global failure responses relay immediately (not 100 per cent compliant)\n");
          t_relay_reply( T , branch , p_msg );
          /* nothing to do for the ser core */
          return 1;
