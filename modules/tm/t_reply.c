@@ -88,10 +88,186 @@ static void update_reply_stats( int code ) {
 	}
 }
 
+static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
+	unsigned int *ret_len)
+{
+	str to;
+
+    if ( parse_headers(rpl,HDR_TO, 0)==-1 || !rpl->to )
+    {
+        LOG(L_ERR, "ERROR: t_build_ACK: "
+            "cannot generate a HBH ACK if key HFs in reply missing\n");
+        return NULL;
+    }
+	to.len=rpl->to->body.s+rpl->to->body.len-rpl->to->name.s;
+	to.s=rpl->orig+(rpl->to->name.s-rpl->buf);
+    return build_local( trans, branch, ret_len,
+        ACK, ACK_LEN, &to );
+}
+
+
 
 /* the main code of stateful replying */
 static int _reply( struct cell *t, struct sip_msg* p_msg, unsigned int code,
     char * text, int lock );
+
+/* This is the neuralgical point of reply processing -- called
+ * from within a REPLY_LOCK, t_should_relay_response decides
+ * how a reply shall be processed and how transaction state is
+ * affected.
+ *
+ * Checks if the new reply (with new_code status) should be sent or not
+ *  based on the current
+ * transactin status.
+ * Returns 	- branch number (0,1,...) which should be relayed
+ *         -1 if nothing to be relayed
+ */
+static enum rps t_should_relay_response( struct cell *Trans , int new_code,
+	int branch , int *should_store, int *should_relay,
+	branch_bm_t *cancel_bitmap, struct sip_msg *reply )
+{
+	int b, lowest_b, lowest_s, dummy;
+
+	/* note: this code never lets replies to CANCEL go through;
+	   we generate always a local 200 for CANCEL; 200s are
+	   not relayed because it's not an INVITE transaction;
+	   >= 300 are not relayed because 200 was already sent
+	   out
+	*/
+	DBG("->>>>>>>>> T_code=%d, new_code=%d\n",Trans->uas.status,new_code);
+	/* if final response sent out, allow only INVITE 2xx  */
+	if ( Trans->uas.status >= 200 ) {
+		if (new_code>=200 && new_code < 300  && 
+#ifdef _BUG_FIX /* t may be local, in which case there is no request */
+			Trans->uas.request->REQ_METHOD==METHOD_INVITE) {
+#endif
+			Trans->is_invite ) {
+			DBG("DBG: t_should_relay: 200 INV after final sent\n");
+			*should_store=0;
+			Trans->uac[branch].last_received=new_code;
+			*should_relay=branch;
+			return RPS_PUSHED_AFTER_COMPLETION;
+		} else {
+			/* except the exception above, too late  messages will
+			   be discarded */
+			*should_store=0;
+			*should_relay=-1;
+			return RPS_DISCARDED;
+		}
+	} 
+
+	/* no final response sent yet */
+	/* negative replies subject to fork picking */
+	if (new_code >=300 ) {
+		/* negative reply received after we have received
+		   a final reply previously -- discard , unless
+		   a recoverable error occured, in which case
+		   retry
+	    */
+		if (Trans->uac[branch].last_received>=200) {
+			/* then drop! */
+			*should_store=0;
+			*should_relay=-1;
+			return RPS_DISCARDED;
+		}
+
+		Trans->uac[branch].last_received=new_code;
+		/* if all_final return lowest */
+		lowest_b=-1; lowest_s=999;
+		for ( b=0; b<Trans->nr_of_outgoings ; b++ ) {
+			/* "fake" for the currently processed branch */
+			if (b==branch) {
+				if (new_code<lowest_s) {
+					lowest_b=b;
+					lowest_s=new_code;
+				}
+				continue;
+			}
+			/* skip 'empty branches' */
+			if (!Trans->uac[b].request.buffer) continue;
+			/* there is still an unfinished UAC transaction; wait now! */
+			if ( Trans->uac[b].last_received<200 ) {
+				*should_store=1;	
+				*should_relay=-1;
+				return RPS_STORE;
+			}
+			if ( Trans->uac[b].last_received<lowest_s )
+			{
+				lowest_b =b;
+				lowest_s = Trans->uac[b].last_received;
+			}
+		} /* find lowest branch */
+		if (lowest_b==-1) {
+			LOG(L_CRIT, "ERROR: t_should_relay_response: lowest==-1\n");
+		}
+		/* no more pending branches -- try if that changes after
+		   a callback
+		*/
+		callback_event( TMCB_ON_NEGATIVE, Trans, 
+			lowest_b==branch?reply:Trans->uac[lowest_b].reply, 
+			lowest_s );
+		/* look if the callback perhaps replied transaction; it also
+		   covers the case in which a transaction is replied localy
+		   on CANCEL -- then it would make no sense to proceed to
+		   new branches bellow
+		*/
+		if (Trans->uas.status >= 200) {
+			*should_store=0;
+			*should_relay=-1;
+			/* this might deserve an improvement -- if something
+			   was already replied, it was put on wait and then,
+			   returning RPS_COMPLETED will make t_on_reply
+			   put it on wait again; perhaps splitting put_on_wait
+			   from send_reply or a new RPS_ code would be healthy
+			*/
+			return RPS_COMPLETED;
+		}
+		/* look if the callback introduced new branches ... */
+		init_branch_iterator();
+		if (next_branch(&dummy)) {
+			if (t_forward_nonack(Trans, Trans->uas.request, 
+						(struct proxy_l *) 0 ) <0) {
+				/* error ... behave as if we did not try to
+				   add a new branch */
+				*should_store=0;
+				*should_relay=lowest_b;
+				return RPS_COMPLETED;
+			}
+			/* we succeded to launch new branches -- await
+			   result
+			*/
+			*should_store=1;
+			*should_relay=-1;
+			return RPS_STORE;
+		}
+		/* really no more pending branches -- return lowest code */
+		*should_store=0;
+		*should_relay=lowest_b;
+		/* we dont need 'which_cancel' here -- all branches 
+		   known to have completed */
+		/* which_cancel( Trans, cancel_bitmap ); */
+		return RPS_COMPLETED;
+	} 
+
+	/* not >=300 ... it must be 2xx or provisional 1xx */
+	if (new_code>=100) {
+		/* 1xx and 2xx except 100 will be relayed */
+		Trans->uac[branch].last_received=new_code;
+		*should_store=0;
+		*should_relay= new_code==100? -1 : branch;
+		if (new_code>=200 ) {
+			which_cancel( Trans, cancel_bitmap );
+			return RPS_COMPLETED;
+		} else return RPS_PROVISIONAL;
+	}
+
+	/* reply_status didn't match -- it must be something weird */
+	LOG(L_CRIT, "ERROR: Oh my gooosh! We don't know whether to relay %d\n",
+		new_code);
+	*should_store=0;
+	*should_relay=-1;
+	return RPS_DISCARDED;
+}
 
 /* Retransmits the last sent inbound reply.
  * input: p_msg==request for which I want to retransmit an associated reply
@@ -193,8 +369,8 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 	if (lock) LOCK_REPLIES( trans );
 	if (trans->is_invite) which_cancel(trans, &cancel_bitmap );
 	if (trans->uas.status>=200) {
-		LOG( L_ERR, "ERROR: t_reply: can't generate replies"
-			"when a final was sent out\n");
+		LOG( L_ERR, "ERROR: t_reply: can't generate %d reply"
+			" when a final %d was sent out\n", code, trans->uas.status);
 		goto error2;
 	}
 	rb = & trans->uas.response;
@@ -283,7 +459,7 @@ void cleanup_uac_timers( struct cell *t )
 	DBG("DEBUG: cleanup_uacs: RETR/FR timers reset\n");
 }
 
-int store_reply( struct cell *trans, int branch, struct sip_msg *rpl)
+static int store_reply( struct cell *trans, int branch, struct sip_msg *rpl)
 {
 #		ifdef EXTRA_DEBUG
 		if (trans->uac[branch].reply) {
@@ -340,7 +516,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 	/* *** store and relay message as needed *** */
 	reply_status = t_should_relay_response(t, msg_status, branch, 
-		&save_clone, &relay, cancel_bitmap );
+		&save_clone, &relay, cancel_bitmap, p_msg );
 	DBG("DEBUG: relay_reply: branch=%d, save=%d, relay=%d\n",
 		branch, save_clone, relay );
 
@@ -487,7 +663,7 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	*cancel_bitmap=0;
 
 	reply_status=t_should_relay_response( t, msg_status, branch,
-		&local_store, &local_winner, cancel_bitmap );
+		&local_store, &local_winner, cancel_bitmap, p_msg );
 	DBG("DEBUG: local_reply: branch=%d, save=%d, winner=%d\n",
 		branch, local_store, local_winner );
 	if (local_store) {
@@ -646,178 +822,6 @@ done:
 }
 
 
-/* This is the neuralgical point of reply processing -- called
- * from within a REPLY_LOCK, t_should_relay_response decides
- * how a reply shall be processed and how transaction state is
- * affected.
- *
- * Checks if the new reply (with new_code status) should be sent or not
- *  based on the current
- * transactin status.
- * Returns 	- branch number (0,1,...) which should be relayed
- *         -1 if nothing to be relayed
- */
-enum rps t_should_relay_response( struct cell *Trans , int new_code,
-	int branch , int *should_store, int *should_relay,
-	branch_bm_t *cancel_bitmap )
-{
-	int b, lowest_b, lowest_s, dummy;
-
-	/* note: this code never lets replies to CANCEL go through;
-	   we generate always a local 200 for CANCEL; 200s are
-	   not relayed because it's not an INVITE transaction;
-	   >= 300 are not relayed because 200 was already sent
-	   out
-	*/
-	DBG("->>>>>>>>> T_code=%d, new_code=%d\n",Trans->uas.status,new_code);
-	/* if final response sent out, allow only INVITE 2xx  */
-	if ( Trans->uas.status >= 200 ) {
-		if (new_code>=200 && new_code < 300  && 
-#ifdef _BUG_FIX /* t may be local, in which case there is no request */
-			Trans->uas.request->REQ_METHOD==METHOD_INVITE) {
-#endif
-			Trans->is_invite ) {
-			DBG("DBG: t_should_relay: 200 INV after final sent\n");
-			*should_store=0;
-			Trans->uac[branch].last_received=new_code;
-			*should_relay=branch;
-			return RPS_PUSHED_AFTER_COMPLETION;
-		} else {
-			/* except the exception above, too late  messages will
-			   be discarded */
-			*should_store=0;
-			*should_relay=-1;
-			return RPS_DISCARDED;
-		}
-	} 
-
-	/* no final response sent yet */
-	/* negative replies subject to fork picking */
-	if (new_code >=300 ) {
-		/* negative reply received after we have received
-		   a final reply previously -- discard , unless
-		   a recoverable error occured, in which case
-		   retry
-	    */
-		if (Trans->uac[branch].last_received>=200) {
-			/* then drop! */
-			*should_store=0;
-			*should_relay=-1;
-			return RPS_DISCARDED;
-		}
-
-		Trans->uac[branch].last_received=new_code;
-		/* if all_final return lowest */
-		lowest_b=-1; lowest_s=999;
-		for ( b=0; b<Trans->nr_of_outgoings ; b++ ) {
-			/* "fake" for the currently processed branch */
-			if (b==branch) {
-				if (new_code<lowest_s) {
-					lowest_b=b;
-					lowest_s=new_code;
-				}
-				continue;
-			}
-			/* skip 'empty branches' */
-			if (!Trans->uac[b].request.buffer) continue;
-			/* there is still an unfinished UAC transaction; wait now! */
-			if ( Trans->uac[b].last_received<200 ) {
-				*should_store=1;	
-				*should_relay=-1;
-				return RPS_STORE;
-			}
-			if ( Trans->uac[b].last_received<lowest_s )
-			{
-				lowest_b =b;
-				lowest_s = Trans->uac[b].last_received;
-			}
-		} /* find lowest branch */
-		if (lowest_b==-1) {
-			LOG(L_CRIT, "ERROR: t_should_relay_response: lowest==-1\n");
-		}
-		/* no more pending branches -- try if that changes after
-		   a callback
-		*/
-		callback_event( TMCB_ON_NEGATIVE, Trans, 0, lowest_s );
-		/* look if the callback perhaps replied transaction; it also
-		   covers the case in which a transaction is replied localy
-		   on CANCEL -- then it would make no sense to proceed to
-		   new branches bellow
-		*/
-		if (Trans->uas.status >= 200) {
-			*should_store=0;
-			*should_relay=-1;
-			/* this might deserve an improvement -- if something
-			   was already replied, it was put on wait and then,
-			   returning RPS_COMPLETED will make t_on_reply
-			   put it on wait again; perhaps splitting put_on_wait
-			   from send_reply or a new RPS_ code would be healthy
-			*/
-			return RPS_COMPLETED;
-		}
-		/* look if the callback introduced new branches ... */
-		init_branch_iterator();
-		if (next_branch(&dummy)) {
-			if (t_forward_nonack(Trans, Trans->uas.request, 
-						(struct proxy_l *) 0 ) <0) {
-				/* error ... behave as if we did not try to
-				   add a new branch */
-				*should_store=0;
-				*should_relay=lowest_b;
-				return RPS_COMPLETED;
-			}
-			/* we succeded to launch new branches -- await
-			   result
-			*/
-			*should_store=1;
-			*should_relay=-1;
-			return RPS_STORE;
-		}
-		/* really no more pending branches -- return lowest code */
-		*should_store=0;
-		*should_relay=lowest_b;
-		/* we dont need 'which_cancel' here -- all branches 
-		   known to have completed */
-		/* which_cancel( Trans, cancel_bitmap ); */
-		return RPS_COMPLETED;
-	} 
-
-	/* not >=300 ... it must be 2xx or provisional 1xx */
-	if (new_code>=100) {
-		/* 1xx and 2xx except 100 will be relayed */
-		Trans->uac[branch].last_received=new_code;
-		*should_store=0;
-		*should_relay= new_code==100? -1 : branch;
-		if (new_code>=200 ) {
-			which_cancel( Trans, cancel_bitmap );
-			return RPS_COMPLETED;
-		} else return RPS_PROVISIONAL;
-	}
-
-	/* reply_status didn't match -- it must be something weird */
-	LOG(L_CRIT, "ERROR: Oh my gooosh! We don't know whether to relay %d\n",
-		new_code);
-	*should_store=0;
-	*should_relay=-1;
-	return RPS_DISCARDED;
-}
-
-char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
-	unsigned int *ret_len)
-{
-	str to;
-
-    if ( parse_headers(rpl,HDR_TO, 0)==-1 || !rpl->to )
-    {
-        LOG(L_ERR, "ERROR: t_build_ACK: "
-            "cannot generate a HBH ACK if key HFs in reply missing\n");
-        return NULL;
-    }
-	to.len=rpl->to->body.s+rpl->to->body.len-rpl->to->name.s;
-	to.s=rpl->orig+(rpl->to->name.s-rpl->buf);
-    return build_local( trans, branch, ret_len,
-        ACK, ACK_LEN, &to );
-}
 
 void on_negative_reply( struct cell* t, struct sip_msg* msg, 
 	int code, void *param )

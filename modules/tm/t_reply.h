@@ -83,13 +83,10 @@ int t_reply( struct cell *t, struct sip_msg * , unsigned int , char * );
 */
 int t_reply_unsafe( struct cell *t, struct sip_msg * , unsigned int , char * );
 
-
-enum rps t_should_relay_response( struct cell *Trans, int new_code, 
-	int branch, int *should_store, int *should_relay, 
-	branch_bm_t *cancel_bitmap  );
-
+#ifdef _OBSOLETED
 void cleanup_after_final( struct s_table *h_table, struct cell *t,
 	unsigned int status );
+#endif
 
 enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch, 
 	unsigned int msg_status, branch_bm_t *cancel_bitmap );
@@ -97,14 +94,9 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
     unsigned int msg_status, branch_bm_t *cancel_bitmap );
 
-int store_reply( struct cell *trans, int branch, struct sip_msg *rpl);
-
 void set_final_timer( /* struct s_table *h_table,*/ struct cell *t );
 
 void cleanup_uac_timers( struct cell *t );
-
-char *build_ack( struct sip_msg* rpl, struct cell *trans, int branch ,
-	unsigned int *ret_len);
 
 void on_negative_reply( struct cell* t, struct sip_msg* msg,
 	int code, void *param  );

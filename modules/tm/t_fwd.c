@@ -322,6 +322,15 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	   a result of CANCEL quickly
 	*/
 	DBG("DEBUG: e2e_cancel: sending 487\n");
+	/* in case that something in the meantime has been sent upstream
+	   (like if FR hit at the same time), don't try to send
+	if (t_invite->uas.status>=200) return;
+	/* there is still a race-condition -- the FR can hit now; that's
+	   not too bad -- we take care in t_reply's REPLY_LOCK; in
+	   the worst case, both this t_reply and other replier will
+	   try, and the later one will result in error message 
+	   "can't reply twice"
+	*/
 	t_reply(t_invite, t_invite->uas.request, 487, CANCELLED );
 }
 
