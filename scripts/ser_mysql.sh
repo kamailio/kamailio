@@ -140,7 +140,7 @@ EOF
 # read realm
 prompt_realm() 
 {
-	printf "Domain (realm) for the default user 'admin': "
+	printf "Doamin (realm) for the default user 'admin': "
 	read SIP_DOMAIN
 	echo
 }
@@ -158,7 +158,6 @@ credentials()
 		echo "HA1B calculation failed"
 		exit 1
 	fi
-
 }
 
 ser_create () # pars: <database name> [<no_init_user>]
@@ -248,11 +247,12 @@ CREATE TABLE acc (
   to_uri varchar(128) NOT NULL default '',
   sip_callid varchar(128) NOT NULL default '',
   $USERCOL varchar(64) NOT NULL default '',
-  domain varchar(100) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
   fromtag varchar(128) NOT NULL default '',
   totag varchar(128) NOT NULL default '',
   time datetime NOT NULL default '0000-00-00 00:00:00',
-  timestamp timestamp(14) NOT NULL
+  timestamp timestamp(14) NOT NULL,
+  INDEX acc_user ($USERCOL, domain)
 ) $TABLE_TYPE;
 
 
@@ -279,8 +279,8 @@ CREATE TABLE active_sessions (
 #
 
 CREATE TABLE aliases (
-  $USERCOL varchar(50) NOT NULL default '',
-  domain varchar(100) NOT NULL default '',
+  $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
   contact varchar(255) NOT NULL default '',
   expires datetime default NULL,
   q float(10,2) default NULL,
@@ -301,8 +301,8 @@ CREATE TABLE aliases (
 
 CREATE TABLE event (
   id int(10) unsigned NOT NULL auto_increment,
-  $USERCOL varchar(50) NOT NULL default '',
-  domain varchar(100) NOT NULL default '',
+  $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
   uri varchar(255) NOT NULL default '',
   description varchar(255) NOT NULL default '',
   PRIMARY KEY (id)
@@ -318,8 +318,8 @@ CREATE TABLE event (
 
 
 CREATE TABLE grp (
-  $USERCOL varchar(50) NOT NULL default '',
-  domain varchar(100) NOT NULL default '',
+  $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
   grp varchar(50) NOT NULL default '',
   last_modified datetime NOT NULL default '0000-00-00 00:00:00',
   PRIMARY KEY($USERCOL, domain, grp)
@@ -334,8 +334,8 @@ CREATE TABLE grp (
 
 
 CREATE TABLE location (
-  $USERCOL varchar(50) NOT NULL default '',
-  domain varchar(100) NOT NULL default '',
+  $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
   contact varchar(255) NOT NULL default '',
   expires datetime default NULL,
   q float(10,2) default NULL,
@@ -367,11 +367,12 @@ CREATE TABLE missed_calls (
   to_uri varchar(128) NOT NULL default '',
   sip_callid varchar(128) NOT NULL default '',
   $USERCOL varchar(64) NOT NULL default '',
-  domain varchar(100) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
   fromtag varchar(128) NOT NULL default '',
   totag varchar(128) NOT NULL default '',
   time datetime NOT NULL default '0000-00-00 00:00:00',
-  timestamp timestamp(14) NOT NULL
+  timestamp timestamp(14) NOT NULL,
+  INDEX mc_user ($USERCOL, domain)
 ) $TABLE_TYPE;
 
 
@@ -385,8 +386,8 @@ CREATE TABLE missed_calls (
 
 CREATE TABLE pending (
   phplib_id varchar(32) NOT NULL default '',
-  $USERCOL varchar(100) NOT NULL default '',
-  domain varchar(100) NOT NULL default '',
+  $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
   password varchar(25) NOT NULL default '',
   first_name varchar(25) NOT NULL default '',
   last_name varchar(45) NOT NULL default '',
@@ -418,8 +419,8 @@ CREATE TABLE pending (
 
 CREATE TABLE phonebook (
   id int(10) unsigned NOT NULL auto_increment,
-  $USERCOL varchar(50) NOT NULL default '',
-  domain varchar(100) NOT NULL default '',
+  $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
   fname varchar(32) NOT NULL default '',
   lname varchar(32) NOT NULL default '',
   sip_uri varchar(128) NOT NULL default '',
@@ -436,7 +437,7 @@ CREATE TABLE phonebook (
 
 
 CREATE TABLE reserved (
-  $USERCOL char(100) NOT NULL default '',
+  $USERCOL char(64) NOT NULL default '',
   UNIQUE KEY user2(username)
 ) $TABLE_TYPE;
 
@@ -450,8 +451,8 @@ CREATE TABLE reserved (
 
 CREATE TABLE subscriber (
   phplib_id varchar(32) NOT NULL default '',
-  $USERCOL varchar(100) NOT NULL default '',
-  domain varchar(100) NOT NULL default '',
+  $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
   password varchar(25) NOT NULL default '',
   first_name varchar(25) NOT NULL default '',
   last_name varchar(45) NOT NULL default '',
@@ -479,8 +480,8 @@ CREATE TABLE subscriber (
 CREATE TABLE config (
    attribute varchar(32) NOT NULL,
    value varchar(128) NOT NULL,
-   $USERCOL varchar(100) NOT NULL default '',
-   domain varchar(100) NOT NULL default '',
+   $USERCOL varchar(64) NOT NULL default '',
+   domain varchar(128) NOT NULL default '',
    modified timestamp(14)
 ) $TABLE_TYPE;
 
@@ -503,7 +504,7 @@ CREATE TABLE silo(
 #
 
 CREATE TABLE domain (
-  domain varchar(50) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
   last_modified datetime NOT NULL default '0000-00-00 00:00:00',
   PRIMARY KEY  (domain)
 ) $TABLE_TYPE;
@@ -513,8 +514,8 @@ CREATE TABLE domain (
 # Table structure for table 'uri' -- uri user parts users are allowed to use
 #
 CREATE TABLE uri (
-  $USERCOL varchar(50) NOT NULL default '',
-  domain varchar(50) NOT NULL default '',
+  $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
   uri_user varchar(50) NOT NULL default '',
   last_modified datetime NOT NULL default '0000-00-00 00:00:00',
   PRIMARY KEY ($USERCOL, domain, uri_user)
@@ -537,12 +538,13 @@ CREATE TABLE server_monitoring (
 
 
 CREATE TABLE preferences (
-  $USERCOL varchar(50) NOT NULL default '',
-  domain varchar(100) NOT NULL default '',
+  $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
   attribute varchar(50) NOT NULL default '',
   value varchar(100) NOT NULL default '',
   PRIMARY KEY ($USERCOL, domain, attribute)
 ) $TABLE_TYPE;
+	  
 
 #
 # Table structure for table 'server_monitoring_agg'
