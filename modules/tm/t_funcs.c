@@ -476,7 +476,6 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 	return 0;
 
 error:
-	/* t_unref( p_msg, NULL, NULL ); */
 	T_UNREF( T );
 	T->inbound_response[branch]=NULL;
 	sip_msg_free( clone );
@@ -554,15 +553,16 @@ int t_on_request_received( struct sip_msg  *p_msg , unsigned int ip , unsigned i
 
 int t_on_request_received_uri( struct sip_msg  *p_msg )
 {
-   unsigned int     ip, port;
+	unsigned int     ip, port;
 
-   if ( get_ip_and_port_from_uri( p_msg , &ip, &port)<0 )
-   {
-      LOG( L_ERR , "ERROR: t_on_request_received_uri: unable to extract ip and port from uri!\n" );
-      return -1;
-   }
+	if ( get_ip_and_port_from_uri( p_msg , &ip, &port)<0 )
+	{
+		LOG( L_ERR , "ERROR: t_on_request_received_uri: \
+		    unable to extract ip and port from uri!\n" );
+		return -1;
+	}
 
-   return t_on_request_received( p_msg , ip , port );
+	return t_on_request_received( p_msg , ip , port );
 }
 
 
@@ -1124,54 +1124,69 @@ void delete_cell( struct cell *p_cell )
 */
 int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip, unsigned int *param_port)
 {
-   struct hostent  *nhost;
-   unsigned int     ip, port;
-   struct sip_uri    parsed_uri;
-   str                      uri;
-   int                      err;
+	struct hostent  *nhost;
+	unsigned int      ip, port;
+	struct sip_uri    parsed_uri;
+	str                      uri;
+	int                      err;
+#ifdef DNS_IP_HACK
+	int                      len;
+#endif
 
-   /* the original uri has been changed? */
-   if (p_msg->new_uri.s==0 || p_msg->new_uri.len==0)
-     uri = p_msg->first_line.u.request.uri;
-   else
-     uri = p_msg->new_uri;
+	/* the original uri has been changed? */
+	if (p_msg->new_uri.s==0 || p_msg->new_uri.len==0)
+		uri = p_msg->first_line.u.request.uri;
+	else
+		uri = p_msg->new_uri;
 
-   /* parsing the request uri in order to get host and port */
-   if (parse_uri( uri.s , uri.len , &parsed_uri )<0)
-   {
-        LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: unable to parse destination uri\n");
-        return  -1;
-   }
+	/* parsing the request uri in order to get host and port */
+	if (parse_uri( uri.s , uri.len , &parsed_uri )<0)
+	{
+		LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: "
+		   "unable to parse destination uri\n");
+		goto error;
+	}
 
-   /* getting host address*/
-   nhost = gethostbyname( parsed_uri.host.s );
+	/* getting the port */
+	if ( parsed_uri.port.s==0 || parsed_uri.port.len==0 )
+		port = SIP_PORT;
+	else{
+		port = str2s( parsed_uri.port.s , parsed_uri.port.len , &err );
+		if ( err<0 ){
+			LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: "
+			  "converting port from str to int failed; using default SIP port\n");
+			port = SIP_PORT;
+		}
+	}
+	port = htons( port );
 
-   if ( !nhost )
-   {
-      LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: cannot resolve host\n");
-      return -1;
-   }
-   memcpy(&ip, nhost->h_addr_list[0], sizeof(unsigned int));
+	/* getting host address*/
+#ifdef DNS_IP_HACK
+	len=strlen( parsed_uri.host.s );
+	ip=str2ip(parsed_uri.host.s, len, &err);
+	if (err==0)
+		goto success;
+#endif
+	/* fail over to normal lookup */
+	nhost = gethostbyname( parsed_uri.host.s );
+	if ( !nhost )
+	{
+		LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: "
+		  "cannot resolve host\n");
+		goto error;
+	}
+	memcpy(&ip, nhost->h_addr_list[0], sizeof(unsigned int));
 
-   /* getting the port */
-   if ( parsed_uri.port.s==0 || parsed_uri.port.len==0 )
-      port = SIP_PORT;
-   else
-   {
-       port = str2s( parsed_uri.port.s , parsed_uri.port.len , &err );
-       if ( err<0 )
-       {
-           LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: converting port from str to int failed; using default SIP port\n");
-           port = SIP_PORT;
-       }
-   }
-   port = htons( port );
 
-   free_uri( &parsed_uri );
+success:
+	*param_ip = ip;
+	*param_port = port;
+	return 0;
 
-   *param_ip = ip;
-   *param_port = port;
-   return 0;
+error:
+	*param_ip = 0;
+	*param_port = 0;
+	return -1;
 }
 
 
