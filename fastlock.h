@@ -111,6 +111,7 @@ inline static int tsl(fl_lock_t* lock)
         );
 #elif defined __CPU_mips2
 	long tmp;
+	tmp=1; /* just to kill a gcc 2.95 warning */
 	
 	asm volatile(
 		".set noreorder\n\t"

@@ -3,9 +3,8 @@
  *  simple locking test program
  *  (no paralles stuff)
  * 
- *  Compile with: gcc -D__CPU_i386 -O3 on x86 machines and -D__CPU_mips
- *  on mips machines.
- *
+ *  Compile with: gcc -D__CPU_i386 -O3 on x86 machines and
+ *                gcc -mips2 -O2 -D__CPU_mips  on mips machines.
  *  -- andrei
  *
  *  
