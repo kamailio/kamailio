@@ -2,6 +2,9 @@ $Id$
 
 ( - todo, x - done)
 
+- need to confirm fd receipt after send_fd, before closing it (this might
+ happen in tcp_send new conn.) (see FreeBSD send BUGS for more info)
+- make send_all, send  non-blocking ready ?
 - forward port fixes from testing
 - use recvmsg to get the dst ip address in udp_rcv_loop
  (it won't work on solaris, but...)
