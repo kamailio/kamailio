@@ -1,12 +1,33 @@
 /*
  * $Id$
+ *
+ * Copyright (C) 2002-2003 Fhg Fokus
+ *
+ * This file is sipsak, a free sip testing tool.
+ *
+ * sipsak is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * sipsak is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  */
 
 /* sipsak written by nils ohlmeier (ohlmeier@fokus.gmd.de).
-based up on a modifyed version of shoot.
-set DEBUG on compile will produce much more output, primary
-it will print out the sended and received messages before or after
-every network action.
+   based up on a modifyed version of shoot.
+   set DEBUG on compile will produce much more output. primarily
+   it will print out the sended and received messages before or after
+   every network action.
+*/
+
+/* changes by jiri@iptel.org; now messages can be really received;
+   status code returned is 2 for some local errors , 0 for success
+   and 1 for remote error -- ICMP/timeout; can be used to test if
+   a server is alive; 1xx messages are now ignored; windows support
+   dropped
 */
 
 /*
@@ -16,12 +37,13 @@ for any problems you may have using it.
 bouquets and brickbats to farhan@hotfoon.com
 */
 
-/* changes by jiri@iptel.org; now messages can be really received;
-   status code returned is 2 for some local errors , 0 for success
-   and 1 for remote error -- ICMP/timeout; can be used to test if
-   a server is alive; 1xx messages are now ignored; windows support
-   dropped
+/* TO-DO:
+   - filter out retransmissions
+   - support for short notation
+   - support for IPv6
 */
+
+//set ts=4 :-)
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -84,6 +106,7 @@ bouquets and brickbats to farhan@hotfoon.com
 #define USRLOC_EXP_DEF 15
 #define FLOOD_METH "OPTIONS"
 
+/* lots of global variables. ugly but makes life easier. */
 long address;
 int verbose, nameend, namebeg, expires_t, flood, warning_ext;
 int maxforw, lport, rport, randtrash, trashchar, numeric;
@@ -153,7 +176,8 @@ long getaddress(char *host)
 }
 
 /* because the full qualified domain name is needed by many other
-   functions it will be determined by this function.*/
+   functions it will be determined by this function.
+*/
 void get_fqdn(){
 	char hname[100], dname[100], hlp[18];
 	size_t namelen=100;
@@ -205,8 +229,7 @@ void get_fqdn(){
 #endif
 }
 
-/* add a Via Header Field in the message.
-*/
+/* add a Via Header Field in the message. */
 void add_via(char *mes)
 {
 	char *via_line, *via, *backup; 
@@ -240,7 +263,8 @@ void add_via(char *mes)
 }
 
 /* copy the via lines from the message to the message 
-   reply for correct routing of our reply.*/
+   reply for correct routing of our reply.
+*/
 void cpy_vias(char *reply){
 	char *first_via, *middle_via, *last_via, *backup;
 
@@ -257,7 +281,8 @@ void cpy_vias(char *reply){
 	last_via=strchr(last_via, '\n');
 	middle_via=strchr(mes_reply, '\n')+1;
 	/* make a backup, insert the vias after the first line and append 
-	backup */
+	   backup
+	*/
 	backup=malloc(strlen(middle_via)+1);
 	strcpy(backup, middle_via);
 	strncpy(middle_via, first_via, last_via-first_via+1);
@@ -268,7 +293,7 @@ void cpy_vias(char *reply){
 #endif
 }
 
-/* create a valid sip header out of the given parameters */
+/* create a valid sip header for the different modes */
 void create_msg(char *buff, int action){
 	unsigned int c;
 	char *usern;
@@ -284,10 +309,24 @@ void create_msg(char *buff, int action){
 			sprintf(usern, "%s%i", username, namebeg);
 			/* build the register, message and the 200 we need in for 
 			   USRLOC on one function call*/
-			sprintf(buff, "%s sip:%s%s%s%s:%i\r\n%s<sip:%s@%s>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sip:%s@%s:%i>\r\n%s%i\r\n\r\n", REG_STR, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, usern, domainname, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, 3*namebeg+1, REG_STR, CONT_STR, usern, fqdn, lport, EXP_STR, expires_t);
+			sprintf(buff, "%s sip:%s%s%s%s:%i\r\n%s<sip:%s@%s>\r\n"
+				"%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sip:%s@%s:%i>\r\n"
+				"%s%i\r\n\r\n", REG_STR, domainname, SIP20_STR, VIA_STR, fqdn, 
+				lport, FROM_STR, usern, domainname, TO_STR, usern, domainname, 
+				CALL_STR, c, fqdn, CSEQ_STR, 3*namebeg+1, REG_STR, CONT_STR, 
+				usern, fqdn, lport, EXP_STR, expires_t);
 			c=rand();
-			sprintf(message, "%s sip:%s@%s%s%s%s:%i\r\n%s<sip:sipsak@%s:%i>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s%s%i\r\n\r\n%s%s%i.", MES_STR, usern, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, fqdn, lport, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, 3*namebeg+2, MES_STR, CON_TXT_STR, CON_LEN_STR, SIPSAK_MES_STR_LEN+strlen(usern), SIPSAK_MES_STR, username, namebeg);
-			sprintf(mes_reply, "%s%s<sip:sipsak@%s:%i>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s 0\r\n\r\n", SIP200_STR, FROM_STR, fqdn, lport, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, 3*namebeg+2, MES_STR, CON_LEN_STR);
+			sprintf(message, "%s sip:%s@%s%s%s%s:%i\r\n%s<sip:sipsak@%s:%i>\r\n"
+				"%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s%s%i\r\n\r\n%s%s%i.", 
+				MES_STR, usern, domainname, SIP20_STR, VIA_STR, fqdn, lport, 
+				FROM_STR, fqdn, lport, TO_STR, usern, domainname, CALL_STR, c, 
+				fqdn, CSEQ_STR, 3*namebeg+2, MES_STR, CON_TXT_STR, CON_LEN_STR, 
+				SIPSAK_MES_STR_LEN+strlen(usern), SIPSAK_MES_STR, username, 
+				namebeg);
+			sprintf(mes_reply, "%s%s<sip:sipsak@%s:%i>\r\n%s<sip:%s@%s>\r\n"
+				"%s%u@%s\r\n%s%i %s\r\n%s 0\r\n\r\n", SIP200_STR, FROM_STR, 
+				fqdn, lport, TO_STR, usern, domainname, CALL_STR, c, fqdn, 
+				CSEQ_STR, 3*namebeg+2, MES_STR, CON_LEN_STR);
 #ifdef DEBUG
 			printf("message:\n%s\n", message);
 			printf("message reply:\n%s\n", mes_reply);
@@ -295,13 +334,26 @@ void create_msg(char *buff, int action){
 			free(usern);
 			break;
 		case REQ_OPT:
-			sprintf(buff, "%s sip:%s@%s%s%s<sip:sipsak@%s:%i>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sip:sipsak@%s:%i>\r\n\r\n", OPT_STR, username, domainname, SIP20_STR, FROM_STR, fqdn, lport, TO_STR, username, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, OPT_STR, CONT_STR, fqdn, lport);
+			sprintf(buff, "%s sip:%s@%s%s%s<sip:sipsak@%s:%i>\r\n"
+				"%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n"
+				"%s<sip:sipsak@%s:%i>\r\n\r\n", OPT_STR, username, domainname, 
+				SIP20_STR, FROM_STR, fqdn, lport, TO_STR, username, domainname, 
+				CALL_STR, c, fqdn, CSEQ_STR, namebeg, OPT_STR, CONT_STR, fqdn, 
+				lport);
 			break;
 		case REQ_FLOOD:
-			sprintf(buff, "%s sip:%s%s%s%s:9\r\n%s<sip:sipsak@%s:9>\r\n%s<sip:%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sipsak@%s:9>\r\n\r\n", FLOOD_METH, domainname, SIP20_STR, VIA_STR, fqdn, FROM_STR, fqdn, TO_STR, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, FLOOD_METH, CONT_STR, fqdn);
+			sprintf(buff, "%s sip:%s%s%s%s:9\r\n%s<sip:sipsak@%s:9>\r\n"
+				"%s<sip:%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sipsak@%s:9>\r\n\r\n", 
+				FLOOD_METH, domainname, SIP20_STR, VIA_STR, fqdn, FROM_STR, 
+				fqdn, TO_STR, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, 
+				FLOOD_METH, CONT_STR, fqdn);
 			break;
 		case REQ_RAND:
-			sprintf(buff, "%s sip:%s%s%s%s:%i\r\n%s<sip:sipsak@%s:%i>\r\n%s<sip:%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sipsak@%s:%i>\r\n\r\n", OPT_STR, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, fqdn, lport, TO_STR, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, OPT_STR, CONT_STR, fqdn, lport);
+			sprintf(buff, "%s sip:%s%s%s%s:%i\r\n%s<sip:sipsak@%s:%i>\r\n"
+				"%s<sip:%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sipsak@%s:%i>\r\n\r\n", 
+				OPT_STR, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, 
+				fqdn, lport, TO_STR, domainname, CALL_STR, c, fqdn, CSEQ_STR, 
+				namebeg, OPT_STR, CONT_STR, fqdn, lport);
 			break;
 		default:
 			printf("error: unknown request type to create\n");
@@ -375,7 +427,7 @@ void uri_replace(char *mes, char *uri)
 #endif
 }
 
-/* trashes one character in buff radnomly */
+/* trashes one character in buff randomly */
 void trash_random(char *message)
 {
 	int r;
@@ -419,7 +471,8 @@ void warning_extract(char *message)
 }
 
 /* this function is taken from traceroute-1.4_p12 
-   which is distributed under the GPL */
+   which is distributed under the GPL and it returns
+   the difference between to timeval structs */
 double deltaT(struct timeval *t1p, struct timeval *t2p)
 {
         register double dt;
@@ -429,18 +482,7 @@ double deltaT(struct timeval *t1p, struct timeval *t2p)
         return (dt);
 }
 
-/*
-shoot:
-takes:
-	1. the text message of buff to 
-	2. the address (network orderd byte order)
-	3. local- and remote-port (not network byte ordered).
-	4. and lots of boolean for the different modi
-
-starting from half a second, times-out on replies and
-keeps retrying with exponential back-off that flattens out
-at 5 seconds (5000 milliseconds).
-*/
+/* this is the main function with the loops and modes */
 void shoot(char *buff)
 {
 	struct sockaddr_in	addr, sockname;
@@ -453,10 +495,9 @@ void shoot(char *buff)
 	char reply[BUFSIZE];
 	fd_set	fd;
 	socklen_t slen;
-	//regex_t* regexp;
-	//regex_t* redexp;
 	regex_t redexp, proexp, okexp, tmhexp, errexp;
 
+	/* initalize some local vars */
 	redirected = 1;
 	nretries = 5;
 	retryAfter = 5000;
@@ -492,21 +533,25 @@ void shoot(char *buff)
 		lport=ntohs(sockname.sin_port);
 	}
 
-	/* set a regular expression according to the modus */
-	//regexp=(regex_t*)malloc(sizeof(regex_t));
-	regcomp(&proexp, "^SIP/[0-9]\\.[0-9] 1[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
-	regcomp(&okexp, "^SIP/[0-9]\\.[0-9] 200 ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
-	regcomp(&redexp, "^SIP/[0-9]\\.[0-9] 3[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE);
-	regcomp(&errexp, "^SIP/[0-9]\\.[0-9] 4[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
-	regcomp(&tmhexp, "^SIP/[0-9]\\.[0-9] 483 ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
-	/* catching redirects */
-	//redexp=(regex_t*)malloc(sizeof(regex_t));
+	/* set all regular expression to simplfy the result code indetification */
+	regcomp(&proexp, "^SIP/[0-9]\\.[0-9] 1[0-9][0-9] ", 
+		REG_EXTENDED|REG_NOSUB|REG_ICASE); 
+	regcomp(&okexp, "^SIP/[0-9]\\.[0-9] 200 ", 
+		REG_EXTENDED|REG_NOSUB|REG_ICASE); 
+	regcomp(&redexp, "^SIP/[0-9]\\.[0-9] 3[0-9][0-9] ", 
+		REG_EXTENDED|REG_NOSUB|REG_ICASE);
+	regcomp(&errexp, "^SIP/[0-9]\\.[0-9] 4[0-9][0-9] ", 
+		REG_EXTENDED|REG_NOSUB|REG_ICASE); 
+	regcomp(&tmhexp, "^SIP/[0-9]\\.[0-9] 483 ", 
+		REG_EXTENDED|REG_NOSUB|REG_ICASE); 
 
 	if (usrloc){
+		/* in usrloc every test consists of three steps */
 		nretries=3*(nameend-namebeg)+3;
 		create_msg(buff, REQ_REG);
 	}
 	else if (trace){
+		/* for trace we need some spezial initis */
 		if (maxforw!=-1)
 			nretries=maxforw;
 		else
@@ -517,6 +562,7 @@ void shoot(char *buff)
 		add_via(buff);
 	}
 	else if (flood){
+		/* this should be the max of an (32 bit) int without the sign */
 		if (namebeg==-1) namebeg=2147483647;
 		nretries=namebeg;
 		namebeg=1;
@@ -531,12 +577,14 @@ void shoot(char *buff)
 			if (trashchar < nameend)
 				nameend=trashchar;
 			else
-				printf("warning: number of trashed chars to big. setting to request lenght\n");
+				printf("warning: number of trashed chars to big. setting to "
+					"request lenght\n");
 		}
 		nretries=nameend-1;
 		trash_random(buff);
 	}
 	else {
+		/* for non of the modes we also need some inits */
 		if (!file_b) {
 			namebeg=1;
 			create_msg(buff, REQ_OPT);
@@ -551,26 +599,31 @@ void shoot(char *buff)
 	/* if we got a redirect this loop ensures sending to the 
 	   redirected server*/
 	while (redirected) {
-
+		/* we don't want to send for ever */
 		redirected=0;
 
+		/* destination socket init here because it could be changed in a 
+		   case of a redirect */
 		addr.sin_addr.s_addr = address;
 		addr.sin_port = htons((short)rport);
 		addr.sin_family = AF_INET;
 	
 		/* we connect as per the RFC 2543 recommendations
-		modified from sendto/recvfrom */
+		   modified from sendto/recvfrom */
 		ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
 		if (ret==-1) {
 			perror("no connect");
 			exit(2);
 		}
 
+		/* here we go for the number of nretries which healily depends on the 
+		   mode */
 		for (i = 0; i <= nretries; i++)
 		{
 			if (trace) {
 				set_maxforw(buff);
 			}
+			/* some initial output */
 			else if (usrloc && verbose) {
 				switch (usrlocstep) {
 					case 0:
@@ -597,6 +650,7 @@ void shoot(char *buff)
 				printf("** request **\n%s\n", buff);
 			}
 
+			/* lets fire the request to the server and store when we did */
 			ret = send(sock, buff, strlen(buff), 0);
 			(void)gettimeofday(&sendtime, &tz);
 			if (ret==-1) {
@@ -604,7 +658,9 @@ void shoot(char *buff)
 				exit( 1 );
 			}
 
+			/* in flood we are only interested in sending so skip the rest */
 			if (!flood) {
+				/* set the timeout and wait for a response */
 				tv.tv_sec = retryAfter/1000;
 				tv.tv_usec = (retryAfter % 1000) * 1000;
 
@@ -615,6 +671,7 @@ void shoot(char *buff)
 				(void)gettimeofday(&recvtime, &tz);
 				if (ret == 0)
 				{
+					/* lets see if we at least received an icmp error */
 					sockerr.fd=sock;
 					sockerr.events=POLLERR;
 					if ((poll(&sockerr, 1, 10))==1) {
@@ -622,21 +679,30 @@ void shoot(char *buff)
 							recv(sock, reply, strlen(reply), 0);
 							perror("send failure: ");
 							if (randtrash) 
-								printf ("last message before send failure:\n%s\n", buff);
+								printf ("last message before send failure:"
+									"\n%s\n", buff);
 							exit(1);
 						}
 					}
-					if (trace) printf("%i: timeout after %i ms\n", i, retryAfter);
-					else if (verbose) printf("** timeout after %i ms**\n", retryAfter);
+					/* printout that we did not received anything */
+					if (trace) printf("%i: timeout after %i ms\n", i, 
+									retryAfter);
+					else if (verbose) printf("** timeout after %i ms**\n", 
+										retryAfter);
 					if (randtrash) {
-						printf("did not get a response on this request:\n%s\n", buff);
+						printf("did not get a response on this request:"
+							"\n%s\n", buff);
 						if (i+1 < nameend) {
 							if (randretrys == 2) {
-								printf("sended the following message three times without getting a response:\n%s\ngive up further retransmissions...\n", buff);
+								printf("sended the following message three "
+									"times without getting a response:\n%s\n"
+									"give up further retransmissions...\n", 
+									buff);
 								exit(1);
 							}
 							else {
-								printf("resending it without additional random changes...\n\n");
+								printf("resending it without additional "
+									"random changes...\n\n");
 								randretrys++;
 							}
 						}
@@ -644,26 +710,34 @@ void shoot(char *buff)
 					retryAfter = retryAfter * 2;
 					if (retryAfter > 5000)
 						retryAfter = 5000;
+					/* if we did not exit until here lets try another send */
 					continue;
-				} else if ( ret == -1 ) {
+				}
+				else if ( ret == -1 ) {
 					perror("select error");
 					exit(2);
-				} /* no timeout, no error ... something has happened :-) */
+				}
 				else if (FD_ISSET(ssock, &fd)) {
+					/* no timeout, no error ... something has happened :-) */
 				 	if (!trace && !usrloc && !randtrash)
 						printf ("\nmessage received\n");
-				} else {
-					puts("\nselect returned succesfuly, nothing received\n");
+				}
+				else {
+					printf("\nselect returned succesfuly, nothing received\n");
 					continue;
 				}
 
-				/* we are retrieving only the extend of a decent MSS = 1500 bytes */
+				/* we are retrieving only the extend of a decent 
+				   MSS = 1500 bytes */
 				len = sizeof(addr);
 				ret = recv(ssock, reply, BUFSIZE, 0);
 				if(ret > 0)
 				{
 					reply[ret] = 0;
-					if (i==0) memcpy(&firstsendt, &sendtime, sizeof(struct timeval));
+					/* store the time of our first send */
+					if (i==0)
+						memcpy(&firstsendt, &sendtime, sizeof(struct timeval));
+					/* lets see if received a redirect */
 					if (redirects && regexec(&redexp, reply, 0, 0, 0)==0) {
 						printf("** received redirect ");
 						if (warning_ext) {
@@ -672,23 +746,27 @@ void shoot(char *buff)
 							printf("\n");
 						}
 						else printf("\n");
-						/* we'll try to handle 301 and 302 here, other 3xx are to complex */
-						regcomp(&redexp, "^SIP/[0-9]\\.[0-9] 30[1-2] ", REG_EXTENDED|REG_NOSUB|REG_ICASE);
+						/* we'll try to handle 301 and 302 here, other 3xx 
+						   are to complex */
+						regcomp(&redexp, "^SIP/[0-9]\\.[0-9] 30[1-2] ", 
+							REG_EXTENDED|REG_NOSUB|REG_ICASE);
 						if (regexec(&redexp, reply, 0, 0, 0)==0) {
 							/* try to find the contact in the redirect */
 							if ((foo=strstr(reply, "Contact"))==NULL) {
-								printf("error: cannot find Contact in this redirect:\n%s\n", reply);
+								printf("error: cannot find Contact in this "
+									"redirect:\n%s\n", reply);
 								exit(2);
 							}
 							crlf=strchr(foo, '\n');
-							if ((contact=strchr(foo, '\r'))!=NULL && contact<crlf)
+							if ((contact=strchr(foo, '\r'))!=NULL 
+							&& contact<crlf)
 								crlf=contact;
 							bar=malloc(crlf-foo+1);
 							strncpy(bar, foo, crlf-foo);
-							//sprintf(bar+(crlf-foo), "0");
 							*(bar+(crlf-foo))='\0';
 							if ((contact=strstr(bar, "sip"))==NULL) {
-								printf("error: cannot find sip in the Contact of this redirect:\n%s\n", reply);
+								printf("error: cannot find sip in the Contact "
+									"of this redirect:\n%s\n", reply);
 								exit(2);
 							}
 							if ((foo=strchr(contact, ';'))!=NULL)
@@ -703,7 +781,9 @@ void shoot(char *buff)
 									foo++;
 									rport = atoi(foo);
 									if (!rport) {
-										printf("error: cannot handle the port in the uri in Contact:\n%s\n", reply);
+										printf("error: cannot handle the port "
+											"in the uri in Contact:\n%s\n", 
+											reply);
 										exit(2);
 									}
 								}
@@ -716,12 +796,15 @@ void shoot(char *buff)
 								/* get the new destination IP*/
 								address = getaddress(crlf);
 								if (!address){
-									printf("error: cannot determine host address from Contact of redirect:\%s\n", reply);
+									printf("error: cannot determine host "
+										"address from Contact of redirect:"
+										"\%s\n", reply);
 									exit(2);
 								}
 							}
 							else{
-								printf("error: missing : in Contact of this redirect:\n%s\n", reply);
+								printf("error: missing : in Contact of this "
+									"redirect:\n%s\n", reply);
 								exit(2);
 							}
 							free(bar);
@@ -730,20 +813,24 @@ void shoot(char *buff)
 							i=nretries;
 						}
 						else {
-							printf("error: cannot handle this redirect:\n%s\n", reply);
+							printf("error: cannot handle this redirect:"
+								"\n%s\n", reply);
 							exit(2);
 						}
 					}
 					else if (trace) {
 						if (regexec(&tmhexp, reply, 0, 0, 0)==0) {
+							/* we received 483 to many hops */
 							printf("%i: ", i);
 #ifdef DEBUG
-							printf("(%.3f ms)\n%s\n", deltaT(&sendtime, &recvtime), reply);
+							printf("(%.3f ms)\n%s\n", 
+								deltaT(&sendtime, &recvtime), reply);
 #else
 							warning_extract(reply);
 							crlf=strchr(reply, '\n');
 							*crlf='\0';
-							printf("(%.3f ms) %s\n", deltaT(&sendtime, &recvtime), reply);
+							printf("(%.3f ms) %s\n", 
+								deltaT(&sendtime, &recvtime), reply);
 #endif
 							namebeg++;
 							maxforw++;
@@ -752,18 +839,23 @@ void shoot(char *buff)
 							continue;
 						}
 						else if (regexec(&proexp, reply, 0, 0, 0)==0) {
+							/* we received a provisional response */
 							printf("%i: ", i);
 #ifdef DEBUG
-							printf("(%.3f ms)\n%s\n", deltaT(&sendtime, &recvtime), reply);
+							printf("(%.3f ms)\n%s\n", 
+								deltaT(&sendtime, &recvtime), reply);
 #else
 							warning_extract(reply);
 							crlf=strchr(reply, '\n');
 							*crlf='\0';
-							printf("(%.3f ms) %s\n", deltaT(&sendtime, &recvtime), reply);
+							printf("(%.3f ms) %s\n", 
+								deltaT(&sendtime, &recvtime), reply);
 #endif
 							continue;
 						}
 						else {
+							/* anything else then 483 or provisional will
+							   be treated as final */
 							if (maxforw==i) printf("%i: ", i);
 							else printf("\t");
 							warning_extract(crlf);
@@ -771,8 +863,8 @@ void shoot(char *buff)
 							*crlf='\0';
 							crlf++;
 							contact=strstr(crlf, "Contact");
-							//printf("received reply from ");
-							printf("(%.3f ms) %s\n", deltaT(&sendtime, &recvtime), reply);
+							printf("(%.3f ms) %s\n", 
+								deltaT(&sendtime, &recvtime), reply);
 							if (contact){
 								crlf=strchr(contact,'\n');
 								*crlf='\0';
@@ -787,8 +879,8 @@ void shoot(char *buff)
 					else if (usrloc) {
 						switch (usrlocstep) {
 							case 0:
-								/* at first we have sended a register a look at the 
-								   response now*/
+								/* at first we have sended a register and look 
+								   at the response now*/
 								if (regexec(&okexp, reply, 0, 0, 0)==0) {
 									if (verbose)
 										printf ("  OK\n");
@@ -801,18 +893,21 @@ void shoot(char *buff)
 								else {
 									if (verbose)
 										printf("received:\n%s\n", reply);
-									printf("error: didn't received '200 OK' on regsiter. aborting\n");
+									printf("error: didn't received '200 OK' "
+										"on regsiter. aborting\n");
 									exit(1);
 								}
 								break;
 							case 1:
 								/* now we sended the message and look if its 
 								   forwarded to us*/
-								if (!strncmp(reply, messusern, strlen(messusern))) {
+								if (!strncmp(reply, messusern, 
+								strlen(messusern))) {
 									if (verbose) {
 										crlf=strstr(reply, "\r\n\r\n");
 										crlf=crlf+4;
-										printf("         received message\n  '%s'\n", crlf);
+										printf("         received message\n  "
+											"'%s'\n", crlf);
 									}
 #ifdef DEBUG
 									printf("\n%s\n", reply);
@@ -824,24 +919,29 @@ void shoot(char *buff)
 								else {
 									if (verbose)
 										printf("\nreceived:\n%s\n", reply);
-									printf("error: didn't received the 'MESSAGE' we sended. aborting\n");
+									printf("error: didn't received the "
+										"'MESSAGE' we sended. aborting\n");
 									exit(1);
 								}
 								break;
 							case 2:
-								/* finnaly we sended our reply on the message and 
-								   look if this is also forwarded to us*/
-								while (!strncmp(reply, messusern, strlen(messusern))){
-									printf("warning: received 'MESSAGE' retransmission!\n");
+								/* finnaly we sended our reply on the message 
+								   and look if this is also forwarded to us*/
+								while (!strncmp(reply, messusern, 
+								strlen(messusern))){
+									printf("warning: received 'MESSAGE' "
+										"retransmission!\n");
 									ret = recv(ssock, reply, BUFSIZE, 0);
 								}
 								if (regexec(&okexp, reply, 0, 0, 0)==0) {
 									if (verbose)
 										printf("   reply received\n\n");
 									else
-										printf("USRLOC for %s%i completed successful\n", username, namebeg);
+										printf("USRLOC for %s%i completed "
+											"successful\n", username, namebeg);
 									if (namebeg==nameend) {
-										printf("All USRLOC tests completed successful.\n");
+										printf("All USRLOC tests completed "
+											"successful.\n");
 										exit(0);
 									}
 									namebeg++;
@@ -851,7 +951,9 @@ void shoot(char *buff)
 								else {
 									if (verbose)
 										printf("\nreceived:\n%s\n", reply);
-									printf("error: didn't received the '200 OK' that we sended as the reply on the message\n");
+									printf("error: didn't received the '200 "
+										"OK' that we sended as the reply on "
+										"the message\n");
 									exit(1);
 								}
 							break;
@@ -859,7 +961,7 @@ void shoot(char *buff)
 					}
 					else if (randtrash) {
 						/* in randomzing trash we are expexting 4?? error codes
-						 * everything should not be normal */
+						   everything should not be normal */
 						if (regexec(&errexp, reply, 0, 0, 0)==0) {
 #ifdef DEBUG
 							printf("received:\n%s\n", reply);
@@ -874,14 +976,19 @@ void shoot(char *buff)
 						}
 						else {
 							printf("warning: did not received 4xx\n");
-							if (verbose) printf("sended:\n%s\nreceived:\n%s\n", buff, reply);
+							if (verbose) 
+								printf("sended:\n%s\nreceived:\n%s\n", buff, 
+									reply);
 						}
 						if (nameend==(i+1)) {
 							if (randretrys == 0) {
-								printf("random end reached. server survived :) respect!\n");
+								printf("random end reached. server survived "
+									":) respect!\n");
 							}
 							else {
-								printf("maximum sendings reached but did not get a response on this request:\n%s\n", buff);
+								printf("maximum sendings reached but did not "
+									"get a response on this request:\n%s\n", 
+									buff);
 							}
 							exit(0);
 						}
@@ -891,8 +998,14 @@ void shoot(char *buff)
 						/* in the normal send and reply case anything other 
 						   then 1xx will be treated as final response*/
 						printf("** reply received ");
-						if (i==0) printf("after %.3f ms **\n", deltaT(&sendtime, &recvtime));
-						else printf("%.3f ms after first send\n   and %.3f ms after last send **\n", deltaT(&firstsendt, &recvtime), deltaT(&sendtime, &recvtime));
+						if (i==0) 
+							printf("after %.3f ms **\n", 
+								deltaT(&sendtime, &recvtime));
+						else 
+							printf("%.3f ms after first send\n   and %.3f ms "
+								"after last send **\n", 
+								deltaT(&firstsendt, &recvtime), 
+								deltaT(&sendtime, &recvtime));
 						if (verbose) printf("%s\n", reply);
 						else {
 							crlf=strchr(reply, '\n');
@@ -900,7 +1013,8 @@ void shoot(char *buff)
 							printf("   %s\n", reply);
 						}
 						if (regexec(&proexp, reply, 0, 0, 0)==0) {
-							printf("   provisional received; still waiting for a final response\n ");
+							printf("   provisional received; still waiting "
+								"for a final response\n ");
 							continue;
 						} else {
 							printf("   final received\n ");
@@ -930,6 +1044,7 @@ void shoot(char *buff)
 	exit(1);
 }
 
+/* prints out some usage help and exits */
 void print_help() {
 	printf("sipsak %s ", SIPSAK_VERSION);
 #ifdef DEBUG
@@ -941,23 +1056,29 @@ void print_help() {
 		" USRLOC: sipsak -U [-b number] -e number [-x number] -s sip:uri\n"
 		" flood : sipsak -F [-c number] -s sip:uri\n"
 		" random: sipsak -R [-t number] -s sip:uri\n\n"
-		" additional parameter in every modus:\n"
-		"                [-d] [-i] [-l port] [-m number] [-n] [-r port] [-v] [-w]\n"
+		" additional parameter in every mode:\n"
+		"                [-d] [-i] [-l port] [-m number] [-n] [-r port] [-v] "
+			"[-w]\n"
 		"   -h           displays this help message\n"
 		"   -V           prints version string only\n"
 		"   -f filename  the file which contains the SIP message to send\n"
-		"   -s sip:uri   the destination server uri in form sip:[user@]servername[:port]\n"
-		"   -T           activates the traceroute modus\n"
-		"   -U           activates the USRLOC modus\n"
-		"   -b number    the starting number appendix to the user name in USRLOC modus\n"
+		"   -s sip:uri   the destination server uri in form "
+			"sip:[user@]servername[:port]\n"
+		"   -T           activates the traceroute mode\n"
+		"   -U           activates the USRLOC mode\n"
+		"   -b number    the starting number appendix to the user name in "
+			"USRLOC mode\n"
 		"                (default: 0)\n"
-		"   -e number    the ending numer of the appendix to the user name in USRLOC\n"
-		"                modus\n"
+		"   -e number    the ending numer of the appendix to the user name in "
+			"USRLOC\n"
+		"                mode\n"
 		"   -x number    the expires header field value (default: 15)\n"
-		"   -F           activates the flood modus\n"
-		"   -c number    the maximum CSeq number for flood modus (default: 2^31)\n"
+		"   -F           activates the flood mode\n"
+		"   -c number    the maximum CSeq number for flood mode "
+			"(default: 2^31)\n"
 		"   -R           activates the random modues (dangerous)\n"
-		"   -t number    the maximum number of trashed character in random modus\n"
+		"   -t number    the maximum number of trashed character in random "
+			"mode\n"
 		"                (default: request length)\n"
 		"   -l port      the local port to use (default: any)\n"
 		"   -r port      the remote port to use (default: 5060)\n"
@@ -967,7 +1088,8 @@ void print_help() {
 		"   -d           ignore redirects\n"
 		"   -v           be more verbose\n"
 		"   -w           extract IP from the warning in reply\n\n"
-		"The manupulation function are only tested with nice RFC conform SIP-messages,\n"
+		"The manupulation function are only tested with nice RFC conform "
+			"SIP-messages,\n"
 		"so don't expect them to work with ugly or malformed messages.\n");
 	exit(0);
 };
@@ -1000,9 +1122,9 @@ int main(int argc, char *argv[])
 	while ((c=getopt(argc,argv,"b:c:de:f:Fhil:m:nr:Rs:t:TUvVwx:")) != EOF){
 		switch(c){
 			case 'b':
-				//namebeg=atoi(optarg);
 				if ((namebeg=atoi(optarg))==-1) {
-					printf("error: non-numerical appendix begin for the username\n");
+					printf("error: non-numerical appendix begin for the "
+						"username\n");
 					exit(2);
 				}
 				break;
@@ -1016,9 +1138,9 @@ int main(int argc, char *argv[])
 				redirects=0;
 				break;
 			case 'e':
-				//nameend=atoi(optarg);
 				if ((nameend=atoi(optarg))==-1) {
-					printf("error: non-numerical appendix end for the username\n");
+					printf("error: non-numerical appendix end for the "
+						"username\n");
 					exit(2);
 				}
 				break;
@@ -1026,7 +1148,8 @@ int main(int argc, char *argv[])
 				flood=1;
 				break;
 			case 'f':
-				/* file is opened in binary mode so that the cr-lf is preserved */
+				/* file is opened in binary mode so that the cr-lf is 
+				   preserved */
 				pf = fopen(optarg, "rb");
 				if (!pf){
 					puts("unable to open the file.\n");
@@ -1034,8 +1157,10 @@ int main(int argc, char *argv[])
 				}
 				length  = fread(buff, 1, sizeof(buff), pf);
 				if (length >= sizeof(buff)){
-					printf("error:the file is too big. try files of less than %i bytes.\n", BUFSIZE);
-					printf("      or recompile the program with bigger BUFSIZE defined.\n");
+					printf("error:the file is too big. try files of less "
+						"than %i bytes.\n", BUFSIZE);
+					printf("      or recompile the program with bigger "
+						"BUFSIZE defined.\n");
 					exit(2);
 				}
 				fclose(pf);
@@ -1076,6 +1201,7 @@ int main(int argc, char *argv[])
 				randtrash=1;
 				break;
 			case 's':
+				/* we try to extract as much informationas we can from the uri*/
 				if (!strncmp(optarg,"sip",3)){
 					if ((delim=strchr(optarg,':'))!=NULL){
 						delim++;
@@ -1090,7 +1216,8 @@ int main(int argc, char *argv[])
 							delim2++;
 							rport = atoi(delim2);
 							if (!rport) {
-								printf("error: non-numerical remote port number\n");
+								printf("error: non-numerical remote port "
+									"number\n");
 								exit(2);
 							}
 						}
@@ -1098,7 +1225,8 @@ int main(int argc, char *argv[])
 						strncpy(domainname, delim, strlen(delim));
 						address = getaddress(delim);
 						if (!address){
-							printf("error:unable to determine the remote host address\n");
+							printf("error:unable to determine the remote host "
+								"address\n");
 							exit(2);
 						}
 					}
@@ -1116,7 +1244,8 @@ int main(int argc, char *argv[])
 			case 't':
 				trashchar=atoi(optarg);
 				if (!trashchar) {
-					printf("error: non-numerical number of trashed character\n");
+					printf("error: non-numerical number of trashed "
+						"character\n");
 					exit(2);
 				}
 				break;
@@ -1153,18 +1282,20 @@ int main(int argc, char *argv[])
 	/* lots of conditions to check */
 	if (trace) {
 		if (usrloc || flood || randtrash) {
-			printf("error: trace can't be combined with usrloc, random or flood\n");
+			printf("error: trace can't be combined with usrloc, random or "
+				"flood\n");
 			exit(2);
 		}
 		if (!uri_b) {
-			printf("error: for trace modus a sip:uri is realy needed\n");
+			printf("error: for trace mode a sip:uri is realy needed\n");
 			exit(2);
 		}
 		if (file_b) {
 			printf("warning: file will be ignored for tracing.");
 		}
 		if (!username) {
-			printf("error: for trace modus without a file the sip:uir have to contain a username\n");
+			printf("error: for trace mode without a file the sip:uir have to "
+				"contain a username\n");
 			exit(2);
 		}
 		if (!via_ins){
@@ -1172,26 +1303,29 @@ int main(int argc, char *argv[])
 			via_ins=1;
 		}
 		if (!warning_ext) {
-			printf("warning: IP extract from warning activated to be more informational\n");
+			printf("warning: IP extract from warning activated to be more "
+				"informational\n");
 			warning_ext=1;
 		}
 		if (maxforw==-1) maxforw=255;
 	}
 	else if (usrloc) {
 		if (trace || flood || randtrash) {
-			printf("error: usrloc can't be combined with trace, random or flood\n");
+			printf("error: usrloc can't be combined with trace, random or "
+				"flood\n");
 			exit(2);
 		}
 		if (!username || !uri_b || nameend==-1) {
-			printf("error: for the USRLOC modus you have to give a sip:uri with a "
-					"username and the\n       username appendix end at least\n");
+			printf("error: for the USRLOC mode you have to give a sip:uri with "
+				"a username and the\n       username appendix end at least\n");
 			exit(2);
 		}
 		if (via_ins) {
 			via_ins=0;
 		}
 		if (redirects) {
-			printf("warning: redirects are not expected in USRLOC. Disableing\n");
+			printf("warning: redirects are not expected in USRLOC. "
+				"disableing\n");
 			redirects=0;
 		}
 		if (namebeg==-1)
@@ -1199,7 +1333,8 @@ int main(int argc, char *argv[])
 	}
 	else if (flood) {
 		if (trace || usrloc || randtrash) {
-			printf("error: flood can't be combined with trace, random or usrloc\n");
+			printf("error: flood can't be combined with trace, random or "
+				"usrloc\n");
 			exit(2);
 		}
 		if (!uri_b) {
@@ -1207,13 +1342,15 @@ int main(int argc, char *argv[])
 			exit(2);
 		}
 		if (redirects) {
-			printf("warning: redirects are not expected in flood. Disableing\n");
+			printf("warning: redirects are not expected in flood. "
+				"disableing\n");
 			redirects=0;
 		}
 	}
 	else if (randtrash) {
 		if (trace || usrloc || flood) {
-			printf("error: random can't be combined with trace, flood or usrloc\n");
+			printf("error: random can't be combined with trace, flood or "
+				"usrloc\n");
 			exit(2);
 		}
 		if (!uri_b) {
@@ -1221,11 +1358,13 @@ int main(int argc, char *argv[])
 			exit(2);
 		}
 		if (redirects) {
-			printf("warning: redirects are not expected in random. Disableing\n");
+			printf("warning: redirects are not expected in random. "
+				"disableing\n");
 			redirects=0;
 		}
 		if (verbose) {
-			printf("warning: random characters may destroy your terminal output\n");
+			printf("warning: random characters may destroy your terminal "
+				"output\n");
 		}
 	}
 	else {
@@ -1234,7 +1373,8 @@ int main(int argc, char *argv[])
 			exit(2);
 		}
 		if (!(username || file_b)) {
-			printf("error: ether a file or an username in the sip uri is required\n");
+			printf("error: ether a file or an username in the sip uri is "
+				"required\n");
 			exit(2);
 		}
 		
@@ -1252,12 +1392,4 @@ int main(int argc, char *argv[])
 	/* normaly we won't come back here, but to satisfy the compiler */
 	return 0;
 }
-
-
-/*
-shoot will exercise the all types of sip servers.
-it is not to be used to measure round-trips and general connectivity.
-use ping for that. 
-written by farhan on 10th august, 2000.
-*/
 
