@@ -445,7 +445,7 @@ static inline int find_last_route(struct sip_msg* _m, struct hdr_field** _h, rr_
 		return -1;
 	}
 
-	ptr = _m->route->next;
+	ptr = _m->route;
 	last = 0;
 
 	while(ptr) {
