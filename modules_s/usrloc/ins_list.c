@@ -71,6 +71,13 @@ int process_ins_list(str* _d)
 	char b[256];
 	db_key_t keys[] = {user_col, contact_col, expires_col, q_col, callid_col, cseq_col};
 	db_val_t vals[6];
+
+	keys[0] = user_col;
+	keys[1] = contact_col;
+	keys[2] = expires_col;
+	keys[3] = q_col;
+	keys[4] = callid_col;
+	keys[5] = cseq_col;
 	
 	if (ins_root) {
 	     /* FIXME */
