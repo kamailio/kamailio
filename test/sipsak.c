@@ -26,17 +26,49 @@ bouquets and brickbats to farhan@hotfoon.com
 
 #include <regex.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #define RESIZE		1024
 #define BUFSIZE		1500
-#define VIA_BEGIN_STR "Via: SIP/2.0/UDP "
-#define VIA_BEGIN_STR_LEN 17
+#define FQDN_SIZE   200
+#define REQ_INV 1
+#define REQ_REG 2
+#define REQ_OPT 3
+#define VIA_STR "Via: SIP/2.0/UDP "
+#define VIA_STR_LEN 17
 #define MAX_FRW_STR "Max-Forwards: "
 #define MAX_FRW_STR_LEN 14
 #define SIP20_STR " SIP/2.0\r\n"
 #define SIP20_STR_LEN 10
+#define SIP200_STR "SIP/2.0 200 OK\r\n"
+#define SIP200_STR_LEN 16
+#define REG_STR "REGISTER"
+#define REG_STR_LEN 8
+#define OPT_STR "OPTIONS"
+#define OPT_STR_LEN 7
+#define MES_STR "MESSAGE"
+#define MES_STR_LEN 7
+#define FROM_STR "From: "
+#define FROM_STR_LEN 6
+#define TO_STR "To: "
+#define TO_STR_LEN 4
+#define CALL_STR "Call-ID: "
+#define CALL_STR_LEN 9
+#define CSEQ_STR "CSeq: "
+#define CSEQ_STR_LEN 6
+#define CONT_STR "Contact: "
+#define CONT_STR_LEN 9
+#define CON_TXT_STR "Content-Type: text/plain\r\n"
+#define CON_TXT_STR_LEN 26
+#define CON_LEN_STR "Content-Length: "
+#define CON_LEN_STR_LEN 16
+#define SIPSAK_MES_STR "USRLOC test message from SIPsak for user "
+#define SIPSAK_MES_STR_LEN 41
 
-int verbose=0;
+int verbose, nameend, namebeg;
+char *username, *domainname;
+char fqdn[FQDN_SIZE];
+char message[BUFSIZE], mes_reply[BUFSIZE];
 
 /* take either a dot.decimal string of ip address or a 
 domain name and returns a NETWORK ordered long int containing
@@ -98,6 +130,103 @@ long getaddress(char *host)
 	return l;
 }
 
+void get_fqdn(){
+	char hname[100], dname[100];
+	size_t namelen=100;
+
+	if (gethostname(&hname[0], namelen) < 0) {
+		printf("error: cannot determine domainname\n");
+		exit(2);
+	}
+	if ((strchr(hname, '.'))==NULL) {
+#ifdef DEBUG
+		printf("hostname without dots. determine domainname...\n");
+#endif
+		if (getdomainname(&dname[0], namelen) < 0) {
+			printf("error: cannot determine domainname\n");
+			exit(2);
+		}
+		sprintf(fqdn, "%s.%s", hname, dname);
+	}
+	else {
+		strcpy(fqdn, hname);
+	}
+
+#ifdef DEBUG
+	printf("fqdnhostname: %s\n", fqdn);
+#endif
+}
+
+/* This function tries to add a Via Header Field in the message. */
+void add_via(char *mes, int port)
+{
+	char *via_line, *via, *backup; 
+
+	via_line = malloc(VIA_STR_LEN+strlen(fqdn)+9);
+	sprintf(via_line, "%s%s:%i\r\n", VIA_STR, fqdn, port);
+#ifdef DEBUG
+	printf("our Via-Line: %s\n", via_line);
+#endif
+
+	if (strlen(mes)+strlen(via_line)>= BUFSIZE){
+		printf("can't add our Via Header Line because file is too big\n");
+		exit(2);
+	}
+	if ((via=strstr(mes,"Via:"))==NULL){
+		/* We doesn't find a Via so we insert our via
+		   direct after the first line. */
+		via=strchr(mes,'\n');
+		via++;
+	}
+	backup=malloc(strlen(via)+1);
+	strncpy(backup, via, strlen(via)+1);
+	strncpy(via, via_line, strlen(via_line));
+	strncpy(via+strlen(via_line), backup, strlen(backup)+1);
+	free(via_line);
+	free(backup);
+	if (verbose)
+		printf("New message with Via-Line:\n%s\n", mes);
+}
+
+/* This function tries to create a valid sip header out of the given 
+   parameters */
+void create_msg(char *buff, int action, int lport){
+	unsigned int c;
+	char *usern;
+
+#ifdef DEBUG
+	printf("username: %s\ndomainname: %s\n", username, domainname);
+#endif
+	usern=malloc(strlen(username)+6);
+	sprintf(usern, "%s%i", username, namebeg);
+	srandom(lport);
+	c=random();
+	switch (action){
+		case REQ_REG:
+			sprintf(buff, "%s sip:%s:%i%s%s<sip:%s@%s>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n\r\n", REG_STR, fqdn, lport, SIP20_STR, FROM_STR, usern, domainname, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, REG_STR);
+			sprintf(message, "%s im:%s@%s%s%s%s:%i\r\n%s<im:sipsak@%s:%i>\r\n%s<im:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s%s%i\r\n\r\n%s%s%i.", MES_STR, username, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, fqdn, lport, TO_STR, username, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, OPT_STR, CON_TXT_STR, CON_LEN_STR, SIPSAK_MES_STR_LEN+strlen(usern), SIPSAK_MES_STR, username, namebeg);
+#ifdef DEBUG
+			printf("message:\n%s\n", message);
+#endif
+			sprintf(mes_reply, "%s%s<sip:%s@%s:%i>\r\n%s<sip:sipsak@%s:%i>\r\n%s%u@%s\r\n%s%i %s\r\n%s 0\r\n\r\n", SIP200_STR, FROM_STR, usern, domainname, lport, TO_STR, fqdn, lport, CALL_STR, c, fqdn, CSEQ_STR, namebeg, MES_STR, CON_LEN_STR);
+#ifdef DEBUG
+			printf("message reply:\n%s\n", mes_reply);
+#endif
+			break;
+		case REQ_OPT:
+			sprintf(buff, "%s sip:%s@%s%s%s<sip:sipsak@%s:%i>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sip:sipsak@%s:%i>\r\n\r\n", OPT_STR, username, domainname, SIP20_STR, FROM_STR, fqdn, lport, TO_STR, username, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, OPT_STR, CONT_STR, fqdn, lport);
+			break;
+		default:
+			printf("error: unknown request type to create\n");
+			exit(2);
+			break;
+	}
+	free(usern);
+#ifdef DEBUG
+	printf("request:\n%s", buff);
+#endif
+}
+
 /* This function check for the existence of a Max-Forwards Header Field.
    If its present it sets it to the given value, if not it will be inserted.*/
 void set_maxforw(char *mes, int maxfw){
@@ -139,60 +268,7 @@ void set_maxforw(char *mes, int maxfw){
 	}
 }
 
-/* This function tries to add a Via Header Field in the message. */
-void add_via(char *mes, int port)
-{
-	char *via_line, *via, *backup; 
-	char hname[100], dname[100], fqdnname[200];
-	size_t namelen=100;
 
-	if (gethostname(&hname[0], namelen) < 0) {
-		printf("error: cannot determine domainname\n");
-		exit(2);
-	}
-	if ((strchr(hname, '.'))==NULL) {
-#ifdef DEBUG
-		printf("hostname without dots. determine domainname...\n");
-#endif
-		if (getdomainname(&dname[0], namelen) < 0) {
-			printf("error: cannot determine domainname\n");
-			exit(2);
-		}
-		sprintf(fqdnname, "%s.%s", hname, dname);
-	}
-	else {
-		strcpy(fqdnname, hname);
-	}
-
-#ifdef DEBUG
-	printf("fqdnhostname: %s\n", fqdnname);
-#endif
-
-	via_line = malloc(VIA_BEGIN_STR_LEN+strlen(fqdnname)+9);
-	sprintf(via_line, "%s%s:%i\r\n", VIA_BEGIN_STR, fqdnname, port);
-#ifdef DEBUG
-	printf("our Via-Line: %s\n", via_line);
-#endif
-
-	if (strlen(mes)+strlen(via_line)>= BUFSIZE){
-		printf("can't add our Via Header Line because file is too big\n");
-		exit(2);
-	}
-	if ((via=strstr(mes,"Via:"))==NULL){
-		/* We doesn't find a Via so we insert our via
-		   direct after the first line. */
-		via=strchr(mes,'\n');
-		via++;
-	}
-	backup=malloc(strlen(via)+1);
-	strncpy(backup, via, strlen(via)+1);
-	strncpy(via, via_line, strlen(via_line));
-	strncpy(via+strlen(via_line), backup, strlen(backup)+1);
-	free(via_line);
-	free(backup);
-	if (verbose)
-		printf("New message with Via-Line:\n%s\n", mes);
-}
 
 /* replaces the uri in first line of mes with the other uri */
 void uri_replace(char *mes, char *uri)
@@ -228,15 +304,12 @@ at 5 seconds (5000 milliseconds).
 we are detecting the final response without a '1' as the first
 letter.
 */
-void shoot(char *buff, long address, int lport, int rport, int maxforw, int trace, int vbool)
+void shoot(char *buff, long address, int lport, int rport, int maxforw, int trace, int vbool, int fbool, int usrloc)
 {
 	struct sockaddr_in	addr;
 	struct sockaddr_in	sockname;
 	int ssock;
 	int redirected=1;
-	/*
-	char compiledre[ RESIZE ];
-	*/
 	int retryAfter = 500;
 	int	nretries = 10;
 	int sock, i, len, ret;
@@ -247,8 +320,6 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 	char	*contact, *crlf, *foo, *bar;
 	regex_t* regexp;
 	regex_t* redexp;
-/*	struct hostent *host;
-	long l, *lp; */
 
 	/* create a socket */
 	sock = (int)socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -272,7 +343,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 	}
 
 	/* for the via line we need our listening port number */
-	if (vbool && lport==0){
+	if ((vbool||usrloc) && lport==0){
 		memset(&sockname, 0, sizeof(sockname));
 		slen=sizeof(sockname);
 		getsockname(ssock, (struct sockaddr *)&sockname, &slen);
@@ -290,6 +361,14 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 	redexp=(regex_t*)malloc(sizeof(regex_t));
 	regcomp(redexp, "^SIP/[0-9]\\.[0-9] 3[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
 
+	get_fqdn();
+
+	if (usrloc){
+		nretries=nameend-namebeg;
+		create_msg(buff, REQ_REG, lport);
+	}
+	if (trace & !fbool)
+		create_msg(buff, REQ_OPT, lport);
 	if(maxforw)
 		set_maxforw(buff, maxforw);
 	if(vbool)
@@ -301,7 +380,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 		else
 			nretries=255;
 	}
-
+exit(2);
 	while (redirected) {
 
 		redirected=0;
@@ -484,30 +563,36 @@ int main(int argc, char *argv[])
 	long	address;
 	FILE	*pf;
 	char	buff[BUFSIZE];
-	int		length, c, fbool, sbool, tbool, vbool;
-	int		maxforw=0;
-	int		lport=0;
-	int		rport=5060;
+	int		length, c, fbool, sbool, tbool, vbool, ubool;
+	int		maxforw, lport, rport;
 	char	*delim, *delim2;
 
-	fbool=sbool=tbool=0;
-	vbool=1;
+	username=NULL;
+	verbose=namebeg=nameend=0;
 
-	while ((c=getopt(argc,argv,"f:s:l:m:thiv")) != EOF){
+	fbool=sbool=tbool=lport=maxforw=ubool=0;
+	vbool=1;
+    rport=5060;
+	memset(buff, 0, BUFSIZE);
+	memset(message, 0, BUFSIZE);
+	memset(mes_reply, 0, BUFSIZE);
+	memset(fqdn, 0, FQDN_SIZE);
+
+	while ((c=getopt(argc,argv,"b:e:f:hil:m:r:s:tuv")) != EOF){
 		switch(c){
-			case 'h':
-				printf("\nusage: sipsak [-h] -f filename -s sip:uri [-l port] [-m number] [-t] [-i] [-v]\n"
-						"   -h           displays this help message\n"
-						"   -f filename  the file which contains the SIP message to send\n"
-						"   -s sip:uri   the destination server uri in form sip:[user@]servername[:port]\n"
-						"   -l port      the local port to use\n"
-						"   -m number    the value for the max-forwards header field\n"
-						"   -t           activates the traceroute modus\n"
-						"   -i           deactivate the insertion of a Via-Line\n"
-						"   -v           be more verbose\n"
-						"The manupulation function are only tested with nice RFC conform SIP-messages,\n"
-						"so don't expect them to work with ugly or malformed messages.\n");
-				exit(0);
+			case 'b':
+				namebeg=atoi(optarg);
+				if (!namebeg) {
+					puts("error: non-numerical appendix begin for the username");
+					exit(2);
+				}
+				break;
+			case 'e':
+				nameend=atoi(optarg);
+				if (!nameend) {
+					puts("error: non-numerical appendix end for the username");
+					exit(2);
+				}
 				break;
 			case 'f':
 				/* file is opened in binary mode so that the cr-lf is preserved */
@@ -526,40 +611,30 @@ int main(int argc, char *argv[])
 				buff[length] = '\0';
 				fbool=1;
 				break;
-			case 's':
-				if ((delim=strchr(optarg,':'))!=NULL){
-					delim++;
-					if (!strncmp(optarg,"sip",3)){
-						if ((delim2=strchr(delim,'@'))!=NULL){
-							/* we don't need the username */
-							delim2++;
-							delim=delim2;
-						}
-						if ((delim2=strchr(delim,':'))!=NULL){
-							*delim2 = '\0';
-							delim2++;
-							rport = atoi(delim2);
-							if (!rport) {
-								puts("error: non-numerical remote port number");
-								exit(2);
-							}
-						}
-						address = getaddress(delim);
-						if (!address){
-							puts("error:unable to determine the remote host address.");
-							exit(2);
-						}
-					}
-					else{
-						puts("error: sip:uri doesn't not begin with sip");
-						exit(2);
-					}
-				}
-				else{
-					puts("error: sip:uri doesn't contain a : ?!");
-					exit(2);
-				}
-				sbool=1;
+			case 'h':
+				printf("\nmodi:\n"
+						" shoot : sipsak -f filename -s sip:uri\n"
+						" trace : sipsak [-f filename] -s sip:uri -t\n"
+						" USRLOC: sipsak [-b number] -e number -s sip:uri -u\n"
+						" additional parameter in every modi: [-i] [-l port] [-m number] [-r port] [-v]\n"
+						"   -h           displays this help message\n"
+						"   -f filename  the file which contains the SIP message to send\n"
+						"   -s sip:uri   the destination server uri in form sip:[user@]servername[:port]\n"
+						"   -t           activates the traceroute modus\n"
+						"   -u           activates the USRLOC modus\n"
+						"   -b number    the starting number appendix to the user name in USRLOC modus\n"
+						"   -e number    the ending numer of the appendix to the user name in USRLOC modus\n"
+						"   -l port      the local port to use\n"
+						"   -r port      the remote port to use\n"
+						"   -m number    the value for the max-forwards header field\n"
+						"   -i           deactivate the insertion of a Via-Line\n"
+						"   -v           be more verbose\n"
+						"The manupulation function are only tested with nice RFC conform SIP-messages,\n"
+						"so don't expect them to work with ugly or malformed messages.\n");
+				exit(0);
+				break;
+			case 'i':
+				vbool=0;
 				break;
 			case 'l':
 				lport=atoi(optarg);
@@ -574,39 +649,105 @@ int main(int argc, char *argv[])
 					puts("error: non-numerical number of max-forwards");
 					exit(2);
 				}
+			case 'r':
+				rport=atoi(optarg);
+				if (!rport) {
+					puts("error: non-numerical remote port number");
+					exit(2);
+				}
 				break;
+			case 's':
+				if (!strncmp(optarg,"sip",3)){
+					if ((delim=strchr(optarg,':'))!=NULL){
+						delim++;
+						if ((delim2=strchr(delim,'@'))!=NULL){
+							username=malloc(delim2-delim+1);
+							strncpy(username, delim, delim2-delim);
+							delim2++;
+							delim=delim2;
+						}
+						if ((delim2=strchr(delim,':'))!=NULL){
+							*delim2 = '\0';
+							delim2++;
+							rport = atoi(delim2);
+							if (!rport) {
+								puts("error: non-numerical remote port number");
+								exit(2);
+							}
+						}
+						domainname=malloc(strlen(delim)+1);
+						strncpy(domainname, delim, strlen(delim));
+						address = getaddress(delim);
+						if (!address){
+							puts("error:unable to determine the remote host address.");
+							exit(2);
+						}
+					}
+					else{
+						puts("error: sip:uri doesn't contain a : ?!");
+						exit(2);
+					}
+				}
+				else{
+					puts("error: sip:uri doesn't not begin with sip");
+					exit(2);
+				}
+				sbool=1;
+				break;			break;
 			case 't':
 				tbool=1;
 				break;
-			case 'i':
-				vbool=0;
+			case 'u':
+				ubool=1;
 				break;
 			case 'v':
 				verbose=1;
+				break;
+			default:
+				printf("error: unknown parameter %c\n", c);
+				exit(2);
 				break;
 		}
 	}
 
 	if (tbool) {
-		if (strncmp(buff, "OPTIONS", 7)){
-			printf("error: tracerouting only possible with an OPTIONS request.\n"
-				"       Give another request file or convert it to an OPTIONS request.\n");
+		if (!sbool) {
+			printf("error: for trace modus a sip:uri is realy needed\n");
 			exit(2);
 		}
+		if (fbool) {
+			if (strncmp(buff, "OPTIONS", 7)){
+				printf("error: tracerouting only possible with an OPTIONS request.\n"
+					"       Give another request file or convert it to an OPTIONS request.\n");
+				exit(2);
+			}
+		}
+		else {
+			if (!username) {
+				printf("error: for trace modus without a file the sip:uir have to contain a username\n");
+				exit(2);
+			}
+		}
+		if (!vbool){
+			printf("warning: Via-Line is needed for tracing. Ignoring -i\n");
+			vbool=1;
+		}
 	}
-
-	if (fbool & sbool)
-		shoot(buff, address, lport, rport, maxforw, tbool, vbool);
-	else{
+	else if (ubool) {
+		if (!username || !sbool || !nameend) {
+			printf("error: for the USRLOC modus you have to give a sip:uri with a "
+					"username and the\n       username appendix end at least\n");
+			exit(2);
+		}
+		if (vbool){
+			printf("warning: Via-Line is useless for USRLOC. Enableling -i\n");
+			vbool=0;
+		}
+	}
+	else if (!fbool & !sbool)
 		printf("error: you have to give the file to send and the sip:uri at least.\n"
 			"       see 'sipsak -h' for more help.\n");
-	}
-
-	/* visual studio closes the debug console as soon as the 
-	program terminates. this is to hold the window from collapsing
-	Uncomment it if needed.
-	getchar();*/
-	
+	shoot(buff, address, lport, rport, maxforw, tbool, vbool, fbool, ubool);
 
 	return 0;
 }
@@ -617,9 +758,5 @@ shoot will exercise the all types of sip servers.
 it is not to be used to measure round-trips and general connectivity.
 use ping for that. 
 written by farhan on 10th august, 2000.
-
-TO-DO:
-2. understand redirect response and retransmit to the redirected server.
-
 */
 
