@@ -23,6 +23,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-03-11: New module interface (janakj)
  */
 
 
@@ -55,57 +59,39 @@ static int cpl_is_response_redirect(struct sip_msg* msg, char* str, char* str2);
 static int cpl_update_contact(struct sip_msg* msg, char* str, char* str2);
 static int mod_init(void);
 
+
+/*
+ * Exported functions
+ */
+static cmd_export_t cmds[] = {
+	{"cpl_run_script",           cpl_run_script,           0, 0},
+	{"cpl_is_response_accept",   cpl_is_response_accept,   0, 0},
+	{"cpl_is_response_reject",   cpl_is_response_reject,   0, 0},
+	{"cpl_is_response_redirect", cpl_is_response_redirect, 0, 0},
+	{"cpl_update_contact"	     cpl_update_contact,       0, 0},
+	{0, 0, 0, 0}
+};
+
+
+/*
+ * Exported parameters
+ */
+static param_export_t params[] = {
+	{"cpl_server", STR_PARAM, &cpl_server},
+	{"cpl_port",   INT_PARAM, &cpl_port  },
+	{0, 0, 0}
+};
+
+
 struct module_exports exports = {
 	"cpl_module",
-	(char*[]){		"cpl_run_script",
-				"cpl_is_response_accept",
-				"cpl_is_response_reject",
-				"cpl_is_response_redirect",
-				"cpl_update_contact"
-			},
-	(cmd_function[]){
-				cpl_run_script,
-				cpl_is_response_accept,
-				cpl_is_response_reject,
-				cpl_is_response_redirect,
-				cpl_update_contact
-				},
-	(int[]){
-				0,
-				0,
-				0,
-				0,
-				0
-			},
-	(fixup_function[]){
-				0,
-				0,
-				0,
-				0,
-				0
-		},
-	5,
-
-	(char*[]) {   /* Module parameter names */
-		"cpl_server",
-		"cpl_port"
-	},
-	(modparam_t[]) {   /* Module parameter types */
-		STR_PARAM,
-		INT_PARAM
-	},
-	(void*[]) {   /* Module parameter variable pointers */
-		&cpl_server,
-		&cpl_port
-	},
-	2,      /* Number of module paramers */
-
-
+	cmds,     /* Exported functions */
+	params,   /* Exported parameters */
 	mod_init, /* Module initialization function */
-	(response_function) 0,
-	(destroy_function) 0,
+        0,
 	0,
-	0 /* per-child init function */
+	0,
+	0         /* per-child init function */
 };
 
 
