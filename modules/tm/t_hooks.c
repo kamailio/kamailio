@@ -126,6 +126,12 @@ int register_tmcb( struct sip_msg* p_msg, int types, transaction_cb f,
 			types);
 		return E_BUG;
 	}
+	/* we don't register null functions */
+	if (f==0) {
+		LOG(L_CRIT, "BUG:tm:register_tmcb: null callback function\n");
+		return E_BUG;
+	}
+
 	if (types&TMCB_REQUEST_IN) {
 		if (types!=TMCB_REQUEST_IN) {
 			LOG(L_CRIT, "BUG:tm:register_tmcb: callback type TMCB_REQUEST_IN "
