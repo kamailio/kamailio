@@ -1,0 +1,117 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    The module implements the Diversion extensions as per draft-levy-sip-diversion-08.  The
+	    diversion extensions are useful in various scenarios involving call
+	    forwarding. Typically one needs to communicate the original recipient of the call to the
+	    PSTN gateway and this is what the diversion extensions can be used for.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>None.</para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>suffix</varname> (string)</title>
+	    <para>
+		The suffix to be appended to the end of the header field. You can use the parameter
+		to specify additional parameters to be added to the header field, see the example.
+	    </para>
+	    <para>
+		Default value is <quote></quote> (empty string).
+	    </para>
+	    <example>
+		<title><varname>suffix</varname> usage</title>
+		<programlisting format="linespecific">
+modparam("diversion", "suffix", ";privacy=full")
+</programlisting>
+	    </example>
+	</section>
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title><function moreinfo="none">add_diversion(reason)</function></title>
+	    <para>
+		The function adds a new diversion header field before any other existing Diversion
+		header field in the message (the newly added Diversion header field will become the
+		topmost Diversion header field). The inbound (without any modifications done by the
+		proxy server) Request-URI will be used as the Diversion URI.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>reason</emphasis> - The reason string to be added as the reason
+			parameter
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function moreinfo="none">add_diversion</function> usage</title>
+		<programlisting format="linespecific">
+...
+add_diversion("user-busy");
+...
+</programlisting>
+	    </example>
+	</section>
+	    <section>
+		<title>Diversion Example</title>
+		<para>
+		    The following example shows a Diversion header field added to INVITE
+		    message. The INVITE message was diverted by the user agent of sip:jiri@iptel.org
+		    because the user was talking to someone else and the new destination is 
+		    sip:jan@iptel.org.
+		</para>
+		<programlisting format="linespecific">
+INVITE sip:jan@iptel.org SIP/2.0
+From: "5060" &lt;sip:5060@iptel.org&gt;;tag=ldgheoihege
+To: "Jan Janak" &lt;sip:jan@iptel.org&gt;
+Call-ID: adgasdkgjhkjha@1.2.3.4
+CSeq: 3 INVITE
+Diversion: &lt;sip:jiri@iptel.org&gt;;reason=user-busy
+Via: SIP/2.0/UDP 1.2.3.4:5060
+Contact: &lt;sip:5060@2.3.4.5&gt;
+Content-Length: 0
+</programlisting>
+	    </section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("diversion.sgml" "Book" "chapter")
+End:
+-->
