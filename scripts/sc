@@ -5,7 +5,7 @@
 # sc: ser control; tool for maintaining ser's databases
 #
 
-# local domain & realm
+# realm
 DOMAIN=iptel.org
 
 # SQL config
@@ -39,31 +39,74 @@ EMAIL_COLUMN=email_address
 
 usage() {
 	echo "usage: "
-	echo -n "   $0 add <name> <realm> <password> <email> "
-	echo "... introduce a new subscriber"
-	echo "   $0 dul <name> ... delete user's UsrLoc entries"
+	echo -n "   $0 add <name> <password> <email> "
+	echo "... introduce a new subscriber (*)"
+	echo "   $0 dul <name> ... delete user's UsrLoc entries (*)"
 	echo "   $0 show [<name>] ... show online users"
 	echo "   $0 mail <name> ... send an email to a user"
-	echo "   $0 rm <name> ... delete a user"
-	echo "   $0 stat ... runnig processe shown + show "
+	echo "   $0 rm <name> ... delete a user (*)"
+	echo "   $0 passwd <user> <passwd> ... change user's password (*)"
+	echo "   $0 stat ... show runnig processes + $0 show"
+	echo 
+	echo "   commands labeled with (*) will prompt for a MySQL password"
 }
 
 
 case $1 in
 
-	add)
-		if [ $# -ne 5 ] ; then
+	passwd)
+		if [ $# -ne 3 ] ; then
 			usage
 			exit 1
 		fi
 		shift
 
-		HA1=`$GENHA1 $1 $2 $3`
+		HA1=`$GENHA1 $1 $DOMAIN $2`
 		if [ $? -ne 0 ] ; then
 			echo "HA1 calculation failed"
 			exit 1
 		fi
-		HA1B=`$GENHA1 "$1@$DOMAIN" $2 $3`
+		HA1B=`$GENHA1 "$1@$DOMAIN" $DOMAIN $2`
+		if [ $? -ne 0 ] ; then
+			echo "HA1B calculation failed"
+			exit 1
+		fi
+		read -s -p "MySql Password: " PW
+		echo 
+		CNT=`$MYSQL -B -h $SQL_HOST -u $SQL_USER -p$PW \
+			-e "use $SQL_DB; select count(*) from $TABLE \
+			where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$DOMAIN';" | tail -n1`
+		if [ $CNT -eq 0 ] ; then
+			echo "No such user exists"
+			exit 1
+		fi
+		$MYSQL -h $SQL_HOST -u $SQL_USER -p$PW \
+			-e "use $SQL_DB; update $TABLE \
+			set $HA1_COLUMN='$HA1', $HA1B_COLUMN='$HA1B', $PASSWORD_COLUMN='$2' \
+			WHERE $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$DOMAIN';"
+		if [ $? -ne 0 ] ; then
+			echo "password change failed"
+		else
+			echo "password change succeeded"
+		fi
+
+		;;		
+			
+		
+
+	add)
+		if [ $# -ne 4 ] ; then
+			usage
+			exit 1
+		fi
+		shift
+
+		HA1=`$GENHA1 $1 $DOMAIN $2`
+		if [ $? -ne 0 ] ; then
+			echo "HA1 calculation failed"
+			exit 1
+		fi
+		HA1B=`$GENHA1 "$1@$DOMAIN" $DOMAIN $2`
 		if [ $? -ne 0 ] ; then
 			echo "HA1B calculation failed"
 			exit 1
@@ -74,7 +117,7 @@ case $1 in
 		
 		CNT=`$MYSQL -B -h $SQL_HOST -u $SQL_USER -p$PW \
 			-e "use $SQL_DB; select count(*) from $TABLE \
-			where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$2';" | tail -n1`
+			where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$DOMAIN';" | tail -n1`
 		if [ $CNT -ne 0 ] ; then
 			echo "user '$1' already exists"
 			exit 1
@@ -82,7 +125,7 @@ case $1 in
 		$MYSQL -h $SQL_HOST -u $SQL_USER -p$PW \
 			-e "use $SQL_DB; insert into $TABLE \
 				($SUBSCRIBER_COLUMN,$REALM_COLUMN,$HA1_COLUMN,$HA1B_COLUMN,$PASSWORD_COLUMN,$EMAIL_COLUMN) \
-				values ('$1','$2','$HA1','$HA1B','$3', '$4');";
+				values ('$1','$DOMAIN','$HA1','$HA1B','$2', '$3');";
 		if [ $? -ne 0 ] ; then
 			echo "introducing a new user to the database failed"
 		else
