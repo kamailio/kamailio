@@ -73,8 +73,8 @@ mode = debug
 
 
 #common
-CC=gcc-3.0
-LD=gcc-3.0
+CC=gcc #-3.0
+LD=gcc #-3.0
 MKDEP=gcc -MM $(DEFS)
 MKTAGS=ctags-exuberant -R .
 
