@@ -113,6 +113,8 @@ BEGIN {
 	server_ims=0;
 	server_csco=0;
 	server_sapphire=0;
+	server_lucent=0;
+	server_snom=0;
 	server_xx=0
 
 }
@@ -303,6 +305,14 @@ server==0 && /Server:.*CSCO/ {
 }
 server==0 && /Server:.*sapphire/ {
 	server_sapphire++
+	server=1
+}
+server==0 && /Server:.*snom/ {
+	server_snom++
+	server=1
+}
+server==0 && /Server:.*Lucent/ {
+	server_lucent++
 	server=1
 }
 server==0 && /Server:/ {
@@ -630,6 +640,8 @@ END {
 	print "3com: " server_3com " EPYGI: " server_epygi " Leader: " server_leader
 	print "IMS (Nortel): " server_ims " CSCO: " server_csco
 	print "sapphire: " server_sapphire
+	print "snom: " server_snom
+	print "lucent: " server_lucent
 	print "UFO: " server_xx
 }
 '
