@@ -195,14 +195,22 @@ int forward_reply(struct sip_msg* msg)
 	
 	to=0;
 	new_buf=0;
-#ifndef BOGDANS_CUTOFF
 	/*check if first via host = us */
 	if (check_via){
 		for (r=0; r<sock_no; r++)
+		{
+			DBG("forward_reply - checking if via==us: %d==%d && "
+					" [%.*s] == [%.*s]\n", 
+					msg->via1->host.len,
+					sock_info[r].name.len,
+					msg->via1->host.len, msg->via1->host.s,
+					sock_info[r].name.len, sock_info[r].name.s
+				);
 			if ( (msg->via1->host.len==sock_info[r].name.len) && 
 					(memcmp(msg->via1->host.s, sock_info[r].name.s, 
 										sock_info[r].name.len)==0) )
 				break;
+		}
 		if (r==sock_no){
 			LOG(L_NOTICE, "ERROR: forward_reply: host in first via!=me :"
 					" %.*s\n", msg->via1->host.len, msg->via1->host.s);
@@ -210,7 +218,6 @@ int forward_reply(struct sip_msg* msg)
 			goto error;
 		}
 	}
-#endif
 	/* quick hack, slower for mutliple modules*/
 	for (mod=modules;mod;mod=mod->next){
 		if ((mod->exports) && (mod->exports->response_f)){

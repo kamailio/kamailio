@@ -55,10 +55,19 @@ int check_address(struct ip_addr* ip, char *name, int resolver)
 {
 	struct hostent* he;
 	int i;
+	char* s;
 
 	/* maybe we are lucky and name it's an ip */
-	if (strcmp(name, ip_addr2a(ip))==0)
-		return 0;
+	s=ip_addr2a(ip);
+	if (s){
+		DBG("check_address(%s, %s, %d)\n", ip_addr2a(ip), name, resolver);
+		if (strcmp(name, s)==0)
+			return 0;
+	}else{
+		LOG(L_CRIT, "check_address: BUG: could not convert ip address\n");
+		return -1;
+	}
+		
 	if (resolver&DO_DNS){
 		DBG("check_address: doing dns lookup\n");
 		/* try all names ips */
