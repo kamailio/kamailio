@@ -35,6 +35,7 @@
  *  2003-03-31  removed msg->repl_add_rm (andrei)
  *  2003-04-26 ZSW (jiri)
  *  2003-05-01  parser extended to support Accept header field (janakj)
+ *  2005-03-02  free_via_list(vb) on via parse error (andrei)
  */
 
 
@@ -116,7 +117,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			tmp=parse_via(tmp, end, vb);
 			if (vb->error==PARSE_ERROR){
 				LOG(L_ERR, "ERROR: get_hdr_field: bad via\n");
-				pkg_free(vb);
+				free_via_list(vb);
 				goto error;
 			}
 			hdr->parsed=vb;
