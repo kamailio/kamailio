@@ -30,6 +30,7 @@
  * History:
  * --------
  *  2004-02-26  created by andrei
+ *  2003-03-03  switched to heavy macro use, added tsend_dgram_ev (andrei) 
  */
 
 #include <string.h>
@@ -38,8 +39,55 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/uio.h>
 
 #include "dprint.h"
+
+/* the functions below are very similar => some generic macros */
+#define TSEND_INIT \
+	int n; \
+	struct pollfd pf; \
+	pf.fd=fd; \
+	pf.events=POLLOUT
+
+#define TSEND_POLL(f_name) \
+poll_loop: \
+	while(1){ \
+		n=poll(&pf, 1, timeout); \
+		if (n<0){ \
+			if (errno==EINTR) continue; /* signal, ignore */ \
+			LOG(L_ERR, "ERROR: " f_name ": poll failed: %s [%d]\n", \
+					strerror(errno), errno); \
+			goto error; \
+		}else if (n==0){ \
+			/* timeout */ \
+			LOG(L_ERR, "ERROR: " f_name ": send timeout (%d)\n", timeout); \
+			goto error; \
+		} \
+		if (pf.revents&POLLOUT){ \
+			/* we can write again */ \
+			goto again; \
+		}else if (pf.revents&(POLLERR|POLLHUP|POLLNVAL)){ \
+			LOG(L_ERR, "ERROR: " f_name ": bad poll flags %x\n", \
+					pf.revents); \
+			goto error; \
+		} \
+		/* if POLLIN or POLLPRI or other non-harmfull events happened,    \
+		 * continue ( although poll should never signal them since we're  \
+		 * not interested in them => we should never reach this point) */ \
+	} 
+
+
+#define TSEND_ERR_CHECK(f_name)\
+	if (n<0){ \
+		if (errno==EINTR) goto again; \
+		else if (errno!=EAGAIN && errno!=EWOULDBLOCK){ \
+			LOG(L_ERR, "ERROR: " f_name ": failed to send: (%d) %s\n", \
+					errno, strerror(errno)); \
+			goto error; \
+		}else goto poll_loop; \
+	}
+	
 
 
 /* sends on fd (which must be O_NONBLOCK); if it cannot send any data
@@ -50,17 +98,10 @@
  */
 int tsend_stream(int fd, char* buf, unsigned int len, int timeout)
 {
-	int n;
 	int written;
-	int initial_len;
-	struct pollfd pf;
+	TSEND_INIT;
 	
 	written=0;
-	initial_len=len;
-	pf.fd=fd;
-	pf.events=POLLOUT;
-	
-	
 again:
 	n=send(fd, buf, len,
 #ifdef HAVE_MSG_NOSIGNAL
@@ -69,121 +110,61 @@ again:
 			0
 #endif
 		);
-	if (n<0){
-		if (errno==EINTR) goto again;
-		else if (errno!=EAGAIN && errno!=EWOULDBLOCK){
-			LOG(L_ERR, "ERROR: tsend_stream: failed to send: (%d) %s\n",
-						errno, strerror(errno));
-			goto error;
-		}
+	TSEND_ERR_CHECK("tsend_stream");
+	written+=n; 
+	if (n<len){ 
+		/* partial write */ 
+		buf+=n; 
+		len-=n; 
+	}else{ 
+		/* succesfull full write */ 
+		return written;
 	}
-	written+=n;
-	if (n<len){
-		/* partial write */
-		buf+=n;
-		len-=n;
-	}else{
-		/* succesfull full write */
-		goto end;
-	}
-	while(1){
-		n=poll(&pf, 1, timeout);
-		if (n<0){
-			if (errno==EINTR) continue; /* signal, ignore */
-			LOG(L_ERR, "ERROR: tsend_stream: poll failed: %s [%d]\n",
-					strerror(errno), errno);
-			goto error;
-		}else if (n==0){
-			/* timeout */
-			LOG(L_ERR, "ERROR: tsend_stream: send timeout (%d)\n", timeout);
-			goto error;
-		}
-		if (pf.revents&POLLOUT){
-			/* we can write again */
-			goto again;
-		}else if (pf.revents&(POLLERR|POLLHUP|POLLNVAL)){
-			LOG(L_ERR, "ERROR: tsend_stream: bad poll flags %x\n", 
-					pf.revents);
-			goto error;
-		}
-		/* if POLLIN or POLLPRI or other non-harmfull events happened,
-		 * continue ( although poll should never signal them since we're
-		 * not interested in them => we should never reach this point) */
-	}
+	TSEND_POLL("tsend_stream");
 error:
 	return -1;
-end:
-	return written;
 }
 
 
 
-/* sends on dram fd (which must be O_NONBLOCK); if it cannot send any data
+/* sends on dgram fd (which must be O_NONBLOCK); if it cannot send any data
  * in timeout miliseconds it will return ERROR
  * returns: -1 on error, or number of bytes written
  *  (if less than len => couldn't send all)
  *  bugs: signals will reset the timer
  */
-int tsend_dgram(int fd, char* buf, unsigned int len, int timeout,
-				const struct sockaddr* to, socklen_t tolen)
+int tsend_dgram(int fd, char* buf, unsigned int len, 
+				const struct sockaddr* to, socklen_t tolen, int timeout)
 {
-	int n;
-	int written;
-	int initial_len;
-	struct pollfd pf;
-	
-	written=0;
-	initial_len=len;
-	pf.fd=fd;
-	pf.events=POLLOUT;
-	
+	TSEND_INIT;
 again:
 	n=sendto(fd, buf, len, 0, to, tolen);
-	if (n<0){
-		if (errno==EINTR) goto again;
-		else if (errno!=EAGAIN && errno!=EWOULDBLOCK){
-			LOG(L_ERR, "ERROR: tsend_dgram: failed to send: (%d) %s\n",
-						errno, strerror(errno));
-			goto error;
-		}
-	}
-	written+=n;
-	if (n<len){
-		/* partial write */
-		LOG(L_CRIT, "BUG: tsend_dgram: partial write on datagram socket\n");
-		goto error;
-	}else{
-		/* succesfull full write */
-		goto end;
-	}
-	while(1){
-		n=poll(&pf, 1, timeout);
-		if (n<0){
-			if (errno==EINTR) continue; /* signal, ignore */
-			LOG(L_ERR, "ERROR: tsend_dgram: poll failed: %s [%d]\n",
-					strerror(errno), errno);
-			goto error;
-		}else if (n==0){
-			/* timeout */
-			LOG(L_ERR, "ERROR: tsend_dgram: send timeout (%d)\n", timeout);
-			goto error;
-		}
-		if (pf.revents&POLLOUT){
-			/* we can write again */
-			goto again;
-		}else if (pf.revents&(POLLERR|POLLHUP|POLLNVAL)){
-			LOG(L_ERR, "ERROR: tsend_dgram: bad poll flags %x\n", 
-					pf.revents);
-			goto error;
-		}
-		/* if POLLIN or POLLPRI or other non-harmfull events happened,
-		 * continue ( although poll should never signal them since we're
-		 * not interested in them => we should never reach this point) */
-	}
+	TSEND_ERR_CHECK("tsend_dgram");
+	/* we don't care about partial writes: they shouln't happen on 
+	 * a datagram socket */
+	return n;
+	TSEND_POLL("tsend_datagram");
 error:
 	return -1;
-end:
-	return written;
 }
 
 	
+/* sends on connected datagram fd (which must be O_NONBLOCK); 
+ * if it cannot send any data in timeout miliseconds it will return ERROR
+ * returns: -1 on error, or number of bytes written
+ *  (if less than len => couldn't send all)
+ *  bugs: signals will reset the timer
+ */
+
+int tsend_dgram_ev(int fd, const struct iovec* v, int count, int timeout)
+{
+	TSEND_INIT;
+again:
+	n=writev(fd, v, count);
+	TSEND_ERR_CHECK("tsend_datagram_ev");
+	return n;
+	TSEND_POLL("tsend_datagram_ev");
+error:
+	return -1;
+}
+
