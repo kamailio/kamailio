@@ -39,6 +39,7 @@
 
 
 int use_fast_cmp = 0;
+int rr_append_fromtag = 1;
 
 
 static int mod_init(void);
@@ -71,15 +72,18 @@ struct module_exports exports = {
 	3, /* number of functions*/
 
 	(char*[]) { /* Module parameter names */
-		"use_fast_cmp"
+		"use_fast_cmp",
+		"append_fromtag"
 	},
 	(modparam_t[]) {   /* Module parameter types */
+		INT_PARAM,
 		INT_PARAM
 	},
 	(void*[]) {   /* Module parameter variable pointers */
-		&use_fast_cmp
+		&use_fast_cmp,
+		&rr_append_fromtag
 	},
-	1,         /* Number of module paramers */
+	2,         /* Number of module paramers */
 
 	mod_init,  /* initialize module */
 	0,         /* response function*/

@@ -25,6 +25,12 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ * 2003-01-19 - verification against double record-routing added, 
+ *            - option for putting from-tag in record-route added 
+ *            - buffer overflow eliminated (jiri)
  */
 
 #include "common.h"
@@ -35,6 +41,7 @@
 #include "../../action.h"
 #include "../../data_lump.h"
 #include "../../globals.h"
+#include "../../parser/parse_from.h"
 #include "utils.h"
 #include "rr_mod.h"
 
@@ -43,6 +50,8 @@ char rr_hash[MD5_LEN];
 char rr_s[256];
 
 str rr_suffix;
+
+int append_fromtag;
 
 /*
  * Generate hash string that will be inserted in RR
@@ -262,61 +271,90 @@ int remove_TMRoute(struct sip_msg* _m, struct hdr_field* _route, str* _uri)
  * Returns 0 on success, negative number on a failure
  * if _lr is set to 1, ;lr parameter will be used
  */
-int build_RR(struct sip_msg* _m, str* _l, int _lr)
+static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 {
 	str user;
+	int len;
+	char *rr;
+	char *p;
+	struct to_body *from;
+
+	from=0; /* fool -Wall */
+
+	/* calculate length first */
 	
-	_l->len = RR_PREFIX_LEN;
-	memcpy(_l->s, RR_PREFIX, _l->len);
+	len = RR_PREFIX_LEN;
 	
-	     /* first try to look at r-uri for a username */
+     /* first try to look at r-uri for a username */
 	user.s = _m->first_line.u.request.uri.s;
 	user.len = _m->first_line.u.request.uri.len;
 	get_username(&user);
 	
-	     /* no username in original uri -- hmm; maybe it is a uri
-		with just host address and username is in a preloaded route,
-		which is now no rewritten r-uri (assumed rewriteFromRoute
-		was called somewhere in script's beginning) 
-	     */
+	/* no username in original uri -- hmm; maybe it is a uri
+	   with just host address and username is in a preloaded route,
+	   which is now no rewritten r-uri (assumed rewriteFromRoute
+	   was called somewhere in script's beginning) 
+     */
 	if (user.len==0 && _m->new_uri.s) {
 		user.s = _m->new_uri.s;
 		user.len = _m->new_uri.len;
 		get_username(&user);
 	}
+	len+=user.len+1 /* '@' */;
 	
 	if (_lr && use_fast_cmp) {
-		memcpy(_l->s + _l->len, rr_hash, MD5_LEN);
-		_l->len += MD5_LEN;
+		len+=MD5_LEN;
+	} 
+	len+=rr_suffix.len;
+	if (rr_append_fromtag) {
+		if (parse_from_header(_m)<0) {
+			LOG(L_ERR, "ERROR: build_RR: From parsing failed\n");
+			return 0;
+		}
+		from=(struct to_body*)_m->from->parsed;
+		if (from->tag_value.s) len+=RR_FROMTAG_LEN+from->tag_value.len;
+	}
+	len+=_lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN;
 
-		if (user.len) {
-			memcpy(_l->s + _l->len, user.s, user.len);
-			_l->len += user.len;
-		}
-		
-		*(_l->s + _l->len++) = '@';
-	} else {
-		if (user.len) {
-			memcpy(_l->s + _l->len, user.s, user.len);
-			_l->len += user.len;
-			*(_l->s + _l->len++) = '@';
-		}
+
+	rr = (char*)pkg_malloc(len);
+	if (!rr) {
+		LOG(L_ERR, "ERROR: build_rr: No memory left\n");
+		return 0;
 	}
 
-	memcpy(_l->s + _l->len, rr_suffix.s, rr_suffix.len);
-	_l->len += rr_suffix.len;
+	/* fill the buffer now ... */
+
+	*_l=len;
+	p=rr;
+
+	
+	memcpy(p, RR_PREFIX, RR_PREFIX_LEN);p+=RR_PREFIX_LEN;
+	
+	if (_lr && use_fast_cmp) {
+		memcpy(p, rr_hash, MD5_LEN);p+=MD5_LEN;
+	}
+	if (user.len) {
+		memcpy(p, user.s, user.len);p+=user.len;
+	}
+	*p='@';p++;
+
+	memcpy(p, rr_suffix.s, rr_suffix.len);p+=rr_suffix.len;
+	if (rr_append_fromtag && from->tag_value.s) {
+		memcpy(p, RR_FROMTAG, RR_FROMTAG_LEN); p+=RR_FROMTAG_LEN;
+		memcpy(p, from->tag_value.s, from->tag_value.len);
+			p+=from->tag_value.len;
+	}
 
 	if (_lr) {
-		memcpy(_l->s + _l->len, ";lr>\r\n",  7);
-		_l->len += 6;
+		memcpy(p, RR_LR_TERM,  RR_LR_TERM_LEN); p+= RR_LR_TERM_LEN;
 	} else {
-		memcpy(_l->s + _l->len, ">\r\n", 4);
-		_l->len += 3;
+		memcpy(p, RR_SR_TERM,  RR_SR_TERM_LEN); p+= RR_SR_TERM_LEN;
 	}
 	
-	DBG("build_RR(): \'%.*s\'", _l->len, _l->s);
+	DBG("DEBUG: build_RR(): \'%.*s\'", len, rr);
 	
-	return 0;
+	return rr;
 }
 
 
@@ -348,16 +386,16 @@ int insert_RR(struct sip_msg* _m, str* _l)
 int record_route(struct sip_msg* _m, char* _lr, char* _s)
 {
 	str b;
-	
-	b.s = (char*)pkg_malloc(MAX_RR_LEN);
-	if (!b.s) {
-		LOG(L_ERR, "add_rr(): No memory left\n");
-		return -1;
+	static unsigned int last_rr_msg;
+
+	if (_m->id==last_rr_msg) {
+			LOG(L_ERR, "ERROR: record_route: double attempt to record-route\n");
+			return -1;
 	}
 	
-	if (build_RR(_m, &b, (int)_lr) < 0) {
+	b.s=build_RR(_m, &b.len, (int) _lr);	
+	if (!b.s) {
 		LOG(L_ERR, "add_rr(): Error while building Record-Route line\n");
-		pkg_free(b.s);
 		return -2;
 	}
 
@@ -366,6 +404,7 @@ int record_route(struct sip_msg* _m, char* _lr, char* _s)
 		pkg_free(b.s);
 		return -3;
 	}
-	
+
+	last_rr_msg=_m->id;	
 	return 1;
 }
