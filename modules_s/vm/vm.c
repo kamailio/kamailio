@@ -126,7 +126,7 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {
-    "voicemail", 
+    "vm", 
     cmds,         /* Exported commands */
     params,       /* Exported parameters */
     vm_mod_init,  /* module initialization function */
