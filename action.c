@@ -15,6 +15,7 @@
 #include "msg_parser.h"
 #include "ut.h"
 #include "sr_module.h"
+#include "mem.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -212,11 +213,11 @@ int do_action(struct action* a, struct sip_msg* msg)
 				}
 				if (a->type==SET_URI_T){
 					if (msg->new_uri.s) {
-							free(msg->new_uri.s);
+							pkg_free(msg->new_uri.s);
 							msg->new_uri.len=0;
 					}
 					len=strlen(a->p1.string);
-					msg->new_uri.s=malloc(len+1);
+					msg->new_uri.s=pkg_malloc(len+1);
 					if (msg->new_uri.s==0){
 						LOG(L_ERR, "ERROR: do_action: memory allocation"
 								" failure\n");
@@ -244,7 +245,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 					break;
 				}
 				
-				new_uri=malloc(MAX_URI_SIZE);
+				new_uri=pkg_malloc(MAX_URI_SIZE);
 				if (new_uri==0){
 					LOG(L_ERR, "ERROR: do_action: memory allocation "
 								" failure\n");
@@ -317,7 +318,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				}
 				*crt=0; /* null terminate the thing */
 				/* copy it to the msg */
-				if (msg->new_uri.s) free(msg->new_uri.s);
+				if (msg->new_uri.s) pkg_free(msg->new_uri.s);
 				msg->new_uri.s=new_uri;
 				msg->new_uri.len=crt-new_uri;
 				free_uri(&uri);

@@ -444,7 +444,8 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 	headers=q_memchr(host,'?',end-host);
 	params=q_memchr(host,';',end-host);
 	port=q_memchr(host,':',end-host);
-	host_len=(port)?port-host:(params)?params-host:(headers)?headers-host:end-host;
+	host_len=(port)?port-host:(params)?params-host:(headers)?headers-host:
+		end-host;
 	/* get host */
 	uri->host.s=pkg_malloc(host_len+1);
 	if (uri->host.s==0){
