@@ -30,6 +30,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 #include "../../fifo_server.h"
 #include "../../str.h"
 #include "../../dprint.h"
@@ -175,16 +176,20 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
      str room = { NULL, 0 };
      str packet_loss = { NULL, 0 };
      double x=0, y=0, radius=0;
+     time_t expires = act_time + default_expires;
+     double priority = default_priority;
      int flags = 0;
      int changed = 0;
      int ret = 0;
 
-     flags = parse_pidf(body, &contact, &basic, &status, &location, &site, &floor, &room, &x, &y, &radius, &packet_loss);
+     flags = parse_pidf(body, &contact, &basic, &status, &location, &site, &floor, &room, &x, &y, &radius, 
+			&packet_loss, &priority, &expires);
      if (contact.len) {
 	  find_presence_tuple(&contact, presentity, &tuple);
 	  if (!tuple && new_tuple_on_publish) {
-	       new_presence_tuple(&contact, presentity, &tuple);
+	       new_presence_tuple(&contact, expires, presentity, &tuple);
 	       add_presence_tuple(presentity, tuple);
+	       changed = 1;
 	  }
      } else {
 	  tuple = presentity->tuples;
@@ -199,12 +204,12 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
      if (basic.len && basic.s) {
 	  int origstate = tuple->state;
 	  tuple->state =
-	       (strncmp(basic.s, "online", basic.len) == 0) ? PS_ONLINE : PS_OFFLINE;
+	       (strcasecmp(basic.s, "online") == 0) ? PS_ONLINE : PS_OFFLINE;
 	  if (tuple->state != origstate)
 	       changed = 1;
      }
      if (status.len && status.s) {
-	  if (tuple->status.len && str_strcmp(&tuple->status, &status) != 0)
+	  if (tuple->status.len && str_strcasecmp(&tuple->status, &status) != 0)
 	       changed = 1;
 	  tuple->status.len = status.len;
 	  strncpy(tuple->status.s, status.s, status.len);
@@ -212,7 +217,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
      }
      LOG(L_INFO, "publish_presentity: -2-\n");
      if (location.len && location.s) {
-	  if (tuple->location.loc.len && str_strcmp(&tuple->location.loc, &location) != 0)
+	  if (tuple->location.loc.len && str_strcasecmp(&tuple->location.loc, &location) != 0)
 	       changed = 1;
 	  tuple->location.loc.len = location.len;
 	  strncpy(tuple->location.loc.s, location.s, location.len);
@@ -221,7 +226,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 	  tuple->location.loc.len = 0;
      }
      if (site.len && site.s) {
-	  if (tuple->location.site.len && str_strcmp(&tuple->location.site, &site) != 0)
+	  if (tuple->location.site.len && str_strcasecmp(&tuple->location.site, &site) != 0)
 	       changed = 1;
 	  tuple->location.site.len = site.len;
 	  strncpy(tuple->location.site.s, site.s, site.len);
@@ -230,7 +235,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 	  tuple->location.site.len = 0;
      }
      if (floor.len && floor.s) {
-	  if (tuple->location.floor.len && str_strcmp(&tuple->location.floor, &floor) != 0)
+	  if (tuple->location.floor.len && str_strcasecmp(&tuple->location.floor, &floor) != 0)
 	       changed = 1;
 	  tuple->location.floor.len = floor.len;
 	  strncpy(tuple->location.floor.s, floor.s, floor.len);
@@ -239,7 +244,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 	  tuple->location.floor.len = 0;
      }
      if (room.len && room.s) {
-	  if (tuple->location.room.len && str_strcmp(&tuple->location.room, &room) != 0)
+	  if (tuple->location.room.len && str_strcasecmp(&tuple->location.room, &room) != 0)
 	       changed = 1;
 	  tuple->location.room.len = room.len;
 	  strncpy(tuple->location.room.s, room.s, room.len);
@@ -248,7 +253,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 	  tuple->location.room.len = 0;
      }
      if (packet_loss.len && packet_loss.s) {
-	  if (tuple->location.packet_loss.len && str_strcmp(&tuple->location.packet_loss, &packet_loss) != 0)
+	  if (tuple->location.packet_loss.len && str_strcasecmp(&tuple->location.packet_loss, &packet_loss) != 0)
 	       changed = 1;
 	  tuple->location.packet_loss.len = packet_loss.len;
 	  strncpy(tuple->location.packet_loss.s, packet_loss.s, packet_loss.len);
@@ -278,6 +283,14 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 	  tuple->location.radius = 0;
      }
 
+     if (tuple->priority != priority) {
+       changed = 1;
+       tuple->priority = priority;
+     }
+     if (tuple->expires != expires) {
+       changed = 1;
+       tuple->expires = expires;
+     }
      if (use_location_package)
 	  if (site.len && floor.len && room.len && changed) {
 	       location_package_location_add_user(_d, &site, &floor, &room, presentity);
@@ -406,13 +419,14 @@ int fifo_pa_publish(FILE *stream, char *response_file)
 	return -1;
 }
 
+#warning change fifo_pa_presence to take pdomain, uri, contact, basic, priority, expires
 /*
  * FIFO function for publishing presence
  *
  * :pa_presence:
  * pdomain (registrar or jabber)
  * presentity_uri
- * presentity_presence (civil or geopriv)
+ * presentity_basic
  *
  */
 #define MAX_P_URI 128
@@ -477,7 +491,7 @@ int fifo_pa_presence(FILE *fifo, char *response_file)
 
 	origstate = presentity->state;
 	presentity->state = newstate =
-		(strcmp(presence_s, "online") == 0) ? PS_ONLINE : PS_OFFLINE;
+		(strcasecmp(presence_s, "online") == 0) ? PS_ONLINE : PS_OFFLINE;
 
 	if (origstate != newstate || allocated_presentity) {
 		presentity->flags |= PFLAG_PRESENCE_CHANGED;
@@ -492,6 +506,166 @@ int fifo_pa_presence(FILE *fifo, char *response_file)
 		   p_uri.len, ZSW(p_uri.s),
 		   presence.len, ZSW(presence.s));
 	return 1;
+}
+
+/*
+ * FIFO function for publishing location
+ *
+ * :pa_presence_contact:
+ * pdomain (registrar or jabber)
+ * presentity_uri
+ * presentity_contact
+ * basic
+ * status
+ * priority
+ * expires
+ *
+ */
+#define MAX_P_URI 128
+#define MAX_LOCATION 256
+#define MAX_PDOMAIN 256
+int fifo_pa_presence_contact(FILE *fifo, char *response_file)
+{
+     char pdomain_s[MAX_P_URI];
+     char p_uri_s[MAX_P_URI];
+     char p_contact_s[MAX_P_URI];
+     char location_s[MAX_LOCATION];
+     char priority_s[MAX_LOCATION];
+     char expires_s[MAX_LOCATION];
+     pdomain_t *pdomain = NULL;
+     presentity_t *presentity = NULL;
+     presence_tuple_t *tuple = NULL;
+     str pdomain_name, p_uri, p_contact, location, priority_str, expires_str;
+     time_t expires;
+     double priority;
+     int changed = 0;
+     char *msg = "no error";
+
+     if (!read_line(pdomain_s, MAX_PDOMAIN, fifo, &pdomain_name.len) || pdomain_name.len == 0) {
+	  fifo_reply(response_file,
+		     "400 pa_location_contact: pdomain expected\n");
+	  LOG(L_ERR, "ERROR: pa_location_contact: pdomain expected\n");
+	  return 1;
+     }
+     pdomain_name.s = pdomain_s;
+
+     if (!read_line(p_uri_s, MAX_P_URI, fifo, &p_uri.len) || p_uri.len == 0) {
+	  fifo_reply(response_file,
+		     "400 pa_location_contact: p_uri expected\n");
+	  LOG(L_ERR, "ERROR: pa_location_contact: p_uri expected\n");
+	  return 1;
+     }
+     p_uri.s = p_uri_s;
+
+     if (!read_line(p_contact_s, MAX_P_URI, fifo, &p_contact.len) || p_contact.len == 0) {
+	  fifo_reply(response_file,
+		     "400 pa_location_contact: p_contact expected\n");
+	  LOG(L_ERR, "ERROR: pa_location_contact: p_contact expected\n");
+	  return 1;
+     }
+     p_contact.s = p_contact_s;
+
+     if (!read_line(location_s, MAX_LOCATION, fifo, &location.len) || location.len == 0) {
+	  fifo_reply(response_file,
+		     "400 pa_location_contact: location expected\n");
+	  LOG(L_ERR, "ERROR: pa_location_contact: location expected\n");
+	  return 1;
+     }
+     location.s = location_s;
+
+     if (!read_line(priority_s, MAX_LOCATION, fifo, &priority_str.len) || priority_str.len == 0) {
+	  fifo_reply(response_file,
+		     "400 pa_location_contact: priority expected\n");
+	  LOG(L_ERR, "ERROR: pa_location_contact: priority expected\n");
+	  return 1;
+     }
+     priority = strtod(priority_s, NULL);
+
+     if (!read_line(expires_s, MAX_LOCATION, fifo, &expires_str.len) || expires_str.len == 0) {
+	  fifo_reply(response_file,
+		     "400 pa_location_contact: expires expected\n");
+	  LOG(L_ERR, "ERROR: pa_location_contact: expires expected\n");
+	  return 1;
+     }
+     expires = strtoul(expires_s, NULL, 0);
+
+     register_pdomain(pdomain_s, &pdomain);
+     if (!pdomain) {
+	  fifo_reply(response_file, "400 could not register pdomain\n");
+	  LOG(L_ERR, "ERROR: pa_location_contact: could not register pdomain %.*s\n",
+	      pdomain_name.len, pdomain_name.s);
+	  return 1;
+     }
+
+     lock_pdomain(pdomain);
+
+     find_presentity(pdomain, &p_uri, &presentity);
+     if (!presentity) {
+	  new_presentity(pdomain, &p_uri, &presentity);
+	  add_presentity(pdomain, presentity);
+	  changed = 1;
+     }
+     if (!presentity) {
+	  msg = "400 could not find presentity\n";
+	  LOG(L_ERR, "ERROR: pa_location_contact: could not find presentity %.*s\n",
+	      p_uri.len, p_uri.s);
+	  return 1;
+     }
+
+     find_presence_tuple(&p_contact, presentity, &tuple);
+     if (!tuple && new_tuple_on_publish) {
+       new_presence_tuple(&p_contact, expires, presentity, &tuple);
+       add_presence_tuple(presentity, tuple);
+       changed = 1;
+     }
+     if (!tuple) {
+	  LOG(L_ERR, "publish_presentity: no tuple for %.*s\n", 
+	      presentity->uri.len, presentity->uri.s);
+	  msg = "400 could not find presence tuple\n";
+	  goto error;
+     }
+     changed = 1;
+
+     if (1 || (tuple->location.loc.len && str_strcasecmp(&tuple->location.room, &location) != 0)) {
+       changed = 1;
+       LOG(L_ERR, "Setting room of contact=%.*s to %.*s\n",
+	   tuple->contact.len, tuple->contact.s,
+	   tuple->location.room.len, tuple->location.room.s);
+       strncpy(tuple->location.room.s, location.s, location.len);
+       tuple->location.room.len = location.len;
+
+       strncpy(tuple->location.loc.s, location.s, location.len);
+       tuple->location.loc.len = location.len;
+     }
+
+     if (tuple->priority != priority) {
+       tuple->priority = priority;
+       changed = 1;
+     }
+
+     if (tuple->expires != expires) {
+       tuple->expires = expires;
+       changed = 1;
+     }
+
+     if (changed) {
+	  presentity->flags |= PFLAG_PRESENCE_CHANGED;
+     }
+
+     db_update_presentity(presentity);
+
+     unlock_pdomain(pdomain);
+
+     fifo_reply(response_file, "200 published\n",
+		"(%.*s %.*s)\n",
+		p_uri.len, ZSW(p_uri.s),
+		location.len, ZSW(location.s));
+     return 1;
+
+ error:
+     unlock_pdomain(pdomain);
+     fifo_reply(response_file, msg);
+     return 1;
 }
 
 /*
@@ -567,7 +741,7 @@ int fifo_pa_location(FILE *fifo, char *response_file)
 
      changed = 1;
      for (tuple = presentity->tuples; tuple; tuple = tuple->next) {
-	  if (tuple->location.loc.len && str_strcmp(&tuple->location.room, &location) != 0)
+	  if (tuple->location.loc.len && str_strcasecmp(&tuple->location.room, &location) != 0)
 	       changed = 1;
 
 	  LOG(L_ERR, "Setting room of contact=%.*s to %.*s\n",
@@ -592,5 +766,228 @@ int fifo_pa_location(FILE *fifo, char *response_file)
 		"(%.*s %.*s)\n",
 		p_uri.len, ZSW(p_uri.s),
 		location.len, ZSW(location.s));
+     return 1;
+}
+
+/*
+ * FIFO function for publishing location
+ *
+ * :pa_location_contact:
+ * pdomain (registrar or jabber)
+ * presentity_uri
+ * presentity_contact
+ * location (civil or geopriv)
+ * priority
+ * expires
+ *
+ */
+#define MAX_P_URI 128
+#define MAX_LOCATION 256
+#define MAX_PDOMAIN 256
+int fifo_pa_location_contact(FILE *fifo, char *response_file)
+{
+     char pdomain_s[MAX_P_URI];
+     char p_uri_s[MAX_P_URI];
+     char p_contact_s[MAX_P_URI];
+     char location_s[MAX_LOCATION];
+     char priority_s[MAX_LOCATION];
+     char expires_s[MAX_LOCATION];
+     pdomain_t *pdomain = NULL;
+     presentity_t *presentity = NULL;
+     presence_tuple_t *tuple = NULL;
+     str pdomain_name, p_uri, p_contact, location, priority_str, expires_str;
+     time_t expires;
+     double priority;
+     int changed = 0;
+     char *msg = "no error";
+
+     if (!read_line(pdomain_s, MAX_PDOMAIN, fifo, &pdomain_name.len) || pdomain_name.len == 0) {
+	  fifo_reply(response_file,
+		     "400 pa_location_contact: pdomain expected\n");
+	  LOG(L_ERR, "ERROR: pa_location_contact: pdomain expected\n");
+	  return 1;
+     }
+     pdomain_name.s = pdomain_s;
+
+     if (!read_line(p_uri_s, MAX_P_URI, fifo, &p_uri.len) || p_uri.len == 0) {
+	  fifo_reply(response_file,
+		     "400 pa_location_contact: p_uri expected\n");
+	  LOG(L_ERR, "ERROR: pa_location_contact: p_uri expected\n");
+	  return 1;
+     }
+     p_uri.s = p_uri_s;
+
+     if (!read_line(p_contact_s, MAX_P_URI, fifo, &p_contact.len) || p_contact.len == 0) {
+	  fifo_reply(response_file,
+		     "400 pa_location_contact: p_contact expected\n");
+	  LOG(L_ERR, "ERROR: pa_location_contact: p_contact expected\n");
+	  return 1;
+     }
+     p_contact.s = p_contact_s;
+
+     if (!read_line(location_s, MAX_LOCATION, fifo, &location.len) || location.len == 0) {
+	  fifo_reply(response_file,
+		     "400 pa_location_contact: location expected\n");
+	  LOG(L_ERR, "ERROR: pa_location_contact: location expected\n");
+	  return 1;
+     }
+     location.s = location_s;
+
+     if (!read_line(priority_s, MAX_LOCATION, fifo, &priority_str.len) || priority_str.len == 0) {
+	  fifo_reply(response_file,
+		     "400 pa_location_contact: priority expected\n");
+	  LOG(L_ERR, "ERROR: pa_location_contact: priority expected\n");
+	  return 1;
+     }
+     priority = strtod(priority_s, NULL);
+
+     if (!read_line(expires_s, MAX_LOCATION, fifo, &expires_str.len) || expires_str.len == 0) {
+	  fifo_reply(response_file,
+		     "400 pa_location_contact: expires expected\n");
+	  LOG(L_ERR, "ERROR: pa_location_contact: expires expected\n");
+	  return 1;
+     }
+     expires = strtoul(expires_s, NULL, 0);
+
+     register_pdomain(pdomain_s, &pdomain);
+     if (!pdomain) {
+	  fifo_reply(response_file, "400 could not register pdomain\n");
+	  LOG(L_ERR, "ERROR: pa_location_contact: could not register pdomain %.*s\n",
+	      pdomain_name.len, pdomain_name.s);
+	  return 1;
+     }
+
+     lock_pdomain(pdomain);
+
+     find_presentity(pdomain, &p_uri, &presentity);
+     if (!presentity) {
+	  new_presentity(pdomain, &p_uri, &presentity);
+	  add_presentity(pdomain, presentity);
+	  changed = 1;
+     }
+     if (!presentity) {
+	  msg = "400 could not find presentity\n";
+	  LOG(L_ERR, "ERROR: pa_location_contact: could not find presentity %.*s\n",
+	      p_uri.len, p_uri.s);
+	  return 1;
+     }
+
+     find_presence_tuple(&p_contact, presentity, &tuple);
+     if (!tuple && new_tuple_on_publish) {
+       new_presence_tuple(&p_contact, expires, presentity, &tuple);
+       add_presence_tuple(presentity, tuple);
+       tuple->state = PS_ONLINE;
+       changed = 1;
+     }
+     if (!tuple) {
+	  LOG(L_ERR, "publish_presentity: no tuple for %.*s\n", 
+	      presentity->uri.len, presentity->uri.s);
+	  msg = "400 could not find presence tuple\n";
+	  goto error;
+     }
+     changed = 1;
+
+     if (1 || (tuple->location.loc.len && str_strcasecmp(&tuple->location.room, &location) != 0)) {
+       changed = 1;
+       LOG(L_ERR, "Setting room of contact=%.*s to %.*s\n",
+	   tuple->contact.len, tuple->contact.s,
+	   tuple->location.room.len, tuple->location.room.s);
+       strncpy(tuple->location.room.s, location.s, location.len);
+       tuple->location.room.len = location.len;
+
+       strncpy(tuple->location.loc.s, location.s, location.len);
+       tuple->location.loc.len = location.len;
+     }
+
+     if (tuple->priority != priority) {
+       tuple->priority = priority;
+       changed = 1;
+     }
+
+     if (expires < 7*24*3600) {
+       /* must be seconds */
+       get_act_time();
+       expires = act_time + expires;
+     }
+     if (tuple->expires != expires) {
+       tuple->expires = expires;
+       changed = 1;
+     }
+
+     if (changed) {
+	  presentity->flags |= PFLAG_PRESENCE_CHANGED;
+     }
+
+     db_update_presentity(presentity);
+
+     unlock_pdomain(pdomain);
+
+     fifo_reply(response_file, "200 published\n",
+		"(%.*s %.*s)\n",
+		p_uri.len, ZSW(p_uri.s),
+		location.len, ZSW(location.s));
+     return 1;
+
+ error:
+     unlock_pdomain(pdomain);
+     fifo_reply(response_file, msg);
+     return 1;
+}
+
+/*
+ * FIFO function to cause ser to reload watcherinfo for a presentity
+ *
+ * :pa_watcherinfo:
+ * pdomain (registrar or jabber)
+ * presentity_uri
+ *
+ */
+#define MAX_P_URI 128
+#define MAX_LOCATION 256
+#define MAX_PDOMAIN 256
+int fifo_pa_watcherinfo(FILE *fifo, char *response_file)
+{
+     char pdomain_s[MAX_P_URI];
+     char p_uri_s[MAX_P_URI];
+     pdomain_t *pdomain = NULL;
+     presentity_t *presentity = NULL;
+     str pdomain_name, p_uri;
+
+     if (!read_line(pdomain_s, MAX_PDOMAIN, fifo, &pdomain_name.len) || pdomain_name.len == 0) {
+	  fifo_reply(response_file,
+		     "400 pa_watcherinfo: pdomain expected\n");
+	  LOG(L_ERR, "ERROR: pa_watcherinfo: pdomain expected\n");
+	  return 1;
+     }
+     pdomain_name.s = pdomain_s;
+
+     if (!read_line(p_uri_s, MAX_P_URI, fifo, &p_uri.len) || p_uri.len == 0) {
+	  fifo_reply(response_file,
+		     "400 pa_watcherinfo: p_uri expected\n");
+	  LOG(L_ERR, "ERROR: pa_watcherinfo: p_uri expected\n");
+	  return 1;
+     }
+     p_uri.s = p_uri_s;
+
+     register_pdomain(pdomain_s, &pdomain);
+     if (!pdomain) {
+	  fifo_reply(response_file, "400 could not register pdomain\n");
+	  LOG(L_ERR, "ERROR: pa_watcherinfo: could not register pdomain %.*s\n",
+	      pdomain_name.len, pdomain_name.s);
+	  return 1;
+     }
+
+     lock_pdomain(pdomain);
+
+     find_presentity(pdomain, &p_uri, &presentity);
+     if (presentity) {
+       db_read_watcherinfo(presentity);
+     }
+
+     unlock_pdomain(pdomain);
+
+     fifo_reply(response_file, "200 watcherinfo updated\n",
+		"(%.*s)\n",
+		p_uri.len, ZSW(p_uri.s));
      return 1;
 }
