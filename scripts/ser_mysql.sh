@@ -8,12 +8,14 @@
 #        table definitons
 # USAGE: call the command without any parameters for info
 #
-# History:
+# 2003-01-21 changed SILO table definition, by dcm
 #
-# 2003-01-24: Changed realm column of subscriber and pending
-#             tables to domain (janakj)
+# History:
+# 2003-01-26 statistics table introduced (jiri)
 # 2003-01-25: Optimized keys of some core tables (janakj)
 # 2003-01-25: USER_ID changed to user everywhere (janakj)
+# 2003-01-24: Changed realm column of subscriber and pending
+#             tables to domain (janakj)
 #
 
 #################################################################
@@ -130,9 +132,12 @@ INSERT INTO version VALUES ( 'aliases', '2');
 INSERT INTO version VALUES ( 'active_sessions', '1');
 INSERT INTO version VALUES ( 'acc', '1');
 INSERT INTO version VALUES ( 'config', '1');
-INSERT INTO version VALUES ( 'silo', '1');
+INSERT INTO version VALUES ( 'silo', '2');
+INSERT INTO version VALUES ( 'realm', '1');
 INSERT INTO version VALUES ( 'domain', '1');
 INSERT INTO version VALUES ( 'uri', '1');
+INSERT INTO version VALUES ( 'server_monitoring', '1');
+INSERT INTO version VALUES ( 'server_monitoring_ul', '1');
 
 
 #
@@ -408,6 +413,62 @@ CREATE TABLE uri (
   uri_user varchar(50) NOT NULL default '',
   last_modified datetime NOT NULL default '0000-00-00 00:00:00',
   PRIMARY KEY (user, domain, uri_user)
+) $TABLE_TYPE;
+
+#
+# Table structure for table 'server_monitoring'
+#
+
+
+CREATE TABLE server_monitoring (
+  time datetime NOT NULL default '0000-00-00 00:00:00',
+  ts_current int(10) unsigned default NULL,
+  ts_waiting int(10) unsigned default NULL,
+  ts_total int(10) unsigned default NULL,
+  ts_total_local int(10) unsigned default NULL,
+  ts_replied int(10) unsigned default NULL,
+  ts_6xx int(10) unsigned default NULL,
+  ts_5xx int(10) unsigned default NULL,
+  ts_4xx int(10) unsigned default NULL,
+  ts_3xx int(10) unsigned default NULL,
+  ts_2xx int(10) unsigned default NULL,
+  sl_200 int(10) unsigned default NULL,
+  sl_202 int(10) unsigned default NULL,
+  sl_2xx int(10) unsigned default NULL,
+  sl_300 int(10) unsigned default NULL,
+  sl_301 int(10) unsigned default NULL,
+  sl_302 int(10) unsigned default NULL,
+  sl_3xx int(10) unsigned default NULL,
+  sl_400 int(10) unsigned default NULL,
+  sl_401 int(10) unsigned default NULL,
+  sl_403 int(10) unsigned default NULL,
+  sl_404 int(10) unsigned default NULL,
+  sl_407 int(10) unsigned default NULL,
+  sl_408 int(10) unsigned default NULL,
+  sl_483 int(10) unsigned default NULL,
+  sl_4xx int(10) unsigned default NULL,
+  sl_500 int(10) unsigned default NULL,
+  sl_5xx int(10) unsigned default NULL,
+  sl_6xx int(10) unsigned default NULL,
+  sl_xxx int(10) unsigned default NULL,
+  sl_failures int(10) unsigned default NULL,
+  PRIMARY KEY  (time)
+) $TABLE_TYPE;
+
+
+
+
+#
+# Table structure for table 'server_monitoring_ul'
+#
+
+
+CREATE TABLE server_monitoring_ul (
+  time datetime NOT NULL default '0000-00-00 00:00:00',
+  domain varchar(64) NOT NULL default '',
+  registered int(10) unsigned default NULL,
+  expired int(10) unsigned default NULL,
+  PRIMARY KEY  (domain,time)
 ) $TABLE_TYPE;
 
 
