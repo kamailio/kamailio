@@ -444,6 +444,7 @@ static int faked_env(struct sip_msg *fake,
 	static enum route_mode backup_mode;
 	static struct cell *backup_t;
 	static unsigned int backup_msgid;
+	struct hdr_field *hdr;
 
 	if (_restore) goto restore;
 
@@ -492,7 +493,7 @@ static int faked_env(struct sip_msg *fake,
 		fake->new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
 		if (!fake->new_uri.s) {
 			LOG(L_ERR, "ERROR: faked_env: no uri/pkg mem\n");
-			goto restore;
+			goto restore_err;
 		}
 		fake->new_uri.len=shmem_msg->new_uri.len;
 		memcpy( fake->new_uri.s, shmem_msg->new_uri.s, 
@@ -506,16 +507,16 @@ static int faked_env(struct sip_msg *fake,
 	if (shmem_msg->add_rm) {
 		fake->add_rm=dup_lump_list(shmem_msg->add_rm);
 		if (!fake->add_rm) { /* non_emty->empty ... failure */
-			LOG(L_ERR, "ERROR: on_negative_reply: lump dup failed\n");
-			goto restore;
+			LOG(L_ERR, "ERROR:fake_env: lump dup failed\n");
+			goto restore_err;
 		}
 	}
 
 	if (shmem_msg->body_lumps) {
 		fake->body_lumps=dup_lump_list(shmem_msg->body_lumps);
 		if (!fake->body_lumps) { /* non_empty->empty ... failure */
-			LOG(L_ERR, "ERROR: on_negative_reply: lump dup failed\n");
-			goto restore;
+			LOG(L_ERR, "ERROR:fake_env: lump dup failed\n");
+			goto restore_err;
 		}
 	}
 	
@@ -523,6 +524,20 @@ static int faked_env(struct sip_msg *fake,
 	return 1;
 
 restore:
+	/* free header's parsed structures that were added by failure handlers */
+	for( hdr=fake->headers ; hdr ; hdr=hdr->next ) {
+		if ( hdr->parsed && hdr_allocs_parse(hdr) &&
+		(hdr->parsed<(void*)_t->uas.request ||
+		hdr->parsed>=(void*)_t->uas.end_request)) {
+			/* header parsed filed doesn't point inside uas.request memory
+			 * chunck -> it was added by failure funcs.-> free it as pkg */
+			DBG("DBG:fake_env: removing hdr->parsed %d\n",
+					hdr->type);
+			clean_hdr_field(hdr);
+			hdr->parsed = 0;
+		}
+	}
+restore_err:
 	/* restore original environment and destroy faked message */
 	free_duped_lump_list(fake->add_rm);
 	free_duped_lump_list(fake->body_lumps);
@@ -858,7 +873,7 @@ static int store_reply( struct cell *trans, int branch, struct sip_msg *rpl)
 		if (rpl==FAKED_REPLY)
 			trans->uac[branch].reply=FAKED_REPLY;
 		else
-			trans->uac[branch].reply = sip_msg_cloner( rpl );
+			trans->uac[branch].reply = sip_msg_cloner( rpl, 0);
 
 		if (! trans->uac[branch].reply ) {
 			LOG(L_ERR, "ERROR: store_reply: can't alloc' clone memory\n");

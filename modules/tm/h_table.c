@@ -207,7 +207,7 @@ static void inline init_branches(struct cell *t)
 struct cell*  build_cell( struct sip_msg* p_msg )
 {
 	struct cell* new_cell;
-
+	int          sip_msg_len;
 
 	/* allocs a new cell */
 	new_cell = (struct cell*)shm_malloc( sizeof( struct cell ) );
@@ -228,20 +228,16 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	new_cell->uas.response.retr_timer.payload = &(new_cell->uas.response);
 	new_cell->uas.response.my_T=new_cell;
 
-	/* bogdan - debug */
-	/*fprintf(stderr,"before clone VIA |%.*s|\n",via_len(p_msg->via1),
-		via_s(p_msg->via1,p_msg));*/
-
 	/* enter callback, which may potentially want to parse some stuff,
-	   before the request is shmem-ized
-	*/ 
-    	if (p_msg) callback_event(TMCB_REQUEST_IN, new_cell, p_msg,
-            p_msg->REQ_METHOD );
+	   before the request is shmem-ized */
+	if (p_msg)
+		callback_event(TMCB_REQUEST_IN, new_cell, p_msg,p_msg->REQ_METHOD );
 
 	if (p_msg) {
-		new_cell->uas.request = sip_msg_cloner(p_msg);
+		new_cell->uas.request = sip_msg_cloner(p_msg, &sip_msg_len);
 		if (!new_cell->uas.request)
 			goto error;
+		new_cell->uas.end_request=((char*)new_cell->uas.request)+sip_msg_len;
 	}
 
 	/* UAC */

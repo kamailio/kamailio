@@ -74,6 +74,14 @@
 #define HDR_OTHER              (1 << 28)  /* Some other header field */
 
 
+/* returns true if the header links allocated memory on parse field */
+#define hdr_allocs_parse( _hdr ) \
+	(((_hdr)->type)&(HDR_VIA|HDR_TO|HDR_FROM|HDR_CONTACT|HDR_ROUTE|\
+		HDR_RECORDROUTE|HDR_AUTHORIZATION|HDR_EXPIRES|HDR_PROXYAUTH|\
+		HDR_EVENT|HDR_ACCEPT|HDR_CONTENTDISPOSITION))
+
+
+
 /* 
  * Format: name':' body 
  */

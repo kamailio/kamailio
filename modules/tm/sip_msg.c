@@ -246,7 +246,7 @@ static inline void clone_authorized_hooks(struct sip_msg* new, struct sip_msg* o
 
 
 
-struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
+struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len)
 {
 	unsigned int      len;
 	struct hdr_field  *hdr,*new_hdr,*last_hdr;
@@ -282,51 +282,51 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 				}
 				break;
 
-		        case HDR_TO:
-		        case HDR_FROM:
-				     /* From header might be unparsed */
+			case HDR_TO:
+			case HDR_FROM:
+				/* From header might be unparsed */
 				if (hdr->parsed) {
 					len+=ROUND4(sizeof(struct to_body));
-					     /*to param*/
+					/*to param*/
 					to_prm = ((struct to_body*)(hdr->parsed))->param_lst;
 					for(;to_prm;to_prm=to_prm->next)
 						len+=ROUND4(sizeof(struct to_param ));
 				}
-				break;				
+				break;
 
 			case HDR_CSEQ:
 				len+=ROUND4(sizeof(struct cseq_body));
 				break;
 
 
-		        case HDR_AUTHORIZATION:
-		        case HDR_PROXYAUTH:
+			case HDR_AUTHORIZATION:
+			case HDR_PROXYAUTH:
 				if (hdr->parsed) {
 					len += ROUND4(AUTH_BODY_SIZE);
 				}
 				break;
 			
 			case HDR_CALLID:
-		        case HDR_CONTACT:
+			case HDR_CONTACT:
 			case HDR_MAXFORWARDS:
 			case HDR_ROUTE:
 			case HDR_RECORDROUTE:
 			case HDR_CONTENTTYPE:
 			case HDR_CONTENTLENGTH:
-		        case HDR_EXPIRES:
-		        case HDR_SUPPORTED:
+			case HDR_EXPIRES:
+			case HDR_SUPPORTED:
 			case HDR_PROXYREQUIRE:
 			case HDR_UNSUPPORTED:
 			case HDR_ALLOW:
-		        case HDR_EVENT:
-		        case HDR_ACCEPT:
-		        case HDR_ACCEPTLANGUAGE:
-		        case HDR_ORGANIZATION:
-		        case HDR_PRIORITY:
-		        case HDR_SUBJECT:
-		        case HDR_USERAGENT:
-		        case HDR_ACCEPTDISPOSITION:
-		        case HDR_CONTENTDISPOSITION:
+			case HDR_EVENT:
+			case HDR_ACCEPT:
+			case HDR_ACCEPTLANGUAGE:
+			case HDR_ORGANIZATION:
+			case HDR_PRIORITY:
+			case HDR_SUBJECT:
+			case HDR_USERAGENT:
+			case HDR_ACCEPTDISPOSITION:
+			case HDR_CONTENTDISPOSITION:
 				/* we ignore them for now even if they have something parsed*/
 				break;
 
@@ -342,7 +342,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 	/* length of the data lump structures */
 #define LUMP_LIST_LEN(len, list) \
 do { \
-        struct lump* tmp, *chain; \
+	struct lump* tmp, *chain; \
 	chain = (list); \
 	while (chain) \
 	{ \
@@ -376,6 +376,8 @@ do { \
 		LOG(L_ERR , "ERROR: sip_msg_cloner: cannot allocate memory\n" );
 		return 0;
 	}
+	if (sip_msg_len)
+		*sip_msg_len = len;
 
 	/* filling up the new structure */
 	new_msg = (struct sip_msg*)p;
