@@ -34,4 +34,6 @@
 
 int set_mod_param(char* _mod, char* _name, modparam_t _type, void* _val);
 
+int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val);
+
 #endif

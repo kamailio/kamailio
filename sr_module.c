@@ -244,7 +244,6 @@ void* find_param_export(char* mod, char* name, modparam_t type)
 }
 
 
-
 /* finds a module, given a pointer to a module function *
  * returns pointer to module, & if  c!=0, *c=pointer to the
  * function cmd_export structure*/

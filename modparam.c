@@ -24,11 +24,18 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-03-20  regex support in modparam (janakj)
  */
 
 
 #include "modparam.h"
 #include "dprint.h"
+#include "mem/mem.h"
+#include <sys/types.h>
+#include <regex.h>
 #include <string.h>
 
 
@@ -62,5 +69,77 @@ int set_mod_param(char* _mod, char* _name, modparam_t _type, void* _val)
 		break;
 	}
 
+	return 0;
+}
+
+
+int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
+{
+	struct sr_module* t;
+	param_export_t* param;
+	regex_t preg;
+	int mod_found, len;
+	char* reg;
+
+	len = strlen(regex);
+	reg = pkg_malloc(len + 2 + 1);
+	if (reg == 0) {
+		LOG(L_ERR, "set_mod_param_regex(): No memory left\n");
+		return -1;
+	}
+	reg[0] = '^';
+	memcpy(reg + 1, regex, len);
+	reg[len + 1] = '$';
+	reg[len + 2] = '\0';
+	
+	if (regcomp(&preg, reg, REG_EXTENDED | REG_NOSUB | REG_ICASE)) {
+		LOG(L_ERR, "set_mod_param_regex(): Error while compiling regular expression\n");
+		pkg_free(reg);
+		return -2;
+	}
+	
+	mod_found = 0;
+
+	for(t = modules; t; t = t->next) {
+		if (regexec(&preg, t->exports->name, 0, 0, 0) == 0) {
+			DBG("set_mod_param_regex: %s matches module %s\n", regex, t->exports->name);
+			mod_found = 1;
+			for(param=t->exports->params;param && param->name ; param++) {
+				if ((strcmp(name, param->name) == 0) &&
+				    (param->type == type)) {
+					DBG("set_mod_param_regex: found <%s> in module %s [%s]\n",
+					    name, t->exports->name, t->path);
+
+					switch(type) {
+					case STR_PARAM:
+						*((char**)(param->param_pointer)) = strdup((char*)val);
+						break;
+						
+					case INT_PARAM:
+						*((int*)(param->param_pointer)) = (int)(long)val;
+						break;
+					}
+
+					break;
+				}
+			}
+			if (!param || !param->name) {
+				LOG(L_ERR, "set_mod_param_regex: parameter <%s> not found in module <%s>\n",
+				    name, t->exports->name);
+				regfree(&preg);
+				pkg_free(reg);
+				return -3;
+			}
+		}
+	}
+
+	regfree(&preg);
+	if (!mod_found) {
+		LOG(L_ERR, "set_mod_param_regex: No module matching %s found\n|", regex);
+		pkg_free(reg);
+		return -4;
+	}
+
+	pkg_free(reg);
 	return 0;
 }

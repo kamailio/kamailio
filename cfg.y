@@ -32,6 +32,7 @@
  * 2003-01-23  mhomed added (jiri)
  * 2003-03-19  replaced all mallocs/frees with pkg_malloc/pkg_free (andrei)
  * 2003-03-19  Added support for route type in find_export (janakj)
+ * 2003-03-20  Regex support in modparam (janakj)
  */
 
 
@@ -372,12 +373,12 @@ module_stm:	LOADMODULE STRING	{ DBG("loading module %s\n", $2);
 								}
 		 | LOADMODULE error	{ yyerror("string expected");  }
                  | MODPARAM LPAREN STRING COMMA STRING COMMA STRING RPAREN {
-			 if (set_mod_param($3, $5, STR_PARAM, $7) != 0) {
+			 if (set_mod_param_regex($3, $5, STR_PARAM, $7) != 0) {
 				 yyerror("Can't set module parameter");
 			 }
 		   }
                  | MODPARAM LPAREN STRING COMMA STRING COMMA NUMBER RPAREN {
-			 if (set_mod_param($3, $5, INT_PARAM, (void*)$7) != 0) {
+			 if (set_mod_param_regex($3, $5, INT_PARAM, (void*)$7) != 0) {
 				 yyerror("Can't set module parameter");
 			 }
 		   }
