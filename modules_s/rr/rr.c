@@ -207,15 +207,24 @@ int buildRRLine(struct sip_msg* _m, str* _l)
 #endif
 	_l->len = RR_PREFIX_LEN;
 	memcpy(_l->s, RR_PREFIX, _l->len);
-	memcpy(_l->s + _l->len, _m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len);
-	_l->len += _m->first_line.u.request.uri.len;
+
+	DBG("%d\n", _m->dst_ip);
+	_l->len += sprintf(_l->s + _l->len, "sip:%d.%d.%d.%d", 
+			   (addresses[0] & 0x000000ff),
+			   (addresses[0] & 0x0000ff00) >>  8,
+			   (addresses[0] & 0x00ff0000) >> 16,
+			   (addresses[0] & 0xff000000) >> 24
+			   );
+
+	     /*	memcpy(_l->s + _l->len, _m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len); */
+	     /* _l->len += _m->first_line.u.request.uri.len; */
+
 	if (port_no != 5060) {
-	     _l->len +=  sprintf(_l->s + _l->len, ":%d", port_no);
+		_l->len +=  sprintf(_l->s + _l->len, ":%d", port_no);
 	}
-               /* bogdan :replaced \n with CRLF*/
 	memcpy(_l->s + _l->len, ";branch=0>" CRLF,  10 + CRLF_LEN + 1);
 	_l->len += 10 + CRLF_LEN;
-
+	
 	DBG("buildRRLine(): %s", _l->s);
 
 	return TRUE;
