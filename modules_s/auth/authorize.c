@@ -114,7 +114,7 @@ static inline int check_response(dig_cred_t* _cred, str* _method, char* _ha1)
 static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_field** _h)
 {
 	struct hdr_field** hook;
-	struct hdr_field* ptr;
+	struct hdr_field* ptr, *prev;
 	int res;
 	str* r;
 
@@ -142,7 +142,7 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 		res = parse_credentials(ptr);
 		if (res < 0) {
 			LOG(L_ERR, "find_credentials(): Error while parsing credentials\n");
-			if (send_resp(_m, 400, MESSAGE_400, NULL, 0) == -1) {
+			if (send_resp(_m, 400, MESSAGE_400, 0, 0) == -1) {
 				LOG(L_ERR, "authorize(): Error while sending 400 reply\n");
 			}
 			return -1;
@@ -156,13 +156,17 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 				}
 			}
 			
-			if (parse_headers(_m, _hftype, 1) == -1) {
-				LOG(L_ERR, "find_credentials(): Error while parsing headers\n");
-				return -3;
-			} else {
+		}
+
+		prev = ptr;
+		if (parse_headers(_m, _hftype, 1) == -1) {
+			LOG(L_ERR, "find_credentials(): Error while parsing headers\n");
+			return -3;
+		} else {
+			if (prev != _m->last_header) {
 				if (_m->last_header->type == _hftype) ptr = _m->last_header;
 				else ptr = 0;
-			}
+			} else ptr = 0;
 		}
 	}
 	return 0;
