@@ -105,8 +105,13 @@ static inline void build_proxy_auth_hf(char* _realm, char* _buf, int* _len)
 	nonce[40] = '\0';
 
 	     /* Currently we support qop=auth only */
+
+	     /*
+	      * FIXME: We prefer not to use qop since some clients claim
+	      *        to support that but they don't
+	      */
 	*_len = snprintf(_buf, AUTH_HF_LEN,
-			 "Proxy-Authenticate: Digest realm=\"%s\", nonce=\"%s\",qop=\"auth\",algorithm=MD5\r\n", 
+			 "Proxy-Authenticate: Digest realm=\"%s\", nonce=\"%s\",algorithm=MD5\r\n", 
 			 _realm, nonce);
 }
 
@@ -294,7 +299,7 @@ int check_cred(cred_t* _cred, str* _method, char* _ha1)
 		return 1;
 	} else {
 		printf("check_cred(): Authorization failed\n");
-		return 0;
+		return -1;
 	}
 }
 
