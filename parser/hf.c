@@ -31,6 +31,10 @@ void clean_hdr_field(struct hdr_field* hf)
 			free_cseq(hf->parsed);
 			break;
 
+		case HDR_FROM:
+			free_to(hf->parsed);
+			break;
+
 		default:
 			LOG(L_CRIT, "BUG: clean_hdr_field: unknown header type %d\n",
 			    hf->type);
