@@ -739,8 +739,10 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 	if(!to || !from || !cbf)
 		return;
 
+#ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_register_watcher: from=[%.*s] to=[%.*s]\n", from->len,
 			from->s, to->len, to->s);
+#endif
 	jkey.hash = xj_get_hash(from, NULL);
 	jkey.id = from;
 
@@ -776,8 +778,10 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 	jsmsg->cbf = (pa_callback_f)cbf;
 	jsmsg->p = pp;
 
+#ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_register_watcher:%d: sending <%p> to worker through <%d>\n",
 			getpid(), jsmsg, pipe);
+#endif
 	// sending the SHM pointer of SIP message to the worker
 	fl = write(pipe, &jsmsg, sizeof(jsmsg));
 	if(fl != sizeof(jsmsg))
@@ -814,42 +818,43 @@ void xjab_check_workers(int mpid)
 		return;
 	for(i=0; i < jwl->len; i++)
 	{
-		if(jwl->workers[i].pid <= 0)
-			continue;
-				stat = 0;
-		n = waitpid(jwl->workers[i].pid, &stat, WNOHANG);
-		if(n == 0)
-			continue;
-		
-		LOG(L_ERR,"XJAB:xjab_check_workers: worker[%d][pid=%d] has exited"
-			" - status=%d err=%d errno=%d\n", i, jwl->workers[i].pid, 
-			stat, n, errno);
-		if(n==jwl->workers[i].pid)
+		if(jwl->workers[i].pid > 0)
 		{
-			DBG("XJAB:%d:xjab_check_workers: create a new worker\n", mpid);
+			stat = 0;
+			n = waitpid(jwl->workers[i].pid, &stat, WNOHANG);
+			if(n == 0)
+				continue;
+		
+			LOG(L_ERR,"XJAB:xjab_check_workers: worker[%d][pid=%d] has exited"
+				" - status=%d err=%d errno=%d\n", i, jwl->workers[i].pid, 
+				stat, n, errno);
 			xj_wlist_clean_jobs(jwl, i, 1);
 			xj_wlist_set_pid(jwl, -1, i);
-			if ( (stat=fork())<0 )
+		}
+		
+#ifdef XJ_EXTRA_DEBUG
+		DBG("XJAB:%d:xjab_check_workers: create a new worker[%d]\n", mpid, i);
+#endif
+		if ( (stat=fork())<0 )
+		{
+#ifdef XJ_EXTRA_DEBUG
+			DBG("XJAB:xjab_check_workers: error - cannot launch new"
+				" worker[%d]\n", i);
+#endif
+			LOG(L_ERR, "XJAB:xjab_check_workers: error - worker[%d] lost"
+				" forever \n", i);
+			return;
+		}
+		if (stat == 0)
+		{
+			if(xj_wlist_set_pid(jwl, getpid(), i) < 0)
 			{
-				DBG("XJAB:xjab_check_workers: error - cannot launch worker\n");
+				LOG(L_ERR, "XJAB:xjab_check_workers: error setting new"
+					" worker's pid - w[%d]\n", i);
 				return;
 			}
-			if (stat == 0)
-			{
-				if(xj_wlist_set_pid(jwl, getpid(), i) < 0)
-				{
-					DBG("XJAB:xjab_check_workers: error setting worker's pid\n");
-					return;
-				}
-				xj_worker_process(jwl,jaddress,jport,i,db_con[i]);
-				exit(0);
-			}
-		}
-		else
-		{
-			LOG(L_ERR, "XJAB:xjab_check_workers: error - worker[%d][pid=%d] lost"
-				" forever\n", i, jwl->workers[i].pid);
-			xj_wlist_set_pid(jwl, -1, i);
+			xj_worker_process(jwl,jaddress,jport,i,db_con[i]);
+			exit(0);
 		}
 	}			
 }

@@ -160,7 +160,7 @@ xj_pres_cell xj_pres_list_add(xj_pres_list prl, xj_pres_cell prc)
 		xj_pres_cell_free(prc);
 		return NULL;
 	}
-	
+	// presence list empty
 	if(prl->clist==NULL)
 	{
 		prl->nr++;

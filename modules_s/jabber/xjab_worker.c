@@ -150,7 +150,7 @@ int xj_address_translation(str *src, str *dst, xj_jalias als, int flag)
 	}
 
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_address_translation:%d: - doing address corection\n", 
+	DBG("XJAB:xj_address_translation:%d: - doing address correction\n",
 			_xj_pid);	
 #endif
 	
@@ -199,8 +199,8 @@ int xj_address_translation(str *src, str *dst, xj_jalias als, int flag)
 			*p = '@';
 		else
 		{
-			DBG("XJAB:xj_address_translation:%d: - wrong Jabber"
-			" destination\n", _xj_pid);
+			DBG("XJA:xj_address_translation:%d: - wrong Jabber"
+				" destination <%.*s>!!!\n", _xj_pid, src->len, src->s);
 			return -1;
 		}
 		return 0;
@@ -297,8 +297,10 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 		mset = set;
 
 		tmv.tv_sec = (jcp->jmqueue.size == 0)?jwl->sleept:1;
+#ifdef XJ_EXTRA_DEBUG
 		//DBG("XJAB:xj_worker[%d]:%d: select waiting %ds - queue=%d\n",rank,
 		//		_xj_pid, (int)tmv.tv_sec, jcp->jmqueue.size);
+#endif
 		tmv.tv_usec = 0;
 
 		ret = select(maxfd+1, &mset, NULL, NULL, &tmv);
@@ -816,8 +818,8 @@ step_xx:
 		{
 			ltime = get_ticks();
 #ifdef XJ_EXTRA_DEBUG
-			DBG("XJAB:xj_worker:%d: scanning for expired connection\n",
-				_xj_pid);
+			//DBG("XJAB:xj_worker:%d: scanning for expired connection\n",
+			//	_xj_pid);
 #endif
 			xj_worker_check_jcons(jwl, jcp, ltime, &set);
 		}
