@@ -39,6 +39,7 @@
  *               require_certificate added (andrei)
  *  2003-07-06  more tls config. vars added: tls_method, tls_port_no (andrei)
  *  2003-10-02  added {,set_}advertised_{address,port} (andrei)
+ *  2003-10-07  added hex and octal numbers support (andrei)
  */
 
 
@@ -197,9 +198,11 @@ TLSv1			"tlsv1"|"TLSv1"|"TLSV1"
 LETTER		[a-zA-Z]
 DIGIT		[0-9]
 ALPHANUM	{LETTER}|{DIGIT}|[_]
-NUMBER		{DIGIT}+
+NUMBER		0|([1-9]{DIGIT}*)
 ID			{LETTER}{ALPHANUM}*
 HEX			[0-9a-fA-F]
+HEXNUMBER	0x{HEX}+
+OCTNUMBER	0[0-7]+
 HEX4		{HEX}{1,4}
 IPV6ADDR	({HEX4}":"){7}{HEX4}|({HEX4}":"){1,7}(":"{HEX4}){1,7}|":"(":"{HEX4}){1,7}|({HEX4}":"){1,7}":"|"::"
 QUOTES		\"
@@ -342,6 +345,10 @@ EAT_ABLE	[\ \t\b\r]
 
 <INITIAL>{IPV6ADDR}		{ count(); yylval.strval=yytext; return IPV6ADDR; }
 <INITIAL>{NUMBER}		{ count(); yylval.intval=atoi(yytext);return NUMBER; }
+<INITIAL>{HEXNUMBER}	{ count(); yylval.intval=(int)strtol(yytext, 0, 16);
+							return NUMBER; }
+<INITIAL>{OCTNUMBER}	{ count(); yylval.intval=(int)strtol(yytext, 0, 8);
+							return NUMBER; }
 <INITIAL>{YES}			{ count(); yylval.intval=1; return NUMBER; }
 <INITIAL>{NO}			{ count(); yylval.intval=0; return NUMBER; }
 <INITIAL>{TCP}			{ count(); yylval.intval=PROTO_TCP; return NUMBER; }

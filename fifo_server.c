@@ -56,6 +56,8 @@
  *  2003-03-29  destroy pkg mem introduced (jiri)
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-01-29  new built-in fifo commands: arg and pwd (jiri)
+ *  2003-10-07  fifo security fixes: permissions, always delete old fifo,
+ *               reply fifo checks -- added fifo_check (andrei)
  */
 
 
@@ -87,8 +89,7 @@
 
 /* FIFO server vars */
 char *fifo=0; /* FIFO name */
-int fifo_mode=S_IRUSR | S_IWUSR | S_IRGRP | 
-	S_IWGRP | S_IROTH | S_IWOTH;
+int fifo_mode=S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP ;
 pid_t fifo_pid;
 /* file descriptors */
 static int fifo_read=0;
@@ -299,6 +300,60 @@ static char *trim_filename( char * file )
 	return new_fn;
 }
 
+
+
+/* reply fifo security checks:
+ * checks if fd is a fifo, is not hardlinked and it's not a softlink
+ * opened file descriptor + file name (for soft link check)
+ * returns 0 if ok, <0 if not */
+static int fifo_check(int fd, char* fname)
+{
+	struct stat fst;
+	struct stat lst;
+	
+	if (fstat(fd, &fst)<0){
+		LOG(L_ERR, "ERROR: fifo_check: fstat failed: %s\n",
+				strerror(errno));
+		return -1;
+	}
+	/* check if fifo */
+	if (!S_ISFIFO(fst.st_mode)){
+		LOG(L_ERR, "ERROR: fifo_check: %s is not a fifo\n", fname);
+		return -1;
+	}
+	/* check if hard-linked */
+	if (fst.st_nlink>1){
+		LOG(L_ERR, "ERROR: security: fifo_check: %s is hard-linked %d times\n",
+				fname, fst.st_nlink);
+		return -1;
+	}
+	
+	/* lstat to check for soft links */
+	if (lstat(fname, &lst)<0){
+		LOG(L_ERR, "ERROR: fifo_check: lstat failed: %s\n",
+				strerror(errno));
+		return -1;
+	}
+	if (S_ISLNK(lst.st_mode)){
+		LOG(L_ERR, "ERROR: security: fifo_check: %s is a soft link\n",
+				fname);
+		return -1;
+	}
+	/* if this is not a symbolic link, check to see if the inode didn't
+	 * change to avoid possible sym.link, rm sym.link & replace w/ fifo race
+	 */
+	if ((lst.st_dev!=fst.st_dev)||(lst.st_ino!=fst.st_ino)){
+		LOG(L_ERR, "ERROR: security: fifo_check: inode/dev number differ"
+				": %ld %ld (%s)\n",
+				 fst.st_ino, lst.st_ino, fname);
+		return -1;
+	}
+	/* success */
+	return 0;
+}
+
+
+
 /* tell FIFO client what happened via reply pipe */
 void fifo_reply( char *reply_fifo, char *reply_fmt, ... )
 {
@@ -367,6 +422,10 @@ tryagain:
 			pipe_name, strerror(errno));
 		return 0;
 	}
+	/* security checks: is this really a fifo?, is 
+	 * it hardlinked? is it a soft link? */
+	if (fifo_check(fifofd, pipe_name)<0) goto error;
+	
 	/* we want server blocking for big writes */
 	if ( (flags=fcntl(fifofd, F_GETFL, 0))<0) {
 		LOG(L_ERR, "ERROR: open_reply_pipe (%s): getfl failed: %s\n",
@@ -484,7 +543,15 @@ int open_fifo_server()
 		return 1;
 	}
 	DBG("DBG: open_uac_fifo: opening fifo...\n");
-	if (stat(fifo, &filestat)==-1) { /* FIFO doesn't exist yet ... */
+	if (stat(fifo, &filestat)==0){
+		/* FIFO exist, delete it (safer) */
+		if (unlink(fifo)<0){
+			LOG(L_ERR, "ERROR: open_fifo_server: cannot delete old fifo (%s):"
+					" %s\n", fifo, strerror(errno));
+			return -1;
+		}
+	}
+	 /* create FIFO ... */
 		LOG(L_DBG, "DEBUG: open_fifo_server: FIFO stat failed: %s\n",
 			strerror(errno));
 		if ((mkfifo(fifo, fifo_mode)<0)) {
@@ -500,14 +567,6 @@ int open_fifo_server()
 					strerror(errno), fifo_mode);
 			return -1;
 		}
-	} else { /* file can be stat-ed, check if it is really a FIFO */
-		if (!(S_ISFIFO(filestat.st_mode))) {
-			LOG(L_ERR, "ERROR: open_fifo_server: "
-				"the file is not a FIFO: %s\n",
-				fifo );
-			return -1;
-		}
-	}
 	DBG("DEBUG: fifo %s opened, mode=%d\n", fifo, fifo_mode );
 	time(&up_since);
 	t=ctime(&up_since);
