@@ -147,7 +147,7 @@ static int mod_init( void )
 	fprintf( stderr, "radius_acc - initializing\n");
 
 	/* import the TM auto-loading function */
-	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT))) {
+	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
 		LOG(L_ERR, "ERROR: radius_acc: mod_init: can't import load_tm\n");
 		return -1;
 	}

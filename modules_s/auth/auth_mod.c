@@ -156,7 +156,7 @@ static int mod_init(void)
 {
 	printf("auth module - initializing\n");
 	
-	sl_reply = find_export("sl_send_reply", 2);
+	sl_reply = find_export("sl_send_reply", 2, 0);
 
 	if (!sl_reply) {
 		LOG(L_ERR, "auth:mod_init(): This module requires sl module\n");

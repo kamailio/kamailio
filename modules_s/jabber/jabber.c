@@ -207,7 +207,7 @@ static int mod_init(void)
 	}
 
 	/* import the TM auto-loading function */
-	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT))) {
+	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
 		LOG(L_ERR, "ERROR: xjab:mod_init: can't import load_tm\n");
 		return -1;
 	}
@@ -217,7 +217,7 @@ static int mod_init(void)
 
 #ifdef HAVE_IHTTP
 	/* import the iHTTP auto-loading function */
-	if ( !(load_ih=(load_ih_f)find_export("load_ih", IH_NO_SCRIPT_F))) {
+	if ( !(load_ih=(load_ih_f)find_export("load_ih", IH_NO_SCRIPT_F, 0))) {
 		LOG(L_ERR, "ERROR:xjab:mod_init: can't import load_ih\n");
 		return -1;
 	}

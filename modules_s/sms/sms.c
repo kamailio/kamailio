@@ -515,7 +515,7 @@ int global_init()
 	char       *p;
 
 	/* import the TM auto-loading function */
-	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT))) {
+	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
 		LOG(L_ERR, "ERROR: sms: global_init: cannot import load_tm\n");
 		goto error;
 	}

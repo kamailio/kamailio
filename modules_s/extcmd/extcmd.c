@@ -120,7 +120,7 @@ static int extcmd_init(void)
 	DBG("EXTCMD - initializing\n");
 
 	/* import the TM auto-loading function */
-	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT))) {
+	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
 		LOG(L_ERR, "ERROR: extcmd: global_init: cannot import load_tm\n");
 		goto error;
 	}

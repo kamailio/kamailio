@@ -106,7 +106,7 @@ static int mod_init(void)
               * We will need sl_send_reply from stateless
 	      * module for sending replies
 	      */
-        sl_reply = find_export("sl_send_reply", 2);
+        sl_reply = find_export("sl_send_reply", 2, 0);
 	if (!sl_reply) {
 		LOG(L_ERR, "This module requires sl module\n");
 		return -1;

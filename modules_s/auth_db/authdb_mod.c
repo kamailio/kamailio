@@ -152,15 +152,15 @@ static int mod_init(void)
 		return -1;
 	}
 
-	pre_auth_func = (pre_auth_f)find_export("~pre_auth", 0);
-	post_auth_func = (post_auth_f)find_export("~post_auth", 0);
+	pre_auth_func = (pre_auth_f)find_export("~pre_auth", 0, 0);
+	post_auth_func = (post_auth_f)find_export("~post_auth", 0, 0);
 
 	if (!(pre_auth_func && post_auth_func)) {
 		LOG(L_ERR, "auth_db:mod_init(): This module requires auth module\n");
 		return -2;
 	}
 
-	sl_reply = find_export("sl_send_reply", 2);
+	sl_reply = find_export("sl_send_reply", 2, 0);
 	if (!sl_reply) {
 		LOG(L_ERR, "auth_db:mod_init(): This module requires sl module\n");
 		return -2;
