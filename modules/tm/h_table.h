@@ -238,7 +238,7 @@ typedef struct entry
 	unsigned int    next_label;
 	/* sync mutex */
 	ser_lock_t      mutex;
-	unsigned int	entries;
+	unsigned long entries;
 }entry_type;
 
 
@@ -265,6 +265,8 @@ void   insert_into_hash_table( struct cell * p_cell);
 void   insert_into_hash_table_unsafe( struct cell * p_cell );
 
 unsigned int transaction_count( void );
+
+int fifo_hash( FILE *stream, char *response_file );
 
 #endif
 

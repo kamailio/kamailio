@@ -323,7 +323,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	*/
 	DBG("DEBUG: e2e_cancel: sending 487\n");
 	/* in case that something in the meantime has been sent upstream
-	   (like if FR hit at the same time), don't try to send
+	   (like if FR hit at the same time), don't try to send */
 	if (t_invite->uas.status>=200) return;
 	/* there is still a race-condition -- the FR can hit now; that's
 	   not too bad -- we take care in t_reply's REPLY_LOCK; in

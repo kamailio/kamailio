@@ -36,15 +36,15 @@ extern struct t_stats *cur_stats, *acc_stats;
 
 struct t_stats {
 	/* number of server transactions */
-	unsigned int transactions;
+	unsigned long transactions;
 	/* number of UAC transactions (part of transactions) */
-	unsigned int client_transactions;
+	unsigned long client_transactions;
 	/* number of transactions in wait state */
-	unsigned int waiting;
+	unsigned long waiting;
 	/* number of transactions which completed with this status */
-	unsigned int completed_3xx, completed_4xx, completed_5xx, 
+	unsigned long completed_3xx, completed_4xx, completed_5xx, 
 		completed_6xx, completed_2xx;
-	unsigned int replied_localy;
+	unsigned long replied_localy;
 };
 
 int init_tm_stats(void);

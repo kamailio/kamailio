@@ -45,32 +45,32 @@ struct t_stats *cur_stats, *acc_stats;
 int print_stats(  FILE *f )
 {
 	fprintf(f, "Current:\n");
-	fprintf(f, "# of transactions: %d, ", 
+	fprintf(f, "# of transactions: %ld, ", 
 		cur_stats->transactions );
-	fprintf(f, "local: %d, ",
+	fprintf(f, "local: %ld, ",
 		cur_stats->client_transactions );
-	fprintf(f, "waiting: %d" CLEANUP_EOL ,
+	fprintf(f, "waiting: %ld" CLEANUP_EOL ,
 		cur_stats->waiting );
 
 	fprintf(f, "Total:\n");
-	fprintf(f, "# of transactions: %d,",
+	fprintf(f, "# of transactions: %ld,",
 		acc_stats->transactions );
-	fprintf(f, " local: %d,",
+	fprintf(f, " local: %ld,",
 		acc_stats->client_transactions );
-	fprintf(f, " waiting: %d" CLEANUP_EOL ,
+	fprintf(f, " waiting: %ld" CLEANUP_EOL ,
 		acc_stats->waiting );
 
-	fprintf(f, "Replied localy: %d" CLEANUP_EOL ,
+	fprintf(f, "Replied localy: %ld" CLEANUP_EOL ,
 		acc_stats->replied_localy );
-	fprintf(f, "Completion status 6xx: %d,",
+	fprintf(f, "Completion status 6xx: %ld,",
 		acc_stats->completed_6xx );
-	fprintf(f, " 5xx: %d,",
+	fprintf(f, " 5xx: %ld,",
 		acc_stats->completed_5xx );
-	fprintf(f, " 4xx: %d,",
+	fprintf(f, " 4xx: %ld,",
 		acc_stats->completed_4xx );
-	fprintf(f, " 3xx: %d,",
+	fprintf(f, " 3xx: %ld,",
 		acc_stats->completed_3xx );
-	fprintf(f, "2xx: %d" CLEANUP_EOL ,
+	fprintf(f, "2xx: %ld" CLEANUP_EOL ,
 		acc_stats->completed_2xx );
 	
 	return 1;

@@ -35,6 +35,7 @@
 #include "../../ut.h"
 #include "../../globals.h"
 #include "../../error.h"
+#include "../../fifo_server.h"
 #include "t_reply.h"
 #include "t_cancel.h"
 #include "t_stats.h"
@@ -360,7 +361,7 @@ void remove_from_hash_table_unsafe( struct cell * p_cell)
 	else
 		p_entry->last_cell = p_cell->prev_cell;
 	/* update stats */
-	p_entry->entries--;
+	/* p_entry->entries--; */
 	cur_stats->transactions--;
 	if (p_cell->local) cur_stats->client_transactions--;
 	cur_stats->waiting--;
@@ -368,4 +369,22 @@ void remove_from_hash_table_unsafe( struct cell * p_cell)
 	/* unlock( &(p_entry->mutex) ); */
 }
 
+/* print accumulated distribution of the hash table */
+int fifo_hash( FILE *stream, char *response_file )
+{
+	FILE *reply_file;
+	unsigned int i;
 
+	reply_file=open_reply_pipe(response_file);
+	if (reply_file==0) {
+		LOG(L_ERR, "ERROR: fifo_hash: file '%s' not opened\n", 
+			response_file);
+		return -1;
+	}
+	fputs( "200 ok\n", reply_file);
+	for (i=0; i<TABLE_ENTRIES; i++) {
+		fprintf(reply_file, "%d.\t%ld\n", i, tm_table->entrys[i].entries );
+	}
+	fclose(reply_file);
+	return 1;
+}
