@@ -1,0 +1,52 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+
+<!ENTITY user SYSTEM "extcmd_user.sgml">
+<!ENTITY devel SYSTEM "extcmd_devel.sgml">
+<!ENTITY faq SYSTEM "extcmd_faq.sgml">
+
+<!-- Include general SER documentation entities -->
+<!ENTITY % serentities SYSTEM "../../../doc/ser_entities.sgml">
+%serentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>extcmd Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>AuthorFirstname</firstname>
+		<surname>AuthorLastname</surname>
+		<affiliation><orgname>Organization Name</orgname></affiliation>
+		<address>
+		    <email>autor@email.net</email>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>EditorFirstname</firstname>
+		<surname>EditorLastname</surname>
+		<address>
+		    <email>editor@email.net</email>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>Fill in here</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+    
+</book>
