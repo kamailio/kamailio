@@ -1,0 +1,164 @@
+# 
+# $Id$
+#
+
+From: Bogdan Andrei Iancu <iancu@fokus.gmd.de>
+Subject: [Sr] sms faq 
+
+
+
+
+
+
+
+                            SIP <-> SMS GateWay
+
+
+
+
+1.Description
+
+
+1.1 Numbering plan
+
+
+The gateway accepts and advertises phone numbers in international format, more
+specific like: +(international code)(area code)(number).
+Ex:    Germany, D1 = +49 170 5678181
+    Romania, Connex = +40 722 123456
+A number in this format is expected to be placed as username into RURI or in
+the To header; if RURI misses the username, the To header will be consider.
+Also, the gateway will advertise in this format the username in Contact
+headers (in SIP replies and requests) and in From headers (in SIP requests).
+
+
+1.2 Address mapping
+
+
+To identify the destination number for the SMS, the gateway expects to have a
+mobile number into username in the SIP destination address
+(ex - sip:+401704678811@iptel.org)
+For the revert direction, because the gateway has only one GSM number, the
+destination SIP address has to be encapsulated into the SMS body  The gateway
+expects to find at the beginning of the SMS body a sip address in
+"sip:user.host" format. Everything before the SIP address will be discarded,
+the useful text beginning exactly after the address
+(Ex - SMS="For sip:user@host hello world!!" -> SIP="hello world")
+In order to facilitate replying, the gateway send all the SMS messages with a
+header containing the source SIP address in the following format:
+"From sip:user@host (if you reply DONOT remove it)<new_line>". When a SMS-reply
+is received having this header (all of it or truncated at the end), the header
+will be strip out (will not be sent into the SIP message)
+
+
+
+
+2.Configuration
+
+
+The following parameters are available for configuring the SMS gateway:
+
+
+- "modems" - string, mandatory -  define and configure one or more GSM modems
+SYNTAX:
+modems_value = list of modem_definition separated by semi-colon
+modem_definition = "modem_name[list_of_param]"
+list_of_param = list of modem_param semi-colon separated
+modem_param = "X=value"
+MODEM PARAMETERS:
+d=device (mandatory)- device associated with modem (/dev/ttyS0,/dev/modem,etc)
+p=pin (optional) - SIM's pin - default NULL;
+m=mode (optional) - modem working mode ("ASCII","OLD","DIGICOM","NEW")
+    default value is "NEW";
+b=baudrate (optional) - default 19600
+r=retry (optional) - sec to wait before retrying a command that prev failed!
+    default is 10 sec
+l=looping (optional) - time for modem to wait before performing a new check
+    for incomimg/outgoing SMS/SIP_MSG - default=20
+EXAMPLES:
+modparam("sms","modems","Nokia [d=/dev/ttyS1;b=9600;m=new;l=30] ")
+modparam("sms","modems","Nokia[d=/dev/ttyS1];Siemens[d=/dev/ttyS2]")
+
+
+- "networks" - string, mandatory -  define and configure the used GMS networks
+SYNTAX:
+networks_value = list of net_definition semi colon separated
+net_definition = "net_name[list_of_param]"
+list_of_param = list of set_param semi colon separated
+set_param  = "X=value"
+NETWORK PARAMETERS:
+c=SMS_Center (mandatory) - SMS center number for that network
+m=msx_sms_per_call (optional) - maximum number of SMS send / received from
+    that net in one modem loop. - default = 10 - this param was introduce
+    to avoid starvation.
+    Ex: a modem can send SMS for more than 1 networks; if you have a huge
+    number of SMS for the first network and the  number of incoming SIP
+    msg is equal with the sent SMS per same unit of time, the modem will
+    never get to send SMS fro the next networks.
+
+
+EXAMPLE:
+modparam("sms","networks","D1 [c=491710765000;m=10] ;d2[ c=3456;m=20])
+
+
+- "links" - string, mandatory -  define from which network each modem should
+    send SMS.
+SYNTAX:
+links_value = list of modem_asoc semi colon separated
+modem_asoc = "modem_name[list of networks name]"
+EXAMPLE:
+modparam("sms","links","NOKIA[D1;d2]") - the modem NOKIA will send SMS from D1
+    and D2 net (in this order!!!). if in a net queue are more then
+    max_sms_per_call SMS the modem will NOT SLEEP before starting the next
+    loop! - shortly, if msg are waiting to be sent, the modem will not go in
+    sleep.
+
+
+- "default_net" - string, optional - the default network to use; if no
+    one specified, the first defined network is used. This parameter is useful
+    only if the the "sms_send_msg" exported function is used
+    (see "Exported functions").
+
+
+ - max_sms_parts - numeric, optional - shows in maximum how many parts (SMS
+messages) a SIP message can be split. If exceeded, the SIP message will be
+sent truncated and the SIP user will get back another message containing the
+unsent part
+
+
+ - domain_str - string, optional - specify a fake domain name to be used by
+the gateway. The Contact headers and the From header from request will be
+construct based on this fake domain name. It's useful when the gateway is
+transparently hidden behind a proxy/register (located on different machines).
+Default is used the name of the machine the gateway runs on.
+
+
+ - use_contact - numeric, optional - if a contact header should be added to
+the outgoing SIP messages. Even if the SIP draft forbids this, some UAS
+requires it. Default is 0 (no).
+
+
+
+
+3. Usage and behavior
+
+
+Once configured, the module can be used through the exported functions:
+ - sms_send_msg_to_net("network_name") - put the SIP msg in the specified
+        network queue. The function return error if the number encapsulated
+        into SIP message is malformed, if the content_type is incorrect or
+        because of some internal failures.
+ - sms_send_msg()  - the same as the previous one, but use the default
+        network queue.
+Errors occurred because of an invalid number or a too long message or because
+of an internal modem malfunction are reported back to the SIP user via a SIP
+message containing explanations regarding the error.
+
+
+
+
+4. Technical specifications
+
+
+Each modem forks its own process for sending /fetching SMS. Communication and
+queuing between ser working processes and modem processes is done with pipes.
