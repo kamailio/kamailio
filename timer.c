@@ -66,7 +66,19 @@ int init_timer()
 
 
 
-	
+void destroy_timer()
+{
+	if (jiffies){
+#ifdef SHM_MEM
+		shm_free(jiffies); jiffies=0;
+#else
+		free(jiffies); jiffies=0;
+#endif
+	}
+}
+
+
+
 /*register a periodic timer;
  * ret: <0 on error*/
 int register_timer(timer_function f, void* param, unsigned int interval)

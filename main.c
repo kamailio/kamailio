@@ -326,6 +326,38 @@ int is_main=0; /* flag = is this the  "main" process? */
 
 char* pid_file = 0; /* filename as asked by use */
 
+
+
+/* callit before exiting; if show_status==1, mem status is displayed */
+void cleanup(show_status)
+{
+	/*clean-up*/
+	destroy_modules();
+#ifdef USE_TCP
+	destroy_tcp();
+#endif
+	destroy_timer();
+#ifdef PKG_MALLOC
+	if (show_status){
+		LOG(memlog, "Memory status (pkg):\n");
+		pkg_status();
+	}
+#endif
+#ifdef SHM_MEM
+	shm_free(pt);
+	pt=0;
+	if (show_status){
+			LOG(memlog, "Memory status (shm):\n");
+			shm_status();
+	}
+	/* zero all shmem alloc vars that we still use */
+	shm_mem_destroy();
+#endif
+	if (pid_file) unlink(pid_file);
+}
+
+
+
 /* daemon init, return 0 on success, -1 on error */
 int daemonize(char*  name)
 {
@@ -472,20 +504,8 @@ void handle_sigs()
 
 			     /* Wait for all the children to die */
 			while(wait(0) > 0);
-
-			destroy_modules();
-#ifdef PKG_MALLOC
-			LOG(memlog, "Memory status (pkg):\n");
-			pkg_status();
-#endif
-#ifdef SHM_MEM
-			LOG(memlog, "Memory status (shm):\n");
-			shm_status();
-			/* zero all shmem alloc vars that we still use */
-			pt=0;
-			shm_mem_destroy();
-#endif
-			if (pid_file) unlink(pid_file);
+			
+			cleanup(1); /* cleanup & show status*/
 			dprint("Thank you for flying " NAME "\n");
 			exit(0);
 			break;
@@ -531,6 +551,8 @@ void handle_sigs()
 #endif
 			/* exit */
 			kill(0, SIGTERM);
+			while(wait(0) > 0); /* wait for all the children to terminate*/
+			cleanup(1); /* cleanup & show status*/
 			DBG("terminating due to SIGCHLD\n");
 			exit(0);
 			break;
@@ -1558,11 +1580,15 @@ try_again:
 	ret=main_loop();
 	/*kill everything*/
 	kill(0, SIGTERM);
+	/*clean-up*/
+	cleanup(0);
 	return ret;
 
 error:
 	/*kill everything*/
 	kill(0, SIGTERM);
+	/*clean-up*/
+	cleanup(0);
 	return -1;
 
 }

@@ -256,6 +256,7 @@ void destroy_modules()
 
 	for(t=modules;t;t=t->next)
 		if  ((t->exports)&&(t->exports->destroy_f)) t->exports->destroy_f();
+	modules=0;
 }
 
 #ifdef NO_REVERSE_INIT

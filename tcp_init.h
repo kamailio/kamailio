@@ -30,6 +30,7 @@
 #include "ip_addr.h"
 
 int init_tcp();
+void destroy_tcp();
 int tcp_init(struct socket_info* sock_info);
 int tcp_init_children();
 void tcp_main_loop();

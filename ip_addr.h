@@ -49,6 +49,7 @@ struct ip_addr{
 	
 	/* 64 bits alligned address */
 	union {
+		unsigned long  addrl[16/sizeof(long)]; /* long format*/
 		unsigned int   addr32[4];
 		unsigned short addr16[8];
 		unsigned char  addr[16];

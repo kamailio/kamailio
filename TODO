@@ -16,7 +16,7 @@ x (different way) add request header bitmap field for the modules
 
 
 High priority:
-- parse_uri should not copy anymore the uri members (and it should not 0
+x- parse_uri should not copy anymore the uri members (and it should not 0
  terminate them anylonger).
 x fix/replace T_REF/T_UNREF
 x review all the tm locking
@@ -66,3 +66,5 @@ x freopen stdin, stdout, stderr to /dev/null
 - add a section on building ser & configuring it for maximum performance
  (-DF_MALLOC, -DNO_DBG, ... sip_warning=0, a.s.o)
 - add src_port, dst_port, proto to cfg.{y,lex}
+x generic locking lib
+- convert tm to use new locking lib

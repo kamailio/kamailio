@@ -51,11 +51,13 @@
 #include "tcp_conn.h"
 #include "globals.h"
 #include "pt.h"
+#include "locking.h"
 #include "mem/mem.h"
 #include "mem/shm_mem.h"
 #include "timer.h"
 #include "tcp_server.h"
 #include "tcp_init.h"
+
 
 
 
@@ -73,7 +75,12 @@ struct tcp_child{
 
 
 
-struct tcp_connection** conn_list=0;
+/* connection hash table (after ip&port) */
+struct tcp_connection** tcpconn_addr_hash=0;
+/* connection hash table (after connection id) */
+struct tcp_connection** tcpconn_id_hash=0;
+lock_t* tcpconn_lock=0;
+
 struct tcp_child tcp_children[MAX_TCP_CHILDREN];
 static int connection_id=1; /*  unique for each connection, used for 
 								quickly finding the corresponding connection
@@ -143,11 +150,24 @@ error:
 
 struct tcp_connection*  tcpconn_add(struct tcp_connection *c)
 {
-	TCPCONN_LOCK;
-	/* add it at the begining of the list*/
-	if (c) tcpconn_listadd(*conn_list, c, next, prev);
-	TCPCONN_UNLOCK;
-	return c;
+	unsigned hash;
+
+	if (c){
+		TCPCONN_LOCK;
+		/* add it at the begining of the list*/
+		hash=tcp_addr_hash(&c->rcv.src_ip, c->rcv.src_port);
+		c->addr_hash=hash;
+		tcpconn_listadd(tcpconn_addr_hash[hash], c, next, prev);
+		hash=tcp_id_hash(c->id);
+		c->id_hash=hash;
+		tcpconn_listadd(tcpconn_id_hash[hash], c, id_next, id_prev);
+		TCPCONN_UNLOCK;
+		DBG("tcpconn_add: hashes: %d, %d\n", c->addr_hash, c->id_hash);
+		return c;
+	}else{
+		LOG(L_CRIT, "tcpconn_add: BUG: null connection pointer\n");
+		return 0;
+	}
 }
 
 
@@ -155,39 +175,52 @@ struct tcp_connection*  tcpconn_add(struct tcp_connection *c)
 void tcpconn_rm(struct tcp_connection* c)
 {
 	TCPCONN_LOCK;
-	tcpconn_listrm(*conn_list, c, next, prev);
+	tcpconn_listrm(tcpconn_addr_hash[c->addr_hash], c, next, prev);
+	tcpconn_listrm(tcpconn_id_hash[c->id_hash], c, id_next, id_prev);
 	TCPCONN_UNLOCK;
 	shm_free(c);
 }
 
 
-/* finds a connection, if id=0 uses the ip addr & port */
-struct tcp_connection* tcpconn_find(int id, struct ip_addr* ip, int port)
+/* finds a connection, if id=0 uses the ip addr & port
+ * WARNING: unprotected (locks) use tcpconn_get unless you really
+ * know what you are doing */
+struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port)
 {
 
 	struct tcp_connection *c;
+	unsigned hash;
 	
 	DBG("tcpconn_find: %d ",id ); print_ip(ip); DBG(" %d\n", ntohs(port));
-	for (c=*conn_list; c; c=c->next){
-		DBG("c=%p, c->id=%d, ip=",c, c->id);
-		print_ip(&c->rcv.src_ip);
-		DBG(" port=%d\n", ntohs(c->rcv.src_port));
-		if (id){
+	if (id){
+		hash=tcp_id_hash(id);
+		for (c=tcpconn_id_hash[hash]; c; c=c->id_next){
+			DBG("c=%p, c->id=%d, ip=",c, c->id);
+			print_ip(&c->rcv.src_ip);
+			DBG(" port=%d\n", ntohs(c->rcv.src_port));
 			if (id==c->id) return c;
-		}else if (ip &&	(port==c->rcv.src_port)&&
-					(ip_addr_cmp(ip, &c->rcv.src_ip)))
-			return c;
+		}
+	}else if (ip){
+		hash=tcp_addr_hash(ip, port);
+		for (c=tcpconn_addr_hash[hash]; c; c=c->next){
+			DBG("c=%p, c->id=%d, ip=",c, c->id);
+			print_ip(&c->rcv.src_ip);
+			DBG(" port=%d\n", ntohs(c->rcv.src_port));
+			if ( (port==c->rcv.src_port) && (ip_addr_cmp(ip, &c->rcv.src_ip)) )
+				return c;
+		}
 	}
 	return 0;
 }
 
 
 
+/* _tcpconn_find with locks */
 struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port)
 {
 	struct tcp_connection* c;
 	TCPCONN_LOCK;
-	c=tcpconn_find(id, ip, port);
+	c=_tcpconn_find(id, ip, port);
 	if (c) c->refcnt++;
 	TCPCONN_UNLOCK;
 	return c;
@@ -275,27 +308,30 @@ send_it:
 
 
 
-/* very ineficient for now, use hashtable some day - FIXME*/
+/* very ineficient for now - FIXME*/
 void tcpconn_timeout(fd_set* set)
 {
 	struct tcp_connection *c, *next;
-	int ticks;;
+	int ticks;
+	unsigned h;;
 	
 	
 	ticks=get_ticks();
-	c=*conn_list;
-	while(c){
-		next=c->next;
-		if ((c->refcnt==0) && (ticks>c->timeout)) {
-			DBG("tcpconn_timeout: timeout for %p (%d > %d)\n",
-					c, ticks, c->timeout);
-			if (c->s>0) {
-				FD_CLR(c->s, set);
-				close(c->s);
+	for(h=0; h<TCP_ADDR_HASH_SIZE; h++){
+		c=tcpconn_addr_hash[h];
+		while(c){
+			next=c->next;
+			if ((c->refcnt==0) && (ticks>c->timeout)) {
+				DBG("tcpconn_timeout: timeout for hash=%d - %p (%d > %d)\n",
+						h, c, ticks, c->timeout);
+				if (c->s>0) {
+					FD_CLR(c->s, set);
+					close(c->s);
+				}
+				tcpconn_rm(c);
 			}
-			tcpconn_rm(c);
+			c=next;
 		}
-		c=next;
 	}
 }
 
@@ -390,6 +426,7 @@ void tcp_main_loop()
 	int new_sock;
 	union sockaddr_union su;
 	struct tcp_connection* tcpconn;
+	unsigned h;
 	long response[2];
 	int cmd;
 	int bytes;
@@ -459,24 +496,26 @@ void tcp_main_loop()
 			}
 		}
 		
-		/* check all the read fds (from the tcpconn list) */
-		
-		for(tcpconn=*conn_list; tcpconn && n; tcpconn=tcpconn->next){
-			if ((tcpconn->refcnt==0)&&(FD_ISSET(tcpconn->s, &sel_set))){
-				/* new data available */
-				n--;
-				/* pass it to child, so remove it from select list */
-				DBG("tcp_main_loop: data available on %p %d\n",
-						tcpconn, tcpconn->s);
-				FD_CLR(tcpconn->s, &master_set);
-				if (send2child(tcpconn)<0){
-					LOG(L_ERR,"ERROR: tcp_main_loop: no children available\n");
-					close(tcpconn->s);
-					tcpconn_rm(tcpconn);
+		/* check all the read fds (from the tcpconn_addr_hash ) */
+		for (h=0; h<TCP_ADDR_HASH_SIZE; h++){
+			for(tcpconn=tcpconn_addr_hash[h]; tcpconn && n; 
+					tcpconn=tcpconn->next){
+				if ((tcpconn->refcnt==0)&&(FD_ISSET(tcpconn->s, &sel_set))){
+					/* new data available */
+					n--;
+					/* pass it to child, so remove it from select list */
+					DBG("tcp_main_loop: data available on %p [h:%d] %d\n",
+							tcpconn, h, tcpconn->s);
+					FD_CLR(tcpconn->s, &master_set);
+					if (send2child(tcpconn)<0){
+						LOG(L_ERR,"ERROR: tcp_main_loop: no "
+									"children available\n");
+						close(tcpconn->s);
+						tcpconn_rm(tcpconn);
+					}
 				}
 			}
 		}
-		
 		/* check unix sockets & listen | destroy connections */
 		/* start from 1, the "main" process does not transmit anything*/
 		for (r=1; r<process_no && n; r++){
@@ -589,16 +628,69 @@ read_again:
 
 int init_tcp()
 {
-	/* allocate list head*/
-	conn_list=shm_malloc(sizeof(struct tcp_connection*));
-	if (conn_list==0){
-		LOG(L_CRIT, "ERROR: init_tcp: memory allocation failure\n");
+	/* init lock */
+	tcpconn_lock=lock_alloc();
+	if (tcpconn_lock==0){
+		LOG(L_CRIT, "ERROR: init_tcp: could not alloc lock\n");
 		goto error;
 	}
-	*conn_list=0;
+	if (lock_init(tcpconn_lock)==0){
+		LOG(L_CRIT, "ERROR: init_tcp: could not init lock\n");
+		lock_dealloc((void*)tcpconn_lock);
+		tcpconn_lock=0;
+		goto error;
+	}
+	/* alloc hashtables*/
+	tcpconn_addr_hash=(struct tcp_connection**)shm_malloc(TCP_ADDR_HASH_SIZE*
+								sizeof(struct tcp_connection*));
+
+	if (tcpconn_addr_hash==0){
+		LOG(L_CRIT, "ERROR: init_tcp: could not alloc address hashtable\n");
+		lock_destroy(tcpconn_lock);
+		lock_dealloc((void*)tcpconn_lock);
+		tcpconn_lock=0;
+		goto error;
+	}
+	
+	tcpconn_id_hash=(struct tcp_connection**)shm_malloc(TCP_ID_HASH_SIZE*
+								sizeof(struct tcp_connection*));
+	if (tcpconn_id_hash==0){
+		LOG(L_CRIT, "ERROR: init_tcp: could not alloc id hashtable\n");
+		shm_free(tcpconn_addr_hash);
+		tcpconn_addr_hash=0;
+		lock_destroy(tcpconn_lock);
+		lock_dealloc((void*)tcpconn_lock);
+		tcpconn_lock=0;
+		goto error;
+	}
+	/* init hashtables*/
+	memset((void*)tcpconn_addr_hash, 0, 
+			TCP_ADDR_HASH_SIZE * sizeof(struct tcp_connection*));
+	memset((void*)tcpconn_id_hash, 0, 
+			TCP_ID_HASH_SIZE * sizeof(struct tcp_connection*));
 	return 0;
 error:
 		return -1;
+}
+
+
+
+/* cleanup before exit */
+void destroy_tcp()
+{
+	if (tcpconn_lock){
+		lock_destroy(tcpconn_lock);
+		lock_dealloc((void*)tcpconn_lock);
+		tcpconn_lock=0;
+	}
+	if(tcpconn_addr_hash){
+		shm_free(tcpconn_addr_hash);
+		tcpconn_addr_hash=0;
+	}
+	if(tcpconn_id_hash){
+		shm_free(tcpconn_id_hash);
+		tcpconn_id_hash=0;
+	}
 }
 
 

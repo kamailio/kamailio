@@ -44,12 +44,6 @@ Implements:
 #ifndef _locking_h
 #define _locking_h
 
-#include "mem/mem.h"
-#ifdef SHM_MEM
-#include "mem/shm_mem.h"
-#else
-#error "locking requires shared memroy support"
-#endif
 
 #ifdef FAST_LOCK
 #include "fastlock.h"
@@ -179,5 +173,12 @@ inline static void lock_release(lock_t* lock)
 #endif
 
 
+/*shm_{malloc, free}*/
+#include "mem/mem.h"
+#ifdef SHM_MEM
+#include "mem/shm_mem.h"
+#else
+#error "locking requires shared memroy support"
+#endif
 
 #endif
