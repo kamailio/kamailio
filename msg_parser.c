@@ -262,7 +262,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			}
 			hdr->parsed=to_b;
 			hdr->body.len=tmp-hdr->body.s;
-			DBG("get_hdr_field: to <%s>: <%s>=[%d] %c [%d]\n",
+			DBG("get_hdr_field: to <%s>: <%s>=[%d] <%c> [%d]\n",
 				hdr->name.s, to_b->body.s,to_b->body.len,*tmp,hdr->body.len);
 			break;
 		case HDR_FROM:
