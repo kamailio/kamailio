@@ -54,7 +54,7 @@ int new_presentity(str* _to, presentity_t** _p);
 /*
  * Free all memory associated with a presentity
  */
-int free_presentity(presentity_t* _p);
+void free_presentity(presentity_t* _p);
 
 
 int timer_presentity(presentity_t* _p);
@@ -67,6 +67,10 @@ int remove_watcher(presentity_t* _p, watcher_t* _w);
 
 int notify_watchers(presentity_t* _p);
 
+/*
+ * Print a presentity
+ */
+void print_presentity(FILE* _f, presentity_t* _p);
 
 #endif /* PRESENTITY_H */
 

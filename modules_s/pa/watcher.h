@@ -73,7 +73,7 @@ void free_watcher(watcher_t* _w);
 /*
  * Print contact, for debugging purposes only
  */
-void print_ucontact(FILE* _f, watcher_t* _w);
+void print_watcher(FILE* _f, watcher_t* _w);
 
 
 int update_watcher(watcher_t* _w, str* _c, time_t _e);

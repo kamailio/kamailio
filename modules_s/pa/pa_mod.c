@@ -45,15 +45,6 @@ int default_expires = 3600;
 /** TM bind */
 struct tm_binds tmb;
 
-/*
- * sl_send_reply function pointer
- */
-int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
-
-
-int (*ul_register_watcher)(str* _d, str* _a, void* cb, void* data);
-int (*ul_unregister_watcher)(str* _d, str* _a, void* cb, void* data);
-
 
 struct module_exports exports = {
 	"pa", 
@@ -96,16 +87,6 @@ static int mod_init(void)
 
 	fprintf(stderr, "Presence Agent - initializing\n");
 
-             /*
-              * We will need sl_send_reply from stateless
-	      * module for sending replies
-	      */
-        sl_reply = find_export("sl_send_reply", 2);
-	if (!sl_reply) {
-		LOG(L_ERR, "This module requires sl module\n");
-		return -1;
-	}
-
 	/* import the TM auto-loading function */
 	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT))) {
 		LOG(L_ERR, "Can't import tm\n");
@@ -115,19 +96,6 @@ static int mod_init(void)
 	if (load_tm( &tmb )==-1)
 		return -1;
 	
-	(cmd_function)ul_register_watcher = find_export("~ul_register_watcher", 1);
-	if (ul_register_watcher == 0) {
-		LOG(L_ERR, "Cant find callback\n");
-		return -1;
-	}
-
-	(cmd_function)ul_unregister_watcher = find_export("~ul_unregister_watcher", 1);
-	if (ul_unregister_watcher == 0) {
-		LOG(L_ERR, "Cant find callback\n");
-		return -1;
-	}
-
-
 	return 0;
 }
 

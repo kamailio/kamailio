@@ -74,9 +74,8 @@ int send_reply(struct sip_msg* _m)
 
 	paerrno2msg(&code, &msg);
 	
-	if (sl_reply(_m, (char*)code, msg) == -1) {
+	if (tmb.t_reply(_m, code, msg) == -1) {
 		LOG(L_ERR, "send_reply(): Error while sending %d %s\n", code, msg);
 		return -1;
 	} else return 0;	
 }
-

@@ -36,23 +36,20 @@
 #include "pdomain.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_to.h"
+#include "../../parser/parse_from.h"
 #include "pa_mod.h"
 #include "watcher.h"
 #include "../../trim.h"
-
-static struct to_body from;
-char buffer[256];
-
-static str usrloc_domain = {
-	"location",
-	8
-};
-
+#include "../../parser/parse_uri.h"
+#include "reply.h"
+#include "notify.h"
 
 static doctype_t acc;
 
-
-void usrloc_callback(str* _user, int state, void* data)
+/*
+ * FIXME: locking
+ */
+void callback(str* _user, int state, void* data)
 {
 	struct presentity* ptr;
 
@@ -140,14 +137,7 @@ static inline int parse_message(struct sip_msg* _m)
 		LOG(L_ERR, "parse_message(): From: missing\n");
 		return -6;
 	} else {
-		memcpy(buffer, _m->from->body.s, _m->from->body.len);
-		buffer[_m->from->body.len] = '\r';
-		buffer[_m->from->body.len + 1] = '\n';
-		buffer[_m->from->body.len + 2] = '\0';
-
-		memset(&from, 0, sizeof(from));
-		parse_to(buffer, buffer + _m->from->body.len + 3, &from);
-		if (from.error != PARSE_OK) {
+		if (parse_from_header(_m) == -1) { 
 			paerrno = PA_FROM_ERROR;
 			LOG(L_ERR, "parse_message(): Error while parsing From\n");
 			return -7;
@@ -222,14 +212,14 @@ static inline int create_presentity(struct sip_msg* _m, struct pdomain* _d, str*
 	c = &((contact_body_t*)_m->contact->parsed)->contacts->uri;
 	get_raw_uri(c);
 
-	if (add_watcher(*_p, &(from.uri), c, e, acc, &(_m->callid->body), &_m->from->body, &_m->to->body, _w) < 0) {
+	if (add_watcher(*_p, &(get_from(_m)->uri), c, e, acc, &(_m->callid->body), &(get_from(_m)->tag_value), &_m->to->body, _w) < 0) {
 		LOG(L_ERR, "create_presentity(): Error while creating presentity\n");
 		return -2;
 	}
 
 	add_presentity(_d, *_p);
 
-	ul_register_watcher(&usrloc_domain, _to, usrloc_callback, *_p);
+	_d->reg(&(get_from(_m)->uri), _to, callback, *_p);
 
 	return 0;
 }
@@ -296,7 +286,7 @@ static inline int update_presentity(struct sip_msg* _m, struct pdomain* _d, stru
 		if (e) {
 			e += time(0);
 
-			if (add_watcher(_p, &(from.uri), c, e, acc, &_m->callid->body, &_m->from->body, &_m->to->body, _w) < 0) {
+			if (add_watcher(_p, &(get_from(_m)->uri), c, e, acc, &_m->callid->body, &_m->from->body, &_m->to->body, _w) < 0) {
 				LOG(L_ERR, "update_presentity(): Error while creating presentity\n");
 				return -2;
 			}			
@@ -312,6 +302,18 @@ static inline int update_presentity(struct sip_msg* _m, struct pdomain* _d, stru
 }
 
 
+int extract_userdomain(str* _ud)
+{
+	struct sip_uri uri;
+
+	     /* FIXME: Can be password between username and host */
+	parse_uri(_ud->s, _ud->len, &uri);
+	_ud->s = uri.user.s;
+	_ud->len = uri.user.len + uri.host.len + 1;
+	return 0;
+}
+
+
 /*
  * Handle a subscribe Request
  */
@@ -320,7 +322,7 @@ int subscribe(struct sip_msg* _m, char* _s1, char* _s2)
 	struct pdomain* d;
 	struct presentity *p;
 	struct watcher* w;
-	str* user;
+	str ud;
 
 	paerrno = PA_OK;
 
@@ -337,21 +339,20 @@ int subscribe(struct sip_msg* _m, char* _s1, char* _s2)
 	d = (struct pdomain*)_s1;
 
 	if (_m->new_uri.s) {
-		user = &_m->new_uri;
+		ud = _m->new_uri;
 	} else {
-		user = &_m->first_line.u.request.uri;
+		ud = _m->first_line.u.request.uri;
 	}
 	
-	if (extract_username(user) < 0) {
-		paerrno = PA_EXTRACT_USER;
-		LOG(L_ERR, "subscribe(): Error while extracting username from R-URI\n");
+	lock_pdomain(d);
+	
+	if (extract_userdomain(&ud) < 0) {
+		LOG(L_ERR, "subscribe(): Error while extracting user@domain\n");
 		goto error;
 	}
 
-	lock_pdomain(d);
-
-	if (find_presentity(d, user, &p) > 0) {
-		if (create_presentity(_m, d, user, &p, &w) < 0) {
+	if (find_presentity(d, &ud, &p) > 0) {
+		if (create_presentity(_m, d, &ud, &p, &w) < 0) {
 			LOG(L_ERR, "subscribe(): Error while creating new presentity\n");
 			unlock_pdomain(d);
 			goto error;
@@ -364,7 +365,7 @@ int subscribe(struct sip_msg* _m, char* _s1, char* _s2)
 		}
 	}
 
-	print_all_pdomains(stdout);
+	     /*	print_all_pdomains(stdout); */
 
 	if (send_reply(_m) < 0) return -1;
 

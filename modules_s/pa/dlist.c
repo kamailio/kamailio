@@ -33,7 +33,8 @@
 #include "paerrno.h"
 #include <string.h>
 #include "../../mem/shm_mem.h"
-
+#include "../../sr_module.h"
+#include "ptime.h"
 
 /*
  * List of all registered domains
@@ -76,6 +77,9 @@ static inline int find_dlist(str* _n, dlist_t** _d)
  */
 static inline int new_dlist(str* _n, dlist_t** _d)
 {
+	cmd_function reg;
+	cmd_function unreg;
+
 	dlist_t* ptr;
 
 	     /* Domains are created before ser forks,
@@ -100,16 +104,39 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 	memcpy(ptr->name.s, _n->s, _n->len);
 	ptr->name.len = _n->len;
 
-	if (new_pdomain(&(ptr->name), 512, &(ptr->d)) < 0) {
+	if ((_n->len == 9) && (!strncasecmp(_n->s, "registrar", 9))) {
+		reg = find_export("~ul_register_watcher", 1);
+		if (reg == 0) {
+			LOG(L_ERR, "new_dlist(): ~ul_register_watcher not found\n");
+			return -3;
+		}
+		unreg = find_export("~ul_unregister_watcher", 1);
+		if (unreg == 0) {
+			LOG(L_ERR, "new_dlist(): ~ul_unregister_watcher not found\n");
+			return -4;
+		}
+	} else if ((_n->len == 6) && (!strncasecmp(_n->s, "jabber", 6))) {
+		reg = find_export("jab_register_watcher", 1);
+		if (reg == 0) {
+			LOG(L_ERR, "new_dlist(): jab_register_watcher not found\n");
+			return -5;
+		}
+		unreg = find_export("jab_unregister_watcher", 1);
+		if (unreg == 0) {
+			LOG(L_ERR, "new_dlist(): jab_unregister_watcher not found\n");
+			return -6;
+		}
+	} else {
+		LOG(L_ERR, "new_dlist(): Unknown module to bind: %.*s\n", _n->len, _n->s);
+			return -7;
+	}
+
+	if (new_pdomain(&(ptr->name), 512, &(ptr->d), (register_watcher_t)reg, (unregister_watcher_t)unreg) < 0) {
 		LOG(L_ERR, "new_dlist(): Error while creating domain structure\n");
 		shm_free(ptr->name.s);
 		shm_free(ptr);
-		return -3;
+		return -8;
 	}
-
-
-
-
 
 	*_d = ptr;
 	return 0;

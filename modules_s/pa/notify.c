@@ -286,9 +286,21 @@ static inline int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 		return -6;
 	}
 
-	tmb.t_uac(&method, &_w->contact, &headers, &body, &_w->dialog.to, 
-		  0, 0, 0, &_w->dialog.callid, &_w->dialog.from_tag, _w->dialog.cseq++);
-
+	tmb.t_uac_dlg(&method,              /* NOTIFY */ 
+		      0,                    /* dst */
+		      &_w->contact,         /* R-URI */
+		      &_w->from,            /* From -> To */
+		      &_w->dialog.to,       /* To -> From */
+		      &_w->dialog.from_tag, /* From tag -> To tag */
+		      0,                    /* From tag automatically generated */
+		      &_w->dialog.cseq,     /* CSeq */
+		      &_w->dialog.callid,   /* Call-ID */
+		      &headers,             /* Headers */
+		      &body,                /* Body */
+                      0,                    /* completition_cb */
+		      0                     /* cbp */
+		      );
+	_w->dialog.cseq++;
 	return 0;
 
 }
@@ -325,9 +337,22 @@ static inline int send_lpidf_notify(struct presentity* _p, struct watcher* _w)
 		return -6;
 	}
 
-	tmb.t_uac(&method, &_w->contact, &headers, &body, &_w->dialog.to, 
-		  0, 0, 0, &_w->dialog.callid, &_w->dialog.from_tag, _w->dialog.cseq++);
+	tmb.t_uac_dlg(&method,              /* NOTIFY */ 
+		      0,                    /* dst */
+		      &_w->contact,         /* R-URI */
+		      &_w->from,            /* From -> To */
+		      &_w->dialog.to,       /* To -> From */
+		      &_w->dialog.from_tag, /* From tag -> To tag */
+		      0,                    /* From tag automatically generated */
+		      &_w->dialog.cseq,    /* CSeq */
+		      &_w->dialog.callid,   /* Call-ID */
+		      &headers,             /* Headers */
+		      &body,                /* Body */
+                      0,                    /* completition_cb */
+		      0                     /* cbp */
+		      );
 
+	_w->dialog.cseq++;
 	return 0;
 }
 
@@ -345,4 +370,6 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 		return send_lpidf_notify(_p, _w);
 		break;
 	}
+
+	return -1;
 }

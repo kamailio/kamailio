@@ -64,7 +64,7 @@ int new_presentity(str* _to, presentity_t** _p)
 /*
  * Free all memory associated with a presentity
  */
-int free_presentity(presentity_t* _p)
+void free_presentity(presentity_t* _p)
 {
 	watcher_t* ptr;
 
@@ -119,6 +119,7 @@ int add_watcher(presentity_t* _p, str* _from, str* _c, time_t _e, doctype_t _a, 
 
 	(*_w)->next = _p->watchers;
 	_p->watchers = *_w;
+	return 0;
 }
 
 
