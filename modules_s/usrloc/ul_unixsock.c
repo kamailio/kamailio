@@ -316,8 +316,11 @@ static int ul_flush(str* msg)
 
 static int ul_dump(str* msg)
 {
-	unixsock_reply_asciiz( "200 OK\n");
-	     /* FIXME */
+	     /* This function is not implemented in unixsock interface,
+	      * it produces a lot of data which would not fit into a single
+	      * message
+	      */
+	unixsock_reply_asciiz( "500 Not Implemented\n");
 	return 0;
 }
 
@@ -432,6 +435,31 @@ static int ul_add(str* msg)
 }
 
 
+/*
+ * Build Contact HF for reply
+ */
+static inline int print_contacts(ucontact_t* _c)
+{
+	int cnt = 0;
+
+	while(_c) {
+		if (VALID_CONTACT(_c, act_time)) {
+			cnt++;
+			if (cnt == 1) {
+				unixsock_reply_asciiz("200 OK\n");
+			}
+			if (unixsock_reply_printf("<%.*s>;q=%-3.2f;expires=%d\n",
+						  _c->c.len, ZSW(_c->c.s),
+						  _c->q, (int)(_c->expires - act_time)) < 0) {
+				return -1;
+			}
+		}
+		_c = _c->next;
+	}
+	return cnt == 0;
+}
+
+
 static inline int ul_show_contact(str* msg)
 {
 	udomain_t* d;
@@ -483,20 +511,22 @@ static inline int ul_show_contact(str* msg)
 		}
 		
 		get_act_time();
-
-		     /* FIXME */
-		     /*
-		if (!print_contacts(reply_file, r->contacts)) {
-			unlock_udomain(d);
-			fprintf(reply_file, "404 No registered contacts found\n");
-			fclose(reply_file);
-			return 1;
+		
+		res = print_contacts(r->contacts);
+		if (res > 0) {
+			unixsock_reply_asciiz("404 No registered contacts found\n");
+			res = 1;
+		} else if (res < 0) {
+			unixsock_reply_reset();
+			unixsock_reply_asciiz("500 Buffer too small\n");
+			goto err_unlock;
+		} else {
+			res = 0;
 		}
-		     */
 
 		unlock_udomain(d);
 		unixsock_reply_send();
-		return 0;
+		return res;
 	} else {
 		unixsock_reply_printf("400 table (%.*s) not found\n", table.len, ZSW(table.s));
 		goto err;
