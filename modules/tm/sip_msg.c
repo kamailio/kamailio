@@ -123,8 +123,8 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 
 	/*computing the length of entire sip_msg structure*/
 	len = ROUND4(sizeof( struct sip_msg ));
-	/*we will keep only the original msg*/
-	len += ROUND4(org_msg->len);
+	/*we will keep only the original msg +ZT */
+	len += ROUND4(org_msg->len + 1);
 	/*the new uri (if any)*/
 	if (org_msg->new_uri.s && org_msg->new_uri.len)
 		len+= ROUND4(org_msg->new_uri.len);
@@ -206,8 +206,10 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 	}
 	/* message buffers(org and scratch pad) */
 	memcpy( p , org_msg->orig , org_msg->len);
+	/* ZT to be safer */
+	*(p+org_msg->len)=0;
 	new_msg->orig = new_msg->buf = p;
-	p += ROUND4(new_msg->len);
+	p += ROUND4(new_msg->len+1);
 	/* unparsed and eoh pointer */
 	new_msg->unparsed = translate_pointer(new_msg->buf ,org_msg->buf,
 		org_msg->unparsed );

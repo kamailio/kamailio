@@ -93,7 +93,12 @@ inline void final_response_handler( void *attr)
 	{
 		DBG("DEBUG: FR_handler:stop retr. and send CANCEL (%p)\n",r_buf->my_T);
 		reset_timer( hash_table, &(r_buf->retr_timer) );
-		t_build_and_send_CANCEL( r_buf->my_T ,r_buf->branch);
+		/* BUG -- we want CANCELs actually ONLY for INVITE; BTW, the
+		   CANCEL construction method results for non-INVITEs in
+		   bizzar messages such as "CANCELS" for OPTIONS; -Jiri
+		*/
+		if (r_buf->my_T->uas.request->first_line.u.request.method_value==METHOD_INVITE)
+			t_build_and_send_CANCEL( r_buf->my_T ,r_buf->branch);
 		/* dirty hack:t_send_reply would increase ref_count which would indeed
 		result in refcount++ which would not -- until timer processe's
 		T changes again; currently only on next call to t_send_reply from

@@ -42,6 +42,9 @@ int receive_msg(char* buf, unsigned int len, union sockaddr_union* src_su)
 	/* fill in msg */
 	msg->buf=buf;
 	msg->len=len;
+	/* zero termination (termination of orig message bellow not that
+	   useful as most of the work is done with scrath-pad; -jiri  */
+	buf[len]=0;
 	su2ip_addr(&msg->src_ip, src_su);
 	msg->dst_ip=bind_address->address; /* won't work if listening on 0.0.0.0 */
 	msg->id=msg_no;

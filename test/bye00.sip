@@ -1,6 +1,6 @@
 BYE sip:jiri@bat.iptel.org SIP/2.0
 Max-Forwards: 0
-Via: SIP/2.0/UDP 195.37.77.101;branch=df6250bb14ccda4a69dc0502173d02b2.e0e.0
+Via: SIP/2.0/UDP 195.37.77.100;branch=df6250bb14ccda4a69dc0502173d02b2.e0e.0
 Via: SIP/2.0/UDP 213.20.228.21:13671
 From: "jiri" <sip:jiri@iptel.org>;tag=9c77afe9-71ec-4c52-a009-f2869fba848b
 To: <sip:jiri@bat.iptel.org>;tag=9c77afe9-71ec-4c52-a009-f2869fba848b

@@ -1,4 +1,8 @@
+<<<<<<< Makefile.defs
 # $Id$
+=======
+# $Id$
+>>>>>>> 1.99
 #
 # makefile defs (CC, LD,a.s.o)
 #
@@ -7,7 +11,7 @@
 #version number
 VERSION = 0
 PATCHLEVEL = 8
-SUBLEVEL = 8
+SUBLEVEL = 7
 EXTRAVERSION = -3-ipv6
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
@@ -74,22 +78,21 @@ ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/ )
 # -DNEW_HNAME
 #		32-bit header name parsing; turn off for lower speed ;-) or debugging;
 #		to become non-optional if fast and stable
-# -DSILENT_FR
+# -SILENT_FR
 #		if defined, when FR timer hits (in tm) cancel is sent only if forking
 #		if used; otherwise, just delete the transaction without doing anything
-# -DUSE_IPV6
-#		compiles ipv6 support
 
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"'\
-	 -DDNS_IP_HACK  -DPKG_MALLOC \
+	 -DPKG_MALLOC \
 	 -DF_MALLOC \
 	 -DSHM_MEM  -DSHM_MMAP \
 	 -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 \
 	 -DWAIT -DNEW_HNAME \
+	 -DSILENT_FR \
 	 -DUSE_IPV6 \
-	 -DVERY_NOISY_REPLIES\
-	 #-DSILENT_FR \
+	 -DNOISY_REPLIES -DVERY_NOISY_REPLIES\
+ 	 #-DUSE_SYNONIM\
 	 #-DNO_DEBUG \
 	 #-DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=0 \
 	 #-DNOSMP \
@@ -230,7 +233,7 @@ ifeq	($(ARCH), sparc64)
 ifeq		($(CC_NAME), gcc)
 				#common stuff
 				CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) -Winline\
-					-Wall #-Wmissing-prototypes \
+					#-Wmissing-prototypes \
 				#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
 					#use 32bit for now
@@ -318,7 +321,7 @@ endif
 	# -andrei
 else	#mode,release
 ifeq	($(CC_NAME), gcc)
-		CFLAGS=-g -Wcast-align -Winline $(PROFILE) -Wall
+		CFLAGS=-g -Wcast-align -Winline $(PROFILE)
 		LDFLAGS+=-g -Wl,-E $(PROFILE)
 endif
 ifeq	($(CC_NAME), icc)
@@ -375,8 +378,7 @@ ifeq  ($(OS), SunOS)
 ifeq ($(CC_NAME), suncc)
 	LIBS=-lfast
 endif
-	LIBS+=-ldl -L/usr/local/lib -L/usr/lib/mysql -lfl -lresolv -lnsl \
-		-lsocket -lrt
+	LIBS+=-ldl -L/usr/local/lib -L/usr/lib/mysql -lfl -lxnet -lrt
 	# -lrt needed for sched_yield
 endif
 

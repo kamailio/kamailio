@@ -48,13 +48,15 @@ int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
 	via = 0;
 	p_msg = Trans->uas.request;
 
-	len = 0;
-	/*first line's len - CANCEL and INVITE has the same lenght */
-	len += ( REQ_LINE(p_msg).version.s+REQ_LINE(p_msg).version.len)-
-		REQ_LINE(p_msg).method.s+CRLF_LEN;
-	/*check if the REQ URI was override */
+	/* method, separators, version */
+	len=SIP_VERSION_LEN + CANCEL_LEN + 2 /* spaces */ + CRLF_LEN;
+	/* if URL was overridden .... */
 	if (Trans->uac[branch].uri.s)
-		len += Trans->uac[branch].uri.len - REQ_LINE(p_msg).uri.len;
+		len+=Trans->uac[branch].uri.len;
+	else
+	/* ... otherwise use the inbound URL */
+		len+=REQ_LINE(p_msg).uri.len;
+
 	/*via*/
 	if ( add_branch_label(Trans,p_msg,branch)==-1 )
 		goto error;
@@ -67,16 +69,18 @@ int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
 	}
 	len+= via_len;
 	/*headers*/
-	for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
-		if (hdr->type==HDR_FROM || hdr->type==HDR_CALLID || 
-			hdr->type==HDR_CSEQ || hdr->type==HDR_TO )
+	for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next ) {
+		if (hdr->type==HDR_FROM || hdr->type==HDR_CALLID 
+			|| hdr->type==HDR_TO )
 			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) + CRLF_LEN ;
-	/* User Agent header*/
-	len += USER_AGENT_LEN + CRLF_LEN;
-	/* Content Lenght heder*/
-	len += CONTENT_LEN_LEN + CRLF_LEN;
-	/* end of message */
-	len += CRLF_LEN;
+		else if (hdr->type==HDR_CSEQ)
+			len += hdr->name.len + 2 + ((struct cseq_body*)hdr->parsed)->number.len +
+				1+CANCEL_LEN+CRLF_LEN;
+	}
+	/* User Agent, Conteny Length, EoM */
+	len += USER_AGENT_LEN + CRLF_LEN +
+		CONTENT_LEN_LEN + CRLF_LEN +
+		CRLF_LEN;
 
 	cancel_buf=sh_malloc( len+1 );
 	if (!cancel_buf)
@@ -86,24 +90,16 @@ int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
 	}
 	p = cancel_buf;
 
-	/* first line -> do we have a new URI? */
-	if (Trans->uac[branch].uri.s)
-	{
-		append_mem_block(p,REQ_LINE(p_msg).method.s,
-			REQ_LINE(p_msg).uri.s-REQ_LINE(p_msg).method.s);
-		append_mem_block(p,Trans->uac[branch].uri.s,
+	append_mem_block( p, CANCEL " ", CANCEL_LEN +1 );
+	if (Trans->uac[branch].uri.s) {
+		append_mem_block( p, Trans->uac[branch].uri.s, 
 			Trans->uac[branch].uri.len);
-		append_mem_block(p,REQ_LINE(p_msg).uri.s+REQ_LINE(p_msg).uri.len,
-			REQ_LINE(p_msg).version.s+REQ_LINE(p_msg).version.len-
-			(REQ_LINE(p_msg).uri.s+REQ_LINE(p_msg).uri.len))
-	}else{
-		append_mem_block(p,REQ_LINE(p_msg).method.s,
-			REQ_LINE(p_msg).version.s+REQ_LINE(p_msg).version.len-
-			REQ_LINE(p_msg).method.s);
+	} else {
+		append_mem_block(p,REQ_LINE(p_msg).uri.s,
+			REQ_LINE(p_msg).uri.len );
 	}
-	/* changhing method name*/
-	memcpy(cancel_buf, CANCEL , CANCEL_LEN );
-	append_mem_block(p,CRLF,CRLF_LEN);
+	append_mem_block( p, " " SIP_VERSION CRLF, 1+SIP_VERSION_LEN+CRLF_LEN );
+
 	/* insert our via */
 	append_mem_block(p,via,via_len);
 
@@ -115,22 +111,19 @@ int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
 			append_mem_block(p,hdr->name.s,
 				((hdr->body.s+hdr->body.len)-hdr->name.s) );
 			append_mem_block(p, CRLF, CRLF_LEN );
-		}else if ( hdr->type==HDR_CSEQ )
+		} else if ( hdr->type==HDR_CSEQ )
 		{
-			append_mem_block(p,hdr->name.s,
-				((((struct cseq_body*)hdr->parsed)->method.s)-hdr->name.s));
-			append_mem_block(p, CANCEL CRLF, CANCEL_LEN +CRLF_LEN );
+			append_mem_block(p,hdr->name.s, hdr->name.len );
+			append_mem_block(p,": ", 2 );
+			append_mem_block(p, ((struct cseq_body*)hdr->parsed)->number.s,
+				((struct cseq_body*)hdr->parsed)->number.len );
+			append_mem_block(p, " " CANCEL CRLF, 1+CANCEL_LEN+CRLF_LEN);
 		}
-}
+	}
 
-	/* User Agent header */
-	append_mem_block(p,USER_AGENT,USER_AGENT_LEN);
-	append_mem_block(p,CRLF,CRLF_LEN);
-	/* Content Lenght header*/
-	append_mem_block(p,CONTENT_LEN,CONTENT_LEN_LEN);
-	append_mem_block(p,CRLF,CRLF_LEN);
-	/* end of message */
-	append_mem_block(p,CRLF,CRLF_LEN);
+	/* User Agent header, Content Length, EoM */
+	append_mem_block(p,USER_AGENT CRLF CONTENT_LEN CRLF CRLF ,
+		USER_AGENT_LEN + CRLF_LEN + CONTENT_LEN_LEN + CRLF_LEN + CRLF_LEN);
 	*p=0;
 
 	if (Trans->uac[branch].request.cancel) {
