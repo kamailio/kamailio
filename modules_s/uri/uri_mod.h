@@ -36,19 +36,20 @@
 #define URI_MOD_H
 
 #include "../../db/db.h"
+#include "../../str.h"
 
 /*
  * Module parameters variables
  */
-extern char* db_url;                    /* Database URL */
-extern char* uri_table;                 /* Name of URI table */
-extern char* uri_user_col;              /* Name of username column in URI table */
-extern char* uri_domain_col;            /* Name of domain column in URI table */
-extern char* uri_uriuser_col;           /* Name of uri_user column in URI table */
-extern char* subscriber_table;          /* Name of subscriber table */
-extern char* subscriber_user_col;       /* Name of user column in subscriber table */
-extern char* subscriber_domain_col;     /* Name of domain column in subscriber table */
-extern int use_uri_table;               /* Whether or not should be uri table used */
-extern db_con_t* db_handle;             /* Database connection handle */
+extern str db_url;                    /* Database URL */
+extern str uri_table;                 /* Name of URI table */
+extern str uri_user_col;              /* Name of username column in URI table */
+extern str uri_domain_col;            /* Name of domain column in URI table */
+extern str uri_uriuser_col;           /* Name of uri_user column in URI table */
+extern str subscriber_table;          /* Name of subscriber table */
+extern str subscriber_user_col;       /* Name of user column in subscriber table */
+extern str subscriber_domain_col;     /* Name of domain column in subscriber table */
+extern int use_uri_table;             /* Whether or not should be uri table used */
+extern db_con_t* db_handle;           /* Database connection handle */
 
 #endif /* URI_MOD_H */

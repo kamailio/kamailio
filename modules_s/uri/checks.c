@@ -149,14 +149,14 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 			return -6;
 		}
 
-		if (db_use_table(db_handle, uri_table) < 0) {
+		if (db_use_table(db_handle, uri_table.s) < 0) {
 			LOG(L_ERR, "check_username(): Error while trying to use uri table\n");
 		}
 
-		keys[0] = uri_user_col;
-		keys[1] = uri_domain_col;
-		keys[2] = uri_uriuser_col;
-		cols[0] = uri_user_col;
+		keys[0] = uri_user_col.s;
+		keys[1] = uri_domain_col.s;
+		keys[2] = uri_uriuser_col.s;
+		cols[0] = uri_user_col.s;
 
 		VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = DB_STR;
 		VAL_NULL(vals) = VAL_NULL(vals + 1) = VAL_NULL(vals + 2) = 0;
@@ -245,19 +245,19 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 	}
 
 	if (use_uri_table) {
-		if (db_use_table(db_handle, uri_table) < 0) {
+		if (db_use_table(db_handle, uri_table.s) < 0) {
 			LOG(L_ERR, "does_uri_exist(): Error while trying to use uri table\n");
 		}
-		keys[0] = uri_domain_col;
-		keys[1] = uri_uriuser_col;
-		cols[0] = uri_uriuser_col;
+		keys[0] = uri_domain_col.s;
+		keys[1] = uri_uriuser_col.s;
+		cols[0] = uri_uriuser_col.s;
 	} else {
-		if (db_use_table(db_handle, subscriber_table) < 0) {
+		if (db_use_table(db_handle, subscriber_table.s) < 0) {
 			LOG(L_ERR, "does_uri_exist(): Error while trying to use subscriber table\n");
 		}
-		keys[0] = subscriber_domain_col;
-		keys[1] = subscriber_user_col;
-		cols[0] = subscriber_user_col;
+		keys[0] = subscriber_domain_col.s;
+		keys[1] = subscriber_user_col.s;
+		cols[0] = subscriber_user_col.s;
 	}
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
