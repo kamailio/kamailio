@@ -1572,6 +1572,8 @@ main_via:
 						if (vb->last_param)	vb->last_param->next=param;
 						else				vb->param_lst=param;
 						vb->last_param=param;
+						if (param->type==PARAM_BRANCH)
+							vb->branch=param;
 						
 						switch(state){
 							case L_PARAM:

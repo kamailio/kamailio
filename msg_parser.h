@@ -112,9 +112,12 @@ struct via_body{  /* format: name/version/transport host:port;params comment */
 	str port_str;
 	str params;
 	str comment;
+	int bsize;    /* body size, not including hdr */
 	struct via_param* param_lst; /* list of parameters*/
 	struct via_param* last_param; /*last via parameter, internal use*/
-	int bsize;    /* body size, not including hdr */
+	/* shortcuts to "important" params*/
+	struct via_param* branch;
+	
 	struct via_body* next; /* pointer to next via body string if
 							  compact via or null */
 };
@@ -202,6 +205,7 @@ char* parse_via(char* buffer, char* end, struct via_body *vb);
 char* parse_cseq(char* buffer, char* end, struct cseq_body *cb);
 #endif
 
+void free_via_param_list(struct via_param *vp);
 void free_via_list(struct via_body *vb);
 void clean_hdr_field(struct hdr_field* hf);
 void free_hdr_field_lst(struct hdr_field* hf);

@@ -869,12 +869,25 @@ void free_uri(struct sip_uri* u)
 
 
 
+void free_via_param_list(struct via_param* vp)
+{
+	struct via_param* foo;
+	while(vp){
+		foo=vp;
+		vp=vp->next;
+		pkg_free(foo);
+	}
+}
+
+
+
 void free_via_list(struct via_body* vb)
 {
 	struct via_body* foo;
 	while(vb){
 		foo=vb;
 		vb=vb->next;
+		if (foo->param_lst) free_via_param_list(foo->param_lst);
 		pkg_free(foo);
 	}
 }
