@@ -246,12 +246,21 @@ int buildRRLine(struct sip_msg* _m, str* _l)
 		user.s = _m->first_line.u.request.uri.s;
 		user.len = _m->first_line.u.request.uri.len;
 	}
-#else
+#endif
+	/* first try to look at r-uri for a username */
 	user.s = _m->first_line.u.request.uri.s;
 	user.len = _m->first_line.u.request.uri.len;
-#endif
-
 	get_username(&user);
+	/* no username in original uri -- hmm; maybe it is a uri
+	   with just host address and username is in a preloaded route,
+	   which is now no rewritten r-uri (assumed rewriteFromRoute
+	   was called somewhere in script's beginning) */
+	if (user.len==0 && _m->new_uri.s) {
+		user.s = _m->new_uri.s;
+		user.len = _m->new_uri.len;
+		get_username(&user);
+	}
+
 	if (user.len) {
 		memcpy(_l->s + _l->len, user.s, user.len);
 		_l->len += user.len;
