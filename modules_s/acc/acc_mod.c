@@ -25,6 +25,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-03-11: New module interface (janakj)
  */
 
 
@@ -57,36 +61,36 @@ char *uid_column="uid";
 
 #ifdef SQL_ACC
 
-    /* Database url */
-    char *db_url;
+     /* Database url */
+char *db_url;
 
-    /* name of database table, default=="acc" */
-    char *db_table_acc="acc";
+     /* name of database table, default=="acc" */
+char *db_table_acc="acc";
 
-    /* names of columns in table acc*/
-    char* acc_sip_from_col      = "sip_from";
-    char* acc_sip_to_col        = "sip_to";
-    char* acc_sip_status_col    = "sip_status";
-    char* acc_sip_method_col    = "sip_method";
-    char* acc_i_uri_col         = "i_uri";
-    char* acc_o_uri_col         = "o_uri";
-    char* acc_sip_callid_col    = "sip_callid";
-    char* acc_user_col          = "user";
-    char* acc_time_col          = "time";
+     /* names of columns in table acc*/
+char* acc_sip_from_col      = "sip_from";
+char* acc_sip_to_col        = "sip_to";
+char* acc_sip_status_col    = "sip_status";
+char* acc_sip_method_col    = "sip_method";
+char* acc_i_uri_col         = "i_uri";
+char* acc_o_uri_col         = "o_uri";
+char* acc_sip_callid_col    = "sip_callid";
+char* acc_user_col          = "user";
+char* acc_time_col          = "time";
 
-    /* name of missed calls table, default=="missed_calls" */
-    char *db_table_mc="missed_calls";
+     /* name of missed calls table, default=="missed_calls" */
+char *db_table_mc="missed_calls";
 
-    /* names of columns in table missed calls*/
-    char* mc_sip_from_col      = "sip_from";
-    char* mc_sip_to_col        = "sip_to";
-    char* mc_sip_status_col    = "sip_status";
-    char* mc_sip_method_col    = "sip_method";
-    char* mc_i_uri_col         = "i_uri";
-    char* mc_o_uri_col         = "o_uri";
-    char* mc_sip_callid_col    = "sip_callid";
-    char* mc_user_col          = "user";
-    char* mc_time_col          = "time";
+     /* names of columns in table missed calls*/
+char* mc_sip_from_col      = "sip_from";
+char* mc_sip_to_col        = "sip_to";
+char* mc_sip_status_col    = "sip_status";
+char* mc_sip_method_col    = "sip_method";
+char* mc_i_uri_col         = "i_uri";
+char* mc_o_uri_col         = "o_uri";
+char* mc_sip_callid_col    = "sip_callid";
+char* mc_user_col          = "user";
+char* mc_time_col          = "time";
 
 #endif
 
@@ -123,130 +127,55 @@ static void on_missed(struct cell *t, struct sip_msg *reply,
 	int code, void *param );
 
 
+static cmd_export_t cmds[] = {
+	{"acc_request", acc_request, 1, 0},
+	{0, 0, 0, 0}
+};
+
+static param_export_t params[] = {
+#ifdef SQL_ACC
+        {"db_table_acc",          STR_PARAM, &db_table_acc         }, 
+	{"db_table_missed_calls", STR_PARAM, &db_table_missed_calls},
+	{"db_url",                STR_PARAM, &db_url               },
+        {"acc_sip_from_column",   STR_PARAM, &acc_sip_from_column  },
+        {"acc_sip_to_column",     STR_PARAM, &acc_sip_status_column},
+        {"acc_sip_status_column", STR_PARAM, &acc_sip_status_column},
+        {"acc_sip_method_column", STR_PARAM, &acc_sip_method_column},
+        {"acc_i_uri_column",      STR_PARAM, &acc_i_uri_column     },
+        {"acc_o_uri_column",      STR_PARAM, &acc_o_uri_column     },
+        {"acc_sip_callid_column", STR_PARAM, &acc_sip_callid_column},
+        {"acc_user_column",       STR_PARAM, &acc_user_column      },
+        {"acc_time_column",       STR_PARAM, &acc_time_column      },
+        {"mc_sip_from_column",    STR_PARAM, &mc_sip_from_column   },
+        {"mc_sip_to_column",      STR_PARAM, &mc_sip_to_column     },
+        {"mc_sip_status_column",  STR_PARAM, &mc_sip_status_column },
+        {"mc_sip_method_column",  STR_PARAM, &mc_sip_method_column },
+        {"mc_i_uri_column",       STR_PARAM, &mc_i_uri_column      },
+        {"mc_o_uri_column",       STR_PARAM, &mc_o_uri_column      },
+        {"mc_sip_callid_column",  STR_PARAM, &mc_sip_callid_column },
+        {"mc_user_column",        STR_PARAM, &mc_user_column       },
+        {"mc_time_column",        STR_PARAM, &mc_time_column       },
+#endif
+	{"uid_column",            STR_PARAM, &uid_column           },
+	{"log_level",             INT_PARAM, &log_level            },
+	{"early_media",           INT_PARAM, &early_media          },
+	{"failed_transactions",   INT_PARAM, &failed_transactions  },
+	{"acc_flag",              INT_PARAM, &acc_flag             },
+	{"report_ack",            INT_PARAM, &report_ack           },
+        {"missed_flag",           INT_PARAM, &missed_flag          },
+	{"usesyslog",             INT_PARAM, &usesyslog            }
+};
+
+
 struct module_exports exports= {
 	"acc",
-
-	/* exported functions */
-	( char*[] ) { "acc_request" },
-	( cmd_function[] ) { acc_request },
-	( int[] ) { 1 /* acc_missed */},
-	( fixup_function[]) { 0 /* acc_missed */},
-	1, /* number of exported functions */
-
-	/* exported variables */
-	(char *[]) { /* variable names */
-#ifdef SQL_ACC
-        "db_table_acc",
-        "db_table_missed_calls",
-		"db_url",
-        "acc_sip_from_column",
-        "acc_sip_to_column",
-        "acc_sip_status_column",
-        "acc_sip_method_column",
-        "acc_i_uri_column",
-        "acc_o_uri_column",
-        "acc_sip_callid_column",
-        "acc_user_column",
-        "acc_time_column",
-        "mc_sip_from_column",
-        "mc_sip_to_column",
-        "mc_sip_status_column",
-        "mc_sip_method_column",
-        "mc_i_uri_column",
-        "mc_o_uri_column",
-        "mc_sip_callid_column",
-        "mc_user_column",
-        "mc_time_column",
-#endif
-		"uid_column",
-		"log_level",
-		"early_media",
-		"failed_transactions",
-		"acc_flag",
-		"report_ack",
-        "missed_flag",
-        "usesyslog"
-	},
-
-	(modparam_t[]) { /* variable types */
-#ifdef SQL_ACC
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-        STR_PARAM,
-#endif
-		STR_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-        INT_PARAM
-	},
-
-	(void *[]) { /* variable pointers */
-#ifdef SQL_ACC
-        &db_table_acc,
-        &db_table_mc,
-		&db_url,
-        &acc_sip_from_col,
-        &acc_sip_to_col,
-        &acc_sip_status_col,
-        &acc_sip_method_col,
-        &acc_i_uri_col,
-        &acc_o_uri_col,
-        &acc_sip_callid_col,
-        &acc_user_col,
-        &acc_time_col,
-        &mc_sip_from_col,
-        &mc_sip_to_col,
-        &mc_sip_status_col,
-        &mc_sip_method_col,
-        &mc_i_uri_col,
-        &mc_o_uri_col,
-        &mc_sip_callid_col,
-        &mc_user_col,
-        &mc_time_col,
-#endif
-		&uid_column,
-		&log_level,
-		&early_media,
-		&failed_transactions,
-		&acc_flag,
-		&report_ack,
-        &missed_flag,
-        &usesyslog
-	},
-
-#ifdef SQL_ACC
-    29,         /* number of variables */
-#else
-    8,          /* number of variables */
-#endif
-
-	mod_init, 	/* initialization module */
-	0,			/* response function */
-    destroy,    /* destroy function */
-	0,			/* oncancel function */
-    child_init  /* per-child init function */
+	cmds,       /* exported functions */
+	params,     /* exported params */
+	mod_init,   /* initialization module */
+	0,	    /* response function */
+	destroy,    /* destroy function */
+	0,	    /* oncancel function */
+	child_init  /* per-child init function */
 };
 
 
