@@ -11,6 +11,7 @@
 # 2003-01-21 changed SILO table definition, by dcm
 #
 # History:
+# 2003-03-12 added replication mark and state columns to location (nils)
 # 2003-03-05: Changed user to username, user is reserved word (janakj)
 # 2003-01-26 statistics table introduced (jiri)
 # 2003-01-25: Optimized keys of some core tables (janakj)
@@ -126,7 +127,7 @@ INSERT INTO version VALUES ( 'reserved', '1');
 INSERT INTO version VALUES ( 'phonebook', '1');
 INSERT INTO version VALUES ( 'pending', '2');
 INSERT INTO version VALUES ( 'missed_calls', '1');
-INSERT INTO version VALUES ( 'location', '2');
+INSERT INTO version VALUES ( 'location', '3');
 INSERT INTO version VALUES ( 'grp', '2');
 INSERT INTO version VALUES ( 'event', '1');
 INSERT INTO version VALUES ( 'aliases', '2');
@@ -247,6 +248,8 @@ CREATE TABLE location (
   callid varchar(255) default NULL,
   cseq int(11) default NULL,
   last_modified timestamp(14) NOT NULL,
+  replicate int(10) unsigned default NULL,
+  state tinyint(1) unsigned default NULL,
   PRIMARY KEY(username, domain, contact)
 ) $TABLE_TYPE;
 

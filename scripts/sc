@@ -337,7 +337,7 @@ usrloc() {
 				exit 1
 			fi
 
-			fifo_cmd ul_add "$TABLE" "$1" "$2" "$FOREVER_REL" "1.00"
+			fifo_cmd ul_add "$TABLE" "$1" "$2" "$FOREVER_REL" "1.00" "0"
 			exit $?
 			;;
 		rm)
