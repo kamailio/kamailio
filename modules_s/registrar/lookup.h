@@ -41,11 +41,20 @@ int lookup(struct sip_msg* _m, char* _t, char* _s);
 
 
 /*
+ * Lookup a contact in usrloc and rewrite R-URI if found
+ */
+int lookup_key(struct sip_msg* _m, char* _t, char* _key);
+
+
+/*
  * Return true if the AOR in the Request-URI is registered,
  * it is similar to lookup but registered neither rewrites
  * the Request-URI nor appends branches
  */
 int registered(struct sip_msg* _m, char* _t, char* _s);
+
+
+int registered_key(struct sip_msg* _m, char* _t, char* _key);
 
 
 #endif /* LOOKUP_H */

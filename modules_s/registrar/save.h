@@ -47,6 +47,12 @@ int save(struct sip_msg* _m, char* _t, char* _s);
 
 
 /*
+ * Process REGISTER request and save it's contacts
+ */
+int save_key(struct sip_msg* _m, char* _t, char* _key);
+
+
+/*
  * Process REGISTER request and save it's contacts, do not send any replies
  */
 int save_noreply(struct sip_msg* _m, char* _t, char* _s);

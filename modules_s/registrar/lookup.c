@@ -168,3 +168,20 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 		return -1;
 	}
 }
+
+
+/*
+ * Lookup contact in the database and rewrite Request-URI
+ */
+int lookup_key(struct sip_msg* _m, char* _t, char* _key)
+{
+
+	return 1;
+}
+
+
+int registered_key(struct sip_msg* _m, char* _t, char* _key)
+{
+
+	return 1;
+}

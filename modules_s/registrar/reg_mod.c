@@ -50,6 +50,7 @@ MODULE_VERSION
 
 static int mod_init(void);                           /* Module init function */
 static int domain_fixup(void** param, int param_no); /* Fixup that converts domain name */
+static int domain_key_fixup(void** param, int param_no);
 static void mod_destroy(void);
 
 usrloc_api_t ul;            /* Structure containing pointers to usrloc functions */
@@ -85,11 +86,14 @@ int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"save",         save,         1, domain_fixup, REQUEST_ROUTE                },
-	{"save_noreply", save_noreply, 1, domain_fixup, REQUEST_ROUTE                },
-	{"save_memory",  save_memory,  1, domain_fixup, REQUEST_ROUTE                },
-	{"lookup",       lookup,       1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"registered",   registered,   1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"save",         save,           1, domain_fixup,     REQUEST_ROUTE                },
+	{"save",         save_key,       2, domain_key_fixup, REQUEST_ROUTE                },
+	{"save_noreply", save_noreply,   1, domain_fixup,     REQUEST_ROUTE                },
+	{"save_memory",  save_memory,    1, domain_fixup,     REQUEST_ROUTE                },
+	{"lookup",       lookup,         1, domain_fixup,     REQUEST_ROUTE | FAILURE_ROUTE},
+	{"lookup",       lookup_key,     2, domain_key_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"registered",   registered,     1, domain_fixup,     REQUEST_ROUTE | FAILURE_ROUTE},
+	{"registered",   registered_key, 2, domain_key_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -194,6 +198,37 @@ static int domain_fixup(void** param, int param_no)
 
 		*param = (void*)d;
 	}
+	return 0;
+}
+
+
+/*
+ * Convert char* parameter to udomain_t* pointer
+ */
+static int domain_key_fixup(void** param, int param_no)
+{
+	udomain_t* d;
+	str* s;
+
+	if (param_no == 1) {
+		if (ul.register_udomain((char*)*param, &d) < 0) {
+			LOG(L_ERR, "domain_key_fixup: Error while registering domain\n");
+			return E_UNSPEC;
+		}
+
+		*param = (void*)d;
+	} else if (param_no == 2) {
+		s = (str*)pkg_malloc(sizeof(str));
+		if (!s) {
+			LOG(L_ERR, "domain_key_fixup: No memory left\n");
+			return E_UNSPEC;
+		}
+		
+		s->s = (char*)*param;
+		s->len = strlen(s->s);
+		*param = (void*)s;
+	}
+
 	return 0;
 }
 

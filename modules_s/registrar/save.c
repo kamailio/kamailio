@@ -42,6 +42,7 @@
 #include "../../ut.h"
 #include "../usrloc/usrloc.h"
 #include "../../qvalue.h"
+#include "../../usr_avp.h"
 #include "common.h"
 #include "sip_msg.h"
 #include "rerrno.h"
@@ -428,7 +429,7 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 /*
  * Process REGISTER request and save it's contacts
  */
-static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* _s, int doreply)
+static inline int save_real(struct sip_msg* _m, udomain_t* _t, str* _key, int doreply)
 {
 	contact_t* c;
 	int st;
@@ -447,9 +448,13 @@ static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* _s, int dor
 	get_act_time();
 	c = get_first_contact(_m);
 
-	if (extract_aor(&get_to(_m)->uri, &aor) < 0) {
-		LOG(L_ERR, "save(): Error while extracting Address Of Record\n");
-		goto error;
+	if (!_key) {
+		if (extract_aor(&get_to(_m)->uri, &aor) < 0) {
+			LOG(L_ERR, "save(): Error while extracting Address Of Record\n");
+			goto error;
+		}
+	} else {
+		str = *_key;
 	}
 
 	ua.len = 0;
@@ -487,7 +492,22 @@ static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* _s, int dor
  */
 int save(struct sip_msg* _m, char* _t, char* _s)
 {
-	return save_real(_m, (udomain_t*)_t, _s, 1);
+	
+
+	return save_real(_m, (udomain_t*)_t, 0, 1);
+}
+
+
+/*
+ * Process REGISTER request and save it's contacts
+ */
+int save_key(struct sip_msg* _m, char* _t, char* _key)
+{
+	int_str avp_name;
+
+	avp_name.s = (str*)_key;
+
+	return save_real(_m, (udomain_t*)_t, 0, 1);
 }
 
 
@@ -496,7 +516,7 @@ int save(struct sip_msg* _m, char* _t, char* _s)
  */
 int save_noreply(struct sip_msg* _m, char* _t, char* _s)
 {
-	return save_real(_m, (udomain_t*)_t, _s, 0);
+	return save_real(_m, (udomain_t*)_t, 0, 0);
 }
 
 
@@ -506,5 +526,5 @@ int save_noreply(struct sip_msg* _m, char* _t, char* _s)
 int save_memory(struct sip_msg* _m, char* _t, char* _s)
 {
 	mem_only = FL_MEM;
-	return save_real(_m, (udomain_t*)_t, _s, 1);
+	return save_real(_m, (udomain_t*)_t, 0, 1);
 }
