@@ -314,6 +314,7 @@ int main_loop()
 
 static void sig_usr(int signo)
 {
+	DPrint("INT received, program terminates\n");
 	if (signo==SIGINT) {	/* exit gracefuly */
 #ifdef STATS
 		/* print statistics on exit only for the first process */
@@ -324,8 +325,6 @@ static void sig_usr(int signo)
 			else
 				printf("statistics dump to %s failed\n", stat_file );
 #endif
-		DPrint("INT received, program terminates\n");
-		DPrint("Thank you for flying ser\n");
 		/* WARNING: very dangerous, might be unsafe*/
 		if (is_main)
 			destroy_modules();
@@ -343,7 +342,7 @@ static void sig_usr(int signo)
 		if (is_main)
 			shm_mem_destroy();
 #endif
-		exit(0);
+		goto bye;
 	} else if (signo==SIGUSR1) { /* statistic */
 #ifdef STATS
 		dump_all_statistic();
@@ -357,6 +356,9 @@ static void sig_usr(int signo)
 		shm_status();
 #endif
 	}
+bye:
+	DPrint("Thank you for flying ser\n");
+	exit(0);
 }
 
 
