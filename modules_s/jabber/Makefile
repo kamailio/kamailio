@@ -12,8 +12,7 @@ NAME=jabber.so
 DEFS+=-DXJ_EXTRA_DEBUG
 
 # expat.h location
-DEFS+=-I/usr/local/include -I/usr/pkg/include
-
-LIBS=-L/usr/local/lib -L/usr/pkg/lib -lexpat
+DEFS+=-I$(LOCALBASE)/include -I/usr/pkg/include
+LIBS=-L$(LOCALBASE)/lib -L/usr/pkg/lib -lexpat
 
 include ../../Makefile.modules
