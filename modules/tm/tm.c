@@ -130,6 +130,7 @@ struct module_exports exports= {
 
 				"register_tmcb",
 				T_UAC,
+				T_UAC_DLG,
 				"load_tm",
 				"t_newdlg"
 			},
@@ -150,6 +151,7 @@ struct module_exports exports= {
 
 					(cmd_function) register_tmcb,
 					(cmd_function) t_uac,
+					(cmd_function) t_uac_dlg,
 					(cmd_function) load_tm,
 					w_t_newdlg,
 					},
@@ -169,6 +171,7 @@ struct module_exports exports= {
 				1, /* t_on_negative */
 				NO_SCRIPT /* register_tmcb */,
 				NO_SCRIPT /* t_uac */,
+				NO_SCRIPT /* t_uac_dlg */,
 				NO_SCRIPT /* load_tm */,
 				0 /* t_newdlg */
 			},
@@ -188,14 +191,15 @@ struct module_exports exports= {
 				fixup_str2int,			/* t_on_negative */
 				0,						/* register_tmcb */
 				0,						/* t_uac */
+				0,                                              /* t_uac_dlg */
 				0,						/* load_tm */
 				0						/* t_newdlg */
 	
 		},
 #ifdef _OBSO
-	15,
+	16,
 #else
-	14,
+	15,
 #endif
 
 	/* ------------ exported variables ---------- */
