@@ -108,7 +108,7 @@ optimizations:
 - assembly for some very common used function
 - getsock* cache
 - fd cache for tcp_send
-- dns cache?
+- dns cache? (see DNS)
 
 
 tcp stuff:
@@ -126,4 +126,8 @@ tm optimizations:
   build_uac_request, build_uac_request_dlg, t_uac, t_uac_dlg
 - uri2proxy - t_uac_dlg => extra malloc/free (no üroxy needed here)
   
-
+dns stuff:
+ - dns cache
+ - support for NAPTR (naptr(domain, pref_proto)=> srv_rec + proto => srv(srv_rec, proto) => A or AAAA => A/AAAA(name))
+ - support for fallback (inside the same A/AAAA record, other ip; if fails => other SRV ; if it fails too other NAPTR
+[see rfc3263]

@@ -32,6 +32,7 @@
  * 2003-02-07 undoed jiri's zero term. changes (they break tcp) (andrei)
  * 2003-02-10 moved zero-term in the calling functions (udp_receive &
  *            tcp_read_req)
+ * 2003-08-13 fixed exec_pre_cb returning 0 (backported from stable) (andrei)
  */
 
 
@@ -66,6 +67,7 @@ unsigned int msg_no=0;
 int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info) 
 {
 	struct sip_msg* msg;
+	int ret;
 #ifdef STATS
 	int skipped = 1;
 	struct timeval tvb, tve;	
@@ -102,7 +104,11 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	/* if some of the callbacks said not to continue with
 	   script processing, don't do so
 	*/
-	if (exec_pre_cb(msg)==0) goto error;
+	ret=exec_pre_cb(msg);
+	if (ret<=0){
+		if (ret<0) goto error;
+		else goto end; /* drop the message -- no error -- andrei */
+	}
 
 	/* ... and clear branches from previous message */
 	clear_branches();
@@ -170,6 +176,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		DBG("succesfully ran reply processing...(%d usec)\n", diff);
 #endif
 	}
+end:
 #ifdef STATS
 	skipped = 0;
 #endif
