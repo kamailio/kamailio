@@ -8,7 +8,7 @@ x update Makefile*  from stable
 x update all package specs from stable
 - add BUG checks for  fd > 0 && fd <= maxfd to all selects?
 x tcp_main_loop: BUG cases should "conitnue;"
-- change len_gt into and expr (e.g msg:len).
+x change len_gt into and expr (e.g msg:len).
 - sipit: uri == myself doesn't match tls port = 5061
 - sipit: fix check_self & *_alias to work with tcp & tls
 x sipit: fix ipv6 references in check_self
@@ -99,7 +99,7 @@ x forward to received= if present
 x add support for -u user and -g group (not only -u uid, -g uid)
 - change uid/gid after opening the sockets
 - exec improvments (add format strings to it)
-- command line switch for checking the config file syntax
+x command line switch for checking the config file syntax
 - config file version (a la sendmail)
 0 loop detection
 - cfg. file reload

@@ -43,6 +43,9 @@
  *              require_certificate added (andrei)
  * 2003-07-06  more tls config. vars added: tls_method, tls_port_no (andrei)
  * 2003-10-02  added {,set_}advertised_{address,port} (andrei)
+ * 2003-10-10  added <,>,<=,>=, != operators support
+ *             added msg:len (andrei)
+ * 2003-10-11  if(){} doesn't require a ';' after it anymore (andrei)
  */
 
 
@@ -148,7 +151,6 @@ void warn(char* s);
 %token SETFLAG
 %token RESETFLAG
 %token ISFLAGSET
-%token LEN_GT
 %token METHOD
 %token URI
 %token SRCIP
@@ -158,6 +160,7 @@ void warn(char* s);
 %token PROTO
 %token AF
 %token MYSELF
+%token MSGLEN 
 
 /* config vars. */
 %token DEBUG
@@ -211,6 +214,11 @@ void warn(char* s);
 /* operators */
 %nonassoc EQUAL
 %nonassoc EQUAL_T
+%nonassoc GT
+%nonassoc LT
+%nonassoc GTE
+%nonassoc LTE
+%nonassoc DIFF
 %nonassoc MATCH
 %left OR
 %left AND
@@ -244,6 +252,7 @@ void warn(char* s);
 %type <strval> host
 %type <strval> listen_id
 %type <idlst>  id_lst
+%type <intval> equalop strop intop
 /*%type <route_el> rules;
   %type <route_el> rule;
 */
@@ -283,14 +292,6 @@ listen_id:	ip			{	tmp=ip_addr2a($1);
 								}else{
 									strncpy($$, tmp, strlen(tmp)+1);
 								}
-							}
-						}
-		 |	ID			{	$$=pkg_malloc(strlen($1)+1);
-		 					if ($$==0){
-									LOG(L_CRIT, "ERROR: cfg. parser: out of "
-											"memory.\n");
-							}else{
-									strncpy($$, $1, strlen($1)+1);
 							}
 						}
 		 |	STRING			{	$$=pkg_malloc(strlen($1)+1);
@@ -335,7 +336,7 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| DEBUG EQUAL error  { yyerror("number  expected"); }
 		| FORK  EQUAL NUMBER { dont_fork= ! $3; }
 		| FORK  EQUAL error  { yyerror("boolean value expected"); }
-		| LOGSTDERROR EQUAL NUMBER { log_stderr=$3; }
+		| LOGSTDERROR EQUAL NUMBER { if (!config_check) log_stderr=$3; }
 		| LOGSTDERROR EQUAL error { yyerror("boolean value expected"); }
 		| DNS EQUAL NUMBER   { received_dns|= ($3)?DO_DNS:0; }
 		| DNS EQUAL error { yyerror("boolean value expected"); }
@@ -700,117 +701,112 @@ exp:	exp AND exp 	{ $$=mk_exp(AND_OP, $1, $3); }
 	| exp_elem			{ $$=$1; }
 	;
 
-exp_elem:	METHOD EQUAL_T STRING	{$$= mk_elem(	EQUAL_OP, STRING_ST, 
+equalop:	  EQUAL_T {$$=EQUAL_OP; }
+			| DIFF	{$$=DIFF_OP; }
+		;
+		
+intop:	equalop	{$$=$1; }
+		|  GT	{$$=GT_OP; }
+		| LT	{$$=LT_OP; }
+		| GTE	{$$=GTE_OP; }
+		| LTE	{$$=LTE_OP; }
+		;
+		
+strop:	equalop	{$$=$1; }
+		| MATCH	{$$=MATCH_OP; }
+		;
+
+exp_elem:	METHOD strop STRING	{$$= mk_elem(	$2, STRING_ST, 
 													METHOD_O, $3);
 									}
-		| METHOD EQUAL_T ID	{$$ = mk_elem(	EQUAL_OP, STRING_ST,
+		| METHOD strop  ID	{$$ = mk_elem(	$2, STRING_ST,
 											METHOD_O, $3); 
 				 			}
-		| METHOD EQUAL_T error { $$=0; yyerror("string expected"); }
-		| METHOD MATCH STRING	{$$ = mk_elem(	MATCH_OP, STRING_ST,
-												METHOD_O, $3); 
-				 				}
-		| METHOD MATCH ID	{$$ = mk_elem(	MATCH_OP, STRING_ST,
-											METHOD_O, $3); 
-				 			}
-		| METHOD MATCH error { $$=0; yyerror("string expected"); }
+		| METHOD strop error { $$=0; yyerror("string expected"); }
 		| METHOD error	{ $$=0; yyerror("invalid operator,"
-										"== or =~ expected");
+										"== , !=, or =~ expected");
 						}
-		| URI EQUAL_T STRING 	{$$ = mk_elem(	EQUAL_OP, STRING_ST,
+		| URI strop STRING 	{$$ = mk_elem(	$2, STRING_ST,
 												URI_O, $3); 
 				 				}
-		| URI EQUAL_T ID 	{$$ = mk_elem(	EQUAL_OP, STRING_ST,
+		| URI strop host 	{$$ = mk_elem(	$2, STRING_ST,
 											URI_O, $3); 
 				 			}
-		| URI EQUAL_T MYSELF    { $$=mk_elem(	EQUAL_OP, MYSELF_ST,
+		| URI equalop MYSELF    { $$=mk_elem(	$2, MYSELF_ST,
 												URI_O, 0);
 								}
-		| URI EQUAL_T error { $$=0; yyerror("string expected"); }
-		| URI MATCH STRING	{ $$=mk_elem(	MATCH_OP, STRING_ST,
-											URI_O, $3);
-							}
-		| URI MATCH ID		{ $$=mk_elem(	MATCH_OP, STRING_ST,
-											URI_O, $3);
-							}
-		| URI MATCH error {  $$=0; yyerror("string expected"); }
+		| URI strop error { $$=0; yyerror("string or MYSELF expected"); }
 		| URI error	{ $$=0; yyerror("invalid operator,"
-				  					" == or =~ expected");
+									" == , != or =~ expected");
 					}
-		| SRCPORT EQUAL_T NUMBER	{ $$=mk_elem(	EQUAL_OP, NUMBER_ST,
+		| SRCPORT intop NUMBER	{ $$=mk_elem(	$2, NUMBER_ST,
 												SRCPORT_O, (void *) $3 ); }
-		| SRCPORT EQUAL_T error { $$=0; yyerror("number expected"); }
-		| SRCPORT error { $$=0; yyerror("equal operator expected"); }
-		| DSTPORT EQUAL_T NUMBER	{ $$=mk_elem(	EQUAL_OP, NUMBER_ST,
+		| SRCPORT intop error { $$=0; yyerror("number expected"); }
+		| SRCPORT error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
+		| DSTPORT intop NUMBER	{ $$=mk_elem(	$2, NUMBER_ST,
 												DSTPORT_O, (void *) $3 ); }
-		| DSTPORT EQUAL_T error { $$=0; yyerror("number expected"); }
-		| DSTPORT error { $$=0; yyerror("equal operator expected"); }
-		| PROTO EQUAL_T NUMBER	{ $$=mk_elem(	EQUAL_OP, NUMBER_ST,
+		| DSTPORT intop error { $$=0; yyerror("number expected"); }
+		| DSTPORT error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
+		| PROTO intop NUMBER	{ $$=mk_elem(	$2, NUMBER_ST,
 												PROTO_O, (void *) $3 ); }
-		| PROTO EQUAL_T error { $$=0; yyerror("number expected"); }
-		| PROTO error { $$=0; yyerror("equal operator expected"); }
-		| AF EQUAL_T NUMBER	{ $$=mk_elem(	EQUAL_OP, NUMBER_ST,
+		| PROTO intop error { $$=0; yyerror("number expected"); }
+		| PROTO error { $$=0; yyerror("equal/!= operator expected"); }
+		| AF intop NUMBER	{ $$=mk_elem(	$2, NUMBER_ST,
 												AF_O, (void *) $3 ); }
-		| AF EQUAL_T error { $$=0; yyerror("number expected"); }
-		| AF error { $$=0; yyerror("equal operator expected"); }
-		| SRCIP EQUAL_T ipnet	{ $$=mk_elem(	EQUAL_OP, NET_ST,
+		| AF intop error { $$=0; yyerror("number expected"); }
+		| AF error { $$=0; yyerror("equal/!= operator expected"); }
+		| MSGLEN intop NUMBER	{ $$=mk_elem(	$2, NUMBER_ST,
+												MSGLEN_O, (void *) $3 ); }
+		| MSGLEN intop MAX_LEN	{ $$=mk_elem(	$2, NUMBER_ST,
+												MSGLEN_O, (void *) BUF_SIZE); }
+		| MSGLEN intop error { $$=0; yyerror("number expected"); }
+		| MSGLEN error { $$=0; yyerror("equal/!= operator expected"); }
+		| SRCIP equalop ipnet	{ $$=mk_elem(	$2, NET_ST,
 												SRCIP_O, $3);
 								}
-		| SRCIP EQUAL_T STRING	{ $$=mk_elem(	EQUAL_OP, STRING_ST,
+		| SRCIP strop STRING	{ $$=mk_elem(	$2, STRING_ST,
 												SRCIP_O, $3);
 								}
-		| SRCIP EQUAL_T host	{ $$=mk_elem(	EQUAL_OP, STRING_ST,
+		| SRCIP strop host	{ $$=mk_elem(	$2, STRING_ST,
 												SRCIP_O, $3);
 								}
-		| SRCIP EQUAL_T MYSELF  { $$=mk_elem(	EQUAL_OP, MYSELF_ST,
+		| SRCIP equalop MYSELF  { $$=mk_elem(	$2, MYSELF_ST,
 												SRCIP_O, 0);
 								}
-		| SRCIP EQUAL_T error { $$=0; yyerror( "ip address or hostname"
+		| SRCIP strop error { $$=0; yyerror( "ip address or hostname"
 						 "expected" ); }
-		| SRCIP MATCH STRING	{ $$=mk_elem(	MATCH_OP, STRING_ST,
-												SRCIP_O, $3);
-								}
-		| SRCIP MATCH ID		{ $$=mk_elem(	MATCH_OP, STRING_ST,
-												SRCIP_O, $3);
-								}
-		| SRCIP MATCH error  { $$=0; yyerror( "hostname expected"); }
 		| SRCIP error  { $$=0; 
-						 yyerror("invalid operator, == or =~ expected");}
-		| DSTIP EQUAL_T ipnet	{ $$=mk_elem(	EQUAL_OP, NET_ST,
+						 yyerror("invalid operator, ==, != or =~ expected");}
+		| DSTIP equalop ipnet	{ $$=mk_elem(	$2, NET_ST,
 												DSTIP_O, $3);
 								}
-		| DSTIP EQUAL_T STRING	{ $$=mk_elem(	EQUAL_OP, STRING_ST,
+		| DSTIP strop STRING	{ $$=mk_elem(	$2, STRING_ST,
 												DSTIP_O, $3);
 								}
-		| DSTIP EQUAL_T host	{ $$=mk_elem(	EQUAL_OP, STRING_ST,
+		| DSTIP strop host	{ $$=mk_elem(	$2, STRING_ST,
 												DSTIP_O, $3);
 								}
-		| DSTIP EQUAL_T MYSELF  { $$=mk_elem(	EQUAL_OP, MYSELF_ST,
+		| DSTIP equalop MYSELF  { $$=mk_elem(	$2, MYSELF_ST,
 												DSTIP_O, 0);
 								}
-		| DSTIP EQUAL_T error { $$=0; yyerror( "ip address or hostname"
+		| DSTIP strop error { $$=0; yyerror( "ip address or hostname"
 						 			"expected" ); }
-		| DSTIP MATCH STRING	{ $$=mk_elem(	MATCH_OP, STRING_ST,
-												DSTIP_O, $3);
-								}
-		| DSTIP MATCH ID	{ $$=mk_elem(	MATCH_OP, STRING_ST,
-											DSTIP_O, $3);
-							}
-		| DSTIP MATCH error  { $$=0; yyerror ( "hostname  expected" ); }
 		| DSTIP error { $$=0; 
-						yyerror("invalid operator, == or =~ expected");}
-		| MYSELF EQUAL_T URI    { $$=mk_elem(	EQUAL_OP, MYSELF_ST,
+						yyerror("invalid operator, ==, != or =~ expected");}
+		| MYSELF equalop URI    { $$=mk_elem(	$2, MYSELF_ST,
 												URI_O, 0);
 								}
-		| MYSELF EQUAL_T SRCIP  { $$=mk_elem(	EQUAL_OP, MYSELF_ST,
+		| MYSELF equalop SRCIP  { $$=mk_elem(	$2, MYSELF_ST,
 												SRCIP_O, 0);
 								}
-		| MYSELF EQUAL_T DSTIP  { $$=mk_elem(	EQUAL_OP, MYSELF_ST,
+		| MYSELF equalop DSTIP  { $$=mk_elem(	$2, MYSELF_ST,
 												DSTIP_O, 0);
 								}
-		| MYSELF EQUAL_T error {	$$=0; 
+		| MYSELF equalop error {	$$=0; 
 									yyerror(" URI, SRCIP or DSTIP expected"); }
-		| MYSELF error	{ $$=0; yyerror ("invalid operator, == expected"); }
+		| MYSELF error	{ $$=0; 
+							yyerror ("invalid operator, == or != expected");
+						}
 		| stm				{ $$=mk_elem( NO_OP, ACTIONS_ST, ACTION_O, $1 ); }
 		| NUMBER		{$$=mk_elem( NO_OP, NUMBER_ST, NUMBER_O, (void*)$1 ); }
 	;
@@ -851,6 +847,7 @@ host:	ID				{ $$=$1; }
 
 
 stm:		cmd						{ $$=$1; }
+		|	if_cmd					{ $$=$1; }
 		|	LBRACE actions RBRACE	{ $$=$2; }
 	;
 
@@ -860,6 +857,7 @@ actions:	actions action	{$$=append_action($1, $2); }
 	;
 
 action:		cmd SEMICOLON {$$=$1;}
+		| if_cmd {$$=$1;}
 		| SEMICOLON /* null action */ {$$=0;}
 		| cmd error { $$=0; yyerror("bad command: missing ';'?"); }
 	;
@@ -1282,13 +1280,6 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| SETFLAG LPAREN NUMBER RPAREN {$$=mk_action( SETFLAG_T, NUMBER_ST, 0,
 													(void *)$3, 0 ); }
 		| SETFLAG error { $$=0; yyerror("missing '(' or ')'?"); }
-
-		| LEN_GT LPAREN NUMBER RPAREN {$$=mk_action( LEN_GT_T, NUMBER_ST, 0,
-													(void *)$3, 0 ); }
-		| LEN_GT LPAREN MAX_LEN RPAREN {$$=mk_action( LEN_GT_T, NUMBER_ST, 0,
-													(void *) BUF_SIZE, 0 ); }
-		| LEN_GT error { $$=0; yyerror("missing '(' or ')'?"); }
-
 		| RESETFLAG LPAREN NUMBER RPAREN {$$=mk_action(	RESETFLAG_T, NUMBER_ST, 0,
 													(void *)$3, 0 ); }
 		| RESETFLAG error { $$=0; yyerror("missing '(' or ')'?"); }
@@ -1465,7 +1456,6 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 									}
 								  }
 		| ID LPAREN error RPAREN { $$=0; yyerror("bad arguments"); }
-		| if_cmd		{ $$=$1; }
 	;
 
 

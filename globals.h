@@ -44,6 +44,7 @@
 
 
 extern char * cfg_file;
+extern int config_check;
 extern char *stat_file;
 extern struct socket_info sock_info[]; /* all addresses we listen/send from*/
 #ifdef USE_TCP

@@ -30,6 +30,7 @@
  *
  *  2003-04-12  FORCE_RPORT_T added (andrei)
  *  2003-04-22  strip_tail added (jiri)
+ *  2003-10-10  >,<,>=,<=, != and MSGLEN_O added (andrei)
  */
 
 
@@ -51,9 +52,10 @@
 
 enum { EXP_T=1, ELEM_T };
 enum { AND_OP=1, OR_OP, NOT_OP };
-enum { EQUAL_OP=10, MATCH_OP, NO_OP };
+enum { EQUAL_OP=10, MATCH_OP, GT_OP, LT_OP, GTE_OP, LTE_OP, DIFF_OP, NO_OP };
 enum { METHOD_O=1, URI_O, SRCIP_O, SRCPORT_O,
-	   DSTIP_O, DSTPORT_O, PROTO_O, AF_O, DEFAULT_O, ACTION_O, NUMBER_O};
+	   DSTIP_O, DSTPORT_O, PROTO_O, AF_O, MSGLEN_O, DEFAULT_O, ACTION_O,
+	   NUMBER_O};
 
 enum { FORWARD_T=1, SEND_T, DROP_T, LOG_T, ERROR_T, ROUTE_T, EXEC_T,
 		SET_HOST_T, SET_HOSTPORT_T, SET_USER_T, SET_USERPASS_T, 

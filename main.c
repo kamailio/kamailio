@@ -43,6 +43,7 @@
  *  2003-06-28  kill_all_children is now used instead of kill(0, sig)
  *                see comment above it for explanations. (andrei)
  *  2003-06-29  replaced port_no_str snprintf w/ int2str (andrei)
+ *  2003-10-10  added switch for config check (-c) (andrei)
  *
  */
 
@@ -196,6 +197,7 @@ static char help_msg[]= "\
 Usage: " NAME " -l address [-p port] [-l address [-p port]...] [options]\n\
 Options:\n\
     -f file      Configuration file (default " CFG_FILE ")\n\
+    -c           Check configuration file for errors\n\
     -p port      Listen on the specified port (default: 5060)\n\
                   applies to the last address in -l and to all \n\
                   following that do not have a corespponding -p\n\
@@ -289,6 +291,7 @@ int sig_flag = 0;              /* last signal received */
 int debug = L_NOTICE;
 int dont_fork = 0;
 int log_stderr = 0;
+int config_check = 0;
 /* check if reply first via host==us */
 int check_via =  0;        
 /* shall use stateful synonym branches? faster but not reboot-safe */
@@ -1262,12 +1265,16 @@ int main(int argc, char** argv)
 #ifdef STATS
 	"s:"
 #endif
-	"f:p:m:b:l:n:N:rRvdDETVhw:t:u:g:P:i:";
+	"f:cp:m:b:l:n:N:rRvdDETVhw:t:u:g:P:i:";
 	
 	while((c=getopt(argc,argv,options))!=-1){
 		switch(c){
 			case 'f':
 					cfg_file=optarg;
+					break;
+			case 'c':
+					config_check=1;
+					log_stderr=1; /* force stderr logging */
 					break;
 			case 's':
 				#ifdef STATS
@@ -1709,6 +1716,10 @@ try_again:
 		fprintf(stderr, "WARNING: no fork mode %s\n", 
 				(sock_no>1)?" and more than one listen address found (will"
 							" use only the the first one)":"");
+	}
+	if (config_check){
+		fprintf(stderr, "config file ok, exiting...\n");
+		goto error;
 	}
 	
 #ifdef USE_TCP

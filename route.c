@@ -38,6 +38,7 @@
  *  2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
  *  2003-05-23  comp_ip fixed, now it will resolve its operand and compare
  *              the ip with all the addresses (andrei)
+ *  2003-10-10  added more operators support to comp_* (<,>,<=,>=,!=) (andrei)
  */
 
  
@@ -247,15 +248,28 @@ static int fix_actions(struct action* a)
 
 inline static int comp_no( int port, void *param, int op, int subtype )
 {
-	if (op!=EQUAL_OP) {
-		LOG(L_CRIT, "BUG: comp_no: '=' expected: %d\n", op );
-		return E_BUG;
-	}
+	
 	if (subtype!=NUMBER_ST) {
 		LOG(L_CRIT, "BUG: comp_no: number expected: %d\n", subtype );
 		return E_BUG;
 	}
-	return port==(long)param;
+	switch (op){
+		case EQUAL_OP:
+			return port==(long)param;
+		case DIFF_OP:
+			return port!=(long)param;
+		case GT_OP:
+			return port>(long)param;
+		case LT_OP:
+			return port<(long)param;
+		case GTE_OP:
+			return port>=(long)param;
+		case LTE_OP:
+			return port<=(long)param;
+		default:
+		LOG(L_CRIT, "BUG: comp_no: unknown operator: %d\n", op );
+		return E_BUG;
+	}
 }
 
 /* eval_elem helping function, returns str op param */
@@ -265,19 +279,29 @@ inline static int comp_strstr(str* str, void* param, int op, int subtype)
 	char backup;
 	
 	ret=-1;
-	if (op==EQUAL_OP){
-		if (subtype!=STRING_ST){
-			LOG(L_CRIT, "BUG: comp_str: bad type %d, "
-					"string expected\n", subtype);
-			goto error;
-		}
-		ret=(strncasecmp(str->s, (char*)param, str->len)==0);
-	}else if (op==MATCH_OP){
-		if (subtype!=RE_ST){
-			LOG(L_CRIT, "BUG: comp_str: bad type %d, "
-					" RE expected\n", subtype);
-			goto error;
-		}
+	switch(op){
+		case EQUAL_OP:
+			if (subtype!=STRING_ST){
+				LOG(L_CRIT, "BUG: comp_str: bad type %d, "
+						"string expected\n", subtype);
+				goto error;
+			}
+			ret=(strncasecmp(str->s, (char*)param, str->len)==0);
+			break;
+		case DIFF_OP:
+			if (subtype!=STRING_ST){
+				LOG(L_CRIT, "BUG: comp_str: bad type %d, "
+						"string expected\n", subtype);
+				goto error;
+			}
+			ret=(strncasecmp(str->s, (char*)param, str->len)!=0);
+			break;
+		case MATCH_OP:
+			if (subtype!=RE_ST){
+				LOG(L_CRIT, "BUG: comp_str: bad type %d, "
+						" RE expected\n", subtype);
+				goto error;
+			}
 		/* this is really ugly -- we put a temporary zero-terminating
 		 * character in the original string; that's because regexps
          * take 0-terminated strings and our messages are not
@@ -291,12 +315,13 @@ inline static int comp_strstr(str* str, void* param, int op, int subtype)
          * which might be too slow
          * -jiri
          */
-		backup=str->s[str->len];str->s[str->len]=0;
-		ret=(regexec((regex_t*)param, str->s, 0, 0, 0)==0);
-		str->s[str->len]=backup;
-	}else{
-		LOG(L_CRIT, "BUG: comp_str: unknown op %d\n", op);
-		goto error;
+			backup=str->s[str->len];str->s[str->len]=0;
+			ret=(regexec((regex_t*)param, str->s, 0, 0, 0)==0);
+			str->s[str->len]=backup;
+			break;
+		default:
+			LOG(L_CRIT, "BUG: comp_str: unknown op %d\n", op);
+			goto error;
 	}
 	return ret;
 	
@@ -310,23 +335,34 @@ inline static int comp_str(char* str, void* param, int op, int subtype)
 	int ret;
 	
 	ret=-1;
-	if (op==EQUAL_OP){
-		if (subtype!=STRING_ST){
-			LOG(L_CRIT, "BUG: comp_str: bad type %d, "
-					"string expected\n", subtype);
+	switch(op){
+		case EQUAL_OP:
+			if (subtype!=STRING_ST){
+				LOG(L_CRIT, "BUG: comp_str: bad type %d, "
+						"string expected\n", subtype);
+				goto error;
+			}
+			ret=(strcasecmp(str, (char*)param)==0);
+			break;
+		case DIFF_OP:
+			if (subtype!=STRING_ST){
+				LOG(L_CRIT, "BUG: comp_str: bad type %d, "
+						"string expected\n", subtype);
+				goto error;
+			}
+			ret=(strcasecmp(str, (char*)param)!=0);
+			break;
+		case MATCH_OP:
+			if (subtype!=RE_ST){
+				LOG(L_CRIT, "BUG: comp_str: bad type %d, "
+						" RE expected\n", subtype);
+				goto error;
+			}
+			ret=(regexec((regex_t*)param, str, 0, 0, 0)==0);
+			break;
+		default:
+			LOG(L_CRIT, "BUG: comp_str: unknown op %d\n", op);
 			goto error;
-		}
-		ret=(strcasecmp(str, (char*)param)==0);
-	}else if (op==MATCH_OP){
-		if (subtype!=RE_ST){
-			LOG(L_CRIT, "BUG: comp_str: bad type %d, "
-					" RE expected\n", subtype);
-			goto error;
-		}
-		ret=(regexec((regex_t*)param, str, 0, 0, 0)==0);
-	}else{
-		LOG(L_CRIT, "BUG: comp_str: unknown op %d\n", op);
-		goto error;
 	}
 	return ret;
 	
@@ -334,6 +370,25 @@ error:
 	return -1;
 }
 
+
+/* check_self wrapper -- it checks also for the op */
+inline static int check_self_op(int op, str* s, unsigned short p)
+{
+	int ret;
+	
+	ret=check_self(s, p);
+	switch(op){
+		case EQUAL_OP:
+			break;
+		case DIFF_OP:
+			if (ret>=0) ret=!ret;
+			break;
+		default:
+			LOG(L_CRIT, "BUG: check_self_op: invalid operator %d\n", op);
+			ret=-1;
+	}
+	return ret;
+}
 
 
 /* eval_elem helping function, returns an op param */
@@ -347,45 +402,67 @@ inline static int comp_ip(struct ip_addr* ip, void* param, int op, int subtype)
 	ret=-1;
 	switch(subtype){
 		case NET_ST:
-			ret=matchnet(ip, (struct net*) param);
-			/*ret=(a&((struct net*)param)->mask)==((struct net*)param)->ip;*/
+			switch(op){
+				case EQUAL_OP:
+					ret=(matchnet(ip, (struct net*) param)==1);
+					break;
+				case DIFF_OP:
+					ret=(matchnet(ip, (struct net*) param)!=1);
+					break;
+				default:
+					goto error_op;
+			}
 			break;
 		case STRING_ST:
 		case RE_ST:
-			/* 1: compare with ip2str*/
-			ret=comp_str(ip_addr2a(ip), param, op, subtype);
-			if (ret==1) break;
-			/* 2: resolve (name) & compare w/ all the ips */
-			he=resolvehost((char*)param);
-			if (he==0){
-				DBG("comp_ip: could not resolve %s\n", (char*)param);
-			}else if (he->h_addrtype==ip->af){
-				for(h=he->h_addr_list;(ret!=1)&& (*h); h++){
-					ret=(memcmp(ip->u.addr, *h, ip->len)==0);
-				}
-				if (ret==1) break;
-			}
-			/* 3: (slow) rev dns the address
-			 * and compare with all the aliases
-			 * !!??!! review: remove this? */
-			he=rev_resolvehost(ip);
-			if (he==0){
-				print_ip( "comp_ip: could not rev_resolve ip address: ",
-							ip, "\n");
-				ret=0;
-			}else{
-				/*  compare with primary host name */
-				ret=comp_str(he->h_name, param, op, subtype);
-				/* compare with all the aliases */
-				for(h=he->h_aliases; (ret!=1) && (*h); h++){
-					ret=comp_str(*h, param, op, subtype);
-				}
+			switch(op){
+				case EQUAL_OP:
+				case MATCH_OP:
+					/* 1: compare with ip2str*/
+					ret=comp_str(ip_addr2a(ip), param, op, subtype);
+					if (ret==1) break;
+					/* 2: resolve (name) & compare w/ all the ips */
+					if (subtype==STRING_ST){
+						he=resolvehost((char*)param);
+						if (he==0){
+							DBG("comp_ip: could not resolve %s\n",
+									(char*)param);
+						}else if (he->h_addrtype==ip->af){
+							for(h=he->h_addr_list;(ret!=1)&& (*h); h++){
+								ret=(memcmp(ip->u.addr, *h, ip->len)==0);
+							}
+							if (ret==1) break;
+						}
+					}
+					/* 3: (slow) rev dns the address
+					* and compare with all the aliases
+					* !!??!! review: remove this? */
+					he=rev_resolvehost(ip);
+					if (he==0){
+						print_ip( "comp_ip: could not rev_resolve ip address:"
+									" ", ip, "\n");
+					ret=0;
+					}else{
+						/*  compare with primary host name */
+						ret=comp_str(he->h_name, param, op, subtype);
+						/* compare with all the aliases */
+						for(h=he->h_aliases; (ret!=1) && (*h); h++){
+							ret=comp_str(*h, param, op, subtype);
+						}
+					}
+					break;
+				case DIFF_OP:
+					ret=comp_ip(ip, param, EQUAL_OP, subtype);
+					if (ret>=0) ret=!ret;
+					break;
+				default:
+					goto error_op;
 			}
 			break;
 		case MYSELF_ST: /* check if it's one of our addresses*/
 			tmp.s=ip_addr2a(ip);
 			tmp.len=strlen(tmp.s);
-			ret=check_self(&tmp, 0);
+			ret=check_self_op(op, &tmp, 0);
 			break;
 		default:
 			LOG(L_CRIT, "BUG: comp_ip: invalid type for "
@@ -393,6 +470,9 @@ inline static int comp_ip(struct ip_addr* ip, void* param, int op, int subtype)
 			ret=-1;
 	}
 	return ret;
+error_op:
+	LOG(L_CRIT, "BUG: comp_ip: invalid operator %d\n", op);
+	return -1;
 	
 }
 
@@ -418,7 +498,7 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 				if(msg->new_uri.s){
 					if (e->subtype==MYSELF_ST){
 						if (parse_sip_msg_uri(msg)<0) ret=-1;
-						else	ret=check_self(&msg->parsed_uri.host,
+						else	ret=check_self_op(e->op, &msg->parsed_uri.host,
 									msg->parsed_uri.port_no?
 									msg->parsed_uri.port_no:SIP_PORT);
 					}else{
@@ -428,7 +508,7 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 				}else{
 					if (e->subtype==MYSELF_ST){
 						if (parse_sip_msg_uri(msg)<0) ret=-1;
-						else	ret=check_self(&msg->parsed_uri.host,
+						else	ret=check_self_op(e->op, &msg->parsed_uri.host,
 									msg->parsed_uri.port_no?
 									msg->parsed_uri.port_no:SIP_PORT);
 					}else{
@@ -466,6 +546,9 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 				break;
 		case AF_O:
 				ret=comp_no(msg->rcv.src_ip.af, e->r.param, e->op, e->subtype);
+				break;
+		case MSGLEN_O:
+				ret=comp_no(msg->len, e->r.param, e->op, e->subtype);
 				break;
 		default:
 				LOG(L_CRIT, "BUG: eval_elem: invalid operand %d\n",

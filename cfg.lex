@@ -40,6 +40,7 @@
  *  2003-07-06  more tls config. vars added: tls_method, tls_port_no (andrei)
  *  2003-10-02  added {,set_}advertised_{address,port} (andrei)
  *  2003-10-07  added hex and octal numbers support (andrei)
+ *  2003-10-10  replaced len_gt w/ msg:len (andrei)
  */
 
 
@@ -94,7 +95,6 @@ FORCE_RPORT		"force_rport"|"add_rport"
 SETFLAG		setflag
 RESETFLAG	resetflag
 ISFLAGSET	isflagset
-LEN_GT		len_gt
 SET_HOST		"rewritehost"|"sethost"|"seth"
 SET_HOSTPORT	"rewritehostport"|"sethostport"|"sethp"
 SET_USER		"rewriteuser"|"setuser"|"setu"
@@ -132,9 +132,15 @@ DSTPORT	dst_port
 PROTO	proto
 AF		af
 MYSELF	myself
+MSGLEN			"msg:len"
 /* operators */
 EQUAL	=
 EQUAL_T	==
+GT	>
+LT	<
+GTE	>=
+LTE	<=
+DIFF	!=
 MATCH	=~
 NOT		!|"not"
 AND		"and"|"&&"|"&"
@@ -244,7 +250,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{SETFLAG}	{ count(); yylval.strval=yytext; return SETFLAG; }
 <INITIAL>{RESETFLAG}	{ count(); yylval.strval=yytext; return RESETFLAG; }
 <INITIAL>{ISFLAGSET}	{ count(); yylval.strval=yytext; return ISFLAGSET; }
-<INITIAL>{LEN_GT}	{ count(); yylval.strval=yytext; return LEN_GT; }
+<INITIAL>{MSGLEN}	{ count(); yylval.strval=yytext; return MSGLEN; }
 <INITIAL>{ROUTE}	{ count(); yylval.strval=yytext; return ROUTE; }
 <INITIAL>{ROUTE_ONREPLY}	{ count(); yylval.strval=yytext;
 								return ROUTE_ONREPLY; }
@@ -336,6 +342,11 @@ EAT_ABLE	[\ \t\b\r]
 
 <INITIAL>{EQUAL}	{ count(); return EQUAL; }
 <INITIAL>{EQUAL_T}	{ count(); return EQUAL_T; }
+<INITIAL>{GT}	{ count(); return GT; }
+<INITIAL>{LT}	{ count(); return LT; }
+<INITIAL>{GTE}	{ count(); return GTE; }
+<INITIAL>{LTE}	{ count(); return LTE; }
+<INITIAL>{DIFF}	{ count(); return DIFF; }
 <INITIAL>{MATCH}	{ count(); return MATCH; }
 <INITIAL>{NOT}		{ count(); return NOT; }
 <INITIAL>{AND}		{ count(); return AND; }

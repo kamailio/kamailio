@@ -7,6 +7,35 @@ $Id$
 
 texops:
  - subst('s/re/repl/flags') support
+core:
+ - added switch to check the config file (-c)
+ - changes: removed len_gt() and replaced with if (msg:len op number|max_len)
+ - multiple operator support: ==, != for special operations (e.g myself, ip)
+                              ==, !=, ~= for strings
+                              ==, !=, >, <, >=, <= for integers
+ - new config variables:
+     advertised_address= ip | string
+       address advertised in via and in the DST_* lumps (e.g RR)
+       This is the default value, if empty (default) the socket
+       address will be used.
+       WARNING: - don't set it unless you know what you are doing
+                 (e.g. nat traversal)
+               - you can set anything here, no check is made
+                (e.g. foo.bar will be accepted even if 
+                 foo.bar doesn't exist)
+    advertised_port= no
+       port advertised in via and in the DST_*lumps (e.g. RR)
+       This is the default value, if empty (default) the socket
+       port will be used.
+       Same warnings as above.
+ - new script commands:
+    set_advertised_address(ip|string)
+       same as advertised_address but it affects only the current message:
+       Message host/lump address= the set_advertised one if
+       present, else advertised_address else socket address.
+    set_advertised_port(no)
+       same as advertised_port but it affects only the current
+       message; see set_advertised_address & s/address/port/g
 
 
 
