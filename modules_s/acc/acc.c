@@ -446,6 +446,12 @@ int acc_db_bind(char* db_url)
 		LOG(L_ERR, "ERROR: acc_db_init: bind_db failed\n");
 		return -1;
 	}
+
+	     /* Check database capabilities */
+	if (!DB_CAPABILITY(acc_dbf, DB_CAP_INSERT)) {
+		LOG(L_ERR, "ERROR: acc_db_init: Database module does not implement insert function\n");
+		return -1;
+	}
 	
 	return 0;
 }
