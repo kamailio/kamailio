@@ -47,6 +47,12 @@ static char flags[]="NOCR:"
 #else
 "Off"
 #endif
+", STATS:"
+#ifdef STATS
+"On"
+#else
+"Off"
+#endif
 ;
 
 static char help_msg[]= "\
@@ -76,6 +82,12 @@ Options:\n\
                  auto-probing procedure even if  OS allows\n\
 ";
 
+/* print compile-time constants */
+void print_ct_constants()
+{
+	printf("MAX_RECV_BUFFER_SIZE %d, MAX_LISTEN %d, MAX_URI_SIZE %d\n",
+		MAX_RECV_BUFFER_SIZE, MAX_LISTEN, MAX_URI_SIZE );
+}
 
 /* debuging function */
 /*
@@ -332,6 +344,7 @@ int main(int argc, char** argv)
 			case 'V':
 					printf("version: %s\n", version);
 					printf("flags: %s\n", flags );
+					print_ct_constants();
 					printf("%s\n",id);
 					exit(0);
 					break;

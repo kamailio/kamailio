@@ -79,6 +79,7 @@ int udp_init(unsigned long ip, unsigned short port)
         	if (setsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF,
                              (void*)&optval, sizeof(optval)) ==-1)
         	{
+			/* Solaris returns -1 if asked size too big; Linux ignores */
 			LOG(L_DBG, "DEBUG: udp_init: SOL_SOCKET failed for %d, phase %d: %s\n",
 			    optval,  phase, strerror(errno) );
 			/* if setting buffer size failed and still in the aggressive
@@ -88,6 +89,9 @@ int udp_init(unsigned long ip, unsigned short port)
 			else break;
         	} 
 		/* verify if change has taken effect */
+		/* Linux note -- otherwise I would never know that; funny thing: Linux
+		   doubles size for which we asked in setsockopt
+		*/
 		voptvallen=sizeof(voptval);
 		if (getsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF, (void*) &voptval,
 		    &voptvallen) == -1 )
