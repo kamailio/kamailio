@@ -412,6 +412,8 @@ void handle_sigs()
 			else
 				DBG("SIGTERM received, program terminates\n");
 				
+			/* first of all, kill the children also */
+			kill(0, SIGTERM);
 			destroy_modules();
 #ifdef PKG_MALLOC
 			LOG(memlog, "Memory status (pkg):\n");
@@ -425,8 +427,6 @@ void handle_sigs()
 			shm_mem_destroy();
 #endif
 			if (pid_file) unlink(pid_file);
-			/* kill children also*/
-			kill(0, SIGTERM);
 			dprint("Thank you for flying " NAME "\n");
 			exit(0);
 			break;
