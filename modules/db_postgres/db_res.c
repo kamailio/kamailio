@@ -38,6 +38,7 @@
 
 #include <stdlib.h>
 #include "../../db/db_res.h"
+#include "../../db/db_con.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "defs.h"

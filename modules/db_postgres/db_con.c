@@ -37,12 +37,12 @@
  */
 
 #include <string.h>
-#include "../../db/db_con.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "defs.h"
 #include "con_postgres.h"
 #include "aug_std.h"
+#include "db_con.h"
 
 /*
  * Store name of table that will be used by
