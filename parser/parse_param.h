@@ -42,8 +42,6 @@
  */
 typedef enum ptype {
 	P_OTHER = 0, /* Unknown parameter */
-	P_LR,        /* Route & Record-Route: lr parameter */
-	P_R2,        /* Route & Record-Route: r2 parameter - Route & Record-Route */
 	P_Q,         /* Contact: q parameter */
 	P_EXPIRES,   /* Contact: expires parameter */
 	P_METHOD,    /* Contact: method parameter */
@@ -59,7 +57,6 @@ typedef enum ptype {
  */
 typedef enum pclass {
 	CLASS_ANY = 0,  /* Any parameters, well-known hooks will be not used */
-	CLASS_RR,       /* Route & Record-Route parameters */
 	CLASS_CONTACT,  /* Contact parameters */
 	CLASS_URI       /* URI parameters */
 } pclass_t;
@@ -75,15 +72,6 @@ typedef struct param {
 	int len;              /* Total lenght of the parameter including = and quotes */
 	struct param* next;   /* Next parameter in the list */
 } param_t;
-
-
-/*
- * Hooks to well known parameters for Route & Record-Route class of parameters
- */
-struct rr_hooks {
-	struct param* lr; /* lr parameter */
-	struct param* r2; /* r2 parameters - ser specific */
-};
 
 
 /*
@@ -111,7 +99,6 @@ struct uri_hooks {
  * Union of hooks structures for all classes
  */
 typedef union param_hooks {
- 	struct rr_hooks rr;           /* Route & Record-Route hooks */
 	struct contact_hooks contact; /* Contact hooks */
 	struct uri_hooks uri;         /* URI hooks */
 } param_hooks_t;

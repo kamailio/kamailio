@@ -96,14 +96,14 @@ int parse_rr(struct hdr_field* _h)
 			}
 
 			     /* Parse all parameters */
-			if (parse_params(&s, CLASS_RR, &hooks, &r->params) < 0) {
+			if (parse_params(&s, CLASS_ANY, &hooks, &r->params) < 0) {
 				LOG(L_ERR, "parse_rr(): Error while parsing params\n");
 				goto error;
 			}
 			r->len = r->params->name.s + r->params->len - r->nameaddr.name.s;
 
 			     /* Copy hooks */
-			r->r2 = hooks.rr.r2;
+			     /*r->r2 = hooks.rr.r2; */
 
 			if (s.len == 0) goto ok;
 		}
@@ -211,7 +211,7 @@ static inline void xlate_pointers(struct sip_msg* _m, rr_t* _r)
 	
 	ptr = _r->params;
 	while(ptr) {
-		if (ptr->type == P_R2) _r->r2 = ptr;
+		     /*		if (ptr->type == P_R2) _r->r2 = ptr; */
 		ptr->name.s = translate_pointer(_r->nameaddr.name.s, _m->buf, ptr->name.s);
 		ptr->body.s = translate_pointer(_r->nameaddr.name.s, _m->buf, ptr->body.s);		
 		ptr = ptr->next;

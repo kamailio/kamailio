@@ -46,34 +46,6 @@
 
 /*
  * Try to find out parameter name, recognized parameters
- * are lr and r2
- */
-static inline void parse_rr_class(param_hooks_t* _h, param_t* _p)
-{
-	switch(_p->name.s[0]) {
-	case 'l':
-	case 'L':
-		if ((_p->name.len == 2) &&
-		    ((_p->name.s[1] == 'r') || (_p->name.s[1] == 'R'))) {
-			_p->type = P_LR;
-			_h->rr.lr = _p;
-		}
-		break;
- 
-	case 'r':
-	case 'R':
-		if ((_p->name.len == 3) &&
-		    (_p->name.s[1] == '2')) {
-			_p->type = P_R2;
-			_h->rr.r2 = _p;
-		}
-		break;
-	}
-}
-
-
-/*
- * Try to find out parameter name, recognized parameters
  * are q, expires and method
  */
 static inline void parse_contact_class(param_hooks_t* _h, param_t* _p)
@@ -145,7 +117,7 @@ static inline void parse_uri_class(param_hooks_t* _h, param_t* _p)
 		if ((_p->name.len == 5) &&
 		    (!strncasecmp(_p->name.s + 1, "addr", 4))) {
 			_p->type = P_MADDR;
-			_p->uri.maddr = _p;
+			_h->uri.maddr = _p;
 		}
 		break;
 	}
@@ -287,7 +259,6 @@ static inline void parse_param_name(str* _s, pclass_t _c, param_hooks_t* _h, par
 	_p->name.len = _s->s - _p->name.s;
 	
 	switch(_c) {
-	case CLASS_RR:      parse_rr_class(_h, _p);      break;
 	case CLASS_CONTACT: parse_contact_class(_h, _p); break;
 	case CLASS_URI:     parse_uri_class(_h, _p);     break;
 	default: break;
@@ -459,8 +430,6 @@ static inline void print_param(param_t* _p)
 	
 	switch(_p->type) {
 	case P_OTHER:     type = "P_OTHER";     break;
-	case P_LR:        type = "P_LR";        break;
-	case P_R2:        type = "P_R2";        break;
 	case P_Q:         type = "P_Q";         break;
 	case P_EXPIRES:   type = "P_EXPIRES";   break;
 	case P_METHOD:    type = "P_METHOD";    break;
