@@ -43,8 +43,9 @@ usage() {
 	echo "... introduce a new subscriber"
 	echo "   $0 dul <name> ... delete user's UsrLoc entries"
 	echo "   $0 show [<name>] ... show online users"
+	echo "   $0 mail <name> ... send an email to a user"
 	echo "   $0 rm <name> ... delete a user"
-	echo "   $0 stat"
+	echo "   $0 stat ... runnig processe shown + show "
 }
 
 
@@ -98,6 +99,25 @@ case $1 in
 		QUERY="delete from $USRLOC where $USRLOC.$USER_COLUMN='$2'"
 		mysql -h $SQL_HOST -u $SQL_USER "-p" -e "$QUERY ;" $SQL_DB
 		;;
+
+	mail)
+		if [ $# -ne 2 ] ; then
+			usage
+			exit 1
+		fi
+		shift
+		QUERY="select $TABLE.$EMAIL_COLUMN from $TABLE where  $TABLE.$SUBSCRIBER_COLUMN='$1'"
+		EA=`mysql -B -h $SQL_HOST -u $RO_USER "-p$RO_PW" -e "$QUERY ;" $SQL_DB|tail -1`
+		echo "Write email to $1: $EA now ..."
+		mail -s "Message from $DOMAIN SIP admin" $EA
+		if [ $? -eq 0 ] ; then
+			echo message sent
+		else
+			echo sending message failed
+		fi
+
+		;;
+
 
 	show)
 		if [ $# -ne 1 -a $# -ne 2 ] ; then
