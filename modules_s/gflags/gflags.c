@@ -47,9 +47,9 @@
 /* flag buffer size for FIFO protocool */
 #define MAX_FLAG_LEN 12
 /* FIFO action protocol names */
-#define FIFO_SET_GFLAG "SET_GFLAG"
-#define FIFO_IS_GFLAG "RESET_GFLAG"
-#define FIFO_RESET_GFLAG "IS_GFLAG"
+#define FIFO_SET_GFLAG "set_gflag"
+#define FIFO_IS_GFLAG "is_gflag"
+#define FIFO_RESET_GFLAG "reset_gflag"
 
 #include "../../sr_module.h"
 #include "../../error.h"
