@@ -183,7 +183,9 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	*/
 	backup_mhomed=mhomed;
 	mhomed=0;
-	ret=msg_send(0, msg->rcv.proto, &to, msg->rcv.proto_reserved1, buf, len);
+	/* use for sending the received interface -bogdan*/
+	ret = msg_send( msg->rcv.bind_address, msg->rcv.proto, &to,
+			msg->rcv.proto_reserved1, buf, len);
 	mhomed=backup_mhomed;
 	if (ret<0) 
 		goto error;
