@@ -1058,6 +1058,11 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
    }
    trans->outbound_response->bufflen = len ;
    trans->outbound_response->retr_buffer   = (char*)sh_malloc( len );
+   if (! trans->outbound_response->retr_buffer ) {
+	LOG(L_ERR, "ERROR: push_reply_from_uac_to_uas: no memory to allocate retr_buffer\n");
+	free( buf );
+	return -1;
+   }
    memcpy( trans->outbound_response->retr_buffer , buf , len );
    free( buf ) ;
 
