@@ -26,6 +26,8 @@ was created from the cvs stable tree (rel_0_8_12), so if you have an up-to-date
 New Features
 ============
 
+ - experimental OS X (darwin) support
+
 core:
  - basic avp support (no db conectivity yet)
 tm:

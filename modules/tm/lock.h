@@ -28,6 +28,8 @@
  * History:
  * --------
  *  2003-03-17  converted to locking.h (andrei)
+ *  2004-07-28  s/lock_set_t/gen_lock_set_t/ because of a type conflict
+ *              on darwin (andrei)
  */
 
 #include "defs.h"
@@ -47,7 +49,7 @@
 /* typedef to structure we use for mutexing;
    currently, index to a semaphore set identifier now */
 typedef struct {
-	lock_set_t* semaphore_set;
+	gen_lock_set_t* semaphore_set;
 	int semaphore_index;
 } ser_lock_t;
 #endif
