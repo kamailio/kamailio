@@ -10,6 +10,11 @@ new archs:
  - mips2/cobalt experimental support
  - x86_64 experimental support
 modules:
+ -  tm has a new parameter: restart_fr_on_each_reply. If set (default)
+    fr_inv timer will be restarted for each provisional reply, if not set
+    it will be restarted only for the first reply and for replies >=180
+    (but only if increasing, eg.: 180, 181 ...). Usefull when dealing with bad
+    UAs that re-transmit 180s.
  - nathelper received port  test (flag 16 for nat_uac_test): compares the
    source port of the message with sip port in the first Via and returns
    true if different.
@@ -36,7 +41,10 @@ core:
  - new parts:
        UNIX domain socket server implemented
  - changes: 
- 	-  avp (Attribute-Value Pair) support added
+    - config: better escape support in strings (e.g. \", \<cr>, \x0a, \012)
+    - bad network addresses are now automatically fixed
+      (e.g. 192.168.1.80/27 => 192.168.1.64/27)
+    -  avp (Attribute-Value Pair) support added
     -  multicast support added (see mcast_loopback & mcast_ttl)
     -  saving of procces group id enabled, if the -G option is specified
        (a safe way to quickly kill all ser processes)

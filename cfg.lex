@@ -49,6 +49,7 @@
  *               sock_group  (andrei)
  *  2004-05-03  applied multicast support patch from janakj
  *              added MCAST_TTL (andrei)
+ *  2004-10-08  more escapes: \", \xHH, \nnn and minor optimizations (andrei)
  */
 
 
@@ -68,15 +69,23 @@
 	#define COMMENT_LN_S	2
 	#define STRING_S		3
 
+	#define STR_BUF_ALLOC_UNIT	128
+	struct str_buf{
+		char* s;
+		char* crt;
+		int left;
+	};
+
 	
 	static int comment_nest=0;
 	static int state=0;
-	static char* tstr=0;
+	static struct str_buf s_buf;
 	int line=1;
 	int column=1;
 	int startcolumn=1;
 
-	static char* addstr(char*, char**);
+	static char* addchar(struct str_buf *, char);
+	static char* addstr(struct str_buf *, char*, int);
 	static void count();
 
 
@@ -459,30 +468,32 @@ EAT_ABLE	[\ \t\b\r]
 
 <STRING1>{QUOTES} { count(); state=INITIAL_S; BEGIN(INITIAL); 
 						yytext[yyleng-1]=0; yyleng--;
-						addstr(yytext, &tstr);
-						yylval.strval=tstr; tstr=0;
+						addstr(&s_buf, yytext, yyleng);
+						yylval.strval=s_buf.s;
+						memset(&s_buf, 0, sizeof(s_buf));
 						return STRING;
 					}
 <STRING2>{TICK}  { count(); state=INITIAL_S; BEGIN(INITIAL); 
 						yytext[yyleng-1]=0; yyleng--;
-						addstr(yytext, &tstr);
-						yylval.strval=tstr;
-						tstr=0;
+						addstr(&s_buf, yytext, yyleng);
+						yylval.strval=s_buf.s;
+						memset(&s_buf, 0, sizeof(s_buf));
 						return STRING;
 					}
 <STRING2>.|{EAT_ABLE}|{CR}	{ yymore(); }
 
-<STRING1>\\n		{ count(); yytext[yyleng-2]='\n';yytext[yyleng-1]=0; 
-						yyleng--; addstr(yytext, &tstr); }
-<STRING1>\\r		{ count(); yytext[yyleng-2]='\r';yytext[yyleng-1]=0; 
-						yyleng--; addstr(yytext, &tstr); }
-<STRING1>\\a		{ count(); yytext[yyleng-2]='\a';yytext[yyleng-1]=0; 
-						yyleng--; addstr(yytext, &tstr); }
-<STRING1>\\t		{ count(); yytext[yyleng-2]='\t';yytext[yyleng-1]=0; 
-						yyleng--; addstr(yytext, &tstr); }
-<STRING1>\\\\		{ count(); yytext[yyleng-2]='\\';yytext[yyleng-1]=0; 
-						yyleng--; addstr(yytext, &tstr); } 
-<STRING1>.|{EAT_ABLE}|{CR}	{ yymore(); }
+<STRING1>\\n		{ count(); addchar(&s_buf, '\n'); }
+<STRING1>\\r		{ count(); addchar(&s_buf, '\r'); }
+<STRING1>\\a		{ count(); addchar(&s_buf, '\a'); }
+<STRING1>\\t		{ count(); addchar(&s_buf, '\t'); }
+<STRING1>\\{QUOTES}	{ count(); addchar(&s_buf, '"');  }
+<STRING1>\\\\		{ count(); addchar(&s_buf, '\\'); } 
+<STRING1>\\x{HEX}{1,2}	{ count(); addchar(&s_buf, 
+											(char)strtol(yytext+2, 0, 16)); }
+<STRING1>\\[0-7]{1,3}	{ count(); addchar(&s_buf, 
+											(char)strtol(yytext+1, 0, 8));  }
+<STRING1>\\{CR}		{ count(); } /* eat escaped CRs */
+<STRING1>.|{EAT_ABLE}|{CR}	{ addchar(&s_buf, *yytext); }
 
 
 <INITIAL,COMMENT>{COM_START}	{ count(); comment_nest++; state=COMMENT_S;
@@ -497,8 +508,7 @@ EAT_ABLE	[\ \t\b\r]
 
 <INITIAL>{COM_LINE}.*{CR}	{ count(); } 
 
-<INITIAL>{ID}			{ count(); addstr(yytext, &tstr);
-						  yylval.strval=tstr; tstr=0; return ID; }
+<INITIAL>{ID}			{ count(); yylval.strval=yytext; return ID; }
 
 
 <<EOF>>							{
@@ -506,7 +516,11 @@ EAT_ABLE	[\ \t\b\r]
 										case STRING_S: 
 											LOG(L_CRIT, "ERROR: cfg. parser: unexpected EOF in"
 														" unclosed string\n");
-											if (tstr) {pkg_free(tstr);tstr=0;}
+											if (s_buf.s){
+												pkg_free(s_buf.s);
+												memset(&s_buf, 0,
+															sizeof(s_buf));
+											}
 											break;
 										case COMMENT_S:
 											LOG(L_CRIT, "ERROR: cfg. parser: unexpected EOF:"
@@ -522,28 +536,41 @@ EAT_ABLE	[\ \t\b\r]
 			
 %%
 
-static char* addstr(char * src, char ** dest)
+
+static char* addchar(struct str_buf* dst, char c)
+{
+	return addstr(dst, &c, 1);
+}
+
+
+
+static char* addstr(struct str_buf* dst_b, char* src, int len)
 {
 	char *tmp;
-	unsigned len1, len2;
+	unsigned size;
+	unsigned used;
 	
-	if (*dest==0){
-		len1 = strlen(src);
-		*dest = pkg_malloc(len1 + 1);
-		if (*dest == 0) goto error;
-		memcpy(*dest, src, len1 + 1);
-	}else{
-		len1=strlen(*dest);
-		len2=strlen(src);
-		tmp=pkg_malloc(len1+len2+1);
+	if (dst_b->left<(len+1)){
+		used=(unsigned)(dst_b->crt-dst_b->s);
+		size=used+len+1;
+		/* round up to next multiple */
+		size+= STR_BUF_ALLOC_UNIT-size%STR_BUF_ALLOC_UNIT;
+		tmp=pkg_malloc(size);
 		if (tmp==0) goto error;
-		memcpy(tmp, *dest, len1);
-		memcpy(tmp+len1, src, len2);
-		tmp[len1+len2]=0;
-		pkg_free(*dest);
-		*dest=tmp;
+		if (dst_b->s){
+			memcpy(tmp, dst_b->s, used); 
+			pkg_free(dst_b->s);
+		}
+		dst_b->s=tmp;
+		dst_b->crt=dst_b->s+used;
+		dst_b->left=size-used;
 	}
-	return *dest;
+	memcpy(dst_b->crt, src, len);
+	dst_b->crt+=len;
+	*(dst_b->crt)=0;
+	dst_b->left-=len;
+	
+	return dst_b->s;
 error:
 	LOG(L_CRIT, "ERROR:lex:addstr: memory allocation error\n");
 	return 0;
