@@ -15,16 +15,26 @@ Patch: http://www.mobile-ip.de/~andrei/ser/main_group.patch
 Workaround: update from cvs or  apply the corresponding patch
 CVS status: fixed
 --------------------------------------------------------------
-Desc: textops search REs like "^From" fails to match on RH8
+Desc: textops search REs like "^From" fail to match on RH8
 Ser version: all
-Reason: there is a bug in RH8 libc
+Reason: there is a bug in RH8 libc, this kind of REs will never match
+        in case insensitive mode
+Test:  compile test/re_test.c (gcc re_test.c -o re_test) and try
+        echo -e "From:\nTo:" |./re_test -v '^From'
+       if your system is ok you should see 1 match, if not (and 
+       your libc has this bug), 0 matches.
 Workarround: ?upgrade?
 --------------------------------------------------------------
-Desc: textops subst REs match newline in constructs such [^@]
-Ser version: 0.8.13?-unstable
-Reason: there is a bug in newer libc versions (at least in debian
-        libc6 2.3.x)
-Workarround: use an older or fixed libc6 or avoid [^something]
+Desc: textops REs match newline in constructs such [^@]
+Ser version: all 
+Reason: there is a bug in newer linux libc versions (at least in
+         Debian libc6 2.3.x, Gentoo 1.4 lib 2.3.2, RH8, RH9, Fedora)
+Test:  compile test/re_test.c (gcc re_test.c -o re_test) and try
+        echo -e "From:\nTo:" |./re_test -v '[^.]+'
+       if your system is ok you should see 2 matches, if not (and 
+       your libc has this bug), only 1 match.
+Workarround: - use an older or fixed libc6 or avoid [^something]
+             - rewrite [^something] as [^something[:cntrl:]]
 ---------------------------------------------------------------
 Desc: memory leaks occurs if SIP requests are processed in which
       a Via header field occurs in end of header and includes
