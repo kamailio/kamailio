@@ -14,6 +14,8 @@ x better Via parsing (handle ' ' in uri, eg: foo.bar : 1234 ; received=) and
 x (different way) add request header bitmap field for the modules
 
 High priority:
+- fix/replace T_REF/T_UNREF
+- review all the tm locking
 x if () {} else {}
 x plugin interface
 - ipv6 support
