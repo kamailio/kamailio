@@ -117,6 +117,7 @@ fi
 %dir %{_libdir}/ser/modules
 %{_libdir}/ser/modules/acc.so
 %{_libdir}/ser/modules/auth.so
+%{_libdir}/ser/modules/exec.so
 %{_libdir}/ser/modules/im.so
 %{_libdir}/ser/modules/jabber.so
 %{_libdir}/ser/modules/maxfwd.so
@@ -146,6 +147,9 @@ fi
 
 
 %changelog
+* Fri Oct  4 23:25:52 CEST 2002 Jiri Kuthan <jiri@iptel.org>
+- exec module introduced
+
 * Wed Sep 25 2002 Andrei Pelinescu - Onciul  <pelinescu-onciul@fokus.gmd.de>
 - modified make install & make: added cfg-target & modules-target
 
