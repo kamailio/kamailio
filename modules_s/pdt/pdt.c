@@ -24,6 +24,7 @@
  *
  * History:
  * -------
+ * 2003-04-07: a structure for both hashes introduced (ramona) 
  * 2003-04-06: db connection closed in mod_init (janakj)
  */
 
@@ -53,15 +54,12 @@
 #define DB_KEY_NAME		"domain"
 #define DB_KEY_CODE		"code"
 
-code_t hash_size = 2;
-code_t hash_size_two_pow = 1;
+int hs_two_pow = 1;
 
-/*** TODO -- make a structure with both hashes and their size */
+/** structure containing the both hashes */
+double_hash_t *hash;
 
-h_entry_t *dhash, /* domains hash */
-	  *chash; /* prefixes hash */
-
-/* next code to be allocated */
+/** next code to be allocated */
 code_t *next_code = NULL;
 
 /** database connection */
@@ -72,7 +70,7 @@ db_con_t *db_con = NULL;
 char *db_url = "sql://root@127.0.0.1/pdt";
 char *db_table = "domains";
 
-/* pstn prefix */
+/** pstn prefix */
 char *prefix = NULL;
 code_t prefix_len = 0;
 
@@ -98,7 +96,7 @@ static param_export_t params[]={
 	{"prefix", STR_PARAM, &prefix},
 	{"terminator", INT_PARAM, &code_terminator},
 	{"start_range", INT_PARAM, &start_range},
-	{"hsize_2pow", INT_PARAM, &hash_size_two_pow},
+	{"hsize_2pow", INT_PARAM, &hs_two_pow},
 	{0, 0, 0}
 };
 
@@ -107,10 +105,10 @@ struct module_exports exports = {
 	cmds,
 	params,
 	
-	mod_init,	/* module initialization function */
-	0,		/* response function */
+	mod_init,		/* module initialization function */
+	0,				/* response function */
 	mod_destroy,	/* destroy function */
-	0,	/* oncancel function */
+	0,				/* oncancel function */
 	mod_child_init	/* per child init function */
 };	
 
@@ -200,7 +198,7 @@ static int mod_init(void)
 		
 	DBG("PDT: initializing...\n");
 	
-	if(hash_size_two_pow<0)
+	if(hs_two_pow<0)
 	{
 		LOG(L_ERR, "PDT: mod_init: hash_size_two_pow must be"
 					" positive and less than %d\n", MAX_HSIZE_TWO_POW);
@@ -215,12 +213,6 @@ static int mod_init(void)
 
 	if(!prefix_valid())
 		return -1;
-
-
-	if(hash_size_two_pow>MAX_HSIZE_TWO_POW)
-			hash_size = MAX_HASH_SIZE;
-	else
-			hash_size = 1<<hash_size_two_pow;
 
 	next_code = (code_t*)shm_malloc(sizeof(code_t));
 	if(!next_code)
@@ -263,19 +255,13 @@ static int mod_init(void)
 		DBG("PDT: mod_init: Database connection opened successfully\n");
 	}
 	
-	/* init hashes */
-	if( (dhash = init_hash(hash_size)) == NULL )
+	/* init hashes in share memory */
+	if( (hash = init_double_hash(hs_two_pow)) == NULL)
 	{
-		LOG(L_ERR, "PDT: mod_init: dhash cannot be allocated\n");
+		LOG(L_ERR, "PDT: mod_init: hash could not be allocated\n");	
 		goto error2;
 	}
 	
-	if( (chash = init_hash(hash_size)) ==NULL)
-	{
-		LOG(L_ERR, "PDT: mod_init: chash cannot be allocated\n");
-		goto error3;
-	}
-
 	/* loading all information from database */
 	*next_code = 0;
 	if(db_query(db_con, NULL, NULL, NULL, NULL, 0, 0, "code", &db_res)==0)
@@ -299,14 +285,17 @@ static int mod_init(void)
 			if(cell == NULL)
 					goto error;
 			
-			add_to_hash(dhash, hash_size, cell, DHASH);
-			add_to_hash(chash, hash_size, cell, CHASH);
-
+			if(add_to_double_hash(hash, cell)<0)
+			{
+				LOG(L_ERR, "PDT: mod_init: could not add information from database"
+								" into shared-memory hashes\n");
+				goto error;
+			}
 			
  		}
 		// clear up here
-		//print_hash(dhash, hash_size);
-		//print_hash(chash, hash_size);
+		//print_hash(hash->dhash, hash->hash_size);
+		//print_hash(hash->chash, hash->hash_size);
 
 		(*next_code)++;
 		if (*next_code < start_range)
@@ -321,13 +310,12 @@ static int mod_init(void)
 		{
 			LOG(L_ERR, "PDT: mod_init: error when freeing"
 				" up the response space\n");
-			//goto error;
 		}
 	}
 	else
 	{
 		/* query to database failed */
-		LOG(L_ERR, "PDT: mod_init: error when reading from database\n");
+		LOG(L_ERR, "PDT: mod_init: query to database failed\n");
 		goto error;
 	}
 
@@ -336,9 +324,7 @@ static int mod_init(void)
 	return 0;
 
 error:
-	free_hash(chash, hash_size, NOT_ERASE_CELL);
-error3:
-	free_hash(dhash, hash_size, ERASE_CELL);
+	free_double_hash(hash);
 error2:
 	db_close(db_con);
 error1:	
@@ -385,17 +371,6 @@ static int prefix2domain(struct sip_msg* msg, char* str1, char* str2)
 		  return -1;
 		}
 
-	// clear up hear	
-/*	DBG("PDT: prefix2domain: user: %.*s | passwd: %.*s | " 
-		"host: %.*s | port: %.*s | "
-		"params: %.*s | headers: %.*s \n",
-		 msg->parsed_uri.user.len, msg->parsed_uri.user.s,
-		 msg->parsed_uri.passwd.len, msg->parsed_uri.passwd.s,
-		 msg->parsed_uri.host.len, msg->parsed_uri.host.s,
-		 msg->parsed_uri.port.len, msg->parsed_uri.port.s,
-		 msg->parsed_uri.params.len, msg->parsed_uri.params.s,
-		 msg->parsed_uri.headers.len, msg->parsed_uri.headers.s);
-*/	
 	/* if the user part begin with the prefix for PSTN users, extract the code*/
 	if (msg->parsed_uri.user.len<=0)
 	{
@@ -422,7 +397,7 @@ static int prefix2domain(struct sip_msg* msg, char* str1, char* str2)
 		}
 		
 
-		if(!(MAX_CODE_10>code || (MAX_CODE_10==code && MAX_CODE-MAX_CODE_R>digit)))
+		if(MAX_CODE_10<code || (MAX_CODE_10==code && MAX_CODE-MAX_CODE_R<=digit))
 		{
 			DBG("PDT: prefix2domain: domain_code not well formed\n");
 			return -1;	
@@ -435,7 +410,7 @@ static int prefix2domain(struct sip_msg* msg, char* str1, char* str2)
 		
     
 	/* find the domain that corresponds to that code */
-	if(!(host_port=get_domain_from_hash(chash, hash_size, code)))
+	if(!(host_port=get_domain_from_hash(hash->chash, hash->hash_size, code)))
 	{
 		LOG(L_ERR, "PDT: get_domain_from_hash: required " 
 					"code %d is not allocated yet\n", code);
@@ -518,8 +493,8 @@ int update_new_uri(struct sip_msg *msg, int code_len, char* host_port)
 	msg->new_uri.len = uri_len;
 
 	// here to clear	
-//	DBG("********PDT********NEW URI: %.*s\n", msg->new_uri.len, 
-//			msg->new_uri.s);
+	DBG("PDT: update_new_uri: %.*s\n", msg->new_uri.len, 
+			msg->new_uri.s);
 	
 	return 0;
 }
@@ -528,8 +503,7 @@ int update_new_uri(struct sip_msg *msg, int code_len, char* host_port)
 static void mod_destroy(void)
 {
     DBG("PDT: mod_destroy : Cleaning up\n");
-    free_hash(chash, hash_size, NOT_ERASE_CELL);
-    free_hash(dhash, hash_size, ERASE_CELL);
+    free_double_hash(hash);
     db_close(db_con);
     shm_free(next_code);
     lock_destroy(&l);
@@ -590,7 +564,7 @@ int get_domainprefix(FILE *stream, char *response_file)
 	lock_get(&l);
 
 	/* search the domain in the hashtable */
-	cell = get_code_from_hash(dhash, hash_size, domain_name);
+	cell = get_code_from_hash(hash->dhash, hash->hash_size, domain_name);
 	
 	/* the domain is registered */
 	if(cell)
@@ -599,8 +573,6 @@ int get_domainprefix(FILE *stream, char *response_file)
 		lock_release(&l);
 			
 		/* domain already in the database */	
-//		DBG("201 Domain name=%.*s	Domain code=%d%d\n", 
-//				sdomain.len, sdomain.s, cell->code, code_terminator);
 		fifo_reply(response_file, "201 |Domain name= %.*s"
 				"Domain code= %d%d\n",
 				sdomain.len, sdomain.s, cell->code, code_terminator);
@@ -613,7 +585,6 @@ int get_domainprefix(FILE *stream, char *response_file)
 	if(!authorized)
 	{
 		lock_release(&l);
-//		DBG("203 Domain name not registered yet\n");
 		fifo_reply(response_file, "203 |Domain name not registered yet\n");
 		return 0;
 	}
@@ -639,6 +610,7 @@ int get_domainprefix(FILE *stream, char *response_file)
 	/* insert a new domain into database */
 	if(db_insert(db_con, db_keys, db_vals, NR_KEYS)<0)
 	{
+		/* next available code is still code */
 		*next_code = code;
 		lock_release(&l);
 		LOG(L_ERR, "PDT: get_domaincode: error storing a"
@@ -650,18 +622,12 @@ int get_domainprefix(FILE *stream, char *response_file)
 	
 	/* insert the new domain into hashtables, too */
 	cell = new_cell(sdomain.s, code);
-	if(add_to_hash(dhash, hash_size, cell, DHASH)<0)
-		goto error1;		
-
-	if(add_to_hash(chash, hash_size, cell, CHASH)<0)
-		goto error2;
+	if(add_to_double_hash(hash, cell)<0)
+		goto error;		
 
 	lock_release(&l);
 
 	/* user authorized to register new domains */
-//	DBG("202 Domain name:%.*s	New domain code: %d%d\n", 
-//			sdomain.len, sdomain.s, code, code_terminator);
-			
 	fifo_reply(response_file, "202 |Domain name= %.*s"
 		"	New domain code=  %d%d\n",
 		sdomain.len, sdomain.s, code, code_terminator);
@@ -669,15 +635,12 @@ int get_domainprefix(FILE *stream, char *response_file)
 	return 0;
 
 	
-error2:	
-	if(remove_from_hash(dhash, hash_size, cell, DHASH)<0)
-		LOG(L_ERR,"PDT: get_domaincode: database/share-memory are inconsistent\n");
-	
-error1:
+error:
+	/* next available code is still code */
+	*next_code = code;
 	/* delete from database */
 	if(db_delete(db_con, db_keys, db_ops, db_vals, NR_KEYS)<0)
 		LOG(L_ERR,"PDT: get_domaincode: database/share-memory are inconsistent\n");
-	*next_code = code;
 	lock_release(&l);
 	
 	return -1;

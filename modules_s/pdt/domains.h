@@ -56,18 +56,40 @@ typedef struct _h_entry	{
     entry_t * e;
 } h_entry_t;
 
+typedef struct _double_hash {
+	h_entry_t* dhash;
+	h_entry_t* chash;
+	unsigned int hash_size;
+} double_hash_t;
+
 dc_t* new_cell(char* domain, code_t code);
 void free_cell(dc_t* cell);
+
 entry_t* new_entry(dc_t* cell);
 void free_entry(entry_t *e, int erase_cell);
-h_entry_t* init_hash(code_t hash_size);
-void free_hash(h_entry_t* hash, code_t hash_size, int do_cell);
+
+h_entry_t* init_hash(unsigned int hash_size);
+void free_hash(h_entry_t* hash, unsigned int hash_size, int do_cell);
+
 unsigned int compute_hash(char *s);
-int add_to_hash(h_entry_t* hash, code_t hash_size, dc_t* cell, int type);
-int remove_from_hash(h_entry_t* hash, code_t hash_size, dc_t* cell, int type);
-char* get_domain_from_hash(h_entry_t* hash, code_t hash_size, code_t code);
-dc_t* get_code_from_hash(h_entry_t* hash, code_t hash_size, char* domain);
-void print_hash(h_entry_t* hash, code_t hash_size);
+int add_to_hash(h_entry_t* hash, unsigned int hash_size, dc_t* cell, int type);
+int remove_from_hash(h_entry_t* hash, unsigned int hash_size, dc_t* cell, int type);
+
+char* get_domain_from_hash(h_entry_t* hash, unsigned int hash_size, code_t code);
+dc_t* get_code_from_hash(h_entry_t* hash, unsigned int hash_size, char* domain);
+
+void print_hash(h_entry_t* hash, unsigned int hash_size);
+
+/* FIFO function */
 int get_domainprefix(FILE *stream, char* response_file);
+
+/* update the new_uri field of the sip_msg structure */
 int update_new_uri(struct sip_msg *msg, int code_len, char* host_port);
+
+
+double_hash_t* init_double_hash(int hash_size);
+void free_double_hash(double_hash_t* hash);
+int add_to_double_hash(double_hash_t* hash, dc_t* cell);
+int remove_from_double_hash(double_hash_t* hash, dc_t* cell);
+
 #endif

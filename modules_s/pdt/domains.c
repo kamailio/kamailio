@@ -22,7 +22,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-		       
+
+ /**
+  * History
+  * -------
+  * 2003-04-07: a structure for both hashes introduced (ramona)
+  * 
+  */
+
 #include <stdio.h>
 #include <string.h>
 
@@ -42,33 +49,33 @@ dc_t* new_cell(char* domain, code_t code)
 {
 	dc_t* cell = NULL; 
 	
-    if(!domain)
+	if(!domain)
 		return NULL;
 	
-    /* the cell is in share memory */
-    cell = (dc_t*)shm_malloc(sizeof(dc_t));
+	/* the cell is in share memory */
+	cell = (dc_t*)shm_malloc(sizeof(dc_t));
     
-    /* if there is no space return just NULL */
-    if(!cell)
-	return NULL;
+	/* if there is no space return just NULL */
+	if(!cell)
+		return NULL;
 	
-    /* otherwise, fill in the structure fields */
-    /* domain name */
-    cell->domain = (char*)shm_malloc((1+strlen(domain))*sizeof(char));
-    strcpy(cell->domain, domain);
+	/* otherwise, fill in the structure fields */
+	/* domain name */
+	cell->domain = (char*)shm_malloc((1+strlen(domain))*sizeof(char));
+	strcpy(cell->domain, domain);
 
-    /* domain code */
-    cell->code = code; 
+	/* domain code */
+	cell->code = code; 
 
 	cell->dhash = compute_hash(domain);
     
-    /* return the newly alocated in share memory cell */
-    return cell;
+	/* return the newly alocated in share memory cell */
+	return cell;
 }
 
 void free_cell(dc_t* cell)
 {
-    /* if it is not already NULL */
+	/* if it is not already NULL */
 	if(!cell)
 		return;	
 	
@@ -111,16 +118,13 @@ void free_entry(entry_t *e, int erase_cell)
 }
 
 /* returns a pointer to a hashtable */
-h_entry_t* init_hash(code_t hash_size)
+h_entry_t* init_hash(unsigned int hash_size)
 {
 	int i, j;
 	
 	/* initialized to NULL */
 	h_entry_t *hash = NULL; 
 
-	if(hash_size>MAX_HASH_SIZE)
-		return NULL;
-    
 	/* space for the hash is allocated in share memory */
 	hash = (h_entry_t*)shm_malloc(hash_size*sizeof(h_entry_t));
 	if(hash == NULL)
@@ -148,7 +152,42 @@ error:
 }
 
 
-void free_hash(h_entry_t* hash, code_t hash_size, int do_cell)
+double_hash_t* init_double_hash(int hs_two_pow)
+{
+	double_hash_t* hash = NULL;
+	int hash_size;
+
+	if(hs_two_pow>MAX_HSIZE_TWO_POW || hs_two_pow<0)
+		hash_size = MAX_HASH_SIZE;
+	else
+		hash_size = 1<<hs_two_pow;	
+
+
+	/* space for the double_hash is allocated in share memory */
+	hash = (double_hash_t*)shm_malloc(sizeof(double_hash_t));
+	if(hash == NULL)
+		return NULL;
+
+	if( (hash->dhash = init_hash(hash_size)) == NULL )
+	{
+		shm_free(hash);
+		return NULL;
+	}
+	
+	if( (hash->chash = init_hash(hash_size)) == NULL )
+	{
+		free_hash(hash->dhash, hash_size, ERASE_CELL);
+		shm_free(hash);
+		return NULL;
+	}
+
+	hash->hash_size = hash_size;
+
+	return hash;
+}
+
+
+void free_hash(h_entry_t* hash, unsigned int hash_size, int do_cell)
 {
     int   i;   /* index for hash entries */
     entry_t *tmp, /* just a temporar variable */
@@ -157,20 +196,20 @@ void free_hash(h_entry_t* hash, code_t hash_size, int do_cell)
 		return;
     
 	/* free memory ocupied by all hash entries */
-    for(i=0; i<hash_size; i++)
-    {
+	for(i=0; i<hash_size; i++)
+	{
 		/* iterator through the i-th entry of the hash */
 		it = hash[i].e;
 		
 		/* as long as we have a cell */
 		while(it != NULL)
 		{
-		    /* retains the next cell */
+			/* retains the next cell */
 	    	tmp = it->n;
 			free_entry(it, do_cell);
 	    	
 			/* the iterator points up to the next cell */
-		    it = tmp;
+			it = tmp;
 		}
 		lock_destroy(&hash[i].lock);
     }
@@ -178,54 +217,75 @@ void free_hash(h_entry_t* hash, code_t hash_size, int do_cell)
 	shm_free(hash);
 }
 
-int add_to_hash(h_entry_t* hash, code_t hash_size, dc_t* cell, int type)
+void free_double_hash(double_hash_t* hash)
 {
-    int hash_entry=0;
-    entry_t *it, *tmp;
-    entry_t * e;
+	free_hash(hash->dhash, hash->hash_size, ERASE_CELL);	
+	free_hash(hash->chash, hash->hash_size, NOT_ERASE_CELL);
+	shm_free(hash);
+}
+
+int add_to_double_hash(double_hash_t* hash, dc_t* cell)
+{
+	if(add_to_hash(hash->dhash, hash->hash_size, cell, DHASH)<0)
+		return -1;
 	
-    if(!hash || !cell || hash_size>MAX_HASH_SIZE)
-	return -1;
+	if(add_to_hash(hash->chash, hash->hash_size, cell, CHASH)<0)
+	{
+		remove_from_hash(hash->dhash, hash->hash_size, cell, DHASH);
+		return -1;
+	}	
+	
+	return 0;
+}
+
+int add_to_hash(h_entry_t* hash, unsigned int hash_size, dc_t* cell, int type)
+{
+	int hash_entry=0;
+	entry_t *it, *tmp;
+	entry_t * e;
+	
+	if(!hash || !cell || hash_size>MAX_HASH_SIZE)
+		return -1;
     
-    /* find the list where we have to introduce the new cell */
+	/* find the list where we have to introduce the new cell */
 	if(type==DHASH)
-	    hash_entry = get_hash_entry(cell->dhash, hash_size);
+		hash_entry = get_hash_entry(cell->dhash, hash_size);
 	else 
-		if(type==CHASH)
-			hash_entry = get_hash_entry(cell->code, hash_size);
-		else
-			return -1;	
+	if(type==CHASH)
+		hash_entry = get_hash_entry(cell->code, hash_size);
+	else
+		return -1;	
 
 
 	lock_get(&hash[hash_entry].lock);
 	
-    /* first element of the list */	
-    it = hash[hash_entry].e;
+	/* first element of the list */	
+	it = hash[hash_entry].e;
 
-    /* find the place where to insert the new cell */
-    /* a double linked list in the hash is kept alphabetically
+	/* find the place where to insert the new cell */
+	/* a double linked list in the hash is kept alphabetically
 	 * or numerical ordered */    
-    if(type==DHASH)
+	if(type==DHASH)
 	{		
 		tmp = NULL;
-    	while(it!=NULL && it->dc->dhash < cell->dhash)
-    	{
-        	tmp = it;
-        	it = it->n;
-    	}
+		while(it!=NULL && it->dc->dhash < cell->dhash)
+		{
+			tmp = it;
+			it = it->n;
+		}
 	}
 	else
 	{
 		tmp = NULL;
-    	while( it!=NULL && it->dc->code < cell->code )
-    	{
-        	tmp = it;
-        	it = it->n;
-    	}
+		while( it!=NULL && it->dc->code < cell->code )
+		{
+			tmp = it;
+			it = it->n;
+		}
 	}
     
-    /* we need a new entry for this cell */
-    e = new_entry(cell);	
+	/* we need a new entry for this cell */
+	e = new_entry(cell);	
 	if(e == NULL)
 	{
 		lock_release(&hash[hash_entry].lock);
@@ -242,52 +302,64 @@ int add_to_hash(h_entry_t* hash, code_t hash_size, dc_t* cell, int type)
 	e->n=it;
 	
 	if(it)
-		it->p=e;
+	it->p=e;
 
 	lock_release(&hash[hash_entry].lock);
 
-    return 0;
+	return 0;
 }
 
-
-
-int remove_from_hash(h_entry_t* hash, code_t hash_size, dc_t* cell, int type)
+int remove_from_double_hash(double_hash_t* hash, dc_t* cell)
 {
-    int hash_entry=0;
-    entry_t *it, *tmp;
+	if(!cell)
+		return 0;	
+		
+	if(!hash)
+		return -1;	
+
+	/* DHASH frees the memory of cell */
+	remove_from_hash(hash->dhash, hash->hash_size, cell, DHASH);
+	remove_from_hash(hash->chash, hash->hash_size, cell, CHASH);
+
+	return 0;	
+}
+
+int remove_from_hash(h_entry_t* hash, unsigned int hash_size, dc_t* cell, int type)
+{
+	int hash_entry=0;
+	entry_t *it, *tmp;
 	
 	if(!cell)
 		return 0;
 	
-	if(!hash || hash_size>MAX_HASH_SIZE)
+	if(!hash) 
 		return -1;
     
-    /* find the list where the cell must be */
+	/* find the list where the cell must be */
 	if(type==DHASH)
-	    hash_entry = get_hash_entry(cell->dhash, hash_size);
+		hash_entry = get_hash_entry(cell->dhash, hash_size);
 	else 
 		if(type==CHASH)
 			hash_entry = get_hash_entry(cell->code, hash_size);
-		else
-			return -1;	
+	else
+		return -1;	
 
 
 	lock_get(&hash[hash_entry].lock);
 	
-    /* first element of the list */	
-    it = hash[hash_entry].e;
+	/* first element of the list */	
+	it = hash[hash_entry].e;
 
-    /* find the cell in the list */
-    /* a double linked list in the hash is kept alphabetically
-	 * or numerical ordered */    
+	/* find the cell in the list */
+	/* a double linked list in the hash is kept alphabetically
+	* or numerical ordered */    
 	tmp = NULL;
-    while(it!=NULL && it->dc != cell)
-    {
-       	tmp = it;
-       	it = it->n;
-    }
+	while(it!=NULL && it->dc != cell)
+	{
+		tmp = it;
+		it = it->n;
+	}
 	
-
 	if(it)
 	{
 		if(tmp)
@@ -297,18 +369,16 @@ int remove_from_hash(h_entry_t* hash, code_t hash_size, dc_t* cell, int type)
 
 		if(it->n)
 			it->n->p = it->p;
+
+		free_entry(it, (type==DHASH?ERASE_CELL:NOT_ERASE_CELL));
 	}
 	
-	free_entry(it, ERASE_CELL);
-
 	lock_release(&hash[hash_entry].lock);
 
-    return 0;
+	return 0;
 }
 
-
-
-char* get_domain_from_hash(h_entry_t* hash, code_t hash_size, code_t code)
+char* get_domain_from_hash(h_entry_t* hash, unsigned int hash_size, code_t code)
 {
 	int hash_entry;
 	entry_t* it;
@@ -337,7 +407,7 @@ char* get_domain_from_hash(h_entry_t* hash, code_t hash_size, code_t code)
 			
 }
 
-dc_t* get_code_from_hash(h_entry_t* hash, code_t hash_size, char* domain)
+dc_t* get_code_from_hash(h_entry_t* hash, unsigned int hash_size, char* domain)
 {
 	int hash_entry;
 	unsigned int dhash;
@@ -368,7 +438,7 @@ dc_t* get_code_from_hash(h_entry_t* hash, code_t hash_size, char* domain)
 	return NULL;
 }
 
-void print_hash(h_entry_t* hash, code_t hash_size)
+void print_hash(h_entry_t* hash, unsigned int hash_size)
 {
 	int i, count;
 	entry_t *it;
@@ -386,7 +456,7 @@ void print_hash(h_entry_t* hash, code_t hash_size)
 		while(it!=NULL)
 		{
 			printf("|Domain: %s |Code: %d | DHash:%u \n",
-							it->dc->domain, it->dc->code, it->dc->dhash);
+					it->dc->domain, it->dc->code, it->dc->dhash);
 			it = it->n;
 			count++;
 		}
