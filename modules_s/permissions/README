@@ -1,0 +1,46 @@
+#
+# $Id$
+#
+# PERMISSIONS module
+#
+
+Description:
+------------
+
+Permissions module is used to determinate if a call has appropriate permission to be established.
+Permissions can be menaged in configuraton files simular to hosts.allow and hosts.deny:
+
+The search stops at the first match:
+    - Routing will be allowed when a (FROM,TO) pair matches an entry in the /etc/ser/permissions.allow file.
+    - Otherwise, routing will be denied when a (FROM,TO) pair matches an entry in the /etc/ser/permissions.deny file.
+    - Otherwise, routing will be allowed.
+
+A non-existing permission control file is treated as if it were an empty file.
+Thus, permission control can be turned off by providing no permission control files.
+	      
+FROM and TO headers are always compared with regular expressions! For the syntax see the sample file: config/permissions.allow
+
+
+Exported parameters: none
+-------------------
+
+
+Exported functions:
+------------------
+
+Name:	allow_routing()
+Params:	-
+Desc:	Returns true if the (FROM,TO) pair in the received sip message has appropriate permission according to the configuration files.
+
+
+TODO:
+----
+Create your own configuration files /etc/ser/permissions.allow and /etc/ser/permissions.deny! Samples can be found in the config directory.
+
+
+Module dependency: none
+-----------------
+
+
+Author:	Miklós Tirpák
+	mtirpak@sztaki.hu
