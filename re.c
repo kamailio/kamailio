@@ -268,7 +268,7 @@ error:
 
 
 
-static int replace_len(char* match, int nmatch, regmatch_t* pmatch,
+static int replace_len(const char* match, int nmatch, regmatch_t* pmatch,
 					struct subst_expr* se, struct sip_msg* msg)
 {
 	int r;
@@ -314,7 +314,7 @@ static int replace_len(char* match, int nmatch, regmatch_t* pmatch,
 
 /* rpl.s will be alloc'ed with the proper size & rpl.len set
  * returns 0 on success, <0 on error*/
-static int replace_build(char* match, int nmatch, regmatch_t* pmatch,
+static int replace_build(const char* match, int nmatch, regmatch_t* pmatch,
 					struct subst_expr* se, struct sip_msg* msg, str* rpl)
 {
 	int r;
@@ -386,12 +386,12 @@ error:
 
 
 /* WARNING: input must be 0 terminated! */
-struct replace_lst* subst_run(struct subst_expr* se, char* input,
+struct replace_lst* subst_run(struct subst_expr* se, const char* input,
 								struct sip_msg* msg)
 {
 	struct replace_lst *head;
 	struct replace_lst **crt;
-	char *p;
+	const char *p;
 	int r;
 	regmatch_t* pmatch;
 	int nmatch;
@@ -453,16 +453,16 @@ error:
 
 /* returns the substitution result in a str, input must be 0 term
  *  0 on no match or malloc error */ 
-str* subst_str(char *input, struct sip_msg* msg, struct subst_expr* se)
+str* subst_str(const char *input, struct sip_msg* msg, struct subst_expr* se)
 {
 	str* res;
 	struct replace_lst *lst;
 	struct replace_lst* l;
 	int len;
 	int size;
-	char* p;
+	const char* p;
 	char* dest;
-	char* end;
+	const char* end;
 	
 	
 	/* compute the len */

@@ -73,9 +73,9 @@ struct replace_lst{
 void subst_expr_free(struct subst_expr* se);
 void replace_lst_free(struct replace_lst* l);
 struct subst_expr*  subst_parser(str* subst);
-struct replace_lst* subst_run( struct subst_expr* se, char* input, 
+struct replace_lst* subst_run( struct subst_expr* se, const char* input, 
 		                       struct sip_msg* msg);
-str* subst_str(char* input, struct sip_msg* msg, struct subst_expr* se);
+str* subst_str(const char* input, struct sip_msg* msg, struct subst_expr* se);
 
 
 
