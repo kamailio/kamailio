@@ -185,7 +185,7 @@ int check_from(struct sip_msg* _m, char* _s1, char* _s2)
 /*
  * Check if uri belongs to a local user
  */
-int does_uri_exist(struct sip_msg* _msg, char* _table, char* _s2)
+int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 {
 	db_key_t keys[2];
 	db_val_t vals[2];
@@ -197,44 +197,51 @@ int does_uri_exist(struct sip_msg* _msg, char* _table, char* _s2)
 		return -1;
 	}
 
-	if (use_uri_table) {
-		if (db_use_table(db_handle, table) < 0) {
-			LOG(L_ERR, "does_uri_exist(): Error while trying to use uri table\n");
-		}
-
-		keys[0] = domain_column;
-		keys[1] = uriuser_column;
-
-		cols[0] = uriuser_column;
-
-	} else {
-		if (db_use_table(db_handle, subscriber_table) < 0) {
-			LOG(L_ERR, "does_uri_exist(): Error while trying to use subscriber table\n");
-		}
-
-		keys[0] = subscriber_domain_column;
-		keys[1] = subscriber_user_column;
-
-		cols[0] = subscriber_user_column;
+	if (db_use_table(db_handle, subscriber_table) < 0) {
+		LOG(L_ERR, "does_uri_exist(): Error while trying to use subscriber table\n");
 	}
+	
+	keys[0] = subscriber_domain_column;
+	keys[1] = subscriber_user_column;
+	
+	cols[0] = subscriber_user_column;
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
 	VAL_STR(vals) = _msg->parsed_uri.host;
 	VAL_STR(vals + 1) = _msg->parsed_uri.user;
-	
+
 	if (db_query(db_handle, keys, 0, vals, cols, 2, 1, 0, &res) < 0) {
-		LOG(L_ERR, "is_local(): Error while querying database\n");
+		LOG(L_ERR, "does_uri_existl(): Error while querying database\n");
 		return -1;
 	}
 	
-	if (RES_ROW_N(res) == 0) {
-		DBG("does_uri_exist(): User in request uri does not exist\n");
-		db_free_query(db_handle, res);
-		return -1;
-	} else {
-		DBG("does _uri_exit(): User in request uri does not exist\n");
-		db_free_query(db_handle, res);
-		return 1;
+	if (RES_ROW_N(res) != 0) goto found;
+
+	db_free_query(db_handle, res);
+
+	if (db_use_table(db_handle, uri_table) < 0) {
+		LOG(L_ERR, "does_uri_exist(): Error while trying to use uri table\n");
 	}
+
+	keys[0] = uri_domain_column;
+	keys[1] = uri_uriuser_column;
+	cols[0] = uri_uriuser_column;
+
+	if (db_query(db_handle, keys, 0, vals, cols, 2, 1, 0, &res) < 0) {
+		LOG(L_ERR, "does_uri_existl(): Error while querying database\n");
+		return -1;
+	}
+
+	if (RES_ROW_N(res) == 0) goto notfound;
+
+ found:
+	DBG("does _uri_exit(): User in request uri does exist\n");
+	db_free_query(db_handle, res);
+	return 1;
+
+ notfound:
+	DBG("does _uri_exit(): User in request uri does not exist\n");
+	db_free_query(db_handle, res);
+	return -1;
 }

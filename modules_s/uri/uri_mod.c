@@ -64,14 +64,14 @@ static int str_fixup(void** param, int param_no);
  * Module parameter variables
  */
 char* db_url                   = "sql://serro:47serro11@localhost/ser";
-char* table                    = "uri";        /* Name of URI table */
-char* user_column              = "user";       /* Name of user column in URI table */
-char* domain_column            = "domain";     /* Name of domain column in URI table */
-char* uriuser_column           = "uri_user";   /* Name of uri_user column in URI table */
+
+char* uri_table                = "uri";        /* Name of URI table */
+char* uri_domain_column        = "domain";     /* Name of domain column in URI table */
+char* uri_uriuser_column       = "uri_user";   /* Name of uri_user column in URI table */
+
 char* subscriber_table         = "subscriber"; /* Name of subscriber table */
 char* subscriber_user_column   = "user";       /* Name of user column in subscriber table */
 char* subscriber_domain_column = "domain";     /* Name of domain column in subscriber table */
-int   use_uri_table            = 0;            /* Should we use URI table ?, default no */
 
 db_con_t* db_handle = 0;   /* Database connection handle */
 
@@ -93,7 +93,7 @@ struct module_exports exports = {
 		check_from,
 		does_uri_exist
 	},
-	(int[]) {1, 0, 0, 0, 1},
+	(int[]) {1, 0, 0, 0, 0},
 	(fixup_function[]) { 
 		str_fixup, 0, 0, 0
 	},
@@ -101,14 +101,12 @@ struct module_exports exports = {
 	
 	(char*[]) {
 		"db_url",                   /* Database URL */
-		"table",                    /* Name of URI table */
-		"user_column",              /* Name of user column in URI table */
-		"domain_column",            /* Name of domain column in URI table */
-		"uriuser_column",           /* Name of uri_user column in URI table */
+		"uri_table",                /* Name of URI table */
+		"uri_domain_column",        /* Name of domain column in URI table */
+		"uri_uriuser_column",       /* Name of uri_user column in URI table */
 		"subscriber_table",         /* Name of subscriber table */
 		"subscriber_user_column",   /* Name of user column in subscriber table */
-		"subscriber_domain_column", /* Name of domain column in subscriber table */
-		"use_uri_table"             /* Should URI table be used ? */
+		"subscriber_domain_column"  /* Name of domain column in subscriber table */
 		
 	},   /* Module parameter names */
 	(modparam_t[]) {
@@ -118,23 +116,19 @@ struct module_exports exports = {
 		STR_PARAM,
 		STR_PARAM,
 		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-	        INT_PARAM
+		STR_PARAM
 	},   /* Module parameter types */
 	(void*[]) {
 		&db_url,
-		&table,
-		&user_column,
-		&domain_column,
-		&uriuser_column,
+		&uri_table,
+		&uri_domain_column,
+		&uri_uriuser_column,
 		&subscriber_table,
 		&subscriber_user_column,
-		&subscriber_domain_column,
-		&use_uri_table
+		&subscriber_domain_column
 		
 	},         /* Module parameter variable pointers */
-	9,         /* Number of module paramers */
+	7,         /* Number of module paramers */
 	mod_init,  /* module initialization function */
 	0,         /* response function */
 	destroy,   /* destroy function */
