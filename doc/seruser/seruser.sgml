@@ -2261,6 +2261,9 @@ warning: IP extract from warning activated to be more informational
 				<para>
 					One can also use other <application>syslogd</application>
 					implementation. <application>metalog</application>
+					(<ulink url="http://http://metalog.sourceforge.net//">
+			    	http://metalog.sourceforge.net/
+					</ulink>)
 					features regular expression matching that enables
 					to filter and group log messages.
 				</para>
