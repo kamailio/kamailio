@@ -376,7 +376,7 @@ static inline int save_ruri(struct sip_msg* _m)
 	memcpy(s + ROUTE_PREFIX_LEN, _m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len);
 	memcpy(s + ROUTE_PREFIX_LEN + _m->first_line.u.request.uri.len, ROUTE_SUFFIX, ROUTE_SUFFIX_LEN);
 
-	DBG("save_ruri(): New header: '%s'\n", s);
+	DBG("save_ruri(): New header: '%.*s'\n", len, ZSW(s));
 
 	     /* Insert it */
 	if (insert_new_lump_before(anchor, s, len, 0) == 0) {
