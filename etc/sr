@@ -23,8 +23,8 @@
 # run from somewhere else
 
 BIN=sr
-ETC=sr.cfg
 HM=/home/srouter
+ETC=$HM/sip_router/etc/iptel.cfg
 USR=510
 GRP=510
 
@@ -32,19 +32,20 @@ RETVAL=0
 
 MYDIR=$HM/core
 CORE=$MYDIR/core
-cd $MYDIR
 
 # See how we were called.
 case "$1" in
   start)
 	echo -n "Starting SIP router: "
-	if [ -f $CORE ] ; then
-		chmod a+r $CORE
-		DATE=`date "+%Y-%m-%d--%H-%M"`
-		mv $CORE $CORE.$DATE
-		( cd ../sip_router; tar cf - . ) | gzip > ser.$DATE.tgz
-	fi
-	$HM/bin/$BIN -f $HM/etc/$ETC -w $MYDIR
+	cd $MYDIR
+#  core timestamping moved to sercheck; -jiri
+#	if [ -f $CORE ] ; then
+#		chmod a+r $CORE
+#		DATE=`date "+%Y-%m-%d--%H-%M"`
+#		mv $CORE $CORE.$DATE
+#		( cd ../sip_router; tar cf - . ) | gzip > ser.$DATE.tgz
+#	fi
+	$HM/bin/$BIN -f $ETC -w $MYDIR
 	# man setuid: If uid is different from the old effective uid, 
     # the process will be forbidden from eaving core dumps.
 	# -> don't set uid, we want to collect core dumps

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh 
 #
 # $Id$
 #
@@ -8,27 +8,38 @@
 
 
 NOTIFY=sr@iptel.org
-SERDIR=/home/srouter/sip_router
-BIN=./ser
-CORE=../core/core
+SERHOME=/home/srouter
+export SERDIR=$SERHOME/sip_router
+BIN=$SERDIR/ser
+COREDIR=$SERHOME/core
+CORE=$COREDIR/core
+ETC=/etc/sr.cfg
 
 PROCCNT=`ps -C sr --no-headers -o pid | wc -l`
-CH=`grep "^children" /etc/sr.cfg | awk -F= ' { print $2 } '`
+CH=`grep "^children" $ETC | awk -F= ' { print $2 } '`
 ALL=`expr $CH + 1`
 TMP=/tmp/seralert.$$
 
+
 if [ $PROCCNT -ne $ALL ] ; then 
 
-	echo "Alarm: ser restart occured on `date` at $HOSTNAME" > $TMP
 	cd $SERDIR
+	echo "Alarm: ser restart occured on `date` at $HOSTNAME" > $TMP
 	if [ -r $BIN -a -r $CORE ] ; then
 		echo "----------------------------------" >> $TMP
-		gdb $BIN $CORE -x test/bt.gdb -batch >> $TMP
+		DATE=`date "+%Y-%m-%d--%H-%M"`
+		NEWCORE=$COREDIR/core.$DATE
+		mv $CORE $NEWCORE
+		echo core stored in $NEWCORE >> $TMP
+		gdb $BIN $NEWCORE -x test/bt.gdb -batch >> $TMP
+		chmod a+r $NEWCORE
+       ( cd $SERDIR; tar cf - . ) | gzip > $COREDIR/ser.$DATE.tgz
+
 	else
 		echo "no core found" >> $TMP
 	fi
 
 	/etc/init.d/sr restart
 	mail -s "ser restart occured" $NOTIFY < $TMP
-	rm $TMP
+	rm -f $TMP
 fi
