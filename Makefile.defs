@@ -59,7 +59,7 @@ ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/ )
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"'\
 	 -DDNS_IP_HACK  -DPKG_MALLOC -DSHM_MEM  -DSHM_MMAP \
-	 -DUSE_SYNONIM -DF_MALLOC -DSTATIC_TM \
+	 -DUSE_SYNONIM -DF_MALLOC \
 	 #-DEXTRA_DEBUG 
 	 #-DVQ_MALLOC  -DDBG_LOCK  #-DSTATS
 	 #-DDBG_QM_MALLOC #-DNO_DEBUG
@@ -81,8 +81,8 @@ endif
 
 
 #PROFILE=  -pg #set this if you want profiling
-mode = debug
-#mode = release
+#mode = debug
+mode = release
 
 # platform dependent settings
 

@@ -2,7 +2,8 @@ $Id$
 
 ( - todo, x - done)
 
-
+- add $(INCLUDES) to the Makefiles
+- make ser suncc ready
 - fix parse_cseq!!! (it doesnt parse 1234\n INVITE a.s.o)
 x fix 0 parameter module f. call
 x better Via parsing (handle ' ' in uri, eg: foo.bar : 1234 ; received=) and
