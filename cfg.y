@@ -81,6 +81,7 @@ void* f_tmp;
 %token URI
 %token SRCIP
 %token DSTIP
+%token MYSELF
 
 /* config vars. */
 %token DEBUG
@@ -427,6 +428,9 @@ exp_elem:	METHOD EQUAL_T STRING	{$$= mk_elem(	EQUAL_OP, STRING_ST,
 		| URI EQUAL_T ID 	{$$ = mk_elem(	EQUAL_OP, STRING_ST,
 											URI_O, $3); 
 				 			}
+		| URI EQUAL_T MYSELF    { $$=mk_elem(	EQUAL_OP, MYSELF_ST,
+												URI_O, 0);
+								}
 		| URI EQUAL_T error { $$=0; yyerror("string expected"); }
 		| URI MATCH STRING	{ $$=mk_elem(	MATCH_OP, STRING_ST,
 											URI_O, $3);
@@ -446,6 +450,9 @@ exp_elem:	METHOD EQUAL_T STRING	{$$= mk_elem(	EQUAL_OP, STRING_ST,
 								}
 		| SRCIP EQUAL_T host	{ $$=mk_elem(	EQUAL_OP, STRING_ST,
 												SRCIP_O, $3);
+								}
+		| SRCIP EQUAL_T MYSELF  { $$=mk_elem(	EQUAL_OP, MYSELF_ST,
+												SRCIP_O, 0);
 								}
 		| SRCIP EQUAL_T error { $$=0; yyerror( "ip address or hostname"
 						 "expected" ); }
@@ -467,6 +474,9 @@ exp_elem:	METHOD EQUAL_T STRING	{$$= mk_elem(	EQUAL_OP, STRING_ST,
 		| DSTIP EQUAL_T host	{ $$=mk_elem(	EQUAL_OP, STRING_ST,
 												DSTIP_O, $3);
 								}
+		| DSTIP EQUAL_T MYSELF  { $$=mk_elem(	EQUAL_OP, MYSELF_ST,
+												DSTIP_O, 0);
+								}
 		| DSTIP EQUAL_T error { $$=0; yyerror( "ip address or hostname"
 						 			"expected" ); }
 		| DSTIP MATCH STRING	{ $$=mk_elem(	MATCH_OP, STRING_ST,
@@ -478,6 +488,18 @@ exp_elem:	METHOD EQUAL_T STRING	{$$= mk_elem(	EQUAL_OP, STRING_ST,
 		| DSTIP MATCH error  { $$=0; yyerror ( "hostname  expected" ); }
 		| DSTIP error { $$=0; 
 						yyerror("invalid operator, == or =~ expected");}
+		| MYSELF EQUAL_T URI    { $$=mk_elem(	EQUAL_OP, MYSELF_ST,
+												URI_O, 0);
+								}
+		| MYSELF EQUAL_T SRCIP  { $$=mk_elem(	EQUAL_OP, MYSELF_ST,
+												SRCIP_O, 0);
+								}
+		| MYSELF EQUAL_T DSTIP  { $$=mk_elem(	EQUAL_OP, MYSELF_ST,
+												DSTIP_O, 0);
+								}
+		| MYSELF EQUAL_T error {	$$=0; 
+									yyerror(" URI, SRCIP or DSTIP expected"); }
+		| MYSELF error	{ $$=0; yyerror ("invalid operator, == expected"); }
 		| stm				{ $$=mk_elem( NO_OP, ACTIONS_ST, ACTION_O, $1 ); }
 		| NUMBER		{$$=mk_elem( NO_OP, NUMBER_ST, NUMBER_O, (void*)$1 ); }
 	;

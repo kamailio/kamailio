@@ -77,6 +77,7 @@ METHOD	method
 URI		uri
 SRCIP	src_ip
 DSTIP	dst_ip
+MYSELF	myself
 /* operators */
 EQUAL	=
 EQUAL_T	==
@@ -180,6 +181,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{URI}	{ count(); yylval.strval=yytext; return URI; }
 <INITIAL>{SRCIP}	{ count(); yylval.strval=yytext; return SRCIP; }
 <INITIAL>{DSTIP}	{ count(); yylval.strval=yytext; return DSTIP; }
+<INITIAL>{MYSELF}	{ count(); yylval.strval=yytext; return MYSELF; }
 
 <INITIAL>{DEBUG}	{ count(); yylval.strval=yytext; return DEBUG; }
 <INITIAL>{FORK}		{ count(); yylval.strval=yytext; return FORK; }

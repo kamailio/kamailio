@@ -14,7 +14,6 @@
 #include "parse_cseq.h"
 #include "parse_to.h"
 #include "parse_via.h"
-#include "parse_uri.h"
 #include "parse_fline.h"
 #include "hf.h"
 
@@ -44,6 +43,18 @@ if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
                 fl->u.request.method_value=METHOD_##methodname;           \
                 tmp=buffer+methodname##_LEN;                              \
 }
+
+
+
+struct sip_uri {
+	str user;     /* Username */
+	str passwd;   /* Password */
+	str host;     /* Host name */
+	str port;     /* Port number */
+	str params;   /* Parameters */
+	str headers;  
+};
+
 
 
 struct sip_msg {
@@ -96,6 +107,8 @@ struct sip_msg {
 	     /* modifications */
 	
 	str new_uri; /* changed first line uri*/
+	int parsed_uri_ok; /* 1 if parsed_uri is valid, 0 if not */
+	struct sip_uri parsed_uri; /* speed-up > keep here the parsed uri*/
 	
 	struct lump* add_rm;         /* used for all the forwarded requests */
 	struct lump* repl_add_rm;    /* used for all the forwarded replies */

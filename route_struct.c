@@ -160,6 +160,9 @@ void print_expr(struct expr* exp)
 			case NUMBER_ST:
 					DBG("%d",exp->r.intval);
 					break;
+			case MYSELF_ST:
+					DBG("_myself_");
+					break;
 			default:
 					DBG("type<%d>", exp->subtype);
 		}

@@ -192,6 +192,33 @@ error:
 }
 
 
+
+int parse_sip_msg_uri(struct sip_msg* msg)
+{
+	char* tmp;
+	int tmp_len;
+	if (msg->parsed_uri_ok) return 1;
+	else{
+		if (msg->new_uri.s){
+			tmp=msg->new_uri.s;
+			tmp_len=msg->new_uri.len;
+		}else{
+			tmp=msg->first_line.u.request.uri.s;
+			tmp_len=msg->first_line.u.request.uri.len;
+		}
+		if (parse_uri(tmp, tmp_len, &msg->parsed_uri)<0){
+			LOG(L_ERR, "ERROR: parse_sip_msg_uri: bad uri <%*s>\n",
+						tmp_len, tmp);
+			msg->parsed_uri_ok=0;
+			return -1;
+		}
+		msg->parsed_uri_ok=1;
+		return 1;
+	}
+}
+
+
+
 void free_uri(struct sip_uri* u)
 {
 	if (u) {

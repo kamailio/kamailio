@@ -53,6 +53,7 @@ struct socket_info{
 	str address_str;        /* ip address converted to string -- optimization*/
 	unsigned short port_no;  /* port number */
 	str port_no_str; /* port number converted to string -- optimization*/
+	int is_ip; /* 1 if name is an ip address, 0 if not  -- optimization*/
 };
 
 

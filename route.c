@@ -16,12 +16,14 @@
 #include <netdb.h>
 
 #include "route.h"
+#include "forward.h"
 #include "dprint.h"
 #include "proxy.h"
 #include "action.h"
 #include "sr_module.h"
 #include "ip_addr.h"
 #include "resolve.h"
+#include "parser/parse_uri.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -242,6 +244,7 @@ static int comp_ip(struct ip_addr* ip, void* param, int op, int subtype)
 	struct hostent* he;
 	char ** h;
 	int ret;
+	str tmp;
 
 	ret=-1;
 	switch(subtype){
@@ -275,6 +278,11 @@ static int comp_ip(struct ip_addr* ip, void* param, int op, int subtype)
 				}
 			}
 			break;
+		case MYSELF_ST: /* check if it's one of our addresses*/
+			tmp.s=ip_addr2a(ip);
+			tmp.len=strlen(tmp.s);
+			ret=check_self(&tmp);
+			break;
 		default:
 			LOG(L_CRIT, "BUG: comp_ip: invalid type for "
 						" src_ip or dst_ip (%d)\n", subtype);
@@ -304,11 +312,21 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 				break;
 		case URI_O:
 				if(msg->new_uri.s){
-					ret=comp_str(msg->new_uri.s, e->r.param,
-									e->op, e->subtype);
+					if (e->subtype==MYSELF_ST){
+						if (parse_sip_msg_uri(msg)<0) ret=-1;
+						else	ret=check_self(&msg->parsed_uri.host);
+					}else{
+						ret=comp_str(msg->new_uri.s, e->r.param,
+										e->op, e->subtype);
+					}
 				}else{
-					ret=comp_str(msg->first_line.u.request.uri.s, e->r.param,
-									e->op, e->subtype);
+					if (e->subtype==MYSELF_ST){
+						if (parse_sip_msg_uri(msg)<0) ret=-1;
+						else	ret=check_self(&msg->parsed_uri.host);
+					}else{
+						ret=comp_str(msg->first_line.u.request.uri.s,
+										 e->r.param, e->op, e->subtype);
+					}
 				}
 				break;
 		case SRCIP_O:

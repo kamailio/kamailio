@@ -13,6 +13,7 @@
 #include "udp_server.h"
 #include "route.h"
 #include "parser/msg_parser.h"
+#include "parser/parse_uri.h"
 #include "ut.h"
 #include "sr_module.h"
 #include "mem/mem.h"
@@ -48,6 +49,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 	int user;
 	int err;
 	struct sip_uri uri;
+	struct sip_uri* u;
 	unsigned short port;
 
 	/* reset the value of error to E_UNSPEC so avoid unknowledgable
@@ -65,30 +67,24 @@ int do_action(struct action* a, struct sip_msg* msg)
 		case FORWARD_T:
 			if (a->p1_type==URIHOST_ST){
 				/*parse uri*/
-				if (msg->new_uri.s){
-						tmp=msg->new_uri.s;
-						len=msg->new_uri.len;
-				}else{
-						tmp=msg->first_line.u.request.uri.s;
-						len=msg->first_line.u.request.uri.len;
-				}
-				ret=parse_uri(tmp, len, &uri );
+				ret=parse_sip_msg_uri(msg);
 				if (ret<0) {
-					LOG(L_ERR, "ERROR: do_action: forward: bad_uri <%s>,"
-								" dropping packet\n",tmp);
+					LOG(L_ERR, "ERROR: do_action: forward: bad_uri "
+								" dropping packet\n");
 					break;
 				}
+				u=&msg->parsed_uri;
 				switch (a->p2_type){
 					case URIPORT_ST:
-									if (uri.port.s){
+									if (u->port.s){
 									 /*port=strtol(uri.port.s,&end,10);*/
-										port=str2s((unsigned char*)uri.port.s, 
-													uri.port.len, &err);
+										port=str2s((unsigned char*)u->port.s,
+													u->port.len, &err);
 										/*if ((end)&&(*end)){*/
 										if (err){
 											LOG(L_ERR, "ERROR: do_action: "
 												"forward: bad port in "
-												"uri: <%s>\n", uri.port.s);
+												"uri: <%s>\n", u->port.s);
 											ret=E_BAD_URI;
 											goto error_fwd_uri;
 										}
@@ -104,7 +100,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 							goto error_fwd_uri;
 				}
 				/* create a temporary proxy*/
-				p=mk_proxy(uri.host.s, port);
+				p=mk_proxy(u->host.s, port);
 				if (p==0){
 					LOG(L_ERR, "ERROR:  bad host name in uri,"
 							" dropping packet\n");
@@ -112,7 +108,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 					goto error_fwd_uri;
 				}
 				ret=forward_request(msg, p);
-				free_uri(&uri);
+				/*free_uri(&uri); -- no longer needed, in sip_msg*/
 				free_proxy(p); /* frees only p content, not p itself */
 				free(p);
 				if (ret>=0) ret=1;
@@ -299,6 +295,10 @@ int do_action(struct action* a, struct sip_msg* msg)
 				pkg_free(msg->new_uri.s);
 				msg->new_uri.len=0;
 				msg->new_uri.s=0;
+				if (msg->parsed_uri_ok){
+					msg->parsed_uri_ok=0; /* invalidate current parsed uri*/
+					free_uri(&msg->parsed_uri);
+				}
 			};
 			ret=1;
 			break;
@@ -327,6 +327,10 @@ int do_action(struct action* a, struct sip_msg* msg)
 					if (msg->new_uri.s) {
 							pkg_free(msg->new_uri.s);
 							msg->new_uri.len=0;
+							if (msg->parsed_uri_ok){
+								msg->parsed_uri_ok=0;
+								free_uri(&msg->parsed_uri);
+							}
 					}
 					len=strlen(a->p1.string);
 					msg->new_uri.s=pkg_malloc(len+1);
@@ -460,6 +464,10 @@ int do_action(struct action* a, struct sip_msg* msg)
 				if (msg->new_uri.s) pkg_free(msg->new_uri.s);
 				msg->new_uri.s=new_uri;
 				msg->new_uri.len=crt-new_uri;
+				if (msg->parsed_uri_ok){
+					msg->parsed_uri_ok=0;
+					free_uri(&msg->parsed_uri);
+				}
 				free_uri(&uri);
 				ret=1;
 				break;
@@ -508,7 +516,7 @@ error_uri:
 	if (new_uri) free(new_uri);
 	return E_UNSPEC;
 error_fwd_uri:
-	free_uri(&uri);
+	/*free_uri(&uri); -- not needed anymore, using msg->parsed_uri*/
 	return ret;
 }
 

@@ -62,6 +62,52 @@ struct socket_info* get_send_socket(union sockaddr_union* to)
 
 
 
+/* checks if the host is one of the address we listen on
+* returns 1 if true, 0 if false, -1 on error
+*/
+int check_self(str* host)
+{
+	int r;
+	
+	for (r=0; r<sock_no; r++){
+		DBG("check_self - checking if host==us: %d==%d && "
+				" [%.*s] == [%.*s]\n", 
+					host->len,
+					sock_info[r].name.len,
+					host->len, host->s,
+					sock_info[r].name.len, sock_info[r].name.s
+			);
+		if ( (host->len==sock_info[r].name.len) && 
+	#ifdef USE_IPV6
+			(strncasecmp(host->s, sock_info[r].name.s,
+								 sock_info[r].name.len)==0) /*slower*/
+	#else
+			(memcmp(host->s, sock_info[r].name.s, 
+								sock_info[r].name.len)==0)
+	#endif
+			)
+			break;
+	/* check if host == ip address */
+		if ( 	(!sock_info[r].is_ip) &&
+				(host->len==sock_info[r].address_str.len) && 
+	#ifdef USE_IPV6
+			(strncasecmp(host->s, sock_info[r].address_str.s,
+								 sock_info[r].address_str.len)==0) /*slower*/
+	#else
+			(memcmp(host->s, sock_info[r].address_str.s, 
+								sock_info[r].address_str.len)==0)
+	#endif
+			)
+			break;
+	}
+	if (r==sock_no){
+		DBG("check_self: host != me\n");
+		return 0;
+	}
+	return 1;
+}
+
+
 int forward_request( struct sip_msg* msg, struct proxy_l * p)
 {
 	unsigned int len;
@@ -247,7 +293,6 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 /* removes first via & sends msg to the second */
 int forward_reply(struct sip_msg* msg)
 {
-	int  r;
 	char* new_buf;
 	union sockaddr_union* to;
 	struct socket_info* send_sock;
@@ -258,27 +303,7 @@ int forward_reply(struct sip_msg* msg)
 	new_buf=0;
 	/*check if first via host = us */
 	if (check_via){
-		for (r=0; r<sock_no; r++)
-		{
-			DBG("forward_reply - checking if via==us: %d==%d && "
-					" [%.*s] == [%.*s]\n", 
-					msg->via1->host.len,
-					sock_info[r].name.len,
-					msg->via1->host.len, msg->via1->host.s,
-					sock_info[r].name.len, sock_info[r].name.s
-				);
-			if ( (msg->via1->host.len==sock_info[r].name.len) && 
-	#ifdef USE_IPV6
-					(strncasecmp(msg->via1->host.s, sock_info[r].name.s,
-								 sock_info[r].name.len)==0) /*slower*/
-	#else
-					(memcmp(msg->via1->host.s, sock_info[r].name.s, 
-										sock_info[r].name.len)==0)
-	#endif
-					)
-				break;
-		}
-		if (r==sock_no){
+		if (check_self(&(msg->via1->host))!=1){
 			LOG(L_NOTICE, "ERROR: forward_reply: host in first via!=me :"
 					" %.*s\n", msg->via1->host.len, msg->via1->host.s);
 			/* send error msg back? */

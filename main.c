@@ -197,7 +197,7 @@ int log_stderr = 0;
 /* check if reply first via host==us */
 int check_via =  0;        
 /* shall use stateful synonym branches? faster but not reboot-safe */
-int syn_branch = 0;
+int syn_branch = 1;
 /* should replies include extensive warnings? by default yes,
    good for trouble-shooting
 */
@@ -956,8 +956,14 @@ int main(int argc, char** argv)
 			goto error;
 		}
 		strncpy(sock_info[r].address_str.s, tmp, strlen(tmp)+1);
+		/* set is_ip (1 if name is an ip address, 0 otherwise) */
 		sock_info[r].address_str.len=strlen(tmp);
-		
+		if 	(	(sock_info[r].address_str.len==sock_info[r].name.len)&&
+				(strncasecmp(sock_info[r].address_str.s, sock_info[r].name.s,
+						 sock_info[r].address_str.len)==0)
+			)	sock_info[r].is_ip=1;
+		else sock_info[r].is_ip=0;
+			
 		if (sock_info[r].port_no==0) sock_info[r].port_no=port_no;
 		port_no_str_len=snprintf(port_no_str, MAX_PORT_LEN, ":%d", 
 									(unsigned short) sock_info[r].port_no);
