@@ -817,14 +817,14 @@ int branch_builder( unsigned int hash_index,
 		begin++; size--;
 	} else return 0;
 
-	/* label is set -- use it ... */
-	if (label) {
-		if (int2reverse_hex( &begin, &size, label )==-1)
-			return 0;
-	} else { /* ... no label -- char value is used */
+	/* string with request's characteristic value ... use it ... */
+	if (char_v) {
 		if (memcpy(begin,char_v,MD5_LEN)) {
 			begin+=MD5_LEN; size-=MD5_LEN;
 		} else return 0;
+	} else { /* ... use the "label" value otherwise */
+		if (int2reverse_hex( &begin, &size, label )==-1)
+			return 0;
 	}
 
 	if (size) {
