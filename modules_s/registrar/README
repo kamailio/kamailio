@@ -40,18 +40,52 @@ Desc:    The parameter controls how lookup function processes multiple contacts.
          Request-URI will be overwritten with the highest-q rated contact and the 
          rest will be left unprocessed.  
 
+Name:    append_branches
+Type:    integer
+Default: 1
+Desc:    When the registar finds more than one contacts for a particular user
+         it will put the first one into the Request-URI and append other to the
+	 message so that tm can use them for forking. If this parameter is set 0
+	 then only the Request-URI will be rewritten and other contacts will be
+	 omitted.
+
+Name:    use_domain
+Type:    integer
+Default: 0
+Desc:    If set to 1 then the registrar will use username@domain as address of record.
+         If the variable is set to 0 then only username will be used as the address
+	 of record.
+
+Name:    case_sensitive
+Type:    integer
+Default: 0
+Desc:    If set to 1 then AOR comparison will be case sensitive, if set to 0 then
+         AOR comparison will be case insensitive -- This is recommended.
+	 
+Name:    desc_time_order
+Type:    integer
+Default: 0
+Desc:    If set to 1 then all contacts will be ordered in descending modification
+         time order. In this case the most recently updated/created contact will
+	 be used.
+
 
 Exported Functions:
 ------------------
 
 Name:   save
-Params: table - Table name where contacts should be stored.
+Params: domain - Logical domain within registrar. If dababase is used then this must
+        be name of the table which stores the contacts.
 Desc:   The function processes a REGISTER message. It can add, remove or modify
         usrloc records depending on Contact and Expires HFs in the REGISTER message.
         On success, 200 OK will be returned listing all contacts that are currently
         in usrloc. On an error, error message will be send with a short description
         in reason phrase.
 
+Name:   save_noreply
+Params: domain - Logical domain within registar. If database is used then this must
+        be na e of the table which stores the contacts.
+Desc:   Same as save() but it doesn't send a reply.
 
 Name:   lookup
 Params: table - Name of table that should be used for the lookup
