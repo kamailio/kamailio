@@ -344,6 +344,8 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 	p += ((str*)_data)->len;
 	
 	if (append_fromtag && from->tag_value.len) {
+		memcpy(p, RR_FROMTAG, RR_FROMTAG_LEN);
+		p += RR_FROMTAG_LEN;
 		memcpy(p, from->tag_value.s, from->tag_value.len);
 		p += from->tag_value.len;
 	}
