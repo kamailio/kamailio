@@ -33,7 +33,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.c"
 
-extern char *cpl_orig_tz; /* pointer to the original TZ env. var. */
+extern str cpl_orig_tz; /* pointer to the original TZ env. var. */
 
 
 /* UPDATED + CHECKED
@@ -679,16 +679,12 @@ script_error:
 
 
 
-inline static int set_TZ(char *tz_name)
+inline static int set_TZ(char *tz_env)
 {
-	static char buf[256];
-
-	memcpy( buf, "TZ=",3);
-	strcpy( buf+3, tz_name );
-
-	if (putenv( buf )==-1) {
-		LOG(L_ERR,"ERROR:cpl-c:set_TZ: setenv failed -> unable to "
-			"switch to \"%s\"TimeZone\n",tz_name);
+	DBG("DEBUG:cpl-c:set_TZ: switching TZ as \"%s\"\n",tz_env);
+	if (putenv( tz_env )==-1) {
+		LOG(L_ERR,"ERROR:cpl-c:set_TZ: setenv failed -> unable to set TZ "
+			" \"%s\"\n",tz_env);
 		return -1;
 	}
 	tzset(); /* just to be sure */
@@ -841,8 +837,8 @@ static inline char *run_time_switch( struct cpl_interpreter *intr )
 				/* does the recv_time match the specified interval?  */
 				j = check_tmrec( &trt, &att, 0);
 				/* restore the orig TZ */
-				if (cpl_orig_tz && (flags&(1<<7)) )
-					set_TZ(cpl_orig_tz);
+				if ( flags&(1<<7) )
+					set_TZ(cpl_orig_tz.s);
 				/* free structs that I don't need any more */
 				ac_tm_free( &att );
 				tmrec_free( &trt );
@@ -876,8 +872,8 @@ static inline char *run_time_switch( struct cpl_interpreter *intr )
 	tmrec_free( &trt );
 	return DEFAULT_ACTION;
 runtime_error:
-	if (cpl_orig_tz && (flags&(1<<7)) )
-		set_TZ(cpl_orig_tz);
+	if ( flags&(1<<7) )
+		set_TZ(cpl_orig_tz.s);
 	ac_tm_free( &att );
 	tmrec_free( &trt );
 	return CPL_RUNTIME_ERROR;
@@ -885,8 +881,8 @@ parse_err:
 	LOG(L_ERR,"ERROR:cpl-c:run_priority_switch: error parsing attr [%d][%s]\n",
 		attr_name,attr_str?(char*)attr_str:"NULL");
 script_error:
-	if (cpl_orig_tz && (flags&(1<<7)) )
-		set_TZ(cpl_orig_tz);
+	if ( flags&(1<<7) )
+		set_TZ(cpl_orig_tz.s);
 	ac_tm_free( &att );
 	tmrec_free( &trt );
 	return CPL_SCRIPT_ERROR;

@@ -101,6 +101,18 @@ enum {EMAIL_TO,EMAIL_HDR_NAME,EMAIL_KNOWN_HDR_BODY,EMAIL_UNKNOWN_HDR_BODY};
 		(_p_) += (_s_).len + 1*((((_s_).len)&0x0001)==1);\
 	}while(0)
 
+#define append_double_str_attr(_p_,_s1_,_s2_,_end_,_error_) \
+	do{\
+		check_overflow(_p_,(_s1_).len + (_s2_).len +\
+			1*((((_s2_).len+(_s2_).len)&0x0001)==1), _end_, _error_);\
+		*((length_type_ptr)(_p_))=htons((length_type)((_s1_).len)+(_s2_).len);\
+		(_p_) += sizeof(length_type);\
+		memcpy( (_p_), (_s1_).s, (_s1_).len);\
+		(_p_) += (_s1_).len;\
+		memcpy( (_p_), (_s2_).s, (_s2_).len);\
+		(_p_) += (_s2_).len + 1*((((_s1_).len+(_s2_).len)&0x0001)==1);\
+	}while(0)
+
 #define get_attr_val(_attr_name_,_val_,_error_) \
 	do { \
 		(_val_).s = (char*)xmlGetProp(node,(_attr_name_));\
@@ -631,6 +643,7 @@ error:
 static inline int encode_time_switch_attr(xmlNodePtr  node, char *node_ptr,
 																char *buf_end)
 {
+	static str     tz_str = {"TZ=",3};
 	xmlAttrPtr     attr;
 	char           *p, *p_orig;
 	unsigned char  *nr_attr;
@@ -648,7 +661,7 @@ static inline int encode_time_switch_attr(xmlNodePtr  node, char *node_ptr,
 				/* attribute's encoded value */
 				get_attr_val( attr->name , val, error);
 				val.len++; /* grab also the \0 */
-				append_str_attr(p,val, buf_end, error);
+				append_double_str_attr(p,tz_str,val, buf_end, error);
 				break;
 			case 'U': case 'u':
 				/* set_attr_type(p, TZURL_ATTR, buf_end, error);
