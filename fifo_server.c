@@ -417,7 +417,7 @@ static void fifo_server(FILE *fifo_stream)
 		if (f==0) {
 			LOG(L_ERR, "ERROR: fifo_server: command %s is not available\n",
 				command);
-			fifo_reply(file, "[%s not available]\n", command);
+			fifo_reply(file, "500 command '%s' not available\n", command);
 			goto consume;
 		}
 		if (f->f(fifo_stream, file)<0) {
@@ -511,7 +511,7 @@ int open_fifo_server()
 static int print_version_cmd( FILE *stream, char *response_file )
 {
 	if (response_file) {
-		fifo_reply(response_file, SERVER_HDR CRLF );
+		fifo_reply(response_file, "200 ok\n" SERVER_HDR CRLF );
 	} else {
 		LOG(L_ERR, "ERROR: no file for print_version_cmd\n");
 	}
@@ -532,12 +532,12 @@ static int print_fifo_cmd( FILE *stream, char *response_file )
 	}
 	if (!read_line(text, MAX_PRINT_TEXT, stream, &text_len)) {
 		fifo_reply(response_file, 
-			"ERROR: print_fifo_cmd: too big text");
+			"500 print_fifo_cmd: too big text");
 		return -1;
 	}
 	/* now the work begins */
 	if (response_file) {
-		fifo_reply(response_file, text );
+		fifo_reply(response_file, "200 ok\n%s\n", text );
 	} else {
 		LOG(L_INFO, "INFO: print_fifo_cmd: %.*s\n", 
 			text_len, text );
@@ -555,7 +555,8 @@ static int uptime_fifo_cmd( FILE *stream, char *response_file )
 	}
 
 	time(&now);
-	fifo_reply( response_file, "Now: %sUp Since: %sUp time: %.0f [sec]\n",
+	fifo_reply( response_file, "200 ok\n"
+		"Now: %sUp Since: %sUp time: %.0f [sec]\n",
 		ctime(&now), up_since_ctime, difftime(now, up_since) );
 
 	return 1;
@@ -577,11 +578,10 @@ static int which_fifo_cmd(FILE *stream, char *response_file )
 			response_file );
 		return -1;
 	}
-	fputs( "------ Begin of registered FIFO commands -----------\n", reply_pipe);
+	fputs( "200 ok\n", reply_pipe);
 	for(c=cmd_list; c; c=c->next) {
 		fprintf( reply_pipe, "%s\n", c->name );
 	}
-	fputs( "------ End of registered FIFO commands -----------\n", reply_pipe);
 
 	fclose(reply_pipe);
 	return 1;
@@ -603,6 +603,7 @@ static int ps_fifo_cmd(FILE *stream, char *response_file )
 		return -1;
 	}
 
+	fputs( "200 ok\n", reply_pipe);
 	for (p=0; p<process_count();p++) 
 		fprintf( reply_pipe, "%d\t%d\t%s\n",
 			p, pt[p].pid, pt[p].desc );

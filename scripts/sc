@@ -117,6 +117,19 @@ prompt_pw() {
 	fi
 }
 
+# process output from FIFO server; if everything is ok
+# skip the first "ok" line and proceed to returned 
+# parameters
+filter_fl()
+{
+#	tail +2
+	
+	awk 'BEGIN {line=0;IGNORECASE=1;}
+		{line++}
+		line==1 && /^200 ok/ { next }
+		{ print }'
+}
+
 
 fifo_cmd()
 {
@@ -139,7 +152,7 @@ fifo_cmd()
 
 	# start reader now so that it is ready for replies
 	# immediately after a request was sent out
-	cat < $path &
+	cat < $path | filter_fl &
 
 	# issue request
 	if [ "$#" -eq 1 ] ; then
@@ -172,10 +185,15 @@ print_stats() {
 
 echo "[cycle #: $3; if constant make sure server lives and fifo is on]"
 
-cat < $2 &
+cat < $2 | filter_fl &
 cat > $SER_FIFO <<EOF
 :version:$1
 
+EOF
+wait
+
+cat < $2 | filter_fl &
+cat > $SER_FIFO << EOF
 :uptime:$1
 
 EOF
@@ -183,7 +201,7 @@ wait
 echo
 
 echo Transaction Statistics
-cat < $2 &
+cat < $2 | filter_fl &
 cat > $SER_FIFO <<EOF
 :t_stats:$1
 
@@ -192,7 +210,7 @@ wait
 echo
 
 echo Stateless Server Statistics
-cat < $2 &
+cat < $2 | filter_fl &
 cat > $SER_FIFO <<EOF
 :sl_stats:$1
 
@@ -201,7 +219,7 @@ wait
 echo
 
 echo UsrLoc Stats
-cat < $2 &
+cat < $2 | filter_fl &
 cat > $SER_FIFO <<EOF
 :ul_stats:$1
 

@@ -91,6 +91,7 @@ int static fifo_stats( FILE *pipe, char *response_file )
 			response_file, strerror(errno) );
 		return -1;
 	}
+	fputs( "200 ok\n", file);
 	print_stats( file );
 	fclose(file);
 	

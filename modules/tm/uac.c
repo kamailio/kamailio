@@ -247,7 +247,7 @@ static void fifo_callback( struct cell *t, struct sip_msg *msg,
 	get_reply_status(&text,msg,code);
 	if (text.s==0) {
 		LOG(L_ERR, "ERROR: fifo_callback: get_reply_status failed\n");
-		fifo_reply(filename, "ERROR: fifo_callback: get_reply_status failed\n");
+		fifo_reply(filename, "500 fifo_callback: get_reply_status failed\n");
 		return;
 	}
 	fifo_reply(filename, "%.*s", text.len, text.s );
@@ -276,31 +276,31 @@ int fifo_uac( FILE *stream, char *response_file )
 		*/
 		LOG(L_ERR, "ERROR: fifo_uac: method expected\n");
 		fifo_reply(response_file, 
-			"ERROR: fifo_uac: method expected");
-		return -1;
+			"400 fifo_uac: method expected");
+		return 1;
 	}
 	DBG("DEBUG: fifo_uac: method: %.*s\n", sm.len, method );
 	if (!read_line(dst, MAX_DST, stream, &sd.len)||sd.len==0) {
 		fifo_reply(response_file, 
-			"ERROR: fifo_uac: destination expected\n");
+			"400 fifo_uac: destination expected\n");
 		LOG(L_ERR, "ERROR: fifo_uac: destination expected\n");
-		return -1;
+		return 1;
 	}
 	DBG("DEBUG: fifo_uac:  dst: %.*s\n", sd.len, dst );
 	/* now read header fields line by line */
 	if (!read_line_set(header, MAX_HEADER, stream, &sh.len)) {
 		fifo_reply(response_file, 
-			"ERROR: fifo_uac: HFs expected\n");
+			"400 fifo_uac: HFs expected\n");
 		LOG(L_ERR, "ERROR: fifo_uac: header fields expected\n");
-		return -1;
+		return 1;
 	}
 	DBG("DEBUG: fifo_uac: header: %.*s\n", sh.len, header );
 	/* and eventually body */
 	if (!read_body(body, MAX_BODY, stream, &sb.len)) {
 		fifo_reply(response_file, 
-			"ERROR: fifo_uac: body expected\n");
+			"400 fifo_uac: body expected\n");
 		LOG(L_ERR, "ERROR: fifo_uac: body expected\n");
-		return -1;
+		return 1;
 	}
 	DBG("DEBUG: fifo_uac: body: %.*s\n", sb.len, body );
 	DBG("DEBUG: fifo_uac: EoL -- proceeding to transaction creation\n");
@@ -310,7 +310,9 @@ int fifo_uac( FILE *stream, char *response_file )
 		shmem_file=shm_malloc(fn_len);
 		if (shmem_file==0) {
 			LOG(L_ERR, "ERROR: fifo_uac: no shmem\n");
-			return -1;
+			fifo_reply(response_file, 
+				"500 fifo_uac: no shmem for shmem_file\n");
+			return 1;
 		}
 		memcpy(shmem_file, response_file, fn_len );
 	} else {
@@ -322,7 +324,7 @@ int fifo_uac( FILE *stream, char *response_file )
 		if (err2reason_phrase(ret, &sip_error, err_buf,
 				sizeof(err_buf), "FIFO/UAC" ) > 0 ) 
 		{
-			fifo_reply(response_file, "FIFO/UAC error: %d\n",
+			fifo_reply(response_file, "500 FIFO/UAC error: %d\n",
 				ret );
 		} else {
 			fifo_reply(response_file, err_buf );
@@ -367,38 +369,38 @@ int fifo_uac_from( FILE *stream, char *response_file )
 		*/
 		LOG(L_ERR, "ERROR: fifo_uac: method expected\n");
 		fifo_reply(response_file, 
-			"ERROR: fifo_uac: method expected");
-		return -1;
+			"400 fifo_uac: method expected");
+		return 1;
 	}
 	DBG("DEBUG: fifo_uac: method: %.*s\n", sm.len, method );
 	if (!read_line(from, MAX_FROM, stream, &sf.len)) {
 		fifo_reply(response_file, 
-			"ERROR: fifo_uac: from expected\n");
+			"400 fifo_uac: from expected\n");
 		LOG(L_ERR, "ERROR: fifo_uac: from expected\n");
-		return -1;
+		return 1;
 	}
 	DBG("DEBUG: fifo_uac:  from: %.*s\n", sf.len, from);
 	if (!read_line(dst, MAX_DST, stream, &sd.len)||sd.len==0) {
 		fifo_reply(response_file, 
-			"ERROR: fifo_uac: destination expected\n");
+			"400 fifo_uac: destination expected\n");
 		LOG(L_ERR, "ERROR: fifo_uac: destination expected\n");
-		return -1;
+		return 1;
 	}
 	DBG("DEBUG: fifo_uac:  dst: %.*s\n", sd.len, dst );
 	/* now read header fields line by line */
 	if (!read_line_set(header, MAX_HEADER, stream, &sh.len)) {
 		fifo_reply(response_file, 
-			"ERROR: fifo_uac: HFs expected\n");
+			"400 fifo_uac: HFs expected\n");
 		LOG(L_ERR, "ERROR: fifo_uac: header fields expected\n");
-		return -1;
+		return 1;
 	}
 	DBG("DEBUG: fifo_uac: header: %.*s\n", sh.len, header );
 	/* and eventually body */
 	if (!read_body(body, MAX_BODY, stream, &sb.len)) {
 		fifo_reply(response_file, 
-			"ERROR: fifo_uac: body expected\n");
+			"400 fifo_uac: body expected\n");
 		LOG(L_ERR, "ERROR: fifo_uac: body expected\n");
-		return -1;
+		return 1;
 	}
 	DBG("DEBUG: fifo_uac: body: %.*s\n", sb.len, body );
 	DBG("DEBUG: fifo_uac: EoL -- proceeding to transaction creation\n");
@@ -408,7 +410,9 @@ int fifo_uac_from( FILE *stream, char *response_file )
 		shmem_file=shm_malloc(fn_len);
 		if (shmem_file==0) {
 			LOG(L_ERR, "ERROR: fifo_uac: no shmem\n");
-			return -1;
+			fifo_reply(response_file, 
+				"500 fifo_uac: no memory for shmem_file\n");
+			return 1;
 		}
 		memcpy(shmem_file, response_file, fn_len );
 	} else {
@@ -427,7 +431,7 @@ int fifo_uac_from( FILE *stream, char *response_file )
 		{
 			fifo_reply(response_file, err_buf );
 		} else {
-			fifo_reply(response_file, "FIFO/UAC error: %d\n",
+			fifo_reply(response_file, "500 FIFO/UAC error: %d\n",
 				ret );
 		}
 	}
