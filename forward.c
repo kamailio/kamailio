@@ -32,6 +32,67 @@
 #include "stats.h"
 #endif
 
+
+static char q_inet_itoa_buf[16]; /* 123.567.901.345\0 */
+/* faster than inet_ntoa */
+__inline char* q_inet_itoa(unsigned long ip)
+{
+	unsigned char* p;
+	unsigned char a,b,c;  /* abc.def.ghi.jkl */
+	int offset;
+	int r;
+	p=(unsigned char*)&ip;
+
+	offset=0;
+	/* unrolled loops (faster)*/
+	for(r=0;r<3;r++){
+		a=p[r]/100;
+		c=p[r]%10;
+		b=p[r]%100/10;
+		if (a){
+			q_inet_itoa_buf[offset]=a+'0';
+			q_inet_itoa_buf[offset+1]=b+'0';
+			q_inet_itoa_buf[offset+2]=c+'0';
+			q_inet_itoa_buf[offset+3]='.';
+			offset+=4;
+		}else if (b){
+			q_inet_itoa_buf[offset]=b+'0';
+			q_inet_itoa_buf[offset+1]=c+'0';
+			q_inet_itoa_buf[offset+2]='.';
+			offset+=3;
+		}else{
+			q_inet_itoa_buf[offset]=c+'0';
+			q_inet_itoa_buf[offset+1]='.';
+			offset+=2;
+		}
+	}
+	/* last number */
+	a=p[r]/100;
+	c=p[r]%10;
+	b=p[r]%100/10;
+	if (a){
+		q_inet_itoa_buf[offset]=a+'0';
+		q_inet_itoa_buf[offset+1]=b+'0';
+		q_inet_itoa_buf[offset+2]=c+'0';
+		q_inet_itoa_buf[offset+3]=0;
+	}else if (b){
+		q_inet_itoa_buf[offset]=b+'0';
+		q_inet_itoa_buf[offset+1]=c+'0';
+		q_inet_itoa_buf[offset+2]=0;
+	}else{
+		q_inet_itoa_buf[offset]=c+'0';
+		q_inet_itoa_buf[offset+1]=0;
+	}
+	
+	return q_inet_itoa_buf;
+}
+		
+		
+
+		
+		
+	
+
 /* checks if ip is in host(name) and ?host(ip)=name? 
  * ip must be in network byte order!
  *  resolver = DO_DNS | DO_REV_DNS; if 0 no dns check is made
@@ -42,9 +103,10 @@ int check_address(unsigned long ip, char *name, int resolver)
 	int i;
 	
 	/* maybe we are lucky and name it's an ip */
-	if (strcmp(name, inet_ntoa( *(struct in_addr *)&ip ))==0)
+	if (strcmp(name, q_inet_itoa( /* *(struct in_addr *)&*/ip ))==0)
 		return 0;
 	if (resolver&DO_DNS){ 
+		DBG("check_address: doing dns lookup\n");
 		/* try all names ips */
 		he=gethostbyname(name);
 		for(i=0;he && he->h_addr_list[i];i++){
@@ -53,7 +115,8 @@ int check_address(unsigned long ip, char *name, int resolver)
 		}
 	}
 	if (resolver&DO_REV_DNS){
-	print_ip(ip);
+		DBG("check_address: doing rev. dns lookup\n");
+		print_ip(ip);
 		/* try reverse dns */
 		he=gethostbyaddr((char*)&ip, sizeof(ip), AF_INET);
 		if (he && (strcmp(he->h_name, name)==0))
@@ -73,6 +136,8 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	unsigned int len, new_len, via_len, received_len, uri_len;
 	char* line_buf;
 	char* received_buf;
+	char* tmp;
+	int tmp_len;
 	char* new_buf;
 	char* orig;
 	char* buf;
@@ -102,8 +167,29 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 		LOG(L_ERR, "ERROR: forward_request: out of memory\n");
 		goto error1;
 	}
+/*
 	via_len=snprintf(line_buf, MAX_VIA_LINE_SIZE, "Via: SIP/2.0/UDP %s:%d\r\n",
 						names[0], port_no);
+*/
+	via_len=MY_VIA_LEN+names_len[0]; /* space included in MY_VIA*/
+	if ((via_len+port_no_str_len+CRLF_LEN)<MAX_VIA_LINE_SIZE){
+		memcpy(line_buf, MY_VIA, MY_VIA_LEN);
+		memcpy(line_buf+MY_VIA_LEN, names[0], names_len[0]);
+		if (port_no!=SIP_PORT){
+			memcpy(line_buf+via_len, port_no_str, port_no_str_len);
+			via_len+=port_no_str_len;
+		}
+		memcpy(line_buf+via_len, CRLF, CRLF_LEN);
+		via_len+=CRLF_LEN;
+		line_buf[via_len]=0; /* null terminate the string*/
+	}else{
+		LOG(L_ERR, "forward_request: ERROR: via too long (%d)\n",
+				via_len);
+		goto error1;
+	}
+
+		
+	
 	/* check if received needs to be added */
 	if (check_address(source_ip, msg->via1.host, received_dns)!=0){
 		received_buf=malloc(sizeof(char)*MAX_RECEIVED_SIZE);
@@ -111,9 +197,17 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 			LOG(L_ERR, "ERROR: forward_request: out of memory\n");
 			goto error1;
 		}
+		/*
 		received_len=snprintf(received_buf, MAX_RECEIVED_SIZE,
 								";received=%s", 
 								inet_ntoa(*(struct in_addr *)&source_ip));
+		*/
+		memcpy(received_buf, RECEIVED, RECEIVED_LEN);
+		tmp=q_inet_itoa( /* *(struct in_addr *)& */source_ip);
+		tmp_len=strlen(tmp);
+		received_len=RECEIVED_LEN+tmp_len;
+		memcpy(received_buf+RECEIVED_LEN, tmp, tmp_len);
+		received_buf[received_len]=0; /*null terminate it */
 	}
 	
 	/* add via header to the list */

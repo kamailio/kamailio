@@ -30,4 +30,16 @@
 
 #define MAX_URI_SIZE 1024	/* used when rewriting URIs */
 
+#define MY_VIA "Via: SIP/2.0/UDP "
+#define MY_VIA_LEN 17
+
+
+#define MAX_PORT_LEN 7 /* ':' + max 5 letters + \0 */
+#define CRLF "\r\n"
+#define CRLF_LEN 2
+
+#define RECEIVED ";received="
+#define RECEIVED_LEN 10
+
+
 #endif

@@ -34,7 +34,7 @@
 
 
 static char id[]="@(#) $Id$";
-static char version[]="ser 0.8.3.1";
+static char version[]="ser 0.8.3.2";
 static char flags[]="NOCR:"
 #ifdef NOCR
 "On"
@@ -98,6 +98,8 @@ void receive_stdin_loop()
 
 char* cfg_file = 0;
 unsigned short port_no = 0; /* port on which we listen */
+char port_no_str[MAX_PORT_LEN];
+int port_no_str_len=0;
 unsigned int maxbuffer = 128*1024; /* maximum buffer size we do not want to exceed
 				      durig the auto-probing procedure; may be
 				      re-configured */
@@ -110,6 +112,7 @@ int received_dns = 0;      /* use dns and/or rdns or to see if we need to
                               add a ;received=x.x.x.x to via: */
 
 char* names[MAX_LISTEN];               /* our names */
+int names_len[MAX_LISTEN];    /* lengths of the names*/
 unsigned long addresses[MAX_LISTEN];   /* our ips */
 int addresses_no=0;                    /* number of names/ips */
 
@@ -383,6 +386,18 @@ int main(int argc, char** argv)
 
 	/* fix parameters */
 	if (port_no<=0) port_no=SIP_PORT;
+	port_no_str_len=snprintf(port_no_str, MAX_PORT_LEN, ":%d", 
+				(unsigned short) port_no);
+	if (port_no_str_len<0){
+		fprintf(stderr, "ERROR: bad port number: %d\n", port_no);
+		goto error;
+	}
+	/* on some system snprintf return really strange things if it does not have
+	 * enough space */
+	port_no_str_len=
+				(port_no_str_len<MAX_PORT_LEN)?port_no_str_len:MAX_PORT_LEN;
+
+	
 	if (children_no<=0) children_no=CHILD_NO;
 	if (addresses_no==0) {
 		/* get our address, only the first one */
@@ -398,6 +413,11 @@ int main(int argc, char** argv)
 		strncpy(names[addresses_no], myname.nodename,
 				strlen(myname.nodename)+1);
 		addresses_no++;
+	}
+
+	/*get name lens*/
+	for(r=0; r<addresses_no; r++){
+		names_len[r]=strlen(names[r]);
 	}
 
 #ifdef STATS
