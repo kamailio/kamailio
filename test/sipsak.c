@@ -63,7 +63,7 @@ bouquets and brickbats to farhan@hotfoon.com
 #include <arpa/inet.h>
 #include <sys/poll.h>
 
-#define SIPSAK_VERSION "v0.6.5"
+#define SIPSAK_VERSION "v0.6"
 #define RESIZE		1024
 #define BUFSIZE		4096
 #define FQDN_SIZE   200
@@ -343,11 +343,23 @@ void create_msg(char *buff, int action){
 				lport);
 			break;
 		case REQ_FLOOD:
+#ifdef REGISTER_HACK
+			usern=malloc(strlen(username)+10);
+			sprintf(usern, "%s%i", username, namebeg);
+			sprintf(buff, "%s sip:%s%s%s%s:%i\r\n%s<sip:%s@%s>\r\n"
+				"%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sip:%s@%s:%i>\r\n"
+				"%s%i\r\n\r\n", REG_STR, domainname, SIP20_STR, VIA_STR, fqdn, 
+				lport, FROM_STR, usern, domainname, TO_STR, usern, domainname, 
+				CALL_STR, c, fqdn, CSEQ_STR, namebeg, REG_STR, CONT_STR, 
+				usern, fqdn, lport, EXP_STR, expires_t);
+			free(usern);
+#else
 			sprintf(buff, "%s sip:%s%s%s%s:9\r\n%s<sip:sipsak@%s:9>\r\n"
 				"%s<sip:%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sipsak@%s:9>\r\n\r\n", 
 				FLOOD_METH, domainname, SIP20_STR, VIA_STR, fqdn, FROM_STR, 
 				fqdn, TO_STR, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, 
 				FLOOD_METH, CONT_STR, fqdn);
+#endif
 			break;
 		case REQ_RAND:
 			sprintf(buff, "%s sip:%s%s%s%s:%i\r\n%s<sip:sipsak@%s:%i>\r\n"
@@ -471,6 +483,29 @@ void warning_extract(char *message)
 	}
 }
 
+int cseq(char *message)
+{
+	char *cseq;
+	int num=-1;
+
+	cseq=strstr(message, "CSeq");
+	if (cseq) {
+		cseq+=6;
+		num=atoi(cseq);
+		if (num < 1) {
+#ifdef DEBUG
+			printf("CSeq found but not convertable\n");
+#endif
+			return 0;
+		}
+		return num;
+	}
+#ifdef DEBUG
+	printf("no CSeq found\n");
+#endif
+	return 0;
+}
+
 /* this function is taken from traceroute-1.4_p12 
    which is distributed under the GPL and it returns
    the difference between to timeval structs */
@@ -492,7 +527,7 @@ void shoot(char *buff)
 	struct pollfd sockerr;
 	int ssock, redirected, retryAfter, nretries;
 	int sock, i, len, ret, usrlocstep, randretrys;
-	int dontsend;
+	int dontsend, cseqcmp, cseqtmp;
 	char *contact, *crlf, *foo, *bar;
 	char reply[BUFSIZE];
 	fd_set	fd;
@@ -744,6 +779,26 @@ void shoot(char *buff)
 					/* store the time of our first send */
 					if (i==0)
 						memcpy(&firstsendt, &sendtime, sizeof(struct timeval));
+					/* check for old CSeq => ignore retransmission */
+					if (usrloc) {
+						switch (usrlocstep) {
+							case 0: 
+								cseqcmp = 3*namebeg+1;
+								break;
+							case 1:
+							case 2:
+								cseqcmp = 3*namebeg+2;
+						}
+					}
+					else
+						cseqcmp = namebeg;
+					cseqtmp = cseq(reply);
+					if ((0 < cseqtmp) && (cseqtmp < cseqcmp)) {
+						printf("received retransmission: irgnoring\n");
+						dontsend = 1;
+						i--;
+						continue;
+					}
 					/* lets see if received a redirect */
 					if (redirects && regexec(&redexp, reply, 0, 0, 0)==0) {
 						printf("** received redirect ");
@@ -911,7 +966,7 @@ void shoot(char *buff)
 								/* now we sended the message and look if its 
 								   forwarded to us*/
 								if (!strncmp(reply, messusern, 
-								strlen(messusern))) {
+									strlen(messusern))) {
 									if (verbose) {
 										crlf=strstr(reply, "\r\n\r\n");
 										crlf=crlf+4;
@@ -936,12 +991,6 @@ void shoot(char *buff)
 							case 2:
 								/* finnaly we sended our reply on the message 
 								   and look if this is also forwarded to us*/
-								while (!strncmp(reply, messusern, 
-								strlen(messusern))){
-									printf("warning: received 'MESSAGE' "
-										"retransmission!\n");
-									ret = recv(ssock, reply, BUFSIZE, 0);
-								}
 								if (regexec(&okexp, reply, 0, 0, 0)==0) {
 									if (verbose)
 										printf("   reply received\n\n");
@@ -970,7 +1019,7 @@ void shoot(char *buff)
 					}
 					else if (randtrash) {
 						/* in randomzing trash we are expexting 4?? error codes
-						   everything should not be normal */
+						   everything else should not be normal */
 						if (regexec(&errexp, reply, 0, 0, 0)==0) {
 #ifdef DEBUG
 							printf("received:\n%s\n", reply);
