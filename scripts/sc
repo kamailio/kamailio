@@ -324,7 +324,11 @@ usrloc() {
 			if [ $# -eq 2 ] ; then
 				fifo_cmd ul_show_contact $TABLE $2
 			elif [ $# -eq 1 ] ; then
-				fifo_cmd ul_dump
+				printf "Dumping all contacts may take long: are you sure you want to proceed? [Y|N] "
+				read answer
+				if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
+					fifo_cmd ul_dump
+				fi
 			else
 				echo "wrong number of params for usrloc show"
 				usage
