@@ -1,0 +1,936 @@
+#!/bin/sh  
+#
+# $Id$
+#
+# sc: ser control; tool for maintaining ser's databases using UNIX sockets
+#
+# History:
+# -------
+# 2004-03-09 Derived from the original FIFO version (janakj)
+#
+
+# configuration for starting/stopping ser
+PID_FILE=/var/run/ser.pid
+SYSLOG=1 # 0=output to console, 1=output to syslog
+STARTOPTIONS= # for example -dddd
+DIR=`dirname $0`
+SERBIN=$DIR/ser
+
+# ser's UNIX domain socket
+if [ -z "$SER_UNIXSOCK" ]; then
+        SER_UNIXSOCK=/tmp/ser.sock
+fi
+
+# period in which stats are reprinted
+if [ -z "$WATCH_PERIOD" ] ; then
+	WATCH_PERIOD=2
+fi
+
+# SQL config
+if [ -z "$SQL_DB" ] ; then
+	SQL_DB=ser
+fi
+if [ -z "$SQL_HOST" ] ; then
+	SQL_HOST=localhost
+fi
+if [ -z "$SQL_USER" ] ; then
+	SQL_USER=ser
+fi
+
+# the read-only user for whom password may be stored here
+if [ -z "$RO_USER" ] ; then
+	RO_USER=serro
+fi
+if [ -z "$RO_PW" ] ; then
+	RO_PW=47serro11
+fi
+
+# binaries
+GENHA1='gen_ha1'
+SERUNIX='serunix'
+MYSQL='mysql'
+SER='sr'
+LAST_LINE='tail -1'
+
+# ACL name verification
+VERIFY_ACL=1
+ACL_GROUPS="local ld int voicemail free-pstn prepaid"
+
+VERSION='$Revision$'
+
+#### SQL names
+
+# Usr Loc Table
+if [ -z "$UL_TABLE" ] ; then
+	UL_TABLE=location
+fi
+USER_COLUMN=username
+CALLID_COLUMN=callid
+
+# subscriber table
+if [ -z "$SUB_TABLE" ] ; then
+	SUB_TABLE=subscriber
+fi
+REALM_COLUMN=domain
+HA1_COLUMN=HA1
+HA1B_COLUMN=HA1B
+PASSWORD_COLUMN=password
+RPID_COLUMN=rpid
+SUBSCRIBER_COLUMN='username'
+EMAIL_COLUMN=email_address
+SUB_CREATED_COLUMN=datetime_created
+SUB_MODIFIED_COLUMN=datetime_modified
+PHP_LIB_COLUMN=phplib_id
+
+# acl table
+if [ -z "$ACL_TABLE" ] ; then
+	ACL_TABLE=grp
+fi
+ACL_USER_COLUMN=username
+ACL_DOMAIN_COLUMN=domain
+ACL_GROUP_COLUMN=grp
+ACL_MODIFIED_COLUMN=last_modified
+ACL_DOMAIN_COLUMN=domain
+
+# aliases table
+if [ -z "$ALS_TABLE" ] ; then
+	ALS_TABLE=aliases
+fi
+A_USER_COLUMN=username
+A_CONTACT_COLUMN=contact
+A_EXPIRES_COLUMN=expires
+A_Q_COLUMN=q
+A_CALLID_COLUMN=callid
+A_CSEQ_COLUMN=cseq
+A_LAST_MODIFIED_COLUMN=last_modified
+
+# domain table
+DOMAIN_TABLE=domain
+
+# URI table
+if [ -z "$URI_TABLE" ] ; then
+	URI_TABLE=uri
+fi
+URIUSER_COLUMN=uri_user
+MODIFIED_COLUMN=last_modified
+
+UNIXSOCK_DBG=0
+
+EGREP="egrep"
+#===================================================================
+
+
+usage() {
+CMD=`basename $0`
+if [ "0$VERIFY_ACL" -eq 1 ] ; then
+	EXTRA_TEXT="ACL privileges are: $ACL_GROUPS"
+fi
+cat <<EOF
+$0 $VERSION
+parameter usage: 
+           * subscribers *
+ add <username> <password> <email> .. add a new subscriber (*)
+ passwd <username> <passwd> ......... change user's password (*)
+ rm <username> ...................... delete a user (*)
+ mail <username> .................... send an email to a user
+ alias show [<alias>] ............... show aliases
+ alias rm <alias> ................... remove an alias
+ alias add <alias> <uri> ............ add an aliases 
+ rpid add <username> <rpid> ......... add rpid for a user (*)
+ rpid rm <username> ................. set rpid to NULL for a user (*)
+ rpid show <username> ............... show rpid of a user
+
+           * access control lists *
+ acl show [<username>] .............. show user membership
+ acl grant <username> <group> ....... grant user membership (*)
+ acl revoke <username> [<group>] .... grant user membership(s) (*)
+
+           * usrloc *
+ ul show [<username>]................ show in-RAM online users
+ ul rm <username> ................... delete user's UsrLoc entries
+ ul add <username> <uri> ............ introduce a permanent UrLoc entry
+ showdb [<username>] ................ show online users flushed in DB
+
+           * domains *
+ domain show ........................ show list of served domains
+ domain add <domainname> ............ add a new served domain
+ domain rm <domainname> ............. remove a served domain
+
+           * control and diagnostics *
+ moni ... show internal status        start .... start ser
+ ps ..... show runnig processes       stop ..... stop ser
+ unixsock ... send raw unixsock commands  restart .. restart ser
+ ping <uri> .. ping a URI (OPTIONS)
+ cisco_restart <uri> .. restart a Cisco phone (NOTIFY)
+
+
+   Commands labeled with (*) will prompt for a MySQL password.
+   If the variable PW is set, the password will not be prompted.
+
+     $EXTRA_TEXT
+EOF
+}
+
+
+# determine host name, typically for use in printing UAC
+# messages; we use today a simplistic but portable uname -n way --
+# no domain name is displayed ; unixsock_uac expands !! to host
+# address only for optional header fields; uname output without
+# domain is sufficient for informational header fields such as
+# From
+#
+get_my_host() {
+	uname -n
+}
+
+# calculate name and domain of current user
+set_user() {
+
+	SERUSER=`echo $1|awk -F @ '{print $1}'`
+	SERDOMAIN=`echo $1|awk -F @ '{print $2}'`
+
+	if [ -z "$SERDOMAIN" ] ; then
+		SERDOMAIN="$SIP_DOMAIN"
+	fi
+
+	if [ -z "$SERDOMAIN" ] ; then
+		echo "domain unknown: use usernames with domain or set default domain in SIP_DOMAIN"
+		exit 1
+	fi
+}
+
+
+# check the parameter if it is a valid SIP URI
+# quite simplified now -- it captures just very basic
+# errors
+check_uri() {
+	echo "$1" | $EGREP "^sip(s)?:([a-zA-Z0-9_]+@)?.*\..*" 
+}
+
+# check for alias duplicates
+check_alias() {
+		unixsock_cmd ul_show_contact "$ALS_TABLE" "$1" | grep 404 > /dev/null
+		if [ $? -ne 0 ]; then
+			echo error: overlap with an existing alias
+			exit 1
+		fi
+}
+
+
+#params: none
+# output: PW
+prompt_pw() {
+	if [ -z "$PW" ] ; then
+		savetty=`stty -g`
+		printf "MySql password: " > /dev/stderr
+		stty -echo
+    	read PW
+		stty $savetty
+    	echo
+	fi
+}
+
+print_status() {
+	echo $1 | grep "^[1-6][0-9][0-9]" > /dev/null
+	if [ "$?" -eq 0 ] ; then 
+		echo $1
+	else
+		echo "200 OK"
+	fi
+}
+
+# process output from unixsock server; if everything is ok
+# skip the first "ok" line and proceed to returned 
+# parameters
+filter_fl()
+{
+#	tail +2
+	
+	awk 'BEGIN {line=0;IGNORECASE=1;}
+		{line++}
+		line==1 && /^200/ { next }
+		{ print }'
+}
+
+unixsock_cmd()
+{
+	if [ "0${UNIXSOCK_DBG}" -eq 1 ] ; then
+		echo "entering unixsock_cmd $*"
+	fi
+	if [ "$#" -lt 1 ]; then
+		echo "ERROR: unixsock_cmd must take at least command name as parameter"
+		exit
+	fi
+
+	# construct the command now
+	CMD=":$1:\n";
+	shift
+	while [ -n "$1" ] ; do
+		CMD="${CMD}${1}\n"
+		shift
+	done
+	CMD="${CMD}\n"
+	
+	printf "$CMD" | $SERUNIX $SER_UNIXSOCK | filter_fl
+
+	if [ "0${UNIXSOCK_DBG}" -eq 1 ] ; then
+		printf "UNIXSOCK command was:\n$CMD"
+	fi
+}
+
+
+# $1=attempt number
+print_stats() {
+	echo "[cycle #: $1; if constant make sure server lives]"
+	unixsock_cmd version
+	unixsock_cmd uptime
+	echo Transaction Statistics
+	unixsock_cmd t_stats
+	echo Stateless Server Statistics
+	unixsock_cmd sl_stats
+	echo UsrLoc Stats
+	unixsock_cmd ul_stats
+}
+
+
+# input: sql query, optional mysql command-line params
+sql_query() {
+	# if password not yet queried, query it now
+	if [ -z "$PW" ] ; then
+		savetty=`stty -g`
+		printf "MySql password: " > /dev/stderr
+		stty -echo
+    	read PW >&2
+		stty $savetty
+    	echo >&2
+	fi
+	$MYSQL $2 -h $SQL_HOST -u $SQL_USER "-p$PW" -e "$1 ;" $SQL_DB
+}
+
+# input: sql query, optional mysql command-line params
+sql_ro_query() {
+	$MYSQL $2 -h $SQL_HOST -u $RO_USER "-p$RO_PW" \
+		-e "$1 ;" $SQL_DB
+}
+
+
+usrloc() {
+	if [ "$#" -lt 2 ] ; then
+		echo "usrloc: too few parameters"
+		exit 1
+	fi
+	if [ "$1" = "alias" ] ; then
+		USRLOC_TABLE="$ALS_TABLE"
+		CHECK_SUB=1
+	elif [ "$1" = "ul" ] ; then
+		USRLOC_TABLE="$UL_TABLE"
+		CHECK_SUB=0
+	else
+		echo "usrloc: unknown table name"
+		exit 1
+	fi
+	shift
+
+	case $1 in 
+		show)
+			if [ $# -eq 2 ] ; then
+				set_user $2
+				unixsock_cmd ul_show_contact $USRLOC_TABLE "$SERUSER@$SERDOMAIN"
+			elif [ $# -eq 1 ] ; then
+				printf "Dumping all contacts may take long: are you sure you want to proceed? [Y|N] " > /dev/stderr
+				read answer
+				if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
+					unixsock_cmd ul_dump
+				fi
+			else
+				echo "wrong number of params for usrloc show"
+				usage
+				exit 1
+			fi
+			exit $?
+			;;
+		add)
+			if [ $# -ne 3 ] ; then
+				usage
+				exit 1
+			fi
+			shift
+			check_uri "$2"
+			set_user $1
+				
+			if [ "$?" -ne "0" ] ; then
+				echo "$2 is not a valid URI"
+				exit 1
+			fi
+
+			if [ "$CHECK_SUB" -ne 0 ] ; then
+				is_user 
+				if [ $? -eq 0 ] ; then
+					echo overlap of alias with an existing subscriber name
+					exit 1;
+				fi
+			fi
+
+			check_alias "$SERUSER@$SERDOMAIN"
+
+			# 128 means FL_PERSISTENT is on
+			unixsock_cmd ul_add "$USRLOC_TABLE" "$SERUSER@$SERDOMAIN" "$2" "0" "1.00" "0" "128"
+			exit $?
+			;;
+		rm)
+			if [ $# -ne 2 ] ; then
+                		usage
+                		exit 1
+            		fi
+
+			shift
+			set_user $1
+			unixsock_cmd ul_rm $USRLOC_TABLE "$SERUSER@$SERDOMAIN"
+
+            ;;
+
+		*)
+			usage
+			exit 1
+			;;
+	esac
+}
+
+rpid() {
+	if [ "$#" -lt 2 ] ; then
+		echo "rpid: too few parameters"
+		exit 1
+	fi
+        shift;
+
+	case $1 in
+		show)
+			if [ $# -eq 2 ] ; then
+				set_user $2
+				is_user 
+				if [ $? -ne 0 ] ; then
+					echo non-existent user
+					exit 1;
+				fi
+				CLAUSE=" WHERE $SUBSCRIBER_COLUMN='$SERUSER' AND $REALM_COLUMN='$SERDOMAIN' "
+			elif [ $# -ne 1 ] ; then
+				usage
+				exit 1
+			fi
+			QUERY="select $SUBSCRIBER_COLUMN, $RPID_COLUMN FROM $SUB_TABLE $CLAUSE ; "
+			sql_ro_query "$QUERY"
+			;;
+
+		add|rm)
+		        MODE=$1;
+
+			if [ "$MODE" == "add" ] ; then
+			    ARG_NUM=3;
+			else
+			    ARG_NUM=2;
+			fi
+			
+			if [ $# -lt $ARG_NUM ] ; then
+				usage
+				exit 1
+			fi
+
+			prompt_pw
+			set_user $2
+			is_user 
+			if [ $? -ne 0 ] ; then
+				echo non-existent user
+				exit 1
+			fi
+			shift 2
+
+			if [ "$MODE" = "add" ] ; then
+			        RPID_VAL="'$1'";
+			else
+			        RPID_VAL=NULL;
+			fi
+
+			QUERY="UPDATE $SUB_TABLE \
+                	SET $RPID_COLUMN=$RPID_VAL \
+                	WHERE $SUBSCRIBER_COLUMN='$SERUSER' AND $REALM_COLUMN='$SERDOMAIN';"
+				sql_query "$QUERY"
+				if [ $? -ne 0 ] ; then
+					echo "SQL Error"
+					exit 1
+				fi
+
+			$0 rpid show $SERUSER@$SERDOMAIN
+
+			;;
+
+		*)
+			usage
+			exit 1
+			;;
+	esac
+}
+
+domain() {
+	case $1 in
+		show)
+			# QUERY="select * FROM $DOMAIN_TABLE ; "
+			# sql_ro_query "$QUERY"
+			unixsock_cmd domain_dump
+			;;
+		add)
+			shift
+			if [ $# -ne 1 ] ; then
+				echo missing domain to be added
+				exit 1
+			fi
+			prompt_pw
+       		QUERY="insert into $DOMAIN_TABLE (domain) VALUES ('$1');"
+			sql_query "$QUERY"
+			if [ $? -ne 0 ] ; then
+				echo "SQL Error"
+				exit 1
+			fi
+			unixsock_cmd domain_reload
+			;;
+		rm)
+			shift
+			if [ $# -ne 1 ] ; then
+				echo missing domain to be removed
+				exit 1
+			fi
+			prompt_pw
+       		QUERY="delete from $DOMAIN_TABLE where domain='$1';"
+			sql_query "$QUERY"
+			if [ $? -ne 0 ] ; then
+				echo "SQL Error"
+				exit 1
+			fi
+			unixsock_cmd domain_reload
+			;;
+		*)
+			usage
+			exit 1
+	esac
+}
+
+acl() {
+	case $1 in
+		show)
+			if [ $# -eq 2 ] ; then
+				set_user $2
+				is_user 
+				if [ $? -ne 0 ] ; then
+					echo non-existent user
+					exit 1;
+				fi
+				CLAUSE=" WHERE $ACL_USER_COLUMN='$SERUSER' AND $ACL_DOMAIN_COLUMN='$SERDOMAIN' "
+			elif [ $# -ne 1 ] ; then
+				usage
+				exit 1
+			fi
+			QUERY="select * FROM $ACL_TABLE $CLAUSE ; "
+			sql_ro_query "$QUERY"
+
+			;;
+
+		grant)
+			if [ $# -lt 3 ] ; then
+				usage
+				exit 1
+			fi
+			prompt_pw
+			set_user $2
+			is_user 
+			if [ $? -ne 0 ] ; then
+				echo non-existent user
+				exit 1
+			fi
+			shift 2
+			while [ $# -gt 0 ] ; do
+
+				if [ $VERIFY_ACL -eq 1 ] ; then
+					found=0
+					for i in $ACL_GROUPS ; do
+						if [ "$1" = "$i" ] ; then
+							found=1
+							break
+						fi
+					done	
+					if [ $found -eq 0 ] ; then
+						echo "Invalid privilege: $1 ignored"
+						shift
+						continue
+					fi
+				fi
+
+        		QUERY="insert into $ACL_TABLE \
+                	($ACL_USER_COLUMN,$ACL_GROUP_COLUMN,$ACL_MODIFIED_COLUMN, $ACL_DOMAIN_COLUMN ) \
+                	values ('$SERUSER','$1', now(), '$SERDOMAIN' );"
+				sql_query "$QUERY"
+				if [ $? -ne 0 ] ; then
+					echo "SQL Error"
+					exit 1
+				fi
+				shift
+			done
+
+			$0 acl show $SERUSER@$SERDOMAIN
+
+			;;
+
+		revoke)
+			if [ $# -eq 3 ] ; then
+				CLAUSE=" and $ACL_GROUP_COLUMN='$3' "
+			elif [ $# -ne 2 ] ; then
+				usage
+				exit 1
+			fi	
+
+			set_user $2
+
+			QUERY="delete from $ACL_TABLE where \
+				$ACL_TABLE.$ACL_USER_COLUMN='$SERUSER' AND $ACL_DOMAIN_COLUMN='$SERDOMAIN' $CLAUSE"
+			sql_query "$QUERY"
+
+			$0 acl show $2
+
+			;;
+
+		*)
+			usage
+			exit 1
+			;;
+	esac
+}
+
+# params: user
+# output: false if exists, true otherwise
+is_user() {
+	QUERY="select count(*) from $SUB_TABLE \
+		where $SUBSCRIBER_COLUMN='$SERUSER' and $REALM_COLUMN='$SERDOMAIN';"
+	CNT=`sql_ro_query "$QUERY" | grep -v ERROR | $LAST_LINE`
+	if [ "0$CNT" -eq 0 ] ; then
+		false
+	else
+		true
+	fi
+
+}
+
+
+# params: user, password
+# output: HA1, HA1B
+credentials()
+{
+	set_user $1
+
+	HA1=`$GENHA1 $SERUSER $SERDOMAIN $2`
+	if [ $? -ne 0 ] ; then
+		echo "HA1 calculation failed"
+		exit 1
+	fi
+	HA1B=`$GENHA1 "$SERUSER@$SERDOMAIN" $SERDOMAIN $2`
+	if [ $? -ne 0 ] ; then
+		echo "HA1B calculation failed"
+		exit 1
+	fi
+}
+
+#================================================================
+
+# if the script calls itself ...
+export PW
+
+case $1 in
+
+	start)
+		echo
+		printf "Starting SER : "
+		if [ -r $PID_FILE ] ; then
+			echo "PID file exists! ($PID_FILE) already running?"
+			exit 1
+		else
+			if [ ! -x "$SERBIN" ] ; then
+				echo "SER binaries not found at $SERBIN; reconfigure SERBIN in $0"
+				exit 1
+			fi
+			if [ $SYSLOG = 1 ] ; then
+				$SERBIN -P $PID_FILE $STARTOPTIONS 1>/dev/null 2>/dev/null
+			else
+			 	$SERBIN -P $PID_FILE -E $STARTOPTIONS
+			fi
+			sleep 1
+			if [ ! -s $PID_FILE ] ; then
+				echo "PID file $PID_FILE does not exist -- SER start failed"
+				exit 1
+			fi
+			echo "started pid(`cat $PID_FILE`)"
+		fi
+		exit 0
+		;;
+
+	stop)
+		printf "Stopping SER : "
+		if [ -r $PID_FILE ] ; then
+			kill `cat $PID_FILE`
+			echo "stopped"
+		else
+			echo No PID file found! SER probably not running
+			exit 1
+		fi
+		exit 0
+		;;
+
+	restart)
+		$0 stop
+		if [ "$?" -ne 0 ] ; then
+			exit 1
+		fi
+		sleep 2
+		$0 start
+		exit 0
+		;;
+
+	passwd)
+		if [ $# -ne 3 ] ; then
+			usage
+			exit 1
+		fi
+		shift
+		credentials $1 $2
+		prompt_pw
+
+		is_user $1
+		if [ $? -ne 0 ] ; then
+			echo non-existent user
+			exit 1
+		fi
+		QUERY="update $SUB_TABLE \
+			set $HA1_COLUMN='$HA1', $HA1B_COLUMN='$HA1B', $PASSWORD_COLUMN='$2' \
+			, $SUB_MODIFIED_COLUMN=now() \
+			WHERE $SUBSCRIBER_COLUMN='$SERUSER' and $REALM_COLUMN='$SERDOMAIN';"
+		sql_query "$QUERY"
+		if [ $? -ne 0 ] ; then
+			echo "password change failed"
+		else
+			echo "password change succeeded"
+		fi
+		;;
+
+        add)
+		if [ $# -ne 4 ] ; then
+			usage
+			exit 1
+		fi
+		shift
+		credentials $1 $2
+		prompt_pw
+		is_user $1
+		if [ $? -eq 0 ] ; then
+           		echo user already exists
+           		exit 1
+		fi  
+		check_alias "$SERUSER@$SERDOMAIN"
+
+
+		QUERY="insert into $SUB_TABLE \
+				($SUBSCRIBER_COLUMN,$REALM_COLUMN,$HA1_COLUMN,\
+				$HA1B_COLUMN,$PASSWORD_COLUMN,$EMAIL_COLUMN, $SUB_CREATED_COLUMN,  \
+				$PHP_LIB_COLUMN ) \
+				values ('$SERUSER','$SERDOMAIN','$HA1','$HA1B','$2', '$3', now(), '$HA1' );";
+		sql_query "$QUERY"
+		if [ $? -ne 0 ] ; then
+			echo "introducing a new user to the database failed"
+		else
+			echo "new user added"
+		fi
+
+		QUERY="insert into $URI_TABLE \
+				($SUBSCRIBER_COLUMN,$REALM_COLUMN,$URIUSER_COLUMN,$MODIFIED_COLUMN) \
+				values ('$SERUSER','$SERDOMAIN','$SERUSER',now());";
+		sql_query "$QUERY"
+		if [ $? -ne 0 ] ; then
+			echo "introducing a new user into uri table failed"
+		else
+			echo "new user into uri table added"
+		fi
+		;;
+
+	monitor|console|moni|con)
+		attempt=0
+		if [ "$2" == "" ]; then
+		    loops=-1;
+		else
+		    loops=$2;
+		fi
+		clear
+		while [ $loops -ne $attempt ] ; do
+			attempt=$(($attempt + 1))
+			#clear
+			tput cup 0 0
+			print_stats $attempt
+			if [ $loops -ne $attempt ] ; then
+				sleep $WATCH_PERIOD
+			fi
+				
+		done
+		exit 0
+		;;
+
+	mail)
+		if [ $# -ne 2 ] ; then
+			usage
+			exit 1
+		fi
+		shift
+		set_user $1
+		QUERY="select $SUB_TABLE.$EMAIL_COLUMN from $SUB_TABLE where  \
+			$SUB_TABLE.$SUBSCRIBER_COLUMN='$SERUSER' and $SUB_TABLE.$REALM_COLUMN='$SERDOMAIN'"
+		EA=`sql_ro_query "$QUERY" "-B" | grep -v ERROR | $LAST_LINE`
+		if [ $? -ne 0 ] ; then
+			echo "MySql query failed"
+			exit 1
+		fi
+		echo "Write email to $1: $EA now ..."
+		mail -s "Message from $SERDOMAIN SIP admin" $EA
+		if [ $? -eq 0 ] ; then
+			echo message sent
+		else
+			echo sending message failed
+		fi
+		;;
+
+	alias|ul)
+		usrloc "$@"
+		;;
+
+        rpid)
+	        rpid "$@"
+		;;
+
+	online)
+		unixsock_cmd ul_dump |grep aor| awk '{print $3}' | sort | sort -mu
+		exit $?
+		;;
+
+
+	showdb|userdb)
+		if [ $# -ne 2 ] ; then
+			usage
+			exit 1
+		fi
+		shift
+		set_user $1
+		is_user
+		if [ $? -ne 0 ] ; then
+			echo non-existent user
+			exit 1;
+		fi
+
+		QUERY1="select $SUB_TABLE.$EMAIL_COLUMN from $SUB_TABLE where  \
+			$SUB_TABLE.$SUBSCRIBER_COLUMN='$SERUSER' and $SUB_TABLE.$REALM_COLUMN='$SERDOMAIN' "
+		QUERY2="select $UL_TABLE.* from $UL_TABLE where \
+			$UL_TABLE.$USER_COLUMN='$1' order by expires desc"
+		QUERY3="select $UL_TABLE.$USER_COLUMN, $SUB_TABLE.$EMAIL_COLUMN, $UL_TABLE.$CALLID_COLUMN \
+			from $SUB_TABLE, $UL_TABLE where  \
+			$SUB_TABLE.$SUBSCRIBER_COLUMN=$UL_TABLE.$USER_COLUMN  order by $UL_TABLE.$USER_COLUMN" 
+
+		if [ $# -eq 1 ] ; then
+			sql_ro_query "$QUERY1"
+			sql_ro_query "$QUERY2"
+		else
+			sql_ro_query "$QUERY3"
+		fi
+		echo "Note: Due to usage of cache, server's list " \
+			"may differ from DB list."
+		;;
+
+	rm)
+        	if [ $# -ne 2 ] ; then
+            		usage
+            		exit 1
+        	fi
+		shift 
+		prompt_pw 
+
+		set_user $1
+        	is_user 
+        	if [ $? -ne 0 ] ; then
+            		echo non-existent user
+            		exit 1
+        	fi
+
+		# begin with remove all user's privileges
+		$0 acl revoke $1  > /dev/null 2>&1
+
+		QUERY="delete from $URI_TABLE where $SUBSCRIBER_COLUMN='$SERUSER'"
+		sql_query "$QUERY"
+
+
+		# destroy the user now
+		QUERY="delete from $SUB_TABLE where $SUB_TABLE.$SUBSCRIBER_COLUMN='$SERUSER' and $SUB_TABLE.$REALM_COLUMN='$SERDOMAIN'"
+		sql_query "$QUERY"
+
+		# and also all his contacts
+		$0 ul rm $1   > /dev/null 2>&1
+		;;
+			
+	ps)
+		unixsock_cmd ps
+		;;
+
+	acl)
+		shift
+		acl "$@"
+		;;
+
+	domain)
+		shift
+		domain "$@"
+		;;
+
+	unixsock)
+		shift
+		unixsock_cmd "$@"
+		;;
+
+	ping)
+		# error handling is hacked -- filter_fl should not
+		# consume positive status -- that should be done by
+		# calling app
+		if [ "$#" -ne 2 ] ; then	
+			usage
+			exit 1
+		fi
+		myhost=`get_my_host`
+		RET=`unixsock_cmd t_uac_dlg OPTIONS "$2" "." \
+			"From: sip:daemon@$myhost" \
+			"To: <$2>" "Contact: <sip:daemon@!!>" "." "." \
+			| head -1 ` 
+		print_status $RET
+		;;
+
+	cisco_restart)
+		if [ "$#" -ne 2 ] ; then	
+			usage
+			exit 1
+		fi
+		myhost=`get_my_host`
+		RET=`unixsock_cmd t_uac_dlg NOTIFY "$2" "." \
+			"From: sip:daemon@$myhost" \
+			"To: <$2>" "Event: check-sync" \
+			"Contact: <sip:daemon@!!>" "." "." |
+			head -1 `
+		print_status $RET
+		;;
+
+	version)
+		echo  "$0 $VERSION"
+		;;
+		
+	*)
+		usage
+		exit 1
+		;;
+
+esac
