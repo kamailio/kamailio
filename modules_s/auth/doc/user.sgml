@@ -173,7 +173,7 @@ if (www_authorize("iptel.org", "subscriber")) {
 		</listitem>
 	    </itemizedlist>
 	    <example>
-		<title>proxy_authorize usage</title>
+		<title>proxy_challenge usage</title>
 		<programlisting format="linespecific">
 ...
 if (!proxy_authorize("", "subscriber)) {
