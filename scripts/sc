@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/sh
 #
 # $Id$
 #
@@ -63,7 +63,7 @@ LAST_LINE='tail -1'
 
 # ACL name verification
 VERIFY_ACL=1
-ACL_GROUPS="local ld int voicemail free-pstn"
+ACL_GROUPS="local ld int voicemail free-pstn prepaid"
 
 # expiration time for alias table
 FOREVER='2020-05-28 21:32:15'
@@ -217,6 +217,15 @@ set_user() {
 # errors
 check_uri() {
 	echo "$1" | $EGREP "^sip(s)?:([a-zA-Z0-9_]+@)?.*\..*" 
+}
+
+# check for alias duplicates
+check_alias() {
+		fifo_cmd ul_show_contact "$ALS_TABLE" "$1" | grep 404 > /dev/null
+		if [ $? -ne 0 ]; then
+			echo error: overlap with an existing alias
+			exit 1
+		fi
 }
 
 
@@ -432,6 +441,8 @@ usrloc() {
 					exit 1;
 				fi
 			fi
+
+			check_alias "$SERUSER@$SERDOMAIN"
 
 			fifo_cmd ul_add "$USRLOC_TABLE" "$SERUSER@$SERDOMAIN" "$2" "$FOREVER_REL" "1.00" "0"
 			exit $?
@@ -787,17 +798,13 @@ case $1 in
 		shift
 		credentials $1 $2
 		prompt_pw
-	        is_user $1
-        	if [ $? -eq 0 ] ; then
-            		echo user already exists
-            		exit 1
-        	fi  
+	    is_user $1
+        if [ $? -eq 0 ] ; then
+           		echo user already exists
+           		exit 1
+       	fi  
+		check_alias "$SERUSER@$SERDOMAIN"
 
-		fifo_cmd ul_show_contact "$ALS_TABLE" "$SERUSER@$SERDOMAIN" | grep 404 > /dev/null
-		if [ $? -ne 0 ]; then
-			echo error: overlap with an existing alias
-			exit 1
-		fi
 
 		QUERY="insert into $SUB_TABLE \
 				($SUBSCRIBER_COLUMN,$REALM_COLUMN,$HA1_COLUMN,\
