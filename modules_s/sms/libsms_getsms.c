@@ -341,6 +341,7 @@ int split_type_0(struct sms_msg *sms_messg, char* Pointer,
 {
 	int Length;
 	int padding;
+	int is_binary;
 
 	Length=octet2bin(Pointer);
 	padding=Length%2;
@@ -350,16 +351,13 @@ int split_type_0(struct sms_msg *sms_messg, char* Pointer,
 	/* remove Padding characters after swapping */
 	sms->sender[Length]=0;
 	Pointer=Pointer+Length+padding+3;
-	if ((Pointer[0] & 4)==4)
-		sms_messg->is_binary=1;
-	else
-		sms_messg->is_binary=0;
+	is_binary = ((Pointer[0] & 4)==4);
 	Pointer++;
 	set_date(sms->date,Pointer);
 	Pointer=Pointer+6;
 	set_time(sms->time,Pointer);
 	Pointer=Pointer+8;
-	if (sms_messg->is_binary)
+	if (is_binary)
 		sms->userdatalength = pdu2binary(Pointer,sms->ascii);
 	else
 		sms->userdatalength = pdu2ascii(Pointer,sms->ascii);
@@ -375,96 +373,38 @@ int split_type_0(struct sms_msg *sms_messg, char* Pointer,
 int split_type_2(struct sms_msg *sms_messg, char* position,
 												struct incame_sms *sms)
 {
-	int length;
-	int padding;
-	int status;
-	char temp[32];
+	int  length;
+	int  padding;
+	char *p;
 
-	strcpy(sms->ascii,"SMS STATUS REPORT\n");
-	// get recipient address
+	/* get from report the sms id */
+	sms->sms_id = octet2bin(position);
 	position+=2;
+	/* get recipient address */
 	length=octet2bin(position);
 	padding=length%2;
 	position+=4;
 	memcpy(sms->sender,position,length+padding);
 	sms->sender[length]=0;
 	swapchars(sms->sender,length);
-	strcat(sms->ascii,"\nDischarge_timestamp: ");
 	// get SMSC timestamp
 	position+=length+padding;
 	set_date(sms->date,position);
 	set_time(sms->time,position+6);
 	// get Discharge timestamp
 	position+=14;
-	set_date(temp,position);
-	*(temp+DATE_LEN) = ' ';
-	set_time(temp+DATE_LEN+1,position+6);
-	temp[DATE_LEN+1+TIME_LEN] = 0;
-	strcat(sms->ascii,temp);
-	strcat(sms->ascii,"\nStatus: ");
+	p = sms->ascii + 2;
+	set_date(p,position);
+	*(p+DATE_LEN) = ' ';
+	set_time(p+DATE_LEN+1,position+6);
 	// get Status
 	position+=14;
-	status=octet2bin(position);
-	sprintf(temp,"%i,",status);
-	strcat(sms->ascii,temp);
-	switch (status) {
-		case 0: strcat(sms->ascii,"Ok,short message received by the SME");
-			break;
-		case 1: strcat(sms->ascii,"Ok,short message forwarded by the SC to"
-			" the SME but the SC is unable to confirm delivery");
-			break;
-		case 2: strcat(sms->ascii,"Ok,short message replaced by the SC");
-			break;
-		case 32: strcat(sms->ascii,"Still trying,congestion");
-			break;
-		case 33: strcat(sms->ascii,"Still trying,SME busy");
-			break;
-		case 34: strcat(sms->ascii,"Still trying,no response from SME");
-			break;
-		case 35: strcat(sms->ascii,"Still trying,service rejected");
-			break;
-		case 36: strcat(sms->ascii,"Still trying,quality of service not"
-			" available");
-			break;
-		case 37: strcat(sms->ascii,"Still trying,error in SME");
-			break;
-		case 64: strcat(sms->ascii,"Error,remote procedure error");
-			break;
-		case 65: strcat(sms->ascii,"Error,incompatible destination");
-			break;
-		case 66: strcat(sms->ascii,"Error,connection rejected by SME");
-			break;
-		case 67: strcat(sms->ascii,"Error,not obtainable");
-			break;
-		case 68: strcat(sms->ascii,"Error,quality of service not available");
-			break;
-		case 69: strcat(sms->ascii,"Error,no interworking available");
-			break;
-		case 70: strcat(sms->ascii,"Error,SM validity period expired");
-			break;
-		case 71: strcat(sms->ascii,"Error,SM deleted by originating SME");
-			break;
-		case 72: strcat(sms->ascii,"Error,SM deleted by SC administration");
-			break;
-		case 73: strcat(sms->ascii,"Error,SM does not exist");
-			break;
-		case 96: strcat(sms->ascii,"Error,congestion");
-			break;
-		case 97: strcat(sms->ascii,"Error,SME busy");
-			break;
-		case 98: strcat(sms->ascii,"Error,no response from SME");
-			break;
-		case 99: strcat(sms->ascii,"Error,service rejected");
-			break;
-		case 100: strcat(sms->ascii,"Error,quality of service not available");
-			break;
-		case 101: strcat(sms->ascii,"Error,error in SME");
-			break;
-		default: strcat(sms->ascii,"unknown");
-	}
-	sms->is_statusreport=1;
-	sms->userdatalength=strlen(sms->ascii);
-	return 0;
+	sms->ascii[0] = (unsigned char)octet2bin(position);
+	sms->ascii[1] = ' ';
+	sms->ascii[2+DATE_LEN+1+TIME_LEN] = 0;
+
+	sms->userdatalength=2+DATE_LEN+1+TIME_LEN;
+	return 1;
 }
 
 
@@ -477,7 +417,6 @@ int splitpdu(struct modem *mdm, struct sms_msg *sms_messg, char* pdu,
 {
 	int Length;
 	int Type;
-	int foo;
 	char* Pointer;
 	char* start;
 	char* end;
@@ -518,22 +457,18 @@ int splitpdu(struct modem *mdm, struct sms_msg *sms_messg, char* pdu,
 		}
 		Pointer=pdu+Length+4;
 	}
-	/* is UDH bit set? */
-	if (octet2bin(Pointer)&4)
-		sms_messg->udh=1;
-	else
-		sms_messg->udh=0;
+	/* is UDH bit set? udh=(octet2bin(Pointer)&4) */
 	Type=octet2bin(Pointer) & 3;
 	Pointer+=2;
-	if (Type==0) // SMS Deliver
+	if (Type==0) {
+		sms->is_statusreport = 0; /*SMS Deliver*/
 		return split_type_0(sms_messg, Pointer, sms);
-	else if (Type==2)  // Status Report
+	} else if (Type==2) {
+		sms->is_statusreport = 1; /*Status Report*/
 		return split_type_2(sms_messg, Pointer, sms);
-	// Unsupported type
-	foo = sprintf(sms->ascii,"Message format (%i) is not supported. "
-		"Cannot decode.\n%s\n",Type,pdu);
-	sms->userdatalength = foo;
-	return 1;
+	}
+	/*Unsupported type*/
+	return -1;
 }
 
 
@@ -565,10 +500,6 @@ int getsms( struct incame_sms *sms, struct modem *mdm, int sim)
 		goto error;
 	}
 
-	if (sms->is_statusreport)
-	{
-		DBG("DEBUG:report=%s",sms->ascii);
-	}
 	deletesms(mdm,found);
 
 	return 1;

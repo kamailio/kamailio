@@ -24,6 +24,7 @@ mailto:s.frings@mail.isis.de
 #include "libsms_modem.h"
 
 
+int  use_sms_report;
 
 static char hexa[16] = {
 	'0','1','2','3','4','5','6','7',
@@ -120,8 +121,8 @@ int make_pdu(struct sms_msg *msg, struct modem *mdm, char* pdu)
 	int  pdu_len=0;
 	int  foo;
 
-	memcpy(tmp,msg->to,msg->to_len);
-	foo = msg->to_len;
+	memcpy(tmp,msg->to.s,msg->to.len);
+	foo = msg->to.len;
 	tmp[foo] = 0;
 	// terminate the number with F if the length is odd
 	if ( foo%2 ) {
@@ -130,31 +131,58 @@ int make_pdu(struct sms_msg *msg, struct modem *mdm, char* pdu)
 	}
 	// Swap every second character
 	swapchars(tmp,foo);
-	flags=1; // SMS-Sumbit MS to SMSC
+	flags = 0x01;   /* SMS-Sumbit MS to SMSC */
+	if (use_sms_report)
+		flags |= 0x20 ; /* status report request */
 	coding=240+1; // Dummy + Class 1
-	if (msg->is_binary)
+	/*if (msg->is_binary)
 	{
 		coding+=4; // 8 Bit
 		if (msg->udh)
 			flags+=64; // User Data Header
-	}
+	}*/
 	if (mdm->mode!=MODE_OLD)
 		flags+=16; // Validity field
 	/* concatenate the first part of the PDU string */
 	if (mdm->mode==MODE_OLD)
 		pdu_len += sprintf(pdu,"%02X00%02X91%s00%02X%02X",flags,
-			msg->to_len,tmp,coding,msg->text_len);
+			msg->to.len,tmp,coding,msg->text.len);
 	else
 		pdu_len += sprintf(pdu,"00%02X00%02X91%s00%02XA7%02X",flags,
-			msg->to_len,tmp,coding,msg->text_len);
+			msg->to.len,tmp,coding,msg->text.len);
 	/* Create the PDU string of the message */
-	if (msg->is_binary)
-		pdu_len += binary2pdu(msg->text,msg->text_len,pdu+pdu_len);
-	else
-		pdu_len += ascii2pdu(msg->text,msg->text_len,pdu+pdu_len,
-			msg->cs_convert);
+	//pdu_len += binary2pdu(msg->text.s,msg->text.len,pdu+pdu_len);
+	pdu_len += ascii2pdu(msg->text.s,msg->text.len,pdu+pdu_len,1/*convert*/);
 	/* concatenate the text to the PDU string */
 	return pdu_len;
+}
+
+
+
+
+/* search into modem reply for the sms id */
+inline int fetch_sms_id(char *answer)
+{
+	char *p;
+	int  id;
+
+	p = strstr(answer,"+CMGS:");
+	if (!p)
+		goto error;
+	p += 6;
+	/* parse to the first digit */
+	while(p && *p && (*p==' ' || *p=='\r' || *p=='\n'))
+		p++;
+	if (*p<'0' || *p>'9')
+		goto error;
+	/* convert the number*/
+	id = 0;
+	while (p && *p>='0' && *p<='9')
+		id = id*10 + *(p++)-'0';
+
+	return id;
+error:
+	return -1;
 }
 
 
@@ -171,32 +199,39 @@ int putsms( struct sms_msg *sms_messg, struct modem *mdm)
 	int retries;
 	int err_code;
 	int pdu_len;
+	int sms_id;
 
 	pdu_len = make_pdu(sms_messg, mdm, pdu);
 	if (mdm->mode==MODE_OLD)
 		clen = sprintf(command,"AT+CMGS=%i\r",pdu_len/2);
 	else if (mdm->mode==MODE_ASCII)
-		clen = sprintf(command,"AT+CMGS=\"+%.*s\"\r",sms_messg->to_len,
-			sms_messg->to);
+		clen = sprintf(command,"AT+CMGS=\"+%.*s\"\r",sms_messg->to.len,
+			sms_messg->to.s);
 	else
 		clen = sprintf(command,"AT+CMGS=%i\r",pdu_len/2-1);
 
 	if (mdm->mode==MODE_ASCII)
-		clen2=sprintf(command2,"%.*s\x1A",sms_messg->text_len,sms_messg->text);
+		clen2=sprintf(command2,"%.*s\x1A",sms_messg->text.len,
+		sms_messg->text.s);
 	else
 		clen2=sprintf(command2,"%.*s\x1A",pdu_len,pdu);
 
+	sms_id = 0;
 	for(err_code=0,retries=0;err_code<2 && retries<10; retries++)
 	{
 		if (put_command(mdm->fd,command,clen,answer,sizeof(answer),50,0)
 		&& put_command(mdm->fd,command2,clen2,answer,sizeof(answer),300,0)
-		&& !strstr(answer,"ERROR") )
+		&& strstr(answer,"OK") )
 		{
-			/* no error during sending and the modem didn't said error */
-			if (!strstr(answer,"OK"))
-				LOG(L_WARN,"WARNING: putsms: Maybe could not send message,"
-					" modem did not confirm submission.\n");
+			/* no error during sending and the modem said OK */
 			err_code = 2;
+			/* if reports were request, we have to fetch the sms id from
+			the modem reply to keep trace of the status reports */
+			if (use_sms_report) {
+				sms_id = fetch_sms_id(answer);
+				if (sms_id==-1)
+					err_code = 1;
+			}
 		} else {
 			/* we have an error */
 			if (checkmodem(mdm)!=0) {
@@ -215,7 +250,7 @@ int putsms( struct sms_msg *sms_messg, struct modem *mdm)
 
 	if (err_code==0)
 		LOG(L_WARN,"WARNNING: something spuky is going on with the modem!"
-			" Re-inited and tried fro 10 times without success!\n");
-	return (err_code==0?-2:(err_code==3?-1:1));
+			" Re-inited and re-tried for 10 times without success!\n");
+	return (err_code==0?-2:(err_code==2?sms_id:-1));
 }
 

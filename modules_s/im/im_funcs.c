@@ -196,6 +196,7 @@ s_end:
 int im_extract_body(struct sip_msg *msg, str *body )
 {
 	int len;
+	int offset;
 
 	if ( parse_headers(msg,HDR_EOH, 0)==-1 )
 	{
@@ -217,14 +218,17 @@ int im_extract_body(struct sip_msg *msg, str *body )
 		goto error;
 	}
 
-	if ( strncmp(CRLF,msg->unparsed,CRLF_LEN)!=0 )
-	{
+	if ( strncmp(CRLF,msg->unparsed,CRLF_LEN)==0 )
+		offset = CRLF_LEN;
+	else if (*(msg->unparsed)=='\n' || *(msg->unparsed)=='\r' )
+		offset = 1;
+	else{
 		LOG(L_ERR,"ERROR: im_extract_body:unable to detect the beginning"
 			" of message body!\n ");
 		goto error;
 	}
 
-	body->s = msg->unparsed + CRLF_LEN;
+	body->s = msg->unparsed + offset;
 	body->len = len;
 	DBG("DEBUG:im_extract_body:=|%.*s|\n",body->len,body->s);
 

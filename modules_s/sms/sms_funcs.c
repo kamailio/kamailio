@@ -15,6 +15,7 @@
 #include "../../data_lump_rpl.h"
 #include "../im/im_funcs.h"
 #include "sms_funcs.h"
+#include "sms_report.h"
 #include "libsms_modem.h"
 #include "libsms_sms.h"
 
@@ -29,6 +30,7 @@ int nr_of_modems;
 int max_sms_parts;
 int *queued_msgs;
 int use_contact;
+int use_sms_report;
 
 
 
@@ -65,7 +67,7 @@ int use_contact;
 
 
 
-int add_contact(struct sip_msg* msg , str* user)
+inline int add_contact(struct sip_msg* msg , str* user)
 {
 	struct lump_rpl *lump;
 	char *buf, *p;
@@ -108,11 +110,12 @@ int push_on_network(struct sip_msg *msg, int net)
 {
 	str    body;
 	struct sip_uri  uri;
-	struct sms_msg  sms_messg;
+	struct sms_msg  *sms_messg;
 	struct to_body  from_parsed;
 	struct to_param *foo,*bar;
 	char   *p;
 	int    flag;
+	int    len;
 
 	if ( im_extract_body(msg,&body)==-1 )
 	{
@@ -155,6 +158,13 @@ int push_on_network(struct sip_msg *msg, int net)
 			}
 		}
 	}
+	/* check the uri.user format = '+(inter code)(number)' */
+	if (uri.user.len<2 || uri.user.s[0]!='+' || uri.user.s[1]<'1'
+	|| uri.user.s[1]>'9') {
+		LOG(L_ERR,"ERROR:sms_push_on_net: user tel number [%.*s] does not"
+			"respect international format\n",uri.user.len,uri.user.s);
+		goto error;
+	}
 
 	/* parsing from header */
 	memset(&from_parsed,0,sizeof(from_parsed));
@@ -164,7 +174,7 @@ int push_on_network(struct sip_msg *msg, int net)
 		LOG(L_ERR,"ERROR:sms_push_on_net: cannot parse from header\n");
 		goto error;
 	}
-	/* we are not intrested in from param-> le's us free them now*/
+	/* we are not intrested in from param-> le's free them now*/
 	for(foo=from_parsed.param_lst ; foo ; foo=bar){
 		bar = foo->next;
 		pkg_free(foo);
@@ -176,46 +186,40 @@ int push_on_network(struct sip_msg *msg, int net)
 		goto error;
 	}
 
-	/* copy "from" into sms struct */
-	memcpy(sms_messg.from,from_parsed.uri.s,from_parsed.uri.len);
-	sms_messg.from_len = from_parsed.uri.len;
-
-	/* compossing sms body */
-	sms_messg.text_len = SMS_HDR_BF_ADDR_LEN + sms_messg.from_len
-		+ SMS_HDR_AF_ADDR_LEN + body.len+SMS_FOOTER_LEN;
-	sms_messg.text = (char*)shm_malloc(sms_messg.text_len);
-	if (!sms_messg.text) {
+	/*-------------BUILD AND FILL THE SMS_MSG STRUCTURE --------------------*/
+	/* computes the amount of memory needed */
+	len = SMS_HDR_BF_ADDR_LEN + from_parsed.uri.len
+		+ SMS_HDR_AF_ADDR_LEN + body.len + SMS_FOOTER_LEN /*text to send*/
+		+ from_parsed.uri.len /* from */
+		+ uri.user.len-1 /* to user (wihout '+') */
+		+ sizeof(struct sms_msg) ; /* the sms_msg structure */
+	/* allocs a new sms_msg structure in shared memory */
+	sms_messg = (struct sms_msg*)shm_malloc(len);
+	if (!sms_messg) {
 		LOG(L_ERR,"ERROR:sms_push_on_net: cannot get shm memory!\n");
 		goto error;
 	}
-	p = sms_messg.text;
+	p = (char*)sms_messg + sizeof(struct sms_msg);
+
+	/* copy "from" into sms struct */
+	sms_messg->from.len = from_parsed.uri.len;
+	sms_messg->from.s = p;
+	append_str(p,from_parsed.uri.s,from_parsed.uri.len);
+
+	/* copy "to.user" - we have to strip out the '+' */
+	sms_messg->to.len = uri.user.len-1;
+	sms_messg->to.s = p;
+	append_str(p,uri.user.s+1,sms_messg->to.len);
+
+	/* copy (and compossing) sms body */
+	sms_messg->text.len = SMS_HDR_BF_ADDR_LEN + sms_messg->from.len
+		+ SMS_HDR_AF_ADDR_LEN + body.len+SMS_FOOTER_LEN;
+	sms_messg->text.s = p;
 	append_str(p, SMS_HDR_BF_ADDR, SMS_HDR_BF_ADDR_LEN);
-	append_str(p, sms_messg.from, sms_messg.from_len);
+	append_str(p, sms_messg->from.s, sms_messg->from.len);
 	append_str(p, SMS_HDR_AF_ADDR, SMS_HDR_AF_ADDR_LEN);
 	append_str(p, body.s, body.len);
 	append_str(p, SMS_FOOTER, SMS_FOOTER_LEN);
-
-	/* copy user from uri */
-	if (uri.user.len<2 || uri.user.s[0]!='+' || uri.user.s[1]<'1'
-	|| uri.user.s[1]>'9') {
-		LOG(L_ERR,"ERROR:sms_push_on_net: user tel number [%.*s] does not"
-			"respect international format\n",uri.user.len,uri.user.s);
-		goto error;
-	}
-	if (uri.user.len>MAX_CHAR_BUF) {
-		LOG(L_ERR,"ERROR:sms_push_on_net: user tel number"
-			" longer than %d\n",MAX_CHAR_BUF);
-		goto error;
-	}
-	/* we have to strip out the '+' */
-	sms_messg.to_len = uri.user.len-1;
-	p = sms_messg.to;
-	append_str(p, uri.user.s+1, sms_messg.to_len);
-
-	/* setting up sms characteristics */
-	sms_messg.is_binary = 0;
-	sms_messg.udh = 1;
-	sms_messg.cs_convert = 1;
 
 	if (*queued_msgs>MAX_QUEUED_MESSAGES)
 		goto error;
@@ -226,7 +230,7 @@ int push_on_network(struct sip_msg *msg, int net)
 	{
 		LOG(L_ERR,"ERROR:sms_push_on_net: error when writting for net %d "
 			"to pipe [%d] : %s\n",net,net_pipes_in[net],strerror(errno) );
-		shm_free(sms_messg.text);
+		shm_free(sms_messg);
 		(*queued_msgs)--;
 		goto error;
 	}
@@ -282,7 +286,7 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 		*(p++)='>';
 	}
 
-	foo = im_send_message(to, to, &from, &contact, body);
+	foo = im_send_message(to, to, &from, &contact, body); /* TM */
 	if (from.s) pkg_free(from.s);
 	if (contact.s) pkg_free(contact.s);
 	return foo;
@@ -300,17 +304,9 @@ inline int send_error(struct sms_msg *sms_messg, char *msg1_s, int msg1_len,
 													char *msg2_s, int msg2_len)
 {
 	str  body;
-	str  from;
-	str  to;
 	char *p;
 	int  foo;
 
-	/* from */
-	from.s = sms_messg->from;
-	from.len = sms_messg->from_len;
-	/* to */
-	to.len = sms_messg->to_len;
-	to.s = sms_messg->to;
 	/* body */
 	body.len = msg1_len + msg2_len;
 	body.s = (char*)pkg_malloc(body.len);
@@ -321,7 +317,7 @@ inline int send_error(struct sms_msg *sms_messg, char *msg1_s, int msg1_len,
 	append_str(p, msg2_s, msg2_len);
 
 	/* sending */
-	foo = send_sip_msg_request( &from, &to, &body);
+	foo = send_sip_msg_request( &(sms_messg->from), &(sms_messg->to), &body);
 	pkg_free( body.s );
 	return foo;
 error:
@@ -332,9 +328,8 @@ error:
 
 
 
-inline unsigned short *split_text(char *text, int text_len, int *nr,int nice)
+inline unsigned int split_text(str *text, unsigned char *lens,int nice)
 {
-	static unsigned short lens[30];
 	int  nr_chunks;
 	int  k,k1,len;
 	char c;
@@ -344,14 +339,14 @@ inline unsigned short *split_text(char *text, int text_len, int *nr,int nice)
 
 	do{
 		k = MAX_SMS_LENGTH-(nice&&nr_chunks?SMS_EDGE_PART_LEN:0);
-		if ( len+k<text_len ) {
+		if ( len+k<text->len ) {
 			/* is not the last piece :-( */
 			if (nice && !nr_chunks) k -= SMS_EDGE_PART_LEN;
-			if (text_len-len-k<=SMS_FOOTER_LEN+4)
-				k = (text_len-len)/2;
+			if (text->len-len-k<=SMS_FOOTER_LEN+4)
+				k = (text->len-len)/2;
 			/* ->looks for a point to split */
 			k1 = k;
-			while( k>0 && (c=text[len+k-1])!='.' && c!=' ' && c!=';'
+			while( k>0 && (c=text->s[len+k-1])!='.' && c!=' ' && c!=';'
 			&& c!='\r' && c!='\n' && c!='-' && c!='!' && c!='?' && c!='+'
 			&& c!='=' && c!='\t' && c!='\'')
 				k--;
@@ -362,14 +357,13 @@ inline unsigned short *split_text(char *text, int text_len, int *nr,int nice)
 			lens[nr_chunks] = k;
 		}else {
 			/*last chunk*/
-			lens[nr_chunks] = text_len-len;
-			len = text_len;
+			lens[nr_chunks] = text->len-len;
+			len = text->len;
 		}
 		nr_chunks++;
-	}while (len<text_len);
+	}while (len<text->len);
 
-	if (nr) *nr = nr_chunks;
-	return lens;
+	return nr_chunks;
 }
 
 
@@ -377,29 +371,33 @@ inline unsigned short *split_text(char *text, int text_len, int *nr,int nice)
 
 int send_as_sms(struct sms_msg *sms_messg, struct modem *mdm)
 {
-	static char  buf[MAX_SMS_LENGTH];
-	unsigned int buf_len;
-	unsigned short *len_array, *len_array_nice;
-	unsigned int   nr_chunks,  nr_chunks_nice;
-	unsigned int use_nice;
-	char *text;
-	int  text_len;
+	static char   buf[MAX_SMS_LENGTH];
+	unsigned int  buf_len;
+	unsigned char len_array_1[256], len_array_2[256], *len_array;
+	unsigned int  nr_chunks_1,  nr_chunks_2, nr_chunks;
+	unsigned int  use_nice;
+	str  text;
 	char *p, *q;
 	int  ret_code;
 	int  i;
 
-	use_nice = 0;
-	text = sms_messg->text;
-	text_len = sms_messg->text_len;
+	text.s   = sms_messg->text.s;
+	text.len = sms_messg->text.len;
 
-	len_array = split_text(text, text_len, &nr_chunks,0);
-	len_array_nice = split_text(text, text_len, &nr_chunks_nice,1);
-	if (nr_chunks_nice==nr_chunks) {
-		len_array = len_array_nice;
+	nr_chunks_1 = split_text( &text, len_array_1, 0);
+	nr_chunks_2 = split_text( &text, len_array_2, 1);
+	if (nr_chunks_1==nr_chunks_2) {
+		len_array = len_array_2;
+		nr_chunks = nr_chunks_2;
 		use_nice = 1;
+	} else {
+		len_array = len_array_1;
+		nr_chunks = nr_chunks_1;
+		use_nice = 0;
 	}
 
-	for(i=0,p=text;i<nr_chunks&&i<max_sms_parts;p+=len_array[i++]) {
+	sms_messg->ref = 1;
+	for(i=0,p=text.s ; i<nr_chunks&&i<max_sms_parts ; p+=len_array[i++]) {
 		if (use_nice) {
 			q = buf;
 			if (nr_chunks>1 && i)  {
@@ -428,28 +426,39 @@ int send_as_sms(struct sms_msg *sms_messg, struct modem *mdm)
 			append_str(q,SMS_FOOTER,SMS_FOOTER_LEN);
 			p += buf_len-SMS_TRUNCATED_LEN-SMS_FOOTER_LEN-SMS_EDGE_PART_LEN;
 			send_error(sms_messg, ERR_TRUNCATE_TEXT, ERR_TRUNCATE_TEXT_LEN,
-				p, text_len-(p-text)-SMS_FOOTER_LEN);
+				p, text.len-(p-text.s)-SMS_FOOTER_LEN);
 		}
 		DBG("---%d--<%d><%d>--\n|%.*s|\n",i,len_array[i],buf_len,buf_len,buf);
-		sms_messg->text = buf;
-		sms_messg->text_len = buf_len;
-		if ( (ret_code=putsms(sms_messg,mdm))!=1)
+		sms_messg->text.s   = buf;
+		sms_messg->text.len = buf_len;
+		if ( (ret_code=putsms(sms_messg,mdm))<0)
 			goto error;
+		if (use_sms_report)
+			add_sms_into_report_queue(ret_code,sms_messg,
+				p-use_nice*SMS_EDGE_PART_LEN,len_array[i]);
 	}
 
-	shm_free(text);
+	sms_messg->ref--;
+	/* put back the pointer to the beginning of the messsage*/
+	sms_messg->text.s = text.s;
+	sms_messg->text.len = text.len;
+	/* remove the sms if nobody points to it */
+	if (!sms_messg->ref){
+		shm_free(sms_messg);
+	}
 	return 1;
 error:
-	shm_free(sms_messg->text);
+	if (!(--(sms_messg->ref)))
+		shm_free(sms_messg);
 	if (ret_code==-1)
 		/* bad number */
-		send_error(sms_messg, sms_messg->to, sms_messg->to_len,
+		send_error(sms_messg, sms_messg->to.s, sms_messg->to.len,
 			ERR_NUMBER_TEXT, ERR_NUMBER_TEXT_LEN);
 	else if (ret_code==-2)
 		/* bad modem */
 		send_error(sms_messg, ERR_MODEM_TEXT, ERR_MODEM_TEXT_LEN,
-			text+SMS_HDR_BF_ADDR_LEN+sms_messg->from_len+SMS_HDR_AF_ADDR_LEN,
-			text_len-SMS_FOOTER_LEN-SMS_HDR_BF_ADDR_LEN-sms_messg->from_len-
+			text.s+SMS_HDR_BF_ADDR_LEN+sms_messg->from.len+SMS_HDR_AF_ADDR_LEN,
+			text.len-SMS_FOOTER_LEN-SMS_HDR_BF_ADDR_LEN-sms_messg->from.len-
 			SMS_HDR_AF_ADDR_LEN );
 	return -1;
 }
@@ -597,9 +606,32 @@ error:
 
 
 
+int check_sms_report( struct incame_sms *sms )
+{
+	struct sms_msg *sms_messg;
+	str *s1, *s2;
+	int res;
+
+	DBG("DEBUG:sms:check_sms_report: Report for sms number %d.\n",sms->sms_id);
+	res = relay_report_to_queue(sms->sms_id, sms->sender ,sms->ascii[0]);
+	if (res==-1) {
+		/* the sms wasd confirmed with an error code -> we have to send a
+		message to the SIP user */
+		s1 = get_error_str(sms->ascii[0]);
+		s2 = get_text_from_report_queue(sms->sms_id);
+		sms_messg = get_sms_from_report_queue(sms->sms_id);
+		send_error( sms_messg, s1->s, s1->len, s2->s, s2->len);
+		remove_sms_from_report_queue(sms->sms_id);
+	}
+	return 1;
+}
+
+
+
+
 void modem_process(struct modem *mdm)
 {
-	struct sms_msg sms_messg;
+	struct sms_msg    *sms_messg;
 	struct incame_sms sms;
 	struct network *net;
 	int i,k,len;
@@ -631,7 +663,7 @@ void modem_process(struct modem *mdm)
 		cpms_unsuported = 1;
 	}
 
-	sleep(1);
+	set_gettime_function();
 
 	while(1)
 	{
@@ -669,10 +701,10 @@ void modem_process(struct modem *mdm)
 				}
 
 				/* compute and send the sms */
-				DBG("DEBUG:modem_process: processing sms: to:[%.*s] "
-					"body=[%.*s]\n",sms_messg.to_len,sms_messg.to,
-					sms_messg.text_len,sms_messg.text);
-				if ( send_as_sms( &sms_messg , mdm)==-1 )
+				DBG("DEBUG:modem_process: processing sms: \n\tTo:[%.*s] "
+					"\n\tBody=<%d>[%.*s]\n",sms_messg->to.len,sms_messg->to.s,
+					sms_messg->text.len,sms_messg->text.len,sms_messg->text.s);
+				if ( send_as_sms( sms_messg , mdm)==-1 )
 					last_smsc_index = -1;
 
 				counter++;
@@ -702,13 +734,19 @@ void modem_process(struct modem *mdm)
 						"\n\r\"%.*s\"\n\r",sms.sender,sms.name,
 						DATE_LEN,sms.date,TIME_LEN,sms.time,
 						sms.userdatalength,sms.ascii);
-					send_sms_as_sip(&sms);
+					if (!sms.is_statusreport)
+						send_sms_as_sip(&sms);
+					else 
+						check_sms_report(&sms);
 				}
 			}
 
 		/* sleep -> if it's needed */
-		if (!dont_wait)
+		if (!dont_wait) {
+			/* if reports are used, check for expired records in report queue*/
+			if (use_sms_report) check_timeout_in_report_queue();
 			sleep(mdm->looping_interval);
+		}
 	}/*while*/
 }
 

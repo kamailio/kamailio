@@ -20,6 +20,7 @@
 #include "../../mem/shm_mem.h"
 #include "../im/im_funcs.h"
 #include "sms_funcs.h"
+#include "sms_report.h"
 #include "libsms_modem.h"
 
 
@@ -41,11 +42,12 @@ char *default_net_str = 0;
 char *domain_str      = 0;
 
 /*global vaiables*/
-int  default_net   = 0;
-int  max_sms_parts = MAX_SMS_PARTS;
+int  default_net    = 0;
+int  max_sms_parts  = MAX_SMS_PARTS;
 str  domain;
-int  *queued_msgs  = 0;
-int  use_contact   = 0;
+int  *queued_msgs   = 0;
+int  use_contact    = 0;
+int  use_sms_report = 0;
 
 
 struct module_exports exports= {
@@ -75,7 +77,8 @@ struct module_exports exports= {
 		"default_net",
 		"max_sms_parts",
 		"domain",
-		"use_contact"
+		"use_contact",
+		"use_sms_report"
 	},
 	(modparam_t[]) {   /* Module parameter types */
 		STR_PARAM,
@@ -84,6 +87,7 @@ struct module_exports exports= {
 		STR_PARAM,
 		INT_PARAM,
 		STR_PARAM,
+		INT_PARAM,
 		INT_PARAM
 	},
 	(void*[]) {   /* Module parameter variable pointers */
@@ -93,9 +97,10 @@ struct module_exports exports= {
 		&default_net_str,
 		&max_sms_parts,
 		&domain_str,
-		&use_contact
+		&use_contact,
+		&use_sms_report
 	},
-	7,      /* Number of module paramers */
+	8,      /* Number of module paramers */
 
 	sms_init,   /* module initialization function */
 	(response_function) 0,
@@ -549,6 +554,12 @@ int global_init()
 		}
 	}
 
+	/* if report will be used, init the report queue */
+	if (use_sms_report && !init_report_queue()) {
+		LOG(L_ERR,"ERROR: sms_global_init: cannot get shm memory!\n");
+		goto error;
+	}
+
 	/* alloc in shm for queued_msgs */
 	queued_msgs = (int*)shm_malloc(sizeof(int));
 	if (!queued_msgs) {
@@ -616,6 +627,9 @@ static int sms_exit(void)
 
 	if (queued_msgs)
 		shm_free(queued_msgs);
+
+	if (use_sms_report)
+		destroy_report_queue();
 
 	return 0;
 }
