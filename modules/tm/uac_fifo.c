@@ -541,12 +541,12 @@ static void fifo_callback( struct cell *t, int type, struct tmcb_params *ps )
 	DBG("!!!!! ref_counter: %d\n", t->ref_count);
 
 	DBG("DEBUG: fifo UAC completed with status %d\n", ps->code);
-	if (!ps->param) {
+	if (!*ps->param) {
 		LOG(L_INFO, "INFO: fifo UAC completed with status %d\n", ps->code);
 		return;
 	}
 
-	filename=(char *)(ps->param);
+	filename=(char *)(*ps->param);
 	if (ps->rpl==FAKED_REPLY) {
 		get_reply_status( &text, ps->rpl, ps->code);
 		if (text.s==0) {
@@ -570,7 +570,7 @@ static void fifo_callback( struct cell *t, int type, struct tmcb_params *ps )
 	}
 	DBG("DEBUG: fifo_callback sucesssfuly completed\n");
 done:
-	shm_free(ps->param);
+	shm_free(filename);
 }
 
 
