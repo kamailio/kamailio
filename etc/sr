@@ -9,7 +9,7 @@
 #
 # chkconfig: 2345 20 80
 # description: controls execution of SIP router
-# processname: sip_router
+# processname: sr
 # config: /etc/sip_router.cfg
 
 # Source function library.
