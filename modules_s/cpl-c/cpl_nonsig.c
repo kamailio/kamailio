@@ -126,6 +126,7 @@ static inline void write_log( struct cpl_cmd *cmd)
 		LOG(L_ERR,"ERROR:cpl_c:write_log: writing to log file [%s] : %s\n",
 			file, strerror(errno) );
 	}
+	close (fd);
 
 	shm_free( cmd->s1.s );
 }
