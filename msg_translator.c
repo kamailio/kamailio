@@ -225,9 +225,11 @@ static char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 	else
 		foo=&(msg->first_line.u.request.uri);
 	print_len=snprintf(buf+fix_len, MAX_WARNING_LEN-fix_len,
-		"pid=%d req_src_ip=%s in_uri=%.*s out_uri=%.*s via_cnt%c=%d\"",
+		"pid=%d req_src_ip=%s req_src_port=%d in_uri=%.*s out_uri=%.*s"
+		" via_cnt%c=%d\"",
 		my_pid(),
 		ip_addr2a(&msg->rcv.src_ip),
+		ntohs(msg->rcv.src_port),
 		msg->first_line.u.request.uri.len, msg->first_line.u.request.uri.s,
 		foo->len, foo->s, 
 		msg->parsed_flag & HDR_EOH ? '=' : '>', /* should be = */
