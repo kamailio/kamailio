@@ -68,7 +68,7 @@ inline int set_uri(struct sip_msg* _msg, char* uri, int len)
 	}
 	if (_msg->parsed_uri_ok) {
 		_msg->parsed_uri_ok = 0;
-		free_uri(&_msg->parsed_uri);
+/*		free_uri(&_msg->parsed_uri); not needed anymore */
 	}
 	_msg->new_uri.s = pkg_malloc(len + 1);
 	if (_msg->new_uri.s == 0) {
@@ -119,7 +119,6 @@ int is_from_user_e164(struct sip_msg* _msg, char* _s1, char* _s2)
 	}
 
 	result = is_e164(&(uri.user));
-	free_uri(&uri);
 	return result;
 }
 

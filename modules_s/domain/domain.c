@@ -113,7 +113,6 @@ int is_from_local(struct sip_msg* _msg, char* _s1, char* _s2)
 	}
 
 	ret = is_domain_local(&(uri.host));
-	free_uri(&uri);
 	return ret;
 }
 
