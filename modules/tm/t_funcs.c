@@ -214,10 +214,6 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	int reply_ret;
 	/* struct hdr_field *hdr; */
 	struct cell *t;
-#ifdef ACK_FORKING_HACK
-	str ack_uri;
-	str backup_uri;
-#endif
 
 	ret=0;
 
@@ -254,31 +250,9 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 			ret=forward_request( p_msg , proxy, proto) ;
 			free_proxy( proxy );	
 			pkg_free( proxy );
-#ifdef ACK_FORKING_HACK
-			backup_uri=p_msg->new_uri;
-			init_branch_iterator();
-			while((ack_uri.s=next_branch(&ack_uri.len))) {
-				p_msg->new_uri=ack_uri;
-				proxy=uri2proxy(GET_NEXT_HOP(p_msg), proto);
-				if (proxy==0) continue;
-				forward_request(p_msg, proxy, proxy->proto); /* ok, uri2proxy*/
-				free_proxy( proxy );	
-				pkg_free( proxy );
-			}
-			p_msg->new_uri=backup_uri;
-#endif
 		} else {
 			proto=get_proto(proto, proxy->proto);
 			ret=forward_request( p_msg , proxy, proto ) ;
-#ifdef ACK_FORKING_HACK
-			backup_uri=p_msg->new_uri;
-			init_branch_iterator();
-			while((ack_uri.s=next_branch(&ack_uri.len))) {
-				p_msg->new_uri=ack_uri;
-				forward_request(p_msg, proxy, proto);
-			}
-			p_msg->new_uri=backup_uri;
-#endif
 		}
 		goto done;
 	}
