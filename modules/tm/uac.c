@@ -42,6 +42,8 @@
  *  2003-03-01  kr set through a function now (jiri)
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-04-02  port_no_str does not contain a leading ':' anymore (andrei)
+ *  2003-07-08  appropriate log messages in check_params(...), 
+ *               call calculate_hooks if next_hop==NULL in t_uac (dcm) 
  */
 
 #include <string.h>
@@ -121,12 +123,12 @@ static inline int check_params(str* method, str* to, str* from, dlg_t** dialog)
 	}
 
 	if (!to->s || !to->len) {
-		LOG(L_ERR, "check_params(): Invalid request method\n");
+		LOG(L_ERR, "check_params(): Invalid To URI\n");
 		return -4;
 	}
 
 	if (!from->s || !from->len) {
-		LOG(L_ERR, "check_params(): Invalid request method\n");
+		LOG(L_ERR, "check_params(): Invalid From URI\n");
 		return -5;
 	}
 	return 0;
@@ -147,6 +149,12 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb
 	int ret;
 
 	ret=-1;
+	
+	/*** added by dcm 
+	 * - needed by external ua to send a request within a dlg
+	 */
+	if(!dialog->hooks.next_hop && w_calculate_hooks(dialog)<0)
+		goto error2;
 
 	send_sock = uri2sock(dialog->hooks.next_hop, &to_su, PROTO_NONE);
 	if (!send_sock) {

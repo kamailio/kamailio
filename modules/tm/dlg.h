@@ -159,5 +159,10 @@ int calculate_routeset_length(dlg_t* _d);
  */
 char* print_routeset(char* buf, dlg_t* _d);
 
+/*
+ * wrapper to calculate_hooks
+ * added by dcm
+ */
+int w_calculate_hooks(dlg_t* _d);
 
 #endif /* DLG_H */
