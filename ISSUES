@@ -6,6 +6,15 @@ This is a collection of issues which have shown up
 since the version 0.8.8 was released.
 
 ----------------------------------------------------------------
+Desc:  ser won't run on linux kernels <2.4  (fails with EINVAL when
+      intializing the shared memory)
+BugId:  n/a
+Ser version: 0.8.8, 0.8.9, 0.8.10 
+Workaround: Upgrade to a 2.4.* kernel (older kernels don't support shared 
+            mmaping of /dev/zero ) or recompile ser with SYSV shm instead of
+            mmap (remove -DSHM_MMAP from Makefile.defs)
+CVS status: n/a
+----------------------------------------------------------------
 Desc:  ser 0.8.10 won't compile with bison 1.75
 BugId:  n/a
 Ser version: 0.8.8, 0.8.9, 0.8.10 
