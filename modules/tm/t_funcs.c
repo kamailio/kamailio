@@ -303,28 +303,15 @@ int t_put_on_wait(  struct cell  *Trans  )
 	DBG("DEBUG: t_put_on_wait: stopping timers (FR and RETR)\n");
 	reset_retr_timers(hash_table,Trans) ;
 
+#ifdef SILENT_FR
+	if (Trans->nr_of_outgoings>1)
+#endif
+	{
 	/* cancel pending client transactions, if any */
 	for( i=0 ; i<Trans->nr_of_outgoings ; i++ )
 		if ( Trans->uac[i].rpl_received && Trans->uac[i].status<200 )
 			t_build_and_send_CANCEL(Trans , i);
-
-
-	/* we don't need outbound requests anymore -- let's save
-	   memory and junk them right now!
-	*/
-/*
-	shm_lock();
-	for ( i =0 ; i<Trans->nr_of_outgoings;  i++ )
-	{
-		if ( rb=Trans->outbound_request[i] )
-		{
-			if (rb->retr_buffer) shm_free_unsafe( rb->retr_buffer );
-			Trans->outbound_request[i] = NULL;
-			shm_free_unsafe( rb );
-		}
 	}
-	shm_unlock();
-*/
 
 	/* adds to Wait list*/
 	set_timer( hash_table, &(Trans->wait_tl), WT_TIMER_LIST );
@@ -712,7 +699,7 @@ inline void final_response_handler( void *attr)
 	if ( r_buf->my_T->uac[r_buf->branch].status<200
 #ifdef SILENT_FR
 	&& (r_buf->my_T->nr_of_outgoings>1)
-	/*should be fork==yes, but we don't have forking yet - bogdan */
+	/* fork==yes  - bogdan */
 #endif
 	)
 	{
