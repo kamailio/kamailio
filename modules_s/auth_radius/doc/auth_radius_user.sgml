@@ -20,7 +20,9 @@
 	    whole authentication is done in the Radius server. Before sending the request to the
 	    radius server we perform some sanity checks over the credentials to make sure that only
 	    well formed credentials will get to the server. We have implemented radius
-	    authentication according to draft-sterman-aaa-sip-00
+	    authentication according to draft-sterman-aaa-sip-00. This module requires radiusclient
+	    library version 0.4.0 or higher which is available from <ulink url='http://developer.berlios.de/projects/radiusclient-ng/'>
+	    http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
 	</para>
 	<para>How to configure radius server -- more detailed description -- TBD.</para>
 	<warning>
@@ -65,7 +67,7 @@ modparam("auth_radius", "radius_config", "/etc/radiusclient.conf")
 		be put in this parameter if you need to change it.
 	    </para>
 	    <para>
-		Default value is <quote>PW_SIP (15)</quote>.
+		Default value is <quote>15</quote>.
 	    </para>
 	    <example>
 		<title><varname>radius_config</varname> usage</title>

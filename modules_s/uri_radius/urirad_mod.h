@@ -34,10 +34,8 @@
 #ifndef URIRAD_MOD_H
 #define URIRAD_MOD_H
 
-/*
- * Module parameter variables
- */
-extern char* radius_config;   /* radiusclient configuration file */
-extern int service_type;      /* radius service type for uri check */
+extern struct attr attrs[];
+extern struct val vals[];
+extern void *rh;
 
 #endif /* URIRAD_MOD_H */

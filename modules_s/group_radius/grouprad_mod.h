@@ -34,10 +34,13 @@
 #ifndef GROUPRAD_MOD_H
 #define GROUPRAD_MOD_H
 
+extern struct attr attrs[];
+extern struct val vals[];
+extern void *rh;
+
 /*
  * Module parameter variables
  */
-extern char* radius_config;   /* radiusclient configuration file */
 extern int use_domain;        /* Should we use also domain ? */
 
 #endif /* GROUPRAD_MOD_H */

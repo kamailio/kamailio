@@ -14,7 +14,7 @@ LIBS=
 #DEFS+=-DSQL_ACC
 
 # uncomment the next two lines if you wish to enable RADIUS accounting
-#DEFS+=-DRAD_ACC
+#DEFS+=-DRAD_ACC -I$(LOCALBASE)/include
 
 # uncomment the next two lines if you wish to enable DIAMETER accounting
 #DEFS+=-DDIAM_ACC

@@ -44,7 +44,7 @@
 #include "../../parser/hf.h"
 #include "../../parser/digest/digest.h"
 #include "group.h"
-#include "dict.h"
+#include "../../modules/acc/dict.h"
 #include "grouprad_mod.h"
 
 
@@ -191,8 +191,8 @@ int radius_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 		user_name = user;
 	}
 
-	if (!rc_avpair_add(&send, PW_USER_NAME, user_name.s, user_name.len)) {
-		LOG(L_ERR, "radius_is_user_in(): Error adding PW_USER_NAME\n");
+	if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, user_name.s, user_name.len, 0)) {
+		LOG(L_ERR, "radius_is_user_in(): Error adding User-Name attribute\n");
 		rc_avpair_free(send);
 		if (use_domain) pkg_free(user_name.s);
 		return -7;
@@ -200,19 +200,19 @@ int radius_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 
 	if (use_domain) pkg_free(user_name.s);
 
-	if (!rc_avpair_add(&send, PW_SIP_GROUP, grp->s, grp->len)) {
-		LOG(L_ERR, "radius_is_user_in(): Error adding PW_SIP_GROUP\n");
+	if (!rc_avpair_add(rh, &send, attrs[A_SIP_GROUP].v, grp->s, grp->len, 0)) {
+		LOG(L_ERR, "radius_is_user_in(): Error adding Sip-Group attribute\n");
 	 	return -8;  	
 	}
 
-	service = PW_GROUP_CHECK;
-	if (!rc_avpair_add(&send, PW_SERVICE_TYPE, &service, 0)) {
-		LOG(L_ERR, "radius_is_user_in(): Error adding PW_SERVICE_TYPE\n");
+	service = vals[V_GROUP_CHECK].v;
+	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &service, 0, 0)) {
+		LOG(L_ERR, "radius_is_user_in(): Error adding Service-Type attribute\n");
 		rc_avpair_free(send);
 	 	return -9;  	
 	}
 
-	if (rc_auth(0, send, &received, msg) == OK_RC) {
+	if (rc_auth(rh, 0, send, &received, msg) == OK_RC) {
 		DBG("radius_is_user_in(): Success\n");
 		rc_avpair_free(send);
 		rc_avpair_free(received);

@@ -37,14 +37,12 @@
 
 #include "../auth/api.h"
 
+extern struct attr attrs[];
+extern struct val vals[];
+extern void *rh;
+extern int ciscopec;
 
 extern pre_auth_f pre_auth_func;
 extern post_auth_f post_auth_func;
 
-/*
- * Module parameter variables
- */
-extern char* radius_config; /* radiusclient configuration file */
-extern int service_type;    /* radius service type used for access request */
- 
 #endif /* AUTHRAD_MOD_H */

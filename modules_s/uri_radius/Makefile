@@ -8,6 +8,7 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=uri_radius.so
+DEFS+=-I$(LOCALBASE)/include
 LIBS=-L$(LOCALBASE)/lib -L/usr/pkg/lib -lradiusclient
 
 include ../../Makefile.modules

@@ -45,12 +45,17 @@
 #include "authrad_mod.h"
 #include "authorize.h"
 #include <radiusclient.h>
-#include "dict.h"
+#include "../../modules/acc/dict.h"
 
 MODULE_VERSION
 
 pre_auth_f pre_auth_func = 0;   /* Pre authorization function from auth module */
 post_auth_f post_auth_func = 0; /* Post authorization function from auth module */
+
+struct attr attrs[A_MAX];
+struct val vals[V_MAX];
+void *rh;
+int ciscopec;
 
 static int mod_init(void);                        /* Module initialization function */
 static int str_fixup(void** param, int param_no); /* char* -> str* */
@@ -59,8 +64,8 @@ static int str_fixup(void** param, int param_no); /* char* -> str* */
 /*
  * Module parameter variables
  */
-char* radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
-int service_type = PW_SIP_SESSION;
+static char* radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
+static int service_type = -1;
 
 
 /*
@@ -103,16 +108,48 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	DICT_VENDOR *vend;
+
 	DBG("auth_radius - Initializing\n");
 
-	if (rc_read_config(radius_config) != 0) {
+	memset(attrs, 0, sizeof(attrs));
+	memset(attrs, 0, sizeof(vals));
+	attrs[A_SERVICE_TYPE].n			= "Service-Type";
+	attrs[A_SIP_RPID].n			= "Sip-RPId";
+	attrs[A_SIP_URI_USER].n			= "Sip-URI-User";
+	attrs[A_DIGEST_RESPONSE].n		= "Digest-Response";
+	attrs[A_DIGEST_ALGORITHM].n		= "Digest-Algorithm";
+	attrs[A_DIGEST_BODY_DIGEST].n		= "Digest-Body-Digest";
+	attrs[A_DIGEST_CNONCE].n		= "Digest-CNonce";
+	attrs[A_DIGEST_NONCE_COUNT].n		= "Digest-Nonce-Count";
+	attrs[A_DIGEST_QOP].n			= "Digest-QOP";
+	attrs[A_DIGEST_METHOD].n		= "Digest-Method";
+	attrs[A_DIGEST_URI].n			= "Digest-URI";
+	attrs[A_DIGEST_NONCE].n			= "Digest-Nonce";
+	attrs[A_DIGEST_REALM].n			= "Digest-Realm";
+	attrs[A_DIGEST_USER_NAME].n		= "Digest-User-Name";
+	attrs[A_USER_NAME].n			= "User-Name";
+	attrs[A_CISCO_AVPAIR].n			= "Cisco-AVPair";
+	vals[V_SIP_SESSION].n			= "Sip-Session";
+
+	if ((rh = rc_read_config(radius_config)) == NULL) {
 		LOG(L_ERR, "auth_radius: Error opening configuration file \n");
 		return -1;
 	}
-    
-	if (rc_read_dictionary(rc_conf_str("dictionary")) != 0) {
+
+	if (rc_read_dictionary(rh, rc_conf_str(rh, "dictionary")) != 0) {
 		LOG(L_ERR, "auth_radius: Error opening dictionary file \n");
 		return -2;
+	}
+
+	vend = rc_dict_findvend(rh, "Cisco");
+	if (vend == NULL) {
+		LOG(L_WARN, "auth_radius: No `Cisco' vendor in Radius "
+			   "dictionary\n");
+		ciscopec = -1;
+		attrs[A_CISCO_AVPAIR].n = NULL;
+	} else {
+		ciscopec = vend->vendorpec;
 	}
 
 	pre_auth_func = (pre_auth_f)find_export("pre_auth", 0, 0);
@@ -120,8 +157,13 @@ static int mod_init(void)
 
 	if (!(pre_auth_func && post_auth_func)) {
 		LOG(L_ERR, "auth_radius: This module requires auth module\n");
-		return -3;
+		return -4;
 	}
+
+	INIT_AV(rh, attrs, vals, "auth_radius", -5, -6);
+
+	if (service_type != -1)
+		vals[V_SIP_SESSION].v = service_type;
 
 	return 0;
 }

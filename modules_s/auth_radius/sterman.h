@@ -45,6 +45,6 @@
  * which can be be used as a check item in the request.  Service type of
  * the request is Authenticate-Only.
  */
-int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _rpid); 
+int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _method, str* _user, str* _rpid); 
 
 #endif /* STERMAN_H */

@@ -35,7 +35,7 @@
 #include "../../mem/mem.h"
 #include "../../parser/parse_uri.h"
 #include "../../dprint.h"
-#include "dict.h"
+#include "../../modules/acc/dict.h"
 #include "checks.h"
 #include "urirad_mod.h"
 #include <radiusclient.h>
@@ -74,22 +74,22 @@ int radius_does_uri_exist(struct sip_msg* _m, char* _s1, char* _s2)
 	at += _m->parsed_uri.host.len;
 	*at = '\0';
 
-	if (!rc_avpair_add(&send, PW_USER_NAME, uri, 0)) {
+	if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, uri, 0, 0)) {
 		LOG(L_ERR, "radius_does_uri_exist(): Error adding User-Name\n");
 		rc_avpair_free(send);
 		pkg_free(uri);
 	 	return -3;
 	}
 
-	service = service_type;
-	if (!rc_avpair_add(&send, PW_SERVICE_TYPE, &service, 0)) {
+	service = vals[V_CALL_CHECK].v;
+	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &service, 0, 0)) {
 		LOG(L_ERR, "radius_does_uri_exist(): Error adding service type\n");
 		rc_avpair_free(send);
 		pkg_free(uri);
 	 	return -4;  	
 	}
 	
-	if (rc_auth(0, send, &received, msg) == OK_RC) {
+	if (rc_auth(rh, 0, send, &received, msg) == OK_RC) {
 		DBG("radius_does_uri_exist(): Success\n");
 		rc_avpair_free(send);
 		rc_avpair_free(received);

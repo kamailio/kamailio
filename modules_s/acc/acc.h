@@ -100,7 +100,8 @@
 
 
 #ifdef RAD_ACC
-extern int service_type;
+extern struct attr attrs[];
+extern struct val vals[];
 #endif
 
 

@@ -107,10 +107,13 @@ int log_missed_flag = 0;
 int log_level=L_NOTICE;
 char *log_fmt=DEFAULT_LOG_FMT;
 #ifdef RAD_ACC
-char *radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
+static char *radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
 int radius_flag = 0;
 int radius_missed_flag = 0;
-int service_type = PW_SIP_SESSION;
+static int service_type = -1;
+void *rh;
+struct attr attrs[A_MAX];
+struct val vals[V_MAX];
 #endif
 
 /* DIAMETER */
@@ -312,19 +315,43 @@ static int mod_init( void )
 #endif
 
 #ifdef RAD_ACC
+	memset(attrs, 0, sizeof(attrs));
+	memset(attrs, 0, sizeof(vals));
+	attrs[A_CALLING_STATION_ID].n		= "Calling-Station-Id";
+	attrs[A_CALLED_STATION_ID].n		= "Called-Station-Id";
+	attrs[A_SIP_TRANSLATED_REQUEST_URI].n	= "Sip-Translated-Request-URI";
+	attrs[A_ACCT_SESSION_ID].n		= "Acct-Session-Id";
+	attrs[A_SIP_TO_TAG].n			= "Sip-To-Tag";
+	attrs[A_SIP_FROM_TAG].n			= "Sip-From-Tag";
+	attrs[A_SIP_CSEQ].n			= "Sip-CSeq";
+	attrs[A_ACCT_STATUS_TYPE].n		= "Acct-Status-Type";
+	attrs[A_SERVICE_TYPE].n			= "Service-Type";
+	attrs[A_SIP_RESPONSE_CODE].n		= "Sip-Response-Code";
+	attrs[A_SIP_METHOD].n			= "Sip-Method";
+	attrs[A_USER_NAME].n			= "User-Name";
+	vals[V_STATUS_START].n			= "Start";
+	vals[V_STATUS_STOP].n			= "Stop";
+	vals[V_STATUS_FAILED].n			= "Failed";
+	vals[V_SIP_SESSION].n			= "Sip-Session";
+
 	/* open log */
 	rc_openlog("ser");
 	/* read config */
-	if (rc_read_config(radius_config)!=0) {
+	if ((rh = rc_read_config(radius_config)) == NULL) {
 		LOG(L_ERR, "ERROR: acc: error opening radius config file: %s\n", 
 			radius_config );
 		return -1;
 	}
 	/* read dictionary */
-	if (rc_read_dictionary(rc_conf_str("dictionary"))!=0) {
+	if (rc_read_dictionary(rh, rc_conf_str(rh, "dictionary"))!=0) {
 		LOG(L_ERR, "ERROR: acc: error reading radius dictionary\n");
 		return -1;
 	}
+
+	INIT_AV(rh, attrs, vals, "acc", -1, -1);
+
+	if (service_type != -1)
+		vals[V_SIP_SESSION].v = service_type;
 #endif
 
 	return 0;

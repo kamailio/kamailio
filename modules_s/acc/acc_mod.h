@@ -53,7 +53,7 @@ extern int log_missed_flag;
 #ifdef RAD_ACC
 extern int radius_flag;
 extern int radius_missed_flag;
-extern int service_type;
+extern void *rh;
 #endif
 
 #ifdef DIAM_ACC

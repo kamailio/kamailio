@@ -32,11 +32,12 @@
  */
 
 
+#include <stdlib.h>
 #include <string.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../auth/api.h"
-#include "dict.h"
+#include "../../modules/acc/dict.h"
 #include "sterman.h"
 #include "authrad_mod.h"
 #include <radiusclient.h>
@@ -49,12 +50,12 @@
  * which can be be used as a check item in the request.  Service type of
  * the request is Authenticate-Only.
  */
-int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _rpid) 
+int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _method, str* _user, str* _rpid) 
 {
 	static char msg[4096];
 	VALUE_PAIR *send, *received, *vp;
 	UINT4 service;
-	str method, user, user_name;
+	str method, user, user_name, callid;
 	int i;
 	
 	send = received = 0;
@@ -73,8 +74,8 @@ int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _
 	 */
 
 	if (_cred->username.domain.len) {
-		if (!rc_avpair_add(&send, PW_USER_NAME, _cred->username.whole.s, _cred->username.whole.len)) {
-			LOG(L_ERR, "sterman(): Unable to add PW_USER_NAME attribute\n");
+		if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, _cred->username.whole.s, _cred->username.whole.len, 0)) {
+			LOG(L_ERR, "sterman(): Unable to add User-Name attribute\n");
 			rc_avpair_free(send);
 			return -2;
 		}
@@ -88,8 +89,8 @@ int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _
 		memcpy(user_name.s, _cred->username.whole.s, _cred->username.whole.len);
 		user_name.s[_cred->username.whole.len] = '@';
 		memcpy(user_name.s + _cred->username.whole.len + 1, _cred->realm.s, _cred->realm.len);
-		if (!rc_avpair_add(&send, PW_USER_NAME, user_name.s, user_name.len)) {
-			LOG(L_ERR, "sterman(): Unable to add PW_USER_NAME attribute\n");
+		if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, user_name.s, user_name.len, 0)) {
+			LOG(L_ERR, "sterman(): Unable to add User-Name attribute\n");
 			pkg_free(user_name.s);
 			rc_avpair_free(send);
 			return -4;
@@ -97,30 +98,30 @@ int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _
 		pkg_free(user_name.s);
 	}
 
-	if (!rc_avpair_add(&send, PW_DIGEST_USER_NAME, _cred->username.whole.s, _cred->username.whole.len)) {
-		LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_USER_NAME attribute\n");
+	if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_USER_NAME].v, _cred->username.whole.s, _cred->username.whole.len, 0)) {
+		LOG(L_ERR, "sterman(): Unable to add Digest-User-Name attribute\n");
 		rc_avpair_free(send);
 		return -5;
 	}
 
-	if (!rc_avpair_add(&send, PW_DIGEST_REALM, _cred->realm.s, _cred->realm.len)) {
-		LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_REALM attribute\n");
+	if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_REALM].v, _cred->realm.s, _cred->realm.len, 0)) {
+		LOG(L_ERR, "sterman(): Unable to add Digest-Realm attribute\n");
 		rc_avpair_free(send);
 		return -6;
 	}
-	if (!rc_avpair_add(&send, PW_DIGEST_NONCE, _cred->nonce.s, _cred->nonce.len)) {
-		LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_NONCE attribute\n");
+	if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_NONCE].v, _cred->nonce.s, _cred->nonce.len, 0)) {
+		LOG(L_ERR, "sterman(): Unable to add Digest-Nonce attribute\n");
 		rc_avpair_free(send);
 		return -7;
 	}
 	
-	if (!rc_avpair_add(&send, PW_DIGEST_URI, _cred->uri.s, _cred->uri.len)) {
-		LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_URI attribute\n");
+	if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_URI].v, _cred->uri.s, _cred->uri.len, 0)) {
+		LOG(L_ERR, "sterman(): Unable to add Digest-URI attribute\n");
 		rc_avpair_free(send);
 		return -8;
 	}
-	if (!rc_avpair_add(&send, PW_DIGEST_METHOD, method.s, method.len)) {
-		LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_METHOD attribute\n");
+	if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_METHOD].v, method.s, method.len, 0)) {
+		LOG(L_ERR, "sterman(): Unable to add Digest-Method attribute\n");
 		rc_avpair_free(send);
 		return -9;
 	}
@@ -129,39 +130,39 @@ int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _
 	 * Add the additional authentication fields according to the QOP.
 	 */
 	if (_cred->qop.qop_parsed == QOP_AUTH) {
-		if (!rc_avpair_add(&send, PW_DIGEST_QOP, "auth", 4)) {
-			LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_QOP attribute\n");
+		if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_QOP].v, "auth", 4, 0)) {
+			LOG(L_ERR, "sterman(): Unable to add Digest-QOP attribute\n");
 			rc_avpair_free(send);
 			return -10;
 		}
-		if (!rc_avpair_add(&send, PW_DIGEST_NONCE_COUNT, _cred->nc.s, _cred->nc.len)) {
-			LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_NONCE_COUNT attribute\n");
+		if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_NONCE_COUNT].v, _cred->nc.s, _cred->nc.len, 0)) {
+			LOG(L_ERR, "sterman(): Unable to add Digest-CNonce-Count attribute\n");
 			rc_avpair_free(send);
 			return -11;
 		}
-		if (!rc_avpair_add(&send, PW_DIGEST_CNONCE, _cred->cnonce.s, _cred->cnonce.len)) {
-			LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_CNONCE attribute\n");
+		if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_CNONCE].v, _cred->cnonce.s, _cred->cnonce.len, 0)) {
+			LOG(L_ERR, "sterman(): Unable to add Digest-CNonce attribute\n");
 			rc_avpair_free(send);
 			return -12;
 		}
 	} else if (_cred->qop.qop_parsed == QOP_AUTHINT) {
-		if (!rc_avpair_add(&send, PW_DIGEST_QOP, "auth-int", 8)) {
-			LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_QOP attribute\n");
+		if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_QOP].v, "auth-int", 8, 0)) {
+			LOG(L_ERR, "sterman(): Unable to add Digest-QOP attribute\n");
 			rc_avpair_free(send);
 			return -13;
 		}
-		if (!rc_avpair_add(&send, PW_DIGEST_NONCE_COUNT, _cred->nc.s, _cred->nc.len)) {
-			LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_NONCE_COUNT attribute\n");
+		if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_NONCE_COUNT].v, _cred->nc.s, _cred->nc.len, 0)) {
+			LOG(L_ERR, "sterman(): Unable to add Digest-Nonce-Count attribute\n");
 			rc_avpair_free(send);
 			return -14;
 		}
-		if (!rc_avpair_add(&send, PW_DIGEST_CNONCE, _cred->cnonce.s, _cred->cnonce.len)) {
-			LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_CNONCE attribute\n");
+		if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_CNONCE].v, _cred->cnonce.s, _cred->cnonce.len, 0)) {
+			LOG(L_ERR, "sterman(): Unable to add Digest-CNonce attribute\n");
 			rc_avpair_free(send);
 			return -15;
 		}
-		if (!rc_avpair_add(&send, PW_DIGEST_BODY_DIGEST, _cred->opaque.s, _cred->opaque.len)) {
-			LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_BODY_DIGEST attribute\n");
+		if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_BODY_DIGEST].v, _cred->opaque.s, _cred->opaque.len, 0)) {
+			LOG(L_ERR, "sterman(): Unable to add Digest-Body-Digest attribute\n");
 			rc_avpair_free(send);
 			return -16;
 		}
@@ -170,73 +171,62 @@ int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _
 		/* send nothing for qop == "" */
 	}
 
-	/*
-	 * Now put everything place all the previous attributes into the
-	 * PW_DIGEST_ATTRIBUTES
-	 */
-	
-	/*
-	 *  Fix up Digest-Attributes issues see draft-sterman-aaa-sip-00
-	 */
-	for (vp = send; vp; vp = vp->next) {
-		switch (vp->attribute) {
-  		default:
-			break;
-
-			/* Fall thru the know values */
-		case PW_DIGEST_REALM:
-		case PW_DIGEST_NONCE:
-		case PW_DIGEST_METHOD:
-		case PW_DIGEST_URI:
-		case PW_DIGEST_QOP:
-		case PW_DIGEST_ALGORITHM:
-		case PW_DIGEST_BODY_DIGEST:
-		case PW_DIGEST_CNONCE:
-		case PW_DIGEST_NONCE_COUNT:
-		case PW_DIGEST_USER_NAME:
-	
-			/* overlapping! */
-			memmove(&vp->strvalue[2], &vp->strvalue[0], vp->lvalue);
-			vp->strvalue[0] = vp->attribute - PW_DIGEST_REALM + 1;
-			vp->lvalue += 2;
-			vp->strvalue[1] = vp->lvalue;
-			vp->attribute = PW_DIGEST_ATTRIBUTES;
-			break;
-		}
-	}
-
 	/* Add the response... What to calculate against... */
-	if (!rc_avpair_add(&send, PW_DIGEST_RESPONSE, _cred->response.s, _cred->response.len)) {
-		LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_RESPONSE attribute\n");
+	if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_RESPONSE].v, _cred->response.s, _cred->response.len, 0)) {
+		LOG(L_ERR, "sterman(): Unable to add Digest-Response attribute\n");
 		rc_avpair_free(send);
 		return -17;
 	}
 
 	/* Indicate the service type, Authenticate only in our case */
-	service = service_type;
-	if (!rc_avpair_add(&send, PW_SERVICE_TYPE, &service, 0)) {
-		LOG(L_ERR, "sterman(): Unable to add PW_SERVICE_TYPE attribute\n");
+	service = vals[V_SIP_SESSION].v;
+	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &service, 0, 0)) {
+		LOG(L_ERR, "sterman(): Unable to add Service-Type attribute\n");
 		rc_avpair_free(send);
 	 	return -18;
 	}
 
 	/* Add SIP URI as a check item */
-	if (!rc_avpair_add(&send, PW_SIP_URI_USER, user.s, user.len)) {
-		LOG(L_ERR, "sterman(): Unable to add PW_SIP_URI_USER attribute\n");
+	if (!rc_avpair_add(rh, &send, attrs[A_SIP_URI_USER].v, user.s, user.len, 0)) {
+		LOG(L_ERR, "sterman(): Unable to add Sip-URI-User attribute\n");
 		rc_avpair_free(send);
 	 	return -19;  	
 	}
-       
+
+	if (ciscopec != -1) {
+		/* Add SIP Call-ID as a Cisco VSA, like IOS does */
+		if (_msg->callid == NULL || _msg->callid->body.s == NULL) {
+			LOG(L_ERR, "sterman(): Call-ID is missed\n");
+			rc_avpair_free(send);
+			return -20;
+		}
+		callid.len = _msg->callid->body.len + 8;
+		callid.s = alloca(callid.len);
+		if (callid.s == NULL) {
+			LOG(L_ERR, "sterman(): No memory left\n");
+			rc_avpair_free(send);
+			return -21;
+		}
+		memcpy(callid.s, "call-id=", 8);
+		memcpy(callid.s + 8, _msg->callid->body.s, _msg->callid->body.len);
+		if (rc_avpair_add(rh, &send, attrs[A_CISCO_AVPAIR].v, callid.s,
+		    callid.len, ciscopec) == 0) {
+			LOG(L_ERR, "sterman(): Unable to add Cisco-AVPair attribute\n");
+			rc_avpair_free(send);
+			return -22;
+ 		}
+	}
+
 	/* Send request */
-	if ((i = rc_auth(SIP_PORT, send, &received, msg)) == OK_RC) {
+	if ((i = rc_auth(rh, SIP_PORT, send, &received, msg)) == OK_RC) {
 		DBG("radius_authorize_sterman(): Success\n");
 		rc_avpair_free(send);
 
 		     /* Make a copy of rpid if available */
-		if ((vp = rc_avpair_get(received, PW_SIP_RPID))) {
+		if ((vp = rc_avpair_get(received, attrs[A_SIP_RPID].v, 0))) {
 			if (MAX_RPID_LEN < vp->lvalue) {
 				LOG(L_ERR, "radius_authorize_sterman(): rpid buffer too small\n");
-				return -20;
+				return -23;
 			}
 			memcpy(_rpid->s, vp->strvalue, vp->lvalue);
 			_rpid->len = vp->lvalue;
@@ -249,6 +239,6 @@ int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _
 		DBG("radius_authorize_sterman(): Failure\n");
 		rc_avpair_free(send);
 		rc_avpair_free(received);
-		return -21;
+		return -24;
 	}
 }

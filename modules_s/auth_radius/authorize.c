@@ -128,7 +128,7 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 	     /* Clear the rpid buffer from previous value */
 	rpid.len = 0;
 
-	res = radius_authorize_sterman(&cred->digest, &_msg->first_line.u.request.method, &user, &rpid);
+	res = radius_authorize_sterman(_msg, &cred->digest, &_msg->first_line.u.request.method, &user, &rpid);
 	pkg_free(user.s);
 
 	if (res == 1) {

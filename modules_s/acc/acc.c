@@ -72,9 +72,9 @@ static str na={NA, NA_LEN};
 
 #ifdef RAD_ACC
 /* caution: keep these aligned to RAD_ACC_FMT !! */
-static int rad_attr[] = { PW_CALLING_STATION_ID, PW_CALLED_STATION_ID,
-	PW_SIP_TRANSLATED_REQ_ID, PW_ACCT_SESSION_ID, PW_SIP_TO_TAG, 
-	PW_SIP_FROM_TAG, PW_SIP_CSEQ };
+static int rad_attr[] = { A_CALLING_STATION_ID, A_CALLED_STATION_ID,
+	A_SIP_TRANSLATED_REQUEST_URI, A_ACCT_SESSION_ID, A_SIP_TO_TAG,
+	A_SIP_FROM_TAG, A_SIP_CSEQ };
 #endif
 
 #ifdef DIAM_ACC
@@ -551,14 +551,14 @@ inline UINT4 rad_status(struct sip_msg *rq, str *phrase)
 
 	code=phrase2code(phrase);
 	if (code==0)
-		return PW_STATUS_FAILED;
+		return vals[V_STATUS_FAILED].v;
 	if ((rq->REQ_METHOD==METHOD_INVITE || rq->REQ_METHOD==METHOD_ACK)
 				&& code>=200 && code<300) 
-		return PW_STATUS_START;
+		return vals[V_STATUS_START].v;
 	if ((rq->REQ_METHOD==METHOD_BYE 
 					|| rq->REQ_METHOD==METHOD_CANCEL)) 
-		return PW_STATUS_STOP;
-	return PW_STATUS_FAILED;
+		return vals[V_STATUS_STOP].v;
+	return vals[V_STATUS_FAILED].v;
 }
 
 int acc_rad_request( struct sip_msg *rq, struct hdr_field *to, 
@@ -594,28 +594,28 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 	}
 
 	av_type=rad_status(rq, phrase);
-	if (!rc_avpair_add(&send, PW_ACCT_STATUS_TYPE, &av_type,0)) {
+	if (!rc_avpair_add(rh, &send, attrs[A_ACCT_STATUS_TYPE].v, &av_type,0, 0)) {
 		LOG(L_ERR, "ERROR: acc_rad_request: add STATUS_TYPE\n");
 		goto error;
 	}
-	av_type=service_type;
-	if (!rc_avpair_add(&send, PW_SERVICE_TYPE, &av_type,0)) {
+	av_type=vals[V_SIP_SESSION].v;
+	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &av_type,0, 0)) {
 		LOG(L_ERR, "ERROR: acc_rad_request: add STATUS_TYPE\n");
 		goto error;
 	}
 	av_type=phrase2code(phrase); /* status=integer */
 	/* if (phrase.len<3) c=nullcode;
 	else { memcpy(ccode, phrase.s, 3); ccode[3]=0;c=nullcode;} */
-	if (!rc_avpair_add(&send, PW_SIP_RESPONSE_CODE, &av_type,0)) {
+	if (!rc_avpair_add(rh, &send, attrs[A_SIP_RESPONSE_CODE].v, &av_type,0, 0)) {
 		LOG(L_ERR, "ERROR: acc_rad_request: add RESPONSE_CODE\n");
 		goto error;
 	}
 	av_type=rq->REQ_METHOD;
-	if (!rc_avpair_add(&send, PW_SIP_METHOD, &av_type,0)) {
+	if (!rc_avpair_add(rh, &send, attrs[A_SIP_METHOD].v, &av_type,0, 0)) {
 		LOG(L_ERR, "ERROR: acc_rad_request: add SIP_METHOD\n");
 		goto error;
 	}
-        /* Handle PW_USER_NAME as a special case */
+        /* Handle User-Name as a special case */
 	user=cred_user(rq);  /* try to take it from credentials */
 	if (user) {
 		realm = cred_realm(rq);
@@ -629,10 +629,10 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 			memcpy(user_name.s, user->s, user->len);
 			user_name.s[user->len] = '@';
 			memcpy(user_name.s+user->len+1, realm->s, realm->len);
-			if (!rc_avpair_add(&send, PW_USER_NAME, 
-					   user_name.s, user_name.len)) {
+			if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, 
+					   user_name.s, user_name.len, 0)) {
 				LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
-				    "failed for %d\n", PW_USER_NAME );
+				    "failed for %d\n", attrs[A_USER_NAME].v );
 				pkg_free(user_name.s);
 				goto error;
 			}
@@ -640,10 +640,10 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 		} else {
 			user_name.len = user->len;
 			user_name.s = user->s;
-			if (!rc_avpair_add(&send, PW_USER_NAME, 
-					   user_name.s, user_name.len)) {
+			if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, 
+					   user_name.s, user_name.len, 0)) {
 				LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
-				    "failed for %d\n", PW_USER_NAME );
+				    "failed for %d\n", attrs[A_USER_NAME].v );
 				goto error;
 			}
 		}
@@ -662,10 +662,10 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 			memcpy(user_name.s, puri.user.s, puri.user.len);
 			user_name.s[puri.user.len] = '@';
 			memcpy(user_name.s+puri.user.len+1, puri.host.s, puri.host.len);
-			if (!rc_avpair_add(&send, PW_USER_NAME, 
-					   user_name.s, user_name.len)) {
+			if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, 
+					   user_name.s, user_name.len, 0)) {
 				LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
-				    "failed for %d\n", PW_USER_NAME );
+				    "failed for %d\n", attrs[A_USER_NAME].v );
 				pkg_free(user_name.s);
 				goto error;
 			}
@@ -673,25 +673,25 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 		} else {
 			user_name.len = na.len;
 			user_name.s = na.s;
-			if (!rc_avpair_add(&send, PW_USER_NAME, 
-					   user_name.s, user_name.len)) {
+			if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, 
+					   user_name.s, user_name.len, 0)) {
 				LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
-				    "failed for %d\n", PW_USER_NAME );
+				    "failed for %d\n", attrs[A_USER_NAME].v );
 				goto error;
 			}
 		}
 	}
         /* Remaining attributes from rad_attr vector */
 	for(i=0; i<attr_cnt; i++) {
-		if (!rc_avpair_add(&send, rad_attr[i], 
-				   val_arr[i]->s,val_arr[i]->len)) {
+		if (!rc_avpair_add(rh, &send, attrs[rad_attr[i]].v, 
+				   val_arr[i]->s,val_arr[i]->len, 0)) {
 			LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
-			    "failed for %d\n", rad_attr[i] );
+			    "failed for %s\n", attrs[rad_attr[i]].n );
 			goto error;
 		}
 	}
 		
-	if (rc_acct(SIP_PORT, send)!=OK_RC) {
+	if (rc_acct(rh, SIP_PORT, send)!=OK_RC) {
 		LOG(L_ERR, "ERROR: acc_rad_request: radius-ing failed\n");
 		goto error;
 	}

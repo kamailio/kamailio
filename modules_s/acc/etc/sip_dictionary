@@ -23,6 +23,9 @@
 #	7		= 1	(integer encoding)
 #
 
+VENDOR		Cisco			9
+ATTRIBUTE	Cisco-AVPair		1	string	Cisco
+
 #
 #	Following are the proper new names. Use these.
 #
@@ -99,39 +102,42 @@ ATTRIBUTE	Connect-Rate		1007	integer
 #	Experiment SIP-specific attributes:
 #	These attributes are tied between client & server
 #
-ATTRIBUTE	Sip-Method					101	integer
-ATTRIBUTE	Sip-Response-Code			102	integer
-ATTRIBUTE	Sip-CSeq					103	string
-ATTRIBUTE	Sip-To-Tag					104	string
-ATTRIBUTE	Sip-From-Tag				105	string
-ATTRIBUTE	Sip-Branch-ID				106	string
+ATTRIBUTE	Sip-Method			101	integer
+ATTRIBUTE	Sip-Response-Code		102	integer
+ATTRIBUTE	Sip-CSeq			103	string
+ATTRIBUTE	Sip-To-Tag			104	string
+ATTRIBUTE	Sip-From-Tag			105	string
+ATTRIBUTE	Sip-Branch-ID			106	string
 ATTRIBUTE	Sip-Translated-Request-URI	107	string
 ATTRIBUTE	Sip-Source-IP-Address		108	ipaddr
-ATTRIBUTE	Sip-Source-Port				109	integer
-ATTRIBUTE   Sip-User-ID	            	110 string
-ATTRIBUTE   Sip-User-realm 				111 string
-ATTRIBUTE   Sip-User-nonce 				112 string
-ATTRIBUTE   Sip-User-method				113 string
-ATTRIBUTE   Sip-User-digest-uri     	114 string
-ATTRIBUTE	Sip-User-nonce_count 		115 string
-ATTRIBUTE	Sip-User-qop				116 string
-ATTRIBUTE	Sip-User-opaque				117 string
-ATTRIBUTE	Sip-User-response			118 string
-ATTRIBUTE   Sip_User-cnonce				119 string
+ATTRIBUTE	Sip-Source-Port			109	integer
+ATTRIBUTE   	Sip-User-ID	            	110	string
+ATTRIBUTE   	Sip-User-Realm 			111	string
+ATTRIBUTE   	Sip-User-Nonce 			112	string
+ATTRIBUTE   	Sip-User-Method			113	string
+ATTRIBUTE   	Sip-User-Digest-URI     	114	string
+ATTRIBUTE	Sip-User-Nonce-Count 		115	string
+ATTRIBUTE	Sip-User-QOP			116	string
+ATTRIBUTE	Sip-User-Opaque			117	string
+ATTRIBUTE	Sip-User-Response		118	string
+ATTRIBUTE   	Sip-User-CNonce			119	string
 
+ATTRIBUTE	Sip-URI-User			208	string
+ATTRIBUTE	Sip-Group			211	string
+ATTRIBUTE	Sip-RPId			213	string
 
-ATTRIBUTE	Digest-Response		206	string
-ATTRIBUTE 	Digest-Attributes	207	string
-ATTRIBUTE	Digest-Realm		1063	string
-ATTRIBUTE	Digest-Nonce		1064	string
-ATTRIBUTE	Digest-Method		1065	string
-ATTRIBUTE	Digest-URI		1066	string
-ATTRIBUTE	Digest-QOP		1067	string
-ATTRIBUTE	Digest-Algorithm	1068	string
-ATTRIBUTE	Digest-Body-Digest	1069	string
-ATTRIBUTE	Digest-CNonce		1070	string
-ATTRIBUTE	Digest-Nonce-Count	1071	string
-ATTRIBUTE	Digest-User-Name	1072	string
+ATTRIBUTE	Digest-Response			206	string
+ATTRIBUTE 	Digest-Attributes		207	string
+ATTRIBUTE	Digest-Realm			1063	string
+ATTRIBUTE	Digest-Nonce			1064	string
+ATTRIBUTE	Digest-Method			1065	string
+ATTRIBUTE	Digest-URI			1066	string
+ATTRIBUTE	Digest-QOP			1067	string
+ATTRIBUTE	Digest-Algorithm		1068	string
+ATTRIBUTE	Digest-Body-Digest		1069	string
+ATTRIBUTE	Digest-CNonce			1070	string
+ATTRIBUTE	Digest-Nonce-Count		1071	string
+ATTRIBUTE	Digest-User-Name		1072	string
 
 
 
@@ -165,6 +171,9 @@ VALUE		Service-Type		Callback-Framed-User	4
 VALUE		Service-Type		Outbound-User		5
 VALUE		Service-Type		Administrative-User	6
 VALUE		Service-Type		NAS-Prompt-User		7
+VALUE		Service-Type		Call-Check		10
+VALUE		Service-Type		Group-Check		12
+VALUE		Service-Type		Sip-Session		15
 
 #	Framed Protocols
 
@@ -196,6 +205,7 @@ VALUE		Acct-Status-Type	Start			1
 VALUE		Acct-Status-Type	Stop			2
 VALUE		Acct-Status-Type	Accounting-On		7
 VALUE		Acct-Status-Type	Accounting-Off		8
+VALUE		Acct-Status-Type	Failed			15
 
 #	Authentication Types
 

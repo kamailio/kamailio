@@ -40,10 +40,15 @@
 #include "../../dprint.h"
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
+#include "../../modules/acc/dict.h"
 #include "grouprad_mod.h"
 #include "group.h"
 
 MODULE_VERSION
+
+void *rh;
+struct attr attrs[A_MAX];
+struct val vals[V_MAX];
 
 static int mod_init(void); /* Module initialization function */
 static int hf_fixup(void** param, int param_no); /* Header field fixup */
@@ -52,7 +57,7 @@ static int hf_fixup(void** param, int param_no); /* Header field fixup */
 /*
  * Module parameter variables
  */
-char* radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
+static char* radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
 int use_domain = 1;  /* By default we use domain */
 
 
@@ -93,16 +98,24 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	DBG("group_radius - initializing\n");
-	
-	if (rc_read_config(radius_config) != 0) {
+
+	memset(attrs, 0, sizeof(attrs));
+	memset(attrs, 0, sizeof(vals));
+	attrs[A_SERVICE_TYPE].n	= "Service-Type";
+	attrs[A_USER_NAME].n	= "User-Name";
+	vals[V_GROUP_CHECK].n	= "Group-Check";
+
+	if ((rh = rc_read_config(radius_config)) == NULL) {
 		LOG(L_ERR, "group_radius: Error opening configuration file \n");
 		return -1;
 	}
     
-	if (rc_read_dictionary(rc_conf_str("dictionary")) != 0) {
+	if (rc_read_dictionary(rh, rc_conf_str(rh, "dictionary")) != 0) {
 		LOG(L_ERR, "group_radius: Error opening dictionary file \n");
 		return -2;
 	}
+
+	INIT_AV(rh, attrs, vals, "group_radius", -3, -4);
 
 	return 0;
 }
