@@ -28,18 +28,24 @@ Chapter 1. User's Guide
 
 1.1. Overview
 
-   Least cost routing (LCR) module supports sequential forwarding of a
-   request to one or more gateways based on From URI and user part of
-   Request-URI (telephone number).  Gateway patterns matching From URI
-   and telephone number are ordered for forwarding purpose (1)
-   according to longest user part match, (2) according to priority, and
-   (3) randomly.
+   Least cost routing (LCR) module implements two related capabilities:
+
+   (1) sequential forwarding of a request to one or more gateways
+       (functions load_gws and next_gw),
+
+   (2) sequential forwarding to contacts if they don't share the
+       the same qvalue (functions load_contacts and next_contacts).
+
+   Gateway selection is based on From URI and user part of Request-URI
+   (telephone number).  Gateway patterns matching From URI and telephone
+   number are ordered for forwarding purpose (1) according to longest
+   user part match, (2) according to priority, and (3) randomly.
 
    Each gateway belongs to a gateway group either alone or among other
    gateways.  All gateways in a group share the same priority.
 
-   LCR module operates on two database tables gw and lcr.  Table gw
-   contains gw's name, IP address, port, and group id.  Table lcr
+   Gateway selection operates on two database tables: gw and lcr.  Table
+   gw contains gw's name, IP address, port, and group id.  Table lcr
    contains prefix of user part of Request-URI, From URI, gateway group
    id, and priority.  From URI can contain special characters % and _
    matching any number of any characters and any one character,
@@ -73,12 +79,24 @@ Chapter 1. User's Guide
      * from_uri_column (default "from_uri")
      * priority_column (default "priority")
 
-   In addition there are two parameters that can be used to override
-   names of the two AVPs used by LCR module:
+   In addition there are parameters that can be used to override names
+   of the AVPs used by LCR module:
 
-     * gw_addr_avp (default "lcr_gw_addr")
-     * gw_port_avp (default "lcr_gw_port")
-     _________________________________________________________
+     * gw_addr_avp	  (default "lcr_gw_addr")
+     * gw_port_avp	  (default "lcr_gw_port")
+     * contact_avp	  (default "lcr_contact")
+     * fr_inv_timer_avp	  (default "fr_inv_timer_avp")
+
+   Finally, there are two parameters used by sequential forwarding:
+
+     * fr_inv_timer	  (default 90)
+     * fr_inv_timer_next  (default 30)
+
+   Function next_contacts() sets tm fr_inv_timer to fr_inv_timer_next
+   value if, after next contacts, there are still lower qvalue
+   contacts available, and to fr_inv_timer value if next contacts are
+   the last ones left.
+    _________________________________________________________
 
 1.4. Exported Functions
 
@@ -105,13 +123,23 @@ Chapter 1. User's Guide
    where host:port part of Request-URI is replaced by the first
    gw_addr_avp, and gw_port_avp AVP values and destroys those AVP values.
 
+   Returns 1 on success and -1 if there were no gateways left or if an
+   error occurred (see syslog).
+
    Must be preceded by successful load_gws() call.
 
-   Example:
+   Example from route block:
    
    if (!next_gw()) {
-      sl_send_reply("503", "Service not available - No more gateways");
+      sl_send_reply("503", "Service not available - No gateways");
       break;
+    };
+
+   Example from failure route block:
+
+   if (!next_gw()) {
+      t_reply("503", "Service not available - No more gateways");
+      break;	     
     };
 
 1.4.3. from_gw()
@@ -124,6 +152,55 @@ Chapter 1. User's Guide
       ...
       break;
    };
+
+1.4.4. load_contacts()
+
+   Loads contacts in destination set in increasing qvalue order as
+   values of lcr_contact attribute.  If all contacts in the destination
+   set have the same qvalue, load_contacts() does not do
+   anything thus minimizing performance impact of sequential forking
+   capability when it is not needed.  Returns 1 if loading of contacts
+   succeeded or there was nothing to do.  Returns -1 on error (see
+   syslog).
+
+   Example:
+
+   if (!load_contacts()) {
+      sl_send_reply("500", "Server Internal Error - Cannot load contacts");
+      break;
+   };
+
+1.4.5. next_contacts()
+
+   If called from a route block, replaces Request-URI with the first
+   lcr_contact AVP value, adds the remaining lcr_contact AVP values
+   with the same qvalue as branches, and destroys those AVP values.  It
+   does nothing if there are no lcr_contact AVPs.  Returns 1 if there
+   were no errors and -1 if an error occurred (see syslog).
+
+   If called from a failure route block, adds the first lcr_contact AVP
+   value and all following lcr_contact AVP values with the same qvalue
+   as new branches to request and destroys those AVP values.  Returns 1
+   if new branches were successfully added and -1 on error (see syslog)
+   or if there were no more lcr_contact AVP values.
+
+   Must be preceded by successful load_contacts() call.
+
+   Example from route block:
+   
+   if (!next_contacts()) {
+       sl_send_reply("500", "Server Internal Error");
+        break;
+   } else {
+      t_relay();
+   };
+
+   Example from failure route block:
+   
+   if (next_contacts()) {
+       t_relay();
+   };
+
 
 1.5. FIFO Commands
 

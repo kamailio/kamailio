@@ -1,5 +1,5 @@
 /* 
- * Least Cost Routing module
+ * Least Cost Routing module (also implements sequential forking)
  *
  * Copyright (C) 2005 Juha Heinanen
  *
@@ -27,6 +27,7 @@
  * History:
  * -------
  *  2005-02-14: Introduced lcr module (jh)
+ *  2005-02-20: Added sequential forking functions (jh)
  */
 
 #include <stdio.h>
@@ -45,6 +46,8 @@
 #include "../mysql/dbase.h"
 #include "../../action.h"
 #include "../../modules/tm/tm_load.h"
+#include "../../qvalue.h"
+#include "../../dset.h"
 #include "fifo.h"
 
 MODULE_VERSION
@@ -56,6 +59,9 @@ MODULE_VERSION
  */
 #define GW_TABLE_VERSION 1
 #define LCR_TABLE_VERSION 1
+
+/* usr_avp flag for sequential forking */
+#define Q_FLAG      (1<<4)
 
 static void destroy(void);       /* Module destroy function */
 static int child_init(int rank); /* Per-child initialization function */
@@ -93,8 +99,13 @@ int reload_gws ( void );
 #define MAX_QUERY_SIZE 512
 #define MAX_NO_OF_GWS 32
 
+/* Default avp names */
 #define DEF_GW_ADDR_AVP "lcr_gw_addr"
 #define DEF_GW_PORT_AVP "lcr_gw_port"
+#define DEF_CONTACT_AVP "lcr_contact"
+#define DEF_FR_INV_TIMER_AVP "fr_inv_timer_avp"
+#define DEF_FR_INV_TIMER 90
+#define DEF_FR_INV_TIMER_NEXT 30
 
 /*
  * Type definitions
@@ -113,28 +124,42 @@ static db_func_t lcr_dbf;
 /*
  * Module parameter variables
  */
-static str db_url         = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
-str gw_table              = {GW_TABLE, GW_TABLE_LEN};
-str gw_name_col           = {GW_NAME_COL, GW_NAME_COL_LEN};
-str ip_addr_col           = {IP_ADDR_COL, IP_ADDR_COL_LEN};
-str port_col              = {PORT_COL, PORT_COL_LEN};
-str grp_id_col            = {GRP_ID_COL, GRP_ID_COL_LEN};
-str lcr_table             = {LCR_TABLE, LCR_TABLE_LEN};
-str prefix_col            = {PREFIX_COL, PREFIX_COL_LEN};
-str from_uri_col          = {FROM_URI_COL, FROM_URI_COL_LEN};
-str priority_col          = {PRIORITY_COL, PRIORITY_COL_LEN};
-str gw_addr_avp           = {DEF_GW_ADDR_AVP, sizeof(DEF_GW_ADDR_AVP) - 1};
-str gw_port_avp           = {DEF_GW_PORT_AVP, sizeof(DEF_GW_PORT_AVP) - 1};
+static str db_url    = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
+str gw_table         = {GW_TABLE, GW_TABLE_LEN};
+str gw_name_col      = {GW_NAME_COL, GW_NAME_COL_LEN};
+str ip_addr_col      = {IP_ADDR_COL, IP_ADDR_COL_LEN};
+str port_col         = {PORT_COL, PORT_COL_LEN};
+str grp_id_col       = {GRP_ID_COL, GRP_ID_COL_LEN};
+str lcr_table        = {LCR_TABLE, LCR_TABLE_LEN};
+str prefix_col       = {PREFIX_COL, PREFIX_COL_LEN};
+str from_uri_col     = {FROM_URI_COL, FROM_URI_COL_LEN};
+str priority_col     = {PRIORITY_COL, PRIORITY_COL_LEN};
+str gw_addr_avp      = {DEF_GW_ADDR_AVP, sizeof(DEF_GW_ADDR_AVP) - 1};
+str gw_port_avp      = {DEF_GW_PORT_AVP, sizeof(DEF_GW_PORT_AVP) - 1};
+str contact_avp      = {DEF_CONTACT_AVP, sizeof(DEF_CONTACT_AVP) - 1};
+str inv_timer_avp    = {DEF_FR_INV_TIMER_AVP, sizeof(DEF_FR_INV_TIMER_AVP)
+			-1 };
+int inv_timer        = DEF_FR_INV_TIMER;
+int inv_timer_next   = DEF_FR_INV_TIMER_NEXT;
 
 /*
- * Other module variables
+ * Other module types and variables
  */
+
+struct contact {
+    str uri;
+    qvalue_t q;
+    unsigned short q_flag;
+    struct contact *next;
+};
+
+int_str addr_name, port_name, contact_name, inv_timer_name;
+
 struct gw_info **gws;	/* Pointer to current gw table pointer */
 struct gw_info *gws_1;	/* Pointer to gw table 1 */
 struct gw_info *gws_2;	/* Pointer to gw table 2 */
 struct tm_binds tmb;
 
-int_str addr_name, port_name;
 
 /*
  * Module functions that are defined later
@@ -142,15 +167,19 @@ int_str addr_name, port_name;
 int load_gws(struct sip_msg* _m, char* _s1, char* _s2);
 int next_gw(struct sip_msg* _m, char* _s1, char* _s2);
 int from_gw(struct sip_msg* _m, char* _s1, char* _s2);
+int load_contacts (struct sip_msg*, char*, char*);
+int next_contacts (struct sip_msg*, char*, char*);
 
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"load_gws",  load_gws,   0, 0,         REQUEST_ROUTE},
-	{"next_gw",   next_gw,    0, 0,         REQUEST_ROUTE | FAILURE_ROUTE},
-	{"from_gw",   from_gw,    0, 0,         REQUEST_ROUTE | FAILURE_ROUTE},
+	{"load_gws",      load_gws,      0, 0, REQUEST_ROUTE},
+	{"next_gw",       next_gw,       0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"from_gw",       from_gw,       0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"load_contacts", load_contacts, 0, 0, REQUEST_ROUTE},
+	{"next_contacts", next_contacts, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -171,6 +200,10 @@ static param_export_t params[] = {
 	{"priority_column",          STR_PARAM, &priority_col.s },
 	{"gw_addr_avp",              STR_PARAM, &gw_addr_avp.s  },
 	{"gw_port_avp",              STR_PARAM, &gw_port_avp.s  },
+	{"contact_avp",              STR_PARAM, &contact_avp.s  },
+        {"fr_inv_timer_avp",         STR_PARAM, &inv_timer_avp.s  },
+        {"fr_inv_timer",             INT_PARAM, &inv_timer      },
+        {"fr_inv_timer_next",        INT_PARAM, &inv_timer_next },
 	{0, 0, 0}
 };
 
@@ -307,6 +340,8 @@ static int mod_init(void)
         priority_col.len = strlen(priority_col.s);
 	gw_addr_avp.len = strlen(gw_addr_avp.s);
 	gw_port_avp.len = strlen(gw_port_avp.s);
+	contact_avp.len = strlen(contact_avp.s);
+	inv_timer_avp.len = strlen(inv_timer_avp.s);
 
 	/* Check table version */
 	ver = lcr_db_ver(db_url.s, &gw_table);
@@ -363,6 +398,8 @@ static int mod_init(void)
 
 	addr_name.s = &gw_addr_avp;
 	port_name.s = &gw_port_avp;
+	contact_name.s = &contact_avp;
+	inv_timer_name.s = &inv_timer_avp;
 
 	return 0;
 
@@ -383,8 +420,8 @@ static void destroy(void)
  */
 int reload_gws ( void )
 {
-    int q_len, port, i;
-    unsigned int ip_addr;
+    int q_len, i;
+    unsigned int ip_addr, port;
     db_con_t* dbh;
     char query[MAX_QUERY_SIZE];
     db_res_t* res;
@@ -431,11 +468,11 @@ int reload_gws ( void )
 		lcr_dbf.close(dbh);
 		return -1;
 	}
-      	ip_addr = (int)VAL_INT(ROW_VALUES(row));
+      	ip_addr = (unsigned int)VAL_INT(ROW_VALUES(row));
 	if (VAL_NULL(ROW_VALUES(row) + 1) == 1) {
 		port = 0;
 	} else {
-		port = (int)VAL_INT(ROW_VALUES(row) + 1);
+		port = (unsigned int)VAL_INT(ROW_VALUES(row) + 1);
 	}
 	if (*gws == gws_1) {
 		gws_2[i].ip_addr = ip_addr;
@@ -626,7 +663,12 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 
 	destroy_avp(avp);
 
-	return rval;
+	if (rval != 1) {
+	    LOG(L_ERR, "next_gw(): ERROR: do_action failed with return value <%d>\n", rval);
+	    return -1;
+	}
+
+	return 1;
 
     } else { /* MODE_ONFAILURE */
 
@@ -681,7 +723,12 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 
 	pkg_free(uri.s);
 
-	return rval;
+	if (rval != 1) {
+	    LOG(L_ERR, "next_gw(): ERROR: do_action failed with return value <%d>\n", rval);
+	    return -1;
+	}
+
+	return -1;
     }	    
 }
 
@@ -706,4 +753,241 @@ int from_gw(struct sip_msg* _m, char* _s1, char* _s2)
     }
 
     return -1;
+}
+
+
+/* 
+ * Frees contact list used by load_contacts function
+ */
+static inline void free_contact_list(struct contact *curr) {
+    struct contact *prev;
+    while (curr) {
+	prev = curr;
+	curr = curr->next;
+	pkg_free(prev);
+    }
+}
+
+
+/* 
+ * Loads contacts in destination set into "lcr_contact" AVP in reverse
+ * priority order and associated each contact with Q_FLAG telling if
+ * contact is the last one in its priority class.  Finally, removes
+ * all branches from destination set.
+ */
+int load_contacts(struct sip_msg* msg, char* key, char* value)
+{	
+    	str branch, *ruri;
+	qvalue_t q, ruri_q;
+	struct contact *contacts, *next, *prev, *curr;
+	int_str val;
+	struct usr_avp *avp;
+
+	/* Check if anything needs to be done */
+	if (nr_branches == 0) {
+	    DBG("load_contacts(): DEBUG: Nothing to do - no branches!\n");
+	    return 1;
+	}
+
+	ruri = GET_RURI(msg);
+	if (!ruri) {
+	    LOG(L_ERR, "ERROR: load_contacts(): No Request-URI found\n");
+	    return -1;
+	}
+	ruri_q = get_ruri_q();
+
+	init_branch_iterator();
+	while((branch.s = next_branch(&branch.len, &q, 0, 0))) {
+	    if (q != ruri_q) {
+		goto rest;
+	    }
+	}
+	DBG("load_contacts(): DEBUG: Nothing to do - all same q!\n");
+	return 1;
+
+rest:
+	/* Insert Request-URI to contact list */
+	contacts = (struct contact *)pkg_malloc(sizeof(struct contact));
+	if (!contacts) {
+	    LOG(L_ERR, "ERROR: load_contacts(): No memory for Request-URI\n");
+	    return -1;
+	}
+	contacts->uri.s = ruri->s;
+	contacts->uri.len = ruri->len;
+	contacts->q = ruri_q;
+	contacts->next = (struct contact *)0;
+
+	/* Insert branch URIs to contact list in increasing q order */
+	init_branch_iterator();
+	while((branch.s = next_branch(&branch.len, &q, 0, 0))) {
+	    next = (struct contact *)pkg_malloc(sizeof(struct contact));
+	    if (!next) {
+		LOG(L_ERR, "ERROR: load_contacts(): No memory for branch URI\n");
+		free_contact_list(contacts);
+		return -1;
+	    }
+	    next->uri = branch;
+	    next->q = q;
+	    prev = (struct contact *)0;
+	    curr = contacts;
+	    while (curr && (curr->q < q)) {
+		prev = curr;
+		curr = curr->next;
+	    }
+	    if (!curr) {
+		next->next = (struct contact *)0;
+		prev->next = next;
+	    } else {
+		next->next = curr;
+		if (prev) {
+		    prev->next = next;
+		} else {
+		    contacts = next;
+		}
+	    }		    
+	}
+
+	/* Assign values for q_flags */
+	curr = contacts;
+	curr->q_flag = 0;
+	while (curr->next) {
+	    if (curr->q < curr->next->q) {
+		curr->next->q_flag = Q_FLAG;
+	    } else {
+		curr->next->q_flag = 0;
+	    }
+	    curr = curr->next;
+	}
+
+	/* Add contacts to "contacts" AVP */
+	curr = contacts;
+	while (curr) {
+	    val.s = &(curr->uri);
+	    add_avp(AVP_NAME_STR|AVP_VAL_STR|(curr->q_flag),
+		    contact_name, val);
+	    curr = curr->next;
+	}
+
+	/* Clear all branches */
+	clear_branches();
+
+	/* Free contacts list */
+	free_contact_list(contacts);
+
+	/* Print all avp_contact_avp attributes */
+	avp = search_first_avp(AVP_NAME_STR|AVP_VAL_STR, contact_name, &val);
+	do {
+	    DBG("load_contacts(): DEBUG: Loaded <%s>, q_flag <%d>\n",
+		val.s->s, avp->flags & Q_FLAG);
+	    avp = search_next_avp(avp, &val);
+	} while (avp);
+	
+	return 1;
+}
+
+
+/*
+ * Adds to request a destination set that includes all highest priority
+ * class contacts in "lcr_contact" AVP.   If called from a route block,
+ * rewrites the request uri with first contact and adds the remaining
+ * contacts as branches.  If called from failure route block, adds all
+ * contacts as brances.  Removes added contacts from "lcr_contact" AVP.
+ */
+int next_contacts(struct sip_msg* msg, char* key, char* value)
+{
+    struct usr_avp *avp, *prev;
+    int_str val;
+    struct action act;
+    int rval;
+
+    if (*(tmb.route_mode) == MODE_REQUEST) {
+	
+	/* Find first avp_contact_avp value */
+	avp = search_first_avp(AVP_NAME_STR|AVP_VAL_STR, contact_name, &val);
+	if (!avp) {
+	    DBG("next_contacts(): DEBUG: No AVPs -- we are done!\n");
+	    return 1;
+	}
+
+	/* Set Request-URI */
+	act.type = SET_URI_T;
+	act.p1_type = STRING_ST;
+	act.p1.string = val.s->s;
+	rval = do_action(&act, msg);
+	if (rval != 1) {
+	    destroy_avp(avp);
+	    return rval;
+	}
+	DBG("next_contacts(): DEBUG: R-URI is <%s>\n", val.s->s);
+	if (avp->flags & Q_FLAG) {
+	    destroy_avp(avp);
+	    /* Set fr_inv_timer */
+	    val.n = inv_timer_next;
+	    if (add_avp(AVP_NAME_STR, inv_timer_name, val) != 0) {
+		LOG(L_ERR, "next_contacts(): ERROR: setting of fr_inv_timer_avp failed\n");
+		return -1;
+	    }
+	    return 1;
+	}
+	    
+	/* Append branches until out of branches or Q_FLAG is set */
+	prev = avp;
+	while ((avp = search_next_avp(avp, &val))) {
+	    destroy_avp(prev);
+	    act.type = APPEND_BRANCH_T;
+	    act.p1_type = STRING_ST;
+	    act.p1.string = val.s->s;
+	    rval = do_action(&act, msg);
+	    if (rval != 1) {
+		destroy_avp(avp);
+		LOG(L_ERR, "next_contacts(): ERROR: do_action failed with return value <%d>\n", rval);
+		return -1;
+	    }
+	    DBG("next_contacts(): DEBUG: Branch is <%s>\n", val.s->s);
+	    if (avp->flags & Q_FLAG) {
+		destroy_avp(avp);
+		val.n = inv_timer_next;
+		if (add_avp(AVP_NAME_STR, inv_timer_name, val) != 0) {
+		    LOG(L_ERR, "next_contacts(): ERROR: setting of fr_inv_timer_avp failed\n");
+		    return -1;
+		}
+		return 1;
+	    }
+	    prev = avp;
+	}
+
+    } else { /* MODE_ONFAILURE */
+	
+	avp = search_first_avp(AVP_NAME_STR|AVP_VAL_STR, contact_name, &val);
+	if (!avp) return -1;
+
+	prev = avp;
+	do {
+	    act.type = APPEND_BRANCH_T;
+	    act.p1_type = STRING_ST;
+	    act.p1.string = val.s->s;
+	    rval = do_action(&act, msg);
+	    if (rval != 1) {
+		destroy_avp(avp);
+		return rval;
+	    }
+	    DBG("next_contacts(): DEBUG: New branch is <%s>\n", val.s->s);
+	    if (avp->flags & Q_FLAG) {
+		destroy_avp(avp);
+		return 1;
+	    }
+	    prev = avp;
+	    avp = search_next_avp(avp, &val);
+	    destroy_avp(prev);
+	} while (avp);
+
+	/* Restore fr_inv_timer */
+	val.n = inv_timer;
+	if (add_avp(AVP_NAME_STR, inv_timer_name, val) != 0) {
+	    LOG(L_ERR, "next_contacts(): ERROR: setting of fr_inv_timer_avp failed\n");
+	    return -1;
+	}
+    }
+
+    return 1;
 }
