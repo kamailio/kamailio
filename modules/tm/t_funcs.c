@@ -430,14 +430,48 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
       unsigned int len;
       char * buf;
 
-      //buf = build_res_buf_from_sip_reg( T->inbound_request );
+      buf = build_res_buf_from_sip_req( code , text , T->inbound_request , &len );
       if (!buf)
       {
          DBG("DEBUG: t_send_reply: response building failed\n");
          return -1;
       }
 
+     if ( T->inbound_response )
+      {
+         sh_free( T->inbound_response->buffer );
+      }
+      else
+      {
+         struct hostent  *nhost;
+         char foo;
 
+          T->inbound_response = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
+          memset( T->inbound_response , 0 , sizeof (struct retrans_buff) );
+          T->inbound_response->tl[RETRASMISSIONS_LIST].payload = &(T->inbound_response);
+          /*some dirty trick to get the port and ip of destination */
+          foo = *((p_msg->via1->host.s)+(p_msg->via1->host.len));
+          *((p_msg->via1->host.s)+(p_msg->via1->host.len)) = 0;
+          nhost = gethostbyname( p_msg->via1->host.s );
+          *((p_msg->via1->host.s)+(p_msg->via1->host.len)) = foo;
+          if ( !nhost )
+             return -1;
+          memcpy( &(T->inbound_response->to.sin_addr) , &(nhost->h_addr) , nhost->h_length );
+          T->inbound_response->dest_ip         = htonl(T->inbound_response->to.sin_addr.s_addr);
+          T->inbound_response->dest_port      = ntohl(T->inbound_response->to.sin_port);
+          T->inbound_response->to.sin_family = AF_INET;
+      }
+
+      T->inbound_response->bufflen = len ;
+      T->inbound_response->buffer   = (char*)sh_malloc( len );
+      memcpy( T->inbound_response->buffer , buf , len );
+      free( buf ) ;
+
+      /* make sure that if we send something final upstream, everything else will be cancelled */
+      if ( code>=200 )
+         t_put_on_wait( p_msg );
+
+      t_retransmit_reply( p_msg );
    }
 }
 
