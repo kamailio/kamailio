@@ -56,6 +56,8 @@ void cancel_branch( struct cell *t, int branch );
 
 int fifo_uac_cancel( FILE* stream, char *response_file );
 
+int unixsock_uac_cancel(str* msg);
+
 char *build_cancel(struct cell *Trans,unsigned int branch,
 	unsigned int *len );
 

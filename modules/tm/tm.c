@@ -492,6 +492,10 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if (unixsock_register_cmd("t_uac_cancel", unixsock_uac_cancel) < 0) {
+		LOG(L_CRIT, "cannot register t_uac_cancel with the unix server\n");
+		return -1;
+	}
 
 	/* building the hash table*/
 	if (!init_hash_table()) {
