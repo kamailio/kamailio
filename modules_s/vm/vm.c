@@ -45,13 +45,14 @@
 #include "../../error.h"
 #include "../../ut.h"
 #include "../../config.h"
-#include "../tm/tm_load.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_rr.h"
 #include "../../parser/parse_nameaddr.h"
 #include "../../parser/parser_f.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../db/db.h"
+#include "../tm/tm_load.h"
+//#include "../tm/t_reply.h"
 
 #include "vm_fifo.h"
 #include "defs.h"
@@ -84,7 +85,9 @@ static str empty_param = {".",1};
 
 static int write_to_vm_fifo(char *fifo, str *lines, int cnt );
 static int init_tmb();
-static int vm_action(struct sip_msg*, char* fifo, char*);
+static int vm_action_req(struct sip_msg*, char* fifo, char *action);
+static int vm_action_fld(struct sip_msg*, char* fifo, char *action);
+static int vm_action(struct sip_msg* msg, char* fifo, char *action, int mode);
 static int vmt_action(struct sip_msg*, char* fifo, char*);
 static int vm_mod_init(void);
 static int vm_init_child(int rank);
@@ -110,7 +113,8 @@ db_con_t* db_handle = 0;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"vm", vm_action, 2, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"vm", vm_action_req, 2, 0, REQUEST_ROUTE },
+	{"vm", vm_action_fld, 2, 0, FAILURE_ROUTE },
 	{"vmt", vmt_action, 2, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{0, 0, 0, 0, 0}
 };
@@ -271,7 +275,23 @@ static int vmt_action(struct sip_msg* msg, char* fifo, char* action)
 #define VM_RR_PARSED       (1<<3)
 #define VM_RRTMP_PARSED    (1<<4)
 
-static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
+#define VM_REQUEST   0
+#define VM_ONFAILURE 1
+
+
+static int vm_action_req(struct sip_msg *msg, char* fifo, char *action)
+{
+	return vm_action( msg, fifo, action, VM_REQUEST);
+}
+
+
+static int vm_action_fld(struct sip_msg *msg, char* fifo, char *action)
+{
+	return vm_action( msg, fifo, action, VM_ONFAILURE);
+}
+
+
+static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action,int mode)
 {
     str             body;
     unsigned int    hash_index;
@@ -302,6 +322,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	int             ret;
 
 	ret = -1;
+	DBG("DEBUG:vm:vm_action: mode is %d\n",mode);
 
 	if(msg->first_line.type != SIP_REQUEST){
 		LOG(L_ERR, "ERROR: vm() has been passed something "
@@ -313,7 +334,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 
 	/* parse all -- we will need every header field for a UAS
 	 * avoid parsing if in FAILURE_ROUTE - all hdr have already been parsed */
-	if ( rmode==MODE_REQUEST && parse_headers(msg, HDR_EOH, 0)==-1) {
+	if ( mode==VM_REQUEST && parse_headers(msg, HDR_EOH, 0)==-1) {
 		LOG(L_ERR, "ERROR: vm: parse_headers failed\n");
 		goto error;
 	}
@@ -329,7 +350,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	/* if in FAILURE_MODE, we have to remember if the from will be parsed by us
 	 * or was already parsed - if it's parsed by us, free it at the end */
 	if (msg->from->parsed==0) {
-		if (rmode==MODE_ONFAILURE )
+		if (mode==VM_ONFAILURE )
 			parse_flags |= VM_FROM_PARSED;
 		if(parse_from_header(msg) == -1){
 			LOG(L_ERR,"ERROR: %s : vm: "
@@ -350,7 +371,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	str_uri.len = 0;
 	if(msg->contact) {
 		if (msg->contact->parsed==0) {
-			if (rmode==MODE_ONFAILURE)
+			if (mode==VM_ONFAILURE)
 				parse_flags |= VM_CONTACT_PARSED;
 			if( parse_contact(msg->contact) == -1) {
 				LOG(L_ERR,"ERROR: %s : vm: "
@@ -392,7 +413,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	p_hdr = msg->record_route;
 	if(p_hdr) {
 		if (p_hdr->parsed==0) {
-			if (rmode==MODE_ONFAILURE)
+			if (mode==VM_ONFAILURE)
 				parse_flags |= VM_RR_PARSED;
 			if ( parse_rr(p_hdr) ) {
 				LOG(L_ERR,"ERROR: vm: while parsing 'Record-Route:' header\n");
@@ -429,7 +450,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 			if(p_hdr->parsed==0) {
 				/* if we are in failure route and we have to parse,
 				 * remember to free before exiting */
-				if (rmode==MODE_ONFAILURE)
+				if (mode==VM_ONFAILURE)
 					parse_flags |= VM_RRTMP_PARSED;
 				if ( parse_rr(p_hdr) ){
 					LOG(L_ERR,"ERROR: %s : vm: "
