@@ -1,3 +1,7 @@
+/*
+ * $Id$
+ */
+
 #ifndef __DB_H__
 #define __DB_H__
 
@@ -5,8 +9,6 @@
 
 /*
  * Generic database interface
- *
- * $id$
  */
 
 
