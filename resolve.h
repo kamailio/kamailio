@@ -55,6 +55,11 @@ struct aaaa_rdata {
 	unsigned char ip6[16];
 };
 
+/* cname rec. struct*/
+struct cname_rdata {
+	char name[MAX_DNS_NAME];
+};
+
 
 
 struct rdata* get_record(char* name, int type);

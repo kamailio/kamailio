@@ -73,7 +73,7 @@ struct srv_rdata* dns_srv_parser( unsigned char* msg, unsigned char* end,
 	if ((rdata+6)>end) goto error;
 	srv=(struct srv_rdata*)local_malloc(sizeof(struct srv_rdata));
 	if (srv==0){
-		LOG(L_ERR, "ERROR: dns_srv_parser: outof memory\n");
+		LOG(L_ERR, "ERROR: dns_srv_parser: out of memory\n");
 		goto error;
 	}
 	
@@ -84,12 +84,35 @@ struct srv_rdata* dns_srv_parser( unsigned char* msg, unsigned char* end,
 	srv->priority=ntohs(srv->priority);
 	srv->weight=ntohs(srv->weight);
 	srv->port=ntohs(srv->port);
-	if ((len=dn_expand(msg, end, rdata, srv->name, MAX_DNS_NAME))==-1)
+	if ((len=dn_expand(msg, end, rdata, srv->name, MAX_DNS_NAME-1))==-1)
 		goto error;
-	/* add terminatng 0 ? */
+	/* add terminating 0 ? (warning: len=compressed name len) */
 	return srv;
 error:
 	if (srv) local_free(srv);
+	return 0;
+}
+
+
+
+/* parses a CNAME record into a cname_rdata structure */
+struct cname_rdata* dns_cname_parser( unsigned char* msg, unsigned char* end,
+									  unsigned char* rdata)
+{
+	struct cname_rdata* cname;
+	int len;
+	
+	cname=0;
+	cname=(struct cname_rdata*)local_malloc(sizeof(struct cname_rdata));
+	if(cname==0){
+		LOG(L_ERR, "ERROR: dns_cname_parser: out of memory\n");
+		goto error;
+	}
+	if ((len=dn_expand(msg, end, rdata, cname->name, MAX_DNS_NAME-1))==-1)
+		goto error;
+	return cname;
+error:
+	if (cname) local_free(cname);
 	return 0;
 }
 
@@ -236,22 +259,16 @@ struct rdata* get_record(char* name, int type)
 		rdlength=ntohs(rdlength);
 		p+=2;
 		/* check for type */
+		/*
 		if (rtype!=type){
 			LOG(L_ERR, "WARNING: get_record: wrong type in answer (%d!=%d)\n",
 					rtype, type);
 			p+=rdlength;
 			continue;
 		}
-		/* expand the "type" record  (rdata)*/
-		/* print it */
-		/*
-		printf("\ntype=%d class= %d, ttl= %d, rdlength= %d\n",
-				rtype, class, ttl, rdlength);
-		for (i=0;i<rdlength;i++){
-			printf("%x ", *(p+i));
-		}
-		printf("\n");
 		*/
+		/* expand the "type" record  (rdata)*/
+		
 		rd=(struct rdata*) local_malloc(sizeof(struct rdata));
 		if (rd==0){
 			LOG(L_ERR, "ERROR: get_record: out of memory\n");
@@ -260,7 +277,8 @@ struct rdata* get_record(char* name, int type)
 		rd->type=rtype;
 		rd->class=class;
 		rd->ttl=ttl;
-		switch(type){
+		rd->next=0;
+		switch(rtype){
 			case T_SRV:
 				srv_rd= dns_srv_parser(buff.buff, end, p);
 				rd->rdata=(void*)srv_rd;
@@ -294,10 +312,17 @@ struct rdata* get_record(char* name, int type)
 				*crt=rd;
 				crt=&(rd->next);
 				break;
+			case T_CNAME:
+				rd->rdata=(void*) dns_cname_parser(buff.buff, end, p);
+				if(rd->rdata==0) goto error_parse;
+				*crt=rd;
+				crt=&(rd->next);
+				break;
 			default:
-				LOG(L_ERR, "BUG: get_record: unknown type %d\n", type);
+				LOG(L_ERR, "WARNING: get_record: unknown type %d\n", rtype);
 				rd->rdata=0;
-				goto error;
+				*crt=rd;
+				crt=&(rd->next);
 		}
 		
 		p+=rdlength;
