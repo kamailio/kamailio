@@ -8,6 +8,14 @@ ordered by numbers of ser versions to which they relate,
 beginning with the newest release. Issues related to
 operating systems are summarized in the bottom.
 
+Desc: ser 0.8.10 reports No memory left when an INVITE containing Route
+      header fields is received.
+BugId:n/a
+Ser version: 0.8.10
+Patch: http://iptel.org/~janakj/invroute.patch
+Workaround: Apply the patch to 0.8.10 sources
+CVS status: fixed
+---------------------------------------------------------------
 Desc: ser 0.8.10 fails to remove consumed verified credentials properly
       and leaves characters in forwarded messages when consume_credentials
       is used
