@@ -117,7 +117,7 @@ int parse_content_type_hdr( struct sip_msg *msg )
 			{'p',CONTENT_TYPE_APPLICATION_SDP,0,-1},
 	};
 	int node;
-	int mime;
+	long mime;
 	char *mark;
 	char *p, *end;
 
@@ -203,11 +203,11 @@ int parse_content_type_hdr( struct sip_msg *msg )
 		goto error;
 
 	mime = ((mime==-1)?CONTENT_TYPE_UNKNOWN:mime);
-	(int)(msg->content_type->parsed) = mime;
+	msg->content_type->parsed = (void*)mime;
 	return mime;
 error:
 	LOG(L_ERR,"ERROR:parse_content_type: parse error near char [%d][%c] "
-		"offset=%d\n",*p,*p,p-msg->content_type->body.s);
+		"offset=%d\n",*p,*p,(int)(p-msg->content_type->body.s));
 	return -1;
 }
 

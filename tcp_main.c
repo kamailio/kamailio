@@ -33,10 +33,10 @@
 #error "shared memory support needed (add -DSHM_MEM to Makefile.defs)"
 #endif
 
-#include <sys/select.h>
 
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/uio.h>  /* writev*/
 
@@ -348,7 +348,13 @@ get_fd:
 send_it:
 	DBG("tcp_send: sending...\n");
 	lock_get(&c->write_lock);
-	n=send(fd, buf, len, MSG_NOSIGNAL);
+	n=send(fd, buf, len,
+#ifdef HAVE_MSG_NOSIGNAL
+			MSG_NOSIGNAL
+#else
+			0
+#endif
+			);
 	lock_release(&c->write_lock);
 	DBG("tcp_send: after write: c= %p n=%d fd=%d\n",c, n, fd);
 	DBG("tcp_send: buf=\n%.*s\n", (int)len, buf);

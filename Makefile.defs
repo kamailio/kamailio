@@ -530,7 +530,8 @@ LIBS= -lfl -ldl -lresolv
 
 #os specific stuff
 ifeq ($(OS), linux)
-	DEFS+=-DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD
+	DEFS+=-DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD \
+			-DHAVE_MSG_NOSIGNAL
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_SYSV_SEM  # try posix sems
 		found_lock_method=yes

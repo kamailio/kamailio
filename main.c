@@ -712,7 +712,7 @@ int main_loop()
 			for(i=0;i<children_no;i++){
 				process_no++;
 #ifdef USE_TCP
-		 		if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sockfd)<0){
+		 		if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
 					LOG(L_ERR, "ERROR: main_loop: socketpair failed: %s\n",
 						strerror(errno));
 					goto error;
@@ -770,7 +770,7 @@ int main_loop()
 #endif
 	{
 #ifdef USE_TCP
- 		if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sockfd)<0){
+ 		if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
 			LOG(L_ERR, "ERROR: main_loop: socketpair failed: %s\n",
 				strerror(errno));
 			goto error;

@@ -63,13 +63,16 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <string.h>
 #include <time.h>
 #include <stdarg.h>
+#ifdef USE_TCP
+#include <sys/socket.h>
+#endif
+
 #include "dprint.h"
 #include "ut.h"
 #include "error.h"
@@ -512,7 +515,7 @@ int open_fifo_server()
 	}
 	memcpy(up_since_ctime,t,strlen(t)+1);
 #ifdef USE_TCP
-	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sockfd)<0){
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
 			LOG(L_ERR, "ERROR: open_fifo_server: socketpair failed: %s\n",
 				strerror(errno));
 			return -1;

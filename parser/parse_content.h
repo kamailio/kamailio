@@ -45,13 +45,13 @@
 /*
  * returns the content-length value of a sip_msg as an integer
  */
-#define get_content_length(_msg_)   ((int)((_msg_)->content_length->parsed))
+#define get_content_length(_msg_)   ((long)((_msg_)->content_length->parsed))
 
 
 /*
  * returns the content-type value of a sip_msg as an integer
  */
-#define get_content_type(_msg_)   ((int)((_msg_)->content_type->parsed))
+#define get_content_type(_msg_)   ((long)((_msg_)->content_type->parsed))
 
 
 

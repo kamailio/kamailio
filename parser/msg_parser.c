@@ -173,9 +173,10 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 				LOG(L_ERR, "ERROR:get_hdr_field: bad content_length header\n");
 				goto error;
 			}
-			hdr->parsed=(void*)integer;
+			hdr->parsed=(void*)(long)integer;
 			hdr->body.len=tmp-hdr->body.s;
-			DBG("DEBUG: get_hdr_body : content_length=%d\n",(int)hdr->parsed);
+			DBG("DEBUG: get_hdr_body : content_length=%d\n",
+					(int)(long)hdr->parsed);
 			break;
 		case HDR_CONTENTTYPE:
 		case HDR_FROM:

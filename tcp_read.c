@@ -37,10 +37,10 @@
 #include <errno.h>
 #include <string.h>
 
-#include <sys/select.h>
 
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 
 #include <unistd.h>
@@ -368,9 +368,11 @@ again:
 			bytes=tcp_read_headers(req, s);
 						/* if timeout state=0; goto end__req; */
 			DBG("read= %d bytes, parsed=%d, state=%d, error=%d\n",
-					bytes, req->parsed-req->start, req->state, req->error );
+					bytes, (int)(req->parsed-req->start), req->state,
+					req->error );
 			DBG("tcp_read_req: last char=%X, parsed msg=\n%.*s\n",
-					*(req->parsed-1), req->parsed-req->start, req->start);
+					*(req->parsed-1), (int)(req->parsed-req->start),
+					req->start);
 			if (bytes==-1){
 				LOG(L_ERR, "ERROR: tcp_read_req: error reading \n");
 				resp=CONN_ERROR;
@@ -386,8 +388,8 @@ again:
 		if (req->error!=TCP_REQ_OK){
 			LOG(L_ERR,"ERROR: tcp_read_req: bad request, state=%d, error=%d "
 					  "buf:\n%.*s\nparsed:\n%.*s\n", req->state, req->error,
-					  req->pos-req->buf, req->buf,
-					  req->parsed-req->start, req->start);
+					  (int)(req->pos-req->buf), req->buf,
+					  (int)(req->parsed-req->start), req->start);
 			DBG("- received from: port %d, ip -", ntohs(con->rcv.src_port));
 			print_ip(&con->rcv.src_ip); DBG("-\n");
 			resp=CONN_ERROR;
@@ -398,7 +400,7 @@ again:
 			DBG("- received from: port %d, ip - ", ntohs(con->rcv.src_port));
 			print_ip(&con->rcv.src_ip); DBG("-\n");
 			DBG("tcp_read_req: headers:\n%.*s.\n",
-					req->body-req->start, req->start);
+					(int)(req->body-req->start), req->start);
 			if (req->has_content_len){
 				DBG("tcp_read_req: content-length= %d\n", req->content_len);
 				DBG("tcp_read_req: body:\n%.*s\n", req->content_len,req->body);

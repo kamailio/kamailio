@@ -249,7 +249,7 @@ static int comp_port( int port, void *param, int op, int subtype )
 		LOG(L_CRIT, "BUG: comp_port: number expected: %d\n", subtype );
 		return E_BUG;
 	}
-	return port==(int)param;
+	return port==(long)param;
 }
 
 /* eval_elem helping function, returns str op param */

@@ -355,7 +355,7 @@ struct module_exports exports= {
 
 inline static int fixup_str2int( void** param, int param_no)
 {
-	unsigned int go_to;
+	unsigned long go_to;
 	int err;
 
 	if (param_no==1) {
@@ -530,7 +530,7 @@ inline static int fixup_hostport2proxy(void** param, int param_no)
 /* (char *code, char *reason_phrase)==>(int code, r_p as is) */
 inline static int fixup_t_send_reply(void** param, int param_no)
 {
-	unsigned int code;
+	unsigned long code;
 	int err;
 
 	if (param_no==1){
@@ -619,9 +619,9 @@ inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2)
 	 */
 	if (rmode==MODE_ONREPLY_REQUEST) { 
 		DBG("DEBUG: t_reply_unsafe called from w_t_reply\n");
-		return t_reply_unsafe(t, msg, (unsigned int) str, str2);
+		return t_reply_unsafe(t, msg, (unsigned int)(long) str, str2);
 	} else {
-		return t_reply( t, msg, (unsigned int) str, str2);
+		return t_reply( t, msg, (unsigned int)(long) str, str2);
 	}
 }
 
@@ -698,7 +698,7 @@ inline static int w_t_newtran( struct sip_msg* p_msg, char* foo, char* bar )
 
 inline static int w_t_on_negative( struct sip_msg* msg, char *go_to, char *foo )
 {
-	return t_on_negative( (unsigned int ) go_to );
+	return t_on_negative( (unsigned int )(long) go_to );
 }
 
 inline static int w_t_relay_to( struct sip_msg  *p_msg , 
