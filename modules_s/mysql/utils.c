@@ -32,7 +32,9 @@
  *            guess daylight saving (janakj)
  */
 
-#define _XOPEN_SOURCE 4
+
+#define _XOPEN_SOURCE 4     /* bsd */
+#define _XOPEN_SOURCE_EXTENDED 1    /* solaris */
 
 #include <strings.h>
 #include <string.h>
