@@ -34,7 +34,7 @@ int udp_init(unsigned long ip, unsigned short port)
 	/* set sock opts? */
 	optval=1;
 	if (setsockopt(udp_sock, SOL_SOCKET, SO_REUSEADDR,
-					&optval, sizeof(optval)) ==-1)
+					(void*)&optval, sizeof(optval)) ==-1)
 	{
 		DPrint("ERROR: udp_init: setsockopt: %s\n", strerror());
 		goto error;

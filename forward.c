@@ -45,7 +45,7 @@ int check_address(unsigned long ip, char *name, int resolver)
 	}
 	if (resolver&DO_REV_DNS){
 		/* try reverse dns */
-		he=gethostbyaddr(&ip, sizeof(ip), AF_INET);
+		he=gethostbyaddr((char*)&ip, sizeof(ip), AF_INET);
 		if (strcmp(he->h_name, name)==0)
 			return 0;
 		for (i=0; he->h_aliases[i];i++){
