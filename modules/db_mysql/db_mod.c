@@ -46,10 +46,10 @@ struct module_exports exports = {
 	},
 	8, /* number of functions*/
 
-	NULL,   /* Module parameter names */
-	NULL,   /* Module parameter types */
-	NULL,   /* Module parameter variable pointers */
-	0,      /* Number of module paramers */
+	0,   /* Module parameter names */
+	0,   /* Module parameter types */
+	0,   /* Module parameter variable pointers */
+	0,   /* Number of module paramers */
 
 	mod_init, /* module initialization function */
 	0,        /* response function*/

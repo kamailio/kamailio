@@ -71,7 +71,7 @@ static inline int connect_db(db_con_t* _h, const char* _db_url)
 
 	mysql_init(CON_CONNECTION(_h));
 
-	if (!mysql_real_connect(CON_CONNECTION(_h), host, user, password, database, p, NULL, 0)) {
+	if (!mysql_real_connect(CON_CONNECTION(_h), host, user, password, database, p, 0, 0)) {
 		LOG(L_ERR, "connect_db(): %s\n", mysql_error(CON_CONNECTION(_h)));
 		mysql_close(CON_CONNECTION(_h));
 		pkg_free(buf);
@@ -235,14 +235,14 @@ db_con_t* db_init(const char* _sqlurl)
 #ifdef PARANOID
 	if (!_sqlurl) {
 		LOG(L_ERR, "db_init(): Invalid parameter value\n");
-		return NULL;
+		return 0;
 	}
 #endif
 
 	res = pkg_malloc(sizeof(db_con_t) + sizeof(struct con_mysql));
 	if (!res) {
 		LOG(L_ERR, "db_init(): No memory left\n");
-		return NULL;
+		return 0;
 	} else {
 		memset(res, 0, sizeof(db_con_t) + sizeof(struct con_mysql));
 	}
@@ -250,7 +250,7 @@ db_con_t* db_init(const char* _sqlurl)
 	if (connect_db(res, _sqlurl) < 0) {
 		LOG(L_ERR, "db_init(): Error while trying to connect database\n");
 		pkg_free(res);
-		return NULL;
+		return 0;
 	}
 
 	return res;
@@ -289,18 +289,24 @@ int get_result(db_con_t* _h, db_res_t** _r)
 	}
 #endif
 
-	CON_RESULT(_h) = mysql_store_result(CON_CONNECTION(_h));
-	if (!CON_RESULT(_h)) {
-		LOG(L_ERR, "get_result(): %s\n", mysql_error(CON_CONNECTION(_h)));
-		*_r = NULL;
+	*_r = new_result();
+	if (*_r == 0) {
+		LOG(L_ERR, "get_result(): No memory left\n");
 		return -2;
 	}
 
-	*_r = new_result();
+	CON_RESULT(_h) = mysql_store_result(CON_CONNECTION(_h));
+	if (!CON_RESULT(_h)) {
+		LOG(L_ERR, "get_result(): %s\n", mysql_error(CON_CONNECTION(_h)));
+		free_result(*_r);
+		*_r = 0;
+		return -3;
+	}
+
         if (convert_result(_h, *_r) < 0) {
 		LOG(L_ERR, "get_result(): Error while converting result\n");
 		free_result(*_r);
-		return -3;
+		return -4;
 	}
 	
 	return 0;
@@ -320,7 +326,7 @@ int db_free_query(db_con_t* _h, db_res_t* _r)
 	     return -1;
      }
      mysql_free_result(CON_RESULT(_h));
-     CON_RESULT(_h) = NULL;
+     CON_RESULT(_h) = 0;
      return 0;
 }
 
