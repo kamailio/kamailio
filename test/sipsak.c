@@ -34,6 +34,7 @@ bouquets and brickbats to farhan@hotfoon.com
 #include <regex.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/poll.h>
 
 #define SIPSAK_VERSION "v0.1"
 #define RESIZE		1024
@@ -355,6 +356,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 {
 	struct sockaddr_in	addr, sockname;
 	struct timeval	tv;
+	struct pollfd sockerr;
 	int ssock, redirected, retryAfter, nretries;
 	int sock, i, len, ret, usrlocstep;
 	char	*contact, *crlf, *foo, *bar;
@@ -365,7 +367,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 	regex_t* redexp;
 
 	redirected = 1;
-	nretries = 10;
+	nretries = 5;
 	retryAfter = 500;
 	usrlocstep = 0;
 
@@ -490,6 +492,16 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 			ret = select(FD_SETSIZE, &fd, NULL, NULL, &tv);
 			if (ret == 0)
 			{
+				sockerr.fd=sock;
+				sockerr.events=POLLERR;
+				if ((poll(&sockerr, 1, 10))==1) {
+					if (sockerr.revents && POLLERR) {
+						printf("send failure:\n");
+						recv(sock, reply, strlen(reply), 0);
+						perror("");
+						exit(1);
+					}
+				}
 				printf("** timeout **\n");
 				retryAfter = retryAfter * 2;
 				if (retryAfter > 5000)
