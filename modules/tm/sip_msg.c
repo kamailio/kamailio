@@ -36,6 +36,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
    struct to_param   *to_prm,*new_to_prm;
    struct sip_msg     *new_msg;
    struct lump          *lump_chain, *lump_tmp, **lump_anchor, **lump_anchor2;
+   struct lump_rpl    *rpl_lump, *new_rpl_lump, **rpl_lump_anchor;
    char                       *p,*foo;
 
 
@@ -97,8 +98,9 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
       lump_chain = lump_chain->next;
    }
 
-   /**/
-
+   /*length of reply lump structures*/
+   for(rpl_lump=org_msg->reply_lump;rpl_lump;rpl_lump=rpl_lump->next)
+       len+=rpl_lump->text.len;
 
    p=(char *)sh_malloc(len);foo=p;
    if (!p)
@@ -290,6 +292,21 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
       lump_anchor = &((*lump_anchor)->next);
       lump_chain = lump_chain->next;
    }
+
+   /*cloning reply lump structures*/
+   rpl_lump_anchor = &(new_msg->reply_lump);
+   for(rpl_lump=org_msg->reply_lump;rpl_lump;rpl_lump=rpl_lump->next)
+   {
+       *(rpl_lump_anchor)=(struct lump_rpl*)p;
+       p+=sizeof( struct lump_rpl );
+       (*rpl_lump_anchor)->text.len = rpl_lump->text.len;
+       (*rpl_lump_anchor)->text.s=p;
+       p+=rpl_lump->text.len;
+       memcpy((*rpl_lump_anchor)->text.s,rpl_lump->text.s,rpl_lump->text.len);
+       (*rpl_lump_anchor)->next=0;
+       rpl_lump_anchor = &((*rpl_lump_anchor)->next)
+   }
+
    return new_msg;
 }
 
