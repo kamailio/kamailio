@@ -44,6 +44,7 @@
  *  2003-08-21  check_self properly handles ipv6 addresses & refs   (andrei)
  *  2003-10-21  check_self updated to handle proto (andrei)
  *  2003-10-24  converted to the new socket_info lists (andrei)
+ *  2004-10-10  modified check_self to use grep_sock_info (andrei)
  */
 
 
@@ -230,93 +231,9 @@ struct socket_info* get_send_socket(union sockaddr_union* to, int proto)
  */
 int check_self(str* host, unsigned short port, unsigned short proto)
 {
-	char* hname;
-	int h_len;
-	struct socket_info* si;
-	unsigned short c_proto;
-#ifdef USE_IPV6
-	struct ip_addr* ip6;
-#endif
-	
-	h_len=host->len;
-	hname=host->s;
-#ifdef USE_IPV6
-	if ((h_len>2)&&((*hname)=='[')&&(hname[h_len-1]==']')){
-		/* ipv6 reference, skip [] */
-		hname++;
-		h_len-=2;
-	}
-#endif
-	c_proto=proto?proto:PROTO_UDP;
-	do{
-		/* get the proper sock list */
-		switch(c_proto){
-			case PROTO_NONE: /* we'll use udp and not all the lists FIXME: */
-			case PROTO_UDP:
-				si=udp_listen;
-				break;
-#ifdef USE_TCP
-			case PROTO_TCP:
-				si=tcp_listen;
-				break;
-#endif
-#ifdef USE_TLS
-			case PROTO_TLS:
-				si=tls_listen;
-				break;
-#endif
-			default:
-				/* unknown proto */
-				LOG(L_WARN, "WARNING: check_self: "
-							"unknown proto %d\n", c_proto);
-				return 0; /* false */
-		}
-		for (; si; si=si->next){
-			DBG("check_self - checking if host==us: %d==%d && "
-					" [%.*s] == [%.*s]\n", 
-						h_len,
-						si->name.len,
-						h_len, hname,
-						si->name.len, si->name.s
-				);
-			if (port) {
-				DBG("check_self - checking if port %d matches port %d\n", 
-						si->port_no, port);
-				if (si->port_no!=port) {
-					continue;
-				}
-			}
-			if ( (h_len==si->name.len) && 
-				(strncasecmp(hname, si->name.s,
-						 si->name.len)==0) /*slower*/)
-				/* comp. must be case insensitive, host names
-				 * can be written in mixed case, it will also match
-				 * ipv6 addresses if we are lucky*/
-				goto found;
-		/* check if host == ip address */
-#ifdef USE_IPV6
-			/* ipv6 case is uglier, host can be [3ffe::1] */
-			ip6=str2ip6(host);
-			if (ip6){
-				if (ip_addr_cmp(ip6, &si->address))
-					goto found; /* match */
-				else
-					continue; /* no match, but this is an ipv6 address
-								 so no point in trying ipv4 */
-			}
-#endif
-			/* ipv4 */
-			if ( 	(!(si->flags&SI_IS_IP)) &&
-					(h_len==si->address_str.len) && 
-				(memcmp(hname, si->address_str.s, 
-									si->address_str.len)==0)
-				)
-				goto found;
-		}
-	}while( (proto==0) && (c_proto=next_proto(c_proto)) );
-	
+	if (grep_sock_info(host, port, proto)) goto found;
 	/* try to look into the aliases*/
-	if (grep_aliases(hname, h_len, port, proto)==0){
+	if (grep_aliases(host->s, host->len, port, proto)==0){
 		DBG("check_self: host != me\n");
 		return 0;
 	}

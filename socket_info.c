@@ -32,6 +32,7 @@
  * History:
  * --------
  *  2003-10-22  created by andrei
+ *  2004-10-10  added grep_sock_info (andrei)
  */
 
 
@@ -181,6 +182,99 @@ static struct socket_info** get_sock_info_list(unsigned short proto)
 			LOG(L_CRIT, "BUG: get_sock_info_list: invalid proto %d\n", proto);
 	}
 	return 0;
+}
+
+
+
+/* checks if the proto: host:port is one of the address we listen on
+ * and returns the corresponding socket_info structure.
+ * if port==0, the  port number is ignored
+ * if proto==0 (PROTO_NONE) the protocol is ignored
+ * returns  0 if not found
+ * WARNING: uses str2ip6 so it will overwrite any previous
+ *  unsaved result of this function (static buffer)
+ */
+struct socket_info* grep_sock_info(str* host, unsigned short port,
+												unsigned short proto)
+{
+	char* hname;
+	int h_len;
+	struct socket_info* si;
+	struct socket_info** list;
+	unsigned short c_proto;
+#ifdef USE_IPV6
+	struct ip_addr* ip6;
+#endif
+
+	h_len=host->len;
+	hname=host->s;
+#ifdef USE_IPV6
+	if ((h_len>2)&&((*hname)=='[')&&(hname[h_len-1]==']')){
+		/* ipv6 reference, skip [] */
+		hname++;
+		h_len-=2;
+	}
+#endif
+	c_proto=proto?proto:PROTO_UDP;
+	do{
+		/* get the proper sock_list */
+		if (c_proto==PROTO_NONE)
+			list=&udp_listen;
+		else
+			list=get_sock_info_list(c_proto);
+	
+		if (list==0){
+			LOG(L_WARN, "WARNING: grep_sock_info: "
+						"unknown proto %d\n", c_proto);
+			goto not_found; /* false */
+		}
+		for (si=*list; si; si=si->next){
+			DBG("grep_sock_info - checking if host==us: %d==%d && "
+					" [%.*s] == [%.*s]\n", 
+						h_len,
+						si->name.len,
+						h_len, hname,
+						si->name.len, si->name.s
+				);
+			if (port) {
+				DBG("grep_sock_info - checking if port %d matches port %d\n", 
+						si->port_no, port);
+				if (si->port_no!=port) {
+					continue;
+				}
+			}
+			if ( (h_len==si->name.len) && 
+				(strncasecmp(hname, si->name.s,
+						 si->name.len)==0) /*slower*/)
+				/* comp. must be case insensitive, host names
+				 * can be written in mixed case, it will also match
+				 * ipv6 addresses if we are lucky*/
+				goto found;
+		/* check if host == ip address */
+#ifdef USE_IPV6
+			/* ipv6 case is uglier, host can be [3ffe::1] */
+			ip6=str2ip6(host);
+			if (ip6){
+				if (ip_addr_cmp(ip6, &si->address))
+					goto found; /* match */
+				else
+					continue; /* no match, but this is an ipv6 address
+								 so no point in trying ipv4 */
+			}
+#endif
+			/* ipv4 */
+			if ( 	(!(si->flags&SI_IS_IP)) &&
+					(h_len==si->address_str.len) && 
+				(memcmp(hname, si->address_str.s, 
+									si->address_str.len)==0)
+				)
+				goto found;
+		}
+	}while( (proto==0) && (c_proto=next_proto(c_proto)) );
+not_found:
+	return 0;
+found:
+	return si;
 }
 
 

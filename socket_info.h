@@ -57,6 +57,8 @@ int fix_all_socket_lists();
 void print_all_socket_lists();
 void print_aliases();
 
+struct socket_info* grep_sock_info(str* host, unsigned short port,
+										unsigned short proto);
 
 /* helper function:
  * returns next protocol, if the last one is reached return 0
@@ -106,7 +108,6 @@ inline static struct socket_info* get_first_socket()
 #endif
 	return 0;
 }
-
 
 
 #endif
