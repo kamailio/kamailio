@@ -187,6 +187,11 @@ int parse_headers(struct sip_msg* msg, int flags, int next)
 
 	end=msg->buf+msg->len;
 	tmp=msg->unparsed;
+	
+	if (next) {
+		orig_flag = msg->parsed_flag;
+		msg->parsed_flag &= ~flags;
+	}
 
 	if (next) {
 		orig_flag = msg->parsed_flag;
