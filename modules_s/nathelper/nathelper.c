@@ -5,6 +5,10 @@
  *			 we received this message from
  * fix_nated_sdp() - replaces IP address in the SDP with IP address
  *		     and/or adds direction=active option to the SDP
+ * force_rtp_proxy() - rewrite IP address and UDP port in the SDP
+ *		       body in such a way that RTP traffic visits
+ *		       RTP proxy running on the same machine as a
+ *		       ser itself
  *
  * Beware, those functions will only work correctly if the UA supports
  * symmetric signalling and media (not all do)!!!
@@ -48,9 +52,14 @@
 #include "../../timer.h"
 #include "../../ut.h"
 #include "../registrar/sip_msg.h"
+#include <sys/types.h>
+#include <sys/uio.h>
+#include <sys/un.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 MODULE_VERSION
 
@@ -58,6 +67,12 @@ static int fix_nated_contact_f(struct sip_msg *, char *, char *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
 static int update_clen(struct sip_msg *, int);
 static int extract_mediaip(str *, str *);
+static int extract_mediaport(str *, str *);
+static int alter_mediaip(struct sip_msg *, str *, str *, str *, int *, int);
+static int alter_mediaport(struct sip_msg *, str *, str *, str *, int *, int);
+static int get_rtpp_port(str *, int);
+static int force_rtp_proxy_f(struct sip_msg *, char *, char *);
+
 static void timer(unsigned int, void *);
 inline static int fixup_str2int(void**, int);
 static int mod_init(void);
@@ -71,12 +86,13 @@ static const char sbuf[4] = {0, 0, 0, 0};
 static cmd_export_t cmds[]={
 		{"fix_nated_contact", fix_nated_contact_f, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE },
 		{"fix_nated_sdp", fix_nated_sdp_f, 1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE },
-		{0,0,0,0,0}
+		{"force_rtp_proxy", force_rtp_proxy_f, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE },
+		{0, 0, 0, 0, 0}
 	};
 
 static param_export_t params[]={
 	{"natping_interval", INT_PARAM, &natping_interval},
-	{0,0,0}
+	{0, 0, 0}
 };
 
 struct module_exports exports={
@@ -232,14 +248,17 @@ fixup_str2int( void** param, int param_no)
 #define AOLDMEDIAIP	"a=oldmediaip:"
 #define AOLDMEDIAIP_LEN	13
 
+#define AOLDMEDIPRT	"a=oldmediaport:"
+#define AOLDMEDIPRT_LEN	15
+
 #define CLEN_LEN	10
 
 static int
 fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 {
-	str body, mediaip;
-	int level, added_len, offset, len;
-	char *buf, *cp;
+	str body, body1, oldip, oldip1, newip;
+	int level, added_len;
+	char *buf;
 	struct lump* anchor;
 
 	level = (int)(long)str1;
@@ -272,60 +291,28 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	if (level & FIX_MEDIAIP) {
-		if (extract_mediaip(&body, &mediaip) == -1) {
+		if (extract_mediaip(&body, &oldip) == -1) {
 			LOG(L_ERR, "ERROR: fix_nated_sdp: can't extract media IP from the SDP\n");
 			goto finalise;
 		}
+		body1.s = oldip.s + oldip.len;
+		body1.len = body.s + body.len - body1.s;
+		if (extract_mediaip(&body1, &oldip1) == -1) {
+			oldip1.len = 0;
+		}
 
-		/* check that updating mediaip is really necessary */
-		if (7 == mediaip.len && memcmp("0.0.0.0", mediaip.s, 7) == 0)
-			goto finalise;
-		cp = ip_addr2a(&msg->rcv.src_ip);
-		len = strlen(cp);
-		if (len == mediaip.len && memcmp(cp, mediaip.s, len) == 0)
-			goto finalise;
-
-		anchor = anchor_lump(&(msg->add_rm),
-		    body.s + body.len - msg->buf, 0, 0);
-		if (anchor == NULL) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: anchor_lump failed\n");
+		newip.s = ip_addr2a(&msg->rcv.src_ip);
+		newip.len = strlen(newip.s);
+		if (alter_mediaip(msg, &body, &oldip, &newip,
+		    &added_len, 1) == -1) {
+			LOG(L_ERR, "ERROR: fix_nated_sdp: can't alter media IP");
 			return -1;
 		}
-		buf = pkg_malloc(AOLDMEDIAIP_LEN + mediaip.len + CRLF_LEN);
-		if (buf == NULL) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: out of memory\n");
+		if (oldip1.len > 0 && alter_mediaip(msg, &body, &oldip1, &newip,
+		    &added_len, 0) == -1) {
+			LOG(L_ERR, "ERROR: fix_nated_sdp: can't alter media IP");
 			return -1;
 		}
-		memcpy(buf, AOLDMEDIAIP, AOLDMEDIAIP_LEN);
-		memcpy(buf + AOLDMEDIAIP_LEN, mediaip.s, mediaip.len);
-		memcpy(buf + AOLDMEDIAIP_LEN + mediaip.len, CRLF, CRLF_LEN);
-		if (insert_new_lump_after(anchor, buf,
-		    AOLDMEDIAIP_LEN + mediaip.len + CRLF_LEN, 0) == NULL) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after failed\n");
-			pkg_free(buf);
-			return -1;
-		}
-		added_len += AOLDMEDIAIP_LEN + mediaip.len + CRLF_LEN;
-
-		buf = pkg_malloc(len);
-		if (buf == NULL) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: out of memory\n");
-			return -1;
-		}
-		offset = mediaip.s - msg->buf;
-		anchor = del_lump(&msg->add_rm, offset, mediaip.len, 0);
-		if (anchor == NULL) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: del_lump failed\n");
-			pkg_free(buf);
-			return -1;
-		}
-		memcpy(buf, cp, len);
-		if (insert_new_lump_after(anchor, buf, len, 0) == 0) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after failed\n");
-			pkg_free(buf);
-			return -1;
-		}
-		added_len += len - mediaip.len;
 	}
 
 finalise:
@@ -406,6 +393,273 @@ extract_mediaip(str *body, str *mediaip)
 		LOG(L_ERR, "ERROR: extract_mediaip: no `IP4' in `c=' field\n");
 		return -1;
 	}
+	return 1;
+}
+
+static int
+extract_mediaport(str *body, str *mediaport)
+{
+	char *cp, *cp1;
+	int len;
+
+	cp1 = NULL;
+	for (cp = body->s; (len = body->s + body->len - cp) > 0;) {
+		cp1 = ser_memmem(cp, "m=", len, 2);
+		if (cp1 == NULL || cp1[-1] == '\n' || cp1[-1] == '\r')
+			break;
+		cp = cp1 + 2;
+	}
+	if (cp1 == NULL) {
+		LOG(L_ERR, "ERROR: extract_mediaport: no `m=' in SDP\n");
+		return -1;
+	}
+	mediaport->s = cp1 + 2;
+	mediaport->len = eat_line(mediaport->s, body->s + body->len -
+	  mediaport->s) - mediaport->s;
+	trim_len(mediaport->len, mediaport->s, *mediaport);
+
+	if (mediaport->len < 7 || memcmp(mediaport->s, "audio", 5) != 0 ||
+	  !isspace(mediaport->s[5])) {
+		LOG(L_ERR, "ERROR: extract_mediaport: can't parse `m=' in SDP\n");
+		return -1;
+	}
+	cp = eat_space_end(mediaport->s + 5, mediaport->s + mediaport->len);
+	mediaport->len = eat_token_end(cp, mediaport->s + mediaport->len) - cp;
+	mediaport->s = cp;
+	return 1;
+}
+
+static int
+alter_mediaip(struct sip_msg *msg, str *body, str *oldip, str *newip,
+  int *clendelta, int preserve)
+{
+	char *buf;
+	int offset;
+	struct lump* anchor;
+
+	/* check that updating mediaip is really necessary */
+	if (7 == oldip->len && memcmp("0.0.0.0", oldip->s, 7) == 0)
+		return 0;
+	if (newip->len == oldip->len &&
+	    memcmp(newip->s, oldip->s, newip->len) == 0)
+		return 0;
+
+	if (preserve != 0) {
+		anchor = anchor_lump(&(msg->add_rm),
+		    body->s + body->len - msg->buf, 0, 0);
+		if (anchor == NULL) {
+			LOG(L_ERR, "ERROR: alter_mediaip: anchor_lump failed\n");
+			return -1;
+		}
+		buf = pkg_malloc(AOLDMEDIAIP_LEN + oldip->len + CRLF_LEN);
+		if (buf == NULL) {
+			LOG(L_ERR, "ERROR: alter_mediaip: out of memory\n");
+			return -1;
+		}
+		memcpy(buf, AOLDMEDIAIP, AOLDMEDIAIP_LEN);
+		memcpy(buf + AOLDMEDIAIP_LEN, oldip->s, oldip->len);
+		memcpy(buf + AOLDMEDIAIP_LEN + oldip->len, CRLF, CRLF_LEN);
+		if (insert_new_lump_after(anchor, buf,
+		    AOLDMEDIAIP_LEN + oldip->len + CRLF_LEN, 0) == NULL) {
+			LOG(L_ERR, "ERROR: alter_mediaip: insert_new_lump_after failed\n");
+			pkg_free(buf);
+			return -1;
+		}
+		*clendelta += AOLDMEDIAIP_LEN + oldip->len + CRLF_LEN;
+	}
+
+	buf = pkg_malloc(newip->len);
+	if (buf == NULL) {
+		LOG(L_ERR, "ERROR: alter_mediaip: out of memory\n");
+		return -1;
+	}
+	offset = oldip->s - msg->buf;
+	anchor = del_lump(&msg->add_rm, offset, oldip->len, 0);
+	if (anchor == NULL) {
+		LOG(L_ERR, "ERROR: alter_mediaip: del_lump failed\n");
+		pkg_free(buf);
+		return -1;
+	}
+	memcpy(buf, newip->s, newip->len);
+	if (insert_new_lump_after(anchor, buf, newip->len, 0) == 0) {
+		LOG(L_ERR, "ERROR: alter_mediaip: insert_new_lump_after failed\n");
+		pkg_free(buf);
+		return -1;
+	}
+	*clendelta += newip->len - oldip->len;
+	return 0;
+}
+
+static int
+alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
+  int *clendelta, int preserve)
+{
+	char *buf;
+	int offset;
+	struct lump* anchor;
+
+	/* check that updating mediaport is really necessary */
+	if (newport->len == oldport->len &&
+	    memcmp(newport->s, oldport->s, newport->len) == 0)
+		return 0;
+
+	if (preserve != 0) {
+		anchor = anchor_lump(&(msg->add_rm),
+		    body->s + body->len - msg->buf, 0, 0);
+		if (anchor == NULL) {
+			LOG(L_ERR, "ERROR: alter_mediaport: anchor_lump failed\n");
+			return -1;
+		}
+		buf = pkg_malloc(AOLDMEDIPRT_LEN + oldport->len + CRLF_LEN);
+		if (buf == NULL) {
+			LOG(L_ERR, "ERROR: alter_mediaport: out of memory\n");
+			return -1;
+		}
+		memcpy(buf, AOLDMEDIPRT, AOLDMEDIPRT_LEN);
+		memcpy(buf + AOLDMEDIPRT_LEN, oldport->s, oldport->len);
+		memcpy(buf + AOLDMEDIPRT_LEN + oldport->len, CRLF, CRLF_LEN);
+		if (insert_new_lump_after(anchor, buf,
+		    AOLDMEDIPRT_LEN + oldport->len + CRLF_LEN, 0) == NULL) {
+			LOG(L_ERR, "ERROR: alter_mediaport: insert_new_lump_after failed\n");
+			pkg_free(buf);
+			return -1;
+		}
+		*clendelta += AOLDMEDIPRT_LEN + oldport->len + CRLF_LEN;
+	}
+
+	buf = pkg_malloc(newport->len);
+	if (buf == NULL) {
+		LOG(L_ERR, "ERROR: alter_mediaport: out of memory\n");
+		return -1;
+	}
+	offset = oldport->s - msg->buf;
+	anchor = del_lump(&msg->add_rm, offset, oldport->len, 0);
+	if (anchor == NULL) {
+		LOG(L_ERR, "ERROR: alter_mediaport: del_lump failed\n");
+		pkg_free(buf);
+		return -1;
+	}
+	memcpy(buf, newport->s, newport->len);
+	if (insert_new_lump_after(anchor, buf, newport->len, 0) == 0) {
+		LOG(L_ERR, "ERROR: alter_mediaport: insert_new_lump_after failed\n");
+		pkg_free(buf);
+		return -1;
+	}
+	*clendelta += newport->len - oldport->len;
+	return 0;
+}
+
+static int
+get_rtpp_port(str *callid, int create)
+{
+	struct sockaddr_un addr;
+	int fd, len;
+	struct iovec v[3];
+	char buf[16];
+
+	memset(&addr, 0, sizeof(addr));
+	addr.sun_family = AF_LOCAL;
+	strncpy(addr.sun_path, "/var/run/rtpproxy.sock",
+	    sizeof(addr.sun_path) - 1);
+
+	fd = socket(AF_LOCAL, SOCK_STREAM, 0);
+	if (fd < 0) {
+		LOG(L_ERR, "ERROR: get_rtpp_port: can't create socket\n");
+		return -1;
+	}
+	if (connect(fd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
+		close(fd);
+		LOG(L_ERR, "ERROR: get_rtpp_port: can't connect to RTP proxy\n");
+		return -1;
+	}
+
+	if (create == 0)
+		v[0].iov_base = "L ";
+	else
+		v[0].iov_base = "U ";
+	v[0].iov_len = 2;
+	v[1].iov_base = callid->s;
+	v[1].iov_len = callid->len;
+	v[2].iov_base = "\n";
+	v[2].iov_len = 1;
+	do {
+		len = writev(fd, v, 3);
+	} while (len == -1 && errno == EINTR);
+	if (len <= 0) {
+		close(fd);
+		LOG(L_ERR, "ERROR: get_rtpp_port: can't send command to a RTP proxy\n");
+		return -1;
+	}
+
+	do {
+		len = read(fd, buf, sizeof(buf) - 1);
+	} while (len == -1 && errno == EINTR);
+	close(fd);
+	if (len <= 0) {
+		LOG(L_ERR, "ERROR: get_rtpp_port: can't read reply from a RTP proxy\n");
+		return -1;
+	}
+	buf[len] = '\0';
+
+	return atoi(buf);
+}
+
+static int
+force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
+{
+	str body, body1, oldport, oldip, oldip1, newport, newip;
+	int create, port, cldelta;
+	char buf[16];
+
+	if (msg->first_line.type == SIP_REQUEST &&
+	    msg->first_line.u.request.method_value == METHOD_INVITE) {
+		create = 1;
+	} else if (msg->first_line.type == SIP_REPLY) {
+		create = 0;
+	} else {
+		return -1;
+	}
+	if (msg->callid == NULL || msg->callid->body.len <= 0) {
+		LOG(L_ERR, "ERROR: force_rtp_proxy: no Call-Id field\n");
+		return -1;
+	}
+	if (extract_body(msg, &body) == -1 || body.len == 0)
+		return -1;
+	if (extract_mediaip(&body, &oldip) == -1) {
+		LOG(L_ERR, "ERROR: force_rtp_proxy: can't extract media IP fromthe message\n");
+		return -1;
+	}
+	body1.s = oldip.s + oldip.len;
+	body1.len = body.s + body.len - body1.s;
+	if (extract_mediaip(&body1, &oldip1) == -1) {
+		oldip1.len = 0;
+	}
+	if (extract_mediaport(&body, &oldport) == -1) {
+		LOG(L_ERR, "ERROR: force_rtp_proxy: can't extract media port from the message\n");
+		return -1;
+	}
+	port = get_rtpp_port(&(msg->callid->body), create);
+	if (port <= 0 || port > 65535)
+		return -1;
+
+	newport.s = buf;
+	newport.len = sprintf(buf, "%d", port);
+	newip.s = ip_addr2a(&msg->rcv.dst_ip);
+	newip.len = strlen(newip.s);
+
+	cldelta = 0;
+	if (alter_mediaip(msg, &body, &oldip, &newip, &cldelta, 0) == -1)
+		return -1;
+	if (oldip1.len > 0 &&
+	    alter_mediaip(msg, &body1, &oldip1, &newip, &cldelta, 0) == -1)
+		return -1;
+	if (alter_mediaport(msg, &body, &oldport, &newport, &cldelta, 0) == -1)
+		return -1;
+
+	if (cldelta == 0)
+		return 1;
+
+	return (update_clen(msg, body.len + cldelta));
 	return 1;
 }
 

@@ -8,7 +8,7 @@ This is a module to help with NAT traversal. In particular , it helps
 symmetric UAs that don't advertise they are symmetric and are not able
 to determine their public address. fix_nated_contact rewrites Contact
 header field with request's source address:port pair. 
-add_direction_active adds the active direction indication to SDP (flag
+fix_nated_sdp adds the active direction indication to SDP (flag
 0x01) and updates source IP address too (flag 0x02).
 
 Known devices that get along over NATs with nathelper are ATAs
@@ -17,23 +17,35 @@ See
 http://www.cisco.com/en/US/products/sw/iosswrel/ps1839/products_feature_guide09186a0080110bf9.html
 
 
+Exported parameters:
+-------------------
+
+Name:	natping_interval
+Type:	integer
+Default:	0
+Desc:	Period of time in seconds between sending short UDP packets to all
+	currently registered UAs to keep their NAT bindings alive. Value of
+	0 disables this functionality
+
+
 Exported Functions:
 ------------------
 
 
-Name:	add_rport()
-Params:	
-Desc:	Adds blank `rport=' parameter into the first Via field.
-Example:	if (search("User-Agent: Cisco ATA.*") {add_rport();};
-
-
 Name:	fix_nated_contact()
-Params:	
-Desc:	
-Example:	
+Params:	none
+Desc:	Rewrites Contact HF to contain request's source address:port
+Example:	if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 
 
-Name:	add_direction_active()
-Params:	
-Desc:	
-Example:	
+Name:	fix_nated_sdp()
+Params:	mode - 0x01 (add direction=active), 0x02 (rewrite media IP
+	address with source address of the message)
+Desc:	Rewrites SDP body in accordance with mode flag
+Example:	if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp(3);};
+
+Name:	force_rtp_proxy
+Params:	none
+Desc:	Rewrites SDP body to ensure that media is passed throuth RTP
+	proxy
+Example:	if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy(3);};
