@@ -127,25 +127,26 @@ void free_rdata_list(struct rdata* head);
 
 /* converts a str to an ipv4 address, returns the address or 0 on error
    Warning: the result is a pointer to a statically allocated structure */
-static inline struct ip_addr* str2ip(unsigned char* str, unsigned int len)
+static inline struct ip_addr* str2ip(str* st)
 {
 	int i;
 	unsigned char *limit;
-	unsigned char *init;
 	static struct ip_addr ip;
+	unsigned char* s;
+
+	s = st->s;
 
 	/*init*/
 	ip.u.addr32[0]=0;
 	i=0;
-	limit=str+len;
-	init=str;
+	limit=st->s + st->len;
 
-	for(;str<limit ;str++){
-		if (*str=='.'){
+	for(;s<limit ;s++){
+		if (*s=='.'){
 				i++;
 				if (i>3) goto error_dots;
-		}else if ( (*str <= '9' ) && (*str >= '0') ){
-				ip.u.addr[i]=ip.u.addr[i]*10+*str-'0';
+		}else if ( (*s <= '9' ) && (*s >= '0') ){
+				ip.u.addr[i]=ip.u.addr[i]*10+*s-'0';
 		}else{
 				//error unknown char
 				goto error_char;
@@ -156,11 +157,15 @@ static inline struct ip_addr* str2ip(unsigned char* str, unsigned int len)
 	
 	return &ip;
 
+
+	     /* FIXME: janakj - is this correct ?, we return always 0 here 
+	      * Also we could use different loglevels here
+	      */
 error_dots:
-	DBG("str2ip: ERROR: too many dots in [%.*s]\n", (int)len, init);
+	DBG("str2ip: ERROR: too many dots in [%.*s]\n", st->len, st->s);
 	return 0;
-error_char:
-	DBG("str2ip: WARNING: unexpected char %c in %.*s\n", *str,(int)len, init);
+ error_char:
+	DBG("str2ip: WARNING: unexpected char %c in [%.*s]\n", *s, st->len, st->s);
 	return 0;
 }
 
@@ -168,7 +173,7 @@ error_char:
 
 /* returns an ip_addr struct.; on error returns 0
  * the ip_addr struct is static, so subsequent calls will destroy its content*/
-static inline struct ip_addr* str2ip6(unsigned char* str, unsigned int len)
+static inline struct ip_addr* str2ip6(str* st)
 {
 	int i, idx1, rest;
 	int no_colons;
@@ -179,10 +184,10 @@ static inline struct ip_addr* str2ip6(unsigned char* str, unsigned int len)
 	unsigned short addr_end[8];
 	unsigned short* addr;
 	unsigned char* limit;
-	unsigned char* init;
+	unsigned char* s;
 	
 	/* init */
-	init=str;
+	s=st->s;
 	i=idx1=rest=0;
 	double_colon=0;
 	no_colons=0;
@@ -190,11 +195,11 @@ static inline struct ip_addr* str2ip6(unsigned char* str, unsigned int len)
 	ip.len=16;
 	addr_start=ip.u.addr16;
 	addr=addr_start;
-	limit=str+len;
+	limit=st->s+st->len;
 	memset(addr_start, 0 , 8*sizeof(unsigned short));
 	memset(addr_end, 0 , 8*sizeof(unsigned short));
-	for (; str<limit; str++){
-		if (*str==':'){
+	for (; s<limit; s++){
+		if (*s==':'){
 			no_colons++;
 			if (no_colons>7) goto error_too_many_colons;
 			if (double_colon){
@@ -207,7 +212,7 @@ static inline struct ip_addr* str2ip6(unsigned char* str, unsigned int len)
 				addr[i]=htons(addr[i]);
 				i++;
 			}
-		}else if ((hex=HEX2I(*str))>=0){
+		}else if ((hex=HEX2I(*s))>=0){
 				addr[i]=addr[i]*16+hex;
 				double_colon=0;
 		}else{
@@ -236,26 +241,26 @@ static inline struct ip_addr* str2ip6(unsigned char* str, unsigned int len)
 	return &ip;
 
 error_too_many_colons:
-	DBG("str2ip6: ERROR: too many colons in [%.*s]\n", (int) len, init);
+	DBG("str2ip6: ERROR: too many colons in [%.*s]\n", st->len, st->s);
 	return 0;
 
 error_too_few_colons:
-	DBG("str2ip6: ERROR: too few colons in [%.*s]\n", (int) len, init);
+	DBG("str2ip6: ERROR: too few colons in [%.*s]\n", st->len, st->s);
 	return 0;
 
 error_colons:
-	DBG("str2ip6: ERROR: too many double colons in [%.*s]\n", (int) len, init);
+	DBG("str2ip6: ERROR: too many double colons in [%.*s]\n", st->len, st->s);
 	return 0;
 
 error_char:
-	DBG("str2ip6: WARNING: unexpected char %c in  [%.*s]\n", *str, (int) len,
-			init);
+	DBG("str2ip6: WARNING: unexpected char %c in  [%.*s]\n", *s, st->len,
+			st->s);
 	return 0;
 }
 
 
 
-struct hostent* sip_resolvehost(char* name, unsigned short* port);
+struct hostent* sip_resolvehost(str* name, unsigned short* port);
 
 
 
@@ -271,17 +276,19 @@ static inline struct hostent* resolvehost(const char* name)
 #endif
 #ifdef DNS_IP_HACK
 	struct ip_addr* ip;
-	int len;
-	
-	len=strlen(name);
+	str s;
+
+	s.s = (char*)name;
+	s.len = strlen(name);
+
 	/* check if it's an ip address */
-	if ( ((ip=str2ip((unsigned char*)name, len))!=0)
+	if ( ((ip=str2ip(&s))!=0)
 #ifdef	USE_IPV6
-		  || ((ip=str2ip6((unsigned char*)name, len))!=0)
+		  || ((ip=str2ip6(&s))!=0)
 #endif
 		){
 		/* we are lucky, this is an ip address */
-		return ip_addr2he(( char*)name, len, ip);
+		return ip_addr2he(&s, ip);
 	}
 	
 #endif

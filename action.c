@@ -125,7 +125,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 							goto error_fwd_uri;
 				}
 				/* create a temporary proxy*/
-				p=mk_proxy(u->host.s, port);
+				p=mk_proxy(&u->host, port);
 				if (p==0){
 					LOG(L_ERR, "ERROR:  bad host name in uri,"
 							" dropping packet\n");
@@ -329,10 +329,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				pkg_free(msg->new_uri.s);
 				msg->new_uri.len=0;
 				msg->new_uri.s=0;
-				if (msg->parsed_uri_ok){
-					msg->parsed_uri_ok=0; /* invalidate current parsed uri*/
-					free_uri(&msg->parsed_uri);
-				}
+				msg->parsed_uri_ok=0; /* invalidate current parsed uri*/
 			};
 			ret=1;
 			break;
@@ -362,10 +359,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 							pkg_free(msg->new_uri.s);
 							msg->new_uri.len=0;
 					}
-					if (msg->parsed_uri_ok){
-							msg->parsed_uri_ok=0;
-							free_uri(&msg->parsed_uri);
-					}
+					msg->parsed_uri_ok=0;
 					len=strlen(a->p1.string);
 					msg->new_uri.s=pkg_malloc(len+1);
 					if (msg->new_uri.s==0){
@@ -400,7 +394,6 @@ int do_action(struct action* a, struct sip_msg* msg)
 					LOG(L_ERR, "ERROR: do_action: memory allocation "
 								" failure\n");
 					ret=E_OUT_OF_MEM;
-					free_uri(&uri);
 					break;
 				}
 				end=new_uri+MAX_URI_SIZE;
@@ -426,7 +419,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				} else if (a->type==STRIP_T) {
 					if (a->p1.number>uri.user.len) {
 						LOG(L_WARN, "Error: too long strip asked; deleting username: "
-							"%d of %s\n", a->p1.number, uri.user.s );
+							"%d of <%.*s>\n", a->p1.number, uri.user.len, uri.user.s );
 						len=0;
 					} else if (a->p1.number==uri.user.len) {
 						len=0;
@@ -451,7 +444,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				if (tmp){
 					len=strlen(":"); if(crt+len>end) goto error_uri;
 					memcpy(crt,":",len);crt+=len;
-					len=strlen(tmp); if(crt+len>end) goto error_uri;
+					len=uri.passwd.len; if(crt+len>end) goto error_uri;
 					memcpy(crt,tmp,len);crt+=len;
 				}
 				/* host */
@@ -459,18 +452,26 @@ int do_action(struct action* a, struct sip_msg* msg)
 					len=strlen("@"); if(crt+len>end) goto error_uri;
 					memcpy(crt,"@",len);crt+=len;
 				}
-				if ((a->type==SET_HOST_T) ||(a->type==SET_HOSTPORT_T))
+				if ((a->type==SET_HOST_T) ||(a->type==SET_HOSTPORT_T)) {
 					tmp=a->p1.string;
-				else
+					if (tmp) len = strlen(tmp);
+				} else {
 					tmp=uri.host.s;
+					len = uri.host.len;
+				}
 				if (tmp){
-					len=strlen(tmp); if(crt+len>end) goto error_uri;
+					if(crt+len>end) goto error_uri;
 					memcpy(crt,tmp,len);crt+=len;
 				}
 				/* port */
 				if (a->type==SET_HOSTPORT_T) tmp=0;
-				else if (a->type==SET_PORT_T) tmp=a->p1.string;
-				else tmp=uri.port.s;
+				else if (a->type==SET_PORT_T) {
+					tmp=a->p1.string;
+					if (tmp) len = strlen(tmp);
+				} else {
+					tmp=uri.port.s;
+					len = uri.port.len;
+				}
 				if (tmp){
 					len=strlen(":"); if(crt+len>end) goto error_uri;
 					memcpy(crt,":",len);crt+=len;
@@ -482,7 +483,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				if (tmp){
 					len=strlen(";"); if(crt+len>end) goto error_uri;
 					memcpy(crt,";",len);crt+=len;
-					len=strlen(tmp); if(crt+len>end) goto error_uri;
+					len=uri.params.len; if(crt+len>end) goto error_uri;
 					memcpy(crt,tmp,len);crt+=len;
 				}
 				/* headers */
@@ -490,7 +491,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				if (tmp){
 					len=strlen("?"); if(crt+len>end) goto error_uri;
 					memcpy(crt,"?",len);crt+=len;
-					len=strlen(tmp); if(crt+len>end) goto error_uri;
+					len=uri.headers.len; if(crt+len>end) goto error_uri;
 					memcpy(crt,tmp,len);crt+=len;
 				}
 				*crt=0; /* null terminate the thing */
@@ -498,11 +499,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				if (msg->new_uri.s) pkg_free(msg->new_uri.s);
 				msg->new_uri.s=new_uri;
 				msg->new_uri.len=crt-new_uri;
-				if (msg->parsed_uri_ok){
-					msg->parsed_uri_ok=0;
-					free_uri(&msg->parsed_uri);
-				}
-				free_uri(&uri);
+				msg->parsed_uri_ok=0;
 				ret=1;
 				break;
 		case IF_T:
@@ -546,7 +543,6 @@ int do_action(struct action* a, struct sip_msg* msg)
 	
 error_uri:
 	LOG(L_ERR, "ERROR: do_action: set*: uri too long\n");
-	free_uri(&uri);
 	if (new_uri) free(new_uri);
 	return E_UNSPEC;
 error_fwd_uri:

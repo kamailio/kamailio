@@ -27,7 +27,6 @@
 
 
 #include "parse_uri.h"
-#include "../mem/mem.h"
 #include <string.h>
 #include "../dprint.h"
 #include "../ut.h"    /* q_memchr */
@@ -52,16 +51,16 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 	memset(uri, 0, sizeof(struct sip_uri)); /* zero it all, just to be sure */
 	/* look for "sip:"*/;
 	next=q_memchr(buf, ':',  len);
-	if ((next==0)||(strncmp(buf,"sip",next-buf)!=0)){
+	if ((next==0)||(strncasecmp(buf,"sip",next-buf)!=0)){
 		LOG(L_DBG, "ERROR: parse_uri: bad sip uri\n");
 		ser_error=ret=E_BAD_URI;
-		goto error;
+		return ret;
 	}
 	buf=next+1; /* next char after ':' */
 	if (buf>end){
 		LOG(L_DBG, "ERROR: parse_uri: uri too short\n");
 		ser_error=ret=E_BAD_URI;
-		goto error;
+		return ret;
 	}
 	/*look for '@' */
 	next=q_memchr(buf,'@', end-buf);
@@ -78,36 +77,14 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 		if (passwd==0){
 			/* no ':' found => no password */
 			uri->passwd.s=0;
-			uri->user.s=(char*)pkg_malloc(next-user+1);
-			if (uri->user.s==0){
-				LOG(L_ERR,"ERROR:parse_uri: memory allocation failure\n");
-				ser_error=ret=E_OUT_OF_MEM;
-				goto error;
-			}
-			memcpy(uri->user.s, user, next-user);
+			uri->user.s=user;
 			uri->user.len=next-user;
-			uri->user.s[next-user]=0; /* null terminate it, 
-									   usefull for easy printing*/
 		}else{
-			uri->user.s=(char*)pkg_malloc(passwd-user+1);
-			if (uri->user.s==0){
-				LOG(L_ERR,"ERROR:parse_uri: memory allocation failure\n");
-				ser_error=ret=E_OUT_OF_MEM;
-				goto error;
-			}
-			memcpy(uri->user.s, user, passwd-user);
+			uri->user.s=user;
 			uri->user.len=passwd-user;
-			uri->user.s[passwd-user]=0;
 			passwd++; /*skip ':' */
-			uri->passwd.s=(char*)pkg_malloc(next-passwd+1);
-			if (uri->passwd.s==0){
-				LOG(L_ERR,"ERROR:parse_uri: memory allocation failure\n");
-				ser_error=ret=E_OUT_OF_MEM;
-				goto error;
-			}
-			memcpy(uri->passwd.s, passwd, next-passwd);
+			uri->passwd.s=passwd;
 			uri->passwd.len=next-passwd;
-			uri->passwd.s[next-passwd]=0;
 		}
 		host=next+1; /* skip '@' */
 	}
@@ -115,7 +92,7 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 	if(host>=end){
 		LOG(L_DBG, "ERROR: parse_uri: missing hostport\n");
 		ser_error=ret=E_UNSPEC;
-		goto error;
+		return ret;
 	}
 	next=host;
 	ipv6=q_memchr(host, '[', end-host);
@@ -124,14 +101,14 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 		if (host>=end){
 			LOG(L_DBG, "ERROR: parse_uri: bad ipv6 uri\n");
 			ret=E_UNSPEC;
-			goto error;
+			return ret;
 		}
 		ipv6=q_memchr(host, ']', end-host);
 		if ((ipv6==0)||(ipv6==host)){
 			LOG(L_DBG, "ERROR: parse_uri: bad ipv6 uri - null address"
 					" or missing ']'\n");
 			ret=E_UNSPEC;
-			goto error;
+			return ret;
 		}
 		host_len=ipv6-host;
 		next=ipv6;
@@ -146,15 +123,9 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 				end-host;
 	}
 	/* get host */
-	uri->host.s=pkg_malloc(host_len+1);
-	if (uri->host.s==0){
-		LOG(L_ERR, "ERROR: parse_uri: memory allocation error\n");
-		ret=E_OUT_OF_MEM;
-		goto error;
-	}
-	memcpy(uri->host.s, host, host_len);
+	uri->host.s=host;
 	uri->host.len=host_len;
-	uri->host.s[host_len]=0;
+
 	/* get port*/
 	if ((port)&&(port+1<end)){
 		port++;
@@ -162,18 +133,11 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 			/* error -> invalid uri we found ';' or '?' before ':' */
 			LOG(L_DBG, "ERROR: parse_uri: malformed sip uri\n");
 			ser_error=ret=E_BAD_URI;
-			goto error;
+			return ret;
 		}
 		port_len=(params)?params-port:(headers)?headers-port:end-port;
-		uri->port.s=pkg_malloc(port_len+1);
-		if (uri->port.s==0){
-			LOG(L_ERR, "ERROR: parse_uri: memory allocation error\n");
-			ser_error=ret=E_OUT_OF_MEM;
-			goto error;
-		}
-		memcpy(uri->port.s, port, port_len);
+		uri->port.s=port;
 		uri->port.len=port_len;
-		uri->port.s[port_len]=0;
 	}else uri->port.s=0;
 	/* get params */
 	if ((params)&&(params+1<end)){
@@ -182,32 +146,18 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 			/* error -> invalid uri we found '?' or '?' before ';' */
 			LOG(L_DBG, "ERROR: parse_uri: malformed sip uri\n");
 			ser_error=ret=E_BAD_URI;
-			goto error;
+			return ret;
 		}
 		params_len=(headers)?headers-params:end-params;
-		uri->params.s=pkg_malloc(params_len+1);
-		if (uri->params.s==0){
-			LOG(L_ERR, "ERROR: parse_uri: memory allocation error\n");
-			ser_error=ret=E_OUT_OF_MEM;
-			goto error;
-		}
-		memcpy(uri->params.s, params, params_len);
+		uri->params.s=params;
 		uri->params.len=params_len;
-		uri->params.s[params_len]=0;
 	}else uri->params.s=0;
 	/*get headers */
 	if ((headers)&&(headers+1<end)){
 		headers++;
 		headers_len=end-headers;
-		uri->headers.s=pkg_malloc(headers_len+1);
-		if(uri->headers.s==0){
-			LOG(L_ERR, "ERROR: parse_uri: memory allocation error\n");
-			ser_error=ret=E_OUT_OF_MEM;
-			goto error;
-		}
-		memcpy(uri->headers.s, headers, headers_len);
+		uri->headers.s=headers;
 		uri->headers.len=headers_len;
-		uri->headers.s[headers_len]=0;
 	}else uri->headers.s=0;
 
 	err=0;
@@ -216,11 +166,9 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 		LOG(L_DBG, "ERROR: parse_uri: bad port number in sip uri: %s\n",
 				uri->port.s);
 		ser_error=ret=E_BAD_URI;
-		goto error;
+		return ret;
 	}
-	return ret;
-error:
-	free_uri(uri);
+
 	return ret;
 }
 
@@ -250,16 +198,3 @@ int parse_sip_msg_uri(struct sip_msg* msg)
 	}
 }
 
-
-
-void free_uri(struct sip_uri* u)
-{
-	if (u) {
-		if (u->user.s)    pkg_free(u->user.s);
-		if (u->passwd.s)  pkg_free(u->passwd.s);
-		if (u->host.s)    pkg_free(u->host.s);
-		if (u->port.s)    pkg_free(u->port.s);
-		if (u->params.s)  pkg_free(u->params.s);
-		if (u->headers.s) pkg_free(u->headers.s);
-	}
-}

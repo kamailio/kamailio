@@ -32,10 +32,11 @@
 
 #include <netdb.h>
 #include "ip_addr.h"
+#include "str.h"
 
 struct proxy_l{
 	struct proxy_l* next;
-	char* name; /* original name */
+	str name; /* original name */
 	struct hostent host; /* addresses */
 	unsigned short port;
 	unsigned short reserved; /*align*/
@@ -52,8 +53,8 @@ struct proxy_l{
 
 extern struct proxy_l* proxies;
 
-struct proxy_l* add_proxy(char* name, unsigned short port);
-struct proxy_l* mk_proxy(char* name, unsigned short port);
+struct proxy_l* add_proxy(str* name, unsigned short port);
+struct proxy_l* mk_proxy(str* name, unsigned short port);
 struct proxy_l* mk_proxy_from_ip(struct ip_addr* ip, unsigned short port);
 void free_proxy(struct proxy_l* p);
 

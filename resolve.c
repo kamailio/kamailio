@@ -451,7 +451,7 @@ not_found:
  * returns: hostent struct & *port filled with the port from the SRV record;
  *  0 on error
  */
-struct hostent* sip_resolvehost(char* name, unsigned short* port)
+struct hostent* sip_resolvehost(str* name, unsigned short* port)
 {
 	struct hostent* he;
 	struct rdata* head;
@@ -459,29 +459,28 @@ struct hostent* sip_resolvehost(char* name, unsigned short* port)
 	struct srv_rdata* srv;
 	struct ip_addr* ip;
 	static char tmp[MAX_DNS_NAME]; /* tmp. buff. for SRV lookups */
-	int len;
 
 	/* try SRV if no port specified (draft-ietf-sip-srv-06) */
 	if ((port)&&(*port==0)){
 		*port=SIP_PORT; /* just in case we don't find another */
-		len=strlen(name);
-		if ((len+SRV_PREFIX_LEN+1)>MAX_DNS_NAME){
+		if ((name->len+SRV_PREFIX_LEN+1)>MAX_DNS_NAME){
 			LOG(L_WARN, "WARNING: sip_resolvehost: domain name too long (%d),"
-						" unable to perform SRV lookup\n", len);
+						" unable to perform SRV lookup\n", name->len);
 		}else{
 			/* check if it's an ip address */
-			if ( ((ip=str2ip((unsigned char*)name, len))!=0)
+			if ( ((ip=str2ip(name))!=0)
 #ifdef	USE_IPV6
-				  || ((ip=str2ip6((unsigned char*)name, len))!=0)
+				  || ((ip=str2ip6(name))!=0)
 #endif
 				){
 				/* we are lucky, this is an ip address */
-				return ip_addr2he(name,len,ip);
+				return ip_addr2he(name,ip);
 			}
 			
 			memcpy(tmp, SRV_PREFIX, SRV_PREFIX_LEN);
-			memcpy(tmp+SRV_PREFIX_LEN, name, len+1); /*include the ending 0*/
-			
+			memcpy(tmp+SRV_PREFIX_LEN, name->s, name->len);
+			tmp[SRV_PREFIX_LEN + name->len] = '\0';
+
 			head=get_record(tmp, T_SRV);
 			for(l=head; l; l=l->next){
 				if (l->type!=T_SRV) continue; /*should never happen*/
@@ -501,12 +500,17 @@ struct hostent* sip_resolvehost(char* name, unsigned short* port)
 					return he;
 				}
 			}
-			DBG("sip_resolvehost: not SRV record found for %s," 
-					" trying 'normal' lookup...\n", name);
+			DBG("sip_resolvehost: not SRV record found for %.*s," 
+					" trying 'normal' lookup...\n", name->len, name->s);
 		}
 	}
-	he=resolvehost(name);
+
+	if (name->len >= MAX_DNS_NAME) {
+		LOG(L_ERR, "sip_resolvehost: domain name too long\n");
+		return 0;
+	}
+	memcpy(tmp, name->s, name->len);
+	tmp[name->len] = '\0';
+	he=resolvehost(tmp);
 	return he;
 }
-
-

@@ -289,7 +289,6 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 								 struct via_body* via )
 {
 	struct hostent* he;
-	char *host_copy;
 	str* name;
 	unsigned short port;
 
@@ -311,28 +310,14 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 	   (host.s[len] will always be ok for a via)
 	    BTW: when is via->host.s non null terminated? tm copy? - andrei 
 	    Yes -- it happened on generating a 408 by TM; -jiri
+	    sip_resolvehost now accepts str -janakj
 	*/
-	if (name->s[name->len]){
-		host_copy=pkg_malloc( name->len+1 );
-		if (!host_copy) {
-			LOG(L_NOTICE, "ERROR: update_sock_struct_from_via:"
-							" not enough memory\n");
-			return -1;
-		}
-		memcpy(host_copy, name->s, name->len );
-		host_copy[name->len]=0;
-		DBG("update_sock_struct_from_via: trying SRV lookup\n");
-		he=sip_resolvehost(host_copy, &port);
-		
-		pkg_free( host_copy );
-	}else{
-		DBG("update_sock_struct_from_via: trying SRV lookup\n");
-		he=sip_resolvehost(name->s, &port);
-	}
+	DBG("update_sock_struct_from_via: trying SRV lookup\n");
+	he=sip_resolvehost(name, &port);
 	
 	if (he==0){
-		LOG(L_NOTICE, "ERROR:forward_reply:resolve_host(%s) failure\n",
-				name->s);
+		LOG(L_NOTICE, "ERROR:forward_reply:resolve_host(%.*s) failure\n",
+				name->len, name->s);
 		return -1;
 	}
 	hostent2su(to, he, 0, htons(port));

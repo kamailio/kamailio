@@ -137,6 +137,7 @@ static int fix_actions(struct action* a)
 	char *tmp;
 	int ret,r;
 	struct sr_module* mod;
+	str s;
 	
 	if (a==0){
 		LOG(L_CRIT,"BUG: fix_actions: null pointer\n");
@@ -162,7 +163,9 @@ static int fix_actions(struct action* a)
 							t->p1.string=tmp;
 							/* no break */
 						case STRING_ST:
-							p=add_proxy(t->p1.string, t->p2.number);
+							s.s = t->p1.string;
+							s.len = strlen(s.s);
+							p=add_proxy(&s, t->p2.number);
 							if (p==0) return E_BAD_ADDRESS;
 							t->p1.data=p;
 							t->p1_type=PROXY_ST;

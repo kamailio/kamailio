@@ -57,11 +57,11 @@ struct proxy_l* proxies=0;
 
 /* searches for the proxy named 'name', on port 'port'
    returns: pointer to proxy_l on success or 0 if not found */ 
-static struct proxy_l* find_proxy(char *name, unsigned short port)
+static struct proxy_l* find_proxy(str *name, unsigned short port)
 {
 	struct proxy_l* t;
 	for(t=proxies; t; t=t->next)
-		if ((strcasecmp(t->name, name)==0) && (t->port==port))
+		if (((t->name.len == name->len) && (strncasecmp(t->name.s, name->s, name->len)==0)) && (t->port==port))
 			break;
 	return t;
 }
@@ -169,7 +169,7 @@ void free_hostent(struct hostent *dst)
 
 
 
-struct proxy_l* add_proxy(char* name, unsigned short port)
+struct proxy_l* add_proxy(str* name, unsigned short port)
 {
 	struct proxy_l* p;
 	
@@ -190,7 +190,7 @@ error:
 /* same as add_proxy, but it doesn't add the proxy to the list
  * uses also SRV if possible (quick hack) */
 
-struct proxy_l* mk_proxy(char* name, unsigned short port)
+struct proxy_l* mk_proxy(str* name, unsigned short port)
 {
 	struct proxy_l* p;
 	struct hostent* he;
@@ -202,7 +202,7 @@ struct proxy_l* mk_proxy(char* name, unsigned short port)
 		goto error;
 	}
 	memset(p,0,sizeof(struct proxy_l));
-	p->name=name;
+	p->name=*name;
 	p->port=port;
 
 	DBG("DEBUG: mk_proxy: doing DNS lookup...\n");
@@ -210,7 +210,7 @@ struct proxy_l* mk_proxy(char* name, unsigned short port)
 	if (he==0){
 		ser_error=E_BAD_ADDRESS;
 		LOG(L_CRIT, "ERROR: mk_proxy: could not resolve hostname:"
-					" \"%s\"\n", name);
+					" \"%.*s\"\n", name->len, name->s);
 		free(p);
 		goto error;
 	}
