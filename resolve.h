@@ -29,6 +29,7 @@
 /* History:
  * --------
  *  2003-04-12  support for resolving ipv6 address references added (andrei)
+ *  2004-07-28  darwin needs nameser_compat.h (andrei)
  */
 
 
@@ -40,6 +41,10 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <arpa/nameser.h>
+
+#ifdef __OS_darwin
+#include <arpa/nameser_compat.h>
+#endif
 
 #include "ip_addr.h"
 

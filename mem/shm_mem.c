@@ -30,6 +30,7 @@
  * --------
  *  2003-03-12  splited shm_mem_init in shm_getmem & shm_mem_init_mallocs
  *               (andrei)
+ *  2004-07-27  ANON mmap support, needed on darwin (andrei)
  */
 
 
@@ -140,6 +141,10 @@ int shm_getmem()
 	}
 	
 #ifdef SHM_MMAP
+#ifdef USE_ANON_MMAP
+	shm_mempool=mmap(0, shm_mem_size, PROT_READ|PROT_WRITE,
+					 MAP_ANON|MAP_SHARED, -1 ,0);
+#else
 	fd=open("/dev/zero", O_RDWR);
 	if (fd==-1){
 		LOG(L_CRIT, "ERROR: shm_mem_init: could not open /dev/zero: %s\n",
@@ -149,6 +154,7 @@ int shm_getmem()
 	shm_mempool=mmap(0, shm_mem_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd ,0);
 	/* close /dev/zero */
 	close(fd);
+#endif /* USE_ANON_MMAP */
 #else
 	
 	shm_shmid=shmget(IPC_PRIVATE, /* SHM_MEM_SIZE */ shm_mem_size , 0700);

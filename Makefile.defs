@@ -31,6 +31,7 @@
 #              code exists (sobomax)
 #  2003-11-08  mips1 support introduced (andrei)
 #  2003-11-24  openbsd 3.4 (elf) fixes (andrei)
+#  2004-07-27  darwin (mac os x) port  (andrei)
 
 
 # check if already included/exported
@@ -40,17 +41,19 @@ else
 makefile_defs=1
 export makefile_defs
 
+# main binary name
+MAIN_NAME=ser
 
 #version number
 VERSION = 0
 PATCHLEVEL = 8
-SUBLEVEL =   13
-EXTRAVERSION = -dev-36-malloc
+SUBLEVEL =   99
+EXTRAVERSION = -dev
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
 ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/  \
-			-e s/armv4l/arm/)
+			-e s/armv4l/arm/ -e "s/Power Macintosh/ppc/" )
 OSREL = $(shell uname -r)
 
 # TLS support
@@ -101,8 +104,13 @@ ifeq ($(OS), netbsd)
 	doc-dir = share/doc/ser
 	man-dir = man/
 else
+ifeq ($(OS), darwin)
+	doc-dir = share/doc/ser/
+	man-dir = man/
+else
 	doc-dir = doc/ser/
 	man-dir = man/
+endif
 endif
 endif
 endif
@@ -154,8 +162,8 @@ MKTAGS=ctags -R .
 
 ifneq (,$(findstring gcc, $(CC_LONGVER)))
 	CC_NAME=gcc
-	CC_VER=$(CC) $(shell $(CC) --version|head -1| \
-				 sed -e 's/.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/' -e 's/[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
+	CC_VER=$(CC) $(shell $(CC) --version|head -n 1| \
+				 sed -e 's/^[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/' -e 's/^[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
 	# sun sed is a little brain damaged => this complicated expression
 	MKDEP=$(CC) -MM 
 	#transform gcc version into 2.9x or 3.0
@@ -167,7 +175,7 @@ endif
 
 ifneq (, $(findstring Sun, $(CC_LONGVER)))
 	CC_NAME=suncc
-	CC_SHORTVER=$(shell echo "$(CC_LONGVER)"|head -1| \
+	CC_SHORTVER=$(shell echo "$(CC_LONGVER)"|head -n 1| \
 					sed -e 's/.*\([0-9]\.[0-9]\).*/\1/g' )
 	CC_VER=$(CC) $(CC_SHORTVER)
 	MKDEP=$(CC) -xM1 
@@ -176,7 +184,7 @@ endif
 ifneq (, $(findstring Intel(R) C++ Compiler, $(CC_LONGVER)))
 	# very nice: gcc compatible
 	CC_NAME=icc
-	CC_FULLVER=$(shell echo "$(CC_LONGVER)"|head -1| \
+	CC_FULLVER=$(shell echo "$(CC_LONGVER)"|head -n 1| \
 					sed -e 's/.*Version \([0-9]\.[0-9]\.[0-9]*\).*/\1/g' )
 	CC_SHORTVER=$(shell echo "$(CC_FULLVER)" | cut -d. -f1,2 )
 	CC_VER=$(CC) $(CC_FULLVER)
@@ -731,6 +739,26 @@ ifeq ($(OS), netbsd)
 	endif
 	YACC=yacc
 	LIBS= -lfl 
+endif
+
+# OS X support, same as freebsd
+ifeq ($(OS), darwin)
+	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN \
+		-DHAVE_SCHED_YIELD -DHAVE_MSGHDR_MSG_CONTROL \
+		-DUSE_ANON_MMAP \
+		-DNDEBUG
+	# -DNDEBUG used to turn off assert (assert wants to call
+	# eprintf which doesn't seem to be defined in any shared lib
+	ifneq ($(found_lock_method), yes)
+		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
+		found_lock_method=yes
+		LIBS= -pthread -lfl -lresolv  #dlopen is in libc
+	else
+		LIBS= -lfl -lresolv  #dlopen is in libc
+	endif
+	LDFLAGS=        # darwin doesn't like -O2 or -E
+	MOD_LDFLAGS= -bundle -bundle_loader ../../$(MAIN_NAME)
+	YACC=yacc
 endif
 
 ifneq (,$(findstring CYGWIN, $(OS)))

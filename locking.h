@@ -34,6 +34,8 @@
  *  2003-03-05  lock set support added for FAST_LOCK & SYSV (andrei)
  *  2003-03-06  splited in two: lock_ops.h & lock_alloc.h, to avoid
  *               shm_mem.h<->locking.h interdependency (andrei)
+ *  2004-07-28  s/lock_set_t/gen_lock_set_t/ because of a type conflict
+ *              on darwin (andrei)
  *
 Implements (in lock_ops.h & lock_alloc.h):
 
@@ -49,13 +51,13 @@ Implements (in lock_ops.h & lock_alloc.h):
 	
 	lock sets:
 	----------
-	type: lock_set_t
-	lock_set_t* lock_set_alloc(no)               - allocs a lock set in shm.
-	lock_set_t* lock_set_init(lock_set_t* set);  - inits the lock set
-	void lock_set_destroy(lock_set_t* s);        - removes the lock set
-	void lock_set_dealloc(lock_set_t* s);        - deallocs the lock set shm.
-	void lock_set_get(lock_set_t* s, int i);     - locks sem i from the set
-	void lock_set_release(lock_set_t* s, int i)  - unlocks sem i from the set
+	type: gen_lock_set_t
+	gen_lock_set_t* lock_set_alloc(no)               - allocs a lock set in shm.
+	gen_lock_set_t* lock_set_init(gen_lock_set_t* set);  - inits the lock set
+	void lock_set_destroy(gen_lock_set_t* s);        - removes the lock set
+	void lock_set_dealloc(gen_lock_set_t* s);        - deallocs the lock set shm.
+	void lock_set_get(gen_lock_set_t* s, int i);     - locks sem i from the set
+	void lock_set_release(gen_lock_set_t* s, int i)  - unlocks sem i from the set
 
 WARNING: - lock_set_init may fail for large number of sems (e.g. sysv). 
          - signals are not treated! (some locks are "awakened" by the signals)

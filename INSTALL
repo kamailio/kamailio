@@ -71,9 +71,6 @@ OS Notes:
 - FreeBSD/OpenBSD/NetBSD: make sure gmake, bison or yacc & flex are installed
 - Solaris: as above; you can use Solaris's yacc instead of bison. You might
   need also gtar and ginstall.
-- Windows: it works in windows (only the core, w/o shared mem. support) but you
-  must install a recent cygwin version (http://www.cygwin.com/) and also 
-  install a newer regex library version (>=0.12). 
     
 
 2. Howto Build ser From Source Distribution

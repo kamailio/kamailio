@@ -82,7 +82,6 @@ modules_basenames=$(shell echo $(modules)| \
 #modules_names=$(patsubst modules/%, %.so, $(modules))
 modules_full_path=$(join  $(modules), $(addprefix /, $(modules_names)))
 
-NAME=ser
 
 ALLDEP=Makefile Makefile.sources Makefile.defs Makefile.rules
 
@@ -92,6 +91,8 @@ ALLDEP=Makefile Makefile.sources Makefile.defs Makefile.rules
 makefile_defs=0
 DEFS:=
 include Makefile.defs
+
+NAME=$(MAIN_NAME)
 
 #export relevant variables to the sub-makes
 export DEFS PROFILE CC  LD MKDEP MKTAGS CFLAGS LDFLAGS MOD_CFLAGS MOD_LDFLAGS

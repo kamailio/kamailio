@@ -48,18 +48,18 @@ then
 	if echo "$FULLVER"|grep gcc >/dev/null
 	then
 		NAME=gcc
-		VER=`$CC --version|head -1| \
-				sed -e 's/.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/'\
-				    -e 's/.*[^.0-9]\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/'`
+		VER=`$CC --version|head -n 1| \
+				sed -e 's/^[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/'\
+				    -e 's/^[^.0-9]*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/'`
 	elif echo "$FULLVER"|grep Sun >/dev/null
 	then
 		NAME=suncc
-		VER=`echo "$FULLVER"|head -1| \
+		VER=`echo "$FULLVER"|head -n 1| \
 				sed -e 's/.*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/'`
 	elif echo "$FULLVER"|grep "Intel(R) C++ Compiler" >/dev/null
 	then
 		NAME=icc
-		VER=`echo "$FULLVER"|head -1| \
+		VER=`echo "$FULLVER"|head -n 1| \
 				sed -e 's/.*Version \([0-9]\.[0-9]\.[0-9]*\).*/\1/' ` 
 	fi
 	

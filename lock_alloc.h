@@ -28,9 +28,12 @@
 /*
  *   ser locking library
  *   WARNING: don't include this directly include instead locking.h!
- *
+ * History:
+ * --------
  *  2003-03-06  created by andrei (contains parts of the original locking.h)
  *  2003-03-17  fixed cast warning in shm_free (forced to void*) (andrei)
+ *  2004-07-28  s/lock_set_t/gen_lock_set_t/ because of a type conflict
+ *              on darwin (andrei)
  *
 Implements: (see also locking.h)
 
@@ -41,8 +44,8 @@ Implements: (see also locking.h)
 	
 	lock sets: [implemented only for FL & SYSV so far]
 	----------
-	lock_set_t* lock_set_alloc(no)               - allocs a lock set in shm.
-	void lock_set_dealloc(lock_set_t* s);        - deallocs the lock set shm.
+	gen_lock_set_t* lock_set_alloc(no)               - allocs a lock set in shm.
+	void lock_set_dealloc(gen_lock_set_t* s);        - deallocs the lock set shm.
 
 */
 
@@ -63,14 +66,14 @@ Implements: (see also locking.h)
 #define lock_dealloc(lock) shm_free((void*)lock)
 /* lock sets */
 
-inline static lock_set_t* lock_set_alloc(int n)
+inline static gen_lock_set_t* lock_set_alloc(int n)
 {
-	lock_set_t* ls;
-	ls=(lock_set_t*)shm_malloc(sizeof(lock_set_t)+n*sizeof(gen_lock_t));
+	gen_lock_set_t* ls;
+	ls=(gen_lock_set_t*)shm_malloc(sizeof(gen_lock_set_t)+n*sizeof(gen_lock_t));
 	if (ls==0){
 		LOG(L_CRIT, "ERROR: lock_set_alloc (FL): could not allocate lock_set\n");
 	}else{
-		ls->locks=(gen_lock_t*)((char*)ls+sizeof(lock_set_t));
+		ls->locks=(gen_lock_t*)((char*)ls+sizeof(gen_lock_set_t));
 		ls->size=n;
 	}
 	return ls;
@@ -85,10 +88,10 @@ inline static lock_set_t* lock_set_alloc(int n)
 #define lock_dealloc(lock) shm_free((void*)lock)
 /* lock sets */
 
-inline static lock_set_t* lock_set_alloc(int n)
+inline static gen_lock_set_t* lock_set_alloc(int n)
 {
-	lock_set_t* ls;
-	ls=(lock_set_t*)shm_malloc(sizeof(lock_set_t));
+	gen_lock_set_t* ls;
+	ls=(gen_lock_set_t*)shm_malloc(sizeof(gen_lock_set_t));
 	if (ls){
 		ls->size=n;
 		ls->semid=-1;

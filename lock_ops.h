@@ -40,6 +40,8 @@
  *  2003-03-10  lock set support added also for PTHREAD_MUTEX & POSIX_SEM
  *               (andrei)
  *  2003-03-17  possible signal interruptions treated for sysv (andrei)
+ *  2004-07-28  s/lock_set_t/gen_lock_set_t/ because of a type conflict
+ *              on darwin (andrei)
  *
 Implements:
 
@@ -52,10 +54,10 @@ Implements:
 	
 	lock sets: [implemented only for FL & SYSV so far]
 	----------
-	lock_set_t* lock_set_init(lock_set_t* set);  - inits the lock set
-	void lock_set_destroy(lock_set_t* s);        - removes the lock set
-	void lock_set_get(lock_set_t* s, int i);     - locks sem i from the set
-	void lock_set_release(lock_set_t* s, int i)  - unlocks sem i from the set
+	gen_lock_set_t* lock_set_init(gen_lock_set_t* set);  - inits the lock set
+	void lock_set_destroy(gen_lock_set_t* s);        - removes the lock set
+	void lock_set_get(gen_lock_set_t* s, int i);     - locks sem i from the set
+	void lock_set_release(gen_lock_set_t* s, int i)  - unlocks sem i from the set
 
 WARNING: - lock_set_init may fail for large number of sems (e.g. sysv). 
          - signals are not treated! (some locks are "awakened" by the signals)
@@ -209,16 +211,16 @@ tryagain:
 #if defined(FAST_LOCK) || defined(USE_PTHREAD_MUTEX) || defined(USE_POSIX_SEM)
 #define GEN_LOCK_T_PREFERED
 
-struct lock_set_t_ {
+struct gen_lock_set_t_ {
 	long size;
 	gen_lock_t* locks;
 }; /* must be  aligned (32 bits or 64 depending on the arch)*/
-typedef struct lock_set_t_ lock_set_t;
+typedef struct gen_lock_set_t_ gen_lock_set_t;
 
 
 #define lock_set_destroy(lock_set) /* do nothing */
 
-inline static lock_set_t* lock_set_init(lock_set_t* s)
+inline static gen_lock_set_t* lock_set_init(gen_lock_set_t* s)
 {
 	int r;
 	for (r=0; r<s->size; r++) if (lock_init(&s->locks[r])==0) return 0;
@@ -232,14 +234,14 @@ inline static lock_set_t* lock_set_init(lock_set_t* s)
 #elif defined(USE_SYSV_SEM)
 #undef GEN_LOCK_T_PREFERED
 
-struct lock_set_t_ {
+struct gen_lock_set_t_ {
 	int size;
 	int semid;
 };
 
 
-typedef struct lock_set_t_ lock_set_t;
-inline static lock_set_t* lock_set_init(lock_set_t* s)
+typedef struct gen_lock_set_t_ gen_lock_set_t;
+inline static gen_lock_set_t* lock_set_init(gen_lock_set_t* s)
 {
 	union semun su;
 	int r;
@@ -262,12 +264,12 @@ inline static lock_set_t* lock_set_init(lock_set_t* s)
 	return s;
 }
 
-inline static void lock_set_destroy(lock_set_t* s)
+inline static void lock_set_destroy(gen_lock_set_t* s)
 {
 	semctl(s->semid, 0, IPC_RMID, (union semun)(int)0);
 }
 
-inline static void lock_set_get(lock_set_t* s, int n)
+inline static void lock_set_get(gen_lock_set_t* s, int n)
 {
 	struct sembuf sop;
 	sop.sem_num=n;
@@ -285,7 +287,7 @@ tryagain:
 	}
 }
 
-inline static void lock_set_release(lock_set_t* s, int n)
+inline static void lock_set_release(gen_lock_set_t* s, int n)
 {
 	struct sembuf sop;
 	sop.sem_num=n;
