@@ -86,6 +86,8 @@ if [ $# -ne 2 ] ; then
 	exit 1
 fi
 
+echo "creating database $1 ..."
+
 $CMD $2 <<EOF
 create database $1;
 use $1;
@@ -278,6 +280,7 @@ CREATE TABLE pending (
   HA1 varchar(128) NOT NULL default '',
   REALM varchar(128) NOT NULL default '',
   ha1b varchar(128) NOT NULL default '',
+  perms varchar(32) default NULL,
   UNIQUE KEY USER_ID (USER_ID),
   KEY USER_ID_2 (USER_ID),
   UNIQUE KEY phplib_id (phplib_id)
@@ -342,6 +345,7 @@ CREATE TABLE subscriber (
   HA1 varchar(128) NOT NULL default '',
   REALM varchar(128) NOT NULL default '',
   ha1b varchar(128) NOT NULL default '',
+  perms varchar(32) default NULL,
   UNIQUE KEY phplib_id (phplib_id),
   UNIQUE KEY USER_ID (USER_ID),
   KEY USER_ID_2 (USER_ID)
@@ -404,6 +408,10 @@ case $1 in
 		exit $?
 		;;
 	create)
+		shift
+		if [ $# -eq 1 ] ; then
+			DBNAME="$1"
+		fi
 		ser_create $DBNAME $SQL_USER
 		exit $?
 		;;
