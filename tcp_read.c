@@ -30,6 +30,8 @@
  * 2002-12-??  created by andrei.
  * 2003-02-10  zero term before calling receive_msg & undo afterwards (andrei)
  * 2003-05-13  l: (short form of Content-Length) is now recognized (andrei)
+ * 2003-07-01  tcp_read & friends take no a single tcp_connection 
+ *              parameter & they set c->state to S_CONN_EOF on eof (andrei)
  */
 
 #ifdef USE_TCP
@@ -55,16 +57,25 @@
 #include "receive.h"
 #include "timer.h"
 #include "ut.h"
+#ifdef USE_TLS
+#include "tls/tls_server.h"
+#endif
 
 
 
 /* reads next available bytes
  * return number of bytes read, 0 on EOF or -1 on error,
+ * on EOF it also sets c->state to S_CONN_EOF
+ * (to distinguish from reads that would block which could return 0)
  * sets also r->error */
-int tcp_read(struct tcp_req *r, int fd)
+int tcp_read(struct tcp_connection *c)
 {
 	int bytes_free, bytes_read;
-	
+	struct tcp_req *r;
+	int fd;
+
+	r=&c->req;
+	fd=c->fd;
 	bytes_free=TCP_BUF_SIZE- (int)(r->pos - r->buf);
 	
 	if (bytes_free==0){
@@ -84,6 +95,8 @@ again:
 			r->error=TCP_READ_ERROR;
 			return -1;
 		}
+	}else if (bytes_read==0){
+		r->state=S_CONN_EOF;
 	}
 #ifdef EXTRA_DEBUG
 	DBG("tcp_read: read %d bytes:\n%.*s\n", bytes_read, bytes_read, r->pos);
@@ -103,10 +116,11 @@ again:
  * when either r->body!=0 or r->state==H_BODY =>
  * all headers have been read. It should be called in a while loop.
  * returns < 0 if error or 0 if EOF */
-int tcp_read_headers(struct tcp_req *r, int fd)
+int tcp_read_headers(struct tcp_connection *c)
 {
 	int bytes, remaining;
 	char *p;
+	struct tcp_req* r;
 	
 	#define crlf_default_skip_case \
 					case '\n': \
@@ -149,11 +163,17 @@ int tcp_read_headers(struct tcp_req *r, int fd)
 							  break
 
 
+	r=&c->req;
 	/* if we still have some unparsed part, parse it first, don't do the read*/
 	if (r->parsed<r->pos){
 		bytes=0;
 	}else{
-		bytes=tcp_read(r, fd);
+#ifdef USE_TLS
+		if (c->type==PROTO_TLS)
+			bytes=tls_read(c);
+		else
+#endif
+			bytes=tcp_read(c);
 		if (bytes<=0) return bytes;
 	}
 	p=r->parsed;
@@ -376,9 +396,28 @@ int tcp_read_req(struct tcp_connection* con)
 		s=con->fd;
 		req=&con->req;
 		size=0;
+#ifdef USE_TLS
+		if (con->type==PROTO_TLS){
+			if (con->state==S_CONN_ACCEPT){
+				if (tls_accept(con)!=0){
+					resp=CONN_ERROR;
+					goto end_req;
+				}
+				if(con->state!=S_CONN_OK) goto end_req; /* not enough data */
+			}
+			if(con->state==S_CONN_CONNECT){
+				if (tls_connect(con)!=0){
+					resp=CONN_ERROR;
+					goto end_req;
+				}
+				if(con->state!=S_CONN_OK) goto end_req; /* not enough data */
+			}
+		}
+#endif
+
 again:
 		if(req->complete==0 && req->error==TCP_REQ_OK){
-			bytes=tcp_read_headers(req, s);
+			bytes=tcp_read_headers(con);
 #ifdef EXTRA_DEBUG
 						/* if timeout state=0; goto end__req; */
 			DBG("read= %d bytes, parsed=%d, state=%d, error=%d\n",
@@ -393,7 +432,7 @@ again:
 				resp=CONN_ERROR;
 				goto end_req;
 			}
-			if ((size==0) && (bytes==0)){
+			if ((size==0) && (bytes==0) &&(con->state==S_CONN_EOF)){
 				DBG( "tcp_read_req: EOF\n");
 				resp=CONN_EOF;
 				goto end_req;
@@ -575,6 +614,9 @@ void tcp_receive_loop(int unix_sock)
 					con->state=S_CONN_BAD;
 					release_tcpconn(con, resp, unix_sock);
 				}
+#ifdef USE_TLS
+				if (con->type==PROTO_TLS) tls_tcpconn_update_fd(con, s);
+#endif
 				con->timeout=get_ticks()+TCP_CHILD_TIMEOUT;
 				FD_SET(s, &master_set);
 				if (maxfd<s) maxfd=s;

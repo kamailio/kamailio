@@ -54,7 +54,7 @@ Implements: (see also locking.h)
 #ifdef SHM_MEM
 #include "mem/shm_mem.h"
 #else
-#error "locking requires shared memroy support"
+#error "locking requires shared memory support"
 #endif
 
 #if defined(FAST_LOCK) || defined(USE_PTHREAD_MUTEX) || defined(USE_POSIX_SEM)

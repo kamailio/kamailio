@@ -46,7 +46,12 @@
 extern char * cfg_file;
 extern char *stat_file;
 extern struct socket_info sock_info[]; /* all addresses we listen/send from*/
+#ifdef USE_TCP
 extern struct socket_info tcp_info[]; /* all tcp sockets we listen on*/
+#endif
+#ifdef USE_TLS
+extern struct socket_info tls_info[]; /* tcp-tls sockets */
+#endif
 extern int sock_no; /* number of addresses/open sockets*/
 extern unsigned short port_no;
 
@@ -68,6 +73,9 @@ extern int children_no;
 #ifdef USE_TCP
 extern int tcp_children_no;
 extern int tcp_disable;
+#endif
+#ifdef USE_TLS
+extern int tls_disable;
 #endif
 extern int dont_fork;
 extern int check_via;

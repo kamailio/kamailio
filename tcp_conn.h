@@ -63,7 +63,8 @@ enum tcp_req_states {	H_SKIP_EMPTY, H_SKIP, H_LF, H_LFCR,  H_BODY, H_STARTWS,
 	};
 
 enum tcp_conn_states { S_CONN_ERROR=-2, S_CONN_BAD=-1, S_CONN_OK=0, 
-						S_CONN_INIT, S_CONN_ACCEPT, S_CONN_CONNECT };
+						S_CONN_INIT, S_CONN_EOF, 
+						S_CONN_ACCEPT, S_CONN_CONNECT };
 
 
 /* fd communication commands */

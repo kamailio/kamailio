@@ -82,6 +82,9 @@
 #include "sr_module.h"
 #include "tcp_server.h"
 #include "tcp_init.h"
+#ifdef USE_TLS
+#include "tls/tls_server.h"
+#endif
 
 
 
@@ -120,9 +123,6 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 									int state)
 {
 	struct tcp_connection *c;
-#ifdef USE_TLS
-	int flags;
-#endif
 	
 	c=(struct tcp_connection*)shm_malloc(sizeof(struct tcp_connection));
 	if (c==0){
@@ -155,21 +155,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	c->extra_data=0;
 #ifdef USE_TLS
 	if (type==PROTO_TLS){
-		c->type=PROTO_TLS;
-		c->rcv.proto=PROTO_TLS;
-		c->flags=F_CONN_NON_BLOCKING;
-		flags=fcntl(sock, F_GETFL);
-		if (flags==-1){
-			LOG(L_ERR, "ERROR: tcpconn_new: fcntl failed :%s\n",
-					strerror(errno));
-			goto error;
-		}
-		if (fcntl(sock, F_SETFL, flags|O_NONBLOCK)==-1){
-			LOG(L_ERR, "ERROR: tcpconn_new: fcntl: set non blocking failed :"
-					" %s\n", strerror(errno));
-			goto error;
-		}
-		c->timeout=get_ticks()+TLS_CON_TIMEOUT;
+		if (tls_tcpconn_init(c, sock)==-1) goto error;
 	}else
 #endif /* USE_TLS*/
 	{
