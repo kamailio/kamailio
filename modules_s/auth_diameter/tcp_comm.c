@@ -317,7 +317,7 @@ next:
 				break;
 			}
 			rb->chall_len=avp->data.len;
-			rb->chall = (char*)pkg_malloc(avp->data.len*sizeof(char));
+			rb->chall = (unsigned char*)pkg_malloc(avp->data.len*sizeof(char));
 			if(rb->chall == NULL)
 			{
 				LOG(L_ERR, M_NAME": no more free memory\n");
