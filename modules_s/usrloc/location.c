@@ -61,7 +61,7 @@ static inline int parse_all_headers(struct sip_msg* _msg)
 		return FALSE;
 	}
 #endif
-	if (parse_headers(_msg, HDR_EOH) == -1) {
+	if (parse_headers(_msg, HDR_EOH, 0) == -1) {
 		ERR("Error while parsing headers");
 		return FALSE;
 	}

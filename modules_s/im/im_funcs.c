@@ -191,7 +191,7 @@ int im_extract_body(struct sip_msg *msg, str *body )
 {
 	int len;
 
-	if ( parse_headers(msg,HDR_EOH)==-1 )
+	if ( parse_headers(msg,HDR_EOH, 0)==-1 )
 	{
 		LOG(L_ERR,"ERROR: im_extract_body:unable to parse all headers!\n");
 		goto error;

@@ -659,7 +659,7 @@ static int lookup_contact(struct sip_msg* _msg, char* _table, char* _str2)
 	contact_t* ptr;
 	
 	if (!_msg->to) {
-		if (parse_headers(_msg, HDR_TO) == -1) {
+		if (parse_headers(_msg, HDR_TO, 0) == -1) {
 			ERR("Error while parsing headers");
 			return -1;
 		}

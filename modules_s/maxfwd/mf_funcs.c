@@ -22,7 +22,7 @@ int is_maxfwd_present( struct sip_msg* msg , str *foo)
 	/* lookup into the message for MAX FORWARDS header*/
 	if ( !msg->maxforwards ) {
 		DBG("DEBUG : is_maxfwd_present: searching for max_forwards header\n");
-		if  ( parse_headers( msg , HDR_MAXFORWARDS )==-1 ){
+		if  ( parse_headers( msg , HDR_MAXFORWARDS, 0 )==-1 ){
 			LOG( L_ERR , "ERROR: is_maxfwd_present :"
 				" parsing MAX_FORWARD header failed!\n");
 			return -2;

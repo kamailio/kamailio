@@ -39,7 +39,7 @@
  */
 int findRouteHF(struct sip_msg* _m)
 {
-	if (parse_headers(_m, HDR_ROUTE) == -1) {
+	if (parse_headers(_m, HDR_ROUTE, 0) == -1) {
 		LOG(L_ERR, "findRouteHF(): Error while parsing headers\n");
 		return FALSE;
 	} else {

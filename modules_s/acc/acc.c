@@ -19,7 +19,7 @@ void acc_reply_report(  struct cell* t , struct sip_msg *msg )
 
 	/* take call-if from TM -- it is parsed for requests and we do not
 	   want to parse it from reply unnecessarily */
-	if (parse_headers(rq, HDR_CALLID)==-1 && ! rq->callid) {
+	if (parse_headers(rq, HDR_CALLID, 0)==-1 && ! rq->callid) {
 		LOG(L_INFO, "ERROR: attempt to account on a reply to request "
 			"with an invalid Call-ID\n");
 		return;
@@ -43,7 +43,7 @@ void acc_ack_report(  struct cell* t , struct sip_msg *msg )
 
 	rq =  t->uas.request;	
 
-	if (parse_headers(rq, HDR_CALLID)==-1 && ! rq->callid) {
+	if (parse_headers(rq, HDR_CALLID, 0)==-1 && ! rq->callid) {
 		LOG(L_INFO, "ERROR: attempt to account on a request with invalid Call-ID\n");
 		return;
 	}
