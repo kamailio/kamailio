@@ -47,7 +47,7 @@
 #include "dbt_util.h"
 #include "dbt_lib.h"
 
-static dbt_cache_p _cachedb = NULL;
+static dbt_cache_p *_cachedb = NULL;
 static gen_lock_t *_cachesem = NULL;
 
 /**
@@ -71,6 +71,16 @@ int dbt_init_cache()
 			return -1;
 		}
 	}
+	/* init pointer to caches list */
+	if (!_cachedb) {
+		_cachedb = shm_malloc( sizeof(dbt_cache_p) );
+		if (!_cachedb) {
+			LOG(L_CRIT,"dbtext:dbt_init_cache: no enough shm mem\n");
+			lock_dealloc(_cachesem);
+			return -1;
+		}
+		*_cachedb = NULL;
+	}
 	
 	return 0;
 }
@@ -81,7 +91,7 @@ int dbt_init_cache()
 dbt_cache_p dbt_cache_get_db(str *_s)
 {
 	dbt_cache_p _dcache=NULL;;
-	if(!_cachesem)
+	if(!_cachesem || !_cachedb)
 	{
 		LOG(L_ERR, "DBT:dbt_cache_get_db: dbtext cache not initialized!\n");
 		return NULL;
@@ -93,14 +103,14 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 
 	lock_get(_cachesem);
 	
-	_dcache = _cachedb;
+	_dcache = *_cachedb;
 	while(_dcache)
 	{
 		lock_get(&_dcache->sem);
 		if(_dcache->dbp)
 		{
 			if(_dcache->dbp->name.len==_s->len 
-					&& strncasecmp(_dcache->dbp->name.s, _s->s, _s->len))
+					&& !strncasecmp(_dcache->dbp->name.s, _s->s, _s->len))
 			{
 				lock_release(&_dcache->sem);
 				goto done;
@@ -159,15 +169,15 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 	
 	_dcache->prev = NULL;
 
-	if(_cachedb)
+	if(*_cachedb)
 	{
-		_dcache->next = _cachedb;
-		_cachedb->prev = _dcache;
+		_dcache->next = *_cachedb;
+		(*_cachedb)->prev = _dcache;
 	}
 	else
 		_dcache->next = NULL;
 
-	_cachedb = _dcache;
+	*_cachedb = _dcache;
 
 done:
 	lock_release(_cachesem);
@@ -180,12 +190,12 @@ done:
 int dbt_cache_check_db(str *_s)
 {
 	dbt_cache_p _dcache=NULL;;
-	if(!_cachesem || !_cachedb || !_s || !_s->s || _s->len<=0)
+	if(!_cachesem || !(*_cachedb) || !_s || !_s->s || _s->len<=0)
 		return -1;
 	
 	lock_get(_cachesem);
 	
-	_dcache = _cachedb;
+	_dcache = *_cachedb;
 	while(_dcache)
 	{
 		if(_dcache->dbp)
@@ -210,12 +220,12 @@ int dbt_cache_check_db(str *_s)
 int dbt_cache_del_db(str *_s)
 {
 	dbt_cache_p _dcache=NULL;;
-	if(!_cachesem || !_cachedb || !_s || !_s->s || _s->len<=0)
+	if(!_cachesem || !(*_cachedb) || !_s || !_s->s || _s->len<=0)
 		return -1;
 	
 	lock_get(_cachesem);
 	
-	_dcache = _cachedb;
+	_dcache = *_cachedb;
 	while(_dcache)
 	{
 		if(_dcache->dbp)
@@ -236,7 +246,7 @@ int dbt_cache_del_db(str *_s)
 	if(_dcache->prev)
 		(_dcache->prev)->next = _dcache->next;
 	else
-		_cachedb = _dcache->next;
+		*_cachedb = _dcache->next;
 
 	if(_dcache->next)
 		(_dcache->next)->prev = _dcache->prev;
@@ -375,16 +385,18 @@ int dbt_cache_destroy()
 	
 	lock_get(_cachesem);
 	
-	_dc = _cachedb;
+	_dc = *_cachedb;
 	while(_dc)
 	{
 		_dc0 = _dc;
 		_dc = _dc->next;
 		dbt_cache_free(_dc0);
 	}
+	shm_free(_cachedb);
+	
 	lock_destroy(_cachesem);
 	lock_dealloc(_cachesem);
-
+	
 	return 0;
 }
 
@@ -401,7 +413,7 @@ int dbt_cache_print(int _f)
 	
 	lock_get(_cachesem);
 	
-	_dc = _cachedb;
+	_dc = *_cachedb;
 	while(_dc)
 	{
 		lock_get(&_dc->sem);

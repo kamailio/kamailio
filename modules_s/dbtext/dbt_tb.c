@@ -304,9 +304,13 @@ int dbt_row_set_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 			break;
 			
 			case DB_INT:
-			case DB_DATETIME:
 				_drp->fields[_idx].type = DB_INT;
 				_drp->fields[_idx].val.int_val = _vp->val.int_val;
+			break;
+			
+			case DB_DATETIME:
+				_drp->fields[_idx].type = DB_INT;
+				_drp->fields[_idx].val.int_val = (int)_vp->val.time_val;
 			break;
 			
 			default:
@@ -354,7 +358,7 @@ int dbt_row_update_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 			
 			case DB_STRING:
 				_drp->fields[_idx].type = DB_STR;
-				// free if already exists
+				/* free if already exists */
 				if(_drp->fields[_idx].val.str_val.s)
 					shm_free(_drp->fields[_idx].val.str_val.s);
 
@@ -383,7 +387,13 @@ int dbt_row_update_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 				_drp->fields[_idx].val.int_val = _vp->val.int_val;
 			break;
 			
+			case DB_DATETIME:
+				_drp->fields[_idx].type = DB_INT;
+				_drp->fields[_idx].val.int_val = (int)_vp->val.time_val;
+			break;
+			
 			default:
+				LOG(L_ERR,"ERROR:dbtext: unsupported type %d in update\n",_t);
 				_drp->fields[_idx].nul = 1;
 				return -1;
 		}
