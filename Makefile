@@ -4,7 +4,7 @@
 #
 
 sources= $(wildcard *.c)
-objs= $((sources:.c=.o)
+objs= $(sources:.c=.o)
 depends= $(sources:.c=.d)
 
 NAME=sip_router
