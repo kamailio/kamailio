@@ -3,7 +3,7 @@
  *
  * Event header field body parser
  * This parser was written for Presence Agent module only.
- * it recognize presence package only, no subpackages, no parameters
+ * it recognizes presence package only, no subpackages, no parameters
  * It should be replaced by a more generic parser if subpackages or
  * parameters should be parsed too.
  *
