@@ -29,6 +29,8 @@
  * History:
  * -------
  * 2003-03-24 Created by janakj
+ * 2003-04-07 shm duplication support (janakj)
+ * 2003-04-07 URI class added (janakj)
  */
 
 #ifndef PARSE_PARAM_H
@@ -44,7 +46,11 @@ typedef enum ptype {
 	P_R2,        /* Route & Record-Route: r2 parameter - Route & Record-Route */
 	P_Q,         /* Contact: q parameter */
 	P_EXPIRES,   /* Contact: expires parameter */
-	P_METHOD     /* Contact: method parameter */
+	P_METHOD,    /* Contact: method parameter */
+	P_TRANSPORT, /* URI: transport parameter */
+	P_LR,        /* URI: lr parameter */
+	P_R2,        /* URI: r2 parameter (ser specific) */
+	P_MADDR      /* URI: maddr parameter */
 } ptype_t;
 
 
@@ -54,7 +60,8 @@ typedef enum ptype {
 typedef enum pclass {
 	CLASS_ANY = 0,  /* Any parameters, well-known hooks will be not used */
 	CLASS_RR,       /* Route & Record-Route parameters */
-	CLASS_CONTACT   /* Contact parameters */
+	CLASS_CONTACT,  /* Contact parameters */
+	CLASS_URI       /* URI parameters */
 } pclass_t;
 
 
@@ -90,11 +97,23 @@ struct contact_hooks {
 
 
 /*
+ * Hooks to well known parameter for URI class of parameters
+ */
+struct uri_hooks {
+	struct param* transport; /* transport parameter */
+	struct param* lr;        /* lr parameter */
+	struct param* r2;        /* r2 parameter */
+	struct param* maddr;     /* maddr parameter */
+};
+
+
+/*
  * Union of hooks structures for all classes
  */
 typedef union param_hooks {
  	struct rr_hooks rr;           /* Route & Record-Route hooks */
 	struct contact_hooks contact; /* Contact hooks */
+	struct uri_hooks uri;         /* URI hooks */
 } param_hooks_t;
 
 

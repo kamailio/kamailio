@@ -29,6 +29,8 @@
  * History:
  * -------
  * 2003-03-24 Created by janakj
+ * 2003-04-07 shm duplication added (janakj)
+ * 2003-04-07 URI class added (janakj)
  */
 
 #include <stdio.h>
@@ -100,6 +102,50 @@ static inline void parse_contact_class(param_hooks_t* _h, param_t* _p)
 		    (!strncasecmp(_p->name.s + 1, "ethod", 5))) {
 			_p->type = P_METHOD;
 			_h->contact.method = _p;
+		}
+		break;
+	}
+}
+
+
+/*
+ * Try to find out parameter name, recognized parameters
+ * are transport, lr, r2, maddr
+ */
+static inline void parse_uri_class(param_hooks_t* _h, param_t* _p)
+{
+	switch(_p->name.s[0]) {
+	case 't':
+	case 'T':
+		if ((_p->name.len == 9) &&
+		    (!strncasecmp(_p->name.s + 1, "ransport", 8))) {
+			_p->type = P_TRANSPORT;
+			_h->uri.transport = _p;
+		}
+		break;
+
+	case 'l':
+	case 'L':
+		if ((_p->name.len == 2) && ((_p->name.s[1] == 'r') || (_p->name.s[1] == 'R'))) {
+			_p->type = P_LR;
+			_h->uri.lr = _p;
+		}
+		break;
+
+	case 'r':
+	case 'R':
+		if ((_p->name.len == 2) && (_p->name.s[1] == '2')) {
+			_p->type = P_R2;
+			_h->uri.r2 = _p;
+		}
+		break;
+
+	case 'm':
+	case 'M':
+		if ((_p->name.len == 5) &&
+		    (!strncasecmp(_p->name.s + 1, "addr", 4))) {
+			_p->type = P_MADDR;
+			_p->uri.maddr = _p;
 		}
 		break;
 	}
@@ -243,6 +289,7 @@ static inline void parse_param_name(str* _s, pclass_t _c, param_hooks_t* _h, par
 	switch(_c) {
 	case CLASS_RR:      parse_rr_class(_h, _p);      break;
 	case CLASS_CONTACT: parse_contact_class(_h, _p); break;
+	case CLASS_URI:     parse_uri_class(_h, _p);     break;
 	default: break;
 	}
 }
@@ -411,13 +458,17 @@ static inline void print_param(param_t* _p)
 	printf("---param(%p)---\n", _p);
 	
 	switch(_p->type) {
-	case P_OTHER:   type = "P_OTHER";   break;
-	case P_LR:      type = "P_LR";      break;
-	case P_R2:      type = "P_R2";      break;
-	case P_Q:       type = "P_Q";       break;
-	case P_EXPIRES: type = "P_EXPIRES"; break;
-	case P_METHOD:  type = "P_METHOD";  break;
-	default:        type = "UNKNOWN";   break;
+	case P_OTHER:     type = "P_OTHER";     break;
+	case P_LR:        type = "P_LR";        break;
+	case P_R2:        type = "P_R2";        break;
+	case P_Q:         type = "P_Q";         break;
+	case P_EXPIRES:   type = "P_EXPIRES";   break;
+	case P_METHOD:    type = "P_METHOD";    break;
+	case P_TRANSPORT: type = "P_TRANSPORT"; break;
+	case P_LR:        type = "P_LR";        break;
+	case P_R2:        type = "P_R2";        break;
+	case P_MADDR:     type = "P_MADDR";     break;
+	default:          type = "UNKNOWN";     break;
 	}
 	
 	printf("type: %s\n", type);
