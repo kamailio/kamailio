@@ -489,7 +489,7 @@ static void sig_usr(int signo)
 #ifdef STATS
 			dump_all_statistic();
 #endif
-			if (pif_file) unlink(pid_file);
+			if (pid_file) unlink(pid_file);
 		}
 		exit(0);
 	} else if (signo==SIGUSR1) { /* statistic */
