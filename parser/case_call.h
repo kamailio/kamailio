@@ -1,7 +1,7 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * Call-ID header field parser macros
+ * Call-ID Header Name Parsing Macros
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -33,28 +33,24 @@
 
 
 #define ID_CASE                      \
-     switch(val) {                   \
-     case __ID1_:                    \
+     switch(LOWER_DWORD(val)) {      \
+     case __id1_:                    \
 	     hdr->type = HDR_CALLID; \
 	     hdr->name.len = 7;      \
 	     *(p + 3) = '\0';        \
 	     return (p + 4);         \
 	                             \
-     case __ID2_:                    \
+     case __id2_:                    \
 	     hdr->type = HDR_CALLID; \
 	     p += 4;                 \
 	     goto dc_end;            \
      }
 
 
-#define Call_CASE      \
+#define call_CASE      \
      p += 4;           \
      val = READ(p);    \
      ID_CASE;          \
-                       \
-     val = unify(val); \
-     ID_CASE;          \
-                       \
      goto other;
 
 

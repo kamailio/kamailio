@@ -1,7 +1,7 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * Contact, Content-Type, Content-Length header field parser macros
+ * Contact, Content-Type, Content-Length Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -33,7 +33,7 @@
 
 
 #define TH_CASE                                        \
-        switch(val) {                                  \
+        switch(LOWER_DWORD(val)) {                     \
         case _th12_:                                   \
                 hdr->type = HDR_CONTENTLENGTH;         \
                 hdr->name.len = 14;                    \
@@ -41,9 +41,9 @@
                 return (p + 4);                        \
         }                                              \
                                                        \
-        if ((*p == 't') || (*p == 'T')) {              \
+        if (LOWER_BYTE(*p) == 't') {                   \
                 p++;                                   \
-                if ((*p == 'h') || (*p == 'H')) {      \
+                if (LOWER_BYTE(*p) == 'h') {           \
                         hdr->type = HDR_CONTENTLENGTH; \
                         p++;                           \
                         goto dc_end;                   \
@@ -52,14 +52,14 @@
 
 
 #define LENG_TYPE_CASE                       \
-        switch(val) {                        \
-        case _Leng_:                         \
+        switch(LOWER_DWORD(val)) {            \
+        case _leng_:                         \
                 p += 4;                      \
                 val = READ(p);               \
                 TH_CASE;                     \
                 goto other;                  \
                                              \
-        case _Type_:                         \
+        case _type_:                         \
                 hdr->type = HDR_CONTENTTYPE; \
                 p += 4;                      \
                 goto dc_end;                 \
@@ -67,7 +67,7 @@
 
 
 #define ACT_ENT_CASE                     \
-        switch(val) {                    \
+        switch(LOWER_DWORD(val)) {       \
         case _act1_:                     \
 	        hdr->type = HDR_CONTACT; \
 	        hdr->name.len = 7;       \
@@ -83,19 +83,13 @@
                 p += 4;                  \
                 val = READ(p);           \
                 LENG_TYPE_CASE;          \
-                                         \
-                val = unify(val);        \
-                LENG_TYPE_CASE;          \
                 goto other;              \
         }                         
 
 
-#define Cont_CASE      \
+#define cont_CASE      \
      p += 4;           \
      val = READ(p);    \
-     ACT_ENT_CASE;     \
-                       \
-     val = unify(val); \
      ACT_ENT_CASE;     \
      goto other;
 

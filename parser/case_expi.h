@@ -1,7 +1,7 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * Expires header field parser macros
+ * Expires Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -33,7 +33,7 @@
 
 
 #define EXPI_RES_CASE                    \
-        switch(val) {                    \
+        switch(LOWER_DWORD(val)) {       \
         case _res1_:                     \
 		hdr->type = HDR_EXPIRES; \
 		hdr->name.len = 7;       \
@@ -47,12 +47,9 @@
         }
 
 
-#define Expi_CASE         \
+#define expi_CASE         \
         p += 4;           \
         val = READ(p);    \
-        EXPI_RES_CASE;    \
-                          \
-        val = unify(val); \
         EXPI_RES_CASE;    \
         goto other;
 

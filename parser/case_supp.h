@@ -1,7 +1,7 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * Supported header field parser macros
+ * Supported Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -33,10 +33,10 @@
 
 
 #define ORTE_CASE                                  \
-        switch(val) {                              \
+        switch(LOWER_DWORD(val)) {                 \
         case _orte_:                               \
 	        p += 4;                            \
-	        if ((*p == 'd') || (*p == 'D')) {  \
+	        if (LOWER_BYTE(*p) == 'd') {       \
 		        hdr->type = HDR_SUPPORTED; \
                         p++;                       \
                         goto dc_end;               \
@@ -45,12 +45,9 @@
         }
 
 
-#define Supp_CASE         \
+#define supp_CASE         \
         p += 4;           \
         val = READ(p);    \
-        ORTE_CASE;        \
-                          \
-        val = unify(val); \
         ORTE_CASE;        \
         goto other;
 

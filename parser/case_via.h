@@ -1,7 +1,7 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * Via header field parser macros
+ * Via Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -32,14 +32,14 @@
 #define CASE_VIA_H
 
 
-#define Via1_CASE            \
+#define via1_CASE            \
         hdr->type = HDR_VIA; \
         hdr->name.len = 3;   \
         *(p + 3) = '\0';     \
         return (p + 4)        
 
 
-#define Via2_CASE            \
+#define via2_CASE            \
         hdr->type = HDR_VIA; \
         p += 4;              \
         goto dc_end

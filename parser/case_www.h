@@ -1,7 +1,7 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * WWW-Authenticate header field parser macros
+ * WWW-Authenticate Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -33,7 +33,7 @@
 
 
 #define CATE_CASE                        \
-        switch(val) {                    \
+        switch(LOWER_DWORD(val)) {       \
         case _cate_:                     \
                 hdr->type = HDR_WWWAUTH; \
                 p += 4;                  \
@@ -41,39 +41,29 @@
         }
 
 
-#define ENTI_CASE                 \
-        switch(val) {             \
-        case _enti_:              \
-                p += 4;           \
-                val = READ(p);    \
-                CATE_CASE;        \
-                                  \
-                val = unify(val); \
-                CATE_CASE;        \
-                goto other;       \
+#define ENTI_CASE                  \
+        switch(LOWER_DWORD(val)) { \
+        case _enti_:               \
+                p += 4;            \
+                val = READ(p);     \
+                CATE_CASE;         \
+                goto other;        \
 } 
 
 
-#define WWW_AUTH_CASE             \
-        switch(val) {             \
-        case _Auth_:              \
-	        p += 4;           \
-                val = READ(p);    \
-                ENTI_CASE;        \
-                                  \
-                val = unify(val); \
-                ENTI_CASE;        \
-	        goto other;       \
+#define WWW_AUTH_CASE              \
+        switch(LOWER_DWORD(val)) { \
+        case _auth_:               \
+	        p += 4;            \
+                val = READ(p);     \
+                ENTI_CASE;         \
+	        goto other;        \
         }
 
 
-#define WWW_CASE          \
+#define www_CASE          \
         p += 4;           \
         val = READ(p);    \
-        WWW_AUTH_CASE;    \
-                          \
-        val = unify(val); \
-                          \
         WWW_AUTH_CASE;    \
         goto other;
 

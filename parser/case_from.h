@@ -1,7 +1,7 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * From header field parser macros
+ * From Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -32,7 +32,7 @@
 #define CASE_FROM_H
 
 
-#define From_CASE             \
+#define from_CASE             \
         hdr->type = HDR_FROM; \
         p += 4;               \
         goto dc_end

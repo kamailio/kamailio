@@ -1,7 +1,7 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * Record-Route header field parser macros
+ * Record-Route Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -33,32 +33,26 @@
 
 
 #define OUTE_CASE                            \
-        if (val == _oute_) {                 \
+        if (LOWER_DWORD(val) == _oute_) {    \
 	        hdr->type = HDR_RECORDROUTE; \
 		p += 4;                      \
 		goto dc_end;                 \
 	}                                    \
 
 
-#define RD_R_CASE                 \
-        switch(val) {             \
-        case _rd_R_:              \
-	        p += 4;           \
-	        val = READ(p);    \
-		OUTE_CASE;        \
-                                  \
-	        val = unify(val); \
-		OUTE_CASE;        \
-	        goto other;       \
+#define RD_R_CASE                  \
+        switch(LOWER_DWORD(val)) { \
+        case _rd_r_:               \
+	        p += 4;            \
+	        val = READ(p);     \
+		OUTE_CASE;         \
+	        goto other;        \
         }
 
 
-#define Reco_CASE         \
+#define reco_CASE         \
         p += 4;           \
         val = READ(p);    \
-        RD_R_CASE;        \
-                          \
-        val = unify(val); \
         RD_R_CASE;        \
         goto other;
 

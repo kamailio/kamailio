@@ -1,7 +1,7 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * To header field parser macros
+ * To Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -32,7 +32,7 @@
 #define CASE_TO_H
 
 
-#define To12_CASE           \
+#define to12_CASE           \
         hdr->type = HDR_TO; \
         hdr->name.len = 2;  \
         *(p + 2) = '\0';    \

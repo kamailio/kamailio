@@ -1,7 +1,7 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * Authoriazation header field parser macros
+ * Authorization Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -27,17 +27,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
 #ifndef CASE_AUTH_H
 #define CASE_AUTH_H
 
 
 #define AUTH_ATIO_CASE                                 \
-        if (val == _atio_) {                           \
+        if (LOWER_DWORD(val) == _atio_) {              \
 	        p += 4;                                \
-		switch(*p) {                           \
+		switch(LOWER_BYTE(*p)) {               \
 		case 'n':                              \
-		case 'N':                              \
 		        hdr->type = HDR_AUTHORIZATION; \
 			p++;                           \
 			goto dc_end;                   \
@@ -47,27 +45,19 @@
 	}
 	             
 
-#define AUTH_ORIZ_CASE            \
-        if (val == _oriz_) {      \
-                p += 4;           \
-	        val = READ(p);    \
-	        AUTH_ATIO_CASE;   \
-          			  \
-                val = unify(val); \
-	        AUTH_ATIO_CASE;   \
-                                  \
-                goto other;       \
+#define AUTH_ORIZ_CASE                     \
+        if (LOWER_DWORD(val) == _oriz_) {  \
+                p += 4;                    \
+	        val = READ(p);             \
+	        AUTH_ATIO_CASE;            \
+                goto other;                \
         }
 
 
-#define Auth_CASE      \
+#define auth_CASE      \
      p += 4;           \
      val = READ(p);    \
      AUTH_ORIZ_CASE;   \
-                       \
-     val = unify(val); \
-     AUTH_ORIZ_CASE;   \
-                       \
      goto other;
 
 

@@ -1,7 +1,7 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * Require header field parser macros
+ * Require Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -33,7 +33,7 @@
 
 
 #define IRE_CASE                         \
-        switch(val) {                    \
+        switch(LOWER_DWORD(val)) {       \
         case _ire1_:                     \
                 hdr->type = HDR_REQUIRE; \
                 hdr->name.len = 7;       \
@@ -47,12 +47,9 @@
         }
 
 
-#define Requ_CASE         \
+#define requ_CASE         \
         p += 4;           \
         val = READ(p);    \
-        IRE_CASE;         \
-                          \
-        val = unify(val); \
         IRE_CASE;         \
         goto other;
 

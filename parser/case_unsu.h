@@ -1,7 +1,7 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * Unsupported header field parser macros
+ * Unsupported Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -33,7 +33,7 @@
 
 
 #define TED_CASE                             \
-        switch(val) {                        \
+        switch(LOWER_DWORD(val)) {           \
         case _ted1_:                         \
                 hdr->type = HDR_UNSUPPORTED; \
                 hdr->name.len = 11;          \
@@ -47,25 +47,19 @@
         }
 
 
-#define PPOR_CASE                 \
-        switch(val) {             \
-        case _ppor_:              \
-                p += 4;           \
-                val = READ(p);    \
-                TED_CASE;         \
-                                  \
-                val = unify(val); \
-                TED_CASE;         \
-                goto other;       \
+#define PPOR_CASE                  \
+        switch(LOWER_DWORD(val)) { \
+        case _ppor_:               \
+                p += 4;            \
+                val = READ(p);     \
+                TED_CASE;          \
+                goto other;        \
         }
 
 
-#define Unsu_CASE         \
+#define unsu_CASE         \
         p += 4;           \
         val = READ(p);    \
-        PPOR_CASE;        \
-                          \
-        val = unify(val); \
         PPOR_CASE;        \
         goto other;       \
 

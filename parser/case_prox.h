@@ -1,7 +1,7 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * Proxy-Authorization and Proxy-Require header field parser macros
+ * Proxy-Require, Proxy-Authorization Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -33,7 +33,7 @@
 
 
 #define ION_CASE                           \
-        switch(val) {                      \
+        switch(LOWER_DWORD(val)) {         \
         case _ion1_:                       \
 	        hdr->type = HDR_PROXYAUTH; \
 	        hdr->name.len = 19;        \
@@ -47,39 +47,32 @@
         }
 
 
-#define IZAT_CASE                 \
-        switch(val) {             \
-        case _izat_:              \
-                p += 4;           \
-                val = READ(p);    \
-                ION_CASE;         \
-                                  \
-                val = unify(val); \
-                ION_CASE;         \
-                goto other;       \
+#define IZAT_CASE                  \
+        switch(LOWER_DWORD(val)) { \
+        case _izat_:               \
+                p += 4;            \
+                val = READ(p);     \
+                ION_CASE;          \
+                goto other;        \
         }
 
 
-#define THOR_CASE                 \
-        switch(val) {             \
-        case _thor_:              \
-                p += 4;           \
-                val = READ(p);    \
-                IZAT_CASE;        \
-                                  \
-                val = unify(val); \
-                IZAT_CASE;        \
-                goto other;       \
+#define THOR_CASE                  \
+        switch(LOWER_DWORD(val)) { \
+        case _thor_:               \
+                p += 4;            \
+                val = READ(p);     \
+                IZAT_CASE;         \
+                goto other;        \
         }
 
 
 #define QUIR_CASE                                     \
-        switch(val) {                                 \
+        switch(LOWER_DWORD(val)) {                    \
         case _quir_:                                  \
 	        p += 4;                               \
-                switch(*p) {                          \
+                switch(LOWER_BYTE(*p)) {              \
                 case 'e':                             \
-                case 'E':                             \
                         hdr->type = HDR_PROXYREQUIRE; \
 	                p++;                          \
                         goto dc_end;                  \
@@ -88,36 +81,27 @@
         }
 
 
-#define PROX2_CASE                \
-        switch(val) {             \
-        case _y_Au_:              \
-                p += 4;           \
-                val = READ(p);    \
-                THOR_CASE;        \
-                                  \
-                val = unify(val); \
-                THOR_CASE;        \
-                goto other;       \
-                                  \
-        case _y_Re_:              \
-                p += 4;           \
-                val = READ(p);    \
-                QUIR_CASE;        \
-                                  \
-                val = unify(val); \
-                QUIR_CASE;        \
-                goto other;       \
+#define PROX2_CASE                 \
+        switch(LOWER_DWORD(val)) { \
+        case _y_au_:               \
+                p += 4;            \
+                val = READ(p);     \
+                THOR_CASE;         \
+                goto other;        \
+                                   \
+        case _y_re_:               \
+                p += 4;            \
+                val = READ(p);     \
+                QUIR_CASE;         \
+                goto other;        \
         }
 
 
-#define Prox_CASE         \
+#define prox_CASE         \
         p += 4;           \
         val = READ(p);    \
         PROX2_CASE;       \
-                          \
-        val = unify(val); \
-        PROX2_CASE;       \
-        goto other;
+         goto other;
 
 
 #endif /* CASE_PROX_H */

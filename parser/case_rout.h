@@ -1,7 +1,7 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * Route header field parser macros
+ * Route Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -32,11 +32,10 @@
 #define CASE_ROUT_H
 
 
-#define Rout_CASE                   \
+#define rout_CASE                   \
      p += 4;                        \
-     switch(*p) {                   \
+     switch(LOWER_BYTE(*p)) {       \
      case 'e':                      \
-     case 'E':                      \
 	     hdr->type = HDR_ROUTE; \
 	     p++;                   \
 	     goto dc_end;           \
