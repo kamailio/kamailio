@@ -24,6 +24,7 @@ struct cell;
 #define sh_malloc( size )  malloc(size)
 #define sh_free( ptr )        free(ptr)
 
+/* always use a power of 2 for hash table size */
 #define TABLE_ENTRIES  256
 #define MAX_FORK           20
 

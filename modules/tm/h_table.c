@@ -1,12 +1,8 @@
 #include "h_table.h"
 
-
-int table_entries;
-
 struct cell      *T;
 unsigned int  global_msg_id;
-
-
+struct s_table*  hash_table;
 
 void free_cell( struct cell* dead_cell )
 {
@@ -53,7 +49,7 @@ void free_hash_table( struct s_table *hash_table )
       if ( hash_table->entrys )
       {
          /* remove the hash table entry by entry */
-         for( i = 0 ; i<table_entries; i++)
+         for( i = 0 ; i<TABLE_ENTRIES; i++)
          {
              release_entry_lock( (hash_table->entrys)+i );
              /* delete all synonyms at hash-collision-slot i */
@@ -97,14 +93,13 @@ struct s_table* init_hash_table()
    /*inits the time*/
    hash_table->time = 0;
 
-    table_entries = TABLE_ENTRIES;
 
    /* try first allocating all the structures needed for syncing */
    if (lock_initialize()==-1)
 	goto error;
 
    /* allocs the entry's table */
-    hash_table->entrys  = sh_malloc( table_entries * sizeof( struct entry )  );
+    hash_table->entrys  = sh_malloc( TABLE_ENTRIES * sizeof( struct entry )  );
     if ( !hash_table->entrys )
 	goto error;
 
@@ -119,7 +114,7 @@ struct s_table* init_hash_table()
 	goto error;
 
     /* inits the entrys */
-    for(  i=0 ; i<table_entries; i++ )
+    for(  i=0 ; i<TABLE_ENTRIES; i++ )
     {
        hash_table->entrys[i].first_cell = 0;
        hash_table->entrys[i].last_cell = 0;

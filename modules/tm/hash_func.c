@@ -10,6 +10,6 @@ int hash( str  call_id, str cseq_nr )
     if ( cseq_nr.len>0 )
       for( i=0 ; i<cseq_nr.len ; hash_code+=cseq_nr.s[i++] );
 
-   return hash_code %= table_entries;
+   return hash_code %= TABLE_ENTRIES;
 }
 
