@@ -889,11 +889,12 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 	char              *warning;
 	unsigned int      warning_len;
 	unsigned int	  text_len;
-	int r;
-	int content_len_len;
+	int  r;
+	int  content_len_len;
 	char *content_len;
+	char content_len_buf[MAX_CONTENT_LEN_BUF];
 	char *after_body;
-	str to_tag;
+	str  to_tag;
 	char *totags;
 
 	received_buf=0;
@@ -988,8 +989,10 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 
 	if (body_len) {
 		content_len=int2str(body_len, &content_len_len);
+		memcpy(content_len_buf,content_len,content_len_len+1);
+		content_len = content_len_buf;
 		len += CONTENT_LENGTH_LEN + content_len_len + CRLF_LEN;
-	    len += body_len;
+		len += body_len;
 	} else {
 		len +=CONTENT_LENGTH_LEN+1 + CRLF_LEN;
 	}
