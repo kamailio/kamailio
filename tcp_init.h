@@ -25,14 +25,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
-
-#ifndef receive_h
-#define receive_h
-
+#ifndef tcp_init_h
+#define tcp_init_h
 #include "ip_addr.h"
 
-int receive_msg(char* buf, unsigned int len, struct receive_info *ri);
+int init_tcp();
+int tcp_init(struct socket_info* sock_info);
+int tcp_init_children();
+void tcp_main_loop();
+void tcp_receive_loop(int unix_sock);
 
 
 #endif

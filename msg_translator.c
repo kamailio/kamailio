@@ -147,7 +147,7 @@ char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 	print_len=snprintf(buf+fix_len, MAX_WARNING_LEN-fix_len,
 		"pid=%d req_src_ip=%s in_uri=%.*s out_uri=%.*s via_cnt%c=%d\"",
 		my_pid(),
-		ip_addr2a(&msg->src_ip),
+		ip_addr2a(&msg->rcv.src_ip),
 		msg->first_line.u.request.uri.len, msg->first_line.u.request.uri.s,
 		foo->len, foo->s, 
 		msg->parsed_flag & HDR_EOH ? '=' : '>', /* should be = */
@@ -175,7 +175,7 @@ char* received_builder(struct sip_msg *msg, unsigned int *received_len)
 	int extra_len;
 
 	extra_len = 0;
-	source_ip=&msg->src_ip;
+	source_ip=&msg->rcv.src_ip;
 	buf = 0;
 
 	buf=pkg_malloc(sizeof(char)*MAX_RECEIVED_SIZE);
@@ -393,7 +393,7 @@ static inline void process_lumps(	struct lump* l,	char* new_buf,
 
 char * build_req_buf_from_sip_req( struct sip_msg* msg,
 								unsigned int *returned_len,
-								struct socket_info* send_sock)
+								struct socket_info* send_sock, int proto)
 {
 	unsigned int len, new_len, received_len, uri_len, via_len;
 	char* line_buf;
@@ -416,7 +416,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 
 
 	line_buf = via_builder( &via_len, send_sock, 
-		msg->add_to_branch_s, msg->add_to_branch_len);
+		msg->add_to_branch_s, msg->add_to_branch_len, proto);
 	if (!line_buf){
 		LOG(L_ERR,"ERROR: build_req_buf_from_sip_req: no via received!\n");
 		goto error00;
@@ -424,7 +424,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	/* check if received needs to be added */
 	backup = msg->via1->host.s[msg->via1->host.len];
 	msg->via1->host.s[msg->via1->host.len] = 0;
-	r=check_address(&msg->src_ip, msg->via1->host.s, received_dns);
+	r=check_address(&msg->rcv.src_ip, msg->via1->host.s, received_dns);
 	msg->via1->host.s[msg->via1->host.len] = backup;
 	if (r!=0){
 		if ((received_buf=received_builder(msg,&received_len))==0)
@@ -612,7 +612,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	/* check if received needs to be added */
 	backup = msg->via1->host.s[msg->via1->host.len];
 	msg->via1->host.s[msg->via1->host.len] = 0;
-	r=check_address(&msg->src_ip, msg->via1->host.s, received_dns);
+	r=check_address(&msg->rcv.src_ip, msg->via1->host.s, received_dns);
 	msg->via1->host.s[msg->via1->host.len] = backup;
 	if (r!=0) {
 		if ((received_buf=received_builder(msg,&received_len))==0) {
@@ -843,7 +843,7 @@ int branch_builder( unsigned int hash_index,
 
 char* via_builder( unsigned int *len, 
 	struct socket_info* send_sock,
-	char *branch, int branch_len )
+	char *branch, int branch_len, int proto )
 {
 	unsigned int  via_len, extra_len;
 	char               *line_buf;
@@ -865,7 +865,15 @@ char* via_builder( unsigned int *len,
 
 	via_len=MY_VIA_LEN+send_sock->address_str.len; /*space included in MY_VIA*/
 
-	memcpy(line_buf, MY_VIA, MY_VIA_LEN);
+	memcpy(line_buf, MY_VIA, MY_VIA_LEN-4); /* without "UPD " */
+	if (proto==PROTO_UDP)
+		memcpy(line_buf+MY_VIA_LEN-4, "UDP ", 4);
+	else if (proto==PROTO_TCP)
+		memcpy(line_buf+MY_VIA_LEN-4, "TCP ", 4);
+	else{
+		LOG(L_CRIT, "BUG: via_builder: unknown proto %d\n", proto);
+		return 0;
+	}
 #	ifdef USE_IPV6
 	if (send_sock->address.af==AF_INET6) {
 		line_buf[MY_VIA_LEN]='[';

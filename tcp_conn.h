@@ -41,9 +41,9 @@
 #define TCP_CHILD_SELECT_TIMEOUT 2 /* the same as above but for children */
 
 
-enum {	TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR, TCP_REQ_OVERRUN, 
-	 	TCP_REQ_BAD_LEN };
-enum {	H_SKIP, H_LF, H_LFCR,  H_BODY, H_STARTWS,
+enum tcp_req_errors {	TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR,
+						TCP_REQ_OVERRUN, TCP_REQ_BAD_LEN };
+enum tcp_req_states {	H_SKIP, H_LF, H_LFCR,  H_BODY, H_STARTWS,
 		H_CONT_LEN1, H_CONT_LEN2, H_CONT_LEN3, H_CONT_LEN4, H_CONT_LEN5,
 		H_CONT_LEN6, H_CONT_LEN7, H_CONT_LEN8, H_CONT_LEN9, H_CONT_LEN10,
 		H_CONT_LEN11, H_CONT_LEN12, H_CONT_LEN13, H_L_COLON, 
@@ -51,8 +51,8 @@ enum {	H_SKIP, H_LF, H_LFCR,  H_BODY, H_STARTWS,
 	};
 
 /* fd communication commands */
-enum { CONN_DESTROY=-3, CONN_ERROR=-2, CONN_EOF=-1, CONN_RELEASE, CONN_GET_FD,
-	   CONN_NEW };
+enum conn_cmds { CONN_DESTROY=-3, CONN_ERROR=-2, CONN_EOF=-1, CONN_RELEASE, 
+					CONN_GET_FD, CONN_NEW };
 
 struct tcp_req{
 	struct tcp_req* next;
@@ -65,8 +65,8 @@ struct tcp_req{
 	int has_content_len; /* 1 if content_length was parsed ok*/
 	int complete; /* 1 if one req has been fully read, 0 otherwise*/
 	int bytes_to_go; /* how many bytes we have still to read from the body*/
-	int error;
-	int state;
+	enum tcp_req_errors error;
+	enum tcp_req_states state;
 };
 
 
@@ -77,10 +77,13 @@ struct tcp_connection{
 	int fd; /* used only by "children" */
 	int id; /* id (unique!) used to retrieve a specific connection when
 	           reply-ing*/
+	struct receive_info rcv; /* src & dst ip, ports, proto a.s.o*/
+#if 0
 	struct ip_addr ip; /* peer ip */
 	int port; /* peer port */
 	int sock_idx; /* receiving socket index in the tcp_info array */
 	union sockaddr_union su;
+#endif
 	struct tcp_req req; /* request data */
 	int refcnt;
 	int timeout; /* connection timeout, after this it will be removed*/

@@ -53,6 +53,7 @@
 enum request_method { METHOD_INVITE=1, METHOD_CANCEL=2, METHOD_ACK=4, 
 	METHOD_BYE=8, METHOD_OTHER=16 };
 
+
 #define IFISMETHOD(methodname,firstchar)                                  \
 if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
         strncasecmp( tmp+1, #methodname +1, methodname##_LEN-1)==0 &&     \
@@ -116,14 +117,12 @@ struct sip_msg {
 
 	char* eoh;        /* pointer to the end of header (if found) or null */
 	char* unparsed;   /* here we stopped parsing*/
-
-	struct ip_addr src_ip;
-	struct ip_addr dst_ip;
+	
+	struct receive_info rcv; /* source & dest ip, ports, proto a.s.o*/
 	
 	char* orig;       /* original message copy */
 	char* buf;        /* scratch pad, holds a modfied message,
-			   *  via, etc. point into it 
-			   */
+					   *  via, etc. point into it */
 	unsigned int len; /* message len (orig) */
 
 	     /* modifications */
@@ -214,13 +213,18 @@ inline static int char_msg_val( struct sip_msg *msg, char *cv )
 inline static char* get_body(struct sip_msg *msg)
 {
 	int offset;
+	int len;
 
 	if ( parse_headers(msg,HDR_EOH, 0)==-1 )
 		return 0;
 
-	if ( strncmp(CRLF,msg->unparsed,CRLF_LEN)==0 )
+	if (msg->unparsed){
+		len=(int)(msg->unparsed-msg->buf);
+	}else return 0;
+	if ((len+2<=msg->len) && (strncmp(CRLF,msg->unparsed,CRLF_LEN)==0) )
 		offset = CRLF_LEN;
-	else if (*(msg->unparsed)=='\n' || *(msg->unparsed)=='\r' )
+	else if ( (len+1<=msg->len) &&
+				(*(msg->unparsed)=='\n' || *(msg->unparsed)=='\r' ) )
 		offset = 1;
 	else
 		return 0;

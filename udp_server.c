@@ -213,6 +213,7 @@ int udp_init(struct socket_info* sock_info)
 		goto error;
 	}
 */
+	sock_info->proto=PROTO_UDP;
 	if (init_su(addr, &sock_info->address, htons(sock_info->port_no))<0){
 		LOG(L_ERR, "ERROR: udp_init: could not init sockaddr_union\n");
 		goto error;
@@ -278,6 +279,7 @@ int udp_rcv_loop()
 
 	union sockaddr_union* from;
 	unsigned int fromlen;
+	struct receive_info ri;
 
 
 	from=(union sockaddr_union*) malloc(sizeof(union sockaddr_union));
@@ -286,7 +288,11 @@ int udp_rcv_loop()
 		goto error;
 	}
 	memset(from, 0 , sizeof(union sockaddr_union));
-
+	ri.bind_address=bind_address; /* this will not change, we do it only once*/
+	ri.dst_port=bind_address->port_no;
+	ri.dst_ip=bind_address->address;
+	ri.proto=PROTO_UDP;
+	ri.proto_reserved1=ri.proto_reserved2=0;
 	for(;;){
 #ifdef DYN_BUF
 		buf=pkg_malloc(BUF_SIZE+1);
@@ -327,9 +333,13 @@ int udp_rcv_loop()
 			continue;
 		}
 #endif
+		ri.src_su=*from;
+		su2ip_addr(&ri.src_ip, from);
+		ri.src_port=su_getport(from);
+		
 		
 		/* receive_msg must free buf too!*/
-		receive_msg(buf, len, from);
+		receive_msg(buf, len, &ri);
 		
 	/* skip: do other stuff */
 		

@@ -63,4 +63,6 @@ x jku: branch hash computation over canonical values
 
 
 x freopen stdin, stdout, stderr to /dev/null
-
+- add a section on building ser & configuring it for maximum performance
+ (-DF_MALLOC, -DNO_DBG, ... sip_warning=0, a.s.o)
+- add src_port, dst_port, proto to cfg.{y,lex}

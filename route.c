@@ -146,6 +146,7 @@ static int fix_actions(struct action* a)
 		switch(t->type){
 			case FORWARD_T:
 			case FORWARD_TCP_T:
+			case FORWARD_UDP_T:
 			case SEND_T:
 			case SEND_TCP_T:
 					switch(t->p1_type){
@@ -360,10 +361,10 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 				}
 				break;
 		case SRCIP_O:
-				ret=comp_ip(&msg->src_ip, e->r.param, e->op, e->subtype);
+				ret=comp_ip(&msg->rcv.src_ip, e->r.param, e->op, e->subtype);
 				break;
 		case DSTIP_O:
-				ret=comp_ip(&msg->dst_ip, e->r.param, e->op, e->subtype);
+				ret=comp_ip(&msg->rcv.dst_ip, e->r.param, e->op, e->subtype);
 				break;
 		case NUMBER_O:
 				ret=!(!e->r.intval); /* !! to transform it in {0,1} */

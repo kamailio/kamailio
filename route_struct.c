@@ -235,6 +235,9 @@ void print_action(struct action* a)
 			case FORWARD_TCP_T:
 					DBG("forward_tcp(");
 					break;
+			case FORWARD_UDP_T:
+					DBG("forward_udp(");
+					break;
 			case SEND_T:
 					DBG("send(");
 					break;

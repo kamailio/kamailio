@@ -77,6 +77,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 	struct sip_uri uri;
 	struct sip_uri* u;
 	unsigned short port;
+	int proto;
 
 	/* reset the value of error to E_UNSPEC so avoid unknowledgable
 	   functions to return with errror (status<0) and not setting it
@@ -86,11 +87,21 @@ int do_action(struct action* a, struct sip_msg* msg)
 	ser_error=E_UNSPEC;
 
 	ret=E_BUG;
-	switch (a->type){
+	switch ((unsigned char)a->type){
 		case DROP_T:
 				ret=0;
 			break;
 		case FORWARD_T:
+#ifdef USE_TCP
+		case FORWARD_TCP_T:
+#endif
+		case FORWARD_UDP_T:
+
+			if (a->type==FORWARD_UDP_T) proto=PROTO_UDP;
+#ifdef USE_TCP
+			else if (a->type==FORWARD_TCP_T) proto= PROTO_TCP;
+#endif
+			else proto=msg->rcv.proto;
 			if (a->p1_type==URIHOST_ST){
 				/*parse uri*/
 				ret=parse_sip_msg_uri(msg);
@@ -121,13 +132,13 @@ int do_action(struct action* a, struct sip_msg* msg)
 					ret=E_BAD_ADDRESS;
 					goto error_fwd_uri;
 				}
-				ret=forward_request(msg, p);
+				ret=forward_request(msg, p, proto);
 				/*free_uri(&uri); -- no longer needed, in sip_msg*/
 				free_proxy(p); /* frees only p content, not p itself */
 				free(p);
 				if (ret>=0) ret=1;
 			}else if ((a->p1_type==PROXY_ST) && (a->p2_type==NUMBER_ST)){
-				ret=forward_request(msg,(struct proxy_l*)a->p1.data);
+				ret=forward_request(msg,(struct proxy_l*)a->p1.data, proto);
 				if (ret>=0) ret=1;
 			}else{
 				LOG(L_CRIT, "BUG: do_action: bad forward() types %d, %d\n",
@@ -167,7 +178,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				p->tx_bytes+=msg->len;
 				if (a->type==SEND_T){
 					/*udp*/
-					send_sock=get_send_socket(to);
+					send_sock=get_send_socket(to, PROTO_UDP);
 					if (send_sock!=0){
 						ret=udp_send(send_sock, msg->orig, msg->len, to);
 					}else{

@@ -55,6 +55,7 @@
 #include "mem/shm_mem.h"
 #include "timer.h"
 #include "tcp_server.h"
+#include "tcp_init.h"
 
 
 
@@ -81,7 +82,8 @@ int unix_tcp_sock;
 
 
 
-struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su, int i)
+struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
+									struct socket_info* ba)
 {
 	struct tcp_connection *c;
 	
@@ -93,14 +95,22 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su, int i)
 	}
 	c->s=sock;
 	c->fd=sock;
-	c->su=*su;
-	c->sock_idx=i;
+	c->rcv.src_su=*su;
+	
 	c->refcnt=0;
-	su2ip_addr(&c->ip, su);
-	c->port=su_getport(su);
+	su2ip_addr(&c->rcv.src_ip, su);
+	c->rcv.src_port=su_getport(su);
+	c->rcv.proto=PROTO_TCP;
+	c->rcv.bind_address=ba;
+	if (ba){
+		c->rcv.dst_ip=ba->address;
+		c->rcv.dst_port=ba->port_no;
+	}
 	init_tcp_req(&c->req);
 	c->timeout=get_ticks()+TCP_CON_TIMEOUT;
 	c->id=connection_id++;
+	c->rcv.proto_reserved1=0; /* this will be filled before receive_message*/
+	c->rcv.proto_reserved2=0;
 	return c;
 	
 error:
@@ -157,14 +167,16 @@ struct tcp_connection* tcpconn_find(int id, struct ip_addr* ip, int port)
 
 	struct tcp_connection *c;
 	
-	DBG("tcpconn_find: %d ",id ); print_ip(ip); DBG(" %d\n", port);
+	DBG("tcpconn_find: %d ",id ); print_ip(ip); DBG(" %d\n", ntohs(port));
 	for (c=*conn_list; c; c=c->next){
 		DBG("c=%p, c->id=%d, ip=",c, c->id);
-		print_ip(&c->ip);
-		DBG(" port=%d\n", c->port);
+		print_ip(&c->rcv.src_ip);
+		DBG(" port=%d\n", ntohs(c->rcv.src_port));
 		if (id){
 			if (id==c->id) return c;
-		}else if ((port==c->port)&&(ip_addr_cmp(ip, &c->ip))) return c;
+		}else if (ip &&	(port==c->rcv.src_port)&&
+					(ip_addr_cmp(ip, &c->rcv.src_ip)))
+			return c;
 	}
 	return 0;
 }
@@ -199,17 +211,31 @@ int tcp_send(char* buf, unsigned len, union sockaddr_union* to, int id)
 	long response[2];
 	int n;
 	
-	su2ip_addr(&ip, to);
-	port=su_getport(to);
+	port=0;
+	if (to){
+		su2ip_addr(&ip, to);
+		port=su_getport(to);
+		c=tcpconn_get(id, &ip, port); /* lock ;inc refcnt; unlock */
+	}else if (id){
+		c=tcpconn_get(id, 0, 0);
+	}else{
+		LOG(L_CRIT, "BUG: tcp_send called with null id & to\n");
+		return -1;
+	}
 	
-	c=tcpconn_get(id, &ip, port); /* lock ;inc refcnt; unlock */
 	if (id){
 		if (c==0) {
-		LOG(L_ERR, "ERROR: tcp_send: id %d not found, dropping\n",
-					id);
-			return -1;
-		}
-	}else{
+			if (to){
+				c=tcpconn_get(0, &ip, port); /* try again w/o id */
+				goto no_id;
+			}else{
+				LOG(L_ERR, "ERROR: tcp_send: id %d not found, dropping\n",
+						id);
+				return -1;
+			}
+		}else goto get_fd;
+	}
+no_id:
 		if (c==0){
 			DBG("tcp_send: no open tcp connection found, opening new one\n");
 			/* create tcp connection */
@@ -224,18 +250,24 @@ int tcp_send(char* buf, unsigned len, union sockaddr_union* to, int id)
 			response[1]=CONN_NEW;
 			n=write(unix_tcp_sock, response, sizeof(response));
 			n=send_fd(unix_tcp_sock, &c, sizeof(c), c->s);
-		}else{
+			goto send_it;
+		}
+get_fd:
 			DBG("tcp_send: tcp connection found, acquiring fd\n");
 			/* get the fd */
 			response[0]=(long)c;
 			response[1]=CONN_GET_FD;
 			n=write(unix_tcp_sock, response, sizeof(response));
+			DBG("tcp_send, c= %p, n=%d\n", c, n);
 			n=receive_fd(unix_tcp_sock, &c, sizeof(c), &c->fd);
-		}
+			DBG("tcp_send: after receive_fd: c= %p n=%d fd=%d\n",c, n, c->fd);
+		
 	
-	}
+	
+send_it:
 	DBG("tcp_send: sending...\n");
 	n=write(c->fd, buf, len);
+	DBG("tcp_send: after write: c= %p n=%d fd=%d\n",c, n, c->fd);
 	close(c->fd);
 	tcpconn_put(c); /* release c (lock; dec refcnt; unlock) */
 	return n;
@@ -269,12 +301,12 @@ void tcpconn_timeout(fd_set* set)
 
 
 
-int tcp_init_sock(struct socket_info* sock_info)
+int tcp_init(struct socket_info* sock_info)
 {
 	union sockaddr_union* addr;
 	
 	addr=&sock_info->su;
-	sock_info->proto=SOCKET_TCP;
+	sock_info->proto=PROTO_TCP;
 	if (init_su(addr, &sock_info->address, htons(sock_info->port_no))<0){
 		LOG(L_ERR, "ERROR: tcp_init: could no init sockaddr_union\n");
 		goto error;
@@ -369,14 +401,14 @@ void tcp_main_loop()
 	FD_ZERO(&master_set);
 	/* set all the listen addresses */
 	for (r=0; r<sock_no; r++){
-		if ((tcp_info[r].proto==SOCKET_TCP) &&(tcp_info[r].socket!=-1)){
+		if ((tcp_info[r].proto==PROTO_TCP) &&(tcp_info[r].socket!=-1)){
 			FD_SET(tcp_info[r].socket, &master_set);
 			if (tcp_info[r].socket>maxfd) maxfd=tcp_info[r].socket;
 		}
 	}
 	/* set all the unix sockets used for child comm */
-	for (r=0; r<process_no; r++){
-		if (pt[r].unix_sock>=0){
+	for (r=1; r<process_no; r++){
+		if (pt[r].unix_sock>0){ /* we can't have 0, we never close it!*/
 			FD_SET(pt[r].unix_sock, &master_set);
 			if (pt[r].unix_sock>maxfd) maxfd=pt[r].unix_sock;
 		}
@@ -399,8 +431,7 @@ void tcp_main_loop()
 		}
 		
 		for (r=0; r<sock_no && n; r++){
-			if ((tcp_info[r].proto==SOCKET_TCP) &&
-					(FD_ISSET(tcp_info[r].socket, &sel_set))){
+			if ((FD_ISSET(tcp_info[r].socket, &sel_set))){
 				/* got a connection on r */
 				su_len=sizeof(su);
 				new_sock=accept(tcp_info[r].socket, &(su.s), &su_len);
@@ -412,7 +443,7 @@ void tcp_main_loop()
 				}
 				
 				/* add socket to list */
-				tcpconn=tcpconn_new(new_sock, &su, r);
+				tcpconn=tcpconn_new(new_sock, &su, &tcp_info[r]);
 				if (tcpconn){
 					tcpconn_add(tcpconn);
 					DBG("tcp_main_loop: new connection: %p %d\n",
@@ -449,7 +480,8 @@ void tcp_main_loop()
 		/* check unix sockets & listen | destroy connections */
 		/* start from 1, the "main" process does not transmit anything*/
 		for (r=1; r<process_no && n; r++){
-			if ( (pt[r].unix_sock>=0) && FD_ISSET(pt[r].unix_sock, &sel_set)){
+			if ( (pt[r].unix_sock>0) && FD_ISSET(pt[r].unix_sock, &sel_set)){
+				/* (we can't have a fd==0, 0 i s never closed )*/
 				n--;
 				/* errno==EINTR !!! TODO*/
 read_again:
@@ -560,7 +592,7 @@ int init_tcp()
 	/* allocate list head*/
 	conn_list=shm_malloc(sizeof(struct tcp_connection*));
 	if (conn_list==0){
-		LOG(L_CRIT, "ERROR: tcp_init: memory allocation failure\n");
+		LOG(L_CRIT, "ERROR: init_tcp: memory allocation failure\n");
 		goto error;
 	}
 	*conn_list=0;
@@ -580,11 +612,7 @@ int tcp_init_children()
 	
 	
 	/* create the tcp sock_info structures */
-	/* copy the sockets*/
-	for (r=0; r<sock_no ; r++){
-		tcp_info[r]=sock_info[r];
-		tcp_init_sock(&tcp_info[r]);
-	}
+	/* copy the sockets --moved to main_loop*/
 	
 	/* fork children & create the socket pairs*/
 	for(r=0; r<tcp_children_no; r++){

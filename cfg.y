@@ -64,6 +64,7 @@ struct id_list* lst_tmp;
 /* keywords */
 %token FORWARD
 %token FORWARD_TCP
+%token FORWARD_UDP
 %token SEND
 %token SEND_TCP
 %token DROP
@@ -682,6 +683,135 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 										}
 		| FORWARD error { $$=0; yyerror("missing '(' or ')' ?"); }
 		| FORWARD LPAREN error RPAREN { $$=0; yyerror("bad forward"
+										"argument"); }
+		| FORWARD_UDP LPAREN host RPAREN	{ $$=mk_action(	FORWARD_UDP_T,
+														STRING_ST,
+														NUMBER_ST,
+														$3,
+														0);
+										}
+		| FORWARD_UDP LPAREN STRING RPAREN	{ $$=mk_action(	FORWARD_UDP_T,
+														STRING_ST,
+														NUMBER_ST,
+														$3,
+														0);
+										}
+		| FORWARD_UDP LPAREN ip RPAREN	{ $$=mk_action(	FORWARD_UDP_T,
+														IP_ST,
+														NUMBER_ST,
+														(void*)$3,
+														0);
+										}
+		| FORWARD_UDP LPAREN host COMMA NUMBER RPAREN { $$=mk_action(
+																FORWARD_UDP_T,
+																 STRING_ST,
+																 NUMBER_ST,
+																$3,
+																(void*)$5);
+												 }
+		| FORWARD_UDP LPAREN STRING COMMA NUMBER RPAREN {$$=mk_action(
+																FORWARD_UDP_T,
+																 STRING_ST,
+																 NUMBER_ST,
+																$3,
+																(void*)$5);
+													}
+		| FORWARD_UDP LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(
+																FORWARD_UDP_T,
+																 IP_ST,
+																 NUMBER_ST,
+																 (void*)$3,
+																(void*)$5);
+												  }
+		| FORWARD_UDP LPAREN URIHOST COMMA URIPORT RPAREN {
+													$$=mk_action(FORWARD_UDP_T,
+																 URIHOST_ST,
+																 URIPORT_ST,
+																0,
+																0);
+													}
+													
+									
+		| FORWARD_UDP LPAREN URIHOST COMMA NUMBER RPAREN {
+													$$=mk_action(FORWARD_UDP_T,
+																 URIHOST_ST,
+																 NUMBER_ST,
+																0,
+																(void*)$5);
+													}
+		| FORWARD_UDP LPAREN URIHOST RPAREN {
+													$$=mk_action(FORWARD_UDP_T,
+																 URIHOST_ST,
+																 NUMBER_ST,
+																0,
+																0);
+										}
+		| FORWARD_UDP error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| FORWARD_UDP LPAREN error RPAREN { $$=0; yyerror("bad forward_udp"
+										"argument"); }
+		| FORWARD_TCP LPAREN host RPAREN	{ $$=mk_action(	FORWARD_TCP_T,
+														STRING_ST,
+														NUMBER_ST,
+														$3,
+														0);
+										}
+		| FORWARD_TCP LPAREN STRING RPAREN	{ $$=mk_action(	FORWARD_TCP_T,
+														STRING_ST,
+														NUMBER_ST,
+														$3,
+														0);
+										}
+		| FORWARD_TCP LPAREN ip RPAREN	{ $$=mk_action(	FORWARD_TCP_T,
+														IP_ST,
+														NUMBER_ST,
+														(void*)$3,
+														0);
+										}
+		| FORWARD_TCP LPAREN host COMMA NUMBER RPAREN { $$=mk_action(
+																FORWARD_TCP_T,
+																 STRING_ST,
+																 NUMBER_ST,
+																$3,
+																(void*)$5);
+												 }
+		| FORWARD_TCP LPAREN STRING COMMA NUMBER RPAREN {$$=mk_action(
+																FORWARD_TCP_T,
+																 STRING_ST,
+																 NUMBER_ST,
+																$3,
+																(void*)$5);
+													}
+		| FORWARD_TCP LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(FORWARD_TCP_T,
+																 IP_ST,
+																 NUMBER_ST,
+																 (void*)$3,
+																(void*)$5);
+												  }
+		| FORWARD_TCP LPAREN URIHOST COMMA URIPORT RPAREN {
+													$$=mk_action(FORWARD_TCP_T,
+																 URIHOST_ST,
+																 URIPORT_ST,
+																0,
+																0);
+													}
+													
+									
+		| FORWARD_TCP LPAREN URIHOST COMMA NUMBER RPAREN {
+													$$=mk_action(FORWARD_TCP_T,
+																 URIHOST_ST,
+																 NUMBER_ST,
+																0,
+																(void*)$5);
+													}
+		| FORWARD_TCP LPAREN URIHOST RPAREN {
+													$$=mk_action(FORWARD_TCP_T,
+																 URIHOST_ST,
+																 NUMBER_ST,
+																0,
+																0);
+										}
+		| FORWARD_TCP error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| FORWARD_TCP LPAREN error RPAREN { $$=0; yyerror("bad forward_tcp"
 										"argument"); }
 		| SEND LPAREN host RPAREN	{ $$=mk_action(	SEND_T,
 													STRING_ST,

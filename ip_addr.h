@@ -40,8 +40,8 @@
 
 #include "dprint.h"
 
-#define SOCKET_TCP	1
-#define SOCKET_UDP	0
+enum sip_protos { PROTO_UDP, PROTO_TCP, PROTO_TLS };
+
 
 struct ip_addr{
 	unsigned int af; /* address family: AF_INET6 or AF_INET */
@@ -82,6 +82,21 @@ struct socket_info{
 	int is_lo; /* 1 if is a loopback, 0 if not */
 	union sockaddr_union su; 
 	int proto; /* tcp or udp*/
+};
+
+
+struct receive_info{
+	struct ip_addr src_ip;
+	struct ip_addr dst_ip;
+	short src_port;
+	short dst_port;
+	int proto;
+	int proto_reserved1;
+	int proto_reserved2;
+	union sockaddr_union src_su; /* usefull for replies*/
+	struct socket_info* bind_address; /* sock_info structure on which 
+									  the msg was received*/
+	/* no need for dst_su yet */
 };
 
 

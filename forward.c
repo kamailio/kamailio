@@ -53,6 +53,9 @@
 #include "ip_addr.h"
 #include "resolve.h"
 #include "name_alias.h"
+#ifdef USE_TCP
+#include "tcp_server.h"
+#endif
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -63,14 +66,31 @@
 /* returns a socket_info pointer to the sending socket or 0 on error
  * params: destination socket_union pointer
  */
-struct socket_info* get_send_socket(union sockaddr_union* to)
+struct socket_info* get_send_socket(union sockaddr_union* to, int proto)
 {
 	struct socket_info* send_sock;
 	
 	send_sock=0;
 	/* check if we need to change the socket (different address families -
 	 * eg: ipv4 -> ipv6 or ipv6 -> ipv4) */
-	if ((bind_address==0) ||(to->s.sa_family!=bind_address->address.af)){
+#ifdef USE_TCP
+	if (proto==PROTO_TCP){
+		/* on tcp just use the "main address", we don't really now the
+		 * sending address (we can find it out, but we'll find also to see
+		 * if we listen on it, and if yes on which port -> too complicated*/
+		switch(to->s.sa_family){
+			case AF_INET:	send_sock=sendipv4_tcp;
+							break;
+#ifdef USE_IPV6
+			case AF_INET6:	send_sock=sendipv6_tcp;
+							break;
+#endif
+			default:		LOG(L_ERR, "get_send_socket: BUG: don't know how"
+									" to forward to af %d\n", to->s.sa_family);
+		}
+	}else
+#endif
+	      if ((bind_address==0) ||(to->s.sa_family!=bind_address->address.af)){
 		switch(to->s.sa_family){
 			case AF_INET:	send_sock=sendipv4;
 							break;
@@ -139,16 +159,18 @@ int check_self(str* host, unsigned short port)
 
 
 
-int forward_request( struct sip_msg* msg, struct proxy_l * p)
+int forward_request( struct sip_msg* msg, struct proxy_l * p, int proto)
 {
 	unsigned int len;
 	char* buf;
 	union sockaddr_union* to;
 	struct socket_info* send_sock;
 	char md5[MD5_LEN];
+	int id; /* used as branch for tcp! */
 	
 	to=0;
 	buf=0;
+	id=0;
 	
 	to=(union sockaddr_union*)malloc(sizeof(union sockaddr_union));
 	if (to==0){
@@ -172,7 +194,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	p->tx_bytes+=len;
 	
 
-	send_sock=get_send_socket(to);
+	send_sock=get_send_socket(to, proto);
 	if (send_sock==0){
 		LOG(L_ERR, "forward_req: ERROR: cannot forward to af %d "
 				"no coresponding listening socket\n", to->s.sa_family);
@@ -190,6 +212,9 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	   value in there; better for performance
 	*/
 
+#ifdef USE_TCP
+	if (msg->rcv.proto==PROTO_TCP) id=msg->rcv.proto_reserved1;
+#endif
 	if (syn_branch ) {
 		*msg->add_to_branch_s='0';
 		msg->add_to_branch_len=1;
@@ -199,31 +224,52 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 			goto error1;
 		}
 		msg->hash_index=hash( msg->callid->body, get_cseq(msg)->number);
-		if (!branch_builder( msg->hash_index, 0, md5, 0 /* 0-th branch */,
+		if (!branch_builder( msg->hash_index, 0, md5, id /* 0-th branch */,
 					msg->add_to_branch_s, &msg->add_to_branch_len )) {
 			LOG(L_ERR, "ERROR: forward_request: branch_builder failed\n");
 			goto error1;
 		}
 	}
 
-	buf = build_req_buf_from_sip_req( msg, &len, send_sock);
+	buf = build_req_buf_from_sip_req( msg, &len, send_sock,  proto);
 	if (!buf){
 		LOG(L_ERR, "ERROR: forward_request: building failed\n");
 		goto error1;
 	}
 	 /* send it! */
 	DBG("Sending:\n%s.\n", buf);
-	DBG("orig. len=%d, new_len=%d\n", msg->len, len );
+	DBG("orig. len=%d, new_len=%d, proto=%d\n", msg->len, len, proto );
 	
-	if (udp_send(send_sock, buf, len,  to)==-1){
-			ser_error=E_SEND;
-			p->errors++;
-			p->ok=0;
-			STATS_TX_DROPS;
-			goto error1;
+	
+	if (proto==PROTO_UDP){
+		if (udp_send(send_sock, buf, len,  to)==-1){
+				ser_error=E_SEND;
+				p->errors++;
+				p->ok=0;
+				STATS_TX_DROPS;
+				goto error1;
+		}
 	}
+#ifdef USE_TCP
+	 else if (proto==PROTO_TCP){
+		if (tcp_send(buf, len, to, 0)==-1){
+				ser_error=E_SEND;
+				p->errors++;
+				p->ok=0;
+				STATS_TX_DROPS;
+				goto error1;
+		}
+	}
+#endif
+	 else{
+		LOG(L_CRIT, "BUG: forward_request: unknown proto %d\n", proto);
+		ser_error=E_SEND;
+		STATS_TX_DROPS;
+		goto error1;
+	}
+
 	/* sent requests stats */
-	else STATS_TX_REQUEST(  msg->first_line.u.request.method_value );
+	STATS_TX_REQUEST(  msg->first_line.u.request.method_value );
 	
 	pkg_free(buf);
 	free(to);
@@ -238,14 +284,6 @@ error:
 }
 
 
-int update_sock_struct_from_ip( union sockaddr_union* to,
-	struct sip_msg *msg )
-{
-
-	init_su(to, &msg->src_ip, 
-		(msg->via1->port)?htons(msg->via1->port): htons(SIP_PORT) );
-	return 1;
-}
 
 int update_sock_struct_from_via( union sockaddr_union* to,
 								 struct via_body* via )
@@ -310,6 +348,13 @@ int forward_reply(struct sip_msg* msg)
 	struct socket_info* send_sock;
 	unsigned int new_len;
 	struct sr_module *mod;
+	int proto;
+#ifdef USE_TCP
+	char* s;
+	char* p;
+	int len;
+	int id;
+#endif
 	
 	to=0;
 	new_buf=0;
@@ -355,22 +400,57 @@ int forward_reply(struct sip_msg* msg)
 	}
 
 	if (update_sock_struct_from_via( to, msg->via2 )==-1) goto error;
-	send_sock=get_send_socket(to);
+	send_sock=get_send_socket(to, msg->rcv.proto);
 	if (send_sock==0){
 		LOG(L_ERR, "forward_reply: ERROR: no sending socket found\n");
 		goto error;
 	}
 
-	if (udp_send(send_sock, new_buf,new_len,  to)==-1)
-	{
-		STATS_TX_DROPS;
-		goto error;
-	} else {
-#ifdef STATS
-		int j = msg->first_line.u.reply.statuscode/100;
-		STATS_TX_RESPONSE(  j );
-#endif
+	proto=msg->via2->proto;
+	if (proto==PROTO_UDP){
+		if (udp_send(send_sock, new_buf,new_len,  to)==-1)
+		{
+			STATS_TX_DROPS;
+			goto error;
+		}
 	}
+#ifdef USE_TCP
+	 else if (proto==PROTO_TCP){
+		 id=0;
+		/* find id in branch if it exists */
+		if ((msg->via1->branch)&&(msg->via1->branch->value.len>MCOOKIE_LEN) &&
+			(memcmp(msg->via1->branch->value.s, MCOOKIE, MCOOKIE_LEN)==0)){
+			DBG("forward_reply: found branch\n");
+			s=msg->via1->branch->value.s+MCOOKIE_LEN;
+			len=msg->via1->branch->value.len-MCOOKIE_LEN;
+			for (p=s; p<s+len  && *p!=BRANCH_SEPARATOR; p++);
+			p++;
+			for(;p<s+len && *p!=BRANCH_SEPARATOR; p++);
+			p++;
+			if (p<s+len){
+				/* we found the second BRANCH_SEPARATOR, p points after it */
+				len-=(int)(p-s);
+				id=reverse_hex2int(p, len);
+				DBG("forward_reply: id= %x\n", id);
+			}else{
+				DBG("forward_reply: no id in branch\n");
+			}
+		}		
+				
+		if (tcp_send(new_buf, new_len,  to, id)==-1)
+		{
+			STATS_TX_DROPS;
+			goto error;
+		}
+	} 
+#endif
+	else{
+		LOG(L_CRIT, "BUG: forward_reply: unknown proto %d\n", proto);
+		goto error;
+	}
+#ifdef STATS
+		STATS_TX_RESPONSE(  (msg->first_line.u.reply.statuscode/100) );
+#endif
 
 	DBG(" reply forwarded to %s:%d\n", msg->via2->host.s,
 		(unsigned short) msg->via2->port);

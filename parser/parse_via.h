@@ -41,6 +41,7 @@ enum {
 };
 
 
+
 struct via_param {
 	int type;               /* Type of the parameter */
 	str name;               /* Name of the parameter */
@@ -57,6 +58,7 @@ struct via_body {
 	str name;
 	str version;   
 	str transport;
+	int proto; /* transport */
 	str host;
 	int port;
 	str port_str;

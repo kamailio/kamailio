@@ -46,6 +46,7 @@
 #include "../dprint.h"
 #include "../ut.h"
 #include "../mem/mem.h"
+#include "../ip_addr.h"
 #include "parse_via.h"
 #include "parse_def.h"
 
@@ -72,7 +73,9 @@ enum {
 	SIP1, SIP2, FIN_SIP,
 	L_VER, F_VER,
 	VER1, VER2, FIN_VER,
-	L_PROTO, F_PROTO, P_PROTO
+	UDP1, UDP2, FIN_UDP,
+	TCP1, TCP2, FIN_TCP,
+	L_PROTO, F_PROTO
 };
 
 
@@ -99,12 +102,14 @@ enum {
  * output state = L_PARAM or F_PARAM or END_OF_HEADER
  * (and saved_state= last state); everything else => error 
  */
-static /*inline*/ char* parse_via_param(char* p, char* end, int* pstate, 
-				    int* psaved_state, struct via_param* param)
+static /*inline*/ char* parse_via_param(char* p, char* end,
+										unsigned char* pstate, 
+				    					unsigned char* psaved_state,
+										struct via_param* param)
 {
 	char* tmp;
-	register int state;
-	int saved_state;
+	register unsigned char state;
+	unsigned char saved_state;
 
 	state=*pstate;
 	saved_state=*psaved_state;
@@ -866,8 +871,8 @@ static /*inline*/ char* parse_via_param(char* p, char* end, int* pstate,
 char* parse_via(char* buffer, char* end, struct via_body *vb)
 {
 	char* tmp;
-	int state;
-	int saved_state;
+	unsigned char state;
+	unsigned char saved_state;
 	int c_nest;
 	int err;
 
@@ -888,9 +893,16 @@ parse_again:
 					case F_VER:
 					case F_PROTO:
 						break;
-					case P_PROTO:
+					case FIN_UDP:
 						*tmp=0;  /* finished proto parsing */
 						vb->transport.len=tmp-vb->transport.s;
+						vb->proto=PROTO_UDP;
+						state=F_HOST; /* start looking for host*/
+						goto main_via;
+					case FIN_TCP:
+						*tmp=0;  /* finished proto parsing */
+						vb->transport.len=tmp-vb->transport.s;
+						vb->proto=PROTO_TCP;
 						state=F_HOST; /* start looking for host*/
 						goto main_via;
 					case FIN_SIP:
@@ -924,9 +936,17 @@ parse_again:
 						saved_state=state;
 						state=F_LF;
 						break;
-					case P_PROTO:
+					case FIN_UDP:
 						*tmp=0;
 						vb->transport.len=tmp-vb->transport.s;
+						vb->proto=PROTO_UDP;
+						state=F_LF;
+						saved_state=F_HOST; /* start looking for host*/
+						goto main_via;
+					case FIN_TCP:
+						*tmp=0;
+						vb->transport.len=tmp-vb->transport.s;
+						vb->proto=PROTO_TCP;
 						state=F_LF;
 						saved_state=F_HOST; /* start looking for host*/
 						goto main_via;
@@ -965,9 +985,17 @@ parse_again:
 						saved_state=state;
 						state=F_CR;
 						break;
-					case P_PROTO:
+					case FIN_UDP:
 						*tmp=0;
 						vb->transport.len=tmp-vb->transport.s;
+						vb->proto=PROTO_UDP;
+						state=F_CR;
+						saved_state=F_HOST;
+						goto main_via;
+					case FIN_TCP:
+						*tmp=0;
+						vb->transport.len=tmp-vb->transport.s;
+						vb->proto=PROTO_TCP;
 						state=F_CR;
 						saved_state=F_HOST;
 						goto main_via;
@@ -1027,13 +1055,6 @@ parse_again:
 						state=SIP1;
 						vb->name.s=tmp;
 						break;
-					/* allow S in PROTO */
-					case F_PROTO:
-						state=P_PROTO;
-						vb->transport.s=tmp;
-						break;
-					case P_PROTO:
-						break;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
 								" state %d\n", *tmp, state);
@@ -1045,13 +1066,6 @@ parse_again:
 				switch(state){
 					case SIP1:
 						state=SIP2;
-						break;
-					/* allow i in PROTO */
-					case F_PROTO:
-						vb->transport.s=tmp;
-						state=P_PROTO;
-						break;
-					case P_PROTO:
 						break;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
@@ -1066,11 +1080,59 @@ parse_again:
 						state=FIN_SIP;
 						break;
 					/* allow p in PROTO */
-					case F_PROTO:
-						state=P_PROTO;
-						vb->transport.s=tmp;
+					case UDP2:
+						state=FIN_UDP;
 						break;
-					case P_PROTO:
+					case TCP2:
+						state=FIN_TCP;
+						break;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
+								" state %d\n", *tmp, state);
+						goto error;
+				}
+				break;
+			case 'U':
+			case 'u':
+				switch(state){
+					case F_PROTO:
+						state=UDP1;
+						break;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
+								" state %d\n", *tmp, state);
+						goto error;
+				}
+				break;
+			case 'D':
+			case 'd':
+				switch(state){
+					case UDP1:
+						state=UDP2;
+						break;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
+								" state %d\n", *tmp, state);
+						goto error;
+				}
+				break;
+			case 'T':
+			case 't':
+				switch(state){
+					case F_PROTO:
+						state=TCP1;
+						break;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
+								" state %d\n", *tmp, state);
+						goto error;
+				}
+				break;
+			case 'C':
+			case 'c':
+				switch(state){
+					case TCP1:
+						state=TCP2;
 						break;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
@@ -1085,13 +1147,6 @@ parse_again:
 						state=VER1;
 						vb->version.s=tmp;
 						break;
-					/* allow 2 in PROTO*/
-					case F_PROTO:
-						vb->transport.s=tmp;
-						state=P_PROTO;
-						break;
-					case P_PROTO:
-						break;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
 								" state %d\n", *tmp, state);
@@ -1102,13 +1157,6 @@ parse_again:
 				switch(state){
 					case VER1:
 						state=VER2;
-						break;
-					/* allow . in PROTO */
-					case F_PROTO:
-						vb->transport.s=tmp;
-						state=P_PROTO;
-						break;
-					case P_PROTO:
 						break;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
@@ -1121,13 +1169,6 @@ parse_again:
 					case VER2:
 						state=FIN_VER;
 						break;
-					/* allow 0 in PROTO*/
-					case F_PROTO:
-						vb->transport.s=tmp;
-						state=P_PROTO;
-						break;
-					case P_PROTO:
-						break;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
 								" state %d\n", *tmp, state);
@@ -1136,18 +1177,9 @@ parse_again:
 				break;
 			
 			default:
-				switch(state){
-					case F_PROTO:
-						vb->transport.s=tmp;
-						state=P_PROTO;
-						break;
-					case P_PROTO:
-						break;
-					default:
 						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
 								" state %d\n", *tmp, state);
 						goto error;
-				}
 				break;
 		}
 	} /* for tmp*/
