@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE cpl PUBLIC '-//IETF//DTD RFCxxxx CPL 1.0//EN' 'cpl.dtd'>
+
+<cpl>
+  <incoming>
+    <address-switch field="origin" subfield="user">
+      <address is="sisalem">
+        <reject status="603" reason="I am very busy!"/>
+      </address>
+      <address is="P1111">
+        <location url="sip:sisalem@iptel.org" priority="1.0" clear="no">
+          <redirect permanent="no" />
+        </location>
+      </address>
+      <otherwise>	
+        <location url="sip:test@mail.iptel.org" priority="1.0" clear="no">
+          <redirect permanent="no" />
+        </location>
+      </otherwise>
+    </address-switch>
+  </incoming>
+</cpl>
+
