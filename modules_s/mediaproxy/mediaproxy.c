@@ -26,6 +26,9 @@
  */
 
 // TODO
+//
+// - make the asymmetric files use CFG_DIR
+// - find a way to install the config files with make install
 
 #include "../../sr_module.h"
 #include "../../dprint.h"
@@ -148,6 +151,7 @@ static usrloc_api_t userLocation;
 
 static AsymmetricClients sipAsymmetrics = {
     "/etc/ser/sip-asymmetric-clients",
+    //CFG_DIR"/sip-asymmetric-clients",
     0,
     NULL,
     0,
@@ -426,23 +430,23 @@ getFromDomain(struct sip_msg* msg)
     static char buf[16] = "unknown"; // buf is here for a reason. don't
     static str notfound = {buf, 7};  // use the constant string directly!
     static struct sip_uri puri;
-	str uri;
+    str uri;
 
-	if (parse_from_header(msg) < 0) {
+    if (parse_from_header(msg) < 0) {
         LOG(L_ERR, "error: mediaproxy/getFromDomain(): error parsing `From' header\n");
-		return notfound;
-	}
+        return notfound;
+    }
 
-	uri = get_from(msg)->uri;
+    uri = get_from(msg)->uri;
 
-	if (parse_uri(uri.s, uri.len, &puri) < 0) {
+    if (parse_uri(uri.s, uri.len, &puri) < 0) {
         LOG(L_ERR, "error: mediaproxy/getFromDomain(): error parsing `From' URI\n");
-		return notfound;
-	} else if (puri.host.len == 0) {
-		return notfound;
-	}
+        return notfound;
+    } else if (puri.host.len == 0) {
+        return notfound;
+    }
 
-	return puri.host;
+    return puri.host;
 }
 
 /* Get called domain */
@@ -451,19 +455,19 @@ getToDomain(struct sip_msg* msg)
 {
     static char buf[16] = "unknown"; // buf is here for a reason. don't
     static str notfound = {buf, 7};  // use the constant string directly!
-	static struct sip_uri puri;
-	str uri;
+    static struct sip_uri puri;
+    str uri;
 
-	uri = get_to(msg)->uri;
+    uri = get_to(msg)->uri;
 
-	if (parse_uri(uri.s, uri.len, &puri) < 0) {
+    if (parse_uri(uri.s, uri.len, &puri) < 0) {
         LOG(L_ERR, "error: mediaproxy/getToDomain(): error parsing `To' URI\n");
-		return notfound;
-	} else if (puri.host.len == 0) {
-		return notfound;
-	}
+        return notfound;
+    } else if (puri.host.len == 0) {
+        return notfound;
+    }
 
-	return puri.host;
+    return puri.host;
 
 }
 
@@ -481,14 +485,14 @@ getDestinationDomain(struct sip_msg* msg)
     static char buf[16] = "unknown"; // buf is here for a reason. don't
     static str notfound = {buf, 7};  // use the constant string directly!
 
-	if (parse_sip_msg_uri(msg) < 0) {
-    LOG(L_ERR, "error: mediaproxy/getDestinationDomain(): error parsing destination URI\n");
-	    return notfound;
+    if (parse_sip_msg_uri(msg) < 0) {
+        LOG(L_ERR, "error: mediaproxy/getDestinationDomain(): error parsing destination URI\n");
+        return notfound;
     } else if (msg->parsed_uri.host.len==0) {
         return notfound;
     }
 
-	return msg->parsed_uri.host;
+    return msg->parsed_uri.host;
 }*/
 
 /* Extract User-Agent */

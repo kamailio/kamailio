@@ -102,13 +102,13 @@ pingClients(unsigned int ticks, void *param)
 static int
 FixContact(struct sip_msg* msg, char* str1, char* str2)
 {
+    str beforeHost, after, agent;
     contact_t* contact;
     struct lump* anchor;
     struct sip_uri uri;
     char *newip, *buf;
     int len, offset;
     Bool asymmetric;
-    str agent;
 
     if (!getContactURI(msg, &uri, &contact))
         return -1;
@@ -119,43 +119,58 @@ FixContact(struct sip_msg* msg, char* str1, char* str2)
     if (uri.port.len == 0)
         uri.port.s = uri.host.s + uri.host.len;
 
+    agent = getUserAgent(msg);
+    asymmetric = isSIPAsymmetric(agent);
+
+    beforeHost.s   = contact->uri.s;
+    beforeHost.len = uri.host.s - contact->uri.s;
+    if (asymmetric) {
+        // for asymmetrics we preserve the original port
+        after.s   = uri.port.s;
+        after.len = contact->uri.s + contact->uri.len - after.s;
+    } else {
+        after.s   = uri.port.s + uri.port.len;
+        after.len = contact->uri.s + contact->uri.len - after.s;
+    }
+
     newip = ip_addr2a(&msg->rcv.src_ip);
+
+    len = beforeHost.len + strlen(newip) + after.len + 20;
 
     // first try to alloc mem. if we fail we don't want to have the lump
     // deleted and not replaced. at least this way we keep the original.
-    buf = pkg_malloc(strlen(newip) + 20);
+    buf = pkg_malloc(len);
     if (buf == NULL) {
         LOG(L_ERR, "error: fix_contact(): out of memory\n");
         return -1;
     }
 
-    agent = getUserAgent(msg);
-    asymmetric = isSIPAsymmetric(agent);
-
-    offset = uri.host.s - msg->buf;
-    if (asymmetric)
-        len = uri.host.len;
-    else
-        len = uri.port.s + uri.port.len - uri.host.s;
-
-    anchor = del_lump(msg, offset, len, HDR_CONTACT);
+    offset = contact->uri.s - msg->buf;
+    anchor = del_lump(msg, offset, contact->uri.len, HDR_CONTACT);
 
     if (!anchor) {
         pkg_free(buf);
         return -1;
     }
 
-    if (asymmetric) {
-        len = sprintf(buf, "%s", newip);
+    if (asymmetric && uri.port.len==0) {
+        len = sprintf(buf, "%.*s%s%.*s", beforeHost.len, beforeHost.s,
+                      newip, after.len, after.s);
+    } else if (asymmetric) {
+        len = sprintf(buf, "%.*s%s:%.*s", beforeHost.len, beforeHost.s,
+                      newip, after.len, after.s);
     } else {
-        len = sprintf(buf, "%s:%d", newip, msg->rcv.src_port);
+        len = sprintf(buf, "%.*s%s:%d%.*s", beforeHost.len, beforeHost.s,
+                      newip, msg->rcv.src_port, after.len, after.s);
     }
 
     if (insert_new_lump_after(anchor, buf, len, HDR_CONTACT) == 0) {
-        LOG(L_ERR, "error: fix_contact(): failed to fix contact\n");
         pkg_free(buf);
         return -1;
     }
+
+    contact->uri.s   = buf;
+    contact->uri.len = len;
 
     if (asymmetric) {
         LOG(L_INFO, "info: fix_contact(): preserved port for SIP "
