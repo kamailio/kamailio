@@ -429,13 +429,12 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	      
 	    /* Parse all parameters */
 	    tmp_str = record_route->nameaddr.uri;
-	    if (parse_params(&tmp_str, CLASS_RR, &hooks, &record_route->params) < 0) {
+	    if (parse_params(&tmp_str, CLASS_URI, &hooks, &record_route->params) < 0) {
 	      LOG(L_ERR, "vm: Error while parsing record route uri params\n");
 	      goto error;
 	    }
 	    
-	    //for(route_param=record_route->params; route_param; route_param=route_param->next)
-	    fproxy_lr = (hooks.rr.lr != 0);//|= (route_param->type == P_LR);
+	    fproxy_lr = (hooks.uri.lr != 0);
 	    
 	    DBG("record_route->nameaddr.uri: %.*s\n",record_route->nameaddr.uri.len,record_route->nameaddr.uri.s);
 	    if(fproxy_lr){
