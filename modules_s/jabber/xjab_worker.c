@@ -1126,7 +1126,7 @@ call_pa_cbf:
 			DBG("XJAB:xj_manage_jab: calling CBF(%.*s,%d)\n",
 				tf.len, tf.s, prc->state);
 #endif
-			(*(prc->cbf))(&tf, prc->state, prc->cbp);
+			(*(prc->cbf))(&tf, &tf, prc->state, prc->cbp);
 		}
 	}
 ready:
@@ -1476,7 +1476,7 @@ void xj_worker_check_watcher(xj_wlist jwl, xj_jcon_pool jcp,
 			" conference.\n", _xj_pid);
 #endif
 		// set as offline
-		(*(jsmsg->cbf))(&jsmsg->to, XJ_PS_OFFLINE, jsmsg->p);
+		(*(jsmsg->cbf))(&jsmsg->to, &jsmsg->to, XJ_PS_OFFLINE, jsmsg->p);
 		return;
 	}
 			
@@ -1525,7 +1525,7 @@ void xj_worker_check_watcher(xj_wlist jwl, xj_jcon_pool jcp,
 				_xj_pid, jsmsg->to.len, jsmsg->to.s, prc->state);
 #endif
 			// send presence info to SIP subscriber
-			(*(prc->cbf))(&jsmsg->to, prc->state, prc->cbp);
+			(*(prc->cbf))(&jsmsg->to, &jsmsg->to, prc->state, prc->cbp);
 		}
 	}
 }

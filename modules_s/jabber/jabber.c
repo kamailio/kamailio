@@ -690,7 +690,7 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 
 #ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_register_watcher: from=[%.*s] to=[%.*s]\n", from->len,
-			from->s, to->len, to->s);
+	    from->s, to->len, to->s);
 #endif
 	from_uri.s = from->s;
 	from_uri.len = from->len;
@@ -710,10 +710,10 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 	}
 	
 	//putting the SIP message parts in share memory to be accessible by workers
-    jsmsg = (xj_sipmsg)shm_malloc(sizeof(t_xj_sipmsg));
+	jsmsg = (xj_sipmsg)shm_malloc(sizeof(t_xj_sipmsg));
 	memset(jsmsg, 0, sizeof(t_xj_sipmsg));
-    if(jsmsg == NULL)
-    	goto error;
+	if(jsmsg == NULL)
+		goto error;
 	
 	jsmsg->msg.len = 0;
 	jsmsg->msg.s = NULL;
@@ -728,7 +728,7 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 	}
 #ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_register_watcher: DESTINATION after correction [%.*s].\n",
-				to_uri.len, to_uri.s);
+	    to_uri.len, to_uri.s);
 #endif
 
 	jsmsg->to.len = to_uri.len;
@@ -751,7 +751,7 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 
 #ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_register_watcher:%d: sending <%p> to worker through <%d>\n",
-			getpid(), jsmsg, pipe);
+	    getpid(), jsmsg, pipe);
 #endif
 	// sending the SHM pointer of SIP message to the worker
 	fl = write(pipe, &jsmsg, sizeof(jsmsg));
@@ -765,7 +765,7 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 		goto error;
 	}
 	
-error:
+ error:
 	return;
 }
 

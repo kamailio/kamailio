@@ -268,7 +268,7 @@ void xj_pres_list_notifyall(xj_pres_list prl, int s)
 	while(p)
 	{
 		if(p->cbf)
-			(*(p->cbf))(&(p->userid),(s==XJ_PS_CHECK)?p->state:s,
+			(*(p->cbf))(&(p->userid),&(p->userid), (s==XJ_PS_CHECK)?p->state:s,
 					p->cbp);
 		p = p->next;
 	}

@@ -55,7 +55,7 @@
 #define XJ_FLAG_OPEN		0
 #define XJ_FLAG_CLOSE		1
 
-typedef void (*pa_callback_f)(str* _user, int _state, void *p);
+typedef void (*pa_callback_f)(str* _user, str* _contact, int _state, void *p);
 
 /**********             ***/
 
