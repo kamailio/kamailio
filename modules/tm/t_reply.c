@@ -480,6 +480,7 @@ restore:
 	free_duped_lump_list(fake->add_rm);
 	free_duped_lump_list(fake->body_lumps);
 	if (fake->new_uri.s) pkg_free(fake->new_uri.s);
+	del_nonshm_lump_rpl( &(fake->reply_lump) );
 	set_t(backup_t);
 	global_msg_id=backup_msgid;
 	rmode=backup_mode;

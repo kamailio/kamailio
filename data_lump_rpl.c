@@ -134,3 +134,17 @@ void unlink_lump_rpl(struct sip_msg * msg, struct lump_rpl* lump)
 }
 
 
+
+void del_nonshm_lump_rpl( struct lump_rpl **head_list)
+{
+	struct lump_rpl *foo;
+
+	while( (*head_list) && (((*head_list)->flags&LUMP_RPL_SHMEM)==0) ) {
+		foo = (*head_list);
+		(*head_list) = foo->next;
+		free_lump_rpl( foo );
+	}
+}
+
+
+

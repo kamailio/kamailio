@@ -679,8 +679,8 @@ do { \
 	{
 		*(rpl_lump_anchor)=(struct lump_rpl*)p;
 		p+=ROUND4(sizeof( struct lump_rpl ));
-		(*rpl_lump_anchor)->flags =
-			rpl_lump->flags&(~(LUMP_RPL_NODUP|LUMP_RPL_NOFREE));
+		(*rpl_lump_anchor)->flags = LUMP_RPL_SHMEM |
+			(rpl_lump->flags&(~(LUMP_RPL_NODUP|LUMP_RPL_NOFREE)));
 		(*rpl_lump_anchor)->text.len = rpl_lump->text.len;
 		(*rpl_lump_anchor)->text.s=p;
 		p+=ROUND4(rpl_lump->text.len);
