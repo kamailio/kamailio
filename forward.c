@@ -39,11 +39,9 @@
  *  2003-04-03  added su_setport (andrei)
  *  2003-04-04  update_sock_struct_from_via now differentiates between
  *               local replies  & "normal" replies (andrei)
- *  2003-04-12  update_sock_struct_from via uses also FL_FORCE_RPORT for
+ *  2003-04-12  update_sock_struct_form via uses also FL_FORCE_RPORT for
  *               local replies (andrei)
  *  2003-08-21  check_self properly handles ipv6 addresses & refs   (andrei)
- *  2003-10-21  check_self updated to handle proto (andrei)
- *  2003-10-24  converted to the new socket_info lists (andrei)
  */
 
 
@@ -72,7 +70,6 @@
 #include "ip_addr.h"
 #include "resolve.h"
 #include "name_alias.h"
-#include "socket_info.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -89,14 +86,15 @@ struct socket_info* get_out_socket(union sockaddr_union* to, int proto)
 {
 	int temp_sock;
 	socklen_t len;
+	int r;
 	union sockaddr_union from; 
-	struct socket_info* si;
 
 	if (proto!=PROTO_UDP) {
 		LOG(L_CRIT, "BUG: get_out_socket can only be called for UDP\n");
 		return 0;
 	}
-	
+
+	r=-1;
 	temp_sock=socket(to->s.sa_family, SOCK_DGRAM, 0 );
 	if (temp_sock==-1) {
 		LOG(L_ERR, "ERROR: get_out_socket: socket() failed: %s\n",
@@ -114,39 +112,38 @@ struct socket_info* get_out_socket(union sockaddr_union* to, int proto)
 				strerror(errno));
 		goto error;
 	}
-	for (si=udp_listen; si; si=si->next) {
+	for (r=0; r<sock_no; r++) {
 		switch(from.s.sa_family) {
 			case AF_INET:	
-						if (si->address.af!=AF_INET)
+						if (sock_info[r].address.af!=AF_INET)
 								continue;
-						if (memcmp(&si->address.u,
+						if (memcmp(&sock_info[r].address.u,
 								&from.sin.sin_addr, 
-								si->address.len)==0)
-							goto found; /*  success */
+								sock_info[r].address.len)==0)
+							goto error; /* it is actually success */
 						break;
 #if defined(USE_IPV6)
 			case AF_INET6:	
-						if (si->address.af!=AF_INET6)
+						if (sock_info[r].address.af!=AF_INET6)
 								continue;
-						if (memcmp(&si->address.u,
+						if (memcmp(&sock_info[r].address.u,
 								&from.sin6.sin6_addr, len)==0)
-							goto found;
+							goto error;
 						continue;
 #endif
 			default:	LOG(L_ERR, "ERROR: get_out_socket: "
 									"unknown family: %d\n",
 									from.s.sa_family);
+						r=-1;
 						goto error;
 		}
 	}
-error:
 	LOG(L_ERR, "ERROR: get_out_socket: no socket found\n");
+	r=-1;
+error:
 	close(temp_sock);
-	return 0;
-found:
-	close(temp_sock);
-	DBG("DEBUG: get_out_socket: socket determined: %p\n", si );
-	return si;
+	DBG("DEBUG: get_out_socket: socket determined: %d\n", r );
+	return r==-1? 0: &sock_info[r];
 }
 
 
@@ -221,19 +218,17 @@ struct socket_info* get_send_socket(union sockaddr_union* to, int proto)
 
 
 
-/* checks if the proto: host:port is one of the address we listen on;
+/* checks if the host:port is one of the address we listen on;
  * if port==0, the  port number is ignored
- * if proto==0 (PROTO_NONE) the protocol is ignored
  * returns 1 if true, 0 if false, -1 on error
  * WARNING: uses str2ip6 so it will overwrite any previous
  *  unsaved result of this function (static buffer)
  */
-int check_self(str* host, unsigned short port, unsigned short proto)
+int check_self(str* host, unsigned short port)
 {
+	int r;
 	char* hname;
 	int h_len;
-	struct socket_info* si;
-	unsigned short c_proto;
 #ifdef USE_IPV6
 	struct ip_addr* ip6;
 #endif
@@ -247,80 +242,59 @@ int check_self(str* host, unsigned short port, unsigned short proto)
 		h_len-=2;
 	}
 #endif
-	c_proto=proto?proto:PROTO_UDP;
-	do{
-		/* get the proper sock list */
-		switch(c_proto){
-			case PROTO_NONE: /* we'll use udp and not all the lists FIXME: */
-			case PROTO_UDP:
-				si=udp_listen;
-				break;
-#ifdef USE_TCP
-			case PROTO_TCP:
-				si=tcp_listen;
-				break;
-#endif
+	for (r=0; r<sock_no; r++){
+		DBG("check_self - checking if host==us: %d==%d && "
+				" [%.*s] == [%.*s]\n", 
+					h_len,
+					sock_info[r].name.len,
+					h_len, hname,
+					sock_info[r].name.len, sock_info[r].name.s
+			);
+		if (port) {
+			DBG("check_self - checking if port %d matches port %d\n", 
+					sock_info[r].port_no, port);
 #ifdef USE_TLS
-			case PROTO_TLS:
-				si=tls_listen;
-				break;
+			if  ((sock_info[r].port_no!=port) && (tls_info[r].port_no!=port)) {
+#else
+			if (sock_info[r].port_no!=port) {
 #endif
-			default:
-				/* unknown proto */
-				LOG(L_WARN, "WARNING: check_self: "
-							"unknown proto %d\n", c_proto);
-				return 0; /* false */
-		}
-		for (; si; si=si->next){
-			DBG("check_self - checking if host==us: %d==%d && "
-					" [%.*s] == [%.*s]\n", 
-						h_len,
-						si->name.len,
-						h_len, hname,
-						si->name.len, si->name.s
-				);
-			if (port) {
-				DBG("check_self - checking if port %d matches port %d\n", 
-						si->port_no, port);
-				if (si->port_no!=port) {
-					continue;
-				}
+				continue;
 			}
-			if ( (h_len==si->name.len) && 
-				(strncasecmp(hname, si->name.s,
-						 si->name.len)==0) /*slower*/)
-				/* comp. must be case insensitive, host names
-				 * can be written in mixed case, it will also match
-				 * ipv6 addresses if we are lucky*/
-				goto found;
-		/* check if host == ip address */
+		}
+		if ( (h_len==sock_info[r].name.len) && 
+			(strncasecmp(hname, sock_info[r].name.s,
+				     sock_info[r].name.len)==0) /*slower*/)
+			/* comp. must be case insensitive, host names
+			 * can be written in mixed case, it will also match
+			 * ipv6 addresses if we are lucky*/
+			break;
+	/* check if host == ip address */
 #ifdef USE_IPV6
-			/* ipv6 case is uglier, host can be [3ffe::1] */
-			ip6=str2ip6(host);
-			if (ip6){
-				if (ip_addr_cmp(ip6, &si->address))
-					goto found; /* match */
-				else
-					continue; /* no match, but this is an ipv6 address
-								 so no point in trying ipv4 */
-			}
-#endif
-			/* ipv4 */
-			if ( 	(!(si->flags&SI_IS_IP)) &&
-					(h_len==si->address_str.len) && 
-				(memcmp(hname, si->address_str.s, 
-									si->address_str.len)==0)
-				)
-				goto found;
+		/* ipv6 case is uglier, host can be [3ffe::1] */
+		ip6=str2ip6(host);
+		if (ip6){
+			if (ip_addr_cmp(ip6, &sock_info[r].address))
+				break; /* match */
+			else
+				continue; /* no match, but this is an ipv6 address
+							 so no point in trying ipv4 */
 		}
-	}while( (proto==0) && (c_proto=next_proto(c_proto)) );
-	
-	/* try to look into the aliases*/
-	if (grep_aliases(hname, h_len, port, proto)==0){
-		DBG("check_self: host != me\n");
-		return 0;
+#endif
+		/* ipv4 */
+		if ( 	(!sock_info[r].is_ip) &&
+				(h_len==sock_info[r].address_str.len) && 
+			(memcmp(hname, sock_info[r].address_str.s, 
+								sock_info[r].address_str.len)==0)
+			)
+			break;
 	}
-found:
+	if (r==sock_no){
+		/* try to look into the aliases*/
+		if (grep_aliases(hname, h_len, port)==0){
+			DBG("check_self: host != me\n");
+			return 0;
+		}
+	}
 	return 1;
 }
 
@@ -513,8 +487,7 @@ int forward_reply(struct sip_msg* msg)
 	/*check if first via host = us */
 	if (check_via){
 		if (check_self(&msg->via1->host,
-					msg->via1->port?msg->via1->port:SIP_PORT,
-					msg->via1->proto)!=1){
+					msg->via1->port?msg->via1->port:SIP_PORT)!=1){
 			LOG(L_NOTICE, "ERROR: forward_reply: host in first via!=me :"
 					" %.*s:%d\n", msg->via1->host.len, msg->via1->host.s,
 									msg->via1->port);
@@ -536,7 +509,7 @@ int forward_reply(struct sip_msg* msg)
 		|| (msg->via2==0) || (msg->via2->error!=PARSE_OK))
 	{
 		/* no second via => error */
-		LOG(L_ERR, "ERROR: forward_msg: no 2nd via found in reply\n");
+		LOG(L_ERR, "ERROR: forward_reply: no 2nd via found in reply\n");
 		goto error;
 	}
 
