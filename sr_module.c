@@ -23,6 +23,9 @@ int init_builtin_modules()
 	#ifdef STATIC_TM
 		register_module(tm_mod_register,"built-in", 0);
 	#endif
+	#ifdef STATIC_MAXFWD
+		register_module(maxfwd_mod_register, "buitl-in", 0);
+	#endif
 }
 
 
