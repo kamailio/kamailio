@@ -32,11 +32,12 @@
  */
 
 
-#include "../../fifo_server.h"
-#include "../../dprint.h"
-#include "ul_fifo.h"
 #include <string.h>
 #include <stdio.h>
+#include "../../fifo_server.h"
+#include "../../dprint.h"
+#include "../../ut.h"
+#include "ul_fifo.h"
 #include "dlist.h"
 #include "udomain.h"
 #include "utime.h"
@@ -52,61 +53,8 @@
  * Dedicated to Douglas Adams, don't panic !
  */
 #define FIFO_CALLID "The-Answer-To-The-Ultimate-Question-Of-Life-Universe-And-Everything"
-#define FIFO_CSEQ 42 
-
-#define FIFO_CALLID_LEN 67
-
-
-/*
- * ASCII to integer
- */
-static inline int atoi(str* _s, int* _r)
-{
-	int i;
-	
-	*_r = 0;
-	for(i = 0; i < _s->len; i++) {
-		if ((_s->s[i] >= '0') && (_s->s[i] <= '9')) {
-			*_r *= 10;
-			*_r += _s->s[i] - '0';
-		} else {
-			return -1;
-		}
-	}
-	
-	return 0;
-}
-
-
-/*
- * ASCII to float
- */
-static inline int atof(str* _s, float* _r)
-{
-	int i, dot = 0;
-	float order = 0.1;
-
-	*_r = 0;
-	for(i = 0; i < _s->len; i++) {
-		if (_s->s[i] == '.') {
-			if (dot) return -1;
-			dot = 1;
-			continue;
-		}
-		if ((_s->s[i] >= '0') && (_s->s[i] <= '9')) {
-			if (dot) {
-				*_r += (_s->s[i] - '0') * order;
-				order /= 10;
-			} else {
-				*_r *= 10;
-				*_r += _s->s[i] - '0';
-			}
-		} else {
-			return -2;
-		}
-	}
-	return 0;
-}
+#define FIFO_CALLID_LEN (sizeof(FIFO_CALLID)-1)
+#define FIFO_CSEQ 42
 
 
 
@@ -310,17 +258,17 @@ static int ul_add(FILE* pipe, char* response_file)
 	fifo_find_domain(&table, &d);
 	
 	if (d) {
-		if (atoi(&expires, &exp_i) < 0) {
+		if (str2int(&expires, &exp_i) < 0) {
 			fifo_reply(response_file, "400 Invalid expires format\n");
 			return 1;
 		}
 		
-		if (atof(&q, &q_f) < 0) {
+		if (str2float(&q, &q_f) < 0) {
 			fifo_reply(response_file, "400 Invalid q format\n");
 			return 1;
 		}
 
-		if (atoi(&rep, &rep_i) < 0) {
+		if (str2int(&rep, &rep_i) < 0) {
 			fifo_reply(response_file, "400 Invalid replicate format\n");
 			return 1;
 		}
@@ -329,21 +277,21 @@ static int ul_add(FILE* pipe, char* response_file)
 		
 		if (add_contact(d, &user, &contact, exp_i, q_f, rep_i) < 0) {
 			unlock_udomain(d);
-			LOG(L_ERR, "ul_add(): Error while adding contact (\'%.*s\',\'%.*s\') in table \'%.*s\'\n",
+			LOG(L_ERR, "ul_add(): Error while adding contact ('%.*s','%.*s') in table '%.*s'\n",
 			    user.len, user.s, contact.len, contact.s, table.len, table.s);
 			fifo_reply(response_file, "500 Error while adding contact\n"
-				" (\'%.*s\',\'%.*s\') in table \'%.*s\'\n",
-				user.len, user.s, contact.len, contact.s, table.len, table.s);
+				   " ('%.*s','%.*s') in table '%.*s'\n",
+				   user.len, user.s, contact.len, contact.s, table.len, table.s);
 			return 1;
 		}
 		unlock_udomain(d);
 		
 		fifo_reply(response_file, "200 Added to table\n"
-				"(\'%.*s\',\'%.*s\') to \'%.*s\'\n",
+				"('%.*s','%.*s') to '%.*s'\n",
 			   user.len, user.s, contact.len, contact.s, table.len, table.s);
 		return 1;
 	} else {
-		fifo_reply(response_file, "400 Table \'%.*s\' not found in memory, use save(\'%.*s\') or lookup(\'%.*s\') in the configuration script first\n", 
+		fifo_reply(response_file, "400 Table '%.*s' not found in memory, use save(\"%.*s\") or lookup(\"%.*s\") in the configuration script first\n", 
 			table.len, table.s, table.len, table.s, table.len, table.s);
 		return 1;
 	}
@@ -496,10 +444,10 @@ static inline int print_contacts(FILE* _o, ucontact_t* _c)
 	int cnt = 0;
 
 	while(_c) {
-		if (_c->expires > act_time) {
+		if ((_c->expires > act_time) && (_c->state < CS_ZOMBIE_N)) {
 			cnt++;
 			if (cnt==1) {
-				fputs( "200 ok\n", _o);
+				fputs( "200 OK\n", _o);
 			}
 			fprintf(_o, "<%.*s>;q=%-3.2f;expires=%d\n",
 				_c->c.len, _c->c.s,
