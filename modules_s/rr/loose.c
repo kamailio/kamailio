@@ -209,7 +209,7 @@ static inline int is_myself(str* _host, unsigned short _port)
 {
 	int ret;
 	
-	ret = check_self(_host, _port ? _port : SIP_PORT);
+	ret = check_self(_host, _port ? _port : SIP_PORT, 0);/* match all protos*/
 	if (ret < 0) return 0;
 
 #ifdef ENABLE_USER_CHECK
@@ -371,7 +371,7 @@ static inline int save_ruri(struct sip_msg* _m)
 	}
 
 	     /* Create an anchor */
-	anchor = anchor_lump(&_m->add_rm, _m->unparsed - _m->buf, 0, 0);
+	anchor = anchor_lump(_m, _m->unparsed - _m->buf, 0, 0);
 	if (anchor == 0) {
 		LOG(L_ERR, "save_ruri(): Can't get anchor\n");
 		return -2;
@@ -436,7 +436,7 @@ static inline int handle_strict_router(struct sip_msg* _m, struct hdr_field* _hd
 		rem_len = _r->next->nameaddr.name.s - _hdr->body.s;
 	}
 
-	if (!del_lump(&_m->add_rm, rem_off - _m->buf, rem_len, 0)) {
+	if (!del_lump(_m, rem_off - _m->buf, rem_len, 0)) {
 		LOG(L_ERR, "hsr(): Can't remove Route HF\n");
 		return -9;
 	}			
@@ -520,7 +520,7 @@ static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 			     /* No next route in the same header, remove the whole header
 			      * field immediately
 			      */
-			if (!del_lump(&_m->add_rm, hdr->name.s - _m->buf, hdr->len, 0)) {
+			if (!del_lump(_m, hdr->name.s - _m->buf, hdr->len, 0)) {
 				LOG(L_ERR, "ras(): Can't remove Route HF\n");
 				return -1;
 			}
@@ -568,7 +568,7 @@ static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 			rem_off = hdr->name.s;
 			rem_len = hdr->len;
 		}
-		if (!del_lump(&_m->add_rm, rem_off - _m->buf, rem_len, 0)) {
+		if (!del_lump(_m, rem_off - _m->buf, rem_len, 0)) {
 			LOG(L_ERR, "ras(): Can't remove Route HF\n");
 			return -5;
 		}
@@ -586,7 +586,7 @@ static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 			      */
 			rem_off = hdr->body.s;
 			rem_len = rt->nameaddr.name.s - hdr->body.s;
-			if (!del_lump(&_m->add_rm, rem_off - _m->buf, rem_len, 0)) {
+			if (!del_lump(_m, rem_off - _m->buf, rem_len, 0)) {
 				LOG(L_ERR, "ras(): Can't remove Route HF\n");
 				return -6;
 			}			
@@ -619,7 +619,7 @@ static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 			rem_off = hdr->name.s;
 			rem_len = hdr->len;
 		}
-		if (!del_lump(&_m->add_rm, rem_off - _m->buf, rem_len, 0)) {
+		if (!del_lump(_m, rem_off - _m->buf, rem_len, 0)) {
 			LOG(L_ERR, "ras(): Can't remove Route HF\n");
 			return -9;
 		}
@@ -662,7 +662,7 @@ static inline int route_after_loose(struct sip_msg* _m)
 			     /* No next route in the same header, remove the whole header
 			      * field immediately
 			      */
-			if (!del_lump(&_m->add_rm, hdr->name.s - _m->buf, hdr->len, 0)) {
+			if (!del_lump(_m, hdr->name.s - _m->buf, hdr->len, 0)) {
 				LOG(L_ERR, "ral(): Can't remove Route HF\n");
 				return -2;
 			}
@@ -683,7 +683,7 @@ static inline int route_after_loose(struct sip_msg* _m)
 				     /* No next route in the same header, remove the whole header
 				      * field immediately
 				      */
-				if (!del_lump(&_m->add_rm, hdr->name.s - _m->buf, hdr->len, 0)) {
+				if (!del_lump(_m, hdr->name.s - _m->buf, hdr->len, 0)) {
 					LOG(L_ERR, "ral(): Can't remove Route HF\n");
 					return -4;
 				}
@@ -730,7 +730,7 @@ static inline int route_after_loose(struct sip_msg* _m)
 		      * and must be removed here
 		      */
 		if (rt != hdr->parsed) {
-			if (!del_lump(&_m->add_rm, hdr->body.s - _m->buf, rt->nameaddr.name.s - hdr->body.s, 0)) {
+			if (!del_lump(_m, hdr->body.s - _m->buf, rt->nameaddr.name.s - hdr->body.s, 0)) {
 				LOG(L_ERR, "ral(): Can't remove Route HF\n");
 				return -8;
 			}			
