@@ -28,6 +28,7 @@
  */
 
 
+#include <string.h>
 #include "lpidf.h"
 #include "paerrno.h"
 #include "../../dprint.h"

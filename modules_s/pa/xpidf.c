@@ -145,6 +145,7 @@ int xpidf_add_address(str* _b, int _l, str* _addr, xpidf_status_t _st)
 	case XPIDF_ST_OPEN:   p = STATUS_OPEN;   len = STATUS_OPEN_LEN;   break;
 	case XPIDF_ST_CLOSED: p = STATUS_CLOSED; len = STATUS_CLOSED_LEN; break;
 	case XPIDF_ST_INUSE:  p = STATUS_INUSE;  len = STATUS_INUSE_LEN;  break;
+	default:              p = STATUS_CLOSED; len = STATUS_CLOSED_LEN; break; /* Makes gcc happy */
 	}
 
 	if (_l < 
