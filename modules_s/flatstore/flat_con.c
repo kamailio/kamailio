@@ -98,7 +98,7 @@ struct flat_con* flat_new_connection(struct flat_id* id)
 
 	fn = get_name(id);
 
-	res->file = fopen(fn, "w");
+	res->file = fopen(fn, "a");
 	if (!res->file) {
 		LOG(L_ERR, "flat_new_connection: %s\n", strerror(errno));
 		pkg_free(res);
@@ -140,7 +140,7 @@ int flat_reopen_connection(struct flat_con* con)
 
 		fn = get_name(con->id);
 
-		con->file = fopen(fn, "w");
+		con->file = fopen(fn, "a");
 		if (!con->file) {
 			LOG(L_ERR, "flat_reopen_connection: Invalid parameter value\n");
 			return -1;
