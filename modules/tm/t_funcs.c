@@ -1295,34 +1295,35 @@ void final_response_handler( void *attr)
 	struct retrans_buff* r_buf = (struct retrans_buff*)attr;
 
 #ifdef EXTRA_DEBUG
-	if (r_buf->my_T->damocles) {
-		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and called from FR timer\n",
-			r_buf->my_T);
+	if (r_buf->my_T->damocles) 
+	{
+		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
+			" called from FR timer\n",r_buf->my_T);
 		abort();
-	}	
+	}
 #endif
 
 	/* the transaction is already removed from FR_LIST by the timer */
 	/* send a 408 */
 	if ( r_buf->my_T->status<200)
 	{
-		DBG("DEBUG: final_response_handler:stop retransmission and send 408 (t=%p)\n", r_buf->my_T);
+		DBG("DEBUG: final_response_handler:stop retransmission and"
+			" send 408 (t=%p)\n", r_buf->my_T);
 		reset_timer( hash_table, &(r_buf->retr_timer) );
 		/* dirty hack: t_send_reply would increase ref_count which would indeed
-		   result in refcount++ which would not -- until timer processe's
-		   T changes again; currently only on next call to t_send_reply from
-		   FR timer; thus I fake the values now to avoid recalculating T
-		   and refcount++
-
-			-jku
-	    */
+		result in refcount++ which would not -- until timer processe's
+		T changes again; currently only on next call to t_send_reply from
+		FR timer; thus I fake the values now to avoid recalculating T
+		and refcount++
+		jku */
 		T=r_buf->my_T;
 		global_msg_id=T->inbound_request->id;
 
-		t_send_reply( r_buf->my_T->inbound_request , 408 , "Request Timeout" );
-	} else {
+		t_send_reply( r_buf->my_T->inbound_request,408,"Request Timeout" );
+	}else{
 		/* put it on WT_LIST - transaction is over */
-		DBG("DEBUG: final_response_handler:cancel transaction->put on wait (t=%p)\n", r_buf->my_T);
+		DBG("DEBUG: final_response_handler:cancel transaction->put on wait"
+			" (t=%p)\n", r_buf->my_T);
 		t_put_on_wait(  r_buf->my_T );
 	}
 	DBG("DEBUG: final_response_handler : done\n");
