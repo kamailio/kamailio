@@ -108,7 +108,8 @@
 #define get_int(_p_,_end_,_res_,_n_,_err_s_,_err_) \
 	do { \
 		_res_ = 0;\
-		for( _n_=0 ; (_p_)<(_end_) && isdigit(*(_p_)) ; (_p_)++,(_n_)++)\
+		for( _n_=0 ; (_p_)<(_end_) && isdigit((int)(unsigned char)*(_p_)) ; \
+				(_p_)++,(_n_)++)\
 			(_res_)=(_res_)*10+(*(_p_)-'0');\
 		if ((_n_)==0) {\
 			double_log( _err_s_ );\
@@ -289,7 +290,8 @@ static inline int parse_db_value( str *s, db_val_t *val, str **ret_s)
 		val->type = DB_DATETIME;
 		val->val.time_val = mktime( &td );
 		/*DBG("DBG: <%.*s> is %s\n",s->len,s->s,ctime(&val->val.time_val));*/
-	} else if ( (*(p=s->s)=='+') || (*p=='-') || isdigit(*p) ) {
+	} else if ( (*(p=s->s)=='+') || (*p=='-') || 
+				isdigit((int)(unsigned char)*p) ) {
 		/* can be a DB_INT / DB_DOUBLE / DB_BITMAP value */
 		if (sgn_str2float( s, &nr, &nr_type)!=0) {
 			double_log("Bad int/float value format (expected [+/-]nr[.nr])");
@@ -360,7 +362,7 @@ static inline int get_avps( FILE *fifo , db_key_t *keys, db_op_t *ops,
 {
 	str  line;
 	str  key,op,val;
-	char *c;
+	unsigned char *c;
 	str  *p_val;
 	int  sp_found;
 
@@ -383,12 +385,12 @@ static inline int get_avps( FILE *fifo , db_key_t *keys, db_op_t *ops,
 			/* parse the line key|op|val */
 			c = line.s;
 			/* parse the key name */
-			for( key.s=c ; *c && (isalnum(*c)||*c=='_') ; c++ );
+			for( key.s=c ; *c && (isalnum((int)*c)||*c=='_') ; c++ );
 			if (!*c) goto parse_error;
-			key.len = c-key.s;
+			key.len = (char*)c-key.s;
 			if (key.len==0) goto parse_error;
 			/* possible spaces? */
-			for( sp_found=0 ; *c && isspace(*c) ; c++,sp_found=1 );
+			for( sp_found=0 ; *c && isspace((int)*c) ; c++,sp_found=1 );
 			if (!*c) goto parse_error;
 			/* parse the operator */
 			op.s = c;
@@ -404,19 +406,19 @@ static inline int get_avps( FILE *fifo , db_key_t *keys, db_op_t *ops,
 					/* at least one space must be before unknown ops */
 					if(!sp_found) goto parse_error;
 					/* eat everything to first space */
-					for( ; *c && !isspace(*c) ; c++ );
-					if (!*c || c==op.s) goto parse_error; /* 0 length */
+					for( ; *c && !isspace((int)*c) ; c++ );
+					if (!*c || (char*)c==op.s) goto parse_error; /* 0 length */
 					/* include into operator str. one space before and after*/
 					op.s--;
 					c++;
 			}
-			op.len = c - op.s;
+			op.len = (char*)c - op.s;
 			/* possible spaces? */
-			for( ; *c && isspace(*c) ; c++ );
+			for( ; *c && isspace((int)*c) ; c++ );
 			if (!*c) goto parse_error;
 			/* get value */
 			val.s = c;
-			val.len = line.len - (c-line.s);
+			val.len = line.len - ((char*)c-line.s);
 			if (val.len==0) goto parse_error;
 			if (parse_db_value( &val, &vals[*nr], &p_val)!=0)
 				goto error;
@@ -451,7 +453,7 @@ static inline int get_avps( FILE *fifo , db_key_t *keys, db_op_t *ops,
 	}
 parse_error:
 	LOG(L_ERR,"ERROR:get_avps: parse error in \"%.*s\" at char [%d][%c] "
-		"offset %d\n",line.len,line.s,*c,*c, (unsigned)(c-line.s));
+		"offset %d\n",line.len,line.s,*c,*c, (unsigned)((char*)c-line.s));
 	double_log("Broken AVP(attr|op|val) in DB command");
 error:
 	for(;*nr;(*nr)--)
