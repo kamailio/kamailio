@@ -116,14 +116,26 @@ int get_all_ucontacts(void *buf, int len, unsigned int flags)
 				      */
 				if ((c->flags & flags) != flags)
 					continue;
-				if (len >= (int)(sizeof(c->c.len) + c->c.len)) {
-					memcpy(cp, &c->c.len, sizeof(c->c.len));
-					cp = (char*)cp + sizeof(c->c.len);
-					memcpy(cp, c->c.s, c->c.len);
-					cp = (char*)cp + c->c.len;
-					len -= sizeof(c->c.len) + c->c.len;
+				if (c->received.s) {
+					if (len >= (int)(sizeof(c->received.len) + c->received.len)) {
+						memcpy(cp, &c->received.len, sizeof(c->received.len));
+						cp = (char*)cp + sizeof(c->received.len);
+						memcpy(cp, c->received.s, c->received.len);
+						cp = (char*)cp + c->received.len;
+						len -= sizeof(c->received.len) + c->received.len;
+					} else {
+						shortage += sizeof(c->received.len) + c->received.len;
+					}
 				} else {
-					shortage += sizeof(c->c.len) + c->c.len;
+					if (len >= (int)(sizeof(c->c.len) + c->c.len)) {
+						memcpy(cp, &c->c.len, sizeof(c->c.len));
+						cp = (char*)cp + sizeof(c->c.len);
+						memcpy(cp, c->c.s, c->c.len);
+						cp = (char*)cp + c->c.len;
+						len -= sizeof(c->c.len) + c->c.len;
+					} else {
+						shortage += sizeof(c->c.len) + c->c.len;
+					}
 				}
 			}
 		}
