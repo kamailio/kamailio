@@ -50,6 +50,11 @@ struct branch
 {
 	char uri[MAX_URI_SIZE];
 	unsigned int len;
+
+	     /* Real destination of the request */
+	char dst_uri[MAX_URI_SIZE];
+	unsigned int dst_uri_len;
+
 	int q; /* Preference of the contact among
 		* contact within the array */
 };
@@ -87,7 +92,7 @@ void init_branch_iterator(void)
  * array, 0 is returned if there are no
  * more branches
  */
-char* next_branch(int* len, qvalue_t* q)
+char* next_branch(int* len, qvalue_t* q, char** dst_uri, int* dst_len)
 {
 	unsigned int i;
 
@@ -96,10 +101,18 @@ char* next_branch(int* len, qvalue_t* q)
 		branch_iterator++;
 		*len = branches[i].len;
 		*q = branches[i].q;
+		if (dst_uri && dst_len) {
+			*dst_uri = branches[i].dst_uri;
+			*dst_len = branches[i].dst_uri_len;
+		}
 		return branches[i].uri;
 	} else {
 		*len = 0;
 		*q = Q_UNSPECIFIED;
+		if (dst_uri && dst_len) {
+			*dst_uri = 0;
+			*dst_len = 0;
+		}
 		return 0;
 	}
 }
@@ -118,7 +131,7 @@ void clear_branches(void)
 /* 
  * Add a new branch to current transaction 
  */
-int append_branch(struct sip_msg* msg, char* uri, int uri_len, qvalue_t q)
+int append_branch(struct sip_msg* msg, char* uri, int uri_len, char* dst_uri, int dst_uri_len, qvalue_t q)
 {
 	     /* if we have already set up the maximum number
 	      * of branches, don't try new ones 
@@ -152,6 +165,12 @@ int append_branch(struct sip_msg* msg, char* uri, int uri_len, qvalue_t q)
 	branches[nr_branches].len = uri_len;
 	branches[nr_branches].q = q;
 	
+	if (dst_uri) {
+		memcpy(branches[nr_branches].dst_uri, dst_uri, dst_uri_len);
+		branches[nr_branches].dst_uri[dst_uri_len] = 0;
+		branches[nr_branches].dst_uri_len = dst_uri_len;
+	}
+
 	nr_branches++;
 	return 1;
 }
@@ -181,7 +200,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 	}
 
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q))) {
+	while ((uri.s = next_branch(&uri.len, &q, 0, 0))) {
 		cnt++;
 		*len += uri.len;
 		if (q != Q_UNSPECIFIED) {
@@ -222,7 +241,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 	}
 
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q))) {
+	while ((uri.s = next_branch(&uri.len, &q, 0, 0))) {
 		if (i) {
 			memcpy(p, CONTACT_DELIM, CONTACT_DELIM_LEN);
 			p += CONTACT_DELIM_LEN;

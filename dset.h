@@ -35,7 +35,7 @@ struct sip_msg;
 /* 
  * Add a new branch to current transaction 
  */
-int append_branch(struct sip_msg* msg, char* uri, int uri_len, qvalue_t q);
+int append_branch(struct sip_msg* msg, char* uri, int uri_len, char* dst_uri, int dst_uri_len, qvalue_t q);
 
 
 /* 
@@ -47,7 +47,7 @@ void init_branch_iterator(void);
 /*
  * Get the next branch in the current transaction
  */
-char* next_branch(int* len, qvalue_t* q);
+char* next_branch(int* len, qvalue_t* q, char** dst_uri, int* dst_len);
 
 
 /*

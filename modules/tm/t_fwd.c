@@ -407,6 +407,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	struct cell *t_invite;
 	int success_branch;
 	int try_new;
+	str dst_uri;
 
 	/* make -Wall happy */
 	current_uri.s=0;
@@ -444,10 +445,10 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	} else try_new=0;
 
 	init_branch_iterator();
-	while((current_uri.s=next_branch( &current_uri.len, &q))) {
+	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri.s, &dst_uri.len))) {
 		try_new++;
 		branch_ret=add_uac( t, p_msg, &current_uri, 
-				    (p_msg->dst_uri.len) ? (&p_msg->dst_uri) : &current_uri, 
+				    (dst_uri.len) ? (&dst_uri) : &current_uri, 
 				    proxy, proto);
 		/* pick some of the errors in case things go wrong;
 		   note that picking lowest error is just as good as

@@ -283,7 +283,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 			}
 			ret=append_branch( msg, a->p1.string, 
 					   a->p1.string ? strlen(a->p1.string):0,
-					   a->p2.number);
+					   0, 0, a->p2.number);
 			break;
 
 		/* jku begin: is_length_greater_than */
