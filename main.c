@@ -404,7 +404,7 @@ int daemonize(char*  name)
 		/* continue, leave it open */
 	};
 	/* close stderr only if log_stderr=0 */
-	if ((!log_stderr) &&(freopen("/dev/null", "r", stderr)==0)){
+	if ((!log_stderr) &&(freopen("/dev/null", "w", stderr)==0)){
 		LOG(L_ERR, "unable to replace stderr with /dev/null: %s\n",
 				strerror(errno));
 		/* continue, leave it open */
@@ -560,7 +560,14 @@ int main_loop()
 		*/
 
 		/* we need another process to act as the timer*/
-		if (timer_list){
+#ifndef USE_TCP
+		/* if we are using tcp we always need a timer process,
+		 * we cannot count on select timeout to measure time
+		 * (it works only on linux)
+		 */
+		if (timer_list)
+#endif
+		{
 				process_no++;
 				if ((pid=fork())<0){
 					LOG(L_CRIT,  "ERROR: main_loop: Cannot fork\n");
