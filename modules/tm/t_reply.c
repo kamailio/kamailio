@@ -457,6 +457,9 @@ static inline int fake_req(struct sip_msg *faked_req,
 	/* if we set msg_id to something different from current's message
 	 * id, the first t_fork will properly clean new branch URIs */
 	faked_req->id=shmem_msg->id-1;
+	/* msg->parsed_uri_ok must be reset since msg_parsed_uri is
+	 * not cloned (and cannot be cloned) */
+	faked_req->parsed_uri_ok = 0;
 
 	/* new_uri can change -- make a private copy */
 	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
