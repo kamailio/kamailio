@@ -105,7 +105,6 @@ struct s_table* init_hash_table()
    for(  i=0 ; i<NR_OF_TIMER_LISTS ; i++ )
       init_timerlist_lock( hash_table, i );
 
-   return hash_table;
 //#ifdef THREAD
    /* starts the timer thread/ process */
    pthread_create( &thread, NULL, timer_routine, hash_table );
