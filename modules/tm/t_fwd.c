@@ -23,6 +23,7 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	char         *buf, *shbuf;
 	struct cell  *T_source = T;
 	struct lump  *a,*b,*b1,*c;
+	str          backup_uri;
 
 
 	buf    = 0;
@@ -30,8 +31,8 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	nr_forks++;
 	t_forks[0].ip = dest_ip_param;
 	t_forks[0].port = dest_port_param;
-	t_forks[0].uri.s = p_msg->new_uri.s;
-	t_forks[0].uri.len = p_msg->new_uri.len;
+	backup_uri.s = t_forks[0].uri.s = p_msg->new_uri.s;
+	backup_uri.len = t_forks[0].uri.len = p_msg->new_uri.len;
 
 	/* are we forwarding for the first time? */
 	if ( T->uac[0].request.buffer )
@@ -155,8 +156,8 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 			RT_T1_TO_1 );
 	}
 
-	p_msg->new_uri.s = t_forks[0].uri.s;
-	p_msg->new_uri.len = t_forks[0].uri.len;
+	p_msg->new_uri.s = backup_uri.s;
+	p_msg->new_uri.len = backup_uri.len;
 	nr_forks = 0;
 	return 1;
 
@@ -164,6 +165,8 @@ error:
 	if (shbuf) shm_free(shbuf);
 	T->uac[branch].request.buffer=NULL;
 	if (buf) pkg_free( buf );
+	p_msg->new_uri.s = backup_uri.s;
+	p_msg->new_uri.len = backup_uri.len;
 	nr_forks = 0;
 	return -1;
 }
