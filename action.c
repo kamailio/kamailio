@@ -26,8 +26,10 @@
  *
  * History:
  * ---------
- * 2003-02-28 scratchpad compatibility abandoned (jiri)
- * 2003-01-29 removed scratchpad (jiri)
+ * 2003-02-28  scratchpad compatibility abandoned (jiri)
+ * 2003-01-29  removed scratchpad (jiri)
+ * 2003-03-19  fixed set* len calculation bug & simplified a little the code
+ *              (should be a little faster now) (andrei)
  */
 
 
@@ -414,7 +416,8 @@ int do_action(struct action* a, struct sip_msg* msg)
 					tmp=a->p1.string;
 					len=strlen(tmp); if(crt+len>end) goto error_uri;
 					memcpy(crt,tmp,len);crt+=len;
-					/* whateever we had before, with prefix we have username now */
+					/* whatever we had before, with prefix we have username 
+					   now */
 					user=1;
 				}
 
@@ -423,8 +426,9 @@ int do_action(struct action* a, struct sip_msg* msg)
 					len=strlen(tmp);
 				} else if (a->type==STRIP_T) {
 					if (a->p1.number>uri.user.len) {
-						LOG(L_WARN, "Error: too long strip asked; deleting username: "
-							"%d of <%.*s>\n", a->p1.number, uri.user.len, uri.user.s );
+						LOG(L_WARN, "Error: too long strip asked; "
+									" deleting username: %d of <%.*s>\n",
+									a->p1.number, uri.user.len, uri.user.s );
 						len=0;
 					} else if (a->p1.number==uri.user.len) {
 						len=0;
@@ -447,19 +451,19 @@ int do_action(struct action* a, struct sip_msg* msg)
 				else tmp=uri.passwd.s;
 				/* passwd */
 				if (tmp){
-					len=strlen(":"); if(crt+len>end) goto error_uri;
-					memcpy(crt,":",len);crt+=len;
-					len=uri.passwd.len; if(crt+len>end) goto error_uri;
+					len=uri.passwd.len; if(crt+len+1>end) goto error_uri;
+					*crt=':'; crt++;
 					memcpy(crt,tmp,len);crt+=len;
 				}
 				/* host */
 				if (user || tmp){ /* add @ */
-					len=strlen("@"); if(crt+len>end) goto error_uri;
-					memcpy(crt,"@",len);crt+=len;
+					if(crt+1>end) goto error_uri;
+					*crt='@'; crt++;
 				}
 				if ((a->type==SET_HOST_T) ||(a->type==SET_HOSTPORT_T)) {
 					tmp=a->p1.string;
 					if (tmp) len = strlen(tmp);
+					else len=0;
 				} else {
 					tmp=uri.host.s;
 					len = uri.host.len;
@@ -473,30 +477,28 @@ int do_action(struct action* a, struct sip_msg* msg)
 				else if (a->type==SET_PORT_T) {
 					tmp=a->p1.string;
 					if (tmp) len = strlen(tmp);
+					else len = 0;
 				} else {
 					tmp=uri.port.s;
 					len = uri.port.len;
 				}
 				if (tmp){
-					len=strlen(":"); if(crt+len>end) goto error_uri;
-					memcpy(crt,":",len);crt+=len;
-					len=strlen(tmp); if(crt+len>end) goto error_uri;
+					if(crt+len+1>end) goto error_uri;
+					*crt=':'; crt++;
 					memcpy(crt,tmp,len);crt+=len;
 				}
 				/* params */
 				tmp=uri.params.s;
 				if (tmp){
-					len=strlen(";"); if(crt+len>end) goto error_uri;
-					memcpy(crt,";",len);crt+=len;
-					len=uri.params.len; if(crt+len>end) goto error_uri;
+					len=uri.params.len; if(crt+len+1>end) goto error_uri;
+					*crt=';'; crt++;
 					memcpy(crt,tmp,len);crt+=len;
 				}
 				/* headers */
 				tmp=uri.headers.s;
 				if (tmp){
-					len=strlen("?"); if(crt+len>end) goto error_uri;
-					memcpy(crt,"?",len);crt+=len;
-					len=uri.headers.len; if(crt+len>end) goto error_uri;
+					len=uri.headers.len; if(crt+len+1>end) goto error_uri;
+					*crt='?'; crt++;
 					memcpy(crt,tmp,len);crt+=len;
 				}
 				*crt=0; /* null terminate the thing */
