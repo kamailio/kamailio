@@ -565,9 +565,6 @@ int getsms( struct incame_sms *sms, struct modem *mdm, int sim)
 		goto error;
 	}
 
-	DBG("DEBUG:getsms: from %s, sent on %s %s\n",sms->sender,sms->date,
-		sms->time);
-
 	deletesms(mdm,found);
 
 	return 1;

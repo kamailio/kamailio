@@ -272,10 +272,11 @@ int set_sock_struct( union sockaddr_union* to, str *to_str)
 			port.len--;
 			port.s++;
 			/*get the port as number*/
-			port_nr = str2s(host.s,host.len,&err);
+			port_nr = str2s(port.s,port.len,&err);
 			if (err) {
-				LOG(L_ERR,"ERROR:set_sock_struct: cannot convert port <%.*s>"
-					"into number\n",port.len,port.s);
+				LOG(L_ERR,"ERROR: set_sock_struct:cannot convert port <%.*s>"
+					"into number [%d]\n",port.len,port.s,port_nr);
+				goto error;
 			}
 		} else {
 			LOG(L_ERR,"ERROR:set_sock_struct: cannot separate host from "
@@ -288,7 +289,7 @@ int set_sock_struct( union sockaddr_union* to, str *to_str)
 	ip=str2ip((unsigned char*)host.s,host.len,&err);
 	if (err==0){
 		to->sin.sin_family=AF_INET;
-		to->sin.sin_port=htons(SIP_PORT);
+		to->sin.sin_port=port_nr?htons(port_nr):htons(SIP_PORT);
 		memcpy(&to->sin.sin_addr, (char*)&ip, 4);
 	}else
 #endif
@@ -305,7 +306,7 @@ int set_sock_struct( union sockaddr_union* to, str *to_str)
 				host.s);
 			goto error;
 		}
-		hostent2su(to, he, 0, htons(SIP_PORT));
+		hostent2su(to, he, 0, port_nr?htons(port_nr):htons(SIP_PORT));
 	}
 	return 1;
 error:
