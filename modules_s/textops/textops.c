@@ -1,5 +1,4 @@
-/*
- * $Id$
+/*$Id$
  *
  * Example ser module, it implements the following commands:
  * search_append("key", "txt") - insert a "txt" after "key"
@@ -53,6 +52,7 @@
  *  2003-08-20  subst_uri added (like above for uris) (andrei)
  *  2003-09-11  updated to new build_lump_rpl() interface (bogdan)
  *  2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
+ *  2004-05-09: append_time introduced (jiri)
  */
 
 
@@ -71,8 +71,21 @@
 #include <string.h>
 #include <sys/types.h> /* for regex */
 #include <regex.h>
+#include <time.h>
+#include <sys/time.h>
 
 MODULE_VERSION
+
+
+/* RFC822-conformant dates format:
+
+   %a -- abbreviated week of day name (locale), %d day of month
+   as decimal number, %b abbreviated month name (locale), %Y
+   year with century, %T time in 24h notation
+*/
+#define TIME_FORMAT "Date: %a, %d %b %Y %H:%M:%S GMT"
+#define MAX_TIME 64
+
 
 static int search_f(struct sip_msg*, char*, char*);
 static int replace_f(struct sip_msg*, char*, char*);
@@ -85,12 +98,21 @@ static int search_append_f(struct sip_msg*, char*, char*);
 static int append_to_reply_f(struct sip_msg* msg, char* key, char* str);
 static int append_hf(struct sip_msg* msg, char* str1, char* str2);
 static int append_urihf(struct sip_msg* msg, char* str1, char* str2);
+static int append_time_f(struct sip_msg* msg, char* , char *);
 
 static int fixup_regex(void**, int);
 static int fixup_substre(void**, int);
 static int str_fixup(void** param, int param_no);
 
 static int mod_init(void);
+/* RFC822-conformant dates format:
+
+   %a -- abbreviated week of day name (locale), %d day of month
+   as decimal number, %b abbreviated month name (locale), %Y
+   year with century, %T time in 24h notation
+*/
+#define TIME_FORMAT "Date: %a, %d %b %Y %H:%M:%S GMT"
+
 
 
 
@@ -117,6 +139,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
 	{"subst_uri",            subst_uri_f,     1, fixup_substre,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
+	{"append_time",		append_time_f,		0, 0,
+		REQUEST_ROUTE },
 	{0,0,0,0,0}
 };
 
@@ -452,6 +476,41 @@ static int fixup_substre(void** param, int param_no)
 }
 
 
+static int append_time_f(struct sip_msg* msg, char* p1, char *p2)
+{
+
+
+	size_t len;
+	char time_str[MAX_TIME];
+	time_t now;
+	struct tm *bd_time;
+
+	now=time(0);
+
+	bd_time=gmtime(&now);
+	if (bd_time==NULL) {
+		LOG(L_ERR, "ERROR: append_time: gmtime failed\n");
+		return -1;
+	}
+
+	len=strftime(time_str, MAX_TIME, TIME_FORMAT, bd_time);
+	if (len>MAX_TIME+2 || len==0) {
+		LOG(L_ERR, "ERROR: append_time: unexpected time length\n");
+		return -1;
+	}
+
+	time_str[len]='\r';
+	time_str[len+1]='\n';
+
+
+	if (add_lump_rpl(msg, time_str, len+2, LUMP_RPL_HDR)==0)
+	{
+		LOG(L_ERR, "ERROR: append_time: unable to add lump\n");
+		return -1;
+	}
+
+	return 1;
+}
 
 static int append_to_reply_f(struct sip_msg* msg, char* key, char* str)
 {
