@@ -103,20 +103,20 @@ static cmd_export_t cmds[] = {
  * Exported parameters 
  */
 static param_export_t params[] = {
-	{"user_col",       STR_PARAM, &user_col      },
-	{"domain_col",     STR_PARAM, &domain_col    },
-	{"contact_col",    STR_PARAM, &contact_col   },
-	{"expires_col",    STR_PARAM, &expires_col   },
-	{"q_col",          STR_PARAM, &q_col         },
-	{"callid_col",     STR_PARAM, &callid_col    },
-	{"cseq_col",       STR_PARAM, &cseq_col      },
-	{"method_col",     STR_PARAM, &method_col    },
-	{"replicate_col",  STR_PARAM, &replicate_col },
-	{"state_col",      STR_PARAM, &state_col     },
-	{"db_url",         STR_PARAM, &db_url        },
-	{"timer_interval", INT_PARAM, &timer_interval},
-	{"db_mode",        INT_PARAM, &db_mode       },
-	{"use_domain",     INT_PARAM, &use_domain    },
+	{"user_column",       STR_PARAM, &user_col      },
+	{"domain_column",     STR_PARAM, &domain_col    },
+	{"contact_column",    STR_PARAM, &contact_col   },
+	{"expires_column",    STR_PARAM, &expires_col   },
+	{"q_column",          STR_PARAM, &q_col         },
+	{"callid_column",     STR_PARAM, &callid_col    },
+	{"cseq_column",       STR_PARAM, &cseq_col      },
+	{"method_column",     STR_PARAM, &method_col    },
+	{"replicate_column",  STR_PARAM, &replicate_col },
+	{"state_column",      STR_PARAM, &state_col     },
+	{"db_url",            STR_PARAM, &db_url        },
+	{"timer_interval",    INT_PARAM, &timer_interval},
+	{"db_mode",           INT_PARAM, &db_mode       },
+	{"use_domain",        INT_PARAM, &use_domain    },
 	{0, 0, 0}
 };
 
