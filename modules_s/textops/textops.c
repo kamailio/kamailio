@@ -14,6 +14,7 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../data_lump.h"
+#include "../../data_lump_rpl.h"
 #include "../../error.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,16 +25,38 @@
 static int search_f(struct sip_msg*, char*, char*);
 static int replace_f(struct sip_msg*, char*, char*);
 static int search_append_f(struct sip_msg*, char*, char*);
+static int append_to_reply_f(struct sip_msg* msg, char* key, char* str);
 
 static int fixup_regex(void**, int);
 
 
-static struct module_exports my_exports= {	"textops", 
-	(char*[])		 {"search", "search_append", "replace"},
-	(cmd_function[]) {search_f, search_append_f, replace_f },
-	(int[])			 { 1,        2,               2},
-	(fixup_function[]){fixup_regex, fixup_regex,  fixup_regex},
-	3,
+static struct module_exports my_exports= {
+	"textops",
+	(char*[])	{
+			"search",
+			"search_append",
+			"replace",
+			"append_to_reply"
+	},
+	(cmd_function[]) {
+			search_f,
+			search_append_f,
+			replace_f,
+			append_to_reply_f
+	},
+	(int[]) {
+			1,
+			2,
+			2,
+			1
+	},
+	(fixup_function[]){
+			fixup_regex,
+			fixup_regex,
+			fixup_regex,
+			0
+	},
+	4,
 	0, /* response function */
 	0,  /* destroy function */
 	0 /* on_cancel function */
@@ -69,9 +92,10 @@ static int search_append_f(struct sip_msg* msg, char* key, char* str)
 		if ((l=anchor_lump(&msg->add_rm, pmatch.rm_eo, 0, 0))==0)
 			return -1;
 	}
-	
+
 	return insert_new_lump_after(l, str, strlen(str), 0)?1:-1;
 }
+
 
 
 static int replace_f(struct sip_msg* msg, char* key, char* str)
@@ -81,7 +105,7 @@ static int replace_f(struct sip_msg* msg, char* key, char* str)
 
 	if (regexec((regex_t*) key, msg->orig, 1, &pmatch, 0)!=0) return -1;
 	if (pmatch.rm_so!=-1){
-		if ((l=del_lump(&msg->add_rm, pmatch.rm_so, 
+		if ((l=del_lump(&msg->add_rm, pmatch.rm_so,
 						pmatch.rm_eo-pmatch.rm_so, 0))==0)
 			return -1;
 	}
@@ -89,10 +113,11 @@ static int replace_f(struct sip_msg* msg, char* key, char* str)
 }
 
 
+
 static int fixup_regex(void** param, int param_no)
 {
 	regex_t* re;
-	
+
 	DBG("module - fixing %s\n", *param);
 	if (param_no!=1) return 0;
 	if ((re=malloc(sizeof(regex_t)))==0) return E_OUT_OF_MEM;
@@ -107,3 +132,22 @@ static int fixup_regex(void** param, int param_no)
 	*param=re;
 	return 0;
 }
+
+
+
+static int append_to_reply_f(struct sip_msg* msg, char* key, char* str)
+{
+	struct lump_rpl *lump;
+
+	lump = build_lump_rpl( key, strlen(key) );
+	if (!lump)
+	{
+		LOG(L_ERR,"ERROR:append_to_reply : unable to create lump_rl\n");
+		return -1;
+	}
+	add_lump_rpl( msg , lump );
+
+	return 1;
+}
+
+
