@@ -1,4 +1,4 @@
-#!/bin/sh   
+#!/bin/sh 
 #
 # $Id$
 #
@@ -383,8 +383,10 @@ usrloc() {
 	fi
 	if [ "$1" = "alias" ] ; then
 		USRLOC_TABLE="$ALS_TABLE"
+		CHECK_SUB=1
 	elif [ "$1" = "ul" ] ; then
 		USRLOC_TABLE="$UL_TABLE"
+		CHECK_SUB=0
 	else
 		echo "usrloc: unknown table name"
 		exit 1
@@ -417,19 +419,29 @@ usrloc() {
 			shift
 			check_uri "$2"
 			set_user $1
+				
 			if [ "$?" -ne "0" ] ; then
 				echo "$2 is not a valid URI"
 				exit 1
+			fi
+
+			if [ "$CHECK_SUB" -ne 0 ] ; then
+				is_user 
+				if [ $? -eq 0 ] ; then
+					echo overlap of alias with an existing subscriber name
+					exit 1;
+				fi
 			fi
 
 			fifo_cmd ul_add "$USRLOC_TABLE" "$SERUSER@$SERDOMAIN" "$2" "$FOREVER_REL" "1.00" "0"
 			exit $?
 			;;
 		rm)
-            if [ $# -ne 2 ] ; then
-                usage
-                exit 1
-            fi
+			if [ $# -ne 2 ] ; then
+                		usage
+                		exit 1
+            		fi
+
 			shift
 			set_user $1
 			fifo_cmd ul_rm $USRLOC_TABLE "$SERUSER@$SERDOMAIN"
@@ -775,11 +787,17 @@ case $1 in
 		shift
 		credentials $1 $2
 		prompt_pw
-        is_user $1
-        if [ $? -eq 0 ] ; then
-            echo user already exists
-            exit 1
-        fi
+	        is_user $1
+        	if [ $? -eq 0 ] ; then
+            		echo user already exists
+            		exit 1
+        	fi  
+
+		fifo_cmd ul_show_contact "$ALS_TABLE" "$SERUSER@$SERDOMAIN" | grep 404 > /dev/null
+		if [ $? -ne 0 ]; then
+			echo error: overlap with an existing alias
+			exit 1
+		fi
 
 		QUERY="insert into $SUB_TABLE \
 				($SUBSCRIBER_COLUMN,$REALM_COLUMN,$HA1_COLUMN,\
@@ -912,19 +930,19 @@ case $1 in
 		;;
 
 	rm)
-        if [ $# -ne 2 ] ; then
-            usage
-            exit 1
-        fi
+        	if [ $# -ne 2 ] ; then
+            		usage
+            		exit 1
+        	fi
 		shift 
 		prompt_pw 
 
 		set_user $1
-        is_user 
-        if [ $? -ne 0 ] ; then
-            echo non-existent user
-            exit 1
-        fi
+        	is_user 
+        	if [ $? -ne 0 ] ; then
+            		echo non-existent user
+            		exit 1
+        	fi
 
 		# begin with remove all user's privileges
 		$0 acl revoke $1  > /dev/null 2>&1
