@@ -9,11 +9,14 @@
 #include <stdio.h>
 
 #include "msg_translator.h"
+#include "globals.h"
 #include "mem/mem.h"
 #include "dprint.h"
 #include "config.h"
 #include "md5utils.h"
 #include "data_lump_rpl.h"
+#include "ip_addr.h"
+#include "resolve.h"
 
 
 
@@ -40,88 +43,35 @@
 extern char version[];
 extern int version_len;
 
-/* faster than inet_ntoa */
-static inline char* q_inet_itoa(unsigned long ip)
-{
-	static char q_inet_itoa_buf[16]; /* 123.567.901.345\0 */
-	unsigned char* p;
-	unsigned char a,b,c;  /* abc.def.ghi.jkl */
-	int offset;
-	int r;
-	p=(unsigned char*)&ip;
-
-	offset=0;
-	/* unrolled loops (faster)*/
-	for(r=0;r<3;r++){
-		a=p[r]/100;
-		c=p[r]%10;
-		b=p[r]%100/10;
-		if (a){
-			q_inet_itoa_buf[offset]=a+'0';
-			q_inet_itoa_buf[offset+1]=b+'0';
-			q_inet_itoa_buf[offset+2]=c+'0';
-			q_inet_itoa_buf[offset+3]='.';
-			offset+=4;
-		}else if (b){
-			q_inet_itoa_buf[offset]=b+'0';
-			q_inet_itoa_buf[offset+1]=c+'0';
-			q_inet_itoa_buf[offset+2]='.';
-			offset+=3;
-		}else{
-			q_inet_itoa_buf[offset]=c+'0';
-			q_inet_itoa_buf[offset+1]='.';
-			offset+=2;
-		}
-	}
-	/* last number */
-	a=p[r]/100;
-	c=p[r]%10;
-	b=p[r]%100/10;
-	if (a){
-		q_inet_itoa_buf[offset]=a+'0';
-		q_inet_itoa_buf[offset+1]=b+'0';
-		q_inet_itoa_buf[offset+2]=c+'0';
-		q_inet_itoa_buf[offset+3]=0;
-	}else if (b){
-		q_inet_itoa_buf[offset]=b+'0';
-		q_inet_itoa_buf[offset+1]=c+'0';
-		q_inet_itoa_buf[offset+2]=0;
-	}else{
-		q_inet_itoa_buf[offset]=c+'0';
-		q_inet_itoa_buf[offset+1]=0;
-	}
-
-	return q_inet_itoa_buf;
-}
-
-
 
 
 /* checks if ip is in host(name) and ?host(ip)=name?
  * ip must be in network byte order!
  *  resolver = DO_DNS | DO_REV_DNS; if 0 no dns check is made
  * return 0 if equal */
-int check_address(unsigned long ip, char *name, int resolver)
+int check_address(struct ip_addr* ip, char *name, int resolver)
 {
 	struct hostent* he;
 	int i;
 
 	/* maybe we are lucky and name it's an ip */
-	if (strcmp(name, q_inet_itoa(ip))==0)
+	if (strcmp(name, ip_addr2a(ip))==0)
 		return 0;
 	if (resolver&DO_DNS){
 		DBG("check_address: doing dns lookup\n");
 		/* try all names ips */
-		he=gethostbyname(name);
-		for(i=0;he && he->h_addr_list[i];i++){
-			if (*(unsigned long*)he->h_addr_list[i]==ip)
-				return 0;
+		he=resolvehost(name);
+		if (ip->af==he->h_addrtype){
+			for(i=0;he && he->h_addr_list[i];i++){
+				if ( memcmp(&he->h_addr_list[i], ip->u.addr, ip->len)==0)
+					return 0;
+			}
 		}
 	}
 	if (resolver&DO_REV_DNS){
 		DBG("check_address: doing rev. dns lookup\n");
 		/* try reverse dns */
-		he=gethostbyaddr((char*)&ip, sizeof(ip), AF_INET);
+		he=rev_resolvehost(ip);
 		if (he && (strcmp(he->h_name, name)==0))
 			return 0;
 		for (i=0; he && he->h_aliases[i];i++){
@@ -241,7 +191,7 @@ char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 	/*adding src_ip*/
 	if (p-buf+26+2>=MAX_WARNING_LEN)
 		goto done;
-	p += sprintf(p,"req_src_ip=%s",q_inet_itoa(msg->src_ip));
+	p += sprintf(p,"req_src_ip=%s",ip_addr2a(&msg->src_ip));
 	*(p++)=' ';
 
 	/*adding in_uri*/
@@ -274,7 +224,7 @@ done:
 char * build_req_buf_from_sip_req( struct sip_msg* msg,
 								unsigned int *returned_len)
 {
-	unsigned int len, new_len, received_len, uri_len, via_len;
+	unsigned int len, new_len, received_len, uri_len, via_len, extra_len;
 	char* line_buf;
 	char* received_buf;
 	char* tmp;
@@ -284,7 +234,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	char* buf;
 	char  backup;
 	unsigned int offset, s_offset, size;
-	unsigned long source_ip;
+	struct ip_addr* source_ip;
 	struct lump *t,*r;
 	struct lump* anchor;
 
@@ -292,10 +242,11 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	orig=msg->orig;
 	buf=msg->buf;
 	len=msg->len;
-	source_ip=msg->src_ip;
+	source_ip=&msg->src_ip;
 	received_len=0;
 	new_buf=0;
 	received_buf=0;
+	extra_len=0;
 
 
 	line_buf = via_builder( msg, &via_len );
@@ -318,10 +269,17 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 								inet_ntoa(*(struct in_addr *)&source_ip));
 		*/
 		memcpy(received_buf, RECEIVED, RECEIVED_LEN);
-		tmp=q_inet_itoa( /* *(struct in_addr *)& */source_ip);
+		tmp=ip_addr2a(source_ip);
 		tmp_len=strlen(tmp);
 		received_len=RECEIVED_LEN+tmp_len;
-		memcpy(received_buf+RECEIVED_LEN, tmp, tmp_len);
+		if(source_ip->af==AF_INET6){
+			received_len+=2;
+			received_buf[RECEIVED_LEN]='[';
+			received_buf[RECEIVED_LEN+tmp_len+1]=']';
+			extra_len=1;
+		}
+		
+		memcpy(received_buf+RECEIVED_LEN+extra_len, tmp, tmp_len);
 		received_buf[received_len]=0; /*null terminate it */
 	}
 	msg->via1->host.s[msg->via1->host.len] = backup;

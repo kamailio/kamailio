@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "dprint.h"
+#include "ip_addr.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -102,43 +103,6 @@ struct action* append_action(struct action* a, struct action* b)
 
 
 
-struct net* mk_net(unsigned long ip, unsigned long mask)
-{
-	struct net* n;
-
-	n=(struct net*)malloc(sizeof(struct net));
-	if (n==0) goto error;
-	n->ip=ip;
-	n->mask=mask;
-	return n;
-error:
-	LOG(L_CRIT, "ERROR: mk_net_mask: memory allocation failure\n");
-	return 0;
-}
-
-	
-	
-
-void print_ip(unsigned ip)
-{
-	DBG("%d.%d.%d.%d", ((unsigned char*)&ip)[0],
-						  ((unsigned char*)&ip)[1],
-						  ((unsigned char*)&ip)[2],
-						  ((unsigned char*)&ip)[3]);
-}
-
-
-void print_net(struct net* net)
-{
-	if (net==0){
-		LOG(L_WARN, "ERROR: print net: null pointer\n");
-		return;
-	}
-	print_ip(net->ip); DBG("/"); print_ip(net->mask);
-}
-
-
-
 void print_expr(struct expr* exp)
 {
 	if (exp==0){
@@ -190,7 +154,7 @@ void print_expr(struct expr* exp)
 					print_net((struct net*)exp->r.param);
 					break;
 			case IP_ST:
-					print_ip(exp->r.intval);
+					print_ip((struct ip_addr*)exp->r.param);
 					break;
 			case ACTIONS_ST:
 					print_action((struct action*)exp->r.param);
@@ -295,7 +259,7 @@ void print_action(struct action* a)
 					DBG("%d",t->p1.number);
 					break;
 			case IP_ST:
-					print_ip(t->p1.number);
+					print_ip((struct ip_addr*)t->p1.data);
 					break;
 			case EXPR_ST:
 					print_expr((struct expr*)t->p1.data);

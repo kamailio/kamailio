@@ -18,6 +18,7 @@
 #include <sys/fcntl.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+#include <signal.h>
 
 #include "config.h"
 #include "dprint.h"
@@ -31,9 +32,10 @@
 #include "sr_module.h"
 #include "timer.h"
 #include "parser/msg_parser.h"
+#include "ip_addr.h"
+#include "resolve.h"
 
 
-#include <signal.h>
 
 #include "stats.h"
 
@@ -50,6 +52,9 @@ static char flags[]=
 "On"
 #else
 "Off"
+#endif
+#ifdef USE_IPV6
+", USE_IPV6"
 #endif
 #ifdef NO_DEBUG
 ", NO_DEBUG"
@@ -142,7 +147,7 @@ Options:\n\
     -h           This help message\n\
     -b nr        Maximum receive buffer size which will not be exceeded by\n\
                  auto-probing procedure even if  OS allows\n\
-	-m nr        Size of shared memory allocated in Megabytes\n\
+    -m nr        Size of shared memory allocated in Megabytes\n\
     -w  dir      change the working directory to \"dir\" (default \"/\")\n\
     -t  dir      chroot to \"dir\"\n\
     -u uid       change uid \n\
@@ -193,12 +198,13 @@ char* cfg_file = 0;
 unsigned short port_no = 0; /* port on which we listen */
 char port_no_str[MAX_PORT_LEN];
 int port_no_str_len=0;
-unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do not want to exceed
-				      		durig the auto-probing procedure; may be
-				      		re-configured */
-int children_no = 0;           /* number of children processing requests */
-int *pids=0;		       /*array with childrens pids, 0= main proc,
-				alloc'ed in shared mem if possible*/
+unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do
+												  not want to exceed durig the
+												  auto-probing procedure; may 
+												  be re-configured */
+int children_no = 0;			/* number of children processing requests */
+int *pids=0;					/*array with childrens pids, 0= main proc,
+									alloc'ed in shared mem if possible*/
 int debug = 0;
 int dont_fork = 0;
 int log_stderr = 0;
@@ -213,9 +219,9 @@ int gid = 0;
 
 char* names[MAX_LISTEN];              /* our names */
 int names_len[MAX_LISTEN];            /* lengths of the names*/
-unsigned int addresses[MAX_LISTEN];   /* our ips */
+struct ip_addr addresses[MAX_LISTEN]; /* our ips */
 int addresses_no=0;                   /* number of names/ips */
-unsigned int bind_address=0;          /* listen address of the crt. process */
+struct ip_addr* bind_address;        /* listen address of the crt. process */
 
 /* ipc related globals */
 int process_no = 0;
@@ -373,7 +379,7 @@ int main_loop()
 		setstats( 0 );
 #endif
 		/* only one address */
-		if (udp_init(addresses[0],port_no)==-1) goto error;
+		if (udp_init(&addresses[0],port_no)==-1) goto error;
 
 		/* we need another process to act as the timer*/
 		if (timer_list){
@@ -414,7 +420,7 @@ int main_loop()
 	}else{
 		for(r=0;r<addresses_no;r++){
 			/* create the listening socket (for each address)*/
-			if (udp_init(addresses[r], port_no)==-1) goto error;
+			if (udp_init(&addresses[r], port_no)==-1) goto error;
 			for(i=0;i<children_no;i++){
 				if ((pid=fork())<0){
 					LOG(L_CRIT,  "main_loop: Cannot fork\n");
@@ -784,8 +790,8 @@ int main(int argc, char** argv)
 		fprintf(stderr, "ERROR: bad port number: %d\n", port_no);
 		goto error;
 	}
-	/* on some system snprintf return really strange things if it does not have
-	 * enough space */
+	/* on some system snprintf return really strange things if it does not 
+	   have  enough space */
 	port_no_str_len=
 				(port_no_str_len<MAX_PORT_LEN)?port_no_str_len:MAX_PORT_LEN;
 
@@ -836,16 +842,17 @@ int main(int argc, char** argv)
 	/* get ips */
 	printf("Listening on ");
 	for (r=0; r<addresses_no;r++){
-		he=gethostbyname(names[r]);
+		he=resolvehost(names[r]);
 		if (he==0){
 			DPrint("ERROR: could not resolve %s\n", names[r]);
 			goto error;
 		}
-		memcpy(&addresses[r], he->h_addr_list[0], sizeof(int));
+		hostent2ip_addr(&addresses[r], he, 0); /*convert to ip_addr format*/
+		/*memcpy(&addresses[r], he->h_addr_list[0], sizeof(int));*/
 		/*addresses[r]=*((long*)he->h_addr_list[0]);*/
-		printf("%s [%s] : %d\n",names[r],
-				inet_ntoa(*(struct in_addr*)&addresses[r]),
-				(unsigned short)port_no);
+		printf("%s [",names[r]);
+		stdout_print_ip(&addresses[r]);
+		printf("]:%d\n", (unsigned short)port_no);
 	}
 
 #ifdef STATS

@@ -20,6 +20,8 @@
 #include "proxy.h"
 #include "action.h"
 #include "sr_module.h"
+#include "ip_addr.h"
+#include "resolve.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -117,10 +119,9 @@ static int fix_actions(struct action* a)
 			case FORWARD_T:
 			case SEND_T:
 					switch(t->p1_type){
-						case NUMBER_ST:
-						case IP_ST: /* for now ip_st==number_st*/
-							tmp=strdup(inet_ntoa(
-										*(struct in_addr*)&t->p1.number));
+						case IP_ST: 
+							tmp=strdup(ip_addr2a(
+										(struct ip_addr*)t->p1.data));
 							if (tmp==0){
 								LOG(L_CRIT, "ERROR: fix_actions:"
 										"memory allocation failure\n");
@@ -234,7 +235,7 @@ error:
 
 
 /* eval_elem helping function, returns a op param */
-static int comp_ip(unsigned a, void* param, int op, int subtype)
+static int comp_ip(struct ip_addr* ip, void* param, int op, int subtype)
 {
 	struct hostent* he;
 	char ** h;
@@ -243,22 +244,28 @@ static int comp_ip(unsigned a, void* param, int op, int subtype)
 	ret=-1;
 	switch(subtype){
 		case NET_ST:
-			ret=(a&((struct net*)param)->mask)==((struct net*)param)->ip;
+			ret=matchnet(ip, (struct net*) param);
+			/*ret=(a&((struct net*)param)->mask)==((struct net*)param)->ip;*/
 			break;
 		case STRING_ST:
 		case RE_ST:
 			/* 1: compare with ip2str*/
+		/* !!!??? review reminder ( resolve(name) & compare w/ all ips? */
+#if 0
 			ret=comp_str(inet_ntoa(*(struct in_addr*)&a), param, op,
 						subtype);
 			if (ret==1) break;
+#endif
 			/* 2: (slow) rev dns the address
 			 * and compare with all the aliases */
-			he=gethostbyaddr((char*)&a, sizeof(a), AF_INET);
+			he=rev_resolvehost(ip);
 			if (he==0){
-				LOG(L_DBG, "comp_ip: could not rev_resolve %x\n", a);
+				DBG( "comp_ip: could not rev_resolve ip address: ");
+				print_ip(ip);
+				DBG("\n");
 				ret=0;
 			}else{
-				/*  compare with primayry host name */
+				/*  compare with primary host name */
 				ret=comp_str(he->h_name, param, op, subtype);
 				/* compare with all the aliases */
 				for(h=he->h_aliases; (ret!=1) && (*h); h++){
@@ -303,10 +310,10 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 				}
 				break;
 		case SRCIP_O:
-				ret=comp_ip(msg->src_ip, e->r.param, e->op, e->subtype);
+				ret=comp_ip(&msg->src_ip, e->r.param, e->op, e->subtype);
 				break;
 		case DSTIP_O:
-				ret=comp_ip(msg->dst_ip, e->r.param, e->op, e->subtype);
+				ret=comp_ip(&msg->dst_ip, e->r.param, e->op, e->subtype);
 				break;
 		case NUMBER_O:
 				ret=!(!e->r.intval); /* !! to transform it in {0,1} */

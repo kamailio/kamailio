@@ -25,6 +25,8 @@
 #include "msg_translator.h"
 #include "sr_module.h"
 #include "stats.h"
+#include "ip_addr.h"
+#include "resolve.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -36,7 +38,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 {
 	unsigned int len;
 	char* buf;
-	struct sockaddr_in* to;
+	union sockaddr_union* to;
 
 	to=0;
 	buf = build_req_buf_from_sip_req( msg, &len);
@@ -45,7 +47,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 		goto error;
 	}
 
-	to=(struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
+	to=(union sockaddr_union*)malloc(sizeof(union sockaddr_union));
 	if (to==0){
 		LOG(L_ERR, "ERROR: forward_request: out of memory\n");
 		goto error;
@@ -55,26 +57,20 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	DBG("Sending:\n%s.\n", buf);
 	DBG("orig. len=%d, new_len=%d\n", msg->len, len );
 
-	to->sin_family = AF_INET;
-	to->sin_port = (p->port)?htons(p->port):htons(SIP_PORT);
 	/* if error try next ip address if possible */
 	if (p->ok==0){
 		if (p->host.h_addr_list[p->addr_idx+1])
 			p->addr_idx++;
+		else p->addr_idx=0;
 		p->ok=1;
 	}
-	
-	memcpy(&(to->sin_addr.s_addr), p->host.h_addr_list[p->addr_idx],
-			sizeof(to->sin_addr.s_addr));
-	/* 
-	to->sin_addr.s_addr=*((long*)p->host.h_addr_list[p->addr_idx]);
-	*/
 
+	hostent2su(to, &p->host, p->addr_idx, 
+				(p->port)?htons(p->port):htons(SIP_PORT));
 	p->tx++;
 	p->tx_bytes+=len;
 
-	if (udp_send( buf, len, (struct sockaddr*) to,
-				sizeof(struct sockaddr_in))==-1){
+	if (udp_send( buf, len,  to, sizeof(union sockaddr_union))==-1){
 			p->errors++;
 			p->ok=0;
 			STATS_TX_DROPS;
@@ -93,43 +89,50 @@ error:
 }
 
 
-int update_sock_struct_from_via( struct sockaddr_in* to,  struct via_body* via )
+int update_sock_struct_from_via( union sockaddr_union* to,  
+								 struct via_body* via )
 {
 	int err;
 	struct hostent* he;
+	unsigned int ip;
 	char *host_copy;
 
-	to->sin_family = AF_INET;
-	to->sin_port = (via->port)?htons(via->port): htons(SIP_PORT);
 
 #ifdef DNS_IP_HACK
-	to->sin_addr.s_addr=str2ip((unsigned char*)via->host.s,via->host.len,&err);
-	if (err)
+	ip=str2ip((unsigned char*)via->host.s,via->host.len,&err);
+	if (err==0){
+		to->sin.sin_family=AF_INET;
+		to->sin.sin_port=(via->port)?htons(via->port): htons(SIP_PORT);
+		memcpy(&to->sin.sin_addr, (char*)&ip, 4);
+	}else
 #endif
 	{
-		/* fork? gethostbyname will probably block... */
 		/* we do now a malloc/memcpy because gethostbyname loves \0-terminated 
-		   strings; -jiri */
-		if (!(host_copy=pkg_malloc( via->host.len+1 ))) {
-			LOG(L_NOTICE, "ERROR: update_sock_struct_from_via: not enough memory\n");
-			return -1;
+		   strings; -jiri 
+		   but only if host is not null terminated
+		   (host.s[len] will always be ok for a via)
+           BTW: when is via->host.s non null terminated? tm copy?
+		   - andrei 
+		*/
+		if (via->host.s[via->host.len]){
+			if (!(host_copy=pkg_malloc( via->host.len+1 ))) {
+				LOG(L_NOTICE, "ERROR: update_sock_struct_from_via: not enough memory\n");
+				return -1;
+			}
+			memcpy(host_copy, via->host.s, via->host.len );
+			host_copy[via->host.len]=0;
+			he=resolvehost(host_copy);
+			pkg_free( host_copy );
+		}else{
+			he=resolvehost(via->host.s);
 		}
-		memcpy(host_copy, via->host.s, via->host.len );
-		host_copy[via->host.len]=0;
-		he=gethostbyname(host_copy);
-		/* he=gethostbyname(via->host.s); */
-		pkg_free( host_copy );
 
 		if (he==0){
 			LOG(L_NOTICE, "ERROR:forward_reply:gethostbyname(%s) failure\n",
 					via->host.s);
 			return -1;
 		}
-		memcpy(&(to->sin_addr.s_addr), he->h_addr_list[0], 
-				sizeof(to->sin_addr.s_addr));
-		/*
-		to->sin_addr.s_addr=*((long*)he->h_addr_list[0]);
-		*/
+		hostent2su(to, he, 0, (via->port)?htons(via->port): htons(SIP_PORT));
 	}
 	return 1;
 }
@@ -140,7 +143,7 @@ int forward_reply(struct sip_msg* msg)
 {
 	int  r;
 	char* new_buf;
-	struct sockaddr_in* to;
+	union sockaddr_union* to;
 	unsigned int new_len;
 	struct sr_module *mod;
 	
@@ -158,7 +161,6 @@ int forward_reply(struct sip_msg* msg)
 		}
 	}
 
-	/* here will be called the T Module !!!!!!  */
 	/* quick hack, slower for mutliple modules*/
 	for (mod=modules;mod;mod=mod->next){
 		if ((mod->exports) && (mod->exports->response_f)){
@@ -176,7 +178,7 @@ int forward_reply(struct sip_msg* msg)
 		goto error;
 	}
 
-	to=(struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
+	to=(union sockaddr_union*)malloc(sizeof(union sockaddr_union));
 	if (to==0){
 		LOG(L_ERR, "ERROR: forward_reply: out of memory\n");
 		goto error;
@@ -190,8 +192,8 @@ int forward_reply(struct sip_msg* msg)
 
 	if (update_sock_struct_from_via( to, msg->via2 )==-1) goto error;
 
-	if (udp_send(new_buf,new_len, (struct sockaddr*) to,
-					sizeof(struct sockaddr_in))==-1)
+	if (udp_send(new_buf,new_len,  to,
+				sizeof(union sockaddr_union))==-1)
 	{
 		STATS_TX_DROPS;
 		goto error;

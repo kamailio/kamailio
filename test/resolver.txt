@@ -1,0 +1,84 @@
+
+
+
+				 Linux		FreeBSD		Solaris		Cygwin
+gethostbyname		y			y			y			y
+gethostbyname_r		n			n			y			-
+gethostbyname2		y			y			y(*)		-
+getaddrinfo			y			y			y			-
+res_search (res_*)	y			y			y			-
+
+Linux, Solaris, Cygwin:
+
+struct sockaddr_in{
+	sa_family_t     sin_family;
+	in_port_t       sin_port;
+	struct  in_addr sin_addr;
+	/* ...*/
+}; 
+
+FreeBSD:
+struct sockaddr_in {
+        u_char  sin_len;
+        u_char  sin_family;
+        u_short sin_port;
+        struct  in_addr sin_addr;
+        char    sin_zero[8];
+};
+
+
+Linux, Solaris, Cygwin:
+struct sockaddr_in6 {
+        sa_family_t     sin6_family;
+        in_port_t       sin6_port;
+        uint32_t        sin6_flowinfo;
+        struct in6_addr sin6_addr;
+		/*...*/
+};
+
+
+FreeBSD:
+struct sockaddr_in6 {
+        u_int8_t        sin6_len;       /* length of this struct(sa_family_t)*/
+        u_int8_t        sin6_family;    /* AF_INET6 (sa_family_t) */
+        u_int16_t       sin6_port;      /* Transport layer port # (in_port_t)*/
+        u_int32_t       sin6_flowinfo;  /* IP6 flow information */
+        struct in6_addr sin6_addr;      /* IP6 address */
+        u_int32_t       sin6_scope_id;  /* intface scope id */
+};
+
+
+
+				sockaddr_in					sockaddr_in6
+Linux	<netinet/in.h> or <linux/in.h>	<netinet/in.h> or <linux/in6.h> (*)
+FreeBSD			<netinet/in.h>				<netinet6/in6.h>
+Solaris			<netinet/in.h>				<netinet/in.h>
+Cygwin	<netinet/in.h> or <cywin/in.h>	<netinet/in.h> or <cygwin/in.h>
+
+(*) - on linux netinet/in.h -> from GNU libc, linux/in*.h from the kernel.
+
+
+
+
+struct sockaddr:
+
+Linux:
+(sa_family_t= unsigned short)
+
+struct sockaddr {
+        sa_family_t     sa_family;      /* address family, AF_xxx       */
+        char            sa_data[14];    /* 14 bytes of protocol address */
+};
+
+
+
+FreeBSD:
+
+(sa_family_t = u_char)
+
+struct sockaddr {
+        u_char          sa_len;         /* total length */
+        sa_family_t     sa_family;      /* address family */
+        char            sa_data[14];    /* actually longer; address value */
+};
+

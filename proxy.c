@@ -18,6 +18,9 @@
 #include "ut.h"
 #endif
 
+#include "resolve.h"
+#include "ip_addr.h"
+
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
 #endif
@@ -174,6 +177,7 @@ struct proxy_l* mk_proxy(char* name, unsigned short port)
 	p->name=name;
 	p->port=port;
 #ifdef DNS_IP_HACK
+	/* fast ipv4 string to address conversion*/
 	len=strlen(name);
 	ip=str2ip((unsigned char*)name, len, &err);
 	if (err==0){
@@ -210,7 +214,7 @@ struct proxy_l* mk_proxy(char* name, unsigned short port)
 #endif
 	/* fail over to normal lookup */
 
-	he=gethostbyname(name);
+	he=resolvehost(name);
 	if (he==0){
 		LOG(L_CRIT, "ERROR: mk_proxy: could not resolve hostname:"
 					" \"%s\"\n", name);
@@ -230,7 +234,7 @@ error:
 
 
 /* same as mk_proxy, but get the host as an ip*/
-struct proxy_l* mk_proxy_from_ip(unsigned int ip, unsigned short port)
+struct proxy_l* mk_proxy_from_ip(struct ip_addr* ip, unsigned short port)
 {
 	struct proxy_l* p;
 
@@ -242,19 +246,19 @@ struct proxy_l* mk_proxy_from_ip(unsigned int ip, unsigned short port)
 	memset(p,0,sizeof(struct proxy_l));
 
 	p->port=port;
-	p->host.h_addrtype=AF_INET;
-	p->host.h_length=4;
+	p->host.h_addrtype=ip->af;
+	p->host.h_length=ip->len;
 	p->host.h_addr_list=malloc(2*sizeof(char*));
 	if (p->host.h_addr_list==0) goto error;
 	p->host.h_addr_list[1]=0;
-	p->host.h_addr_list[0]=malloc(5);
+	p->host.h_addr_list[0]=malloc(ip->len+1);
 	if (p->host.h_addr_list[0]==0){
 		free(p->host.h_addr_list);
 		goto error;
 	}
 
-	memcpy(p->host.h_addr_list[0], (char*)&ip, 4);
-	p->host.h_addr_list[0][4]=0;
+	memcpy(p->host.h_addr_list[0], ip->u.addr, ip->len);
+	p->host.h_addr_list[0][ip->len]=0;
 
 	return p;
 

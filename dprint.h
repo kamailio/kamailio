@@ -8,7 +8,6 @@
 
 #include <syslog.h>
 
-#include "globals.h"
 
 #define L_ALERT -3
 #define L_CRIT  -2
@@ -18,6 +17,10 @@
 #define L_INFO   3
 #define L_DBG    4
 
+/* vars:*/
+
+extern int debug;
+extern int log_stderr;
 
 
 #define DPRINT_LEV	1

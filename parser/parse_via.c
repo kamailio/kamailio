@@ -1284,8 +1284,7 @@ main_via:
 							" no host found\n");
 						goto error;
 					case P_IP6HOST:
-						LOG(L_ERR, "ERROR:parse_via: bad ipv6 reference\n");
-						goto error;
+						break;
 					case P_HOST:
 						*tmp=0; /*mark  end of host*/
 						vb->host.len=tmp-vb->host.s;

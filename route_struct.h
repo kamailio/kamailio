@@ -63,10 +63,6 @@ struct action{
 };
 
 
-struct net{
-	unsigned long ip;
-	unsigned long mask;
-};
 
 struct expr* mk_exp(int op, struct expr* left, struct expr* right);
 struct expr* mk_elem(int op, int subtype, int operand, void* param);
@@ -76,8 +72,6 @@ struct action* mk_action3(int type, int p1_type, int p2_type, int p3_type,
 							void* p1, void* p2, void* p3);
 struct action* append_action(struct action* a, struct action* b);
 
-
-struct net* mk_net(unsigned long ip, unsigned long mask);
 
 void print_action(struct action* a);
 void print_expr(struct expr* exp);

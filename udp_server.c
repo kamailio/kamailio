@@ -12,10 +12,12 @@
 
 
 #include "udp_server.h"
+#include "globals.h"
 #include "config.h"
 #include "dprint.h"
 #include "receive.h"
 #include "mem/mem.h"
+#include "ip_addr.h"
 
 #ifdef DEBUG_DMALLOC
 #include <mem/dmalloc.h>
@@ -105,23 +107,30 @@ int probe_max_receive_buffer( int udp_sock )
 	/* EoJKU */
 }
 
-int udp_init(unsigned long ip, unsigned short port)
+int udp_init(struct ip_addr* ip, unsigned short port)
 {
-	struct sockaddr_in* addr;
+	union sockaddr_union* addr;
 	int optval;
 
 
-	addr=(struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
+	addr=(union sockaddr_union*)malloc(sizeof(union sockaddr_union));
 	if (addr==0){
 		LOG(L_ERR, "ERROR: udp_init: out of memory\n");
 		goto error;
 	}
+	
+	if (init_su(addr, ip, htons(port)<0){
+		LOG(L_ERR, "ERROR: udp_init: could not init sockaddr_union\n");
+		goto error;
+	}
+	/*
 	addr->sin_family=AF_INET;
 	addr->sin_port=htons(port);
 	addr->sin_addr.s_addr=ip;
+	*/
 
 	
-	udp_sock = socket(PF_INET, SOCK_DGRAM, 0);
+	udp_sock = socket(AF2PF(addr->s.sa_family), SOCK_DGRAM, 0);
 	if (udp_sock==-1){
 		LOG(L_ERR, "ERROR: udp_init: socket: %s\n", strerror(errno));
 		goto error;
@@ -138,7 +147,7 @@ int udp_init(unsigned long ip, unsigned short port)
 	if ( probe_max_receive_buffer(udp_sock)==-1) goto error;
 	bind_address=ip;
 
-	if (bind(udp_sock, (struct sockaddr*) addr, sizeof(struct sockaddr))==-1){
+	if (bind(udp_sock,  &addr->s, sizeof(union sockaddr_union))==-1){
 		LOG(L_ERR, "ERROR: udp_init: bind: %s\n", strerror(errno));
 		goto error;
 	}
@@ -162,11 +171,11 @@ int udp_rcv_loop()
 	static char buf [BUF_SIZE+1];
 #endif
 
-	struct sockaddr_in* from;
+	union sockaddr_union* from;
 	unsigned int fromlen;
 
 
-	from=(struct sockaddr_in*) malloc(sizeof(struct sockaddr_in));
+	from=(union sockaddr_union*) malloc(sizeof(union sockaddr_union));
 	if (from==0){
 		LOG(L_ERR, "ERROR: udp_rcv_loop: out of memory\n");
 		goto error;
@@ -181,8 +190,8 @@ int udp_rcv_loop()
 			goto error;
 		}
 #endif
-		fromlen=sizeof(struct sockaddr_in);
-		len=recvfrom(udp_sock, buf, BUF_SIZE, 0, (struct sockaddr*)from,
+		fromlen=sizeof(union sockaddr_union);
+		len=recvfrom(udp_sock, buf, BUF_SIZE, 0, &from->s,
 						&fromlen);
 		if (len==-1){
 			LOG(L_ERR, "ERROR: udp_rcv_loop:recvfrom:[%d] %s\n",
@@ -195,7 +204,7 @@ int udp_rcv_loop()
 		buf[len+1]=0;
 		
 		/* receive_msg must free buf too!*/
-		receive_msg(buf, len, from->sin_addr.s_addr);
+		receive_msg(buf, len, from);
 		
 	/* skip: do other stuff */
 		
@@ -213,56 +222,15 @@ error:
 
 
 /* which socket to use? main socket or new one? */
-int udp_send(char *buf, unsigned len, struct sockaddr*  to, unsigned tolen)
+int udp_send(char *buf, unsigned len, union sockaddr_union*  to,
+				unsigned tolen)
 {
 
 	int n;
 
-/*	struct sockaddr_in a2;*/
-#ifndef NO_DEBUG
-#define MAX_IP_LENGTH 18
-	char ip_txt[MAX_IP_LENGTH];
-	char *c;
-	struct sockaddr_in* a;
-	unsigned short p;
-
-	a=(struct sockaddr_in*) to;
-	memset(ip_txt, 0, MAX_IP_LENGTH);
-	c=inet_ntoa(a->sin_addr);
-	strncpy( ip_txt, c, MAX_IP_LENGTH - 1 );
-	p=ntohs(a->sin_port);
-
-	if (tolen < sizeof(struct sockaddr_in))
-		DBG("DEBUG: udp_send: tolen small\n");
-	if (a->sin_family && a->sin_family != AF_INET)
-		DBG("DEBUG: udp_send: to not INET\n");
-	if (a->sin_port == 0)
-		DBG("DEBUG: udp_send: no port\n");
-
-#ifdef EXTRA_DEBUG
-	if ( tolen < sizeof(struct sockaddr_in) ||
-	a->sin_family && a->sin_family != AF_INET || a->sin_port == 0 )
-		abort();
-	/* every message must be terminated by CRLF */
-	if (memcmp(buf+len-CRLF_LEN, CRLF, CRLF_LEN)!=0) {
-		LOG(L_CRIT, "ERROR: this is ugly -- we are sending a packet"
-			" not terminated by CRLF\n");
-		abort();
-	}
-#endif
-
-	DBG("DEBUG: udp_send destination: IP=%s, port=%u;\n", ip_txt, p);
-#endif
-/*
-	memset(&a2, 0, sizeof(struct sockaddr_in));
-	a2.sin_family = a->sin_family;
-	a2.sin_port = a->sin_port;
-	a2.sin_addr.s_addr = a->sin_addr.s_addr;
-*/
 
 again:
-	n=sendto(udp_sock, buf, len, 0, to, tolen);
-/*	n=sendto(udp_sock, buf, len, 0, &a2, sizeof(struct sockaddr_in) );*/
+	n=sendto(udp_sock, buf, len, 0, &to->s, tolen);
 	if (n==-1){
 		LOG(L_ERR, "ERROR: udp_send: sendto(sock,%p,%d,0,%p,%d): %s(%d)\n",
 				buf,len,to,tolen,
@@ -272,9 +240,6 @@ again:
 			LOG(L_CRIT,"CRITICAL: invalid sendtoparameters\n"
 			"one possible reason is the server is bound to localhost and\n"
 			"attempts to send to the net\n");
-#			ifdef EXTRA_DEBUG
-			abort();
-#			endif
 		}
 	}
 	return n;

@@ -13,12 +13,14 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <errno.h>
 #include "route_struct.h"
 #include "globals.h"
 #include "route.h"
 #include "dprint.h"
 #include "sr_module.h"
 #include "modparam.h"
+#include "ip_addr.h"
 
 #include "config.h"
 
@@ -40,7 +42,8 @@ void* f_tmp;
 	char* strval;
 	struct expr* expr;
 	struct action* action;
-	struct net* net;
+	struct net* ipnet;
+	struct ip_addr* ipaddr;
 }
 
 /* terminals */
@@ -106,6 +109,7 @@ void* f_tmp;
 %token <intval> NUMBER
 %token <strval> ID
 %token <strval> STRING
+%token <strval> IPV6ADDR
 
 /* other */
 %token COMMA
@@ -124,8 +128,8 @@ void* f_tmp;
 /*non-terminals */
 %type <expr> exp, exp_elem /*, condition*/
 %type <action> action, actions, cmd, if_cmd, stm
-%type <uval> ipv4
-%type <net> net4
+%type <ipaddr> ipv4, ipv6, ip
+%type <ipnet> ipnet
 %type <strval> host
 /*%type <route_el> rules;
   %type <route_el> rule;
@@ -175,18 +179,25 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| CHECK_VIA EQUAL error { yyerror("boolean value expected"); }
 		| LOOP_CHECKS EQUAL NUMBER { loop_checks=$3; }
 		| LOOP_CHECKS EQUAL error { yyerror("boolean value expected"); }
-		| LISTEN EQUAL ipv4  {
+		| LISTEN EQUAL ip  {
 								if (addresses_no < MAX_LISTEN){
-									tmp=inet_ntoa(*(struct in_addr*)&$3);
-									names[addresses_no]=
-												(char*)malloc(strlen(tmp)+1);
-									if (names[addresses_no]==0){
+									tmp=ip_addr2a($3);
+								/*	tmp=inet_ntoa(*(struct in_addr*)&$3);*/
+									if (tmp==0){
 										LOG(L_CRIT, "ERROR: cfg. parser: "
-														"out of memory.\n");
+											" bad ip address: %s\n",
+											strerror(errno));
 									}else{
-										strncpy(names[addresses_no], tmp,
-												strlen(tmp)+1);
-										addresses_no++;
+										names[addresses_no]=
+												(char*)malloc(strlen(tmp)+1);
+										if (names[addresses_no]==0){
+											LOG(L_CRIT, "ERROR: cfg. parser: "
+														"out of memory.\n");
+										}else{
+											strncpy(names[addresses_no], tmp,
+													strlen(tmp)+1);
+											addresses_no++;
+										}
 									}
 								}else{
 									LOG(L_CRIT, "ERROR: cfg. parser:"
@@ -255,20 +266,62 @@ module_stm:	LOADMODULE STRING	{ DBG("loading module %s\n", $2);
 		 ;
 
 
+ip:		 ipv4  { $$=$1; }
+		|ipv6  { $$=$1; }
+		;
+
 ipv4:	NUMBER DOT NUMBER DOT NUMBER DOT NUMBER { 
-											if (($1>255) || ($1<0) ||
-												($3>255) || ($3<0) ||
-												($5>255) || ($5<0) ||
-												($7>255) || ($7<0)){
-												yyerror("invalid ipv4"
-														"address");
-												$$=0;
+											$$=malloc(sizeof(struct ip_addr));
+											if ($$==0){
+												LOG(L_CRIT, "ERROR: cfg. "
+													"parser: out of memory.\n"
+													);
 											}else{
-												$$=htonl( ($1<<24)|
+												memset($$, 0, 
+													sizeof(struct ip_addr));
+												$$->af=AF_INET;
+												$$->len=4;
+												if (($1>255) || ($1<0) ||
+													($3>255) || ($3<0) ||
+													($5>255) || ($5<0) ||
+													($7>255) || ($7<0)){
+													yyerror("invalid ipv4"
+															"address");
+													$$->u.addr32[0]=0;
+													/* $$=0; */
+												}else{
+													$$->u.addr[0]=$1;
+													$$->u.addr[1]=$3;
+													$$->u.addr[2]=$5;
+													$$->u.addr[3]=$7;
+													/*
+													$$=htonl( ($1<<24)|
 													($3<<16)| ($5<<8)|$7 );
+													*/
+												}
 											}
 												}
 	;
+
+ipv6:	IPV6ADDR {
+					$$=malloc(sizeof(struct ip_addr));
+					if ($$==0){
+						LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
+					}else{
+						memset($$, 0, sizeof(struct ip_addr));
+						$$->af=AF_INET6;
+						$$->len=16;
+					#ifndef USE_IPV6
+						yyerror("ipv6 address & no ipv6 support compiled in");
+						YYABORT;
+					#endif
+						if (inet_pton(AF_INET6, $1, $$->u.addr)<=0){
+							yyerror("bad ipv6 address");
+						}
+					}
+				}
+	;
+
 
 route_stm:	ROUTE LBRACE actions RBRACE { push($3, &rlist[DEFAULT_RT]); }
 
@@ -343,7 +396,7 @@ exp_elem:	METHOD EQUAL_T STRING	{$$= mk_elem(	EQUAL_OP, STRING_ST,
 		| URI error	{ $$=0; yyerror("invalid operator,"
 				  					" == or =~ expected");
 					}
-		| SRCIP EQUAL_T net4	{ $$=mk_elem(	EQUAL_OP, NET_ST,
+		| SRCIP EQUAL_T ipnet	{ $$=mk_elem(	EQUAL_OP, NET_ST,
 												SRCIP_O, $3);
 								}
 		| SRCIP EQUAL_T STRING	{ $$=mk_elem(	EQUAL_OP, STRING_ST,
@@ -363,7 +416,7 @@ exp_elem:	METHOD EQUAL_T STRING	{$$= mk_elem(	EQUAL_OP, STRING_ST,
 		| SRCIP MATCH error  { $$=0; yyerror( "hostname expected"); }
 		| SRCIP error  { $$=0; 
 						 yyerror("invalid operator, == or =~ expected");}
-		| DSTIP EQUAL_T net4	{ $$=mk_elem(	EQUAL_OP, NET_ST,
+		| DSTIP EQUAL_T ipnet	{ $$=mk_elem(	EQUAL_OP, NET_ST,
 												DSTIP_O, $3);
 								}
 		| DSTIP EQUAL_T STRING	{ $$=mk_elem(	EQUAL_OP, STRING_ST,
@@ -387,18 +440,22 @@ exp_elem:	METHOD EQUAL_T STRING	{$$= mk_elem(	EQUAL_OP, STRING_ST,
 		| NUMBER		{$$=mk_elem( NO_OP, NUMBER_ST, NUMBER_O, (void*)$1 ); }
 	;
 
-net4:	ipv4 SLASH ipv4	{ $$=mk_net($1, $3); } 
-	| ipv4 SLASH NUMBER {	if (($3>32)|($3<0)){
+ipnet:	ip SLASH ip	{ $$=mk_net($1, $3); } 
+	| ip SLASH NUMBER 	{	if (($3<0) || ($3>$1->len*8)){
 								yyerror("invalid bit number in netmask");
 								$$=0;
 							}else{
+								$$=mk_net_bitlen($1, $3);
+							/*
 								$$=mk_net($1, 
 										htonl( ($3)?~( (1<<(32-$3))-1 ):0 ) );
+							*/
 							}
 						}
-	| ipv4				{ $$=mk_net($1, 0xffffffff); }
-	| ipv4 SLASH error { $$=0;
-						 yyerror("netmask (eg:255.0.0.0 or 8) expected");}
+	| ip				{ $$=mk_net_bitlen($1, $1->len*8); }
+	| ip SLASH error	{ $$=0;
+						 yyerror("netmask (eg:255.0.0.0 or 8) expected");
+						}
 	;
 
 host:	ID				{ $$=$1; }
@@ -462,7 +519,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 														$3,
 														0);
 										}
-		| FORWARD LPAREN ipv4 RPAREN	{ $$=mk_action(	FORWARD_T,
+		| FORWARD LPAREN ip RPAREN	{ $$=mk_action(	FORWARD_T,
 														IP_ST,
 														NUMBER_ST,
 														(void*)$3,
@@ -480,7 +537,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 																$3,
 																(void*)$5);
 													}
-		| FORWARD LPAREN ipv4 COMMA NUMBER RPAREN { $$=mk_action(FORWARD_T,
+		| FORWARD LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(FORWARD_T,
 																 IP_ST,
 																 NUMBER_ST,
 																 (void*)$3,
@@ -524,7 +581,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 													$3,
 													0);
 									}
-		| SEND LPAREN ipv4 RPAREN	{ $$=mk_action(	SEND_T,
+		| SEND LPAREN ip RPAREN		{ $$=mk_action(	SEND_T,
 													IP_ST,
 													NUMBER_ST,
 													(void*)$3,
@@ -542,7 +599,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 																$3,
 																(void*)$5);
 												}
-		| SEND LPAREN ipv4 COMMA NUMBER RPAREN { $$=mk_action(	SEND_T,
+		| SEND LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(	SEND_T,
 																IP_ST,
 																NUMBER_ST,
 																(void*)$3,

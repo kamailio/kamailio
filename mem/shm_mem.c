@@ -7,6 +7,7 @@
 
 #include "shm_mem.h"
 #include "../config.h"
+#include "../globals.h"
 
 #ifdef  SHM_MMAP
 
@@ -21,6 +22,8 @@
 #ifdef FAST_LOCK
 #include "../fastlock.h"
 #endif
+
+
 
 
 /* define semun */

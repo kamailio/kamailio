@@ -8,6 +8,7 @@
 %{
 	#include "cfg.tab.h"
 	#include "dprint.h"
+	#include "globals.h"
 	#include <string.h>
 	#include <stdlib.h>
 
@@ -107,6 +108,9 @@ DIGIT		[0-9]
 ALPHANUM	{LETTER}|{DIGIT}|[_]
 NUMBER		{DIGIT}+
 ID			{LETTER}{ALPHANUM}*
+HEX			[0-9a-fA-F]
+HEX4		{HEX}{1,4}
+IPV6ADDR	({HEX4}":"){7}{HEX4}|({HEX4}":"){1,7}(":"{HEX4}){1,7}|":"(":"{HEX4}){1,7}|({HEX4}":"){1,7}":"|"::"
 QUOTES		\"
 TICK		\'
 SLASH		"/"
@@ -188,8 +192,10 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{AND}		{ count(); return AND; }
 <INITIAL>{OR}		{ count(); return OR;  }
 
-<INITIAL>{NUMBER}		{ count(); yylval.intval=atoi(yytext);
-							return NUMBER; }
+
+
+<INITIAL>{IPV6ADDR}		{ count(); yylval.strval=yytext; return IPV6ADDR; }
+<INITIAL>{NUMBER}		{ count(); yylval.intval=atoi(yytext);return NUMBER; }
 <INITIAL>{YES}			{ count(); yylval.intval=1; return NUMBER; }
 <INITIAL>{NO}			{ count(); yylval.intval=0; return NUMBER; }
 

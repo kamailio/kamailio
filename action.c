@@ -37,7 +37,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 {
 	int ret;
 	int v;
-	struct sockaddr_in* to;
+	union sockaddr_union* to;
 	struct proxy_l* p;
 	char* tmp;
 	char *new_uri, *end, *crt;
@@ -77,8 +77,8 @@ int do_action(struct action* a, struct sip_msg* msg)
 										/*if ((end)&&(*end)){*/
 										if (err){
 											LOG(L_ERR, "ERROR: do_action: "
-													"forward: bad port in "
-													"uri: <%s>\n", uri.port.s);
+												"forward: bad port in "
+												"uri: <%s>\n", uri.port.s);
 											ret=E_UNSPEC;
 											goto error_fwd_uri;
 										}
@@ -116,24 +116,22 @@ int do_action(struct action* a, struct sip_msg* msg)
 			}
 			break;
 		case SEND_T:
-			to=(struct sockaddr_in*) malloc(sizeof(struct sockaddr_in));
-			if (to==0){
-				LOG(L_ERR, "ERROR: do_action: "
-							"memory allocation failure\n");
-				ret=E_OUT_OF_MEM;
-				break;
-			}
 			if ((a->p1_type!= PROXY_ST)|(a->p2_type!=NUMBER_ST)){
 				LOG(L_CRIT, "BUG: do_action: bad send() types %d, %d\n",
 						a->p1_type, a->p2_type);
 				ret=E_BUG;
 				break;
 			}
+			to=(union sockaddr_union*) malloc(sizeof(union sockaddr_union));
+			if (to==0){
+				LOG(L_ERR, "ERROR: do_action: "
+							"memory allocation failure\n");
+				ret=E_OUT_OF_MEM;
+				break;
+			}
 			
 			p=(struct proxy_l*)a->p1.data;
 			
-			to->sin_family = AF_INET;
-			to->sin_port=(p->port)?htons(p->port):htons(SIP_PORT);
 			if (p->ok==0){
 				if (p->host.h_addr_list[p->addr_idx+1])
 					p->addr_idx++;
@@ -141,15 +139,14 @@ int do_action(struct action* a, struct sip_msg* msg)
 					p->addr_idx=0;
 				p->ok=1;
 			}
-			memcpy(&(to->sin_addr.s_addr), p->host.h_addr_list[p->addr_idx],
-					sizeof(to->sin_addr.s_addr));
-			/*
-			to->sin_addr.s_addr=*((long*)p->host.h_addr_list[p->addr_idx]);
-			*/
-			p->tx++;
-			p->tx_bytes+=msg->len;
-			ret=udp_send(msg->orig, msg->len, (struct sockaddr*)to,
-					sizeof(struct sockaddr_in));
+			ret=hostent2su(	to, &p->host, p->addr_idx,
+						(p->port)?htons(p->port):htons(SIP_PORT) );
+			if (ret==0){
+				p->tx++;
+				p->tx_bytes+=msg->len;
+				ret=udp_send(msg->orig, msg->len, to,
+								sizeof(union sockaddr_union));
+			}
 			free(to);
 			if (ret<0){
 				p->errors++;
