@@ -1189,7 +1189,7 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
 {
     str sdp, sessionIP, callId, fromDomain, toDomain, userAgent, tokens[64];
     char *clientIP, *ptr, *command, *cmd, *result, *agent, *fromType, *toType;
-    int streamCount, i, port, count, cmdlen, success;
+    int streamCount, i, j, port, count, cmdlen, success;
     StreamInfo streams[64];
 
     fromType = (isFromLocal(msg, NULL, NULL)>0) ? "local" : "remote";
@@ -1283,10 +1283,6 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
     if (count == 0) {
         LOG(L_ERR, "error: use_media_proxy(): empty response from mediaproxy\n");
         return -1;
-    } else if (count < streamCount+1) {
-        LOG(L_ERR, "error: use_media_proxy(): insufficient ports returned "
-            "from mediaproxy: got %d, expected %d\n", count-1, streamCount);
-        return -1;
     }
 
     if (sessionIP.s && !ISANYADDR(sessionIP)) {
@@ -1298,29 +1294,29 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
         }
     }
 
-    for (i=0; i<streamCount; i++) {
+    for (i=1, j=0; i<count; i++, j++) {
         // check. is this really necessary?
-        port = strtoint(&tokens[i+1]);
+        port = strtoint(&tokens[i]);
         if (port <= 0 || port > 65535) {
             LOG(L_ERR, "error: use_media_proxy(): invalid port returned "
-                "by mediaproxy: %.*s\n", tokens[i+1].len, tokens[i+1].s);
+                "by mediaproxy: %.*s\n", tokens[i].len, tokens[i].s);
             //return -1;
             continue;
         }
 
-        if (streams[i].port.len!=1 || streams[i].port.s[0]!='0') {
-            success = replaceElement(msg, &(streams[i].port), &tokens[i+1]);
+        if (streams[j].port.len!=1 || streams[j].port.s[0]!='0') {
+            success = replaceElement(msg, &(streams[j].port), &tokens[i]);
             if (!success) {
                 LOG(L_ERR, "error: use_media_proxy(): failed to replace "
-                    "port in media stream nr. %d\n", i+1);
+                    "port in media stream nr. %d\n", i);
                 return -1;
             }
         }
-        if (streams[i].localIP && !ISANYADDR(streams[i].ip)) {
-            success = replaceElement(msg, &(streams[i].ip), &tokens[0]);
+        if (streams[j].localIP && !ISANYADDR(streams[j].ip)) {
+            success = replaceElement(msg, &(streams[j].ip), &tokens[0]);
             if (!success) {
                 LOG(L_ERR, "error: use_media_proxy(): failed to replace "
-                    "IP address in media stream nr. %d\n", i+1);
+                    "IP address in media stream nr. %d\n", i);
                 return -1;
             }
         }
