@@ -32,6 +32,7 @@
 #include "permissions.h"
 #include "hash.h"
 #include "fifo.h"
+#include "unixsock.h"
 #include "../../config.h"
 #include "../../db/db.h"
 #include "../../ip_addr.h"
@@ -91,7 +92,12 @@ int init_trusted(void)
 		
 		/* Initialize fifo interface */
 		(void)init_trusted_fifo();
-
+		
+		if (init_trusted_unixsock() < 0) {
+			LOG(L_ERR, "permissions:init_trusted(): Error while initializing unixsock interface\n");
+			db_close(db_handle);
+			return -1;
+		}
 
 		hash_table_1 = new_hash_table();
 		if (!hash_table_1) return -1;
