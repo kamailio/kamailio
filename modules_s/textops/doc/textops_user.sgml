@@ -59,6 +59,8 @@ From: medabeda
 	    </para>
 	</section>
     </section>
+
+
     <section>
 	<title>Exported Functions</title>
 	<section>
@@ -304,6 +306,14 @@ if (is_present_hf("From")) log(1, "From HF Present");
 	    </example>
 	</section>
     </section>
+    <section>
+		<title>Known Limitatons</title>
+		<para>
+			Search functions are applied to the original request,
+			i.e., they ignore all changes resulting from message
+			processing in SER script.
+		</para>
+	</section>
 </chapter>
 
 <!-- Keep this element at the end of the file
