@@ -29,6 +29,9 @@
  * History:
  * --------
  * 2003-01-20 bug_fix: use of return value of snprintf aligned to C99 (jiri)
+ * 2003-01-23 added rport patches, contributed by 
+ *             Maxim Sobolev <sobomax@FreeBSD.org> and heavily modified by me
+ *             (andrei)
  *
  */
 
@@ -457,14 +460,20 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	r=check_address(&msg->rcv.src_ip, msg->via1->host.s, received_dns);
 	msg->via1->host.s[msg->via1->host.len] = backup;
 	if (r!=0){
-		if ((received_buf=received_builder(msg,&received_len))==0)
+		if ((received_buf=received_builder(msg,&received_len))==0){
+			LOG(L_ERR, "ERROR: build_req_buf_from_sip_req:"
+							" received_builder failed\n");
 			goto error01;  /* free also line_buf */
+		}
 	}
 	
 	/* check if rport needs to be updated */
 	if (msg->via1->rport && msg->via1->rport->value.s==0){
-		if ((rport_buf=rport_builder(msg, &rport_len))==0)
+		if ((rport_buf=rport_builder(msg, &rport_len))==0){
+			LOG(L_ERR, "ERROR: build_req_buf_from_sip_req:"
+							" rport_builder failed\n");
 			goto error01; /* free everything */
+		}
 	}
 
 	/* add via header to the list */
@@ -497,7 +506,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	}
 	/* if rport needs to be updated, delete it and add it's value */
 	if (rport_len){
-		anchor=del_lump(&(msg->add_rm), msg->via1->rport->name.s-buf,
+		anchor=del_lump(&(msg->add_rm), msg->via1->rport->name.s-buf-1, /*';'*/
 							msg->via1->rport->name.len, HDR_VIA);
 		if (anchor==0) goto error03; /* free rport_buf*/
 		if (insert_new_lump_after(anchor, rport_buf, rport_len, HDR_VIA)==0)
@@ -633,7 +642,9 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	int               i;
 	char              backup;
 	char              *received_buf;
+	char              *rport_buf;
 	unsigned int               received_len;
+	unsigned int               rport_len;
 	char              *warning;
 	unsigned int      warning_len;
 	int r;
@@ -641,6 +652,8 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 
 	received_buf=0;
 	received_len=0;
+	rport_buf=0;
+	rport_len=0;
 	buf=0;
 	/* make -Wall happy */
 	warning=0;
@@ -667,6 +680,14 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 			goto error00;
 		}
 	}
+	/* check if rport needs to be updated */
+	if (msg->via1->rport && msg->via1->rport->value.s==0){
+		if ((rport_buf=rport_builder(msg, &rport_len))==0){
+			LOG(L_ERR, "ERROR: build_res_buf_from_sip_req:"
+							" rport_builder failed\n");
+			goto error01; /* free everything */
+		}
+	}
 
 	/*computes the lenght of the new response buffer*/
 	len = 0;
@@ -685,7 +706,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 					len+=new_tag_len+TOTAG_TOKEN_LEN/*";tag="*/;
 			}
 		} else if (hdr->type==HDR_VIA) {
-				if (hdr==msg->h_via1) len += received_len;
+				if (hdr==msg->h_via1) len += received_len+rport_len-RPORT_LEN;
 		} else if (hdr->type==HDR_RECORDROUTE) {
 				/* RR only for 1xx and 2xx replies */
 				if (code<180 || code>=300) continue;
@@ -761,10 +782,31 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 					break;
 				}
 			case HDR_VIA:
-				append_str_trans( p, hdr->name.s ,
-					((hdr->body.s+hdr->body.len )-hdr->name.s ),msg);
-				if (hdr==msg->h_via1 && received_buf)
-					append_str( p, received_buf, received_len, msg);
+				if (hdr==msg->h_via1){
+					if (rport_buf){
+						/* copy until rport */
+						append_str_trans( p, hdr->name.s ,
+							msg->via1->rport->name.s-hdr->name.s-1,msg);
+						/* copy new rport */
+						append_str(p, rport_buf, rport_len, msg);
+						/* copy the rest of the via */
+						append_str_trans(p, msg->via1->rport->name.s+
+											msg->via1->rport->size, 
+											hdr->body.s+hdr->body.len-
+											msg->via1->rport->name.s-
+											msg->via1->rport->size, msg);
+					}else{
+						/* normal whole via copy */
+						append_str_trans( p, hdr->name.s ,
+							((hdr->body.s+hdr->body.len )-hdr->name.s ),msg);
+					}
+					if (received_buf)
+						append_str( p, received_buf, received_len, msg);
+				}else{
+					/* normal whole via copy */
+					append_str_trans( p, hdr->name.s ,
+						((hdr->body.s+hdr->body.len )-hdr->name.s ),msg);
+				}
 				append_str( p, CRLF,CRLF_LEN,msg);
 				break;
 			case HDR_RECORDROUTE:
@@ -810,10 +852,12 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	   needs to be deleted here
 	*/
 	if (received_buf) pkg_free(received_buf);
+	if (rport_buf) pkg_free(rport_buf);
 	return buf;
 
 error01:
 	if (received_buf) pkg_free(received_buf);
+	if (rport_buf) pkg_free(rport_buf);
 error00:
 	*returned_len=0;
 	return 0;
