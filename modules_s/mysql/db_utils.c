@@ -55,6 +55,23 @@ int time2mysql(time_t _time, char* _result, int _res_len)
 	return strftime(_result, _res_len, "%Y-%m-%d %H:%M:%S", t);
 }
 
+#ifndef __USE_GNU
+time_t my_timegm (struct tm *tm) {
+	time_t ret;
+	char *tz;
+
+	*tz = getenv("TZ");
+	setenv("TZ", "", 1);
+	tzset();
+	ret = mktime(tm);
+	if (tz)
+		setenv("TZ", tz, 1);
+	else
+		unsetenv("TZ");
+	tzset();
+	return ret;
+}
+#endif
 
 /*
  * Convert MySQL time representation to time_t structure
@@ -66,7 +83,11 @@ time_t mysql2time(const char* _str)
 	     /* It is neccessary to zero tm structure first */
 	memset(&time, '\0', sizeof(struct tm));
 	strptime(_str, "%Y-%m-%d %H:%M:%S", &time);
+#ifdef __USE_GNU
 	return timegm(&time);
+#else
+	return my_timegm(&time);
+#endif
 }
 
 
