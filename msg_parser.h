@@ -157,7 +157,8 @@ struct sip_msg{
 	struct hdr_field* cseq;
 	struct hdr_field* from;
 	struct hdr_field* contact;
-	struct hdr_field* route;    /* janakj, was missing here */
+	struct hdr_field* maxforwards;
+	struct hdr_field* route;
 	char* eoh; /* pointer to the end of header (if found) or null */
 
 	char* unparsed; /* here we stopped parsing*/
