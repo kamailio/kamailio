@@ -322,7 +322,7 @@ int send_as_sms(struct sms_msg *sms_messg, struct modem *mdm)
 			send_error(sms_messg, ERR_TRUNCATE_TEXT, ERR_TRUNCATE_TEXT_LEN,
 				p, text_len-(p-text)-SMS_FOOTER_LEN);
 		}
-		DBG("---%d--<%d>--\n|%.*s|\n",i,buf_len,buf_len,buf);
+		DBG("---%d--<%d><%d>--\n|%.*s|\n",i,len_array[i],buf_len,buf_len,buf);
 		sms_messg->text = buf;
 		sms_messg->text_len = buf_len;
 		if ( (ret_code=putsms(sms_messg,mdm))!=1)
@@ -442,7 +442,7 @@ void modem_process(struct modem *mdm)
 				used_mem = 10;
 				last_smsc_index = -1;
 			}
-
+#ifdef cucu
 		/* if any, let's get them */
 		if (used_mem)
 			for(i=1,k=1;k<=used_mem && i<=max_mem;i++) {
@@ -455,7 +455,7 @@ void modem_process(struct modem *mdm)
 						sms.date,sms.time,sms.ascii);
 				}
 			}
-
+#endif
 		/* sleep -> if it's needed */
 		if (!dont_wait)
 			sleep(mdm->looping_interval);
