@@ -177,7 +177,7 @@ modparam("speeddial", "new_uri_column", "real_uri")
 
    Example 1-7. Set domain_prefix parameter
 ...
-modparam("speeddial", "domain_prefix", "mysql://ser:xxx@localhost/ser")
+modparam("speeddial", "domain_prefix", "tel.")
 ...
      _________________________________________________________
 

@@ -189,7 +189,7 @@ modparam("speeddial", "new_uri_column", "real_uri")
 		<title>Set <varname>domain_prefix</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("speeddial", "domain_prefix", "mysql://ser:xxx@localhost/ser")
+modparam("speeddial", "domain_prefix", "tel.")
 ...
 </programlisting>
 	    </example>
