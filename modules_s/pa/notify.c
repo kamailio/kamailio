@@ -57,6 +57,9 @@
 #define CONT_TYPE_LPIDF "text/lpidf"
 #define CONT_TYPE_LPIDF_L (sizeof(CONT_TYPE_LPIDF) - 1)
 
+#define CONT_TYPE_PIDF "application/pidf+xml"
+#define CONT_TYPE_PIDF_L (sizeof(CONT_TYPE_PIDF) - 1)
+
 #define SUBSCRIPTION_STATE "Subscription-State: "
 #define SUBSCRIPTION_STATE_L (sizeof(SUBSCRIPTION_STATE) - 1)
 
@@ -170,6 +173,16 @@ static inline int add_cont_type_hf(str* _h, int _l, doctype_t _d)
 		}
 		str_append(_h, CONTENT_TYPE CONT_TYPE_LPIDF CRLF,
 			   CONTENT_TYPE_L + CONT_TYPE_LPIDF_L + CRLF_L);
+		return 0;
+
+	case DOC_PIDF:
+		if (_l < CONTENT_TYPE_L + CONT_TYPE_PIDF_L + CRLF_L) {
+			paerrno = PA_SMALL_BUFFER;
+			LOG(L_ERR, "add_cont_type_hf(): Buffer too small\n");
+			return -2;
+		}
+		str_append(_h, CONTENT_TYPE CONT_TYPE_PIDF CRLF,
+			   CONTENT_TYPE_L + CONT_TYPE_PIDF_L + CRLF_L);
 		return 0;
 
 	default:
@@ -325,6 +338,34 @@ static inline int send_lpidf_notify(struct presentity* _p, struct watcher* _w)
 	return 0;
 }
 
+static inline int send_pidf_notify(struct presentity* _p, struct watcher* _w)
+{
+	lpidf_status_t st;
+
+	if (lpidf_add_presentity(&body, BUF_LEN - body.len, &_p->uri) < 0) {
+		LOG(L_ERR, "send_lpidf_notify(): Error in lpidf_add_presentity\n");
+		return -2;
+	}
+
+	switch(_p->state) {
+	case PS_OFFLINE: st = LPIDF_ST_CLOSED; break;
+	default: st = LPIDF_ST_OPEN; break;
+	}
+
+	if (lpidf_add_address(&body, BUF_LEN - body.len, &_p->uri, st) < 0) {
+		LOG(L_ERR, "send_lpidf_notify(): lpidf_add_address failed\n");
+		return -3;
+	}
+
+	if (create_headers(_w) < 0) {
+		LOG(L_ERR, "send_lpidf_notify(): Error while adding headers\n");
+		return -4;
+	}
+
+	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
+	return 0;
+}
+
 
 int send_notify(struct presentity* _p, struct watcher* _w)
 {
@@ -337,6 +378,10 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 
 	case DOC_LPIDF:
 		return send_lpidf_notify(_p, _w);
+		break;
+
+	case DOC_PIDF:
+		return send_pidf_notify(_p, _w);
 		break;
 	}
 

@@ -232,6 +232,8 @@ void add_presentity(pdomain_t* _d, struct presentity* _p)
 {
 	int sl;
 
+	LOG(L_WARN, "add_presentity p_uri=%.*s\n", _p->uri.len, _p->uri.s);
+
 	sl = hash_func(_d, _p->uri.s, _p->uri.len);
 
 	slot_add(&_d->table[sl], _p, &_d->first, &_d->last);

@@ -30,7 +30,6 @@
 #ifndef PRESENTITY_H
 #define PRESENTITY_H
 
-
 #include "../../str.h"
 #include "../tm/dlg.h"
 #include "watcher.h"
@@ -41,6 +40,7 @@
 typedef struct presentity {
 	str uri;                 /* URI of presentity */
 	pstate_t state;          /* State of presentity */
+	str      location;       /* Physical location of presentity */
 	watcher_t* watchers;     /* List of watchers */
 	struct presentity* next; /* Next presentity */
 	struct presentity* prev; /* Previous presentity in list */

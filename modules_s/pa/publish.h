@@ -1,5 +1,5 @@
 /*
- * Presence Agent, watcher structure and related functions
+ * Presence Agent, publish handling
  *
  * $Id$
  *
@@ -25,58 +25,30 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 
-#ifndef WATCHER_H
-#define WATCHER_H
+#ifndef PUBLISH_H
+#define PUBLISH_H
 
-#include "../../str.h"
-#include "../tm/dlg.h"
-#include <stdio.h>
-#include <time.h>
-
-
-typedef enum doctype {
-	DOC_XPIDF = 0,
-	DOC_LPIDF,
-	DOC_PIDF
-} doctype_t;
-
+#include "../../parser/msg_parser.h"
 
 /*
- * Structure representing a watcher
+ * Handle a publish Request
  */
-typedef struct watcher {
-	str uri;                /* Uri of the watcher */
-	time_t expires;         /* Absolute of the expiration */
-	doctype_t accept;       /* Type of document accepted by the watcher */
-	dlg_t* dialog;          /* Dialog handle */
-	struct watcher* next;   /* Next watcher in the list */
-} watcher_t;
- 
+int handle_publish(struct sip_msg* _m, char* _domain, char* _s2);
 
 /*
- * Create a new watcher structure
+ * FIFO function for publishing events
  */
-int new_watcher(str* _uri, time_t _e, doctype_t _a, dlg_t* _dlg, watcher_t** _w);
-
-
+int fifo_pa_publish(FILE *stream, char *response_file);
 /*
- * Release a watcher structure
+ * FIFO function for publishing presence
  */
-void free_watcher(watcher_t* _w);
-
-
+int fifo_pa_presence(FILE *stream, char *response_file);
 /*
- * Print contact, for debugging purposes only
+ * FIFO function for publishing location
  */
-void print_watcher(FILE* _f, watcher_t* _w);
+int fifo_pa_location(FILE *stream, char *response_file);
 
-
-/*
- * Update expires value of a watcher
- */
-int update_watcher(watcher_t* _w, time_t _e);
-
-
-#endif /* WATCHER_H */
+#endif /* PUBLISH_H */

@@ -51,5 +51,15 @@ int existing_subscription(struct sip_msg* _m, char* _domain, char* _s2);
  */
 int pua_exists(struct sip_msg* _m, char* _domain, char* _s2);
 
+enum doctype;
+/*
+ * Get presentity URI, which is stored in R-URI
+ */
+int get_pres_uri(struct sip_msg* _m, str* _puri);
+
+/*
+ * Parse Accept header field body
+ */
+int parse_accept(struct hdr_field* _h, enum doctype* _a);
 
 #endif /* SUBSCRIBE_H */
