@@ -35,6 +35,8 @@
 /* casting macro for accessing From body */
 #define get_from(p_msg)  ((struct to_body*)(p_msg)->from->parsed)
 
+#define free_from(_to_body_)  free_to(_to_body_)
+
 
 /*
  * To header field parser
