@@ -90,6 +90,13 @@ char* sec_rand = 0;
 
 
 /*
+ * Default Remote-Party-ID prefix
+ */
+char* rpid_prefix_param = "";
+str rpid_prefix;
+
+
+/*
  * Default Remote-Party-ID suffix
  */
 char* rpid_suffix_param = ";party=calling;id-type=subscriber;screen=yes";
@@ -117,6 +124,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"secret",       STR_PARAM, &sec_param        },
 	{"nonce_expire", INT_PARAM, &nonce_expire     },
+	{"rpid_prefix",  STR_PARAM, &rpid_prefix_param},
 	{"rpid_suffix",  STR_PARAM, &rpid_suffix_param},
 	{0, 0, 0}
 };
@@ -190,6 +198,9 @@ static int mod_init(void)
 		secret.len = strlen(secret.s);
 	}
 	
+	rpid_prefix.s = rpid_prefix_param;
+	rpid_prefix.len = strlen(rpid_prefix.s);
+
 	rpid_suffix.s = rpid_suffix_param;
 	rpid_suffix.len = strlen(rpid_suffix.s);
 

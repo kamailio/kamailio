@@ -43,6 +43,7 @@
  */
 extern str secret;            /* secret phrase used to generate nonce */
 extern int nonce_expire;      /* nonce expire interval */
+extern str rpid_prefix;       /* Remote-Party-ID prefix */
 extern str rpid_suffix;       /* Remote-Party-ID suffix */
 
 

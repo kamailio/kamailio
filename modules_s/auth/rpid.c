@@ -44,8 +44,8 @@
 #include "rpid.h"
 
 
-#define RPID_PREFIX "Remote-Party-ID: "
-#define RPID_PREFIX_LEN (sizeof(RPID_PREFIX)-1)
+#define RPID_HF_NAME "Remote-Party-ID: "
+#define RPID_HF_NAME_LEN (sizeof(RPID_HF_NAME)-1)
 
 
 static str rpid;                /* rpid, stored in a backend authentication module */
@@ -120,7 +120,7 @@ int append_rpid_hf(struct sip_msg* _m, char* _s1, char* _s2)
 		return 1;
 	}
 	
-	rpid_hf.len = RPID_PREFIX_LEN + rpid.len + rpid_suffix.len + CRLF_LEN;
+	rpid_hf.len = RPID_HF_NAME_LEN + rpid_prefix.len + rpid.len + rpid_suffix.len + CRLF_LEN;
 	rpid_hf.s = pkg_malloc(rpid_hf.len);
 	if (!rpid_hf.s) {
 		LOG(L_ERR, "append_rpid_hf(): No memory left\n");
@@ -128,8 +128,11 @@ int append_rpid_hf(struct sip_msg* _m, char* _s1, char* _s2)
 	}
 
 	at = rpid_hf.s;
-	memcpy(at, RPID_PREFIX, RPID_PREFIX_LEN);
-	at += RPID_PREFIX_LEN;
+	memcpy(at, RPID_HF_NAME, RPID_HF_NAME_LEN);
+	at += RPID_HF_NAME_LEN;
+
+	memcpy(at, rpid_prefix.s, rpid_prefix.len);
+	at += rpid_prefix.len;
 
 	memcpy(at, rpid.s, rpid.len);
 	at += rpid.len;
