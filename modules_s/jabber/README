@@ -3,6 +3,7 @@ eXtended JABber module
 ======================
 
 1. Description
+1.1 Dependences
 2.1 New features
 2.2 Features
 3. Exported parameters
@@ -21,9 +22,21 @@ Expat is a common XML library and is the fastest available for Linux/Unix,
 the second over all, after msxml library. It is integrated in most of well known
 Linux distributions.
 
+1.1 Dependences
+---------------
+- modules
+	- MYSQL
+	- PA
+	- TM
+- libraries
+	- expat
+
 
 2.1 New features
 ----------------
+[January 2003]
+- presence support (see doc/xxjab.cfg for a sample cfg file)
+[December 2002]
 - SIP to Jabber conference support
 - possibility to manage all kinds of Jabber messages (message/presence/iq)
 - aliases - possibility to set host aliases for addresses (see parameter's desc.)
@@ -49,13 +62,14 @@ Desc:		contact header for SIP messages - if not set, the header
 Name:		db_url
 Type:		string
 Default:	"sql://root@127.0.0.1/sip_jab"
-Desc:		username, password, host, port and database
+Desc:		SQL URL of database - username, password, host, port and database
 			(ex: sql://username:password@hostname.com/database)
 
 Name:		jaddress
 Type:		string
 Default:	"127.0.0.1"
-Desc:		IP or hostname of Jabber server 
+Desc:		IP or hostname of Jabber server - must be the same with value from
+			<host> tag of Jabber server config file
 
 Name:		jport
 Type:		integer
@@ -250,6 +264,9 @@ Ex: sending a message to user@jabber.xxx.org which is in Jabber network, the
 	NOTE: the SER administrator have to set the Jabber transports for each
 	IM network in order to be able to send messages to those networks.
 	The alias of each IM network can be found out from SER admin.
+
+NOTE: you cannot send messages from your SIP client to your associated Jabber
+account - is something like sending messages to yourself.
 
 7. Contacts
 
