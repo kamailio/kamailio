@@ -96,6 +96,7 @@
 
 struct tcp_child{
 	pid_t pid;
+	int proc_no; /* ser proc_no, for debugging */
 	int unix_sock; /* unix sock fd, copied from pt*/
 	int busy;
 	int n_reqs; /* number of requests serviced so far */
@@ -651,7 +652,9 @@ static int send2child(struct tcp_connection* tcpconn)
 				" connection passed to the least busy one (%d)\n",
 				min_busy);
 	}
-	DBG("send2child: to child %d, %ld\n", idx, (long)tcpconn);
+	DBG("send2child: to tcp child %d %d(%d), %p\n", idx, 
+					tcp_children[idx].proc_no,
+					tcp_children[idx].pid, tcpconn);
 	send_fd(tcp_children[idx].unix_sock, &tcpconn, sizeof(tcpconn),
 			tcpconn->s);
 	
@@ -1007,6 +1010,7 @@ int tcp_init_children()
 			/* parent */
 			close(sockfd[1]);
 			tcp_children[r].pid=pid;
+			tcp_children[r].proc_no=process_no;
 			tcp_children[r].busy=0;
 			tcp_children[r].n_reqs=0;
 			tcp_children[r].unix_sock=sockfd[0];

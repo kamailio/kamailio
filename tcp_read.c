@@ -32,6 +32,7 @@
  * 2003-05-13  l: (short form of Content-Length) is now recognized (andrei)
  * 2003-07-01  tcp_read & friends take no a single tcp_connection 
  *              parameter & they set c->state to S_CONN_EOF on eof (andrei)
+ * 2003-07-04  fixed tcp EOF handling (possible infinite loop) (andrei)
  */
 
 #ifdef USE_TCP
@@ -96,7 +97,8 @@ again:
 			return -1;
 		}
 	}else if (bytes_read==0){
-		r->state=S_CONN_EOF;
+		c->state=S_CONN_EOF;
+		DBG("tcp_read: EOF on %p, FD %d\n", c, fd);
 	}
 #ifdef EXTRA_DEBUG
 	DBG("tcp_read: read %d bytes:\n%.*s\n", bytes_read, bytes_read, r->pos);
@@ -395,7 +397,6 @@ int tcp_read_req(struct tcp_connection* con)
 		resp=CONN_RELEASE;
 		s=con->fd;
 		req=&con->req;
-		size=0;
 #ifdef USE_TLS
 		if (con->type==PROTO_TLS){
 			if (con->state==S_CONN_ACCEPT){
@@ -416,7 +417,7 @@ int tcp_read_req(struct tcp_connection* con)
 #endif
 
 again:
-		if(req->complete==0 && req->error==TCP_REQ_OK){
+		if(req->error==TCP_REQ_OK){
 			bytes=tcp_read_headers(con);
 #ifdef EXTRA_DEBUG
 						/* if timeout state=0; goto end__req; */
@@ -432,7 +433,12 @@ again:
 				resp=CONN_ERROR;
 				goto end_req;
 			}
-			if ((size==0) && (bytes==0) &&(con->state==S_CONN_EOF)){
+			/* eof check:
+			 * is EOF if eof on fd and req.  not complete yet,
+			 * if req. is complete we might have a second unparsed
+			 * request after it, so postpone release_with_eof
+			 */
+			if ((con->state==S_CONN_EOF) && (req->complete==0)) {
 				DBG( "tcp_read_req: EOF\n");
 				resp=CONN_EOF;
 				goto end_req;
@@ -514,6 +520,10 @@ again:
 			req->bytes_to_go=0;
 			/* if we still have some unparsed bytes, try to  parse them too*/
 			if (size) goto again;
+			else if (con->state==S_CONN_EOF){
+				DBG( "tcp_read_req: EOF after reading complete request\n");
+				resp=CONN_EOF;
+			}
 			
 		}
 		
