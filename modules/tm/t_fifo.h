@@ -36,7 +36,7 @@
 
 #include "../../parser/msg_parser.h"
 
-extern int unix_send_timeout;
+extern int tm_unix_tx_timeout;
 
 int init_twrite_lines();
 

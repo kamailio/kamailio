@@ -56,7 +56,7 @@
 #include "t_fwd.h"
 #include "../../tsend.h"
 
-int unix_send_timeout = 2; /* Default is 2 seconds */
+int tm_unix_tx_timeout = 2; /* Default is 2 seconds */
 
 #define TWRITE_PARAMS          21
 #define TWRITE_VERSION_S       "0.2"
@@ -480,7 +480,7 @@ static int write_to_unixsock(char* sockname, int cnt)
 		return -1;
 	}
 	
-	if (tsend_dgram_ev(sock, (struct iovec*)lines_eol, 2 * cnt, unix_send_timeout * 1000) < 0) {
+	if (tsend_dgram_ev(sock, (struct iovec*)lines_eol, 2 * cnt, tm_unix_tx_timeout * 1000) < 0) {
 		LOG(L_ERR, "write_to_unixsock: writev failed: %s\n", strerror(errno));
 		return -1;
 	}
