@@ -2,8 +2,8 @@
  * $Id$ 
  */
 
-#ifndef __C_ELEM_H__
-#define __C_ELEM_H__
+#ifndef C_ELEM_H
+#define C_ELEM_H
 
 #include "location.h"
 #include "c_slot.h"

@@ -38,6 +38,3 @@ void get_username(str* _s)
 	} 
 	return;
 }
-
-
-

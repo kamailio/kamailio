@@ -2,8 +2,8 @@
  * $Id$ 
  */
 
-#ifndef __CONTACT_PARSER_H__
-#define __CONTACT_PARSER_H__
+#ifndef CONTACT_PARSER_H
+#define CONTACT_PARSER_H
 
 #include <time.h>
 #include "location.h"

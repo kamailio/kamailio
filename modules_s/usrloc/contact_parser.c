@@ -8,7 +8,7 @@
 #include "contact_parser.h"
 #include "utils.h"
 #include "const.h"
-#include "../../dprint.h"
+#include "log.h"
 
 /* Character delimiting particular contacts in Contact HF */
 #define CONTACT_DELIM ','
@@ -85,7 +85,7 @@ static inline void parse_params(char* _b, time_t* _exp, float* _q)
 
 #ifdef PARANOID
 	if ((!_exp) || (!_q)) {
-		LOG(L_ERR, "parse_params(): Invalid parameter value\n");
+		ERR("Invalid parameter value");
 	        return;
 	}
 #endif
@@ -119,7 +119,7 @@ int parse_contact(char* _s, char** _url, time_t* _expire, float* _q)
 	char* ptr;
 #ifdef PARANOID
 	if ((!_s) || (!_url) || (!_expire) || (!_q)) {
-		LOG(L_ERR, "parse_contact(): Invalid parameter value\n");
+	        ERR("Invalid parameter value");
 		return FALSE;
 	}
 #endif
@@ -128,7 +128,7 @@ int parse_contact(char* _s, char** _url, time_t* _expire, float* _q)
 		*_url = ++_s;
 		ptr = find_not_quoted(_s, '>');
 		if (!ptr) {
-			LOG(L_ERR, "parse_contact(): > not found\n");
+			ERR("> not found");
 			return FALSE;
 		} else {
 			*ptr++ = '\0';
@@ -185,7 +185,7 @@ int parse_contact_hdr(char* _b, location_t* _loc, int _expires, int* _star, cons
 		if (comma) *comma = '\0';
 
 		if (parse_contact(_b, &url, &expires, &q) == FALSE) {
-			LOG(L_ERR, "parse_contact_hdr(): Error while parsing contact\n");
+		        ERR("Error while parsing contact");
 			return FALSE;
 		}
 
@@ -197,7 +197,7 @@ int parse_contact_hdr(char* _b, location_t* _loc, int _expires, int* _star, cons
 		}
 
 		if (add_contact(_loc, url, expires, q, _callid, _cseq) == FALSE) {
-			LOG(L_ERR, "parse_contact_hdr(): Error while adding contact\n");
+			ERR("Error while adding contact");
 			return FALSE;
 		}
 		_b = comma;

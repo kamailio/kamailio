@@ -12,6 +12,7 @@
 #include "../../mem/mem.h"
 #include "defs.h"
 #include "sh_malloc.h"
+#include "usrloc.h"
 
 /*
  * Print contact, for debugging purposes only
@@ -146,7 +147,7 @@ int cmp_contact(contact_t* _c1, contact_t* _c2)
 
 int db_remove_contact(db_con_t* _c, contact_t* _con)
 {
-	db_key_t keys[2] = {USER_COLUMN, CONTACT_COLUMN};
+	db_key_t keys[2] = {user_col, contact_col};
 	db_val_t vals[2] = {{DB_STRING, 0, {.string_val = NULL}},
 			    {DB_STRING, 0, {.string_val = NULL}}
 	};
@@ -173,12 +174,12 @@ int db_remove_contact(db_con_t* _c, contact_t* _con)
 
 int db_update_contact(db_con_t* _c, contact_t* _con)
 {
-	db_key_t keys1[2] = {USER_COLUMN, CONTACT_COLUMN};
+	db_key_t keys1[2] = {user_col, contact_col};
 	db_val_t vals1[2] = {{DB_STRING, 0, {.string_val = NULL}},
 			    {DB_STRING, 0, {.string_val = NULL}}
 	};
 
-	db_key_t keys2[4] = {EXPIRES_COLUMN, Q_COLUMN, CALLID_COLUMN, CSEQ_COLUMN};
+	db_key_t keys2[4] = {expires_col, q_col, callid_col, cseq_col};
 	db_val_t vals2[4] = {{DB_DATETIME, 0, {.time_val = 0}},
 			     {DB_DOUBLE, 0, {.double_val = 0}},
 			     {DB_STRING, 0, {.string_val = NULL}},
@@ -212,7 +213,7 @@ int db_update_contact(db_con_t* _c, contact_t* _con)
 
 int db_insert_contact(db_con_t* _c, contact_t* _con)
 {
-	db_key_t keys[] = {USER_COLUMN, CONTACT_COLUMN, EXPIRES_COLUMN, Q_COLUMN, CALLID_COLUMN, CSEQ_COLUMN};
+	db_key_t keys[] = {user_col, contact_col, expires_col, q_col, callid_col, cseq_col};
 	db_val_t vals[] = {{DB_STRING,   0, {.string_val = NULL}},
 			  {DB_STRING,   0, {.string_val = NULL}},
 			  {DB_DATETIME, 0, {.time_val = 0}},

@@ -8,7 +8,7 @@
 #include "location.h"
 #include "../../str.h"
 #include "utils.h"
-#include "../../dprint.h"
+#include "log.h"
 #include "../../msg_parser.h"
 #include "const.h"
 #include "to_parser.h"
@@ -70,12 +70,12 @@ static inline int parse_all_headers(struct sip_msg* _msg)
 {
 #ifdef PARANOID
 	if (!_msg) {
-		LOG(L_ERR, "parser_all_headers(): Invalid parameter value\n");
+		ERR("Invalid parameter value");
 		return FALSE;
 	}
 #endif
 	if (parse_headers(_msg, HDR_EOH) == -1) {
-		LOG(L_ERR, "parse_all_headers(): Error while parsing headers\n");
+		ERR("Error while parsing headers");
 		return FALSE;
 	}
 
@@ -83,7 +83,7 @@ static inline int parse_all_headers(struct sip_msg* _msg)
 	      * needed
 	      */
 	if (!_msg->to) {
-		LOG(L_ERR, "parse_all_headers(): Unable to find To header field\n");
+		ERR("Unable to find To header field");
 		return FALSE;
 	}
 	
@@ -102,14 +102,14 @@ static inline int process_all_contacts(location_t* _loc, struct sip_msg* _msg, i
 
 #ifdef PARANOID
 	if ((!_loc) || (!_msg) || (!_star) || (!_callid)) {
-		LOG(L_ERR, "process_all_contacts(): Invalid parameter value\n");
+		ERR("Invalid parameter value");
 		return FALSE;
 	}
 #endif
 	*_star = 0;
 	contact = (char*)pkg_malloc(MAX_CONTACT_LEN);
 	if (!contact) {
-		LOG(L_ERR, "process_all_contacts(): No memory left\n");
+		ERR("No memory left");
 		return FALSE;
 	}
 
@@ -123,7 +123,7 @@ static inline int process_all_contacts(location_t* _loc, struct sip_msg* _msg, i
 			memcpy(contact, ptr->body.s, ptr->body.len + 1);
 			
 			if (parse_contact_hdr(contact, _loc, _expires, _star, _callid, _cseq) == FALSE) {
-				LOG(L_ERR, "process_all_contacts(): Error while parsing Contact header field\n");
+				ERR("Error while parsing Contact header field");
 				pkg_free(contact);
 				return FALSE;
 			}
@@ -143,7 +143,7 @@ static inline int get_CSeq(struct sip_msg* _msg, int* _cseq)
 {
 #ifdef PARANOID
 	if ((!_msg) || (!_cseq)) {
-		LOG(L_ERR, "get_cseq(): Invalid parameter value\n");
+		ERR("Invalid parameter value");
 		return FALSE;
 	}
 #endif
@@ -159,7 +159,7 @@ static inline int get_CallID(struct sip_msg* _msg, char** _callid)
 	int len;
 #ifdef PARANOID
 	if ((!_msg) || (!_callid)) {
-		LOG(L_ERR, "get_callid(): Invalid parameter value\n");
+		ERR("Invalid parameter value");
 		return FALSE;
 	}
 #endif
@@ -186,13 +186,13 @@ int sip_to_loc(struct sip_msg* _msg, location_t** _loc, int* _star, int* _expire
 	
 #ifdef PARANOID
 	if ((!_msg) || (!_loc) || (!_star) || (!_expires)) {
-		LOG(L_ERR, "sip_to_loc(): Invalid parameter value\n");
+		ERR("Invalid parameter value");
 		return FALSE;
 	}
 #endif
 
 	if (parse_all_headers(_msg) == FALSE) {
-		LOG(L_ERR, "sip_to_loc(): Error while parsing message headers\n");
+		ERR("Error while parsing message headers");
 		return FALSE;
 	}
 
@@ -203,31 +203,31 @@ int sip_to_loc(struct sip_msg* _msg, location_t** _loc, int* _star, int* _expire
 	     /* Not needed anymore */
 	    
 	if (!to.len) {
-		LOG(L_ERR, "sip_to_loc(): Error while parsing To header field \n");
+		ERR("Error while parsing To header field");
 		return FALSE;
 	}
 
 	if (create_location(_loc, &to) == FALSE) {
-		LOG(L_ERR, "sip_to_loc(): Unable to create location structure\n");
+		ERR("Unable to create location structure");
 		return FALSE;
 	}
 
 	*_expires = get_expires(_msg);
 	
 	if (get_CSeq(_msg, &cseq) == FALSE) {
-		LOG(L_ERR, "sip_to_loc(): Unable to get CSeq value\n");
+		ERR("Unable to get CSeq value");
 		free_location(*_loc);
 		return FALSE;
 	}
 
 	if (get_CallID(_msg, &callid) == FALSE) {
-		LOG(L_ERR, "sip_to_loc(): Unable to get Call-ID value\n");
+		ERR("Unable to get Call-ID value");
 		free_location(*_loc);
 		return FALSE;
 	}
 
 	if (process_all_contacts(*_loc, _msg, *_expires, _star, callid, cseq) == FALSE) {
-		LOG(L_ERR, "sip_to_loc(): Error while processing Contact field\n");
+		ERR("Error while processing Contact field");
 		free_location(*_loc);
 		return FALSE;
 	}
@@ -243,19 +243,19 @@ int create_location(location_t** _loc, str* _user)
 {
 #ifdef PARANOID
 	if ((!_loc) || (!_user)) {
-		LOG(L_ERR, "create_location(): Invalid parameter value\n");
+		ERR("Invalid parameter value");
 		return FALSE;
 	}
 #endif
 	*_loc = (location_t*)sh_malloc(sizeof(location_t));
 	if (!(*_loc)) {
-		LOG(L_ERR, "create_location(): No memory left\n");
+		ERR("No memory left");
 		return FALSE;
 	}
 
 	(*_loc)->user.s = (char*)sh_malloc(_user->len + 1);
 	if (!((*_loc)->user.s)) {
-		LOG(L_ERR, "create_location(): No memory left\n");
+		ERR("No memory left");
 		sh_free(*_loc);
 		return FALSE;
 	}
@@ -283,18 +283,18 @@ int add_contact(location_t* _loc, const char* _contact, time_t _expires, float _
 	contact_t* c, *ptr, *prev;
 #ifdef PARANOID
 	if (!_loc) {
-		LOG(L_ERR, "add_contact(): Invalid _loc parameter value\n");
+		ERR("Invalid _loc parameter value");
 		return FALSE;
 	}
 	
 	if (!_contact) {
-		LOG(L_ERR, "add_contact(): Invalid _contact parameter value\n");
+		ERR("Invalid _contact parameter value");
 		return FALSE;
 	}
 #endif
 
 	if (create_contact(&c, &(_loc->user), _contact, _expires, _q, _callid, _cseq) == FALSE) {
-		LOG(L_ERR, "add_contact(): Can't create contact structure\n");
+		ERR("Can't create contact structure");
 		return FALSE;
 	}
 	
@@ -326,12 +326,12 @@ int remove_contact(location_t* _loc, const char* _contact)
 	contact_t* ptr, *prev = NULL;
 #ifdef PARANOID
 	if (!_loc) {
-		LOG(L_ERR, "remove_contact(): Invalid _loc parameter value\n");
+		ERR("Invalid _loc parameter value");
 		return FALSE;
 	}
 
 	if (!_contact) {
-		LOG(L_ERR, "remove_contact(): Invalid _contact parameter value\n");
+		ERR("Invalid _contact parameter value");
 		return FALSE;
 	}
 #endif
@@ -389,11 +389,11 @@ void print_location(const location_t* _loc)
 {
 	contact_t* ptr = _loc->contacts;
 
-	LOG(L_ERR, "Address of record = \"%s\"\n", _loc->user.s);
+	INFO("Address of record = \"%s\"", _loc->user.s);
 	if (ptr) {
-		LOG(L_ERR, "    Contacts:\n");
+		INFO("    Contacts:");
 	} else {
-		LOG(L_ERR, "    No contacts.\n");
+		INFO("    No contacts.");
 		return;
 	}
 
@@ -401,8 +401,6 @@ void print_location(const location_t* _loc)
 		print_contact(ptr);
 		ptr = ptr->next;
 	}
-
-	LOG(L_ERR, "\n");
 }
 
 
@@ -421,7 +419,7 @@ int validate_location(location_t* _loc, int _expires, int _star, int* _result)
 {
 #ifdef PARANOID
 	if ((!_loc) || (!_result)) {
-		LOG(L_ERR, "validate_location(): Invalid parameter value\n");
+		ERR("Invalid parameter value");
 		return FALSE;
 	}
 #endif
@@ -448,7 +446,7 @@ int remove_zero_expires(location_t* _loc)
 	contact_t* ptr, *prev, *tmp;
 #ifdef PARANOID
 	if (!_loc) {
-		LOG(L_ERR, "remove_zero_expires(): Invalid parameter value\n");
+		ERR("remove_zero_expires(): Invalid parameter value");
 		return FALSE;
 	}
 #endif
@@ -479,7 +477,7 @@ int db_insert_location(db_con_t* _c, location_t* _loc)
 	contact_t* ptr, *p;
 #ifdef PARANOID
 	if (!_loc) {
-		LOG(L_ERR, "db_insert_location(): Invalid parameter value\n");
+		ERR("Invalid parameter value");
 		return FALSE;
 	}
 
@@ -495,7 +493,7 @@ int db_insert_location(db_con_t* _c, location_t* _loc)
 				p = p->next;
 			}
 
-			LOG(L_ERR, "db_insert_contact(): Error while inserting location\n");
+			ERR("Error while inserting location");
 			return FALSE;
 		}
 		ptr = ptr->next;
@@ -516,7 +514,7 @@ int db_remove_location(db_con_t* _c, location_t* _loc)
 
 #ifdef PARANOID
 	if (!_loc) {
-		LOG(L_ERR, "db_remove_location(): Invalid parameter value\n");
+		ERR("Invalid parameter value");
 		return FALSE;
 	}
 
@@ -524,7 +522,7 @@ int db_remove_location(db_con_t* _c, location_t* _loc)
 	
 	val[0].val.string_val = _loc->user.s;
 	if (db_delete(_c, key, val, 1) == FALSE) {
-		LOG(L_ERR, "db_remove_location(): Error while inserting binding\n");
+		ERR("Error while inserting binding");
 		return FALSE;
 	}
 
@@ -536,7 +534,7 @@ static int check_request_order(contact_t* _old, contact_t* _new)
 {
 #ifdef PARANOID
 	if ((!_old) || (!_new)) {
-		LOG(L_ERR, "check_request_order(): Invalid parameter value\n");
+		ERR("Invalid parameter value");
 		return FALSE;
 	}
 #endif
@@ -553,13 +551,13 @@ static int rem_cont(db_con_t* _c, location_t* _dst, contact_t* _dcon)
 {
 	if (_c) {
 		if (db_remove_contact(_c, _dcon) == FALSE) {
-			LOG(L_ERR, "update_location(): Error while removing binding\n");
+			ERR("Error while removing binding");
 			return FALSE;
 		}
 	}
 	     /* FIXME, zbytecne se hleda */
 	if (remove_contact(_dst, _dcon->c.s) == FALSE) {
-		LOG(L_ERR, "update_location(): Error while removing from cache\n");
+		ERR("Error while removing from cache");
 		return FALSE;
 	}
 
@@ -571,13 +569,13 @@ static int upd_cont(db_con_t* _c, contact_t* _dcon, contact_t* _scon)
 {
 	if (_c) {
 		if (db_update_contact(_c, _scon) == FALSE) {
-			LOG(L_ERR, "update_location(): Error while updating database\n");
+			ERR("Error while updating database");
 			return FALSE;
 		}
 	}
 
 	if (update_contact(_dcon, _scon) == FALSE) {
-		LOG(L_ERR, "update_location(): Error while updating cache\n");
+		ERR("Error while updating cache");
 		return FALSE;
 	}
 	return TRUE;
@@ -588,12 +586,12 @@ static int ins_cont(db_con_t* _c, location_t* _dst, contact_t* _scon)
 {
 	if (_c) {
 		if (db_insert_contact(_c, _scon) == FALSE) {
-			LOG(L_ERR, "update_location(): Error inserting into database\n");
+			ERR("Error inserting into database");
 			return FALSE;
 		}
 	}
 	if (add_contact(_dst, _scon->c.s, _scon->expires, _scon->q, _scon->callid, _scon->cseq) == FALSE) {
-		LOG(L_ERR, "update_location(): Error while adding contact\n");
+		ERR("Error while adding contact");
 		return FALSE;
 	}
 	return TRUE;
@@ -617,14 +615,14 @@ int update_location(db_con_t* _c, location_t* _dst, location_t* _src, int* _sr)
 		while(dst_ptr) {
 			if (cmp_contact(dst_ptr, src_ptr) == TRUE) {
 				if (check_request_order(dst_ptr, src_ptr) == TRUE) {  /* FIXME */
-					LOG(L_ERR, "update_location(): Order OK, updating\n");
+					DBG("Order OK, updating");
 					if (src_ptr->expires == 0) {
 						if (rem_cont(_c, _dst, dst_ptr) == FALSE) return FALSE;
 					} else {
 						if (upd_cont(_c, dst_ptr, src_ptr) == FALSE) return FALSE;
 					}
 				} else {
-					LOG(L_ERR, "update_location(): Request for binding update is out of order\n");
+					INFO("Request for binding update is out of order");
 					*_sr = 0; /* Request is out of order, do not send reply */
 				}
 				goto skip;
@@ -651,7 +649,7 @@ int clean_location(location_t* _l, db_con_t* _c, time_t _t)
 
 #ifdef PARANOID
 	if (!_l) {
-		LOG(L_ERR, "clean_location(): Invalid parameter value\n");
+		ERR("Invalid parameter value");
 		return FALSE;
 	}
 #endif
@@ -659,17 +657,16 @@ int clean_location(location_t* _l, db_con_t* _c, time_t _t)
 	ptr = _l->contacts;
 	prev = NULL;
 
-	LOG(L_ERR, "clean_location(): Entering\n");
 	while(ptr) {
-		LOG(L_ERR, "clean_location(): Checking entry: \"%s\"\n", _l->user.s);
+	        DBG("Checking entry: \"%s\"", _l->user.s);
 		if (ptr->expires < _t) {
-			LOG(L_ERR, "clean_location(): Contact %s,%s expired, removing\n", ptr->aor->s, ptr->c.s);
+			DBG("Contact %s,%s expired, removing", ptr->aor->s, ptr->c.s);
 			if (_c) {
 				if (db_remove_contact(_c, ptr) == FALSE) {
-					LOG(L_ERR, "clean_location(): Error while removing contact from db\n");
+					ERR("Error while removing contact from database");
 					return FALSE;
 				}
-				LOG(L_ERR, "clean_location(): contact removed from database\n");
+				DBG("Contact removed from database");
 			}
 			if (prev) {
 				prev->next = ptr->next;
@@ -680,9 +677,9 @@ int clean_location(location_t* _l, db_con_t* _c, time_t _t)
 			tmp = ptr;
 			ptr = ptr->next;
 			free_contact(tmp);
-			LOG(L_ERR, "clean_location(): Contact removed from cache\n");
+			DBG("Contact removed from cache\n");
 		} else {
-			LOG(L_ERR, "clean_cache(): Contact is still fresh\n");
+			DBG("Contact is still fresh");
 			ptr = ptr->next;
 			prev = ptr;
 		}
