@@ -114,7 +114,7 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
  * we should really authenticate (there must be no authentication for
  * ACK and CANCEL
  */
-auth_result_t pre_auth(struct sip_msg* _m, str** _realm, int _hftype, struct hdr_field** _h)
+auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_field** _h)
 {
 	int ret;
 	auth_body_t* c;
@@ -128,7 +128,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str** _realm, int _hftype, struct hdr
 
 	if ((_m->REQ_METHOD == METHOD_ACK) ||  (_m->REQ_METHOD == METHOD_CANCEL)) return AUTHORIZED;
 
-	if ((*_realm)->len == 0) {
+	if (_realm->len == 0) {
 		if (get_realm(_m, &uri) < 0) {
 			LOG(L_ERR, "pre_auth(): Error while extracting realm\n");
 			if (send_resp(_m, 400, MESSAGE_400, 0, 0) == -1) {
@@ -137,14 +137,14 @@ auth_result_t pre_auth(struct sip_msg* _m, str** _realm, int _hftype, struct hdr
 			return ERROR;
 		}
 		
-		*_realm = &uri.host;
+		*_realm = uri.host;
 	}
 
 	     /* Try to find credentials with corresponding realm
 	      * in the message, parse them and return pointer to
 	      * parsed structure
 	      */
-	ret = find_credentials(_m, *_realm, _hftype, _h);
+	ret = find_credentials(_m, _realm, _hftype, _h);
 	if (ret < 0) {
 		LOG(L_ERR, "pre_auth(): Error while looking for credentials\n");
 		if (send_resp(_m, (ret == -2) ? 500 : 400, 

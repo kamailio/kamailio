@@ -46,7 +46,7 @@
 #define MESSAGE_500 "Server Internal Error"
 
 
-static inline int get_ha1(str* _user, str* _domain, str _realm, char* _table, char* _ha1)
+static inline int get_ha1(str* _user, str* _domain, int use_ha1b, char* _table, char* _ha1)
 {
 	db_key_t keys[2];
 	db_val_t vals[2];
@@ -56,7 +56,7 @@ static inline int get_ha1(str* _user, str* _domain, str _realm, char* _table, ch
 
 	keys[0] = username_column;
 	keys[1] = domain_column;
-	col[0] = pass_column;	
+	col[0] = (use_ha1b && !calc_ha1) ? (pass_column_2) : (pass_column);	
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
@@ -64,18 +64,8 @@ static inline int get_ha1(str* _user, str* _domain, str _realm, char* _table, ch
 	VAL_STR(vals).s = _user->s;
 	VAL_STR(vals).len = _user->len;
 
-	printf("bhoj: %.*s\n", _realm.len, _realm.s);	
-	VAL_STR(vals + 1).s = _realm.s;
-	VAL_STR(vals + 1).len = _realm.len;
-
-
-	     /* If there is domain in username, we must use
-	      * another column holding HA1 calculated with the
-	      * domain
-	      */
-	if ((_domain->len) && !calc_ha1) {
-		col[0] = pass_column_2;
-	}
+	VAL_STR(vals + 1).s = _domain->s;
+	VAL_STR(vals + 1).len = _domain->len;
 
 	db_use_table(db_handle, _table);
 	if (db_query(db_handle, keys, 0, vals, col, 2, 1, 0, &res) < 0) {
@@ -85,9 +75,9 @@ static inline int get_ha1(str* _user, str* _domain, str _realm, char* _table, ch
 
 	if (RES_ROW_N(res) == 0) {
 		DBG("get_ha1(): no result for user \'%.*s@%.*s\'\n", 
-		    _user->len, _user->s, _realm.len, _realm.s);
+		    _user->len, _user->s, _domain->len, _domain->s);
 		db_free_query(db_handle, res);
-		return -1;
+		return 1;
 	}
 
         result.s = (char*)ROW_VALUES(RES_ROWS(res))[0].val.string_val;
@@ -96,7 +86,7 @@ static inline int get_ha1(str* _user, str* _domain, str _realm, char* _table, ch
 	if (calc_ha1) {
 		     /* Only plaintext passwords are stored in database,
 		      * we have to calculate HA1 */
-		calc_HA1(HA_MD5, _user, &_realm, &result, 0, 0, _ha1);
+		calc_HA1(HA_MD5, _user, _domain, &result, 0, 0, _ha1);
 		DBG("HA1 string calculated: %s\n", _ha1);
 	} else {
 		memcpy(_ha1, result.s, result.len);
@@ -160,8 +150,11 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 	struct hdr_field* h;
 	auth_body_t* cred;
 	auth_result_t ret;
+	str domain;
 
-	ret = pre_auth_func(_m, &_realm, _hftype, &h);
+	domain = *_realm;
+
+	ret = pre_auth_func(_m, &domain, _hftype, &h);
 	
 	switch(ret) {
 	case ERROR:            return 0;
@@ -172,9 +165,7 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 
 	cred = (auth_body_t*)h->parsed;
 
-	printf("ahoj: %.*s\n", _realm->len, _realm->s);
-
-	res = get_ha1(&cred->digest.username.user, &cred->digest.username.domain, *_realm, _table, ha1);
+	res = get_ha1(&cred->digest.username.user, &domain, cred->digest.username.domain.len, _table, ha1);
         if (res < 0) {
 		     /* Error while accessing the database */
 		if (sl_reply(_m, (char*)500, MESSAGE_500) == -1) {
