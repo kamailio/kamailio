@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -57,7 +58,7 @@ int main(int argc, char** argv)
 {
 	int sock, len, from_len;
 	struct sockaddr_un from, to;
-	char* name, *s;
+	char* name;
 	static char buffer[BUF_SIZE];
 
 	if (argc != 2) {
