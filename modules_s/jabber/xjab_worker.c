@@ -934,8 +934,14 @@ int xj_manage_jab(char *buf, int len, int *pos, xj_jalias als, xj_jcon jbc)
 				if(*p == '/')
 				{
 					if(jcf->nick.len>0 
+						&& strlen(p+1) == jcf->nick.len
 						&& !strncasecmp(p+1, jcf->nick.s, jcf->nick.len))
+					{
+#ifdef XJ_EXTRA_DEBUG
+						DBG("XJAB:xj_manage_jab: message sent by myself\n");
+#endif
 						goto ready;
+					}
 					lbuf[0] = '[';
 					lbuf[1] = 0;
 					strcat(lbuf, p+1);
