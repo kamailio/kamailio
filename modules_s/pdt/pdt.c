@@ -47,8 +47,10 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../fifo_server.h"
+#include "../../unixsock_server.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/msg_parser.h"
+#include "../../ut.h"
 
 #include "domains.h"
 
@@ -89,6 +91,8 @@ static int prefix2domain(struct sip_msg*, char*, char*);
 static int mod_init(void);
 static void mod_destroy(void);
 static int mod_child_init(int r);
+
+static int get_domainprefix_unixsock(str* msg);
 
 static cmd_export_t cmds[]={
 	{"prefix2domain", prefix2domain, 0, 0, REQUEST_ROUTE},
@@ -238,6 +242,11 @@ static int mod_init(void)
 		goto error1;
 	}	
 
+	if(unixsock_register_cmd("get_domainprefix", get_domainprefix_unixsock)<0)
+	{
+		LOG(L_ERR, "PDT: mod_init: cannot register unixsock command 'get_domainprefix'\n");
+		goto error1;
+	}
 
 	/* binding to mysql module */
 	if(bind_dbmod(db_url))
@@ -660,4 +669,118 @@ error:
 	return -1;
 }
 
+static int get_domainprefix_unixsock(str* msg)
+{
+	db_key_t db_keys[NR_KEYS];
+	db_val_t db_vals[NR_KEYS];
+	db_op_t  db_ops[NR_KEYS] = {OP_EQ, OP_EQ};
+	code_t code;
+	dc_t* cell; 
+	str sdomain, sauth;
+	int authorized=0;
+		
+	/* read a line -the domain name parameter- from the fifo */
+	if(unixsock_read_line(&sdomain, msg) != 0)	
+	{
+		unixsock_reply_asciiz("400 Domain expected\n");
+		goto send_err;
+	}
 
+	/* read a line -the authorization to register new domains- from the fifo */
+	if(unixsock_read_line(&sauth, msg) != 0)
+	{	
+		unixsock_reply_asciiz("400 Authorization expected\n");
+		goto send_err;
+	}
+
+	sdomain.s[sdomain.len] = '\0';
+
+	/* see what kind of user we have */
+	authorized = sauth.s[0]-'0';
+
+	lock_get(&l);
+
+	/* search the domain in the hashtable */
+	cell = get_code_from_hash(hash->dhash, hash->hash_size, sdomain.s);
+	
+	/* the domain is registered */
+	if(cell)
+	{
+
+		lock_release(&l);
+			
+		/* domain already in the database */
+		unixsock_reply_printf("201 Domain name=%.*s Domain code=%d%d\n",
+				      sdomain.len, ZSW(sdomain.s), cell->code, code_terminator);
+		unixsock_reply_send();
+		return 0;
+		
+	}
+	
+	/* domain not registered yet */
+	/* user not authorized to register new domains */	
+	if(!authorized)
+	{
+		lock_release(&l);
+		unixsock_reply_asciiz("203 Domain name not registered yet\n");
+		unixsock_reply_send();
+		return 0;
+	}
+
+	code = *next_code;
+	*next_code = apply_correction(code+1);
+		
+
+	/* prepare for insertion into database */
+	db_keys[0] = DB_KEY_CODE;
+	db_keys[1] = DB_KEY_NAME;
+
+	db_vals[0].type = DB_INT;
+	db_vals[0].nul = 0;
+	db_vals[0].val.int_val = code;
+
+	db_vals[1].type = DB_STR;
+	db_vals[1].nul = 0;
+	db_vals[1].val.str_val.s = sdomain.s;
+	db_vals[1].val.str_val.len = sdomain.len;
+	DBG("%d %.*s\n", code, sdomain.len, sdomain.s);
+			
+	/* insert a new domain into database */
+	if(db_insert(db_con, db_keys, db_vals, NR_KEYS)<0)
+	{
+		/* next available code is still code */
+		*next_code = code;
+		lock_release(&l);
+		LOG(L_ERR, "PDT: get_domaincode: error storing a"
+				" new domain\n");
+		unixsock_reply_asciiz("204 Cannot register the new domain in a consistent way\n");
+		unixsock_reply_send();
+		return -1;
+	}
+	
+	/* insert the new domain into hashtables, too */
+	cell = new_cell(sdomain.s, code);
+	if(add_to_double_hash(hash, cell)<0)
+		goto error;		
+
+	lock_release(&l);
+
+	/* user authorized to register new domains */
+	unixsock_reply_printf("202 Domain name=%.*s New domain code=%d%d\n",
+			      sdomain.len, ZSW(sdomain.s), code, code_terminator);
+
+	unixsock_reply_send();
+	return 0;
+
+ error:
+	/* next available code is still code */
+	*next_code = code;
+	/* delete from database */
+	if(db_delete(db_con, db_keys, db_ops, db_vals, NR_KEYS)<0)
+		LOG(L_ERR,"PDT: get_domaincode: database/share-memory are inconsistent\n");
+	lock_release(&l);
+	unixsock_reply_asciiz("500 Database/shared-memory are inconsistent\n");
+send_err:
+	unixsock_reply_send();
+	return -1;
+}
