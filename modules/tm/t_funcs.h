@@ -7,6 +7,8 @@
 #include "../../msg_parser.h"
 #include "../../globals.h"
 #include "../../udp_server.h"
+#include "../../msg_translator.h"
+#include "../../mem.h"
 
 struct s_table;
 struct timer;

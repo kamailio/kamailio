@@ -252,11 +252,13 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       T->outbound_request[0]->to.sin_port     = htonl( dest_port ) ;
       T->outbound_request[0]->to.sin_addr.s_addr = ntohl( dest_ip ) ;
 
-      // buf = build_message( p_mesg , &len );      TO DO!!
-      // T->outbound_request[0]->bufflen     = len ;
-      // T->outbound_request[0]->buffer = (struct retans_buff*)sh_malloc( len );
-      // memcpy( T->outbound_request[0]->buffer , buf , len );
-      // free( buf ) ;
+      buf = build_buf_from_sip_request  ( p_msg, &len);
+      if (!buf)
+         return -1;
+      T->outbound_request[0]->bufflen = len ;
+      T->outbound_request[0]->buffer   = (char*)sh_malloc( len );
+      memcpy( T->outbound_request[0]->buffer , buf , len );
+      free( buf ) ;
    }/* end for the first time */
 
 
@@ -649,6 +651,9 @@ int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg )
   */
 int push_reply_from_uac_to_uas( struct sip_msg *p_msg , unsigned int branch )
 {
+   char *buf;
+   unsigned int len;
+
    /* if there is a reply, release the buffer (everything else stays same) */
    if ( T->inbound_response )
    {
@@ -657,8 +662,7 @@ int push_reply_from_uac_to_uas( struct sip_msg *p_msg , unsigned int branch )
    else
    {
       struct hostent  *nhost;
-     char foo,*buf;
-      unsigned int len;
+     char foo;
 
       T->inbound_response = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
       memset( T->inbound_response , 0 , sizeof (struct retrans_buff) );
@@ -677,11 +681,13 @@ int push_reply_from_uac_to_uas( struct sip_msg *p_msg , unsigned int branch )
    }
 
    /*  */
-   // buf = build_message( p_mesg , &len );      TO DO!!
-   // T->inbound_request->bufflen     = len ;
-   // T->outbound_request[0]->buffer = (struct retans_buff*)sh_malloc( len );
-   // memcpy( T->inbound_request->buffer , buf , len );
-   // free( buf ) ;
+   buf = build_buf_from_sip_response  ( p_msg, &len);
+   if (!buf)
+        return -1;
+   T->inbound_response->bufflen = len ;
+   T->inbound_response->buffer   = (char*)sh_malloc( len );
+   memcpy( T->inbound_response->buffer , buf , len );
+   free( buf ) ;
 
    /* make sure that if we send something final upstream, everything else will be cancelled */
    if (T->outbound_response[branch]->first_line.u.reply.statusclass>=2 )

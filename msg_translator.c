@@ -398,4 +398,63 @@ error:
 
 
 
+char * build_buf_from_sip_response(struct sip_msg* msg, unsigned int *returned_len)
+{
+	unsigned int new_len, via_len,r;
+	char* new_buf;
+	unsigned offset, s_offset, size;
+	struct hostent* he;
+	char* orig;
+	char* buf;
+	unsigned int len;
+#ifdef DNS_IP_HACK
+	int err;
+#endif
+
+
+	orig=msg->orig;
+	buf=msg->buf;
+	len=msg->len;
+	new_buf=0;
+	/* we must remove the first via */
+	via_len=msg->via1->bsize;
+	size=msg->via1->hdr.s-buf;
+	DBG("via len: %d, initial size: %d\n", via_len, size);
+	if (msg->via1->next){
+		/* add hdr size*/
+		size+=msg->via1->hdr.len+1;
+	    DBG(" adjusted via len: %d, initial size: %d\n",
+				via_len, size);
+	}else{
+		/* add hdr size ("Via:")*/
+		via_len+=msg->via1->hdr.len+1;
+	}
+	new_len=len-via_len;
+
+	DBG(" old size: %d, new size: %d\n", len, new_len);
+	new_buf=(char*)malloc(new_len+1);/* +1 is for debugging
+											(\0 to print it )*/
+	if (new_buf==0){
+		LOG(L_ERR, "ERROR: forward_reply: out of memory\n");
+		goto error;
+	}
+	new_buf[new_len]=0; /* debug: print the message */
+	memcpy(new_buf, orig, size);
+	offset=size;
+	s_offset=size+via_len;
+	memcpy(new_buf+offset,orig+s_offset, len-s_offset);
+	 /* send it! */
+	DBG(" copied size: orig:%d, new: %d, rest: %d\n",
+			s_offset, offset,
+			len-s_offset );
+
+	*returned_len=new_len;
+	return new_buf;
+error:
+	if (new_buf) free(new_buf);
+	*returned_len=0;
+	return 0;
+}
+
+
 
