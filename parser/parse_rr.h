@@ -44,6 +44,7 @@ typedef struct rr {
 	name_addr_t nameaddr; /* Name-addr part */
 	param_t* r2;          /* Hook to r2 parameter */
 	param_t* params;      /* Linked list of other parameters */
+	int len;              /* Length of the whole route field */
         struct rr* next;      /* Next RR in the list */
 } rr_t;
 

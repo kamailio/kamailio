@@ -68,7 +68,6 @@ int parse_rr(struct hdr_field* _h)
 			LOG(L_ERR, "parse_rr(): No memory left\n");
 			goto error;
 		}
-
 		memset(r, 0, sizeof(rr_t));
 		
 		     /* Parse name-addr part of the header */
@@ -76,7 +75,8 @@ int parse_rr(struct hdr_field* _h)
 			LOG(L_ERR, "parse_rr(): Error while parsing name-addr\n");
 			goto error;
 		}
-		
+		r->len = r->nameaddr.len;
+
 		     /* Shift just behind the closing > */
 		s.s = r->nameaddr.name.s + r->nameaddr.len;  /* Point just behind > */
 		s.len -= r->nameaddr.len;
@@ -99,6 +99,7 @@ int parse_rr(struct hdr_field* _h)
 				LOG(L_ERR, "parse_rr(): Error while parsing params\n");
 				goto error;
 			}
+			r->len = r->params->name.s + r->params->len - r->nameaddr.name.s;
 
 			     /* Copy hooks */
 			r->r2 = hooks.rr.r2;
