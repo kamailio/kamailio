@@ -1,5 +1,9 @@
 Radius Accounting FAQ
 
+So far tested with: 
+- freeradius server
+- radiator server (http://www.open.com.au/radiator/)
+
 Quick & Dirty:
 Install radiusclient & freeradius copy the dictionary definitions found in doc/ directory to /usr/local/etc/raddb. 
 
