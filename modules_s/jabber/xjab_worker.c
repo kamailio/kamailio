@@ -233,9 +233,9 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 
 	_xj_pid = getpid();
 	
-	signal(SIGTERM, xj_sig_handler);
-	signal(SIGINT, xj_sig_handler);
-	signal(SIGQUIT, xj_sig_handler);
+	//signal(SIGTERM, xj_sig_handler);
+	//signal(SIGINT, xj_sig_handler);
+	//signal(SIGQUIT, xj_sig_handler);
 	signal(SIGSEGV, xj_sig_handler);
 
 	if(!jwl || !jaddress || rank >= jwl->len)
@@ -1007,9 +1007,9 @@ ready:
 
 void xj_sig_handler(int s) 
 {
-	signal(SIGTERM, xj_sig_handler);
-	signal(SIGINT, xj_sig_handler);
-	signal(SIGQUIT, xj_sig_handler);
+	//signal(SIGTERM, xj_sig_handler);
+	//signal(SIGINT, xj_sig_handler);
+	//signal(SIGQUIT, xj_sig_handler);
 	signal(SIGSEGV, xj_sig_handler);
 	main_loop = 0;
 	DBG("XJAB:xj_worker:%d: SIGNAL received=%d\n **************", _xj_pid, s);

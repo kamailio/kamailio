@@ -342,11 +342,11 @@ static int child_init(int rank)
 		}
 	}
 	
-	if(pipes)
-	{
-		for(i=0;i<nrw;i++)
-			close(pipes[i][0]);
-	}
+	//if(pipes)
+	//{
+	//	for(i=0;i<nrw;i++)
+	//		close(pipes[i][0]);
+	//}
 	return 0;
 }
 
@@ -630,9 +630,16 @@ void destroy(void)
 	int i;
 	DBG("XJAB: Unloading module ...\n");
 	if(pipes)
-	{
+	{ // close the pipes
 		for(i = 0; i < nrw; i++)
+		{
+			if(pipes[i])
+			{
+				close(pipes[i][0]);
+				close(pipes[i][1]);
+			}
 			pkg_free(pipes[i]);
+		}
 		pkg_free(pipes);
 	}
 	// cleaning MySQL connections
