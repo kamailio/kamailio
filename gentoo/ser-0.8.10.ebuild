@@ -53,10 +53,16 @@ src_install () {
 		doc-dir=${P} || die
 	exeinto /etc/init.d
 	newexe gentoo/ser.init ser
+	# fix what the Makefile don't do
 	exeinto /usr/sbin
 	newexe scripts/harv_ser.sh harv_ser.sh
-#	exeinto /usr/bin
-#	newexe utils/gen_ha1/gen_ha1 gen_ha1
+	rm ${D}/usr/sbin/gen_ha1
+	if [ "`use mysql`" ]; then
+		exeinto /usr/bin
+		newexe utils/gen_ha1/gen_ha1 gen_ha1
+	else
+		rm ${D}/usr/sbin/ser_mysql.sh
+	fi
 }
 
 pkg_prerm () {
