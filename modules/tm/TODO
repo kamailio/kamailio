@@ -9,6 +9,7 @@ Things we have omitted for now:
 - 6xx should be delayed indeed
 - ACK of 2xx INV caching (avoid e2e retransmission
   of an ACK hit the proxy too)
+- timers (408)
 
 - Via:
 	- branch

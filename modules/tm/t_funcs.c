@@ -5,27 +5,6 @@ unsigned int     global_msg_id;
 struct s_table*  hash_table;
 int                      sock_fd;
 
-struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_msg );
-int t_reply_matching( struct s_table* , struct sip_msg* , struct cell** , unsigned int*  );
-int t_store_incoming_reply( struct cell* , unsigned int , struct sip_msg* );
-int t_relay_reply( struct cell* , unsigned int , struct sip_msg* );
-int t_check( struct s_table* , struct sip_msg*  );
-int t_all_final( struct cell * );
-int t_build_and_send_ACK( struct cell *Trans , unsigned int brach );
-int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg );
-int push_reply_from_uac_to_uas( struct sip_msg * , unsigned int );
-int t_cancel_branch(unsigned int branch); //TO DO
-
-
-void retransmission_handler( void *);
-void final_response_handler( void *);
-void wait_handler( void *);
-void delete_handler( void *);
-
-
-
-
-
 int tm_startup()
 {
    /* building the hash table*/
@@ -128,7 +107,7 @@ int t_lookup_request( struct sip_msg* p_msg )
    while( p_cell )
    {
       /* the transaction is referenceted for reading */
-      ref_transaction( p_cell );
+      ref_cell( p_cell );
 
       /* is it the wanted transaction ? */
       if ( !isACK )
@@ -145,7 +124,7 @@ int t_lookup_request( struct sip_msg* p_msg )
                                   if ( /*cseq*/ !memcmp( p_cell->inbound_request->cseq->body.s , p_msg->cseq->body.s , p_msg->cseq->body.len ) )
                                      { /* WE FOUND THE GOLDEN EGG !!!! */
                                         T = p_cell;
-                                        unref_transaction ( p_cell );
+                                        unref_cell( p_cell );
                                         return 1;
                                      }
       }
@@ -166,7 +145,7 @@ int t_lookup_request( struct sip_msg* p_msg )
                                         if ( /*cseq_nr*/ !memcmp( get_cseq(p_cell->inbound_request)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len ) )
                                            { /* WE FOUND THE GOLDEN EGG !!!! */
                                               T = p_cell;
-                                              unref_transaction ( p_cell );
+                                              unref_cell( p_cell );
                                                return 1;
                                            }
       } /* end if is ACK or not*/
@@ -175,7 +154,7 @@ int t_lookup_request( struct sip_msg* p_msg )
       p_cell = p_cell->next_cell;
 
       /* the transaction is dereferenceted */
-      unref_transaction ( tmp_cell );
+      unref_cell( tmp_cell );
    }
 
    /* no transaction found */
@@ -438,7 +417,7 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
    while( p_cell )
    {
       /* the transaction is referenceted for reading */
-      ref_transaction( p_cell );
+      ref_cell( p_cell );
 
       /* is it the wanted transaction ? */
       /* first only the length are checked */
@@ -457,7 +436,7 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
                                           if ( /*cseq_nr*/ !memcmp( get_cseq(p_cell->inbound_request)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len ) )
                                              if ( /*req_uri*/ memcmp( p_cell->inbound_request->first_line.u.request.uri.s , p_msg->first_line.u.request.uri.s , p_msg->first_line.u.request.uri.len ) )
                                              { /* WE FOUND THE GOLDEN EGG !!!! */
-                                                unref_transaction ( p_cell );
+                                                unref_cell( p_cell );
                                                 return p_cell;
                                              }
       /* next transaction */
@@ -465,7 +444,7 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
       p_cell = p_cell->next_cell;
 
       /* the transaction is dereferenceted */
-      unref_transaction ( tmp_cell );
+      unref_cell( tmp_cell );
    }
 
    /* no transaction found */
@@ -517,7 +496,7 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
             while( p_cell )
              {
                 /* the transaction is referenceted for reading */
-                ref_transaction( p_cell );
+                ref_cell( p_cell );
                 /* is it the cell with the wanted entry_label? */
                 if ( p_cell->label = entry_label )
                    /* has the transaction the wanted branch? */
@@ -525,7 +504,7 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
                     {/* WE FOUND THE GOLDEN EGG !!!! */
                        p_Trans = &p_cell;
                        *p_branch = branch_id;
-                       unref_transaction( p_cell );
+                       unref_cell( p_cell );
                        return 1;
                     }
 
@@ -534,7 +513,7 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
                p_cell = p_cell->next_cell;
 
                /* the transaction is dereferenceted */
-               unref_transaction( tmp_cell );
+               unref_cell( tmp_cell );
              }
           }
       }
