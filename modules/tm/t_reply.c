@@ -1319,6 +1319,7 @@ int reply_received( struct sip_msg  *p_msg )
 				DBG("reply_received: FR_INV_TIMER = %d\n", timer);
 				set_timer( & uac->request.fr_timer,
 					   FR_INV_TIMER_LIST, &timer );
+				t->flags |= T_NOISY_CTIMER_FLAG;
 			} else {
 				set_timer( & uac->request.fr_timer,
 					   FR_INV_TIMER_LIST, 0 );

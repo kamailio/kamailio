@@ -390,7 +390,7 @@ inline static void final_response_handler( struct timer_link *fr_tl )
 		/* don't go silent if disallowed globally ... */
 		&& noisy_ctimer==0
 		/* ... or for this particular transaction */
-		&& has_noisy_ctimer(t);
+		&& has_noisy_ctimer(t) == 0;
 	if (silent) {
 		UNLOCK_REPLIES(t);
 		DBG("DEBUG: final_response_handler: transaction silently dropped (%p)\n",t);
