@@ -100,7 +100,7 @@ void free_expires(exp_body_t** _e)
 void print_expires(exp_body_t* _e)
 {
 	printf("===Expires===\n");
-	printf("text: %.*s\n", _e->text.len, _e->text.s);
+	printf("text: \'%.*s\'\n", _e->text.len, _e->text.s);
 	printf("val : %d\n", _e->val);
 	printf("===/Expires===\n");
 }

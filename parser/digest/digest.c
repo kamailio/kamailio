@@ -10,6 +10,9 @@
 #include <stdio.h>          /* printf */
 
 
+/*
+ * Create and initialize a new credentials structure
+ */
 static inline int new_credentials(struct hdr_field* _h)
 {
 	auth_body_t* b;
@@ -31,6 +34,9 @@ static inline int new_credentials(struct hdr_field* _h)
 }
 
 
+/*
+ * Parse digest credentials
+ */
 int parse_credentials(struct hdr_field* _h)
 {
 	int res;
@@ -54,6 +60,9 @@ int parse_credentials(struct hdr_field* _h)
 }
 
 
+/*
+ * Free all memory
+ */
 void free_credentials(auth_body_t** _b)
 {
 	pkg_free(*_b);

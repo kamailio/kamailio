@@ -19,8 +19,6 @@
 #include "../globals.h"
 #include "parse_hname2.h"
 
-
-
 #ifdef DEBUG_DMALLOC
 #include <mem/dmalloc.h>
 #endif
