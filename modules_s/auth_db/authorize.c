@@ -212,7 +212,9 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 		rpid.s = NULL;
 		rpid.len = 0;
 		for (i = 0; i < avps_str_n; i++) {
-			if (avps_str[i].len != 4 || memcmp(avps_str[i].s, "rpid", 4) != 0)
+			if (avps_str[i].len != 4
+					|| VAL_NULL(&(result->rows[0].values[1 + avps_int_n + i]))
+					|| memcmp(avps_str[i].s, "rpid", 4) != 0)
 				continue;
 			rpid.s = (char*)VAL_STRING(&(result->rows[0].values[1 + avps_int_n + i]));
 			if(rpid.s!=NULL)
@@ -228,6 +230,8 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 			return -1;
 		case AUTHORIZED:
 			for (i = 0; i < avps_int_n; i++) {
+				if(VAL_NULL(&(result->rows[0].values[1 + i])))
+					continue;
 				iname.s = &(avps_int[i]);
 				ivalue.n = VAL_INT(&(result->rows[0].values[1 + i]));
 				add_avp(AVP_NAME_STR, iname, ivalue);
@@ -236,7 +240,8 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 			}
 			for (i = 0; i < avps_str_n; i++) {
 				value.s = (char*)VAL_STRING(&(result->rows[0].values[1 + avps_int_n + i]));
-				if(value.s==NULL)
+				if(VAL_NULL(&(result->rows[0].values[1 + avps_int_n + i]))
+						|| value.s==NULL)
 					continue;
 				iname.s = &(avps_str[i]);
 				value.len = strlen(value.s);
