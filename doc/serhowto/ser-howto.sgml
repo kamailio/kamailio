@@ -14,6 +14,13 @@
 			<firstname>Dan</firstname>
 			<surname>Austin</surname>
 		</author>
+		<editor>
+			<firstname>Nils</firstname>
+			<surname>Ohlmeier</surname>
+			<address>
+				<email>nils@iptel.org</email>
+			</address>
+		</editor>
 	</authorgroup>
 	<copyright>
 		<year>2002-2003</year>
@@ -78,8 +85,36 @@ The newest release may be found in the folder /latest
 	<section>
 		<title>Installation Notes</title>
 		<para>
-Supported architectures: Linux/i386, Linux/armv4l, FreeBSD/i386, OpenBSD/i386
-Solaris/sparc64
+Supported architectures:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			Linux/i386
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			Linux/armv4l
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			FreeBSD/i386
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			OpenBSD/i386
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			Solaris/sparc64
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
 (For other architectures the Makefiles might need to be edited)
 There are various configuration options defined in the Make file.
 		</para>
@@ -105,8 +140,7 @@ flex
 		</listitem>
 		<listitem>
 		<para>
-GNU make (on Linux this is the standard "make", on FreeBSD and Solaris is
- called "gmake")
+GNU make (on Linux this is the standard <quote>make</quote>, on FreeBSD and Solaris is called <quote>gmake</quote>)
 		</para>
 		</listitem>
 		<listitem>
@@ -116,28 +150,27 @@ sed and tr (used in the make files)
 		</listitem>
 		<listitem>
 		<para>
-GNU tar ("gtar" on Solaris) and gzip if you want "make tar" to work
+GNU tar (<quote>gtar</quote> on Solaris) and gzip if you want <quote>make tar</quote> to work
 		</para>
 		</listitem>
 		<listitem>
 		<para>
-GNU install or BSD install (on Solaris "ginstall") if you want "make
-  install", "make bin", "make sunpkg" to work
+GNU install or BSD install (on Solaris <quote>ginstall</quote>) if you want <quote>make install</quote>, <quote>make bin</quote>, <quote>make sunpkg</quote> to work
 		</para>
 		</listitem>
 		<listitem>
 		<para>
-?mysql? if you need MySQL support
+<quote>mysql</quote> if you need MySQL support
 		</para>
 		</listitem>
 		<listitem>
 		<para>
-?Apache (httpd)? if you want serweb support
+<quote>Apache (httpd)</quote> if you want serweb support
 		</para>
 		</listitem>
 		<listitem>
 		<para>
-?PHP, MySQL-PHP? for serweb support
+<quote>PHP, MySQL-PHP</quote> for serweb support
 		</para>
 		</listitem>
 		<listitem>
@@ -158,41 +191,65 @@ Installing SER on a RedHat Linux distribution for example, is a simple matter of
 	<section>
 		<title>Install the package</title>
 		<para>
-Example /root>rpm -i ser-08.10-2.i386.rpm
+Example:
 		</para>
+		<screen>
+		/root>rpm -i ser-08.10-2.i386.rpm
+		</screen>
 		<para>
 Packages for other popular distributions are available, and can be installed using the appropriate package manager for that distribution.
 		</para>
 		<para>
-On many platforms you can start the service with /etc/init.d/ser start.  RedHat systems will use /etc/rc.d/init.d/ser start.
+On many platforms you can start the service with:
 		</para>
+		<screen>
+	/etc/init.d/ser start
+		</screen>
+		<para>
+		RedHat systems will use:
+		</para>
+		<screen>
+	/etc/rc.d/init.d/ser start
+		</screen>
 		<para>
 You now have a functioning SIP server, but what can you do with it?  At this point not very much.  With an SIP client, such as Microsoft MSN Messenger 4.6, you can register with the server, send Instant Messages to other logged on clients of the same server, and even have voice conversations with them.
 		</para>
 		<para>
-That sounds pretty good, but maybe you?d like to add a little more security, or make you server accessible to others.
+That sounds pretty good, but maybe you'd like to add a little more security, or make you server accessible to others.
 		</para>
 	</section>
 	<section>
 		<title>Serctl Utility</title>
 		<para>
-To do so, first set the environment variable SIP_DOMAIN to your domain name, e.g., in Bourne shell, call export SIP_DOMAIN=<quote>foo.bar</quote>
+To do so, first set the environment variable SIP_DOMAIN to your domain name, e.g., in Bourne shell (bash), call:
 		</para>
+		<screen>
+		export SIP_DOMAIN=<quote>foo.bar</quote>
+		</screen>
 		<para>
 If you wont the system to created this variable automatically, you need to add the line
 		</para>
+		<screen>
+		export SIP_DOMAIN=<quote>foo.bar</quote>
+		</screen>
 		<para>
-export SIP_DOMAIN=<quote>foo.bar</quote> in the end of file /etc/profile.
+		in the end of file /etc/profile.
 		</para>
 		<para>
 If you are using other than 'localhost' mysql server for maintaining subscriber database, change the variable 'SQL_HOST' to the proper host name in the serctl script.
 		</para>
 		<para>
-Run the serctl utility  /usr/sbin/serctl monitor.
+Run the serctl utility
 		</para>
+		<screen>
+		/usr/sbin/serctl monitor
+		</screen>
 		<para>
-       /usr/local/sbin/serctl monitor  (if you installed from a tar.gz or Solaris package).
+If you installed from a tar.gz or Solaris package:
 		</para>
+		<screen>
+		/usr/local/sbin/serctl monitor
+		</screen>
 	</section>
 	<section>
 		<title>DNS SVR Resource Records</title>
@@ -205,20 +262,20 @@ These requirements can be meet by using DNS SVR Resource Records, available in B
 		<para>
 The format for a SVR RR is this:
 		</para>
-		<programlisting>
-_service._protocol        SVR Priority Weight     Port hostname
-		</programlisting>
+		<screen>
+		_service._protocol        SVR Priority Weight     Port hostname
+		</screen>
 		<para>
 In this case we want to establish an entry for our primary SIP server, gateway.mydomain.com, that will listen on UDP port 5060.  The entry will look like this:
 		</para>
-		<programlisting>
-_sip._udp         SRV     0  0   5060  gateway.mydomain.com
-		</programlisting>
+		<screen>
+		_sip._udp         SRV     0  0   5060  gateway.mydomain.com
+		</screen>
 		<para>
 Placement of the new resource record is important.  Here is a sample zone file:
 		</para>
 		<para>
-		<programlisting>
+		<screen>
 ; zone 'mydomain.com'   last serial 1998071308
 $ORIGIN com.
 mydomain  86400           IN      SOA     gateway.mydomain.com. postmaster.mydomain.com. (
@@ -237,19 +294,19 @@ $ORIGIN fitawi.com.
 _sip._udp               SRV  0 0  5060  gateway.mydomain.com.
 gateway         IN      A               192.168.0.1
 www             IN      CNAME           gateway.mydomain.com.
-		</programlisting>
+		</screen>
 		</para>
 		<para>
 After reloading your zone file you can verify that the entry is working by using dig.
 		</para>
-		<para>
+		<screen>
         dig -t SRV _sip._udp.mydomain.com
-		</para>
+		</screen>
 		<para>
 The results should look something like this:
 		</para>
 		<para>
-		<programlisting>
+		<screen>
 ; &lt;&lt;>> DiG 9.1.0 &lt;&lt;>> -t SRV _sip._udp.mydomain.com
 ;; global options:  printcmd
 ;; Got answer:
@@ -273,7 +330,7 @@ gateway. mydomain.com.     86400   IN      A       192.168.0.150
 ;; SERVER: 192.168.0.150#53(192.168.0.150)
 ;; WHEN: Tue Dec  3 08:34:17 2002
 ;; MSG SIZE  rcvd: 132
-		</programlisting>
+		</screen>
 		</para>
 	</section>
 	<section>
@@ -291,26 +348,29 @@ To install support for a MySQL database you will need to download the package se
 If you do not already have a copy of MySQL installed, download it from your <ulink url="http://www.mysql.com"></ulink>
 		</para>
 		<para>
-Once you have MySQL installed and started, execute /usr/sbin/ser_mysql.sh.
+Once you have MySQL installed and started, execute
 		</para>
+		<screen>
+		/usr/sbin/ser_mysql.sh
+		</screen>
 		<para>
 You can verify that the database has been created, and correct permissions assigned by using the mysql management tool and these steps:
 		</para>
 		<para>
-		<programlisting>
+		<screen>
 Mysql> select * from user;
 | Host               | User  | Password         | Select_priv | Insert_priv | Update_priv | Delete_priv | Create_priv | Drop_priv | Reload_priv | Shutdown_priv | Process_priv | File_priv | Grant_priv | References_priv | Index_priv | Alter_priv |
 | %                  | ser   | 4e633cf914a735a0 | N           | N           | N           | N           | N           | N         | N           | N             | N            | N         | N          | N               | N          | N          |
 | localhost          | ser   | 4e633cf914a735a0 | Y           | Y           | Y           | Y           | Y           | Y         | Y           | Y             | Y            | Y         | N          | Y               | Y          | Y          |
 | %                  | serro | 7cb73a267cb7bd5f | N           | N           | N           | N           | N           | N         | N           | N             | N            | N         | N          | N               | N          | N          |
 | localhost          | serro | 7cb73a267cb7bd5f | Y           | N           | N           | N           | N           | N         | N           | N             | N            | N         | N          | N               | N          | N          |
-		</programlisting>
+		</screen>
 		</para>
 		<para>
 The above results show that the two user, ser and serro, have been created and granted the permissions needed to access the database.  Note that in the above example the permissions have been modified to deny access to these accounts from any system(%) other than local host.
 		</para>
 		<para>
-		<programlisting>
+		<screen>
 mysql> connect ser;
 Connection id:    294
 Current database: ser
@@ -339,7 +399,7 @@ mysql> show tables;
 mysql> select * from subscriber;
 | phplib_id                        | USER_ID | PASSWORD | FIRST_NAME | LAST_NAME | PHONE        | EMAIL_ADDRESS              | DATETIME_CREATED    | DATETIME_MODIFIED   | confirmation                     | flag | SendNotification | Greeting | HA1                              | REALM      | ha1b                             | perms | allow_find | timezone            |
 | 4cefa7a4d3c8c2dbf6328520bd873a19 | admin     | heslo | first        | admin    | 557-8469     | admin@iptel.org      | 2002-12-02 19:20:41 | 2002-12-02 20:29:46 | 80e0f273b2067d40277b49ff842bb9e3 | o    |                  |          | c79a8f8f08596baa84bb02c88884426d | iptel.org | f322c94b8b2fbe557d43ab3ac9e05b3a | admin | 1          | America/Los_Angeles |
-		</programlisting>
+		</screen>
 		</para>
 		<para>
 This last query shows that you have one user account defined and it has administrator privileges.
@@ -359,21 +419,21 @@ Now that we have a working MySQL database, we need to modify the configuration f
 		<para>
 To enable support for the new MySQL database we need to load the appropriate module.  That is accomplished by uncomment this line:
 		</para>
-		<para>
-loadmodule "//usr/lib/ser/modules/mysql.so
-		</para>
+		<screen>
+		loadmodule "//usr/lib/ser/modules/mysql.so
+		</screen>
 		<para>
 Next we need to set SER to use the database and write changes instead of just caching them in memory.  This is done by means of commenting this line:
 		</para>
-		<para>
-  modparam ("usrloc", "db_mode",  0)
-		</para>
+		<screen>
+		modparam ("usrloc", "db_mode",  0)
+		</screen>
 		<para>
 And uncomment this line:
 		</para>
-		<para>
-  modparam ("usrloc", "db_mode", 2)
-		</para>
+		<screen>
+		modparam ("usrloc", "db_mode", 2)
+		</screen>
 		<para>
 Note on db_modes:
 		</para>
@@ -408,12 +468,10 @@ Periodically writes contact information to the database based in the in memory c
 		<para>
 We have the option of storing passwords in our database in plain text.  This allows for password recovery and makes the initial setup and testing easier.  To enable this feature uncomment these lines:
 		</para>
-		<para>
-  modparam (<quote>auth</quote>, <quote>calculate_ha1</quote>, yes)
-		</para>
-		<para>
-  modparam (<quote>auth</quote>, <quote>password_column</quote>, <quote>password</quote>)
-		</para>
+		<screen>
+		modparam (<quote>auth</quote>, <quote>calculate_ha1</quote>, yes)
+	modparam (<quote>auth</quote>, <quote>password_column</quote>, <quote>password</quote>)
+		</screen>
 		<para>
 These lines work together.  The first tells SER to generate a hash based on username, password and realm.  The second tells SER where to look for the plain-text password in the database.
 		</para>
@@ -427,16 +485,19 @@ Change (uri==?myself?) to (uri=~?mydomain.com?)
 Uncomment these lines and change all instances of iptel.org to mydomain.com
 		</para>
 		<para>
-		<programlisting>
+		<screen>
 if (!www_authorize("mydomain.com", "subscriber")) {
         www_challenge("mydomain.com", "0");
         break;
 };
-		</programlisting>
+		</screen>
 		</para>
 		<para>
-We're now ready to restart ser.  On RedHat use /etc/rc.d/init.d/ser restart
+We're now ready to restart ser.  On RedHat use
 		</para>
+		<screen>
+		/etc/rc.d/init.d/ser restart
+		</screen>
 	</section>
 	<section>
 		<title>Adding an admin for your realm</title>
@@ -449,9 +510,9 @@ Basic account manipulation can be performed with the serctl script, located in /
 		<para>
 To add a user use these commands
 		</para>
-		<para>
-serctl add JoeUser qwerty joe@mydomain.com
-		</para>
+		<screen>
+		serctl add JoeUser qwerty joe@mydomain.com
+		</screen>
 		<para>
 The system notify for <quote>Type MySQL Password</quote>, the default password is <quote>heslo</quote>
 		</para>
@@ -459,7 +520,7 @@ The system notify for <quote>Type MySQL Password</quote>, the default password i
 To make JoeUser an administrator, we need to logon to MySQL and modify the database.
 		</para>
 		<para>
-		<programlisting>
+		<screen>
 mysql> connect ser;
 
 mysql> update subscriber set perms=?admin? where USER_ID=?JoeUser?;
@@ -468,7 +529,7 @@ Rows matched: 1  Changed: 1  Warnings: 0
 
 mysql> select * from subscriber;
 | 4cefa7a4d3c8c2dbf6328520bd873a19 | JoeUser     | qwerty |  |   |   | joe@mydomain.com   | 2002-12-02 19:20:41 | 2002-12-02 20:29:46 | 80e0f273b2067d40277b49ff842bb9e3 | o    |                  |          | c79a8f8f08596baa84bb02c88884426d | mydomain.com | f322c94b8b2fbe557d43ab3ac9e05b3a | admin | 1          | America/Los_Angeles |
-		</programlisting>
+		</screen>
 		</para>
 		<para>
 The third from last field shows that Joe has been assigned admin privileges.
@@ -483,7 +544,7 @@ At this point Joe can logon to our server, but since he is the only user, there 
 The script serctl can be used to manage users, access control lists, in memory contacts, and to monitor server health.  Executing serctl with no arguments will produce this output:
 		</para>
 		<para>
-		<programlisting>
+		<screen>
 usage:
            * subscribers *
  serctl add &lt;username> &lt;password> &lt;email> .. add a new subscriber (*)
@@ -514,7 +575,7 @@ usage:
    If the variable PW is set, the password will not be prompted.
 
      ACL privileges are: local ld int voicemail free-pstn
-		</programlisting>
+		</screen>
 		</para>
 	</section>
 	<section>
@@ -522,26 +583,22 @@ usage:
 		<para>
 User account management is performed with these commands:
 		</para>
-		<para>
-serctl add
-		</para>
-		<para>
-serctl password
-		</para>
-		<para>
-serctl rm
-		</para>
+		<screen>
+		serctl add
+	serctl password
+	serctl rm
+		</screen>
 		<para>
 The contents of the in memory cache can be managed with the ul argument.  Care must be taken to with these commands.  For example:
 		</para>
-		<para>
-serctl ul rm joe
-		</para>
+		<screen>
+		serctl ul rm joe
+		</screen>
 		<para>
 Will remove the current contact information about Joe from memory
 		</para>
 		<para>
-Whereas serctl rm joe will delete joe?s account.
+Whereas <quote>serctl rm joe</quote> will delete joe's account.
 		</para>
 	</section>
 	<section>
@@ -550,7 +607,7 @@ Whereas serctl rm joe will delete joe?s account.
 The command <quote>serctl ul show</quote> will list any currently registered clients.  The output will look like this:
 		</para>
 		<para>
-		<programlisting>
+		<screen>
 ===Domain list===
 ---Domain---
 name : 'location'
@@ -598,7 +655,7 @@ prev   : (nil)
 
 ---/Domain---
 ===/Domain list===
-		</programlisting>
+		</screen>
 		</para>
 	</section>
 	<section>
@@ -607,7 +664,7 @@ prev   : (nil)
 Two commands can be used to check the health of the server.  The first command serctl ps returns a list of all SER related processes, the ip address and the port they are listening on.  For example:
 		</para>
 		<para>
-		<programlisting>
+		<screen>
 [root@gateway /root]# serctl ps
 0       31029   attendant
 1       31033   receiver child=0 sock=0 @ 127.0.0.1::5060
@@ -620,13 +677,13 @@ Two commands can be used to check the health of the server.  The first command s
 8       31040   receiver child=3 sock=1 @ 192.168.0.1::5060
 9       31049   fifo server
 10      31072   timer
-		</programlisting>
+		</screen>
 		</para>
 		<para>
 The second command, serctl monitor, shows the server version, uptime, pending and completed transactions, and the number of major category responses the server has sent.  Another example:
 		</para>
 		<para>
-		<programlisting>
+		<screen>
 [cycle #: 1; if constant make sure server lives and fifo is on]
 Server: Sip EXpress router (0.8.10 (i386/linux)
 Now: Wed Dec  4 10:13:02 2002
@@ -650,14 +707,14 @@ failures: 0
 UsrLoc Stats
 Domain Registered Expired
 'location' 2 2
-		</programlisting>
+		</screen>
 		</para>
 	</section>
 	</chapter>
 	<chapter>
 	<title>Installing SERweb</title>
 	<para>
-The SERweb package can be downloaded from ftp://ftp.berlios.de/ser/latest/serweb
+The SERweb package can be downloaded from <ulink url="ftp://ftp.berlios.de/ser/latest/serweb"></ulink>
 	</para>
 	<para>
 The pages associated with SERweb provide a starting point to customize your SIP user account management tools.
@@ -683,13 +740,13 @@ In case your server performs multiple functions, and you want to just add the SE
 Unzip the files into a temporary directory, such as /root/serweb.  The directory will contain these files:
 		</para>
 		<para>
-		<programlisting>
+		<screen>
 -rw-rw-r--    1 827      2020        18561 Sep 25 16:31 COPYING
 drwxr-xr-x    2 827      2020         1024 Nov 27 16:43 CVS
 -rw-rw-r--    1 827      2020          529 Sep 25 16:29 README
 drwxr-xr-x    7 827      2020         1024 Nov 27 22:24 html
 drwxr-xr-x    3 827      2020         2048 Sep 26 10:26 phplib
-		</programlisting>
+		</screen>
 		</para>
 		<para>
 On the Linux RedHat Version 8 root directory on web server is /var/www/html/
@@ -697,36 +754,32 @@ On the Linux RedHat Version 8 root directory on web server is /var/www/html/
 		<para>
 Move the html directory to the root of your web server:
 		</para>
-		<para>
-mv html /var/www/html/htdocs/serweb
-		</para>
+		<screen>
+		mv html /var/www/html/htdocs/serweb
+		</screen>
 		<para>
 Move the phplib directory to your web server application directory:
 		</para>
+		<screen>
+		mv phplib /var/www/html/phplib
+		</screen>
 		<para>
-mv phplib /var/www/html/phplib
+Following files must be updated with this <quote>new</quote> path to the libraries:
 		</para>
-		<para>
-Following files must be updated with this ?new? path to the libraries:
-		</para>
-		<para>
-./admin/prepend.php
-		</para>
-		<para>
-./user_interface/prepend.php
-		</para>
-		<para>
-./user_interface/reg/prepend.php
-		</para>
+		<screen>
+		./admin/prepend.php
+	./user_interface/prepend.php
+	./user_interface/reg/prepend.php
+		</screen>
 		<para>
 For these files the variable: $_PHPLIB[<quote>libdir</quote>]  = <quote>../../phplib/</quote>; becomes $_PHPLIB[<quote>libdir</quote>]  = <quote>../../../phplib/</quote>;
 		</para>
 		<para>
 In the ./admin directory edit the files acl.php, index.php, and users.php will need their path to the forms library updated.  For this example, add ../ to the existing line
 		</para>
-		<para>
-:require <quote>../../../phplib/oohforms.inc</quote>;
-		</para>
+		<screen>
+		:require <quote>../../../phplib/oohforms.inc</quote>;
+		</screen>
 		<para>
 In the ./user_interface directory the following files need the same change:
 		</para>
@@ -742,15 +795,11 @@ Finish.php, get_pass.php, index.php
 		<para>
 The last changes occur in the config.php file to provide the location for graphic files, style sheets and time zone information.  Update the following variables:
 		</para>
-		<para>
-$this->root_path=<quote>/serweb/</quote>;
-		</para>
-		<para>
-$this->fifo_server = <quote>/tmp/ser_fifo</quote>;
-		</para>
-		<para>
-$this->zonetab_file =   <quote>/usr/share/zoneinfo/zone.tab</quote>;
-		</para>
+		<screen>
+		$this->root_path=<quote>/serweb/</quote>;
+	$this->fifo_server = <quote>/tmp/ser_fifo</quote>;
+	$this->zonetab_file =   <quote>/usr/share/zoneinfo/zone.tab</quote>;
+		</screen>
 		<para>
 //TZ zone descriptions file, usually: /usr/share/zoneinfo/zone.tab
 		</para>
@@ -772,23 +821,19 @@ This will insure sending a registration feedback mail to SIP server using its IP
 		<para>
 We need to update /usr/local/apache/htdocs/serweb/config.php to represent our realm.  The following variables need to be changed to our domain:
 		</para>
-		<para>
-$this->realm=<quote>mydomain.com</quote>;
-		</para>
-		<para>
-$this->domainname=<quote> mydomain.com</quote>;
-		</para>
-		<para>
-$this->web_contact=<quote>sip:JoeUser@ mydomain.com</quote>;
-		</para>
+		<screen>
+		$this->realm=<quote>mydomain.com</quote>;
+	$this->domainname=<quote> mydomain.com</quote>;
+	$this->web_contact=<quote>sip:JoeUser@ mydomain.com</quote>;
+		</screen>
 		<para>
 //address of pseudo sender
 		</para>
+		<screen>
+		$this->default_domain=<quote> mydomain.com</quote>;
+	$this->mail_header_from=<quote>Registration@ mydomain.com</quote>;
+		</screen>
 		<para>
-$this->default_domain=<quote> mydomain.com</quote>;
-		</para>
-		<para>
-$this->mail_header_from=<quote>Registration@ mydomain.com</quote>;
 		</para>
 		<para>
 Additionally we will want to modify the section for Terms and Conditions, either replacing it with appropriate language for our services, or at least replacing iptel.org with our domain information.
@@ -829,9 +874,9 @@ Detailed information about the communications between clients and the SIP server
 		<para>
 Ngrep is a capable of listening in on network traffic and filtering it in much the same way as grep can locate patterns in files.  To monitor the communications between a client, joe, and the server the following command would be run on the server:
 		</para>
-		<para>
-ngrep  -n 5060 -d eth0 joe
-		</para>
+		<screen>
+		ngrep  -n 5060 -d eth0 joe
+		</screen>
 		<para>
 Since SIP communications are ASCII based, all events such as REGISTER, INVITE, SUBSCRIBE, etc. are captured.  The output of ngrep can identify problems with SIP addresses, or client identity.
 		</para>
@@ -972,14 +1017,14 @@ sip-server ipv4:192.168.0.1      **  IP address of our SIP server
 The following is an extremely simple sample of how to relay a call from a SIP client to the PSTN
 		</para>
 		<para>
-		<programlisting>
+		<screen>
 # attempt handoff to PSTN
                  if (uri=~<quote>^sip:9[0-9]*@mydomain.com</quote>) {  ##  This assumes that the caller is
                         log(<quote>Forwarding to PSTN\n</quote>);      ##  registered in our realm
                         t_relay_to( <quote>192.168.0.2</quote>, <quote>5060</quote>);  ##  Our Cisco router
                         break;
                  };
-		</programlisting>
+		</screen>
 		</para>
 	</section>
 	</chapter>
