@@ -36,6 +36,10 @@
  *               init_shm_mallocs called after cmd. line parsing (andrei)
  *  2003-04-15  added tcp_disable support (andrei)
  *  2003-05-09  closelog() before openlog to force opening a new fd (needed on solaris) (andrei)
+ *  2003-06-11  moved all signal handlers init. in install_sigs and moved it
+ *               after daemonize (so that we won't catch anymore our own
+ *               SIGCHLD generated when becoming session leader) (andrei)
+ *              changed is_main default value to 1 (andrei)
  *
  */
 
@@ -350,7 +354,7 @@ extern FILE* yyin;
 extern int yyparse();
 
 
-int is_main=0; /* flag = is this the  "main" process? */
+int is_main=1; /* flag = is this the  "main" process? */
 
 char* pid_file = 0; /* filename as asked by use */
 
@@ -595,6 +599,101 @@ void handle_sigs()
 
 
 
+/* added by jku; allows for regular exit on a specific signal;
+   good for profiling which only works if exited regularly and
+   not by default signal handlers
+    - modified by andrei: moved most of the stuff to handle_sigs, 
+       made it safer for the "fork" case
+*/
+static void sig_usr(int signo)
+{
+
+
+	if (is_main){
+		if (sig_flag==0) sig_flag=signo;
+		else /*  previous sig. not processed yet, ignoring? */
+			return; ;
+		if (dont_fork) 
+				/* only one proc, doing everything from the sig handler,
+				unsafe, but this is only for debugging mode*/
+			handle_sigs();
+	}else{
+		/* process the important signals */
+		switch(signo){
+			case SIGPIPE:
+					LOG(L_INFO, "INFO: signal %d received\n", signo);
+				break;
+			case SIGINT:
+			case SIGTERM:
+					LOG(L_INFO, "INFO: signal %d received\n", signo);
+					/* print memory stats for non-main too */
+					#ifdef PKG_MALLOC
+					LOG(memlog, "Memory status (pkg):\n");
+					pkg_status();
+					#endif
+					exit(0);
+					break;
+			case SIGUSR1:
+				/* statistics, do nothing, printed only from the main proc */
+					break;
+				/* ignored*/
+			case SIGUSR2:
+			case SIGHUP:
+					break;
+			case SIGCHLD:
+#ifndef 			STOP_JIRIS_CHANGES
+					LOG(L_INFO, "INFO: SIGCHLD received: "
+						"we do not worry about grand-children\n");
+#else
+					exit(0); /* terminate if one child died */
+#endif
+		}
+	}
+}
+
+
+
+/* install the signal handlers, returns 0 on success, -1 on error */
+int install_sigs()
+{
+	/* added by jku: add exit handler */
+	if (signal(SIGINT, sig_usr) == SIG_ERR ) {
+		DPrint("ERROR: no SIGINT signal handler can be installed\n");
+		goto error;
+	}
+	/* if we debug and write to a pipe, we want to exit nicely too */
+	if (signal(SIGPIPE, sig_usr) == SIG_ERR ) {
+		DPrint("ERROR: no SIGINT signal handler can be installed\n");
+		goto error;
+	}
+	
+	if (signal(SIGUSR1, sig_usr)  == SIG_ERR ) {
+		DPrint("ERROR: no SIGUSR1 signal handler can be installed\n");
+		goto error;
+	}
+	if (signal(SIGCHLD , sig_usr)  == SIG_ERR ) {
+		DPrint("ERROR: no SIGCHLD signal handler can be installed\n");
+		goto error;
+	}
+	if (signal(SIGTERM , sig_usr)  == SIG_ERR ) {
+		DPrint("ERROR: no SIGTERM signal handler can be installed\n");
+		goto error;
+	}
+	if (signal(SIGHUP , sig_usr)  == SIG_ERR ) {
+		DPrint("ERROR: no SIGHUP signal handler can be installed\n");
+		goto error;
+	}
+	if (signal(SIGUSR2 , sig_usr)  == SIG_ERR ) {
+		DPrint("ERROR: no SIGUSR2 signal handler can be installed\n");
+		goto error;
+	}
+	return 0;
+error:
+	return -1;
+}
+
+
+
 /* main loop */
 int main_loop()
 {
@@ -607,7 +706,7 @@ int main_loop()
 
 	/* one "main" process and n children handling i/o */
 
-
+	is_main=0;
 	if (dont_fork){
 #ifdef STATS
 		setstats( 0 );
@@ -906,61 +1005,6 @@ int main_loop()
 
 }
 
-
-/* added by jku; allows for regular exit on a specific signal;
-   good for profiling which only works if exited regularly and
-   not by default signal handlers
-    - modified by andrei: moved most of the stuff to handle_sigs, 
-       made it safer for the "fork" case
-*/
-static void sig_usr(int signo)
-{
-
-
-	if (is_main){
-		if (sig_flag==0) sig_flag=signo;
-		else /*  previous sig. not processed yet, ignoring? */
-			return; ;
-		if (dont_fork) 
-				/* only one proc, doing everything from the sig handler,
-				unsafe, but this is only for debugging mode*/
-			handle_sigs();
-	}else{
-		/* process the important signals */
-		switch(signo){
-			case SIGPIPE:
-					LOG(L_INFO, "INFO: signal %d received\n", signo);
-				break;
-			case SIGINT:
-			case SIGTERM:
-					LOG(L_INFO, "INFO: signal %d received\n", signo);
-					/* print memory stats for non-main too */
-					#ifdef PKG_MALLOC
-					LOG(memlog, "Memory status (pkg):\n");
-					pkg_status();
-					#endif
-					exit(0);
-					break;
-			case SIGUSR1:
-				/* statistics, do nothing, printed only from the main proc */
-					break;
-				/* ignored*/
-			case SIGUSR2:
-			case SIGHUP:
-					break;
-			case SIGCHLD:
-#ifndef 			STOP_JIRIS_CHANGES
-					LOG(L_INFO, "INFO: SIGCHLD received: "
-						"we do not worry about grand-children\n");
-#else
-					exit(0); /* terminate if one child died */
-#endif
-		}
-	}
-}
-
-
-
 /* add all family type addresses of interface if_name to the socket_info array
  * if if_name==0, adds all addresses on all interfaces
  * WARNING: it only works with ipv6 addresses on FreeBSD
@@ -1120,37 +1164,6 @@ int main(int argc, char** argv)
 	if (init_pkg_mallocs()==-1)
 		goto error;
 
-	/* added by jku: add exit handler */
-	if (signal(SIGINT, sig_usr) == SIG_ERR ) {
-		DPrint("ERROR: no SIGINT signal handler can be installed\n");
-		goto error;
-	}
-	/* if we debug and write to a pipe, we want to exit nicely too */
-	if (signal(SIGPIPE, sig_usr) == SIG_ERR ) {
-		DPrint("ERROR: no SIGINT signal handler can be installed\n");
-		goto error;
-	}
-
-	if (signal(SIGUSR1, sig_usr)  == SIG_ERR ) {
-		DPrint("ERROR: no SIGUSR1 signal handler can be installed\n");
-		goto error;
-	}
-	if (signal(SIGCHLD , sig_usr)  == SIG_ERR ) {
-		DPrint("ERROR: no SIGCHLD signal handler can be installed\n");
-		goto error;
-	}
-	if (signal(SIGTERM , sig_usr)  == SIG_ERR ) {
-		DPrint("ERROR: no SIGTERM signal handler can be installed\n");
-		goto error;
-	}
-	if (signal(SIGHUP , sig_usr)  == SIG_ERR ) {
-		DPrint("ERROR: no SIGHUP signal handler can be installed\n");
-		goto error;
-	}
-	if (signal(SIGUSR2 , sig_usr)  == SIG_ERR ) {
-		DPrint("ERROR: no SIGUSR2 signal handler can be installed\n");
-		goto error;
-	}
 #ifdef DBG_MSG_QA
 	fprintf(stderr, "WARNING: ser startup: "
 		"DBG_MSG_QA enabled, ser may exit abruptly\n");
@@ -1635,6 +1648,11 @@ try_again:
 	if (!dont_fork){
 		if ( daemonize(argv[0]) <0 ) goto error;
 	}
+	if (install_sigs() != 0){
+		fprintf(stderr, "ERROR: could not install the signal handlers\n");
+		goto error;
+	}
+	
 	if (init_modules() != 0) {
 		fprintf(stderr, "ERROR: error while initializing modules\n");
 		goto error;
