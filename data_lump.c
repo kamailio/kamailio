@@ -31,7 +31,7 @@
  *  2003-04-01  added conditional lump suport functions (andrei)
  *  2003-10-20  anchor_lump & del_lump will automatically choose the lump list
  *              based on  msg->eoh comparisons (andrei)
- *  
+ *  2003-10-28  added extra checks (paranoia) for {anchor,del}_lump (andrei)
  */
 
 
@@ -267,6 +267,22 @@ struct lump* del_lump(struct sip_msg* msg, int offset, int len, int type)
 	struct lump* prev, *t;
 	struct lump** list;
 
+	/* extra checks */
+	if (offset>msg->len){
+		LOG(L_CRIT, "BUG: del_lump: offset exceeds message size (%d > %d)"
+					" aborting...\n", offset, msg->len);
+		abort();
+	}
+	if (offset+len>msg->len){
+		LOG(L_CRIT, " BUG: del_lump: offset + len exceeds message"
+				" size (%d + %d > %d)\n", offset, len,  msg->len);
+		abort();
+	}
+	if (len==0){
+		LOG(L_WARN, "WARNING: del_lump: called with 0 len (offset =%d)\n",
+				offset);
+	}
+	
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		LOG(L_ERR, "ERROR: insert_new_lump_before: out of memory\n");
@@ -307,6 +323,19 @@ struct lump* anchor_lump(struct sip_msg* msg, int offset, int len, int type)
 	struct lump* prev, *t;
 	struct lump** list;
 
+	
+	/* extra checks */
+	if (offset>msg->len){
+		LOG(L_CRIT, "BUG: anchor_lump: offset exceeds message size (%d > %d)"
+					" aborting...\n", offset, msg->len);
+		abort();
+	}
+	if (len){
+		LOG(L_WARN, "WARNING: anchor_lump: called with len !=0 (%d)\n", len);
+		if (offset+len>msg->len)
+			LOG(L_WARN, "WARNING: anchor_lump: offset + len exceeds message"
+					" size (%d + %d > %d)\n", offset, len,  msg->len);
+	}
 	
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
