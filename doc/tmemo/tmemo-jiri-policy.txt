@@ -47,3 +47,19 @@ if not to me (I'm relaying for a local phone to an external address)
         proxy_authorize (once again, based on from address)
         done
 
+
+Another Concern Raised by Juha
+------------------------------
+What if users with valid credentials in a domain will call
+someone, whose SIP address is rededirected/referred/forwarded
+to an accounted PSTN destination? Callers will then "dial"
+a sip URI (bob@iptel) which will be turned without their
+awareness to (900-666666@iptel), challenged by gateway,
+automatically answered by most of existing software today
+and accounted then.
+
+Solutions?
+- don't submit credentials automatically in UAC if challenge uri!=
+  dialing uri; pop up a confirmation prompt in UA
+- challenge with a different realm which will take authentication
+- be restrictive and ban forwarding, REFERs, 3xx
