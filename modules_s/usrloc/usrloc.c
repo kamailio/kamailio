@@ -18,6 +18,7 @@
 #include "../../timer.h"
 
 
+
 /* Per-child init function */
 static int child_init(int rank);
 
@@ -30,8 +31,15 @@ void destroy(void);
 /* Build Contact HF for 200 responses */
 static inline void build_contact_buf(char* _b, int* _len, location_t* _loc);
 
+#ifdef OOO_HACK
+
+#define RP_OOO "OK o-o-o"
+#define RP_RETR "OK retransmission"
+static inline int send_200(struct sip_msg* _msg, location_t* _loc, char* _rp);
+#else
 /* Send 200 OK response with properly created Contact HF */
 static inline int send_200(struct sip_msg* _msg, location_t* _loc);
+#endif
 
 /*
  * Process request that contained a star, in that case, we will remove
@@ -374,7 +382,11 @@ static inline void build_contact_buf(char* _b, int* _len, location_t* _loc)
  * Send 200 OK response using stateless module
  * Contact HF will be cenostructed if _loc != NULL
  */
+#ifdef OOO_HACK
+static inline int send_200(struct sip_msg* _msg, location_t* _loc, char* _rp)
+#else
 static inline int send_200(struct sip_msg* _msg, location_t* _loc)
+#endif
 {
 	struct lump_rpl* ptr;
 	char buffer[MAX_CONTACT_BUFFER];
@@ -386,7 +398,11 @@ static inline int send_200(struct sip_msg* _msg, location_t* _loc)
 		add_lump_rpl(_msg, ptr);
 	}
 
+#ifdef OOO_HACK
+	sl_reply(_msg, (char*)200, _rp);
+#else
 	sl_reply(_msg, (char*)200, "OK");
+#endif
 	return TRUE;
 }
 
@@ -410,7 +426,11 @@ static inline int process_star_loc(struct sip_msg* _msg, cache_t* _c, location_t
 	DBG("All bindings removed, sending 200 OK");
 
 	     /* Send 200 OK response with no Contact HF */
+#ifdef OOO_HACK
+	if (send_200(_msg, NULL, "OK") == FALSE) {
+#else
 	if (send_200(_msg, NULL) == FALSE) {
+#endif
 		ERR("Error while sending 200 response");
 		return FALSE;
 	}
@@ -436,7 +456,11 @@ static inline int process_no_contacts(struct sip_msg* _msg, cache_t* _c, locatio
 	if (!el) {    /* There are no such contacts */
 		DBG("No bindings found, sending 200 OK");
 		     /* Send 200 OK response without Contact HF */
+#ifdef OOO_HACK
+		if (send_200(_msg, NULL, "OK") == FALSE) {
+#else
 		if (send_200(_msg, NULL) == FALSE) {
+#endif
 			ERR("Error while sending 200 OK");
 			return FALSE;
 		}
@@ -446,7 +470,11 @@ static inline int process_no_contacts(struct sip_msg* _msg, cache_t* _c, locatio
 		     /* Send 200 OK and list all contacts currently
 		      * present in the database
 		      */
+#ifdef OOO_HACK
+		if (send_200(_msg, ELEM_LOC(el), "OK") == FALSE) {
+#else
 		if (send_200(_msg, ELEM_LOC(el)) == FALSE) {
+#endif
 			ERR("Error while sending 200 response");
 			cache_release_elem(el);
 			return FALSE;
@@ -483,8 +511,35 @@ static inline int process_contacts(struct sip_msg* _msg, cache_t* _c, location_t
 			cache_release_elem(el);
 			return FALSE;
 		}
-		
-		if (send_rep) {
+
+#ifdef OOO_HACK
+		switch(send_rep) {
+		case 0:
+			if (send_200(_msg, (el) ? (ELEM_LOC(el)) : (NULL), RP_OOO) == FALSE) {
+				ERR("Error while sending 200 OK response");
+				if (el) cache_release_elem(el);
+				return FALSE;
+			}
+			break;
+
+		case 1:
+			if (send_200(_msg, (el) ? (ELEM_LOC(el)) : (NULL), "OK") == FALSE) {
+				ERR("Error while sending 200 OK response");
+				if (el) cache_release_elem(el);
+				return FALSE;
+			}
+			break;
+
+		case 2:
+			if (send_200(_msg, (el) ? (ELEM_LOC(el)) : (NULL), RP_RETR) == FALSE) {
+				ERR("Error while sending 200 OK response");
+				if (el) cache_release_elem(el);
+				return FALSE;
+			}
+			break;
+		}
+#else		
+		if (send_rep > 0) {
 			DBG("Sending 200 OK");
 
 			     /* Send 200 OK response with actual list of contacts
@@ -495,8 +550,10 @@ static inline int process_contacts(struct sip_msg* _msg, cache_t* _c, location_t
 				if (el) cache_release_elem(el);
 				return FALSE;
 			}
+		} else {
+			     /* send 4xx here, o-o-o */
 		}
-		
+#endif		
 		if (el) cache_release_elem(el);
 		return TRUE;
 	} else {  /* No contacts in the database were found */
@@ -511,7 +568,11 @@ static inline int process_contacts(struct sip_msg* _msg, cache_t* _c, location_t
 			}
 		}
 		DBG("Sending 200 OK");
+#ifdef OOO_HACK
+		if (send_200(_msg, _loc, "OK") == FALSE) {
+#else
 		if (send_200(_msg, _loc) == FALSE) {
+#endif
 			ERR("Error while sending 200 response");
 			return FALSE;
 		}

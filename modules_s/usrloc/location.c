@@ -530,16 +530,8 @@ int db_remove_location(db_con_t* _c, location_t* _loc)
 }
 
 
-/*
- * Returns TRUE if request is retransmission or a new one,
- * FALSE otherwise
- */
 static int check_request_order(contact_t* _old, contact_t* _new)
 {
-#ifdef OOO_HACK
-	return TRUE;
-#endif
-
 #ifdef PARANOID
 	if ((!_old) || (!_new)) {
 		ERR("Invalid parameter value");
@@ -549,10 +541,13 @@ static int check_request_order(contact_t* _old, contact_t* _new)
 
 	if (!strcmp(_old->callid, _new->callid)) {
 		if (_old->cseq > _new->cseq) {
-			return FALSE;
+			return 0;      /* O-O-O */
+		} else if (_old->cseq == _new->cseq) {
+			return 2; /* Retransmission */
 		}
 	}
-	return TRUE;
+
+	return 1; /* OK */
 }
 
 
@@ -611,28 +606,38 @@ static int ins_cont(db_con_t* _c, location_t* _dst, contact_t* _scon)
 /* 
  * FIXME: Pravdepodobne by bylo jednodussi nevytvaret src location
  *        zpracovavat kontakty rovnou jakmile se parsujou
+ *
+ * _sr: 0 - O-O-O
+ *      1 - OK
+ *      2 - Retransmission
+ *
  */
 int update_location(db_con_t* _c, location_t* _dst, location_t* _src, int* _sr)
 {
 	contact_t* src_ptr = _src->contacts, *dst_ptr, *dst_ptr_prev, *src_ptr_prev = NULL;
 
-
-	*_sr = 1; /* By default send reply */
+	*_sr = 1; /* By default OK */
 	while(src_ptr) {
 		dst_ptr = _dst->contacts;
 		dst_ptr_prev = NULL;
 		while(dst_ptr) {
 			if (cmp_contact(dst_ptr, src_ptr) == TRUE) {
-				if (check_request_order(dst_ptr, src_ptr) == TRUE) {  /* FIXME */
+				*_sr = check_request_order(dst_ptr, src_ptr);
+#ifdef OOO_HACK
+				if (1) {
+#else
+				if (*_sr == 1) {  /* FIXME */
 					DBG("Order OK, updating");
+#endif
 					if (src_ptr->expires == 0) {
 						if (rem_cont(_c, _dst, dst_ptr) == FALSE) return FALSE;
 					} else {
 						if (upd_cont(_c, dst_ptr, src_ptr) == FALSE) return FALSE;
 					}
+				} else if (*_sr == 2) {
+					INFO("Request for binding update is retransmission");
 				} else {
 					INFO("Request for binding update is out of order");
-					*_sr = 0; /* Request is out of order, do not send reply */
 				}
 				goto skip;
 			}

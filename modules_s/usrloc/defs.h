@@ -16,4 +16,8 @@
  */
 #define OOO_HACK
 
+/*
+ * Debug info in reason phrase
+ */
+
 #endif
