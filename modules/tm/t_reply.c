@@ -61,6 +61,7 @@
  *  2004-02-13: t->is_invite and t->local replaced with flags (bogdan)
  *  2004-02-18  fifo_t_reply imported from vm module (bogdan)
  *  2004-08-23  avp list is available from failure/on_reply routes (bogdan)
+ *  2004-10-01  added a new param.: restart_fr_on_each_reply (andrei)
  */
 
 
@@ -94,6 +95,10 @@
 #include "t_fwd.h"
 #include "fix_lumps.h"
 #include "t_stats.h"
+
+
+/* restart fr timer on each provisional reply, default yes */
+int restart_fr_on_each_reply=1;
 
 /* are we processing original or shmemed request ? */
 enum route_mode rmode=MODE_REQUEST;
@@ -1186,6 +1191,7 @@ int reply_received( struct sip_msg  *p_msg )
 {
 
 	int msg_status;
+	int last_uac_status;
 	char *ack;
 	unsigned int ack_len;
 	int branch;
@@ -1212,6 +1218,7 @@ int reply_received( struct sip_msg  *p_msg )
 		"uac[%d]=%d local=%d is_invite=%d)\n",
 		t->uas.status, branch, uac->last_received, 
 		is_local(t), is_invite(t));
+	last_uac_status=uac->last_received;
 
 	/* it's a cancel ... ? */
 	if (get_cseq(p_msg)->method.len==CANCEL_LEN 
@@ -1291,7 +1298,10 @@ int reply_received( struct sip_msg  *p_msg )
 	} 
 
 	/* update FR/RETR timers on provisional replies */
-	if (msg_status<200) { /* provisional now */
+	if (msg_status<200 && ( restart_fr_on_each_reply ||
+				( (last_uac_status<msg_status) &&
+					((msg_status>=180) || (last_uac_status==0)) )
+			) ) { /* provisional now */
 		if (is_invite(t)) {
 			/* invite: change FR to longer FR_INV, do not
 			   attempt to restart retransmission any more

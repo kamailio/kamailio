@@ -71,6 +71,7 @@
  *              takes no parameters -> forwards to uri (bogdan)
  *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  *  2004-02-18  t_reply exported via FIFO - imported from VM (bogdan)
+ *  2004-10-01  added a new param.: restart_fr_on_each_reply (andrei)
  */
 
 
@@ -265,6 +266,7 @@ static param_export_t params[]={
 	{"noisy_ctimer",          INT_PARAM, &noisy_ctimer                          },
 	{"uac_from",              STR_PARAM, &uac_from                              },
 	{"unix_tx_timeout",       INT_PARAM, &tm_unix_tx_timeout                    },
+	{"restart_fr_on_each_reply", INT_PARAM, &restart_fr_on_each_reply        },
 	{0,0,0}
 };
 

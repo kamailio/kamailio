@@ -31,6 +31,7 @@
  * History:
  * --------
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free
+ *  2004-10-01  mk_net fixes bad network addresses now (andrei)
  */
 
 
@@ -45,7 +46,10 @@
 struct net* mk_net(struct ip_addr* ip, struct ip_addr* mask)
 {
 	struct net* n;
+	int warning;
+	int r;
 	
+	warning=0;
 	if ((ip->af != mask->af) || (ip->len != mask->len)){
 		LOG(L_CRIT, "ERROR: mk_net: trying to use a different mask family"
 				" (eg. ipv4/ipv6mask or ipv6/ipv4mask)\n");
@@ -58,6 +62,18 @@ struct net* mk_net(struct ip_addr* ip, struct ip_addr* mask)
 	}
 	n->ip=*ip;
 	n->mask=*mask;
+	for (r=0; r<n->ip.len/4; r++) { /*ipv4 & ipv6 addresses are multiple of 4*/
+		n->ip.u.addr32[r] &= n->mask.u.addr32[r];
+		if (n->ip.u.addr32[r]!=ip->u.addr32[r]) warning=1;
+	};
+	if (warning){
+		LOG(L_WARN, "WARNING: mk_net: invalid network address/netmask "
+					"combination fixed...\n");
+		print_ip("original network address:", ip, "/");
+		print_ip("", mask, "\n");
+		print_ip("fixed    network address:", &(n->ip), "/");
+		print_ip("", &(n->mask), "\n");
+	};
 	return n;
 error:
 	return 0;
@@ -67,26 +83,20 @@ error:
 
 struct net* mk_net_bitlen(struct ip_addr* ip, unsigned int bitlen)
 {
-	struct net* n;
+	struct ip_addr mask;
 	int r;
 	
 	if (bitlen>ip->len*8){
 		LOG(L_CRIT, "ERROR: mk_net_bitlen: bad bitlen number %d\n", bitlen);
 		goto error;
 	}
-	n=(struct net*)pkg_malloc(sizeof(struct net));
-	if (n==0){
-		LOG(L_CRIT, "ERROR: mk_net_bitlen: memory allocation failure\n"); 
-		goto error;
-	}
-	memset(n,0, sizeof(struct net));
-	n->ip=*ip;
-	for (r=0;r<bitlen/8;r++) n->mask.u.addr[r]=0xff;
-	if (bitlen%8) n->mask.u.addr[r]=  ~((1<<(8-(bitlen%8)))-1);
-	n->mask.af=ip->af;
-	n->mask.len=ip->len;
+	memset(&mask,0, sizeof(mask));
+	for (r=0;r<bitlen/8;r++) mask.u.addr[r]=0xff;
+	if (bitlen%8) mask.u.addr[r]=  ~((1<<(8-(bitlen%8)))-1);
+	mask.af=ip->af;
+	mask.len=ip->len;
 	
-	return n;
+	return mk_net(ip, &mask);
 error:
 	return 0;
 }

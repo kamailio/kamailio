@@ -35,6 +35,9 @@
 
 #include "h_table.h"
 
+
+extern int restart_fr_on_each_reply;
+
 /* reply processing status */
 enum rps {
 	/* something bad happened */
