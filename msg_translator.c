@@ -1816,7 +1816,8 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	}
 
 	if (len!=p-buf)
-		LOG(L_CRIT,"BUGGGG!!!! diff len=%d p-buf=%d\n",len,p-buf);
+		LOG(L_CRIT,"BUG:build_res_from_sip_req: diff len=%d p-buf=%d\n",
+					len, (int)(p-buf));
 
 	*(p) = 0;
 	*returned_len = len;
