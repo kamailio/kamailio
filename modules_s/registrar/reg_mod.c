@@ -62,6 +62,8 @@ int desc_time_order = 0;              /* By default do not order according to th
 int nat_flag        = 4;              /* SER flag marking contacts behind NAT */
 int min_expires     = 60;             /* Minimum expires the phones are allowed to use in seconds,
 			               * use 0 to switch expires checking off */
+int max_expires     = 0;              /* Minimum expires the phones are allowed to use in seconds,
+			               * use 0 to switch expires checking off */
 char* realm_pref    = "";   /* Realm prefix to be removed */
 str realm_prefix;
 
@@ -95,6 +97,7 @@ static param_export_t params[] = {
 	{"nat_flag",        INT_PARAM, &nat_flag       },
 	{"realm_prefix",    STR_PARAM, &realm_pref     },
 	{"min_expires",     INT_PARAM, &min_expires    },
+	{"max_expires",     INT_PARAM, &max_expires    },
 	{0,0,0}
 };
 

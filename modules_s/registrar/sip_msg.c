@@ -236,6 +236,10 @@ int calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
 		*_e = min_expires + act_time;
 	}
 
+	if ((*_e != 0) && max_expires && ((*_e - act_time) > max_expires)) {
+		*_e = max_expires + act_time;
+	}
+
 	return 0;
 }
 

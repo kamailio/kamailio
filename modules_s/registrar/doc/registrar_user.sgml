@@ -73,6 +73,46 @@ modparam("registrar", "default_expires", 1800)
 </programlisting>
 	    </example>
 	</section>
+	<section>
+	    <title><varname>min_expires</varname> (integer)</title>
+	    <para>
+		The minimum expires value of a Contact, values lower than this minimum will be
+		automatically set to the minimum. Value 0 disables the checking.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 60.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>min_expires</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "min_expires", 60)
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>max_expires</varname> (integer)</title>
+	    <para>
+		The maximum expires value of a Contact, values higher than this maximum will be
+		automatically set to the maximum. Value 0 disables the checking.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>max_expires</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "max_expires", 120)
+...
+</programlisting>
+	    </example>
+	</section>
 
 	<section>
 	    <title><varname>default_q</varname> (integer)</title>
