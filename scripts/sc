@@ -32,6 +32,7 @@ ACL_GROUPS="local ld int voicemail free-pstn"
 FOREVER='2020-05-28 21:32:15'
 FOREVER_REL=1073741823
 
+VERSION='$Revision$'
 #### SQL names
 
 # Usr Loc Table
@@ -77,7 +78,7 @@ if [ "0$VERIFY_ACL" -eq 1 ] ; then
 	EXTRA_TEXT="ACL privileges are: $ACL_GROUPS"
 fi
 cat <<EOF
-sc $Revision$
+$0 $VERSION
 usage: 
            * subscribers *
  $CMD add <username> <password> <email> .. add a new subscriber (*)
@@ -179,15 +180,15 @@ fifo_cmd()
 	# immediately after a request was sent out
 	cat < $path | filter_fl &
 
-	# issue FIFO request
-	echo -e $CMD > $SER_FIFO
+	# issue FIFO request (printf taken to deal with \n)
+	printf "$CMD" > $SER_FIFO
 
 	# wait for the reader to complete
 	wait
 	rm $path
 
 	if [ "0${FIFO_DBG}" -eq 1 ] ; then
-		echo -e "FIFO command was:\n$CMD"
+		printf "FIFO command was:\n$CMD"
 	fi
 }
 
@@ -632,6 +633,10 @@ case $1 in
 	fifo)
 		shift
 		fifo_cmd "$@"
+		;;
+
+	version)
+		echo  "$0 $VERSION"
 		;;
 		
 	*)
