@@ -22,41 +22,132 @@ GENHA1='gen_ha1'
 MYSQL='mysql'
 SER='sr'
 
-# SQL names
+#### SQL names
+
+# Usr Loc Table
+USRLOC=location
 USER_COLUMN=user
+
+# subscriber table
+TABLE=subscriber
 REALM_COLUMN=realm
 HA1_COLUMN=HA1
 HA1B_COLUMN=HA1B
-# subscriber table
-TABLE=subscriber
-# Usr Loc Table
-USRLOC=location
 PASSWORD_COLUMN=password
 SUBSCRIBER_COLUMN='user_id'
 EMAIL_COLUMN=email_address
+SUB_CREATED_COLUMN=datetime_created
+SUB_MODIFIED_COLUMN=datetime_modified
+
 # acl table
 ACL_TABLE=grp
 ACL_USER_COLUMN=user
 ACL_GROUP_COLUMN=grp
+ACL_MODIFIED_COLUMN=last_modified
 
+# aliases table
+A_TABLE=aliases
+A_USER_COLUMN=user
+A_CONTACT_COLUMN=contact
+A_EXPIRES_COLUMN=expires
+A_Q_COLUMN=q
+A_CALLID_COLUMN=callid
+A_CSEQ_COLUMN=cseq
+A_LAST_MODIFIED_COLUMN=last_modified
+
+#===================================================================
 
 
 usage() {
 	echo "usage: "
 	echo -n " `basename $0` add <name> <password> <email> "
 	echo "... add a new subscriber (*)"
-	echo " `basename $0` dul <name> ... delete user's UsrLoc entries (*)"
-	echo " `basename $0` show [<name>] ... show online users"
-	echo " `basename $0` mail <name> ... send an email to a user"
-	echo " `basename $0` rm <name> ... delete a user (*)"
-	echo " `basename $0` passwd <user> <passwd> ... change user's password (*)"
-	echo " `basename $0` stat ... show runnig processes + $0 show"
-	echo " `basename $0` acl show [<user>] ... show user membership"
-	echo " `basename $0` acl grant <user> <group> ... grant user memberhsip (*)"
-	echo " `basename $0` acl revoke <user> [<group>] ... grant user memberhsip(s) (*)"
+	echo " `basename $0` dul <name> - delete user's UsrLoc entries (*)"
+	echo " `basename $0` show [<name>] - show online users"
+	echo " `basename $0` mail <name> - send an email to a user"
+	echo " `basename $0` rm <name> - delete a user (*)"
+	echo " `basename $0` passwd <user> <passwd> - change user's password (*)"
+	echo " `basename $0` stat - show runnig processes + $0 show"
+	echo " `basename $0` acl show [<user>] - show user membership"
+	echo " `basename $0` acl grant <user> <group>... - grant user membership (*)"
+	echo " `basename $0` acl revoke <user> [<group>] - grant user membership(s) (*)"
+	echo " `basename $0` alias show [<alias>] - show aliases"
+	echo " `basename $0` alias rm <alias> - remove an alias"
+	echo " `basename $0` alias add <alias> <uri> - show aliases"
 	echo 
 	echo "   commands labeled with (*) will prompt for a MySQL password"
+	echo "   if the variable PW is set, the password will not be prompted"
 	echo
+}
+
+#params: none
+# output: PW
+prompt_pw() {
+    read -s -p "MySql Password: " PW
+    echo
+}
+
+
+# input: sql query, optional mysql command-line params
+sql_query() {
+	# if password not yet queried, query it now
+	if [ -z "$PW" ] ; then
+		read -s -p "MySql Password: " PW >&2
+		echo >&2
+	fi
+	$MYSQL $2 -h $SQL_HOST -u $SQL_USER "-p$PW" -e "$1 ;" $SQL_DB
+}
+
+# input: sql query, optional mysql command-line params
+sql_ro_query() {
+	$MYSQL $2 -h $SQL_HOST -u $RO_USER "-p$RO_PW" \
+		-e "$1 ;" $SQL_DB
+}
+
+
+ser_alias() {
+	case $1 in 
+		show)
+			if [ $# -eq 2 ] ; then
+				CLAUSE=" WHERE $A_USER_COLUMN='$2' "
+			elif [ $# -ne 1 ] ; then
+				usage
+				exit 1
+			fi
+			QUERY="select * FROM $A_TABLE $CLAUSE ; "
+			sql_ro_query "$QUERY"
+			;;
+		add)
+			if [ $# -ne 3 ] ; then
+				usage
+				exit 1
+			fi
+			QUERY="insert into $A_TABLE \
+				($A_USER_COLUMN, $A_CONTACT_COLUMN, $A_EXPIRES_COLUMN, \
+				$A_Q_COLUMN, $A_CALLID_COLUMN, $A_CSEQ_COLUMN, \
+				$A_LAST_MODIFIED_COLUMN) \
+				values ( '$2', '$3', '2099-05-28 21:32:15', \
+				'1.00', 'call-id-for-ever', '1',
+				now() );"
+			sql_query "$QUERY"
+			;;
+		rm)
+            if [ $# -ne 2 ] ; then
+                usage
+                exit 1
+            fi
+
+            QUERY="delete from $A_TABLE where \
+                $A_TABLE.$A_USER_COLUMN='$2' "
+			sql_query "$QUERY"
+
+            ;;
+
+		*)
+			usage
+			exit 1
+			;;
+	esac
 }
 
 acl() {
@@ -69,21 +160,31 @@ acl() {
 				exit 1
 			fi
 			QUERY="select * FROM $ACL_TABLE $CLAUSE ; "
-			$MYSQL -h $SQL_HOST -u $RO_USER "-p$RO_PW" \
-				-e "$QUERY ;" $SQL_DB
+			sql_ro_query "$QUERY"
 
 			;;
 
 		grant)
-			if [ $# -ne 3 ] ; then
+			if [ $# -lt 3 ] ; then
 				usage
 				exit 1
 			fi
+			SIP_USER="$2"
+			shift 2
+			while [ $# -gt 0 ] ; do
 
-        	$MYSQL -h $SQL_HOST -u $SQL_USER -p$PW \
-            	-e "use $SQL_DB; insert into $ACL_TABLE \
-                ($ACL_USER_COLUMN,$ACL_GROUP_COLUMN) \
-                values ('$2','$3');";
+        		QUERY="insert into $ACL_TABLE \
+                	($ACL_USER_COLUMN,$ACL_GROUP_COLUMN,$ACL_MODIFIED_COLUMN) \
+                	values ('$SIP_USER','$1', now());"
+				sql_query "$QUERY"
+				if [ $? -ne 0 ] ; then
+					echo "SQL Error"
+					exit 1
+				fi
+				shift
+			done
+
+			$0 acl show $SIP_USER
 
 			;;
 
@@ -97,7 +198,9 @@ acl() {
 
 			QUERY="delete from $ACL_TABLE where \
 				$ACL_TABLE.$ACL_USER_COLUMN='$2' $CLAUSE"
-			$MYSQL -h $SQL_HOST -u $SQL_USER "-p$PW" -e "$QUERY ;" $SQL_DB
+			sql_query "$QUERY"
+
+			$0 acl show $2
 
 			;;
 
@@ -111,10 +214,9 @@ acl() {
 # params: user
 # output: false if exists, true otherwise
 is_user() {
-	CNT=`$MYSQL -B -h $SQL_HOST -u $SQL_USER -p$PW \
-		-e "use $SQL_DB; select count(*) from $TABLE \
-		where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$DOMAIN';" \
-		| grep -v ERROR | tail -n1`
+	QUERY="select count(*) from $TABLE \
+		where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$DOMAIN';"
+	CNT=`sql_query "$QUERY" | grep -v ERROR | tail -n1`
 	if [ "0$CNT" -eq 0 ] ; then
 		false
 	else
@@ -123,12 +225,6 @@ is_user() {
 
 }
 
-#params: none
-# output: PW
-prompt_pw() {
-	read -s -p "MySql Password: " PW
-	echo 
-}
 
 # params: user, password
 # output: HA1, HA1B
@@ -156,18 +252,19 @@ case $1 in
 			exit 1
 		fi
 		shift
-		credentials
-
+		credentials $1 $2
 		prompt_pw
+
 		is_user $1
 		if [ $? -ne 0 ] ; then
 			echo non-existent user
 			exit 1
 		fi
-		$MYSQL -h $SQL_HOST -u $SQL_USER -p$PW \
-			-e "use $SQL_DB; update $TABLE \
+		QUERY="update $TABLE \
 			set $HA1_COLUMN='$HA1', $HA1B_COLUMN='$HA1B', $PASSWORD_COLUMN='$2' \
+			, $SUB_MODIFIED_COLUMN=now() \
 			WHERE $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$DOMAIN';"
+		sql_query "$QUERY"
 		if [ $? -ne 0 ] ; then
 			echo "password change failed"
 		else
@@ -184,7 +281,7 @@ case $1 in
 			exit 1
 		fi
 		shift
-		credentials
+		credentials $1 $2
 		prompt_pw
         is_user $1
         if [ $? -eq 0 ] ; then
@@ -192,11 +289,11 @@ case $1 in
             exit 1
         fi
 
-		$MYSQL -h $SQL_HOST -u $SQL_USER -p$PW \
-			-e "use $SQL_DB; insert into $TABLE \
+		QUERY="insert into $TABLE \
 				($SUBSCRIBER_COLUMN,$REALM_COLUMN,$HA1_COLUMN,\
-				$HA1B_COLUMN,$PASSWORD_COLUMN,$EMAIL_COLUMN) \
-				values ('$1','$DOMAIN','$HA1','$HA1B','$2', '$3');";
+				$HA1B_COLUMN,$PASSWORD_COLUMN,$EMAIL_COLUMN, $SUB_CREATED_COLUMN) \
+				values ('$1','$DOMAIN','$HA1','$HA1B','$2', '$3', now() );";
+		sql_query "$QUERY"
 		if [ $? -ne 0 ] ; then
 			echo "introducing a new user to the database failed"
 		else
@@ -211,15 +308,15 @@ case $1 in
 			exit 1
 		fi
 		prompt_pw
-		CNT=`$MYSQL -B -h $SQL_HOST -u $SQL_USER -p$PW \
-			 -e "use $SQL_DB; select count(*) from $USRLOC \
-			where $USRLOC.$USER_COLUMN='$2';" | grep -v ERROR | tail -n1`
+		QUERY="select count(*) from $USRLOC \
+			where $USRLOC.$USER_COLUMN='$2';"
+		CNT=`sql_query "$QUERY" "-B" | grep -v ERROR | tail -n1`
 		if [ "0$CNT" -eq 0 ] ; then
 			echo Nothing to delete
 			exit 1
 		fi
 		QUERY="delete from $USRLOC where $USRLOC.$USER_COLUMN='$2'"
-		$MYSQL -h $SQL_HOST -u $SQL_USER "-p$PW" -e "$QUERY ;" $SQL_DB
+		sql_query "$QUERY"
 		if [ $? -ne 0 ] ; then
 			echo "database operation failed"
 		else
@@ -236,8 +333,7 @@ case $1 in
 		shift
 		QUERY="select $TABLE.$EMAIL_COLUMN from $TABLE where  \
 			$TABLE.$SUBSCRIBER_COLUMN='$1'"
-		EA=`$MYSQL -B -h $SQL_HOST -u $RO_USER "-p$RO_PW" \
-			-e "$QUERY ;" $SQL_DB| grep -v ERROR | tail -n1`
+		EA=`sql_ro_query "$QUERY" "-B" | grep -v ERROR | tail -n1`
 		if [ $? -ne 0 ] ; then
 			echo "MySql query failed"
 			exit 1
@@ -270,10 +366,10 @@ case $1 in
 			$TABLE.$SUBSCRIBER_COLUMN=$USRLOC.$USER_COLUMN" 
 
 		if [ $# -eq 1 ] ; then
-			$MYSQL -h $SQL_HOST -u $RO_USER "-p$RO_PW" -e "$QUERY1 ;" $SQL_DB
-			$MYSQL -h $SQL_HOST -u $RO_USER "-p$RO_PW" -e "$QUERY2 ;" $SQL_DB
+			sql_ro_query "$QUERY1"
+			sql_ro_query "$QUERY2"
 		else
-			$MYSQL -h $SQL_HOST -u $RO_USER "-p$RO_PW" -e "$QUERY3 ;" $SQL_DB
+			sql_ro_query "$QUERY3"
 		fi
 		echo -n "Note: Due to usage of cache, server's list "
 		echo "may differ from DB list."
@@ -286,7 +382,8 @@ case $1 in
             exit 1
         fi
 		shift 
-		prompt_pw
+		prompt_pw 
+
         is_user $1
         if [ $? -ne 0 ] ; then
             echo non-existent user
@@ -294,7 +391,7 @@ case $1 in
         fi
 
         QUERY="delete from $TABLE where $TABLE.$SUBSCRIBER_COLUMN='$1'"
-        $MYSQL -h $SQL_HOST -u $SQL_USER "-p$PW" -e "$QUERY ;" $SQL_DB
+		sql_query "$QUERY"
         ;;
 			
 	stat)
@@ -310,6 +407,11 @@ case $1 in
 	acl)
 		shift
 		acl "$@"
+		;;
+
+	alias)
+		shift
+		ser_alias "$@"
 		;;
 		
 	*)
