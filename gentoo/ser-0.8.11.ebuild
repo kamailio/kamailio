@@ -1,10 +1,6 @@
-# Copyright 1999-2003 Gentoo Technologies, Inc.
+# Copyright 1999-2003 Fraunhofer Fokus
 # Distributed under the terms of the GNU General Public License v2
 # $Header$
-
-# TODO: 
-#  - add USE Debug !!!
-#  - remove debug statements
 
 DESCRIPTION="SIP Express Router"
 
@@ -13,17 +9,20 @@ SRC_URI="ftp://ftp.berlios.de/pub/ser/0.8.11/src/${P}_src.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="x86"
-IUSE="ipv6 mysql postgres"
+KEYWORDS="~x86 ~ppc ~sparc"
+IUSE="debug ipv6 mysql postgres"
 
 DEPEND=">=sys-devel/gcc-2.95.3
 		>=sys-devel/bison-1.35
 		>=sys-devel/flex-2.5.4a
-		mysql? ( >=dev-db/mysql-3.23.52 )"
+		mysql? ( >=dev-db/mysql-3.23.52 )
+		postgres? ( >=dev-db/postgresql-7.3.4 )"
 
 S="${WORKDIR}/${P}"
 
 inc_mod=""
+make_options=""
+
 check_mods() {
 	if [ "`use mysql`" ]; then
 		inc_mod="${inc_mod} mysql"
@@ -51,11 +50,16 @@ src_compile() {
 		cp Makefile.defs Makefile.defs.orig 
 		sed -e "s/-DUSE_IPV6//g" Makefile.defs.orig > Makefile.defs;
 	fi
+	# optimization can result in strange debuging symbols so omit it in case
+	if [ "`use debug`" ]; then
+		make_options="${make_options} mode=debug"
+	else
+		make_options="${make_options} CFLAGS=${CFLAGS}"
+	fi
 
 	check_mods
-echo "Mods: ${inc_mod}"
 
-	make all CFLAGS="${CFLAGS}" \
+	make all "${make_options}" \
 		prefix=${D}/ \
 		include_modules="${inc_mod}" \
 		cfg-prefix=/ \
@@ -64,7 +68,7 @@ echo "Mods: ${inc_mod}"
 
 src_install () {
 	check_mods
-echo "Mods: ${inc_mod}"
+
 	make install \
 		prefix=${D}/ \
 		include_modules="${inc_mod}" \
@@ -87,6 +91,14 @@ echo "Mods: ${inc_mod}"
 	if [ ! "`use mysql`" ]; then
 		rm ${D}/usr/sbin/ser_mysql.sh
 	fi
+}
+
+pkg_postinst() {
+	einfo "WARNING: If you upgraded from a previous Ser version"
+	einfo "please read the README, NEWS and INSTALL files in the"
+	einfo "documentation directory because the database and the"
+	einfo "configuration file of old Ser versions are incompatible"
+	einfo "with the current version."
 }
 
 pkg_prerm () {
