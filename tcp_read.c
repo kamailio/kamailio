@@ -29,6 +29,7 @@
  * --------
  * 2002-12-??  created by andrei.
  * 2003-02-10  zero term before calling receive_msg & undo afterwards (andrei)
+ * 2003-05-13  l: (short form of Content-Length) is now recognized (andrei)
  */
 
 #ifdef USE_TCP
@@ -125,7 +126,13 @@ int tcp_read_headers(struct tcp_req *r, int fd)
 					case 'c': \
 						if(!r->has_content_len) r->state=H_CONT_LEN1; \
 						else r->state=H_SKIP; \
-						break 
+						break; \
+					case 'l': \
+					case 'L': \
+						/* short form for Content-Length */ \
+						if (!r->has_content_len) r->state=H_L_COLON; \
+						else r->state=H_SKIP; \
+						break
 						
 	#define change_state(upper, lower, newstate)\
 					switch(*p){ \
@@ -244,6 +251,12 @@ int tcp_read_headers(struct tcp_req *r, int fd)
 					case 'C': 
 					case 'c': 
 						r->state=H_CONT_LEN1; 
+						r->start=p;
+						break;
+					case 'l':
+					case 'L':
+						/* short form for Content-Length */
+						r->state=H_L_COLON;
 						r->start=p;
 						break;
 					default:
