@@ -34,7 +34,8 @@ build-stamp: configure-stamp
 	dh_testdir
 
 	# Add here commands to compile the package.
-	$(MAKE) all modules="modules/tm modules/textops modules/print"
+	$(MAKE) all 
+	$(MAKE) modules modules=modules/mysql
 	#/usr/bin/docbook-to-man debian/ser.sgml > ser.1
 
 	touch build-stamp
@@ -56,17 +57,23 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package into debian/ser
-	$(MAKE) install modules="modules/tm modules/textops modules/print" \
+	$(MAKE) install  \
 		prefix=$(CURDIR)/debian/ser/usr \
 		cfg-prefix=$(CURDIR)/debian/ser 
+	
+	# install only the mysql module
+	$(MAKE) install-modules modules=modules/mysql  \
+		prefix=$(CURDIR)/debian/ser-mysql-module/usr \
+		cfg-prefix=$(CURDIR)/debian/ser-mysql-module 
+	#dh_movefiles
 
 
-# Build architecture-independent files here.
-binary-indep: build install
-# We have nothing to do by default.
 
-# Build architecture-dependent files here.
-binary-arch: build install
+# This single target is used to build all the packages, all at once, or
+# one at a time. So keep in mind: any options passed to commands here will
+# affect _all_ packages. Anything you want to only affect one package
+# should be put in another target, such as the install target.
+binary-common: 
 	dh_testdir
 	dh_testroot
 #	dh_installdebconf	
@@ -94,6 +101,21 @@ binary-arch: build install
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
+
+# Build architecture-independent packages using the common target
+binary-indep: build install
+# (Uncomment this next line if you have such packages.)
+#        $(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
+# We have nothing to do by default.
+
+
+# Build architecture-dependent packages using the common target
+binary-arch: build install
+	$(MAKE) -f debian/rules DH_OPTIONS=-a binary-common
+
+# Any other binary targets build just one binary package at a time.
+binary-%: build install
+	$(MAKE) -f debian/rules binary-common DH_OPTIONS=-p$*
 
 binary: binary-indep binary-arch
 .PHONY: build clean binary-indep binary-arch binary install configure

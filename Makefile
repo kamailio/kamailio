@@ -95,6 +95,10 @@ bin:
 	$(TAR) -C tmp/ser/ -zcf ../$(NAME)-$(RELEASE)_$(OS)_$(ARCH).tar.gz .
 	rm -rf tmp/ser
 
+.PHONY: deb
+deb:
+	dpkg-buildpackage -rfakeroot -pgpg -sgpg
+
 .PHONY: sunpkg
 sunpkg:
 	mkdir -p tmp/ser

@@ -2,11 +2,29 @@ Source: ser
 Section: net
 Priority: optional
 Maintainer: Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
-Build-Depends: debhelper (>> 3.0.0)
+Build-Depends: debhelper (>> 3.0.0), libmysqlclient-dev
 Standards-Version: 3.5.2
 
 Package: ser
 Architecture: any
 Depends: ${shlibs:Depends}
+Suggests: ser-mysql-module
 Description: Sip Express Router, very fast and configurable SIP proxy
- ser or Sip Express Router is a very fast and configurable SIP proxy.
+ ser or SIP Express Router is a very fast and flexible SIP (RFC3621)
+ proxy server. Written entirely in C, ser can handle thousands calls
+ per second even on low-budget hardware. C Shell like scripting language
+ provides full control over the server's behaviour. It's modular
+ architecture allows only required functionality to be loaded.
+ Currently the following modules are available: Digest Authentication,
+ CPL scripts, Instant Messaging, MySQL support, Presence Agent, Radius
+ Authentication, Record Routing, SMS Gateway, Jabber Gateway, Transaction 
+ Module, Registrar and User Location.
+
+Package: ser-mysql-module
+Architecture: any
+Depends: ${shlibs:Depends}, ser (= ${Source-Version}), mysql
+Description: contains the mysql database connectivity module
+ This has been split out of the main ser package, so that ser will not
+ depend upon mysql. This module will enable you to use the digest
+ authentication module or persistent user location entries.
+
