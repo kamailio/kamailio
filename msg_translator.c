@@ -345,6 +345,9 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 					/*size+=strlen(msg->via1->hdr.s+size+1)+1;*/
 					size += msg->via1->port_str.len + 1; /* +1 for ':'*/
 				}
+			#ifdef USE_IPV6
+				if(send_sock->address.af==AF_INET6) size+=1; /* +1 for ']'*/
+			#endif
 		}
 		anchor=anchor_lump(&(msg->add_rm),msg->via1->hdr.s-buf+size,0,
 				HDR_VIA);

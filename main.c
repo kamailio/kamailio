@@ -854,7 +854,8 @@ int main(int argc, char** argv)
 			DPrint("ERROR: could not resolve %s\n", sock_info[r].name.s);
 			goto error;
 		}
-		hostent2ip_addr(&sock_info[r].address, he, 0); /*convert to ip_addr format*/
+		hostent2ip_addr(&sock_info[r].address, he, 0); /*convert to ip_addr 
+														 format*/
 		tmp=ip_addr2a(&sock_info[r].address);
 		sock_info[r].address_str.s=(char*)malloc(strlen(tmp)+1);
 		if (sock_info[r].address_str.s==0){
