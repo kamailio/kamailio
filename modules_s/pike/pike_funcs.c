@@ -57,6 +57,7 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 			LOG(L_ERR,"ERROR:pike_check_req: cannot allocated sh mem!\n");
 			goto error;
 		}
+		memset(ip4,0,sizeof(struct ip_v4));
 		ip4->ip = msg->src_ip.u.addr32[0];
 		ip4->counter[0] = 1;
 		lock(&locks[IPv4]);
@@ -64,6 +65,12 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 			/* the src ip already in tree */
 			exceed=(++old_ip4->counter[0]>=(unsigned short)max_value);
 			unlock(&locks[IPv4]);
+			/* update the time out */
+			lock(timers[IPv4].sem);
+			remove_from_timer(&timers[IPv4],&(old_ip4->timer));
+			old_ip4->timer.timeout = get_ticks() + timeout;
+			append_to_timer(&timers[IPv4],&(old_ip4->timer));
+			unlock(timers[IPv4].sem);
 			DBG("DEBUG:pike_check_req: IPv4 src found [%X] with [%d][%d] "
 				"exceed=%d\n",old_ip4->ip,old_ip4->counter[1],
 				old_ip4->counter[0],exceed);
@@ -75,10 +82,16 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 		} else {
 			/* new record */
 			unlock(&locks[IPv4]);
+			/* put it in the timer list */
+			lock(timers[IPv4].sem);
+			old_ip4->timer.timeout = get_ticks() + timeout;
+			append_to_timer(&timers[IPv4],&(old_ip4->timer));
+			unlock(timers[IPv4].sem);
 			DBG("DEBUG:pike_check_req: new IPv4 src [%X]\n",ip4->ip);
 		}
 	} else {
 	}
+
 error:
 	return 1;
 overflow:
@@ -90,6 +103,30 @@ overflow:
 
 void clean_routine(void *param)
 {
+	struct pike_timer *pt;
+	struct ip_v4      *ip4;
+	struct ip_v6      *ip6;
+	int i;
+
+	for(i=0;i<IP_TYPES;i++) {
+		if ( !is_empty(&timers[i]) ) {
+			/* get the expired elements */
+			lock(timers[i].sem);
+			pt = check_and_split_timer(&timers[i],get_ticks());
+			unlock(timers[i].sem);
+			/* process them */
+			if (pt) {
+				DBG("something to delete!! ;-))\n");
+				lock(&locks[i]);
+				for(;pt;pt=pt->next)
+				{
+					ip4 = (struct ip_v4*)del234( btrees[i], pt);
+					if (ip4) shm_free( ip4 );
+				}
+				unlock(&locks[i]);
+			}
+		}
+	}
 }
 
 

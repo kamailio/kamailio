@@ -15,7 +15,7 @@
 #include "../../error.h"
 #include "../../dprint.h"
 #include "../../ut.h"
-#include "../../mem/mem.h"
+#include "../../mem/shm_mem.h"
 #include "tree234.h"
 #include "pike_funcs.h"
 
@@ -27,14 +27,14 @@ static int pike_exit(void);
 
 
 /* parameters */
-int time_unit = 60*10;
+int time_unit = 60;
 int max_value = 500;
-int timeout   = 60*60;
+int timeout   = 2*60;
 
 /* global variables */
 tree234                 *btrees[IP_TYPES];
 pike_lock               *locks;
-struct pike_timer_head  timers[IP_TYPES];
+struct pike_timer_head  *timers;
 
 
 
@@ -90,11 +90,17 @@ static int pike_init(void)
 		LOG(L_ERR,"ERROR:pike_init: create sem failed!\n");
 		goto error;
 	}
-		/* init the B trees - ipv4 and ipv6 */
+	/* init the B trees - ipv4 and ipv6 */
 	btrees[IPv4] = newtree234(cmp_ipv4);
 	btrees[IPv6] = newtree234(cmp_ipv6);
 	/* setting up timers */
-	memset(&timers,0,2*sizeof(struct pike_timer_head));
+	timers = (struct pike_timer_head*)shm_malloc(IP_TYPES
+		*sizeof(struct pike_timer_head));
+	if (!timers) {
+		LOG(L_ERR,"ERROR:pike_init: no free shm mem\n");
+		goto error;
+	}
+	memset(timers,0,IP_TYPES*sizeof(struct pike_timer_head));
 	timers[IPv4].sem = locks+2;
 	timers[IPv6].sem = locks+3;
 	/* registering timeing functions  */

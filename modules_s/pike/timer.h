@@ -16,7 +16,10 @@ struct pike_timer_head {
 	pike_lock         *sem;
 };
 
-//void add()
+void append_to_timer(struct pike_timer_head*, struct pike_timer*);
+void remove_from_timer(struct pike_timer_head*, struct pike_timer*);
+int  is_empty(struct pike_timer_head*);
+struct pike_timer *check_and_split_timer(struct pike_timer_head*,int);
 
 #endif
 

@@ -27,20 +27,20 @@ extern int                     max_value;
 extern int                     timeout;
 extern tree234                 *btrees[IP_TYPES];
 extern pike_lock               *locks;
-extern struct pike_timer_head  timers[IP_TYPES];
+extern struct pike_timer_head  *timers;
 
 
 
 struct ip_v4 {
+	struct pike_timer timer;
 	int ip;
 	unsigned short counter[2];
-	struct pike_timer timer;
 };
 
 struct ip_v6 {
+	struct pike_timer timer;
 	int ip[4];
 	unsigned short counter[2];
-	struct pike_timer timer;
 };
 
 
