@@ -21,6 +21,7 @@
 <!ENTITY ccdiversion SYSTEM "../../examples/ccdiversion.cfg">
 <!ENTITY releasenotes SYSTEM "../../NEWS">
 <!ENTITY install SYSTEM "../../INSTALL">
+<!ENTITY voicemail SYSTEM "voicemail.sgml">
 
 
 
@@ -32,7 +33,7 @@
 <?dbhtml filename="index.html">
 
    
-    <title>iptel.org SIP Express Router v0.8.11 -- Admin's Guide</title>
+    <title>iptel.org SIP Express Router v0.9.0 -- Admin's Guide</title>
     <bookinfo>
 	<authorgroup>
 	    <author>
@@ -736,6 +737,12 @@ if (search("(f|From): .*@mydomain.com)) {
 				at which a request was received
 			    </para>
 			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>src_port</emphasis> port number from which a SIP
+				request came
+			    </para>
+			</listitem>
 		    </itemizedlist>
 		</para>
 		<para>
@@ -852,8 +859,7 @@ if (search("(f|From): .*@mydomain.com)) {
 
 			<row>
 			    <entry>
-				dst_ip
-				by <application moreinfo="none">ser</application>
+				dst_ip				
 			    </entry>			    
 			    <entry>
 				== (match)
@@ -866,6 +872,21 @@ if (search("(f|From): .*@mydomain.com)) {
 				via loopback interface
 			    </entry>
 			</row>
+
+			<row>
+			    <entry>
+				    src_port
+			    </entry>			    
+			    <entry>
+				== (match)
+			    </entry>
+			    <entry>
+				port number
+			    </entry>
+			    <entry>
+				port number from which a request was sent, e.g. src_port==5060
+			    </entry>
+			</row>			    
 
 
 		    </tbody>
@@ -1404,7 +1425,102 @@ forward(uri:host, uri:port);
 
 	</section> <!-- Destination Set -->
 
-
+	<section>
+	    <title>User Location</title>
+	    <para>
+		Mobility is a key feature of SIP. Users are able to use one
+		one or more SIP devices and be reachable at them. Incoming requests 
+		for users are forwarded to all user's devices in use. The key
+		concept is that of soft-state registration. Users can
+		-- if in possession of valid credentials -- link SIP
+		devices to their e-mail like address of record. Their SIP devices
+		do so using a REGISTER request, as in <xref linkend="register">.
+		The request creates a binding between the public address of
+		record (To header field) and SIP device's current address
+		(Contact header field). 
+		<example id="register">
+		    <title>REGISTER Request</title>
+		    <programlisting format="linespecific">
+REGISTER sip:192.168.2.16 SIP/2.0
+Via: SIP/2.0/UDP 192.168.2.16;branch=z9hG4bKd5e5.5a9947e4.0
+Via: SIP/2.0/UDP 192.168.2.33:5060
+From: sip:123312@192.168.2.16
+To: sip:123312@192.168.2.16
+Call-ID: 00036bb9-0fd30217-491b6aa6-0a7092e9@192.168.2.33
+Date: Wed, 29 Jan 2003 18:13:15 GMT
+CSeq: 101 REGISTER
+User-Agent: CSCO/4
+Contact: sip:123312@192.168.2.33:5060
+Content-Length: 0
+Expires: 600
+		    </programlisting>
+		</example>
+		Similar requests can be used to query all user's current contacts or to
+		delete them. All Contacts have certain time to live, when the time expires,
+		contact is removed and no longer used for processing of incoming requests.
+	    </para>
+	    <para>
+		<application moreinfo="none">ser</application> is built to do both: update
+		user location database from received REGISTER requests and look-up these
+		contacts when inbound requests for a user arrive. To achieve high performance,
+		the user location table is stored in memory. In regular intervals
+		(usrloc module's parameter <varname>timer_interval</varname> determines
+		their length), all changes to the in-memory table are backed up in
+		<application moreinfo="none">mysql</application> database to achieve
+		peristence accross server reboots. Administrators or application writers
+		can lookup list of current user's contacts stored in memory using the
+		<application moreinfo="none">serctl</application> tool (see <xref linkend="serctl">).
+		<example>
+		    <title>Use of <application>serctl</application> Tool to Query User Location</title>
+		    <screen format="linespecific">
+<![CDATA[
+[jiri@fox jiri]$ sc ul show jiri
+<sip:jiri@212.202.172.134>;q=0.00;expires=456
+<sip:7271@gateway.foo.bar>;q=0.00;expires=36000
+]]>
+		    </screen>
+		</example>
+	    </para>
+	    <para>
+		Building user location in <application moreinfo="none">ser</application> scripts is
+		quite easy. One first needs to determine whether a request is for served domain,
+		as described in <xref linkend="domainmatching">. If that is the case, the script
+		needs to distinguish between REGISTER requests, that update user location table,
+		and all other requests for which next hop is determined from the table. The
+		<command moreinfo="none">save</command> action is used to update user location
+		(i.e., it writes to it). The <command moreinfo="none">lookup</command> actions
+		reads from the user location table and fills in destination set with current
+		user's contacts.
+		<example>
+		    <title>Use of User Location Actions</title>
+		    <programlisting format="linespecific">
+# is the request for my domain ?
+if (uri==myself) {
+    if (method=="REGISTER") { # REGISTERs are used to update
+         save("location");
+         break; # that's it, we saved the contacts, exit now
+    } else {
+         if (!lookup("location") { # no registered contact
+            sl_send_reply("404", "Not Found");
+            break;
+         }
+         # ok -- there are some contacts for the user; forward
+         # the incoming request to all of them
+         t_relay();
+    };
+};
+		    </programlisting>
+		</example>
+	    </para>
+	    <para>
+		Note that we used the action for stateful forwarding, 
+		<command moreinfo="none">t_relay</command>. That's is because
+		stateful forwarding allows to fork an incoming request to
+		multiple destinations. If we used stateful forwarding,
+		the request would be forwarded only to one uri out of
+		all user's contacts.
+	    </para>
+	</section> <!-- User Location -->
 	
 	<section>
 	    <title>External Modules</title>
@@ -3959,9 +4075,15 @@ Domain Registered Expired
 		be seen at iptel.org's SIP site. Just create and use a SIP
 		account at <ulink url="http://www.iptel.org/user/">http://www.iptel.org/user/</ulink>
 	    </para>
-	</section>
+	</section> <!-- serweb -->
 
-    </chapter> <!-- serweb -->
+
+    <section>
+	<title>Voicemail</title>
+&voicemail;
+    </section> <!-- voicemail -->
+
+    </chapter> <!-- other apps -->
     
     <chapter>
 	<title>Reference</title>
@@ -4981,6 +5103,36 @@ if (len_gt(1024)) {
 			</row>
 			<row>
 			    <entry>
+				replace
+			    </entry>
+			    <entry>
+				textops
+			    </entry>
+			    <entry>
+				RegExp, Substitute
+			    </entry>
+			    <entry>
+				find the first occurence of a string matching the regular 
+				expression in header or body and replace it with a substitute
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				replace_all
+			    </entry>
+			    <entry>
+				textops
+			    </entry>
+			    <entry>
+				RegExp, Substitute
+			    </entry>
+			    <entry>
+				find all occurences of a string matching the regular 
+				expression in header or body and replace it with a substitute
+			    </entry>
+			</row>
+			<row>
+			    <entry>
 				save
 			    </entry>
 			    <entry>
@@ -5005,7 +5157,7 @@ if (len_gt(1024)) {
 				regular expression
 			    </entry>
 			    <entry>
-				search for a regular expression match in request
+				search for a regular expression match in request header of body
 			    </entry>
 			</row>
 
@@ -5128,6 +5280,20 @@ if (len_gt(1024)) {
 			    <entry>core</entry>
 			    <entry>none</entry>
 			    <entry>prints list of available FIFO commands</entry>
+			</row>
+			<row>
+			    <entry>arg</entry>
+			    <entry>core</entry>
+			    <entry>none</entry>
+			    <entry>prints list of command-line arguments with which 
+				<application moreinfo="none">ser</application> was started</entry>
+			</row>
+			<row>
+			    <entry>pwd</entry>
+			    <entry>core</entry>
+			    <entry>none</entry>
+			    <entry>prints <application moreinfo="none">ser</application>'s working
+			    directory</entry>
 			</row>
 			<row>
 			    <entry>version</entry>
