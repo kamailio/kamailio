@@ -153,24 +153,13 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 		}
 	}
 
-	/* add to tags only to invites with To without to-tag */
-	if ( msg->first_line.u.request.method_value==METHOD_INVITE 
-		&& (msg->to || (parse_headers(msg,HDR_TO, 0)!=-1 && msg->to))
+	/* add a to-tag if there is a To header field without it */
+	if ( 	/* since RFC3261, we append to-tags anywhere we can, except
+		 * 100 replies */
+       		/* msg->first_line.u.request.method_value==METHOD_INVITE && */
+		code>=180 &&
+		(msg->to || (parse_headers(msg,HDR_TO, 0)!=-1 && msg->to))
 		&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) ) 
-
-/* try to send a reply even if there is no To */
-#ifdef _OBSOLETED
-	/* To header is needed (tag param in particular)*/
-	if (msg->to==0 && (parse_headers(msg,HDR_TO, 0)==-1 || msg->to==0) )
-	{
-		LOG(L_ERR, "ERROR: sl_send_reply: cannot find/parse To\n");
-		goto error;
-	}
-	/* to:tag is added only for INVITEs without To tag in order
-	to be able to capture the ACK*/
-	if ( msg->first_line.u.request.method_value==METHOD_INVITE
-	&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) ) 
-#endif
 	{
 		calc_crc_suffix( msg );
 		buf = build_res_buf_from_sip_req(code,text,sl_tag,TOTAG_LEN,msg ,&len);
