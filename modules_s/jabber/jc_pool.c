@@ -348,7 +348,7 @@ int jab_send_sip_msg(str *to, str *from, str *contact, str *msg)
 	}
 	else
 		tfrom.s = buf+4;
-	return im_send_message(to, &tfrom, contact, msg);
+	return im_send_message(to, to, &tfrom, contact, msg);
 }
 
 /**
