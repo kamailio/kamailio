@@ -59,7 +59,7 @@ int new_urecord(str* _dom, str* _aor, urecord_t** _r)
 
 	(*_r)->aor.s = (char*)shm_malloc(_aor->len);
 	if ((*_r)->aor.s == 0) {
-		LOG(L_ERR, "new_urecord(): No memory left 2\n");
+		LOG(L_ERR, "new_urecord(): No memory left\n");
 		shm_free(*_r);
 		return -2;
 	}
