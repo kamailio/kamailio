@@ -76,42 +76,32 @@ static inline int rwrite(struct sip_msg* _m, str* _s)
 int lookup(struct sip_msg* _m, char* _t, char* _s)
 {
 	urecord_t* r;
-	str user;
+	str aor;
 	ucontact_t* ptr;
 	int res;
 	
-	if (!_m->to && (parse_headers(_m, HDR_TO, 0) == -1)) {
-		LOG(L_ERR, "lookup(): Error while parsing headers\n");
+	if (_m->new_uri.s) aor = _m->new_uri;
+	else aor = _m->first_line.u.request.uri;
+	
+	if (extract_aor(_m, &aor) < 0) {
+		LOG(L_ERR, "lookup(): Error while extracting address of record\n");
 		return -1;
-	}
-
-	if (!_m->to) {
-	        LOG(L_ERR, "lookup(): Unable to find To HF\n");
-		return -2;
-	}
-	
-	if (_m->new_uri.s) user = _m->new_uri;
-	else user = _m->first_line.u.request.uri;
-	
-	if ((get_username(&user) < 0) || !user.len) {
-		LOG(L_ERR, "lookup(): Error while extracting username\n");
-		return -3;
 	}
 	
 	get_act_time();
 
 	ul_lock_udomain((udomain_t*)_t);
-	res = ul_get_urecord((udomain_t*)_t, &user, &r);
+	res = ul_get_urecord((udomain_t*)_t, &aor, &r);
 	if (res < 0) {
 		LOG(L_ERR, "lookup(): Error while querying usrloc\n");
 		ul_unlock_udomain((udomain_t*)_t);
-		return -4;
+		return -2;
 	}
 	
 	if (res > 0) {
-		DBG("lookup(): \'%.*s\' Not found in usrloc\n", user.len, user.s);
+		DBG("lookup(): \'%.*s\' Not found in usrloc\n", aor.len, aor.s);
 		ul_unlock_udomain((udomain_t*)_t);
-		return -5;
+		return -3;
 	}
 
 	ptr = r->contacts;
@@ -121,13 +111,13 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 		if (rwrite(_m, &ptr->c) < 0) {
 			LOG(L_ERR, "lookup(): Unable to rewrite Request-URI\n");
 			ul_unlock_udomain((udomain_t*)_t);
-			return -6;
+			return -4;
 		}
 		ptr = ptr->next;
 	} else {
 		     /* All contacts expired */
 		ul_unlock_udomain((udomain_t*)_t);
-		return -7;
+		return -5;
 	}
 	
 	     /* Append branches if enabled */
@@ -138,7 +128,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 			if (append_branch(_m, ptr->c.s, ptr->c.len) == -1) {
 				LOG(L_ERR, "lookup(): Error while appending a branch\n");
 				ul_unlock_udomain((udomain_t*)_t);
-				return -8;
+				return -6;
 			}
 		} 
 		ptr = ptr->next;

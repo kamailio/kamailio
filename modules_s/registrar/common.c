@@ -28,9 +28,13 @@
  */
 
 #include <string.h> 
+#include <ctype.h>
 #include "../../dprint.h"
 #include "../../ut.h"      /* q_memchr */
+#include "../../parser/parse_uri.h"
 #include "common.h"
+#include "rerrno.h"
+#include "reg_mod.h"
 
 
 /*
@@ -76,4 +80,84 @@ int get_username(str* _s)
 		_s->len = at - _s->s;
 		return 0;
 	} else return -2;
+}
+
+
+#define MAX_AOR_LEN 256
+char aor_buf[MAX_AOR_LEN];
+
+
+static inline void strlower(str* _s)
+{
+	int i;
+
+	for(i = 0; i < _s->len; i++) {
+		_s->s[i] = tolower(_s->s[i]);
+	}
+}
+
+
+/*
+ * Extract Address Of Record
+ */
+int extract_aor(struct sip_msg* _m, str* _a)
+{
+	str aor;
+	struct sip_uri puri;
+
+	aor = ((struct to_body*)_m->to->parsed)->uri;
+
+	if (use_domain) {
+		if (parse_uri(aor.s, aor.len, &puri) < 0) {
+			rerrno = R_AOR_PARSE;
+			LOG(L_ERR, "extract_aor(): Error while parsing AOR, sending 400\n");
+			return -1;
+		}
+
+		_a->s = aor_buf;
+		_a->len = puri.user.len + puri.host.len + 1;
+
+		if (_a->len > MAX_AOR_LEN) {
+			rerrno = R_AOR_LEN;
+			LOG(L_ERR, "extract_aor(): Address Of Record too long, sending 500\n");
+			free_uri(&puri);
+			return -2;
+		}
+
+		memcpy(aor_buf, puri.user.s, puri.user.len);
+		aor_buf[puri.user.len] = '@';
+		memcpy(aor_buf + puri.user.len + 1, puri.host.s, puri.host.len);
+
+		if (case_sensitive) {
+			aor.s = _a->s + puri.user.len + 1;
+			aor.len = puri.host.len;
+			strlower(&aor);
+		} else {
+			strlower(_a);
+		}
+
+		free_uri(&puri);
+	} else {
+		if (get_username(&aor) < 0) {
+			rerrno = R_TO_USER;
+			LOG(L_ERR, "extract_aor(): Can't extract username part from To URI, sending 400\n");
+			return -3;
+		}
+		_a->len = aor.len;
+
+		if (case_sensitive) {
+			_a->s = aor.s;
+		} else {
+			if (aor.len > MAX_AOR_LEN) {
+				rerrno = R_AOR_LEN;
+				LOG(L_ERR, "extract_aor(): Username too long, sending 500\n");
+				return -4;
+			}
+			memcpy(aor_buf, aor.s, aor.len);
+			_a->s = aor_buf;
+			strlower(_a);
+		}
+	}
+
+	return 0;
 }

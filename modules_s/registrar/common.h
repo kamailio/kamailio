@@ -32,6 +32,7 @@
 #define COMMON_H
 
 #include "../../str.h"
+#include "../../parser/msg_parser.h"
 
 
 /*
@@ -44,6 +45,12 @@ char* find_not_quoted(str* _s, char _c);
  * Extract username part from URI
  */
 int get_username(str* _s);
+
+
+/*
+ * Extract Address Of Record
+ */
+int extract_aor(struct sip_msg* _m, str* _a);
 
 
 #endif /* COMMON_H */

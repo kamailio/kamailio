@@ -36,8 +36,11 @@
 extern int default_expires;
 extern int default_q;
 extern int append_branches;
+extern int use_domain;
+extern int case_sensitive;
 
 extern float def_q;
+
 
 extern int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
 

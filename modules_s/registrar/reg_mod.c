@@ -47,9 +47,10 @@ static int domain_fixup(void** param, int param_no); /* Fixup that converts doma
 int default_expires = 3600; /* Default expires value in seconds */
 int default_q       = 0;    /* Default q value multiplied by 1000 */
 int append_branches = 1;    /* If set to 1, lookup will put all contacts found in msg structure */
+int use_domain      = 0;    /* If set to 1, domain will username@domain will be used as AOR */
+int case_sensitive  = 0;    /* If set to 1, username in aor will be case sensitive */
 
 float def_q;                /* default_q converted to float in mod_init */
-
 
 /*
  * sl_send_reply function pointer
@@ -80,9 +81,13 @@ struct module_exports exports = {
 	(char*[]) { /* Module parameter names */
 		"default_expires",
 		"default_q",
-		"append_branches"
+		"append_branches",
+		"use_domain",
+		"case_sensitive"
 	},
 	(modparam_t[]) {   /* Module parameter types */
+		INT_PARAM,
+		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM
@@ -90,9 +95,11 @@ struct module_exports exports = {
 	(void*[]) {   /* Module parameter variable pointers */
 		&default_expires,
 		&default_q,
-		&append_branches
+		&append_branches,
+		&use_domain,
+		&case_sensitive
 	},
-	3,         /* Number of module paramers */
+	5,         /* Number of module paramers */
 
 	mod_init,   /* module initialization function */
 	0,

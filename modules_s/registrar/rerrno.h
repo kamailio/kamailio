@@ -43,6 +43,8 @@ typedef enum rerr {
 	R_UL_DEL_C,   /* Usrloc contact delete failed */
 	R_UL_UPD_C,   /* Usrloc contact update failed */
 	R_TO_USER,    /* No username part in To URI */
+	R_AOR_LEN,    /* Address Of Record too long */
+	R_AOR_PARSE,  /* Error while parsing Address Of Record */
 	R_INV_EXP,    /* Invalid expires parameter in contact */
 	R_INV_Q,      /* Invalid q parameter in contact */
 	R_PARSE,      /* Error while parsing message */

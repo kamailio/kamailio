@@ -99,6 +99,8 @@ static inline void rerrno2msg(int* _c, char** _m)
 	case R_UL_DEL_C:   *_c = 500; *_m = MSG_500 " - Usrloc_contact_delete failed";     break;			
 	case R_UL_UPD_C:   *_c = 500; *_m = MSG_500 " - Usrloc_contact_update failed";     break;
 	case R_TO_USER:    *_c = 400; *_m = MSG_400 " - No username in To URI";            break;
+	case R_AOR_LEN:    *_c = 500; *_m = MSG_500 " - Address Of Record too long";       break;
+	case R_AOR_PARSE:  *_c = 400; *_m = MSG_400 " - Error while parsing AOR";          break;
 	case R_INV_EXP:    *_c = 400; *_m = MSG_400 " - Invalid expires param in contact"; break;
 	case R_INV_Q:      *_c = 400; *_m = MSG_400 " - Invalid q param in contact";       break;
 	case R_PARSE:      *_c = 400; *_m = MSG_400 " - Message parse error";              break;
