@@ -1,0 +1,62 @@
+#
+# $Id$
+#
+# Registrar - REGISTER processing logic
+#
+
+Module depends on: Usrloc - User location module
+                   sl     - For sending stateless replies
+
+
+Exported parameters:
+-------------------
+
+Name:    default_expires
+Type:    integer
+Default: 3600
+Desc:    If the processed message contains neither Expires HFs nor
+         expires contact parameters, this value will be used
+         for newly created usrloc records. The parameter contains
+         number of second to expire (for example use 3600 for one hour).
+
+
+Name:    default_q
+Type:    integer
+Default: 0
+Desc:    The parameter represents default q value for new contacts. Because
+         ser doesn't support float parameter types, the value in the parameter
+         is divided by 100 and stored as float. For example, if you want default_q
+         to be 0.38, use value 38 here.
+
+
+Name:    append_branches
+Type:    integer
+Default: 1
+Desc:    The parameter controls how lookup function processes multiple contacts.
+         If there are multiple contacts for the given username in usrloc and this
+         parametr is set to 1, Request-URI will be overwritten with the highest-q
+         rated contact and the rest will be appended to sip_msg structure and can 
+         be later used by tm for forking. If the parameter is set to 0, only 
+         Request-URI will be overwritten with the highest-q rated contact and the 
+         rest will be left unprocessed.  
+
+
+Exported Functions:
+------------------
+
+Name:   save
+Params: table - Table name where contacts should be stored.
+Desc:   The function processes a REGISTER message. It can add, remove or modify
+        usrloc records depending on Contact and Expires HFs in the REGISTER message.
+        On success, 200 OK will be returned listing all contacts that are currently
+        in usrloc. On an error, error message will be send with a short description
+        in reason phrase.
+
+
+Name:   lookup
+Params: table - Name of table that should be used for the lookup
+Desc:   The functions extracts username from Request-URI and tries to find all contacts
+        for the username in usrloc. If there are no such contacts, -1 will be returned.
+        If there are such contacts, Request-URI will be overwritten with the contact that
+        has the highest q value and optionally the rest will be appended to the message
+        (depending on append_branches parameter value).
