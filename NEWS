@@ -6,11 +6,13 @@ $Id$
 0.8.13 changes
 
 modules:
+ - TM saves the avp list into transactions, and make it available into
+   callbacks, failure and reply routes.
  - VM functionality was transfered into TM module. Instead of fetching the
    email value from DB (as VM), TM looks for the "email" attribute to get the
    value.
    vm() function was replaced with t_write_req()
-   vm_reply() fifo functions was replcaed by TM with t_reply() fifo function
+   vm_reply() fifo functions was replcated by TM with t_reply() fifo function
    NOTE!! because current version of SEMS/AA try to send reply via vm_reply,
    it will not work with the TM version.
  - TM contains new command - t_write_unix("/tmp/sems.sock", "announcement")
@@ -27,6 +29,7 @@ core:
  - new parts:
        UNIX domain socket server implemented
  - changes: 
+ 	-  avp (Attribute-Value Pair) support added
     -  multicast support added (see mcast_loopback & mcast_ttl)
     -  saving of procces group id enabled, if the -G option is specified
        (a safe way to quickly kill all ser processes)
