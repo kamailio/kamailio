@@ -346,6 +346,11 @@ error:
 
 static int cpl_exit(void)
 {
+	/* free the TZ orig */
+	if (cpl_orig_tz.s)
+		shm_free(cpl_orig_tz.s);
+
+	/* if still runnigng, stop the aux process */
 	if (!aux_process) {
 		LOG(L_INFO,"INFO:cpl_c:cpl_exit: aux process hasn't been created -> "
 			"nothing to kill :-(\n");
