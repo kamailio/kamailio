@@ -114,7 +114,7 @@ static inline unsigned int calc_buf_len(ucontact_t* c)
  */
 int build_contact(ucontact_t* c)
 {
-	char* p;
+	char *p, *cp;
 	int fl, len;
 
 	contact.data_len = calc_buf_len(c);
@@ -163,7 +163,8 @@ int build_contact(ucontact_t* c)
 
 			memcpy(p, EXPIRES_PARAM, EXPIRES_PARAM_LEN);
 			p += EXPIRES_PARAM_LEN;
-			memcpy(p, int2str((int)(c->expires - act_time), &len), len);
+			cp = int2str((int)(c->expires - act_time), &len);
+			memcpy(p, cp, len);
 			p += len;
 
 			if (c->received.s) {
