@@ -41,7 +41,7 @@
 #include "dlist.h"
 #include "udomain.h"
 #include "utime.h"
-
+#include "ul_mod.h"
 
 #define MAX_CONTACT 128
 #define MAX_EXPIRES 20
@@ -219,6 +219,13 @@ static int ul_add(FILE* pipe, char* response_file)
 		LOG(L_ERR, "ERROR: ul_add: aor expected\n");
 		return 1;
 	}
+
+	if (use_domain && !memchr(user_s, '@', user.len)) {
+		fifo_reply(response_file,
+			   "400 ul_add: username@domain expected\n");
+		LOG(L_ERR, "ERROR: ul_add: username@domain expected\n");
+		return 1;
+	}
 	
 	if (!read_line(contact_s, MAX_CONTACT, pipe, &contact.len) || contact.len == 0) {
 		fifo_reply(response_file,
@@ -318,6 +325,13 @@ int static ul_rm( FILE *pipe, char *response_file )
 		return 1;
 	}
 
+	if (use_domain && !memchr(user, '@', aor.len)) {
+		fifo_reply(response_file,
+			   "400 ul_rm: username@domain expected\n");
+		LOG(L_ERR, "ERROR: ul_rm: username@domain expected\n");
+		return 1;
+	}
+
 	aor.s = user;
 	t.s = table;
 
@@ -369,6 +383,14 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 		return 1;
 	}
 
+	if (use_domain && !memchr(user, '@', aor.len)) {
+		fifo_reply(response_file,
+			   "400 ul_rm_contact: user@domain expected\n");
+		LOG(L_ERR, "ERROR: ul_rm_contact: user@domain expected\n");
+		return 1;
+	};
+	
+	
 	if (!read_line(contact, MAX_CONTACT, pipe, &c.len) || c.len == 0) {
 		fifo_reply(response_file,
 			   "400 ul_rm_contact: contact expected\n");
@@ -483,7 +505,14 @@ static inline int ul_show_contact(FILE* pipe, char* response_file)
 		LOG(L_ERR, "ERROR: ul_show_contact: user name expected\n");
 		return 1;
 	}
-
+	
+	if (use_domain && !memchr(user, '@', aor.len)) {
+		fifo_reply(response_file,
+			   "400 ul_show_contact: user@domain expected\n");
+		LOG(L_ERR, "ERROR: ul_show_contact: Domain missing\n");
+		return 1;
+	}
+	
 	aor.s = user;
 	t.s = table;
 	
