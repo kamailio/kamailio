@@ -87,6 +87,7 @@ static gen_lock_set_t* init_lock_set(int *size)
 {
 	gen_lock_set_t *lset;
 
+	lset=0; /* kill warnings */
 	for( ; *size ; *size=((*size)>>1) ) {
 		LOG(L_INFO,"INFO:pike:init_lock_set: probing %d set size\n",*size);
 		/* create a lock set */
