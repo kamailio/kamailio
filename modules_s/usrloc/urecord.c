@@ -353,7 +353,7 @@ int db_delete_urecord(urecord_t* _r)
 	b[_r->domain->len] = '\0';
 	db_use_table(db, b);
 
-	if (db_delete(db, keys, vals, 1) < 0) {
+	if (db_delete(db, keys, 0, vals, 1) < 0) {
 		LOG(L_ERR, "db_delete_urecord(): Error while deleting from database\n");
 		return -1;
 	}

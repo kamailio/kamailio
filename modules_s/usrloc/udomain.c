@@ -213,7 +213,7 @@ int preload_udomain(udomain_t* _d)
 	memcpy(b, _d->name->s, _d->name->len);
 	b[_d->name->len] = '\0';
 	db_use_table(db, b);
-	if (db_query(db, 0, 0, columns, 0, 6, 0, &res) < 0) {
+	if (db_query(db, 0, 0, 0, columns, 0, 6, 0, &res) < 0) {
 		LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
 		return -1;
 	}

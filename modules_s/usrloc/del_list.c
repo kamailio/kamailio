@@ -87,7 +87,7 @@ int process_del_list(str* _d)
 		VAL_STR(vals + 1).len = p->cont_len;
 		VAL_STR(vals + 1).s = p->tail + p->user_len;
 
-		if (db_delete(db, keys, vals, 2) < 0) {
+		if (db_delete(db, keys, 0, vals, 2) < 0) {
 			LOG(L_ERR, "process_del_list(): Error while deleting from database\n");
 			return -1;
 		}

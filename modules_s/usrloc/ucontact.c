@@ -344,7 +344,7 @@ int db_update_ucontact(ucontact_t* _c)
 	b[_c->domain->len] = '\0';
 	db_use_table(db, b);
 
-	if (db_update(db, keys1, vals1, keys2, vals2, 2, 4) < 0) {
+	if (db_update(db, keys1, 0, vals1, keys2, vals2, 2, 4) < 0) {
 		LOG(L_ERR, "db_upd_ucontact(): Error while updating database\n");
 		return -1;
 	}
@@ -369,7 +369,7 @@ int db_delete_ucontact(ucontact_t* _c)
 	b[_c->domain->len] = '\0';
 	db_use_table(db, b);
 
-	if (db_delete(db, keys, vals, 2) < 0) {
+	if (db_delete(db, keys, 0, vals, 2) < 0) {
 		LOG(L_ERR, "db_del_ucontact(): Error while deleting from database\n");
 		return -1;
 	}
