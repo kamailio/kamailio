@@ -106,7 +106,7 @@ struct tcp_connection** tcpconn_id_hash=0;
 gen_lock_t* tcpconn_lock=0;
 
 struct tcp_child tcp_children[MAX_TCP_CHILDREN];
-static int connection_id=1; /*  unique for each connection, used for 
+static int* connection_id=0; /*  unique for each connection, used for 
 								quickly finding the corresponding connection
 								for a reply */
 int unix_tcp_sock;
@@ -147,7 +147,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	}
 	init_tcp_req(&c->req);
 	c->timeout=get_ticks()+TCP_CON_TIMEOUT;
-	c->id=connection_id++;
+	c->id=(*connection_id)++;
 	c->rcv.proto_reserved1=0; /* this will be filled before receive_message*/
 	c->rcv.proto_reserved2=0;
 	return c;
@@ -872,12 +872,24 @@ int init_tcp()
 		tcpconn_lock=0;
 		goto error;
 	}
+	/* init globals */
+	connection_id=(int*)shm_malloc(sizeof(int));
+	if (connection_id==0){
+		LOG(L_CRIT, "ERROR: init_tcp: could not alloc globals\n");
+		lock_destroy(tcpconn_lock);
+		lock_dealloc((void*)tcpconn_lock);
+		tcpconn_lock=0;
+		goto error;
+	}
+	*connection_id=1;
 	/* alloc hashtables*/
 	tcpconn_addr_hash=(struct tcp_connection**)shm_malloc(TCP_ADDR_HASH_SIZE*
 								sizeof(struct tcp_connection*));
 
 	if (tcpconn_addr_hash==0){
 		LOG(L_CRIT, "ERROR: init_tcp: could not alloc address hashtable\n");
+		shm_free(connection_id);
+		connection_id=0;
 		lock_destroy(tcpconn_lock);
 		lock_dealloc((void*)tcpconn_lock);
 		tcpconn_lock=0;
@@ -888,6 +900,8 @@ int init_tcp()
 								sizeof(struct tcp_connection*));
 	if (tcpconn_id_hash==0){
 		LOG(L_CRIT, "ERROR: init_tcp: could not alloc id hashtable\n");
+		shm_free(connection_id);
+		connection_id=0;
 		shm_free(tcpconn_addr_hash);
 		tcpconn_addr_hash=0;
 		lock_destroy(tcpconn_lock);
@@ -922,6 +936,10 @@ void destroy_tcp()
 	if(tcpconn_id_hash){
 		shm_free(tcpconn_id_hash);
 		tcpconn_id_hash=0;
+	}
+	if(connection_id){
+		shm_free(connection_id);
+		connection_id=0;
 	}
 }
 

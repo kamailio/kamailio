@@ -41,12 +41,12 @@
 
 
 #define TCP_BUF_SIZE 65535
-#define TCP_CON_TIMEOUT 60 /* in  seconds */
-#define TCP_CON_SEND_TIMEOUT 30 /* timeout after a send */
-#define TCP_CHILD_TIMEOUT 5 /* after 5 seconds, the child "returns" 
+#define TCP_CON_TIMEOUT 180 /* in  seconds */
+#define TCP_CON_SEND_TIMEOUT 120 /* timeout after a send */
+#define TCP_CHILD_TIMEOUT 10 /* after 5 seconds, the child "returns" 
 							 the connection to the tcp master process */
-#define TCP_MAIN_SELECT_TIMEOUT 5 /* how often "tcp main" checks for timeout*/
-#define TCP_CHILD_SELECT_TIMEOUT 2 /* the same as above but for children */
+#define TCP_MAIN_SELECT_TIMEOUT 10 /* how often "tcp main" checks for timeout*/
+#define TCP_CHILD_SELECT_TIMEOUT 5 /* the same as above but for children */
 
 
 enum tcp_req_errors {	TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR,

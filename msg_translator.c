@@ -1182,7 +1182,8 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		if  ((id_buf=id_builder(msg, &id_len))==0){
 			LOG(L_ERR, "ERROR: build_req_buf_from_sip_req:"
 							" id_builder failed\n");
-			goto error01; /* free everything */
+			goto error00; /* we don't need to free anything,
+			                 nothing alloc'ed yet*/
 		}
 		extra_params.s=id_buf;
 		extra_params.len=id_len;
@@ -1303,7 +1304,7 @@ skip_clen:
 		 * parse_headers is called from clen_builder */
 		anchor=anchor_lump(&(msg->add_rm), msg->unparsed-buf, 0,
 							 HDR_CONTENTLENGTH);
-		if (anchor==0) goto error04; /* free clen_buf*/
+		if (anchor==0) goto error04; /* free clen_buf */
 		if (insert_new_lump_after(anchor, clen_buf, clen_len,
 					HDR_CONTENTLENGTH)==0)
 			goto error04; /* free clen_buf*/
@@ -1354,13 +1355,15 @@ skip_clen:
 #endif
 
 	*returned_len=new_len;
+	/* cleanup */
+#ifdef USE_TCP
+	if (id_buf) pkg_free(id_buf); /* it's not in a lump => we don't need it
+									 anymore */
+#endif
 	return new_buf;
 
 error01:
-	pkg_free(line_buf);
-#ifdef USE_TCP
-	if (id_buf) pkg_free(id_buf);
-#endif
+	if (line_buf) pkg_free(line_buf);
 error02:
 	if (received_buf) pkg_free(received_buf);
 error03:
@@ -1370,6 +1373,9 @@ error04:
 	if (clen_buf) pkg_free(clen_buf);
 #endif
 error00:
+#ifdef USE_TCP
+	if (id_buf) pkg_free(id_buf);
+#endif
 	*returned_len=0;
 	return 0;
 }
