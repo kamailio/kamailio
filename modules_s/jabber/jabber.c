@@ -38,6 +38,7 @@
  * 2003-03-16 flags export parameter added (janakj)
  * 2003-04-06 rank 0 changed to 1 in child_init (janakj)
  * 2003-06-19 fixed too many Jabber workers bug (mostly on RH9.0) (dcm)
+ * 2003-08-05 adapted to the new parse_content_type_hdr function (bogdan)
  */
 
 
@@ -415,6 +416,7 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 	xj_sipmsg jsmsg;
 	int pipe, fl;
 	t_xj_jkey jkey, *p;
+	int mime;
 
 	// extract message body - after that whole SIP MESSAGE is parsed
 	if (type==XJ_SEND_MESSAGE)
@@ -438,7 +440,7 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 		body.len = get_content_length(msg);
 
 		/* parse the content-type header */
-		if(parse_content_type_hdr(msg)==-1)
+		if((mime=parse_content_type_hdr(msg))<1)
 		{
 			LOG(L_ERR,"XJAB:xjab_manage_sipmsg: ERROR cannot parse"
 					" Content-Type header\n");
@@ -446,11 +448,11 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 		}
 
 		/* check the content-type value */
-		if(get_content_type(msg)!=CONTENT_TYPE_TEXT_PLAIN
-			&& get_content_type(msg)!=CONTENT_TYPE_MESSAGE_CPIM)
+		if(mime!=(TYPE_TEXT<<16)+SUBTYPE_PLAIN
+			&& mime!=(TYPE_MESSAGE<<16)+SUBTYPE_CPIM)
 		{
 			LOG(L_ERR,"XJAB:xjab_manage_sipmsg: ERROR invalid content-type for"
-				" a message request! type found=%d\n", get_content_type(msg));
+				" a message request! type found=%d\n", mime);
 			goto error;
 		}
 	}

@@ -41,6 +41,7 @@
  *             now (janakj)
  * 2003-04-07: m_dump takes a parameter which sets the way the outgoing URI
  *             is computed (dcm)
+ * 2003-08-05 adapted to the new parse_content_type_hdr function (bogdan)
  */
 
 #include <stdio.h>
@@ -266,6 +267,7 @@ static int m_store(struct sip_msg* msg, char* mode, char* str2)
 	int nr_keys = 0, val, lexpire;
 	t_content_type ctype;
 	char buf[512], buf1[1024], *p;
+	int mime;
 
 	DBG("MSILO: m_store: ------------ start ------------\n");
 
@@ -448,16 +450,15 @@ static int m_store(struct sip_msg* msg, char* mode, char* str2)
 	lexpire = expire_time;
 	// add 'content-type'
 	/* parse the content-type header */
-	if (parse_content_type_hdr(msg)==-1 ) 
+	if ((mime=parse_content_type_hdr(msg))<1 ) 
 	{
 		LOG(L_ERR,"MSILO:m_store: ERROR cannot parse Content-Type header\n");
 		goto error;
 	}
 
 	/** check the content-type value */
-	if(msg->content_type && msg->content_type->body.len > 0
-		&& get_content_type(msg)!=CONTENT_TYPE_TEXT_PLAIN
-		&& get_content_type(msg)!=CONTENT_TYPE_MESSAGE_CPIM )
+	if( mime!=(TYPE_TEXT<<16)+SUBTYPE_PLAIN
+		&& mime!=(TYPE_MESSAGE<<16)+SUBTYPE_CPIM )
 	{
 		if(m_extract_content_type(msg->content_type->body.s, 
 				msg->content_type->body.len, &ctype, CT_TYPE) != -1)

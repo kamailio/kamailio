@@ -28,9 +28,10 @@
 /*
  * History:
  * --------
- * 2003-02-28 protocolization of t_uac_dlg completed (jiri)
  * 2003-01-23 switched from t_uac to t_uac_dlg, adapted to new way of
  * parsing for Content-Type; by bogdan
+ * 2003-02-28 protocolization of t_uac_dlg completed (jiri)
+ * 2003-08-05 adapted to the new parse_content_type_hdr function (bogdan)
  */
 
 #include <unistd.h>
@@ -158,6 +159,7 @@ int push_on_network(struct sip_msg *msg, int net)
 	struct to_body  *from;
 	char   *p;
 	int    len;
+	int    mime;
 
 	/* get the message's body
 	 * anyhow we have to call this function, so let's do it at the beginning
@@ -177,16 +179,16 @@ int push_on_network(struct sip_msg *msg, int net)
 	body.len = get_content_length( msg );
 
 	/* parse the content-type header */
-	if (parse_content_type_hdr(msg)==-1 ) {
+	if ( (mime=parse_content_type_hdr(msg))<1 ) {
 		LOG(L_ERR,"ERROR:extcmd:dump_msg:cannot parse Content-Type header\n");
 		goto error;
 	}
 
 	/* check the content-type value */
-	if ( get_content_type(msg)!=CONTENT_TYPE_TEXT_PLAIN
-	&& get_content_type(msg)!=CONTENT_TYPE_MESSAGE_CPIM ) {
+	if ( mime!=(TYPE_TEXT<<16)+SUBTYPE_PLAIN
+	&& mime!=(TYPE_MESSAGE<<16)+SUBTYPE_CPIM ) {
 		LOG(L_ERR,"ERROR:extcmd:dump_msg: invalid content-type for a "
-			"message request! type found=%d\n",get_content_type(msg));
+			"message request! type found=%d\n",mime);
 		goto error;
 	}
 
