@@ -211,7 +211,7 @@ Options:\n\
     -h           This help message\n\
     -b nr        Maximum receive buffer size which will not be exceeded by\n\
                   auto-probing procedure even if  OS allows\n\
-    -m nr        Size of shared memory allocated in Megabytes\n\
+    -m nr        Size of shared memory allocated (in Megabytes)\n\
     -w dir       Change the working directory to \"dir\" (default \"/\")\n\
     -t dir       Chroot to \"dir\"\n\
     -u uid       Change uid \n\
@@ -257,7 +257,7 @@ void receive_stdin_loop()
 }
 */
 
-/* global vars */
+/* global vars) */
 
 int own_pgid = 0; /* whether or not we have our own pgid (and it's ok
 					 to use kill(0, sig) */
