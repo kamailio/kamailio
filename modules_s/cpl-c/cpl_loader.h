@@ -23,14 +23,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ *
+ * History:
+ * -------
+ * 2003-06-24: file created (bogdan)
  */
 
-#ifndef _CPL_PARSER_H
-#define _CPL_PARSER_H
+#ifndef _CPL_LOADER_H
+#define _CPL_LOADER_H
 
-#include "../../str.h"
 
-int encodeXML(str *xml, char* DTD_filename, str *bin);
-
+int cpl_loader( FILE *fifo_stream, char *response_file );
 
 #endif
+
+
+
+
+

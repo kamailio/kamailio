@@ -40,22 +40,19 @@
 #include "../../str.h"
 #include "../../dprint.h"
 #include "../../error.h"
+#include "../../fifo_server.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../db/db.h"
 #include "cpl_run.h"
 #include "cpl_db.h"
+#include "cpl_loader.h"
 
-
-//char           *resp_buf;
-//char           *cpl_server = "127.0.0.1";
-//unsigned int   cpl_port = 18011;
-//unsigned int   resp_len;
-//unsigned int   resp_code;
 
 char *DB_URL       = 0;  /* database url */
 char *DB_TABLE     = 0;  /* */
-static db_con_t* db_hdl   = 0;
+char *dtd_file     = 0;
+db_con_t* db_hdl   = 0;   /* this should be static !!!!*/
 int  cache_timeout = 5;
 cmd_function sl_send_rpl = 0;
 
@@ -85,6 +82,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"cpl_db",        STR_PARAM, &DB_URL       },
 	{"cpl_table",     STR_PARAM, &DB_TABLE     },
+	{"cpl_dtd_file",  STR_PARAM, &dtd_file     },
 	{"cache_timeout", INT_PARAM, &cache_timeout},
 	{0, 0, 0}
 };
@@ -141,6 +139,11 @@ static int cpl_init(void)
 			"found empty\n");
 		goto error;
 	}
+	if (dtd_file==0) {
+		LOG(L_CRIT,"ERROR:cpl_init: mandatory parameter \"cpl_dtd_file\" "
+			"found empty\n");
+		goto error;
+	}
 
 	/* bind to the mysql module */
 	if (bind_dbmod()) {
@@ -152,8 +155,14 @@ static int cpl_init(void)
 	/* bind the sl_send_reply function */
 	sl_send_rpl = find_export("sl_send_reply", 2, REQUEST_ROUTE);
 	if (sl_send_rpl==0) {
-		LOG(L_CRIT,"ERROR:cpl_init: connot find \"sl_send_reply\" function! "
+		LOG(L_CRIT,"ERROR:cpl_init: cannot find \"sl_send_reply\" function! "
 			"Did you forget to load the sl module ?\n");
+		goto error;
+	}
+
+	/* register the fifo command */
+	if (register_fifo_cmd( cpl_loader, "LOAD_CPL", 0)!=1) {
+		LOG(L_CRIT,"ERROR:cpl_init: cannot register fifo command!\n");
 		goto error;
 	}
 
@@ -166,10 +175,9 @@ error:
 
 static int cpl_child_init(int rank)
 {
-	//int  i, foo;
-
-	/* only the child 1 will execut this
-	if (rank != 1) goto done; */
+	/* don't do anything for main process and TCP manager process */
+	if (rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+		return 0;
 
 	if ( (db_hdl=db_init(DB_URL))==0 ) {
 		LOG(L_CRIT,"ERROR:cpl_child_init: cannot initialize database "

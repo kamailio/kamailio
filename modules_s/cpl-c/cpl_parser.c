@@ -38,6 +38,7 @@
 #include "CPL_tree.h"
 #include "sub_list.h"
 #include "../../dprint.h"
+#include "../../str.h"
 
 
 
@@ -702,10 +703,9 @@ int encrypt_node( xmlNodePtr node, unsigned char *p)
 
 
 
-char* encryptXML( char* xml_s, int xml_len, char* DTD_filename, int *bin_len)
+int encodeXML( str *xml, char* DTD_filename, str *bin)
 {
 	static unsigned char buf[2048];
-	int  len;
 	xmlValidCtxt  cvp;
 	xmlDocPtr  doc;
 	xmlNodePtr cur;
@@ -716,8 +716,8 @@ char* encryptXML( char* xml_s, int xml_len, char* DTD_filename, int *bin_len)
 	dtd  = 0;
 
 	/* parse the xml */
-	xml_s[xml_len] = 0;
-	doc = xmlParseDoc( xml_s );
+	xml->s[xml->len] = 0;
+	doc = xmlParseDoc( xml->s );
 	if (!doc) {
 		LOG(L_ERR,"ERROR:cpl:encryptXML:CPL script not parsed successfully\n");
 		goto error;
@@ -746,8 +746,8 @@ char* encryptXML( char* xml_s, int xml_len, char* DTD_filename, int *bin_len)
 		goto error;
 	}
 
-	len = encrypt_node( cur, buf);
-	if (len<0) {
+	bin->len = encrypt_node( cur, buf);
+	if (bin->len<0) {
 		LOG(L_ERR,"ERROR:cpl:encryptXML: zero lenght return by encripting"
 			" function\n");
 		goto error;
@@ -756,8 +756,8 @@ char* encryptXML( char* xml_s, int xml_len, char* DTD_filename, int *bin_len)
 
 	if (doc) xmlFreeDoc(doc);
 	if (list) delete_list(list);
-	if (bin_len) *bin_len = len;
-	return buf;
+	bin->s = buf;
+	return 1;
 error:
 	if (doc) xmlFreeDoc(doc);
 	if (list) delete_list(list);

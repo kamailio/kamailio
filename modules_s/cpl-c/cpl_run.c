@@ -48,6 +48,19 @@
 #define HDR_NOT_FOUND        ((char*)0xffffffff)
 #define UNDEF_CHAR           (0xff)
 
+#define check_overflow_by_ptr(_ptr_,_intr_,_error_) \
+	do {\
+		if ( (char*)(_ptr_)>(_intr_)->script.len+(_intr_)->script.s ) \
+			goto _error_; \
+	}while(0)
+
+#define check_overflow_by_offset(_len_,_intr_,_error_) \
+	do {\
+		if ( (char*)((_intr_)->ip+(_len_)) > \
+		(_intr_)->script.len+(_intr_)->script.s ) \
+			goto _error_; \
+	}while(0)
+
 
 extern int (*sl_send_rpl)(struct sip_msg*, char*, char*);
 
@@ -65,7 +78,7 @@ struct cpl_interpreter* build_cpl_interpreter( struct sip_msg *msg,
 	}
 	memset( intr, 0, sizeof(struct cpl_interpreter));
 
-	/* unut the interpreter*/
+	/* init the interpreter*/
 	intr->script.s = script->s;
 	intr->script.len = script->len;
 	intr->recv_time = time(0);
@@ -575,6 +588,7 @@ error:
 int run_cpl_script( struct cpl_interpreter *intr )
 {
 	do {
+		check_overflow_by_offset( SIMPLE_NODE_SIZE(intr->ip), intr, error);
 		switch ( NODE_TYPE(intr->ip) ) {
 			case CPL_NODE:
 				DBG("DEBUG:run_cpl_script:processing CPL node \n");

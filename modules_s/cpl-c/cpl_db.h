@@ -28,8 +28,11 @@
 #ifndef _CPL_DB_H
 #define _CPL_DB_H
 
+#include "../../db/db.h"
 
-int write_to_db(char *usr, char *bin_s, int bin_len, char *xml_s, int xml_len);
+
+int write_to_db(db_con_t *db_con, char *usr, str *xml, str *bin);
 int get_user_script( db_con_t *db_hdl, str *user, str *script);
+
 
 #endif
