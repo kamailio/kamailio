@@ -37,7 +37,7 @@
 
 
 /* returns a socket_info pointer to the sending socket or 0 on error
- * params: destination socke_union pointer
+ * params: destination socket_union pointer
  */
 struct socket_info* get_send_socket(union sockaddr_union* to)
 {
