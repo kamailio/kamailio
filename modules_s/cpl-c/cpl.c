@@ -60,7 +60,7 @@ char *dtd_file     = 0;
 db_con_t* db_hdl   = 0;   /* this should be static !!!!*/
 int  cache_timeout = 5;
 cmd_function sl_send_rpl = 0;
-static char *log_dir     = 0; /*directory where the user log should be dumped*/
+char *log_dir     = 0;    /*directory where the user log should be dumped*/
 int   cpl_cmd_pipe[2];
 
 
@@ -177,6 +177,11 @@ static int cpl_init(void)
 		LOG(L_WARN,"WARNING:cpl_init: log_dir param found void -> logging "
 			" disabled!\n");
 	} else {
+		if ( strlen(log_dir)>MAX_LOG_DIR_SIZE ) {
+			LOG(L_ERR,"ERROR:cpl_init: dir \"%s\" has a too long name :-(!\n",
+				log_dir);
+			goto error;
+		}
 		/* check if the dir exists */
 		if (stat( log_dir, &stat_t)==-1) {
 			LOG(L_ERR,"ERROR:cpl_init: checking dir \"%s\" status failed;"
@@ -345,6 +350,8 @@ static int cpl_run_script(struct sip_msg* msg, char* str1, char* str2)
 	/* build a new script interpreter */
 	if ( (cpl_intr=build_cpl_interpreter(msg,&script,(unsigned int)str1))==0 )
 		goto error;
+	/* attache the user */
+	cpl_intr->user = uri.user;
 
 	/* run the script */
 	switch (run_cpl_script( cpl_intr )) {

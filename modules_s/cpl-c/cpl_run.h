@@ -40,6 +40,7 @@
 
 
 struct cpl_interpreter {
+	str user;              /* user */
 	str script;            /* CPL script */
 	unsigned char *ip;     /* instruction pointer */
 	int recv_time;         /* receiving time stamp */

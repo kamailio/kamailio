@@ -179,7 +179,9 @@
 
 /* attributs and values for LOG node */
 #define  NAME_ATTR                   0
+#define  MAX_NAME_SIZE               32
 #define  COMMENT_ATTR                1
+#define  MAX_COMMENT_SIZE            128
 
 /* attributs and values for SUB node */
 #define  REF_ATTR                    0

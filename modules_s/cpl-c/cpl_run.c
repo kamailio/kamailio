@@ -39,12 +39,15 @@
 #include "CPL_tree.h"
 #include "loc_set.h"
 #include "cpl_utils.h"
+#include "cpl_nonsig.h"
 #include "cpl_run.h"
 
 
 #define EO_SCRIPT            ((unsigned char*)0xffffffff)
 #define HDR_NOT_FOUND        ((char*)0xffffffff)
 #define UNDEF_CHAR           (0xff)
+#define LOG_SEPARATOR        ": "
+#define LOG_SEPARATOR_LEN    (sizeof(LOG_SEPARATOR)-1)
 
 #define check_overflow_by_ptr(_ptr_,_intr_,_error_) \
 	do {\
@@ -67,7 +70,7 @@
 
 
 extern int (*sl_send_rpl)(struct sip_msg*, char*, char*);
-
+extern char *log_dir;
 
 /* include all inline functions for processing the switches */
 #include "cpl_switches.h"
@@ -341,8 +344,8 @@ inline unsigned char *run_reject( struct cpl_interpreter *intr )
 				p += 3+reason_len;
 				break;
 			default:
-				LOG(L_WARN,"WARNING:run_reject: unknown attribute "
-					"(%d) in REJECT node -> ignoring..\n",*p);
+				LOG(L_ERR,"ERROR:run_reject: unknown attribute "
+					"(%d) in REJECT node\n",*p);
 				goto error;
 		}
 	}
@@ -412,8 +415,8 @@ inline unsigned char *run_redirect( struct cpl_interpreter *intr )
 				p += 2;
 				break;
 			default:
-				LOG(L_WARN,"WARNING:run_redirect: unknown attribute "
-					"(%d) in REDIRECT node -> ignoring..\n",*p);
+				LOG(L_ERR,"ERROR:run_redirect: unknown attribute "
+					"(%d) in REDIRECT node\n",*p);
 				goto error;
 		}
 	}
@@ -475,6 +478,102 @@ error:
 
 
 
+inline unsigned char *run_log( struct cpl_interpreter *intr )
+{
+	unsigned char *p;
+	str buf;
+	str name;
+	str comment;
+	str cur_time;
+	time_t now;
+	int i;
+
+	name.s = comment.s = 0;
+	name.len = comment.len = 0;
+
+	/* sanity check */
+	if (NR_OF_KIDS(intr->ip)>1) {
+		LOG(L_ERR,"ERROR:run_log: LOG node suppose to have max one child, "
+			"not %d!\n",NR_OF_KIDS(intr->ip));
+		goto error;
+	}
+
+	/* is loging enabled? */
+	if ( log_dir==0 )
+		goto done;
+
+	/* read the attributes of the LOG node*/
+	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
+		switch (*p) {
+			case NAME_ATTR:
+				check_overflow_by_ptr( p+2, intr, error);
+				name.len = *((unsigned short*)(p+1));
+				check_overflow_by_ptr( p+2+name.len, intr, error);
+				name.s = p+3;
+				p += 3+name.len;
+				break;
+			case COMMENT_ATTR:
+				check_overflow_by_ptr( p+2, intr, error);
+				comment.len = *((unsigned short*)(p+1));
+				check_overflow_by_ptr( p+2+comment.len, intr, error);
+				comment.s = p+3;
+				p += 3+comment.len;
+				break;
+			default:
+				LOG(L_ERR,"ERROR:run_log: unknown attribute "
+					"(%d) in LOG node\n",*p);
+				goto error;
+		}
+	}
+
+	if (comment.len==0)
+		goto done;
+
+	/* if no log name -> set the default one */
+	if (!name.len) {
+		name.s = "default_log";
+		name.len = 11;
+	}
+
+	/* get current date+time */
+	time( &now );
+	cur_time.s = ctime( &now );
+	cur_time.len = strlen( cur_time.s )-1; /* ctime_r adds a \n at the end */
+
+	buf.len =  intr->user.len + cur_time.len + 1/*' '*/ + name.len +
+		LOG_SEPARATOR_LEN + comment.len + 1/*'\n'*/;
+	buf.s = (char*)shm_malloc( buf.len );
+	if (!buf.s) {
+		LOG(L_ERR,"ERROR:cpl_c:run_log: no more shm memory!\n");
+		goto error;
+	}
+
+	/* compose the buffer */
+	p = buf.s;
+	memcpy( p, intr->user.s, intr->user.len );
+	p += intr->user.len;
+	memcpy( p, cur_time.s, cur_time.len);
+	p +=  cur_time.len;
+	*(p++) = ' ';
+	memcpy( p, name.s, name.len);
+	p +=  name.len;
+	memcpy( p, LOG_SEPARATOR, LOG_SEPARATOR_LEN);
+	p +=  LOG_SEPARATOR_LEN;
+	memcpy( p, comment.s, comment.len);
+	p += comment.len;
+	*(p++) = '\n';
+
+	/* send the command */
+	write_cpl_cmd( CPL_LOG_CMD, buf.s, intr->user.len, buf.len-intr->user.len);
+
+done:
+	return ((NR_OF_KIDS(intr->ip)==0)?EO_SCRIPT:
+		(intr->ip+KID_OFFSET(intr->ip,0)));
+error:
+	return 0;
+}
+
+
 
 
 int run_cpl_script( struct cpl_interpreter *intr )
@@ -483,43 +582,47 @@ int run_cpl_script( struct cpl_interpreter *intr )
 		check_overflow_by_offset( SIMPLE_NODE_SIZE(intr->ip), intr, error);
 		switch ( NODE_TYPE(intr->ip) ) {
 			case CPL_NODE:
-				DBG("DEBUG:run_cpl_script:processing CPL node \n");
+				DBG("DEBUG:run_cpl_script: processing CPL node \n");
 				intr->ip = run_cpl_node( intr );
 				break;
 			case ADDRESS_SWITCH_NODE:
-				DBG("DEBUG:run_cpl_script:processing address-switch node\n");
+				DBG("DEBUG:run_cpl_script: processing address-switch node\n");
 				intr->ip = run_address_switch( intr );
 				break;
 			case STRING_SWITCH_NODE:
-				DBG("DEBUG:run_cpl_script:processing string-switch node\n");
+				DBG("DEBUG:run_cpl_script: processing string-switch node\n");
 				intr->ip = run_string_switch( intr );
 				break;
 			case PRIORITY_SWITCH_NODE:
-				DBG("DEBUG:run_cpl_script:processing priority-switch node\n");
+				DBG("DEBUG:run_cpl_script: processing priority-switch node\n");
 				intr->ip = run_priority_switch( intr );
 				break;
 			case TIME_SWITCH_NODE:
-				DBG("DEBUG:run_cpl_script:processing time-switch node\n");
+				DBG("DEBUG:run_cpl_script: processing time-switch node\n");
 				intr->ip = run_time_switch( intr );
 				break;
 			case LOCATION_NODE:
-				DBG("DEBUG:run_cpl_script:processing location node\n");
+				DBG("DEBUG:run_cpl_script: processing location node\n");
 				intr->ip = run_location( intr );
 				break;
 			case REMOVE_LOCATION_NODE:
-				DBG("DEBUG:run_cpl_script:processing remove_location node\n");
+				DBG("DEBUG:run_cpl_script: processing remove_location node\n");
 				intr->ip = run_remove_location( intr );
 				break;
 			case REJECT_NODE:
-				DBG("DEBUG:run_cpl_script:processing reject node\n");
+				DBG("DEBUG:run_cpl_script: processing reject node\n");
 				intr->ip = run_reject( intr );
 				break;
 			case REDIRECT_NODE:
-				DBG("DEBUG:run_cpl_script:processing redirect node\n");
+				DBG("DEBUG:run_cpl_script: processing redirect node\n");
 				intr->ip = run_redirect( intr );
 				break;
+			case LOG_NODE:
+				DBG("DEBUG:run_cpl_script: processing log node\n");
+				intr->ip = run_log( intr );
+				break;
 			case SUB_NODE:
-				DBG("DEBUG:run_cpl_script:processing sub node\n");
+				DBG("DEBUG:run_cpl_script: processing sub node\n");
 				intr->ip = run_sub( intr );
 				break;
 			default:

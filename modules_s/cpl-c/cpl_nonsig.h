@@ -32,17 +32,20 @@
 #ifndef _CPL_NONSIG_H_
 #define _CPL_NONSIG_H_
 
-#include "../../str.h"
+#include <unistd.h>
 
 struct cpl_cmd {
 	unsigned int code;
-	str val1;
-	str val2;
+	char *s;
+	int len1;
+	int len2;
 };
 
 
 #define CPL_LOG_CMD    1
 #define CPL_MAIL_CMD   2
+
+#define MAX_LOG_DIR_SIZE    256
 
 
 extern int cpl_cmd_pipe[2];
@@ -51,14 +54,14 @@ extern int cpl_cmd_pipe[2];
 void cpl_aux_process( int cmd_out, char *log_dir);
 
 
-static inline void write_cpl_cmd( unsigned int code, str *val1, str *val2 )
+static inline void write_cpl_cmd(unsigned int code, char *s, int len1,int len2)
 {
 	static struct cpl_cmd cmd;
+
 	cmd.code = code;
-	cmd.val1.s = val1->s;
-	cmd.val1.len = val1->len;
-	cmd.val2.s = val2->s;
-	cmd.val2.len = val2->len;
+	cmd.s = s;
+	cmd.len1 = len1;
+	cmd.len2 = len2;
 
 	if (write( cpl_cmd_pipe[1], &cmd, sizeof(struct cpl_cmd) )==-1)
 		LOG(L_ERR,"ERROR:cpl_c:write_cpl_cmd: write ret: %s\n",

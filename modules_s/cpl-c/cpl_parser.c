@@ -637,14 +637,16 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 			FOR_ALL_ATTR(node,attr) {
 				nr_attr++;
 				val = (char*)xmlGetProp(node,attr->name);
+				foo = strlen(val);
 				switch (attr->name[0] ) {
 					case 'n': case 'N':
+						if (foo>MAX_NAME_SIZE) foo=MAX_NAME_SIZE;
 						*(p++) = NAME_ATTR; break;
 					case 'c': case 'C':
+						if (foo>MAX_COMMENT_SIZE) foo=MAX_COMMENT_SIZE;
 						*(p++) = COMMENT_ATTR;break;
 					default: goto error;
 				}
-				foo = strlen(val);
 				*((unsigned short*)(p)) = (unsigned short)foo;
 				p += 2;
 				memcpy(p,val,foo);
