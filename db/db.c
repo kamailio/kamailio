@@ -31,12 +31,13 @@
   */
 
 
-#include "db.h"
 #include "../dprint.h"
 #include "../sr_module.h"
 #include "../mem/mem.h"
 #include "../str.h"
 #include "../ut.h"
+#include "db_cap.h"
+#include "db.h"
 
 
 
@@ -76,33 +77,63 @@ int bind_dbmod(char* mod, db_func_t* mydbf)
 		tmp = mod;
 	}
 
+	dbf.cap = 0;
+
+	     /* All modules must export db_use_table */
 	dbf.use_table = (db_use_table_f)find_mod_export(tmp, "db_use_table", 2, 0);
-	if (dbf.use_table == 0) goto err;
+	if (dbf.use_table == 0) {
+		LOG(L_ERR, "bind_dbmod: Module %s does not export db_use_table function\n", tmp);
+		goto err;
+	}
 
+	     /* All modules must export db_init */
 	dbf.init = (db_init_f)find_mod_export(tmp, "db_init", 1, 0);
-	if (dbf.init == 0) goto err;
+	if (dbf.init == 0) {
+		LOG(L_ERR, "bind_dbmod: Module %s does not export db_init function\n", tmp);
+		goto err;
+	}
 
+	     /* All modules must export db_close */
 	dbf.close = (db_close_f)find_mod_export(tmp, "db_close", 2, 0);
-	if (dbf.close == 0) goto err;
+	if (dbf.close == 0) {
+		LOG(L_ERR, "bind_dbmod: Module %s does not export db_close function\n", tmp);
+		goto err;
+	}
 
 	dbf.query = (db_query_f)find_mod_export(tmp, "db_query", 2, 0);
-	if (dbf.query == 0) goto err;
+	if (dbf.query) {
+		dbf.cap |= DB_CAP_QUERY;
+	}
 
 	dbf.raw_query = (db_raw_query_f)find_mod_export(tmp, "db_raw_query", 2, 0);
-	if (dbf.raw_query == 0) goto err;
+	if (dbf.raw_query) {
+		dbf.cap |= DB_CAP_RAW_QUERY;
+	}
 
-	dbf.free_result = (db_free_result_f)find_mod_export(tmp, "db_free_result", 2,
-														0);
-	if (dbf.free_result == 0) goto err;
+	     /* Free result must be exported if DB_CAP_QUERY 
+	      * or DB_CAP_RAW_QUERY is set
+	      */
+	dbf.free_result = (db_free_result_f)find_mod_export(tmp, "db_free_result", 2, 0);
+	if ((dbf.cap & (DB_CAP_QUERY | DB_CAP_RAW_QUERY))
+	    && (dbf.free_result == 0)) {
+		LOG(L_ERR, "bind_dbmod: Module %s supports quries but does not export free_result function\n", tmp);
+		goto err;
+	}
 
 	dbf.insert = (db_insert_f)find_mod_export(tmp, "db_insert", 2, 0);
-	if (dbf.insert == 0) goto err;
+	if (dbf.insert) {
+		dbf.cap |= DB_CAP_INSERT;
+	}
 
 	dbf.delete = (db_delete_f)find_mod_export(tmp, "db_delete", 2, 0);
-	if (dbf.delete == 0) goto err;
+	if (dbf.delete) {
+		dbf.cap |= DB_CAP_DELETE;
+	}
 
 	dbf.update = (db_update_f)find_mod_export(tmp, "db_update", 2, 0);
-	if (dbf.update == 0) goto err;
+	if (dbf.update) {
+		dbf.cap |= DB_CAP_UPDATE;
+	}
 
 	*mydbf=dbf; /* copy */
 	return 0;

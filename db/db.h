@@ -134,6 +134,7 @@ typedef int (*db_update_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _
 
 
 typedef struct db_func {
+	unsigned int     cap;          /* Capability vector of the database transport */
 	db_use_table_f   use_table;    /* Specify table name */
 	db_init_f        init;         /* Initialize database connection */
 	db_close_f       close;        /* Close database connection */
