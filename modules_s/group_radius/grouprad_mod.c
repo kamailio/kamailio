@@ -58,7 +58,7 @@ static int hf_fixup(void** param, int param_no); /* Header field fixup */
  * Module parameter variables
  */
 static char* radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
-int use_domain = 1;  /* By default we use domain */
+int use_domain = 0;  /* By default we use domain */
 
 
 /*

@@ -115,7 +115,7 @@ str *avps_str        = NULL;
 int avps_int_n       = 0;
 int avps_str_n       = 0;
 int calc_ha1         = 0;
-int use_domain       = 1;    /* Use also domain when looking up a table row */
+int use_domain       = 0;    /* Use also domain when looking up a table row */
 
 
 
