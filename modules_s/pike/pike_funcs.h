@@ -34,11 +34,6 @@
 #include "../../locking.h"
 
 
-//extern int                     time_unit;
-//extern int                     max_value;
-//extern gen_lock_t              *timer_lock;
-
-
 int  pike_check_req(struct sip_msg *msg, char *foo, char *bar);
 void clean_routine(unsigned int, void*);
 void swap_routine(unsigned int, void*);

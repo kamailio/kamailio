@@ -24,6 +24,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ *  2004-11-05: adaptiv init lock (bogdan)
  */
 
 
@@ -51,7 +55,7 @@ static inline struct ip_node* prv_get_tree_branch(unsigned char b)
 /* locks a tree branch */
 static inline void prv_lock_tree_branch(unsigned char b)
 {
-	lock_get( root->entries[b].lock);
+	lock_set_get( root->entry_lock_set, root->entries[b].lock_idx);
 }
 
 
@@ -59,7 +63,7 @@ static inline void prv_lock_tree_branch(unsigned char b)
 /* unlocks a tree branch */
 static inline void prv_unlock_tree_branch(unsigned char b)
 {
-	lock_release( root->entries[b].lock);
+	lock_set_release( root->entry_lock_set, root->entries[b].lock_idx);
 }
 
 
@@ -78,10 +82,45 @@ void unlock_tree_branch(unsigned char b)
 }
 
 
+/* size must be a power of 2  */
+static gen_lock_set_t* init_lock_set(int *size)
+{
+	gen_lock_set_t *lset;
+
+	for( ; *size ; *size=((*size)>>1) ) {
+		LOG(L_INFO,"INFO:pike:init_lock_set: probing %d set size\n",*size);
+		/* create a lock set */
+		lset = lock_set_alloc( *size );
+		if (lset==0) {
+			LOG(L_INFO,"INFO:pike:init_lock_set: cannot get %d locks\n",
+				*size);
+			continue;
+		}
+		/* init lock set */
+		if (lock_set_init(lset)==0) {
+			LOG(L_INFO,"INFO:pike:init_lock_set: cannot init %d locks\n",
+				*size);
+			lock_set_dealloc( lset );
+			lset = 0;
+			continue;
+		}
+		/* alloc and init succesfull */
+		break;
+	}
+
+	if (*size==0) {
+		LOG(L_ERR,"ERROR:pike:init_lock_set: cannot get a lock set\n");
+		return 0;
+	}
+	return lset;
+}
+
+
 
 /* Builds and Inits a new IP tree */
 int init_ip_tree(int maximum_hits)
 {
+	int size;
 	int i;
 
 	/* create the root */
@@ -92,31 +131,27 @@ int init_ip_tree(int maximum_hits)
 	}
 	memset( root, 0, sizeof(struct ip_tree));
 
-	/* create a lock set for all entries */
-	root->entry_lock_set = lock_set_alloc(MAX_IP_BRANCHES);
-	if (root->entry_lock_set==0)
-		goto error;
-
 	/* init lock set */
-	if (lock_set_init(root->entry_lock_set)==0) {
-		LOG(L_ERR,"ERROR:pike:init_ip_tree: lock_set init failed\n");
+	size = MAX_IP_BRANCHES;
+	root->entry_lock_set = init_lock_set( &size );
+	if (root->entry_lock_set==0) {
+		LOG(L_ERR,"ERROR:pike:init_ip_tree: failed to create locks\n");
 		goto error;
 	}
-
+	/* assign to each branch a lock */
 	for(i=0;i<MAX_IP_BRANCHES;i++) {
 		root->entries[i].node = 0;
-		root->entries[i].lock = &(root->entry_lock_set->locks[i]);
+		root->entries[i].lock_idx = i % size;
+		DBG("DEBUG:pike:pike_ip_tree: branch %d takes lock index %d\n",
+			i, root->entries[i].lock_idx);
 	}
 
 	root->max_hits = maximum_hits;
 
 	return 0;
 error:
-	if (root) {
-		if (root->entry_lock_set)
-			lock_set_dealloc(root->entry_lock_set);
+	if (root)
 		shm_free(root);
-	}
 	return -1;
 }
 

@@ -26,8 +26,8 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-/* History:
+ *
+ * History:
  * --------
  *  2003-03-11  updated to the new module exports interface (andrei)
  *  2003-03-11  converted to the new locking interface: locking.h --
@@ -148,6 +148,7 @@ static int pike_init(void)
 			PIKE_PRINT_IP_TREE);
 		goto error4;
 	}
+
 	return 0;
 error4:
 	shm_free( timer );
