@@ -227,7 +227,7 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 		/* replaced five div's + 1 add with most probably 1 comparison or 2 */							
 		
 		/* deleting old port */
-		if ((l = del_lump (&msg->add_rm,pmatch.rm_so + off + (pos -(begin + pmatch.rm_so)),oldlen, 0)) == 0)
+		if ((l = del_lump (&msg->body_lumps,pmatch.rm_so + off + (pos -(begin + pmatch.rm_so)),oldlen, 0)) == 0)
 		{
 			LOG (L_ERR,"ERROR: sdp_mangle_port: del_lump failed\n");
 			return -10;
@@ -444,7 +444,7 @@ sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip)
 		/* replacing ip */
 
 		/* deleting old ip */
-		if ((l = del_lump (&msg->add_rm,pmatch.rm_so + off + (pos - (begin + pmatch.rm_so)),oldlen, 0)) == 0)
+		if ((l = del_lump (&msg->body_lumps,pmatch.rm_so + off + (pos - (begin + pmatch.rm_so)),oldlen, 0)) == 0)
 		{
 			LOG (L_ERR,"ERROR: sdp_mangle_ip: del_lump failed\n");
 			return -12;

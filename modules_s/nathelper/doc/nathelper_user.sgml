@@ -76,7 +76,27 @@
 		<title>Set <varname>natping_interval</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("module", "natping_interval", 10)
+modparam("nathelper", "natping_interval", 10)
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>ping_nated_only</varname> (integer)</title>
+	    <para>
+		If this variable is set then only contacts that have <quote>behind_NAT</quote> flag
+		in user location database set set will get ping.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>ping_nated_only</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "ping_nated_only", 1)
 ...
 </programlisting>
 	    </example>
@@ -144,6 +164,20 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy(3);};
 </programlisting>
 	    </example>
 	</section>
+
+	<section>
+		<title>
+			<function>nat_uac_test(mode)</function>
+		</title>
+		<para>
+			Tries to guess if client's request originated behind a nat.
+			The parameter determines what heuristics is used. If flag 
+			1 is set, the "received" test is used -- address in Via is 
+			compared against source IP address of signaling. If flag
+			2 is set, Contact header field is searched for occurence
+			of RFC1918 addresses. Both flags can be bitwise combined,
+			the test returns true if any of the tests identified a NAT.
+		</para>
     </section>
 </chapter>
 
