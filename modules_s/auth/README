@@ -2,68 +2,19 @@
 # $Id$
 #
 
-Module depends on: mysql - Used as interface to database
-                   sl    - Used for stateless replies
+Module depends on: sl - Used for stateless replies 
 
+This module provides generic functions that are not authentication
+mechanism specific. Rest of functions (those that require access
+to the database or a radius server) are in separate modules.
 
 Exported parameters:
 -------------------
 
-Name:    db_url
-Type:    string
-Default: "sql://serro:47serro11@localhost/ser"
-Desc:    Database url string in form "sql://<user>:<pass>@host/database"
-
-
-Name:    subscriber_table
-Type:    string
-Default: "subscriber"
-Desc:    Name of table containing subscribers
-
-
-Name:    user_column
-Type:    string
-Default: "user"
-Desc:    Name of column containing usernames in subscriber table
-
-
-Name:    domain_column
-Type:    string
-Default: "domain"
-Desc:    Name of column containing domain in subscriber table
-
-
-Name:    password_column
-Type:    string
-Default: "ha1"
-Desc:    Name of column containing (plaintext passwords)/(ha1 strings) if
-         calculate_ha1 parameter is set to true/false.
-
-
-Name:    password_column_2
-Type:    string
-Default: "ha1b"
-Desc:    The parameter can be used if and only if USER_DOMAIN_HACK macro
-         is set in defs.h header file. The column of this name contains
-         alternate ha1 strings calculated from username containing also
-         domain, for example username="jan@iptel.org". This hack is 
-         neccessary for some broken user agents. The parameter has no
-         meaning if "calculate_ha1" is set to true.
-         
 Name:    secret
 Type:    string
 Default: Randomly generated
-Desc:    Nonce secret phrase
-
-
-Name:    calculate_ha1
-Type:    integer
-Default: false
-Desc:    If set to true, auth module assumes that "password_column"
-         contains plaintext passwords and ha1 string will be calculated
-         at runtime. If set to false, "password_column" must contain
-         precalculated ha1 strings.
-
+Desc:    Nonce secret phrase to be used
 
 Name:    nonce_expire
 Type:    integer
@@ -71,44 +22,16 @@ Default: 300
 Desc:    Every nonce is valid only for a limited amount of time. This
          parameter specifies nonce validity interval in seconds. 
          
-Name:    retry_count
-Type:    integer
-Default: 5
-Desc:    This parameter specifies how many times a user is allowed to
-         retry authentication with incorrect credentials. After that 
-         the user will receive 403 Forbidden and must retry with different 
-         credentials. This should prevent DoS attacks from misconfigured
-         user agents which try to authenticate with incorrect password 
-         again and again and again......
-         
-Name:	 domain_table
+Name:    rpid_suffix
 Type:    string
-Default: "domain"
-Desc:    Name of table containing names of local domains that the proxy
-	 is responsible for. Local users must have in their sip uri a
-	 host part that is equal to one of these domains.
-
-Name:	 domain_domain_column
-Type:	 string
-Default: "domain"
-Desc:	 Name of column containing domains in domain table
-
+Default: ";party=calling;id-type=subscriber;screen=yes"
+Desc:    Suffix to be added to Remote-Party-ID header field after the
+         string returned from Radius as the value of SIP-RPID reply
+	 attribute.
+		  
 
 Exported Functions:
 ------------------
-
-Name:   www_authorize
-Params: realm - realm string
-        table - subscriber table name
-Desc:   Checks credentials in Authorization header field
-Example:	if (!www_authorize( "iptel.org", "subscriber" )) {
-				www_challenge(  "iptel.org", "0"; break; }
-
-Name:   proxy_authorize
-Params: realm - realm string
-        table - subscriber database table name
-Desc:   Checks credentials in Proxy-Authorization header field
-
 
 Name:   www_challenge
 Params: realm - realm string
@@ -120,7 +43,6 @@ Desc:   Challenges a user agent using WWW-Authenticate header
         (Turning off is useful primarly to make UAC happy, which
 	 have a brokn qop implementation, particularly M$ Messenger 4.6).
 
-
 Name:   proxy_challenge
 Params: realm - realm string
         qop   - qop string, "1" means use qop parameter
@@ -131,29 +53,23 @@ Desc:   Challenges a user agent using Proxy-Authenticate header
 	(Turning off is useful primarly to make UAC happy, which
 	 have a broken qop implementation, particularly M$ Messenger 4.6).
 
-
 Name:   consume_credentials
 Params: -
 Desc:   Removes previously authorized credentials from the message.
         The function must be called after {www,proxy}_authorize.
 
+Name:    is_rpid_user_e164
+Params:  -
+Desc:    Checks if the SIP URI in the saved SIP-RPID reply attribute
+	 contains an E164 number (+ followed by up to 15 decimal digits)
+	 in its user part.  Check faild, if no saved SIP-RPID exists.
 
-Name:	is_from_local
-Params:	-
-Desc:	Checks based on realm table if host part of From header uri is
-	one of the local realms that the proxy is responsible for
+Name:    append_rpid_hf
+Params:  -
+Desc:    Appends to the message a Remote-Party-ID header that contains
+         header 'Remote-Party-ID: ' followed by the saved value of the
+         SIP-RPID reply attribute followed by the value of module
+         parameter radius_rpid_suffix.  If no saved SIP-RPID exists, no
+         header is appended.
 
-
-Name:	is_uri_host_local
-Params:	-
-Desc:	Checks based on realm table if request uri belongs to one of the
-	local realms
-
-
-Usage Note
-----------
-As long as hop-by-hop requests ACK and CANCEL cannot be challenged
-(see SIP specification), they typically include none or invalid
-credentials. Avoid verification of these credentials in ACK/CANCEL
-messages.  It would result in dropping valid requests.
-
+									
