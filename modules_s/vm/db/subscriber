@@ -1,3 +1,0 @@
-id(int,auto) username(str,null) domain(str,null) email_address(str,null)
-1:raf:iptel.org:rco@iptel.org
-
