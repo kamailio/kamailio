@@ -436,7 +436,7 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 	if (int2reverse_hex( &begin, &size, branch)==-1) return -1;
 
 	p_msg->add_to_branch_len+=(orig_size-size);
-	DBG("DEBUG: XXX branch label created now: %*s (%d)\n",
+	DBG("DEBUG: XXX branch label created now: %.*s (%d)\n",
 		p_msg->add_to_branch_len, p_msg->add_to_branch_s );
 	return 0;
 
