@@ -34,7 +34,9 @@
  * 2003-04-04  bug_fix: REQ_IN callback not called for local 
  *             UAC transactions (jiri)
  * 2003-09-12  timer_link->tg will be set only if EXTRA_DEBUG (andrei)
- */
+ * 2004-07-21  avp support added - move and remove avp list to/from
+ *             transactions (bogdan)
+*/
 
 #include "defs.h"
 
@@ -143,6 +145,10 @@ void free_cell( struct cell* dead_cell )
 		tt=foo;
 	}
 
+	/* free the avp list */
+	if (dead_cell->user_avps)
+		destroy_avp_list_unsafe( &dead_cell->user_avps );
+
 	/* the cell's body */
 	shm_free_unsafe( dead_cell );
 
@@ -208,6 +214,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 {
 	struct cell* new_cell;
 	int          sip_msg_len;
+	struct usr_avp **old;
 
 	/* allocs a new cell */
 	new_cell = (struct cell*)shm_malloc( sizeof( struct cell ) );
@@ -227,6 +234,11 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	new_cell->uas.response.fr_timer.payload =
 	new_cell->uas.response.retr_timer.payload = &(new_cell->uas.response);
 	new_cell->uas.response.my_T=new_cell;
+
+	/* move the current avp list to transaction -bogdan */
+	old = set_avp_list( &new_cell->user_avps );
+	new_cell->user_avps = *old;
+	*old = 0;
 
 	/* enter callback, which may potentially want to parse some stuff,
 	   before the request is shmem-ized */
@@ -254,6 +266,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 
 	init_synonym_id(new_cell);
 	init_cell_lock(  new_cell );
+
 	return new_cell;
 
 error:

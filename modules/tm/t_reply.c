@@ -52,6 +52,8 @@
  *  2003-11-05  flag context updated from failure/reply handlers back
  *              to transaction context (jiri)
  *  2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
+ *  2004-07-21  user avp(attribute value pair) added -> making avp list
+ *              available in failure/on_reply routes (bogdan)
  */
 
 
@@ -74,6 +76,7 @@
 #include "../../tags.h"
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
+#include "../../usr_avp.h"
 
 #include "t_hooks.h"
 #include "t_funcs.h"
@@ -454,6 +457,7 @@ static int faked_env(struct sip_msg *fake,
 	static enum route_mode backup_mode;
 	static struct cell *backup_t;
 	static unsigned int backup_msgid;
+	static struct usr_avp **backup_list;
 	struct hdr_field *hdr;
 
 	if (_restore) goto restore;
@@ -530,7 +534,10 @@ static int faked_env(struct sip_msg *fake,
 			goto restore_err;
 		}
 	}
-	
+
+	/* make available the avp list from transaction */
+	backup_list = set_avp_list( &_t->user_avps );
+
 	/* success */
 	return 1;
 
@@ -559,6 +566,8 @@ restore_err:
 	rmode=backup_mode;
 	/* if failure handler changed flag, update transaction context */
 	shmem_msg->flags=fake->flags;
+	/* restore original avp list */
+	set_avp_list( backup_list );
 	return 0;
 }
 
@@ -1153,6 +1162,7 @@ int reply_received( struct sip_msg  *p_msg )
 	struct ua_client *uac;
 	struct cell *t;
 	str next_hop;
+	struct usr_avp **backup_list;
 
 
 	/* make sure we know the assosociated transaction ... */
@@ -1219,10 +1229,14 @@ int reply_received( struct sip_msg  *p_msg )
 		rmode=MODE_ONREPLY;
 		/* transfer transaction flag to message context */
 		if (t->uas.request) p_msg->flags=t->uas.request->flags;
+		/* set the as avp_list the one from transaction */
+		backup_list = set_avp_list( &t->user_avps );
 	 	if (run_actions(onreply_rlist[t->on_reply], p_msg)<0) 
 			LOG(L_ERR, "ERROR: on_reply processing failed\n");
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
+		/* restore original avp list */
+		set_avp_list( backup_list );
 	}
 	LOCK_REPLIES( t );
 	if (t->local) {

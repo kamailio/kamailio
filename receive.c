@@ -35,6 +35,8 @@
  * 2003-08-13 fixed exec_pre_cb returning 0 (backported from stable) (andrei)
  * 2004-04-30 exec_pre_cb is called after basic sanity checks (at least one
  *            via present & parsed ok)  (andrei)
+ * 2004-07-21 added user avp (attribute value pairs) support;
+ *            reset_avps() (bogdan)
  */
 
 
@@ -54,6 +56,7 @@
 #include "ip_addr.h"
 #include "script_cb.h"
 #include "dset.h"
+#include "usr_avp.h"
 
 
 #ifdef DEBUG_DMALLOC
@@ -146,7 +149,6 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 			goto error;
 		}
 
-
 #ifdef STATS
 		gettimeofday( & tve, &tz );
 		diff = (tve.tv_sec-tvb.tv_sec)*1000000+(tve.tv_usec-tvb.tv_usec);
@@ -206,6 +208,8 @@ end:
 #endif
 	/* execute post-script callbacks, if any; -jiri */
 	exec_post_cb(msg);
+	/* free possible loaded avps -bogdan */
+	reset_avps();
 	DBG("receive_msg: cleaning up\n");
 	free_sip_msg(msg);
 	pkg_free(msg);
@@ -217,6 +221,8 @@ error:
 	DBG("error:...\n");
 	/* execute post-script callbacks, if any; -jiri */
 	exec_post_cb(msg);
+	/* free possible loaded avps -bogdan */
+	reset_avps();
 error02:
 	free_sip_msg(msg);
 	pkg_free(msg);

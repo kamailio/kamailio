@@ -29,6 +29,7 @@
  * 2003-03-16  removed _TOTAG (jiri)
  * 2003-03-06  we keep a list of 200/INV to-tags now (jiri)
  * 2003-03-01  kr set through a function now (jiri)
+ * 2004-07-21  avp support added - avp list linked in transaction (bogdan)
  */
 
 #include "defs.h"
@@ -43,6 +44,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../types.h"
 #include "../../md5utils.h"
+#include "../../usr_avp.h"
 #include "config.h"
 
 struct s_table;
@@ -249,6 +251,9 @@ typedef struct cell
 	 * forwarded or passed to UAC; note that there can be arbitrarily 
 	 * many due to downstream forking; */
 	struct totag_elem *fwded_totags;
+
+	/* list with user avp */
+	struct usr_avp *user_avps;
 }cell_type;
 
 

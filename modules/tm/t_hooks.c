@@ -28,6 +28,8 @@
  * History:
  * --------
  *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2004-07-21  user avp(attribute value pair) added -> making avp list
+ *              available in callbacks (bogdan)
  */
 
 #include "defs.h"
@@ -37,6 +39,8 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
+#include "../../usr_avp.h"
+#include "h_table.h"
 #include "t_hooks.h"
 
 /* strange things happen if callback_array is static on openbsd */
@@ -71,13 +75,21 @@ int register_tmcb( tmcb_type cbt, transaction_cb f, void *param )
 	return callback_id;
 }
 
+
+
 void callback_event( tmcb_type cbt , struct cell *trans,
 	struct sip_msg *msg, int code )
 {
 	struct tm_callback_s *cbs;
+	struct usr_avp **backup;
 
+	if (callback_array[cbt]==0)
+		return;
+
+	backup = set_avp_list( &trans->user_avps );
 	for (cbs=callback_array[ cbt ]; cbs; cbs=cbs->next)  {
 		DBG("DBG: callback type %d, id %d entered\n", cbt, cbs->id );
 		cbs->callback( trans, msg, code, cbs->param );
 	}
+	set_avp_list( backup );
 }
