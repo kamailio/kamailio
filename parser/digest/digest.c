@@ -49,7 +49,6 @@ static inline int new_credentials(struct hdr_field* _h)
 		
 	init_dig_cred(&(b->digest));
 	b->stale = 0;
-	b->nonce_retries = 0;
 	b->authorized = 0;
 
 	_h->parsed = (void*)b;

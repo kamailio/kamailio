@@ -51,7 +51,6 @@ typedef struct auth_body {
 	struct hdr_field* authorized;
 	dig_cred_t digest;           /* Parsed digest credentials */
 	unsigned char stale;         /* Flag is set if nonce is stale */
-	int nonce_retries;           /* How many times the nonce was used */
 } auth_body_t;
 
 
