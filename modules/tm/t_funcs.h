@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <netinet/in.h>
 #include <netdb.h>
+
 #include "../../msg_parser.h"
 #include "../../globals.h"
 #include "../../udp_server.h"
@@ -16,6 +17,10 @@
 #include "../../timer.h"
 #include "../../forward.h"
 #include "../../mem/mem.h"
+
+#include "config.h"
+#include "lock.h"
+#include "timer.h"
 
 struct s_table;
 struct timer;

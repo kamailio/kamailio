@@ -39,6 +39,11 @@ static int w_t_add_fork_on_no_rpl(struct sip_msg* msg,char* str,char* str2);
 static int w_t_clear_forks(struct sip_msg* msg, char* str, char* str2);
 static void w_onbreak(struct sip_msg* msg) { t_unref(); }
 
+static int w_t_setflag( struct sip_msg* msg, char *flag, char *foo );
+static int w_t_resetflag( struct sip_msg* msg, char *flag, char *foo );
+static int w_t_isflagset( struct sip_msg* msg, char *flag, char *foo );
+static int fixup_t_flag(void** param, int param_no);
+
 static int mod_init(void);
 
 struct module_exports exports= {
@@ -57,7 +62,10 @@ struct module_exports exports= {
 				"t_fork_to_ip",
 				"t_fork_to_uri",
 				"t_clear_forks",
-				"t_fork_on_no_response"
+				"t_fork_on_no_response",
+				"t_setflag",
+				"t_resetflag",
+				"t_isflagset"
 			},
 	(cmd_function[]){
 					w_t_add_transaction,
@@ -73,7 +81,10 @@ struct module_exports exports= {
 					w_t_add_fork_ip,
 					w_t_add_fork_uri,
 					w_t_clear_forks,
-					w_t_add_fork_on_no_rpl
+					w_t_add_fork_on_no_rpl,
+					w_t_setflag,
+					w_t_resetflag,
+					w_t_isflagset
 					},
 	(int[]){
 				0, /* t_add_transaction */
@@ -89,7 +100,10 @@ struct module_exports exports= {
 				2, /* t_fork_to_ip */
 				1, /* t_fork_to_uri */
 				0, /* t_clear_forks */
-				1  /* t_add_fork_on_no_response */
+				1,  /* t_add_fork_on_no_response */
+				1, /* t_setflag */
+				1, /* t_resetflag */
+				1 /* w_t_isflagset */
 			},
 	(fixup_function[]){
 				0,						/* t_add_transaction */
@@ -105,9 +119,13 @@ struct module_exports exports= {
 				fixup_t_forward,		/* t_fork_to_ip */
 				fixup_t_add_fork_uri,   /* t_fork_to_uri */
 				0,						/* t_clear_forks */
-				fixup_t_add_fork_uri	/* t_add_fork_on_no_response */
+				fixup_t_add_fork_uri,	/* t_add_fork_on_no_response */
+				fixup_t_flag,			/* t_setflag */
+				fixup_t_flag,			/* t_resetflag */
+				fixup_t_flag			/* t_isflagset */
+	
 		},
-	14,
+	17,
 	NULL,   /* Module parameter names */
 	NULL,   /* Module parameter types */
 	NULL,   /* Module parameter variable pointers */
@@ -470,3 +488,90 @@ static int t_relay( struct sip_msg  *p_msg , char* foo, char* bar)
 }
 
 
+
+/* wrapping functions for flaf processing  */
+
+static int fixup_t_flag(void** param, int param_no)
+{
+    unsigned int *code;
+	char *c;
+
+	DBG("TM module: fixing flag: %s\n", (char *) (*param));
+
+	if (param_no!=1) {
+		LOG(L_ERR, "ERROR: TM module: only parameter #1 for flags can be fixed\n");
+		return E_BUG;
+	};
+
+	if ( !(code = malloc( sizeof( unsigned int) )) ) return E_OUT_OF_MEM;
+
+	*code = 0;
+	c = *param;
+	while ( *c && (*c==' ' || *c=='\t')) c++; /* intial whitespaces */
+
+	if (strcasecmp(c, "white")==0) *code=FL_WHITE;
+	else if (strcasecmp(c, "yellow")==0) *code=FL_YELLOW;
+	else if (strcasecmp(c, "green")==0) *code=FL_GREEN;
+	else if (strcasecmp(c, "red")==0) *code=FL_RED;
+	else if (strcasecmp(c, "blue")==0) *code=FL_BLUE;
+	else if (strcasecmp(c, "magenta")==0) *code=FL_MAGENTA;
+	else if (strcasecmp(c, "brown")==0) *code=FL_BROWN;
+	else if (strcasecmp(c, "black")==0) *code=FL_BLACK;
+	else while ( *c && *c>='0' && *c<='9' ) {
+		*code = *code*10+ *c-'0';
+		if (*code > (sizeof( tflags_t ) * CHAR_BIT - 1 )) {
+			LOG(L_ERR, "ERROR: TM module: too big flag number: %s; MAX=%d\n",
+				(char *) (*param), sizeof( tflags_t ) * CHAR_BIT - 1 );
+			goto error;
+		}
+		c++;
+	}
+	while ( *c && (*c==' ' || *c=='\t')) c++; /* terminating whitespaces */
+
+	if ( *code == 0 ) {
+		LOG(L_ERR, "ERROR: TM module: bad flag number: %s\n", (char *) (*param));
+		goto error;
+	}
+
+	/* free string */
+	free( *param );
+	/* fix now */
+	*param = code;
+	
+	return 0;
+
+error:
+	free( code );
+	return E_CFG;
+}
+
+
+static int w_t_setflag( struct sip_msg* msg, char *flag, char *foo )
+{
+    if (t_check( msg , 0 , 0)==-1) return -1;
+    if (!T) {
+        DBG("DEBUG: t_setflag: no transaction found\n");
+        return -1;
+    }
+	return t_setflag( (unsigned int) flag );
+}
+
+static int w_t_resetflag( struct sip_msg* msg, char *flag, char *foo )
+{
+    if (t_check( msg , 0 , 0)==-1) return -1;
+    if (!T) {
+        DBG("DEBUG: t_resetflag: no transaction found\n");
+        return -1;
+    }
+	return t_resetflag( (unsigned int) flag );
+}
+
+static int w_t_isflagset( struct sip_msg* msg, char *flag, char *foo )
+{
+    if (t_check( msg , 0 , 0)==-1) return -1;
+    if (!T) {
+        DBG("DEBUG: t_isflagset: no transaction found\n");
+        return -1;
+    }
+	return t_isflagset( (unsigned int) flag );
+}
