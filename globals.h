@@ -45,14 +45,14 @@ extern int dont_fork;
 extern int check_via;
 extern int received_dns;
 extern int syn_branch;
-extern int process_no;
+/* extern int process_no; */
 extern int sip_warning;
 extern int server_signature;
 /*
  * debug & log_stderr moved to dprint.h*/
 
 /* extern process_bm_t process_bit; */
-extern int *pids;
+/* extern int *pids; -moved to pt.h */
 
 extern int cfg_errors;
 extern unsigned int msg_no;
@@ -63,8 +63,10 @@ extern unsigned int shm_mem_size;
 char extern *fifo; /* FIFO name */
 extern int fifo_mode;
 
+/* moved to pt.h
 extern int *pids;
 extern int process_no;
+*/
 
 extern int reply_to_via;
 
