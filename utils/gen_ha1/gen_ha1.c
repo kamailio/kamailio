@@ -1,3 +1,7 @@
+/*
+ * $Id$
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "../../md5global.h"
@@ -12,11 +16,12 @@ int main(int argc, char** argv)
 
 	if (argc != 4) {
 		printf("Usage: gen_ha1 <username> <realm> <password> \n");
-		return EXIT_SUCCESS;
+		/* return EXIT_SUCCESS; -jku */
+		return 1;
 	}
 
 	DigestCalcHA1("md5", argv[1], argv[2], argv[3], "", "", ha1);
 	printf("%s\n", ha1);
 	
-	return EXIT_SUCCESS;
+	return 0; /* jku */
 }
