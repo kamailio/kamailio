@@ -18,6 +18,7 @@
 # 2003-01-25: USER_ID changed to user everywhere (janakj)
 # 2003-01-24: Changed realm column of subscriber and pending
 #             tables to domain (janakj)
+# 2003-04-14  reinstall introduced (jiri)
 #
 
 #################################################################
@@ -29,10 +30,11 @@ USERNAME=ser
 DEFAULT_PW=heslo
 ROUSER=serro
 RO_PW=47serro11
-CMD="mysql -h $DBHOST -p -u "
-BACKUP_CMD="mysqldump -h $DBHOST -p -c -t -u "
-TABLE_TYPE="TYPE=MyISAM"
 SQL_USER="root"
+CMD="mysql -h $DBHOST -u$SQL_USER "
+DUMP_CMD="mysqldump -h $DBHOST -u$SQL_USER -c -t "
+BACKUP_CMD="mysqldump -h $DBHOST -u$SQL_USER -c "
+TABLE_TYPE="TYPE=MyISAM"
 # user name column
 USERCOL="username"
 
@@ -48,6 +50,7 @@ usage: $COMMAND create
        $COMMAND backup (dumps current database to stdout)
 	   $COMMAND restore <file> (restores tables from a file)
        $COMMAND copy <new_db> (creates a new db from an existing one)
+       $COMMAND reinstalls (updates to a new SER database)
 
        if you want to manipulate database as other MySql user than
        root, want to change database name from default value "$DBNAME",
@@ -57,43 +60,87 @@ usage: $COMMAND create
 EOF
 } #usage
 
-ser_backup()  # pars: <database name> <sql_user>
+
+# read password 
+prompt_pw() 
 {
-if [ $# -ne 2 ] ; then
-	echo "ser_drop function takes two params"
-	exit 1
-fi
-$BACKUP_CMD $2 $1
+	savetty=`stty -g`
+	printf "MySql password for $SQL_USER: "
+	stty -echo
+	read PW
+	stty $savetty
+	echo
 }
 
-ser_restore() #pars: <database name> <sql_user> <filename>
+# execute sql command
+sql_query()
 {
-if [ $# -ne 3 ] ; then
-	echo "ser_drop function takes two params"
-	exit 1
-fi
-$CMD $2 $1 < $3
+	$CMD "-p$PW" "$@"
 }
 
-ser_drop()  # pars: <database name> <sql_user>
+# dump all rows
+ser_dump()  # pars: <database name> 
+{
+	if [ $# -ne 1 ] ; then
+		echo "ser_dump function takes one param"
+		exit 1
+	fi
+	$DUMP_CMD "-p$PW" $1
+}
+
+
+# copy a database to database_bak
+ser_backup() # par: <database name> 
+{
+	if [ $# -ne 1 ] ; then
+		echo  "ser_backup function takes one param"
+		exit 1
+	fi
+	BU=/tmp/mysql_bup.$$
+	$BACKUP_CMD "-p$PW" $1 > $BU
+	if [ "$?" -ne 0 ] ; then
+		echo "ser backup dump failed"
+		exit 1
+	fi
+#XX
+	ser_drop $1_bak 
+#XX
+	sql_query <<EOF
+	create database $1_bak;
+EOF
+
+	ser_restore $1_bak $BU
+	if [ "$?" -ne 0 ]; then
+		echo "ser backup/restore failed"
+		rm $BU
+		exit 1
+	fi
+}
+
+ser_restore() #pars: <database name> <filename>
 {
 if [ $# -ne 2 ] ; then
+	echo "ser_restore function takes two params"
+	exit 1
+fi
+sql_query $1 < $2
+}
+
+ser_drop()  # pars: <database name> 
+{
+if [ $# -ne 1 ] ; then
 	echo "ser_drop function takes two params"
 	exit 1
 fi
 
-$CMD $2 << EOF
+sql_query << EOF
 drop database $1;
 EOF
 } #ser_drop
 
-ser_create () # pars: <database name> <sql_user> [<no_init_user>]
+ser_create () # pars: <database name> [<no_init_user>]
 {
-
-#test
-#cat > /tmp/sss <<EOF
-
-if [ $# -eq 2 ] ; then
+if [ $# -eq 1 ] ; then
 	# by default we create initial user
 	INITIAL_USER="INSERT INTO subscriber 
 		($USERCOL, password, first_name, last_name, phone, 
@@ -105,17 +152,17 @@ if [ $# -eq 2 ] ; then
 		'0239482f19d262f3953186a725a6f53b', 'iptel.org', 
 		'a84e8abaa7e83d1b45c75ab15b90c320', 
 		'65e397cda0aa8e3202ea22cbd350e4e9', 'admin' );"
-elif [ $# -eq 3 ] ; then
+elif [ $# -eq 2 ] ; then
 	# if 3rd param set, don't create any initial user
 	INITIAL_USER=""
 else
-	echo "ser_create function takes two or three params"
+	echo "ser_create function takes one or two params"
 	exit 1
 fi
 
 echo "creating database $1 ..."
 
-$CMD $2 <<EOF
+sql_query <<EOF
 create database $1;
 use $1;
 
@@ -511,33 +558,57 @@ EOF
 } # ser_create
 
 
+export PW
+prompt_pw
+
 case $1 in
-	renew)
-		# backup, drop, restore -- experimental; thought to
-		# deal with upgrade to new structures which include
-		# new tables or columns (troubles can appear if columns
-		# renamed); not tested too much yet
+	reinstall)
+
+		#1 create a backup database (named *_bak)
+		echo "creating backup database"
+		ser_backup $DBNAME 
+		if [ "$?" -ne 0 ] ; then
+			echo "reinstall: ser_backup failed"
+			exit 1
+		fi
+		#2 dump original database and change names in it
+		echo "dumping table content ($DBNAME)"
 		tmp_file=/tmp/ser_mysql.$$
-		ser_backup $DBNAME $SQL_USER > $tmp_file
-		ret=$?
-		if [ "$ret" -ne 0 ]; then
-			rm $tmp_file
-			exit $ret
+		ser_dump $DBNAME  > $tmp_file
+		if [ "$?" -ne 0 ] ; then
+			echo "reinstall: dumping original db failed"
+			exit 1
 		fi
-		ser_drop $DBNAME $SQL_USER
-		ret=$?
-		if [ "$ret" -ne 0 ]; then
-			exit $ret
+		sed "s/[uU][sS][eE][rR]_[iI][dD]/user/g" $tmp_file |
+			sed "s/[uU][sS][eE][rR]/$USERCOL/g" |
+			sed "s/[rR][eE][aA][lL][mM]/domain/g"> ${tmp_file}.2
+		#3 drop original database
+		echo "dropping table ($DBNAME)"
+		ser_drop $DBNAME 
+		if [ "$?" -ne 0 ] ; then
+			echo "reinstall: dropping table failed"
+			rm $tmp_file*
+			exit 1
 		fi
-		ser_create $DBNAME $SQL_USER no_init_user
-		ret=$?
-		if [ "$ret" -ne 0 ]; then
-			exit $ret
+		#4 change names in table definition and restore
+		echo "creating new structures"
+		ser_create $DBNAME no_init_user
+		if [ "$?" -ne 0 ] ; then
+			echo "reinstall: creating new table failed"
+			rm $tmp_file*
+			exit 1
 		fi
-		ser_restore $DBNAME $SQL_USER $tmp_file
-		ret=$?
-		rm $tmp_file
-		exit $ret
+		#5 restoring table content
+		echo "restoring table content" 
+		ser_restore $DBNAME ${tmp_file}.2
+		if [ "$?" -ne 0 ] ; then
+			echo "reinstall: restoring table failed"
+			rm $tmp_file*
+			exit 1
+		fi
+#XX
+#		rm $tmp_file*
+		exit 0
 		;;
 	copy)
 		# copy database to some other name
@@ -547,26 +618,26 @@ case $1 in
 			exit 1
 		fi
 		tmp_file=/tmp/ser_mysql.$$
-		ser_backup $DBNAME $SQL_USER > $tmp_file
+		ser_dump $DBNAME  > $tmp_file
 		ret=$?
 		if [ "$ret" -ne 0 ]; then
 			rm $tmp_file
 			exit $ret
 		fi
-		ser_create $1 $SQL_USER no_init_user
+		ser_create $1 no_init_user
 		ret=$?
 		if [ "$ret" -ne 0 ]; then
 			rm $tmp_file
 			exit $ret
 		fi
-		ser_restore $1 $SQL_USER $tmp_file
+		ser_restore $1 $tmp_file
 		ret=$?
 		rm $tmp_file
 		exit $ret
 		;;
 	backup)
 		# backup current database
-		ser_backup $DBNAME $SQL_USER
+		ser_dump $DBNAME 
 		exit $?
 		;;
 	restore)
@@ -576,7 +647,7 @@ case $1 in
 			usage
 			exit 1
 		fi
-		ser_restore $DBNAME $SQL_USER $1
+		ser_restore $DBNAME $1
 		exit $?
 		;;
 	create)
@@ -585,22 +656,22 @@ case $1 in
 		if [ $# -eq 1 ] ; then
 			DBNAME="$1"
 		fi
-		ser_create $DBNAME $SQL_USER
+		ser_create $DBNAME 
 		exit $?
 		;;
 	drop)
 		# delete ser database
-		ser_drop $DBNAME $SQL_USER
+		ser_drop $DBNAME 
 		exit $?
 		;;
 	reinit)
 		# delete database and create a new one
-		ser_drop $DBNAME $SQL_USER
+		ser_drop $DBNAME 
 		ret=$?
 		if [ "$ret" -ne 0 ]; then
 			exit $ret
 		fi
-		ser_create $DBNAME $SQL_USER
+		ser_create $DBNAME 
 		exit $?
 		;;
 	*)

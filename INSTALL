@@ -280,7 +280,12 @@ proceed, you need to make sure MySQL is installed on your box.
     or
     dpkg -i <package_name>
 3) create MySQL tables
-    /usr/sbin/ser_mysql.sh create
+	- if you have a previously installed SER on your system, use
+    	/usr/sbin/ser_mysql.sh create
+	  to convert your SER database into new structures
+	- otherwise, if this is your very first installation, use
+    	/usr/sbin/ser_mysql.sh create
+	  to create SER database structures
    (you will be promted for password of MySql "root" user)
 4) configure ser to use SQL
     uncomment all lines in configuration file ser.cfg which are related to 
