@@ -18,6 +18,7 @@
 <!ENTITY execstep4 SYSTEM "../../examples/exec_s4.cfg">
 <!ENTITY execstep5 SYSTEM "../../examples/exec_s5.cfg">
 <!ENTITY execstep5b SYSTEM "../../examples/exec_s5b.cfg">
+<!ENTITY ccdiversion SYSTEM "../../examples/ccdiversion.cfg">
 <!ENTITY releasenotes SYSTEM "../../NEWS">
 <!ENTITY install SYSTEM "../../INSTALL">
 
@@ -2482,7 +2483,7 @@ modparam("usrloc", "db_url","sql://ser:secret@dbhost/ser")
 			    </programlisting>
 			</para>
 	    </section> <!-- user aliases -->
-	    <section>
+	    <section id=acl>
 		<title>Access Control (PSTN Gateway)</title>
 			<para>
 			    It is sometimes important to exercise some sort of
@@ -2914,7 +2915,8 @@ if (!lookup("location")) {
 		</para>
 	    </section> <!-- NAT traversal -->
 	    <section>
-		<title>Prevention of Unauthorized Domain Name Use in From</title>
+		<title>Authentication Policy: Prevention of Unauthorized Domain 
+		    Name Use in From and More</title>
 		<para>
 		    Malicous users can claim a name of domain, to which they do 
 		    not administratively belong, in From header field. This
@@ -2961,8 +2963,115 @@ if (search("^(f|From):.*foo.bar")) {
 };
 		    </programlisting>
 		</para>
+		<para>
+		    In general, the authentication policy may be very rich. You may not
+		    forget each request deserves its own security and you need to 
+		    decide whether it shall be authenticated or not. As mentioned
+		    above, in closed networks, you may want to authenticate absolutely 
+		    every request. That however prohibits traffic from users from
+		    other domains. A pseudo-example of a reasonable policy is attached:
+		    it looks whether a request is registration, it claims to originate
+		    from our domain in From header field, or is a local request to
+		    another domain.
+		    <programlisting format="linespecific">
+# (example provided by Michael Graff on [serusers] mailing list
+if (to me):
+    if register
+          www_authorize or fail if not a valid register
+          done
+    if claiming to be "From" one of the domains I accept registrations for
+          proxy_authorize
+          done
+    if not to me (I'm relaying for a local phone to an external address)
+          proxy_authorize
+          done
+		    </programlisting>
+		</para>
+		<para>
+		    You also may want to apply additional restriction to how
+		    digest username relates to usernames claimed in From and
+		    To header fields. For example, the <command moreinfo="none">check_to</command>
+		    action enforces the digest id to be equal to username
+		    in To header fields. That is good in preventing someone
+		    with valid credentials to register as someone else
+		    (e.g., sending a REGISTER with valid credentials of
+		    "joe" and To belonging to "alice"). Similarly,
+		    <command moreinfo="none">check_from</command> is used
+		    to enforce username in  from to equal to digest id.
+		    <note>
+			<para>
+			    There may be a need for a more complex relationship
+			    between From/To username and digest id. For example,
+			    providers with an established user/password database
+			    may wish to keep using it, whereas permitting users
+			    to claim some telephone numbers in From. To address
+			    such needs generally, there needs to be a 1:N mapping
+			    between digest id and all usernames that are acceptable
+			    for it. This is being addressed in a newly contributed
+			    module "domain", which also addresses more generally
+			    issues of domain matching for multidomain scenarios.
+			</para>
+		    </note>
+		</para>
+		<para>
+		    Other operational aspect affecting the authentication policy
+		    is guarding PSTN gateways (see <xref linkend="acl">). There
+		    may be destinations that are given away for free whereas
+		    other destinations may require access control using
+		    group membership, to which  authentication is a prerequisity.
+		</para>
 
-	    </section> <!-- faked froms -->
+	    </section> <!-- authentication policy, faked froms -->
+	    <section>
+		<title>Connecting to PBX Voicemail Using a Cisco Gateway</title>
+		<para>
+		    In some networks, administrators may wish to utilize their
+		    PBX voicemail systems behind PSTN gateways. There is a practical problem
+		    in many network settings: it is not clear for whom a call to
+		    voicemail is. If voicemail is identified by a single number,
+		    which is then put in INVITE's URI, there is no easy way to
+		    learn for whom a message should be recorded. PBX voicemail
+		    utilize that PSTN protocols signal the number of originally
+		    called party. If you wish to make the PBX voicemail work,
+		    you need to convey the number in SIP and translate it in
+		    PSTN gateways to its PSTN counterpart.
+		</para>
+		<para>
+		    There may be many different ways to achieve this scenario. Here
+		    we describe the proprietary mechanism Cisco gateways use and how to 
+		    configure <application moreinfo="none">ser</application> to
+		    make the gateways happy. Cisco gateways expect the number
+		    of originally called party to be located in proprietary
+		    <varname>CC-Diversion</varname> header field. When a SIP 
+		    INVITE sent via a PSTN gateway to PBX voicemail has number
+		    of originally called party in the header field, the voicemail
+		    system knows for whom the incoming message is. That is at least
+		    true for AS5300/2600 with Cisco IOS 12.2.(2)XB connected to
+		    Nortel pbxs via PRI. (On the other hand, 12.2.(7b) is known
+		    not to work in this scenario.)
+		</para>
+		<para>
+		    <application moreinfo="none">ser</application> needs then to
+		    be configured to append the <varname>CC-Diversion</varname>
+		    header field name for INVITEs sent to PBX voicemail.
+		    The following script shows that: when initial forwarding
+		    fails (nobody replies, busy is received, etc.), a new branch
+		    is initiated to the pbx's phone number. 
+		    <command moreinfo="none">append_urihf</command> is used to
+		    append the <varname>CC-Diversion</varname> header field. It
+		    takes two parameters: prefix, which includes header name,
+		    and suffix which takes header field separator. 
+		    <command moreinfo="none">append_urihf</command> inserts
+		    original URI between those two.
+		    <example>
+			<title>Forwarding to PBX/Voicemail via Cisco Gateways</title>
+			<programlisting format="linespecific">
+&ccdiversion;
+			</programlisting>
+		    </example>
+		    
+		</para>
+	    </section>
 	</section> <!-- howtos -->
 
 	<section>
@@ -3001,13 +3110,16 @@ if (search("^(f|From):.*foo.bar")) {
 		    </answer>		    
 		</qandaentry>
 		<qandaentry>
+			
 		    <question>
+			        
 			<para>
-			    <anchor id="msmbug">
+			
 			    Windows Messenger authentication fails.
 			</para>
 		    </question>
 		    <answer>
+			<anchor id="msmbug">
 			<para>
 			    The most likely reason for this problem is a bug
 			    in Windows Messenger. WM only authenticates if
@@ -3487,8 +3599,8 @@ print
 		</example>
 
 		<example>
-			<title>Showing User Contacts Using serctl</title>
-			<para>
+		    <title>Showing User Contacts Using serctl</title>
+		    <para>
 			Another example of use of FIFO is accessing server's
 			in-memory user location database. That's a very powerful
 			feature: web applications and other tools can use it
@@ -3498,9 +3610,12 @@ print
 			FIFO command <command>ul_show_contact</command> to
 			retrieve current whereabouts of user "jiri".
 			<programlisting>
+<![CDATA[
 [jiri@fox ser]$ serctl fifo ul_show_contact location jiri
 <sip:195.37.78.160:14519>;q=0.00;expires=1012
+]]>
 			</programlisting>
+		    </para>
 		</example>
 	    </para>
 	    <para>
