@@ -24,6 +24,8 @@
 #               in the cfg (re: /usr/.*lib/ser/modules)
 #              ser.cfg.default is installed only if there is a previous
 #               cfg. -- fixes packages containing ser.cfg.default (andrei)
+#  2003-08-29  install-modules-doc split from install-doc, added 
+#               install-modules-all, removed README.cfg (andrei)
 #
 
 auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
@@ -271,9 +273,10 @@ install-modules: modules $(modules-prefix)/$(modules-dir)
 	done 
 
 
-install-doc: $(doc-prefix)/$(doc-dir)
-	$(INSTALL-TOUCH) $(doc-prefix)/$(doc-dir)/README.cfg 
-	$(INSTALL-DOC) README.cfg $(doc-prefix)/$(doc-dir)
+install-modules-all: install-modules install-modules-doc
+
+
+install-doc: $(doc-prefix)/$(doc-dir) install-modules-doc
 	$(INSTALL-TOUCH) $(doc-prefix)/$(doc-dir)/INSTALL 
 	$(INSTALL-DOC) INSTALL $(doc-prefix)/$(doc-dir)
 	$(INSTALL-TOUCH) $(doc-prefix)/$(doc-dir)/README-MODULES 
@@ -282,6 +285,11 @@ install-doc: $(doc-prefix)/$(doc-dir)
 	$(INSTALL-DOC) AUTHORS $(doc-prefix)/$(doc-dir)
 	$(INSTALL-TOUCH) $(doc-prefix)/$(doc-dir)/NEWS
 	$(INSTALL-DOC) NEWS $(doc-prefix)/$(doc-dir)
+	$(INSTALL-TOUCH) $(doc-prefix)/$(doc-dir)/README 
+	$(INSTALL-DOC) README $(doc-prefix)/$(doc-dir)
+
+
+install-modules-doc: $(doc-prefix)/$(doc-dir)
 	-@for r in $(modules_basenames) "" ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f modules/"$$r"/README ]; then \
@@ -293,8 +301,7 @@ install-doc: $(doc-prefix)/$(doc-dir)
 			fi ; \
 		fi ; \
 	done 
-	$(INSTALL-TOUCH) $(doc-prefix)/$(doc-dir)/README 
-	$(INSTALL-DOC) README $(doc-prefix)/$(doc-dir)
+
 
 install-man: $(man-prefix)/$(man-dir)/man8 $(man-prefix)/$(man-dir)/man5
 	$(INSTALL-TOUCH)  $(man-prefix)/$(man-dir)/man8/ser.8 
