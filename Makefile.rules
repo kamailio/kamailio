@@ -40,24 +40,33 @@ static: $(objs)
 .PHONY: clean
 clean:
 	-@rm -f $(objs) $(NAME) 2>/dev/null
-	-@for r in $(modules) $(static_modules_path); do \
-		echo "module $$r" ; \
-		$(MAKE) -C $$r clean ; \
+	-@for r in $(modules) $(static_modules_path) "" ; do \
+		if [ -n "$$r" ]; then \
+			echo "module $$r" ; \
+			$(MAKE) -C $$r clean ; \
+		fi ; \
 	done
-
-
 
 .PHONY: proper
 .PHONY: distclean
 .PHONY: realclean
 proper realclean distclean: clean 
 	-@rm -f $(depends) 2>/dev/null
-	-@for r in $(modules); do $(MAKE) -C $$r proper ; done
+	-@for r in $(modules) "" ; do \
+		if [ -n "$$r" ]; then \
+			 $(MAKE) -C $$r proper ; \
+		fi ; \
+	done 
 
 .PHONY: mantainer-cleaan
 mantainer-clean: distclean
 	-rm -f $(auto_gen) TAGS tags *.dbg .*.swp
-	-@for r in $(modules); do $(MAKE) -C $$r mantainer-clean ; done
+	-@for r in $(modules) "" ; do \
+		if [ -n "$$r" ]; then \
+			$(MAKE) -C $$r mantainer-clean; \
+		fi ; \
+	 done 
+
 
 .PHONY: TAGS
 TAGS:

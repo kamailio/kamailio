@@ -70,9 +70,10 @@ ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/ )
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"'\
 	 -DDNS_IP_HACK  -DPKG_MALLOC -DSHM_MEM  -DSHM_MMAP \
-	 -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 \
 	 -DF_MALLOC  -DUSE_SYNONIM\
-	 -DNO_DEBUG
+	 -DNO_DEBUG \
+	 -DNOSMP
+#	 -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 \
 	 #-DEXTRA_DEBUG 
 	 #-DVQ_MALLOC  -DDBG_LOCK  #-DSTATS
 	 #-DDBG_QM_MALLOC #-DNO_DEBUG
@@ -166,7 +167,7 @@ ifeq		($(CC_NAME), gcc)
 				#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
 					#use 32bit for now
-					CFLAGS+= -mcpu=v9 -mtune=ultrasparc  -m32  \
+					CFLAGS+= -mcpu=ultrasparc -mtune=ultrasparc  -m32  \
 					# -mcpu=v9 or ultrasparc? # -mtune implied by -mcpu
 					#-mno-epilogue #try to inline function exit code
 					#-mflat # omit save/restore

@@ -55,20 +55,24 @@ all: $(NAME) modules
 
 .PHONY: modules
 modules:
-	-@for r in $(modules); do \
-		echo  "" ; \
-		echo  "" ; \
-		$(MAKE) -C $$r ; \
-	done
+	-@for r in $(modules) "" ; do \
+		if [ -n "$$r" ]; then \
+			echo  "" ; \
+			echo  "" ; \
+			$(MAKE) -C $$r ; \
+		fi ; \
+	done 
 
 .PHONY: static_modules
 static_modules:
-	-@echo "Extra objs: $(extra_objs)"
-	-@for r in $(static_modules_path); do \
-		echo  "" ; \
-		echo  "Making static module $r" ; \
-		$(MAKE) -C $$r static ; \
-	done
+	-@echo "Extra objs: $(extra_objs)" 
+	-@for r in $(static_modules_path) "" ; do \
+		if [ -n "$$r" ]; then \
+			echo  "" ; \
+			echo  "Making static module $r" ; \
+			$(MAKE) -C $$r static ; \
+		fi ; \
+	done 
 
 
 	
