@@ -942,7 +942,7 @@ static int send2child(struct tcp_connection* tcpconn)
 	tcp_children[idx].busy++;
 	tcp_children[idx].n_reqs++;
 	if (min_busy){
-		LOG(L_WARN, "WARNING: send2child: no free tcp receiver, "
+		DBG("WARNING: send2child: no free tcp receiver, "
 				" connection passed to the least busy one (%d)\n",
 				min_busy);
 	}
