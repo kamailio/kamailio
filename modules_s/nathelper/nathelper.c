@@ -62,7 +62,7 @@
  *
  *		nat_uac_test extended to allow testing top Via (sobomax)
  *
- * 2004-02-210	force_rtp_proxy now accepts option argument, which
+ * 2004-02-21	force_rtp_proxy now accepts option argument, which
  *		consists of string of chars, each of them turns "on"
  *		some feature, currently supported ones are:
  *
@@ -72,7 +72,7 @@
  *		       corresponding session is already exists in the
  *		       RTP proxy. Only makes sense for SIP requests,
  *		       replies are always processed in "lookup" mode;
- *		 'i' - flags that message is received from UA in the
+ *		 `i' - flags that message is received from UA in the
  *		       LAN. Only makes sense when RTP proxy is rinning
  *		       in the bridge mode.
  *
@@ -82,6 +82,34 @@
  *		which case 1st argument is option string and the 2nd
  *		one is IP address which have to be inserted into
  *		SDP (IP address on which RTP proxy listens).
+ *
+ * 2004-03-12	Added support for IPv6 addresses in SDPs. Particularly,
+ *		force_rtp_proxy now can work with IPv6-aware RTP proxy,
+ *		replacing IPv4 address in SDP with IPv6 one and vice versa.
+ *		This allows creating full-fledged IPv4<->IPv6 gateway.
+ *		See 4to6.cfg file for example.
+ *
+ *		Two new options added into force_rtp_proxy:
+ *
+ *		 `f' - instructs nathelper to ignore marks inserted
+ *		       by another nathepler in transit to indicate
+ *		       that the session is already goes through another
+ *		       proxy. Allows creating chain of proxies.
+ *		 `d' - flags that IP address in SDP should be trusted.
+ *		       Without this flag, nathelper ignores address in the
+ *		       SDP and uses source address of the SIP message
+ *		       as media address which is passed to the RTP proxy.
+ *
+ *		Protocol between nathelper and RTP proxy in bridge
+ *		mode has been slightly changed. Now RTP proxy expects SER
+ *		to provide 2 flags when creating or updating session
+ *		to indicate direction of this session. Each of those
+ *		flags can be either `e' or `i'. For example `ei' means
+ *		that we received INVITE from UA on the "external" network
+ *		network and will send it to the UA on "internal" one.
+ *		Also possible `ie' (internal->external), `ii'
+ *		(internal->internal) and `ee' (external->external). See
+ *		example file alg.cfg for details.
  *
  */
 
@@ -137,7 +165,6 @@ MODULE_VERSION
 
 /* Handy macros */
 #define	STR2IOVEC(sx, ix)	{(ix).iov_base = (sx).s; (ix).iov_len = (sx).len;}
-#define	ISNULLADDR(sx)		((sx).len == 7 && memcmp("0.0.0.0", (sx).s, 7) == 0)
 
 /* Supported version of the RTP proxy command protocol */
 #define	SUP_CPROTOVER	20040107
@@ -146,9 +173,9 @@ MODULE_VERSION
 static int nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2);
 static int fix_nated_contact_f(struct sip_msg *, char *, char *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
-static int extract_mediaip(str *, str *);
+static int extract_mediaip(str *, str *, int *);
 static int extract_mediaport(str *, str *);
-static int alter_mediaip(struct sip_msg *, str *, str *, str *, int);
+static int alter_mediaip(struct sip_msg *, str *, str *, int, str *, int, int);
 static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
 static char *gencookie();
 static char *send_rtpp_command(struct iovec *, int);
@@ -343,6 +370,20 @@ child_init(int rank)
 	mypid = getpid();
 
 	return 0;
+}
+
+static int
+isnulladdr(str *sx, int pf)
+{
+	char *cp;
+
+	if (pf == AF_INET6) {
+		for(cp = sx->s; cp < sx->s + sx->len; cp++)
+			if (*cp != '0' && *cp != ':')
+				return 0;
+		return 1;
+	}
+	return (sx->len == 7 && memcmp("0.0.0.0", sx->s, 7) == 0);
 }
 
 /*
@@ -593,16 +634,17 @@ static int
 sdp_1918(struct sip_msg* msg)
 {
 	str body, ip;
+	int pf;
 
 	if (extract_body(msg, &body) == -1) {
 		LOG(L_ERR,"ERROR: sdp_1918: cannot extract body from msg!\n");
 		return 0;
 	}
-	if (extract_mediaip(&body, &ip) == -1) {
+	if (extract_mediaip(&body, &ip, &pf) == -1) {
 		LOG(L_ERR, "ERROR: sdp_1918: can't extract media IP from the SDP\n");
 		return 0;
 	}
-	if (ISNULLADDR(ip))
+	if (pf != AF_INET || isnulladdr(&ip, pf))
 		return 0;
 
 	return (is1918addr(&ip) == 1) ? 1 : 0;
@@ -656,16 +698,19 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 }
 
 #define	ADD_ADIRECTION	0x01
-#define	FIX_MEDIAIP	0x02
+#define	FIX_MEDIP	0x02
 
 #define	ADIRECTION	"a=direction:active\r\n"
 #define	ADIRECTION_LEN	(sizeof(ADIRECTION) - 1)
 
-#define	AOLDMEDIAIP	"a=oldmediaip:"
-#define	AOLDMEDIAIP_LEN	(sizeof(AOLDMEDIAIP) - 1)
+#define	AOLDMEDIP	"a=oldmediaip:"
+#define	AOLDMEDIP_LEN	(sizeof(AOLDMEDIP) - 1)
 
-#define	AOLDMEDIPRT	"a=oldmediaport:"
-#define	AOLDMEDIPRT_LEN	(sizeof(AOLDMEDIPRT) - 1)
+#define	AOLDMEDIP6	"a=oldmediaip6:"
+#define	AOLDMEDIP6_LEN	(sizeof(AOLDMEDIP6) - 1)
+
+#define	AOLDMEDPRT	"a=oldmediaport:"
+#define	AOLDMEDPRT_LEN	(sizeof(AOLDMEDPRT) - 1)
 
 #define	ANORTPPROXY	"a=nortpproxy:yes\r\n"
 #define	ANORTPPROXY_LEN	(sizeof(ANORTPPROXY) - 1)
@@ -674,7 +719,7 @@ static int
 fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	str body, body1, oldip, oldip1, newip;
-	int level;
+	int level, pf, pf1;
 	char *buf;
 	struct lump* anchor;
 
@@ -705,24 +750,36 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 		}
 	}
 
-	if (level & FIX_MEDIAIP) {
-		if (extract_mediaip(&body, &oldip) == -1) {
+	if (level & FIX_MEDIP) {
+		if (extract_mediaip(&body, &oldip, &pf) == -1) {
 			LOG(L_ERR, "ERROR: fix_nated_sdp: can't extract media IP from the SDP\n");
+			goto finalise;
+		}
+		if (pf != AF_INET) {
+			LOG(L_ERR, "ERROR: fix_nated_sdp: "
+			    "not an IPv4 address in SDP\n");
 			goto finalise;
 		}
 		body1.s = oldip.s + oldip.len;
 		body1.len = body.s + body.len - body1.s;
-		if (extract_mediaip(&body1, &oldip1) == -1) {
+		if (extract_mediaip(&body1, &oldip1, &pf1) == -1) {
 			oldip1.len = 0;
+		}
+		if (oldip1.len > 0 && pf != pf1) {
+			LOG(L_ERR, "ERROR: fix_nated_sdp: mismatching "
+			    "address families in SDP\n");
+			return -1;
 		}
 
 		newip.s = ip_addr2a(&msg->rcv.src_ip);
 		newip.len = strlen(newip.s);
-		if (alter_mediaip(msg, &body, &oldip, &newip, 1) == -1) {
+		if (alter_mediaip(msg, &body, &oldip, pf, &newip, pf,
+		    1) == -1) {
 			LOG(L_ERR, "ERROR: fix_nated_sdp: can't alter media IP");
 			return -1;
 		}
-		if (oldip1.len > 0 && alter_mediaip(msg, &body, &oldip1, &newip, 0) == -1) {
+		if (oldip1.len > 0 && alter_mediaip(msg, &body, &oldip1, pf1,
+		    &newip, pf, 0) == -1) {
 			LOG(L_ERR, "ERROR: fix_nated_sdp: can't alter media IP");
 			return -1;
 		}
@@ -733,7 +790,7 @@ finalise:
 }
 
 static int
-extract_mediaip(str *body, str *mediaip)
+extract_mediaip(str *body, str *mediaip, int *pf)
 {
 	char *cp, *cp1;
 	int len, nextisip;
@@ -762,12 +819,27 @@ extract_mediaip(str *body, str *mediaip)
 			nextisip++;
 			break;
 		}
-		if (len == 3 && memcmp(cp, "IP4", 3) == 0)
-			nextisip = 1;
+		if (len == 3 && memcmp(cp, "IP", 2) == 0) {
+			switch (cp[2]) {
+			case '4':
+				nextisip = 1;
+				*pf = AF_INET;
+				break;
+
+			case '6':
+				nextisip = 1;
+				*pf = AF_INET6;
+				break;
+
+			default:
+				break;
+			}
+		}
 		cp = eat_space_end(cp + len, mediaip->s + mediaip->len);
 	}
 	if (nextisip != 2 || mediaip->len == 0) {
-		LOG(L_ERR, "ERROR: extract_mediaip: no `IP4' in `c=' field\n");
+		LOG(L_ERR, "ERROR: extract_mediaip: "
+		    "no `IP[4|6]' in `c=' field\n");
 		return -1;
 	}
 	return 1;
@@ -807,15 +879,16 @@ extract_mediaport(str *body, str *mediaport)
 }
 
 static int
-alter_mediaip(struct sip_msg *msg, str *body, str *oldip, str *newip,
-  int preserve)
+alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
+  str *newip, int newpf, int preserve)
 {
 	char *buf;
 	int offset;
 	struct lump* anchor;
+	str omip, nip, oip;
 
 	/* check that updating mediaip is really necessary */
-	if (ISNULLADDR(*oldip))
+	if (oldpf == newpf && isnulladdr(oldip, oldpf))
 		return 0;
 	if (newip->len == oldip->len &&
 	    memcmp(newip->s, oldip->s, newip->len) == 0)
@@ -827,38 +900,66 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, str *newip,
 			LOG(L_ERR, "ERROR: alter_mediaip: anchor_lump failed\n");
 			return -1;
 		}
-		buf = pkg_malloc(AOLDMEDIAIP_LEN + oldip->len + CRLF_LEN);
+		if (oldpf == AF_INET6) {
+			omip.s = AOLDMEDIP6;
+			omip.len = AOLDMEDIP6_LEN;
+		} else {
+			omip.s = AOLDMEDIP;
+			omip.len = AOLDMEDIP_LEN;
+		}
+		buf = pkg_malloc(omip.len + oldip->len + CRLF_LEN);
 		if (buf == NULL) {
 			LOG(L_ERR, "ERROR: alter_mediaip: out of memory\n");
 			return -1;
 		}
-		memcpy(buf, AOLDMEDIAIP, AOLDMEDIAIP_LEN);
-		memcpy(buf + AOLDMEDIAIP_LEN, oldip->s, oldip->len);
-		memcpy(buf + AOLDMEDIAIP_LEN + oldip->len, CRLF, CRLF_LEN);
+		memcpy(buf, omip.s, omip.len);
+		memcpy(buf + omip.len, oldip->s, oldip->len);
+		memcpy(buf + omip.len + oldip->len, CRLF, CRLF_LEN);
 		if (insert_new_lump_after(anchor, buf,
-		    AOLDMEDIAIP_LEN + oldip->len + CRLF_LEN, 0) == NULL) {
+		    omip.len + oldip->len + CRLF_LEN, 0) == NULL) {
 			LOG(L_ERR, "ERROR: alter_mediaip: insert_new_lump_after failed\n");
 			pkg_free(buf);
 			return -1;
 		}
 	}
 
-	buf = pkg_malloc(newip->len);
-	if (buf == NULL) {
-		LOG(L_ERR, "ERROR: alter_mediaip: out of memory\n");
-		return -1;
+	if (oldpf == newpf) {
+		nip.len = newip->len;
+		nip.s = pkg_malloc(nip.len);
+		if (nip.s == NULL) {
+			LOG(L_ERR, "ERROR: alter_mediaip: out of memory\n");
+			return -1;
+		}
+		memcpy(nip.s, newip->s, newip->len);
+	} else {
+		nip.len = newip->len + 2;
+		nip.s = pkg_malloc(nip.len);
+		if (nip.s == NULL) {
+			LOG(L_ERR, "ERROR: alter_mediaip: out of memory\n");
+			return -1;
+		}
+		memcpy(nip.s + 2, newip->s, newip->len);
+		nip.s[0] = (newpf == AF_INET6) ? '6' : '4';
+		nip.s[1] = ' ';
 	}
-	offset = oldip->s - msg->buf;
-	anchor = del_lump(msg, offset, oldip->len, 0);
+
+	oip = *oldip;
+	if (oldpf != newpf) {
+		do {
+			oip.s--;
+			oip.len++;
+		} while (*oip.s != '6' && *oip.s != '4');
+	}
+	offset = oip.s - msg->buf;
+	anchor = del_lump(msg, offset, oip.len, 0);
 	if (anchor == NULL) {
 		LOG(L_ERR, "ERROR: alter_mediaip: del_lump failed\n");
-		pkg_free(buf);
+		pkg_free(nip.s);
 		return -1;
 	}
-	memcpy(buf, newip->s, newip->len);
-	if (insert_new_lump_after(anchor, buf, newip->len, 0) == 0) {
+	if (insert_new_lump_after(anchor, nip.s, nip.len, 0) == 0) {
 		LOG(L_ERR, "ERROR: alter_mediaip: insert_new_lump_after failed\n");
-		pkg_free(buf);
+		pkg_free(nip.s);
 		return -1;
 	}
 	return 0;
@@ -883,16 +984,16 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 			LOG(L_ERR, "ERROR: alter_mediaport: anchor_lump failed\n");
 			return -1;
 		}
-		buf = pkg_malloc(AOLDMEDIPRT_LEN + oldport->len + CRLF_LEN);
+		buf = pkg_malloc(AOLDMEDPRT_LEN + oldport->len + CRLF_LEN);
 		if (buf == NULL) {
 			LOG(L_ERR, "ERROR: alter_mediaport: out of memory\n");
 			return -1;
 		}
-		memcpy(buf, AOLDMEDIPRT, AOLDMEDIPRT_LEN);
-		memcpy(buf + AOLDMEDIPRT_LEN, oldport->s, oldport->len);
-		memcpy(buf + AOLDMEDIPRT_LEN + oldport->len, CRLF, CRLF_LEN);
+		memcpy(buf, AOLDMEDPRT, AOLDMEDPRT_LEN);
+		memcpy(buf + AOLDMEDPRT_LEN, oldport->s, oldport->len);
+		memcpy(buf + AOLDMEDPRT_LEN + oldport->len, CRLF, CRLF_LEN);
 		if (insert_new_lump_after(anchor, buf,
-		    AOLDMEDIPRT_LEN + oldport->len + CRLF_LEN, 0) == NULL) {
+		    AOLDMEDPRT_LEN + oldport->len + CRLF_LEN, 0) == NULL) {
 			LOG(L_ERR, "ERROR: alter_mediaport: insert_new_lump_after failed\n");
 			pkg_free(buf);
 			return -1;
@@ -1070,8 +1171,8 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	str body, body1, oldport, oldip, oldip1, newport, newip;
 	str callid, from_tag, to_tag, tmp;
-	int create, port, len, asymmetric, flookup, argc;
-	int oidx;
+	int create, port, len, asymmetric, flookup, argc, proxied, real;
+	int oidx, pf, pf1, force;
 	char buf[16], opts[16];
 	char *cp, *cp1;
 	char **ap, *argv[10];
@@ -1079,7 +1180,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	struct iovec v[1 + 6 + 5] = {{NULL, 0}, {opts, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 7}, {" ", 1}, {NULL, 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
 						/* 1 */    /* 2 */   /* 3 */    /* 4 */   /* 5 */    /* 6 */   /* 7 */    /* 8 */   /* 9 */    /* 10 */  /* 11 */
 
-	asymmetric = flookup = 0;
+	asymmetric = flookup = force = real = 0;
 	oidx = 1;
 	for (cp = str1; *cp != '\0'; cp++) {
 		switch (*cp) {
@@ -1087,6 +1188,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		case 'A':
 			opts[oidx++] = 'A';
 			asymmetric = 1;
+			real = 1;
 			break;
 
 		case 'i':
@@ -1102,6 +1204,16 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		case 'l':
 		case 'L':
 			flookup = 1;
+			break;
+
+		case 'f':
+		case 'F':
+			force = 1;
+			break;
+
+		case 'r':
+		case 'R':
+			real = 1;
 			break;
 
 		default:
@@ -1149,20 +1261,25 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		from_tag = to_tag;
 		to_tag = tmp;
 	}
+	proxied = 0;
 	for (cp = body.s; (len = body.s + body.len - cp) >= ANORTPPROXY_LEN;) {
 		cp1 = ser_memmem(cp, ANORTPPROXY, len, ANORTPPROXY_LEN);
 		if (cp1 == NULL)
 			break;
-		if (cp1[-1] == '\n' || cp1[-1] == '\r')
-			return -1;
+		if (cp1[-1] == '\n' || cp1[-1] == '\r') {
+			proxied = 1;
+			break;
+		}
 		cp = cp1 + ANORTPPROXY_LEN;
 	}
-	if (extract_mediaip(&body, &oldip) == -1) {
+	if (proxied != 0 && force == 0)
+		return -1;
+	if (extract_mediaip(&body, &oldip, &pf) == -1) {
 		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't extract media IP "
 		    "from the message\n");
 		return -1;
 	}
-	if (asymmetric != 0) {
+	if (asymmetric != 0 || real != 0) {
 		newip = oldip;
 	} else {
 		newip.s = ip_addr2a(&msg->rcv.src_ip);
@@ -1170,13 +1287,22 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	}
 	body1.s = oldip.s + oldip.len;
 	body1.len = body.s + body.len - body1.s;
-	if (extract_mediaip(&body1, &oldip1) == -1) {
+	if (extract_mediaip(&body1, &oldip1, &pf1) == -1) {
 		oldip1.len = 0;
+	}
+	if (oldip1.len > 0 && pf != pf1) {
+		LOG(L_ERR, "ERROR: force_rtp_proxy2: mismatching address "
+		    "families in SDP\n");
+		return -1;
 	}
 	if (extract_mediaport(&body, &oldport) == -1) {
 		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't extract media port "
 		    "from the message\n");
 		return -1;
+	}
+	if (pf == AF_INET6) {
+		opts[oidx] = '6';
+		oidx++;
 	}
 	opts[0] = (create == 0) ? 'L' : 'U';
 	v[1].iov_len = oidx;
@@ -1202,35 +1328,49 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	if (port <= 0 || port > 65535)
 		return -1;
 
-	newport.s = buf;
-	newport.len = sprintf(buf, "%d", port);
-	newip.s = (argc < 2) ? str2 : argv[1];
-	newip.len = strlen(newip.s);
+	pf1 = (argc >= 3 && argv[2][0] == '6') ? AF_INET6 : AF_INET;
 
-	if (alter_mediaip(msg, &body, &oldip, &newip, 0) == -1)
+	if (isnulladdr(&oldip, pf)) {
+		if (pf1 == AF_INET6) {
+			newip.s = "::";
+			newip.len = 2;
+		} else {
+			newip.s = "0.0.0.0";
+			newip.len = 7;
+		}
+	} else {
+		newport.s = buf;
+		newport.len = sprintf(buf, "%d", port);
+		newip.s = (argc < 2) ? str2 : argv[1];
+		newip.len = strlen(newip.s);
+	}
+
+	if (alter_mediaip(msg, &body, &oldip, pf, &newip, pf1, 0) == -1)
 		return -1;
 	if (oldip1.len > 0 &&
-	    alter_mediaip(msg, &body1, &oldip1, &newip, 0) == -1)
+	    alter_mediaip(msg, &body1, &oldip1, pf, &newip, pf1, 0) == -1)
 		return -1;
 	if (alter_mediaport(msg, &body, &oldport, &newport, 0) == -1)
 		return -1;
 
-	cp = pkg_malloc(ANORTPPROXY_LEN * sizeof(char));
-	if (cp == NULL) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy2: out of memory\n");
-		return -1;
-	}
-	anchor = anchor_lump(msg, body.s + body.len - msg->buf, 0, 0);
-	if (anchor == NULL) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy2: anchor_lump failed\n");
-		pkg_free(cp);
-		return -1;
-	}
-	memcpy(cp, ANORTPPROXY, ANORTPPROXY_LEN);
-	if (insert_new_lump_after(anchor, cp, ANORTPPROXY_LEN, 0) == NULL) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy2: insert_new_lump_after failed\n");
-		pkg_free(cp);
-		return -1;
+	if (proxied == 0) {
+		cp = pkg_malloc(ANORTPPROXY_LEN * sizeof(char));
+		if (cp == NULL) {
+			LOG(L_ERR, "ERROR: force_rtp_proxy2: out of memory\n");
+			return -1;
+		}
+		anchor = anchor_lump(msg, body.s + body.len - msg->buf, 0, 0);
+		if (anchor == NULL) {
+			LOG(L_ERR, "ERROR: force_rtp_proxy2: anchor_lump failed\n");
+			pkg_free(cp);
+			return -1;
+		}
+		memcpy(cp, ANORTPPROXY, ANORTPPROXY_LEN);
+		if (insert_new_lump_after(anchor, cp, ANORTPPROXY_LEN, 0) == NULL) {
+			LOG(L_ERR, "ERROR: force_rtp_proxy2: insert_new_lump_after failed\n");
+			pkg_free(cp);
+			return -1;
+		}
 	}
 
 	return 1;
