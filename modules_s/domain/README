@@ -75,3 +75,12 @@ Name:	domain_dump
 Params: -
 Desc:	Causes domain module to dump hash indexes and domain names in
 	its cache memory.
+
+
+Known Limitations
+-----------------
+
+There is an unlikely race condition on domain list update.
+If a process uses a table, which is reloaded at the same 
+time twice through FIFO, the second reload will delete the
+original table still in use by the process.
