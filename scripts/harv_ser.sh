@@ -108,6 +108,7 @@ BEGIN {
 	ua_sipimp=0;
 	ua_sjphone=0;
 	ua_lgelite=0;
+	ua_asterisk=0;
 	ua_commworks=0;
 	ua_xx=0;
 
@@ -282,6 +283,10 @@ ua==0 && /User-Agent:.*SJLabs-SJPhone/ {
 }
 ua==0 && /User-Agent:.*LG-Elite/ {
 	ua_lgelite++
+	ua=1
+}
+ua==0 && /User-Agent:.*Asterisk/ {
+	ua_asterisk++
 	ua=1
 }
 ua==0 && /User-Agent:.*CommWorks/ {
@@ -694,6 +699,7 @@ END {
 	print "SIPimp: " ua_sipimp
 	print "SJPhone: " ua_sjphone
 	print "LG-Elite: " ua_lgelite
+	print "Asterisk: " ua_asterisk
 	print "CommWorks: " ua_commworks
 	print "UFO: " ua_xx
 
