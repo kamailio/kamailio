@@ -10,39 +10,48 @@
 	<section>
 	    <title>Why use it ?</title>
 	    <para>
-		The main reason in creating it was to have a single transparent interface to various locking methods. For example right now &ser; uses the
-		following locking methods, depending on their availability on the target system.
+		The main reason in creating it was to have a single transparent interface to various
+		locking methods. For example right now &ser; uses the following locking methods,
+		depending on their availability on the target system.
 	    </para>
 	    <itemizedlist>
 		<listitem>
 		    <simpara><emphasis>FAST_LOCK</emphasis></simpara>
 		    <simpara>
-			Fast inline assembly locks, defined in <filename moreinfo="none">fast_lock.h</filename>. They are currently available for x86, sparc64,
-			strongarm (amv4l) and ppc (external untested contributed code). In general if the assembly code exists for a given architecture and the
-			compiler knows inline assembly (for example sun cc does not) FAST_LOCK is prefered. The main advantage of using FAST_LOCK is very low
-			memory overhead and extremely fast lock/unlock operations (like 20 times faster then SYSV semaphores on linux & 40 times on
-			solaris). The only thing that comes close to them are pthread mutexes (which are about 3-4 times slower).
+			Fast inline assembly locks, defined in <filename
+			moreinfo="none">fast_lock.h</filename>. They are currently available for
+			x86, sparc64, strongarm (amv4l) and ppc (external untested contributed
+			code). In general if the assembly code exists for a given architecture and
+			the compiler knows inline assembly (for example sun cc does not) FAST_LOCK
+			is prefered. The main advantage of using FAST_LOCK is very low memory
+			overhead and extremely fast lock/unlock operations (like 20 times faster
+			then SYSV semaphores on linux & 40 times on solaris). The only thing that
+			comes close to them are pthread mutexes (which are about 3-4 times slower).
 		    </simpara>
 		</listitem>
 		<listitem>
 		    <simpara><emphasis>PHTREAD_MUTEX</emphasis></simpara>
 		    <simpara>
-			Uses pthread_mutex_lock/unlock. They are quite fast but they work between processes only on some systems (they do not work on linux).
+			Uses pthread_mutex_lock/unlock. They are quite fast but they work between
+			processes only on some systems (they do not work on linux).
 		    </simpara>
 		</listitem>
 		<listitem>
 		    <simpara><emphasis>POSIX_SEM</emphasis></simpara>
 		    <simpara>
-			Uses posix semaphores (<function moreinfo="none">sem_wait</function>/<function moreinfo="none">sem_post</function>). They are slower
-			then the previous methods but still way faster then SYSV sempahores. Unfortunately they also do not work on all the systems
-			(e.g. linux).
+			Uses posix semaphores (<function
+			moreinfo="none">sem_wait</function>/<function
+			moreinfo="none">sem_post</function>). They are slower then the previous
+			methods but still way faster then SYSV sempahores. Unfortunately they also
+			do not work on all the systems (e.g. linux).
 		    </simpara>
 		</listitem>
 		<listitem>
 		    <simpara><emphasis>SYSV_SEM</emphasis></simpara>
 		    <simpara>
-			This is the most portable but also the slowest locking method. Another problem is that the number of semaphores that can be alocated by
-			a process is limited. One also has to free them before exiting.
+			This is the most portable but also the slowest locking method. Another
+			problem is that the number of semaphores that can be alocated by a process
+			is limited. One also has to free them before exiting.
 		    </simpara>
 		</listitem>
 	    </itemizedlist>
@@ -50,28 +59,35 @@
 	<section>
 	    <title>How to use it ?</title>
 	    <simpara>
-		First of all you have to include <filename moreinfo="none">locking.h</filename>. Then when compiling the code one or all of FAST_LOCK,
-		USE_PTHREAD_MUTEX, USE_PTHREAD_SEM or USE_SYSV_SEM must be defined (the ser <filename moreinfo="none">Makefile.defs</filename> takes care of
-		this, you should need to change it only for new architectures or compilers). <filename moreinfo="none">locking.h</filename> defines 2 new types:
+		First of all you have to include <filename
+		moreinfo="none">locking.h</filename>. Then when compiling the code one or all of
+		FAST_LOCK, USE_PTHREAD_MUTEX, USE_PTHREAD_SEM or USE_SYSV_SEM must be defined (the
+		ser <filename moreinfo="none">Makefile.defs</filename> takes care of this, you
+		should need to change it only for new architectures or compilers). <filename
+		moreinfo="none">locking.h</filename> defines 2 new types:
 		<structname>gen_lock_t</structname> and <structname>lock_set_t</structname>.
 	    </simpara>
 	</section>
 	<section>
 	    <title>Simple Locks</title>
 	    <simpara>
-		The simple locks are simple mutexes. The type is <structname>gen_lock_t</structname>.  
+		The simple locks are simple mutexes. The type is
+		<structname>gen_lock_t</structname>.
 	    </simpara>
 	    <warning>
 		<simpara>
-		    Do not make any assumptions on <structname>gen_lock_t</structname> base type, it does not have to be always an int.
+		    Do not make any assumptions on <structname>gen_lock_t</structname> base type, it
+		    does not have to be always an int.
 		</simpara>
 	    </warning>
 	    <section>
 		<title>Allocation & Initialization</title>
 		<simpara>
-		    The locks are allocated with: <function moreinfo="none">gen_lock_t* lock_alloc()</function> and initialized with <function
-		    moreinfo="none">gen_lock_t* lock_init(gen_lock_t* lock)</function>. Both functions return 0 on failure. The locks must be initialized before
-		    use. A proper alloc/init sequence looks like:
+		    The locks are allocated with: <function moreinfo="none">gen_lock_t*
+		    lock_alloc()</function> and initialized with <function
+		    moreinfo="none">gen_lock_t* lock_init(gen_lock_t* lock)</function>. Both
+		    functions return 0 on failure. The locks must be initialized before use. A
+		    proper alloc/init sequence looks like:
 		</simpara>
 		<programlisting format="linespecific">
 gen_lock_t* lock;
@@ -85,8 +101,9 @@ if (lock_init(lock)==0){
 ...
 </programlisting>
 		<simpara>
-		    Lock allocation can be skipped in some cases: if the lock is already in shared memory you don't need to allocate it again, you can
-		    initialize it directly, but keep in mind that the lock <emphasis>MUST</emphasis> be in shared memory.
+		    Lock allocation can be skipped in some cases: if the lock is already in shared
+		    memory you don't need to allocate it again, you can initialize it directly, but
+		    keep in mind that the lock <emphasis>MUST</emphasis> be in shared memory.
 		</simpara>
 		<simpara>
 		    Example:
@@ -118,10 +135,13 @@ if (lock_init(&amp;bar->lock)==0){
 		    </funcprototype>
 		</funcsynopsis>
 		<simpara>
-		    The <function moreinfo="none">lock_destroy</function> function must be called first. It removes the resources associated with the lock, but
-		    it does not also free the lock shared memory part. Think of sysv <command moreinfo="none">rmid</command>.  Please don't forget to call this
-		    function, or you can leave allocated resources in some cases (e.g sysv semaphores). Be carefull to call it in your module destroy function
-		    if you use any global module locks.
+		    The <function moreinfo="none">lock_destroy</function> function must be called
+		    first. It removes the resources associated with the lock, but it does not also
+		    free the lock shared memory part. Think of sysv <command
+		    moreinfo="none">rmid</command>.  Please don't forget to call this function, or
+		    you can leave allocated resources in some cases (e.g sysv semaphores). Be
+		    carefull to call it in your module destroy function if you use any global module
+		    locks.
 		</simpara>
 		<simpara>
 		    Example:
@@ -131,7 +151,8 @@ lock_destroy(lock);
 lock_dealloc(lock);
 </programlisting>
 		<simpara>
-		    Of course you don't need to call <function moreinfo="none">lock_dealloc</function> if your lock was not allocated with 
+		    Of course you don't need to call <function
+		    moreinfo="none">lock_dealloc</function> if your lock was not allocated with
 		    <function moreinfo="none">lock_alloc</function>l.
 		</simpara>
 	    </section>
@@ -152,8 +173,10 @@ lock_dealloc(lock);
 	<section>
 	    <title>Lock Sets</title>
 	    <simpara>
-		The lock sets are kind of sysv semaphore sets equivalent. The type is <structname>lock_set_t</structname>.  Use them when you need a lot of
-		mutexes. In some cases they waste less system resources than arrays of <structname>gen_lock_t</structname> (e.g. sys v semaphores).
+		The lock sets are kind of sysv semaphore sets equivalent. The type is
+		<structname>lock_set_t</structname>.  Use them when you need a lot of mutexes. In
+		some cases they waste less system resources than arrays of
+		<structname>gen_lock_t</structname> (e.g. sys v semaphores).
 	    </simpara>
 	    <section>
 		<title>Allocating & Initializing</title>
@@ -172,8 +195,9 @@ lock_dealloc(lock);
 		</simpara>
 		<warning>
 		    <simpara>
-			Expect the allocation function to fail for large numbers. It depends on the locking method used & the system available resources (again
-			the sysv semaphores example).
+			Expect the allocation function to fail for large numbers. It depends on the
+			locking method used & the system available resources (again the sysv
+			semaphores example).
 		    </simpara>
 		</warning>
 		<simpara>
