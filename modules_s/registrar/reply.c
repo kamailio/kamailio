@@ -102,7 +102,9 @@ void build_contact(ucontact_t* _c)
 		LOG(L_ERR, "build_contact(): Contact list buffer exhaused, %d contact(s) ignored\n", nummissed);
 	}
 
-	DBG("build_contact(): Created Contact HF: %.*s\n", l, b);
+	if (_c) {
+		DBG("build_contact(): Created Contact HF: %.*s\n", l, b);
+	}
 }
 
 
