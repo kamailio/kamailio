@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * JABBER module
+ * XJAB module
  *
  *
  * Copyright (C) 2001-2003 Fhg Fokus
@@ -49,12 +49,13 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
+#include "../../db/db.h"
 
 #include "../tm/tm_load.h"
 
+#include "xjab_load.h"
 #include "xjab_worker.h"
 #include "xjab_util.h"
-#include "../../db/db.h"
 
 
 /** TM bind */
@@ -94,12 +95,11 @@ static int child_init(int rank);
 int xjab_manage_sipmsg(struct sip_msg *msg, int type);
 void xjab_check_workers(int mpid);
 
-static int jab_send_message(struct sip_msg*, char*, char*);
-static int jab_send_bye(struct sip_msg*, char*, char*);
-static int jab_join_jconf(struct sip_msg*, char*, char*);
-static int jab_exit_jconf(struct sip_msg*, char*, char*);
-static int jab_go_online(struct sip_msg*, char*, char*);
-static int jab_go_offline(struct sip_msg*, char*, char*);
+static int xj_send_message(struct sip_msg*, char*, char*);
+static int xj_join_jconf(struct sip_msg*, char*, char*);
+static int xj_exit_jconf(struct sip_msg*, char*, char*);
+static int xj_go_online(struct sip_msg*, char*, char*);
+static int xj_go_offline(struct sip_msg*, char*, char*);
 
 void destroy(void);
 
@@ -107,27 +107,37 @@ struct module_exports exports= {
 	"jabber",
 	(char*[]){
 		"jab_send_message",
-		"jab_send_bye",
 		"jab_join_jconf",
 		"jab_exit_jconf",
 		"jab_go_online",
-		"jab_go_offline"
+		"jab_go_offline",
+		"jab_register_watcher",
+		"jab_unregister_watcher",
+		"load_xjab"
 	},
 	(cmd_function[]){
-		jab_send_message,
-		jab_send_bye,
-		jab_join_jconf,
-		jab_exit_jconf,
-		jab_go_online,
-		jab_go_offline
+		xj_send_message,
+		xj_join_jconf,
+		xj_exit_jconf,
+		xj_go_online,
+		xj_go_offline,
+		(cmd_function)xj_register_watcher,
+		(cmd_function)xj_unregister_watcher,
+		(cmd_function)load_xjab
 	},
 	(int[]){
-		0, 0, 0, 0, 0, 0
+		0, 0, 0, 0, 0,
+		XJ_NO_SCRIPT_F,
+		XJ_NO_SCRIPT_F,
+		XJ_NO_SCRIPT_F
 	},
 	(fixup_function[]){
-		0, 0, 0, 0, 0, 0
+		0, 0, 0, 0, 0,
+		0,
+		0,
+		0
 	},
-	6,
+	8,
 
 	(char*[]) {   /* Module parameter names */
 		"contact",
@@ -342,25 +352,16 @@ static int child_init(int rank)
 /**
  * send the SIP MESSAGE through Jabber
  */
-static int jab_send_message(struct sip_msg *msg, char* foo1, char * foo2)
+static int xj_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 {
 	DBG("XJAB: processing SIP MESSAGE\n");
 	return xjab_manage_sipmsg(msg, XJ_SEND_MESSAGE);
 }
 
 /**
- * send the SIP BYE through Jabber
- */
-static int jab_send_bye(struct sip_msg *msg, char* foo1, char * foo2)
-{
-	DBG("XJAB: processing SIP BYE\n");
-	return xjab_manage_sipmsg(msg, XJ_SEND_BYE);
-}
-
-/**
  * join a Jabber conference
  */
-static int jab_join_jconf(struct sip_msg *msg, char* foo1, char * foo2)
+static int xj_join_jconf(struct sip_msg *msg, char* foo1, char * foo2)
 {
 	DBG("XJAB: join a Jabber conference\n");
 	return xjab_manage_sipmsg(msg, XJ_JOIN_JCONF);
@@ -369,7 +370,7 @@ static int jab_join_jconf(struct sip_msg *msg, char* foo1, char * foo2)
 /**
  * exit from Jabber conference
  */
-static int jab_exit_jconf(struct sip_msg *msg, char* foo1, char * foo2)
+static int xj_exit_jconf(struct sip_msg *msg, char* foo1, char * foo2)
 {
 	DBG("XJAB: exit from a Jabber conference\n");
 	return xjab_manage_sipmsg(msg, XJ_EXIT_JCONF);
@@ -378,7 +379,7 @@ static int jab_exit_jconf(struct sip_msg *msg, char* foo1, char * foo2)
 /**
  * go online in Jabber network
  */
-static int jab_go_online(struct sip_msg *msg, char* foo1, char * foo2)
+static int xj_go_online(struct sip_msg *msg, char* foo1, char * foo2)
 {
 	DBG("XJAB: go online in Jabber network\n");
 	return xjab_manage_sipmsg(msg, XJ_GO_ONLINE);
@@ -387,7 +388,7 @@ static int jab_go_online(struct sip_msg *msg, char* foo1, char * foo2)
 /**
  * go offline in Jabber network
  */
-static int jab_go_offline(struct sip_msg *msg, char* foo1, char * foo2)
+static int xj_go_offline(struct sip_msg *msg, char* foo1, char * foo2)
 {
 	DBG("XJAB: go offline in Jabber network\n");
 	return xjab_manage_sipmsg(msg, XJ_GO_OFFLINE);
@@ -439,10 +440,10 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 		body.len = (int)msg->content_length->parsed;
 	}
 	
-	// check for FROM header
-	if(!msg->from)
+	// check for TO and FROM headers 
+	if(parse_headers( msg, HDR_TO|HDR_FROM, 0)==-1 || !msg->to || !msg->from)
 	{
-		LOG(L_ERR,"XJAB:xjab_manage_sipmsg: cannot find FROM HEADER!\n");
+		LOG(L_ERR,"XJAB:xjab_manage_sipmsg: cannot find TO or FROM HEADERS!\n");
 		goto error;
 	}
 	
@@ -468,10 +469,12 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 				goto error;
 			}
 		break;
-		case XJ_SEND_BYE:
 		case XJ_EXIT_JCONF:
 		case XJ_GO_OFFLINE:
 			if((pipe = xj_wlist_check(jwl, &jkey, &p)) < 0)
+/**
+ *
+ */
 			{
 				DBG("XJAB:xjab_manage_sipmsg: no open Jabber session for"
 						" <%.*s>!\n", from->uri.len, from->uri.s);
@@ -579,7 +582,6 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 			}
 			strncpy(jsmsg->msg.s, body.s, jsmsg->msg.len);
 		break;
-		case XJ_SEND_BYE:
 		case XJ_JOIN_JCONF:
 		case XJ_EXIT_JCONF:
 		case XJ_GO_ONLINE:
@@ -661,6 +663,97 @@ void destroy(void)
 	DBG("XJAB: Unloaded\n");
 }
 
+/**
+ * register a watcher function for a Jabber user' presence
+ */
+void xj_register_watcher(str *dom,str *to,str *from,pa_callback_f cbf,void *pp)
+{
+	xj_sipmsg jsmsg = NULL;
+	t_xj_jkey jkey, *jp;
+	int pipe, fl;
+
+	if(!to || !from || !cbf)
+		return;
+
+	jkey.hash = xj_get_hash(from, NULL);
+	jkey.id = from;
+
+	if((pipe = xj_wlist_get(jwl, &jkey, &jp)) < 0)
+	{
+		DBG("XJAB:xj_register_watcher: cannot find pipe of the worker!\n");
+		goto error;
+	}
+	
+	//putting the SIP message parts in share memory to be accessible by workers
+    jsmsg = (xj_sipmsg)shm_malloc(sizeof(t_xj_sipmsg));
+	memset(jsmsg, 0, sizeof(t_xj_sipmsg));
+    if(jsmsg == NULL)
+    	goto error;
+	
+	if(dom && dom->s && dom->len > 0)
+	{
+		jsmsg->msg.len = dom->len;
+		if((jsmsg->msg.s = (char*)shm_malloc(jsmsg->msg.len+1)) == NULL)
+		{
+			shm_free(jsmsg);
+			goto error;
+		}
+		strncpy(jsmsg->msg.s, dom->s, jsmsg->msg.len);
+	}
+	else
+	{
+		jsmsg->msg.len = 0;
+		jsmsg->msg.s = NULL;
+
+	}
+	
+	jsmsg->to.len = to->len;
+	if((jsmsg->to.s = (char*)shm_malloc(jsmsg->to.len+1)) == NULL)
+	{
+		if(jsmsg->msg.s)
+			shm_free(jsmsg->msg.s);
+		shm_free(jsmsg);
+		goto error;
+	}
+	strncpy(jsmsg->to.s, to->s, jsmsg->to.len);
+
+	jsmsg->jkey = jp;
+	jsmsg->type = XJ_REG_WATCHER;
+	//jsmsg->jkey->hash = jkey.hash;
+	
+	jsmsg->cbf = cbf;
+	jsmsg->p = pp;
+
+	DBG("XJAB:xj_register_watcher:%d: sending <%p> to worker through <%d>\n",
+			getpid(), jsmsg, pipe);
+	// sending the SHM pointer of SIP message to the worker
+	fl = write(pipe, &jsmsg, sizeof(jsmsg));
+	if(fl != sizeof(jsmsg))
+	{
+		DBG("XJAB:xj_register_watcher: error when writting to worker pipe!\n");
+		if(jsmsg->msg.s)
+			shm_free(jsmsg->msg.s);
+		shm_free(jsmsg->to.s);
+		shm_free(jsmsg);
+		goto error;
+	}
+	
+error:
+	return;
+}
+
+/**
+ * unregister a watcher for a Jabber user' presence
+ */
+void xj_unregister_watcher(str *dom, str *to, str *from)
+{
+	if(!to || !from)
+		return;
+}
+
+/**
+ *
+ */
 void xjab_check_workers(int mpid)
 {
 	int i, n, stat;
