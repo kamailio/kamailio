@@ -1,4 +1,5 @@
-/* enum_mod.h v 0.2 2002/12/27
+/*
+ * $Id$
  *
  * Enum module headers
  *

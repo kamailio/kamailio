@@ -1,4 +1,5 @@
-/* enum.h v 0.2 2002/12/27
+/*
+ * $Id$
  *
  * Header file for Enum and E164 related functions
  *

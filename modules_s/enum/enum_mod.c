@@ -1,4 +1,5 @@
-/* enum_mod.c v 0.2 2002/12/27
+/*
+ * $Id$
  *
  * Enum module
  *

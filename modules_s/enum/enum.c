@@ -1,4 +1,5 @@
-/* enum.c v 0.3 2003/1/19
+/*
+ * $Id$
  *
  * Enum and E164 related functions
  *
