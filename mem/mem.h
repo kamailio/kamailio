@@ -28,9 +28,9 @@
 #	ifdef DBG_QM_MALLOC
 #		ifdef VQ_MALLOC
 #			define pkg_malloc(s) vqm_malloc(mem_block, (s),__FILE__, \
-				__FUNCTION__, __LINE__);
+				__FUNCTION__, __LINE__)
 #			define pkg_free(p)   vqm_free(mem_block, (p), __FILE__,  \
-				__FUNCTION__, __LINE__);
+				__FUNCTION__, __LINE__)
 #		elif defined F_MALLOC
 #			define pkg_malloc(s) fm_malloc(mem_block, (s),__FILE__, \
 				__FUNCTION__, __LINE__);
