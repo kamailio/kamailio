@@ -25,6 +25,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef _SCRIPT_CB_H_
+#define _SCRIPT_CB_H_
 
 #include "parser/msg_parser.h"
 
@@ -48,4 +50,5 @@ int exec_pre_cb( struct sip_msg *msg);
 void exec_post_cb( struct sip_msg *msg);
 void destroy_script_cb();
 
+#endif
 
