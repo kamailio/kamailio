@@ -121,6 +121,11 @@ Desc:		outbound proxy address
 			address. If is missing, the message will be delivered to the
 			hostname of the destination address
 
+Name:		registrar
+Type:		string
+Default:	"jabber_gateway@127.0.0.1"
+Desc:		the address in whose behalf the INFO and ERROR messages are sent.
+
 Name:		workers
 Type:		integer
 Default:	2

@@ -88,8 +88,8 @@ int _xj_pid = 0;
 int main_loop = 1;
 
 /** **/
-
-static str jab_gw_name = {"sip_to_jabber_gateway", 21};
+extern char *registrar;
+static str jab_gw_name = {"jabber_gateway@127.0.0.1", 24};
 
 /**
  * address corection
@@ -286,6 +286,18 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 	//signal(SIGINT, xj_sig_handler);
 	//signal(SIGQUIT, xj_sig_handler);
 	signal(SIGSEGV, xj_sig_handler);
+
+	if(registrar)
+	{
+		jab_gw_name.s = registrar;
+		jab_gw_name.len = strlen(registrar);
+		if(registrar[0]== 's' && registrar[1]== 'i' &&
+			registrar[2]== 'p' && registrar[3]== ':')
+		{
+			jab_gw_name.s += 4;
+			jab_gw_name.len -= 4;
+		}
+	}
 
 	if(!jwl || !jwl->aliases || !jwl->aliases->jdm 
 			|| !jaddress || rank >= jwl->len)
@@ -1330,7 +1342,7 @@ void xj_worker_check_jcons(xj_wlist jwl, xj_jcon_pool jcp, int ltime, fd_set *ps
 		{
 #ifdef XJ_EXTRA_DEBUG
 			DBG("XJAB:xj_worker:%d: sending 'terminated' status to SIP"
-					"subscriber\n", _xj_pid);
+					" subscriber\n", _xj_pid);
 #endif
 			xj_pres_list_notifyall(jcp->ojc[i]->plist,
 					XJ_PS_TERMINATED);
