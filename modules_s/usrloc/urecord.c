@@ -174,7 +174,7 @@ static inline int nodb_timer(urecord_t* _r)
 			LOG(L_NOTICE, "Binding '\%.*s\',\'%.*s\' has expired\n",
 			    ptr->aor->len, ptr->aor->s,
 			    ptr->c.len, ptr->c.s);
-
+			
 			t = ptr;
 			ptr = ptr->next;
 
@@ -236,9 +236,11 @@ static inline int wb_timer(urecord_t* _r)
 
 	while(ptr) {
 		if (ptr->expires < act_time) {
-			LOG(L_NOTICE, "Binding '\%.*s\',\'%.*s\' has expired\n",
-			    ptr->aor->len, ptr->aor->s,
-			    ptr->c.len, ptr->c.s);
+			if (ptr->expires != 0) { /* expires == 0 means the contact was remove by user */
+				LOG(L_NOTICE, "Binding '\%.*s\',\'%.*s\' has expired\n",
+				    ptr->aor->len, ptr->aor->s,
+				    ptr->c.len, ptr->c.s);
+			}
 			t = ptr;
 			ptr = ptr->next;
 
