@@ -55,6 +55,7 @@
  * 2003-10-02  via+lump dst address/port can be set to preset values (andrei)
  * 2003-10-08  receive_test function-alized (jiri)
  * 2003-10-20  added body_lump list (sip_msg), adjust_clen (andrei & jan)
+ * 2003-11-11  type of rpl_lumps replaced by flags (bogdan)
  *
  */
 /* Via special params:
@@ -1667,7 +1668,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	/* lumps length */
 	for(lump=msg->reply_lump;lump;lump=lump->next) {
 		len += lump->text.len;
-		if (lump->type==LUMP_RPL_BODY)
+		if (lump->flags&LUMP_RPL_BODY)
 			body = lump;
 	}
 	/* server header */
@@ -1795,7 +1796,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	} /* end for */
 	/* lumps */
 	for(lump=msg->reply_lump;lump;lump=lump->next)
-		if (lump->type==LUMP_RPL_HDR){
+		if (lump->flags&LUMP_RPL_HDR){
 			memcpy(p,lump->text.s,lump->text.len);
 			p += lump->text.len;
 		}

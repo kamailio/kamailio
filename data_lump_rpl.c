@@ -24,6 +24,12 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * 2002-02-14 : created by bogdan
+ * 2003-09-11 : lump_rpl type added - LUMP_RPL_BODY & LUMP_RPL_HDR (bogdan)
+ * 2003-11-11 : build_lump_rpl merged into add_lump_rpl; types -> flags ;
+ *              flags LUMP_RPL_NODUP and LUMP_RPL_NOFREE added (bogdan)
  */
 
 
@@ -33,62 +39,60 @@
 #include "data_lump_rpl.h"
 
 
-struct lump_rpl* build_lump_rpl( char* text, int len , int type)
+
+struct lump_rpl* add_lump_rpl(struct sip_msg *msg, char *s, int len, int flags)
 {
 	struct lump_rpl *lump = 0;
-
-	lump = (struct lump_rpl*) pkg_malloc(sizeof(struct lump_rpl));
-	if (!lump)
-	{
-		LOG(L_ERR,"ERROR:build_lump_rpl : no free memory (struct)!\n");
-		goto error;
-	}
-
-	lump->text.s = pkg_malloc( len );
-	if (!lump->text.s)
-	{
-		LOG(L_ERR,"ERROR:build_lump_rpl : no free memory (%d)!\n", len );
-		goto error;
-	}
-
-	memcpy(lump->text.s,text,len);
-	lump->text.len = len;
-	lump->type = type;
-	lump->next = 0;
-
-	return lump;
-
-error:
-	if (lump) pkg_free(lump);
-	return 0;
-}
-
-
-
-int add_lump_rpl(struct sip_msg * msg, struct lump_rpl* lump)
-{
 	struct lump_rpl *foo;
 
-	if (lump==0 || lump->text.s==0 || lump->text.len==0) {
+	/* some checkings */
+	if ( (flags&(LUMP_RPL_HDR|LUMP_RPL_BODY))==(LUMP_RPL_HDR|LUMP_RPL_BODY)
+	|| (flags&(LUMP_RPL_HDR|LUMP_RPL_BODY))==0) {
+		LOG(L_ERR,"ERROR:add_lump_rpl: bad type flags (none or both)!\n");
+		goto error;
+	}
+	if (len<=0 || s==0) {
 		LOG(L_ERR,"ERROR:add_lump_rpl: I won't add an empty lump!\n");
-		return -1;
+		goto error;
 	}
 
-	if (!msg->reply_lump)
-	{
+	/* build the lump */
+	lump = (struct lump_rpl*) pkg_malloc
+		( sizeof(struct lump_rpl) + ((flags&LUMP_RPL_NODUP)?0:len) );
+	if (!lump) {
+		LOG(L_ERR,"ERROR:add_lump_rpl : no free pkg memory !\n");
+		goto error;
+	}
+
+	if (flags&LUMP_RPL_NODUP) {
+		lump->text.s = s;
+	} else {
+		lump->text.s = ((char*)lump)+sizeof(struct lump_rpl);
+		memcpy( lump->text.s, s, len);
+	}
+	lump->text.len = len;
+	lump->flags = flags;
+	lump->next = 0;
+
+	/* add the lump to the msg */
+	if (!msg->reply_lump) {
 		msg->reply_lump = lump;
 	}else{
-		if (lump->type!=LUMP_RPL_BODY)
+		if (!(flags&LUMP_RPL_BODY))
 			for(foo=msg->reply_lump;foo->next;foo=foo->next);
 		else
 			for(foo=msg->reply_lump;foo->next;foo=foo->next)
-				if (lump->type==LUMP_RPL_BODY) {
+				if (lump->flags&LUMP_RPL_BODY) {
 					LOG(L_ERR,"ERROR:add_lump_rpl: LUMP_RPL_BODY "
 						"already added!\n");
-					return -1;
+					pkg_free(lump);
+					goto error;
 				}
 		foo->next = lump;
 	}
+
+	return lump;
+error:
 	return 0;
 }
 
@@ -96,8 +100,12 @@ int add_lump_rpl(struct sip_msg * msg, struct lump_rpl* lump)
 
 void free_lump_rpl(struct lump_rpl* lump)
 {
-	if (lump && lump->text.s)  pkg_free(lump->text.s);
-	if (lump) pkg_free(lump);
+	if (lump) {
+		if (!((lump->flags)&LUMP_RPL_NOFREE) && ((lump->flags)&LUMP_RPL_NODUP)
+		&& lump->text.s)
+			pkg_free(lump->text.s);
+		pkg_free(lump);
+	}
 }
 
 
