@@ -28,6 +28,7 @@
  * --------
  *  2003-01-19  support for duplication lump lists added (jiri)
  *  2003-03-31  added subst lumps -- they expand in ip addr, port a.s.o (andrei)
+ *  2003-04-01  added conditional lump suport functions (andrei)
  */
 
 
@@ -156,7 +157,7 @@ struct lump* insert_subst_lump_after( struct lump* after, enum lump_subst subst,
 										int type)
 {
 	struct lump* tmp;
-
+	
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		ser_error=E_OUT_OF_MEM;
@@ -182,7 +183,7 @@ struct lump* insert_subst_lump_before(	struct lump* before,
 										int type)
 {
 	struct lump* tmp;
-
+	
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		ser_error=E_OUT_OF_MEM;
@@ -194,6 +195,57 @@ struct lump* insert_subst_lump_before(	struct lump* before,
 	tmp->type=type;
 	tmp->op=LUMP_ADD_SUBST;
 	tmp->u.subst=subst;
+	tmp->len=0;
+	before->before=tmp;
+	return tmp;
+}
+
+
+
+/* inserts a  cond lump immediately after hdr 
+ * returns pointer on success, 0 on error */
+struct lump* insert_cond_lump_after( struct lump* after, enum lump_conditions c,
+										int type)
+{
+	struct lump* tmp;
+	
+	tmp=pkg_malloc(sizeof(struct lump));
+	if (tmp==0){
+		ser_error=E_OUT_OF_MEM;
+		LOG(L_ERR, "ERROR: insert_new_lump_after: out of memory\n");
+		return 0;
+	}
+	memset(tmp,0,sizeof(struct lump));
+	tmp->after=after->after;
+	tmp->type=type;
+	tmp->op=LUMP_ADD_OPT;
+	tmp->u.cond=c;
+	tmp->len=0;
+	after->after=tmp;
+	return tmp;
+}
+
+
+
+/* inserts a  conditional lump immediately before "before" 
+ * returns pointer on success, 0 on error */
+struct lump* insert_cond_lump_before(	struct lump* before, 
+										enum lump_conditions c,
+										int type)
+{
+	struct lump* tmp;
+	
+	tmp=pkg_malloc(sizeof(struct lump));
+	if (tmp==0){
+		ser_error=E_OUT_OF_MEM;
+		LOG(L_ERR,"ERROR: insert_new_lump_before: out of memory\n");
+		return 0;
+	}
+	memset(tmp,0,sizeof(struct lump));
+	tmp->before=before->before;
+	tmp->type=type;
+	tmp->op=LUMP_ADD_OPT;
+	tmp->u.cond=c;
 	tmp->len=0;
 	before->before=tmp;
 	return tmp;

@@ -127,6 +127,11 @@ struct lump* insert_subst_lump_after(struct lump* after,  enum lump_subst subst,
 struct lump* insert_subst_lump_before(struct lump* before,enum lump_subst subst,
 									int type);
 
+/* conditional lumps */
+struct lump* insert_cond_lump_after(struct lump* after, enum lump_conditions c,
+									int type);
+struct lump* insert_cond_lump_before(struct lump* after, enum lump_conditions c,
+									int type);
 
 /* removes an already existing header */
 struct lump* del_lump(struct lump** list, int offset, int len, int type);
