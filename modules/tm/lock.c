@@ -66,8 +66,9 @@ int lock_initialize()
 
 	/* transaction timers */
 	if ((timer_semaphore= init_semaphore_set( TG_NR ) ) < 0) {
-                LOG(L_ERR, "ERROR: lock_initialize:  "
-			"transaction timer semaphore initialization failure\n");
+		LOG(L_CRIT, "ERROR: lock_initialize:  "
+			"transaction timer semaphore initialization failure: %s\n",
+				strerror(errno));
 		goto error;
 	}
 
@@ -80,23 +81,37 @@ int lock_initialize()
 	i=SEM_MIN;
 	/* probing phase: 0=initial, 1=after the first failure */
 	probe_run=0;
+again:
 	do {
 		if (entry_semaphore>0) /* clean-up previous attempt */
 			semctl( entry_semaphore, 0 , IPC_RMID , 0 );
+		if (reply_semaphore>0)
+			semctl(reply_semaphore, 0 , IPC_RMID , 0 );
+		if (ack_semaphore>0)
+			semctl(reply_semaphore, 0 , IPC_RMID , 0 );
+
+		if (i==0){
+			LOG(L_CRIT, "lock_initialize: could not allocate semaphore"
+					" sets\n");
+			goto error;
+		}
+
 		entry_semaphore=init_semaphore_set( i );
 		if (entry_semaphore==-1) {
-			DBG("DEBUG: lock_initialize: entry semaphore initialization failure:  %s\n", strerror( errno ) );
+			DBG("DEBUG: lock_initialize: entry semaphore "
+					"initialization failure:  %s\n", strerror( errno ) );
 			/* Solaris: EINVAL, Linux: ENOSPC */
                         if (errno==EINVAL || errno==ENOSPC ) {
                                 /* first time: step back and try again */
                                 if (probe_run==0) {
-					DBG("DEBUG: lock_initialize: first time sempahore allocation failure\n");
+					DBG("DEBUG: lock_initialize: first time "
+								"semaphore allocation failure\n");
                                         i--;
                                         probe_run=1;
                                         continue;
 				/* failure after we stepped back; give up */
                                 } else {
-				 	LOG(L_ERR, "ERROR: lock_initialize:   second time sempahore allocation failure\n");
+				 	DBG("DEBUG: lock_initialize:   second time sempahore allocation failure\n");
 					goto error;
 				}
                         }
@@ -116,8 +131,34 @@ int lock_initialize()
 	} while(1);
 	sem_nr=i;	
 
-	reply_semaphore=init_semaphore_set( sem_nr );
-	ack_semaphore=init_semaphore_set(sem_nr);
+	if ((reply_semaphore=init_semaphore_set( sem_nr ))<0){
+		if (errno==EINVAL || errno==ENOSPC ) {
+			DBG("DEBUG:lock_initialize: reply semaphore initialization"
+				" failure: %s\n", strerror(errno));
+			probe_run==1;
+			i--;
+			goto again;
+		}else{
+			LOG(L_CRIT, "ERROR:lock_initialize: reply semaphore initialization"
+				" failure: %s\n", strerror(errno));
+			goto error;
+		}
+	}
+	
+	if ((ack_semaphore=init_semaphore_set(sem_nr))<0){
+		if (errno==EINVAL || errno==ENOSPC ) {
+			DBG( "DEBUG:lock_initialize: ack semaphore initialization"
+				" failure: %s\n", strerror(errno));
+			probe_run==1;
+			i--;
+			goto again;
+		}else{
+			LOG(L_CRIT, "ERROR:lock_initialize: ack semaphore initialization"
+				" failure: %s\n", strerror(errno));
+			goto error;
+		}
+	}
+
 
 
 	/* return success */
@@ -135,8 +176,8 @@ static int init_semaphore_set( int size )
 
 	new_semaphore=semget ( IPC_PRIVATE, size, IPC_CREAT | IPC_PERMISSIONS );
 	if (new_semaphore==-1) {
-		LOG(L_CRIT, "ERROR: init_semaphore_set:  failure to allocate a"
-					" semaphore: %s\n", strerror(errno));
+		DBG("DEBUG: init_semaphore_set(%d):  failure to allocate a"
+					" semaphore: %s\n", size, strerror(errno));
 		return -1;
 	}
 	for (i=0; i<size; i++) {
@@ -148,7 +189,7 @@ static int init_semaphore_set( int size )
                 /* binary lock */
                 argument.val = +1;
                 if (semctl( new_semaphore, i , SETVAL , argument )==-1) {
-			LOG(L_CRIT, "ERROR: init_semaphore_set:  failure to "
+			DBG("DEBUG: init_semaphore_set:  failure to "
 						"initialize a semaphore: %s\n", strerror(errno));
 			if (semctl( entry_semaphore, 0 , IPC_RMID , 0 )==-1)
 				DBG("DEBUG: init_semaphore_set:  failure to release"
@@ -235,9 +276,9 @@ tryagain:
 			goto tryagain;
 		} else {
 			LOG(L_CRIT, "ERROR: change_semaphore(%x, %x, 1) : %s\n",
-					s.semaphore.set, &pbuf,
+					s.semaphore_set, &pbuf,
 					strerror(errno));
-			
+		}
 	}
 	return r;
 }
