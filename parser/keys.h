@@ -30,6 +30,7 @@
  * --------
  * 2003-05-01 _acce_ macro added (janakj)
  * 2003-05-01 Macros for Accept-Disposition added (janakj)
+ * 2003-11-02 Macros for Diversion added (jh)
  */
 
 #ifndef KEYS_H
@@ -114,5 +115,14 @@
 #define _pt_d_ 0x64617470   /* "pt-d" */
 #define _ispo_ 0x6f707369   /* "ispo" */
 #define _siti_ 0x69746973   /* "siti" */
+
+#define _dive_ 0x65766964   /* "dive" */
+#define _rsio_ 0x6f697372   /* "rsio" */
+
+#define _remo_ 0x6f6d6572   /* "remo" */
+#define _te_p_ 0x702d6574   /* "te-p" */
+#define _arty_ 0x79747261   /* "arty" */
+#define __id2_ 0x2064692d   /* "-id " */
+#define __id1_ 0x3a64692d   /* "-id:" */
 
 #endif /* KEYS_H */

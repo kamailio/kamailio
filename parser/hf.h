@@ -71,7 +71,9 @@
 #define HDR_USERAGENT          (1 << 25)  /* User-Agent header field */
 #define HDR_ACCEPTDISPOSITION  (1 << 26)  /* Accept-Disposition header field */
 #define HDR_CONTENTDISPOSITION (1 << 27)  /* Content-Disposition header field */
-#define HDR_OTHER              (1 << 28)  /* Some other header field */
+#define HDR_DIVERSION          (1 << 28)  /* Diversion header field */
+#define HDR_RPID               (1 << 29)  /* Remote-Party-ID header field */
+#define HDR_OTHER              (1 << 30)  /* Some other header field */
 
 
 /* 
@@ -81,7 +83,7 @@ struct hdr_field {
 	int type;               /* Header field type */
 	str name;               /* Header field name */
 	str body;               /* Header field body (may not include CRLF) */
-	int len;				/* length from hdr start until EoHF (incl.CRLF) */
+	int len;		/* length from hdr start until EoHF (incl.CRLF) */
 	void* parsed;           /* Parsed data structures */
 	struct hdr_field* next; /* Next header field in the list */
 };
