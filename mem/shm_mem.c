@@ -18,6 +18,10 @@
 
 #endif
 
+#ifdef FAST_LOCK
+#include "../fastlock.h"
+#endif
+
 
 /* define semun */
 #if defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)
@@ -38,8 +42,12 @@
 static int shm_shmid=-1; /*shared memory id*/
 #endif
 
-
+#ifdef FAST_LOCK
+lock_t* mem_lock=0;
+#else
 int shm_semid=-1; /*semaphore id*/
+#endif
+
 static void* shm_mempool=(void*)-1;
 #ifdef VQ_MALLOC
 	struct vqm_block* shm_block;
@@ -153,6 +161,8 @@ int shm_mem_init()
 		shm_mem_destroy();
 		return -1;
 	}
+
+#ifndef FAST_LOCK
 	/* alloc a semaphore (for malloc)*/
 	shm_semid=semget(IPC_PRIVATE, 1, 0700);
 	if (shm_semid==-1){
@@ -170,6 +180,7 @@ int shm_mem_init()
 		shm_mem_destroy();
 		return -1;
 	}
+#endif
 	/* init it for malloc*/
 #	ifdef VQ_MALLOC
 		shm_block=vqm_malloc_init(shm_mempool, SHM_MEM_SIZE);
@@ -182,6 +193,11 @@ int shm_mem_init()
 		shm_mem_destroy();
 		return -1;
 	}
+#ifdef FAST_LOCK
+	mem_lock=shm_malloc_unsafe(sizeof(lock_t));
+	init_lock(*mem_lock);
+#endif
+	
 	DBG("shm_mem_init: success\n");
 	
 	return 0;
@@ -210,10 +226,12 @@ void shm_mem_destroy()
 		shm_shmid=-1;
 	}
 #endif
+#ifndef FAST_LOCK
 	if (shm_semid!=-1) {
 		semctl(shm_semid, 0, IPC_RMID, (union semun)0);
 		shm_semid=-1;
 	}
+#endif
 }
 
 

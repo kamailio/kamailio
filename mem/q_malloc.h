@@ -7,6 +7,28 @@
 #define q_malloc_h
 
 
+
+/* defs*/
+
+#define ROUNDTO		16 /* size we round to, must be = 2^n */
+#define MIN_FRAG_SIZE	ROUNDTO
+
+
+
+#define QM_MALLOC_OPTIMIZE_FACTOR 10 /*used below */
+#define QM_MALLOC_OPTIMIZE  (1<<QM_MALLOC_OPTIMIZE_FACTOR)
+								/* size to optimize for,
+									(most allocs < this size),
+									must be 2^k */
+
+#define QM_HASH_SIZE (QM_MALLOC_OPTIMIZE/ROUNDTO + \
+		(32-QM_MALLOC_OPTIMIZE_FACTOR)+1)
+
+/* hash structure:
+ * 0 .... QM_MALLOC_OPTIMIE/ROUNDTO  - small buckets, size increases with
+ *                            ROUNDTO from bucket to bucket
+ * +1 .... end -  size = 2^k, big buckets */
+
 struct qm_frag{
 	unsigned int size;
 	union{
@@ -31,6 +53,13 @@ struct qm_frag_end{
 };
 
 
+
+struct qm_frag_full{
+	struct qm_frag head;
+	struct qm_frag_end tail;
+};
+
+
 struct qm_block{
 	unsigned int size; /* total size */
 	unsigned int used; /* alloc'ed size*/
@@ -40,8 +69,8 @@ struct qm_block{
 	struct qm_frag* first_frag;
 	struct qm_frag_end* last_frag_end;
 	
-	struct qm_frag free_lst;
-	struct qm_frag_end free_lst_end;
+	struct qm_frag_full free_hash[QM_HASH_SIZE];
+	/*struct qm_frag_end free_lst_end;*/
 };
 
 

@@ -40,16 +40,30 @@
 #	define MY_FREE qm_free
 #	define MY_STATUS qm_status
 #endif
-extern int shm_semid;
+
+#ifdef FAST_LOCK
+#include "../fastlock.h"
+	
+	extern lock_t* mem_lock;
+#else
+extern  int shm_semid;
+#endif
+
 
 int shm_mem_init();
 void shm_mem_destroy();
 
 
+#ifdef FAST_LOCK
 
+#define shm_lock()    get_lock(mem_lock)
+#define shm_unlock()  release_lock(mem_lock)
+
+#else
 /* inline functions (do not move them to *.c, they won't be inlined anymore) */
 static inline void shm_lock()
 {
+
 	struct sembuf sop;
 	
 	sop.sem_num=0;
@@ -98,6 +112,7 @@ again:
 }
 
 /* ret -1 on erro*/
+#endif
 
 
 
