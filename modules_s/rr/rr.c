@@ -45,7 +45,7 @@ int findRouteHF(struct sip_msg* _m)
 		if (_m->route) {
 			return TRUE;
 		} else {
-			LOG(L_ERR, "findRouteHF(): msg->route = NULL\n");
+			DBG("findRouteHF(): msg->route = NULL\n");
 			return FALSE;
 		}
 	}
