@@ -60,6 +60,11 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	unsigned int       len;
 	struct sockaddr_in to;
 
+	if ( msg->first_line.u.request.method_value==METHOD_ACK)
+	{
+		DBG("DEBUG: sl_send_reply: I wan't send a reply for ACK!!\n");
+		goto error;
+	}
 	to.sin_family = AF_INET;
 	if (update_sock_struct_from_via(  &(to),  msg->via1 )==-1)
 	{
