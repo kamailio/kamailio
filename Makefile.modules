@@ -9,6 +9,12 @@ MOD_NAME=$(NAME:.so=)
 ALLDEP=Makefile ../../Makefile.sources ../../Makefile.rules \
  ../../Makefile.modules
 
+#override modules value, a module cannot have submodules
+override modules=
+override static_modules=
+override static_modules_path=
+
+
 ifeq ($(MAKELEVEL), 0)
 # make called directly in the module dir!
 
