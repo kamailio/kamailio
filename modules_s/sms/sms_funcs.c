@@ -51,9 +51,10 @@ int *queued_msgs;
 int push_on_network(struct sip_msg *msg, int net)
 {
 	str    body;
-	struct sip_uri to_uri;
-	struct sms_msg sms_messg;
-	struct to_body from_parsed;
+	struct sip_uri  to_uri;
+	struct sms_msg  sms_messg;
+	struct to_body  from_parsed;
+	struct to_param *foo,*bar;
 	char   *p;
 
 	if (*queued_msgs>MAX_QUEUED_MESSAGES)
@@ -87,6 +88,9 @@ int push_on_network(struct sip_msg *msg, int net)
 		LOG(L_ERR,"ERROR:sms_push_on_net: cannot parse from header\n");
 		goto error;
 	}
+	/* we are not intrested in from param-> le's us free them now*/
+	for(foo=from_parsed.param_lst ; foo ; pkg_free(foo),foo=bar)
+		bar = foo->next;
 
 	/* copy "from" into sms struct */
 	memcpy(sms_messg.from,from_parsed.uri.s,from_parsed.uri.len);
@@ -314,11 +318,12 @@ int send_as_sms(struct sms_msg *sms_messg, struct modem *mdm)
 		}
 		if (i+1==max_sms_parts && i+1<nr_chunks) {
 			/* simply override the end of the last allowed part */
-			buf_len = MAX_SMS_LENGTH;
-			q = buf + (MAX_SMS_LENGTH-SMS_TRUNCATED_LEN-SMS_FOOTER_LEN);
+			buf_len += SMS_TRUNCATED_LEN+SMS_FOOTER_LEN;
+			if (buf_len>MAX_SMS_LENGTH) buf_len = MAX_SMS_LENGTH;
+			q = buf + (buf_len-SMS_TRUNCATED_LEN-SMS_FOOTER_LEN);
 			append_str(q,SMS_TRUNCATED,SMS_TRUNCATED_LEN);
 			append_str(q,SMS_FOOTER,SMS_FOOTER_LEN);
-			p += MAX_SMS_LENGTH-SMS_TRUNCATED_LEN-SMS_FOOTER_LEN; 
+			p += buf_len-SMS_TRUNCATED_LEN-SMS_FOOTER_LEN-SMS_EDGE_PART_LEN;
 			send_error(sms_messg, ERR_TRUNCATE_TEXT, ERR_TRUNCATE_TEXT_LEN,
 				p, text_len-(p-text)-SMS_FOOTER_LEN);
 		}
@@ -442,7 +447,7 @@ void modem_process(struct modem *mdm)
 				used_mem = 10;
 				last_smsc_index = -1;
 			}
-#ifdef cucu
+
 		/* if any, let's get them */
 		if (used_mem)
 			for(i=1,k=1;k<=used_mem && i<=max_mem;i++) {
@@ -455,7 +460,7 @@ void modem_process(struct modem *mdm)
 						sms.date,sms.time,sms.ascii);
 				}
 			}
-#endif
+
 		/* sleep -> if it's needed */
 		if (!dont_wait)
 			sleep(mdm->looping_interval);
