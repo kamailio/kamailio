@@ -55,7 +55,7 @@ typedef struct rule_file {
 #define MAX_RULE_FILES 64
 
 extern char* db_url;        /* Database URL */
-extern int db_mode;	    /* Database usage mode: 0=no db, 1=no cache, 2=cache */
+extern int db_mode;	    /* Database usage mode: 0=no cache, 1=cache */
 extern char* trusted_table; /* Name of trusted table */
 extern char* source_col;    /* Name of source address column */
 extern char* proto_col;     /* Name of protocol column */
@@ -63,5 +63,7 @@ extern char* from_col;      /* Name of from pattern column */
 
 extern db_con_t* db_handle;
 
+#define DISABLE_CACHE 0
+#define ENABLE_CACHE 1
 
 #endif

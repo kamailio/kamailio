@@ -63,7 +63,7 @@ int init_trusted(void)
 	hash_table_1 = hash_table_2 = 0;
 	hash_table = 0;
 
-	if (db_mode == 1) {
+	if (db_mode == ENABLE_CACHE) {
 		db_handle = db_init(db_url);
 		if (!db_handle) {
 			LOG(L_ERR, "init_trusted(): Unable to connect database\n");
@@ -121,13 +121,31 @@ int init_trusted(void)
  */
 int init_child_trusted(int rank)
 {
+	str name;
+	int ver;
+
 	/* Check if database is needed by child */
-	if (((db_mode == 0) && (rank > 0)) || ((db_mode == 1) && (rank == PROC_FIFO))) {
+	if (((db_mode == DISABLE_CACHE) && (rank > 0)) || ((db_mode == ENABLE_CACHE) && (rank == PROC_FIFO))) {
 		db_handle = db_init(db_url);
 		if (!db_handle) {
 			LOG(L_ERR, "init_child_trusted(): Unable to connect database\n");
 			return -1;
 		}
+
+		name.s = trusted_table;
+		name.len = strlen(trusted_table);
+		ver = table_version(db_handle, &name);
+
+		if (ver < 0) {
+			LOG(L_ERR, "init_child_trusted(): Error while querying table version\n");
+			db_close(db_handle);
+			return -1;
+		} else if (ver < TABLE_VERSION) {
+			LOG(L_ERR, "init_child_trusted(): Invalid table version (use ser_mysql.sh reinstall)\n");
+			db_close(db_handle);
+			return -1;
+		}		
+
 	}
 
 	return 0;
@@ -258,13 +276,11 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 		return -1;
 	}
 
-	if (db_mode == 0) {
+	if (db_mode == DISABLE_CACHE) {
 		keys[0] = source_col;
 		cols[0] = proto_col;
 		cols[1] = from_col;
 
-		db_handle = db_init(db_url);
-		
 		if (db_use_table(db_handle, trusted_table) < 0) {
 			LOG(L_ERR, "allow_trusted(): Error while trying to use trusted table\n");
 			return -1;
@@ -275,21 +291,18 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 
 		if (db_query(db_handle, keys, 0, vals, cols, 1, 2, 0, &res) < 0) {
 			LOG(L_ERR, "allow_trusted(): Error while querying database\n");
-			db_close(db_handle);
 			return -1;
 		}
 
 		if (RES_ROW_N(res) == 0) {
 			db_free_query(db_handle, res);
-			db_close(db_handle);
 			return -1;
 		}
 		
 		result = match_res(_msg, res);
 		db_free_query(db_handle, res);
-		db_close(db_handle);
 		return result;
-	} else if (db_mode == 1) {
+	} else if (db_mode == ENABLE_CACHE) {
 		return match_hash_table(*hash_table, _msg);
 	} else {
 		LOG(L_ERR, "allow_trusted(): Error - set db_mode parameter of permissions module properly\n");

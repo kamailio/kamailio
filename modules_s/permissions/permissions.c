@@ -58,7 +58,7 @@ static char* deny_suffix = ".deny";
 
 /* for allow_trusted function */
 char* db_url = 0;                  /* Don't connect to the database by default */
-int db_mode = 0;		   /* Database usage mode: 0=no cache, 1=cache */
+int db_mode = DISABLE_CACHE;	   /* Database usage mode: 0=no cache, 1=cache */
 char* trusted_table = "trusted";   /* Name of trusted table */
 char* source_col = "src_ip";       /* Name of source address column */
 char* proto_col = "proto";         /* Name of protocol column */
