@@ -436,11 +436,17 @@ int update_new_uri(struct sip_msg *msg, int code_len, char* host_port)
 	msg->parsed_uri_ok = 0;
 
 	/* compute the new uri length */
-	uri_len = 4 + msg->parsed_uri.user.len-code_len + 1 + 
+	uri_len = 4 + msg->parsed_uri.user.len-code_len +
 			( msg->parsed_uri.passwd.len ? msg->parsed_uri.passwd.len + 1:0 ) + 
 			strlen(host_port) + 1 +
 			(msg->parsed_uri.params.len ? msg->parsed_uri.params.len + 1:0 ) +
-			(msg->parsed_uri.headers.len ? msg->parsed_uri.headers.len + 1:0 );
+			(msg->parsed_uri.headers.len ? msg->parsed_uri.headers.len + 1:0 ) + 1;
+	
+	if (uri_len > MAX_URI_SIZE) 
+	{
+		LOG(L_ERR, "PDT: update_new_uri(): uri is too long\n");
+		return -1;
+	}
 
 	/* space for the new uri */
 	tmp = (char*)pkg_malloc(uri_len);
