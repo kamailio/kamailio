@@ -1,0 +1,45 @@
+<!-- $Id$ -->
+
+<!-- Entities often used in the documentation -->
+
+<!ENTITY fhg "FhG FOKUS">
+<!ENTITY iptel "<ulink url='http://iptel.org'>iptel.org</ulink>">
+<!ENTITY ser "SER">
+<!ENTITY sername "SIP Express Router">
+
+<!ENTITY serhome "http://iptel.org/ser">
+<!ENTITY serbugs "http://iptel.org/ser/bugs">
+<!ENTITY serhelp "http://mail.iptel.org/mailman/listinfo/serhelp">
+<!ENTITY serusers "http://mail.iptel.org/mailman/listinfo/serusers">
+<!ENTITY serdev "http://mail.iptel.org/mailman/listinfo/serdev">
+
+<!ENTITY serhomelink "<ulink url='&serhome;'>&serhome</ulink>">
+<!ENTITY serbugslink "<ulink url='&serbugs;'>&serbugs</ulink>">
+<!ENTITY serhelplink "<ulink url='&serhelp;'>&serhelp</ulink>">
+<!ENTITY seruserslink "<ulink url='&serusers;'>&serusers</ulink>">
+<!ENTITY serdevlink "<ulink url='&serdev;'>&serdev</ulink>">
+
+<!ENTITY serhelpmail "<email>serhelp@iptel.org</email>">
+<!ENTITY serusersmail "<email>serusers@iptel.org</email>">
+<!ENTITY serdevmail "<email>serdev@iptel.org</email>">
+
+<!-- Often used acronyms -->
+
+<!ENTITY sip "<acronym>SIP</acronym>">
+<!ENTITY sdp "<acronym>SDP</acronym>">
+<!ENTITY rtp "<acronym>RTP</acronym>">
+<!ENTITY pstn "<acronym>PSTN</acronym>">
+<!ENTITY http "<acronym>HTTP</acronym>">
+<!ENTITY uri "<acronym>URI</acronym>">
+<!ENTITY uac "<acronym>UAC</acronym>">
+<!ENTITY uas "<acronym>UAS</acronym>">
+<!ENTITY nat "<acronym>NAT</acronym>">
+<!ENTITY ip "<acronym>IP</acronym>">
+<!ENTITY udp "<acronym>UDP</acronym>">
+<!ENTITY ietf "<ulink url='http://www.ietf.org'>IETF</ulink>">
+
+<!-- Often used RFCs -->
+
+<!ENTITY rfc3261 "<ulink url='http://www.ietf.org/rfc/rfc3261.txt'>RFC3261</ulink>">
+<!ENTITY rfc822 "<ulink url='http://www.ietf.org/rfc/rfc822.txt'>RFC822</ulink>">
+<!ENTITY rfc2543 "<ulink url='http://www.ietf.org/rfc/rfc2543.txt'>RFC2543</ulink>">

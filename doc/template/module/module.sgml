@@ -1,29 +1,13 @@
 <!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
-<!ENTITY parentsgml "module.sgml">
-<!ENTITY fhg "FhG FOKUS">
-<!ENTITY ser "SER">
-<!ENTITY sername "SIP Express Router">
-
-<!ENTITY serhome "http://iptel.org/ser">
-<!ENTITY serbugs "http://iptel.org/ser/bugs">
-<!ENTITY serhelp "http://mail.iptel.org/mailman/listinfo/serhelp">
-<!ENTITY serusers "http://mail.iptel.org/mailman/listinfo/serusers">
-<!ENTITY serdev "http://mail.iptel.org/mailman/listinfo/serdev">
-
-<!ENTITY serhomelink "<ulink url='&serhome;'>&serhome</ulink>">
-<!ENTITY serbugslink "<ulink url='&serbugs;'>&serbugs</ulink>">
-<!ENTITY serhelplink "<ulink url='&serhelp;'>&serhelp</ulink>">
-<!ENTITY seruserslink "<ulink url='&serusers;'>&serusers</ulink>">
-<!ENTITY serdevlink "<ulink url='&serdev;'>&serdev</ulink>">
-
-<!ENTITY serhelpmail "<email>serhelp@iptel.org</email>">
-<!ENTITY serusersmail "<email>serusers@iptel.org</email>">
-<!ENTITY serdevmail "<email>serdev@iptel.org</email>">
 
 <!ENTITY user SYSTEM "module_user.sgml">
 <!ENTITY devel SYSTEM "module_devel.sgml">
 <!ENTITY faq SYSTEM "module_faq.sgml">
+
+<!-- Include general SER documentation entities -->
+<!ENTITY % serentities SYSTEM "../../ser_entities.sgml">
+%serentities;
 
 ]>
 
@@ -37,14 +21,14 @@
 		<surname>AuthorLastname</surname>
 		<affiliation><orgname>Organization Name</orgname></affiliation>
 		<address>
-		<email>autor@email.net</email>
+		    <email>autor@email.net</email>
 		</address>
 	    </author>
 	    <editor>
 		<firstname>EditorFirstname</firstname>
 		<surname>EditorLastname</surname>
 		<address>
-		<email>editor@email.net</email>
+		    <email>editor@email.net</email>
 		</address>
 	    </editor>
 	</authorgroup>
@@ -65,5 +49,5 @@
     &user;
     &devel;
     &faq;
-
+    
 </book>
