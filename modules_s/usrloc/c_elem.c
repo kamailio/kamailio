@@ -61,7 +61,7 @@ void print_element(c_elem_t* _el)
 	}
 #endif
 
-	DBG("usr_loc: Nothing to print right now\n");
-	DBG("usr_loc: location:\n");
+	LOG(L_ERR, "usr_loc: Nothing to print right now\n");
+	LOG(L_ERR, "usr_loc: location:\n");
 	print_location(_el->loc);
 }

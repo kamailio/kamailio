@@ -23,7 +23,7 @@ void print_contact(contact_t* _c)
 		return;
 	}
 #endif
-	DBG("    Contact=\"%s\" expires=%d q=%-3.2f, Call-ID=%s CSeq=%d\n",
+	LOG(L_ERR, "    Contact=\"%s\" expires=%d q=%-3.2f, Call-ID=%s CSeq=%d\n",
 	       _c->c.s, (unsigned int)_c->expires, _c->q, _c->callid, _c->cseq);
 }
 

@@ -65,11 +65,11 @@ struct module_exports* mod_register()
 	}
 	
 	if (bind_dbmod()) {
-		DBG("usrloc: Database module not found, using memory cache only\n");
+		LOG(L_ERR, "usrloc: Database module not found, using memory cache only\n");
 		db_con = NULL;
 		use_db = 0;
 	} else {
-		DBG("usrloc: Database module found, will be used for persistent storage\n");
+		LOG(L_ERR, "usrloc: Database module found, will be used for persistent storage\n");
 		use_db = 1;
 	}
 
@@ -81,13 +81,13 @@ struct module_exports* mod_register()
 	register_timer(tr, NULL, 60);
 
 	if (use_db) {
-		DBG("usrloc: Opening database connection for parent\n");
+		LOG(L_ERR, "usrloc: Opening database connection for parent\n");
 		db_con = db_init(DB_URL);
 		if (!db_con) {
 			LOG(L_ERR, "usrloc-parent: Error while connecting database\n");
 		} else {
 			db_use_table(db_con, TABLE_NAME);
-			DBG("usrloc: Database connection opened successfuly\n");
+			LOG(L_ERR, "usrloc: Database connection opened successfuly\n");
 		}
 
 		preload_cache(c, db_con);
@@ -104,14 +104,14 @@ struct module_exports* mod_register()
 static int child_init(int rank)
 {
 	if (use_db) {
-		DBG("usrloc: Opening database connection for child %d\n", rank);
+		LOG(L_ERR, "usrloc: Opening database connection for child %d\n", rank);
 		db_con = db_init(DB_URL);
 		if (!db_con) {
 			LOG(L_ERR, "usrloc-rank %d: Error while connecting database\n", rank);
 			return -1;
 		} else {
 			db_use_table(db_con, TABLE_NAME);
-			DBG("usrloc-rank %d: Database connection opened successfuly\n", rank);
+			LOG(L_ERR, "usrloc-rank %d: Database connection opened successfuly\n", rank);
 		}
 	}
 
@@ -121,9 +121,9 @@ static int child_init(int rank)
 
 static void tr(unsigned int ticks, void* param)
 {
-	DBG("timer(): Running timer\n");
+	LOG(L_ERR, "timer(): Running timer\n");
 	clean_cache(c, db_con);
-	DBG("timer(): Timer finished\n");
+	LOG(L_ERR, "timer(): Timer finished\n");
 }
 
 
@@ -176,7 +176,7 @@ void build_contact_buf(char* _buf, int* _len, location_t* _loc)
 	}
 
 	*(_buf + l) = '\0';
-	DBG("build_contact_buf(): %s\n", _buf);
+	LOG(L_ERR, "build_contact_buf(): %s\n", _buf);
 
 	*_len = l;
 }
@@ -204,13 +204,13 @@ static inline int process_star_loc(struct sip_msg* _msg, cache_t* _c, location_t
 	     /* Remove all bindings with the same address
 	      * of record
 	      */
-	DBG("process_star_loc(): Removing all bindings from cache\n");
+	LOG(L_ERR, "process_star_loc(): Removing all bindings from cache\n");
 	if (cache_remove(_c, db_con, &(_loc->user)) == FALSE) {
 		LOG(L_ERR, "process_star_loc(): Error while removing cache entry\n");
 		return FALSE;
 	}
 	
-	DBG("process_star_loc(): All bindings removed, sending 200 OK\n");
+	LOG(L_ERR, "process_star_loc(): All bindings removed, sending 200 OK\n");
 	if (send_200(_msg, NULL) == FALSE) {
 		LOG(L_ERR, "process_star_loc(): Error while sending 200 response\n");
 		return FALSE;
@@ -226,14 +226,14 @@ static inline int process_no_contacts(struct sip_msg* _msg, cache_t* _c, locatio
 
 	el = cache_get(c, &(_loc->user));
 	if (!el) {
-		DBG("process_no_contacts(): No bindings found, sending 200 OK\n");
+		LOG(L_ERR, "process_no_contacts(): No bindings found, sending 200 OK\n");
 		if (send_200(_msg, NULL) == FALSE) {
 			LOG(L_ERR, "process_no_contacts(): Error while sending 200 OK\n");
 			return FALSE;
 		}
 		return TRUE;
 	} else {
-		DBG("process_no_contacts(): Bindings found, sending 200 OK with bindings\n");
+		LOG(L_ERR, "process_no_contacts(): Bindings found, sending 200 OK with bindings\n");
 		if (send_200(_msg, el->loc) == FALSE) {
 			LOG(L_ERR, "process_no_contact(): Error while sending 200 response\n");
 			cache_release_elem(el);
@@ -251,14 +251,14 @@ static inline int process_contacts(struct sip_msg* _msg, cache_t* _c, location_t
 
 	el = cache_get(_c, &(_loc->user));
 	if (el) {
-		DBG("process_contacts(): Location found in cache, updating\n");
+		LOG(L_ERR, "process_contacts(): Location found in cache, updating\n");
 		if (cache_update(_c, db_con, &el, _loc) == FALSE) {
 			LOG(L_ERR, "process_contacts(): Error while updating bindings in cache\n");
 			cache_release_elem(el);
 			return FALSE;
 		}
 		
-		DBG("process_contacts(): Sending 200 OK\n");
+		LOG(L_ERR, "process_contacts(): Sending 200 OK\n");
 		if (send_200(_msg, (el) ? ((el)->loc) : (NULL)) == FALSE) {
 			LOG(L_ERR, "process_contacts(): Error while sending 200 response\n");
 			if (el) cache_release_elem(el);
@@ -268,7 +268,7 @@ static inline int process_contacts(struct sip_msg* _msg, cache_t* _c, location_t
 		if (el) cache_release_elem(el);
 		return TRUE;
 	} else {
-		DBG("process_contacts(): Location not found in cache, inserting\n");
+		LOG(L_ERR, "process_contacts(): Location not found in cache, inserting\n");
 		remove_zero_expires(_loc);
 		if (_loc->contacts) {
 			if (cache_put(_c, db_con, _loc) == FALSE) {
@@ -276,7 +276,7 @@ static inline int process_contacts(struct sip_msg* _msg, cache_t* _c, location_t
 				return FALSE;
 			}
 		}
-		DBG("process_contacts(): Sending 200 OK\n");
+		LOG(L_ERR, "process_contacts(): Sending 200 OK\n");
 		if (send_200(_msg, _loc) == FALSE) {
 			LOG(L_ERR, "process_contacts(): Error while sending 200 response\n");
 			return FALSE;
@@ -290,14 +290,14 @@ static inline int process_contacts(struct sip_msg* _msg, cache_t* _c, location_t
 static int process_loc(struct sip_msg* _msg, cache_t* _c, location_t* _loc, int star)
 {
 	if (star == 1) {
-		DBG("process_loc(): star = 1, processing\n");
+		LOG(L_ERR, "process_loc(): star = 1, processing\n");
 		return process_star_loc(_msg, _c, _loc);
 	} else {
 		if (!_loc->contacts) {
-			DBG("process_loc(): No contacts found\n");
+			LOG(L_ERR, "process_loc(): No contacts found\n");
 			return process_no_contacts(_msg, _c, _loc);
 		} else {
-			DBG("process_loc(): Contacts found\n");
+			LOG(L_ERR, "process_loc(): Contacts found\n");
 			return process_contacts(_msg, _c, _loc);
 		}
 	}
@@ -315,7 +315,7 @@ static int save_contact(struct sip_msg* _msg, char* _table, char* _str2)
 		return -1;
 	}
 
-	DBG("save_contact(): Validating request\n");
+	LOG(L_ERR, "save_contact(): Validating request\n");
 	if (validate_location(loc, expires, star, &valid) == FALSE) {
 		LOG(L_ERR, "save_contact(): Error while validating request\n");
 		free_location(loc);
@@ -323,7 +323,7 @@ static int save_contact(struct sip_msg* _msg, char* _table, char* _str2)
 	}
 
 	if (!valid) {
-		DBG("save_contact(): Request not validated, sending 400\n");
+		LOG(L_ERR, "save_contact(): Request not validated, sending 400\n");
 		free_location(loc);
 		if (sl_reply(_msg, (char*)400, "Bad Request") == -1) {
 			LOG(L_ERR, "save_contact(): Error while sending 400 response\n");
@@ -331,7 +331,7 @@ static int save_contact(struct sip_msg* _msg, char* _table, char* _str2)
 		return -1;
 	}
 
-	DBG("save_contact(): Request validated, processing\n");
+	LOG(L_ERR, "save_contact(): Request validated, processing\n");
 	if (process_loc(_msg, c, loc, star) == FALSE) {
 		LOG(L_ERR, "save_contact(): Error while processing location\n");
 		free_location(loc);
@@ -388,7 +388,7 @@ static int lookup_contact(struct sip_msg* _msg, char* _table, char* _str2)
 		while ((ptr) && (ptr->expires < t)) ptr = ptr->next;
 		
 		if (ptr) {
-			DBG("lookup_contact(): Binding find, rewriting Request-URI\n");
+			LOG(L_ERR, "lookup_contact(): Binding find, rewriting Request-URI\n");
 			if (rwrite(_msg, &(ptr->c)) == FALSE) {
 				LOG(L_ERR, "lookup_contact(): Unable to rewrite request URI\n");
 				cache_release_elem(el);
@@ -397,12 +397,12 @@ static int lookup_contact(struct sip_msg* _msg, char* _table, char* _str2)
 			cache_release_elem(el);
 			return 1;	
 		} else {
-			DBG("lookup_contact(): Binding has expired or not found\n");
+			LOG(L_ERR, "lookup_contact(): Binding has expired or not found\n");
 			cache_release_elem(el);
 			return -1;
 		}
 	} else {
-		DBG("lookup_contact(): No binding found in database\n");
+		LOG(L_ERR, "lookup_contact(): No binding found in database\n");
 		return -2;
 	}
 }
@@ -417,7 +417,7 @@ static int rwrite(struct sip_msg* _msg, str* _s)
 	memcpy(buffer, _s->s, _s->len);
 	buffer[_s->len] = '\0';
 
-	DBG("rwrite(): Rewriting with %s\n", buffer);
+	LOG(L_ERR, "rwrite(): Rewriting with %s\n", buffer);
 	act.type = SET_URI_T;
 	act.p1_type = STRING_ST;
 	act.p1.string = buffer;

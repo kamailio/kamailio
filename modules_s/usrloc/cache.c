@@ -193,7 +193,7 @@ c_elem_t* cache_get(cache_t* _c, str* _aor)
 	p[_aor->len] = '\0';
 	strlower(p, _aor->len);
 
-	DBG("usr_loc: p=%s\n", p);
+	LOG(L_ERR,"usr_loc: p=%s\n", p);
 
 	slot_num = hash_func(_c, p, _aor->len);
 	if (slot_num == -1) {
@@ -204,9 +204,9 @@ c_elem_t* cache_get(cache_t* _c, str* _aor)
 
 	slot = CACHE_GET_SLOT(_c, slot_num);
 	     /* FIXME: Tady by se mel zamykat jenom element */
-	DBG("Before lock\n");
+	LOG(L_ERR, "Before lock\n");
 	get_lock(&(slot->lock));
-	DBG("After lock\n");
+	LOG(L_ERR, "After lock\n");
 
 	count = SLOT_ELEM_COUNT(slot);
 	el = SLOT_FIRST_ELEM(slot);
@@ -219,9 +219,9 @@ c_elem_t* cache_get(cache_t* _c, str* _aor)
 		el = SLOT_ELEM_NEXT(el);
 	}
 
-	DBG("Before release\n");
+	LOG(L_ERR, "Before release\n");
 	release_lock(&(slot->lock));
-	DBG("After release\n");
+	LOG(L_ERR, "After release\n");
 	pkg_free(p);
 	return NULL;
 }
@@ -242,14 +242,14 @@ void print_cache(cache_t* _c)
 
 	el = CACHE_FIRST_ELEM(_c);
 
-	DBG("=== Cache content:\n");
+	LOG(L_ERR, "=== Cache content:\n");
 
 	while(el) {
 		print_element(el);
 		el = CACHE_NEXT_ELEM(el);
 	}
 
-	DBG("=== End of cache content\n");
+	LOG(L_ERR, "=== End of cache content\n");
 }
 
 
@@ -397,7 +397,7 @@ int preload_cache(cache_t* _c, db_con_t* _con)
 	}
 
 	if (RES_ROW_N(res) == 0) {
-		DBG("preload_cache(): Table is empty\n");
+		LOG(L_ERR, "preload_cache(): Table is empty\n");
 		db_free_query(_con, res);
 		return TRUE;
 	}
@@ -409,7 +409,7 @@ int preload_cache(cache_t* _c, db_con_t* _con)
 		if (!i) user = cur_user;
 
 		if ((strcmp(cur_user, user)) || (!i)) {
-			DBG("Preloading contacts for username %s\n", cur_user);
+			LOG(L_ERR, "Preloading contacts for username %s\n", cur_user);
 			user = cur_user;
 			if (loc) {
 				     //cache_put(_c, loc);
@@ -431,7 +431,7 @@ int preload_cache(cache_t* _c, db_con_t* _con)
 		callid = ROW_VALUES(row)[4].val.string_val;
 		cseq = ROW_VALUES(row)[5].val.int_val;
 		
-		DBG("    contact=%s expires=%d q=%3.2f callid=%s cseq=%d\n", contact, (unsigned int)expires, q, callid, cseq);
+		LOG(L_ERR, "    contact=%s expires=%d q=%3.2f callid=%s cseq=%d\n", contact, (unsigned int)expires, q, callid, cseq);
 		add_contact(loc, contact, expires, q, callid, cseq);
 	}
 

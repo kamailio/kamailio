@@ -416,11 +416,11 @@ void print_location(const location_t* _loc)
 {
 	contact_t* ptr = _loc->contacts;
 
-	DBG("Address of record = \"%s\"\n", _loc->user.s);
+	LOG(L_ERR, "Address of record = \"%s\"\n", _loc->user.s);
 	if (ptr) {
-		DBG("    Contacts:\n");
+		LOG(L_ERR, "    Contacts:\n");
 	} else {
-		DBG("    No contacts.\n");
+		LOG(L_ERR, "    No contacts.\n");
 		return;
 	}
 
@@ -429,7 +429,7 @@ void print_location(const location_t* _loc)
 		ptr = ptr->next;
 	}
 
-	DBG("\n");
+	LOG(L_ERR, "\n");
 }
 
 
@@ -596,7 +596,7 @@ int update_location(db_con_t* _c, location_t* _dst, location_t* _src)
 		while(dst_ptr) {
 			if (cmp_contact(dst_ptr, src_ptr) == TRUE) {
 				if (check_request_order(dst_ptr, src_ptr) == TRUE) {  /* FIXME */
-					DBG("update_location(): Order OK, updating\n");
+					LOG(L_ERR, "update_location(): Order OK, updating\n");
 					if (src_ptr->expires == 0) {
 						if (_c) {
 							if (db_remove_contact(_c, dst_ptr) == FALSE) {
@@ -623,7 +623,7 @@ int update_location(db_con_t* _c, location_t* _dst, location_t* _src)
 					}
 					return TRUE;
 				} else {
-					DBG("update_location(): Request for binding update is out of order\n");
+					LOG(L_ERR, "update_location(): Request for binding update is out of order\n");
 					goto skip;
 				}
 			}
@@ -668,7 +668,7 @@ int clean_location(location_t* _l, db_con_t* _c, time_t _t)
 
 	while(ptr) {
 		if (ptr->expires < _t) {
-			DBG("clean_location(): Contact %s,%s expired, removing\n", ptr->aor->s, ptr->c.s);
+			LOG(L_ERR, "clean_location(): Contact %s,%s expired, removing\n", ptr->aor->s, ptr->c.s);
 			if (_c) {
 				if (db_remove_contact(_c, ptr) == FALSE) {
 					LOG(L_ERR, "clean_location(): Error while removing contact from db\n");
@@ -709,7 +709,7 @@ int clean_location(location_t* _l, db_con_t* _c, time_t _t)
 
 	while(ptr) {
 		if (ptr->expires < _t) {
-			DBG("clean_location(): Contact %s,%s expired, removing\n", ptr->aor->s, ptr->c.s);
+			LOG(L_ERR, "clean_location(): Contact %s,%s expired, removing\n", ptr->aor->s, ptr->c.s);
 			if (_c) {
 				if (db_remove_contact(_c, ptr) == FALSE) {
 					LOG(L_ERR, "clean_location(): Error while removing contact from db\n");
