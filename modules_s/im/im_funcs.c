@@ -6,6 +6,12 @@
 
 
 
+#define READ(val) \
+(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
+
+
+
+
 int inline im_get_body_len( struct sip_msg* msg)
 {
 	int x,err;
@@ -35,7 +41,41 @@ error:
 
 int inline im_check_content_type(struct sip_msg *msg)
 {
-	char type1[4]="text";
+	static unsigned int text[16] = {
+		0x74786574/*text*/,0x74786554/*texT*/,0x74784574/*teXt*/,
+		0x74784554/*teXT*/,0x74586574/*tExt*/,0x74586554/*tExT*/,
+		0x74584574/*tEXt*/,0x74584554/*tEXT*/,0x54786574/*Text*/,
+		0x54786554/*TexT*/,0x54784574/*TeXt*/,0x54784554/*TeXT*/,
+		0x54586574/*TExt*/,0x54586554/*TExT*/,0x54584574/*TEXt*/,
+		0x54584554/*TEXT*/ };
+	static unsigned int plai[16] = {
+		0x69616c70/*plai*/,0x69616c50/*plaI*/,0x69614c70/*plAi*/,
+		0x69614c50/*plAI*/,0x69416c70/*pLai*/,0x69416c50/*pLaI*/,
+		0x69414c70/*pLAi*/,0x69414c50/*pLAI*/,0x49616c70/*Plai*/,
+		0x49616c50/*PlaI*/,0x49614c70/*PlAi*/,0x49614c50/*PlAI*/,
+		0x49416c70/*PLai*/,0x49416c50/*PLaI*/,0x49414c70/*PLAi*/,
+		0x49414c50/*PLAI*/ };
+	static unsigned int mess[16] = {
+		0x7373656d/*mess*/,0x7373654d/*mesS*/,0x7373456d/*meSs*/,
+		0x7373454d/*meSS*/,0x7353656d/*mEss*/,0x7353654d/*mEsS*/,
+		0x7353456d/*mESs*/,0x7353454d/*mESS*/,0x5373656d/*Mess*/,
+		0x5373654d/*MesS*/,0x5373456d/*MeSs*/,0x5373454d/*MeSS*/,
+		0x5353656d/*MEss*/,0x5353654d/*MEsS*/,0x5353456d/*MESs*/,
+		0x5353454d/*MESS*/ };
+	static unsigned int age_[8] = {
+		0x00656761/*age_*/,0x00656741/*agE_*/,0x00654761/*aGe_*/,
+		0x00654741/*aGE_*/,0x00456761/*Age_*/,0x00456741/*AgE-*/,
+		0x00454761/*AGe-*/,0x00454741/*AGE-*/ };
+	static unsigned int cpim[16] = {
+		0x6d697063/*cpim*/,0x6d697043/*cpiM*/,0x6d695063/*cpIm*/,
+		0x6d695043/*cpIM*/,0x6d497063/*cPim*/,0x6d497043/*cPiM*/,
+		0x6d495063/*cPIm*/,0x6d495043/*cPIM*/,0x4d697063/*Cpim*/,
+		0x4d697043/*CpiM*/,0x4d695063/*CpIm*/,0x4d695043/*CpIM*/,
+		0x4d497063/*CPim*/,0x4d497043/*CPiM*/,0x4d495063/*CPIm*/,
+		0x4d495043/*CPIM*/ };
+	str           str_type;
+	unsigned int  i,x,mime;
+	char          *p;
 
 	if (!msg->content_type)
 	{
@@ -44,8 +84,41 @@ int inline im_check_content_type(struct sip_msg *msg)
 		goto done;
 	}
 
-	
+	trim_len(msg->content_type->body.len,msg->content_type->body.s,str_type);
+	p = str_type.s;
+	x = READ(p);
+	p = p + 4;
+	if (x==text[0]) {
+		mime = 1 ;
+		goto slash;
+	} else if (x==mess[0]) {
+		mime = 2;
+		
+	}
+	if (x==text[15]||x==text[1]||x==text[2]||x==text[3]||x==text[4]||
+		x==text[5]||x==text[6]||x==text[7]||x==text[8]||x==text[9]||
+		x==text[10]||x==text[11]||x==text[12]||x==text[13]||x==text[14]) {
+		mime =1;
+		goto slash;
+	}else if (x==mess[15]) {
+		mime = 2;
+	}
 
+slash:
+	/* skip spaces and tabs if any */
+	while ((*p==' ' || *p=='\t') && p+1<str_type.s+str_type.len)
+		p++;
+	if (*p!='/')
+	{
+		LOG(L_ERR, "ERROR:im_check_content_type: parse error:"
+			"no / found after primary type\n");
+		goto error;
+	}
+
+
+
+error:
+	return -1;
 done:
 	return 1;
 }
@@ -106,8 +179,10 @@ int im_get_user(struct sip_msg *msg, str *user, str *host)
 		LOG(L_ERR,"ERROR: im_get_user:unable to parse uri\n");
 		return -1;
 	}
-	user = &uri.user;
-	host = &uri.user;
+	user->s   = uri.user.s;
+	user->len = uri.user.len;
+	host->s   = uri.host.s;
+	host->len = uri.host.len;
 	return 1;
 
 }
