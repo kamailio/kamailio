@@ -51,8 +51,8 @@ int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
 /*
  * Module parameter variables
  */
-char* db_url       = "sql://janakj:heslo@localhost/ser";
-char* user_column  = "user";
+char* db_url       = "sql://serro:47serro11@localhost/ser";
+char* user_column  = "user_id";
 char* realm_column = "realm";
 char* pass_column  = "ha1";
 
