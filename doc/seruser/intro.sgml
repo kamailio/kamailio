@@ -974,9 +974,9 @@ if (uri==myself) {
 	    </para>
 	    <para>
 		Note that we used the action for stateful forwarding, 
-		<command moreinfo="none">t_relay</command>. That's is because
+		<command moreinfo="none">t_relay</command>. That's because
 		stateful forwarding allows to fork an incoming request to
-		multiple destinations. If we used stateful forwarding,
+		multiple destinations. If we used stateless forwarding,
 		the request would be forwarded only to one uri out of
 		all user's contacts.
 	    </para>
