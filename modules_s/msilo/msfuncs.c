@@ -126,7 +126,7 @@ int apo_escape(char* src, int slen, char* dst, int dlen)
 }
 
 /**
- * parse content of Content-Type header - only value of C-T at this moment
+ * etract the value of Content-Type header
  * - src: pointer to C-T content
  * - len: length of src
  * - ctype: parsed C-T
@@ -134,7 +134,7 @@ int apo_escape(char* src, int slen, char* dst, int dlen)
  *
  * #return: 0 OK ; -1 error
   */
-int parse_content_type(char* src, int len, t_content_type* ctype, int flag)
+int extract_content_type(char* src, int len, t_content_type* ctype, int flag)
 {
 	char *p, *end;
 	int f = 0, pos;
@@ -287,7 +287,8 @@ int m_build_body(str *body, int date, str msg)
 	
 	p = body->s;
 
-	*p++ = '[';
+	strncpy(p, "[Offline message - ", 19);
+	p += 19;
 	
 	strncpy(p, ctime((const time_t*)(&date)), 24);
 	p += 24;

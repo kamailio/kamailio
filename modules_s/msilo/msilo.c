@@ -39,7 +39,7 @@
 #include "../../error.h"
 #include "../../dprint.h"
 #include "../../ut.h"
-#include "../im/im_funcs.h"
+#include "../../timer.h"
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
 #include "../../globals.h"
@@ -48,32 +48,41 @@
 #include "../tm/uac.h"
 
 #include "../tm/tm_load.h"
+#include "../im/im_funcs.h"
 #include "../im/im_load.h"
 
+#include "ms_msg_list.h"
 #include "msfuncs.h"
 
-#define NR_KEYS	7	
+#define MS_OFFLINE_MSG	"User [%.*s] is offline. The message will be delivered when user goes online."
+
+#define MAX_DEL_KEYS	1	
+#define NR_KEYS	6
 
 #define DB_KEY_MID		"mid"
-#define DB_KEY_IURI		"iuri"
-#define DB_KEY_OURI 	"ouri"
-#define DB_KEY_FROM		"from_h"
-#define DB_KEY_TO		"to_h"
+#define DB_KEY_FROM		"src_addr"
+#define DB_KEY_TO		"dst_addr"
 #define DB_KEY_BODY		"body"
 #define DB_KEY_CTYPE	"ctype"
 #define DB_KEY_EXP_TIME	"exp_time"
 #define DB_KEY_INC_TIME	"inc_time"
 
-#define STR_IDX_NO		8
+#define STR_IDX_NO			6
 
-#define STR_IDX_IURI	0
-#define STR_IDX_OURI 	1
-#define STR_IDX_FROM	2
-#define STR_IDX_TO		3
-#define STR_IDX_BODY	4
-#define STR_IDX_CTYPE	5
-#define STR_IDX_EXP_TIME	6
-#define STR_IDX_INC_TIME	7
+#define STR_IDX_FROM		0
+#define STR_IDX_TO			1
+#define STR_IDX_BODY		2
+#define STR_IDX_CTYPE		3
+#define STR_IDX_INC_TIME	4
+#define STR_IDX_EXP_TIME	5
+
+#define DUMP_IDX_NO			5
+
+#define DUMP_IDX_MID		0
+#define DUMP_IDX_FROM		1
+#define DUMP_IDX_BODY		2
+#define DUMP_IDX_CTYPE		3
+#define DUMP_IDX_INC_TIME	4
 
 #define SET_STR_VAL(_str, _res, _r, _c)	\
 	if (RES_ROWS(_res)[_r].values[_c].nul != 0) \
@@ -101,16 +110,23 @@
 /** database connection */
 db_con_t *db_con = NULL;
 
+/** precessed msg list - used for dumping the messages */
+msg_list ml = NULL;
+
 /** TM bind */
 struct tm_binds tmb;
-/** IM binds */
-struct im_binds imb;
 
 /** parameters */
 
 char *db_url="sql://root@127.0.0.1/msilo";
 char *db_table="silo";
-int  expiration=3600;
+char *registrar="sip:registrar@iptel.org";
+int  expire_time=72*3600;
+int  check_time=30;
+int  clean_period=5;
+
+str msg_type = { "MESSAGE", 7};
+str reg_addr;
 
 /** module functions */
 static int mod_init(void);
@@ -121,7 +137,7 @@ static int m_dump(struct sip_msg*, char*, char*);
 
 void destroy(void);
 
-void m_clean_silo(void *);
+void m_clean_silo(unsigned int ticks, void *);
 
 /** TM callback function */
 static void m_tm_callback( struct cell *t, struct sip_msg *msg,
@@ -151,19 +167,28 @@ struct module_exports exports= {
 	(char*[]) {   /* Module parameter names */
 		"db_url",
 		"db_table",
-		"expiration"
+		"registrar",
+		"expire_time",
+		"check_time",
+		"clean_period"
 	},
 	(modparam_t[]) {   /* Module parameter types */
 		STR_PARAM,
 		STR_PARAM,
+		STR_PARAM,
+		INT_PARAM,
+		INT_PARAM,
 		INT_PARAM
 	},
 	(void*[]) {   /* Module parameter variable pointers */
 		&db_url,
 		&db_table,
-		&expiration
+		&registrar,
+		&expire_time,
+		&check_time,
+		&clean_period
 	},
-	3,      /* Number of module paramers */
+	6,      /* Number of module paramers */
 	
 	mod_init,   /* module initialization function */
 	(response_function) 0,
@@ -178,7 +203,6 @@ struct module_exports exports= {
 static int mod_init(void)
 {
 	load_tm_f  load_tm;
-	load_im_f  load_im;
 
 	DBG("MSILO: initializing ...\n");
 
@@ -198,15 +222,28 @@ static int mod_init(void)
 	if (load_tm( &tmb )==-1)
 		return -1;
 
-	/** import the IM auto-loading function */
-	if ( !(load_im=(load_im_f)find_export("load_im", 1))) 
+	ml = msg_list_init();
+	if(!ml)
 	{
-		LOG(L_ERR, "ERROR: sms: global_init: cannot import load_im\n");
+		DBG("ERROR: msilo: mod_init: can't initialize msg list\n");
 		return -1;
 	}
-	/* let the auto-loading function load all IM stuff */
-	if (load_im( &imb )==-1)
+	register_timer( m_clean_silo, 0, check_time);
+
+	db_con = db_init(db_url);
+	if (!db_con)
+	{
+		LOG(L_ERR,"MSILO: mod_init: Error while connecting database\n");
 		return -1;
+	}
+	else
+	{
+		db_use_table(db_con, db_table);
+		DBG("MSILO: mod_init: Database connection opened successfully\n");
+	}
+
+	reg_addr.s = registrar;
+	reg_addr.len = strlen(registrar);
 
 	return 0;
 }
@@ -226,7 +263,7 @@ static int child_init(int rank)
 	else
 	{
 		db_use_table(db_con, db_table);
-		DBG("MSILO: child %d: Database connection opened successfuly\n", rank);
+		DBG("MSILO: child %d: Database connection opened successfully\n", rank);
 	}
 	return 0;
 }
@@ -236,78 +273,16 @@ static int child_init(int rank)
  */
 static int m_store(struct sip_msg* msg, char* str1, char* str2)
 {
-	str body;
+	str body, str_hdr;
 	struct to_body to, from, *pto, *pfrom;
 	db_key_t db_keys[NR_KEYS];
 	db_val_t db_vals[NR_KEYS];
-	int nr_keys = 0, val;
+	int nr_keys = 0, val, lexpire;
 	t_content_type ctype;
+	char buf[512], buf1[1024];
 
 	DBG("MSILO: m_store: ------------ start ------------\n");
 		
-	// extract message body - after that whole SIP MESSAGE is parsed
-	if(imb.im_extract_body(msg, &body) == -1)
-	{
-		DBG("MSILO: m_store: cannot extract body from sip msg!\n");
-		goto error;
-	}
-	// check if the body of message contains something
-	if(body.len <= 0)
-	{
-		DBG("MSILO: m_store: body of the message is empty!\n");
-		goto error;
-	}
-	
-	db_keys[nr_keys] = DB_KEY_BODY;
-	
-	db_vals[nr_keys].type = DB_BLOB;
-	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.blob_val.s = body.s;
-	db_vals[nr_keys].val.blob_val.len = body.len;
-
-	nr_keys++;
-	
-	// check FROM header
-	if(msg->from != NULL && msg->from->body.s != NULL)
-	{
-		if(msg->from->parsed != NULL)
-		{
-			pfrom = (struct to_body*)msg->from->parsed;
-			DBG("MSILO: m_store: 'From' header ALREADY PARSED: <%.*s>\n",
-				pfrom->uri.len, pfrom->uri.s );	
-		}
-		else
-		{
-			memset( &from , 0, sizeof(from) );
-			parse_to(msg->from->body.s, 
-				msg->from->body.s + msg->from->body.len + 1, &from);
-			if(from.uri.len > 0) // && from.error == PARSE_OK)
-			{
-				DBG("MSILO: m_store: 'from' parsed OK <%.*s>.\n",
-					from.uri.len, from.uri.s);
-				pfrom = &from;
-			}
-			else
-			{
-				DBG("MSILO: m_store: 'from' NOT parsed\n");
-				goto error;
-			}
-		}
-	}
-	else
-	{
-		DBG("MSILO: m_store: cannot find 'from' header!\n");
-		goto error;
-	}
-	db_keys[nr_keys] = DB_KEY_FROM;
-	
-	db_vals[nr_keys].type = DB_STR;
-	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.str_val.s = pfrom->uri.s;
-	db_vals[nr_keys].val.str_val.len = pfrom->uri.len;
-
-	nr_keys++;
-
 	// check TO header
 	if(msg->to != NULL && msg->to->body.s != NULL)
 	{
@@ -341,6 +316,13 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 		goto error;
 	}
 	
+	if(pto->uri.len == reg_addr.len && 
+			!strncasecmp(pto->uri.s, reg_addr.s, reg_addr.len))
+	{
+		DBG("MSILO: m_store: message to MSILO REGISTRAR!\n");
+		goto error;
+	}
+
 	db_keys[nr_keys] = DB_KEY_TO;
 	
 	db_vals[nr_keys].type = DB_STR;
@@ -349,70 +331,114 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	db_vals[nr_keys].val.str_val.len = pto->uri.len;
 
 	nr_keys++;
-	
-	// check 'request uri'
-	if ( msg->first_line.u.request.uri.len <= 0 )
+
+	// check FROM header
+	if(msg->from != NULL && msg->from->body.s != NULL)
 	{
-		DBG("MSILO: m_store: ERROR getting URI from first line\n");
+		if(msg->from->parsed != NULL)
+		{
+			pfrom = (struct to_body*)msg->from->parsed;
+			DBG("MSILO: m_store: 'From' header ALREADY PARSED: <%.*s>\n",
+				pfrom->uri.len, pfrom->uri.s );	
+		}
+		else
+		{
+			memset( &from , 0, sizeof(from) );
+			parse_to(msg->from->body.s, 
+				msg->from->body.s + msg->from->body.len + 1, &from);
+			if(from.uri.len > 0) // && from.error == PARSE_OK)
+			{
+				DBG("MSILO: m_store: 'from' parsed OK <%.*s>.\n",
+					from.uri.len, from.uri.s);
+				pfrom = &from;
+			}
+			else
+			{
+				DBG("MSILO: m_store: 'from' NOT parsed\n");
+				goto error;
+			}
+		}
+	}
+	else
+	{
+		DBG("MSILO: m_store: cannot find 'from' header!\n");
 		goto error;
 	}
-	db_keys[nr_keys] = DB_KEY_IURI;
+	
+	if(pfrom->uri.len == reg_addr.len && 
+			!strncasecmp(pfrom->uri.s, reg_addr.s, reg_addr.len))
+	{
+		DBG("MSILO: m_store: message from MSILO REGISTRAR!\n");
+		goto error;
+	}
+
+	db_keys[nr_keys] = DB_KEY_FROM;
 	
 	db_vals[nr_keys].type = DB_STR;
 	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.str_val.s = msg->first_line.u.request.uri.s;
-	db_vals[nr_keys].val.str_val.len = msg->first_line.u.request.uri.len;
+	db_vals[nr_keys].val.str_val.s = pfrom->uri.s;
+	db_vals[nr_keys].val.str_val.len = pfrom->uri.len;
 
 	nr_keys++;
 
-	// check 'new uri'
-	if( msg->new_uri.len > 0 )
+	// extract message body - after that whole SIP MESSAGE is parsed
+	/* get the message's body */
+	if(parse_headers(msg,HDR_CONTENTLENGTH | HDR_CONTENTTYPE | HDR_EXPIRES,0)
+		==-1 || !msg->content_length || !msg->content_type) 
 	{
-		DBG("MSILO: m_store: new URI found\n");
-		db_keys[nr_keys] = DB_KEY_OURI;
+		LOG(L_ERR,"MSILO:m_dump: ERROR fetching content-lenght, content_type"
+			" and expires failed! Parse error or headers missing!\n");
+		goto error;
+	}
+
+	body.s = get_body( msg );
+	if (body.s==0) 
+	{
+		LOG(L_ERR,"MSILO:m_store: ERROR cannot extract body from msg\n");
+		goto error;
+	}
+	body.len = (int)msg->content_length->parsed;
 	
-		db_vals[nr_keys].type = DB_STR;
-		db_vals[nr_keys].nul = 0;
-		db_vals[nr_keys].val.str_val.s = msg->new_uri.s;
-		db_vals[nr_keys].val.str_val.len = msg->new_uri.len;
-
-		nr_keys++;
-	}
-	else
-		DBG("MSILO: m_store: new URI not found\n");
-
-	if(parse_headers(msg, HDR_CONTENTTYPE | HDR_EXPIRES, 0) >= 0)
+	// check if the body of message contains something
+	if(body.len <= 0)
 	{
-		// add 'content-type'
-		if(msg->content_type && msg->content_type->body.len > 0)
+		DBG("MSILO: m_store: body of the message is empty!\n");
+		goto error;
+	}
+	
+	db_keys[nr_keys] = DB_KEY_BODY;
+	
+	db_vals[nr_keys].type = DB_BLOB;
+	db_vals[nr_keys].nul = 0;
+	db_vals[nr_keys].val.blob_val.s = body.s;
+	db_vals[nr_keys].val.blob_val.len = body.len;
+
+	nr_keys++;
+	
+	lexpire = expire_time;
+	// add 'content-type'
+	if(msg->content_type && msg->content_type->body.len > 0)
+	{
+		if(extract_content_type(msg->content_type->body.s, 
+				msg->content_type->body.len, &ctype, CT_TYPE)
+				!= -1)
 		{
-			if(parse_content_type(msg->content_type->body.s, 
-					msg->content_type->body.len, &ctype, CT_TYPE)
-					!= -1)
-			{
-				DBG("MSILO: m_store: 'content-type' found\n");
-				db_keys[nr_keys] = DB_KEY_CTYPE;
-				db_vals[nr_keys].type = DB_STR;
-				db_vals[nr_keys].nul = 0;
-				db_vals[nr_keys].val.str_val.s = ctype.type.s;
-				db_vals[nr_keys].val.str_val.len = ctype.type.len;
-				nr_keys++;
-			}
-			
-		}
-		//check 'expires'
-		if(msg->expires && msg->expires->body.len > 0)
-		{
-			DBG("MSILO: m_store: 'expires' found\n");
-			val = atoi(msg->expires->body.s);
-			if(val > 0)
-				expiration = (expiration<=val)?expiration:val;
+			DBG("MSILO: m_store: 'content-type' found\n");
+			db_keys[nr_keys] = DB_KEY_CTYPE;
+			db_vals[nr_keys].type = DB_STR;
+			db_vals[nr_keys].nul = 0;
+			db_vals[nr_keys].val.str_val.s = ctype.type.s;
+			db_vals[nr_keys].val.str_val.len = ctype.type.len;
+			nr_keys++;
 		}
 	}
-	else
+	//check 'expires'
+	if(msg->expires && msg->expires->body.len > 0)
 	{
-		DBG("MSILO: m_store: 'content-type' and 'exprires' threw error"
-			"at parsing\n");
+		DBG("MSILO: m_store: 'expires' found\n");
+		val = atoi(msg->expires->body.s);
+		if(val > 0)
+			lexpire = (expire_time<=val)?expire_time:val;
 	}
 
 	/** current time */
@@ -422,7 +448,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	db_keys[nr_keys] = DB_KEY_EXP_TIME;
 	db_vals[nr_keys].type = DB_INT;
 	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.int_val = val+expiration;
+	db_vals[nr_keys].val.int_val = val+lexpire;
 	nr_keys++;
 
 	/** add incoming time */
@@ -437,8 +463,23 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 		LOG(L_ERR, "MSILO: m_store: error storing message\n");
 		goto error;
 	}
-	DBG("MSILO: m_store: message stored.\n");
+	DBG("MSILO: m_store: message stored. T:<%.*s> F:<%.*s>\n",
+		pto->uri.len, pto->uri.s, pfrom->uri.len, pfrom->uri.s);
+	
+	strcpy(buf1,"Content-Type: text/plain"CRLF"Contact: ");
+	str_hdr.len = 24 + CRLF_LEN + 9;
+	strncat(buf1,reg_addr.s,reg_addr.len);
+	str_hdr.len += reg_addr.len;
+	strcat(buf1, CRLF);
+	str_hdr.len += CRLF_LEN;
+	str_hdr.s = buf1;
 
+	sprintf(buf, MS_OFFLINE_MSG, pto->uri.len, pto->uri.s);
+	body.s = buf;
+	body.len = strlen(buf);
+
+	tmb.t_uac(&msg_type, &pfrom->uri, &str_hdr , &body, &reg_addr, 0 , 0, 0);
+	
 	return 1;
 error:
 	return -1;
@@ -452,17 +493,16 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 	struct to_body to, *pto;
 	db_key_t db_keys[1] = { DB_KEY_TO };
 	db_val_t db_vals[1];
-	db_key_t db_cols[] = {	DB_KEY_MID, DB_KEY_IURI, DB_KEY_OURI, DB_KEY_FROM,
-						DB_KEY_BODY, DB_KEY_CTYPE, DB_KEY_INC_TIME 
+	db_key_t db_cols[] = {	DB_KEY_MID, DB_KEY_FROM, DB_KEY_BODY,
+							DB_KEY_CTYPE, DB_KEY_INC_TIME 
 					};
 	db_res_t* db_res = NULL;
-	int i, db_no_cols = 7, db_no_keys = 1, *msg_id;
+	int i, db_no_cols = DUMP_IDX_NO, db_no_keys = 1, *msg_id, mid;
 	char hdr_buf[1024], body_buf[1024];
 
 	str str_vals[STR_IDX_NO], *sp, 
 			hdr_str  = { hdr_buf, 1024 }, 
-			body_str = { body_buf, 1024 },
-			msg_type = { "MESSAGE", 7};
+			body_str = { body_buf, 1024 };
 
 	DBG("MSILO: m_dump: ------------ start ------------\n");
 	
@@ -528,8 +568,8 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 
 	memset(str_vals, 0, STR_IDX_NO*sizeof(str));
 	
-	if((db_query(db_con, db_keys, db_vals, db_cols, db_no_keys, db_no_cols,
-				NULL, &db_res)==0) && (RES_ROW_N(db_res) > 0))
+	if((db_query(db_con,db_keys,NULL,db_vals,db_cols,db_no_keys,db_no_cols,
+			NULL,&db_res)==0) && (RES_ROW_N(db_res) > 0))
 	{
 		DBG("MSILO: m_dump: dumping [%d] messages for <%.*s>!!!\n", 
 				RES_ROW_N(db_res), pto->uri.len, pto->uri.s);
@@ -537,23 +577,18 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 		for(i = 0; i < RES_ROW_N(db_res); i++) 
 		{
 		//RES_ROWS(db_res)[i].values[0].val.string_val;
-
-			SET_STR_VAL(str_vals[STR_IDX_IURI], db_res, i, 1);
-			SET_STR_VAL(str_vals[STR_IDX_OURI], db_res, i, 2);
-			SET_STR_VAL(str_vals[STR_IDX_FROM], db_res, i, 3);
-			SET_STR_VAL(str_vals[STR_IDX_BODY], db_res, i, 4);
-			SET_STR_VAL(str_vals[STR_IDX_CTYPE], db_res, i, 5);
+			mid =  RES_ROWS(db_res)[i].values[DUMP_IDX_MID].val.int_val;
+			if(msg_list_check_msg(ml, mid))
+			{
+				DBG("MSILO: m_dump: message[%d] mid=%d already sent.\n", 
+					i, mid);
+				continue;
+			}
 			
+			SET_STR_VAL(str_vals[STR_IDX_FROM], db_res, i, DUMP_IDX_FROM);
+			SET_STR_VAL(str_vals[STR_IDX_BODY], db_res, i, DUMP_IDX_BODY);
+			SET_STR_VAL(str_vals[STR_IDX_CTYPE], db_res, i, DUMP_IDX_CTYPE);
 			
-			/** determination of req URI */
-			/**
-			if(str_vals[STR_IDX_OURI].len > 0)
-				sp = &str_vals[STR_IDX_OURI];
-			else
-				if(str_vals[STR_IDX_IURI].len > 0)
-					sp = &str_vals[STR_IDX_IURI];
-				else
-			**/
 			sp = &pto->uri;
 
 			hdr_str.len = 1024;		
@@ -576,24 +611,16 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 				goto error;
 			}
 						
-			*msg_id = RES_ROWS(db_res)[i].values[0].val.int_val;
+			*msg_id = mid;
 			
 			DBG("MSILO: m_dump: msg [%d-%d] for: %.*s\n", i+1, *msg_id,
 					sp->len, sp->s);
-			
-			/** sending using IM library */
-			/***
-			m_send_message( *msg_id, 
-				sp, &pto->uri, &str_vals[STR_IDX_FROM], 
-				&str_vals[STR_IDX_FROM], &str_vals[STR_IDX_CTYPE],
-				&str_vals[STR_IDX_BODY]);
-			***/
 			
 			/** sending using TM function: t_uac */
 
 			body_str.len = 1024;
 			if(m_build_body(&body_str, 
-					RES_ROWS(db_res)[i].values[6].val.int_val,
+					RES_ROWS(db_res)[i].values[DUMP_IDX_INC_TIME].val.int_val,
 					str_vals[STR_IDX_BODY] ) < 0)
 			{
 				DBG("MSILO: m_dump: sending simple body\n");
@@ -630,15 +657,55 @@ error:
 /**
  * delete expired messages from database - waiting foe new DB module
  */
-void m_clean_silo(void *param)
+void m_clean_silo(unsigned int ticks, void *param)
 {
-	db_key_t db_keys[] = { DB_KEY_EXP_TIME };
-	db_val_t db_vals[] = { { DB_INT, 0, { .int_val = (int)time(NULL) } } };
+	msg_list_el mle = NULL, p;
+	db_key_t db_keys[MAX_DEL_KEYS];
+	db_val_t db_vals[MAX_DEL_KEYS];
+	db_op_t  db_ops[1] = { OP_LEQ };
+	int n;
 	
-	LOG(L_ERR, "MSILO: clean_silo: cleaning expired messages\n");
+	DBG("MSILO: clean_silo: cleaning stored messages - %d\n", ticks);
 	
-	if (db_delete(db_con, db_keys, db_vals, 1) < 0) 
-		LOG(L_ERR, "MSILO: clean_silo: error cleaning exp. messages\n");
+	msg_list_check(ml);
+	mle = p = msg_list_reset(ml);
+	n = 0;
+	while(p)
+	{
+		db_keys[n] = DB_KEY_MID;
+		db_vals[n].type = DB_INT;
+		db_vals[n].nul = 0;
+		db_vals[n].val.int_val = p->msgid;
+		DBG("MSILO: clean_silo: cleaning stored message [%d]\n", p->msgid);
+		n++;
+		if(n==MAX_DEL_KEYS)
+		{
+			if (db_delete(db_con, db_keys, NULL, db_vals, n) < 0) 
+				DBG("MSILO: clean_silo: error cleaning %d messages.\n", n);
+			n = 0;
+		}
+		p = p->next;
+	}
+	if(n>0)
+	{
+		if (db_delete(db_con, db_keys, NULL, db_vals, n) < 0) 
+			DBG("MSILO: clean_silo: error cleaning %d messages\n", n);
+		n = 0;
+	}
+
+	msg_list_el_free_all(mle);
+	
+	// cleaning expired messages
+	if(ticks%(check_time*clean_period)<check_time)
+	{
+		DBG("MSILO: clean_silo: cleaning expired messages\n");
+		db_keys[0] = DB_KEY_EXP_TIME;
+		db_vals[0].type = DB_INT;
+		db_vals[0].nul = 0;
+		db_vals[0].val.int_val = (int)time(NULL);
+		if (db_delete(db_con, db_keys, db_ops, db_vals, 1) < 0) 
+			DBG("MSILO: clean_silo: ERROR cleaning expired messages\n");
+	}
 }
 
 
@@ -648,6 +715,8 @@ void m_clean_silo(void *param)
 void destroy(void)
 {
 	DBG("MSILO: destroy module ...\n");
+	msg_list_free(ml);
+
 	if(db_con)
 		db_close(db_con);
 }
@@ -658,9 +727,6 @@ void destroy(void)
 void m_tm_callback( struct cell *t, struct sip_msg *msg,
 	int code, void *param)
 {
-	db_key_t db_keys[] = { DB_KEY_MID };
-	db_val_t db_vals[1];
-	
 	DBG("MSILO: m_tm_callback: completed with status %d\n", code);
 	if(!t->cbp)
 	{
@@ -676,19 +742,11 @@ void m_tm_callback( struct cell *t, struct sip_msg *msg,
 	{
 		DBG("MSILO: m_tm_callback: message <%d> was not sent successfully\n",
 				*((int*)t->cbp));
+		msg_list_set_flag(ml, *((int*)t->cbp), MS_MSG_ERRO);
 		goto done;
 	}
-	
-	db_vals[0].type = DB_INT;
-	db_vals[0].nul = 0;
-	db_vals[0].val.int_val = *((int*)t->cbp);
-	
-	if (db_delete(db_con, db_keys, db_vals, 1) < 0) 
-		LOG(L_ERR,"MSILO: m_tm_callback: error deleting sent message"
-				" <%d>\n", db_vals[0].val.int_val);
-	else
-		DBG("MSILO: m_tm_callback: message <%d> deleted from database\n",
-				db_vals[0].val.int_val);
+
+	msg_list_set_flag(ml, *((int*)t->cbp), MS_MSG_DONE);
 	
 done:
 	return;

@@ -1,25 +1,72 @@
 MSILO - offline messages service - SER module
 =============================================
 
+
 1.Description
 -------------
-This module stores received messages of offline users and sends them next time
+This module stores received messages for offline users and sends them next time
 when they became online.
+
 
 2.Exported symbols
 ------------------
-Methods:
-- m_store: store current message
-- m_dump: dump stored messages of current user
-Parameters:
-- db_url: database URL - including username, password, hostname, port
-				database name, ex: 'sql://user:passwd@hostname.org:port/dbname'
-- db_table: table name
-- expiration: default expiration time of the message - in seconds
+Methods
+-------
+
+Name: 	m_store
+Params:	none
+Desc:	store current message (should be called when a user is offline)
+
+Name: 	m_dump
+Params:	none
+Desc:	dump stored messages of the user (should be called when an user 
+		registers OK)
+
+
+Parameters
+----------
+
+Name:		db_url
+Type:		string
+Default:	sql://root@127.0.0.1/msilo
+Desc:		SQL URL of database - username, password, host, port and database
+			(ex: sql://username:password@hostname.com/database)
+
+
+Name:		db_table
+Type:		string
+Default:	silo
+Desc:		table name
+
+
+Name:		registrar
+Type:		string
+Default:	sip:registrar@iptel.org
+Desc:		the SIP address used to inform users that destination of their
+			message is not online
+
+
+Name:		expire_time
+Type:		int
+Default:	259200 (72 hours = 3 days)
+Desc:		defaultult expire time of the message - seconds
+
+
+Name:		check_time
+Type:		int
+Default:	30
+Desc:		time to check if dumped messages are sent OK - seconds
+
+
+Name:		clean_period
+Type:		int
+Default:	5
+Desc:		number of 'check_time' cycles. This period is used to check if
+			there are expired messages in database.
+
 
 3.Module dependences
 -------------------
-- IM
 - MYSQL
 - TM
 
@@ -30,4 +77,4 @@ Parameters:
 Contacts
 --------
 - for any suggestion/bug contact:
-	Daniel MIERLA <mierla@fokus.gmd.de>
+	<serhelp@iptel.org>
