@@ -39,6 +39,8 @@
 #include <string.h>
 #include <sys/uio.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <sys/un.h>
 
 #include "../../str.h"
 #include "../../ut.h"
@@ -151,7 +153,7 @@ error:
 }
 
 
-int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
+static int assemble_msg(struct sip_msg* msg, char* action)
 {
 	static char     id_buf[IDBUF_LEN];
 	static char     route_buffer[ROUTE_BUFFER_MAX];
@@ -159,8 +161,7 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 	static char     cmd_buf[CMD_BUFFER_MAX];
 	static str      empty_param = {".",1};
 	static str      email_attr = {"email",5};
-	unsigned int      hash_index;
-	unsigned int      label;
+	unsigned int      hash_index, label;
 	contact_body_t*   cb=0;
 	contact_t*        c=0;
 	name_addr_t       na;
@@ -168,18 +169,12 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 	struct hdr_field* p_hdr;
 	param_hooks_t     hooks;
 	struct usr_avp    *email_avp;
-	str               body;
-	str               str_uri;
 	int               l;
-	char*             s;
-	char              fproxy_lr;
-	str               route;
-	str               next_hop;
-	str               hdrs;
-	str               tmp_s;
+	char*             s, fproxy_lr;
+	str               route, next_hop, hdrs, tmp_s, body, str_uri;
 
 	if(msg->first_line.type != SIP_REQUEST){
-		LOG(L_ERR,"ERROR:tm:t_write_req: called for something else then"
+		LOG(L_ERR,"assemble_msg: called for something else then"
 			"a SIP request\n");
 		goto error;
 	}
@@ -189,27 +184,27 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 
 	/* parse all -- we will need every header field for a UAS */
 	if ( parse_headers(msg, HDR_EOH, 0)==-1) {
-		LOG(L_ERR,"ERROR:tm:t_write_req: parse_headers failed\n");
+		LOG(L_ERR,"assemble_msg: parse_headers failed\n");
 		goto error;
 	}
 
 	/* find index and hash; (the transaction can be safely used due 
 	 * to refcounting till script completes) */
 	if( t_get_trans_ident(msg,&hash_index,&label) == -1 ) {
-		LOG(L_ERR,"ERROR:tm:t_write_req: t_get_trans_ident failed\n");
+		LOG(L_ERR,"assemble_msg: t_get_trans_ident failed\n");
 		goto error;
 	}
 
 	 /* parse from header */
 	if (msg->from->parsed==0 && parse_from_header(msg)==-1 ) {
-		LOG(L_ERR,"ERROR:tm:t_write_req:while parsing <From:> header\n");
+		LOG(L_ERR,"assemble_msg: while parsing <From:> header\n");
 		goto error;
 	}
 
 	/* parse the RURI (doesn't make any malloc) */
 	msg->parsed_uri_ok = 0; /* force parsing */
 	if (parse_sip_msg_uri(msg)<0) {
-		LOG(L_ERR,"ERROR:tm:t_write_req: vm: uri has not been parsed\n");
+		LOG(L_ERR,"assemble_msg: uri has not been parsed\n");
 		goto error;
 	}
 
@@ -218,13 +213,10 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 	str_uri.len = 0;
 	if(msg->contact) {
 		if (msg->contact->parsed==0 && parse_contact(msg->contact)==-1) {
-			LOG(L_ERR,"ERROR:tm:t_write_req: error while parsing "
-					"<Contact:> header\n");
+			LOG(L_ERR,"assemble_msg: error while parsing "
+			    "<Contact:> header\n");
 			goto error;
 		}
-#ifdef EXTRA_DEBUG
-		DBG("DEBUG: vm:msg->contact->parsed ******* contacts: *******\n");
-#endif
 		cb = (contact_body_t*)msg->contact->parsed;
 		if(cb && (c=cb->contacts)) {
 			str_uri = c->uri;
@@ -232,15 +224,7 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 				parse_nameaddr(&str_uri,&na);
 				str_uri = na.uri;
 			}
-#ifdef EXTRA_DEBUG
-			/*print_contacts(c);*/
-			for(; c; c=c->next)
-				DBG("DEBUG:           %.*s\n",c->uri.len,c->uri.s);
-#endif
 		}
-#ifdef EXTRA_DEBUG
-		DBG("DEBUG:tm:t_write_req: **** end of contacts ****\n");
-#endif
 	}
 
 	/* str_uri is taken from caller's contact or from header
@@ -256,8 +240,8 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 	p_hdr = msg->record_route;
 	if(p_hdr) {
 		if (p_hdr->parsed==0 && parse_rr(p_hdr)!=0 ) {
-			LOG(L_ERR,"ERROR:tm:t_write_req: while parsing "
-				"'Record-Route:' header\n");
+			LOG(L_ERR,"assemble_msg: while parsing "
+			    "'Record-Route:' header\n");
 			goto error;
 		}
 		record_route = (rr_t*)p_hdr->parsed;
@@ -274,15 +258,15 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 				record_route->nameaddr.uri.s);
 			if (parse_params( &tmp_s, CLASS_URI, &hooks, 
 			&record_route->params) < 0) {
-				LOG(L_ERR,"ERROR:tm:t_write_req: error while parsing "
-					"record route uri params\n");
+				LOG(L_ERR,"assemble_msg: error while parsing "
+				    "record route uri params\n");
 				goto error;
 			}
 			fproxy_lr = (hooks.uri.lr != 0);
-			DBG("DEBUG:tm:t_write_req: record_route->nameaddr.uri: %.*s\n",
+			DBG("assemble_msg: record_route->nameaddr.uri: %.*s\n",
 				record_route->nameaddr.uri.len,record_route->nameaddr.uri.s);
 			if(fproxy_lr){
-				DBG("DEBUG:tm:t_write_req: first proxy has loose routing.\n");
+				DBG("assemble_msg: first proxy has loose routing.\n");
 				copy_route(s,route.len,record_route->nameaddr.uri.s,
 					record_route->nameaddr.uri.len);
 			}
@@ -293,14 +277,14 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 				continue;
 
 			if(p_hdr->parsed==0 && parse_rr(p_hdr)!=0 ){
-				LOG(L_ERR,"ERROR:tm:t_write_req: "
-						"while parsing <Record-route:> header\n");
+				LOG(L_ERR,"assemble_msg: "
+				    "while parsing <Record-route:> header\n");
 				goto error;
 			}
 			for(record_route=p_hdr->parsed; record_route;
-			record_route=record_route->next){
-				DBG("DEBUG:tm:t_write_req: record_route->nameaddr.uri: "
-					"<%.*s>\n", record_route->nameaddr.uri.len,
+			    record_route=record_route->next){
+				DBG("assemble_msg: record_route->nameaddr.uri: "
+				    "<%.*s>\n", record_route->nameaddr.uri.len,
 					record_route->nameaddr.uri.s);
 				copy_route(s,route.len,record_route->nameaddr.uri.s,
 					record_route->nameaddr.uri.len);
@@ -315,15 +299,15 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 		}
 	}
 
-	DBG("DEBUG:tm:t_write_req: calculated route: %.*s\n",
-		route.len,route.len ? route.s : "");
-	DBG("DEBUG:tm:t_write_req: next r-uri: %.*s\n",
-		str_uri.len,str_uri.len ? str_uri.s : "");
-
+	DBG("assemble_msg: calculated route: %.*s\n",
+	    route.len,route.len ? route.s : "");
+	DBG("assemble_msg: next r-uri: %.*s\n",
+	    str_uri.len,str_uri.len ? str_uri.s : "");
+	
 	if( REQ_LINE(msg).method_value==METHOD_INVITE ) {
 		/* get body */
 		if( (body.s = get_body(msg)) == 0 ){
-			LOG(L_ERR, "ERROR:tm:t_write_req: get_body failed\n");
+			LOG(L_ERR, "assemble_msg: get_body failed\n");
 			goto error;
 		}
 		body.len = msg->len - (body.s - msg->buf);
@@ -331,8 +315,8 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 		/* get email (if any) */
 		if ( (email_avp=search_avp( &email_attr ))!=0 &&
 		email_avp->val_type!=AVP_TYPE_STR ) {
-			LOG(L_WARN, "WARNING:tm:t_write_req: 'email' avp found but "
-				"not string -> ignoring it\n");
+			LOG(L_WARN, "assemble_msg: 'email' avp found but "
+			    "not string -> ignoring it\n");
 			email_avp = 0;
 		}
 	}
@@ -341,8 +325,8 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 	hdrs.s = s = hdrs_buf;
 	l = sizeof(flag_t);
 	if (l+12+1 >= HDRS_BUFFER_MAX) {
-		LOG(L_ERR,"ERROR:tm:t_write_req: buffer overflow "
-			"while copying optional header\n");
+		LOG(L_ERR,"assemble_msg: buffer overflow "
+		    "while copying optional header\n");
 		goto error;
 	}
 	append_str(s,"P-MsgFlags: ",12); hdrs.len = 12;
@@ -355,8 +339,8 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 			continue;
 
 		if(hdrs.len+p_hdr->name.len+p_hdr->body.len+4 >= HDRS_BUFFER_MAX){
-			LOG(L_ERR,"ERROR:tm:t_write_req: buffer overflow while "
-				"copying optional header\n");
+			LOG(L_ERR,"assemble_msg: buffer overflow while "
+			    "copying optional header\n");
 			goto error;
 		}
 		append_str(s,p_hdr->name.s,p_hdr->name.len);
@@ -375,8 +359,8 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 
 	eol_line(1).s = s = cmd_buf;
 	if(strlen(action)+12 >= CMD_BUFFER_MAX){
-		LOG(L_ERR,"ERROR:tm:t_write_req: buffer overflow while "
-			"copying command name\n");
+		LOG(L_ERR,"assemble_msg: buffer overflow while "
+		    "copying command name\n");
 		goto error;
 	}
 	append_str(s,"sip_request.",12);
@@ -409,7 +393,7 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 	eol_line(16).s=id_buf;       /* hash:label */
 	s = int2str(hash_index, &l);
 	if (l+1>=IDBUF_LEN) {
-		LOG(L_ERR, "ERROR:tm:t_write_req: too big hash\n");
+		LOG(L_ERR, "assemble_msg: too big hash\n");
 		goto error;
 	}
 	memcpy(id_buf, s, l);
@@ -417,7 +401,7 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 	eol_line(16).len=l+1;
 	s = int2str(label, &l);
 	if (l+1+eol_line(16).len>=IDBUF_LEN) {
-		LOG(L_ERR, "ERROR:tm:t_write_req: too big label\n");
+		LOG(L_ERR, "assemble_msg: too big label\n");
 		goto error;
 	}
 	memcpy(id_buf+eol_line(16).len, s, l);
@@ -428,18 +412,6 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 	eol_line(19) = hdrs;
 	eol_line(20) = body;
 
-	if ( write_to_fifo(vm_fifo, TWRITE_PARAMS)==-1 ) {
-		LOG(L_ERR, "ERROR:tm:t_write_req: write_to_fifo failed\n");
-		goto error;
-	}
-
-	/* make sure that if voicemail does not initiate a reply
-	 * timely, a SIP timeout will be sent out */
-	if( add_blind_uac()==-1 ) {
-		LOG(L_ERR, "ERROR:tm:t_write_req: add_blind failed\n");
-		goto error;
-	}
-
 	/* success */
 	return 1;
 error:
@@ -449,3 +421,131 @@ error:
 }
 
 
+static int write_to_unixsock(int socket, int cnt)
+{
+	     /* write now (unbuffered straight-down write) */
+ rep:
+	if (writev(socket, (struct iovec*)lines_eol, 2 * cnt) < 0) {
+		if (errno != EINTR) {
+			LOG(L_ERR, "write_to_unixsock: writev failed: %s\n",
+			    strerror(errno));
+			return -1;
+		} else {
+			goto rep;
+		}
+	}
+	return 0;
+}
+
+
+int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
+{
+	if (assemble_msg(msg, action) < 0) {
+		LOG(L_ERR, "ERROR:tm:t_write_req: Error int assemble_msg\n");
+		return -1;
+	}
+		
+	if (write_to_fifo(vm_fifo, TWRITE_PARAMS) == -1) {
+		LOG(L_ERR, "ERROR:tm:t_write_req: write_to_fifo failed\n");
+		return -1;
+	}
+	
+	     /* make sure that if voicemail does not initiate a reply
+	      * timely, a SIP timeout will be sent out */
+	if (add_blind_uac() == -1) {
+		LOG(L_ERR, "ERROR:tm:t_write_req: add_blind failed\n");
+		return -1;
+	}
+	return 0;
+}
+
+
+int t_write_unix(struct sip_msg* msg, char* socket, char* action)
+{
+	if (assemble_msg(msg, action) < 0) {
+		LOG(L_ERR, "ERROR:tm:t_write_unix: Error in assemble_msg\n");
+		return -1;
+	}
+
+	if (write_to_unixsock((int)socket, TWRITE_PARAMS) == -1) {
+		LOG(L_ERR, "ERROR:tm:t_write_unix: write_to_unixsock failed\n");
+		return -1;
+	}
+
+	     /* make sure that if voicemail does not initiate a reply
+	      * timely, a SIP timeout will be sent out */
+	if (add_blind_uac() == -1) {
+		LOG(L_ERR, "ERROR:tm:t_write_unix: add_blind failed\n");
+		return -1;
+	}
+	return 0;
+}
+
+
+/* 
+ * Convert Unix domain socket name into socket, 
+ * connect the socket and switch it over to non-blocking
+ * mode
+ */
+int unixsock_fixup(void** param, int param_no)
+{
+	int sock, len, flags;
+	struct sockaddr_un dest;
+	char* name;
+
+	if (param_no == 1){
+		name = (char*) param;
+		if (!name) {
+			LOG(L_ERR, "unixsock_fixup: Invalid parameter\n");
+			return E_UNSPEC;
+		}
+
+		len = strlen(name);
+		if (len == 0) {
+			DBG("unixsock_fixup: Error - empty socket name\n");
+			return -1;
+		} else if (len > 107) {
+			LOG(L_ERR, "unixsock_fixup: Socket name too long\n");
+			return -1;
+		}
+
+		memset(&dest, 0, sizeof(dest));
+		dest.sun_family = PF_LOCAL;
+		memcpy(dest.sun_path, name, len);
+		
+		sock = socket(PF_LOCAL, SOCK_DGRAM, 0);
+		if (sock == -1) {
+			LOG(L_ERR, "unixsock_fixup: Unable to create socket: %s\n", strerror(errno));
+			return E_UNSPEC;
+		}
+
+		     /* Turn non-blocking mode on */
+		flags = fcntl(sock, F_GETFL);
+		if (flags == -1){
+			LOG(L_ERR, "unixsock_fixup: fnctl failed: %s\n",
+			    strerror(errno));
+			close(sock);
+			return E_UNSPEC;
+		}
+		
+		if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) == -1) {
+			LOG(L_ERR, "unixsock_fixup: fcntl: set non-blocking failed:"
+			    " %s\n", strerror(errno));
+			close(sock);
+			return E_UNSPEC;
+		}
+
+		if (connect(sock, (struct sockaddr*)&dest, SUN_LEN(&dest)) == -1) {
+			close(sock);
+			LOG(L_ERR, "unixsock_fixup: Error in connect: %s\n", strerror(errno));
+			return E_UNSPEC;
+		}
+
+		pkg_free(*param);
+		*param = (void*)sock;
+		return 0;
+	}
+
+	     /* second param => no conversion*/
+	return 0;
+}

@@ -225,6 +225,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_write_req",       t_write_req,              2, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
+	{"t_write_unix",      t_write_unix,             2, unixsock_fixup,
+	                REQUEST_ROUTE | FAILURE_ROUTE },
 
 	/* not applicable from the script */
 	{"register_tmcb",      (cmd_function)register_tmcb,     NO_SCRIPT,   0, 0},
