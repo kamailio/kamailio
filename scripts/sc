@@ -115,6 +115,11 @@ ser_alias() {
 	case $1 in 
 		show)
 			if [ $# -eq 2 ] ; then
+				is_user $2
+				if [ $? -ne 0 ] ; then
+					echo non-existent user
+					exit 1;
+				fi
 				CLAUSE=" WHERE $A_USER_COLUMN='$2' "
 			elif [ $# -ne 1 ] ; then
 				usage
@@ -160,6 +165,11 @@ acl() {
 	case $1 in
 		show)
 			if [ $# -eq 2 ] ; then
+				is_user $2
+				if [ $? -ne 0 ] ; then
+					echo non-existent user
+					exit 1;
+				fi
 				CLAUSE=" WHERE $ACL_USER_COLUMN='$2' "
 			elif [ $# -ne 1 ] ; then
 				usage
@@ -243,7 +253,7 @@ acl() {
 is_user() {
 	QUERY="select count(*) from $TABLE \
 		where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$DOMAIN';"
-	CNT=`sql_query "$QUERY" | grep -v ERROR | tail -n1`
+	CNT=`sql_ro_query "$QUERY" | grep -v ERROR | tail -n1`
 	if [ "0$CNT" -eq 0 ] ; then
 		false
 	else
@@ -379,8 +389,14 @@ case $1 in
 		;;
 
 
-	show)
-		if [ $# -ne 1 -a $# -ne 2 ] ; then
+	show|user)
+		if [ $# -eq 2 ] ; then
+			is_user $2
+			if [ $? -ne 0 ] ; then
+				echo non-existent user
+				exit 1;
+			fi
+		elif [ $# -ne 1  ] ; then
 			usage
 			exit 1
 		fi
