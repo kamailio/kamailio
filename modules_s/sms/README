@@ -82,7 +82,6 @@ m=msx_sms_per_call (optional) - maximum number of SMS send / received from
    number of SMS for the first network and the number of incoming SIP
    msg is equal with the sent SMS per same unit of time, the modem will
    never get to send SMS fro the next networks.
-
 EXAMPLE:
 modparam("sms","networks","D1 [c=491710765000;m=10] ;d2[ c=3456;m=20])
 
@@ -117,6 +116,13 @@ Default is used the name of the machine the gateway runs on.
  - use_contact - numeric, optional - if a contact header should be added to
 the outgoing SIP messages. Even if the SIP draft forbids this, some UAS
 requires it. Default is 0 (no).
+
+ - use_sms_report - numeric, optional - if the modem should ask for SMS
+confirmation from the SMS Center. If the SMSC reply with an error code, the
+gateway will send back to SIP user a SIP message containing the text (or part
+of it) that couldn't be send. At the moment, the confirmation mechanims is
+supported only be NOKIA modems (as tested ) - aditionals mechanisms (for other
+types of modems) are in course of developing. Default is 0 (no).
 
 
 3. Usage and behavior
