@@ -39,6 +39,7 @@
 #include <signal.h>
 #include <string.h>
 #include <time.h>
+#include <stdarg.h>
 #include "dprint.h"
 #include "ut.h"
 #include "error.h"
@@ -256,9 +257,11 @@ static char *trim_filename( char * file )
 }
 
 /* tell FIFO client what happened via reply pipe */
-void fifo_reply( char *reply_fifo, char *reply_txt)
+void fifo_reply( char *reply_fifo, char *reply_fmt, ... )
 {
 	FILE *file_handle;
+	int r;
+	va_list ap;
 
 	file_handle=open_reply_pipe(reply_fifo);
 	if (file_handle==0) {
@@ -266,22 +269,59 @@ void fifo_reply( char *reply_fifo, char *reply_txt)
 			fifo);
 		return;
 	}
-	if (fprintf(file_handle, "%s", reply_txt)<=0) {
+retry:
+	va_start(ap, reply_fmt);
+	r=vfprintf(file_handle, reply_fmt, ap);
+	va_end(ap);
+	if (r<=0) {
 		LOG(L_ERR, "ERROR: fifo_error: write error (%s): %s\n",
 			fifo, strerror(errno));
+		if ((errno==EINTR)||(errno==EAGAIN)||(errno==EWOULDBLOCK)) {
+			goto retry;
+		}
 	}
 	fclose(file_handle);
 }
 
 FILE *open_reply_pipe( char *pipe_name )
 {
+
+	int fifofd;
 	FILE *file_handle;
 
-	if (!pipe_name) {
+	int retries=FIFO_REPLY_RETRIES;
+
+	if (!pipe_name || *pipe_name==0) {
 		DBG("DEBUG: open_reply_pipe: no file to write to about missing cmd\n");
 		return 0;
 	}
-	file_handle=fopen( pipe_name, "w");
+
+tryagain:
+	fifofd=open( pipe_name, O_WRONLY | O_NONBLOCK );
+	if (fifofd==-1) {
+		/* retry several times if client is not yet ready for getting
+		   feedback via a reply pipe
+		*/
+		if (errno==ENXIO) {
+			/* give up on the client - we can't afford server blocking */
+			if (retries==0) {
+				LOG(L_ERR, "ERROR: open_reply_pipe: no client at %s\n",
+					pipe_name );
+				return 0;
+			}
+			/* don't be noisy on the very first try */
+			if (retries!=FIFO_REPLY_RETRIES)
+				DBG("DEBUG: open_reply_pipe: retry countdown: %d\n", retries );
+			sleep_us( FIFO_REPLY_WAIT );
+			retries--;
+			goto tryagain;
+		}
+		/* some other opening error */
+		LOG(L_ERR, "ERROR: open_reply_pipe: open error (%s): %s\n",
+			pipe_name, strerror(errno));
+		return 0;
+	}
+	file_handle=fdopen( fifofd, "w");
 	if (file_handle==NULL) {
 		LOG(L_ERR, "ERROR: open_reply_pipe: open error (%s): %s\n",
 			pipe_name, strerror(errno));
@@ -296,7 +336,6 @@ static void fifo_server(FILE *fifo_stream)
 	int line_len;
 	char *file_sep, *command, *file;
 	struct fifo_command *f;
-	FILE *file_handle;
 
 	file_sep=command=file=0;
 
@@ -349,33 +388,12 @@ static void fifo_server(FILE *fifo_stream)
 		if (f==0) {
 			LOG(L_ERR, "ERROR: fifo_server: command %s is not available\n",
 				command);
-			file_handle=open_reply_pipe(file);
-			if (file_handle==0) {
-				LOG(L_ERR, "ERROR: fifo_server: no reply pipe\n");
-				goto consume;
-			}
-			if (fprintf(file_handle, "[%s not available]\n", command)<=0) {
-				LOG(L_ERR, "ERROR: fifo_server: write error: %s\n",
-				 	strerror(errno));
-			}
-			fclose(file_handle);
+			fifo_reply(file, "[%s not available]\n", command);
 			goto consume;
 		}
 		if (f->f(fifo_stream, file)<0) {
 			LOG(L_ERR, "ERROR: fifo_server: command (%s) "
 				"processing failed\n", command );
-#ifdef _OBSOLETED
-			file_handle=open_reply_pipe(file);
-			if (file_handle==0) {
-				LOG(L_ERR, "ERROR: fifo_server: no reply pipe\n");
-				goto consume;
-			}
-			if (fprintf(file_handle, "[%s failed]\n", command)<=0) {
-				LOG(L_ERR, "ERROR: fifo_server: write error: %s\n",
-				strerror(errno));
-			}
-			fclose(file_handle);
-#endif
 			goto consume;
 		}
 
@@ -433,6 +451,8 @@ int open_fifo_server()
 				strerror(errno));
 			return -1;
 		}
+		/* a real server doesn't die if writing to reply fifo fails */
+		signal(SIGPIPE, SIG_IGN);
 		LOG(L_INFO, "SER: open_uac_fifo: fifo server up at %s...\n",
 			fifo);
 		fifo_server( fifo_stream ); /* never retruns */
@@ -453,21 +473,6 @@ static int print_version_cmd( FILE *stream, char *response_file )
 {
 	if (response_file) {
 		fifo_reply(response_file, SERVER_HDR CRLF );
-#ifdef _OBSOLETED
-		file=open( response_file, O_WRONLY );
-		if (file<0) {
-			LOG(L_ERR, "ERROR: print_version_cmd: open error (%s): %s\n",
-				response_file, strerror(errno));
-			return -1;
-		}
-		if (write(file, SERVER_HDR CRLF, SERVER_HDR_LEN+CRLF_LEN)<0) {
-			LOG(L_ERR, "ERROR: print_version_cmd: write error: %s\n",
-				strerror(errno));
-			close(file);
-			return -1;
-		}
-		close(file);
-#endif
 	} else {
 		LOG(L_ERR, "ERROR: no file for print_version_cmd\n");
 	}
@@ -487,9 +492,6 @@ static int print_fifo_cmd( FILE *stream, char *response_file )
 		return -1;
 	}
 	if (!read_line(text, MAX_PRINT_TEXT, stream, &text_len)) {
-#ifdef _OBSOLETED
-		LOG(L_ERR, "ERROR: print_fifo_cmd: too big text\n");
-#endif
 		fifo_reply(response_file, 
 			"ERROR: print_fifo_cmd: too big text");
 		return -1;
@@ -497,21 +499,6 @@ static int print_fifo_cmd( FILE *stream, char *response_file )
 	/* now the work begins */
 	if (response_file) {
 		fifo_reply(response_file, text );
-#ifdef _OBSOLETED
-		file=open( response_file , O_WRONLY);
-		if (file<0) {
-			LOG(L_ERR, "ERROR: print_fifo_cmd: open error (%s): %s\n",
-				response_file, strerror(errno));
-			return -1;
-		}
-		if (write(file, text,text_len)<0) {
-			LOG(L_ERR, "ERROR: print_fifo_cmd: write error: %s\n",
-				 strerror(errno));
-			close(file);
-			return 1;
-		}
-		close(file);
-#endif
 	} else {
 		LOG(L_INFO, "INFO: print_fifo_cmd: %.*s\n", 
 			text_len, text );
@@ -521,14 +508,20 @@ static int print_fifo_cmd( FILE *stream, char *response_file )
 
 static int uptime_fifo_cmd( FILE *stream, char *response_file )
 {
-	FILE *file;
 	time_t now;
 
 	if (response_file==0 || *response_file==0 ) { 
 		LOG(L_ERR, "ERROR: uptime_fifo_cmd: null file\n");
 		return -1;
 	}
-	file=fopen(response_file, "w" );
+
+	time(&now);
+	fifo_reply( response_file, "Now: %sUp Since: %sUp time: %.0f [sec]\n",
+		ctime(&now), ctime(&up_since), difftime(now, up_since) );
+
+#ifdef _OBSOLETED
+
+	file=open_reply_pipe(response_file);
 	if (file==NULL) {
 		LOG(L_ERR, "ERROR: uptime_fifo_cmd: file %s bad: %s\n",
 			response_file, strerror(errno) );
@@ -536,11 +529,31 @@ static int uptime_fifo_cmd( FILE *stream, char *response_file )
 	}
 
 	time(&now);
-	fprintf(file, "Now: %s", ctime(&now) );
-	fprintf(file, "Up since: %s", ctime(&up_since) );
-	fprintf(file, "Up time: %.0f [sec]\n", difftime(now, up_since));
+
+	r=fprintf(file, "Now: %s", ctime(&now) );
+	r=1;
+	if (r<=0) {
+		printf("XXX: r: %d : %s\n", r, strerror(errno));
+		goto done;
+	}
+
+	r=fprintf(file, "Up since: %s", ctime(&up_since) );
+	r=1;
+	if (r<=0) {
+		printf("XXX: r: %d : %s\n", r, strerror(errno));
+		goto done;
+	}
+	r=fprintf(file, "Up time: %.0f [sec]\n", difftime(now, up_since));
+	r=1;
+	if (r<=0) {
+		printf("XXX: r: %d : %s\n", r, strerror(errno));
+		goto done;
+	}
+
+done:
 
 	fclose(file);
+#endif
 	return 1;
 }
 

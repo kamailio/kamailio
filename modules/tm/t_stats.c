@@ -61,7 +61,7 @@ int static fifo_stats( FILE *pipe, char *response_file )
 		return -1;
 	}
 
-	file=fopen(response_file, "w" );
+	file=open_reply_pipe(response_file );
 	if (file==NULL) {
 		LOG(L_ERR, "ERROR: fifo_stats: file %s bad: %s\n",
 			response_file, strerror(errno) );

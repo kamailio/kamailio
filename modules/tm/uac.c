@@ -211,35 +211,24 @@ static void fifo_callback( struct cell *t, struct sip_msg *msg,
 {
 
 	char *filename;
-	int file;
-	int r;
 	str text;
 
 	DBG("DEBUG: fifo UAC completed with status %d\n", code);
-	if (t->cbp) {
-		filename=(char *)(t->cbp);
-		file=open(filename, O_WRONLY);
-		if (file<0) {
-			LOG(L_ERR, "ERROR: fifo_callback: can't open file %s: %s\n",
-				filename, strerror(errno));
-			return;
-		}
-		get_reply_status(&text,msg,code);
-		if (text.s==0) {
-			LOG(L_ERR, "ERROR: fifo_callback: get_reply_status failed\n");
-			return;
-		}
-		r=write(file, text.s , text.len );
-		close(file);
-		pkg_free(text.s);
-		if (r<0) {
-			LOG(L_ERR, "ERROR: fifo_callback: write error: %s\n",
-				strerror(errno));
-			return;	
-		}
-	} else {
+	if (!t->cbp) {
 		LOG(L_INFO, "INFO: fifo UAC completed with status %d\n", code);
+		return;
 	}
+
+	filename=(char *)(t->cbp);
+	get_reply_status(&text,msg,code);
+	if (text.s==0) {
+		LOG(L_ERR, "ERROR: fifo_callback: get_reply_status failed\n");
+		fifo_reply(filename, "ERROR: fifo_callback: get_reply_status failed\n");
+		return;
+	}
+	fifo_reply(filename, "%.*s", text.len, text.s );
+	pkg_free(text.s);
+	DBG("DEBUG: fifo_callback sucesssfuly completed\n");
 }	
 
 /* to be obsoleted in favor of fifo_uac_from */

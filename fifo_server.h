@@ -43,7 +43,7 @@ int register_core_fifo();
 FILE *open_reply_pipe( char *pipe_name );
 
 /* tell FIFO client an error occured via reply pipe */
-void fifo_reply( char *reply_fifo, char *reply_txt);
+void fifo_reply( char *reply_fifo, char *reply_fmt, ... );
 
 
 #endif
