@@ -10,6 +10,8 @@
 #include "../mem/mem.h"
 #include "parse_def.h"
 #include "digest/digest.h" /* free_credentials */
+#include "parse_event.h"
+#include "parse_expires.h"
 
 
 /* 
@@ -39,6 +41,14 @@ void clean_hdr_field(struct hdr_field* hf)
 
 		case HDR_FROM:
 			free_to(hf->parsed);
+			break;
+
+		case HDR_EVENT:
+			free_event((event_t**)(&(hf->parsed)));
+			break;
+
+		case HDR_EXPIRES:
+			free_expires((exp_body_t**)(&(hf->parsed)));
 			break;
 
 		default:
