@@ -12,4 +12,4 @@
 typedef const char* db_key_t;
 
 
-#endif
+#endif /* DB_KEY_H */

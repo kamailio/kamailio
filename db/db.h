@@ -128,4 +128,4 @@ extern db_func_t dbf;
 int bind_dbmod(void);
  
 
-#endif
+#endif /* DB_H */

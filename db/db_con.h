@@ -13,22 +13,19 @@
  * handle
  */
 typedef struct {
-	char* table;    /* Default table to use */
-	void* con;      /* Mysql Connection */
-	void* res;      /* Result of previous operation */
-	void* row;      /* Actual row in the result */
-	int connected;
+	char* table;           /* Default table to use */
+	int connected;         /* 1 if database is connected */
+	unsigned char tail[0]; /* Variable length tail
+				* database module specific */    
 } db_con_t;
 
 
 #define CON_CONNECTED(cn)  ((cn)->connected)
 #define CON_TABLE(cn)      ((cn)->table)
-#define CON_CONNECTION(cn) ((cn)->con)
-#define CON_RESULT(cn)     ((cn)->res)
-#define CON_ROW(cn)        ((cn)->row)
+#define CON_TAIL(cn)       ((cn)->tail)
 
 
 int use_table(db_con_t* _h, const char* _t);
 
 
-#endif
+#endif /* DB_CON_H */

@@ -50,4 +50,4 @@ int convert_result(db_con_t* _h, db_res_t* _r);
 int free_result(db_res_t* _r);
 
 
-#endif
+#endif /* DB_RES_H */

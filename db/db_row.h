@@ -29,4 +29,4 @@ int convert_row(db_con_t* _h, struct db_res* _res, db_row_t* _r);
 int free_row(db_row_t* _r);
 
 
-#endif
+#endif /* DB_ROW_H */
