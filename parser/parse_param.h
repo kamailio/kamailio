@@ -50,7 +50,8 @@ typedef enum ptype {
 	P_TRANSPORT, /* URI: transport parameter */
 	P_LR,        /* URI: lr parameter */
 	P_R2,        /* URI: r2 parameter (ser specific) */
-	P_MADDR      /* URI: maddr parameter */
+	P_MADDR,     /* URI: maddr parameter */
+	P_TTL,       /* URI: ttl parameter */
 } ptype_t;
 
 
@@ -94,6 +95,7 @@ struct uri_hooks {
 	struct param* lr;        /* lr parameter */
 	struct param* r2;        /* r2 parameter */
 	struct param* maddr;     /* maddr parameter */
+	struct param* ttl;       /* ttl parameter */
 };
 
 
