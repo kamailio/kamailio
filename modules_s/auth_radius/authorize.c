@@ -82,9 +82,10 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 	auth_body_t* cred;
 	str* uri;
 	struct sip_uri puri;
-	str user = {"jan", 3};
+	str user;
 
 	ret = pre_auth_func(_msg, &_realm, _hftype, &h);
+	cred = (auth_body_t*)h->parsed;
 	
 	switch(ret) {
 	case ERROR:            return 0;
@@ -114,7 +115,7 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 
 	user.s = (char *)pkg_malloc(puri.user.len);
 	un_escape(&(puri.user), &user);
-	cred = (auth_body_t*)h->parsed;
+
 	res = radius_authorize_sterman(&cred->digest, &_msg->first_line.u.request.method, &user);
 	pkg_free(user.s);
 
@@ -124,6 +125,7 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 		case ERROR:          return 0;
 		case NOT_AUTHORIZED: return -1;
 		case AUTHORIZED:     return 1;
+		default:             return -1;
 		}
 	}
 
