@@ -620,6 +620,15 @@ void tcp_receive_loop(int unix_sock)
 				con->timeout=get_ticks()+TCP_CHILD_TIMEOUT;
 				FD_SET(s, &master_set);
 				if (maxfd<s) maxfd=s;
+				if (con==list){
+					LOG(L_CRIT, "BUG: tcp_receive_loop: duplicate"
+							" connection recevied: %p, id %d, fd %d, refcnt %d"
+							" state %d (n=%d)\n", con, con->id, con->fd,
+							con->refcnt, con->state, n);
+					resp=CONN_ERROR;
+					release_tcpconn(con, resp, unix_sock);
+					goto skip; /* try to recover */
+				}
 				tcpconn_listadd(list, con, c_next, c_prev);
 			}
 skip:

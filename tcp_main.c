@@ -393,6 +393,7 @@ int tcp_send(int type, char* buf, unsigned len, union sockaddr_union* to,
 				int id)
 {
 	struct tcp_connection *c;
+	struct tcp_connection *tmp;
 	struct ip_addr ip;
 	int port;
 	int fd;
@@ -470,11 +471,22 @@ get_fd:
 				goto release_c;
 			}
 			DBG("tcp_send, c= %p, n=%d\n", c, n);
+			tmp=c;
 			n=receive_fd(unix_tcp_sock, &c, sizeof(c), &fd);
 			if (n<=0){
 				LOG(L_ERR, "BUG: tcp_send: failed to get fd(receive_fd):"
 							" %s (%d)\n", strerror(errno), errno);
 				n=-1;
+				goto release_c;
+			}
+			if (c!=tmp){
+				LOG(L_CRIT, "BUG: tcp_send: get_fd: got different connection:"
+						"  %p (id= %d, refcnt=%d state=%d != "
+						"  %p (id= %d, refcnt=%d state=%d (n=%d)\n",
+						  c,   c->id,   c->refcnt,   c->state,
+						  tmp, tmp->id, tmp->refcnt, tmp->state, n
+				   );
+				n=-1; /* fail */
 				goto release_c;
 			}
 			DBG("tcp_send: after receive_fd: c= %p n=%d fd=%d\n",c, n, fd);
