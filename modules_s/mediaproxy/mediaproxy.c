@@ -705,27 +705,32 @@ checkContentType(struct sip_msg *msg)
 }
 
 
-/* Get the SDP message from SIP message and check it's Content-Type */
-static Bool
+// Get the SDP message from SIP message and check it's Content-Type
+// return -1 on error, 0 if empty message, 1 if message present and not empty
+static int
 getSDPMessage(struct sip_msg *msg, str *sdp)
 {
     sdp->s = get_body(msg);
     if (sdp->s==NULL) {
         LOG(L_ERR, "error: mediaproxy/getSDPMessage(): cannot get the SDP body from SIP message\n");
-        return False;
+        return -1;
     }
     sdp->len = msg->buf + msg->len - sdp->s;
     if (sdp->len==0) {
-        LOG(L_ERR, "error: mediaproxy/getSDPMessage(): SDP message has zero length\n");
-        return False;
+        // 0 length body is ok for ACK messages
+        if (!(msg->first_line.type == SIP_REQUEST &&
+              msg->first_line.u.request.method_value == METHOD_ACK)) {
+            LOG(L_ERR, "error: mediaproxy/getSDPMessage(): SDP message has zero length\n");
+        }
+        return 0;
     }
 
     if (!checkContentType(msg)) {
         LOG(L_ERR, "error: mediaproxy/getSDPMessage(): content type is not `application/sdp'\n");
-        return False;
+        return -1;
     }
 
-    return True;
+    return 1;
 }
 
 
@@ -1296,24 +1301,41 @@ EndMediaSession(struct sip_msg* msg, char* str1, char* str2)
 }
 
 
+#define MSG_UNKNOWN 0
+#define MSG_INVITE  1
+#define MSG_ACK     2
+#define MSG_REPLY   3
+
+
 static int
 UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
 {
     str sdp, sessionIP, callId, fromDomain, toDomain, userAgent, tokens[64];
     str fromAddr, toAddr, fromTag, toTag;
     char *clientIP, *ptr, *command, *result, *agent, *fromType, *toType, *info;
-    int streamCount, i, port, count, portCount, cmdlen, infolen, success;
+    int streamCount, i, port, count, portCount, cmdlen, infolen, success, type;
     StreamInfo streams[64];
     Bool request;
 
+    if (msg->first_line.type == SIP_REQUEST) {
+        if (msg->first_line.u.request.method_value == METHOD_INVITE)
+            type = MSG_INVITE;
+        else if (msg->first_line.u.request.method_value == METHOD_ACK)
+            type = MSG_ACK;
+        else
+            type = MSG_UNKNOWN;
+    } else if (msg->first_line.type == SIP_REPLY) {
+        type = MSG_REPLY;
+    } else {
+        type = MSG_UNKNOWN;
+    }
+
     fromType = (isFromLocal(msg, NULL, NULL)>0) ? "local" : "remote";
 
-    if (msg->first_line.type == SIP_REQUEST &&
-        (msg->first_line.u.request.method_value == METHOD_INVITE ||
-         msg->first_line.u.request.method_value == METHOD_ACK)) {
+    if (type==MSG_INVITE || type==MSG_ACK) {
         request = True;
         toType = (isDestinationLocal(msg, NULL, NULL)>0) ? "local" : "remote";
-    } else if (msg->first_line.type == SIP_REPLY) {
+    } else if (type==MSG_REPLY) {
         request = False;
         toType = "unknown";
     } else {
@@ -1325,7 +1347,10 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
         return -1;
     }
 
-    if (!getSDPMessage(msg, &sdp)) {
+    success = getSDPMessage(msg, &sdp);
+    if (success==0 && type==MSG_ACK) {
+        return 1; // nothing to do. it's ok for ACK to not have a SDP body
+    } else if (success <= 0) {
         LOG(L_ERR, "error: use_media_proxy(): failed to get the SDP message\n");
         return -1;
     }
