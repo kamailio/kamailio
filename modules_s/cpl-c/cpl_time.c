@@ -33,6 +33,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "../../mem/mem.h"
 #include "cpl_time.h"

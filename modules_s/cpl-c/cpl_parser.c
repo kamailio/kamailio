@@ -119,7 +119,7 @@ enum {EMAIL_TO,EMAIL_HDR_NAME,EMAIL_KNOWN_HDR_BODY,EMAIL_UNKNOWN_HDR_BODY};
 #define MAX_EMAIL_BODY_SIZE    512
 #define MAX_EMAIL_SUBJECT_SIZE 32
 
-static inline unsigned char *decode_mail_url(char *p, char *p_end, char *url,
+static inline char *decode_mail_url(char *p, char *p_end, char *url,
 														unsigned char *nr_attr)
 {
 	static char buf[ MAX_EMAIL_HDR_SIZE ];
@@ -896,7 +896,8 @@ error:
  * [| attr2_t(2) attr2_val(2) |]?                   TIMEOUT attr
  * [| attr3_t(2) attr3_val(2) |]?                   ORDERING attr
  */
-inline int encode_proxy_attr(xmlNodePtr  node, char *node_ptr, char *buf_end)
+static inline int encode_proxy_attr(xmlNodePtr  node, char *node_ptr,
+																char *buf_end)
 {
 	xmlAttrPtr     attr;
 	char           *p, *p_orig;
@@ -1210,7 +1211,7 @@ inline int encode_sub_attr(xmlNodePtr  node, char *node_ptr, char *buf_end)
 	FOR_ALL_ATTR(node,attr) {
 		(*nr_attr)++;
 		/* there is only one attribute -> REF */
-		if ( strcasecmp("ref",attr->name)!=0 ) {
+		if ( strcasecmp("ref",(char*)attr->name)!=0 ) {
 			LOG(L_ERR,"ERROR:cpl_c:encode_sub_attr: unknown attribute "
 				"<%s>\n",attr->name);
 			goto error;
@@ -1440,7 +1441,7 @@ int encodeCPL( str *xml, str *bin)
 	list = 0;
 
 	/* parse the xml */
-	doc = xmlParseDoc( xml->s );
+	doc = xmlParseDoc( (unsigned char*)xml->s );
 	if (!doc) {
 		LOG(L_ERR,"ERROR:cpl:encodeCPL:CPL script not parsed successfully\n");
 		goto error;
@@ -1468,7 +1469,7 @@ int encodeCPL( str *xml, str *bin)
 	xmlFreeDoc(doc);
 	if (list) delete_list(list);
 	bin->s = buf;
-	write_to_file("cpl.dat", bin);/*  only for debugging */
+	write_to_file("cpl.dat", bin); /* only for debugging */
 	return 1;
 error:
 	if (doc) xmlFreeDoc(doc);
@@ -1481,7 +1482,7 @@ error:
 /* loads and parse the dtd file; a validating context is created */
 int init_CPL_parser( char* DTD_filename )
 {
-	dtd = xmlParseDTD( NULL, DTD_filename);
+	dtd = xmlParseDTD( NULL, (unsigned char*)DTD_filename);
 	if (!dtd) {
 		LOG(L_ERR,"ERROR:cpl-c:init_CPL_parser: DTD not parsed successfully\n");
 		return -1;
