@@ -221,11 +221,11 @@ struct module_exports exports = {
 // Functions dealing with strings
 
 /*
- * mp_memmem() finds the start of the first occurrence of the substring needle
+ * strfind() finds the start of the first occurrence of the substring needle
  * of length nlen in the memory area haystack of length len.
  */
 static void*
-mp_memmem(const void *haystack, size_t len, const void *needle, size_t nlen)
+strfind(const void *haystack, size_t len, const void *needle, size_t nlen)
 {
     char *sp;
 
@@ -235,6 +235,30 @@ mp_memmem(const void *haystack, size_t len, const void *needle, size_t nlen)
 
     for (sp = (char*)haystack; sp <= (char*)haystack + len - nlen; sp++) {
         if (*sp == *(char*)needle && memcmp(sp, needle, nlen)==0) {
+            return sp;
+        }
+    }
+
+    return NULL;
+}
+
+/*
+ * strcasefind() finds the start of the first occurrence of the substring
+ * needle of length nlen in the memory area haystack of length len by doing
+ * a case insensitive search
+ */
+static void*
+strcasefind(const char *haystack, size_t len, const char *needle, size_t nlen)
+{
+    char *sp;
+
+    /* Sanity check */
+    if(!(haystack && needle && nlen && len>=nlen))
+        return NULL;
+
+    for (sp = (char*)haystack; sp <= (char*)haystack + len - nlen; sp++) {
+        if (tolower(*sp) == tolower(*(char*)needle) &&
+            strncasecmp(sp, needle, nlen)==0) {
             return sp;
         }
     }
@@ -334,7 +358,7 @@ encodeQuopri(str buf)
 
 /* Find a line in str `block' that starts with `start'. */
 static char*
-findLineStartingWith(str *block, char *start)
+findLineStartingWith(str *block, char *start, int ignoreCase)
 {
     char *ptr, *bend;
     str zone;
@@ -345,10 +369,13 @@ findLineStartingWith(str *block, char *start)
     ptr = NULL;
 
     for (zone = *block; zone.len > 0; zone.len = bend - zone.s) {
-        ptr = mp_memmem(zone.s, zone.len, start, tlen);
+        if (ignoreCase)
+            ptr = strcasefind(zone.s, zone.len, start, tlen);
+        else
+            ptr = strfind(zone.s, zone.len, start, tlen);
         if (!ptr || ptr==zone.s || ptr[-1]=='\n' || ptr[-1]=='\r')
             break;
-        zone.s = ptr + 2;
+        zone.s = ptr + tlen;
     }
 
     return ptr;
@@ -523,7 +550,7 @@ getFromAddress(struct sip_msg *msg)
         uri.len -= 4;
     }
 
-    if ((ptr = mp_memmem(uri.s, uri.len, ";", 1))!=NULL) {
+    if ((ptr = strfind(uri.s, uri.len, ";", 1))!=NULL) {
         uri.len = ptr - uri.s;
     }
 
@@ -555,7 +582,7 @@ getToAddress(struct sip_msg *msg)
         uri.len -= 4;
     }
 
-    if ((ptr = mp_memmem(uri.s, uri.len, ";", 1))!=NULL) {
+    if ((ptr = strfind(uri.s, uri.len, ";", 1))!=NULL) {
         uri.len = ptr - uri.s;
     }
 
@@ -630,7 +657,7 @@ getUserAgent(struct sip_msg* msg)
     block.s   = msg->buf;
     block.len = msg->len;
 
-    ptr = findLineStartingWith(&block, "Server:");
+    ptr = findLineStartingWith(&block, "Server:", True);
     if (!ptr)
         return notfound;
 
@@ -743,7 +770,7 @@ getMediaIPFromBlock(str *block, str *mediaip)
     char *ptr;
     int count;
 
-    ptr = findLineStartingWith(block, "c=");
+    ptr = findLineStartingWith(block, "c=", False);
 
     if (!ptr) {
         mediaip->s   = NULL;
@@ -777,7 +804,7 @@ getSessionLevelMediaIP(str *sdp, str *mediaip)
     char *ptr;
 
     // session IP can be found from the beginning up to the first media block
-    ptr = findLineStartingWith(sdp, "m=");
+    ptr = findLineStartingWith(sdp, "m=", False);
     if (ptr) {
         block.s   = sdp->s;
         block.len = ptr - block.s;
@@ -808,7 +835,7 @@ getMediaStreams(str *sdp, str *sessionIP, StreamInfo *streams, int limit)
     sdpEnd = sdp->s + sdp->len;
 
     for (i=0, block=*sdp; i<limit; i++) {
-        ptr = findLineStartingWith(&block, "m=");
+        ptr = findLineStartingWith(&block, "m=", False);
 
         if (!ptr)
             break;
