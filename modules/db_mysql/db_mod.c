@@ -6,11 +6,15 @@
 #include "dbase.h"
 #include <stdio.h>
 
+
+static int mod_init(void);
+
+
 /*
  * MySQL database module interface
  */
 
-static struct module_exports mysql_exports = {	
+struct module_exports exports = {	
 	"mysql",
 	(char*[]) {
 		"db_use_table",
@@ -39,19 +43,22 @@ static struct module_exports mysql_exports = {
 		0, 0, 0, 0, 0, 0, 0, 0
 	},
 	8, /* number of functions*/
-	0, /* response function*/
-	0,  /* destroy function */
-	0,	/* oncancel function */
-	0   /* per-child init function */
+
+	NULL,   /* Module parameter names */
+	NULL,   /* Module parameter types */
+	NULL,   /* Module parameter variable pointers */
+	0,      /* Number of module paramers */
+
+	mod_init, /* module initialization function */
+	0,        /* response function*/
+	0,        /* destroy function */
+	0,        /* oncancel function */
+	0         /* per-child init function */
 };
 
 
-#ifdef STATIC_MYSQL
-struct module_exports* mysql_mod_register()
-#else
-struct module_exports* mod_register()
-#endif
+static int mod_init(void)
 {
-	fprintf(stderr, "mysql - registering...\n");
-	return &mysql_exports;
+	fprintf(stderr, "mysql - initializing\n");
+	return 0;
 }
