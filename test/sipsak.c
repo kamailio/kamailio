@@ -413,7 +413,8 @@ void warning_extract(char *message)
 		printf("%s ", server);
 	}
 	else {
-		printf("no Warning header found\n");
+		if (verbose) printf("'no Warning header found' ");
+		else printf("unknown ");
 	}
 }
 
@@ -687,7 +688,8 @@ void shoot(char *buff)
 								crlf=contact;
 							bar=malloc(crlf-foo+1);
 							strncpy(bar, foo, crlf-foo);
-							sprintf(bar+(crlf-foo), "0");
+							//sprintf(bar+(crlf-foo), "0");
+							*(bar+(crlf-foo))='\0';
 							if ((contact=strstr(bar, "sip"))==NULL) {
 								printf("error: cannot find sip in the Contact of this redirect:\n%s\n", reply);
 								exit(2);
@@ -754,15 +756,15 @@ void shoot(char *buff)
 						}
 						else {
 							crlf=strchr(reply,'\n');
-							sprintf(crlf, "0");
+							*crlf='\0';
 							crlf++;
 							contact=strstr(crlf, "Contact");
 							printf("received reply from ");
-							warning_extract(reply);
-							printf(" after %.3f ms", deltaT(&sendtime, &recvtime));
+							warning_extract(crlf);
+							printf("after %.3f ms", deltaT(&sendtime, &recvtime));
 							if (contact){
 								crlf=strchr(contact,'\n');
-								sprintf(crlf, "0");
+								*crlf='\0';
 								printf(":\n     %s\n", contact);
 							}
 							else {
