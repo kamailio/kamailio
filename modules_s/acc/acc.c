@@ -534,11 +534,16 @@ int acc_db_request( struct sip_msg *rq, struct hdr_field *to,
 	VAL_NULL(vals+i)=0;
 	VAL_STRING(vals+i)=time_s;
 
-	acc_dbf.use_table(db_handle, table);
+	if (acc_dbf.use_table(db_handle, table) < 0) {
+		LOG(L_ERR, "ERROR: acc_request: "
+		           "Error in use_table\n");
+		return -1;
+	}
+	
 	if (acc_dbf.insert(db_handle, keys, vals, i+1) < 0) {
 		LOG(L_ERR, "ERROR: acc_request: "
 				"Error while inserting to database\n");
-		return -1;;
+		return -1;
 	}
 
 	return 1;

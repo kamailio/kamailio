@@ -115,6 +115,7 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 		if (uridb_dbf.use_table(db_handle, uri_table.s) < 0) {
 			LOG(L_ERR, "ERROR: check_username(): "
 					"Error while trying to use uri table\n");
+			return -7;
 		}
 
 		keys[0] = uri_user_col.s;
@@ -133,7 +134,7 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 		{
 			LOG(L_ERR, "ERROR: check_username():"
 					" Error while querying database\n");
-			return -7;
+			return -8;
 		}
 
 		     /* If the previous function returns at least one row, it means
@@ -144,7 +145,7 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 			DBG("check_username(): From/To user '%.*s' is spoofed\n", 
 			    puri.user.len, ZSW(puri.user.s));
 			uridb_dbf.free_query(db_handle, res);
-			return -8;
+			return -9;
 		} else {
 			DBG("check_username(): From/To user '%.*s' and auth user match\n", 
 			    puri.user.len, ZSW(puri.user.s));
@@ -163,7 +164,7 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 		}
 	
 		DBG("check_username(): Digest username and URI username do NOT match\n");
-		return -9;
+		return -10;
 	}
 }
 
@@ -214,6 +215,7 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 		if (uridb_dbf.use_table(db_handle, uri_table.s) < 0) {
 			LOG(L_ERR, "ERROR: does_uri_exist(): "
 					"Error while trying to use uri table\n");
+			return -2;
 		}
 		keys[0] = uri_uriuser_col.s;
 		keys[1] = uri_domain_col.s;
@@ -222,6 +224,7 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 		if (uridb_dbf.use_table(db_handle, subscriber_table.s) < 0) {
 			LOG(L_ERR, "ERROR: does_uri_exist():"
 					" Error while trying to use subscriber table\n");
+			return -3;
 		}
 		keys[0] = subscriber_user_col.s;
 		keys[1] = subscriber_domain_col.s;
@@ -236,13 +239,13 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 	if (uridb_dbf.query(db_handle, keys, 0, vals, cols, (use_domain ? 2 : 1),
 				1, 0, &res) < 0) {
 		LOG(L_ERR, "does_uri_exist(): Error while querying database\n");
-		return -2;
+		return -4;
 	}
 	
 	if (RES_ROW_N(res) == 0) {
 		DBG("does_uri_exit(): User in request uri does not exist\n");
 		uridb_dbf.free_query(db_handle, res);
-		return -3;
+		return -5;
 	} else {
 		DBG("does_uri_exit(): User in request uri does exist\n");
 		uridb_dbf.free_query(db_handle, res);

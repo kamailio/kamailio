@@ -465,7 +465,11 @@ int db_delete_urecord(urecord_t* _r)
 	     /* FIXME */
 	memcpy(b, _r->domain->s, _r->domain->len);
 	b[_r->domain->len] = '\0';
-	ul_dbf.use_table(ul_dbh, b);
+	if (ul_dbf.use_table(ul_dbh, b) < 0) {
+		LOG(L_ERR, "ERROR: db_delete_urecord():"
+		                " Error in use_table\n");
+		return -1;
+	}
 
 	if (ul_dbf.delete(ul_dbh, keys, 0, vals, (use_domain) ? (2) : (1)) < 0) {
 		LOG(L_ERR, "ERROR: db_delete_urecord():"

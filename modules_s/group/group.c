@@ -178,7 +178,11 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 
 	VAL_STR(vals + 1) = *((str*)_grp);
 	
-	group_dbf.use_table(db_handle, table.s);
+	if (group_dbf.use_table(db_handle, table.s) < 0) {
+		LOG(L_ERR, "is_user_in(): Error in use_table\n");
+		return -5;
+	}
+
 	if (group_dbf.query(db_handle, keys, 0, vals, col, (use_domain) ? (3): (2),
 				1, 0, &res) < 0) {
 		LOG(L_ERR, "is_user_in(): Error while querying database\n");

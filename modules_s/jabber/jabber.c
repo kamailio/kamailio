@@ -261,7 +261,10 @@ static int mod_init(void)
 		}
 		else
 		{
-			jabber_dbf.use_table(db_con[i], db_table);
+			if (jabber_dbf.use_table(db_con[i], db_table) < 0) {
+				LOG(L_ERR, "XJAB:mod_init: Error in use_table\n");
+				return -1;
+			}
 			DBG("XJAB:mod_init: Database connection opened successfuly\n");
 		}
 	}

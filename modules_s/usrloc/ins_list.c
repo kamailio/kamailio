@@ -91,7 +91,10 @@ int process_ins_list(str* _d)
 	     /* FIXME */
 		memcpy(b, _d->s, _d->len);
 		b[_d->len] = '\0';
-		ul_dbf.use_table(ul_dbh, b);
+		if (ul_dbf.use_table(ul_dbh, b) < 0) {
+			LOG(L_ERR, "process_ins_list: Error in use_table\n");
+			return -1;
+		}
 	
 		VAL_TYPE(vals) = DB_STR;
 		VAL_TYPE(vals + 1) = DB_STR;

@@ -314,7 +314,11 @@ static int vm_get_user_info( str* user,   /*[in]*/
 	VAL_NULL(&vals[1]) = 0;
 	VAL_STR(&vals[1])  = *host;
 
-	vm_dbf.use_table(db_handle, subscriber_table);
+	if (vm_dbf.use_table(db_handle, subscriber_table) < 0) {
+		LOG(L_ERR, "ERROR: vm: get_user_info: Error in use_table\n");
+		goto error;
+	}
+
 	if (vm_dbf.query(db_handle, keys, 0, vals, cols, (use_domain ? 2 : 1),
 				1, 0, &email_res))
 	{

@@ -244,7 +244,7 @@ int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_package, docty
 	  int s_id_col, status_col, display_name_col, event_col;
 	  char *package = event_package_name[watcher->event_package];
 
-	  LOG(L_ERR, "db_new_watcher starting\n");
+	  LOG(L_ERR, "new_watcher starting\n");
 	  query_cols[n_query_cols] = "r_uri";
 	  query_ops[n_query_cols] = OP_EQ;
 	  query_vals[n_query_cols].type = DB_STR;
@@ -252,7 +252,7 @@ int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_package, docty
 	  query_vals[n_query_cols].val.str_val.s = _p->uri.s;
 	  query_vals[n_query_cols].val.str_val.len = _p->uri.len;
 	  n_query_cols++;
-	  LOG(L_ERR, "db_new_watcher:  _p->uri=%.*s\n", _p->uri.len, _p->uri.s);
+	  LOG(L_ERR, "new_watcher:  _p->uri=%.*s\n", _p->uri.len, _p->uri.s);
 
 	  query_cols[n_query_cols] = "w_uri";
 	  query_ops[n_query_cols] = OP_EQ;
@@ -271,18 +271,22 @@ int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_package, docty
 	  query_vals[n_query_cols].val.str_val.s = package;
 	  query_vals[n_query_cols].val.str_val.len = strlen(package);
 	  n_query_cols++;
-	  LOG(L_ERR, "db_new_watcher:  watcher->package=%s\n", package);
+	  LOG(L_ERR, "new_watcher:  watcher->package=%s\n", package);
 
 	  result_cols[s_id_col = n_result_cols++] = "s_id";
 	  result_cols[status_col = n_result_cols++] = "status";
 	  result_cols[event_col = n_result_cols++] = "event";
 	  result_cols[display_name_col = n_result_cols++] = "display_name";
 		
-	  pa_dbf.use_table(pa_db, watcherinfo_table);
+	  if (pa_dbf.use_table(pa_db, watcherinfo_table) < 0) {
+		  LOG(L_ERR, "new_watcher: Error in use_table\n");
+		  return -1;
+	  }
+	  
 	  if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
 			result_cols, n_query_cols, n_result_cols, 0, &res) < 0) {
-	       LOG(L_ERR, "new_watcher(): Error while querying tuple\n");
-	       return -1;
+		  LOG(L_ERR, "new_watcher: Error while querying tuple\n");
+		  return -1;
 	  }
 	  LOG(L_INFO, "new_watcher: getting values: res=%p res->n=%d\n",
 	      res, (res ? res->n : 0));
@@ -368,10 +372,10 @@ int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_package, docty
 	       n_query_cols++;
 
 	       /* insert new record into database */
-	       LOG(L_INFO, "new_tuple: inserting %d cols into table\n", n_query_cols);
+	       LOG(L_INFO, "new_watcher: inserting %d cols into table\n", n_query_cols);
 	       if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols)
 				   < 0) {
-		    LOG(L_ERR, "db_new_tuple(): Error while inserting tuple\n");
+		    LOG(L_ERR, "new_watcher: Error while inserting tuple\n");
 		    return -1;
 	       }
 	  }
@@ -416,7 +420,11 @@ int db_read_watcherinfo(presentity_t *_p)
 	  result_cols[expires_col = n_result_cols++] = "expires";
 	  result_cols[watcher_event_col = n_result_cols++] = "event";
 		
-	  pa_dbf.use_table(pa_db, watcherinfo_table);
+	  if (pa_dbf.use_table(pa_db, watcherinfo_table) < 0) {
+		  LOG(L_ERR, "db_read_watcherinfo: Error in use_table\n");
+		  return -1;
+	  }
+
 	  if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
 			result_cols, n_query_cols, n_result_cols, 0, &res) < 0) {
 	       LOG(L_ERR, "db_read_watcherinfo(): Error while querying watcherinfo\n");

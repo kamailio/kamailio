@@ -232,7 +232,12 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	
 	memcpy(b, _d->name->s, _d->name->len);
 	b[_d->name->len] = '\0';
-	ul_dbf.use_table(_c, b);
+
+	if (ul_dbf.use_table(_c, b) < 0) {
+		LOG(L_ERR, "preload_udomain(): Error in use_table\n");
+		return -1;
+	}
+
 	if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? (10) : (9), 0,
 				&res) < 0) {
 		LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
