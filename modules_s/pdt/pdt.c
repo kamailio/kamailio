@@ -62,7 +62,7 @@ MODULE_VERSION
 int hs_two_pow = 1;
 
 /** structure containing the both hashes */
-double_hash_t *hash;
+double_hash_t *hash= NULL;
 
 /** next code to be allocated */
 code_t *next_code = NULL;
@@ -441,11 +441,11 @@ int update_new_uri(struct sip_msg *msg, int code_len, char* host_port)
 	msg->parsed_uri_ok = 0;
 
 	/* compute the new uri length */
-	uri_len = 4/*sip:*/ + msg->parsed_uri.user.len-code_len +
+	uri_len = 4 + msg->parsed_uri.user.len-code_len +
 			( msg->parsed_uri.passwd.len ? msg->parsed_uri.passwd.len + 1:0 ) + 
-			strlen(host_port) + 1/*@*/ +
+			strlen(host_port) + 1 +
 			(msg->parsed_uri.params.len ? msg->parsed_uri.params.len + 1:0 ) +
-			(msg->parsed_uri.headers.len ? msg->parsed_uri.headers.len + 1:0 );
+			(msg->parsed_uri.headers.len ? msg->parsed_uri.headers.len + 1:0 ) + 1;
 	
 	if (uri_len > MAX_URI_SIZE) 
 	{
@@ -454,7 +454,7 @@ int update_new_uri(struct sip_msg *msg, int code_len, char* host_port)
 	}
 
 	/* space for the new uri */
-	tmp = (char*)pkg_malloc(uri_len+1);
+	tmp = (char*)pkg_malloc(uri_len);
 	if(tmp == NULL)	
 	{
 		LOG(L_ERR, "PDT: update_new_uri: error allocating space\n");
@@ -504,8 +504,8 @@ int update_new_uri(struct sip_msg *msg, int code_len, char* host_port)
 	msg->new_uri.len = uri_len;
 
 	// here to clear	
-	DBG("PDT: update_new_uri: len=%d uri=%.*s\n", msg->new_uri.len, 
-			msg->new_uri.len, msg->new_uri.s);
+	DBG("PDT: update_new_uri: %.*s\n", msg->new_uri.len, 
+			msg->new_uri.s);
 	
 	return 0;
 }
@@ -513,11 +513,14 @@ int update_new_uri(struct sip_msg *msg, int code_len, char* host_port)
 
 static void mod_destroy(void)
 {
-    DBG("PDT: mod_destroy : Cleaning up\n");
-    free_double_hash(hash);
-    db_close(db_con);
-    shm_free(next_code);
-    lock_destroy(&l);
+	DBG("PDT: mod_destroy : Cleaning up\n");
+	if (hash)
+		free_double_hash(hash);
+	if (db_con)
+		db_close(db_con);
+	if (next_code)
+		shm_free(next_code);
+	lock_destroy(&l);
 }
 
 
