@@ -31,16 +31,35 @@
 
 #include "msg_parser.h"
 
+
+struct mime_type {
+	unsigned short type;
+	unsigned short subtype;
+};
+
+
+
 /*
- * Types for Content-Type header that are recognize
+ * Mimes types/subtypes that are recognize
  */
-#define CONTENT_TYPE_UNPARSED        0
-#define CONTENT_TYPE_TEXT_PLAIN      1
-#define CONTENT_TYPE_MESSAGE_CPIM    2
-#define CONTENT_TYPE_APPLICATION_SDP 3
-#define CONTENT_TYPE_UNKNOWN         0x7fff
+#define TYPE_TEXT            1
+#define TYPE_MESSAGE         2
+#define TYPE_APPLICATION     3
+#define TYPE_ALL             0xfe
+#define TYPE_UNKNOWN         0xff
+
+#define SUBTYPE_PLAIN        1
+#define SUBTYPE_CPIM         2
+#define SUBTYPE_SDP          3
+#define SUBTYPE_CPL          4
+#define SUBTYPE_ALL          0xfe
+#define SUBTYPE_UNKNOWN      0xff
 
 
+/*
+ * Maximum number of mimes allowed in Accept header 
+ */
+#define MAX_MIMES_NR         128
 
 /*
  * returns the content-length value of a sip_msg as an integer
@@ -54,14 +73,29 @@
 #define get_content_type(_msg_)   ((int)(long)((_msg_)->content_type->parsed))
 
 
+/*
+ * returns the accept values of a sip_msg as an null-terminated array
+ * of integer
+ */
+#define get_accept(_msg_) ((int*)((_msg_)->accept->parsed))
 
 /*
  * parse the the body of the Content-Type header. It's value is also converted
  * as int.
  * Returns:   n (n>0)  : the found type
- *           -1        : error (parse error or hdr not found)
+ *            0        : hdr not found
+ *           -1        : error (parse error )
  */
 int parse_content_type_hdr( struct sip_msg *msg);
+
+/*
+ * parse the the body of the Accept header. It's values are also converted
+ * as an null-terminated array of ints.
+ * Returns:   1 : OK
+ *            0 : hdr not found
+ *           -1 : error (parse error)
+ */
+int parse_accept_hdr( struct sip_msg *msg );
 
 
 /*

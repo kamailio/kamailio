@@ -28,6 +28,7 @@
  * -------
  * 2003-03-26 Frees also hdr->parsed for Route & Record-Route (janakj)
  * 2003-04-26 ZSW (jiri)
+ * 2003-08-05 free the parsed part of Accept header (bogdan)
  */
 
 
@@ -94,6 +95,10 @@ void clean_hdr_field(struct hdr_field* hf)
 
 		case HDR_CONTENTLENGTH:
 		case HDR_CONTENTTYPE:
+			break;
+
+		case HDR_ACCEPT:
+			pkg_free(hf->parsed);
 			break;
 
 		default:

@@ -563,14 +563,8 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 					new_hdr->parsed = auth_body_cloner(new_msg->buf , org_msg->buf , (struct auth_body*)hdr->parsed , &p);
 				}
 				break;
-			case HDR_WWWAUTH :
-				new_msg->www_auth = new_hdr;
-				break;
 			case HDR_SUPPORTED :
 				new_msg->supported = new_hdr;
-				break;
-			case HDR_REQUIRE :
-				new_msg->require = new_hdr;
 				break;
 			case HDR_PROXYREQUIRE :
 				new_msg->proxy_require = new_hdr;

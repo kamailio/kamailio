@@ -179,6 +179,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			DBG("DEBUG: get_hdr_body : content_length=%d\n",
 					(int)(long)hdr->parsed);
 			break;
+		case HDR_SUPPORTED:
 		case HDR_CONTENTTYPE:
 		case HDR_FROM:
 		case HDR_CALLID:
@@ -189,14 +190,19 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		case HDR_AUTHORIZATION:
 		case HDR_EXPIRES:
 		case HDR_PROXYAUTH:
-		case HDR_WWWAUTH:
-		case HDR_SUPPORTED:
-		case HDR_REQUIRE:
 		case HDR_PROXYREQUIRE:
 		case HDR_UNSUPPORTED:
 		case HDR_ALLOW:
 		case HDR_EVENT:
 	        case HDR_ACCEPT:
+	        case HDR_ACCEPTLANGUAGE:
+	        case HDR_ORGANIZATION:
+	        case HDR_PRIORITY:
+	        case HDR_SUBJECT:
+	        case HDR_USERAGENT:
+	        case HDR_CONTENTPURPOSE:
+	        case HDR_CONTENTACTION:
+	        case HDR_CONTENTDISPOSITION:
 		case HDR_OTHER:
 			/* just skip over it */
 			hdr->body.s=tmp;
@@ -340,21 +346,13 @@ int parse_headers(struct sip_msg* msg, int flags, int next)
 				if (msg->proxy_auth==0) msg->proxy_auth = hf;
 				msg->parsed_flag|=HDR_PROXYAUTH;
 				break;
-			case HDR_WWWAUTH:
-				if (msg->www_auth==0) msg->www_auth = hf;
-				msg->parsed_flag|=HDR_WWWAUTH;
-				break;
-			case HDR_SUPPORTED:
-				if (msg->supported==0) msg->supported = hf;
-				msg->parsed_flag|=HDR_SUPPORTED;
-				break;
-			case HDR_REQUIRE:
-				if (msg->require==0) msg->require = hf;
-				msg->parsed_flag|=HDR_REQUIRE;
-				break;
-			case HDR_PROXYREQUIRE:
+		        case HDR_PROXYREQUIRE:
 				if (msg->proxy_require==0) msg->proxy_require = hf;
 				msg->parsed_flag|=HDR_PROXYREQUIRE;
+				break;
+	                case HDR_SUPPORTED:
+				if (msg->supported==0) msg->supported=hf;
+				msg->parsed_flag|=HDR_SUPPORTED;
 				break;
 			case HDR_UNSUPPORTED:
 				if (msg->unsupported==0) msg->unsupported=hf;
@@ -371,6 +369,38 @@ int parse_headers(struct sip_msg* msg, int flags, int next)
 		        case HDR_ACCEPT:
 				if (msg->accept==0) msg->accept = hf;
 				msg->parsed_flag|=HDR_ACCEPT;
+				break;
+		        case HDR_ACCEPTLANGUAGE:
+				if (msg->accept_language==0) msg->accept_language = hf;
+				msg->parsed_flag|=HDR_ACCEPTLANGUAGE;
+				break;
+		        case HDR_ORGANIZATION:
+				if (msg->organization==0) msg->organization = hf;
+				msg->parsed_flag|=HDR_ORGANIZATION;
+				break;
+		        case HDR_PRIORITY:
+				if (msg->priority==0) msg->priority = hf;
+				msg->parsed_flag|=HDR_PRIORITY;
+				break;
+		        case HDR_SUBJECT:
+				if (msg->subject==0) msg->subject = hf;
+				msg->parsed_flag|=HDR_SUBJECT;
+				break;
+		        case HDR_USERAGENT:
+				if (msg->user_agent==0) msg->user_agent = hf;
+				msg->parsed_flag|=HDR_USERAGENT;
+				break;
+		        case HDR_CONTENTPURPOSE:
+				if (msg->content_purpose==0) msg->content_purpose = hf;
+				msg->parsed_flag|=HDR_CONTENTPURPOSE;
+				break;
+		        case HDR_CONTENTACTION:
+				if (msg->content_action==0) msg->content_action = hf;
+				msg->parsed_flag|=HDR_CONTENTACTION;
+				break;
+		        case HDR_CONTENTDISPOSITION:
+				if (msg->content_disposition==0) msg->content_disposition = hf;
+				msg->parsed_flag|=HDR_CONTENTDISPOSITION;
 				break;
 			case HDR_VIA:
 				msg->parsed_flag|=HDR_VIA;

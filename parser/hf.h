@@ -40,33 +40,39 @@
 
 
 /* Header types and flags */
-#define HDR_EOH         		-1   /* End of header found */
-#define HDR_ERROR                0   /* Error while parsing */
-#define HDR_VIA                  1   /* Via header field */
-#define HDR_VIA1                 1   /* First Via header field */
-#define HDR_VIA2          (1 <<  1)  /* only used as flag*/
-#define HDR_TO            (1 <<  2)  /* To header field */
-#define HDR_FROM          (1 <<  3)  /* From header field */
-#define HDR_CSEQ          (1 <<  4)  /* CSeq header field */
-#define HDR_CALLID        (1 <<  5)  /* Call-Id header field */
-#define HDR_CONTACT       (1 <<  6)  /* Contact header field */
-#define HDR_MAXFORWARDS   (1 <<  7)  /* MaxForwards header field */
-#define HDR_ROUTE         (1 <<  8)  /* Route header field */
-#define HDR_RECORDROUTE   (1 <<  9)  /* Record-Route header field */
-#define HDR_CONTENTTYPE   (1 << 10)  /* Content-Type header field */
-#define HDR_CONTENTLENGTH (1 << 11)  /* Content-Length header field */
-#define HDR_AUTHORIZATION (1 << 12)  /* Authorization header field */
-#define HDR_EXPIRES       (1 << 13)  /* Expires header field */
-#define HDR_PROXYAUTH     (1 << 14)  /* Proxy-Authorization header field */
-#define HDR_WWWAUTH       (1 << 15)  /* WWW-Authorization header field */
-#define HDR_SUPPORTED     (1 << 16)  /* Supported header field */
-#define HDR_REQUIRE       (1 << 17)  /* Require header field */
-#define HDR_PROXYREQUIRE  (1 << 18)  /* Proxy-Require header field */
-#define HDR_UNSUPPORTED   (1 << 19)  /* Unsupported header field */
-#define HDR_ALLOW         (1 << 20)  /* Allow header field */
-#define HDR_EVENT         (1 << 21)  /* Event header field */
-#define HDR_ACCEPT        (1 << 22)  /* Accept header field */
-#define HDR_OTHER         (1 << 23)  /* Some other header field */
+#define HDR_EOH         	     -1   /* End of header found */
+#define HDR_ERROR                     0   /* Error while parsing */
+#define HDR_VIA                       1   /* Via header field */
+#define HDR_VIA1                      1   /* First Via header field */
+#define HDR_VIA2               (1 <<  1)  /* only used as flag*/
+#define HDR_TO                 (1 <<  2)  /* To header field */
+#define HDR_FROM               (1 <<  3)  /* From header field */
+#define HDR_CSEQ               (1 <<  4)  /* CSeq header field */
+#define HDR_CALLID             (1 <<  5)  /* Call-Id header field */
+#define HDR_CONTACT            (1 <<  6)  /* Contact header field */
+#define HDR_MAXFORWARDS        (1 <<  7)  /* MaxForwards header field */
+#define HDR_ROUTE              (1 <<  8)  /* Route header field */
+#define HDR_RECORDROUTE        (1 <<  9)  /* Record-Route header field */
+#define HDR_CONTENTTYPE        (1 << 10)  /* Content-Type header field */
+#define HDR_CONTENTLENGTH      (1 << 11)  /* Content-Length header field */
+#define HDR_AUTHORIZATION      (1 << 12)  /* Authorization header field */
+#define HDR_EXPIRES            (1 << 13)  /* Expires header field */
+#define HDR_PROXYAUTH          (1 << 14)  /* Proxy-Authorization header field */
+#define HDR_SUPPORTED          (1 << 15)  /* Supported  header field */
+#define HDR_PROXYREQUIRE       (1 << 16)  /* Proxy-Require header field */
+#define HDR_UNSUPPORTED        (1 << 17)  /* Unsupported header field */
+#define HDR_ALLOW              (1 << 18)  /* Allow header field */
+#define HDR_EVENT              (1 << 19)  /* Event header field */
+#define HDR_ACCEPT             (1 << 20)  /* Accept header field */
+#define HDR_ACCEPTLANGUAGE     (1 << 21)  /* Accept-Language header field */
+#define HDR_ORGANIZATION       (1 << 22)  /* Organization header field */
+#define HDR_PRIORITY           (1 << 23)  /* Priority header field */
+#define HDR_SUBJECT            (1 << 24)  /* Subject header field */
+#define HDR_USERAGENT          (1 << 25)  /* User-Agent header field */
+#define HDR_CONTENTPURPOSE     (1 << 26)  /* Content-Purpose header field */
+#define HDR_CONTENTACTION      (1 << 27)  /* Content-Action header field */
+#define HDR_CONTENTDISPOSITION (1 << 28)  /* Content-Disposition header field */
+#define HDR_OTHER              (1 << 29)  /* Some other header field */
 
 
 /* 

@@ -1,7 +1,7 @@
 /* 
  * $Id$ 
  *
- * Accept Header Field Name Parsing Macros
+ * Accept and Accept-Language Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -31,8 +31,45 @@
 #define CASE_ACCE_H
 
 
+#define age_CASE                                \
+        switch(LOWER_DWORD(val)) {              \
+        case _age1_:                            \
+	        hdr->type = HDR_ACCEPTLANGUAGE; \
+	        hdr->name.len = 15;             \
+	        return (p + 4);                 \
+                                                \
+        case _age2_:                            \
+                hdr->type = HDR_ACCEPTLANGUAGE; \
+                p += 4;                         \
+	        goto dc_end;                    \
+        }
+
+
+#define angu_CASE                  \
+        switch(LOWER_DWORD(val)) { \
+        case _angu_:               \
+		p += 4;            \
+		val = READ(p);     \
+		age_CASE;          \
+		goto other;        \
+	}
+
+
+#define ptl_CASE                   \
+        switch(LOWER_DWORD(val)) { \
+        case _pt_l_:               \
+		p += 4;            \
+		val = READ(p);     \
+		angu_CASE;         \
+		goto other;        \
+	}
+
+
 #define acce_CASE                           \
     p += 4;                                 \
+    val = READ(p);                          \
+    ptl_CASE;                               \
+                                            \
     if (LOWER_BYTE(*p) == 'p') {            \
             p++;                            \
             if (LOWER_BYTE(*p) == 't') {    \

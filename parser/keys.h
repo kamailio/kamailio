@@ -34,6 +34,11 @@
 #ifndef KEYS_H
 #define KEYS_H
 
+/*
+ * a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q  r  s  t  u  v  w  x  y  z  :  ' ' -
+ * 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74 75 76 77 78 79 7a 3a 20  2d
+ */
+
 #define _acce_ 0x65636361   /* "acce" */
 #define _allo_ 0x6f6c6c61   /* "allo" */
 #define _auth_ 0x68747561   /* "auth" */
@@ -85,5 +90,28 @@
 #define _enti_ 0x69746e65   /* "enti" */
 #define _cate_ 0x65746163   /* "cate" */
 #define _even_ 0x6e657665   /* "even" */
+
+#define _pt_l_ 0x6c2d7470   /* "pt-l" */
+#define _angu_ 0x75676e61   /* "angu" */
+#define _age2_ 0x20656761   /* "age " */
+#define _age1_ 0x3a656761   /* "age:" */
+#define _orga_ 0x6167726f   /* "orga" */
+#define _niza_ 0x617a696e   /* "niza" */
+#define _tion_ 0x6e6f6974   /* "tion" */
+#define _prio_ 0x6f697270   /* "prio" */
+#define _rity_ 0x79746972   /* "rity" */
+#define _subj_ 0x6a627573   /* "subj" */
+#define _ect2_ 0x20746365   /* "ect " */
+#define _ect1_ 0x3a746365   /* "ect:" */
+#define _user_ 0x72657375   /* "user" */
+#define __age_ 0x6567612d   /* "-age" */
+#define _purp_ 0x70727570   /* "purp" */
+#define _ose2_ 0x2065736f   /* "ose " */
+#define _ose1_ 0x3a65736f   /* "ose:" */
+#define _acti_ 0x69746361   /* "acti" */
+#define _disp_ 0x70736964   /* "disp" */
+#define _osit_ 0x7469736f   /* "osit" */
+#define _ion2_ 0x206e6f69   /* "ion " */
+#define _ion1_ 0x3a6e6f69   /* "ion:" */
 
 #endif /* KEYS_H */

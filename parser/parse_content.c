@@ -24,6 +24,12 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * 2003-08-04 parse_content_type_hdr separates type from subtype inside
+ * the mime type (bogdan)
+ * 2003-08-04 CPL subtype added (bogdan)
+ * 2003-08-05 parse_accept_hdr function added (bogdan)
  */
 
 
@@ -31,25 +37,71 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "../mem/mem.h"
 #include "../dprint.h"
 #include "../str.h"
 #include "../ut.h"
 #include "parse_content.h"
+
+
+#define is_mime_char(_c_) \
+	(isalpha(_c_) || (_c_)=='-' || (_c_)=='+')
+#define is_char_equal(_c_,_cs_) \
+	( (isalpha(_c_)?(((_c_)|0x20)==(_cs_)):((_c_)==(_cs_)))==1 )
+
 
 /*
  * Node of the type's tree; this tree contains all the known types;
  */
 typedef struct type_node_s {
 	char c;                      /* char contained by this node */
-	char final;                 /* says what to be done if the matched string
-	                              * ends at this node: -1-> dead end (unknown
-	                              * type) or the index of the sub-type that
-	                              * follows (for types) or the  final type 
-	                              * (for sub-types)*/
+	unsigned char final;         /* says what mime type/subtype was detected
+	                              * if string ends at this node */
 	unsigned char nr_sons;       /* the number of sub-nodes */
 	int next;                    /* the next sibling node */
 }type_node_t;
 
+
+static type_node_t type_tree[] = {
+	{'t',TYPE_UNKNOWN,1,4},
+		{'e',TYPE_UNKNOWN,1,-1},
+			{'x',TYPE_UNKNOWN,1,-1},
+				{'t',TYPE_TEXT,0,-1},
+	{'m',TYPE_UNKNOWN,1,11},
+		{'e',TYPE_UNKNOWN,1,-1},
+			{'s',TYPE_UNKNOWN,1,-1},
+				{'s',TYPE_UNKNOWN,1,-1},
+					{'a',TYPE_UNKNOWN,1,-1},
+						{'g',TYPE_UNKNOWN,1,-1},
+							{'e',TYPE_MESSAGE,0,-1},
+	{'a',TYPE_UNKNOWN,1,-1},
+		{'p',TYPE_UNKNOWN,1,-1},
+			{'p',TYPE_UNKNOWN,1,-1},
+				{'l',TYPE_UNKNOWN,1,-1},
+					{'i',TYPE_UNKNOWN,1,-1},
+						{'c',TYPE_UNKNOWN,1,-1},
+							{'a',TYPE_UNKNOWN,1,-1},
+								{'t',TYPE_UNKNOWN,1,-1},
+									{'i',TYPE_UNKNOWN,1,-1},
+										{'o',TYPE_UNKNOWN,1,-1},
+											{'n',TYPE_APPLICATION,0,-1}
+	};
+
+static type_node_t subtype_tree[] = {
+		{'p',SUBTYPE_UNKNOWN,1,5},
+			{'l',SUBTYPE_UNKNOWN,1,-1},
+				{'a',SUBTYPE_UNKNOWN,1,-1},
+					{'i',SUBTYPE_UNKNOWN,1,-1},
+						{'n',SUBTYPE_PLAIN,0,-1},
+		{'c',SUBTYPE_UNKNOWN,1,10},
+			{'p',SUBTYPE_UNKNOWN,2,-1},
+				{'i',SUBTYPE_UNKNOWN,1,9},
+					{'m',SUBTYPE_CPIM,0,-1},
+				{'l',SUBTYPE_CPL,0,-1},
+		{'s',SUBTYPE_UNKNOWN,1,-1},
+			{'d',SUBTYPE_UNKNOWN,1,-1},
+				{'p',SUBTYPE_SDP,0,-1},
+	};
 
 
 
@@ -96,51 +148,13 @@ error:
 
 
 
-
-
-int parse_content_type_hdr( struct sip_msg *msg )
+char* decode_mime_type(char *start, char *end, unsigned int *mime_type)
 {
-	static type_node_t type_tree[] = {
-		{'t',-1,1,4}, {'e',-1,1,-1}, {'x',-1,1,-1}, {'t',0,0,-1},
-		{'m',-1,1,11}, {'e',-1,1,-1}, {'s',-1,1,-1}, {'s',-1,1,-1},
-			{'a',-1,1,-1},{'g',-1,1,-1}, {'e',5,0,-1},
-		{'a',-1,1,-1}, {'p',-1,1,-1}, {'p',-1,1,-1}, {'l',-1,1,-1},
-			{'i',-1,1,-1},{'c',-1,1,-1},{'a',-1,1,-1},{'t',-1,1,-1},
-			{'i',-1,1,-1},{'o',-1,1,-1},{'n',9,0,-1}
-	};
-	static type_node_t subtype_tree[] = {
-		{'p',0,1,5}, {'l',0,1,-1}, {'a',0,1,-1}, {'i',0,1,-1},
-			{'n',CONTENT_TYPE_TEXT_PLAIN,0,-1},
-		{'c',0,1,9}, {'p',0,1,-1}, {'i',0,1,-1},
-			{'m',CONTENT_TYPE_MESSAGE_CPIM,0,-1},
-		{'s',0,1,-1}, {'d',0,1,-1},
-			{'p',CONTENT_TYPE_APPLICATION_SDP,0,-1},
-	};
 	int node;
-	long mime;
 	char *mark;
-	char *p, *end;
+	char *p;
 
-	/* is the header already found? */
-	if ( msg->content_type==0 ) {
-		/* if not, found it */
-		if ( parse_headers(msg,HDR_CONTENTTYPE,0)==-1)
-			return -1;
-		if ( msg->content_type==0 ) {
-			LOG(L_ERR,"ERROR:parse_content_type_header: missing Content-Type"
-					"header\n");
-			return -1;
-		}
-	}
-
-	/* maybe the header is already parsed! */
-	if ( get_content_type(msg)!=CONTENT_TYPE_UNPARSED)
-		return get_content_type(msg);
-
-	/* it seams we have to parse it! :-( */
-	p = msg->content_type->body.s;
-	end = p + msg->content_type->body.len;
-	mime = CONTENT_TYPE_UNKNOWN;
+	p = start;
 
 	/* search the begining of the type */
 	while ( p<end && (*p==' ' || *p=='\t' ||
@@ -150,20 +164,27 @@ int parse_content_type_hdr( struct sip_msg *msg )
 		goto error;
 
 	/* parse the type */
-	node = 0;
-	mark = p;
-	while (p<end && ((*p>='a' && *p<='z') || (*p>='A' && *p<='Z')) ) {
-		while ( node!=-1 && type_tree[node].c!=*p && type_tree[node].c+32!=*p){
-			node = type_tree[node].next;
-		}
-		if (node!=-1 && type_tree[node].nr_sons)
-			node++;
+	if (*p=='*') {
+		*mime_type = TYPE_ALL<<16;
 		p++;
+	} else {
+		node = 0;
+		mark = p;
+		while (p<end && is_mime_char(*p)  ) {
+			while ( node!=-1 && !is_char_equal(*p,type_tree[node].c) ){
+				node = type_tree[node].next;
+			}
+			if (node!=-1 && type_tree[node].nr_sons)
+				node++;
+			p++;
+		}
+		if (p==end || mark==p)
+			goto error;
+		if (node!=-1)
+			*mime_type = type_tree[node].final<<16;
+		else
+			*mime_type = TYPE_UNKNOWN<<16;
 	}
-	if (p==end || mark==p)
-		goto error;
-	if (node!=-1)
-		node = type_tree[node].final;
 
 	/* search the '/' separator */
 	while ( p<end && (*p==' ' || *p=='\t' ||
@@ -180,36 +201,175 @@ int parse_content_type_hdr( struct sip_msg *msg )
 		goto error;
 
 	/* parse the sub-type */
-	mark = p;
-	while (p<end && ((*p>='a' && *p<='z') || (*p>='A' && *p<='Z')) ) {
-		while(node!=-1&&subtype_tree[node].c!=*p&&subtype_tree[node].c+32!=*p)
-			node = subtype_tree[node].next;
-		if (node!=-1 && subtype_tree[node].nr_sons)
-			node++;
+	if (*p=='*') {
+		*mime_type |= SUBTYPE_ALL;
 		p++;
+	} else {
+		node = 0;
+		mark = p;
+		while (p<end && is_mime_char(*p) ) {
+			while(node!=-1 && !is_char_equal(*p,subtype_tree[node].c) )
+				node = subtype_tree[node].next;
+			if (node!=-1 && subtype_tree[node].nr_sons)
+				node++;
+			p++;
+		}
+		if (p==mark)
+			goto error;
+		if (node!=-1)
+			*mime_type |= subtype_tree[node].final;
+		else
+			*mime_type |= SUBTYPE_UNKNOWN;
 	}
-	if (p==mark)
-		goto error;
-	if (node!=-1)
-		mime = subtype_tree[node].final;
 
 	/* now its possible to have some spaces */
 	while ( p<end && (*p==' ' || *p=='\t' ||
 	(*p=='\n' && (*(p+1)==' '||*(p+1)=='\t')) ))
 		p++;
 
-	/* is this the end? if there are params, ignore them!! */
-	if ( *p!=';' && p!=end )
+	/* if there are params, ignore them!! -> eat everything to
+	 * the end or to the first ',' */
+	if ( p<end && *p==';' )
+		for(p++; p<end && *p!=','; p++);
+
+	/* is this the correct end? */
+	if (p!=end && *p!=',' )
 		goto error;
 
-	mime = ((mime==-1)?CONTENT_TYPE_UNKNOWN:mime);
+	/* check the format of the decoded mime */
+	if ((*mime_type)>>16==TYPE_ALL && ((*mime_type)&0x00ff)!=SUBTYPE_ALL) {
+		LOG(L_ERR,"ERROR:decode_mine_type: invalid mime format found "
+			" <*/submime> in [%.*s]!!\n", end-start,start);
+		return 0;
+	}
+
+	return p;
+error:
+	LOG(L_ERR,"ERROR:decode_mine_type: parse error near in [%.*s] char"
+		"[%d][%c] offset=%d\n", end-start,start,*p,*p,(int)(p-start));
+	return 0;
+}
+
+
+
+/* returns: > 0 mime found
+ *          = 0 hdr not found
+ *          =-1 error */
+int parse_content_type_hdr( struct sip_msg *msg )
+{
+	char *end;
+	char *ret;
+	int  mime;
+
+	/* is the header already found? */
+	if ( msg->content_type==0 ) {
+		/* if not, found it */
+		if ( parse_headers(msg,HDR_CONTENTTYPE,0)==-1)
+			goto error;
+		if ( msg->content_type==0 ) {
+			DBG("DEBUG:parse_content_type_hdr: missing Content-Type"
+				"header\n");
+			return 0;
+		}
+	}
+
+	/* maybe the header is already parsed! */
+	if ( msg->content_type->parsed!=0)
+		return get_content_type(msg);
+
+	/* it seams we have to parse it! :-( */
+	end = msg->content_type->body.s + msg->content_type->body.len;
+	ret = decode_mime_type(msg->content_type->body.s, end , &mime);
+	if (ret==0)
+		goto error;
+	if (ret!=end) {
+		LOG(L_ERR,"ERROR:parse_content_type_hdr: CONTENT_TYPE hdr containes "
+			"more then one mime type :-(!\n");
+		goto error;
+	}
+	if ((mime&0x00ff)==SUBTYPE_ALL || (mime>>16)==TYPE_ALL) {
+		LOG(L_ERR,"ERROR:parse_content_type_hdr: invalid mime with wildcard "
+			"'*' in Content-Type hdr!\n");
+		goto error;
+	}
+
 	msg->content_type->parsed = (void*)mime;
 	return mime;
+
 error:
-	LOG(L_ERR,"ERROR:parse_content_type: parse error near char [%d][%c] "
-		"offset=%d\n",*p,*p,(int)(p-msg->content_type->body.s));
 	return -1;
 }
 
 
+
+/* returns: > 0 ok
+ *          = 0 hdr not found
+ *          = -1 error */
+int parse_accept_hdr( struct sip_msg *msg )
+{
+	static int mimes[MAX_MIMES_NR];
+	int nr_mimes;
+	int mime;
+	char *end;
+	char *ret;
+
+	/* is the header already found? */
+	if ( msg->accept==0 ) {
+		/* if not, found it */
+		if ( parse_headers(msg,HDR_ACCEPT,0)==-1)
+			goto error;
+		if ( msg->accept==0 ) {
+			DBG("DEBUG:parse_accept_hdr: missing Accept header\n");
+			return 0;
+		}
+	}
+
+	/* maybe the header is already parsed! */
+	if ( msg->accept->parsed!=0)
+		return 1;
+
+	/* it seams we have to parse it! :-( */
+	ret = msg->accept->body.s;
+	end = ret + msg->accept->body.len;
+	nr_mimes = 0;
+	while (1){
+		ret = decode_mime_type(ret, end , &mime);
+		if (ret==0)
+			goto error;
+		/* a new mime was found  -> put it into array */
+		if (nr_mimes==MAX_MIMES_NR) {
+			LOG(L_ERR,"ERROR:parse_accept_hdr: Accept hdr contains more than"
+				" %d mime type -> buffer ovrflow!!\n",MAX_MIMES_NR);
+			goto error;
+		}
+		mimes[nr_mimes++] = mime;
+		/* is another mime following? */
+		if (ret==end )
+			break;
+		/* parse the mime separator ',' */
+		if (*ret!=',' || ret+1==end) {
+			LOG(L_ERR,"ERROR:parse_accept_hdr: parse error between mimes at "
+				"char <%x> (offset=%d) in <%.*s>!\n",
+				*ret,ret-msg->accept->body.s,
+				msg->accept->body.len,msg->accept->body.s);
+			goto error;
+		}
+		/* skip the ',' */
+		ret++;
+	}
+
+	/* copy and link the mime buffer into the message */
+	msg->accept->parsed = (void*)pkg_malloc((nr_mimes+1)*sizeof(int));
+	if (msg->accept->parsed==0) {
+		LOG(L_ERR,"ERROR:parse_accept_hdr: no more pkg memory\n");
+		goto error;
+	}
+	memcpy(msg->accept->parsed,mimes,nr_mimes*sizeof(int));
+	/* make the buffer null terminated */
+	((int*)msg->accept->parsed)[nr_mimes] = 0;
+
+	return 1;
+error:
+	return -1;
+}
 

@@ -173,14 +173,20 @@ struct sip_msg {
 	struct hdr_field* authorization;
 	struct hdr_field* expires;
 	struct hdr_field* proxy_auth;
-	struct hdr_field* www_auth;
 	struct hdr_field* supported;
-	struct hdr_field* require;
 	struct hdr_field* proxy_require;
 	struct hdr_field* unsupported;
 	struct hdr_field* allow;
 	struct hdr_field* event;
 	struct hdr_field* accept;
+	struct hdr_field* accept_language;
+	struct hdr_field* organization;
+	struct hdr_field* priority;
+	struct hdr_field* subject;
+	struct hdr_field* user_agent;
+	struct hdr_field* content_purpose;
+	struct hdr_field* content_action;
+	struct hdr_field* content_disposition;
 
 	char* eoh;        /* pointer to the end of header (if found) or null */
 	char* unparsed;   /* here we stopped parsing*/

@@ -65,7 +65,8 @@ static inline char* skip_ws(char* p, unsigned int size)
 #include "case_to.h"       /* To */
 #include "case_cseq.h"     /* CSeq */
 #include "case_call.h"     /* Call-ID */
-#include "case_cont.h"     /* Contact, Content-Type, Content-Length */
+#include "case_cont.h"     /* Contact, Content-Type, Content-Length, Content-Purpose, 
+			    * Content-Action, Content-Disposition */
 #include "case_rout.h"     /* Route */
 #include "case_max.h"      /* Max-Forwards */
 #include "case_reco.h"     /* Record-Route */
@@ -74,11 +75,13 @@ static inline char* skip_ws(char* p, unsigned int size)
 #include "case_prox.h"     /* Proxy-Authorization, Proxy-Require */
 #include "case_allo.h"     /* Allow */
 #include "case_unsu.h"     /* Unsupported */
-#include "case_requ.h"     /* Require */
-#include "case_supp.h"     /* Supported */
-#include "case_www.h"      /* WWW-Authenticate */
 #include "case_even.h"     /* Event */
-#include "case_acce.h"     /* Accept */
+#include "case_acce.h"     /* Accept, Accept-Language */
+#include "case_orga.h"     /* Organization */
+#include "case_prio.h"     /* Priority */
+#include "case_subj.h"     /* Subject */
+#include "case_user.h"     /* User-Agent */
+#include "case_supp.h"     /* Supported */
 
 
 #define READ(val) \
@@ -97,15 +100,17 @@ static inline char* skip_ws(char* p, unsigned int size)
 	case _reco_: reco_CASE; \
 	case _via2_: via2_CASE; \
 	case _auth_: auth_CASE; \
+	case _supp_: supp_CASE; \
 	case _expi_: expi_CASE; \
 	case _prox_: prox_CASE; \
 	case _allo_: allo_CASE; \
 	case _unsu_: unsu_CASE; \
-	case _requ_: requ_CASE; \
-	case _supp_: supp_CASE; \
-        case _www__: www_CASE;  \
         case _even_: even_CASE; \
-        case _acce_: acce_CASE;
+        case _acce_: acce_CASE; \
+        case _orga_: orga_CASE; \
+        case _prio_: prio_CASE; \
+        case _subj_: subj_CASE; \
+        case _user_: user_CASE;
 
 
 #define PARSE_COMPACT(id)          \
@@ -162,8 +167,8 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 		case 'i': PARSE_COMPACT(HDR_CALLID);        break;
 		case 'm': PARSE_COMPACT(HDR_CONTACT);       break;
 		case 'l': PARSE_COMPACT(HDR_CONTENTLENGTH); break;
-		case 'c': PARSE_COMPACT(HDR_CONTENTTYPE);   break;
 		case 'k': PARSE_COMPACT(HDR_SUPPORTED);     break;
+		case 'c': PARSE_COMPACT(HDR_CONTENTTYPE);   break;
 		case 'o': PARSE_COMPACT(HDR_EVENT);         break;
 		}
 		goto other;
