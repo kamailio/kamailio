@@ -1433,11 +1433,35 @@ if (len_gt(1024)) {
 			    delivered.
 			</para>
 		    </listitem>
+
 		    <listitem>
 			<para>
 			    version -- keeps version number of each table definition.
 			</para>
 		    </listitem>
+
+		    <listitem>
+			<para>
+			    domain -- maintains list of served domains.
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    server_monitoring-* -- reserved for persistent monitoring of 
+				server's operation
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    uri -- used to keep lists of URIs "owned" by a user
+				(as identified by digest identity); good for some
+				PSTN interworking scenarios
+			</para>
+		    </listitem>
+
+
 		</itemizedlist>
 		
 	    </para>
