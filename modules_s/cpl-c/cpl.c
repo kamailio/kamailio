@@ -217,14 +217,6 @@ static int cpl_init(void)
 		goto error;
 	}
 
-	/* bind the sl_send_reply function
-	sl_send_rpl = find_export("sl_send_reply", 2, REQUEST_ROUTE);
-	if (sl_send_rpl==0) {
-		LOG(L_CRIT,"ERROR:cpl_init: cannot find \"sl_send_reply\" function! "
-			"Did you forget to load the sl module ?\n");
-		goto error;
-	}*/
-
 	/* import the TM auto-loading function */
 	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
 		LOG(L_ERR, "ERROR:cpl_c:cpl_init: cannot import load_tm\n");
@@ -234,9 +226,13 @@ static int cpl_init(void)
 	if (load_tm( &cpl_tmb )==-1)
 		goto error;
 
-	/* register the fifo command */
-	if (register_fifo_cmd( cpl_loader, "LOAD_CPL", 0)!=1) {
-		LOG(L_CRIT,"ERROR:cpl_init: cannot register fifo command!\n");
+	/* register the fifo commands */
+	if (register_fifo_cmd( cpl_load, "LOAD_CPL", 0)!=1) {
+		LOG(L_CRIT,"ERROR:cpl_init: cannot register LOAD_CPL fifo cmd!\n");
+		goto error;
+	}
+	if (register_fifo_cmd( cpl_remove, "REMOVE_CPL", 0)!=1) {
+		LOG(L_CRIT,"ERROR:cpl_init: cannot register REMOVE_CPL fifo cmd!\n");
 		goto error;
 	}
 

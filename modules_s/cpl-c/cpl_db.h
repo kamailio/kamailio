@@ -31,8 +31,28 @@
 #include "../../db/db.h"
 
 
+/* inserts into database a cpl script in XML format(xml) along with its binary
+ * format (bin)
+ * Returns:  1 - success
+ *          -1 - error
+ */
 int write_to_db(db_con_t *db_con, char *usr, str *xml, str *bin);
+
+
+/* fetch from database the binary format of the cpl script for a given user
+ * Returns:  1 - success
+ *          -1 - error
+ */
 int get_user_script( db_con_t *db_hdl, str *user, str *script);
+
+
+/* delete from database the entiry record for a given user - if a user has no
+ * script, he will be removed complitly from db; users without script are not
+ * allowed into db ;-)
+ * Returns:  1 - success
+ *          -1 - error
+ */
+int rmv_from_db(db_con_t *db_con, char *usr);
 
 
 #endif

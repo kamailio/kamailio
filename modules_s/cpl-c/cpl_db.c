@@ -91,6 +91,11 @@ error:
 
 
 
+/* inserts into database a cpl script in XML format(xml) along with its binary
+ * format (bin)
+ * Returns:  1 - success
+ *          -1 - error
+ */
 int write_to_db(db_con_t *db_con, char *usr, str *xml, str *bin)
 {
 	db_key_t   keys[] = {"user","cpl_xml","cpl_bin"};
@@ -147,3 +152,27 @@ error:
 }
 
 
+/* delete from database the entiry record for a given user - if a user has no
+ * script, he will be removed complitly from db; users without script are not
+ * allowed into db ;-)
+ * Returns:  1 - success
+ *          -1 - error
+ */
+int rmv_from_db(db_con_t *db_con, char *usr)
+{
+	db_key_t   keys[] = {"user"};
+	db_val_t   vals[1];
+
+	/* username */
+	vals[0].type = DB_STRING;
+	vals[0].nul  = 0;
+	vals[0].val.string_val = usr;
+
+	if (db_delete(db_con, keys, NULL, vals, 1) < 0) {
+		LOG(L_ERR,"ERROR:cpl-c:rmv_from_db: error when deleting script for "
+			"user \"%s\"\n",usr);
+		return -1;
+	}
+
+	return 1;
+}

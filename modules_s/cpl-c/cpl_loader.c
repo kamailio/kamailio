@@ -27,6 +27,7 @@
  *
  * History:
  * -------
+ * 2003-08-21: cpl_remove() added (bogdan)
  * 2003-06-24: file created (bogdan)
  */
 
@@ -53,6 +54,10 @@
 extern char *dtd_file;
 extern db_con_t* db_hdl;
 
+
+
+
+/* debug function -> write into a file the content of a str stuct. */
 int write_to_file(char *filename, str *buf)
 {
 	int fd;
@@ -81,7 +86,11 @@ error:
 
 
 
-
+/* Loads a file into a buffer; first the file lenght will be determined for
+ * allocated an exact buffer len for storing the file content into.
+ * Returns:  1 - success
+ *          -1 - error
+ */
 int load_file( char *filename, str *xml)
 {
 	int n;
@@ -135,7 +144,7 @@ int load_file( char *filename, str *xml)
 		}
 	}
 	if (xml->len!=offset) {
-		LOG(L_ERR,"ERROR:cpl:load_file: couldn't read all file!\n");
+		LOG(L_ERR,"ERROR:cpl-c:load_file: couldn't read all file!\n");
 		goto error;
 	}
 	xml->s[xml->len] = 0;
@@ -148,56 +157,102 @@ error:
 
 
 
-
-
-
-int cpl_loader( FILE *fifo_stream, char *response_file )
+/* Triggered by fifo server -> implements LOAD_CPL command
+ * Command format:
+ * -----------------------
+ *   :LOAD_CPL:
+ *   username
+ *   cpl_filename
+ *   <empty line>
+ * -----------------------
+ * For the given user, loads the XML cpl file, compile it into binary format
+ * and store both format into database
+ */
+int cpl_load( FILE *fifo_stream, char *response_file )
 {
 	static char user[MAX_STATIC_BUF];
 	static char cpl_file[MAX_STATIC_BUF];
 	int user_len;
 	int cpl_file_len;
-	str xml;
-	str bin;
+	str xml = {0,0};
+	str bin = {0,0};
 
-	DBG("DEBUG:cpl_loader: FIFO commnad received!\n");
+	DBG("DEBUG:cpl-c:cpl_load: \"LOAD_CPL\" FIFO commnad received!\n");
 
 	/* first line must be the username */
 	if (read_line( user, MAX_STATIC_BUF-1 , fifo_stream, &user_len )!=1 ||
 	user_len<=0) {
-		LOG(L_ERR,"ERROR:cpl:cpl_loader: unable to read username from "
+		LOG(L_ERR,"ERROR:cpl-c:cpl_load: unable to read username from "
 			"FIFO command\n");
 		goto error;
 	}
 	user[user_len] = 0;
-	DBG("DEBUG:cpl_loader: user=%.*s\n",user_len,user);
+	DBG("DEBUG:cpl_load: user=%.*s\n",user_len,user);
 
 	/* second line must be the cpl file */
 	if (read_line( cpl_file, MAX_STATIC_BUF-1,fifo_stream,&cpl_file_len)!=1 ||
 	cpl_file_len<=0) {
-		LOG(L_ERR,"ERROR:cpl:cpl_loader: unable to read cpl_file name from "
+		LOG(L_ERR,"ERROR:cpl-c:cpl_load: unable to read cpl_file name from "
 			"FIFO command\n");
 		goto error;
 	}
 	cpl_file[cpl_file_len] = 0;
-	DBG("DEBUG:cpl_loader: cpl file=%.*s\n",cpl_file_len,cpl_file);
+	DBG("DEBUG:cpl-c:cpl_load: cpl file=%.*s\n",cpl_file_len,cpl_file);
 
-	/* load the xml file */
+	/* load the xml file - this function will allocted a buff for the loading
+	 * the cpl file and attach it to xml.s -> don't forget to free it! */
 	if (load_file( cpl_file, &xml)!=1)
-		return -1;
+		goto error;
 
 	/* get the binary coding for the XML file */
 	if ( encodeXML( &xml, dtd_file , &bin)!=1)
-		return -1;
+		goto error1;
 
 	/* write both the XML and binary formats into database */
 	if (write_to_db( db_hdl, user, &xml, &bin)!=1)
-		return -1;
+		goto error1;
 
 	/* free the memory used for storing the cpl script in XML format */
 	pkg_free( xml.s );
 
-	//write_to_file("cript.ccc", bin.s, bin.len);
+	return 1;
+error1:
+	pkg_free ( xml.s );
+error:
+	return -1;
+}
+
+
+
+/* Triggered by fifo server -> implements REMOVE_CPL command
+ * Command format:
+ * -----------------------
+ *   :REMOVE_CPL:
+ *   username
+ *   <empty line>
+ * -----------------------
+ * For the given user, remove the entire database record
+ * (XML cpl and binary cpl); user with empty cpl scripts are not accepted
+ */
+int cpl_remove( FILE *fifo_stream, char *response_file )
+{
+	static char user[MAX_STATIC_BUF];
+	int user_len;
+
+	DBG("DEBUG:cpl-c:cpl_remove: \"REMOVE_CPL\" FIFO commnad received!\n");
+
+	/* first line must be the username */
+	if (read_line( user, MAX_STATIC_BUF-1 , fifo_stream, &user_len )!=1 ||
+	user_len<=0) {
+		LOG(L_ERR,"ERROR:cpl-c:cpl_remove: unable to read username from "
+			"FIFO command\n");
+		goto error;
+	}
+	user[user_len] = 0;
+	DBG("DEBUG:cpl-c:cpl_remove: user=%.*s\n",user_len,user);
+
+	if (rmv_from_db( db_hdl, user)!=1)
+		goto error;
 
 	return 1;
 error:

@@ -34,7 +34,8 @@
 #define _CPL_LOADER_H
 
 
-int cpl_loader( FILE *fifo_stream, char *response_file );
+int cpl_load( FILE *fifo_stream, char *response_file );
+int cpl_remove( FILE *fifo_stream, char *response_file );
 
 #endif
 
