@@ -328,6 +328,7 @@ static int contact_1918(struct sip_msg* msg)
 		return 0;
 	}
 	backup=msg->contact->body.s[msg->contact->body.len];
+	msg->contact->body.s[msg->contact->body.len] = 0;
 	fnd=regexec( key_m1918, msg->contact->body.s, 1, &pmatch, 0)==0;
 	msg->contact->body.s[msg->contact->body.len]=backup;
 	return fnd;
