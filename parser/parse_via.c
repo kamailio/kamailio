@@ -1762,6 +1762,7 @@ parse_again:
 								pkg_free(param);
 								goto error;
 							default:
+								pkg_free(param);
 								LOG(L_ERR, "ERROR: parse_via after"
 										" parse_via_param: invalid"
 										" char <%c> on state %d\n",
