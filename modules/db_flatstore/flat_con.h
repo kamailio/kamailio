@@ -61,4 +61,10 @@ struct flat_con* flat_new_connection(struct flat_id* id);
 void flat_free_connection(struct flat_con* con);
 
 
+/*
+ * Reopen a connection
+ */
+int flat_reopen_connection(struct flat_con* con);
+
+
 #endif /* _FLAT_CON_H */

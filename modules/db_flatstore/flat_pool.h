@@ -47,4 +47,16 @@ struct flat_con* flat_get_connection(char* dir, char* table);
 void flat_release_connection(struct flat_con* con);
 
 
+/*
+ * Close and reopen all opened connections
+ */
+int flat_rotate_logs(void);
+
+
+/*
+ * Reopen a connection
+ */
+int flat_reopen_connection(struct flat_con* con);
+
+
 #endif /* _FLAT_POOL_H */

@@ -34,7 +34,9 @@
  */
 
 #include "../../sr_module.h"
+#include "../../mem/shm_mem.h"
 #include "flatstore.h"
+#include "flat_fifo.h"
 #include "flatstore_mod.h"
 
 MODULE_VERSION
@@ -42,6 +44,9 @@ MODULE_VERSION
 static int child_init(int rank);
 
 static int mod_init(void);
+
+static void mod_destroy(void);
+
 
 /*
  * Process number used in filenames
@@ -59,6 +64,14 @@ int flat_flush = 1;
  */
 char* flat_delimiter = "|";
 
+
+/*
+ * Timestamp of the last log rotation request from
+ * the FIFO interface
+ */
+time_t* flat_rotate;	
+
+time_t local_timestamp;
 
 /*
  * Flatstore database module interface
@@ -84,12 +97,12 @@ static param_export_t params[] = {
 struct module_exports exports = {	
 	"flatstore",
 	cmds,
-	params,    /*  module parameters */
-	mod_init,  /* module initialization function */
-	0,         /* response function*/
-	0,         /* destroy function */
-	0,         /* oncancel function */
-	child_init /* per-child init function */
+	params,      /*  module parameters */
+	mod_init,    /* module initialization function */
+	0,           /* response function*/
+	mod_destroy, /* destroy function */
+	0,           /* oncancel function */
+	child_init   /* per-child init function */
 };
 
 
@@ -99,7 +112,29 @@ static int mod_init(void)
 		LOG(L_ERR, "flatstore:mod_init: Delimiter has to be exactly one character\n");
 		return -1;
 	}
+
+	     /* Initialize fifo interface */
+	if (init_flat_fifo() < 0) {
+		LOG(L_ERR, "usrloc/fifo initialization failed\n");
+		return -1;
+	}
+
+	flat_rotate = (time_t*)shm_malloc(sizeof(time_t));
+	if (!flat_rotate) {
+		LOG(L_ERR, "flatstore: No shared memory left\n");
+		return -1;
+	}
+
+	*flat_rotate = time(0);
+	local_timestamp = *flat_rotate;
+
 	return 0;
+}
+
+
+static void mod_destroy(void)
+{
+	if (flat_rotate) shm_free(flat_rotate);
 }
 
 
