@@ -218,6 +218,7 @@ static cmd_export_t cmds[]={
 
 static param_export_t params[]={
 	{"ruri_matching", INT_PARAM, &ruri_matching                         },
+	{"via1_matching", INT_PARAM, &via1_matching                         },
 	{"fr_timer",      INT_PARAM, &(timer_id2timeout[FR_TIMER_LIST])     },
 	{"fr_inv_timer",  INT_PARAM, &(timer_id2timeout[FR_INV_TIMER_LIST]) },
 	{"wt_timer",      INT_PARAM, &(timer_id2timeout[WT_TIMER_LIST])     },

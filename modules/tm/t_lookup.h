@@ -47,6 +47,7 @@
 
 extern unsigned int     global_msg_id;
 extern int ruri_matching;
+extern int via1_matching;
 
 void init_t();
 int init_rb( struct retr_buf *rb, struct sip_msg *msg );
