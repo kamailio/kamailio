@@ -84,7 +84,7 @@ void destroy_tmcb_lists()
 }
 
 
-static inline int insert_tmcb(struct tmcb_head_list *cb_list, int types,
+int insert_tmcb(struct tmcb_head_list *cb_list, int types,
 									transaction_cb f, void *param )
 {
 	struct tm_callback *cbp;
