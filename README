@@ -1,0 +1,9 @@
+$Id$
+
+[ under construction :) ]
+
+read INSTALL
+compile & sip_router -h
+
+Example configuration files in ./tests/*.cfg
+

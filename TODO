@@ -18,4 +18,13 @@ Low priority:
 - cfg. file reload
 - flags for using names or ip adresses in Via ?
 
+- make install
+- init.d scripts (and rc.local? for *BSD or Slackware)
+- man page
+- autoconf scripts
+- Debian package build files
+- the same for rpm
+- the same for FreeBSD and Slackware
+
+
 

@@ -1,0 +1,29 @@
+$Id$
+
+Installation Notes
+
+Supported architectures: Linux, FreeBSD, Solaris
+(for other architectures the Makefile must be edited)
+
+Requirements:
+
+
+- gcc
+- bison or yacc (Berkley yacc)
+- flex
+- gmake (on Linux this is the standard "make")
+
+Arhitecture Notes:
+
+- FreeBSD: make sure gmake, bison & flex are installed
+- Solaris: as above; you can use Solaris's yacc instead of bison
+
+Compile:
+
+make
+(or gmake on non-Linux systems)
+
+Install(not done yet):
+
+make prefix=/usr/local  install
+
