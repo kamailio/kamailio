@@ -147,7 +147,7 @@ fi
 
 
 %changelog
-* Fri Oct  4 23:25:52 CEST 2002 Jiri Kuthan <jiri@iptel.org>
+* Fri Oct  4 2002 Jiri Kuthan <jiri@iptel.org>
 - exec module introduced
 
 * Wed Sep 25 2002 Andrei Pelinescu - Onciul  <pelinescu-onciul@fokus.gmd.de>
