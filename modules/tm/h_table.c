@@ -19,10 +19,11 @@ void free_cell( struct cell* dead_cell )
 	DBG("DEBUG: free_cell: start\n");
 	/* UA Server */
 	DBG("DEBUG: free_cell: inbound request %p\n",dead_cell->inbound_request);
+	shm_lock();
 	if ( dead_cell->inbound_request )
-		sip_msg_free( dead_cell->inbound_request );
+		sip_msg_free_unsafe( dead_cell->inbound_request );
 	DBG("DEBUG: free_cell: outbound response %p\n",dead_cell->outbound_response);
-	if (b=dead_cell->outbound_response.retr_buffer) sh_free( b );
+	if (b=dead_cell->outbound_response.retr_buffer) shm_free_unsafe( b );
 
 	/* UA Clients */
 	for ( i =0 ; i<dead_cell->nr_of_outgoings;  i++ )
@@ -31,19 +32,22 @@ void free_cell( struct cell* dead_cell )
 		DBG("DEBUG: free_cell: outbound_request[%d] %p\n",i,dead_cell->outbound_request[i]);
 		if ( rb=dead_cell->outbound_request[i] )
       		{
-			if (rb->retr_buffer) sh_free( rb->retr_buffer );
+/*
+			if (rb->retr_buffer) shm_free( rb->retr_buffer );
 	 		dead_cell->outbound_request[i] = NULL;
-         		sh_free( rb );
+*/
+         		shm_free_unsafe( rb );
       		}
       		/* outbound requests*/
       		DBG("DEBUG: free_cell: inbound_response[%d] %p\n",i,dead_cell->inbound_response[i]);
       		if ( dead_cell -> inbound_response[i] )
-         		sip_msg_free( dead_cell->inbound_response[i] );
+         		sip_msg_free_unsafe( dead_cell->inbound_response[i] );
    	}
    	/* mutex */
    	/* release_cell_lock( dead_cell ); */
    	/* the cell's body */
-   	sh_free( dead_cell );
+   	shm_free_unsafe( dead_cell );
+	shm_unlock();
    	DBG("DEBUG: free_cell: done\n");
 }
 

@@ -489,6 +489,7 @@ int main(int argc, char** argv)
 					printf("flags: %s\n", flags );
 					print_ct_constants();
 					printf("%s\n",id);
+					printf("%s compiled on %s at %s\n", __FILE__, __DATE__, __TIME__ );
 					exit(0);
 					break;
 			case 'h':

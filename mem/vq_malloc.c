@@ -85,7 +85,7 @@ void my_assert( int assertation, int line, char *file, char *function )
 }
 
 #ifdef DBG_QM_MALLOC
-static  void vqm_debug_frag(struct vqm_block* qm, struct vqm_frag* f)
+void vqm_debug_frag(struct vqm_block* qm, struct vqm_frag* f)
 {
 
 	int r;
@@ -110,15 +110,14 @@ static  void vqm_debug_frag(struct vqm_block* qm, struct vqm_frag* f)
    and changed the demanded size to size really used including all
    possible overhead
  */
-unsigned char size2bucket( struct vqm_block* qm, int *size )
+unsigned char size2bucket( struct vqm_block* qm, int *size  )
 {
 	unsigned char b;	
 	unsigned int real_size;
 	unsigned int exceeds;
 
+	real_size = *size+ VQM_OVERHEAD;
 
-	real_size = *size+ sizeof(struct vqm_frag)+
-			sizeof(struct vqm_frag_end);
 #ifdef DBG_QM_MALLOC
 	real_size+=END_CHECK_PATTERN_LEN;
 #endif
@@ -306,9 +305,6 @@ void* vqm_malloc(struct vqm_block* qm, unsigned int size)
 #endif
 	return (char*)new_chunk+sizeof(struct vqm_frag);
 }
-
-
-
 
 #ifdef DBG_QM_MALLOC
 void vqm_free(struct vqm_block* qm, void* p, char* file, char* func, 

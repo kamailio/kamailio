@@ -191,10 +191,12 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 	unsigned int dest_port  = dest_port_param;
 	int	branch;
 	unsigned int len;
-   	char               *buf;
+   	char               *buf, *shbuf;
 	struct retrans_buff *rb;
+	
 
 	buf=NULL;
+	shbuf = NULL;
 	branch = 0;	/* we don't do any forking right now */
 
 	/* it's about the same transaction or not? */
@@ -253,23 +255,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 				"nothing to CANCEL\n");
             			return 1;
          		}
-      		}/* end special case CANCEL*/
-
-		/* allocates a new retrans_buff for the outbound request */
-		DBG("DEBUG: t_forward: building outbound request\n");
-		T->outbound_request[branch] = rb = 
-			(struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
-		if (!rb)
-		{
-			LOG(L_ERR, "ERROR: t_forward: out of shmem\n");
-			goto error;
-		}
-		memset( rb , 0 , sizeof (struct retrans_buff) );
-		rb->retr_timer.payload =  rb;
-		rb->fr_timer.payload =  rb;
-		rb->to.sin_family = AF_INET;
-		rb->my_T =  T;
-		T->nr_of_outgoings = 1;
+      	}/* end special case CANCEL*/
 
 		if ( add_branch_label( T, T->inbound_request , branch )==-1) 
 			goto error;
@@ -277,12 +263,34 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 			goto error;
 		if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len))) 
 			goto error;
-		rb->bufflen = len ;
-		if ( !(rb->retr_buffer = (char*)sh_malloc( len ))) 
+
+		/* allocates a new retrans_buff for the outbound request */
+		DBG("DEBUG: t_forward: building outbound request\n");
+		shm_lock();
+		T->outbound_request[branch] = rb = 
+			(struct retrans_buff*)shm_malloc_unsafe( sizeof(struct retrans_buff)  );
+		if (!rb)
 		{
-			LOG(L_ERR, "ERROR: t_forward: shmem allocation failed\n");
+			LOG(L_ERR, "ERROR: t_forward: out of shmem\n");
+			shm_unlock();
 			goto error;
 		}
+		shbuf = (char *) shm_malloc_unsafe( len );
+		if (!shbuf)
+		{ 
+			LOG(L_ERR, "ERROR: t_forward: out of shmem buffer\n");
+			shm_unlock();
+			goto error;
+		}
+		shm_unlock();
+		memset( rb , 0 , sizeof (struct retrans_buff) );
+		rb->retr_buffer = shbuf;
+		rb->retr_timer.payload =  rb;
+		rb->fr_timer.payload =  rb;
+		rb->to.sin_family = AF_INET;
+		rb->my_T =  T;
+		T->nr_of_outgoings = 1;
+		rb->bufflen = len ;
 		memcpy( rb->retr_buffer , buf , len );
 		free( buf ) ; buf=NULL;
 
@@ -330,9 +338,9 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
    return 1;
 
 error:
-	if ( rb && rb->retr_buffer) sh_free( rb->retr_buffer );
+	if (shbuf) shm_free(shbuf);
 	if (rb) {
-		sh_free(rb);
+		shm_free(rb);
 		T->outbound_request[branch]=NULL;
 	}
 	if (buf) free( buf );
@@ -582,10 +590,9 @@ int t_unref( struct sip_msg* p_msg, char* foo, char* bar )
   */
 int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 {
-	unsigned int len;
+	unsigned int len, buf_len;
 	char * buf;
 	struct retrans_buff *rb;
-	char *b;
 
 	DBG("DEBUG: t_send_reply: entered\n");
 	if (t_check( p_msg , 0 )==-1) return -1;
@@ -628,15 +635,16 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 		goto error;
 	}
 
-	if (! (b = (char*)sh_malloc( len )))
+	/* if this is a first reply (?100), longer replies will probably follow;
+       try avoiding shm_resize by higher buffer size
+    */
+	buf_len = rb->retr_buffer ? len : len + REPLY_OVERBUFFER_LEN;
+
+	if (! (rb->retr_buffer = (char*)shm_resize( rb->retr_buffer, buf_len )))
 	{
 		LOG(L_ERR, "ERROR: t_send_reply: cannot allocate shmem buffer\n");
 		goto error2;
 	}
-	/* if present, remove previous message */
-	if (  rb->retr_buffer)
-		sh_free( rb->retr_buffer );
-	rb->retr_buffer   = b;
 	rb->bufflen = len ;
 	memcpy( rb->retr_buffer , buf , len );
 	free( buf ) ;
@@ -666,9 +674,8 @@ error:
 int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
 {
 	char *buf;
-	unsigned int len;
+	unsigned int len, buf_len;
 	struct retrans_buff *rb;
-	char *b;
 
 	DBG("DEBUG: push_reply_from_uac_to_uas: start\n");
 	rb= & trans->outbound_response;
@@ -700,14 +707,16 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
 			"no shmem for outbound reply buffer\n");
 		goto error;
 	}
-	if ( !(b = (char*)sh_malloc( len ))) {
-		LOG(L_ERR, "ERROR: push_reply_from_uac_to_uas: "
-			"no memory to allocate retr_buffer\n");
+
+	/* if this is a first reply (?100), longer replies will probably follow;
+       try avoiding shm_resize by higher buffer size
+    */
+	buf_len = rb->retr_buffer ? len : len + REPLY_OVERBUFFER_LEN;
+	if (! (rb->retr_buffer = (char*)shm_resize( rb->retr_buffer, buf_len )))
+	{
+		LOG(L_ERR, "ERROR: t_send_reply: cannot allocate shmem buffer\n");
 		goto error1;
 	}
-	if (  rb->retr_buffer ) 
-		sh_free(  rb->retr_buffer ) ;  
-	rb->retr_buffer = b;
 	rb->bufflen = len ;
    	memcpy( rb->retr_buffer , buf , len );
    	free( buf ) ;
@@ -966,8 +975,8 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch, struct sip_ms
       else if ( hdr->type==HDR_TO )
                  len += ((r_msg->to->body.s+r_msg->to->body.len ) - r_msg->to->name.s ) + CRLF_LEN ;
 
-   /* CSEQ method : from INVITE-> ACK, don't count CRLF twice*/
-   len -= 3 + 2 ;
+   /* CSEQ method : from INVITE-> ACK */
+   len -= 3  ;
    /* end of message */
    len += CRLF_LEN; /*new line*/
 
@@ -1047,6 +1056,58 @@ error:
    return -1;
 }
 
+
+void delete_cell( struct cell *p_cell )
+{
+#ifdef EXTRA_DEBUG
+	int i;
+
+	if (is_in_timer_list2(& p_cell->wait_tl )) {
+		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and still on WAIT\n",
+			p_cell);
+		abort();
+	}
+	if (is_in_timer_list2(& p_cell->outbound_response.retr_timer )) {
+		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and still on RETR (rep)\n",
+			p_cell);
+		abort();
+	}
+	if (is_in_timer_list2(& p_cell->outbound_response.fr_timer )) {
+		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and still on FR (rep)\n",
+			p_cell);
+		abort();
+	}
+	for (i=0; i<p_cell->nr_of_outgoings; i++) {
+		if (is_in_timer_list2(& p_cell->outbound_request[i]->retr_timer)) {
+			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and still on RETR (req %d)\n",
+			p_cell, i);
+			abort();
+		}
+		if (is_in_timer_list2(& p_cell->outbound_request[i]->fr_timer)) {
+			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and still on FR (req %d)\n",
+			p_cell, i);
+			abort();
+		}
+	}
+#endif
+	/* still in use ... don't delete */
+	if ( p_cell->ref_counter ) {
+#ifdef	EXTRA_DEBUG
+		if (p_cell->ref_counter>1) {
+			DBG("DEBUG: while debugging with a single process, ref_count > 1\n");
+			DBG("DEBUG: transaction =%p\n", p_cell );
+			abort();
+		}
+#endif
+		DBG("DEBUG: delete_cell: t=%p post for delete (%d)\n",
+			p_cell,p_cell->ref_counter);
+		/* it's added to del list for future del */
+		set_timer( hash_table, &(p_cell->dele_tl), DELETE_LIST );
+	} else {
+		DBG("DEBUG: delete_handler : delete transaction %p\n", p_cell );
+		free_cell( p_cell );
+	}
+}
 
 
 /*---------------------TIMEOUT HANDLERS--------------------------*/
@@ -1147,75 +1208,23 @@ void wait_handler( void *attr)
 #ifdef EXTRA_DEBUG
 	p_cell->damocles = 1;
 #endif
-	set_timer( hash_table, &(p_cell->dele_tl), DELETE_LIST );
+	delete_cell( p_cell );
 	DBG("DEBUG: wait_handler : done\n");
 }
-
-
 
 
 void delete_handler( void *attr)
 {
 	struct cell *p_cell = (struct cell*)attr;
 
+	DBG("DEBUG: delete_handler : removing %p \n", p_cell );
 #ifdef EXTRA_DEBUG
-	int i;
 	if (p_cell->damocles==0) {
 		LOG( L_ERR, "ERROR: transaction %p not scheduled for deletion and called from DELETE timer\n",
 			p_cell);
 		abort();
 	}	
-	if (is_in_timer_list2(& p_cell->wait_tl )) {
-		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and still on WAIT\n",
-			p_cell);
-		abort();
-	}
-	if (is_in_timer_list2(& p_cell->outbound_response.retr_timer )) {
-		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and still on RETR (rep)\n",
-			p_cell);
-		abort();
-	}
-	if (is_in_timer_list2(& p_cell->outbound_response.fr_timer )) {
-		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and still on FR (rep)\n",
-			p_cell);
-		abort();
-	}
-	for (i=0; i<p_cell->nr_of_outgoings; i++) {
-		if (is_in_timer_list2(& p_cell->outbound_request[i]->retr_timer)) {
-			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and still on RETR (req %d)\n",
-			p_cell, i);
-			abort();
-		}
-		if (is_in_timer_list2(& p_cell->outbound_request[i]->fr_timer)) {
-			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and still on FR (req %d)\n",
-			p_cell, i);
-			abort();
-		}
-	}
-
 #endif
-
-	/* the transaction is already removed from DEL_LIST by the timer */
-	/* if is not refenceted -> is deleted*/
-	if ( p_cell->ref_counter==0 )
-	{
-		DBG("DEBUG: delete_handler : delete transaction %p\n", p_cell );
-		free_cell( p_cell );
-	} else {
-#ifdef	EXTRA_DEBUG
-		if (p_cell->ref_counter>1) {
-			DBG("DEBUG: while debugging with a single process, ref_count > 1\n");
-			DBG("DEBUG: transaction =%p\n", p_cell );
-			abort();
-		}
-#endif
-		DBG("DEBUG: delete_handler: t=%p post for delete (%d)\n",
-			p_cell,p_cell->ref_counter);
-		/* else it's readded to del list for future del */
-		set_timer( hash_table, &(p_cell->dele_tl), DELETE_LIST );
-    }
+	delete_cell( p_cell );
     DBG("DEBUG: delete_handler : done\n");
 }
-
-
-

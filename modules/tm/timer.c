@@ -100,6 +100,12 @@ struct timer_link  *check_and_split_time_list( struct timer *timer_list, int tim
 	struct timer_link *tl , *tmp , *end, *ret;
 
 	//DBG("DEBUG : check_and_split_time_list: start\n");
+
+	/* quick check whether it is worth entering the lock */
+	if (timer_list->first_tl.next_tl==&timer_list->last_tl ||
+		timer_list->first_tl.next_tl->time_out > time )
+			return NULL;
+
 	/* the entire timer list is locked now -- noone else can manipulate it */
 	lock( timer_list->mutex );
 

@@ -30,8 +30,19 @@ int lock_initialize();
 int init_semaphore_set( int size );
 void lock_cleanup();
 
-int lock( ser_lock_t s );
-int unlock( ser_lock_t s );
+
+#ifdef DBG_LOCK
+int _lock( ser_lock_t s , char *file, char *function, unsigned int line );
+int _unlock( ser_lock_t s, char *file, char *function, unsigned int line );
+#	define lock(_s) _lock( (_s), __FILE__, __FUNCTION__, __LINE__ )
+#	define unlock(_s) _unlock( (_s), __FILE__, __FUNCTION__, __LINE__ )
+#else
+int _lock( ser_lock_t s );
+int _unlock( ser_lock_t s );
+#	define lock(_s) _lock( (_s) )
+#	define unlock(_s) _unlock( (_s) )
+#endif
+
 int change_semaphore( ser_lock_t s  , int val );
 
 int init_cell_lock( struct cell *cell );

@@ -47,12 +47,14 @@ ARCH = $(shell uname -s)
 # -DVQ_MALLOC
 #		additional option to PKG_MALLOC which utilizes a fater then
 #		qm version
+# -DDBG_MALLOC
+#		issues additional debugging information if lock/unlock is called
 #
 
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DDNS_IP_HACK  -DPKG_MALLOC -DSHM_MEM  -DSHM_MMAP \
 	-DEXTRA_DEBUG \
-	-DVQ_MALLOC  #-DSTATS
+	-DDBG_QM_MALLOC -DVQ_MALLOC  -DDBG_LOCK  #-DSTATS
 	  #-DDBG_QM_MALLOC #-DVQ_MALLOC #-DNO_DEBUG
 	  #-DNO_DEBUG #-DDBG_QM_MALLOC
 #-DEXTRA_DEBUG

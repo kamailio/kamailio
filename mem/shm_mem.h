@@ -44,113 +44,61 @@ extern int shm_semid;
 
 int shm_mem_init();
 void shm_mem_destroy();
+inline void shm_lock();
+inline void shm_unlock();
 
-
-
-inline static void shm_lock()
-{
-	struct sembuf sop;
-	
-	sop.sem_num=0;
-	sop.sem_op=-1; /*down*/
-	sop.sem_flg=0 /*SEM_UNDO*/;
-again:
-	semop(shm_semid, &sop, 1);
-#if 0
-	switch(ret){
-		case 0: /*ok*/
-			break;
-		case EINTR: /*interrupted by signal, try again*/
-			DBG("sh_lock: interrupted by signal, trying again...\n");
-			goto again;
-		default:
-			LOG(L_ERR, "ERROR: sh_lock: error waiting on semaphore: %s\n",
-					strerror(errno));
-	}
-#endif
-}
-
-
-
-inline static void shm_unlock()
-{
-	struct sembuf sop;
-	
-	sop.sem_num=0;
-	sop.sem_op=1; /*up*/
-	sop.sem_flg=0 /*SEM_UNDO*/;
-again:
-	semop(shm_semid, &sop, 1);
-#if 0
-	/*should ret immediately*/
-	switch(ret){
-		case 0: /*ok*/
-			break;
-		case EINTR: /*interrupted by signal, try again*/
-			DBG("sh_lock: interrupted by signal, trying again...\n");
-			goto again;
-		default:
-			LOG(L_ERR, "ERROR: sh_lock: error waiting on semaphore: %s\n",
-					strerror(errno));
-	}
-#endif
-}
 
 
 
 #ifdef DBG_QM_MALLOC
-#define shm_malloc(size) \
+
+#define shm_malloc_unsafe(_size ) \
+	MY_MALLOC(shm_block, (_size), __FILE__, __FUNCTION__, __LINE__ )
+#define shm_malloc(_size) \
 ({\
 	void *p;\
 	\
-	/*if (shm_lock()==0){*/\
-		shm_lock();\
-		p=MY_MALLOC(shm_block, (size), __FILE__, __FUNCTION__, __LINE__);\
-		shm_unlock();\
-	/* \
-	}else{ \
-		p=0;\
-	}*/ \
-	 p; \
+	shm_lock();\
+	p=shm_malloc_unsafe( (_size) );\
+	shm_unlock();\
+	p; \
 })
 
-
-
-#define shm_free(p) \
+#define shm_free_unsafe( _p  ) \
+	MY_FREE( shm_block, (_p), __FILE__, __FUNCTION__, __LINE__ )
+#define shm_free(_p) \
 do { \
 		shm_lock(); \
-		MY_FREE(shm_block, (p), __FILE__, __FUNCTION__, __LINE__); \
+		shm_free_unsafe( (_p)); \
 		shm_unlock(); \
 }while(0)
 
+#define shm_resize(_p, _s ) \
+	_shm_resize( (_p), (_s),   __FILE__, __FUNCTION__, __LINE__)
 
 #else
 
-
+#define shm_malloc_unsafe(_size) MY_MALLOC(shm_block, (_size))
 #define shm_malloc(size) \
 ({\
 	void *p;\
 	\
-	/*if (shm_lock()==0){*/\
 		shm_lock();\
-		p=MY_MALLOC(shm_block, (size));\
+		p=shm_malloc_unsafe(size); \
 		shm_unlock();\
-	/* \
-	}else{ \
-		p=0;\
-	}*/ \
 	 p; \
 })
 
 
-
-#define shm_free(p) \
+#define shm_free_unsafe( _p ) MY_FREE(shm_block, (_p))
+#define shm_free(_p) \
 do { \
 		shm_lock(); \
-		MY_FREE(shm_block, (p)); \
+		shm_free_unsafe( _p ); \
 		shm_unlock(); \
 }while(0)
 
+#define shm_resize(_p, _s) _shm_resize( (_p), (_s))
 
 #endif
 
@@ -163,7 +111,7 @@ do { \
 }while(0)
 
 
-	
+
 
 #endif
 

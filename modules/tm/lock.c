@@ -172,42 +172,56 @@ void lock_cleanup()
 }
 
 
+
+
 /* lock sempahore s */
-int lock( ser_lock_t s )
+#ifdef DBG_LOCK
+inline int _lock( ser_lock_t s , char *file, char *function, unsigned int line )
+#else
+inline int _lock( ser_lock_t s )
+#endif
 {
-	//DBG("DEBUG: lock: entering lock\n");
+#ifdef DBG_LOCK
+	DBG("DEBUG: lock : entered from %s , %s(%d)\n", function, file, line );
+#endif
 	return change_semaphore( s, -1 );
-	//DBG("DEBUG: lock: leaving lock\n");
 }
 
-int unlock( ser_lock_t s )
+#ifdef DBG_LOCK
+inline int _unlock( ser_lock_t s, char *file, char *function, unsigned int line )
+#else
+inline int _unlock( ser_lock_t s )
+#endif
 {
-	//DBG("DEBUG: unlock: entering unlock\n");
+#ifdef DBG_LOCK
+	DBG("DEBUG: lock : entered from %s, %s:%d\n", file, function, line );
+#endif
 	return change_semaphore( s, +1 );
-	//DBG("DEBUG: unlock: leaving unlock\n");
 }
 
 
 int change_semaphore( ser_lock_t s  , int val )
 {
-   struct sembuf pbuf;
-   int r;
+	struct sembuf pbuf;
+	int r;
 
-   pbuf.sem_num = s.semaphore_index ;
-   pbuf.sem_op =val;
-   pbuf.sem_flg = 0;
+	pbuf.sem_num = s.semaphore_index ;
+	pbuf.sem_op =val;
+	pbuf.sem_flg = 0;
 
 tryagain:
-   r=semop( s.semaphore_set, &pbuf ,  1 /* just 1 op */ );
+	r=semop( s.semaphore_set, &pbuf ,  1 /* just 1 op */ );
 
-   if (r==-1) {
-	if (errno=EINTR) {
-		DBG("signal received in a semaphore\n");
-		goto tryagain;
-	} else LOG(L_ERR, "ERROR: change_semaphore: %s\n", strerror(errno));
+	if (r==-1) {
+		if (errno=EINTR) {
+			DBG("signal received in a semaphore\n");
+			goto tryagain;
+		} else LOG(L_ERR, "ERROR: change_semaphore: %s\n", strerror(errno));
     }
    return r;
 }
+
+
 /*
 int init_cell_lock( struct cell *cell )
 {

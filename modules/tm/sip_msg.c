@@ -693,7 +693,3 @@ struct via_body* via_body_cloner_2( char* new_buf , char *org_buf , struct via_b
    return new_via;
 }
 
-void sip_msg_free_2(struct sip_msg* msg)
-{
-   sh_free( (char*)msg );
-}

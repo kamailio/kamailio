@@ -47,7 +47,111 @@ static void* shm_mempool=(void*)-1;
 	struct qm_block* shm_block;
 #endif
 
+#define sh_realloc(_p, _size) ({ \
+		char *_c; \
+		shm_lock(); \
+		shm_free_unsafe( (_p) ); \
+		_c=shm_malloc_unsafe( (_size) ); \
+		shm_unlock(); \
+		_c; })
 
+/* look at a buffer if there is perhaps enough space for the new size
+   (It is benefitial to do so because vq_malloc is pretty stateful
+    and if we ask for a new buffer size, we can still make it happy
+    with current buffer); if so, we return current buffer again;
+    otherwise, we free it, allocate a new one and return it; no
+    guarantee for buffer content; if allocation fails, we return
+    NULL
+*/
+#ifdef DBG_QM_MALLOC
+void* _shm_resize( void* p, unsigned int s, char* file, char* func, unsigned int line)
+#else
+void* _shm_resize( void* p , unsigned int s)
+#endif
+{
+	char *c;
+#ifdef VQ_MALLOC
+	struct vqm_frag *f;
+#else
+#	warning shm_resize performs suboptimally without VQ_MALLOC!
+#endif
+
+	if (p==0) {
+		DBG("WARNING:vqm_resize: resize(0) called\n");
+		return shm_malloc( s );
+	}
+
+#	ifdef VQ_MALLOC
+	f=(struct  vqm_frag*) ((char*)p-sizeof(struct vqm_frag));
+#	ifdef DBG_QM_MALLOC
+	DBG("_shm_resize(%x, %d), called from %s: %s(%d)\n",  p, s, file, func, line);
+	VQM_DEBUG_FRAG(shm_block, f);
+	if (p>(void *)shm_block->core_end || p<(void*)shm_block->init_core){
+		LOG(L_CRIT, "BUG: vqm_free: bad pointer %x (out of memory block!) - "
+				"aborting\n", p);
+		abort();
+	}
+#	endif
+	if (s <= f->size-VQM_OVERHEAD) {
+#		ifdef DBG_QM_MALLOC
+		DBG("DEBUG: happy guy -- you reused a memory fragment!\n");
+#		endif
+		return p;
+	};
+#endif
+	/* we can't make the request happy with current size */
+	return sh_realloc( p, s ); 
+}
+
+
+inline void shm_lock()
+{
+	struct sembuf sop;
+	
+	sop.sem_num=0;
+	sop.sem_op=-1; /*down*/
+	sop.sem_flg=0 /*SEM_UNDO*/;
+again:
+	semop(shm_semid, &sop, 1);
+#if 0
+	switch(ret){
+		case 0: /*ok*/
+			break;
+		case EINTR: /*interrupted by signal, try again*/
+			DBG("sh_lock: interrupted by signal, trying again...\n");
+			goto again;
+		default:
+			LOG(L_ERR, "ERROR: sh_lock: error waiting on semaphore: %s\n",
+					strerror(errno));
+	}
+#endif
+}
+
+
+
+inline void shm_unlock()
+{
+	struct sembuf sop;
+	
+	sop.sem_num=0;
+	sop.sem_op=1; /*up*/
+	sop.sem_flg=0 /*SEM_UNDO*/;
+again:
+	semop(shm_semid, &sop, 1);
+#if 0
+	/*should ret immediately*/
+	switch(ret){
+		case 0: /*ok*/
+			break;
+		case EINTR: /*interrupted by signal, try again*/
+			DBG("sh_lock: interrupted by signal, trying again...\n");
+			goto again;
+		default:
+			LOG(L_ERR, "ERROR: sh_lock: error waiting on semaphore: %s\n",
+					strerror(errno));
+	}
+#endif
+}
 
 /* ret -1 on erro*/
 int shm_mem_init()

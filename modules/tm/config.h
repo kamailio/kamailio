@@ -33,4 +33,10 @@
 #define RETR_T1  		1
 #define RETR_T2  		4
 
+/* when first reply is sent, this additional space is allocated so that
+   one does not have to reallocate share memory when the message is
+   replaced by a subsequent, longer message
+*/
+#define REPLY_OVERBUFFER_LEN 160
+
 #endif

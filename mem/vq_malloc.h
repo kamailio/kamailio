@@ -35,14 +35,16 @@
 
 
 #ifdef DBG_QM_MALLOC
-#define ST_CHECK_PATTERN   	0xf0f0f0f0
-#define END_CHECK_PATTERN  	"sExP"
-#define END_CHECK_PATTERN_LEN 	4
-
-#define VQM_DEBUG_FRAG(qm, f) vqm_debug_frag( (qm), (f))
+#	define ST_CHECK_PATTERN   	0xf0f0f0f0
+#	define END_CHECK_PATTERN  	"sExP"
+#	define END_CHECK_PATTERN_LEN 	4
+#	define VQM_OVERHEAD (sizeof(struct vqm_frag)+ sizeof(struct vqm_frag_end)+END_CHECK_PATTERN_LEN)
+#	define VQM_DEBUG_FRAG(qm, f) vqm_debug_frag( (qm), (f))
 #else
-#define VQM_DEBUG_FRAG(qm, f)
+#	define VQM_DEBUG_FRAG(qm, f)
+#	define VQM_OVERHEAD (sizeof(struct vqm_frag)+ sizeof(struct vqm_frag_end))
 #endif
+
 
 
 struct vqm_frag {
@@ -113,14 +115,10 @@ struct vqm_block* vqm_malloc_init(char* address, unsigned int size);
 #ifdef DBG_QM_MALLOC
 void* vqm_malloc(struct vqm_block*, unsigned int size, char* file, char* func, 
 					unsigned int line);
-#else
-void* vqm_malloc(struct vqm_block*, unsigned int size);
-#endif
-
-#ifdef DBG_QM_MALLOC
 void  vqm_free(struct vqm_block*, void* p, char* file, char* func, 
 				unsigned int line);
 #else
+void* vqm_malloc(struct vqm_block*, unsigned int size);
 void  vqm_free(struct vqm_block*, void* p);
 #endif
 
