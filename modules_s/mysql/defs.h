@@ -1,19 +1,13 @@
 /* 
  * $Id$ 
+ *
+ * MySQL module various definitions
  */
 
-#ifndef __DEFS_H__
-#define __DEFS_H__
+#ifndef DEFS_H
+#define DEFS_H
 
 #define PARANOID
-#define SQL_BUF_LEN 1024
+#define SQL_BUF_LEN 65535
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
-#endif
+#endif /* DEFS_H */

@@ -1,5 +1,7 @@
 /* 
  * $Id$ 
+ *
+ * MySQL module useful functions
  */
 
 #include "db_utils.h"
@@ -9,6 +11,7 @@
 
 #define _XOPEN_SOURCE
 #include <time.h>
+
 
 /*
  * Convert time_t structure to format accepted by MySQL database
@@ -42,7 +45,7 @@ time_t mysql2time(const char* _str)
 }
 
 
-
+/* FIXME */
 /*
  * SQL URL parser
  */
@@ -60,15 +63,15 @@ int parse_sql_url(char* _url, char** _user, char** _pass,
 	     /* Remove any leading and trailing spaces and tab */
 	_url = trim(_url);
 
-	if (strlen(_url) < 6) return FALSE;
+	if (strlen(_url) < 6) return -1;
 
-	if (*_url == '\0') return FALSE; /* Empty string */
+	if (*_url == '\0') return -2; /* Empty string */
 
 	slash = strchr(_url, '/');
-	if (!slash) return FALSE;   /* Invalid string, slashes not found */
+	if (!slash) return -3;   /* Invalid string, slashes not found */
 
 	if ((*(++slash)) != '/') {  /* Invalid URL, 2nd slash not found */
-		return FALSE;
+		return -4;
 	}
 
 	slash++;
@@ -108,6 +111,5 @@ int parse_sql_url(char* _url, char** _user, char** _pass,
 		*_user = trim(slash);
 	}
 
-	return TRUE;
+	return 0;
 }
-

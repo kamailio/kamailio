@@ -1,3 +1,9 @@
+/*
+ * $Id$
+ *
+ * MySQL module core functions
+ */
+
 #ifndef DBASE_H
 #define DBASE_H
 
@@ -57,4 +63,4 @@ int db_update(db_con_t* _h, db_key_t* _k, db_val_t* _v,
 	      db_key_t* _uk, db_val_t* _uv, int _n, int _un);
 
 
-#endif
+#endif /* DBASE_H */
