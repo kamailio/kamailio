@@ -198,7 +198,7 @@ static int child_init(int rank)
 static int m_store(struct sip_msg* msg, char* str1, char* str2)
 {
 	str body;
-	struct to_body to, from;
+	struct to_body to, from, *pto, *pfrom;
 	db_key_t db_keys[NR_KEYS];
 	db_val_t db_vals[NR_KEYS];
 	int nr_keys = 0, val;
@@ -223,17 +223,30 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	nr_keys++;
 	
 	// check FROM header
-	if(msg->from != NULL)
+	if(msg->from != NULL && msg->from->body.s != NULL)
 	{
-		memset( &from , 0, sizeof(from) );
-		parse_to(msg->from->body.s, 
-			msg->from->body.s + msg->from->body.len + 1, &from);
-		if(from.error == PARSE_OK)
-			DBG("MSILO: m_store: 'from' parsed OK.\n");
+		if(msg->from->parsed != NULL)
+		{
+			pfrom = (struct to_body*)msg->from->parsed;
+			DBG("MSILO: m_store: 'From' header ALREADY PARSED: <%.*s>\n",
+				pfrom->uri.len, pfrom->uri.s );	
+		}
 		else
 		{
-			DBG("MSILO: m_store: 'from' NOT parsed\n");
-			goto error;
+			memset( &from , 0, sizeof(from) );
+			parse_to(msg->from->body.s, 
+				msg->from->body.s + msg->from->body.len + 1, &from);
+			if(from.uri.len > 0) // && from.error == PARSE_OK)
+			{
+				DBG("MSILO: m_store: 'from' parsed OK <%.*s>.\n",
+					from.uri.len, from.uri.s);
+				pfrom = &from;
+			}
+			else
+			{
+				DBG("MSILO: m_store: 'from' NOT parsed\n");
+				goto error;
+			}
 		}
 	}
 	else
@@ -245,26 +258,36 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	
 	db_vals[nr_keys].type = DB_STR;
 	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.str_val.s = from.uri.s;
-	db_vals[nr_keys].val.str_val.len = from.uri.len;
+	db_vals[nr_keys].val.str_val.s = pfrom->uri.s;
+	db_vals[nr_keys].val.str_val.len = pfrom->uri.len;
 
 	nr_keys++;
 
 	// check TO header
-	if(msg->to != NULL)
+	if(msg->to != NULL && msg->to->body.s != NULL)
 	{
-		memset( &to , 0, sizeof(to) );
-		parse_to(msg->to->body.s,
-				msg->to->body.s + msg->to->body.len + 1, &to);
-		if(to.uri.len > 0) // && to.error == PARSE_OK)
+		if(msg->to->parsed != NULL)
 		{
-			DBG("MSILO: m_store: 'to' parsed OK <%.*s>.\n", 
-				to.uri.len, to.uri.s);
+			pto = (struct to_body*)msg->to->parsed;
+			DBG("MSILO: m_store: 'To' header ALREADY PARSED: <%.*s>\n",
+				pto->uri.len, pto->uri.s );	
 		}
 		else
 		{
-			DBG("MSILO: m_store: 'to' NOT parsed\n");
-			goto error;
+			memset( &to , 0, sizeof(to) );
+			parse_to(msg->to->body.s,
+					msg->to->body.s + msg->to->body.len + 1, &to);
+			if(to.uri.len > 0) // && to.error == PARSE_OK)
+			{
+				DBG("MSILO: m_store: 'to' parsed OK <%.*s>.\n", 
+					to.uri.len, to.uri.s);
+				pto = &to;
+			}
+			else
+			{
+				DBG("MSILO: m_store: 'to' NOT parsed\n");
+				goto error;
+			}
 		}
 	}
 	else
@@ -277,8 +300,8 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	
 	db_vals[nr_keys].type = DB_STR;
 	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.str_val.s = to.uri.s;
-	db_vals[nr_keys].val.str_val.len = to.uri.len;
+	db_vals[nr_keys].val.str_val.s = pto->uri.s;
+	db_vals[nr_keys].val.str_val.len = pto->uri.len;
 
 	nr_keys++;
 	
@@ -381,7 +404,7 @@ error:
  */
 static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 {
-	struct to_body to;
+	struct to_body to, *pto;
 	db_key_t db_keys[1] = { DB_KEY_TO };
 	db_val_t db_vals[1];
 	db_key_t db_cols[] = {	DB_KEY_MID, DB_KEY_IURI, DB_KEY_OURI, DB_KEY_FROM,
@@ -399,15 +422,25 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 	DBG("MSILO: m_dump: ------------ start ------------\n");
 	
 	// check TO header
-	if(msg->to != NULL)
+	if(msg->to != NULL && msg->to->body.s != NULL)
 	{
-		memset( &to , 0, sizeof(to) );
-		parse_to(msg->to->body.s,
-				msg->to->body.s + msg->to->body.len + 1, &to);
-		if(to.uri.len <= 0) // || to.error != PARSE_OK)
+		if(msg->to->parsed != NULL)
 		{
-			DBG("MSILO: m_dump: 'to' NOT parsed\n");
-			goto error;
+			pto = (struct to_body*)msg->to->parsed;
+			DBG("MSILO: m_dump: 'To' header ALREADY PARSED: <%.*s>\n",
+				pto->uri.len, pto->uri.s );	
+		}
+		else
+		{
+			memset( &to , 0, sizeof(to) );
+			parse_to(msg->to->body.s,
+				msg->to->body.s + msg->to->body.len + 1, &to);
+			if(to.uri.len <= 0) // || to.error != PARSE_OK)
+			{
+				DBG("MSILO: m_dump: 'to' NOT parsed\n");
+				goto error;
+			}
+			pto = &to;
 		}
 	}
 	else
@@ -428,12 +461,12 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			if(i <= 0)
 			{ // user goes offline
 				DBG("MSILO: m_dump: user <%.*s> goes offline - expires=%d\n",
-						to.uri.len, to.uri.s, i);
+						pto->uri.len, pto->uri.s, i);
 				goto error;
 			}
 			else
 				DBG("MSILO: m_dump: user <%.*s> online - expires=%d\n",
-						to.uri.len, to.uri.s, i);
+						pto->uri.len, pto->uri.s, i);
 		}
 	}
 	else
@@ -444,8 +477,8 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 
 	db_vals[0].type = DB_STR;
 	db_vals[0].nul = 0;
-	db_vals[0].val.str_val.s = to.uri.s;
-	db_vals[0].val.str_val.len = to.uri.len;
+	db_vals[0].val.str_val.s = pto->uri.s;
+	db_vals[0].val.str_val.len = pto->uri.len;
 
 
 	memset(str_vals, 0, STR_IDX_NO*sizeof(str));
@@ -454,7 +487,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 				NULL, &db_res)==0) && (RES_ROW_N(db_res) > 0))
 	{
 		DBG("MSILO: m_dump: dumping [%d] messages for <%.*s>!!!\n", 
-				RES_ROW_N(db_res), to.uri.len, to.uri.s);
+				RES_ROW_N(db_res), pto->uri.len, pto->uri.s);
 
 		for(i = 0; i < RES_ROW_N(db_res); i++) 
 		{
@@ -476,7 +509,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 					sp = &str_vals[STR_IDX_IURI];
 				else
 			**/
-			sp = &to.uri;
+			sp = &pto->uri;
 
 			hdr_str.len = 1024;		
 			if(m_build_headers(&hdr_str, str_vals[STR_IDX_CTYPE]) < 0)
@@ -505,15 +538,12 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			/** sending using IM library */
 			/***
 			m_send_message( *msg_id, 
-				sp, &to.uri, &str_vals[STR_IDX_FROM], 
+				sp, &pto->uri, &str_vals[STR_IDX_FROM], 
 				&str_vals[STR_IDX_FROM], &str_vals[STR_IDX_CTYPE],
 				&str_vals[STR_IDX_BODY]);
 			***/
+			
 			/** sending using TM function: t_uac */
-
-			//int t_uac( str *msg_type, str *dst, 
-			//	str *headers, str *body, transaction_cb completion_cb,
-			//	void *cbp, struct dialog *dlg)
 
 			body_str.len = 1024;
 			if(m_build_body(&body_str, 
@@ -521,7 +551,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 					str_vals[STR_IDX_BODY] ) < 0)
 			{
 				DBG("MSILO: m_dump: sending simple body\n");
-				t_uac(&msg_type, &to.uri, &hdr_str,
+				t_uac(&msg_type, &pto->uri, &hdr_str,
 					&str_vals[STR_IDX_BODY], &str_vals[STR_IDX_FROM],
 					m_tm_callback, (void*)msg_id, 0
 				);
@@ -529,7 +559,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			else
 			{
 				DBG("MSILO: m_dump: sending composed body\n");
-				t_uac(&msg_type, &to.uri, &hdr_str,
+				t_uac(&msg_type, &pto->uri, &hdr_str,
 					&body_str, &str_vals[STR_IDX_FROM],
 					m_tm_callback, (void*)msg_id, 0
 				);
@@ -537,8 +567,8 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 		}
 	}
 	else
-		DBG("MSILO: m_dump: no stored message for <%.*s>!\n", to.uri.len,
-					to.uri.s);
+		DBG("MSILO: m_dump: no stored message for <%.*s>!\n", pto->uri.len,
+					pto->uri.s);
 	/**
 	 * Free the result because we don't need it
 	 * anymore
