@@ -235,6 +235,9 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       /* allocates a new retrans_buff for the outbound request */
       T->outbound_request[branch] = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
       memset( T->outbound_request[branch] , 0 , sizeof (struct retrans_buff) );
+      T->outbound_request[branch]->tl[RETRASMISSIONS_LIST].payload = "cucu bau";// T->outbound_request[branch];
+      T->outbound_request[branch]->tl[FR_TIMER_LIST].payload =  T->outbound_request[branch];
+      DBG("DEBUG: t_forward: ************PAYLOAD=%p\n",T->outbound_request[branch]);
       T->nr_of_outgoings = 1;
 
       /* special case : CANCEL */
@@ -291,7 +294,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       insert_into_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]), RETRASMISSIONS_LIST , RETR_T1 );
    }/* end for the first time */
 
-   DBG("DEBUG: t_forward: sending outbund request from buffer (%d bytes):\n%*s\n", 
+   DBG("DEBUG: t_forward: sending outbund request from buffer (%d bytes):\n%*s\n",
 	T->outbound_request[branch]->bufflen, T->outbound_request[branch]->bufflen,
 	 T->outbound_request[branch]->buffer);
    /* send the request */
@@ -326,12 +329,12 @@ int t_forward_uri( struct sip_msg* p_msg, char* foo, char* bar  )
       global_msg_id = p_msg->id;
    }
 
-   DBG("DEBUG: t_forward: 1. T=%x\n", T);
+   DBG("DEBUG: t_forward_uri: 1. T=%x\n", T);
    /* if  T hasn't been previous searched -> search for it */
    if ( (int)T ==-1 )
       t_lookup_request( p_msg, 0 , 0 );
 
-   DBG("DEBUG: t_forward: 2. T=%x\n", T);
+   DBG("DEBUG: t_forward_uri: 2. T=%x\n", T);
    /*if T hasn't been found after all -> return not found (error) */
    if ( !T )
       return -1;
@@ -1070,8 +1073,8 @@ void retransmission_handler( void *attr)
    struct retrans_buff* r_buf = (struct retrans_buff*)attr;
 
    /* the transaction is already removed from RETRANSMISSION_LIST by the timer */
-   DBG("DEBUG: retransmission_handler : payload received=%p\n",attr);
-
+   DBG("DEBUG: retransmission_handler : payload received=%s\n",(char*)attr);
+   return;
    /* computs the new timeout. */
    if ( r_buf->timeout_value<r_buf->timeout_ceiling )
       r_buf->timeout_value *=2;

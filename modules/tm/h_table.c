@@ -143,6 +143,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
    /* ref counter is 0 */
    /* all pointers from timers list tl are NULL */
    new_cell->wait_tl.payload = new_cell;
+   new_cell->dele_tl.payload = new_cell;
 
    /* inbound request */
    /* force parsing all the needed headers*/

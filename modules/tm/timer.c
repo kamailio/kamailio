@@ -45,7 +45,6 @@ void insert_into_timer_list( struct s_table* hash_table , struct timer_link* new
     /* if we have an empty list*/
    if ( !timer_list->first_tl )
    {
-      DBG("DEBUG: insert_into_timer[%d]: empty list\n",list_id);
       new_tl->next_tl= 0;
       new_tl->prev_tl = 0;
       lock( timer_list->mutex );
