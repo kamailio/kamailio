@@ -66,10 +66,10 @@ int max_reqs  = 30;
 int timeout   = 120;
 
 /* global variables */
-struct ip_node          *tree;
+struct ip_node          *tree=0;
 gen_lock_t*             timer_lock=0;
 gen_lock_t*             tree_lock=0;
-struct pike_timer_head  *timer;
+struct pike_timer_head  *timer=0;
 
 
 static cmd_export_t cmds[]={
@@ -143,12 +143,14 @@ static int pike_init(void)
 	return 0;
 error3:
 	destroy_ip_tree(tree);
+	tree = 0;
 error2:
 	lock_destroy(timer_lock);
 	lock_destroy(tree_lock);
 error1:
 	if (timer_lock) lock_dealloc(timer_lock);
 	if (tree_lock)  lock_dealloc(tree_lock);
+	timer_lock = tree_lock = 0;
 	return -1;
 }
 
@@ -156,20 +158,21 @@ error1:
 
 static int pike_exit(void)
 {
-	/* lock the timer list */
-	lock_get(timer_lock);
-	/* free the timer list head */
-	shm_free(timer);
-	/* destroy the IP tree */
-	lock_get(tree_lock);
-	destroy_ip_tree(tree);
 	/* destroy semaphore */
-	lock_release(timer_lock);
-	lock_release(tree_lock);
-	lock_destroy(timer_lock);
-	lock_destroy(tree_lock);
-	lock_dealloc(timer_lock);
-	lock_dealloc(tree_lock);
+	if (timer_lock) {
+		lock_destroy(timer_lock);
+		lock_dealloc(timer_lock);
+	}
+	if (tree_lock) {
+		lock_destroy(tree_lock);
+		lock_dealloc(tree_lock);
+	}
+	/* free the timer list head */
+	if (timer)
+		shm_free(timer);
+	/* destroy the IP tree */
+	if (tree)
+		destroy_ip_tree(tree);
 	return 0;
 }
 
