@@ -59,10 +59,12 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'t_reply' not found\n");
 		return -1;
 	}
+#ifdef _OBSO
 	if (!(tmb->t_reply_unsafe=(treply_f)find_export(T_REPLY_UNSAFE, 2)) ) {
 		LOG( L_ERR, LOAD_ERROR "'t_reply_unsafe' not found\n");
 		return -1;
 	}
+#endif
 	if (!(tmb->t_forward_nonack=(tfwd_f)find_export(T_FORWARD_NONACK , 2)) ) {
 		LOG( L_ERR, LOAD_ERROR "'t_forward_nonack' not found\n");
 		return -1;
