@@ -1,9 +1,9 @@
 <!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
 <!ENTITY ser "SIP Express Router">
-<!ENTITY user SYSTEM "user.sgml">
-<!ENTITY devel SYSTEM "devel.sgml">
-<!ENTITY faq SYSTEM "faq.sgml">
+<!ENTITY user SYSTEM "domain_user.sgml">
+<!ENTITY devel SYSTEM "domain_devel.sgml">
+<!ENTITY faq SYSTEM "domain_faq.sgml">
 
 ]>
 
