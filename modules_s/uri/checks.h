@@ -63,5 +63,10 @@ int check_from(struct sip_msg* _msg, char* _str1, char* _str2);
  */
 int does_uri_exist(struct sip_msg* _msg, char* _table, char* _s2);
 
+/*
+ * Check if message includes a to-tag
+ */
+int has_totag(struct sip_msg* _m, char* _foo, char* _bar);
+
 
 #endif /* CHECKS_H */

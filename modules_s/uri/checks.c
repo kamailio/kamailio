@@ -29,6 +29,7 @@
  * History:
  * --------
  * 2003-02-26: Created by janakj
+ * 2004-03-20: has_totag introduced (jiri)
  */
 
 #include <string.h>
@@ -41,6 +42,31 @@
 #include "../../db/db.h"                /* Database API */
 #include "uri_mod.h"
 #include "checks.h"
+
+/*
+ * Checks if From includes a To-tag -- good to identify
+ * if a request creates a new dialog
+ */
+int has_totag(struct sip_msg* _m, char* _foo, char* _bar)
+{
+	str tag;
+
+	if (!_m->to && parse_headers(_m, HDR_TO,0)==-1) {
+		LOG(L_ERR, "ERROR: has_totag: To parsing failed\n");
+		return -1;
+	}
+	if (!_m->to) {
+		LOG(L_ERR, "ERROR: has_totag: no To\n");
+		return -1;
+	}
+	tag=get_to(_m)->tag_value;
+	if (tag.s==0 || tag.len==0) {
+		DBG("DEBUG: has_totag: no totag\n");
+		return -1;
+	}
+	DBG("DEBUG: has_totag: totag found\n");
+	return 1;
+}
 
 
 /*
