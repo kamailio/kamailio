@@ -970,8 +970,9 @@ int unixsock_reply_printf(char* fmt, ...)
 
 	va_start(ap, fmt);
 	ret = vsnprintf(reply_pos.s, reply_pos.len, fmt, ap);
-	if ((ret == -1) || (ret >= reply_pos.len)) {
+	if ((ret < 0) || (ret >= reply_pos.len)) {
 		LOG(L_ERR, "unixsock_reply_printf: Buffer too small\n");
+		va_end(ap);
 		return -1;
 	}
 
