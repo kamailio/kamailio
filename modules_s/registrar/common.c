@@ -5,8 +5,9 @@
  */
 
 #include "common.h"
-#include <string.h> /* memchr */
+#include <string.h> 
 #include "../../dprint.h"
+#include "../../ut.h"      /* q_memchr */
 
 
 /*
@@ -48,8 +49,8 @@ int get_user(str* _s)
 	
 	LOG(L_ERR, "get_user2(): %.*s\n", _s->len, _s->s);
 
-	at = memchr(_s->s, '@', _s->len);
-	dc = memchr(_s->s, ':', _s->len);
+	at = q_memchr(_s->s, '@', _s->len);
+	dc = q_memchr(_s->s, ':', _s->len);
 	if (at) {
 		if ((dc) && (dc < at)) {
 			_s->len = dc - _s->s;
