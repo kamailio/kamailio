@@ -881,6 +881,8 @@ int main(int argc, char** argv)
 	int ret;
 	struct passwd *pw_entry;
 	struct group  *gr_entry;
+	unsigned int seed;
+	int rfd;
 
 	/*init*/
 	port_no_str_len=0;
@@ -1079,6 +1081,27 @@ int main(int argc, char** argv)
 		goto error;
 	}
 
+	/* seed the prng */
+	/* try to use /dev/random if possible */
+	seed=0;
+	if ((rfd=open("/dev/random", O_RDONLY))!=-1){
+try_again:
+		if (read(rfd, (void*)&seed, sizeof(seed))==-1){
+			if (errno==EINTR) goto try_again; /* interrupted by signal */
+			LOG(L_WARN, "WARNING: could not read from /dev/random (%d)\n",
+						errno);
+		}
+		DBG("read %u from /dev/random\n", seed);
+			close(rfd);
+	}else{
+		LOG(L_WARN, "WARNING: could not open /dev/random (%d)\n", errno);
+	}
+	seed+=getpid()+time(0);
+	DBG("seeding PRNG with %u\n", seed);
+	srand(seed);
+	DBG("test random number %u\n", rand());
+	
+	
 	/* init hash fucntion */
 	if (init_hash()<0) {
 		LOG(L_ERR, "ERROR: init_hash failed\n");
