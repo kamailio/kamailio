@@ -32,18 +32,21 @@
 
 #include "../../str.h"
 #include "../tm/dlg.h"
+#include "../../parser/parse_content.h"
 #include <stdio.h>
 #include <time.h>
 
+#define MIMETYPE(x_,y_) ((TYPE_##x_ << 16) | (SUBTYPE_##y_))
 
 typedef enum doctype {
-	DOC_XPIDF = 0,
-	DOC_LPIDF = 1,
-	DOC_PIDF = 2,
-	DOC_WINFO = 3,
-	DOC_XCAP_CHANGE = 4,
-	DOC_LOCATION = 5,
-	N_DOCTYPES
+	DOC_XPIDF = MIMETYPE(APPLICATION,XPIDFXML),
+	DOC_LPIDF = MIMETYPE(APPLICATION,LPIDFXML),
+	DOC_PIDF =  MIMETYPE(APPLICATION,PIDFXML),
+	DOC_WINFO = MIMETYPE(APPLICATION,WATCHERINFOXML),
+//	DOC_XCAP_CHANGE = (1 << 4),
+//	DOC_LOCATION = (1 << 5),
+	DOC_MULTIPART_RELATED = MIMETYPE(MULTIPART,RELATED),
+	DOC_RLMI_XML = MIMETYPE(APPLICATION,RLMIXML)
 } doctype_t;
 
 typedef enum watcher_status {
@@ -76,8 +79,8 @@ typedef struct watcher {
 	str uri;                /* Uri of the watcher */
 	time_t expires;         /* Absolute of the expiration */
 	int event_package;      /* event package being watched */
-	doctype_t accept;       /* Type of document accepted by the watcher */
-	dlg_t* dialog;          /* Dialog handle */
+        int preferred_mimetype; /* Type of document accepted by the watcher */
+ 	dlg_t* dialog;          /* Dialog handle */
 	str s_id;               /* id of this watcherinfo statement */
 	wflags_t flags;
         watcher_event_t  event;

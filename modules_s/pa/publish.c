@@ -37,6 +37,7 @@
 #include "../../mem/mem.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
+#include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_expires.h"
 #include "../../parser/parse_event.h"
 #include "dlist.h"
@@ -192,6 +193,13 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 			&packet_loss, &priority, &expires, &prescaps);
      if (contact.len) {
 	  find_presence_tuple(&contact, presentity, &tuple);
+	  if (!tuple) {
+		  contact_t *sip_contact = NULL;
+		  /* get contact from SIP Headers*/
+		  contact_iterator(&sip_contact, _m, NULL);
+		  if (sip_contact)
+			  find_presence_tuple(&sip_contact->uri, presentity, &tuple);
+	  }
 	  if (!tuple && new_tuple_on_publish) {
 	       new_presence_tuple(&contact, expires, presentity, &tuple);
 	       add_presence_tuple(presentity, tuple);
@@ -376,6 +384,7 @@ static int publish_presentity(struct sip_msg* _m, struct pdomain* _d, struct pre
 /*
  * Handle a publish Request
  */
+
 int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 {
 	struct pdomain* d;
@@ -386,15 +395,20 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 	get_act_time();
 	paerrno = PA_OK;
 
+	LOG(L_ERR, "handle_publish -1- _m=%p\n", _m);
 	if (parse_hfs(_m) < 0) {
 		LOG(L_ERR, "handle_publish(): Error while parsing message header\n");
 		goto error;
 	}
+	LOG(L_ERR, "handle_publish -1b-\n");
 
+#if 0
 	if (check_message(_m) < 0) {
 		LOG(L_ERR, "handle_publish(): Error while checking message\n");
 		goto error;
 	}
+	LOG(L_ERR, "handle_publish -1c-\n");
+#endif
 
 	d = (struct pdomain*)_domain;
 
@@ -403,6 +417,7 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 		goto error;
 	}
 
+	LOG(L_ERR, "handle_publish -2-\n");
 	lock_pdomain(d);
 	
 	LOG(L_ERR, "handle_publish -4- p_uri=%*.s p_uri.len=%d\n", p_uri.len, p_uri.s, p_uri.len);

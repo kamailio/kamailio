@@ -40,6 +40,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_expires.h"
 #include "../../parser/parse_event.h"
+#include "../../parser/parse_content.h"
 #include "presentity.h"
 #include "watcher.h"
 #include "pstate.h"
@@ -55,21 +56,18 @@
 #define DOCUMENT_TYPE "application/cpim-pidf+xml"
 #define DOCUMENT_TYPE_L (sizeof(DOCUMENT_TYPE) - 1)
 
-static int accepts_to_event_package[N_DOCTYPES] = {
-	[DOC_XPIDF] = EVENT_PRESENCE,
-	[DOC_LPIDF] = EVENT_PRESENCE,
-	[DOC_PIDF] = EVENT_PRESENCE,
-	[DOC_WINFO] = EVENT_PRESENCE_WINFO,
-	[DOC_XCAP_CHANGE] = EVENT_XCAP_CHANGE,
-	[DOC_LOCATION] = EVENT_LOCATION,
+static struct {
+	int event_type;
+	int mimes[MAX_MIMES_NR];
+} event_package_mimetypes[] = {
+	{ EVENT_PRESENCE, { MIMETYPE(APPLICATION,PIDFXML), MIMETYPE(APPLICATION,XPIDFXML), MIMETYPE(APPLICATION,LPIDFXML), 0 } },
+	{ EVENT_PRESENCE_WINFO, { MIMETYPE(APPLICATION,WATCHERINFOXML), 0 }},
+#ifdef EVENT_SIP_PROFILE
+	{ EVENT_SIP_PROFILE, { MIMETYPE(MESSAGE,EXTERNAL_BODY), 0 }},
+#endif
+//	{ EVENT_XCAP_CHANGE, { MIMETYPE(APPLICATION,WINFO+XML), 0 } },
+	{ -1, { 0 }},
 };
-
-/*
- * A static variable holding document type accepted
- * by the watcher's user agent
- */
-static doctype_t acc;
-
 
 /*
  * contact will be NULL if user is offline
@@ -179,59 +177,6 @@ static int get_watch_uri(struct sip_msg* _m, str* _wuri, str *_dn)
 	return 0;
 }
 
-
-/*
- * Parse Accept header field body
- * FIXME: This is ugly parser, write something more clean
- */
-int parse_accept(struct hdr_field* _h, doctype_t* _a)
-{
-	if (_h) {
-		char* buffer;
-
-		/*
-		 * All implementation must support xpidf so make
-		 * it the default
-		 */
-		*_a = DOC_XPIDF;
-
-		buffer = pkg_malloc(_h->body.len + 1);
-		if (!buffer) {
-			paerrno = PA_NO_MEMORY;
-			LOG(L_ERR, "parse_accept(): No memory left\n");
-			return -1;
-		}
-
-		memcpy(buffer, _h->body.s, _h->body.len);
-		buffer[_h->body.len] = '\0';
-	
-		if (strstr(buffer, "application/cpim-pidf+xml")
-		    || strstr(buffer, "application/pidf+xml")) {
-			*_a = DOC_PIDF;
-		} else if (strstr(buffer, "application/xpidf+xml")) {
-			*_a = DOC_XPIDF;
-		} else if (strstr(buffer, "text/lpidf")) {
-			*_a = DOC_LPIDF;
-		} else if (strstr(buffer, "application/watcherinfo+xml")) {
-			*_a = DOC_WINFO;
-		} else if (strstr(buffer, "application/xcap-change+xml")) {
-			*_a = DOC_XCAP_CHANGE;
-		} else if (strstr(buffer, "application/location+xml")) {
-			*_a = DOC_LOCATION;
-		} else {
-			*_a = DOC_XPIDF;
-		}
-	
-		pkg_free(buffer);
-		return 0;
-	} else {
-		/* XP messenger is not giving an accept field, so default to lpidf */
-		*_a = DOC_XPIDF;
-		return 0;
-	}
-}
-
-
 /*
  * Parse all header fields that will be needed
  * to handle a SUBSCRIBE request
@@ -270,14 +215,14 @@ static int parse_hfs(struct sip_msg* _m, int accept_header_required)
 	}
 
 	if (_m->accept) {
-		if (parse_accept(_m->accept, &acc) < 0) {
+		if (parse_accept_hdr(_m) < 0) {
 			paerrno = PA_ACCEPT_PARSE;
 			LOG(L_ERR, "parse_hfs(): Error while parsing Accept header field\n");
 			return -10;
 		}
 	} else if (accept_header_required) {
 		LOG(L_ERR, "no accept header\n");
-		acc = DOC_XPIDF;
+		return -11;
 	}
 
 	return 0;
@@ -289,24 +234,78 @@ static int parse_hfs(struct sip_msg* _m, int accept_header_required)
  */
 int check_message(struct sip_msg* _m)
 {
+	LOG(L_ERR, "check_message -0- _m=%p\n", _m);
 	if (_m->event) {
-		event_t *event;
+		event_t *parsed_event;
+		int *accepts_mimes = get_accept(_m);
+
+		LOG(L_ERR, "check_message -1- accepts_mimes=%p\n", accepts_mimes);
+
+		if (accepts_mimes) {
+			char buf[100];
+			int offset = 0;
+			int *a = accepts_mimes;
+			buf[0] = '0';
+			while (*a) {
+				offset += sprintf(buf+offset, ":%#06x", *a);
+				a++;
+			}
+			LOG(L_ERR, "pa check_message: accept=%.*s parsed=%s\n",
+			    _m->accept->body.len, _m->accept->body.s, buf);
+		}
+		LOG(L_ERR, "check_message -2-\n");
 
 		if (!_m->event->parsed)
 			parse_event(_m->event);
-		event = (event_t*)(_m->event->parsed);
+		LOG(L_ERR, "check_message -3-\n");
+		parsed_event = (event_t*)(_m->event->parsed);
 
-		if (event && (event->parsed != accepts_to_event_package[acc])) {
-			char *accept_s = NULL;
-			int accept_len = 0;
-			if (_m->accept && _m->accept->body.len) {
-				accept_s = _m->accept->body.s;
-				accept_len = _m->accept->body.len;
+		LOG(L_ERR, "check_message -4- parsed_event=%p\n", parsed_event);
+		if (parsed_event) {
+			int i = 0;
+			int eventtype = parsed_event->parsed;
+			LOG(L_ERR, "check_message -4- eventtype=%#06x\n", eventtype);
+			while (event_package_mimetypes[i].event_type != -1) {
+				LOG(L_ERR, "check_message -4a- eventtype=%#x epm[i].event_type=%#x", 
+				    eventtype, event_package_mimetypes[i].event_type);
+				if (eventtype == event_package_mimetypes[i].event_type) {
+					int j = 0;
+					int mimetype;
+					while ((mimetype = event_package_mimetypes[i].mimes[j]) != 0) {
+						int k = 0;
+						while (accepts_mimes[k]) {
+							LOG(L_ERR, "check_message -4c- eventtype=%#x mimetype=%#x accepts_mimes[k]=%#x\n", eventtype, mimetype, accepts_mimes[k]);
+
+							if (accepts_mimes[k] == mimetype) {
+								int am0 = accepts_mimes[0];
+								/* we have a match */
+								LOG(L_ERR, "check_message -4b- eventtype=%#x accepts_mime=%#x\n", eventtype, mimetype);
+								/* move it to front for later */
+								accepts_mimes[0] = mimetype;
+								accepts_mimes[k] = am0;
+								return 0;
+							}
+							k++;
+						}
+						j++;
+					}
+				}
+				i++;
 			}
-			LOG(L_ERR, "check_message(): Accepts %.*s not valid for event package et=%.*s\n",
-			    _m->accept->body.len, _m->accept->body.s, event->text.len, event->text.s);
-			return -1;
+			/* else, none of the mimetypes accepted are generated for this event package */
+			{
+				char *accept_s = NULL;
+				int accept_len = 0;
+				if (_m->accept && _m->accept->body.len) {
+					accept_s = _m->accept->body.s;
+					accept_len = _m->accept->body.len;
+				}
+				LOG(L_ERR, "check_message(): Accepts %.*s not valid for event package et=%.*s\n",
+				    _m->accept->body.len, _m->accept->body.s, _m->event->body.len, _m->event->body.s);
+				return -1;
+			}
 		}
+		LOG(L_ERR, "check_message -5-\n");
 	}
 	return 0;
 }
@@ -324,12 +323,16 @@ int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 	str watch_dn;
 	event_t *event = NULL;
 	int et = 0;
+	int acc = 0;
+	int *accepts_mimes = get_accept(_m);
 	if (_m->event) {
 		event = (event_t*)(_m->event->parsed);
 		et = event->parsed;
 	} else {
 		et = EVENT_PRESENCE;
 	}
+	if (accepts_mimes)
+		acc = accepts_mimes[0];
 
 	if (_m->expires) {
 		e = ((exp_body_t*)_m->expires->parsed)->val;
@@ -398,6 +401,8 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 	str watch_dn;
 	event_t *event = NULL;
 	int et = 0;
+	int acc = 0;
+	int *accepts_mimes = get_accept(_m);
 	if (_m->event) {
 		event = (event_t*)(_m->event->parsed);
 		et = event->parsed;
@@ -405,6 +410,8 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 		LOG(L_ERR, "update_presentity defaulting to EVENT_PRESENCE\n");
 		et = EVENT_PRESENCE;
 	}
+	if (accepts_mimes)
+		acc = accepts_mimes[0];
 
 	if (_m->expires) {
 		e = ((exp_body_t*)_m->expires->parsed)->val;
@@ -667,7 +674,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	}
 
 	LOG(L_ERR, "handle_subscription about to return 1: w->event_package=%d w->accept=%d p->flags=%x w->flags=%x w=%p\n",
-	    (w ? w->event_package : -1), (w ? w->accept : -1), (p ? p->flags : -1), (w ? w->flags : -1), w);
+	    (w ? w->event_package : -1), (w ? w->preferred_mimetype : -1), (p ? p->flags : -1), (w ? w->flags : -1), w);
 	unlock_pdomain(d);
 	return 1;
 	

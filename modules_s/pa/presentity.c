@@ -492,7 +492,7 @@ int find_presence_tuple(str* _contact, presentity_t *_p, presence_tuple_t ** _t)
 		return -1;
 	}
 	tuple = _p->tuples;
-	LOG(L_ERR, "find_presence_tuple: _p=%p _p->tuples=%p\n", _p, _p->tuples);
+	//LOG(L_ERR, "find_presence_tuple: _p=%p _p->tuples=%p\n", _p, _p->tuples);
 	while (tuple) {
 		if (str_strcasecmp(&tuple->contact, _contact) == 0) {
 			*_t = tuple;
@@ -620,6 +620,7 @@ int timer_presentity(presentity_t* _p)
 	        if (watcher->expires <= act_time) {
 		  LOG(L_ERR, "Removing watcher %.*s\n", watcher->uri.len, watcher->uri.s);
 			watcher->expires = 0;
+			_p->flags |= PFLAG_WATCHERINFO_CHANGED;
 			send_notify(_p, watcher);
 			t = watcher;
 			watcher = watcher->next;
@@ -637,6 +638,7 @@ int timer_presentity(presentity_t* _p)
 	        if (watcher->expires <= act_time) {
 		  LOG(L_ERR, "Removing watcher %.*s\n", watcher->uri.len, watcher->uri.s);
 			watcher->expires = 0;
+			_p->flags |= PFLAG_WATCHERINFO_CHANGED;
 			send_notify(_p, watcher);
 			t = watcher;
 			watcher = watcher->next;
@@ -751,7 +753,7 @@ int add_winfo_watcher(presentity_t* _p, str* _uri, time_t _e, int event_package,
 		return -1;
 	}
 
-	(*_w)->accept = DOC_WINFO;
+	(*_w)->preferred_mimetype = DOC_WINFO;
 	(*_w)->next = _p->winfo_watchers;
 	_p->winfo_watchers = *_w;
 	return 0;
