@@ -9,6 +9,10 @@
 #include <netinet/in.h>
 #include <errno.h>
 #include <arpa/inet.h>
+#ifdef __linux__
+	#include <linux/types.h>
+	#include <linux/errqueue.h>
+#endif
 
 
 #include "udp_server.h"
@@ -137,11 +141,20 @@ int udp_init(struct socket_info* sock_info)
 	/* set sock opts? */
 	optval=1;
 	if (setsockopt(sock_info->socket, SOL_SOCKET, SO_REUSEADDR ,
-					(void*)&optval, sizeof(optval)) ==-1)
-	{
+					(void*)&optval, sizeof(optval)) ==-1){
 		LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", strerror(errno));
 		goto error;
 	}
+#ifdef __linux__
+	optval=1;
+	/* enable error receiving on unconnected sockets */
+	if(setsockopt(sock_info->socket, SOL_IP, IP_RECVERR,
+					(void*)&optval, sizeof(optval)) ==-1){
+		LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", strerror(errno));
+		goto error;
+	}
+#endif
+
 
 	if ( probe_max_receive_buffer(sock_info->socket)==-1) goto error;
 

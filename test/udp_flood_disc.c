@@ -13,6 +13,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#ifdef __linux__
+#include <linux/types.h>
+#include <linux/errqueue.h>
+#endif
 
 
 static char *id="$Id$";
@@ -48,6 +52,9 @@ int main (int argc, char** argv)
 	char *fname;
 	char *dst;
 	int port;
+#ifdef __linux__
+	int optval;
+#endif
 	
 	/* init */
 	count=0;
@@ -164,12 +171,14 @@ int main (int argc, char** argv)
 		fprintf(stderr, "ERROR: socket: %s\n", strerror(errno));
 		goto error;
 	}
-/*
-	if (connect(sock, (struct sockaddr*) &addr, sizeof(struct sockaddr))!=0){
-		fprintf(stderr, "ERROR: connect: %s\n", strerror(errno));
-		goto error;
+#ifdef __linux__
+	/* enable error receiving on unconnected sockets*/
+	optval=1;
+	if(setsockopt(sock,SOL_IP,IP_RECVERR,(void*)&optval,sizeof(optval))==-1){
+		fprintf(stderr, "Error: setsockopt: %s\n", strerror(errno));
+		exit(1);
 	}
-*/
+#endif
 
 
 	/* flood loop */
