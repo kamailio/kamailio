@@ -231,6 +231,7 @@ int remove_TMRoute(struct sip_msg* _m, struct hdr_field* _route, str* _uri)
 		}
 
 		DBG("remove_TMRoute(): next URI found: \'%.*s\'\n", rest.len - (next - rest.s), next);
+		     /* FIXME: 1 to be remove when spaces at the beginning are skipped */
 		offset = _route->body.s - _m->buf + 1; /* + 1 - keep the first white char */
 		len = next - _route->body.s - 1;
 		
@@ -250,8 +251,8 @@ int remove_TMRoute(struct sip_msg* _m, struct hdr_field* _route, str* _uri)
 	} else {
 		DBG("remove_TMRoute(): No next URI in the same Route found\n");
 		offset = _route->name.s - _m->buf;
-		len = _route->name.len + _route->body.len + 2;
-		if (_route->body.s[_route->body.len] != '\0') len++;  /* FIXME: Is this necessary ?, Yes it is */
+		if (_route->next) len = _route->next->name.s -_route->name.s;
+		else len = _m->unparsed - _route->name.s;
 
 		_uri->s = 0;
 		_uri->len = 0;
