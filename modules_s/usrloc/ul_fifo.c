@@ -500,7 +500,7 @@ static inline int ul_show_contact(FILE* pipe, char* response_file)
 		}
 		
 		if (res > 0) {
-			fifo_reply(response_file, "Username %s in table %s not found\n", user, table);
+			fifo_reply(response_file, "ERROR: Username %s in table %s not found\n", user, table);
 			unlock_udomain(d);
 			return -1;
 		}
@@ -516,7 +516,7 @@ static inline int ul_show_contact(FILE* pipe, char* response_file)
 
 		if (!print_contacts(reply_file, r->contacts)) {
 			unlock_udomain(d);
-			fprintf(reply_file, "No registered contacts found\n");
+			fprintf(reply_file, "ERROR: No registered contacts found\n");
 			fclose(reply_file);
 			return -1;
 		}
@@ -525,7 +525,7 @@ static inline int ul_show_contact(FILE* pipe, char* response_file)
 		unlock_udomain(d);
 		return 1;
 	} else {
-		fifo_reply(response_file, "table (%s) not found\n", table);
+		fifo_reply(response_file, "ERROR: table (%s) not found\n", table);
 		return -1;
 	}
 }
