@@ -14,6 +14,8 @@ typedef char HASH[HASHLEN];
 typedef char HASHHEX[HASHHEXLEN+1];
 
 
+void CvtHex(HASH Bin, HASHHEX Hex);
+
 /* 
  * calculate H(A1) as per HTTP Digest spec 
  */

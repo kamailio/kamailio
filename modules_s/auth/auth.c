@@ -16,11 +16,15 @@
 #include "cred.h"
 #include "db.h"
 #include "calc.h"
+#include "../../md5global.h"
+#include "../../md5.h"
 
 static char tag[32];
 static char auth_hf[AUTH_HF_LEN];
 
+
 extern db_con_t* db_handle;
+
 
 void auth_init(void)
 {
@@ -46,40 +50,101 @@ void auth_init(void)
 }
 
 
-/*
- * FIXME
- * Calculate nonce value
- */
-static inline int calc_nonce(char* _realm, char* _nonce)
+static void to_hex(unsigned char* _dst, unsigned char *_src, int _src_len)
 {
-	memcpy(_nonce, "12345678901234567890123456789012", 32);
-	_nonce[32] = '\0';
-	return 0;
+	unsigned short i;
+	unsigned char j;
+    
+	for (i = 0; i < _src_len; i++) {
+		j = (_src[i] >> 4) & 0xf;
+		if (j <= 9)
+			_dst[i*2] = (j + '0');
+		else
+			_dst[i*2] = (j + 'a' - 10);
+		j = _src[i] & 0xf;
+		if (j <= 9)
+			_dst[i*2+1] = (j + '0');
+		else
+			_dst[i*2+1] = (j + 'a' - 10);
+	}
+}
+
+
+/*
+ * Calculate nonce value
+ * Nonce value consists of time in seconds since 1.1 1970 and
+ * secret phrase
+ */
+static inline void calc_nonce(char* _realm, unsigned char* _nonce)
+{
+	MD5_CTX ctx;
+	time_t t;
+	unsigned char bin[16];
+	HASHHEX hash;
+	
+	t = time(NULL);
+	to_hex(_nonce, (unsigned char*)time, 8);
+	
+	MD5Init(&ctx);
+	MD5Update(&ctx, _nonce, 8);
+	MD5Update(&ctx, ":", 1);
+	MD5Update(&ctx, NONCE_SECRET, NONCE_SECRET_LEN);
+	MD5Final(bin, &ctx);
+	CvtHex(bin, _nonce + 8);
 }
 
 
 /*
  * Create Proxy-Authenticate header field
  */
-static inline int build_proxy_auth_hf(char* _realm, char* _buf, int* _len)
+static inline void build_proxy_auth_hf(char* _realm, char* _buf, int* _len)
 {
-	char nonce[33];
-#ifdef PARANOID
-	if ((!_buf) || (!_len) || (!_realm)) {
-		LOG(L_ERR, "build_proxy_auth_hf(): Invalid parameter value\n");
-		return -1;
-	}
-#endif
-	if (calc_nonce(_realm, nonce) == -1) {
-		LOG(L_ERR, "build_proxy_auth_hf(): Error while calculating nonce value\n");
+	     /* 8 hex chars time value + 32 hex char MD5 + '\0' */
+	char nonce[41];
+	calc_nonce(_realm, nonce);
+	nonce[40] = '\0';
+
+	     /* Currently we support qop=auth only */
+	*_len = snprintf(_buf, AUTH_HF_LEN,
+			 "Proxy-Authenticate: Digest realm=\"%s\", nonce=\"%s\",qop=\"auth\",algorithm=MD5\r\n", 
+			 _realm, nonce);
+}
+
+
+/*
+ * Create a response with given code and reason phrase
+ * Optionaly add new headers specified in _hdr
+ */
+static int send_resp(struct sip_msg* _m, int code, char* _reason, char* _hdr, int _hdr_len)
+{
+	char* buf;
+	struct sockaddr_in to;
+	struct lump_rpl* ptr;
+	unsigned int len;
+
+	to.sin_family = AF_INET;
+	if (update_sock_struct_from_via(&to, _m->via1) == -1) {
+		LOG(L_ERR, "send_resp(): Cannot lookup reply dst: %s\n",
+		    _m->via1->host.s);
 		return -1;
 	}
 
-	*_len = snprintf(_buf, AUTH_HF_LEN,
-			 "Proxy-Authenticate: Digest realm=\"%s\", nonce=\"%s\",qop=\"auth\"\r\n", 
-			 _realm, nonce);
-	return 0;
+	/* Add new headers if there are any */
+	if (_hdr) {
+		ptr = build_lump_rpl(_hdr, _hdr_len);
+		add_lump_rpl(_m, ptr);
+	}
+
+	buf = build_res_buf_from_sip_req(code, _reason, tag, 32, _m ,&len);
+	if (!buf) {
+		LOG(L_ERR, "send_resp(): Build of response failed\n");
+		return -1;
+	}
+
+	udp_send(buf, len, (struct sockaddr*)&to, sizeof(struct sockaddr_in));
+	return 1;
 }
+
 
 
 /*
@@ -93,50 +158,23 @@ int challenge(struct sip_msg* _msg, char* _realm, char* _str2)
 	struct lump_rpl* ptr;
 	int auth_hf_len;
 
-	to.sin_family = AF_INET;
-	if (update_sock_struct_from_via(&to, _msg->via1) == -1) {
-		LOG(L_ERR, "challenge(): Cannot lookup reply dst: %s\n",
-		    _msg->via1->host.s);
+	printf("challenge(): Entering\n");
+
+	build_proxy_auth_hf(_realm, auth_hf, &auth_hf_len);
+	if (send_resp(_msg, 407, MESSAGE_407, auth_hf, auth_hf_len) == -1) {
+		LOG(L_ERR, "challenge(): Error while sending response\n");
 		return -1;
 	}
-
-	if (build_proxy_auth_hf(_realm, auth_hf, &auth_hf_len) == -1) {
-		LOG(L_ERR, "challenge(): Can't build Proxy Authenticate HF\n");
-		return -1;
-	}
-
-	ptr = build_lump_rpl(auth_hf, auth_hf_len);
-	add_lump_rpl(_msg, ptr);
-
-	buf = build_res_buf_from_sip_req(407, MESSAGE_407, tag, 32, _msg ,&len);
-	if (!buf) {
-		LOG(L_ERR, "challenge(): Build of response failed\n");
-		return -1;
-	}
-
-	udp_send(buf, len, (struct sockaddr*)&to, sizeof(struct sockaddr_in));
-	return 1;
-}
-
-
-static int check_realm(struct hdr_field* _hf, char* _realm)
-{
-#ifdef PARANOID
-	if ((!_hf) || (!_realm)) {
-		LOG(L_ERR, "check_realm(): Invalid parameter value\n");
-		return -1;
-	}
-#endif
-	
 	return 0;
 }
 
 
-static int find_auth_hf(struct sip_msg* _msg, char* _realm, struct hdr_field** _hf)
+static int find_auth_hf(struct sip_msg* _msg, char* _realm, cred_t* _c)
 {
 	struct hdr_field* ptr;
+	int res;
 #ifdef PARANOID
-	if ((!_msg) || (!_realm) || (!_hf)) {
+	if ((!_msg) || (!_realm) || (!_c)) {
 		LOG(L_ERR, "find_auth_hf(): Invalid parameter value\n");
 		return -1;
 	}
@@ -145,9 +183,24 @@ static int find_auth_hf(struct sip_msg* _msg, char* _realm, struct hdr_field** _
 	ptr = _msg->headers;
 	while(ptr) {
 		if (!strcasecmp(AUTH_RESPONSE, ptr->name.s)) {
-			if (check_realm(ptr, _realm) == 0) {
-				*_hf = ptr;
-				return 0;
+			res = hf2cred(ptr, _c); 
+			if (res == -1) {
+				LOG(L_ERR, "find_auth_hf(): Error while parsing credentials\n");
+				return -1;
+			}
+			     /* Malformed digest field */
+			if (res == -2) {
+				if (send_resp(_msg, 400, MESSAGE_400, NULL, 0) == -1) {
+					LOG(L_ERR, "find_auth_hf(): Error while sending 400 reply\n");
+				}
+				return -1;
+			}
+			     /* We only support digest scheme */
+			if (_c->scheme == SCHEME_DIGEST) {
+				     /* Check the realm */
+				if (!memcmp(_realm, _c->realm.s, _c->realm.len)) {
+					return 0;
+				}
 			}
 		}
 		ptr = ptr->next;
@@ -156,32 +209,32 @@ static int find_auth_hf(struct sip_msg* _msg, char* _realm, struct hdr_field** _
 }
 
 
-int get_a1(str* _user, char* _realm, char* _a1)
+static int get_ha1(str* _user, char* _realm, char* _ha1)
 {
 	db_key_t keys[] = {"user", "realm"};
 	db_val_t vals[] = {{DB_STRING, 0, {.string_val = _user->s}},
 			   {DB_STRING, 0, {.string_val = _realm}}
 	};
-	db_key_t col[] = {"a1"};
+	db_key_t col[] = {"ha1"};
 	db_res_t* res;
 
-	const char* a1;
+	const char* ha1;
 
 #ifdef PARANOID
-	if ((!_realm) || (!_user) || (!_a1)) {
-		LOG(L_ERR, "get_a1(): Invalid parameter value\n");
+	if ((!_realm) || (!_user) || (!_ha1)) {
+		LOG(L_ERR, "get_ha1(): Invalid parameter value\n");
 		return -1;
 	}
 #endif
 	
 	db_use_table(db_handle, DB_TABLE);
 	if (db_query(db_handle, keys, vals, col, 2, 1, NULL, &res) == FALSE) {
-		LOG(L_ERR, "get_a1(): Error while querying database\n");
+		LOG(L_ERR, "get_ha1(): Error while querying database\n");
 		return -1;
 	}
 
-        a1 = ROW_VALUES(RES_ROWS(res))[0].val.string_val;
-	memcpy(_a1, a1, strlen(a1) + 1);
+        ha1 = ROW_VALUES(RES_ROWS(res))[0].val.string_val;
+	memcpy(_ha1, ha1, strlen(ha1) + 1);
 
 	db_free_query(db_handle, res);
 	return 0;
@@ -189,30 +242,49 @@ int get_a1(str* _user, char* _realm, char* _a1)
 
 
 
-int check_cred(cred_t* _cred, str* _method, char* _a1)
+int check_cred(cred_t* _cred, str* _method, char* _ha1)
 {
 	HASHHEX resp;
 	HASHHEX HA1;
 	HASHHEX hent;
+	char* qop;
+
 #ifdef PARANOID
-	if ((!_cred) || (!_a1) || (!_method)) {
+	if ((!_cred) || (!_ha1) || (!_method)) {
 		LOG(L_ERR, "check_cred(): Invalid parameter value\n");
 		return -1;
 	}
 #endif
-	DigestCalcHA1("MD5", _cred->username.s, _cred->realm.s, _a1, _cred->nonce.s, _cred->cnonce.s, HA1);
-	DigestCalcResponse(HA1, _cred->nonce.s, _cred->nonce_count.s, _cred->cnonce.s, "auth", _method->s,
+	
+	     /* We always send algorithm=MD5 and qop=auth, so we can
+	      * hardwire these values here, if th client uses a
+	      * different algorithm and qop, it will simply not
+	      * authorize him
+	      */
+	//	DigestCalcHA1("md5", _cred->username.s, _cred->realm.s, _a1, _cred->nonce.s, _cred->cnonce.s, HA1);
+
+        switch(_cred->qop) {
+	case QOP_AUTH:
+		qop = "auth";
+		break;
+	case QOP_AUTH_INT:
+		qop = "auth-int";
+		break;
+	default:
+		qop = "";
+		break;
+	}
+		
+	DigestCalcResponse(_ha1, _cred->nonce.s, _cred->nonce_count.s, _cred->cnonce.s, qop, _method->s,
 			   _cred->uri.s, hent, resp);
 
-	printf("res = %s\n", resp);
-	printf("a1 = %s\n", _a1);
-	printf("met = %s\n", _method->s);
+	DBG("check_cred(): Our result = %s\n", resp);
 
 	if (!memcmp(resp, _cred->response.s, 32)) {
-		printf("Authorization OK\n");
+		printf("check_cred(): Authorization is OK\n");
 		return 1;
 	} else {
-		printf("Authorization failed\n");
+		printf("check_cred(): Authorization failed\n");
 		return 0;
 	}
 }
@@ -221,7 +293,7 @@ int check_cred(cred_t* _cred, str* _method, char* _a1)
 
 int authorize(struct sip_msg* _msg, char* _realm, char* str2)
 {
-	char a1[256];
+	char ha1[256];
 	cred_t cred;
 	int res;
 	struct hdr_field* auth_hf;
@@ -239,28 +311,34 @@ int authorize(struct sip_msg* _msg, char* _realm, char* str2)
 	     /* Finds the first occurence of authorization header for the
 	      * given realm
 	      */
-	if (find_auth_hf(_msg, _realm, &auth_hf) == -1) {
-		DBG("authorize(): Proxy-Authorization HF not found\n");
+	if (find_auth_hf(_msg, _realm, &cred) == -1) {
+		DBG("authorize(): Proxy-Authorization HF not found or malformed\n");
 		return -1;
 	}
-	DBG("authorize(): Proxy-Authorization HF found\n");
+	DBG("authorize(): Proxy-Authorization HF with the given realm found\n");
 
-	if (hf2cred(auth_hf, &cred)) {
-		LOG(L_ERR, "authorize(): Error while parsing header\n");
-		return -1;
-	}
-
+	     /*
+	      * FIXME: For debugging purposes only
+	      */
 	print_cred(&cred);
 
-	if (get_a1(&cred.username, _realm, a1) == -1) {
+	printf("Before ge_a1\n");
+	if (get_ha1(&cred.username, _realm, ha1) == -1) {
 		LOG(L_ERR, "authorize(): Error while getting A1 string for user %s\n", cred.username.s);
 		return -1;
 	}
-
-        res = check_cred(&cred, &_msg->first_line.u.request.method, a1);
+	
+	if (validate_cred(&cred) == -1) {
+		if (send_resp(_msg, 400, MESSAGE_400, NULL, 0) == -1) {
+			LOG(L_ERR, "authorize(): Error while sending 400 reply\n");
+		}
+		return -1;
+	}
+	
+	printf("Before check_cred\n");
+        res = check_cred(&cred, &_msg->first_line.u.request.method, ha1);
 	if (res == -1) {
 		LOG(L_ERR, "authorize(): Error while checking credentials\n");
 		return -1;
 	} else return res;
 }
-

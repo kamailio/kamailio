@@ -5,15 +5,41 @@
 #include <stdlib.h>
 
 
+#define DIGEST   "Digest"
+
+#define USERNAME  "username"
+#define REALM     "realm"
+#define NONCE     "nonce"
+#define URI       "uri"
+#define RESPONSE  "response"
+#define CNONCE    "cnonce"
+#define OPAQUE    "opaque"
+#define QOP       "qop"
+#define NC        "nc"
+#define ALGORITHM "algorithm"
+
+#define USERNAME_ID   1
+#define REALM_ID      2
+#define NONCE_ID      3
+#define URI_ID        4
+#define RESPONSE_ID   5
+#define CNONCE_ID     6
+#define OPAQUE_ID     7
+#define QOP_ID        8
+#define NC_ID         9
+#define ALGORITHM_ID 10
+#define UNKNOWN_ID  256
+
+
+/*
+ * Unquote a string
+ */
 static void unquote(str* _s)
 {
-	DBG("qu: %s\n", _s->s);
-	DBG("qul: %d\n", _s->len);
 	if (*(_s->s + _s->len - 1) == '\"') {
 		*(_s->s + _s->len - 1) = '\0';
 		_s->len--;
 	}
-	DBG("aaa2\n");
 	if (*(_s->s) == '\"') {
 		_s->s++;
 		_s->len--;
@@ -94,8 +120,6 @@ static int parse_digest_param(char* _s, cred_t* _c)
 	*(body + body_len) = '\0';	
 
 	id = name_parser(_s);
-
-	printf("parsing %s\n", _s);
 
 	switch(id) {
 	case USERNAME_ID:
@@ -188,9 +212,7 @@ static int parse_digest_params(char* _s, cred_t* _c)
 		}
 	} while(ptr);
 
-	DBG("Before unquote_cred\n");
 	unquote_cred(_c);
-	DBG("After unquote_cred\n");
 	
 	return 0;
 }
@@ -210,7 +232,7 @@ int hf2cred(struct hdr_field* _hf, cred_t* _c)
 
 	if (!ptr) {
 		LOG(L_ERR, "hf2cred(): Invalid Proxy-Authorize field\n");
-		return -1;
+		return -2;
 	}
 	
 	*ptr = '\0';
@@ -218,12 +240,10 @@ int hf2cred(struct hdr_field* _hf, cred_t* _c)
 		_c->scheme = SCHEME_DIGEST;
 		s = eat_lws(ptr + 1);
 
-		DBG("hf2cred(): Before parse_digest_params\n");
 		if (parse_digest_params(s, _c) == -1) {
 			LOG(L_ERR, "hf2cred(): Error while parsing digest parameters\n");
-			return -1;
+			return -2;
 		}
-		DBG("hf2cred(): After parse_digest_params\n");
 		
 		return 0;
 	} else {
@@ -312,32 +332,97 @@ int init_cred(cred_t* _c)
 #endif
 	_c->scheme = SCHEME_UNKNOWN;
 
-	_c->username.s = NULL;
+	_c->username.s = "";
 	_c->username.len = 0;
 
-	_c->realm.s = NULL;
+	_c->realm.s = "";
 	_c->realm.len = 0;
 
-	_c->nonce.s = NULL;
+	_c->nonce.s = "";
 	_c->nonce.len = 0;
 
-	_c->uri.s = NULL;
+	_c->uri.s = "";
 	_c->uri.len = 0;
 
-	_c->response.s = NULL;
+	_c->response.s = "";
 	_c->response.len = 0;
 
 	_c->algorithm = ALG_UNSPECIFIED;
 
-	_c->cnonce.s = NULL;
+	_c->cnonce.s = "";
 	_c->cnonce.len = 0;
 
-	_c->opaque.s = NULL;
+	_c->opaque.s = "";
 	_c->opaque.len = 0;
 
 	_c->qop = QOP_UNDEFINED;
 
-	_c->nonce_count.s = NULL;
+	_c->nonce_count.s = "";
 	_c->nonce_count.len = 0;
+	return 0;
+}
+
+
+
+int validate_cred(cred_t* _c)
+{
+#ifdef PARANOID
+	if (!_c) {
+		LOG(L_ERR, "validate_cred(): Invalid parameter value\n");
+		return -1;
+	}
+#endif
+	
+	if (_c->scheme != SCHEME_DIGEST) {
+		LOG(L_ERR, "validate_cred(): Unknown scheme\n");
+		return -1;
+	}
+
+	if (_c->algorithm != ALG_MD5) {
+		LOG(L_ERR, "validate_cred(): Unsupported algorithm\n");
+		return -1;
+	}
+
+	if (_c->username.len == 0) {
+		LOG(L_ERR, "validate_cred(): Invalid username\n");
+		return -1;
+	}
+
+	if (_c->realm.len == 0) {
+		LOG(L_ERR, "validate_cred(): Invalid realm\n");
+		return -1;
+	}
+
+	if (_c->nonce.len == 0) {
+		LOG(L_ERR, "validate_cred(): Invalid nonce\n");
+		return -1;
+	}
+		
+	if (_c->uri.len == 0) {
+		LOG(L_ERR, "validate_cred(): Invalid uri\n");
+		return -1;
+	}
+
+	if (_c->response.len == 0) {
+		LOG(L_ERR, "validate_cred(): Invalid response\n");
+		return -1;
+	}
+
+
+	if (_c->qop == QOP_AUTH) {
+		if (_c->cnonce.len == 0) {
+			LOG(L_ERR, "validate_cred(): Invalid cnonce\n");
+			return -1;
+		}
+
+		if (_c->nonce_count.len == 0) {
+			LOG(L_ERR, "validate_cred(): Invalid nonce_count\n");
+			return -1;
+		}
+	} else if (_c->qop != QOP_UNDEFINED) {
+		LOG(L_ERR, "validate_cred(): Unsupported qop value\n");
+		return -1;
+	}
+
 	return 0;
 }

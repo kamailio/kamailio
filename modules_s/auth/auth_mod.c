@@ -13,6 +13,7 @@
 
 void destroy(void);
 
+
 static struct module_exports auth_exports = {"auth", 
 					     (char*[]) { 
 						     "authorize",
@@ -39,7 +40,7 @@ db_con_t* db_handle;
 
 struct module_exports* mod_register()
 {
-	LOG(L_ERR, "%auth module - registering\n");
+	LOG(L_ERR, "auth module - registering\n");
 	auth_init();
 	
 	     /* Find a database module */

@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "calc.h"
-#include "../../global.h"
+#include "../../md5global.h"
 #include "../../md5.h"
 
 

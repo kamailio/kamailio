@@ -26,6 +26,7 @@
 #define QOP_UNKNOWN   256
 #define QOP_UNDEFINED 512
 
+
 typedef struct cred {
 	int scheme;
 	str username;
@@ -44,6 +45,6 @@ typedef struct cred {
 int init_cred(cred_t* _c);
 int hf2cred(struct hdr_field* _hf, cred_t* _c);
 int print_cred(cred_t* _c);
-
+int validate_cred(cred_t* _c);
 
 #endif

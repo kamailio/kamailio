@@ -9,7 +9,7 @@
 
 
 /*
- * Function prototypes
+ * Initialize authentication module
  */
 void auth_init(void);
 
@@ -25,5 +25,6 @@ int challenge(struct sip_msg* _msg, char* _realm, char* _str2);
  * is realm
  */
 int authorize(struct sip_msg* _msg, char* _realm, char* _str2);
+
 
 #endif
