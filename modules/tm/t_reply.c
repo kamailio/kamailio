@@ -870,10 +870,22 @@ void on_negative_reply( struct cell* t, struct sip_msg* msg,
 	/* create faked environment  -- uri rewriting stuff needs the
 	   original uri
 	*/
+#ifdef _OBSOLETED
 	memset( &faked_msg, 0, sizeof( struct sip_msg ));
+	faked_msg.flags=t->uas.request->flags;	
 	/* original URI doesn't change -- feel free to refer to shmem */
 	faked_msg.first_line.u.request.uri=
 		t->uas.request->first_line.u.request.uri;
+#else
+    /* 
+     on_negative_reply faked msg now copied from shmem msg (as opposed
+     to zero-ing) -- more "read-only" actions (exec in particular) will 
+     work from reply_route as they will see msg->from, etc.; caution, 
+     rw actions may append some pkg stuff to msg, which will possibly be 
+     never released (shmem is released in a single block)
+    */
+	memcpy( &faked_msg, t->uas.request, sizeof(struct sip_msg));
+#endif
 	/* new_uri can change -- make a private copy */
 	if (t->uas.request->new_uri.s!=0 && t->uas.request->new_uri.len!=0) {
 		faked_msg.new_uri.s=pkg_malloc(t->uas.request->new_uri.len+1);
@@ -883,7 +895,6 @@ void on_negative_reply( struct cell* t, struct sip_msg* msg,
 			faked_msg.new_uri.len);
 		faked_msg.new_uri.s[faked_msg.new_uri.len]=0;
 	} else { faked_msg.new_uri.s=0; faked_msg.new_uri.len=0; }
-	faked_msg.flags=t->uas.request->flags;	
 	/* if we set msg_id to something different from current's message
        id, the first t_fork will properly clean new branch URIs
 	*/
