@@ -246,7 +246,7 @@ INSERT INTO version VALUES ( 'aliases', '6');
 INSERT INTO version VALUES ( 'active_sessions', '1');
 INSERT INTO version VALUES ( 'acc', '2');
 INSERT INTO version VALUES ( 'config', '1');
-INSERT INTO version VALUES ( 'silo', '2');
+INSERT INTO version VALUES ( 'silo', '3');
 INSERT INTO version VALUES ( 'realm', '1');
 INSERT INTO version VALUES ( 'domain', '1');
 INSERT INTO version VALUES ( 'uri', '1');
