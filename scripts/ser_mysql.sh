@@ -8,8 +8,6 @@
 #        table definitons
 # USAGE: call the command without any parameters for info
 #
-# 
-# 2003-01-21 changed SILO table definition, by dcm
 #
 
 #################################################################
@@ -377,8 +375,9 @@ CREATE TABLE config (
 
 CREATE TABLE silo(
 	mid INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
-	src_addr VARCHAR(128) NOT NULL DEFAULT "",
-	dst_addr VARCHAR(128) NOT NULL DEFAULT "",
+	src_addr VARCHAR(256) NOT NULL DEFAULT "",
+	dst_addr VARCHAR(256) NOT NULL DEFAULT "",
+	r_uri VARCHAR(256) NOT NULL DEFAULT "",
 	inc_time INTEGER NOT NULL DEFAULT 0,
 	exp_time INTEGER NOT NULL DEFAULT 0,
 	ctype VARCHAR(32) NOT NULL DEFAULT "text/plain",
