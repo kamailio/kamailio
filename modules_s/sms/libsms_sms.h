@@ -1,5 +1,5 @@
-#ifndef _LIBSMS_PUTSMS_H
-#define _LIBSMS_PUTSMS_H
+#ifndef _LIBSMS_SMS_H
+#define _LIBSMS_SMS_H
 
 #include "sms_funcs.h"
 

@@ -5,7 +5,7 @@
 #include "../im/im_funcs.h"
 #include "sms_funcs.h"
 #include "libsms_modem.h"
-#include "libsms_put_sms.h"
+#include "libsms_sms.h"
 
 
 
@@ -46,6 +46,7 @@ int push_on_network(struct sip_msg *msg, int net)
 	}
 	memcpy(sms_messg.text, body.s, foo);
 	if (msg->from) {
+		memset(&from_parsed,0,sizeof(from_parsed));
 		parse_to(msg->from->body.s,msg->from->body.s+msg->from->body.len+1,
 			&from_parsed);
 		if (from_parsed.error!=PARSE_OK && foo+SMS_FROM_LEN+
@@ -132,7 +133,7 @@ void modem_process(struct modem *mdm)
 						LOG(L_ERR,"ERROR:modem_process: truncated message"
 						" read from pipe! -> discarted\n");
 					else if (errno==EAGAIN) {
-						DBG("DEBUG:modem_process: pipe emptied!! \n");
+						DBG("DEBUG:modem_process: out pipe emptied!! \n");
 						empty_pipe = 1;
 					}
 					counter++;
@@ -155,6 +156,7 @@ void modem_process(struct modem *mdm)
 				if (counter==net->max_sms_per_call)
 					dont_wait = 1;
 			}/*while*/
+			
 		}/*for*/
 		if (!dont_wait)
 			sleep(mdm->looping_interval);
