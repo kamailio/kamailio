@@ -27,6 +27,7 @@
 #define HDR_CONTACT       64
 #define HDR_MAXFORWARDS  128
 #define HDR_ROUTE        256
+#define HDR_RECORDROUTE  512
 #define HDR_OTHER       65536 /*unknown header type*/
 
 /* maximum length of values appended to Via-branch parameter */
@@ -159,6 +160,7 @@ struct sip_msg{
 	struct hdr_field* contact;
 	struct hdr_field* maxforwards;
 	struct hdr_field* route;
+	struct hdr_field* record_route;
 	char* eoh; /* pointer to the end of header (if found) or null */
 
 	char* unparsed; /* here we stopped parsing*/

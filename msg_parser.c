@@ -250,6 +250,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		case HDR_CALLID:
 		case HDR_CONTACT:
 		case HDR_ROUTE:   /* janakj, HDR_ROUTE was missing here */
+	        case HDR_RECORDROUTE:
 		case HDR_MAXFORWARDS:
 		case HDR_OTHER:
 			/* just skip over it */
@@ -599,7 +600,11 @@ int parse_headers(struct sip_msg* msg, int flags)
 				if (msg->route==0) msg->route=hf;
 				msg->parsed_flag|=HDR_ROUTE;
 				break;
-			case HDR_VIA:
+		        case HDR_RECORDROUTE:
+				if (msg->record_route==0) msg->record_route = hf;
+				msg->parsed_flag|=HDR_RECORDROUTE;
+				break;
+		        case HDR_VIA:
 				msg->parsed_flag|=HDR_VIA;
 				DBG("parse_headers: Via1 found, flags=%d\n", flags);
 				if (msg->via1==0) {

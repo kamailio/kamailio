@@ -1,5 +1,5 @@
 /*
- * $Id§
+ * $Id$
  *
  * header name parsing automaton:
 
@@ -12,6 +12,7 @@
  * Contact:           m:
  * Max-Forwards:      n/a
  * Route:             n/a
+ * Record-Route:      n/a
  */
 
 
@@ -29,9 +30,12 @@ enum { INITIAL=0,
 		MAXFORWARDS6, MAXFORWARDS7, MAXFORWARDS8, MAXFORWARDS9, MAXFORWARDS10,
 		MAXFORWARDS11,
 		ROUTE1, ROUTE2, ROUTE3, ROUTE4,
+                RECROUTE1, RECROUTE2, RECROUTE3, RECROUTE4, RECROUTE5, 
+                RECROUTE6, RECROUTE7, RECROUTE8, RECROUTE9, RECROUTE10,
+       
 		/* final states*/
 		F_VIA=1000, F_FROM, F_TO, F_CSEQ, F_CALLID, F_CONTACT, F_MAXFORWARDS,
-		F_ROUTE,
+                F_ROUTE, F_RECROUTE,
 		I_START,
 
 		UNKNOWN_HEADER=200,
@@ -142,6 +146,11 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 						case MAXFORWARDS9:
 							state=MAXFORWARDS10;
 							break;
+					        case RECROUTE3:
+							state=RECROUTE4;
+							break;
+					        case RECROUTE6:
+							state=RECROUTE7;
 						case UNKNOWN_HEADER: break;
 						default:
 							state=UNKNOWN_HEADER;
@@ -168,6 +177,12 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 							break;
 						case MAXFORWARDS5:
 							state=MAXFORWARDS6;
+							break;
+					        case RECROUTE2:
+							state=RECROUTE3;
+							break;
+					        case RECROUTE7:
+							state=RECROUTE8;
 							break;
 						case UNKNOWN_HEADER: break;
 						default:
@@ -205,6 +220,9 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 							case ROUTE3:
 								state=ROUTE4;
 								break;
+						        case RECROUTE9:
+								state=RECROUTE10;
+								break;
 							case UNKNOWN_HEADER: break;
 							default:
 								state=UNKNOWN_HEADER;
@@ -219,6 +237,9 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 								break;
 							case CONTACT5:
 								state=CONTACT6;
+								break;
+						        case RECROUTE1:
+								state=RECROUTE2;
 								break;
 							case UNKNOWN_HEADER: break;
 							default:
@@ -255,6 +276,12 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 								break;
 							case ROUTE4:
 								state=F_ROUTE;
+								break;
+						        case ROUTE1:
+								state=RECROUTE1;
+								break;
+						        case RECROUTE10:
+								state=F_RECROUTE;
 								break;
 							case UNKNOWN_HEADER: break;
 							default:
@@ -307,6 +334,9 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 							case MAXFORWARDS10:
 								state=MAXFORWARDS11;
 								break;
+						        case RECROUTE4:
+								state=RECROUTE5;
+								break;
 							case UNKNOWN_HEADER: break;
 							default:
 								state=UNKNOWN_HEADER;
@@ -354,6 +384,9 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 							case MAXFORWARDS3:
 								state=MAXFORWARDS4;
 								break;
+						        case RECROUTE5:
+								state=RECROUTE6;
+								break;
 							case UNKNOWN_HEADER: break;
 							default:
 								state=UNKNOWN_HEADER;
@@ -384,6 +417,9 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 							case ROUTE2:
 								state=ROUTE3;
 								break;
+						        case RECROUTE8:
+								state=RECROUTE9;
+								break;
 							case UNKNOWN_HEADER: break;
 							default:
 								state=UNKNOWN_HEADER;
@@ -400,7 +436,8 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 							case F_CALLID:
 							case F_CONTACT:
 							case F_MAXFORWARDS:
-							case F_ROUTE:
+						        case F_ROUTE:
+						        case F_RECROUTE:
 								break; /* eat trailing space*/
 							case VIA1:
 								/*compact form: v: */
@@ -473,6 +510,11 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 								*t=0;
 								hdr->name.len=t-hdr->name.s;
 								hdr->type=HDR_ROUTE;
+								goto skip;
+						        case F_RECROUTE:
+								*t=0;
+								hdr->name.len=t-hdr->name.s;
+								hdr->type=HDR_RECORDROUTE;
 								goto skip;
 							case UNKNOWN_HEADER:
 								*t=0;
