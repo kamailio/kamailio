@@ -27,6 +27,7 @@
  * History:
  * ---------
  *  2004-10-04  first version (ramona)
+ *  2004-11-11  added support for db schemes for avp_db_load (ramona)
  */
 
 

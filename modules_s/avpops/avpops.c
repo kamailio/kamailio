@@ -27,6 +27,8 @@
  * History:
  * ---------
  *  2004-10-04  first version (ramona)
+ *  2004-11-15  added support for db schemes for avp_db_load (ramona)
+ *  2004-11-17  aligned to new AVP core global aliases (ramona)
  */
 
 
@@ -43,7 +45,6 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "avpops_parse.h"
-#include "avpops_aliases.h"
 #include "avpops_impl.h"
 #include "avpops_db.h"
 
@@ -54,7 +55,6 @@ MODULE_VERSION
 static char *DB_URL        = 0;  /* database url */
 static char *DB_TABLE      = 0;  /* table */
 static int  use_domain     = 0;  /* if domain should be use for avp matching */
-static char *aliases_s     = 0;  /* string definition for avp aliases */
 static char *db_columns[6] = {"uuid","attribute","value",
                               "type","username","domain"};
 
@@ -62,6 +62,7 @@ static char *db_columns[6] = {"uuid","attribute","value",
 static int avpops_init(void);
 static int avpops_child_init(int rank);
 
+static int register_galiases( modparam_t type, param_func_param_t param_val);
 static int fixup_db_load_avp(void** param, int param_no);
 static int fixup_db_delete_avp(void** param, int param_no);
 static int fixup_db_store_avp(void** param, int param_no);
@@ -111,7 +112,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"avp_url",           STR_PARAM, &DB_URL         },
 	{"avp_table",         STR_PARAM, &DB_TABLE       },
-	{"avp_aliases",       STR_PARAM, &aliases_s      },
+	{"avp_aliases",       STR_PARAM|USE_FUNC_PARAM, register_galiases },
 	{"use_domain",        INT_PARAM, &use_domain     },
 	{"uuid_column",       STR_PARAM, &db_columns[0]  },
 	{"attribute_column",  STR_PARAM, &db_columns[1]  },
@@ -137,6 +138,17 @@ struct module_exports exports = {
 
 
 
+static int register_galiases( modparam_t type, param_func_param_t param_val)
+{
+	if (param_val.string!=0 && param_val.string[0]!=0)
+	{
+		if ( add_avp_galias_str( param_val.string )!=0 )
+			return -1;
+	}
+
+	return 0;
+}
+
 
 static int avpops_init(void)
 {
@@ -157,13 +169,6 @@ static int avpops_init(void)
 			goto error;
 	}
 
-	/* parse and add aliases if defined */
-	if (aliases_s)
-	{
-		if ( parse_avp_aliases( aliases_s , '=', ';')!=0 )
-			goto error;
-	}
-
 	init_store_avps( db_columns );
 
 	return 0;
@@ -174,9 +179,6 @@ error:
 
 static int avpops_child_init(int rank)
 {
-	/* we don't need aliases anymore */
-	destroy_avp_aliases();
-
 	/* init DB only if enabled */
 	if (DB_URL==0)
 		return 0;
@@ -193,25 +195,31 @@ static struct fis_param *get_attr_or_alias(char *s)
 {
 	struct fis_param *ap;
 	char *p;
+	int type;
+	str alias;
+
+	/* compose the param structure */
+	ap = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
+	if (ap==0)
+	{
+		LOG(L_ERR,"ERROR:avpops:get_attr_or_alias: no more pkg mem\n");
+		goto error;
+	}
+	memset( ap, 0, sizeof(struct fis_param));
 
 	if (*s=='$')
 	{
 		/* alias */
-		if ( (ap=lookup_avp_alias(s+1))==0 )
+		alias .s = s+1;
+		alias.len = strlen(alias.s);
+		if (lookup_avp_galias( &alias, &type, &ap->val)==-1)
 		{
 			LOG(L_ERR,"ERROR:avpops:get_attr_or_alias: unknow alias"
 				"\"%s\"\n", s+1);
 			goto error;
 		}
+		ap->flags |= (type&AVP_NAME_STR)?AVPOPS_VAL_STR:AVPOPS_VAL_INT;
 	} else {
-		/* compose the param structure */
-		ap = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
-		if (ap==0)
-		{
-			LOG(L_ERR,"ERROR:avpops:get_attr_or_alias: no more pkg mem\n");
-			goto error;
-		}
-		memset( ap, 0, sizeof(struct fis_param));
 		if ( (p=parse_avp_attr( s, ap, 0))==0 || *p!=0)
 		{
 			LOG(L_ERR,"ERROR:avpops:get_attr_or_alias: failed to parse "
@@ -231,6 +239,7 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 	struct fis_param *sp;
 	struct db_param  *dbp;
 	int flags;
+	str alias;
 	char *s;
 	char *p;
 
@@ -244,15 +253,17 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 	s = (char*)*param;
 	if (param_no==1)
 	{
+		/* prepare the fis_param structure */
+		sp = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
+		if (sp==0) {
+			LOG(L_ERR,"ERROR:avpops:fixup_db_avp: no more pkg mem\n");
+			return E_OUT_OF_MEM;
+		}
+		memset( sp, 0, sizeof(struct fis_param));
+
 		if (*s!='$')
 		{
 			/* is a constant string -> use it as uuid*/
-			sp = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
-			if (sp==0) {
-				LOG(L_ERR,"ERROR:avpops:fixup_db_avp: no more pkg mem\n");
-				return E_OUT_OF_MEM;
-			}
-			memset( sp, 0, sizeof(struct fis_param));
 			sp->flags = AVPOPS_VAL_STR;
 			sp->val.s = (str*)pkg_malloc(strlen(s)+1+sizeof(str));
 			if (sp->val.s==0) {
@@ -278,19 +289,20 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 						"<%s>\n",p);
 					return E_UNSPEC;
 				}
-				/* compose the db_param structure */
-				sp = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
-				if (sp==0) {
-					LOG(L_ERR,"ERROR:avpops:fixup_db_avp: no more pkg mem\n");
-					return E_OUT_OF_MEM;
-				}
 				memset( sp, 0, sizeof(struct fis_param));
 				sp->flags = flags|AVPOPS_VAL_NONE;
-			} else if ( p || (sp=lookup_avp_alias(s))==0 )
-			{
-				LOG(L_ERR,"ERROR:avpops:fixup_db_avp: source/flags \"%s\""
-					" unknown!\n",s);
-				return E_UNSPEC;
+			} else {
+				/* can be only an AVP alias */
+				alias .s = s+1;
+				alias.len = strlen(alias.s);
+				if ( p || lookup_avp_galias( &alias, &flags, &sp->val)==-1 )
+				{
+					LOG(L_ERR,"ERROR:avpops:fixup_db_avp: source/flags \"%s\""
+						" unknown!\n",s);
+					return E_UNSPEC;
+				}
+				sp->flags = AVPOPS_VAL_AVP |
+					((flags&AVP_NAME_STR)?AVPOPS_VAL_STR:AVPOPS_VAL_INT);
 			}
 		}
 		pkg_free(*param);
@@ -370,7 +382,7 @@ static int fixup_write_avp(void** param, int param_no)
 						"pkg mem\n");
 					return E_OUT_OF_MEM;
 				}
-				memset( ap, 0, sizeof(struct db_param));
+				memset( ap, 0, sizeof(struct fis_param));
 				/* any falgs ? */
 				if ( p && !( (flags&AVPOPS_USE_SRC_IP)==0 && (
 				(!strcasecmp("username",p) && (flags|=AVPOPS_FLAG_USER)) ||

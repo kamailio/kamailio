@@ -28,6 +28,7 @@
  * ---------
  *  2004-10-04  first version (ramona)
  *  2004-11-11  DB scheme added (ramona)
+ *  2004-11-17  aligned to new AVP core global aliases (ramona)
  */
 
 
@@ -37,9 +38,9 @@
 
 #include "../../ut.h"
 #include "../../dprint.h"
+#include "../../usr_avp.h"
 #include "../../mem/mem.h"
 #include "avpops_parse.h"
-#include "avpops_aliases.h"
 
 
 #define SCHEME_UUID_COL          "uuid_col"
@@ -128,11 +129,11 @@ error:
 
 int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 {
-	struct fis_param *ap;
 	unsigned long ul;
 	str   tmp;
 	char  c;
 	char  have_scheme;
+	int   type;
 
 	/* parse the attribute name - check first if it's not an alias */
 	if ( *s=='$')
@@ -142,23 +143,24 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 		if ( (s=strchr(tmp.s, '/'))!=0 )
 		{
 			c = *s;
-			*s = 0;
+			tmp.len = s - tmp.s;
 		} else {
 			c = 0;
+			tmp.len = strlen(tmp.s);
 		}
-		if (strlen(tmp.s)==0)
+		if (tmp.len==0)
 		{
 			LOG(L_ERR,"ERROR:avpops:parse_avp_db: empty alias in <%s>\n", s);
 			goto error;
 		}
 		/* search the alias */
-		if ( (ap=lookup_avp_alias(tmp.s))==0 )
+		if ( lookup_avp_galias( &tmp, &type, &dbp->a.val)!=0 )
 		{
 			LOG(L_ERR,"ERROR:avpops:parse_avp_db: unknow alias"
 				"\"%s\"\n", tmp.s);
 			goto error;
 		}
-		dbp->a = *ap;
+		dbp->a.flags = (type&AVP_NAME_STR)?AVPOPS_VAL_STR:AVPOPS_VAL_INT;
 	} else {
 		if ( (s=parse_avp_attr( s, &(dbp->a), '/'))==0 )
 			goto error;
@@ -255,77 +257,6 @@ error:
 }
 
 
-
-int  parse_avp_aliases(char *s, char c1, char c2)
-{
-	char *alias;
-	struct fis_param *attr;
-	
-	if (s==0)
-	{
-		LOG(L_ERR,"ERROR:avpops:parse_avp_aliases: null string received\n");
-		goto error;
-	}
-
-	while (*s)
-	{
-		/* skip spaces */
-		while (*s && isspace((int)*s))  s++;
-		if (*s==0)
-			return 0;
-		/* get alias name */
-		alias = s;
-		while (*s && !isspace((int)*s) && c1!=*s )  s++;
-		if (*s==0)
-			goto parse_error;
-		if (*s==c1)
-		{
-			*(s++) = 0; /*make alias null terminated */
-		} else {
-			*(s++) = 0; /*make alias null terminated */
-			/* skip spaces */
-			while (*s && isspace((int)*s))  s++;
-			if (*s!=c1)
-				goto parse_error;
-			s++;
-		}
-		/* skip spaces */
-		while (*s && isspace((int)*s))  s++;	
-		/* get avp attribute name */
-		attr = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
-		if (attr==0)
-		{
-			LOG(L_ERR,"ERROR:avpops:parse_avp_aliases: no more pkg mem\n");
-			goto error;
-		}
-		memset( attr, 0, sizeof(struct fis_param));
-		if ( (s=parse_avp_attr( s, attr, c2))==0)
-			goto parse_error;
-		if (*s==c2)
-			s++;
-		if (attr->flags&AVPOPS_VAL_NONE)
-		{
-			LOG(L_ERR,"ERROR:avpops:parse_avp_aliases: avp must have a name\n");
-			goto error;
-		}
-		/* add alias */
-		if (add_avp_alias( alias, attr)!=0)
-		{
-			LOG(L_ERR,"ERROR:avpops:parse_avp_aliases: failed to add alias\n");
-			goto error;
-		}
-		/* skip spaces */
-		while (*s && isspace((int)*s))  s++;
-	}
-
-	return 0;
-parse_error:
-	LOG(L_ERR,"ERROR:avops:parse_avp_aliases: parse failed in <%s>\n",alias);
-error:
-	return -1;
-}
-
-
 struct fis_param* parse_intstr_value(char *p, int len)
 {
 	struct fis_param *vp;
@@ -403,10 +334,11 @@ struct fis_param* parse_check_value(char *s)
 {
 	struct fis_param *vp;
 	int  flags;
-	char foo;
 	char *p;
 	char *t;
 	int len;
+	int type;
+	str alias;
 
 	flags = 0;
 	vp = 0;
@@ -441,29 +373,32 @@ struct fis_param* parse_check_value(char *s)
 		if (*(++p)==0 || (--len)==0)
 			goto parse_error;
 		flags |= AVPOPS_VAL_NONE;
+		/* struct for value */
+		vp = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
+		if (vp==0) {
+			LOG(L_ERR,"ERROR:avpops:parse_check_value: no more pkg mem\n");
+			goto error;
+		}
+		memset( vp, 0, sizeof(struct fis_param));
 		/* variable -> which one? */
 		if ( (strncasecmp(p,"ruri"  ,len)==0 && (flags|=AVPOPS_USE_RURI))
 		  || (strncasecmp(p,"from"  ,len)==0 && (flags|=AVPOPS_USE_FROM))
 		  || (strncasecmp(p,"to"    ,len)==0 && (flags|=AVPOPS_USE_TO))
 		  || (strncasecmp(p,"src_ip",len)==0 && (flags|=AVPOPS_USE_SRC_IP)))
 		{
-			vp = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
-			if (vp==0) {
-				LOG(L_ERR,"ERROR:avpops:parse_check_value: no more pkg mem\n");
-				goto error;
-			}
-			memset( vp, 0, sizeof(struct fis_param));
 			flags |= AVPOPS_VAL_NONE;
 		} else {
-			foo = p[len];
-			p[len] = 0; /* make the string null terminated */
-			vp = lookup_avp_alias(p);
-			p[len] = foo;
-			if ( vp==0 ) {
+			alias.s = p;
+			alias.len = len;
+			if ( lookup_avp_galias( &alias, &type, &vp->val)!=0 )
+			{
 				LOG(L_ERR,"ERROR:avpops:parse_check_value: unknown "
 					"variable/alias <%.*s>\n",len,p);
 				goto error;
 			}
+			flags |= AVPOPS_VAL_AVP |
+				((type&AVP_NAME_STR)?AVPOPS_VAL_STR:AVPOPS_VAL_INT);
+			DBG("flag==%d\n",flags);
 		}
 		p += len;
 	} else {
