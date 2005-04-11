@@ -1255,8 +1255,13 @@ testSourceAddress(struct sip_msg* msg)
     int via1Port;
 
     diffIP   = received_test(msg);
-    via1Port = (msg->via1->port ? msg->via1->port : SIP_PORT);
-    diffPort = (msg->rcv.src_port != via1Port);
+    if (isSIPAsymmetric(getUserAgent(msg))) {
+        // ignore port test for asymmetric clients (it's always different)
+        diffPort = False;
+    } else {
+        via1Port = (msg->via1->port ? msg->via1->port : SIP_PORT);
+        diffPort = (msg->rcv.src_port != via1Port);
+    }
 
     return (diffIP || diffPort);
 }

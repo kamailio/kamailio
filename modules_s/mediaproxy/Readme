@@ -184,8 +184,11 @@ modparam("mediaproxy", "natping_interval", 20)
 
       1 - tests if client has a private IP address (as defined by RFC1918)
           in the Contact field of the SIP message.
-      2 - tests if client has contacted SER from an address that is
-          different from the one in the Via field.
+
+      2 - tests if client has contacted SER from an address that is different
+          from the one in the 1st Via field. Both IP and port are checked,
+          except for asymmetric clients for which the port is ignored.
+
       4 - tests if client has a private IP address (as defined by RFC1918)
           in the top Via field of the SIP message.
 
