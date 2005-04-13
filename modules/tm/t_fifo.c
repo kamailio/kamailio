@@ -84,8 +84,8 @@
 
 int tm_unix_tx_timeout = 2; /* Default is 2 seconds */
 
-#define TWRITE_PARAMS          21
-#define TWRITE_VERSION_S       "0.2"
+#define TWRITE_PARAMS          20
+#define TWRITE_VERSION_S       "0.3"
 #define TWRITE_VERSION_LEN     (sizeof(TWRITE_VERSION_S)-1)
 #define eol_line(_i_)          ( lines_eol[2*(_i_)] )
 
@@ -853,28 +853,27 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 
 	eol_line(2)=REQ_LINE(msg).method;     /* method type */
 	eol_line(3)=msg->parsed_uri.user;     /* user from r-uri */
-	eol_line(4)=empty_param;              /* email - TODO -remove it */
-	eol_line(5)=msg->parsed_uri.host;     /* domain */
+	eol_line(4)=msg->parsed_uri.host;     /* domain */
 
-	eol_line(6)=msg->rcv.bind_address->address_str; /* dst ip */
+	eol_line(5)=msg->rcv.bind_address->address_str; /* dst ip */
 
-	eol_line(7)=msg->rcv.dst_port==SIP_PORT ?
+	eol_line(6)=msg->rcv.dst_port==SIP_PORT ?
 			empty_param : msg->rcv.bind_address->port_no_str; /* port */
 
 	/* r_uri ('Contact:' for next requests) */
-	eol_line(8)=msg->first_line.u.request.uri;
+	eol_line(7)=msg->first_line.u.request.uri;
 
 	/* r_uri for subsequent requests */
-	eol_line(9)=str_uri.len?str_uri:empty_param;
+	eol_line(8)=str_uri.len?str_uri:empty_param;
 
-	eol_line(10)=get_from(msg)->body;		/* from */
-	eol_line(11)=msg->to->body;			/* to */
-	eol_line(12)=msg->callid->body;		/* callid */
-	eol_line(13)=get_from(msg)->tag_value;	/* from tag */
-	eol_line(14)=get_to(msg)->tag_value;	/* to tag */
-	eol_line(15)=get_cseq(msg)->number;	/* cseq number */
+	eol_line(9)=get_from(msg)->body;		/* from */
+	eol_line(10)=msg->to->body;			/* to */
+	eol_line(11)=msg->callid->body;		/* callid */
+	eol_line(12)=get_from(msg)->tag_value;	/* from tag */
+	eol_line(13)=get_to(msg)->tag_value;	/* to tag */
+	eol_line(14)=get_cseq(msg)->number;	/* cseq number */
 
-	eol_line(16).s=id_buf;       /* hash:label */
+	eol_line(15).s=id_buf;       /* hash:label */
 	s = int2str(hash_index, &l);
 	if (l+1>=IDBUF_LEN) {
 		LOG(L_ERR, "assemble_msg: too big hash\n");
@@ -882,19 +881,19 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	}
 	memcpy(id_buf, s, l);
 	id_buf[l]=':';
-	eol_line(16).len=l+1;
+	eol_line(15).len=l+1;
 	s = int2str(label, &l);
-	if (l+1+eol_line(16).len>=IDBUF_LEN) {
+	if (l+1+eol_line(15).len>=IDBUF_LEN) {
 		LOG(L_ERR, "assemble_msg: too big label\n");
 		goto error;
 	}
-	memcpy(id_buf+eol_line(16).len, s, l);
-	eol_line(16).len+=l;
+	memcpy(id_buf+eol_line(15).len, s, l);
+	eol_line(15).len+=l;
 
-	eol_line(17) = route.len ? route : empty_param;
-	eol_line(18) = next_hop;
-	eol_line(19) = append;
-	eol_line(20) = body;
+	eol_line(16) = route.len ? route : empty_param;
+	eol_line(17) = next_hop;
+	eol_line(18) = append;
+	eol_line(19) = body;
 
 	/* success */
 	return 1;
