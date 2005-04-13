@@ -84,8 +84,8 @@
 
 int tm_unix_tx_timeout = 2; /* Default is 2 seconds */
 
-#define TWRITE_PARAMS          21
-#define TWRITE_VERSION_S       "0.2"
+#define TWRITE_PARAMS          20
+#define TWRITE_VERSION_S       "0.3"
 #define TWRITE_VERSION_LEN     (sizeof(TWRITE_VERSION_S)-1)
 #define eol_line(_i_)          ( lines_eol[2*(_i_)] )
 
@@ -354,7 +354,7 @@ int parse_tw_append( modparam_t type, void* val)
 			}
 			foo.s[foo.len] = bar;
 			ha->ival = hdr.type;
-			if (hdr.type==HDR_OTHER_T || ha->title.s==0) {
+			if (hdr.type==HDR_OTHER || ha->title.s==0) {
 				/* duplicate hdr name */
 				ha->sval.s = (char*)pkg_malloc(foo.len+1);
 				if (ha->sval.s==0) {
@@ -559,7 +559,7 @@ error:
 
 
 static inline char* add2buf(char *buf, char *end, char *title, int title_len,
-												char *value , int value_len)
+			    char *value , int value_len)
 {
 	if (buf+title_len+value_len+2+1>=end)
 		return 0;
@@ -575,7 +575,7 @@ static inline char* add2buf(char *buf, char *end, char *title, int title_len,
 
 
 static inline char* append2buf( char *buf, int len, struct sip_msg *req, 
-														struct hdr_avp *ha)
+				struct hdr_avp *ha)
 {
 	struct hdr_field *hdr;
 	struct usr_avp   *avp;
@@ -594,9 +594,11 @@ static inline char* append2buf( char *buf, int len, struct sip_msg *req,
 			if (ha->sval.s) {
 				avp_name.s=&ha->sval;
 				avp = search_first_avp( AVP_NAME_STR, avp_name, &avp_val);
+				DBG("AVP <%.*s>: %x\n",avp_name.s->len,avp_name.s->s,(unsigned int)avp);
 			} else {
 				avp_name.n=ha->ival;
 				avp = search_first_avp( 0, avp_name, &avp_val);
+				DBG("AVP <%i>: %x\n",avp_name.n,(unsigned int)avp);
 			}
 			if (avp) {
 				if (avp->flags&AVP_VAL_STR) {
@@ -615,14 +617,14 @@ static inline char* append2buf( char *buf, int len, struct sip_msg *req,
 		} else if (ha->type==ELEM_IS_HDR) {
 			/* parse the HDRs */
 			if (!msg_parsed) {
-				if (parse_headers( req, HDR_EOH_F, 0)!=0) {
+				if (parse_headers( req, HDR_EOH, 0)!=0) {
 					LOG(L_ERR,"ERROR:tm:append2buf: parsing hdrs failed\n");
 					goto error;
 				}
 				msg_parsed = 1;
 			}
 			/* search the HDR */
-			if (ha->ival==HDR_OTHER_T) {
+			if (ha->ival==HDR_OTHER) {
 				for(hdr=req->headers;hdr;hdr=hdr->next)
 					if (ha->sval.len==hdr->name.len &&
 					strncasecmp( ha->sval.s, hdr->name.s, hdr->name.len)==0)
@@ -681,7 +683,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	}
 
 	/* parse all -- we will need every header field for a UAS */
-	if ( parse_headers(msg, HDR_EOH_F, 0)==-1) {
+	if ( parse_headers(msg, HDR_EOH, 0)==-1) {
 		LOG(L_ERR,"assemble_msg: parse_headers failed\n");
 		goto error;
 	}
@@ -771,7 +773,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 		}
 		for(p_hdr = p_hdr->next;p_hdr;p_hdr = p_hdr->next) {
 			/* filter out non-RR hdr and empty hdrs */
-			if( (p_hdr->type!=HDR_RECORDROUTE_T) || p_hdr->body.len==0)
+			if( (p_hdr->type!=HDR_RECORDROUTE) || p_hdr->body.len==0)
 				continue;
 
 			if(p_hdr->parsed==0 && parse_rr(p_hdr)!=0 ){
@@ -816,13 +818,19 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 
 	/* additional headers */
 	append.s = s = append_buf;
-	if (sizeof(flag_t)+12+1 >= APPEND_BUFFER_MAX) {
+	if (sizeof(flag_t)*2+12+1 >= APPEND_BUFFER_MAX) {
 		LOG(L_ERR,"assemble_msg: buffer overflow "
 		    "while copying optional header\n");
 		goto error;
 	}
 	append_str(s,"P-MsgFlags: ",12);
-	int2reverse_hex(&s, &l, (int)msg->msg_flags);
+	l = APPEND_BUFFER_MAX - (12+1); /* include trailing `\n'*/
+
+	if (int2reverse_hex(&s, &l, (int)msg->msg_flags) == -1) {
+		LOG(L_ERR,"assemble_msg: buffer overflow "
+		    "while copying optional header\n");
+		goto error;
+	}
 	append_chr(s,'\n');
 
 	if ( twi->append && ((s=append2buf( s, APPEND_BUFFER_MAX-(s-append.s), msg,
@@ -845,28 +853,27 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 
 	eol_line(2)=REQ_LINE(msg).method;     /* method type */
 	eol_line(3)=msg->parsed_uri.user;     /* user from r-uri */
-	eol_line(4)=empty_param;              /* email - TODO -remove it */
-	eol_line(5)=msg->parsed_uri.host;     /* domain */
+	eol_line(4)=msg->parsed_uri.host;     /* domain */
 
-	eol_line(6)=msg->rcv.bind_address->address_str; /* dst ip */
+	eol_line(5)=msg->rcv.bind_address->address_str; /* dst ip */
 
-	eol_line(7)=msg->rcv.dst_port==SIP_PORT ?
+	eol_line(6)=msg->rcv.dst_port==SIP_PORT ?
 			empty_param : msg->rcv.bind_address->port_no_str; /* port */
 
 	/* r_uri ('Contact:' for next requests) */
-	eol_line(8)=msg->first_line.u.request.uri;
+	eol_line(7)=msg->first_line.u.request.uri;
 
 	/* r_uri for subsequent requests */
-	eol_line(9)=str_uri.len?str_uri:empty_param;
+	eol_line(8)=str_uri.len?str_uri:empty_param;
 
-	eol_line(10)=get_from(msg)->body;		/* from */
-	eol_line(11)=msg->to->body;			/* to */
-	eol_line(12)=msg->callid->body;		/* callid */
-	eol_line(13)=get_from(msg)->tag_value;	/* from tag */
-	eol_line(14)=get_to(msg)->tag_value;	/* to tag */
-	eol_line(15)=get_cseq(msg)->number;	/* cseq number */
+	eol_line(9)=get_from(msg)->body;		/* from */
+	eol_line(10)=msg->to->body;			/* to */
+	eol_line(11)=msg->callid->body;		/* callid */
+	eol_line(12)=get_from(msg)->tag_value;	/* from tag */
+	eol_line(13)=get_to(msg)->tag_value;	/* to tag */
+	eol_line(14)=get_cseq(msg)->number;	/* cseq number */
 
-	eol_line(16).s=id_buf;       /* hash:label */
+	eol_line(15).s=id_buf;       /* hash:label */
 	s = int2str(hash_index, &l);
 	if (l+1>=IDBUF_LEN) {
 		LOG(L_ERR, "assemble_msg: too big hash\n");
@@ -874,19 +881,19 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	}
 	memcpy(id_buf, s, l);
 	id_buf[l]=':';
-	eol_line(16).len=l+1;
+	eol_line(15).len=l+1;
 	s = int2str(label, &l);
-	if (l+1+eol_line(16).len>=IDBUF_LEN) {
+	if (l+1+eol_line(15).len>=IDBUF_LEN) {
 		LOG(L_ERR, "assemble_msg: too big label\n");
 		goto error;
 	}
-	memcpy(id_buf+eol_line(16).len, s, l);
-	eol_line(16).len+=l;
+	memcpy(id_buf+eol_line(15).len, s, l);
+	eol_line(15).len+=l;
 
-	eol_line(17) = route.len ? route : empty_param;
-	eol_line(18) = next_hop;
-	eol_line(19) = append;
-	eol_line(20) = body;
+	eol_line(16) = route.len ? route : empty_param;
+	eol_line(17) = next_hop;
+	eol_line(18) = append;
+	eol_line(19) = body;
 
 	/* success */
 	return 1;
