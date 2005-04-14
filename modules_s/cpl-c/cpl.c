@@ -208,13 +208,13 @@ static int cpl_init(void)
 
 	/* check the module params */
 	if (DB_URL==0) {
-		LOG(L_CRIT,"ERROR:cpl_init: mandatory parameter \"DB_URL\" "
+		LOG(L_CRIT,"ERROR:cpl_init: mandatory parameter \"cpl_db\" "
 			"found empty\n");
 		goto error;
 	}
 
 	if (DB_TABLE==0) {
-		LOG(L_CRIT,"ERROR:cpl_init: mandatory parameter \"DB_TABLE\" "
+		LOG(L_CRIT,"ERROR:cpl_init: mandatory parameter \"cpl_table\" "
 			"found empty\n");
 		goto error;
 	}
