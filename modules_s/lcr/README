@@ -154,7 +154,18 @@ Chapter 1. User's Guide
       break;
    };
 
-1.4.4. load_contacts()
+1.4.4. to_gw()
+
+   Checks if in-dialog request goes to a gateway.
+
+   Example:
+   
+   if (to_gw()) {
+      ...
+      break;
+   };
+
+1.4.5. load_contacts()
 
    Loads contacts in destination set in increasing qvalue order as
    values of lcr_contact AVP.  If all contacts in the destination set
@@ -170,7 +181,7 @@ Chapter 1. User's Guide
       break;
    };
 
-1.4.5. next_contacts()
+1.4.6. next_contacts()
 
    If called from a route block, replaces Request-URI with the first
    lcr_contact AVP value, adds the remaining lcr_contact AVP values with

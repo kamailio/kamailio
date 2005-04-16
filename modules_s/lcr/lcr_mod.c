@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../ut.h"
@@ -176,6 +177,7 @@ struct tm_binds tmb;
 int load_gws(struct sip_msg* _m, char* _s1, char* _s2);
 int next_gw(struct sip_msg* _m, char* _s1, char* _s2);
 int from_gw(struct sip_msg* _m, char* _s1, char* _s2);
+int to_gw(struct sip_msg* _m, char* _s1, char* _s2);
 int load_contacts (struct sip_msg*, char*, char*);
 int next_contacts (struct sip_msg*, char*, char*);
 
@@ -187,6 +189,7 @@ static cmd_export_t cmds[] = {
 	{"load_gws",      load_gws,      0, 0, REQUEST_ROUTE},
 	{"next_gw",       next_gw,       0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"from_gw",       from_gw,       0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"to_gw",         to_gw,         0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"load_contacts", load_contacts, 0, 0, REQUEST_ROUTE},
 	{"next_contacts", next_contacts, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
@@ -749,6 +752,8 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	act.type = APPEND_BRANCH_T;
 	act.p1_type = STRING_ST;
 	act.p1.string = uri.s; 
+	act.p2_type = NUMBER_ST;
+	act.p2.number = 0;
 	rval = do_action(&act, _m);
 
 	pkg_free(uri.s);
@@ -780,6 +785,45 @@ int from_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	    if ((*gws)[i].ip_addr == src_addr) {
 		    return 1;
 	    }
+    }
+
+    return -1;
+}
+
+
+/*
+ * Checks if in-dialog request goes to gateway
+ */
+int to_gw(struct sip_msg* _m, char* _s1, char* _s2)
+{
+    char host[16];
+    struct in_addr addr;
+    unsigned int i;
+
+    if((_m->parsed_uri_ok == 0) && (parse_sip_msg_uri(_m) < 0)) {
+	LOG(L_ERR, "LCR: to_gw: ERROR while parsing the R-URI\n");
+	return -1;
+    }
+
+    if (_m->parsed_uri.host.len > 15) {
+	LOG(L_ERR, "LCR: to_gw: too long R-URI host\n");
+	return -1;
+    }
+    memcpy(host, _m->parsed_uri.host.s, _m->parsed_uri.host.len);
+    host[_m->parsed_uri.host.len] = 0;
+    
+    if (!inet_aton(host, &addr)) {
+	LOG(L_ERR, "LCR: to_gw: host is not valid IP address\n");
+	return -1;
+    }
+
+    for (i = 0; i < MAX_NO_OF_GWS; i++) {
+	if ((*gws)[i].ip_addr == 0) {
+	    return -1;
+	}
+	if ((*gws)[i].ip_addr == addr.s_addr) {
+	    return 1;
+	}
     }
 
     return -1;
@@ -969,6 +1013,8 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 	    act.type = APPEND_BRANCH_T;
 	    act.p1_type = STRING_ST;
 	    act.p1.string = val.s->s;
+	    act.p2_type = NUMBER_ST;
+	    act.p2.number = 0;
 	    rval = do_action(&act, msg);
 	    if (rval != 1) {
 		destroy_avp(avp);
@@ -999,6 +1045,8 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 	    act.type = APPEND_BRANCH_T;
 	    act.p1_type = STRING_ST;
 	    act.p1.string = val.s->s;
+	    act.p2_type = NUMBER_ST;
+	    act.p2.number = 0;
 	    rval = do_action(&act, msg);
 	    if (rval != 1) {
 		destroy_avp(avp);
