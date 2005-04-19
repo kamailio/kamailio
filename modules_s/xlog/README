@@ -54,6 +54,7 @@ Chapter 1. User's Guide
 
      * %% : '%'
      * %br : request's first branch
+     * %bR : request's all branches
      * %ci : call-id
      * %cs : cseq
      * %ct : contact header
@@ -86,7 +87,8 @@ Chapter 1. User's Guide
        the second N=1, a.s.o. To print the last header of that
        type, use -1, no other negative values are supported now.
        No white spaces are allowed inside the specifier (before
-       }, before or after {, [, ] symbols).
+       }, before or after {, [, ] symbols). When N='*', all
+	   headers of that type are printed.
        The module should identify most of compact header names
        (the ones recognized by ser which should be all at this
        moment), if not, the compact form has to be specified

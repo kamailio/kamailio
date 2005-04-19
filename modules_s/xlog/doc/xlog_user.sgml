@@ -35,6 +35,11 @@
 	    </listitem>
 	    <listitem>
 		<para>
+		    %bR : request's all branches
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
 		    %ci : call-id
 		</para>
 	    </listitem>
@@ -167,7 +172,7 @@
 			a.s.o. To print the last header of that type, use -1, no other
 			negative values are supported now. No white spaces are allowed
 			inside the specifier (before }, before or after {, [, ]
-			symbols).
+			symbols). When N='*', all headers of that type are printed.
 		</para>
 		<para>
 			The module should identify most of compact header names (the ones

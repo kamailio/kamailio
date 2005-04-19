@@ -52,12 +52,19 @@
 
 #include "xl_lib.h"
 
-static str str_null = { "<null>", 6 };
-static str str_per = { "%", 1 };
+static str str_null  = { "<null>", 6 };
+static str str_empty = { "", 0 };
+static str str_per   = { "%", 1 };
 
 int msg_id = 0;
 time_t msg_tm = 0;
 int cld_pid = 0;
+
+#define XLOG_FIELD_DELIM ", "
+#define XLOG_FIELD_DELIM_LEN (sizeof(XLOG_FIELD_DELIM) - 1)
+
+#define LOCAL_BUF_SIZE	511
+static char local_buf[LOCAL_BUF_SIZE+1];
 
 static int xl_get_null(struct sip_msg *msg, str *res, str *hp, int hi)
 {
@@ -66,6 +73,16 @@ static int xl_get_null(struct sip_msg *msg, str *res, str *hp, int hi)
 	
 	res->s = str_null.s;
 	res->len = str_null.len;
+	return 0;
+}
+
+static int xl_get_empty(struct sip_msg *msg, str *res, str *hp, int hi)
+{
+	if(msg==NULL || res==NULL)
+		return -1;
+	
+	res->s = str_empty.s;
+	res->len = str_empty.len;
 	return 0;
 }
 
@@ -223,30 +240,6 @@ static int xl_get_ruri(struct sip_msg *msg, str *res, str *hp, int hi)
 		res->len = msg->first_line.u.request.uri.len;
 	}
 	
-	return 0;
-}
-
-static int xl_get_branch(struct sip_msg *msg, str *res, str *hp, int hi)
-{
-	str branch;
-	qvalue_t q;
-
-	if(msg==NULL || res==NULL)
-		return -1;
-
-	if(msg->first_line.type == SIP_REPLY)	/* REPLY doesnt have a branch */
-		return xl_get_null(msg, res, hp, hi);
-
-
-	init_branch_iterator();
-	branch.s = next_branch(&branch.len, &q, 0, 0, 0);
-	if (!branch.s) {
-		return xl_get_null(msg, res, hp, hi);
-	}
-	
-	res->s = branch.s;
-	res->len = branch.len;
-
 	return 0;
 }
 
@@ -547,9 +540,114 @@ static int xl_get_dset(struct sip_msg *msg, str *res, str *hp, int hi)
     return 0;
 }
 
+static int xl_get_branch(struct sip_msg *msg, str *res, str *hp, int hi)
+{
+	str branch;
+	qvalue_t q;
+
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REPLY)
+		return xl_get_null(msg, res, hp, hi);
+
+
+	init_branch_iterator();
+	branch.s = next_branch(&branch.len, &q, 0, 0, 0);
+	if (!branch.s) {
+		return xl_get_null(msg, res, hp, hi);
+	}
+	
+	res->s = branch.s;
+	res->len = branch.len;
+
+	return 0;
+}
+
+#define Q_PARAM ">;q="
+#define Q_PARAM_LEN (sizeof(Q_PARAM) - 1)
+
+static int xl_get_branches(struct sip_msg *msg, str *res, str *hp, int hi)
+{
+	str uri;
+	qvalue_t q;
+	int len, cnt, i, qlen;
+	char *p, *qbuf;
+
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REPLY)
+		return xl_get_null(msg, res, hp, hi);
+  
+	cnt = len = 0;
+
+	init_branch_iterator();
+	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0)))
+	{
+		cnt++;
+		len += uri.len;
+		if (q != Q_UNSPECIFIED)
+		{
+			len += 1 + Q_PARAM_LEN + len_q(q);
+		}
+	}
+
+	if (cnt == 0)
+		return xl_get_empty(msg, res, hp, hi);   
+
+	len += (cnt - 1) * XLOG_FIELD_DELIM_LEN;
+
+	if (len + 1 > LOCAL_BUF_SIZE)
+	{
+		LOG(L_ERR, "ERROR:xl_get_branches: local buffer length exceeded\n");
+		return xl_get_null(msg, res, hp, hi);
+	}
+
+	i = 0;
+	p = local_buf;
+
+	init_branch_iterator();
+	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0)))
+	{
+		if (i)
+		{
+			memcpy(p, XLOG_FIELD_DELIM, XLOG_FIELD_DELIM_LEN);
+			p += XLOG_FIELD_DELIM_LEN;
+		}
+
+		if (q != Q_UNSPECIFIED)
+		{
+			*p++ = '<';
+		}
+
+		memcpy(p, uri.s, uri.len);
+		p += uri.len;
+		if (q != Q_UNSPECIFIED)
+		{
+			memcpy(p, Q_PARAM, Q_PARAM_LEN);
+			p += Q_PARAM_LEN;
+
+			qbuf = q2str(q, &qlen);
+			memcpy(p, qbuf, qlen);
+			p += qlen;
+		}
+		i++;
+	}
+
+	res->s = &(local_buf[0]);
+	res->len = len;
+
+	return 0;
+}
+
+#define XLOG_PRINT_ALL	-2
+#define XLOG_PRINT_LAST	-1
+
 static int xl_get_header(struct sip_msg *msg, str *res, str *hp, int hi)
 {
 	struct hdr_field *hf, *hf0;
+	char *p;
 	
 	if(msg==NULL || res==NULL)
 		return -1;
@@ -558,6 +656,7 @@ static int xl_get_header(struct sip_msg *msg, str *res, str *hp, int hi)
 		return xl_get_null(msg, res, hp, hi);
 	
 	hf0 = NULL;
+	p = local_buf;
 
 	/* we need to be sure we have parsed all headers */
 	parse_headers(msg, HDR_EOH_F, 0);
@@ -575,6 +674,31 @@ static int xl_get_header(struct sip_msg *msg, str *res, str *hp, int hi)
 		}
 		
 		hf0 = hf;
+		if(hi==XLOG_PRINT_ALL)
+		{
+			if(p!=local_buf)
+			{
+				if(p-local_buf+XLOG_FIELD_DELIM_LEN+1>LOCAL_BUF_SIZE)
+				{
+					LOG(L_ERR,
+						"ERROR:xl_get_header: local buffer length exceeded\n");
+					return xl_get_null(msg, res, hp, hi);
+				}
+				memcpy(p, XLOG_FIELD_DELIM, XLOG_FIELD_DELIM_LEN);
+				p += XLOG_FIELD_DELIM_LEN;
+			}
+			
+			if(p-local_buf+hf0->body.len+1>LOCAL_BUF_SIZE)
+			{
+				LOG(L_ERR,
+					"ERROR:xl_get_header: local buffer length exceeded!\n");
+				return xl_get_null(msg, res, hp, hi);
+			}
+			memcpy(p, hf0->body.s, hf0->body.len);
+			p += hf0->body.len;
+			continue;
+		}
+		
 		if(hi==0)
 			goto done;
 		if(hi>0)
@@ -582,6 +706,14 @@ static int xl_get_header(struct sip_msg *msg, str *res, str *hp, int hi)
 	}
 	
 done:
+	if(hi==XLOG_PRINT_ALL)
+	{
+		*p = 0;
+		res->s = local_buf;
+		res->len = p - local_buf;
+		return 0;
+	}
+	
 	if(hf0==NULL || hi>0)
 		return xl_get_null(msg, res, hp, hi);
 	res->s = hf0->body.s;
@@ -635,6 +767,9 @@ int xl_parse_format(char *s, xl_elog_p *el)
 				{
 					case 'r':
 						e->itf = xl_get_branch;
+					break;
+					case 'R':
+						e->itf = xl_get_branches;
 					break;
 					default:
 						e->itf = xl_get_null;
@@ -838,11 +973,12 @@ int xl_parse_format(char *s, xl_elog_p *el)
 								" as a negative index\n", s);
 								goto error;
 						}
-						e->hindex = -1;
+						e->hindex = XLOG_PRINT_LAST;
 						p++;
-					}
-					else
-					{
+					} else if (*p=='*') {
+						e->hindex = XLOG_PRINT_ALL;
+						p++;
+					} else {
 						while(*p>='0' && *p<='9')
 						{
 							e->hindex = e->hindex * 10 + *p - '0';
