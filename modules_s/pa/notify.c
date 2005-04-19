@@ -297,10 +297,13 @@ static int add_contact_hf(str* _h, int _l, str *_c)
 		LOG(L_ERR, "add_contact_hf(): Buffer too small\n");
 		return -1;
 	}
-		
+
+	/* prevent double insertion of Content-Type with SIP URI */
+#if 0
 	str_append(_h, CONTENT_TYPE, CONTENT_TYPE_L);
 	str_append(_h, _c->s, _c->len);
 	str_append(_h, CRLF, CRLF_L);
+#endif
 	return 0;
 }
 
@@ -363,6 +366,14 @@ static int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 	if (xpidf_add_presentity(&body, BUF_LEN - body.len, &_p->uri) < 0) {
 		LOG(L_ERR, "send_xpidf_notify(): xpidf_add_presentity failed\n");
 		return -3;
+	}
+	if (!tuple) {
+		 LOG(L_ERR, "send_xpidf_notify() NO TUPLE\n");
+		 st = XPIDF_ST_CLOSED;
+		 if (xpidf_add_address(&body, BUF_LEN - body.len, &_p->uri, st) < 0) {
+             LOG(L_ERR, "send_xpidf_notify(): xpidf_add_address failed\n");
+             return -3;
+         }
 	}
 	while (tuple) {
 
@@ -449,7 +460,7 @@ static int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 		LOG(L_ERR, "send_pidf_notify(): pidf_add_presentity failed\n");
 		return -3;
 	}
-
+	/* XXX add !tuple handler */
 	if (tuple) {
 		while (tuple) {
 			if (pidf_start_tuple(&body, &tuple->id, BUF_LEN - body.len) < 0) {
