@@ -60,6 +60,7 @@ struct mime_type {
 #define SUBTYPE_XPIDFXML     9
 #define SUBTYPE_WATCHERINFOXML     10
 #define SUBTYPE_EXTERNAL_BODY      11
+#define SUBTYPE_XML_MSRTC_PIDF     12
 #define SUBTYPE_ALL          0xfe
 #define SUBTYPE_UNKNOWN      0xff
 
