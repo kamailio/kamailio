@@ -149,14 +149,20 @@ static struct mimetype_test {
 	const char *string;
 	int parsed;
 } mimetype_tests[] = {
+	{ "text/plain", MIMETYPE(TEXT,PLAIN) },
+	{ "message/cpim", MIMETYPE(MESSAGE,CPIM) },
+	{ "application/sdp", MIMETYPE(APPLICATION,SDP) },
+	{ "application/cpl+xml", MIMETYPE(APPLICATION,CPLXML) },
 	{ "application/pidf+xml", MIMETYPE(APPLICATION,PIDFXML) },
-	{ "application/xpidf+xml", MIMETYPE(APPLICATION,XPIDFXML) },
 	{ "application/rlmi+xml", MIMETYPE(APPLICATION,RLMIXML) },
 	{ "multipart/related", MIMETYPE(MULTIPART,RELATED) },
-	{ "text/plain", MIMETYPE(TEXT,PLAIN) },
+	{ "application/lpidf+xml", MIMETYPE(APPLICATION,LPIDFXML) },
+	{ "application/xpidf+xml", MIMETYPE(APPLICATION,XPIDFXML) },
+	{ "application/watcherinfo+xml", MIMETYPE(APPLICATION,WATCHERINFOXML) },
 	{ "application/external-body", MIMETYPE(APPLICATION,EXTERNAL_BODY) },
+	{ "application/*", MIMETYPE(APPLICATION,ALL) },
 #ifdef SUBTYPE_XML_MSRTC_PIDF
-	{ "text/xml+msrtcp.idf", MIMETYPE(TEXT,XML_MSRTC_PIDF) },
+	{ "text/xml+msrtcp.pidf", MIMETYPE(TEXT,XML_MSRTC_PIDF) },
 #endif
 	{ NULL, 0 }
 };
@@ -167,9 +173,10 @@ static void test_mimetype_parser(void)
 	DBG("Presence Agent - testing mimetype parser\n");
 	while (mt->string) {
 		int pmt;
+		LOG(L_DBG, "Presence Agent - parsing mimetype %s\n", mt->string);
 		decode_mime_type(mt->string, mt->string+strlen(mt->string), &pmt);
 		if (pmt != mt->parsed) {
-			DBG("Parsed mimetype %s got %x expected %x\n",
+			LOG(L_ERR, "Parsed mimetype %s got %x expected %x\n",
 			    mt->string, pmt, mt->parsed);
 		}
 		mt++;
@@ -285,7 +292,7 @@ static int pa_child_init(int _rank)
 static void pa_destroy(void)
 {
 	free_all_pdomains();
-	if (use_db) {
+	if (use_db && (pa_dbf.close != NULL) && (pa_db != NULL)) {
 		pa_dbf.close(pa_db);
 	}
 }
