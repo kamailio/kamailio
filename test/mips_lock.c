@@ -1,10 +1,12 @@
 /*
- *
+ * $Id$
+ * 
  *  simple locking test program
  *  (no paralles stuff)
  * 
- *  Compile with: gcc -D__CPU_i386 -O3 on x86 machines and
- *                gcc -mips2 -O2 -D__CPU_mips  on mips machines.
+ *  Compile with: gcc -D__CPU_i386 -O3 -o mips_lock on x86 machines and
+ *                gcc -mips2 -O2 -D__CPU_mips  -o mips_lock on mips machines.
+ *                gcc -O3 -D__CPU_alpha -o mips_lock on alphas
  *  -- andrei
  *
  *  
@@ -20,7 +22,27 @@ int tsl(fl_lock_t* lock)
 {
 	long val;
 	
-#ifdef __CPU_mips
+#ifdef __CPU_alpha
+	long tmp=0;
+	/* lock low bit set to 1 when the lock is hold and to 0 otherwise */
+	asm volatile(
+		"1:  ldl %0, %1   \n\t"
+		"    blbs %0, 2f  \n\t"  /* optimization if locked */
+		"    ldl_l %0, %1 \n\t"
+		"    blbs %0, 2f  \n\t" 
+		"    lda %2, 1    \n\t"  /* or: or $31, 1, %2 ??? */
+		"    stl_c %2, %1 \n\t"
+		"    beq %2, 1b   \n\t"
+		"    mb           \n\t"
+		"2:               \n\t"
+		:"=&r" (val), "=m"(*lock), "=r"(tmp)
+		:"1"(*lock)  /* warning on gcc 3.4: replace it with m or remove
+						it and use +m in the input line ? */
+		: "memory"
+	);
+				
+				
+#elif defined __CPU_mips
 	long tmp=0;
 	
 	asm volatile(
@@ -32,7 +54,7 @@ int tsl(fl_lock_t* lock)
 		"    nop \n\t"
 		".set reorder\n\t"
 		: "=&r" (tmp), "=&r" (val), "=m" (*lock) 
-		: "0" (tmp), "2" (*lock) 
+		: "2" (*lock) 
 		: "cc"
 	);
 #elif defined __CPU_i386
@@ -51,7 +73,15 @@ int tsl(fl_lock_t* lock)
 
 void release_lock(fl_lock_t* lock)
 {
-#ifdef __CPU_mips
+#ifdef __CPU_alpha
+	asm volatile(
+			"    mb          \n\t"
+			"    stl $31, %0 \n\t"
+			: "=m"(*lock)
+			:
+			: "memory"  /* because of the mb */
+			);  
+#elif defined __CPU_mips
 	int tmp;
 	tmp=0;
 	asm volatile(
