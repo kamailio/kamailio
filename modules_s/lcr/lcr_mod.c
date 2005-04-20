@@ -949,8 +949,7 @@ rest:
 	free_contact_list(contacts);
 
 	/* Print all avp_contact_avp attributes */
-	avp = search_first_avp(contact_avp_name_str|AVP_VAL_STR,
-			       contact_name, &val);
+	avp = search_first_avp(contact_avp_name_str, contact_name, &val);
 	do {
 	    DBG("load_contacts(): DEBUG: Loaded <%s>, q_flag <%d>\n",
 		val.s->s, avp->flags & Q_FLAG);
@@ -978,8 +977,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
     if (*(tmb.route_mode) == MODE_REQUEST) {
 	
 	/* Find first lcr_contact_avp value */
-	avp = search_first_avp(contact_avp_name_str|AVP_VAL_STR,
-			       contact_name, &val);
+	avp = search_first_avp(contact_avp_name_str, contact_name, &val);
 	if (!avp) {
 	    DBG("next_contacts(): DEBUG: No AVPs -- we are done!\n");
 	    return 1;
@@ -1036,8 +1034,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 
     } else { /* MODE_ONFAILURE */
 	
-	avp = search_first_avp(contact_avp_name_str|AVP_VAL_STR,
-			       contact_name, &val);
+	avp = search_first_avp(contact_avp_name_str, contact_name, &val);
 	if (!avp) return -1;
 
 	prev = avp;

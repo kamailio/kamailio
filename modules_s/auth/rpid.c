@@ -107,7 +107,7 @@ int append_rpid_hf(struct sip_msg* _m, char* _s1, char* _s2)
 	int_str rcv_avp, val;
 
 	rcv_avp.s = &rpid_avp;
-	if (!search_first_avp(AVP_NAME_STR | AVP_VAL_STR, rcv_avp, &val)) {
+	if (!search_first_avp(AVP_NAME_STR, rcv_avp, &val)) {
 		DBG("append_rpid_hf: No rpid AVP\n");
 		return -1;
 	}
@@ -162,7 +162,7 @@ int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix)
 	int_str rcv_avp, val;
 
 	rcv_avp.s = &rpid_avp;
-	if (!search_first_avp(AVP_NAME_STR | AVP_VAL_STR, rcv_avp, &val)) {
+	if (!search_first_avp(AVP_NAME_STR, rcv_avp, &val)) {
 		DBG("append_rpid_hf: No rpid AVP\n");
 		return -1;
 	}
@@ -220,7 +220,7 @@ int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
 	int_str rcv_avp, val;
 
 	rcv_avp.s = &rpid_avp;
-	if (!search_first_avp(AVP_NAME_STR | AVP_VAL_STR, rcv_avp, &val)) {
+	if (!search_first_avp(AVP_NAME_STR, rcv_avp, &val)) {
 		DBG("is_rpid_user_e164: No rpid AVP\n");
 		goto err;
 	}

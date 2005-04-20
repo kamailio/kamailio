@@ -157,7 +157,7 @@ static int print_sattr(struct sip_msg* msg, char* attr, char* s2)
 
 	name.s = (str*)attr;
 
-	avp_entry = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, name, &value);
+	avp_entry = search_first_avp(AVP_NAME_STR, name, &value);
 	if (avp_entry == 0) {
 		LOG(L_ERR, "print_sattr: AVP '%.*s' not found\n", name.s->len, ZSW(name.s->s));
 		return -1;
@@ -186,8 +186,7 @@ static int is_sattr_set(struct sip_msg* msg, char* attr, char* foo)
 	struct usr_avp* avp_entry;
 
 	name.s = (str*)attr;
-	avp_entry = search_first_avp(AVP_NAME_STR | AVP_VAL_STR,
-				     name, &value);
+	avp_entry = search_first_avp(AVP_NAME_STR, name, &value);
 	if (avp_entry == 0) {
 		return -1;
 	}
@@ -204,8 +203,7 @@ static int attr2uri(struct sip_msg* msg, char* attr, char* foo)
 
 	name.s=(str*)attr;
 
-	avp_entry = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, 
-				     name, &value);
+	avp_entry = search_first_avp(AVP_NAME_STR, name, &value);
 	if (avp_entry == 0) {
 		LOG(L_ERR, "attr2uri: AVP '%.*s' not found\n", name.s->len, ZSW(name.s->s));
 		return -1;
