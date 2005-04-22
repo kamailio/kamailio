@@ -294,7 +294,9 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 	int is_ack;
 	int dlg_parsed;
 	int ret;
+	struct cell *e2e_ack_trans;
 
+	e2e_ack_trans=0;
 	via1=p_msg->via1;
 	is_ack=p_msg->REQ_METHOD==METHOD_ACK;
 	dlg_parsed=0;
@@ -309,8 +311,21 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 		if (!t_msg) continue;  /* don't try matching UAC transactions */
 		if (skip_method & t_msg->REQ_METHOD) continue;
 
+		     /* here we do an exercise which will be removed from future code
+		      *	versions: we try to match end-2-end ACKs if they appear at our
+		      * server. This allows some applications bound to TM via callbacks
+		      * to correlate the e2e ACKs with transaction context, e.g., for
+		      * purpose of accounting. We think it is a bad place here, among
+		      * other things because it is not reliable. If a transaction loops
+		      * via SER the ACK can't be matched to proper INVITE transaction
+		      * (it is a separate transactino with its own branch ID) and it
+		      * matches all transaction instances in the loop dialog-wise.
+		      * Eventually, regardless to which transaction in the loop the
+		      * ACK belongs, only the first one will match.
+		      */
+
 		/* dialog matching needs to be applied for ACK/200s */
-		if (is_ack && p_cell->uas.status<300) {
+		if (is_ack && p_cell->uas.status<300 && e2e_ack_trans==0) {
 			/* make sure we have parsed all things we need for dialog
 			 * matching */
 			if (!dlg_parsed) {
@@ -322,8 +337,7 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 			}
 			ret=ack_matching(p_cell /* t w/invite */, p_msg /* ack */);
 			if (ret>0) {
-				*trans=p_cell;
-				return ret; /* 2: e2e proxied ACK, 1 e2e UAS ACK */
+				e2e_ack_trans=p_cell;
 			}
 			/* this ACK is neither local "negative" one, nor a proxied
 			 * end-2-end one, nor an end-2-end one for a UAS transaction
@@ -342,6 +356,12 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 		return 1;
 	}
 	/* :-( ... we didn't find any */
+	
+	/* just check if it we found an e2e ACK previously */
+	if (e2e_ack_trans) {
+		*trans=e2e_ack_trans;
+		return 2;
+	}
 	DBG("DEBUG: RFC3261 transaction matching failed\n");
 	return 0;
 }
@@ -361,6 +381,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 	int ret;
 	struct via_param *branch;
 	int match_status;
+	struct cell *e2e_ack_trans;
 
 	/* parse all*/
 	if (check_transaction_quadruple(p_msg)==0)
@@ -381,6 +402,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 
 	/* assume not found */
 	ret=-1;
+	e2e_ack_trans=0;
 
 	/* first of all, look if there is RFC3261 magic cookie in branch; if
 	 * so, we can do very quick matching and skip the old-RFC bizzar
@@ -465,10 +487,12 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 				get_to(t_msg)->uri.len)!=0) continue;
 
 			/* it is e2e ACK/200 */
-			if (p_cell->uas.status<300) {
+			if (p_cell->uas.status<300 && e2e_ack_trans==0) {
 				/* all criteria for proxied ACK are ok */
-				if (p_cell->relaied_reply_branch!=-2) 
-					goto e2e_ack;
+				if (p_cell->relaied_reply_branch!=-2) {
+					e2e_ack_trans=p_cell;
+					continue;
+				}
 				/* it's a local UAS transaction */
 				if (dlg_matching(p_cell, p_msg))
 					goto found;
@@ -492,6 +516,12 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 	} /* synonym loop */
 
 notfound:
+
+	if (e2e_ack_trans) {
+		p_cell=e2e_ack_trans;
+		goto e2e_ack;
+	}
+		
 	/* no transaction found */
 	set_t(0);
 	if (!leave_new_locked) {
