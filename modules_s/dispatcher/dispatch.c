@@ -19,8 +19,7 @@
  *
  * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHA:b1
- * NTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License 
@@ -33,6 +32,7 @@
  * History
  * -------
  * 2004-07-31  first version, by dcm
+ * 2005-04-22  added ruri  & to_uri hashing (andrei)
  * 
  */
 
@@ -429,16 +429,46 @@ int ds_hash_fromuri(struct sip_msg *msg, unsigned int *hash)
 		LOG(L_ERR, "DISPATCHER:ds_hash_fromuri:ERROR cannot get From uri\n");
 		return -1;
 	}
-
+	
 	from.s   = get_from(msg)->uri.s;
 	from.len = get_from(msg)->uri.len; 
 	trim(&from);
-
+	
 	*hash = ds_get_hash(&from, NULL);
 	
 	return 0;
 }
+
+
+
+/**
+ *
+ */
+int ds_hash_touri(struct sip_msg *msg, unsigned int *hash)
+{
+	str to;
+	if(msg==NULL || hash == NULL)
+	{
+		LOG(L_ERR, "DISPATCHER:ds_hash_touri: bad parameters\n");
+		return -1;
+	}
+	if ((msg->to==0) && ((parse_headers(msg, HDR_TO_F, 0)==-1) ||
+				(msg->to==0)))
+	{
+		LOG(L_ERR, "DISPATCHER:ds_hash_touri:ERROR cannot parse To hdr\n");
+		return -1;
+	}
 	
+	
+	to.s   = get_to(msg)->uri.s;
+	to.len = get_to(msg)->uri.len; 
+	trim(&to);
+	
+	*hash = ds_get_hash(&to, NULL);
+	
+	return 0;
+}
+
 /**
  *
  */
@@ -457,7 +487,7 @@ int ds_hash_callid(struct sip_msg *msg, unsigned int *hash)
 		LOG(L_ERR, "DISPATCHER:ds_hash_callid:ERROR cannot parse Call-Id\n");
 		return -1;
 	}
-
+	
 	cid.s   = msg->callid->body.s;
 	cid.len = msg->callid->body.len;
 	trim(&cid);
@@ -466,6 +496,43 @@ int ds_hash_callid(struct sip_msg *msg, unsigned int *hash)
 	
 	return 0;
 }
+
+
+
+int ds_hash_ruri(struct sip_msg *msg, unsigned int *hash)
+{
+	str hostport;
+	str* uri;
+	
+	
+	if(msg==NULL || hash == NULL)
+	{
+		LOG(L_ERR, "DISPATCHER:ds_hash_ruri: bad parameters\n");
+		return -1;
+	}
+	if (parse_sip_msg_uri(msg)<0){
+		LOG(L_ERR, "DISPATCHER: ds_hash_ruri: ERROR: bad request uri\n");
+		return -1;
+	}
+	
+	uri=GET_RURI(msg);
+	hostport=*uri; /* we want only sip:user@host:port */
+	if (msg->parsed_uri.port.s){
+		hostport.len=(int)(msg->parsed_uri.port.s-uri->s)+
+						msg->parsed_uri.port.len;
+	}else if(msg->parsed_uri.host.s){
+		hostport.len=(int)(msg->parsed_uri.host.s-uri->s)+
+						msg->parsed_uri.host.len;
+	}else{ /* missing host! => error */
+		LOG(L_ERR, "DISPATCHER: ds_hash_uri: ERROR: bad uri <%.*s>\n",
+					uri->len, uri->s);
+		return -1;
+	}
+	
+	*hash = ds_get_hash(&hostport, NULL);
+	return 0;
+}
+
 
 /**
  *
@@ -539,7 +606,26 @@ int ds_select_dst(struct sip_msg *msg, char *set, char *alg)
 				return -1;
 			}
 		break;
+		case 2:
+			if(ds_hash_touri(msg, &hash)!=0)
+			{
+				LOG(L_ERR,
+					"DISPATCHER:ds_select_dst: can't get To uri hash\n");
+				return -1;
+			}
+		break;
+		case 3:
+			if (ds_hash_ruri(msg, &hash)!=0)
+			{
+				LOG(L_ERR,	
+					"DISPATCHER:ds_select_dst: can't get ruri hash\n");
+				return -1;
+			}
+		break;
 		default:
+			LOG(L_WARN,
+					"WARNING: ds_select_dst: algo %d not implemented"
+					" using callid hashing instead...\n", a);
 			hash = 0;
 	}
 
