@@ -594,11 +594,11 @@ static inline char* append2buf( char *buf, int len, struct sip_msg *req,
 			if (ha->sval.s) {
 				avp_name.s=&ha->sval;
 				avp = search_first_avp( AVP_NAME_STR, avp_name, &avp_val);
-				DBG("AVP <%.*s>: %x\n",avp_name.s->len,avp_name.s->s,(unsigned int)avp);
+				DBG("AVP <%.*s>: %p\n",avp_name.s->len,avp_name.s->s,avp);
 			} else {
 				avp_name.n=ha->ival;
 				avp = search_first_avp( 0, avp_name, &avp_val);
-				DBG("AVP <%i>: %x\n",avp_name.n,(unsigned int)avp);
+				DBG("AVP <%i>: %p\n",avp_name.n,avp);
 			}
 			if (avp) {
 				if (avp->flags&AVP_VAL_STR) {
