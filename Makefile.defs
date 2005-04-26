@@ -299,22 +299,17 @@ DEFS+= $(extra_defs) \
 	 -DUSE_TCP \
 	 -DDISABLE_NAGLE \
 	 -DDBG_QM_MALLOC \
-	# -DF_MALLOC \
-	# -DDBG_QM_MALLOC \
-	# -DDBG_F_MALLOC \
 	 #-DF_MALLOC \
+	 #-DDBG_F_MALLOC \
 	 #-DNO_DEBUG \
-	 #-DNO_LOG
+	 #-DNO_LOG \
 	 #-DEXTRA_DEBUG \
-	 #-DDBG_QM_MALLOC \
-	 #-DVQ_MALLOC  
-	 #-DCONTACT_BUG
-	 #-DDBG_LOCK
+	 #-DVQ_MALLOC  \
+	 #-DCONTACT_BUG \
+	 #-DDBG_LOCK \
 	 #-DNOSMP \
-	 #-DEXTRA_DEBUG \
 	 #-DUSE_SHM_MEM \
 	 #-DSTATS \
-	 #-DWITH_SNMP_MOD \
 	 #-DNO_LOG
 
 #PROFILE=  -pg #set this if you want profiling
