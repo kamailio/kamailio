@@ -108,6 +108,7 @@ int reload_gws ( void );
 #define DEF_FR_INV_TIMER_AVP "fr_inv_timer_avp"
 #define DEF_FR_INV_TIMER 90
 #define DEF_FR_INV_TIMER_NEXT 30
+#define DEF_RPID_AVP "rpid"
 
 /*
  * Type definitions
@@ -143,6 +144,7 @@ str inv_timer_avp    = {DEF_FR_INV_TIMER_AVP, sizeof(DEF_FR_INV_TIMER_AVP)
 			-1 };
 int inv_timer        = DEF_FR_INV_TIMER;
 int inv_timer_next   = DEF_FR_INV_TIMER_NEXT;
+str rpid_avp         = {DEF_RPID_AVP, sizeof(DEF_RPID_AVP) - 1};
 
 /*
  * Other module types and variables
@@ -215,6 +217,7 @@ static param_export_t params[] = {
         {"fr_inv_timer_avp",         STR_PARAM, &inv_timer_avp.s  },
         {"fr_inv_timer",             INT_PARAM, &inv_timer      },
         {"fr_inv_timer_next",        INT_PARAM, &inv_timer_next },
+	{"rpid_avp",                 STR_PARAM, &rpid_avp.s     },
 	{0, 0, 0}
 };
 
@@ -353,6 +356,7 @@ static int mod_init(void)
 	gw_addr_port_avp.len = strlen(gw_addr_port_avp.s);
 	contact_avp.len = strlen(contact_avp.s);
 	inv_timer_avp.len = strlen(inv_timer_avp.s);
+	rpid_avp.len = strlen(rpid_avp.s);
 
 	/* Check table version */
 	ver = lcr_db_ver(db_url.s, &gw_table);
@@ -555,12 +559,12 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 {
     db_res_t* res;
     db_row_t *row, *r;
-    int_str val;	    
     str ruri_user, from_uri, value;
     char query[MAX_QUERY_SIZE];
     int q_len, i, j;
     union addr_port ap;
     unsigned int addr;
+    int_str rcv_avp, val;
 
     /* Find Request-URI user */
     if (parse_sip_msg_uri(_m) < 0) {
@@ -569,20 +573,29 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
     }
     ruri_user = _m->parsed_uri.user;
 
-    /* Look for From URI */
-    if ((!_m->from) && (parse_headers(_m, HDR_FROM_F, 0) == -1)) {
+   /* Look for Caller RPID or From URI */
+    rcv_avp.s = &rpid_avp;
+    if (search_first_avp(AVP_NAME_STR, rcv_avp, &val) &&
+	val.s->s && val.s->len) {
+	/* Get URI user from RPID */
+	from_uri.len = val.s->len;
+	from_uri.s = val.s->s;
+    } else {
+	/* Get URI from From URI */
+	if ((!_m->from) && (parse_headers(_m, HDR_FROM_F, 0) == -1)) {
 	    LOG(L_ERR, "load_gws(): Error while parsing message\n");
 	    return -1;
-    }
-    if (!_m->from) {
+	}
+	if (!_m->from) {
 	    LOG(L_ERR, "load_gws(): FROM header field not found\n");
 	    return -1;
-    }
-    if ((!(_m->from)->parsed) && (parse_from_header(_m) < 0)) {
+	}
+	if ((!(_m->from)->parsed) && (parse_from_header(_m) < 0)) {
 	    LOG(L_ERR, "load_gws(): Error while parsing From body\n");
 	    return -1;
+	}
+	from_uri = get_from(_m)->uri;
     }
-    from_uri = get_from(_m)->uri;
     
     q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s.%.*s, %.*s.%.*s FROM %.*s, %.*s WHERE '%.*s' LIKE %.*s.%.*s AND '%.*s' LIKE CONCAT(%.*s.%.*s, '%%') AND %.*s.%.*s = %.*s.%.*s ORDER BY CHAR_LENGTH(%.*s.%.*s), %.*s.%.*s DESC, RAND()",
 		     gw_table.len, gw_table.s, ip_addr_col.len, ip_addr_col.s,
@@ -806,14 +819,12 @@ int to_gw(struct sip_msg* _m, char* _s1, char* _s2)
     }
 
     if (_m->parsed_uri.host.len > 15) {
-	LOG(L_ERR, "LCR: to_gw: too long R-URI host\n");
 	return -1;
     }
     memcpy(host, _m->parsed_uri.host.s, _m->parsed_uri.host.len);
     host[_m->parsed_uri.host.len] = 0;
     
     if (!inet_aton(host, &addr)) {
-	LOG(L_ERR, "LCR: to_gw: host is not valid IP address\n");
 	return -1;
     }
 
@@ -855,7 +866,6 @@ int load_contacts(struct sip_msg* msg, char* key, char* value)
 	qvalue_t q, ruri_q;
 	struct contact *contacts, *next, *prev, *curr;
 	int_str val;
-	struct usr_avp *avp;
 
 	/* Check if anything needs to be done */
 	if (nr_branches == 0) {
@@ -939,6 +949,8 @@ rest:
 	    val.s = &(curr->uri);
 	    add_avp(contact_avp_name_str|AVP_VAL_STR|(curr->q_flag),
 		    contact_name, val);
+	    DBG("load_contacts(): DEBUG: Loaded <%s>, q_flag <%d>\n",
+		val.s->s, curr->q_flag);	    
 	    curr = curr->next;
 	}
 
@@ -948,14 +960,6 @@ rest:
 	/* Free contacts list */
 	free_contact_list(contacts);
 
-	/* Print all avp_contact_avp attributes */
-	avp = search_first_avp(contact_avp_name_str, contact_name, &val);
-	do {
-	    DBG("load_contacts(): DEBUG: Loaded <%s>, q_flag <%d>\n",
-		val.s->s, avp->flags & Q_FLAG);
-	    avp = search_next_avp(avp, &val);
-	} while (avp);
-	
 	return 1;
 }
 

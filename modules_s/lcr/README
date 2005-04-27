@@ -36,10 +36,12 @@ Chapter 1. User's Guide
    (2) sequential forwarding to contacts if they don't share the
        the same qvalue (functions load_contacts and next_contacts).
 
-   Gateway selection is based on From URI and user part of Request-URI
-   (telephone number).  Gateway patterns matching From URI and telephone
-   number are ordered for forwarding purpose (1) according to longest
-   user part match, (2) according to priority, and (3) randomly.
+   Gateway selection is based on caller's RPID URI (if available in
+   caller's RPID AVP after authentication) or From URI and user part of
+   Request-URI (telephone number).  Gateway patterns matching RPID or
+   From URI and telephone number are ordered for forwarding purpose (1)
+   according to longest user part match, (2) according to priority, and
+   (3) randomly.
 
    Each gateway belongs to a gateway group either alone or among other
    gateways.  All gateways in a group share the same priority.
@@ -52,7 +54,7 @@ Chapter 1. User's Guide
    respectively.  In addition to gw and lcr tables there is third table
    gw_grp that is used for administrative purposes only to associate
    names with gateway group ids.
-     _________________________________________________________
+   _________________________________________________________
 
 1.2. Dependencies
 
@@ -104,9 +106,9 @@ Chapter 1. User's Guide
 
 1.4.1. load_gws()
 
-   Loads addresses and ports of gateways matching From URI and user part
-   of Request-URI to gw_addr_port_avp AVPs.  Returns 1 or -1 depending
-   on success.
+   Loads addresses and ports of gateways matching RPID AVP (if
+   available) or From URI and user part of Request-URI to
+   gw_addr_port_avp AVPs.  Returns 1 or -1 depending on success.
 
    Example:
 
