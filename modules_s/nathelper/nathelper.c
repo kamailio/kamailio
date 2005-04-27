@@ -139,10 +139,15 @@
  *
  * 2005-02-25	Force for pinging the socket returned by USRLOC (bogdan)
  *
- * 2005-03-22	support for multiple media streams added (netch)
+ * 2005-03-22	Support for multiple media streams added (netch)
+ *
+ * 2005-04-27	Support for doing natpinging using real SIP requests added.
+ *		Requires tm module for doing its work. Old method (sending UDP
+ *		with 4 zero bytes can be selected by specifying natping_method="null".
  */
 
 #include "nhelpr_funcs.h"
+#include "nathelper.h"
 #include "../../flags.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
@@ -196,10 +201,6 @@ MODULE_VERSION
 #define	NAT_UAC_TEST_S_1918	0x08
 #define	NAT_UAC_TEST_RPORT	0x10
 
-/* Handy macros */
-#define	STR2IOVEC(sx, ix)	do {(ix).iov_base = (sx).s; (ix).iov_len = (sx).len;} while(0)
-#define	SZ2IOVEC(sx, ix)	do {(ix).iov_base = (sx); (ix).iov_len = strlen(sx);} while(0)
-
 /* Supported version of the RTP proxy command protocol */
 #define	SUP_CPROTOVER	20040107
 /* Required additional version of the RTP proxy command protocol */
@@ -228,15 +229,10 @@ static int add_rcv_param_f(struct sip_msg *, char *, char *);
 static char *find_sdp_line(char *, char *, char);
 static char *find_next_sdp_line(char *, char *, char, char *);
 
-static void timer(unsigned int, void *);
 inline static int fixup_str2int(void**, int);
 static int mod_init(void);
 static int child_init(int);
 
-static usrloc_api_t ul;
-
-static int cblen = 0;
-static int natping_interval = 0;
 struct socket_info* force_socket = 0;
 
 
@@ -258,12 +254,6 @@ static str sup_ptypes[] = {
 	{.s = NULL, .len = 0}
 };
 
-/*
- * If this parameter is set then the natpinger will ping only contacts
- * that have the NAT flag set in user location database
- */
-static int ping_nated_only = 0;
-static const char sbuf[4] = {0, 0, 0, 0};
 static char *rtpproxy_sock = "unix:/var/run/rtpproxy.sock"; /* list */
 static char *force_socket_str = 0;
 static int rtpproxy_disable = 0;
@@ -309,6 +299,7 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 	{"natping_interval",      INT_PARAM, &natping_interval      },
+	{"natping_method",        STR_PARAM, &natping_method        },
 	{"ping_nated_only",       INT_PARAM, &ping_nated_only       },
 	{"rtpproxy_sock",         STR_PARAM, &rtpproxy_sock         },
 	{"rtpproxy_disable",      INT_PARAM, &rtpproxy_disable      },
@@ -335,7 +326,6 @@ static int
 mod_init(void)
 {
 	int i;
-	bind_usrloc_t bind_usrloc;
 	struct in_addr addr;
 	str socket_str;
 
@@ -345,18 +335,9 @@ mod_init(void)
 		force_socket=grep_sock_info(&socket_str,0,0);
 	}
 
-	if (natping_interval > 0) {
-		bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
-		if (!bind_usrloc) {
-			LOG(L_ERR, "nathelper: Can't find usrloc module\n");
- 			return -1;
- 		}
-
-		if (bind_usrloc(&ul) < 0) {
-			return -1;
-		}
-
-		register_timer(timer, NULL, natping_interval);
+	if (natpinger_init() < 0) {
+		LOG(L_ERR, "nathelper: natpinger_init() failed\n");
+		return -1;
 	}
 
 	/* Prepare 1918 networks list */
@@ -1937,81 +1918,6 @@ force_rtp_proxy0_f(struct sip_msg* msg, char* str1, char* str2)
 	char arg[1] = {'\0'};
 
 	return force_rtp_proxy1_f(msg, arg, NULL);
-}
-
-static void
-timer(unsigned int ticks, void *param)
-{
-	int rval;
-	void *buf, *cp;
-	str c;
-	struct sip_uri curi;
-	union sockaddr_union to;
-	struct hostent* he;
-	struct socket_info* send_sock;
-
-	buf = NULL;
-	if (cblen > 0) {
-		buf = pkg_malloc(cblen);
-		if (buf == NULL) {
-			LOG(L_ERR, "ERROR: nathelper::timer: out of memory\n");
-			return;
-		}
-	}
-	rval = ul.get_all_ucontacts(buf, cblen, (ping_nated_only ? FL_NAT : 0));
-	if (rval > 0) {
-		if (buf != NULL)
-			pkg_free(buf);
-		cblen = rval * 2;
-		buf = pkg_malloc(cblen);
-		if (buf == NULL) {
-			LOG(L_ERR, "ERROR: nathelper::timer: out of memory\n");
-			return;
-		}
-		rval = ul.get_all_ucontacts(buf, cblen, (ping_nated_only ? FL_NAT : 0));
-		if (rval != 0) {
-			pkg_free(buf);
-			return;
-		}
-	}
-
-	if (buf == NULL)
-		return;
-
-	cp = buf;
-	while (1) {
-		memcpy(&(c.len), cp, sizeof(c.len));
-		if (c.len == 0)
-			break;
-		c.s = (char*)cp + sizeof(c.len);
-		cp =  (char*)cp + sizeof(c.len) + c.len;
-		memcpy(&send_sock, cp, sizeof(send_sock));
-		cp += sizeof(send_sock);
-		if (parse_uri(c.s, c.len, &curi) < 0) {
-			LOG(L_ERR, "ERROR: nathelper::timer: can't parse contact uri\n");
-			continue;
-		}
-		if (curi.proto != PROTO_UDP && curi.proto != PROTO_NONE)
-			continue;
-		if (curi.port_no == 0)
-			curi.port_no = SIP_PORT;
-		he = sip_resolvehost(&curi.host, &curi.port_no, PROTO_UDP);
-		if (he == NULL){
-			LOG(L_ERR, "ERROR: nathelper::timer: can't resolve_hos\n");
-			continue;
-		}
-		hostent2su(&to, he, 0, curi.port_no);
-		if (send_sock == 0) {
-			send_sock = force_socket ? force_socket :
-				get_send_socket(0, &to, PROTO_UDP);
-		}
-		if (send_sock == NULL) {
-			LOG(L_ERR, "ERROR: nathelper::timer: can't get sending socket\n");
-			continue;
-		}
-		udp_send(send_sock, (char *)sbuf, sizeof(sbuf), &to);
-	}
-	pkg_free(buf);
 }
 
 #define DSTIP_PARAM ";dstip="
