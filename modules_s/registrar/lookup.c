@@ -150,6 +150,7 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 {
 	str uri, aor;
 	urecord_t* r;
+        ucontact_t* ptr;
 	int res;
 
 	if (_m->new_uri.s) uri = _m->new_uri;
@@ -167,11 +168,20 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 	if (res < 0) {
 		LOG(L_ERR, "registered(): Error while querying usrloc\n");
 		return -1;
-	} else if (res == 0) {
-		DBG("registered(): '%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
-		return 1;
-	} else {
-		DBG("registered(): '%.*s' not found in usrloc\n", aor.len, ZSW(aor.s));
-		return -1;
 	}
+
+	if (res == 0) {
+		ptr = r->contacts;
+		while (ptr && !VALID_CONTACT(ptr, act_time)) {
+			ptr = ptr->next;
+		}
+
+		if (ptr) {
+			DBG("registered(): '%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
+			return 1;
+		}
+	}
+
+	DBG("registered(): '%.*s' not found in usrloc\n", aor.len, ZSW(aor.s));
+	return -1;
 }
