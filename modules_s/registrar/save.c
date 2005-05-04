@@ -299,14 +299,15 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 	ucontact_t* c, *c2;
 	str callid;
 	int cseq, e, ret;
+	int set, reset;
 	qvalue_t q;
-	unsigned int fl;
+	unsigned int nated;
 	str* recv;
 	int_str rcv_avp;
 	int_str val;
 	
 	rcv_avp.n=rcv_avp_no;
-	fl = (isflagset(_m, nat_flag) == 1);
+	nated = (isflagset(_m, nat_flag) ? FL_NAT : FL_NONE);
 
 	if (max_contacts) {
 		ret = test_max_contacts(_m, _r, _c);
@@ -354,18 +355,13 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 					recv = 0;
 				}
 
-				if (ul.insert_ucontact(_r, &_c->uri, e, q, &callid, cseq,
-						       (fl ? FL_NAT : FL_NONE), &c2, _ua, recv, 
+				if (ul.insert_ucontact(_r, &_c->uri, e, q, &callid, cseq, 
+						       nated | mem_only,
+						       &c2, _ua, recv, 
 						       _m->rcv.bind_address) < 0) {
 					rerrno = R_UL_INS_C;
 					LOG(L_ERR, "update(): Error while inserting contact\n");
 					return -4;
-				}
-
-				if (mem_only) {
-					c2->flags |= FL_MEM;
-				} else {
-					c2->flags &= ~FL_MEM;
 				}
 			}
 		} else {
@@ -408,18 +404,12 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 					recv = 0;
 				}
 
-				if (ul.update_ucontact(c, e, q, &callid, cseq,
-						       (fl ? FL_NAT : FL_NONE),
-						       (fl ? FL_NONE : FL_NAT), _ua, recv, 
-						       _m->rcv.bind_address) < 0) {
+				set = nated | mem_only;
+				reset = ~(nated | mem_only) & (FL_NAT | FL_MEM);
+				if (ul.update_ucontact(c, e, q, &callid, cseq, set, reset, _ua, recv, _m->rcv.bind_address) < 0) {
 					rerrno = R_UL_UPD_C;
 					LOG(L_ERR, "update(): Error while updating contact\n");
 					return -8;
-				}
-				if (mem_only) {
-					c->flags |= FL_MEM;
-				} else {
-					c->flags &= ~FL_MEM;
 				}
 			}
 		}
@@ -534,6 +524,7 @@ static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* _s, int dor
  */
 int save(struct sip_msg* _m, char* _t, char* _s)
 {
+	mem_only = FL_NONE;
 	return save_real(_m, (udomain_t*)_t, _s, 1);
 }
 
@@ -543,6 +534,7 @@ int save(struct sip_msg* _m, char* _t, char* _s)
  */
 int save_noreply(struct sip_msg* _m, char* _t, char* _s)
 {
+	mem_only = FL_NONE;
 	return save_real(_m, (udomain_t*)_t, _s, 0);
 }
 
