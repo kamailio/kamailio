@@ -35,10 +35,70 @@
 #include "../../mem/mem.h"
 #include "../../parser/parse_uri.h"
 #include "../../dprint.h"
+#include "../../usr_avp.h"
+#include "../../ut.h"
 #include "../../modules/acc/dict.h"
 #include "checks.h"
 #include "urirad_mod.h"
 #include <radiusclient-ng.h>
+
+
+/*
+ * Split name:value into string name and string value
+ */
+static void attr_name_value(VALUE_PAIR* vp, str* name, str* value)
+{
+	int i;
+	
+	for (i = 0; i < vp->lvalue; i++) {
+		if (vp->strvalue[i] == ':') {
+			name->s = vp->strvalue;
+			name->len = i;
+
+			if (i == (vp->lvalue - 1)) {
+				value->s = (char*)0;
+				value->len = 0;
+			} else {
+				value->s = vp->strvalue + i + 1;
+				value->len = vp->lvalue - i - 1;
+			}
+			return;
+		}
+	}
+
+	name->len = value->len = 0;
+	name->s = value->s = (char*)0;
+}
+
+
+/*
+ * Generate AVPs from the database result
+ */
+static int generate_avps(VALUE_PAIR* received)
+{
+	str name_str, val_str;
+	int_str name, val;
+	VALUE_PAIR *vp;
+
+	vp = received;
+	name.s = &name_str;
+	val.s = &val_str;
+
+	while ((vp = rc_avpair_get(vp, attrs[A_SIP_AVP].v, 0))) {
+		attr_name_value(vp, &name_str, &val_str);
+		
+		if (add_avp(AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) {
+			LOG(L_ERR, "generate_avps: Unable to create a new AVP\n");
+		} else {
+			DBG("generate_avps: AVP '%.*s'='%.*s' has been added\n",
+			    name_str.len, ZSW(name_str.s), 
+			    val_str.len, ZSW(val_str.s));
+		}
+		vp = vp->next;
+	}
+	
+	return 0;
+}
 
 
 /*
@@ -92,6 +152,7 @@ int radius_does_uri_exist(struct sip_msg* _m, char* _s1, char* _s2)
 	if (rc_auth(rh, 0, send, &received, msg) == OK_RC) {
 		DBG("radius_does_uri_exist(): Success\n");
 		rc_avpair_free(send);
+		generate_avps(received);
 		rc_avpair_free(received);
 		pkg_free(uri);
 		return 1;
