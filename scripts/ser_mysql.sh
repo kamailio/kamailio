@@ -596,8 +596,7 @@ CREATE TABLE usr_preferences (
   value varchar(128) NOT NULL default '',
   type integer NOT NULL default '0',
   modified timestamp(14) NOT NULL,
-  PRIMARY KEY  (attribute,$USERCOL,domain),
-  INDEX (uuid)
+  PRIMARY KEY  (attribute,$USERCOL,domain)
 ) $TABLE_TYPE;
 
 
@@ -687,8 +686,7 @@ CREATE TABLE speed_dial (
   fname varchar(128) NOT NULL default '',
   lname varchar(128) NOT NULL default '',
   description varchar(64) NOT NULL default '',
-  PRIMARY KEY  ($USERCOL,domain,sd_username,sd_domain),
-  INDEX (uuid)
+  PRIMARY KEY  ($USERCOL,domain,sd_username,sd_domain)
 ) $TABLE_TYPE;
 
 #
