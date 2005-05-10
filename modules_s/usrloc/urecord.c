@@ -452,8 +452,6 @@ int insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid,
 	if (db_mode == WRITE_THROUGH) {
 		if (db_insert_ucontact(*_con) < 0) {
 			LOG(L_ERR, "insert_ucontact(): Error while inserting in database\n");
-			mem_delete_ucontact(_r, *_con);
-			return -2;
 		}
 		(*_con)->state = CS_SYNC;
 	}
