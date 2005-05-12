@@ -344,7 +344,7 @@ int ds_destroy_list()
 		pkg_free(sp->dlist);
 		sp = sp->next;
 	}
-	pkg_free(_ds_list);
+	if (_ds_list) pkg_free(_ds_list);
 	
 	si = _ds_index;
 	while(si)
