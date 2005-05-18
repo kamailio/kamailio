@@ -307,7 +307,11 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 	int_str val;
 	
 	rcv_avp.n=rcv_avp_no;
-	nated = (isflagset(_m, nat_flag) ? FL_NAT : FL_NONE);
+	if (isflagset(_m, nat_flag) == 1) {
+		nated = FL_NAT;
+	} else {
+		nated = FL_NONE;
+	}
 
 	if (max_contacts) {
 		ret = test_max_contacts(_m, _r, _c);
