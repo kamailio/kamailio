@@ -275,7 +275,6 @@ db_con_t* db_init(const char* _url)
 		     /* Not in the pool yet */
 		con = new_connection(id);
 		if (!con) {
-			LOG(L_ERR, "db_init: No memory left\n");
 			goto err;
 		}
 		pool_insert((struct pool_con*)con);
