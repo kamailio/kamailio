@@ -227,8 +227,8 @@ static inline struct auth_body* auth_body_cloner(char* new_buf, char *org_buf, s
 }
 
 
-static inline void clone_authorized_hooks(struct sip_msg* new,
-														struct sip_msg* old)
+static inline int clone_authorized_hooks(struct sip_msg* new,
+					 struct sip_msg* old)
 {
 	struct hdr_field* ptr, *new_ptr, *hook1, *hook2;
 	char stop = 0;
@@ -244,12 +244,20 @@ static inline void clone_authorized_hooks(struct sip_msg* new,
 
 	while(ptr) {
 		if (ptr == hook1) {
+			if (!new->authorization || !new->authorization->parsed) {
+				LOG(L_CRIT, "BUG: Error in message cloner (authorization)\n");
+				return -1;
+			}				
 			((struct auth_body*)new->authorization->parsed)->authorized =
 				new_ptr;
 			stop |= 1;
 		}
 		
 		if (ptr == hook2) {
+			if (!new->proxy_auth || !new->proxy_auth->parsed) {
+				LOG(L_CRIT, "BUG: Error in message cloner (proxy_auth)\n");
+				return -1;
+			}
 			((struct auth_body*)new->proxy_auth->parsed)->authorized =
 				new_ptr;
 			stop |= 2;
@@ -260,6 +268,7 @@ static inline void clone_authorized_hooks(struct sip_msg* new,
 		ptr = ptr->next;
 		new_ptr = new_ptr->next;
 	}
+	return 0;
 }
 
 
@@ -520,14 +529,14 @@ do { \
 				((struct cseq_body*)new_hdr->parsed)->method.s =
 					translate_pointer(new_msg->buf ,org_msg->buf,
 					((struct cseq_body*)hdr->parsed)->method.s );
-				new_msg->cseq = new_hdr;
+				if (new_msg->cseq == 0) new_msg->cseq = new_hdr;
 				break;
 			case HDR_TO_T:
 			case HDR_FROM_T:
 				if (hdr->type == HDR_TO_T) {
-					new_msg->to = new_hdr;
+					if (new_msg->to == 0) new_msg->to = new_hdr;
 				} else {
-					new_msg->from = new_hdr;
+					if (new_msg->from == 0) new_msg->from = new_hdr;
 				}
 				/* From header might be unparsed */
 				if (!hdr->parsed) break;
@@ -570,83 +579,129 @@ do { \
 				}
 				break;
 			case HDR_CALLID_T:
-				new_msg->callid = new_hdr;
+				if (new_msg->callid == 0) {
+					new_msg->callid = new_hdr;
+				}
 				break;
 			case HDR_CONTACT_T:
-				new_msg->contact = new_hdr;
+				if (new_msg->contact == 0) {
+					new_msg->contact = new_hdr;
+				}
 				break;
 			case HDR_MAXFORWARDS_T:
-				new_msg->maxforwards = new_hdr;
+				if (new_msg->maxforwards == 0) {
+					new_msg->maxforwards = new_hdr;
+				}
 				break;
 			case HDR_ROUTE_T:
-				new_msg->route = new_hdr;
+				if (new_msg->route == 0) {
+					new_msg->route = new_hdr;
+				}
 				break;
 			case HDR_RECORDROUTE_T:
-				new_msg->record_route = new_hdr;
+				if (new_msg->record_route == 0) {
+					new_msg->record_route = new_hdr;
+				}
 				break;
 			case HDR_CONTENTTYPE_T:
-				new_msg->content_type = new_hdr;
-				new_msg->content_type->parsed = hdr->parsed;
+				if (new_msg->content_type == 0) {
+					new_msg->content_type = new_hdr;
+					new_msg->content_type->parsed = hdr->parsed;
+				}
 				break;
 			case HDR_CONTENTLENGTH_T:
-				new_msg->content_length = new_hdr;
-				new_msg->content_length->parsed = hdr->parsed;
+				if (new_msg->content_length == 0) {
+					new_msg->content_length = new_hdr;
+					new_msg->content_length->parsed = hdr->parsed;
+				}
 				break;
 			case HDR_AUTHORIZATION_T:
-				new_msg->authorization = new_hdr;
+				if (new_msg->authorization == 0) {
+					new_msg->authorization = new_hdr;
+				}
 				if (hdr->parsed) {
 					new_hdr->parsed = auth_body_cloner(new_msg->buf ,
 						org_msg->buf , (struct auth_body*)hdr->parsed , &p);
 				}
 				break;
 			case HDR_EXPIRES_T:
-				new_msg->expires = new_hdr;
+				if (new_msg->expires == 0) {
+					new_msg->expires = new_hdr;
+				}
 				break;
 			case HDR_PROXYAUTH_T:
-				new_msg->proxy_auth = new_hdr;
+				if (new_msg->proxy_auth == 0) {
+					new_msg->proxy_auth = new_hdr;
+				}
 				if (hdr->parsed) {
 					new_hdr->parsed = auth_body_cloner(new_msg->buf ,
 						org_msg->buf , (struct auth_body*)hdr->parsed , &p);
 				}
 				break;
 			case HDR_SUPPORTED_T:
-				new_msg->supported = new_hdr;
+				if (new_msg->supported == 0) {
+					new_msg->supported = new_hdr;
+				}
 				break;
 			case HDR_PROXYREQUIRE_T:
-				new_msg->proxy_require = new_hdr;
+				if (new_msg->proxy_require == 0) {
+					new_msg->proxy_require = new_hdr;
+				}
 				break;
 			case HDR_UNSUPPORTED_T:
-				new_msg->unsupported = new_hdr;
+				if (new_msg->unsupported == 0) {
+					new_msg->unsupported = new_hdr;
+				}
 				break;
 			case HDR_ALLOW_T:
-				new_msg->allow = new_hdr;	
+				if (new_msg->allow == 0) {
+					new_msg->allow = new_hdr;
+				}
 				break;
 			case HDR_EVENT_T:
-				new_msg->event = new_hdr;
+				if (new_msg->event == 0) {
+					new_msg->event = new_hdr;
+				}
 				break;
 			case HDR_ACCEPT_T:
-				new_msg->accept = new_hdr;
+				if (new_msg->accept == 0) {
+					new_msg->accept = new_hdr;
+				}
 				break;
 			case HDR_ACCEPTLANGUAGE_T:
-				new_msg->accept_language = new_hdr;
+				if (new_msg->accept_language == 0) {
+					new_msg->accept_language = new_hdr;
+				}
 				break;
 			case HDR_ORGANIZATION_T:
-				new_msg->organization = new_hdr;
+				if (new_msg->organization == 0) {
+					new_msg->organization = new_hdr;
+				}
 				break;
 			case HDR_PRIORITY_T:
-				new_msg->priority = new_hdr;
+				if (new_msg->priority == 0) {
+					new_msg->priority = new_hdr;
+				}
 				break;
 			case HDR_SUBJECT_T:
-				new_msg->subject = new_hdr;
+				if (new_msg->priority == 0) {
+					new_msg->subject = new_hdr;
+				}
 				break;
 			case HDR_USERAGENT_T:
-				new_msg->user_agent = new_hdr;
+				if (new_msg->user_agent == 0) {
+					new_msg->user_agent = new_hdr;
+				}
 				break;
 			case HDR_ACCEPTDISPOSITION_T:
-				new_msg->accept_disposition = new_hdr;
+				if (new_msg->accept_disposition == 0) {
+					new_msg->accept_disposition = new_hdr;
+				}
 				break;
 			case HDR_CONTENTDISPOSITION_T:
-				new_msg->content_disposition = new_hdr;
+				if (new_msg->content_disposition == 0) {
+					new_msg->content_disposition = new_hdr;
+				}
 				break;
 			default:
 				/* ignore the rest*/
@@ -719,7 +774,10 @@ do { \
 		rpl_lump_anchor = &((*rpl_lump_anchor)->next);
 	}
 
-	clone_authorized_hooks(new_msg, org_msg);
+	if (clone_authorized_hooks(new_msg, org_msg) < 0) {
+		shm_free(new_msg);
+		return 0;
+	}
 
 	return new_msg;
 }
