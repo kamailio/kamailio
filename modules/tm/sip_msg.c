@@ -684,7 +684,7 @@ do { \
 				}
 				break;
 			case HDR_SUBJECT_T:
-				if (new_msg->priority == 0) {
+				if (new_msg->subject == 0) {
 					new_msg->subject = new_hdr;
 				}
 				break;
