@@ -805,6 +805,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	    str_uri.len,str_uri.len ? str_uri.s : "");
 	
 	if ( REQ_LINE(msg).method_value==METHOD_INVITE || 
+	     REQ_LINE(msg).method_value==METHOD_INFO ||
 			(twi->append && twi->append->add_body) ) {
 		/* get body */
 		if( (body.s = get_body(msg)) == 0 ){

@@ -51,6 +51,7 @@
 #define CANCEL_LEN 6
 #define ACK_LEN 3
 #define BYE_LEN 3
+#define INFO_LEN 4
 
 
 struct msg_start {
