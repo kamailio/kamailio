@@ -3,6 +3,14 @@ Release notes for SIP Express Router (ser)
 
 $Id$
 
+0.10.99-dev changes
+
+
+new archs:
+  - powerpc64 support
+  - alpha experimental support
+
+
 0.8.99-dev changes
 
 

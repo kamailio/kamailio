@@ -173,6 +173,7 @@ tar:
 		--exclude=$(notdir $(CURDIR))/debian/ser* \
 		--exclude=$(notdir $(CURDIR))/ser_tls* \
 		--exclude=CVS* \
+		--exclude=.svn* \
 		--exclude=.cvsignore \
 		--exclude=*.[do] \
 		--exclude=*.so \

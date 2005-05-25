@@ -38,6 +38,10 @@
  *  2004-09-12  added MIPS locking for ISA>=2 (>r3000)  (andrei)
  *  2004-12-16  for now use the same locking code for sparc32 as for sparc64
  *               (it will work only if NOSMP is defined) (andrei)
+ *  2005-04-27  added alpha locking code (andrei)
+ *  2005-05-25  PPC locking code enabled for PPC64; added a lwsync to
+ *               the tsl part and replaced the sync with a lwsync for the
+ *               unlock part (andrei)
  *
  */
 
@@ -99,13 +103,17 @@ inline static int tsl(fl_lock_t* lock)
 			: "r"(1), "r" (lock) : "memory"
 	);
 	
-#elif defined __CPU_ppc
+#elif defined(__CPU_ppc) || defined(__CPU_ppc64)
 	asm volatile(
 			"1: lwarx  %0, 0, %2\n\t"
 			"   cmpwi  %0, 0\n\t"
 			"   bne    0f\n\t"
 			"   stwcx. %1, 0, %2\n\t"
 			"   bne-   1b\n\t"
+			"   lwsync\n\t" /* lwsync or isync, lwsync is faster
+							   and should work, see
+							   [ IBM Programming environments Manual, D.4.1.1]
+							 */
 			"0:\n\t"
 			: "=r" (val)
 			: "r"(1), "b" (lock) :
@@ -126,6 +134,25 @@ inline static int tsl(fl_lock_t* lock)
 		: "=&r" (tmp), "=&r" (val), "=m" (*lock) 
 		: "0" (tmp), "2" (*lock) 
 		: "cc"
+	);
+#elif defined __CPU_alpha
+	long tmp;
+	tmp=0;
+	/* lock low bit set to 1 when the lock is hold and to 0 otherwise */
+	asm volatile(
+		"1:  ldl %0, %1   \n\t"
+		"    blbs %0, 2f  \n\t"  /* optimization if locked */
+		"    ldl_l %0, %1 \n\t"
+		"    blbs %0, 2f  \n\t" 
+		"    lda %2, 1    \n\t"  /* or: or $31, 1, %2 ??? */
+		"    stl_c %2, %1 \n\t"
+		"    beq %2, 1b   \n\t"
+		"    mb           \n\t"
+		"2:               \n\t"
+		:"=&r" (val), "=m"(*lock), "=r"(tmp)
+		:"1"(*lock)  /* warning on gcc 3.4: replace it with m or remove
+						it and use +m in the input line ? */
+		: "memory"
 	);
 #else
 #error "unknown architecture"
@@ -180,23 +207,33 @@ inline static void release_lock(fl_lock_t* lock)
 		: "r"(0), "r"(lock)
 		: "memory"
 	);
-#elif defined __CPU_ppc
+#elif defined(__CPU_ppc) || defined(__CPU_ppc64)
 	asm volatile(
-			"sync\n\t"
+			/* "sync\n\t"  lwsync is faster and will work
+			 *             here too
+			 *             [IBM Prgramming Environments Manual, D.4.2.2]
+			 */
+			"lwsync\n\t"
 			"stw %0, 0(%1)\n\t"
 			: /* no output */
 			: "r"(0), "b" (lock)
 			: "memory"
-        );
+	);
 	*lock = 0;
 #elif defined __CPU_mips2
-		asm volatile(
+	asm volatile(
 		".set noreorder \n\t"
 		"    sync \n\t"
 		"    sw $0, %0 \n\t"
 		".set reorder \n\t"
 		: /*no output*/  : "m" (*lock) : "memory"
 	);
+#elif defined __CPU_alpha
+	asm volatile(
+		"    mb          \n\t"
+		"    stl $31, %0 \n\t"
+		: "=m"(*lock) :/* no input*/ : "memory"  /* because of the mb */
+	);  
 #else
 #error "unknown architecture"
 #endif
