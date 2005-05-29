@@ -42,6 +42,10 @@ Chapter 1. User's Guide
   a string and in the second case as an int (second case has not been
   implemented yet).
 
+  The module prefixes each attribute name as returned from Radius by
+  string "caller_" or "callee_" depending if caller's or callee's
+  attributes are loaded.
+
 1.2. Dependencies
 
   None.
@@ -92,7 +96,11 @@ modparam("avp_radius", "callee_service_type", 19)
 
    In "caller" case, attributes belong to the user of the From URI, in
    "callee" case, to the user of the Request URI, and, in "digest" case,
-   to the authenticated user.
+   to the authenticated user.  
+
+   AVP name returned from Radius is prefixed by string "caller_", if
+   avp_load_radius parameter is "caller" or "digest", and by "callee_",
+   if parameter is "callee".
 
    Example 1-4. avp_load_radius usage
 avp_load_radius("callee");
