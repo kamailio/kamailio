@@ -155,10 +155,19 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 	fprintf(_f, "domain    : '%.*s'\n", _c->domain->len, ZSW(_c->domain->s));
 	fprintf(_f, "aor       : '%.*s'\n", _c->aor->len, ZSW(_c->aor->s));
 	fprintf(_f, "Contact   : '%.*s'\n", _c->c.len, ZSW(_c->c.s));
-	if (t > _c->expires)
-		fprintf(_f, "Expires   : -%u\n", (unsigned int)(t - _c->expires));
-	else
-		fprintf(_f, "Expires   : %u\n", (unsigned int)(_c->expires - t));
+	fprintf(_f, "Expires   : ");
+	if (_c->flags & FL_PERMANENT) {
+		fprintf(_f, "Permanent\n");
+	} else {
+		if (_c->expires == 0) {
+			fprintf(_f, "Deleted\n");
+		} else if (t > _c->expires) {
+			fprintf(_f, "Expired\n");
+		} else {
+			fprintf(_f, "%u\n", (unsigned int)(_c->expires - t));
+		}
+	}
+
 	fprintf(_f, "q         : %s\n", q2str(_c->q, 0));
 	fprintf(_f, "Call-ID   : '%.*s'\n", _c->callid.len, ZSW(_c->callid.s));
 	fprintf(_f, "CSeq      : %d\n", _c->cseq);
@@ -311,6 +320,8 @@ int st_delete_ucontact(ucontact_t* _c)
 		      * from the database
 		      */
 		if (db_mode == WRITE_BACK) {
+			/* Reset permanent flag */
+			_c->flags &= ~FL_PERMANENT;
 			_c->expires = 0;
 			return 0;
 		} else {
