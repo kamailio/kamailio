@@ -243,14 +243,16 @@ check_alias() {
 				> /dev/stderr
 			exit 1
 		fi
-		echo "$RES" | grep "^200" > /dev/null
+
+		# Unknown error
+		echo "$RES" | grep "^[1-9][0-9][0-9]" > /dev/null
 		if [ $? -eq 0 ] ; then
-			echo "error: overlap with an existing alias" \
-				> /dev/stderr
-			exit 1
+		    echo "error: $RES" \
+		    	    > /dev/stderr
+		    exit 1
 		fi
-		# other errors
-		echo "error: $RES" > /dev/stderr
+
+		echo "error: Overlap with an existing alias" > /dev/stderr
 		exit 1
 }
 
