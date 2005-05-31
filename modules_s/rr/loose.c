@@ -698,7 +698,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 				}
 				if (res > 0) { /* No next route found */
 					DBG("after_loose: No next URI found\n");
-					return NOT_RR_DRIVEN;
+					return (preloaded ? NOT_RR_DRIVEN : RR_DRIVEN);
 				}
 				rt = (rr_t*)hdr->parsed;
 			} else rt = rt->next;
