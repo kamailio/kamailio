@@ -246,30 +246,39 @@ static void fake_reply(struct cell *t, int branch, int code )
 	cancel_bitmap=do_cancel_branch ? 1<<branch : 0;
 	if ( is_local(t) ) {
 		reply_status=local_reply( t, FAKED_REPLY, branch, 
-			code, &cancel_bitmap );
+					  code, &cancel_bitmap );
+		if (reply_status == RPS_COMPLETED) {
+			put_on_wait(t);
+		}
 	} else {
 		reply_status=relay_reply( t, FAKED_REPLY, branch, code,
-			&cancel_bitmap );
+					  &cancel_bitmap );
+
+#ifdef 0
+		if (reply_status==RPS_COMPLETED) {
+			     /* don't need to cleanup uac_timers -- they were cleaned
+				branch by branch and this last branch's timers are
+				reset now too
+			     */
+			     /* don't need to issue cancels -- local cancels have been
+				issued branch by branch and this last branch was
+				canceled now too
+			     */
+			     /* then the only thing to do now is to put the transaction
+				on FR/wait state 
+			     */
+			     /*
+			       set_final_timer(  t );
+			     */
+		}
+#endif
+
 	}
 	/* now when out-of-lock do the cancel I/O */
 	if (do_cancel_branch) cancel_branch(t, branch );
 	/* it's cleaned up on error; if no error occurred and transaction
 	   completed regularly, I have to clean-up myself
 	*/
-	if (reply_status==RPS_COMPLETED) {
-		/* don't need to cleanup uac_timers -- they were cleaned
-		   branch by branch and this last branch's timers are
-		   reset now too
-		*/
-		/* don't need to issue cancels -- local cancels have been
-		   issued branch by branch and this last branch was
-		   canceled now too
-		*/
-		/* then the only thing to do now is to put the transaction
-		   on FR/wait state 
-		*/
-		set_final_timer(  t );
-	}
 }
 
 

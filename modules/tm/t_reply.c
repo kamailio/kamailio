@@ -1099,6 +1099,13 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 	UNLOCK_REPLIES( t );
 
+	     /* Set retransmission timer before the reply is sent out to avoid
+	      * race conditions
+	      */
+	if (reply_status == RPS_COMPLETED) {
+		set_final_timer(t);
+	}
+
 	/* send it now (from the private buffer) */
 	if (relay >= 0) {
 		SEND_PR_BUFFER( uas_rb, buf, res_len );
@@ -1270,14 +1277,14 @@ int reply_received( struct sip_msg  *p_msg )
 		 * on_reply processing, which may take very long, like if it
 		 * is attempted to establish a TCP connection to a fail-over dst */
 		
-	if (t->flags & T_IS_INVITE_FLAG) {
+	if (is_invite(t)) {
 		if (msg_status >= 300) {
 			ack = build_ack(p_msg, t, branch, &ack_len);
 			if (ack) {
 				SEND_PR_BUFFER(&uac->request, ack, ack_len);
 				shm_free(ack);
 			}
-		} else if ((t->flags & T_IS_LOCAL_FLAG) && msg_status >= 200) {
+		} else if (is_local(t) && msg_status >= 200) {
 			ack = build_local_ack(p_msg, t, branch, &ack_len, &next_hop);
 			if (ack) {
 				if (send_local_ack(p_msg, &next_hop, ack, ack_len) < 0) {
@@ -1304,24 +1311,32 @@ int reply_received( struct sip_msg  *p_msg )
 	LOCK_REPLIES( t );
 	if ( is_local(t) ) {
 		reply_status=local_reply( t, p_msg, branch, msg_status, &cancel_bitmap );
+		if (reply_status == RPS_COMPLETED) {
+			     /* no more UAC FR/RETR (if I received a 2xx, there may
+			      * be still pending branches ...
+			      */
+			cleanup_uac_timers( t );	
+			if (is_invite(t)) cancel_uacs( t, cancel_bitmap );
+			     /* FR for negative INVITES, WAIT anything else */
+			put_on_wait(t);
+		}
 	} else {
 		reply_status=relay_reply( t, p_msg, branch, msg_status, 
 			&cancel_bitmap );
+		if (reply_status == RPS_COMPLETED) {
+			     /* no more UAC FR/RETR (if I received a 2xx, there may
+				be still pending branches ...
+			     */
+			cleanup_uac_timers( t );	
+			if (is_invite(t)) cancel_uacs( t, cancel_bitmap );
+			     /* FR for negative INVITES, WAIT anything else */
+			     /* set_final_timer(t) */
+		}
+
 	}
 
 	if (reply_status==RPS_ERROR)
 		goto done;
-
-	/* clean-up the transaction when transaction completed */
-	if (reply_status==RPS_COMPLETED) {
-		/* no more UAC FR/RETR (if I received a 2xx, there may
-		   be still pending branches ...
-		*/
-		cleanup_uac_timers( t );	
-		if (is_invite(t)) cancel_uacs( t, cancel_bitmap );
-		/* FR for negative INVITES, WAIT anything else */
-		set_final_timer(  t );
-	} 
 
 	/* update FR/RETR timers on provisional replies */
 	if (msg_status<200 && ( restart_fr_on_each_reply ||
