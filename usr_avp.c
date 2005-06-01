@@ -98,9 +98,18 @@ int add_avp(unsigned short flags, int_str name, int_str val)
 
 	assert( crt_avps!=0 );
 
+	if ( name.s==0 ) {
+		LOG(L_ERR,"ERROR:avp:add_avp: 0 ID or NULL NAME AVP!");
+		goto error;
+	}
+
 	/* compute the required mem size */
 	len = sizeof(struct usr_avp);
 	if (flags&AVP_NAME_STR) {
+		if ( name.s->s==0 || name.s->len==0) {
+			LOG(L_ERR,"ERROR:avp:add_avp: EMPTY NAME AVP!");
+			goto error;
+		}
 		if (flags&AVP_VAL_STR)
 			len += sizeof(struct str_str_data)-sizeof(void*) + name.s->len
 				+ (val.s->len+1);
@@ -263,11 +272,21 @@ struct usr_avp *search_first_avp( unsigned short name_type,
 	if (*crt_avps==0)
 		return 0;
 
+	if ( name.s==0) {
+		LOG(L_ERR,"ERROR:avp:search_first_avp: 0 ID or NULL NAME AVP!");
+		return 0;
+	}
+
 	/* search for the AVP by ID (&name) */
-	if (name_type&AVP_NAME_STR)
+	if (name_type&AVP_NAME_STR) {
+		if ( name.s->s==0 || name.s->len==0) {
+			LOG(L_ERR,"ERROR:avp:search_first_avp: EMPTY NAME AVP!");
+			return 0;
+		}
 		avp = internal_search_name_avp(*crt_avps,compute_ID(name.s),name.s);
-	else
+	} else {
 		avp = internal_search_ID_avp( *crt_avps, name.n );
+	}
 
 	/* get the value - if required */
 	if (avp && val)
