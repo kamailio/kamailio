@@ -11,6 +11,6 @@ NAME=pa.so
 LIBS=
 
 DEFS+=-I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2
-LIBS+=-I/usr/include/lib  -L$(LOCALBASE)/lib -L/usr/pkg/lib -lxml2
+LIBS+=-I/usr/include/lib  -L$(LOCALBASE)/lib -lxml2
 
 include ../../Makefile.modules

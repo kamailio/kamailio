@@ -14,7 +14,7 @@ DEFS+=-DXJ_EXTRA_DEBUG
 # -DHAVE_IHTTP
 
 # expat.h location
-DEFS+=-I$(LOCALBASE)/include -I/usr/pkg/include
-LIBS=-L$(LOCALBASE)/lib -L/usr/pkg/lib -lexpat
+DEFS+=-I$(LOCALBASE)/include
+LIBS=-L$(LOCALBASE)/lib -lexpat
 
 include ../../Makefile.modules

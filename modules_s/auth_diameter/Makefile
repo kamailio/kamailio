@@ -8,6 +8,6 @@
 auto_gen=
 NAME=auth_diameter.so
 #LIBS=-Llib -ldiameter_msg
-#LIBS=-L$(LOCALBASE)/lib -L/usr/pkg/lib -lradiusclient
+#LIBS=-L$(LOCALBASE)/lib  -lradiusclient
 
 include ../../Makefile.modules
