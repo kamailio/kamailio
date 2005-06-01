@@ -1090,6 +1090,13 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 	UNLOCK_REPLIES( t );
 
+	     /* Setup retransmission timer _before_ the reply is sent
+	      * to avoid race conditions
+	      */
+	if (reply_status == RPS_COMPLETED) {
+		set_final_timer(t);
+	}
+
 	/* send it now (from the private buffer) */
 	if (relay >= 0) {
 		SEND_PR_BUFFER( uas_rb, buf, res_len );
@@ -1206,26 +1213,22 @@ error:
 int reply_received( struct sip_msg  *p_msg )
 {
 
-	int msg_status;
-	int last_uac_status;
+	int msg_status, last_uac_status, branch, reply_status;
 	char *ack;
-	unsigned int ack_len;
-	int branch;
-	/* has the transaction completed now and we need to clean-up? */
-	int reply_status;
+	unsigned int ack_len, timer;
+	     /* has the transaction completed now and we need to clean-up? */
 	branch_bm_t cancel_bitmap;
 	struct ua_client *uac;
 	struct cell *t;
 	str next_hop;
 	struct usr_avp **backup_list;
-	unsigned int timer;
 
-	/* make sure we know the associated transaction ... */
-	if (t_check( p_msg  , &branch )==-1)
-		return 1;
-	/*... if there is none, tell the core router to fwd statelessly */
-	t=get_t();
-	if ( (t==0)||(t==T_UNDEFINED)) return 1;
+	     /* make sure we know the associated transaction ... */
+	if (t_check(p_msg, &branch ) == -1) return 1;
+	
+	     /*... if there is none, tell the core router to fwd statelessly */
+	t = get_t();
+	if ((t == 0) || (t == T_UNDEFINED)) return 1;
 
 	cancel_bitmap=0;
 	msg_status=p_msg->REPLY_STATUS;
@@ -1237,38 +1240,40 @@ int reply_received( struct sip_msg  *p_msg )
 		is_local(t), is_invite(t));
 	last_uac_status=uac->last_received;
 
-	/* it's a cancel ... ? */
-	if (get_cseq(p_msg)->method.len==CANCEL_LEN 
-		&& memcmp( get_cseq(p_msg)->method.s, CANCEL, CANCEL_LEN)==0
-		/* .. which is not e2e ? ... */
-		&& is_invite(t) ) {
-			/* ... then just stop timers */
-			reset_timer( &uac->local_cancel.retr_timer);
-			if ( msg_status >= 200 )
+	     /* it's a cancel ... ? */
+	if (get_cseq(p_msg)->method.len == CANCEL_LEN 
+	    && memcmp( get_cseq(p_msg)->method.s, CANCEL, CANCEL_LEN) == 0
+		 /* .. which is not e2e ? ... */
+	    && is_invite(t) ) {
+		     /* ... then just stop timers */
+		reset_timer( &uac->local_cancel.retr_timer);
+		if ( msg_status >= 200 ) {
 				reset_timer( &uac->local_cancel.fr_timer);
-			DBG("DEBUG: reply to local CANCEL processed\n");
-			goto done;
+		}
+		DBG("DEBUG: reply to local CANCEL processed\n");
+		goto done;
 	}
 
-
-	/* *** stop timers *** */
-	/* stop retransmission */
-	reset_timer( &uac->request.retr_timer);
-	/* stop final response timer only if I got a final response */
-	if ( msg_status >= 200 )
+	     /* *** stop timers *** */
+	     /* stop retransmission */
+	reset_timer(&uac->request.retr_timer);
+	
+	     /* stop final response timer only if I got a final response */
+	if ( msg_status >= 200 ) {
 		reset_timer( &uac->request.fr_timer);
-		/* acknowledge negative INVITE replies (do it before detailed
-		 * on_reply processing, which may take very long, like if it
-		 * is attempted to establish a TCP connection to a fail-over dst */
-		
-	if (t->flags & T_IS_INVITE_FLAG) {
+	}
+
+	     /* acknowledge negative INVITE replies (do it before detailed
+	      * on_reply processing, which may take very long, like if it
+	      * is attempted to establish a TCP connection to a fail-over dst */
+	if (is_invite(t)) {
 		if (msg_status >= 300) {
 			ack = build_ack(p_msg, t, branch, &ack_len);
 			if (ack) {
 				SEND_PR_BUFFER(&uac->request, ack, ack_len);
 				shm_free(ack);
 			}
-		} else if ((t->flags & T_IS_LOCAL_FLAG) && msg_status >= 200) {
+		} else if (is_local(t) && msg_status >= 200) {
 			ack = build_local_ack(p_msg, t, branch, &ack_len, &next_hop);
 			if (ack) {
 				if (send_local_ack(p_msg, &next_hop, ack, ack_len) < 0) {
@@ -1278,74 +1283,87 @@ int reply_received( struct sip_msg  *p_msg )
 			}
 		}
 	}
-	/* processing of on_reply block */
+
+	     /* processing of on_reply block */
 	if (t->on_reply) {
-		rmode=MODE_ONREPLY;
-		/* transfer transaction flag to message context */
-		if (t->uas.request) p_msg->flags=t->uas.request->flags;
-		/* set the as avp_list the one from transaction */
-		backup_list = set_avp_list( &t->user_avps );
-		if (run_actions(onreply_rlist[t->on_reply], p_msg)<0) 
+		rmode = MODE_ONREPLY;
+		     /* transfer transaction flag to message context */
+		if (t->uas.request) p_msg->flags = t->uas.request->flags;
+		     /* set the as avp_list the one from transaction */
+		backup_list = set_avp_list(&t->user_avps);
+		if (run_actions(onreply_rlist[t->on_reply], p_msg)<0) {
 			LOG(L_ERR, "ERROR: on_reply processing failed\n");
-		/* transfer current message context back to t */
+		}
+		     /* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
-		/* restore original avp list */
+		     /* restore original avp list */
 		set_avp_list( backup_list );
 	}
+	
 	LOCK_REPLIES( t );
-	if ( is_local(t) ) {
-		reply_status=local_reply( t, p_msg, branch, msg_status, &cancel_bitmap );
+	if (is_local(t)) {
+		reply_status = local_reply(t, p_msg, branch, msg_status, &cancel_bitmap);
+		if (reply_status == RPS_COMPLETED) {
+			cleanup_uac_timers(t);
+			if (is_invite(t)) cancel_uacs(t, cancel_bitmap);
+			     /* There is no need to call set_final_timer because we know
+			      * that the transaction is local */
+			put_on_wait(t);
+		}
 	} else {
-		reply_status=relay_reply( t, p_msg, branch, msg_status, 
-			&cancel_bitmap );
+		reply_status = relay_reply(t, p_msg, branch, msg_status, &cancel_bitmap);
+		     /* clean-up the transaction when transaction completed */
+		if (reply_status == RPS_COMPLETED) {
+			     /* no more UAC FR/RETR (if I received a 2xx, there may
+			      * be still pending branches ...
+			      */
+			cleanup_uac_timers(t);	
+			if (is_invite(t)) cancel_uacs(t, cancel_bitmap);
+			     /* FR for negative INVITES, WAIT anything else */
+			
+			     /* Call to set_final_timer is embedded in relay_reply to avoid
+			      * race conditions when reply is sent out and an ACK to stop retransmissions
+			      * comes before retransmission timer is set 
+			      *
+			      * set_final_timer(t); 
+			      */
+		} 
 	}
-
-	if (reply_status==RPS_ERROR)
-		goto done;
-
-	/* clean-up the transaction when transaction completed */
-	if (reply_status==RPS_COMPLETED) {
-		/* no more UAC FR/RETR (if I received a 2xx, there may
-		   be still pending branches ...
-		*/
-		cleanup_uac_timers( t );	
-		if (is_invite(t)) cancel_uacs( t, cancel_bitmap );
-		/* FR for negative INVITES, WAIT anything else */
-		set_final_timer(  t );
-	} 
-
-	/* update FR/RETR timers on provisional replies */
-	if (msg_status<200 && ( restart_fr_on_each_reply ||
-				( (last_uac_status<msg_status) &&
-					((msg_status>=180) || (last_uac_status==0)) )
-			) ) { /* provisional now */
+	
+	if (reply_status == RPS_ERROR) goto done;
+	
+	     /* update FR/RETR timers on provisional replies */
+	if (msg_status < 200 && (restart_fr_on_each_reply ||
+				 ((last_uac_status<msg_status) &&
+				  ((msg_status >= 180) || (last_uac_status == 0)))
+				 ) ) { /* provisional now */
 		if (is_invite(t)) {
-			/* invite: change FR to longer FR_INV, do not
-			   attempt to restart retransmission any more
-			*/
+			     /* invite: change FR to longer FR_INV, do not
+			      * attempt to restart retransmission any more
+			      */
 
-			backup_list = set_avp_list( &t->user_avps );
+			backup_list = set_avp_list(&t->user_avps);
 			if (!fr_inv_avp2timer(&timer)) {
 				DBG("reply_received: FR_INV_TIMER = %d\n", timer);
-				set_timer( & uac->request.fr_timer,
-					   FR_INV_TIMER_LIST, &timer );
+				set_timer(&uac->request.fr_timer,
+					  FR_INV_TIMER_LIST, &timer);
 			} else {
-				set_timer( & uac->request.fr_timer,
-					   FR_INV_TIMER_LIST, 0 );
+				set_timer(& uac->request.fr_timer, FR_INV_TIMER_LIST, 0);
 			}
-			set_avp_list( backup_list );
+			set_avp_list(backup_list);
 		} else {
 			     /* non-invite: restart retransmissions (slow now) */
-			uac->request.retr_list=RT_T2;
-			set_timer(  & uac->request.retr_timer, RT_T2, 0 );
+			uac->request.retr_list = RT_T2;
+			set_timer(&uac->request.retr_timer, RT_T2, 0);
 		}
 	} /* provisional replies */
-
-done:
-	/* don't try to relay statelessly neither on success
-       (we forwarded statefully) nor on error; on troubles, 
-	   simply do nothing; that will make the other party to 
-	   retransmit; hopefuly, we'll then be better off */
+	
+ done:
+	     /* don't try to relay statelessly neither on success
+	      * (we forwarded statefully) nor on error; on troubles, 
+	      * simply do nothing; that will make the other party to 
+	      * retransmit; hopefuly, we'll then be better off 
+	      */
 	return 0;
 }
 
