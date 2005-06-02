@@ -254,7 +254,7 @@ static void fake_reply(struct cell *t, int branch, int code )
 		reply_status=relay_reply( t, FAKED_REPLY, branch, code,
 					  &cancel_bitmap );
 
-#ifdef 0
+#if 0
 		if (reply_status==RPS_COMPLETED) {
 			     /* don't need to cleanup uac_timers -- they were cleaned
 				branch by branch and this last branch's timers are
