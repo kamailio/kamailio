@@ -38,6 +38,7 @@
 #  2004-12-15  HAVE_ALLOCA_H added (andrei)
 #  2004-12-19  amd64 transformed in x86_64 (andrei)
 #  2005-04-27  alpha support added (andrei)
+#  2005-06-01  use $(LOCALBASE) instead of /usr/{local,pkg} (andrei)
 
 
 # check if already included/exported
@@ -70,10 +71,48 @@ ifneq ($(TLS),)
 endif
 # extra CC command line options (e.g  -march=athlon-mp)
 CC_EXTRA_OPTS ?=
+
+# dirs 
+cfg-dir = etc/ser/
+bin-dir = sbin/
+modules-dir = lib/ser/modules/
+ifeq ($(OS), linux)
+	doc-dir = share/doc/ser/
+	man-dir = share/man/
+	LOCALBASE ?= /usr/local
+else
+ifeq ($(OS), freebsd)
+	doc-dir = share/doc/ser/
+	man-dir = man/
+	LOCALBASE ?= /usr/local
+else
+ifeq ($(OS), openbsd)
+	doc-dir = share/doc/ser/
+	man-dir = man/
+	LOCALBASE ?= /usr/local
+else
+ifeq ($(OS), netbsd)
+	doc-dir = share/doc/ser
+	man-dir = man/
+	LOCALBASE ?= /usr/pkg
+else
+ifeq ($(OS), darwin)
+	doc-dir = share/doc/ser/
+	man-dir = man/
+	LOCALBASE ?= /usr/local
+else
+	doc-dir = doc/ser/
+	man-dir = man/
+	LOCALBASE ?= /usr/local
+endif
+endif
+endif
+endif
+endif
+
  # install location
-DESTDIR ?= /usr/local
+DESTDIR ?= $(LOCALBASE)
 PREFIX ?= $(DESTDIR)
-LOCALBASE ?= /usr/local
 prefix = $(PREFIX)
 # install path is $(basedir) $(prefix) 
 # example:
@@ -91,38 +130,7 @@ doc-prefix = $(basedir)$(prefix)
 man-prefix = $(basedir)$(prefix)
 ut-prefix = $(basedir)$(prefix)
 
-# dirs
-cfg-dir = etc/ser/
-bin-dir = sbin/
-modules-dir = lib/ser/modules/
-ifeq ($(OS), linux)
-	doc-dir = share/doc/ser/
-	man-dir = share/man/
-else
-ifeq ($(OS), freebsd)
-	doc-dir = share/doc/ser/
-	man-dir = man/
-else
-ifeq ($(OS), openbsd)
-	doc-dir = share/doc/ser/
-	man-dir = man/
-else
-ifeq ($(OS), netbsd)
-	doc-dir = share/doc/ser
-	man-dir = man/
-else
-ifeq ($(OS), darwin)
-	doc-dir = share/doc/ser/
-	man-dir = man/
-else
-	doc-dir = doc/ser/
-	man-dir = man/
-endif
-endif
-endif
-endif
-endif
-ut-prefix = bin/
+
 # target dirs for various stuff
 cfg-target = $(prefix)/$(cfg-dir)
 bin-target = $(prefix)/$(bin-dir)
@@ -862,7 +870,7 @@ ifeq ($(CC_NAME), suncc)
 endif
 	OLD_SOLARIS= $(shell echo "$(OSREL)" | \
 				sed -e 's/^5\.[0-6][^0-9]*$$/yes/' )
-	LIBS+= -L/usr/local/lib -lfl -lxnet -lnsl 
+	LIBS+= -L$(LOCALBASE)/lib -lfl -lxnet -lnsl 
 ifeq	($(OLD_SOLARIS), yes)
 		LIBS+=-lposix4
 else
@@ -954,7 +962,8 @@ endif
 
 #add libssl if needed
 ifneq ($(TLS),)
-LIBS+= -L/usr/local/lib -L/usr/local/ssl/lib -lssl  -lcrypto
+DEFS+= -I$(LOCALBASE)/ssl/include
+LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lssl  -lcrypto
 endif
 
 ifneq ($(found_lock_method), yes)

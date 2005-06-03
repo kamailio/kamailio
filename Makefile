@@ -237,6 +237,7 @@ mk-install-dirs: $(cfg-prefix)/$(cfg-dir) $(bin-prefix)/$(bin-dir) \
 			$(modules-prefix)/$(modules-dir) $(doc-prefix)/$(doc-dir) \
 			$(man-prefix)/$(man-dir)/man8 $(man-prefix)/$(man-dir)/man5
 
+
 $(cfg-prefix)/$(cfg-dir): 
 		mkdir -p $(cfg-prefix)/$(cfg-dir)
 
