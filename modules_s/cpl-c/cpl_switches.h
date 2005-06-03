@@ -31,7 +31,7 @@
 
 #include "cpl_time.h"
 #include "../../parser/parse_from.h"
-#include "../../parser/parse_uri.c"
+#include "../../parser/parse_uri.h"
 
 
 
