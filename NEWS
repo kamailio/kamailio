@@ -12,6 +12,7 @@ new archs:
  - x86_64 support
  - OS X (darwin) support
  - sparc32 single cpu highly experimental support
+ - ppc64 experimental support
 
 modules:
  - enum - support for more than one NAPTR

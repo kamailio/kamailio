@@ -39,6 +39,8 @@
  *  2004-12-16  for now use the same locking code for sparc32 as for sparc64
  *               (it will work only if NOSMP is defined) (andrei)
  *  2005-04-27  added alpha locking code (andrei)
+ *  2005-06-06  ppc locking code enabled also for ppc64, note however
+ *               that the version in HEAD might be more reliable (andrei)
  *
  */
 
@@ -100,7 +102,7 @@ inline static int tsl(fl_lock_t* lock)
 			: "r"(1), "r" (lock) : "memory"
 	);
 	
-#elif defined __CPU_ppc
+#elif defined(__CPU_ppc) || defined(__CPU_ppc64)
 	asm volatile(
 			"1: lwarx  %0, 0, %2\n\t"
 			"   cmpwi  %0, 0\n\t"
@@ -200,7 +202,7 @@ inline static void release_lock(fl_lock_t* lock)
 		: "r"(0), "r"(lock)
 		: "memory"
 	);
-#elif defined __CPU_ppc
+#elif defined(__CPU_ppc) || defined(__CPU_ppc64)
 	asm volatile(
 			"sync\n\t"
 			"stw %0, 0(%1)\n\t"
