@@ -229,7 +229,7 @@ static inline struct hdr_field *get_autenticate_hdr(struct sip_msg *rpl,
 	}
 	for( hdr=rpl->headers ; hdr ; hdr=hdr->next )
 	{
-		if ( !(hdr->type&HDR_OTHER_T) )
+		if ( hdr->type!=HDR_OTHER_T )
 			continue;
 		if (hdr->name.len==hdr_name.len &&
 		strncasecmp(hdr->name.s,hdr_name.s, hdr_name.len)==0 )
