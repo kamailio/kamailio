@@ -1,0 +1,290 @@
+
+uri_db Module
+
+Jan Janak
+
+   FhG FOKUS
+
+Edited by
+
+Jan Janak
+
+Bogdan-Andrei Iancu
+
+   Copyright © 2003 FhG FOKUS
+
+   Copyright © 2005 voice-system.ro
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. OpenSER Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. db_url (string)
+              1.3.2. uri_table (string)
+              1.3.3. uri_user_column (string)
+              1.3.4. uri_domain_column (string)
+              1.3.5. uri_uriuser_column (string)
+              1.3.6. subscriber_table (string)
+              1.3.7. subscriber_user_column (string)
+              1.3.8. subscriber_domain_column (string)
+              1.3.9. use_uri_table (integer)
+              1.3.10. use_domain (integer)
+
+        1.4. Exported Functions
+
+              1.4.1. check_to()
+              1.4.2. check_from()
+              1.4.3. does_uri_exist()
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set db_url parameter
+   1-2. Set uri_table parameter
+   1-3. Set uri_user_column parameter
+   1-4. Set uri_domain_column parameter
+   1-5. Set uri_uriuser_column parameter
+   1-6. Set subscriber_table parameter
+   1-7. Set subscriber_user_column parameter
+   1-8. Set subscriber_domain_column parameter
+   1-9. Set use_uri_table parameter
+   1-10. Set use_domain parameter
+   1-11. check_to usage
+   1-12. check_from usage
+   1-13. does_uri_exist usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   Various checks related to SIP URI.
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. OpenSER Modules
+
+   The following modules must be loaded before this module:
+
+     * a OpenSER database module.
+     _________________________________________________________
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running OpenSER with this module loaded:
+
+     * None.
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. db_url (string)
+
+   URL of the database to be used.
+
+   Default value is "mysql://serro:47serro11@localhost/ser". 
+
+   Example 1-1. Set db_url parameter
+...
+modparam("db_url", "db_url", "mysql://username:password@localhost/ser")
+...
+     _________________________________________________________
+
+1.3.2. uri_table (string)
+
+   Table containing list of allowed URIs for each user.
+
+   Default value is "uri". 
+
+   Example 1-2. Set uri_table parameter
+...
+modparam("db_url", "uri_table", "uri")
+...
+     _________________________________________________________
+
+1.3.3. uri_user_column (string)
+
+   Column holding usernames in the URI table.
+
+   Default value is "username". 
+
+   Example 1-3. Set uri_user_column parameter
+...
+modparam("db_url", "uri_user_column", "username")
+...
+     _________________________________________________________
+
+1.3.4. uri_domain_column (string)
+
+   Column holding domain in the URI table.
+
+   Default value is "domain". 
+
+   Example 1-4. Set uri_domain_column parameter
+...
+modparam("db_url", "uri_domain_column", "domain")
+...
+     _________________________________________________________
+
+1.3.5. uri_uriuser_column (string)
+
+   Column holding URI username in the URI table.
+
+   Default value is "uri_user". 
+
+   Example 1-5. Set uri_uriuser_column parameter
+...
+modparam("db_url", "uri_uriuser_column", "uri_user")
+...
+     _________________________________________________________
+
+1.3.6. subscriber_table (string)
+
+   Name of the subscriber table.
+
+   Default value is "subscriber". 
+
+   Example 1-6. Set subscriber_table parameter
+...
+modparam("db_url", "subscriber_table", "subscriber")
+...
+     _________________________________________________________
+
+1.3.7. subscriber_user_column (string)
+
+   Column holding username in subscriber table.
+
+   Default value is "username". 
+
+   Example 1-7. Set subscriber_user_column parameter
+...
+modparam("db_url", "subscriber_user_column", "username")
+...
+     _________________________________________________________
+
+1.3.8. subscriber_domain_column (string)
+
+   Column holding domains in the subscriber table.
+
+   Default value is "domain". 
+
+   Example 1-8. Set subscriber_domain_column parameter
+...
+modparam("db_url", "subscriber_domain_column", "domain")
+...
+     _________________________________________________________
+
+1.3.9. use_uri_table (integer)
+
+   Specify if the "uri" table should be used for checkings
+   instead of "subscriber" table. Non 0 value means true.
+
+   Default value is "0 (false)". 
+
+   Example 1-9. Set use_uri_table parameter
+...
+modparam("db_url", "use_uri_table", 1)
+...
+     _________________________________________________________
+
+1.3.10. use_domain (integer)
+
+   Specify if the domain part of the URI should be used to
+   identify the users (along with username). Useful in multi
+   domain setup. Non 0 value means true.
+
+   Default value is "0 (false)". 
+
+   Example 1-10. Set use_domain parameter
+...
+modparam("db_url", "use_domain", 1)
+...
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. check_to()
+
+   Check To username against URI table or digest credentials.
+
+   Example 1-11. check_to usage
+...
+if (check_to()) {
+        ...
+};
+...
+     _________________________________________________________
+
+1.4.2. check_from()
+
+   Check From username against URI table or digest credentials.
+
+   Example 1-12. check_from usage
+...
+if (check_from()) {
+        ...
+};
+...
+     _________________________________________________________
+
+1.4.3. does_uri_exist()
+
+   Check if username in the request URI belongs to an existing
+   user.
+
+   Example 1-13. does_uri_exist usage
+...
+if (does_uri_exist()) {
+        ...
+};
+...
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any API to use in other OpenSER
+   modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about OpenSER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about OpenSER?
+
+   Take a look at http://openser.org/.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * User Mailing List -
+       http://openser.org/mailman/listinfo/users
+     * Developer Mailing List -
+       http://openser.org/mailman/listinfo/devel
+
+   E-mails regarding any stable OpenSER release should be sent to
+   <users@openser.org> and e-mails regarding development versions
+   should be sent to <devel@openser.org>.
+
+   If you want to keep the mail private, send it to
+   <team@openser.org>.
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://openser.org/bugs.

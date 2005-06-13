@@ -1,0 +1,320 @@
+
+Auth_db Module
+
+Jan Janak
+
+   FhG Fokus
+
+Jakob Schlyter
+
+Bogdan-Andrei Iancu
+
+   voice-system.ro
+
+Edited by
+
+Jan Janak
+
+   Copyright © 2002, 2003 FhG FOKUS
+
+   Copyright © 2005 voice-system.ro
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+        1.3. Exported Parameters
+
+              1.3.1. db_url (string)
+              1.3.2. user_column (string)
+              1.3.3. domain_column (string)
+              1.3.4. password_column (string)
+              1.3.5. password_column_2 (string)
+              1.3.6. calculate_ha1 (integer)
+              1.3.7. use_domain (integer)
+              1.3.8. load_credentials (string)
+
+        1.4. Exported Functions
+
+              1.4.1. www_authorize(realm, table)
+              1.4.2. proxy_authorize(realm, table)
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. db_url parameter usage
+   1-2. user_column parameter usage
+   1-3. domain_column parameter usage
+   1-4. password_column parameter usage
+   1-5. password_column_2 parameter usage
+   1-6. calculate_ha1 parameter usage
+   1-7. use_domain parameter usage
+   1-8. load_credentials parameter usage
+   1-9. www_authorize usage
+   1-10. proxy_authorize usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   This module contains all authentication related functions that
+   need the access to the database. This module should be used
+   together with auth module, it cannot be used independently
+   because it depends on the module. Select this module if you
+   want to use database to store authentication information like
+   subscriber usernames and passwords. If you want to use radius
+   authentication, then use auth_radius instead.
+     _________________________________________________________
+
+1.2. Dependencies
+
+   The module depends on the following modules (in the other
+   words the listed modules must be loaded before this module):
+
+     * auth -- Generic authentication functions
+     * database -- Any database module (currently mysql,
+       postgres, dbtext)
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. db_url (string)
+
+   This is URL of the database to be used. Value of the parameter
+   depends on the database module used. For example for mysql and
+   postgres modules this is something like
+   mysql://username:password@host:port/database. For dbtext
+   module (which stores data in plaintext files) it is directory
+   in which the database resides.
+
+   Default value is "mysql://serro:47serro11@localhost/ser".
+
+   Example 1-1. db_url parameter usage
+modparam("auth_db", "db_url", "mysql://foo:bar@foobar.org/ser")
+     _________________________________________________________
+
+1.3.2. user_column (string)
+
+   This is the name of the column holding usernames. Default
+   value is fine for most people. Use the parameter if you really
+   need to change it.
+
+   Default value is "username".
+
+   Example 1-2. user_column parameter usage
+modparam("auth_db", "user_column", "user")
+     _________________________________________________________
+
+1.3.3. domain_column (string)
+
+   This is the name of the column holding domains of users.
+   Default value is fine for most people. Use the parameter if
+   you really need to change it.
+
+   Default value is "domain".
+
+   Example 1-3. domain_column parameter usage
+modparam("auth_db", "domain_column", "domain")
+     _________________________________________________________
+
+1.3.4. password_column (string)
+
+   This is the name of the column holding passwords. Passwords
+   can be either stored as plain text or pre-calculated HA1
+   strings. HA1 strings are MD5 hashes of username, password, and
+   realm. HA1 strings are more safe because the server doesn't
+   need to know plaintext passwords and they cannot be obtained
+   from HA1 strings.
+
+   Default value is "ha1".
+
+   Example 1-4. password_column parameter usage
+modparam("auth_db", "password_column", "password")
+     _________________________________________________________
+
+1.3.5. password_column_2 (string)
+
+   As described in the previous section this parameter contains
+   name of column holding pre-calculated HA1 string that were
+   calculated including the domain in the username. This
+   parameter is used only when calculate_ha1 is set to 0 and user
+   agent send a credentials containing the domain in the
+   username.
+
+   Default value of the parameter is ha1b.
+
+   Example 1-5. password_column_2 parameter usage
+modparam("auth_db", "password_column_2", "ha1_2")
+     _________________________________________________________
+
+1.3.6. calculate_ha1 (integer)
+
+   This parameter tells server whether it should expect plaintext
+   passwords in the database or HA1 string. If the parameter is
+   set to 1 then the server will assume that the column pointed
+   to by password_column contains plaintext passwords and it will
+   calculate HA1 strings on the fly.
+
+   If the parameter is set to 0 then the server assumes that the
+   database contains HA1 strings directly and will not calculate
+   them. If username parameter of credentials contains also
+   @domain (some user agents put domain in username parameter),
+   then column pointed to by password_column_2 parameter will be
+   used instead. This column should also contain HA1 strings but
+   they should be calculated including the domain in the username
+   parameter (as opposed to password_column which (when
+   containing HA1 strings) should always contains HA1 strings
+   calculated without domain in username.
+
+   This ensures that the authentication will always work when
+   using pre-calculated HA1 string, not depending on the presence
+   of the domain in username.
+
+   Default value of this parameter is 0.
+
+   Example 1-6. calculate_ha1 parameter usage
+modparam("auth_db", "calculate_ha1", 1)
+     _________________________________________________________
+
+1.3.7. use_domain (integer)
+
+   If true (not 0), domain will be also used when looking up in
+   the subscriber table. If you have a multi-domain setup, it is
+   strongly recommended to turn on this parameter to avoid
+   username overlapping between domains.
+
+   IMPORTANT: before turning on this parameter, be sure that the
+   domain column in subscriber table is properly populated.
+
+   Default value is "0 (false)".
+
+   Example 1-7. use_domain parameter usage
+modparam("auth_db", "use_domain", 1)
+     _________________________________________________________
+
+1.3.8. load_credentials (string)
+
+   This parameter specifies of credentials to be fetch from
+   database when the authentication is performed. The loaded
+   credentials will be stored in AVPs. If the AVP name is not
+   specificaly given, it will be used a NAME AVP with the same
+   name as the column name.
+
+   Parameter syntax:
+
+     * load_credentials = credential (';' credential)* 
+     * credential = (avp_specification '=' column_name) |
+       (column_name) 
+     * avp_specification = 'i:'ID | 's:'NAME | NAME | '$'alias 
+
+   Default value of this parameter is "rpid".
+
+   Example 1-8. load_credentials parameter usage
+modparam("auth_db", "load_credentials", "i:13=rpid;email_address")
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. www_authorize(realm, table)
+
+   The function verifies credentials according to RFC2617. If the
+   credentials are verified successfully then the function will
+   succeed and mark the credentials as authorized (marked
+   credentials can be later used by some other functions). If the
+   function was unable to verify the credentials for some reason
+   then it will fail and the script should call www_challenge
+   which will challenge the user again.
+
+   Meaning of the parameters is as follows:
+
+     * realm - Realm is a opaque string that the user agent
+       should present to the user so he can decide what username
+       and password to use. Usually this is domain of the host
+       the server is running on.
+       If an empty string "" is used then the server will
+       generate it from the request. In case of REGISTER requests
+       To header field domain will be used (because this header
+       field represents a user being registered), for all other
+       messages From header field domain will be used.
+     * table - Table to be used to lookup usernames and passwords
+       (usually subscribers table).
+
+   Example 1-9. www_authorize usage
+...
+if (www_authorize("siphub.net", "subscriber")) {
+    www_challenge("siphub.net", "1");
+};
+...
+     _________________________________________________________
+
+1.4.2. proxy_authorize(realm, table)
+
+   The function verifies credentials according to RFC2617. If the
+   credentials are verified successfully then the function will
+   succeed and mark the credentials as authorized (marked
+   credentials can be later used by some other functions). If the
+   function was unable to verify the credentials for some reason
+   then it will fail and the script should call proxy_challenge
+   which will challenge the user again.
+
+   Meaning of the parameters is as follows:
+
+     * realm - Realm is a opaque string that the user agent
+       should present to the user so he can decide what username
+       and password to use. Usually this is domain of the host
+       the server is running on.
+       If an empty string "" is used then the server will
+       generate it from the request. From header field domain
+       will be used as realm.
+     * table - Table to be used to lookup usernames and passwords
+       (usually subscribers table).
+
+   Example 1-10. proxy_authorize usage
+...
+if (!proxy_authorize("", "subscriber)) {
+    proxy_challenge("", "1");  # Realm will be autogenerated
+};
+...
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any API to use in other OpenSER
+   modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about OpenSER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about OpenSER?
+
+   Take a look at http://openser.org/.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * User Mailing List -
+       http://openser.org/mailman/listinfo/users
+     * Developer Mailing List -
+       http://openser.org/mailman/listinfo/devel
+
+   E-mails regarding any stable OpenSER release should be sent to
+   <users@openser.org> and e-mails regarding development versions
+   should be sent to <devel@openser.org>.
+
+   If you want to keep the mail private, send it to
+   <team@openser.org>.
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://openser.org/bugs.

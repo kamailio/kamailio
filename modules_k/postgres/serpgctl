@@ -1,0 +1,783 @@
+#!/bin/sh 
+#
+# $Id$
+#
+# sc: ser control; tool for maintaining ser's databases
+#
+# History:
+# --------
+# 2003-04-06 this is a hack, from serctl, to make work with postgres
+# 2003-02-23 Thomas's start|stop commands checked in
+#
+# To-DO:
+# -----
+# - generalization for other than mysql databases
+# - front-end to updating administrative mysql password would
+#   be a convenient thing to have
+#
+# I copy this over the top of the existing serctl program.
+#
+
+
+
+# configuration for starting/stopping ser
+PID_FILE=/var/run/ser.pid
+SYSLOG=1 # 0=output to console, 1=output to syslog
+STARTOPTIONS= # for example -dddd
+
+# ser's FIFO server
+if [ -z "$SER_FIFO" ]; then
+	SER_FIFO=/tmp/ser_fifo
+fi
+# period in which stats are reprinted
+if [ -z "$WATCH_PERIOD" ] ; then
+	WATCH_PERIOD=2
+fi
+PW="test"
+
+# SQL config
+if [ -z "$SQL_DB" ] ; then
+	SQL_DB=ser
+fi
+if [ -z "$SQL_HOST" ] ; then
+	SQL_HOST=localhost
+fi
+if [ -z "$SQL_PORT" ] ; then
+	SQL_PORT=5432
+fi
+if [ -z "$SQL_USER" ] ; then
+	SQL_USER=ser
+fi
+
+# the read-only user for whom password may be stored here
+if [ -z "$RO_USER" ] ; then
+	RO_USER=serro
+fi
+if [ -z "$RO_PW" ] ; then
+	RO_PW=47serro11
+fi
+
+# binaries
+GENHA1='gen_ha1'
+PGSQL='psql'
+SER='sr'
+LAST_LINE='tail -1'
+
+# ACL name verification
+VERIFY_ACL=1
+ACL_GROUPS="local ld int voicemail free-pstn"
+
+# expiration time for alias table
+FOREVER='2020-05-28 21:32:15'
+FOREVER_REL=1073741823
+
+VERSION='$Revision$'
+#### SQL names
+
+# Usr Loc Table
+USRLOC=location
+USER_COLUMN=username
+CALLID_COLUMN=callid
+
+# subscriber table
+TABLE=subscriber
+REALM_COLUMN=domain
+HA1_COLUMN=HA1
+HA1B_COLUMN=HA1B
+PASSWORD_COLUMN=password
+SUBSCRIBER_COLUMN='username'
+EMAIL_COLUMN=email_address
+SUB_CREATED_COLUMN=datetime_created
+SUB_MODIFIED_COLUMN=datetime_modified
+PHP_LIB_COLUMN=phplib_id
+
+# acl table
+ACL_TABLE=grp
+ACL_USER_COLUMN=user
+ACL_GROUP_COLUMN=grp
+ACL_MODIFIED_COLUMN=last_modified
+
+# aliases table
+A_TABLE=aliases
+A_USER_COLUMN=user
+A_CONTACT_COLUMN=contact
+A_EXPIRES_COLUMN=expires
+A_Q_COLUMN=q
+A_CALLID_COLUMN=callid
+A_CSEQ_COLUMN=cseq
+A_LAST_MODIFIED_COLUMN=last_modified
+
+FIFO_DBG=0
+#===================================================================
+
+
+usage() {
+CMD=`basename $0`
+if [ "0$VERIFY_ACL" -eq 1 ] ; then
+	EXTRA_TEXT="ACL privileges are: $ACL_GROUPS"
+fi
+cat <<EOF
+$0 $VERSION
+usage: 
+           * subscribers *
+ $CMD add <username> <password> <email> .. add a new subscriber (*)
+ $CMD passwd <username> <passwd> ......... change user's password (*)
+ $CMD rm <username> ...................... delete a user (*)
+ $CMD mail <username> .................... send an email to a user
+ $CMD alias show [<alias>] ............... show aliases
+ $CMD alias rm <alias> ................... remove an alias
+ $CMD alias add <alias> <uri> ............ add an aliases 
+
+           * access control lists *
+ $CMD acl show [<username>] .............. show user membership
+ $CMD acl grant <username> <group> ....... grant user membership (*)
+ $CMD acl revoke <username> [<group>] .... grant user membership(s) (*)
+
+           * usrloc *
+ $CMD ul show [<username>]................ show in-RAM online users
+ $CMD ul rm <username> ................... delete user's UsrLoc entries
+ $CMD ul add <username> <uri> ............ introduce a permanent UrLoc entry
+ $CMD showdb [<username>] ................ show online users flushed in DB
+
+           * server health *
+ $CMD monitor ............................ show internal status
+ $CMD ps ................................. show runnig processes 
+ $CMD fifo ............................... send raw commands to FIFO
+
+           * server control *
+ $CMD start .............................. start ser
+ $CMD stop ............................... stop ser
+ $CMD restart ............................ restart ser
+
+
+   Commands labeled with (*) will prompt for a MySQL password.
+   If the variable PW is set, the password will not be prompted.
+
+     $EXTRA_TEXT
+
+EOF
+}
+
+# check the parameter if it is a valid SIP URI
+# quite simplified now -- it captures just very basic
+# errors
+check_uri() {
+	echo "$1" | grep -E "^sip:([a-zA-Z0-9_]+@)?.*\..*" 
+}
+
+
+#params: none
+# output: PW
+prompt_pw() {
+	if [ -z "$PW" ] ; then
+		savetty=`stty -g`
+		printf "Postgres password: "
+		stty -echo
+    	read PW
+		stty $savetty
+    	echo
+	fi
+}
+
+# process output from FIFO server; if everything is ok
+# skip the first "ok" line and proceed to returned 
+# parameters
+filter_fl()
+{
+#	tail +2
+	
+	awk 'BEGIN {line=0;IGNORECASE=1;}
+		{line++}
+		line==1 && /^200 ok/ { next }
+		{ print }'
+}
+
+
+fifo_cmd()
+{
+	if [ "0${FIFO_DBG}" -eq 1 ] ; then
+		echo "entering fifo_cmd $*"
+	fi
+	if [ "$#" -lt 1 ]; then
+		echo "ERROR: fifo_cmd must take at least command name as parameter"
+		exit
+	fi
+	name=ser_receiver_$$
+	path=/tmp/$name
+	if [ ! -w $SER_FIFO ]; then
+		echo "Error opening ser's FIFO $SER_FIFO"
+		echo "Make sure you have line fifo=$SER_FIFO in your config"
+		exit 1
+	fi
+	mkfifo $path
+	if [ $? -ne 0 ] ; then
+		echo "error opening read fifo $path"
+		exit 1
+	fi
+	chmod a+w $path
+
+	# construct the command now
+	CMD=":$1:$name\n";
+	shift
+	while [ -n "$1" ] ; do
+		CMD="${CMD}${1}\n"
+		shift
+	done
+	CMD="${CMD}\n"
+
+	trap "rm -f $path; exit 1" 2
+
+	# start reader now so that it is ready for replies
+	# immediately after a request was sent out
+	cat < $path | filter_fl &
+
+	# issue FIFO request (printf taken to deal with \n)
+	printf "$CMD" > $SER_FIFO
+
+	# wait for the reader to complete
+	wait
+	rm $path
+
+	if [ "0${FIFO_DBG}" -eq 1 ] ; then
+		printf "FIFO command was:\n$CMD"
+	fi
+}
+
+
+# $1 = name $2=path $3=attempt
+print_stats() {
+
+echo "[cycle #: $3; if constant make sure server lives and fifo is on]"
+
+cat < $2 | filter_fl &
+cat > $SER_FIFO <<EOF
+:version:$1
+
+EOF
+wait
+
+cat < $2 | filter_fl &
+cat > $SER_FIFO << EOF
+:uptime:$1
+
+EOF
+wait
+echo
+
+echo Transaction Statistics
+cat < $2 | filter_fl &
+cat > $SER_FIFO <<EOF
+:t_stats:$1
+
+EOF
+wait
+echo
+
+echo Stateless Server Statistics
+cat < $2 | filter_fl &
+cat > $SER_FIFO <<EOF
+:sl_stats:$1
+
+EOF
+wait
+echo
+
+echo UsrLoc Stats
+cat < $2 | filter_fl &
+cat > $SER_FIFO <<EOF
+:ul_stats:$1
+
+EOF
+wait
+}
+
+
+# input: sql query, optional mysql command-line params
+sql_query() {
+	# if password not yet queried, query it now
+	if [ -z "$PW" ] ; then
+		savetty=`stty -g`
+		printf "MySql password: "
+		stty -echo
+    	read PW >&2
+		stty $savetty
+    	echo >&2
+	fi
+	$PGSQL $2\
+		-A -q -t \
+		-P fieldsep="	" \
+		-h $SQL_HOST \
+		-U $SQL_USER \
+		$SQL_DB \
+		-c "$1"
+}
+
+# input: sql query, optional mysql command-line params
+sql_ro_query() {
+	$PGSQL $2\
+		-h $SQL_HOST \
+		-U $SQL_USER \
+		$SQL_DB \
+		-c "$1"
+}
+
+# input: sql query, optional mysql command-line params
+sql_ro_raw_query() {
+	$PGSQL $2\
+		-A -q -t \
+		-P fieldsep="	" \
+		-h $SQL_HOST \
+		-U $SQL_USER \
+		$SQL_DB \
+		-c "$1"
+}
+
+
+usrloc() {
+	if [ "$#" -lt 2 ] ; then
+		echo "usrloc: too few parameters"
+		exit 1
+	fi
+	if [ "$1" = "alias" ] ; then
+		TABLE="$A_TABLE"
+	elif [ "$1" = "ul" ] ; then
+		TABLE="$USRLOC"
+	else
+		echo "usrloc: unknown table name"
+		exit 1
+	fi
+	shift
+
+	case $1 in 
+		show)
+			if [ $# -eq 2 ] ; then
+				fifo_cmd ul_show_contact $TABLE $2
+			elif [ $# -eq 1 ] ; then
+				fifo_cmd ul_dump
+			else
+				echo "wrong number of params for usrloc show"
+				usage
+				exit 1
+			fi
+			exit $?
+			;;
+		add)
+			if [ $# -ne 3 ] ; then
+				usage
+				exit 1
+			fi
+			shift
+			check_uri "$2"
+			if [ "$?" -ne "0" ] ; then
+				echo "$2 is not a valid URI"
+				exit 1
+			fi
+
+			fifo_cmd ul_add "$TABLE" "$1" "$2" "$FOREVER_REL" "1.00" "0"
+			exit $?
+			;;
+		rm)
+            if [ $# -ne 2 ] ; then
+                usage
+                exit 1
+            fi
+			shift
+			fifo_cmd ul_rm $TABLE $1
+
+            ;;
+
+		*)
+			usage
+			exit 1
+			;;
+	esac
+}
+
+acl() {
+	case $1 in
+		show)
+			if [ $# -eq 2 ] ; then
+				is_user $2
+				if [ $? -ne 0 ] ; then
+					echo non-existent user
+					exit 1;
+				fi
+				CLAUSE=" WHERE $ACL_USER_COLUMN='$2' "
+			elif [ $# -ne 1 ] ; then
+				usage
+				exit 1
+			fi
+			QUERY="select * FROM $ACL_TABLE $CLAUSE ; "
+			sql_ro_query "$QUERY"
+
+			;;
+
+		grant)
+			if [ $# -lt 3 ] ; then
+				usage
+				exit 1
+			fi
+			prompt_pw
+			is_user $2
+			if [ $? -ne 0 ] ; then
+				echo non-existent user
+				exit 1
+			fi
+			SIP_USER="$2"
+			shift 2
+			while [ $# -gt 0 ] ; do
+
+				if [ $VERIFY_ACL -eq 1 ] ; then
+					found=0
+					for i in $ACL_GROUPS ; do
+						if [ "$1" = "$i" ] ; then
+							found=1
+							break
+						fi
+					done	
+					if [ $found -eq 0 ] ; then
+						echo "Invalid privilege: $1 ignored"
+						shift
+						continue
+					fi
+				fi
+
+        		QUERY="insert into $ACL_TABLE \
+                	($ACL_USER_COLUMN,$ACL_GROUP_COLUMN,$ACL_MODIFIED_COLUMN) \
+                	values ('$SIP_USER','$1', now());"
+				sql_query "$QUERY"
+				if [ $? -ne 0 ] ; then
+					echo "SQL Error"
+					exit 1
+				fi
+				shift
+			done
+
+			$0 acl show $SIP_USER
+
+			;;
+
+		revoke)
+			if [ $# -eq 3 ] ; then
+				CLAUSE=" and $ACL_GROUP_COLUMN='$3' "
+			elif [ $# -ne 2 ] ; then
+				usage
+				exit 1
+			fi	
+
+			QUERY="delete from $ACL_TABLE where \
+				$ACL_TABLE.$ACL_USER_COLUMN='$2' $CLAUSE"
+			sql_query "$QUERY"
+
+			$0 acl show $2
+
+			;;
+
+		*)
+			usage
+			exit 1
+			;;
+	esac
+}
+
+# params: user
+# output: false if exists, true otherwise
+is_user() {
+	QUERY="select count(*) from $TABLE \
+		where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$SIP_DOMAIN';"
+	CNT=`sql_ro_raw_query "$QUERY" | grep -v ERROR | $LAST_LINE`
+	if [ "0$CNT" -eq 0 ] ; then
+		false
+	else
+		true
+	fi
+
+}
+
+
+# params: user, password
+# output: HA1, HA1B
+credentials()
+{
+	HA1=`$GENHA1 $1 $SIP_DOMAIN $2`
+	if [ $? -ne 0 ] ; then
+		echo "HA1 calculation failed"
+		exit 1
+	fi
+	HA1B=`$GENHA1 "$1@$SIP_DOMAIN" $SIP_DOMAIN $2`
+	if [ $? -ne 0 ] ; then
+		echo "HA1B calculation failed"
+		exit 1
+	fi
+}
+
+#================================================================
+
+if [ -z "$SIP_DOMAIN" ] ; then
+	echo
+	echo "You need to set environment variable SIP_DOMAIN (e.g. to 'foobar.com') first"
+	echo
+#	This confuses new users cause its easy to miss the information above
+#	usage
+	exit 1
+fi
+
+# if the script calls itself ...
+export PW
+
+case $1 in
+
+	start)
+		DIR=`dirname $0`
+		echo
+		printf "Starting SER : "
+		if [ -r $PID_FILE ] ; then
+			echo "PID file exists! ($PID_FILE) already running?"
+			exit 1
+		else
+			if [ $SYSLOG = 1 ] ; then
+				$DIR/ser -P $PID_FILE $STARTOPTIONS 1>/dev/null 2>/dev/null
+			else
+			 	$DIR/ser -P $PID_FILE -E $STARTOPTIONS
+			fi
+			sleep 1
+			echo "started pid(`cat $PID_FILE`)"
+		fi
+		exit 0
+	;;
+
+	stop)
+		printf "Stopping SER : "
+		if [ -r $PID_FILE ] ; then
+			kill `cat $PID_FILE`
+			echo "stopped"
+		else
+			echo No PID file found!
+			exit 1
+		fi
+		exit 0
+	;;
+
+	restart)
+	        DIR=`dirname $0`
+		printf "Stopping SER : "
+		if [ -r $PID_FILE ] ; then
+			kill `cat $PID_FILE`
+			echo "stopped"
+		else
+			echo No PID file found! SER problably not running
+			exit 1
+		fi
+		sleep 2
+		printf "Starting SER : "
+		if [ -r $PID_FILE ] ; then
+			echo "PID file exists! ($PID_FILE) already running?"
+			exit 1
+		else
+			if [ $SYSLOG = 1 ] ; then
+			        $DIR/ser -P $PID_FILE $STARTOPTIONS 1>/dev/null 2>/dev/null
+			else
+			        $DIR/ser -P $PID_FILE -E $STARTOPTIONS
+			fi
+			sleep 1
+			echo "started pid(`cat $PID_FILE`)"
+		fi
+		exit 0
+	;;
+
+	passwd)
+		if [ $# -ne 3 ] ; then
+			usage
+			exit 1
+		fi
+		shift
+		credentials $1 $2
+		prompt_pw
+
+		is_user $1
+		if [ $? -ne 0 ] ; then
+			echo non-existent user
+			exit 1
+		fi
+		QUERY="update $TABLE \
+			set $HA1_COLUMN='$HA1', $HA1B_COLUMN='$HA1B', $PASSWORD_COLUMN='$2' \
+			, $SUB_MODIFIED_COLUMN=now() \
+			WHERE $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$SIP_DOMAIN';"
+		sql_query "$QUERY"
+		if [ $? -ne 0 ] ; then
+			echo "password change failed"
+		else
+			echo "password change succeeded"
+		fi
+
+		;;		
+			
+		
+
+	add)
+		if [ $# -ne 4 ] ; then
+			usage
+			exit 1
+		fi
+		shift
+		credentials $1 $2
+		prompt_pw
+        is_user $1
+        if [ $? -eq 0 ] ; then
+            echo user already exists
+            exit 1
+        fi
+
+		QUERY="insert into $TABLE \
+				($SUBSCRIBER_COLUMN,$REALM_COLUMN,$HA1_COLUMN,\
+				$HA1B_COLUMN,$PASSWORD_COLUMN,$EMAIL_COLUMN, $SUB_CREATED_COLUMN,  \
+				$PHP_LIB_COLUMN,datetime_modified ) \
+				values ('$1','$SIP_DOMAIN','$HA1','$HA1B','$2', '$3', now(), '$HA1', now() );";
+		sql_query "$QUERY"
+		if [ $? -ne 0 ] ; then
+			echo "introducing a new user to the database failed"
+		else
+			echo "new user added"
+		fi
+
+		;;
+
+	monitor|console|moni|con)
+		name=ser_receiver_$$
+		path=/tmp/$name
+		if [ ! -w $SER_FIFO ]; then
+			echo "Error opening ser's FIFO $SER_FIFO"
+			echo "Make sure you have line fifo=$SER_FIFO in your config"
+			exit 1
+		fi
+		mkfifo $path
+		if [ $? -ne 0 ] ; then
+			echo "error opening read fifo $path"
+			exit 1
+		fi
+		trap "rm $path;  clear; echo sc monitor ^C-ed; exit 1" 2
+		attempt=0
+		clear
+		while [ 1 -eq 1 ]; do
+			attempt=`expr $attempt + 1`
+			#clear
+			tput cup 0 0
+			print_stats $name $path $attempt
+			sleep $WATCH_PERIOD
+		done
+		rm $path
+		exit 0
+		;;
+
+	mail)
+		if [ $# -ne 2 ] ; then
+			usage
+			exit 1
+		fi
+		shift
+		QUERY="select $TABLE.$EMAIL_COLUMN from $TABLE where  \
+			$TABLE.$SUBSCRIBER_COLUMN='$1'"
+		EA=`sql_ro_raw_query "$QUERY" "-B" | grep -v ERROR | $LAST_LINE`
+		if [ $? -ne 0 ] ; then
+			echo "MySql query failed"
+			exit 1
+		fi
+		echo "Write email to $1: $EA now ..."
+		mail -s "Message from $SIP_DOMAIN SIP admin" $EA
+		if [ $? -eq 0 ] ; then
+			echo message sent
+		else
+			echo sending message failed
+		fi
+
+		;;
+
+	alias|ul)
+		usrloc "$@"
+		;;
+
+	online)
+		fifo_cmd ul_dump |grep aor| awk '{print $3}' | sort | sort -mu
+		exit $?
+		;;
+
+
+	showdb|userdb)
+		if [ $# -eq 2 ] ; then
+			is_user $2
+			if [ $? -ne 0 ] ; then
+				echo non-existent user
+				exit 1;
+			fi
+		elif [ $# -ne 1  ] ; then
+			usage
+			exit 1
+		fi
+
+		shift
+
+		QUERY1="select $TABLE.$EMAIL_COLUMN from $TABLE where  \
+			$TABLE.$SUBSCRIBER_COLUMN='$1'"
+		QUERY2="select $USRLOC.* from $USRLOC where \
+			$USRLOC.$USER_COLUMN='$1' order by expires desc"
+		QUERY3="select $USRLOC.$USER_COLUMN, $TABLE.$EMAIL_COLUMN, $USRLOC.$CALLID_COLUMN \
+			from $TABLE, $USRLOC where  \
+			$TABLE.$SUBSCRIBER_COLUMN=$USRLOC.$USER_COLUMN  order by $USRLOC.$USER_COLUMN" 
+
+		if [ $# -eq 1 ] ; then
+			sql_ro_query "$QUERY1"
+			sql_ro_query "$QUERY2"
+		else
+			sql_ro_query "$QUERY3"
+		fi
+		echo "Note: Due to usage of cache, server's list " \
+			"may differ from DB list."
+
+		;;
+
+	rm)
+        if [ $# -ne 2 ] ; then
+            usage
+            exit 1
+        fi
+		shift 
+		prompt_pw 
+
+        is_user $1
+        if [ $? -ne 0 ] ; then
+            echo non-existent user
+            exit 1
+        fi
+
+        QUERY="delete from $TABLE where $TABLE.$SUBSCRIBER_COLUMN='$1'"
+		sql_query "$QUERY"
+
+		$0 acl revoke $1 > /dev/null 2>&1
+		$0 dul $1   > /dev/null 2>&1
+        ;;
+			
+	ps)
+		fifo_cmd ps
+		;;
+
+	acl)
+		shift
+		acl "$@"
+		;;
+
+	fifo)
+		shift
+		fifo_cmd "$@"
+		;;
+
+	version)
+		echo  "$0 $VERSION"
+		;;
+		
+	*)
+		usage
+		exit 1
+		;;
+
+esac
+

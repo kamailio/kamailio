@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="US-ASCII" ?>
+
+   <!--
+       Draft DTD for CPL, corresponding to
+       draft-ietf-iptel-cpl-06.
+   -->
+
+   <!-- Nodes. -->
+   <!-- Switch nodes -->
+   <!ENTITY % Switch 'address-switch|string-switch|language-switch|
+                      time-switch|priority-switch' >
+
+   <!-- Location nodes -->
+   <!ENTITY % Location 'location|lookup|remove-location' >
+
+   <!-- Signalling action nodes -->
+   <!ENTITY % SignallingAction 'proxy|redirect|reject' >
+
+   <!-- Other actions -->
+   <!ENTITY % OtherAction 'mail|log' >
+
+   <!-- Links to subactions -->
+   <!ENTITY % Sub 'sub' >
+
+   <!-- Nodes are one of the above four categories, or a subaction.
+        This entity (macro) describes the contents of an output.
+        Note that a node can be empty, implying default action. -->
+   <!ENTITY % Node     '(%Location;|%Switch;|%SignallingAction;|
+                        %OtherAction;|%Sub;)?' >
+
+
+   <!-- Switches: choices a CPL script can make. -->
+
+   <!-- All switches can have an 'otherwise' output. -->
+   <!ELEMENT otherwise ( %Node; ) >
+
+   <!-- All switches can have a 'not-present' output. -->
+   <!ELEMENT not-present ( %Node; ) >
+
+   <!-- Address-switch makes choices based on addresses. -->
+   <!ELEMENT address-switch ( address*, (not-present, address*)?,
+                              otherwise? ) >
+   <!-- <not-present> must appear at most once -->
+   <!ATTLIST address-switch
+      field         CDATA    #REQUIRED
+      subfield      CDATA    #IMPLIED
+   >
+
+   <!ELEMENT address ( %Node; ) >
+
+   <!ATTLIST address
+      is            CDATA    #IMPLIED
+      contains      CDATA    #IMPLIED
+      subdomain-of  CDATA    #IMPLIED
+   > <!-- Exactly one of these three attributes must appear -->
+
+
+   <!-- String-switch makes choices based on strings. -->
+
+   <!ELEMENT string-switch ( string*, (not-present, string*)?,
+                             otherwise? ) >
+   <!-- <not-present> must appear at most once -->
+   <!ATTLIST string-switch
+      field         CDATA    #REQUIRED
+   >
+
+   <!ELEMENT string ( %Node; ) >
+   <!ATTLIST string
+      is            CDATA    #IMPLIED
+      contains      CDATA    #IMPLIED
+   >  <!-- Exactly one of these two attributes must appear -->
+
+
+   <!-- Language-switch makes choices based on the originator's preferred
+        languages. -->
+
+   <!ELEMENT language-switch ( language*, (not-present, language*)?,
+                               otherwise? ) >
+   <!-- <not-present> must appear at most once -->
+
+   <!ELEMENT language ( %Node; ) >
+   <!ATTLIST language
+      matches      CDATA     #REQUIRED
+   >
+
+
+   <!-- Time-switch makes choices based on the current time. -->
+
+   <!ELEMENT time-switch ( time*, (not-present, time*)?, otherwise? ) >
+   <!ATTLIST time-switch
+      tzid          CDATA    #IMPLIED
+      tzurl         CDATA    #IMPLIED
+   >
+
+   <!ELEMENT time ( %Node; ) >
+
+   <!-- Exactly one of the two attributes "dtend" and "duration"
+        must occur. -->
+   <!-- The value of "freq" is (daily|weekly|monthly|yearly).  It is
+           case-insensitive, so it is not given as a DTD switch. -->
+   <!-- None of the attributes following freq are meaningful unless freq
+            appears. -->
+   <!-- The value of "wkst" is (MO|TU|WE|TH|FR|SA|SU).  It is
+           case-insensitive, so it is not given as a DTD switch. -->
+   <!ATTLIST time
+      dtstart       CDATA  #REQUIRED
+      dtend         CDATA  #IMPLIED
+      duration      CDATA  #IMPLIED
+      freq          CDATA  #IMPLIED
+      until         CDATA  #IMPLIED
+      count         CDATA  #IMPLIED
+      interval      CDATA  "1"
+      bysecond      CDATA  #IMPLIED
+      byminute      CDATA  #IMPLIED
+      byhour        CDATA  #IMPLIED
+      byday         CDATA  #IMPLIED
+      bymonthday    CDATA  #IMPLIED
+      byyearday     CDATA  #IMPLIED
+      byweekno      CDATA  #IMPLIED
+      bymonth       CDATA  #IMPLIED
+      wkst          CDATA  "MO"
+      bysetpos      CDATA  #IMPLIED
+   >
+
+
+   <!-- Priority-switch makes choices based on message priority. -->
+
+   <!ELEMENT priority-switch ( priority*, (not-present, priority*)?,
+                               otherwise? ) >
+   <!-- <not-present> must appear at most once -->
+
+   <!ENTITY % PriorityVal '(emergency|urgent|normal|non-urgent)' >
+
+   <!ELEMENT priority ( %Node; ) >
+
+   <!-- Exactly one of these three attributes must appear -->
+   <!ATTLIST priority
+      less          %PriorityVal;  #IMPLIED
+      greater       %PriorityVal;  #IMPLIED
+      equal         CDATA          #IMPLIED
+   >
+
+
+   <!-- Locations: ways to specify the location a subsequent action
+        (proxy, redirect) will attempt to contact. -->
+
+   <!ENTITY % Clear  'clear (yes|no) "no"' >
+
+
+   <!ELEMENT location ( %Node; ) >
+   <!ATTLIST location
+      url           CDATA    #REQUIRED
+      priority      CDATA    #IMPLIED
+      %Clear;
+   >
+   <!-- priority is in the range  0.0 - 1.0.  Its default value SHOULD
+         be 1.0 -->
+
+   <!ELEMENT lookup ( success?,notfound?,failure? ) >
+   <!ATTLIST lookup
+     source         CDATA     #REQUIRED
+     timeout        CDATA     "30"
+     use            CDATA     #IMPLIED
+     ignore         CDATA     #IMPLIED
+     %Clear;
+   >
+
+   <!ELEMENT success  ( %Node; ) >
+   <!ELEMENT notfound ( %Node; ) >
+   <!ELEMENT failure ( %Node; ) >
+
+   <!ELEMENT remove-location ( %Node; ) >
+   <!ATTLIST remove-location
+      param         CDATA    #IMPLIED
+      value         CDATA    #IMPLIED
+      location      CDATA    #IMPLIED
+   >
+
+
+   <!-- Signalling Actions: call-signalling actions the script can
+        take. -->
+
+   <!ELEMENT proxy ( busy?,noanswer?,redirection?,failure?,default? ) >
+
+   <!-- The default value of timeout is "20" if the <noanswer> output
+        exists. -->
+   <!ATTLIST proxy
+      timeout       CDATA    #IMPLIED
+      recurse       (yes|no) "yes"
+      ordering      (parallel|sequential|first-only) "parallel"
+   >
+
+   <!ELEMENT busy ( %Node; ) >
+   <!ELEMENT noanswer ( %Node; ) >
+   <!ELEMENT redirection ( %Node; ) >
+   <!-- "failure" repeats from lookup, above. -->
+   <!ELEMENT default ( %Node; ) >
+
+   <!ELEMENT redirect EMPTY >
+   <!ATTLIST redirect
+      permanent     (yes|no) "no"
+   >
+
+
+   <!-- Statuses we can return -->
+
+   <!ELEMENT reject EMPTY >
+   <!-- The value of "status" is (busy|notfound|reject|error), or a SIP
+        4xx-6xx status. -->
+   <!ATTLIST reject
+      status        CDATA    #REQUIRED
+      reason        CDATA    #IMPLIED
+   >
+
+   <!-- Non-signalling actions: actions that don't affect the call -->
+
+   <!ELEMENT mail ( %Node; ) >
+   <!ATTLIST mail
+      url           CDATA    #REQUIRED
+   >
+
+   <!ELEMENT log ( %Node; ) >
+   <!ATTLIST log
+      name          CDATA    #IMPLIED
+      comment       CDATA    #IMPLIED
+   >
+
+
+   <!-- Calls to subactions. -->
+
+   <!ELEMENT sub EMPTY >
+   <!ATTLIST sub
+      ref           IDREF    #REQUIRED
+   >
+
+
+   <!-- Ancillary data -->
+
+   <!ENTITY % Ancillary 'ancillary?' >
+
+   <!ELEMENT ancillary EMPTY >
+
+
+   <!-- Subactions -->
+
+   <!ENTITY % Subactions 'subaction*' >
+
+
+   <!ELEMENT subaction ( %Node; )>
+   <!ATTLIST subaction
+      id            ID       #REQUIRED
+   >
+
+
+   <!-- Top-level actions -->
+
+   <!ENTITY % TopLevelActions 'outgoing?,incoming?' >
+
+   <!ELEMENT outgoing ( %Node; )>
+
+   <!ELEMENT incoming ( %Node; )>
+
+   <!-- The top-level element of the script. -->
+
+   <!ELEMENT cpl  ( %Ancillary;,%Subactions;,%TopLevelActions; ) >
+

@@ -1,0 +1,117 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>&uri; check using Radius server.</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>No dependencies on other &ser; modules</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>radius client library</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>radius_config</varname> (string)</title>
+	    <para>
+		Radiusclient configuration file.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>/usr/local/etc/radiusclient/radiusclient.conf</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>param_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("uri_radius", "radius_config", "/etc/radiusclient.conf")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>service_type</varname> (integer)</title>
+	    <para>
+		Radius service type used in <function>radius_does_uri_exist check</function>.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 10 (Call-Check).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>param_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("uri_radius", "service_type", 11)
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">radius_does_uri_exist()</function>
+	    </title>
+	    <para>
+		Checks from Radius if user@host in Request-&uri; is a local user. Can be used to
+		decide if 404 or 480 should be returned after lookup has failed.
+	    </para>
+	    <example>
+		<title><function>radius_does_uri_exist</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (radius_does_uri_exist()) {
+    ...
+};
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("uri_radius.sgml" "Book" "chapter")
+End:
+-->

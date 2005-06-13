@@ -1,0 +1,193 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	<chapterinfo>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>Various checks related to &sip; &uri;.</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&ser; Modules</title>
+		<para>None.</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+	<para>
+		None.
+	</para>
+	</section>
+	<section>
+	<title>Exported Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">is_user(username)</function>
+		</title>
+		<para>
+		Check if the username in credentials matches the given username.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>username</emphasis> - Username string.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>is_user</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_user("john")) {
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">has_totag()</function>
+		</title>
+		<para>
+		Check if To header field uri contains tag parameter.
+		</para>
+		<example>
+		<title><function>has_totag</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (has_totag()) {
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">uri_param(param)</function>
+		</title>
+		<para>
+		Find if Request URI has a given parameter with no value
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>param</emphasis> - parameter name to look for.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>uri_param</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (uri_param("param1")) {
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">uri_param(param,value)</function>
+		</title>
+		<para>
+		Find if Request URI has a given parameter with matching value
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>param</emphasis> - parameter name to look for.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>value</emphasis> - parameter value to match.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>uri_param</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (uri_param("param1","value1")) {
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">add_uri_param(param)</function>
+		</title>
+		<para>
+		Add to RURI a parameter (name=value);
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>param</emphasis> - parameter to be appended in
+			<quote>name=value</quote> format.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>add_uri_param</function> usage</title>
+		<programlisting format="linespecific">
+...
+add_uri_param("nat=yes");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">tel2sip()</function>
+		</title>
+		<para>
+		Converts RURI, if it is tel URI, to SIP URI.  Returns true, only if
+		conversion succeeded or if no conversion was needed (like RURI
+		was not tel URI.
+		</para>
+		<example>
+		<title><function>tel2sip</function> usage</title>
+		<programlisting format="linespecific">
+...
+tel2sip();
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("uri.sgml" "Book" "chapter")
+End:
+-->

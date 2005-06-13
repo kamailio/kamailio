@@ -1,0 +1,62 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+<!ENTITY user SYSTEM "auth_db_user.sgml">
+<!ENTITY devel SYSTEM "auth_db_devel.sgml">
+<!ENTITY faq SYSTEM "auth_db_faq.sgml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
+%docentities;
+
+]>
+
+<book>
+	<bookinfo>
+	<title>Auth_db Module</title>
+	<authorgroup>
+		<author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>FhG Fokus</orgname></affiliation>
+		<email>jan@iptel.org</email>
+		</author>
+		<author>
+		<firstname>Jakob</firstname>
+		<surname>Schlyter</surname>
+		<email>jakob@schlyter.se</email>
+		</author>
+		<author>
+		<firstname>Bogdan-Andrei</firstname>
+		<surname>Iancu</surname>
+		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<email>bogdan@voice-system.ro</email>
+		</author>
+		<editor>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<email>jan@iptel.org</email>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2002</year>
+		<year>2003</year>
+		<holder>FhG FOKUS</holder>
+	</copyright>
+	<copyright>
+		<year>2005</year>
+		<holder>&voicesystem;</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</bookinfo>
+	<toc></toc>
+	
+	&user;
+	&devel;
+	&faq;
+
+</book>

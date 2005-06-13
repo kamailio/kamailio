@@ -1,0 +1,52 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+
+<!ENTITY user SYSTEM "maxfwd_user.sgml">
+<!ENTITY devel SYSTEM "maxfwd_devel.sgml">
+<!ENTITY faq SYSTEM "maxfwd_faq.sgml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
+%docentities;
+
+]>
+
+<book>
+	<bookinfo>
+	<title>maxfwd Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Bogdan-Andrei</firstname>
+		<surname>Iancu</surname>
+		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<address>
+			<email>bogdan@voice-system.ro</email>
+		</address>
+		</author>
+		<editor>
+		<firstname>Bogdan-Andrei</firstname>
+		<surname>Iancu</surname>
+		<address>
+			<email>bogdan@voice-system.ro</email>
+		</address>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2003</year>
+		<holder>&fhg;</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</bookinfo>
+	<toc></toc>
+	
+	&user;
+	&devel;
+	&faq;
+	
+</book>

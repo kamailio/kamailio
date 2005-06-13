@@ -1,0 +1,53 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+
+<!ENTITY user SYSTEM "auth_diameter_user.sgml">
+<!ENTITY devel SYSTEM "auth_diameter_devel.sgml">
+<!ENTITY faq SYSTEM "auth_diameter_faq.sgml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
+%docentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>AUTH_DIAMETER Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Elena-Ramona</firstname>
+		<surname>Modroiu</surname>
+		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<address>
+		    <email>ramona@voice-system.ro</email>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>Elena-Ramona</firstname>
+		<surname>Modroiu</surname>
+		<address>
+		    <email>ramona@voice-system.ro</email>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <year>2004</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+    
+</book>

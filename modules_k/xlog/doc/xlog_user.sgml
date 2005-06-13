@@ -1,0 +1,365 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    This module provides the possibility to print user formatted log or debug messages from
+	    &ser; scripts, similar to printf function but now a specifier is replaced with a part of
+	    the &sip; request. <xref linkend="sec-implemented-specifiers"> shows what can be printed
+	    out.
+	</para>
+    </section>
+    <section id="sec-implemented-specifiers">
+	<title>Implemented Specifiers</title>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    %% : '%'
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %br : request's first branch
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %bR : request's all branches
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ci : call-id
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %cs : cseq
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ct : contact header
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ds : destination set
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %du : destination uri
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %fu : 'From' uri
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ft : 'From' tag
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %mb : whole SIP message buffer
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %mf : flags set for current SIP request
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %mF : flags set for current SIP request in hexa
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %mi : SIP message id
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ml : SIP message length
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %pp : process id (pid)
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %rm : request's method
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %rr : reply's reason
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %rs : reply's status
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ru : request's r-uri
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Ri : IP address of the interface where the request
+		    has been received
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Rp : received port
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %si : IP source address (previously was %is)
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %sp : source port
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %tt : 'To' tag
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %tu : 'To' uri
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Tf : string formatted time
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Ts : unix time stamp
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ua : User agent header field
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		%{id[N]} : print headers or AVPs
+		</para>
+		<itemizedlist>
+	    <listitem>
+		<para>
+		    %{name[N]} : print the body of the Nth header identified by 
+			'name'. If [N] is omitted then the body of the first header is
+			printed. The first header is got when N=0, for the second N=1,
+			a.s.o. To print the last header of that type, use -1, no other
+			negative values are supported now. No white spaces are allowed
+			inside the specifier (before }, before or after {, [, ]
+			symbols). When N='*', all headers of that type are printed.
+		</para>
+		<para>
+			The module should identify most of compact header names (the ones
+			recognized by &ser; which should be all at this moment), if not,
+			the compact form has to be specified explicitely. It is
+			recommended to use dedicated specifiers for headers (e.g., %ua
+			for user agent header), if they are available -- they are faster.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %{[si]:name[N]} : print the value of the AVP identified by
+			'name'. The leter before ':' specifies the type of the AVP name
+			(i - integer, s - string; when missing it is considered string).
+			N has the meaning as for header printing.
+		<para>
+		</listitem>
+	    <listitem>
+		<para>
+		    %{$name[N]} : print the value of the AVP identified by the alias
+			'name'. N has the meaning as for header printing.
+		<para>
+		</listitem>
+		</itemizedlist>
+	    </listitem>
+	</itemizedlist>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>No dependencies on other &ser; modules</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>buf_size</varname> (integer)</title>
+	    <para>
+		Maximum size of the log message.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 4096.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>buf_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xlog", "buf_size", 8192)
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">xlog(level, format)</function>
+	    </title>
+	    <para>
+		Print a formated message using LOG function.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>level</emphasis> - The level that will be used in LOG function. It can be:
+		    </para>
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				L_ALERT
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				L_CRIT
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				L_ERR
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				L_WARN
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				L_NOTICE
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				L_INFO
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				L_DBG
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		    <para>
+			What really matters is the third letter of the value.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>format</emphasis> - The formatted string to be printed. 
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>xlog</function> usage</title>
+		<programlisting format="linespecific">
+...
+xlog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru> 2nd via <%{via[1]}>\n");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">xdbg(format)</function>
+	    </title>
+	    <para>
+		Print a formatted message using DBG function.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>format</emphasis> - The formatted string to be printed.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>xdbg</function> usage</title>
+		<programlisting format="linespecific">
+...
+xdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("xlog.sgml" "Book" "chapter")
+End:
+-->

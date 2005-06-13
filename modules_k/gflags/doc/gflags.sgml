@@ -1,0 +1,45 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+<!ENTITY user SYSTEM "gflags_user.sgml">
+<!ENTITY devel SYSTEM "gflags_devel.sgml">
+<!ENTITY faq SYSTEM "gflags_faq.sgml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
+%docentities;
+
+]>
+
+<book>
+	<bookinfo>
+	<title>gflags Module</title>
+	<authorgroup>
+		<author>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<email>jiri@iptel.org</email>
+		</author>
+		<editor>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<email>daniel@voice-system.ro</email>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2004</year>
+		<holder>&fhg;</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</bookinfo>
+	<toc></toc>
+	
+	&user;
+	&devel;
+	&faq;
+
+</book>

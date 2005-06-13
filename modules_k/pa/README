@@ -1,0 +1,139 @@
+
+pa Module
+
+Jan Janak
+
+   FhG FOKUS
+
+Edited by
+
+Jan Janak
+
+   Copyright © 2003 FhG FOKUS
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. OpenSER Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. default_expires (integer)
+
+        1.4. Exported Functions
+
+              1.4.1. handle_subscription(domain)
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set default_expires parameter
+   1-2. handle_subscription usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   This module implements a presence server, i.e. entity that
+   receives SUBSCRIBE messages and sends NOTIFY when presence
+   status of a user changes. Currently the presence server can be
+   connected to registrar and jabber module so SIP users can see
+   presence of jabber users.
+
+   This module currently cannot work as a B2BUA, i.e. it cannot
+   subscribe to presence of users using SIP. We are currently
+   working on that feature.
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. OpenSER Modules
+
+   The following modules must be loaded before this module:
+
+     * No dependencies on other OpenSER modules.
+     _________________________________________________________
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running OpenSER with this module loaded:
+
+     * None.
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. default_expires (integer)
+
+   Default expires value to be used when the client doesn't
+   supply one (in seconds).
+
+   Default value is "3600". 
+
+   Example 1-1. Set default_expires parameter
+...
+modparam("pa", "default_expires", 3600)
+...
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. handle_subscription(domain)
+
+   This function processes SUBSCRIBE and generates NOTIFY.
+
+   Meaning of the parameters is as follows:
+
+     * domain - This can be either "registrar" or "jabber".
+
+   Example 1-2. handle_subscription usage
+...
+handle_subscription("jabber");
+...
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any API to use in other OpenSER
+   modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about OpenSER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about OpenSER?
+
+   Take a look at http://openser.org/.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * User Mailing List -
+       http://openser.org/mailman/listinfo/users
+     * Developer Mailing List -
+       http://openser.org/mailman/listinfo/devel
+
+   E-mails regarding any stable OpenSER release should be sent to
+   <users@openser.org> and e-mails regarding development versions
+   should be sent to <devel@openser.org>.
+
+   If you want to keep the mail private, send it to
+   <team@openser.org>.
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://openser.org/bugs.

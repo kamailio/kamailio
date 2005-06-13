@@ -1,0 +1,914 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	<chapterinfo>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		<acronym>TM</acronym> module enables stateful processing of SIP 
+		transactions. The main use of stateful logic, which is costly in 
+		terms of memory and <acronym>CPU</acronym>, is some services 
+		inherently need state. For example, transaction-based accounting 
+		(module acc) needs to process transaction state as opposed to 
+		individual messages, and any kinds of forking must be implemented 
+		statefully. Other use of stateful processing is it trading
+		<acronym>CPU</acronym> caused by retransmission processing for memory.
+		That makes however only sense if <acronym>CPU</acronym> consumption 
+		per request is huge. For example, if you want to avoid costly 
+		<acronym>DNS</acronym> resolution for every retransmission of a 
+		request to an unresolvable destination, use stateful mode. Then,
+		only the initial message burdens server by <acronym>DNS</acronym> 
+		queries, subsequent retransmissions will be dropped and will not 
+		result in more processes blocked by <acronym>DNS</acronym> resolution.
+		The price is more memory consumption and higher processing latency.
+	</para>
+	<para>
+		From user's perspective, there are these major functions : t_relay, 
+		t_relay_to_udp and t_relay_to_tcp. All of them setup transaction state,
+		absorb retransmissions from upstream, generate downstream 
+		retransmissions and correlate replies to requests. t_relay forwards 
+		to current URI; (be it original request's URI or a URI changed by 
+		some of URI-modifying functions, such as sethost). t_relay_to_udp and 
+		t_relay_to_tcp forward to a specific address over UDP or TCP 
+		respectively.
+	</para>
+	<para>
+		In general, if <acronym>TM</acronym> is used, it copies clones of 
+		received SIP messages in shared memory. That costs the memory and 
+		also <acronym>CPU</acronym> time (memcpys, lookups, shmem locks, etc.)
+		Note that non-<acronym>TM</acronym> functions operate over the 
+		received message in private memory, that means that any core 
+		operations will have no effect on statefully processed messages after 
+		creating the transactional state. For example, calling record_route 
+		<emphasis>after</emphasis> t_relay is pretty useless, as the 
+		<acronym>RR</acronym> is added to privately held message whereas its
+		<acronym>TM</acronym> clone is being forwarded.
+	</para>
+	<para>
+		<acronym>TM</acronym> is quite big and uneasy to program--lot of 
+		mutexes, shared memory access, malloc & free, timers--you really 
+		need to be careful when you do anything. To simplify 
+		<acronym>TM</acronym> programming, there is the instrument of 
+		callbacks. The callback mechanisms allow programmers to register 
+		their functions to specific event. See t_hooks.h for a list of 
+		possible events.
+	</para>
+	<para>
+		Other things programmers may want to know is UAC--it is a very 
+		simplistic code which allows you to generate your own transactions. 
+		Particularly useful for things like NOTIFYs or <acronym>IM</acronym> 
+		gateways. The UAC takes care of all the transaction machinery: 
+		retransmissions , FR timeouts, forking, etc.  See t_uac prototype 
+		in uac.h for more details. Who wants to see the transaction result 
+		may register for a callback.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&ser; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &ser; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before 
+		running &ser; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>fr_timer</varname> (integer)</title>
+		<para>
+		Timer which hits if no final reply for a request or ACK for a 
+		negative INVITE reply arrives (in seconds).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 30 seconds.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fr_timer</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "fr_timer", 10)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>fr_inv_timer</varname> (integer)</title>
+		<para>
+		Timer which hits if no final reply for an INVITE arrives after a 
+		provisional message was received (in seconds).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 120 seconds.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fr_inv_timer</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "fr_inv_timer", 200)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>wt_timer</varname> (integer)</title>
+		<para>
+		Time for which a transaction stays in memory to absorb delayed 
+		messages after it completed; also, when this timer hits, 
+		retransmission of local cancels is stopped (a puristic but complex 
+		behavior would be not to enter wait state until local branches
+		are finished by a final reply or FR timer--we simplified).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 5 seconds.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>wt_timer</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "wt_timer", 10)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>delete_timer</varname> (integer)</title>
+		<para>
+		Time after which a to-be-deleted transaction currently ref-ed by a
+		process will be tried to be deleted again.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 2 seconds.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>delete_timer</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "delete_timer", 5)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>retr_timer1p1</varname> (integer)</title>
+		<para>
+		Retransmission period.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 second.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>retr_timer1p1</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "retr_timer1p1", 2)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>retr_timer1p2</varname> (integer)</title>
+		<para>
+		Retransmission period.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 2 * <varname>retr_timer1p1</varname> second.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>retr_timer1p2</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "retr_timer1p2", 4)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>retr_timer1p3</varname> (integer)</title>
+		<para>
+		Retransmission period.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 4 * <varname>retr_timer1p1</varname> second.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>retr_timer1p4</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "retr_timer1p3", 8)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>retr_timer2</varname> (integer)</title>
+		<para>
+		Maximum retransmission period.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 4 seconds.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>retr_timer2</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "retr_timer2", 8)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>noisy_ctimer</varname> (integer)</title>
+		<para>
+		If set, on FR timer INVITE transactions will be explicitly canceled 
+		if possible, silently dropped otherwise. Preferably, it is turned off 
+		to allow very long ringing. This behavior is overridden if a request 
+		is forked, or some functionality explicitly turned it off for a 
+		transaction (like acc does to avoid unaccounted transactions due to 
+		expired timer).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (false).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>noisy_ctimer</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "noisy_ctimer", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>ruri_matching</varname> (integer)</title>
+		<para>
+		Should be request-uri matching used as a part of pre-3261 transaction
+		matching as the standard wants us to do so? Turn only off for better 
+		interaction with devices that are broken and send different r-uri in
+		CANCEL/ACK than in original INVITE.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (true).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ruri_matching</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "ruri_matching", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>via1_matching</varname> (integer)</title>
+		<para>
+		Should be top most VIA matching used as a part of pre-3261 transaction
+		matching as the standard wants us to do so? Turn only off for better 
+		interaction with devices that are broken and send different top most
+		VIA in CANCEL/ACK than in original INVITE.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (true).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>via1_matching</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "via1_matching", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>unix_tx_timeout</varname> (integer)</title>
+		<para>
+		Send timeout to be used by function which use UNIX sockets 
+		(as t_write_unix).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 2 seconds.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>unix_tx_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "unix_tx_timeout", 5)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>restart_fr_on_each_reply</varname> (integer)</title>
+		<para>
+		If true (non null value), the final response timer will be re-triggered
+		for each received provisional reply. In this case, final response
+		timeout may occure after a time longe than fr_inv_timer (if UAS keeps
+		sending provisional replies)
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (true).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>restart_fr_on_each_reply</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "restart_fr_on_each_reply", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>fr_timer_avp</varname> (string)</title>
+		<para>
+		Full specification (NAME, ID, Alias) of an AVP which contains a final
+		response timeout value. If present, ths value will overeide the 
+		static fr_timer parameter.
+		</para>
+		<para>
+		If set to empty string, the whole mechanism for variable timeout will
+		be disabled, falling back to the static value.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "callee_fr_timer".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fr_timer_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "fr_timer_avp", "i:24")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>fr_inv_timer_avp</varname> (string)</title>
+		<para>
+		Full specification (NAME, ID, Alias) of an AVP which contains a final
+		INVITE response timeout value. If present, ths value will overeide the 
+		static fr_inv_timer parameter.
+		</para>
+		<para>
+		If set to empty string, the whole mechanism for variable timeout will
+		be disabled, falling back to the static value.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "callee_fr_inv_timer".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fr_inv_timer_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "fr_inv_timer_avp", "i:25")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>tw_append</varname> (string)</title>
+		<para>
+		List of additional information to be appended by t_write_fifo and
+		t_write_unix functions.
+		</para>
+		<para>
+		<emphasis>
+			Default value is null string.
+		</emphasis>
+		</para>
+		<para>
+		Syntax of the parameter is:
+		<itemizedlist>
+			<listitem><para><emphasis>
+			tw_append = append_name':' element (';'element)*
+			</emphasis></para></listitem>
+			<listitem><para><emphasis>
+			element = [title '='] value
+			</emphasis></para></listitem>
+			<listitem><para><emphasis>
+			value = ('avp['AVP_SPEC']') | 'hdr['HDR_NAME']'
+				| 'msg[body]'
+			</emphasis></para></listitem>
+		</itemizedlist>
+		</para>
+		<para>
+		Eacj elelmrt will be appended per line in 
+		<quote>title: value</quote> format. If <quote>title</quote> is 
+		missing, the AVP or HDR name will be used. For 
+		<quote>msg[body]</quote>, the title is mandatory.
+		</para>
+		<example>
+		<title>Set <varname>fr_inv_timer_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "fr_inv_timer_avp", "i:25")
+...
+</programlisting>
+		</example>
+	</section>
+
+
+	</section>
+	<section>
+	<title>Exported Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">t_relay_to_udp(ip, port)</function>,
+		<function moreinfo="none">t_relay_to_tcp(ip, port)</function>
+		</title>
+		<para>
+		Relay a message statefully to a fixed destination. This along with 
+		<function moreinfo="none">t_relay</function> is the function most 
+		users want to use--all other are mostly for programming. Programmers 
+		interested in writing <acronym>TM</acronym> logic should review how 
+		t_relay is implemented in tm.c and how <acronym>TM</acronym> 
+		callbacks work.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>ip</emphasis> - IP address where the message 
+			should be sent.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>port</emphasis> - Port number.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>t_relay_to_udp</function> usage</title>
+		<programlisting format="linespecific">
+...
+t_relay_to_udp("1.2.3.4", "5060");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_relay()</function>
+		</title>
+		<para>
+		Relay a message statefully to destination indicated in current URI. 
+		(If the original URI was rewritten by UsrLoc, RR, strip/prefix, etc., 
+		the new URI will be taken). Returns a negative value on failure--you 
+		may still want to send a negative reply upstream statelessly not to 
+		leave upstream UAC in lurch.
+		</para>
+		<example>
+		<title><function>t_relay</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!t_relay()) { sl_reply_error(); break; };
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_on_negative(reply_route)</function>
+		</title>
+		<para>
+		Sets reply routing block, to which control is passed after a transaction completed
+		with a negative result but before sending a final reply. In the referred block, you
+		can either start a new branch (good for services such as forward_on_no_reply) or
+		send a final reply on your own (good for example for message silo, which received a
+		negative reply from upstream and wants to tell upstream <quote>202 I will take care
+		of it</quote>). Note that the set of command which are usable within reply_routes
+		is strictly limited to rewriting &uri;, initiating new branches, logging, and
+		sending stateful replies (<function>t_reply</function>). Any other commands may
+		result in unpredictable behavior and possible server failure. Note that whenever
+		reply_route is entered, uri is reset to value which it had on relaying. If it
+		temporarily changed during a reply_route processing, subsequent reply_route will
+		ignore the changed value and use again the original one.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>reply_route</emphasis> - Reply route block to be called.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>t_on_negative</function> usage</title>
+		<programlisting format="linespecific">
+...
+route { 
+	t_on_negative("1"); 
+	t_relay(); 
+} 
+
+reply_route[1] {
+	revert_uri(); 
+	setuser("voicemail"); 
+	append_branch(); 
+}
+...
+</programlisting>
+		</example>
+		<para>
+		See test/onr.cfg for a more complex example of combination
+		of serial with parallel forking.
+		</para>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">append_branch()</function>
+		</title>
+		<para>
+		Similarly to <function>t_fork_to</function>, it extends destination set by a new
+		entry. The difference is that current &uri; is taken as new entry.
+		</para>
+		<example>
+		<title><function>append_branch</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_user("john"); 
+t_fork(); 
+set_user("alice");
+t_fork(); 
+t_relay();
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_newtran()</function>
+		</title>
+		<para>
+		Creates a new transaction, returns a negative value on error. This is the only way a
+		script can add a new transaction in an atomic way. Typically, it is used to deploy a
+		&uas;.
+		</para>
+		<example>
+		<title><function>t_newtran</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (t_newtran()) { 
+	log("UAS logic"); 
+	t_reply("999","hello"); 
+} else sl_reply_error();
+...
+</programlisting>
+		</example>
+		<para>
+		See test/uas.cfg for more examples.
+		</para>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_reply(code, reason_phrase)</function>
+		</title>
+		<para>
+		Sends a stateful reply after a transaction has been established. See
+		<function>t_newtran</function> for usage.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>code</emphasis> - Reply code number.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>reason_phrase</emphasis> - Reason string.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>t_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+t_reply("404", "Not found");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_lookup_request()</function>
+		</title>
+		<para>
+		Checks if a transaction exists. Returns a positive value if so, negative otherwise.
+		Most likely you will not want to use it, as a typical application of a looku-up is
+		to introduce a new transaction if none was found. However this is safely
+		(atomically) done using <function>t_newtran</function>.
+		</para>
+		<example>
+		<title><function>t_lookup_request</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (t_lookup_request()) {
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_retransmit_reply()</function>
+		</title>
+		<para>
+		Retransmits a reply sent previously by &uas; transaction.
+		</para>
+		<example>
+		<title><function>t_retransmit_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+t_retransmit_reply();
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_release()</function>
+		</title>
+		<para>
+		Remove transaction from memory (it will be first put on a wait timer to absorb
+		delayed messages).
+		</para>
+		<example>
+		<title><function>t_release</function> usage</title>
+		<programlisting format="linespecific">
+...
+t_release();
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_forward_nonack(ip, port)</function>
+		<function moreinfo="none">t_forward_nonack_udp(ip, port)</function>
+		<function moreinfo="none">t_forward_nonack_tcp(ip, port)</function>
+		<function moreinfo="none">t_forward_nonack_uri()</function>
+		</title>
+		<para>
+		Similar to t_relay() but it expects the transaction to be aleady
+		created - this why it cannot handle ACK (which are statelessly
+		forwarded). It should be used along with t_newtran().
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>ip</emphasis> - IP address where the message 
+			should be sent.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>port</emphasis> - Port number.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		t_forward_nonack_uri() will determin the detination address 
+		(proto:IP:port) based on the RURI.
+		</para>
+		<example>
+		<title><function>t_forward_nonack_xxx</function> usage</title>
+		<programlisting format="linespecific">
+...
+t_forward_nonack("1.2.3.4", "5060");
+t_forward_nonack_udp("1.2.3.4", "5060"); # force UDP proto
+t_forward_nonack_tcp("1.2.3.4", "5060"); # force TCP proto
+t_forward_nonack_uri();
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_replicate(ip, port)</function>
+		<function moreinfo="none">t_replicate_udp(ip, port)</function>
+		<function moreinfo="none">t_replicate_tcp(ip, port)</function>
+		</title>
+		<para>
+		Replicates a request to another address. No information due the
+		replicated request (like reply code) will be forwarded to the 
+		original SIP UAC.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>ip</emphasis> - IP address where the message 
+			should be sent.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>port</emphasis> - Port number.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>t_forward_nonack_xxx</function> usage</title>
+		<programlisting format="linespecific">
+...
+t_replicate("1.2.3.4", "5060");
+t_replicate_udp("1.2.3.4", "5060"); # force UDP proto
+t_replicate_tcp("1.2.3.4", "5060"); # force TCP proto
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_check_status(re)</function>
+		</title>
+		<para>
+		Returns true if the regualr expresion <quote>re</quote> match the 
+		reply code of the response message as follows:
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>in routing block</emphasis> - the code of the
+			last sent reply.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>in on_reply block</emphasis> - the code of the
+			current received reply.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>in on_failure block</emphasis> - the code of the
+			selected negative final reply.
+			</para>
+		</listitem>
+		</itemizedlist>
+		</para>
+		<example>
+		<title><function>t_check_status</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (t_check_status("(487)|(408)")) {
+    log("487 or 408 negative reply\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_flush_flags()</function>
+		</title>
+		<para>
+		Flush the flags from current request into the already created 
+		transaction. It make sens only in routing block if the trnasaction was
+		created via t_newtran() and the flags have been altered since.
+		</para>
+		<example>
+		<title><function>t_flush_flags</function> usage</title>
+		<programlisting format="linespecific">
+...
+t_flush_flags();
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_local_replied(reply)</function>
+		</title>
+		<para>
+		Returns true if all or last (depending of the parameter) reply(es) were
+		local generated (and not received).
+		</para>
+		<para>
+		Parameter may be <quote>all</quote> or <quote>last</quote>.
+		</para>
+		<example>
+		<title><function>t_local_replied</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (t_local_replied("all")) {
+	log ("no reply received\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_write_fifo(info,fifo)</function>
+		<function moreinfo="none">t_write_unix(info,sock)</function>
+		</title>
+		<para>
+		Write via FIFO file or UNIX socket a lot of information regarding the
+		request. Which information should be written may be control via the
+		<quote>tw_append</quote> parameter.
+		</para>
+		<example>
+		<title><function>t_local_replied</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("tm","tw_append","append1:Email=avp[i:12];UA=hdr[User-Agent]")
+modparam("tm","tw_append","append2:body=msg[body]")
+...
+t_write_fifo("voicemail/append1","/tmp/appx_fifo");
+...
+t_write_unix("logger/append2","/var/run/logger.sock");
+...
+</programlisting>
+		</example>
+	</section>
+
+
+
+
+	</section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("tm.sgml" "Book" "chapter")
+End:
+-->

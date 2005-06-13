@@ -1,0 +1,54 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+<!ENTITY user SYSTEM "msilo_user.sgml">
+<!ENTITY devel SYSTEM "msilo_devel.sgml">
+<!ENTITY faq SYSTEM "msilo_faq.sgml">
+
+<!ENTITY msilosql SYSTEM "msilo.sql">
+<!ENTITY msilocfg SYSTEM "msilo.cfg">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
+%docentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>MSILO Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<address>
+		<email>daniel@voice-system.ro</email>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<address>
+		<email>daniel@voice-system.ro</email>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>&fhg;</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+
+</book>

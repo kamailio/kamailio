@@ -1,0 +1,129 @@
+<!-- Auth_radius Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	gflags module (global flags) keeps a bitmap of flags in shared memory
+	and may be used to change behaviour of server based on value of the flags.
+	E.g., if (is_gflag("1")) { t_relay_to_udp("10.0.0.1","5060"); }
+	else { t_relay_to_udp("10.0.0.2","5060"); }.
+	</para>
+	<para>
+	The benefit of this module is the value of the switch flags
+	can be manipulated by external applications such as web interface
+	or command line tools. The size of bitmap is 32 (unsigned int).
+	</para>
+	<para>
+	The module exports commands to FIFO server that can be used to change
+	the global flags via FIFO interface. The FIFO commands are:
+	<quote>set_gflag</quote>, <quote>reset_gflag</quote> and
+	<quote>is_gflag</quote>.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<para>
+	    The module depends on the following modules (in the other words the
+		listed modules must be loaded before this module):
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>none</emphasis></para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>initial</varname> (string)</title>
+		<para>
+		The initial value of global flags bitmap.
+		</para>
+		<para>
+		Default value is 
+			<quote>0</quote>.
+		</para>
+		<example>
+		<title><varname>initial</varname> parameter usage</title>
+		<programlisting format="linespecific">
+modparam("gflags", "initial", "15)
+		</programlisting>
+		</example>
+	</section>
+	</section>
+
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title><function moreinfo="none">set_gflag(flag)</function></title>
+	    <para>
+		Set the bit at the position <quote>flag</quote> in global flags.
+	    </para>
+	    <para>
+		<quote>flag</quote> can have a value from the range 1..31.
+	    </para>
+	    <example>
+		<title><function moreinfo="none">set_gflag()</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_gflag("4");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><function moreinfo="none">reset_gflag(flag)</function></title>
+	    <para>
+		Reset the bit at the position <quote>flag</quote> in global flags.
+	    </para>
+	    <example>
+		<title><function moreinfo="none">reset_gflag()</function> usage</title>
+		<programlisting format="linespecific">
+...
+reset_gflag("4");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><function moreinfo="none">is_gflag(flag)</function></title>
+	    <para>
+		Check if bit at the position <quote>flag</quote> in global flags is
+		set.
+	    </para>
+	    <example>
+		<title><function moreinfo="none">is_gflag()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(is_gflag("4"))
+{
+    log("global flag 4 is set\n");
+} else {
+    log("global flag 4 is not set\n");
+};
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("gflags.sgml" "Book" "chapter")
+End:
+-->

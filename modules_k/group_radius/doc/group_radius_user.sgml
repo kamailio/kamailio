@@ -1,0 +1,149 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+
+    <section>
+	<title>Overview</title>
+	<para>
+	    This module export functions necessary for group membership checking over radius. There
+	    is a database table that contains list of users and groups they belong to. The table is
+	    used by functions of this module.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    None.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>radiusclient library</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>radius_config</varname> (string)</title>
+	    <para>
+		Location of the configuration file of the radius client library.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>/usr/local/etc/radiusclient/radiusclient.conf</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>radius_config</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("group", "radius_config", "/etc/radiusclient.conf")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>use_domain</varname> (integer)</title>
+	    <para>
+		If set to 1 then username@domain will be used for lookup, if set to 0 then only
+		username will be used.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0 (no).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>use_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("group_radius", "use_domain", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">radius_is_user_in(URI, group)</function>
+	    </title>
+	    <para>
+		The function returns true if username in the given &uri; is member of the given
+		group and false if not.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>&uri;</emphasis> - &uri; whose username and optionally domain to be
+			used, this can be one of:
+			<itemizedlist>
+			    <listitem>
+				<para>Request-URI - Use Request-URI username and (optionally) domain.</para>
+			    </listitem>
+			    <listitem>
+				<para>To - Use To username and (optionally) domain.</para>
+			    </listitem>
+			    <listitem>
+				<para>From - Use From username and (optionally) domain.</para>
+			    </listitem>
+			    <listitem>
+				<para>Credentials - Use digest credentials username.</para>
+			    </listitem>
+			</itemizedlist>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>group</emphasis> - Name of the group to check.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>radius_is_user_in</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (radius_is_user_in("Request-URI", "ld")) {
+    ...
+};
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("group_radius.sgml" "Book" "chapter")
+End:
+-->

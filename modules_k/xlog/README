@@ -1,0 +1,222 @@
+
+xlog Module
+
+Elena-Ramona Modroiu
+
+   voice-system.ro
+
+Edited by
+
+Elena-Ramona Modroiu
+
+   Copyright © 2003 FhG FOKUS
+
+   Copyright © 2005 voice-system.ro
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Implemented Specifiers
+        1.3. Dependencies
+
+              1.3.1. OpenSER Modules
+              1.3.2. External Libraries or Applications
+
+        1.4. Exported Parameters
+
+              1.4.1. buf_size (integer)
+
+        1.5. Exported Functions
+
+              1.5.1. xlog(level, format)
+              1.5.2. xdbg(format)
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set buf_size parameter
+   1-2. xlog usage
+   1-3. xdbg usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   This module provides the possibility to print user formatted
+   log or debug messages from OpenSER scripts, similar to printf
+   function but now a specifier is replaced with a part of the
+   SIP request. Section 1.2 shows what can be printed out.
+     _________________________________________________________
+
+1.2. Implemented Specifiers
+
+     * %% : '%'
+     * %br : request's first branch
+     * %bR : request's all branches
+     * %ci : call-id
+     * %cs : cseq
+     * %ct : contact header
+     * %ds : destination set
+     * %du : destination uri
+     * %fu : 'From' uri
+     * %ft : 'From' tag
+     * %mb : whole SIP message buffer
+     * %mf : flags set for current SIP request
+     * %mF : flags set for current SIP request in hexa
+     * %mi : SIP message id
+     * %ml : SIP message length
+     * %pp : process id (pid)
+     * %rm : request's method
+     * %rr : reply's reason
+     * %rs : reply's status
+     * %ru : request's r-uri
+     * %Ri : IP address of the interface where the request has
+       been received
+     * %Rp : received port
+     * %si : IP source address (previously was %is)
+     * %sp : source port
+     * %tt : 'To' tag
+     * %tu : 'To' uri
+     * %Tf : string formatted time
+     * %Ts : unix time stamp
+     * %ua : User agent header field
+     * %{id[N]} : print headers or AVPs
+          + %{name[N]} : print the body of the Nth header
+            identified by 'name'. If [N] is omitted then the body
+            of the first header is printed. The first header is
+            got when N=0, for the second N=1, a.s.o. To print the
+            last header of that type, use -1, no other negative
+            values are supported now. No white spaces are allowed
+            inside the specifier (before }, before or after {, [,
+            ] symbols). When N='*', all headers of that type are
+            printed.
+            The module should identify most of compact header
+            names (the ones recognized by OpenSER which should be
+            all at this moment), if not, the compact form has to
+            be specified explicitely. It is recommended to use
+            dedicated specifiers for headers (e.g., %ua for user
+            agent header), if they are available -- they are
+            faster.
+          + %{[si]:name[N]} : print the value of the AVP
+            identified by 'name'. The leter before ':' specifies
+            the type of the AVP name (i - integer, s - string;
+            when missing it is considered string). N has the
+            meaning as for header printing.
+          + %{$name[N]} : print the value of the AVP identified
+            by the alias 'name'. N has the meaning as for header
+            printing.
+     _________________________________________________________
+
+1.3. Dependencies
+
+1.3.1. OpenSER Modules
+
+   The following modules must be loaded before this module:
+
+     * No dependencies on other OpenSER modules.
+     _________________________________________________________
+
+1.3.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running OpenSER with this module loaded:
+
+     * None.
+     _________________________________________________________
+
+1.4. Exported Parameters
+
+1.4.1. buf_size (integer)
+
+   Maximum size of the log message.
+
+   Default value is 4096. 
+
+   Example 1-1. Set buf_size parameter
+...
+modparam("xlog", "buf_size", 8192)
+...
+     _________________________________________________________
+
+1.5. Exported Functions
+
+1.5.1. xlog(level, format)
+
+   Print a formated message using LOG function.
+
+   Meaning of the parameters is as follows:
+
+     * level - The level that will be used in LOG function. It
+       can be:
+          + L_ALERT
+          + L_CRIT
+          + L_ERR
+          + L_WARN
+          + L_NOTICE
+          + L_INFO
+          + L_DBG
+       What really matters is the third letter of the value.
+     * format - The formatted string to be printed.
+
+   Example 1-2. xlog usage
+...
+xlog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru> 2nd via <%{via[1]}>\
+n");
+...
+     _________________________________________________________
+
+1.5.2. xdbg(format)
+
+   Print a formatted message using DBG function.
+
+   Meaning of the parameters is as follows:
+
+     * format - The formatted string to be printed.
+
+   Example 1-3. xdbg usage
+...
+xdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
+...
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any API to use in other OpenSER
+   modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about OpenSER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about OpenSER?
+
+   Take a look at http://openser.org/.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * User Mailing List -
+       http://openser.org/mailman/listinfo/users
+     * Developer Mailing List -
+       http://openser.org/mailman/listinfo/devel
+
+   E-mails regarding any stable OpenSER release should be sent to
+   <users@openser.org> and e-mails regarding development versions
+   should be sent to <devel@openser.org>.
+
+   If you want to keep the mail private, send it to
+   <team@openser.org>.
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://openser.org/bugs.

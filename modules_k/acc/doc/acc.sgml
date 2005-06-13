@@ -1,0 +1,54 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+<!ENTITY user SYSTEM "acc_user.sgml">
+<!ENTITY devel SYSTEM "acc_devel.sgml">
+<!ENTITY faq SYSTEM "acc_faq.sgml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
+%docentities;
+
+]>
+
+<book>
+	<bookinfo>
+	<title>Acc Module</title>
+	<productname class="trade">&ser;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<affiliation><orgname>iptel.org</orgname></affiliation>
+		<email>jiri@iptel.org</email>
+		</author>
+		<author>
+		<firstname>Ramona-Elena</firstname>
+		<surname>Modroiu</surname>
+		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<email>ramona@voice-system.ro</email>
+		</author>
+	</authorgroup>
+	<copyright>
+		<year>2002</year>
+		<year>2003</year>
+		<holder>FhG FOKUS</holder>
+	</copyright>
+	<copyright>
+		<year>2004</year>
+		<year>2005</year>
+		<holder>&voicesystem;</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</bookinfo>
+	<toc></toc>
+	
+	&user;
+	&devel;
+	&faq;
+
+</book>
