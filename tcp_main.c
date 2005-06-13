@@ -1108,7 +1108,7 @@ void tcp_main_loop()
 					case CONN_DESTROY:
 					case CONN_EOF:
 						/* WARNING: this will auto-dec. refcnt! */
-						tcp_children[pt[r].idx].busy--;
+						tcp_children[r].busy--;
 						if (tcpconn){
 							if (tcpconn->s!=-1)
 								FD_CLR(tcpconn->s, &master_set);
