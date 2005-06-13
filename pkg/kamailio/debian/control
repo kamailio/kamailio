@@ -1,0 +1,46 @@
+Source: openser
+Section: net
+Priority: optional
+Maintainer: Daniel-Constantin Mierla <daniel@voice-system.ro>
+Build-Depends: debhelper (>= 4), libmysqlclient14-dev, libexpat1-dev
+Standards-Version: 3.5.2
+
+Package: openser
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
+Suggests: openser-mysql-module, openser-jabber-module
+Conflicts: openser-mysql-module (<< ${Source-Version}), openser-jabber-module (<< ${Source-Version}), openser-radius-modules (<< ${Source-Version})
+Description: Open SIP Express Router, very fast and configurable SIP proxy
+ openser or Open SIP Express Router is a very fast and flexible SIP (RFC3621)
+ proxy server. Written entirely in C, openser can handle thousands calls
+ per second even on low-budget hardware. C Shell like scripting language
+ provides full control over the server's behaviour. It's modular
+ architecture allows only required functionality to be loaded.
+ Currently the following modules are available: Digest Authentication,
+ CPL scripts, Instant Messaging, MySQL support, Presence Agent, Radius
+ Authentication, Record Routing, SMS Gateway, Jabber Gateway, Transaction 
+ Module, Registrar and User Location.
+
+Package: openser-mysql-module
+Architecture: any
+Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Description: contains the mysql database connectivity module for openser.
+ This has been split out of the main openser package, so that openser will not
+ depend upon mysql. This module will enable you to use the digest
+ authentication module or persistent user location entries.
+
+Package: openser-jabber-module
+Architecture: any
+Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Description: contains the openser jabber module (sip-jabber message translation)
+ This has been split out of the main openser package, so that openser will not
+ depend upon libexpat. This module will enable you to use openser to translate
+  sip messages into jabber messages.
+
+Package: openser-radius-modules
+Architecture: any
+Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Description: contains the openser radius modules 
+ This has been split out of the main openser package, so that openser will not
+ depend upon libradius1. This modules will enable you to authenticate, 
+ do group membership checking or check the messages uris using radius.

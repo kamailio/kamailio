@@ -1,0 +1,167 @@
+#!/usr/bin/make -f
+# Sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
+#
+# $Id$
+#
+# History:
+# --------
+
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# This is the debhelper compatibility version to use.
+# export DH_COMPAT=4
+#  -- already set in compat
+#  force no striping (always include debug symbols for now)
+export DEB_BUILD_OPTIONS:="$(DEB_BUILD_OPTIONS) nostrip"
+
+# modules not in the "main" package or unstable 
+EXCLUDED_MODULES=	mysql jabber auth_radius group_radius uri_radius \
+					postgress snmp cpl cpl-c ext extcmd 
+
+# modules depending on mysql
+MYSQL_MODULES=mysql
+#jabber related modules
+JABBER_MODULES=jabber
+#module depending on radiusclient
+RADIUS_MODULES=auth_radius group_radius uri_radius
+
+# the same but with path prepended (needed for modules="...")
+MYSQL_MOD_PATH=$(addprefix modules/, $(MYSQL_MODULES))
+JABBER_MOD_PATH=$(addprefix modules/, $(JABBER_MODULES))
+RADIUS_MOD_PATH=$(addprefix modules/, $(RADIUS_MODULES))
+
+
+
+
+
+ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -g
+endif
+ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+	INSTALL_PROGRAM += -s
+endif
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	# Add here commands to configure the package.
+
+	touch configure-stamp
+
+
+build: build-stamp
+
+build-stamp: configure-stamp 
+	dh_testdir
+
+	# Add here commands to compile the package.
+	$(MAKE) all  skip_modules="$(EXCLUDED_MODULES)" cfg-target=/etc/openser/
+	$(MAKE) modules modules="$(MYSQL_MOD_PATH)" cfg-target=/etc/openser/
+	$(MAKE) modules modules="$(JABBER_MOD_PATH)" cfg-target=/etc/openser/
+	$(MAKE) modules modules="$(RADIUS_MOD_PATH)" cfg-target=/etc/openser/
+	#/usr/bin/docbook-to-man debian/openser.sgml > openser.1
+
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+
+	# Add here commands to clean up after the build process.
+	-$(MAKE) \
+		include_modules="$(MYSQL_MODULES) $(JABBER_MODULES) $(RADIUS_MODULES)"\
+		 clean
+
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+	# Add here commands to install the package into debian/openser
+	$(MAKE) install  skip_modules="$(EXCLUDED_MODULES)" \
+		basedir=$(CURDIR)/debian/openser \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser \
+		cfg-target=/etc/openser/
+	# install only the mysql module
+	$(MAKE) install-modules-all modules="$(MYSQL_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-mysql-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-mysql-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-mysql-module
+	#install only the jabber module
+	$(MAKE) install-modules-all modules="$(JABBER_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-jabber-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-jabber-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-jabber-module
+	#install only the radius modules
+	$(MAKE) install-modules-all modules="$(RADIUS_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-radius-modules \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-radius-modules \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-radius-modules
+	#dh_movefiles
+
+
+
+# This single target is used to build all the packages, all at once, or
+# one at a time. So keep in mind: any options passed to commands here will
+# affect _all_ packages. Anything you want to only affect one package
+# should be put in another target, such as the install target.
+binary-common: 
+	dh_testdir
+	dh_testroot
+#	dh_installdebconf	
+	dh_installdocs
+	dh_installexamples
+	dh_installmenu
+#	dh_installlogrotate
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+	dh_installinit  -- defaults 23
+	dh_installcron
+	dh_installman
+	dh_installinfo
+#	dh_undocumented
+	dh_installchangelogs 
+	dh_link
+	dh_strip
+	dh_compress 
+	dh_fixperms
+#	dh_makeshlibs
+	dh_installdeb
+#	dh_perl
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+# Build architecture-independent packages using the common target
+binary-indep: build install
+# (Uncomment this next line if you have such packages.)
+#        $(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
+# We have nothing to do by default.
+
+
+# Build architecture-dependent packages using the common target
+binary-arch: build install
+	$(MAKE) -f debian/rules DH_OPTIONS=-a binary-common
+
+# Any other binary targets build just one binary package at a time.
+binary-%: build install
+	$(MAKE) -f debian/rules binary-common DH_OPTIONS=-p$*
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure
