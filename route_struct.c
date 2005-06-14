@@ -46,6 +46,7 @@
 #include "dprint.h"
 #include "ip_addr.h"
 #include "mem/mem.h"
+#include "ut.h" /* ZSW() */
 
 
 struct expr* mk_exp(int op, struct expr* left, struct expr* right)
@@ -186,7 +187,7 @@ void print_expr(struct expr* exp)
 					DBG("N/A");
 					break;
 			case STRING_ST:
-					DBG("\"%s\"", (char*)exp->r.param);
+					DBG("\"%s\"", ZSW((char*)exp->r.param));
 					break;
 			case NET_ST:
 					print_net((struct net*)exp->r.param);
@@ -348,7 +349,7 @@ void print_action(struct action* a)
 		}
 		switch(t->p1_type){
 			case STRING_ST:
-					DBG("\"%s\"", t->p1.string);
+					DBG("\"%s\"", ZSW(t->p1.string));
 					break;
 			case NUMBER_ST:
 					DBG("%lu",t->p1.number);
@@ -368,7 +369,7 @@ void print_action(struct action* a)
 			case SOCKID_ST:
 					DBG("%d:%s:%d",
 							((struct socket_id*)t->p1.data)->proto,
-							((struct socket_id*)t->p1.data)->name,
+							ZSW(((struct socket_id*)t->p1.data)->name),
 							((struct socket_id*)t->p1.data)->port
 							);
 					break;
@@ -380,7 +381,7 @@ void print_action(struct action* a)
 			case NOSUBTYPE:
 					break;
 			case STRING_ST:
-					DBG(", \"%s\"", t->p2.string);
+					DBG(", \"%s\"", ZSW(t->p2.string));
 					break;
 			case NUMBER_ST:
 					DBG(", %lu",t->p2.number);
@@ -394,7 +395,7 @@ void print_action(struct action* a)
 			case SOCKID_ST:
 					DBG("%d:%s:%d",
 							((struct socket_id*)t->p1.data)->proto,
-							((struct socket_id*)t->p1.data)->name,
+							ZSW(((struct socket_id*)t->p1.data)->name),
 							((struct socket_id*)t->p1.data)->port
 							);
 					break;
@@ -406,7 +407,7 @@ void print_action(struct action* a)
 			case NOSUBTYPE:
 					break;
 			case STRING_ST:
-					DBG(", \"%s\"", t->p3.string);
+					DBG(", \"%s\"", ZSW(t->p3.string));
 					break;
 			case NUMBER_ST:
 					DBG(", %lu",t->p3.number);
@@ -420,7 +421,7 @@ void print_action(struct action* a)
 			case SOCKID_ST:
 					DBG("%d:%s:%d",
 							((struct socket_id*)t->p1.data)->proto,
-							((struct socket_id*)t->p1.data)->name,
+							ZSW(((struct socket_id*)t->p1.data)->name),
 							((struct socket_id*)t->p1.data)->port
 							);
 					break;
