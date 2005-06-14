@@ -17,7 +17,6 @@ f none lib/openser/modules/avpops.so 0755 bin bin
 f none lib/openser/modules/auth.so 0755 bin bin
 f none lib/openser/modules/auth_db.so 0755 bin bin
 f none lib/openser/modules/auth_diameter.so 0755 bin bin
-f none lib/openser/modules/cpl-c.so 0755 bin bin
 f none lib/openser/modules/dbtext.so 0755 bin bin
 f none lib/openser/modules/dispatcher.so 0755 bin bin
 f none lib/openser/modules/diversion.so 0755 bin bin
@@ -59,14 +58,12 @@ f none doc/openser/README.avpops 0644 bin bin
 f none doc/openser/README.auth 0644 bin bin
 f none doc/openser/README.auth_db 0644 bin bin
 f none doc/openser/README.auth_diameter 0644 bin bin
-f none doc/openser/README.cpl-c  0644 bin bin
 f none doc/openser/README.dbtext  0644 bin bin
 f none doc/openser/README.dispatcher  0644 bin bin
 f none doc/openser/README.diversion  0644 bin bin
 f none doc/openser/README.domain  0644 bin bin
 f none doc/openser/README.enum    0644 bin bin
 f none doc/openser/README.exec 0644 bin bin
-f none doc/openser/README.flatstore 0644 bin bin
 f none doc/openser/README.gflags 0644 bin bin
 f none doc/openser/README.group 0644 bin bin
 f none doc/openser/README.jabber 0644 bin bin
