@@ -9,7 +9,7 @@
 
 
 # Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
+export DH_VERBOSE=1
 
 # This is the debhelper compatibility version to use.
 # export DH_COMPAT=4
@@ -25,12 +25,15 @@ EXCLUDED_MODULES=	mysql jabber postgress cpl-c \
 MYSQL_MODULES=mysql
 #jabber related modules
 JABBER_MODULES=jabber
+#cpl related modules
+CPL_MODULES=cpl-c
 #module depending on radiusclient
 RADIUS_MODULES=auth_radius group_radius uri_radius
 
 # the same but with path prepended (needed for modules="...")
 MYSQL_MOD_PATH=$(addprefix modules/, $(MYSQL_MODULES))
 JABBER_MOD_PATH=$(addprefix modules/, $(JABBER_MODULES))
+CPL_MOD_PATH=$(addprefix modules/, $(CPL_MODULES))
 RADIUS_MOD_PATH=$(addprefix modules/, $(RADIUS_MODULES))
 
 
@@ -61,6 +64,7 @@ build-stamp: configure-stamp
 	$(MAKE) all  skip_modules="$(EXCLUDED_MODULES)" cfg-target=/etc/openser/
 	$(MAKE) modules modules="$(MYSQL_MOD_PATH)" cfg-target=/etc/openser/
 	$(MAKE) modules modules="$(JABBER_MOD_PATH)" cfg-target=/etc/openser/
+	$(MAKE) modules modules="$(CPL_MOD_PATH)" cfg-target=/etc/openser/
 	$(MAKE) modules modules="$(RADIUS_MOD_PATH)" cfg-target=/etc/openser/
 	#/usr/bin/docbook-to-man debian/openser.sgml > openser.1
 
@@ -73,7 +77,7 @@ clean:
 
 	# Add here commands to clean up after the build process.
 	-$(MAKE) \
-		include_modules="$(MYSQL_MODULES) $(JABBER_MODULES) $(RADIUS_MODULES)"\
+		include_modules="$(MYSQL_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES)"\
 		 clean
 
 	dh_clean
@@ -104,6 +108,13 @@ install: build
 		cfg-prefix=$(CURDIR)/debian/openser-jabber-module \
 		cfg-target=/etc/openser/ \
 		doc-dir=share/doc/openser-jabber-module
+	#install only the cpl module
+	$(MAKE) install-modules-all modules="$(CPL_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-cpl-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-cpl-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-cpl-module
 	#install only the radius modules
 	$(MAKE) install-modules-all modules="$(RADIUS_MOD_PATH)"  \
 		basedir=$(CURDIR)/debian/openser-radius-modules \

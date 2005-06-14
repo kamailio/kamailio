@@ -64,8 +64,8 @@ if [ -x "/etc/init.d/openser" ]; then
 	 if ! invoke-rc.d openser restart ; then
 		echo ""
 		echo "openser failed to (re)start. Perhaps your configuration requires "
-		echo "additional modules (e.g. openser-mysql-module, openser-jabber-module "
-		echo "or openser-radius-modules). Next try to install any additional openser"
+		echo "additional modules (e.g. openser-mysql-module, openser-jabber-module, "
+		echo " openser-cpl-module or openser-radius-modules). Next try to install any additional openser"
 		echo "modules you might need and then (re)start openser by executing "
 		echo "the command '/etc/init.d/openser start|restart'."
 	fi
