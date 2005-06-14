@@ -25,6 +25,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*
+ * History:
+ * --------
+ * 2004-06-14 added ability to read default values from DB table usr_preferences_types (kozlik)
+ */
+   
 #include <string.h>
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
@@ -37,6 +43,8 @@
 #include "../../db/db.h"
 #include "../../config.h"
 #include "../../usr_avp.h"
+#include "avp_db.h"
+#include "avp_list.h"
 
 
 MODULE_VERSION
@@ -57,27 +65,31 @@ typedef enum load_avp_param {
 } load_avp_param_t;
 
 
-static char* db_url          = DEFAULT_RODB_URL;    /* Database URL */
-static char* db_table        = "usr_preferences";
-static char* uuid_column     = "uuid";
-static char* username_column = "username";
-static char* domain_column   = "domain";
-static char* attr_column     = "attribute";
-static char* val_column      = "value";
-static str caller_prefix     = {CALLER_PREFIX, CALLER_PREFIX_LEN};
-static str callee_prefix     = {CALLEE_PREFIX, CALLEE_PREFIX_LEN};
-static int caller_uuid_avp   = 1;
-static int callee_uuid_avp   = 2;
-static int use_domain        = 0;
+static char* db_url           = DEFAULT_RODB_URL;    /* Database URL */
+static char* db_table         = "usr_preferences";
+static char* uuid_column      = "uuid";
+static char* username_column  = "username";
+static char* domain_column    = "domain";
+static char* attr_column      = "attribute";
+static char* val_column       = "value";
+char* db_list_table    	      = "usr_preferences_types";
+char* attr_name_column        = "att_name";
+char* attr_type_column        = "att_raw_type";
+char* attr_dval_column        = "default_value";
+static str caller_prefix      = {CALLER_PREFIX, CALLER_PREFIX_LEN};
+static str callee_prefix      = {CALLEE_PREFIX, CALLEE_PREFIX_LEN};
+static int caller_uuid_avp    = 1;
+static int callee_uuid_avp    = 2;
+static int use_domain         = 0;
 
-static db_con_t* db_handle;
-static db_func_t dbf;
-
+db_con_t* db_handle;
+db_func_t dbf;
 
 static int load_avp(struct sip_msg*, char*, char*);
 static int mod_init(void);
 static int child_init(int);
 static int load_avp_fixup(void**, int);
+
 
 
 /*
@@ -93,16 +105,20 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"caller_uuid_avp", INT_PARAM, &caller_uuid_avp},
-	{"callee_uuid_avp", INT_PARAM, &callee_uuid_avp},
-	{"db_url",          STR_PARAM, &db_url         },
-	{"pref_table",      STR_PARAM, &db_table       },
-	{"uuid_column",     STR_PARAM, &uuid_column    },
-	{"username_column", STR_PARAM, &username_column},
-	{"domain_column",   STR_PARAM, &domain_column  },
-	{"attr_column",     STR_PARAM, &attr_column    },
-	{"val_column",      STR_PARAM, &val_column     },
-	{"use_domain",      INT_PARAM, &use_domain     },
+	{"caller_uuid_avp",  INT_PARAM, &caller_uuid_avp },
+	{"callee_uuid_avp",  INT_PARAM, &callee_uuid_avp },
+	{"db_url",           STR_PARAM, &db_url          },
+	{"pref_table",       STR_PARAM, &db_table        },
+	{"uuid_column",      STR_PARAM, &uuid_column     },
+	{"username_column",  STR_PARAM, &username_column },
+	{"domain_column",    STR_PARAM, &domain_column   },
+	{"attr_column",      STR_PARAM, &attr_column     },
+	{"val_column",       STR_PARAM, &val_column      },
+	{"use_domain",       INT_PARAM, &use_domain      },
+	{"pref_list_table",  STR_PARAM, &db_list_table   },
+	{"attr_name_column", STR_PARAM, &attr_name_column},
+	{"attr_type_column", STR_PARAM, &attr_type_column},
+	{"attr_dval_column", STR_PARAM, &attr_dval_column},
 	{0, 0, 0}
 };
 
@@ -124,7 +140,7 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-        DBG("avp_db - initializing\n");
+	DBG("avp_db - initializing\n");
 
 	if (bind_dbmod(db_url, &dbf) < 0) {
 		LOG(L_ERR, "avpdb_mod_init: Unable to bind a database driver\n");
@@ -138,8 +154,10 @@ static int mod_init(void)
 
 	caller_prefix.len = strlen(caller_prefix.s);
 	callee_prefix.len = strlen(callee_prefix.s);
+
+	if (init_avp_list() < 0) return -1;
     
-        return 0;
+	return 0;
 }
 
 
@@ -147,16 +165,33 @@ static int child_init(int rank)
 {
 	DBG("avp_db - Initializing child %i\n", rank);
 
+	if (avp_db_init() < 0) return -1;
+	
+	return 0;
+}
+
+
+int avp_db_init(){
+	DBG("avp_db - Initializing DB\n");
+
 	db_handle = dbf.init(db_url);
 	
 	if (!db_handle) {
-		LOG(L_ERR, "avpdb_init_child: could not initialize connection to %s\n",  db_url);
+		LOG(L_ERR, "avp_db_init: could not initialize connection to %s\n",  db_url);
 		return -1;
 	}
 	
 	return 0;
 }
 
+void avp_db_close(){
+	DBG("avp_db - Closeing DB\n");
+
+	if (db_handle && dbf.close){
+		dbf.close(db_handle);
+		db_handle=0;
+	}
+}
 
 static int query_db(str* prefix, str* uuid, str* username, str* domain)
 {
@@ -168,7 +203,12 @@ static int query_db(str* prefix, str* uuid, str* username, str* domain)
 	db_row_t* cur_row;
 	
 	int_str name, val;
-	str name_str, val_str;
+	str name_str, val_str, att_name_str;
+
+	avp_list_t*   avp_l = *avp_list;
+	int           avp_use_default[avp_l->n];
+	
+	init_avp_use_def(avp_use_default, avp_l);
 
 	cols[0] = attr_column;
 	cols[1] = val_column;
@@ -223,6 +263,9 @@ static int query_db(str* prefix, str* uuid, str* username, str* domain)
 		memcpy(name_str.s + prefix->len, 
 		       (char*)VAL_STRING(ROW_VALUES(cur_row)), name_len);
 	
+		att_name_str.len = strlen((char*)VAL_STRING(ROW_VALUES(cur_row)));
+		att_name_str.s = (char*)VAL_STRING(ROW_VALUES(cur_row));
+
 		val_str.len = strlen((char*)VAL_STRING(ROW_VALUES(cur_row) + 1));
 		val_str.s = (char*)VAL_STRING(ROW_VALUES(cur_row) + 1);
 		
@@ -237,7 +280,11 @@ static int query_db(str* prefix, str* uuid, str* username, str* domain)
 		    name_str.s,
 		    val_str.len,
 		    val_str.s);
+
+		reset_avp_use_def_flag(avp_use_default, avp_l, &att_name_str);
 	}
+
+	add_default_avps(avp_use_default, avp_l, prefix);
 	
 	dbf.free_result(db_handle, res);
 	return 1;
