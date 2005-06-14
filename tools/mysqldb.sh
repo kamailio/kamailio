@@ -299,6 +299,7 @@ INSERT INTO version VALUES ( 'preferences_types', '1');
 INSERT INTO version VALUES ( 'admin_privileges', '1');
 INSERT INTO version VALUES ( 'calls_forwarding', '1');
 INSERT INTO version VALUES ( 'speed_dial', '1');
+INSERT INTO version VALUES ( 'dbaliases', '1');
 
 #
 # Table structure for table 'acc' -- accounted calls
@@ -376,9 +377,10 @@ CREATE TABLE aliases (
 CREATE TABLE dbaliases (
   alias_username varchar(64) NOT NULL default '',
   alias_domain varchar(128) NOT NULL default '',
-  username varchar(64) NOT NULL default '',
+  $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
-  UNIQUE KEY alias_key (alias_username,alias_domain)
+  UNIQUE KEY alias_key (alias_username,alias_domain),
+  INDEX alias_user ($USERCOL, domain)
 ) $TABLE_TYPE;
 
 		  
