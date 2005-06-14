@@ -39,7 +39,7 @@
 #include "../../mem/mem.h"
 #include "authrad_mod.h"
 #include "authorize.h"
-#include <radiusclient.h>
+#include <radiusclient-ng.h>
 #include "../../modules/acc/dict.h"
 
 MODULE_VERSION

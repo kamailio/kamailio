@@ -1,17 +1,17 @@
 <!-- Auth_radius Module User's Guide -->
 
 <chapter>
-    <chapterinfo>
+	<chapterinfo>
 	<revhistory>
-	    <revision>
+		<revision>
 		<revnumber>$Revision$</revnumber>
 		<date>$Date$</date>
-	    </revision>
+		</revision>
 	</revhistory>
-    </chapterinfo>
-    <title>User's Guide</title>
-    
-    <section>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
 	<title>Overview</title>
 	<para>
 	avp_radius module allows loading of user's attributes into AVPs from
@@ -31,19 +31,39 @@
 	caller's or callee's attributes are loaded.
 	</para>
 	</section>
+
 	<section>
 	<title>Dependencies</title>
-	<para>
-	    The module depends on the following modules (in the other words the
-		listed modules must be loaded before this module):
-	    <itemizedlist>
-		<listitem>
-		    <para><emphasis>none</emphasis></para>
-		</listitem>
-	    </itemizedlist>
-	</para>
-    </section>
-    <section>
+		<section>
+		<title>&ser; Modules</title>
+			<para>
+			The module depends on the following modules (in the other words 
+			the listed modules must be loaded before this module):
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>none</emphasis></para>
+				</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+			The following libraries or applications must be installed 
+			before compilling &ser; with this module loaded:
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>radiusclient-ng</emphasis> 0.5.0 or higher -- 
+				library and development files. See <ulink 
+				url='http://developer.berlios.de/projects/radiusclient-ng/'>
+				http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
+				</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+	</section>
+
+	<section>
 	<title>Exported Parameters</title>
 	<section>
 		<title><varname>radius_config</varname> (string)</title>
@@ -98,46 +118,46 @@ modparam("avp_radius", "callee_service_type", 19)
 	</section>
 	</section>
 
-    <section>
+	<section>
 	<title>Exported Functions</title>
 	<section>
-	    <title><function moreinfo="none">avp_load_radius(user)</function></title>
-	    <para>
+		<title><function moreinfo="none">avp_load_radius(user)</function></title>
+		<para>
 		The functions loads user's attributes from radius and stores them
 		into AVPs.  Parameter <quote>user</quote> is used to indicate,
 		whose attributes are loaded.  Possible values are:
-	    </para>
-	    <itemizedlist>
+		</para>
+		<itemizedlist>
 		<listitem>
-		    <para><emphasis>caller</emphasis> - attributes belong to the user
+			<para><emphasis>caller</emphasis> - attributes belong to the user
 			of the From URI are loaded</para>
 		</listitem>
 		<listitem>
-		    <para><emphasis>callee</emphasis> - attributes belong to the user
+			<para><emphasis>callee</emphasis> - attributes belong to the user
 			of the Request URI are loaded</para>
 		</listitem>
 		<listitem>
-		    <para><emphasis>digest</emphasis> - attributes belong to the
+			<para><emphasis>digest</emphasis> - attributes belong to the
 			authenticated user are loaded</para>
 		</listitem>
-	    </itemizedlist>
-	    <para>
+		</itemizedlist>
+		<para>
 		AVP name returned from Radius is prefixed by string
 		<quote>caller_</quote>, if avp_load_radius parameter is
 		<quote>caller</quote> or <quote>digest</quote>, and by
 		<quote>callee_</quote>, if parameter is <quote>callee</quote>.
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title><function moreinfo="none">avp_load_radius()</function> usage</title>
 		<programlisting format="linespecific">
 ...
 avp_load_radius("callee");
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
-    </section>
+	</section>
 </chapter>
 
 <!-- Keep this element at the end of the file

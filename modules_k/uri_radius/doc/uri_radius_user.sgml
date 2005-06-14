@@ -1,113 +1,115 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    <chapterinfo>
+	<chapterinfo>
 	<revhistory>
-	    <revision>
+		<revision>
 		<revnumber>$Revision$</revnumber>
 		<date>$Date$</date>
-	    </revision>
+		</revision>
 	</revhistory>
-    </chapterinfo>
-    <title>User's Guide</title>
-    
-    <section>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
 	<title>Overview</title>
 	<para>&uri; check using Radius server.</para>
-    </section>
-    <section>
+	</section>
+
+	<section>
 	<title>Dependencies</title>
-	<section>
-	    <title>&ser; Modules</title>
-	    <para>
-		The following modules must be loaded before this module:
-	    	<itemizedlist>
-		    <listitem>
+		<section>
+			<title>&ser; Modules</title>
 			<para>
-			    <emphasis>No dependencies on other &ser; modules</emphasis>.
+			The module depends on the following modules (in the other words 
+			the listed modules must be loaded before this module):
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>none</emphasis></para>
+				</listitem>
+			</itemizedlist>
 			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
-	</section>
-	<section>
-	    <title>External Libraries or Applications</title>
-	    <para>
-		The following libraries or applications must be installed before running
-		&ser; with this module loaded:
-	    	<itemizedlist>
-		    <listitem>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
 			<para>
-			    <emphasis>radius client library</emphasis>.
-			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
+			The following libraries or applications must be installed 
+			before compilling &ser; with this module loaded:
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>radiusclient-ng</emphasis> 0.5.0 or higher -- 
+				library and development files. See <ulink 
+				url='http://developer.berlios.de/projects/radiusclient-ng/'>
+				http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
+				</para>
+				</listitem>
+			</itemizedlist>
+		</section>
 	</section>
-    </section>
-    <section>
+
+	<section>
 	<title>Exported Parameters</title>
 	<section>
-	    <title><varname>radius_config</varname> (string)</title>
-	    <para>
+		<title><varname>radius_config</varname> (string)</title>
+		<para>
 		Radiusclient configuration file.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>/usr/local/etc/radiusclient/radiusclient.conf</quote>.
+			Default value is <quote>/usr/local/etc/radiusclient/radiusclient.conf</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>param_name</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("uri_radius", "radius_config", "/etc/radiusclient.conf")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 	<section>
-	    <title><varname>service_type</varname> (integer)</title>
-	    <para>
+		<title><varname>service_type</varname> (integer)</title>
+		<para>
 		Radius service type used in <function>radius_does_uri_exist check</function>.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is 10 (Call-Check).
+			Default value is 10 (Call-Check).
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>param_name</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("uri_radius", "service_type", 11)
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
-    </section>
-    <section>
+	</section>
+	<section>
 	<title>Exported Functions</title>
 	<section>
-	    <title>
+		<title>
 		<function moreinfo="none">radius_does_uri_exist()</function>
-	    </title>
-	    <para>
+		</title>
+		<para>
 		Checks from Radius if user@host in Request-&uri; is a local user. Can be used to
 		decide if 404 or 480 should be returned after lookup has failed.
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title><function>radius_does_uri_exist</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if (radius_does_uri_exist()) {
-    ...
+	...
 };
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
-    </section>
+	</section>
 </chapter>
 
 <!-- Keep this element at the end of the file

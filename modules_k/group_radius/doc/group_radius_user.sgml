@@ -1,145 +1,147 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    <chapterinfo>
+	<chapterinfo>
 	<revhistory>
-	    <revision>
+		<revision>
 		<revnumber>$Revision$</revnumber>
 		<date>$Date$</date>
-	    </revision>
+		</revision>
 	</revhistory>
-    </chapterinfo>
-    <title>User's Guide</title>
+	</chapterinfo>
+	<title>User's Guide</title>
 
-    <section>
+	<section>
 	<title>Overview</title>
 	<para>
-	    This module export functions necessary for group membership checking over radius. There
-	    is a database table that contains list of users and groups they belong to. The table is
-	    used by functions of this module.
+		This module export functions necessary for group membership checking over radius. There
+		is a database table that contains list of users and groups they belong to. The table is
+		used by functions of this module.
 	</para>
-    </section>
-    <section>
+	</section>
+
+	<section>
 	<title>Dependencies</title>
-	<section>
-	    <title>&ser; Modules</title>
-	    <para>
-		The following modules must be loaded before this module:
-	    	<itemizedlist>
-		    <listitem>
+		<section>
+			<title>&ser; Modules</title>
 			<para>
-			    None.
+			The module depends on the following modules (in the other words 
+			the listed modules must be loaded before this module):
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>none</emphasis></para>
+				</listitem>
+			</itemizedlist>
 			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
-	</section>
-	<section>
-	    <title>External Libraries or Applications</title>
-	    <para>
-		The following libraries or applications must be installed before running
-		&ser; with this module loaded:
-	    	<itemizedlist>
-		    <listitem>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
 			<para>
-			    <emphasis>radiusclient library</emphasis>.
-			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
+			The following libraries or applications must be installed 
+			before compilling &ser; with this module loaded:
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>radiusclient-ng</emphasis> 0.5.0 or higher -- 
+				library and development files. See <ulink 
+				url='http://developer.berlios.de/projects/radiusclient-ng/'>
+				http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
+				</para>
+				</listitem>
+			</itemizedlist>
+		</section>
 	</section>
-    </section>
-    <section>
+
+	<section>
 	<title>Exported Parameters</title>
 	<section>
-	    <title><varname>radius_config</varname> (string)</title>
-	    <para>
+		<title><varname>radius_config</varname> (string)</title>
+		<para>
 		Location of the configuration file of the radius client library.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>/usr/local/etc/radiusclient/radiusclient.conf</quote>.
+			Default value is <quote>/usr/local/etc/radiusclient/radiusclient.conf</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>radius_config</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("group", "radius_config", "/etc/radiusclient.conf")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 	<section>
-	    <title><varname>use_domain</varname> (integer)</title>
-	    <para>
+		<title><varname>use_domain</varname> (integer)</title>
+		<para>
 		If set to 1 then username@domain will be used for lookup, if set to 0 then only
 		username will be used.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is 0 (no).
+			Default value is 0 (no).
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>use_domain</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("group_radius", "use_domain", 1)
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
-    </section>
-    <section>
+	</section>
+	<section>
 	<title>Exported Functions</title>
 	<section>
-	    <title>
+		<title>
 		<function moreinfo="none">radius_is_user_in(URI, group)</function>
-	    </title>
-	    <para>
+		</title>
+		<para>
 		The function returns true if username in the given &uri; is member of the given
 		group and false if not.
-	    </para>
-	    <para>Meaning of the parameters is as follows:</para>
-	    <itemizedlist>
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
 		<listitem>
-		    <para><emphasis>&uri;</emphasis> - &uri; whose username and optionally domain to be
+			<para><emphasis>&uri;</emphasis> - &uri; whose username and optionally domain to be
 			used, this can be one of:
 			<itemizedlist>
-			    <listitem>
+				<listitem>
 				<para>Request-URI - Use Request-URI username and (optionally) domain.</para>
-			    </listitem>
-			    <listitem>
+				</listitem>
+				<listitem>
 				<para>To - Use To username and (optionally) domain.</para>
-			    </listitem>
-			    <listitem>
+				</listitem>
+				<listitem>
 				<para>From - Use From username and (optionally) domain.</para>
-			    </listitem>
-			    <listitem>
+				</listitem>
+				<listitem>
 				<para>Credentials - Use digest credentials username.</para>
-			    </listitem>
+				</listitem>
 			</itemizedlist>
-		    </para>
+			</para>
 		</listitem>
 		<listitem>
-		    <para><emphasis>group</emphasis> - Name of the group to check.
-		    </para>
+			<para><emphasis>group</emphasis> - Name of the group to check.
+			</para>
 		</listitem>
-	    </itemizedlist>
-	    <example>
+		</itemizedlist>
+		<example>
 		<title><function>radius_is_user_in</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if (radius_is_user_in("Request-URI", "ld")) {
-    ...
+	...
 };
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
-    </section>
+	</section>
 </chapter>
 
 <!-- Keep this element at the end of the file

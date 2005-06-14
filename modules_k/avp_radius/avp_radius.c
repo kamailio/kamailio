@@ -22,7 +22,7 @@
  */
 
 
-#include <radiusclient.h>
+#include <radiusclient-ng.h>
 #include "../acc/dict.h"
 #include "../../sr_module.h"
 #include "../../mem/mem.h"

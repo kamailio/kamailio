@@ -105,19 +105,27 @@
 		Support for SQL and RADIUS works analogously. You need to enable it by recompiling the
 		module with properly set defines. Uncomment the SQL_ACC and RAD_ACC lines in
 		modules/acc/Makefile. To compile SQL support, you need to have mysqlclient package on
-		your system. To compile RADIUS support, you need to have radiusclient installed on your
-		system (version 0.4.1 or higher is required) which is available from
+		your system. To compile RADIUS support, you need to have 
+		radiusclient-ng (only versions higher or equal to 0.5.0) installed on 
+		your system which is available from
 		<ulink url='http://developer.berlios.de/projects/radiusclient-ng/'>
-		http://developer.berlios.de/projects/radiusclient-ng/</ulink>. The radius client needs to
-		be configured properly. To do so, use the template at etc/radiusclient.conf and make sure
-		that module's radius_config parameter points to its location.  In particular, accounting
-		secret must match that one configured in server and proper dictionary is used (one is
-		available at etc/sip_dictionary). Uses along with FreeRadius (http://www.freeradius.org/)
-		and Radiator (http://www.open.com.au/radiator/) servers have been reported to us.
+		http://developer.berlios.de/projects/radiusclient-ng/</ulink>. 
+		The radius client needs to be configured properly. To do so, use the 
+		template at etc/radiusclient.conf and make sure
+		that module's radius_config parameter points to its location.  
+		In particular, accounting secret must match that one configured in 
+		server and proper dictionary is used (one is available at 
+		etc/sip_dictionary). Uses along with FreeRadius 
+		(<ulink url='http://www.freeradius.org/'>
+		http://www.freeradius.org/</ulink>) and Radiator 
+		(<ulink url='http://www.open.com.au/radiator/'>
+		http://www.open.com.au/radiator/</ulink>) servers have been 
+		reported to us.
 	</para>
 	<para>
-		Both mysql and radius libraries must be dynamically linkable. You need to configure your
-		OS so that &ser;, when started, will find them. Typically, you do so by manipulating
+		Both mysql and radius libraries must be dynamically linkable. 
+		You need to configure your OS so that &ser;, when started, will 
+		find them. Typically, you do so by manipulating
 		LD_LIBRARY_PATH environment variable or configuring ld.so.
 	</para>
 	<section>
@@ -222,21 +230,42 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 		from DB data structure constraints.
 		</para>
 	</section>
+
 	<section>
-	<title>Dependencies</title>
-	<para>
-		The module depends on the following modules (in the other words the listed modules
-		must be loaded before this module):
-		<itemizedlist>
-		<listitem>
-			<para><emphasis>tm</emphasis> -- Transaction Manager</para>
-		</listitem>
-		<listitem>
-			<para><emphasis>a database module</emphasis> -- If compiled with database support.</para>
-		</listitem>
-		</itemizedlist>
-	</para>
+		<title>Dependencies</title>
+		<section>
+			<title>&ser; Modules</title>
+			<para>
+			The module depends on the following modules (in the other words 
+			the listed modules must be loaded before this module):
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>tm</emphasis> -- Transaction Manager</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>a database module</emphasis> -- If compiled 
+				with database support.</para>
+				</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+			The following libraries or applications must be installed 
+			before running &ser; with this module loaded:
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>radiusclient-ng</emphasis> 0.5.0 or higher -- 
+				if compiled with RADIUS support. See <ulink 
+				url='http://developer.berlios.de/projects/radiusclient-ng/'>
+				http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
+				</para>
+				</listitem>
+			</itemizedlist>
+		</section>
 	</section>
+
 	<section>
 	<title>Exported Parameters</title>
 	<section>

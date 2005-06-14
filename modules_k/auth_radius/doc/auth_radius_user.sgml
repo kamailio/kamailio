@@ -1,36 +1,31 @@
 <!-- Auth_radius Module User's Guide -->
 
 <chapter>
-    <chapterinfo>
+	<chapterinfo>
 	<revhistory>
-	    <revision>
+		<revision>
 		<revnumber>$Revision$</revnumber>
 		<date>$Date$</date>
-	    </revision>
+		</revision>
 	</revhistory>
-    </chapterinfo>
-    <title>User's Guide</title>
-    
-    <section>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
 	<title>Overview</title>
 	<para>
-	    This module contains functions that are used to perform authentication using a Radius
-	    server. Basically the proxy will pass along the credentials to the radius server which
-	    will in turn send a reply containing result of the authentication. So basically the
-	    whole authentication is done in the Radius server. Before sending the request to the
-	    radius server we perform some sanity checks over the credentials to make sure that only
-	    well formed credentials will get to the server. We have implemented radius
-	    authentication according to draft-sterman-aaa-sip-00. This module requires radiusclient
-	    library version 0.4.1 or higher which is available from <ulink url='http://developer.berlios.de/projects/radiusclient-ng/'>
-	    http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
+		This module contains functions that are used to perform authentication using a Radius
+		server. Basically the proxy will pass along the credentials to the radius server which
+		will in turn send a reply containing result of the authentication. So basically the
+		whole authentication is done in the Radius server. Before sending the request to the
+		radius server we perform some sanity checks over the credentials to make sure that only
+		well formed credentials will get to the server. We have implemented radius
+		authentication according to draft-sterman-aaa-sip-00. This module requires radiusclient-ng
+		library version 0.5.0 or higher which is available from <ulink url='http://developer.berlios.de/projects/radiusclient-ng/'>
+		http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
 	</para>
-	<para>How to configure radius server -- more detailed description -- TBD.</para>
-	<warning>
-	    <para>The detailed description of radius authentication setup is important since many
-	    people will use it and we want to make the setup painless.</para>
-	</warning>
-    </section>
-    <section>
+	</section>
+	<section>
 	<title>Additional Credentials</title>
 	<para>
 		When performing authentification, the RADIUS server may include in the
@@ -62,19 +57,40 @@
 		The RPID value may be fetch via this mechanism.
 	</para>
 	</section>
+
 	<section>
 	<title>Dependencies</title>
-	<para>
-	    The module depends on the following modules (in the other words the listed modules
-	    must be loaded before this module):
-	    <itemizedlist>
-		<listitem>
-		    <para><emphasis>auth</emphasis> -- Generic authentication functions</para>
-		</listitem>
-	    </itemizedlist>
-	</para>
-    </section>
-    <section>
+		<section>
+			<title>&ser; Modules</title>
+			<para>
+			The module depends on the following modules (in the other words 
+			the listed modules must be loaded before this module):
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>auth</emphasis> -- Generic authentication 
+				functions</para>
+				</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+			The following libraries or applications must be installed 
+			before compilling &ser; with this module loaded:
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>radiusclient-ng</emphasis> 0.5.0 or higher -- 
+				library and development files. See <ulink 
+				url='http://developer.berlios.de/projects/radiusclient-ng/'>
+				http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
+				</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+	</section>
+
+	<section>
 	<title>Exported Parameters</title>
 	<section>
 		<title><varname>radius_config</varname> (string)</title>
@@ -140,90 +156,90 @@ modparam("auth_radius", "rpid_old_compat", 1)
 	</section>
 	</section>
 
-    <section>
+	<section>
 	<title>Exported Functions</title>
 	<section>
-	    <title><function moreinfo="none">radius_www_authorize(realm)</function></title>
-	    <para>
+		<title><function moreinfo="none">radius_www_authorize(realm)</function></title>
+		<para>
 		The function verifies credentials according to RFC2617. If the credentials are
 		verified successfully then the function will succeed and mark the credentials as
 		authorized (marked credentials can be later used by some other functions). If the
 		function was unable to verify the credentials for some reason then it will fail and
 		the script should call <function moreinfo="none">www_challenge</function> which will
 		challenge the user again.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		This function will, in fact, perform sanity checks over the received credentials and
 		then pass them along to the radius server which will verify the credentials and
 		return whether they are valid or not.
-	    </para>
-	    <para>Meaning of the parameter is as follows:</para>
-	    <itemizedlist>
+		</para>
+		<para>Meaning of the parameter is as follows:</para>
+		<itemizedlist>
 		<listitem>
-		    <para><emphasis>realm</emphasis> - Realm is a opaque string that the user agent
-		    should present to the user so he can decide what username and password to
-		    use. Usually this is domain of the host the server is running on.
-		    </para>
-		    <para>
+			<para><emphasis>realm</emphasis> - Realm is a opaque string that the user agent
+			should present to the user so he can decide what username and password to
+			use. Usually this is domain of the host the server is running on.
+			</para>
+			<para>
 			If an empty string <quote></quote> is used then the server will generate it
 			from the request. In case of REGISTER requests To header field domain will
 			be used (because this header field represents a user being registered), for
 			all other messages From header field domain will be used.
-		    </para>
+			</para>
 		</listitem>
-	    </itemizedlist>
-	    <example>
+		</itemizedlist>
+		<example>
 		<title><function moreinfo="none">radius_www_authorize</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if (!radius_www_authorize("siphub.net")) {
-    www_challenge("siphub.net", "1");
+	www_challenge("siphub.net", "1");
 };
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section>
-	    <title><function moreinfo="none">radius_proxy_authorize(realm)</function></title>
-	    <para>
+		<title><function moreinfo="none">radius_proxy_authorize(realm)</function></title>
+		<para>
 		The function verifies credentials according to RFC2617. If the credentials are
 		verified successfully then the function will succeed and mark the credentials as
 		authorized (marked credentials can be later used by some other functions). If the
 		function was unable to verify the credentials for some reason then it will fail and
 		the script should call <function moreinfo="none">proxy_challenge</function> which will
 		challenge the user again.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		This function will, in fact, perform sanity checks over the received credentials and
 		then pass them along to the radius server which will verify the credentials and
 		return whether they are valid or not.
-	    </para>
-	    <para>Meaning of the parameter is as follows:</para>
-	    <itemizedlist>
+		</para>
+		<para>Meaning of the parameter is as follows:</para>
+		<itemizedlist>
 		<listitem>
-		    <para><emphasis>realm</emphasis> - Realm is a opaque string that the user agent
-		    should present to the user so he can decide what username and password to
-		    use. Usually this is domain of the host the server is running on.
-		    </para>
-		    <para>
+			<para><emphasis>realm</emphasis> - Realm is a opaque string that the user agent
+			should present to the user so he can decide what username and password to
+			use. Usually this is domain of the host the server is running on.
+			</para>
+			<para>
 			If an empty string <quote></quote> is used then the server will generate it
 			from the request. From header field domain will be used as realm.
-		    </para>
+			</para>
 		</listitem>
-	    </itemizedlist>
-	    <example>
+		</itemizedlist>
+		<example>
 		<title>proxy_authorize usage</title>
 		<programlisting format="linespecific">
 ...
 if (!radius_proxy_authorize("")) {
-    proxy_challenge("", "1");  # Realm will be autogenerated
+	proxy_challenge("", "1");  # Realm will be autogenerated
 };
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
-    </section>
+	</section>
 </chapter>
 
 <!-- Keep this element at the end of the file

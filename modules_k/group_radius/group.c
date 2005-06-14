@@ -27,7 +27,7 @@
  *
  */
 
-#include <radiusclient.h>
+#include <radiusclient-ng.h>
 #include <string.h>
 #include "../../mem/mem.h"
 #include "../../ut.h"
