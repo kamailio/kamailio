@@ -9,7 +9,7 @@ lib/openser/modules/avpops.so
 lib/openser/modules/auth.so
 lib/openser/modules/auth_db.so
 lib/openser/modules/auth_diameter.so
-lib/openser/modules/cpl-c.so
+lib/openser/modules/auth_radius.so
 lib/openser/modules/dbtext.so
 lib/openser/modules/dispatcher.so
 lib/openser/modules/diversion.so
@@ -19,6 +19,7 @@ lib/openser/modules/exec.so
 lib/openser/modules/flatstore.so
 lib/openser/modules/gflags.so
 lib/openser/modules/group.so
+lib/openser/modules/group_radius.so
 lib/openser/modules/jabber.so
 lib/openser/modules/mangler.so
 lib/openser/modules/maxfwd.so
@@ -51,14 +52,14 @@ share/doc/openser/README.avpops
 share/doc/openser/README.auth
 share/doc/openser/README.auth_db
 share/doc/openser/README.auth_diameter
-share/doc/openser/README.cpl-c
+share/doc/openser/README.auth_radius
 share/doc/openser/README.dbtext
 share/doc/openser/README.domain
 share/doc/openser/README.enum
 share/doc/openser/README.exec
-share/doc/openser/README.flatstore
 share/doc/openser/README.gflags
 share/doc/openser/README.group
+share/doc/openser/README.group_radius
 share/doc/openser/README.jabber
 share/doc/openser/README.mangler
 share/doc/openser/README.maxfwd
