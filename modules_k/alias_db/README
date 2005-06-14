@@ -51,7 +51,7 @@ Daniel-Constantin Mierla
    1-6. Set use_domain parameter
    1-7. Set domain_prefix parameter
    1-8. alias_db_lookup() usage
-   1-9. msilo sql script
+   1-9. alias_db sql script
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -204,7 +204,7 @@ alias_db_lookup("dbaliases");
    The table structure used by alias_db module is defined by next
    SQL script (good for MySQL).
 
-   Example 1-9. msilo sql script
+   Example 1-9. alias_db sql script
 ...
 create table dbaliases (
   alias_username varchar(64) not null default '',

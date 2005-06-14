@@ -244,7 +244,7 @@ alias_db_lookup("dbaliases");
 		<acronym>SQL</acronym> script (good for MySQL).
 		</para>
 	    <example>
-		<title>msilo sql script</title>
+		<title>alias_db sql script</title>
 		<programlisting format="linespecific">
 ...
 &aliasdbsql;
