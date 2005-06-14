@@ -77,9 +77,9 @@ TAGS:
 	$(MKTAGS) 
 	
 ifeq (,$(MAKECMDGOALS))
-include $(depends)
+-include $(depends)
 endif
 ifneq (,$(filter-out clean proper distclean realclean mantainer-clean TAGS \
 		tar modules, $(MAKECMDGOALS)))
-include $(depends)
+-include $(depends)
 endif
