@@ -1,5 +1,5 @@
 #! /bin/sh
-# preinst script for openser-0.9.2
+# preinst script for openser-0.10.0
 #
 # see: dh_installdeb(1)
 
@@ -20,8 +20,8 @@ case "$1" in
 #        if [ "$1" = "upgrade" ]
 #        then
 #            start-stop-daemon --stop --quiet --oknodo  \
-#                --pidfile /var/run/openser-0.9.2.pid  \
-#                --exec /usr/sbin/openser-0.9.2 2>/dev/null || true
+#                --pidfile /var/run/openser-0.10.0.pid  \
+#                --exec /usr/sbin/openser-0.10.0 2>/dev/null || true
 #        fi
     ;;
 
