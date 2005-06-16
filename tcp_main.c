@@ -1133,10 +1133,10 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			/* EAGAIN is ok if we try to empty the buffer
 			 * e.g.: SIGIO_RT overflow mode or EPOLL ET */
 			if ((errno!=EAGAIN) && (errno!=EWOULDBLOCK)){
-				LOG(L_CRIT, "ERROR: handle_tcp_child: read from tcp child %d "
+				LOG(L_CRIT, "ERROR: handle_tcp_child: read from tcp child %ld "
 						" (pid %d, no %d) %s [%d]\n",
-						tcp_c-&tcp_children[0], tcp_c->pid, tcp_c->proc_no,
-						strerror(errno), errno );
+						(long)(tcp_c-&tcp_children[0]), tcp_c->pid,
+						tcp_c->proc_no, strerror(errno), errno );
 			}else{
 				bytes=0;
 			}

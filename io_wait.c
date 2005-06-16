@@ -394,8 +394,8 @@ int init_io_wait(io_wait_h* h, int max_fd, enum poll_types poll_method)
 	h->fd_hash=local_malloc(sizeof(*(h->fd_hash))*h->max_fd_no);
 	if (h->fd_hash==0){
 		LOG(L_CRIT, "ERROR: init_io_wait: could not alloc"
-					" fd hashtable (%d bytes)\n",
-					sizeof(*(h->fd_hash))*h->max_fd_no );
+					" fd hashtable (%ld bytes)\n",
+					(long)sizeof(*(h->fd_hash))*h->max_fd_no );
 		goto error;
 	}
 	memset((void*)h->fd_hash, 0, sizeof(*(h->fd_hash))*h->max_fd_no);
@@ -411,8 +411,8 @@ int init_io_wait(io_wait_h* h, int max_fd, enum poll_types poll_method)
 			h->fd_array=local_malloc(sizeof(*(h->fd_array))*h->max_fd_no);
 			if (h->fd_array==0){
 				LOG(L_CRIT, "ERROR: init_io_wait: could not"
-							" alloc fd array (%d bytes)\n",
-							sizeof(*(h->fd_hash))*h->max_fd_no);
+							" alloc fd array (%ld bytes)\n",
+							(long)sizeof(*(h->fd_hash))*h->max_fd_no);
 				goto error;
 			}
 			memset((void*)h->fd_array, 0, sizeof(*(h->fd_array))*h->max_fd_no);
