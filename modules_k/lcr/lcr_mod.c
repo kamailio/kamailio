@@ -211,9 +211,9 @@ static param_export_t params[] = {
 	{"priority_column",          STR_PARAM, &priority_col.s },
 	{"gw_addr_port_avp",         STR_PARAM, &gw_addr_port_avp.s },
 	{"contact_avp",              STR_PARAM, &contact_avp.s  },
-        {"fr_inv_timer_avp",         STR_PARAM, &inv_timer_avp.s  },
-        {"fr_inv_timer",             INT_PARAM, &inv_timer      },
-        {"fr_inv_timer_next",        INT_PARAM, &inv_timer_next },
+	{"fr_inv_timer_avp",         STR_PARAM, &inv_timer_avp.s  },
+	{"fr_inv_timer",             INT_PARAM, &inv_timer      },
+	{"fr_inv_timer_next",        INT_PARAM, &inv_timer_next },
 	{"rpid_avp",                 STR_PARAM, &rpid_avp.s     },
 	{0, 0, 0}
 };
@@ -319,19 +319,16 @@ static int child_init(int rank)
  */
 static int mod_init(void)
 {
-	load_tm_f  load_tm;
 	int ver, i;
 	unsigned int par;
 
 	DBG("lcr - initializing\n");
 
-	/* import the TM auto-loading function */
-	if (!(load_tm = (load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
-	    LOG(L_ERR, "ERROR: lcr:mod_init(): cannot import load_tm\n");
+	/* load the TM API */
+	if (load_tm_api(&tmb)!=0) {
+		LOG(L_ERR, "ERROR: lcr:mod_init(): can't load TM API\n");
 		goto err;
 	}
-	/* let the auto-loading function load all TM stuff */
-	if (load_tm(&tmb) == -1) goto err;
 
 	/* Bind database */
 	if (lcr_db_bind(db_url.s)) {
@@ -341,15 +338,15 @@ static int mod_init(void)
 
 	/* Update length of module variables */
 	db_url.len = strlen(db_url.s);
-        gw_table.len = strlen(gw_table.s);
+	gw_table.len = strlen(gw_table.s);
 	gw_name_col.len = strlen(gw_name_col.s);
 	ip_addr_col.len = strlen(ip_addr_col.s);
 	port_col.len = strlen(port_col.s);
-        grp_id_col.len = strlen(grp_id_col.s);
-        lcr_table.len = strlen(lcr_table.s);
+	grp_id_col.len = strlen(grp_id_col.s);
+	lcr_table.len = strlen(lcr_table.s);
 	prefix_col.len = strlen(prefix_col.s);
 	from_uri_col.len = strlen(from_uri_col.s);
-        priority_col.len = strlen(priority_col.s);
+	priority_col.len = strlen(priority_col.s);
 	gw_addr_port_avp.len = strlen(gw_addr_port_avp.s);
 	contact_avp.len = strlen(contact_avp.s);
 	inv_timer_avp.len = strlen(inv_timer_avp.s);

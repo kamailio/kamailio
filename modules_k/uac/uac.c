@@ -100,8 +100,6 @@ struct module_exports exports= {
 
 static int mod_init(void)
 {
-	load_tm_f  load_tm;
-
 	LOG(L_INFO,"UAC - initializing\n");
 
 	from_param.s = from_param_chr;
@@ -120,15 +118,11 @@ static int mod_init(void)
 			from_restore_mode);
 	}
 
-	/* load the tm functions  */
-	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0)))
-	{
-		LOG(L_ERR, "ERROR:uac:mod_init: cannot import load_tm\n");
+	/* load the TM API */
+	if (load_tm_api(&uac_tmb)!=0) {
+		LOG(L_ERR, "ERROR:uac:mod_init(: can't load TM API\n");
 		goto error;
 	}
-	/* let the auto-loading function load all TM stuff */
-	if (load_tm( &uac_tmb )==-1)
-		goto error;
 
 	if (from_restore_mode==FROM_AUTO_RESTORE)
 	{

@@ -292,7 +292,7 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 		pkg_free(param.s);
 		goto error;
 	}
-	msg->msg_flags |= FL_FROM_ALTERED;
+	msg->msg_flags |= FL_USE_UAC_FROM;
 
 	return 0;
 error:
@@ -406,16 +406,13 @@ void correct_reply(struct cell* t, int type, struct tmcb_params *p);
 
 void tr_checker(struct cell* t, int type, struct tmcb_params *param)
 {
-	DBG("---------------------- inside tr_checker\n");
 	if ( t && param->req )
 	{
-		DBG("*************** marker **************\n");
 		/* is the request marked with FROM altered flag? */
-		if (param->req->msg_flags&FL_FROM_ALTERED) {
+		if (param->req->msg_flags&FL_USE_UAC_FROM) {
 			/* need to put back in replies the FROM from UAS */
 			/* in callback we need FROM to be parsed- it's already done 
 			 * by replace_from() function */
-			DBG("*************** marker **************\n");
 			if ( uac_tmb.register_tmcb( 0, t, TMCB_RESPONSE_IN,
 				correct_reply, (void*)&rst_from )!=1 )
 			{
