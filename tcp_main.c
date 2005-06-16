@@ -52,6 +52,8 @@
  *              new socket if tcpconn_new return 0 (e.g. out of mem) (andrei)
  *  2003-11-28  tcp_blocking_write & tcp_blocking_connect added (andrei)
  *  2004-11-08  dropped find_tcp_si and replaced with find_si (andrei)
+ *  2005-06-07  new tcp optimized code, supports epoll (LT), sigio + real time
+ *               signals, poll & select (andrei)
  */
 
 
@@ -61,7 +63,6 @@
 #ifndef SHM_MEM
 #error "shared memory support needed (add -DSHM_MEM to Makefile.defs)"
 #endif
-
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -73,13 +74,17 @@
 #include <netinet/tcp.h>
 #include <sys/uio.h>  /* writev*/
 #include <netdb.h>
+#include <stdlib.h> /*exit() */
 
 #include <unistd.h>
-#include <fcntl.h>
 
 #include <errno.h>
 #include <string.h>
 
+#ifdef HAVE_SELECT
+#include <sys/select.h>
+#endif
+#include <sys/poll.h>
 
 
 #include "ip_addr.h"
@@ -97,15 +102,21 @@
 #include "tsend.h"
 #ifdef USE_TLS
 #include "tls/tls_server.h"
-#endif
-
-
-
+#endif 
 
 #define local_malloc pkg_malloc
 #define local_free   pkg_free
 
+#define HANDLE_IO_INLINE
+#include "io_wait.h"
+#include <fcntl.h> /* must be included after io_wait.h if SIGIO_RT is used */
+
 #define MAX_TCP_CHILDREN 100
+
+
+
+enum fd_types { F_NONE, F_SOCKINFO /* a tcp_listen fd */,
+				F_TCPCONN, F_TCPCHILD, F_PROC };
 
 struct tcp_child{
 	pid_t pid;
@@ -116,9 +127,12 @@ struct tcp_child{
 };
 
 
+
 int tcp_accept_aliases=0; /* by default don't accept aliases */
 int tcp_connect_timeout=DEFAULT_TCP_CONNECT_TIMEOUT;
 int tcp_send_timeout=DEFAULT_TCP_SEND_TIMEOUT;
+enum poll_types tcp_poll_method=0; /* by default choose the best method */
+int tcp_max_fd_no=DEFAULT_TCP_MAX_FD_NO;
 
 /* connection hash table (after ip&port) , includes also aliases */
 struct tcp_conn_alias** tcpconn_aliases_hash=0;
@@ -132,7 +146,10 @@ static int* connection_id=0; /*  unique for each connection, used for
 								for a reply */
 int unix_tcp_sock;
 
-int tcp_proto_no=-1; /* tcp protocol number as returned by getprotobyname */
+static int tcp_proto_no=-1; /* tcp protocol number as returned by
+							   getprotobyname */
+
+static io_wait_h io_h;
 
 
 
@@ -177,20 +194,38 @@ error:
 
 
 
+/* blocking connect on a non-blocking fd; it will timeout after
+ * tcp_connect_timeout 
+ * if BLOCKING_USE_SELECT and HAVE_SELECT are defined it will internally
+ * use select() instead of poll (bad if fd > FD_SET_SIZE, poll is preferred)
+ */
 static int tcp_blocking_connect(int fd, const struct sockaddr *servaddr,
 								socklen_t addrlen)
 {
 	int n;
+#if defined(HAVE_SELECT) && defined(BLOCKING_USE_SELECT)
 	fd_set sel_set;
+	fd_set orig_set;
 	struct timeval timeout;
+#else
+	struct pollfd pf;
+#endif
+	int elapsed;
+	int to;
 	int ticks;
 	int err;
 	unsigned int err_len;
 	
+	to=tcp_connect_timeout;
+	ticks=get_ticks();
 again:
 	n=connect(fd, servaddr, addrlen);
 	if (n==-1){
-		if (errno==EINTR) goto again;
+		if (errno==EINTR){
+			elapsed=(get_ticks()-ticks)*TIMER_TICK;
+			if (elapsed<to)		goto again;
+			else goto error_timeout;
+		}
 		if (errno!=EINPROGRESS && errno!=EALREADY){
 			LOG(L_ERR, "ERROR: tcp_blocking_connect: (%d) %s\n",
 					errno, strerror(errno));
@@ -198,28 +233,43 @@ again:
 		}
 	}else goto end;
 	
+	/* poll/select loop */
+#if defined(HAVE_SELECT) && defined(BLOCKING_USE_SELECT)
+		FD_ZERO(&orig_set);
+		FD_SET(fd, &orig_set);
+#else
+		pf.fd=fd;
+		pf.events=POLLOUT;
+#endif
 	while(1){
-		FD_ZERO(&sel_set);
-		FD_SET(fd, &sel_set);
-		timeout.tv_sec=tcp_connect_timeout;
+		elapsed=(get_ticks()-ticks)*TIMER_TICK;
+		if (elapsed<to)
+			to-=elapsed;
+		else 
+			goto error_timeout;
+#if defined(HAVE_SELECT) && defined(BLOCKING_USE_SELECT)
+		sel_set=orig_set;
+		timeout.tv_sec=to;
 		timeout.tv_usec=0;
-		ticks=get_ticks();
 		n=select(fd+1, 0, &sel_set, 0, &timeout);
+#else
+		n=poll(&pf, 1, to*1000);
+#endif
 		if (n<0){
 			if (errno==EINTR) continue;
-			LOG(L_ERR, "ERROR: tcp_blocking_connect: select failed: (%d) %s\n",
-					errno, strerror(errno));
+			LOG(L_ERR, "ERROR: tcp_blocking_connect: poll/select failed:"
+					" (%d) %s\n", errno, strerror(errno));
 			goto error;
-		}else if (n==0){
-			/* timeout */
-			if (get_ticks()-ticks>=tcp_connect_timeout){
-				LOG(L_ERR, "ERROR: tcp_blocking_connect: timeout (%d)\n",
-						tcp_connect_timeout);
-				goto error;
-			}
-			continue;
-		}
+		}else if (n==0) /* timeout */ continue;
+#if defined(HAVE_SELECT) && defined(BLOCKING_USE_SELECT)
 		if (FD_ISSET(fd, &sel_set)){
+#else
+		if (pf.revents&(POLLERR|POLLHUP|POLLNVAL)){ 
+			LOG(L_ERR, "ERROR: tcp_blocking_connect: bad poll flags %x\n",
+					pf.revents);
+			goto error;
+		}else{
+#endif
 			err_len=sizeof(err);
 			getsockopt(fd, SOL_SOCKET, SO_ERROR, &err, &err_len);
 			if (err==0) goto end;
@@ -230,6 +280,10 @@ again:
 			}
 		}
 	}
+error_timeout:
+	/* timeout */
+	LOG(L_ERR, "ERROR: tcp_blocking_connect: timeout %d s elapsed from %d s\n",
+			elapsed, tcp_connect_timeout);
 error:
 	return -1;
 end:
@@ -683,20 +737,13 @@ no_id:
 			/* send the new tcpconn to "tcp main" */
 			response[0]=(long)c;
 			response[1]=CONN_NEW;
-			n=send_all(unix_tcp_sock, response, sizeof(response));
-			if (n<=0){
-				LOG(L_ERR, "BUG: tcp_send: failed write: %s (%d)\n",
-						strerror(errno), errno);
-				n=-1;
-				goto end;
-			}	
-			n=send_fd(unix_tcp_sock, &c, sizeof(c), c->s);
+			n=send_fd(unix_tcp_sock, response, sizeof(response), c->s);
 			if (n<=0){
 				LOG(L_ERR, "BUG: tcp_send: failed send_fd: %s (%d)\n",
 						strerror(errno), errno);
 				n=-1;
 				goto end;
-			}
+			}	
 			goto send_it;
 		}
 get_fd:
@@ -715,7 +762,7 @@ get_fd:
 			}
 			DBG("tcp_send, c= %p, n=%d\n", c, n);
 			tmp=c;
-			n=receive_fd(unix_tcp_sock, &c, sizeof(c), &fd);
+			n=receive_fd(unix_tcp_sock, &c, sizeof(c), &fd, MSG_WAITALL);
 			if (n<=0){
 				LOG(L_ERR, "BUG: tcp_send: failed to get fd(receive_fd):"
 							" %s (%d)\n", strerror(errno), errno);
@@ -772,43 +819,6 @@ end:
 release_c:
 	tcpconn_put(c); /* release c (lock; dec refcnt; unlock) */
 	return n;
-}
-
-
-
-/* very inefficient for now - FIXME*/
-void tcpconn_timeout(fd_set* set)
-{
-	struct tcp_connection *c, *next;
-	int ticks;
-	unsigned h;
-	int fd;
-	
-	
-	ticks=get_ticks();
-	TCPCONN_LOCK; /* fixme: we can lock only on delete IMO */
-	for(h=0; h<TCP_ID_HASH_SIZE; h++){
-		c=tcpconn_id_hash[h];
-		while(c){
-			next=c->id_next;
-			if ((c->refcnt==0) && (ticks>c->timeout)) {
-				DBG("tcpconn_timeout: timeout for hash=%d - %p (%d > %d)\n",
-						h, c, ticks, c->timeout);
-				fd=c->s;
-#ifdef USE_TLS
-				if (c->type==PROTO_TLS)
-					tls_close(c, fd);
-#endif
-				_tcpconn_rm(c);
-				if (fd>0) {
-					FD_CLR(fd, set);
-					close(fd);
-				}
-			}
-			c=next;
-		}
-	}
-	TCPCONN_UNLOCK;
 }
 
 
@@ -880,10 +890,11 @@ int tcp_init(struct socket_info* sock_info)
 		/* continue since this is not critical */
 	}
 	if (bind(sock_info->socket, &addr->s, sockaddru_len(*addr))==-1){
-		LOG(L_ERR, "ERROR: tcp_init: bind(%x, %p, %d) on %s: %s\n",
-				sock_info->socket, &addr->s, 
+		LOG(L_ERR, "ERROR: tcp_init: bind(%x, %p, %d) on %s:%d : %s\n",
+				sock_info->socket,  &addr->s, 
 				(unsigned)sockaddru_len(*addr),
 				sock_info->address_str.s,
+				sock_info->port_no,
 				strerror(errno));
 		goto error;
 	}
@@ -946,58 +957,65 @@ static int send2child(struct tcp_connection* tcpconn)
 }
 
 
-/* handle a new connection, called internally by tcp_main_loop */
-static inline void handle_new_connect(struct socket_info* si,
-										fd_set* sel_set, int* n)
+/* handles a new connection, called internally by tcp_main_loop/handle_io.
+ * params: si - pointer to one of the tcp socket_info structures on which
+ *              an io event was detected (connection attempt)
+ * returns:  handle_* return convention: -1 on error, 0 on EAGAIN (no more
+ *           io events queued), >0 on success. success/error refer only to
+ *           the accept.
+ */
+static inline int handle_new_connect(struct socket_info* si)
 {
 	union sockaddr_union su;
 	struct tcp_connection* tcpconn;
 	socklen_t su_len;
 	int new_sock;
 	
-	if ((FD_ISSET(si->socket, sel_set))){
-		/* got a connection on r */
-		su_len=sizeof(su);
-		new_sock=accept(si->socket, &(su.s), &su_len);
-		(*n)--;
-		if (new_sock==-1){
-			LOG(L_ERR,  "WARNING: tcp_main_loop: error while accepting"
-					" connection(%d): %s\n", errno, strerror(errno));
-			return;
-		}
-		if (init_sock_opt(new_sock)<0){
-			LOG(L_ERR, "ERROR: tcp_main_loop: init_sock_opt failed\n");
-			close(new_sock);
-			return;
-		}
-		
-		/* add socket to list */
-		tcpconn=tcpconn_new(new_sock, &su, si, si->proto, S_CONN_ACCEPT);
-		if (tcpconn){
-			tcpconn->refcnt++; /* safe, not yet available to the
-								  outside world */
-			tcpconn_add(tcpconn);
-			DBG("tcp_main_loop: new connection: %p %d\n",
-				tcpconn, tcpconn->s);
-			/* pass it to a child */
-			if(send2child(tcpconn)<0){
-				LOG(L_ERR,"ERROR: tcp_main_loop: no children "
-						"available\n");
-				TCPCONN_LOCK;
-				tcpconn->refcnt--;
-				if (tcpconn->refcnt==0){
-					close(tcpconn->s);
-					_tcpconn_rm(tcpconn);
-				}else tcpconn->timeout=0; /* force expire */
-				TCPCONN_UNLOCK;
-			}
-		}else{ /*tcpconn==0 */
-			LOG(L_ERR, "ERROR: tcp_main_loop: tcpconn_new failed, "
-					"closing socket\n");
-			close(new_sock);
-		}
+	/* got a connection on r */
+	su_len=sizeof(su);
+	new_sock=accept(si->socket, &(su.s), &su_len);
+	if (new_sock==-1){
+		if ((errno==EAGAIN)||(errno==EWOULDBLOCK))
+			return 0;
+		LOG(L_ERR,  "WARNING: handle_new_connect: error while accepting"
+				" connection(%d): %s\n", errno, strerror(errno));
+		return -1;
 	}
+	if (init_sock_opt(new_sock)<0){
+		LOG(L_ERR, "ERROR: handle_new_connect: init_sock_opt failed\n");
+		close(new_sock);
+		return 1; /* success, because the accept was succesfull */
+	}
+	
+	/* add socket to list */
+	tcpconn=tcpconn_new(new_sock, &su, si, si->proto, S_CONN_ACCEPT);
+	if (tcpconn){
+		tcpconn->refcnt++; /* safe, not yet available to the
+							  outside world */
+		tcpconn_add(tcpconn);
+		DBG("handle_new_connect: new connection: %p %d\n",
+			tcpconn, tcpconn->s);
+		/* pass it to a child */
+		if(send2child(tcpconn)<0){
+			LOG(L_ERR,"ERROR: handle_new_connect: no children "
+					"available\n");
+			TCPCONN_LOCK;
+			tcpconn->refcnt--;
+			if (tcpconn->refcnt==0){
+				close(tcpconn->s);
+				_tcpconn_rm(tcpconn);
+			}else tcpconn->timeout=0; /* force expire */
+			TCPCONN_UNLOCK;
+		}
+	}else{ /*tcpconn==0 */
+		LOG(L_ERR, "ERROR: handle_new_connect: tcpconn_new failed, "
+				"closing socket\n");
+		close(new_sock);
+		
+	}
+	return 1; /* accept() was succesfull */
 }
+
 
 
 /* used internally by tcp_main_loop() */
@@ -1008,7 +1026,7 @@ static void tcpconn_destroy(struct tcp_connection* tcpconn)
 	TCPCONN_LOCK; /*avoid races w/ tcp_send*/
 	tcpconn->refcnt--;
 	if (tcpconn->refcnt==0){ 
-		DBG("tcp_main_loop: destroying connection\n");
+		DBG("tcpconn_destroy: destroying connection\n");
 		fd=tcpconn->s;
 #ifdef USE_TLS
 		/*FIXME: lock ->writelock ? */
@@ -1021,37 +1039,393 @@ static void tcpconn_destroy(struct tcp_connection* tcpconn)
 		/* force timeout */
 		tcpconn->timeout=0;
 		tcpconn->state=S_CONN_BAD;
-		DBG("tcp_main_loop: delaying ...\n");
+		DBG("tcpconn_destroy: delaying ...\n");
 		
 	}
 	TCPCONN_UNLOCK;
 }
 
 
-void tcp_main_loop()
+
+/* handles an io event on one of the watched tcp connections
+ * 
+ * params: tcpconn - pointer to the tcp_connection for which we have an io ev.
+ *         fd_i    - index in the fd_array table (needed for delete)
+ * returns:  handle_* return convention, but on success it always returns 0
+ *           (because it's one-shot, after a succesfull execution the fd is
+ *            removed from tcp_main's watch fd list and passed to a child =>
+ *            tcp_main is not interested in further io events that might be
+ *            queued for this fd)
+ */
+inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, int fd_i)
 {
-	int r;
-	int n;
-	fd_set master_set;
-	fd_set sel_set;
-	int maxfd;
+	int fd;
+	
+	/* FIXME: is refcnt!=0 really necessary? */
+	if ((tcpconn->refcnt!=0)){
+		/* FIXME: might be valid for sigio_rt iff fd flags are not cleared
+		 *        (there is a short window in which it could generate a sig
+		 *         that would be catched by tcp_main) */
+		LOG(L_CRIT, "BUG: handle_tcpconn_ev: io event on referenced"
+					" tcpconn (%p), refcnt=%d, fd=%d\n",
+					tcpconn, tcpconn->refcnt, tcpconn->s);
+		return -1;
+	}
+	/* pass it to child, so remove it from the io watch list */
+	DBG("handle_tcpconn_ev: data available on %p %d\n", tcpconn, tcpconn->s);
+	if (io_watch_del(&io_h, tcpconn->s, fd_i)==-1) goto error;
+	tcpconn_ref(tcpconn); /* refcnt ++ */
+	if (send2child(tcpconn)<0){
+		LOG(L_ERR,"ERROR: handle_tcpconn_ev: no children available\n");
+		TCPCONN_LOCK;
+		tcpconn->refcnt--;
+		if (tcpconn->refcnt==0){
+			fd=tcpconn->s;
+			_tcpconn_rm(tcpconn);
+			close(fd);
+		}else tcpconn->timeout=0; /* force expire*/
+		TCPCONN_UNLOCK;
+	}
+	return 0; /* we are not interested in possibly queued io events, 
+				 the fd was either passed to a child, or closed */
+error:
+	return -1;
+}
+
+
+
+/* handles io from a tcp child process
+ * params: tcp_c - pointer in the tcp_children array, to the entry for
+ *                 which an io event was detected 
+ *         fd_i  - fd index in the fd_array (usefull for optimizing
+ *                 io_watch_deletes)
+ * returns:  handle_* return convention: -1 on error, 0 on EAGAIN (no more
+ *           io events queued), >0 on success. success/error refer only to
+ *           the reads from the fd.
+ */
+inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
+{
 	struct tcp_connection* tcpconn;
-	unsigned h;
 	long response[2];
 	int cmd;
 	int bytes;
-	struct timeval timeout;
-	int fd;
-	struct socket_info* si;
+	
+	if (tcp_c->unix_sock<=0){
+		/* (we can't have a fd==0, 0 is never closed )*/
+		LOG(L_CRIT, "BUG: handle_tcp_child: fd %d for %d "
+				"(pid %d, ser no %d)\n", tcp_c->unix_sock,
+				(int)(tcp_c-&tcp_children[0]), tcp_c->pid, tcp_c->proc_no);
+		goto error;
+	}
+	/* read until sizeof(response)
+	 * (this is a SOCK_STREAM so read is not atomic) */
+	bytes=recv_all(tcp_c->unix_sock, response, sizeof(response), MSG_DONTWAIT);
+	if (bytes<(int)sizeof(response)){
+		if (bytes==0){
+			/* EOF -> bad, child has died */
+			DBG("DBG: handle_tcp_child: dead tcp child %d (pid %d, no %d)"
+					" (shutting down?)\n", (int)(tcp_c-&tcp_children[0]), 
+					tcp_c->pid, tcp_c->proc_no );
+						/* don't listen on it any more */
+			io_watch_del(&io_h, tcp_c->unix_sock, fd_i); 
+			goto error; /* eof. so no more io here, it's ok to return error */
+		}else if (bytes<0){
+			/* EAGAIN is ok if we try to empty the buffer
+			 * e.g.: SIGIO_RT overflow mode or EPOLL ET */
+			if ((errno!=EAGAIN) && (errno!=EWOULDBLOCK)){
+				LOG(L_CRIT, "ERROR: handle_tcp_child: read from tcp child %d "
+						" (pid %d, no %d) %s [%d]\n",
+						tcp_c-&tcp_children[0], tcp_c->pid, tcp_c->proc_no,
+						strerror(errno), errno );
+			}else{
+				bytes=0;
+			}
+			/* try to ignore ? */
+			goto end;
+		}else{
+			/* should never happen */
+			LOG(L_CRIT, "BUG: handle_tcp_child: too few bytes received (%d)\n",
+					bytes );
+			bytes=0; /* something was read so there is no error; otoh if
+					  receive_fd returned less then requested => the receive
+					  buffer is empty => no more io queued on this fd */
+			goto end;
+		}
+	}
+	
+	DBG("handle_tcp_child: reader response= %lx, %ld from %d \n",
+					response[0], response[1], (int)(tcp_c-&tcp_children[0]));
+	cmd=response[1];
+	tcpconn=(struct tcp_connection*)response[0];
+	if (tcpconn==0){
+		/* should never happen */
+		LOG(L_CRIT, "BUG: handle_tcp_child: null tcpconn pointer received"
+				 " from tcp child %d (pid %d): %lx, %lx\n",
+				 	(int)(tcp_c-&tcp_children[0]), tcp_c->pid,
+					response[0], response[1]) ;
+		goto end;
+	}
+	switch(cmd){
+		case CONN_RELEASE:
+			tcp_c->busy--;
+			if (tcpconn->state==S_CONN_BAD){ 
+				tcpconn_destroy(tcpconn);
+				break;
+			}
+			io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
+			/* update the timeout*/
+			tcpconn->timeout=get_ticks()+TCP_CON_TIMEOUT;
+			tcpconn_put(tcpconn);
+			DBG("handle_tcp_child: CONN_RELEASE  %p refcnt= %d\n", 
+											tcpconn, tcpconn->refcnt);
+			break;
+		case CONN_ERROR:
+		case CONN_DESTROY:
+		case CONN_EOF:
+			/* WARNING: this will auto-dec. refcnt! */
+				tcp_c->busy--;
+				/* main doesn't listen on it => we don't have to delete it
+				 if (tcpconn->s!=-1)
+					io_watch_del(&io_h, tcpconn->s, -1);
+				*/
+				tcpconn_destroy(tcpconn);
+				break;
+		default:
+				LOG(L_CRIT, "BUG: handle_tcp_child:  unknown cmd %d"
+									" from tcp reader %d\n",
+									cmd, (int)(tcp_c-&tcp_children[0]));
+	}
+end:
+	return bytes;
+error:
+	return -1;
+}
 
-	/*init */
-	maxfd=0;
-	FD_ZERO(&master_set);
-	/* set all the listen addresses */
+
+
+/* handles io from a "generic" ser process (get fd or new_fd from a tcp_send)
+ * 
+ * params: p     - pointer in the ser processes array (pt[]), to the entry for
+ *                 which an io event was detected
+ *         fd_i  - fd index in the fd_array (usefull for optimizing
+ *                 io_watch_deletes)
+ * returns:  handle_* return convention:
+ *          -1 on error reading from the fd,
+ *           0 on EAGAIN  or when no  more io events are queued 
+ *             (receive buffer empty),
+ *           >0 on successfull reads from the fd (the receive buffer might
+ *             be non-empty).
+ */
+inline static int handle_ser_child(struct process_table* p, int fd_i)
+{
+	struct tcp_connection* tcpconn;
+	long response[2];
+	int cmd;
+	int bytes;
+	int ret;
+	int fd;
+	
+	ret=-1;
+	if (p->unix_sock<=0){
+		/* (we can't have a fd==0, 0 is never closed )*/
+		LOG(L_CRIT, "BUG: handle_ser_child: fd %d for %d "
+				"(pid %d)\n", p->unix_sock, (int)(p-&pt[0]), p->pid);
+		goto error;
+	}
+			
+	/* get all bytes and the fd (if transmitted)
+	 * (this is a SOCK_STREAM so read is not atomic) */
+	bytes=receive_fd(p->unix_sock, response, sizeof(response), &fd,
+						MSG_DONTWAIT);
+	if (bytes<(int)sizeof(response)){
+		/* too few bytes read */
+		if (bytes==0){
+			/* EOF -> bad, child has died */
+			DBG("DBG: handle_ser_child: dead child %d, pid %d"
+					" (shutting down?)\n", (int)(p-&pt[0]), p->pid);
+			/* don't listen on it any more */
+			io_watch_del(&io_h, p->unix_sock, fd_i);
+			goto error; /* child dead => no further io events from it */
+		}else if (bytes<0){
+			/* EAGAIN is ok if we try to empty the buffer
+			 * e.g: SIGIO_RT overflow mode or EPOLL ET */
+			if ((errno!=EAGAIN) && (errno!=EWOULDBLOCK)){
+				LOG(L_CRIT, "ERROR: handle_ser_child: read from child %d  "
+						"(pid %d):  %s [%d]\n", (int)(p-&pt[0]), p->pid,
+						strerror(errno), errno);
+				ret=-1;
+			}else{
+				ret=0;
+			}
+			/* try to ignore ? */
+			goto end;
+		}else{
+			/* should never happen */
+			LOG(L_CRIT, "BUG: handle_ser_child: too few bytes received (%d)\n",
+					bytes );
+			ret=0; /* something was read so there is no error; otoh if
+					  receive_fd returned less then requested => the receive
+					  buffer is empty => no more io queued on this fd */
+			goto end;
+		}
+	}
+	ret=1; /* something was received, there might be more queued */
+	DBG("handle_ser_child: read response= %lx, %ld, fd %d from %d (%d)\n",
+					response[0], response[1], fd, (int)(p-&pt[0]), p->pid);
+	cmd=response[1];
+	tcpconn=(struct tcp_connection*)response[0];
+	if (tcpconn==0){
+		LOG(L_CRIT, "BUG: handle_ser_child: null tcpconn pointer received"
+				 " from child %d (pid %d): %lx, %lx\n",
+				 	(int)(p-&pt[0]), p->pid, response[0], response[1]) ;
+		goto end;
+	}
+	switch(cmd){
+		case CONN_ERROR:
+			if (tcpconn->s!=-1)
+				io_watch_del(&io_h, tcpconn->s, -1);
+			tcpconn_destroy(tcpconn);
+			break;
+		case CONN_GET_FD:
+			/* send the requested FD  */
+			/* WARNING: take care of setting refcnt properly to
+			 * avoid race condition */
+			if (send_fd(p->unix_sock, &tcpconn, sizeof(tcpconn),
+							tcpconn->s)<=0){
+				LOG(L_ERR, "ERROR: handle_ser_child: send_fd failed\n");
+			}
+			break;
+		case CONN_NEW:
+			/* update the fd in the requested tcpconn*/
+			/* WARNING: take care of setting refcnt properly to
+			 * avoid race condition */
+			if (fd==-1){
+				LOG(L_CRIT, "BUG: handle_ser_child: CONN_NEW:"
+							" no fd received\n");
+				break;
+			}
+			tcpconn->s=fd;
+			/* add tcpconn to the list*/
+			tcpconn_add(tcpconn);
+			io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
+			/* update the timeout*/
+			tcpconn->timeout=get_ticks()+TCP_CON_TIMEOUT;
+			break;
+		default:
+			LOG(L_CRIT, "BUG: handle_ser_child: unknown cmd %d\n", cmd);
+	}
+end:
+	return ret;
+error:
+	return -1;
+}
+
+
+
+/* generic handle io routine, it will call the appropiate
+ *  handle_xxx() based on the fd_map type
+ *
+ * params:  fm  - pointer to a fd hash entry
+ *          idx - index in the fd_array (or -1 if not known)
+ * return: -1 on error
+ *          0 on EAGAIN or when by some other way it is known that no more 
+ *            io events are queued on the fd (the receive buffer is empty).
+ *            Usefull to detect when there are no more io events queued for
+ *            sigio_rt, epoll_et, kqueue.
+ *         >0 on successfull read from the fd (when there might be more io
+ *            queued -- the receive buffer might still be non-empty)
+ */
+inline static int handle_io(struct fd_map* fm, int idx)
+{	
+	int ret;
+	
+	switch(fm->type){
+		case F_SOCKINFO:
+			ret=handle_new_connect((struct socket_info*)fm->data);
+			break;
+		case F_TCPCONN:
+			ret=handle_tcpconn_ev((struct tcp_connection*)fm->data, idx);
+			break;
+		case F_TCPCHILD:
+			ret=handle_tcp_child((struct tcp_child*)fm->data, idx);
+			break;
+		case F_PROC:
+			ret=handle_ser_child((struct process_table*)fm->data, idx);
+			break;
+		case F_NONE:
+			LOG(L_CRIT, "BUG: handle_io: empty fd map\n");
+			goto error;
+		default:
+			LOG(L_CRIT, "BUG: handle_io: uknown fd type %d\n", fm->type); 
+			goto error;
+	}
+	return ret;
+error:
+	return -1;
+}
+
+
+
+/* very inefficient for now - FIXME*/
+static void tcpconn_timeout()
+{
+	struct tcp_connection *c, *next;
+	int ticks;
+	unsigned h;
+	int fd;
+	
+	
+	ticks=get_ticks();
+	TCPCONN_LOCK; /* fixme: we can lock only on delete IMO */
+	for(h=0; h<TCP_ID_HASH_SIZE; h++){
+		c=tcpconn_id_hash[h];
+		while(c){
+			next=c->id_next;
+			if ((c->refcnt==0) && (ticks>c->timeout)) {
+				DBG("tcpconn_timeout: timeout for hash=%d - %p (%d > %d)\n",
+						h, c, ticks, c->timeout);
+				fd=c->s;
+#ifdef USE_TLS
+				if (c->type==PROTO_TLS)
+					tls_close(c, fd);
+#endif
+				_tcpconn_rm(c);
+				if (fd>0) {
+					io_watch_del(&io_h, fd, -1);
+					close(fd);
+				}
+			}
+			c=next;
+		}
+	}
+	TCPCONN_UNLOCK;
+}
+
+
+
+/* tcp main loop */
+void tcp_main_loop()
+{
+
+	struct socket_info* si;
+	int r;
+	
+	/* init io_wait (here because we want the memory allocated only in
+	 * the tcp_main process) */
+	
+	/* FIXME: TODO: make tcp_max_fd_no a config param */
+	if  (init_io_wait(&io_h, tcp_max_fd_no, tcp_poll_method)<0)
+		goto error;
+	/* init: start watching all the fds*/
+	
+	/* add all the sockets we listens on for connections */
 	for (si=tcp_listen; si; si=si->next){
 		if ((si->proto==PROTO_TCP) &&(si->socket!=-1)){
-			FD_SET(si->socket, &master_set);
-			if (si->socket>maxfd) maxfd=si->socket;
+			if (io_watch_add(&io_h, si->socket, F_SOCKINFO, si)<0){
+				LOG(L_CRIT, "ERROR: tcp_main_loop: init: failed to add "
+							"listen socket to the fd list\n");
+				goto error;
+			}
 		}else{
 			LOG(L_CRIT, "BUG: tcp_main_loop: non tcp address in tcp_listen\n");
 		}
@@ -1060,239 +1434,113 @@ void tcp_main_loop()
 	if (!tls_disable){
 		for (si=tls_listen; si; si=si->next){
 			if ((si->proto==PROTO_TLS) && (si->socket!=-1)){
-				FD_SET(si->socket, &master_set);
-				if (si->socket>maxfd) maxfd=si->socket;
+				if (io_watch_add(&io_h, si->socket, F_SOCKINFO, si)<0){
+					LOG(L_CRIT, "ERROR: tcp_main_loop: init: failed to add "
+							"tls listen socket to the fd list\n");
+					goto error;
+				}
 			}else{
 				LOG(L_CRIT, "BUG: tcp_main_loop: non tls address"
 						" in tls_listen\n");
 			}
 		}
-	}
 #endif
-	/* set all the unix sockets used for child comm */
+	/* add all the unix sockets used for communcation with other ser processes
+	 *  (get fd, new connection a.s.o) */
 	for (r=1; r<process_no; r++){
-		if (pt[r].unix_sock>0){ /* we can't have 0, we never close it!*/
-			FD_SET(pt[r].unix_sock, &master_set);
-			if (pt[r].unix_sock>maxfd) maxfd=pt[r].unix_sock;
-		}
+		if (pt[r].unix_sock>0) /* we can't have 0, we never close it!*/
+			if (io_watch_add(&io_h, pt[r].unix_sock, F_PROC, &pt[r])<0){
+					LOG(L_CRIT, "ERROR: tcp_main_loop: init: failed to add "
+							"process %d unix socket to the fd list\n", r);
+					goto error;
+			}
 	}
+	/* add all the unix sokets used for communication with the tcp childs */
 	for (r=0; r<tcp_children_no; r++){
-		if (tcp_children[r].unix_sock>0){ /* we can't have 0, 
-											 we never close it!*/
-			FD_SET(tcp_children[r].unix_sock, &master_set);
-			if (tcp_children[r].unix_sock>maxfd)
-				maxfd=tcp_children[r].unix_sock;
-		}
+		if (tcp_children[r].unix_sock>0)/*we can't have 0, we never close it!*/
+			if (io_watch_add(&io_h, tcp_children[r].unix_sock, F_TCPCHILD,
+							&tcp_children[r]) <0){
+				LOG(L_CRIT, "ERROR: tcp_main_loop: init: failed to add "
+						"tcp child %d unix socket to the fd list\n", r);
+				goto error;
+			}
 	}
 	
-	
-	/* main loop*/
-	
-	while(1){
-		sel_set=master_set;
-		timeout.tv_sec=TCP_MAIN_SELECT_TIMEOUT;
-		timeout.tv_usec=0;
-		n=select(maxfd+1, &sel_set, 0 ,0 , &timeout);
-		if (n<0){
-			if (errno==EINTR) continue; /* just a signal */
-			/* errors */
-			LOG(L_ERR, "ERROR: tcp_main_loop: select:(%d) %s\n", errno,
-					strerror(errno));
-			n=0;
-		}
-		
-		for (si=tcp_listen; si && n; si=si->next)
-			handle_new_connect(si, &sel_set, &n);
-#ifdef USE_TLS
-			if (!tls_disable)
-				for (si=tls_listen; si && n; si=si->next)
-					handle_new_connect(si, &sel_set, &n);
+	/* main loop */
+	switch(io_h.poll_method){
+		case POLL_POLL:
+			while(1){
+				/* wait and process IO */
+				io_wait_loop_poll(&io_h, TCP_MAIN_SELECT_TIMEOUT, 0); 
+				/* remove old connections */
+				tcpconn_timeout();
+			}
+			break;
+#ifdef HAVE_SELECT
+		case POLL_SELECT:
+			while(1){
+				io_wait_loop_select(&io_h, TCP_MAIN_SELECT_TIMEOUT, 0);
+				tcpconn_timeout();
+			}
+			break;
 #endif
-		
-		/* check all the read fds (from the tcpconn_addr_hash ) */
-		for (h=0; h<TCP_ID_HASH_SIZE; h++){
-			for(tcpconn=tcpconn_id_hash[h]; tcpconn && n; 
-					tcpconn=tcpconn->id_next){
-				/* FIXME: is refcnt==0 really necessary? */
-				if ((tcpconn->refcnt==0)&&(FD_ISSET(tcpconn->s, &sel_set))){
-					/* new data available */
-					n--;
-					/* pass it to child, so remove it from select list */
-					DBG("tcp_main_loop: data available on %p [h:%d] %d\n",
-							tcpconn, h, tcpconn->s);
-					FD_CLR(tcpconn->s, &master_set);
-					tcpconn_ref(tcpconn); /* refcnt ++ */
-					if (send2child(tcpconn)<0){
-						LOG(L_ERR,"ERROR: tcp_main_loop: no "
-									"children available\n");
-						TCPCONN_LOCK;
-						tcpconn->refcnt--;
-						if (tcpconn->refcnt==0){
-							fd=tcpconn->s;
-							_tcpconn_rm(tcpconn);
-							close(fd);
-						}else tcpconn->timeout=0; /* force expire*/
-						TCPCONN_UNLOCK;
-					}
-				}
+#ifdef HAVE_SIGIO_RT
+		case POLL_SIGIO_RT:
+			while(1){
+				io_wait_loop_sigio_rt(&io_h, TCP_MAIN_SELECT_TIMEOUT);
+				tcpconn_timeout();
 			}
-		}
-		/* check unix sockets & listen | destroy connections */
-		/* tcp_children readers first */
-		for (r=0; r<tcp_children_no && n; r++){
-			if ( (tcp_children[r].unix_sock>0) && 
-					FD_ISSET(tcp_children[r].unix_sock, &sel_set)){
-				/* (we can't have a fd==0, 0 is never closed )*/
-				n--;
-				/* read until sizeof(response)
-				 * (this is a SOCK_STREAM so read is not atomic */
-				bytes=recv_all(tcp_children[r].unix_sock, response,
-								sizeof(response));
-				if (bytes==0){
-					/* EOF -> bad, child has died */
-					DBG("DBG: tcp_main_loop: dead tcp child %d"
-							" (shutting down?)\n", r);
-					/* don't listen on it any more */
-					FD_CLR(tcp_children[r].unix_sock, &master_set);
-					/*exit(-1);*/
-					continue; /* skip this and try the next one */
-				}else if (bytes<0){
-					LOG(L_CRIT, "ERROR: tcp_main_loop: read from tcp child %d "
-							"%s\n", r, strerror(errno));
-					/* try to ignore ? */
-					continue; /* skip this and try the next one */
-				}
-					
-				DBG("tcp_main_loop: reader response= %lx, %ld from %d \n",
-						response[0], response[1], r);
-				cmd=response[1];
-				tcpconn=(struct tcp_connection*)response[0];
-				switch(cmd){
-					case CONN_RELEASE:
-						tcp_children[r].busy--;
-						if (tcpconn){
-								if (tcpconn->state==S_CONN_BAD){ 
-									tcpconn_destroy(tcpconn);
-									break;
-								}
-								FD_SET(tcpconn->s, &master_set);
-								if (maxfd<tcpconn->s) maxfd=tcpconn->s;
-								/* update the timeout*/
-								tcpconn->timeout=get_ticks()+TCP_CON_TIMEOUT;
-								tcpconn_put(tcpconn);
-								DBG("tcp_main_loop: CONN_RELEASE  %p"
-										" refcnt= %d\n", 
-										tcpconn, tcpconn->refcnt);
-						}
-						break;
-					case CONN_ERROR:
-					case CONN_DESTROY:
-					case CONN_EOF:
-						/* WARNING: this will auto-dec. refcnt! */
-						tcp_children[r].busy--;
-						if (tcpconn){
-							if (tcpconn->s!=-1)
-								FD_CLR(tcpconn->s, &master_set);
-							tcpconn_destroy(tcpconn);
-						}
-						break;
-					default:
-							LOG(L_CRIT, "BUG: tcp_main_loop:  unknown cmd %d"
-										" from tcp reader %d\n",
-									cmd, r);
-				}
+			break;
+#endif
+#ifdef HAVE_EPOLL
+		case POLL_EPOLL_LT:
+			while(1){
+				io_wait_loop_epoll(&io_h, TCP_MAIN_SELECT_TIMEOUT, 0);
+				tcpconn_timeout();
 			}
-		}
-		/* check "send" unix sockets & listen | destroy connections */
-		/* start from 1, the "main" process does not transmit anything*/
-		for (r=1; r<process_no && n; r++){
-			if ( (pt[r].unix_sock>0) && FD_ISSET(pt[r].unix_sock, &sel_set)){
-				/* (we can't have a fd==0, 0 is never closed )*/
-				n--;
-				/* read until sizeof(response)
-				 * (this is a SOCK_STREAM so read is not atomic */
-				bytes=recv_all(pt[r].unix_sock, response, sizeof(response));
-				if (bytes==0){
-					/* EOF -> bad, child has died */
-					DBG("DBG: tcp_main_loop: dead child %d"
-							" (shutting down?)\n", r);
-					/* don't listen on it any more */
-					FD_CLR(pt[r].unix_sock, &master_set);
-					/*exit(-1);*/
-					continue; /* skip this and try the next one */
-				}else if (bytes<0){
-					LOG(L_CRIT, "ERROR: tcp_main_loop: read from child:  %s\n",
-							strerror(errno));
-					/* try to ignore ? */
-					continue; /* skip this and try the next one */
-				}
-					
-				DBG("tcp_main_loop: read response= %lx, %ld from %d (%d)\n",
-						response[0], response[1], r, pt[r].pid);
-				cmd=response[1];
-				tcpconn=(struct tcp_connection*)response[0];
-				switch(cmd){
-					case CONN_ERROR:
-						if (tcpconn){
-							if (tcpconn->s!=-1)
-								FD_CLR(tcpconn->s, &master_set);
-							tcpconn_destroy(tcpconn);
-						}
-						break;
-					case CONN_GET_FD:
-						/* send the requested FD  */
-						/* WARNING: take care of setting refcnt properly to
-						 * avoid race condition */
-						if (tcpconn){
-							if (send_fd(pt[r].unix_sock, &tcpconn,
-										sizeof(tcpconn), tcpconn->s)<=0){
-								LOG(L_ERR, "ERROR: tcp_main_loop:"
-										"send_fd failed\n");
-							}
-						}else{
-							LOG(L_CRIT, "BUG: tcp_main_loop: null pointer\n");
-						}
-						break;
-					case CONN_NEW:
-						/* update the fd in the requested tcpconn*/
-						/* WARNING: take care of setting refcnt properly to
-						 * avoid race condition */
-						if (tcpconn){
-							bytes=receive_fd(pt[r].unix_sock, &tcpconn,
-									sizeof(tcpconn), &tcpconn->s);
-								if (bytes<sizeof(tcpconn)){
-									if (bytes<0){
-										LOG(L_CRIT, "BUG: tcp_main_loop:"
-												" CONN_NEW: receive_fd "
-												"failed\n");
-									}else{
-										LOG(L_CRIT, "BUG: tcp_main_loop:"
-												" CONN_NEW: to few bytes "
-												"received (%d)\n", bytes );
-									}
-									break; /* try to ignore */
-								}
-							/* add tcpconn to the list*/
-							tcpconn_add(tcpconn);
-							FD_SET(tcpconn->s, &master_set);
-							if (maxfd<tcpconn->s) maxfd=tcpconn->s;
-							/* update the timeout*/
-							tcpconn->timeout=get_ticks()+TCP_CON_TIMEOUT;
-						}else{
-							LOG(L_CRIT, "BUG: tcp_main_loop: null pointer\n");
-						}
-						break;
-					default:
-							LOG(L_CRIT, "BUG: tcp_main_loop: unknown cmd %d\n",
-									cmd);
-				}
+			break;
+		case POLL_EPOLL_ET:
+			while(1){
+				io_wait_loop_epoll(&io_h, TCP_MAIN_SELECT_TIMEOUT, 1);
+				tcpconn_timeout();
 			}
-		} /* for */
-		
-		/* remove old connections */
-		tcpconn_timeout(&master_set);
-	
+			break;
+#endif
+		default:
+			LOG(L_CRIT, "BUG: tcp_main_loop: no support for poll method "
+					" %s (%d)\n", 
+					poll_method_name(io_h.poll_method), io_h.poll_method);
+			goto error;
 	}
+error:
+	destroy_io_wait(&io_h);
+	LOG(L_CRIT, "ERROR: tcp_main_loop: exiting...");
+	exit(-1);
+}
+
+
+
+
+/* cleanup before exit */
+void destroy_tcp()
+{
+		if (tcpconn_id_hash){
+			shm_free(tcpconn_id_hash);
+			tcpconn_id_hash=0;
+		}
+		if (connection_id){
+			shm_free(connection_id);
+			connection_id=0;
+		}
+		if (tcpconn_aliases_hash){
+			shm_free(tcpconn_aliases_hash);
+			tcpconn_aliases_hash=0;
+		}
+		if (tcpconn_lock){
+			lock_destroy(tcpconn_lock);
+			lock_dealloc((void*)tcpconn_lock);
+			tcpconn_lock=0;
+		}
 }
 
 
@@ -1315,9 +1563,6 @@ int init_tcp()
 	connection_id=(int*)shm_malloc(sizeof(int));
 	if (connection_id==0){
 		LOG(L_CRIT, "ERROR: init_tcp: could not alloc globals\n");
-		lock_destroy(tcpconn_lock);
-		lock_dealloc((void*)tcpconn_lock);
-		tcpconn_lock=0;
 		goto error;
 	}
 	*connection_id=1;
@@ -1326,25 +1571,12 @@ int init_tcp()
 			shm_malloc(TCP_ALIAS_HASH_SIZE* sizeof(struct tcp_conn_alias*));
 	if (tcpconn_aliases_hash==0){
 		LOG(L_CRIT, "ERROR: init_tcp: could not alloc address hashtable\n");
-		shm_free(connection_id);
-		connection_id=0;
-		lock_destroy(tcpconn_lock);
-		lock_dealloc((void*)tcpconn_lock);
-		tcpconn_lock=0;
 		goto error;
 	}
-	
 	tcpconn_id_hash=(struct tcp_connection**)shm_malloc(TCP_ID_HASH_SIZE*
 								sizeof(struct tcp_connection*));
 	if (tcpconn_id_hash==0){
 		LOG(L_CRIT, "ERROR: init_tcp: could not alloc id hashtable\n");
-		shm_free(connection_id);
-		connection_id=0;
-		shm_free(tcpconn_aliases_hash);
-		tcpconn_aliases_hash=0;
-		lock_destroy(tcpconn_lock);
-		lock_dealloc((void*)tcpconn_lock);
-		tcpconn_lock=0;
 		goto error;
 	}
 	/* init hashtables*/
@@ -1352,34 +1584,13 @@ int init_tcp()
 			TCP_ALIAS_HASH_SIZE * sizeof(struct tcp_conn_alias*));
 	memset((void*)tcpconn_id_hash, 0, 
 			TCP_ID_HASH_SIZE * sizeof(struct tcp_connection*));
+	
+	
 	return 0;
 error:
-		return -1;
-}
-
-
-
-/* cleanup before exit */
-void destroy_tcp()
-{
-	if (tcpconn_lock){
-		lock_destroy(tcpconn_lock);
-		lock_dealloc((void*)tcpconn_lock);
-		tcpconn_lock=0;
-	}
-	if(tcpconn_aliases_hash){
-		shm_free(tcpconn_aliases_hash);
-		tcpconn_aliases_hash=0;
-	}
-	if(tcpconn_id_hash){
-		shm_free(tcpconn_id_hash);
-		tcpconn_id_hash=0;
-	}
-	
-	if(connection_id){
-		shm_free(connection_id);
-		connection_id=0;
-	}
+	/* clean-up */
+	destroy_tcp();
+	return -1;
 }
 
 
@@ -1434,6 +1645,9 @@ int tcp_init_children()
 			unix_tcp_sock=sockfd[1];
 			bind_address=0; /* force a SEGFAULT if someone uses a non-init.
 							   bind address on tcp */
+			/* record pid twice to avoid the child using it, before
+			 * parent gets a chance to set it*/
+			pt[process_no].pid=getpid();
 			if (init_child(r+children_no+1) < 0) {
 				LOG(L_ERR, "init_children failed\n");
 				goto error;

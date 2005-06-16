@@ -55,7 +55,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 10
 SUBLEVEL =   99
-EXTRAVERSION = -dev7
+EXTRAVERSION = -dev8-new_tcp
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -913,6 +913,18 @@ ifeq ($(OS), linux)
 		DEFS+= -DUSE_SYSV_SEM  # try posix sems
 		found_lock_method=yes
 	endif
+	# check for 2.6
+	ifneq ($(shell echo "$(OSREL)"|grep "^2\.6\."),)
+		ifeq ($(NO_EPOLL),)
+			DEFS+=-DHAVE_EPOLL
+		endif
+	endif
+	ifeq ($(NO_SIGIO),)
+		DEFS+=-DHAVE_SIGIO_RT
+	endif
+	ifeq ($(NO_SELECT),)
+		DEFS+=-DHAVE_SELECT
+	endif
 endif
 
 ifeq  ($(OS), solaris)
@@ -921,6 +933,9 @@ ifeq  ($(OS), solaris)
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
+	endif
+	ifeq ($(NO_SELECT),)
+		DEFS+=-DHAVE_SELECT
 	endif
 	ifeq ($(mode), release)
 		#use these only if you're using gcc with Solaris ld
@@ -956,6 +971,9 @@ ifeq ($(OS), freebsd)
 	else
 		LIBS= -lfl  #dlopen is in libc
 	endif
+	ifeq ($(NO_SELECT),)
+		DEFS+=-DHAVE_SELECT
+	endif
 	YACC=yacc
 endif
 
@@ -965,6 +983,9 @@ ifeq ($(OS), openbsd)
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
+	endif
+	ifeq ($(NO_SELECT),)
+		DEFS+=-DHAVE_SELECT
 	endif
 	# (symbols on openbsd are prefixed by "_")
 	YACC=yacc
@@ -995,6 +1016,9 @@ ifeq ($(OS), netbsd)
 		DEFS+= -DUSE_SYSV_SEM  # try pthread sems
 		found_lock_method=yes
 	endif
+	ifeq ($(NO_SELECT),)
+		DEFS+=-DHAVE_SELECT
+	endif
 	YACC=yacc
 	LIBS= -lfl 
 endif
@@ -1013,6 +1037,9 @@ ifeq ($(OS), darwin)
 		LIBS= -pthread -lfl -lresolv  #dlopen is in libc
 	else
 		LIBS= -lfl -lresolv  #dlopen is in libc
+	endif
+	ifeq ($(NO_SELECT),)
+		DEFS+=-DHAVE_SELECT
 	endif
 	LDFLAGS=        # darwin doesn't like -O2 or -E
 	MOD_LDFLAGS= -bundle -bundle_loader ../../$(MAIN_NAME)

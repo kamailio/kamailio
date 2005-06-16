@@ -588,7 +588,7 @@ void tcp_receive_loop(int unix_sock)
 			if (FD_ISSET(unix_sock, &sel_set)){
 				nfds--;
 				/* a new conn from "main" */
-				n=receive_fd(unix_sock, &con, sizeof(con), &s);
+				n=receive_fd(unix_sock, &con, sizeof(con), &s, 0);
 				if (n<0){
 					if (errno == EWOULDBLOCK || errno == EAGAIN ||
 							errno == EINTR){

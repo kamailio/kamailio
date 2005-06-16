@@ -309,13 +309,13 @@ inline static int char_msg_val( struct sip_msg *msg, char *cv )
 inline static char* get_body(struct sip_msg *msg)
 {
 	int offset;
-	int len;
+	unsigned int len;
 
 	if ( parse_headers(msg, HDR_EOH_F, 0)==-1 )
 		return 0;
 
 	if (msg->unparsed){
-		len=(int)(msg->unparsed-msg->buf);
+		len=(unsigned int)(msg->unparsed-msg->buf);
 	}else return 0;
 	if ((len+2<=msg->len) && (strncmp(CRLF,msg->unparsed,CRLF_LEN)==0) )
 		offset = CRLF_LEN;

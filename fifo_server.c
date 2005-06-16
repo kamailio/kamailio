@@ -672,6 +672,9 @@ int start_fifo_server()
 		return -1;
 	}
 	if (fifo_pid==0) { /* child == FIFO server */
+		/* record pid twice to avoid the child using it, before
+		 * parent gets a chance to set it*/
+		pt[process_no].pid=getpid();
 		LOG(L_INFO, "INFO: fifo process starting: %d\n", getpid());
 		/* call per-child module initialization too -- some
 		   FIFO commands may need it

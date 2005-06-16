@@ -56,6 +56,9 @@
  *               crashed childvwhich still holds the lock  (andrei)
  *  2004-12-02  removed -p, extended -l to support [proto:]address[:port],
  *               added parse_phostport, parse_proto (andrei)
+ *  2005-06-16  always record the pid in pt[process_no].pid twice: once in the
+ *               parent & once in the child to avoid a short window when one
+ *               of them might use it "unset" (andrei)
  */
 
 
@@ -111,6 +114,7 @@
 #include "script_cb.h"
 #include "ut.h"
 #ifdef USE_TCP
+#include "poll_types.h"
 #include "tcp_init.h"
 #ifdef USE_TLS
 #include "tls/tls_init.h"
@@ -155,7 +159,8 @@ Options:\n\
     -E           Log to stderr\n"
 #ifdef USE_TCP
 "    -T           Disable tcp\n\
-    -N           Number of tcp child processes (default: equal to `-n`)\n"
+    -N           Number of tcp child processes (default: equal to `-n`)\n\
+    -W           poll method\n"
 #endif
 "    -V           Version number\n\
     -h           This help message\n\
@@ -190,6 +195,9 @@ void print_ct_constants()
 			" MAX_URI_SIZE %d, BUF_SIZE %d\n",
 		MAX_RECV_BUFFER_SIZE, MAX_LISTEN, MAX_URI_SIZE, 
 		BUF_SIZE );
+#ifdef USE_TCP
+	printf("poll method support: %s.\n", poll_support);
+#endif
 }
 
 /* debugging function */
@@ -862,6 +870,9 @@ int main_loop()
 				
 				if (pid==0){
 					/* child */
+					/* record pid twice to avoid the child using it, before
+					 * parent gets a chance to set it*/
+					pt[process_no].pid=getpid();
 					/* timer!*/
 					/* process_bit = 0; */
 					if (init_child(PROC_TIMER) < 0) {
@@ -1021,6 +1032,9 @@ int main_loop()
 						unix_tcp_sock=sockfd[1];
 					}
 #endif
+					/* record pid twice to avoid the child using it, before
+					 * parent gets a chance to set it*/
+					pt[process_no].pid=getpid();
 					bind_address=si; /* shortcut */
 					if (init_child(i + 1) < 0) {
 						LOG(L_ERR, "init_child failed\n");
@@ -1084,6 +1098,9 @@ int main_loop()
 				unix_tcp_sock=sockfd[1];
 			}
 #endif
+			/* record pid twice to avoid the child using it, before
+			 * parent gets a chance to set it*/
+			pt[process_no].pid=getpid();
 			if (init_child(PROC_TIMER) < 0) {
 				LOG(L_ERR, "timer: init_child failed\n");
 				goto error;
@@ -1120,6 +1137,9 @@ int main_loop()
 			}else if (pid==0){
 				/* child */
 				/* is_main=0; */
+				/* record pid twice to avoid the child using it, before
+				 * parent gets a chance to set it*/
+				pt[process_no].pid=getpid();
 				if (init_child(PROC_TCP_MAIN) < 0) {
 					LOG(L_ERR, "tcp_main: error in init_child\n");
 					goto error;
@@ -1215,7 +1235,7 @@ int main(int argc, char** argv)
 #ifdef STATS
 	"s:"
 #endif
-	"f:cm:b:l:n:N:rRvdDETVhw:t:u:g:P:G:i:x:";
+	"f:cm:b:l:n:N:rRvdDETVhw:t:u:g:P:G:i:x:W:";
 	
 	while((c=getopt(argc,argv,options))!=-1){
 		switch(c){
@@ -1302,6 +1322,18 @@ int main(int argc, char** argv)
 					if ((tmp==0) ||(*tmp)){
 						fprintf(stderr, "bad process number: -N %s\n",
 									optarg);
+						goto error;
+					}
+#else
+					fprintf(stderr,"WARNING: tcp support not compiled in\n");
+#endif
+					break;
+			case 'W':
+#ifdef USE_TCP
+					tcp_poll_method=get_poll_type(optarg);
+					if (tcp_poll_method==POLL_NONE){
+						fprintf(stderr, "bad poll method name: -W %s\ntry "
+										"one of %s.\n", optarg, poll_support);
 						goto error;
 					}
 #else

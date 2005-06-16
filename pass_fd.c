@@ -31,6 +31,8 @@
   *  2003-02-20  added solaris support (! HAVE_MSGHDR_MSG_CONTROL) (andrei)
   *  2003-11-03  added send_all, recv_all  and updated send/get_fd
   *               to handle signals  (andrei)
+  *  2005-06-13  added flags to recv_all & receive_fd, to allow full blocking
+  *              or semi-nonblocking mode (andrei)
   */
 
 #ifdef USE_TCP
@@ -47,27 +49,53 @@
 
 
 /* receive all the data or returns error (handles EINTR etc.)
+ * params: socket
+ *         data     - buffer for the results
+ *         data_len - 
+ *         flags    - recv flags for the first recv (see recv(2)), only
+ *                    0, MSG_WAITALL and MSG_DONTWAIT make sense
+ * if flags is set to MSG_DONWAIT (or to 0 and the socket fd is non-blocking),
+ * and if no data is queued on the fd, recv_all will not wait (it will 
+ * return error and set errno to EAGAIN/EWOULDBLOCK). However if even 1 byte
+ *  is queued, the call will block until the whole data_len was read or an
+ *  error or eof occured ("semi-nonblocking" behaviour,  some tcp code
+ *   counts on it).
+ * if flags is set to MSG_WAITALL it will block even if no byte is available.
+ *  
  * returns: bytes read or error (<0)
  * can return < data_len if EOF */
-int recv_all(int socket, void* data, int data_len)
+int recv_all(int socket, void* data, int data_len, int flags)
 {
 	int b_read;
 	int n;
 	
 	b_read=0;
-	do{
+again:
+	n=recv(socket, (char*)data, data_len, flags);
+	if (n<0){
+		/* error */
+		if (errno==EINTR) goto again; /* signal, try again */
+		/* on EAGAIN just return (let the caller know) */
+		if ((errno==EAGAIN)||(errno==EWOULDBLOCK)) return n;
+			LOG(L_CRIT, "ERROR: recv_all: 1st recv on %d failed: %s\n",
+					socket, strerror(errno));
+			return n;
+	}
+	b_read+=n;
+	while( (b_read!=data_len) && (n)){
 		n=recv(socket, (char*)data+b_read, data_len-b_read, MSG_WAITALL);
 		if (n<0){
 			/* error */
 			if (errno==EINTR) continue; /* signal, try again */
-			LOG(L_CRIT, "ERROR: recv_all: recv on %d failed: %s\n",
+			LOG(L_CRIT, "ERROR: recv_all: 2nd recv on %d failed: %s\n",
 					socket, strerror(errno));
 			return n;
 		}
 		b_read+=n;
-	}while( (b_read!=data_len) && (n));
+	}
 	return b_read;
 }
+
 
 
 /* sends all data (takes care of signals) (assumes blocking fd)
@@ -136,7 +164,15 @@ again:
 
 
 
-int receive_fd(int unix_socket, void* data, int data_len, int* fd)
+/* receives a fd and data_len data
+ * params: unix_socket 
+ *         data
+ *         data_len
+ *         fd         - will be set to the passed fd value or -1 if no fd
+ *                      was passed
+ *         flags      - 0, MSG_DONTWAIT, MSG_WAITALL; same as recv_all flags
+ * returns: bytes read on success, -1 on error (and sets errno) */
+int receive_fd(int unix_socket, void* data, int data_len, int* fd, int flags)
 {
 	struct msghdr msg;
 	struct iovec iov[1];
@@ -166,9 +202,10 @@ int receive_fd(int unix_socket, void* data, int data_len, int* fd)
 	msg.msg_iovlen=1;
 	
 again:
-	ret=recvmsg(unix_socket, &msg, MSG_WAITALL);
+	ret=recvmsg(unix_socket, &msg, flags);
 	if (ret<0){
 		if (errno==EINTR) goto again;
+		if ((errno==EAGAIN)||(errno==EWOULDBLOCK)) goto error;
 		LOG(L_CRIT, "ERROR: receive_fd: recvmsg on %d failed: %s\n",
 				unix_socket, strerror(errno));
 		goto error;
@@ -181,7 +218,8 @@ again:
 	if (ret<data_len){
 		LOG(L_WARN, "WARNING: receive_fd: too few bytes read (%d from %d)"
 				    "trying to fix...\n", ret, data_len);
-		n=recv_all(unix_socket, (char*)data+ret, data_len-ret);
+		/* blocking recv_all */
+		n=recv_all(unix_socket, (char*)data+ret, data_len-ret, MSG_WAITALL);
 		if (n>=0) ret+=n;
 		else{
 			ret=n;
@@ -204,8 +242,9 @@ again:
 		}
 		*fd=*((int*) CMSG_DATA(cmsg));
 	}else{
+		/*
 		LOG(L_ERR, "ERROR: receive_fd: no descriptor passed, cmsg=%p,"
-				"len=%d\n", cmsg, (unsigned)cmsg->cmsg_len);
+				"len=%d\n", cmsg, (unsigned)cmsg->cmsg_len); */
 		*fd=-1;
 		/* it's not really an error */
 	}
@@ -213,8 +252,8 @@ again:
 	if (msg.msg_accrightslen==sizeof(int)){
 		*fd=new_fd;
 	}else{
-		LOG(L_ERR, "ERROR: receive_fd: no descriptor passed,"
-				" accrightslen=%d\n", msg.msg_accrightslen);
+		/*LOG(L_ERR, "ERROR: receive_fd: no descriptor passed,"
+				" accrightslen=%d\n", msg.msg_accrightslen); */
 		*fd=-1;
 	}
 #endif
