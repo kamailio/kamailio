@@ -2,7 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
- *
+ * 
  * This file is part of openser, a free SIP server.
  *
  * openser is free software; you can redistribute it and/or modify
@@ -18,11 +18,12 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * History:
- * --------
- *  2004-06-06  bind_dbmod takes dbf as parameter (andrei)
  */
+ /*
+  * History:
+  * --------
+  *  2004-06-06  bind_dbmod takes dbf as parameter (andrei)
+  */
 
 
 #include "../dprint.h"
@@ -127,6 +128,11 @@ int bind_dbmod(char* mod, db_func_t* mydbf)
 	dbf.update = (db_update_f)find_mod_export(tmp, "db_update", 2, 0);
 	if (dbf.update) {
 		dbf.cap |= DB_CAP_UPDATE;
+	}
+
+	dbf.replace = (db_replace_f)find_mod_export(tmp, "db_replace", 2, 0);
+	if (dbf.replace) {
+		dbf.cap |= DB_CAP_REPLACE;
 	}
 
 	*mydbf=dbf; /* copy */

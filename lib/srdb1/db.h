@@ -3,14 +3,19 @@
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of openser, a free SIP server.
+ * This file is part of ser, a free SIP server.
  *
- * openser is free software; you can redistribute it and/or modify
+ * ser is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * openser is distributed in the hope that it will be useful,
+ * For a license to use the ser software under conditions
+ * other than those described here, or to purchase support for this
+ * software, please contact iptel.org by e-mail at the following addresses:
+ *    info@iptel.org
+ *
+ * ser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -18,7 +23,8 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
+ */
+/*
  * History:
  * --------
  *  2004-06-06  removed db_* macros and global dbf (andrei)
@@ -126,6 +132,10 @@ typedef int (*db_delete_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _
 typedef int (*db_update_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 			    db_key_t* _uk, db_val_t* _uv, int _n, int _un);
 
+/*
+ * Insert a row and replace if one already 
+ */
+typedef int (*db_replace_f) (db_con_t* handle, db_key_t* keys, db_val_t* vals, int n);
 
 
 typedef struct db_func {
@@ -139,6 +149,7 @@ typedef struct db_func {
 	db_insert_f      insert;       /* Insert into table */
 	db_delete_f      delete;       /* Delete from table */ 
 	db_update_f      update;       /* Update table */
+	db_replace_f     replace;      /* Replace row in a table */
 } db_func_t;
 
 
