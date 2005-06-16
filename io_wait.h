@@ -65,6 +65,11 @@
 #include <sys/epoll.h>
 #endif
 #ifdef HAVE_SELECT
+/* needed on openbsd for select*/
+#include <sys/time.h> 
+#include <sys/types.h> 
+#include <unistd.h>
+/* needed according to POSIX for select*/
 #include <sys/select.h>
 #endif
 #include <sys/poll.h>

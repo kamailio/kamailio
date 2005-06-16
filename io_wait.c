@@ -267,7 +267,9 @@ char* check_poll_method(enum poll_types poll_method)
 {
 	char* ret;
 	ret=0;
-	
+	unsigned int os_ver;
+
+	os_ver=get_sys_version(0,0,0);	
 	switch(poll_method){
 		case POLL_NONE:
 			break;
@@ -286,7 +288,7 @@ char* check_poll_method(enum poll_types poll_method)
 #ifndef HAVE_EPOLL
 			ret="epoll not supported, try re-compiling with -DHAVE_EPOLL";
 #else
-			if (get_sys_version(0,0,0)<0x020542) /* if ver < 2.5.66 */
+			if (os_ver<0x020542) /* if ver < 2.5.66 */
 			 	ret="epoll not supported on kernels < 2.6";
 #endif
 			break;
@@ -307,10 +309,12 @@ char* check_poll_method(enum poll_types poll_method)
 enum poll_types choose_poll_method()
 {
 	enum poll_types poll_method;
-	
+	unsigned int os_ver;
+
+	os_ver=get_sys_version(0,0,0);	
 	poll_method=0;
 #ifdef HAVE_EPOLL
-	if (get_sys_version(0,0,0)>=0x020542) /* if ver >= 2.5.66 */
+	if (os_ver>=0x020542) /* if ver >= 2.5.66 */
 		poll_method=POLL_EPOLL_LT; /* or POLL_EPOLL_ET */
 		
 #endif
