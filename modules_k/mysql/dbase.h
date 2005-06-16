@@ -85,6 +85,12 @@ int db_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 
 
 /*
+ * Just like insert, but replace the row if it exists
+ */
+int db_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n);
+
+
+/*
  * Store name of table that will be used by
  * subsequent database functions
  */

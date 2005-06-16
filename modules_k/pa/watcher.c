@@ -1,7 +1,7 @@
 /*
- * $Id$
- *
  * Presence Agent, watcher structure and related functions
+ *
+ * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -39,17 +39,28 @@ char *doctype_name[] = {
 	[DOC_XPIDF] = "DOC_XPIDF",
 	[DOC_LPIDF] = "DOC_LPIDF",
 	[DOC_PIDF] = "DOC_PIDF",
+#ifdef SUBTYPE_XML_MSRTC_PIDF
+	[DOC_MSRTC_PIDF] = "DOC_MSRTC_PIDF",
+#endif
 	[DOC_WINFO] = "DOC_WINFO",
+#ifdef DOC_XCAP_CHANGE
 	[DOC_XCAP_CHANGE] = "DOC_XCAP_CHANGE",
+#endif
+#ifdef DOC_LOCATION
 	[DOC_LOCATION] = "DOC_LOCATION"
+#endif
 };
 
 char *event_package_name[] = {
 	[EVENT_OTHER] = "unknown",
 	[EVENT_PRESENCE] = "presence",
 	[EVENT_PRESENCE_WINFO] = "presence.winfo",
+#ifdef DOC_XCAP_CHANGE
 	[EVENT_XCAP_CHANGE] = "xcap-change",
+#endif
+#ifdef DOC_LOCATION
 	[EVENT_LOCATION] = "location",
+#endif
 	NULL
 };
 
@@ -140,7 +151,7 @@ static char hbuf[2048];
 static int watcher_assign_statement_id(presentity_t *presentity, watcher_t *watcher)
 {
 	unsigned int h = 0;
-	char *dn = doctype_name[watcher->accept];
+	char *dn = doctype_name[watcher->preferred_mimetype];
 	if (1) {
 		int len = 0;
 		strncpy(hbuf+len, presentity->uri.s, presentity->uri.len);
@@ -197,7 +208,7 @@ int new_watcher_no_wb(presentity_t *_p, str* _uri, time_t _e, int event_package,
 
 	watcher->event_package = event_package;
 	watcher->expires = _e; /* Expires value */
-	watcher->accept = _a;  /* Accepted document type */
+	watcher->preferred_mimetype = _a;  /* Accepted document type */
 	watcher->dialog = _dlg; /* Dialog handle */
 	watcher->event = WE_SUBSCRIBE;
 	*_w = watcher;
@@ -357,7 +368,7 @@ int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_package, docty
 	       query_cols[n_query_cols] = "accepts";
 	       query_vals[n_query_cols].type = DB_INT;
 	       query_vals[n_query_cols].nul = 0;
-	       query_vals[n_query_cols].val.int_val = watcher->accept;
+	       query_vals[n_query_cols].val.int_val = watcher->preferred_mimetype;
 	       n_query_cols++;
 
 	       query_cols[n_query_cols] = "expires";
@@ -461,13 +472,13 @@ int db_read_watcherinfo(presentity_t *_p)
 			 status.len = strlen(status.s);
 		    }
 		    if (!row_vals[watcher_event_col].nul) {
-			 watcher_event_str.s = 
+			 watcher_event_str.s =
 				 (char*)row_vals[watcher_event_col].val.string_val;
 			 watcher_event_str.len = strlen(watcher_event_str.s);
 			 watcher_event = watcher_event_from_string(&watcher_event_str);
 		    }
 		    if (!row_vals[display_name_col].nul) {
-			 display_name.s = 
+			 display_name.s =
 				 (char*)row_vals[display_name_col].val.string_val;
 			 display_name.len = strlen(display_name.s);
 		    }
@@ -513,7 +524,7 @@ void print_watcher(FILE* _f, watcher_t* _w)
 	fprintf(_f, "---Watcher---\n");
 	fprintf(_f, "uri    : '%.*s'\n", _w->uri.len, ZSW(_w->uri.s));
 	fprintf(_f, "expires: %d\n", (int)(_w->expires - time(0)));
-	fprintf(_f, "accept : %s\n", doctype_name[_w->accept]);
+	fprintf(_f, "accept : %s\n", doctype_name[_w->preferred_mimetype]);
 	fprintf(_f, "next   : %p\n", _w->next);
 	tmb.print_dlg(_f, _w->dialog);
 	fprintf(_f, "---/Watcher---\n");
@@ -601,6 +612,7 @@ int winfo_add_watcher(str* _b, int _l, watcher_t *watcher)
 	add_str(watcher_event_names[watcher->event]);
 	add_string(SID_START, SID_START_L);
 	add_str(watcher->s_id);
+	if (0)
 	if (watcher->display_name.len > 0) {
 	  add_string(DISPLAY_NAME_START, DISPLAY_NAME_START_L);
 	  escape_str(&watcher->display_name);

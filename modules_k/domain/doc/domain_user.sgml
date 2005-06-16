@@ -137,7 +137,7 @@ if (is_from_local()) {
 		one of the local domains that the proxy is responsible for
 		</para>
 		<example>
-		<title>is_from_local usage</title>
+		<title>is_uri_host_local usage</title>
 		<programlisting format="linespecific">
 ...
 if (is_uri_host_local()) {

@@ -212,22 +212,38 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{"ruri_matching",       INT_PARAM, &ruri_matching                        },
-	{"via1_matching",       INT_PARAM, &via1_matching                        },
-	{"fr_timer",            INT_PARAM, &(timer_id2timeout[FR_TIMER_LIST])    },
-	{"fr_inv_timer",        INT_PARAM, &(timer_id2timeout[FR_INV_TIMER_LIST])},
-	{"wt_timer",            INT_PARAM, &(timer_id2timeout[WT_TIMER_LIST])    },
-	{"delete_timer",        INT_PARAM, &(timer_id2timeout[DELETE_LIST])      },
-	{"retr_timer1p1",       INT_PARAM, &(timer_id2timeout[RT_T1_TO_1])       },
-	{"retr_timer1p2",       INT_PARAM, &(timer_id2timeout[RT_T1_TO_2])       },
-	{"retr_timer1p3",       INT_PARAM, &(timer_id2timeout[RT_T1_TO_3])       },
-	{"retr_timer2",         INT_PARAM, &(timer_id2timeout[RT_T2])            },
-	{"noisy_ctimer",        INT_PARAM, &noisy_ctimer                         },
-	{"unix_tx_timeout",     INT_PARAM, &tm_unix_tx_timeout                   },
-	{"restart_fr_on_each_reply", INT_PARAM, &restart_fr_on_each_reply        },
-	{"fr_timer_avp",        STR_PARAM, &fr_timer_param                       },
-	{"fr_inv_timer_avp",    STR_PARAM, &fr_inv_timer_param                   },
-	{"tw_append",           STR_PARAM|USE_FUNC_PARAM, (void*)parse_tw_append },
+	{"ruri_matching",             INT_PARAM,
+		&ruri_matching},
+	{"via1_matching",             INT_PARAM,
+		&via1_matching},
+	{"fr_timer",                  INT_PARAM,
+		&(timer_id2timeout[FR_TIMER_LIST])},
+	{"fr_inv_timer",              INT_PARAM,
+		&(timer_id2timeout[FR_INV_TIMER_LIST])},
+	{"wt_timer",                  INT_PARAM,
+		&(timer_id2timeout[WT_TIMER_LIST])},
+	{"delete_timer",              INT_PARAM,
+		&(timer_id2timeout[DELETE_LIST])},
+	{"retr_timer1p1",             INT_PARAM,
+		&(timer_id2timeout[RT_T1_TO_1])},
+	{"retr_timer1p2",             INT_PARAM,
+		&(timer_id2timeout[RT_T1_TO_2])},
+	{"retr_timer1p3",             INT_PARAM,
+		&(timer_id2timeout[RT_T1_TO_3])},
+	{"retr_timer2",               INT_PARAM,
+		&(timer_id2timeout[RT_T2])},
+	{"noisy_ctimer",              INT_PARAM,
+		&noisy_ctimer},
+	{"unix_tx_timeout",           INT_PARAM,
+		&tm_unix_tx_timeout},
+	{"restart_fr_on_each_reply",  INT_PARAM,
+		&restart_fr_on_each_reply},
+	{"fr_timer_avp",              STR_PARAM,
+		&fr_timer_param},
+	{"fr_inv_timer_avp",          STR_PARAM,
+		&fr_inv_timer_param},
+	{"tw_append",                 STR_PARAM|USE_FUNC_PARAM,
+		(void*)parse_tw_append },
 	{0,0,0}
 };
 
@@ -446,18 +462,16 @@ static int script_init( struct sip_msg *foo, void *bar)
 	 * private values left over from previous message will
 	 * not be used again */
 
-	if (foo->first_line.type==SIP_REQUEST){
-		/* make sure the new message will not inherit previous
-			message's t_on_negative value
-		*/
-		t_on_negative( 0 );
-		t_on_reply(0);
-		/* reset the kr status */
-		set_kr(0);
-		/* set request mode so that multiple-mode actions know
-		 * how to behave */
-		rmode=MODE_REQUEST;
-	}
+	/* make sure the new message will not inherit previous
+	 * message's t_on_negative value
+	 */
+	t_on_negative( 0 );
+	t_on_reply(0);
+	/* reset the kr status */
+	set_kr(0);
+	/* set request mode so that multiple-mode actions know
+	 * how to behave */
+	rmode=MODE_REQUEST;
 	return 1;
 }
 
@@ -565,11 +579,18 @@ static int mod_init(void)
 	}
 
 	/* register post-script clean-up function */
-	register_script_cb( w_t_unref, POST_SCRIPT_CB, 
-			0 /* empty param */ );
-	register_script_cb( script_init, PRE_SCRIPT_CB , 
-			0 /* empty param */ );
+	if (register_script_cb( w_t_unref, POST_SCRIPT_CB|REQ_TYPE_CB, 0)<0 ) {
+		LOG(L_ERR,"ERROR:tm:mod_init: failed to register POST request "
+			"callback\n");
+		return -1;
+	}
+	if (register_script_cb( script_init, PRE_SCRIPT_CB|REQ_TYPE_CB , 0)<0 ) {
+		LOG(L_ERR,"ERROR:tm:mod_init: failed to register PRE request "
+			"callback\n");
+		return -1;
+	}
 
+	
 	if (init_avp_params( fr_timer_param, fr_inv_timer_param)<0 ){
 		LOG(L_ERR,"ERROR:tm:mod_init: failed to process timer AVPs\n");
 		return -1;

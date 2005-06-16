@@ -137,7 +137,7 @@ static struct socket_info *get_sock_hdr(struct sip_msg *msg)
 	str port;
 	char *p;
 
-	if (parse_headers( msg, HDR_EOH, 0) == -1) {
+	if (parse_headers( msg, HDR_EOH_F, 0) == -1) {
 		LOG(L_ERR,"ERROR:registrar:get_sock_hdr: failed to parse message\n");
 		return 0;
 	}
@@ -590,7 +590,7 @@ static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* _s, int dor
 	}
 
 	ua.len = 0;
-	if (parse_headers(_m, HDR_USERAGENT, 0) != -1 && _m->user_agent &&
+	if (parse_headers(_m, HDR_USERAGENT_F, 0) != -1 && _m->user_agent &&
 	    _m->user_agent->body.len > 0) {
 		ua.len = _m->user_agent->body.len;
 		ua.s = _m->user_agent->body.s;
@@ -624,7 +624,7 @@ static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* _s, int dor
  */
 int save(struct sip_msg* _m, char* _t, char* _s)
 {
-	mem_only = 0;
+	mem_only = FL_NONE;
 	return save_real(_m, (udomain_t*)_t, _s, 1);
 }
 
@@ -634,7 +634,7 @@ int save(struct sip_msg* _m, char* _t, char* _s)
  */
 int save_noreply(struct sip_msg* _m, char* _t, char* _s)
 {
-	mem_only = 0;
+	mem_only = FL_NONE;
 	return save_real(_m, (udomain_t*)_t, _s, 0);
 }
 

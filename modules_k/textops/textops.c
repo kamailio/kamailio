@@ -438,7 +438,7 @@ static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 
 	cnt=0;
 	/* we need to be sure we have seen all HFs */
-	parse_headers(msg, HDR_EOH, 0);
+	parse_headers(msg, HDR_EOH_F, 0);
 	for (hf=msg->headers; hf; hf=hf->next) {
 		if(((str*)str_hf)->s==NULL)
 		{
@@ -465,7 +465,7 @@ static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 	struct hdr_field *hf;
 
 	/* we need to be sure we have seen all HFs */
-	parse_headers(msg, HDR_EOH, 0);
+	parse_headers(msg, HDR_EOH_F, 0);
 	for (hf=msg->headers; hf; hf=hf->next) {
 		if(((str*)str_hf)->s==NULL)
 		{
@@ -584,7 +584,7 @@ static int append_hf_helper(struct sip_msg* msg, str *str1, str *str2)
 	char *s;
 	int len;
 
-	if (parse_headers(msg, HDR_EOH, 0) == -1) {
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LOG(L_ERR, "append_hf(): Error while parsing message\n");
 		return -1;
 	}
@@ -688,7 +688,7 @@ static int hname_fixup(void** param, int param_no)
 	s->len--;
 	s->s[s->len] = c;
 
-	if (hdr.type!=HDR_OTHER && hdr.type!=HDR_ERROR)
+	if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T)
 	{
 		LOG(L_INFO,"INFO:textops:hname_fixup: using "
 				"hdr type (%d) instead of <%.*s>\n",

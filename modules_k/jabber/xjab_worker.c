@@ -342,7 +342,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 		if(!FD_ISSET(pipe, &mset))
 			goto step_y;
 		
-		if(read(pipe, &jsmsg, sizeof(jsmsg)) < sizeof(jsmsg))
+		if(read(pipe, &jsmsg, sizeof(jsmsg)) < (int)sizeof(jsmsg))
 		{
 			DBG("XJAB:xj_worker:%d: BROKEN PIPE - exiting\n", _xj_pid);
 			break;

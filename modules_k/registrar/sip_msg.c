@@ -69,7 +69,7 @@ int parse_message(struct sip_msg* _m)
 {
 	struct hdr_field* ptr;
 	
-	if (parse_headers(_m, HDR_EOH, 0) == -1) {
+	if (parse_headers(_m, HDR_EOH_F, 0) == -1) {
 		rerrno = R_PARSE;
 		LOG(L_ERR, "parse_message(): Error while parsing headers\n");
 		return -1;
@@ -102,7 +102,7 @@ int parse_message(struct sip_msg* _m)
 	if (_m->contact) {
 		ptr = _m->contact;
 		while(ptr) {
-			if (ptr->type == HDR_CONTACT) {
+			if (ptr->type == HDR_CONTACT_T) {
 				if (!ptr->parsed && (parse_contact(ptr) < 0)) {
 					rerrno = R_PARSE_CONT;
 					LOG(L_ERR, "parse_message(): Error while parsing Contact body\n");
@@ -146,7 +146,7 @@ int check_contacts(struct sip_msg* _m, int* _s)
 		     /* Message must contain no other Contact HFs */
 		p = _m->contact->next;
 		while(p) {
-			if (p->type == HDR_CONTACT) {
+			if (p->type == HDR_CONTACT_T) {
 				rerrno = R_STAR_CONT;
 				return 1;
 			}
@@ -158,7 +158,7 @@ int check_contacts(struct sip_msg* _m, int* _s)
 		     /* Message must contain no star Contact HF */
 		p = _m->contact->next;
 		while(p) {
-			if (p->type == HDR_CONTACT) {
+			if (p->type == HDR_CONTACT_T) {
 				if (((contact_body_t*)p->parsed)->star == 1) {
 					rerrno = R_STAR_CONT;
 					return 1;
@@ -193,7 +193,7 @@ contact_t* get_next_contact(contact_t* _c)
 	if (_c->next == 0) {
 		p = act_contact->next;
 		while(p) {
-			if (p->type == HDR_CONTACT) {
+			if (p->type == HDR_CONTACT_T) {
 				act_contact = p;
 				return (((contact_body_t*)p->parsed)->contacts);
 			}

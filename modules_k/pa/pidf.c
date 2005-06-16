@@ -1,7 +1,7 @@
 /*
- * $Id$
- *
  * Presence Agent, PIDF document support
+ *
+ * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -27,6 +27,8 @@
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 
+#include "../../parser/parse_content.h"
+#include "../../data_lump.h"
 #include "../../dprint.h"
 #include "paerrno.h"
 #include "common.h"
@@ -65,7 +67,7 @@
 #define PRESENCE_ETAG "</presence>"
 #define PRESENCE_ETAG_L (sizeof(PRESENCE_ETAG) - 1)
 
-#define TUPLE_START "<tuple id=\"9r28r49\">"
+#define TUPLE_START "<tuple id=\""
 #define TUPLE_START_L (sizeof(TUPLE_START) - 1)
 
 #define TUPLE_END "\">"
@@ -655,4 +657,155 @@ int parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *status_st
 	  flags |= PARSE_PIDF_PRESCAPS;
      }
      return flags;
+}
+
+/* from modules/mangler/utils.c: */
+int
+patch_msg (struct sip_msg *msg, char *oldstr, unsigned int oldlen, char *newstr,
+       unsigned int newlen)
+{
+	int off;
+	struct lump *anchor;
+
+	if (oldstr == NULL)
+		return -1;
+
+	if (newstr == NULL)
+		return -2;
+	off = oldstr - msg->buf;
+	if (off < 0)
+		return -3;
+	if ((anchor = del_lump (msg, off, oldlen, 0)) == 0)
+	{
+		LOG (L_ERR, "ERROR: patch: error lumping with del_lump\n");
+		return -4;
+	}
+	if ((insert_new_lump_after (anchor, newstr, newlen, 0)) == 0)
+	{
+		LOG (L_ERR,
+		     "ERROR: patch: error lumping with insert_new_lump_after\n");
+		return -5;
+	}
+
+	return 0;
+}
+
+int mangle_pidf(struct sip_msg* _msg, char* _domain, char* _s2)
+{
+     char *body = get_body(_msg);
+     int body_len = strlen(body);
+     xmlDocPtr doc = NULL;
+     xmlNodePtr presenceNode = NULL;
+     xmlNodePtr personNode = NULL;
+     xmlNodePtr noteNode = NULL;
+     xmlNodePtr wav3substatusNode = NULL;
+
+     doc = event_body_parse(body);
+     if (!doc) {
+	  return 1;
+     }
+     presenceNode = xmlDocGetNodeByName(doc, "presence", NULL);
+     personNode = xmlDocGetNodeByName(doc, "person", NULL);
+     noteNode = xmlDocGetNodeByName(doc, "note", NULL);
+     wav3substatusNode = xmlDocGetNodeByName(doc, "wav3substatus", NULL);
+
+     if (presenceNode) {
+	  xmlNsPtr ns = presenceNode->ns;
+	  int patch = 0;
+	  //LOG(L_ERR, "mangle_pidf -1-\n");
+	  if (wav3substatusNode) {
+	       // add note node for Eyebeam with copy of contents of wav3substatus
+	       //LOG(L_ERR, "mangle_pidf -2-\n");
+	       noteNode = xmlNewNode(ns, "note");
+	       xmlAddChild(presenceNode, noteNode);
+	       xmlNodeSetContent(noteNode, strdup(xmlNodeGetContent(wav3substatusNode)));
+	       LOG(L_ERR, "mangle_pidf -3-\n");
+	       patch = 1;
+	  } else if (noteNode) {
+	       //LOG(L_ERR, "mangle_pidf -4-\n");
+	       wav3substatusNode = xmlNewNode(ns, "wav3substatus");
+	       xmlNodeSetContent(wav3substatusNode, strdup(xmlNodeGetContent(noteNode)));
+	       xmlAddChild(presenceNode, wav3substatusNode);
+	       LOG(L_ERR, "mangle_pidf -5-\n");
+	       patch = 1;
+	  }
+	  if (patch) {
+	       xmlChar *new_body = NULL;
+	       char *nbp;
+	       int new_body_len = 0;
+	       //LOG(L_ERR, "mangle_pidf -6-\n");
+	       xmlDocDumpMemory(doc, &new_body, &new_body_len);
+	       if (new_body && new_body_len > 0) {
+		    nbp = pkg_malloc(new_body_len+1);
+		    strncpy(nbp, new_body, new_body_len+1);
+		    if (1)
+			 LOG(L_ERR, "mangle_pidf -7- old_body_len=%d new_body_len=%d new_body=%s\n", 
+			     body_len, new_body_len, nbp);
+		    if (0)
+			 LOG(L_ERR, "mangle_pidf -7a- body_lumps=%p\n", _msg->body_lumps);
+		    patch_msg(_msg, body, body_len, nbp, new_body_len);
+	       }
+	  }
+     }
+     LOG(L_ERR, "mangle_pidf -8-\n");
+     return 1;
+}
+
+int mangle_message_cpim(struct sip_msg* _msg, char* _s1, char* _s2)
+{
+     char *body = get_body(_msg);
+     int parsed_content_type;
+     struct hdr_field *content_type = _msg->content_type;
+     int body_len = 0;
+     
+     parse_headers(_msg, HDR_CONTENTLENGTH_F|HDR_CONTENTTYPE_F, 0);
+     parsed_content_type = parse_content_type_hdr(_msg);
+     body_len = get_content_length(_msg);
+
+     LOG(L_ERR, "mangle_message_cpim -1- content_type==%.*s %x (patching %x) bodylen=%d\n", 
+	 content_type->body.len, content_type->body.s, 
+	 parsed_content_type, MIMETYPE(MESSAGE,CPIM),
+	 body_len);
+     if (body && (parsed_content_type == MIMETYPE(MESSAGE,CPIM))) {
+	  char *ptr = strstr(body, "\r\n\r\n");
+	  char *new_content_type_str = strstr(body, "Content-Type: ");
+	  int new_content_type_len = 0;
+	  char *new_content_type_body;
+
+	  if (new_content_type_str) {
+	       char *new_content_type_end = strstr(new_content_type_str, "\r\n");
+	       if (new_content_type_end) {
+		    new_content_type_str += 14;
+		    new_content_type_len = new_content_type_end - new_content_type_str;
+	       } else {
+		    new_content_type_len = 10;
+		    new_content_type_str = "text/plain";
+	       }
+	  } else {
+	       new_content_type_len = 10;
+	       new_content_type_str = "text/plain";
+	  }
+	  if (strncmp(new_content_type_str, "application/sip-iscomposing+xml", 31) == 0) {
+	       new_content_type_len = 30;
+	       new_content_type_str = "application/im-iscomposing+xml";
+	  }
+	  new_content_type_body = pkg_malloc(new_content_type_len);
+	  strncpy(new_content_type_body, new_content_type_str, new_content_type_len);
+
+	  //LOG(L_ERR, "mangle_message_cpim -1- oldbody=%.*s\n", body_len, body);
+	  patch_msg(_msg, content_type->body.s, content_type->body.len, new_content_type_body, new_content_type_len);
+
+	  LOG(L_ERR, "mangle_message_cpim -1b- patched content-type=%.*s\n", new_content_type_len, new_content_type_str);
+	  if (ptr) {
+	       char *new_body = NULL;
+	       int new_body_len =  body_len - (ptr + 4 - body);
+	    
+	       //LOG(L_ERR, "mangle_message_cpim -2- old_body_len=%d new_body_len=%d\n", body_len, new_body_len);
+	       new_body = pkg_malloc(new_body_len+1);
+	       strncpy(new_body, ptr+4, new_body_len+1);
+	       patch_msg(_msg, body, body_len, new_body, new_body_len);
+	  }
+     }
+     LOG(L_ERR, "mangle_message_cpim -3-\n");
+     return 1;
 }

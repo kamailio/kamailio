@@ -56,7 +56,7 @@ inline static void free_via_clen_lump( struct lump **list )
 	prev_lump=0;
 	for(lump=*list;lump;lump=next) {
 		next=lump->next;
-		if (lump->type==HDR_VIA||lump->type==HDR_CONTENTLENGTH) {
+		if (lump->type==HDR_VIA_T||lump->type==HDR_CONTENTLENGTH_T) {
 			a=lump->before;
 			while(a) {
 				foo=a; a=a->before;

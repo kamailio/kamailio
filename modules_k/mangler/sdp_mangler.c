@@ -71,7 +71,7 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 		}
                 
 	if ((msg->content_length==0) &&
-			((parse_headers(msg,HDR_CONTENTLENGTH,0)==-1) ||
+			((parse_headers(msg,HDR_CONTENTLENGTH_F,0)==-1) ||
 			 (msg->content_length==0) )){
 		LOG(L_ERR,"ERROR: sdp_mangle_port: bad or missing "
 				"Content-Length \n");
@@ -309,7 +309,7 @@ sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip)
 		return -1;
 		}
 	if ((msg->content_length==0) &&
-				((parse_headers(msg,HDR_CONTENTLENGTH,0)==-1) ||
+				((parse_headers(msg,HDR_CONTENTLENGTH_F,0)==-1) ||
 				 (msg->content_length==0) )){
 			LOG(L_ERR,"ERROR: sdp_mangle_port: bad or missing "
 					"Content-Length \n");

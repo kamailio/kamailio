@@ -239,46 +239,11 @@ static void fake_reply(struct cell *t, int branch, int code )
 		reply_status=local_reply( t, FAKED_REPLY, branch, 
 					  code, &cancel_bitmap );
 		if (reply_status==RPS_COMPLETED) {
-			/* don't need to cleanup uac_timers -- they were cleaned
-			 * branch by branch and this last branch's timers are
-			 * reset now too
-			 */
-			/* don't need to issue cancels -- local cancels have been
-			 * issued branch by branch and this last branch was
-			 * canceled now too
-			 */
-			/* then the only thing to do now is to put the transaction
-			 * on FR/wait state 
-			 */
-			/* there is no need to call set_final_timer here because
-			 * the transaction is known to be local
-			 */
 			put_on_wait(t);
 		}
 	} else {
 		reply_status=relay_reply( t, FAKED_REPLY, branch, code,
 			&cancel_bitmap );
-#if 0
-		if (reply_status==RPS_COMPLETED) {
-			/* don't need to cleanup uac_timers -- they were cleaned
-				branch by branch and this last branch's timers are
-				reset now too
-			*/
-			/* don't need to issue cancels -- local cancels have been
-				issued branch by branch and this last branch was
-				canceled now too
-			*/
-			/* then the only thing to do now is to put the transaction
-				on FR/wait state 
-			*/
-			/* call to set_final_timer is embedded in relay_reply to avoid
-			 * race conditions where a reply would be sent but retransmission
-			 * timers would be set afterwards (which can cause troubles when a
-			 * reply spirals through the same instance twice and kernel switches
-			 * context immediately after message has been sent.
-			*/
-		}
-#endif
 	}
 	/* now when out-of-lock do the cancel I/O */
 	if (do_cancel_branch) cancel_branch(t, branch );
@@ -286,6 +251,7 @@ static void fake_reply(struct cell *t, int branch, int code )
 	   completed regularly, I have to clean-up myself
 	*/
 }
+
 
 
 
@@ -405,7 +371,7 @@ inline static void final_response_handler( struct timer_link *fr_tl )
 		/* don't go silent if disallowed globally ... */
 		&& noisy_ctimer==0
 		/* ... or for this particular transaction */
-		&& has_noisy_ctimer(t);
+		&& has_noisy_ctimer(t)==0;
 	if (silent) {
 		UNLOCK_REPLIES(t);
 		DBG("DEBUG: final_response_handler: transaction silently dropped (%p)\n",t);
@@ -641,9 +607,10 @@ static void insert_timer_unsafe( struct timer *timer_list, struct timer_link *tl
 	tl->timer_list = timer_list;
 
 	for(ptr = timer_list->last_tl.prev_tl; 
-	    ptr != &timer_list->first_tl; 
-	    ptr = ptr->prev_tl) {
-		if (ptr->time_out <= time_out) break;
+	ptr != &timer_list->first_tl; 
+	ptr = ptr->prev_tl) {
+		if ((ptr->time_out != TIMER_DELETED) && (ptr->time_out <= time_out))
+			break;
 	}
 
 	tl->prev_tl = ptr;

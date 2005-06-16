@@ -389,7 +389,7 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
 					value = (variable) | (fix_value)
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					variable = '$src_ip' | (sip_uri)['/'('username'|'domain')])
+					variable = '$src_ip' | '$hdr[name]' | (sip_uri)['/'('username'|'domain')])
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
 					sip_uri = '$from' | '$to' | '$ruri'
@@ -419,6 +419,7 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
 avp_write("$to","i:678");
 avp_write("$ruri/username","$email");
 avp_write("$src_ip","s:ip");
+avp_write("$hdr[call-id]","i:11");
 avp_write("i:333","i:6");
 ...
 				</programlisting>
@@ -546,7 +547,7 @@ avp_pushto("Foo","$bar/g");
 					op_value = operator '/' value ['/'flags]
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					operator = 'eq' | 'lt' | 'gt' | 're'
+					operator = 'eq' | 'lt' | 'gt' | 're' | 'fm'
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
 					value = variable | fix_value
@@ -571,6 +572,53 @@ avp_check("i:678", "lt/i:345/g");
 avp_check("s:person","eq/$from/I");
 avp_check("s:foo","gt/$bar/g");
 avp_check("s:foo","re/sip:.*@bar.net/g");
+avp_check("s:foo","fm/$fm_avp/g");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_copy(old_name,new_name)
+				</function>
+			</title>
+			<para>
+			Copy / move an avp under a new name.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>name1</emphasis> - which AVP(s) should be 
+				copied/moved.
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = ( avp_name | avp_alias )
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>name2</emphasis> - the new name of the 
+				copied/moved AVP(s).
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = ( avp_name | avp_alias ) ['/'flags]
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					flags = 'g' | 'G' | 'd' | 'D'
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>avp_copy</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_copy("i:678", "s:345/g");
+avp_copy("$old","$new/gd");
 ...
 				</programlisting>
 			</example>
@@ -595,17 +643,6 @@ avp_print();
 		</section>
 	</section>
 
-
-	<section>
-		<title>Installation & Running</title>
-		<para>The AVPOPS module requires one more column in the 
-		<emphasis>usr_preferences</emphasis> table than how it is created 
-		now by <emphasis>ser_mysql</emphasis> script. The missing column is
-		<emphasis>"type"</emphasis>. Till the discrepancy is fixed, please 
-		add by hand the column <emphasis>"type" integer, not null, default 0
-		</emphasis>.
-		</para>
-	</section>
 </chapter>
 
 <!-- Keep this element at the end of the file

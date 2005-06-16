@@ -226,7 +226,7 @@ struct acc_extra *parse_acc_extra(char *extra_str, int allowed_flags)
 			val.len--;
 			val.s[val.len] = bkp;
 			extra->ival = hdr.type;
-			if (extra->ival!=HDR_OTHER)
+			if (extra->ival!=HDR_OTHER_T)
 				LOG(L_INFO,"INFO:acc:parse_acc_extra: optimazing by using "
 					"hdr type (%d) instead of <%.*s>\n",
 					extra->ival,val.len,val.s);
@@ -339,7 +339,7 @@ int extra2int( struct acc_extra *extra )
 static inline struct hdr_field* search_hdr(struct hdr_field *hdr,
 												struct acc_extra *extra)
 {
-	if (extra->ival==HDR_OTHER)
+	if (extra->ival==HDR_OTHER_T)
 	{
 		while (hdr)
 		{
@@ -439,7 +439,8 @@ int extra2strar( struct acc_extra *extra, /* extra list to account */
 			}
 		} else {
 			/* account a HEADER - first parse them all */
-			if (!hdr_parsed && ++hdr_parsed && parse_headers(rq, HDR_EOH, 0)!=0)
+			if (!hdr_parsed && ++hdr_parsed &&
+			parse_headers(rq, HDR_EOH_F, 0)!=0)
 			{
 				LOG(L_ERR,"ERROR:acc:extra2strar: failed to parse headers ->"
 					" skipping hdr extras\n");

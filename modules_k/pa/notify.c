@@ -1,7 +1,7 @@
 /*
- * $Id$
- *
  * Presence Agent, notifications
+ *
+ * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -41,6 +41,9 @@
 #include "watcher.h"
 #include "location.h"
 
+
+#define CONTACT "Contact: "
+#define CONTACT_L  (sizeof(CONTACT) - 1)
 
 #define CONTENT_TYPE "Content-Type: "
 #define CONTENT_TYPE_L  (sizeof(CONTENT_TYPE) - 1)
@@ -150,16 +153,18 @@ static str headers = {headers_buf, 0};
 static str body = {buffer, 0};
 
 
-static inline int add_event_hf(str* _h, int _l, int accept)
+static inline int add_event_hf(str* _h, int _l, int preferred_mimetype)
 {
 	int event_l;
 	char *event;
-	if (accept == DOC_WINFO) {
+	if (preferred_mimetype == DOC_WINFO) {
 		event = WINFO_TEXT;
 		event_l = WINFO_TEXT_L;
-	} else if (accept == DOC_XCAP_CHANGE) {
+#ifdef DOC_XCAP_CHANGE
+	} else if (preferred_mimetype == DOC_XCAP_CHANGE) {
 		event = XCAP_CHANGE_TEXT;
 		event_l = XCAP_CHANGE_TEXT_L;
+#endif
 	} else {
 		event = PRESENCE_TEXT;
 		event_l = PRESENCE_TEXT_L;
@@ -202,6 +207,9 @@ static inline int add_cont_type_hf(str* _h, int _l, doctype_t _d)
 			   CONTENT_TYPE_L + CONT_TYPE_LPIDF_L + CRLF_L);
 		return 0;
 
+#ifdef SUBTYPE_XML_MSRTC_PIDF
+	case DOC_MSRTC_PIDF:
+#endif
 	case DOC_PIDF:
 		if (_l < CONTENT_TYPE_L + CONT_TYPE_PIDF_L + CRLF_L) {
 			paerrno = PA_SMALL_BUFFER;
@@ -222,6 +230,7 @@ static inline int add_cont_type_hf(str* _h, int _l, doctype_t _d)
 			   CONTENT_TYPE_L + CONT_TYPE_WINFO_L + CRLF_L);
 		return 0;
 
+#ifdef DOC_XCAP_CHANGE
 	case DOC_XCAP_CHANGE:
 		if (_l < CONTENT_TYPE_L + CONT_TYPE_XCAP_CHANGE_L + CRLF_L) {
 			paerrno = PA_SMALL_BUFFER;
@@ -231,6 +240,7 @@ static inline int add_cont_type_hf(str* _h, int _l, doctype_t _d)
 		str_append(_h, CONTENT_TYPE CONT_TYPE_XCAP_CHANGE CRLF,
 			   CONTENT_TYPE_L + CONT_TYPE_XCAP_CHANGE_L + CRLF_L);
 		return 0;
+#endif
 
 	default:
 		paerrno = PA_UNSUPP_DOC;
@@ -275,6 +285,22 @@ static inline int add_subs_state_hf(str* _h, int _l, subs_state_t _s, ss_reason_
 	return 0;
 }
 
+static int add_contact_hf(str* _h, int _l, str *_c)
+{
+	if (_l < CONTACT_L + _c->len + CRLF_L) {
+		paerrno = PA_SMALL_BUFFER;
+		LOG(L_ERR, "add_contact_hf(): Buffer too small\n");
+		return -1;
+	}
+
+	/* prevent double insertion of Content-Type with SIP URI */
+#if 0
+	str_append(_h, CONTENT_TYPE, CONTENT_TYPE_L);
+	str_append(_h, _c->s, _c->len);
+	str_append(_h, CRLF, CRLF_L);
+#endif
+	return 0;
+}
 
 static inline int create_headers(struct watcher* _w)
 {
@@ -283,14 +309,19 @@ static inline int create_headers(struct watcher* _w)
 
 	headers.len = 0;
 	
-	if (add_event_hf(&headers, BUF_LEN, _w->accept) < 0) {
+	if (add_event_hf(&headers, BUF_LEN, _w->preferred_mimetype) < 0) {
 		LOG(L_ERR, "create_headers(): Error while adding Event header field\n");
 		return -1;
 	}
 
-	if (add_cont_type_hf(&headers, BUF_LEN - headers.len, _w->accept)  < 0) {
+	if (add_cont_type_hf(&headers, BUF_LEN - headers.len, _w->preferred_mimetype)  < 0) {
 		LOG(L_ERR, "create_headers(): Error while adding Content-Type header field\n");
 		return -2;
+	}
+
+	if (add_contact_hf(&headers, BUF_LEN - headers.len, &_w->uri) < 0) {
+		LOG(L_ERR, "create_headers(): Error while adding Contact header field\n");
+		return -3;
 	}
 
 	if (_w && _w->expires) t = _w->expires - time(0);
@@ -330,6 +361,14 @@ static int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 	if (xpidf_add_presentity(&body, BUF_LEN - body.len, &_p->uri) < 0) {
 		LOG(L_ERR, "send_xpidf_notify(): xpidf_add_presentity failed\n");
 		return -3;
+	}
+	if (!tuple) {
+		 LOG(L_ERR, "send_xpidf_notify() NO TUPLE\n");
+		 st = XPIDF_ST_CLOSED;
+		 if (xpidf_add_address(&body, BUF_LEN - body.len, &_p->uri, st) < 0) {
+             LOG(L_ERR, "send_xpidf_notify(): xpidf_add_address failed\n");
+             return -3;
+         }
 	}
 	while (tuple) {
 
@@ -416,7 +455,7 @@ static int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 		LOG(L_ERR, "send_pidf_notify(): pidf_add_presentity failed\n");
 		return -3;
 	}
-
+	/* XXX add !tuple handler */
 	if (tuple) {
 		while (tuple) {
 			if (pidf_start_tuple(&body, &tuple->id, BUF_LEN - body.len) < 0) {
@@ -547,6 +586,7 @@ static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
 	return 0;
 }
 
+#ifdef HAVE_XCAP_CHANGE_NOTIFY
 static int send_xcap_change_notify(struct presentity* _p, struct watcher* _w)
 {
 	int len = 0;
@@ -581,6 +621,7 @@ static int send_xcap_change_notify(struct presentity* _p, struct watcher* _w)
 	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
 	return 0;
 }
+#endif /* HAVE_XCAP_CHANGE_NOTIFY */
 
 int send_location_notify(struct presentity* _p, struct watcher* _w)
 {
@@ -640,12 +681,12 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 		return -2;
 	}
 
-	LOG(L_ERR, "notifying %.*s _p->flags=%x _w->event_package=%d _w->accept=%d _w->status=%d\n", 
-	    _w->uri.len, _w->uri.s, _p->flags, _w->event_package, _w->accept, _w->status);
+	LOG(L_ERR, "notifying %.*s _p->flags=%x _w->event_package=%d _w->preferred_mimetype=%d _w->status=%d\n", 
+	    _w->uri.len, _w->uri.s, _p->flags, _w->event_package, _w->preferred_mimetype, _w->status);
 	if ((_p->flags & (PFLAG_PRESENCE_CHANGED|PFLAG_WATCHERINFO_CHANGED)) 
 	    && (_w->event_package == EVENT_PRESENCE)
 	    && (_w->status = WS_ACTIVE)) {
-		switch(_w->accept) {
+		switch(_w->preferred_mimetype) {
 		case DOC_XPIDF:
 			rc = send_xpidf_notify(_p, _w);
 			if (rc) LOG(L_ERR, "send_xpidf_notify returned %d\n", rc);
@@ -656,6 +697,9 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 			if (rc) LOG(L_ERR, "send_lpidf_notify returned %d\n", rc);
 			break;
 
+#ifdef SUBTYPE_XML_MSRTC_PIDF
+		case DOC_MSRTC_PIDF:
+#endif
 		case DOC_PIDF:
 		default:
 			rc = send_pidf_notify(_p, _w);
@@ -664,28 +708,37 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 	}
 	if ((_p->flags & PFLAG_WATCHERINFO_CHANGED) 
 	    && (_w->event_package == EVENT_PRESENCE_WINFO)) {
-		switch(_w->accept) {
+		switch(_w->preferred_mimetype) {
 		case DOC_WINFO:
-			rc = send_winfo_notify(_p, _w);
-			if (rc) LOG(L_ERR, "send_winfo_notify returned %d\n", rc);
-			return rc;
+			if (watcherinfo_notify) {
+				rc = send_winfo_notify(_p, _w);
+				if (rc) LOG(L_ERR, "send_winfo_notify returned %d\n", rc);
+				return rc;
+			} else {
+				return 0;
+			}
 		default:
 			/* inapplicable */
 		  ;
 		}
 	}
+#ifdef HAVE_XCAP_CHANGE_NOTIFY
 	if ((_p->flags & PFLAG_XCAP_CHANGED) 
 	    && (_w->event_package == EVENT_XCAP_CHANGE)) {
-		switch(_w->accept) {
+		switch(_w->preferred_mimetype) {
+#ifdef DOC_XCAP_CHANGE
 		case DOC_XCAP_CHANGE:
+#endif
 		default:
 			rc = send_xcap_change_notify(_p, _w);
 			if (rc) LOG(L_ERR, "send_xcap_change_notify returned %d\n", rc);
 		}
 	}
+#endif /* HAVE_XCAP_CHANGE_NOTIFY */
+#ifdef PFLAG_LOCATION_CHANGED
 	if ((_p->flags & PFLAG_LOCATION_CHANGED) 
 	    && (_w->event_package == EVENT_LOCATION)) {
-		switch(_w->accept) {
+		switch(_w->preferred_mimetype) {
 		case DOC_LOCATION:
 			rc = send_location_notify(_p, _w);
 			if (rc) LOG(L_ERR, "send_location_notify returned %d\n", rc);
@@ -695,6 +748,7 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 		  ;
 		}
 	}
+#endif /* PFLAG_LOCATION_CHANGED */
 
 	return rc;
 }

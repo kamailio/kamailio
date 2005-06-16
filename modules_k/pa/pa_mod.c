@@ -1,7 +1,7 @@
 /*
- * $Id$
- *
  * Presence Agent, module interface
+ *
+ * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -39,6 +39,8 @@
 #include "unixsock.h"
 #include "location.h"
 #include "pa_mod.h"
+#include "pidf.h"
+#include "watcher.h"
 
 MODULE_VERSION
 
@@ -52,6 +54,7 @@ int default_expires = 3600;  /* Default expires value if not present in the mess
 int timer_interval = 10;     /* Expiration timer interval in seconds */
 double default_priority = 0.5; /* Default priority of presence tuple */
 static int default_priority_percentage = 50; /* expressed as percentage because config file grammar does not support floats */
+int watcherinfo_notify = 1; /* send watcherinfo notifications */
 
 /** TM bind */
 struct tm_binds tmb;
@@ -60,10 +63,12 @@ struct tm_binds tmb;
 db_con_t* pa_db; /* Database connection handle */
 db_func_t pa_dbf;
 
-int use_db = 0;
+int use_db = 1;
 str db_url;
 int use_place_table = 0;
+#ifdef HAVE_LOCATION_PACKAGE
 str pa_domain;
+#endif /* HAVE_LOCATION_PACKAGE */
 char *presentity_table = "presentity";
 char *presentity_contact_table = "presentity_contact";
 char *watcherinfo_table = "watcherinfo";
@@ -73,7 +78,7 @@ int use_location_package = 0;
 int new_watcher_pending = 0;
 int callback_update_db = 1;
 int callback_lock_pdomain = 1;
-int new_tuple_on_publish = 0;
+int new_tuple_on_publish = 1;
 int pa_pidf_priority = 1;
 
 /*
@@ -85,6 +90,8 @@ static cmd_export_t cmds[]={
 	{"handle_publish",        handle_publish,        1, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"existing_subscription", existing_subscription, 1, subscribe_fixup, REQUEST_ROUTE                },
 	{"pua_exists",            pua_exists,            1, subscribe_fixup, REQUEST_ROUTE                },
+	{"mangle_pidf",           mangle_pidf,           0, NULL, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"mangle_message_cpim",   mangle_message_cpim,   0, NULL,            REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -101,7 +108,9 @@ static param_export_t params[]={
 	{"use_bsearch",          INT_PARAM, &use_bsearch          },
 	{"use_location_package", INT_PARAM, &use_location_package },
 	{"db_url",               STR_PARAM, &db_url.s             },
+#ifdef HAVE_LOCATION_PACKAGE
 	{"pa_domain",            STR_PARAM, &pa_domain.s          },
+#endif /* HAVE_LOCATION_PACKAGE */
 	{"presentity_table",     STR_PARAM, &presentity_table     },
 	{"presentity_contact_table", STR_PARAM, &presentity_contact_table     },
 	{"watcherinfo_table",    STR_PARAM, &watcherinfo_table    },
@@ -111,6 +120,7 @@ static param_export_t params[]={
 	{"callback_lock_pdomain", INT_PARAM, &callback_lock_pdomain },
 	{"new_tuple_on_publish", INT_PARAM, &new_tuple_on_publish  },
 	{"pidf_priority",        INT_PARAM, &pa_pidf_priority  },
+	{"watcherinfo_notify",   INT_PARAM, &watcherinfo_notify   },
 	{0, 0, 0}
 };
 
@@ -132,9 +142,52 @@ void pa_sig_handler(int s)
 	DBG("PA:pa_worker:%d: SIGNAL received=%d\n **************", getpid(), s);
 }
 
+static struct mimetype_test {
+	const char *string;
+	int parsed;
+} mimetype_tests[] = {
+	{ "text/plain", MIMETYPE(TEXT,PLAIN) },
+	{ "message/cpim", MIMETYPE(MESSAGE,CPIM) },
+	{ "application/sdp", MIMETYPE(APPLICATION,SDP) },
+	{ "application/cpl+xml", MIMETYPE(APPLICATION,CPLXML) },
+	{ "application/pidf+xml", MIMETYPE(APPLICATION,PIDFXML) },
+	{ "application/rlmi+xml", MIMETYPE(APPLICATION,RLMIXML) },
+	{ "multipart/related", MIMETYPE(MULTIPART,RELATED) },
+	{ "application/lpidf+xml", MIMETYPE(APPLICATION,LPIDFXML) },
+	{ "application/xpidf+xml", MIMETYPE(APPLICATION,XPIDFXML) },
+	{ "application/watcherinfo+xml", MIMETYPE(APPLICATION,WATCHERINFOXML) },
+	{ "application/external-body", MIMETYPE(APPLICATION,EXTERNAL_BODY) },
+	{ "application/*", MIMETYPE(APPLICATION,ALL) },
+#ifdef SUBTYPE_XML_MSRTC_PIDF
+	{ "text/xml+msrtcp.pidf", MIMETYPE(TEXT,XML_MSRTC_PIDF) },
+#endif
+	{ NULL, 0 }
+};
+
+char* decode_mime_type(char *start, char *end, unsigned int *mime_type);
+
+static void test_mimetype_parser(void)
+{
+	struct mimetype_test *mt = &mimetype_tests[0];
+	DBG("Presence Agent - testing mimetype parser\n");
+	while (mt->string) {
+		int pmt;
+		LOG(L_DBG, "Presence Agent - parsing mimetype %s\n", mt->string);
+		decode_mime_type((char*)mt->string,
+			(char*)(mt->string+strlen(mt->string)), &pmt);
+		if (pmt != mt->parsed) {
+			LOG(L_ERR, "Parsed mimetype %s got %x expected %x\n",
+			    mt->string, pmt, mt->parsed);
+		}
+		mt++;
+	}
+}
+
 static int pa_mod_init(void)
 {
-	LOG(L_INFO,"Presence Agent - initializing\n");
+	DBG("Presence Agent - initializing\n");
+
+	test_mimetype_parser();
 
 	/* load the TM API */
 	if (load_tm_api(&tmb)!=0) {
@@ -179,12 +232,16 @@ static int pa_mod_init(void)
 	LOG(L_CRIT, "db_url=%s\n", ZSW(db_url.s));
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
 	LOG(L_CRIT, "db_url.len=%d\n", db_url.len);
-	if (pa_domain.s == NULL)
-	  pa_domain.s = "sip.handhelds.org";
-	LOG(L_CRIT, "pa_domain=%s\n", pa_domain.s);
-	pa_domain.len = strlen(pa_domain.s);
-	LOG(L_CRIT, "pa_mod: use_db=%d db_url.s=%s pa_domain=%s\n", 
-	    use_db, ZSW(db_url.s), ZSW(pa_domain.s));
+#ifdef HAVE_LOCATION_PACKAGE
+	if (pa_domain.len == 0) {
+		LOG(L_ERR, "pa_mod_init(): pa_domain must be specified\n");
+		return -1;
+	}
+	LOG(L_CRIT, "pa_mod: pa_mod=%s\n", ZSW(pa_domain.s));
+#endif /* HAVE_LOCATION_PACKAGE */
+
+	LOG(L_CRIT, "pa_mod: use_db=%d db_url.s=%s\n", 
+	    use_db, ZSW(db_url.s));
 	if (use_db) {
 		if (!db_url.len) {
 			LOG(L_ERR, "pa_mod_init(): no db_url specified but use_db=1\n");
@@ -230,7 +287,7 @@ static int pa_child_init(int _rank)
 static void pa_destroy(void)
 {
 	free_all_pdomains();
-	if (use_db) {
+	if (use_db && (pa_dbf.close != NULL) && (pa_db != NULL)) {
 		pa_dbf.close(pa_db);
 	}
 }

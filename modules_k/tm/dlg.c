@@ -308,7 +308,7 @@ static inline int get_route_set(struct sip_msg* _m, rr_t** _rs, unsigned char _o
 
 	ptr = _m->record_route;
 	while(ptr) {
-		if (ptr->type == HDR_RECORDROUTE) {
+		if (ptr->type == HDR_RECORDROUTE_T) {
 			if (parse_rr(ptr) < 0) {
 				LOG(L_ERR, "get_route_set(): Error while parsing Record-Route body\n");
 				goto error;
@@ -353,7 +353,7 @@ static inline int response2dlg(struct sip_msg* _m, dlg_t* _d)
 	str contact, rtag;
 
 	     /* Parse the whole message, we will need all Record-Route headers */
-	if (parse_headers(_m, HDR_EOH, 0) == -1) {
+	if (parse_headers(_m, HDR_EOH_F, 0) == -1) {
 		LOG(L_ERR, "response2dlg(): Error while parsing headers\n");
 		return -1;
 	}
@@ -470,7 +470,7 @@ static inline int dlg_early_resp_uac(dlg_t* _d, struct sip_msg* _m)
  */
 static inline int get_cseq_method(struct sip_msg* _m, str* _method)
 {
-	if (!_m->cseq && ((parse_headers(_m, HDR_CSEQ, 0) == -1) || !_m->cseq)) {
+	if (!_m->cseq && ((parse_headers(_m, HDR_CSEQ_F, 0)==-1) || !_m->cseq)) {
 		LOG(L_ERR, "get_cseq_method(): Error while parsing CSeq\n");
 		return -1;
 	}
@@ -518,7 +518,7 @@ static inline int dlg_confirmed_resp_uac(dlg_t* _d, struct sip_msg* _m)
 	if (get_cseq_method(_m, &method) < 0) return -1;
 	if ((method.len == 6) && !memcmp("INVITE", method.s, 6)) {
 		     /* Get contact if any and update remote target */
-		if (parse_headers(_m, HDR_CONTACT, 0) == -1) {
+		if (parse_headers(_m, HDR_CONTACT_F, 0) == -1) {
 			LOG(L_ERR, "dlg_confirmed_resp_uac(): Error while parsing headers\n");
 			return -2;
 		}
@@ -666,7 +666,7 @@ static inline int request2dlg(struct sip_msg* _m, dlg_t* _d)
 {
 	str contact, rtag, callid;
 
-	if (parse_headers(_m, HDR_EOH, 0) == -1) {
+	if (parse_headers(_m, HDR_EOH_F, 0) == -1) {
 		LOG(L_ERR, "request2dlg(): Error while parsing headers");
 		return -1;
 	}
@@ -781,7 +781,7 @@ int dlg_request_uas(dlg_t* _d, struct sip_msg* _m)
 	     /* We must check if the request is not out of order or retransmission
 	      * first, if so then we will not update anything
 	      */
-	if (parse_headers(_m, HDR_CSEQ, 0) == -1) {
+	if (parse_headers(_m, HDR_CSEQ_F, 0) == -1) {
 		LOG(L_ERR, "dlg_request_uas(): Error while parsing headers\n");
 		return -2;
 	}
@@ -797,7 +797,7 @@ int dlg_request_uas(dlg_t* _d, struct sip_msg* _m)
 	      */
 	if (_m->first_line.u.request.method_value == METHOD_INVITE) {
 		     /* target refresher */
-		if (parse_headers(_m, HDR_CONTACT, 0) == -1) {
+		if (parse_headers(_m, HDR_CONTACT_F, 0) == -1) {
 			LOG(L_ERR, "dlg_request_uas(): Error while parsing headers\n");
 			return -4;
 		}

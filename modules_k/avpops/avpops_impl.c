@@ -215,7 +215,7 @@ inline static str* get_source_uri(struct sip_msg* msg,int source)
 		return &(get_from(msg)->uri);
 	} else if (source&AVPOPS_USE_TO)
 	{  /* to */
-		if (parse_headers( msg, HDR_TO, 0)<0)
+		if (parse_headers( msg, HDR_TO_F, 0)<0)
 		{
 			LOG(L_ERR,"ERROR:avpops:get_source_uri: failed "
 				"to parse to\n");
@@ -555,7 +555,7 @@ static inline str *search_hdr(struct sip_msg* msg, struct fis_param *hdr_def)
 	struct hdr_field *hdr;
 
 	/* parse all HDRs */
-	if (parse_headers( msg, HDR_EOH, 0)!=0) {
+	if (parse_headers( msg, HDR_EOH_F, 0)!=0) {
 		LOG(L_ERR,"ERROR:tm:append2buf: parsing hdrs failed\n");
 		return 0;
 	}
@@ -817,7 +817,7 @@ int ops_pushto_avp ( struct sip_msg* msg, struct fis_param* dst,
 			{
 				/* if is not the first modification, push the current uri as
 				 * branch */
-				if (append_branch( msg, 0, 0, 0, 0, Q_UNSPECIFIED)!=1 )
+				if (append_branch( msg, 0, 0, 0, 0, Q_UNSPECIFIED,0)!=1 )
 				{
 					LOG(L_ERR,"ERROR:avpops:pushto_avp: append_branch action"
 						" failed\n");
@@ -843,7 +843,7 @@ int ops_pushto_avp ( struct sip_msg* msg, struct fis_param* dst,
 			}
 		} else {
 			/* set a header for request */
-			if (parse_headers(msg, HDR_EOH, 0)==-1)
+			if (parse_headers(msg, HDR_EOH_F, 0)==-1)
 			{
 				LOG(L_ERR, "ERROR:avpops:pushto_avp: message parse failed\n");
 				goto error;

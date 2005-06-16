@@ -43,7 +43,7 @@ Juha Heinanen
    1-3. Setting domain_table parameter
    1-4. Setting domain_column parameter
    1-5. is_from_local usage
-   1-6. is_from_local usage
+   1-6. is_uri_host_local usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -141,7 +141,7 @@ if (is_from_local()) {
    Checks based on domain table if host part of RURI is one of
    the local domains that the proxy is responsible for
 
-   Example 1-6. is_from_local usage
+   Example 1-6. is_uri_host_local usage
 ...
 if (is_uri_host_local()) {
         ...

@@ -437,7 +437,7 @@ static Bool
 getCallId(struct sip_msg* msg, str *cid)
 {
     if (msg->callid == NULL) {
-        if (parse_headers(msg, HDR_CALLID, 0) == -1) {
+        if (parse_headers(msg, HDR_CALLID_F, 0) == -1) {
             return False;
         }
         if (msg->callid == NULL) {
@@ -638,7 +638,7 @@ getUserAgent(struct sip_msg* msg)
     str block, server;
     char *ptr;
 
-    if ((parse_headers(msg, HDR_USERAGENT, 0)!=-1) && msg->user_agent &&
+    if ((parse_headers(msg, HDR_USERAGENT_F, 0)!=-1) && msg->user_agent &&
         msg->user_agent->body.len>0) {
         return msg->user_agent->body;
     }
@@ -671,23 +671,22 @@ static Bool
 getContactURI(struct sip_msg* msg, struct sip_uri *uri, contact_t** _c)
 {
 
-    if ((parse_headers(msg, HDR_CONTACT, 0) == -1) || !msg->contact)
+    if ((parse_headers(msg, HDR_CONTACT_F, 0) == -1) || !msg->contact)
         return False;
 
     if (!msg->contact->parsed && parse_contact(msg->contact) < 0) {
-        LOG(L_ERR, "error: mediaproxy/getContactURI(): error parsing Contact body\n");
+        LOG(L_ERR, "error: mediaproxy/getContactURI(): cannot parse Contact header\n");
         return False;
     }
 
     *_c = ((contact_body_t*)msg->contact->parsed)->contacts;
 
     if (*_c == NULL) {
-        LOG(L_ERR, "error: mediaproxy/getContactURI(): error parsing Contact body\n");
         return False;
     }
 
     if (parse_uri((*_c)->uri.s, (*_c)->uri.len, uri) < 0 || uri->host.len <= 0) {
-        LOG(L_ERR, "error: mediaproxy/getContactURI(): error parsing Contact URI\n");
+        LOG(L_ERR, "error: mediaproxy/getContactURI(): cannot parse Contact URI\n");
         return False;
     }
 
@@ -1251,8 +1250,13 @@ testSourceAddress(struct sip_msg* msg)
     int via1Port;
 
     diffIP   = received_test(msg);
-    via1Port = (msg->via1->port ? msg->via1->port : SIP_PORT);
-    diffPort = (msg->rcv.src_port != via1Port);
+    if (isSIPAsymmetric(getUserAgent(msg))) {
+        // ignore port test for asymmetric clients (it's always different)
+        diffPort = False;
+    } else {
+        via1Port = (msg->via1->port ? msg->via1->port : SIP_PORT);
+        diffPort = (msg->rcv.src_port != via1Port);
+    }
 
     return (diffIP || diffPort);
 }

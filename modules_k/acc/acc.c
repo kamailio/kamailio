@@ -122,6 +122,7 @@ static inline str *cred_user(struct sip_msg *rq)
 
 static inline str *cred_realm(struct sip_msg *rq)
 {
+	str* realm;
 	struct hdr_field* h;
 	auth_body_t* cred;
 
@@ -129,9 +130,12 @@ static inline str *cred_realm(struct sip_msg *rq)
 	if (!h) get_authorized_cred(rq->authorization, &h);
 	if (!h) return 0;
 	cred=(auth_body_t*)(h->parsed);
-	if (!cred || !cred->digest.realm.len) 
-			return 0;
-	return &cred->digest.realm;
+	if (!cred) return 0;
+	realm = GET_REALM(&cred->digest);
+	if (!realm->len || !realm->s) {
+		return 0;
+	}
+	return realm;
 }
 
 /* create an array of str's for accounting using a formatting string;

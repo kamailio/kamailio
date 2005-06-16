@@ -173,7 +173,7 @@ int unmatched_totag(struct cell *t, struct sip_msg *ack)
 	struct totag_elem *i;
 	str *tag;
 
-	if (parse_headers(ack, HDR_TO,0)==-1 || 
+	if (parse_headers(ack, HDR_TO_F,0)==-1 || 
 				!ack->to ) {
 		LOG(L_ERR, "ERROR: unmatched_totag: To invalid\n");
 		return 1;
@@ -267,15 +267,15 @@ static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
 {
 	str to;
 
-    if (parse_headers(rpl,HDR_TO, 0)==-1 || !rpl->to ) {
-        LOG(L_ERR, "ERROR: build_ack: "
-            "cannot generate a HBH ACK if key HFs in reply missing\n");
-        return NULL;
-    }
+	if (parse_headers(rpl,HDR_TO_F, 0)==-1 || !rpl->to ) {
+		LOG(L_ERR, "ERROR: build_ack: "
+			"cannot generate a HBH ACK if key HFs in reply missing\n");
+		return NULL;
+	}
 	to.s=rpl->to->name.s;
 	to.len=rpl->to->len;
-    return build_local( trans, branch, ret_len,
-        ACK, ACK_LEN, &to );
+
+	return build_local( trans, branch, ret_len, ACK, ACK_LEN, &to );
 }
 
 
@@ -284,11 +284,11 @@ static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
  * route set, the URI to which the message should be sent will be returned
  * in next_hop parameter
  */
-static char *build_local_ack(struct sip_msg* rpl, struct cell *trans, int branch,
-			     unsigned int *ret_len, str* next_hop)
+static char *build_local_ack(struct sip_msg* rpl, struct cell *trans,
+							int branch, unsigned int *ret_len, str* next_hop)
 {
 	str to;
-	if (parse_headers(rpl, HDR_EOH, 0) == -1 || !rpl->to) {
+	if (parse_headers(rpl, HDR_EOH_F, 0) == -1 || !rpl->to) {
 		LOG(L_ERR, "ERROR: build_local_ack: Error while parsing headers\n");
 		return 0;
 	}
@@ -299,10 +299,10 @@ static char *build_local_ack(struct sip_msg* rpl, struct cell *trans, int branch
 }
 
 
-     /*
-      * The function is used to send a localy generated ACK to INVITE
-      * (tm generates the ACK on behalf of application using UAC
-      */
+/*
+ * The function is used to send a localy generated ACK to INVITE
+ * (tm generates the ACK on behalf of application using UAC
+ */
 static int send_local_ack(struct sip_msg* msg, str* next_hop,
 							char* ack, int ack_len)
 {
@@ -756,9 +756,13 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		}
 
 		/* no more pending branches -- try if that changes after
-		   a callback; save branch count to be able to determine
-		   later if new branches were initiated */
+		 * a callback; save branch count to be able to determine
+		 * later if new branches were initiated */
 		branch_cnt=Trans->nr_of_outgoings;
+		/* also append the current reply to the transaction to 
+		 * make it available in failure routes - a kind of "fake"
+		 * save of the final reply per branch */
+		Trans->uac[branch].reply = reply;
 
 		/* run ON_FAILURE handlers ( route and callbacks) */
 		if ( has_tran_tmcbs( Trans, TMCB_ON_FAILURE) || Trans->on_negative ) {
@@ -766,6 +770,11 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 				picked_branch==branch?reply:Trans->uac[picked_branch].reply, 
 				picked_code);
 		}
+
+		/* now reset it; after the failure logic, the reply may
+		 * not be stored any more and we don't want to keep into
+		 * transaction some broken reference */
+		Trans->uac[branch].reply = 0;
 
 		/* look if the callback perhaps replied transaction; it also
 		   covers the case in which a transaction is replied localy
@@ -1203,10 +1212,14 @@ error:
   */
 int reply_received( struct sip_msg  *p_msg )
 {
-	int msg_status, last_uac_status, branch, reply_status;
+	int msg_status;
+	int last_uac_status;
+	int branch;
+	int reply_status;
 	char *ack;
-	unsigned int ack_len, timer;
-	     /* has the transaction completed now and we need to clean-up? */
+	unsigned int ack_len;
+	unsigned int timer;
+	/* has the transaction completed now and we need to clean-up? */
 	branch_bm_t cancel_bitmap;
 	struct ua_client *uac;
 	struct cell *t;
@@ -1281,18 +1294,16 @@ int reply_received( struct sip_msg  *p_msg )
 		if (t->uas.request) p_msg->flags = t->uas.request->flags;
 		/* set the as avp_list the one from transaction */
 		backup_list = set_avp_list(&t->user_avps);
-		if (run_actions(onreply_rlist[t->on_reply], p_msg)<0) {
-			LOG(L_ERR, "ERROR: on_reply processing failed\n");
-		}
+		run_actions(onreply_rlist[t->on_reply], p_msg);
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
 		/* restore original avp list */
 		set_avp_list( backup_list );
 	}
-	
+
 	LOCK_REPLIES( t );
 	if (is_local(t)) {
-		reply_status = local_reply(t,p_msg, branch, msg_status, &cancel_bitmap);
+		reply_status = local_reply(t,p_msg, branch,msg_status,&cancel_bitmap);
 		if (reply_status == RPS_COMPLETED) {
 			cleanup_uac_timers(t);
 			if (is_invite(t)) cancel_uacs(t, cancel_bitmap);
@@ -1301,26 +1312,21 @@ int reply_received( struct sip_msg  *p_msg )
 			put_on_wait(t);
 		}
 	} else {
-		reply_status = relay_reply(t,p_msg, branch, msg_status, &cancel_bitmap);
+		reply_status = relay_reply(t,p_msg,branch,msg_status,&cancel_bitmap);
 		/* clean-up the transaction when transaction completed */
 		if (reply_status == RPS_COMPLETED) {
 			/* no more UAC FR/RETR (if I received a 2xx, there may
 			 * be still pending branches ...
 			 */
-			cleanup_uac_timers(t);	
+			cleanup_uac_timers(t);
 			if (is_invite(t)) cancel_uacs(t, cancel_bitmap);
 			/* FR for negative INVITES, WAIT anything else */
-			
-			/* Call to set_final_timer is embedded in relay_reply to avoid
-			 * race conditions when reply is sent out and an ACK to stop 
-			 * retransmissions comes before retransmission timer is set 
-			 *
-			 * set_final_timer(t); 
-			 */
-		} 
+			/* set_final_timer(t); */
+		}
 	}
 	
-	if (reply_status == RPS_ERROR) goto done;
+	if (reply_status == RPS_ERROR)
+		goto done;
 	
 	/* update FR/RETR timers on provisional replies */
 	if (msg_status < 200 && (restart_fr_on_each_reply ||
@@ -1347,7 +1353,10 @@ int reply_received( struct sip_msg  *p_msg )
 		}
 	} /* provisional replies */
 	
- done:
+done:
+	/* we are done with the transaction, so unref it - the reference
+	 * was incremented by t_check() function -bogdan*/
+	t_unref(p_msg);
 	/* don't try to relay statelessly neither on success
 	 * (we forwarded statefully) nor on error; on troubles, 
 	 * simply do nothing; that will make the other party to 

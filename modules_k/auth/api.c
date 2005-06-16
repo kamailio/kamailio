@@ -57,29 +57,40 @@ void strip_realm(str* _realm)
 /*
  * Find credentials with given realm in a SIP message header
  */
-static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_field** _h)
+static inline int find_credentials(struct sip_msg* _m, str* _realm,
+								hdr_types_t _hftype, struct hdr_field** _h)
 {
 	struct hdr_field** hook, *ptr, *prev;
+	hdr_flags_t hdr_flags;
 	int res;
 	str* r;
 
-	     /*
-	      * Determine if we should use WWW-Authorization or
-	      * Proxy-Authorization header fields, this parameter
-	      * is set in www_authorize and proxy_authorize
-	      */
+	/*
+	 * Determine if we should use WWW-Authorization or
+	 * Proxy-Authorization header fields, this parameter
+	 * is set in www_authorize and proxy_authorize
+	 */
 	switch(_hftype) {
-	case HDR_AUTHORIZATION: hook = &(_m->authorization); break;
-	case HDR_PROXYAUTH:     hook = &(_m->proxy_auth);    break;
-	default:                hook = &(_m->authorization); break;
+	case HDR_AUTHORIZATION_T:
+		hook = &(_m->authorization);
+		hdr_flags=HDR_AUTHORIZATION_F;
+		break;
+	case HDR_PROXYAUTH_T:
+		hook = &(_m->proxy_auth);
+		hdr_flags=HDR_PROXYAUTH_F;
+		break;
+	default:
+		hook = &(_m->authorization);
+		hdr_flags=HDR_T2F(_hftype);
+		break;
 	}
 
-	     /*
-	      * If the credentials haven't been parsed yet, do it now
-	      */
+	/*
+	 * If the credentials haven't been parsed yet, do it now
+	 */
 	if (*hook == 0) {
-		     /* No credentials parsed yet */
-		if (parse_headers(_m, _hftype, 0) == -1) {
+		/* No credentials parsed yet */
+		if (parse_headers(_m, hdr_flags, 0) == -1) {
 			LOG(L_ERR, "find_credentials(): Error while parsing headers\n");
 			return -1;
 		}
@@ -87,10 +98,10 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 
 	ptr = *hook;
 
-	     /*
-	      * Iterate through the credentials in the message and
-	      * find credentials with given realm
-	      */
+	/*
+	 * Iterate through the credentials in the message and
+	 * find credentials with given realm
+	 */
 	while(ptr) {
 		res = parse_credentials(ptr);
 		if (res < 0) {
@@ -108,7 +119,7 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 		}
 
 		prev = ptr;
-		if (parse_headers(_m, _hftype, 1) == -1) {
+		if (parse_headers(_m, hdr_flags, 1) == -1) {
 			LOG(L_ERR, "find_credentials(): Error while parsing headers\n");
 			return -4;
 		} else {
@@ -119,9 +130,9 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 		}
 	}
 	
-	     /*
-	      * Credentials with given realm not found
-	      */
+	/*
+	 * Credentials with given realm not found
+	 */
 	return 1;
 }
 
@@ -132,17 +143,18 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
  * we should really authenticate (there must be no authentication for
  * ACK and CANCEL
  */
-auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_field** _h)
+auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
+													struct hdr_field** _h)
 {
 	int ret;
 	auth_body_t* c;
 	struct sip_uri uri;
 
-	     /* ACK and CANCEL must be always authorized, there is
-	      * no way how to challenge ACK and CANCEL cannot be
-	      * challenged because it must have the same CSeq as
-	      * the request to be canceled
-	      */
+	/* ACK and CANCEL must be always authorized, there is
+	 * no way how to challenge ACK and CANCEL cannot be
+	 * challenged because it must have the same CSeq as
+	 * the request to be canceled
+	 */
 
 	if ((_m->REQ_METHOD == METHOD_ACK) ||  (_m->REQ_METHOD == METHOD_CANCEL)) return AUTHORIZED;
 
@@ -159,10 +171,10 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_
 		strip_realm(_realm);
 	}
 
-	     /* Try to find credentials with corresponding realm
-	      * in the message, parse them and return pointer to
-	      * parsed structure
-	      */
+	/* Try to find credentials with corresponding realm
+	 * in the message, parse them and return pointer to
+	 * parsed structure
+	 */
 	ret = find_credentials(_m, _realm, _hftype, _h);
 	if (ret < 0) {
 		LOG(L_ERR, "pre_auth(): Error while looking for credentials\n");
@@ -176,10 +188,10 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_
 		return NOT_AUTHORIZED;
 	}
 
-	     /* Pointer to the parsed credentials */
+	/* Pointer to the parsed credentials */
 	c = (auth_body_t*)((*_h)->parsed);
 
-	     /* Check credentials correctness here */
+	/* Check credentials correctness here */
 	if (check_dig_cred(&(c->digest)) != E_DIG_OK) {
 		LOG(L_ERR, "pre_auth(): Credentials received are not filled properly\n");
 		if (send_resp(_m, 400, MESSAGE_400, 0, 0) == -1) {
@@ -211,12 +223,12 @@ auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h)
 	if (is_nonce_stale(&c->digest.nonce)) {
 		if ((_m->REQ_METHOD == METHOD_ACK) || 
 		    (_m->REQ_METHOD == METHOD_CANCEL)) {
-			     /* Method is ACK or CANCEL, we must accept stale
-			      * nonces because there is no way how to challenge
-			      * with new nonce (ACK has no response associated 
-			      * and CANCEL must have the same CSeq as the request 
-			      * to be canceled)
-			      */
+			/* Method is ACK or CANCEL, we must accept stale
+			 * nonces because there is no way how to challenge
+			 * with new nonce (ACK has no response associated 
+			 * and CANCEL must have the same CSeq as the request 
+			 * to be canceled)
+			 */
 		} else {
 			DBG("post_auth(): Response is OK, but nonce is stale\n");
 			c->stale = 1;

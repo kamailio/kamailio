@@ -129,6 +129,8 @@ static void inline _set_fr_retr( struct retr_buf *rb, int retr )
 	if (!fr_avp2timer(&timer)) {
 		DBG("_set_fr_retr: FR_TIMER = %d\n", timer);
 		set_timer(&rb->fr_timer, FR_TIMER_LIST, &timer);
+		/* Automatically enable noisy_ctimer for the transaction */
+		rb->my_T->flags |= T_NOISY_CTIMER_FLAG;
 	} else {
 		set_timer(&rb->fr_timer, FR_TIMER_LIST, 0);
 	}

@@ -421,7 +421,7 @@ static int fixup_write_avp(void** param, int param_no)
 							"failed\n");
 						return E_UNSPEC;
 					}
-					if (hdr.type==HDR_OTHER) {
+					if (hdr.type==HDR_OTHER_T) {
 						/* duplicate hdr name */
 						len -= 5; /*hdr[]*/
 						ap->val.s = (str*)pkg_malloc(sizeof(str)+len+1);

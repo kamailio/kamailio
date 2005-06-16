@@ -194,7 +194,7 @@ static int str_fixup(void** param, int param_no)
 int diameter_proxy_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
 {
 	/* realm parameter is converted to str* in str_fixup */
-	return authorize(_msg, (str*)_realm, HDR_PROXYAUTH);
+	return authorize(_msg, (str*)_realm, HDR_PROXYAUTH_T);
 
 }
 
@@ -204,7 +204,7 @@ int diameter_proxy_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
  */
 int diameter_www_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
 {
-	return authorize(_msg, (str*)_realm, HDR_AUTHORIZATION);
+	return authorize(_msg, (str*)_realm, HDR_AUTHORIZATION_T);
 }
 
 static int group_fixup(void** param, int param_no)

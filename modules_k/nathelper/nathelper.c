@@ -605,7 +605,7 @@ static inline int
 get_callid(struct sip_msg* _m, str* _cid)
 {
 
-	if ((parse_headers(_m, HDR_CALLID, 0) == -1)) {
+	if ((parse_headers(_m, HDR_CALLID_F, 0) == -1)) {
 		LOG(L_ERR, "get_callid(): parse_headers() failed\n");
 		return -1;
 	}
@@ -628,7 +628,7 @@ static inline int
 get_contact_uri(struct sip_msg* _m, struct sip_uri *uri, contact_t** _c)
 {
 
-	if ((parse_headers(_m, HDR_CONTACT, 0) == -1) || !_m->contact)
+	if ((parse_headers(_m, HDR_CONTACT_F, 0) == -1) || !_m->contact)
 		return -1;
 	if (!_m->contact->parsed && parse_contact(_m->contact) < 0) {
 		LOG(L_ERR, "get_contact_uri: Error while parsing Contact body\n");
@@ -671,7 +671,7 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	offset = c->uri.s - msg->buf;
-	anchor = del_lump(msg, offset, c->uri.len, HDR_CONTACT);
+	anchor = del_lump(msg, offset, c->uri.len, HDR_CONTACT_T);
 	if (anchor == 0)
 		return -1;
 
@@ -695,7 +695,7 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 		len = len1;
 	hostport.s[0] = temp[0];
 	c->uri.s[c->uri.len] = temp[1];
-	if (insert_new_lump_after(anchor, buf, len, HDR_CONTACT) == 0) {
+	if (insert_new_lump_after(anchor, buf, len, HDR_CONTACT_T) == 0) {
 		pkg_free(buf);
 		return -1;
 	}

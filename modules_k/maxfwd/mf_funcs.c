@@ -48,7 +48,7 @@ int is_maxfwd_present( struct sip_msg* msg , str *foo)
 
 	/* lookup into the message for MAX FORWARDS header*/
 	if ( !msg->maxforwards ) {
-		if  ( parse_headers( msg , HDR_MAXFORWARDS, 0 )==-1 ){
+		if  ( parse_headers( msg , HDR_MAXFORWARDS_F, 0 )==-1 ){
 			LOG( L_ERR , "ERROR:maxfwd:is_maxfwd_present :"
 				" parsing MAX_FORWARD header failed!\n");
 			return -2;
@@ -89,7 +89,7 @@ int decrement_maxfwd( struct sip_msg* msg , int x, str *s)
 
 	/*rewriting the max-fwd value in the message (buf and orig)*/
 	x--;
-	for(i = s->len - 1; x && i >= 0; i--) {
+	for(i = s->len - 1; i >= 0; i--) {
 		s->s[i] = (x % 10) + '0';
 		x /= 10;
 		if (x==0) {

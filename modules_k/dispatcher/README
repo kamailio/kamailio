@@ -118,6 +118,8 @@ modparam("dispatcher", "force_dst", 1)
        address.
           + "0" - hash over callid
           + "1" - hash over from uri.
+          + "2" - hash over to uri.
+          + "3" - hash over ruri.
           + "X" - if the algorithm is not implemented, the first
             entry in set is chosen.
 

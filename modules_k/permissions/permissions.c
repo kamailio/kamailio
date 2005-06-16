@@ -32,6 +32,7 @@
 #include "../../mem/mem.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
+#include "../../parser/parse_refer_to.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../str.h"
 #include "../../dset.h"
@@ -83,6 +84,8 @@ static int allow_routing_1(struct sip_msg* msg, char* basename, char* str2);
 static int allow_routing_2(struct sip_msg* msg, char* allow_file, char* deny_file);
 static int allow_register_1(struct sip_msg* msg, char* basename, char* s);
 static int allow_register_2(struct sip_msg* msg, char* allow_file, char* deny_file);
+static int allow_refer_to_1(struct sip_msg* msg, char* basename, char* s);
+static int allow_refer_to_2(struct sip_msg* msg, char* allow_file, char* deny_file);
 
 static int mod_init(void);
 static void mod_exit(void);
@@ -97,6 +100,8 @@ static cmd_export_t cmds[] = {
 	{"allow_register", allow_register_1, 1, single_fixup,  REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_register", allow_register_2, 2, load_fixup,    REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_trusted",  allow_trusted,    0, 0,             REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_refer_to", allow_refer_to_1, 1, single_fixup,  REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_refer_to", allow_refer_to_2, 2, load_fixup,    REQUEST_ROUTE | FAILURE_ROUTE},
         {0, 0, 0, 0, 0}
 };
 
@@ -261,7 +266,7 @@ static int check_routing(struct sip_msg* msg, int idx)
 	}
 	
 	/* looking for FROM HF */
-        if ((!msg->from) && (parse_headers(msg, HDR_FROM, 0) == -1)) {
+        if ((!msg->from) && (parse_headers(msg, HDR_FROM_F, 0) == -1)) {
                 LOG(L_ERR, "check_routing(): Error while parsing message\n");
                 return -1;
         }
@@ -325,7 +330,7 @@ static int check_routing(struct sip_msg* msg, int idx)
 
  check_branches:
 	init_branch_iterator();
-	while((branch.s = next_branch(&branch.len, &q, 0, 0))) {
+	while((branch.s = next_branch(&branch.len, &q, 0, 0, 0))) {
 		uri_str = get_plain_uri(&branch);
 		if (!uri_str) {
 			LOG(L_ERR, "check_uri(): Error while extracting plain URI\n");
@@ -536,7 +541,7 @@ static int check_register(struct sip_msg* msg, int idx)
 	      * of them causes reject then we don't look at others, this could improve performance
 	      * a little bit in some situations
 	      */
-	if (parse_headers(msg, HDR_TO | HDR_CONTACT, 0) == -1) {
+	if (parse_headers(msg, HDR_TO_F | HDR_CONTACT_F, 0) == -1) {
 		LOG(L_ERR, "check_register(): Error while parsing headers\n");
 		return -1;
 	}
@@ -620,4 +625,106 @@ int allow_register_1(struct sip_msg* msg, char* basename, char* s)
 int allow_register_2(struct sip_msg* msg, char* allow_file, char* deny_file)
 {
 	return check_register(msg, (int)(long)allow_file);
+}
+
+
+/*
+ * determines the permission to refer to given refer-to uri
+ * return values:
+ * -1:	deny
+ * 1:	allow
+ */
+static int check_refer_to(struct sip_msg* msg, int idx) 
+{
+	struct hdr_field *from, *refer_to;
+	int len;
+	static char from_str[EXPRESSION_LENGTH+1];
+	static char refer_to_str[EXPRESSION_LENGTH+1];
+	
+	/* turn off control, allow any refer */
+	if ((!allow[idx].rules) && (!deny[idx].rules)) {
+		DBG("check_refer_to(): No rules => allow any refer\n");
+		return 1;
+	}
+	
+	/* looking for FROM HF */
+        if ((!msg->from) && (parse_headers(msg, HDR_FROM_F, 0) == -1)) {
+                LOG(L_ERR, "check_refer_to(): Error while parsing message\n");
+                return -1;
+        }
+	
+	if (!msg->from) {
+		LOG(L_ERR, "check_refer_to(): FROM header field not found\n");
+		return -1;
+	}
+	
+	/* we must call parse_from_header explicitly */
+        if ((!(msg->from)->parsed) && (parse_from_header(msg) < 0)) {
+                LOG(L_ERR, "check_refer_to(): Error while parsing From body\n");
+                return -1;
+        }
+	
+	from = msg->from;
+	len = ((struct to_body*)from->parsed)->uri.len;
+	if (len > EXPRESSION_LENGTH) {
+                LOG(L_ERR, "check_refer_to(): From header field is too long: %d chars\n", len);
+                return -1;
+	}
+	strncpy(from_str, ((struct to_body*)from->parsed)->uri.s, len);
+	from_str[len] = '\0';
+	
+	/* looking for REFER-TO HF */
+        if ((!msg->refer_to) && (parse_headers(msg, HDR_REFER_TO_F, 0) == -1)){
+                LOG(L_ERR, "check_refer_to(): Error while parsing message\n");
+                return -1;
+        }
+	
+	if (!msg->refer_to) {
+		LOG(L_ERR, "check_refer_to(): Refer-To header field not found\n");
+		return -1;
+	}
+	
+	/* we must call parse_refer_to_header explicitly */
+        if ((!(msg->refer_to)->parsed) && (parse_refer_to_header(msg) < 0)) {
+                LOG(L_ERR, "check_refer_to(): Error while parsing Refer-To body\n");
+                return -1;
+        }
+	
+	refer_to = msg->refer_to;
+	len = ((struct to_body*)refer_to->parsed)->uri.len;
+	if (len > EXPRESSION_LENGTH) {
+                LOG(L_ERR, "check_refer_to(): Refer-To header field is too long: %d chars\n", len);
+                return -1;
+	}
+	strncpy(refer_to_str, ((struct to_body*)refer_to->parsed)->uri.s, len);
+	refer_to_str[len] = '\0';
+	
+        DBG("check_refer_to(): looking for From: %s Refer-To: %s\n", from_str, refer_to_str);
+	     /* rule exists in allow file */
+	if (search_rule(allow[idx].rules, from_str, refer_to_str)) {
+    		DBG("check_refer_to(): allow rule found => refer is allowed\n");
+		return 1;
+	}
+	
+	/* rule exists in deny file */
+	if (search_rule(deny[idx].rules, from_str, refer_to_str)) {
+		DBG("check_refer_to(): deny rule found => refer is denied\n");
+		return -1;
+	}
+
+	DBG("check_refer_to(): Neither allow nor deny rule found => refer_to is allowed\n");
+
+	return 1;
+}
+
+
+int allow_refer_to_1(struct sip_msg* msg, char* basename, char* s)
+{
+	return check_refer_to(msg, (int)(long)basename);
+}
+
+
+int allow_refer_to_2(struct sip_msg* msg, char* allow_file, char* deny_file)
+{
+	return check_refer_to(msg, (int)(long)allow_file);
 }

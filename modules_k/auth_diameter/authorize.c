@@ -69,7 +69,7 @@ int get_uri(struct sip_msg* m, str** uri)
 					(memcmp(REQ_LINE(m).method.s, "REGISTER", 8) == 0)) 
 	{	
 		/* REGISTER */
-		if (!m->to && ((parse_headers(m, HDR_TO, 0) == -1)|| (!m->to))) 
+		if (!m->to && ((parse_headers(m, HDR_TO_F, 0) == -1)|| (!m->to))) 
 		{
 			LOG(L_ERR, M_NAME":get_uri(): To header field not found or "
 				"malformed\n");
@@ -104,10 +104,10 @@ int get_realm(struct sip_msg* m, int hftype, struct sip_uri* u)
 	/* extracting the uri */
 	if ((REQ_LINE(m).method.len==8)
 					&& !memcmp(REQ_LINE(m).method.s, "REGISTER", 8) 
-					&& (hftype == HDR_AUTHORIZATION) ) 
+					&& (hftype == HDR_AUTHORIZATION_T) ) 
 	{ 
 		/* REGISTER */
-		if (!m->to && ((parse_headers(m, HDR_TO, 0) == -1) || (!m->to))) 
+		if (!m->to && ((parse_headers(m, HDR_TO_F, 0) == -1) || (!m->to))) 
 		{
 			LOG(L_ERR, M_NAME":get_realm(): Error while parsing TO header\n");
 			/* signal the error */
@@ -142,23 +142,32 @@ int get_realm(struct sip_msg* m, int hftype, struct sip_uri* u)
 
 /* Find credentials with given realm in a SIP message header */
 int find_credentials(struct sip_msg* _m, str* _realm, int _hftype, 
-				struct hdr_field** _h)
+													struct hdr_field** _h)
 {
 	struct hdr_field** hook, *ptr, *prev;
 	int res;
+	hdr_flags_t hdr_flags;
 	str* r;
-      
+
 	switch(_hftype) 
 	{
-		case HDR_AUTHORIZATION: hook = &(_m->authorization); break;
-		case HDR_PROXYAUTH:     hook = &(_m->proxy_auth);    break;
-		default:                hook = &(_m->authorization); break;
+		case HDR_AUTHORIZATION_T:
+			hook = &(_m->authorization);
+			hdr_flags=HDR_AUTHORIZATION_F;
+			break;
+		case HDR_PROXYAUTH_T:
+			hook = &(_m->proxy_auth);
+			hdr_flags=HDR_PROXYAUTH_F;
+			break;
+		default:
+			hook = &(_m->authorization);
+			hdr_flags=HDR_T2F(_hftype);
+			break;
 	}
 
-	     
-     /* If the credentials haven't been parsed yet, do it now */
+	/* If the credentials haven't been parsed yet, do it now */
 	if (*hook == 0) 
-		if (parse_headers(_m, _hftype, 0) == -1) 
+		if (parse_headers(_m, hdr_flags, 0) == -1) 
 		{
 			LOG(L_ERR, M_NAME":find_credentials(): Error while parsing headers\n");
 			return -1;
@@ -194,7 +203,7 @@ int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 			}
 			
 			prev = ptr;
-			if (parse_headers(_m, _hftype, 1) == -1) 
+			if (parse_headers(_m, hdr_flags, 1) == -1) 
 			{
 				LOG(L_ERR, M_NAME":find_credentials(): Error while parsing"
 					" headers\n");
@@ -216,7 +225,8 @@ int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 }
 
 
-auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_field** _h)
+auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, 
+													struct hdr_field** _h)
 {
 	int ret;
 	struct sip_uri uri;
@@ -265,7 +275,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_
 
 
 /* Authorize digest credentials */
-int authorize(struct sip_msg* msg, str* realm, int hftype)
+int authorize(struct sip_msg* msg, str* realm, hdr_types_t hftype)
 {
 	auth_result_t ret;
 	struct hdr_field* h;
@@ -677,7 +687,7 @@ int srv_response(struct sip_msg* msg, rd_buf_t * rb, int hftype)
 			return -1;
 				
 		case AAA_CHALENGE:
-		 	if(hftype==HDR_AUTHORIZATION) /* SIP server */
+		 	if(hftype==HDR_AUTHORIZATION_T) /* SIP server */
 			{
 				auth_hf_len = WWW_AUTH_CHALLENGE_LEN+rb->chall_len;
 				auth_hf = (char*)ad_malloc(auth_hf_len*(sizeof(char)));

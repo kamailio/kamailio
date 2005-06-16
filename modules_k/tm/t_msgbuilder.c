@@ -190,7 +190,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	/* copy'n'paste Route headers */
 	if (!is_local(Trans)) {
 		for ( hdr=Trans->uas.request->headers ; hdr ; hdr=hdr->next )
-			 if (hdr->type==HDR_ROUTE)
+			 if (hdr->type==HDR_ROUTE_T)
 				*len+=hdr->len;
 	}
 
@@ -229,7 +229,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 
 	if (!is_local(Trans))  {
 		for ( hdr=Trans->uas.request->headers ; hdr ; hdr=hdr->next )
-			if(hdr->type==HDR_ROUTE) {
+			if(hdr->type==HDR_ROUTE_T) {
 				append_mem_block(p, hdr->name.s, hdr->len );
 			}
 	}
@@ -280,7 +280,7 @@ static inline int process_routeset(struct sip_msg* msg, str* contact, struct rte
 	ptr = msg->record_route;
 	head = 0;
 	while(ptr) {
-		if (ptr->type == HDR_RECORDROUTE) {
+		if (ptr->type == HDR_RECORDROUTE_T) {
 			if (parse_rr(ptr) < 0) {
 				LOG(L_ERR, "process_routeset: Error while parsing Record-Route header\n");
 				return -1;

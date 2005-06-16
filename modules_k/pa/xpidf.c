@@ -1,7 +1,7 @@
 /*
- * $Id$
- *
  * Presence Agent, XPIDF document support
+ *
+ * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -153,8 +153,10 @@ int xpidf_add_address(str* _b, int _l, str* _addr, xpidf_status_t _st)
 	case XPIDF_ST_OPEN:
 		p = STATUS_OPEN; 
 		len = STATUS_OPEN_L;
+#ifdef WITH_MSN
 		available = MSNSUBSTATUS_ONLINE; 
 		len_available = MSNSUBSTATUS_ONLINE_L;
+#endif
 		break;
 #if 0
 	case XPIDF_ST_INUSE:     
@@ -168,8 +170,10 @@ int xpidf_add_address(str* _b, int _l, str* _addr, xpidf_status_t _st)
 	case XPIDF_ST_CLOSED: 
 		p = STATUS_CLOSED; 
 		len = STATUS_CLOSED_L;
+#ifdef WITH_MSN
 		available = MSNSUBSTATUS_OFFLINE; 
 		len_available = MSNSUBSTATUS_OFFLINE_L;
+#endif
 		break;
 	}
 
@@ -186,7 +190,9 @@ int xpidf_add_address(str* _b, int _l, str* _addr, xpidf_status_t _st)
 		  ADDRESS_END_L + 
 		  CRLF_L +
 		  len + 
+#ifdef WITH_MSN
 		  len_available + 
+#endif
 		  CRLF_L +
 		  ADDRESS_ETAG_L + 
 		  CRLF_L +
@@ -203,7 +209,9 @@ int xpidf_add_address(str* _b, int _l, str* _addr, xpidf_status_t _st)
 	str_append(_b, _addr->s, _addr->len);
 	str_append(_b, ADDRESS_END CRLF, ADDRESS_END_L + CRLF_L);
 	str_append(_b, p, len);
+#ifdef WITH_MSN
 	str_append(_b,available, len_available);
+#endif
 	str_append(_b, CRLF ADDRESS_ETAG CRLF ATOM_ETAG CRLF, 
 		   CRLF_L + ADDRESS_ETAG_L + CRLF_L + ATOM_ETAG_L + CRLF_L);
 

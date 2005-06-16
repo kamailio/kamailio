@@ -1,7 +1,7 @@
 /*
- * $Id$
- *
  * Presence Agent, PIDF document support
+ *
+ * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -96,5 +96,8 @@ int parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *status_st
 #define PARSE_PIDF_PRESCAPS  (1 << 13)
 
 #define PARSE_PIDF_LOCATION_MASK 0x3F8
+
+int mangle_pidf(struct sip_msg* _m, char* _s1, char* _s2);
+int mangle_message_cpim(struct sip_msg* _msg, char* _s1, char* _s2);
 
 #endif /* PIDF_H */

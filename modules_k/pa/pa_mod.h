@@ -1,7 +1,7 @@
 /*
- * $Id$
- *
  * Presence Agent, module interface
+ *
+ * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -52,6 +52,7 @@ extern char *place_table;
 extern int use_bsearch;
 extern int use_location_package;
 extern int new_watcher_pending;
+extern int watcherinfo_notify;
 extern int callback_update_db;
 extern int callback_lock_pdomain;
 extern int new_tuple_on_publish;

@@ -19,7 +19,6 @@ Bogdan-Andrei Iancu
 
               1.1.1. Call Routing
               1.1.2. Registration Permissions
-              1.1.3. Trusted sources
 
         1.2. Dependencies
 
@@ -33,12 +32,6 @@ Bogdan-Andrei Iancu
               1.3.3. check_all_branches (integer)
               1.3.4. allow_suffix (string)
               1.3.5. deny_suffix (string)
-              1.3.6. db_url (string)
-              1.3.7. db_mode (integer)
-              1.3.8. trusted_table (string)
-              1.3.9. source_col (string)
-              1.3.10. proto_col (string)
-              1.3.11. from_col (string)
 
         1.4. Exported Functions
 
@@ -47,7 +40,6 @@ Bogdan-Andrei Iancu
               1.4.3. allow_routing(allow_file, deny_file)
               1.4.4. allow_register(basename)
               1.4.5. allow_register(allow_file, deny_file)
-              1.4.6. allow_trusted() 
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -58,18 +50,11 @@ Bogdan-Andrei Iancu
    1-3. Set check_all_branches parameter
    1-4. Set allow_suffix parameter
    1-5. Set deny_suffix parameter
-   1-6. Set db_url parameter
-   1-7. Set db_mode parameter
-   1-8. Set trusted_table parameter
-   1-9. Set source_col parameter
-   1-10. Set proto_col parameter
-   1-11. Set from_col parameter
-   1-12. allow_routing usage
-   1-13. allow_routing(basename) usage
-   1-14. allow_routing(allow_file, deny_file) usage
-   1-15. allow_register(basename) usage
-   1-16. allow_register(allow_file, deny_file) usage
-   1-17. allow_trusted() usage
+   1-6. allow_routing usage
+   1-7. allow_routing(basename) usage
+   1-8. allow_routing(allow_file, deny_file) usage
+   1-9. allow_register(basename) usage
+   1-10. allow_register(allow_file, deny_file) usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -86,7 +71,7 @@ Chapter 1. User's Guide
    When allow_routing function is called it tries to find a rule
    that matches selected fields of the message.
 
-   OPENSER is a forking proxy and therefore a single message can
+   OpenSER is a forking proxy and therefore a single message can
    be sent to different destinations simultaneously. When
    checking permissions all the destinations must be checked and
    if one of them fails, the forwarding will fail.
@@ -141,14 +126,6 @@ Chapter 1. User's Guide
 
    The algorithm of matching is same as described in Section
    1.1.1.
-     _________________________________________________________
-
-1.1.3. Trusted sources
-
-   A request can be trusted either via authentication, either
-   based on its source. allow_trusted checks based on request's
-   source address, protocol and FROM field if request can be
-   trusted.
      _________________________________________________________
 
 1.2. Dependencies
@@ -254,87 +231,6 @@ modparam("permissions", "deny_suffix", ".deny")
 ...
      _________________________________________________________
 
-1.3.6. db_url (string)
-
-   DB URL used by allow_trusted function to load all trusted
-   sources.
-
-   Default value is "NULL". 
-
-   Example 1-6. Set db_url parameter
-...
-modparam("permissions", "db_url", "mysql://ser:passwd@host/database")
-...
-     _________________________________________________________
-
-1.3.7. db_mode (integer)
-
-   Specifies the way allow_trusted function should use access the
-   data from DB. A 0 value means no cache - each time, the
-   function will query the DB. A non-0 values means cache - DB
-   containts is loaded at startup, the function using the memory
-   cache.
-
-   Default value is "0 (no cache)". 
-
-   Example 1-7. Set db_mode parameter
-...
-modparam("permissions", "db_mode", 1)
-...
-     _________________________________________________________
-
-1.3.8. trusted_table (string)
-
-   Name of the DB table to be used by allow_trusted for getting
-   the trust rules.
-
-   Default value is "trusted". 
-
-   Example 1-8. Set trusted_table parameter
-...
-modparam("permissions", "trusted_table", "GWtrusted")
-...
-     _________________________________________________________
-
-1.3.9. source_col (string)
-
-   Name of the DB column to contain the source address for the
-   trusted rules (used by allow_trusted)
-
-   Default value is "src_ip". 
-
-   Example 1-9. Set source_col parameter
-...
-modparam("permissions", "source_col", "source_IP")
-...
-     _________________________________________________________
-
-1.3.10. proto_col (string)
-
-   Name of the DB column to contain the incoming protocol used by
-   the trusted rules (used by allow_trusted)
-
-   Default value is "proto". 
-
-   Example 1-10. Set proto_col parameter
-...
-modparam("permissions", "proto_col", "protocol")
-...
-     _________________________________________________________
-
-1.3.11. from_col (string)
-
-   Name of the DB column to contain the incoming FROM URI pattern
-   used by the trusted rules (used by allow_trusted)
-
-   Default value is "from_pattern". 
-
-   Example 1-11. Set from_col parameter
-...
-modparam("permissions", "from_col", "from_uri")
-...
-     _________________________________________________________
-
 1.4. Exported Functions
 
 1.4.1. allow_routing()
@@ -344,7 +240,7 @@ modparam("permissions", "from_col", "from_uri")
    configuration files. This function uses default configuration
    files specified in default_allow_file and default_deny_file.
 
-   Example 1-12. allow_routing usage
+   Example 1-6. allow_routing usage
 ...
 if (allow_routing()) {
         t_relay();
@@ -367,7 +263,7 @@ if (allow_routing()) {
        function expects the file to be located in the same
        directory as the main configuration file of the server.
 
-   Example 1-13. allow_routing(basename) usage
+   Example 1-7. allow_routing(basename) usage
 ...
 if (allow_routing("basename")) {
         t_relay();
@@ -392,7 +288,7 @@ if (allow_routing("basename")) {
        function expects the file to be located in the same
        directory as the main configuration file of the server.
 
-   Example 1-14. allow_routing(allow_file, deny_file) usage
+   Example 1-8. allow_routing(allow_file, deny_file) usage
 ...
 if (allow_routing("rules.allow", "rules.deny")) {
         t_relay();
@@ -415,7 +311,7 @@ if (allow_routing("rules.allow", "rules.deny")) {
        function expects the file to be located in the same
        directory as the main configuration file of the server.
 
-   Example 1-15. allow_register(basename) usage
+   Example 1-9. allow_register(basename) usage
 ...
 if (method=="REGISTER") {
         if (allow_register("register")) {
@@ -445,7 +341,7 @@ if (method=="REGISTER") {
        function expects the file to be located in the same
        directory as the main configuration file of the server.
 
-   Example 1-16. allow_register(allow_file, deny_file) usage
+   Example 1-10. allow_register(allow_file, deny_file) usage
 ...
 if (method=="REGISTER") {
         if (allow_register("register.allow", "register.deny")) {
@@ -455,23 +351,6 @@ if (method=="REGISTER") {
                 sl_send_reply("403", "Forbidden");
         };
 };
-...
-     _________________________________________________________
-
-1.4.6. allow_trusted()
-
-   Checks based on request's source address, protocol and FROM
-   field if request can be trusted without authentication.
-   Possible protocol values are "any" (that matches any
-   protocol), "tcp", "udp", "tls" and "sctp".
-
-   Example 1-17. allow_trusted() usage
-...
-if (!allow_trusted()) {
-    # performe authentication
-    .......
-}
-# request is trusted for sure now
 ...
      _________________________________________________________
 

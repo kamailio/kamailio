@@ -64,7 +64,6 @@ void print_timer_list(struct list_link *head)
 }
 
 
-#define _test
 int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 {
 	struct ip_node *node;
@@ -75,7 +74,7 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 
 #ifdef _test
 	/* get the ip address from second via */
-	if (parse_headers(msg, HDR_VIA1, 0)!=0 )
+	if (parse_headers(msg, HDR_VIA1_F, 0)!=0 )
 		return -1;
 	if (msg->via1==0 )
 		return -1;

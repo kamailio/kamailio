@@ -276,7 +276,7 @@ static int add_sock_hdr(struct sip_msg* msg, char *name, char *foo)
 
 	hdr_name = (str*)name;
 
-	if (parse_headers( msg, HDR_EOH, 0) == -1) {
+	if (parse_headers( msg, HDR_EOH_F, 0) == -1) {
 		LOG(L_ERR,"ERROR:registrar:add_sock_hdr: failed to parse message\n");
 		goto error;
 	}

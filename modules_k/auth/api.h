@@ -46,8 +46,10 @@ typedef enum auth_result {
  * we should really authenticate (there must be no authentication for
  * ACK and CANCEL
  */
-typedef auth_result_t (*pre_auth_t)(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_field** _h);
-auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_field** _h);
+typedef auth_result_t (*pre_auth_t)(struct sip_msg* _m, str* _realm, 
+		hdr_types_t _hftype, struct hdr_field** _h);
+auth_result_t pre_auth(struct sip_msg* _m, str* _realm, 
+		hdr_types_t _hftype, struct hdr_field** _h);
 
 
 /*
@@ -69,9 +71,10 @@ void strip_realm(str *_realm);
 typedef struct auth_api {
 	int_str rpid_avp;      /* Name of AVP containing Remote-Party-ID */
 	int     rpid_avp_type; /* type of the RPID AVP */
-	pre_auth_t  pre_auth;  /* The function to be called before authentication */
-	post_auth_t post_auth; /* The function to be called after authentication */
+	pre_auth_t  pre_auth;  /* The function to be called before auth */
+	post_auth_t post_auth; /* The function to be called after auth */
 } auth_api_t;
+
 
 typedef int (*bind_auth_t)(auth_api_t* api);
 int bind_auth(auth_api_t* api);

@@ -20,7 +20,8 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
+ */
+/*
  * History:
  * --------
  *  2003-03-11  updated to the new module exports interface (andrei)
@@ -31,8 +32,12 @@
 #include "dbase.h"
 #include "db_mod.h"
 
+#include <mysql.h>
+
 int ping_interval = 5 * 60; /* Default is 5 minutes */
 int auto_reconnect = 1;     /* Default is enabled */
+
+static int mysql_mod_init(void);
 
 MODULE_VERSION
 
@@ -50,6 +55,7 @@ static cmd_export_t cmds[] = {
 	{"db_insert",      (cmd_function)db_insert,      2, 0, 0},
 	{"db_delete",      (cmd_function)db_delete,      2, 0, 0},
 	{"db_update",      (cmd_function)db_update,      2, 0, 0},
+	{"db_replace",     (cmd_function)db_replace,     2, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 
@@ -67,10 +73,17 @@ static param_export_t params[] = {
 struct module_exports exports = {	
 	"mysql",
 	cmds,
-	params, /*  module parameters */
-	0,      /* module initialization function */
-	0,      /* response function*/
-	0,      /* destroy function */
-	0,      /* oncancel function */
-	0       /* per-child init function */
+	params,          /*  module parameters */
+	mysql_mod_init,  /* module initialization function */
+	0,               /* response function*/
+	0,               /* destroy function */
+	0,               /* oncancel function */
+	0                /* per-child init function */
 };
+
+
+static int mysql_mod_init(void)
+{
+	DBG("mysql: MySQL client version is %s\n", mysql_get_client_info());
+	return 0;
+}

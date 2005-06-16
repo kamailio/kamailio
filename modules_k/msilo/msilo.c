@@ -1,4 +1,4 @@
-/**
+/*
  * $Id$
  *
  * MSILO module
@@ -666,7 +666,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 	body_str.len=1024;
 	
 	/* check for TO header */
-	if(msg->to==NULL && (parse_headers(msg, HDR_TO, 0)==-1
+	if(msg->to==NULL && (parse_headers(msg, HDR_TO_F, 0)==-1
 				|| msg->to==NULL || msg->to->body.s==NULL))
 	{
 		LOG(L_ERR,"MSILO:m_dump: ERROR cannot find TO HEADER!\n");
@@ -696,7 +696,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 	/**
 	 * check if has expires=0 (REGISTER)
 	 */
-	if(parse_headers(msg, HDR_EXPIRES, 0) >= 0)
+	if(parse_headers(msg, HDR_EXPIRES_F, 0) >= 0)
 	{
 		/* check 'expires' > 0 */
 		if(msg->expires && msg->expires->body.len > 0)

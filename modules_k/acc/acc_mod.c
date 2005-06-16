@@ -470,7 +470,7 @@ static inline void acc_preparse_req(struct sip_msg *rq)
 	 * don't be worried about parsing outcome -- if it failed, 
 	 * we will report N/A
 	 */
-	parse_headers(rq, HDR_CALLID| HDR_FROM| HDR_TO, 0 );
+	parse_headers(rq, HDR_CALLID_F| HDR_FROM_F| HDR_TO_F, 0 );
 	parse_from_header(rq);
 
 	if (strchr(log_fmt, 'p') || strchr(log_fmt, 'D')) {
@@ -551,7 +551,7 @@ static inline void acc_onreply_in(struct cell *t, struct sip_msg *reply,
 	if (((is_invite(t) && code>=300 && is_mc_on(t->uas.request))
 					|| should_acc_reply(t,code)) 
 				&& (reply && reply!=FAKED_REPLY)) {
-		parse_headers(reply, HDR_TO, 0 );
+		parse_headers(reply, HDR_TO_F, 0 );
 	}
 }
 

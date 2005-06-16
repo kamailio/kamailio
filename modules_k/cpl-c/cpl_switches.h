@@ -142,7 +142,7 @@ static inline char *run_address_switch( struct cpl_interpreter *intr )
 							if (!intr->to) {
 								/* get and parse the header */
 								if (!intr->msg->to &&
-								(parse_headers(intr->msg,HDR_TO,0)==-1 ||
+								(parse_headers(intr->msg,HDR_TO_F,0)==-1 ||
 								!intr->msg->to)) {
 									LOG(L_ERR,"ERROR:run_address_switch: bad "
 										"msg or missing TO header\n");
@@ -349,7 +349,7 @@ static inline char *run_string_switch( struct cpl_interpreter *intr )
 								/* get the subject header */
 								if (!intr->msg->subject) {
 									if (parse_headers(intr->msg,
-									HDR_SUBJECT,0)==-1) {
+									HDR_SUBJECT_F,0)==-1) {
 										LOG(L_ERR,"ERROR:run_string_switch: "
 										"bad SUBJECT header\n");
 										goto runtime_error;
@@ -372,7 +372,7 @@ static inline char *run_string_switch( struct cpl_interpreter *intr )
 								/* get the organization header */
 								if (!intr->msg->organization) {
 									if (parse_headers(intr->msg,
-									HDR_ORGANIZATION,0)==-1) {
+									HDR_ORGANIZATION_F,0)==-1) {
 										LOG(L_ERR,"ERROR:run_string_switch: "
 										"bad ORGANIZATION hdr\n");
 										goto runtime_error;
@@ -395,7 +395,7 @@ static inline char *run_string_switch( struct cpl_interpreter *intr )
 								/* get the  header */
 								if (!intr->msg->user_agent) {
 									if (parse_headers(intr->msg,
-									HDR_USERAGENT,0)==-1) {
+									HDR_USERAGENT_F,0)==-1) {
 										LOG(L_ERR,"ERROR:run_string_switch: "
 										"bad USERAGENT hdr\n");
 										goto runtime_error;
@@ -553,7 +553,8 @@ static inline char *run_priority_switch( struct cpl_interpreter *intr )
 					if (!intr->priority) {
 						/* get the PRIORITY header from message */
 						if (!intr->msg->priority) {
-							if (parse_headers(intr->msg,HDR_PRIORITY,0)==-1) {
+							if (parse_headers(intr->msg,HDR_PRIORITY_F,
+							0)==-1) {
 								LOG(L_ERR,"ERROR:run_priority_switch: bad "
 									"sip msg or PRIORITY header !\n");
 								goto runtime_error;
@@ -1045,7 +1046,7 @@ static inline char *run_language_switch( struct cpl_interpreter *intr )
 						/* get the accept_language header */
 						if (!intr->msg->accept_language) {
 							if (parse_headers(intr->msg,
-							HDR_ACCEPTLANGUAGE,0)==-1) {
+							HDR_ACCEPTLANGUAGE_F,0)==-1) {
 								LOG(L_ERR,"ERROR:run_language_switch: "
 									"bad ACCEPT_LANGUAGE header\n");
 								goto runtime_error;
