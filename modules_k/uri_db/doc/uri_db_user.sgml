@@ -55,14 +55,14 @@
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>mysql://serro:47serro11@localhost/ser</quote>.
+			Default value is <quote>DEFAULT_RODB_URL</quote>.
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("db_url", "db_url", "mysql://username:password@localhost/ser")
+modparam("db_url", "db_url", "mysql://username:password@localhost/openser")
 ...
 </programlisting>
 		</example>

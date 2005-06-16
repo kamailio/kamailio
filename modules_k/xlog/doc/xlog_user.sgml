@@ -120,6 +120,11 @@
 	    </listitem>
 	    <listitem>
 		<para>
+		    %rt : refer-to uri
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
 		    %ru : request's r-uri
 		</para>
 	    </listitem>

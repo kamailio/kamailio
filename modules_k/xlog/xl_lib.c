@@ -44,6 +44,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_hname2.h"
+#include "../../parser/parse_refer_to.h"
 
 #include "xl_lib.h"
 
@@ -243,7 +244,7 @@ static int xl_get_contact(struct sip_msg* msg, str* res, str *hp, int hi)
 	if(msg==NULL || res==NULL)
 		return -1;
 
-	if(msg->contact==NULL && parse_headers(msg, HDR_CONTACT, 0)==-1) 
+	if(msg->contact==NULL && parse_headers(msg, HDR_CONTACT_F, 0)==-1) 
 	{
 		DBG("XLOG: xl_get_contact: no contact header\n");
 		return xl_get_null(msg, res, hp, hi);
@@ -314,7 +315,7 @@ static int xl_get_to(struct sip_msg *msg, str *res, str *hp, int hi)
 	if(msg==NULL || res==NULL)
 		return -1;
 
-	if(msg->to==NULL && parse_headers(msg, HDR_TO, 0)==-1)
+	if(msg->to==NULL && parse_headers(msg, HDR_TO_F, 0)==-1)
 	{
 		LOG(L_ERR, "XLOG: xl_get_to: ERROR cannot parse TO header\n");
 		return xl_get_null(msg, res, hp, hi);
@@ -333,7 +334,7 @@ static int xl_get_to_tag(struct sip_msg* msg, str* res, str *hp, int hi)
 	if(msg==NULL || res==NULL)
 		return -1;
 
-	if(msg->to==NULL && ((parse_headers(msg, HDR_TO, 0)==-1) || 
+	if(msg->to==NULL && ((parse_headers(msg, HDR_TO_F, 0)==-1) || 
 				(msg->to==NULL)) )
 	{
 		LOG(L_ERR, "XLOG: xl_get_to: ERROR cannot parse TO header\n");
@@ -354,7 +355,7 @@ static int xl_get_cseq(struct sip_msg *msg, str *res, str *hp, int hi)
 	if(msg==NULL || res==NULL)
 		return -1;
 	
-	if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ, 0)==-1) || 
+	if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1) || 
 				(msg->cseq==NULL)) )
 	{
 		LOG(L_ERR, "XLOG: xl_get_cseq: ERROR cannot parse CSEQ header\n");
@@ -445,7 +446,7 @@ static int xl_get_callid(struct sip_msg *msg, str *res, str *hp, int hi)
 	if(msg==NULL || res==NULL)
 		return -1;
 	
-	if(msg->callid==NULL && ((parse_headers(msg, HDR_CALLID, 0)==-1) ||
+	if(msg->callid==NULL && ((parse_headers(msg, HDR_CALLID_F, 0)==-1) ||
 				(msg->callid==NULL)) )
 	{
 		LOG(L_ERR, "XLOG: xl_get_callid: ERROR cannot parse Call-Id header\n");
@@ -519,7 +520,7 @@ static int xl_get_useragent(struct sip_msg *msg, str *res, str *hp, int hi)
 {
 	if(msg==NULL || res==NULL) 
 		return -1;
-	if(msg->user_agent==NULL && ((parse_headers(msg, HDR_USERAGENT, 0)==-1)
+	if(msg->user_agent==NULL && ((parse_headers(msg, HDR_USERAGENT_F, 0)==-1)
 			 || (msg->user_agent==NULL)))
 	{
 		DBG("XLOG: xl_get_useragent: User-Agent header not found\n");
@@ -532,6 +533,28 @@ static int xl_get_useragent(struct sip_msg *msg, str *res, str *hp, int hi)
 	
 	return 0;
 }
+
+static int xl_get_refer_to(struct sip_msg *msg, str *res, str *hp, int hi)
+{
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	if(parse_refer_to_header(msg)==-1)
+	{
+		LOG(L_ERR,
+			"XLOG: xl_get_refer_to: ERROR cannot parse Refer-To header\n");
+		return xl_get_null(msg, res, hp, hi);
+	}
+	
+	if(msg->refer_to==NULL || get_refer_to(msg)==NULL)
+		return xl_get_null(msg, res, hp, hi);
+
+	res->s = get_refer_to(msg)->uri.s;
+	res->len = get_refer_to(msg)->uri.len; 
+	
+	return 0;
+}
+
 
 static int xl_get_dset(struct sip_msg *msg, str *res, str *hp, int hi)
 {
@@ -679,7 +702,7 @@ static int xl_get_header(struct sip_msg *msg, str *res, str *hp, int hi)
 	p = local_buf;
 
 	/* we need to be sure we have parsed all headers */
-	parse_headers(msg, HDR_EOH, 0);
+	parse_headers(msg, HDR_EOH_F, 0);
 	for (hf=msg->headers; hf; hf=hf->next)
 	{
 		if(hp->s==NULL)
@@ -986,6 +1009,8 @@ int xl_parse_format(char *s, xl_elog_p *el)
 					case 's':
 						e->itf = xl_get_status;
 					break;
+					case 't':
+						e->itf = xl_get_refer_to;
 					case 'u':
 						e->itf = xl_get_ruri;
 					break;
@@ -1159,7 +1184,7 @@ int xl_parse_format(char *s, xl_elog_p *el)
 					}
 					e->hparam.len--;
 					e->hparam.s[e->hparam.len] = c;
-					if (hdr.type!=HDR_OTHER && hdr.type!=HDR_ERROR)
+					if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T)
 					{
 						LOG(L_INFO,"INFO:xlog: xl_parse_format: using "
 							"hdr type (%d) instead of <%.*s>\n",
