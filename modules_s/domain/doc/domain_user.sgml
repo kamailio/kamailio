@@ -130,6 +130,23 @@ if (is_from_local()) {
 </programlisting>
 	    </example>
 	</section>
+	<section>
+	    <title><function moreinfo="none">is_uri_host_local()</function></title>
+	    <para>
+		Checks based on domain table if host part of Request-URI is
+		one of the local domains that the proxy is responsible for
+	    </para>
+	    <example>
+		<title>is_uri_host_local_local usage</title>
+		<programlisting format="linespecific">
+...
+if (is_uri_host_local()) {
+    ...
+};
+...
+</programlisting>
+	    </example>
+	</section>
     </section>
     <section>
 	<title><acronym>FIFO</acronym> Commands</title>
