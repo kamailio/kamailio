@@ -1,0 +1,36 @@
+#
+# $Id$
+#
+#
+# Radiusclient library detection comes here
+#
+# (To be included from Makefiles of radius related modules)
+#
+# The purpose of this makefile is to perform radiusclient library
+# detection and setup library and include paths in DEFS and LIBS
+# variables. In addition RADIUSCLIENT_NG_4 will be defined when
+# libradiusclient-ng version 4 is detected. That means the module
+# should include radiusclient.h, otherwise radiusclient-ng.h
+# should be included. Variable RADIUSCLIENT_LIB contains the
+# name of the shared library.
+#
+
+#
+# Radiusclient-ng is often installed from tarballs so we
+# need to look int /usr/local/lib as well
+#
+DEFS+=-I$(LOCALBASE)/include
+LIBS+=-L$(LOCALBASE)/lib
+
+ifneq ($(radiusclient_ng), 4)
+
+# radiusclient-ng 5+
+# DEFS+=-DRADIUSCLIENT_NG_5P
+RADIUSCLIENT_LIB=radiusclient-ng
+
+else
+
+DEFS+=-DRADIUSCLIENT_NG_4
+RADIUSCLIENT_LIB=radiusclient
+
+endif
