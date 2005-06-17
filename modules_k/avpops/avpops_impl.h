@@ -64,6 +64,7 @@
 #define AVPOPS_USE_HDRREQ    (1<<10)
 #define AVPOPS_USE_HDRRPL    (1<<11)
 #define AVPOPS_USE_SRC_IP    (1<<12)
+#define AVPOPS_USE_DST_IP    (1<<13)
 
 /* flags about operation  16..23  */
 #define AVPOPS_OP_EQ        (1<<16)

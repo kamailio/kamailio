@@ -385,6 +385,7 @@ static int fixup_write_avp(void** param, int param_no)
 			if ( (!strcasecmp( "from", s) && (flags|=AVPOPS_USE_FROM))
 				|| (!strcasecmp( "to", s) && (flags|=AVPOPS_USE_TO))
 				|| (!strcasecmp( "ruri", s) && (flags|=AVPOPS_USE_RURI))
+				|| (!strcasecmp( "dst_ip", s) && (flags|=AVPOPS_USE_DST_IP))
 				|| (!strcasecmp( "src_ip", s) && (flags|=AVPOPS_USE_SRC_IP))
 				|| (!strncasecmp( "hdr", s, 3) && (flags|=AVPOPS_USE_HDRREQ)) )
 			{
@@ -397,7 +398,8 @@ static int fixup_write_avp(void** param, int param_no)
 				}
 				memset( ap, 0, sizeof(struct fis_param));
 				/* any falgs ? */
-				if ( p && !(!(flags&(AVPOPS_USE_SRC_IP|AVPOPS_USE_HDRREQ)) && (
+				if ( p && !(!(flags&(AVPOPS_USE_SRC_IP|AVPOPS_USE_HDRREQ
+				|AVPOPS_USE_DST_IP)) && (
 				(!strcasecmp("username",p) && (flags|=AVPOPS_FLAG_USER)) ||
 				(!strcasecmp("domain", p) && (flags|=AVPOPS_FLAG_DOMAIN)))) )
 				{
