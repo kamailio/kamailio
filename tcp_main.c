@@ -1444,6 +1444,7 @@ void tcp_main_loop()
 						" in tls_listen\n");
 			}
 		}
+	}
 #endif
 	/* add all the unix sockets used for communcation with other ser processes
 	 *  (get fd, new connection a.s.o) */
