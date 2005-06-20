@@ -692,7 +692,8 @@ static int xl_get_color(struct sip_msg *msg, str *res, str *hp, int hi)
 			append_sstring(p, end, "47");
 		break;
 		default:
-			return -1;
+			LOG(L_ERR, "XLOG: exit background\n");
+			return xl_get_empty(msg, res, hp, hi);
 	}
 
 	/* end */
