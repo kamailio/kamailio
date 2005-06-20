@@ -389,7 +389,7 @@ static int fixup_local_replied(void** param, int param_no)
 		val = (char*)*param;
 		if (strcasecmp(val,"all")==0) {
 			n = 1;
-		} if (strcasecmp(val,"last")==0) {
+		} else if (strcasecmp(val,"last")==0) {
 			n = 0;
 		} else {
 			LOG(L_ERR,"ERROR:tm:fixup_local_replied: invalid param \"%s\"\n",
