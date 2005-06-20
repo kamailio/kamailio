@@ -81,7 +81,7 @@ int sl_startup()
 	}
 	*(sl_timeout)=get_ticks();
 
-	return 1;
+	return 0;
 }
 
 

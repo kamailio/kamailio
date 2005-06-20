@@ -87,9 +87,16 @@ static int mod_init(void)
 		LOG(L_ERR, "ERROR: init_sl_stats failed\n");
 		return -1;
 	}
-	/* if SL loaded, filter ACKs on beginning */
-	register_script_cb( sl_filter_ACK, PRE_SCRIPT_CB, 0 );
-	sl_startup();
+	/* filter all ACKs before script */
+	if (register_script_cb(sl_filter_ACK, PRE_SCRIPT_CB|REQ_TYPE_CB, 0 )!=0) {
+		LOG(L_ERR,"ERROR:sl:mod_init: register_script_cb failed\n");
+		return -1;
+	}
+	/* init internal SL stuff */
+	if (sl_startup()!=0) {
+		LOG(L_ERR,"ERROR:sl:mod_init: sl_startup failed\n");
+		return -1;
+	}
 
 	return 0;
 }
