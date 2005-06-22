@@ -410,7 +410,7 @@ static inline char* build_recv_sock(struct socket_info *sock, int *len)
 	p += sock->address_str.len;
 	*(p++) = '_';
 	memcpy( p, sock->port_no_str.s, sock->port_no_str.len);
-	p += sock->address_str.len;
+	p += sock->port_no_str.len;
 	*len = (int)(long)(p-buf);
 	DBG("build_recv_sock: <%.*s>\n",*len,buf);
 	return buf;
