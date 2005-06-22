@@ -32,23 +32,46 @@ Jiri Kuthan
               1.3.7. retr_timer1p3 (integer)
               1.3.8. retr_timer2 (integer)
               1.3.9. noisy_ctimer (integer)
+              1.3.10. ruri_matching (integer)
+              1.3.11. via1_matching (integer)
+              1.3.12. uac_from (string)
+              1.3.13. unix_tx_timeout (integer)
+              1.3.14. restart_fr_on_each_reply (integer)
+              1.3.15. fr_timer_avp (string)
+              1.3.16. fr_inv_timer_avp (string)
+              1.3.17. tw_append (string)
 
         1.4. Exported Functions
 
               1.4.1. t_relay_to_udp(ip, port), t_relay_to_tcp(ip,
-                      port)
+                      port), t_relay_to_tls(ip, port)
 
               1.4.2. t_relay()
-              1.4.3. t_on_negative(reply_route)
-              1.4.4. append_branch()
-              1.4.5. t_newtran()
-              1.4.6. t_reply(code, reason_phrase)
-              1.4.7. t_lookup_request()
-              1.4.8. t_retransmit_reply()
-              1.4.9. t_release()
-              1.4.10. t_forward_nonack(ip, port)
-              1.4.11. External Usage of TM
-              1.4.12. Known Issues
+              1.4.3. t_on_failure(reply_route)
+              1.4.4. t_on_failure(reply_route)
+              1.4.5. t_on_failure(reply_route)
+              1.4.6. t_on_reply(onreply_route)
+              1.4.7. t_check_status(regex)
+              1.4.8. t_write_req(fifo, application)
+              1.4.9. t_write_unix(socket, application)
+              1.4.10. append_branch()
+              1.4.11. t_newtran()
+              1.4.12. t_reply(code, reason_phrase)
+              1.4.13. t_lookup_request()
+              1.4.14. t_retransmit_reply()
+              1.4.15. t_release()
+              1.4.16. t_replicate(ip, port), t_replicate_udp(ip,
+                      port), t_replicate_tcp(ip, port),
+                      t_replicate_tls(ip, port)
+
+              1.4.17. t_forward_nonack(ip, port),
+                      t_forward_nonack_uri(),
+                      t_forward_nonack_udp(ip, port),
+                      t_forward_nonack_tcp(ip, port),
+                      t_forward_nonack_tls(ip, port)
+
+              1.4.18. External Usage of TM
+              1.4.19. Known Issues
 
    2. Developer's Guide
 
@@ -70,16 +93,21 @@ Jiri Kuthan
    1-7. Set retr_timer1p4 parameter
    1-8. Set retr_timer2 parameter
    1-9. Set noisy_ctimer parameter
-   1-10. t_relay_to_udp usage
-   1-11. t_relay usage
-   1-12. t_on_negative usage
-   1-13. append_branch usage
-   1-14. t_newtran usage
-   1-15. t_reply usage
-   1-16. t_lookup_request usage
-   1-17. t_retransmit_reply usage
-   1-18. t_release usage
-   1-19. t_forward_nonack usage
+   1-10. Set tw_append parameter
+   1-11. t_relay_to_udp usage
+   1-12. t_relay usage
+   1-13. t_on_failure usage
+   1-14. t_on_failure usage
+   1-15. t_on_failure usage
+   1-16. t_on_reply usage
+   1-17. t_check_status usage
+   1-18. append_branch usage
+   1-19. t_newtran usage
+   1-20. t_reply usage
+   1-21. t_lookup_request usage
+   1-22. t_retransmit_reply usage
+   1-23. t_release usage
+   1-24. t_forward_nonack usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -277,9 +305,108 @@ modparam("tm", "noisy_ctimer", 1)
 ...
      _________________________________________________________
 
+1.3.10. ruri_matching (integer)
+
+   The parameter controls whether the Request-URI should be
+   included in pre-RFC3261 transaction maching. When set 1 then
+   the Request-URI will be included, when set to 0 then it will
+   be not included.
+
+   Default value is 1 (include Request-URI). 
+     _________________________________________________________
+
+1.3.11. via1_matching (integer)
+
+   The parameter controls whether the topmost Via header field
+   should be included in pre-RFC3261 transaction maching. When
+   set 1 then the topmost Via header field will be included, when
+   set to 0 then it will be not included.
+
+   Default value is 1 (include topmost Via header field). 
+     _________________________________________________________
+
+1.3.12. uac_from (string)
+
+   This parameter allows to configure the URI that will be put in
+   the From header field of SIP request generated localy by the
+   UAC in tm module. This parameter is currently not used.
+
+   Default value is "sip:foo@foo.bar". 
+     _________________________________________________________
+
+1.3.13. unix_tx_timeout (integer)
+
+   Maximum timeout in seconds for the request sent over the unix
+   domain socket interface (using t_write_unix function). The
+   function will indicate failure if it does not manage to send
+   all the data within the interval configured by this parameter.
+
+   Default value is 2 seconds. 
+     _________________________________________________________
+
+1.3.14. restart_fr_on_each_reply (integer)
+
+   The parameter controls whether the FR timer will be restarted
+   on each provisional reply received.
+
+   Default value is 1 (yes). 
+     _________________________________________________________
+
+1.3.15. fr_timer_avp (string)
+
+   This parameter makes it possible to override the value of FR
+   (final reply) timer on per-transaction basis. TM module can
+   pick the value of the timer from an AVP. The name or ID of the
+   AVP can be configured by this parameter. If there is no such
+   AVP then the default value configured through fr_timer
+   parameter will be used.
+
+   Default value is "callee_fr_timer". 
+     _________________________________________________________
+
+1.3.16. fr_inv_timer_avp (string)
+
+   This parameter makes it possible to override the value of FR
+   Invite (final response for INVITE transactions) timer on
+   per-transaction basis. TM module can pick the value of the
+   timer from an AVP. The name or ID of the AVP can be configured
+   by this parameter. If there is no such AVP then the default
+   value configured through fr_inv_timer parameter will be used.
+
+   Default value is "callee_fr_inv_timer". 
+     _________________________________________________________
+
+1.3.17. tw_append (string)
+
+   This parameter configures additional information that can be
+   passed over the FIFO or unix domain socket interfaces by TM
+   module to another application. TM module can pass values of
+   AVPs, SIP message header fields, or the message body. Syntax
+   of the parameter is as follows:
+tw_append = name ':' element ( ';' element ) *
+element   = [ title '=' ] ( avp_val | hdr_val )
+element   = title '=' body_val
+avp_val   = "avp" '[' avp_spec ']'
+hdr_val   = "hdr" '[' hdr_name ']'
+body_val  = "msg[body]"
+
+   Default value is "". 
+
+   Example 1-10. Set tw_append parameter
+
+   Pass the value of callee_fr_timer AVP, the contents of Subject
+   header field, and the whole SIP message body to the
+   application over FIFO or unix domain socket interface.
+...
+modparam("tm", "tw_append", "params:avp[callee_fr_timer];hdr[Subject];b
+ody=msg[body]")
+...
+     _________________________________________________________
+
 1.4. Exported Functions
 
-1.4.1. t_relay_to_udp(ip, port), t_relay_to_tcp(ip, port)
+1.4.1. t_relay_to_udp(ip, port), t_relay_to_tcp(ip, port),
+t_relay_to_tls(ip, port)
 
    Relay a message statefully to a fixed destination. This along
    with t_relay is the function most users want to use--all other
@@ -292,7 +419,7 @@ modparam("tm", "noisy_ctimer", 1)
      * ip - IP address where the message should be sent.
      * port - Port number.
 
-   Example 1-10. t_relay_to_udp usage
+   Example 1-11. t_relay_to_udp usage
 ...
 t_relay_to_udp("1.2.3.4", "5060");
 ...
@@ -307,13 +434,13 @@ t_relay_to_udp("1.2.3.4", "5060");
    negative reply upstream statelessly not to leave upstream UAC
    in lurch.
 
-   Example 1-11. t_relay usage
+   Example 1-12. t_relay usage
 ...
 if (!t_relay()) { sl_reply_error(); break; };
 ...
      _________________________________________________________
 
-1.4.3. t_on_negative(reply_route)
+1.4.3. t_on_failure(reply_route)
 
    Sets reply routing block, to which control is passed after a
    transaction completed with a negative result but before
@@ -336,14 +463,14 @@ if (!t_relay()) { sl_reply_error(); break; };
 
      * reply_route - Reply route block to be called.
 
-   Example 1-12. t_on_negative usage
+   Example 1-13. t_on_failure usage
 ...
 route {
-    t_on_negative("1");
+    t_on_failure("1");
     t_relay();
 }
 
-reply_route[1] {
+failure_route[1] {
     revert_uri();
     setuser("voicemail");
     append_branch();
@@ -354,13 +481,167 @@ reply_route[1] {
    serial with parallel forking.
      _________________________________________________________
 
-1.4.4. append_branch()
+1.4.4. t_on_failure(reply_route)
+
+   Sets reply routing block, to which control is passed after a
+   transaction completed with a negative result but before
+   sending a final reply. In the referred block, you can either
+   start a new branch (good for services such as
+   forward_on_no_reply) or send a final reply on your own (good
+   for example for message silo, which received a negative reply
+   from upstream and wants to tell upstream "202 I will take care
+   of it"). Note that the set of command which are usable within
+   reply_routes is strictly limited to rewriting URI, initiating
+   new branches, logging, and sending stateful replies (t_reply).
+   Any other commands may result in unpredictable behavior and
+   possible server failure. Note that whenever reply_route is
+   entered, uri is reset to value which it had on relaying. If it
+   temporarily changed during a reply_route processing,
+   subsequent reply_route will ignore the changed value and use
+   again the original one.
+
+   Meaning of the parameters is as follows:
+
+     * reply_route - Reply route block to be called.
+
+   Example 1-14. t_on_failure usage
+...
+route {
+    t_on_failure("1");
+    t_relay();
+}
+
+failure_route[1] {
+    revert_uri();
+    setuser("voicemail");
+    append_branch();
+}
+...
+
+   See test/onr.cfg for a more complex example of combination of
+   serial with parallel forking.
+     _________________________________________________________
+
+1.4.5. t_on_failure(reply_route)
+
+   Sets reply routing block, to which control is passed after a
+   transaction completed with a negative result but before
+   sending a final reply. In the referred block, you can either
+   start a new branch (good for services such as
+   forward_on_no_reply) or send a final reply on your own (good
+   for example for message silo, which received a negative reply
+   from upstream and wants to tell upstream "202 I will take care
+   of it"). Note that the set of command which are usable within
+   reply_routes is strictly limited to rewriting URI, initiating
+   new branches, logging, and sending stateful replies (t_reply).
+   Any other commands may result in unpredictable behavior and
+   possible server failure. Note that whenever reply_route is
+   entered, uri is reset to value which it had on relaying. If it
+   temporarily changed during a reply_route processing,
+   subsequent reply_route will ignore the changed value and use
+   again the original one.
+
+   Meaning of the parameters is as follows:
+
+     * reply_route - Reply route block to be called.
+
+   Example 1-15. t_on_failure usage
+...
+route {
+    t_on_failure("1");
+    t_relay();
+}
+
+failure_route[1] {
+    revert_uri();
+    setuser("voicemail");
+    append_branch();
+}
+...
+
+   See test/onr.cfg for a more complex example of combination of
+   serial with parallel forking.
+     _________________________________________________________
+
+1.4.6. t_on_reply(onreply_route)
+
+   Sets reply routing block, to which control is passed when a
+   reply is received from one of downstream branches. Only a
+   limited set of functions is available in onreply_route blocks.
+   The routing block will be called for every reply received from
+   downstream. A typical use for onreply_route blocks would be
+   rewriting contacts with private IP addresses in 200 OK replies
+   by nathelper module.
+
+   Meaning of the parameters is as follows:
+
+     * onreply_route - Reply route block to be called.
+
+   Example 1-16. t_on_reply usage
+...
+route {
+    t_on_reply("1");
+    t_relay();
+}
+
+onreply_route[1] {
+    fix_nated_contact();
+    force_rtp_proxy();
+}
+...
+     _________________________________________________________
+
+1.4.7. t_check_status(regex)
+
+   This function can be used to check the status code in replies
+   from failure_route and onreply_route blocks. It allows to
+   differentiate processing based on the status code received.
+
+   Meaning of the parameters is as follows:
+
+     * regex - Regular expression to be matched agains the status
+       code.
+
+   Example 1-17. t_check_status usage
+...
+failure_route[1] {
+    if (t_check_status("486")) {
+        # Busy
+        t_relay_to_udp("1.2.3.4", "5060");
+    };
+ }
+...
+     _________________________________________________________
+
+1.4.8. t_write_req(fifo, application)
+
+   Send the request ove the FIFO interface to another
+   application, such as SEMS.
+
+   Meaning of the parameters is as follows:
+
+     * fifo - Name of the FIFO interface.
+     * application - Name of the application.
+     _________________________________________________________
+
+1.4.9. t_write_unix(socket, application)
+
+   Send the request ove the unix domain socket interface to
+   another application, such as SEMS.
+
+   Meaning of the parameters is as follows:
+
+     * socket - Filename of the unix domain socket.
+     * application - Name of the application.
+     _________________________________________________________
+
+1.4.10. append_branch()
 
    Similarly to t_fork_to, it extends destination set by a new
    entry. The difference is that current URI is taken as new
    entry.
 
-   Example 1-13. append_branch usage
+   Example 1-18. append_branch usage
 ...
 set_user("john");
 t_fork();
@@ -370,13 +651,13 @@ t_relay();
 ...
      _________________________________________________________
 
-1.4.5. t_newtran()
+1.4.11. t_newtran()
 
    Creates a new transaction, returns a negative value on error.
    This is the only way a script can add a new transaction in an
    atomic way. Typically, it is used to deploy a UAS.
 
-   Example 1-14. t_newtran usage
+   Example 1-19. t_newtran usage
 ...
 if (t_newtran()) {
     log("UAS logic");
@@ -387,7 +668,7 @@ if (t_newtran()) {
    See test/uas.cfg for more examples.
      _________________________________________________________
 
-1.4.6. t_reply(code, reason_phrase)
+1.4.12. t_reply(code, reason_phrase)
 
    Sends a stateful reply after a transaction has been
    established. See t_newtran for usage.
@@ -397,13 +678,13 @@ if (t_newtran()) {
      * code - Reply code number.
      * reason_phrase - Reason string.
 
-   Example 1-15. t_reply usage
+   Example 1-20. t_reply usage
 ...
 t_reply("404", "Not found");
 ...
      _________________________________________________________
 
-1.4.7. t_lookup_request()
+1.4.13. t_lookup_request()
 
    Checks if a transaction exists. Returns a positive value if
    so, negative otherwise. Most likely you will not want to use
@@ -411,7 +692,7 @@ t_reply("404", "Not found");
    new transaction if none was found. However this is safely
    (atomically) done using t_newtran.
 
-   Example 1-16. t_lookup_request usage
+   Example 1-21. t_lookup_request usage
 ...
 if (t_lookup_request()) {
     ...
@@ -419,44 +700,59 @@ if (t_lookup_request()) {
 ...
      _________________________________________________________
 
-1.4.8. t_retransmit_reply()
+1.4.14. t_retransmit_reply()
 
    Retransmits a reply sent previously by UAS transaction.
 
-   Example 1-17. t_retransmit_reply usage
+   Example 1-22. t_retransmit_reply usage
 ...
 t_retransmit_reply();
 ...
      _________________________________________________________
 
-1.4.9. t_release()
+1.4.15. t_release()
 
    Remove transaction from memory (it will be first put on a wait
    timer to absorb delayed messages).
 
-   Example 1-18. t_release usage
+   Example 1-23. t_release usage
 ...
 t_release();
 ...
      _________________________________________________________
 
-1.4.10. t_forward_nonack(ip, port)
+1.4.16. t_replicate(ip, port), t_replicate_udp(ip, port),
+t_replicate_tcp(ip, port), t_replicate_tls(ip, port)
+
+   Replicate a message to another server. Functions with "_tls"
+   suffix are only available with additional TLS package.
+
+   Meaning of the parameters is as follows:
+
+     * ip - IP address where the message should be sent.
+     * port - Port number.
+     _________________________________________________________
+
+1.4.17. t_forward_nonack(ip, port), t_forward_nonack_uri(),
+t_forward_nonack_udp(ip, port), t_forward_nonack_tcp(ip, port),
+t_forward_nonack_tls(ip, port)
 
    mainly for internal usage--forward a non-ACK request
-   statefully.
+   statefully. t_forward_nonack_tls is only available with
+   additional TLS package.
 
    Meaning of the parameters is as follows:
 
      * ip - IP address where the message should be sent.
      * port - Port number.
 
-   Example 1-19. t_forward_nonack usage
+   Example 1-24. t_forward_nonack usage
 ...
 t_forward_nonack("1.2.3.4", "5060");
 ...
      _________________________________________________________
 
-1.4.11. External Usage of TM
+1.4.18. External Usage of TM
 
    There are applications which would like to generate SIP
    transactions without too big involvement in SIP stack,
@@ -504,7 +800,7 @@ end of body
    or cat test/transaction.fifo > /tmp/ser_fifo
      _________________________________________________________
 
-1.4.12. Known Issues
+1.4.19. Known Issues
 
      * We don't have authentication merging on forking.
      * Local ACK/CANCELs copy'n'pastes Route and ignores deleted

@@ -284,6 +284,149 @@ modparam("tm", "noisy_ctimer", 1)
 	    </example>
 	</section>
 
+	<section>
+	    <title><varname>ruri_matching</varname> (integer)</title>
+	    <para>
+		The parameter controls whether the Request-URI should be
+		included in pre-RFC3261 transaction maching. When set 1 then
+		the Request-URI will be included, when set to 0 then it will be
+		not included.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 1 (include Request-URI).
+		</emphasis>
+	    </para>
+	</section>
+
+	<section>
+	    <title><varname>via1_matching</varname> (integer)</title>
+	    <para>
+		The parameter controls whether the topmost Via header field
+		should be included in pre-RFC3261 transaction maching. When set
+		1 then the topmost Via header field will be included, when set
+		to 0 then it will be not included.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 1 (include topmost Via header field).
+		</emphasis>
+	    </para>
+	</section>
+
+	<section>
+	    <title><varname>uac_from</varname> (string)</title>
+	    <para>
+		This parameter allows to configure the URI that will be put in
+		the From header field of SIP request generated localy by the
+		UAC in tm module. This parameter is currently not used.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is "sip:foo@foo.bar".
+		</emphasis>
+	    </para>
+	</section>
+
+	<section>
+	    <title><varname>unix_tx_timeout</varname> (integer)</title>
+	    <para>
+		Maximum timeout in seconds for the request sent over the unix
+		domain socket interface (using t_write_unix function). The
+		function will indicate failure if it does not manage to send
+		all the data within the interval configured by this parameter.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 2 seconds.
+		</emphasis>
+	    </para>
+	</section>
+
+	<section>
+	    <title><varname>restart_fr_on_each_reply</varname> (integer)</title>
+	    <para>
+		The parameter controls whether the FR timer will be restarted on
+		each provisional reply received.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 1 (yes).
+		</emphasis>
+	    </para>
+	</section>
+
+	<section>
+	    <title><varname>fr_timer_avp</varname> (string)</title>
+	    <para>
+		This parameter makes it possible to override the value of FR
+		(final reply) timer on per-transaction basis. TM module can
+		pick the value of the timer from an AVP. The name or ID of the
+		AVP can be configured by this parameter. If there is no such
+		AVP then the default value configured through fr_timer
+		parameter will be used.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is "callee_fr_timer".
+		</emphasis>
+	    </para>
+	</section>
+
+	<section>
+	    <title><varname>fr_inv_timer_avp</varname> (string)</title>
+	    <para>
+		This parameter makes it possible to override the value of FR
+		Invite (final response for INVITE transactions) timer on
+		per-transaction basis. TM module can pick the value of the
+		timer from an AVP. The name or ID of the AVP can be configured
+		by this parameter. If there is no such AVP then the default
+		value configured through fr_inv_timer parameter will be used.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is "callee_fr_inv_timer".
+		</emphasis>
+	    </para>
+	</section>
+
+	<section>
+	    <title><varname>tw_append</varname> (string)</title>
+	    <para>
+		This parameter configures additional information that can be
+		passed over the FIFO or unix domain socket interfaces by TM
+		module to another application. TM module can pass values of
+		AVPs, SIP message header fields, or the message body. Syntax of
+		the parameter is as follows:
+	    </para>
+	    <programlisting>
+tw_append = name ':' element ( ';' element ) *
+element   = [ title '=' ] ( avp_val | hdr_val )
+element   = title '=' body_val
+avp_val   = "avp" '[' avp_spec ']'
+hdr_val   = "hdr" '[' hdr_name ']'
+body_val  = "msg[body]"
+</programlisting>
+	    <para>
+		<emphasis>
+		    Default value is "".
+		</emphasis>
+	    </para>
+
+	    <example>
+		<title>Set <varname>tw_append</varname> parameter</title>
+		<para>
+		    Pass the value of callee_fr_timer AVP, the contents of
+		    Subject header field, and the whole SIP message body to the
+		    application over FIFO or unix domain socket interface.
+		</para>
+		<programlisting format="linespecific">
+...
+modparam("tm", "tw_append", "params:avp[callee_fr_timer];hdr[Subject];body=msg[body]")
+...
+</programlisting>
+	    </example>
+	</section>
 
 
     </section>
@@ -292,7 +435,8 @@ modparam("tm", "noisy_ctimer", 1)
 	<section>
 	    <title>
 		<function moreinfo="none">t_relay_to_udp(ip, port)</function>,
-		<function moreinfo="none">t_relay_to_tcp(ip, port)</function>
+		<function moreinfo="none">t_relay_to_tcp(ip, port)</function>,
+		<function moreinfo="none">t_relay_to_tls(ip, port)</function>
 	    </title>
 	    <para>
 		Relay a message statefully to a fixed destination. This along with <function
@@ -342,9 +486,12 @@ if (!t_relay()) { sl_reply_error(); break; };
 	    </example>
 	</section>
 
+
+
+
 	<section>
 	    <title>
-		<function moreinfo="none">t_on_negative(reply_route)</function>
+		<function moreinfo="none">t_on_failure(reply_route)</function>
 	    </title>
 	    <para>
 		Sets reply routing block, to which control is passed after a transaction completed
@@ -368,15 +515,15 @@ if (!t_relay()) { sl_reply_error(); break; };
 		</listitem>
 	    </itemizedlist>
 	    <example>
-		<title><function>t_on_negative</function> usage</title>
+		<title><function>t_on_failure</function> usage</title>
 		<programlisting format="linespecific">
 ...
 route { 
-    t_on_negative("1"); 
+    t_on_failure("1"); 
     t_relay(); 
 } 
 
-reply_route[1] {
+failure_route[1] {
     revert_uri(); 
     setuser("voicemail"); 
     append_branch(); 
@@ -388,6 +535,215 @@ reply_route[1] {
 		See test/onr.cfg for a more complex example of combination
 		of serial with parallel forking.
 	    </para>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">t_on_failure(reply_route)</function>
+	    </title>
+	    <para>
+		Sets reply routing block, to which control is passed after a transaction completed
+		with a negative result but before sending a final reply. In the referred block, you
+		can either start a new branch (good for services such as forward_on_no_reply) or
+		send a final reply on your own (good for example for message silo, which received a
+		negative reply from upstream and wants to tell upstream <quote>202 I will take care
+		of it</quote>). Note that the set of command which are usable within reply_routes
+		is strictly limited to rewriting &uri;, initiating new branches, logging, and
+		sending stateful replies (<function>t_reply</function>). Any other commands may
+		result in unpredictable behavior and possible server failure. Note that whenever
+		reply_route is entered, uri is reset to value which it had on relaying. If it
+		temporarily changed during a reply_route processing, subsequent reply_route will
+		ignore the changed value and use again the original one.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>reply_route</emphasis> - Reply route block to be called.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>t_on_failure</function> usage</title>
+		<programlisting format="linespecific">
+...
+route { 
+    t_on_failure("1"); 
+    t_relay(); 
+} 
+
+failure_route[1] {
+    revert_uri(); 
+    setuser("voicemail"); 
+    append_branch(); 
+}
+...
+</programlisting>
+	    </example>
+	    <para>
+		See test/onr.cfg for a more complex example of combination
+		of serial with parallel forking.
+	    </para>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">t_on_failure(reply_route)</function>
+	    </title>
+	    <para>
+		Sets reply routing block, to which control is passed after a transaction completed
+		with a negative result but before sending a final reply. In the referred block, you
+		can either start a new branch (good for services such as forward_on_no_reply) or
+		send a final reply on your own (good for example for message silo, which received a
+		negative reply from upstream and wants to tell upstream <quote>202 I will take care
+		of it</quote>). Note that the set of command which are usable within reply_routes
+		is strictly limited to rewriting &uri;, initiating new branches, logging, and
+		sending stateful replies (<function>t_reply</function>). Any other commands may
+		result in unpredictable behavior and possible server failure. Note that whenever
+		reply_route is entered, uri is reset to value which it had on relaying. If it
+		temporarily changed during a reply_route processing, subsequent reply_route will
+		ignore the changed value and use again the original one.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>reply_route</emphasis> - Reply route block to be called.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>t_on_failure</function> usage</title>
+		<programlisting format="linespecific">
+...
+route { 
+    t_on_failure("1"); 
+    t_relay(); 
+} 
+
+failure_route[1] {
+    revert_uri(); 
+    setuser("voicemail"); 
+    append_branch(); 
+}
+...
+</programlisting>
+	    </example>
+	    <para>
+		See test/onr.cfg for a more complex example of combination
+		of serial with parallel forking.
+	    </para>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">t_on_reply(onreply_route)</function>
+	    </title>
+	    <para>
+		Sets reply routing block, to which control is passed when a
+		reply is received from one of downstream branches. Only a
+		limited set of functions is available in onreply_route
+		blocks. The routing block will be called for every reply
+		received from downstream. A typical use for onreply_route
+		blocks would be rewriting contacts with private IP addresses in
+		200 OK replies by nathelper module.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>onreply_route</emphasis> - Reply route block to be called.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>t_on_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+route { 
+    t_on_reply("1"); 
+    t_relay(); 
+} 
+
+onreply_route[1] {
+    fix_nated_contact();
+    force_rtp_proxy();
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">t_check_status(regex)</function>
+	    </title>
+	    <para>
+		This function can be used to check the status code in replies
+		from failure_route and onreply_route blocks. It allows to
+		differentiate processing based on the status code received.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>regex</emphasis> - Regular expression to be
+		    matched agains the status code.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>t_check_status</function> usage</title>
+		<programlisting format="linespecific">
+...
+failure_route[1] {
+    if (t_check_status("486")) {
+        # Busy
+        t_relay_to_udp("1.2.3.4", "5060");
+    };
+ }
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">t_write_req(fifo, application)</function>
+	    </title>
+	    <para>
+		Send the request ove the FIFO interface to another application,
+		such as SEMS.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>fifo</emphasis> - Name of the FIFO interface.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>application</emphasis> - Name of the application.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">t_write_unix(socket, application)</function>
+	    </title>
+	    <para>
+		Send the request ove the unix domain socket interface to another application,
+		such as SEMS.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>socket</emphasis> - Filename of the unix
+		    domain socket.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>application</emphasis> - Name of the application.
+		    </para>
+		</listitem>
+	    </itemizedlist>
 	</section>
 
 	<section>
@@ -525,10 +881,43 @@ t_release();
 
 	<section>
 	    <title>
-		<function moreinfo="none">t_forward_nonack(ip, port)</function>
+		<function moreinfo="none">t_replicate(ip, port)</function>,
+		<function moreinfo="none">t_replicate_udp(ip, port)</function>,
+		<function moreinfo="none">t_replicate_tcp(ip, port)</function>,
+		<function moreinfo="none">t_replicate_tls(ip, port)</function>
 	    </title>
 	    <para>
-		mainly for internal usage--forward a non-ACK request statefully.
+		Replicate a message to another server. Functions with "_tls"
+		suffix are only available with additional TLS package.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>ip</emphasis> - &ip address where the message should be sent.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>port</emphasis> - Port number.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">t_forward_nonack(ip,
+		port)</function>,
+		<function moreinfo="none">t_forward_nonack_uri()</function>,
+		<function moreinfo="none">t_forward_nonack_udp(ip,
+		port)</function>,
+		<function moreinfo="none">t_forward_nonack_tcp(ip,
+		port)</function>,
+		<function moreinfo="none">t_forward_nonack_tls(ip, port)</function>
+	    </title>
+	    <para>
+		mainly for internal usage--forward a non-ACK request
+		statefully. t_forward_nonack_tls is only available with
+		additional TLS package.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
