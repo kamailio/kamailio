@@ -1,8 +1,8 @@
 %define name    ser
-%define ver     0.8.12
+%define ver     0.8.14
 %define rel     0
 
-%define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgress snmp cpl cpl-c ext extcmd
+%define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgres snmp cpl cpl-c extcmd
 %define MYSQL_MODULES		mysql
 %define JABBER_MODULES		jabber
 %define RADIUS_MODULES		auth_radius group_radius uri_radius
@@ -55,15 +55,15 @@ BuildPrereq:  expat-devel
 %description jabber
 The ser-jabber package contains a sip to jabber message translator.
 
-%package  radius
-Summary:  ser radius authentication, group and uri check modules.
-Group:    System Environment/Daemons
-Requires: ser = %ver
-BuildPrereq:  radiusclient-devel
+#%package  radius
+#Summary:  ser radius authentication, group and uri check modules.
+#Group:    System Environment/Daemons
+#Requires: ser = %ver
+#BuildPrereq:  radiusclient-devel
 
-%description radius
-The ser-radius package contains modules for radius authentication, group
- membership and uri checking.
+#%description radius
+#The ser-radius package contains modules for radius authentication, group
+# membership and uri checking.
 
 %prep
 %setup
@@ -98,16 +98,16 @@ make install-doc modules="modules/%JABBER_MODULES" \
 		prefix=/usr \
 		cfg-prefix=$RPM_BUILD_ROOT \
 		cfg-target=/%{_sysconfdir}/ser/ 
-make install-modules modules="%RADIUS_MOD_PATH" \
-		basedir=$RPM_BUILD_ROOT \
-		prefix=/usr \
-		cfg-prefix=$RPM_BUILD_ROOT \
-		cfg-target=/%{_sysconfdir}/ser/ 
-make install-doc modules="%RADIUS_MOD_PATH" \
-		basedir=$RPM_BUILD_ROOT \
-		prefix=/usr \
-		cfg-prefix=$RPM_BUILD_ROOT \
-		cfg-target=/%{_sysconfdir}/ser/ 
+#make install-modules modules="%RADIUS_MOD_PATH" \
+#		basedir=$RPM_BUILD_ROOT \
+#		prefix=/usr \
+#		cfg-prefix=$RPM_BUILD_ROOT \
+#		cfg-target=/%{_sysconfdir}/ser/ 
+#make install-doc modules="%RADIUS_MOD_PATH" \
+#		basedir=$RPM_BUILD_ROOT \
+#		prefix=/usr \
+#		cfg-prefix=$RPM_BUILD_ROOT \
+#		cfg-target=/%{_sysconfdir}/ser/ 
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 $RPM_SOURCE_DIR/ser.init \
@@ -145,6 +145,7 @@ fi
 %doc %{_docdir}/ser/README.domain
 %doc %{_docdir}/ser/README.enum
 %doc %{_docdir}/ser/README.exec
+%doc %{_docdir}/ser/README.ext
 %doc %{_docdir}/ser/README.group
 %doc %{_docdir}/ser/README.mangler
 %doc %{_docdir}/ser/README.maxfwd
@@ -180,9 +181,11 @@ fi
 %{_libdir}/ser/modules/domain.so
 %{_libdir}/ser/modules/enum.so
 %{_libdir}/ser/modules/exec.so
+%{_libdir}/ser/modules/ext.so
 %{_libdir}/ser/modules/group.so
 %{_libdir}/ser/modules/mangler.so
 %{_libdir}/ser/modules/maxfwd.so
+%{_libdir}/ser/modules/mediaproxy.so
 %{_libdir}/ser/modules/msilo.so
 %{_libdir}/ser/modules/nathelper.so
 %{_libdir}/ser/modules/pa.so
@@ -222,18 +225,22 @@ fi
 
 %{_libdir}/ser/modules/jabber.so
 
-%files radius
-%defattr(-,root,root)
-%doc %{_docdir}/ser/README.auth_radius
-%doc %{_docdir}/ser/README.group_radius
-%doc %{_docdir}/ser/README.uri_radius
+#%files radius
+#%defattr(-,root,root)
+#%doc %{_docdir}/ser/README.auth_radius
+#%doc %{_docdir}/ser/README.group_radius
+#%doc %{_docdir}/ser/README.uri_radius
 
-%{_libdir}/ser/modules/auth_radius.so
-%{_libdir}/ser/modules/group_radius.so
-%{_libdir}/ser/modules/uri_radius.so
+#%{_libdir}/ser/modules/auth_radius.so
+#%{_libdir}/ser/modules/group_radius.so
+#%{_libdir}/ser/modules/uri_radius.so
 
 
 %changelog
+
+* Fri Jul 23 2004 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
+- changed vesion to 0.8.14 (new upstream release)
+- added ext to the modules list, removed the radius modules (they depend on radiusclient-ng now)
 
 * Fri Nov 14 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
 - changed vesion to 0.8.12 (new upstream release)
