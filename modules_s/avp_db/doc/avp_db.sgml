@@ -1,0 +1,264 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN">
+
+<book>
+    <bookinfo>
+	<title>avp_db Module</title>
+	<authorgroup>
+	    <author>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<affiliation><orgname>FhG Fokus</orgname></affiliation>
+		<email>jiri@iptel.org</email>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2004</year>
+	    <year>2005</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    <chapter>
+	<title>User's Guide</title>
+	
+	<section>
+	    <title>Overview</title>
+	    <para>
+		This module contains several functions that can be used to
+		manipulate the contents of AVPs (Attribute-Value pairs). The
+		AVPs are variables attached to the SIP message being
+		processed. Each variable has its name and value. AVPs can be
+		used to store arbitrary data or as a means of inter-module comminication.
+	    </para>
+	    <para>
+		You may also want to check the avpops module which is more
+		flexible and contains more functions. In future SER releases
+		the avp module will be probably deprecated in favor of avpops module.
+	    </para>
+		<para>
+		Domain module operates in caching mode. Domain module reads the default values
+		of AVPs into cache memory when the module is loaded. After that default values
+		is re-read only when module is given avp_list_reload fifo command. Any changes 
+		in usr_preferences_types table must thus be followed by avp_list_reload command 
+		in order to reflect them in module behavior.
+		</para>
+	</section>
+	
+	<section>
+	<title>Dependencies</title>
+	    <para>
+		A database module, such as mysql, postgres, or dbtext.
+	    </para>
+	</section>
+	<section>
+	    <title>Exported Parameters</title>
+	    <section>
+		<title><varname>caller_uuid_avp</varname> (integer)</title>
+		<para>
+		    Number of the AVP that contains the UUID of caller.
+		</para>
+		<para>
+		    Default value is 1.
+		</para>
+	    </section>
+	    <section>
+		<title><varname>callee_uuid_avp</varname> (integer)</title>
+		<para>
+		    Number of the AVP that contains the UUID of callee.
+		</para>
+		<para>
+		    Default value is 2.
+		</para>
+	    </section>
+	    <section>
+		<title><varname>db_url</varname> (string)</title>
+		<para>
+		    The URL of the database to be used.
+		</para>
+		<para>
+		    Default value is "mysql://ser:heslo@localhost/ser".
+		</para>
+	    </section>
+	    <section>
+		<title><varname>pref_table</varname> (string)</title>
+		<para>
+		    Name of the user preferences table from which the contents
+		    of AVPs will be loaded.
+		</para>
+		<para>
+		    Default value is "usr_preferences".
+		</para>
+	    </section>
+
+	    <section>
+		<title><varname>uuid_column</varname> (string)</title>
+		<para>
+		    Name of the column that stores UUID in the preferences table.
+		</para>
+		<para>
+		    Default value is "uuid".
+		</para>
+	    </section>
+	    <section>
+		<title><varname>username_column</varname> (string)</title>
+		<para>
+		    Name of the column containing the username of the subscriber.
+		</para>
+		<para>
+		    Default value is "username".
+		</para>
+	    </section>
+	    <section>
+		<title><varname>domain_column</varname> (string)</title>
+		<para>
+		    Name of the column containing the domain that the
+		    subscriber belongs to. This is useful when SER is running
+		    in multi-domain mode.
+		</para>
+		<para>
+		    Default value is "domain".
+		</para>
+	    </section>
+	    <section>
+		<title><varname>attr_column</varname> (string)</title>
+		<para>
+		    The name of the column containing attribute names.
+		</para>
+		<para>
+		    Default value is "attribute".
+		</para>
+	    </section>
+	    <section>
+		<title><varname>val_column</varname> (string)</title>
+		<para>
+		    The name of the column containing attribute value.
+		</para>
+		<para>
+		    Default value is "value".
+		</para>
+	    </section>
+	    <section>
+		<title><varname>use_domain</varname> (int)</title>
+		<para>
+		    This parameter controls where the module should use also
+		    the domain part, in addition to the username, as the
+		    key. This parameter should be set to 1 in multi-domain mode.
+		</para>
+		<para>
+		    Default value is 0.
+		</para>
+	    </section>
+	    <section>
+		<title><varname>pref_list_table</varname> (string)</title>
+		<para>
+		    Name of the table storing user preferences types and default values.
+		</para>
+		<para>
+		    Default value is "usr_preferences_types".
+		</para>
+	    </section>
+	    <section>
+		<title><varname>attr_name_column</varname> (string)</title>
+		<para>
+		    The name of the column in usr_preferences_types table
+		    storing names of AVPs.
+		</para>
+		<para>
+		    Default value is "att_name".
+		</para>
+	    </section>
+	    <section>
+		<title><varname>att_type_column</varname> (string)</title>
+		<para>
+		    The name of the column in usr_preferences_types table
+		    storing types of AVPs.
+		</para>
+		<para>
+		    Default value is "att_raw_type".
+		</para>
+	    </section>
+	    <section>
+		<title><varname>att_dval_column</varname> (string)</title>
+		<para>
+		    The name of the column in usr_preferences_types table
+		    containing default values of AVPs.
+		</para>
+		<para>
+		    Default value is "default_value".
+		</para>
+	    </section>
+	</section>
+	
+	<section>
+	    <title>Exported Functions</title>
+
+	    <section>
+		<title><function moreinfo="none">avp_load(type)</function></title>
+		<para>
+		    Load AVPs from the database.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		    <listitem>
+			<para><emphasis>type</emphasis> - One of:
+			    <itemizedlist>
+				<listitem>
+				    <para>
+					caller_uuid - Load AVPs for caller
+					identified by UUID. All AVP names will
+					have "caller_" prefix.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					callee_uuid - Load AVPs for callee
+					identified by UUID. All AVP names will
+					have "callee_" prefix.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					caller - Load AVPs for caller based on
+					the URI of the caller (From). All AVP names
+					will have "caller_" prefix.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					callee - Load AVPs for callee based on
+					the URI of the callee
+					(Request-URI). All AVP names will have
+					"callee_" prefix.
+				    </para>
+				</listitem>
+			    </itemizedlist>
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </section>
+	</section>
+
+    <section>
+		<title><acronym>FIFO</acronym> Commands</title>
+		<section>
+			<title><function moreinfo="none">avp_list_reload</function></title>
+			<para>
+			Causes avp_db module to re-read the contents of pref_list_table table
+			into cache memory.
+			</para>
+		</section>
+    </section>
+    </chapter>
+</book>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+End:
+-->
