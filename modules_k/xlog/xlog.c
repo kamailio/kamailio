@@ -43,6 +43,7 @@ char *log_buf = NULL;
 
 /** parameters */
 int buf_size=4096;
+int force_color=0;
 
 /** module functions */
 static int mod_init(void);
@@ -66,7 +67,8 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{"buf_size",  INT_PARAM, &buf_size},
+	{"buf_size",     INT_PARAM, &buf_size},
+	{"force_color",  INT_PARAM, &force_color},
 	{0,0,0}
 };
 
@@ -117,7 +119,7 @@ static int xlog(struct sip_msg* msg, char* lev, char* frm)
 
 	log_len = buf_size;
 
-	if(xl_print_log(msg, (xl_elog_t*)frm, log_buf, &log_len)<0)
+	if(xl_print_log(msg, (xl_elem_t*)frm, log_buf, &log_len)<0)
 		return -1;
 
 	/* log_buf[log_len] = '\0'; */
@@ -134,7 +136,7 @@ static int xdbg(struct sip_msg* msg, char* frm, char* str2)
 
 	log_len = buf_size;
 
-	if(xl_print_log(msg, (xl_elog_t*)frm, log_buf, &log_len)<0)
+	if(xl_print_log(msg, (xl_elem_t*)frm, log_buf, &log_len)<0)
 		return -1;
 
 	/* log_buf[log_len] = '\0'; */
@@ -190,17 +192,27 @@ static int xlog_fixup(void** param, int param_no)
 
 static int xdbg_fixup(void** param, int param_no)
 {
-	xl_elog_t *model;
+	xl_elem_t *model;
 
 	if(param_no==1)
 	{
 		if(*param)
 		{
-			if(xl_parse_format((char*)(*param), &model)<0)
+			if(log_stderr!=0 || (log_stderr==0 && force_color!=0))
 			{
-				LOG(L_ERR, "XLOG:xdbg_fixup: ERROR: wrong format[%s]\n",
-					(char*)(*param));
-				return E_UNSPEC;
+				if(xl_parse_format((char*)(*param), &model, XL_DISABLE_NONE)<0)
+				{
+					LOG(L_ERR, "XLOG:xdbg_fixup: ERROR: wrong format[%s]\n",
+						(char*)(*param));
+					return E_UNSPEC;
+				}
+			} else {
+				if(xl_parse_format((char*)(*param),&model,XL_DISABLE_COLORS)<0)
+				{
+					LOG(L_ERR, "XLOG:xdbg_fixup: ERROR: wrong format[%s]!\n",
+						(char*)(*param));
+					return E_UNSPEC;
+				}
 			}
 			
 			*param = (void*)model;

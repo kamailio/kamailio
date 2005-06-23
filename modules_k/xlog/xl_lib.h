@@ -23,22 +23,9 @@
 #ifndef _XL_LIB_H_
 #define _XL_LIB_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../items.h"
 
-typedef int (*item_func_t) (struct sip_msg*, str*, str*, int);
-
-typedef struct _xl_elog
-{
-	str text;
-	str hparam;
-	int hindex;
-	item_func_t itf;
-	struct _xl_elog *next;
-} xl_elog_t, *xl_elog_p;
-
-int xl_elog_free_all(xl_elog_p log);
-int xl_parse_format(char *s, xl_elog_p *el);
-int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len);
+int xl_print_log(struct sip_msg* msg, xl_elem_p log, char *buf, int *len);
 
 #endif
 
