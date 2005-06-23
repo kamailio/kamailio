@@ -13,32 +13,6 @@
     <qandaset defaultlabel="number">
 	<qandaentry>
 	    <question>
-		<para>
-		Does <emphasis>dispatcher</emphasis> provide a fair distribution?
-		</para>
-	    </question>
-	    <answer>
-		<para>
-		    There is no guarantee of that. You should do some measurements
-			to decide what distribution algorithm fits better in your
-			environment.
-		</para>
-	    </answer>
-	</qandaentry>
-	<qandaentry>
-	    <question>
-		<para>Is <emphasis>dispatcher</emphasis> dialog stateful?</para>
-	    </question>
-	    <answer>
-		<para>
-		    No. Dispatcher is stateless, although some distribution algorithms
-			are designed to select same destination for subsequent requests of
-			the same dialog (e.g., hashing the call-id).
-		</para>
-	    </answer>
-	</qandaentry>
-	<qandaentry>
-	    <question>
 		<para>Where can I find more about &ser;?</para>
 	    </question>
 	    <answer>

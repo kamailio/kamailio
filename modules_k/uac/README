@@ -181,30 +181,15 @@ Chapter 2. Developer's Guide
 
 Chapter 3. Frequently Asked Questions
 
-   3.1. Does dispatcher provide a fair distribution? 
-   3.2. Is dispatcher dialog stateful?
-   3.3. Where can I find more about OpenSER?
-   3.4. Where can I post a question about this module?
-   3.5. How can I report a bug?
+   3.1. Where can I find more about OpenSER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
 
-   3.1. Does dispatcher provide a fair distribution?
-
-   There is no guarantee of that. You should do some measurements
-   to decide what distribution algorithm fits better in your
-   environment.
-
-   3.2. Is dispatcher dialog stateful?
-
-   No. Dispatcher is stateless, although some distribution
-   algorithms are designed to select same destination for
-   subsequent requests of the same dialog (e.g., hashing the
-   call-id).
-
-   3.3. Where can I find more about OpenSER?
+   3.1. Where can I find more about OpenSER?
 
    Take a look at http://openser.org/.
 
-   3.4. Where can I post a question about this module?
+   3.2. Where can I post a question about this module?
 
    First at all check if your question was already answered on
    one of our mailing lists:
@@ -221,7 +206,7 @@ Chapter 3. Frequently Asked Questions
    If you want to keep the mail private, send it to
    <team@openser.org>.
 
-   3.5. How can I report a bug?
+   3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
    http://openser.org/bugs
