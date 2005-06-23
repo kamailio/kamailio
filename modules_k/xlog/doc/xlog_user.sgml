@@ -14,206 +14,48 @@
     <section>
 	<title>Overview</title>
 	<para>
-	    This module provides the possibility to print user formatted log or debug messages from
-	    &ser; scripts, similar to printf function but now a specifier is replaced with a part of
-	    the &sip; request. <xref linkend="sec-implemented-specifiers"> shows what can be printed
+	    This module provides the possibility to print user formatted log or
+		debug messages from &ser; scripts, similar to printf function but now
+		a specifier is replaced with a part of the &sip; request or other
+		variables from system.
+		<xref linkend="sec-implemented-specifiers"> shows what can be printed
 	    out.
 	</para>
     </section>
     <section id="sec-implemented-specifiers">
 	<title>Implemented Specifiers</title>
+	<para>
+	The specifiers have been replaced by pseudo-variables which are
+	now part of &ser; core and are used by other modules as well (e.g., avpops
+	in the function avp_printf())
+	</para>
+	<para>
+	The most important changes are:
+	</para>
 	<itemizedlist>
 	    <listitem>
 		<para>
-		    %% : '%'
+		- '%' has been replaced by '$'
 		</para>
 	    </listitem>
 	    <listitem>
 		<para>
-		    %br : request's first branch
+		- to print a header, use now $hdr(header_name[index]) instead of
+		%{header_name[index]}
 		</para>
 	    </listitem>
 	    <listitem>
 		<para>
-		    %bR : request's all branches
+		- to print an AVP, use now $avp([si]:avp_id[index]) instead of
+		%{[si]:avp_id[index]} or $avp([$avp_alias[index]) instead of
+		%{[$avp_alias[index]}
 		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %ci : call-id
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %cs : cseq
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %ct : contact header
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %ds : destination set
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %du : destination uri
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %fu : 'From' uri
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %ft : 'From' tag
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %mb : whole SIP message buffer
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %mf : flags set for current SIP request
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %mF : flags set for current SIP request in hexa
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %mi : SIP message id
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %ml : SIP message length
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %pp : process id (pid)
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %rm : request's method
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %rr : reply's reason
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %rs : reply's status
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %rt : refer-to uri
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %ru : request's r-uri
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %Ri : IP address of the interface where the request
-		    has been received
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %Rp : received port
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %si : IP source address (previously was %is)
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %sp : source port
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %tt : 'To' tag
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %tu : 'To' uri
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %Tf : string formatted time
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %Ts : unix time stamp
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %ua : User agent header field
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		%{id[N]} : print headers or AVPs
-		</para>
-		<itemizedlist>
-	    <listitem>
-		<para>
-		    %{name[N]} : print the body of the Nth header identified by 
-			'name'. If [N] is omitted then the body of the first header is
-			printed. The first header is got when N=0, for the second N=1,
-			a.s.o. To print the last header of that type, use -1, no other
-			negative values are supported now. No white spaces are allowed
-			inside the specifier (before }, before or after {, [, ]
-			symbols). When N='*', all headers of that type are printed.
-		</para>
-		<para>
-			The module should identify most of compact header names (the ones
-			recognized by &ser; which should be all at this moment), if not,
-			the compact form has to be specified explicitely. It is
-			recommended to use dedicated specifiers for headers (e.g., %ua
-			for user agent header), if they are available -- they are faster.
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %{[si]:name[N]} : print the value of the AVP identified by
-			'name'. The leter before ':' specifies the type of the AVP name
-			(i - integer, s - string; when missing it is considered string).
-			N has the meaning as for header printing.
-		<para>
-		</listitem>
-	    <listitem>
-		<para>
-		    %{$name[N]} : print the value of the AVP identified by the alias
-			'name'. N has the meaning as for header printing.
-		<para>
-		</listitem>
-		</itemizedlist>
 	    </listitem>
 	</itemizedlist>
+	<para>
+	The full list of available pseudo-variables in &ser; is availabe at:
+	 <ulink url="http://openser.org/docs/pseudo-variables.html">http://openser.org/docs/pseudo-variables.html</ulink>
+	</para>
     </section>
     <section>
 	<title>Dependencies</title>
@@ -262,6 +104,25 @@
 		<programlisting format="linespecific">
 ...
 modparam("xlog", "buf_size", 8192)
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>force_color</varname> (integer)</title>
+	    <para>
+		When set to 1, forces color printing even if log_stderror=0.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>force_color</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xlog", "force_color", 0)
 ...
 </programlisting>
 	    </example>
@@ -331,7 +192,7 @@ modparam("xlog", "buf_size", 8192)
 		<title><function>xlog</function> usage</title>
 		<programlisting format="linespecific">
 ...
-xlog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru> 2nd via <%{via[1]}>\n");
+xlog("L_ERR", "time [$Tf] method <$rm> r-uri <$ru> 2nd via <$hdr(via[1])>\n");
 ...
 </programlisting>
 	    </example>
@@ -355,7 +216,7 @@ xlog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru> 2nd via <%{via[1]}>\n");
 		<title><function>xdbg</function> usage</title>
 		<programlisting format="linespecific">
 ...
-xdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
+xdbg("time $Cbx[$Tf]$Cxx method <$rm> r-uri <$ru>\n");
 ...
 </programlisting>
 	    </example>

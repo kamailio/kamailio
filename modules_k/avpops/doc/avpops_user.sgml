@@ -625,6 +625,45 @@ avp_copy("$old","$new/gd");
 		</section>
 		<section>
 			<title>
+				<function moreinfo="none">avp_printf(dest, format)
+				</function>
+			</title>
+			<para>
+			Prints the formatted string 'format' in the AVP 'dest'. The
+			'format' parameter can include any pseudo-variable defined in
+			&ser;. The list with all pseudo-variables in &ser; can be found
+			at: <ulink url="http://openser.org/docs/pseudo-variables.html">http://openser.org/docs/pseudo-variables.html</ulink>.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>dest</emphasis> - in which AVP should be 
+				stored the result.
+				Parameter syntax is:
+				</para>
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = ( avp_name | avp_alias )
+					</emphasis></para></listitem>
+				</itemizedlist>
+			</listitem>
+			<listitem>
+				<para><emphasis>format</emphasis> - the formatted string
+				to be printed in 'dest' AVP.
+				</para>
+			</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>avp_printf</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_printf("i:20", "This is a $rm request with the call-id $hdr(call-id)");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
 				<function moreinfo="none">avp_print()
 				</function>
 			</title>

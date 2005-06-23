@@ -27,6 +27,7 @@ Elena-Ramona Modroiu
         1.4. Exported Parameters
 
               1.4.1. buf_size (integer)
+              1.4.2. force_color (integer)
 
         1.5. Exported Functions
 
@@ -38,8 +39,9 @@ Elena-Ramona Modroiu
 
    List of Examples
    1-1. Set buf_size parameter
-   1-2. xlog usage
-   1-3. xdbg usage
+   1-2. Set force_color parameter
+   1-3. xlog usage
+   1-4. xdbg usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -49,91 +51,28 @@ Chapter 1. User's Guide
    This module provides the possibility to print user formatted
    log or debug messages from OpenSER scripts, similar to printf
    function but now a specifier is replaced with a part of the
-   SIP request. Section 1.2 shows what can be printed out.
+   SIP request or other variables from system. Section 1.2 shows
+   what can be printed out.
      _________________________________________________________
 
 1.2. Implemented Specifiers
 
-     * %% : '%'
-     * %br : request's first branch
-     * %bR : request's all branches
-     * %ci : call-id
-     * %cs : cseq
-     * %ct : contact header
-     * %ds : destination set
-     * %du : destination uri
-     * %fu : 'From' uri
-     * %ft : 'From' tag
-     * %mb : whole SIP message buffer
-     * %mf : flags set for current SIP request
-     * %mF : flags set for current SIP request in hexa
-     * %mi : SIP message id
-     * %ml : SIP message length
-     * %pp : process id (pid)
-     * %rm : request's method
-     * %rr : reply's reason
-     * %rs : reply's status
-     * %ru : request's r-uri
-     * %Ri : IP address of the interface where the request has
-       been received
-     * %Rp : received port
-     * %si : IP source address (previously was %is)
-     * %sp : source port
-     * %tt : 'To' tag
-     * %tu : 'To' uri
-     * %Tf : string formatted time
-     * %Ts : unix time stamp
-     * %ua : User agent header field
-     * %{id[N]} : print headers or AVPs
-          + %{name[N]} : print the body of the Nth header
-            identified by 'name'. If [N] is omitted then the body
-            of the first header is printed. The first header is
-            got when N=0, for the second N=1, a.s.o. To print the
-            last header of that type, use -1, no other negative
-            values are supported now. No white spaces are allowed
-            inside the specifier (before }, before or after {, [,
-            ] symbols). When N='*', all headers of that type are
-            printed.
-            The module should identify most of compact header
-            names (the ones recognized by OpenSER which should be
-            all at this moment), if not, the compact form has to
-            be specified explicitely. It is recommended to use
-            dedicated specifiers for headers (e.g., %ua for user
-            agent header), if they are available -- they are
-            faster.
-          + %{[si]:name[N]} : print the value of the AVP
-            identified by 'name'. The leter before ':' specifies
-            the type of the AVP name (i - integer, s - string;
-            when missing it is considered string). N has the
-            meaning as for header printing.
-          + %{$name[N]} : print the value of the AVP identified
-            by the alias 'name'. N has the meaning as for header
-            printing.
+   The specifiers have been replaced by pseudo-variables which
+   are now part of OpenSER core and are used by other modules as
+   well (e.g., avpops in the function avp_printf())
+
+   The most important changes are:
+
+     * - '%' has been replaced by '$'
+     * - to print a header, use now $hdr(header_name[index])
+       instead of %{header_name[index]}
+     * - to print an AVP, use now $avp([si]:avp_id[index])
+       instead of %{[si]:avp_id[index]} or
+       $avp([$avp_alias[index]) instead of %{[$avp_alias[index]}
+
+   The full list of available pseudo-variables in OpenSER is
+   availabe at: http://openser.org/docs/pseudo-variables.html
      _________________________________________________________
-
-1.2.1 Color Specifiers
-
-     *  %Cxy : Color specifier; x: foreground, y: background
-
-     Colors could be:
-
-     * s : Black
-     * r : Red  
-     * g : Green
-     * y : Yellow
-     * b : Blue  
-     * p : Purple
-     * c : Cyan  
-     * w : White 
-     * x : default terminal color 
-
-     Writting the 1st color specifier in capitals gives bold
-     text. If you don't want to change foreground or background
-	 color use 'x'.
-     
-     Multiple color specifiers are possible.
-     
-	 _________________________________________________________
 
 1.3. Dependencies
 
@@ -166,6 +105,18 @@ modparam("xlog", "buf_size", 8192)
 ...
      _________________________________________________________
 
+1.4.2. force_color (integer)
+
+   When set to 1, forces color printing even if log_stderror=0.
+
+   Default value is 0. 
+
+   Example 1-2. Set force_color parameter
+...
+modparam("xlog", "force_color", 0)
+...
+     _________________________________________________________
+
 1.5. Exported Functions
 
 1.5.1. xlog(level, format)
@@ -186,10 +137,10 @@ modparam("xlog", "buf_size", 8192)
        What really matters is the third letter of the value.
      * format - The formatted string to be printed.
 
-   Example 1-2. xlog usage
+   Example 1-3. xlog usage
 ...
-xlog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru> 2nd via <%{via[1]}>\
-n");
+xlog("L_ERR", "time [$Tf] method <$rm> r-uri <$ru> 2nd via <$hdr(via[1]
+)>\n");
 ...
      _________________________________________________________
 
@@ -201,9 +152,9 @@ n");
 
      * format - The formatted string to be printed.
 
-   Example 1-3. xdbg usage
+   Example 1-4. xdbg usage
 ...
-xdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
+xdbg("time $Cbx[$Tf]$Cxx method <$rm> r-uri <$ru>\n");
 ...
      _________________________________________________________
 
