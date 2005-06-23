@@ -47,6 +47,7 @@
 #include "../../str.h"
 #include "../../dprint.h"
 #include "../../error.h"
+#include "../../items.h"
 #include "avpops_parse.h"
 #include "avpops_impl.h"
 #include "avpops_db.h"
@@ -74,6 +75,7 @@ static int fixup_delete_avp(void** param, int param_no);
 static int fixup_pushto_avp(void** param, int param_no);
 static int fixup_check_avp(void** param, int param_no);
 static int fixup_copy_avp(void** param, int param_no);
+static int fixup_printf(void** param, int param_no);
 
 static int w_dbload_avps(struct sip_msg* msg, char* source, char* param);
 static int w_dbstore_avps(struct sip_msg* msg, char* source, char* param);
@@ -84,6 +86,7 @@ static int w_pushto_avps(struct sip_msg* msg, char* destination, char *param);
 static int w_check_avps(struct sip_msg* msg, char* param, char *check);
 static int w_copy_avps(struct sip_msg* msg, char* param, char *check);
 static int w_print_avps(struct sip_msg* msg, char* foo, char *bar);
+static int w_printf(struct sip_msg* msg, char* dest, char *format);
 
 
 
@@ -108,6 +111,8 @@ static cmd_export_t cmds[] = {
 	{"avp_copy",  w_copy_avps, 2,  fixup_copy_avp,
 									REQUEST_ROUTE|FAILURE_ROUTE},
 	{"avp_print", w_print_avps, 0, 0,
+									REQUEST_ROUTE|FAILURE_ROUTE},
+	{"avp_printf", w_printf, 2, fixup_printf,
 									REQUEST_ROUTE|FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
@@ -764,6 +769,44 @@ static int fixup_copy_avp(void** param, int param_no)
 	return 0;
 }
 
+static int fixup_printf(void** param, int param_no)
+{
+	struct fis_param *ap;
+	xl_elem_t *model;
+
+	if (param_no==1) {
+		/* attribute name / alias */
+		if ( (ap=get_attr_or_alias((char*)*param))==0 )
+		{
+			LOG(L_ERR,"ERROR:avpops:fixup_printf: bad attribute name"
+				"/alias <%s>\n", (char*)*param);
+			return E_UNSPEC;
+		}
+		pkg_free(*param);
+		*param=(void*)ap;
+	} else if (param_no==2) {
+		if(*param)
+		{
+			if(xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS)<0)
+			{
+				LOG(L_ERR, "ERROR:avpops:fixup_printf: wrong format[%s]\n",
+					(char*)(*param));
+				return E_UNSPEC;
+			}
+			
+			*param = (void*)model;
+			return 0;
+		}
+		else
+		{
+			LOG(L_ERR, "ERROR:avpops:fixup_printf: null format\n");
+			return E_UNSPEC;
+		}
+	}
+
+	return 0;
+}
+
 
 static int w_dbload_avps(struct sip_msg* msg, char* source, char* param)
 {
@@ -823,4 +866,8 @@ static int w_print_avps(struct sip_msg* msg, char* foo, char *bar)
 	return ops_print_avp();
 }
 
+static int w_printf(struct sip_msg* msg, char* dest, char *format)
+{
+	return ops_printf(msg, (struct fis_param*)dest, (xl_elem_t*)format);
+}
 

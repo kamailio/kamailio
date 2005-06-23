@@ -46,6 +46,7 @@
 #include "../../dset.h"
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
+#include "../../items.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
 #include "../../mem/mem.h"
@@ -1124,6 +1125,44 @@ int ops_print_avp()
 	}
 
 	
+	return 1;
+}
+
+#define AVP_PRINTBUF_SIZE 1024
+int ops_printf(struct sip_msg* msg, struct fis_param* dest, xl_elem_t *format)
+{
+	static char printbuf[AVP_PRINTBUF_SIZE];
+	int printbuf_len;
+	int_str avp_val;
+	unsigned short flags;
+	str s;
+
+	if(msg==NULL || dest==NULL || format==NULL)
+	{
+		LOG(L_ERR, "avpops:ops_printf: error - bad parameters\n");
+		return -1;
+	}
+	
+	printbuf_len = AVP_PRINTBUF_SIZE-1;
+	if(xl_printf(msg, format, printbuf, &printbuf_len)<0)
+	{
+		LOG(L_ERR, "avpops:ops_printf: error - cannot print the format\n");
+		return -1;
+	}
+	s.s   = printbuf;
+	s.len = printbuf_len;
+	avp_val.s = &s;
+		
+	/* set the proper flag */
+	flags = AVP_VAL_STR;
+	flags |=  (dest->flags&AVPOPS_VAL_INT)?0:AVP_NAME_STR;
+
+	if (add_avp(flags, dest->val, avp_val)<0)
+	{
+		LOG(L_ERR, "avpops:ops_printf: error - cannot add AVP\n");
+		return -1;
+	}
+
 	return 1;
 }
 

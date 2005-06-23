@@ -36,6 +36,7 @@
 
 #include "../../str.h"
 #include "../../usr_avp.h"
+#include "../../items.h"
 #include "../../parser/msg_parser.h"
 
 #include "avpops_db.h"
@@ -80,7 +81,6 @@
 #define AVPOPS_FLAG_DOMAIN  (1<<27)
 #define AVPOPS_FLAG_DELETE  (1<<28)
 
-
 /* container structer for Flag+Int_Str_value parameter */
 struct fis_param
 {
@@ -124,6 +124,8 @@ int ops_copy_avp( struct sip_msg* msg, struct fis_param* name1,
 								struct fis_param* name2);
 
 int ops_print_avp();
+
+int ops_printf(struct sip_msg* msg, struct fis_param* dest, xl_elem_t *format);
 
 #endif
 
