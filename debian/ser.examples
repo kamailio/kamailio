@@ -10,4 +10,6 @@ examples/redirect.cfg
 examples/replicate.cfg
 examples/serial_183.cfg
 examples/uas.cfg
+examples/vm_proxy.cfg
+examples/voicemail.cfg
 examples/welcome.cfg
