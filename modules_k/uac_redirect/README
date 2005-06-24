@@ -90,8 +90,8 @@ Chapter 1. User's Guide
 
    The logging will be done via the accounting module functions
    (all are supported). The information to be logged will be the
-   same as the normal logged information direcly via ACC module,
-   but with differencies:
+   same as the normal logged information directly via ACC module,
+   but with following differences:
 
      * reason phrase - which will be dynamically set by the
        redirection function;
@@ -131,8 +131,8 @@ Chapter 1. User's Guide
 
 1.4.1. default_filter (string)
 
-   The default behaviour in filtering contacts. It may be
-   "accept" or "deny".
+   The default behavior in filtering contacts. It may be "accept"
+   or "deny".
 
    The default value is "accept". 
 
@@ -151,7 +151,7 @@ modparam("uac_redirect","default_filter","deny")
 
    The parameter may be defined only one - multiple definition
    will overwrite the previous definitions. If more regular
-   expresion need to be defined, use the set_deny_filter()
+   expression need to be defined, use the set_deny_filter()
    scripting function.
 
    This parameter is optional, it's default value being NULL. 
@@ -171,7 +171,7 @@ modparam("uac_redirect","deny_filter",".*@siphub\.net")
 
    The parameter may be defined only one - multiple definition
    will overwrite the previous definitions. If more regular
-   expresion need to be defined, use the set_accept_filter()
+   expression need to be defined, use the set_accept_filter()
    scripting function.
 
    This parameter is optional, it's default value being NULL. 
@@ -185,8 +185,8 @@ modparam("uac_redirect","accept_filter",".*@siphub\.net")
 1.4.4. acc_function (string)
 
    Specifies the accounting function to be used. Just be defining
-   this parameter, the accountign support will not be enabled.
-   Accountinf may only be enabled via two parameters
+   this parameter, the accounting support will not be enabled.
+   Accounting may only be enabled via two parameters
    set_accept_filter() scripting function.
 
    Its values my be:
@@ -207,9 +207,9 @@ modparam("uac_redirect","acc_function","acc_db_request")
 1.4.5. acc_db_table (string)
 
    Specifies the accounting table to be used if DB accounting was
-   choosen (acc_function was set to "acc_db_request"). Just be
-   defining this parameter, the accountign support will not be
-   enabled. Accountinf may only be enabled via two parameters
+   chosen (acc_function was set to "acc_db_request"). Just be
+   defining this parameter, the accounting support will not be
+   enabled. Accounting may only be enabled via two parameters
    set_accept_filter() scripting function.
 
    The default value is "acc". 
@@ -224,11 +224,11 @@ modparam("uac_redirect","acc_db_table","acc_redirect")
 
 1.5.1. set_deny_filter(filter,flags)
 
-   Sets additionals deny filters. Maximum 6 may be combined. This
+   Sets additional deny filters. Maximum 6 may be combined. This
    additional filter will apply only to the current message - it
    will not have a global effect.
 
-   Default or prevoius added deny filter may be reset depending
+   Default or previous added deny filter may be reset depending
    of the flag parameter value:
 
      * reset_all - reset both default and previous added deny
@@ -246,11 +246,11 @@ set_deny_filter(".*@domain1.net","");
 
 1.5.2. set_accept_filter(filter,flags)
 
-   Sets additionals accept filters. Maximum 6 may be combined.
+   Sets additional accept filters. Maximum 6 may be combined.
    This additional filter will apply only to the current message
    - it will not have a global effect.
 
-   Default or prevoius added deny filter may be reset depending
+   Default or previous added deny filter may be reset depending
    of the flag parameter value:
 
      * reset_all - reset both default and previous added accept
@@ -271,8 +271,8 @@ set_accept_filter(".*@domain1.net","");
 
    The function may be called only from failure routes. It will
    extract the contacts from all 3xx branches and append them as
-   new branches. Note that the function will not forward the nw
-   brnaches, this must be done explicitly from script.
+   new branches. Note that the function will not forward the new
+   branches, this must be done explicitly from script.
 
    How many contacts (in total and per branch) are selected
    depends of the max parameter values. Its syntax is:
@@ -309,7 +309,7 @@ get_redirects("*");
 
    The accounting records will be mark by the reason phrase.
 
-   If this funtion appers in the script, at startup, the module
+   If this function appears in the script, at startup, the module
    will import the accounting function. Otherwise not.
 
    Example 1-9. get_redirects usage

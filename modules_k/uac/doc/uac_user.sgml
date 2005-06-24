@@ -25,7 +25,13 @@
 		<itemizedlist>
 			<listitem>
 			<para>
-				authentication does not support qop
+				authentication does not support qop;
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				CSeq not increased during authentication - the response 
+				may be rejected.
 			</para>
 			</listitem>
 		</itemizedlist>

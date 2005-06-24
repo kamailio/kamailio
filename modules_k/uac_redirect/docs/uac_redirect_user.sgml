@@ -57,8 +57,8 @@
 		<para>
 		The logging will be done via the accounting module functions (all are
 		supported). The information to be logged will be the same as the 
-		normal logged information direcly via ACC module, but with 
-		differencies:
+		normal logged information directly via ACC module, but with 
+		following differences:
 		</para>
 		<itemizedlist>
 			<listitem>
@@ -130,7 +130,7 @@
 		<section>
 			<title><varname>default_filter</varname> (string)</title>
 			<para>
-			The default behaviour in filtering contacts. It may be 
+			The default behavior in filtering contacts. It may be 
 			<quote>accept</quote> or <quote>deny</quote>.
 			</para>
 			<para>
@@ -159,7 +159,7 @@ modparam("uac_redirect","default_filter","deny")
 			</para>
 			<para>
 			The parameter may be defined only one - multiple definition will
-			overwrite the previous definitions. If more regular expresion 
+			overwrite the previous definitions. If more regular expression 
 			need to be defined, use the 
 			<function moreinfo="none">set_deny_filter()</function> scripting
 			function.
@@ -191,7 +191,7 @@ modparam("uac_redirect","deny_filter",".*@siphub\.net")
 			</para>
 			<para>
 			The parameter may be defined only one - multiple definition will
-			overwrite the previous definitions. If more regular expresion 
+			overwrite the previous definitions. If more regular expression 
 			need to be defined, use the 
 			<function moreinfo="none">set_accept_filter()</function> scripting
 			function.
@@ -216,8 +216,8 @@ modparam("uac_redirect","accept_filter",".*@siphub\.net")
 			<title><varname>acc_function</varname> (string)</title>
 			<para>
 			Specifies the accounting function to be used. Just be defining 
-			this parameter, the accountign support will not be enabled. 
-			Accountinf may only be enabled via two parameters 
+			this parameter, the accounting support will not be enabled. 
+			Accounting may only be enabled via two parameters 
 			<function moreinfo="none">set_accept_filter()</function> 
 			scripting function.
 			</para>
@@ -256,10 +256,10 @@ modparam("uac_redirect","acc_function","acc_db_request")
 			<title><varname>acc_db_table</varname> (string)</title>
 			<para>
 			Specifies the accounting table to be used if DB accounting was 
-			choosen (<varname>acc_function</varname> was set to 
+			chosen (<varname>acc_function</varname> was set to 
 			<quote>acc_db_request</quote>). Just be defining 
-			this parameter, the accountign support will not be enabled. 
-			Accountinf may only be enabled via two parameters 
+			this parameter, the accounting support will not be enabled. 
+			Accounting may only be enabled via two parameters 
 			<function moreinfo="none">set_accept_filter()</function> 
 			scripting function.
 			</para>
@@ -288,12 +288,12 @@ modparam("uac_redirect","acc_db_table","acc_redirect")
 					</function>
 			</title>
 			<para>
-			Sets additionals deny filters. Maximum 6 may be combined. This
+			Sets additional deny filters. Maximum 6 may be combined. This
 			additional filter will apply only to the current message - it
 			will not have a global effect.
 			</para>
 			<para>
-			Default or prevoius added deny filter may be reset depending of
+			Default or previous added deny filter may be reset depending of
 			the <emphasis>flag</emphasis> parameter value:
 			</para>
 			<itemizedlist>
@@ -335,12 +335,12 @@ set_deny_filter(".*@domain1.net","");
 					</function>
 			</title>
 			<para>
-			Sets additionals accept filters. Maximum 6 may be combined. This
+			Sets additional accept filters. Maximum 6 may be combined. This
 			additional filter will apply only to the current message - it
 			will not have a global effect.
 			</para>
 			<para>
-			Default or prevoius added deny filter may be reset depending of
+			Default or previous added deny filter may be reset depending of
 			the <emphasis>flag</emphasis> parameter value:
 			</para>
 			<itemizedlist>
@@ -384,7 +384,7 @@ set_accept_filter(".*@domain1.net","");
 				The function may be called only from failure routes. It will
 				extract the contacts from all 3xx branches and append them
 				as new branches. Note that the function will not forward the
-				nw brnaches, this must be done explicitly from script.
+				new branches, this must be done explicitly from script.
 			</para>
 			<para>
 				How many contacts (in total and per branch) are selected 
@@ -446,7 +446,7 @@ get_redirects("*");
 				<emphasis>reason</emphasis> phrase.
 			</para>
 			<para>
-				If this funtion appers in the script, at startup, the module
+				If this function appears in the script, at startup, the module
 				will import the accounting function. Otherwise not.
 			</para>
 			<example>

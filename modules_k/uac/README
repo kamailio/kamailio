@@ -57,7 +57,9 @@ Chapter 1. User's Guide
 
    Known limitations in this version:
 
-     * authentication does not support qop
+     * authentication does not support qop;
+     * CSeq not increased during authentication - the response
+       may be rejected.
      _________________________________________________________
 
 1.2. Dependencies
