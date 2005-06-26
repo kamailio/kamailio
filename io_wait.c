@@ -342,8 +342,8 @@ char* check_poll_method(enum poll_types poll_method)
 			if (os_ver<0x020000) /* if ver < 2.0 */
 				ret="kqueue not supported on NetBSD < 2.0";
 	#elif defined (__OS_openbsd)
-			if (os_ver<0x0307) /* if ver < 3.7 ??? */
-				ret="kqueue not supported on OpenBSD < 3.7 (?)";
+			if (os_ver<0x0209) /* if ver < 2.9 ? */
+				ret="kqueue not supported on OpenBSD < 2.9 (?)";
 	#endif /* assume that the rest support kqueue ifdef HAVE_KQUEUE */
 #endif
 			break;	
@@ -376,7 +376,7 @@ enum poll_types choose_poll_method()
 	#elif defined (__OS_netbsd)
 		if (os_ver>=0x020000) /* if ver >= 2.0 */
 	#elif defined (__OS_openbsd)
-		if (os_ver>=0x0307) /* if ver >= 3.7 */
+		if (os_ver>=0x0209) /* if ver >= 2.9 (?) */
 	#endif /* assume that the rest support kqueue ifdef HAVE_KQUEUE */
 			poll_method=POLL_KQUEUE;
 #endif

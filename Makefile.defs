@@ -1001,8 +1001,8 @@ ifeq ($(OS), openbsd)
 		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
 	endif
-	# check for ver >= 3.7
-	ifeq ($(shell [ $(OSREL_N) -ge 3007 ] && echo has_kqueue), has_kqueue)
+	# check for ver >=2 9
+	ifeq ($(shell [ $(OSREL_N) -ge 2009 ] && echo has_kqueue), has_kqueue)
 		ifeq ($(NO_KQUEUE),)
 			DEFS+=-DHAVE_KQUEUE
 		endif
