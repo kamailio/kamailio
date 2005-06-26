@@ -32,6 +32,7 @@
  * History:
  * --------
  *  2005-06-15  created by andrei
+ *  2005-06-26  added kqueue (andrei)
  */
 
 
@@ -216,6 +217,33 @@ static void destroy_epoll(io_wait_h* h)
 
 
 
+#ifdef HAVE_KQUEUE
+/* kqueue specific init
+ * returns -1 on error, 0 on success */
+static int init_kqueue(io_wait_h* h)
+{
+	h->kq_fd=kqueue();
+	if (h->kq_fd==-1){
+		LOG(L_ERR, "ERROR: init_kqueue: kqueue: %s [%d]\n",
+				strerror(errno), errno);
+		return -1;
+	}
+	return 0;
+}
+
+
+
+static void destroy_kqueue(io_wait_h* h)
+{
+	if (h->kq_fd!=-1){
+		close(h->kq_fd);
+		h->kq_fd=-1;
+	}
+}
+#endif
+
+
+
 #ifdef HAVE_SELECT
 static int init_select(io_wait_h* h)
 {
@@ -284,10 +312,10 @@ char* check_poll_method(enum poll_types poll_method)
 			break;
 		case POLL_EPOLL_LT:
 		case POLL_EPOLL_ET:
-			/* only on 2.6 + */
 #ifndef HAVE_EPOLL
 			ret="epoll not supported, try re-compiling with -DHAVE_EPOLL";
 #else
+			/* only on 2.6 + */
 			if (os_ver<0x020542) /* if ver < 2.5.66 */
 			 	ret="epoll not supported on kernels < 2.6";
 #endif
@@ -296,8 +324,30 @@ char* check_poll_method(enum poll_types poll_method)
 #ifndef HAVE_SIGIO_RT
 			ret="sigio_rt not supported, try re-compiling with"
 				" -DHAVE_SIGIO_RT";
+#else
+			/* only on 2.2 +  ?? */
+			if (os_ver<0x020200) /* if ver < 2.2.0 */
+			 	ret="epoll not supported on kernels < 2.2 (?)";
 #endif
 			break;
+		case POLL_KQUEUE:
+#ifndef HAVE_KQUEUE
+			ret="kqueue not supported, try re-compiling with -DHAVE_KQUEUE";
+#else
+		/* only in FreeBSD 4.1, NETBSD 2.0, OpenBSD ???, Darwin ??? FIXME */
+	#ifdef __OS_freebsd
+			if (os_ver<0x0401) /* if ver < 4.1 */
+				ret="kqueue not supported on FreeBSD < 4.1";
+	#elif defined (__OS_netbsd)
+			if (os_ver<0x020000) /* if ver < 2.0 */
+				ret="kqueue not supported on NetBSD < 2.0";
+	#elif defined (__OS_openbsd)
+			if (os_ver<0x0307) /* if ver < 3.7 ??? */
+				ret="kqueue not supported on OpenBSD < 3.7 (?)";
+	#endif /* assume that the rest support kqueue ifdef HAVE_KQUEUE */
+#endif
+			break;	
+
 		default:
 			ret="unknown not supported method";
 	}
@@ -318,8 +368,22 @@ enum poll_types choose_poll_method()
 		poll_method=POLL_EPOLL_LT; /* or POLL_EPOLL_ET */
 		
 #endif
+#ifdef HAVE_KQUEUE
+	if (poll_method==0)
+		/* only in FreeBSD 4.1, NETBSD 2.0, OpenBSD ???, Darwin ??? FIXME */
+	#ifdef __OS_freebsd
+		if (os_ver>=0x0401) /* if ver >= 4.1 */
+	#elif defined (__OS_netbsd)
+		if (os_ver>=0x020000) /* if ver >= 2.0 */
+	#elif defined (__OS_openbsd)
+		if (os_ver>=0x0307) /* if ver >= 3.7 */
+	#endif /* assume that the rest support kqueue ifdef HAVE_KQUEUE */
+			poll_method=POLL_KQUEUE;
+#endif
 #ifdef  HAVE_SIGIO_RT
-		if (poll_method==0) poll_method=POLL_SIGIO_RT;
+		if (poll_method==0) 
+			if (os_ver>=0x020200) /* if ver >= 2.2.0 */
+				poll_method=POLL_SIGIO_RT;
 #endif
 		if (poll_method==0) poll_method=POLL_POLL;
 	return poll_method;
@@ -369,7 +433,9 @@ int init_io_wait(io_wait_h* h, int max_fd, enum poll_types poll_method)
 #ifdef HAVE_EPOLL
 	h->epfd=-1;
 #endif
-	
+#ifdef HAVE_KQUEUE
+	h->kq_fd=-1;
+#endif
 	poll_err=check_poll_method(poll_method);
 	
 	/* set an appropiate poll method */
@@ -446,6 +512,32 @@ int init_io_wait(io_wait_h* h, int max_fd, enum poll_types poll_method)
 			}
 			break;
 #endif
+#ifdef HAVE_KQUEUE
+		case POLL_KQUEUE:
+			h->kq_array=local_malloc(sizeof(*(h->kq_array))*h->max_fd_no);
+			if (h->kq_array==0){
+				LOG(L_CRIT, "ERROR: init_io_wait: could not alloc"
+							" kqueue event array\n");
+				goto error;
+			}
+			h->kq_changes_size=KQ_CHANGES_ARRAY_SIZE;
+			h->kq_changes=local_malloc(sizeof(*(h->kq_changes))*
+										h->kq_changes_size);
+			if (h->kq_changes==0){
+				LOG(L_CRIT, "ERROR: init_io_wait: could not alloc"
+							" kqueue changes array\n");
+				goto error;
+			}
+			h->kq_nchanges=0;
+			memset((void*)h->kq_array, 0, sizeof(*(h->kq_array))*h->max_fd_no);
+			memset((void*)h->kq_changes, 0,
+						sizeof(*(h->kq_changes))* h->kq_changes_size);
+			if (init_kqueue(h)<0){
+				LOG(L_CRIT, "ERROR: init_io_wait: kqueue init failed\n");
+				goto error;
+			}
+			break;
+#endif
 		default:
 			LOG(L_CRIT, "BUG: init_io_wait: unknown/unsupported poll"
 						" method %s (%d)\n",
@@ -472,6 +564,19 @@ void destroy_io_wait(io_wait_h* h)
 				h->ep_array=0;
 			}
 		break;
+#endif
+#ifdef HAVE_KQUEUE
+		case POLL_KQUEUE:
+			destroy_kqueue(h);
+			if (h->kq_array){
+				local_free(h->kq_array);
+				h->kq_array=0;
+			}
+			if (h->kq_changes){
+				local_free(h->kq_changes);
+				h->kq_changes=0;
+			}
+			break;
 #endif
 #ifdef HAVE_SIGIO_RT
 		case POLL_SIGIO_RT:

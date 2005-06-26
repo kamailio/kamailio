@@ -39,6 +39,7 @@
 #  2004-12-19  amd64 transformed in x86_64 (andrei)
 #  2005-04-27  alpha support added (andrei)
 #  2005-06-01  use $(LOCALBASE) instead of /usr/{local,pkg} (andrei)
+#  2006-06-26  numeric OSREL & HAVE_KQUEUE added to the *BSD (andrei)
 
 
 # check if already included/exported
@@ -55,7 +56,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 10
 SUBLEVEL =   99
-EXTRAVERSION = -dev8-new_tcp
+EXTRAVERSION = -dev9-new_tcp
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -63,6 +64,13 @@ ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/  \
 			-e s/armv4l/arm/ -e "s/Power Macintosh/ppc/" -e "s/cobalt/mips2/" \
 			-e s/amd64/x86_64/ )
 OSREL = $(shell uname -r)
+# numerical version (good for comparisons: A.B.C => A*1000000+B*1000+C)
+OSREL_N= $(shell echo $(OSREL) | sed -e 's/^[^0-9]*//' \
+		-e 's/^\([0-9][0-9]*\(\.[0-9][0-9]*\)*\).*$$/\1/g' | \
+		(IFS=. read A B C ; R=0; \
+		[ -n "$$A" ] && R=`expr $$R \* 1000 + $$A` && \
+		[ -n "$$B" ] && R=`expr $$R \* 1000 + $$B` && \
+		[ -n "$$C" ] && R=`expr $$R \* 1000 + $$C`; echo $$R ) )
 
 # TLS support
 TLS ?= 
@@ -913,14 +921,17 @@ ifeq ($(OS), linux)
 		DEFS+= -DUSE_SYSV_SEM  # try posix sems
 		found_lock_method=yes
 	endif
-	# check for 2.6
-	ifneq ($(shell echo "$(OSREL)"|grep "^2\.6\."),)
+	# check for >= 2.5.44
+	ifeq ($(shell [ $(OSREL_N) -ge 2005044 ] && echo has_epoll), has_epoll)
 		ifeq ($(NO_EPOLL),)
 			DEFS+=-DHAVE_EPOLL
 		endif
 	endif
-	ifeq ($(NO_SIGIO),)
-		DEFS+=-DHAVE_SIGIO_RT
+	# check for >= 2.2.0
+	ifeq ($(shell [ $(OSREL_N) -ge 2002000 ] && echo has_sigio), has_sigio)
+		ifeq ($(NO_SIGIO),)
+			DEFS+=-DHAVE_SIGIO_RT
+		endif
 	endif
 	ifeq ($(NO_SELECT),)
 		DEFS+=-DHAVE_SELECT
@@ -971,6 +982,12 @@ ifeq ($(OS), freebsd)
 	else
 		LIBS= -lfl  #dlopen is in libc
 	endif
+	# check for ver >= 4.1
+	ifeq ($(shell [ $(OSREL_N) -gt 4001 ] && echo has_kqueue), has_kqueue)
+		ifeq ($(NO_KQUEUE),)
+			DEFS+=-DHAVE_KQUEUE
+		endif
+	endif
 	ifeq ($(NO_SELECT),)
 		DEFS+=-DHAVE_SELECT
 	endif
@@ -983,6 +1000,12 @@ ifeq ($(OS), openbsd)
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
+	endif
+	# check for ver >= 3.7
+	ifeq ($(shell [ $(OSREL_N) -ge 3007 ] && echo has_kqueue), has_kqueue)
+		ifeq ($(NO_KQUEUE),)
+			DEFS+=-DHAVE_KQUEUE
+		endif
 	endif
 	ifeq ($(NO_SELECT),)
 		DEFS+=-DHAVE_SELECT
@@ -1015,6 +1038,13 @@ ifeq ($(OS), netbsd)
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_SYSV_SEM  # try pthread sems
 		found_lock_method=yes
+	endif
+	# check for ver >= 2.0.0
+$(warning OSREL_N=$(OSREL_N) , OSREL=$(OSREL) )
+	ifeq ($(shell [ $(OSREL_N) -ge 2000000 ] && echo has_kqueue), has_kqueue)
+		ifeq ($(NO_KQUEUE),)
+			DEFS+=-DHAVE_KQUEUE
+		endif
 	endif
 	ifeq ($(NO_SELECT),)
 		DEFS+=-DHAVE_SELECT

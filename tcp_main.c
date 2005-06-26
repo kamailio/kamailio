@@ -54,6 +54,7 @@
  *  2004-11-08  dropped find_tcp_si and replaced with find_si (andrei)
  *  2005-06-07  new tcp optimized code, supports epoll (LT), sigio + real time
  *               signals, poll & select (andrei)
+ *  2005-06-26  *bsd kqueue support (andrei)
  */
 
 
@@ -1073,7 +1074,7 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, int fd_i)
 	}
 	/* pass it to child, so remove it from the io watch list */
 	DBG("handle_tcpconn_ev: data available on %p %d\n", tcpconn, tcpconn->s);
-	if (io_watch_del(&io_h, tcpconn->s, fd_i)==-1) goto error;
+	if (io_watch_del(&io_h, tcpconn->s, fd_i, 0)==-1) goto error;
 	tcpconn_ref(tcpconn); /* refcnt ++ */
 	if (send2child(tcpconn)<0){
 		LOG(L_ERR,"ERROR: handle_tcpconn_ev: no children available\n");
@@ -1126,8 +1127,8 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			DBG("DBG: handle_tcp_child: dead tcp child %d (pid %d, no %d)"
 					" (shutting down?)\n", (int)(tcp_c-&tcp_children[0]), 
 					tcp_c->pid, tcp_c->proc_no );
-						/* don't listen on it any more */
-			io_watch_del(&io_h, tcp_c->unix_sock, fd_i); 
+			/* don't listen on it any more */
+			io_watch_del(&io_h, tcp_c->unix_sock, fd_i, 0); 
 			goto error; /* eof. so no more io here, it's ok to return error */
 		}else if (bytes<0){
 			/* EAGAIN is ok if we try to empty the buffer
@@ -1186,9 +1187,9 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 				tcp_c->busy--;
 				/* main doesn't listen on it => we don't have to delete it
 				 if (tcpconn->s!=-1)
-					io_watch_del(&io_h, tcpconn->s, -1);
+					io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
 				*/
-				tcpconn_destroy(tcpconn);
+				tcpconn_destroy(tcpconn); /* closes also the fd */
 				break;
 		default:
 				LOG(L_CRIT, "BUG: handle_tcp_child:  unknown cmd %d"
@@ -1244,7 +1245,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			DBG("DBG: handle_ser_child: dead child %d, pid %d"
 					" (shutting down?)\n", (int)(p-&pt[0]), p->pid);
 			/* don't listen on it any more */
-			io_watch_del(&io_h, p->unix_sock, fd_i);
+			io_watch_del(&io_h, p->unix_sock, fd_i, 0);
 			goto error; /* child dead => no further io events from it */
 		}else if (bytes<0){
 			/* EAGAIN is ok if we try to empty the buffer
@@ -1283,8 +1284,8 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 	switch(cmd){
 		case CONN_ERROR:
 			if (tcpconn->s!=-1)
-				io_watch_del(&io_h, tcpconn->s, -1);
-			tcpconn_destroy(tcpconn);
+				io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
+			tcpconn_destroy(tcpconn); /* will close also the fd */
 			break;
 		case CONN_GET_FD:
 			/* send the requested FD  */
@@ -1391,7 +1392,7 @@ static void tcpconn_timeout()
 #endif
 				_tcpconn_rm(c);
 				if (fd>0) {
-					io_watch_del(&io_h, fd, -1);
+					io_watch_del(&io_h, fd, -1, IO_FD_CLOSING);
 					close(fd);
 				}
 			}
@@ -1503,6 +1504,14 @@ void tcp_main_loop()
 		case POLL_EPOLL_ET:
 			while(1){
 				io_wait_loop_epoll(&io_h, TCP_MAIN_SELECT_TIMEOUT, 1);
+				tcpconn_timeout();
+			}
+			break;
+#endif
+#ifdef HAVE_KQUEUE
+		case POLL_KQUEUE:
+			while(1){
+				io_wait_loop_kqueue(&io_h, TCP_MAIN_SELECT_TIMEOUT, 0);
 				tcpconn_timeout();
 			}
 			break;

@@ -46,6 +46,7 @@
  * History:
  * --------
  *  2005-06-13  created by andrei
+ *  2005-06-26  added kqueue (andrei)
  */
 
 
@@ -63,6 +64,11 @@
 #endif
 #ifdef HAVE_EPOLL
 #include <sys/epoll.h>
+#endif
+#ifdef HAVE_KQUEUE
+#include <sys/types.h> /* needed on freebsd */
+#include <sys/event.h>
+#include <sys/time.h>
 #endif
 #ifdef HAVE_SELECT
 /* needed on openbsd for select*/
@@ -103,6 +109,19 @@ struct fd_map{
 };
 
 
+#ifdef HAVE_KQUEUE
+#ifndef KQ_CHANGES_ARRAY_SIZE
+#define KQ_CHANGES_ARRAY_SIZE 128
+
+#ifdef __OS_netbsd
+#define KEV_UDATA_CAST (intptr_t)
+#else
+#define KEV_UDATA_CAST
+#endif
+
+#endif
+#endif
+
 
 /* handler structure */
 struct io_wait_handler{
@@ -113,6 +132,13 @@ struct io_wait_handler{
 #ifdef HAVE_SIGIO_RT
 	sigset_t sset; /* signal mask for sigio & sigrtmin */
 	int signo;     /* real time signal used */
+#endif
+#ifdef HAVE_KQUEUE
+	struct kevent* kq_array;   /* used for the eventlist*/
+	struct kevent* kq_changes; /* used for the changelist */
+	size_t kq_nchanges;
+	size_t kq_changes_size; /* size of the changes array */
+	int kq_fd;
 #endif
 #ifdef HAVE_SELECT
 	fd_set master_set;
@@ -185,6 +211,43 @@ int handle_io(struct fd_map* fm, int idx);
 
 
 
+#ifdef HAVE_KQUEUE
+/*
+ * kqueue specific function: register a change
+ * (adds a change to the kevent change array, and if full flushes it first)
+ * returns: -1 on error, 0 on success
+ */
+static inline int kq_ev_change(io_wait_h* h, int fd, int filter, int flag, 
+								void* data)
+{
+	int n;
+	struct timespec tspec;
+
+	if (h->kq_nchanges>=h->kq_changes_size){
+		/* changes array full ! */
+		LOG(L_WARN, "WARNING: kq_ev_change: kqueue changes array full"
+					" trying to flush...\n");
+		tspec.tv_sec=0;
+		tspec.tv_nsec=0;
+again:
+		n=kevent(h->kq_fd, h->kq_changes, h->kq_nchanges, 0, 0, &tspec);
+		if (n==-1){
+			if (errno==EINTR) goto again;
+			LOG(L_ERR, "ERROR: io_watch_add: kevent flush changes "
+						" failed: %s [%d]\n", strerror(errno), errno);
+			return -1;
+		}
+		h->kq_nchanges=0; /* changes array is empty */
+	}
+	EV_SET(&h->kq_changes[h->kq_nchanges], fd, filter, flag, 0, 0,
+			KEV_UDATA_CAST data);
+	h->kq_nchanges++;
+	return 0;
+}
+#endif
+
+
+
 /* generic io_watch_add function
  * returns 0 on success, -1 on error
  *
@@ -235,7 +298,7 @@ inline static int io_watch_add(	io_wait_h* h,
 		LOG(L_CRIT, "BUG: io_watch_add: fd is -1!\n");
 		goto error;
 	}
-	/* add it to the poll fd array */
+	/* check if not too big */
 	if (h->fd_no>=h->max_fd_no){
 		LOG(L_CRIT, "ERROR: io_watch_add: maximum fd number exceeded:"
 				" %d/%d\n", h->fd_no, h->max_fd_no);
@@ -321,6 +384,12 @@ again2:
 			}
 			break;
 #endif
+#ifdef HAVE_KQUEUE
+		case POLL_KQUEUE:
+			if (kq_ev_change(h, fd, EVFILT_READ, EV_ADD, e)==-1)
+				goto error;
+			break;
+#endif
 		default:
 			LOG(L_CRIT, "BUG: io_watch_add: no support for poll method "
 					" %s (%d)\n", poll_method_str[h->poll_method],
@@ -328,7 +397,7 @@ again2:
 			goto error;
 	}
 	
-	h->fd_no++; /* "activate" changes, for epoll it
+	h->fd_no++; /* "activate" changes, for epoll/kqueue/devpoll it
 				   has only informative value */
 	return 0;
 error:
@@ -339,12 +408,19 @@ error:
 
 
 
-/* parameters: fd and index in the fd_array
- * if index==-1, it fd_array will be searched for the corresponding fd
- * entry (slower but unavoidable in some cases)
- * index is not used (no fd_arry) for epoll, /dev/poll and kqueue
+#define IO_FD_CLOSING 16
+/* parameters:    h - handler 
+ *               fd - file descriptor
+ *            index - index in the fd_array if known, -1 if not
+ *                    (if index==-1 fd_array will be searched for the
+ *                     corresponding fd* entry -- slower but unavoidable in 
+ *                     some cases). index is not used (no fd_array) for epoll,
+ *                     /dev/poll and kqueue
+ *            flags - optimization flags, e.g. IO_FD_CLOSING, the fd was 
+ *                    or will shortly be closed, in some cases we can avoid
+ *                    extra remove operations (e.g.: epoll, kqueue, sigio)
  * returns 0 if ok, -1 on error */
-inline static int io_watch_del(io_wait_h* h, int fd, int idx)
+inline static int io_watch_del(io_wait_h* h, int fd, int idx, int flags)
 {
 	
 #define fix_fd_array \
@@ -416,11 +492,21 @@ inline static int io_watch_del(io_wait_h* h, int fd, int idx)
 #ifdef HAVE_EPOLL
 		case POLL_EPOLL_LT:
 		case POLL_EPOLL_ET:
-			n=epoll_ctl(h->epfd, EPOLL_CTL_DEL, fd, &ep_event);
-			if (n==-1){
-				LOG(L_ERR, "ERROR: io_watch_del: removing fd from"
-					" epoll list failed: %s [%d]\n", strerror(errno), errno);
-				goto error;
+			if (!(flags & IO_FD_CLOSING)){
+				n=epoll_ctl(h->epfd, EPOLL_CTL_DEL, fd, &ep_event);
+				if (n==-1){
+					LOG(L_ERR, "ERROR: io_watch_del: removing fd from epoll "
+							"list failed: %s [%d]\n", strerror(errno), errno);
+					goto error;
+				}
+			}
+			break;
+#endif
+#ifdef HAVE_KQUEUE
+		case POLL_KQUEUE:
+			if (!(flags & IO_FD_CLOSING)){
+				if (kq_ev_change(h, fd, EVFILT_READ, EV_DELETE, 0)==-1)
+					goto error;
 			}
 			break;
 #endif
@@ -528,7 +614,7 @@ again:
 		if (n==-1){
 			if (errno==EINTR) goto again; /* signal, ignore it */
 			else{
-				LOG(L_ERR, "ERROR:io_wait_loop_epoll_et: epoll_wait:"
+				LOG(L_ERR, "ERROR:io_wait_loop_epoll: epoll_wait:"
 						" %s [%d]\n", strerror(errno), errno);
 				goto error;
 			}
@@ -536,6 +622,47 @@ again:
 		for (r=0; r<n; r++){
 			while((handle_io((struct fd_map*)h->ep_array[r].data.ptr, -1)>0)
 					&& repeat);
+		}
+error:
+	return n;
+}
+#endif
+
+
+
+#ifdef HAVE_KQUEUE
+inline static int io_wait_loop_kqueue(io_wait_h* h, int t, int repeat)
+{
+	int n, r;
+	struct timespec tspec;
+	
+	tspec.tv_sec=t;
+	tspec.tv_nsec=0;
+again:
+		n=kevent(h->kq_fd, h->kq_changes, h->kq_nchanges,  h->kq_array,
+					h->fd_no, &tspec);
+		if (n==-1){
+			if (errno==EINTR) goto again; /* signal, ignore it */
+			else{
+				LOG(L_ERR, "ERROR: io_wait_loop_kqueue: kevent:"
+						" %s [%d]\n", strerror(errno), errno);
+				goto error;
+			}
+		}
+		h->kq_nchanges=0; /* reset changes array */
+		for (r=0; r<n; r++){
+			if (h->kq_array[r].flags & EV_ERROR){
+				/* error in changes: we ignore it, it can be caused by
+				   trying to remove an already closed fd: race between
+				   adding smething to the changes array, close() and
+				   applying the changes */
+				LOG(L_INFO, "INFO: io_wait_loop_kqueue: kevent error on "
+							"fd %d: %s [%d]\n", h->kq_array[r].ident,
+							strerror(h->kq_array[r].data),
+							h->kq_array[r].data);
+			}else /* READ/EOF */
+				while((handle_io((struct fd_map*)h->kq_array[r].udata, -1)>0)
+						&& repeat);
 		}
 error:
 	return n;
