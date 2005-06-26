@@ -9,7 +9,7 @@ Package: ser
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
 Suggests: ser-mysql-module, ser-jabber-module, ser-cpl-module, ser-pa-module, ser-radius-modules
-Conflicts: ser-mysql-module (<< ${Source-Version}), ser-jabber-module (<< ${Source-Version}), ser-radius-modules (<< ${Source-Version}), ser-cpl-module (<< ${Source-Version}), ser-pa-module (<< ${Source-Version})
+Conflicts: ser-mysql-module (<< ${Source-Version}), ser-jabber-module (<< ${Source-Version}), ser-radius-modules (<< ${Source-Version}), ser-cpl-module (<< ${Source-Version}), ser-pa-module (<< ${Source-Version}), ser-acc-db-module (<< ${Source-Version}), ser-acc-radius-module (<< ${Source-Version})
 Description: Sip Express Router, very fast and configurable SIP proxy
  ser or SIP Express Router is a very fast and flexible SIP (RFC3621)
  proxy server. Written entirely in C, ser can handle thousands calls
@@ -58,3 +58,17 @@ Description: contains the ser radius modules
  This has been split out of the main ser package, so that ser will not
  depend upon libradius1. This modules will enable you to authenticate, 
  do group membership checking or check the messages uris using radius.
+
+Package: ser-acc-db-module
+Architecture: any
+Depends: ${shlibs:Depends}, ser (= ${Source-Version})
+Suggests: ser-mysql-module
+Description: contains the ser acc module, with db support 
+ This modules will enable you to do accounting in a database. 
+ You need also a database interface module like mysql or postgres.
+
+Package: ser-acc-radius-module
+Architecture: any
+Depends: ${shlibs:Depends}, ser (= ${Source-Version})
+Description: contains the ser acc module, with radius support 
+ This modules will enable you to do accounting over radius. 

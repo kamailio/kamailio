@@ -42,6 +42,8 @@ RADIUS_MODULES=auth_radius group_radius uri_radius avp_radius
 CPL_MODULES=cpl-c
 # pa related modules
 PA_MODULES=pa
+# acc module
+ACC_MODULE=acc
 
 # the same but with path prepended (needed for modules="...")
 MYSQL_MOD_PATH=$(addprefix modules/, $(MYSQL_MODULES))
@@ -49,6 +51,7 @@ JABBER_MOD_PATH=$(addprefix modules/, $(JABBER_MODULES))
 RADIUS_MOD_PATH=$(addprefix modules/, $(RADIUS_MODULES))
 CPL_MOD_PATH=$(addprefix modules/, $(CPL_MODULES))
 PA_MOD_PATH=$(addprefix modules/, $(PA_MODULES))
+ACC_MOD_PATH=$(addprefix modules/, $(ACC_MODULE))
 
 
 
@@ -143,6 +146,27 @@ install: build
 		cfg-prefix=$(CURDIR)/debian/ser-pa-module \
 		cfg-target=/etc/ser/ \
 		doc-dir=share/doc/ser-pa-module
+	# Ugly hacks to make 2 new versions from acc: ac_db & acc_radius
+	#install only the acc db version module
+	cd $(ACC_MOD_PATH); $(MAKE) proper; cd ../..; \
+	$(MAKE) install-modules-all modules="$(ACC_MOD_PATH)" \
+		basedir=$(CURDIR)/debian/ser-acc-db-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser-acc-db-module \
+		cfg-target=/etc/ser/ \
+		doc-dir=share/doc/ser-acc-db-module \
+		NAME=acc_db.so modules_names=acc_db.so EXTRA_DEFS=-DSQL_ACC ;\
+	cd $(ACC_MOD_PATH); $(MAKE) proper NAME=acc_db.so; cd ../..
+	#install only the acc radius version module
+	$(MAKE) install-modules-all modules="$(ACC_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/ser-acc-radius-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser-acc-radius-module \
+		cfg-target=/etc/ser/ \
+		doc-dir=share/doc/ser-acc-radius-module \
+		NAME=acc_radius.so modules_names=acc_radius.so EXTRA_DEFS=-DRAD_ACC \
+		LIBS=-lradiusclient-ng ; \
+	cd $(ACC_MOD_PATH); $(MAKE) proper NAME=acc_radius.so; cd ../..
 	#dh_movefiles
 
 
