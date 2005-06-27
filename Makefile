@@ -267,6 +267,9 @@ install-cfg: $(cfg-prefix)/$(cfg-dir)
 			mv -f $(cfg-prefix)/$(cfg-dir)ser.cfg.sample \
 				$(cfg-prefix)/$(cfg-dir)ser.cfg; \
 		fi
+		# radius dictionary
+		$(INSTALL-TOUCH) $(cfg-prefix)/$(cfg-dir)/dictionary.ser 
+		$(INSTALL-BIN) etc/dictionary.ser $(cfg-prefix)/$(cfg-dir)
 #		$(INSTALL-CFG) etc/ser.cfg $(cfg-prefix)/$(cfg-dir)
 
 install-bin: $(bin-prefix)/$(bin-dir) utils/gen_ha1/gen_ha1 utils/serunix/serunix
