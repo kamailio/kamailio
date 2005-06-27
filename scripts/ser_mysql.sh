@@ -280,6 +280,8 @@ CREATE TABLE acc (
   totag varchar(128) NOT NULL default '',
   time datetime NOT NULL default '0000-00-00 00:00:00',
   timestamp timestamp(14) NOT NULL,
+  caller_deleted char(1) NOT NULL default '0',
+  callee_deleted char(1) NOT NULL default '0',
   INDEX acc_user ($USERCOL, domain),
   KEY sip_callid (sip_callid)
 ) $TABLE_TYPE;
@@ -675,6 +677,8 @@ CREATE TABLE speed_dial (
   sd_username varchar(64) NOT NULL default '',
   sd_domain varchar(128) NOT NULL default '',
   new_uri varchar(192) NOT NULL default '',
+  fname varchar(128) NOT NULL default '',
+  lname varchar(128) NOT NULL default '',
   description varchar(64) NOT NULL default '',
   PRIMARY KEY  ($USERCOL,domain,sd_username,sd_domain)
 ) $TABLE_TYPE;
