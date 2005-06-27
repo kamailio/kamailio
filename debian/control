@@ -2,7 +2,7 @@ Source: ser
 Section: net
 Priority: optional
 Maintainer: Andrei Pelinescu-Onciul <andrei@iptel.org>
-Build-Depends: debhelper (>= 4), libmysqlclient-dev, libexpat1-dev, libradius-ng-dev, libxml2-dev, libpq-dev
+Build-Depends: debhelper (>= 4), libmysqlclient-dev, libexpat1-dev, libradiusclient-ng-dev, libxml2-dev, libpq-dev
 Standards-Version: 3.5.2
 
 Package: ser

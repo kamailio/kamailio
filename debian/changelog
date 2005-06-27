@@ -1,4 +1,4 @@
-ser (0.9.3) unstable; urgency=low
+ser (0.9.3-0.1) unstable; urgency=low
 
   * new upstream release 
   * added ser-cpl-module, ser-pa-module, ser-postgres-module,
