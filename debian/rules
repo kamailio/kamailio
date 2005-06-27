@@ -42,6 +42,8 @@ RADIUS_MODULES=auth_radius group_radius uri_radius avp_radius
 CPL_MODULES=cpl-c
 # pa related modules
 PA_MODULES=pa
+# postgres modules
+POSTGRES_MODULES=postgres
 # acc module
 ACC_MODULE=acc
 
@@ -51,6 +53,7 @@ JABBER_MOD_PATH=$(addprefix modules/, $(JABBER_MODULES))
 RADIUS_MOD_PATH=$(addprefix modules/, $(RADIUS_MODULES))
 CPL_MOD_PATH=$(addprefix modules/, $(CPL_MODULES))
 PA_MOD_PATH=$(addprefix modules/, $(PA_MODULES))
+POSTGRES_MOD_PATH=$(addprefix modules/, $(POSTGRES_MODULES))
 ACC_MOD_PATH=$(addprefix modules/, $(ACC_MODULE))
 
 
@@ -83,6 +86,10 @@ build-stamp: configure-stamp
 	$(MAKE) modules modules="$(RADIUS_MOD_PATH)" cfg-target=/etc/ser/
 	$(MAKE) modules modules="$(CPL_MOD_PATH)" cfg-target=/etc/ser/
 	$(MAKE) modules modules="$(PA_MOD_PATH)" cfg-target=/etc/ser/
+	# postgres will generate lots of warnings
+	$(MAKE) modules modules="$(POSTGRES_MOD_PATH)" cfg-target=/etc/ser/
+	# acc-db & acc-radius are compiled on install, because they share
+	#  the same source tree with acc
 	#/usr/bin/docbook-to-man debian/ser.sgml > ser.1
 
 	touch build-stamp
@@ -146,6 +153,13 @@ install: build
 		cfg-prefix=$(CURDIR)/debian/ser-pa-module \
 		cfg-target=/etc/ser/ \
 		doc-dir=share/doc/ser-pa-module
+	#install only the postgres module
+	$(MAKE) install-modules-all modules="$(POSTGRES_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/ser-postgres-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser-postgres-module \
+		cfg-target=/etc/ser/ \
+		doc-dir=share/doc/ser-postgres-module
 	# Ugly hacks to make 2 new versions from acc: ac_db & acc_radius
 	#install only the acc db version module
 	cd $(ACC_MOD_PATH); $(MAKE) proper; cd ../..; \

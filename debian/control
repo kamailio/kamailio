@@ -2,14 +2,14 @@ Source: ser
 Section: net
 Priority: optional
 Maintainer: Andrei Pelinescu-Onciul <andrei@iptel.org>
-Build-Depends: debhelper (>= 4), libmysqlclient-dev, libexpat1-dev, libradiusclient-ng-dev, libxml2-dev
+Build-Depends: debhelper (>= 4), libmysqlclient-dev, libexpat1-dev, libradius-ng-dev, libxml2-dev, libpq-dev
 Standards-Version: 3.5.2
 
 Package: ser
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
 Suggests: ser-mysql-module, ser-jabber-module, ser-cpl-module, ser-pa-module, ser-radius-modules
-Conflicts: ser-mysql-module (<< ${Source-Version}), ser-jabber-module (<< ${Source-Version}), ser-radius-modules (<< ${Source-Version}), ser-cpl-module (<< ${Source-Version}), ser-pa-module (<< ${Source-Version}), ser-acc-db-module (<< ${Source-Version}), ser-acc-radius-module (<< ${Source-Version})
+Conflicts: ser-mysql-module (<< ${Source-Version}), ser-jabber-module (<< ${Source-Version}), ser-radius-modules (<< ${Source-Version}), ser-cpl-module (<< ${Source-Version}), ser-pa-module (<< ${Source-Version}), ser-postgres-module (<< ${Source-Version}), ser-acc-db-module (<< ${Source-Version}), ser-acc-radius-module (<< ${Source-Version})
 Description: Sip Express Router, very fast and configurable SIP proxy
  ser or SIP Express Router is a very fast and flexible SIP (RFC3621)
  proxy server. Written entirely in C, ser can handle thousands calls
@@ -58,6 +58,14 @@ Description: contains the ser radius modules
  This has been split out of the main ser package, so that ser will not
  depend upon libradius1. This modules will enable you to authenticate, 
  do group membership checking or check the messages uris using radius.
+
+Package: ser-postgres-module
+Architecture: any
+Depends: ${shlibs:Depends}, ser (= ${Source-Version})
+Description: contains the postgres database connectivity module
+ This has been split out of the main ser package, so that ser will not
+ depend upon libbpq. This module will enable you to use the digest
+ authentication module or persistent user location entries.
 
 Package: ser-acc-db-module
 Architecture: any

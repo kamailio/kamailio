@@ -1,8 +1,9 @@
 ser (0.9.3) unstable; urgency=low
 
   * new upstream release 
-  * added ser-cpl-module and  ser-pa-module
-  * ser-radius-module depends now on libradiusclient-ng2 
+  * added ser-cpl-module, ser-pa-module, ser-postgres-module,
+    ser-acc-db-module and ser-acc-radius-module
+  * ser-radius-modules depend now on libradiusclient-ng2 
     (not in official Debian archives)
 
  -- Andrei Pelinescu-Onciul <andrei@iptel.org>  Thu, 23 Jun 2005 16:43:35 +0200
