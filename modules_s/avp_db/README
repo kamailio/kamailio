@@ -1,0 +1,207 @@
+
+avp_db Module
+
+Jiri Kuthan
+
+   FhG Fokus
+
+   Copyright © 2004, 2005 FhG FOKUS
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+        1.3. Exported Parameters
+
+              1.3.1. caller_uuid_avp (integer)
+              1.3.2. callee_uuid_avp (integer)
+              1.3.3. db_url (string)
+              1.3.4. pref_table (string)
+              1.3.5. uuid_column (string)
+              1.3.6. username_column (string)
+              1.3.7. domain_column (string)
+              1.3.8. attr_column (string)
+              1.3.9. val_column (string)
+              1.3.10. use_domain (int)
+              1.3.11. pref_list_table (string)
+              1.3.12. attr_name_column (string)
+              1.3.13. att_type_column (string)
+              1.3.14. att_dval_column (string)
+
+        1.4. Exported Functions
+
+              1.4.1. avp_load(type)
+
+        1.5. FIFO Commands
+
+              1.5.1. avp_list_reload
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   This module contains several functions that can be used to
+   manipulate the contents of AVPs (Attribute-Value pairs). The
+   AVPs are variables attached to the SIP message being
+   processed. Each variable has its name and value. AVPs can be
+   used to store arbitrary data or as a means of inter-module
+   comminication.
+
+   You may also want to check the avpops module which is more
+   flexible and contains more functions. In future SER releases
+   the avp module will be probably deprecated in favor of avpops
+   module.
+
+   Domain module operates in caching mode. Domain module reads
+   the default values of AVPs into cache memory when the module
+   is loaded. After that default values is re-read only when
+   module is given avp_list_reload fifo command. Any changes in
+   usr_preferences_types table must thus be followed by
+   avp_list_reload command in order to reflect them in module
+   behavior.
+     _________________________________________________________
+
+1.2. Dependencies
+
+   A database module, such as mysql, postgres, or dbtext.
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. caller_uuid_avp (integer)
+
+   Number of the AVP that contains the UUID of caller.
+
+   Default value is 1.
+     _________________________________________________________
+
+1.3.2. callee_uuid_avp (integer)
+
+   Number of the AVP that contains the UUID of callee.
+
+   Default value is 2.
+     _________________________________________________________
+
+1.3.3. db_url (string)
+
+   The URL of the database to be used.
+
+   Default value is "mysql://ser:heslo@localhost/ser".
+     _________________________________________________________
+
+1.3.4. pref_table (string)
+
+   Name of the user preferences table from which the contents of
+   AVPs will be loaded.
+
+   Default value is "usr_preferences".
+     _________________________________________________________
+
+1.3.5. uuid_column (string)
+
+   Name of the column that stores UUID in the preferences table.
+
+   Default value is "uuid".
+     _________________________________________________________
+
+1.3.6. username_column (string)
+
+   Name of the column containing the username of the subscriber.
+
+   Default value is "username".
+     _________________________________________________________
+
+1.3.7. domain_column (string)
+
+   Name of the column containing the domain that the subscriber
+   belongs to. This is useful when SER is running in multi-domain
+   mode.
+
+   Default value is "domain".
+     _________________________________________________________
+
+1.3.8. attr_column (string)
+
+   The name of the column containing attribute names.
+
+   Default value is "attribute".
+     _________________________________________________________
+
+1.3.9. val_column (string)
+
+   The name of the column containing attribute value.
+
+   Default value is "value".
+     _________________________________________________________
+
+1.3.10. use_domain (int)
+
+   This parameter controls where the module should use also the
+   domain part, in addition to the username, as the key. This
+   parameter should be set to 1 in multi-domain mode.
+
+   Default value is 0.
+     _________________________________________________________
+
+1.3.11. pref_list_table (string)
+
+   Name of the table storing user preferences types and default
+   values.
+
+   Default value is "usr_preferences_types".
+     _________________________________________________________
+
+1.3.12. attr_name_column (string)
+
+   The name of the column in usr_preferences_types table storing
+   names of AVPs.
+
+   Default value is "att_name".
+     _________________________________________________________
+
+1.3.13. att_type_column (string)
+
+   The name of the column in usr_preferences_types table storing
+   types of AVPs.
+
+   Default value is "att_raw_type".
+     _________________________________________________________
+
+1.3.14. att_dval_column (string)
+
+   The name of the column in usr_preferences_types table
+   containing default values of AVPs.
+
+   Default value is "default_value".
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. avp_load(type)
+
+   Load AVPs from the database.
+
+   Meaning of the parameters is as follows:
+
+     * type - One of:
+          + caller_uuid - Load AVPs for caller identified by
+            UUID. All AVP names will have "caller_" prefix.
+          + callee_uuid - Load AVPs for callee identified by
+            UUID. All AVP names will have "callee_" prefix.
+          + caller - Load AVPs for caller based on the URI of the
+            caller (From). All AVP names will have "caller_"
+            prefix.
+          + callee - Load AVPs for callee based on the URI of the
+            callee (Request-URI). All AVP names will have
+            "callee_" prefix.
+     _________________________________________________________
+
+1.5. FIFO Commands
+
+1.5.1. avp_list_reload
+
+   Causes avp_db module to re-read the contents of
+   pref_list_table table into cache memory.
