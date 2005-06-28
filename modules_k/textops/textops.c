@@ -520,8 +520,8 @@ static int fixup_substre(void** param, int param_no)
 				(char*)*param);
 		return E_BAD_RE;
 	}
-	/* free string */
-	pkg_free(*param);
+	/* don't free string -- needed for specifiers */
+	/* pkg_free(*param); */
 	/* replace it with the compiled subst. re */
 	*param=se;
 	return 0;
