@@ -163,11 +163,21 @@ replace_all("ser", "Sip Express Router");
      * '/re/repl/flags' - sed like regular expression. flags can
        be a combination of i (case insensitive), g (global) or s
        (match newline don't treat it as end of line).
+       're' - is regular expresion
+       'repl' - is replacement string - may contain
+       pseudo-varibales
+       'flags' - substitution flags (i - ignore case, g - global)
 
    Example 1-5. subst usage
 ...
 # replace the uri in to: with the message uri (just an example)
 if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1\u\2/ig') ) {};
+
+# replace the uri in to: with the value of avp sip_address (just an exa
+mple)
+if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)
+\2/ig') ) {};
+
 ...
      _________________________________________________________
 
@@ -181,6 +191,10 @@ if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1\u\2/ig') ) {};
      * '/re/repl/flags' - sed like regular expression. flags can
        be a combination of i (case insensitive), g (global) or s
        (match newline don't treat it as end of line).
+       're' - is regular expresion
+       'repl' - is replacement string - may contain
+       pseudo-varibales
+       'flags' - substitution flags (i - ignore case, g - global)
 
    Example 1-6. subst_uri usage
 ...
@@ -188,6 +202,12 @@ if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1\u\2/ig') ) {};
 )
 # as a parameter: orig_uri (just an example)
 if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:3463\1@\2;orig_uri=\0/i')){$
+
+# adds the avp 'uri_prefix' as prefix to numeric uris, and save the ori
+ginal
+# uri (\0 match) as a parameter: orig_uri (just an example)
+if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=
+\0/i')){$
 
 ...
      _________________________________________________________
@@ -202,11 +222,20 @@ if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:3463\1@\2;orig_uri=\0/i')){$
      * '/re/repl/flags' - sed like regular expression. flags can
        be a combination of i (case insensitive), g (global) or s
        (match newline don't treat it as end of line).
+       're' - is regular expresion
+       'repl' - is replacement string - may contain
+       pseudo-varibales
+       'flags' - substitution flags (i - ignore case, g - global)
 
    Example 1-7. subst usage
 ...
 # adds 3463 prefix to uris ending with 3642 (just an example)
 if (subst_user('/3642$/36423463/')){$
+
+...
+# adds avp 'user_prefix' as prefix to username in r-uri ending with 364
+2
+if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 
 ...
      _________________________________________________________

@@ -186,6 +186,15 @@ replace_all("ser", "Sip Express Router");
 				expression. flags can be a combination of i (case insensitive),
 				g (global) or s (match newline don't treat it as end of line).
 			</para>
+			<para>
+			're' - is regular expresion
+			</para>
+			<para>
+			'repl' - is replacement string - may contain pseudo-varibales
+			</para>
+			<para>
+			'flags' - substitution flags (i - ignore case, g - global)
+			</para>
 		</listitem>
 		</itemizedlist>
 		<example>
@@ -194,6 +203,10 @@ replace_all("ser", "Sip Express Router");
 ...
 # replace the uri in to: with the message uri (just an example)
 if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1\u\2/ig') ) {};
+
+# replace the uri in to: with the value of avp sip_address (just an example)
+if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)\2/ig') ) {};
+
 ...
 </programlisting>
 		</example>
@@ -214,6 +227,15 @@ if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1\u\2/ig') ) {};
 				expression. flags can be a combination of i (case insensitive),
 				g (global) or s (match newline don't treat it as end of line).
 			</para>
+			<para>
+			're' - is regular expresion
+			</para>
+			<para>
+			'repl' - is replacement string - may contain pseudo-varibales
+			</para>
+			<para>
+			'flags' - substitution flags (i - ignore case, g - global)
+			</para>
 		</listitem>
 		</itemizedlist>
 		<example>
@@ -223,6 +245,10 @@ if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1\u\2/ig') ) {};
 # adds 3463 prefix to numeric uris, and save the original uri (\0 match)
 # as a parameter: orig_uri (just an example)
 if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:3463\1@\2;orig_uri=\0/i')){$
+
+# adds the avp 'uri_prefix' as prefix to numeric uris, and save the original
+# uri (\0 match) as a parameter: orig_uri (just an example)
+if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=\0/i')){$
 
 ...
 </programlisting>
@@ -244,6 +270,15 @@ if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:3463\1@\2;orig_uri=\0/i')){$
 				expression. flags can be a combination of i (case insensitive),
 				g (global) or s (match newline don't treat it as end of line).
 			</para>
+			<para>
+			're' - is regular expresion
+			</para>
+			<para>
+			'repl' - is replacement string - may contain pseudo-varibales
+			</para>
+			<para>
+			'flags' - substitution flags (i - ignore case, g - global)
+			</para>
 		</listitem>
 		</itemizedlist>
 		<example>
@@ -252,6 +287,10 @@ if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:3463\1@\2;orig_uri=\0/i')){$
 ...
 # adds 3463 prefix to uris ending with 3642 (just an example)
 if (subst_user('/3642$/36423463/')){$
+
+...
+# adds avp 'user_prefix' as prefix to username in r-uri ending with 3642
+if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 
 ...
 </programlisting>
