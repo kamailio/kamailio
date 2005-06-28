@@ -37,6 +37,7 @@
  * 2004-06-06  db cleanup: static db_url, calls to acc_db_{bind,init,close)
  *             (andrei)
  * 2005-05-30  acc_extra patch commited (ramona)
+ * 2005-06-28  multi leg call support added (bogdan)
  */
 
 #include <stdio.h>
@@ -106,6 +107,10 @@ char *log_fmt=DEFAULT_LOG_FMT;
 /* log extra variables */
 static char *log_extra_str = 0;
 struct acc_extra *log_extra = 0;
+/* multi call-leg support */
+int multileg_enabled = 0;
+int src_avp_id = 0;
+int dst_avp_id = 0;
 
 
 #ifdef RAD_ACC
@@ -148,26 +153,28 @@ char *db_table_acc="acc"; /* name of database table> */
 
 
 /* names of columns in tables acc/missed calls*/
-char* acc_sip_from_col      = "sip_from";
-char* acc_sip_to_col        = "sip_to";
-char* acc_sip_status_col    = "sip_status";
-char* acc_sip_method_col    = "sip_method";
-char* acc_i_uri_col         = "i_uri";
-char* acc_o_uri_col         = "o_uri";
-char* acc_totag_col			= "totag";
-char* acc_fromtag_col		= "fromtag";
-char* acc_domain_col		= "domain";
-char* acc_from_uri			= "from_uri";
-char* acc_to_uri			= "to_uri";
-char* acc_sip_callid_col    = "sip_callid";
-char* acc_user_col          = "username";
-char* acc_time_col          = "time";
+char* acc_sip_from_col   = "sip_from";
+char* acc_sip_to_col     = "sip_to";
+char* acc_sip_status_col = "sip_status";
+char* acc_sip_method_col = "sip_method";
+char* acc_i_uri_col      = "i_uri";
+char* acc_o_uri_col      = "o_uri";
+char* acc_totag_col      = "totag";
+char* acc_fromtag_col    = "fromtag";
+char* acc_domain_col     = "domain";
+char* acc_from_uri       = "from_uri";
+char* acc_to_uri         = "to_uri";
+char* acc_sip_callid_col = "sip_callid";
+char* acc_user_col       = "username";
+char* acc_time_col       = "time";
+char* acc_src_col        = "src_leg";
+char* acc_dst_col        = "dst_leg";
 
 /* db extra variables */
 static char *db_extra_str = 0;
 struct acc_extra *db_extra = 0;
 
-/* name of missed calls table, default=="missed_calls" */
+/* name of missed calls table */
 char *db_table_mc="missed_calls";
 #endif
 
@@ -185,24 +192,29 @@ static int w_acc_diam_request(struct sip_msg *rq, char *comment, char *foo);
 
 
 static cmd_export_t cmds[] = {
-	{"acc_log_request",  w_acc_log_request,  1, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"acc_log_request", w_acc_log_request, 1, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 #ifdef SQL_ACC
-	{"acc_db_request",   w_acc_db_request,   2, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"acc_db_request",  w_acc_db_request,  2, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
 #ifdef RAD_ACC
-	{"acc_rad_request",  w_acc_rad_request,  1, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"acc_rad_request", w_acc_rad_request, 1, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
 #ifdef DIAM_ACC
-	{"acc_diam_request", w_acc_diam_request, 1, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"acc_diam_request",w_acc_diam_request,1, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
 	{0, 0, 0, 0, 0}
 };
+
+
 
 static param_export_t params[] = {
 	{"early_media",          INT_PARAM, &early_media          },
 	{"failed_transactions",  INT_PARAM, &failed_transactions  },
 	{"report_ack",           INT_PARAM, &report_ack           },
 	{"report_cancels",       INT_PARAM, &report_cancels       },
+	{"multi_leg_enabled",    INT_PARAM, &multileg_enabled     },
+	{"src_leg_avp_id",       INT_PARAM, &src_avp_id           },
+	{"dst_leg_avp_id",       INT_PARAM, &dst_avp_id           },
 	/* syslog specific */
 	{"log_flag",             INT_PARAM, &log_flag             },
 	{"log_missed_flag",      INT_PARAM, &log_missed_flag      },
@@ -246,6 +258,8 @@ static param_export_t params[] = {
 	{"acc_totag_column",     STR_PARAM, &acc_totag_col        },
 	{"acc_fromtag_column",   STR_PARAM, &acc_fromtag_col      },
 	{"acc_domain_column",    STR_PARAM, &acc_domain_col       },
+	{"acc_src_leg_column",   STR_PARAM, &acc_src_col          },
+	{"acc_dst_leg_column",   STR_PARAM, &acc_dst_col          },
 	{"db_extra",             STR_PARAM, &db_extra_str         },
 #endif
 	{0,0,0}
@@ -262,6 +276,7 @@ struct module_exports exports= {
 	0,          /* oncancel function */
 	child_init  /* per-child init function */
 };
+
 
 
 /* ------------- Callback handlers --------------- */
@@ -322,6 +337,12 @@ static int mod_init( void )
 		return -1;
 	}
 
+	if (multileg_enabled && (dst_avp_id==0 || src_avp_id==0) ) {
+		LOG(L_ERR,"ERROR:acc:mod_init: multi call-leg enabled but no src "
+			" and dst avp IDs defined!\n");
+		return -1;
+	}
+
 	/* init the extra engine */
 	init_acc_extra();
 
@@ -332,8 +353,12 @@ static int mod_init( void )
 	}
 
 #ifdef SQL_ACC
+	if (db_url==0 || db_url[0]==0) {
+		LOG(L_ERR,"ERROR:acc:mod_init: no DB_URL specified!!\n");
+		return -1;
+	}
 	if (acc_db_bind(db_url)<0){
-		LOG(L_ERR, "ERROR:acc_db_init: failed..."
+		LOG(L_ERR, "ERROR:acc:mod_init: acc_db_init: failed..."
 				"did you load a database module?\n");
 		return -1;
 	}
@@ -353,18 +378,22 @@ static int mod_init( void )
 
 	memset(attrs, 0, sizeof(attrs));
 	memset(attrs, 0, sizeof(vals));
-	attrs[A_CALLING_STATION_ID].n		= "Calling-Station-Id";
-	attrs[A_CALLED_STATION_ID].n		= "Called-Station-Id";
+	attrs[A_CALLING_STATION_ID].n			= "Calling-Station-Id";
+	attrs[A_CALLED_STATION_ID].n			= "Called-Station-Id";
 	attrs[A_SIP_TRANSLATED_REQUEST_URI].n	= "Sip-Translated-Request-URI";
 	attrs[A_ACCT_SESSION_ID].n		= "Acct-Session-Id";
 	attrs[A_SIP_TO_TAG].n			= "Sip-To-Tag";
 	attrs[A_SIP_FROM_TAG].n			= "Sip-From-Tag";
-	attrs[A_SIP_CSEQ].n			= "Sip-CSeq";
+	attrs[A_SIP_CSEQ].n				= "Sip-CSeq";
 	attrs[A_ACCT_STATUS_TYPE].n		= "Acct-Status-Type";
 	attrs[A_SERVICE_TYPE].n			= "Service-Type";
-	attrs[A_SIP_RESPONSE_CODE].n		= "Sip-Response-Code";
+	attrs[A_SIP_RESPONSE_CODE].n	= "Sip-Response-Code";
 	attrs[A_SIP_METHOD].n			= "Sip-Method";
 	attrs[A_USER_NAME].n			= "User-Name";
+	if (multileg_enabled) {
+		attrs[A_SRC_LEG].n			= "Sip-Leg-Source";
+		attrs[A_DST_LEG].n			= "Sip-Leg-Destination";
+	}
 	vals[V_STATUS_START].n			= "Start";
 	vals[V_STATUS_STOP].n			= "Stop";
 	vals[V_STATUS_FAILED].n			= "Failed";
@@ -408,10 +437,12 @@ static int mod_init( void )
 	return 0;
 }
 
+
+
 static int child_init(int rank)
 {
 #ifdef SQL_ACC
-	if (acc_db_init()<0)
+	if (acc_db_init(db_url)<0)
 		return -1;
 #endif
 
@@ -443,6 +474,8 @@ static int child_init(int rank)
 	return 0;
 }
 
+
+
 static void destroy(void)
 {
 	if (log_extra)
@@ -464,6 +497,7 @@ static void destroy(void)
 }
 
 
+
 static inline void acc_preparse_req(struct sip_msg *rq)
 {
 	/* try to parse from for From-tag for accounted transactions; 
@@ -477,6 +511,7 @@ static inline void acc_preparse_req(struct sip_msg *rq)
 		parse_orig_ruri(rq);
 	}
 }
+
 
 
 /* prepare message and transaction context for later accounting */

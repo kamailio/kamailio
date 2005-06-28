@@ -27,6 +27,12 @@
 		<affiliation><orgname>&voicesystem;</orgname></affiliation>
 		<email>ramona@voice-system.ro</email>
 		</author>
+		<editor>
+		<firstname>Bogdan-Andrei</firstname>
+		<surname>Iancu</surname>
+		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<email>bogdan@voice-system.ro</email>
+		</editor>
 	</authorgroup>
 	<copyright>
 		<year>2002</year>

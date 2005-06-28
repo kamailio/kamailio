@@ -111,7 +111,7 @@ void acc_log_reply(  struct cell* t , struct sip_msg *reply,
 
 #ifdef SQL_ACC
 int acc_db_bind(char* db_url);
-int acc_db_init();
+int acc_db_init(char* db_url);
 void acc_db_close();
 int acc_db_request( struct sip_msg *rq, struct hdr_field *to,
 		str* phrase,  char *table, char *fmt);

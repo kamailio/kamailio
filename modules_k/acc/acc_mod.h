@@ -26,6 +26,7 @@
  * 2003-04-04  grand acc cleanup (jiri)
  * 2003-11-04  multidomain support for mysql introduced (jiri)
  * 2004-06-06  removed db_url, db_handle (andrei)
+ * 2005-06-28  multi leg call support added (bogdan)
  */
 
 
@@ -44,6 +45,10 @@ extern char *log_fmt;
 extern int report_cancels;
 extern int log_flag;
 extern int log_missed_flag;
+
+extern int multileg_enabled;
+extern int src_avp_id;
+extern int dst_avp_id;
 
 
 #ifdef RAD_ACC
@@ -81,6 +86,8 @@ extern char* acc_from_uri;
 extern char* acc_to_uri;
 extern char* acc_totag_col;
 extern char* acc_fromtag_col;
+extern char* acc_dst_col;
+extern char* acc_src_col;
 
 
 #endif /* SQL_ACC */

@@ -9,6 +9,10 @@ Ramona-Elena Modroiu
 
    voice-system.ro
 
+Edited by
+
+Bogdan-Andrei Iancu
+
    Copyright © 2002, 2003 FhG FOKUS
 
    Copyright © 2004, 2005 voice-system.ro
@@ -22,85 +26,100 @@ Ramona-Elena Modroiu
               1.1.1. General Example
 
         1.2. Extra accounting
-        1.3. Dependencies
 
-              1.3.1. OpenSER Modules
-              1.3.2. External Libraries or Applications
+              1.2.1. Overview
+              1.2.2. Definitions and syntax
+              1.2.3. How it works
 
-        1.4. Exported Parameters
+        1.3. Multi Call-Legs accounting
 
-              1.4.1. secret (string)
-              1.4.2. log_level (integer)
-              1.4.3. log_fmt (string)
-              1.4.4. early_media (integer)
-              1.4.5. failed_transactions (integer)
-              1.4.6. log_flag (integer)
-              1.4.7. log_missed_flag (integer)
-              1.4.8. report_ack (integer)
-              1.4.9. report_cancels (integer)
-              1.4.10. radius_config (string)
-              1.4.11. service_type (integer)
-              1.4.12. radius_flag (integer)
-              1.4.13. radius_missed_flag (integer)
-              1.4.14. db_url (string)
-              1.4.15. db_flag (integer)
-              1.4.16. db_missed_flag (integer)
-              1.4.17. diameter_flag (integer)
-              1.4.18. diameter_missed_flag (integer)
-              1.4.19. diameter_client_host (string)
-              1.4.20. diameter_client_port (int)
-              1.4.21. log_extra (string)
-              1.4.22. db_extra (string)
-              1.4.23. radius_extra (string)
-              1.4.24. diamter_extra (string)
+              1.3.1. Overview
+              1.3.2. Configuration
+              1.3.3. Logged data
 
-        1.5. Exported Functions
+        1.4. Dependencies
 
-              1.5.1. acc_log_request(comment)
-              1.5.2. acc_db_request(comment, table)
-              1.5.3. acc_rad_request(comment)
-              1.5.4. acc_diam_request(comment)
+              1.4.1. OpenSER Modules
+              1.4.2. External Libraries or Applications
+
+        1.5. Exported Parameters
+
+              1.5.1. log_level (integer)
+              1.5.2. log_fmt (string)
+              1.5.3. early_media (integer)
+              1.5.4. failed_transactions (integer)
+              1.5.5. log_flag (integer)
+              1.5.6. log_missed_flag (integer)
+              1.5.7. report_ack (integer)
+              1.5.8. report_cancels (integer)
+              1.5.9. radius_config (string)
+              1.5.10. service_type (integer)
+              1.5.11. radius_flag (integer)
+              1.5.12. radius_missed_flag (integer)
+              1.5.13. db_url (string)
+              1.5.14. db_flag (integer)
+              1.5.15. db_missed_flag (integer)
+              1.5.16. diameter_flag (integer)
+              1.5.17. diameter_missed_flag (integer)
+              1.5.18. diameter_client_host (string)
+              1.5.19. diameter_client_port (int)
+              1.5.20. log_extra (string)
+              1.5.21. db_extra (string)
+              1.5.22. radius_extra (string)
+              1.5.23. diamter_extra (string)
+              1.5.24. multi_leg_enabled (integer)
+              1.5.25. src_leg_avp_id (integer)
+              1.5.26. dst_leg_avp_id (integer)
+
+        1.6. Exported Functions
+
+              1.6.1. acc_log_request(comment)
+              1.6.2. acc_db_request(comment, table)
+              1.6.3. acc_rad_request(comment)
+              1.6.4. acc_diam_request(comment)
 
    2. Developer's Guide
    3. Frequently Asked Questions
 
    List of Examples
-   1-1. Setting secret module parameter
-   1-2. log_level example
-   1-3. log_fmt example
-   1-4. early_media example
-   1-5. failed_transactions example
-   1-6. log_flag example
-   1-7. log_missed_flag example
-   1-8. report_ack example
-   1-9. report_cancels example
-   1-10. radius_config example
-   1-11. service_type example
-   1-12. radius_flag example
-   1-13. radius_missed_flag example
-   1-14. db_url example
-   1-15. db_flag example
-   1-16. db_missed_flag example
-   1-17. diameter_flag example
-   1-18. diameter_missed_flag example
+   1-1. log_level example
+   1-2. log_fmt example
+   1-3. early_media example
+   1-4. failed_transactions example
+   1-5. log_flag example
+   1-6. log_missed_flag example
+   1-7. report_ack example
+   1-8. report_cancels example
+   1-9. radius_config example
+   1-10. service_type example
+   1-11. radius_flag example
+   1-12. radius_missed_flag example
+   1-13. db_url example
+   1-14. db_flag example
+   1-15. db_missed_flag example
+   1-16. diameter_flag example
+   1-17. diameter_missed_flag example
+   1-18. diameter_client_host example
    1-19. diameter_client_host example
-   1-20. diameter_client_host example
-   1-21. log_extra example
-   1-22. db_extra example
-   1-23. radius_extra example
-   1-24. diameter_extra example
-   1-25. acc_log_request usage
-   1-26. acc_db_request usage
-   1-27. acc_rad_request usage
-   1-28. acc_diam_request usage
+   1-20. log_extra example
+   1-21. db_extra example
+   1-22. radius_extra example
+   1-23. diameter_extra example
+   1-24. multi_leg_enabled example
+   1-25. src_leg_avp_id example
+   1-26. dst_leg_avp_id example
+   1-27. acc_log_request usage
+   1-28. acc_db_request usage
+   1-29. acc_rad_request usage
+   1-30. acc_diam_request usage
      _________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
-   acc module is used to report on transactions to syslog, SQL
-   and RADIUS.
+   acc module is used to report on transactions to syslog, SQL,
+   RADIUS and DIAMETER (beta version).
 
    To report on a transaction using syslog, use "setflag" to mark
    a transaction you are interested in with a flag, load
@@ -153,9 +172,9 @@ Chapter 1. User's Guide
        best knows about call status (including media status and
        PSTN status in case of the gateway).
 
-   Support for SQL and RADIUS works analogously. You need to
-   enable it by recompiling the module with properly set defines.
-   Uncomment the SQL_ACC and RAD_ACC lines in
+   Support for SQL, RADIUS and DIAMETER works analogously. You
+   need to enable it by recompiling the module with properly set
+   defines. Uncomment the SQL_ACC, RAD_ACC or DDIAM_ACC lines in
    modules/acc/Makefile. To compile SQL support, you need to have
    mysqlclient package on your system. To compile RADIUS support,
    you need to have radiusclient-ng (only versions higher or
@@ -184,33 +203,35 @@ modparam("acc", "log_level", 1)
 modparam("acc", "log_flag", 1)
 
 if (uri=~"sip:+40") /* calls to Romania */ {
-        if (!proxy_authorize("siphub.net" /* realm */,
-                                                 "subscriber" /* table
-name */))  {
-                proxy_challenge("siphub.net" /* realm */, "0" /* no qop
- */ );
-                break;
-        }
+    if (!proxy_authorize("siphub.net" /* realm */,
+    "subscriber" /* table name */))  {
+        proxy_challenge("siphub.net" /* realm */, "0" /* no qop */ );
+        break;
+    }
 
-        if (method=="INVITE" & !check_from()) {
-                log("from!=digest\n");
-                sl_send_reply("403","Forbidden");
-                break;
-        }
+    if (method=="INVITE" & !check_from()) {
+        log("from!=digest\n");
+        sl_send_reply("403","Forbidden");
+        break;
+    }
 
-        setflag(1); /* set for accounting (the same value as in log_fla
-g!)
-        t_relay();      /* enter stateful mode now */
+    setflag(1); /* set for accounting (the same value as in log_flag!)
+    t_relay();  /* enter stateful mode now */
 };
      _________________________________________________________
 
 1.2. Extra accounting
+
+1.2.1. Overview
 
    Along the static information defined via FMT-s, ACC modules
    allows dynamical selection of extra information to be logged.
    There are two classes of information that are accessible by
    extra accounting: data from SIP messages (as headers) and
    internal OpenSER data (as AVPs).
+     _________________________________________________________
+
+1.2.2. Definitions and syntax
 
    Selection of extra information is done via xxx_extra
    parameters by specifying the names of additional headers or
@@ -228,35 +249,105 @@ g!)
      * LOG accounting - log_name will be just printed along with
        the data in log_name=data format;
      * DB accounting - log_name will be the name of the DB column
-       where the data will be stored. IMPORTANT: add in db acc
+       where the data will be stored.IMPORTANT: add in db acc
        table the columns corresponding to each extra data; 
      * RADIUS accounting - log_name will be the AVP name used for
        packing the data into RADIUS message. The log_name will be
        translated to AVP number via the dictionary. IMPORTANT:
        add in RADIUS dictionary the log_name attribute. 
      * DIAMETER accounting - log_name will be the AVP code used
-       for packing the data into DIAMETER message. the AVP code
+       for packing the data into DIAMETER message. The AVP code
        is given directly as integer, since DIAMETER has no
        dictionary support yet. IMPORTANT: log_name must be a
        number.
+     _________________________________________________________
+
+1.2.3. How it works
 
    Data can be an header name or an AVP name/ID - depending of
    the data_type. If header, the search for it into SIP messages
    will be optimized by converting at start-up the header name
    (string) into header type (integer) - this is not possible for
-   all headers (only for the the most important); otherwise case
+   all headers (only for the most important); otherwise case
    insensitive string matching will be used.
 
    The only defined flag is 'g' - global - which will force
    logging all values of the given header or AVP. Without this
    flag, only the first found value will be logged. IMPORTANT for
-   DB logging, this flag is disabled from DB data structure
+   DB logging, this flag is disabled due DB data structure
    constraints.
      _________________________________________________________
 
-1.3. Dependencies
+1.3. Multi Call-Legs accounting
 
-1.3.1. OpenSER Modules
+1.3.1. Overview
+
+   A SIP call can have multiple legs due forwarding actions. For
+   example user A calls user B which forwards the call to user C.
+   There is only one SIP call but with 2 legs ( A to B and B to
+   C). Accounting the legs of a call is required for proper
+   billing of the calls (if C is a PSTN number and the call is
+   billed, user B must pay for the call -as last party modifing
+   the call destination-, and not A -as initiator of the call.
+   Call forwarding on server is only one example which shows the
+   necessity of the having an accounting engine with multiple
+   legs support.
+     _________________________________________________________
+
+1.3.2. Configuration
+
+   First how it works? The idea is to store in several OpenSER
+   AVP pairs the originator and destination for each call-leg.
+   For the A call B and B forwards to C example, the AVP pairs
+   are (A,B) and (B,C). There are two type of AVPs -source and
+   destination- which refined a call-leg. The administator must
+   take care and to properly insert these AVP from the script (in
+   proper order and with correct type).
+
+   When the accouning infomation for the call will be
+   written/sent, all the call-leg pairs will be added (based on
+   found AVP pairs).
+
+   By default, the multiple call-legs support is disable - it can
+   be enabled via the multi_leg_enabled module parameter. By
+   enabling it, you will have also to define the AVPs to be used
+   for source and destination (which define one call-leg). From
+   performance reasons, the AVPs may be specified only via IDs.
+     _________________________________________________________
+
+1.3.3. Logged data
+
+   For each call, all the source-destination pairs (which defined
+   a call-leg) will be looged. How the information will be
+   actually logged, depends of the data backend:
+
+     * syslog -- all pairs will be added to one record string as
+       src_leg=xxx, dst_leg=xxxx pairs.
+     * database -- each pair will be separatly logged (due DB
+       data structure constraints); several records will be
+       written, the difference between them being only the source
+       & destination of the corresponding call-leg. with database
+       support.
+
+       Note
+
+   You will need to add in your DB (all acc related tables) the
+   two colums for call-leg definition (source and destination).
+     * Radius -- all pairs will be added to same Radius
+       accounting message as RADIUS AVPs - for each call-leg two
+       RADIUS AVPs will be added: source and destination
+
+   Note
+
+   You will need to add in your dictionaty the two RADIUS AVPs
+   used for call-leg definition (source and destination):
+   Sip-Leg-Source and Sip-Leg-Destination
+     * Diameter -- not supported. with database support.
+     _________________________________________________________
+
+1.4. Dependencies
+
+1.4.1. OpenSER Modules
 
    The module depends on the following modules (in the other
    words the listed modules must be loaded before this module):
@@ -265,7 +356,7 @@ g!)
      * a database module -- If compiled with database support.
      _________________________________________________________
 
-1.3.2. External Libraries or Applications
+1.4.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
@@ -275,78 +366,70 @@ g!)
        http://developer.berlios.de/projects/radiusclient-ng/.
      _________________________________________________________
 
-1.4. Exported Parameters
+1.5. Exported Parameters
 
-1.4.1. secret (string)
-
-   Default value is randomly generated string.
-
-   Example 1-1. Setting secret module parameter
-modparam("auth", "secret", "johndoessecretphrase")
-     _________________________________________________________
-
-1.4.2. log_level (integer)
+1.5.1. log_level (integer)
 
    Log level at which accounting messages are issued to syslog.
 
    Default value is L_NOTICE.
 
-   Example 1-2. log_level example
+   Example 1-1. log_level example
 modparam("acc", "log_level", 2)   # Set log_level to 2
      _________________________________________________________
 
-1.4.3. log_fmt (string)
+1.5.2. log_fmt (string)
 
    Defines what parts of header fields will be printed to syslog,
    see "overview" for list of accepted values.
 
    Default value is "miocfs".
 
-   Example 1-3. log_fmt example
+   Example 1-2. log_fmt example
 modparam("acc", "log_fmt", "mfs")
      _________________________________________________________
 
-1.4.4. early_media (integer)
+1.5.3. early_media (integer)
 
    Should be early media (183) accounted too ?
 
    Default value is 0 (no).
 
-   Example 1-4. early_media example
+   Example 1-3. early_media example
 modparam("acc", "early_media", 1)
      _________________________________________________________
 
-1.4.5. failed_transactions (integer)
+1.5.4. failed_transactions (integer)
 
    Should be failed transactions (status>=300) accounted too ?
 
    Default value is 0 (no).
 
-   Example 1-5. failed_transactions example
+   Example 1-4. failed_transactions example
 modparam("acc", "failed_transactions", 1)
      _________________________________________________________
 
-1.4.6. log_flag (integer)
+1.5.5. log_flag (integer)
 
    Request flag which needs to be set to account a transaction.
 
    Default value is 1.
 
-   Example 1-6. log_flag example
+   Example 1-5. log_flag example
 modparam("acc", "log_flag", 2)
      _________________________________________________________
 
-1.4.7. log_missed_flag (integer)
+1.5.6. log_missed_flag (integer)
 
    Request flag which needs to be set to account missed calls.
 
    Default value is 2.
 
-   Example 1-7. log_missed_flag example
+   Example 1-6. log_missed_flag example
 modparam("acc", "log_missed_flag", 3)
      _________________________________________________________
 
-1.4.8. report_ack (integer)
+1.5.7. report_ack (integer)
 
    Shall acc attempt to account e2e ACKs too ? Note that this is
    really only an attempt, as e2e ACKs may take a different path
@@ -355,11 +438,11 @@ modparam("acc", "log_missed_flag", 3)
 
    Default value is 1 (yes).
 
-   Example 1-8. report_ack example
+   Example 1-7. report_ack example
 modparam("acc", "report_ack", 0)
      _________________________________________________________
 
-1.4.9. report_cancels (integer)
+1.5.8. report_cancels (integer)
 
    By default, CANCEL reporting is disabled -- most accounting
    applications are happy to see INVITE's cancellation status.
@@ -367,11 +450,11 @@ modparam("acc", "report_ack", 0)
 
    Default value is 0 (no).
 
-   Example 1-9. report_cancels example
+   Example 1-8. report_cancels example
 modparam("acc", "report_cancels", 1)
      _________________________________________________________
 
-1.4.10. radius_config (string)
+1.5.9. radius_config (string)
 
    This parameter is radius specific. Path to radius client
    configuration file, set the referred config file correctly and
@@ -383,162 +466,198 @@ modparam("acc", "report_cancels", 1)
    Default value is
    "/usr/local/etc/radiusclient/radiusclient.conf".
 
-   Example 1-10. radius_config example
+   Example 1-9. radius_config example
 modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
      _________________________________________________________
 
-1.4.11. service_type (integer)
+1.5.10. service_type (integer)
 
    Radius service type used for accounting.
 
    Default value is 15 (SIP).
 
-   Example 1-11. service_type example
+   Example 1-10. service_type example
 modparam("acc", "service_type", 16)
      _________________________________________________________
 
-1.4.12. radius_flag (integer)
+1.5.11. radius_flag (integer)
 
    Request flag which needs to be set to account a transaction --
    RADIUS specific.
 
    Default value is 1.
 
-   Example 1-12. radius_flag example
+   Example 1-11. radius_flag example
 modparam("acc", "radius_flag", 2)
      _________________________________________________________
 
-1.4.13. radius_missed_flag (integer)
+1.5.12. radius_missed_flag (integer)
 
    Request flag which needs to be set to account missed calls --
    RADIUS specific.
 
    Default value is 2.
 
-   Example 1-13. radius_missed_flag example
+   Example 1-12. radius_missed_flag example
 modparam("acc", "radius_missed_flag", 3)
      _________________________________________________________
 
-1.4.14. db_url (string)
+1.5.13. db_url (string)
 
    SQL address -- database specific.
 
    Default value is "mysql://openser:openserrw@localhost/openser"
 
-   Example 1-14. db_url example
+   Example 1-13. db_url example
 modparam("acc", "db_url", "mysql://user:password@localhost/openser")
      _________________________________________________________
 
-1.4.15. db_flag (integer)
+1.5.14. db_flag (integer)
 
    Request flag which needs to be set to account a transaction --
    database specific.
 
    Default value is 1.
 
-   Example 1-15. db_flag example
+   Example 1-14. db_flag example
 modparam("acc", "db_flag", 2)
      _________________________________________________________
 
-1.4.16. db_missed_flag (integer)
+1.5.15. db_missed_flag (integer)
 
    Request flag which needs to be set to account missed calls --
    database specific.
 
    Default value is 2.
 
-   Example 1-16. db_missed_flag example
+   Example 1-15. db_missed_flag example
 modparam("acc", "db_missed_flag", 3)
      _________________________________________________________
 
-1.4.17. diameter_flag (integer)
+1.5.16. diameter_flag (integer)
 
    Request flag which needs to be set to account a transaction --
    DIAMETER specific.
 
    Default value is 1.
 
-   Example 1-17. diameter_flag example
+   Example 1-16. diameter_flag example
 modparam("acc", "diameter_flag", 2)
      _________________________________________________________
 
-1.4.18. diameter_missed_flag (integer)
+1.5.17. diameter_missed_flag (integer)
 
    Request flag which needs to be set to account missed calls --
    DIAMETER specific.
 
    Default value is 2.
 
-   Example 1-18. diameter_missed_flag example
+   Example 1-17. diameter_missed_flag example
 modparam("acc", "diameter_missed_flag", 3)
      _________________________________________________________
 
-1.4.19. diameter_client_host (string)
+1.5.18. diameter_client_host (string)
 
    Hostname of the machine where the DIAMETER Client is running
    -- DIAMETER specific.
 
    Default value is "localhost".
 
-   Example 1-19. diameter_client_host example
+   Example 1-18. diameter_client_host example
 modparam("acc", "diameter_client_host", "3a_server.net")
      _________________________________________________________
 
-1.4.20. diameter_client_port (int)
+1.5.19. diameter_client_port (int)
 
    Port number where the Diameter Client is listening -- DIAMETER
    specific.
 
    Default value is 3000.
 
-   Example 1-20. diameter_client_host example
+   Example 1-19. diameter_client_host example
 modparam("acc", "diameter_client_port", 3000)
      _________________________________________________________
 
-1.4.21. log_extra (string)
+1.5.20. log_extra (string)
 
    Extra values to be logged.
 
    Default value is NULL.
 
-   Example 1-21. log_extra example
+   Example 1-20. log_extra example
 modparam("acc", "log_extra", "ua=hdr/User-Agent;uuid=avp/i:123")
      _________________________________________________________
 
-1.4.22. db_extra (string)
+1.5.21. db_extra (string)
 
    Extra values to be logged into database - DB specific.
 
    Default value is NULL.
 
-   Example 1-22. db_extra example
+   Example 1-21. db_extra example
 modparam("acc", "db_extra", "ct=hdr/Content-type; email=avp/s:email")
      _________________________________________________________
 
-1.4.23. radius_extra (string)
+1.5.22. radius_extra (string)
 
    Extra values to be logged via RADIUS - RADIUS specific.
 
    Default value is NULL.
 
-   Example 1-23. radius_extra example
+   Example 1-22. radius_extra example
 modparam("acc", "radius_extra", "via=hdr/Via/g; email=avp/s:email")
      _________________________________________________________
 
-1.4.24. diamter_extra (string)
+1.5.23. diamter_extra (string)
 
    Extra values to be logged via DIAMETER - DIAMETER specific.
 
    Default value is NULL.
 
-   Example 1-24. diameter_extra example
+   Example 1-23. diameter_extra example
 modparam("acc", "diameter_extra", "ct=7846/Content-type; 7847=avp/s:ema
 il")
      _________________________________________________________
 
-1.5. Exported Functions
+1.5.24. multi_leg_enabled (integer)
 
-1.5.1. acc_log_request(comment)
+   If set to a non 0 value, it will enables the logging of the
+   call-legs. See Section 1.3 for a detailed description of the
+   Multi Call-Legs accounting.
+
+   Default value is 0 (disabled).
+
+   Example 1-24. multi_leg_enabled example
+modparam("acc", "multi_leg_enabled", 1)
+     _________________________________________________________
+
+1.5.25. src_leg_avp_id (integer)
+
+   Defines the AVP (ID AVP) which contains the source URI part of
+   a call-leg. See Section 1.3 for a detailed description of the
+   Multi Call-Legs accounting.
+
+   Default value is 0 (undefined).
+
+   Example 1-25. src_leg_avp_id example
+modparam("acc", "src_leg_avp_id", 110)
+     _________________________________________________________
+
+1.5.26. dst_leg_avp_id (integer)
+
+   Defines the AVP (ID AVP) which contains the destination URI
+   part of a call-leg. See Section 1.3 for a detailed description
+   of the Multi Call-Legs accounting.
+
+   Default value is 0 (undefined).
+
+   Example 1-26. dst_leg_avp_id example
+modparam("acc", "dst_leg_avp_id", 110)
+     _________________________________________________________
+
+1.6. Exported Functions
+
+1.6.1. acc_log_request(comment)
 
    acc_request reports on a request, for example, it can be used
    to report on missed calls to off-line users who are replied
@@ -549,13 +668,13 @@ il")
 
      * comment - Comment to be appended.
 
-   Example 1-25. acc_log_request usage
+   Example 1-27. acc_log_request usage
 ...
 acc_log_request("Some comment");
 ...
      _________________________________________________________
 
-1.5.2. acc_db_request(comment, table)
+1.6.2. acc_db_request(comment, table)
 
    Like acc_log_request, acc_db_request reports on a request. The
    report is sent to database at "db_url", in the table referred
@@ -566,13 +685,13 @@ acc_log_request("Some comment");
      * comment - Comment to be appended.
      * table - Database table to be used.
 
-   Example 1-26. acc_db_request usage
+   Example 1-28. acc_db_request usage
 ...
 acc_log_request("Some comment", "Some table");
 ...
      _________________________________________________________
 
-1.5.3. acc_rad_request(comment)
+1.6.3. acc_rad_request(comment)
 
    Like acc_log_request, acc_rad_request reports on a request. It
    reports to radius server as configured in "radius_config".
@@ -581,13 +700,13 @@ acc_log_request("Some comment", "Some table");
 
      * comment - Comment to be appended.
 
-   Example 1-27. acc_rad_request usage
+   Example 1-29. acc_rad_request usage
 ...
 acc_rad_request("Some comment");
 ...
      _________________________________________________________
 
-1.5.4. acc_diam_request(comment)
+1.6.4. acc_diam_request(comment)
 
    Like acc_log_request, acc_diam_request reports on a request.
    It reports to Diameter server.
@@ -596,7 +715,7 @@ acc_rad_request("Some comment");
 
      * comment - Comment to be appended.
 
-   Example 1-28. acc_diam_request usage
+   Example 1-30. acc_diam_request usage
 ...
 acc_diam_request("Some comment");
 ...

@@ -26,6 +26,7 @@
  * 2004-06-06  updated to the new DB api, cleanup: acc_db_{bind, init,close)
  *              added (andrei)
  * 2005-05-30  acc_extra patch commited (ramona)
+ * 2005-06-28  multi leg call support added (bogdan)
  */
 
 
@@ -36,6 +37,7 @@
 #include "../../error.h"
 #include "../../ut.h"      /* q_memchr */
 #include "../../mem/mem.h"
+#include "../../usr_avp.h"
 #include "../../parser/hf.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
@@ -89,12 +91,9 @@ static int diam_attr[] = { AVP_SIP_FROM_URI, AVP_SIP_TO_URI, AVP_SIP_OURI,
 #endif
 
 #ifdef SQL_ACC
-
-static char* acc_db_url=0;
 static db_func_t acc_dbf;
 static db_con_t* db_handle=0;
 extern struct acc_extra *db_extra;
-
 #endif
 
 
@@ -313,6 +312,31 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 	return cnt;
 }
 
+/****************************************************
+ *        macros for embedded multi-leg logging
+ ****************************************************/
+#define leg_loop_VARS \
+	struct usr_avp *dst; \
+	struct usr_avp *src; \
+	int_str dst_val; \
+	int_str src_val; \
+
+
+#define BEGIN_loop_all_legs \
+	src = search_first_avp(0,(int_str)src_avp_id,&src_val); \
+	dst = search_first_avp(0,(int_str)dst_avp_id,&dst_val); \
+	do { \
+		while (src && (src->flags&AVP_VAL_STR)==0 ) \
+			src = search_next_avp(src,&src_val); \
+		while (dst && (dst->flags&AVP_VAL_STR)==0 ) \
+			dst = search_next_avp(dst,&dst_val);
+
+#define END_loop_all_legs \
+		src = src?search_next_avp(src,&src_val):0; \
+		dst = dst?search_next_avp(dst,&dst_val):0; \
+	}while(src||dst);
+
+
 
 	/* skip leading text and begin with first item's
 	 * separator ", " which will be overwritten by the
@@ -321,35 +345,35 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 /********************************************
  *        acc_request
  ********************************************/
+#define MAX_LOG_SIZE  65536
 int acc_log_request( struct sip_msg *rq, struct hdr_field *to, 
 				str *txt, str *phrase)
 {
+	static char log_msg[MAX_LOG_SIZE];
 	static str* val_arr[ALL_LOG_FMT_LEN+MAX_ACC_EXTRA];
 	static str atr_arr[ALL_LOG_FMT_LEN+MAX_ACC_EXTRA];
 	int len;
-	char *log_msg;
 	char *p;
 	int attr_cnt;
 	int attr_len;
 	int i;
+	leg_loop_VARS;
 
 	if (skip_cancel(rq)) return 1;
 
 	attr_cnt=fmt2strar( log_fmt, rq, to, phrase, 
 					&len, &attr_len, val_arr, atr_arr);
 	if (!attr_cnt) {
-		LOG(L_ERR, "ERROR: acc_log_request: fmt2strar failed\n");
+		LOG(L_ERR, "ERROR:acc:acc_log_request: fmt2strar failed\n");
 		return -1;
 	}
 	attr_cnt += extra2strar( log_extra, rq,
 		&len, &attr_len,
 		atr_arr+attr_cnt, val_arr+attr_cnt);
 	
-	len+=attr_len+ACC_LEN+txt->len+A_EOL_LEN 
-		+attr_cnt*(A_SEPARATOR_LEN+A_EQ_LEN)-A_SEPARATOR_LEN;
-	log_msg=pkg_malloc(len);
-	if (!log_msg) {
-		LOG(L_ERR, "ERROR: acc_log_request: no mem\n");
+	if ( MAX_LOG_SIZE < len+ attr_len+ACC_LEN+txt->len+A_EOL_LEN 
+	+ attr_cnt*(A_SEPARATOR_LEN+A_EQ_LEN)-A_SEPARATOR_LEN) {
+		LOG(L_ERR, "ERROR:acc:acc_log_request: buffer to small\n");
 		return -1;
 	}
 
@@ -369,8 +393,40 @@ int acc_log_request( struct sip_msg *rq, struct hdr_field *to,
 		p+=val_arr[i]->len;
 	}
 
+	if ( multileg_enabled ) {
+		BEGIN_loop_all_legs;
+		if (p+A_SEPARATOR_LEN+7+A_EQ_LEN+A_SEPARATOR_LEN+7+A_EQ_LEN
+		+(src?src_val.s->len:NA_LEN)+(dst?dst_val.s->len:NA_LEN) >
+		log_msg+MAX_LOG_SIZE ) {
+			LOG(L_ERR, "ERROR:acc:acc_log_request: buffer to small\n");
+			return -1;
+		}
+		if (src) {
+			memcpy(p, A_SEPARATOR"src_leg"A_EQ, A_SEPARATOR_LEN+7+A_EQ_LEN );
+			p+=A_SEPARATOR_LEN+7+A_EQ_LEN;
+			memcpy(p, src_val.s->s, src_val.s->len);
+			p+=src_val.s->len;
+		} else {
+			memcpy(p, A_SEPARATOR"src_leg"A_EQ NA,
+				A_SEPARATOR_LEN+7+A_EQ_LEN+NA_LEN);
+			p+=A_SEPARATOR_LEN+7+A_EQ_LEN+NA_LEN;
+		}
+		if (dst) {
+			memcpy(p, A_SEPARATOR"dst_leg"A_EQ, A_SEPARATOR_LEN+7+A_EQ_LEN );
+			p+=A_SEPARATOR_LEN+7+A_EQ_LEN;
+			memcpy(p, dst_val.s->s, dst_val.s->len);
+			p+=dst_val.s->len;
+		} else {
+			memcpy(p, A_SEPARATOR"dst_leg"A_EQ NA,
+				A_SEPARATOR_LEN+7+A_EQ_LEN+NA_LEN);
+			p+=A_SEPARATOR_LEN+7+A_EQ_LEN+NA_LEN;
+		}
+		END_loop_all_legs;
+	}
+
 	/* terminating text */
 	memcpy(p, A_EOL, A_EOL_LEN); p+=A_EOL_LEN;
+
 	/* leading text */
 	p=log_msg;
 	memcpy(p, ACC, ACC_LEN ); p+=ACC_LEN;
@@ -378,7 +434,6 @@ int acc_log_request( struct sip_msg *rq, struct hdr_field *to,
 
 	LOG(log_level, "%s", log_msg );
 
-	pkg_free(log_msg);
 	return 1;
 }
 
@@ -441,28 +496,29 @@ void acc_log_ack(  struct cell* t , struct sip_msg *ack )
 	acc_log_request(ack, to, &lead, &code_str );
 }
 
+
 /**************** SQL Support *************************/
 
 #ifdef SQL_ACC
 
 /* caution: keys need to be aligned to formatting strings */
-static db_key_t keys[ALL_LOG_FMT_LEN+1+MAX_ACC_EXTRA];
+static db_key_t db_keys[ALL_LOG_FMT_LEN+3+MAX_ACC_EXTRA];
+static db_val_t db_vals[ALL_LOG_FMT_LEN+3+MAX_ACC_EXTRA];
 
 
 /* binds to the corresponding database module
  * returns 0 on success, -1 on error */
 int acc_db_bind(char* db_url)
 {
-	acc_db_url=db_url;
-	if (bind_dbmod(acc_db_url, &acc_dbf)<0){
-		LOG(L_ERR, "ERROR: acc_db_init: bind_db failed\n");
+	if (bind_dbmod(db_url, &acc_dbf)<0){
+		LOG(L_ERR, "ERROR:acc:acc_db_init: bind_db failed\n");
 		return -1;
 	}
 
 	/* Check database capabilities */
 	if (!DB_CAPABILITY(acc_dbf, DB_CAP_INSERT)) {
-		LOG(L_ERR, "ERROR: acc_db_init: Database module does not implement "
-			"insert function\n");
+		LOG(L_ERR, "ERROR:acc:acc_db_init: Database module does not "
+			"implement insert function\n");
 		return -1;
 	}
 	return 0;
@@ -473,117 +529,130 @@ void acc_db_init_keys()
 {
 	struct acc_extra *extra;
 	int i;
+	int n;
 
 	/* init the static db keys */
+	n = 0;
 	/* caution: keys need to be aligned to formatting strings */
-	keys[0] = acc_from_uri;
-	keys[1] = acc_to_uri;
-	keys[2] = acc_sip_method_col;
-	keys[3] = acc_i_uri_col;
-	keys[4] = acc_o_uri_col;
-	keys[5] = acc_sip_from_col;
-	keys[6] = acc_sip_callid_col;
-	keys[7] = acc_sip_to_col;
-	keys[8] = acc_sip_status_col;
-	keys[9] = acc_user_col;
-	keys[10] = acc_totag_col;
-	keys[11] = acc_fromtag_col;
-	keys[12] = acc_domain_col;
+	db_keys[n++] = acc_from_uri;
+	db_keys[n++] = acc_to_uri;
+	db_keys[n++] = acc_sip_method_col;
+	db_keys[n++] = acc_i_uri_col;
+	db_keys[n++] = acc_o_uri_col;
+	db_keys[n++] = acc_sip_from_col;
+	db_keys[n++] = acc_sip_callid_col;
+	db_keys[n++] = acc_sip_to_col;
+	db_keys[n++] = acc_sip_status_col;
+	db_keys[n++] = acc_user_col;
+	db_keys[n++] = acc_totag_col;
+	db_keys[n++] = acc_fromtag_col;
+	db_keys[n++] = acc_domain_col;
+
 	/* init the extra db keys */
 	for(i=0,extra=db_extra; extra && i<MAX_ACC_EXTRA ; i++,extra=extra->next)
-		keys[13+i] = extra->name.s;
+		db_keys[n++] = extra->name.s;
+
+	/* time column */
+	db_keys[n++] = acc_time_col;
+
+	/* multi leg call columns */
+	if (multileg_enabled) {
+		db_keys[n++] = acc_src_col;
+		db_keys[n++] = acc_dst_col;
+	}
+
+	/* init the values */
+	for(i=0; i<n; i++) {
+		VAL_TYPE(db_vals+i)=DB_STR;
+		VAL_NULL(db_vals+i)=0;
+	}
 }
 
 
 /* initialize the database connection
  * returns 0 on success, -1 on error */
-int acc_db_init()
+int acc_db_init(char *db_url)
 {
-	if (acc_db_url){
-		db_handle=acc_dbf.init(acc_db_url);
-		if (db_handle==0){
-			LOG(L_ERR, "ERROR: acc_db_init: unable to connect to the "
-					"database\n");
-			return -1;
-		}
-		acc_db_init_keys();
-		return 0;
-	}else{
-		LOG(L_CRIT, "BUG: acc_db_init: null db url\n");
+	db_handle=acc_dbf.init(db_url);
+	if (db_handle==0){
+		LOG(L_ERR, "ERROR:acc:acc_db_init: unable to connect to the "
+				"database\n");
 		return -1;
 	}
+	acc_db_init_keys();
+	return 0;
 }
 
 
 /* close a db connection */
 void acc_db_close()
 {
-	if (db_handle && acc_dbf.close)	acc_dbf.close(db_handle);
+	if (db_handle && acc_dbf.close)
+		acc_dbf.close(db_handle);
 }
 
 
 int acc_db_request( struct sip_msg *rq, struct hdr_field *to, 
 				str *phrase, char *table, char *fmt)
 {
-	static db_val_t vals[ALL_LOG_FMT_LEN+1+MAX_ACC_EXTRA];
-	static str* val_arr[ALL_LOG_FMT_LEN+1+MAX_ACC_EXTRA];
-	static str atr_arr[ALL_LOG_FMT_LEN+1+MAX_ACC_EXTRA];
+	static str* val_arr[ALL_LOG_FMT_LEN+3+MAX_ACC_EXTRA];
+	static str atr_arr[ALL_LOG_FMT_LEN+3+MAX_ACC_EXTRA];
+	static char time_buf[20];
 
 	struct tm *tm;
 	time_t timep;
-	char time_s[20];
+	str  time_str;
 	int attr_cnt;
-
 	int i;
 	int dummy_len;
+	leg_loop_VARS;
 
 	if (skip_cancel(rq)) return 1;
 
-	/* database columns:
-	 * "sip_method", "i_uri", "o_uri", "sip_from", "sip_callid", 
-	 * "sip_to", "sip_status", "user", "time"
-	 */
+	/* formated database columns */
 	attr_cnt=fmt2strar( fmt, rq, to, phrase, 
 					&dummy_len, &dummy_len, val_arr, atr_arr);
 	if (!attr_cnt) {
-		LOG(L_ERR, "ERROR: acc_db_request: fmt2strar failed\n");
+		LOG(L_ERR, "ERROR:acc:acc_db_request: fmt2strar failed\n");
 		return -1;
 	}
+
+	/* extra columns */
 	attr_cnt += extra2strar( db_extra, rq,
 		&dummy_len, &dummy_len,
 		atr_arr+attr_cnt, val_arr+attr_cnt);
 
-	if (!acc_db_url) {
-		LOG(L_ERR, "ERROR: can't log -- no db_url set\n");
-		return -1;
-	}
+	for(i=0; i<attr_cnt; i++)
+		VAL_STR(db_vals+i)=*val_arr[i];
 
+	/* time column */
 	timep = time(NULL);
 	tm = db_localtime ? localtime(&timep) : gmtime(&timep);
-	strftime(time_s, 20, "%Y-%m-%d %H:%M:%S", tm);
-
-
-	for(i=0; i<attr_cnt; i++) {
-		VAL_TYPE(vals+i)=DB_STR;
-		VAL_NULL(vals+i)=0;
-		VAL_STR(vals+i)=*val_arr[i];
-	}
-	/* time */
-	VAL_TYPE(vals+i)=DB_STRING;
-	VAL_NULL(vals+i)=0;
-	VAL_STRING(vals+i)=time_s;
-	keys[i] = acc_time_col;
+	time_str.len = strftime(time_buf, 20, "%Y-%m-%d %H:%M:%S", tm);
+	time_str.s = time_buf;
+	VAL_STR( db_vals + (attr_cnt++) ) = time_str;
 
 	if (acc_dbf.use_table(db_handle, table) < 0) {
-		LOG(L_ERR, "ERROR: acc_request: "
-		           "Error in use_table\n");
+		LOG(L_ERR, "ERROR:acc:acc_db_request: Error in use_table\n");
 		return -1;
 	}
-	
-	if (acc_dbf.insert(db_handle, keys, vals, attr_cnt+1) < 0) {
-		LOG(L_ERR, "ERROR: acc_request: "
+
+	if ( !multileg_enabled ) {
+		if (acc_dbf.insert(db_handle, db_keys, db_vals, attr_cnt) < 0) {
+			LOG(L_ERR, "ERROR:acc:acc_db_request: "
+					"Error while inserting to database\n");
+			return -1;
+		}
+	} else {
+		BEGIN_loop_all_legs;
+		VAL_STR(db_vals+attr_cnt+0) = src?(*(src_val.s)):na;
+		VAL_STR(db_vals+attr_cnt+1) = dst?(*(dst_val.s)):na;
+		if (acc_dbf.insert(db_handle, db_keys, db_vals, attr_cnt+2) < 0) {
+			LOG(L_ERR, "ERROR:acc:acc_db_request: "
 				"Error while inserting to database\n");
-		return -1;
+			return -1;
+		}
+		END_loop_all_legs;
 	}
 
 	return 1;
@@ -677,11 +746,7 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 	str user_name;
 	struct sip_uri puri;
 	struct to_body* from;
-#ifdef _OBSO
-	char nullcode="00000";
-	char ccode[6];
-	char *c;
-#endif
+	leg_loop_VARS;
 
 	send=NULL;
 
@@ -697,30 +762,31 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 		&dummy_len, &dummy_len,
 		atr_arr+attr_cnt, val_arr+attr_cnt);
 
-
-	av_type=rad_status(rq, phrase);
+	av_type=rad_status(rq, phrase); /* status */
 	if (!rc_avpair_add(rh, &send, attrs[A_ACCT_STATUS_TYPE].v, &av_type, -1, 0)) {
 		LOG(L_ERR, "ERROR: acc_rad_request: add STATUS_TYPE\n");
 		goto error;
 	}
-	av_type=vals[V_SIP_SESSION].v;
+
+	av_type=vals[V_SIP_SESSION].v; /* session*/
 	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &av_type, -1, 0)) {
 		LOG(L_ERR, "ERROR: acc_rad_request: add STATUS_TYPE\n");
 		goto error;
 	}
+
 	av_type=phrase2code(phrase); /* status=integer */
-	/* if (phrase.len<3) c=nullcode;
-	else { memcpy(ccode, phrase.s, 3); ccode[3]=0;c=nullcode;} */
 	if (!rc_avpair_add(rh, &send, attrs[A_SIP_RESPONSE_CODE].v, &av_type, -1, 0)) {
 		LOG(L_ERR, "ERROR: acc_rad_request: add RESPONSE_CODE\n");
 		goto error;
 	}
-	av_type=rq->REQ_METHOD;
+
+	av_type=rq->REQ_METHOD; /* method */
 	if (!rc_avpair_add(rh, &send, attrs[A_SIP_METHOD].v, &av_type, -1, 0)) {
 		LOG(L_ERR, "ERROR: acc_rad_request: add SIP_METHOD\n");
 		goto error;
 	}
-        /* Handle User-Name as a special case */
+
+	/* Handle User-Name as a special case */
 	user=cred_user(rq);  /* try to take it from credentials */
 	if (user) {
 		realm = cred_realm(rq);
@@ -779,9 +845,9 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 			user_name.len = na.len;
 			user_name.s = na.s;
 			if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, 
-					   user_name.s, user_name.len, 0)) {
+			user_name.s, user_name.len, 0)) {
 				LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
-				    "failed for %d\n", attrs[A_USER_NAME].v );
+				 	"failed for %d\n", attrs[A_USER_NAME].v );
 				goto error;
 			}
 		}
@@ -790,9 +856,9 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 	/* Remaining attributes from rad_attr vector */
 	for(i=0; i<attr_cnt; i++) {
 		if (!rc_avpair_add(rh, &send, attrs[rad_attr[i]].v, 
-				   val_arr[i]->s,val_arr[i]->len, 0)) {
+				val_arr[i]->s,val_arr[i]->len, 0)) {
 			LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
-			    "failed for %s\n", attrs[rad_attr[i]].n );
+				"failed for %s\n", attrs[rad_attr[i]].n );
 			goto error;
 		}
 	}
@@ -801,9 +867,26 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 		if (!rc_avpair_add(rh, &send, attrs[atr_arr[i].len].v,
 				val_arr[i]->s,val_arr[i]->len, 0)) {
 			LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
-			    "failed for %s\n", atr_arr[i].s );
+				"failed for %s\n", atr_arr[i].s );
 			goto error;
 		}
+	}
+	/* call-legs also get inserted */
+	if (multileg_enabled) {
+		BEGIN_loop_all_legs;
+		if (!rc_avpair_add(rh, &send, attrs[A_SRC_LEG].v,
+				src?src_val.s->s:NA,src?src_val.s->len:NA_LEN, 0)) {
+			LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
+				"failed for %d\n", attrs[A_SRC_LEG].v );
+			goto error;
+		}
+		if (!rc_avpair_add(rh, &send, attrs[A_DST_LEG].v,
+				dst?dst_val.s->s:NA,dst?dst_val.s->len:NA_LEN, 0)) {
+			LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
+				"failed for %d\n", attrs[A_DST_LEG].v );
+			goto error;
+		}
+		END_loop_all_legs;
 	}
 
 	if (rc_acct(rh, SIP_PORT, send)!=OK_RC) {
@@ -817,6 +900,7 @@ error:
 	rc_avpair_free(send);
 	return -1;
 }
+
 
 void acc_rad_missed( struct cell* t, struct sip_msg *reply,
 	unsigned int code )
@@ -833,6 +917,7 @@ void acc_rad_missed( struct cell* t, struct sip_msg *reply,
 	pkg_free(acc_text.s);
 }
 
+
 void acc_rad_ack(  struct cell* t , struct sip_msg *ack )
 {
 	str code_str;
@@ -841,6 +926,7 @@ void acc_rad_ack(  struct cell* t , struct sip_msg *ack )
 	acc_rad_request(ack, ack->to ? ack->to : t->uas.request->to,
 			&code_str);
 }
+
 
 void acc_rad_reply(  struct cell* t , struct sip_msg *reply,
 	unsigned int code )
@@ -851,6 +937,8 @@ void acc_rad_reply(  struct cell* t , struct sip_msg *reply,
 	acc_rad_request(t->uas.request, valid_to(t,reply), &code_str);
 }
 #endif
+
+
 
 /**************** DIAMETER Support *************************/
 #ifdef DIAM_ACC

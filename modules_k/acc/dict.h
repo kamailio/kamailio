@@ -18,6 +18,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * WARNING: Don't forget to update the dictionary if you update this file !!!
+ *
+ * History:
+ * --------
+ * 2005-06-28  multi leg call support added (bogdan)
+ *
  */
 
 #ifndef _DICT_H
@@ -33,36 +38,38 @@ struct val {
 	int v;
 };
 
-#define	A_USER_NAME			0
-#define	A_SERVICE_TYPE			1
-#define	A_CALLED_STATION_ID		2
-#define	A_CALLING_STATION_ID		3
-#define	A_ACCT_STATUS_TYPE		4
-#define	A_ACCT_SESSION_ID		5
-#define	A_SIP_METHOD			6
-#define	A_SIP_RESPONSE_CODE		7
-#define	A_SIP_CSEQ			8
-#define	A_SIP_TO_TAG			9
-#define	A_SIP_FROM_TAG			10
+#define	A_USER_NAME						0
+#define	A_SERVICE_TYPE					1
+#define	A_CALLED_STATION_ID				2
+#define	A_CALLING_STATION_ID			3
+#define	A_ACCT_STATUS_TYPE				4
+#define	A_ACCT_SESSION_ID				5
+#define	A_SIP_METHOD					6
+#define	A_SIP_RESPONSE_CODE				7
+#define	A_SIP_CSEQ						8
+#define	A_SIP_TO_TAG					9
+#define	A_SIP_FROM_TAG					10
 #define	A_SIP_TRANSLATED_REQUEST_URI	11
-#define	A_DIGEST_RESPONSE		12
-#define	A_DIGEST_ATTRIBUTES		13
-#define	A_SIP_URI_USER			14
-#define	A_SIP_RPID			15
-#define	A_DIGEST_REALM			16
-#define	A_DIGEST_NONCE			17
-#define	A_DIGEST_METHOD			18
-#define	A_DIGEST_URI			19
-#define	A_DIGEST_QOP			20
-#define	A_DIGEST_ALGORITHM		21
-#define	A_DIGEST_BODY_DIGEST		22
-#define	A_DIGEST_CNONCE			23
-#define	A_DIGEST_NONCE_COUNT		24
-#define	A_DIGEST_USER_NAME		25
-#define	A_SIP_GROUP			26
-#define	A_CISCO_AVPAIR			27
-#define A_SIP_AVP                       28
-#define	A_MAX				29
+#define	A_DIGEST_RESPONSE				12
+#define	A_DIGEST_ATTRIBUTES				13
+#define	A_SIP_URI_USER					14
+#define	A_SIP_RPID						15
+#define	A_DIGEST_REALM					16
+#define	A_DIGEST_NONCE					17
+#define	A_DIGEST_METHOD					18
+#define	A_DIGEST_URI					19
+#define	A_DIGEST_QOP					20
+#define	A_DIGEST_ALGORITHM				21
+#define	A_DIGEST_BODY_DIGEST			22
+#define	A_DIGEST_CNONCE					23
+#define	A_DIGEST_NONCE_COUNT			24
+#define	A_DIGEST_USER_NAME				25
+#define	A_SIP_GROUP						26
+#define	A_CISCO_AVPAIR					27
+#define	A_SIP_AVP						28
+#define	A_SRC_LEG						29
+#define	A_DST_LEG						30
+#define	A_MAX							31
 
 #define	V_STATUS_START			0
 #define	V_STATUS_STOP			1
