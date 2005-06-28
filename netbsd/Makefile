@@ -20,8 +20,10 @@ MAN8=ser.8
 MAN5=ser.cfg.5
 # MANCOMPRESSED must not be specified (if defined is assumed to be yes)
 
-
-USE_GMAKE= yes
+# netbsd 2.0
+USE_TOOLS+=	gmake
+#netbsd 1.6
+USE_GMAKE= yes     
 # we override the DISTFILE NAME
 DISTNAME= ${PORTNAME}-${PORTVERSION}
 DISTFILES= ${DISTNAME}_src.tar.gz
@@ -38,6 +40,10 @@ DEPENDS= expat-[0-9]*:../../textproc/expat \
 #.include "/usr/pkgsrc/mk/bsd.prefs.mk"
 
 pre-fetch:
+
+.include "../../textproc/expat/buildlink3.mk"
+.include "../../databases/mysql-client/buildlink3.mk"
+.include "../../textproc/libxml2/buildlink3.mk"
 
 .include "../../mk/bsd.pkg.mk"
 
