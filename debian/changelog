@@ -1,3 +1,9 @@
+ser (0.9.3-0.2) unstable; urgency=low
+
+  * missing init.d/ser fixed 
+
+ -- Andrei Pelinescu-Onciul <andrei@iptel.org>  Tue, 28 Jun 2005 23:56:05 +0200
+
 ser (0.9.3-0.1) unstable; urgency=low
 
   * new upstream release 

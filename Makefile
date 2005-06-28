@@ -170,7 +170,8 @@ tar:
 	$(TAR) -C .. \
 		--exclude=$(notdir $(CURDIR))/test* \
 		--exclude=$(notdir $(CURDIR))/tmp* \
-		--exclude=$(notdir $(CURDIR))/debian/ser* \
+		--exclude=$(notdir $(CURDIR))/debian/ser \
+		--exclude=$(notdir $(CURDIR))/debian/ser-* \
 		--exclude=$(notdir $(CURDIR))/ser_tls* \
 		--exclude=CVS* \
 		--exclude=.cvsignore \
