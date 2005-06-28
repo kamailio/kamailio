@@ -38,11 +38,11 @@ MAKE_ENV= include_modules="mysql jabber cpl-c pa"
 
 # depends on mysql and libexpat because of the above modules
 BUILD_DEPENDS= :expat-1.*:textproc/expat \
-               :mysql-client-3.23.*:databases/mysql \
-               :libxml2*:textproc/libxml2
+               :mysql-client-[3-].*:databases/mysql \
+               :libxml-2.*:textproc/libxml
 LIB_DEPENDS=   expat.2:expat-1.*:textproc/expat \
-               lib/mysql/mysqlclient.10:mysql-client-3.23.*:databases/mysql \
-               xml2:libxml2*:textproc/libxml2
+               lib/mysql/mysqlclient.10:mysql-client-[3-].*:databases/mysql \
+               xml2:libxml-2.*:textproc/libxml
 
 
 
