@@ -9,11 +9,11 @@
 
 
 PORTNAME= ser
-PORTVERSION= 0.8.12
+PORTVERSION= 0.9.3
 CATEGORIES= net
-MASTER_SITES= ftp://ftp.berlios.de/pub/ser/0.8.12/src/
+MASTER_SITES= ftp://ftp.berlios.de/pub/ser/0.9.3/src/
 
-MAINTAINER= pelinescu-onciul@fokus.fraunhofer.de
+MAINTAINER= andrei@iptel.org
 
 .include <bsd.port.pre.mk>
 
@@ -34,16 +34,18 @@ DISTNAME= ${PORTNAME}-${PORTVERSION}_src
 WRKSRC= ${WRKDIR}/${PORTNAME}-${PORTVERSION}
 
 # build by default mysql and jabber
-MAKE_ENV= include_modules="mysql jabber"
+MAKE_ENV= include_modules="mysql jabber cpl-c pa"
 
 
 
 
 # depends on mysql and libexpat because of the above modules
 BUILD_DEPENDS= ${LOCALBASE}/include/expat.h:${PORTSDIR}/textproc/expat* \
-               ${LOCALBASE}/include/mysql/mysql.h:${PORTSDIR}/databases/mysql32*-client
+               ${LOCALBASE}/include/mysql/mysql.h:${PORTSDIR}/databases/mysql32*-client \
+               ${LOCALBASE}/include/libxml2/libxml/uri.h:${PORTSDIR}/textproc/libxml2* 
 LIB_DEPENDS=   expat:${PORTSDIR}/textproc/expat* \
-               mysqlclient.10:${PORTSDIR}/databases/mysql32*-client
+               mysqlclient.10:${PORTSDIR}/databases/mysql32*-client \
+               xml2:${PORTSDIR}/textproc/libxml2
 
 pre-fetch:
 
