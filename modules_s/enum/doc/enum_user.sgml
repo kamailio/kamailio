@@ -27,8 +27,9 @@
 	    After forming the domain name, <function moreinfo="none">enum_query</function> queries
 	    DNS for its NAPTR records. From the possible response <function
 	    moreinfo="none">enum_query</function> chooses those records, whose flags field has
-	    string value "u", and whose services field has string value "e2u+[service:]sip" (case is
-	    ignored in both cases), and whose regexp field is of the form !pattern!replacement!.
+	    string value "u", and whose services field has string value "e2u+[service:]sip" or 
+	    "e2u+type[:subtype][+type[:subtype]...]" (case is ignored in both cases), and whose
+	    regexp field is of the form !pattern!replacement!.
 	</para>
 	<para>
 	    Then <function moreinfo="none">enum_query</function> sorts the chosen NAPTR records
@@ -41,6 +42,18 @@
 	    tel_uri_params module parameter. Finally, <function
 	    moreinfo="none">enum_query</function> associates a q value with each new URI based on
 	    the &lt;order, preference&gt; of the corresponding NAPTR record.
+	</para>
+	<para>
+	    When using <function moreinfo="none">enum_query</function> without any parameters, it 
+	    searches for NAPTRs with service type "e2u+sip" in the default enum tree. When using 
+	    <function moreinfo="none">enum_query</function> with a single parameter, this parameter 
+	    will be used as enum tree. When using <function moreinfo="none">enum_query</function> 
+	    with two parameters, the functionality depends on the first letter in the second 
+	    parameter. When the first letter is not a '+' sign, the second parameter will be used 
+	    to search for NAPTRs with service type "e2u+parameter:sip". When the second parameter 
+	    starts with a '+' sign, the ENUM lookup also supports compound NAPTRs (e.g. 
+	    "e2u+voice:sip+video:sip") and searching for multiple service types within one lookup. 
+	    Multiple service types must be separeted by a '+' sign.
 	</para>
 	<para>
 	    Enum query returns 1 if the current Request URI was replaced and -1 if not.
@@ -128,7 +141,24 @@ modparam("enum", "tel_uri_params", ";npdi")
 		<title><function moreinfo="none">enum_query</function> usage</title>
 		<programlisting format="linespecific">
 ...
+# search for "e2u+sip" in freenum.org 
 enum_query("freenum.org.");
+...
+# search for "e2u+sip" in default tree (configured as parameter)
+enum_query();
+...
+# search for "e2u+voice:sip" in e164.arpa
+enum_query("e164.arpa.","voice");
+...
+# search for service type "sip" or "voice:sip" or "video:sip"
+# note the '+' sign in front of the second parameter
+enum_query("e164.arpa.","+sip+voice:sip+video:sip");
+...
+# quering for service sip and voice:sip
+enum_query("e164.arpa.");
+enum_query("e164.arpa.","voice");
+# or use instead
+enum_query("e164.arpa.","+sip+voice:sip");
 ...
 </programlisting>
 	    </example>
