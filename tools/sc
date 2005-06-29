@@ -2,7 +2,7 @@
 #
 # $Id$
 #
-# sc: ser control; tool for maintaining ser's databases
+# sc: openser control; tool for maintaining openser
 #
 # History:
 # --------
@@ -54,7 +54,7 @@ if [ -z "$SERBIN" ] ; then
 fi
 
 ##### ----------------------------------------------- #####
-### ser's FIFO server
+### openser's FIFO server
 if [ -z "$SER_FIFO" ]; then
 	SER_FIFO=/tmp/openser_fifo
 fi
@@ -510,7 +510,7 @@ fifo_cmd()
 	name=ser_receiver_$$
 	path=/tmp/$name
 	if [ ! -w $SER_FIFO ]; then
-		echo "Error opening ser's FIFO $SER_FIFO"
+		echo "Error opening openser's FIFO $SER_FIFO"
 		echo "Make sure you have line fifo=$SER_FIFO in your config"
 		exit 2
 	fi
@@ -668,7 +668,7 @@ usrloc() {
 			fi
 
 			if [ "$CHECK_SUB" -ne 0 ] ; then
-				is_user 
+				is_user $1 
 				if [ $? -eq 0 ] ; then
 					echo overlap of alias with an existing subscriber name
 					exit 1;
@@ -749,7 +749,7 @@ rpid() {
 		show)
 			if [ $# -eq 2 ] ; then
 				set_user $2
-				is_user 
+				is_user $2 
 				if [ $? -ne 0 ] ; then
 					echo non-existent user
 					exit 1;
@@ -779,7 +779,7 @@ rpid() {
 
 			prompt_pw
 			set_user $2
-			is_user 
+			is_user $2 
 			if [ $? -ne 0 ] ; then
 				echo non-existent user
 				exit 1
@@ -860,7 +860,7 @@ acl() {
 		show)
 			if [ $# -eq 2 ] ; then
 				set_user $2
-				is_user 
+				is_user $2 
 				if [ $? -ne 0 ] ; then
 					echo non-existent user
 					exit 1;
@@ -882,7 +882,7 @@ acl() {
 			fi
 			prompt_pw
 			set_user $2
-			is_user 
+			is_user $2 
 			if [ $? -ne 0 ] ; then
 				echo non-existent user
 				exit 1
@@ -948,6 +948,8 @@ acl() {
 # params: user
 # output: false if exists, true otherwise
 is_user() {
+	set_user $1
+	
 	QUERY="select count(*) from $SUB_TABLE \
 		where $SUBSCRIBER_COLUMN='$SERUSER' and $REALM_COLUMN='$SERDOMAIN';"
 	CNT=`sql_ro_query "$QUERY" | grep -v ERROR | $LAST_LINE`
@@ -962,12 +964,6 @@ is_user() {
 # output: false if exists, true otherwise
 is_alias_db()
 {
-	check_aor "$1"
-	if [ "$?" -ne "0" ] ; then
-		echo "is_alias_db: <$1> is not a valid AoR (user@domain)"
-		exit 1
-	fi
-				
 	set_user $1
 	
 	QUERY="select count(*) from $DA_TABLE \
@@ -1758,7 +1754,7 @@ case $1 in
 		name=ser_receiver_$$
 		path=/tmp/$name
 		if [ ! -w $SER_FIFO ]; then
-			echo "Error opening ser's FIFO $SER_FIFO"
+			echo "Error opening openser's FIFO $SER_FIFO"
 			echo "Make sure you have line fifo=$SER_FIFO in your config"
 			exit 1
 		fi
@@ -1847,8 +1843,7 @@ case $1 in
 	showdb|userdb)
 		shift
 		if [ $# -eq 1 ] ; then
-			set_user $1
-			is_user
+			is_user $1
 			if [ $? -ne 0 ] ; then
 				echo non-existent user
 				exit 1;
@@ -1881,8 +1876,7 @@ case $1 in
 		shift 
 		prompt_pw 
 
-		set_user $1
-		is_user 
+		is_user $1 
 		if [ $? -ne 0 ] ; then
 			echo non-existent user
 			exit 1
