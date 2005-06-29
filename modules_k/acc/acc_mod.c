@@ -91,7 +91,7 @@ rd_buf_t *rb;
 /* should early media replies (183) be logged ? default==no */
 int early_media = 0;
 /* should failed replies (>=3xx) be logged ? default==no */
-int failed_transactions = 0;
+int failed_transaction_flag = 0;
 /* would you like us to report CANCELs from upstream too? */
 int report_cancels = 0;
 /* report e2e ACKs too */
@@ -208,13 +208,13 @@ static cmd_export_t cmds[] = {
 
 
 static param_export_t params[] = {
-	{"early_media",          INT_PARAM, &early_media          },
-	{"failed_transactions",  INT_PARAM, &failed_transactions  },
-	{"report_ack",           INT_PARAM, &report_ack           },
-	{"report_cancels",       INT_PARAM, &report_cancels       },
-	{"multi_leg_enabled",    INT_PARAM, &multileg_enabled     },
-	{"src_leg_avp_id",       INT_PARAM, &src_avp_id           },
-	{"dst_leg_avp_id",       INT_PARAM, &dst_avp_id           },
+	{"early_media",             INT_PARAM, &early_media             },
+	{"failed_transaction_flag", INT_PARAM, &failed_transaction_flag },
+	{"report_ack",              INT_PARAM, &report_ack              },
+	{"report_cancels",          INT_PARAM, &report_cancels          },
+	{"multi_leg_enabled",       INT_PARAM, &multileg_enabled        },
+	{"src_leg_avp_id",          INT_PARAM, &src_avp_id              },
+	{"dst_leg_avp_id",          INT_PARAM, &dst_avp_id              },
 	/* syslog specific */
 	{"log_flag",             INT_PARAM, &log_flag             },
 	{"log_missed_flag",      INT_PARAM, &log_missed_flag      },
@@ -526,8 +526,8 @@ static void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 			TMCB_RESPONSE_OUT |
 			/* account e2e acks if configured to do so */
 			TMCB_E2EACK_IN |
-			/* report on missed calls */
-			/*TMCB_ON_FAILURE_RO | */
+			/* report on missed calls
+			TMCB_ON_FAILURE | */
 			/* get incoming replies ready for processing */
 			TMCB_RESPONSE_IN;
 		if (tmb.register_tmcb( 0, t, tmcb_types, tmcb_func, 0 )<=0) {
@@ -560,7 +560,7 @@ static inline int should_acc_reply(struct cell *t, int code)
 
 	/* negative transactions reported otherwise only if explicitly 
 	 * demanded */
-	if (!failed_transactions && code >=300) return 0;
+	if (!is_failed_acc_on(r) && code >=300) return 0;
 	if (!is_acc_on(r))
 		return 0;
 	if (skip_cancel(r))
@@ -649,7 +649,7 @@ static inline void on_missed(struct cell *t, struct sip_msg *reply,
 #ifdef RAD_ACC
 		if (reset_rmf) resetflag(t->uas.request, radius_missed_flag);
 #endif
-/* DIAMETER */	
+/* DIAMETER */
 #ifdef DIAM_ACC
 		if (reset_dimf) resetflag(t->uas.request, diameter_missed_flag);
 #endif
@@ -669,8 +669,7 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *reply,
 
 	/* acc_onreply is bound to TMCB_REPLY which may be called
 	   from _reply, like when FR hits; we should not miss this
-	   event for missed calls either
-	*/
+	   event for missed calls either */
 	on_missed(t, reply, code, param );
 
 	if (!should_acc_reply(t, code)) return;
@@ -733,7 +732,7 @@ static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps )
 		acc_onreply( t, ps->rpl, ps->code, ps->param );
 	} else if (type&TMCB_E2EACK_IN) {
 		acc_onack( t, ps->req, ps->code, ps->param );
-	/*} else if (type&TMCB_ON_FAILURE_RO) {
+	/*} else if (type&TMCB_ON_FAILURE) {
 		on_missed( t, ps->rpl, ps->code, ps->param );*/
 	} else if (type&TMCB_RESPONSE_IN) {
 		acc_onreply_in( t, ps->rpl, ps->code, ps->param);

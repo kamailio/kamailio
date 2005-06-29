@@ -39,7 +39,7 @@
 /* module parameter declaration */
 extern int log_level;
 extern int early_media;
-extern int failed_transactions;
+extern int failed_transaction_flag;
 
 extern char *log_fmt;
 extern int report_cancels;
@@ -92,15 +92,21 @@ extern char* acc_src_col;
 
 #endif /* SQL_ACC */
 
+static inline int is_failed_acc_on(struct sip_msg *rq)
+{
+	return failed_transaction_flag
+		&& isflagset(rq, failed_transaction_flag)==1;
+}
+
 static inline int is_log_acc_on(struct sip_msg *rq)
-{   
+{
 	return log_flag && isflagset(rq, log_flag)==1;
-}   
+}
 #ifdef SQL_ACC
 static inline int is_db_acc_on(struct sip_msg *rq)
-{   
+{
 	return db_flag && isflagset(rq, db_flag)==1;
-}   
+}
 #endif
 #ifdef RAD_ACC
 static inline int is_rad_acc_on(struct sip_msg *rq)

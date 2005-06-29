@@ -418,17 +418,18 @@ modparam("acc", "early_media", 1)
 		</example>
 	</section>
 	<section>
-		<title><varname>failed_transactions</varname> (integer)</title>
+		<title><varname>failed_transaction_flag</varname> (integer)</title>
 		<para>
-		Should be failed transactions (status>=300) accounted too ?
+		Per transaction flag which says if the transaction should be 
+		accounted also in case of failure (status>=300).
 		</para>
 		<para>
-		Default value is 0 (no).
+		Default value is 0 (no flag).
 		</para>
 		<example>
-		<title>failed_transactions example</title>
+		<title>failed_transaction_flag example</title>
 		<programlisting format="linespecific">
-modparam("acc", "failed_transactions", 1)
+modparam("acc", "failed_transaction_flag", 4)
 </programlisting>
 		</example>
 	</section>
