@@ -115,6 +115,7 @@ struct MemOpt
 static int mem_bad(MemHead *mem, char *where, char *file, int line)
 {
 	aug_abort(file, line, "Corrupted memory in %s", where);
+	return 0;
 }
 
 /*
@@ -225,7 +226,7 @@ static void *mem_alloc(size_t size, void *parent, char *file, int line)
 
 	if(par)
 	{
-		if(mem->m.sibling = par->m.child)
+		if((mem->m.sibling = par->m.child))
 			mem->m.sibling->m.parent = mem;
 		par->m.child = mem;
 	}

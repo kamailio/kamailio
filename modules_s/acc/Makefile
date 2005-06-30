@@ -6,6 +6,8 @@
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 include ../../Makefile.defs
+include ../../Makefile.radius
+
 auto_gen=
 NAME=acc.so
 LIBS=
@@ -14,8 +16,8 @@ LIBS=
 #DEFS+=-DSQL_ACC
 
 # uncomment the next two lines if you wish to enable RADIUS accounting
-#DEFS+=-DRAD_ACC -I$(LOCALBASE)/include
-#LIBS=-L$(LOCALBASE)/lib -lradiusclient-ng
+#DEFS+=-DRAD_ACC
+#LIBS=-l$(RADIUSCLIENT_LIB)
 
 # uncomment the next two lines if you wish to enable DIAMETER accounting
 #DEFS+=-DDIAM_ACC

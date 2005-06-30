@@ -95,7 +95,7 @@ struct cpl_enviroment    cpl_env = {
 		0, /* udomain */
 		0, /* no branches on lookup */
 		0, /* timer avp type */
-		(int_str)0  /* timer avp name/ID */
+		/*(int_str)*/{ 0 } /* timer avp name/ID */
 };
 
 struct cpl_functions  cpl_fct;

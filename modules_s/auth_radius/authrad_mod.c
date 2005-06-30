@@ -44,7 +44,13 @@
 #include "../../mem/mem.h"
 #include "authrad_mod.h"
 #include "authorize.h"
-#include <radiusclient-ng.h>
+
+#ifdef RADIUSCLIENT_NG_4
+#  include <radiusclient.h>
+# else
+#  include <radiusclient-ng.h>
+#endif
+
 #include "../../modules/acc/dict.h"
 
 MODULE_VERSION

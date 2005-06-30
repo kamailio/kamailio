@@ -26,8 +26,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef RADIUSCLIENT_NG_4
+#  include <radiusclient.h>
+# else
+#  include <radiusclient-ng.h>
+#endif
 
-#include <radiusclient-ng.h>
 #include "../acc/dict.h"
 #include "../../sr_module.h"
 #include "../../mem/mem.h"

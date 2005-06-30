@@ -40,7 +40,12 @@
 #include "../../modules/acc/dict.h"
 #include "checks.h"
 #include "urirad_mod.h"
-#include <radiusclient-ng.h>
+
+#ifdef RADIUSCLIENT_NG_4
+#  include <radiusclient.h>
+#else
+#  include <radiusclient-ng.h>
+#endif
 
 
 /*

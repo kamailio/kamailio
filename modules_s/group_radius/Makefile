@@ -6,9 +6,10 @@
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 include ../../Makefile.defs
+include ../../Makefile.radius
+
 auto_gen=
 NAME=group_radius.so
-DEFS+=-I$(LOCALBASE)/include
-LIBS=-L$(LOCALBASE)/lib  -lradiusclient-ng
+LIBS=-l$(RADIUSCLIENT_LIB)
 
 include ../../Makefile.modules
