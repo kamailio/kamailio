@@ -1166,3 +1166,72 @@ int ops_printf(struct sip_msg* msg, struct fis_param* dest, xl_elem_t *format)
 	return 1;
 }
 
+int ops_subst(struct sip_msg* msg, struct fis_param** src,
+		struct subst_expr* se)
+{
+	struct fis_param* newp;
+	struct usr_avp *avp;
+	struct usr_avp *prev_avp;
+	int_str         avp_val;
+	unsigned short name_type1;
+	unsigned short name_type2;
+	int n;
+	int nmatches;
+	str* result;
+
+	n = 0;
+	prev_avp = 0;
+
+	/* avp name is known ->search by name */
+	name_type1 = (((src[0]->flags&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
+	
+	newp = (src[1]!=0)?src[1]:src[0];
+	name_type2 = (((newp->flags&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
+
+	avp = search_first_avp(name_type1, src[0]->val, &avp_val);
+	while(avp)
+	{
+		if(!is_avp_str_val(avp))
+		{
+			prev_avp = avp;
+			avp = search_next_avp(prev_avp, &avp_val);
+			continue;
+		}
+		
+		result=subst_str(avp_val.s->s, msg, se, &nmatches);
+		if(result!=NULL)
+		{
+			/* build a new avp with new name */
+			avp_val.s = result;
+			if(add_avp(name_type2|AVP_VAL_STR, newp->val, avp_val)==-1 ) {
+				LOG(L_ERR,"ERROR:avpops:ops_subst: failed to create new avp\n");
+				if(result->s!=0)
+					pkg_free(result->s);
+				pkg_free(result);
+				goto error;
+			}
+			if(result->s!=0)
+				pkg_free(result->s);
+			pkg_free(result);
+			n++;
+			/* copy all avps? */
+			if (!(src[0]->flags&AVPOPS_FLAG_ALL) ) {
+				/* delete the old one? */
+				if (src[0]->flags&AVPOPS_FLAG_DELETE || src[1]==0)
+					destroy_avp(avp);
+				break;
+			} else {
+				prev_avp = avp;
+				avp = search_next_avp(prev_avp, &avp_val);
+				/* delete the old one? */
+				if (src[0]->flags&AVPOPS_FLAG_DELETE || src[1]==0)
+					destroy_avp( prev_avp );
+			}
+		}
+	}
+	DBG("avpops:ops_subst: subst to %d avps\n", n);
+	return n?1:-1;
+error:
+	return -1;
+}
+

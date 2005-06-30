@@ -664,6 +664,82 @@ avp_printf("i:20", "This is a $rm request with the call-id $hdr(call-id)");
 		</section>
 		<section>
 			<title>
+				<function moreinfo="none">avp_subst(avps, subst)</function>
+			</title>
+			<para>
+			Perl/sed-like subst applied to AVPs having string value.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>avps</emphasis> - source AVP, destination AVP
+				and flags. Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					avps = src_avp [ '/' dst_avp [ '/' flags ] ]
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					src_avp = ( avp_name | avp_alias )
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					dst_avp = ( avp_name | avp_alias ) - if dst_avp is missing
+					then the value of src_avp will be replaced
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					flags = ( d | D | g | G ) -- (d, D - delete source avp;
+					g, G - apply to all avps matching src_avp name)
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>subst</emphasis> - perl/sed-like reqular expression.
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					subst = "/regexp/replacement/flags"
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					regexp - regular expression
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					replacement - replacement string, can include pseudo-variables
+					and \1, ..., \9 for matching tokens, \0 for whole matching text
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					flags = 'g' | 'G' | 'i' | 'i' (g, G - replace all matching tokens;
+					i, I - match ignore case)
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>avp_subst</function> usage</title>
+				<programlisting format="linespecific">
+...
+# if avp i:678 has a string value in e-mail format, replace the
+# domain part with the value of domain part from R-URI
+avp_subst("i:678", "/(.*)@(.*)/\1@$rd/");
+
+# if any avp i:678 has a string value in e-mail format, replace the
+# domain part with the value of domain part from R-URI
+# and place the result in avp i:679
+avp_subst("i:678/i:679/g", "/(.*)@(.*)/\1@$rd/");
+...
+				</programlisting>
+			</example>
+			<para>
+			IMPORTANT NOTE: if the replacement string includes src_avp
+			or dst_avp you will get something that you may not expect.
+			In case you have many src_avp and you make the substitution
+			to be applied to all of them, after the first src_avp is
+			processed, it will be added in avp list and next
+			processing will use it.
+			</para>
+		</section>
+		<section>
+			<title>
 				<function moreinfo="none">avp_print()
 				</function>
 			</title>

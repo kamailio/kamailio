@@ -46,7 +46,8 @@ Ramona-Elena Modroiu
               1.4.7. avp_check(name,op_value) 
               1.4.8. avp_copy(old_name,new_name) 
               1.4.9. avp_printf(dest, format) 
-              1.4.10. avp_print() 
+              1.4.10. avp_subst(avps, subst)
+              1.4.11. avp_print() 
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -72,7 +73,8 @@ Ramona-Elena Modroiu
    1-18. avp_check usage
    1-19. avp_copy usage
    1-20. avp_printf usage
-   1-21. avp_print usage
+   1-21. avp_subst usage
+   1-22. avp_print usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -452,12 +454,55 @@ avp_printf("i:20", "This is a $rm request with the call-id $hdr(call-id
 ...
      _________________________________________________________
 
-1.4.10. avp_print()
+1.4.10. avp_subst(avps, subst)
+
+   Perl/sed-like subst applied to AVPs having string value.
+
+   Meaning of the parameters is as follows:
+
+     * avps - source AVP, destination AVP and flags. Parameter
+       syntax is:
+          + avps = src_avp [ '/' dst_avp [ '/' flags ] ] 
+          + src_avp = ( avp_name | avp_alias ) 
+          + dst_avp = ( avp_name | avp_alias ) - if dst_avp is
+            missing then the value of src_avp will be replaced 
+          + flags = ( d | D | g | G ) -- (d, D - delete source
+            avp; g, G - apply to all avps matching src_avp name) 
+     * subst - perl/sed-like reqular expression. Parameter syntax
+       is:
+          + subst = "/regexp/replacement/flags" 
+          + regexp - regular expression 
+          + replacement - replacement string, can include
+            pseudo-variables and \1, ..., \9 for matching tokens,
+            \0 for whole matching text 
+          + flags = 'g' | 'G' | 'i' | 'i' (g, G - replace all
+            matching tokens; i, I - match ignore case) 
+
+   Example 1-21. avp_subst usage
+...
+# if avp i:678 has a string value in e-mail format, replace the
+# domain part with the value of domain part from R-URI
+avp_subst("i:678", "/(.*)@(.*)/\1@$rd/");
+
+# if any avp i:678 has a string value in e-mail format, replace the
+# domain part with the value of domain part from R-URI
+# and place the result in avp i:679
+avp_subst("i:678/i:679/g", "/(.*)@(.*)/\1@$rd/");
+...
+
+   IMPORTANT NOTE: if the replacement string includes src_avp or
+   dst_avp you will get something that you may not expect. In
+   case you have many src_avp and you make the substitution to be
+   applied to all of them, after the first src_avp is processed,
+   it will be added in avp list and next processing will use it.
+     _________________________________________________________
+
+1.4.11. avp_print()
 
    Prints the list with all the AVPs from memory. This is only a
    helper/debug function.
 
-   Example 1-21. avp_print usage
+   Example 1-22. avp_print usage
 ...
 avp_print();
 ...

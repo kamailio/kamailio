@@ -47,7 +47,6 @@
 #include "../../str.h"
 #include "../../dprint.h"
 #include "../../error.h"
-#include "../../items.h"
 #include "avpops_parse.h"
 #include "avpops_impl.h"
 #include "avpops_db.h"
@@ -76,6 +75,7 @@ static int fixup_pushto_avp(void** param, int param_no);
 static int fixup_check_avp(void** param, int param_no);
 static int fixup_copy_avp(void** param, int param_no);
 static int fixup_printf(void** param, int param_no);
+static int fixup_subst(void** param, int param_no);
 
 static int w_dbload_avps(struct sip_msg* msg, char* source, char* param);
 static int w_dbstore_avps(struct sip_msg* msg, char* source, char* param);
@@ -87,6 +87,7 @@ static int w_check_avps(struct sip_msg* msg, char* param, char *check);
 static int w_copy_avps(struct sip_msg* msg, char* param, char *check);
 static int w_print_avps(struct sip_msg* msg, char* foo, char *bar);
 static int w_printf(struct sip_msg* msg, char* dest, char *format);
+static int w_subst(struct sip_msg* msg, char* src, char *subst);
 
 
 
@@ -113,6 +114,8 @@ static cmd_export_t cmds[] = {
 	{"avp_print", w_print_avps, 0, 0,
 									REQUEST_ROUTE|FAILURE_ROUTE},
 	{"avp_printf", w_printf, 2, fixup_printf,
+									REQUEST_ROUTE|FAILURE_ROUTE},
+	{"avp_subst",  w_subst,  2, fixup_subst,
 									REQUEST_ROUTE|FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
@@ -807,6 +810,119 @@ static int fixup_printf(void** param, int param_no)
 	return 0;
 }
 
+static int fixup_subst(void** param, int param_no)
+{
+	struct subst_expr* se;
+	str subst;
+	struct fis_param *ap;
+	struct fis_param **av;
+	char *s;
+	char *p;
+	
+	if (param_no==1) {
+		s = (char*)*param;
+		ap = 0;
+		p = 0;
+		av = (struct fis_param**)pkg_malloc(2*sizeof(struct fis_param*));
+		if(av==NULL)
+		{
+			LOG(L_ERR,"ERROR:avpops:fixup_subst: no more memory\n");
+			return E_UNSPEC;			
+		}
+		memset(av, 0, 2*sizeof(struct fis_param*));
+
+		/* avp src / avp dst /flags */
+		if ( (p=strchr(s,'/'))!=0 )
+			*(p++)=0;
+		if ( (ap=get_attr_or_alias(s))==0 )
+		{
+			LOG(L_ERR,"ERROR:avpops:fixup_subst: bad attribute name"
+				"/alias <%s>\n", (char*)*param);
+			pkg_free(av);
+			return E_UNSPEC;
+		}
+		/* attr name is mandatory */
+		if (ap->flags&AVPOPS_VAL_NONE)
+		{
+			LOG(L_ERR,"ERROR:avpops:fixup_subst: you must specify "
+				"a name for the AVP\n");
+			return E_UNSPEC;
+		}
+		av[0] = ap;
+		if(p==0 || *p=='\0')
+		{
+			pkg_free(*param);
+			*param=(void*)av;
+			return 0;
+		}
+		
+		/* dst */
+		s = p;
+		if ( (p=strchr(s,'/'))!=0 )
+			*(p++)=0;
+		if(p==0 || (p!=0 && p-s>1))
+		{
+			if ( (ap=get_attr_or_alias(s))==0 )
+			{
+				LOG(L_ERR,"ERROR:avpops:fixup_subst: bad attribute name"
+					"/alias <%s>!\n", s);
+				pkg_free(av);
+				return E_UNSPEC;
+			}
+			/* attr name is mandatory */
+			if (ap->flags&AVPOPS_VAL_NONE)
+			{
+				LOG(L_ERR,"ERROR:avpops:fixup_subst: you must specify "
+					"a name for the AVP!\n");
+				return E_UNSPEC;
+			}
+			av[1] = ap;
+		}
+		if(p==0 || *p=='\0')
+		{
+			pkg_free(*param);
+			*param=(void*)av;
+			return 0;
+		}
+		
+		/* flags */
+		for( ; p&&*p ; p++ )
+		{
+			switch (*p) {
+				case 'g':
+				case 'G':
+					av[0]->flags|=AVPOPS_FLAG_ALL;
+					break;
+				case 'd':
+				case 'D':
+					av[0]->flags|=AVPOPS_FLAG_DELETE;
+					break;
+				default:
+					LOG(L_ERR,"ERROR:avpops:fixup_subst: bad flag "
+						"<%c>\n",*p);
+					return E_UNSPEC;
+			}
+		}
+		pkg_free(*param);
+		*param=(void*)av;
+	} else if (param_no==2) {
+		DBG("%s:fixup_subst: fixing %s\n", exports.name, (char*)(*param));
+		subst.s=*param;
+		subst.len=strlen(*param);
+		se=subst_parser(&subst);
+		if (se==0){
+			LOG(L_ERR, "ERROR:%s:fixup_subst: bad subst re %s\n",exports.name, 
+					(char*)*param);
+			return E_BAD_RE;
+		}
+		/* don't free string -- needed for specifiers */
+		/* pkg_free(*param); */
+		/* replace it with the compiled subst. re */
+		*param=se;
+	}
+
+	return 0;
+}
 
 static int w_dbload_avps(struct sip_msg* msg, char* source, char* param)
 {
@@ -869,5 +985,10 @@ static int w_print_avps(struct sip_msg* msg, char* foo, char *bar)
 static int w_printf(struct sip_msg* msg, char* dest, char *format)
 {
 	return ops_printf(msg, (struct fis_param*)dest, (xl_elem_t*)format);
+}
+
+static int w_subst(struct sip_msg* msg, char* src, char *subst)
+{
+	return ops_subst(msg, (struct fis_param**)src, (struct subst_expr*)subst);
 }
 

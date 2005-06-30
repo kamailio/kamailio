@@ -37,6 +37,7 @@
 #include "../../str.h"
 #include "../../usr_avp.h"
 #include "../../items.h"
+#include "../../re.h"
 #include "../../parser/msg_parser.h"
 
 #include "avpops_db.h"
@@ -126,6 +127,9 @@ int ops_copy_avp( struct sip_msg* msg, struct fis_param* name1,
 int ops_print_avp();
 
 int ops_printf(struct sip_msg* msg, struct fis_param* dest, xl_elem_t *format);
+
+int ops_subst(struct sip_msg* msg, struct fis_param** src,
+		struct subst_expr* subst);
 
 #endif
 
