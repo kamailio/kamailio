@@ -96,10 +96,13 @@ void cpl_db_close()
  */
 int get_user_script(str *user, str *script, const char* key)
 {
-	db_key_t   keys_cmp[] = {"user"};
-	db_key_t   keys_ret[] = { key };
+	db_key_t   keys_cmp[1];
+	db_key_t   keys_ret[1];
 	db_val_t   vals[1];
 	db_res_t   *res = 0 ;
+
+	keys_cmp[0] = "user";
+	keys_ret[0] = key;
 
 	DBG("DEBUG:get_user_script: fetching script for user <%s>\n",user->s);
 	vals[0].type = DB_STRING;

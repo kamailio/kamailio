@@ -63,7 +63,9 @@ augExport void aug_exit(int exit_code)
 {
 	DABNAME("aug_exit");
 
+#if augDAB_DEBUG == augTRUE
 	DABTRACE("Exiting with code %d", exit_code);
+#endif
 	exit(exit_code);
 }
 
@@ -71,7 +73,9 @@ augExport void aug_abort_va(char *file, int line, char *fmt, va_list ap)
 {
 	DABNAME("aug_abort");
 
+#if augDAB_DEBUG == augTRUE
 	DAB("ABORT from +%d %s", line, file);
+#endif
 
 	fflush(stdout);
 	fprintf(stderr, "\r\n\n");
@@ -105,7 +109,6 @@ augExport void aug_abort(char *file, int line, char *fmt, ...)
 augExport void aug_setmodule(char *name)
 {
 	char *prog;
-	int len;
 
 	if(!name)
 		return;

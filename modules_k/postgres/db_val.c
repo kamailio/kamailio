@@ -163,7 +163,7 @@ static inline int time2str(time_t _v, char* _s, int* _l)
 /*
  * Does not copy strings
  */
-int str2valp(db_type_t _t, db_val_t* _v, const char* _s, int _l, void *_p)
+int str2valp(db_type_t _t, db_val_t* _v, char* _s, int _l, void *_p)
 {
 	char dbuf[256];
 #ifdef PARANOID
@@ -217,7 +217,7 @@ int str2valp(db_type_t _t, db_val_t* _v, const char* _s, int _l, void *_p)
 
 	case DB_STR:
 		VAL_STR(_v).s = aug_alloc(_l + 1, _p);
-		memcpy(_s, VAL_STR(_v).s, _l);
+		memcpy( _s, VAL_STR(_v).s, _l);
 		VAL_STR(_v).s[_l] = (char) 0;
 		VAL_STR(_v).len = _l;
 		VAL_TYPE(_v) = DB_STR;

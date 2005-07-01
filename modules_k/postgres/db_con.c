@@ -45,7 +45,7 @@
 int use_table(db_con_t* _h, const char* _t)
 {
 	if(CON_TABLE(_h))
-		aug_free(CON_TABLE(_h));
+		aug_free((char*)CON_TABLE(_h));
 	CON_TABLE(_h) = aug_strdup((char *) _t, _h);
 	return 0;
 }

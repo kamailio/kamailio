@@ -396,6 +396,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 	if(!cred)
 	{
 		/* Username AVP */
+		user_name.s = 0;
 		user_name.len = uri.user.len + uri.host.len;
 		if(user_name.len>0)
 		{
@@ -448,6 +449,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 		}
 		else 
 		{
+			user_name.s = 0;
 			user_name.len = cred->username.user.len + cred->realm.len;
 			if(user_name.len>0)
 			{

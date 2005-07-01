@@ -93,9 +93,9 @@
 
 #if augDAB_DEBUG == augTRUE
 
-#define DABNAME(name)	static char *aug_dab_func=name,			\
-				    aug_dab_file[]=augDAB__FILE__;	\
-			static short aug_dab_level=DAB_UNKNOWN, aug_dab_dummy
+#define DABNAME(name)	static char *aug_dab_func=name, \
+		aug_dab_file[]=augDAB__FILE__; \
+		static short aug_dab_level=DAB_UNKNOWN, aug_dab_dummy
 
 #define DABLEVEL(lev)							\
 	(aug_dab_enabled &&						\
@@ -106,7 +106,7 @@
 	 aug_dab_pushinfo(aug_dab_func,aug_dab_file,augDAB__LINE__))
 
 #define DABL(lev)	aug_dab_dummy = DABLEVEL(lev) && aug_dab_fmt
-#define DAB		DABL(DAB_STD)
+#define DAB			DABL(DAB_STD)
 #define DABTRACE	DABL(DAB_TRACE)
 #define DABBULK		DABL(DAB_BULK)
 #define DABTEXT		aug_dab_text
@@ -122,12 +122,6 @@ extern augBool aug_dab_enabled;
 
 #define DABNAME(name)
 #define DABLEVEL(lev)	(augFALSE)
-#define DABL(lev)	(augFALSE) &&
-#define DAB		DABL(0)
-#define DABTRACE	DABL(0)
-#define DABBULK		DABL(0)
-#define DABTEXT		DABL(0)
-#define DABDUMP		DABL(0)
 
 #define DABSET(line)
 #define DABRESET()

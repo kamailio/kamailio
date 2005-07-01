@@ -166,10 +166,12 @@ static void *add234_internal(tree234 *t, void *e, int index) {
 	t->root->elems[0] = e;
 	LOG123(("  created root %p\n", t->root));
 	return orig_e;
-    }
+	}
 
-    np = &t->root;
-    while (*np) {
+	np = &t->root;
+	n = *np;
+
+	while (*np) {
 	int childnum;
 	n = *np;
 	LOG123(("  node %p: %p/%d [%p] %p/%d [%p] %p/%d [%p] %p/%d\n",

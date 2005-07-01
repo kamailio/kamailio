@@ -338,7 +338,6 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		} else {
 			sock = 0;
 		}
-		DBG("----<%.*s>:%d -> p=%p\n", sock_str.len,sock_str.s,port,sock );
 
 
 		if (use_domain) {

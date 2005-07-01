@@ -1527,6 +1527,7 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 		LOG(L_ERR, "ERROR: unforce_rtp_proxy: can't get Call-Id field\n");
 		return -1;
 	}
+	to_tag.s = 0;
 	if (get_to_tag(msg, &to_tag) == -1) {
 		LOG(L_ERR, "ERROR: unforce_rtp_proxy: can't get To tag\n");
 		return -1;
@@ -1696,6 +1697,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't get Call-Id field\n");
 		return -1;
 	}
+	to_tag.s = 0;
 	if (get_to_tag(msg, &to_tag) == -1) {
 		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't get To tag\n");
 		return -1;

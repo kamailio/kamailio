@@ -420,6 +420,9 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 	t_xj_jkey jkey, *p;
 	int mime;
 
+	body.len = 0;
+	body.s = 0;
+
 	// extract message body - after that whole SIP MESSAGE is parsed
 	if (type==XJ_SEND_MESSAGE)
 	{

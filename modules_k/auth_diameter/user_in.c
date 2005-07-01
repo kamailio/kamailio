@@ -125,6 +125,9 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 
 	hf_type = (int)(long)_hf;
 
+	uri.s = 0;
+	uri.len = 0;
+
 	/* extract the uri according with the _hf parameter */
 	switch(hf_type) 
 	{
@@ -191,6 +194,7 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	/* user@domain mode */
 	if (use_domain)
 	{
+		user_name.s = 0;
 		user_name.len = user.len + domain.len;
 		if(user_name.len>0)
 		{

@@ -119,6 +119,9 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 	
 	hf_type = (long)_hf;
 
+	uri.s = 0;
+	uri.len = 0;
+
 	switch(hf_type) {
 	case 1: /* Request-URI */
 		if (get_request_uri(_msg, &uri) < 0) {

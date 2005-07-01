@@ -109,6 +109,7 @@ struct MemOpt
 static int mem_bad(MemHead *mem, char *where, char *file, int line)
 {
 	aug_abort(file, line, "Corrupted memory in %s", where);
+	return 0;
 }
 
 /*
@@ -152,7 +153,8 @@ static void mem_nomem(size_t size, char *func, char *file, int line)
 	else
 		fprintf(stderr, "FATAL: ");
 
-	fprintf(stderr, "%s failure allocating %lu bytes ", func, size);
+	fprintf(stderr, "%s failure allocating %lu bytes ",
+		func, (long unsigned int)size);
 
 	if(file && *file)
 		fprintf(stderr, "from +%d %s \r\n", line, file);
@@ -219,7 +221,7 @@ static void *mem_alloc(size_t size, void *parent, char *file, int line)
 
 	if(par)
 	{
-		if(mem->m.sibling = par->m.child)
+		if( (mem->m.sibling = par->m.child) )
 			mem->m.sibling->m.parent = mem;
 		par->m.child = mem;
 	}
@@ -284,8 +286,10 @@ augExport augNoMemFunc *aug_set_nomem_func(augNoMemFunc *new_func)
 
 	mem_nomem_func = new_func;
 
+#if augDAB_DEBUG == augTRUE
 	DABTRACE("New nomem func %08lx, previous %08lx",
 		(unsigned long)mem_nomem_func, (unsigned long)old);
+#endif
 	return old;
 }
 
@@ -299,14 +303,18 @@ augExport void *aug_alloc_loc(size_t size, void *parent, char *file, int line)
 	void *alloc;
 	DABNAME("aug_alloc");
 
+#if augDAB_DEBUG == augTRUE
 	DAB("size %lu, parent %08lx [+%d %s]",
 		(unsigned long)size, (unsigned long)parent, line, file);
+#endif
 
 	alloc = mem_alloc(size, parent, file, line);
 
+#if augDAB_DEBUG == augTRUE
 	DABL(80)("size %lu with header, caller mem at %08lx",
 		MEM_CROWN(alloc)->m.end - (char *)MEM_CROWN(alloc),
 		(unsigned long)alloc);
+#endif
 
 	return alloc;
 }
@@ -330,10 +338,12 @@ augExport void *aug_realloc_loc(size_t size, void *prev, char *file, int line)
 
 	prev_size = (mem->m.end - (char *)mem) - sizeof (MemHead);
 
+#if augDAB_DEBUG == augTRUE
 	DAB("prior size %lu, new %lu [+%d %s]",
 				(unsigned long)prev_size, (unsigned long)size,
 				line, file);
 	DABL(80)("prior mem %08lx", (unsigned long)mem);
+#endif
 
 	mem_stats.current_bytes_allocated += size - prev_size;
 	mem_stats.realloc_ops++;
@@ -361,8 +371,10 @@ augExport void *aug_realloc_loc(size_t size, void *prev, char *file, int line)
 
 	alloc = MEM_DECAPITATE(new);
 
+#if augDAB_DEBUG == augTRUE
 	DABL(80)("size %lu with header, caller mem at %08lx",
 			new->m.end - (char *)new, (unsigned long)alloc);
+#endif
 
 	return alloc;
 }
@@ -375,7 +387,9 @@ augExport void aug_free_loc(void *alloc, char *file, int line)
 	if(!alloc)
 		aug_abort(file, line, "Attempt to free a NULL pointer");
 
+#if augDAB_DEBUG == augTRUE
 	DAB("Freeing %08lx [+%d %s]", (unsigned long)alloc, line, file);
+#endif
 
 	mem = MEM_CROWN(alloc);
 	MEM_CHECK(mem, "alloc to free");
@@ -405,8 +419,10 @@ augExport void aug_foster_loc(void *alloc, void *parent, char *file, int line)
 	MemHead *mem, *fpar, *ppar, *sib;
 	DABNAME("aug_foster");
 
+#if augDAB_DEBUG == augTRUE
 	DAB("Foster %08lx to %08lx [+%d %s]",
 						alloc, parent, line, file);
+#endif
 
 	if(!alloc)
 		aug_abort(file, line, "Attempt to foster a NULL pointer");
@@ -427,7 +443,9 @@ augExport void aug_foster_loc(void *alloc, void *parent, char *file, int line)
 
 	if(fpar == ppar)
 	{
+#if augDAB_DEBUG == augTRUE
 		DABTRACE("No change in parent (%08lx)", (unsigned long)fpar);
+#endif
 		return;
 	}
 
@@ -445,20 +463,26 @@ augExport void aug_foster_loc(void *alloc, void *parent, char *file, int line)
 	*/
 	if(!ppar)
 	{
+#if augDAB_DEBUG == augTRUE
 		DABBULK("Leaving orphanage");
+#endif
 		if(mem->m.sibling)
 			mem->m.sibling->m.parent = 0;
 	}
 	else if(ppar->m.sibling == mem)
 	{
+#if augDAB_DEBUG == augTRUE
 		DABBULK("Older child");
+#endif
 		ppar->m.sibling = mem->m.sibling;
 		if(ppar->m.sibling)
 			ppar->m.sibling->m.parent = ppar;
 	}
 	else
 	{
+#if augDAB_DEBUG == augTRUE
 		DABBULK("Youngest child");
+#endif
 		ppar->m.child = mem->m.sibling;
 		if(ppar->m.child)
 			ppar->m.child->m.parent = ppar;
@@ -489,13 +513,17 @@ augExport char *aug_strdup_loc(char *str, void *parent, char *file, int line)
 		aug_abort(file, line, "Attempt to duplicate a NULL string");
 
 	size = strlen(str)+1;
+#if augDAB_DEBUG == augTRUE
 	DAB("string length %lu [+%d %s]", (unsigned long)size, line, file);
+#endif
 
 	new = mem_alloc(size, parent, file, line);
 
+#if augDAB_DEBUG == augTRUE
 	DABL(80)("size %lu with header, caller mem at %08lx",
 		MEM_CROWN(new)->m.end - (char *)MEM_CROWN(new),
 		(unsigned long)new);
+#endif
 
 	strcpy(new, str);
 	return new;
@@ -515,7 +543,9 @@ augExport char **aug_vecdup_loc(char **vec, void *parent, char *file, int line)
 	for(v = vec; *v; v++)
 		size += strlen(*v) + 1;
 	vsize = v - vec;
+#if augDAB_DEBUG == augTRUE
 	DABL(80)("%d elements, total string size %d", vsize, size);
+#endif
 
 	vsize++;
 

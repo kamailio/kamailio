@@ -31,6 +31,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include "../../db/db_res.h"
 #include "../../db/db_con.h"
 #include "../../dprint.h"
