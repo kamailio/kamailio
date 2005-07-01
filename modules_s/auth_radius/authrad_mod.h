@@ -37,6 +37,8 @@
 
 #include "../auth/api.h"
 
+#include "../acc/dict.h"
+
 extern struct attr attrs[];
 extern struct val vals[];
 extern void *rh;

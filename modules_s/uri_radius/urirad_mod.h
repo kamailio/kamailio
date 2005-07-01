@@ -34,6 +34,8 @@
 #ifndef URIRAD_MOD_H
 #define URIRAD_MOD_H
 
+#include "../acc/dict.h"
+
 extern struct attr attrs[];
 extern struct val vals[];
 extern void *rh;

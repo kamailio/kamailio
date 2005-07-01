@@ -242,7 +242,7 @@ db_con_t *db_init(const char* _sqlurl)
 	*/
 	res = aug_alloc(sizeof(db_con_t), 0);
 	memset(res, 0, sizeof(db_con_t));
-	(struct con_postgres*)res->tail = aug_alloc(sizeof(struct con_postgres), (char*)res);
+	res->tail = aug_alloc(sizeof(struct con_postgres), (char*)res);
 	memset((struct con_postgres*)res->tail, 0, sizeof(struct con_postgres));
 
 	if (connect_db(res, _sqlurl) < 0)
