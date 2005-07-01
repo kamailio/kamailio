@@ -26,6 +26,7 @@ f none lib/openser/modules/exec.so 0755 bin bin
 f none lib/openser/modules/flatstore.so 0755 bin bin
 f none lib/openser/modules/gflags.so 0755 bin bin
 f none lib/openser/modules/group.so 0755 bin bin
+f none lib/openser/modules/lcr.so 0755 bin bin
 f none lib/openser/modules/jabber.so 0755 bin bin
 f none lib/openser/modules/mangler.so 0755 bin bin
 f none lib/openser/modules/maxfwd.so 0755 bin bin
@@ -67,6 +68,7 @@ f none doc/openser/README.exec 0644 bin bin
 f none doc/openser/README.gflags 0644 bin bin
 f none doc/openser/README.group 0644 bin bin
 f none doc/openser/README.jabber 0644 bin bin
+f none doc/openser/README.lcr 0644 bin bin
 f none doc/openser/README.mangler 0644 bin bin
 f none doc/openser/README.maxfwd 0644 bin bin
 f none doc/openser/README.msilo 0644 bin bin

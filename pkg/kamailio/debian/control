@@ -2,14 +2,14 @@ Source: openser
 Section: net
 Priority: optional
 Maintainer: Daniel-Constantin Mierla <daniel@voice-system.ro>
-Build-Depends: debhelper (>= 4), libmysqlclient14-dev, libexpat1-dev, libxml2-dev
+Build-Depends: debhelper (>= 4), libmysqlclient-dev, libexpat1-dev, libxml2-dev, libpq-dev, libradiusclient-ng-dev
 Standards-Version: 3.5.2
 
 Package: openser
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
-Suggests: openser-mysql-module, openser-jabber-module, opense-cpl-module
-Conflicts: openser-mysql-module (<< ${Source-Version}), openser-jabber-module (<< ${Source-Version}), openser-cpl-modules (<< ${Source-Version}), openser-radius-modules (<< ${Source-Version})
+Suggests: openser-mysql-module, openser-postgres-modules, openser-jabber-module, opense-cpl-module, openser-radius-modules
+Conflicts: openser-mysql-module (<< ${Source-Version}), openser-postgres-module (<< ${Source-Version}), openser-jabber-module (<< ${Source-Version}), openser-cpl-modules (<< ${Source-Version}), openser-radius-modules (<< ${Source-Version})
 Description: Open SIP Express Router, very fast and configurable SIP proxy
  openser or Open SIP Express Router is a very fast and flexible SIP (RFC3621)
  proxy server. Written entirely in C, openser can handle thousands calls
@@ -27,6 +27,14 @@ Depends: ${shlibs:Depends}, openser (= ${Source-Version})
 Description: contains the mysql database connectivity module for openser.
  This has been split out of the main openser package, so that openser will not
  depend upon mysql. This module will enable you to use the digest
+ authentication module or persistent user location entries.
+
+Package: openser-postgres-module
+Architecture: any
+Depends: ${shlibs:Depends}, ser (= ${Source-Version})
+Description: contains the postgres database connectivity module for openser.
+ This has been split out of the main ser package, so that ser will not
+ depend upon libbpq. This module will enable you to use the digest
  authentication module or persistent user location entries.
 
 Package: openser-jabber-module

@@ -18,11 +18,13 @@ export DH_VERBOSE=1
 export DEB_BUILD_OPTIONS:="$(DEB_BUILD_OPTIONS) nostrip"
 
 # modules not in the "main" package or unstable 
-EXCLUDED_MODULES=	mysql jabber postgress cpl-c \
+EXCLUDED_MODULES=	mysql jabber postgres cpl-c pa \
 					auth_radius group_radius uri_radius
 
 # modules depending on mysql
 MYSQL_MODULES=mysql
+# modules depending on postgres
+POSTGRES_MODULES=postgres
 #jabber related modules
 JABBER_MODULES=jabber
 #cpl related modules
@@ -32,6 +34,7 @@ RADIUS_MODULES=auth_radius group_radius uri_radius
 
 # the same but with path prepended (needed for modules="...")
 MYSQL_MOD_PATH=$(addprefix modules/, $(MYSQL_MODULES))
+POSTGRES_MOD_PATH=$(addprefix modules/, $(POSTGRES_MODULES))
 JABBER_MOD_PATH=$(addprefix modules/, $(JABBER_MODULES))
 CPL_MOD_PATH=$(addprefix modules/, $(CPL_MODULES))
 RADIUS_MOD_PATH=$(addprefix modules/, $(RADIUS_MODULES))
@@ -63,6 +66,7 @@ build-stamp: configure-stamp
 	# Add here commands to compile the package.
 	$(MAKE) all  skip_modules="$(EXCLUDED_MODULES)" cfg-target=/etc/openser/
 	$(MAKE) modules modules="$(MYSQL_MOD_PATH)" cfg-target=/etc/openser/
+	$(MAKE) modules modules="$(POSTGRE_MOD_PATH)" cfg-target=/etc/openser/
 	$(MAKE) modules modules="$(JABBER_MOD_PATH)" cfg-target=/etc/openser/
 	$(MAKE) modules modules="$(CPL_MOD_PATH)" cfg-target=/etc/openser/
 	$(MAKE) modules modules="$(RADIUS_MOD_PATH)" cfg-target=/etc/openser/
@@ -77,7 +81,7 @@ clean:
 
 	# Add here commands to clean up after the build process.
 	-$(MAKE) \
-		include_modules="$(MYSQL_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES)"\
+		include_modules="$(MYSQL_MODULES) $(POSTGRES_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES)"\
 		 clean
 
 	dh_clean
@@ -101,6 +105,13 @@ install: build
 		cfg-prefix=$(CURDIR)/debian/openser-mysql-module \
 		cfg-target=/etc/openser/ \
 		doc-dir=share/doc/openser-mysql-module
+	# install only the postgres module
+	$(MAKE) install-modules-all modules="$(POSTGRES_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-postgres-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-postgres-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-postgres-module
 	#install only the jabber module
 	$(MAKE) install-modules-all modules="$(JABBER_MOD_PATH)"  \
 		basedir=$(CURDIR)/debian/openser-jabber-module \

@@ -19,6 +19,7 @@ lib/openser/modules/flatstore.so
 lib/openser/modules/gflags.so
 lib/openser/modules/group.so
 lib/openser/modules/jabber.so
+lib/openser/modules/lcr.so
 lib/openser/modules/mangler.so
 lib/openser/modules/maxfwd.so
 lib/openser/modules/msilo.so
@@ -59,6 +60,7 @@ share/doc/openser/README.exec
 share/doc/openser/README.gflags
 share/doc/openser/README.group
 share/doc/openser/README.jabber
+share/doc/openser/README.lcr
 share/doc/openser/README.mangler
 share/doc/openser/README.maxfwd
 share/doc/openser/README.msilo
