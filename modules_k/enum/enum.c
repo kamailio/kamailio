@@ -36,8 +36,24 @@
 #include "regexp.h"
 
 
+/* return the length of the string until c, if not found returns n */
+static inline int findchr(char* p, int c, unsigned int size)
+{
+	int len=0;
+
+	for(;len<size;p++){
+		if (*p==(unsigned char)c) {
+			return len;
+		}
+		len++;   
+	}
+	return len;
+}
+
+
 /* Checks if NAPTR record has flag u and its services field
- * e2u+[service:]sip
+ * e2u+[service:]sip or
+ * e2u+service[+service[+service[+...]]]
  */
 static inline int sip_match( struct naptr_rdata* naptr, str* service)
 {
@@ -47,13 +63,47 @@ static inline int sip_match( struct naptr_rdata* naptr, str* service)
       (naptr->services_len == 7) &&
       ((strncasecmp(naptr->services, "e2u+sip", 7) == 0) ||
        (strncasecmp(naptr->services, "sip+e2u", 7) == 0));
-  } else {
+  } else if (service->s[0] != '+') {
     return (naptr->flags_len == 1) &&
       ((naptr->flags[0] == 'u') || (naptr->flags[0] == 'U')) &&
       (naptr->services_len == service->len + 8) &&
       (strncasecmp(naptr->services, "e2u+", 4) == 0) &&
       (strncasecmp(naptr->services + 4, service->s, service->len) == 0) &&
       (strncasecmp(naptr->services + 4 + service->len, ":sip", 4) == 0);
+  } else { /* handle compound NAPTRs and multiple services */
+    str bakservice, baknaptr; /* we bakup the str */
+    int naptrlen, len;        /* length of the extracted service */
+
+    /* RFC 3761, NAPTR service field must start with E2U+ */
+    if (strncasecmp(naptr->services, "e2u+", 4) != 0) {
+      return 0;
+    }
+    baknaptr.s   = naptr->services + 4; /* leading 'e2u+' */
+    baknaptr.len = naptr->services_len - 4;
+    for (;;) { /* iterate over services in NAPTR */
+      bakservice.s   = service->s + 1; /* leading '+' */
+      bakservice.len = service->len - 1;
+      naptrlen = findchr(baknaptr.s,'+',baknaptr.len);
+
+      for (;;) { /* iterate over services in enum_query */
+        len = findchr(bakservice.s,'+',bakservice.len);
+        if ((naptrlen == len ) && !strncasecmp(baknaptr.s, bakservice.s, len)){
+          return 1;
+        }
+        if ( (bakservice.len -= len+1) > 0) {
+          bakservice.s += len+1;
+          continue;
+        }
+        break;
+      }
+      if ( (baknaptr.len -= naptrlen+1) > 0) {
+        baknaptr.s += naptrlen+1;
+        continue;
+      }
+      break;
+    }
+    /* no matching service found */
+    return 0;
   }
 }
 
