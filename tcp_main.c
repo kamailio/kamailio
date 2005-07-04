@@ -55,6 +55,7 @@
  *  2005-06-07  new tcp optimized code, supports epoll (LT), sigio + real time
  *               signals, poll & select (andrei)
  *  2005-06-26  *bsd kqueue support (andrei)
+ *  2005-07-04  solaris /dev/poll support (andrei)
  */
 
 
@@ -1516,6 +1517,14 @@ void tcp_main_loop()
 			}
 			break;
 #endif
+#ifdef HAVE_DEVPOLL
+		case POLL_DEVPOLL:
+			while(1){
+				io_wait_loop_devpoll(&io_h, TCP_MAIN_SELECT_TIMEOUT, 0);
+				tcpconn_timeout();
+			}
+			break;
+#endif
 		default:
 			LOG(L_CRIT, "BUG: tcp_main_loop: no support for poll method "
 					" %s (%d)\n", 
@@ -1527,7 +1536,6 @@ error:
 	LOG(L_CRIT, "ERROR: tcp_main_loop: exiting...");
 	exit(-1);
 }
-
 
 
 

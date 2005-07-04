@@ -47,6 +47,7 @@
  * --------
  *  2005-06-13  created by andrei
  *  2005-06-26  added kqueue (andrei)
+ *  2005-07-01  added /dev/poll (andrei)
  */
 
 
@@ -69,6 +70,9 @@
 #include <sys/types.h> /* needed on freebsd */
 #include <sys/event.h>
 #include <sys/time.h>
+#endif
+#ifdef HAVE_DEVPOLL
+#include <sys/devpoll.h>
 #endif
 #ifdef HAVE_SELECT
 /* needed on openbsd for select*/
@@ -139,6 +143,9 @@ struct io_wait_handler{
 	size_t kq_nchanges;
 	size_t kq_changes_size; /* size of the changes array */
 	int kq_fd;
+#endif
+#ifdef HAVE_DEVPOLL
+	int dpoll_fd;
 #endif
 #ifdef HAVE_SELECT
 	fd_set master_set;
@@ -293,6 +300,9 @@ inline static int io_watch_add(	io_wait_h* h,
 #ifdef HAVE_SIGIO_RT
 	static char buf[65536];
 #endif
+#ifdef HAVE_DEVPOLL
+	struct pollfd pfd;
+#endif
 	
 	if (fd==-1){
 		LOG(L_CRIT, "BUG: io_watch_add: fd is -1!\n");
@@ -390,6 +400,21 @@ again2:
 				goto error;
 			break;
 #endif
+#ifdef HAVE_DEVPOLL
+		case POLL_DEVPOLL:
+			pfd.fd=fd;
+			pfd.events=POLLIN;
+			pfd.revents=0;
+again_devpoll:
+			if (write(h->dpoll_fd, &pfd, sizeof(pfd))==-1){
+				if (errno==EAGAIN) goto again_devpoll;
+				LOG(L_ERR, "ERROR: io_watch_add: /dev/poll write failed:"
+							"%s [%d]\n", strerror(errno), errno);
+				goto error;
+			}
+			break;
+#endif
+			
 		default:
 			LOG(L_CRIT, "BUG: io_watch_add: no support for poll method "
 					" %s (%d)\n", poll_method_str[h->poll_method],
@@ -440,6 +465,9 @@ inline static int io_watch_del(io_wait_h* h, int fd, int idx, int flags)
 #ifdef HAVE_EPOLL
 	int n;
 	struct epoll_event ep_event;
+#endif
+#ifdef HAVE_DEVPOLL
+	struct pollfd pfd;
 #endif
 	
 	if ((fd<0) || (fd>=h->max_fd_no)){
@@ -510,6 +538,23 @@ inline static int io_watch_del(io_wait_h* h, int fd, int idx, int flags)
 			}
 			break;
 #endif
+#ifdef HAVE_DEVPOLL
+		case POLL_DEVPOLL:
+				/* for /dev/poll the closed fds _must_ be removed
+				   (they are not removed automatically on close()) */
+				pfd.fd=fd;
+				pfd.events=POLLREMOVE;
+				pfd.revents=0;
+again_devpoll:
+				if (write(h->dpoll_fd, &pfd, sizeof(pfd))==-1){
+					if (errno==EINTR) goto again_devpoll;
+					LOG(L_ERR, "ERROR: io_watch_del: removing fd from "
+								"/dev/poll failed: %s [%d]\n", 
+								strerror(errno), errno);
+					goto error;
+				}
+				break;
+#endif
 		default:
 			LOG(L_CRIT, "BUG: io_watch_del: no support for poll method "
 					" %s (%d)\n", poll_method_str[h->poll_method], 
@@ -530,7 +575,7 @@ error:
  * params: h      - io_wait handle
  *         t      - timeout in s
  *         repeat - if !=0 handle_io will be called until it returns <=0
- * returns: 0 on success, -1 on err
+ * returns: number of IO events handled on success (can be 0), -1 on error
  */
 inline static int io_wait_loop_poll(io_wait_h* h, int t, int repeat)
 {
@@ -773,6 +818,43 @@ end:
 	return ret;
 error:
 	return -1;
+}
+#endif
+
+
+
+#ifdef HAVE_DEVPOLL
+inline static int io_wait_loop_devpoll(io_wait_h* h, int t, int repeat)
+{
+	int n, r;
+	int ret;
+	struct dvpoll dpoll;
+
+		dpoll.dp_timeout=t*1000;
+		dpoll.dp_nfds=h->fd_no;
+		dpoll.dp_fds=h->fd_array;
+again:
+		ret=n=ioctl(h->dpoll_fd, DP_POLL, &dpoll);
+		if (n==-1){
+			if (errno==EINTR) goto again; /* signal, ignore it */
+			else{
+				LOG(L_ERR, "ERROR:io_wait_loop_devpoll: ioctl: %s [%d]\n",
+						strerror(errno), errno);
+				goto error;
+			}
+		}
+		for (r=0; r< n; r++){
+			if (h->fd_array[r].revents & (POLLNVAL|POLLERR)){
+				LOG(L_ERR, "ERROR: io_wait_loop_devpoll: pollinval returned"
+							" for fd %d, revents=%x\n",
+							h->fd_array[r].fd, h->fd_array[r].revents);
+			}
+			/* POLLIN|POLLHUP just go through */
+			while((handle_io(get_fd_map(h, h->fd_array[r].fd), r) > 0) &&
+						repeat);
+		}
+error:
+	return ret;
 }
 #endif
 

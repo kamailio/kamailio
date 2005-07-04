@@ -39,7 +39,8 @@
 #  2004-12-19  amd64 transformed in x86_64 (andrei)
 #  2005-04-27  alpha support added (andrei)
 #  2005-06-01  use $(LOCALBASE) instead of /usr/{local,pkg} (andrei)
-#  2006-06-26  numeric OSREL & HAVE_KQUEUE added to the *BSD (andrei)
+#  2005-06-26  numeric OSREL & HAVE_KQUEUE added to the *BSD (andrei)
+#  2005-07-04  HAVE_DEVPOLL added to solaris (andrei)
 
 
 # check if already included/exported
@@ -944,6 +945,12 @@ ifeq  ($(OS), solaris)
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
+	endif
+	# check for ver >= 5.7
+	ifeq ($(shell [ $(OSREL_N) -gt 5007 ] && echo has_devpoll), has_devpoll)
+		ifeq ($(NO_DEVPOLL),)
+			DEFS+=-DHAVE_DEVPOLL
+		endif
 	endif
 	ifeq ($(NO_SELECT),)
 		DEFS+=-DHAVE_SELECT

@@ -33,6 +33,7 @@
  * --------
  *  2005-06-15  created by andrei
  *  2005-06-26  added kqueue (andrei)
+ *  2005-07-04  added /dev/poll (andrei)
  */
 
 
@@ -41,6 +42,12 @@
 
 #ifdef HAVE_EPOLL
 #include <unistd.h> /* close() */
+#endif
+#ifdef HAVE_DEVPOLL
+#include <sys/types.h> /* open */
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h> /* close, ioctl */
 #endif
 
 #include <sys/utsname.h> /* uname() */
@@ -195,8 +202,10 @@ static void destroy_sigio(io_wait_h* h)
  * returns -1 on error, 0 on success */
 static int init_epoll(io_wait_h* h)
 {
+again:
 	h->epfd=epoll_create(h->max_fd_no);
 	if (h->epfd==-1){
+		if (errno==EINTR) goto again;
 		LOG(L_ERR, "ERROR: init_epoll: epoll_create: %s [%d]\n",
 				strerror(errno), errno);
 		return -1;
@@ -222,8 +231,10 @@ static void destroy_epoll(io_wait_h* h)
  * returns -1 on error, 0 on success */
 static int init_kqueue(io_wait_h* h)
 {
+again:
 	h->kq_fd=kqueue();
 	if (h->kq_fd==-1){
+		if (errno==EINTR) goto again;
 		LOG(L_ERR, "ERROR: init_kqueue: kqueue: %s [%d]\n",
 				strerror(errno), errno);
 		return -1;
@@ -238,6 +249,35 @@ static void destroy_kqueue(io_wait_h* h)
 	if (h->kq_fd!=-1){
 		close(h->kq_fd);
 		h->kq_fd=-1;
+	}
+}
+#endif
+
+
+
+#ifdef HAVE_DEVPOLL
+/* /dev/poll specific init
+ * returns -1 on error, 0 on success */
+static int init_devpoll(io_wait_h* h)
+{
+again:
+	h->dpoll_fd=open("/dev/poll", O_RDWR);
+	if (h->dpoll_fd==-1){
+		if (errno==EINTR) goto again;
+		LOG(L_ERR, "ERROR: init_/dev/poll: open: %s [%d]\n",
+				strerror(errno), errno);
+		return -1;
+	}
+	return 0;
+}
+
+
+
+static void destroy_devpoll(io_wait_h* h)
+{
+	if (h->dpoll_fd!=-1){
+		close(h->dpoll_fd);
+		h->dpoll_fd=-1;
 	}
 }
 #endif
@@ -346,7 +386,19 @@ char* check_poll_method(enum poll_types poll_method)
 				ret="kqueue not supported on OpenBSD < 2.9 (?)";
 	#endif /* assume that the rest support kqueue ifdef HAVE_KQUEUE */
 #endif
-			break;	
+			break;
+		case POLL_DEVPOLL:
+#ifndef HAVE_DEVPOLL
+			ret="/dev/poll not supported, try re-compiling with"
+					" -DHAVE_DEVPOLL";
+#else
+	/* only in Solaris >= 7.0 (?) */
+	#ifdef __OS_solaris
+		if (os_ver<0x0507) /* ver < 5.7 */
+			ret="/dev/poll not supported on Solaris < 7.0 (SunOS 5.7)";
+	#endif
+#endif
+			break;
 
 		default:
 			ret="unknown not supported method";
@@ -379,6 +431,14 @@ enum poll_types choose_poll_method()
 		if (os_ver>=0x0209) /* if ver >= 2.9 (?) */
 	#endif /* assume that the rest support kqueue ifdef HAVE_KQUEUE */
 			poll_method=POLL_KQUEUE;
+#endif
+#ifdef HAVE_DEVPOLL
+	#ifdef __OS_solaris
+	if (poll_method==0)
+		/* only in Solaris >= 7.0 (?) */
+		if (os_ver>=0x0507) /* if ver >=SunOS 5.7 */
+			poll_method=POLL_DEVPOLL;
+	#endif
 #endif
 #ifdef  HAVE_SIGIO_RT
 		if (poll_method==0) 
@@ -436,6 +496,9 @@ int init_io_wait(io_wait_h* h, int max_fd, enum poll_types poll_method)
 #ifdef HAVE_KQUEUE
 	h->kq_fd=-1;
 #endif
+#ifdef HAVE_DEVPOLL
+	h->dpoll_fd=-1;
+#endif
 	poll_err=check_poll_method(poll_method);
 	
 	/* set an appropiate poll method */
@@ -456,7 +519,7 @@ int init_io_wait(io_wait_h* h, int max_fd, enum poll_types poll_method)
 	
 	h->poll_method=poll_method;
 	
-	/* common stuff, evrybody has fd_hash */
+	/* common stuff, everybody has fd_hash */
 	h->fd_hash=local_malloc(sizeof(*(h->fd_hash))*h->max_fd_no);
 	if (h->fd_hash==0){
 		LOG(L_CRIT, "ERROR: init_io_wait: could not alloc"
@@ -474,6 +537,9 @@ int init_io_wait(io_wait_h* h, int max_fd, enum poll_types poll_method)
 #ifdef HAVE_SIGIO_RT
 		case POLL_SIGIO_RT:
 #endif
+#ifdef HAVE_DEVPOLL
+		case POLL_DEVPOLL:
+#endif
 			h->fd_array=local_malloc(sizeof(*(h->fd_array))*h->max_fd_no);
 			if (h->fd_array==0){
 				LOG(L_CRIT, "ERROR: init_io_wait: could not"
@@ -485,6 +551,12 @@ int init_io_wait(io_wait_h* h, int max_fd, enum poll_types poll_method)
 #ifdef HAVE_SIGIO_RT
 			if ((poll_method==POLL_SIGIO_RT) && (init_sigio(h, 0)<0)){
 				LOG(L_CRIT, "ERROR: init_io_wait: sigio init failed\n");
+				goto error;
+			}
+#endif
+#ifdef HAVE_DEVPOLL
+			if ((poll_method==POLL_DEVPOLL) && (init_devpoll(h)<0)){
+				LOG(L_CRIT, "ERROR: init_io_wait: /dev/poll init failed\n");
 				goto error;
 			}
 #endif
@@ -581,6 +653,11 @@ void destroy_io_wait(io_wait_h* h)
 #ifdef HAVE_SIGIO_RT
 		case POLL_SIGIO_RT:
 			destroy_sigio(h);
+			break;
+#endif
+#ifdef HAVE_DEVPOLL
+		case POLL_DEVPOLL:
+			destroy_devpoll(h);
 			break;
 #endif
 		default: /*do  nothing*/
