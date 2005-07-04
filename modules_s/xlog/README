@@ -58,6 +58,11 @@ Chapter 1. User's Guide
      * %ci : call-id
      * %cs : cseq
      * %ct : contact header
+     * %Cxy : color printing based on escape sequences (x -
+       foreground color, y - background color). The values for
+       colors: x - default color of the terminal; s - Black; r -
+       Red; g - Green; y - Yellow; b - Blue; p - Purple; c -
+       Cyan; w - White
      * %ds : destination set
      * %fu : 'From' uri
      * %ft : 'From' tag
@@ -88,7 +93,7 @@ Chapter 1. User's Guide
        type, use -1, no other negative values are supported now.
        No white spaces are allowed inside the specifier (before
        }, before or after {, [, ] symbols). When N='*', all
-	   headers of that type are printed.
+       headers of that type are printed.
        The module should identify most of compact header names
        (the ones recognized by ser which should be all at this
        moment), if not, the compact form has to be specified

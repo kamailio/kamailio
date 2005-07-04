@@ -30,6 +30,8 @@
 /* History:
  * --------
  * 2004-10-20 - added header name specifier (ramona)
+ * 2005-07-04 - added color printing support via escape sequesnces
+ *              contributed by Ingo Wolfsberger (ramona)
  * 
  */
 
@@ -540,6 +542,126 @@ static int xl_get_dset(struct sip_msg *msg, str *res, str *hp, int hi)
     return 0;
 }
 
+#define COL_BUF 10
+
+#define append_sstring(p, end, str) \
+        do{\
+                if ((p)+(sizeof(str)-1)<=(end)){\
+                        memcpy((p), str, sizeof(str)-1); \
+                        (p)+=sizeof(str)-1; \
+                }else{ \
+                        /* overflow */ \
+                        LOG(L_ERR, "XLOG: append_sstring overflow\n"); \
+                        goto error;\
+                } \
+        } while(0) 
+
+static int xl_get_color(struct sip_msg *msg, str *res, str *hp, int hi)
+{
+	static char color[COL_BUF];
+	char* p;
+	char* end;
+
+	p = color;
+	end = p + COL_BUF;
+        
+	/* excape sequenz */
+	append_sstring(p, end, "\033[");
+        
+	if(hp->s[0]!='_')
+	{
+		if (islower(hp->s[0]))
+		{
+			/* normal font */
+			append_sstring(p, end, "0;");
+		} else {
+			/* bold font */
+			append_sstring(p, end, "1;");
+			hp->s[0] += 32;
+		}
+	}
+         
+	/* foreground */
+	switch(hp->s[0])
+	{
+		case 'x':
+			append_sstring(p, end, "39;");
+		break;
+		case 's':
+			append_sstring(p, end, "30;");
+		break;
+		case 'r':
+			append_sstring(p, end, "31;");
+		break;
+		case 'g':
+			append_sstring(p, end, "32;");
+		break;
+		case 'y':
+			append_sstring(p, end, "33;");
+		break;
+		case 'b':
+			append_sstring(p, end, "34;");
+		break;
+		case 'p':
+			append_sstring(p, end, "35;");
+		break;
+		case 'c':
+			append_sstring(p, end, "36;");
+		break;
+		case 'w':
+			append_sstring(p, end, "37;");
+		break;
+		default:
+			LOG(L_ERR, "XLOG: exit foreground\n");
+			return xl_get_empty(msg, res, hp, hi);
+	}
+         
+	/* background */
+	switch(hp->s[1])
+	{
+		case 'x':
+			append_sstring(p, end, "49");
+		break;
+		case 's':
+			append_sstring(p, end, "40");
+		break;
+		case 'r':
+			append_sstring(p, end, "41");
+		break;
+		case 'g':
+			append_sstring(p, end, "42");
+		break;
+		case 'y':
+			append_sstring(p, end, "43");
+		break;
+		case 'b':
+			append_sstring(p, end, "44");
+		break;
+		case 'p':
+			append_sstring(p, end, "45");
+		break;
+		case 'c':
+			append_sstring(p, end, "46");
+		break;
+		case 'w':
+			append_sstring(p, end, "47");
+		break;
+		default:
+			LOG(L_ERR, "XLOG: exit background\n");
+			return xl_get_empty(msg, res, hp, hi);
+	}
+
+	/* end */
+	append_sstring(p, end, "m");
+
+	res->s = color;
+	res->len = p-color;
+	return 0;
+
+error:
+	return -1;
+}
+
 static int xl_get_branch(struct sip_msg *msg, str *res, str *hp, int hi)
 {
 	str branch;
@@ -791,6 +913,44 @@ int xl_parse_format(char *s, xl_elog_p *el)
 					default:
 						e->itf = xl_get_null;
 				}
+			break;
+			case 'C':
+				p++;
+				e->hparam.s = p;
+				
+				/* foreground */
+				switch(*p)
+                {
+					case 'x':
+					case 's': case 'r': case 'g':
+					case 'y': case 'b': case 'p':
+					case 'c': case 'w': case 'S':
+					case 'R': case 'G': case 'Y':
+					case 'B': case 'P': case 'C':
+					case 'W':
+					break;
+					default: 
+						e->itf = xl_get_empty;
+						goto error;
+				}
+				p++;
+                                
+				/* background */
+				switch(*p)
+				{
+					case 'x':
+					case 's': case 'r': case 'g':
+					case 'y': case 'b': case 'p':
+					case 'c': case 'w':
+					break;   
+					default: 
+						e->itf = xl_get_empty;
+						goto error;
+				}
+   
+				/* end */
+				e->hparam.len = 2;
+				e->itf = xl_get_color;
 			break;
 			case 'd':
 				p++;
@@ -1054,7 +1214,7 @@ error:
 
 int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len)
 {
-	int n;
+	int n, h;
 	str tok;
 	xl_elog_p it;
 	char *cur;
@@ -1068,6 +1228,7 @@ int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len)
 	*buf = '\0';
 	cur = buf;
 	
+	h = 0;
 	n = 0;
 	for (it=log; it; it=it->next)
 	{
@@ -1084,18 +1245,40 @@ int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len)
 				goto overflow;
 		}
 		/* put the value of the specifier */
-		if(it->itf && !((*it->itf)(msg, &tok, &(it->hparam), it->hindex)))
+		if(it->itf 
+				/* && ((*it->itf != xl_get_color) || (log_stderr!=0)) */
+				&& !((*it->itf)(msg, &tok, &(it->hparam), it->hindex)))
 		{
 			if(n+tok.len < *len)
 			{
 				memcpy(cur, tok.s, tok.len);
 				n += tok.len;
 				cur += tok.len;
+				
+				/* check for color entries to reset later */
+				if (*it->itf == xl_get_color) {
+					h = 1;
+				}
 			}
 			else
 				goto overflow;
 		}
 	}
+
+	/* reset to default after entry */
+	if (h == 1)
+	{ 
+		h = sizeof("\033[0m")-1;
+		if (n+h < *len)
+		{
+			memcpy(cur, "\033[0m", h);
+			n += h;
+			cur += h;
+			} else {
+				goto overflow;
+			}
+	}
+
 	goto done;
 	
 overflow:
