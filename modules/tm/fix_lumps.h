@@ -35,6 +35,8 @@
  * -------
  *  2003-11-24  changed free_via_lump to free_via_clen_lump and make it
  *              handle CONTENTLENGTH lumps also (andrei)
+ *  2005-07-04  lumps in SHM or dup'ed lumps are not freed and an warning
+ *               message is logged (temporary fix) (andrei)
  */
 
 
@@ -67,21 +69,33 @@ inline static void free_via_clen_lump( struct lump **list )
 	for(lump=*list;lump;lump=next) {
 		next=lump->next;
 		if (lump->type==HDR_VIA_T||lump->type==HDR_CONTENTLENGTH_T) {
+			if (lump->flags & (LUMPFLAG_DUPED|LUMPFLAG_SHMEM)){
+				LOG(L_CRIT, "BUG: free_via_clen_lmp: lump %p, flags %x\n",
+						lump, lump->flags);
+				/* ty to continue */
+			}
 			a=lump->before;
 			while(a) {
 				foo=a; a=a->before;
-				free_lump(foo);
-				pkg_free(foo);
+				if (!(foo->flags&(LUMPFLAG_DUPED|LUMPFLAG_SHMEM)))
+					free_lump(foo);
+				if (!(foo->flags&LUMPFLAG_SHMEM))
+					pkg_free(foo);
 			}
 			a=lump->after;
 			while(a) {
 				foo=a; a=a->after;
-				free_lump(foo);
-				pkg_free(foo);
+				if (!(foo->flags&(LUMPFLAG_DUPED|LUMPFLAG_SHMEM)))
+					free_lump(foo);
+				if (!(foo->flags&LUMPFLAG_SHMEM))
+					pkg_free(foo);
 			}
 			if (prev_lump) prev_lump->next = lump->next;
 			else *list = lump->next;
-			free_lump(lump);pkg_free(lump);
+			if (!(lump->flags&(LUMPFLAG_DUPED|LUMPFLAG_SHMEM)))
+				free_lump(lump);
+			if (!(lump->flags&LUMPFLAG_SHMEM))
+				pkg_free(lump);
 		} else {
 			/* store previous position */
 			prev_lump=lump;

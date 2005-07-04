@@ -373,9 +373,17 @@ struct lump* anchor_lump(struct sip_msg* msg, int offset, int len, enum _hdr_typ
 void free_lump(struct lump* lmp)
 {
 	if (lmp && (lmp->op==LUMP_ADD)){
-		if (lmp->u.value) pkg_free(lmp->u.value);
-		lmp->u.value=0;
-		lmp->len=0;
+		if (lmp->u.value){
+			if (lmp->flags &(LUMPFLAG_DUPED|LUMPFLAG_SHMEM)){
+				LOG(L_CRIT, "BUG: free_lump: called on a not free-able lump:"
+						"%p flags=%x\n", lmp, lmp->flags);
+				abort();
+			}else{
+				pkg_free(lmp->u.value);
+				lmp->u.value=0;
+				lmp->len=0;
+			}
+		}
 	}
 }
 
