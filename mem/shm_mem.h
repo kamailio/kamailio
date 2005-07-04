@@ -54,6 +54,19 @@
 #include <string.h>
 #include <errno.h>
 
+/* fix DBG MALLOC stuff */
+
+/* fix debug defines, DBG_F_MALLOC <=> DBG_QM_MALLOC */
+#ifdef F_MALLOC
+	#ifdef DBG_F_MALLOC
+		#ifndef DBG_QM_MALLOC
+			#define DBG_QM_MALLOC
+		#endif
+	#elif defined(DBG_QM_MALLOC)
+		#define DBG_F_MALLOC
+	#endif
+#endif
+
 
 
 #include "../dprint.h"
@@ -100,19 +113,6 @@ void shm_mem_destroy();
 
 #define shm_lock()    lock_get(mem_lock)
 #define shm_unlock()  lock_release(mem_lock)
-
-/* fix DBG MALLOC stuff */
-
-/* fix debug defines, DBG_F_MALLOC <=> DBG_QM_MALLOC */
-#ifdef F_MALLOC
-	#ifdef DBG_F_MALLOC
-		#ifndef DBG_QM_MALLOC
-			#define DBG_QM_MALLOC
-		#endif
-	#elif defined(DBG_QM_MALLOC)
-		#define DBG_F_MALLOC
-	#endif
-#endif
 
 
 #ifdef DBG_QM_MALLOC
