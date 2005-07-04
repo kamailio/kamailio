@@ -386,6 +386,7 @@ static int fixup_write_avp(void** param, int param_no)
 				|| (!strcasecmp( "to", s) && (flags|=AVPOPS_USE_TO))
 				|| (!strcasecmp( "ruri", s) && (flags|=AVPOPS_USE_RURI))
 				|| (!strcasecmp( "src_ip", s) && (flags|=AVPOPS_USE_SRC_IP))
+				|| (!strcasecmp( "dst_ip", s) && (flags|=AVPOPS_USE_DST_IP))
 				|| (!strncasecmp( "hdr", s, 3) && (flags|=AVPOPS_USE_HDRREQ)) )
 			{
 				ap = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
@@ -397,8 +398,9 @@ static int fixup_write_avp(void** param, int param_no)
 				}
 				memset( ap, 0, sizeof(struct fis_param));
 				/* any falgs ? */
-				if ( p && !(!(flags&(AVPOPS_USE_SRC_IP|AVPOPS_USE_HDRREQ)) && (
-				(!strcasecmp("username",p) && (flags|=AVPOPS_FLAG_USER)) ||
+				if(p && !((flags&
+				(AVPOPS_USE_SRC_IP|AVPOPS_USE_DST_IP|AVPOPS_USE_HDRREQ))==0
+				&& ((!strcasecmp("username",p) && (flags|=AVPOPS_FLAG_USER)) ||
 				(!strcasecmp("domain", p) && (flags|=AVPOPS_FLAG_DOMAIN)))) )
 				{
 					LOG(L_ERR,"ERROR:avpops:fixup_write_avp: flag \"%s\""

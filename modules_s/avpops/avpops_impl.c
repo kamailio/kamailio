@@ -598,6 +598,15 @@ int ops_write_avp(struct sip_msg* msg, struct fis_param *src,
 			}
 			s_ip.len = strlen(s_ip.s);
 			avp_val.s = &s_ip;
+		} else if (src->flags&AVPOPS_USE_DST_IP) {
+			/* get data from dst ip */
+			if ( (s_ip.s=ip_addr2a( &msg->rcv.dst_ip ))==0)
+			{
+				LOG(L_ERR,"ERROR:avpops:write_avp: cannot get dst_ip\n");
+				goto error;
+			}
+			s_ip.len = strlen(s_ip.s);
+			avp_val.s = &s_ip;
 		} else if (src->flags&(AVPOPS_USE_HDRREQ|AVPOPS_USE_HDRRPL)) {
 			/* get data from hdr */
 			if ( (avp_val.s=search_hdr(msg,src))==0 ) {
@@ -936,6 +945,15 @@ cycle2:
 				if ( (s_ip.s=ip_addr2a( &msg->rcv.src_ip ))==0)
 				{
 					LOG(L_ERR,"ERROR:avpops:check_avp: cannot get src_ip\n");
+					goto error;
+				}
+				s_ip.len = strlen(s_ip.s);
+				ck_val.s = &s_ip;
+			} else if (val->flags&AVPOPS_USE_DST_IP) {
+				/* get value from dst ip */
+				if ( (s_ip.s=ip_addr2a( &msg->rcv.dst_ip ))==0)
+				{
+					LOG(L_ERR,"ERROR:avpops:check_avp: cannot get dst_ip\n");
 					goto error;
 				}
 				s_ip.len = strlen(s_ip.s);

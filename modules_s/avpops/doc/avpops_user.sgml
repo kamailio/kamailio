@@ -389,7 +389,7 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
 					value = (variable) | (fix_value)
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					variable = '$src_ip' | '$hdr[name]' | (sip_uri)['/'('username'|'domain')])
+					variable = '$src_ip' | '$dst_ip' | '$hdr[name]' | (sip_uri)['/'('username'|'domain')])
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
 					sip_uri = '$from' | '$to' | '$ruri'
@@ -485,7 +485,7 @@ avp_delete("");
 					ruri_dst = '$ruri'['/'('username'|'domain')]
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					hdr_dst = 'hdr_name'['/'('request'|'reply')]
+					hdr_dst = '$hdr_name'['/'('request'|'reply')]
 					</emphasis></para></listitem>
 				</itemizedlist>
 				</para>
@@ -511,8 +511,8 @@ avp_delete("");
 ...
 avp_pushto("$ruri","i:678");
 avp_pushto("$ruri/domain","s:backup_domains/g");
-avp_pushto("Email/reply","s:email");
-avp_pushto("Foo","$bar/g");
+avp_pushto("$Email/reply","s:email");
+avp_pushto("$Foo","$bar/g");
 ...
 				</programlisting>
 			</example>
@@ -553,7 +553,7 @@ avp_pushto("Foo","$bar/g");
 					value = variable | fix_value
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					variable = '$from'|'$ruri'|'$from'|'$src_ip'|avp_alias
+					variable = '$from'|'$ruri'|'$from'|'$src_ip'|'$dst_ip'|avp_alias
 					<listitem><para><emphasis>
 					fix_value = 'i:'integer | 's:'string | string
 					</emphasis></para></listitem>
