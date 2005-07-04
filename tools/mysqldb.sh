@@ -45,16 +45,16 @@ if [ -z "$DBHOST" ]; then
 	DBHOST="localhost"
 fi
 # user with full privileges over DBNAME database
-if [ -z "$USERNAME" ]; then
-	USERNAME="openser"
+if [ -z "$DBRWUSER" ]; then
+	DBRWUSER="openser"
 fi
 # password user with full privileges over DBNAME database
 if [ -z "$DEFAULT_PW" ]; then
 	DEFAULT_PW="openserrw"
 fi
 # read-only user
-if [ -z "$ROUSER" ]; then
-	ROUSER="openserro"
+if [ -z "$DBROUSER" ]; then
+	DBROUSER="openserro"
 fi
 # password for read-only user
 if [ -z "$RO_PW" ]; then
@@ -256,10 +256,10 @@ create database $1;
 use $1;
 
 # Users: ser is the regular user, serro only for reading
-GRANT ALL PRIVILEGES ON $1.* TO $USERNAME IDENTIFIED  BY '$DEFAULT_PW';
-GRANT ALL PRIVILEGES ON $1.* TO ${USERNAME}@$DBHOST IDENTIFIED BY '$DEFAULT_PW';
-GRANT SELECT ON $1.* TO $ROUSER IDENTIFIED BY '$RO_PW';
-GRANT SELECT ON $1.* TO ${ROUSER}@$DBHOST IDENTIFIED BY '$RO_PW';
+GRANT ALL PRIVILEGES ON $1.* TO $DBRWUSER IDENTIFIED  BY '$DEFAULT_PW';
+GRANT ALL PRIVILEGES ON $1.* TO ${DBRWUSER}@$DBHOST IDENTIFIED BY '$DEFAULT_PW';
+GRANT SELECT ON $1.* TO $DBROUSER IDENTIFIED BY '$RO_PW';
+GRANT SELECT ON $1.* TO ${DBROUSER}@$DBHOST IDENTIFIED BY '$RO_PW';
 
 
 #
