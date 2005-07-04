@@ -34,6 +34,7 @@
 
 #include "../../trim.h"
 #include "../../dprint.h"
+#include "../../action.h"
 #include "../../mem/mem.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
@@ -529,11 +530,12 @@ int ds_hash_ruri(struct sip_msg *msg, unsigned int *hash)
 /**
  *
  */
-int ds_select_dst(struct sip_msg *msg, char *set, char *alg)
+int ds_select_dst(struct sip_msg *msg, char *set, char *alg, int mode)
 {
 	int a, s, idx;
 	ds_setidx_p si = NULL;
 	unsigned int hash;
+	struct action act;
 
 	if(msg==NULL)
 	{
@@ -624,15 +626,32 @@ int ds_select_dst(struct sip_msg *msg, char *set, char *alg)
 	DBG("DISPATCHER:ds_select_dst: alg hash [%u]\n", hash);
 
 	hash = hash%_ds_list[idx].nr;
-
-	if (set_dst_uri(msg, &_ds_list[idx].dlist[hash].uri) < 0) {
-		LOG(L_ERR, "DISPATCHER:dst_select_dst: Error while setting dst_uri\n");
-		return -1;
+	switch(mode)
+	{
+		case 1:
+			act.type = SET_URI_T;
+			act.p1_type = STRING_ST;
+			act.p1.string = _ds_list[idx].dlist[hash].uri.s+4;
+			act.next = 0;
+	
+			if (do_action(&act, msg) < 0) {
+				LOG(L_ERR,
+					"DISPATCHER:dst_select_dst: Error while setting host\n");
+				return -1;
+			}
+		break;
+		default:
+			if (set_dst_uri(msg, &_ds_list[idx].dlist[hash].uri) < 0) {
+				LOG(L_ERR,
+					"DISPATCHER:dst_select_dst: Error while setting dst_uri\n");
+				return -1;
+			}
+			DBG("DISPATCHER:ds_select_dst: selected [%d-%d/%d/%d] <%.*s>\n",
+				a, s, idx, hash, msg->dst_uri.len, msg->dst_uri.s);
+	
+		break;
 	}
 
-	DBG("DISPATCHER:ds_select_dst: selected [%d-%d/%d/%d] <%.*s>\n",
-			a, s, idx, hash, msg->dst_uri.len, msg->dst_uri.s);
-	
 	return 1;
 }
 

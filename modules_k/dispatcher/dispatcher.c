@@ -52,13 +52,15 @@ static int mod_init(void);
 static int child_init(int);
 
 static int w_ds_select_dst(struct sip_msg*, char*, char*);
+static int w_ds_select_domain(struct sip_msg*, char*, char*);
 
 void destroy(void);
 
 static int ds_fixup(void** param, int param_no);
 
 static cmd_export_t cmds[]={
-	{"ds_select_dst", w_ds_select_dst, 2, ds_fixup, REQUEST_ROUTE},
+	{"ds_select_dst",    w_ds_select_dst,    2, ds_fixup, REQUEST_ROUTE},
+	{"ds_select_domain", w_ds_select_domain, 2, ds_fixup, REQUEST_ROUTE},
 	{0,0,0,0,0}
 };
 
@@ -116,7 +118,18 @@ static int w_ds_select_dst(struct sip_msg* msg, char* set, char* alg)
 	if(msg==NULL)
 		return -1;
 
-	return ds_select_dst(msg, set, alg);
+	return ds_select_dst(msg, set, alg, 0);
+}
+
+/**
+ *
+ */
+static int w_ds_select_domain(struct sip_msg* msg, char* set, char* alg)
+{
+	if(msg==NULL)
+		return -1;
+
+	return ds_select_dst(msg, set, alg, 1);
 }
 
 /**

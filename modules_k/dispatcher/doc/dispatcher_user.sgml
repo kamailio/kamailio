@@ -158,6 +158,16 @@ ds_select_dst("1", "0");
 </programlisting>
 		</example>
 	</section>
+  	<section>
+ 	    <title>
+ 		<function moreinfo="none">ds_select_host(set, alg)</function>
+ 		</title>
+ 	    <para>
+ 		The method selects a destination from addresses set  and rewrites the
+ 		host and port from R-URI. The parameters have same meaning as for
+ 		ds_select_dst().
+ 	    <para>
+ 	</section>
 	</section>
 	<section>
 	<title>Installation & Running</title>

@@ -29,6 +29,7 @@ Daniel-Constantin Mierla
         1.4. Exported Functions
 
               1.4.1. ds_select_dst(set, alg)
+              1.4.2. ds_select_host(set, alg)
 
         1.5. Installation & Running
 
@@ -127,6 +128,13 @@ modparam("dispatcher", "force_dst", 1)
 ...
 ds_select_dst("1", "0");
 ...
+     _________________________________________________________
+
+1.4.2. ds_select_host(set, alg)
+
+   The method selects a destination from addresses set and
+   rewrites the host and port from R-URI. The parameters have
+   same meaning as for ds_select_dst().
      _________________________________________________________
 
 1.5. Installation & Running
