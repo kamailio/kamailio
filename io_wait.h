@@ -744,6 +744,11 @@ inline static int io_wait_loop_kqueue(io_wait_h* h, int t, int repeat)
 again:
 		n=kevent(h->kq_fd, h->kq_changes, h->kq_nchanges,  h->kq_array,
 					h->fd_no, &tspec);
+#ifdef EXTRA_DEBUG
+		DBG("DBG: kevent(%d, %p, %d, %p, %d, ...)=%d\n",
+			 h->kq_fd, h->kq_changes, h->kq_nchanges,  h->kq_array, h->fd_no,
+			 n);
+#endif
 		if (n==-1){
 			if (errno==EINTR) goto again; /* signal, ignore it */
 			else{
@@ -754,15 +759,20 @@ again:
 		}
 		h->kq_nchanges=0; /* reset changes array */
 		for (r=0; r<n; r++){
+#ifdef EXTRA_DEBUG
+			DBG("DBG: kqueue: event %d/%d: fd=%d, udata=%lx, flags=0x%x\n",
+					r, n, h->kq_array[r].ident, (long)h->kq_array[r].udata,
+					h->kq_array[r].flags);
+#endif
 			if (h->kq_array[r].flags & EV_ERROR){
 				/* error in changes: we ignore it, it can be caused by
 				   trying to remove an already closed fd: race between
 				   adding smething to the changes array, close() and
 				   applying the changes */
 				LOG(L_INFO, "INFO: io_wait_loop_kqueue: kevent error on "
-							"fd %d: %s [%d]\n", h->kq_array[r].ident,
+							"fd %d: %s [%ld]\n", h->kq_array[r].ident,
 							strerror(h->kq_array[r].data),
-							h->kq_array[r].data);
+							(long)h->kq_array[r].data);
 			}else /* READ/EOF */
 				while((handle_io((struct fd_map*)h->kq_array[r].udata, -1)>0)
 						&& repeat);

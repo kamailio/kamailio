@@ -1047,10 +1047,11 @@ ifeq ($(OS), netbsd)
 		found_lock_method=yes
 	endif
 	# check for ver >= 2.0.0
-$(warning OSREL_N=$(OSREL_N) , OSREL=$(OSREL) )
 	ifeq ($(shell [ $(OSREL_N) -ge 2000000 ] && echo has_kqueue), has_kqueue)
 		ifeq ($(NO_KQUEUE),)
 			DEFS+=-DHAVE_KQUEUE
+			# netbsd + kqueue and -malign-double don't work
+			CFLAGS:=$(filter-out -malign-double, $(CFLAGS))
 		endif
 	endif
 	ifeq ($(NO_SELECT),)
