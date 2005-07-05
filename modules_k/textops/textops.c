@@ -41,7 +41,7 @@
  *  2004-05-09: append_time introduced (jiri)
  *  2004-07-06  subst_user added (like subst_uri but only for user) (sobomax)
  *  2004-11-12  subst_user changes (old serdev mails) (andrei)
- *
+ *  2005-07-05  is_method("name") to check method using id (ramona)
  *  
  * Example ser module, it implements the following commands:
  * search_append("key", "txt") - insert a "txt" after "key"
@@ -62,6 +62,7 @@
 #include "../../re.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_hname2.h"
+#include "../../parser/parse_methods.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -96,11 +97,13 @@ static int append_to_reply_f(struct sip_msg* msg, char* key, char* str);
 static int append_hf(struct sip_msg* msg, char* str1, char* str2);
 static int append_urihf(struct sip_msg* msg, char* str1, char* str2);
 static int append_time_f(struct sip_msg* msg, char* , char *);
+static int is_method_f(struct sip_msg* msg, char* , char *);
 
 static int fixup_regex(void**, int);
 static int fixup_substre(void**, int);
 static int str_fixup(void** param, int param_no);
 static int hname_fixup(void** param, int param_no);
+static int fixup_method(void** param, int param_no);
 
 static int mod_init(void);
 
@@ -120,18 +123,20 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
 	{"append_urihf",     append_urihf,      2, str_fixup,   
 			REQUEST_ROUTE|FAILURE_ROUTE},
-	{"remove_hf",        remove_hf_f,         1, hname_fixup,
+	{"remove_hf",        remove_hf_f,       1, hname_fixup,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
 	{"is_present_hf",        is_present_hf_f,         1, hname_fixup,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
-	{"subst",            subst_f,             1, fixup_substre,
+	{"subst",            subst_f,           1, fixup_substre,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
-	{"subst_uri",            subst_uri_f,     1, fixup_substre,
+	{"subst_uri",            subst_uri_f,   1, fixup_substre,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
-	{"subst_user",           subst_user_f,    1, fixup_substre,
+	{"subst_user",           subst_user_f,  1, fixup_substre,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
 	{"append_time",		append_time_f,		0, 0,
 		REQUEST_ROUTE },
+	{"is_method",       is_method_f,        1, fixup_method,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
 	{0,0,0,0,0}
 };
 
@@ -628,7 +633,34 @@ static int append_urihf(struct sip_msg *msg, char *str1, char *str2 )
 	return append_hf_helper(msg, (str *) str1, (str *) str2);
 }
 
+static int is_method_f(struct sip_msg *msg, char *meth, char *str2 )
+{
+	str *m;
 
+	m = (str*)meth;
+	if(msg->first_line.type==SIP_REQUEST)
+	{
+		if(m->s==0)
+			return (msg->first_line.u.request.method_value==m->len)?1:-1;
+		else
+			return (msg->first_line.u.request.method_value==METHOD_OTHER
+					&& msg->first_line.u.request.method.len==m->len
+					&& (strncasecmp(msg->first_line.u.request.method.s, m->s,
+					m->len)==0))?1:-1;
+	}
+	if(parse_headers(msg, HDR_CSEQ_F, 0)!=0)
+	{
+		LOG(L_ERR, "textops:is_method: ERROR - cannot parse cseq header\n");
+		return -1; /* should it be 0 ?!?! */
+	}
+	if(m->s==0)
+		return (get_cseq(msg)->method_id==m->len)?1:-1;
+	else
+		return (get_cseq(msg)->method_id==METHOD_OTHER
+				&& get_cseq(msg)->method.len==m->len
+				&& (strncasecmp(get_cseq(msg)->method.s, m->s,
+				m->len)==0))?1:-1;
+}
 
 /*
  * Convert char* parameter to str* parameter
@@ -704,3 +736,48 @@ static int hname_fixup(void** param, int param_no)
 	*param = (void*)s;
 	return 0;
 }
+
+/*
+ * Convert char* method to str* parameter
+ */
+static int fixup_method(void** param, int param_no)
+{
+	str* s;
+	int method;
+	
+	s = (str*)pkg_malloc(sizeof(str));
+	if (!s) {
+		LOG(L_ERR, "textops:fixup_method: No memory left\n");
+		return E_UNSPEC;
+	}
+
+	s->s = (char*)*param;
+	s->len = strlen(s->s);
+	if(s->len==0)
+	{
+		LOG(L_ERR,"textops:fixup_method: empty method name\n");
+		pkg_free(s);
+		return E_UNSPEC;
+	}
+
+	if(parse_method(s->s, 0, &method)==NULL)
+	{
+		LOG(L_ERR,"textops:fixup_method: bad method name\n");
+		pkg_free(s);
+		return E_UNSPEC;
+	}
+
+	if(method!=METHOD_UNDEF && method!=METHOD_OTHER)
+	{
+		DBG("textops:fixup_method: using id for method [%.*s/%d]\n",
+				s->len, s->s, method);
+		s->s = 0;
+		s->len = method;
+	} else
+		DBG("textops:fixup_method: name for method [%.*s/%d]\n",
+				s->len, s->s, method);
+
+	*param = (void*)s;
+	return 0;
+}
+

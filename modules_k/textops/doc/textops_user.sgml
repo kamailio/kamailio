@@ -454,6 +454,41 @@ append_time();
 		</example>
 	</section>
 
+	<section>
+		<title>
+		<function moreinfo="none">is_method(name)</function>
+		</title>
+		<para>
+		Check if the method of the message matches the name. If name is a
+		known method (invite, cancel, ack, bye, options, info, update, register,
+		message, subscribe, notify, refer, prack), the function performs method
+		ID testing (integer comparison) instead of ignore case string
+		comparison.
+		</para>
+		<para>
+		If used for replies, the function tests the value of method field from
+		CSeq header.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>name</emphasis> - SIP method name
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>is_method</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(is_method("INVITE"))
+{
+    # process INVITEs here
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 	<section>
 		<title>Known Limitations</title>

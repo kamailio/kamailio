@@ -132,10 +132,7 @@ static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 	int offset = 0;
 
 	/* check if it is called for an OPTIONS request */
-	if ((_msg->REQ_METHOD==METHOD_OTHER) &&
-		(_msg->first_line.u.request.method.len != 7) &&
-		/* FIXME: avoid slow strncasecmp */
-		(strncasecmp(_msg->first_line.u.request.method.s, "OPTIONS", 7) != 0)) {
+	if (_msg->REQ_METHOD!=METHOD_OPTIONS) {
 		LOG(L_ERR, "options_reply(): called for non-OPTIONS request\n");
 		return -1;
 	}

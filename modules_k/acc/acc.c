@@ -975,7 +975,7 @@ inline unsigned long diam_status(struct sip_msg *rq, str *phrase)
 					|| rq->REQ_METHOD==METHOD_CANCEL)) 
 		return AAA_ACCT_STOP;
 	
-	if (rq->REQ_METHOD==METHOD_OTHER/*MESSAGE */ && code>=200 && code <=300)  
+	if (code>=200 && code <=300)  
 		return AAA_ACCT_EVENT;
 	
 	return -1;
