@@ -629,9 +629,13 @@ int ds_select_dst(struct sip_msg *msg, char *set, char *alg, int mode)
 	switch(mode)
 	{
 		case 1:
-			act.type = SET_URI_T;
+			act.type = SET_HOSTPORT_T;
 			act.p1_type = STRING_ST;
-			act.p1.string = _ds_list[idx].dlist[hash].uri.s+4;
+			if(_ds_list[idx].dlist[hash].uri.len>4 
+					&& strncasecmp(_ds_list[idx].dlist[hash].uri.s,"sip:",4)==0)
+				act.p1.string = _ds_list[idx].dlist[hash].uri.s+4;
+			else
+				act.p1.string = _ds_list[idx].dlist[hash].uri.s;
 			act.next = 0;
 	
 			if (do_action(&act, msg) < 0) {
