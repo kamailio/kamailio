@@ -297,13 +297,19 @@ inline static int io_watch_add(	io_wait_h* h,
 	int n;
 	struct epoll_event ep_event;
 #endif
-#ifdef HAVE_SIGIO_RT
-	static char buf[65536];
-#endif
 #ifdef HAVE_DEVPOLL
 	struct pollfd pfd;
 #endif
+#if defined(HAVE_SIGIO_RT) || defined (HAVE_EPOLL)
+	int idx;
+	int check_io;
+	struct pollfd pf;
 	
+	check_io=0; /* set to 1 if we need to check for pre-existiing queued
+				   io/data on the fd */
+	idx=-1;
+#endif
+	e=0;
 	if (fd==-1){
 		LOG(L_CRIT, "BUG: io_watch_add: fd is -1!\n");
 		goto error;
@@ -344,6 +350,10 @@ inline static int io_watch_add(	io_wait_h* h,
 #ifdef HAVE_SIGIO_RT
 		case POLL_SIGIO_RT:
 			fd_array_setup;
+			/* re-set O_ASYNC might be needed, if not done from 
+			 * io_watch_del (or if somebody wants to add a fd which has
+			 * already O_ASYNC/F_SETSIG set on a dupplicate)
+			 */
 			/* set async & signal */
 			if (fcntl(fd, F_SETOWN, my_pid())==-1){
 				LOG(L_ERR, "ERROR: io_watch_add: fnctl: SETOWN"
@@ -362,9 +372,13 @@ inline static int io_watch_add(	io_wait_h* h,
 					fd,  h->signo, my_pid());
 #endif
 			/* empty socket receive buffer, if buffer is already full
-			 * (e.g. early media), no more space to put packets
-			 * => no more signals are ever generated -- andrei */
-			while(recv(fd, buf, sizeof(buf), 0)>=0);
+			 * no more space to put packets
+			 * => no more signals are ever generated
+			 * also when moving fds, the freshly moved fd might have
+			 *  already some bytes queued, we want to get them now
+			 *  and not later -- andrei */
+			idx=h->fd_no;
+			check_io=1;
 			break;
 #endif
 #ifdef HAVE_EPOLL
@@ -392,6 +406,8 @@ again2:
 					strerror(errno), errno);
 				goto error;
 			}
+			idx=-1;
+			check_io=1;
 			break;
 #endif
 #ifdef HAVE_KQUEUE
@@ -424,8 +440,23 @@ again_devpoll:
 	
 	h->fd_no++; /* "activate" changes, for epoll/kqueue/devpoll it
 				   has only informative value */
+#if defined(HAVE_SIGIO_RT) || defined (HAVE_EPOLL)
+	if (check_io){
+		/* handle possible pre-existing events */
+		pf.fd=fd;
+		pf.events=POLLIN;
+check_io_again:
+		while( ((n=poll(&pf, 1, 0))>0) && (handle_io(e, idx)>0));
+		if (n==-1){
+			if (errno==EINTR) goto check_io_again;
+			LOG(L_ERR, "ERROR: io_watch_add: check_io poll: %s [%d]\n",
+						strerror(errno), errno);
+		}
+	}
+#endif
 	return 0;
 error:
+	if (e) unhash_fd_map(e);
 	return -1;
 #undef fd_array_setup
 #undef set_fd_flags 
@@ -469,14 +500,17 @@ inline static int io_watch_del(io_wait_h* h, int fd, int idx, int flags)
 #ifdef HAVE_DEVPOLL
 	struct pollfd pfd;
 #endif
+#ifdef HAVE_SIGIO_RT
+	int fd_flags;
+#endif
 	
 	if ((fd<0) || (fd>=h->max_fd_no)){
 		LOG(L_CRIT, "BUG: io_watch_del: invalid fd %d, not in [0, %d) \n",
 						fd, h->fd_no);
 		goto error;
 	}
-	DBG("DBG: io_watch_del (%p, %d, %d) fd_no=%d called\n",
-			h, fd, idx, h->fd_no);
+	DBG("DBG: io_watch_del (%p, %d, %d, 0x%x) fd_no=%d called\n",
+			h, fd, idx, flags, h->fd_no);
 	e=get_fd_map(h, fd);
 	/* more sanity checks */
 	if (e==0){
@@ -509,25 +543,47 @@ inline static int io_watch_del(io_wait_h* h, int fd, int idx, int flags)
 #ifdef HAVE_SIGIO_RT
 		case POLL_SIGIO_RT:
 			fix_fd_array;
-			/* FIXME: re-set ASYNC? (not needed if the fd is/will be closed
-			 *        but might cause problems if the fd is "moved")
-			 *        update: probably not needed, the fd_map type!=0
-			 *        check should catch old queued signals or in-transit fd
-			 *        (so making another syscall to reset ASYNC is not 
-			 *         necessary)*/
+			/* the O_ASYNC flag must be reset all the time, the fd
+			 *  can be changed only if  O_ASYNC is reset (if not and
+			 *  the fd is a duplicate, you will get signals from the dup. fd
+			 *  and not from the original, even if the dup. fd wa closed
+			 *  and the signals re-set on the original) -- andrei
+			 */
+			/*if (!(flags & IO_FD_CLOSING)){*/
+				/* reset ASYNC */
+				fd_flags=fcntl(fd, F_GETFL); 
+				if (fd_flags==-1){ 
+					LOG(L_ERR, "ERROR: io_watch_del: fnctl: GETFL failed:" 
+							" %s [%d]\n", strerror(errno), errno); 
+					goto error; 
+				} 
+				if (fcntl(fd, F_SETFL, fd_flags&(~O_ASYNC))==-1){ 
+					LOG(L_ERR, "ERROR: io_watch_del: fnctl: SETFL" 
+								" failed: %s [%d]\n", strerror(errno), errno); 
+					goto error; 
+				} 
 			break;
 #endif
 #ifdef HAVE_EPOLL
 		case POLL_EPOLL_LT:
 		case POLL_EPOLL_ET:
+			/* epoll doesn't seem to automatically remove sockets,
+			 * if the socket is a dupplicate/moved and the original
+			 * is still open. The fd is removed from the epoll set
+			 * only when the original (and all the  copies?) is/are 
+			 * closed. This is probably a bug in epoll. --andrei */
+#ifdef EPOLL_NO_CLOSE_BUG
 			if (!(flags & IO_FD_CLOSING)){
+#endif
 				n=epoll_ctl(h->epfd, EPOLL_CTL_DEL, fd, &ep_event);
 				if (n==-1){
 					LOG(L_ERR, "ERROR: io_watch_del: removing fd from epoll "
 							"list failed: %s [%d]\n", strerror(errno), errno);
 					goto error;
 				}
+#ifdef EPOLL_NO_CLOSE_BUG
 			}
+#endif
 			break;
 #endif
 #ifdef HAVE_KQUEUE
@@ -659,8 +715,10 @@ again:
 		if (n==-1){
 			if (errno==EINTR) goto again; /* signal, ignore it */
 			else{
-				LOG(L_ERR, "ERROR:io_wait_loop_epoll: epoll_wait:"
-						" %s [%d]\n", strerror(errno), errno);
+				LOG(L_ERR, "ERROR:io_wait_loop_epoll: "
+						"epoll_wait(%d, %p, %d, %d): %s [%d]\n", 
+						h->epfd, h->ep_array, h->fd_no, t*1000,
+						strerror(errno), errno);
 				goto error;
 			}
 		}

@@ -1174,10 +1174,11 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 				tcpconn_destroy(tcpconn);
 				break;
 			}
-			io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
 			/* update the timeout*/
 			tcpconn->timeout=get_ticks()+TCP_CON_TIMEOUT;
 			tcpconn_put(tcpconn);
+			/* must be after the de-ref*/
+			io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
 			DBG("handle_tcp_child: CONN_RELEASE  %p refcnt= %d\n", 
 											tcpconn, tcpconn->refcnt);
 			break;
@@ -1309,9 +1310,9 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			tcpconn->s=fd;
 			/* add tcpconn to the list*/
 			tcpconn_add(tcpconn);
-			io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
 			/* update the timeout*/
 			tcpconn->timeout=get_ticks()+TCP_CON_TIMEOUT;
+			io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
 			break;
 		default:
 			LOG(L_CRIT, "BUG: handle_ser_child: unknown cmd %d\n", cmd);
