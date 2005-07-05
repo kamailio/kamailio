@@ -160,7 +160,7 @@ ds_select_dst("1", "0");
 	</section>
   	<section>
  	    <title>
- 		<function moreinfo="none">ds_select_host(set, alg)</function>
+ 		<function moreinfo="none">ds_select_domain(set, alg)</function>
  		</title>
  	    <para>
  		The method selects a destination from addresses set  and rewrites the
