@@ -188,14 +188,6 @@ static inline struct fd_map* hash_fd_map(	io_wait_h* h,
 }
 
 
-#ifdef HAVE_SIGIO_RT
-typedef unsigned int sigio_rtsig_mask_t;
-extern sigset_t _sigio_rtsig_used;
-extern int _sigio_crt_rtsig;
-extern int _sigio_init;
-#endif
-
-
 
 #ifdef HANDLE_IO_INLINE
 /* generic handle io routine, this must be defined in the including file
