@@ -368,7 +368,7 @@ avp_delete("");
        SIP message. Parameter syntax:
           + destination = ruri_dst | hdr_dst 
           + ruri_dst = '$ruri'['/'('username'|'domain')] 
-          + hdr_dst = 'hdr_name'['/'('request'|'reply')] 
+          + hdr_dst = '$hdr_name'['/'('request'|'reply')] 
      * name - which AVP(s) should be pushed into the SIP message.
        Parameter syntax is:
           + name = ( avp_name | avp_alias )['/'flags] 
@@ -378,8 +378,8 @@ avp_delete("");
 ...
 avp_pushto("$ruri","i:678");
 avp_pushto("$ruri/domain","s:backup_domains/g");
-avp_pushto("Email/reply","s:email");
-avp_pushto("Foo","$bar/g");
+avp_pushto("$Email/reply","s:email");
+avp_pushto("$Foo","$bar/g");
 ...
      _________________________________________________________
 
