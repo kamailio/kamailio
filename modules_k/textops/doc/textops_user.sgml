@@ -466,6 +466,14 @@ append_time();
 		comparison.
 		</para>
 		<para>
+		The 'name' can be a list of methods in the form of
+		'method1|method2|...'. In this case, the function returns true if the
+		SIP message's method is one from the list. IMPORTANT NOTE: in the list
+		must be only methods defined in &ser; with ID (invite, cancel, ack,
+		bye, options, info, update, register, message, subscribe, notify,
+		refer, prack).
+		</para>
+		<para>
 		If used for replies, the function tests the value of method field from
 		CSeq header.
 		</para>
@@ -483,6 +491,10 @@ append_time();
 if(is_method("INVITE"))
 {
     # process INVITEs here
+}
+if(is_method("OPTION|UPDATE"))
+{
+    # process OPTIONs and UPDATEs here
 }
 ...
 </programlisting>

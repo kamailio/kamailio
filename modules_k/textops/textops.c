@@ -641,7 +641,7 @@ static int is_method_f(struct sip_msg *msg, char *meth, char *str2 )
 	if(msg->first_line.type==SIP_REQUEST)
 	{
 		if(m->s==0)
-			return (msg->first_line.u.request.method_value==m->len)?1:-1;
+			return (msg->first_line.u.request.method_value&m->len)?1:-1;
 		else
 			return (msg->first_line.u.request.method_value==METHOD_OTHER
 					&& msg->first_line.u.request.method.len==m->len
@@ -743,6 +743,8 @@ static int hname_fixup(void** param, int param_no)
 static int fixup_method(void** param, int param_no)
 {
 	str* s;
+	char *p;
+	int m;
 	int method;
 	
 	s = (str*)pkg_malloc(sizeof(str));
@@ -759,23 +761,49 @@ static int fixup_method(void** param, int param_no)
 		pkg_free(s);
 		return E_UNSPEC;
 	}
-
-	if(parse_method(s->s, 0, &method)==NULL)
+	m=0;
+	p=s->s;
+	while(*p)
 	{
-		LOG(L_ERR,"textops:fixup_method: bad method name\n");
+		if(*p=='|')
+		{
+			*p = ',';
+			m=1;
+		}
+		p++;
+	}
+	if(parse_methods(s, &method)!=0)
+	{
+		LOG(L_ERR,"textops:fixup_method: bad method names\n");
 		pkg_free(s);
 		return E_UNSPEC;
 	}
 
-	if(method!=METHOD_UNDEF && method!=METHOD_OTHER)
+	if(m==1)
 	{
-		DBG("textops:fixup_method: using id for method [%.*s/%d]\n",
+		if(method==METHOD_UNDEF || method&METHOD_OTHER)
+		{
+			LOG(L_ERR,
+				"textops:fixup_method: unknown method in list [%.*s/%d]"
+				" - must be only defined methods\n",
+				s->len, s->s, method);
+			return E_UNSPEC;
+		}
+		DBG("textops:fixup_method: using id for methods [%.*s/%d]\n",
 				s->len, s->s, method);
 		s->s = 0;
 		s->len = method;
-	} else
-		DBG("textops:fixup_method: name for method [%.*s/%d]\n",
+	} else {
+		if(method!=METHOD_UNDEF && method!=METHOD_OTHER)
+		{
+			DBG("textops:fixup_method: using id for method [%.*s/%d]\n",
 				s->len, s->s, method);
+			s->s = 0;
+			s->len = method;
+		} else
+			DBG("textops:fixup_method: name for method [%.*s/%d]\n",
+				s->len, s->s, method);
+	}
 
 	*param = (void*)s;
 	return 0;
