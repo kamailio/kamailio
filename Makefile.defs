@@ -58,7 +58,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 10
 SUBLEVEL =   99
-EXTRAVERSION = -dev11-tcp
+EXTRAVERSION = -dev12-tcp
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -1139,6 +1139,9 @@ ifeq ($(OS), darwin)
 		LIBS= -pthread -lfl -lresolv  #dlopen is in libc
 	else
 		LIBS= -lfl -lresolv  #dlopen is in libc
+	endif
+	ifeq ($(NO_KQUEUE),)
+		DEFS+=-DHAVE_KQUEUE
 	endif
 	ifeq ($(NO_SELECT),)
 		DEFS+=-DHAVE_SELECT

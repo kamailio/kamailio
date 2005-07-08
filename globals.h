@@ -81,8 +81,10 @@ extern int tcp_disable;
 extern int tcp_accept_aliases;
 extern int tcp_connect_timeout;
 extern int tcp_send_timeout;
+extern int tcp_con_lifetime; /* connection lifetime */
 extern enum poll_types tcp_poll_method;
 extern int tcp_max_fd_no;
+extern int tcp_max_connections;
 #endif
 #ifdef USE_TLS
 extern int tls_disable;

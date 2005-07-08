@@ -53,11 +53,13 @@
  * 2004-03-30  added DISABLE_CORE and OPEN_FD_LIMIT (andrei)
  * 2004-04-29  added SOCK_MODE, SOCK_USER & SOCK_GROUP (andrei)
  * 2004-05-03  applied multicast support patch (MCAST_LOOPBACK) from janakj
-               added MCAST_TTL (andrei)
+ *             added MCAST_TTL (andrei)
  * 2004-07-05  src_ip & dst_ip will detect ip addresses between quotes
  *              (andrei)
  * 2004-10-19  added FROM_URI, TO_URI (andrei)
  * 2004-11-30  added force_send_socket (andrei)
+ * 2005-07-08  added TCP_CON_LIFETIME, TCP_POLL_METHOD, TCP_MAX_CONNECTIONS
+ *              (andrei)
  */
 
 
@@ -224,6 +226,9 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token TCP_CHILDREN
 %token TCP_CONNECT_TIMEOUT
 %token TCP_SEND_TIMEOUT
+%token TCP_CON_LIFETIME
+%token TCP_POLL_METHOD
+%token TCP_MAX_CONNECTIONS
 %token DISABLE_TLS
 %token TLSLOG
 %token TLS_PORT_NO
@@ -490,6 +495,51 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 									#endif
 									}
 		| TCP_SEND_TIMEOUT EQUAL error { yyerror("number expected"); }
+		| TCP_CON_LIFETIME EQUAL NUMBER {
+									#ifdef USE_TCP
+										tcp_con_lifetime=$3;
+									#else
+										warn("tcp support not compiled in");
+									#endif
+									}
+		| TCP_CON_LIFETIME EQUAL error { yyerror("number expected"); }
+		| TCP_POLL_METHOD EQUAL ID {
+									#ifdef USE_TCP
+										tcp_poll_method=get_poll_type($3);
+										if (tcp_poll_method==POLL_NONE){
+											LOG(L_CRIT, "bad poll method name:"
+													" %s\n, try one of %s.\n",
+													$3, poll_support);
+											yyerror("bad tcp_poll_method "
+													"value");
+										}
+									#else
+										warn("tcp support not compiled in");
+									#endif
+									}
+		| TCP_POLL_METHOD EQUAL STRING {
+									#ifdef USE_TCP
+										tcp_poll_method=get_poll_type($3);
+										if (tcp_poll_method==POLL_NONE){
+											LOG(L_CRIT, "bad poll method name:"
+													" %s\n, try one of %s.\n",
+													$3, poll_support);
+											yyerror("bad tcp_poll_method "
+													"value");
+										}
+									#else
+										warn("tcp support not compiled in");
+									#endif
+									}
+		| TCP_POLL_METHOD EQUAL error { yyerror("poll method name expected"); }
+		| TCP_MAX_CONNECTIONS EQUAL NUMBER {
+									#ifdef USE_TCP
+										tcp_max_connections=$3;
+									#else
+										warn("tcp support not compiled in");
+									#endif
+									}
+		| TCP_MAX_CONNECTIONS EQUAL error { yyerror("number expected"); }
 		| DISABLE_TLS EQUAL NUMBER {
 									#ifdef USE_TLS
 										tls_disable=$3;

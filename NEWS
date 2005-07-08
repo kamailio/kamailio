@@ -7,18 +7,31 @@ $Id$
 
 
 new archs:
-  - powerpc64 support
-  - alpha experimental support
+
+core:
+ - tcp: - improved  performance (io event handling), using OS specific
+           optimizations
+        - 1024 connections limit removed (see tcp_max_connections)
+new config variables:
+   tcp_connection_lifetime = value (s) - how long the lifetime of a
+      tcp connection will be exteneded after an IO event (accept, connect, 
+      read, write). Default: 120 s.
+   tcp_poll_method = poll|select|epoll_et|epoll-lt|kqueue|devpoll - poll
+      method used (by default the best one for the current OS is selected)
+   tcp_max_connections = no - maximum number of tcp connections (if the number
+      is exceeded no new tcp connections will be accepted). Default: 2048.
 
 
-0.8.99-dev changes
+0.9.0 changes
 
 
 new archs:
+ - alpha experimental support
  - mips2/cobalt experimental support
  - x86_64 support
  - OS X (darwin) support
  - sparc32 single cpu highly experimental support
+ - ppc64 support
 
 modules:
  - enum - support for more than one NAPTR

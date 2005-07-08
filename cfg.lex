@@ -52,6 +52,8 @@
  *  2004-10-08  more escapes: \", \xHH, \nnn and minor optimizations (andrei)
  *  2004-10-19  added FROM_URI and TO_URI (andrei)
  *  2004-11-30  added force_send_socket
+ *  2005-07-08  added tcp_connection_lifetime, tcp_poll_method,
+ *               tcp_max_connections (andrei)
  */
 
 
@@ -209,6 +211,9 @@ TCP_CHILDREN	"tcp_children"
 TCP_ACCEPT_ALIASES	"tcp_accept_aliases"
 TCP_SEND_TIMEOUT	"tcp_send_timeout"
 TCP_CONNECT_TIMEOUT	"tcp_connect_timeout"
+TCP_CON_LIFETIME	"tcp_connection_lifetime"
+TCP_POLL_METHOD		"tcp_poll_method"
+TCP_MAX_CONNECTIONS	"tcp_max_connections"
 DISABLE_TLS		"disable_tls"
 TLSLOG			"tlslog"|"tls_log"
 TLS_PORT_NO		"tls_port_no"
@@ -372,6 +377,12 @@ EAT_ABLE	[\ \t\b\r]
 									return TCP_SEND_TIMEOUT; }
 <INITIAL>{TCP_CONNECT_TIMEOUT}		{ count(); yylval.strval=yytext;
 									return TCP_CONNECT_TIMEOUT; }
+<INITIAL>{TCP_CON_LIFETIME}		{ count(); yylval.strval=yytext;
+									return TCP_CON_LIFETIME; }
+<INITIAL>{TCP_POLL_METHOD}		{ count(); yylval.strval=yytext;
+									return TCP_POLL_METHOD; }
+<INITIAL>{TCP_MAX_CONNECTIONS}	{ count(); yylval.strval=yytext;
+									return TCP_MAX_CONNECTIONS; }
 <INITIAL>{DISABLE_TLS}	{ count(); yylval.strval=yytext; return DISABLE_TLS; }
 <INITIAL>{TLSLOG}		{ count(); yylval.strval=yytext; return TLS_PORT_NO; }
 <INITIAL>{TLS_PORT_NO}	{ count(); yylval.strval=yytext; return TLS_PORT_NO; }

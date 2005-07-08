@@ -56,6 +56,8 @@
  *               signals, poll & select (andrei)
  *  2005-06-26  *bsd kqueue support (andrei)
  *  2005-07-04  solaris /dev/poll support (andrei)
+ *  2005-07-08  tcp_max_connections, tcp_connection_lifetime, don't accept
+ *               more connections if tcp_max_connections is exceeded (andrei)
  */
 
 
@@ -133,8 +135,12 @@ struct tcp_child{
 int tcp_accept_aliases=0; /* by default don't accept aliases */
 int tcp_connect_timeout=DEFAULT_TCP_CONNECT_TIMEOUT;
 int tcp_send_timeout=DEFAULT_TCP_SEND_TIMEOUT;
+int tcp_con_lifetime=DEFAULT_TCP_CONNECTION_LIFETIME;
 enum poll_types tcp_poll_method=0; /* by default choose the best method */
-int tcp_max_fd_no=DEFAULT_TCP_MAX_FD_NO;
+int tcp_max_connections=DEFAULT_TCP_MAX_CONNECTIONS;
+int tcp_max_fd_no=0;
+
+static int tcp_connections_no=0; /* current open connections */
 
 /* connection hash table (after ip&port) , includes also aliases */
 struct tcp_conn_alias** tcpconn_aliases_hash=0;
@@ -412,10 +418,11 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 		c->type=PROTO_TCP;
 		c->rcv.proto=PROTO_TCP;
 		c->flags=0;
-		c->timeout=get_ticks()+TCP_CON_TIMEOUT;
+		c->timeout=get_ticks()+tcp_con_lifetime;
 	}
 			
 		
+	tcp_connections_no++;
 	return c;
 	
 error:
@@ -703,9 +710,9 @@ int tcp_send(int type, char* buf, unsigned len, union sockaddr_union* to,
 	if (to){
 		su2ip_addr(&ip, to);
 		port=su_getport(to);
-		c=tcpconn_get(id, &ip, port, TCP_CON_SEND_TIMEOUT); 
+		c=tcpconn_get(id, &ip, port, tcp_con_lifetime); 
 	}else if (id){
-		c=tcpconn_get(id, 0, 0, TCP_CON_SEND_TIMEOUT);
+		c=tcpconn_get(id, 0, 0, tcp_con_lifetime);
 	}else{
 		LOG(L_CRIT, "BUG: tcp_send called with null id & to\n");
 		return -1;
@@ -715,7 +722,7 @@ int tcp_send(int type, char* buf, unsigned len, union sockaddr_union* to,
 		if (c==0) {
 			if (to){
 				/* try again w/o id */
-				c=tcpconn_get(0, &ip, port, TCP_CON_SEND_TIMEOUT);
+				c=tcpconn_get(0, &ip, port, tcp_con_lifetime);
 				goto no_id;
 			}else{
 				LOG(L_ERR, "ERROR: tcp_send: id %d not found, dropping\n",
@@ -983,6 +990,12 @@ static inline int handle_new_connect(struct socket_info* si)
 				" connection(%d): %s\n", errno, strerror(errno));
 		return -1;
 	}
+	if (tcp_connections_no>=tcp_max_connections){
+		LOG(L_ERR, "ERROR: maximum number of connections exceeded: %d/%d\n",
+					tcp_connections_no, tcp_max_connections);
+		close(new_sock);
+		return 1; /* success, because the accept was succesfull */
+	}
 	if (init_sock_opt(new_sock)<0){
 		LOG(L_ERR, "ERROR: handle_new_connect: init_sock_opt failed\n");
 		close(new_sock);
@@ -1037,6 +1050,7 @@ static void tcpconn_destroy(struct tcp_connection* tcpconn)
 #endif
 		_tcpconn_rm(tcpconn);
 		close(fd);
+		tcp_connections_no--;
 	}else{
 		/* force timeout */
 		tcpconn->timeout=0;
@@ -1175,7 +1189,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 				break;
 			}
 			/* update the timeout*/
-			tcpconn->timeout=get_ticks()+TCP_CON_TIMEOUT;
+			tcpconn->timeout=get_ticks()+tcp_con_lifetime;
 			tcpconn_put(tcpconn);
 			/* must be after the de-ref*/
 			io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
@@ -1311,7 +1325,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			/* add tcpconn to the list*/
 			tcpconn_add(tcpconn);
 			/* update the timeout*/
-			tcpconn->timeout=get_ticks()+TCP_CON_TIMEOUT;
+			tcpconn->timeout=get_ticks()+tcp_con_lifetime;
 			io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
 			break;
 		default:
@@ -1566,6 +1580,8 @@ void destroy_tcp()
 
 int init_tcp()
 {
+	char* poll_err;
+	
 	/* init lock */
 	tcpconn_lock=lock_alloc();
 	if (tcpconn_lock==0){
@@ -1604,6 +1620,25 @@ int init_tcp()
 	memset((void*)tcpconn_id_hash, 0, 
 			TCP_ID_HASH_SIZE * sizeof(struct tcp_connection*));
 	
+	/* fix config variables */
+	/* they can have only positive values due the config parser so we can
+	 * ignore most of them */
+		poll_err=check_poll_method(tcp_poll_method);
+	
+	/* set an appropiate poll method */
+	if (poll_err || (tcp_poll_method==0)){
+		tcp_poll_method=choose_poll_method();
+		if (poll_err){
+			LOG(L_ERR, "ERROR: init_tcp: %s, using %s instead\n",
+					poll_err, poll_method_name(tcp_poll_method));
+		}else{
+			LOG(L_INFO, "init_tcp: using %s as the io watch method"
+					" (auto detected)\n", poll_method_name(tcp_poll_method));
+		}
+	}else{
+			LOG(L_INFO, "init_tcp: using %s io watch method (config)\n",
+					poll_method_name(tcp_poll_method));
+	}
 	
 	return 0;
 error:
@@ -1621,7 +1656,20 @@ int tcp_init_children()
 	int sockfd[2];
 	int reader_fd[2]; /* for comm. with the tcp children read  */
 	pid_t pid;
+	struct socket_info *si;
 	
+	/* estimate max fd. no:
+	 * 1 tcp send unix socket/all_proc, 
+	 *  + 1 udp sock/udp proc + 1 tcp_child sock/tcp child*
+	 *  + no_listen_tcp */
+	for(r=0, si=tcp_listen; si; si=si->next, r++);
+#ifdef USE_TLS
+	if (! tls_disable)
+		for (si=tls_listen; si; si=si->next; r++);
+#endif
+	
+	tcp_max_fd_no=process_count()*2 +r-1 /* timer */ +3; /* stdin/out/err*/
+	tcp_max_fd_no+=tcp_max_connections;
 	
 	/* create the tcp sock_info structures */
 	/* copy the sockets --moved to main_loop*/
