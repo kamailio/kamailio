@@ -33,14 +33,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <radiusclient-ng.h>
+
 #include "../../sr_module.h"
 #include "../../error.h"
 #include "../../dprint.h"
+#include "../../config.h"
 #include "../../mem/mem.h"
+#include "../acc/dict.h"
 #include "authrad_mod.h"
 #include "authorize.h"
-#include <radiusclient-ng.h>
-#include "../../modules/acc/dict.h"
 
 MODULE_VERSION
 
@@ -57,9 +59,8 @@ static int str_fixup(void** param, int param_no); /* char* -> str* */
 /*
  * Module parameter variables
  */
-static char* radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
+static char* radius_config = DEFAULT_RADIUSCLEINT_CONF;
 static int service_type = -1;
-int rpid_old_compat = 0;
 
 /*
  * Exported functions
@@ -77,7 +78,6 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"radius_config",    STR_PARAM, &radius_config   },
 	{"service_type",     INT_PARAM, &service_type    },
-	{"rpid_old_compat",  INT_PARAM, &rpid_old_compat },
 	{0, 0, 0}
 };
 
@@ -125,7 +125,6 @@ static int mod_init(void)
 	attrs[A_USER_NAME].n			= "User-Name";
 	attrs[A_CISCO_AVPAIR].n			= "Cisco-AVPair";
 	attrs[A_SIP_AVP].n				= "SIP-AVP";
-	attrs[A_SIP_RPID].n				= "Sip-RPId";
 	vals[V_SIP_SESSION].n			= "Sip-Session";
 
 	if ((rh = rc_read_config(radius_config)) == NULL) {
@@ -145,10 +144,10 @@ static int mod_init(void)
 		attrs[A_CISCO_AVPAIR].n = NULL;
 	}
 
-        bind_auth = (bind_auth_t)find_export("bind_auth", 0, 0);
-        if (!bind_auth) {
+	bind_auth = (bind_auth_t)find_export("bind_auth", 0, 0);
+	if (!bind_auth) {
 		LOG(L_ERR, "auth_radius: Unable to find bind_auth function\n");
-	        return -1;
+		return -1;
 	}
 
 	if (bind_auth(&auth_api) < 0) {

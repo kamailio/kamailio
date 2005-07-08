@@ -38,24 +38,38 @@
 		<quote>SIP-AVP</quote>. The syntax of the value is:
 		<itemizedlist>
 			<listitem><para><emphasis>
-			value = SIP_AVP_NAME ':' SIP_AVP_VALUE
+			value = SIP_AVP_NAME SIP_AVP_VALUE
 			</emphasis></para></listitem>
 			<listitem><para><emphasis>
-			SIP_AVP_NAME = string
+			SIP_AVP_NAME = STRING_NAME | '#'ID_NUMBER
 			</emphasis></para></listitem>
 			<listitem><para><emphasis>
-			SIP_AVP_VALUE = string
+			SIP_AVP_VALUE = ':'STRING_VALUE | '#'NUMBER_VALUE
 			</emphasis></para></listitem>
 		</itemizedlist>
 	</para>
 	<para>
-		All additional credentials will be stored as &ser;NAME AVPs
-		(SIP_AVP_NAME = SIP_AVP_VALUE). NOTE: There is no support (yet) for 
-		storing credentials as &ser;ID AVP!!
+		All additional credentials will be stored as &ser; AVPs
+		(SIP_AVP_NAME = SIP_AVP_VALUE).
 	</para>
 	<para>
 		The RPID value may be fetch via this mechanism.
 	</para>
+	<example>
+	<title><quote>SIP-AVP</quote> RADIUS AVP exmaples</title>
+		<programlisting format="linespecific">
+....
+"email:joe@yahoo.com"
+    -> STRING NAME AVP (email) with STRING VALUE (joe@yahoo.com)
+"#14:joe@yahoo.com"
+    -> ID AVP (14) with STRING VALUE (joe@yahoo.com)
+"age#28"
+    -> STRING NAME AVP (age) with INTEGER VALUE (28)
+"#14#28"
+    -> ID AVP (14) with INTEGER VALUE (28)
+....
+		</programlisting>
+	</example>
 	</section>
 
 	<section>
@@ -100,7 +114,7 @@
 		</para>
 		<para>
 		Default value is 
-			<quote>/usr/local/etc/radiusclient/radiusclient.conf</quote>.
+			<quote>/usr/local/etc/radiusclient-ng/radiusclient.conf</quote>.
 		</para>
 		<example>
 		<title><varname>radius_config</varname> parameter usage</title>
@@ -124,33 +138,6 @@ modparam("auth_radius", "radius_config", "/etc/radiusclient.conf")
 		<title><varname>service_type</varname> parameter usage</title>
 		<programlisting format="linespecific">
 modparam("auth_radius", "service_type", 15)
-		</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>rpid_old_compat</varname> (integer)</title>
-		<para>
-		In order to maintain backwards compatibility in the way the RPID value
-		is fetched from the RADIUS server, by enabling this parameter 
-		( true = not 0), the module will look and use also for the old 
-		RADIUS AVP <quote>Sip-RPId</quote>. The value of RPID will be stored 
-		in a &ser;AVP, its name being the one defined in auth module for 
-		<quote>rpid_avp</quote> - the AVP name is fetched automatically via
-		auth API.
-		</para>
-		<para>
-		Default value is <quote>flase (=0)</quote>.
-		</para>
-		<warning>
-		<para>
-		In the next release, this parameter and the backward compatiblity will
-		be dropped - use additional credentials mechanism to fetch RPID.
-		</para>
-		</warning>
-		<example>
-		<title><varname>rpid_old_compat</varname> parameter usage</title>
-		<programlisting format="linespecific">
-modparam("auth_radius", "rpid_old_compat", 1)
 		</programlisting>
 		</example>
 	</section>

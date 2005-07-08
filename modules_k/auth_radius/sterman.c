@@ -24,6 +24,9 @@
  * History:
  * -------
  * 2003-03-09: Based on digest.c from radius_auth module (janakj)
+ * 2005-07-08: Radius AVP may contain any kind of OpenSER AVP - ID/name or
+ *             int/str value (bogdan)
+ * 2005-07-08: old RPID RADIUS AVP compatibility droped (bogdan)
  */
 
 
@@ -41,28 +44,78 @@
 #include <radiusclient-ng.h>
 
 
-static void attr_name_value(VALUE_PAIR* vp, str* name, str* value)
+static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
+										int_str *name, int_str *value)
 {
-	int i;
-	
-	for (i = 0; i < vp->lvalue; i++) {
-		if (vp->strvalue[i] == ':') {
-			name->s = vp->strvalue;
-			name->len = i;
+	static str names, values;
+	unsigned int r;
+	char *p;
+	char *end;
 
-			if (i == (vp->lvalue - 1)) {
-				value->s = (char*)0;
-				value->len = 0;
-			} else {
-				value->s = vp->strvalue + i + 1;
-				value->len = vp->lvalue - i - 1;
-			}
-			return;
-		}
+	/* empty? */
+	if (vp->lvalue==0 || vp->strvalue==0)
+		goto error;
+
+	p = vp->strvalue;
+	end = vp->strvalue + vp->lvalue;
+
+	/* get name */
+	if (*p!='#') {
+		/* name AVP */
+		*flags |= AVP_NAME_STR;
+		names.s = p;
+	} else {
+		names.s = ++p;
 	}
 
-	name->len = value->len = 0;
-	name->s = value->s = (char*)0;
+	names.len = 0;
+	while( p<end && *p!=':' && *p!='#')
+		p++;
+	if (names.s==p || p==end) {
+		LOG(L_ERR,"ERROR:auth_radius:extract_avp: empty AVP name\n");
+		goto error;
+	}
+	names.len = p - names.s;
+
+	/* get value */
+	if (*p!='#') {
+		/* string value */
+		*flags |= AVP_VAL_STR;
+	}
+	values.s = ++p;
+	values.len = end-values.s;
+	if (values.len==0) {
+		LOG(L_ERR,"ERROR:auth_radius:extract_avp: empty AVP value\n");
+		goto error;
+	}
+
+	if ( !((*flags)&AVP_NAME_STR) ) {
+		/* convert name to id*/
+		if (str2int(&names,&r)!=0 ) {
+			LOG(L_ERR,"ERROR:auth_radius:extract_avp: invalid AVP ID '%.*s'\n",
+				names.len,names.s);
+			goto error;
+		}
+		name->n = (int)r;
+	} else {
+		name->s = &names;
+	}
+
+	if ( !((*flags)&AVP_VAL_STR) ) {
+		/* convert value to integer */
+		if (str2int(&values,&r)!=0 ) {
+			LOG(L_ERR,"ERROR:auth_radius:extract_avp: invalid AVP numrical "
+				"value '%.*s'\n", values.len,values.s);
+			goto error;
+		}
+		value->n = (int)r;
+	} else {
+		value->s = &values;
+	}
+
+	return 0;
+error:
+	return -1;
 }
 
 
@@ -71,44 +124,31 @@ static void attr_name_value(VALUE_PAIR* vp, str* name, str* value)
  */
 static int generate_avps(VALUE_PAIR* received)
 {
-	str name_str, val_str;
 	int_str name, val;
+	unsigned short flags;
 	VALUE_PAIR *vp;
 
 	vp = received;
-	name.s = &name_str;
-	val.s = &val_str;
 
-	/* Look also for the standalone RPID attribute - backward compatible */
-	if (rpid_old_compat && (vp=rc_avpair_get(received,attrs[A_SIP_RPID].v,0))) {
-		val_str.s = vp->strvalue;
-		val_str.len = vp->lvalue;
-		if ( add_avp(auth_api.rpid_avp_type|AVP_VAL_STR,
-		auth_api.rpid_avp, val)<0 ) {
-			LOG(L_ERR, "generate_avps: Unable to create a new AVP for rpid\n");
+	for( ; (vp=rc_avpair_get(vp,attrs[A_SIP_AVP].v,0)) ; vp=vp->next) {
+		flags = 0;
+		if (extract_avp( vp, &flags, &name, &val)!=0 )
+			continue;
+		if (add_avp( flags, name, val) < 0) {
+			LOG(L_ERR, "ERROR:auth_radius:generate_avps: Unable to create "
+				"a new AVP\n");
 		} else {
-			DBG("generate_avps: RPID AVP '%s'/%d='%.*s' has been added\n",
-				(auth_api.rpid_avp_type&AVP_NAME_STR)?
-					auth_api.rpid_avp.s->s:"NULL",
-				(auth_api.rpid_avp_type&AVP_NAME_STR)?
-					0:auth_api.rpid_avp.n,
-				val_str.len, ZSW(val_str.s));
+			DBG("DEBUG:auth_radius:generate_avps: "
+				"AVP '%.*s'/%d='%.*s'/%d has been added\n",
+				(flags&AVP_NAME_STR)?name.s->len:4,
+				(flags&AVP_NAME_STR)?name.s->s:"null",
+				(flags&AVP_NAME_STR)?0:name.n,
+				(flags&AVP_VAL_STR)?val.s->len:4,
+				(flags&AVP_VAL_STR)?val.s->s:"null",
+				(flags&AVP_VAL_STR)?0:val.n );
 		}
 	}
 
-	while ((vp = rc_avpair_get(vp, attrs[A_SIP_AVP].v, 0))) {
-		attr_name_value(vp, &name_str, &val_str);
-		
-		if (add_avp(AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) {
-			LOG(L_ERR, "generate_avps: Unable to create a new AVP\n");
-		} else {
-			DBG("generate_avps: AVP '%.*s'='%.*s' has been added\n",
-			    name_str.len, ZSW(name_str.s), 
-			    val_str.len, ZSW(val_str.s));
-		}
-		vp = vp->next;
-	}
-	
 	return 0;
 }
 
@@ -118,19 +158,21 @@ static int add_cisco_vsa(VALUE_PAIR** send, struct sip_msg* msg)
 	str callid;
 
 	if (!msg->callid && parse_headers(msg, HDR_CALLID_F, 0) == -1) {
-		LOG(L_ERR, "add_cisco_vsa: Cannot parse Call-ID header field\n");
+		LOG(L_ERR, "ERROR:auth_radius:add_cisco_vsa: Cannot parse "
+			"Call-ID header field\n");
 		return -1;
 	}
 
 	if (!msg->callid) {
-		LOG(L_ERR, "add_cisco_vsa: Call-ID header field not found\n");
+		LOG(L_ERR, "ERROR:auth_radius:add_cisco_vsa: Call-ID header "
+			"field not found\n");
 		return -1;
 	}
 
 	callid.len = msg->callid->body.len + 8;
 	callid.s = pkg_malloc(callid.len);
 	if (callid.s == NULL) {
-		LOG(L_ERR, "add_cisco_vsa: No memory left\n");
+		LOG(L_ERR, "ERROR:auth_radius:add_cisco_vsa: No pkg memory left\n");
 		return -1;
 	}
 
@@ -138,8 +180,9 @@ static int add_cisco_vsa(VALUE_PAIR** send, struct sip_msg* msg)
 	memcpy(callid.s + 8, msg->callid->body.s, msg->callid->body.len);
 
 	if (rc_avpair_add(rh, send, attrs[A_CISCO_AVPAIR].v, callid.s,
-			  callid.len, VENDOR(attrs[A_CISCO_AVPAIR].v)) == 0) {
-		LOG(L_ERR, "add_cisco_vsa: Unable to add Cisco-AVPair attribute\n");
+			callid.len, VENDOR(attrs[A_CISCO_AVPAIR].v)) == 0) {
+		LOG(L_ERR, "ERROR:auth_radius:add_cisco_vsa: Unable to add "
+			"Cisco-AVPair attribute\n");
 		pkg_free(callid.s);
 		return -1;
 	}
@@ -167,7 +210,8 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 	send = received = 0;
 
 	if (!(_cred && _method && _user)) {
-		LOG(L_ERR, "radius_authorize_sterman(): Invalid parameter value\n");
+		LOG(L_ERR, "ERROR:auth_radius:radius_authorize_sterman: "
+			"Invalid parameter value\n");
 		return -1;
 	}
 
@@ -180,14 +224,16 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 	 */
 	if (_cred->username.domain.len) {
 		if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, _cred->username.whole.s, _cred->username.whole.len, 0)) {
-			LOG(L_ERR, "radius_authorize_sterman(): Unable to add User-Name attribute\n");
+			LOG(L_ERR, "ERROR:auth_radius:radius_authorize_sterman: Unable "
+				"to add User-Name attribute\n");
 			goto err;
 		}
 	} else {
 		user_name.len = _cred->username.user.len + _cred->realm.len + 1;
 		user_name.s = pkg_malloc(user_name.len);
 		if (!user_name.s) {
-			LOG(L_ERR, "radius_authorize_sterman(): No memory left\n");
+			LOG(L_ERR, "ERROR:auth_radius:radius_authorize_sterman: "
+				"No pkg memory left\n");
 			return -3;
 		}
 		memcpy(user_name.s, _cred->username.whole.s, _cred->username.whole.len);
@@ -196,7 +242,8 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 			_cred->realm.len);
 		if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, user_name.s,
 		user_name.len, 0)) {
-			LOG(L_ERR, "sterman(): Unable to add User-Name attribute\n");
+			LOG(L_ERR, "ERROR:auth_radius:radius_authorize_sterman: "
+				"Unable to add User-Name attribute\n");
 			pkg_free(user_name.s);
 			goto err;
 		}
@@ -205,29 +252,34 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 
 	if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_USER_NAME].v, 
 	_cred->username.whole.s, _cred->username.whole.len, 0)) {
-		LOG(L_ERR, "sterman(): Unable to add Digest-User-Name attribute\n");
+		LOG(L_ERR, "ERROR:auth_radius:radius_authorize_sterman: "
+			"Unable to add Digest-User-Name attribute\n");
 		goto err;
 	}
 
 	if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_REALM].v, _cred->realm.s,
 	_cred->realm.len, 0)) {
-		LOG(L_ERR, "sterman(): Unable to add Digest-Realm attribute\n");
+		LOG(L_ERR, "ERROR:auth_radius:radius_authorize_sterman: Unable "
+			"to add Digest-Realm attribute\n");
 		goto err;
 	}
 	if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_NONCE].v, _cred->nonce.s,
 	_cred->nonce.len, 0)) {
-		LOG(L_ERR, "sterman(): Unable to add Digest-Nonce attribute\n");
+		LOG(L_ERR, "ERROR:auth_radius:radius_authorize_sterman: Unable "
+			"to add Digest-Nonce attribute\n");
 		goto err;
 	}
 	
 	if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_URI].v, _cred->uri.s,
 	_cred->uri.len, 0)) {
-		LOG(L_ERR, "sterman(): Unable to add Digest-URI attribute\n");
+		LOG(L_ERR, "ERROR:auth_radius:radius_authorize_sterman: Unable "
+				"to add Digest-URI attribute\n");
 		goto err;
 	}
 	if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_METHOD].v, method.s,
 	method.len, 0)) {
-		LOG(L_ERR, "sterman(): Unable to add Digest-Method attribute\n");
+		LOG(L_ERR, "ERROR:auth_radius:radius_authorize_sterman: Unable "
+			"to add Digest-Method attribute\n");
 		goto err;
 	}
 	
@@ -236,40 +288,45 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 	 */
 	if (_cred->qop.qop_parsed == QOP_AUTH) {
 		if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_QOP].v, "auth", 4, 0)) {
-			LOG(L_ERR, "sterman(): Unable to add Digest-QOP attribute\n");
+			LOG(L_ERR, "ERROR:auth_radius:radius_authorize_sterman: "
+				"Unable to add Digest-QOP attribute\n");
 			goto err;
 		}
 		if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_NONCE_COUNT].v, 
 		_cred->nc.s, _cred->nc.len, 0)) {
-			LOG(L_ERR, "sterman(): Unable to add Digest-CNonce-Count attribute\n");
+			LOG(L_ERR, "ERROR:auth_radius:radius_authorize_sterman: Unable "
+				"to add Digest-CNonce-Count attribute\n");
 			goto err;
 		}
 		if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_CNONCE].v, 
 		_cred->cnonce.s, _cred->cnonce.len, 0)) {
-			LOG(L_ERR, "sterman(): Unable to add Digest-CNonce attribute\n");
+			LOG(L_ERR, "ERROR:auth_radius:radius_authorize_sterman: Unable "
+				"to add Digest-CNonce attribute\n");
 			goto err;
 		}
 	} else if (_cred->qop.qop_parsed == QOP_AUTHINT) {
 		if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_QOP].v,
 		"auth-int", 8, 0)) {
-			LOG(L_ERR, "sterman(): Unable to add Digest-QOP attribute\n");
+			LOG(L_ERR, "ERROR:auth_radius:radius_authorize_sterman: Unable "
+				"to add Digest-QOP attribute\n");
 			goto err;
 		}
 		if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_NONCE_COUNT].v,
 		_cred->nc.s, _cred->nc.len, 0)) {
-			LOG(L_ERR, "sterman(): Unable to add Digest-Nonce-Count "
-				"attribute\n");
+			LOG(L_ERR, "ERROR:auth_radius:radius_authorize_sterman: Unable "
+				"to add Digest-Nonce-Count attribute\n");
 			goto err;
 		}
 		if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_CNONCE].v,
 		_cred->cnonce.s, _cred->cnonce.len, 0)) {
-			LOG(L_ERR, "sterman(): Unable to add Digest-CNonce attribute\n");
+			LOG(L_ERR, "ERROR:auth_radius:radius_authorize_sterman: Unable "
+				"to add Digest-CNonce attribute\n");
 			goto err;
 		}
 		if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_BODY_DIGEST].v, 
 		_cred->opaque.s, _cred->opaque.len, 0)) {
-			LOG(L_ERR, "sterman(): Unable to add Digest-Body-Digest "
-				"attribute\n");
+			LOG(L_ERR, "ERROR:auth_radius:radius_authorize_sterman: Unable "
+				"to add Digest-Body-Digest attribute\n");
 			goto err;
 		}
 		
@@ -287,13 +344,15 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 	/* Indicate the service type, Authenticate only in our case */
 	service = vals[V_SIP_SESSION].v;
 	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &service, -1, 0)) {
-		LOG(L_ERR, "sterman(): Unable to add Service-Type attribute\n");
+		LOG(L_ERR, "ERROR:auth_radius:radius_authorize_sterman: Unable to "
+			"add Service-Type attribute\n");
 		goto err;
 	}
 
 	/* Add SIP URI as a check item */
 	if (!rc_avpair_add(rh,&send,attrs[A_SIP_URI_USER].v,user.s,user.len,0)) {
-		LOG(L_ERR, "sterman(): Unable to add Sip-URI-User attribute\n");
+		LOG(L_ERR, "ERROR:auth_radius:radius_authorize_sterman: Unable to "
+			"add Sip-URI-User attribute\n");
 		goto err;
 	}
 
@@ -305,7 +364,7 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 
 	/* Send request */
 	if ((i = rc_auth(rh, SIP_PORT, send, &received, msg)) == OK_RC) {
-		DBG("radius_authorize_sterman(): Success\n");
+		DBG("DEBUG:auth_radius:radius_authorize_sterman: Success\n");
 		rc_avpair_free(send);
 		send = 0;
 
@@ -316,7 +375,8 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 		rc_avpair_free(received);
 		return 1;
 	} else {
-		DBG("radius_authorize_sterman(): Failure\n");
+		LOG(L_ERR,"ERROR:auth_radius:radius_authorize_sterman: "
+			"rc_auth failed\n");
 		goto err;
 	}
 

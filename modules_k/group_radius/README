@@ -81,7 +81,7 @@ Chapter 1. User's Guide
    library.
 
    Default value is
-   "/usr/local/etc/radiusclient/radiusclient.conf". 
+   "/usr/local/etc/radiusclient-ng/radiusclient.conf". 
 
    Example 1-1. Set radius_config parameter
 ...

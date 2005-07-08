@@ -60,7 +60,7 @@
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>/usr/local/etc/radiusclient/radiusclient.conf</quote>.
+			Default value is <quote>/usr/local/etc/radiusclient-ng/radiusclient.conf</quote>.
 		</emphasis>
 		</para>
 		<example>

@@ -34,6 +34,7 @@
 #include "../../error.h"
 #include "../../dprint.h"
 #include "../../sr_module.h"
+#include "../../config.h"
 #include "../../mem/mem.h"
 #include "../../modules/acc/dict.h"
 #include "grouprad_mod.h"
@@ -52,7 +53,7 @@ static int hf_fixup(void** param, int param_no); /* Header field fixup */
 /*
  * Module parameter variables
  */
-static char* radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
+static char* radius_config = DEFAULT_RADIUSCLEINT_CONF;
 int use_domain = 0;  /* By default we use domain */
 
 

@@ -20,15 +20,39 @@
 	</para>
 	<para>
 	The module assumes that Radius returns the AVPs as values of reply
-	attribute SIP-AVP. Its value must be a string of form
-	<quote>name:value</quote> or of form <quote>name#value</quote>. In the
-	first case, value is interpreted as a string and in the second case as
-	an int (second case has not been implemented yet).
+	attribute SIP-AVP. Its value must be a string of form:
+	<itemizedlist>
+		<listitem><para><emphasis>
+		value = SIP_AVP_NAME SIP_AVP_VALUE
+		</emphasis></para></listitem>
+		<listitem><para><emphasis>
+		SIP_AVP_NAME = STRING_NAME | '#'ID_NUMBER
+		</emphasis></para></listitem>
+		<listitem><para><emphasis>
+		SIP_AVP_VALUE = ':'STRING_VALUE | '#'NUMBER_VALUE
+		</emphasis></para></listitem>
+	</itemizedlist>
 	</para>
+	<example>
+	<title><quote>SIP-AVP</quote> RADIUS AVP exmaples</title>
+		<programlisting format="linespecific">
+....
+"email:joe@yahoo.com"
+    -> STRING NAME AVP (email) with STRING VALUE (joe@yahoo.com)
+"#14:joe@yahoo.com"
+    -> ID AVP (14) with STRING VALUE (joe@yahoo.com)
+"age#28"
+    -> STRING NAME AVP (age) with INTEGER VALUE (28)
+"#14#28"
+    -> ID AVP (14) with INTEGER VALUE (28)
+....
+		</programlisting>
+	</example>
 	<para>
-	The module prefixes each attribute name as returned from Radius by
-	string <quote>caller_</quote> or <quote>callee_</quote> depending if
-	caller's or callee's attributes are loaded.
+	For AVP with STRING NAME, the module prefixes each attribute name as 
+	returned from Radius by string <quote>caller_</quote> or 
+	<quote>callee_</quote> depending if caller's or callee's attributes 
+	are loaded.
 	</para>
 	</section>
 
@@ -73,7 +97,7 @@
 		</para>
 		<para>
 		Default value is 
-			<quote>/usr/local/etc/radiusclient/radiusclient.conf</quote>.
+			<quote>/usr/local/etc/radiusclient-ng/radiusclient.conf</quote>.
 		</para>
 		<example>
 		<title><varname>radius_config</varname> parameter usage</title>

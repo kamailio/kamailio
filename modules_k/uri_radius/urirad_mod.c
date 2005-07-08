@@ -27,12 +27,14 @@
  * 2003-03-16 - flags export parameter added (janakj)
  */
 
+#include <radiusclient-ng.h>
+
 #include "../../dprint.h"
+#include "../../config.h"
 #include "../../sr_module.h"
+#include "../acc/dict.h"
 #include "urirad_mod.h"
 #include "checks.h"
-#include "../../modules/acc/dict.h"
-#include <radiusclient-ng.h>
 
 MODULE_VERSION
 
@@ -46,7 +48,7 @@ static int mod_init(void); /* Module initialization function */
 /*
  * Module parameter variables
  */
-static char* radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
+static char* radius_config = DEFAULT_RADIUSCLEINT_CONF;
 static int service_type = -1;
 
 /*

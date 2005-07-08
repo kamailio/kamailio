@@ -37,8 +37,6 @@ extern struct attr attrs[];
 extern struct val vals[];
 extern void *rh;
 
-extern int rpid_old_compat;
-
 extern auth_api_t auth_api;
 
 #endif /* AUTHRAD_MOD_H */
