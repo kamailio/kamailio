@@ -8,6 +8,15 @@ $Id$
 
 new archs:
 
+
+modules:
+ - dispatcher - added hashing after request uri and to uri
+              - added a new flag parameter which can be used (for now) to
+                select only the username or the username, host and port when
+                hashing after an uri (to, from or request uri)
+              - improved uri hashing (password is ignored, port is used only
+                if != 5060 or 5061)
+ 
 core:
  - tcp: - improved  performance (io event handling), using OS specific
            optimizations
