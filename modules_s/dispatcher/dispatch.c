@@ -406,12 +406,78 @@ unsigned int ds_get_hash(str *x, str *y)
 	return (h)?h:1;
 }
 
+
+/*
+ * gets the part of the uri we will use as a key for hashing
+ * params:  key1       - will be filled with first part of the key
+ *                       (uri user or "" if no user)
+ *          key2       - will be filled with the second part of the key
+ *                       (uri host:port)
+ *          uri        - str with the whole uri
+ *          parsed_uri - struct sip_uri pointer with the parsed uri
+ *                       (it must point inside uri). It can be null
+ *                       (in this case the uri will be parsed internally).
+ *          flags  -    if & DS_HASH_USER_ONLY, only the user part of the uri
+ *                      will be used
+ * returns: -1 on error, 0 on success
+ */
+static inline int get_uri_hash_keys(str* key1, str* key2,
+							str* uri, struct sip_uri* parsed_uri, int flags)
+{
+	struct sip_uri tmp_p_uri; /* used only if parsed_uri==0 */
+	
+	if (parsed_uri==0){
+		if (parse_uri(uri->s, uri->len, &tmp_p_uri)<0){
+			LOG(L_ERR, "DISPATCHER: get_uri_hash_keys: invalid uri %.*s\n",
+					uri->len, uri->len?uri->s:"");
+			goto error;
+		}
+		parsed_uri=&tmp_p_uri;
+	}
+	/* uri sanity checks */
+	if (parsed_uri->host.s==0){
+			LOG(L_ERR, "DISPATCHER: get_uri_hash_keys: invalid uri, no host"
+					   "present: %.*s\n", uri->len, uri->len?uri->s:"");
+			goto error;
+	}
+	
+	/* we want: user@host:port if port !=5060
+	 *          user@host if port==5060
+	 *          user if the user flag is set*/
+	*key1=parsed_uri->user;
+	key2->s=0;
+	key2->len=0;
+	if (!(flags & DS_HASH_USER_ONLY)){
+		/* key2=host */
+		*key2=parsed_uri->host;
+		/* add port if needed */
+		if (parsed_uri->port.s!=0){ /* uri has a port */
+			/* skip port if == 5060 or sips and == 5061 */
+			if (parsed_uri->port_no !=
+					((parsed_uri->type==SIPS_URI_T)?SIPS_PORT:SIP_PORT))
+				key2->len+=parsed_uri->port.len+1 /* ':' */;
+		}
+	}
+	if (key1->s==0){
+		LOG(L_WARN, "DISPATCHER: get_uri_hashs_keys: empty username in:"
+					" %.*s\n", uri->len, uri->len?uri->s:"");
+	}
+	return 0;
+error:
+	return -1;
+}
+
+
+
 /**
  *
  */
 int ds_hash_fromuri(struct sip_msg *msg, unsigned int *hash)
 {
 	str from;
+	str key1;
+	str key2;
+	
 	if(msg==NULL || hash == NULL)
 	{
 		LOG(L_ERR, "DISPATCHER:ds_hash_fromuri: bad parameters\n");
@@ -430,11 +496,11 @@ int ds_hash_fromuri(struct sip_msg *msg, unsigned int *hash)
 		return -1;
 	}
 	
-	from.s   = get_from(msg)->uri.s;
-	from.len = get_from(msg)->uri.len; 
+	from   = get_from(msg)->uri;
 	trim(&from);
-	
-	*hash = ds_get_hash(&from, NULL);
+	if (get_uri_hash_keys(&key1, &key2, &from, 0, ds_flags)<0)
+		return -1;
+	*hash = ds_get_hash(&key1, &key2);
 	
 	return 0;
 }
@@ -447,6 +513,9 @@ int ds_hash_fromuri(struct sip_msg *msg, unsigned int *hash)
 int ds_hash_touri(struct sip_msg *msg, unsigned int *hash)
 {
 	str to;
+	str key1;
+	str key2;
+	
 	if(msg==NULL || hash == NULL)
 	{
 		LOG(L_ERR, "DISPATCHER:ds_hash_touri: bad parameters\n");
@@ -460,14 +529,17 @@ int ds_hash_touri(struct sip_msg *msg, unsigned int *hash)
 	}
 	
 	
-	to.s   = get_to(msg)->uri.s;
-	to.len = get_to(msg)->uri.len; 
+	to   = get_to(msg)->uri;
 	trim(&to);
 	
-	*hash = ds_get_hash(&to, NULL);
+	if (get_uri_hash_keys(&key1, &key2, &to, 0, ds_flags)<0)
+		return -1;
+	*hash = ds_get_hash(&key1, &key2);
 	
 	return 0;
 }
+
+
 
 /**
  *
@@ -501,8 +573,9 @@ int ds_hash_callid(struct sip_msg *msg, unsigned int *hash)
 
 int ds_hash_ruri(struct sip_msg *msg, unsigned int *hash)
 {
-	str hostport;
 	str* uri;
+	str key1;
+	str key2;
 	
 	
 	if(msg==NULL || hash == NULL)
@@ -516,22 +589,13 @@ int ds_hash_ruri(struct sip_msg *msg, unsigned int *hash)
 	}
 	
 	uri=GET_RURI(msg);
-	hostport=*uri; /* we want only sip:user@host:port */
-	if (msg->parsed_uri.port.s){
-		hostport.len=(int)(msg->parsed_uri.port.s-uri->s)+
-						msg->parsed_uri.port.len;
-	}else if(msg->parsed_uri.host.s){
-		hostport.len=(int)(msg->parsed_uri.host.s-uri->s)+
-						msg->parsed_uri.host.len;
-	}else{ /* missing host! => error */
-		LOG(L_ERR, "DISPATCHER: ds_hash_uri: ERROR: bad uri <%.*s>\n",
-					uri->len, uri->s);
+	if (get_uri_hash_keys(&key1, &key2, uri, &msg->parsed_uri, ds_flags)<0)
 		return -1;
-	}
 	
-	*hash = ds_get_hash(&hostport, NULL);
+	*hash = ds_get_hash(&key1, &key2);
 	return 0;
 }
+
 
 
 /**

@@ -53,6 +53,7 @@ MODULE_VERSION
 /** parameters */
 char *dslistfile = CFG_DIR"dispatcher.list";
 int  force_dst = 0;
+int ds_flags   = 0; 
 
 /** module functions */
 static int mod_init(void);
@@ -73,6 +74,7 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"list_file",      STR_PARAM, &dslistfile},
 	{"force_dst",      INT_PARAM, &force_dst},
+	{"flags",          INT_PARAM, &ds_flags},
 	{0,0,0}
 };
 
