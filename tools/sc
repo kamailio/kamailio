@@ -22,8 +22,8 @@
 #===================================================================
 
 ### include resource files, if any
-if [ -f /etc/ser/.openserctlrc ]; then
-	. /etc/ser/.openserctlrc
+if [ -f /etc/openser/.openserctlrc ]; then
+	. /etc/openser/.openserctlrc
 fi
 if [ -f /usr/local/etc/openser/.openserctlrc ]; then
 	. /usr/local/etc/openser/.openserctlrc

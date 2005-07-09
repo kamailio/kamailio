@@ -1,0 +1,697 @@
+#!/bin/sh 
+#
+# sc: openser control; tool for maintaining openser's databases
+#
+# History:
+# --------
+# 2005-03-25 - SC with DBText support (cesc santasusana)
+# 2005-07-08 - Removed all non-DBText functions (daniel)
+#
+
+
+#===================================================================
+
+### include resource files, if any
+if [ -f /etc/openser/.openscdbtextrc ]; then
+	. /etc/openser/.openscdbtextrc
+fi
+if [ -f /usr/local/etc/openser/.openscdbtextrc ]; then
+	. /usr/local/etc/openser/.openscdbtextrc
+fi
+if [ -f ~/.openscdbtextrc ]; then
+	. ~/.openscdbtextrc
+fi
+
+### version fo this script
+VERSION='1.1 - $Revision$'
+
+##### ----------------------------------------------- #####
+### SQL config
+if [ -z $DBTEXT_PATH ]; then
+	DBTEXT_PATH="/usr/local/etc/openser/dbtext"
+	export DBTEXT_PATH
+fi
+
+##### ----------------------------------------------- #####
+### binaries
+if [ -z "$GENHA1" ] ; then
+	GENHA1='gen_ha1'
+fi
+if [ -z "$LAST_LINE" ] ; then
+	LAST_LINE='tail -1'
+fi
+
+##### ----------------------------------------------- #####
+### path to useful tools
+if [ -z "$EGREP" ] ; then
+	EGREP="egrep"
+fi
+if [ -z "$AWK" ] ; then
+	AWK="awk"
+fi
+
+##### ----------------------------------------------- #####
+# ACL name verification
+if [ -z "$VERIFY_ACL" ] ; then
+	VERIFY_ACL=1
+fi
+if [ -z "$ACL_GROUPS" ] ; then
+	ACL_GROUPS="local ld int voicemail free-pstn"
+fi
+
+##### ----------------------------------------------- #####
+#### table names
+
+# UsrLoc Table
+if [ -z "$UL_TABLE" ] ; then
+	UL_TABLE=location
+fi
+USER_COLUMN=username
+CALLID_COLUMN=callid
+
+# subscriber table
+if [ -z "$SUB_TABLE" ] ; then
+	SUB_TABLE=subscriber
+fi
+REALM_COLUMN=domain
+HA1_COLUMN=HA1
+HA1B_COLUMN=HA1B
+PASSWORD_COLUMN=password
+RPID_COLUMN=rpid
+SUBSCRIBER_COLUMN='username'
+EMAIL_COLUMN=email_address
+SUB_CREATED_COLUMN=datetime_created
+SUB_MODIFIED_COLUMN=datetime_modified
+PHP_LIB_COLUMN=phplib_id
+
+# acl table
+if [ -z "$ACL_TABLE" ] ; then
+	ACL_TABLE=grp
+fi
+ACL_USER_COLUMN=username
+ACL_DOMAIN_COLUMN=domain
+ACL_GROUP_COLUMN=grp
+ACL_MODIFIED_COLUMN=last_modified
+ACL_DOMAIN_COLUMN=domain
+
+# aliases table
+if [ -z "$ALS_TABLE" ] ; then
+	ALS_TABLE=aliases
+fi
+A_USER_COLUMN=username
+A_CONTACT_COLUMN=contact
+A_EXPIRES_COLUMN=expires
+A_Q_COLUMN=q
+A_CALLID_COLUMN=callid
+A_CSEQ_COLUMN=cseq
+A_LAST_MODIFIED_COLUMN=last_modified
+
+# domain table
+if [ -z "$DOMAIN_TABLE" ] ; then
+	DOMAIN_TABLE=domain
+fi
+
+# URI table
+if [ -z "$URI_TABLE" ] ; then
+	URI_TABLE=uri
+fi
+URIUSER_COLUMN=uri_user
+MODIFIED_COLUMN=last_modified
+
+# dbaliases table
+if [ -z "$DA_TABLE" ] ; then
+	DA_TABLE=dbaliases
+fi
+DA_USER_COLUMN=username
+DA_DOMAIN_COLUMN=domain
+DA_ALIAS_USER_COLUMN=alias_username
+DA_ALIAS_DOMAIN_COLUMN=alias_domain
+
+# speeddial table
+if [ -z "$SD_TABLE" ] ; then
+	SD_TABLE=speed_dial
+fi
+SD_USER_COLUMN=username
+SD_DOMAIN_COLUMN=domain
+SD_SD_USER_COLUMN=sd_username
+SD_SD_DOMAIN_COLUMN=sd_domain
+SD_NEW_URI_COLUMN=new_uri
+SD_DESC_COLUMN=description
+
+# avp table
+if [ -z "$AVP_TABLE" ] ; then
+	AVP_TABLE=usr_preferences
+fi
+
+AVP_UUID_COLUMN=uuid
+AVP_USER_COLUMN=username
+AVP_DOMAIN_COLUMN=domain
+AVP_ATTRIBUTE_COLUMN=attribute
+AVP_VALUE_COLUMN=value
+AVP_TYPE_COLUMN=type
+AVP_MODIFIED_COLUMN=modified
+
+#===================================================================
+
+#Set variables to dbtext's files ...
+if [ -z "$UL_FILE" ] ; then
+	UL_FILE=$DBTEXT_PATH/$UL_TABLE
+fi
+if [ -z "$DOMAIN_FILE" ] ; then
+	DOMAIN_FILE=$DBTEXT_PATH/$DOMAIN_TABLE
+fi
+if [ -z "$ALS_FILE" ] ; then
+	ALS_FILE=$DBTEXT_PATH/$ALS_TABLE
+fi
+if [ -z "$SUB_FILE" ] ; then
+	SUB_FILE=$DBTEXT_PATH/$SUB_TABLE
+fi
+if [ -z "$URI_FILE" ] ; then
+	URI_FILE=$DBTEXT_PATH/$URI_TABLE
+fi
+if [ -z "$ACL_FILE" ] ; then
+	ACL_FILE=$DBTEXT_PATH/$ACL_TABLE
+fi
+
+#===================================================================
+
+
+usage() {
+CMD=`basename $0`
+if [ "0$VERIFY_ACL" -eq 1 ] ; then
+	EXTRA_TEXT="ACL privileges are: $ACL_GROUPS"
+fi
+cat <<EOF
+$0 $VERSION
+parameter usage: 
+           * subscribers *
+ add <username> <password> <email> .. add a new subscriber (*)
+ passwd <username> <passwd> ......... change user's password (*)
+ rm <username> ...................... delete a user (*)
+ mail <username> .................... send an email to a user
+ rpid add <username> <rpid> ......... add rpid for a user (*)
+ rpid rm <username> ................. set rpid to NULL for a user (*)
+ rpid show <username> ............... show rpid of a user
+
+           * access control lists *
+ acl show [<username>] .............. show user membership
+ acl grant <username> <group> ....... grant user membership (*)
+ acl revoke <username> [<group>] .... grant user membership(s) (*)
+
+           * usrloc *
+ showdb [<username>] ................ show online users flushed in DB
+
+           * domains *
+ domain show ........................ show list of served domains
+ domain add <domainname> ............ add a new served domain
+ domain rm <domainname> ............. remove a served domain
+
+           * control and diagnostics *
+ dbtext [dbtext_path] ... create the needed dbtext files (default 
+                          location is /usr/local/etc/ser/dbtext)
+
+           * Database Selection *
+ 
+ The exact location of the dbtext files to use must be set. Export
+ DBTEXT_PATH="/path/to/dbtext" (no trailing slash). No password is needed
+ for dbtext. All these parameters can also be set in the "serctl" script
+ file directly. Note that dbtext tries to mimic the results of a MySQL DB,
+ but it is not always possible to reproduce them 100%.
+ DBText files field order is the same as in the MySQL database.
+     
+ $EXTRA_TEXT
+
+EOF
+}
+
+
+# determine host name, typically for use in printing UAC
+# messages; we use today a simplistic but portable uname -n way --
+# no domain name is displayed ; fifo_uac expands !! to host
+# address only for optional header fields; uname output without
+# domain is sufficient for informational header fields such as
+# From
+#
+get_my_host() {
+	uname -n
+}
+
+# calculate name and domain of current user
+set_user() {
+
+	SERUSER=`echo $1|awk -F @ '{print $1}'`
+	SERDOMAIN=`echo $1|awk -F @ '{print $2}'`
+
+	if [ -z "$SERDOMAIN" ] ; then
+		SERDOMAIN="$SIP_DOMAIN"
+	fi
+
+	if [ -z "$SERDOMAIN" ] ; then
+		echo -e "\nDomain unknown: use usernames with domain or set default domain in SIP_DOMAIN\n"
+		exit 1
+	fi
+}
+
+
+# check the parameter if it is a valid SIP URI
+# quite simplified now -- it captures just very basic
+# errors
+check_uri() {
+	echo "$1" | $EGREP "^sip(s)?:([a-zA-Z0-9_]+@)?.*\..*"  > /dev/null
+	if [ $? -ne 0 ] ; then 
+		echo -e "\nerror: invalid URI: $1\n" > /dev/stderr
+		exit 1
+	fi
+}
+
+rpid() {
+	if [ "$#" -lt 2 ] ; then
+		echo -e "\nrpid: too few parameters\n"
+		usage
+		exit 1
+	fi
+	shift;
+
+	case $1 in
+		show)
+			echo
+			if [ $# -eq 2 ] ; then
+				set_user $2
+				is_user 
+				if [ $? -ne 0 ] ; then
+					echo -e "\nnon-existent user\n"
+					exit 1;
+				fi
+				CLAUSE=":$SERUSER:$SERDOMAIN:"
+				
+			elif [ $# -ne 1 ] ; then
+				usage
+				exit 1
+			fi
+			echo -e "RPID show ... "
+			if [ -z $CLAUSE ]; then
+				CLAUSE=""
+			fi
+			#19 is the rpid field
+			cat $SUB_FILE | $EGREP "$CLAUSE" | cut -s -d : -f 2,19
+			echo
+			;;
+
+		add|rm)
+			MODE=$1;
+
+			if [ "$MODE" = "add" ] ; then
+			    ARG_NUM=3;
+			else
+			    ARG_NUM=2;
+			fi
+			
+			if [ $# -lt $ARG_NUM ] ; then
+				usage
+				exit 1
+			fi
+
+			set_user $2
+			is_user 
+			if [ $? -ne 0 ] ; then
+				echo -e "\nnon-existent user\n"
+				exit 1
+			fi
+			shift 2
+
+			if [ "$MODE" = "add" ] ; then
+			        RPID_VAL="'$1'";
+			else
+			        RPID_VAL=NULL;
+			fi
+
+			old_line=`cat $SUB_FILE | $EGREP :$SERUSER:$SERDOMAIN: | head -n 1`
+			pre_rpid=`echo $old_line | cut -s -d : -f 1-18`
+			post_rpid=`echo $old_line | cut -s -d : -f 20-25`
+			new_line=$pre_rpid:$RPID_VAL:$post_rpid
+			cat $SUB_FILE | sed s/$old_line/$new_line/g >> $SUB_FILE.tmp
+			mv -f $SUB_FILE.tmp $SUB_FILE				
+			
+			echo -e "RPID added/removed ... showing current value\n"
+			$0 rpid show $SERUSER@$SERDOMAIN
+
+			;;
+
+		*)
+			usage
+			exit 1
+			;;
+	esac
+}
+
+domain() {
+	case $1 in
+		show)
+			# QUERY="select * FROM $DOMAIN_TABLE ; "
+			# sql_ro_query "$QUERY"
+			fifo_cmd domain_dump
+			;;
+		add)
+			shift
+			if [ $# -ne 1 ] ; then
+				echo -e "\nmissing domain to be added\n"
+				exit 1
+			fi
+			line="$1:$date_now"
+			echo "$line" >> $DOMAIN_FILE
+			echo -e "\nDomain $1 saved into DBTEXT ... now trying to force OpenSER to reload it into memory\n"
+			#FIXME: domain_reload command not supported yet
+			#fifo_cmd domain_reload
+			;;
+		rm)
+			shift
+			if [ $# -ne 1 ] ; then
+				echo -e "\nmissing domain to be removed\n"
+				exit 1
+			fi
+			cat $DOMAIN_FILE | $EGREP -v "^$1:" > $DOMAIN_FILE.tmp
+			mv -f $DOMAIN_FILE.tmp $DOMAIN_FILE
+			echo -e "\nDomain $1 removed from DBTEXT ... now trying to force SER to remove it from memory\n"
+			#FIXME: domain_reload command not supported yet
+			#fifo_cmd domain_reload
+			;;
+		*)
+			usage
+			exit 1
+	esac
+}
+
+acl() {
+	case $1 in
+		show)			
+			if [ $# -eq 2 ] ; then
+				set_user $2
+				is_user 
+				if [ $? -ne 0 ] ; then
+					echo -e "\nnon-existent user\n"
+					exit 1;
+				fi
+				EGREP_COND="^$SERUSER:$SERDOMAIN:"
+			elif [ $# -ne 1 ] ; then
+				usage
+				exit 1
+			fi
+			if [ -z $EGREP_COND ]; then
+				EGREP_COND=""
+			fi
+			echo -e "\nuser*domain**group*lastmodified" | tr "*" "\t"
+			cat $ACL_FILE | $EGREP -v "username" | $EGREP "$EGREP_COND" | tr ":" "\t"
+
+			;;
+
+		grant)
+			if [ $# -lt 3 ] ; then
+				usage
+				exit 1
+			fi
+			set_user $2
+			is_user 
+			if [ $? -ne 0 ] ; then
+				echo -e "\nnon-existent user\n"
+				exit 1
+			fi
+			shift 2
+			while [ $# -gt 0 ] ; do
+
+				if [ $VERIFY_ACL -eq 1 ] ; then
+					found=0
+					for i in $ACL_GROUPS ; do
+						if [ "$1" = "$i" ] ; then
+							found=1
+							break
+						fi
+					done	
+					if [ $found -eq 0 ] ; then
+						echo -e "\nInvalid privilege: $1 ignored\n"
+						shift
+						continue
+					fi
+				fi
+
+				line="$SERUSER:$SERDOMAIN:$1:$date_now"
+				echo $line >> $ACL_FILE
+				shift
+			done
+
+			$0 acl show $SERUSER@$SERDOMAIN
+
+			;;
+
+		revoke)			
+			if [ $# -eq 3 ] ; then
+				CLAUSE="$3:"
+			elif [ $# -ne 2 ] ; then
+				usage
+				exit 1
+			fi	
+
+			set_user $2
+
+			cat $ACL_FILE | $EGREP -v "^$SERUSER:$SERDOMAIN:$CLAUSE" >> $ACL_FILE.tmp
+			mv -f $ACL_FILE.tmp $ACL_FILE
+			$0 acl show $2
+
+			;;
+
+		*)
+			usage
+			exit 1
+			;;
+	esac
+}
+
+# params: user
+# output: false if exists, true otherwise
+is_user() {
+	CNT=`cat $SUB_FILE | $EGREP :$SERUSER:$SERDOMAIN: | wc -w`
+	
+	if [ "0$CNT" -eq 0 ] ; then
+		false
+	else
+		true
+	fi
+}
+
+
+# params: user, password
+# output: HA1, HA1B
+credentials()
+{
+	set_user $1
+
+	HA1=`$GENHA1 $SERUSER $SERDOMAIN $2`
+	if [ $? -ne 0 ] ; then
+		echo -e "\nHA1 calculation failed\n"
+		exit 1
+	fi
+	HA1B=`$GENHA1 "$SERUSER@$SERDOMAIN" $SERDOMAIN $2`
+	if [ $? -ne 0 ] ; then
+		echo -e "\nHA1B calculation failed\n"
+		exit 1
+	fi
+}
+
+#================================================================
+
+# if the script calls itself ...
+export PW
+echo
+case $1 in
+
+	passwd)		
+		if [ $# -ne 3 ] ; then
+			usage
+			exit 1
+		fi
+		shift
+		credentials $1 $2
+
+		is_user $1
+		if [ $? -ne 0 ] ; then
+			echo -e "\nnon-existent user\n"
+			exit 1
+		fi
+		
+		line1=`cat $SUB_FILE | $EGREP :$SERUSER:$SERDOMAIN: | head -n 1`
+		#9 is the date_created field
+		line1_keep1=`echo $line1 | cut -s -d : -f 5,6,7,8,9`
+		line1_keep2=`echo $line1 | cut -s -d : -f 11,12,13,14`
+		line1_keep3=`echo $line1 | cut -s -d : -f 17,18,19,20,21`
+		line2_update="$HA1:$SERUSER:$SERDOMAIN:$2:$line1_keep1:$date_now:$line1_keep2:$HA1:$HA1B:$line1_keep3"
+		cat $SUB_FILE | sed s/"$line1"/"$line2_update"/g >> $SUB_FILE.tmp
+		mv -f $SUB_FILE.tmp $SUB_FILE
+		echo -e "\nPassword change succeeded (DBTEXT)\n"
+		;;
+
+	add)
+		if [ $# -ne 4 ] ; then
+			usage
+			exit 1
+		fi
+		shift
+		credentials $1 $2
+		is_user $1
+		if [ $? -eq 0 ] ; then
+			echo -e "\nuser already exists\n"
+			exit 1
+		fi  
+
+		#Add to SUBSCRIBER file			
+		#phplib_id(str) username(str) domain(str) password(str) 
+		#first_name(str,null) last_name(str,null) phone(str,null) email_address(str) 
+		#datetime_created(int) datetime_modified(int) confirmation(str,null) flag(str,null) sendnotification(str,null) greeting(str,null) ha1(str) ha1b(str) allow_find(str) timezone(str,null) rpid(str,null) domn(int,null) uuid(str,null)
+		line="$HA1:$SERUSER:$SERDOMAIN:$2::::$3:$date_now:$date_now::o:::$HA1:$HA1B:0:NULL:NULL::NULL"
+		echo $line >> $SUB_FILE
+			
+		#Add to URI file
+		#username(str) domain(str) uri_user(str) last_modified(int)
+		line="$SERUSER:$SERDOMAIN:$SERUSER:$date_now"
+		echo $line >> $URI_FILE
+		
+		echo -e "\nNew user ($SERUSER@$SERDOMAIN) added to DBTEXT files\n"
+		
+		;;
+
+	mail)
+		if [ $# -ne 2 ] ; then
+			usage
+			exit 1
+		fi
+		shift
+		set_user $1
+		EA=`cat $SUB_FILE | $EGREP :$SERUSER:$SERDOMAIN: | cut -s -d : -f 8 | $LAST_LINE`
+		echo -e "\nWrite email to $1: $EA now ...\n"
+		mail -s "Message from $SERDOMAIN SIP admin" $EA
+		if [ $? -eq 0 ] ; then
+			echo -e "\nmessage sent\n"
+		else
+			echo -e "\nsending message failed\n"
+		fi
+
+		;;
+
+	rpid)
+		rpid "$@"
+		;;
+
+	showdb|userdb)
+		shift
+		if [ $# -eq 1 ] ; then
+			set_user $1
+			is_user
+			if [ $? -ne 0 ] ; then
+				echo -e "\nnon-existent user\n"
+				exit 1;
+			fi
+			#The email field is number 8 ...
+			echo -e "\n** In Subscriber Table: ** "
+			cat $SUB_FILE | $EGREP :$SERUSER:$SERDOMAIN: | cut -s -d : -f 8
+			echo -e "\n** In Location Table: ** "
+			cat $UL_FILE | head -n 1 | tr -d "(,)" | sed s/"str\|int\|null"/""/g | tr " " ":"
+			cat $UL_FILE | $EGREP "^$SERUSER:($SERDOMAIN)?\B?:" 
+		else
+			usr_loc=`cat $UL_FILE | cut -s -d : -f 1 | tr '\n' '|' | sed s/'|\$'/''/g`
+			if [ -n $usr_loc ]; then
+				echo -e "\n** Subscribers (username and email) currently registered: ** " 
+				cat $SUB_FILE | $EGREP $usr_loc | cut -s -d : -f 2,8
+				echo -e "\n** Deatailed location data available on disk (username, domain, contact, callid): ** " 
+				cat $UL_FILE | $EGREP $usr_loc | cut -s -d : -f 1,2,3,8
+			fi
+		fi
+		echo -e "\nNote: Due to usage of cache, server's list " \
+			"may differ from DB list.\n"
+
+		;;
+
+	rm)
+		if [ $# -ne 2 ] ; then
+			usage
+			exit 1
+		fi
+		shift 
+
+		set_user $1
+		is_user 
+		if [ $? -ne 0 ] ; then
+			echo -e "\nnon-existent user\n"
+			exit 1
+		fi
+
+		# begin with remove all user's privileges
+		echo -e "\nACL revoke not implemented for DBTEXT ... rights not removed\n"
+
+		cat $URI_FILE | $EGREP -v "^$SERUSER:" > $URI_FILE.tmp
+		mv -f $URI_FILE.tmp $URI_FILE
+				
+		# destroy the user now
+		cat $SUB_FILE | $EGREP -v ":$SERUSER:$SERDOMAIN:" >> $SUB_FILE.tmp
+		mv -f $SUB_FILE.tmp $SUB_FILE
+	
+		# and also all his contacts
+		$0 ul rm $1   > /dev/null 2>&1
+		echo -e "\nUSER $SERUSER removed\n"
+		;;
+			
+	acl)
+		shift
+		acl "$@"
+		;;
+
+	domain)
+		shift
+		domain "$@"
+		;;
+
+	dbtext)
+		
+		if [ $# -eq 1 ] ; then
+			DBTEXT_PATH="/usr/local/etc/openser/dbtext"
+		elif [ $# -eq 2 ]; then
+			DBTEXT_PATH=$2
+		else 
+			usage
+			exit
+		fi
+		
+		UL_FILE=$DBTEXT_PATH/$UL_TABLE
+		DOMAIN_FILE=$DBTEXT_PATH/$DOMAIN_TABLE
+		ALS_FILE=$DBTEXT_PATH/$ALS_TABLE
+		SUB_FILE=$DBTEXT_PATH/$SUB_TABLE
+		URI_FILE=$DBTEXT_PATH/$URI_TABLE
+		ACL_FILE=$DBTEXT_PATH/$ACL_TABLE
+		VER_FILE=$DBTEXT_PATH/version
+		
+		mkdir -p $DBTEXT_PATH
+		echo -e "Creating DBText files in $DBTEXT_PATH\n"
+		#Subscriber file
+		echo "phplib_id(str) username(str) domain(str) password(str) first_name(str,null) last_name(str,null) phone(str,null) email_address(str) datetime_created(int) datetime_modified(int) confirmation(str,null) flag(str,null) sendnotification(str,null) greeting(str,null) ha1(str) ha1b(str) allow_find(str) timezone(str,null) rpid(str,null) domn(int,null) uuid(str,null)" > $SUB_FILE
+		#Location file
+		echo "username(str) domain(str,null) contact(str,null) received(str,null) expires(int,null) q(double,null) callid(str,null) cseq(int,null) last_modified(int,null) replicate(int,null) state(int,null) flags(int) user_agent(str)" > $UL_FILE
+		#Aliases file
+		echo "username(str) domain(str,null) contact(str,null) received(str,null) expires(int,null) q(double,null) callid(str,null) cseq(int,null) last_modified(int,null) replicate(int,null) state(int,null) flags(int) user_agent(str)" > $ALS_FILE
+		#Uri file
+		echo "username(str) domain(str) uri_user(str) last_modified(int)" > $URI_FILE
+		#Group/ACL file
+		echo "username(str) domain(str) grp(str) last_modified(int)" > $ACL_FILE
+		#Version file
+		echo "table_name(str) table_version(int)" > $VER_FILE
+		
+		echo -e "DBText files created.\n\nRemeber to set the SER_DB and DBTEXT_PATH variables (read usage)\n"
+		;;
+	
+	version)
+		echo  -e "\n$0 $VERSION\n"
+		;;
+		
+	*)
+		usage
+		exit 1
+		;;
+
+esac
+
