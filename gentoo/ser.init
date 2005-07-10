@@ -7,7 +7,18 @@ depend() {
 	need net
 }
 
+check_config() {
+	out=`(/usr/sbin/ser -c > /dev/null || true) 2>&1`
+	echo "$out" | grep -q 'config file ok, exiting...'
+	if [ "$?" == 1 ]; then
+		echo -e "There are errors in the configuration. Please fix them first"
+		echo -e "\n$out\n"
+		return 1
+	fi
+}
+
 start() {
+	check_config || return 1
 	ebegin "Starting ser"
 	start-stop-daemon --start --quiet --pidfile /var/run/ser.pid \
 		--exec /usr/sbin/ser -- -P /var/run/ser.pid
