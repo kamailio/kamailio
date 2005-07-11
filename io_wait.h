@@ -286,13 +286,13 @@ inline static int io_watch_add(	io_wait_h* h,
 	struct fd_map* e;
 	int flags;
 #ifdef HAVE_EPOLL
-	int n;
 	struct epoll_event ep_event;
 #endif
 #ifdef HAVE_DEVPOLL
 	struct pollfd pfd;
 #endif
 #if defined(HAVE_SIGIO_RT) || defined (HAVE_EPOLL)
+	int n;
 	int idx;
 	int check_io;
 	struct pollfd pf;
