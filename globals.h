@@ -165,4 +165,10 @@ extern str default_global_port;
 extern int disable_core_dump;
 extern int open_files_limit;
 
+/* resolver */
+extern int dns_retr_time;
+extern int dns_retr_no;
+extern int dns_servers_no;
+extern int dns_search_list;
+
 #endif

@@ -60,6 +60,8 @@
  * 2004-11-30  added force_send_socket (andrei)
  * 2005-07-08  added TCP_CON_LIFETIME, TCP_POLL_METHOD, TCP_MAX_CONNECTIONS
  *              (andrei)
+ * 2005-07-11 added DNS_RETR_TIME, DNS_RETR_NO, DNS_SERVERS_NO, DNS_USE_SEARCH,
+ *             DNS_TRY_IPV6 (andrei)
  */
 
 
@@ -195,6 +197,11 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token ALIAS
 %token DNS
 %token REV_DNS
+%token DNS_TRY_IPV6
+%token DNS_RETR_TIME
+%token DNS_RETR_NO
+%token DNS_SERVERS_NO
+%token DNS_USE_SEARCH
 %token PORT
 %token STAT
 %token CHILDREN
@@ -402,6 +409,16 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| DNS EQUAL error { yyerror("boolean value expected"); }
 		| REV_DNS EQUAL NUMBER { received_dns|= ($3)?DO_REV_DNS:0; }
 		| REV_DNS EQUAL error { yyerror("boolean value expected"); }
+		| DNS_TRY_IPV6 EQUAL NUMBER   { dns_try_ipv6=$3; }
+		| DNS_TRY_IPV6 error { yyerror("boolean value expected"); }
+		| DNS_RETR_TIME EQUAL NUMBER   { dns_retr_time=$3; }
+		| DNS_RETR_TIME error { yyerror("number expected"); }
+		| DNS_RETR_NO EQUAL NUMBER   { dns_retr_no=$3; }
+		| DNS_RETR_NO error { yyerror("number expected"); }
+		| DNS_SERVERS_NO EQUAL NUMBER   { dns_servers_no=$3; }
+		| DNS_SERVERS_NO error { yyerror("number expected"); }
+		| DNS_USE_SEARCH EQUAL NUMBER   { dns_search_list=$3; }
+		| DNS_USE_SEARCH error { yyerror("boolean value expected"); }
 		| PORT EQUAL NUMBER   { port_no=$3; }
 		| STAT EQUAL STRING {
 					#ifdef STATS

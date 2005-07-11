@@ -58,7 +58,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 10
 SUBLEVEL =   99
-EXTRAVERSION = -dev12-tcp
+EXTRAVERSION = -dev13-tcp
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -305,6 +305,9 @@ endif
 # -DUSE_TLS
 #		compiles in tls support, requires -DUSE_TCP. Please use
 #		make TLS=1 instead. (tls support is highly experimental for now)
+# -DHAVE_RESOLV_RES
+#		support for changing some of the resolver parameters present
+#		 (_res structure in <resolv.h>)
 
 
 DEFS+= $(extra_defs) \
@@ -318,6 +321,7 @@ DEFS+= $(extra_defs) \
 	 -DUSE_MCAST \
 	 -DUSE_TCP \
 	 -DDISABLE_NAGLE \
+	 -DHAVE_RESOLV_RES \
 	 -DDBG_QM_MALLOC \
 	 #-DF_MALLOC \
 	 #-DDBG_F_MALLOC \

@@ -21,13 +21,38 @@ core:
  - tcp: - improved  performance (io event handling), using OS specific
            optimizations
         - 1024 connections limit removed (see tcp_max_connections)
+-  resolver: - timeouts, retries a.s.o can no be set from ser.cfg
+             (see below dns_* and man resolv.conf(6)).
+             The maximum time a dns request can take (before failing) is:
+              (dns_retr_time*dns_retr_no)*(search_list_domains)
+             If dns_try_ipv6 is yes, mutliply it again by 2.
+             The fastest possible dns config (max 1s):
+                dns_try_ipv6=no
+                dns_retr_time=1
+                dns_retr_no=1
+                dns_use_search_list=no
 new config variables:
+   dns_try_ipv6 = yes/no - if yes and a dns lookup fails, it will retry it
+      for ipv6 (AAAA record). Default: yes
+   dns_retr_time = time - time in s before retrying a dns request.
+      Default: system specific, depends also on the/etc/resolv.conf content
+      (usually 5s).
+   dns_retr_no = no. - number of dns retransmissions before giving up.
+      Default: see above (usually 4)
+   dns_server_no = no. - how many dns servers from the ones defined in 
+      /etc/resolv.conf will be used. Default: all of them.
+   dns_use_search_list= yes/no - if no, the search list in /etc/resolv.conf
+      will be ignored (=> fewer lookups => gives up faster). Default: yes.
+      HINT: even if you don't have a search list defined, setting this option
+      to "no" will still be "faster", because an empty search list is in 
+      fact search "" (so even if the search list is empty/missing there will
+      still be 2 dns queries, eg. foo+'.' and foo+""+'.')
    tcp_connection_lifetime = value (s) - how long the lifetime of a
       tcp connection will be exteneded after an IO event (accept, connect, 
       read, write). Default: 120 s.
    tcp_poll_method = poll|select|epoll_et|epoll-lt|kqueue|devpoll - poll
       method used (by default the best one for the current OS is selected)
-   tcp_max_connections = no - maximum number of tcp connections (if the number
+   tcp_max_connections = no. - maximum number of tcp connections (if the number
       is exceeded no new tcp connections will be accepted). Default: 2048.
 
 

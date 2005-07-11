@@ -54,6 +54,8 @@
  *  2004-11-30  added force_send_socket
  *  2005-07-08  added tcp_connection_lifetime, tcp_poll_method,
  *               tcp_max_connections (andrei)
+ *  2005-07-11  added dns_retr_{time,no}, dns_servers_no, dns_use_search_list,
+ *              dns_try_ipv6 (andrei)
  */
 
 
@@ -182,6 +184,11 @@ LISTEN		listen
 ALIAS		alias
 DNS		 dns
 REV_DNS	 rev_dns
+DNS_TRY_IPV6	dns_try_ipv6
+DNS_RETR_TIME	dns_retr_time
+DNS_RETR_NO		dns_retr_no
+DNS_SERVERS_NO	dns_servers_no
+DNS_USE_SEARCH	dns_use_search_list
 PORT	port
 STAT	statistics
 MAXBUFFER maxbuffer
@@ -356,6 +363,16 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{ALIAS}	{ count(); yylval.strval=yytext; return ALIAS; }
 <INITIAL>{DNS}	{ count(); yylval.strval=yytext; return DNS; }
 <INITIAL>{REV_DNS}	{ count(); yylval.strval=yytext; return REV_DNS; }
+<INITIAL>{DNS_TRY_IPV6}	{ count(); yylval.strval=yytext;
+								return DNS_TRY_IPV6; }
+<INITIAL>{DNS_RETR_TIME}	{ count(); yylval.strval=yytext;
+								return DNS_RETR_TIME; }
+<INITIAL>{DNS_RETR_NO}	{ count(); yylval.strval=yytext;
+								return DNS_RETR_NO; }
+<INITIAL>{DNS_SERVERS_NO}	{ count(); yylval.strval=yytext;
+								return DNS_SERVERS_NO; }
+<INITIAL>{DNS_USE_SEARCH}	{ count(); yylval.strval=yytext;
+								return DNS_USE_SEARCH; }
 <INITIAL>{PORT}	{ count(); yylval.strval=yytext; return PORT; }
 <INITIAL>{STAT}	{ count(); yylval.strval=yytext; return STAT; }
 <INITIAL>{MAXBUFFER}	{ count(); yylval.strval=yytext; return MAXBUFFER; }

@@ -29,6 +29,7 @@
  * -------
  *  2003-02-13  added proto to sip_resolvehost, for SRV lookups (andrei)
  *  2003-07-03  default port value set according to proto (andrei)
+ *  2005-07-11  added resolv_init (timeouts a.s.o) (andrei)
  */ 
 
 
@@ -48,6 +49,48 @@
 /* mallocs for local stuff */
 #define local_malloc pkg_malloc
 #define local_free   pkg_free
+
+int dns_try_ipv6=1; /* default on */
+/* declared in globals.h */
+int dns_retr_time=-1;
+int dns_retr_no=-1;
+int dns_servers_no=-1;
+int dns_search_list=-1;
+
+
+/* init. the resolver
+ * params: retr_time  - time before retransmitting (must be >0)
+ *         retr_no    - retransmissions number
+ *         servers_no - how many dns servers will be used
+ *                      (from the one listed in /etc/resolv.conf)
+ *         search     - if 0 the search list in /etc/resolv.conf will
+ *                      be ignored (HINT: even if you don't have a
+ *                      search list in resolv.conf, it's still better
+ *                      to set search to 0, because an empty seachlist
+ *                      means in fact search "" => it takes more time)
+ * If any of the parameters <0, the default (system specific) value
+ * will be used. See also resolv.conf(5).
+ * returns: 0 on success, -1 on error
+ */
+int resolv_init()
+{
+	res_init();
+#ifdef HAVE_RESOLV_RES
+	if (dns_retr_time>0)
+		_res.retrans=dns_retr_time;
+	if (dns_retr_no>0)
+		_res.retry=dns_retr_no;
+	if (dns_servers_no>=0)
+		_res.nscount=dns_servers_no;
+	if (dns_search_list==0)
+		_res.options&=~(RES_DEFNAMES|RES_DNSRCH);
+#else
+#warning "no resolv timeout support"
+	LOG(L_WARN, "WARNING: resolv_init: no resolv options support - resolv"
+			" options will be ignored\n");
+#endif
+	return 0;
+}
 
 
 
