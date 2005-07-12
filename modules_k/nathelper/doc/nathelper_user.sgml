@@ -27,8 +27,57 @@
 		url="http://www.cisco.com/en/US/products/sw/iosswrel/ps1839/products_feature_guide09186a0080110bf9.html">
 		http://www.cisco.com/en/US/products/sw/iosswrel/ps1839/products_feature_guide09186a0080110bf9.html"></ulink>
 	</para>
-	
 	</section>
+
+	<section>
+	<title>NAT pinging types</title>
+	<para>
+		Currently, the nathelper module supports two types of NAT pings:
+	</para>
+	<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>UDP package</emphasis> - 4 bytes (zero filled) UDP 
+			packages are sent to the contact address.
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>Advantages:</emphasis> low bandwitdh traffic,
+				easy to generate by &ser;;
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>Disadvantages:</emphasis> unidirectional 
+				traffic through NAT (inbound - from outside to inside); As 
+				many NATs do update the bind timeout only on outbound traffic,
+				the bind may expire and closed.
+				</para>
+				</listitem>
+			</itemizedlist>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>SIP request</emphasis> - a stateless SIP request is 
+			sent to the contact address.
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>Advantages:</emphasis> bidirectional traffic
+				through NAT, since each PING request from &ser; (inbound 
+				traffic) will force the SIP client to generate a SIP reply 
+				(outbound traffic) - the NAT bind will be surely kept open.
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>Disadvantages:</emphasis> higher bandwitdh 
+				traffic, more expensive (as time) to generate by &ser;;
+				</para>
+				</listitem>
+			</itemizedlist>
+		</listitem>
+	</itemizedlist>
+	</section>
+
 	<section>
 	<title>Dependencies</title>
 	<section>
@@ -38,7 +87,8 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>No dependencies on other &ser; modules</emphasis>.
+				<emphasis>usrloc</emphasis> module - only if the NATed 
+				contacts are to be pinged.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -47,8 +97,8 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before running
-		&ser; with this module loaded:
+		The following libraries or applications must be installed before 
+		running &ser; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -64,10 +114,14 @@
 	<section>
 		<title><varname>natping_interval</varname> (integer)</title>
 		<para>
-		Period of time in seconds between sending short &udp; packets to all currently
-		registered &ua;s to keep their &nat; bindings alive. Value of 0 disables this
-		functionality.
+		Period of time in seconds between sending the NAT pings to all 
+		currently registered &ua;s to keep their &nat; bindings alive. 
+		Value of 0 disables this functionality.
 		</para>
+		<note><para>
+		Enabling the NAT pinging functionality will force the module to
+		bind itself to USRLOC module.
+		</para></note>
 		<para>
 		<emphasis>
 			Default value is 0.
@@ -85,8 +139,9 @@ modparam("nathelper", "natping_interval", 10)
 	<section>
 		<title><varname>ping_nated_only</varname> (integer)</title>
 		<para>
-		If this variable is set then only contacts that have <quote>behind_NAT</quote> flag
-		in user location database set set will get ping.
+		If this variable is set then only contacts that have 
+		<quote>behind_NAT</quote> flag in user location database set will 
+		get ping.
 		</para>
 		<para>
 		<emphasis>
@@ -105,10 +160,11 @@ modparam("nathelper", "ping_nated_only", 1)
 	<section>
 		<title><varname>received_avp</varname> (integer)</title>
 		<para>
-		The number of the Attribute-Value-Pair (AVP) used to store the URI containing the
-		received IP, port, and protocol. The URI is created by fix_nated_register function
-		of nathelper module and the attribute is then used by the registrar to store the
-		received parameters. Do not forget to change the value of corresponding parameter in
+		The number of the Attribute-Value-Pair (AVP) used to store the URI 
+		containing the received IP, port, and protocol. The URI is created 
+		by fix_nated_register function of nathelper module and the attribute 
+		is then used by the registrar to store the received parameters. Do 
+		not forget to change the value of corresponding parameter in
 		registrar module if you change the value of this parameter.
 		</para>
 		<para>
@@ -149,7 +205,7 @@ modparam("nathelper", "rtpproxy_sock", "udp:localhost:12221")
 		<title><varname>rtpproxy_disable</varname> (integer)</title>
 		<para>
 		If true (set to a non 0 value), the RTPProxy support will be
-		desabled - no connection to it will be established.
+		disabled - no connection to it will be established.
 		</para>
 		<para>
 		<emphasis>
@@ -241,6 +297,49 @@ modparam("nathelper", "rtpproxy_retr", 2)
 		<programlisting format="linespecific">
 ...
 modparam("nathelper", "force_socket", "localhost:33333")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>sipping_from</varname> (string)</title>
+		<para>
+		The parameter sets the SIP URI to be used in generating the SIP
+		requests for NAT ping purposes. To enable the SIP request pinging
+		feature, you have to set this parameter. The SIP request pinging 
+		will be used only for requests marked so (see registrar module,
+		the "sip_natping_flag" flag).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sipping_from</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "sipping_from", "sip:pinger@siphub.net")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>sipping_method</varname> (string)</title>
+		<para>
+		The parameter sets the SIP method to be used in generating the SIP
+		requests for NAT ping purposes.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>OPTIONS</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sipping_method</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "sipping_method", "INFO")
 ...
 </programlisting>
 		</example>

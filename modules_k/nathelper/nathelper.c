@@ -135,30 +135,10 @@
  * 2005-02-25	Force for pinging the socket returned by USRLOC (bogdan)
  *
  * 2005-03-22	support for multiple media streams added (netch)
+ *
+ * 2005-07-11  SIP ping support added (bogdan)
  */
 
-#include "nhelpr_funcs.h"
-#include "../../flags.h"
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../data_lump.h"
-#include "../../data_lump_rpl.h"
-#include "../../error.h"
-#include "../../forward.h"
-#include "../../mem/mem.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parser_f.h"
-#include "../../resolve.h"
-#include "../../timer.h"
-#include "../../trim.h"
-#include "../../ut.h"
-#include "../registrar/sip_msg.h"
-#include "../../msg_translator.h"
-#include "../usrloc/usrloc.h"
-#include "../../usr_avp.h"
-#include "../../socket_info.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -175,6 +155,30 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "../../flags.h"
+#include "../../sr_module.h"
+#include "../../dprint.h"
+#include "../../data_lump.h"
+#include "../../data_lump_rpl.h"
+#include "../../error.h"
+#include "../../forward.h"
+#include "../../mem/mem.h"
+#include "../../parser/parse_from.h"
+#include "../../parser/parse_to.h"
+#include "../../parser/parse_uri.h"
+#include "../../parser/parser_f.h"
+#include "../../resolve.h"
+#include "../../timer.h"
+#include "../../trim.h"
+#include "../../ut.h"
+#include "../../msg_translator.h"
+#include "../../usr_avp.h"
+#include "../../socket_info.h"
+#include "../registrar/sip_msg.h"
+#include "../usrloc/usrloc.h"
+#include "nhelpr_funcs.h"
+#include "sip_pinger.h"
+ 
 MODULE_VERSION
 
 #if !defined(AF_LOCAL)
@@ -223,7 +227,7 @@ static int add_rcv_param_f(struct sip_msg *, char *, char *);
 static char *find_sdp_line(char *, char *, char);
 static char *find_next_sdp_line(char *, char *, char, char *);
 
-static void timer(unsigned int, void *);
+static void nh_timer(unsigned int, void *);
 inline static int fixup_str2int(void**, int);
 static int mod_init(void);
 static int child_init(int);
@@ -269,6 +273,7 @@ static pid_t mypid;
 static unsigned int myseqn = 0;
 static int rcv_avp_no = 42;
 
+
 struct rtpp_head {
 	struct rtpp_node	*rn_first;
 	struct rtpp_node	*rn_last;
@@ -312,6 +317,9 @@ static param_export_t params[] = {
 	{"rtpproxy_tout",         INT_PARAM, &rtpproxy_tout         },
 	{"received_avp",          INT_PARAM, &rcv_avp_no            },
 	{"force_socket",          STR_PARAM, &force_socket_str      },
+	{"sipping_from",          STR_PARAM, &sipping_from.s        },
+	{"sipping_method",        STR_PARAM, &sipping_method.s      },
+
 	{0, 0, 0}
 };
 
@@ -343,7 +351,7 @@ mod_init(void)
 	if (natping_interval > 0) {
 		bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 		if (!bind_usrloc) {
-			LOG(L_ERR, "nathelper: Can't find usrloc module\n");
+			LOG(L_ERR, "ERROR:nathelper:mod_init: Can't find usrloc module\n");
  			return -1;
  		}
 
@@ -351,7 +359,22 @@ mod_init(void)
 			return -1;
 		}
 
-		register_timer(timer, NULL, natping_interval);
+		/* set reply function if SIP natping is enabled */
+		if (sipping_from.s && sipping_from.s[0]) {
+			if (sipping_method.s==0 || sipping_method.s[0]==0) {
+				LOG(L_ERR,"ERROR:nathelper:mod_init: SIP ping FROM set, but "
+					"SIP ping method is empty!\n");
+				return -1;
+			}
+			sipping_method.len = strlen(sipping_method.s);
+			sipping_from.len = strlen(sipping_from.s);
+			exports.response_f = sipping_rpl_filter;
+			init_sip_ping();
+		} else {
+			sipping_from.s = 0;
+		}
+
+		register_timer(nh_timer, NULL, natping_interval);
 	}
 
 	/* Prepare 1918 networks list */
@@ -1936,8 +1959,9 @@ force_rtp_proxy0_f(struct sip_msg* msg, char* str1, char* str2)
 	return force_rtp_proxy1_f(msg, arg, NULL);
 }
 
+
 static void
-timer(unsigned int ticks, void *param)
+nh_timer(unsigned int ticks, void *param)
 {
 	int rval;
 	void *buf, *cp;
@@ -1946,12 +1970,14 @@ timer(unsigned int ticks, void *param)
 	union sockaddr_union to;
 	struct hostent* he;
 	struct socket_info* send_sock;
+	unsigned int flags;
+	str opt;
 
 	buf = NULL;
 	if (cblen > 0) {
 		buf = pkg_malloc(cblen);
 		if (buf == NULL) {
-			LOG(L_ERR, "ERROR: nathelper::timer: out of memory\n");
+			LOG(L_ERR, "ERROR:nathelper:nh_timer: out of memory\n");
 			return;
 		}
 	}
@@ -1962,7 +1988,7 @@ timer(unsigned int ticks, void *param)
 		cblen = rval * 2;
 		buf = pkg_malloc(cblen);
 		if (buf == NULL) {
-			LOG(L_ERR, "ERROR: nathelper::timer: out of memory\n");
+			LOG(L_ERR, "ERROR:nathelper:nh_timer: out of memory\n");
 			return;
 		}
 		rval = ul.get_all_ucontacts(buf, cblen, (ping_nated_only ? FL_NAT : 0));
@@ -1984,17 +2010,21 @@ timer(unsigned int ticks, void *param)
 		cp =  (char*)cp + sizeof(c.len) + c.len;
 		memcpy( &send_sock, cp, sizeof(send_sock));
 		cp += sizeof(send_sock);
+		memcpy( &flags, cp, sizeof(flags));
+		cp += sizeof(flags);
 		if (parse_uri(c.s, c.len, &curi) < 0) {
-			LOG(L_ERR, "ERROR: nathelper::timer: can't parse contact uri\n");
+			LOG(L_ERR, "ERROR:nathelper:nh_timer: can't parse contact uri\n");
 			continue;
 		}
 		if (curi.proto != PROTO_UDP && curi.proto != PROTO_NONE)
 			continue;
 		if (curi.port_no == 0)
 			curi.port_no = SIP_PORT;
+		/* we sholud get rid of this resolve (to ofen and to slow); for the
+		 * moment we are lucky since the curi is an IP -bogdan */
 		he = sip_resolvehost(&curi.host, &curi.port_no, PROTO_UDP);
 		if (he == NULL){
-			LOG(L_ERR, "ERROR: nathelper::timer: can't resolve_hos\n");
+			LOG(L_ERR, "ERROR:nathelper:nh_timer: can't resolve_host\n");
 			continue;
 		}
 		hostent2su(&to, he, 0, curi.port_no);
@@ -2003,10 +2033,19 @@ timer(unsigned int ticks, void *param)
 					get_send_socket(0, &to, PROTO_UDP);
 		}
 		if (send_sock == NULL) {
-			LOG(L_ERR, "ERROR: nathelper::timer: can't get sending socket\n");
+			LOG(L_ERR, "ERROR:nathelper:nh_timer: can't get sending socket\n");
 			continue;
 		}
-		udp_send(send_sock, (char *)sbuf, sizeof(sbuf), &to);
+		if ( (sipping_from.s!=0) && (flags&FL_NAT_SIPPING)!=0 &&
+		(opt.s=build_sipping( &c, send_sock, &opt.len))!=0 ) {
+			if (udp_send(send_sock, opt.s, opt.len, &to)<0){
+				LOG(L_ERR, "ERROR:n2h:natping_hanlder: sip udp_send failed\n");
+			}
+		} else {
+			if (udp_send(send_sock, (char *)sbuf, sizeof(sbuf), &to)<0 ) {
+				LOG(L_ERR, "ERROR:nathelper:nh_timer: udp udp_send failed\n");
+			}
+		}
 	}
 	pkg_free(buf);
 }
