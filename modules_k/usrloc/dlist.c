@@ -20,6 +20,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ========
+ * 2005-07-11 get_all_ucontacts returns also the contact's flags (bogdan)
  */
 
 
@@ -75,11 +79,11 @@ static inline int find_dlist(str* _n, dlist_t** _d)
  *
  * Information is packed into the buffer as follows:
  *
- * +------------+----------+-----+------------+----------+-----+
- * |contact1.len|contact1.s|sock1|contact2.len|contact2.s|sock2|
- * +------------+----------+-----+------------+----------+-----+
- * |.............................|contactN.len|contactN.s|sockN|
- * +------------+----------+-----+------------+----------+-----+
+ * +------------+----------+-----+------+------------+----------+-----+------+
+ * |contact1.len|contact1.s|sock1|flags1|contact2.len|contact2.s|sock2|flags2|
+ * +------------+----------+-----+------+------------+----------+-----+------+
+ * |....................................|contactN.len|contactN.s|sockN|flagsN|
+ * +------------+----------+-----+------+------------+----------+-----+------+
  * |000000000000|
  * +------------+
  */
@@ -90,6 +94,7 @@ int get_all_ucontacts(void *buf, int len, unsigned int flags)
 	ucontact_t *c;
 	void *cp;
 	int shortage;
+	int needed;
 
 	cp = buf;
 	shortage = 0;
@@ -105,40 +110,43 @@ int get_all_ucontacts(void *buf, int len, unsigned int flags)
 			for (c = r->contacts; c != NULL; c = c->next) {
 				if (c->c.len <= 0)
 					continue;
-				     /*
-				      * List only contacts that have all requested
-				      * flags set
-				      */
+				/*
+				 * List only contacts that have all requested
+				 * flags set
+				 */
 				if ((c->flags & flags) != flags)
 					continue;
 				if (c->received.s) {
-					if (len >= (int)(sizeof(c->received.len) +
-					c->received.len + sizeof(c->sock))) {
+					needed = (int)(sizeof(c->received.len) + c->received.len +
+						sizeof(c->sock) + sizeof(c->flags));
+					if (len >= needed) {
 						memcpy(cp, &c->received.len, sizeof(c->received.len));
 						cp = (char*)cp + sizeof(c->received.len);
 						memcpy(cp, c->received.s, c->received.len);
 						cp = (char*)cp + c->received.len;
 						memcpy(cp, &c->sock, sizeof(c->sock));
 						cp = (char*)cp + sizeof(c->sock);
-						len -= sizeof(c->received.len) + c->received.len +
-							sizeof(c->sock);
+						memcpy(cp, &c->flags, sizeof(c->flags));
+						cp = (char*)cp + sizeof(c->flags);
+						len -= needed;
 					} else {
-						shortage += sizeof(c->received.len) +
-							c->received.len + sizeof(c->sock);
+						shortage += needed;
 					}
 				} else {
-					if (len >= (int)(sizeof(c->c.len) + c->c.len +
-					sizeof(c->sock))) {
+					needed = (int)(sizeof(c->c.len) + c->c.len +
+						sizeof(c->sock) + sizeof(c->flags));
+					if (len >= needed) {
 						memcpy(cp, &c->c.len, sizeof(c->c.len));
 						cp = (char*)cp + sizeof(c->c.len);
 						memcpy(cp, c->c.s, c->c.len);
 						cp = (char*)cp + c->c.len;
 						memcpy(cp, &c->sock, sizeof(c->sock));
 						cp = (char*)cp + sizeof(c->sock);
-						len -= sizeof(c->c.len) + c->c.len + sizeof(c->sock);
+						memcpy(cp, &c->flags, sizeof(c->flags));
+						cp = (char*)cp + sizeof(c->flags);
+						len -= needed;
 					} else {
-						shortage += sizeof(c->c.len) + c->c.len +
-							sizeof(c->sock);
+						shortage += needed;
 					}
 				}
 			}

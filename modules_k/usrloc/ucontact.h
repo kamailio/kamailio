@@ -24,6 +24,8 @@
  * History:
  * ---------
  * 2003-03-12 added replication mark and three zombie states (nils)
+ * 2005-07-11 added FL_NAT_SIPPING for nat pinging with SIP method
+ *             instead of UDP package (bogdan)
  */
 
 
@@ -59,6 +61,7 @@ typedef enum flags {
 	FL_N_SUBSCRIBE = 1 << 6,     /* Contact doesn't support SUBSCRIBE and NOTIFY */
 	FL_PERMANENT   = 1 << 7,     /* Permanent contact (does not expire) */
 	FL_MEM         = 1 << 8,     /* Update memory only -- used for REGISTER replication */
+	FL_NAT_SIPPING = 1 << 9,     /* Use SIP ping if nated */
 	FL_ALL         = 0xFFFFFFFF  /* All flags set */
 } flags_t;
 
@@ -71,7 +74,7 @@ typedef struct ucontact {
 	time_t expires;         /* expires parameter */
 	qvalue_t q;             /* q parameter */
 	str callid;             /* Call-ID header field */
-        int cseq;               /* CSeq value */
+	int cseq;               /* CSeq value */
 	cstate_t state;         /* State of the contact */
 	unsigned int flags;     /* Various flags (NAT, supported methods etc) */
 	str user_agent;         /* User-Agent header field */
