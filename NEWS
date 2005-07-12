@@ -31,6 +31,9 @@ core:
                 dns_retr_time=1
                 dns_retr_no=1
                 dns_use_search_list=no
+- default on reply route added: onreply_route {.. } will add a default 
+    onreply route that will be executed for any reply (usefull to catch
+    replies without using tm)
 new config variables:
    dns_try_ipv6 = yes/no - if yes and a dns lookup fails, it will retry it
       for ipv6 (AAAA record). Default: yes

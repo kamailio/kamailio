@@ -81,6 +81,7 @@ str default_via_port={0,0};
 int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info) 
 {
 	struct sip_msg* msg;
+	int ret;
 #ifdef STATS
 	int skipped = 1;
 	struct timeval tvb, tve;	
@@ -159,7 +160,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 			goto end; /* drop the request */
 
 		/* exec the routing script */
-		if (run_actions(rlist[0], msg)<0) {
+		if (run_actions(rlist[DEFAULT_RT], msg)<0){
 			LOG(L_WARN, "WARNING: receive_msg: "
 					"error while trying script\n");
 			goto error_req;
@@ -198,7 +199,15 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		*/
 		if (exec_pre_rpl_cb(msg)==0 )
 			goto end; /* drop the request */
-
+		/* exec the onreply routing script */
+		if (onreply_rlist[DEFAULT_RT]){
+			ret=run_actions(onreply_rlist[DEFAULT_RT], msg);
+			if (ret<0){
+				LOG(L_WARN, "WARNING: receive_msg: "
+						"error while trying onreply script\n");
+				goto error_rpl;
+			}else if (ret==0) goto end; /* drop the message, no error */
+		}
 		/* send the msg */
 		forward_reply(msg);
 
@@ -227,6 +236,11 @@ end:
 	if (skipped) STATS_RX_DROPS;
 #endif
 	return 0;
+error_rpl:
+	/* execute post reply-script callbacks */
+	exec_post_rpl_cb(msg);
+	reset_avps();
+	goto error02;
 error_req:
 	DBG("receive_msg: error:...\n");
 	/* execute post request-script callbacks */
