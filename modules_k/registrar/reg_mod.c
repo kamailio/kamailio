@@ -27,6 +27,8 @@
  *  2003-03-16  flags export parameter added (janakj)
  *  2003-03-21  save_noreply added, provided by Maxim Sobolev
  *              <sobomax@portaone.com> (janakj)
+ *  2005-07-11  added sip_natping_flag for nat pinging with SIP method
+ *              instead of UDP package (bogdan)
  */
 
 #include <stdio.h>
@@ -49,20 +51,33 @@ static int str_fixup(void** param, int param_no);
 static int add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
 static void mod_destroy(void);
 
-usrloc_api_t ul;            /* Structure containing pointers to usrloc functions */
+/* Structure containing pointers to usrloc functions */
+usrloc_api_t ul;
 
-int default_expires = 3600;           /* Default expires value in seconds */
-qvalue_t default_q  = Q_UNSPECIFIED;  /* Default q value multiplied by 1000 */
-int append_branches = 1;              /* If set to 1, lookup will put all contacts found in msg structure */
-int case_sensitive  = 0;              /* If set to 1, username in aor will be case sensitive */
-int desc_time_order = 0;              /* By default do not order according to the descending modification time */
-int nat_flag        = 4;              /* SER flag marking contacts behind NAT */
-int min_expires     = 60;             /* Minimum expires the phones are allowed to use in seconds,
-			               * use 0 to switch expires checking off */
-int max_expires     = 0;              /* Minimum expires the phones are allowed to use in seconds,
-			               * use 0 to switch expires checking off */
-int max_contacts = 0;                 /* Maximum number of contacts per AOR */
-int retry_after = 0;                  /* The value of Retry-After HF in 5xx replies */
+/* Default expires value in seconds */
+int default_expires = 3600;
+/* Default q value multiplied by 1000 */
+qvalue_t default_q  = Q_UNSPECIFIED;
+/* If set to 1, lookup will put all contacts found in msg structure */
+int append_branches = 1;
+/* If set to 1, username in aor will be case sensitive */
+int case_sensitive  = 0;
+/* By default do not order according to the descending modification time */
+int desc_time_order = 0;
+/* flag marking contacts behind NAT */
+int nat_flag        = -1;
+/* flag marking nated contacts to be pinged with SIP method  */
+int sip_natping_flag  = -1;
+/* Minimum expires the phones are allowed to use in seconds
+ * use 0 to switch expires checking off */
+int min_expires     = 60;
+/* Minimum expires the phones are allowed to use in seconds,
+ * use 0 to switch expires checking off */
+int max_expires     = 0;
+/* Maximum number of contacts per AOR */
+int max_contacts = 0;
+/* The value of Retry-After HF in 5xx replies */
+int retry_after = 0;
 
 int use_domain = 0;
 char* realm_pref    = "";   /* Realm prefix to be removed */
@@ -102,22 +117,23 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"default_expires", INT_PARAM, &default_expires},
-	{"default_q",       INT_PARAM, &default_q      },
-	{"append_branches", INT_PARAM, &append_branches},
-	{"case_sensitive",  INT_PARAM, &case_sensitive },
-	{"desc_time_order", INT_PARAM, &desc_time_order},
-	{"nat_flag",        INT_PARAM, &nat_flag       },
-	{"realm_prefix",    STR_PARAM, &realm_pref     },
-	{"min_expires",     INT_PARAM, &min_expires    },
-	{"max_expires",     INT_PARAM, &max_expires    },
-	{"received_param",  STR_PARAM, &rcv_param      },
-	{"received_avp",    INT_PARAM, &rcv_avp_no     },
-	{"use_domain",      INT_PARAM, &use_domain     },
-	{"max_contacts",    INT_PARAM, &max_contacts   },
-	{"retry_after",     INT_PARAM, &retry_after    },
-	{"sock_flag",       INT_PARAM, &sock_flag      },
-	{"sock_hdr_name",   STR_PARAM, &sock_hdr_name.s},
+	{"default_expires",   INT_PARAM, &default_expires   },
+	{"default_q",         INT_PARAM, &default_q         },
+	{"append_branches",   INT_PARAM, &append_branches   },
+	{"case_sensitive",    INT_PARAM, &case_sensitive    },
+	{"desc_time_order",   INT_PARAM, &desc_time_order   },
+	{"nat_flag",          INT_PARAM, &nat_flag          },
+	{"sip_natping_flag",  INT_PARAM, &sip_natping_flag  },
+	{"realm_prefix",      STR_PARAM, &realm_pref        },
+	{"min_expires",       INT_PARAM, &min_expires       },
+	{"max_expires",       INT_PARAM, &max_expires       },
+	{"received_param",    STR_PARAM, &rcv_param         },
+	{"received_avp",      INT_PARAM, &rcv_avp_no        },
+	{"use_domain",        INT_PARAM, &use_domain        },
+	{"max_contacts",      INT_PARAM, &max_contacts      },
+	{"retry_after",       INT_PARAM, &retry_after       },
+	{"sock_flag",         INT_PARAM, &sock_flag         },
+	{"sock_hdr_name",     STR_PARAM, &sock_hdr_name.s   },
 	{0, 0, 0}
 };
 
@@ -146,11 +162,11 @@ static int mod_init(void)
 
 	DBG("registrar - initializing\n");
 
-             /*
-              * We will need sl_send_reply from stateless
-	      * module for sending replies
-	      */
-        sl_reply = find_export("sl_send_reply", 2, 0);
+	/*
+	 * We will need sl_send_reply from stateless
+	 * module for sending replies
+	 */
+	sl_reply = find_export("sl_send_reply", 2, 0);
 	if (!sl_reply) {
 		LOG(L_ERR, "registrar: This module requires sl module\n");
 		return -1;
@@ -167,13 +183,15 @@ static int mod_init(void)
 		return -1;
 	}
 
-	     /* Normalize default_q parameter */
+	/* Normalize default_q parameter */
 	if (default_q != Q_UNSPECIFIED) {
 		if (default_q > MAX_Q) {
-			DBG("registrar: default_q = %d, lowering to MAX_Q: %d\n", default_q, MAX_Q);
+			DBG("registrar: default_q = %d, lowering to MAX_Q: %d\n",
+				default_q, MAX_Q);
 			default_q = MAX_Q;
 		} else if (default_q < MIN_Q) {
-			DBG("registrar: default_q = %d, raising to MIN_Q: %d\n", default_q, MIN_Q);
+			DBG("registrar: default_q = %d, raising to MIN_Q: %d\n",
+				default_q, MIN_Q);
 			default_q = MIN_Q;
 		}
 	}
@@ -183,15 +201,15 @@ static int mod_init(void)
 		return -1;
 	}
 
-	     /*
-	      * Test if use_domain parameters of usrloc and registrar
-	      * module are equal
-	      */
+	/*
+	 * Test if use_domain parameters of usrloc and registrar
+	 * module are equal
+	 */
 	if (ul.use_domain != use_domain) {
-		LOG(L_ERR, "ERROR: 'use_domain' parameters of 'usrloc' and 'registrar' modules"
-		    " must have the same value !\n");
-		LOG(L_ERR, "(Hint: Did you forget to use modparam(\"registrar\", \"use_domain\", 1) in"
-			" in your ser.cfg ?)\n");
+		LOG(L_ERR, "ERROR: 'use_domain' parameters of 'usrloc' and "
+			"'registrar' modules must have the same value !\n");
+		LOG(L_ERR, "(Hint: Did you forget to use modparam(\"registrar\","
+			" \"use_domain\", 1) in in your ser.cfg ?)\n");
 		return -1;
 	}
 
@@ -210,8 +228,14 @@ static int mod_init(void)
 			"sock_hdr_name -> reseting flag\n");
 		sock_flag = -1;
 	}
+
+	/* fix the flags */
 	if (sock_flag!=-1)
 		sock_flag = 1 << sock_flag;
+	if (nat_flag!=-1)
+		nat_flag = 1 << nat_flag;
+	if (sip_natping_flag!=-1)
+		sip_natping_flag = 1 << sip_natping_flag;
 
 	return 0;
 }

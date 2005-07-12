@@ -27,6 +27,8 @@
  * 2003-02-28 scrathcpad compatibility abandoned (jiri)
  * 2003-03-21 save_noreply added, patch provided by Maxim Sobolev 
  *            <sobomax@portaone.com> (janakj)
+ * 2005-07-11  added sip_natping_flag for nat pinging with SIP method
+ *             instead of UDP package (bogdan)
  */
 
 
@@ -233,8 +235,14 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 	struct socket_info *sock;
 
 	rcv_avp.n=rcv_avp_no;
-	if (isflagset(_m, nat_flag) == 1) flags = FL_NAT;
-	else flags = FL_NONE;
+	/* is nated flag */
+	if (nat_flag!=-1 && _m->flags&nat_flag)
+		flags = FL_NAT;
+	else
+		flags = FL_NONE;
+	/* nat type flag */
+	if (sip_natping_flag!=-1 && _m->flags&sip_natping_flag)
+		flags |= FL_NAT_SIPPING;
 
 	flags |= mem_only;
 
@@ -381,14 +389,21 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 	int cseq, e, ret;
 	int set, reset;
 	qvalue_t q;
-	unsigned int nated;
+	unsigned int flags;
 	str* recv;
 	int_str rcv_avp;
 	int_str val;
 	struct socket_info *sock;
 	
 	rcv_avp.n=rcv_avp_no;
-	nated = ((isflagset(_m, nat_flag)==1) ? FL_NAT : FL_NONE);
+	/* is nated flag */
+	if (nat_flag!=-1 && _m->flags&nat_flag)
+		flags = FL_NAT;
+	else
+		flags = FL_NONE;
+	/* nat type flag */
+	if (sip_natping_flag!=-1 && _m->flags&sip_natping_flag)
+		flags |= FL_NAT_SIPPING;
 
 	if (max_contacts) {
 		ret = test_max_contacts(_m, _r, _c);
@@ -408,19 +423,19 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 		}
 
 		if (ul.get_ucontact(_r, &_c->uri, &c) > 0) {
-			     /* Contact not found */
+			/* Contact not found */
 			if (e != 0) {
-				     /* Calculate q value of the contact */
+				/* Calculate q value of the contact */
 				if (calc_contact_q(_c->q, &q) < 0) {
 					LOG(L_ERR, "update(): Error while calculating q\n");
 					return -2;
 				}
 				
-				     /* Get callid of the message */
+				/* Get callid of the message */
 				callid = _m->callid->body;
 				trim_trailing(&callid);
 				
-				     /* Get CSeq number of the message */
+				/* Get CSeq number of the message */
 				if (str2int(&(((struct cseq_body*)_m->cseq->parsed)->number), 
 								(unsigned int*) &cseq) < 0) {
 					rerrno = R_INV_CSEQ;
@@ -445,7 +460,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 				}
 
 				if (ul.insert_ucontact(_r, &_c->uri, e, q, &callid, cseq,
-				nated | mem_only, &c2, _ua, recv, sock) < 0) {
+				flags | mem_only, &c2, _ua, recv, sock) < 0) {
 					rerrno = R_UL_INS_C;
 					LOG(L_ERR, "update(): Error while inserting contact\n");
 					return -4;
@@ -465,21 +480,21 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 					return -5;
 				}
 			} else {
-				     /* Calculate q value of the contact */
+				/* Calculate q value of the contact */
 				if (calc_contact_q(_c->q, &q) < 0) {
 					LOG(L_ERR, "update(): Error while calculating q\n");
 					return -6;
 				}
 				
-				     /* Get callid of the message */
-				callid = _m->callid->body;				
+				/* Get callid of the message */
+				callid = _m->callid->body;
 				trim_trailing(&callid);
 				
-				     /* Get CSeq number of the message */
-				if (str2int(&(((struct cseq_body*)_m->cseq->parsed)->number), (unsigned int*)&cseq)
-							< 0) {
+				/* Get CSeq number of the message */
+				if (str2int(&(((struct cseq_body*)_m->cseq->parsed)->number),
+				(unsigned int*)&cseq) < 0) {
 					rerrno = R_INV_CSEQ;
-					LOG(L_ERR, "update(): Error while converting cseq number\n");
+					LOG(L_ERR,"update(): Error while converting cseq number\n");
 					return -7;
 				}
 				
@@ -499,8 +514,8 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 					sock = _m->rcv.bind_address;
 				}
 
-				set = nated | mem_only;
-				reset = ~(nated | mem_only) & (FL_NAT | FL_MEM);
+				set = flags | mem_only;
+				reset = ~(flags | mem_only) & (FL_NAT|FL_MEM|FL_NAT_OPTIONS);
 				if (ul.update_ucontact(c, e, q, &callid, cseq,
 						set, reset, _ua, recv, sock) < 0) {
 					rerrno = R_UL_UPD_C;

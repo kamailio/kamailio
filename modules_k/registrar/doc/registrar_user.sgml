@@ -141,6 +141,54 @@ modparam("registrar", "default_q", 100)
 	</section>
 
 	<section>
+		<title><varname>nat_flag</varname> (integer)</title>
+		<para>
+		The parameter specifies the flag to be used as NAT marker. The idea is
+		to set this flag if a register come behind a NAT; the 
+		<quote>save()</quote> functions will save the flag in the usrloc, flag
+		that will be restore by the <quote>lookup()</quote> function.
+		</para>
+		<para>
+		<emphasis>
+			Default value is -1 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>nat_flag</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "nat_flag", 6)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>sip_natping_flag</varname> (integer)</title>
+		<para>
+		The parameter specifies the flat to be used to mark the contacts to 
+		be NAT pinged via a SIP request instead if dummy UDP package. The flag
+		will be stored in usrloc by the <quote>save()</quote> functions and
+		internally used by the <quote>nathelper</quote> module. The flag
+		will NOT be restore by the <quote>lookup()</quote> function.
+		</para>
+		<para>
+		<emphasis>
+			Default value is -1 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sip_natping_flag</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "sip_natping_flag", 7)
+...
+</programlisting>
+		</example>
+	</section>
+
+
+	<section>
 		<title><varname>append_branches</varname> (integer)</title>
 		<para>
 		The parameter controls how lookup function processes multiple 

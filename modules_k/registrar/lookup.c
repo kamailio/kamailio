@@ -131,7 +131,8 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	
  skip:
 	ul.unlock_udomain((udomain_t*)_t);
-	if (nat) setflag(_m, nat_flag);
+	if (nat && nat_flag!=-1)
+		_m->flags |= nat_flag;
 	return 1;
 }
 

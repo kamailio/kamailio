@@ -29,16 +29,18 @@ Bogdan-Andre Iancu
               1.3.2. min_expires (integer)
               1.3.3. max_expires (integer)
               1.3.4. default_q (integer)
-              1.3.5. append_branches (integer)
-              1.3.6. use_domain (integer)
-              1.3.7. case_sensitive (integer)
-              1.3.8. desc_time_order (integer)
-              1.3.9. received_avp (integer)
-              1.3.10. received_param (integer)
-              1.3.11. max_contacts (integer)
-              1.3.12. retry_after (integer)
-              1.3.13. sock_flag (integer)
-              1.3.14. sock_hdr_name (string)
+              1.3.5. nat_flag (integer)
+              1.3.6. sip_natping_flag (integer)
+              1.3.7. append_branches (integer)
+              1.3.8. use_domain (integer)
+              1.3.9. case_sensitive (integer)
+              1.3.10. desc_time_order (integer)
+              1.3.11. received_avp (integer)
+              1.3.12. received_param (integer)
+              1.3.13. max_contacts (integer)
+              1.3.14. retry_after (integer)
+              1.3.15. sock_flag (integer)
+              1.3.16. sock_hdr_name (string)
 
         1.4. Exported Functions
 
@@ -56,21 +58,23 @@ Bogdan-Andre Iancu
    1-2. Set min_expires parameter
    1-3. Set max_expires parameter
    1-4. Set default_q parameter
-   1-5. Set append_branches parameter
-   1-6. Set use_domain parameter
-   1-7. Set case_sensitive parameter
-   1-8. Set desc_time_order parameter
-   1-9. Set received_avp parameter
-   1-10. Set received_param parameter
-   1-11. Set max_contacts parameter
-   1-12. Set retry_after parameter
-   1-13. Set sock_flag parameter
+   1-5. Set nat_flag parameter
+   1-6. Set sip_natping_flag parameter
+   1-7. Set append_branches parameter
+   1-8. Set use_domain parameter
+   1-9. Set case_sensitive parameter
+   1-10. Set desc_time_order parameter
+   1-11. Set received_avp parameter
+   1-12. Set received_param parameter
+   1-13. Set max_contacts parameter
    1-14. Set retry_after parameter
-   1-15. save usage
-   1-16. save_noreply usage
-   1-17. lookup usage
-   1-18. registered usage
-   1-19. add_sock_hdr usage
+   1-15. Set sock_flag parameter
+   1-16. Set retry_after parameter
+   1-17. save usage
+   1-18. save_noreply usage
+   1-19. lookup usage
+   1-20. registered usage
+   1-21. add_sock_hdr usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -158,7 +162,38 @@ modparam("registrar", "default_q", 100)
 ...
      _________________________________________________________
 
-1.3.5. append_branches (integer)
+1.3.5. nat_flag (integer)
+
+   The parameter specifies the flag to be used as NAT marker. The
+   idea is to set this flag if a register come behind a NAT; the
+   "save()" functions will save the flag in the usrloc, flag that
+   will be restore by the "lookup()" function.
+
+   Default value is -1 (disabled). 
+
+   Example 1-5. Set nat_flag parameter
+...
+modparam("registrar", "nat_flag", 6)
+...
+     _________________________________________________________
+
+1.3.6. sip_natping_flag (integer)
+
+   The parameter specifies the flat to be used to mark the
+   contacts to be NAT pinged via a SIP request instead if dummy
+   UDP package. The flag will be stored in usrloc by the "save()"
+   functions and internally used by the "nathelper" module. The
+   flag will NOT be restore by the "lookup()" function.
+
+   Default value is -1 (disabled). 
+
+   Example 1-6. Set sip_natping_flag parameter
+...
+modparam("registrar", "sip_natping_flag", 7)
+...
+     _________________________________________________________
+
+1.3.7. append_branches (integer)
 
    The parameter controls how lookup function processes multiple
    contacts. If there are multiple contacts for the given
@@ -171,13 +206,13 @@ modparam("registrar", "default_q", 100)
 
    Default value is 1. 
 
-   Example 1-5. Set append_branches parameter
+   Example 1-7. Set append_branches parameter
 ...
 modparam("registrar", "append_branches", 0)
 ...
      _________________________________________________________
 
-1.3.6. use_domain (integer)
+1.3.8. use_domain (integer)
 
    If set to 1 then the registrar will use username@domain as
    address of record. If the variable is set to 0 then only
@@ -185,13 +220,13 @@ modparam("registrar", "append_branches", 0)
 
    Default value is 0. 
 
-   Example 1-6. Set use_domain parameter
+   Example 1-8. Set use_domain parameter
 ...
 modparam("registrar", "use_domain", 1)
 ...
      _________________________________________________________
 
-1.3.7. case_sensitive (integer)
+1.3.9. case_sensitive (integer)
 
    If set to 1 then AOR comparison will be case sensitive, if set
    to 0 then AOR comparison will be case insensitive--This is
@@ -199,13 +234,13 @@ modparam("registrar", "use_domain", 1)
 
    Default value is 0. 
 
-   Example 1-7. Set case_sensitive parameter
+   Example 1-9. Set case_sensitive parameter
 ...
 modparam("registrar", "case_sensitive", 1)
 ...
      _________________________________________________________
 
-1.3.8. desc_time_order (integer)
+1.3.10. desc_time_order (integer)
 
    If set to 1 then all contacts will be ordered in descending
    modification time order. In this case the most recently
@@ -213,13 +248,13 @@ modparam("registrar", "case_sensitive", 1)
 
    Default value is 0. 
 
-   Example 1-8. Set desc_time_order parameter
+   Example 1-10. Set desc_time_order parameter
 ...
 modparam("registrar", "desc_time_order", 1)
 ...
      _________________________________________________________
 
-1.3.9. received_avp (integer)
+1.3.11. received_avp (integer)
 
    Registrar will store the value of the AVP configured by this
    parameter in the received column in the user location
@@ -234,26 +269,26 @@ modparam("registrar", "desc_time_order", 1)
 
    Default value is 42. 
 
-   Example 1-9. Set received_avp parameter
+   Example 1-11. Set received_avp parameter
 ...
 modparam("registrar", "received_avp", 43)
 ...
      _________________________________________________________
 
-1.3.10. received_param (integer)
+1.3.12. received_param (integer)
 
    The name of the parameter that will be appended to Contacts of
    200 OK when the received URI was set by nathelper module.
 
    Default value is "received". 
 
-   Example 1-10. Set received_param parameter
+   Example 1-12. Set received_param parameter
 ...
 modparam("registrar", "received_param", "rcv")
 ...
      _________________________________________________________
 
-1.3.11. max_contacts (integer)
+1.3.13. max_contacts (integer)
 
    The parameter can be used to limit the number of contacts per
    AOR (Address of Record) in the user location database. Value 0
@@ -261,14 +296,14 @@ modparam("registrar", "received_param", "rcv")
 
    Default value is 0. 
 
-   Example 1-11. Set max_contacts parameter
+   Example 1-13. Set max_contacts parameter
 ...
 # Allow no more than 10 contacts per AOR
 modparam("registrar", "max_contacts", 10)
 ...
      _________________________________________________________
 
-1.3.12. retry_after (integer)
+1.3.14. retry_after (integer)
 
    The registrar can generate 5xx reply to REGISTER in various
    situations. It can, for example, happen when the max_contacts
@@ -283,13 +318,13 @@ modparam("registrar", "max_contacts", 10)
 
    Default value is 0 (disabled). 
 
-   Example 1-12. Set retry_after parameter
+   Example 1-14. Set retry_after parameter
 ...
 modparam("registrar", "retry_after", 30)
 ...
      _________________________________________________________
 
-1.3.13. sock_flag (integer)
+1.3.15. sock_flag (integer)
 
    Flag to signal to register module to look into REGISTER
    request for a header which contains a socket description
@@ -300,13 +335,13 @@ modparam("registrar", "retry_after", 30)
 
    Default value is -1 (no flag). 
 
-   Example 1-13. Set sock_flag parameter
+   Example 1-15. Set sock_flag parameter
 ...
 modparam("registrar", "sock_flag", 18)
 ...
      _________________________________________________________
 
-1.3.14. sock_hdr_name (string)
+1.3.16. sock_hdr_name (string)
 
    Header which contains a socket description (IP:port) to
    overide the the received socket info. The heaer will be read
@@ -316,7 +351,7 @@ modparam("registrar", "sock_flag", 18)
 
    Default value is NULL. 
 
-   Example 1-14. Set retry_after parameter
+   Example 1-16. Set retry_after parameter
 ...
 modparam("registrar", "sock_hdr_name", "Sock-Info")
 ...
@@ -339,7 +374,7 @@ modparam("registrar", "sock_hdr_name", "Sock-Info")
        used then this must be name of the table which stores the
        contacts.
 
-   Example 1-15. save usage
+   Example 1-17. save usage
 ...
 save("location");
 ...
@@ -355,7 +390,7 @@ save("location");
        used then this must be na e of the table which stores the
        contacts.
 
-   Example 1-16. save_noreply usage
+   Example 1-18. save_noreply usage
 ...
 save_noreply("location");
 ...
@@ -375,7 +410,7 @@ save_noreply("location");
 
      * domain - Name of table that should be used for the lookup.
 
-   Example 1-17. lookup usage
+   Example 1-19. lookup usage
 ...
 lookup("location");
 ...
@@ -392,7 +427,7 @@ lookup("location");
 
      * domain - Name of table that should be used for the lookup.
 
-   Example 1-18. registered usage
+   Example 1-20. registered usage
 ...
 if (registered("location")) {
         sl_send_reply("100", "Trying");
@@ -413,7 +448,7 @@ if (registered("location")) {
 
      * hdr_name - header name to be used.
 
-   Example 1-19. add_sock_hdr usage
+   Example 1-21. add_sock_hdr usage
 ...
 add_sock_hdr("Sock-Info");
 ...

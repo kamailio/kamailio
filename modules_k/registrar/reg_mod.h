@@ -20,6 +20,12 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ *
+ * 2005-07-11  added sip_natping_flag for nat pinging with SIP method
+ *             instead of UDP package (bogdan)
  */
 
 
@@ -37,6 +43,7 @@ extern int append_branches;
 extern int case_sensitive;
 extern int desc_time_order;
 extern int nat_flag;
+extern int sip_natping_flag;
 extern int min_expires;
 extern int max_expires;
 extern int received_avp;
