@@ -1,0 +1,631 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	<chapterinfo>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		Least cost routing (LCR) module implements two related capabilities:
+	</para>
+	<para>
+		<itemizedlist>
+			<listitem>
+			<para>
+				sequential forwarding of a request to one or more gateways
+				(functions load_gws and next_gw)
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				sequential forwarding to contacts if they don't share the
+				the same qvalue (functions load_contacts and next_contacts).
+			</para>
+			</listitem>
+		</itemizedlist>
+	</para>
+	<para>
+		Gateway selection is based on caller's RPID URI (if available in
+		caller's RPID AVP after authentication) or From URI and user part of
+		Request-URI (telephone number).  Gateway patterns matching RPID or
+		From URI and telephone number are ordered for forwarding purpose (1)
+		according to longest user part match, (2) according to priority, and
+		(3) randomly.
+	</para>
+	<para>
+		Each gateway belongs to a gateway group either alone or among other
+		gateways.  All gateways in a group share the same priority.
+	</para>
+	<para>
+		Gateway selection operates on two database tables: gw and lcr.  Table
+		gw contains gw's name, IP address, port, and group id.  Table lcr
+		contains prefix of user part of Request-URI, From URI, gateway group
+		id, and priority.  From URI can contain special characters % and _
+		matching any number of any characters and any one character,
+		respectively.  In addition to gw and lcr tables there is third table
+		gw_grp that is used for administrative purposes only to associate
+		names with gateway group ids.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+	<title>&ser; modules</title>
+	<para>
+		The following modules must be loaded before this module:
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>TM module</emphasis>
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>A database module</emphasis>.
+		</para>
+		</listitem>
+		</itemizedlist>
+	</para>
+	</section>
+	<section>
+	<title>External libraries or applications</title>
+	<para>
+		The following libraries or applications must be installed before
+		running &ser; with this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+	</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>db_url</varname> (string)</title>
+		<para>
+		&url; of the database table to be used.
+		</para>
+		<para>
+		<emphasis>
+			Default value is system default.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>db_url</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","db_url","mysql://muser:pwd@localhost/openser")
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>gw_table</varname> (string)</title>
+		<para>
+		Name of the table holding the gateways definitions.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>gw</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>gw_table</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","gw_table","gw")
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>gw_name_column</varname> (string)</title>
+		<para>
+		Name of the column holding the gateway name.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>gw_name</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>gw_name_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","gw_name_column","gw_name")
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>ip_addr_column</varname> (string)</title>
+		<para>
+		Name of the column holding the IP address of the gateway.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>ip_addr</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>ip_addr_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","ip_addr_column","ip_addr")
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>port_column</varname> (string)</title>
+		<para>
+		Name of the column holding the port number of the gateway.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>port</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>port_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","port_column","port")
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>grp_id_column</varname> (string)</title>
+		<para>
+		Name of the column holding the group ID.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>grp_id</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>grp_id_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","grp_id_column","grp_id")
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>lcr_table</varname> (string)</title>
+		<para>
+		Name of the table holding the LCR rules.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>lcr</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>lcr_table</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","lcr_table","lcr")
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>prefix_column</varname> (string)</title>
+		<para>
+		Name of the column holding the RURI(destination) prefix.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>prefix</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>prefix_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","prefix_column","prefix")
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>from_uri_column</varname> (string)</title>
+		<para>
+		Name of the column holding the FROM (source) URI.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>from_uri</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>from_uri_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","from_uri_column","from_uri")
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>priority_column</varname> (string)</title>
+		<para>
+		Name of the column holding the priority of the rule.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>priority</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>priority_column</varname> module parameter
+			</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","priority_column","priority")
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>gw_addr_port_avp</varname> (string)</title>
+		<para>
+		Overrides the name of the AVP containing the addres:port of the 
+		gateway. If the string name of the AVP contains only digits, the 
+		name of the AVP is integer value of the string.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1400</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>gw_addr_port_avp</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","gw_addr_port_avp","1400")
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>contact_avp</varname> (string)</title>
+		<para>
+		Overrides the name of the AVP containing the contact. If the string 
+		name of the AVP contains only digits, the name of the AVP is integer 
+		value of the string.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1401</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>contact_avp</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","contact_avp","1401")
+
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>fr_inv_timer_avp</varname> (string)</title>
+		<para>
+		Overrides the name of the AVP carrying the Final Response timeout 
+		for INVITEs.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>fr_inv_timer_avp</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>fr_inv_timer_avp</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","fr_inv_timer_avp","fr_inv_timer_avp")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>fr_inv_timer</varname> (integer)</title>
+		<para>
+		Sets the value of the fist INVITE's Final Response timeout to be used 
+		during sequential forwarding:
+		</para>
+		<para>
+		<emphasis>
+			Default value is 90.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>fr_inv_timer</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","fr_inv_timer",90)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>fr_inv_timer_next</varname> (integer)</title>
+		<para>
+		Sets the value of the next INVITE's Final Response timeouts to be used 
+		during sequential forwarding:
+		</para>
+		<para>
+		Function next_contacts() sets tm fr_inv_timer to fr_inv_timer_next
+		value if, after next contacts, there are still lower qvalue
+		contacts available, and to fr_inv_timer value if next contacts are
+		the last ones left.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 30.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>fr_inv_timer_next</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","fr_inv_timer_next",30)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Exported Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">load_gws()</function>
+		</title>
+		<para>
+			Loads addresses and ports of gateways matching RPID AVP (if
+			available) or From URI and user part of Request-URI to
+			gw_addr_port_avp AVPs.  Returns 1 or -1 depending on success.
+		</para>
+		<example>
+		<title><function>load_gws</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!load_gws()) {
+    sl_send_reply("500", "Server Internal Error - Cannot load gateways");
+    break;
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">next_gw()</function>
+		</title>	
+		<para>
+			If called from a route block, replaces host:port part of 
+			Request-URI by the first gw_addr_port_avp AVP value and destroys 
+			that AVP.
+		</para>
+		<para>
+			If called from a failure route block, appends a new branch to 
+			request, where host:port part of Request-URI is replaced by the 
+			first gw_addr_port_avp AVP value and destroys that AVP.
+		</para>
+		<para>
+			Returns 1 on success and -1 if there were no gateways left or if an
+			error occurred (see syslog).
+		</para>
+		<para>
+			Must be preceded by successful load_gws() call.
+		</para>
+		<example>
+		<title><function>next_gw</function> usage from a route block</title>
+		<programlisting format="linespecific">
+...
+if (!next_gw()) {
+    sl_send_reply("503", "Service not available - No gateways");
+    break;
+};
+...
+</programlisting>
+		</example>
+		<example>
+		<title><function>next_gw</function> usage from a failure route block
+			</title>
+		<programlisting format="linespecific">
+...
+if (!next_gw()) {
+    t_reply("503", "Service not available - No more gateways");
+    break;
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">from_gw()</function>
+		</title>
+		<para>
+			Checks if request came from IP address of a gateway.
+		</para>
+		<example>
+		<title><function>from_gw</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (from_gw()) {
+    ...
+    break;
+};
+...
+</programlisting>
+		</example>
+		</section>
+		<section>
+		<title>
+		<function moreinfo="none">to_gw()</function>
+		</title>
+		<para>
+			Checks if in-dialog request goes to a gateway.
+		</para>
+		<example>
+		<title><function>to_gw</function> usage</title>
+		<programlisting format = "linespecific">
+...
+if (to_gw()) {
+    ...
+    break;
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">load_contacts()</function>
+		</title>
+		<para>
+			Loads contacts in destination set in increasing qvalue order as
+			values of lcr_contact AVP.  If all contacts in the destination set
+			have the same qvalue, load_contacts() does not do anything thus
+			minimizing performance impact of sequential forking capability when
+			it is not needed.  Returns 1 if loading of contacts succeeded or
+			there was nothing to do.  Returns -1 on error (see syslog).
+		</para>
+		<example>
+		<title><function>load_contacts</function> usage</title>
+		<programlisting format = "linespecific">
+...
+if (!load_contacts()) {
+    sl_send_reply("500", "Server Internal Error - Cannot load contacts");
+    break;
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">next_contacts()</function>
+		</title>
+		<para>
+			If called from a route block, replaces Request-URI with the first
+			lcr_contact AVP value, adds the remaining lcr_contact AVP values 
+			with the same qvalue as branches, and destroys those AVPs. It does
+			nothing if there are no lcr_contact AVPs.  Returns 1 if there were 
+			no errors and -1 if an error occurred (see syslog).
+		</para>
+		<para>
+			If called from a failure route block, adds the first lcr_contact 
+			AVP value and all following lcr_contact AVP values with the same 
+			qvalue as new branches to request and destroys those AVPs. 
+			Returns 1 if new branches were successfully added and -1 on error 
+			(see syslog) or if there were no more lcr_contact AVPs.
+		</para>
+		<para>
+			Must be preceded by successful load_contacts() call.
+		</para>
+		<example>
+		<title><function>next_contacts</function> usage from route block
+		</title>
+		<programlisting format = "linespecific">
+...
+if (!next_contacts()) {
+    sl_send_reply("500", "Server Internal Error");
+    break;
+} else {
+    t_relay();
+};
+...
+</programlisting>
+		</example>
+		<example>
+		<title><function>next_contacts</function> usage from failure route block</title>
+		<programlisting format = "linespecific">
+if (next_contacts()) {
+    t_relay();
+};
+</programlisting>
+		</example>
+		</section>
+	</section>
+
+	<section>
+	<title>FIFO Commands</title>
+		<section>
+		<title><function>lcr_reload</function></title>
+		<para>
+			Causes lcr module to re-read the contents of gateway table
+			into memory.
+		</para>
+		</section>
+		<section>
+		<title><function>lcr_dump</function></title>
+		<para>
+			Causes lcr module to dump the contents of its in-memory gateway
+			table. 
+		</para>
+		</section>
+	</section>
+	<section>
+	<title>Known Limitations</title>
+	<para>
+		There is an unlikely race condition on lcr reload. If a process uses
+		in memory gw table, which is reloaded at the same time twice through
+		FIFO, the second reload will delete the original table still in use
+		by the process.
+	</para>
+	</section>
+
+	<section>
+	<title>TODO</title>
+	<para>
+		Function load_gws() currently makes an SQL query for the matching
+		gateways.  In order to avoid the query, also lcr table should be
+		read into memory and the corresponding query should be rewritten in
+		C.
+	</para>
+	</section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("lcr.sgml" "Book" "chapter")
+End:
+-->

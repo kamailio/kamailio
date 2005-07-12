@@ -1,5 +1,5 @@
 
-Least Cost Routing Module
+LCR(Least Cost Routing) Module
 
 Juha Heinanen
 
@@ -11,96 +11,325 @@ Juha Heinanen
      _________________________________________________________
 
    Table of Contents
-
    1. User's Guide
 
         1.1. Overview
         1.2. Dependencies
-        1.3. Exported Parameters
-        1.4. Exported Functions
-        1.5. FIFO Commands
-        1.6. Known Limitations
 
-   2. TODO
+              1.2.1. OpenSER modules
+              1.2.2. External libraries or applications
+
+        1.3. Exported Parameters
+
+              1.3.1. db_url (string)
+              1.3.2. gw_table (string)
+              1.3.3. gw_name_column (string)
+              1.3.4. ip_addr_column (string)
+              1.3.5. port_column (string)
+              1.3.6. grp_id_column (string)
+              1.3.7. lcr_table (string)
+              1.3.8. prefix_column (string)
+              1.3.9. from_uri_column (string)
+              1.3.10. priority_column (string)
+              1.3.11. gw_addr_port_avp (string)
+              1.3.12. contact_avp (string)
+              1.3.13. fr_inv_timer_avp (string)
+              1.3.14. fr_inv_timer (integer)
+              1.3.15. fr_inv_timer_next (integer)
+
+        1.4. Exported Functions
+
+              1.4.1. load_gws()
+              1.4.2. next_gw()
+              1.4.3. from_gw()
+              1.4.4. to_gw()
+              1.4.5. load_contacts()
+              1.4.6. next_contacts()
+
+        1.5. FIFO Commands
+
+              1.5.1. lcr_reload
+              1.5.2. lcr_dump
+
+        1.6. Known Limitations
+        1.7. TODO
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Setting db_url module parameter
+   1-2. Setting gw_table module parameter
+   1-3. Setting gw_name_column module parameter
+   1-4. Setting ip_addr_column module parameter
+   1-5. Setting port_column module parameter
+   1-6. Setting grp_id_column module parameter
+   1-7. Setting lcr_table module parameter
+   1-8. Setting prefix_column module parameter
+   1-9. Setting from_uri_column module parameter
+   1-10. Setting priority_column module parameter
+   1-11. Setting gw_addr_port_avp module parameter
+   1-12. Setting contact_avp module parameter
+   1-13. Setting fr_inv_timer_avp module parameter
+   1-14. Setting fr_inv_timer module parameter
+   1-15. Setting fr_inv_timer_next module parameter
+   1-16. load_gws usage
+   1-17. next_gw usage from a route block
+   1-18. next_gw usage from a failure route block
+   1-19. from_gw usage
+   1-20. to_gw usage
+   1-21. load_contacts usage
+   1-22. next_contacts usage from route block
+   1-23. next_contacts usage from failure route block
      _________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
-   Least cost routing (LCR) module implements two related capabilities:
+   Least cost routing (LCR) module implements two related
+   capabilities:
 
-   (1) sequential forwarding of a request to one or more gateways
-       (functions load_gws and next_gw),
+     * sequential forwarding of a request to one or more gateways
+       (functions load_gws and next_gw)
+     * sequential forwarding to contacts if they don't share the
+       the same qvalue (functions load_contacts and
+       next_contacts).
 
-   (2) sequential forwarding to contacts if they don't share the
-       the same qvalue (functions load_contacts and next_contacts).
+   Gateway selection is based on caller's RPID URI (if available
+   in caller's RPID AVP after authentication) or From URI and
+   user part of Request-URI (telephone number). Gateway patterns
+   matching RPID or From URI and telephone number are ordered for
+   forwarding purpose (1) according to longest user part match,
+   (2) according to priority, and (3) randomly.
 
-   Gateway selection is based on caller's RPID URI (if available in
-   caller's RPID AVP after authentication) or From URI and user part of
-   Request-URI (telephone number).  Gateway patterns matching RPID or
-   From URI and telephone number are ordered for forwarding purpose (1)
-   according to longest user part match, (2) according to priority, and
-   (3) randomly.
+   Each gateway belongs to a gateway group either alone or among
+   other gateways. All gateways in a group share the same
+   priority.
 
-   Each gateway belongs to a gateway group either alone or among other
-   gateways.  All gateways in a group share the same priority.
-
-   Gateway selection operates on two database tables: gw and lcr.  Table
-   gw contains gw's name, IP address, port, and group id.  Table lcr
-   contains prefix of user part of Request-URI, From URI, gateway group
-   id, and priority.  From URI can contain special characters % and _
-   matching any number of any characters and any one character,
-   respectively.  In addition to gw and lcr tables there is third table
-   gw_grp that is used for administrative purposes only to associate
-   names with gateway group ids.
-   _________________________________________________________
+   Gateway selection operates on two database tables: gw and lcr.
+   Table gw contains gw's name, IP address, port, and group id.
+   Table lcr contains prefix of user part of Request-URI, From
+   URI, gateway group id, and priority. From URI can contain
+   special characters % and _ matching any number of any
+   characters and any one character, respectively. In addition to
+   gw and lcr tables there is third table gw_grp that is used for
+   administrative purposes only to associate names with gateway
+   group ids.
+     _________________________________________________________
 
 1.2. Dependencies
 
-   The module depends on the following modules (in the other
-   words the listed modules must be loaded before this module):
+1.2.1. OpenSER modules
 
-     * tm module
-     * mysql module
+   The following modules must be loaded before this module:
+
+     * TM module
+     * A database module.
+     _________________________________________________________
+
+1.2.2. External libraries or applications
+
+   The following libraries or applications must be installed
+   before running OpenSER with this module:
+
+     * none.
      _________________________________________________________
 
 1.3. Exported Parameters
 
-   LCR module exports the following database related parameters that
-   have usual purpose:
+1.3.1. db_url (string)
 
-     * db_url (default system default)
-     * gw_table (default "gw")
-     * gw_name_column (default "gw_name")
-     * ip_addr_column (default "ip_addr")
-     * port_column (default "port")
-     * grp_id_column (default "grp_id")
-     * lcr_table (default "lcr")
-     * prefix_column (default "prefix")
-     * from_uri_column (default "from_uri")
-     * priority_column (default "priority")
+   URL of the database table to be used.
 
-   In addition there are parameters that can be used to override names
-   of the AVPs used by LCR module:
+   Default value is system default. 
 
-     * gw_addr_port_avp	  (default "1400")
-     * contact_avp	  (default "1401")
-     * fr_inv_timer_avp	  (default "fr_inv_timer_avp")
+   Example 1-1. Setting db_url module parameter
+...
+modparam("lcr","db_url","mysql://muser:pwd@localhost/openser")
+...
+     _________________________________________________________
 
-   If string value of gw_addr_port_avp or contact_avp contains only
-   digits, the name of the AVP is int value of the string.
+1.3.2. gw_table (string)
 
-   Finally, there are two parameters used by sequential forwarding:
+   Name of the table holding the gateways definitions.
 
-     * fr_inv_timer	  (default 90)
-     * fr_inv_timer_next  (default 30)
+   Default value is "gw". 
 
-   Function next_contacts() sets tm fr_inv_timer to fr_inv_timer_next
-   value if, after next contacts, there are still lower qvalue
-   contacts available, and to fr_inv_timer value if next contacts are
-   the last ones left.
-    _________________________________________________________
+   Example 1-2. Setting gw_table module parameter
+...
+modparam("lcr","gw_table","gw")
+...
+     _________________________________________________________
+
+1.3.3. gw_name_column (string)
+
+   Name of the column holding the gateway name.
+
+   Default value is "gw_name". 
+
+   Example 1-3. Setting gw_name_column module parameter
+...
+modparam("lcr","gw_name_column","gw_name")
+...
+     _________________________________________________________
+
+1.3.4. ip_addr_column (string)
+
+   Name of the column holding the IP address of the gateway.
+
+   Default value is "ip_addr". 
+
+   Example 1-4. Setting ip_addr_column module parameter
+...
+modparam("lcr","ip_addr_column","ip_addr")
+...
+     _________________________________________________________
+
+1.3.5. port_column (string)
+
+   Name of the column holding the port number of the gateway.
+
+   Default value is "port". 
+
+   Example 1-5. Setting port_column module parameter
+...
+modparam("lcr","port_column","port")
+...
+     _________________________________________________________
+
+1.3.6. grp_id_column (string)
+
+   Name of the column holding the group ID.
+
+   Default value is "grp_id". 
+
+   Example 1-6. Setting grp_id_column module parameter
+...
+modparam("lcr","grp_id_column","grp_id")
+...
+     _________________________________________________________
+
+1.3.7. lcr_table (string)
+
+   Name of the table holding the LCR rules.
+
+   Default value is "lcr". 
+
+   Example 1-7. Setting lcr_table module parameter
+...
+modparam("lcr","lcr_table","lcr")
+...
+     _________________________________________________________
+
+1.3.8. prefix_column (string)
+
+   Name of the column holding the RURI(destination) prefix.
+
+   Default value is "prefix". 
+
+   Example 1-8. Setting prefix_column module parameter
+...
+modparam("lcr","prefix_column","prefix")
+...
+     _________________________________________________________
+
+1.3.9. from_uri_column (string)
+
+   Name of the column holding the FROM (source) URI.
+
+   Default value is "from_uri". 
+
+   Example 1-9. Setting from_uri_column module parameter
+...
+modparam("lcr","from_uri_column","from_uri")
+...
+     _________________________________________________________
+
+1.3.10. priority_column (string)
+
+   Name of the column holding the priority of the rule.
+
+   Default value is "priority". 
+
+   Example 1-10. Setting priority_column module parameter 
+...
+modparam("lcr","priority_column","priority")
+...
+     _________________________________________________________
+
+1.3.11. gw_addr_port_avp (string)
+
+   Overrides the name of the AVP containing the addres:port of
+   the gateway. If the string name of the AVP contains only
+   digits, the name of the AVP is integer value of the string.
+
+   Default value is "1400". 
+
+   Example 1-11. Setting gw_addr_port_avp module parameter
+...
+modparam("lcr","gw_addr_port_avp","1400")
+...
+     _________________________________________________________
+
+1.3.12. contact_avp (string)
+
+   Overrides the name of the AVP containing the contact. If the
+   string name of the AVP contains only digits, the name of the
+   AVP is integer value of the string.
+
+   Default value is "1401". 
+
+   Example 1-12. Setting contact_avp module parameter
+...
+modparam("lcr","contact_avp","1401")
+
+...
+     _________________________________________________________
+
+1.3.13. fr_inv_timer_avp (string)
+
+   Overrides the name of the AVP carrying the Final Response
+   timeout for INVITEs.
+
+   Default value is "fr_inv_timer_avp". 
+
+   Example 1-13. Setting fr_inv_timer_avp module parameter
+...
+modparam("lcr","fr_inv_timer_avp","fr_inv_timer_avp")
+...
+     _________________________________________________________
+
+1.3.14. fr_inv_timer (integer)
+
+   Sets the value of the fist INVITE's Final Response timeout to
+   be used during sequential forwarding:
+
+   Default value is 90. 
+
+   Example 1-14. Setting fr_inv_timer module parameter
+...
+modparam("lcr","fr_inv_timer",90)
+...
+     _________________________________________________________
+
+1.3.15. fr_inv_timer_next (integer)
+
+   Sets the value of the next INVITE's Final Response timeouts to
+   be used during sequential forwarding:
+
+   Function next_contacts() sets tm fr_inv_timer to
+   fr_inv_timer_next value if, after next contacts, there are
+   still lower qvalue contacts available, and to fr_inv_timer
+   value if next contacts are the last ones left.
+
+   Default value is 30. 
+
+   Example 1-15. Setting fr_inv_timer_next module parameter
+...
+modparam("lcr","fr_inv_timer_next",30)
+...
+     _________________________________________________________
 
 1.4. Exported Functions
 
@@ -108,112 +337,129 @@ Chapter 1. User's Guide
 
    Loads addresses and ports of gateways matching RPID AVP (if
    available) or From URI and user part of Request-URI to
-   gw_addr_port_avp AVPs.  Returns 1 or -1 depending on success.
+   gw_addr_port_avp AVPs. Returns 1 or -1 depending on success.
 
-   Example:
-
-   if (!load_gws()) {
-      sl_send_reply("500", "Server Internal Error - Cannot load gateways");
-      break;
-   };
+   Example 1-16. load_gws usage
+...
+if (!load_gws()) {
+    sl_send_reply("500", "Server Internal Error - Cannot load gateways"
+);
+    break;
+};
+...
+     _________________________________________________________
 
 1.4.2. next_gw()
 
-   If called from a route block, replaces host:port part of Request-URI
-   by the first gw_addr_port_avp AVP value and destroys that AVP.
+   If called from a route block, replaces host:port part of
+   Request-URI by the first gw_addr_port_avp AVP value and
+   destroys that AVP.
 
-   If called from a failure route block, appends a new branch to request,
-   where host:port part of Request-URI is replaced by the first
-   gw_addr_port_avp AVP value and destroys that AVP.
+   If called from a failure route block, appends a new branch to
+   request, where host:port part of Request-URI is replaced by
+   the first gw_addr_port_avp AVP value and destroys that AVP.
 
-   Returns 1 on success and -1 if there were no gateways left or if an
-   error occurred (see syslog).
+   Returns 1 on success and -1 if there were no gateways left or
+   if an error occurred (see syslog).
 
    Must be preceded by successful load_gws() call.
 
-   Example from route block:
-   
-   if (!next_gw()) {
-      sl_send_reply("503", "Service not available - No gateways");
-      break;
-    };
+   Example 1-17. next_gw usage from a route block
+...
+if (!next_gw()) {
+    sl_send_reply("503", "Service not available - No gateways");
+    break;
+};
+...
 
-   Example from failure route block:
-
-   if (!next_gw()) {
-      t_reply("503", "Service not available - No more gateways");
-      break;	     
-    };
+   Example 1-18. next_gw usage from a failure route block 
+...
+if (!next_gw()) {
+    t_reply("503", "Service not available - No more gateways");
+    break;
+};
+...
+     _________________________________________________________
 
 1.4.3. from_gw()
 
    Checks if request came from IP address of a gateway.
 
-   Example:
-   
-   if (from_gw()) {
-      ...
-      break;
-   };
+   Example 1-19. from_gw usage
+...
+if (from_gw()) {
+    ...
+    break;
+};
+...
+     _________________________________________________________
 
 1.4.4. to_gw()
 
    Checks if in-dialog request goes to a gateway.
 
-   Example:
-   
-   if (to_gw()) {
-      ...
-      break;
-   };
+   Example 1-20. to_gw usage
+...
+if (to_gw()) {
+    ...
+    break;
+};
+...
+     _________________________________________________________
 
 1.4.5. load_contacts()
 
-   Loads contacts in destination set in increasing qvalue order as
-   values of lcr_contact AVP.  If all contacts in the destination set
-   have the same qvalue, load_contacts() does not do anything thus
-   minimizing performance impact of sequential forking capability when
-   it is not needed.  Returns 1 if loading of contacts succeeded or
-   there was nothing to do.  Returns -1 on error (see syslog).
+   Loads contacts in destination set in increasing qvalue order
+   as values of lcr_contact AVP. If all contacts in the
+   destination set have the same qvalue, load_contacts() does not
+   do anything thus minimizing performance impact of sequential
+   forking capability when it is not needed. Returns 1 if loading
+   of contacts succeeded or there was nothing to do. Returns -1
+   on error (see syslog).
 
-   Example:
-
-   if (!load_contacts()) {
-      sl_send_reply("500", "Server Internal Error - Cannot load contacts");
-      break;
-   };
+   Example 1-21. load_contacts usage
+...
+if (!load_contacts()) {
+    sl_send_reply("500", "Server Internal Error - Cannot load contacts"
+);
+    break;
+};
+...
+     _________________________________________________________
 
 1.4.6. next_contacts()
 
-   If called from a route block, replaces Request-URI with the first
-   lcr_contact AVP value, adds the remaining lcr_contact AVP values with
-   the same qvalue as branches, and destroys those AVPs.  It does
-   nothing if there are no lcr_contact AVPs.  Returns 1 if there were no
-   errors and -1 if an error occurred (see syslog).
+   If called from a route block, replaces Request-URI with the
+   first lcr_contact AVP value, adds the remaining lcr_contact
+   AVP values with the same qvalue as branches, and destroys
+   those AVPs. It does nothing if there are no lcr_contact AVPs.
+   Returns 1 if there were no errors and -1 if an error occurred
+   (see syslog).
 
-   If called from a failure route block, adds the first lcr_contact AVP
-   value and all following lcr_contact AVP values with the same qvalue
-   as new branches to request and destroys those AVPs.  Returns 1 if new
-   branches were successfully added and -1 on error (see syslog) or if
-   there were no more lcr_contact AVPs.
+   If called from a failure route block, adds the first
+   lcr_contact AVP value and all following lcr_contact AVP values
+   with the same qvalue as new branches to request and destroys
+   those AVPs. Returns 1 if new branches were successfully added
+   and -1 on error (see syslog) or if there were no more
+   lcr_contact AVPs.
 
    Must be preceded by successful load_contacts() call.
 
-   Example from route block:
-   
-   if (!next_contacts()) {
-       sl_send_reply("500", "Server Internal Error");
-        break;
-   } else {
-      t_relay();
-   };
+   Example 1-22. next_contacts usage from route block 
+...
+if (!next_contacts()) {
+    sl_send_reply("500", "Server Internal Error");
+    break;
+} else {
+    t_relay();
+};
+...
 
-   Example from failure route block:
-   
-   if (next_contacts()) {
-       t_relay();
-   };
-
+   Example 1-23. next_contacts usage from failure route block
+if (next_contacts()) {
+    t_relay();
+};
+     _________________________________________________________
 
 1.5. FIFO Commands
 
@@ -221,23 +467,64 @@ Chapter 1. User's Guide
 
    Causes lcr module to re-read the contents of gateway table
    into memory.
+     _________________________________________________________
 
 1.5.2. lcr_dump
 
-   Causes lcr module to dump the contents of its in-memory gateway
-   table. 
+   Causes lcr module to dump the contents of its in-memory
+   gateway table.
+     _________________________________________________________
 
 1.6. Known Limitations
 
-   There is an unlikely race condition on lcr reload. If a process uses
-   in memory gw table, which is reloaded at the same time twice through
-   FIFO, the second reload will delete the original table still in use
-   by the process.
-   _________________________________________________________
+   There is an unlikely race condition on lcr reload. If a
+   process uses in memory gw table, which is reloaded at the same
+   time twice through FIFO, the second reload will delete the
+   original table still in use by the process.
+     _________________________________________________________
 
-2.0. TODO
+1.7. TODO
 
-   Function load_gws() currently makes an SQL query for the matching
-   gateways.  In order to avoid the query, also lcr table should be
-   read into memory and the corresponding query should be rewritten in
-   C.
+   Function load_gws() currently makes an SQL query for the
+   matching gateways. In order to avoid the query, also lcr table
+   should be read into memory and the corresponding query should
+   be rewritten in C.
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any API to use in other OpenSER
+   modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about OpenSER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about OpenSER?
+
+   Take a look at http://openser.org/.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * User Mailing List -
+       http://openser.org/mailman/listinfo/users
+     * Developer Mailing List -
+       http://openser.org/mailman/listinfo/devel
+
+   E-mails regarding any stable OpenSER release should be sent to
+   <users@openser.org> and e-mails regarding development versions
+   should be sent to <devel@openser.org>.
+
+   If you want to keep the mail private, send it to
+   <team@openser.org>.
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://openser.org/bugs.
