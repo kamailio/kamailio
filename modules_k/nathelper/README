@@ -20,34 +20,37 @@ Bogdan-Andrei Iancu
    1. User's Guide
 
         1.1. Overview
-        1.2. Dependencies
+        1.2. NAT pinging types
+        1.3. Dependencies
 
-              1.2.1. OpenSER Modules
-              1.2.2. External Libraries or Applications
+              1.3.1. OpenSER Modules
+              1.3.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        1.4. Exported Parameters
 
-              1.3.1. natping_interval (integer)
-              1.3.2. ping_nated_only (integer)
-              1.3.3. received_avp (integer)
-              1.3.4. rtpproxy_sock (string)
-              1.3.5. rtpproxy_disable (integer)
-              1.3.6. rtpproxy_disable_tout (integer)
-              1.3.7. rtpproxy_tout (integer)
-              1.3.8. rtpproxy_retr (integer)
-              1.3.9. force_socket (string)
+              1.4.1. natping_interval (integer)
+              1.4.2. ping_nated_only (integer)
+              1.4.3. received_avp (integer)
+              1.4.4. rtpproxy_sock (string)
+              1.4.5. rtpproxy_disable (integer)
+              1.4.6. rtpproxy_disable_tout (integer)
+              1.4.7. rtpproxy_tout (integer)
+              1.4.8. rtpproxy_retr (integer)
+              1.4.9. force_socket (string)
+              1.4.10. sipping_from (string)
+              1.4.11. sipping_method (string)
 
-        1.4. Exported Functions
+        1.5. Exported Functions
 
-              1.4.1. fix_nated_contact()
-              1.4.2. fix_nated_sdp(mode)
-              1.4.3. force_rtp_proxy()
-              1.4.4. force_rtp_proxy(flags)
-              1.4.5. force_rtp_proxy(flags, ip_address)
-              1.4.6. unforce_rtp_proxy()
-              1.4.7. add_rcv_param()
-              1.4.8. fix_nated_register()
-              1.4.9. nat_uac_test(flags)
+              1.5.1. fix_nated_contact()
+              1.5.2. fix_nated_sdp(mode)
+              1.5.3. force_rtp_proxy()
+              1.5.4. force_rtp_proxy(flags)
+              1.5.5. force_rtp_proxy(flags, ip_address)
+              1.5.6. unforce_rtp_proxy()
+              1.5.7. add_rcv_param()
+              1.5.8. fix_nated_register()
+              1.5.9. nat_uac_test(flags)
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -62,14 +65,16 @@ Bogdan-Andrei Iancu
    1-7. Set rtpproxy_tout parameter
    1-8. Set rtpproxy_retr parameter
    1-9. Set force_socket parameter
-   1-10. fix_nated_contact usage
-   1-11. fix_nated_sdp usage
-   1-12. force_rtp_proxy usage
-   1-13. force_rtp_proxy usage
+   1-10. Set sipping_from parameter
+   1-11. Set sipping_method parameter
+   1-12. fix_nated_contact usage
+   1-13. fix_nated_sdp usage
    1-14. force_rtp_proxy usage
-   1-15. unforce_rtp_proxy usage
-   1-16. add_rcv_paramer usage
-   1-17. fix_nated_register usage
+   1-15. force_rtp_proxy usage
+   1-16. force_rtp_proxy usage
+   1-17. unforce_rtp_proxy usage
+   1-18. add_rcv_paramer usage
+   1-19. fix_nated_register usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -91,16 +96,41 @@ Chapter 1. User's Guide
    s_feature_guide09186a0080110bf9.html">
      _________________________________________________________
 
-1.2. Dependencies
+1.2. NAT pinging types
 
-1.2.1. OpenSER Modules
+   Currently, the nathelper module supports two types of NAT
+   pings:
+
+     * UDP package - 4 bytes (zero filled) UDP packages are sent
+       to the contact address.
+          + Advantages: low bandwitdh traffic, easy to generate
+            by OpenSER;
+          + Disadvantages: unidirectional traffic through NAT
+            (inbound - from outside to inside); As many NATs do
+            update the bind timeout only on outbound traffic, the
+            bind may expire and closed.
+     * SIP request - a stateless SIP request is sent to the
+       contact address.
+          + Advantages: bidirectional traffic through NAT, since
+            each PING request from OpenSER (inbound traffic) will
+            force the SIP client to generate a SIP reply
+            (outbound traffic) - the NAT bind will be surely kept
+            open.
+          + Disadvantages: higher bandwitdh traffic, more
+            expensive (as time) to generate by OpenSER;
+     _________________________________________________________
+
+1.3. Dependencies
+
+1.3.1. OpenSER Modules
 
    The following modules must be loaded before this module:
 
-     * No dependencies on other OpenSER modules.
+     * usrloc module - only if the NATed contacts are to be
+       pinged.
      _________________________________________________________
 
-1.2.2. External Libraries or Applications
+1.3.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
@@ -108,13 +138,18 @@ Chapter 1. User's Guide
      * None.
      _________________________________________________________
 
-1.3. Exported Parameters
+1.4. Exported Parameters
 
-1.3.1. natping_interval (integer)
+1.4.1. natping_interval (integer)
 
-   Period of time in seconds between sending short UDP packets to
-   all currently registered UAs to keep their NAT bindings alive.
+   Period of time in seconds between sending the NAT pings to all
+   currently registered UAs to keep their NAT bindings alive.
    Value of 0 disables this functionality.
+
+   Note
+
+   Enabling the NAT pinging functionality will force the module
+   to bind itself to USRLOC module.
 
    Default value is 0. 
 
@@ -124,11 +159,10 @@ modparam("nathelper", "natping_interval", 10)
 ...
      _________________________________________________________
 
-1.3.2. ping_nated_only (integer)
+1.4.2. ping_nated_only (integer)
 
    If this variable is set then only contacts that have
-   "behind_NAT" flag in user location database set set will get
-   ping.
+   "behind_NAT" flag in user location database set will get ping.
 
    Default value is 0. 
 
@@ -138,7 +172,7 @@ modparam("nathelper", "ping_nated_only", 1)
 ...
      _________________________________________________________
 
-1.3.3. received_avp (integer)
+1.4.3. received_avp (integer)
 
    The number of the Attribute-Value-Pair (AVP) used to store the
    URI containing the received IP, port, and protocol. The URI is
@@ -156,7 +190,7 @@ modparam("nathelper", "received_avp", 43)
 ...
      _________________________________________________________
 
-1.3.4. rtpproxy_sock (string)
+1.4.4. rtpproxy_sock (string)
 
    Socket used to connect to RTPProxy. It may specify a UNIX
    socket or an IPv4/IPv6 UDP socket.
@@ -169,10 +203,10 @@ modparam("nathelper", "rtpproxy_sock", "udp:localhost:12221")
 ...
      _________________________________________________________
 
-1.3.5. rtpproxy_disable (integer)
+1.4.5. rtpproxy_disable (integer)
 
    If true (set to a non 0 value), the RTPProxy support will be
-   desabled - no connection to it will be established.
+   disabled - no connection to it will be established.
 
    Default value is "0 (false)". 
 
@@ -182,7 +216,7 @@ modparam("nathelper", "rtpproxy_disable", 1)
 ...
      _________________________________________________________
 
-1.3.6. rtpproxy_disable_tout (integer)
+1.4.6. rtpproxy_disable_tout (integer)
 
    Once RTPProxy was found unreachable and marked as disable,
    nathelper will not attempt to establish communication to
@@ -196,7 +230,7 @@ modparam("nathelper", "rtpproxy_disable_tout", 20)
 ...
      _________________________________________________________
 
-1.3.7. rtpproxy_tout (integer)
+1.4.7. rtpproxy_tout (integer)
 
    Timeout value in waiting for reply from RTPProxy.
 
@@ -208,7 +242,7 @@ modparam("nathelper", "rtpproxy_tout", 2)
 ...
      _________________________________________________________
 
-1.3.8. rtpproxy_retr (integer)
+1.4.8. rtpproxy_retr (integer)
 
    How many times nathelper should retry to send and receive
    after timeout was generated.
@@ -221,7 +255,7 @@ modparam("nathelper", "rtpproxy_retr", 2)
 ...
      _________________________________________________________
 
-1.3.9. force_socket (string)
+1.4.9. force_socket (string)
 
    Socket to be forced in communicating to RTPProxy. It makes
    sense only for UDP communication. If no one specified, the OS
@@ -235,19 +269,48 @@ modparam("nathelper", "force_socket", "localhost:33333")
 ...
      _________________________________________________________
 
-1.4. Exported Functions
+1.4.10. sipping_from (string)
 
-1.4.1. fix_nated_contact()
+   The parameter sets the SIP URI to be used in generating the
+   SIP requests for NAT ping purposes. To enable the SIP request
+   pinging feature, you have to set this parameter. The SIP
+   request pinging will be used only for requests marked so (see
+   registrar module, the "sip_natping_flag" flag).
+
+   Default value is "NULL". 
+
+   Example 1-10. Set sipping_from parameter
+...
+modparam("nathelper", "sipping_from", "sip:pinger@siphub.net")
+...
+     _________________________________________________________
+
+1.4.11. sipping_method (string)
+
+   The parameter sets the SIP method to be used in generating the
+   SIP requests for NAT ping purposes.
+
+   Default value is "OPTIONS". 
+
+   Example 1-11. Set sipping_method parameter
+...
+modparam("nathelper", "sipping_method", "INFO")
+...
+     _________________________________________________________
+
+1.5. Exported Functions
+
+1.5.1. fix_nated_contact()
 
    Rewrites Contact HF to contain request's source address:port.
 
-   Example 1-10. fix_nated_contact usage
+   Example 1-12. fix_nated_contact usage
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 ...
      _________________________________________________________
 
-1.4.2. fix_nated_sdp(mode)
+1.5.2. fix_nated_sdp(mode)
 
    Rewrites Contact HF to contain request's source address:port.
 
@@ -256,24 +319,24 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
      * mode - 0x01 (add direction=active), 0x02 (rewrite media IP
        address with source address of the message).
 
-   Example 1-11. fix_nated_sdp usage
+   Example 1-13. fix_nated_sdp usage
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 ...
      _________________________________________________________
 
-1.4.3. force_rtp_proxy()
+1.5.3. force_rtp_proxy()
 
    Rewrites SDP body to ensure that media is passed through an
    RTP proxy.
 
-   Example 1-12. force_rtp_proxy usage
+   Example 1-14. force_rtp_proxy usage
 ...
 if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 ...
      _________________________________________________________
 
-1.4.4. force_rtp_proxy(flags)
+1.5.4. force_rtp_proxy(flags)
 
    Same as force_rtp_proxy, but forces additional flags.
 
@@ -298,13 +361,13 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
             SDP and uses source address of the SIP message as
             media address which is passed to the RTP proxy.
 
-   Example 1-13. force_rtp_proxy usage
+   Example 1-15. force_rtp_proxy usage
 ...
 if (src_ip=1.2.3.4) {force_rtp_proxy("i");};
 ...
      _________________________________________________________
 
-1.4.5. force_rtp_proxy(flags, ip_address)
+1.5.5. force_rtp_proxy(flags, ip_address)
 
    Same as force_rtp_proxy(flags), but it may force a new SDP IP
    address.
@@ -314,23 +377,23 @@ if (src_ip=1.2.3.4) {force_rtp_proxy("i");};
      * flags - flags to turn on some features.
      * ip_address - new SDP IP address.
 
-   Example 1-14. force_rtp_proxy usage
+   Example 1-16. force_rtp_proxy usage
 ...
 if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("","1.2.3.4");};
 ...
      _________________________________________________________
 
-1.4.6. unforce_rtp_proxy()
+1.5.6. unforce_rtp_proxy()
 
    Tears down the RTPProxy session for the current call.
 
-   Example 1-15. unforce_rtp_proxy usage
+   Example 1-17. unforce_rtp_proxy usage
 ...
 unforce_rtp_proxy();
 ...
      _________________________________________________________
 
-1.4.7. add_rcv_param()
+1.5.7. add_rcv_param()
 
    Add received parameter to Contact header fields. The parameter
    will contain URI created from the source IP, port, and
@@ -339,13 +402,13 @@ unforce_rtp_proxy();
    useful, for example, when replicating register messages using
    t_replicate function to another registrar.
 
-   Example 1-16. add_rcv_paramer usage
+   Example 1-18. add_rcv_paramer usage
 ...
 add_rcv_param();
 ...
      _________________________________________________________
 
-1.4.8. fix_nated_register()
+1.5.8. fix_nated_register()
 
    The function creates a URI consisting of the source IP, port,
    and protocol and stores the URI in an Attribute-Value-Pair.
@@ -353,13 +416,13 @@ add_rcv_param();
    200 OK and registrar will store it in the user location
    database.
 
-   Example 1-17. fix_nated_register usage
+   Example 1-19. fix_nated_register usage
 ...
 fix_nated_register();
 ...
      _________________________________________________________
 
-1.4.9. nat_uac_test(flags)
+1.5.9. nat_uac_test(flags)
 
    Tries to guess if client's request originated behind a nat.
    The parameter determines what heuristics is used.
