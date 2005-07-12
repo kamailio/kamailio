@@ -515,7 +515,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 				}
 
 				set = flags | mem_only;
-				reset = ~(flags | mem_only) & (FL_NAT|FL_MEM|FL_NAT_OPTIONS);
+				reset = ~(flags | mem_only) & (FL_NAT|FL_MEM|FL_NAT_SIPPING);
 				if (ul.update_ucontact(c, e, q, &callid, cseq,
 						set, reset, _ua, recv, sock) < 0) {
 					rerrno = R_UL_UPD_C;
