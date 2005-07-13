@@ -347,7 +347,7 @@ static int mod_init( void )
 	init_acc_extra();
 
 	/* parse the extra string, if any */
-	if (log_extra_str && (log_extra=parse_acc_extra(log_extra_str,-1))==0 ) {
+	if (log_extra_str && (log_extra=parse_acc_extra(log_extra_str))==0 ) {
 		LOG(L_ERR,"ERROR:acc:mod_init: failed to parse log_extra param\n");
 		return -1;
 	}
@@ -363,7 +363,7 @@ static int mod_init( void )
 		return -1;
 	}
 	/* parse the extra string, if any */
-	if (db_extra_str && (db_extra=parse_acc_extra(db_extra_str,0))==0 ) {
+	if (db_extra_str && (db_extra=parse_acc_extra(db_extra_str))==0 ) {
 		LOG(L_ERR,"ERROR:acc:mod_init: failed to parse db_extra param\n");
 		return -1;
 	}
@@ -371,7 +371,7 @@ static int mod_init( void )
 
 #ifdef RAD_ACC
 	/* parse the extra string, if any */
-	if (rad_extra_str && (rad_extra=parse_acc_extra(rad_extra_str,-1))==0 ) {
+	if (rad_extra_str && (rad_extra=parse_acc_extra(rad_extra_str))==0 ) {
 		LOG(L_ERR,"ERROR:acc:mod_init: failed to parse rad_extra param\n");
 		return -1;
 	}
@@ -423,7 +423,7 @@ static int mod_init( void )
 
 #ifdef DIAM_ACC
 	/* parse the extra string, if any */
-	if (dia_extra_str && (dia_extra=parse_acc_extra(dia_extra_str,-1))==0 ) {
+	if (dia_extra_str && (dia_extra=parse_acc_extra(dia_extra_str))==0 ) {
 		LOG(L_ERR,"ERROR:acc:mod_init: failed to parse dia_extra param\n");
 		return -1;
 	}

@@ -24,6 +24,7 @@
  * ---------
  *  2004-10-28  first version (ramona)
  *  2005-05-30  acc_extra patch commited (ramona)
+ *  2005-07-13  acc_extra specification moved to use pseudo-variables (bogdan)
  */
 
 
@@ -31,23 +32,17 @@
 #define _ACC_EXTRA_H_
 
 #include "../../str.h"
+#include "../../items.h"
 #include "../../parser/msg_parser.h"
 #include "dict.h"
 
 struct acc_extra
 {
-	int flags;       /* if attr is an avp or a header */
-	str name;       /* name (log comment/ column name) */
-	/* value - hdr name or avp name */
-	str sval;       /* hdr or avp name */
-	int ival;       /* avp ID */
+	str        name;       /* name (log comment/ column name) */
+	xl_spec_t  spec;       /* value's spec */
 	struct acc_extra *next;
 };
 
-#define ACC_EXTRA_HEADER      (1<<1)
-#define ACC_EXTRA_AVP         (1<<2)
-#define ACC_EXTRA_IS_INT      (1<<3)
-#define ACC_EXTRA_GLOBAL      (1<<4)
 
 #define MAX_ACC_EXTRA 64
 
@@ -55,7 +50,7 @@ struct acc_extra
 
 void init_acc_extra();
 
-struct acc_extra *parse_acc_extra(char *extra, int allowed_flags);
+struct acc_extra *parse_acc_extra(char *extra);
 
 void destroy_extras( struct acc_extra *extra);
 

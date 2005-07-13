@@ -179,24 +179,22 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 			<para>
 			Selection of extra information is done via 
 			<emphasis>xxx_extra<emphasis> parameters by specifying the names
-			of additional headers or AVPs you want to log. The syntax of is:
+			of additional information you want to log. This information is 
+			defined via pseudo-variables and may include headers or AVPs values
+			or other message or system values. The syntax of the parameter is:
+			</para>
 			<itemizedlist>
 				<listitem><para><emphasis>
 				xxx_extra = extra_definition (';'extra_definition)*
 				</emphasis></para></listitem>
 				<listitem><para><emphasis>
-				extra_definition = log_name '=' data_type'/'data['/'flags]
-				</emphasis></para></listitem>
-				<listitem><para><emphasis>
-				data_type = 'hdr' | 'avp'
-				</emphasis></para></listitem>
-				<listitem><para><emphasis>
-				data = header_name | ['s:']AVP_name | 'i:'AVP_id
-				</emphasis></para></listitem>
-				<listitem><para><emphasis>
-				flags = 'g'
+				extra_definition = log_name '=' pseudo_variable
 				</emphasis></para></listitem>
 			</itemizedlist>
+			<para>
+			The full list of supported pseudo-variables in &ser; is availabe 
+			at: <ulink url="http://openser.org/docs/pseudo-variables.html">
+			http://openser.org/docs/pseudo-variables.html</ulink>
 			</para>
 			<para>
 			Via <emphasis>log_name</emphasis> you define how/where the 
@@ -232,20 +230,9 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 		<section>
 			<title>How it works</title>
 			<para>
-			<emphasis>Data</emphasis> can be an header name or an AVP 
-			name/ID - depending of the <emphasis>data_type</emphasis>. If 
-			header, the search for it into SIP messages will be optimized by 
-			converting at start-up the header name (string) into header type 
-			(integer) - this is not possible for all headers (only for the 
-			most important); otherwise case insensitive string matching will 
-			be used.
-			</para>
-			<para>
-			The only defined <emphasis>flag</emphasis> is 'g' - global - 
-			which will force logging all values of the given header or AVP. 
-			Without this flag, only the first found value will be logged.
-			<emphasis>IMPORTANT</emphasis> for DB logging, this flag is 
-			disabled due DB data structure constraints.
+			Some pseudo variables may return more than one value (like 
+			headers or AVPs). In this case, the returned values are
+			embedded in a single string in a comma-separated format.
 			</para>
 		</section>
 	</section>
