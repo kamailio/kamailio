@@ -47,7 +47,8 @@ Ramona-Elena Modroiu
               1.4.8. avp_copy(old_name,new_name) 
               1.4.9. avp_printf(dest, format) 
               1.4.10. avp_subst(avps, subst)
-              1.4.11. avp_print() 
+              1.4.11. avp_op(name,op_value) 
+              1.4.12. avp_print() 
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -74,7 +75,8 @@ Ramona-Elena Modroiu
    1-19. avp_copy usage
    1-20. avp_printf usage
    1-21. avp_subst usage
-   1-22. avp_print usage
+   1-22. avp_op usage
+   1-23. avp_print usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -395,7 +397,8 @@ avp_pushto("$Foo","$bar/g");
      * op_value - define the operator, the value and flags for
        checking. Parameter syntax is:
           + op_value = operator '/' value ['/'flags] 
-          + operator = 'eq' | 'lt' | 'gt' | 're' | 'fm' 
+          + operator = 'eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge' |
+            're' | 'fm' | 'and' | 'or' | 'xor' 
           + value = variable | fix_value 
           + variable =
             '$from'|'$ruri'|'$from'|'$src_ip'|'$dst_ip'|avp_alias
@@ -424,8 +427,8 @@ avp_check("s:foo","fm/$fm_avp/g");
      * name2 - the new name of the copied/moved AVP(s). Parameter
        syntax is:
           + name = ( avp_name | avp_alias ) ['/'flags] 
-          + flags = 'g' | 'G' | 'd' | 'D' 
-
+          + flags = 'g' | 'G' | 'd' | 'D' | 'n' | 'N' | 's' | 'S'
+       
    Example 1-19. avp_copy usage
 ...
 avp_copy("i:678", "s:345/g");
@@ -497,12 +500,43 @@ avp_subst("i:678/i:679/g", "/(.*)@(.*)/\1@$rd/");
    it will be added in avp list and next processing will use it.
      _________________________________________________________
 
-1.4.11. avp_print()
+1.4.11. avp_op(name,op_value)
+
+   Different integer operations with avps.
+
+   Meaning of the parameters is as follows:
+
+     * name - 'source_avp/destination_avp' - which AVP(s) should
+       be processed and where to store the result. If
+       'destination_avp' is missing, same name as 'source_avp' is
+       used to store the result.
+       Parameter syntax is:
+          + name = ( source_avp[/destination_avp] ) 
+            source_avp = ( avp_name | avp_alias ) 
+            destination_avp = ( avp_name | avp_alias ) 
+     * op_value - define the operation, the value and flags.
+       Parameter syntax is:
+          + op_value = operator '/' value ['/'flags] 
+          + operator = 'add' | 'sub' | 'mul' | 'div' | 'mod' |
+            'and' | 'or' | 'xor' | 'not' 
+          + value = variable | fix_value 
+          + variable = avp_alias 
+          + fix_value = 'i:'integer 
+          + flags = 'g' | 'G' | 'd' | 'D' 
+
+   Example 1-22. avp_op usage
+...
+avp_op("i:678", "add/i:345/g");
+avp_op("$number","sub/$number2/d");
+...
+     _________________________________________________________
+
+1.4.12. avp_print()
 
    Prints the list with all the AVPs from memory. This is only a
    helper/debug function.
 
-   Example 1-22. avp_print usage
+   Example 1-23. avp_print usage
 ...
 avp_print();
 ...

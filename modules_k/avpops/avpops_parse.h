@@ -51,6 +51,8 @@ struct fis_param* parse_intstr_value(char *p, int len);
 
 int parse_avp_db_scheme( char *s, struct db_scheme *scheme);
 
+struct fis_param*  parse_op_value(char *s);
+
 
 #endif
 

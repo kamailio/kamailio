@@ -547,7 +547,8 @@ avp_pushto("$Foo","$bar/g");
 					op_value = operator '/' value ['/'flags]
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					operator = 'eq' | 'lt' | 'gt' | 're' | 'fm'
+					operator = 'eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
+					| 're' | 'fm' | 'and' | 'or' | 'xor'
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
 					value = variable | fix_value
@@ -607,7 +608,7 @@ avp_check("s:foo","fm/$fm_avp/g");
 					name = ( avp_name | avp_alias ) ['/'flags]
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					flags = 'g' | 'G' | 'd' | 'D'
+					flags = 'g' | 'G' | 'd' | 'D' | 'n' | 'N' | 's' | 'S'
 					</emphasis></para></listitem>
 				</itemizedlist>
 				</para>
@@ -737,6 +738,77 @@ avp_subst("i:678/i:679/g", "/(.*)@(.*)/\1@$rd/");
 			processed, it will be added in avp list and next
 			processing will use it.
 			</para>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_op(name,op_value)
+				</function>
+			</title>
+			<para>
+			Different integer operations with avps.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>name</emphasis>
+				- 'source_avp/destination_avp' - which AVP(s) should be 
+				processed and where to store the result. If 'destination_avp'
+				is missing, same name as 'source_avp' is used to store the
+				result.
+				</para>
+				<para>
+				Parameter syntax is:
+				</para>
+				<itemizedlist>
+					<listitem>
+					<para><emphasis>
+					name = ( source_avp[/destination_avp] )
+					</emphasis></para>
+					<para><emphasis>
+					source_avp = ( avp_name | avp_alias )
+					</emphasis></para>
+					<para><emphasis>
+					destination_avp = ( avp_name | avp_alias )
+					</emphasis></para>
+					</listitem>
+				</itemizedlist>
+			</listitem>
+			<listitem>
+				<para><emphasis>op_value</emphasis> - define the operation, 
+				the value and flags.
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					op_value = operator '/' value ['/'flags]
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					operator = 'add' | 'sub' | 'mul' | 'div' | 'mod'
+					| 'and' | 'or' | 'xor' | 'not'
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					value = variable | fix_value
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					variable = avp_alias
+					<listitem><para><emphasis>
+					fix_value = 'i:'integer
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					flags = 'g' | 'G' | 'd' | 'D'
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>avp_op</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_op("i:678", "add/i:345/g");
+avp_op("$number","sub/$number2/d");
+...
+				</programlisting>
+			</example>
 		</section>
 		<section>
 			<title>
