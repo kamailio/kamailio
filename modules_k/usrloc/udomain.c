@@ -39,6 +39,7 @@
 #include "ul_mod.h"            /* usrloc module parameters */
 #include "notify.h"
 
+#define UL_TABLE_VERSION	1001
 
 /*
  * Hash function
@@ -217,10 +218,21 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	char* domain;
 	time_t expires;
 	qvalue_t q;
+	int ver;
 
 	urecord_t* r;
 	ucontact_t* c;
 
+	ver = 0;
+	ver =  table_version(&ul_dbf, _c, _d->name);
+	if(ver!=UL_TABLE_VERSION)
+	{
+		LOG(L_ERR,"usrloc:preload_udomain: Wrong version v%d for table <%.*s>,"
+				" expected v%d\n", ver, _d->name->len, _d->name->s,
+				UL_TABLE_VERSION);
+		return -1;
+	}
+	
 	columns[0] = user_col.s;
 	columns[1] = contact_col.s;
 	columns[2] = expires_col.s;
