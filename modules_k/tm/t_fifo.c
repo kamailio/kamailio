@@ -25,6 +25,8 @@
  * -------
  *  2004-02-23  created by splitting it from t_funcs (bogdan)
  *  2004-11-15  t_write_xxx can print whatever avp/hdr
+ *  2005-07-14  t_write_xxx specification aligned to use pseudo-variables 
+ *              (bogdan)
  */
 
 
@@ -43,13 +45,11 @@
 #include "../../str.h"
 #include "../../ut.h"
 #include "../../dprint.h"
+#include "../../items.h"
 #include "../../mem/mem.h"
-#include "../../usr_avp.h"
 #include "../../parser/parser_f.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_rr.h"
-#include "../../parser/parse_nameaddr.h"
-#include "../../parser/parse_hname2.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../tsend.h"
 #include "t_lookup.h"
@@ -72,11 +72,6 @@
 					 (size_t)(((struct sockaddr_un*)0)->sun_path) )
 #endif
 
-
-
-
-
-
 int tm_unix_tx_timeout = 2; /* Default is 2 seconds */
 
 #define TWRITE_PARAMS          20
@@ -88,6 +83,9 @@ int tm_unix_tx_timeout = 2; /* Default is 2 seconds */
 #define ROUTE_BUFFER_MAX       512
 #define APPEND_BUFFER_MAX      4096
 #define CMD_BUFFER_MAX         128
+
+#define BODY_SPEC_S    "msg(body)"
+#define BODY_SPEC_LEN  (sizeof(BODY_SPEC_S)-1)
 
 #define append_str(_dest,_src,_len) \
 	do{ \
@@ -118,19 +116,17 @@ static str   eol={"\n",1};
 
 static int sock;
 
-struct hdr_avp {
-	str title;
-	int type;
-	str sval;
-	int ival;
-	struct hdr_avp *next;
+struct append_elem {
+	str        name;       /* name / title */
+	xl_spec_t  spec;       /* value's spec */
+	struct append_elem *next;
 };
 
 struct tw_append {
 	str name;
 	int add_body;
-	struct hdr_avp *elems;
-	struct tw_append *next;
+	struct append_elem *elems;
+	struct tw_append   *next;
 };
 
 struct tw_info {
@@ -138,60 +134,28 @@ struct tw_info {
 	struct tw_append *append;
 };
 
-#define ELEM_TYPE_AVP      "avp"
-#define ELEM_TYPE_AVP_LEN  (sizeof(ELEM_TYPE_AVP)-1)
-#define ELEM_TYPE_HDR      "hdr"
-#define ELEM_TYPE_HDR_LEN  (sizeof(ELEM_TYPE_HDR)-1)
-#define ELEM_TYPE_MSG      "msg"
-#define ELEM_TYPE_MSG_LEN  (sizeof(ELEM_TYPE_MSG)-1)
-#define ELEM_IS_AVP        (1<<0)
-#define ELEM_IS_HDR        (1<<1)
-#define ELEM_IS_MSG        (1<<2)
-
-#define ELEM_VAL_BODY      "body"
-#define ELEM_VAL_BODY_LEN  (sizeof(ELEM_VAL_BODY)-1)
-
-
 static struct tw_append *tw_appends;
-
-
-static void print_tw_append( struct tw_append *append)
-{
-	struct hdr_avp *ha;
-
-	if (!append)
-		return;
-
-	DBG("DEBUG:tm:print_tw_append: tw_append name=<%.*s>\n",
-		append->name.len,append->name.s);
-	for( ha=append->elems ; ha ; ha=ha->next ) {
-		DBG("\ttitle=<%.*s>\n",ha->title.len,ha->title.s);
-		DBG("\t\tttype=<%d>\n",ha->type);
-		DBG("\t\tsval=<%.*s>\n",ha->sval.len,ha->sval.s);
-		DBG("\t\tival=<%d>\n",ha->ival);
-	}
-}
 
 
 /* tw_append syntax:
  * tw_append = name:element[;element]
- * element   = [title=]value 
- * value     = avp[avp_spec] | hdr[hdr_name] | msg[body] */
+ * element   = (title=pseudo_variable) | msg(body)
+ */
 int parse_tw_append( modparam_t type, void* val)
 {
-	struct hdr_field hdr;
-	struct hdr_avp *last;
-	struct hdr_avp *ha;
+	struct append_elem *last;
+	struct append_elem *elem;
 	struct tw_append *app;
-	int_str avp_name;
 	char *s;
-	char bar;
-	str foo;
-	int n;
+	str  foo;
+	int  xl_flags;
+
 	
 	if (val==0 || ((char*)val)[0]==0)
 		return 0;
+
 	s = (char*)val;
+	xl_flags = XL_THROW_ERROR | XL_DISABLE_COLORS;
 
 	/* start parsing - first the name */
 	while( *s && isspace((int)*s) )  s++;
@@ -207,9 +171,6 @@ int parse_tw_append( modparam_t type, void* val)
 	if ( !*s || *s!=':')
 		goto parse_error;
 	s++;
-	while( *s && isspace((int)*s) )  s++;
-	if ( !*s )
-		goto parse_error;
 
 	/* check for name duplication */
 	for(app=tw_appends;app;app=app->next)
@@ -225,186 +186,103 @@ int parse_tw_append( modparam_t type, void* val)
 		LOG(L_ERR,"ERROR:tm:parse_tw_append: no more pkg memory\n");
 		goto error;
 	}
-	app->name.s = (char*)pkg_malloc( foo.len+1 );
-	if (app->name.s==0) {
-		LOG(L_ERR,"ERROR:tm:parse_tw_append: no more pkg memory\n");
-		goto error;
-	}
-	memcpy( app->name.s, foo.s, foo.len);
-	app->name.len = foo.len;
-	app->name.s[app->name.len] = 0;
+
+	/* init the new append */
+	app->name = foo;
 	last = app->elems = 0;
+
+	/* link the new append */
 	app->next = tw_appends;
 	tw_appends = app;
 
 	/* parse the elements */
 	while (*s) {
-		/* parse element title or element type */
+
+		/* skip white spaces */
+		while( *s && isspace((int)*s) )  s++;
+		if ( !*s )
+			goto parse_error;
+		/* parse element name */
 		foo.s = s;
-		while( *s && *s!='[' && *s!='=' && *s!=';' && !isspace((int)*s) ) s++;
-		if ( !*s || foo.s==s)
+		while( *s && *s!='=' && *s!=';' && !isspace((int)*s) ) s++;
+		if (foo.s==s)
 			goto parse_error;
 		foo.len = s - foo.s;
-		/* new hdr_avp structure */
-		ha = (struct hdr_avp*)pkg_malloc( sizeof(struct hdr_avp) );
-		if (ha==0) {
-			LOG(L_ERR,"ERROR:tm:parse_tw_append: no more pkg memory\n");
-			goto error;
-		}
-		memset( ha, 0, sizeof(struct hdr_avp));
-		if (*s!='[') {
-			/* foo must by title or some error -> parse separator */
-			while( *s && isspace((int)*s) )  s++;
-			if ( !*s || *s!='=')
-				goto parse_error;
-			s++;
-			while( *s && isspace((int)*s) )  s++;
-			if ( !*s )
-				goto parse_error;
-			/* set the title */
-			ha->title.s = (char*)pkg_malloc( foo.len+1 );
-			if (ha->title.s==0) {
-				LOG(L_ERR,"ERROR:tm:parse_tw_append: no more pkg memory\n");
-				goto error;
-			}
-			memcpy( ha->title.s, foo.s, foo.len);
-			ha->title.len = foo.len;
-			ha->title.s[ha->title.len] = 0;
-			/* parse the type now */
-			foo.s = s;
-			while( *s && *s!='[' && *s!=']' && *s!=';' && !isspace((int)*s) )
-				s++;
-			if ( *s!='[' || foo.s==s)
-				goto parse_error;
-			foo.len = s - foo.s;
-		}
-		/* foo containes the elemet type */
-		if ( foo.len==ELEM_TYPE_AVP_LEN &&
-		!strncasecmp( foo.s, ELEM_TYPE_AVP, foo.len) ) {
-			ha->type = ELEM_IS_AVP;
-		} else if ( foo.len==ELEM_TYPE_HDR_LEN &&
-		!strncasecmp( foo.s, ELEM_TYPE_HDR, foo.len) ) {
-			ha->type = ELEM_IS_HDR;
-		} else if ( foo.len==ELEM_TYPE_MSG_LEN &&
-		!strncasecmp( foo.s, ELEM_TYPE_MSG, foo.len) ) {
-			ha->type = ELEM_IS_MSG;
-		} else {
-			LOG(L_ERR,"ERROR:tm:parse_tw_append: unknown type <%.*s>\n",
-				foo.len, foo.s);
-			goto error;
-		}
-		/* parse the element name */
-		s++;
-		foo.s = s;
-		while( *s && *s!=']' && *s!=';' && !isspace((int)*s) ) s++;
-		if ( *s!=']' || foo.s==s )
+		/* skip spaces */
+		while( *s && isspace((int)*s) )  s++;
+		if ( *s && *s!='=' && *s!=';' )
 			goto parse_error;
-		foo.len = s - foo.s;
-		s++;
-		/* process and optimize the element name */
-		if (ha->type==ELEM_IS_AVP) {
-			/* element is AVP */
-			if ( parse_avp_spec( &foo, &n, &avp_name)!=0 ) {
-				LOG(L_ERR,"ERROR:tm:parse_tw_append: bad alias spec "
-					"<%.*s>\n",foo.len, foo.s);
-				goto error;
-			}
-			if (n&AVP_NAME_STR) {
-				/* string name */
-				ha->sval.s = (char*)pkg_malloc(avp_name.s->len+1);
-				if (ha->sval.s==0) {
-					LOG(L_ERR,"ERROR:tm:parse_tw_append: no more pkg mem\n");
-					goto error;
-				}
-				memcpy( ha->sval.s, avp_name.s->s, avp_name.s->len);
-				ha->sval.len = avp_name.s->len;
-				ha->sval.s[ha->sval.len] = 0;
-				if (ha->title.s==0)
-					ha->title = ha->sval;
-			} else {
-				/* ID name - if title is missing, convert the ID to
-				 * string and us it a title */
-				ha->ival = avp_name.n;
-				if (ha->title.s==0) {
-					foo.s=int2str((unsigned long)ha->ival, &foo.len);
-					ha->title.s = (char*)pkg_malloc( n+1 );
-					if (ha->title.s==0) {
-						LOG(L_ERR,"ERROR:tm:parse_tw_append: no more pkg "
-							"memory\n");
-						goto error;
-					}
-					memcpy( ha->title.s, foo.s, foo.len);
-					ha->title.len = foo.len;
-					ha->title.s[ha->title.len] = 0;
-				}
-			}
-		} else if (ha->type==ELEM_IS_HDR) {
-			/* element is HDR -  try to get it's coded type if defined */
-			bar = foo.s[foo.len];
-			foo.s[foo.len] = ':';
-			/* parse header name */
-			if (parse_hname2( foo.s, foo.s+foo.len+1, &hdr)==0) {
-				LOG(L_ERR,"BUG:tm_parse_tw_append: parse header failed\n");
-				goto error;
-			}
-			foo.s[foo.len] = bar;
-			ha->ival = hdr.type;
-			if (hdr.type==HDR_OTHER_T || ha->title.s==0) {
-				/* duplicate hdr name */
-				ha->sval.s = (char*)pkg_malloc(foo.len+1);
-				if (ha->sval.s==0) {
-					LOG(L_ERR,"ERROR:tm:parse_tw_append: no more pkg mem\n");
-					goto error;
-				}
-				memcpy( ha->sval.s, foo.s, foo.len);
-				ha->sval.len = foo.len;
-				ha->sval.s[ha->sval.len] = 0;
-				if (ha->title.s==0)
-					ha->title = ha->sval;
-			}
-		} else {
-			/* element is MSG */
-			if ( !(foo.len==ELEM_VAL_BODY_LEN &&
-			!strncasecmp(ELEM_VAL_BODY,foo.s,foo.len)) ) {
-				LOG(L_ERR,"ERROR:tm:parse_tw_append: unsupported value <%.*s>"
-					" for msg type\n",foo.len,foo.s);
+
+		/* body or element? */
+		if (*s==0 || *s==';')
+		{
+			/* only body allowed in this format */
+			if (foo.len!=BODY_SPEC_LEN ||
+			strncasecmp(foo.s,BODY_SPEC_S,BODY_SPEC_LEN)!=0 )
+			{
+				LOG(L_ERR,"ERROR:tm:parse_tw_append: short spec '%.*s' unknown"
+					"(aceepted only %s)\n",foo.len, foo.s, BODY_SPEC_S);
 				goto error;
 			}
 			app->add_body = 1;
-			pkg_free( ha );
-			ha = 0;
-		}
 
-		/* parse the element separator, if present */
-		while( *s && isspace((int)*s) )  s++;
-		if ( *s && *s!=';')
-			goto parse_error;
-		if (*s==';') {
-			s++;
-			while( *s && isspace((int)*s) )  s++;
-			if (!*s)
+			if (*s && *(s++)!=';')
 				goto parse_error;
+			continue;
 		}
 
-		/* link the element to tw_append structure */
-		if (ha) {
-			if (last==0) {
-				last = app->elems = ha;
-			} else {
-				last->next = ha;
-				last = ha;
-			}
+		/* skip '=' */
+		s++;
+
+		/* new append_elem structure */
+		elem = (struct append_elem*)pkg_malloc( sizeof(struct append_elem) );
+		if (elem==0) {
+			LOG(L_ERR,"ERROR:tm:parse_tw_append: no more pkg memory\n");
+			goto error;
 		}
+		memset( elem, 0, sizeof(struct append_elem));
 
-	} /* end while */
+		/* set and link the element */
+		elem->name = foo;
+		if (last==0) {
+			app->elems = elem;
+		} else {
+			last->next = elem;
+		}
+		last = elem;
 
-	print_tw_append( app );
-	/* free the old string */
-	pkg_free(val);
+		/* skip spaces */
+		while (*s && isspace((int)*s))
+			s++;
+
+		/* get value type */
+		if ( (foo.s=xl_parse_spec( s, &elem->spec, xl_flags))==0 )
+			goto parse_error;
+		s = foo.s;
+
+		/* skip spaces */
+		while (*s && isspace((int)*s))  s++;
+		if (*s && *(s++)!=';')
+			goto parse_error;
+#if 0
+		if (*s){
+			if (*s!=';')
+				goto parse_error;
+			s++;
+		}
+#endif
+	}
+
+	/* go throught all elements and make the names null terminated */
+	for( elem=app->elems ; elem ; elem=elem->next)
+		elem->name.s[elem->name.len] = 0;
+	/* make the append name null terminated also */
+	app->name.s[app->name.len] = 0;
+
 	return 0;
 parse_error:
 	LOG(L_ERR,"ERROR:tm:parse_tw_append: parse error in <%s> around "
-		"position %ld\n", (char*)val, (long)(s-(char*)val));
+		"position %ld(%c)\n", (char*)val, (long)(s-(char*)val),*s);
 error:
 	return -1;
 }
@@ -463,9 +341,6 @@ int fixup_t_write( void** param, int param_no)
 
 
 
-
-
-
 int init_twrite_sock(void)
 {
 	int flags;
@@ -495,6 +370,7 @@ int init_twrite_sock(void)
 }
 
 
+
 int init_twrite_lines()
 {
 	int i;
@@ -512,6 +388,7 @@ int init_twrite_lines()
 
 	return 0;
 }
+
 
 
 static int inline write_to_fifo(char *fifo, int cnt )
@@ -553,103 +430,53 @@ error:
 }
 
 
-static inline char* add2buf(char *buf, char *end, char *title, int title_len,
-			    char *value , int value_len)
+
+static inline char* add2buf(char *buf, char *end, str *name, str *value)
 {
-	if (buf+title_len+value_len+2+1>=end)
+	if (buf+name->len+value->len+2+1>=end)
 		return 0;
-	memcpy( buf, title, title_len);
-	buf += title_len;
+	memcpy( buf, name->s, name->len);
+	buf += name->len;
 	*(buf++) = ':';
 	*(buf++) = ' ';
-	memcpy( buf, value, value_len);
-	buf += value_len;
+	memcpy( buf, value->s, value->len);
+	buf += value->len;
 	*(buf++) = '\n';
 	return buf;
 }
 
 
+
 static inline char* append2buf( char *buf, int len, struct sip_msg *req, 
-				struct hdr_avp *ha)
+				struct append_elem *elem)
 {
-	struct hdr_field *hdr;
-	struct usr_avp   *avp;
-	int_str          avp_val;
-	int_str          avp_name;
-	char  *end;
-	str   foo;
-	int   msg_parsed;
+	str value;
+	char *end;
 
 	end = buf+len;
-	msg_parsed = 0;
 
-	while(ha) {
-		if (ha->type==ELEM_IS_AVP) {
-			/* search for the AVP */
-			if (ha->sval.s) {
-				avp_name.s=&ha->sval;
-				avp = search_first_avp( AVP_NAME_STR, avp_name, &avp_val);
-				DBG("AVP <%.*s>: %p\n",avp_name.s->len,avp_name.s->s, avp);
-			} else {
-				avp_name.n=ha->ival;
-				avp = search_first_avp( 0, avp_name, &avp_val);
-				DBG("AVP <%i>: %p\n",avp_name.n, avp);
-			}
-			if (avp) {
-				if (avp->flags&AVP_VAL_STR) {
-					buf=add2buf( buf, end, ha->title.s, ha->title.len,
-						avp_val.s->s , avp_val.s->len);
-					if (!buf)
-						goto overflow_err;
-				} else {
-					foo.s=int2str( (unsigned long)avp_val.n, &foo.len);
-					buf=add2buf( buf, end, ha->title.s, ha->title.len,
-						foo.s , foo.len);
-					if (!buf)
-						goto overflow_err;
-				}
-			}
-		} else if (ha->type==ELEM_IS_HDR) {
-			/* parse the HDRs */
-			if (!msg_parsed) {
-				if (parse_headers( req, HDR_EOH_F, 0)!=0) {
-					LOG(L_ERR,"ERROR:tm:append2buf: parsing hdrs failed\n");
-					goto error;
-				}
-				msg_parsed = 1;
-			}
-			/* search the HDR */
-			if (ha->ival==HDR_OTHER_T) {
-				for(hdr=req->headers;hdr;hdr=hdr->next)
-					if (ha->sval.len==hdr->name.len &&
-					strncasecmp( ha->sval.s, hdr->name.s, hdr->name.len)==0)
-						break;
-			} else {
-				for(hdr=req->headers;hdr;hdr=hdr->next)
-					if (ha->ival==hdr->type)
-						break;
-			}
-			if (hdr) {
-				trim_len( foo.len, foo.s, hdr->body);
-				buf=add2buf( buf, end, ha->title.s, ha->title.len,
-					foo.s , foo.len);
-				if (!buf)
-					goto overflow_err;
-			}
-		} else {
-			LOG(L_ERR,"BUG:tm:append2buf: unknown element type %d\n",
-				ha->type);
-			goto error;
+	while (elem)
+	{
+		/* get the value */
+		if (xl_get_spec_value( req, &elem->spec, &value)!=0)
+		{
+			LOG(L_ERR,"ERROR:tm:append2buf: failed to get '%.*s'\n",
+				elem->name.len,elem->name.s);
 		}
 
-		ha = ha->next;
+		/* write the value into the buffer */
+		buf = add2buf( buf, end, &elem->name, &value);
+		if (!buf)
+		{
+			LOG(L_ERR,"ERROR:tm:append2buf: overflow -> append "
+				"exceeded %d len\n",len);
+			return 0;
+		}
+
+		elem = elem->next;
 	}
 
 	return buf;
-overflow_err:
-	LOG(L_ERR,"ERROR:tm:append2buf: overflow -> append exceeded %d len\n",len);
-error:
-	return 0;
 }
 
 
@@ -672,34 +499,34 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	str               route, next_hop, append, tmp_s, body, str_uri;
 
 	if(msg->first_line.type != SIP_REQUEST){
-		LOG(L_ERR,"assemble_msg: called for something else then"
+		LOG(L_ERR,"ERROR:tm:assemble_msg: called for something else then"
 			"a SIP request\n");
 		goto error;
 	}
 
 	/* parse all -- we will need every header field for a UAS */
 	if ( parse_headers(msg, HDR_EOH_F, 0)==-1) {
-		LOG(L_ERR,"assemble_msg: parse_headers failed\n");
+		LOG(L_ERR,"ERROR:tm:assemble_msg: parse_headers failed\n");
 		goto error;
 	}
 
 	/* find index and hash; (the transaction can be safely used due 
 	 * to refcounting till script completes) */
 	if( t_get_trans_ident(msg,&hash_index,&label) == -1 ) {
-		LOG(L_ERR,"assemble_msg: t_get_trans_ident failed\n");
+		LOG(L_ERR,"ERROR:tm:assemble_msg: t_get_trans_ident failed\n");
 		goto error;
 	}
 
 	 /* parse from header */
 	if (msg->from->parsed==0 && parse_from_header(msg)==-1 ) {
-		LOG(L_ERR,"assemble_msg: while parsing <From:> header\n");
+		LOG(L_ERR,"ERROR:tm:assemble_msg: while parsing <From:> header\n");
 		goto error;
 	}
 
 	/* parse the RURI (doesn't make any malloc) */
 	msg->parsed_uri_ok = 0; /* force parsing */
 	if (parse_sip_msg_uri(msg)<0) {
-		LOG(L_ERR,"assemble_msg: uri has not been parsed\n");
+		LOG(L_ERR,"ERROR:tm:assemble_msg: uri has not been parsed\n");
 		goto error;
 	}
 
@@ -708,7 +535,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	str_uri.len = 0;
 	if(msg->contact) {
 		if (msg->contact->parsed==0 && parse_contact(msg->contact)==-1) {
-			LOG(L_ERR,"assemble_msg: error while parsing "
+			LOG(L_ERR,"ERROR:tm:assemble_msg: error while parsing "
 			    "<Contact:> header\n");
 			goto error;
 		}
@@ -735,7 +562,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	p_hdr = msg->record_route;
 	if(p_hdr) {
 		if (p_hdr->parsed==0 && parse_rr(p_hdr)!=0 ) {
-			LOG(L_ERR,"assemble_msg: while parsing "
+			LOG(L_ERR,"ERROR:tm:assemble_msg: failed to parse "
 			    "'Record-Route:' header\n");
 			goto error;
 		}
@@ -753,15 +580,15 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 				record_route->nameaddr.uri.s);
 			if (parse_params( &tmp_s, CLASS_URI, &hooks, 
 			&record_route->params) < 0) {
-				LOG(L_ERR,"assemble_msg: error while parsing "
+				LOG(L_ERR,"ERROR:tm:assemble_msg: failed to parse "
 				    "record route uri params\n");
 				goto error;
 			}
 			fproxy_lr = (hooks.uri.lr != 0);
-			DBG("assemble_msg: record_route->nameaddr.uri: %.*s\n",
+			DBG("DEBUG:tm:assemble_msg: record_route->nameaddr.uri: %.*s\n",
 				record_route->nameaddr.uri.len,record_route->nameaddr.uri.s);
 			if(fproxy_lr){
-				DBG("assemble_msg: first proxy has loose routing.\n");
+				DBG("DEBUG:tm:assemble_msg: first proxy has loose routing\n");
 				copy_route(s,route.len,record_route->nameaddr.uri.s,
 					record_route->nameaddr.uri.len);
 			}
@@ -772,14 +599,14 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 				continue;
 
 			if(p_hdr->parsed==0 && parse_rr(p_hdr)!=0 ){
-				LOG(L_ERR,"assemble_msg: "
-				    "while parsing <Record-route:> header\n");
+				LOG(L_ERR,"ERROR:tm:assemble_msg: "
+					"failed to parse <Record-route:> header\n");
 				goto error;
 			}
 			for(record_route=p_hdr->parsed; record_route;
-			    record_route=record_route->next){
-				DBG("assemble_msg: record_route->nameaddr.uri: "
-				    "<%.*s>\n", record_route->nameaddr.uri.len,
+				record_route=record_route->next){
+				DBG("DEBUG:tm:assemble_msg: record_route->nameaddr.uri: "
+					"<%.*s>\n", record_route->nameaddr.uri.len,
 					record_route->nameaddr.uri.s);
 				copy_route(s,route.len,record_route->nameaddr.uri.s,
 					record_route->nameaddr.uri.len);
@@ -794,16 +621,16 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 		}
 	}
 
-	DBG("assemble_msg: calculated route: %.*s\n",
+	DBG("DEBUG:tm:assemble_msg: calculated route: %.*s\n",
 		route.len,route.len ? route.s : "");
-	DBG("assemble_msg: next r-uri: %.*s\n",
+	DBG("DEBUG:tm:assemble_msg: next r-uri: %.*s\n",
 		str_uri.len,str_uri.len ? str_uri.s : "");
-	
+
 	if ( REQ_LINE(msg).method_value==METHOD_INVITE || 
-			(twi->append && twi->append->add_body) ) {
+	(twi->append && twi->append->add_body) ) {
 		/* get body */
 		if( (body.s = get_body(msg)) == 0 ){
-			LOG(L_ERR, "assemble_msg: get_body failed\n");
+			LOG(L_ERR, "ERROR:tm:assemble_msg: get_body failed\n");
 			goto error;
 		}
 		body.len = msg->len - (body.s - msg->buf);
@@ -811,18 +638,18 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 		body = empty_param;
 	}
 
-	/* additional headers */
+	/* flags & additional headers */
 	append.s = s = append_buf;
 	if (sizeof(flag_t)*2+12+1 >= APPEND_BUFFER_MAX) {
-		LOG(L_ERR,"assemble_msg: buffer overflow "
-		    "while copying optional header\n");
+		LOG(L_ERR,"ERROR:tm:assemble_msg: buffer overflow "
+			"while copying flags\n");
 		goto error;
 	}
 	append_str(s,"P-MsgFlags: ",12);
 	l = APPEND_BUFFER_MAX - (12+1); /* include trailing `\n'*/
 
 	if (int2reverse_hex(&s, &l, (int)msg->msg_flags) == -1) {
-		LOG(L_ERR,"assemble_msg: buffer overflow "
+		LOG(L_ERR,"ERROR:tm:assemble_msg: buffer overflow "
 		    "while copying optional header\n");
 		goto error;
 	}
@@ -838,7 +665,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 
 	eol_line(1).s = s = cmd_buf;
 	if(twi->action.len+12 >= CMD_BUFFER_MAX){
-		LOG(L_ERR,"assemble_msg: buffer overflow while "
+		LOG(L_ERR,"ERROR:tm:assemble_msg: buffer overflow while "
 		    "copying command name\n");
 		goto error;
 	}
@@ -871,7 +698,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	eol_line(15).s=id_buf;       /* hash:label */
 	s = int2str(hash_index, &l);
 	if (l+1>=IDBUF_LEN) {
-		LOG(L_ERR, "assemble_msg: too big hash\n");
+		LOG(L_ERR, "ERROR:tm:assemble_msg: too big hash\n");
 		goto error;
 	}
 	memcpy(id_buf, s, l);
@@ -879,7 +706,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	eol_line(15).len=l+1;
 	s = int2str(label, &l);
 	if (l+1+eol_line(15).len>=IDBUF_LEN) {
-		LOG(L_ERR, "assemble_msg: too big label\n");
+		LOG(L_ERR, "ERROR:tm:assemble_msg: too big label\n");
 		goto error;
 	}
 	memcpy(id_buf+eol_line(15).len, s, l);
@@ -905,16 +732,16 @@ static int write_to_unixsock(char* sockname, int cnt)
 	struct sockaddr_un dest;
 
 	if (!sockname) {
-		LOG(L_ERR, "write_to_unixsock: Invalid parameter\n");
+		LOG(L_ERR, "ERROR:tm:write_to_unixsock: Invalid parameter\n");
 		return E_UNSPEC;
 	}
 
 	len = strlen(sockname);
 	if (len == 0) {
-		DBG("write_to_unixsock: Error - empty socket name\n");
+		DBG("DEBUG:tm:write_to_unixsock: Error - empty socket name\n");
 		return -1;
 	} else if (len > 107) {
-		LOG(L_ERR, "write_to_unixsock: Socket name too long\n");
+		LOG(L_ERR, "ERROR:tm:write_to_unixsock: Socket name too long\n");
 		return -1;
 	}
 
@@ -937,12 +764,14 @@ static int write_to_unixsock(char* sockname, int cnt)
 		e = 0;
 #endif
 	if (e == -1) {
-		LOG(L_ERR, "write_to_unixsock: Error in connect: %s\n", strerror(errno));
+		LOG(L_ERR, "ERROR:tm:write_to_unixsock: Error in connect: %s\n",
+			strerror(errno));
 		return -1;
 	}
 
 	if (tsend_dgram_ev(sock, (struct iovec*)lines_eol, 2 * cnt, tm_unix_tx_timeout * 1000) < 0) {
-		LOG(L_ERR, "write_to_unixsock: writev failed: %s\n", strerror(errno));
+		LOG(L_ERR, "ERROR:tm:write_to_unixsock: writev failed: %s\n",
+			strerror(errno));
 		return -1;
 	}
 
@@ -962,8 +791,8 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* info)
 		return -1;
 	}
 	
-	     /* make sure that if voicemail does not initiate a reply
-	      * timely, a SIP timeout will be sent out */
+	/* make sure that if voicemail does not initiate a reply
+	 * timely, a SIP timeout will be sent out */
 	if (add_blind_uac() == -1) {
 		LOG(L_ERR, "ERROR:tm:t_write_req: add_blind failed\n");
 		return -1;
@@ -984,8 +813,8 @@ int t_write_unix(struct sip_msg* msg, char* socket, char* info)
 		return -1;
 	}
 
-	     /* make sure that if voicemail does not initiate a reply
-	      * timely, a SIP timeout will be sent out */
+	/* make sure that if voicemail does not initiate a reply
+	 * timely, a SIP timeout will be sent out */
 	if (add_blind_uac() == -1) {
 		LOG(L_ERR, "ERROR:tm:t_write_unix: add_blind failed\n");
 		return -1;

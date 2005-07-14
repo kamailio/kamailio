@@ -456,25 +456,28 @@ modparam("tm", "fr_inv_timer_avp", "i:25")
 			tw_append = append_name':' element (';'element)*
 			</emphasis></para></listitem>
 			<listitem><para><emphasis>
-			element = [title '='] value
-			</emphasis></para></listitem>
-			<listitem><para><emphasis>
-			value = ('avp['AVP_SPEC']') | 'hdr['HDR_NAME']'
-				| 'msg[body]'
+			element = (name '=' pseudo_variable) | 'msg(body)'
 			</emphasis></para></listitem>
 		</itemizedlist>
 		</para>
 		<para>
-		Eacj elelmrt will be appended per line in 
-		<quote>title: value</quote> format. If <quote>title</quote> is 
-		missing, the AVP or HDR name will be used. For 
-		<quote>msg[body]</quote>, the title is mandatory.
+		The full list of supported pseudo-variables in &ser; is availabe 
+		at: <ulink url="http://openser.org/docs/pseudo-variables.html">
+		http://openser.org/docs/pseudo-variables.html</ulink>
+		</para>
+		<para>
+		Each element will be appended per line in 
+		<quote>name: value</quote> format. Element <quote>msg(body)</quote>
+		is the only one which does not accept name; the body it will be
+		printed all the time at the end, disregarding its position in the
+		definition string.
 		</para>
 		<example>
-		<title>Set <varname>fr_inv_timer_avp</varname> parameter</title>
+		<title>Set <varname>tw_append</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("tm", "fr_inv_timer_avp", "i:25")
+modparam("tm", "tw_append",
+   "test: ua=$hdr(User-Agent) ;avp=$avp(i:10);msg(body);time=$Ts")
 ...
 </programlisting>
 		</example>

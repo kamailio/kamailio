@@ -99,7 +99,7 @@ Bogdan-Andrei Iancu
    1-13. Set restart_fr_on_each_reply parameter
    1-14. Set fr_timer_avp parameter
    1-15. Set fr_inv_timer_avp parameter
-   1-16. Set fr_inv_timer_avp parameter
+   1-16. Set tw_append parameter
    1-17. t_relay_to_udp usage
    1-18. t_relay usage
    1-19. t_on_negative usage
@@ -416,17 +416,20 @@ modparam("tm", "fr_inv_timer_avp", "i:25")
    Syntax of the parameter is:
 
      * tw_append = append_name':' element (';'element)* 
-     * element = [title '='] value 
-     * value = ('avp['AVP_SPEC']') | 'hdr['HDR_NAME']' |
-       'msg[body]' 
+     * element = (name '=' pseudo_variable) | 'msg(body)' 
 
-   Eacj elelmrt will be appended per line in "title: value"
-   format. If "title" is missing, the AVP or HDR name will be
-   used. For "msg[body]", the title is mandatory.
+   The full list of supported pseudo-variables in OpenSER is
+   availabe at: http://openser.org/docs/pseudo-variables.html
 
-   Example 1-16. Set fr_inv_timer_avp parameter
+   Each element will be appended per line in "name: value"
+   format. Element "msg(body)" is the only one which does not
+   accept name; the body it will be printed all the time at the
+   end, disregarding its position in the definition string.
+
+   Example 1-16. Set tw_append parameter
 ...
-modparam("tm", "fr_inv_timer_avp", "i:25")
+modparam("tm", "tw_append",
+   "test: ua=$hdr(User-Agent) ;avp=$avp(i:10);msg(body);time=$Ts")
 ...
      _________________________________________________________
 
