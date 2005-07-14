@@ -312,12 +312,19 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 
 1.5.2. fix_nated_sdp(mode)
 
-   Rewrites Contact HF to contain request's source address:port.
+   Alters the SDP information in orer to facilitate NAT
+   traversal. What changes to be performed may be controled via
+   the "parameter".
 
-   Meaning of the parameters is as follows:
+   The parameter value may be a bitwise OR of the following
+   flags:
 
-     * mode - 0x01 (add direction=active), 0x02 (rewrite media IP
-       address with source address of the message).
+     * 0x01 - adds "a=direction:active" SDP line;
+     * 0x02 - rewrite media IP address (c=) with source address
+       of the message.
+     * 0x04 - adds "a=nortpproxy:yes" SDP line;
+     * 0x08 - rewrite IP from origin description (o=) with source
+       address of the message.
 
    Example 1-13. fix_nated_sdp usage
 ...
@@ -349,9 +356,12 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
             corresponding session is already exists in the RTP
             proxy. Only makes sense for SIP requests, replies are
             always processed in "lookup" mode.
-          + i - flags that message is received from UA in the
-            LAN. Only makes sense when RTP proxy is running in
-            the bridge mode.
+          + i - flags that message is received from UA in the LAN
+            (internal network). Only makes sense when RTP proxy
+            is running in the bridge mode.
+          + e - flags that message is received from UA in the WAN
+            (external network). Only makes sense when RTP proxy
+            is running in the bridge mode.
           + f - instructs nathelper to ignore marks inserted by
             another nathelper in transit to indicate that the
             session is already goes through another proxy. Allows
@@ -360,6 +370,9 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
             Without this flag, nathelper ignores address in the
             SDP and uses source address of the SIP message as
             media address which is passed to the RTP proxy.
+          + o - flags that IP from the origin description
+            (o=).should be also changed.
+          +
 
    Example 1-15. force_rtp_proxy usage
 ...

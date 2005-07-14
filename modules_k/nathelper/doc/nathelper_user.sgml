@@ -370,15 +370,30 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 		<function moreinfo="none">fix_nated_sdp(mode)</function>
 		</title>
 		<para>
-		Rewrites Contact <acronym>HF</acronym> to contain request's source address:port.
+		Alters the SDP information in orer to facilitate NAT traversal. What
+		changes to be performed may be controled via the 
+		<quote>parameter</quote>.
 		</para>
-		<para>Meaning of the parameters is as follows:</para>
+		<para>The parameter value may be a bitwise OR of the following
+		flags:
+		</para>
 		<itemizedlist>
 		<listitem>
-			<para>
-			<emphasis>mode</emphasis> - 0x01 (add direction=active), 0x02 (rewrite media
-			&ip; address with source address of the message).
+			<para><emphasis>0x01</emphasis> - adds 
+			<quote>a=direction:active</quote> SDP line;
 			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>0x02</emphasis> - rewrite media
+			&ip; address (c=) with source address of the message.
+		</listitem>
+		<listitem>
+			<para><emphasis>0x04</emphasis> - adds 
+			<quote>a=nortpproxy:yes</quote> SDP line;
+		</listitem>
+		<listitem>
+			<para><emphasis>0x08</emphasis> - rewrite IP from
+			origin description (o=) with source address of the message.
 		</listitem>
 		</itemizedlist>
 		<example>
@@ -395,7 +410,8 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 		<function moreinfo="none">force_rtp_proxy()</function>
 		</title>
 		<para>
-		Rewrites &sdp; body to ensure that media is passed through an &rtp; proxy.
+		Rewrites &sdp; body to ensure that media is passed through 
+		an &rtp; proxy.
 		</para>
 		<example>
 		<title><function>force_rtp_proxy</function> usage</title>
@@ -422,7 +438,7 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 			<itemizedlist>
 				<listitem><para>
 				<emphasis>a</emphasis> - flags that UA from which message is
-					received doesn't support symmetric RTP.
+				received doesn't support symmetric RTP.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>l</emphasis> - force <quote>lookup</quote>, that is,
@@ -432,8 +448,13 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 				</para></listitem>
 				<listitem><para>
 				<emphasis>i</emphasis> - flags that message is received from 
-				UA in the LAN. Only makes sense when RTP proxy is running 
-				in the bridge mode.
+				UA in the LAN (internal network). Only makes sense when 
+				RTP proxy is running in the bridge mode.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>e</emphasis> - flags that message is received from 
+				UA in the WAN (external network). Only makes sense when RTP 
+				proxy is running in the bridge mode.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>f</emphasis> - instructs nathelper to ignore marks 
@@ -447,6 +468,11 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 				the SDP and uses source address of the SIP message as media 
 				address which is passed to the RTP proxy.
 				</para></listitem>
+				<listitem><para>
+				<emphasis>o</emphasis> - flags that IP from the origin 
+				description (o=).should be also changed.
+				</para></listitem>
+				<listitem><para>
 			</itemizedlist>
 		</listitem>
 		</itemizedlist>

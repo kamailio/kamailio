@@ -137,6 +137,8 @@
  * 2005-03-22	support for multiple media streams added (netch)
  *
  * 2005-07-11  SIP ping support added (bogdan)
+ *
+ * 2005-07-14  SDP origin (o=) IP may be also changed (bogdan)
  */
 
 #include <sys/types.h>
@@ -211,7 +213,7 @@ struct rtpp_node;
 static int nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2);
 static int fix_nated_contact_f(struct sip_msg *, char *, char *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
-static int extract_mediaip(str *, str *, int *);
+static int extract_mediaip(str *, str *, int *, char *);
 static int extract_mediaport(str *, str *);
 static int alter_mediaip(struct sip_msg *, str *, str *, int, str *, int, int);
 static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
@@ -352,8 +354,8 @@ mod_init(void)
 		bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 		if (!bind_usrloc) {
 			LOG(L_ERR, "ERROR:nathelper:mod_init: Can't find usrloc module\n");
- 			return -1;
- 		}
+			return -1;
+		}
 
 		if (bind_usrloc(&ul) < 0) {
 			return -1;
@@ -807,7 +809,7 @@ sdp_1918(struct sip_msg* msg)
 		LOG(L_ERR,"ERROR: sdp_1918: cannot extract body from msg!\n");
 		return 0;
 	}
-	if (extract_mediaip(&body, &ip, &pf) == -1) {
+	if (extract_mediaip(&body, &ip, &pf,"c=") == -1) {
 		LOG(L_ERR, "ERROR: sdp_1918: can't extract media IP from the SDP\n");
 		return 0;
 	}
@@ -872,6 +874,7 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 #define	ADD_ADIRECTION	0x01
 #define	FIX_MEDIP	0x02
 #define	ADD_ANORTPPROXY	0x04
+#define	FIX_ORGIP	0x08
 
 #define	ADIRECTION	"a=direction:active\r\n"
 #define	ADIRECTION_LEN	(sizeof(ADIRECTION) - 1)
@@ -888,11 +891,59 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 #define	ANORTPPROXY	"a=nortpproxy:yes\r\n"
 #define	ANORTPPROXY_LEN	(sizeof(ANORTPPROXY) - 1)
 
+
+static inline int 
+replace_sdp_ip(struct sip_msg* msg, str *org_body, char *line)
+{
+	str body1, oldip, newip;
+	str body = *org_body;
+	unsigned hasreplaced = 0;
+	int pf, pf1 = 0;
+	str body2;
+	char *bodylimit = body.s + body.len;
+
+	/* Iterate all lines and replace ips in them. */
+	newip.s = ip_addr2a(&msg->rcv.src_ip);
+	newip.len = strlen(newip.s);
+	body1 = body;
+	for(;;) {
+		if (extract_mediaip(&body1, &oldip, &pf,line) == -1)
+			break;
+		if (pf != AF_INET) {
+			LOG(L_ERR, "ERROR: fix_nated_sdp: "
+				"not an IPv4 address in '%s' SDP\n",line);
+				return -1;
+			}
+		if (!pf1)
+			pf1 = pf;
+		else if (pf != pf1) {
+			LOG(L_ERR, "ERROR: fix_nated_sdp: mismatching "
+				"address families in '%s' SDP\n",line);
+			return -1;
+		}
+		body2.s = oldip.s + oldip.len;
+		body2.len = bodylimit - body2.s;
+		if (alter_mediaip(msg, &body1, &oldip, pf, &newip, pf,1) == -1) {
+			LOG(L_ERR, "ERROR: fix_nated_sdp: can't alter '%s' IP\n",line);
+			return -1;
+		}
+		hasreplaced = 1;
+		body1 = body2;
+	}
+	if (!hasreplaced) {
+		LOG(L_ERR, "ERROR: fix_nated_sdp: can't extract '%s' IP "
+			"from the SDP\n",line);
+		return -1;
+	}
+
+	return 0;
+}
+
 static int
 fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 {
-	str body, body1, oldip, newip;
-	int level, pf;
+	str body;
+	int level;
 	char *buf;
 	struct lump* anchor;
 
@@ -917,8 +968,9 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 				return -1;
 			}
 			memcpy(buf, ADIRECTION, ADIRECTION_LEN);
-			if (insert_new_lump_after(anchor, buf, ADIRECTION_LEN, 0) == NULL) {
-				LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after failed\n");
+			if (insert_new_lump_after(anchor, buf, ADIRECTION_LEN, 0)==NULL) {
+				LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after "
+					"failed\n");
 				pkg_free(buf);
 				return -1;
 			}
@@ -930,8 +982,9 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 				return -1;
 			}
 			memcpy(buf, ANORTPPROXY, ANORTPPROXY_LEN);
-			if (insert_new_lump_after(anchor, buf, ANORTPPROXY_LEN, 0) == NULL) {
-				LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after failed\n");
+			if (insert_new_lump_after(anchor, buf, ANORTPPROXY_LEN, 0)==NULL) {
+				LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after "
+					"failed\n");
 				pkg_free(buf);
 				return -1;
 			}
@@ -939,65 +992,35 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	if (level & FIX_MEDIP) {
- 		/* Iterate all c= and replace ips in them. */
- 		unsigned hasreplaced = 0;
- 		int pf1 = 0;
- 		str body2;
- 		char *bodylimit = body.s + body.len;
- 		newip.s = ip_addr2a(&msg->rcv.src_ip);
- 		newip.len = strlen(newip.s);
- 		body1 = body;
- 		for(;;) {
- 			if (extract_mediaip(&body1, &oldip, &pf) == -1)
- 				break;
- 			if (pf != AF_INET) {
- 				LOG(L_ERR, "ERROR: fix_nated_sdp: "
- 				    "not an IPv4 address in SDP\n");
- 				goto finalize;
- 			}
- 			if (!pf1)
- 				pf1 = pf;
- 			else if (pf != pf1) {
- 				LOG(L_ERR, "ERROR: fix_nated_sdp: mismatching "
- 				    "address families in SDP\n");
- 				return -1;
- 			}
- 			body2.s = oldip.s + oldip.len;
- 			body2.len = bodylimit - body2.s;
- 			if (alter_mediaip(msg, &body1, &oldip, pf, &newip, pf,
- 			    1) == -1)
- 			{
- 				LOG(L_ERR, "ERROR: fix_nated_sdp: can't alter media IP\n");
- 				return -1;
- 			}
- 			hasreplaced = 1;
- 			body1 = body2;
- 		}
- 		if (!hasreplaced) {
- 			LOG(L_ERR, "ERROR: fix_nated_sdp: can't extract media IP from the SDP\n");
- 			goto finalize;
- 		}
+		/* Iterate all c= and replace ips in them. */
+		if (replace_sdp_ip(msg, &body, "c=")==-1)
+			return -1;
 	}
 
-finalize:
+	if (level & FIX_ORGIP) {
+		/* Iterate all o= and replace ips in them. */
+		if (replace_sdp_ip(msg, &body, "o=")==-1)
+			return -1;
+	}
+
 	return 1;
 }
 
 static int
-extract_mediaip(str *body, str *mediaip, int *pf)
+extract_mediaip(str *body, str *mediaip, int *pf, char *line)
 {
 	char *cp, *cp1;
 	int len, nextisip;
 
 	cp1 = NULL;
 	for (cp = body->s; (len = body->s + body->len - cp) > 0;) {
-		cp1 = ser_memmem(cp, "c=", len, 2);
+		cp1 = ser_memmem(cp, line, len, 2);
 		if (cp1 == NULL || cp1[-1] == '\n' || cp1[-1] == '\r')
 			break;
 		cp = cp1 + 2;
 	}
 	if (cp1 == NULL) {
-		LOG(L_ERR, "ERROR: extract_mediaip: no `c=' in SDP\n");
+		LOG(L_ERR, "ERROR: extract_mediaip: no `%s' in SDP\n",line);
 		return -1;
 	}
 	mediaip->s = cp1 + 2;
@@ -1033,7 +1056,7 @@ extract_mediaip(str *body, str *mediaip, int *pf)
 	}
 	if (nextisip != 2 || mediaip->len == 0) {
 		LOG(L_ERR, "ERROR: extract_mediaip: "
-		    "no `IP[4|6]' in `c=' field\n");
+		    "no `IP[4|6]' in `%s' field\n",line);
 		return -1;
 	}
 	return 1;
@@ -1126,28 +1149,6 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 	    memcmp(newip->s, oldip->s, newip->len) == 0)
 		return 0;
 
-	/*
-	 * Since rewriting the same info twice will mess SDP up,
-	 * apply simple anti foot shooting measure - put flag on
-	 * messages that have been altered and check it when
-	 * another request comes.
-	 */
-#if 0
-	/* disabled:
-	 *  - alter_mediaip is called twice if 2 c= lines are present
-	 *    in the sdp (and we want to allow it)
-	 *  - the message flags are propagated in the on_reply_route
-	 *  => if we set the flags for the request they will be seen for the
-	 *    reply too, but we don't want that
-	 *  --andrei
-	 */
-	if (msg->msg_flags & FL_SDP_IP_AFS) {
-		LOG(L_ERR, "ERROR: alter_mediaip: you can't rewrite the same "
-		  "SDP twice, check your config!\n");
-		return -1;
-	}
-#endif
-
 	if (preserve != 0) {
 		anchor = anchor_lump(msg, body->s + body->len - msg->buf, 0, 0);
 		if (anchor == NULL) {
@@ -1211,10 +1212,6 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 		pkg_free(nip.s);
 		return -1;
 	}
-
-#if 0
-	msg->msg_flags |= FL_SDP_IP_AFS;
-#endif
 
 	if (insert_new_lump_after(anchor, nip.s, nip.len, 0) == 0) {
 		LOG(L_ERR, "ERROR: alter_mediaip: insert_new_lump_after failed\n");
@@ -1627,7 +1624,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	str body, body1, oldport, oldip, newport, newip;
 	str callid, from_tag, to_tag, tmp;
-	int create, port, len, asymmetric, flookup, argc, proxied, real;
+	int create, port, len, asymmetric, flookup, argc, proxied, real, orgip;
 	int oidx, pf, pf1, force;
 	char opts[16];
 	char *cp, *cp1;
@@ -1651,14 +1648,14 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		{" ", 1},	/* separator */
 		{NULL, 0}	/* to_tag */
 	};
-	char *v1p, *v2p, *c1p, *c2p, *m1p, *m2p, *bodylimit;
+	char *v1p, *v2p, *c1p, *c2p, *m1p, *m2p, *bodylimit, *o1p;
 	char medianum_buf[20];
 	int medianum, media_multi;
 	str medianum_str, tmpstr1;
 	int c1p_altered;
 
 	v[1].iov_base=opts;
-	asymmetric = flookup = force = real = 0;
+	asymmetric = flookup = force = real = orgip = 0;
 	oidx = 1;
 	for (cp = str1; *cp != '\0'; cp++) {
 		switch (*cp) {
@@ -1692,6 +1689,11 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		case 'r':
 		case 'R':
 			real = 1;
+			break;
+
+		case 'o':
+		case 'O':
+			orgip = 1;
 			break;
 
 		default:
@@ -1779,8 +1781,14 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			break; /* No sessions left */
 		v2p = find_next_sdp_line(v1p, bodylimit, 'v', bodylimit);
 		/* v2p is text limit for session parsing. */
-		m1p = find_sdp_line(v1p, v2p, 'm');
+		/* get session origin */
+		o1p = find_sdp_line(v1p, v2p, 'o');
+		if (o1p==0) {
+			LOG(L_ERR, "ERROR: force_rtp_proxy2: no o= in session\n");
+			return -1;
+		}
 		/* Have this session media description? */
+		m1p = find_sdp_line(o1p, v2p, 'm');
 		if (m1p == NULL) {
 			LOG(L_ERR, "ERROR: force_rtp_proxy2: no m= in session\n");
 			return -1;
@@ -1789,8 +1797,10 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		 * Find c1p only between session begin and first media.
 		 * c1p will give common c= for all medias.
 		 */
-		c1p = find_sdp_line(v1p, m1p, 'c');
+		c1p = find_sdp_line(o1p, m1p, 'c');
 		c1p_altered = 0;
+		if (orgip==0)
+			o1p = 0;
 		/* Have session. Iterate media descriptions in session */
 		m2p = m1p;
 		for (;;) {
@@ -1809,7 +1819,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 				return -1;
 			}
 			tmpstr1.len = v2p - tmpstr1.s; /* limit is session limit text */
-			if (extract_mediaip(&tmpstr1, &oldip, &pf) == -1) {
+			if (extract_mediaip(&tmpstr1, &oldip, &pf,"c=") == -1) {
 				LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
 				    " extract media IP from the message\n");
 				return -1;
@@ -1852,7 +1862,8 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			do {
 				node = select_rtpp_node(callid, 1);
 				if (!node) {
-					LOG(L_ERR, "ERROR: force_rtp_proxy2: no available proxies\n");
+					LOG(L_ERR, "ERROR: force_rtp_proxy2: no available "
+						"proxies\n");
 					return -1;
 				}
 				cp = send_rtpp_command(node, v, (to_tag.len > 0) ? 14 : 12);
@@ -1863,7 +1874,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			memset(argv, 0, sizeof(argv));
 			cpend=cp+strlen(cp);
 			next=eat_token_end(cp, cpend);
-			for (ap = argv; cp<cpend; cp=next+1, next=eat_token_end(cp, cpend)){
+			for (ap=argv; cp<cpend; cp=next+1, next=eat_token_end(cp, cpend)){
 				*next=0;
 				if (*cp != '\0') {
 					*ap=cp;
@@ -1878,7 +1889,8 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			}
 			port = atoi(argv[0]);
 			if (port <= 0 || port > 65535) {
-				LOG(L_ERR, "force_rtp_proxy2: incorrect port in reply from rtp proxy\n");
+				LOG(L_ERR, "force_rtp_proxy2: incorrect port in reply "
+					"from rtp proxy\n");
 				return -1;
 			}
 
@@ -1909,10 +1921,27 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			if (c2p != NULL || !c1p_altered) {
 				body1.s = c2p ? c2p : c1p;
 				body1.len = bodylimit - body1.s;
-				if (alter_mediaip(msg, &body1, &oldip, pf, &newip, pf1, 0) == -1)
+				if (alter_mediaip(msg, &body1, &oldip, pf, &newip, pf1, 0)==-1)
 					return -1;
 				if (!c2p)
 					c1p_altered = 1;
+			}
+			/*
+			 * Alter the IP in "o=", but only once per session
+			 */
+			if (o1p) {
+				tmpstr1.s = o1p;
+				tmpstr1.len = v2p - tmpstr1.s;
+				if (extract_mediaip(&tmpstr1, &oldip, &pf,"o=") == -1) {
+					LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
+						" extract media IP from the message\n");
+					return -1;
+				}
+				body1.s = o1p;
+				body1.len = bodylimit - body1.s;
+				if (alter_mediaip(msg, &body1, &oldip, pf, &newip, pf1, 0)==-1)
+					return -1;
+				o1p = 0;
 			}
 		} /* Iterate medias in session */
 	} /* Iterate sessions */
