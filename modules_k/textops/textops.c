@@ -745,7 +745,7 @@ static int fixup_method(void** param, int param_no)
 	str* s;
 	char *p;
 	int m;
-	int method;
+	unsigned int method;
 	
 	s = (str*)pkg_malloc(sizeof(str));
 	if (!s) {
