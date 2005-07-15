@@ -450,7 +450,7 @@ static inline char* add2buf(char *buf, char *end, str *name, str *value)
 static inline char* append2buf( char *buf, int len, struct sip_msg *req, 
 				struct append_elem *elem)
 {
-	str value;
+	xl_value_t value;
 	char *end;
 
 	end = buf+len;
@@ -458,14 +458,14 @@ static inline char* append2buf( char *buf, int len, struct sip_msg *req,
 	while (elem)
 	{
 		/* get the value */
-		if (xl_get_spec_value( req, &elem->spec, &value)!=0)
+		if (xl_get_spec_value(req, &elem->spec, &value)!=0)
 		{
 			LOG(L_ERR,"ERROR:tm:append2buf: failed to get '%.*s'\n",
 				elem->name.len,elem->name.s);
 		}
 
 		/* write the value into the buffer */
-		buf = add2buf( buf, end, &elem->name, &value);
+		buf = add2buf( buf, end, &elem->name, &value.rs);
 		if (!buf)
 		{
 			LOG(L_ERR,"ERROR:tm:append2buf: overflow -> append "

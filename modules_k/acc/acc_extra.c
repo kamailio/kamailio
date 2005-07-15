@@ -243,7 +243,7 @@ int extra2strar( struct acc_extra *extra, /* extra list to account */
 		str *attr_arr,
 		str **val_arr)
 {
-	str value;
+	xl_value_t value;
 	int    n;
 	int    p;
 	int    r;
@@ -270,14 +270,14 @@ int extra2strar( struct acc_extra *extra, /* extra list to account */
 		}
 
 		/* set the value into the acc buffer */
-		if (value.s+value.len==static_detector)
+		if (value.rs.s+value.rs.len==static_detector)
 		{
-			memcpy(str_buf[p].s, value.s, value.len);
-			str_buf[p].len = value.len;
+			memcpy(str_buf[p].s, value.rs.s, value.rs.len);
+			str_buf[p].len = value.rs.len;
 			set_acc( n, extra->name, &str_buf[p] );
 			p++;
 		} else {
-			str_buf[r] = value;
+			str_buf[r] = value.rs;
 			set_acc( n, extra->name, &str_buf[r] );
 			r++;
 		}
