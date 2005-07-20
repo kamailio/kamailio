@@ -16,6 +16,8 @@ Section 2 describes the types of SIP phones that work with mediaproxy and a
 Section 3 is about mediaproxy features.
 Section 4 describes the exported module parameters and functions.
 Section 5 is a comparison with nathelper.
+Section 6 is a example how to use sip_ping from nathelper to send pings based
+          on real SIP requests instead of the 4 byte pings one way pings.
 
 1. Principle of operation
    ----------------------
@@ -253,4 +255,34 @@ fly without any need for restart.
 Another advantage of this is that ser.cfg becomes simpler and easier to
 maintain.
 
+
+6. How to use sip_ping from the nathelper module
+   ---------------------------------------------
+
+  The nathelper module provides a option ping with real SIP messages instead
+of just sending 4 zero bytes, which has the advantage that the communication
+is bidirectional and thus some NATs that only keep the connection open if
+there is traffic from the inside won't close the pinholes (the 4 zero byte
+ping doesn't have a reply from inside the NAT).
+
+Example configuration:
+loadmodule "/lib/openser/modules/mediaproxy.so"
+loadmodule "/lib/openser/modules/nathelper.so"
+
+modparam("mediaproxy", "natping_interval", 0)
+
+modparam("nathelper", "rtpproxy_disable", 1)
+modparam("nathelper", "natping_interval", 30)
+modparam("nathelper", "sipping_from", "sip:ping@sip1.cableone.extern")
+
+modparam("registrar", "nat_flag", 6)
+modparam("registrar", "sip_natping_flag", 2)
+
+if (method=="REGISTER") {
+    setflag(6);	# nat
+    setflag(2);	# sip_ping
+    if (!save("location")) {
+    	sl_reply_error();
+    }
+}
 
