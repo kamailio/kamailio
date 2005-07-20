@@ -126,9 +126,14 @@ extern augBool aug_dab_enabled;
 
 #else
 
+#ifdef __SUNPRO_C
+	#define DABL_NOP(...) /* ignore */
+#else
+	#define DABL_NOP(args...) /* ignore */
+#endif
 #define DABNAME(name)
 #define DABLEVEL(lev)	(augFALSE)
-#define DABL(lev)	(augFALSE) &&
+#define DABL(lev)	 DABL_NOP
 #define DAB		DABL(0)
 #define DABTRACE	DABL(0)
 #define DABBULK		DABL(0)

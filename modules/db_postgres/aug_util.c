@@ -111,7 +111,6 @@ augExport void aug_abort(char *file, int line, char *fmt, ...)
 augExport void aug_setmodule(char *name)
 {
 	char *prog;
-	int len;
 
 	if(!name)
 		return;
