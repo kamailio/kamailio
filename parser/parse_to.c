@@ -496,7 +496,8 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 	int status;
 	int saved_status;
 	char  *tmp,*foo;
-
+	
+	saved_status=START_TO; /* fixes gcc 4.x warning */
 	status=START_TO;
 	to_b->error=PARSE_OK;
 	to_b->uri.len = 0;

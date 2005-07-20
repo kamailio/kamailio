@@ -227,6 +227,8 @@ static int parse_method(str* _next, unsigned int* _method)
  {
  	str next;
  	unsigned int method;
+	
+	method=0; /* fixes silly gcc 4.x warning */
  
 	if (!_body || !_methods) {
 		LOG(L_ERR, "parse_methods: Invalid parameter value\n");

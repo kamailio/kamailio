@@ -1605,6 +1605,9 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	received_len=rport_len=warning_len=content_len_len=0;
 	
 	text_len=strlen(text);
+
+	to_tag.s=0;  /* fixes gcc 4.0 warning */
+	to_tag.len=0;
 	
 	/* force parsing all headers -- we want to return all
 	Via's in the reply and they may be scattered down to the

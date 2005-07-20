@@ -1011,6 +1011,7 @@ parse_again:
 	vb->error=PARSE_ERROR;
 	/* parse start of via ( SIP/2.0/UDP    )*/
 	state=F_SIP;
+	saved_state=F_SIP; /* fixes gcc 4.0 warning */
 	param_start=0;
 	for(tmp=buffer;tmp<end;tmp++){
 		switch(*tmp){
