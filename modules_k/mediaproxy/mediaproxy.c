@@ -325,7 +325,7 @@ strtoint(str *data)
 static char*
 encodeQuopri(str buf)
 {
-    char *result = pkg_malloc(buf.len*3+1);
+    char *result;
     int i, j;
     char c;
 
@@ -1114,6 +1114,13 @@ checkAsymmetricFile(AsymmetricClients *aptr)
         line.s[line.len] = 0;
 
         re = (regex_t*)pkg_malloc(sizeof(regex_t));
+        if (!re) {
+            LOG(L_WARN, "warning: mediaproxy/checkAsymmetricFile(): "
+                "cannot allocate memory for all the %s asymmetric "
+                "clients listed in file. Some of them will not be "
+                "handled properly.\n", which);
+            break;
+        }
         code = regcomp(re, line.s, REG_EXTENDED|REG_ICASE|REG_NOSUB);
         if (code == 0) {
             if (aptr->count+1 > aptr->size) {
@@ -1249,7 +1256,7 @@ testSourceAddress(struct sip_msg* msg)
     Bool diffIP, diffPort;
     int via1Port;
 
-    diffIP   = received_test(msg);
+    diffIP = received_test(msg);
     if (isSIPAsymmetric(getUserAgent(msg))) {
         // ignore port test for asymmetric clients (it's always different)
         diffPort = False;
@@ -1444,8 +1451,20 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
     }
 
     agent = encodeQuopri(userAgent);
+    if (!agent) {
+        LOG(L_ERR, "error: use_media_proxy(): out of memory\n");
+        pkg_free(command);
+        return -1;
+    }
 
     info = pkg_malloc(infolen);
+    if (!info) {
+        LOG(L_ERR, "error: use_media_proxy(): out of memory\n");
+        pkg_free(command);
+        pkg_free(agent);
+        return -1;
+    }
+
     sprintf(info, "from:%.*s,to:%.*s,fromtag:%.*s,totag:%.*s",
             fromAddr.len, fromAddr.s, toAddr.len, toAddr.s,
             fromTag.len, fromTag.s, toTag.len, toTag.s);
