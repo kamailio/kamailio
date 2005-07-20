@@ -1,0 +1,45 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+<!ENTITY user SYSTEM "mediaproxy_user.sgml">
+<!ENTITY devel SYSTEM "mediaproxy_devel.sgml">
+<!ENTITY faq SYSTEM "mediaproxy_faq.sgml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
+%docentities;
+
+]>
+
+<book>
+	<bookinfo>
+	<title>Mediaproxy Module</title>
+	<authorgroup>
+		<author>
+		<firstname>Dan</firstname>
+		<surname>Pascu</surname>
+		<email>dan@ag-projects.com</email>
+		</author>
+		<editor>
+		<firstname>Dan</firstname>
+		<surname>Pascu</surname>
+		<email>dan@ag-projects.com</email>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2004</year>
+		<holder>Dan Pascu</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</bookinfo>
+	<toc></toc>
+
+	&user;
+	&devel;
+	&faq;
+
+</book>

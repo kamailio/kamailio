@@ -148,7 +148,7 @@ static int natpingInterval = 60; // 60 seconds
 static usrloc_api_t userLocation;
 
 static AsymmetricClients sipAsymmetrics = {
-    "/etc/ser/sip-asymmetric-clients",
+    "/etc/openser/sip-asymmetric-clients",
     //CFG_DIR"/sip-asymmetric-clients",
     0,
     NULL,
@@ -157,7 +157,7 @@ static AsymmetricClients sipAsymmetrics = {
 };
 
 static AsymmetricClients rtpAsymmetrics = {
-    "/etc/ser/rtp-asymmetric-clients",
+    "/etc/openser/rtp-asymmetric-clients",
     0,
     NULL,
     0,
