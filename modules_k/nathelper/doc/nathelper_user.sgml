@@ -470,9 +470,8 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 				</para></listitem>
 				<listitem><para>
 				<emphasis>o</emphasis> - flags that IP from the origin 
-				description (o=).should be also changed.
+				description (o=) should be also changed.
 				</para></listitem>
-				<listitem><para>
 			</itemizedlist>
 		</listitem>
 		</itemizedlist>
