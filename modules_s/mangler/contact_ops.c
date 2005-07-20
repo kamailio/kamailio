@@ -174,7 +174,8 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 	char separator;
 	int res;
 	
-	
+	uri.s=0; /* fixes gcc 4.0 warning */
+	uri.len=0;
 #ifdef DEBUG
 	fprintf (stdout,"---START--------DECODE CONTACT-----------------\n");
         fprintf (stdout,"%.*s\n",50,msg->buf);

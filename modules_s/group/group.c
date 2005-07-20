@@ -117,6 +117,8 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 	struct hdr_field* h;
 	struct auth_body* c = 0; /* Makes gcc happy */
 
+	uri.s=0; /* fixes gcc 4.0 warning */
+	uri.len=0;
 	keys[0] = user_column.s;
 	keys[1] = group_column.s;
 	keys[2] = domain_column.s;

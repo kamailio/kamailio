@@ -348,6 +348,7 @@ static inline char *run_location( struct cpl_interpreter *intr )
 	clear = NO_VAL;
 	prio = 10;
 	url.s = (char*)UNDEF_CHAR;
+	url.len = 0; /* fixes gcc 4.0 warning */
 
 	/* sanity check */
 	if (NR_OF_KIDS(intr->ip)>1) {

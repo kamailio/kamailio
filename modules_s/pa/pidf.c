@@ -393,7 +393,7 @@ void xpath_map(xmlDocPtr doc, char *xpath, void (*f)(xmlNodePtr, void *), void *
 	int i;
 
 	context = xmlXPathNewContext(doc);
-	result = xmlXPathEvalExpression(xpath, context);
+	result = xmlXPathEvalExpression((xmlChar*)xpath, context);
 	if(!result || xmlXPathNodeSetIsEmpty(result->nodesetval)){
 		fprintf(stderr, "xpath_map: no result for xpath=%s\n", xpath);
 		return;
@@ -415,7 +415,7 @@ xmlNodePtr xpath_get_node(xmlDocPtr doc, char *xpath)
 	xmlNodePtr node;
 
 	context = xmlXPathNewContext(doc);
-	result = xmlXPathEvalExpression(xpath, context);
+	result = xmlXPathEvalExpression((xmlChar*)xpath, context);
 	if(xmlXPathNodeSetIsEmpty(result->nodesetval)){
 		fprintf(stderr, "xpath_get_node: no result for xpath=%s\n", xpath);
 		return NULL;
@@ -430,7 +430,7 @@ xmlAttrPtr xmlNodeGetAttrByName(xmlNodePtr node, const char *name)
 {
 	xmlAttrPtr attr = node->properties;
 	while (attr) {
-		if (xmlStrcasecmp(attr->name, name) == 0)
+		if (xmlStrcasecmp(attr->name, (xmlChar*)name) == 0)
 			return attr;
 		attr = attr->next;
 	}
@@ -441,7 +441,7 @@ char *xmlNodeGetAttrContentByName(xmlNodePtr node, const char *name)
 {
      xmlAttrPtr attr = xmlNodeGetAttrByName(node, name);
      if (attr)
-	  return xmlNodeGetContent(attr->children);
+	  return (char*)xmlNodeGetContent(attr->children);
      else
 	  return NULL;
 }
@@ -450,7 +450,7 @@ xmlNodePtr xmlNodeGetChildByName(xmlNodePtr node, const char *name)
 {
 	xmlNodePtr cur = node->children;
 	while (cur) {
-		if (xmlStrcasecmp(cur->name, name) == 0)
+		if (xmlStrcasecmp(cur->name, (xmlChar*)name) == 0)
 			return cur;
 		cur = cur->next;
 	}
@@ -462,8 +462,9 @@ xmlNodePtr xmlNodeGetNodeByName(xmlNodePtr node, const char *name, const char *n
 	xmlNodePtr cur = node;
 	while (cur) {
 		xmlNodePtr match = NULL;
-		if (xmlStrcasecmp(cur->name, name) == 0) {
-			if (!ns || (cur->ns && xmlStrcasecmp(cur->ns->prefix, ns) == 0))
+		if (xmlStrcasecmp(cur->name, (xmlChar*)name) == 0) {
+			if (!ns || (cur->ns && 
+						xmlStrcasecmp(cur->ns->prefix, (xmlChar*)ns) == 0))
 				return cur;
 		}
 		match = xmlNodeGetNodeByName(cur->children, name, ns);
@@ -478,7 +479,7 @@ char *xmlNodeGetNodeContentByName(xmlNodePtr root, const char *name, const char 
 {
 	xmlNodePtr node = xmlNodeGetNodeByName(root, name, ns);
 	if (node)
-		return xmlNodeGetContent(node->children);
+		return (char*)xmlNodeGetContent(node->children);
 	else
 		return NULL;
 }
@@ -493,7 +494,7 @@ char *xmlDocGetNodeContentByName(xmlDocPtr doc, const char *name, const char *ns
 {
 	xmlNodePtr node = xmlDocGetNodeByName(doc, name, ns);
 	if (node)
-		return xmlNodeGetContent(node->children);
+		return (char*)xmlNodeGetContent(node->children);
 	else
 		return NULL;
 }
@@ -506,8 +507,9 @@ void xmlNodeMapByName(xmlNodePtr node, const char *name, const char *ns,
 	if (!f)
 		return;
 	while (cur) {
-		if (xmlStrcasecmp(cur->name, name) == 0) {
-			if (!ns || (cur->ns && xmlStrcasecmp(cur->ns->prefix, ns) == 0))
+		if (xmlStrcasecmp(cur->name, (xmlChar*)name) == 0) {
+			if (!ns || (cur->ns &&
+						xmlStrcasecmp(cur->ns->prefix, (xmlChar*)ns) == 0))
 				f(cur, data);
 		}
 		/* visit children */

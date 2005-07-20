@@ -36,6 +36,7 @@
 #define AUTHRAD_MOD_H
 
 #include "../auth/api.h"
+#include "../../modules/acc/dict.h" /* attr & val */
 
 #include "../acc/dict.h"
 

@@ -84,6 +84,7 @@ int lpidf_add_address(str* _b, int _l, str* _addr, lpidf_status_t _st)
 	switch(_st) {
 	case LPIDF_ST_OPEN:   s.s = Q_OPEN; s.len = Q_OPEN_L;     break;
 	case LPIDF_ST_CLOSED: s.s = Q_CLOSED; s.len = Q_CLOSED_L; break;
+	default: s.s=0; s.len=0;
 	}
 
 	if (_l < (CONTACT_START_L + _addr->len + CONTACT_MIDDLE_L + s.len + 2)) {

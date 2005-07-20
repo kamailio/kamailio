@@ -101,6 +101,7 @@
 
 
 #ifdef RAD_ACC
+#include "dict.h"
 extern struct attr attrs[];
 extern struct val vals[];
 #endif

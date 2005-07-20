@@ -552,6 +552,7 @@ get_to_tag(struct sip_msg* _m, str* _tag)
 		_tag->s = get_to(_m)->tag_value.s;
 		_tag->len = get_to(_m)->tag_value.len;
 	} else {
+		_tag->s = 0; /* fixes gcc 4.0 warnings */
 		_tag->len = 0;
 	}
 

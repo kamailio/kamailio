@@ -36,6 +36,8 @@
 
 #include "../acc/dict.h"
 
+#include "../../modules/acc/dict.h" /* attr & val */
+
 extern struct attr attrs[];
 extern struct val vals[];
 extern void *rh;

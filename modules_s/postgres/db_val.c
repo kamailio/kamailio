@@ -223,7 +223,7 @@ int str2valp(db_type_t _t, db_val_t* _v, const char* _s, int _l, void *_p)
 
 	case DB_STR:
 		VAL_STR(_v).s = aug_alloc(_l + 1, _p);
-		memcpy(_s, VAL_STR(_v).s, _l);
+		memcpy(VAL_STR(_v).s, _s,  _l);
 		VAL_STR(_v).s[_l] = (char) 0;
 		VAL_STR(_v).len = _l;
 		VAL_TYPE(_v) = DB_STR;
@@ -248,7 +248,7 @@ int str2valp(db_type_t _t, db_val_t* _v, const char* _s, int _l, void *_p)
 	case DB_BLOB:
 
 		VAL_STR(_v).s = aug_alloc(_l + 1, _p);
-		memcpy(_s, VAL_STR(_v).s, _l);
+		memcpy(VAL_STR(_v).s, _s,  _l);
 		VAL_STR(_v).s[_l] = (char) 0;
 		VAL_STR(_v).len = _l;
 		VAL_TYPE(_v) = DB_BLOB;

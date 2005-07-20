@@ -84,9 +84,10 @@ extern augNoMemFunc *aug_set_nomem_func(augNoMemFunc *new_func);
 
 extern void *aug_alloc_loc(size_t size, void *parent, char *file, int line);
 extern void *aug_realloc_loc(size_t size, void *prev, char *file, int line);
-extern char *aug_strdup_loc(char *str, void *parent, char *file, int line);
+extern char *aug_strdup_loc(const char *str, void *parent, char *file,
+								int line);
 extern char **aug_vecdup_loc(char **vec, void *parent, char *file, int line);
-extern void aug_free_loc(void *mem, char *file, int line);
+extern void aug_free_loc(const void *mem, char *file, int line);
 extern void aug_foster_loc(void *mem, void *new_parent, char *file, int line);
 
 extern augAllocStats *aug_alloc_stats(void);

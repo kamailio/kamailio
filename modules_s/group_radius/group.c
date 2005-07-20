@@ -128,6 +128,8 @@ int radius_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	struct hdr_field* h;
 	struct sip_uri puri;
 
+	uri.s=0;  /* fixes gcc 4.0 warning */
+	uri.len=0;
 	grp = (str*)_group; /* via fixup */
 	send = received = 0;
 

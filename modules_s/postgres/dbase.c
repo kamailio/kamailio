@@ -234,6 +234,7 @@ static int disconnect_db(db_con_t* _h)
 db_con_t *db_init(const char* _sqlurl)
 {
 	db_con_t* res;
+	void* t;
 
 	DLOG("db_init", "entry");
 
@@ -242,7 +243,8 @@ db_con_t *db_init(const char* _sqlurl)
 	*/
 	res = aug_alloc(sizeof(db_con_t), 0);
 	memset(res, 0, sizeof(db_con_t));
-	res->tail = aug_alloc(sizeof(struct con_postgres), (char*)res);
+	t = aug_alloc(sizeof(struct con_postgres), (char*)res);
+	res->tail = (unsigned long) t;
 	memset((struct con_postgres*)res->tail, 0, sizeof(struct con_postgres));
 
 	if (connect_db(res, _sqlurl) < 0)

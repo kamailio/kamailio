@@ -126,6 +126,9 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	int ret;
 	unsigned int tmp;
 
+	user_name.s=0; /* fixes a gcc 4.0 warning */
+	uri.s=0; 
+	uri.len=0; 
 	grp = (str*)_group; /* via fixup */
 
 	hf_type = (int)(long)_hf;

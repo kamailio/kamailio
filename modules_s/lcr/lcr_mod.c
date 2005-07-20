@@ -641,7 +641,7 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 	} else {
 		ap.port[2] = (int)VAL_INT(ROW_VALUES(row) + 1);
 	}
-	value.s = &(ap.ap[0]);
+	value.s = (char*)&(ap.ap[0]);
 	value.len = 6;
 	val.s = &value;
 	add_avp(gw_ap_avp_name_str|AVP_VAL_STR, addr_port_name, val);

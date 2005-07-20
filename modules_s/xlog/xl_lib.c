@@ -693,7 +693,8 @@ static int xl_get_branches(struct sip_msg *msg, str *res, str *hp, int hi)
 {
 	str uri;
 	qvalue_t q;
-	int len, cnt, i, qlen;
+	int len, cnt, i;
+	unsigned int qlen;
 	char *p, *qbuf;
 
 	if(msg==NULL || res==NULL)

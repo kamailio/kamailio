@@ -558,6 +558,7 @@ static int format_converter(register buffy * odp, const char *fmt,
     boolean_e adjust_width;
     bool_int is_negative;
 
+    s_len=0; /* warning fix */
     sp = odp->nextb;
     bep = odp->buf_end;
 
