@@ -42,8 +42,21 @@
 
 struct tm_binds {
 	register_tmcb_f  register_tmcb;
+	cmd_function     t_replicate;
+	cmd_function     t_replicate_udp;
+#ifdef USE_TCP
+	cmd_function     t_replicate_tcp;
+#endif
+#ifdef USE_TLS
+	cmd_function     t_replicate_tls;
+#endif
 	cmd_function     t_relay_to_udp;
+#ifdef USE_TCP
 	cmd_function     t_relay_to_tcp;
+#endif
+#ifdef USE_TLS
+	cmd_function     t_relay_to_tls;
+#endif
 	cmd_function     t_relay;
 	tnewtran_f       t_newtran;
 	treply_f         t_reply;

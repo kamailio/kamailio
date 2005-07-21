@@ -414,9 +414,21 @@ int load_tm( struct tm_binds *tmb)
 {
 	tmb->register_tmcb = register_tmcb;
 
+	/* replicate function */
+	tmb->t_replicate = w_t_replicate;
+	tmb->t_replicate_udp = w_t_replicate_udp;
+#ifdef USE_TCP
+	tmb->t_replicate_tcp = w_t_replicate_tcp;
+#endif
+#ifdef USE_TLS
+	tmb->t_replicate_tls = w_t_replicate_tls;
+#endif
 	/* relay / reply function */
 #ifdef USE_TCP
 	tmb->t_relay_to_tcp = w_t_relay_to_tcp;
+#endif
+#ifdef USE_TLS
+	tmb->t_relay_to_tls = w_t_relay_to_tls;
 #endif
 	tmb->t_relay_to_udp = w_t_relay_to_udp;
 	tmb->t_relay = w_t_relay;
