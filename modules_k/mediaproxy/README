@@ -387,7 +387,7 @@ if (method==BYE) {
 
 1.8. How to use sip_ping from the nathelper module
 
-   The nathelper module provides a option ping with real SIP
+   The nathelper module provides an option to ping with real SIP
    messages instead of just sending 4 zero bytes, which has the
    advantage that the communication is bidirectional and thus
    some NATs that only keep the connection open if there is
