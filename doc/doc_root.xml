@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<book id="ser_doc" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <chapter>
+	<title>SIP Introduction</title>
+	<xi:include href="sip/sip_introduction.xml"/>
+    </chapter>
+
+    <chapter>
+	<title>Howto</title>
+	<xi:include href="serhowto/ser-howto.xml"/>
+    </chapter>
+
+    <chapter>
+	<title>RADIUS Howto</title>
+	<xi:include href="ser_radius/ser_radius.xml"/>
+    </chapter>
+
+    <chapter>
+	<title>Administrator's Guide</title>
+	<xi:include href="seruser/seruser.xml"/>
+    </chapter>
+
+    <chapter>
+    	<title>Module Documentation</title>
+	<xi:include href="../modules/acc/doc/acc.xml"/>
+	<xi:include href="../modules/auth/doc/auth.xml"/>
+	<xi:include href="../modules/auth_db/doc/auth_db.xml"/>
+	<xi:include href="../modules/auth_radius/doc/auth_radius.xml"/>
+	<xi:include href="../modules/avp/doc/avp.xml"/>
+	<xi:include href="../modules/avp_db/doc/avp_db.xml"/>
+	<xi:include href="../modules/avpops/doc/avpops.xml"/>
+	<xi:include href="../modules/avp_radius/doc/avp_radius.xml"/>
+	<xi:include href="../modules/cpl-c/doc/cpl-c.xml"/>
+	<xi:include href="../modules/dbtext/doc/dbtext.xml"/>
+	<xi:include href="../modules/dispatcher/doc/dispatcher.xml"/>
+	<xi:include href="../modules/diversion/doc/diversion.xml"/>
+	<xi:include href="../modules/domain/doc/domain.xml"/>
+	<xi:include href="../modules/enum/doc/enum.xml"/>
+	<xi:include href="../modules/exec/doc/exec.xml"/>
+	<xi:include href="../modules/flatstore/doc/flatstore.xml"/>
+	<xi:include href="../modules/gflags/doc/gflags.xml"/>
+	<xi:include href="../modules/group/doc/group.xml"/>
+	<xi:include href="../modules/group_radius/doc/group_radius.xml"/>
+	<xi:include href="../modules/jabber/doc/jabber.xml"/>
+	<xi:include href="../modules/mangler/doc/mangler.xml"/>
+	<xi:include href="../modules/maxfwd/doc/maxfwd.xml"/>
+	<xi:include href="../modules/msilo/doc/msilo.xml"/>
+	<xi:include href="../modules/nathelper/doc/nathelper.xml"/>
+	<xi:include href="../modules/options/doc/options.xml"/>
+	<xi:include href="../modules/pa/doc/pa.xml"/>
+	<xi:include href="../modules/pdt/doc/pdt.xml"/>
+	<xi:include href="../modules/permissions/doc/permissions.xml"/>
+	<xi:include href="../modules/pike/doc/pike.xml"/>
+	<xi:include href="../modules/print/doc/print.xml"/>
+	<xi:include href="../modules/registrar/doc/registrar.xml"/>
+	<xi:include href="../modules/rr/doc/rr.xml"/>
+	<xi:include href="../modules/sl/doc/sl.xml"/>
+	<xi:include href="../modules/sms/doc/sms.xml"/>
+	<xi:include href="../modules/speeddial/doc/speeddial.xml"/>
+	<xi:include href="../modules/textops/doc/textops.xml"/>
+	<xi:include href="../modules/tm/doc/tm.xml"/>
+	<xi:include href="../modules/uac/doc/uac.xml"/>
+	<xi:include href="../modules/uri/doc/uri.xml"/>
+	<xi:include href="../modules/uri_db/doc/uri_db.xml"/>
+	<xi:include href="../modules/uri_radius/doc/uri_radius.xml"/>
+	<xi:include href="../modules/usrloc/doc/usrloc.xml"/>
+	<xi:include href="../modules/xlog/doc/xlog.xml"/>
+    </chapter>
+    
+    <chapter>
+	<title>Developer's Guide</title>
+	<xi:include href="serdev/serdev.xml"/>
+    </chapter>
+
+    <chapter>
+	<title>Frequently Asked Questions</title>
+	<xi:include href="serfaq/serfaq.xml"/>
+    </chapter>
+</book>
