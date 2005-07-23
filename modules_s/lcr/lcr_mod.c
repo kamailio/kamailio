@@ -30,6 +30,7 @@
  *  2005-02-20: Added sequential forking functions (jh)
  *  2005-02-25: Added support for int AVP names, combined addr and port
  *              AVPs (jh)
+ *  2005-07-23: Added support for gw URI scheme and transport (jh)
  */
 
 #include <stdio.h>
@@ -46,11 +47,13 @@
 #include "../../usr_avp.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
+#include "../../parser/msg_parser.h"
 #include "../mysql/dbase.h"
 #include "../../action.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../qvalue.h"
 #include "../../dset.h"
+#include "../../ip_addr.h"
 #include "fifo.h"
 
 MODULE_VERSION
@@ -60,7 +63,7 @@ MODULE_VERSION
  * increment this value if you change the table in
  * an backwards incompatible way
  */
-#define GW_TABLE_VERSION 1
+#define GW_TABLE_VERSION 2
 #define LCR_TABLE_VERSION 1
 
 /* usr_avp flag for sequential forking */
@@ -84,6 +87,12 @@ int reload_gws ( void );
 #define PORT_COL "port"
 #define PORT_COL_LEN (sizeof(PORT_COL) - 1)
 
+#define URI_SCHEME_COL "uri_scheme"
+#define URI_SCHEME_COL_LEN (sizeof(URI_SCHEME_COL) - 1)
+
+#define TRANSPORT_COL "transport"
+#define TRANSPORT_COL_LEN (sizeof(TRANSPORT_COL) - 1)
+
 #define GRP_ID_COL "grp_id"
 #define GRP_ID_COL_LEN (sizeof(GRP_ID_COL) - 1)
 
@@ -103,7 +112,7 @@ int reload_gws ( void );
 #define MAX_NO_OF_GWS 32
 
 /* Default avp names */
-#define DEF_GW_ADDR_PORT_AVP "1400"
+#define DEF_GW_URI_AVP "1400"
 #define DEF_CONTACT_AVP "1401"
 #define DEF_FR_INV_TIMER_AVP "fr_inv_timer_avp"
 #define DEF_FR_INV_TIMER 90
@@ -113,9 +122,14 @@ int reload_gws ( void );
 /*
  * Type definitions
  */
+
+typedef enum sip_protos uri_transport;
+
 struct gw_info {
-	unsigned int ip_addr;
-	unsigned int port;
+    unsigned int ip_addr;
+    unsigned int port;
+    uri_type scheme;
+    uri_transport transport;
 };
 
 /*
@@ -132,13 +146,14 @@ str gw_table         = {GW_TABLE, GW_TABLE_LEN};
 str gw_name_col      = {GW_NAME_COL, GW_NAME_COL_LEN};
 str ip_addr_col      = {IP_ADDR_COL, IP_ADDR_COL_LEN};
 str port_col         = {PORT_COL, PORT_COL_LEN};
+str uri_scheme_col   = {URI_SCHEME_COL, URI_SCHEME_COL_LEN};
+str transport_col    = {TRANSPORT_COL, TRANSPORT_COL_LEN};
 str grp_id_col       = {GRP_ID_COL, GRP_ID_COL_LEN};
 str lcr_table        = {LCR_TABLE, LCR_TABLE_LEN};
 str prefix_col       = {PREFIX_COL, PREFIX_COL_LEN};
 str from_uri_col     = {FROM_URI_COL, FROM_URI_COL_LEN};
 str priority_col     = {PRIORITY_COL, PRIORITY_COL_LEN};
-str gw_addr_port_avp = {DEF_GW_ADDR_PORT_AVP,
-			sizeof(DEF_GW_ADDR_PORT_AVP) - 1};
+str gw_uri_avp       = {DEF_GW_URI_AVP,	sizeof(DEF_GW_URI_AVP) - 1};
 str contact_avp      = {DEF_CONTACT_AVP, sizeof(DEF_CONTACT_AVP) - 1};
 str inv_timer_avp    = {DEF_FR_INV_TIMER_AVP, sizeof(DEF_FR_INV_TIMER_AVP)
 			-1 };
@@ -157,15 +172,10 @@ struct contact {
     struct contact *next;
 };
 
-union addr_port {
-    unsigned char ap[6];
-    unsigned int addr;
-    unsigned short port[3];
-};
-
-int_str addr_port_name, contact_name, inv_timer_name;
-unsigned short gw_ap_avp_name_str;
+int_str gw_uri_name, contact_name, rpid_name, inv_timer_name;
+unsigned short gw_uri_avp_name_str;
 unsigned short contact_avp_name_str;
+unsigned short rpid_avp_name_str;
 
 struct gw_info **gws;	/* Pointer to current gw table pointer */
 struct gw_info *gws_1;	/* Pointer to gw table 1 */
@@ -207,12 +217,14 @@ static param_export_t params[] = {
 	{"gw_name_column",           STR_PARAM, &gw_name_col.s  },
 	{"ip_addr_column",           STR_PARAM, &ip_addr_col.s  },
 	{"port_column",              STR_PARAM, &port_col.s     },
+	{"uri_scheme_column",        STR_PARAM, &uri_scheme_col.s },
+	{"transport_column",         STR_PARAM, &transport_col.s },
 	{"grp_id_column",            STR_PARAM, &grp_id_col.s   },
 	{"lcr_table",                STR_PARAM, &lcr_table.s    },
 	{"prefix_column",            STR_PARAM, &prefix_col.s   },
 	{"from_uri_column",          STR_PARAM, &from_uri_col.s },
 	{"priority_column",          STR_PARAM, &priority_col.s },
-	{"gw_addr_port_avp",         STR_PARAM, &gw_addr_port_avp.s },
+	{"gw_uri_avp",               STR_PARAM, &gw_uri_avp.s },
 	{"contact_avp",              STR_PARAM, &contact_avp.s  },
         {"fr_inv_timer_avp",         STR_PARAM, &inv_timer_avp.s  },
         {"fr_inv_timer",             INT_PARAM, &inv_timer      },
@@ -354,12 +366,14 @@ static int mod_init(void)
 	gw_name_col.len = strlen(gw_name_col.s);
 	ip_addr_col.len = strlen(ip_addr_col.s);
 	port_col.len = strlen(port_col.s);
+	uri_scheme_col.len = strlen(uri_scheme_col.s);
+	transport_col.len = strlen(transport_col.s);
         grp_id_col.len = strlen(grp_id_col.s);
         lcr_table.len = strlen(lcr_table.s);
 	prefix_col.len = strlen(prefix_col.s);
 	from_uri_col.len = strlen(from_uri_col.s);
         priority_col.len = strlen(priority_col.s);
-	gw_addr_port_avp.len = strlen(gw_addr_port_avp.s);
+	gw_uri_avp.len = strlen(gw_uri_avp.s);
 	contact_avp.len = strlen(contact_avp.s);
 	inv_timer_avp.len = strlen(inv_timer_avp.s);
 	rpid_avp.len = strlen(rpid_avp.s);
@@ -418,12 +432,12 @@ static int mod_init(void)
 	}
 
 	/* Assign parameter names */
-	if (str2int(&gw_addr_port_avp, &par) == 0) {
-	    addr_port_name.n = par;
-	    gw_ap_avp_name_str = 0;
+	if (str2int(&gw_uri_avp, &par) == 0) {
+	    gw_uri_name.n = par;
+	    gw_uri_avp_name_str = 0;
 	} else {
-	    addr_port_name.s = &gw_addr_port_avp;
-	    gw_ap_avp_name_str = AVP_NAME_STR;
+	    gw_uri_name.s = &gw_uri_avp;
+	    gw_uri_avp_name_str = AVP_NAME_STR;
 	}
 	if (str2int(&contact_avp, &par) == 0) {
 	    contact_name.n = par;
@@ -431,6 +445,13 @@ static int mod_init(void)
 	} else {
 	    contact_name.s = &contact_avp;
 	    contact_avp_name_str = AVP_NAME_STR;
+	}
+	if (str2int(&rpid_avp, &par) == 0) {
+	    rpid_name.n = par;
+	    rpid_avp_name_str = 0;
+	} else {
+	    rpid_name.s = &rpid_avp;
+	    rpid_avp_name_str = AVP_NAME_STR;
 	}
 	inv_timer_name.s = &inv_timer_avp;
 
@@ -455,14 +476,18 @@ int reload_gws ( void )
 {
     int q_len, i;
     unsigned int ip_addr, port;
+    uri_type scheme;
+    uri_transport transport;
     db_con_t* dbh;
     char query[MAX_QUERY_SIZE];
     db_res_t* res;
     db_row_t* row;
 
-    q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s, %.*s FROM %.*s",
+    q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s, %.*s, %.*s, %.*s FROM %.*s",
 		     ip_addr_col.len, ip_addr_col.s,
 		     port_col.len, port_col.s,
+		     uri_scheme_col.len, uri_scheme_col.s,
+		     transport_col.len, transport_col.s,
 		     gw_table.len, gw_table.s);
 
     if (q_len >= MAX_QUERY_SIZE) {
@@ -507,12 +532,45 @@ int reload_gws ( void )
 	} else {
 		port = (unsigned int)VAL_INT(ROW_VALUES(row) + 1);
 	}
+	if (port > 65536) {
+	    LOG(L_ERR, "reload_gws(): Port of GW is too large: %u\n", port);
+	    lcr_dbf.free_result(dbh, res);
+	    lcr_dbf.close(dbh);
+	    return -1;
+	}
+	if (VAL_NULL(ROW_VALUES(row) + 2) == 1) {
+	    scheme = SIP_URI_T;
+	} else {
+	    scheme = (uri_type)VAL_INT(ROW_VALUES(row) + 2);
+	    if ((scheme != SIP_URI_T) && (scheme != SIPS_URI_T)) {
+		LOG(L_ERR, "reload_gws(): Unknown or unsupported URI scheme: %u\n", (unsigned int)scheme);
+		lcr_dbf.free_result(dbh, res);
+		lcr_dbf.close(dbh);
+		return -1;
+	    }
+	}
+	if (VAL_NULL(ROW_VALUES(row) + 3) == 1) {
+	    transport = PROTO_NONE;
+	} else {
+	    transport = (uri_transport)VAL_INT(ROW_VALUES(row) + 3);
+	    if ((transport != PROTO_UDP) && (transport != PROTO_TCP) &&
+		(transport != PROTO_TLS)) {
+		LOG(L_ERR, "reload_gws(): Unknown or unsupported transport: %u\n", (unsigned int)transport);
+		lcr_dbf.free_result(dbh, res);
+		lcr_dbf.close(dbh);
+		return -1;
+	    }
+	}
 	if (*gws == gws_1) {
 		gws_2[i].ip_addr = ip_addr;
 		gws_2[i].port = port;
+		gws_2[i].scheme = scheme;
+		gws_2[i].transport = transport;
 	} else {
 		gws_1[i].ip_addr = ip_addr;
 		gws_1[i].port = port;
+		gws_1[i].scheme = scheme;
+		gws_1[i].transport = transport;
 	}
     }
     
@@ -535,24 +593,40 @@ int reload_gws ( void )
 void print_gws (FILE *reply_file)
 {
 	int i;
+	uri_transport transport;
 
 	for (i = 0; i < MAX_NO_OF_GWS; i++) {
 		if ((*gws)[i].ip_addr == 0) {
 			return;
 		}
+		if ((*gws)[i].scheme == SIP_URI_T) {
+		    fprintf(reply_file, "sip:");
+		} else {
+		    fprintf(reply_file, "sips:");
+		}
 		if ((*gws)[i].port == 0) {
-			fprintf(reply_file, "%d.%d.%d.%d\n",
+			fprintf(reply_file, "%d.%d.%d.%d",
 				((*gws)[i].ip_addr << 24) >> 24,
 				(((*gws)[i].ip_addr >> 8) << 24) >> 24,
 				(((*gws)[i].ip_addr >> 16) << 24) >> 24,
 				(*gws)[i].ip_addr >> 24);
 		} else {
-			fprintf(reply_file, "%d.%d.%d.%d:%d\n",
+			fprintf(reply_file, "%d.%d.%d.%d:%d",
 				((*gws)[i].ip_addr << 24) >> 24,
 				(((*gws)[i].ip_addr >> 8) << 24) >> 24,
 				(((*gws)[i].ip_addr >> 16) << 24) >> 24,
 				(*gws)[i].ip_addr >> 24,
 				(*gws)[i].port);
+		}
+		transport = (*gws)[i].transport;
+		if (transport == PROTO_UDP) {
+		    fprintf(reply_file, ":udp\n");
+		} else  if (transport == PROTO_TCP) {
+		    fprintf(reply_file, ":tcp\n");
+		} else  if (transport == PROTO_TLS) {
+		    fprintf(reply_file, ":tls\n");
+		} else {
+		    fprintf(reply_file, "\n");
 		}
 	}
 }
@@ -567,10 +641,15 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
     db_row_t *row, *r;
     str ruri_user, from_uri, value;
     char query[MAX_QUERY_SIZE];
+    char ruri[MAX_URI_SIZE];
     int q_len, i, j;
-    union addr_port ap;
-    unsigned int addr;
-    int_str rcv_avp, val;
+    unsigned int addr, port;
+    uri_type scheme;
+    uri_transport transport;
+    struct ip_addr address;
+    str addr_str, port_str;
+    char *at;
+    int_str val;
 
     /* Find Request-URI user */
     if (parse_sip_msg_uri(_m) < 0) {
@@ -580,8 +659,7 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
     ruri_user = _m->parsed_uri.user;
 
    /* Look for Caller RPID or From URI */
-    rcv_avp.s = &rpid_avp;
-    if (search_first_avp(AVP_NAME_STR, rcv_avp, &val) &&
+    if (search_first_avp(rpid_avp_name_str, rpid_name, &val) &&
 	val.s->s && val.s->len) {
 	/* Get URI user from RPID */
 	from_uri.len = val.s->len;
@@ -603,9 +681,11 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 	from_uri = get_from(_m)->uri;
     }
     
-    q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s.%.*s, %.*s.%.*s FROM %.*s, %.*s WHERE '%.*s' LIKE %.*s.%.*s AND '%.*s' LIKE CONCAT(%.*s.%.*s, '%%') AND %.*s.%.*s = %.*s.%.*s ORDER BY CHAR_LENGTH(%.*s.%.*s), %.*s.%.*s DESC, RAND()",
+    q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s FROM %.*s, %.*s WHERE '%.*s' LIKE %.*s.%.*s AND '%.*s' LIKE CONCAT(%.*s.%.*s, '%%') AND %.*s.%.*s = %.*s.%.*s ORDER BY CHAR_LENGTH(%.*s.%.*s), %.*s.%.*s DESC, RAND()",
 		     gw_table.len, gw_table.s, ip_addr_col.len, ip_addr_col.s,
 		     gw_table.len, gw_table.s, port_col.len, port_col.s,
+		     gw_table.len, gw_table.s, uri_scheme_col.len, uri_scheme_col.s,
+		     gw_table.len, gw_table.s, transport_col.len, transport_col.s,
 		     gw_table.len, gw_table.s, lcr_table.len, lcr_table.s,
 		     from_uri.len, from_uri.s,
 		     lcr_table.len, lcr_table.s, from_uri_col.len, from_uri_col.s,
@@ -635,19 +715,70 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 		r = RES_ROWS(res) + j;
 		if (addr == (unsigned int)VAL_INT(ROW_VALUES(r))) goto skip;
 	}
-	ap.addr = addr;
 	if (VAL_NULL(ROW_VALUES(row) + 1) == 1) {
-		ap.port[2] = 0;
+		port = 0;
 	} else {
-		ap.port[2] = (int)VAL_INT(ROW_VALUES(row) + 1);
+		port = (unsigned int)VAL_INT(ROW_VALUES(row) + 1);
 	}
-	value.s = (char*)&(ap.ap[0]);
-	value.len = 6;
+	if (VAL_NULL(ROW_VALUES(row) + 2) == 1) {
+	    scheme = SIP_URI_T;
+	} else {
+	    scheme = (uri_type)VAL_INT(ROW_VALUES(row) + 2);
+	}
+	if (VAL_NULL(ROW_VALUES(row) + 3) == 1) {
+	    transport = PROTO_NONE;
+	} else {
+	    transport = (uri_transport)VAL_INT(ROW_VALUES(row) + 3);
+	}
+	if (5 + ruri_user.len + 1 + 15 + 1 + 5 + 1 + 14 > MAX_URI_SIZE) {
+	    LOG(L_ERR, "load_gws(): Request URI would be too long\n");
+	    goto skip;
+	}
+	at = (char *)&(ruri[0]);
+	if (scheme == SIP_URI_T) {
+	    memcpy(at, "sip:", 4); at = at + 4;
+	} else if (scheme == SIPS_URI_T) {
+	    memcpy(at, "sips:", 5); at = at + 5;
+	} else {
+	    LOG(L_ERR, "load_gws(): Unknown or unsupported URI scheme: %u\n", (unsigned int)scheme);
+	    goto skip;
+	}
+	memcpy(at, ruri_user.s, ruri_user.len); at = at + ruri_user.len;
+	*at = '@'; at = at + 1;
+	address.af = AF_INET;
+	address.len = 4;
+	address.u.addr32[0] = addr;
+	addr_str.s = ip_addr2a(&address);
+	addr_str.len = strlen(addr_str.s);
+	memcpy(at, addr_str.s, addr_str.len); at = at + addr_str.len;
+	if (port != 0) {
+	    if (port > 65536) {
+		LOG(L_ERR, "load_gws(): Port of GW is too large: %u\n", port);
+		goto skip;
+	    }
+	    *at = ':'; at = at + 1;
+	    port_str.s = int2str(port, &port_str.len);
+	    memcpy(at, port_str.s, port_str.len); at = at + port_str.len;
+	}
+	if (transport != PROTO_NONE) {
+	    memcpy(at, ";transport=", 11); at = at + 11;
+	    if (transport == PROTO_UDP) {
+		memcpy(at, "udp", 3); at = at + 3;
+	    } else if (transport == PROTO_TCP) {
+		memcpy(at, "tcp", 3); at = at + 3;
+	    } else if (transport == PROTO_TLS) {
+		memcpy(at, "tls", 3); at = at + 3;
+	    } else {
+		LOG(L_ERR, "load_gws(): Unknown or unsupported transport: %u\n", (unsigned int)transport);
+		goto skip;
+	    }
+	}
+	value.s = (char *)&(ruri[0]);
+	value.len = at - value.s;
 	val.s = &value;
-	add_avp(gw_ap_avp_name_str|AVP_VAL_STR, addr_port_name, val);
-	DBG("load_gws(): DEBUG: Added gw_addr_port_avp <%x, %d>\n",
-	    *((unsigned int *)(val.s->s)),
-	    *((unsigned short *)(val.s->s + 4)));
+	add_avp(gw_uri_avp_name_str|AVP_VAL_STR, gw_uri_name, val);
+	DBG("load_gws(): DEBUG: Added gw_uri_avp <%.*s>\n",
+	    value.len, value.s);
     skip:
 	continue;
     }
@@ -670,45 +801,19 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 {
     int_str val;
     struct action act;
-    int rval, port_len;
-    struct ip_addr addr;
+    int rval;
     struct usr_avp *avp;
-    str uri, uri_user, addr_str;
-    char *at, *port_string;
-    union addr_port *ap;
-    unsigned int address, port;
 
-    avp = search_first_avp(gw_ap_avp_name_str, addr_port_name, &val);
+    avp = search_first_avp(gw_uri_avp_name_str, gw_uri_name, &val);
     if (!avp) return -1;
 
-    ap = (union addr_port *)(val.s->s);
-    address = ap->addr;
-    port = (ap->port)[2];
-    destroy_avp(avp);
-
-    addr.af = AF_INET;
-    addr.len = 4;
-    addr.u.addr32[0] = address;
-
     if (*(tmb.route_mode) == MODE_REQUEST) {
-
-	act.p1.string = ip_addr2a(&addr);
-
-	if (port == 0) {
-	    act.type = SET_HOSTPORT_T;
-	    act.p1_type = STRING_ST;
-	    rval = do_action(&act, _m);
-	} else {
-	    act.type = SET_HOST_T;
-	    act.p1_type = STRING_ST;
-	    rval = do_action(&act, _m);
-	    if (rval != 1) return -1;
-	    act.p1.string = int2str(port, &port_len);
-	    act.type = SET_PORT_T;
-	    act.p1_type = STRING_ST;
-	    rval = do_action(&act, _m);
-	}
-
+	
+	act.type = SET_URI_T;
+	act.p1_type = STRING_ST;
+	act.p1.string = val.s->s;
+	rval = do_action(&act, _m);
+	destroy_avp(avp);
 	if (rval != 1) {
 	    LOG(L_ERR, "next_gw(): ERROR: do_action failed with return value <%d>\n", rval);
 	    return -1;
@@ -718,65 +823,13 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 
     } else { /* MODE_ONFAILURE */
 
-	if (port != 0) {
-	    port_string = int2str(port, &port_len);
-	    port_len = port_len;
-	} else {
-	    port_string = (char *)0;
-	    port_len = 0;
-	}
-
-	addr_str.s = ip_addr2a(&addr);
-	addr_str.len = strlen(addr_str.s);
-
-	if (parse_sip_msg_uri(_m) < 0) {
-	    LOG(L_ERR, "next_gw(): Error while parsing R-URI\n");
-	    return -1;
-	}
-
-	uri_user = _m->parsed_uri.user;
-
-	if (port != 0) {
-	    uri.len = 4 + uri_user.len + 1 + addr_str.len + 1 + port_len + 1;
-	} else {
-	    uri.len = 4 + uri_user.len + 1 + addr_str.len + 1;
-	}	    
-	if (uri.len > MAX_URI_SIZE) {
-	    LOG(L_ERR, "next_gw(): URI is too long\n");
-	    return -1;
-	}
-	uri.s = pkg_malloc(uri.len);
-	if (!uri.s) {
-	    LOG(L_ERR, "next_gw(): No memory for new uri\n");
-	    return -1;
-	}
-	
-	at = uri.s;
-	memcpy(at, "sip:", 4);
-	at = at + 4;
-	memcpy(at, uri_user.s, uri_user.len);
-	at = at + uri_user.len;
-	*at = '@';
-	at = at + 1;
-	memcpy(at, addr_str.s, addr_str.len);
-	at = at + addr_str.len;
-	if (port != 0) {
-	    *at = ':';
-	    at = at + 1;
-	    memcpy(at, port_string, port_len);
-	    at = at + port_len;
-	}
-	*at = '\0';
-
 	act.type = APPEND_BRANCH_T;
 	act.p1_type = STRING_ST;
-	act.p1.string = uri.s; 
+	act.p1.string = val.s->s;
 	act.p2_type = NUMBER_ST;
 	act.p2.number = 0;
 	rval = do_action(&act, _m);
-
-	pkg_free(uri.s);
-
+	destroy_avp(avp);
 	if (rval != 1) {
 	    LOG(L_ERR, "next_gw(): ERROR: do_action failed with return value <%d>\n", rval);
 	    return -1;

@@ -47,13 +47,18 @@ Chapter 1. User's Guide
    gateways.  All gateways in a group share the same priority.
 
    Gateway selection operates on two database tables: gw and lcr.  Table
-   gw contains gw's name, IP address, port, and group id.  Table lcr
-   contains prefix of user part of Request-URI, From URI, gateway group
-   id, and priority.  From URI can contain special characters % and _
-   matching any number of any characters and any one character,
-   respectively.  In addition to gw and lcr tables there is third table
-   gw_grp that is used for administrative purposes only to associate
-   names with gateway group ids.
+   gw contains gw's name, IP address, port, URI scheme, transport URI
+   parameter, and group id.  IP address, URI scheme, and transport are
+   coded as unsigned integers.  Valid URI scheme values are NULL = sip,
+   1 = sip and 2 = sips.  Currently valid transport values are NULL =
+   none, 1 = udp, 2 = tcp, and 3 = tls.
+
+   Table lcr contains prefix of user part of Request-URI, From URI,
+   gateway group id, and priority.  From URI can contain special
+   characters % and _ matching any number of any characters and any one
+   character, respectively.  In addition to gw and lcr tables there is
+   third table gw_grp that is used for administrative purposes only to
+   associate names with gateway group ids.
    _________________________________________________________
 
 1.2. Dependencies
@@ -75,6 +80,8 @@ Chapter 1. User's Guide
      * gw_name_column (default "gw_name")
      * ip_addr_column (default "ip_addr")
      * port_column (default "port")
+     * uri_scheme_column (default "uri_scheme")
+     * transport_column (default "transport")
      * grp_id_column (default "grp_id")
      * lcr_table (default "lcr")
      * prefix_column (default "prefix")
@@ -84,12 +91,13 @@ Chapter 1. User's Guide
    In addition there are parameters that can be used to override names
    of the AVPs used by LCR module:
 
-     * gw_addr_port_avp	  (default "1400")
+     * gw_uri_avp	  (default "1400")
      * contact_avp	  (default "1401")
      * fr_inv_timer_avp	  (default "fr_inv_timer_avp")
+     * rpid_avp		  (default "rpid")
 
-   If string value of gw_addr_port_avp or contact_avp contains only
-   digits, the name of the AVP is int value of the string.
+   If string value of an AVP parameter contains only digits, the name of
+   the AVP is int value of the string.
 
    Finally, there are two parameters used by sequential forwarding:
 
@@ -106,9 +114,9 @@ Chapter 1. User's Guide
 
 1.4.1. load_gws()
 
-   Loads addresses and ports of gateways matching RPID AVP (if
-   available) or From URI and user part of Request-URI to
-   gw_addr_port_avp AVPs.  Returns 1 or -1 depending on success.
+   Loads URIs of gateways matching RPID AVP (if available) or From URI
+   and user part of Request-URI to gw_uri_avp AVPs.  Returns 1 or -1
+   depending on success.
 
    Example:
 
@@ -119,12 +127,12 @@ Chapter 1. User's Guide
 
 1.4.2. next_gw()
 
-   If called from a route block, replaces host:port part of Request-URI
-   by the first gw_addr_port_avp AVP value and destroys that AVP.
+   If called from a route block, replaces Request-URI by the first
+   gw_uri_avp AVP value and destroys that AVP.
 
    If called from a failure route block, appends a new branch to request,
-   where host:port part of Request-URI is replaced by the first
-   gw_addr_port_avp AVP value and destroys that AVP.
+   whose Request-URI is the first gw_uri_avp AVP value, and destroys that
+   AVP.
 
    Returns 1 on success and -1 if there were no gateways left or if an
    error occurred (see syslog).
