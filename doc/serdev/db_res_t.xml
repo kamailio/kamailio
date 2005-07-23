@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="db_res_t" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Type <type>db_res_t</type></title>
+    <para>
+	This type represents a result returned by <function>db_query</function>
+	function (see below). The result can consist of zero or more rows (see
+	<type>db_row_t</type> description).
+    </para>
+    <note>
+	<para>
+	    A variable of type <type>db_res_t</type> returned by
+	    <function>db_query</function> function uses dynamically allocated
+	    memory, don't forget to call <function>db_free_result</function> if
+	    you don't need the variable anymore.  You will encounter memory
+	    leaks if you fail to do this !
+	</para>
+    </note>
+    <para>
+	In addition to zero or more rows, each <type>db_res_t</type> object
+	contains also an array of <type>db_key_t</type> objects. The objects
+	represent keys (names of columns).
+    </para>
+    <programlisting>
+typedef struct db_res {
+    struct {
+        db_key_t* keys;    /* Array of column names */
+        db_type_t* types;  /* Array of column types */
+        int n;             /* Number of columns */
+    } col;
+    struct db_row* rows;   /* Array of rows */
+    int n;                 /* Number of rows */
+} db_res_t;
+    </programlisting>
+    <itemizedlist>
+	<listitem>
+	    <para>
+		<function>RES_NAMES(res)</function> Macro.
+	    </para>
+	    <para>
+		Use this macro if you want to obtain pointer to an array of
+		cell names.
+	    </para>
+	    <example>
+		<title>RES_NAMES Macro</title>
+		<programlisting>
+...
+db_key_t* column_names = ROW_NAMES(row);
+...
+		</programlisting>
+	    </example>
+	</listitem>
+	
+	<listitem>
+	    <para>
+		<function>RES_COL_N(res)</function> Macro.
+	    </para>
+	    <para>
+		Use this macro if you want to get the number of columns in the result.
+	    </para>
+	    <example>
+		<title>RES_COL_N Macro</title>
+		<programlisting>
+<![CDATA[
+...
+int ncol = RES_COL_N(res);
+for(i = 0; i < ncol; i++) {
+    /* do something with the column */
+}
+...
+]]>
+		</programlisting>
+	    </example>
+	</listitem>
+	
+	<listitem>
+	    <para>
+		<function>RES_ROWS(res)</function> Macro.
+	    </para>
+	    <para>
+		Use this macro if you need to obtain pointer to array of rows.
+	    </para>
+	    <example>
+		<title>RES_ROWS Macro</title>
+		<programlisting>
+...
+db_row_t* rows = RES_ROWS(res);
+...
+		</programlisting>
+	    </example>
+	</listitem>
+	
+	<listitem>
+	    <para>
+		<function>RES_ROW_N(res)</function> Macro.
+	    </para>
+	    <para>
+		Use this macro if you need to obtain the number of rows in the
+		result.
+	    </para>
+	    <example>
+		<title>RES_ROW_N Macro</title>
+		<programlisting>
+...
+int n = RES_ROW_N(res);
+...
+		</programlisting>
+	    </example>
+	</listitem>
+    </itemizedlist>
+</section>
+

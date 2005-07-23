@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="msg_start" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Structure <structname>msg_start</structname></title>
+    <para>
+	The structure represents the first line of a <acronym>SIP</acronym>
+	request or response.
+    </para>
+    <para>
+	The structure is defined in file <filename>parse_fline.h</filename>
+	under <filename>parser</filename> subdirectory.
+    </para>
+    
+    <para>
+	<emphasis>Structure Declaration</emphasis>
+	<programlisting>
+struct msg_start {
+    int type;                        /* Type of the Message - Request/Response */
+    union {
+        struct {
+            str method;              /* Method string */
+            str uri;                 /* Request URI */
+            str version;             /* SIP version */
+            int method_value;        /* Parsed method */
+        } request;
+
+        struct {
+            str version;             /* SIP version */
+            str status;              /* Reply status */
+            str reason;              /* Reply reason phrase */
+            unsigned int statuscode; /* Status code */
+        } reply;
+    }u;
+};
+	</programlisting>
+    </para>
+    <para>
+	<emphasis>Description of Request Related Fields:</emphasis>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>type</structfield> - Type of the message -
+		    REQUEST or RESPONSE.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>method</structfield> - Name of method (same as
+		    in the message).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>uri</structfield> - Request <acronym>URI</acronym>.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>version</structfield> - Version string.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>method_value</structfield> - Parsed
+		    method. Field method which is of type <type>str</type> will
+		    be converted to integer and stored here. This is good for
+		    comparison, integer comparison is much faster then string
+		    comparison.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+
+    <para>
+	<emphasis>Description of Response Related Fields:</emphasis>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>version</structfield> - Version string.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>status</structfield> - Response status code as
+		    string.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>reason</structfield> - Response reason string
+		    as in the message.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>statuscode</structfield> - Response status
+		    code converted to integer.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+</section>
+

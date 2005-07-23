@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="sr_module" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Structure <structname>sr_module</structname></title>
+    <para>
+	Each loaded module is represented by an instance of
+	<structname>sr_module</structname> structure. All the instances are
+	linked. There is a global variable <varname>modules</varname> defined
+	in file <filename>sr_module.c</filename> which is head of linked-list
+	of all loaded modules.
+    </para>
+    <para>
+	Detailed description of the structure follows:
+    </para>
+    <programlisting>
+struct sr_module{
+    char* path;
+    void* handle;
+    struct module_exports* exports;
+    struct sr_module* next;
+};
+    </programlisting>
+    <para>
+	<emphasis>Fields and their description:</emphasis>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>path</structfield> - Path to the module. This
+		    is the path you pass as parameter to
+		    <function>loadmodule</function> function in the config
+		    file.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>handle</structfield> - Handle returned by
+		    <function>dlopen</function>.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>exports</structfield> - Pointer to structure
+		    describing interface of the module (will be described
+		    later).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>next</structfield> - Pointer to the next <structname>sr_module</structname> structure
+		    in the linked list.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+</section>

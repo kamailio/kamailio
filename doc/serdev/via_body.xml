@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="via_body" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>The Server Startup</title>
+
+    <title>Structure <structname>via_body</structname></title>
+    <para>
+	The structure represents parsed Via header field. See file
+	<filename>parse_via.h</filename> under <filename>parser</filename>
+	subdirectory for more details.
+    </para>
+    <programlisting>
+struct via_body { 
+    int error;
+    str hdr;                      /* Contains "Via" or "v" */ 
+    str name;
+    str version;   
+    str transport;
+    str host;
+    int port;
+    str port_str;
+    str params;
+    str comment;
+    int bsize;                    /* body size, not including hdr */
+    struct via_param* param_lst;  /* list of parameters*/
+    struct via_param* last_param; /*last via parameter, internal use*/
+
+    /* shortcuts to "important" params*/
+    struct via_param* branch;
+    struct via_param* received;
+
+    struct via_body* next;        /* pointer to next via body string if
+    compact via or null */
+};
+    </programlisting>
+    <para>
+	<emphasis>Field Description:</emphasis>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>error</structfield> - The field contains error
+		    code when the parser was unable to parse the header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>hdr</structfield>- Header field name, it can
+		    be "Via" or "v" in this case.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>name</structfield> - Protocol name ("SIP" in
+		    this case).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>version</structfield> - Protocol version (for
+		    example "2.0").
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>transport</structfield> - Transport protocol
+		    name ("TCP", "UDP" and so on).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>host</structfield> - Hostname or IP address
+		    contained in the Via header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>port</structfield> - Port number as integer.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>port_str</structfield> - Port number as string.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>params</structfield> - Unparsed parameters (as
+		    one string containing all the parameters).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>comment</structfield> - Comment.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>bsize</structfield> - Size of the body (not including hdr).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>param_lst</structfield> - Linked list of all parameters.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>last_param</structfield> - Last parameter in the list.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>branch</structfield> - Branch parameter.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>received</structfield> - Received parameter.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>next</structfield> - If the Via is in compact
+		    form (more Vias in the same header field), this field
+		    contains pointer to the next Via.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+</section>

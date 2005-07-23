@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="ip_addr" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Structure <structname>ip_addr</structname></title>
+    <para>
+	The structure represents IPv4 or IPv6 address. It is defined in
+	<filename>ip_addr.h</filename>.
+	<programlisting>
+struct ip_addr{
+     unsigned int af;     /* address family: AF_INET6 or AF_INET */
+     unsigned int len;    /* address len, 16 or 4 */
+		
+     /* 64 bits aligned address */
+     union {
+         unsigned int   addr32[4];
+         unsigned short addr16[8];
+         unsigned char  addr[16];
+     }u;
+};
+	</programlisting>
+    </para>
+</section>

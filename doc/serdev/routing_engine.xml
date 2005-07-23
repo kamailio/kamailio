@@ -1,0 +1,467 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="routing_engine" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>The Routing Engine</title>
+    <para>
+	In a previous section we discussed how routing part of a config file
+	gets translated into binary representation. In this section, we will
+	discuss how the binary representation is used during message
+	processing.
+    </para>
+    <para>
+	Upon a <acronym>SIP</acronym> message receipt, the server performs some
+	basic sanity checks and converts the message into
+	<structname>sip_msg</structname> structure. After that the Routing
+	Engine will start processing the message.
+    </para>
+    <para>
+	The routing engine can be found in file <filename>action.c</filename>.
+    </para>
+    <para>
+	The main function is <function>run_actions.</function> The function
+	accepts two parameters. The first parameter is list of actions to be
+	processed (Remember, the config file gets translated into array of
+	linked lists. Each linked list in the array represents one "route" part
+	of the config file). The second parameter is
+	<structname>sip_msg</structname> structure representing the message to
+	be processed.
+    </para>
+    <para>
+	Upon a receipt of a request, the linked list representing the main
+	route part will be processed so the first parameter will be
+	<varname>rlist[0]</varname>. (The linked list of main route part is
+	always at index 0).
+    </para>
+    <para>
+	The function will then sequentially call <function>do_action</function>
+	function for each element of the linked list. Return value of the
+	function is important. If the function returns 0, processing of the
+	list will be stopped. By returning 0 a command can indicate that
+	processing of the message should be stopped and the message will be
+	dropped.
+    </para>
+    <para>
+	Modules may export so-called <emphasis>on_break handlers</emphasis>.
+	<emphasis>on_break</emphasis> handler is a function, that will be
+	called when processing of the linked-list is interrupted (ret ==
+	0). All such handlers will be called when processing of the linked-list
+	is finished and ret == 0.
+    </para>
+
+    <section id="do_action">
+	<title><function>do_action</function> Function</title>
+	<para>
+	    <function>do_action</function> function is core of the routing
+	    engine. There is a big <function>switch</function> statement. Each
+	    case of the statements is one command handled by the server core
+	    itself.
+	</para>
+	<para>
+	    The following commands are handled by the <acronym>SER</acronym> core
+	    itself: 
+	    <function>drop</function>,
+	    <function>forward</function>,
+	    <function>send</function>,
+	    <function>log</function>,
+	    <function>append_branch</function>,
+	    <function>len_gt</function>,
+	    <function>setflag</function>,
+	    <function>resetflag</function>,
+	    <function>isflagset</function>,
+	    <function>error</function>,
+	    <function>route</function>,
+	    <function>exec</function>,
+	    <function>revert_uri</function>,
+	    <function>set_host</function>,
+	    <function>set_hostport</function>,
+	    <function>set_user</function>,
+	    <function>set_userpass</function>,
+	    <function>set_port</function>,
+	    <function>set_uri</function>,
+	    <function>prefix</function>,
+	    <function>strip</function>,
+	    <function>if</function>,
+	    <function>module</function>.
+	</para>
+	<para>
+	    Each of the commands is represented by a <emphasis>case</emphasis>
+	    statement in the switch.  (For example, if you are interested in
+	    implementation of <function>drop</function> command, look at
+	    "case DROP_T:" statement in the function.
+	</para>
+	<para>
+	    The respective commands will be described now.
+	</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <function>drop</function> - This command is very simple, it
+		    simply returns 0 which will result in abortion of
+		    processing of the request. No other commands after
+		    <function>drop</function> will be executed.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>forward</function> - The function will forward
+		    the message further. The message will be either forwarded
+		    to the Request <acronym>URI</acronym> of the message or to
+		    <acronym>IP</acronym> or host given as parameter.
+		</para>
+		<para>
+		    In the first case, host in the Request
+		    <acronym>URI</acronym> must be converted into corresponding
+		    <acronym>IP</acronym> address.  Function
+		    <function>mk_proxy</function> converts hostname to
+		    corresponding <acronym>IP</acronym> address.  The message
+		    is then sent out using <function>forward_request</function>
+		    function.
+		</para>
+		<para>
+		    In the second case, hostname was converted to
+		    <acronym>IP</acronym> address in fixup i.e. immediately
+		    after the config file was compiled into its binary
+		    representation. The first parameter is pointer to
+		    <structname>proxy</structname> structure created in the
+		    fixup and therefore we only need to call
+		    <function>forward_request</function> here to forward the
+		    message further.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>send</function> - This functions sends the
+		    message to a third-party host. The message will be sent out
+		    as is - i.e. without Request <acronym>URI</acronym> and Via
+		    altering.
+		</para>
+		<para>
+		    Hostname or <acronym>IP</acronym> address of the
+		    third-party host is specified as a parameter of the
+		    function.
+		</para>
+		<para>
+		    The message will be sent out using 
+		    <function>udp_send</function> directly.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>log</function> - The message given as a parameter
+		    will be logged using system logger. It can be either
+		    <command>syslog</command> or <varname>stderr</varname>
+		    (depends on configuration). The message is logged using
+		    <function>LOG</function> which is a macro defined in
+		    <filename>dprint.h</filename> header file.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>append_branch</function> - Append a new
+		    <acronym>URI</acronym> for forking.
+		</para>
+		<para>
+		    More than one destinations may be associated with a single
+		    <acronym>SIP</acronym> request. If the server was
+		    configured so, it will use all the destinations and fork
+		    the request.
+		</para>
+		<para>
+		    The server keeps an array of all destinations, that should
+		    be used when forking. The array and related functions can
+		    be found in file <filename>dset.c</filename>. There is
+		    function <function>append_branch</function> which adds a
+		    new destination to the set.
+		</para>
+		<para>
+		    This command simply calls
+		    <function>append_branch</function> function and adds a new
+		    destination to the destination set.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>len_gt</function> - The command accepts one
+		    number as a parameter. It then compares the number with
+		    length of the message. If the message length is greater or
+		    equal then the number then 1 will be returned otherwise the
+		    function returns -1.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>setflag</function> - Sets a flag in the
+		    message. The command simply calls
+		    <function>setflags</function> function that will set the
+		    flag. Fore more information see file
+		    <filename>flag.c</filename>.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>resetflag</function> - Same as command
+		    <function>setflag</function> - only resetflag will be
+		    called instead of setflag.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>isflagset</function> - Test if the flag
+		    is set or not.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>error</function> - Log a message with NOTICE log
+		    level.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>route</function> - Execute another
+		    route statement.
+		</para>
+		<para>
+		    As we have mentioned already, there can be more that one
+		    route statement in the config file. One of them is main
+		    (without number), the other are additional. This command
+		    makes it possible to execute an additional route statement.
+		</para>
+		<para>
+		    The command accepts one parameter which is route statement
+		    number.  First sanity checks over the parameter will be
+		    performed. If the checks passed, function
+		    <function>run_actions</function> will be called.  The
+		    function accepts two parameters. The first one is linked
+		    list to execute, the second one is
+		    <structname>sip_msg</structname> structure representing the
+		    message to be processed.
+		</para>
+		<para>
+		    As you might remember, each route statement was compiled
+		    into linked list of commands to be executed and head of the
+		    linked list was stored in <varname>rlist</varname>
+		    array. For example, head of linked list representing route
+		    statement with number 4 will be stored at position 4 in the
+		    array (position 0 is reserved for the main route
+		    statement).
+		</para>
+		<para>
+		    So the command will simply call
+		    <function>run_actions(rlist[a->p1.number], msg)</function>
+		    and that will execute route statement with number given as
+		    parameter.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>exec</function> - Execute a shell command.
+		</para>
+		<para>
+		    The command accepts one parameter of type
+		    <type>char*</type>. The string given as parameter will be
+		    passed to <function>system</function> function which will
+		    in turn execute <function>/bin/sh -c
+			&lt;string&gt;</function>.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>revert_uri</function> - Revert changes made to
+		    the Request <acronym>URI</acronym>.
+		</para>
+		<para>
+		    If there is a new <acronym>URI</acronym> stored in
+		    <structfield>new_uri</structfield> of
+		    <structname>sip_msg</structname> structure, it will be
+		    freed. The original Request <acronym>URI</acronym> will be
+		    used when forwarding the message.
+		</para>
+		<para>
+		    If there is a valid <acronym>URI</acronym> in
+		    <structfield>parsed_uri</structfield> field of
+		    <structname>sip_msg</structname> structure (indicated by
+		    <structfield>parsed_uri_ok</structfield> field), it will be
+		    freed too.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>set_host</function> - Change hostname of Request
+		    <acronym>URI</acronym> to value given as parameter.
+		</para>
+		<para>
+		    If there is a <acronym>URI</acronym> in
+		    <structfield>new_uri</structfield> field, it will be
+		    modified, otherwise the original Request
+		    <acronym>URI</acronym> will be modified.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>set_hostport</function> - change hostname and
+		    port of Request <acronym>URI</acronym> to value given as
+		    string parameter.
+		</para>
+		<para>
+		    If there is a <acronym>URI</acronym> in
+		    <structfield>new_uri</structfield> field, it will be
+		    modified, otherwise the original Request
+		    <acronym>URI</acronym> will be modified.  </para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>set_user</function> - Set username part of
+		    Request <acronym>URI</acronym> to string given as
+		    parameter.
+		</para>
+		<para>
+		    If there is a <acronym>URI</acronym> in
+		    <structfield>new_uri</structfield> field, it will be
+		    modified, otherwise the original Request
+		    <acronym>URI</acronym> will be modified.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>set_userpass</function> - Set username and
+		    password part of Request <acronym>URI</acronym> to string
+		    given as parameter.
+		</para>
+		<para>
+		    If there is a <acronym>URI</acronym> in
+		    <structfield>new_uri</structfield> field, it will be
+		    modified, otherwise the original Request
+		    <acronym>URI</acronym> will be modified.  </para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>set_port</function> - Set port of Request
+		    <acronym>URI</acronym> to value given as parameter.
+		</para>
+		<para>
+		    If there is a <acronym>URI</acronym> in
+		    <structfield>new_uri</structfield> field, it will be
+		    modified, otherwise the original Request
+		    <acronym>URI</acronym> will be modified.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>set_uri</function> - Set a new Request
+		    <acronym>URI</acronym>.
+		</para>
+		<para>
+		    If there is a <acronym>URI</acronym> in
+		    <structfield>new_uri</structfield> field, it will be
+		    freed. If there is a valid <acronym>URI</acronym> in
+		    <structfield>parsed_uri</structfield> field, it will be
+		    freed too.
+		</para>
+		<para>
+		    Then <acronym>URI</acronym> given as parameter will be
+		    stored in <structfield>new_uri</structfield> field. (If
+		    <structfield>new_uri</structfield> contains a
+		    <acronym>URI</acronym> it will be used instead of Request
+		    <acronym>URI</acronym> when forwarding the message).
+		</para>
+	    </listitem>
+		<listitem>
+		<para>
+		    <function>prefix</function> - Set the parameter as username
+		    prefix.
+		</para>
+		<para>
+		    The string will be put immediately after "sip:" part of the
+		    Request <acronym>URI</acronym>.
+		</para>
+		<para>
+		    If there is a <acronym>URI</acronym> in
+		    <structfield>new_uri</structfield> field, it will be
+		    modified, otherwise the original Request
+		    <acronym>URI</acronym> will be modified.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>strip</function> - Remove first n characters of
+		    username in Request <acronym>URI</acronym>.
+		</para>
+		<para>
+		    If there is a <acronym>URI</acronym> in <structfield>new_uri</structfield>
+		    field, it will be modified, otherwise the original Request
+		    <acronym>URI</acronym> will be modified.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>if</function> - if Statement.
+		</para>
+		<para>
+		    There is an expression associated with the command and one
+		    or two linked lists of commands. The expression is a
+		    regular expression compiled into binary form in the fixup
+		    when the config file was compiled.
+		</para>
+		<para>
+		    The expression will be evaluated now. If the result is &gt;
+		    0, the first linked list will be executed using
+		    <function>run_action</function> function. The linked list
+		    represents command enclosed in curly braces of
+		    <function>if</function> command.
+		</para>
+		<para>
+		    Otherwise, if there is the second list, it will be executed
+		    in the same way. The second list represents commands of
+		    <function>else</function> statement.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>module</function> - Execute a function exported by
+		    a module.
+		</para>
+		<para>
+		    When a command in a route statement is not recognized by
+		    the core itself (i.e. it is not one of commands handled by
+		    the core itself), list of exported functions of all loaded
+		    modules will be searched for a function with corresponding
+		    name and number of parameters.
+		</para>
+		<para>
+		    If the function was found, <function>module</function>
+		    command (this one) will be created and pointer to the
+		    function will be stored in
+		    <structfield>p1.data</structfield> field.
+		</para>
+		<para>
+		    So, this command will simply call function whose pointer is
+		    in <structfield>p1.data</structfield> field and will pass 2
+		    parameters to the function. If one or both of the
+		    parameters were not used, 0 will be passed instead.
+		</para>
+		<para>
+		    Return value of the function will be returned as return
+		    value of <function>module</function> command.
+		</para>
+		<para>
+		    This command makes <acronym>SER</acronym> pretty extensible
+		    while the core itself is still reasonably small and
+		    clean. Additional functionality is put in modules and
+		    loaded only when needed.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section> <!-- do-action -->
+</section>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="expires_parser" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Expires HF Body Parser</title>
+    <para>
+	The parser parses body of Expires header field. The body is very
+	simple, it consists of number only.  so the parser only removes any
+	leading tabs and spaces and converts the number from string to
+	integer. That's it.
+    </para>
+    <para>
+	The parser can be found in file <filename>parse_expires.c</filename>
+	under <filename>parser</filename> subdirectory. Main function is
+	<function>parse_expires</function>. The function is not called
+	automatically when an Expires header field was found. It is up to you
+	to call the function if you need the body to be parsed.
+    </para>
+    <para>
+	The function creates a new instance of
+	<structname>exp_body_t</structname> structure and calls the parser. If
+	everything went OK, pointer to the newly created structure will be
+	saved in <structfield>parsed</structfield> field of the
+	<structname>hdr_field</structname> structure representing the parsed
+	header field.
+    </para>
+
+    <xi:include href="exp_body_t.xml"/>
+</section>

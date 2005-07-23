@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="str" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title></title>
+
+    <title>Type <type>str</type></title>
+    <para>
+	One of our main goals was to make <acronym>SER</acronym> really
+	fast. There are many functions across the server that need to work with
+	strings. Usually these functions need to know string length. We wanted
+	to avoid using of <function>strlen</function> because the function is
+	relatively slow. It must scan the whole string and find the first
+	occurrence of zero character. To avoid this, we created
+	<type>str</type> type. The type has 2 fields, field
+	<structfield>s</structfield> is pointer to the beginning of the string
+	and field <structfield>len</structfield> is length of the string. We
+	then calculate length of the string only once and later reuse saved
+	value.
+    </para>
+    <important>
+	<para>
+	    <type>str</type> structure is quite important because it is widely
+	    used in <acronym>SER</acronym> (most functions accept
+	    <type>str</type> instead of <type>char*</type>).
+	</para>
+    </important>
+    
+    <para><emphasis><type>str</type> Type Declaration</emphasis></para>
+    <programlisting>
+struct _str{
+    char* s;
+    int len;
+};
+
+typedef struct _str str;		    
+    </programlisting>
+    
+    <para>
+	The declaration can be found in header file <filename>str.h</filename>.
+    </para>
+    
+    <warning>
+	<para>
+	    Because we store string lengths, there is no need to zero terminate
+	    them. Some strings in the server are still zero terminated, some
+	    are not. Be careful when using functions like
+	    <function>snprintf</function> that rely on the ending zero. You can
+	    print variable of type <type>str</type> this way:
+
+	    <programlisting>
+printf("%.*s", mystring->len, mystring->s);
+	    </programlisting> 
+
+	    That ensures that the string will be printed correctly even if
+	    there is no zero character at the end.
+	</para>
+    </warning>
+</section>

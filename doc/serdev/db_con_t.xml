@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="db_con_t" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Type <type>db_con_t</type></title>
+    <para>
+	This type represents a database connection, all database functions
+	(described below) use a variable of this type as one argument. In other
+	words, variable of <type>db_con_t</type> type serves as a handle for a
+	particular database connection.
+    </para>
+    <programlisting>
+typedef struct db_con {
+    char* table;     /* Default table to use */
+    void* con;       /* Database connection */
+    void* res;       /* Result of previous operation */
+    void* row;       /* Internal, not for public use */
+   int connected;    /* 1 if connection is established */
+} db_con_t;
+    </programlisting>
+    <para>
+	There are no macros defined for <type>db_con_t</type> type.
+    </para>
+</section>

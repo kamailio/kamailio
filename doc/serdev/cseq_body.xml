@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="cseq_body" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Structure <structname>cseq_body</structname></title>
+    <para>
+	The structure represents parsed CSeq body. The structure is declared in
+	<filename>parse_cseq.h</filename> file.
+    </para>
+    <para><emphasis>Structure Declaration:</emphasis></para>
+    <programlisting>
+struct cseq_body{
+    int error;  /* Error code */
+    str number; /* CSeq number */
+    str method; /* Associated method */
+};
+    </programlisting>
+    <para>
+	<emphasis>Field Description:</emphasis>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>error</structfield> - Error code will be put
+		    here when parsing of CSeq body fails.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>number</structfield> - CSeq number as string.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>method</structfield> - CSeq method.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+</section>

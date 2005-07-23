@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="sip_msg" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Structure <structname>sip_msg</structname></title>
+    <para>
+	This is the most important structure in the whole server. This
+	structure represents a <acronym>SIP</acronym> message. When a message
+	is received, it is immediately converted into this structure and all
+	operations are performed over the structure. After the server finished
+	processing, this structure is converted back to character array buffer
+	and the buffer is sent out.
+    </para>
+    <para>
+	<emphasis>Structure Declaration:</emphasis>
+	<programlisting>
+struct sip_msg {
+    unsigned int id;               /* message id, unique/process*/
+    struct msg_start first_line;   /* Message first line */
+    struct via_body* via1;         /* The first via */
+    struct via_body* via2;         /* The second via */
+    struct hdr_field* headers;     /* All the parsed headers*/
+    struct hdr_field* last_header; /* Pointer to the last parsed header*/
+    int parsed_flag;               /* Already parsed header field types */
+
+    /* Via, To, CSeq, Call-Id, From, end of header*/
+    /* first occurrence of it; subsequent occurrences 
+     * saved in 'headers' 
+     */
+
+    struct hdr_field* h_via1;
+    struct hdr_field* h_via2;
+    struct hdr_field* callid;
+    struct hdr_field* to;
+    struct hdr_field* cseq;
+    struct hdr_field* from;
+    struct hdr_field* contact;
+    struct hdr_field* maxforwards;
+    struct hdr_field* route;
+    struct hdr_field* record_route;
+    struct hdr_field* content_type;
+    struct hdr_field* content_length;
+    struct hdr_field* authorization;
+    struct hdr_field* expires;
+    struct hdr_field* proxy_auth;
+    struct hdr_field* www_auth;
+    struct hdr_field* supported;
+    struct hdr_field* require;
+    struct hdr_field* proxy_require;
+    struct hdr_field* unsupported;
+    struct hdr_field* allow;
+    struct hdr_field* event;
+
+    char* eoh;        /* pointer to the end of header (if found) or null */
+    char* unparsed;   /* here we stopped parsing*/
+
+   struct ip_addr src_ip;
+   struct ip_addr dst_ip;
+	
+   char* orig;       /* original message copy */
+   char* buf;        /* scratch pad, holds a modified message,
+	              *  via, etc. point into it 
+	              */
+   unsigned int len; /* message len (orig) */
+                     /* modifications */
+
+   str new_uri;       /* changed first line uri*/
+   int parsed_uri_ok; /* 1 if parsed_uri is valid, 0 if not */
+   struct sip_uri parsed_uri; /* speed-up > keep here the parsed uri*/
+	
+   struct lump* add_rm; /* used for all the forwarded 
+                         * requests */
+   struct lump* repl_add_rm;    /* used for all the forwarded replies */
+   struct lump_rpl *reply_lump; /* only for locally generated replies !!!*/
+   char add_to_branch_s[MAX_BRANCH_PARAM_LEN];
+   int add_to_branch_len;
+
+       /* index to TM hash table; stored in core to avoid unnecessary calcs */
+   unsigned int  hash_index;
+		
+       /* allows to set various flags on the message; may be used for 
+	* simple inter-module communication or remembering processing state
+	* reached 
+	*/
+   flag_t flags;	
+};
+	</programlisting>
+    </para>
+    <para>
+	<emphasis>Field Description:</emphasis>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>id</structfield> - Unique ID of the message within a process context.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>first_line</structfield> - Parsed first line of the message.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>via1</structfield> - The first Via - parsed.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>via2</structfield> - The second Via - parsed.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>headers</structfield> - Linked list of all parsed headers.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>last_header</structfield> - Pointer to the
+		    last parsed header (parsing is incremental, that means that
+		    the parser will stop if all requested headers were found
+		    and next time it will continue at the place where it
+		    stopped previously. Therefore this field will not point to
+		    the last header of the message if the whole message hasn't
+		    been parsed yet).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>parsed_flag</structfield> - Already parsed header field types (bitwise OR).
+		</para>
+	    </listitem>
+	</itemizedlist>
+
+	The following fields are set to zero if the corresponding header field
+	was not found in the message or hasn't been parsed yet. (These fields
+	are called hooks - they always point to the first occurrence if there
+	is more than one header field of the same type).
+
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>h_via1</structfield> - Pointer to the first Via header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>h_via2</structfield> - Pointer to the second Via header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>callid</structfield> - Pointer to the first Call-ID header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>to</structfield> - Pointer to the first To header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>cseq</structfield> - Pointer to the first CSeq header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>from</structfield> - Pointer to the first From header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>contact</structfield> - Pointer to the first Contact header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>maxforwards</structfield> - Pointer to the first Max-Forwards header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>route</structfield> - Pointer to the first Route header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>record_route</structfield> - Pointer to the first Record-Route header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>content_type</structfield> - Pointer to the first Content-Type header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>content_length</structfield> - Pointer to the first Content-Length header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>authorization</structfield> - Pointer to the first Authorization header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>expires</structfield> - Pointer to the first Expires header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>proxy_auth</structfield> - Pointer to the first Proxy-Authorize header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>www_auth</structfield> - Pointer to the first WWW-Authorize header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>supported</structfield> - Pointer to the first Supported header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>require</structfield> - Pointer to the first Require header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>proxy_require</structfield> - Pointer to the first Proxy-Require header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>unsupported</structfield> - Pointer to the first Unsupported header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>allow</structfield> - Pointer to the first Allow header field.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>event</structfield> - Pointer to the first Event header field.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	
+	The following fields are mostly used internally by the server and
+	should be modified through dedicated functions only.
+	
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>eoh</structfield> - Pointer to the End of
+		    Header or null if not found yet (the field will be set if
+		    and only if the whole message was parsed already).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>unparsed</structfield> - Pointer to the first
+		    unparsed character in the message.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>src_ip</structfield> - Sender's <acronym>IP</acronym> address.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>dst_ip</structfield> - Destination's <acronym>IP</acronym> address.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>orig</structfield> - Original (unmodified)
+		    message copy, this field will hold unmodified copy of the
+		    message during the whole message lifetime.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>buf</structfield> - Message scratch-pad (modified
+		    copy of the message) - All modifications made to the message
+		    will be done here.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>len</structfield> - Length of the message (unmodified).
+		</para>
+	    </listitem>
+	</itemizedlist>
+	
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>new_uri</structfield> - New Request-URI to be used when forwarding the message.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>parsed_uri_ok</structfield> - 1 if <structfield>parsed_uri</structfield> is 
+		    valid, 0 if not.
+	    </para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>parsed_uri</structfield> - The original parsed
+		    Request <acronym>URI</acronym>, sometimes it might be
+		    necessary to revert changes made to the Request
+		    <acronym>URI</acronym> and therefore we store the original
+		    <acronym>URI</acronym> here.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>add_rm</structfield> - Linked list describing
+		    all modifications that will be made to
+		    <emphasis>REQUEST</emphasis> before it will be
+		    forwarded. The list will be processed when the request is
+		    being converted to character array (i.e. immediately before
+		    the request will be send out).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>repl_add_rm</structfield> - Linked list
+		    describing all modifications that will be made to
+		    <emphasis>REPLY</emphasis> before it will be forwarded. the
+		    list will be processed when the reply is being converted to
+		    character array (i.e. immediately before the request will
+		    be send out).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>reply_lump</structfield> - This is list of
+		    data chunks that should be appended to locally generated
+		    reply, i.e. when the server is generating local reply out
+		    of the request. A local reply is reply generated by the
+		    server. For example, when processing of a request fails for
+		    some reason, the server might generate an error reply and
+		    send it back to sender.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>add_to_branch_s</structfield> - String to be
+		    appended to branch parameter.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>add_to_branch_len</structfield> - Length of the string.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>hash_index</structfield> - Index to a hash table
+		    in TM module.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>flags</structfield> - Allows to set various flags on the message. May be used 
+		    for simple inter-module communication or remembering processing state reached.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+</section> <!-- sip_msg -->

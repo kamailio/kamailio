@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="main_loop" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Main Loop</title>
+    <para>
+	Upon startup, all children execute <function>recvfrom</function>
+	function. The process will enter the kernel mode. When there is no data
+	to be processed at the moment, the kernel will put the process on list
+	of processes waiting for data and the process will be put asleep.
+    </para>
+    <para>
+	When data to be processed was received, the first process on the list
+	will be removed from the list and woken up. After the process finished
+	processing of the data, it will call <function>recvfrom</function>
+	again and will be put by the kernel at the end of the list.
+    </para>
+    <para>
+	When next data arrives, the first process on the list will be removed,
+	processes the data and will be put on the end of the list again. And so
+	on...
+    </para>
+    
+    <para>
+	The main loop logic can be found in function
+	<function>udp_rcv_loop</function> in file
+	<filename>udp_server.c</filename>.
+    </para>
+    <para>
+	The message is received using <function>recvfrom</function>
+	function. The received data is stored in buffer and zero terminated.
+    </para>
+    <para>
+	If configured so, basic sanity checks over the received message will be
+	performed.
+    </para>
+    <para>
+	The message is then processed by <function>receive_msg</function>
+	function and <function>recvfrom</function> is called again.
+    </para>
+    
+    <section id="receive_msg">
+	<title><function>receive_msg</function> Function</title>
+	<para>
+	    The function can be found in <filename>receive.c</filename> file.
+	</para>
+	
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    In the server, a request or response is represented by
+		    <structname>sip_msg</structname> structure. The structure
+		    is allocated in this function. The original message is
+		    stored in <structfield>buf</structfield> attribute of the
+		    structure and is zero terminated. Then, another copy of the
+		    received message will be created and the copy will be
+		    stored in <structfield>orig</structfield> field. The
+		    original copy will be not modified during the server
+		    operation. All changes will be made to the copy in
+		    <structfield>buf</structfield> field. The second copy of
+		    the message will be removed in the future.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    The message will be parsed (function
+		    <function>parse_msg</function>). We don't need the whole
+		    message header to be parsed at this stage. Only the first
+		    line and first Via header need to be parsed. The server
+		    needs to know if the message is request or response - hence
+		    the first line. The server also needs the first Via to be
+		    able to add its own Via - hence the first Via. Nothing else
+		    will be parsed at the moment - this saves time. (Message
+		    parser as well as <structname>sip_msg</structname>
+		    structure will be described later).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    A module may register callbacks. Each callback have
+		    associated an event, that will trigger the callback. One
+		    such callback is <emphasis>pre-script</emphasis>
+		    callback. Such callback will be called immediately before
+		    the routing part of the config file will be executed.  If
+		    there are such callbacks registered, they will be executed
+		    now.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    As the next step we will determine type of the message. If
+		    the message being processed is a REQUEST then basic sanity
+		    checks will be performed (make sure that there is the first
+		    Via and parsing was successful) and the message will be
+		    passed to routing engine.  The routing engine is one of the
+		    most complicated parts of the server and will be in detail
+		    described in chapter <link linkend="routing_engine">The
+			Routing Engine</link>.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    If the message is a RESPONSE, it will be simply forwarded
+		    to its destination.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    After all, <emphasis>post-script</emphasis> callbacks will
+		    be executed if any and the structure representing the
+		    message will be released.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    Processing of the message is done now and the process is ready for another 
+		    <acronym>SIP</acronym> message.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section> <!-- recv-message -->
+</section>

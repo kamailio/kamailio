@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="sip_uri" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Structure <structname>sip_uri</structname></title>
+    <para>
+	This structure represents parsed SIP URI.
+    </para>
+    <programlisting>
+struct sip_uri {
+    str user;     /* Username */
+    str passwd;   /* Password */
+    str host;     /* Host name */
+    str port;     /* Port number */
+    str params;   /* Parameters */
+    str headers;  
+};
+    </programlisting>
+    <para>
+	<emphasis>Field Description:</emphasis>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>user</structfield> - Username if found in the URI.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>passwd</structfield> - Password if found in
+		    the URI.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>host</structfield> - Hostname of the URI.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>params</structfield> - Parameters of the URI
+		    if any.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>headers</structfield> - See the SIP RFC.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+</section>

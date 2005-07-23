@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="db_row_t" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Type <type>db_row_t</type></title>
+    <para>
+	This type represents one row in a database table. In other words, the
+	row is an array of <type>db_val_t</type> variables, where each
+	<type>db_val_t</type> variable represents exactly one cell in the
+	table.
+    </para>
+    <programlisting>
+typedef struct db_row {
+    db_val_t* values;    /* Array of values in the row */
+    int n;               /* Number of values in the row */
+} db_val_t;
+    </programlisting>
+    <itemizedlist>
+	<listitem>
+	    <para>
+		<function>ROW_VALUES(row)</function> Macro.
+	    </para>
+	    <para>
+		Use this macro to get pointer to array of <type>db_val_t</type>
+		structures.
+	    </para>
+	    <example>
+		<title>ROW_VALUES Macro</title>
+		<programlisting>
+...
+db_val_t* v = ROW_VALUES(row);
+if (VAL_TYPE(v) == DB_INT)
+...
+		</programlisting>
+	    </example>
+	</listitem>
+	
+	<listitem>
+	    <para>
+		<function>ROW_N(row)</function> Macro.
+	    </para>
+	    <para>
+		Use this macro to get number of cells in a row.
+	    </para>
+	    <example>
+		<title>ROW_N Macro</title>
+		<programlisting>
+<![CDATA[
+...
+db_val_t* val = ROW_VALUES(row);
+for(i = 0; i < ROW_N(row); i++) {
+    switch(VAL_TYPE(val + i)) {
+        case DB_INT: ...; break;
+        case DB_DOUBLE: ...; break;
+        ...
+    }
+}
+...
+]]>
+		</programlisting>
+	    </example>
+	</listitem>
+    </itemizedlist>
+</section>

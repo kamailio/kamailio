@@ -1,0 +1,508 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="db_interface" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>The Database Interface</title>
+    <para>
+	This is a generic database interface for modules that need to utilize a
+	database. The interface should be used by all modules that access
+	database.  The interface will be independent of the underlying database
+	server.
+    </para>
+    <note>
+	<para>
+	    If possible, use predefined macros if you need to access any
+	    structure attributes.
+	</para>
+	<para>
+	    For additional description, see comments in sources of mysql
+	    module.
+	</para>
+	<para>
+	    If you want to see more complicated examples of how the API could
+	    be used, see sources of dbexample, usrloc or auth modules.
+	</para>
+    </note>
+    
+    <section id="data_types">
+	<title>Data types</title>
+	<para>
+	    There are several data types. All of them are defined in header
+	    files under <filename>db</filename> subdirectory, a client must
+	    include <filename>db.h</filename> header file to be able to use
+	    them.
+	</para>
+
+	<xi:include href="db_con_t.xml"/>
+	<xi:include href="db_key_t.xml"/>
+	<xi:include href="db_type_t.xml"/>
+	<xi:include href="db_val_t.xml"/>
+	<xi:include href="db_row_t.xml"/>
+	<xi:include href="db_res_t.xml"/>
+    </section>
+	
+    <section id="db_functions">
+	<title>Functions</title>
+	<para>
+	    There are several functions that implement the database
+	    <acronym>API</acronym> logic. All function names start with db_
+	    prefix, except <function>bind_dbmod</function>.
+	    <function>bind_dbmod</function> is implemented in
+	    <filename>db.c</filename> file, all other functions are implemented
+	    in a standalone module.  Detailed description of functions follows.
+	</para>
+	
+	<section id="bind_dbmod">
+	    <title><function>bind_dbmod</function></title>
+	    <para>
+		This function is special, it's only purpose is to call
+		<function>find_export</function> function in the
+		<acronym>SER</acronym> core and find addresses of all other
+		functions (starting with db_ prefix). This function
+		<emphasis>MUST</emphasis> be called <emphasis>FIRST</emphasis>
+		!
+	    </para>
+	    <funcsynopsis>
+		<funcprototype>
+		    <funcdef>int <function>bind_dbmod</function></funcdef>
+		    <void/>
+		</funcprototype>
+	    </funcsynopsis>
+	    <para>
+		The function takes no parameters.
+	    </para>
+	    <para>
+		The function returns 0 if it was able to find addresses of all
+		other functions, otherwise value &lt; 0 is returned.
+	    </para>
+	</section> <!-- bind_dbmod -->
+	
+	<section id="db_init">
+	    <title><function>db_init</function></title>
+	    <para>
+		Use this function to initialize the database
+		<acronym>API</acronym> and open a new database connection. This
+		function must be called after <function>bind_dbmod</function>
+		but before any other function is called.
+	    </para>
+	    <funcsynopsis>
+		<funcprototype>
+		    <funcdef>db_con_t* <function>db_init</function></funcdef>
+		    <paramdef>const char* <parameter>_sql_url</parameter></paramdef>
+		</funcprototype>
+	    </funcsynopsis>
+	    <para>
+		The function takes one parameter, the parameter must contain
+		database connection <acronym>URL</acronym>. The
+		<acronym>URL</acronym> is of the form
+		mysql://username:password@host:port/database where:
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>username</emphasis> - Username to use
+			    when logging into database (optional).
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>password</emphasis> - Password if it was
+			    set (optional).
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>host</emphasis> - Hostname or IP address
+			    of the host where database server lives
+			    (mandatory).
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>port</emphasis> - Port number of the
+			    server if the port differs from default value
+			    (optional).
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>database</emphasis> - If the database server supports 
+			    multiple databases, you must specify name of the database (optional).
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	    <para>
+		The function returns pointer to <type>db_con_t</type>*
+		representing the connection if it was successful, otherwise 0
+		is returned.
+	    </para>
+	</section> <!-- db-init -->
+	
+	<section id="db_close">
+	    <title><function>db_close</function></title>
+	    <para>
+		The function closes previously open connection and frees all
+		previously allocated memory. The function
+		<function>db_close</function> must be the very last function
+		called.
+	    </para>
+		<funcsynopsis>
+		<funcprototype>
+		    <funcdef>void <function>db_close</function></funcdef>
+		    <paramdef>db_con_t* <parameter>_h</parameter></paramdef>
+		</funcprototype>
+	    </funcsynopsis>
+	    <para>
+		The function takes one parameter, this parameter is a pointer
+		to <type>db_con_t</type> structure representing database
+		connection that should be closed.
+	    </para>
+	    <para>
+		Function doesn't return anything.
+	    </para>
+	</section> <!-- db-close -->
+	
+	<section id="db_query">
+	    <title><function>db_query</function></title>
+	    <para>
+		This function implements SELECT <acronym>SQL</acronym> directive.
+	    </para>
+	    <funcsynopsis>
+		<funcprototype>
+		    <funcdef>int <function>db_query</function></funcdef>
+		    <paramdef>db_con_t* <parameter>_h</parameter></paramdef>
+		    <paramdef>db_key_t* <parameter>_k</parameter></paramdef>
+		    <paramdef>db_val_t* <parameter>_v</parameter></paramdef>
+		    <paramdef>db_key_t* <parameter>_c</parameter></paramdef>
+		    <paramdef>int <parameter>_n</parameter></paramdef>
+		    <paramdef>int <parameter>_nc</parameter></paramdef>
+		    <paramdef>db_key_t* <parameter>_o</parameter></paramdef>
+		    <paramdef>db_res_t** <parameter>_r</parameter></paramdef>
+		</funcprototype>
+	    </funcsynopsis>
+	    <para>
+		The function takes 8 parameters:
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>_h</emphasis> - Database connection handle.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>_k</emphasis> - Array of column names
+			    that will be compared and their values must
+			    match.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>_v</emphasis> - Array of values,
+			    columns specified in _k parameter must match
+			    these values.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>_c</emphasis> - Array of column names
+			    that you are interested in.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>_n</emphasis> - Number of key-value
+			    pairs to match in _k and _v parameters.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>_nc</emphasis> - Number of columns in
+			    _c parameter.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>_o</emphasis> - Order by.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>_r</emphasis> - Address of variable
+				where pointer to the result will be stored.
+			</para>
+		    </listitem>
+		</itemizedlist>
+		If _k and _v parameters are NULL and _n is zero, you will get
+		the whole table.  If _c is NULL and _nc is zero, you will get
+		all table columns in the result
+	    </para>
+	    <para>
+		_r will point to a dynamically allocated structure, it is
+		necessary to call db_free_result function once you are finished
+		with the result.
+	    </para>
+	    <para>
+		Strings in the result are not duplicated, they will be
+		discarded if you call db_free_result, make a copy yourself if
+		you need to keep it after db_free_result.
+	    </para>
+	    <para>
+		You must call db_free_result <emphasis>BEFORE</emphasis> you
+		can call db_query again !
+	    </para>
+	    <para>
+		The function returns 0 if everything is OK, otherwise value
+		&lt; 0 is returned.
+	    </para>
+	</section> <!-- db_query -->
+	
+	<section id="db_free_result">
+	    <title><function>db_free_result</function></title>
+	    <para>
+		This function frees all memory allocated previously in
+		<function>db_query</function>, it is necessary to call this
+		function for a <type>db_res_t</type> structure if you don't
+		need the structure anymore. You must call this function
+		<emphasis>BEFORE</emphasis> you call
+		<function>db_query</function> again !
+	    </para>
+	    <funcsynopsis>
+		<funcprototype>
+		    <funcdef>int <function>db_free_result</function></funcdef>
+		    <paramdef>db_con_t* <parameter>_h</parameter></paramdef>
+		    <paramdef>db_res_t* <parameter>_r</parameter></paramdef>
+		</funcprototype>
+	    </funcsynopsis>
+	    <para>
+		The function takes 2 parameters:
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <parameter>_h</parameter> - Database connection handle.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <parameter>_r</parameter> - Pointer to db_res_t
+			    structure to destroy.
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	    <para>
+		The function returns 0 if everything is OK, otherwise the
+		function returns value &lt; 0.
+	    </para>
+	</section> <!-- db_free_result -->
+	
+	<section id="db_insert">
+	    <title><function>db_insert</function></title>
+	    <para>
+		This function implements INSERT SQL directive, you can
+		insert one or more rows in a table using this function.
+	    </para>
+	    <funcsynopsis>
+		<funcprototype>
+		    <funcdef>int <function>db_insert</function></funcdef>
+		    <paramdef>db_con_t* <parameter>_h</parameter></paramdef>
+		    <paramdef>db_key_t* <parameter>_k</parameter></paramdef>
+		    <paramdef>db_val_t* <parameter>_v</parameter></paramdef>
+		    <paramdef>int <parameter>_n</parameter></paramdef>
+		</funcprototype>
+	    </funcsynopsis>
+	    <para>
+		The function takes 4 parameters:
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <parameter>_h</parameter> - Database connection handle.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <parameter>_k</parameter> - Array of keys (column names).
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <parameter>_v</parameter> - Array of values for
+			    keys specified in _k parameter.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <parameter>_n</parameter> - Number of
+			    keys-value pairs int _k and _v parameters.
+			    </para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	    <para>
+		The function returns 0 if everything is OK, otherwise the
+		function returns value &lt; 0.
+	    </para>
+	</section> <!-- db_insert -->
+	
+	<section id="db_delete">
+	    <title><function>db_delete</function></title>
+	    <para>
+		This function implements DELETE SQL directive, it is
+		possible to delete one or more rows from a table.
+	    </para>
+	    <funcsynopsis>
+		<funcprototype>
+		    <funcdef>int <function>db_delete</function></funcdef>
+		    <paramdef>db_con_t* <parameter>_h</parameter></paramdef>
+		    <paramdef>db_key_t* <parameter>_k</parameter></paramdef>
+		    <paramdef>db_val_t* <parameter>_v</parameter></paramdef>
+		    <paramdef>int <parameter>_n</parameter></paramdef>
+		</funcprototype>
+	    </funcsynopsis>
+	    <para>
+		The function takes 4 parameters:
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <parameter>_h</parameter> - Database connection handle.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <parameter>_k</parameter> - Array of keys
+			    (column names) that will be matched.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <parameter>_v</parameter> - Array of values
+			    that the row must match to be deleted.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <parameter>_n</parameter> - Number of
+			    keys-value parameters in _k and _v parameters.
+			</para>
+		    </listitem>
+		</itemizedlist>
+		If _k is NULL and _v is NULL and _n is zero, all rows are
+		deleted (table will be empty).
+	    </para>
+	    <para>
+		The function returns 0 if everything is OK, otherwise the
+		function returns value &lt; 0.
+	    </para>
+	</section> <!-- db_delete -->
+	
+	<section id="db_update">
+	    <title><function>db_update</function></title>
+	    <para>
+		The function implements UPDATE SQL directive. It is possible to
+		modify one or more rows in a table using this function.
+	    </para>
+		<funcsynopsis>
+		<funcprototype>
+		    <funcdef>int <function>db_update</function></funcdef>
+		    <paramdef>db_con_t* <parameter>_h</parameter></paramdef>
+		    <paramdef>db_key_t* <parameter>_k</parameter></paramdef>
+		    <paramdef>db_val_t* <parameter>_v</parameter></paramdef>
+		    <paramdef>db_key_t* <parameter>_uk</parameter></paramdef>
+		    <paramdef>db_val_t* <parameter>_uv</parameter></paramdef>
+		    <paramdef>int <parameter>_n</parameter></paramdef>
+		    <paramdef>int <parameter>_un</parameter></paramdef>
+		</funcprototype>
+	    </funcsynopsis>
+	    <para>
+		The function takes 7 parameters:
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <parameter>_h</parameter> - Database connection handle.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <parameter>_k</parameter> - Array of keys (column names) that will be matched.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <parameter>_v</parameter> - Array of values that the row must match 
+			    to be modified.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <parameter>_uk</parameter> - Array of keys (column names) that will be modified.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <parameter>_uv</parameter> - New values for keys specified in _k parameter.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <parameter>_n</parameter> - Number of key-value pairs in _k and _v parameters.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <parameter>_un</parameter> - Number of key-value pairs 
+			    in _uk and _uv parameters.
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	    <para>
+		The function returns 0 if everything is OK, otherwise the function returns
+		value &lt; 0.
+	    </para>
+	</section> <!-- db_update -->
+
+	<section id="db_use_table">
+	    <title><function>db_use_table</function></title>
+	    <para>
+		The function db_use_table takes a table name and stores it
+		in db_con_t structure.  All subsequent operations (insert,
+		delete, update, query) are performed on that table.
+	    </para>
+	    <funcsynopsis>
+		<funcprototype>
+		    <funcdef>int <function>db_use-table</function></funcdef>
+		    <paramdef>db_con_t* <parameter>_h</parameter></paramdef>
+		    <paramdef>cons char* <parameter>_t</parameter></paramdef>
+		</funcprototype>
+	    </funcsynopsis>
+	    <para>
+		The function takes 2 parameters:
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <parameter>_h</parameter> - Database connection handle.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <parameter>_t</parameter> - Table name.
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	    <para>
+		The function returns 0 if everything is OK, otherwise the
+		function returns value &lt; 0.
+	    </para>
+	</section>
+    </section>
+</section>

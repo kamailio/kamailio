@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="hdr_field" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Structure <structname>hdr_field</structname></title>
+    
+    <para>
+	The structure represents a header field of a SIP message. A header
+	field consist of <emphasis>name</emphasis> and
+	<emphasis>body</emphasis> separated by a double colon.  For example:
+	"Server: SIP Express Router\r\n" is one header field. "Server" is
+	header field name and "SI Express Router\r\n" is header field body.
+    </para>
+    <para>
+	The structure is defined in file <filename>hf.h</filename> under
+	<filename>parser</filename> subdirectory.
+    </para>
+    <para>
+	<emphasis>Structure Declaration</emphasis>
+	<programlisting>
+struct hdr_field {   
+    int type;                /* Header field type */
+    str name;                /* Header field name */
+    str body;                /* Header field body */
+    void* parsed;            /* Parsed data structures */
+    struct hdr_field* next;  /* Next header field in the list */
+};
+	</programlisting>
+    </para>
+    <para>
+	<emphasis>Field Description:</emphasis>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>type</structfield> - Type of the header field,
+		    the following header field types are defined (and
+		    recognized by the parser):
+		</para>
+		<para>
+		    HDR_VIA1, HDR_VIA2, HDR_TO, HDR_FROM, HDR_CSEQ, HDR_CALLID,
+		    HDR_CONTACT, HDR_MAXFORWARDS, HDR_ROUTE, HDR_RECORDROUTE,
+		    HDR_CONTENTTYPE, HDR_CONTENTLENGTH, HDR_AUTHORIZATION,
+		    HDR_EXPIRES, HDR_PROXYAUTH, HDR_WWWAUTH, HDR_SUPPORTED,
+		    HDR_REQUIRE, HDR_PROXYREQUIRE, HDR_UNSUPPORTED, HDR_ALLOW,
+		    HDR_EVENT, HDR_OTHER.
+		</para>
+		<para>
+		    Their meaning is self explanatory. HDR_OTHER marks header
+		    field not recognized by the parser.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>name</structfield> - Name of the header field
+		    (the part before colon)
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>body</structfield> - body of the header field
+		    (the part after colon)
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>parsed</structfield> - Each header field body
+		    can be further parsed. The field contains pointer to parsed
+		    structure if the header field was parsed already. The
+		    pointer is of type <type>void*</type> because it can point
+		    to different types of structure depending on the header
+		    field type.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>next</structfield> - Pointer to the next
+		    header field in linked list.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+</section>

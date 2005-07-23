@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="msg_parser" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>The SIP Message Parser</title>
+    <para>
+	In this section we will discuss internals of the <acronym>SIP</acronym>
+	message header parser implemented in the server. Message parsing is
+	very important and one of the most time consuming operations of a
+	<acronym>SIP</acronym> server. We have been trying to make the parser
+	as fast as possible.
+    </para>
+    <para>
+	A header field parser can be either in the server core or in a
+	module. By convention, parser that is needed by the core itself or is
+	needed by at least two modules will be in the core. Parsers contained
+	in modules will be not described in this section.
+    </para>
+    <para>
+	There is a <filename>parser</filename> subdirectory that contains all
+	the parsers and related stuff.
+    </para>
+    <para>
+	The following parsers can be found under <filename>parser</filename>
+	subdirectory:
+    </para>
+
+    <section id="sip_msg_structure">
+	<title>Structure of a <acronym>SIP</acronym> Message</title>
+	<para>
+	    A <acronym>SIP</acronym> message consists of message header and
+	    optional message body.  The header is separated from the body with
+	    a empty line (containing CRLF only).
+	</para>
+	<para>
+	    Message header consists of the first line and one or more header
+	    fields. The first line determines type of the message. Header
+	    fields provide additional information that is needed by clients and
+	    servers to be able to process the message.
+	</para>
+	<para>
+	    Each header field consists of header field name and header field
+	    body. Header field name is delimited from header field body by a
+	    colon (":"). For example, "Server: SIP Express Router" - in this
+	    case "Server" is header field name and "SIP Express Router" is
+	    header field body.
+	</para>
+    </section> <!-- sip-msg-structure -->
+    <section id="parser_structure">
+	<title>Parser Structure</title>
+	<para>
+	    The server implements what we call <emphasis>incremental
+		parsing</emphasis>. It means that a header field will be not
+	    parsed unless it is really needed. There is a minimal set of
+	    header that will be parsed every time. The set includes:
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			The first line - the server must know if the message is
+			request or response
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			Via header field - Via will be needed for sure. We must
+			add ourself to Via list when forwarding the message.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+	
+	<xi:include href="fline_parser.xml"/>
+	<xi:include href="hfname_parser.xml"/>
+
+	<xi:include href="to_parser.xml"/>
+	<xi:include href="from_parser.xml"/>
+	<xi:include href="cseq_parser.xml"/>
+	<xi:include href="event_parser.xml"/>
+	<xi:include href="expires_parser.xml"/>
+	<xi:include href="via_parser.xml"/>
+	<xi:include href="contact_parser.xml"/>
+	<xi:include href="digest_parser.xml"/>
+    </section> <!-- parser-organization -->
+</section>

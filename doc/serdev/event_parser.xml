@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="event_parser" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Event Body Parser</title>
+    <para>
+	Purpose of this parser is to parse body of an Event Header field. The
+	parser can be found in file <filename>parse_event.c</filename> under
+	<filename>parser</filename> subdirectory.
+    </para>
+    <note>
+	<para>
+	    This is <emphasis>NOT</emphasis> fully featured Event body parser !
+	    The parser was written for Presence Agent module only and thus can
+	    recognize Presence package only. No subpackages will be
+	    recognized. All other packages will be marked as "OTHER".
+	</para>
+	<para>
+	    The parser should be replace by a more generic parser if
+	    subpackages or parameters should be parsed too.
+	</para>
+    </note>
+    <para>
+	Main function is <function>parse_event</function> in file
+	<filename>parse_event.c</filename>. The function will create an
+	instance of <structname>event_t</structname> structure and call the
+	parser. If everything went OK, pointer to the newly created structure
+	will be stored in <structfield>parsed</structfield> field of
+	<structname>hdr_field</structname> structure representing the parsed
+	header field.
+    </para>
+    <para>
+	As usually, the newly created structure will be freed when the whole
+	message is being destroyed.  See function
+	<function>clean_hdr_field</function> in file <filename>hf.c</filename>.
+    </para>
+    <para>
+	The parser will be not called automatically when the main parser finds
+	an Event header field.  It is up to you to call the parser when you
+	really need the body of the header field to be parsed (call
+	<function>parse_event</function> function).
+    </para>
+
+    <xi:include href="event_t.xml"/>
+</section>

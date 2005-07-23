@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="exp_body_t" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Structure <structname>exp_body_t</structname></title>
+    <para>
+	The structure represents parsed Expires body. The structure is declared
+	in <filename>parse_expires.h</filename> file.
+    </para>
+    <para><emphasis>Structure Declaration:</emphasis>
+	<programlisting>
+typedef struct exp_body {
+    str text;   /* Original text representation */
+    int val;    /* Parsed value */
+} exp_body_t;
+	</programlisting>
+    </para>
+
+    <para><emphasis>Field Description:</emphasis>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>text</structfield> - Expires value as text.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>val</structfield> - Expires value as integer.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+</section>

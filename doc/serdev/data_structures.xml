@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="data_structures" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Data Structures</title>
+    <para>
+	There are some data structures that are important and widely used in
+	the server. We will describe them in detail in this section.
+    </para>
+    
+    <note>
+	<para>
+	    There are many more structures and types defined across the server
+	    and modules. We will describe only the most important and common
+	    data structure here. The rest will be described in other sections
+	    if needed.
+	</para>
+    </note>
+
+    <xi:include href="str.xml"/>
+    <xi:include href="hdr_field.xml"/>
+    <xi:include href="sip_uri.xml"/>
+    <xi:include href="via_body.xml"/>
+    <xi:include href="ip_addr.xml"/>
+    <xi:include href="lump.xml"/>
+    <xi:include href="lump_rpl.xml"/>
+    <xi:include href="msg_start.xml"/>
+    <xi:include href="sip_msg.xml"/>
+    <xi:include href="to_body.xml"/>
+    <xi:include href="cseq_body.xml"/>
+    <xi:include href="event_t.xml"/>
+    <xi:include href="exp_body_t.xml"/>
+
+</section>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="lump_rpl" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Structure <structname>lump_rpl</structname></title>
+    <para>
+	The structure represents text that should be added to reply. List of
+	such data is kept in the request and processed when the request is
+	being turned into reply.
+    </para>
+    <para>
+	The structure will be described in more detail later in chapter SIP
+	Message Modifications.
+    </para>
+</section> <!-- lump-rpl -->

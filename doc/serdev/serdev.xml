@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="serdev" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<email>jan@iptel.org</email>
+	    </author>
+	    <author>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<email>jiri@iptel.org</email>
+	    </author>
+	    <author>
+		<firstname>Bogdan</firstname>
+		<surname>Iancu</surname>
+		<email>Bogdan.Iancu@fokus.fraunhofer.de</email>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2001</year>
+	    <year>2002</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+	<abstract>
+	    <para>
+		The document describes the SIP Express Router internals and
+		algorithms. It describes overall server architecture, request
+		processing, configuration, memory management, interprocess
+		locking, module interface and selected modules in detail.
+	    </para>
+	    <para>
+		The document is intended mainly for module developers wishing
+		to implement a new module for the server. Other people like
+		developers of SIP related software or students might be
+		interested too.
+	    </para>
+	</abstract>
+    </sectioninfo>
+    
+    <title>SER Developer's Guide</title>
+    
+    <xi:include href="startup.xml"/>
+    <xi:include href="main_loop.xml"/>
+    <xi:include href="shutdown.xml"/>
+    <xi:include href="data_structures.xml"/>
+    <xi:include href="routing_engine.xml"/>
+
+    <xi:include href="msg_parser.xml"/>
+    <xi:include href="modiface.xml"/>
+    <xi:include href="db_interface.xml"/>
+    <xi:include href="locking.xml"/>
+
+    <!--    
+    TODO:
+    * How to traverse all headers of given type
+    * How to append a header at the end of the message
+    * How to insert a header at the beginning of the message
+    * How to delete a chunk of text from the header
+    * How to add header into a reply
+    * How mod_destroy gets called, from which process and how many times
+    -->
+</section>

@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="module_exports" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Structure <structname>module_exports</structname></title>
+    <para>
+	This structure describes interface that must be exported by each
+	module. Every module must have a global variable named
+	<varname>exports</varname> which is of type <structname>struct
+	    module_exports</structname>.
+    </para>
+    <para>
+	Immediately after <function>dlopen</function> the server will try to
+	find symbol named <varname>exports</varname> in the module to be
+	loaded. This symbol is a structure describing interface of the
+	module. Pointer to the symbol will be then put in
+	<structfield>exports</structfield> field of
+	<structname>sr_module</structname> structure representing the module in
+	the server.
+    </para>
+    <para>
+	Detailed description of the structure follows:
+    </para>
+    <programlisting>
+struct module_exports{
+    char* name;                     /* null terminated module name */
+    char** cmd_names;               /* cmd names registered 
+                                     * by this modules */
+    cmd_function* cmd_pointers;     /* pointers to the 
+                                     * corresponding functions */
+    int* param_no;                  /* number of parameters used by 
+                                     * the function */
+    fixup_function* fixup_pointers; /* pointers to functions 
+                                     * called to "fix"
+                                     * the params, e.g: precompile 
+                                     * a re */
+    int cmd_no;                     /* number of registered commands
+                                     * (size of cmd_{names,pointers} 
+                                     */
+    char** param_names;      /* parameter names registered 
+                              * by this modules */
+    modparam_t* param_types; /* Type of parameters */
+    void** param_pointers;   /* Pointers to the corresponding 
+                              * memory locations */
+    int par_no;              /* number of registered parameters */
+    init_function init_f;         /* Initialization function */
+    response_function response_f; /* function used for responses,
+                                   * returns yes or no; can be null 
+                                   */
+    destroy_function destroy_f;   /* function called when the module 
+                                   * should be "destroyed", e.g: on 
+                                   * ser exit;
+                                   * can be null */
+    onbreak_function onbreak_f;
+    child_init_function init_child_f;  /* function called by all 
+                                        * processes after the fork */
+};
+    </programlisting>
+    <para>
+	<emphasis>Fields and their description</emphasis>:
+    </para>
+    <itemizedlist>
+	<listitem>
+	    <para>
+		<structfield>name</structfield> - Name of the module.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>cmd_names</structfield> - Array of names of
+		exported commands.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>cmd_pointers</structfield> - Array of pointers to
+		functions implementing commands specified in
+		<structfield>cmd_names</structfield> array.
+	    </para>
+	    <para>
+		<emphasis>Function Prototype</emphasis>:
+	    </para>
+	    <funcsynopsis>
+		<funcprototype>
+		    <funcdef>int <function>cmd_function</function></funcdef>
+		    <paramdef>struct sip_msg* <parameter>msg</parameter></paramdef>
+		    <paramdef>char* <parameter>param1</parameter></paramdef>
+		    <paramdef>char* <parameter>param2</parameter></paramdef>
+		</funcprototype>
+	    </funcsynopsis>
+	    <para>
+		The first parameter is <structname>sip_msg</structname>
+		currently being processed.  Remaining parameters are parameters
+		from the config file. If the function accepts only one
+		parameter, <parameter>param2</parameter> will be set to zero,
+		if the function accepts no parameters,
+		<parameter>param1</parameter> and <parameter
+		moreinfo="none">param2</parameter> will be set to zero.
+	    </para>
+	    <para>
+		The function should return number &gt; 0 if everything went OK
+		and processing of the message should continue. The function
+		should return 0 if processing of the message should be stopped.
+		The function should return number &lt; 0 on an error.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>param_no</structfield> - Array of number of
+		parameters of exported commands.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>fixup_pointer</structfield> - Array of pointers to
+		fixup functions, each fixup function for one exported
+		command. If there is no fixup function for a particular
+		exported function, corresponding field in the array will
+		contain zero.
+	    </para>
+	    <para>
+		<emphasis>Function Prototype</emphasis>:
+	    </para>
+	    <funcsynopsis>
+		<funcprototype>
+		    <funcdef>int <function>fixup_function</function></funcdef>
+		    <paramdef>void** <parameter>param</parameter></paramdef>
+		    <paramdef>int <parameter>param_no</parameter></paramdef>
+		</funcprototype>
+	    </funcsynopsis>
+	    <para>
+		The first parameter is pointing to variable to be fixed. The
+		second parameter is order of the variable.
+	    </para>
+	    <para>
+		The function should return 0 if everything went OK and number
+		&lt; 0 on an error.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>cmd_no</structfield> - Number of exported commands.
+	    </para>
+	    <important>
+		<para>
+		    <structfield>cmd_names</structfield>,
+		    <structfield>cmd_pointers</structfield>,
+		    <structfield>param_no</structfield> and
+		    <structfield>fixup_pointer</structfield> arrays must have
+		    at least <structfield>cmd_no</structfield> elements ! (It
+		    might even kill your cat if you fail to fulfill this
+		    condition).
+		</para>
+	    </important>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>param_names</structfield> - Array of names of
+		exported parameters.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>param_types</structfield> - Array of types of
+		parameters, each field of the array can be either STR_PARAM or
+		INT_PARAM (currently only two parameter types are defined).
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>param_pointers</structfield> - Array of pointers
+		to variables, that hold values of the parameters.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>param_no</structfield> - Number of exported
+		parameters.
+	    </para>
+	    <important>
+		<para>
+		    <structfield>param_names</structfield>,
+		    <structfield>param_types</structfield> and
+		    <structfield>param_pointers</structfield> arrays must have
+		    at least <structfield>param_no</structfield> elements !
+		    (Remember the previous note about your cat ? The same might
+		    happen to your dog if you fail to fulfill the condition
+		    second time !).
+		</para>
+	    </important>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>init_f</structfield> - Pointer to module's
+		initialization function, 0 if the module doesn't need
+		initialization function.
+	    </para>
+	    <para>
+		<emphasis>Function Prototype</emphasis>:
+	    </para>
+	    <funcsynopsis>
+		<funcprototype>
+		    <funcdef>int <function>init_function</function></funcdef>
+		    <void/>
+		</funcprototype>
+	    </funcsynopsis>
+	    <para>
+		The function should return 0 if everything went OK and number
+		&lt; 0 on an error;
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>response_f</structfield> - If a module is
+		interested in seeing responses, it will provide pointer to a
+		function here. The function will be called when a response
+		comes. The field will contain 0 if the module doesn't want to
+		see responses.
+	    </para>
+	    <para>
+		<emphasis>Function Prototype</emphasis>:
+	    </para>
+	    <funcsynopsis>
+		<funcprototype>
+		    <funcdef>int <function>response_function</function></funcdef>
+		    <paramdef>struct sip_msg* <parameter>msg</parameter></paramdef>
+		</funcprototype>
+	    </funcsynopsis>
+	    <para>
+		The function accepts one parameter which is structure
+		representing the response currently being processed.
+	    </para>
+	    <para>
+		The function should return 0 if the response should be dropped. 
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>destroy_f</structfield> - Destroy function. The
+		function will be called when the server is shutting down. Can
+		be 0 if the module doesn't need destroy function.
+	    </para>
+	    <para>
+		<emphasis>Function Prototype</emphasis>:
+	    </para>
+	    <funcsynopsis>
+		<funcprototype>
+		    <funcdef>void <function>destroy_function</function></funcdef>
+		    <void/>
+		</funcprototype>
+	    </funcsynopsis>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>onbreak_f</structfield> - On break function. The
+		function will be called when processing of a route statement
+		was aborted. Can be 0 if module doesn't need this function.
+	    </para>
+	    <para>
+		<emphasis>Function Prototype</emphasis>:
+	    </para>
+	    <funcsynopsis>
+		<funcprototype>
+		    <funcdef>void <function>onbreak_function</function></funcdef>
+		    <paramdef>struct sip_msg* <parameter>msg</parameter></paramdef>
+		</funcprototype>
+	    </funcsynopsis>
+	    <para>
+		The function accepts one parameter which is message currently
+		being processed.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>init_child_f</structfield> - Child initialization
+		function. This is an additional initialization
+		function. <structfield>init_f</structfield> will be called from
+		the main process <emphasis>BEFORE</emphasis> the main process
+		forks children. <structfield>init_child_f</structfield> will be
+		called from all children <emphasis>AFTER</emphasis> the fork.
+	    </para>
+	    <para>
+		Per-child specific initialization can be done here. For
+		example, each child can open its own database connection in the
+		function, and so on.
+	    </para>
+	    <para>
+		<emphasis>Function Prototype</emphasis>:
+	    </para>
+	    <funcsynopsis>
+		<funcprototype>
+		    <funcdef>int <function>child_init_function</function></funcdef>
+		    <paramdef>int <parameter>rank</parameter></paramdef>
+		</funcprototype>
+	    </funcsynopsis>
+	    <para>
+		The function accepts one parameter, which is rank (starting
+		from 0) of child executing the function.
+	    </para>
+	    <para>
+		The function should return 0 if everything went OK and number
+		&lt; 0 on an error.
+	    </para>
+	</listitem>
+    </itemizedlist>
+</section>

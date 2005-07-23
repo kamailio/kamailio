@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="to_body" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Structure <structname>to_body</structname></title>
+    <para>
+	The structure represents parsed To body. The structure is declared in
+	<filename>parse_to.h</filename> file.
+    </para>
+    <para><emphasis>Structure Declaration:</emphasis></para>
+    <programlisting>
+struct to_param {
+    int type;              /* Type of parameter */
+    str name;              /* Name of parameter */
+    str value;             /* Parameter value */
+    struct to_param* next; /* Next parameter in the list */
+};
+
+struct to_body{
+    int error;                    /* Error code */
+    str body;                     /* The whole header field body */
+    str uri;                      /* URI */
+    str tag_value;                /* Value of tag */
+    struct to_param *param_lst;   /* Linked list of parameters */
+    struct to_param *last_param;  /* Last parameter in the list */
+};
+    </programlisting>
+    <para>
+	Structure <structname>to_param</structname> is a temporary structure
+	representing a To <acronym>URI</acronym> parameter. Right now only TAG
+	parameter will be marked in <structfield>type</structfield> field. All
+	other parameters will have the same type.
+    </para>
+    <para><emphasis>Field Description:</emphasis></para>
+    <itemizedlist>
+	<listitem>
+	    <para>
+		<structfield>error</structfield> - Error code will be put here
+		when parsing of To body fails.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>body</structfield> - The whole header field body.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>uri</structfield> - <acronym>URI</acronym> of the
+		To header field.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>tag_value</structfield> - Value of tag parameter
+		if present.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>param_lst</structfield> - Linked list of all parameters.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<structfield>last_param</structfield> - Pointer to the last parameter in the linked list.
+	    </para>
+	</listitem>
+    </itemizedlist>
+</section>

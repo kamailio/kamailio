@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="contact_parser" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Contact Header Field Parser</title>
+    <para>
+	The parser is located under <filename>parser/contact</filename>
+	subdirectory. The parser is not called automatically when the main
+	parser finds a Contact header field. It is your responsibility to call
+	the parser if you want a Contact header field body to be parsed.
+    </para>
+    <para>
+	Main function is <function>parse_contact</function> in file
+	<filename>parse_contact.c</filename>. The function accepts one
+	parameter which is structure <structname>hdr_field</structname>
+	representing the header field to be parsed. A single Contact header
+	field may contain multiple contacts, the parser will parse all of them
+	and will create linked list of all such contacts.
+    </para>
+    <para>
+	The function creates and initializes an instance of
+	<structname>contact_body</structname> structure.  Then function
+	<function>contact_parser</function> will be called. If everything went
+	OK, pointer to the newly created structure will be stored in
+	<structfield>parsed</structfield> field of the
+	<structname>hdr_field</structname> structure representing the parsed
+	header field.
+    </para>
+    <para>
+	Function <function>contact_parser</function> will then check if the
+	contact is star, if not it will call
+	<function>parse_contacts</function> function that will parse all
+	contacts of the header field.
+    </para>
+    <para>
+	Function <function>parse_contacts</function> can be found in file
+	<filename>contact.c</filename>. It extracts <acronym>URI</acronym> and
+	parses all contact parameters.
+    </para>
+    <para>
+	The Contact parameter parser can be found in file
+	<filename>cparam.c</filename>.
+    </para>
+    <para>
+	The following structures will be created during parsing:
+    </para>
+    <note>
+	<para>
+	    Mind that none of string in the following structures is zero
+	    terminated ! Be very careful when processing the strings with
+	    functions that require zero termination (printf for example) !
+	</para>
+    </note>
+    <programlisting>
+typedef struct contact_body {
+    unsigned char star;    /* Star contact */
+    contact_t* contacts;   /* List of contacts */
+} contact_body_t;
+    </programlisting>
+    <para>
+	This is the main structure. Pointer to instance of this structure will be stored in 
+	<structfield>parsed</structfield> field of structure representing the header field to be parsed.
+	The structure contains two field:
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>star</structfield> field - This field will
+		    contain 1 if the Contact was star (see
+		    <acronym>RFC3261</acronym> for more details).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>contacts</structfield> field - This field
+		    contains pointer to linked list of all contacts found in
+		    the Contact header field.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+    
+    <programlisting>
+typedef struct contact {
+    str uri;              /* contact uri */
+    cparam_t* q;          /* q parameter hook */
+    cparam_t* expires;    /* expires parameter hook */
+    cparam_t* method;     /* method parameter hook */
+    cparam_t* params;     /* List of all parameters */
+    struct contact* next; /* Next contact in the list */
+} contact_t;
+    </programlisting>
+    <para>
+	This structure represents one Contact (Mind that there might be several
+	contacts in one Contact header field delimited by a comma). Its fields
+	have the following meaning:
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>uri</structfield> - This field contains
+		    pointer to begin of <acronym>URI</acronym> and its length.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>q</structfield> - This is a hook to structure representing q parameter.
+		    If there is no such parameter, the hook contains 0.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>expires</structfield> - This is a hook to
+		    structure representing expires parameter. If there is no
+		    such parameter, the hook contains 0.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>method</structfield> - This is a hook to
+		    structure representing method parameter. If there is no
+		    such parameter, the hook contains 0.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>params</structfield> - Linked list of all
+		    parameters.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>next</structfield> - Pointer to the next
+		    contact that was in the same header field.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+    
+    <programlisting>
+typedef enum cptype {
+    CP_OTHER = 0,  /* Unknown parameter */
+    CP_Q,          /* Q parameter */
+    CP_EXPIRES,    /* Expires parameter */
+    CP_METHOD      /* Method parameter */
+} cptype_t;
+    </programlisting>
+    <para>
+	This is an enum of recognized types of contact parameters. Q parameter
+	will have type set to CP_Q, Expires parameter will have type set to
+	CP_EXPIRES and Method parameter will have type set to CP_METHOD. All
+	other parameters will have type set to CP_OTHER.
+    </para>
+    
+    <programlisting>
+/*
+ * Structure representing a contact
+ */
+typedef struct cparam {
+    cptype_t type;       /* Type of the parameter */
+    str name;            /* Parameter name */
+    str body;            /* Parameter body */
+    struct cparam* next; /* Next parameter in the list */
+} cparam_t;
+    </programlisting>
+    
+    <para>
+	This structure represents a contact parameter. Field description
+	follows:
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>type</structfield> - Type of the parameter,
+		    see <structname>cptype</structname> enum for more details.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>name</structfield> - Name of the parameter
+		    (i.e. the part before "=").
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>body</structfield> - Body of the parameter
+		    (i.e. the part after "=").
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>next</structfield> - Next parameter in the linked list.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+</section>

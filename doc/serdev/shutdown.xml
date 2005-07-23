@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="shutdown" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>The Server Showdown</title>
+    <para>
+	The server shutdown can be triggered by sending a signal to the
+	server. The server will behave differently upon receiving various types
+	of signals, here is a brief summary:
+    </para>
+    <itemizedlist>
+	<listitem>
+	    <para>
+		<emphasis>SIGINT, SIGPIPE, SIGTERM, SIGCHLD</emphasis> will terminate the server.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>SIGUSR1</emphasis> will print statistics and let the server continue.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>SIGHUP, SIGUSR2</emphasis> will be ignored.
+	    </para>
+	</listitem>
+    </itemizedlist>
+    
+    <para>
+	There is only one common signal handler for all signals - function
+	<function>sig_usr</function> in file <filename>main.c</filename>.
+    </para>
+    
+    <para>
+	In normal mode of operation (<varname>dont_fork</varname> variable is
+	not set), the main server is not processing any requests, it calls
+	<function>pause</function> function and will be waiting for signals
+	only. What happens when a signal arrives is shown in the previous
+	paragraph.
+    </para>
+    <para>
+	When in normal mode (<varname>dont_fork</varname> is not set), the
+	signal handler of the main process will only store number of the signal
+	received.  All the processing logic will be executed by the main
+	process outside the signal handler (function
+	<function>handle_sigs</function>) The function will be called
+	immediately after the signal handler finish. The main process usually
+	does some cleanup and running such things outside the signal handler is
+	much more safe than doing it from the handler itself. Children only
+	print statistics and exit or ignore the signal completely, that is
+	quite safe and can be done directly from the signal handler of
+	children.
+    </para>
+    <para>
+	When <varname>dont_fork</varname> is set, all the cleanup will be done
+	directly from the signal handler, because there is only one process -
+	the main process. This is not so safe as the previous case, but this
+	mode should be used for debugging only and such shortcoming doesn't
+	harm in that case.
+    </para>
+    <para>
+	Upon receipt of SIGINT, SIGPIPE or SIGTERM
+	<function>destroy_modules</function> will be called.  Each module may
+	register so-called <function>destroy</function> function if it needs to
+	do some cleanup when the server is terminating (flush of cache to disk
+	for example). <function>destroy_modules</function> will call destroy
+	function of all loaded modules.
+    </para>
+     <para>
+	If you need to terminate the server and all of its children, the best
+	way how to do it is to send SIGTERM to the main process, the main
+	process will in turn send the same signal to its children.
+    </para>
+    <para>
+	The main process and its children are in the same process
+	group. Therefore the main process can kill all its children simply by
+	sending a signal to pid 0, sending to pid 0 will send the signal to all
+	processes in the same process group as the sending process. This is how
+	the main process will terminate all children when it is going to shut
+	down.
+    </para>
+    <para>
+	If one child exited during normal operation, the whole server will be
+	shut down. This is better than let the server continue - a dead child
+	might hold a lock and that could block the whole server, such situation
+	cannot be avoided easily. Instead of that it is better to shutdown the
+	whole server and let it restart.
+    </para>
+
+</section> <!-- server-shutdown -->

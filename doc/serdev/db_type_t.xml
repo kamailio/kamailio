@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="db_type_t" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Type <type>db_type_t</type></title>
+    <para>
+	Each cell in a database table can be of a different type. To
+	distinguish among these types, the <type>db_type_t</type> enumeration
+	is used. Every value of the enumeration represents one data-type that
+	is recognized by the database <acronym>API</acronym>. This enumeration
+	is used in conjunction with <type>db_type_t</type>. For more
+	information, see the next section.
+    </para>
+    <programlisting>
+typedef enum {
+    DB_INT,       /* Integer number */
+    DB_DOUBLE,    /* Decimal number */
+    DB_STRING,    /* String */
+    DB_STR,       /* str structure */
+    DB_DATETIME   /* Date and time */
+    DB_BLOB       /* Binary large object */
+} db_type_t;
+    </programlisting>
+    <para>
+	There are no macros defined.
+    </para>
+</section>

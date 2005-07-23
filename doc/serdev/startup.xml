@@ -1,0 +1,810 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="ser_startup" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>The Server Startup</title>
+    <para>
+	The <function>main</function> function in file
+	<filename>main.c</filename> is the first function called upon server
+	startup. It's purpose is to initialize the server and enter main
+	loop. The server initialization will be described in the following
+	sections.
+    </para>
+    
+    <para>
+	Particular initialization steps are described in order in which they
+	appear in <function>main</function> function.
+    </para>
+    
+    <section id="signal_handlers">
+	<title>Installation Of New Signal Handlers</title>
+	<para>
+	    The first step in the initialization process is the installation of
+	    new signal handlers. We need our own signal handlers to be able to
+	    do graceful shutdown, print server statistics and so on. There is
+	    only one signal handler function which is function
+	    <function>sig_usr</function> in file <filename>main.c</filename>.
+	</para>
+	<para>
+	    The following signals are handled by the function: SIGINT, SIGPIPE,
+	    SIGUSR1, SIGCHLD, SIGTERM, SIGHUP and SIGUSR2.
+	</para>
+    </section> <!-- signal-installation -->
+    
+    <section id="cmdline_parameters">
+	<title>Processing Command Line Parameters</title>
+	<para>
+	    SER utilizes the <function>getopt</function>function to parse
+	    command line parameters. The function is extensively described in
+	    the man pages.
+	</para>
+    </section> <!-- cmd-line-params -->
+    
+    <section id="parser-init">
+	<title>Parser Initialization</title>
+	<para>
+	    SER contains a fast 32-bit parser. The parser uses pre-calculated
+	    hash table that needs to be filled in upon startup. The
+	    initialization is done here, there are two functions that do the
+	    job. Function <function>init_hfname_parser</function> initializes
+	    hash table in header field name parser and function
+	    <function>init_digest_parser</function> initializes hash table in
+	    digest authentication parser. The parser's internals will be
+	    described later.
+	</para>
+    </section> <!-- parser-init -->
+    
+    <section id="malloc_init">
+	<title>Malloc Initialization</title>
+	<para>
+	    To make SER even faster we decided to re-implement memory
+	    allocation routines. The new <function>malloc</function> better
+	    fits our needs and speeds up the server a lot. The memory
+	    management subsystem needs to be initialized upon server
+	    startup. The initialization mainly creates internal data structures
+	    and allocates memory region to be partitioned.
+	</para>
+	
+	<important>
+	    <para>
+		The memory allocation code must be initialized
+		<emphasis>BEFORE</emphasis> any of its function is called !
+	    </para>
+	</important>
+    </section> <!-- malloc-init -->
+    
+    <section id="timer_init">
+	<title>Timer Initialization</title>
+	<para>
+	    Various subsystems of the server must be called periodically
+	    regardless of the incoming requests. That's what timer is
+	    for. Function <function>init_timer</function> initializes the timer
+	    subsystem. The function is called from <filename>main.c</filename>
+	    and can be found in <filename>timer.c</filename> The timer
+	    subsystem will be described later.
+	</para>
+	<warning>
+	    <para>
+		Timer subsystem must be initialized before config file is parsed !
+	    </para>
+	</warning>
+    </section> <!-- timer-init -->
+
+    <section id="fifo_init">
+	<title>FIFO Initialization</title>
+	<para>
+	    SER has built-in support for FIFO control. It means that the
+	    running server can accept commands over a FIFO special file (a
+	    named pipe). Function <function>register_core_fifo</function>
+	    initializes FIFO subsystem and registers basic commands, that are
+	    processed by the core itself. The function can be found in file
+	    <filename>fifo_server.c</filename>.
+	</para>
+	<para>
+	    The FIFO server will be described in another chapter.
+	</para>
+    </section> <!-- fifo-init -->
+    
+    <section id="builtin_modules">
+	<title>Built-in Module Initialization</title>
+	<para>
+	    Modules can be either loaded dynamically at runtime or compiled in statically. When a module
+	    is loaded at runtime, it is registered
+	    <footnote id="regfoot">
+		<para>
+		    Module registration is a process when the core tries to find what functions and
+		    parameters are offered by the module.
+		</para>
+	    </footnote>
+	    immediately with the core. When the module is compiled in
+	    statically, the registration<footnoteref linkend="regfoot"/> must be
+	    performed during the server startup. Function
+	    <function>register_builtin_modules</function> does the job.
+	</para>
+    </section> <!-- builtin-mod-reg -->
+    
+    <section id="ser_configuration">
+	<title>Server Configuration</title>
+	<para>
+	    The server is configured through a configuration file. The
+	    configuration file is C-Shell like script which defines how
+	    incoming requests should be processed. The file cannot be
+	    interpreted directly because that would be very slow. Instead of
+	    that the file is translated into an internal binary
+	    representation. The process is called compilation and will be
+	    described in the following sections.
+	</para>
+	<note>
+	    <para>
+		The following sections only describe how the internal binary
+		representation is being constructed from the config file. The
+		way how the binary representation is used upon a request
+		arrival will be described later.
+	    </para>
+	</note>
+	<para>The compilation can be divided in several steps:</para>
+	
+	<section id="lexical_analysis">
+	    <title>Lexical Analysis</title>
+	    <para>
+		Lexical analysis is process of converting the input (the
+		configuration file in this case) into a stream of tokens. A
+		token is a set of characters that 'belong' together. A program
+		that can turn the input into stream of tokens is called
+		scanner. For example, when scanner encounters a number in the
+		config file, it will produce token NUMBER.
+	    </para>
+	    <para>
+		There is no need to implement the scanner from scratch, it can
+		be done automatically.  There is a utility called flex. Flex
+		accepts a configuration file and generates scanner according to
+		the configuration file. The configuration file for flex
+		consists of several lines - each line describing one token. The
+		tokens are described using regular expressions. For more
+		details, see flex manual page or info documentation.
+	    </para>
+	    <para>
+		Flex input file for the SER config file is in file
+		<filename>cfg.lex</filename>. The file is processed by flex
+		when the server is being compiled and the result is written in
+		file <filename>lex.yy.c</filename>. The output file contains
+		the scanner implemented in the C language.
+	    </para>
+	</section> <!-- lex-analysis -->
+	
+	<section id="syntax_analysis">
+	    <title>Syntactical Analysis</title>
+	    <para>
+		The second stage of configuration file processing is called
+		syntactical analysis. Purpose of syntactical analysis is to
+		check if the configuration file has been well formed, doesn't
+		contain syntactical errors and perform various actions at
+		various stages of the analysis.  Program performing syntactical
+		analysis is called parser.
+	    </para>
+	    <para>
+		Structure of the configuration file is described using
+		grammar. Grammar is a set of rules describing valid 'order' or
+		'combination' of tokens. If the file isn't conformable with
+		it's grammar, it is syntactically invalid and cannot be further
+		processed. In that case an error will be issued and the server
+		will be aborted.
+	    </para>
+	    <para>
+		There is a utility called yacc. Input of the utility is a file
+		containing the grammar of the configuration file, in addition
+		to the grammar, you can describe what action the parser should
+		do at various stages of parsing. For example, you can instruct
+		the parser to create a structure describing an IP address every
+		time it finds an IP address in the configuration file and
+		convert the address to its binary representation.
+	    </para>
+	    <para>For more information see yacc documentation.</para>
+	    <para>
+		yacc creates the parser when the server is being compiled from
+		the sources.  Input file for yacc is
+		<filename>cfg.y</filename>. The file contains grammar of the
+		config file along with actions that create the binary
+		representation of the file.  Yacc will write its result into
+		file <filename>cfg.tab.c</filename>. The file contains function
+		<function>yyparse</function> which will parse the whole
+		configuration file and construct the binary representation. For
+		more information about the bison input file syntax see bison
+		documentation.
+	    </para>
+	</section> <!-- syntax-analysis -->
+	
+	<section id="config_structure">
+	    <title>Config File Structure</title>
+	    <para>
+		The configuration file consist of three sections, each of the
+		sections will be described separately.
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>Route Statement</emphasis> - The statement
+			describes how incoming requests will be processed.
+			When a request is received, commands in one or more
+			"route" sections will be executed step by step. The
+			config file must always contain one main "route"
+			statement and may contain several additional "route"
+			statements. Request processing always starts at the
+			beginning of the main "route" statement. Additional
+			"route" statements can be called from the main one or
+			another additional "route" statements (It it similar to
+			function calling).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>Assign Statement</emphasis> - There are many
+			configuration variables across the server and this
+			statement makes it possible to change their
+			value. Generally it is a list of assignments, each
+			assignment on a separate line.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>Module Statement</emphasis> - Additional
+			functionality of the server is available through
+			separate modules. Each module is a shared object that
+			can be loaded at runtime. Modules can export functions,
+			that can be called from the configuration file and
+			variables, that can be configured from the config
+			file. The module statement makes it possible to load
+			modules and configure them. There are two commands in
+			the statement - <function>loadmodule</function> and
+			<function>modparam</function>.  The first can load a
+			module. The second one can configure module's internal
+			variables.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <para>
+		In the following sections we will describe in detail how the
+		three sections are being processed upon server startup.
+	    </para>
+
+	    <section id="route_statement">
+		<title>Route Statement</title>
+		<para>The following grammar snippet describes how the route statement is constructed</para>
+		<programlisting>
+route_stm = "route" "{" actions "}"  
+{ 
+    $$ = push($3, &amp;rlist[DEFAULT_RT]); 
+}
+		   
+actions = actions action { $$ = append_action($1, $2}; }
+| action { $$ = $1; }
+
+action = cmd SEMICOLON { $$ = $1; }
+| SEMICOLON { $$ = 0; }
+
+cmd = "forward" "(" host ")" { $$ = mk_action(FORWARD_T, STRING_ST, NUMBER_ST, $3, 0)
+| ...
+		</programlisting>
+		<para>
+		    A config file can contain one or more "route"
+		    statements. "route" statement without number will be
+		    executed first and is called the main route
+		    statement. There can be additional route statements
+		    identified by number, these additional route statements can
+		    be called from the main route statement or another
+		    additional route statements.
+		</para>
+		<para>
+		    Each route statement consists of a set of actions. Actions
+		    in the route statement are executed step by step in the
+		    same order in which they appear in the config file. Actions
+		    in the route statement are delimited by semicolon.
+		</para>
+		<para>
+		    Each action consists of one and only one command (cmd in
+		    the grammar). There are many types of commands defined. We
+		    don't list all of them here because the list would be too
+		    long and all the commands are processed in the same
+		    way. Therefore we show only one example (forward) and
+		    interested readers might look in <filename>cfg.y</filename>
+		    file for full list of available commands.
+		</para>
+		<para>
+		    Each rule in the grammar contains a section enclosed in
+		    curly braces. The section is the C code snippet that will
+		    be executed every time the parser recognizes that rule in
+		    the config file.
+		</para>
+		<para>
+		    For example, when the parser finds
+		    <function>forward</function> command,
+		    <function>mk_action</function> function (as specified in
+		    the grammar snippet above) will be called. The function
+		    creates a new structure with
+		    <structfield>type</structfield> field set to FORWARD_T
+		    representing the command. Pointer to the structure will be
+		    returned as the return value of the rule.
+		</para>
+		<para>
+		    The pointer propagates through <function>action</function>
+		    rule to <function>actions</function>
+		    rule. <function>Actions</function> rule will create linked
+		    list of all commands. The linked list will be then inserted
+		    into <structfield>rlist</structfield> table.  (Function
+		    <function>push</function> in rule
+		    <function>route_stm</function>).  Each element of the table
+		    represents one "route" statement of the config file.
+		</para>
+		<para>
+		    Each route statement of the configuration file will be
+		    represented by a linked list of all actions in the
+		    statement. Pointers to all the lists will be stored in
+		    rlist array. Additional route statements are identified by
+		    number. The number also serves as index to the array.
+		</para>
+		<para>
+		    When the core is about to execute route statement with
+		    number n, it will look in the array at position n. If the
+		    element at position n is not null then there is a linked
+		    list of commands and the commands will be executed step by
+		    step.
+		</para>
+		<para>
+		    Reply-Route statement is compiled in the same way. Main differences are:
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				Reply-Route statement is executed when a SIP
+				<emphasis>REPLY</emphasis> comes (not ,SIP
+				<emphasis>REQUEST</emphasis>).
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				Only subset of commands is allowed in the
+				reply-route statement.  (See file
+				<filename>cfg.y</filename> for more details).
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>Reply-route statement has it's own array of linked-lists.</para>
+			</listitem>
+		    </itemizedlist>
+		</para>		    
+	    </section> <!-- route-stm -->
+	    
+	    <section id="assign_statement">
+		<title>Assign Statement</title>
+		<para>
+		    The server contains many configuration variables. There is
+		    a section of the config file in which the variables can be
+		    assigned new value. The section is called The Assign
+		    Statement. The following grammar snippet describes how the
+		    section is constructed (only one example will be shown):
+		</para>
+		<programlisting>
+assign_stm = "children" '=' NUMBER { children_no=$3; }
+| "children" '=' error  { yyerror("number expected"); } 
+...
+		</programlisting>
+		<para>
+		    The number in the config file is assigned to
+		    <varname>children_no</varname> variable.  The second
+		    statement will be executed if the parameter is not number
+		    or is in invalid format and will issue an error and abort
+		    the server.
+		</para>
+	    </section> <!-- assign-stm -->
+	    
+	    <section id="module_statement">
+		<title>Module Statement</title>
+		<para>
+		    The module statement allows module loading and
+		    configuration. There are two commands:
+		</para>
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>loadmodule</emphasis> - Load the
+			    specified module in form of a shared object.  The
+			    shared object will be loaded using
+			    <function>dlopen</function>.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>modparam</emphasis> - It is possible to
+			    configure a module using this command. The command
+			    accepts 3 parameters: <emphasis>module
+			    name</emphasis>, <emphasis>variable name</emphasis>
+			    and <emphasis>variable value</emphasis>.
+			</para>
+		    </listitem>
+		</itemizedlist>
+		<para>The following grammar snippet describes the module statement:</para>
+		<programlisting>
+module_stm = "loadmodule" STRING 
+{ 
+    DBG("loading module %s\n", $2);
+    if (load_module($2)!=0) {
+        yyerror("failed to load module");
+    }
+}
+
+| "loadmodule" error	 { yyerror("string expected");  }
+| "modparam" "(" STRING "," STRING "," STRING ")" 
+{
+    if (set_mod_param($3, $5, STR_PARAM, $7) != 0) {
+        yyerror("Can't set module parameter");
+    }
+}
+
+| "modparam" "(" STRING "," STRING "," NUMBER ")" 
+{
+    if (set_mod_param($3, $5, INT_PARAM, (void*)$7) != 0) {
+        yyerror("Can't set module parameter");
+    }
+}
+
+| MODPARAM error { yyerror("Invalid arguments"); }
+		</programlisting>
+		<para>
+		    When the parser finds <function>loadmodule</function>
+		    command, it will execute statement in curly braces.  The
+		    statement will call <function>load_module</function>
+		    function.  The function will load the specified filename
+		    using <function>dlopen</function>.  If
+		    <function>dlopen</function> was successful, the server will
+		    look for <structname>exports</structname> structure
+		    describing the module's interface and register the
+		    module. For more details see <link
+		    linkend="module_interface">module section</link>.
+		</para>
+		<para>
+		    If the parser finds <function>modparam</function> command,
+		    it will try to configure the specified variable in the
+		    specified module. The module must be loaded using
+		    <function>loadmodule</function> before
+		    <function>modparam</function> for the module can be used !
+		    Function <function>set_mod_param</function> will be called
+		    and will configure the variable in the specified module.
+		</para>
+	    </section> <!-- module-stm -->
+	</section> <!-- config-file-struct -->
+    </section> <!-- ser-config -->
+    
+    <section id="iface_config">
+	<title>Interface Configuration</title>
+	<para>
+	    The server will try to obtain list of all configured interfaces of
+	    the host it is running on. If it fails the server tries to convert
+	    hostname to IP address and will use interface with the IP address
+	    only.
+	</para>
+	<para>
+	    Function <function>add_interfaces</function> will add all
+	    configured interfaces to the array.
+	</para>
+	<para>
+	    Try to convert all interface names to IP addresses, remove duplicates...
+	</para>
+    </section> <!-- iface-config -->
+    
+    <section id="daemon">
+	<title>Turning into a Daemon</title>
+	<para>
+	    When configured so, SER becomes a daemon during startup. A process
+	    is called daemon when it hasn't associated controlling
+	    terminal. See function <function>daemonize</function> in file
+	    <filename>main.c</filename> for more details.  The function does
+	    the following:
+	</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <emphasis>chroot</emphasis> is performed if necessary. That
+		    ensures that the server will have access to a particular
+		    directory and its subdirectories only.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    Server's working directory is changed if the new working
+		    directory was specified (usually it is /).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    If command line parameter -g was used, the server's group
+		    ID is changed to that value.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    If command line parameter -u was used, the server's user ID
+		    is changed to that value.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    Perform <emphasis>fork</emphasis>, let the parent process
+		    exit. This ensures that we are not a group leader.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    Perform <emphasis>setsid</emphasis> to become a session
+		    leader and drop the controlling terminal.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    Fork again to drop group leadership.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>Create a pid file.</para>
+	    </listitem>
+	    <listitem>
+		<para>Close all opened file descriptors.</para>
+	    </listitem>
+	</itemizedlist>
+    </section> <!-- daemon -->
+    
+    <section id="module_init">
+	<title>Module Initialization</title>
+	<para>
+	    The whole config file was parsed, all modules were loaded already
+	    and can be initialized now. A module can tell the core that it
+	    needs to be initialized by exporting <function>mod_init</function>
+	    function. <function>mod_init</function> function of all loaded
+	    modules will be called now.
+	</para>
+    </section> <!-- module-init -->
+    
+    <section id="routing_list_fixing">
+	<title>Routing List Fixing</title>
+	<para>
+	    After the whole routing list was parsed, there might be still
+	    places that can be further processed to speed-up the server. For
+	    example, several commands accept regular expression as one of their
+	    parameters. The regular expression can be compiled too and
+	    processing of compiled expression will be much faster.
+	</para>
+	<para>
+	    Another example might be string as parameter of a function. For
+	    example if you call <function>append_hf("Server: SIP Express
+	    Router\r\n")</function> from the routing script, the function will
+	    append a new header field after the last one. In this case, the
+	    function needs to know length of the string parameter. It could
+	    call <function>strlen</function> every time it is called, but that
+	    is not a very good idea because <function>strlen</function> would
+	    be called every time a message is processed and that is not
+	    necessary.
+	</para>
+	<para>
+	    Instead of that the length of the string parameter could be
+	    pre-calculated upon server startup, saved and reused later. The
+	    processing of the request will be faster because
+	    <function>append_hf</function> doesn't need to call
+	    <function>strlen</function> every time, I can just reuse the saved
+	    value.
+	</para>
+	<para>
+	    This can be used also for string to int conversions, hostname
+	    lookups, expression evaluation and so on.
+	</para>
+	<para>
+	    This process is called Routing List Fixing and will be done as one
+	    of last steps of the server startup.
+	</para>
+	<para>
+	    Every loaded module can export one or more functions. Each such
+	    function can have associated a fixup function, which should do
+	    fixing as described in this section. All such fixups of all loaded
+	    modules will be called here. That makes it possible for module
+	    functions to fix their parameters too if necessary.
+	</para>
+    </section> <!-- rt-list-fix -->
+
+    <section id="stat-init">
+	<title>Statistics Initialization</title>
+	<para>
+	    If compiled-in, the core can produce some statistics about itself
+	    and traffic processed. The statistics subsystem gets initialized
+	    here, see function <function>init_stats</function>.
+	</para>
+    </section> <!-- stat-init -->
+
+    <section id="socket_init">
+	<title>Socket Initialization</title>
+	<para>
+	    UDP socket initialization depends on <varname>dont_fork</varname>
+	    variable. If this variable is set (only one process will be
+	    processing incoming requests) and there are multiple listen
+	    interfaces, only the first one will be used. This mode is mainly
+	    for debugging.
+	</para>
+	<para>
+	    If the variable is not set, then sockets for all configured
+	    interfaces will be created and initialized.  See function
+	    <function>udp_init</function> in file
+	    <filename>udp_server.c</filename> for more details.
+	</para>
+    </section> <!-- socke-init -->
+    
+    <section id="forking">
+	<title>Forking</title>
+	<para>
+	    The rest of the initialization process depends on value of
+	    <varname>dont_fork</varname> variable.
+	    <varname>dont_fork</varname> is a global variable defined in
+	    <filename>main.c</filename>.  We will describe both variants
+	    separately.
+	</para>
+
+	<section id="dont_fork">
+	    <title><varname>dont_fork</varname> variable is set (not zero)</title>
+	    <para>
+		If <varname>dont_fork</varname> variable is set, the server
+		will be operating in special mode.  There will be only one
+		process processing incoming requests. This is very slow and was
+		intended mainly for debugging purposes. The main process will
+		be processing all incoming requests itself.
+	    </para>
+	    <para>
+		The server still needs additional children:
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			One child is for the timer subsystem, the child will be
+			processing timers independently of the main process.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			FIFO server will spawn another child if enabled. The
+			child will be processing all commands coming through
+			the fifo interface.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>If SNMP support was enabled, another child will be created.</para>
+		</listitem>
+	    </itemizedlist>
+	    
+	    <para>
+		The following initialization will be performed in dont fork
+		mode.  (look into function <function>main_loop</function> in
+		file <filename>main.c</filename>.
+	    </para>
+
+	    <itemizedlist>
+		<listitem>
+		    <para>Another child will be forked for the timer subsystem.</para>
+		</listitem>
+		<listitem>
+		    <para>
+			Initialize the FIFO server if enabled, this will fork
+			another child.  For more info about the FIFO server,
+			see section The FIFO server.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			Call <function>init_child(0).</function> The function
+			performs per-child specific initialization of all
+			loaded modules.  A module can be initialized though
+			<function>mod_init</function> function.  The function
+			is called <emphasis>BEFORE</emphasis> the server forks
+			and thus is common for all children.
+		    </para>
+		    <para>
+			If there is anything, that needs to be initialized in
+			every child separately (for example if each child needs
+			to open its own file descriptor), it cannot be done in
+			<function>mod_init</function>.  To make such
+			initialization possible, a module can export another
+			initialization function called
+			<function>init_child</function>. The function will be
+			called in all children <emphasis>AFTER</emphasis> fork
+			of the server.
+		    </para>
+		    <para>
+			And since we are in "dont fork" mode and there will no
+			children processing requests (remember the main process
+			will be processing all requests), the
+			<function>init_child</function> wouldn't be called.
+		    </para>
+		    <para>
+			That would be bad, because
+			<function>child_init</function> might do some
+			initialization that must be done otherwise modules
+			might not work properly.
+		    </para>
+		    <para>
+			To make sure that module initialization is complete we
+			will call <function>init_child</function> here for the
+			main process even if we are not going to fork.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <para>
+		That's it. Everything has been initialized properly and as the
+		last step we will call <function>udp_rcv_loop</function> which
+		is the main loop function. The function will be described
+		later.
+	    </para>
+	</section> <!-- dont-fork-set -->
+
+	<section id="dont_fork_not_set">
+	    <title><varname>dont_fork</varname> is not set (zero)</title>
+	    <para>
+		<varname>dont_fork</varname> is not set. That means that the
+		server will fork children and the children will be processing
+		incoming requests. How many children will be created depends on
+		the configuration (<varname>children</varname> variable). The
+		main process will be sleeping and handling signals only.
+	    </para>
+
+	    <para>
+		The main process will then initialize the FIFO server. The FIFO
+		server needs another child to handle communication over FIFO
+		and thus another child will be created. The FIFO server will be
+		described in more detail later.
+	    </para>
+
+	    <para>
+		Then the main process will perform another fork for the timer
+		attendant. The child will take care of timer lists and execute
+		specified function when a timer hits.
+	    </para>
+	    <para>
+		The main process is now completely initialized, it will sleep
+		in <function>pause</function> function until a signal comes and
+		call <function>handle_sigs</function> when such condition
+		occurs.
+	    </para>
+	    
+	    <para>
+		The following initialization will be performed by each child
+		separately:
+	    </para>
+	    <para>
+		Each child executes <function>init_child</function>
+		function. The function will sequentially call
+		<function>child_init</function> functions of all loaded
+		modules.
+	    </para>
+	    <para>
+		Because the function is called in each child separately, it can
+		initialize per-child specific data. For example if a module
+		needs to communicate with database, it must open a database
+		connection. If the connection would be opened in
+		<function>mod_init</function> function, all the children would
+		share the same connection and locking would be necessary to
+		avoid conflicts. On the other hand if the connection was opened
+		in <function>child_init</function> function, each child will
+		have its own connection and concurrency conflicts will be
+		handled by the database server.
+	    </para>
+	    <para>
+		And last, but not least, each child executes
+		<function>udp_rcv_loop</function> function which contains the
+		main loop logic.
+	    </para>
+	    
+	</section> <!-- dont-fork-not-set -->
+    </section> <!-- forking -->
+</section>

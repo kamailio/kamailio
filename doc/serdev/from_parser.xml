@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="from_parser" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>From Header Field Parser</title>
+    <para>
+	This parser is only a wrapper to the To header field parser. Since
+	bodies of both header fields are identical, From parser only calls To
+	parser.
+    </para>
+    <para>
+	The wrapper can be found in file <filename>parse_from.c</filename>
+	under <filename>parser</filename> subdirectory. There is only one
+	function called <function>parse_from_header</function>. The function
+	accepts one parameter which is pointer to structure representing the
+	From header field to be parsed. The function creates an instance of
+	<structname>to_body</structname> structure and initializes it. It then
+	calls <function>parse_to</function> function and if everything went OK,
+	the pointer to the newly created structure will be put in
+	<structfield>parsed</structfield> field of the structure representing
+	the parsed header field.
+    </para>
+    <para>
+	The newly created structure will be freed when the whole message is
+	being destroyed.  (See To header field parser description for more
+	details).
+    </para>
+    <para>
+	From parser <emphasis>must be called explicitly</emphasis> !
+    </para>
+    <para>
+	If the main parser finds a From header field, it will not parse the
+	header field body automatically. It is up to you to call the
+	<function>parse_from_header</function> when you want to parse a From
+	header field body.
+    </para>
+</section>

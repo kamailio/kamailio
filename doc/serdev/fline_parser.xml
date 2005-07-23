@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="fline_parser" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+
+    </sectioninfo>
+    
+    <title>The First Line Parser</title>
+    <para>
+	Purpose of the parser is to parse the first line of a
+	<acronym>SIP</acronym> message. The first line is represented by
+	<structname>msg_start</structname> structure define in file
+	<filename>parse_fline.h</filename> under <filename>parser</filename>
+	subdirectory.
+    </para>
+    <para>
+	The main function of the first line parser is
+	<function>parse_first_line</function>, the function will fill in
+	<structname>msg_start</structname> structure.
+    </para>
+    <para>
+	Follow inline comments in the function if you want to add support for a
+	new message type.
+    </para>
+</section>

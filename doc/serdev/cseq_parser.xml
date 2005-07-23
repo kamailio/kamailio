@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="cseq_parser" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>CSeq Header Field Parser</title>
+    <para>
+	Purpose of this parser is to parse body of CSeq header field. The
+	parser can be found in file <filename>parse_cseq.c</filename> under
+	<filename>parser</filename> subdirectory.
+    </para>
+    <para>
+	Main function is <function>parse_cseq</function> but there is no need
+	to call the function explicitly. Every time the parser finds a CSeq
+	header field, this function will be called automatically. Result of the
+	parser is <structname>cseq_body</structname> structure. Pointer to the
+	structure will be stored in <structfield>parsed</structfield> field of
+	<structname>hdr_field</structname> structure. Since the pointer is
+	<type>void*</type>, there is a convenience macro
+	<function>get_cseq</function> in file <filename>parse_cseq.h</filename>
+	that will do the necessary type-casting and will return pointer to
+	<structname>cseq_body</structname> structure.
+    </para>
+    <para>
+	The parser will parse CSeq body according to the grammar defined in
+	<acronym>RFC3261</acronym> and store result in
+	<structname>cseq_body</structname> structure.
+    </para>
+    <para>
+	The parser gets called automatically from function
+	<function>get_hdr_field</function> in file
+	<filename>msg_parser.c</filename>. The function first creates and
+	initializes an instance of <structname>cseq_body</structname>
+	structure, then calls <function>parse_cseq</function> function with the
+	structure as a parameter and if everything went OK, puts the pointer to
+	the structure in <structfield>parsed</structfield> field of
+	<structname>hdr_field</structname> structure representing the parsed
+	CSeq header field.
+    </para>
+    <para>
+	The newly created structure will be freed when the message is being
+	destroyed, see function <function>clean_hdr_field</function> in file
+	<filename>hf.c</filename> for more details.
+    </para>
+    <para>
+	See <xref linkend="cseq_body"/> for description of the
+	<structname>cseq_body</structname> structure.
+    </para>
+</section>

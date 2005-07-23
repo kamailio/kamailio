@@ -1,0 +1,536 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="digest_parser" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Digest Body Parser</title>
+    <para>
+	Purpose of this parser is to parse digest response. The parser can be
+	found under <filename>parser/digest</filename> subdirectory. There
+	might be several header fields containing digest response, for example
+	Proxy-Authorization or WWW-Authorization. The parser can be used for
+	all of them.
+    </para>
+    <para>
+	The parser is not called automatically when by the main parser. It is
+	your responsibility to call the parser when you want a digest response
+	to be parsed.
+    </para>
+    <para>
+	Main function is <function>parse_credentials</function> defined in
+	<filename>digest.c</filename>. The function accepts one parameter which
+	is header field to be parsed. As result the function will create an
+	instance of <structname>auth_body_t</structname> structure which will
+	represent the parsed digest credentials.  Pointer to the structure will
+	be put in <structfield>parsed</structfield> field of the
+	<structname>hdr_field</structname> structure representing the parsed
+	header field. It will be freed when the whole message is being
+	destroyed.
+    </para>
+
+    <para>
+	The digest parser contains 32-bit digest parameter parser. The parser
+	was in detail described in section <link linkend="hfname_parser">Header
+	Field Name Parser</link>. See that section for more details about the
+	digest parameter parser algorithm, they work in the same way.
+    </para>
+
+    <para>
+	Description of digest related structures follows:
+	<programlisting>
+typedef struct auth_body {
+    /* This is pointer to header field containing
+     * parsed authorized digest credentials. This
+     * pointer is set in sip_msg->{authorization,proxy_auth}
+     * hooks.
+     *
+     * This is necessary for functions called after
+     * {www,proxy}_authorize, these functions need to know
+     * which credentials are authorized and they will simply
+     * look into 
+     * sip_msg->{authorization,proxy_auth}->parsed->authorized
+     */
+    struct hdr_field* authorized;
+    dig_cred_t digest;           /* Parsed digest credentials */
+    unsigned char stale;         /* Flag is set if nonce is stale */
+    int nonce_retries;           /* How many times the nonce was used */
+} auth_body_t;
+	</programlisting>
+    </para>
+    <para>
+	This is the "main" structure. Pointer to the structure will be stored
+	in <structfield>parsed</structfield> field of
+	<structname>hdr_field</structname> structure. Detailed description of
+	its fields follows:
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>authorized</structfield> - This is a hook to
+		    header field containing authorized credentials.
+		</para>
+		<para>
+		    A <acronym>SIP</acronym> message may contain several
+		    credentials. They are distinguished using realm
+		    parameter. When the server is trying to authorize the
+		    message, it must first find credentials with corresponding
+		    realm and than authorize the credentials. To authorize
+		    credentials server calculates response string and if the
+		    string matches to response string contained in the
+		    credentials, credentials are authorized (in fact it means
+		    that the user specified in the credentials knows password,
+		    nothing more, nothing less).
+		</para>
+		<para>
+		    It would be good idea to remember which credentials
+		    contained in the message are authorized, there might be
+		    other functions interested in knowing which credentials are
+		    authorized.
+		</para>
+		<para>
+		    That is what is this field for. A function that
+		    successfully authorized credentials (currently there is
+		    only one such function in the server, it is function
+		    <function>authorize</function> in auth module) will put
+		    pointer to header field containing the authorized
+		    credentials in this field. Because there might be several
+		    header field containing credentials, the pointer will be
+		    put in <structfield>authorized</structfield> field in the
+		    first header field in the message containing
+		    credentials. That means that it will be either header field
+		    whose pointer is in <structfield>www_auth</structfield> or
+		    <structfield>proxy_auth</structfield> field of
+		    <structname>sip_msg</structname> structure representing the
+		    message.
+		</para>
+		<para>
+		    When a function wants to find authorized credentials, it
+		    will simply look in
+		    <structfield>msg->www_auth->parsed->authorized</structfield>
+		    or
+		    <structfield>msg->proxy_auth->parsed->authorized</structfield>,
+		    where <structfield>msg</structfield> is variable containing
+		    pointer to <structname>sip_msg</structname> structure.
+		</para>
+		<para>
+		    To simplify the task of saving and retrieving pointer to
+		    authorized credentials, there are two convenience functions
+		    defined in <filename>digest.c</filename> file.  They will
+		    be described later.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>digest</structfield> - Structure containing
+		    parsed digest credentials. The structure will be described
+		    in detail later.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>stale</structfield> - This field will be set
+		    to 1 if the server received a stale nonce. Next time when
+		    the server will be sending another challenge, it will use
+		    "stale=true" parameter. "stale=true" indicates to the
+		    client that username and password used to calculate
+		    response were correct, but nonce was stale.  The client
+		    should recalculate response with the same username and
+		    password (without disturbing user) and new nonce. For more
+		    details see <acronym>RFC2617</acronym>.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>nonce_retries</structfield> - This fields
+		    indicates number of authorization attempts with same nonce.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+    
+    <programlisting>
+/*
+ * Errors returned by check_dig_cred
+ */
+typedef enum dig_err {
+    E_DIG_OK = 0,        /* Everything is OK */
+    E_DIG_USERNAME  = 1, /* Username missing */
+    E_DIG_REALM = 2,     /* Realm missing */
+    E_DIG_NONCE = 4,     /* Nonce value missing */
+    E_DIG_URI = 8,       /* URI missing */
+    E_DIG_RESPONSE = 16, /* Response missing */
+    E_DIG_CNONCE = 32,   /* CNONCE missing */
+    E_DIG_NC = 64,       /* Nonce-count missing */
+} dig_err_t;			
+    </programlisting>
+    <para>
+	This is enum of all possible errors returned by
+	<function>check_dig_cred</function> function.
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>E_DIG_OK</emphasis> - No error found.</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>E_DIG_USERNAME</emphasis> - Username parameter
+		    missing in digest response.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>E_DIG_REALM</emphasis> - Realm parameter
+		missing in digest response.</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>E_DIG_NONCE</emphasis> - Nonce parameter
+		missing in digest response.</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>E_DIG_URI</emphasis> - Uri parameter missing in
+		digest response.</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>E_DIG_RESPONSE</emphasis> - Response parameter
+		    missing in digest response.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>E_DIG_CNONCE</emphasis> - Cnonce parameter
+		missing in digest response.</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>E_DIG_NC</emphasis> - Nc parameter missing in
+		digest response.</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+    
+    <programlisting>
+/* Type of algorithm used */
+typedef enum alg {
+    ALG_UNSPEC = 0,   /* Algorithm parameter not specified */
+    ALG_MD5 = 1,      /* MD5 - default value*/
+    ALG_MD5SESS = 2,  /* MD5-Session */
+    ALG_OTHER = 4     /* Unknown */
+} alg_t;
+    </programlisting>
+    <para>
+	This is enum of recognized algorithm types. (See description of
+	<structname>algorithm</structname> structure for more details).
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>ALG_UNSPEC</emphasis> - Algorithm was not
+		specified in digest response.</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>ALG_MD5</emphasis> - "algorithm=MD5" was found in
+		    digest response.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>ALG_MD5SESS</emphasis> - "algorithm=MD5-Session"
+		    was found in digest response.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>ALG_OTHER</emphasis> - Unknown algorithm
+		    parameter value was found in digest response.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+    
+    <programlisting>
+/* Quality Of Protection used */
+typedef enum qop_type { 
+    QOP_UNSPEC = 0,   /* QOP parameter not present in response */
+    QOP_AUTH = 1,     /* Authentication only */
+    QOP_AUTHINT = 2,  /* Authentication with integrity checks */
+    QOP_OTHER = 4     /* Unknown */
+} qop_type_t;
+    </programlisting>
+    <para>
+	This enum lists all recognized qop parameter values.
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <emphasis>QOP_UNSPEC</emphasis> - qop parameter was not
+		    found in digest response.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>QOP_AUTH</emphasis> - "qop=auth" was found in
+		    digest response.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>QOP_AUTHINT</emphasis> - "qop=auth-int" was found
+		    in digest response.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>QOP_OTHER</emphasis> - Unknown qop parameter
+		    value was found in digest response.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+
+    <programlisting>
+/* Algorithm structure */
+struct algorithm {
+     str alg_str;       /* The original string representation */
+     alg_t alg_parsed;  /* Parsed value */
+};
+    </programlisting>
+    <para>
+	The structure represents "algorithm" parameter of digest
+	response. Description of fields follows:
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>alg_str</structfield> - Algorithm parameter
+		    value as string.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>alg_parsed</structfield> - Parsed algorithm
+		    parameter value.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+
+    <programlisting>
+/* QOP structure */
+struct qp {
+    str qop_str;           /* The original string representation */
+    qop_type_t qop_parsed; /* Parsed value */
+};
+    </programlisting>
+    <para>
+	This structure represents "qop" parameter of digest
+	response. Description of fields follows:
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>qop_str</structfield> - Qop parameter value as
+		    string.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>qop_parsed</structfield> - Parsed "qop"
+		    parameter value.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+    
+    <programlisting>
+/*
+ * Parsed digest credentials
+ */
+typedef struct dig_cred {
+    str username;         /* Username */
+    str realm;            /* Realm */
+    str nonce;            /* Nonce value */
+    str uri;              /* URI */
+    str response;         /* Response string */
+    str algorithm;        /* Algorithm in string representation */
+    struct algorithm alg; /* Type of algorithm used */
+    str cnonce;           /* Cnonce value */
+    str opaque;           /* Opaque data string */
+    struct qp qop;        /* Quality Of Protection */
+    str nc;               /* Nonce count parameter */
+} dig_cred_t;
+    </programlisting>
+    <para>
+	This structure represents set of digest credentials
+	parameters. Description of field follows:
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <structfield>username</structfield> - Value of "username"
+		    parameter.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>realm</structfield> - Value of "realm"
+		    parameter.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>nonce</structfield> - Value of "nonce"
+		    parameter.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>uri</structfield> - Value of "uri" parameter.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>response</structfield> - Value of "response"
+		    parameter.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>algorithm</structfield> - Value of "algorithm"
+		    parameter as string.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>alg</structfield> - Parsed value of
+		    "algorithm" parameter.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>cnonce</structfield> - Value of "cnonce"
+		    parameter.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>opaque</structfield> - Value of "opaque"
+		    parameter.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>qop</structfield> - Value of "qop" parameter.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <structfield>nc</structfield> - Value of "nc" parameter.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+    
+    <section id="other_functions">
+	<title>Other Functions Of the Digest Parser</title>
+	<para>
+	    There are some other mainly convenience functions defined in the
+	    parser. The function will be in detail described in this
+	    section. All the functions are defined in
+	    <filename>digest.c</filename> file.
+	</para>
+	
+	<funcsynopsis>
+	    <funcprototype>
+		<funcdef>dig_err_t <function>check_dig_cred</function></funcdef>
+		<paramdef>dig_cred_t* <parameter>_c</parameter></paramdef>
+	    </funcprototype>
+	</funcsynopsis>
+	
+	<para>
+	    This function performs some basic sanity check over parsed digest
+	    credentials. The following conditions must be met for the checks to
+	    be successful:
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			There must be non-empty "username" parameter in the
+			credentials.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			There must be non-empty "realm" parameter in the
+			credentials.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			There must be non-empty "nonce" parameter in the
+			credentials.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			There must be non-empty "uri" parameter in the
+			credentials.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			There must be non-empty "response" parameter in the
+			credentials.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			If qop parameter is set to QOP_AUTH or QOP_AUTHINT,
+			then there must be also non-empty "cnonce" and "nc"
+			parameters in the digest.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+	<note>
+	    <para>
+		It is recommended to call <function>check_dig_cred</function>
+		before you try to authorize the credentials. If the function
+		fails, there is no need to try to authorize the credentials
+		because the authorization will fail for sure.
+	    </para>
+	</note>
+
+	<funcsynopsis>
+	    <funcprototype>
+		<funcdef>int <function>mark_authorized_cred</function></funcdef>
+		<paramdef>struct sip_msg* <parameter>_m</parameter></paramdef>
+		<paramdef>struct hdr_field* <parameter>_h</parameter></paramdef>
+	    </funcprototype>
+	</funcsynopsis>
+
+	<para>
+	    This is convenience function. The function saves pointer to the
+	    authorized credentials. For more info see description of
+	    <structfield>authorized</structfield> field in
+	    <structname>auth_body</structname> structure.
+	</para>
+
+	<funcsynopsis>
+	    <funcprototype>
+		<funcdef>int <function>get_authorized_cred</function></funcdef>
+		<paramdef>struct sip_msg* <parameter>_m</parameter></paramdef>
+		<paramdef>struct hdr_field** <parameter>_h</parameter></paramdef>
+	    </funcprototype>
+	</funcsynopsis>
+	
+	<para>
+	    This is convenience function. The function will retrieve pointer to
+	    authorized credentials previously saved using
+	    <function>mark_authorized_cred</function> function.  If there is no
+	    such credentials, 0 will be stored in variable pointed to by the
+	    second parameter. The function returns always zero. For more
+	    information see description of
+	    <structfield>authorized</structfield> field in
+	    <structname>auth_body</structname> structure.
+	</para>
+    </section>
+</section>

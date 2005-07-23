@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="hfname_parser" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>The Header Field Name Parser</title>
+    <para>
+	The purpose of the header field type parser is to recognize type of a
+	header field.  The following types of header field will be recognized:
+    </para>
+    <para>
+	Via, To, From, CSeq, Call-ID, Contact, Max-Forwards, Route,
+	Record-Route, Content-Type, Content-Length, Authorization, Expires,
+	Proxy-Authorization, WWW-Authorization, supported, Require,
+	Proxy-Require, Unsupported, Allow, Event.
+    </para>
+    <para>
+	All other header field types will be marked as HDR_OTHER.
+    </para>
+    <para>
+	Main function of header name parser is
+	<function>parse_hname2</function>. The function can be found in file
+	<filename>parse_hname.c</filename>. The function accepts pointers to
+	begin and end of a header field and fills in
+	<structname>hdf_field</structname>
+	structure. <structfield>name</structfield> field will point to the
+	header field name, <structfield>body</structfield> field will point to
+	the header field body and <structfield>type</structfield> field will
+	contain type of the header field if known and HDR_OTHER if unknown.
+    </para>
+    <para>
+	The parser is 32-bit, it means, that it processes 4 characters of
+	header field name at time. 4 characters of a header field name are
+	converted to an integer and the integer is then compared. This is much
+	faster than comparing byte by byte. Because the server is compiled on
+	at least 32-bit architectures, such comparison will be compiled into
+	one instruction instead of 4 instructions.
+    </para>
+    <para>
+	We did some performance measurement and 32-bit parsing is about 3 times
+	faster for a typical <acronym>SIP</acronym> message than corresponding
+	automaton comparing byte by byte. Performance may vary depending on the
+	message size, parsed header fields and header fields type. Test showed
+	that it was always as fast as corresponding 1-byte comparing automaton.
+    </para>
+    <para>
+	Since comparison must be case insensitive in case of header field
+	names, it is necessary to convert it to lower case first and then
+	compare. Since converting byte by byte would slow down the parser a
+	lot, we have implemented a hash table, that can again convert 4 bytes
+	at once. Since set of keys that need to be converted to lowercase is
+	known (the set consists of all possible 4-byte parts of all recognized
+	header field names) we can pre-calculate size of the hash table to be
+	synonym-less. That will simplify (and speed up) the lookup a lot. The
+	hash table must be initialized upon the server startup (function
+	<function>init_hfname_parser</function>).
+    </para>
+    <para>
+	The header name parser consists of several files, all of them are under
+	<filename>parser</filename> subdirectory. Main file is
+	<filename>parse_hname2.c</filename> - this files contains the parser
+	itself and functions used to initialize and lookup the hash table. File
+	<filename>keys.h</filename> contains automatically generated set of
+	macros. Each macro is a group of 4 bytes converted to integer. The
+	macros are used for comparison and the hash table initialization. For
+	example, for Max-Forwards header field name, the following macros are
+	defined in the file:
+    </para>
+    <programlisting>
+#define _max__ 0x2d78616d   /* "max-" */
+#define _maX__ 0x2d58616d   /* "maX-" */
+#define _mAx__ 0x2d78416d   /* "mAx-" */
+#define _mAX__ 0x2d58416d   /* "mAX-" */
+#define _Max__ 0x2d78614d   /* "Max-" */
+#define _MaX__ 0x2d58614d   /* "MaX-" */
+#define _MAx__ 0x2d78414d   /* "MAx-" */
+#define _MAX__ 0x2d58414d   /* "MAX-" */
+
+#define _forw_ 0x77726f66   /* "forw" */
+#define _forW_ 0x57726f66   /* "forW" */
+#define _foRw_ 0x77526f66   /* "foRw" */
+#define _foRW_ 0x57526f66   /* "foRW" */
+#define _fOrw_ 0x77724f66   /* "fOrw" */
+#define _fOrW_ 0x57724f66   /* "fOrW" */
+#define _fORw_ 0x77524f66   /* "fORw" */
+#define _fORW_ 0x57524f66   /* "fORW" */
+#define _Forw_ 0x77726f46   /* "Forw" */
+#define _ForW_ 0x57726f46   /* "ForW" */
+#define _FoRw_ 0x77526f46   /* "FoRw" */
+#define _FoRW_ 0x57526f46   /* "FoRW" */
+#define _FOrw_ 0x77724f46   /* "FOrw" */
+#define _FOrW_ 0x57724f46   /* "FOrW" */
+#define _FORw_ 0x77524f46   /* "FORw" */
+#define _FORW_ 0x57524f46   /* "FORW" */
+
+#define _ards_ 0x73647261   /* "ards" */
+#define _ardS_ 0x53647261   /* "ardS" */
+#define _arDs_ 0x73447261   /* "arDs" */
+#define _arDS_ 0x53447261   /* "arDS" */
+#define _aRds_ 0x73645261   /* "aRds" */
+#define _aRdS_ 0x53645261   /* "aRdS" */
+#define _aRDs_ 0x73445261   /* "aRDs" */
+#define _aRDS_ 0x53445261   /* "aRDS" */
+#define _Ards_ 0x73647241   /* "Ards" */
+#define _ArdS_ 0x53647241   /* "ArdS" */
+#define _ArDs_ 0x73447241   /* "ArDs" */
+#define _ArDS_ 0x53447241   /* "ArDS" */
+#define _ARds_ 0x73645241   /* "ARds" */
+#define _ARdS_ 0x53645241   /* "ARdS" */
+#define _ARDs_ 0x73445241   /* "ARDs" */
+#define _ARDS_ 0x53445241   /* "ARDS" */
+    </programlisting>
+    <para>
+	As you can see, Max-Forwards name was divided into three 4-byte chunks:
+	Max-, Forw, ards. The file contains macros for every possible lower and
+	upper case character combination of the chunks. Because the name (and
+	therefore chunks) can contain colon (":"), minus or space and these
+	characters are not allowed in macro name, they must be
+	substituted. Colon is substituted by "1", minus is substituted by
+	underscore ("_") and space is substituted by "2".
+    </para>
+    <para>
+	When initializing the hash table, all these macros will be used as keys
+	to the hash table. One of each upper and lower case combinations will
+	be used as value. Which one ?
+    </para>
+    <para>
+	There is a convention that each word of a header field name starts with
+	a upper case character. For example, most of user agents will send
+	"Max-Forwards", messages containing some other combination of upper and
+	lower case characters (for example: "max-forwards", "MAX-FORWARDS",
+	"mAX-fORWARDS") are very rare (but it is possible).
+    </para>
+    <para>
+	Considering the previous paragraph, we optimized the parser for the
+	most common case. When all header fields have upper and lower case
+	characters according to the convention, there is no need to do hash
+	table lookups, which is another speed up.
+    </para>
+    <para>
+	For example suppose we are trying to figure out if the header field
+	name is Max-Forwards and the header field name is formed according to
+	the convention (i.e. "Max-Forwards"):
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    Get the first 4 bytes of the header field name ("Max-"),
+		    convert it to an integer and compare to "_Max__"
+		    macro. Comparison succeeded, continue with the next step.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    Get next 4 bytes of the header field name ("Forw"), convert
+		    it to an integer and compare to "_Forw_" macro. Comparison
+		    succeeded, continue with the next step.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    Get next 4 bytes of the header field name ("ards"), convert
+		    it to an integer and compare to "_ards_" macro. Comparison
+		    succeeded, continue with the next step.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    If the following characters are spaces and tabs followed by
+		    a colon (or colon directly without spaces and tabs), we
+		    found Max-Forwards header field name and can set
+		    <structfield>type</structfield> field to
+		    HDR_MAXFORWARDS. Otherwise (other characters than colon,
+		    spaces and tabs) it is some other header field and set
+		    <structfield>type</structfield> field to HDR_OTHER.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+    <para>
+	As you can see, there is no need to do hash table lookups if the header
+	field was formed according to the convention and the comparison was
+	very fast (only 3 comparisons needed !).
+    </para>
+    <para>
+	Now lets consider another example, the header field was not formed
+	according to the convention, for example "MAX-forwards":
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    Get the first 4 bytes of the header field name ("MAX-"),
+		    convert it to an integer and compare to "_Max__" macro.
+		</para>
+		<para>
+		    Comparison failed, try to lookup "MAX-" converted to
+		    integer in the hash table. It was found, result is "Max-"
+		    converted to integer.
+		</para>
+		<para>
+		    Try to compare the result from the hash table to "_Max__"
+		    macro. Comparison succeeded, continue with the next step.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    Compare next 4 bytes of the header field name ("forw"),
+		    convert it to an integer and compare to "_Max__" macro.
+		</para>
+		<para>
+		    Comparison failed, try to lookup "forw" converted to
+		    integer in the hash table. It was found, result is "Forw"
+		    converted to integer.
+		</para>
+		<para>
+		    Try to compare the result from the hash table to "Forw"
+		    macro. Comparison succeeded, continue with the next step.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    Compare next 4 bytes of the header field name ("ards"),
+		    convert it to integer and compare to "ards"
+		    macro. Comparison succeeded, continue with the next step.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    If the following characters are spaces and tabs followed by
+		    a colon (or colon directly without spaces and tabs), we
+		    found Max-Forwards header field name and can set
+		    <structfield>type</structfield> field to
+		    HDR_MAXFORWARDS. Otherwise (other characters than colon,
+		    spaces and tabs) it is some other header field and set
+		    <structfield>type</structfield> field to HDR_OTHER.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </para>
+    <para>
+	In this example, we had to do 2 hash table lookups and 2 more
+	comparisons. Even this variant is still very fast, because the hash
+	table lookup is synonym-less, lookups are very fast.
+    </para>
+</section>

@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="db_val_t" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Type <type>db_val_t</type></title>
+    <para>
+	This structure represents a value in the database. Several data-types
+	are recognized and converted by the database <acronym>API</acronym>:
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <emphasis>DB_INT</emphasis> - Value in the database
+		    represents an integer number.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>DB_DOUBLE</emphasis> - Value in the database
+		    represents a decimal number.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>DB_STRING</emphasis> - Value in the database
+		    represents a string.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>DB_STR</emphasis> - Value in the database
+		    represents a string.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>DB_DATETIME</emphasis> - Value in the database
+		    represents date and time.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>DB_BLOB</emphasis> - Value in the database
+		    represents binary large object.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	These data-types are automatically recognized, converted from internal
+	database representation and stored in a variable of corresponding type.
+    </para>
+    <programlisting>
+typedef struct db_val {
+    db_type_t type;              /* Type of the value */
+    int nul;                     /* NULL flag */
+    union {                      
+        int int_val;             /* Integer value */
+        double double_val;       /* Double value */
+        time_t time_val;         /* Unix time_t value */
+        const char* string_val;  /* Zero terminated string */
+        str str_val;             /* str structure */
+        str blob_val;            /* Structure describing blob */
+    } val;
+} db_val_t;
+    </programlisting>
+    <note>
+	<para>
+	    All macros expect pinter to <type>db_val_t</type> variable as a
+	    parameter.
+	</para>
+    </note>
+    <itemizedlist>
+	<listitem>
+	    <para>
+		<function>VAL_TYPE(value)</function> Macro.
+	    </para>
+	    <para>
+		Use this macro if you need to set/get the type of the value
+	    </para>
+	    <example>
+		<title>VAL_TYPE Macro</title>
+		<programlisting>
+...
+VAL_TYPE(val) = DB_INT;
+if (VAL_TYPE(val) == DB_FLOAT)
+...
+		</programlisting>
+	    </example>
+	</listitem>
+	
+	<listitem>
+	    <para>
+		<function>VAL_NULL(value)</function> Macro.
+	    </para>
+	    <para>
+		Use this macro if you need to set/get the null flag. Non-zero
+		flag means that the corresponding cell in the database
+		contained no data (NULL value in <acronym>MySQL</acronym>
+		terminology).
+	    </para>
+	    <example>
+		<title>VAL_NULL Macro</title>
+		<programlisting>
+...
+if (VAL_NULL(val) == 1) {
+    printf("The cell is NULL");
+}
+...
+		</programlisting>
+	    </example>
+	</listitem>
+	
+	<listitem>
+	    <para>
+		<function>VAL_INT(value)</function> Macro.
+	    </para>
+	    <para>
+		Use this macro if you need to access <type>integer</type> value
+		in <type>db_val_t</type> structure.
+	    </para>
+	    <example>
+		<title>VAL_INT Macro</title>
+		<programlisting>
+...
+if (VAL_TYPE(val) == DB_INT) {
+    printf("%d", VAL_INT(val));
+}
+...
+		</programlisting>
+	    </example>
+	</listitem>
+	
+	<listitem>
+	    <para>
+		<function>VAL_DOUBLE(value)</function> Macro.
+	    </para>
+	    <para>
+		Use this macro if you need to access <type>double</type> value
+		in the <type>db_val_t</type> structure.
+	    </para>
+	    <example>
+		<title>VAL_DOUBLE Macro</title>
+		<programlisting>
+...
+if (VAL_TYPE(val) == DB_DOUBLE) {
+    printf("%f", VAL_DOUBLE(val));
+}
+...
+		</programlisting>
+	    </example>
+	</listitem>
+	
+	<listitem>
+	    <para>
+		<function>VAL_TIME(value)</function> Macro.
+	    </para>
+	    <para>
+		Use this macro if you need to access <type>time_t</type> value
+		in <type>db_val_t</type> structure.
+	    </para>
+	    <example>
+		<title>VAL_TIME Macro</title>
+		<programlisting>
+...
+time_t tim;
+if (VAL_TYPE(val) == DB_DATETIME) {
+    tim = VAL_TIME(val);
+}
+...
+		</programlisting>
+	    </example>
+	</listitem>
+	
+	<listitem>
+	    <para>
+		<function>VAL_STRING(value)</function> Macro.
+	    </para>
+	    <para>
+		Use this macro if you need to access <type>string</type> value
+		in <type>db_val_t</type> structure.
+	    </para>
+	    <example>
+		<title>VAL_STRING Macro</title>
+		<programlisting>
+...
+if (VAL_TYPE(val) == DB_STRING) {
+    printf("%s", VAL_STRING(val));
+}
+...
+		</programlisting>
+	    </example>
+	</listitem>
+	
+	<listitem>
+	    <para>
+		<function>VAL_STR(value)</function> Macro.
+	    </para>
+	    <para>
+		Use this macro if you need to access <type>str</type> structure
+		in <type>db_val_t</type> structure.
+	    </para>
+	    <example>
+		<title>VAL_STR Macro</title>
+		<programlisting>
+...
+if (VAL_TYPE(val) == DB_STR) {
+    printf("%.*s", VAL_STR(val).len, VAL_STR(val).s);
+}
+...
+		</programlisting>
+	    </example>
+	</listitem>
+	
+	<listitem>
+	    <para>
+		<function>VAL_BLOB(value)</function> Macro.
+	    </para>
+	    <para>
+		Use this macro if you need to access <type>blob</type> value in <type>db_val_t</type> structure.
+	    </para>
+	    <example>
+		<title>VAL_STR Macro</title>
+		<programlisting>
+...
+if (VAL_TYPE(val) == DB_BLOB) {
+    printf("%.*s", VAL_BLOB(val).len, VAL_BLOB(val).s);
+}
+...
+		</programlisting>
+	    </example>
+	</listitem>
+    </itemizedlist>
+</section>
