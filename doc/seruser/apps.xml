@@ -1,47 +1,61 @@
-    <chapter>
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="application_writing" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <section>
 	<title>Application Writing</title>
 	<para>
-	    <application moreinfo="none">ser</application> offers several
+	    <application>ser</application> offers several
 	    ways to couple its functionality with applications. The coupling
-	    is bidirectional: <application moreinfo="none">ser</application>
+	    is bidirectional: <application>ser</application>
 	    can utilize external applications and external applications can
-	    utilize <application moreinfo="none">ser</application>. 
+	    utilize <application>ser</application>. 
 	    An example of the former direction would be an external program
 	    determining a least-cost route for a called destination  using 
 	    a pricing table. An example of the latter case
 	    is a web application for server provisioning.
 	    Such an application may want to send instant 
 	    messages, query all current user's locations and monitor server
-	    health. An existing web interface to <application moreinfo="none">ser</application>,
-	    <application moreinfo="none">serweb</application>, actually
+	    health. An existing web interface to <application>ser</application>,
+	    <application>serweb</application>, actually
 	    does all of it. 
 	</para>
 	<para>
 	    The easiest, language-independent way of using external logic 
-	    from <application moreinfo="none">ser</application> is provided
-	    by exec module. exec module allows <application moreinfo="none">ser</application>
+	    from <application>ser</application> is provided
+	    by exec module. exec module allows <application>ser</application>
 	    to start external programs on receipt of a request. The
 	    programs can execute arbitrary logic and/or affect routing of SIP
 	    requests. A great benefit of this programming method is it
 	    is language-independent. Programmers may use programming languages
 	    that are effective or with which they are best familiar.
-	    <xref linkend="usingexec"> gives additional examples illustrating 
+	    <xref linkend="usingexec"/> gives additional examples illustrating 
 	    use of the exec module.
 	</para>
 	<para>
-	    Another method for extending <application moreinfo="none">ser</application>
+	    Another method for extending <application>ser</application>
 	    capabilities is to write new modules in C. This method takes
-	    deeper understanding of <application moreinfo="none">ser</application>
+	    deeper understanding of <application>ser</application>
 	    internals but gains the highest flexibility. Modules can implement
-	    arbitrary brand-new commands upon which <application moreinfo="none">ser</application>
+	    arbitrary brand-new commands upon which <application>ser</application>
 	    scripts can rely on. Guidelines on module programming can be
-	    found in <application moreinfo="none">ser</application>
+	    found in <application>ser</application>
 	    programmer's handbook available from iptel.org website.
 	</para>
 	<para>
 	    To address needs of applications wishing to leverage
-	    <application moreinfo="none">ser</application>,
-	    <application moreinfo="none">ser</application> exports
+	    <application>ser</application>,
+	    <application>ser</application> exports
 	    parts of its functionality via its built-in
 	    "Application FIFO server". This is a simple textual
 	    interface that allows any external applications
@@ -50,29 +64,24 @@
 	    watch server health, etc. Programs written in any
 	    language (PHP, shell scripts, Perl, C, etc.) can
 	    utilize this feature. How to use it is shown in
-	    <xref linkend="fifoserver">.
+	    <xref linkend="fifoserver"/>.
 	</para>
-
 
 	<section id="usingexec">
 	    <title>Using exec Module</title>
 	    <para>
 		
-		The easiest way is to couple <application moreinfo="none">ser</application>
+		The easiest way is to couple <application>ser</application>
 		with external applications via the <emphasis>exec</emphasis>
 		module. This module allows execution of logic and URI manipulation 
 		by external applications on request receipt. While very
 		simple, many useful services can be
 		implemented this way. External applications can be written in
 		any programming language and do not be aware of SIP at all.
-		<application moreinfo="none">ser</application> interacts with
+		<application>ser</application> interacts with
 		the application via standard input/output and environment 
 		variables.
-		
-
 	    </para>
-	
-
 	    <para>
 		For example, an external shell script
 		may send an email whenever a request for a user arrives.
@@ -80,7 +89,7 @@
 
 	    <example>
 		<title>Using exec: Step 1</title>
-		<programlisting format="linespecific">
+		<programlisting>
 # send email if a request for user "jiri" arrives
 if (uri=~"^sip:jiri@") {
      exec_msg("echo 'body: call arrived'|mail -s 'call for you' jiri");
@@ -88,7 +97,7 @@ if (uri=~"^sip:jiri@") {
 		</programlisting>
 	    </example> <!-- step 1 -->
 	    <para>
-		In this example, the <command moreinfo="none">exec_msg</command> 
+		In this example, the <command>exec_msg</command> 
 		action starts an external shell. It passes a received SIP request
 		to shell's input. In the shell, <command>mail</command> command
 		is called to send a notification by e-mail.
@@ -129,14 +138,13 @@ if (uri=~"^sip:jiri@") {
 		    request received on shell program's input
 		    and grep From header field.
 		</para>
-		<programlisting format="linespecific">
-&execstep2;
+		<programlisting>
+<xi:include href="../../examples/exec_s2.cfg" parse="text"/>
 		</programlisting>
 		<para>
 			The following two figures show an example SIP request and
 			email notification generated on its receipt.
-			
-		    <screen format="linespecific">
+		    <screen>
 
 <![CDATA[
 INVITE sip:jiri@iptel.org SIP/2.0
@@ -152,12 +160,11 @@ Content-Length: 451
 
 --- SDP payload snipped ---
 ]]>
-
 		    </screen>
 		
 		    email received:
 		
-			<screen format="linespecific">
+		    <screen>
 <![CDATA[
 Date: Thu, 12 Dec 2002 14:25:02 +0100
 From: root <root@cat.iptel.org>
@@ -171,12 +178,12 @@ request received
 		</para>
 		<para>
 		    There is another way to learn values of request
-		    header fields, simpler than use of <command moreinfo="none">grep</command>. 
-		    <application moreinfo="none">ser</application>
+		    header fields, simpler than use of <command>grep</command>. 
+		    <application>ser</application>
 		    parses header fields and passes their values in 
 		    environment variables. Their names correspond
 		    to header field names prefixed with "SIP_HF_".
-		<programlisting format="linespecific">
+		<programlisting>
 # send email if a request for "jiri" arrives
 if (uri=~"^sip:jiri@") {
      exec_msg("echo request received from $SIP_HF_FROM | mail -s 'request for you' jiri");
@@ -192,7 +199,7 @@ if (uri=~"^sip:jiri@") {
 		    <varname>SIP_USER</varname> and <varname>SIP_OUSER</varname> username
 		    parts of these. The following listing shows environment variables
 		    passed to a shell script on receipt of the previous message:
-		    <programlisting format="linespecific">
+		    <programlisting>
 <![CDATA[
 SIP_HF_MAX_FORWARDS=10
 SIP_HF_VIA=SIP/2.0/UDP 195.37.77.100:5040
@@ -227,18 +234,18 @@ SIP_HF_CONTACT=<sip:123.20.128.35:9315>
 		    their addresses in the script. The missing piece
 		    is translation of user's SIP name to his email address.
 		    This information is maintained in subscriber profiles,
-		    stored in MySQL by <application moreinfo="none">ser</application>.
+		    stored in MySQL by <application>ser</application>.
 		    To translate the username to email address, the executed script
 		    needs to query the MySQL database. That is what this example
 		    shows. First, an SQL query is constructed which looks up
 		    email address of user, for whom a request arrived. If the
 		    query does not return a valid email address, the script
-		    returns with an error status and <application moreinfo="none">ser</application>
+		    returns with an error status and <application>ser</application>
 		    script replies with "user does not exist". Otherwise
 		    an email notification is sent.
 		
-		    <programlisting format="linespecific">
-&execstep3;
+		    <programlisting>
+<xi:include href="../../examples/exec_s3.cfg" parse="text"/>
 		    </programlisting>
 		</para>
 	    </example> <!-- step 3 make the script work for anyone -->
@@ -253,8 +260,8 @@ SIP_HF_CONTACT=<sip:123.20.128.35:9315>
 		    kept. The script does not know whether a request is
 		    a new or a retransmitted one. Transaction management may
 		    be introduced by use of tm module as described in
-		    <xref linkend="statefulua">. In the script,
-		    <command moreinfo="none">t_newtran</command> is first
+		    <xref linkend="statefulua"/>. In the script,
+		    <command>t_newtran</command> is first
 		    called to absorb requests retransmission -- if they
 		    occur, script does not continue. Then, as in the previous
 		    example, an exec module action is called. Eventually,
@@ -262,16 +269,16 @@ SIP_HF_CONTACT=<sip:123.20.128.35:9315>
 		    <note>
 			<para>
 			    Note carefully: it is important that the stateful
-			    reply processing (<command moreinfo="none">t_reply</command>)
+			    reply processing (<command>t_reply</command>)
 			    is used as opposed to using stateless replies
-			    (<command moreinfo="none">sl_send_reply</command>).
+			    (<command>sl_send_reply</command>).
 			    Otherwise, the outgoing reply would not affect
 			    transactional context and would not be resent on
 			    receipt of a request retransmission.
 			</para>
 		    </note>
-		    <programlisting format="linespecific">
-&execstep4;
+		    <programlisting>
+<xi:include href="../../examples/exec_s4.cfg" parse="text"/>
 		    </programlisting>
 		    
 		</para>
@@ -281,11 +288,11 @@ SIP_HF_CONTACT=<sip:123.20.128.35:9315>
 		<para>
 		    The last example iteration shows how to integrate the
 		    email notification on missed calls with the default
-		    <application moreinfo="none">ser</application> script
-		    (see <xref linkend="defaultscript">). It generates an
+		    <application>ser</application> script
+		    (see <xref linkend="defaultscript"/>). It generates an
 		    email for every call invitation to an off-line user.
-		    <programlisting format="linespecific">
-&execstep5;
+		    <programlisting>
+<xi:include href="../../examples/exec_s5.cfg" parse="text"/>
 		    </programlisting>
 		</para>
 		    
@@ -296,30 +303,30 @@ SIP_HF_CONTACT=<sip:123.20.128.35:9315>
 		    reported calls missed due to call cancellation,
 		    busy status or a downstream failure. Such missed
 		    calls can be easily reported to syslog or mysql
-		    using the acc module (see <xref linkend="missedcalls">).
+		    using the acc module (see <xref linkend="missedcalls"/>).
 		    The other, more general way, is to return to request
 		    processing on receipt of a negative reply.
-		    (see <xref linkend="replyprocessingsection">). Before
+		    (see <xref linkend="replyprocessingsection"/>). Before
 		    a request is forwarded, it is labeled to be
-		    re-processed in a <command moreinfo="none">failure_route</command>
+		    re-processed in a <command>failure_route</command>
 		    on receipt of a negative reply -- this is what
-		    <command moreinfo="none">t_on_failure</command> action
+		    <command>t_on_failure</command> action
 		    is used for. It does not matter what caused the transaction
 		    to fail -- it may be unresponsive downstream server,
 		    server responding with 6xx, or server sending a 487
 		    reply, because an INVITE was canceled. When any such
 		    circumstances occur (i.e., transaction does not complete
-		    with a 2xx status code), <command moreinfo="none">failure_route</command>
+		    with a 2xx status code), <command>failure_route</command>
 		    is entered.
 		</para>
 		<para>
-		    The following <application moreinfo="none">ser</application>
+		    The following <application>ser</application>
 		    script reports missed calls in all possible cases.
 		    It reports them when a user is off-line as well as when
 		    a user is on-line, but INVITE transaction does not complete
 		    successfully.
-		    <programlisting format="linespecific">
-&execstep5b;
+		    <programlisting>
+<xi:include href="../../examples/exec_s5b.cfg" parse="text"/>
 		    </programlisting>
 		</para>
 		
@@ -336,64 +343,64 @@ SIP_HF_CONTACT=<sip:123.20.128.35:9315>
 	    is it works with SIP-unaware applications
 	    written in any programming language. Textual nature of the
 	    FIFO interface allows for easy integration with a lot of
-	    existing programs. Today, <application moreinfo="none">ser</application>'s
-	    complementary web-interface, <application moreinfo="none">serweb</application>,
+	    existing programs. Today, <application>ser</application>'s
+	    complementary web-interface, <application>serweb</application>,
 	    written in PHP, leverages the FIFO interface when displaying
 	    and changing user location records stored in server's memory.
 	    It uses this interface to send instant messages too, without
 	    any knowledge of underlying <acronym>SIP</acronym> stack.
 	    Another application relying on the FIFO interface is 
-	    <application moreinfo="none">serctl</application>, <application moreinfo="none">ser</application>
+	    <application>serctl</application>, <application>ser</application>
 	    management utility. The command-line utility can browse
 	    server's in-memory user-location database, display 
 	    running processes and operational statistics.
 	    </para>
 	    <para>
 		The way the FIFO server works is similar to how 
-		<filename moreinfo="none">/proc</filename> filesystem works
+		<filename>/proc</filename> filesystem works
 		on some operating systems. It provides a human-readable way
-		to access <application moreinfo="none">ser</application>'s
+		to access <application>ser</application>'s
 		internals. Applications dump their requests into the FIFO
 		server and receive a status report when request processing
-		completes. <application moreinfo="none">ser</application>
+		completes. <application>ser</application>
 		exports a lot of its functionality located in both the
 		core and external modules through the FIFO server. 
 		</para>
 	    <para>
 		FIFO requests are formed easily. They begin with a command
 		enclosed in colons and followed by name of file or pipe (relative
-		to <filename moreinfo="none">/tmp/</filename> path), to which
+		to <filename>/tmp/</filename> path), to which
 		a reply should be printed. The first request line may be
 		followed by additional lines with command-specific 
-		parameters. For example, the <command moreinfo="none">t_uac_dlg</command>
+		parameters. For example, the <command>t_uac_dlg</command>
 		FIFO command for initiating a transaction allows 
 		to pass additional header fields and message body to
 		a newly created transaction. Each request is terminated by
 		an empty line. Whole requests must be sent by applications
 		atomically in a single batch to avoid mixing with
 		requests from other applications. Requests are sent to
-		pipe at which <application moreinfo="none">ser</application>
+		pipe at which <application>ser</application>
 		listens (filename configured by the <varname>fifo</varname> config
 		file option).
 	    </para>
 	    <para>
 		An easy way to use the FIFO interface is via the
-		<application moreinfo="none">serctl</application>
+		<application>serctl</application>
 		command-line tool. When called along with "fifo",
 		FIFO command name, and optional parameters, the tool
 		generates a FIFO request and prints request result.
 		The following example shows use of this tool with
-		the <command moreinfo="none">uptime</command> and
-		<command moreinfo="none">which</command> commands.
-		<command moreinfo="none">uptime</command> returns
-		server's running time, <command moreinfo="none">which</command>
+		the <command>uptime</command> and
+		<command>which</command> commands.
+		<command>uptime</command> returns
+		server's running time, <command>which</command>
 		returns list of available FIFO commands. Note that only
 		the built-in FIFO command set is displayed as no modules
 		were loaded in this example.
 		<example>
-		    <title>Use of <application moreinfo="none">serctl</application> 
+		    <title>Use of <application>serctl</application> 
 		    to Access FIFO Server</title>
-		    <programlisting format="linespecific">
+		    <programlisting>
 [jiri@cat test]$ serctl fifo uptime
 Now: Fri Dec  6 17:56:10 2002
 Up Since: Fri Dec  6 17:56:07 2002
@@ -407,11 +414,11 @@ uptime
 print
 		    </programlisting>
 		</example>
-		The request which the <application moreinfo="none">serctl</application>
+		The request which the <application>serctl</application>
 		command-line tool sent to FIFO server looked like this:
 		<example>
-		    <title><command moreinfo="none">uptime</command> FIFO Request</title>
-		    <programlisting format="linespecific">
+		    <title><command>uptime</command> FIFO Request</title>
+		    <programlisting>
 :uptime:ser_receiver_1114
 		    </programlisting>
 		</example>
@@ -427,7 +434,7 @@ print
 		requested.
 		<example>
 		    <title>FIFO Errors</title>
-		    <programlisting format="linespecific">
+		    <programlisting>
 [jiri@cat sip_router]$ serctl fifo foobar
 500 command 'foobar' not available
 		    </programlisting>
@@ -462,12 +469,12 @@ print
 		database and tm module exports FIFO commands for
 		management of SIP transactions. See the 
 		example in 
-		<filename moreinfo="none">examples/web_im/send_im.php</filename>
+		<filename>examples/web_im/send_im.php</filename>
 		for how to initiate a SIP transaction
 		(instant message)
 		from a PHP script via the FIFO server. This example
 		uses FIFO command 
-		<command moreinfo="none">t_uac_dlg</command>. The command
+		<command>t_uac_dlg</command>. The command
 		is followed by parameters: header fields and 
 		message body. The same FIFO command can be used from
 		other environments to send instant messages too. The
@@ -475,7 +482,7 @@ print
 		from a shell script.
 		<example>
 		    <title>Sending IM From Shell Script</title>
-		    <programlisting format="linespecific">
+		    <programlisting>
 #!/bin/sh
 #
 # call this script to send an instant message; script parameters
@@ -515,21 +522,21 @@ EOF
 		    register automatically using SIP. The user needs to set 
 		    forwarding manually through some convenient web interface.
 		    The web interface needs to have the ability to upload new user's
-		    contacts to <application moreinfo="none">ser</application>.
-		    This is what the <command moreinfo="none">ul_add</command> FIFO
+		    contacts to <application>ser</application>.
+		    This is what the <command>ul_add</command> FIFO
 		    command is good for. Parameterized by user's name, table name,
 		    expiration time and weight, it allows external applications to
 		    introduce new contacts to server's in-memory user location table.
 		</para>
 		<para>
-		    The example is borrowed from <application moreinfo="none">serweb</application>,
-		    <application moreinfo="none">ser</application>'s web 
+		    The example is borrowed from <application>serweb</application>,
+		    <application>ser</application>'s web 
 		    PHP-written interface.
 		    It consists of a short "stub" function which carries out
 		    all mechanics of FIFO communication and of forming the FIFO
 		    request.
 		</para>
-		<programlisting format="linespecific">
+		<programlisting>
 <![CDATA[
 
 /* construct and send a FIFO command; the command parameters $sip_address, 
@@ -595,9 +602,9 @@ function write2fifo($fifo_cmd, &$errors, &$status){
 	    </example>
 	    <para>
 		See
-		<xref linkend="fiforeference"> for a complete listing
+		<xref linkend="fiforeference"/> for a complete listing
 		of FIFO commands available with current 
-		<application moreinfo="none">ser</application>
+		<application>ser</application>
 		distribution.
 	    </para>
 	    <section>
@@ -631,7 +638,7 @@ function write2fifo($fifo_cmd, &$errors, &$status){
 		    The other design alternative is use of a B2BUA 
 		    <footnote>
 			<para>
-			    See <filename moreinfo="none">
+			    See <filename>
 				draft-ietf-sipping-3pcc-02.txt 
 			    </filename>  for more details.
 			</para>
@@ -678,29 +685,29 @@ function write2fifo($fifo_cmd, &$errors, &$status){
 		    <example>
 			<title>Call-Flow for Click-To-Dial Using REFER</title>
 
-			<programlisting format="linespecific">
+			<programlisting>
 
         CTD                  Caller               Callee
             #1 INVITE
-            ----------------->
+            -----------------&gt;
                              ...
                              caller answers
             #2 200
-            <-----------------
+            &lt;-----------------
             #3 ACK
-            ----------------->
+            -----------------&gt;
             #4 REFER
-            ----------------->
+            -----------------&gt;
             #5 202
-            <-----------------
+            &lt;-----------------
             #6 BYE
-            ----------------->
+            -----------------&gt;
             #7 200
-            <-----------------
+            &lt;-----------------
                                   #8 INVITE
-                                  ------------------>
+                                  ------------------&gt;
                                   #9 180 ringing
-                                  <------------------
+                                  &lt;------------------
 
 
 #1 click-to-dial (CTD) is started and the "wrapper call" is initiated
@@ -764,13 +771,13 @@ To: callee
 
 		    Source code of the example written in Bourne shell
 		    is available in source distrubtion, in 
-		    <filename moreinfo="none">examples/ctd.sh</filename>.
+		    <filename>examples/ctd.sh</filename>.
 		    A PHP implementation exists as well as a part of
 			<application>serweb</application>.
 		</para>
 		<example>
 		    <title>Running the CTD Example</title>
-		    <programlisting format="linespecific">
+		    <programlisting>
 [jiri@cat examples]$ ./ctd.sh 
 destination unspecified -- taking default value sip:23@192.168.2.16
 caller unspecified -- taking default value sip:113311@192.168.2.16
@@ -786,9 +793,9 @@ bye succeeded
 		    <title>Initiating a SIP Transaction from PHP via FIFO</title>
 
 
-		    <programlisting format="linespecific">
+		    <programlisting>
 			<textobject>
-			    <textdata fileref="../../examples/web_im/send_im.php" format="linespecific">
+			    <textdata fileref="../../examples/web_im/send_im.php">
 			</textobject>
 			    
 		    </programlisting>
@@ -798,5 +805,6 @@ bye succeeded
 -->
 
 	</section> <!-- FIFO server -->
-    </chapter>
-
+    </section>
+</section>
+	

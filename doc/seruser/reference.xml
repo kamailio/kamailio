@@ -1,5 +1,19 @@
-    <chapter>
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="reference" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
 	<title>Reference</title>
+
 	<section id="coreoptions">
 	    <title>Core Options</title>
 	    <para>Core options are located in beginning of configuration file and
@@ -24,7 +38,7 @@
 				there is no attendant process, no pid file is generated,
 				and server listens only at one address. Make sure you
 				are debugging the same interface at which 
-				<application moreinfo="none">ser</application> listens.
+				<application>ser</application> listens.
 				The easiest way to do so is to set the interface using
 				<varname>listen</varname> option explicitly.
 				</para>
@@ -34,7 +48,7 @@
 		<listitem>
 		    <para>
 			<varname>log_stderror</varname> - If set to yes, the server will print its debugging 
-			information to standard error output. If set to no, <command moreinfo="none">syslog</command> 
+			information to standard error output. If set to no, <command>syslog</command> 
 			will be used. Default is no (printing to syslog).
 		    </para>
 		</listitem>
@@ -50,7 +64,7 @@
 					<command>
 						ser -l foo  -l bar -p 5061 -l x -l y 
 					</command>
-					will listen on foo:5060, bar:5061 & x:5061 & y:5061
+					will listen on foo:5060, bar:5061 &amp; x:5061 &amp; y:5061
 
 				</para>
 			</note>
@@ -95,7 +109,7 @@
 			server multiple requests in parallel when request processing block (e.g., on DNS
 			lookup). Note that <application>ser</application> typically spawns additional
 			processes, such as timer process or FIFO server. If FIFO server is turned on,
-			you can watch running processes using the <application moreinfo="none">serctl</application>
+			you can watch running processes using the <application>serctl</application>
 			utility.
 
 
@@ -129,9 +143,9 @@
 		    <para>
 			<varname>fifo</varname> - FIFO special file pathname, for example "/tmp/ser_fifo". Default is
 			no filename -- no FIFO server is started then. We recommend to set it so that
-			accompanying applications such as <application moreinfo="none">serweb</application> or
-			<application moreinfo="none">serctl</application> can communicate with
-			<application moreinfo="none">ser</application>.
+			accompanying applications such as <application>serweb</application> or
+			<application>serctl</application> can communicate with
+			<application>ser</application>.
 		    </para>
 		</listitem>
 		<listitem>
@@ -168,7 +182,7 @@
 		    <para>
 			<varname>mhomed</varname> -- enable calculation of 
 			outbound interface; useful on multihomed servers,
-			ser <link linkend="mhomed"></link>.
+			see <xref linkend="mhomed"/>.
 		    </para>
 		</listitem>
 		<listitem>
@@ -226,7 +240,7 @@
 		    </para>
 		    <example>
 			<title>route</title>
-			<programlisting format="linespecific">
+			<programlisting>
 route[0] {
         # call routing block number 2
 	route(2);
@@ -246,20 +260,20 @@ route[2] {
 			can return to their processing later. To activate processing
 			of a <command>failure_route</command> block, call the TM action
 			<command>t_on_failure(route_number)</command> before calling
-			<command moreinfo="none">t_relay</command>. When a negative reply
-			comes back, the desired <command moreinfo="none">failure_route</command>
+			<command>t_relay</command>. When a negative reply
+			comes back, the desired <command>failure_route</command>
 			will be entered and processing of the original request may
 			continue. 
 			</para>
 		    <para>
 			The set of actions applicable from within
-			<command moreinfo="none">failure_route</command> blocks is limited.
+			<command>failure_route</command> blocks is limited.
 			Permitted actions are URI-manipulation actions, logging and
-			sending stateful replies using <command moreinfo="none">t_reply</command>.
+			sending stateful replies using <command>t_reply</command>.
 		    </para>
 		    <example>
 			<title>failure_route</title>
-			<programlisting format="linespecific">
+			<programlisting>
 failure_route[1] {
     # for some reason, the original forwarding attempt
     # failed, try at another URI
@@ -279,7 +293,7 @@ failure_route[1] {
 			route block otherwise.
 			<note>
 			    <para>
-				We recommend to use <command moreinfo="none">break</command>
+				We recommend to use <command>break</command>
 				after any request forwarding or replying. This practice
 				helps to avoid erroneous scripts that 
 				continue execution and mistakenly send another reply or
@@ -307,7 +321,7 @@ failure_route[1] {
 		    </para>
 		    <example>
 			<title>Use of <command>if</command></title>
-			<programlisting format="linespecific">
+			<programlisting>
 if (method=="REGISTER) {
     log("register received\n");
 };
@@ -320,7 +334,7 @@ if (method=="REGISTER) {
 		    </para>
 		    <example>
 			<title>Use of <command>if-else</command></title>
-			<programlisting format="linespecific">
+			<programlisting>
 if (method=="REGISTER) {
     log("register received\n");
 } else {
@@ -355,7 +369,7 @@ if (method=="REGISTER) {
 		    </para>
 		    <example>
 			<title>isflagset</title>
-			<programlisting format="linespecific">
+			<programlisting>
 if (isflagset(1)) {
     ....
 };
@@ -445,7 +459,7 @@ if (isflagset(1)) {
 		    <para>
 			<example>
 			    <title>Use of <command>append_branch</command></title>
-			    <programlisting format="linespecific">
+			    <programlisting>
 # redirect to these two destinations: a@foo.bar and b@foo.bar
 # 1) rewrite the current URI
 rewriteuri("sip:a@foo.bar");
@@ -496,9 +510,9 @@ sl_send_reply("300", "redirection");
 		    </para>
 		    <para>
 			Logging is very useful for troubleshooting or attracting administrator's
-			attention to unusual situations. <application moreinfo="none">ser</application>
-			reports log messages to <application moreinfo="none">syslog</application>
-			facility unless it is configured to print them to <filename moreinfo="none">stderr</filename>
+			attention to unusual situations. <application>ser</application>
+			reports log messages to <application>syslog</application>
+			facility unless it is configured to print them to <filename>stderr</filename>
 			with the <varname>log_stderr</varname> configuration option. Log messages
 			are only issued if their log level exceeds threshold set with the
 			<varname>debug</varname> configuration option. If log level is omitted,
@@ -522,7 +536,7 @@ sl_send_reply("300", "redirection");
 		    </para>
 		    <example>
 			<title>Use of <command>len_gt</command></title>
-			<programlisting format="linespecific">
+			<programlisting>
 # deny all requests larger in size than 1 kilobyte
 if (len_gt(1024)) {
     sl_send_reply("513", "Too big");
@@ -662,9 +676,9 @@ if (len_gt(1024)) {
 	    <title>Modules</title>
 	    <para>
 		Module description is currently located in READMEs of
-		respective module directories. <filename moreinfo="none">README-MODULES</filename>
+		respective module directories. <filename>README-MODULES</filename>
 		lists all available modules, including their maturity status.
-		In the current <application moreinfo="none">ser</application>
+		In the current <application>ser</application>
 		distribution, there are the following modules:
 		<itemizedlist>
 		    <listitem>
@@ -672,7 +686,7 @@ if (len_gt(1024)) {
 			    <emphasis>
 				acc
 			    </emphasis>
-			    -- call accounting using <application moreinfo="none">syslog</application> facility.
+			    -- call accounting using <application>syslog</application> facility.
 				RADIUS and mysql support can be compiled in.
 			    Depends on tm.
 			</para>
@@ -832,9 +846,9 @@ if (len_gt(1024)) {
 	    </para>
 	    <para>
 		The most frequently used actions exported by modules are summarized
-		in <xref linkend="moduleactions">. For a full explanation of 
+		in <xref linkend="moduleactions"/>. For a full explanation of 
 		module actions, see documentation in respective module directories
-		in source distribution of <application moreinfo="none">ser</application>.
+		in source distribution of <application>ser</application>.
 	    </para>
 	    <table id="moduleactions">
 		<title>Frequently Used Module Actions</title>
@@ -1186,13 +1200,13 @@ if (len_gt(1024)) {
 	    <title>FIFO Commands Reference</title>
 	    <para>
 		This section lists currently supported FIFO commands. Some of them are
-		built-in in <application moreinfo="none">ser</application> core, whereas
+		built-in in <application>ser</application> core, whereas
 		others are exported by modules. The most important exporters are now
 		tm and usrloc module. tm FIFO commands allow users to initiate transactions
 		without knowledge of underlying SIP stack. usrloc FIFO commands allow
 		users to access in-memory user-location database. Note that that is the
 		only way how to affect content of the data-base in real-time. Changes
-		to MySql database do not affect in-memory table unless <application moreinfo="none">ser</application>
+		to MySql database do not affect in-memory table unless <application>ser</application>
 		is restarted.
 	    </para>
 	    <table>
@@ -1227,13 +1241,14 @@ if (len_gt(1024)) {
 				none
 			    </entry>
 			    <entry>
-				prints running <application moreinfo="none">ser</application> processes
+				prints running <application>ser</application> processes
 			    </entry>
 			</row>
 			<row>
 			    <entry>which</entry>
 			    <entry>core</entry>
 			    <entry>none</entry>
+
 			    <entry>prints list of available FIFO commands</entry>
 			</row>
 			<row>
@@ -1241,26 +1256,26 @@ if (len_gt(1024)) {
 			    <entry>core</entry>
 			    <entry>none</entry>
 			    <entry>prints list of command-line arguments with which 
-				<application moreinfo="none">ser</application> was started</entry>
+				<application>ser</application> was started</entry>
 			</row>
 			<row>
 			    <entry>pwd</entry>
 			    <entry>core</entry>
 			    <entry>none</entry>
-			    <entry>prints <application moreinfo="none">ser</application>'s working
+			    <entry>prints <application>ser</application>'s working
 			    directory</entry>
 			</row>
 			<row>
 			    <entry>version</entry>
 			    <entry>core</entry>
 			    <entry>none</entry>
-			    <entry>prints version of <application moreinfo="none">ser</application></entry>
+			    <entry>prints version of <application>ser</application></entry>
 			</row>
 			<row>
 			    <entry>uptime</entry>
 			    <entry>core</entry>
 			    <entry>none</entry>
-			    <entry>prints <application moreinfo="none">ser</application>'s running time</entry>
+			    <entry>prints <application>ser</application>'s running time</entry>
 			</row>
 			<row>
 			    <entry>sl_stats</entry>
@@ -1345,7 +1360,7 @@ if (len_gt(1024)) {
 	<section>
 	    <title>Used Database Tables</title>
 	    <para>
-		<application moreinfo="none">ser</application> includes MySQL support
+		<application>ser</application> includes MySQL support
 		to guarantee data persistence across server reboots and storage
 		of users' web environment. The data stored in
 		the database include user profiles, access control lists, user location,
@@ -1363,32 +1378,32 @@ if (len_gt(1024)) {
 		    </listitem>
 		    <listitem>
 			<para>
-			    reserved -- reserved user names. <application moreinfo="none">serweb</application>
+			    reserved -- reserved user names. <application>serweb</application>
 			    does not permit creation of accounts with name on this list.
 			</para>
 		    </listitem>
 		    <listitem>
 			<para>
 			    phonebook -- user's personal phonebooks. Accessible via
-			    <application moreinfo="none">serweb</application>.
+			    <application>serweb</application>.
 			</para>
 		    </listitem>
 		    <listitem>
 			<para>
 			    pending -- table of unconfirmed subscription requests. Used by
-			    <application moreinfo="none">serweb</application>.
+			    <application>serweb</application>.
 			</para>
 		    </listitem>
 		    <listitem>
 			<para>
 			    missed_calls -- table of missed calls. Can be fed by acc modules
-			    if mysql support is turned on. Displayed by <application moreinfo="none">serweb</application>.
+			    if mysql support is turned on. Displayed by <application>serweb</application>.
 			</para>
 		    </listitem>
 		    <listitem>
 			<para>
 			    location -- user contacts. Typically updated through
-			    <application moreinfo="none">ser</application>'r registrar
+			    <application>ser</application>'r registrar
 			    functionality.
 			</para>
 		    </listitem>
@@ -1412,13 +1427,13 @@ if (len_gt(1024)) {
 		    <listitem>
 			<para>
 			    active_sessions -- keeps track of currently active web sessions.
-			    For use by <application moreinfo="none">serweb</application>.
+			    For use by <application>serweb</application>.
 			</para>
 		    </listitem>
 		    <listitem>
 			<para>
 			    acc -- keeps track of accounted calls.  Can be fed by acc module
-			    if mysql support is turned on. Displayed by <application moreinfo="none">serweb</application>.
+			    if mysql support is turned on. Displayed by <application>serweb</application>.
 			</para>
 		    </listitem>
 		    <listitem>
@@ -1466,4 +1481,4 @@ if (len_gt(1024)) {
 		
 	    </para>
 	</section>
-    </chapter> <!-- reference -->
+</section>

@@ -1,18 +1,29 @@
-    <chapter id="complementaryapps">
-	<title>Complementary Applications</title>
-	<section id="serctl">
-	    <title><application>serctl</application> command-line tool</title>
-	    <para>
-		<application>serctl</application> is a command-line utility which allows to
-		perform most of management tasks needed to operate
-		<application moreinfo="none">ser</application>: adding users, changing their passwords,
-		watching server status, etc. Usage of utility is
-		as follows:
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
 
-		<example>
-		    <title><application>serctl</application> usage</title>
-		    <programlisting format="linespecific">
-
+<section id="otherapps" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Complementary Applications</title>
+    <section id="serctl">
+	<title><application>serctl</application> command-line tool</title>
+	<para>
+	    <application>serctl</application> is a command-line utility which allows to
+	    perform most of management tasks needed to operate
+	    <application>ser</application>: adding users, changing their passwords,
+	    watching server status, etc. Usage of utility is
+	    as follows:
+	    <example>
+		<title><application>serctl</application> usage</title>
+		<programlisting>
 usage: 
            * subscribers *
  serctl add &lt;username&gt; &lt;password&gt; &lt;email&gt; .. add a new subscriber (*)
@@ -41,13 +52,12 @@ usage:
 
    Commands labeled with (*) will prompt for a MySQL password.
    If the variable PW is set, the password will not be prompted.
-
- </programlisting>
-		</example>
-	    </para>
-	    <note>
-		<para>
-
+		</programlisting>
+	    </example>
+	</para>
+	<note>
+	    <para>
+		
 		Prior to using the utility, you have to first 
 		set the environment variable <constant>SIP_DOMAIN</constant>
 		to locally appropriate value (e.g., "foo.com"). It is
@@ -59,10 +69,9 @@ usage:
 
 	    <example>
 		<title>Example Output of Server Watching Command 
-		    <command moreinfo="none">sc monitor</command>
+		    <command>sc monitor</command>
 		</title>
-		<programlisting format="linespecific">
-
+		<programlisting>
 [cycle #: 2; if constant make sure server lives and fifo is on]
 Server: Sip EXpress router(0.8.8 (i386/linux))
 Now: Thu Sep 26 23:16:48 2002
@@ -86,7 +95,6 @@ UsrLoc Stats
 Domain Registered Expired
 'aliases' 9 0
 'location' 29 17
-
 		</programlisting>
 
 	    </example>
@@ -96,11 +104,11 @@ Domain Registered Expired
 	    <title>Web User Provisioning -- <application>serweb</application></title>
 	    <para>
 		To make provisioning of user accounts convenient, 
-		a web front-end to <application moreinfo="none">ser</application>,
-		<application moreinfo="none">serweb</application> has been
-		developed. <application moreinfo="none">serweb</application>,
+		a web front-end to <application>ser</application>,
+		<application>serweb</application> has been
+		developed. <application>serweb</application>,
 		a PHP-written web application,
-		allows users to apply for new <application moreinfo="none">ser</application>
+		allows users to apply for new <application>ser</application>
 		accounts, and maintain these.
 		Users can manipulate their contacts, keep a phone-book
 		with SIP addresses, change password, send instant SIP messages,
@@ -108,26 +116,19 @@ Domain Registered Expired
 		grant or revoke user privileges.
 	    </para>
 	    <para>
-		<application moreinfo="none">serweb</application> is freely
+		<application>serweb</application> is freely
 		available from berlios site at
 		<ulink url="http://developer.berlios.de/cvs/?group_id=500">
 		http://developer.berlios.de/cvs/?group_id=500</ulink>. Installation
 		takes unpacking tarball to a safe destination at web server
 		(better not in the HTML tree) and configuring 
-		<filename moreinfo="none">config.php</filename> accordingly
+		<filename>config.php</filename> accordingly
 		to local conditions.
 	    </para>
 	    <para>
-		Running <application moreinfo="none">serweb</application> can
+		Running <application>serweb</application> can
 		be seen at iptel.org's SIP site. Just create and use a SIP
 		account at <ulink url="http://www.iptel.org/user/">http://www.iptel.org/user/</ulink>
 	    </para>
-	</section> <!-- serweb -->
-
-
-    <section>
-	<title>Voicemail</title>
-&voicemail;
-    </section> <!-- voicemail -->
-
-    </chapter> <!-- other apps -->
+    </section> <!-- serweb -->
+</section>

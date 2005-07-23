@@ -1,0 +1,631 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="ser_radius" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<email>jan@iptel.org</email>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>SER RADIUS Howto</title>
+
+    <section id="introduction">
+	<title>Introduction</title>
+	<simpara>
+	    SER can be configured to use RADIUS server for authentication,
+	    accounting, and group membership checking. Since configuration of
+	    RADIUS seems to be a common source of problems, we decided to put
+	    together this HOWTO.
+	</simpara>
+	<simpara>
+	    The HOWTO covers installation and configuration of FreeRADIUS
+	    server only. There are also other RADIUS servers available and as
+	    long as they support digest authentication, they should work
+	    too. Any volunteers willing to describe setup of other RADIUS
+	    servers are encouraged to contact the author.
+	</simpara>
+	
+	<section id="prerequisities">
+	    <title>Prerequisites</title>
+	    <simpara>
+		To setup RADIUS support in SER you will need the following:
+	    </simpara>
+	    <itemizedlist>
+		<listitem>
+		    <simpara>
+			FreeRADIUS server, you can get it from <ulink
+			    url="http://www.freeradius.org">FreeRADIUS
+			    website</ulink>. The HOWTO describes installation
+			and setup of release 0.9.1.
+		    </simpara>
+		</listitem>
+		<listitem>
+		    <simpara>
+			Radiusclient library. In version 0.8.14 we started to
+			use the new version of radiusclient library developed
+			by Maxim Sobolev called radiusclient-ng. The homepage
+			of the library is <ulink
+			url="http://developer.berlios.de/projects/radiusclient-ng/">http://developer.berlios.de/projects/radiusclient-ng/</ulink>
+		    </simpara>
+		</listitem>
+		<listitem>
+		    <simpara>
+			SER, get it from <ulink url="http://iptel.org/ser">http://iptel.org/ser</ulink>
+		    </simpara>
+		</listitem>
+		<listitem>
+		    <simpara>
+			You should also have some experience in configuring
+			SER. Before you enable RADIUS authentication or
+			accounting make sure that the basic server is running
+			and that you know how to customize it to your taste.
+		    </simpara>
+		</listitem>
+		<listitem>
+		    <simpara>
+			If you want to use RADIUS accounting then you will have
+			to compile SER from sources so you should know how to
+			do it.
+		    </simpara>
+		</listitem>
+	    </itemizedlist>
+	    <simpara>
+		Various unix/linux distributions might include binary packages
+		of the mentioned applications. In that case you can safely use
+		the packages, there shouldn't be any problem. Location of some
+		files may be different, though. We will describe how to install
+		the software from sources only.
+	    </simpara>
+	    <warning>
+		<simpara>
+		    Configuration of FreeRADIUS server described in the
+		    document is in no way exhaustive. This document is a sort
+		    of quick-start-guide, it shows how to get things running,
+		    but you should definitely read FreeRADIUS documentation and
+		    configure the server properly ! You have been warned.
+		</simpara>
+	    </warning>
+	</section>
+    </section>
+
+    <section id="radiusclient">
+	<title>Radiusclient Library</title>
+	<simpara>
+	    Untar the source tarball.
+	</simpara>
+	<screen>
+root@localhost:/usr/local/src# tar xvfz radiusclient-0.4.3.tar.gz
+	</screen>
+	<simpara>
+	    Compile and install the library.
+	</simpara>
+	<screen>
+root@localhost:/usr/local/src# cd radiusclient-0.3.2
+root@localhost:/usr/local/src/radiusclient-0.3.2# ./configure
+root@localhost:/usr/local/src/radiusclient-0.3.2# make
+root@localhost:/usr/local/src/radiusclient-0.3.2# make install
+	</screen>
+	<simpara>
+	    By default all the configuration files of the radiusclient library
+	    will be in <filename>/usr/local/etc/radiusclient</filename>
+	    directory.
+	</simpara>
+	<simpara>
+	    If you use binary packages then the configuration files will be
+	    probably in <filename>/etc/radiusclient</filename>.
+	</simpara>
+	<section>
+	    <title>File <filename>radiusclient.conf</filename></title>
+	    <simpara>
+		The main configuration file of the library is
+		<filename>/usr/local/etc/radiusclient/radiusclient.conf</filename>,
+		open the file in your favorite text editor and find lines
+		containing the following:
+	    </simpara>
+	    <programlisting>
+authserver      localhost
+	    </programlisting>
+	    <simpara>
+		This is the hostname or IP address of the RADIUS server used
+		for authentication. You will have to change this unless the
+		server is running on the same host as your SIP proxy.
+	    </simpara>
+	    <programlisting>
+acctserver      localhost
+	    </programlisting>
+	    <simpara>
+		This is the hostname or IP address of the RADIUS server used
+		for accounting. You will have to change this unless the server
+		is running on the same host as your SIP proxy.
+	    </simpara>
+	</section>
+
+	<section id="servers">
+	    <title>File <filename>servers</filename></title>
+	    <simpara>
+		RADIUS protocol uses simple access control mechanism based on
+		shared secrets that allows RADIUS servers to limit access from
+		RADIUS clients. A RADIUS server is configured with a secret
+		string and only RADIUS clients that have the same secret will
+		be accepted.
+	    </simpara>
+	    <simpara>
+		You need to configure a shared secret for each server you have
+		configured in <filename>radiusclient.conf</filename> file in
+		the previous step. The shared secrets are stored in
+		<filename>/usr/local/etc/radiusclient/servers</filename> file.
+	    </simpara>
+	    <simpara>
+		Each line contains hostname of a RADIUS server and shared
+		secret used in communication with that server. The two values
+		are separated by whitespaces. Configure shared secrets for
+		every RADIUS server you are going to use.
+	    </simpara>
+	    <warning>
+		<simpara>
+		    RADIUS servers and clients must be configured with the same
+		    shared secret, otherwise they will not accept RADIUS
+		    messages from each other and neither authentication nor
+		    accounting will work !
+		</simpara>
+	    </warning>
+	</section>
+
+	<section id="dictionary_client">
+	    <title>File <filename>dictionary</filename></title>
+	    <simpara>
+		Radiusclient library contains file called
+		<filename>dictionary.ser</filename>. That file includes all the
+		attributes that are needed by SER. Include the file in the
+		main <filename>dictionary</filename> file. To
+		include the file, put the following line at the end of
+		<filename>dictionary</filename> file:
+	    </simpara>
+	    <screen>
+$INCLUDE /usr/local/etc/radiuclient/dictionary.ser
+	    </screen>
+	</section>
+    </section>
+    
+    <section id="freeradius">
+	<title>FreeRADIUS Server</title>
+	<simpara>
+	    Untar, configure, build, and install the server:
+	</simpara>
+	<screen>
+root@localhost:/usr/local/src# tar xvfz freeradius-0.9.1.tar.gz
+root@localhost:/usr/local/src# cd freeradius-0.9.1
+root@localhost"/usr/local/src/freeradius-0.9.1# ./configure
+root@localhost"/usr/local/src/freeradius-0.9.1# make
+root@localhost"/usr/local/src/freeradius-0.9.1# make install
+	</screen>
+	<simpara>
+	    All the configuration files of FreeRADIUS server will be in
+	    <filename>/usr/local/etc/raddb</filename> directory. If you install
+	    a binary package then you will probably find them in
+	    <filename>/etc/raddb</filename>.
+	</simpara>
+	<simpara>
+	    The following sections describe how to configure freeradius
+	    server. First we describe the common configuration that must be
+	    done in any case. Configuration specific for authentication,
+	    accounting, and group membership checking will be described in
+	    separate sections.
+	</simpara>
+	
+	<section id="common_configuration">
+	    <title>Common configuration</title>
+	    <section>
+		<title>File <filename>clients.conf</filename></title>
+		<simpara>
+		    File <filename>/usr/local/etc/raddb/clients.conf</filename>
+		    contains description of RADIUS clients that are allowed to
+		    use the server. For each of the clients you need to specify
+		    it's hostname or IP address and also a shared secret. The
+		    shared secret must be the same string you configured in
+		    radiusclient library.
+		</simpara>
+		<simpara>
+		    Suppose that your SIP server is running on host
+		    proxy.foo.bar and radiusclient library on that machine has
+		    been configure with "foobarsecret" as the shared
+		    secret. You need to put the following section into the
+		    file:
+		</simpara>
+		<programlisting>
+client proxy.foo.bar {
+    secret = foobarsecret
+    shortname = foo
+}
+		</programlisting>
+		<simpara>
+		    This fragment allows access from RADIUS clients on
+		    proxy.foo.bar if they use "foobarsecret" as the shared
+		    secret.
+		</simpara>
+		<note>
+		    <simpara>
+			The file already contains an entry for localhost (127.0.0.1), so if you are
+			running the RADIUS server on the same host as your SIP server, then modify
+			the existing entry instead. By default it contains shared secret
+			"testing123".
+		    </simpara>
+		</note>
+	    </section>
+	    
+	    <section id="dictionary_server">
+		<title>File <filename>dictionary</filename></title>
+		<simpara>
+		    File <filename>/usr/local/etc/raddb/dictionary</filename>
+		    contains the dictionary of FreeRADIUS server. You have to
+		    add the same dictionary file
+		    (<filename>dictionary.ser</filename>), which you added to
+		    the dictionary of radiusclient library, also here. In this
+		    case you don't have to append the contents of the file, you
+		    can include it into the main file.  Add the following line
+		    at the end of
+		    <filename>/usr/local/etc/raddb/dictionary</filename>:
+		</simpara>
+		<programlisting>
+$INCLUDE /usr/local/etc/radiusclient/dictionary.ser
+		</programlisting>
+		<simpara>
+		    That will include the same attribute definitions that are
+		    used in radiusclient library so the client and server will
+		    understand each other.
+		</simpara>
+	    </section>
+	    
+	    <section id="radiusd.conf">
+		<title>File <filename>radiusd.conf</filename></title>
+		<simpara>
+		    Digest authentication is disabled by default and you must
+		    enable it in this file. There are two sections, "authorize"
+		    and "authenticate". Both sections contain line containing
+		    word "digest". Both of them are commented and you must
+		    un-comment them to enable digest authentication.
+		</simpara>
+		<note>
+		    <simpara>
+			There is also another line containing word "digest"
+			followed by curly braces and it is enabled by
+			default. The section is supposed to contain digest
+			module parameters but because digest module has no
+			parameters, it is empty. This is not the line you are
+			supposed to uncomment ! There are two more.
+		    </simpara>
+		</note>
+	    </section>
+	    
+	    <section id="users">
+		<title>File <filename>users</filename></title>
+		<simpara>
+		    This file contains authentication information for each
+		    user. For testing purposes we will create user "test". Put
+		    the following into the file:
+		</simpara>
+		    <programlisting>
+test Auth-Type := Digest, User-Password == "test"
+     Reply-Message = "Hello, test with digest"
+		</programlisting>
+		
+		<simpara>
+		    The username and password is for testing only, you can
+		    safely remove the entry once your RADIUS server works and
+		    you are able to authenticate.
+		</simpara>
+	    </section>
+	</section>
+	
+	<section id="test">
+	    <title>Test The Server</title>
+	    <note>
+		<simpara>
+		    This step is optional.
+		</simpara>
+	    </note>
+	    <simpara>
+		The basic configuration of FreeRADIUS server is done it now we
+		are going to test if it really works. Start the server with
+		parameter -X. That will cause the server to stay in the
+		foreground (it will not turn into daemon) and produce a lot of
+		debugging information on the standard output:
+	    </simpara>
+	    <screen>
+root@/usr/local/src# radiusd -X
+	    </screen>
+	    <simpara>
+		Create file <filename>digest</filename> and put the following
+		into the file:
+	    </simpara>
+	    <programlisting>
+User-Name = "test", Digest-Response = "631d6d73147add2f9e437f59bbc3aeb7", 
+Digest-Realm = "testrealm", Digest-Nonce = "1234abcd" , 
+Digest-Method = "INVITE", Digest-URI = "sip:5555551212@example.com", 
+Digest-Algorithm = "MD5", Digest-User-Name = "test"
+	    </programlisting>
+	    <simpara>
+		All the attributes must be on a single line.
+	    </simpara>
+	    <simpara>
+		Run <command>radclient</command> to test the server:
+	    </simpara>
+	    <screen>
+root@/usr/local/src# radclient -f digest localhost auth &lt;shared_secret&gt;
+</screen>
+	    <note>
+		<simpara>
+		    I suppose that you run the test utility directly on the
+		    RADIUS server since it comes with the FreeRADIUS server
+		    package. That also means that you have to enable access
+		    from localhost in your <filename>clients.conf</filename>
+		    file. Don't forget to replace &lt;shared_secret&gt; with
+		    the shared secret configured for locahost clients in
+		    <filename>clients.conf</filename>.
+		</simpara>
+	    </note>
+	    <simpara>
+		If your server works properly then you should see the following response:
+	    </simpara>
+	    <screen>
+Received response ID 224, code 2, length = 45
+        Reply-Message = "Hello, test with digest"
+	    </screen>
+	</section>
+	
+	<section id="auth_configuration">
+	    <title>Authentication Configuration</title>
+	    <simpara>
+		To create user "joe" in domain "iptel.org" with password
+		"heslo" put the following into file
+		<filename>/usr/local/etc/raddb/users</filename>:
+	    </simpara>
+	    <programlisting>
+joe@iptel.org Auth-Type := Digest, User-Password == "heslo"
+     Reply-Message = "Authenticated",
+     Sip-Rpid = "1234"
+	    </programlisting>
+	    <simpara>
+		Attribute "Sip-Rpid" is optional. The attribute
+		contains a phone number associated to the user. SER can be
+		configured to put the phone number into Remote-Party-ID header
+		field of the SIP message. The header field can be then used
+		by PSTN gateways to display the number as the number of the
+		caller on regular phones. You can omit the attribute if you
+		don't need it.
+	    </simpara>
+	</section>
+	
+	<section id="accounting_configuration_server"> 
+	    <title>Accounting Configuration</title>
+	    <simpara>
+		By default FreeRADIUS server will log all accounting requests
+		into <filename>/usr/local/var/log/radius/radacct</filename>
+		directory in form of plain text files. The server will
+		create one file for each hostname in the directory. The
+		following example shows how the log files look like.
+	    </simpara>
+	    <example>
+		<title>Example of Accounting Report</title>
+		<programlisting>
+Tue Jun 24 00:20:55 2003
+        Acct-Status-Type = Start
+        Service-Type = 15
+        Sip-Response-Code = 200
+        Sip-Method = 1
+        User-Name = "gh@192.168.2.16"
+        Calling-Station-Id = "sip:gh@192.168.2.16"
+        Called-Station-Id = "sip:jiri@192.168.2.16"
+        Sip-Translated-Request-URI = "sip:jiri@192.168.2.36"
+        Acct-Session-Id = "b9a2ffaa-0458-42e1-b5fd-59656b795d29@192.168.2.32"
+        Sip-To-Tag = "cb2cfe2e-3659-28c7-a8cc-ab0b8cbd3012"
+        Sip-From-Tag = "a783bd2f-bb8d-46fd-84a9-00a9833f189e"
+        Sip-CSeq = "1"
+        NAS-IP-Address = 192.168.2.16
+        NAS-Port = 5060
+        Acct-Delay-Time = 0
+        Client-IP-Address = 127.0.0.1
+        Acct-Unique-Session-Id = "9b323e6b2f5b0f33"
+        Timestamp = 1056406855
+
+Tue Jun 24 00:20:56 2003
+        Acct-Status-Type = Stop
+        Service-Type = 15
+        Sip-Response-Code = 200
+        Sip-Method = 8
+        User-Name = "jiri@192.168.2.16"
+        Calling-Station-Id = "sip:jiri@192.168.2.16"
+        Called-Station-Id = "sip:gh@192.168.2.16"
+        Sip-Translated-Request-URI = "sip:192.168.2.32:9576"
+        Acct-Session-Id = "b9a2ffaa-0458-42e1-b5fd-59656b795d29@192.168.2.32"
+        Sip-To-Tag = "a783bd2f-bb8d-46fd-84a9-00a9833f189e"
+        Sip-From-Tag = "cb2cfe2e-3659-28c7-a8cc-ab0b8cbd3012"
+        Sip-CSeq = "4580"
+        NAS-IP-Address = 192.168.2.16
+        NAS-Port = 5060
+        Acct-Delay-Time = 0
+        Client-IP-Address = 127.0.0.1
+        Acct-Unique-Session-Id = "b2c2479a07b17c95"
+        Timestamp = 1056406856
+		</programlisting>
+	    </example>
+	</section>
+	
+	<section id="group_checking">
+	    <title>Group Checking Configuration</title>
+	    <simpara>
+		If you want to make user "joe" in domain "iptel.org" member of
+		group "pstn" then add the following to your
+		<filename>/usr/local/etc/raddb/users</filename> file:
+	    </simpara>
+	    <programlisting>
+joe@iptel.org Sip-Group == "pstn", Auth-Type := Accept
+        Reply-Message = "Authorized"
+	    </programlisting>
+	</section>
+    </section>
+    
+    <section id="ser_config">
+	<title>SER Configuration</title>
+	<simpara>
+	    We will describe installation from sources here. If you use binary
+	    packages then there is an additional package containing RADIUS
+	    related modules. You will need to install the package.
+	</simpara>
+	<warning>
+	    <simpara>
+		Due to a mistake the binary packages for RADIUS do not include
+		RADIUS-enabled version of acc (accounting) module. The packages
+		contain modules for RADIUS authentication and group membership
+		checking only.
+	    </simpara>
+	    <simpara>
+		If you need accounting over RADIUS then you will have to
+		compile RADIUS-enabled version of acc module from the
+		sources. This will be fixed in one of future releases, we
+		apologize for any inconvenience.
+	    </simpara>
+	</warning>
+	<simpara>
+	    RADIUS-related modules are not compiled by default. To compile
+	    them, edit <filename>Makefile</filename>, find variable
+	    <varname>exclude_modules</varname> and you should see
+	    "auth_radius", "group_radius", and "uri_radius" among excluded
+	    modules. Simply remove the three modules from the list.
+	</simpara>
+	<simpara>
+	    If you need RADIUS accounting then edit also sip_router/modules/acc/Makefile and
+	    uncomment lines containing:
+	</simpara>
+	    <programlisting>
+DEFS+=-DRAD_ACC
+LIBS=-L$(LOCALBASE)/lib -lradiusclient
+	</programlisting>
+	<simpara>
+	    Then recompile and re-install SER:
+	</simpara>
+	<screen>
+root@localhost:/usr/local/src/sip_router# make proper
+root@localhost:/usr/local/src/sip_router# make all
+root@localhost:/usr/local/src/sip_router# make install
+	</screen>
+
+	<section id="auth_configuration_client">
+	    <title>Authentication Configuration</title>
+	    <simpara>
+		Edit configuration file of SER and instead of
+		<filename>auth_db.so</filename> load
+		<filename>auth_radius.so</filename> and also replace
+		<function>www_authorize</function> with
+		<function>radius_www_authorize</function>.
+	    </simpara>
+	    <note>
+		<simpara>
+		    <function>radius_www_authorize</function> takes just one
+		    parameter (as opposed to <function>www_authorize</function>
+		    which takes 2).
+		</simpara>
+	    </note>
+	</section>
+
+	<section id="acc_configuration">
+	    <title>Accounting Configuration</title>
+	    <simpara>
+		To enable RADIUS accounting simply use
+		<varname>radius_log_flag</varname> and
+		<varname>radius_log_missed_flag</varname> parameters instead of
+		<varname>log_flag</varname> and
+		<varname>log_missed_flag</varname>. Mark transactions that
+		should be logged with flags configured in the parameters.
+	    </simpara>
+	</section>
+
+	<section id="group_membership_checking">
+	    <title>Group Membership Checking</title>
+	    <simpara>
+		Instead of <filename>group.so</filename> load
+		<filename>group_radius.so</filename>. The module exports the
+		same functions as <filename>group.so</filename>, the only
+		difference is that all the function names exported by
+		<filename>group_radius.so</filename> have "radius_" prefix.
+	    </simpara>
+	</section>
+    </section>
+	
+    <section id="faq">
+	<title>Frequently Asked Questions</title>
+	<qandaset>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I compiled SER RADIUS modules and installed
+			radiusclient library, but when I try to start ser I get
+			the following error message:
+		    </simpara>
+		    <programlisting>
+libradiusclient.so.0: cannot open shared object file: No such file or directory
+		    </programlisting>
+		</question>
+		<answer>
+		    <simpara>
+			Make sure that the directory which contains the library
+			(usually <filename>/usr/local/lib</filename>) is listed
+			in <filename>/etc/ld.so.conf</filename> and run
+			<command>ldconfig -v</command> (as root).
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I configured everything as described in this HOWTO, but
+			I get the following message from radiusclient library
+			"check_radius_reply: received invalid reply digest from
+			RADIUS server". What does that mean ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			That means that radiusclient library was unable to
+			verify digest of the RADIUS message (it is not related
+			to SIP digest) because shared secret of the client
+			and server do not match.
+		    </simpara>
+		    <note>
+			<simpara>
+			    FreeRADIUS server has two files that can contain
+			    definitions of clients and corresponding shared
+			    secrets--<filename>clients</filename> and
+			    <filename>clients.conf</filename>.
+			</simpara>
+			<simpara>
+			    If you have proper shared secret in one file and you still get the
+			    mentioned error message then check also the other file. This can easily
+			    happen to clients running on the same host (127.0.0.1 or localhost),
+			    because <filename>clients.conf</filename> contains
+			    definition for localhost by default with secret "testing123".
+			</simpara>
+		    </note>
+		</answer>
+	    </qandaentry>
+	</qandaset>
+    </section>
+    
+</section>
+

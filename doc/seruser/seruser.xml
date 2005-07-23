@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="seruser" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<!-- <email>jiri@iptel.org</email>  -->
+	    </author>
+	    <author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<!-- <email>jan@iptel.org</email> -->
+	    </author>
+	    <author>
+		<firstname>Yacine</firstname>
+		<surname>Rebahi</surname>
+		<!-- <email>rebahi@fokus.fhg.de</email> -->
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2001</year>
+	    <year>2002</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+	<abstract>
+	    <para>
+		The document describes the <acronym>SIP</acronym> Express Router and its use in
+		<acronym>SIP</acronym> networks. It is intended as an aid to server 
+		administrators. 
+	    </para>
+	</abstract>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>SER Administrator's Guide</title>
+
+    <xi:include href="general.xml"/>
+    <xi:include href="intro.xml"/>
+    <xi:include href="operation.xml"/>
+    <xi:include href="apps.xml"/>
+    <xi:include href="otherapps.xml"/>
+    <xi:include href="reference.xml"/>
+    <xi:include href="db_fifo.xml"/>
+</section>
+	
