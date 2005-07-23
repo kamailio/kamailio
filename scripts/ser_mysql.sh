@@ -20,6 +20,7 @@
 #             tables to domain (janakj)
 # 2003-04-14  reinstall introduced (jiri)
 # 2004-07-05  new definition of table silo (dcm)
+# 2004-07-23  added uri_scheme and transport cols to table gw (jih)
 
 
 #################################################################
@@ -258,7 +259,7 @@ INSERT INTO version VALUES ( 'usr_preferences_types', '1');
 INSERT INTO version VALUES ( 'admin_privileges', '1');
 INSERT INTO version VALUES ( 'calls_forwarding', '1');
 INSERT INTO version VALUES ( 'speed_dial', '2');
-INSERT INTO version VALUES ( 'gw', '1');
+INSERT INTO version VALUES ( 'gw', '2');
 INSERT INTO version VALUES ( 'gw_grp', '1');
 INSERT INTO version VALUES ( 'lcr', '1');
 
@@ -697,6 +698,8 @@ CREATE TABLE gw (
   gw_name VARCHAR(128) NOT NULL,
   ip_addr INT UNSIGNED NOT NULL,
   port SMALLINT UNSIGNED,
+  uri_scheme TINYINT UNSIGNED,
+  transport TINYINT UNSIGNED,
   grp_id INT UNSIGNED NOT NULL,
   PRIMARY KEY (gw_name),
   KEY (grp_id)
