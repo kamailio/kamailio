@@ -1,0 +1,138 @@
+body {
+	font-size: 12px;
+	background-color: #fff;
+        color: #036;
+        font-family: serif;
+        font-weight: normal;
+	margin-top: 2%;
+	margin-left: 5%;
+	margin-right: 5%;
+	margin-botton: 2%;
+}
+
+h2 {
+	text-align: center;
+}
+
+/* 1em lines are hard to read, let's
+ * use taller lines
+ */
+p {
+	line-height: 1.3em;
+	text-align: justify;
+}
+
+pre.programlisting {
+	background-color: #D0D0D0;
+	color: #000000;
+	align: center;
+}
+
+
+/*
+* Emphasized text at the beginning of paragraphs
+* gets larger font
+*/
+p > span.emphasis:first-child {
+	font-size: larger;
+}
+
+
+/*
+ * Emphasised text withing pre-formatted sections
+ * will be bold
+ */
+pre em {
+	font-weight: bold;
+	font-style: normal;
+}
+
+div.abstract {
+	width: 70%
+	font-style: italic;
+	padding-left: 15%;
+	padding-right: 15%;
+}
+
+
+div.toc {
+	text-align: right;
+}
+
+div.toc p {
+	text-align: right;
+}
+
+
+/* ---------------- Links ---------------- */
+
+/*
+ * :link and :visited are mutualy exclusive,
+ * settings that should apply to both must be
+ * present in both of them.
+ *
+ * Links are not underlined unless they are active
+ * or cursor is over them.
+ *
+ * These are general settings, they apply unless there
+ * is no other more specific setting.
+ */
+
+a:link {
+	text-decoration: none; 	/* Links are not underlined */
+	color: #0073c7;
+	background-color: inherit;
+}
+
+a:visited {
+	text-decoration: none; /* Visited links are not underlined */
+	color: #5A88B5;
+	background-color: inherit;
+}
+
+a:link:hover,
+a:visited:hover,
+a:link:active,
+a:visited:active {
+	text-decoration: underline;
+}
+
+/* ---------------- Headings ---------------- */
+
+/* 
+ * Sessings that apply to all headings 
+ */
+
+/*
+h1, h2, h3, h4, h5, h6 {
+	background-color: inherit;
+        color: #000000; 
+	text-decoration: none;
+	font-weight: bold;
+}
+
+h1 {
+        padding: 0.2em;
+        margin: 0.7em 0 0 0;
+ 	font-size: 22px;
+}
+
+h2 {
+        padding: 0.2em 0 0.2em 0.7em;
+        margin: 0 0 0.5em 0;
+	font-size: 18px;
+}
+
+h3 {
+	font-size: 16px;
+        margin: 1.3em 0 0.4em 0;
+        padding: 0;
+}
+
+h4 {
+	font-size: 14px;
+        margin: 1.3em 0 0.2em 0;
+        padding: 0;
+}
+
+*/
