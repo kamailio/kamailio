@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="group_radius" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<affiliation><orgname>Song Networks</orgname></affiliation>
+		<address>
+		    <email>jh@tutpro.com</email>
+		</address>
+	    </author>
+	    <author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+		<address>
+		    <email>jan@iptel.org</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Group_radius Module</title>
+
+    <section id="overview">
+	<title>Overview</title>
+	<para>
+	    This module export functions necessary for group membership
+	    checking over radius. There is a database table that contains list
+	    of users and groups they belong to. The table is used by functions
+	    of this module.
+	</para>
+    </section>
+
+    <section id="dependencies">
+	<title>Dependencies</title>
+	<para>
+	    The following libraries or applications must be installed before
+	    running SER with this module loaded:
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			radiusclient library.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+    </section>
+
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+
+</section>

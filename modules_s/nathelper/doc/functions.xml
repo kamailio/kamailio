@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="nathelper.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="fix_nated_contact">
+	<title>
+	    <function>fix_nated_contact()</function>
+	</title>
+	<para>
+	    Rewrites Contact <acronym>HF</acronym> to contain request's source address:port.
+	</para>
+	<example>
+	    <title><function>fix_nated_contact</function> usage</title>
+	    <programlisting>
+...
+if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="fix_nated_sdp">
+	<title>
+	    <function>fix_nated_sdp(mode)</function>
+	</title>
+	<para>
+	    Rewrites Contact <acronym>HF</acronym> to contain request's source address:port.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <emphasis>mode</emphasis> - 0x01 (add direction=active),
+		    0x02 (rewrite media IP address with source address of the
+		    message).
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>fix_nated_sdp</function> usage</title>
+	    <programlisting>
+...
+if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="force_rtp_proxy0">
+	<title>
+	    <function>force_rtp_proxy()</function>
+	</title>
+	<para>
+	    Rewrites SDP body to ensure that media is passed through an RTP proxy.
+	</para>
+	<example>
+	    <title><function>force_rtp_proxy</function> usage</title>
+	    <programlisting>
+...
+if (search("User-Agent: Cisco ATA.*") 
+{
+    force_rtp_proxy();
+};
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="add_rcv_param">
+	<title>
+	    <function>add_rcv_param()</function>
+	</title>
+	<para>
+	    Add received parameter to Contact header fields. The parameter will
+	    contain URI created from the source IP, port, and protocol of the
+	    packet containing the SIP message. The parameter can be then
+	    processed by another registrar, this is useful, for example, when
+	    replicating register messages using t_replicate function to another
+	    registrar.
+	</para>
+	<example>
+	    <title><function>add_rcv_paramer</function> usage</title>
+	    <programlisting>
+...
+add_rcv_param();
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="fix_nated_register">
+	<title>
+	    <function>fix_nated_register()</function>
+	</title>
+	<para>
+	    The function creates a URI consisting of the source IP, port, and
+	    protocol and stores the URI in an Attribute-Value-Pair. The URI
+	    will be appended as "received" parameter to Contact in 200 OK and
+	    registrar will store it in the user location database.
+	</para>
+	<example>
+	    <title><function>fix_nated_register</function> usage</title>
+	    <programlisting>
+...
+fix_nated_register();
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="force_rtp_proxy1">
+	<title>
+	    <function>force_rtp_proxy(ip_address)</function>
+	</title>
+	<para>
+	    Rewrites SDP body with given IP address to ensure that media is passed through an
+	    RTP proxy.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <emphasis>ip_address</emphasis> - new SDP IP address.
+		</para>
+	    </listitem>
+	</itemizedlist>
+
+	<example>
+	    <title><function>force_rtp_proxy</function> usage</title>
+	    <programlisting>
+...
+if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("1.2.3.4");};
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="nat_uac_test">
+	<title>
+	    <function>nat_uac_test(mode)</function>
+	</title>
+	<para>
+	    Tries to guess if client's request originated behind a nat.  The
+	    parameter determines what heuristics is used. If flag 1 is set, the
+	    "received" test is used -- address in Via is compared against
+	    source IP address of signaling. If flag 2 is set, Contact header
+	    field is searched for occurrence of RFC1918 addresses. Both flags
+	    can be bitwise combined, the test returns true if any of the tests
+	    identified a NAT.
+	</para>
+    </section>
+
+</section>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="auth_diameter.params" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Parameters</title>
+
+    <section id="diameter_client_host">
+	<title><varname>diameter_client_host</varname> (string)</title>
+	<para>
+	    Hostname of the machine where the DIAMETER Client is running.
+	</para>
+	<para>
+	    Default value is "localhost".
+	</para>
+	<example>
+	    <title>Set <varname>diameter_client_host</varname> parameter</title>
+	    <programlisting>
+...
+modparam("auth_diameter", "diameter_client_host", "10.10.10.10")
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="diameter_client_port">
+	<title><varname>diameter_client_port</varname> (int)</title>
+	<para>
+	    Port number where the DIAMETER Client is listening.
+	</para>
+	<para>
+	    Default value is "3000".
+	</para>
+	<example>
+	    <title>Set <varname>diameter_client_port</varname> parameter</title>
+	    <programlisting>
+...
+modparam("auth_diameter", "diameter_client_port", 3000)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="use_domain">
+	<title><varname>use_domain</varname> (int)</title>
+	<para>
+	    Specifies whether the domain name part of URI is used when checking
+	    the user's privileges.
+	</para>
+	<para>
+	    Default value is "0" (0==false and 1==true ).
+	</para>
+	<example>
+	    <title>Set <varname>use_domain</varname> parameter</title>
+	    <programlisting>
+...
+modparam("auth_diameter", "use_domain", 1)
+...
+	    </programlisting>
+	</example>
+    </section>
+</section>

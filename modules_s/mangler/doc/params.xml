@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="mangler.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="contact_flds_separator">
+	<title><varname>contact_flds_separator</varname> (string)</title>
+	<para>
+	    First char of this parameter is used as separator for
+	    encoding/decoding Contact header.
+	</para>
+	<warning>
+	    <para>
+		First char of this field must be set to a value which is not
+		used inside username,password or other fields of
+		contact.Otherwise it is possible for the decoding step to
+		fail/produce wrong results.
+	    </para>
+	</warning>
+	<para>
+	    Default value is "*".
+	</para>
+	<example>
+	    <title>Set <varname>db_url</varname> parameter</title>
+	    <programlisting>
+...
+modparam("module", "contact_flds_separator", "-")
+...
+	    </programlisting>
+	</example>
+	<para>
+	    then an encoded uri might look sip:user-password-ip-port-protocol@PublicIP
+	</para>
+    </section>
+    
+</section>

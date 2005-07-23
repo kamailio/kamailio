@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="pa" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Jamey</firstname>
+		<surname>Hicks</surname>
+		<affiliation><orgname>Hewlett-Packard Company</orgname></affiliation>
+		<address>
+		    <email>jamey.hicks@hp.com</email>
+		</address>
+	    </author>	    
+	    <author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+		<address>
+		    <email>jan@iptel.org</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <year>2004</year>
+	    <holder>FhG FOKUS</holder>
+	    <holder>Hewlett-Packard Company</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+    
+    <title>Pa Module</title>
+
+    <section id="overview">
+	<title>Overview</title>
+	<para>
+	    This module implements a presence server, i.e. entity that receives SUBSCRIBE messages
+	    and sends NOTIFY when presence status of a user changes. Currently the presence server
+	    can be connected to registrar and jabber module so SIP users can see presence of jabber
+	    users.
+	</para>
+	<para>
+	    This module currently cannot work as a <acronym>B2BUA</acronym>, i.e. it cannot subscribe
+	    to presence of users using SIP. We are currently working on that feature.
+	</para>
+    </section>
+
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+
+</section>
+
+
+

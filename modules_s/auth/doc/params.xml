@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="auth.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+    
+    <section id="secret">
+	<title><varname>secret</varname> (string)</title>
+	<para>
+	    Default value is randomly generated string.
+	</para>
+	<example>
+	    <title>Setting secret module parameter</title>
+	    <programlisting>
+modparam("auth", "secret", "johndoessecretphrase")
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="nonce_expire">
+	<title><varname>nonce_expire</varname> (integer)</title>
+	<para>
+	    Nonces have limited lifetime. After a given period of time nonces
+	    will be considered invalid. This is to protect replay
+	    attacks. Credentials containing a stale nonce will be not
+	    authorized, but the user agent will be challenged again. This time
+	    the challenge will contain <varname>stale</varname> parameter which
+	    will indicate to the client that it doesn't have to disturb user by
+	    asking for username and password, it can recalculate credentials
+	    using existing username and password.
+	</para>
+	<para>
+	    The value is in seconds and default value is 300 seconds.
+	</para>
+	<example>
+	    <title>nonce_expire example</title>
+	    <programlisting>
+modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="rpid_prefix">
+	<title><varname>rpid_prefix</varname> (string)</title>
+	<para>
+	    Prefix to be added to Remote-Party-ID header field just before the
+	    URI returned from either radius or database.
+	</para>
+	<para>
+	    Default value is "" (empty string).
+	</para>
+	<example>
+	    <title>rpid_prefix</title>
+	    <programlisting>
+<![CDATA[
+modparam("auth", "rpid_prefix", "Whatever <")
+]]>
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="rpid_suffix">
+	<title><varname>rpid_suffix</varname> (string)</title>
+	<para>
+	    Suffix to be added to Remote-Party-ID header field after the URI
+	    returned from either radius or database.
+	</para>
+	<para>
+	    Default value is ";party=calling;id-type=subscriber;screen=yes".
+	</para>
+	<example>
+	    <title>rpid_suffix</title>
+	    <programlisting>
+<![CDATA[
+modparam("auth", "rpid_suffix", "@1.2.3.4>")
+]]>
+	    </programlisting>
+	</example>
+    </section>
+</section>

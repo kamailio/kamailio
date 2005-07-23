@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="group_radius.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="radius_config">
+	<title><varname>radius_config</varname> (string)</title>
+	<para>
+	    Location of the configuration file of the radius client library.
+	</para>
+	<para>
+	    Default value is "/usr/local/etc/radiusclient/radiusclient.conf".
+	</para>
+	<example>
+	    <title>Set <varname>radius_config</varname> parameter</title>
+	    <programlisting>
+...
+modparam("group", "radius_config", "/etc/radiusclient.conf")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="use_domain">
+	<title><varname>use_domain</varname> (integer)</title>
+	<para>
+	    If set to 1 then username@domain will be used for lookup, if set to 0 then only
+	    username will be used.
+	</para>
+	<para>
+	    Default value is 0 (no).
+	</para>
+	<example>
+	    <title>Set <varname>use_domain</varname> parameter</title>
+	    <programlisting>
+...
+modparam("group_radius", "use_domain", 1)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+</section>

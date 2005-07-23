@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="auth_db.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="db_url">
+	<title><varname>db_url</varname> (string)</title>
+	<para>
+	    This is URL of the database to be used. Value of the parameter
+	    depends on the database module used. For example for mysql and
+	    postgres modules this is something like
+	    mysql://username:password@host:port/database. For dbtext module
+	    (which stores data in plaintext files) it is directory in which the
+	    database resides.
+	</para>
+	<para>
+	    Default value is "mysql://serro:47serro11@localhost/ser".
+	</para>
+	<example>
+	    <title><varname>db_url</varname> parameter usage</title>
+	    <programlisting>
+modparam("auth_db", "db_url", "mysql://foo:bar@foobar.org/ser")
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="user_column">
+	<title><varname>user_column</varname> (string)</title>
+	<para>
+	    This is the name of the column holding usernames. Default value is
+	    fine for most people. Use the parameter if you really need to
+	    change it.
+	</para>
+	<para>
+	    Default value is "username".
+	</para>
+
+	<example>
+	    <title><varname>user_column</varname> usage</title>
+	    <programlisting>
+modparam("auth_db", "user_column", "user")
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="domain_column">
+	<title><varname>domain_column</varname> (string)</title>
+	<para>
+	    This is the name of the column holding domains of users. Default
+	    value is fine for most people. Use the parameter if you really need
+	    to change it.
+	</para>
+	<para>
+	    Default value is "domain".
+	</para>
+	<example>
+	    <title><varname>domain_column</varname> usage</title>
+	    <programlisting>
+modparam("auth_db", "domain_column", "domain")
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="password_column">
+	<title><varname>password_column</varname> (string)</title>
+	<para>
+	    This is the name of the column holding passwords. Passwords can be
+	    either stored as plain text or pre-calculated HA1 strings. HA1
+	    strings are MD5 hashes of username, password, and realm. HA1
+	    strings are more safe because the server doesn't need to know
+	    plaintext passwords and they cannot be obtained from HA1 strings.
+	</para>
+	<para>
+	    Default value is "ha1".
+	</para>
+	<example>
+	    <title><varname>password_column</varname> usage</title>
+	    <programlisting>
+modparam("auth_db", "password_column", "password")
+	    </programlisting>
+	    </example>
+    </section>
+
+    <section id="rpid_column">
+	<title><varname>rpid_column</varname> (string)</title>
+	<para>
+	    This is the name of the column holding information for the
+	    Remote-Party-ID header field. Default value is fine for most
+	    people. Use the parameter if you really need to change it.
+	</para>
+	<para>
+	    Default value is "rpid".
+	</para>
+	<example>
+	    <title><varname>rpid_column</varname> usage</title>
+	    <programlisting>
+modparam("auth_db", "rpid_column", "remote_party_id")
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="calculate_ha1">
+	<title><varname>calculate_ha1</varname> (integer)</title>
+	<para>
+	    This parameter tells server whether it should expect plaintext
+	    passwords in the database or HA1 string. If the parameter is set to
+	    1 then the server will assume that the column pointed to by
+	    <varname>password_column</varname> contains plaintext passwords and
+	    it will calculate HA1 strings on the fly.
+	</para>
+	<para>
+	    If the parameter is set to 0 then the server assumes that the
+	    database contains HA1 strings directly and will not calculate
+	    them. If username parameter of credentials contains also @domain
+	    (some user agents put domain in username parameter), then column
+	    pointed to by <varname>password_column_2</varname> parameter will
+	    be used instead. This column should also contain HA1 strings but
+	    they should be calculated including the domain in the username
+	    parameter (as opposed to <varname>password_column</varname> which
+	    (when containing HA1 strings) should always contains HA1 strings
+	    calculated without domain in username.
+	</para>
+	<para>
+	    This ensures that the authentication will always work when using
+	    pre-calculated HA1 string, not depending on the presence of the
+	    domain in username.
+	</para>
+	<para>
+	    Default value of this parameter is 0.
+	</para>
+	<example>
+	    <title><varname>calculate_ha1</varname>usage</title>
+	    <programlisting>
+modparam("auth_db", "calculate_ha1", 1)
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="password_column_2">
+	<title><varname>password_column_2</varname> (string)</title>
+	<para>
+	    As described in the previous section this parameter contains name
+	    of column holding pre-calculated HA1 string that were calculated
+	    including the domain in the username. This parameter is used only
+	    when <varname>calculate_ha1</varname> is set to 0 and user agent
+	    send a credentials containing the domain in the username.
+	</para>
+	<para>
+	    Default value of the parameter is ha1b.
+	</para>
+	<example>
+	    <title><varname>password_column_2</varname> usage</title>
+	    <programlisting>
+modparam("auth_db", "password_column_2", "ha1_2")
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="use_rpid">
+	<title><varname>use_rpid</varname> (integer)</title>
+	<para>
+	    This parameter specifies whether the server should fetch a value
+	    for the Remote-Party-ID header field from the database.
+	</para>
+	<para>
+	    If the parameter is set to 1 the server expects to find a value for
+	    this header in the column specified by the
+	    <varname>rpid_column</varname> parameter.
+	</para>
+	<para>
+	    Default value of this parameter is 0.
+	</para>
+	<example>
+	    <title><varname>use_rpid</varname>usage</title>
+	    <programlisting>
+modparam("auth_db", "use_rpid", 1)
+	    </programlisting>
+	</example>
+    </section>
+</section>

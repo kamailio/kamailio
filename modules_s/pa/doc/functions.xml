@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="pa.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="handle_subscription">
+	<title>
+	    <function>handle_subscription(domain)</function>
+	</title>
+	<para>
+	    This function processes SUBSCRIBE and generates NOTIFY.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>domain</emphasis> - This can be either "registrar" or "jabber".
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>handle_subscription</function> usage</title>
+	    <programlisting>
+...
+handle_subscription("jabber");
+...
+	    </programlisting>
+	</example>
+    </section>
+</section>

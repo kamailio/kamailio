@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="avp.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="set_iattr">
+	<title><function>set_iattr(attribute,value)</function></title>
+	<para>
+	    Create an AVP of type integer.
+	</para>
+	<para>Meaning of the parameter is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <emphasis>attribute</emphasis> - The name of of the AVP to
+		    be created.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>value</emphasis> - Integer value of the AVP.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	
+	<example>
+	    <title><function>set_iattr</function> usage</title>
+	    <programlisting>
+...
+set_iattr("fr_inv_timer", "60")
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="flags2attr">
+	<title><function>flags2attr()</function></title>
+	<para>
+	    Store the current state of SER flags into AVP called "flags".
+	</para>
+	<example>
+	    <title><function>flags2attr</function> usage</title>
+	    <programlisting>
+...
+flags2attr()
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="set_sattr">
+	<title><function>set_sattr(attribute,value)</function></title>
+	<para>
+	    Create an AVP of type string.
+	</para>
+	<para>Meaning of the parameter is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>attribute</emphasis> - The name of of the
+		    AVP to be created.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>value</emphasis> - String value of the AVP.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	
+	<example>
+	    <title><function>set_sattr</function> usage</title>
+	    <programlisting>
+...
+set_sattr("called_number", "1234")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="uri2attr">
+	<title><function>uri2attr(attribute)</function></title>
+	<para>
+	    Store the Request-URI of the message being processed in an AVP. The
+	    new value of the Request-URI will be used if it has been already
+	    rewritten by some other function or module.
+	</para>
+	<para>Meaning of the parameter is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <emphasis>attribute</emphasis> - The name of of the AVP.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	
+	<example>
+	    <title><function>uri2attr</function> usage</title>
+	    <programlisting>
+...
+uri2attr("saved_ruri")
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="print_sattr">
+	<title><function>print_sattr(attribute)</function></title>
+	<para>
+	    Print the value of an AVP to syslog.
+	</para>
+	<para>Meaning of the parameter is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>attribute</emphasis> - The name of of the
+		    AVP.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+    
+    <section>
+	<title><function>attr2uri(attribute)</function></title>
+	<para>
+	    Rewrite the Request-URI of the message being processed with
+	    the value of an AVP.
+	</para>
+	<para>Meaning of the parameter is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>attribute</emphasis> - The name of of the
+		    AVP.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+    
+    <section id="is_sattr_set">
+	<title><function>is_sattr_set(attribute)</function></title>
+	<para>
+	    Test for the existence of AVP with given name. The function returns
+	    1 if given AVP exists and 0 if not.
+	</para>
+	<para>Meaning of the parameter is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>attribute</emphasis> - The name of of the
+		    AVP.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>is_sattr_set</function> usage</title>
+	    <programlisting>
+...
+if (is_sattr_set("saved_ruri")) {
+  uri2attr("saved_uri");
+} else {
+  rewriteuri("sip:a@iptel.org");
+};
+...
+</programlisting>
+	</example>
+    </section>
+    
+    <section id="avp_exists">
+	<title><function>avp_exists(attribute, value)</function></title>
+	<para>
+	    Test whether an AVP with given name and value exists. The functio
+	    returns 1 if the AVP with given name and value exists and 0 if
+	    not. The value of the AVP is compared string-wise. The comparison
+	    is case sensitive.
+	</para>
+	<para>Meaning of the parameter is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>attribute</emphasis> - The name of of the
+		    AVP.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>value</emphasis> - The AVP value to
+		    look for.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+</section>

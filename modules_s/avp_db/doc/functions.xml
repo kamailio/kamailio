@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="avp_db.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="avp_load">
+	<title><function moreinfo="none">avp_load(type)</function></title>
+	<para>
+	    Load AVPs from the database.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>type</emphasis> - One of:
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				<emphasis>caller_uuid</emphasis> - Load AVPs
+				for caller identified by UUID. All AVP names
+				will have "caller_" prefix.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>callee_uuid</emphasis> - Load AVPs
+				for callee identified by UUID. All AVP
+				names will have "callee_" prefix.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>caller</emphasis> - Load AVPs for
+				caller based on the URI of the caller
+				(From). All AVP names will have "caller_"
+				prefix.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>callee</emphasis> - Load AVPs for
+				callee based on the URI of the callee
+				(Request-URI). All AVP names will have
+				"callee_" prefix.
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+
+</section>

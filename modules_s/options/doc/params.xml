@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="options.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="accept">
+	<title><varname>accept</varname> (string)</title>
+	<para>
+	    This parameter is the content of the Accept header field.  Note: it
+	    is not clearly written in RFC3261 if a proxy should accept any
+	    content (the default "*/*") because it does not care
+	    about content. Or if it does not accept any content, which is
+	    "".
+	</para>
+	<para>
+	    Default value is "*/*".
+	</para>
+	<example>
+	    <title>Set <varname>accept</varname> parameter</title>
+	    <programlisting>
+...
+modparam("options", "accept", "application/*")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="accept_encoding">
+	<title><varname>accept_encoding</varname> (string)</title>
+	<para>
+	    This parameter is the content of the Accept-Encoding header field.
+	    Please do not change the default value because SER does not support
+	    any encodings yet.
+	</para>
+	<para>
+	    Default value is "".
+	</para>
+	<example>
+	    <title>Set <varname>accept_encoding</varname> parameter</title>
+	    <programlisting>
+...
+modparam("options", "accept_encoding", "gzip")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="accept_language">
+	<title><varname>accept_language</varname> (string)</title>
+	<para>
+	    This parameter is the content of the Accept-Language header field.
+	    You can set any language code which you prefer for error
+	    descriptions from other devices, but presumably there are not much
+	    devices around which support other languages then the default
+	    English.
+	</para>
+	<para>
+	    Default value is "en".
+	</para>
+	<example>
+	    <title>Set <varname>accept_language</varname> parameter</title>
+	    <programlisting>
+...
+modparam("options", "accept_language", "de")
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="support">
+	<title><varname>support</varname> (string)</title>
+	<para>
+	    This parameter is the content of the Support header field.  Please
+	    do not change the default value, because SER currently does not
+	    support any of the SIP extensions registered at the IANA.
+	</para>
+	<para>
+	    Default value is "".
+	</para>
+	<example>
+	    <title>Set <varname>support</varname> parameter</title>
+	    <programlisting>
+...
+modparam("options", "support", "100rel")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+</section>

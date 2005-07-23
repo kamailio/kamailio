@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="auth_diameter" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Elena-Ramona</firstname>
+		<surname>Modroiu</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+		<address>
+		    <email>modroiu@fokus.fraunhofer.de</email>
+		</address>
+	    </author>
+	</authorgroup>
+
+	<copyright>
+	    <year>2003</year>
+	    <year>2004</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Auth_diameter Module</title>
+
+    <section id="overview">
+	<title>Overview</title>
+	<para>
+	    This module implements SIP authentication and authorization with
+	    DIAMETER server, namely DIameter Server Client (DISC).
+	</para>
+	<para>
+	    The digest authentication mechanism is presented in next figure.
+	</para>
+	<example>
+	    <title>Digest Authentication</title>
+	    <programlisting>
+<![CDATA[
+a) First phase of Digest Authentication for SIP:
+
++----+ SIP INVITE   +=====+  DIAMETER      +------+       +------+
+|    | no Auth hdr  #/////#  AA-Request    |      |       |      |
+|    |---------1--->#/////#-------2------->|      |---2-->|      |
+|UAC |              #UAS//#                |DClnt |       |DSrv  |
+|    |<-----4-------#(SER)#<------3--------|(DISC)|<--3---|(DISC)|
+|    |     401      #/////#  DIAMETER      |      |       |      |
++----+ Unauthorized +=====+  AA-Answer     +------+       +------+
+                            Result-Code=4001
+
+b) Second phase of Digest Authentication for SIP:
+
++----+ SIP INVITE   +=====+  DIAMETER     +------+       +----+
+|    | Auth hdr     #/////#  AA-Request   |      |       |    |
+|    |--------1---->#/////#-------2------>|      |---2-->|    |
+|UAC |              #UAS//#               |DClnt |       |DSrv|
+|    |<-------4-----#(SER)#<------3-------|      |<--3---|    |
+|    |      200 OK  #/////#  DIAMETER     |      |       |    |
++----+              +=====+  AA-Answer    +------+       +----+
+                            Result-Code=2001
+]]>
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="dependencies">
+	<title>Dependencies</title>
+	<section id="modules">
+	    <title>SER Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>sl</emphasis> - used to send stateless replies.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section id="libraries">
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		SER with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+</section>

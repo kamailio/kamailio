@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="permissions.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="allow_routing0">
+	<title>
+	    <function>allow_routing()</function>
+	</title>
+	<para>
+	    Returns true if all pairs constructed as described in <xref
+		linkend="call_routing"/> have appropriate permissions
+		according to the configuration files. This function uses
+		default configuration files specified in
+		<varname>default_allow_file</varname> and
+		<varname>default_deny_file</varname>.
+	</para>
+	<example>
+	    <title><function>allow_routing</function> usage</title>
+	    <programlisting>
+...
+if (allow_routing()) {
+    t_relay();
+};
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="allow_routing1">
+	<title>
+	    <function>allow_routing(basename)</function>
+	</title>
+	<para>
+	    Returns true if all pairs constructed as described in <xref
+		linkend="call_routing"/> have appropriate permissions according
+		to the configuration files given as parameters.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <emphasis>basename</emphasis> - Basename from which allow
+		    and deny filenames will be created by appending contents of
+		    <varname>allow_suffix</varname> and
+		    <varname>deny_suffix</varname> parameters.
+		</para>
+		<para>
+		    If the parameter doesn't contain full pathname then the
+		    function expects the file to be located in the same
+		    directory as the main configuration file of the server.
+		</para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>allow_routing(basename)</function> usage</title>
+		<programlisting>
+...
+if (allow_routing("basename")) {
+    t_relay();
+};
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="allow_routing">
+	<title>
+	    <function>allow_routing(allow_file, deny_file)</function>
+	</title>
+	<para>
+	    Returns true if all pairs constructed as described in <xref
+		linkend="call_routing"/> have appropriate permissions according
+		to the configuration files given as parameters.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>allow_file</emphasis> - File containing allow rules.</para>
+		<para>
+		    If the parameter doesn't contain full pathname then the
+		    function expects the file to be located in the same
+		    directory as the main configuration file of the server.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>deny_file</emphasis> - File containing deny rules.</para>
+		<para>
+		    If the parameter doesn't contain full pathname then the
+		    function expects the file to be located in the same
+		    directory as the main configuration file of the server.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>allow_routing(allow_file, deny_file)</function> usage</title>
+	    <programlisting>
+...
+if (allow_routing("rules.allow", "rules.deny")) {
+    t_relay();
+};
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="allow_register">
+	<title>
+	    <function>allow_register(basename)</function>
+	</title>
+	<para>
+	    The function returns true if all pairs constructed as described in
+	    <xref linkend="registration_permissions"/> have appropriate
+	    permissions according to the configuration files given as
+	    parameters.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>basename</emphasis> - Basename from which allow
+		    and deny filenames will be created by appending contents of
+		    <varname>allow_suffix</varname> and
+		    <varname>deny_suffix</varname> parameters.
+		</para>
+		<para>
+		    If the parameter doesn't contain full pathname then the
+		    function expects the file to be located in the same
+		    directory as the main configuration file of the server.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>allow_register(basename)</function> usage</title>
+	    <programlisting>
+...
+if (method=="REGISTER") {
+    if (allow_register("register")) {
+        save("location");
+        break;
+    } else {
+        sl_send_reply("403", "Forbidden");
+    };
+};
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="allow_register2">
+	<title>
+	    <function>allow_register(allow_file, deny_file)</function>
+	</title>
+	<para>
+	    The function returns true if all pairs constructed as described in
+	    <xref linkend="registration_permissions"/> have appropriate
+	    permissions according to the configuration files given as
+	    parameters.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>allow_file</emphasis> - File containing allow rules.</para>
+		<para>
+		    If the parameter doesn't contain full pathname then the
+		    function expects the file to be located in the same
+		    directory as the main configuration file of the server.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>deny_file</emphasis> - File containing deny rules.</para>
+		<para>
+		    If the parameter doesn't contain full pathname then the
+		    function expects the file to be located in the same
+		    directory as the main configuration file of the server.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>allow_register(allow_file, deny_file)</function> usage</title>
+	    <programlisting>
+...
+if (method=="REGISTER") {
+    if (allow_register("register.allow", "register.deny")) {
+        save("location");
+        break;
+    } else {
+        sl_send_reply("403", "Forbidden");
+    };
+};
+...
+</programlisting>
+	</example>
+    </section>
+    
+</section>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="diversion.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="add_diversion">
+	<title><function>add_diversion(reason)</function></title>
+	<para>
+	    The function adds a new diversion header field before any other
+	    existing Diversion header field in the message (the newly added
+	    Diversion header field will become the topmost Diversion header
+	    field). The inbound (without any modifications done by the proxy
+	    server) Request-URI will be used as the Diversion URI.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>reason</emphasis> - The reason string to be added as the reason
+		    parameter
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>add_diversion</function> usage</title>
+	    <programlisting>
+...
+add_diversion("user-busy");
+...
+</programlisting>
+	    </example>
+    </section>
+</section>

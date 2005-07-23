@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="avp_db.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="caller_uuid_avp">
+	<title><varname>caller_uuid_avp</varname> (integer)</title>
+	<para>
+	    Number of the AVP that contains the UUID of caller.
+	</para>
+	<para>
+	    Default value is 1.
+	</para>
+    </section>
+
+    <section id="callee_uuid_avp">
+	<title><varname>callee_uuid_avp</varname> (integer)</title>
+	<para>
+	    Number of the AVP that contains the UUID of callee.
+	</para>
+	<para>
+	    Default value is 2.
+	</para>
+    </section>
+
+    <section id="db_url">
+	<title><varname>db_url</varname> (string)</title>
+	<para>
+	    The URL of the database to be used.
+	</para>
+	<para>
+	    Default value is "mysql://ser:heslo@localhost/ser".
+	</para>
+    </section>
+
+    <section id="pref_table">
+	<title><varname>pref_table</varname> (string)</title>
+	<para>
+	    Name of the user preferences table from which the contents
+	    of AVPs will be loaded.
+	</para>
+	<para>
+	    Default value is "usr_preferences".
+	</para>
+    </section>
+
+    <section id="uuid_column">
+	<title><varname>uuid_column</varname> (string)</title>
+	<para>
+	    Name of the column that stores UUID in the preferences table.
+	</para>
+	<para>
+	    Default value is "uuid".
+	</para>
+    </section>
+
+    <section id="username_column">
+	<title><varname>username_column</varname> (string)</title>
+	<para>
+	    Name of the column containing the username of the subscriber.
+	</para>
+	<para>
+	    Default value is "username".
+	</para>
+    </section>
+
+    <section id="domain_column">
+	<title><varname>domain_column</varname> (string)</title>
+	<para>
+	    Name of the column containing the domain that the
+	    subscriber belongs to. This is useful when SER is running
+	    in multi-domain mode.
+	</para>
+	<para>
+	    Default value is "domain".
+	</para>
+    </section>
+
+    <section id="attr_column">
+	<title><varname>attr_column</varname> (string)</title>
+	<para>
+	    The name of the column containing attribute names.
+	</para>
+	<para>
+	    Default value is "attribute".
+	</para>
+    </section>
+    
+    <section id="val_column">
+	<title><varname>val_column</varname> (string)</title>
+	<para>
+	    The name of the column containing attribute value.
+	</para>
+	<para>
+	    Default value is "value".
+	</para>
+    </section>
+
+    <section id="use_domain">
+	<title><varname>use_domain</varname> (int)</title>
+	<para>
+	    This parameter controls where the module should use also
+	    the domain part, in addition to the username, as the
+	    key. This parameter should be set to 1 in multi-domain mode.
+	</para>
+	<para>
+	    Default value is 0.
+	</para>
+    </section>
+    
+    <section id="pref_list_table">
+	<title><varname>pref_list_table</varname> (string)</title>
+	<para>
+	    Name of the table storing user preferences types and default values.
+	</para>
+	<para>
+	    Default value is "usr_preferences_types".
+	</para>
+    </section>
+    
+    <section id="attr_name_column">
+	<title><varname>attr_name_column</varname> (string)</title>
+	<para>
+	    The name of the column in usr_preferences_types table
+	    storing names of AVPs.
+	</para>
+	<para>
+	    Default value is "att_name".
+	</para>
+    </section>
+    
+    <section id="att_type_column">
+	<title><varname>att_type_column</varname> (string)</title>
+	<para>
+	    The name of the column in usr_preferences_types table
+	    storing types of AVPs.
+	</para>
+	<para>
+	    Default value is "att_raw_type".
+	</para>
+    </section>
+
+    <section id="att_dval_column">
+	<title><varname>att_dval_column</varname> (string)</title>
+	<para>
+	    The name of the column in usr_preferences_types table
+	    containing default values of AVPs.
+	</para>
+	<para>
+	    Default value is "default_value".
+	</para>
+    </section>
+</section>

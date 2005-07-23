@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="group_radius.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="radius_is_user_in">
+	<title>
+	    <function>radius_is_user_in(URI, group)</function>
+	</title>
+	<para>
+	    The function returns true if username in the given URI is member of
+	    the given group and false if not.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>URI</emphasis> - URI whose username and optionally domain to be
+		    used, this can be one of:
+		    <itemizedlist>
+			<listitem>
+			    <para>Request-URI - Use Request-URI username and (optionally) domain.</para>
+			</listitem>
+			<listitem>
+			    <para>To - Use To username and (optionally) domain.</para>
+			</listitem>
+			<listitem>
+			    <para>From - Use From username and (optionally) domain.</para>
+			</listitem>
+			<listitem>
+			    <para>Credentials - Use digest credentials username.</para>
+			</listitem>
+		    </itemizedlist>
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>group</emphasis> - Name of the group to check.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>radius_is_user_in</function> usage</title>
+	    <programlisting>
+...
+if (radius_is_user_in("Request-URI", "ld")) {
+    ...
+};
+...
+	    </programlisting>
+	</example>
+    </section>
+</section>

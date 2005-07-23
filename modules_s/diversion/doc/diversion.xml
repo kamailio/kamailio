@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="diversion" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+		<address>
+		    <email>jan@iptel.org</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2004</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+
+    </sectioninfo>
+
+    <title>Diversion Module</title>
+
+    <section id="overview">
+	<title>Overview</title>
+	<para>
+	    The module implements the Diversion extensions as per
+	    draft-levy-sip-diversion-08.  The diversion extensions are useful
+	    in various scenarios involving call forwarding. Typically one needs
+	    to communicate the original recipient of the call to the PSTN
+	    gateway and this is what the diversion extensions can be used for.
+	</para>
+	<example>
+	    <title>Diversion Example</title>
+	    <para>
+		The following example shows a Diversion header field added to INVITE
+		message. The INVITE message was diverted by the user agent of sip:jiri@iptel.org
+		because the user was talking to someone else and the new destination is 
+		sip:jan@iptel.org.
+	    </para>
+	    <programlisting>
+<![CDATA[
+INVITE sip:jan@iptel.org SIP/2.0
+From: "5060" <sip:5060@iptel.org>;tag=ldgheoihege
+To: "Jan Janak" <sip:jan@iptel.org>;
+Call-ID: adgasdkgjhkjha@1.2.3.4
+CSeq: 3 INVITE
+Diversion: <sip:jiri@iptel.org>;reason=user-busy
+Via: SIP/2.0/UDP 1.2.3.4:5060
+Contact: <sip:5060@2.3.4.5>
+Content-Length: 0
+]]>
+	    </programlisting>
+	</example>
+    </section>
+
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+    <xi:include href="devel.xml"/>
+
+</section>
+

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="pa.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="default_expires">
+	<title><varname>default_expires</varname> (integer)</title>
+	<para>
+	    Default expires value to be used when the client doesn't supply one
+	    (in seconds).
+	</para>
+	<para>
+	    Default value is 3600.
+	</para>
+	<example>
+	    <title>Set <varname>default_expires</varname> parameter</title>
+	    <programlisting>
+...
+modparam("pa", "default_expires", 3600)
+...
+	    </programlisting>
+	</example>
+    </section>
+</section>

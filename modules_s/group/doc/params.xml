@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="group.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="db_url">
+	<title><varname>db_url</varname> (string)</title>
+	<para>
+	    URL of the database table to be used.
+	</para>
+	<para>
+	    Default value is "mysql://serro:47serro11@localhost/ser".
+	</para>
+	<example>
+	    <title>Set <varname>db_url</varname> parameter</title>
+	    <programlisting>
+...
+modparam("group", "db_url", "mysql://username:password@dbhost/ser")
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="table">
+	<title><varname>table</varname> (string)</title>
+	<para>
+	    Name of the table holding groups and their members.
+	</para>
+	<para>
+	    <emphasis>
+		Default value is "grp".
+	    </emphasis>
+	</para>
+	<example>
+	    <title>Set <varname>table</varname> parameter</title>
+	    <programlisting>
+...
+modparam("group", "table", "grp_table")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="user_column">
+	<title><varname>user_column</varname> (string)</title>
+	<para>
+	    Name of the column holding usernames.
+	</para>
+	<para>
+	    Default value is "username".
+	</para>
+	<example>
+	    <title>Set <varname>user_column</varname> parameter</title>
+	    <programlisting>
+...
+modparam("group", "user_column", "user")
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="domain_column">
+	<title><varname>domain_column</varname> (string)</title>
+	<para>
+	    Name of the column holding domains.
+	</para>
+	<para>
+	    Default value is "domain".
+	</para>
+	<example>
+	    <title>Set <varname>domain_column</varname> parameter</title>
+	    <programlisting>
+...
+modparam("group", "domain_column", "realm")
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="group_column">
+	<title><varname>group_column</varname> (string)</title>
+	<para>
+	    Name of the column holding groups.
+	</para>
+	<para>
+	    Default value is grp.
+	</para>
+	<example>
+	    <title>Set <varname>group_column</varname> parameter</title>
+	    <programlisting>
+...
+modparam("group", "group_column", "grp")
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="use_domain">
+	<title><varname>use_domain</varname> (integer)</title>
+	<para>
+	    If set to 1 then username@domain will be used for lookup, if set to
+	    0 then only username will be used.
+	</para>
+	<para>
+		Default value is 0 (no).
+	</para>
+	<example>
+	    <title>Set <varname>use_domain</varname> parameter</title>
+	    <programlisting>
+...
+modparam("group", "use_domain", 1)
+...
+	    </programlisting>
+	</example>
+    </section>
+</section>

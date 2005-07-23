@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="avpops.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="avp_db_load">
+	<title>
+	    <function>avp_db_load(source,name)</function>
+	</title>
+	<para>
+	    Loads from DB into memory the AVPs corresponding to the given
+	    <emphasis>source</emphasis>.
+	</para>
+
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <emphasis>source</emphasis> - what info is used for
+		    identifying the AVPs. Parameter syntax:
+		    <programlisting>
+source = (sip_uri) [ '/' ( 'username' | 'domain' ) ] ) | (avp_alias) | str_value
+sip_uri = '$from' | '$to' | '$ruri'
+		    </programlisting>
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>name</emphasis> - which AVPs will be loaded
+		    from DB into memory. Parameter syntax is:
+		    <itemizedlist>
+			<programlisting>
+name = avp_spec [ '/' ( table_name | '$' db_scheme ) ]
+avp_spec = '' | 's:' | 'i:' | avp_name | avp_alias
+			</programlisting>
+		    </itemizedlist>
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>avp_db_load</function> usage</title>
+	    <programlisting>
+...
+avp_db_load("$from","i:678");
+avp_db_load("$ruri/domain","i:/domain_preferences");
+avp_db_load("$uuid","s:404fwd/fwd_table");
+avp_db_load("$ruri","i:123/$some_scheme");
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="avp_db_store">
+	<title>
+	    <function>avp_db_store(source,name)</function>
+	</title>
+	<para>
+	    Stores to DB the AVPs corresponding to the given
+	    <emphasis>source</emphasis>.
+	</para>
+	<para>
+	    The meaning and usage of the parameters are identical as for
+	    <emphasis>avp_db_load(source,name)</emphasis> function. Please
+	    refer to its description.
+	</para>
+	<example>
+	    <title><function>avp_db_store</function> usage</title>
+	    <programlisting>
+...
+avp_db_store("$to","i:678");
+avp_db_store("$ruri/username","$email");
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="avp_db_delete">
+	<title>
+	    <function>avp_db_delete(source,name)</function>
+	</title>
+	<para>
+	    Deletes from DB the AVPs corresponding to the given
+	    <emphasis>source</emphasis>. 
+	</para>
+	<para>
+	    The meaning and usage of the parameters are identical as for
+	    <emphasis>avp_db_load(source,name)</emphasis> function. Please
+	    refer to its description.
+	</para>
+	<example>
+	    <title><function>avp_db_delete</function> usage</title>
+	    <programlisting>
+...
+avp_db_delete("$to","i:678");
+avp_db_delete("$ruri/username","$email");
+avp_db_delete("$uuid","s:404fwd/fwd_table");
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="avp_write">
+	<title>
+	    <function>avp_write(value,name)</function>
+	</title>
+	<para>
+	    The function writes some value (given) or some information from
+	    the SIP message into a new AVP.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <emphasis>value</emphasis> - the value to be written into
+		    the AVP. Parameter syntax:
+		    <programlisting>
+value = (variable) | (fix_value)
+variable = '$src_ip' | '$dst_ip' | '$hdr[name]' | (sip_uri) [ '/' ( 'username' | 'domain' ) ] )
+sip_uri = '$from' | '$to' | '$ruri'
+fix_value = 'i:'integer | 's:'string | string
+		    </programlisting>
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>name</emphasis> - the name of the new written
+		    AVP. Parameter syntax is:
+		    <programlisting>
+name = avp_name | avp_alias
+		    </programlisting>
+		</para>
+	    </listitem>
+	</itemizedlist>
+
+	<example>
+	    <title><function>avp_write</function> usage</title>
+	    <programlisting>
+...
+avp_write("$to","i:678");
+avp_write("$ruri/username","$email");
+avp_write("$src_ip","s:ip");
+avp_write("$hdr[call-id]","i:11");
+avp_write("i:333","i:6");
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="avp_delete">
+	<title>
+	    <function>avp_delete(name)</function>
+	</title>
+	<para>
+	    Deletes from memory the AVPs with <emphasis>name</emphasis> or,
+	    if empty, all AVPs.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <emphasis>name</emphasis> - which AVPs will be deleted from
+		    memory.  Parameter syntax is:
+		    <programlisting>
+name = ('' | 's:' | 'i:' | avp_name | avp_alias ) [ '/' flag ]
+flag = 'g' | 'G'
+		    </programlisting>
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>avp_delete</function> usage</title>
+	    <programlisting>
+...
+avp_delete("i:678/g");
+avp_delete("$email");
+avp_delete("i:");
+avp_delete("");
+...
+	    </programlisting>
+	</example>
+    </section>
+    <section id="avp_pushto">
+	<title>
+	    <function>avp_pushto(destination,name)</function>
+	</title>
+	<para>
+	    Pushes the value of AVP(s) into the SIP message.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <emphasis>destination</emphasis> - as what will be the AVP
+		    value pushed into SIP message.  Parameter syntax:
+		    <programlisting>
+destination = ruri_dst | hdr_dst
+ruri_dst = '$ruri' [ '/' ( 'username' | 'domain' ) ]
+hdr_dst = '$hdr_name' [ '/' ( 'request' | 'reply' ) ]
+		    </programlisting>
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>name</emphasis> - which AVP(s) should be pushed
+		    into the SIP message. Parameter syntax is:
+		    <programlisting>
+name = ( avp_name | avp_alias ) [ '/' flags ]
+flags = 'g'
+		    </programlisting>
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>avp_pushto</function> usage</title>
+	    <programlisting>
+...
+avp_pushto("$ruri","i:678");
+avp_pushto("$ruri/domain","s:backup_domains/g");
+avp_pushto("$Email/reply","s:email");
+avp_pushto("$Foo","$bar/g");
+...
+	    </programlisting>
+	</example>
+    </section>
+    <section id="avp_check">
+	<title>
+	    <function>avp_check(name,op_value)</function>
+	</title>
+	<para>
+	    Checks the value of the AVP(s) against an operator and value.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>name</emphasis> - which AVP(s) should be 
+		    checked.
+		    Parameter syntax is:
+		    <programlisting>
+name = ( avp_name | avp_alias )
+		    </programlisting>
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>op_value</emphasis> - define the operator, 
+		    the value and flags for checking.
+		    Parameter syntax is:
+		    <programlisting>
+op_value = operator '/' value [ '/' flags ]
+operator = 'eq' | 'lt' | 'gt' | 're' | 'fm'
+value = variable | fix_value
+variable = '$from' | '$ruri' | '$from' | '$src_ip' | '$dst_ip' | avp_alias
+fix_value = 'i:' integer | 's:' string | string
+flags = 'g' | 'G' | 'i' | 'I'
+		    </programlisting>
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>avp_check</function> usage</title>
+	    <programlisting>
+...
+avp_check("i:678", "lt/i:345/g");
+avp_check("s:person","eq/$from/I");
+avp_check("s:foo","gt/$bar/g");
+avp_check("s:foo","re/sip:.*@bar.net/g");
+avp_check("s:foo","fm/$fm_avp/g");
+...
+	    </programlisting>
+	</example>
+    </section>
+    <section id="avp_copy">
+	<title>
+	    <function>avp_copy(old_name,new_name)</function>
+	</title>
+	<para>
+	    Copy / move an AVP under a new name.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>name1</emphasis> - which AVP(s) should be 
+		    copied/moved. Parameter syntax is:
+		    <programlisting>
+name = ( avp_name | avp_alias )
+		    </programlisting>
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>name2</emphasis> - the new name of the
+		    copied/moved AVP(s). Parameter syntax is:
+		    <programlisting>
+name = ( avp_name | avp_alias ) [ '/' flags ]
+flags = 'g' | 'G' | 'd' | 'D'
+		    </programlisting>
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>avp_copy</function> usage</title>
+	    <programlisting>
+...
+avp_copy("i:678", "s:345/g");
+avp_copy("$old","$new/gd");
+...
+	    </programlisting>
+	</example>
+    </section>
+    <section id="avp_print">
+	<title>
+	    <function>avp_print()</function>
+	</title>
+	<para>
+	    Prints the list with all the AVPs from memory. This is only a
+	    helper/debug function.
+	</para>
+	<example>
+	    <title><function>avp_print</function> usage</title>
+	    <programlisting>
+...
+avp_print();
+...
+	    </programlisting>
+	</example>
+    </section>
+</section>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="diversion.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="suffix">
+	<title><varname>suffix</varname> (string)</title>
+	<para>
+	    The suffix to be appended to the end of the header field. You can
+	    use the parameter to specify additional parameters to be added to
+	    the header field, see the example.
+	</para>
+	<para>
+	    Default value is "" (empty string).
+	</para>
+	<example>
+	    <title><varname>suffix</varname> usage</title>
+	    <programlisting>
+modparam("diversion", "suffix", ";privacy=full")
+</programlisting>
+	    </example>
+    </section>
+
+</section>
