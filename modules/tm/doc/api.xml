@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="tm.api" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>TM Module API</title>
+    <para>
+	There are applications which would like to generate SIP transactions
+	without too big involvement in SIP stack, transaction management,
+	etc. An example of such an application is sending instant messages from
+	a website. To address needs of such apps, SER accepts requests for
+	new transactions via fifo pipes too. If you want to enable this
+	feature, start <acronym>FIFO</acronym> server with configuration
+	option.
+    </para>
+    <para>
+	fifo="/tmp/ser_fifo"
+    </para>
+    <para>
+	Then, an application can easily launch a new transaction by writing a
+	transaction request to this named pipe. The request must follow very
+	simple format, which is
+    </para>
+    <programlisting>
+ :t_uac_from:[&lt;file_name&gt;]\n
+ &lt;method&gt;\n
+ &lt;sender's uri&gt;\n
+ &lt;dst uri&gt;\n
+ &lt;CR_separated_headers&gt;\n
+ &lt;body&gt;\n
+ .\n
+ \n
+</programlisting>
+    <para>
+	(Filename is to where a report will be dumped. ser assumes /tmp as
+	file's directory.)
+    </para>
+    <para>
+	Note the the request write must be atomic, otherwise it might get
+	intermixed with writes from other writers. You can easily use it via
+	Unix command-line tools, see the following example:
+    </para>
+    <screen>
+[jiri@bat jiri]$ cat &gt; /tmp/ser_fifo
+:t_uac_from:xxx
+MESSAGE
+sip:sender@iptel.org
+sip:mrx@iptel.org
+header:value
+foo:bar
+bznk:hjhjk
+p_header: p_value
+
+body body body
+yet body
+end of body
+.
+
+    </screen>
+    <para>
+	or cat test/transaction.fifo &gt; /tmp/ser_fifo
+    </para>
+
+    <section id="defines">
+	<title>Defines</title>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    ACK_TAG enables stricter matching of acknowledgments
+		    including to-tags. Without it, to-tags are ignored. It is
+		    disabled by default for two reasons:
+		</para>
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    It eliminates an unlikely race condition in which
+			    transaction's to-tag is being rewritten by a 200 OK
+			    whereas an ACK is being looked up by to-tag.
+			</para>
+		    </listitem>
+		</itemizedlist>
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    It makes UACs happy who set wrong to-tags.
+			</para>
+		    </listitem>
+		</itemizedlist>
+		<para>
+		    It should not make a difference, as there may be only one
+		    negative reply sent upstream and 200/ACKs are not matched
+		    as they constitute another transaction. It will make no
+		    difference at all when the new magic cookie matching is
+		    enabled anyway.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    CANCEL_TAG similarly enables strict matching of CANCELs 
+		    including to-tags--act of mercy to UACs, who screw up
+		    the to-tags (however, it still depends on how forgiving
+		    the downstream UAS is). Like with ACK_TAG, all this
+		    complex transactions matching goes with <ulink
+			url="http://www.ietf.org/rfc/rfc3261.txt">RFC3261</ulink>'s
+		    magic cookie away anyway.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+    <section>
+	<title>Functions</title>
+	<section>
+	    <title>
+		<function>register_tmcb(cb_type, cb_func)</function>
+	    </title>
+	    <para>
+		For programmatic use only--register a function to be called
+		back on an event. See t_hooks.h for more details.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>cb_type</emphasis> - Callback type.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>cb_func</emphasis> - Callback function.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+	
+	<section id="load_tm">
+	    <title>
+		<function>load_tm(*import_structure)</function>
+	    </title>
+	    <para>
+		For programmatic use only--import exported <acronym>TM</acronym> functions.
+		See the acc module for an example of use.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>import_structure</emphasis> - Pointer to the import structure.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+    </section>
+    
+</section>

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="tm" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+		<address>
+		    <email>jiri@iptel.org</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>TM Module</title>
+
+    <section>
+	<title>Overview</title>
+	<para>
+	    <acronym>TM</acronym> module enables stateful processing of SIP
+	    transactions. The main use of stateful logic, which is costly in
+	    terms of memory and <acronym>CPU</acronym>, is some services
+	    inherently need state. For example, transaction-based accounting
+	    (module acc) needs to process transaction state as opposed to
+	    individual messages, and any kinds of forking must be implemented
+	    statefully. Other use of stateful processing is it trading
+	    <acronym>CPU</acronym> caused by retransmission processing for
+	    memory. That makes however only sense if <acronym>CPU</acronym>
+	    consumption per request is huge. For example, if you want to avoid
+	    costly <acronym>DNS</acronym> resolution for every retransmission
+	    of a request to an unresolvable destination, use stateful
+	    mode. Then, only the initial message burdens server by
+	    <acronym>DNS</acronym> queries, subsequent retransmissions will be
+	    dropped and will not result in more processes blocked by
+	    <acronym>DNS</acronym> resolution. The price is more memory
+	    consumption and higher processing latency.
+	</para>
+	<para>
+	    From user's perspective, there are these major functions : t_relay,
+	    t_relay_to_udp and t_relay_to_tcp. All of them setup transaction
+	    state, absorb retransmissions from upstream, generate downstream
+	    retransmissions and correlate replies to requests. t_relay forwards
+	    to current URI (be it original request's URI or a URI changed by
+	    some of URI-modifying functions, such as sethost). t_relay_to_udp
+	    and t_relay_to_tcp forward to a specific address over UDP or TCP
+	    respectively.
+	</para>
+	<para>
+	    In general, if <acronym>TM</acronym> is used, it copies clones of
+	    received SIP messages in shared memory. That costs the memory and
+	    also <acronym>CPU</acronym> time (memcpys, lookups, shmem locks,
+	    etc.)  Note that non-<acronym>TM</acronym> functions operate over
+	    the received message in private memory, that means that any core
+	    operations will have no effect on statefully processed messages
+	    after creating the transactional state. For example, calling
+	    record_route <emphasis>after</emphasis> t_relay is pretty useless,
+	    as the <acronym>RR</acronym> is added to privately held message
+	    whereas its <acronym>TM</acronym> clone is being forwarded.
+	</para>
+	<para>
+	    <acronym>TM</acronym> is quite big and uneasy to program--lot of
+	    mutexes, shared memory access, malloc and free, timers--you really
+	    need to be careful when you do anything. To simplify
+	    <acronym>TM</acronym> programming, there is the instrument of
+	    callbacks. The callback mechanisms allow programmers to register
+	    their functions to specific event. See t_hooks.h for a list of
+	    possible events.
+	</para>
+	<para>
+	    Other things programmers may want to know is UAC--it is a very
+	    simplistic code which allows you to generate your own
+	    transactions. Particularly useful for things like NOTIFYs or
+	    <acronym>IM</acronym> gateways. The UAC takes care of all the
+	    transaction machinery: retransmissions , FR timeouts, forking, etc.
+	    See t_uac prototype in uac.h for more details. Who wants to see the
+	    transaction result may register for a callback.
+	</para>
+    </section>
+    
+    <section id="known_issues">
+	<title>Known Issues</title>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    We don't have authentication merging on forking.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    Local ACK/CANCELs copy'n'pastes Route and ignores deleted
+		    Routes.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    6xx should be delayed.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    Possibly, performance could be improved by not parsing
+		    non-INVITEs, as they do not be replied with 100, and do not
+		    result in ACK/CANCELs, and other things which take
+		    parsing. However, we need to rethink whether we don't need
+		    parsed headers later for something else. Remember, when we
+		    now conserver a request in sh_mem, we can't apply any
+		    pkg_mem operations to it any more. (that might be
+		    redesigned too).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    Another performance improvement may be achieved by not
+		    parsing CSeq in replies until reply branch matches branch
+		    of an INVITE/CANCEL in transaction table.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <function>t_replicate</function> should be done more
+		    cleanly--Vias, Routes, etc. should be removed from a
+		    message prior to replicating it (well, does not matter any
+		    longer so much as there is a new replication module).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <acronym>SNMP</acronym> support (as nobody cares about
+		    <acronym>SNMP</acronym>, in particular for
+		    <acronym>TM</acronym>, I will drop this item soon).
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+    
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+    <xi:include href="api.xml"/>
+
+</section>

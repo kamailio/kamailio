@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
+                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+
+<section id="tm.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="fr_timer">
+	<title><varname>fr_timer</varname> (integer)</title>
+	<para>
+	    Timer which hits if no final reply for a request or ACK for a
+	    negative INVITE reply arrives (in seconds).
+	</para>
+	<para>
+	    Default value is 30 seconds.
+	</para>
+	<example>
+	    <title>Set <varname>fr_timer</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "fr_timer", 10)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="fr_inv_timer">
+	<title><varname>fr_inv_timer</varname> (integer)</title>
+	<para>
+	    Timer which hits if no final reply for an INVITE arrives after a
+	    provisional message was received (in seconds).
+	</para>
+	<para>
+	    Default value is 120 seconds.
+	</para>
+	<example>
+	    <title>Set <varname>fr_inv_timer</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "fr_inv_timer", 200)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="wt_timer">
+	<title><varname>wt_timer</varname> (integer)</title>
+	<para>
+	    Time for which a transaction stays in memory to absorb delayed
+	    messages after it completed; also, when this timer hits,
+	    retransmission of local cancels is stopped (a puristic but complex
+	    behavior would be not to enter wait state until local branches are
+	    finished by a final reply or FR timer--we simplified).
+	</para>
+	<para>
+	    Default value is 5 seconds.
+	</para>
+	<example>
+	    <title>Set <varname>wt_timer</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "wt_timer", 10)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="delete_timer">
+	<title><varname>delete_timer</varname> (integer)</title>
+	<para>
+	    Time after which a to-be-deleted transaction currently ref-ed by a
+	    process will be tried to be deleted again.
+	</para>
+	<para>
+	    Default value is 2 seconds.
+	</para>
+	<example>
+	    <title>Set <varname>delete_timer</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "delete_timer", 5)
+...
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="retr_timer1p1">
+	<title><varname>retr_timer1p1</varname> (integer)</title>
+	<para>
+	    Retransmission period.
+	</para>
+	<para>
+	    Default value is 1 second.
+	</para>
+	<example>
+	    <title>Set <varname>retr_timer1p1</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "retr_timer1p1", 2)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="retr_timer1p2">
+	<title><varname>retr_timer1p2</varname> (integer)</title>
+	<para>
+	    Retransmission period.
+	</para>
+	<para>
+	    Default value is 2 * <varname>retr_timer1p1</varname> second.
+	</para>
+	<example>
+	    <title>Set <varname>retr_timer1p2</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "retr_timer1p2", 4)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="retr_timer1p3">
+	<title><varname>retr_timer1p3</varname> (integer)</title>
+	<para>
+	    Retransmission period.
+	</para>
+	<para>
+	    Default value is 4 * <varname>retr_timer1p1</varname> second.
+	</para>
+	<example>
+	    <title>Set <varname>retr_timer1p4</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "retr_timer1p3", 8)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="retr_timer2">
+	<title><varname>retr_timer2</varname> (integer)</title>
+	<para>
+	    Maximum retransmission period.
+	</para>
+	<para>
+	    Default value is 4 seconds.
+	</para>
+	<example>
+	    <title>Set <varname>retr_timer2</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "retr_timer2", 8)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="noisy_ctimer">
+	<title><varname>noisy_ctimer</varname> (integer)</title>
+	<para>
+	    If set, on FR timer INVITE transactions will be explicitly canceled
+	    if possible, silently dropped otherwise. Preferably, it is turned
+	    off to allow very long ringing.  This behavior is overridden if a
+	    request is forked, or some functionality explicitly turned it off
+	    for a transaction (like acc does to avoid unaccounted transactions
+	    due to expired timer).
+	</para>
+	<para>
+	    Default value is 0 (false).
+	</para>
+	<example>
+	    <title>Set <varname>noisy_ctimer</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "noisy_ctimer", 1)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+</section>
