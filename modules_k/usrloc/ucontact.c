@@ -126,6 +126,7 @@ void free_ucontact(ucontact_t* _c)
 	if (_c->user_agent.s) shm_free(_c->user_agent.s);
 	if (_c->callid.s) shm_free(_c->callid.s);
 	if (_c->c.s) shm_free(_c->c.s);
+	shm_free( _c );
 }
 
 
@@ -364,8 +365,7 @@ int st_expired_ucontact(ucontact_t* _c)
 /*
  * Called when the timer is about flushing the contact,
  * updates contact state and returns 1 if the contact
- * should be inserted, 2 if update , 3 if delete 
- * from memory, 4 if delete from database and 0 otherwise
+ * should be inserted, 2 if update and 0 otherwise
  */
 int st_flush_ucontact(ucontact_t* _c)
 {

@@ -311,16 +311,17 @@ static inline int wb_timer(urecord_t* _r)
 			t = ptr;
 			ptr = ptr->next;
 			
-			     /* Should we remove the contact from the database ? */
+			/* Should we remove the contact from the database ? */
 			if (st_expired_ucontact(t) == 1) {
 				if (db_delete_ucontact(t) < 0) {
-					LOG(L_ERR, "wb_timer(): Can't delete contact from the database\n");
+					LOG(L_ERR, "wb_timer: Can't delete contact from "
+						"the database\n");
 				}
 			}
 			
 			mem_delete_ucontact(_r, t);
 		} else {
-			     /* Determine the operation we have to do */
+			/* Determine the operation we have to do */
 			op = st_flush_ucontact(ptr);
 			
 			switch(op) {
@@ -329,24 +330,15 @@ static inline int wb_timer(urecord_t* _r)
 
 			case 1: /* insert */
 				if (db_insert_ucontact(ptr) < 0) {
-					LOG(L_ERR, "wb_timer(): Error while inserting contact into database\n");
+					LOG(L_ERR, "wb_timer: Error while inserting contact "
+						"into database\n");
 				}
 				break;
 
 			case 2: /* update */
 				if (db_update_ucontact(ptr) < 0) {
-					LOG(L_ERR, "wb_timer(): Error while updating contact in db\n");
+					LOG(L_ERR,"wb_timer: Error while updating contact in db\n");
 				}
-				break;
-
-			case 4: /* delete */
-				if (db_delete_ucontact(ptr) < 0) {
-					LOG(L_ERR, "wb_timer(): Can't delete contact from database\n");
-				}
-				     /* fall through to the next case statement */
-
-			case 3: /* delete from memory */
-				mem_delete_ucontact(_r, ptr);
 				break;
 			}
 
