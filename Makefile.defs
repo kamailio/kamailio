@@ -41,6 +41,7 @@
 #  2005-06-01  use $(LOCALBASE) instead of /usr/{local,pkg} (andrei)
 #  2005-06-06  ppc64 support & missing ppc optimizations section added (andrei)
 #  2005-07-06  gcc 4.0 optimizations support (andrei)
+#  2005-07-25  better solaris arch detection (andrei)
 
 
 # check if already included/exported
@@ -61,9 +62,24 @@ EXTRAVERSION = -rc1
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
-ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/  \
-			-e s/armv4l/arm/ -e "s/Power Macintosh/ppc/" -e "s/cobalt/mips2/" \
+
+ifeq ($(OS),solaris)
+	GETARCH=uname -p
+else
+	GETARCH=uname -m
+endif
+
+ARCH := $(shell $(GETARCH) |sed -e s/i.86/i386/ -e s/sun4u/sparc64/  \
+			-e s/armv4l/arm/ -e "s/Power Macintosh/ppc/" \
+			-e "s/cobalt/mips2/" \
 			-e s/amd64/x86_64/ )
+# fix sparc -> sparc64
+ifeq ($(ARCH),sparc)
+	ifeq ($(shell uname -m),sun4u)
+		ARCH := sparc64
+	endif
+endif
+
 OSREL = $(shell uname -r)
 
 # TLS support
@@ -345,7 +361,7 @@ endif
 # platform dependent settings
 
 # find ld & as name (gnu or solaris)
-ifeq ($(ARCH), sparc64)
+ifeq ($(OS), solaris)
 ifeq ($(CC_NAME), gcc)
 		LDGCC=$(shell $(CC) -v 2>&1 | grep with-ld| \
 				   sed -e 's/.*--with-ld=\([^ ][^ ]*\).*/\1/' )
@@ -890,20 +906,14 @@ CFLAGS+= $(CC_EXTRA_OPTS)
 
 # setting LDFLAGS
 ifeq	($(CC_NAME), gcc)
-ifeq		($(ARCH), sparc64)
-ifeq			($(LDTYPE), solaris)
-					# solaris ld
-					LDFLAGS+=-O2 $(PROFILE)
-					MOD_LDFLAGS=-G $(LDFLAGS)
-else			
-					#gcc and maybe others, on solaris, with gnu ld
-					LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE) 
-					MOD_LDFLAGS=-shared $(LDFLAGS)
-endif
-else
-			#gcc and maybe others
-			LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE) 
-			MOD_LDFLAGS=-shared $(LDFLAGS)
+ifeq		($(LDTYPE), solaris)
+		# solaris ld
+		LDFLAGS+=-O2 $(PROFILE)
+		MOD_LDFLAGS=-G $(LDFLAGS)
+else		
+		#gcc and maybe others, => gnu ld
+		LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE) 
+		MOD_LDFLAGS=-shared $(LDFLAGS)
 endif
 endif
 ifeq	($(CC_NAME), icc)
@@ -982,7 +992,7 @@ endif
 
 ifeq  ($(OS), solaris)
 	DEFS+= -DHAVE_GETIPNODEBYNAME -DHAVE_SYS_SOCKIO_H -DHAVE_SCHED_YIELD \
-			-DHAVE_ALLOCA_H
+			-DHAVE_ALLOCA_H -DUSE_SIGACTION
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes

@@ -35,7 +35,8 @@
  *  2003-04-08  init_mallocs split into init_{pkg,shm}_mallocs and 
  *               init_shm_mallocs called after cmd. line parsing (andrei)
  *  2003-04-15  added tcp_disable support (andrei)
- *  2003-05-09  closelog() before openlog to force opening a new fd (needed on solaris) (andrei)
+ *  2003-05-09  closelog() before openlog to force opening a new fd 
+ *               (needed on solaris) (andrei)
  *  2003-06-11  moved all signal handlers init. in install_sigs and moved it
  *               after daemonize (so that we won't catch anymore our own
  *               SIGCHLD generated when becoming session leader) (andrei)
@@ -56,6 +57,7 @@
  *               crashed childvwhich still holds the lock  (andrei)
  *  2004-12-02  removed -p, extended -l to support [proto:]address[:port],
  *               added parse_phostport, parse_proto (andrei)
+ *  2005-07-25  use sigaction for setting the signal handlers (andrei)
  */
 
 
@@ -399,11 +401,34 @@ void cleanup(show_status)
 static void kill_all_children(int signum)
 {
 	int r;
+
 	if (own_pgid) kill(0, signum);
 	else if (pt)
 		for (r=1; r<process_count(); r++)
 			if (pt[r].pid) kill(pt[r].pid, signum);
 }
+
+
+
+#ifdef USE_SIGACTION
+static void (*set_sig_h(int sig, void (*handler) (int) ))(int)
+{
+	struct sigaction act;
+	struct sigaction old;
+	
+	memset(&act, 0, sizeof(act));
+	act.sa_handler=handler;
+	/*
+	sigemptyset(&act.sa_mask);
+	act.sa_flags=0;
+	*/
+	LOG(L_CRIT, "setting signal %d to %p\n", sig, handler);
+	/* sa_sigaction not set, we use sa_hanlder instead */ 
+	return (sigaction (sig, &act, &old)==-1)?SIG_ERR:old.sa_handler;
+}
+#else
+#define set_sig_h signal
+#endif
 
 
 
@@ -503,17 +528,17 @@ void handle_sigs()
 #endif
 			/* exit */
 			kill_all_children(SIGTERM);
-			if (signal(SIGALRM, sig_alarm_kill) == SIG_ERR ) {
+			if (set_sig_h(SIGALRM, sig_alarm_kill) == SIG_ERR ) {
 				LOG(L_ERR, "ERROR: could not install SIGALARM handler\n");
 				/* continue, the process will die anyway if no
 				 * alarm is installed which is exactly what we want */
 			}
 			alarm(60); /* 1 minute close timeout */
 			while(wait(0) > 0); /* wait for all the children to terminate*/
-			signal(SIGALRM, sig_alarm_abort);
+			set_sig_h(SIGALRM, sig_alarm_abort);
 			cleanup(1); /* cleanup & show status*/
 			alarm(0);
-			signal(SIGALRM, SIG_IGN);
+			set_sig_h(SIGALRM, SIG_IGN);
 			DBG("terminating due to SIGCHLD\n");
 			exit(0);
 			break;
@@ -587,33 +612,32 @@ static void sig_usr(int signo)
 int install_sigs()
 {
 	/* added by jku: add exit handler */
-	if (signal(SIGINT, sig_usr) == SIG_ERR ) {
+	if (set_sig_h(SIGINT, sig_usr) == SIG_ERR ) {
 		DPrint("ERROR: no SIGINT signal handler can be installed\n");
 		goto error;
 	}
 	/* if we debug and write to a pipe, we want to exit nicely too */
-	if (signal(SIGPIPE, sig_usr) == SIG_ERR ) {
+	if (set_sig_h(SIGPIPE, sig_usr) == SIG_ERR ) {
 		DPrint("ERROR: no SIGINT signal handler can be installed\n");
 		goto error;
 	}
-	
-	if (signal(SIGUSR1, sig_usr)  == SIG_ERR ) {
+	if (set_sig_h(SIGUSR1, sig_usr)  == SIG_ERR ) {
 		DPrint("ERROR: no SIGUSR1 signal handler can be installed\n");
 		goto error;
 	}
-	if (signal(SIGCHLD , sig_usr)  == SIG_ERR ) {
+	if (set_sig_h(SIGCHLD , sig_usr)  == SIG_ERR ) {
 		DPrint("ERROR: no SIGCHLD signal handler can be installed\n");
 		goto error;
 	}
-	if (signal(SIGTERM , sig_usr)  == SIG_ERR ) {
+	if (set_sig_h(SIGTERM , sig_usr)  == SIG_ERR ) {
 		DPrint("ERROR: no SIGTERM signal handler can be installed\n");
 		goto error;
 	}
-	if (signal(SIGHUP , sig_usr)  == SIG_ERR ) {
+	if (set_sig_h(SIGHUP , sig_usr)  == SIG_ERR ) {
 		DPrint("ERROR: no SIGHUP signal handler can be installed\n");
 		goto error;
 	}
-	if (signal(SIGUSR2 , sig_usr)  == SIG_ERR ) {
+	if (set_sig_h(SIGUSR2 , sig_usr)  == SIG_ERR ) {
 		DPrint("ERROR: no SIGUSR2 signal handler can be installed\n");
 		goto error;
 	}

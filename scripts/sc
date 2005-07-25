@@ -26,6 +26,7 @@ SYSLOG=1 # 0=output to console, 1=output to syslog
 STARTOPTIONS= # for example -dddd
 DIR=`dirname $0`
 SERBIN=$DIR/ser
+AWK=awk
 
 # ser's FIFO server
 if [ -z "$SER_FIFO" ]; then
@@ -198,8 +199,8 @@ get_my_host() {
 # calculate name and domain of current user
 set_user() {
 
-	SERUSER=`echo $1|awk -F @ '{print $1}'`
-	SERDOMAIN=`echo $1|awk -F @ '{print $2}'`
+	SERUSER=`echo $1|$AWK -F @ '{print $1}'`
+	SERDOMAIN=`echo $1|$AWK -F @ '{print $2}'`
 
 	if [ -z "$SERDOMAIN" ] ; then
 		SERDOMAIN="$SIP_DOMAIN"
@@ -286,7 +287,7 @@ filter_fl()
 {
 #	tail +2
 	
-	awk 'BEGIN {line=0;IGNORECASE=1;}
+	$AWK 'BEGIN {line=0;IGNORECASE=1;}
 		{line++}
 		line==1 && /^200 ok/ { next }
 		{ print }'
@@ -911,7 +912,7 @@ case $1 in
 			exit 1
 		fi
 		chmod a+w $path
-		trap "rm $path;  clear; echo sc monitor ^C-ed; exit 1" 2
+		trap "rm $path;  clear; echo 'sc monitor ^C-ed'; exit 1" 2
 		attempt=0
 		if [ "$2" == "" ]; then
 		    loops=-1;
@@ -920,7 +921,7 @@ case $1 in
 		fi
 		clear
 		while [ $loops -ne $attempt ] ; do
-			attempt=$(($attempt + 1))
+			attempt=`expr $attempt + 1`
 			#clear
 			tput cup 0 0
 			print_stats $name $path $attempt
@@ -970,7 +971,7 @@ case $1 in
 		;;
 
 	online)
-		fifo_cmd ul_dump |grep aor| awk '{print $3}' | sort | sort -mu
+		fifo_cmd ul_dump |grep aor| $AWK '{print $3}' | sort | sort -mu
 		exit $?
 		;;
 
