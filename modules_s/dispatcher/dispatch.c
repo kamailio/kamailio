@@ -372,11 +372,13 @@ unsigned int ds_get_hash(str *x, str *y)
 	h=0;
 	if(x)
 	{
-		for (p=x->s; p<=(x->s+x->len-4); p+=4)
-		{
-			v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
-			h+=v^(v>>3);
-		}
+		p=x->s;
+		if (x->len>=4){
+			for (;p<=(x->s+x->len-4); p+=4){
+				v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
+				h+=v^(v>>3);
+			}
+		};
 		v=0;
 		for (;p<(x->s+x->len); p++)
 		{ 
@@ -387,12 +389,13 @@ unsigned int ds_get_hash(str *x, str *y)
 	}
 	if(y)
 	{
-		for (p=y->s; p<=(y->s+y->len-4); p+=4)
-		{
-			v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
-			h+=v^(v>>3);
-		}
-	
+		p=y->s;
+		if (y->len>=4){
+			for (;p<=(y->s+y->len-4); p+=4){
+				v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
+				h+=v^(v>>3);
+			}
+		};
 		v=0;
 		for (;p<(y->s+y->len); p++)
 		{ 
