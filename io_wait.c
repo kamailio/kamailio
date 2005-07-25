@@ -511,11 +511,7 @@ int init_io_wait(io_wait_h* h, int max_fd, enum poll_types poll_method)
 			LOG(L_INFO, "init_io_wait: using %s as the io watch method"
 					" (auto detected)\n", poll_method_str[poll_method]);
 		}
-	}else{
-			LOG(L_INFO, "init_io_wait: using %s io watch method (forced)\n",
-					poll_method_str[poll_method]);
 	}
-
 	
 	h->poll_method=poll_method;
 	

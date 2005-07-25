@@ -687,7 +687,7 @@ void qm_status(struct qm_block* qm)
 
 /* fills a malloc info structure with info about the block
  * if a parameter is not supported, it will be filled with 0 */
-void qm_info(struct qm_block* qm, struct meminfo* info)
+void qm_info(struct qm_block* qm, struct mem_info* info)
 {
 	int r;
 	long total_frags;

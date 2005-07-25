@@ -148,7 +148,7 @@ void* qm_realloc(struct qm_block*, void* p, unsigned long size);
 #endif
 
 void  qm_status(struct qm_block*);
-void  qm_info(struct qm_block*, struct meminfo*);
+void  qm_info(struct qm_block*, struct mem_info*);
 
 
 #endif

@@ -549,7 +549,7 @@ void fm_status(struct fm_block* qm)
 
 /* fills a malloc info structure with info about the block
  * if a parameter is not supported, it will be filled with 0 */
-void fm_info(struct fm_block* qm, struct meminfo* info)
+void fm_info(struct fm_block* qm, struct mem_info* info)
 {
 	int r;
 	long total_frags;

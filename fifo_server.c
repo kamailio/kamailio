@@ -876,7 +876,7 @@ static int ps_fifo_cmd(FILE *stream, char *response_file )
 
 static int meminfo_fifo_cmd( FILE *stream, char *response_file )
 {
-	struct meminfo mi;
+	struct mem_info mi;
 	
 	if (response_file==0 || *response_file==0 ) { 
 		LOG(L_ERR, "ERROR: meminfo_fifo_cmd: null file\n");
