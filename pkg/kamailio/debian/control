@@ -31,7 +31,7 @@ Description: contains the mysql database connectivity module for openser.
 
 Package: openser-postgres-module
 Architecture: any
-Depends: ${shlibs:Depends}, ser (= ${Source-Version})
+Depends: ${shlibs:Depends}, openser (= ${Source-Version})
 Description: contains the postgres database connectivity module for openser.
  This has been split out of the main ser package, so that ser will not
  depend upon libbpq. This module will enable you to use the digest
