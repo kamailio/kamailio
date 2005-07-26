@@ -264,8 +264,8 @@ modparam("avpops","db_scheme",
 
      * source - what info is used for identifying the AVPs.
        Parameter syntax:
-          + source = (sip_uri)['/'('username'|'domain')]) |
-            (avp_alias) | str_value 
+          + source = (sip_uri|avp_alias|str_value)
+            ['/'('username'|'domain'|'uri'|'uuid')]) 
           + sip_uri = '$from' | '$to' | '$ruri' 
      * name - which AVPs will be loaded from DB into memory.
        Parameter syntax is:

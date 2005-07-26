@@ -71,6 +71,8 @@
 /* flags for operation flags    24..31 */
 #define AVPOPS_FLAG_USER0    (1<<24)
 #define AVPOPS_FLAG_DOMAIN0  (1<<25)
+#define AVPOPS_FLAG_URI0     (1<<26)
+#define AVPOPS_FLAG_UUID0    (1<<27)
 
 /* operation flags  */
 #define AVPOPS_OP_EQ        (1<<0)

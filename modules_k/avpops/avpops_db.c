@@ -204,13 +204,16 @@ static inline int prepare_selection( str *uuid, str *username, str *domain,
 		vals_cmp[ nr_keys_cmp ].val.str_val = *uuid;
 		nr_keys_cmp++;
 	} else {
-		/* username column */
-		keys_cmp[ nr_keys_cmp ] =
+		if (username)
+		{
+			/* username column */
+			keys_cmp[ nr_keys_cmp ] =
 			(scheme&&scheme->username_col)?scheme->username_col:db_columns[4];
-		vals_cmp[ nr_keys_cmp ].type = DB_STR;
-		vals_cmp[ nr_keys_cmp ].nul  = 0;
-		vals_cmp[ nr_keys_cmp ].val.str_val = *username;
-		nr_keys_cmp++;
+			vals_cmp[ nr_keys_cmp ].type = DB_STR;
+			vals_cmp[ nr_keys_cmp ].nul  = 0;
+			vals_cmp[ nr_keys_cmp ].val.str_val = *username;
+			nr_keys_cmp++;
+		}
 		if (domain)
 		{
 			/* domain column */

@@ -259,11 +259,13 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 	struct fis_param *sp;
 	struct db_param  *dbp;
 	int flags;
+	int flags0;
 	str alias;
 	char *s;
 	char *p;
 
 	flags=0;
+	flags0=0;
 	if (DB_URL==0)
 	{
 		LOG(L_ERR,"ERROR:avpops:fixup_db_avp: you have to config a db url "
@@ -282,10 +284,28 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 		}
 		memset( sp, 0, sizeof(struct fis_param));
 
+		if ( (p=strchr(s,'/'))!=0)
+		{
+			*(p++) = 0;
+			/* check for extra flags/params */
+			if (!strcasecmp("domain",p)) {
+				flags|=AVPOPS_FLAG_DOMAIN0;
+			} else if (!strcasecmp("username",p)) {
+				flags|=AVPOPS_FLAG_USER0;
+			} else if (!strcasecmp("uri",p)) {
+				flags|=AVPOPS_FLAG_URI0;
+			} else if (!strcasecmp("uuid",p)) {
+				flags|=AVPOPS_FLAG_UUID0;
+			} else {
+				LOG(L_ERR,"ERROR:avpops:fixup_db_avp: unknow flag "
+					"<%s>\n",p);
+				return E_UNSPEC;
+			}
+		}
 		if (*s!='$')
 		{
 			/* is a constant string -> use it as uuid*/
-			sp->opd = AVPOPS_VAL_STR;
+			sp->opd = ((flags==0)?AVPOPS_FLAG_UUID0:flags)|AVPOPS_VAL_STR;
 			sp->val.s = (str*)pkg_malloc(strlen(s)+1+sizeof(str));
 			if (sp->val.s==0) {
 				LOG(L_ERR,"ERROR:avpops:fixup_db_avp: no more pkg mem\n");
@@ -297,33 +317,24 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 		} else {
 			/* is a variable $xxxxx */
 			s++;
-			if ( (p=strchr(s,'/'))!=0)
-				*(p++) = 0;
 			if ( (!strcasecmp( "from", s) && (flags|=AVPOPS_USE_FROM)) 
-			|| (!strcasecmp( "to", s) && (flags|=AVPOPS_USE_TO)) 
-			|| (!strcasecmp( "ruri", s) && (flags|=AVPOPS_USE_RURI)) )
+					|| (!strcasecmp( "to", s) && (flags|=AVPOPS_USE_TO)) 
+					|| (!strcasecmp( "ruri", s) && (flags|=AVPOPS_USE_RURI)) )
 			{
-				/* check for extra flags/params */
-				if (p&&(!strcasecmp("domain",p)&&!(flags|=AVPOPS_FLAG_DOMAIN0)))
-				{
-					LOG(L_ERR,"ERROR:avpops:fixup_db_avp: unknow flag "
-						"<%s>\n",p);
-					return E_UNSPEC;
-				}
-				memset( sp, 0, sizeof(struct fis_param));
-				sp->opd = flags|AVPOPS_VAL_NONE;
+				memset(sp, 0, sizeof(struct fis_param));
+				sp->opd = ((flags==0)?AVPOPS_FLAG_URI0:flags)|AVPOPS_VAL_NONE;
 			} else {
 				/* can be only an AVP alias */
 				alias .s = s;
 				alias.len = strlen(alias.s);
-				if ( p || lookup_avp_galias( &alias, &flags, &sp->val)==-1 )
+				if (lookup_avp_galias( &alias, &flags0, &sp->val)==-1 )
 				{
 					LOG(L_ERR,"ERROR:avpops:fixup_db_avp: source/flags \"%s\""
 						" unknown!\n",s);
 					return E_UNSPEC;
 				}
-				sp->opd = AVPOPS_VAL_AVP |
-					((flags&AVP_NAME_STR)?AVPOPS_VAL_STR:AVPOPS_VAL_INT);
+				sp->opd = ((flags==0)?AVPOPS_FLAG_UUID0:flags)|AVPOPS_VAL_AVP |
+					((flags0&AVP_NAME_STR)?AVPOPS_VAL_STR:AVPOPS_VAL_INT);
 			}
 		}
 		pkg_free(*param);

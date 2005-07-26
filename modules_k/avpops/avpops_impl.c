@@ -308,32 +308,76 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 	db_res_t         *res;
 	str              uuid;
 	int  i, n, sh_flg;
+	str *s0, *s1, *s2;
 
+	s0 = s1 = s2 = NULL;
 	if (sp->opd&AVPOPS_VAL_NONE)
 	{
 		/* get and parse uri */
-		if (parse_source_uri( msg, sp->opd, &uri)<0 )
+		if(sp->opd&AVPOPS_FLAG_UUID0)
 		{
-			LOG(L_ERR,"ERROR:avpops:load_avps: failed to get uri\n");
-			goto error;
+			if((s0 = get_source_uri(msg,sp->opd))==NULL)
+			{
+				LOG(L_ERR,"ERROR:avpops:load_avps: failed to get uri!\n");
+				goto error;
+			}
+		} else {
+			if (parse_source_uri(msg, sp->opd, &uri)<0 )
+			{
+				LOG(L_ERR,"ERROR:avpops:load_avps: failed to get uri\n");
+				goto error;
+			}
+			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
+				s1 = &uri.user;
+			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_DOMAIN0))
+				s2 = &uri.host;
 		}
 		/* do DB query */
-		res = db_load_avp( 0, (sp->opd&AVPOPS_FLAG_DOMAIN0)?&empty:&uri.user,
-				(use_domain||(sp->opd&AVPOPS_FLAG_DOMAIN0))?&uri.host:0,
+		res = db_load_avp( s0, s1,
+				((use_domain)||(sp->opd&AVPOPS_FLAG_DOMAIN0))?s2:0,
 				dbp->sa.s, dbp->table , dbp->scheme);
-	} else if (sp->opd&AVPOPS_VAL_AVP) {
+	} else if ((sp->opd&AVPOPS_VAL_AVP)||(sp->opd&AVPOPS_VAL_STR)) {
 		/* get uuid from avp */
-		if (get_avp_as_str( sp, &uuid)<0)
+		if (sp->opd&AVPOPS_VAL_AVP)
 		{
-			LOG(L_ERR,"ERROR:avpops:load_avps: failed to get uuid\n");
-			goto error;
+			if (get_avp_as_str(sp, &uuid)<0)
+			{
+				LOG(L_ERR,"ERROR:avpops:load_avps: failed to get uuid\n");
+				goto error;
+			}
+		} else {
+			uuid.s   = sp->val.s->s;
+			uuid.len = sp->val.s->len;
+		}
+		
+		if(sp->opd&AVPOPS_FLAG_UUID0)
+		{
+			s0 = &uuid;
+		} else {
+			/* parse uri */
+			if (parse_uri(uuid.s, uuid.len, &uri)<0)
+			{
+				LOG(L_ERR,"ERROR:avpops:load_avps: failed to parse uri\n");
+				goto error;
+			}
+
+			/* check uri */
+			if(!uri.user.s|| !uri.user.len|| !uri.host.len|| !uri.host.s)
+			{
+				LOG(L_ERR,"ERROR:avpops:load_avps: incomplet uri <%.*s>\n",
+					uuid.len, uuid.s);
+				goto error;
+			}
+
+			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
+				s1 = &uri.user;
+			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_DOMAIN0))
+				s2 = &uri.host;
 		}
 		/* do DB query */
-		res = db_load_avp( &uuid, 0, 0, dbp->sa.s, dbp->table, dbp->scheme);
-	} else  if (sp->opd&AVPOPS_VAL_STR) {
-		/* use the STR val as uuid */
-		/* do DB query */
-		res = db_load_avp( sp->val.s, 0, 0, dbp->sa.s, dbp->table, dbp->scheme);
+		res = db_load_avp( s0, s1,
+				((use_domain)||(sp->opd&AVPOPS_FLAG_DOMAIN0))?s2:0,
+				dbp->sa.s, dbp->table, dbp->scheme);
 	} else {
 		LOG(L_CRIT,"BUG:avpops:load_avps: invalid flag combination (%d/%d)\n",
 			sp->opd, sp->ops);
@@ -376,47 +420,83 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 	unsigned short   name_type;
 	int_str          i_s;
 	str              uuid;
-	int              keys_off;
 	int              keys_nr;
 	int              n;
+	str *s0, *s1, *s2;
+
+	s0 = s1 = s2 = NULL;
 	
 
+	keys_nr = 6; /* uuid, avp name, avp val, avp type, user, domain */
 	if (sp->opd&AVPOPS_VAL_NONE)
 	{
 		/* get and parse uri */
-		if (parse_source_uri( msg, sp->opd, &uri)<0 )
+		if(sp->opd&AVPOPS_FLAG_UUID0)
 		{
-			LOG(L_ERR,"ERROR:avpops:store_avps: failed to get uri\n");
-			goto error;
-		}
-		/* set values for keys  */
-		keys_off = 1;
-		store_vals[4].val.str_val =
-			(sp->opd&AVPOPS_FLAG_DOMAIN0)?empty:uri.user;
-		if (use_domain || sp->opd&AVPOPS_FLAG_DOMAIN0)
-		{
-			store_vals[5].val.str_val = uri.host;
-			keys_nr = 5;
+			if((s0 = get_source_uri(msg,sp->opd))==NULL)
+			{
+				LOG(L_ERR,"ERROR:avpops:load_avps: failed to get uri!\n");
+				goto error;
+			}
 		} else {
-			keys_nr = 4;
+			if (parse_source_uri(msg, sp->opd, &uri)<0 )
+			{
+				LOG(L_ERR,"ERROR:avpops:store_avps: failed to get uri\n");
+				goto error;
+			}
+			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
+				s1 = &uri.user;
+			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_DOMAIN0))
+				s2 = &uri.host;
 		}
-	} else if (sp->opd&AVPOPS_VAL_AVP) {
+		/* set values for keys  */
+		store_vals[0].val.str_val = (s0)?*s0:empty;
+		store_vals[4].val.str_val = (s1)?*s1:empty;
+		if (use_domain || sp->opd&AVPOPS_FLAG_DOMAIN0)
+			store_vals[5].val.str_val = (s2)?*s2:empty;
+	} else if ((sp->opd&AVPOPS_VAL_AVP)||(sp->opd&AVPOPS_VAL_STR)) {
 		/* get uuid from avp */
-		if (get_avp_as_str(sp, &uuid)<0)
+		if (sp->opd&AVPOPS_VAL_AVP)
 		{
-			LOG(L_ERR,"ERROR:avpops:store_avps: failed to get uuid\n");
-			goto error;
+			if (get_avp_as_str(sp, &uuid)<0)
+			{
+				LOG(L_ERR,"ERROR:avpops:load_avps: failed to get uuid\n");
+				goto error;
+			}
+		} else {
+			uuid.s   = sp->val.s->s;
+			uuid.len = sp->val.s->len;
+		}
+		
+		if(sp->opd&AVPOPS_FLAG_UUID0)
+		{
+			s0 = &uuid;
+		} else {
+			/* parse uri */
+			if (parse_uri(uuid.s, uuid.len, &uri)<0)
+			{
+				LOG(L_ERR,"ERROR:avpops:load_avps: failed to parse uri\n");
+				goto error;
+			}
+
+			/* check uri */
+			if(!uri.user.s|| !uri.user.len|| !uri.host.len|| !uri.host.s)
+			{
+				LOG(L_ERR,"ERROR:avpops:load_avps: incomplet uri <%.*s>\n",
+					uuid.len, uuid.s);
+				goto error;
+			}
+
+			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
+				s1 = &uri.user;
+			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_DOMAIN0))
+				s2 = &uri.host;
 		}
 		/* set values for keys  */
-		keys_off = 0;
-		keys_nr = 4;
-		store_vals[0].val.str_val = uuid;
-	} else if (sp->opd&AVPOPS_VAL_STR) {
-		/* use the STR value as uuid */
-		/* set values for keys  */
-		keys_off = 0;
-		keys_nr = 4;
-		store_vals[0].val.str_val = *sp->val.s;
+		store_vals[0].val.str_val = (s0)?*s0:empty;
+		store_vals[4].val.str_val = (s1)?*s1:empty;
+		if (use_domain || sp->opd&AVPOPS_FLAG_DOMAIN0)
+			store_vals[5].val.str_val = (s2)?*s2:empty;
 	} else {
 		LOG(L_CRIT,"BUG:avpops:store_avps: invalid flag combination (%d/%d)\n",
 			sp->opd, sp->ops);
@@ -445,7 +525,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 			int_str2db_val( i_s, &store_vals[2].val.str_val,
 				avp->flags&AVP_VAL_STR);
 			/* save avp */
-			if (db_store_avp( store_keys+keys_off, store_vals+keys_off,
+			if (db_store_avp( store_keys, store_vals,
 					keys_nr, dbp->table)==0 )
 			{
 				avp->flags |= AVP_IS_IN_DB;
@@ -481,7 +561,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 			int_str2db_val( i_s, &store_vals[2].val.str_val,
 				avp->flags&AVP_VAL_STR);
 			/* save avp */
-			if (db_store_avp( store_keys+keys_off, store_vals+keys_off,
+			if (db_store_avp( store_keys, store_vals,
 			keys_nr, dbp->table)==0)
 			{
 				avp->flags |= AVP_IS_IN_DB;
@@ -505,32 +585,77 @@ int ops_dbdelete_avps (struct sip_msg* msg, struct fis_param *sp,
 	struct sip_uri  uri;
 	int             res;
 	str             uuid;
+	str *s0, *s1, *s2;
+
+	s0 = s1 = s2 = NULL;
 
 	if (sp->opd&AVPOPS_VAL_NONE)
 	{
 		/* get and parse uri */
-		if (parse_source_uri( msg, sp->opd, &uri)<0 )
+		if(sp->opd&AVPOPS_FLAG_UUID0)
 		{
-			LOG(L_ERR,"ERROR:avpops:dbdelete_avps: failed to get uri\n");
-			goto error;
+			if((s0 = get_source_uri(msg,sp->opd))==NULL)
+			{
+				LOG(L_ERR,"ERROR:avpops:load_avps: failed to get uri!\n");
+				goto error;
+			}
+		} else {
+			if (parse_source_uri( msg, sp->opd, &uri)<0 )
+			{
+				LOG(L_ERR,"ERROR:avpops:dbdelete_avps: failed to get uri\n");
+				goto error;
+			}
+			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
+				s1 = &uri.user;
+			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_DOMAIN0))
+				s2 = &uri.host;
 		}
 		/* do DB delete */
-		res = db_delete_avp(0, (sp->opd&AVPOPS_FLAG_DOMAIN0)?&empty:&uri.user,
-				(use_domain||(sp->opd&AVPOPS_FLAG_DOMAIN0))?&uri.host:0,
+		res = db_delete_avp(s0, s1,
+				(use_domain||(sp->opd&AVPOPS_FLAG_DOMAIN0))?s2:0,
 				dbp->sa.s, dbp->table);
-	} else if (sp->opd&AVPOPS_VAL_AVP) {
+	} else if ((sp->opd&AVPOPS_VAL_AVP)||(sp->opd&AVPOPS_VAL_STR)) {
 		/* get uuid from avp */
-		if (get_avp_as_str( sp, &uuid)<0)
+		if (sp->opd&AVPOPS_VAL_AVP)
 		{
-			LOG(L_ERR,"ERROR:avpops:dbdelete_avps: failed to get uuid\n");
-			goto error;
+			if (get_avp_as_str(sp, &uuid)<0)
+			{
+				LOG(L_ERR,"ERROR:avpops:load_avps: failed to get uuid\n");
+				goto error;
+			}
+		} else {
+			uuid.s   = sp->val.s->s;
+			uuid.len = sp->val.s->len;
+		}
+		
+		if(sp->opd&AVPOPS_FLAG_UUID0)
+		{
+			s0 = &uuid;
+		} else {
+			/* parse uri */
+			if (parse_uri(uuid.s, uuid.len, &uri)<0)
+			{
+				LOG(L_ERR,"ERROR:avpops:load_avps: failed to parse uri\n");
+				goto error;
+			}
+
+			/* check uri */
+			if(!uri.user.s|| !uri.user.len|| !uri.host.len|| !uri.host.s)
+			{
+				LOG(L_ERR,"ERROR:avpops:load_avps: incomplet uri <%.*s>\n",
+					uuid.len, uuid.s);
+				goto error;
+			}
+
+			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
+				s1 = &uri.user;
+			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_DOMAIN0))
+				s2 = &uri.host;
 		}
 		/* do DB delete */
-		res = db_delete_avp( &uuid, 0, 0, dbp->sa.s, dbp->table);
-	} else if (sp->opd&AVPOPS_VAL_STR) {
-		/* use the STR value as uuid */
-		/* do DB delete */
-		res = db_delete_avp( sp->val.s, 0, 0, dbp->sa.s, dbp->table );
+		res = db_delete_avp(s0, s1,
+				(use_domain||(sp->opd&AVPOPS_FLAG_DOMAIN0))?s2:0,
+				dbp->sa.s, dbp->table);
 	} else {
 		LOG(L_CRIT,
 			"BUG:avpops:dbdelete_avps: invalid flag combination (%d/%d)\n",

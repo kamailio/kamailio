@@ -292,8 +292,8 @@ modparam("avpops","db_scheme",
 				identifying the AVPs. Parameter syntax:
 				<itemizedlist>
 					<listitem><para><emphasis>
-					source = (sip_uri)['/'('username'|'domain')]) |
-							(avp_alias) | str_value
+					source = (sip_uri|avp_alias|str_value)
+					['/'('username'|'domain'|'uri'|'uuid')])		
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
 					sip_uri = '$from' | '$to' | '$ruri'
