@@ -201,6 +201,10 @@ modparam("group", "use_domain", 1)
 			    <listitem>
 				<para>Credentials - Use digest credentials username.</para>
 			    </listitem>
+			    <listitem>
+				<para>$avp[avp_name|avp_alias] - Use the URI from the AVP
+				specified by this pseudo-variable.</para>
+			    </listitem>
 			</itemizedlist>
 		    </para>
 		</listitem>

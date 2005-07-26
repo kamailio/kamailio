@@ -111,13 +111,16 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 	struct sip_uri puri;
 	struct hdr_field* h;
 	struct auth_body* c = 0; /* Makes gcc happy */
-
+	group_check_p gcp=NULL;
+	xl_value_t value;
+	
 	keys[0] = user_column.s;
 	keys[1] = group_column.s;
 	keys[2] = domain_column.s;
 	col[0] = group_column.s;
 	
-	hf_type = (long)_hf;
+	gcp = (group_check_p)_hf;
+	hf_type = (long)gcp->id;
 
 	uri.s = 0;
 	uri.len = 0;
@@ -155,6 +158,17 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 		}
 	
 		c = (auth_body_t*)(h->parsed);
+		break;
+	case 5: /* AVP spec */
+		if(xl_get_spec_value(_msg, &gcp->sp, &value)!=0 
+				|| value.flags&XL_VAL_NULL || value.rs.len<=0)
+		{
+			LOG(L_ERR,
+				"is_user_in(): no AVP found (error in scripts)\n");
+			return -1;
+		}
+		uri.s = value.rs.s;
+		uri.len = value.rs.len;
 		break;
 	}
 

@@ -185,23 +185,38 @@ static int hf_fixup(void** param, int param_no)
 {
 	void* ptr;
 	str* s;
-
+	group_check_p gcp=NULL;
+	
 	if (param_no == 1) {
+		gcp = (group_check_p)pkg_malloc(sizeof(group_check_t));
+		if(gcp == NULL)
+		{
+			LOG(L_ERR, "group:hf_fixup: no more memory\n");
+			return E_UNSPEC;
+		}
+		memset(gcp, 0, sizeof(group_check_t));
 		ptr = *param;
 		
 		if (!strcasecmp((char*)*param, "Request-URI")) {
-			*param = (void*)1;
+			gcp->id = 1;
 		} else if (!strcasecmp((char*)*param, "To")) {
-			*param = (void*)2;
+			gcp->id = 2;
 		} else if (!strcasecmp((char*)*param, "From")) {
-			*param = (void*)3;
+			gcp->id = 3;
 		} else if (!strcasecmp((char*)*param, "Credentials")) {
-			*param = (void*)4;
+			gcp->id = 4;
 		} else {
-			LOG(L_ERR, "hf_fixup(): Unsupported Header Field identifier\n");
-			return E_UNSPEC;
+			if(xl_parse_spec((char*)*param, &gcp->sp,
+					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==NULL
+				|| gcp->sp.type!=XL_AVP)
+			{
+				LOG(L_ERR,
+					"group:hf_fixup: Unsupported User Field identifier\n");
+				return E_UNSPEC;
+			}
+			gcp->id = 5;
 		}
-
+		*param = (void*)gcp;
 		pkg_free(ptr);
 	} else if (param_no == 2) {
 		s = (str*)pkg_malloc(sizeof(str));

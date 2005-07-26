@@ -32,8 +32,13 @@
 #define GROUP_H
 
 #include "../../parser/msg_parser.h"
+#include "../../items.h"
 
-
+typedef struct _group_check
+{
+	int id;
+	xl_spec_t sp;
+} group_check_t, *group_check_p;
 /*
  * Check if username in specified header field is in a table
  */

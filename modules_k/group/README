@@ -165,6 +165,8 @@ modparam("group", "use_domain", 1)
           + To - Use To username and (optionally) domain.
           + From - Use From username and (optionally) domain.
           + Credentials - Use digest credentials username.
+          + $avp[avp_name|avp_alias] - Use the URI from the AVP
+            specified by this pseudo-variable.
      * group - Name of the group to check.
 
    Example 1-7. is_user_in usage
