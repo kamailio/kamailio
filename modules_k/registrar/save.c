@@ -386,7 +386,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 {
 	ucontact_t* c, *c2;
 	str callid;
-	int cseq, e, ret;
+	int cseq, e;
 	int set, reset;
 	qvalue_t q;
 	unsigned int flags;
@@ -406,18 +406,14 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 		flags |= FL_NAT_SIPPING;
 
 	if (max_contacts) {
-		ret = test_max_contacts(_m, _r, _c);
-		if (ret != 0) {
-			build_contact(_r->contacts);
+		if (test_max_contacts(_m, _r, _c) != 0 )
 			return -1;
-		}
 	}
 
 	_c = get_first_contact(_m);
 
 	while(_c) {
 		if (calc_contact_expires(_m, _c->expires, &e) < 0) {
-			build_contact(_r->contacts);
 			LOG(L_ERR, "update(): Error while calculating expires\n");
 			return -1;
 		}
