@@ -60,6 +60,7 @@
 #include "t_cancel.h"
 #include "t_stats.h"
 #include "h_table.h"
+#include "fix_lumps.h" /* free_via_clen_lump */
 
 static enum kill_reason kr;
 
@@ -255,6 +256,9 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 		run_reqin_callbacks( new_cell, p_msg, p_msg->REQ_METHOD);
 
 	if (p_msg) {
+		/* clean possible previous added vias/clen header or else they would 
+		 * get propagated in the failure routes */
+		free_via_clen_lump(&p_msg->add_rm);
 		new_cell->uas.request = sip_msg_cloner(p_msg,&sip_msg_len);
 		if (!new_cell->uas.request)
 			goto error;
