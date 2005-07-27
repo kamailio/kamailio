@@ -133,6 +133,7 @@ void free_ucontact(ucontact_t* _c)
 	if (_c->user_agent.s) shm_free(_c->user_agent.s);
 	if (_c->callid.s) shm_free(_c->callid.s);
 	if (_c->c.s) shm_free(_c->c.s);
+	shm_free(_c);
 }
 
 
