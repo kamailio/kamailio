@@ -95,6 +95,7 @@ int main(int argc, char** argv)
 		        goto err;
 		}
 
+		from_len = sizeof(from);
 		len = recvfrom(sock, buffer, BUF_SIZE, 0, (struct sockaddr*)&from, &from_len);
 		if (len == -1) {
 			fprintf(stderr, "Error in recvfrom: %s\n", strerror(errno));
