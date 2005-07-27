@@ -59,6 +59,8 @@ static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
 	p = vp->strvalue;
 	end = vp->strvalue + vp->lvalue;
 
+	DBG("DEBUG:auth_radius:extract_avp: string is <%.*s>\n", end-p, p);
+
 	/* get name */
 	if (*p!='#') {
 		/* name AVP */
@@ -76,6 +78,8 @@ static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
 		goto error;
 	}
 	names.len = p - names.s;
+	DBG("DEBUG:auth_radius:extract_avp: AVP name is <%.*s>\n",
+		names.len, names.s);
 
 	/* get value */
 	if (*p!='#') {
@@ -88,6 +92,8 @@ static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
 		LOG(L_ERR,"ERROR:auth_radius:extract_avp: empty AVP value\n");
 		goto error;
 	}
+	DBG("DEBUG:auth_radius:extract_avp: AVP val is <%.*s>\n",
+		values.len, values.s);
 
 	if ( !((*flags)&AVP_NAME_STR) ) {
 		/* convert name to id*/
@@ -129,6 +135,9 @@ static int generate_avps(VALUE_PAIR* received)
 	VALUE_PAIR *vp;
 
 	vp = received;
+
+	DBG("DEBUG:auth_radius:generate_avps: getting SIP AVPs from avpair %d\n",
+		attrs[A_SIP_AVP].v);
 
 	for( ; (vp=rc_avpair_get(vp,attrs[A_SIP_AVP].v,0)) ; vp=vp->next) {
 		flags = 0;
@@ -368,9 +377,7 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 		rc_avpair_free(send);
 		send = 0;
 
-		if (generate_avps(received)) {
-			goto err;
-		}
+		generate_avps(received);
 
 		rc_avpair_free(received);
 		return 1;
