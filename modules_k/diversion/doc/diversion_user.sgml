@@ -77,33 +77,49 @@ modparam("diversion", "suffix", ";privacy=full")
 			parameter
 		    </para>
 		</listitem>
-	    </itemizedlist>
-	    <example>
+	</itemizedlist>
+	<example>
 		<title><function moreinfo="none">add_diversion</function> usage</title>
 		<programlisting format="linespecific">
 ...
 add_diversion("user-busy");
 ...
 </programlisting>
-	    </example>
+	</example>
 	</section>
-	    <section>
+	
+	<section>
 		<title>Diversion Example</title>
 		<para>
-		    The following example shows a Diversion header field added to 
-			INVITE message. The INVITE message was diverted by the user agent 
+			The following example shows a Diversion header field added to 
+			INVITE message. The original INVITE received by the user agent 
+			of sip:bob@sip.org is:
+		</para>
+		<programlisting format="linespecific">
+INVITE sip:bob@sip.org SIP/2.0
+Via: SIP/2.0/UDP 1.2.3.4:5060
+From: "mark" &lt;sip:mark@sip.org&gt;;tag=ldgheoihege
+To: "Bob" &lt;sip:bob@sip.org&gt;
+Call-ID: adgasdkgjhkjha@1.2.3.4
+CSeq: 3 INVITE
+Contact: &lt;sip:mark@1.2.3.4&gt;
+Content-Length: 0
+</programlisting>
+		<para>
+			The INVITE message is diverted by the user agent 
 			of sip:bob@sip.org because the user was talking to someone else 
-			and the new destination is sip:alice@sip.org .
+			and the new destination is sip:alice@sip.org :
 		</para>
 		<programlisting format="linespecific">
 INVITE sip:alice@sip.org SIP/2.0
+Via: SIP/2.0/UDP 5.6.7.8:5060
+Via: SIP/2.0/UDP 1.2.3.4:5060
 From: "mark" &lt;sip:mark@sip.org&gt;;tag=ldgheoihege
-To: "Alice" &lt;sip:alice@sip.org&gt;
+To: "Bob" &lt;sip:bob@sip.org&gt;
 Call-ID: adgasdkgjhkjha@1.2.3.4
 CSeq: 3 INVITE
-Diversion: &lt;sip:slice@sip.org&gt;;reason=user-busy
-Via: SIP/2.0/UDP 1.2.3.4:5060
-Contact: &lt;sip:mark@2.3.4.5&gt;
+Diversion: &lt;sip:bob@sip.org&gt;;reason=user-busy
+Contact: &lt;sip:mark@1.2.3.4&gt;
 Content-Length: 0
 </programlisting>
 	    </section>
