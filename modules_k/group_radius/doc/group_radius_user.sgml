@@ -14,9 +14,10 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module export functions necessary for group membership checking over radius. There
-		is a database table that contains list of users and groups they belong to. The table is
-		used by functions of this module.
+		This module export functions necessary for group membership checking 
+		over radius. There is a database table that contains list of users 
+		and groups they belong to. The table is used by functions of this 
+		module.
 	</para>
 	</section>
 
@@ -67,7 +68,7 @@
 		<title>Set <varname>radius_config</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("group", "radius_config", "/etc/radiusclient.conf")
+modparam("group_radius", "radius_config", "/etc/radiusclient.conf")
 ...
 </programlisting>
 		</example>
@@ -101,17 +102,18 @@ modparam("group_radius", "use_domain", 1)
 		<function moreinfo="none">radius_is_user_in(URI, group)</function>
 		</title>
 		<para>
-		The function returns true if username in the given &uri; is member of the given
-		group and false if not.
+		The function returns true if username in the given &uri; is member of 
+		the given group and false if not.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>&uri;</emphasis> - &uri; whose username and optionally domain to be
-			used, this can be one of:
+			<para><emphasis>&uri;</emphasis> - &uri; whose username and 
+			optionally domain to be used, this can be one of:
 			<itemizedlist>
 				<listitem>
-				<para>Request-URI - Use Request-URI username and (optionally) domain.</para>
+				<para>Request-URI - Use Request-URI username and 
+				(optionally) domain.</para>
 				</listitem>
 				<listitem>
 				<para>To - Use To username and (optionally) domain.</para>

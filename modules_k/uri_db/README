@@ -93,11 +93,12 @@ Chapter 1. User's Guide
 
    URL of the database to be used.
 
-   Default value is "mysql://serro:47serro11@localhost/ser". 
+   Default value is "DEFAULT_RODB_URL". 
 
    Example 1-1. Set db_url parameter
 ...
-modparam("db_url", "db_url", "mysql://username:password@localhost/ser")
+modparam("uri_db", "db_url", "mysql://username:password@localhost/opens
+er")
 ...
      _________________________________________________________
 
@@ -109,7 +110,7 @@ modparam("db_url", "db_url", "mysql://username:password@localhost/ser")
 
    Example 1-2. Set uri_table parameter
 ...
-modparam("db_url", "uri_table", "uri")
+modparam("uri_db", "uri_table", "uri")
 ...
      _________________________________________________________
 
@@ -121,7 +122,7 @@ modparam("db_url", "uri_table", "uri")
 
    Example 1-3. Set uri_user_column parameter
 ...
-modparam("db_url", "uri_user_column", "username")
+modparam("uri_db", "uri_user_column", "username")
 ...
      _________________________________________________________
 
@@ -133,7 +134,7 @@ modparam("db_url", "uri_user_column", "username")
 
    Example 1-4. Set uri_domain_column parameter
 ...
-modparam("db_url", "uri_domain_column", "domain")
+modparam("uri_db", "uri_domain_column", "domain")
 ...
      _________________________________________________________
 
@@ -145,7 +146,7 @@ modparam("db_url", "uri_domain_column", "domain")
 
    Example 1-5. Set uri_uriuser_column parameter
 ...
-modparam("db_url", "uri_uriuser_column", "uri_user")
+modparam("uri_db", "uri_uriuser_column", "uri_user")
 ...
      _________________________________________________________
 
@@ -157,7 +158,7 @@ modparam("db_url", "uri_uriuser_column", "uri_user")
 
    Example 1-6. Set subscriber_table parameter
 ...
-modparam("db_url", "subscriber_table", "subscriber")
+modparam("uri_db", "subscriber_table", "subscriber")
 ...
      _________________________________________________________
 
@@ -169,7 +170,7 @@ modparam("db_url", "subscriber_table", "subscriber")
 
    Example 1-7. Set subscriber_user_column parameter
 ...
-modparam("db_url", "subscriber_user_column", "username")
+modparam("uri_db", "subscriber_user_column", "username")
 ...
      _________________________________________________________
 
@@ -181,7 +182,7 @@ modparam("db_url", "subscriber_user_column", "username")
 
    Example 1-8. Set subscriber_domain_column parameter
 ...
-modparam("db_url", "subscriber_domain_column", "domain")
+modparam("uri_db", "subscriber_domain_column", "domain")
 ...
      _________________________________________________________
 
@@ -194,7 +195,7 @@ modparam("db_url", "subscriber_domain_column", "domain")
 
    Example 1-9. Set use_uri_table parameter
 ...
-modparam("db_url", "use_uri_table", 1)
+modparam("uri_db", "use_uri_table", 1)
 ...
      _________________________________________________________
 
@@ -208,7 +209,7 @@ modparam("db_url", "use_uri_table", 1)
 
    Example 1-10. Set use_domain parameter
 ...
-modparam("db_url", "use_domain", 1)
+modparam("uri_db", "use_domain", 1)
 ...
      _________________________________________________________
 

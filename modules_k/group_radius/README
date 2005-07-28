@@ -85,7 +85,7 @@ Chapter 1. User's Guide
 
    Example 1-1. Set radius_config parameter
 ...
-modparam("group", "radius_config", "/etc/radiusclient.conf")
+modparam("group_radius", "radius_config", "/etc/radiusclient.conf")
 ...
      _________________________________________________________
 
