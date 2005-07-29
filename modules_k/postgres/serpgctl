@@ -58,7 +58,7 @@ if [ -z "$RO_PW" ] ; then
 fi
 
 # binaries
-GENHA1='gen_ha1'
+GENHA1='openser_gen_ha1'
 PGSQL='psql'
 SER='sr'
 LAST_LINE='tail -1'
