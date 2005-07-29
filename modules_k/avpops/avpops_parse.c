@@ -303,11 +303,21 @@ struct fis_param* parse_intstr_value(char *p, int len)
 	val_str.len = len;
 	if (flags&AVPOPS_VAL_INT) {
 		/* convert the value to integer */
-		if ( str2sint( &val_str, &uint)==-1 )
+		if(val_str.len>2 && p[0]=='0' && (p[1]=='x' || p[1]=='X'))
 		{
-			LOG(L_ERR,"ERROR:avpops:parse_intstr_value: value is not int "
-				"as type says <%.*s>\n", val_str.len, val_str.s);
-			goto error;
+			if(hexstr2int(val_str.s+2, val_str.len-2, &uint))
+			{
+				LOG(L_ERR,"ERROR:avpops:parse_intstr_value: value is not hex"
+					" int as type says <%.*s>\n", val_str.len, val_str.s);
+				goto error;
+			}
+		} else {
+			if(str2sint( &val_str, &uint)==-1)
+			{
+				LOG(L_ERR,"ERROR:avpops:parse_intstr_value: value is not int"
+					" as type says <%.*s>\n", val_str.len, val_str.s);
+				goto error;
+			}
 		}
 		vp->val.n = uint;
 	} else {

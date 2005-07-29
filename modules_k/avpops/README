@@ -48,7 +48,8 @@ Ramona-Elena Modroiu
               1.4.9. avp_printf(dest, format) 
               1.4.10. avp_subst(avps, subst)
               1.4.11. avp_op(name,op_value) 
-              1.4.12. avp_print() 
+              1.4.12. is_avp_set(name) 
+              1.4.13. avp_print() 
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -76,7 +77,8 @@ Ramona-Elena Modroiu
    1-20. avp_printf usage
    1-21. avp_subst usage
    1-22. avp_op usage
-   1-23. avp_print usage
+   1-23. is_avp_set usage
+   1-24. avp_print usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -326,6 +328,8 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
             (sip_uri)['/'('username'|'domain')]) 
           + sip_uri = '$from' | '$to' | '$ruri' 
           + fix_value = 'i:'integer | 's:'string | string 
+       Integer values can be given in hexadecimal using notation
+       'i:0xhex_number' (e.g.,: 'i:0xabcd');
      * name - the name of the new written AVP. Parameter syntax
        is:
           + name = avp_name | avp_alias 
@@ -404,6 +408,8 @@ avp_pushto("$Foo","$bar/g");
             '$from'|'$ruri'|'$from'|'$src_ip'|'$dst_ip'|avp_alias
           + fix_value = 'i:'integer | 's:'string | string 
           + flags = 'g' | 'G' | 'i' | 'I' 
+       Integer values can be given in hexadecimal using notation:
+       'i:0xhex_number' (e.g.,: 'i:0xabcd');
 
    Example 1-18. avp_check usage
 ...
@@ -523,6 +529,8 @@ avp_subst("i:678/i:679/g", "/(.*)@(.*)/\1@$rd/");
           + variable = avp_alias 
           + fix_value = 'i:'integer 
           + flags = 'g' | 'G' | 'd' | 'D' 
+       Integer values can be given in hexadecimal using notation
+       'i:0xhex_number' (e.g.,: 'i:0xabcd');
 
    Example 1-22. avp_op usage
 ...
@@ -531,12 +539,28 @@ avp_op("$number","sub/$number2/d");
 ...
      _________________________________________________________
 
-1.4.12. avp_print()
+1.4.12. is_avp_set(name)
+
+   Check if any AVP with name is set.
+
+   Meaning of the parameters is as follows:
+
+     * name - name of AVP to look for. Parameter syntax is:
+          + name = ('s:'|'i:'|avp_name|avp_alias) 
+
+   Example 1-23. is_avp_set usage
+...
+if(is_avp_set("i:678/g"))
+    log("AVP with integer id 678 exists\n");
+...
+     _________________________________________________________
+
+1.4.13. avp_print()
 
    Prints the list with all the AVPs from memory. This is only a
    helper/debug function.
 
-   Example 1-23. avp_print usage
+   Example 1-24. avp_print usage
 ...
 avp_print();
 ...

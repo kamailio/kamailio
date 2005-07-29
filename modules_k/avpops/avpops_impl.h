@@ -153,5 +153,7 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 int ops_op_avp(struct sip_msg* msg, struct fis_param** param,
 								struct fis_param* op);
 
+int ops_is_avp_set(struct sip_msg* msg, struct fis_param *ap);
+
 #endif
 

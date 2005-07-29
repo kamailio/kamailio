@@ -399,6 +399,10 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
 					</emphasis></para></listitem>
 				</itemizedlist>
 				</para>
+				<para>
+				Integer values can be given in hexadecimal using notation
+				'i:0xhex_number' (e.g.,: 'i:0xabcd');
+				</para>
 			</listitem>
 			<listitem>
 				<para><emphasis>name</emphasis> - the name of the new written
@@ -562,6 +566,10 @@ avp_pushto("$Foo","$bar/g");
 					flags = 'g' | 'G' | 'i' | 'I'
 					</emphasis></para></listitem>
 				</itemizedlist>
+				</para>
+				<para>
+				Integer values can be given in hexadecimal using notation:
+				'i:0xhex_number' (e.g.,: 'i:0xabcd');
 				</para>
 			</listitem>
 			</itemizedlist>
@@ -798,6 +806,10 @@ avp_subst("i:678/i:679/g", "/(.*)@(.*)/\1@$rd/");
 					</emphasis></para></listitem>
 				</itemizedlist>
 				</para>
+				<para>
+				Integer values can be given in hexadecimal using notation
+				'i:0xhex_number' (e.g.,: 'i:0xabcd');
+				</para>
 			</listitem>
 			</itemizedlist>
 			<example>
@@ -806,6 +818,37 @@ avp_subst("i:678/i:679/g", "/(.*)@(.*)/\1@$rd/");
 ...
 avp_op("i:678", "add/i:345/g");
 avp_op("$number","sub/$number2/d");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">is_avp_set(name)
+				</function>
+			</title>
+			<para>
+			Check if any AVP with <emphasis>name</emphasis> is set.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>name</emphasis> - name of AVP to look for.
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = ('s:'|'i:'|avp_name|avp_alias)
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>is_avp_set</function> usage</title>
+				<programlisting format="linespecific">
+...
+if(is_avp_set("i:678/g"))
+    log("AVP with integer id 678 exists\n");
 ...
 				</programlisting>
 			</example>

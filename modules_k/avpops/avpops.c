@@ -77,6 +77,7 @@ static int fixup_copy_avp(void** param, int param_no);
 static int fixup_printf(void** param, int param_no);
 static int fixup_subst(void** param, int param_no);
 static int fixup_op_avp(void** param, int param_no);
+static int fixup_is_avp_set(void** param, int param_no);
 
 static int w_dbload_avps(struct sip_msg* msg, char* source, char* param);
 static int w_dbstore_avps(struct sip_msg* msg, char* source, char* param);
@@ -90,7 +91,7 @@ static int w_print_avps(struct sip_msg* msg, char* foo, char *bar);
 static int w_printf(struct sip_msg* msg, char* dest, char *format);
 static int w_subst(struct sip_msg* msg, char* src, char *subst);
 static int w_op_avps(struct sip_msg* msg, char* param, char *op);
-
+static int w_is_avp_set(struct sip_msg* msg, char* param, char *foo);
 
 
 /*
@@ -120,6 +121,8 @@ static cmd_export_t cmds[] = {
 	{"avp_subst",  w_subst,   2, fixup_subst,
 									REQUEST_ROUTE|FAILURE_ROUTE},
 	{"avp_op",     w_op_avps, 2, fixup_op_avp,
+									REQUEST_ROUTE|FAILURE_ROUTE},
+	{"is_avp_set", w_is_avp_set, 1, fixup_is_avp_set,
 									REQUEST_ROUTE|FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
@@ -1008,7 +1011,7 @@ static int fixup_op_avp(void** param, int param_no)
 		}
 		av[1] = ap;
 		pkg_free(*param);
-		*param=(void*)ap;
+		*param=(void*)av;
 		return 0;
 	} else if (param_no==2) {
 		if ( (ap=parse_op_value(s))==0 )
@@ -1030,6 +1033,29 @@ static int fixup_op_avp(void** param, int param_no)
 	}
 	return -1;
 }
+
+
+static int fixup_is_avp_set(void** param, int param_no)
+{
+	struct fis_param *ap;
+
+	if (param_no==1) {
+		/* attribute name / alias */
+		if ( ((ap=get_attr_or_alias((char*)*param))==0)
+				|| (ap->opd&AVPOPS_VAL_NONE))
+		{
+			LOG(L_ERR,"ERROR:avpops:fixup_is_avp_set: bad attribute name"
+				"/alias <%s>\n", (char*)*param);
+			return E_UNSPEC;
+		}
+
+		pkg_free(*param);
+		*param=(void*)ap;
+	}
+
+	return 0;
+}
+
 
 static int w_dbload_avps(struct sip_msg* msg, char* source, char* param)
 {
@@ -1103,6 +1129,11 @@ static int w_op_avps(struct sip_msg* msg, char* param, char *op)
 {
 	return ops_op_avp ( msg, (struct fis_param**)param,
 								(struct fis_param*)op);
+}
+
+static int w_is_avp_set(struct sip_msg* msg, char* param, char *op)
+{
+	return ops_is_avp_set(msg, (struct fis_param*)param);
 }
 
 

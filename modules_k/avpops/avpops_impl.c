@@ -1564,3 +1564,13 @@ error:
 	return -1;
 }
 
+int ops_is_avp_set(struct sip_msg* msg, struct fis_param *ap)
+{
+	if(search_first_avp((((ap->opd&AVPOPS_VAL_INT))?0:AVP_NAME_STR),
+				ap->val,0)!=0)
+		return 1;
+	
+	return -1;
+}
+
+
