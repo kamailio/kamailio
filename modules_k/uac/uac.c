@@ -33,6 +33,7 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../error.h"
+#include "../../items.h"
 #include "../../mem/mem.h"
 #include "../tm/tm_load.h"
 #include "../tm/t_hooks.h"
@@ -153,79 +154,69 @@ static void mod_destroy()
 
 static int fixup_replace_from1(void** param, int param_no)
 {
-	str *s;
+	xl_elem_t *model;
 
-	/* convert to str */
-	s = (str*)pkg_malloc( sizeof(str) );
-	if (s==0)
+	model=NULL;
+	if (param_no==1)
 	{
-		LOG(L_CRIT,"ERROR:uac:fixup_replace_from1: no more pkg mem\n");
-		return E_OUT_OF_MEM;
+		if(xl_parse_format((char*)(*param),&model,XL_DISABLE_COLORS)<0)
+		{
+			LOG(L_ERR, "uac:fixup_replace_from1: ERROR: wrong format[%s]!\n",
+				(char*)(*param));
+			return E_UNSPEC;
+		}
 	}
-	s->s = (char*)*param;
-	s->len = strlen(s->s);
-	if (s->len==0)
-	{
-		LOG(L_CRIT,"ERROR:uac:fixup_replace_from1: empty parameter "
-			"not accepted\n");
-		return E_UNSPEC;
-	}
+	*param = (void*)model;
 
-	*param=(void*)s;
 	return 0;
 }
 
 
 static int fixup_replace_from2(void** param, int param_no)
 {
+	xl_elem_t *model;
 	char *p;
-	str *s;
+	str s;
 
 	/* convert to str */
-	s = (str*)pkg_malloc( sizeof(str) );
-	if (s==0)
-	{
-		LOG(L_CRIT,"ERROR:uac:fixup_replace_from2: no more pkg mem\n");
-		return E_OUT_OF_MEM;
-	}
-	s->s = (char*)*param;
-	s->len = strlen(s->s);
-	if (s->len==0)
-	{
-		pkg_free(s->s);
-		s->s = 0;
-	}
+	s.s = (char*)*param;
+	s.len = strlen(s.s);
+	if (s.len==0)
+		s.s = 0;
 
+	model=NULL;
 	if (param_no==1)
 	{
-		if (s->len)
+		if (s.len)
 		{
 			/* put " to display name */
-			p = (char*)pkg_malloc( s->len+2 );
+			p = (char*)pkg_malloc(s.len+3);
 			if (p==0)
 			{
 				LOG(L_CRIT,"ERROR:uac:fixup_replace_from2: no more pkg mem\n");
 				return E_OUT_OF_MEM;
 			}
 			p[0] = '\"';
-			memcpy( p+1, s->s, s->len);
-			p[s->len+1] = '\"';
-			pkg_free(s->s);
-			s->s = p;
-			s->len += 2;
+			memcpy(p+1, s.s, s.len);
+			p[s.len+1] = '\"';
+			p[s.len+2] = '\0';
+			pkg_free(s.s);
+			s.s = p;
+			s.len += 2;
 		}
-	} else if (param_no==2)
+	}
+	if(s.s!=0)
 	{
-		/* do not allow both params empty */
-		if (s->s==0 && ((str*)(*(param-1)))->s==0 )
+		if(xl_parse_format(s.s,&model,XL_DISABLE_COLORS)<0)
 		{
-			LOG(L_CRIT,"ERROR:uac:fixup_replace_from2: both parameter "
-				"are empty\n");
+			LOG(L_ERR,
+				"uac:fixup_replace_from2: ERROR: wrong format[%s]!\n", s.s);
+			pkg_free(s.s);
 			return E_UNSPEC;
 		}
 	}
+	*param = (void*)model;
 
-	*param=(void*)s;
 	return 0;
 }
 
@@ -239,16 +230,46 @@ static int w_restore_from(struct sip_msg *msg,  char* foo, char* bar)
 	return 1;
 }
 
+#define UAC_URI_SIZE	512
+static char uac_uri_buf[UAC_URI_SIZE];
+static char uac_dsp_buf[UAC_URI_SIZE];
 
 static int w_replace_from1(struct sip_msg* msg, char* uri, char* str2)
 {
-	return (replace_from( msg, 0, (str*)uri)==0)?1:-1;
+	str uri_s;
+
+	if(uri==NULL)
+		return -1;
+	
+	uri_s.len = UAC_URI_SIZE;
+	uri_s.s = uac_uri_buf;
+
+	if(xl_printf(msg, (xl_elem_p)uri, uri_s.s, &uri_s.len)!=0)
+		return -1;
+	return (replace_from(msg, 0, &uri_s)==0)?1:-1;
 }
 
 
 static int w_replace_from2(struct sip_msg* msg, char* dsp, char* uri)
 {
-	return (replace_from( msg, (str*)dsp, (str*)uri)==0)?1:-1;
+	str uri_s;
+	str dsp_s;
+	
+	if(uri==NULL && dsp==NULL)
+		return -1;
+
+	uri_s.len = UAC_URI_SIZE;
+	uri_s.s   = uac_uri_buf;
+	dsp_s.len = UAC_URI_SIZE;
+	dsp_s.s   = uac_dsp_buf;
+
+	if(uri!=NULL)
+		if(xl_printf(msg, (xl_elem_p)uri, uri_s.s, &uri_s.len)!=0)
+			return -1;
+	if(dsp!=NULL)
+		if(xl_printf(msg, (xl_elem_p)dsp, dsp_s.s, &dsp_s.len)!=0)
+			return -1;
+	return (replace_from(msg, (dsp)?&dsp_s:0, (uri)?&uri_s:0)==0)?1:-1;
 }
 
 

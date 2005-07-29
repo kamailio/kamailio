@@ -132,8 +132,11 @@ modparam("uac","credential","username:domain:password")
 
    Replace in FROM header the display name and the URI part.
 
+   display and URI parameters can include pseudo-variables.
+
    Example 1-4. uac_replace_from usage
 ...
+uac_replace_from("$avp(s:display)","$avp(s:uri)");
 uac_replace_from("batman","sip:batman@gotham.org");
 uac_replace_from("","sip:robin@gotham.org");
 uac_replace_from("batman","");
@@ -144,6 +147,8 @@ uac_replace_from("batman","");
 
    Replace in FROM header the the URI part without altering the
    display name.
+
+   URI parameter can include pseudo-variables.
 
    Example 1-5. uac_replace_from usage
 ...
