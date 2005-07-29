@@ -86,7 +86,7 @@ fi
 ##### ----------------------------------------------- #####
 ### binaries
 if [ -z "$GENHA1" ] ; then
-	GENHA1='gen_ha1'
+	GENHA1='openser_gen_ha1'
 fi
 if [ -z "$MYSQL" ] ; then
 	MYSQL='mysql'

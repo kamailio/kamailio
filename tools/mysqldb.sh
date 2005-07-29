@@ -79,7 +79,7 @@ if [ -z "$USERCOL" ]; then
 fi
 # path to gen_ha1 tool
 if [ -z "$GENHA1" ]; then
-	GENHA1='gen_ha1'
+	GENHA1='openser_gen_ha1'
 fi
 
 FOREVER="2020-05-28 21:32:15"
