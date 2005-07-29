@@ -7,7 +7,7 @@ d none sbin 0755 bin bin
 f none sbin/openser 0755 bin bin
 f none sbin/openserctl 0755 bin bin
 f none sbin/openser_mysql.sh 0755 bin bin
-f none sbin/gen_ha1 0755 bin bin
+f none sbin/openser_gen_ha1 0755 bin bin
 d none lib 0755 bin bin
 d none lib/openser 2755 bin bin
 d none lib/openser/modules 2755 bin bin
