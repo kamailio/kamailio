@@ -61,8 +61,6 @@
  */
 
 
-#include <assert.h>
-
 #include "../../hash_func.h"
 #include "../../dprint.h"
 #include "../../config.h"
@@ -335,7 +333,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 
 	if (!buf)
 	{
-		DBG("DEBUG: _reply_light: response building failed\n");
+		DBG("DEBUG:tm:_reply_light: response building failed\n");
 		/* determine if there are some branches to be canceled */
 		if ( is_invite(trans) ) {
 			if (lock) LOCK_REPLIES( trans );
@@ -350,7 +348,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	if (lock) LOCK_REPLIES( trans );
 	if ( is_invite(trans) ) which_cancel(trans, &cancel_bitmap );
 	if (trans->uas.status>=200) {
-		LOG( L_ERR, "ERROR: _reply_light: can't generate %d reply"
+		LOG( L_ERR, "ERROR:tm: _reply_light: can't generate %d reply"
 			" when a final %d was sent out\n", code, trans->uas.status);
 		goto error2;
 	}
@@ -364,7 +362,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	rb->buffer = (char*)shm_resize( rb->buffer, buf_len );
 	/* puts the reply's buffer to uas.response */
 	if (! rb->buffer ) {
-			LOG(L_ERR, "ERROR: _reply_light: cannot allocate shmem buffer\n");
+			LOG(L_ERR, "ERROR:tm:_reply_light: cannot allocate shmem buffer\n");
 			goto error3;
 	}
 	update_local_tags(trans, bm, rb->buffer, buf);
@@ -383,7 +381,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	   a final answer whereas there are pending UACs */
 	if (code>=200) {
 		if ( is_local(trans) ) {
-			DBG("DEBUG: local transaction completed from _reply\n");
+			DBG("DEBUG:tm:_reply_light: local transaction completed\n");
 			if ( has_tran_tmcbs(trans, TMCB_LOCAL_COMPLETED) )
 				run_trans_callbacks( TMCB_LOCAL_COMPLETED, trans,
 					0, FAKED_REPLY, code);
@@ -398,23 +396,16 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 		set_final_timer(  trans );
 	}
 
-	/* send it out */
-	/* first check if we managed to resolve topmost Via -- if
-	   not yet, don't try to retransmit
-	*/
-	/*
-	   response.dst.send_sock is valid all the time now, as it's taken
-	   from original request -bogdan
+	/* send it out : response.dst.send_sock is valid all the time now, 
+	 * as it's taken from original request -bogdan */
 	if (!trans->uas.response.dst.send_sock) {
-		LOG(L_ERR, "ERROR: _reply_light: no resolved dst to send reply to\n");
-	} else {
-	*/
-	assert(trans->uas.response.dst.send_sock);
+		LOG(L_CRIT,"BUG:tm:_reply_light: send_sock is NULL\n");
+	}
 	SEND_PR_BUFFER( rb, buf, len );
-	DBG("DEBUG: reply sent out. buf=%p: %.9s..., shmem=%p: %.9s\n", 
-		buf, buf, rb->buffer, rb->buffer );
+	DBG("DEBUG:tm:_reply_light: reply sent out. buf=%p: %.9s..., "
+		"shmem=%p: %.9s\n", buf, buf, rb->buffer, rb->buffer );
 	pkg_free( buf ) ;
-	DBG("DEBUG: _reply_light: finished\n");
+	DBG("DEBUG:tm:_reply_light: finished\n");
 	return 1;
 
 error3:
@@ -841,19 +832,6 @@ int t_retransmit_reply( struct cell *t )
 	static char b[BUF_SIZE];
 	int len;
 
-	/* first check if we managed to resolve topmost Via -- if
-	   not yet, don't try to retransmit
-	*/
-	/* response.dst.send_sock is valid all the time now, as it's taken
-	   from original request -bogdan
-	if (!t->uas.response.dst.send_sock) {
-		LOG(L_WARN, "WARNING: t_retransmit_reply: "
-			"no resolved dst to retransmit\n");
-		return -1;
-	}
-	*/
-	assert(t->uas.response.dst.send_sock);
-
 	/* we need to lock the transaction as messages from
 	   upstream may change it continuously
 	*/
@@ -861,6 +839,14 @@ int t_retransmit_reply( struct cell *t )
 
 	if (!t->uas.response.buffer) {
 		DBG("DBG: t_retransmit_reply: nothing to retransmit\n");
+		goto error;
+	}
+
+	/* response.dst.send_sock is valid all the time now, as it's taken
+	   from original request -bogdan */
+	if (t->uas.response.dst.send_sock) {
+		LOG(L_CRIT,"BUG:t_retransmit_reply: something to retransmit, but"
+			"send_sock is NULL\n");
 		goto error;
 	}
 
