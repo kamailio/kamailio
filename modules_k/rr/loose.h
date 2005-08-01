@@ -28,6 +28,8 @@
 
 #include "../../parser/msg_parser.h"
 
+#define RR_FLOW_DOWNSTREAM  (1<<0)
+#define RR_FLOW_UPSTREAM    (1<<1)
 
 /*
  * Do loose routing as per RFC3621
@@ -39,5 +41,10 @@ int loose_route(struct sip_msg* _m, char* _s1, char* _s2);
  * Check if the our route hdr has required params
  */
 int check_route_param(struct sip_msg * msg, char *re, char *foo);
+
+/*
+ * Check the direction of the message
+ */
+int is_direction(struct sip_msg * msg, char *dir, char *foo);
 
 #endif /* LOOSE_H */

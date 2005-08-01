@@ -60,6 +60,7 @@ MODULE_VERSION
 static int mod_init(void);
 static int str_fixup(void** param, int param_no);
 static int regexp_fixup(void** param, int param_no);
+static int direction_fixup(void** param, int param_no);
 
 
 /*
@@ -84,6 +85,8 @@ static cmd_export_t cmds[] = {
 	{"add_rr_param",         add_rr_param,          1,     str_fixup,
 			REQUEST_ROUTE},
 	{"check_route_param",    check_route_param,     1,     regexp_fixup,
+			REQUEST_ROUTE},
+	{"is_direction",         is_direction,          1,     direction_fixup,
 			REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
@@ -180,5 +183,35 @@ static int regexp_fixup(void** param, int param_no)
 	return 0;
 }
 
+
+
+static int direction_fixup(void** param, int param_no)
+{
+	char *s;
+	int n;
+
+	if (!append_fromtag) {
+		LOG(L_ERR,"ERROR:rr:direction_fixup: usage of \"is_direction\" function "
+			"requires parameter \"append_fromtag\" enabled!!");
+		return E_CFG;
+	}
+	if (param_no==1) {
+		n = 0;
+		s = (char*) *param;
+		if ( strcasecmp(s,"downstream")==0 ) {
+			n = RR_FLOW_DOWNSTREAM;
+		} else if ( strcasecmp(s,"upstream")==0 ) {
+			n = RR_FLOW_UPSTREAM;
+		} else {
+			LOG(L_ERR,"ERROR:rr:direction_fixup: unknown direction '%s'\n",s);
+			return E_CFG;
+		}
+		/* free string */
+		pkg_free(*param);
+		/* replace it with the flag */
+		*param = (void*)(unsigned long)n;
+	}
+	return 0;
+}
 
 

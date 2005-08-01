@@ -38,6 +38,7 @@
 #include "../../data_lump.h"
 #include "../../parser/parse_rr.h"
 #include "../../parser/parse_uri.h"
+#include "../../parser/parse_from.h"
 #include "../../mem/mem.h"
 #include "../../dset.h"
 #include "loose.h"
@@ -819,5 +820,127 @@ int check_route_param(struct sip_msg * msg, char *re, char *foo)
 		routed_params.s[routed_params.len] = bk;
 		return 1;
 	}
+}
+
+
+
+static inline int get_route_param( struct sip_msg *msg, str *name, str *val)
+{
+	char *p;
+	char *end;
+	char c;
+	int quoted;
+
+	/* check if the hooked params belong to the same message */
+	if (routed_msg_id != msg->id)
+		goto notfound;
+
+	/* check if params are present */
+	if ( !routed_params.s || !routed_params.len )
+		goto notfound;
+
+	end = routed_params.s + routed_params.len;
+	p = routed_params.s;
+
+
+	/* parse the parameters string and find the "name" param */
+	while ( end-p>name->len+2 ) {
+		if (p!=routed_params.s) {
+			/* go to first ';' char */
+			for( quoted=0 ; p<end && !(*p==';' && !quoted) ; p++ )
+				if ( (*p=='"' || *p=='\'') && *(p-1)!='\\' )
+					quoted ^= 0x1;
+			if (p==end)
+				goto notfound;
+			p++;
+		}
+		/* get first non space char */
+		while( p<end && (*p==' ' || *p=='\t') )
+			p++;
+		/* check the name - length first and content after */
+		if ( end-p<name->len+2 || memcmp(p,name->s,name->len)!=0 )
+			continue;
+		p+=name->len;
+		while( p<end && (*p==' ' || *p=='\t') )
+			p++;
+		if (*p!='=')
+			continue;
+		p++;
+		while( p<end && (*p==' ' || *p=='\t') )
+			p++;
+		if (p==end)
+			goto notfound;
+		/* get value */
+		if ( *p=='\'' || *p=='"') {
+			for( val->s = ++p ; p<end ; p++) {
+				if ((*p=='"' || *p=='\'') && *(p-1)!='\\' )
+					break;
+			}
+		} else {
+			for( val->s=p ; p<end ; p++) {
+				if ( (c=*p)==';' || c==' ' || c=='\t' )
+					break;
+			}
+		}
+		if(p==end)
+			goto notfound;
+		val->len = p-val->s;
+		break;
+	}
+
+	return 0;
+notfound:
+	return -1;
+}
+
+
+int is_direction(struct sip_msg * msg, char *dir, char *foo)
+{
+	static str ftag_param = {"ftag",4};
+	static unsigned int last_id = (unsigned int)-1;
+	static unsigned int last_dir = 0;
+	str ftag_val;
+	str tag;
+
+	if ( last_id==msg->id && last_dir!=0) {
+		if (last_dir==RR_FLOW_UPSTREAM)
+			goto upstream;
+		else
+			goto downstream;
+	}
+
+	ftag_val.s = 0;
+	ftag_val.len = 0;
+
+	if (get_route_param( msg, &ftag_param, &ftag_val)!=0) {
+		DBG("DEBUG:rr:is_direction: param ftag not found\n");
+		goto downstream;
+	}
+
+	if ( ftag_val.s==0 || ftag_val.len==0 ) {
+		DBG("DEBUG:rr:is_direction: param ftag has empty val\n");
+		goto downstream;
+	}
+
+	/* get the tag value from FROM hdr */
+	if ( parse_from_header(msg)!=0 )
+		goto downstream;
+
+	tag = ((struct to_body*)msg->from->parsed)->tag_value;
+	if (tag.s==0 || tag.len==0)
+		goto downstream;
+
+	/* compare the 2 strings */
+	if (tag.len!=ftag_val.len || memcmp(tag.s,ftag_val.s,ftag_val.len))
+		goto upstream;
+
+downstream:
+	last_id = msg->id;
+	last_dir = RR_FLOW_DOWNSTREAM;
+	return (((unsigned long)dir)==RR_FLOW_DOWNSTREAM)?1:-1;
+upstream:
+	last_id = msg->id;
+	last_dir = RR_FLOW_UPSTREAM;
+	return (((unsigned long)dir)==RR_FLOW_UPSTREAM)?1:-1;
 }
 
