@@ -170,9 +170,13 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 		_c->received.len, ZSW(_c->received.s));
 	fprintf(_f, "State     : %s\n", st);
 	fprintf(_f, "Flags     : %u\n", _c->flags);
-	fprintf(_f, "Sock      : %.*s:%d (%p)\n",
-		_c->sock->address_str.len,_c->sock->address_str.s,
-		_c->sock->port_no,_c->sock);
+	if (_c->sock) {
+		fprintf(_f, "Sock      : %.*s:%d (%p)\n",
+			_c->sock->address_str.len,_c->sock->address_str.s,
+			_c->sock->port_no,_c->sock);
+	} else {
+		fprintf(_f, "Sock      : none (null)\n");
+	}
 	fprintf(_f, "next      : %p\n", _c->next);
 	fprintf(_f, "prev      : %p\n", _c->prev);
 	fprintf(_f, "~~~/Contact~~~~\n");
