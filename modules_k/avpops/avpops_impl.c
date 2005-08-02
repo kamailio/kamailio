@@ -1234,7 +1234,7 @@ int ops_copy_avp( struct sip_msg* msg, struct fis_param* name1,
 		/* build a new avp with new name, but old value */
 		/* do we need cast conversion ?!?! */
 		if((avp->flags&AVP_VAL_STR) && (name2->ops&AVPOPS_FLAG_CASTN)) {
-			if(str2int(avp_val.s, &avp_val2.n)!=0)
+			if(str2int(avp_val.s, (unsigned int*)&avp_val2.n)!=0)
 			{
 				LOG(L_ERR,"ERROR:avpops:copy_avp: cannot convert str to int\n");
 				goto error;
