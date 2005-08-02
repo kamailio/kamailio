@@ -320,16 +320,19 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 		} else {
 			/* is a variable $xxxxx */
 			s++;
+			if(flags==0)
+				flags0=AVPOPS_FLAG_URI0;
 			if ( (!strcasecmp( "from", s) && (flags|=AVPOPS_USE_FROM)) 
 					|| (!strcasecmp( "to", s) && (flags|=AVPOPS_USE_TO)) 
 					|| (!strcasecmp( "ruri", s) && (flags|=AVPOPS_USE_RURI)) )
 			{
 				memset(sp, 0, sizeof(struct fis_param));
-				sp->opd = ((flags==0)?AVPOPS_FLAG_URI0:flags)|AVPOPS_VAL_NONE;
+				sp->opd = flags0|flags|AVPOPS_VAL_NONE;
 			} else {
 				/* can be only an AVP alias */
 				alias .s = s;
 				alias.len = strlen(alias.s);
+				flags0=0;
 				if (lookup_avp_galias( &alias, &flags0, &sp->val)==-1 )
 				{
 					LOG(L_ERR,"ERROR:avpops:fixup_db_avp: source/flags \"%s\""
