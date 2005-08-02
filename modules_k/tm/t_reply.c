@@ -833,8 +833,7 @@ int t_retransmit_reply( struct cell *t )
 	int len;
 
 	/* we need to lock the transaction as messages from
-	   upstream may change it continuously
-	*/
+	   upstream may change it continuously */
 	LOCK_REPLIES( t );
 
 	if (!t->uas.response.buffer) {
@@ -844,7 +843,7 @@ int t_retransmit_reply( struct cell *t )
 
 	/* response.dst.send_sock is valid all the time now, as it's taken
 	   from original request -bogdan */
-	if (t->uas.response.dst.send_sock) {
+	if (t->uas.response.dst.send_sock==0) {
 		LOG(L_CRIT,"BUG:t_retransmit_reply: something to retransmit, but"
 			"send_sock is NULL\n");
 		goto error;
