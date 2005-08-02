@@ -95,7 +95,7 @@ modparam("domain", "domain_table", "new_name")
 		</example>
 	</section>
 	<section>
-		<title><varname>domain_column</varname> (string)</title>
+		<title><varname>domain_col</varname> (string)</title>
 		<para>
 		Name of column containing domains in domain table.
 		</para>
@@ -103,9 +103,9 @@ modparam("domain", "domain_table", "new_name")
 		Default value is <quote>domain</quote>.
 		</para>
 		<example>
-		<title>Setting domain_column parameter</title>
+		<title>Setting domain_col parameter</title>
 		<programlisting format="linespecific">
-modparam("domain", "domain_column", "domain_col")
+modparam("domain", "domain_col", "domain_name")
 </programlisting>
 		</example>
 	</section>
