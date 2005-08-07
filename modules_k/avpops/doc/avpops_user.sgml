@@ -837,7 +837,10 @@ avp_op("$number","sub/$number2/d");
 				Parameter syntax is:
 				<itemizedlist>
 					<listitem><para><emphasis>
-					name = ('s:'|'i:'|avp_name|avp_alias)
+					name = ('s:'|'i:'|avp_name|avp_alias [ '/' flags ])
+					</emphasis></para>
+					<para><emphasis>
+					flags = ('s'|'n') - s = value string; n = value number (int)
 					</emphasis></para></listitem>
 				</itemizedlist>
 				</para>

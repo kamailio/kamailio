@@ -546,7 +546,9 @@ avp_op("$number","sub/$number2/d");
    Meaning of the parameters is as follows:
 
      * name - name of AVP to look for. Parameter syntax is:
-          + name = ('s:'|'i:'|avp_name|avp_alias) 
+          + name = ('s:'|'i:'|avp_name|avp_alias [ '/' flags ]) 
+            flags = ('s'|'n') - s = value string; n = value
+            number (int) 
 
    Example 1-23. is_avp_set usage
 ...

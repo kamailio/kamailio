@@ -1566,9 +1566,20 @@ error:
 
 int ops_is_avp_set(struct sip_msg* msg, struct fis_param *ap)
 {
-	if(search_first_avp((((ap->opd&AVPOPS_VAL_INT))?0:AVP_NAME_STR),
-				ap->val,0)!=0)
+	struct usr_avp *avp;
+	
+	avp=search_first_avp((((ap->opd&AVPOPS_VAL_INT))?0:AVP_NAME_STR),
+				ap->val, 0);
+	if(avp==0)
+		return -1;
+	if(ap->ops&AVPOPS_FLAG_ALL)
 		return 1;
+	
+	do {
+		if((ap->ops&AVPOPS_FLAG_CASTS && avp->flags&AVP_VAL_STR)
+				|| (ap->ops&AVPOPS_FLAG_CASTN && !(avp->flags&AVP_VAL_STR)))
+			return 1;
+	} while ((avp=search_next_avp(avp, 0))!=0);
 	
 	return -1;
 }

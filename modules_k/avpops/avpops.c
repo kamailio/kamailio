@@ -1041,9 +1041,13 @@ static int fixup_op_avp(void** param, int param_no)
 static int fixup_is_avp_set(void** param, int param_no)
 {
 	struct fis_param *ap;
+	char *p;
 
 	if (param_no==1) {
-		/* attribute name / alias */
+		/* attribute name | alias / flags */
+		if ( (p=strchr((char*)*param,'/'))!=0 )
+			*(p++)=0;
+		
 		if ( ((ap=get_attr_or_alias((char*)*param))==0)
 				|| (ap->opd&AVPOPS_VAL_NONE))
 		{
@@ -1051,7 +1055,28 @@ static int fixup_is_avp_set(void** param, int param_no)
 				"/alias <%s>\n", (char*)*param);
 			return E_UNSPEC;
 		}
+		if(p==0 || *p=='\0')
+			ap->ops|=AVPOPS_FLAG_ALL;
 
+		/* flags */
+		for( ; p&&*p ; p++ )
+		{
+			switch (*p) {
+				case 'n':
+				case 'N':
+					ap->ops|=AVPOPS_FLAG_CASTN;
+					break;
+				case 's':
+				case 'S':
+					ap->ops|=AVPOPS_FLAG_CASTS;
+					break;
+				default:
+					LOG(L_ERR,"ERROR:avpops:fixup_is_avp_set: bad flag "
+						"<%c>\n",*p);
+					return E_UNSPEC;
+			}
+		}
+		
 		pkg_free(*param);
 		*param=(void*)ap;
 	}
