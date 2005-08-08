@@ -31,6 +31,10 @@
 
 #include "../../parser/msg_parser.h"
 
+
+#define DS_HASH_USER_ONLY 1  /* use only the uri user part for hashing */
+extern int ds_flags; 
+
 int ds_load_list(char *lfile);
 int ds_destroy_list();
 int ds_select_dst(struct sip_msg *msg, char *set, char *alg, int mode);
