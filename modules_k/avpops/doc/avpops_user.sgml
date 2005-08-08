@@ -850,7 +850,7 @@ avp_op("$number","sub/$number2/d");
 				<title><function>is_avp_set</function> usage</title>
 				<programlisting format="linespecific">
 ...
-if(is_avp_set("i:678/g"))
+if(is_avp_set("i:678"))
     log("AVP with integer id 678 exists\n");
 ...
 				</programlisting>
