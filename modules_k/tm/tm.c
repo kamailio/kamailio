@@ -716,7 +716,7 @@ inline static int t_local_replied(struct sip_msg* msg, char *all, char *bar)
 	/* were all replies local or none  */
 	if (all_rpls) {
 		for( i=t->first_branch ; i<t->nr_of_outgoings ; i++ )
-			if (t->uac[i].last_received==0)
+			if (t->uac[i].last_received!=0)
 				return -1;
 	}
 
