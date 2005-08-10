@@ -57,9 +57,10 @@ typedef struct _ds_dest
 
 typedef struct _ds_set
 {
-	int id;
-	int nr;
-	int index;
+	int id;				/* id of dst set */
+	int nr;				/* number of items in dst set */
+	int index;			/* index pf dst set */
+	int last;			/* last used item in dst set */
 	ds_dest_p dlist;
 	struct _ds_set *next;
 } ds_set_t, *ds_set_p;
@@ -621,7 +622,8 @@ int ds_select_dst(struct sip_msg *msg, char *set, char *alg, int mode)
 		return -1;
 	}
 
-	if((force_dst==0) && (msg->dst_uri.s!=NULL || msg->dst_uri.len>0))
+	if((mode==0) && (force_dst==0)
+			&& (msg->dst_uri.s!=NULL || msg->dst_uri.len>0))
 	{
 		LOG(L_ERR,
 			"DISPATCHER:ds_select_dst: destination already set [%.*s]\n",
@@ -688,10 +690,14 @@ int ds_select_dst(struct sip_msg *msg, char *set, char *alg, int mode)
 				return -1;
 			}
 		break;
+		case 4:
+			hash = _ds_list[idx].last;
+			_ds_list[idx].last = (_ds_list[idx].last+1) % _ds_list[idx].nr;
+		break;
 		default:
 			LOG(L_WARN,
 					"WARNING: ds_select_dst: algo %d not implemented"
-					" using callid hashing instead...\n", a);
+					" - using first entry...\n", a);
 			hash = 0;
 	}
 

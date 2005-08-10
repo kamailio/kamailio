@@ -166,6 +166,11 @@ modparam("dispatcher", "force_dst", 1)
 			</listitem>
 			<listitem>
 				<para>
+				<quote>4</quote> - round-robin (next destination).
+				</para>
+			</listitem>
+			<listitem>
+				<para>
 				<quote>X</quote> - if the algorithm is not implemented, the
 				first entry in set is chosen.
 				</para>
