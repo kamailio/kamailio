@@ -43,6 +43,8 @@
 #include "../../mem/mem.h"
 #include "loose.h"
 #include "record.h"
+#include "rr_cb.h"
+#include "api.h"
 
 #ifdef ENABLE_USER_CHECK
 #include <string.h>
@@ -58,11 +60,16 @@ int add_username = 0;     /* Do not add username by default */
 
 MODULE_VERSION
 
-static int mod_init(void);
+static int  mod_init(void);
+static void mod_destroy(void);
+/* fixup functions */
 static int str_fixup(void** param, int param_no);
 static int regexp_fixup(void** param, int param_no);
 static int direction_fixup(void** param, int param_no);
-
+/* wrapper functions */
+static int w_add_rr_param(struct sip_msg *,char *, char *);
+static int w_check_route_param(struct sip_msg *,char *, char *);
+static int w_is_direction(struct sip_msg *,char *, char *);
 
 /*
  * Exported functions
@@ -83,12 +90,14 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE},
 	{"record_route_strict" , record_route_strict,   0,     0,
 			0},
-	{"add_rr_param",         add_rr_param,          1,     str_fixup,
+	{"add_rr_param",         w_add_rr_param,        1,     str_fixup,
 			REQUEST_ROUTE},
-	{"check_route_param",    check_route_param,     1,     regexp_fixup,
+	{"check_route_param",    w_check_route_param,   1,     regexp_fixup,
 			REQUEST_ROUTE},
-	{"is_direction",         is_direction,          1,     direction_fixup,
+	{"is_direction",         w_is_direction,        1,     direction_fixup,
 			REQUEST_ROUTE},
+	{"load_rr",              (cmd_function)load_rr, 0,     0,
+			0},
 	{0, 0, 0, 0, 0}
 };
 
@@ -110,13 +119,13 @@ static param_export_t params[] ={
 
 struct module_exports exports = {
 	"rr",
-	cmds,      /* Exported functions */
-	params,    /* Exported parameters */
-	mod_init,  /* initialize module */
-	0,         /* response function*/
-	0,         /* destroy function */
-	0,         /* oncancel function */
-	0          /* per-child init function */
+	cmds,        /* Exported functions */
+	params,      /* Exported parameters */
+	mod_init,    /* initialize module */
+	0,           /* response function*/
+	mod_destroy, /* destroy function */
+	0,           /* oncancel function */
+	0            /* per-child init function */
 };
 
 
@@ -136,6 +145,12 @@ static int mod_init(void)
 	}
 #endif
 	return 0;
+}
+
+
+static void mod_destroy()
+{
+	destroy_rrcb_lists();
 }
 
 
@@ -213,6 +228,27 @@ static int direction_fixup(void** param, int param_no)
 		*param = (void*)(unsigned long)n;
 	}
 	return 0;
+}
+
+
+
+static int w_add_rr_param(struct sip_msg *msg,char *param, char *foo)
+{
+	return ((add_rr_param(msg,(str*)param)==0)?1:-1);
+}
+
+
+
+static int w_check_route_param(struct sip_msg *msg,char *re, char *foo)
+{
+	return ((check_route_param(msg,(regex_t*)re)==0)?1:-1);
+}
+
+
+
+static int w_is_direction(struct sip_msg *msg,char *dir, char *foo)
+{
+	return ((is_direction(msg,(int)(long)dir)==0)?1:-1);
 }
 
 

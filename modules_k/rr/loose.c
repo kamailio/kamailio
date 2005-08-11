@@ -42,6 +42,7 @@
 #include "../../mem/mem.h"
 #include "../../dset.h"
 #include "loose.h"
+#include "rr_cb.h"
 #include "rr_mod.h"
 
 
@@ -513,13 +514,13 @@ static inline int after_strict(struct sip_msg* _m)
 	if (is_myself(&puri.host, puri.port_no))
 #endif
 	{
-		/*if (enable_double_rr && is_2rr(&_ruri->params)) {
-		 * DBG("ras(): Removing 2nd URI of mine: '%.*s'\n",
-		 * rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s)); */
 		/* set the hooks for the params -bogdan */
 		routed_msg_id = _m->id;
 		routed_params = puri.params;
- 		if (!rt->next) {
+		/* run RR callbacks -bogdan */
+		run_rr_callbacks( _m, &routed_params );
+
+		if (!rt->next) {
 			/* No next route in the same header, remove the whole header
 			 * field immediately
 			 */
@@ -547,18 +548,17 @@ static inline int after_strict(struct sip_msg* _m)
 	}
 
 	if (is_strict(&puri.params)) {
-		DBG("after_strict: Next hop: '%.*s' is strict router\n", uri->len, ZSW(uri->s));
-		     /* Previous hop was a strict router and the next hop is strict
-		      * router too. There is no need to save R-URI again because it
-		      * is saved already. In fact, in this case we will behave exactly
-		      * like a strict router.
-		      */
+		DBG("after_strict: Next hop: '%.*s' is strict router\n",
+			uri->len, ZSW(uri->s));
+		/* Previous hop was a strict router and the next hop is strict
+		 * router too. There is no need to save R-URI again because it
+		 * is saved already. In fact, in this case we will behave exactly
+		 * like a strict router. */
 
-		     /* Note: when there is only one Route URI left (endpoint), it will
-		      * always be a strict router because endpoints don't use ;lr parameter
-		      * In this case we will simply put the URI in R-URI and forward it, which
-		      * will work perfectly
-		      */
+		/* Note: when there is only one Route URI left (endpoint), it will
+		 * always be a strict router because endpoints don't use ;lr parameter
+		 * In this case we will simply put the URI in R-URI and forward it, 
+		 * which will work perfectly */
 		if (rewrite_uri(_m, uri) < 0) {
 			LOG(L_ERR, "after_strict: Error while rewriting request URI\n");
 			return RR_ERROR;
@@ -583,30 +583,29 @@ static inline int after_strict(struct sip_msg* _m)
 			return RR_ERROR;
 		}
 
-		     /* Next hop is a loose router - Which means that is is not endpoint yet
-		      * In This case we have to recover from previous strict routing, that 
-		      * means we have to find the last Route URI and put in in R-URI and 
-		      * remove the last Route URI.
-		      */
+		/* Next hop is a loose router - Which means that is is not endpoint yet
+		 * In This case we have to recover from previous strict routing, that 
+		 * means we have to find the last Route URI and put in in R-URI and 
+		 * remove the last Route URI. */
 		if (rt != hdr->parsed) {
-			     /* There is a previous route uri which was 2nd uri of mine
-			      * and must be removed here
-			      */
+			/* There is a previous route uri which was 2nd uri of mine
+			 * and must be removed here */
 			rem_off = hdr->body.s;
 			rem_len = rt->nameaddr.name.s - hdr->body.s;
 			if (!del_lump(_m, rem_off - _m->buf, rem_len, 0)) {
 				LOG(L_ERR, "after_strict: Can't remove Route HF\n");
 				return RR_ERROR;
-			}			
+			}
 		}
 
 
 		res = find_rem_target(_m, &hdr, &rt, &prev);
 		if (res < 0) {
-			LOG(L_ERR, "after_strict: Error while looking for last Route URI\n");
+			LOG(L_ERR, "after_strict: Error while looking for last "
+				"Route URI\n");
 			return RR_ERROR;
 		} else if (res > 0) {
-			     /* No remote target is an error */
+			/* No remote target is an error */
 			return RR_ERROR;
 		}
 
@@ -615,12 +614,12 @@ static inline int after_strict(struct sip_msg* _m)
 			LOG(L_ERR, "after_strict: Can't rewrite R-URI\n");
 			return RR_ERROR;
 		}
-		
-		     /* The first character if uri will be either '<' when it is the only URI in a
-		      * Route header field or ',' if there is more than one URI in the header field
-		      */
+
+		/* The first character if uri will be either '<' when it is the 
+		 * only URI in a Route header field or ',' if there is more than 
+		 * one URI in the header field */
 		DBG("after_strict: The last route URI: '%.*s'\n", 
-		    rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
+			rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
 
 		if (prev) {
 			rem_off = prev->nameaddr.name.s + prev->len;
@@ -659,7 +658,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		return RR_ERROR;
 	}
 
-	     /* IF the URI was added by me, remove it */
+	/* IF the URI was added by me, remove it */
 #ifdef ENABLE_USER_CHECK
 	ret=is_myself(&puri.user, &puri.host, puri.port_no);
 	if (ret>0)
@@ -672,6 +671,9 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		/* set the hooks for the params -bogdan */
 		routed_msg_id = _m->id;
 		routed_params = puri.params;
+		/* run RR callbacks -bogdan */
+		run_rr_callbacks( _m, &routed_params );
+
 		if (!rt->next) {
 			/* No next route in the same header, remove the whole header
 			 * field immediately
@@ -695,8 +697,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		if (enable_double_rr && is_2rr(&puri.params)) {
 			if (!rt->next) {
 				/* No next route in the same header, remove the whole header
-				 * field immediately
-				 */
+				 * field immediately */
 				if (!del_lump(_m, hdr->name.s - _m->buf, hdr->len, 0)) {
 					LOG(L_ERR, "after_loose: Can't remove Route HF\n");
 					return RR_ERROR;
@@ -724,10 +725,10 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		/* check if it the ignored user */
 		if(ret < 0)
 			return NOT_RR_DRIVEN;
-#endif	
+#endif
 		DBG("after_loose: Topmost URI is NOT myself\n");
 	}
-	
+
 	DBG("after_loose: URI to be processed: '%.*s'\n", uri->len, ZSW(uri->s));
 	if (is_strict(&puri.params)) {
 		DBG("after_loose: Next URI is a strict router\n");
@@ -736,7 +737,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			return RR_ERROR;
 		}
 	} else {
-		     /* Next hop is loose router */
+		/* Next hop is loose router */
 		DBG("after_loose: Next URI is a loose router\n");
 
 		if (set_dst_uri(_m, uri) < 0) {
@@ -744,11 +745,11 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			return RR_ERROR;
 		}
 
-		     /* There is a previous route uri which was 2nd uri of mine
-		      * and must be removed here
-		      */
+		/* There is a previous route uri which was 2nd uri of mine
+		 * and must be removed here */
 		if (rt != hdr->parsed) {
-			if (!del_lump(_m, hdr->body.s - _m->buf, rt->nameaddr.name.s - hdr->body.s, 0)) {
+			if (!del_lump(_m, hdr->body.s - _m->buf, 
+			rt->nameaddr.name.s - hdr->body.s, 0)) {
 				LOG(L_ERR, "after_loose: Can't remove Route HF\n");
 				return RR_ERROR;
 			}			
@@ -783,7 +784,8 @@ int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
 		return after_loose(_m, 1);
 	} else {
 #ifdef ENABLE_USER_CHECK
-		if (is_myself(&_m->parsed_uri, &_m->parsed_uri.host, &_m->parsed_uri.port_no)) {
+		if (is_myself(&_m->parsed_uri, &_m->parsed_uri.host,
+		&_m->parsed_uri.port_no)) {
 #else
 		if (is_myself(&_m->parsed_uri.host, _m->parsed_uri.port_no)) {
 #endif
@@ -796,7 +798,7 @@ int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
 
 
 
-int check_route_param(struct sip_msg * msg, char *re, char *foo)
+int check_route_param(struct sip_msg * msg, regex_t* re)
 {
 	regmatch_t pmatch;
 	char bk;
@@ -813,18 +815,18 @@ int check_route_param(struct sip_msg * msg, char *re, char *foo)
 	bk = routed_params.s[routed_params.len];
 	routed_params.s[routed_params.len] = 0;
 	DBG("DEBUG:rr:check_route_param: params are <%s>\n", routed_params.s);
-	if (regexec( (regex_t*)re, routed_params.s, 1, &pmatch, 0)!=0) {
+	if (regexec( re, routed_params.s, 1, &pmatch, 0)!=0) {
 		routed_params.s[routed_params.len] = bk;
 		return -1;
 	} else {
 		routed_params.s[routed_params.len] = bk;
-		return 1;
+		return 0;
 	}
 }
 
 
 
-static inline int get_route_param( struct sip_msg *msg, str *name, str *val)
+int get_route_param( struct sip_msg *msg, str *name, str *val)
 {
 	char *p;
 	char *end;
@@ -858,11 +860,21 @@ static inline int get_route_param( struct sip_msg *msg, str *name, str *val)
 		while( p<end && (*p==' ' || *p=='\t') )
 			p++;
 		/* check the name - length first and content after */
-		if ( end-p<name->len+2 || memcmp(p,name->s,name->len)!=0 )
+		if ( end-p<name->len+2 )
+			goto notfound;
+		if ( memcmp(p,name->s,name->len)!=0 ) {
+			p++;
 			continue;
+		}
 		p+=name->len;
 		while( p<end && (*p==' ' || *p=='\t') )
 			p++;
+		if (p==end|| *p==';') {
+			/* empty val */
+			val->len = 0;
+			val->s = 0;
+			break;
+		}
 		if (*p!='=')
 			continue;
 		p++;
@@ -882,9 +894,9 @@ static inline int get_route_param( struct sip_msg *msg, str *name, str *val)
 					break;
 			}
 		}
-		if(p==end)
-			goto notfound;
 		val->len = p-val->s;
+		if (val->len==0)
+			val->s = 0;
 		break;
 	}
 
@@ -894,7 +906,7 @@ notfound:
 }
 
 
-int is_direction(struct sip_msg * msg, char *dir, char *foo)
+int is_direction(struct sip_msg * msg, int dir)
 {
 	static str ftag_param = {"ftag",4};
 	static unsigned int last_id = (unsigned int)-1;
@@ -937,10 +949,10 @@ int is_direction(struct sip_msg * msg, char *dir, char *foo)
 downstream:
 	last_id = msg->id;
 	last_dir = RR_FLOW_DOWNSTREAM;
-	return (((unsigned long)dir)==RR_FLOW_DOWNSTREAM)?1:-1;
+	return (dir==RR_FLOW_DOWNSTREAM)?0:-1;
 upstream:
 	last_id = msg->id;
 	last_dir = RR_FLOW_UPSTREAM;
-	return (((unsigned long)dir)==RR_FLOW_UPSTREAM)?1:-1;
+	return (dir==RR_FLOW_UPSTREAM)?0:-1;
 }
 

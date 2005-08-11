@@ -248,7 +248,6 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 	if (rr_param_buf.len && rr_param_msg!=_m->id) {
 		/* rr_params were set for a different message -> reset buffer */
 		rr_param_buf.len = 0;
-		DBG("----> reset rr_param_buf\n");
 	}
 
 	if (enable_double_rr) {
@@ -448,12 +447,9 @@ static inline int append_to_lump( struct lump *l, str *s, int end_offset)
 /*
  * Appends a new Record-Route parameter
  */
-int add_rr_param(struct sip_msg* msg, char* param, char* foo)
+int add_rr_param(struct sip_msg* msg, str* rr_param)
 {
-	str  *rr_param;
 	int i;
-
-	rr_param = (str*)param;
 
 	if (last_rr_msg==msg->id) {
 		/* RR was already done -> have to modify the RR-sufix lump */
@@ -483,7 +479,7 @@ int add_rr_param(struct sip_msg* msg, char* param, char* foo)
 		DBG("DEBUG:rr:add_rr_param: rr_param_buf=<%.*s>\n",rr_param_buf.len,
 			rr_param_buf.s);
 	}
-	return 1;
+	return 0;
 
 error:
 	return -1;

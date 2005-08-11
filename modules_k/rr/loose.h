@@ -26,6 +26,9 @@
 #ifndef LOOSE_H
 #define LOOSE_H
 
+
+#include <regex.h>
+#include "../../str.h"
 #include "../../parser/msg_parser.h"
 
 #define RR_FLOW_DOWNSTREAM  (1<<0)
@@ -40,11 +43,18 @@ int loose_route(struct sip_msg* _m, char* _s1, char* _s2);
 /*
  * Check if the our route hdr has required params
  */
-int check_route_param(struct sip_msg * msg, char *re, char *foo);
+int check_route_param(struct sip_msg *msg, regex_t* re);
+
 
 /*
  * Check the direction of the message
  */
-int is_direction(struct sip_msg * msg, char *dir, char *foo);
+int is_direction(struct sip_msg *msg, int dir);
+
+
+/*
+ * Gets the value of a route parameter
+ */
+int get_route_param( struct sip_msg *msg, str *name, str *val);
 
 #endif /* LOOSE_H */

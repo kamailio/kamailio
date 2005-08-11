@@ -55,7 +55,7 @@ int record_route_strict(struct sip_msg* _m, char* _s1, char* _s2);
 /*
  * Appends a new Record-Route parameter
  */
-int add_rr_param(struct sip_msg* msg, char* param, char* foo);
+int add_rr_param(struct sip_msg* msg, str* rr_param);
 
 
 #endif /* RECORD_H */
