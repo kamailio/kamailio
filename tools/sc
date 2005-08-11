@@ -12,6 +12,7 @@
 # 2003-09-15 multidomain support completed (jiri)
 # 2003-10-30 more debugging output, less copy and paste in
 #             the previous item
+# 2005-07-28 add support for lcr module (darilion)
 #
 # To-DO:
 # -----
@@ -171,6 +172,17 @@ A_LAST_MODIFIED_COLUMN=last_modified
 # domain table
 if [ -z "$DOMAIN_TABLE" ] ; then
 	DOMAIN_TABLE=domain
+fi
+
+# lcr tables
+if [ -z "$LCR_TABLE" ] ; then
+	LCR_TABLE=lcr
+fi
+if [ -z "$GW_TABLE" ] ; then
+	GW_TABLE=gw
+fi
+if [ -z "$GW_GRP_TABLE" ] ; then
+	GW_GRP_TABLE=gw_grp
 fi
 
 # URI table
@@ -346,6 +358,24 @@ cat <<EOF
  domain show ........................ show list of served domains
  domain add <domainname> ............ add a new served domain
  domain rm <domainname> ............. remove a served domain
+
+           * lcr *
+   * IP addresses must be entered in dotted quad format e.g. 1.2.3.4 *
+   * <uri_scheme> and <transport> must be entered in integer or text,*
+   * e.g. transport '2' is identical to transport 'tcp'.             *
+   *   scheme: 1=sip, 2=sips;   transport: 1=udp, 2=tcp, 3=tls       *
+   * Examples:  serctl lcr addgw_grp usa 1                           *
+   *            serctl lcr addgw level3 1.2.3.4 5080 sip tcp 1       *
+   *            serctl lcr addroute +1 % 1 1                         *
+ lcr show ...................................... show routes, gateways and groups
+ lcr reload .................................... reload lcr gateways
+ lcr addgw_grp <grp_name> ...................... add gateway group, autocreate grp_id
+ lcr addgw_grp <grp_name> <grp_id> ............. add gateway group with grp_id
+ lcr rmgw_grp  <grp_id> ........................ delete the gw_grp
+ lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> .. add a gateway
+ lcr rmgw  <gw_name> ............................................ delete a gateway
+ lcr addroute <prefix> <from> <grp_id> <prio> .. add a route
+ lcr rmroute  <prefix> <from> <grp_id> <prio> .. delete a route
 
            * control and diagnostics *
  moni ... show internal status      start .... start ser
@@ -848,6 +878,157 @@ domain() {
 				exit 1
 			fi
 			fifo_cmd domain_reload
+			;;
+		*)
+			usage
+			exit 1
+	esac
+}
+
+lcr() {
+	case $1 in
+		show)
+			echo lcr routes
+			QUERY="select * FROM $LCR_TABLE ORDER BY prefix; "
+			sql_ro_query "$QUERY"
+			echo lcr gateway groups
+			QUERY="select * FROM $GW_GRP_TABLE ORDER BY grp_id; "
+			sql_ro_query "$QUERY"
+			echo lcr gateways
+			#QUERY="select * FROM $GW_TABLE ORDER BY grp_id; "
+			QUERY="select gw_name, CONCAT(ip_addr, ' (',
+					CONCAT_WS('.',floor(ip_addr - floor(ip_addr/16777216)*16777216 - floor((ip_addr - floor(ip_addr/16777216)*16777216)/65536)*65536 - floor((ip_addr - floor(ip_addr/16777216)*16777216 - floor((ip_addr - floor(ip_addr/16777216)*16777216)/65536)*65536)/256)*256),
+						floor((ip_addr - floor(ip_addr / 16777216) * 16777216 - floor((ip_addr - floor(ip_addr / 16777216) * 16777216) / 65536) * 65536) / 256),
+						floor((ip_addr - floor(ip_addr / 16777216) * 16777216) / 65536),
+						floor(ip_addr / 16777216) ), ') ') as ip, 
+				port, uri_scheme, transport, grp_id 
+				FROM $GW_TABLE ORDER BY grp_id; "
+			sql_ro_query "$QUERY"
+			;;
+		reload)
+			fifo_cmd lcr_reload
+			;;
+		addgw_grp)
+			shift
+			if [ $# -lt 1 ] ; then
+				echo too few paramters
+				usage
+				exit 1
+			fi
+			if [ $# -gt 1 ] ; then
+				GRP_ID=$2
+			else
+				GRP_ID=NULL
+			fi
+			prompt_pw
+			QUERY="insert into $GW_GRP_TABLE VALUES ($GRP_ID, '$1');"
+			sql_query "$QUERY"
+			if [ $? -ne 0 ] ; then
+				echo "SQL Error"
+				exit 1
+			fi
+			fifo_cmd lcr_reload
+			;;
+		rmgw_grp)
+			shift
+			if [ $# -ne 1 ] ; then
+				echo missing grp_id to be removed
+				exit 1
+			fi
+			prompt_pw
+			QUERY="delete from $GW_GRP_TABLE where grp_id=$1;"
+			sql_query "$QUERY"
+			if [ $? -ne 0 ] ; then
+				echo "SQL Error"
+				exit 1
+			fi
+			fifo_cmd lcr_reload
+			;;
+		addroute)
+			shift
+			if [ $# -ne 4 ] ; then
+				echo too few paramters
+				usage
+				exit 1
+			fi
+			prompt_pw
+			QUERY="insert into $LCR_TABLE VALUES ('$1', '$2', $3, $4);"
+			sql_query "$QUERY"
+			if [ $? -ne 0 ] ; then
+				echo "SQL Error"
+				exit 1
+			fi
+			fifo_cmd lcr_reload
+			;;
+		rmroute)
+			shift
+			if [ $# -ne 4 ] ; then
+				echo too few paramters
+				usage
+				exit 1
+			fi
+			prompt_pw
+			QUERY="delete from $LCR_TABLE where prefix='$1' AND from_uri='$2' AND grp_id=$3 AND priority=$4;"
+			sql_query "$QUERY"
+			if [ $? -ne 0 ] ; then
+				echo "SQL Error"
+				exit 1
+			fi
+			fifo_cmd lcr_reload
+			;;
+		addgw)
+			shift
+			if [ $# -ne 6 ] ; then
+				echo too few paramters
+				usage
+				exit 1
+			fi
+			GW_NAME=$1
+			GW_PORT=$3
+			GW_URI_SCHEME=$4
+			if   [ $GW_URI_SCHEME = 'sip' ]; then
+				GW_URI_SCHEME=1
+			elif [ $GW_URI_SCHEME = 'sips' ]; then
+				GW_URI_SCHEME=2
+			fi
+			GW_TRANSPORT=$5
+			if   [ $GW_TRANSPORT = 'udp' ]; then
+				GW_TRANSPORT=1
+			elif [ $GW_TRANSPORT = 'tcp' ]; then
+				GW_TRANSPORT=2
+			elif [ $GW_TRANSPORT = 'tls' ]; then
+				GW_TRANSPORT=3
+			fi
+			GW_GRP_ID=$6
+			oldIFS=$IFS
+			IFS=.
+			set -- $2
+			GW_IP=$(($1+$2*256+$3*65536+$4*16777216))
+			IFS=$oldIFS
+			prompt_pw
+			#QUERY="insert into $GW_TABLE VALUES ('$GW_NAME', $GW_IP, $GW_PORT, $GW_URI_SCHEME, $GW_TRANSPORT, $GW_GRP_ID);"
+			QUERY="insert into $GW_TABLE VALUES ('$GW_NAME', $GW_IP, $GW_PORT, $GW_GRP_ID);"
+			sql_query "$QUERY"
+			if [ $? -ne 0 ] ; then
+				echo "SQL Error"
+				exit 1
+			fi
+			fifo_cmd lcr_reload
+			;;
+		rmgw)
+			shift
+			if [ $# -ne 1 ] ; then
+				echo missing gateway to be removed
+				exit 1
+			fi
+			prompt_pw
+			QUERY="delete from $GW_TABLE where gw_name='$1';"
+			sql_query "$QUERY"
+			if [ $? -ne 0 ] ; then
+				echo "SQL Error"
+				exit 1
+			fi
+			fifo_cmd lcr_reload
 			;;
 		*)
 			usage
@@ -1909,6 +2090,11 @@ case $1 in
 	domain)
 		shift
 		domain "$@"
+		;;
+
+	lcr)
+		shift
+		lcr "$@"
 		;;
 
 	fifo)
