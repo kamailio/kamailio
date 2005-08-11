@@ -91,7 +91,7 @@ if [ -z "$USERCOL" ]; then
 fi
 # path to gen_ha1 tool
 if [ -z "$GENHA1" ]; then
-	GENHA1='/usr/sbin/gen_ha1'
+	GENHA1='/usr/sbin/openser_gen_ha1'
 fi
 
 DUMMY_DATE="2000-01-01 00:00:01"
@@ -144,7 +144,7 @@ EOF
 # execute sql command
 sql_query()
 {
-	$CMD "$@"
+	echo $CMD "$@"
 }
 
 # dump all rows
@@ -278,11 +278,11 @@ GRANT_CMD="CREATE USER $DBRWUSER WITH PASSWORD '$DEFAULT_PW';
 	GRANT ALL PRIVILEGES ON TABLE version, acc, active_sessions, aliases, dbaliases, grp,
 		location, missed_calls, pending, phonebook, subscriber, silo, domain,
 		uri, server_monitoring, usr_preferences, trusted, server_monitoring_agg,
-		admin_privileges, speed_dial TO $DBRWUSER;
+		admin_privileges, speed_dial, gw, gw_grp, lcr TO $DBRWUSER;
 	GRANT SELECT ON TABLE version, acc, active_sessions, aliases, dbaliases, grp,
 		location, missed_calls, pending, phonebook, subscriber, silo, domain,
 		uri, server_monitoring, usr_preferences, trusted, server_monitoring_agg,
-		admin_privileges, speed_dial TO $DBROUSER;"
+		admin_privileges, speed_dial, gw, gw_grp, lcr TO $DBROUSER;"
 TIMESTAMP="timestamp NOT NULL DEFAULT NOW()"
 DATETIME="TIMESTAMP WITHOUT TIME ZONE NOT NULL default '$DUMMY_DATE'"
 DATETIMEALIAS="TIMESTAMP WITHOUT TIME ZONE NOT NULL default '$DEFAULT_ALIASES_EXPIRES'"
@@ -320,6 +320,9 @@ INSERT INTO version VALUES ( 'dbaliases', '1');
 INSERT INTO version VALUES ( 'domain', '1');
 INSERT INTO version VALUES ( 'event', '1');
 INSERT INTO version VALUES ( 'grp', '2');
+INSERT INTO version VALUES ( 'gw', '2');
+INSERT INTO version VALUES ( 'gw_grp', '1');
+INSERT INTO version VALUES ( 'lcr', '1');
 INSERT INTO version VALUES ( 'location', '1001');
 INSERT INTO version VALUES ( 'missed_calls', '2');
 INSERT INTO version VALUES ( 'pending', '4');
@@ -455,6 +458,58 @@ CREATE TABLE grp (
   last_modified $DATETIME,
   PRIMARY KEY($USERCOL, domain, grp)
 ) $TABLE_TYPE;
+
+
+/*
+ * Table structure for table 'gw' (lcr module)
+ */
+
+CREATE TABLE gw (
+  gw_name VARCHAR(128) NOT NULL,
+  ip_addr BIGINT CHECK (ip_addr > 0 AND ip_addr < 4294967296) NOT NULL,
+  port INT CHECK (port > 0 AND port < 65536),
+  uri_scheme SMALLINT CHECK (uri_scheme >= 0 and uri_scheme < 256),
+  transport SMALLINT CHECK (transport >= 0 and transport < 256),
+  grp_id INT CHECK (grp_id > 0) NOT NULL,
+  PRIMARY KEY (gw_name)
+);
+
+CREATE INDEX gw_grp_id_indx ON gw (grp_id);
+
+
+/*
+ * Table structure for table 'gw_grp' (lcr module)
+ */
+
+CREATE TABLE gw_grp (
+  grp_id SERIAL PRIMARY KEY,
+  grp_name VARCHAR(64) NOT NULL
+);
+
+
+/*
+ * Table structure for table 'lcr' (lcr module)
+ */
+
+CREATE TABLE lcr (
+  prefix varchar(16) NOT NULL,
+  from_uri varchar(128) NOT NULL DEFAULT '%',
+  grp_id INT CHECK (grp_id > 0) NOT NULL,
+  priority SMALLINT CHECK (priority >= 0 and priority < 256) NOT NULL
+);
+
+CREATE INDEX lcr_prefix_indx ON lcr (prefix);
+CREATE INDEX lcr_from_uri_indx ON lcr (from_uri);
+CREATE INDEX lcr_grp_id_indx ON lcr (grp_id);
+
+/*
+ * emulate mysql proprietary functions used by the lcr module
+ * in postgresql
+ *
+ */
+
+CREATE FUNCTION "concat" (text,text) RETURNS text AS 'SELECT $1 || $2;' LANGUAGE 'sql';
+CREATE FUNCTION "rand" () RETURNS double precision AS 'SELECT random();' LANGUAGE 'sql';
 
 
 /*
