@@ -48,7 +48,7 @@ long getpid();
 static char sql_buf[SQL_BUF_LEN];
 
 static int submit_query(db_con_t* _h, const char* _s);
-static int connect_db(db_con_t* _h, const char* _db_url);
+static int connect_db(db_con_t* _h);
 static int disconnect_db(db_con_t* _h);
 static int free_query(db_con_t* _h);
 
@@ -57,7 +57,6 @@ static int free_query(db_con_t* _h);
 **
 **	Arguments :
 **		db_con_t *	as previously supplied by db_init()
-**		char *_db_url	the database to connect to
 **
 **	Returns :
 **		0 upon success
@@ -71,9 +70,10 @@ static int free_query(db_con_t* _h);
 **		should clean up after itself.
 */
 
-static int connect_db(db_con_t* _h, const char* _db_url)
+static int connect_db(db_con_t* _h)
 {
 	char* user, *password, *host, *port, *database;
+	char urlbuf[SQLURL_LEN];
 
 	if(! _h)
 	{
@@ -86,6 +86,11 @@ static int connect_db(db_con_t* _h, const char* _db_url)
 		DLOG("connect_db", "disconnect first!");
 		disconnect_db(_h);
 	}
+	
+	if (!CON_SQLURL(_h)) {
+		PLOG("connect_db","FATAL ERROR: no sql url!");
+		return(-1);
+	}
 
 	/*
 	** CON_CONNECTED(_h) is now 0, set by disconnect_db()
@@ -93,19 +98,19 @@ static int connect_db(db_con_t* _h, const char* _db_url)
 
 	/*
 	** Note :
-	** Make a scratch pad copy of given SQL URL.
+	** Make a scratch pad copy of given SQL URL in urlbuf and work on it.
 	** all memory allocated to this connection is rooted
 	** from this.
 	** This is an important concept.
 	** as long as you always allocate memory using the function:
 	** mem = aug_alloc(size, CON_SQLURL(_h)) or
-	** str = aug_strdup(string, CON_SQLURL(_h))
 	** where size is the amount of memory, then in the future
 	** when CON_SQLURL(_h) is freed (in the function disconnect_db())
 	** all other memory allocated in this manner is freed.
 	** this will keep memory leaks from happening.
 	*/
-	CON_SQLURL(_h) = aug_strdup((char *) _db_url, (char *) _h);
+
+	snprintf(urlbuf,SQLURL_LEN,"%s",CON_SQLURL(_h));
 
 	/*
 	** get the connection parameters parsed from the db_url string
@@ -115,14 +120,13 @@ static int connect_db(db_con_t* _h, const char* _db_url)
 	** dbport :            the port to connect to database on
 	** dbname :            the name of the database
 	*/
-	if(parse_sql_url(CON_SQLURL(_h),
+	if(parse_sql_url(urlbuf,
 		&user,&password,&host,&port,&database) < 0)
 	{
-		char buf[256];
-		sprintf(buf, "Error while parsing %s", _db_url);
+		char buf[SQL_BUF_LEN];
+		snprintf(buf, SQL_BUF_LEN, "Error while parsing %s", CON_SQLURL(_h));
 		PLOG("connect_db", buf);
 
-		aug_free(CON_SQLURL(_h));
 		return -3;
 	}
 
@@ -137,7 +141,6 @@ static int connect_db(db_con_t* _h, const char* _db_url)
 	{
 		PLOG("connect_db", PQerrorMessage(CON_CONNECTION(_h)));
 		PQfinish(CON_CONNECTION(_h));
-		aug_free(CON_SQLURL(_h));
 		return -4;
 	}
 
@@ -174,14 +177,6 @@ static int disconnect_db(db_con_t* _h)
 		return(0);
 	}
 
-	/*
-	** free lingering memory tree if it exists
-	*/
-	if(CON_SQLURL(_h))
-	{
-		aug_free(CON_SQLURL(_h));
-		CON_SQLURL(_h) = (char *) 0;
-	}
 
 	/*
 	** ignore if there is no current connection
@@ -230,6 +225,11 @@ db_con_t *db_init(const char* _sqlurl)
 	db_con_t* res;
 
 	DLOG("db_init", "entry");
+	if (strlen(_sqlurl)>(SQLURL_LEN-1)) 
+	{
+		PLOG("db_init","ERROR: sql url too long");
+		return ((db_con_t *) 0);
+	}
 
 	/*
 	** this is the root memory for this database connection.
@@ -239,8 +239,9 @@ db_con_t *db_init(const char* _sqlurl)
 	res->tail = (unsigned long)aug_alloc
 		(sizeof(struct con_postgres), (char*)res);
 	memset((struct con_postgres*)res->tail, 0, sizeof(struct con_postgres));
+	CON_SQLURL(res)=aug_strdup((char*)_sqlurl,(char *)res);
 
-	if (connect_db(res, _sqlurl) < 0)
+	if (connect_db(res) < 0)
 	{
 		PLOG("db_init", "Error while trying to open database, FATAL\n");
 		aug_free(res);
@@ -274,6 +275,15 @@ void db_close(db_con_t* _h)
 	}
 
 	disconnect_db(_h);
+	/*
+	** free sql url memory if it exists
+	*/
+	if(CON_SQLURL(_h))
+	{
+		aug_free(CON_SQLURL(_h));
+		CON_SQLURL(_h) = (char *) 0;
+	}
+
 	aug_free(_h);
 
 }
@@ -351,8 +361,8 @@ static int submit_query(db_con_t* _h, const char* _s)
 		/*
 		** log the error
 		*/
-		char buf[256];
-		sprintf(buf, "query '%s', result '%s'\n",
+		char buf[SQL_BUF_LEN];
+		snprintf(buf, SQL_BUF_LEN, "query '%s', result '%s'\n",
 			_s, PQerrorMessage(CON_CONNECTION(_h)));
 		PLOG("submit_query", buf);
 	}
@@ -475,16 +485,17 @@ static int begin_transaction(db_con_t * _h, char *_s)
 		** attempt to open the db.
 		*/
 
-		if((rv = connect_db(_h, CON_SQLURL(_h))) != 0)
+		if((rv = connect_db(_h)) != 0)
 		{
 			/*
 			** our attempt to fix the connection failed
 			*/
-			char buf[256];
-			sprintf(buf, "no connection, FATAL %d!", rv);
+			char buf[SQL_BUF_LEN];
+			snprintf(buf, SQL_BUF_LEN, "no connection, FATAL %d!", rv);
 			PLOG("begin_transaction",buf);
 			return(rv);
 		}
+		PLOG("db_connect","successfully reconnected");
 	}
 	else
 	{
@@ -500,8 +511,8 @@ static int begin_transaction(db_con_t * _h, char *_s)
 	mr = PQexec(CON_CONNECTION(_h), "BEGIN");
 	if(!mr || PQresultStatus(mr) != PGRES_COMMAND_OK)
 	{
-		char buf[256];
-		sprintf("FATAL %s, '%s'!\n",
+		char buf[SQL_BUF_LEN];
+		snprintf(buf, SQL_BUF_LEN, "FATAL %s, '%s'!\n",
 			PQerrorMessage(CON_CONNECTION(_h)), _s);
 		PLOG("begin_transaction", buf);
 		return(-1);

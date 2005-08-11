@@ -60,4 +60,6 @@ struct con_postgres {
 #define PLOG(f,s) LOG(L_ERR, "PG[%d] %s %s\n",__LINE__,f,s)
 #define DLOG(f,s) LOG(L_INFO, "PG[%d] %s %s\n",__LINE__,f,s)
 
+#define SQLURL_LEN 256
+
 #endif /* CON_POSTGRES_H */
