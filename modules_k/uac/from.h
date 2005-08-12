@@ -41,10 +41,10 @@ void init_from_replacer();
 
 int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri);
 
-int restore_from( struct sip_msg *msg, int is_req);
+int restore_from( struct sip_msg *msg , int *is_from);
 
-/* TM callback functions */
-void tr_checker(struct cell* t, int type, struct tmcb_params *p);
+/* RR callback functions */
+void rr_checker(struct sip_msg *msg, str *r_param, void *cb_param);
 
 
 #endif

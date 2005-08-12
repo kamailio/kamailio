@@ -23,6 +23,8 @@
  * History:
  * ---------
  *  2005-01-31  first version (ramona)
+ *  2005-08-12  some TM callbacks replaced with RR callback - more efficient;
+ *              (bogdan)
  */
 
 
@@ -37,6 +39,7 @@
 #include "../../mem/mem.h"
 #include "../tm/tm_load.h"
 #include "../tm/t_hooks.h"
+#include "../rr/api.h"
 
 #include "from.h"
 #include "auth.h"
@@ -44,11 +47,15 @@
 
 MODULE_VERSION
 
+
+/* local variable used for init */
+static char* from_restore_mode_str = NULL;
+
 /* global param variables */
-static char *from_param_chr = "vsf";
-str from_param;
+str rr_param = {"vsf",3};
 int from_restore_mode = FROM_NO_RESTORE;
 struct tm_binds uac_tmb;
+struct rr_binds uac_rrb;
 
 static int w_replace_from1(struct sip_msg* msg, char* str, char* str2);
 static int w_replace_from2(struct sip_msg* msg, char* str, char* str2);
@@ -63,13 +70,13 @@ static void mod_destroy();
 /* Exported functions */
 static cmd_export_t cmds[]={
 	{"uac_replace_from",  w_replace_from2,  2, fixup_replace_from2,
-									REQUEST_ROUTE|FAILURE_ROUTE },
+			REQUEST_ROUTE },
 	{"uac_replace_from",  w_replace_from1,  1, fixup_replace_from1,
-									REQUEST_ROUTE|FAILURE_ROUTE },
+			REQUEST_ROUTE },
 	{"uac_restore_from",  w_restore_from,   0,                  0,
-									REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE },
+			REQUEST_ROUTE },
 	{"uac_auth",          w_uac_auth,       0,                  0,
-									FAILURE_ROUTE},
+			FAILURE_ROUTE },
 	{0,0,0,0,0}
 };
 
@@ -77,9 +84,9 @@ static cmd_export_t cmds[]={
 
 /* Exported parameters */
 static param_export_t params[] = {
-	{"from_store_param",  STR_PARAM,                &from_param_chr      },
-	{"from_restore_mode", INT_PARAM,                &from_restore_mode   },
-	{"credential",        STR_PARAM|USE_FUNC_PARAM, &add_credential      },
+	{"rr_store_param",    STR_PARAM,                &rr_param.s            },
+	{"from_restore_mode", STR_PARAM,                &from_restore_mode_str },
+	{"credential",        STR_PARAM|USE_FUNC_PARAM, &add_credential        },
 	{0, 0, 0}
 };
 
@@ -103,12 +110,18 @@ static int mod_init(void)
 {
 	LOG(L_INFO,"UAC - initializing\n");
 
-	from_param.s = from_param_chr;
-	from_param.len = strlen(from_param_chr);
-	if (from_param.len==0)
-	{
-		LOG(L_ERR,"ERROR:uac:mod_init: from_tag cannot be empty\n");
-		goto error;
+	if (from_restore_mode_str && *from_restore_mode_str) {
+		if (strcasecmp(from_restore_mode_str,"none")==0) {
+			from_restore_mode = FROM_NO_RESTORE;
+		} else if (strcasecmp(from_restore_mode_str,"manual")==0) {
+			from_restore_mode = FROM_MANUAL_RESTORE;
+		} else if (strcasecmp(from_restore_mode_str,"auto")==0) {
+			from_restore_mode = FROM_AUTO_RESTORE;
+		} else {
+			LOG(L_ERR,"ERROR:uac:mod_init: unsupported value '%s' for "
+				"from_restore_mode\n",from_restore_mode_str);
+			goto error;
+		}
 	}
 
 	if (from_restore_mode!=FROM_NO_RESTORE &&
@@ -119,18 +132,31 @@ static int mod_init(void)
 			from_restore_mode);
 	}
 
-	/* load the TM API */
-	if (load_tm_api(&uac_tmb)!=0) {
-		LOG(L_ERR, "ERROR:uac:mod_init(: can't load TM API\n");
+	rr_param.len = strlen(rr_param.s);
+	if (rr_param.len==0 && from_restore_mode!=FROM_NO_RESTORE)
+	{
+		LOG(L_ERR,"ERROR:uac:mod_init: rr_store_param cannot be empty "
+			"if FROM is restoreable\n");
 		goto error;
 	}
 
 	if (from_restore_mode==FROM_AUTO_RESTORE)
 	{
-		/* get all transactions */
-		if (uac_tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, tr_checker, 0)!=1)
-		{
-			LOG(L_ERR,"ERROR:uac:mod_init: failed to install TM callback\n");
+		/* load the TM API */
+		if (load_tm_api(&uac_tmb)!=0) {
+			LOG(L_ERR, "ERROR:uac:mod_init: can't load TM API\n");
+			goto error;
+		}
+
+		/* load the RR API */
+		if (load_rr_api(&uac_rrb)!=0) {
+			LOG(L_ERR, "ERROR:uac:mod_init: can't load RR API\n");
+			goto error;
+		}
+
+		/* get all requests doing loose route */
+		if (uac_rrb.register_rrcb( rr_checker, 0)!=0) {
+			LOG(L_ERR,"ERROR:uac:mod_init: failed to install RR callback\n");
 			goto error;
 		}
 	}
@@ -226,9 +252,16 @@ static int fixup_replace_from2(void** param, int param_no)
 
 static int w_restore_from(struct sip_msg *msg,  char* foo, char* bar)
 {
-	restore_from( msg , (msg->first_line.type==SIP_REQUEST)?1:0 );
-	return 1;
+	/* safety checks - must be a request */
+	if (msg->first_line.type!=SIP_REQUEST) {
+		LOG(L_ERR,"ERROR:uac:w_restore_from: called for something "
+			"not request\n");
+		return -1;
+	}
+
+	return (restore_from(msg,0)==0)?1:-1;
 }
+
 
 #define UAC_URI_SIZE	512
 static char uac_uri_buf[UAC_URI_SIZE];

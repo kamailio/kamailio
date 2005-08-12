@@ -23,6 +23,10 @@
  * History:
  * ---------
  *  2005-01-31  first version (ramona)
+ *  2005-08-12  encoded old FROM URI stored in RR hdr and not in FROM anymore;
+ *              some TM callbacks replaced with RR callback - more efficient;
+ *              XOR used to mix together old and new URI
+ *              (bogdan)
  */
 
 
@@ -33,18 +37,22 @@
 #include "../../data_lump.h"
 #include "../tm/h_table.h"
 #include "../tm/tm_load.h"
+#include "../rr/api.h"
 
 #include "from.h"
 
-extern str from_param;
+extern str rr_param;
 extern int from_restore_mode;
 extern struct tm_binds uac_tmb;
+extern struct rr_binds uac_rrb;
 
 static char enc_table64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		"abcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static int dec_table64[256];
 
+static void restore_from_reply(struct cell* t, int type, struct tmcb_params *p);
+static void restore_to_reply(struct cell* t, int type, struct tmcb_params *p);
 
 #define text3B64_len(_l)   ( ( ((_l)+2)/3 ) << 2 )
 
@@ -79,7 +87,7 @@ static inline int encode_from( str *src, str *dst )
 
 	for ( idx=0, p=buf ; idx<src->len ; idx+=3)
 	{
-		left = src->len - idx - 1;
+		left = src->len - idx -1 ;
 		left = (left>1? 2 : left);
 
 		/* Collect 1 to 3 bytes to encode */
@@ -95,6 +103,7 @@ static inline int encode_from( str *src, str *dst )
 		*(p++) = left > 0 ? enc_table64[(block >> 6) & 0x3f] : '-';
 		*(p++) = left > 1 ? enc_table64[block & 0x3f] : '-';
 	}
+
 	return 0;
 }
 
@@ -144,21 +153,34 @@ static inline int decode_from( str *src , str *dst)
 	}
 
 	return 0;
-
 }
 
 
-/* 
+/*
  * if display name does not exist, then from_dsp is ignored
  */
 int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 {
+	static char buf_s[MAX_URI_SIZE];
 	struct to_body *from;
 	struct lump* l;
 	str replace;
 	char *p;
 	str param;
 	int offset;
+	str buf;
+	int i;
+
+	/* consistency check! do NOT allow from changing in sequential request*/
+	if ( msg->to==0 && (parse_headers(msg,HDR_TO_F,0)!=0 || msg->to==0) ) {
+		LOG(L_ERR,"ERROR:uac:replace_from: failed to parse TO hdr\n");
+		goto error;
+	}
+	if (get_to(msg)->tag_value.len!=0) {
+		LOG(L_ERR,"ERROR:uac:replace_from: decline FROM replacing in "
+			"sequential request (has TO tag)\n");
+		goto error;
+	}
 
 	/* parse original from hdr */
 	if (parse_from_header(msg)!=0 )
@@ -259,20 +281,39 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 	if (from_restore_mode==FROM_NO_RESTORE)
 		return 0;
 
-	/*add parameter lump */
-	if (encode_from( &from->uri , &replace)<0 )
+	/* build RR parameter */
+	buf.s = buf_s;
+	if ( from->uri.len>from_uri->len ) {
+		if (from->uri.len>MAX_URI_SIZE) {
+			LOG(L_ERR,"ERROR:uac:replace_from: old from uri to long\n");
+			goto error;
+		}
+		memcpy( buf.s, from->uri.s, from->uri.len);
+		for( i=0 ; i<from_uri->len ; i++ )
+			buf.s[i] ^=from_uri->s[i];
+		buf.len = from->uri.len;
+	} else {
+		if (from_uri->len>MAX_URI_SIZE) {
+			LOG(L_ERR,"ERROR:uac:replace_from: new from uri to long\n");
+			goto error;
+		}
+		memcpy( buf.s, from_uri->s, from_uri->len);
+		for( i=0 ; i<from->uri.len ; i++ )
+			buf.s[i] ^=from->uri.s[i];
+		buf.len = from_uri->len;
+	}
+
+	/* encode the param */
+	if (encode_from( &buf , &replace)<0 )
 	{
-		LOG(L_ERR,"ERROR:uac:replace_from: failed to encode uri\n");
+		LOG(L_ERR,"ERROR:uac:replace_from: failed to encode uris\n");
 		goto error;
 	}
-	DBG("encode is=<%.*s> len=%d\n",replace.len,replace.s,replace.len);
-	offset = from->last_param->value.s+from->last_param->value.len-msg->buf;
-	if ( (l=anchor_lump( msg, offset, 0, 0))==0)
-	{
-		LOG(L_ERR,"ERROR:uac:replace_from: anchor lump failed\n");
-		goto error;
-	}
-	param.len = 1+from_param.len+1+replace.len;
+	DBG("DEBUG:uac:replace_from: encode is=<%.*s> len=%d\n",
+		replace.len,replace.s,replace.len);
+
+	/* add RR parameter */
+	param.len = 1+rr_param.len+1+replace.len;
 	param.s = (char*)pkg_malloc(param.len);
 	if (param.s==0)
 	{
@@ -281,262 +322,249 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 	}
 	p = param.s;
 	*(p++) = ';';
-	memcpy( p, from_param.s, from_param.len);
-	p += from_param.len;
+	memcpy( p, rr_param.s, rr_param.len);
+	p += rr_param.len;
 	*(p++) = '=';
 	memcpy( p, replace.s, replace.len);
 	p += replace.len;
-	if (insert_new_lump_after( l, param.s, param.len, 0)==0)
+
+	if (uac_rrb.add_rr_param( msg, &param)!=0)
 	{
-		LOG(L_ERR,"ERROR:uac:replace_from: insert new lump failed\n");
-		pkg_free(param.s);
-		goto error;
+		LOG(L_ERR,"ERROR:uac:replace_from: add_RR_param failed\n");
+		goto error1;
 	}
 	msg->msg_flags |= FL_USE_UAC_FROM;
 
+	/* add TM callback to restore the FROM hdr in reply */
+	if (uac_tmb.register_tmcb(msg,0,TMCB_RESPONSE_IN,restore_from_reply,0)!=1) {
+		LOG(L_ERR,"ERROR:uac:replace_from: failed to install TM callback\n");
+		goto error1;
+	}
+
+	pkg_free(param.s);
 	return 0;
+error1:
+	pkg_free(param.s);
 error:
 	return -1;
 }
 
 
 /*
- * return  0 - replaced
- *        -1 - not replaced or error
+ * return  0 - restored
+ *        -1 - not restored or error
  */
-int restore_from( struct sip_msg *msg, int is_req)
+int restore_from( struct sip_msg *msg, int *is_from )
 {
-	struct to_body *ft_hdr;
-	struct to_param *param;
 	struct lump* l;
-	str replace;
-	str restore;
-	str del;
+	str param_val;
+	str old_uri;
+	str new_uri;
 	char *p;
+	int i;
 
-	/* for replies check the from, for requests check to! */
-	if (!is_req)
-	{
-		/* parse original from hdr */
-		if (parse_from_header(msg)!=0 )
-		{
+	/* we should process only sequntial request, but since we are looking
+	 * for Route param, the test is not really required -bogdan */
+
+	DBG("DEBUG:uac:restore_from: getting '%.*s' Route param\n",
+		rr_param.len,rr_param.s);
+	/* is there something to restore ? */
+	if (uac_rrb.get_route_param( msg, &rr_param, &param_val)!=0) {
+		DBG("DEBUG:uac:restore_from: Route param '%.*s' not found\n",
+			rr_param.len,rr_param.s);
+		goto failed;
+	}
+	DBG("DEBUG:uac:restore_from: Route param is '%.*s' (len=%d)\n",
+		param_val.len,param_val.s,param_val.len);
+
+	/* decode the parameter val to a URI */
+	if (decode_from( &param_val, &new_uri)<0 ) {
+		LOG(L_ERR,"ERROR:uac:restore_from: failed to dencode uri\n");
+		goto failed;
+	}
+
+	/* check the request direction */
+	if (uac_rrb.is_direction( msg, RR_FLOW_UPSTREAM)==0) {
+		/* replace the TO URI */
+		if ( msg->to==0 && (parse_headers(msg,HDR_TO_F,0)!=0 || msg->to==0) ) {
+			LOG(L_ERR,"ERROR:uac:restore_from: failed to parse TO hdr\n");
+			goto failed;
+		}
+		old_uri = ((struct to_body*)msg->to->parsed)->uri;
+		if (is_from) *is_from = 0;
+	} else {
+		/* replace the FROM URI */
+		if ( parse_from_header(msg)!=0 ) {
 			LOG(L_ERR,"ERROR:uac:restore_from: failed to find/parse "
 				"FROM hdr\n");
 			goto failed;
 		}
-		ft_hdr = (struct to_body*)msg->from->parsed;
-	} else {
-		if ( !msg->to && (parse_headers(msg,HDR_TO_F,0)==-1 || !msg->to))
-		{
-			LOG(L_ERR,"ERROR:uac:restore_from: bad msg or missing TO hdr\n");
+		old_uri = ((struct to_body*)msg->from->parsed)->uri;
+		if (is_from) *is_from = 1;
+	}
+
+	/* get new uri */
+	if ( new_uri.len<old_uri.len ) {
+		LOG(L_ERR,"ERROR:uac:restore_from: new URI shorter than old URI\n");
+		goto failed;
+	}
+	for( i=0 ; i<old_uri.len ; i++ )
+		new_uri.s[i] ^= old_uri.s[i];
+	if (new_uri.len==old_uri.len) {
+		for( ; new_uri.len && (new_uri.s[new_uri.len-1]==0) ; new_uri.len-- );
+		if (new_uri.len==0) {
+			LOG(L_ERR,"ERROR:uac:restore_from: new URI got 0 len\n");
 			goto failed;
 		}
-		ft_hdr = (struct to_body*)msg->to->parsed;
 	}
 
-	/* check if it has the param */
-	for( param=ft_hdr->param_lst ; param ; param=param->next )
-		if (param->name.len==from_param.len &&
-		strncmp(param->name.s, from_param.s, from_param.len)==0)
-			break;
+	DBG("DEBUG:uac:restore_from: decoded uris are: new=[%.*s] old=[%.*s]\n",
+		new_uri.len, new_uri.s, old_uri.len, old_uri.s);
 
-	if (param==0)
-		goto failed;
-
-	/* determin what to replace */
-	replace.s = ft_hdr->uri.s;
-	replace.len = ft_hdr->uri.len;
-	DBG("DEBUG:uac:restore_from: replacing [%.*s]\n",
-		replace.len, replace.s);
-
-	/* build del/add lumps */
-	if ((l=del_lump( msg, replace.s-msg->buf, replace.len, 0))==0)
-	{
-		LOG(L_ERR,"ERROR:uac:restore_from: del lump failed\n");
-		goto failed;
-	}
-
-	/* calculate the restore from */
-	if (decode_from( &param->value, &restore)<0 )
-	{
-		LOG(L_ERR,"ERROR:uac:restore_from: failed to dencode uri\n");
-		goto failed;
-	}
-	DBG("DEBUG:uac:restore_from: replacement is [%.*s]\n",
-		replace.len, replace.s);
-
-	p = pkg_malloc( restore.len);
-	if (p==0)
-	{
+	/* duplicate the decoded value */
+	p = pkg_malloc( new_uri.len);
+	if (p==0) {
 		LOG(L_ERR,"ERROR:uac:restore_from: no more pkg mem\n");
 		goto failed;
 	}
-	memcpy( p, restore.s, restore.len);
-	if (insert_new_lump_after( l, p, restore.len, 0)==0)
-	{
-		LOG(L_ERR,"ERROR:uac:restore_from: insert new lump failed\n");
-		pkg_free(p);
-		goto failed;
+	memcpy( p, new_uri.s, new_uri.len);
+	new_uri.s = p;
+
+	/* build del/add lumps */
+	l = del_lump( msg, old_uri.s-msg->buf, old_uri.len, 0);
+	if (l==0) {
+		LOG(L_ERR,"ERROR:uac:restore_from: del lump failed\n");
+		goto failed1;
 	}
 
-	/* delete parameter */
-	del.s = param->name.s;
-	while ( *del.s!=';')  del.s--;
-	del.len = (int)(long)(param->value.s + param->value.len - del.s);
-	DBG("DEBUG:uac:restore_from: deleting [%.*s]\n",del.len,del.s);
-	if ((l=del_lump( msg, del.s-msg->buf, del.len, 0))==0) 
-	{
-		LOG(L_ERR,"ERROR:uac:restore_from: del lump failed\n");
-		goto failed;
+	if (insert_new_lump_after( l, new_uri.s, new_uri.len, 0)==0) {
+		LOG(L_ERR,"ERROR:uac:restore_from: insert new lump failed\n");
+		goto failed1;
 	}
 
 	return 0;
+failed1:
+	pkg_free(new_uri.s);
 failed:
 	return -1;
 }
 
 
 
-/************************** TMCB functions ******************************/
+/************************** RRCB functions ******************************/
 
-static int rst_from = 1;
-static int rst_to = 2;
-
-void correct_reply(struct cell* t, int type, struct tmcb_params *p);
-
-void tr_checker(struct cell* t, int type, struct tmcb_params *param)
+void rr_checker(struct sip_msg *msg, str *r_param, void *cb_param)
 {
-	if ( t && param->req )
-	{
-		/* is the request marked with FROM altered flag? */
-		if (param->req->msg_flags&FL_USE_UAC_FROM) {
-			/* need to put back in replies the FROM from UAS */
-			/* in callback we need FROM to be parsed- it's already done 
-			 * by replace_from() function */
-			if ( uac_tmb.register_tmcb( 0, t, TMCB_RESPONSE_IN,
-				correct_reply, (void*)&rst_from )!=1 )
-			{
-				LOG(L_ERR,"ERROR:uac:tr_checker: failed to install "
-					"TM callback\n");
+	int is_from;
+
+	is_from = 0;
+	/* check if the request contains the route param */
+	if ( restore_from( msg, &is_from)==0 ) {
+		/* restore in req performed -> replace in reply */
+		/* in callback we need TO/FROM to be parsed- it's already done 
+		 * by restore_from() function */
+		if ( uac_tmb.register_tmcb( msg, 0, TMCB_RESPONSE_IN,
+		is_from?restore_from_reply:restore_to_reply, 0)!=1 ) {
+			LOG(L_ERR,"ERROR:uac:rr_checker: failed to install TM callback\n");
 				return;
-			}
-		} else {
-			/* check if the request contains the restore_from tag */
-			if ( restore_from( param->req , 1)==0 )
-			{
-				/* in callback we need TO to be parsed- it's already done 
-				 * by restore_from() function */
-				/* restore in req performed -> replace in reply */
-				if ( uac_tmb.register_tmcb( 0, t, TMCB_RESPONSE_IN,
-					correct_reply, (void*)&rst_to)!=1 )
-				{
-					LOG(L_ERR,"ERROR:uac:tr_checker: failed to install "
-						"TM callback\n");
-					return;
-				}
-			}
 		}
 	}
 }
 
 
-/* take the original FROM URI from UAS and put it in reply */
-void correct_reply(struct cell* t, int type, struct tmcb_params *p)
+/************************** TMCB functions ******************************/
+
+/* replace the entire from HDR with the original FROM request */
+void restore_from_reply(struct cell* t, int type, struct tmcb_params *p)
 {
 	struct lump* l;
-	struct to_param *param;
 	struct sip_msg *req;
-	str src;
-	str dst;
-	str dsrc;
-	str del;
-
-	DBG("---------------------- inside correct_reply\n");
+	struct sip_msg *rpl;
+	str new_val;
 
 	if ( !t || !t->uas.request || !p->rpl )
 		return;
 
 	req = t->uas.request;
+	rpl = p->rpl;
 
-	if ( (**(int**)p->param)==rst_from )
-	{
-		/* copy FROM uri : req -> rpl */
-		if ( !req->from || !req->from->parsed)
-		{
-			LOG(L_CRIT,"BUG:uac:correct_reply: FROM is not already parsed\n");
-			return;
-		}
-		/* parse FROM in reply */
-		if (parse_from_header( p->rpl )!=0 )
-		{
-			LOG(L_ERR,"ERROR:uac:correct_reply: failed to find/parse "
-				"FROM hdr\n");
-			return;
-		}
-		/* remove the parameter */
-		param=((struct to_body*)p->rpl->from->parsed)->param_lst;
-		for( ; param ; param=param->next )
-		{
-			DBG("***** param=<%.*s>=<%.*s>,%p\n",param->name.len,param->name.s,
-					param->value.len,param->value.s,param->next);
-			if (param->name.len==from_param.len &&
-			strncmp(param->name.s, from_param.s, from_param.len)==0)
-			{
-				del.s = param->name.s;
-				while ( *del.s!=';')  del.s--;
-				del.len = (int)(long)(param->value.s+param->value.len-del.s);
-				DBG("DEBUG:uac:correct_reply: deleting [%.*s]\n",
-					del.len,del.s);
-				if ((l=del_lump( p->rpl, del.s-p->rpl->buf, del.len, 0))==0)
-					LOG(L_ERR,"ERROR:uac:correct_reply: del lump failed\n");
-				break;
-			}
-		}
-
-		src = ((struct to_body*)req->from->parsed)->uri;
-		dst = ((struct to_body*)p->rpl->from->parsed)->uri;
-	} else {
-		/* copy TO uri : req -> rpl */
-		if ( !req->to || !req->to->parsed)
-		{
-			LOG(L_CRIT,"BUG:uac:correct_reply: TO is not already parsed\n");
-			return;
-		}
-		/* parse TO in reply */
-		if (!p->rpl->to && (parse_headers(p->rpl,HDR_TO_F,0)==-1||!p->rpl->to))
-		{
-			LOG(L_ERR,"ERROR:uac:correct_reply: failed to find/parse "
-				"TO hdr\n");
-			return;
-		}
-		src = ((struct to_body*)req->to->parsed)->uri;
-		dst = ((struct to_body*)p->rpl->to->parsed)->uri;
-	}
-
-	DBG("DEBUG:correct_reply: replacing <%.*s> with <%.*s>\n",
-			dst.len,dst.s, src.len,src.s);
-
-	/* duplicate the src data */
-	dsrc.len = src.len;
-	dsrc.s = (char*)pkg_malloc(dsrc.len);
-	if (dsrc.s==0) {
-		LOG(L_ERR,"ERROR:uac:correct_reply: no more pkg mem\n");
-		return;
-	}
-	memcpy( dsrc.s, src.s, src.len);
-	/* build del/add lumps */
-	if ((l=del_lump( p->rpl, dst.s-p->rpl->buf, dst.len, 0))==0)
-	{
-		LOG(L_ERR,"ERROR:uac:correct_reply: del lump failed\n");
-		return;
-	}
-	if (insert_new_lump_after( l, dsrc.s, dsrc.len, 0)==0)
-	{
-		LOG(L_ERR,"ERROR:uac:correct_reply: insert new lump failed\n");
-		pkg_free( dsrc.s );
+	/* parse FROM in reply */
+	if (parse_from_header( p->rpl )!=0 ) {
+		LOG(L_ERR,"ERROR:uac:restore_from_reply: failed to find/parse "
+			"FROM hdr\n");
 		return;
 	}
 
-	return;
+	/* duplicate the new from value */
+	new_val.s = pkg_malloc( req->from->len );
+	if (p==0) {
+		LOG(L_ERR,"ERROR:uac:restore_from_reply: no more pkg mem\n");
+		return;
+	}
+	memcpy( new_val.s, req->from->name.s, req->from->len);
+	new_val.len = req->from->len;
+
+
+	DBG("DBG:uac::restore_from_reply: removing <%.*s>\n",
+			rpl->from->len,rpl->from->name.s);
+	l = del_lump( rpl, rpl->from->name.s-rpl->buf, rpl->from->len, 0);
+	if (l==0) {
+		LOG(L_ERR,"ERROR:uac:restore_from_reply: del lump failed\n");
+		return;
+	}
+
+	DBG("DBG:uac::restore_from_reply: inserting <%.*s>\n",
+			new_val.len,new_val.s);
+	if (insert_new_lump_after( l, new_val.s, new_val.len, 0)==0) {
+		LOG(L_ERR,"ERROR:uac:restore_from_reply: insert new lump failed\n");
+		return;
+	}
+}
+
+
+
+/* replace the entire from TO with the original TO request */
+void restore_to_reply(struct cell* t, int type, struct tmcb_params *p)
+{
+	struct lump* l;
+	struct sip_msg *req;
+	struct sip_msg *rpl;
+	str new_val;
+
+	if ( !t || !t->uas.request || !p->rpl )
+		return;
+
+	req = t->uas.request;
+	rpl = p->rpl;
+
+	/* parse TO in reply */
+	if ( rpl->to==0 && (parse_headers(rpl,HDR_TO_F,0)!=0 || rpl->to==0) ) {
+		LOG(L_ERR,"ERROR:uac:restore_to_reply: failed to parse TO hdr\n");
+		return;
+	}
+
+	/* duplicate the new from value */
+	new_val.s = pkg_malloc( req->to->len );
+	if (p==0) {
+		LOG(L_ERR,"ERROR:uac:restore_from_reply: no more pkg mem\n");
+		return;
+	}
+	memcpy( new_val.s, req->to->name.s, req->to->len);
+	new_val.len = req->to->len;
+
+	DBG("DBG:uac::restore_to_reply: removing <%.*s>\n",
+			rpl->to->len,rpl->to->name.s);
+	l = del_lump( rpl, rpl->to->name.s-rpl->buf, rpl->to->len, 0);
+	if (l==0) {
+		LOG(L_ERR,"ERROR:uac:restore_to_reply: del lump failed\n");
+		return;
+	}
+
+	DBG("DBG:uac::restore_to_reply: inserting <%.*s>\n",
+		new_val.len, new_val.s);
+	if (insert_new_lump_after( l, new_val.s, new_val.len, 0)==0) {
+		LOG(L_ERR,"ERROR:uac:restore_to_reply: insert new lump failed\n");
+		return;
+	}
 }
 
