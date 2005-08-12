@@ -314,9 +314,12 @@ if (check_route_param("nat=yes")) {
    The function returns true if the "dir" is the same with the
    request's flow direction.
 
+   The "downstream" (UAC to UAS) direction is relative to the
+   inital request that created the dialog.
+
    Meaning of the parameters is as follows:
 
-     * die - string containing the direction to be checked. It
+     * dir - string containing the direction to be checked. It
        may be "upstream" (from UAS to UAC) or "downstream" (UAC
        to UAS).
 
