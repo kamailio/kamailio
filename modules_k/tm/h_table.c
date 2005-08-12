@@ -55,6 +55,7 @@
 #include "t_stats.h"
 #include "h_table.h"
 #include "fix_lumps.h" /* free_via_clen_lump */
+#include "t_hooks.h"
 
 static enum kill_reason kr;
 
@@ -243,6 +244,12 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	old = set_avp_list( &new_cell->user_avps );
 	new_cell->user_avps = *old;
 	*old = 0;
+
+	/* move the pending callbacks to transaction -bogdan */
+	if (p_msg->id==tmcb_pending_id) {
+		new_cell->tmcb_hl = tmcb_pending_hl;
+		tmcb_pending_hl.first = 0;
+	}
 
 	/* enter callback, which may potentially want to parse some stuff,
 	 * before the request is shmem-ized */

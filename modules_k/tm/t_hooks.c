@@ -41,6 +41,8 @@
 
 struct tmcb_head_list* req_in_tmcb_hl = 0;
 
+struct tmcb_head_list tmcb_pending_hl = {0,0};
+int tmcb_pending_id = -1;
 
 
 int init_tmcb_lists()
@@ -57,19 +59,26 @@ int init_tmcb_lists()
 }
 
 
-void destroy_tmcb_lists()
+inline static void empty_tmcb_list(struct tmcb_head_list *head)
 {
 	struct tm_callback *cbp, *cbp_tmp;
 
-	if (!req_in_tmcb_hl)
-		return;
-
-	for( cbp=req_in_tmcb_hl->first; cbp ; ) {
+	for( cbp=head->first; cbp ; ) {
 		cbp_tmp = cbp;
 		cbp = cbp->next;
 		if (cbp_tmp->param) shm_free( cbp_tmp->param );
 		shm_free( cbp_tmp );
 	}
+	head->first = 0 ;
+	head->reg_types = 0;
+}
+
+void destroy_tmcb_lists()
+{
+	if (!req_in_tmcb_hl)
+		return;
+
+	empty_tmcb_list(req_in_tmcb_hl);
 
 	shm_free(req_in_tmcb_hl);
 }
@@ -111,7 +120,6 @@ int insert_tmcb(struct tmcb_head_list *cb_list, int types,
 int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 											transaction_cb f, void *param )
 {
-	//struct cell* t;
 	struct tmcb_head_list *cb_list;
 
 	/* are the callback types valid?... */
@@ -141,17 +149,24 @@ int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 				return E_BUG;
 			}
 			/* look for the transaction */
-			if ( t_check(p_msg,0)!=1 ){
-				LOG(L_CRIT,"BUG:tm:register_tmcb: no transaction found\n");
-				return E_BUG;
+			if ( t_check(p_msg,0)==1 ){
+				if ( (t=get_t())==0 ) {
+					LOG(L_CRIT,"BUG:tm:register_tmcb: transaction found "
+						"is NULL\n");
+					return E_BUG;
+				}
+				cb_list = &(t->tmcb_hl);
+			} else {
+				/* no transaction found -> link it to waitting list */
+				if (p_msg->id!=tmcb_pending_id) {
+					empty_tmcb_list(&tmcb_pending_hl);
+					tmcb_pending_id = p_msg->id;
+				}
+				cb_list = &(tmcb_pending_hl);
 			}
-			if ( (t=get_t())==0 ) {
-				LOG(L_CRIT,"BUG:tm:register_tmcb: transaction found "
-					"is NULL\n");
-				return E_BUG;
-			}
+		} else {
+			cb_list = &(t->tmcb_hl);
 		}
-		cb_list = &(t->tmcb_hl);
 	}
 
 	return insert_tmcb( cb_list, types, f, param );

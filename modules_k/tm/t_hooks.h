@@ -184,6 +184,8 @@ struct tmcb_head_list {
 
 extern struct tmcb_head_list*  req_in_tmcb_hl;
 
+extern struct tmcb_head_list tmcb_pending_hl;
+extern int tmcb_pending_id;
 
 #define has_tran_tmcbs(_T_, _types_) \
 	( ((_T_)->tmcb_hl.reg_types)&(_types_) )
@@ -199,8 +201,6 @@ void destroy_tmcb_lists();
 /* register a callback for several types of events */
 int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 											transaction_cb f, void *param );
-//int register_tmcb( struct sip_msg* p_msg, int types, transaction_cb f,
-//																void *param );
 
 /* inserts a callback into the a callback list */
 int insert_tmcb(struct tmcb_head_list *cb_list, int types,
