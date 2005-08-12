@@ -5,6 +5,10 @@ Jan Janak
 
    FhG FOKUS
 
+Bogdan-Andrei Iancu
+
+   voice-system.ro
+
 Edited by
 
 Jan Janak
@@ -20,41 +24,56 @@ Bogdan-Andrei Iancu
    1. User's Guide
 
         1.1. Overview
-        1.2. Dependencies
+        1.2. Dialog support
+        1.3. Dependencies
 
-              1.2.1. OpenSER Modules
-              1.2.2. External Libraries or Applications
+              1.3.1. OpenSER Modules
+              1.3.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        1.4. Exported Parameters
 
-              1.3.1. enable_full_lr (integer)
-              1.3.2. append_fromtag (integer)
-              1.3.3. enable_double_rr (integer)
-              1.3.4. add_username (integer)
+              1.4.1. enable_full_lr (integer)
+              1.4.2. append_fromtag (integer)
+              1.4.3. enable_double_rr (integer)
+              1.4.4. add_username (integer)
 
-        1.4. Exported Functions
+        1.5. Exported Functions
 
-              1.4.1. loose_route()
-              1.4.2. strict_route() -- deprecated
-              1.4.3. record_route()
-              1.4.4. record_route_preset(string)
-              1.4.5. add_rr_param(param)
-              1.4.6. check_route_param(re)
+              1.5.1. loose_route()
+              1.5.2. strict_route() -- deprecated
+              1.5.3. record_route()
+              1.5.4. record_route_preset(string)
+              1.5.5. add_rr_param(param)
+              1.5.6. check_route_param(re)
+              1.5.7. is_direction(dir)
 
    2. Developer's Guide
+
+        2.1. Available Functions
+
+              2.1.1. add_rr_param( msg, param)
+              2.1.2. check_route_param( msg, re)
+              2.1.3. is_direction( msg, dir)
+              2.1.4. get_route_param( msg, name, val)
+              2.1.5. register_rrcb( callback, param)
+              2.1.6. Examples
+
    3. Frequently Asked Questions
 
    List of Examples
-   1-1. Set enable_full_lr parameter
-   1-2. Set append_fromtag parameter
-   1-3. Set enable_double_rr parameter
-   1-4. Set add_username parameter
-   1-5. loose_route usage
-   1-6. strict_route usage
-   1-7. record_route usage
-   1-8. record_route_preset usage
-   1-9. add_rr_param usage
-   1-10. check_route_param usage
+   1-1. Dialog support in RR module
+   1-2. Set enable_full_lr parameter
+   1-3. Set append_fromtag parameter
+   1-4. Set enable_double_rr parameter
+   1-5. Set add_username parameter
+   1-6. loose_route usage
+   1-7. strict_route usage
+   1-8. record_route usage
+   1-9. record_route_preset usage
+   1-10. add_rr_param usage
+   1-11. check_route_param usage
+   1-12. check_route_param usage
+   2-1. Loading RR module's API from another module
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -64,16 +83,69 @@ Chapter 1. User's Guide
    The module contains record routing logic
      _________________________________________________________
 
-1.2. Dependencies
+1.2. Dialog support
 
-1.2.1. OpenSER Modules
+   OpenSER is basically only a transaction statefull proxy,
+   without any dialog support build in. There are many
+   features/services which actually requires a dialog awareness,
+   like storing the information in the dialog creation stage,
+   information which will be used during the whole dialog
+   existence.
+
+   The most urging example is NAT traversal, in dealing with the
+   within the dialog INVITEs (re-INVITEs). When processing the
+   initial INVITE, the proxy detects if the caller or callee is
+   behind some NAT and fixes the signalling and media parts -
+   since not all the detection mechanism are available for within
+   the dialog requests (like usrloc), to be able to fix
+   correspondingly the sequential requests, the proxy must
+   remember that the original request was NAT processed. There
+   are many other cases where dialog awareness fixes or helps.
+
+   The solution is to store additional dialog-related information
+   in the routing set (Record-Route/Route headers), headers which
+   show up in all sequential requests. So any information added
+   to rhe Record-Route header will be found (with no direction
+   dependencies) in Route header (corresponding to the proxy
+   address).
+
+   As storage container, the parameters of the Rocord-Route /
+   Route header will be used - Record-Route parameters mirroring
+   are re-infonced by RFC 3261 (see 12.1.1 UAS behavior).
+
+   For this purpose, the modules offers the following functions:
+
+     * add_rr_param() - see Section 1.5.5
+     * check_route_param() - see Section 1.5.6
+
+   Example 1-1. Dialog support in RR module
+
+UAC                       OpenSER PROXY                          UAS
+
+---- INVITE ------>       record_route()          ----- INVITE ---->
+                     add_rr_param(";foo=true")
+
+--- reINVITE ----->        loose_route()          ---- reINVITE --->
+                    check_route_param(";foo=true")
+
+<-- reINVITE ------        loose_route()          <--- reINVITE ----
+                    check_route_param(";foo=true")
+
+<------ BYE -------        loose_route()          <----- BYE -------
+                    check_route_param(";foo=true")
+
+     _________________________________________________________
+
+1.3. Dependencies
+
+1.3.1. OpenSER Modules
 
    The following modules must be loaded before this module:
 
      * No dependencies on other OpenSER modules.
      _________________________________________________________
 
-1.2.2. External Libraries or Applications
+1.3.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
@@ -81,39 +153,39 @@ Chapter 1. User's Guide
      * None.
      _________________________________________________________
 
-1.3. Exported Parameters
+1.4. Exported Parameters
 
-1.3.1. enable_full_lr (integer)
+1.4.1. enable_full_lr (integer)
 
-   If set to 1 then ;lr=on instead of just ;lr will be used. This
-   is to overcome problems with broken UAs which strip ;lr
+   If set to 1 then ";lr=on" instead of just ";lr" will be used.
+   This is to overcome problems with broken UAs which strip ";lr"
    parameter when generating Route header fields from
-   Record-Route (;lr=on seems to help).
+   Record-Route (";lr=on" seems to help).
 
    Default value is 0 (no). 
 
-   Example 1-1. Set enable_full_lr parameter
+   Example 1-2. Set enable_full_lr parameter
 ...
 modparam("rr", "enable_full_lr", 1)
 ...
      _________________________________________________________
 
-1.3.2. append_fromtag (integer)
+1.4.2. append_fromtag (integer)
 
-   if turned on, request's from-tag is appended to record-route;
+   If turned on, request's from-tag is appended to record-route;
    that's useful for understanding whether subsequent requests
    (such as BYE) come from caller (route's from-tag==BYE's
    from-tag) or callee (route's from-tag==BYE's to-tag)
 
    Default value is 1 (yes). 
 
-   Example 1-2. Set append_fromtag parameter
+   Example 1-3. Set append_fromtag parameter
 ...
 modparam("rr", "append_fromtag", 0)
 ...
      _________________________________________________________
 
-1.3.3. enable_double_rr (integer)
+1.4.3. enable_double_rr (integer)
 
    There are some situations when the server needs to insert two
    Record-Route header fields instead of one. For example when
@@ -123,63 +195,63 @@ modparam("rr", "append_fromtag", 0)
 
    Default value is 1 (yes). 
 
-   Example 1-3. Set enable_double_rr parameter
+   Example 1-4. Set enable_double_rr parameter
 ...
 modparam("rr", "enable_double_rr", 0)
 ...
      _________________________________________________________
 
-1.3.4. add_username (integer)
+1.4.4. add_username (integer)
 
    If set to a non 0 value (which means yes), the username part
    will be also added in the Record-Route URI.
 
    Default value is 0 (no). 
 
-   Example 1-4. Set add_username parameter
+   Example 1-5. Set add_username parameter
 ...
 modparam("rr", "add_username", 1)
 ...
      _________________________________________________________
 
-1.4. Exported Functions
+1.5. Exported Functions
 
-1.4.1. loose_route()
+1.5.1. loose_route()
 
    The function performs loose routing as defined in RFC3261. See
    the RFC3261 for more details.
 
-   Example 1-5. loose_route usage
+   Example 1-6. loose_route usage
 ...
 loose_route();
 ...
      _________________________________________________________
 
-1.4.2. strict_route() -- deprecated
+1.5.2. strict_route() -- deprecated
 
-   If there are any Route HFs in the message, the function takes
-   the first one, rewrites Request-URI with it's value and
-   removes the first URI from Route HFs.
+   If there are any Route header in the message, the function
+   takes the first one, rewrites Request-URI with it's value and
+   removes the first URI from Route header.
 
-   Example 1-6. strict_route usage
+   Example 1-7. strict_route usage
 ...
 strict_route();
 ...
      _________________________________________________________
 
-1.4.3. record_route()
+1.5.3. record_route()
 
    The function adds a new Record-Route header field. The header
    field will be inserted in the message before any other
    Record-Route header fields.
 
-   Example 1-7. record_route usage
+   Example 1-8. record_route usage
 ...
 record_route();
 ...
      _________________________________________________________
 
-1.4.4. record_route_preset(string)
+1.5.4. record_route_preset(string)
 
    This function will put the string into Record-Route, don't use
    unless you know what you are doing.
@@ -188,41 +260,42 @@ record_route();
 
      * string - String to be inserted into the header field.
 
-   Example 1-8. record_route_preset usage
+   Example 1-9. record_route_preset usage
 ...
 record_route_preset("1.2.3.4:5090");
 ...
      _________________________________________________________
 
-1.4.5. add_rr_param(param)
+1.5.5. add_rr_param(param)
 
    Adds a parameter to the Record-Route URI (param must be in
    ";name=value" format. The function may be called also before
-   or after the record_route() call.
+   or after the record_route() call (see Section 1.5.3).
 
    Meaning of the parameters is as follows:
 
      * param - String containing the URI parameter to be added.
        It must follow the ";name=value" scheme.
 
-   Example 1-9. add_rr_param usage
+   Example 1-10. add_rr_param usage
 ...
 add_rr_param(";nat=yes");
 ...
      _________________________________________________________
 
-1.4.6. check_route_param(re)
+1.5.6. check_route_param(re)
 
-   The function check if the URI parameters of the local Route
+   The function checks if the URI parameters of the local Route
    header (coresponding to the local server) matches the given
-   regular expression. It must be call after loose_route().
+   regular expression. It must be call after loose_route() (see
+   Section 1.5.1).
 
    Meaning of the parameters is as follows:
 
      * re - regular expression to check against the Route URI
        parameters.
 
-   Example 1-10. check_route_param usage
+   Example 1-11. check_route_param usage
 ...
 if (check_route_param("nat=yes")) {
     setflag(6);
@@ -230,10 +303,155 @@ if (check_route_param("nat=yes")) {
 ...
      _________________________________________________________
 
+1.5.7. is_direction(dir)
+
+   The function checks the flow direction of the request. As for
+   cheking it's used the "ftag" Route header parameter, the
+   append_fromtag (see Section 1.4.2 module parameter must be
+   enables. Also this must be call only after loose_route() (see
+   Section 1.5.1).
+
+   The function returns true if the "dir" is the same with the
+   request's flow direction.
+
+   Meaning of the parameters is as follows:
+
+     * die - string containing the direction to be checked. It
+       may be "upstream" (from UAS to UAC) or "downstream" (UAC
+       to UAS).
+
+   Example 1-12. check_route_param usage
+...
+if (is_direction("upstream")) {
+    xdbg("upstream request ($rm)\n");
+}
+...
+     _________________________________________________________
+
 Chapter 2. Developer's Guide
 
-   The module does not provide any sort of API to use in other
-   OpenSER modules.
+   The RR module provides an internal API to be used by other
+   OpenSER modules. The API offers support for SIP dialog based
+   functionalities - for more about the dialog support offered by
+   RR module, see Section 1.2.
+
+   For internal(non-script) usage, the RR module offers to other
+   module the possiblity to register callback functions to be
+   executed each time a local Route heaer is proccesed. The
+   callback function will receive as parameter the register
+   parameter and the Route header parameter string.
+     _________________________________________________________
+
+2.1. Available Functions
+
+2.1.1. add_rr_param( msg, param)
+
+   Adds a parameter to the requests's Record-Route URI (param
+   must be in ";name=value" format).
+
+   The function returns 0 on success. Otherwise, -1 is returned.
+
+   Meaning of the parameters is as follows:
+
+     * struct sip_msg* msg - request that will has the parameter
+       "param" added to its Record-Route header.
+     * str* param - parameter to be added to the Record-Route
+       header - it must be in ";name=value" format.
+     _________________________________________________________
+
+2.1.2. check_route_param( msg, re)
+
+   The function checks for the request "msg" if the URI
+   parameters of the local Route header (coresponding to the
+   local server) matches the given regular expression "re". It
+   must be call after the loose_route was done.
+
+   The function returns 0 on success. Otherwise, -1 is returned.
+
+   Meaning of the parameters is as follows:
+
+     * struct sip_msg* msg - request that will has the Route
+       header parameters checked.
+     * regex_t* param - compiled regular expression to be checked
+       against the Route header parameters.
+     _________________________________________________________
+
+2.1.3. is_direction( msg, dir)
+
+   The function checks the flow direction of the request "msg".
+   As for cheking it's used the "ftag" Route header parameter,
+   the append_fromtag (see Section 1.4.2 module parameter must be
+   enables. Also this must be call only after the loose_route is
+   done.
+
+   The function returns 0 if the "dir" is the same with the
+   request's flow direction. Otherwise, -1 is returned.
+
+   Meaning of the parameters is as follows:
+
+     * struct sip_msg* msg - request that will have the direction
+       checked.
+     * int dir - direction to be checked against. It may be
+       "RR_FLOW_UPSTREAM" or "RR_FLOW_DOWNSTREAM".
+     _________________________________________________________
+
+2.1.4. get_route_param( msg, name, val)
+
+   The function search in to the "msg"'s Route header parameters
+   the parameter called "name" and returns its value into "val".
+   It must be call only after the loose_route is done.
+
+   The function returns 0 if parameter was found (even if it has
+   no value). Otherwise, -1 is returned.
+
+   Meaning of the parameters is as follows:
+
+     * struct sip_msg* msg - request that will have the Route
+       header parameter searched.
+     * str *name - contains the Route header parameter to be
+       serached.
+     * str *val - returns the value of the searched Route header
+       parameter if found. It might be empty string if the
+       parameter had no value.
+     _________________________________________________________
+
+2.1.5. register_rrcb( callback, param)
+
+   The function register a new callback (along with its
+   parameter). The callback will be called when a loose route
+   will be performed for the local address.
+
+   The function returns 0 on success. Otherwise, -1 is returned.
+
+   Meaning of the parameters is as follows:
+
+     * rr_cb_t callback - callback function to be registered.
+     * void *param - parameter to be passed to the callback
+       function.
+     _________________________________________________________
+
+2.1.6. Examples
+
+   Example 2-1. Loading RR module's API from another module
+...
+#include "../rr/api.h"
+...
+struct rr_binds my_rrb;
+...
+...
+/* load the RR API */
+if (load_rr_api( & my_rrb )!=0) {
+    LOG(L_ERR, "ERROR: can't load RR API\n");
+    goto error;
+}
+...
+...
+/* register a RR callback */
+if (my_rrb.register_rrcb(my_callback,0))!=0) {
+    LOG(L_ERR, "ERROR: can't register RR callback\n");
+    goto error;
+}
+...
      _________________________________________________________
 
 Chapter 3. Frequently Asked Questions
@@ -252,9 +470,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

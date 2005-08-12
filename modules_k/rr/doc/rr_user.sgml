@@ -15,6 +15,75 @@
 	<title>Overview</title>
 	<para>The module contains record routing logic</para>
 	</section>
+
+
+	<section id="RR-dialog-id">
+	<title>Dialog support</title>
+	<para>&ser; is basically <emphasis>only</emphasis> a transaction statefull 
+	proxy, without any dialog support build in. There are many features/services
+	which actually requires a dialog awareness, like storing the information in 
+	the dialog creation stage, information which will be used during the whole 
+	dialog existence.
+	</para>
+	<para>
+	The most urging example is NAT traversal, in dealing with the within the 
+	dialog INVITEs (re-INVITEs). When processing the initial INVITE, the proxy 
+	detects if the caller or callee is behind some NAT and fixes the signalling 
+	and media parts - since not all the detection mechanism are available for 
+	within the dialog requests (like usrloc), to be able to fix correspondingly 
+	the sequential requests, the proxy must remember that the original request 
+	was NAT processed. There are many other cases where dialog awareness fixes 
+	or helps.
+	</para>
+	<para>
+	The solution is to store additional dialog-related information in the 
+	routing set (Record-Route/Route headers), headers which show up in all 
+	sequential requests. So any information added to rhe Record-Route header
+	will be found (with no direction dependencies) in Route header 
+	(corresponding to the proxy address).
+	</para>
+	<para>
+	As storage container, the parameters of the Rocord-Route / Route header
+	will be used - Record-Route parameters mirroring are re-infonced by 
+	RFC 3261 (see 12.1.1 UAS behavior).
+	</para>
+	<para>
+	For this purpose, the modules offers the following functions:
+	</para>
+	<itemizedlist>
+		<listitem>
+			<para>add_rr_param() - see <xref linkend="add-rr-param-id">
+			</para>
+		</listitem>
+		<listitem>
+			<para>check_route_param() - see 
+				<xref linkend="check-route-param-id">
+			</para>
+		</listitem>
+	</itemizedlist>
+	<example>
+		<title>Dialog support in RR module</title>
+		<programlisting format="linespecific">
+  
+UAC                       OpenSER PROXY                          UAS
+
+---- INVITE ------&gt;       record_route()          ----- INVITE ----&gt;
+                     add_rr_param(";foo=true")
+
+--- reINVITE -----&gt;        loose_route()          ---- reINVITE ---&gt;
+                    check_route_param(";foo=true")
+
+&lt;-- reINVITE ------        loose_route()          &lt;--- reINVITE ----
+                    check_route_param(";foo=true")
+
+&lt;------ BYE -------        loose_route()          &lt;----- BYE -------
+                    check_route_param(";foo=true")
+  
+</programlisting>
+		</example>
+	</section>
+
+
 	<section>
 	<title>Dependencies</title>
 	<section>
@@ -30,6 +99,7 @@
 			</itemizedlist>
 		</para>
 	</section>
+
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
@@ -45,14 +115,18 @@
 		</para>
 	</section>
 	</section>
+
+
 	<section>
 	<title>Exported Parameters</title>
 	<section>
 		<title><varname>enable_full_lr</varname> (integer)</title>
 		<para>
-		If set to 1 then ;lr=on instead of just ;lr will be used. This is to overcome
-		problems with broken &ua;s which strip ;lr parameter when generating Route header
-		fields from Record-Route (;lr=on seems to help).
+		If set to 1 then <quote>;lr=on</quote> instead of just 
+		<quote>;lr</quote> will be used. This is to overcome problems with 
+		broken &ua;s which strip <quote>;lr</quote> parameter when generating 
+		Route header fields from Record-Route (<quote>;lr=on</quote> seems 
+		to help).
 		</para>
 		<para>
 		<emphasis>
@@ -69,12 +143,13 @@ modparam("rr", "enable_full_lr", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="append-fromtag-id">
 		<title><varname>append_fromtag</varname> (integer)</title>
 		<para>
-		if turned on, request's from-tag is appended to record-route; that's useful for
-		understanding whether subsequent requests (such as BYE) come from caller (route's
-		from-tag==BYE's from-tag) or callee (route's from-tag==BYE's to-tag)
+		If turned on, request's from-tag is appended to record-route; that's 
+		useful for understanding whether subsequent requests (such as BYE) come 
+		from caller (route's from-tag==BYE's from-tag) or callee 
+		(route's from-tag==BYE's to-tag)
 		</para>
 		<para>
 		<emphasis>
@@ -94,9 +169,10 @@ modparam("rr", "append_fromtag", 0)
 	<section>
 		<title><varname>enable_double_rr</varname> (integer)</title>
 		<para>
-		There are some situations when the server needs to insert two Record-Route header
-		fields instead of one. For example when using two disconnected networks or doing
-		cross-protocol forwarding from UDP->TCP. This parameter enables inserting of 2
+		There are some situations when the server needs to insert two 
+		Record-Route header fields instead of one. For example when using 
+		two disconnected networks or doing cross-protocol forwarding from 
+		UDP->TCP. This parameter enables inserting of 2
 		Record-Routes. The server will later remove both of them.
 		</para>
 		<para>
@@ -134,12 +210,12 @@ modparam("rr", "add_username", 1)
 </programlisting>
 		</example>
 	</section>
-
-
 	</section>
+
+
 	<section>
 	<title>Exported Functions</title>
-	<section>
+	<section id="loose-route-id">
 		<title>
 		<function moreinfo="none">loose_route()</function>
 		</title>
@@ -162,9 +238,9 @@ loose_route();
 		<function moreinfo="none">strict_route()</function> -- deprecated
 		</title>
 		<para>
-		If there are any Route <acronym>HFs</acronym> in the message, the function takes the
-		first one, rewrites Request-URI with it's value and removes the first &uri; from
-		Route <acronym>HFs</acronym>.
+		If there are any Route header in the message, the function takes the
+		first one, rewrites Request-URI with it's value and removes the 
+		first &uri; from Route header.
 		</para>
 		<example>
 		<title><function>strict_route</function> usage</title>
@@ -176,13 +252,14 @@ strict_route();
 		</example>
 	</section>
 
-	<section>
+	<section id="record-route-id">
 		<title>
 		<function moreinfo="none">record_route()</function>
 		</title>
 		<para>
-		The function adds a new Record-Route header field. The header field will be inserted
-		in the message before any other Record-Route header fields.
+		The function adds a new Record-Route header field. The header field 
+		will be inserted in the message before any other Record-Route header 
+		fields.
 		</para>
 		<example>
 		<title><function>record_route</function> usage</title>
@@ -199,14 +276,15 @@ record_route();
 		<function moreinfo="none">record_route_preset(string)</function>
 		</title>
 		<para>
-		This function will put the string into Record-Route, don't use unless you know what
-		you are doing.
+		This function will put the string into Record-Route, don't use 
+		unless you know what you are doing.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>string</emphasis> - String to be inserted into the header field.
+			<emphasis>string</emphasis> - String to be inserted into the 
+				header field.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -220,21 +298,22 @@ record_route_preset("1.2.3.4:5090");
 		</example>
 	</section>
 
-	<section>
+	<section id="add-rr-param-id">
 		<title>
 		<function moreinfo="none">add_rr_param(param)</function>
 		</title>
 		<para>
 		Adds a parameter to the Record-Route URI (param must be in 
-		";name=value" format. The function may be called also before or after
-		the record_route() call.
+		<quote>;name=value</quote> format. The function may be called also 
+		before or after the record_route() call 
+		(see <xref linkend="record-route-id">).
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
 			<para>
 			<emphasis>param</emphasis> - String containing the URI parameter to
-			be added. It must follow the ";name=value" scheme.
+			be added. It must follow the <quote>;name=value</quote> scheme.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -248,13 +327,14 @@ add_rr_param(";nat=yes");
 		</example>
 	</section>
 
-	<section>
+	<section id="check-route-param-id">
 		<title>
 		<function moreinfo="none">check_route_param(re)</function>
 		</title>
-		<para>The function check if the URI parameters of the local Route 
+		<para>The function checks if the URI parameters of the local Route 
 		header (coresponding to the local server) matches the given regular 
-		expression. It must be call after loose_route().
+		expression. It must be call after loose_route() 
+		(see <xref linkend="loose-route-id">).
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -276,6 +356,44 @@ if (check_route_param("nat=yes")) {
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">is_direction(dir)</function>
+		</title>
+		<para>The function checks the flow direction of the request.
+		As for cheking it's used the <quote>ftag</quote> Route header parameter,
+		the append_fromtag (see <xref linkend="append-fromtag-id"> module 
+		parameter must be enables. Also this must be call only after 
+		loose_route() (see <xref linkend="loose-route-id">).
+		</para>
+		<para>
+		The function returns true if the <quote>dir</quote> is the same with
+		the request's flow direction.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>die</emphasis> - string containing the direction to be 
+				checked. It may be <quote>upstream</quote> (from UAS to UAC) or 
+				<quote>downstream</quote> (UAC to UAS).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>check_route_param</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_direction("upstream")) {
+    xdbg("upstream request ($rm)\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+
 
 
 	</section>

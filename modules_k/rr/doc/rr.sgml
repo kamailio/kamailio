@@ -23,6 +23,13 @@
 		<address>
 			<email>jan@iptel.org</email>
 		</address>
+		<author>
+		<firstname>Bogdan-Andrei</firstname>
+		<surname>Iancu</surname>
+		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<address>
+			<email>bogdan@voice-system.ro</email>
+		</address>
 		</author>
 		<editor>
 		<firstname>Jan</firstname>
