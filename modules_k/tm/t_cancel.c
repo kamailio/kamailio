@@ -69,8 +69,9 @@ void cancel_uacs( struct cell *t, branch_bm_t cancel_bm )
 	/* cancel pending client transactions, if any */
 	for( i=0 ; i<t->nr_of_outgoings ; i++ ) 
 		if (cancel_bm & (1<<i))
-           	cancel_branch(t, i);
+			cancel_branch(t, i);
 }
+
 
 void cancel_branch( struct cell *t, int branch )
 {
@@ -104,19 +105,17 @@ void cancel_branch( struct cell *t, int branch )
 	crb->buffer_len=len;
 	crb->dst=irb->dst;
 	crb->branch=branch;
-	/* TO_REMOVE
-	crb->retr_timer.payload=crb->fr_timer.payload=crb;
-	*/
-	/* label it as cancel so that FR timer can better now how to
-	   deal with it */
+	/* label it as cancel so that FR timer can better now how 
+	 * to deal with it */
 	crb->activ_type=TYPE_LOCAL_CANCEL;
 
-    DBG("DEBUG: cancel_branch: sending cancel...\n");
+	DBG("DEBUG: cancel_branch: sending cancel...\n");
 	SEND_BUFFER( crb );
 
-    /*sets and starts the FINAL RESPONSE timer */
+	/*sets and starts the FINAL RESPONSE timer */
 	start_retr( crb );
 }
+
 
 char *build_cancel(struct cell *Trans,unsigned int branch,
 	unsigned int *len )

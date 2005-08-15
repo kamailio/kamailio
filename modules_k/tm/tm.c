@@ -469,7 +469,7 @@ static int w_t_unref( struct sip_msg *foo, void *bar)
 
 
 static int script_init( struct sip_msg *foo, void *bar)
-{   
+{
 	/* we primarily reset all private memory here to make sure
 	 * private values left over from previous message will
 	 * not be used again */

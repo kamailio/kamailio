@@ -167,6 +167,8 @@ struct totag_elem {
 /* set to one if you want to disallow silent transaction
    dropping when C timer hits */
 #define T_NOISY_CTIMER_FLAG  (1<<2)
+/* is this transaction CANCELed ?  */
+#define T_IS_CANCELLED_FLAG  (1<<3)
 
 
 

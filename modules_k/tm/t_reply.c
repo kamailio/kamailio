@@ -1286,7 +1286,16 @@ int reply_received( struct sip_msg  *p_msg )
 		set_avp_list( backup_list );
 	}
 
+	/* lock the reply*/
 	LOCK_REPLIES( t );
+
+	if (t->flags&T_IS_CANCELLED_FLAG) {
+		/* reply for an already canceled transaction -> if the brnach
+		 * was not cancelled due missing reply, fo it now */
+		if (t->uac[branch].last_received<=0)
+			cancel_branch(t, branch);
+	}
+
 	if (is_local(t)) {
 		reply_status = local_reply(t,p_msg, branch,msg_status,&cancel_bitmap);
 		if (reply_status == RPS_COMPLETED) {
