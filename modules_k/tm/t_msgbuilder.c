@@ -54,17 +54,11 @@
 #define ROUTE_SEPARATOR ", "
 #define ROUTE_SEPARATOR_LEN (sizeof(ROUTE_SEPARATOR) - 1)
 
-#define  append_mem_block(_d,_s,_len) \
+#define  append_string(_d,_s,_len) \
 		do{\
 			memcpy((_d),(_s),(_len));\
 			(_d) += (_len);\
 		}while(0);
-
-#define append_str(_p,_str) \
-	do{  \
-		memcpy((_p), (_str).s, (_str).len); \
-		(_p)+=(_str).len;  \
- 	} while(0);
 
 #define LC(_cp) ((*(_cp))|0x20)
 static int extract_from( char *buf, int len, str *from)
@@ -127,7 +121,6 @@ static int extract_from( char *buf, int len, str *from)
 found:
 	from->s = b;
 	from->len = p-b;
-	DBG("-----from= <%.*s>\n",from->len,from->s);
 	return 0;
 }
 
@@ -147,22 +140,13 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	struct hostport hp;
 	str from;
 
-#ifdef _OBSO
-	if ( Trans->uac[branch].last_received<100)
-	{
-		DBG("DEBUG: build_local: no response ever received"
-			" : dropping local request! \n");
-		goto error;
-	}
-#endif
-
 	if (!Trans->uas.request || !(Trans->uas.request->msg_flags&FL_USE_UAC_FROM)
 	|| extract_from( Trans->uac[branch].request.buffer,
 	Trans->uac[branch].request.buffer_len, &from)!=0) {
 		from = Trans->from;
 	}
 
-	/* method, separators, version: "CANCEL sip:p2@iptel.org SIP/2.0" */
+	/* method, separators, version  */
 	*len=SIP_VERSION_LEN + method_len + 2 /* spaces */ + CRLF_LEN;
 	*len+=Trans->uac[branch].uri.len;
 
@@ -186,7 +170,6 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	*len+=from.len+Trans->callid.len+to->len+
 		+Trans->cseq_n.len+1+method_len+CRLF_LEN; 
 
-
 	/* copy'n'paste Route headers */
 	if (!is_local(Trans)) {
 		for ( hdr=Trans->uas.request->headers ; hdr ; hdr=hdr->next )
@@ -209,37 +192,37 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	}
 	p = cancel_buf;
 
-	append_mem_block( p, method, method_len );
-	append_mem_block( p, " ", 1 );
-	append_str( p, Trans->uac[branch].uri );
-	append_mem_block( p, " " SIP_VERSION CRLF, 1+SIP_VERSION_LEN+CRLF_LEN );
+	append_string( p, method, method_len );
+	*(p++) = ' ';
+	append_string( p, Trans->uac[branch].uri.s, Trans->uac[branch].uri.len);
+	append_string( p, " " SIP_VERSION CRLF, 1+SIP_VERSION_LEN+CRLF_LEN );
 
 	/* insert our via */
-	append_mem_block(p,via,via_len);
+	append_string(p,via,via_len);
 
 	/*other headers*/
-	append_str( p, from );
-	append_str( p, Trans->callid );
-	append_str( p, *to );
+	append_string( p, from.s, from.len );
+	append_string( p, Trans->callid.s, Trans->callid.len );
+	append_string( p, to->s, to->len );
 
-	append_str( p, Trans->cseq_n );
-	append_mem_block( p, " ", 1 );
-	append_mem_block( p, method, method_len );
-	append_mem_block( p, CRLF, CRLF_LEN );
+	append_string( p, Trans->cseq_n.s, Trans->cseq_n.len );
+	*(p++) = ' ';
+	append_string( p, method, method_len );
+	append_string( p, CRLF, CRLF_LEN );
 
 	if (!is_local(Trans))  {
 		for ( hdr=Trans->uas.request->headers ; hdr ; hdr=hdr->next )
 			if(hdr->type==HDR_ROUTE_T) {
-				append_mem_block(p, hdr->name.s, hdr->len );
+				append_string(p, hdr->name.s, hdr->len );
 			}
 	}
 
 	/* User Agent header */
 	if (server_signature) {
-		append_mem_block(p,USER_AGENT CRLF, USER_AGENT_LEN+CRLF_LEN );
+		append_string(p,USER_AGENT CRLF, USER_AGENT_LEN+CRLF_LEN );
 	}
 	/* Content Length, EoM */
-	append_mem_block(p, CONTENT_LENGTH "0" CRLF CRLF ,
+	append_string(p, CONTENT_LENGTH "0" CRLF CRLF ,
 		CONTENT_LENGTH_LEN+1 + CRLF_LEN + CRLF_LEN);
 	*p=0;
 
@@ -388,7 +371,7 @@ static inline char* print_rs(char* p, struct rte* list, str* contact)
 	if (contact) {
 		if (list) memapp(p, ROUTE_SEPARATOR, ROUTE_SEPARATOR_LEN);
 		*p++ = '<';
-		append_str(p, *contact);
+		append_string(p, contact->s, contact->len);
 		*p++ = '>';
 	}
 	
@@ -507,37 +490,36 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 		goto error01;
 	}
 	p = req_buf;
-	
-	append_mem_block( p, ACK, ACK_LEN );
-	append_mem_block( p, " ", 1 );
-	append_str(p, ruri);
-	append_mem_block( p, " " SIP_VERSION CRLF, 1 + SIP_VERSION_LEN + CRLF_LEN);
-  	 
-	     /* insert our via */
-	append_mem_block(p, via, via_len);
-	
-	     /*other headers*/
-	append_str(p, Trans->from);
-	append_str(p, Trans->callid);
-	append_str(p, *to);
-	
-	append_str(p, Trans->cseq_n);
-	append_mem_block( p, " ", 1 );
-	append_mem_block( p, ACK, ACK_LEN);
-	append_mem_block(p, CRLF, CRLF_LEN);
-	
-	     /* Routeset */
+
+	append_string( p, ACK " ", ACK_LEN+1 );
+	append_string(p, ruri.s, ruri.len );
+	append_string( p, " " SIP_VERSION CRLF, 1 + SIP_VERSION_LEN + CRLF_LEN);
+
+	/* insert our via */
+	append_string(p, via, via_len);
+
+	/*other headers*/
+	append_string(p, Trans->from.s, Trans->from.len);
+	append_string(p, Trans->callid.s, Trans->callid.len);
+	append_string(p, to->s, to->len);
+
+	append_string(p, Trans->cseq_n.s, Trans->cseq_n.len);
+	*(p++) = ' ';
+	append_string(p, ACK CRLF, ACK_LEN+CRLF_LEN);
+
+	/* Routeset */
 	p = print_rs(p, list, cont);
-	
-	     /* User Agent header */
+
+	/* User Agent header */
 	if (server_signature) {
-		append_mem_block(p, USER_AGENT CRLF, USER_AGENT_LEN + CRLF_LEN);
+		append_string(p, USER_AGENT CRLF, USER_AGENT_LEN + CRLF_LEN);
 	}
-	
-	     /* Content Length, EoM */
-	append_mem_block(p, CONTENT_LENGTH "0" CRLF CRLF, CONTENT_LENGTH_LEN + 1 + CRLF_LEN + CRLF_LEN);
+
+	/* Content Length, EoM */
+	append_string(p, CONTENT_LENGTH "0" CRLF CRLF,
+		CONTENT_LENGTH_LEN + 1 + CRLF_LEN + CRLF_LEN);
 	*p = 0;
-	
+
 	pkg_free(via);
 	free_rte_list(list);
 	return req_buf;
