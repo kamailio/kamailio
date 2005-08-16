@@ -1289,11 +1289,11 @@ int reply_received( struct sip_msg  *p_msg )
 	/* lock the reply*/
 	LOCK_REPLIES( t );
 
-	if (t->flags&T_IS_CANCELLED_FLAG) {
-		/* reply for an already canceled transaction -> if the brnach
-		 * was not cancelled due missing reply, fo it now */
-		if (t->uac[branch].last_received<=0)
-			cancel_branch(t, branch);
+	if (t->uac[branch].flags&T_UAC_TO_CANCEL_FLAG) {
+		/* reply for an UAC with a pending cancel -> do cancel now */
+		cancel_branch(t, branch);
+		/* reset flag */
+		t->uac[branch].flags &= ~(T_UAC_TO_CANCEL_FLAG);
 	}
 
 	if (is_local(t)) {

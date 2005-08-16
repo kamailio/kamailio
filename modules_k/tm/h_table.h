@@ -124,7 +124,7 @@ typedef struct ua_server
 	/* keep to-tags for local 200 replies for INVITE -- 
 	 * we need them for dialog-wise matching of ACKs;
 	 * the pointer shows to shmem-ed reply */
-	str				 local_totag;
+	str              local_totag;
 }ua_server_type;
 
 
@@ -147,7 +147,9 @@ typedef struct ua_client
 	/* if we store a reply (branch picking), this is where it is */
 	struct sip_msg  *reply;
 	/* if we don't store, we at least want to know the status */
-	int             last_received;
+	short            last_received;
+	/* UAC specific flags */
+	short            flags;
 }ua_client_type;
 
 
@@ -167,8 +169,11 @@ struct totag_elem {
 /* set to one if you want to disallow silent transaction
    dropping when C timer hits */
 #define T_NOISY_CTIMER_FLAG  (1<<2)
-/* is this transaction CANCELed ?  */
-#define T_IS_CANCELLED_FLAG  (1<<3)
+
+
+/* transaction UAC's flags */
+/* is the UAC pending for CANCEL ?  */
+#define T_UAC_TO_CANCEL_FLAG  (1<<0)
 
 
 

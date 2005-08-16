@@ -308,7 +308,6 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	cancel_bm=0;
 	lowest_error=0;
 
-
 	backup_uri=cancel_msg->new_uri;
 	/* determine which branches to cancel ... */
 	which_cancel( t_invite, &cancel_bm );
@@ -316,8 +315,6 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	t_cancel->first_branch=t_invite->first_branch;
 	/* fix label -- it must be same for reply matching */
 	t_cancel->label=t_invite->label;
-	/* set a T flag to mark as canceled */
-	t_invite->flags |= T_IS_CANCELLED_FLAG;
 	/* ... and install CANCEL UACs */
 	for (i=t_invite->first_branch; i<t_invite->nr_of_outgoings; i++) {
 		if (cancel_bm & (1<<i)) {
@@ -341,6 +338,11 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	/* internally cancel branches with no received reply */
 	for (i=t_invite->first_branch; i<t_invite->nr_of_outgoings; i++) {
 		if (t_invite->uac[i].last_received==0){
+			/* mark as cancelled */
+			t_invite->uac[i].flags |= T_UAC_TO_CANCEL_FLAG;
+			/* reset the "request" timers */
+			reset_timer(&t_invite->uac[i].request.retr_timer);
+			reset_timer(&t_invite->uac[i].request.fr_timer);
 			LOCK_REPLIES( t_invite );
 			if (RPS_ERROR==relay_reply(t_invite,FAKED_REPLY,i,487,&dummy_bm))
 				lowest_error = -1; /* force sending 500 error */
