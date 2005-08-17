@@ -873,11 +873,10 @@ int get_route_param( struct sip_msg *msg, str *name, str *val)
 			/* empty val */
 			val->len = 0;
 			val->s = 0;
-			break;
+			goto found;
 		}
-		if (*p!='=')
+		if (*(p++)!='=')
 			continue;
-		p++;
 		while( p<end && (*p==' ' || *p=='\t') )
 			p++;
 		if (p==end)
@@ -897,12 +896,13 @@ int get_route_param( struct sip_msg *msg, str *name, str *val)
 		val->len = p-val->s;
 		if (val->len==0)
 			val->s = 0;
-		break;
+		goto found;
 	}
 
-	return 0;
 notfound:
 	return -1;
+found:
+	return 0;
 }
 
 
