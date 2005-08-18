@@ -124,7 +124,7 @@ static cmd_export_t cmds[]={
 	{"append_to_reply",  append_to_reply_f, 1, 0, 
 			REQUEST_ROUTE},
 	{"append_hf",        append_hf,         1, str_fixup,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE | BRANCH_ROUTE}, 
 	{"append_urihf",     append_urihf,      2, str_fixup,   
 			REQUEST_ROUTE|FAILURE_ROUTE},
 	{"remove_hf",        remove_hf_f,         1, str_fixup,
