@@ -73,7 +73,7 @@ struct action* rlist[RT_NO];
 /* reply routing table */
 struct action* onreply_rlist[ONREPLY_RT_NO];
 struct action* failure_rlist[FAILURE_RT_NO];
-
+struct action* branch_rlist[BRANCH_RT_NO];
 
 static int fix_actions(struct action* a); /*fwd declaration*/
 
@@ -742,6 +742,13 @@ int fix_rls()
 			}
 		}
 	}
+	for(i=0;i<BRANCH_RT_NO;i++){
+		if(branch_rlist[i]){
+			if ((ret=fix_actions(branch_rlist[i]))!=0){
+				return ret;
+			}
+		}
+	}
 	return 0;
 }
 
@@ -783,6 +790,14 @@ void print_rl()
 		}
 		DBG("\n");
 	}
+	for(j=0; j<BRANCH_RT_NO; j++){
+		if (branch_rlist[j]==0){
+			continue;
+		}
+		DBG("branch routing table %d:\n",j);
+		for (t=branch_rlist[j],i=0; t; i++, t=t->next){
+			print_action(t);
+		}
+		DBG("\n");
+	}
 }
-
-
