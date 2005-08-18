@@ -339,15 +339,15 @@ static int store_result(db_con_t* _h, db_res_t** _r)
 		}
 	}
 
-        if (convert_result(_h, *_r) < 0) {
+	if (convert_result(_h, *_r) < 0) {
 		LOG(L_ERR, "store_result: Error while converting result\n");
 		pkg_free(*_r);
-
-		     /* This cannot be used because if convert_result fails,
-		      * free_result will try to free rows and columns too 
-		      * and free will be called two times
-		      */
-		     /* free_result(*_r); */
+		/* This cannot be used because if convert_result fails,
+		 * free_result will try to free rows and columns too 
+		 * and free will be called two times
+		 */
+		/* free_result(*_r); */
+		*_r = 0;
 		return -4;
 	}
 	
