@@ -1,0 +1,1 @@
+gw_name(str) ip_addr(int) port(int,null) uri_scheme(int,null) transport(int,null) grp_id(int) 
