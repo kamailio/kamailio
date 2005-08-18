@@ -14,14 +14,10 @@ DOCUMENTS ?= index
 #
 ROOT_DIR ?= ../../..
 
-#
 # Stylesheet used to generate dependencies from XML files
-#
 DEP_XSL ?= $(ROOT_DIR)/doc/stylesheets/dep.xsl
 
-#
 # Default stylesheet used to generate HTML
-#
 XHTML_XSL ?= $(ROOT_DIR)/doc/stylesheets/xhtml.xsl
 
 #
@@ -31,9 +27,11 @@ XHTML_XSL ?= $(ROOT_DIR)/doc/stylesheets/xhtml.xsl
 TXT_XSL ?= $(XHTML_XSL)
 
 #
-# Enable document validation by default
+# Disable document validation by default
 # 
-VALIDATE ?= 1
+VALIDATE ?= 0
+
+CATALOG=$(ROOT_DIR)/doc/catalog.xml
 
 LYNX     ?= lynx
 DIA      ?= dia
@@ -47,10 +45,11 @@ ifeq ($(VALIDATE), 0)
 	override XSLTPROC_FLAGS := $(XSLTPROC_FLAGS) --novalid
 endif
 
-alldep = Makefile $(ROOT_DIR)/Makefile.doc $(ROOT_DIR)/doc/stylesheets/dep.xsl
+alldep = Makefile $(ROOT_DIR)/Makefile.doc $(DEP_XSL)
 
 all: xhtml
 
+xml_files = $(addsuffix .xml, $(DOCUMENTS))
 dep_files = $(addsuffix .d, $(DOCUMENTS))
 xhtml_files = $(addsuffix .xhtml, $(DOCUMENTS))
 txt_files = $(addsuffix .txt, $(DOCUMENTS))
@@ -59,21 +58,24 @@ txt_files = $(addsuffix .txt, $(DOCUMENTS))
 xhtml: $(xhtml_files)
 txt: $(txt_files)
 
-%.xhtml: %.xml $(alldep) $(XHTML_XSL) 
-	$(XSLTPROC) $(XSLTPROC_FLAGS) --xinclude -o $@ $(XHTML_XSL) $<
+%.xhtml: %.xml %.d $(alldep) $(XHTML_XSL)
+	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) --xinclude -o $@ $(XHTML_XSL) $<
 
-%.txt: %.xml $(alldep)
-	$(XSLTPROC) $(XSLTPROC_FLAGS) --xinclude $(TXT_XSL) $< | \
-	$(LYNX) $(LYNX_FLAGS) -stdin -dump $< > $@
+%.txt: %.xml %.d $(alldep)
+	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) --xinclude $(TXT_XSL) $< | \
+	$(LYNX) $(LYNX_FLAGS) -stdin -dump > $@
 
 %.png: %.dia $(alldep)
 	$(DIA) $(DIA_ARGS) -t png -e $@ $<
 
 %.d: %.xml $(alldep) 
-	echo -n $@ $< | sed -e 's/ml/html: /' > $@
-	$(XSLTPROC) $(XSLTPROC_FLAGS) --novalid $(DEP_XSL) $< >> $@ 
+	$(XSLTPROC) $(XSLTPROC_FLAGS) --nonet --novalid --stringparam output $@ $(DEP_XSL) $< 
 
 
+.PHONY: check
+check: $(xml_files)
+	@XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) --xinclude --nowrite --nomkdir --noout $(DEP_XSL) $<
+	
 .PHONY: clean
 clean:
 	rm -f $(txt_files)
@@ -87,7 +89,7 @@ proper realclean distclean: clean
 ifeq (,$(MAKECMDGOALS))
 include $(dep_files) 
 endif
-ifneq (,$(filter-out clean proper realclean distclean, $(MAKECMDGOALS)))
+ifneq (,$(filter-out clean proper realclean distclean check, $(MAKECMDGOALS)))
 include $(dep_files)
 endif
 
