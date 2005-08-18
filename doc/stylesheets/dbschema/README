@@ -1,0 +1,12 @@
+SER supports multiple database servers, at the moment of writing this text
+MySQL, PostgreSQL, dbtext (aka plain text files), and Oracle databases are 
+supported. Maintaining database schema for each database separately would be 
+tedious job, therefore SER keeps the database schema in an XML-based format 
+and schema definitions for the database servers are generated automatically 
+using stylesheets.
+
+This directory contains DTD (Document Type Definition) files describing the
+structure of the XML-based database description language and XSL stylesheets
+used to generate database schema files for all the database servers.
+
+  -- Jan Janak <jan@iptel.org>
