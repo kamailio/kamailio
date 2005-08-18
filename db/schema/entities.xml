@@ -1,0 +1,6 @@
+<!ENTITY user_len "64">
+<!ENTITY domain_len "128">
+<!ENTITY uri_len "255">
+<!ENTITY uuid_len "255">
+<!ENTITY hf_len "255">
+<!ENTITY method_len "16">

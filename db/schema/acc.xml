@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN" 
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table xmlns:my="http://iptel.org/dbschema/mysql">
+    <name>acc</name>
+    <version>2</version>
+    <column>
+	<name>caller_UUID</name>
+	<type>string</type>
+	<size>&uuid_len;</size>
+    </column>
+    <column>
+	<name>callee_UUID</name>
+	<type>string</type>
+	<size>&uuid_len;</size>
+    </column>
+    <column>
+	<name>sip_from</name>
+	<type>string</type>
+	<size>&hf_len;</size>
+    </column>
+    <column>
+	<name>sip_to</name>
+	<type>string</type>
+	<size>&hf_len;</size>
+    </column>
+    <column>
+	<name>sip_status</name>
+	<type>string</type>
+	<size>128</size>
+    </column>
+    <column>
+	<name>sip_method</name>
+	<type>string</type>
+	<size>&method_len;</size>
+    </column>
+    <column>
+	<name>i_uri</name>
+	<type>string</type>
+	<size>&uri_len;</size>
+    </column>
+    <column>
+	<name>o_uri</name>
+	<type>string</type>
+	<size>&uri_len;</size>
+    </column>
+    <column>
+	<name>from_uri</name>
+	<type>string</type>
+	<size>&uri_len;</size>
+    </column>
+    <column>
+	<name>to_uri</name>
+	<type>string</type>
+	<size>&uri_len;</size>
+    </column>
+    <column id="sip_callid">
+	<name>sip_callid</name>
+	<type>string</type>
+	<size>&uri_len;</size>
+    </column>
+    <column id="username">
+	<name>username</name>
+	<type>string</type>
+	<size>&user_len;</size>
+    </column>
+    <column id="domain">
+	<name>domain</name>
+	<type>string</type>
+	<size>&domain_len;</size>
+    </column>
+    <column>
+	<name>fromtag</name>
+	<type>string</type>
+	<size>128</size>
+    </column>
+    <column>
+	<name>totag</name>
+	<type>string</type>
+	<size>128</size>
+    </column>
+    <column>
+	<name>time</name>
+	<type>datetime</type>
+	<default>0000-00-00 00:00:00</default>
+    </column>
+    <column>
+	<name>timestamp</name>
+	<type>datetime</type>
+	<default></default>
+    </column>
+    <column>
+	<name>caller_deleted</name>
+	<type>char</type>
+	<default></default>
+    </column>
+    <column>
+	<name>callee_deleted</name>
+	<type>char</type>
+	<default></default>
+    </column>
+    <index>
+	<name>acc_user</name>
+	<colref linkend="username"/>
+	<colref linkend="domain"/>
+    </index>
+    <index>
+	<name>sip_callid</name>
+	<colref linkend="sip_callid"/>
+    </index>
+</table>

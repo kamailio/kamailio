@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table xmlns:my="http://iptel.org/dbschema/mysql">
+    <name>lcr</name>
+    <column id="prefix">
+	<name>prefix</name>
+	<type>string</type>
+	<size>16</size>
+    </column>
+    <column id="from_uri">
+	<name>from_uri</name>
+	<type>int</type>
+	<default>%</default>
+	<size>&uri_len;</size>
+    </column>
+    <column id="grp_id">
+	<name>grp_id</name>
+	<type>int</type>
+	<null/>
+    </column>
+    <column>
+	<name>priority</name>
+	<type>int</type>
+	<null/>
+    </column>
+    <index>
+	<colref linkend="prefix"/>
+    </index>
+    <index>
+	<colref linkend="from_uri"/>
+    </index>
+    <index>
+	<colref linkend="grp_id"/>
+    </index>
+</table>

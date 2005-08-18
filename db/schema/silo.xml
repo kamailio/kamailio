@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table xmlns:my="http://iptel.org/dbschema/mysql">
+    <name>silo</name>
+    <column id="mid">
+	<name>mid</name>
+	<type auto_increment="yes">unsigned int</type>
+    </column>
+    <column>
+	<name>src_addr</name>
+	<type>string</type>
+	<default></default>
+	<size>255</size>
+    </column>
+    <column>
+	<name>dst_addr</name>
+	<type>string</type>
+	<default></default>
+	<size>255</size>
+    </column>
+    <column>
+	<name>r_uri</name>
+	<type>string</type>
+	<default></default>
+	<size>&uri_len;</size>
+    </column>
+    <column>
+	<name>username</name>
+	<type>string</type>
+	<default></default>
+	<size>&user_len;</size>
+    </column>
+    <column>
+	<name>domain</name>
+	<type>string</type>
+	<default></default>
+	<size>&domain_len;</size>
+    </column>
+    <column>
+	<name>inc_time</name>
+	<type>datetime</type>
+	<default>0</default>
+    </column>
+    <column>
+	<name>exp_time</name>
+	<type>datetime</type>
+	<default>0</default>
+    </column>
+    <column>
+	<name>ctype</name>
+	<type>string</type>
+	<default>text/plain</default>
+	<size>128</size>
+    </column>
+    <column>
+	<name>body</name>
+	<type>binary</type>
+	<default></default>
+    </column>
+    <index>
+	<colref linkend="mid"/>
+    </index>
+</table>

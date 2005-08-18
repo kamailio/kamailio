@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table xmlns:my="http://iptel.org/dbschema/mysql">
+    <name>grp</name>
+    <column id="username">
+	<name>username</name>
+	<type>string</type>
+	<default></default>
+	<size>&user_len;</size>
+    </column>
+    <column id="domain">
+	<name>domain</name>
+	<type>string</type>
+	<default></default>
+	<size>&domain_len;</size>
+    </column>
+    <column id="grp">
+	<name>grp</name>
+	<type>string</type>
+	<default></default>
+	<size>64</size>
+    </column>
+    <column>
+	<name>last_modified</name>
+	<type>datetime</type>
+	<default></default>
+    </column>
+    <index>
+	<colref linkend="username"/>
+	<colref linkend="domain"/>
+	<colref linkend="grp"/>
+    </index>
+</table>

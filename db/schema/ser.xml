@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE database PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<database xmlns:my="http://iptel.org/dbschema/mysql"
+          xmlns:pg="http://iptel.org/dbschema/postgres"
+          xmlns:or="http://iptel.org/dbschema/oracle"
+          xmlns:dt="http://iptel.org/dbschema/dbtext"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+>
+    <name>ser</name>
+    <pg:name>pg_ser</pg:name>
+    <or:name>or_ser</or:name>
+    <dt:name>dt_ser</dt:name>
+
+    <xi:include href="version.xml"/>
+    <xi:include href="acc.xml"/>
+    <xi:include href="active_sessions.xml"/>
+    <xi:include href="aliases.xml"/>
+    <xi:include href="event.xml"/>
+    <xi:include href="grp.xml"/>
+    <xi:include href="location.xml"/>
+    <xi:include href="missed_calls.xml"/>
+    <xi:include href="pending.xml"/>
+    <xi:include href="phonebook.xml"/>
+    <xi:include href="reserved.xml"/>
+    <xi:include href="subscriber.xml"/>
+    <xi:include href="config.xml"/>
+    <xi:include href="silo.xml"/>
+    <xi:include href="domain.xml"/>
+    <xi:include href="uri.xml"/>
+    <xi:include href="server_monitoring.xml"/>
+    <xi:include href="usr_preferences.xml"/>
+    <xi:include href="usr_preferences_types.xml"/>
+    <xi:include href="trusted.xml"/>
+    <xi:include href="server_monitoring_agg.xml"/>
+    <xi:include href="admin_privileges.xml"/>
+    <xi:include href="call_forwarding.xml"/>
+    <xi:include href="speed_dial.xml"/>
+    <xi:include href="gw.xml"/>
+    <xi:include href="gw_grp.xml"/>
+    <xi:include href="lcr.xml"/>
+</database>

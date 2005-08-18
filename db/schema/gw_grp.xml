@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table xmlns:my="http://iptel.org/dbschema/mysql">
+    <name>gw_grp</name>
+    <column>
+	<name>grp_id</name>
+	<type auto_increment="yes">int</type>
+    </column>
+    <column>
+	<name>grp_name</name>
+	<type>string</type>
+	<size>64</size>
+    </column>
+</table>

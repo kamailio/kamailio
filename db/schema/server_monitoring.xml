@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table xmlns:my="http://iptel.org/dbschema/mysql">
+    <name>server_monitoring</name>
+    <column>
+	<name>time</name>
+	<type>datetime</type>
+	<default>0</default>
+    </column>
+    <column id="id">
+	<name>id</name>
+	<type>int</type>
+	<default>0</default>
+    </column>
+    <column id="param">
+	<name>param</name>
+	<type>string</type>
+	<default></default>
+	<size>32</size>
+    </column>
+    <column>
+	<name>value</name>
+	<type>int</type>
+	<default>0</default>
+    </column>
+    <column>
+	<name>increment</name>
+	<type>int</type>
+	<default>0</default>
+    </column>
+    <index>
+	<colref linkend="id"/>
+	<colref linkend="param"/>
+    </index>
+</table>

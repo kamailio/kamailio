@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table xmlns:my="http://iptel.org/dbschema/mysql">
+    <name>missed_calls</name>
+    <column>
+	<name>sip_from</name>
+	<type>string</type>
+	<default></default>
+	<size>&hf_len;</size>
+    </column>
+    <column>
+	<name>sip_to</name>
+	<type>string</type>
+	<default></default>
+	<size>&hf_len;</size>
+    </column>
+    <column>
+	<name>sip_status</name>
+	<type>string</type>
+	<default></default>
+	<size>128</size>
+    </column>
+    <column>
+	<name>sip_method</name>
+	<type>string</type>
+	<default></default>
+	<size>&method_len;</size>
+    </column>
+    <column>
+	<name>i_uri</name>
+	<type>string</type>
+	<default></default>
+	<size>&uri_len;</size>
+    </column>
+    <column>
+	<name>o_uri</name>
+	<type>string</type>
+	<default></default>
+	<size>&uri_len;</size>
+    </column>
+    <column>
+	<name>from_uri</name>
+	<type>string</type>
+	<default></default>
+	<size>&uri_len;</size>
+    </column>
+    <column>
+	<name>to_uri</name>
+	<type>string</type>
+	<default></default>
+	<size>&uri_len;</size>
+    </column>
+    <column>
+	<name>sip_callid</name>
+	<type>string</type>
+	<default></default>
+	<size>&uri_len;</size>
+    </column>
+    <column id="username">
+	<name>username</name>
+	<type>string</type>
+	<default></default>
+	<size>&user_len;</size>
+    </column>
+    <column id="domain">
+	<name>domain</name>
+	<type>string</type>
+	<default></default>
+	<size>&domain_len;</size>
+    </column>
+    <column>
+	<name>fromtag</name>
+	<type>string</type>
+	<default></default>
+	<size>128</size>
+    </column>
+    <column>
+	<name>totag</name>
+	<type>string</type>
+	<default></default>
+	<size>128</size>
+    </column>
+    <column>
+	<name>time</name>
+	<type>datetime</type>
+	<default>0</default>
+    </column>
+    <column>
+	<name>timestamp</name>
+	<type>datetime</type>
+	<default></default>
+    </column>
+    <index>
+	<name>mc_user</name>
+	<colref linkend="username"/>
+	<colref linkend="domain"/>
+    </index>
+</table>

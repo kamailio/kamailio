@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table xmlns:my="http://iptel.org/dbschema/mysql">
+    <name>server_monitoring_agg</name>
+    <column id="param">
+	<name>param</name>
+	<type>string</type>
+	<default></default>
+	<size>32</size>
+    </column>
+    <column>
+	<name>s_value</name>
+	<type>int</type>
+	<default>0</default>
+    </column>
+    <column>
+	<name>s_increment</name>
+	<type>int</type>
+	<default>0</default>
+    </column>
+    <column>
+	<name>last_aggregated_increment</name>
+	<type>int</type>
+	<default>0</default>
+    </column>
+    <column>
+	<name>av</name>
+	<type>double</type>
+	<default>0</default>
+    </column>
+    <column>
+	<name>mv</name>
+	<type>int</type>
+	<default>0</default>
+    </column>
+    <column>
+	<name>ad</name>
+	<type>double</type>
+	<default>0</default>
+    </column>
+    <column>
+	<name>lv</name>
+	<type>int</type>
+	<default>0</default>
+    </column>
+    <column>
+	<name>min_val</name>
+	<type>int</type>
+	<default>0</default>
+    </column>
+    <column>
+	<name>max_val</name>
+	<type>int</type>
+	<default>0</default>
+    </column>
+    <column>
+	<name>min_inc</name>
+	<type>int</type>
+	<default>0</default>
+    </column>
+    <column>
+	<name>max_inc</name>
+	<type>int</type>
+	<default>0</default>
+    </column>
+    <column>
+	<name>lastupdate</name>
+	<type>datetime</type>
+	<default>0</default>
+    </column>
+    <index>
+	<colref linkend="param"/>
+    </index>
+</table>

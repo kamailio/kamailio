@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table xmlns:my="http://iptel.org/dbschema/mysql">
+    <name>trusted</name>
+    <column id="src_ip">
+	<name>src_ip</name>
+	<type>string</type>
+	<size>39</size>
+    </column>
+    <column id="proto">
+	<name>proto</name>
+	<type>string</type>
+	<size>4</size>
+    </column>
+    <column id="from_pattern">
+	<name>from_pattern</name>
+	<type>string</type>
+	<size>64</size>
+    </column>
+    <index>
+	<colref linkend="src_ip"/>
+	<colref linkend="proto"/>
+	<colref linkend="from_pattern"/>
+    </index>
+</table>

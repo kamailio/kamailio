@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table xmlns:my="http://iptel.org/dbschema/mysql">
+    <name>pending</name>
+    <column id="phplib_id">
+	<name>phplib_id</name>
+	<type>string</type>
+	<default></default>
+	<size>32</size>
+    </column>
+    <column id="username">
+	<name>username</name>
+	<type>string</type>
+	<default></default>
+	<size>&user_len;</size>
+    </column>
+    <column id="domain">
+	<name>domain</name>
+	<type>string</type>
+	<default></default>
+	<size>&domain_len;</size>
+    </column>
+    <column>
+	<name>password</name>
+	<type>string</type>
+	<default></default>
+	<size>25</size>
+    </column>
+    <column>
+	<name>first_name</name>
+	<type>string</type>
+	<default></default>
+	<size>25</size>
+    </column>
+    <column>
+	<name>last_name</name>
+	<type>string</type>
+	<default></default>
+	<size>45</size>
+    </column>
+    <column>
+	<name>phone</name>
+	<type>string</type>
+	<default></default>
+	<size>15</size>
+    </column>
+    <column>
+	<name>email_address</name>
+	<type>string</type>
+	<default></default>
+	<size>50</size>
+    </column>
+    <column>
+	<name>datetime_created</name>
+	<type>datetime</type>
+	<default>0</default>
+    </column>
+    <column>
+	<name>datetime_modified</name>
+	<type>datetime</type>
+	<default>0</default>
+    </column>
+    <column>
+	<name>confirmation</name>
+	<type>string</type>
+	<default></default>
+	<size>64</size>
+    </column>
+    <column>
+	<name>flag</name>
+	<type>string</type>
+	<default>o</default>
+	<size>1</size>
+    </column>
+    <column>
+	<name>sendnotification</name>
+	<type>string</type>
+	<default></default>
+	<size>50</size>
+    </column>
+    <column>
+	<name>greeting</name>
+	<type>string</type>
+	<default></default>
+	<size>50</size>
+    </column>
+    <column>
+	<name>ha1</name>
+	<type>string</type>
+	<default></default>
+	<size>128</size>
+    </column>
+    <column>
+	<name>ha1b</name>
+	<type>string</type>
+	<default></default>
+	<size>128</size>
+    </column>
+    <column>
+	<name>allow_find</name>
+	<type>string</type>
+	<default></default>
+	<size>1</size>
+    </column>
+    <column>
+	<name>timezone</name>
+	<type>string</type>
+	<default></default>
+	<size>128</size>
+    </column>
+    <column>
+	<name>rpid</name>
+	<type>string</type>
+	<default></default>
+	<size>&uri_len;</size>
+    </column>
+    <column>
+	<name>domn</name>
+	<type>unsigned int</type>
+	<default></default>
+	<size>10</size>
+    </column>
+    <column>
+	<name>uuid</name>
+	<type>string</type>
+	<default></default>
+	<size>&uuid_len;</size>
+    </column>
+    <index>
+	<colref linkend="username"/>
+	<colref linkend="domain"/>
+    </index>
+    <index>
+	<name>user_2</name>
+	<colref linkend="username"/>
+    </index>
+    <index>
+	<name>phplib_id</name>
+	<colref linkend="phplib_id"/>
+    </index>
+</table>

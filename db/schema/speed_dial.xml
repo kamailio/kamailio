@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table xmlns:my="http://iptel.org/dbschema/mysql">
+    <name>speed_dial</name>
+    <column>
+	<name>uuid</name>
+	<type>string</type>
+	<default></default>
+	<size>&uuid_len;</size>
+    </column>
+    <column id="username">
+	<name>username</name>
+	<type>string</type>
+	<default></default>
+	<size>&user_len;</size>
+    </column>
+    <column id="domain">
+	<name>domain</name>
+	<type>string</type>
+	<default></default>
+	<size>&domain_len;</size>
+    </column>
+    <column id="sd_username">
+	<name>sd_username</name>
+	<type>string</type>
+	<default></default>
+	<size>&user_len;</size>
+    </column>
+    <column id="sd_domain">
+	<name>sd_domain</name>
+	<type>string</type>
+	<default></default>
+	<size>&domain_len;</size>
+    </column>
+    <column>
+	<name>new_uri</name>
+	<type>string</type>
+	<default></default>
+	<size>&uri_len;</size>
+    </column>
+    <column>
+	<name>fname</name>
+	<type>string</type>
+	<default></default>
+	<size>128</size>
+    </column>
+    <column>
+	<name>lname</name>
+	<type>string</type>
+	<default></default>
+	<size>128</size>
+    </column>
+    <column>
+	<name>description</name>
+	<type>string</type>
+	<default></default>
+	<size>64</size>
+    </column>
+    <index>
+	<colref linkend="username"/>
+	<colref linkend="domain"/>
+	<colref linkend="sd_username"/>
+	<colref linkend="sd_domain"/>
+    </index>
+</table>

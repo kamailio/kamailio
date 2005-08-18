@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd">
+
+<table id="version" xmlns:my="http://iptel.org/dbschema/mysql" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:dt="http://iptel.org/dbschema/dbtext">
+    <name>
+	version
+    </name>
+    <my:type>MyISAm</my:type>
+    <column id="tn">
+	<name>table_name</name>
+	<type>string</type>
+	<size>32</size>
+    </column>
+    
+    <column id="tv">
+	<name>table_version</name>
+	<type>unsigned int</type>
+	<default>0</default>
+    </column>
+
+    <row>
+	<value col="tn">acc</value>
+	<dt:value col="tv">2</dt:value>
+    </row>
+
+    <row>
+	<value col="tn">active_sessions</value>
+	<value col="tv">1</value></row>
+    <row>
+	<value col="tn">aliases</value>
+	<value col="tv">6</value>
+    </row>
+    <row>
+	<value col="tn">event</value>
+	<value col="tv">1</value>
+    </row>
+    <row>
+	<value col="tn">grp</value>
+	<value col="tv">2</value>
+    </row>
+    <row>
+	<value col="tn">location</value>
+	<value col="tv">6</value>
+    </row>
+    <row>
+	<value col="tn">missed_calls</value>
+	<value col="tv">2</value>
+    </row>
+    <row>
+	<value col="tn">pending</value>
+	<value col="tv">4</value>
+    </row>
+    <row>
+	<value col="tn">phonebook</value>
+	<value col="tv">1</value>
+    </row>
+    <row>
+	<value col="tn">reserved</value>
+	<value col="tv">1</value>
+    </row>
+    <row>
+	<value col="tn">subscriber</value>
+	<value col="tv">5</value>
+    </row>
+    <row>
+	<value col="tn">config</value>
+	<value col="tv">1</value>
+    </row>
+    <row>
+	<value col="tn">silo</value>
+	<value col="tv">3</value>
+    </row>
+    <row>
+	<value col="tn">domain</value>
+	<value col="tv">1</value>
+    </row>
+    <row>
+	<value col="tn">uri</value>
+	<value col="tv">1</value>
+    </row>
+    <row>
+	<value col="tn">server_monitoring</value>
+	<value col="tv">1</value>
+    </row>
+    <row>
+	<value col="tn">usr_preferences</value>
+	<value col="tv">2</value>
+    </row>
+    <row>
+	<value col="tn">usr_preferences_types</value>
+	<value col="tv">1</value>
+    </row>
+    <row>
+	<value col="tn">trusted</value>
+	<value col="tv">1</value>
+    </row>
+    <row>
+	<value col="tn">server_monitoring_agg</value>
+	<value col="tv">1</value>
+    </row>
+    <row>
+	<value col="tn">admin_privileges</value>
+	<value col="tv">1</value>
+    </row>
+    <row>
+	<value col="tn">call_forwarding</value>
+	<value col="tv">1</value>
+    </row>
+    <row>
+	<value col="tn">speed_dial</value>
+	<value col="tv">2</value>
+    </row>
+    <row>
+	<value col="tn">gw</value>
+	<value col="tv">2</value>
+    </row>
+    <row>
+	<value col="tn">gw_grp</value>
+	<value col="tv">2</value>
+    </row>
+    <row>
+    	<value col="tn">lcr</value>
+	<value col="tv">1</value>
+    </row>
+</table>

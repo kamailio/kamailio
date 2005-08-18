@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table xmlns:my="http://iptel.org/dbschema/mysql">
+    <name>usr_preferences</name>
+    <column>
+	<name>uuid</name>
+	<type>string</type>
+	<default></default>
+	<size>&uuid_len;</size>
+    </column>
+    <column id="username">
+	<name>username</name>
+	<type>string</type>
+	<default></default>
+	<size>&user_len;</size>
+    </column>
+    <column id="domain">
+	<name>domain</name>
+	<type>string</type>
+	<default></default>
+	<size>&domain_len;</size>
+    </column>
+    <column id="attribute">
+	<name>attribute</name>
+	<type>string</type>
+	<default></default>
+	<size>32</size>
+    </column>
+    <column>
+	<name>value</name>
+	<type>string</type>
+	<default></default>
+	<size>128</size>
+    </column>
+    <column>
+	<name>type</name>
+	<type>int</type>
+	<default>0</default>
+    </column>
+    <column>
+	<name>modified</name>
+	<type>datetime</type>
+    </column>
+    <index>
+	<colref linkend="attribute"/>
+	<colref linkend="username"/>
+	<colref linkend="domain"/>
+    </index>
+</table>
