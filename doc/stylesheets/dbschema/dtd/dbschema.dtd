@@ -1,0 +1,50 @@
+<!ELEMENT database (name, description?, table*)>
+<!ATTLIST database
+    id ID #IMPLIED
+>
+
+<!ELEMENT name (#PCDATA) >
+
+<!ELEMENT description (#PCDATA) >
+
+<!ELEMENT table (name, description?, version?, column+, index*, row*) >
+<!ATTLIST table
+    id ID #IMPLIED
+>
+
+<!ELEMENT version (#PCDATA) >
+
+<!ELEMENT column (name, description?, type, size?, default?, null?) >
+<!ATTLIST column
+    id ID #IMPLIED
+>
+
+<!ELEMENT index (name?, unique?, colref+) >
+<!ATTLIST index
+    id ID #IMPLIED
+>
+
+<!ELEMENT type (#PCDATA) >
+<!ATTLIST type
+    auto_increment (yes|no) #IMPLIED
+>
+
+<!ELEMENT size (#PCDATA) >
+
+<!ELEMENT default (#PCDATA) >
+
+<!ELEMENT null EMPTY >
+
+<!ELEMENT unique EMPTY >
+
+<!ELEMENT colref EMPTY>
+<!ATTLIST colref
+    linkend IDREF #REQUIRED
+>
+
+<!ELEMENT row (value*) >
+
+<!ELEMENT value (#PCDATA | null)* >
+<!ATTLIST value
+    col IDREF #REQUIRED
+>
