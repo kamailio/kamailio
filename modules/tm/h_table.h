@@ -238,6 +238,8 @@ typedef struct cell
 	unsigned int on_negative;
 	/* the onreply_route to be processed if registered to do so */
 	unsigned int on_reply;
+	     /* The route to take for each downstream branch separately */
+	unsigned int on_branch;
 
 	/* MD5checksum  (meaningful only if syn_branch=0 */
 	char md5[MD5_LEN];

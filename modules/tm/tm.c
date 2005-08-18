@@ -166,6 +166,7 @@ inline static int w_t_forward_nonack_tcp(struct sip_msg* msg, char* str,char*);
 inline static int w_t_forward_nonack_tls(struct sip_msg* msg, char* str,char*);
 #endif
 inline static int w_t_on_negative(struct sip_msg* msg, char *go_to, char *foo);
+inline static int w_t_on_branch(struct sip_msg* msg, char *go_to, char *foo);
 inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
 inline static int t_check_status(struct sip_msg* msg, char *regexp, char *foo);
 
@@ -227,6 +228,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_on_reply",         w_t_on_reply,            1, fixup_str2int,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+	{"t_on_branch",       w_t_on_branch,         1, fixup_str2int,
+			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"t_check_status",     t_check_status,          1, fixup_str2regexp,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_write_req",       t_write_req,              2, fixup_t_write,
@@ -430,6 +433,7 @@ static int script_init( struct sip_msg *foo, void *bar)
 	*/
 	t_on_negative( 0 );
 	t_on_reply(0);
+	t_on_branch(0);
 	/* reset the kr status */
 	set_kr(0);
 	/* set request mode so that multiple-mode actions know
@@ -768,6 +772,12 @@ inline static int w_t_newtran( struct sip_msg* p_msg, char* foo, char* bar )
 inline static int w_t_on_negative( struct sip_msg* msg, char *go_to, char *foo)
 {
 	t_on_negative( (unsigned int )(long) go_to );
+	return 1;
+}
+
+inline static int w_t_on_branch( struct sip_msg* msg, char *go_to, char *foo)
+{
+	t_on_branch( (unsigned int )(long) go_to );
 	return 1;
 }
 

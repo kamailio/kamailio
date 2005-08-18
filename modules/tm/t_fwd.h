@@ -42,6 +42,8 @@
 typedef int (*tfwd_f)(struct sip_msg* p_msg , struct proxy_l * proxy );
 typedef int (*taddblind_f)( /*struct cell *t */ );
 
+void t_on_branch(unsigned int go_to);
+unsigned int get_on_branch();
 int t_replicate(struct sip_msg *p_msg, struct proxy_l * proxy, int proto);
 char *print_uac_request( struct cell *t, struct sip_msg *i_req,
     int branch, str *uri, unsigned int *len, struct socket_info *send_sock,

@@ -99,6 +99,7 @@
 #include "config.h"
 #include "sip_msg.h"
 #include "t_hooks.h"
+#include "t_fwd.h"
 #include "t_lookup.h"
 #include "dlg.h" /* for t_lookup_callid */
 #include "t_msgbuilder.h" /* for t_lookup_callid */
@@ -999,6 +1000,7 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 	if (p_msg->REQ_METHOD==METHOD_INVITE) new_cell->flags |= T_IS_INVITE_FLAG;
 	new_cell->on_negative=get_on_negative();
 	new_cell->on_reply=get_on_reply();
+	new_cell->on_branch=get_on_branch();
 }
 
 static inline int new_t(struct sip_msg *p_msg)

@@ -58,6 +58,8 @@
 #include "../../globals.h"
 #include "../../mem/mem.h"
 #include "../../dset.h"
+#include "../../action.h"
+#include "../../data_lump.h"
 #include "t_funcs.h"
 #include "t_hooks.h"
 #include "t_msgbuilder.h"
@@ -68,6 +70,27 @@
 #include "fix_lumps.h"
 #include "config.h"
 
+static int goto_on_branch = 0, branch_route = 0;
+
+void t_on_branch( unsigned int go_to )
+{
+	struct cell *t = get_t();
+
+       /* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
+        * in MODE_REQUEST T will be set only if the transaction was already
+        * created; if not -> use the static variable */
+	if (!t || t==T_UNDEFINED ) {
+		goto_on_branch=go_to;
+	} else {
+		get_t()->on_branch = go_to;
+	}
+}
+
+unsigned int get_on_branch(void)
+{
+	return goto_on_branch;
+}
+
 
 char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	int branch, str *uri, unsigned int *len, struct socket_info *send_sock,
@@ -75,6 +98,7 @@ char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 {
 	char *buf, *shbuf;
 	str* msg_uri;
+	struct lump* add_rm_backup, *body_lumps_backup;
 
 	shbuf=0;
 
@@ -83,7 +107,7 @@ char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 			&i_req->add_to_branch_len ))
 	{
 		LOG(L_ERR, "ERROR: print_uac_request: branch computation failed\n");
-		goto error01;
+		goto error00;
 	}
 
 	/* ... update uri ... */
@@ -91,6 +115,18 @@ char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	if ((msg_uri->s!=uri->s) || (msg_uri->len!=uri->len)){
 		i_req->new_uri=*uri;
 		i_req->parsed_uri_ok=0;
+	}
+
+	add_rm_backup = i_req->add_rm;
+	body_lumps_backup = i_req->body_lumps;
+	i_req->add_rm = dup_lump_list(i_req->add_rm);
+	i_req->body_lumps = dup_lump_list(i_req->body_lumps);
+
+	if (branch_route) {
+		     /* run branch_route actions if provided */
+		if (run_actions(branch_rlist[branch_route], i_req) < 0) {
+			LOG(L_ERR, "ERROR: print_uac_request: Error in run_actions\n");
+               }
 	}
 
 	/* run the specific callbacks for this transaction */
@@ -109,11 +145,6 @@ char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 		ser_error=E_OUT_OF_MEM;
 		goto error01;
 	}
-	/*	clean Via's we created now -- they would accumulate for
-		other branches  and for  shmem i_req they would mix up
-	 	shmem with pkg_mem
-	*/
-	free_via_clen_lump(&i_req->add_rm);
 
 	shbuf=(char *)shm_malloc(*len);
 	if (!shbuf) {
@@ -126,6 +157,18 @@ char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 error02:
 	pkg_free( buf );
 error01:
+	     /* Delete the duplicated lump lists, this will also delete
+	      * all lumps created here, such as lumps created in per-branch
+	      * routing sections, Via, and Content-Length headers created in
+	      * build_req_buf_from_sip_req
+	      */
+	free_duped_lump_list(i_req->add_rm);
+	free_duped_lump_list(i_req->body_lumps);
+	     /* Restore the lists from backups */
+	i_req->add_rm = add_rm_backup;
+	i_req->body_lumps = body_lumps_backup;
+
+ error00:
 	return shbuf;
 }
 
@@ -451,6 +494,17 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	/* branch to begin with */
 	first_branch=t->nr_of_outgoings;
 
+	if (t->on_branch) {
+		/* tell add_uac that it should run branch route actions */
+		branch_route = t->on_branch;
+		/* reset the flag before running the actions (so that it
+		 * could be set again in branch_route if needed
+		 */
+		t_on_branch(0);
+	} else {
+		branch_route = 0;
+	}
+	
 	/* on first-time forwarding, use current uri, later only what
 	   is in additional branches (which may be continuously refilled
 	*/
