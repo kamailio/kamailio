@@ -63,9 +63,9 @@ void destroy(void);
 
 static cmd_export_t cmds[]={
 	{"xlog",  xlog,  2, xlog_fixup, REQUEST_ROUTE | FAILURE_ROUTE |
-		 ONREPLY_ROUTE},
+		 ONREPLY_ROUTE | BRANCH_ROUTE},
 	{"xdbg",  xdbg,  1, xdbg_fixup, REQUEST_ROUTE | FAILURE_ROUTE | 
-		ONREPLY_ROUTE},
+		ONREPLY_ROUTE | BRANCH_ROUTE},
 	{0,0,0,0,0}
 };
 
