@@ -140,8 +140,7 @@ static int mod_init(void)
 		goto error;
 	}
 
-	if (from_restore_mode==FROM_AUTO_RESTORE)
-	{
+	if (from_restore_mode!=FROM_NO_RESTORE) {
 		/* load the TM API */
 		if (load_tm_api(&uac_tmb)!=0) {
 			LOG(L_ERR, "ERROR:uac:mod_init: can't load TM API\n");
@@ -154,10 +153,13 @@ static int mod_init(void)
 			goto error;
 		}
 
-		/* get all requests doing loose route */
-		if (uac_rrb.register_rrcb( rr_checker, 0)!=0) {
-			LOG(L_ERR,"ERROR:uac:mod_init: failed to install RR callback\n");
-			goto error;
+		if (from_restore_mode==FROM_AUTO_RESTORE) {
+			/* get all requests doing loose route */
+			if (uac_rrb.register_rrcb( rr_checker, 0)!=0) {
+				LOG(L_ERR,"ERROR:uac:mod_init: failed to install "
+					"RR callback\n");
+				goto error;
+			}
 		}
 	}
 
