@@ -362,6 +362,7 @@ int restore_from( struct sip_msg *msg, int *is_from )
 	str new_uri;
 	char *p;
 	int i;
+	int flag;
 
 	/* we should process only sequntial request, but since we are looking
 	 * for Route param, the test is not really required -bogdan */
@@ -391,6 +392,7 @@ int restore_from( struct sip_msg *msg, int *is_from )
 			goto failed;
 		}
 		old_uri = ((struct to_body*)msg->to->parsed)->uri;
+		flag = FL_USE_UAC_TO;
 		if (is_from) *is_from = 0;
 	} else {
 		/* replace the FROM URI */
@@ -400,6 +402,7 @@ int restore_from( struct sip_msg *msg, int *is_from )
 			goto failed;
 		}
 		old_uri = ((struct to_body*)msg->from->parsed)->uri;
+		flag = FL_USE_UAC_FROM;
 		if (is_from) *is_from = 1;
 	}
 
@@ -441,6 +444,8 @@ int restore_from( struct sip_msg *msg, int *is_from )
 		LOG(L_ERR,"ERROR:uac:restore_from: insert new lump failed\n");
 		goto failed1;
 	}
+
+	msg->msg_flags |= flag;
 
 	return 0;
 failed1:
