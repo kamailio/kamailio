@@ -61,16 +61,39 @@
 		}while(0);
 
 #define LC(_cp) ((*(_cp))|0x20)
-static int extract_from( char *buf, int len, str *from)
+#define SET_FOUND(_new_state) \
+	do{\
+		fill->s=b;fill->len=p-b;\
+		DBG("DEBUG:tm:extract_hdrs: hdr %d extracted as <%.*s>\n",\
+			flag,fill->len,fill->s);\
+		flags&=~(flag);\
+		if (flags) {state=_new_state;}\
+		else {goto done;}\
+	}while(0)
+#define GET_CSEQ() \
+	do{\
+		for(p++;p<end&&isspace((int)*p);p++);\
+		for(fill->s=b;p<end&&isdigit((int)*p);p++);\
+		fill->len=p-fill->s;\
+		if ( (flags&=~(flag))==0) goto done;\
+		state=1;\
+	}while(0)
+static int extract_hdrs( char *buf, int len, str *from, str *to, str *cseq)
 {
 	char *end, *p;
 	char *b;
+	str  *fill;
 	int state;
+	int flags;
+	int flag;
 
 	p = buf;
 	end = buf+len;
 	state = 1;
 	b = 0;
+	flags = ((from!=0)?0x1:0) | ((to!=0)?0x2:0) | ((cseq!=0)?0x4:0);
+	flag = 0;
+	fill = 0;
 
 	while(p<end) {
 		switch (*p) {
@@ -91,36 +114,66 @@ static int extract_from( char *buf, int len, str *from)
 				break;
 			case ':':
 				switch (state) {
-					case 4: state=5;break;
-					case 6: goto found;
+					case 4:case 5: state=5;if(flag==0x04)GET_CSEQ();break;
+					case 6: SET_FOUND(1);break;/*found*/
 					case 2: state=1;break;
 				}
 				break;
 			case 'f':
 			case 'F':
 				if (state==5) break;
-				if (state==6) goto found;
+				if (state==6) SET_FOUND(2);/*found*/;
 				if (state!=2) {state = 1;break;}
 				/* hdr starting with 'f' */
+				if (from==0) break;
 				b = p;
 				if (p+3<end && LC(p+1)=='r' && LC(p+2)=='o' && LC(p+3)=='m')
 					p+=3;
 				state = 4; /* "f" or "from" found */
+				fill = from;
+				flag = 0x1;
+				break;
+			case 't':
+			case 'T':
+				if (state==5) break;
+				if (state==6) SET_FOUND(2);/*found*/;
+				if (state!=2) {state = 1;break;}
+				/* hdr starting with 't' */
+				if (to==0) break;
+				b = p;
+				if (p+1<end && LC(p+1)=='o')
+					p+=1;
+				state = 4; /* "t" or "to" found */
+				fill = to;
+				flag = 0x2;
+				break;
+			case 'c':
+			case 'C':
+				if (state==5) break;
+				if (state==6) SET_FOUND(2);/*found*/;
+				if (state!=2) {state = 1;break;}
+				/* hdr starting with 'c' */
+				if (cseq==0) break;
+				if (p+3<end && LC(p+1)=='s' && LC(p+2)=='e' && LC(p+3)=='q') {
+					b = p;
+					p+=3;
+					state = 4; /* "cseq" found */
+					fill = cseq;
+					flag = 0x4;
+				}
 				break;
 			default:
 				switch (state) {
 					case 2:case 4: state=1; break;
-					case 6: ;goto found;
+					case 6: SET_FOUND(1);break;/*found*/;
 				}
 		}
 		p++;
 	}
 
-	LOG(L_CRIT,"BUG:tm:extract_from: no from found in outgoing buffer\n");
+	LOG(L_CRIT,"BUG:tm:extract_from: no hdrs found in outgoing buffer\n");
 	return -1;
-found:
-	from->s = b;
-	from->len = p-b;
+done:
 	return 0;
 }
 
@@ -129,34 +182,47 @@ found:
    customers of this function are local ACK and local CANCEL
  */
 char *build_local(struct cell *Trans,unsigned int branch,
-	unsigned int *len, char *method, int method_len, str *to)
+	unsigned int *len, char *method, int method_len, str *uas_to)
 {
 	char                *cancel_buf, *p, *via;
 	unsigned int         via_len;
 	struct hdr_field    *hdr;
+	struct sip_msg      *req;
 	char branch_buf[MAX_BRANCH_PARAM_LEN];
-	int branch_len;
 	str branch_str;
 	struct hostport hp;
 	str from;
+	str to;
+	str cseq_n;
 
-	if (!Trans->uas.request || !(Trans->uas.request->msg_flags&FL_USE_UAC_FROM)
-	|| extract_from( Trans->uac[branch].request.buffer,
-	Trans->uac[branch].request.buffer_len, &from)!=0) {
-		from = Trans->from;
+	req = Trans->uas.request;
+	from = Trans->from;
+	cseq_n = Trans->cseq_n;
+	to = *uas_to;
+
+	if (req || req->msg_flags&(FL_USE_UAC_FROM|FL_USE_UAC_TO|FL_USE_UAC_CSEQ)) {
+		if ( extract_hdrs( Trans->uac[branch].request.buffer,
+		Trans->uac[branch].request.buffer_len,
+		(req->msg_flags&FL_USE_UAC_FROM)?&from:0 ,
+		(req->msg_flags&FL_USE_UAC_TO)?&to:0 ,
+		(req->msg_flags&FL_USE_UAC_CSEQ)?&cseq_n:0 )!=0 ) {
+			LOG(L_ERR, "ERROR:tm:build_local: "
+				"failed to extract UAC hdrs\n");
+			goto error;
+		}
 	}
+	DBG("DEBUG:tm:build_local: using FROM=<%.*s>, TO=<%.*s>, CSEQ_N=<%.*s>\n",
+		from.len,from.s , to.len,to.s , cseq_n.len,cseq_n.s);
 
 	/* method, separators, version  */
 	*len=SIP_VERSION_LEN + method_len + 2 /* spaces */ + CRLF_LEN;
 	*len+=Trans->uac[branch].uri.len;
 
 	/*via*/
-	if (!t_calc_branch(Trans,  branch, 
-		branch_buf, &branch_len ))
-		goto error;
 	branch_str.s=branch_buf;
-	branch_str.len=branch_len;
-	set_hostport(&hp, (is_local(Trans))?0:(Trans->uas.request));
+	if (!t_calc_branch(Trans,  branch, branch_str.s, &branch_str.len ))
+		goto error;
+	set_hostport(&hp, (is_local(Trans))?0:req);
 	via=via_builder(&via_len, Trans->uac[branch].request.dst.send_sock,
 		&branch_str, 0, Trans->uac[branch].request.dst.proto, &hp );
 	if (!via)
@@ -167,12 +233,11 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	}
 	*len+= via_len;
 	/*headers*/
-	*len+=from.len+Trans->callid.len+to->len+
-		+Trans->cseq_n.len+1+method_len+CRLF_LEN; 
+	*len+=from.len+Trans->callid.len+to.len+cseq_n.len+1+method_len+CRLF_LEN;
 
 	/* copy'n'paste Route headers */
 	if (!is_local(Trans)) {
-		for ( hdr=Trans->uas.request->headers ; hdr ; hdr=hdr->next )
+		for ( hdr=req->headers ; hdr ; hdr=hdr->next )
 			 if (hdr->type==HDR_ROUTE_T)
 				*len+=hdr->len;
 	}
@@ -203,15 +268,15 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	/*other headers*/
 	append_string( p, from.s, from.len );
 	append_string( p, Trans->callid.s, Trans->callid.len );
-	append_string( p, to->s, to->len );
+	append_string( p, to.s, to.len );
 
-	append_string( p, Trans->cseq_n.s, Trans->cseq_n.len );
+	append_string( p, cseq_n.s, cseq_n.len );
 	*(p++) = ' ';
 	append_string( p, method, method_len );
 	append_string( p, CRLF, CRLF_LEN );
 
 	if (!is_local(Trans))  {
-		for ( hdr=Trans->uas.request->headers ; hdr ; hdr=hdr->next )
+		for ( hdr=req->headers ; hdr ; hdr=hdr->next )
 			if(hdr->type==HDR_ROUTE_T) {
 				append_string(p, hdr->name.s, hdr->len );
 			}
@@ -240,7 +305,7 @@ struct rte {
 	struct rte* next;
 };
 
-  	 
+
 static inline void free_rte_list(struct rte* list)
 {
 	struct rte* ptr;
