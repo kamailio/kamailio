@@ -300,6 +300,9 @@ INSERT INTO version VALUES ( 'admin_privileges', '1');
 INSERT INTO version VALUES ( 'calls_forwarding', '1');
 INSERT INTO version VALUES ( 'speed_dial', '1');
 INSERT INTO version VALUES ( 'dbaliases', '1');
+INSERT INTO version VALUES ( 'gw', '3');
+INSERT INTO version VALUES ( 'gw_grp', '1');
+INSERT INTO version VALUES ( 'lcr', '1');
 
 #
 # Table structure for table 'acc' -- accounted calls
@@ -665,6 +668,47 @@ CREATE TABLE speed_dial (
   PRIMARY KEY  (username,domain,sd_domain,sd_username)
 ) $TABLE_TYPE;
 
+
+#
+# Table structure for table 'gw'
+#
+
+CREATE TABLE gw (
+  gw_name VARCHAR(128) NOT NULL,
+  grp_id INT UNSIGNED NOT NULL,
+  ip_addr INT UNSIGNED NOT NULL,
+  port SMALLINT UNSIGNED,
+  uri_scheme TINYINT UNSIGNED,
+  transport TINYINT UNSIGNED,
+  prefix varchar(16) default NULL,
+  PRIMARY KEY (gw_name),
+  KEY (grp_id)
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'gw_grp'
+#
+
+CREATE TABLE gw_grp (
+  grp_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  grp_name VARCHAR(64) NOT NULL
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'lcr'
+#
+
+CREATE TABLE lcr (
+  prefix varchar(16) NOT NULL,
+  from_uri varchar(128) NOT NULL DEFAULT '%',
+  grp_id INT UNSIGNED NOT NULL,
+  priority TINYINT UNSIGNED NOT NULL,
+  KEY (prefix),
+  KEY (from_uri),
+  KEY (grp_id)
+) $TABLE_TYPE;
 
 
 # add an admin user "admin" with password==$DEFAULT_PW,

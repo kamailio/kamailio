@@ -320,7 +320,7 @@ INSERT INTO version VALUES ( 'dbaliases', '1');
 INSERT INTO version VALUES ( 'domain', '1');
 INSERT INTO version VALUES ( 'event', '1');
 INSERT INTO version VALUES ( 'grp', '2');
-INSERT INTO version VALUES ( 'gw', '2');
+INSERT INTO version VALUES ( 'gw', '3');
 INSERT INTO version VALUES ( 'gw_grp', '1');
 INSERT INTO version VALUES ( 'lcr', '1');
 INSERT INTO version VALUES ( 'location', '1001');
@@ -466,11 +466,12 @@ CREATE TABLE grp (
 
 CREATE TABLE gw (
   gw_name VARCHAR(128) NOT NULL,
+  grp_id INT CHECK (grp_id > 0) NOT NULL,
   ip_addr BIGINT CHECK (ip_addr > 0 AND ip_addr < 4294967296) NOT NULL,
   port INT CHECK (port > 0 AND port < 65536),
   uri_scheme SMALLINT CHECK (uri_scheme >= 0 and uri_scheme < 256),
   transport SMALLINT CHECK (transport >= 0 and transport < 256),
-  grp_id INT CHECK (grp_id > 0) NOT NULL,
+  prefix varchar(16) default NULL,
   PRIMARY KEY (gw_name)
 );
 
