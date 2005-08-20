@@ -259,7 +259,7 @@ INSERT INTO version VALUES ( 'usr_preferences_types', '1');
 INSERT INTO version VALUES ( 'admin_privileges', '1');
 INSERT INTO version VALUES ( 'calls_forwarding', '1');
 INSERT INTO version VALUES ( 'speed_dial', '2');
-INSERT INTO version VALUES ( 'gw', '2');
+INSERT INTO version VALUES ( 'gw', '3');
 INSERT INTO version VALUES ( 'gw_grp', '1');
 INSERT INTO version VALUES ( 'lcr', '1');
 
@@ -696,11 +696,12 @@ CREATE TABLE speed_dial (
 
 CREATE TABLE gw (
   gw_name VARCHAR(128) NOT NULL,
+  grp_id INT UNSIGNED NOT NULL,
   ip_addr INT UNSIGNED NOT NULL,
   port SMALLINT UNSIGNED,
   uri_scheme TINYINT UNSIGNED,
   transport TINYINT UNSIGNED,
-  grp_id INT UNSIGNED NOT NULL,
+  prefix VARCHAR(16) default NULL,
   PRIMARY KEY (gw_name),
   KEY (grp_id)
 ) $TABLE_TYPE;
