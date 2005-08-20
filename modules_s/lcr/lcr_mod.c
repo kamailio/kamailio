@@ -64,7 +64,7 @@ MODULE_VERSION
  * increment this value if you change the table in
  * an backwards incompatible way
  */
-#define GW_TABLE_VERSION 2
+#define GW_TABLE_VERSION 3
 #define LCR_TABLE_VERSION 1
 
 /* usr_avp flag for sequential forking */
