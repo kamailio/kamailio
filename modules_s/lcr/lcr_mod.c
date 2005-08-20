@@ -31,6 +31,7 @@
  *  2005-02-25: Added support for int AVP names, combined addr and port
  *              AVPs (jh)
  *  2005-07-23: Added support for gw URI scheme and transport (jh)
+ *  2005-08-20: Added support for gw prefixes (jh)
  */
 
 #include <stdio.h>
@@ -110,6 +111,7 @@ int reload_gws ( void );
 
 #define MAX_QUERY_SIZE 512
 #define MAX_NO_OF_GWS 32
+#define MAX_PREFIX_LEN 16
 
 /* Default avp names */
 #define DEF_GW_URI_AVP "1400"
@@ -130,6 +132,8 @@ struct gw_info {
     unsigned int port;
     uri_type scheme;
     uri_transport transport;
+    unsigned int prefix_len;
+    char prefix[16];
 };
 
 /*
@@ -475,19 +479,20 @@ static void destroy(void)
 int reload_gws ( void )
 {
     int q_len, i;
-    unsigned int ip_addr, port;
+    unsigned int ip_addr, port, prefix_len;
     uri_type scheme;
     uri_transport transport;
     db_con_t* dbh;
-    char query[MAX_QUERY_SIZE];
+    char query[MAX_QUERY_SIZE], *prefix;
     db_res_t* res;
     db_row_t* row;
 
-    q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s, %.*s, %.*s, %.*s FROM %.*s",
+    q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s, %.*s, %.*s, %.*s, %.*s FROM %.*s",
 		     ip_addr_col.len, ip_addr_col.s,
 		     port_col.len, port_col.s,
 		     uri_scheme_col.len, uri_scheme_col.s,
 		     transport_col.len, transport_col.s,
+		     prefix_col.len, prefix_col.s,
 		     gw_table.len, gw_table.s);
 
     if (q_len >= MAX_QUERY_SIZE) {
@@ -561,16 +566,35 @@ int reload_gws ( void )
 		return -1;
 	    }
 	}
+	if (VAL_NULL(ROW_VALUES(row) + 4) == 1) {
+	    prefix_len = 0;
+	    prefix = (char *)0;
+	} else {
+	    prefix = (char *)VAL_STRING(ROW_VALUES(row) + 4);
+	    prefix_len = strlen(prefix);
+	    if (prefix_len > MAX_PREFIX_LEN) {
+		LOG(L_ERR, "reload_gws(): too long prefix\n");
+		lcr_dbf.free_result(dbh, res);
+		lcr_dbf.close(dbh);
+		return -1;
+	    }
+	}
 	if (*gws == gws_1) {
 		gws_2[i].ip_addr = ip_addr;
 		gws_2[i].port = port;
 		gws_2[i].scheme = scheme;
 		gws_2[i].transport = transport;
+		gws_2[i].prefix_len = prefix_len;
+		if (prefix_len) 
+		    memcpy(&(gws_2[i].prefix[0]), prefix, prefix_len);
 	} else {
 		gws_1[i].ip_addr = ip_addr;
 		gws_1[i].port = port;
 		gws_1[i].scheme = scheme;
 		gws_1[i].transport = transport;
+		gws_1[i].prefix_len = prefix_len;
+		if (prefix_len) 
+		    memcpy(&(gws_1[i].prefix[0]), prefix, prefix_len);
 	}
     }
     
@@ -592,7 +616,7 @@ int reload_gws ( void )
 /* Print gateways stored in current gw table */
 void print_gws (FILE *reply_file)
 {
-	int i;
+	unsigned int i, prefix_len;
 	uri_transport transport;
 
 	for (i = 0; i < MAX_NO_OF_GWS; i++) {
@@ -620,11 +644,18 @@ void print_gws (FILE *reply_file)
 		}
 		transport = (*gws)[i].transport;
 		if (transport == PROTO_UDP) {
-		    fprintf(reply_file, ":udp\n");
+		    fprintf(reply_file, ":udp");
 		} else  if (transport == PROTO_TCP) {
-		    fprintf(reply_file, ":tcp\n");
+		    fprintf(reply_file, ":tcp");
 		} else  if (transport == PROTO_TLS) {
-		    fprintf(reply_file, ":tls\n");
+		    fprintf(reply_file, ":tls");
+		} else {
+		    fprintf(reply_file, ":");
+		}
+		prefix_len = (*gws)[i].prefix_len;
+		if (prefix_len) {
+		    fprintf(reply_file, "%.*s\n",
+			    prefix_len, (*gws)[i].prefix);
 		} else {
 		    fprintf(reply_file, "\n");
 		}
@@ -642,13 +673,13 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
     str ruri_user, from_uri, value;
     char query[MAX_QUERY_SIZE];
     char ruri[MAX_URI_SIZE];
-    int q_len, i, j;
+    unsigned int q_len, i, j, prefix_len;
     unsigned int addr, port;
     uri_type scheme;
     uri_transport transport;
     struct ip_addr address;
     str addr_str, port_str;
-    char *at;
+    char *at, *prefix;
     int_str val;
 
     /* Find Request-URI user */
@@ -681,11 +712,12 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 	from_uri = get_from(_m)->uri;
     }
     
-    q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s FROM %.*s, %.*s WHERE '%.*s' LIKE %.*s.%.*s AND '%.*s' LIKE CONCAT(%.*s.%.*s, '%%') AND %.*s.%.*s = %.*s.%.*s ORDER BY CHAR_LENGTH(%.*s.%.*s), %.*s.%.*s DESC, RAND()",
+    q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s FROM %.*s, %.*s WHERE '%.*s' LIKE %.*s.%.*s AND '%.*s' LIKE CONCAT(%.*s.%.*s, '%%') AND %.*s.%.*s = %.*s.%.*s ORDER BY CHAR_LENGTH(%.*s.%.*s), %.*s.%.*s DESC, RAND()",
 		     gw_table.len, gw_table.s, ip_addr_col.len, ip_addr_col.s,
 		     gw_table.len, gw_table.s, port_col.len, port_col.s,
 		     gw_table.len, gw_table.s, uri_scheme_col.len, uri_scheme_col.s,
 		     gw_table.len, gw_table.s, transport_col.len, transport_col.s,
+		     gw_table.len, gw_table.s, prefix_col.len, prefix_col.s,
 		     gw_table.len, gw_table.s, lcr_table.len, lcr_table.s,
 		     from_uri.len, from_uri.s,
 		     lcr_table.len, lcr_table.s, from_uri_col.len, from_uri_col.s,
@@ -730,7 +762,14 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 	} else {
 	    transport = (uri_transport)VAL_INT(ROW_VALUES(row) + 3);
 	}
-	if (5 + ruri_user.len + 1 + 15 + 1 + 5 + 1 + 14 > MAX_URI_SIZE) {
+	if (VAL_NULL(ROW_VALUES(row) + 4) == 1) {
+	    prefix_len = 0;
+	    prefix = (char *)0;
+	} else {
+	    prefix = (char *)VAL_STRING(ROW_VALUES(row) + 4);
+	    prefix_len = strlen(prefix);
+	}
+	if (5 + prefix_len + ruri_user.len + 1 + 15 + 1 + 5 + 1 + 14 > MAX_URI_SIZE) {
 	    LOG(L_ERR, "load_gws(): Request URI would be too long\n");
 	    goto skip;
 	}
@@ -742,6 +781,9 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 	} else {
 	    LOG(L_ERR, "load_gws(): Unknown or unsupported URI scheme: %u\n", (unsigned int)scheme);
 	    goto skip;
+	}
+	if (prefix_len) {
+	    memcpy(at, prefix, prefix_len); at = at + prefix_len;
 	}
 	memcpy(at, ruri_user.s, ruri_user.len); at = at + ruri_user.len;
 	*at = '@'; at = at + 1;

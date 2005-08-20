@@ -46,19 +46,23 @@ Chapter 1. User's Guide
    Each gateway belongs to a gateway group either alone or among other
    gateways.  All gateways in a group share the same priority.
 
-   Gateway selection operates on two database tables: gw and lcr.  Table
-   gw contains gw's name, IP address, port, URI scheme, transport URI
-   parameter, and group id.  IP address, URI scheme, and transport are
-   coded as unsigned integers.  Valid URI scheme values are NULL = sip,
-   1 = sip and 2 = sips.  Currently valid transport values are NULL =
-   none, 1 = udp, 2 = tcp, and 3 = tls.
+   Gateway and routing information is kept in two tables:  gw and lcr.
+
+   When a gateway is selected, Request-URI is rewritten with information
+   from gw table: URI scheme, prefix, IP address, port, and transport
+   protocol.  Valid URI scheme values are NULL = sip, 1 = sip and 2 =
+   sips.  Prefix is appended in front of Request-URI user part.
+   Currently valid transport protocol values are NULL = none, 1 = udp, 2
+   = tcp, and 3 = tls.
 
    Table lcr contains prefix of user part of Request-URI, From URI,
    gateway group id, and priority.  From URI can contain special
    characters % and _ matching any number of any characters and any one
-   character, respectively.  In addition to gw and lcr tables there is
-   third table gw_grp that is used for administrative purposes only to
-   associate names with gateway group ids.
+   character, respectively.  
+
+   In addition to gw and lcr tables there is third table gw_grp that is
+   used for administrative purposes only to associate names with gateway
+   group ids.
    _________________________________________________________
 
 1.2. Dependencies
