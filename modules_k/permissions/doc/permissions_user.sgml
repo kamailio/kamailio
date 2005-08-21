@@ -101,6 +101,97 @@
 		The algorithm of matching is same as described in <xref linkend="sec-call-routing">.
 		</para>
 	</section>
+	<section id="sec-referral-permissions">
+		<title>Referral Permissions</title>
+		<para>
+                The module can be used to determine if referral is
+                allowed to the destination specified by Refer-To header
+                of REFER request. Permission rules are stored in
+                plaintext configuration files similar to
+                <filename moreinfo="none">hosts.allow</filename> and
+                <filename moreinfo="none">hosts.deny</filename> used by tcpd.
+		</para>
+		<para>
+                When <function moreinfo="none">allow_refer_to</function>
+                function is called, it tries to find a rule that matches
+                selected fields of the message.
+                The matching algorithm is as follows, first match wins:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			Create a pair &lt;From URI, Refer-To URI&gt;.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			Referral will be allowed when the pair matches
+                        an entry in the allow file.
+		</listitem>
+		<listitem>
+			<para>
+			Otherwise referral will be denied when the pair
+                        matches an entry in the	deny file.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			Otherwise, referral will be allowed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		A non-existing permission control file is treated as if it were an empty file. Thus,
+		permission control can be turned off by providing no permission control files.
+		</para>
+		<para>
+		From URI and Refer-To URI are always compared with regular expressions! For
+		the syntax see the sample file: <filename moreinfo="none">config/permissions.allow</filename>.
+		</para>
+	</section>
+	<section id="sec-trusted-requests">
+		<title>Trusted Requests</title>
+		<para>
+                The module can be used to determine if an incoming
+                request can be trusted without authentication.  
+		</para>
+		<para>
+                When <function moreinfo="none">allow_trusted</function>
+                function is called, it tries to find a rule that matches
+                the request.  Rules contain the following fields:
+                &lt;source address, transport protocol, regular
+                expression&gt;.
+		<para>
+                A requests is accepted if there exists a rule, where 
+		</para>
+      		<itemizedlist>
+		<listitem>
+			<para>
+			source address is equal to source address of request,
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			transport protocol is either "any" or equal to
+			transport protocol of request, and
+		</listitem>
+		<listitem>
+			<para>
+                        regular expression matches From URI of request.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+                Otherwise the request is rejected.
+                </para>
+		<para>
+                Rules are stored in a database table specified by module
+                parameters.  There also exists a module parameter that
+                determines if rules are cached into memory for faster
+                matching or if database is consulted for each invocation
+                of allow_trusted function call.
+		</para>
+	</section>
 	</section>
 	<section>
 	<title>Dependencies</title>
@@ -248,6 +339,132 @@ modparam("permissions", "allow_suffix", ".allow")
 		<programlisting format="linespecific">
 ...
 modparam("permissions", "deny_suffix", ".deny")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_url</varname> (string)</title>
+		<para>
+		This is URL of the database to be used to store rules
+		used by <function
+		moreinfo="none">allow_trusted</function> function.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>mysql://serro:47serro11@localhost/ser</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "db_url", "mysql://ser:pass@db_host/ser")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_mode</varname> (integer)</title>
+		<para>
+		Database mode. 0 means non-caching, 1 means caching.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (non-caching).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "db_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>trusted_table</varname> (string)</title>
+		<para>
+                Name of database table containing matching rules used by
+		<function moreinfo="none">allow_register</function> function.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>trusted</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>trusted_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "trusted_table", "pbx")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>source_col</varname> (string)</title>
+		<para>
+                Name of trusted table column containing source IP
+		address that is matched against source IP address of
+		received request.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>src_ip</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>source_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "source_col", "source_ip_address")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>proto_col</varname> (string)</title>
+		<para>
+                Name of trusted table column containing transport
+                protocol that is matched against transport protocol of
+                received request.  Possible values that can be stored in
+                proto_col are
+                <quote>any</quote>, <quote>udp</quote>,
+                <quote>tcp</quote>, <quote>tls</quote>, and
+                <quote>sctp</quote>.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>proto</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>proto_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "proto_col", "transport")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>from_col</varname> (string)</title>
+		<para>
+                Name of trusted table column containing regular
+                expression that is matched against From URI.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>from_pattern</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>from_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "from_col", "regexp")
 ...
 </programlisting>
 		</example>
@@ -429,6 +646,101 @@ if (method=="REGISTER") {
 	} else {
 		sl_send_reply("403", "Forbidden");
 	};
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">allow_refer_to(basename)</function>
+		</title>
+		<para>
+		Returns true if the pair constructed as described in <xref
+		linkend="sec-referral-permissions"> have appropriate permissions according to the
+		configuration files specified by the parameter.
+		</para>
+		<para>Meaning of the parameter is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>basename</emphasis> - Basename from which allow and deny
+			filenames will be created by appending contents of
+			<varname>allow_suffix</varname> and <varname>deny_suffix</varname>
+			parameters.
+			</para>
+			<para>
+			If the parameter doesn't contain full pathname then the function expects the
+			file to be located in the same directory as the main configuration file of
+			the server.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>allow_refer_to(basename)</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (allow_refer_to("basename")) {
+	t_relay();
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">allow_refer_to(allow_file, deny_file)</function>
+		</title>
+		<para>
+		Returns true if the pair constructed as described in <xref
+		linkend="sec-referral-permissions"> have appropriate permissions according to the
+		configuration files specified by parameters.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>allow_file</emphasis> - File containing allow rules.</para>
+			<para>
+			If the parameter doesn't contain full pathname then the function expects the
+			file to be located in the same directory as the main configuration file of
+			the server.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>deny_file</emphasis> - File containing deny rules.</para>
+			<para>
+			If the parameter doesn't contain full pathname then the function expects the
+			file to be located in the same directory as the main configuration file of
+			the server.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>allow_refer_to(allow_file, deny_file)</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (allow_refer_to("rules.allow", "rules.deny")) {
+	t_relay();
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">allow_trusted()</function>
+		</title>
+		<para>
+		Checks based on request's source address, transport
+                protocol, and From URI if request can be trusted without
+                authentication.  Returns 1 if a match is found
+                as described in <xref linkend="sec-trusted-requests">
+                and -1 otherwise.
+		<example>
+		<title><function>allow_trusted()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (allow_trusted()) {
+	t_relay();
 };
 ...
 </programlisting>

@@ -19,6 +19,8 @@ Bogdan-Andrei Iancu
 
               1.1.1. Call Routing
               1.1.2. Registration Permissions
+              1.1.3. Referral Permissions
+              1.1.4. Trusted Requests
 
         1.2. Dependencies
 
@@ -32,6 +34,12 @@ Bogdan-Andrei Iancu
               1.3.3. check_all_branches (integer)
               1.3.4. allow_suffix (string)
               1.3.5. deny_suffix (string)
+              1.3.6. db_url (string)
+              1.3.7. db_mode (integer)
+              1.3.8. trusted_table (string)
+              1.3.9. source_col (string)
+              1.3.10. proto_col (string)
+              1.3.11. from_col (string)
 
         1.4. Exported Functions
 
@@ -40,6 +48,9 @@ Bogdan-Andrei Iancu
               1.4.3. allow_routing(allow_file, deny_file)
               1.4.4. allow_register(basename)
               1.4.5. allow_register(allow_file, deny_file)
+              1.4.6. allow_refer_to(basename)
+              1.4.7. allow_refer_to(allow_file, deny_file)
+              1.4.8. allow_trusted()
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -50,11 +61,20 @@ Bogdan-Andrei Iancu
    1-3. Set check_all_branches parameter
    1-4. Set allow_suffix parameter
    1-5. Set deny_suffix parameter
-   1-6. allow_routing usage
-   1-7. allow_routing(basename) usage
-   1-8. allow_routing(allow_file, deny_file) usage
-   1-9. allow_register(basename) usage
-   1-10. allow_register(allow_file, deny_file) usage
+   1-6. Set db_url parameter
+   1-7. Set db_mode parameter
+   1-8. Set trusted_table parameter
+   1-9. Set source_col parameter
+   1-10. Set proto_col parameter
+   1-11. Set from_col parameter
+   1-12. allow_routing usage
+   1-13. allow_routing(basename) usage
+   1-14. allow_routing(allow_file, deny_file) usage
+   1-15. allow_register(basename) usage
+   1-16. allow_register(allow_file, deny_file) usage
+   1-17. allow_refer_to(basename) usage
+   1-18. allow_refer_to(allow_file, deny_file) usage
+   1-19. allow_trusted() usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -126,6 +146,58 @@ Chapter 1. User's Guide
 
    The algorithm of matching is same as described in Section
    1.1.1.
+     _________________________________________________________
+
+1.1.3. Referral Permissions
+
+   The module can be used to determine if referral is allowed to
+   the destination specified by Refer-To header of REFER request.
+   Permission rules are stored in plaintext configuration files
+   similar to hosts.allow and hosts.deny used by tcpd.
+
+   When allow_refer_to function is called, it tries to find a
+   rule that matches selected fields of the message. The matching
+   algorithm is as follows, first match wins:
+
+     * Create a pair <From URI, Refer-To URI>.
+     * Referral will be allowed when the pair matches an entry in
+       the allow file.
+     * Otherwise referral will be denied when the pair matches an
+       entry in the deny file.
+     * Otherwise, referral will be allowed.
+
+   A non-existing permission control file is treated as if it
+   were an empty file. Thus, permission control can be turned off
+   by providing no permission control files.
+
+   From URI and Refer-To URI are always compared with regular
+   expressions! For the syntax see the sample file:
+   config/permissions.allow.
+     _________________________________________________________
+
+1.1.4. Trusted Requests
+
+   The module can be used to determine if an incoming request can
+   be trusted without authentication.
+
+   When allow_trusted function is called, it tries to find a rule
+   that matches the request. Rules contain the following fields:
+   <source address, transport protocol, regular expression>.
+
+   A requests is accepted if there exists a rule, where
+
+     * source address is equal to source address of request,
+     * transport protocol is either "any" or equal to transport
+       protocol of request, and
+     * regular expression matches From URI of request.
+
+   Otherwise the request is rejected.
+
+   Rules are stored in a database table specified by module
+   parameters. There also exists a module parameter that
+   determines if rules are cached into memory for faster matching
+   or if database is consulted for each invocation of
+   allow_trusted function call.
      _________________________________________________________
 
 1.2. Dependencies
@@ -231,6 +303,85 @@ modparam("permissions", "deny_suffix", ".deny")
 ...
      _________________________________________________________
 
+1.3.6. db_url (string)
+
+   This is URL of the database to be used to store rules used by
+   allow_trusted function.
+
+   Default value is "mysql://serro:47serro11@localhost/ser". 
+
+   Example 1-6. Set db_url parameter
+...
+modparam("permissions", "db_url", "mysql://ser:pass@db_host/ser")
+...
+     _________________________________________________________
+
+1.3.7. db_mode (integer)
+
+   Database mode. 0 means non-caching, 1 means caching.
+
+   Default value is 0 (non-caching). 
+
+   Example 1-7. Set db_mode parameter
+...
+modparam("permissions", "db_mode", 1)
+...
+     _________________________________________________________
+
+1.3.8. trusted_table (string)
+
+   Name of database table containing matching rules used by
+   allow_register function.
+
+   Default value is "trusted". 
+
+   Example 1-8. Set trusted_table parameter
+...
+modparam("permissions", "trusted_table", "pbx")
+...
+     _________________________________________________________
+
+1.3.9. source_col (string)
+
+   Name of trusted table column containing source IP address that
+   is matched against source IP address of received request.
+
+   Default value is "src_ip". 
+
+   Example 1-9. Set source_col parameter
+...
+modparam("permissions", "source_col", "source_ip_address")
+...
+     _________________________________________________________
+
+1.3.10. proto_col (string)
+
+   Name of trusted table column containing transport protocol
+   that is matched against transport protocol of received
+   request. Possible values that can be stored in proto_col are
+   "any", "udp", "tcp", "tls", and "sctp".
+
+   Default value is "proto". 
+
+   Example 1-10. Set proto_col parameter
+...
+modparam("permissions", "proto_col", "transport")
+...
+     _________________________________________________________
+
+1.3.11. from_col (string)
+
+   Name of trusted table column containing regular expression
+   that is matched against From URI.
+
+   Default value is "from_pattern". 
+
+   Example 1-11. Set from_col parameter
+...
+modparam("permissions", "from_col", "regexp")
+...
+     _________________________________________________________
+
 1.4. Exported Functions
 
 1.4.1. allow_routing()
@@ -240,7 +391,7 @@ modparam("permissions", "deny_suffix", ".deny")
    configuration files. This function uses default configuration
    files specified in default_allow_file and default_deny_file.
 
-   Example 1-6. allow_routing usage
+   Example 1-12. allow_routing usage
 ...
 if (allow_routing()) {
         t_relay();
@@ -263,7 +414,7 @@ if (allow_routing()) {
        function expects the file to be located in the same
        directory as the main configuration file of the server.
 
-   Example 1-7. allow_routing(basename) usage
+   Example 1-13. allow_routing(basename) usage
 ...
 if (allow_routing("basename")) {
         t_relay();
@@ -288,7 +439,7 @@ if (allow_routing("basename")) {
        function expects the file to be located in the same
        directory as the main configuration file of the server.
 
-   Example 1-8. allow_routing(allow_file, deny_file) usage
+   Example 1-14. allow_routing(allow_file, deny_file) usage
 ...
 if (allow_routing("rules.allow", "rules.deny")) {
         t_relay();
@@ -311,7 +462,7 @@ if (allow_routing("rules.allow", "rules.deny")) {
        function expects the file to be located in the same
        directory as the main configuration file of the server.
 
-   Example 1-9. allow_register(basename) usage
+   Example 1-15. allow_register(basename) usage
 ...
 if (method=="REGISTER") {
         if (allow_register("register")) {
@@ -341,7 +492,7 @@ if (method=="REGISTER") {
        function expects the file to be located in the same
        directory as the main configuration file of the server.
 
-   Example 1-10. allow_register(allow_file, deny_file) usage
+   Example 1-16. allow_register(allow_file, deny_file) usage
 ...
 if (method=="REGISTER") {
         if (allow_register("register.allow", "register.deny")) {
@@ -350,6 +501,69 @@ if (method=="REGISTER") {
         } else {
                 sl_send_reply("403", "Forbidden");
         };
+};
+...
+     _________________________________________________________
+
+1.4.6. allow_refer_to(basename)
+
+   Returns true if the pair constructed as described in Section
+   1.1.3 have appropriate permissions according to the
+   configuration files specified by the parameter.
+
+   Meaning of the parameter is as follows:
+
+     * basename - Basename from which allow and deny filenames
+       will be created by appending contents of allow_suffix and
+       deny_suffix parameters.
+       If the parameter doesn't contain full pathname then the
+       function expects the file to be located in the same
+       directory as the main configuration file of the server.
+
+   Example 1-17. allow_refer_to(basename) usage
+...
+if (allow_refer_to("basename")) {
+        t_relay();
+};
+...
+     _________________________________________________________
+
+1.4.7. allow_refer_to(allow_file, deny_file)
+
+   Returns true if the pair constructed as described in Section
+   1.1.3 have appropriate permissions according to the
+   configuration files specified by parameters.
+
+   Meaning of the parameters is as follows:
+
+     * allow_file - File containing allow rules.
+       If the parameter doesn't contain full pathname then the
+       function expects the file to be located in the same
+       directory as the main configuration file of the server.
+     * deny_file - File containing deny rules.
+       If the parameter doesn't contain full pathname then the
+       function expects the file to be located in the same
+       directory as the main configuration file of the server.
+
+   Example 1-18. allow_refer_to(allow_file, deny_file) usage
+...
+if (allow_refer_to("rules.allow", "rules.deny")) {
+        t_relay();
+};
+...
+     _________________________________________________________
+
+1.4.8. allow_trusted()
+
+   Checks based on request's source address, transport protocol,
+   and From URI if request can be trusted without authentication.
+   Returns 1 if a match is found as described in Section 1.1.4
+   and -1 otherwise.
+
+   Example 1-19. allow_trusted() usage
+...
+if (allow_trusted()) {
+        t_relay();
 };
 ...
      _________________________________________________________
@@ -376,9 +590,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions
