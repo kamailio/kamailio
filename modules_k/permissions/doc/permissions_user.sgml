@@ -735,6 +735,7 @@ if (allow_refer_to("rules.allow", "rules.deny")) {
                 authentication.  Returns 1 if a match is found
                 as described in <xref linkend="sec-trusted-requests">
                 and -1 otherwise.
+                </para>
 		<example>
 		<title><function>allow_trusted()</function> usage</title>
 		<programlisting format="linespecific">
@@ -747,6 +748,28 @@ if (allow_trusted()) {
 		</example>
 	</section>
 	</section>
+	<section>
+	<title>FIFO Commands</title>
+	<section>
+		<title>
+		<function moreinfo="none">trusted_reload</function>
+		</title>
+		<para>
+                Causes permissions module to re-read the contents of
+                trusted table into cache memory.
+                </para>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">trusted_dump</function>
+		</title>
+		<para>
+                Causes permissions module to dump contents of trusted
+                table from cache memory.
+                </para>
+	</section>
+	</section>
+
 </chapter>
 
 <!-- Keep this element at the end of the file

@@ -52,6 +52,11 @@ Bogdan-Andrei Iancu
               1.4.7. allow_refer_to(allow_file, deny_file)
               1.4.8. allow_trusted()
 
+        1.5. FIFO Commands
+
+              1.5.1. trusted_reload
+              1.5.2. trusted_dump
+
    2. Developer's Guide
    3. Frequently Asked Questions
 
@@ -566,6 +571,20 @@ if (allow_trusted()) {
         t_relay();
 };
 ...
+     _________________________________________________________
+
+1.5. FIFO Commands
+
+1.5.1. trusted_reload
+
+   Causes permissions module to re-read the contents of trusted
+   table into cache memory.
+     _________________________________________________________
+
+1.5.2. trusted_dump
+
+   Causes permissions module to dump contents of trusted table
+   from cache memory.
      _________________________________________________________
 
 Chapter 2. Developer's Guide
