@@ -92,9 +92,6 @@
 /* restart fr timer on each provisional reply, default yes */
 int restart_fr_on_each_reply=1;
 
-/* are we processing original or shmemed request ? */
-enum route_mode rmode=MODE_REQUEST;
-
 /* private place where we create to-tags for replies */
 /* janakj: made public, I need to access this value to store it in dialogs */
 char tm_tags[TOTAG_VALUE_LEN];
@@ -466,20 +463,15 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
  * the env. will be restore to original */
 static inline void faked_env( struct cell *t,struct sip_msg *msg)
 {
-	static enum route_mode backup_mode;
 	static struct cell *backup_t;
 	static unsigned int backup_msgid;
 	static struct usr_avp **backup_list;
 	static struct socket_info* backup_si;
+	static int backup_route_type;
 
 	if (msg) {
-		/* remember we are back in request processing, but process
-		 * a shmem-ed replica of the request; advertise it in rmode;
-		 * for example t_reply needs to know that
-		 */
-		backup_mode=rmode;
-		rmode=MODE_ONFAILURE;
-		/* also, tm actions look in beginning whether transaction is
+		swap_route_type( backup_route_type, FAILURE_ROUTE);
+		/* tm actions look in beginning whether transaction is
 		 * set -- whether we are called from a reply-processing 
 		 * or a timer process, we need to set current transaction;
 		 * otherwise the actions would attempt to look the transaction
@@ -500,7 +492,7 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 		/* restore original environment */
 		set_t(backup_t);
 		global_msg_id=backup_msgid;
-		rmode=backup_mode;
+		set_route_type( backup_route_type );
 		/* restore original avp list */
 		set_avp_list( backup_list );
 		bind_address=backup_si;
@@ -1189,7 +1181,6 @@ error:
 
 
 
-
 /*  This function is called whenever a reply for our module is received; 
   * we need to register  this function on module initialization;
   *  Returns :   0 - core router stops
@@ -1274,11 +1265,11 @@ int reply_received( struct sip_msg  *p_msg )
 
 	/* processing of on_reply block */
 	if (t->on_reply) {
-		rmode = MODE_ONREPLY;
 		/* transfer transaction flag to message context */
 		if (t->uas.request) p_msg->flags = t->uas.request->flags;
 		/* set the as avp_list the one from transaction */
 		backup_list = set_avp_list(&t->user_avps);
+		/* run block */
 		run_actions(onreply_rlist[t->on_reply], p_msg);
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;

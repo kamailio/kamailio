@@ -845,36 +845,35 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     avp = search_first_avp(gw_uri_avp_name_str, gw_uri_name, &val);
     if (!avp) return -1;
 
-    if (*(tmb.route_mode) == MODE_REQUEST) {
-	
-	act.type = SET_URI_T;
-	act.p1_type = STRING_ST;
-	act.p1.string = val.s->s;
-	rval = do_action(&act, _m);
-	destroy_avp(avp);
-	if (rval != 1) {
-	    LOG(L_ERR, "next_gw(): ERROR: do_action failed with return value <%d>\n", rval);
-	    return -1;
+	if (route_type == REQUEST_ROUTE) {
+		act.type = SET_URI_T;
+		act.p1_type = STRING_ST;
+		act.p1.string = val.s->s;
+		rval = do_action(&act, _m);
+		destroy_avp(avp);
+		if (rval != 1) {
+			LOG(L_ERR, "next_gw(): ERROR: do_action failed with return "
+				"value <%d>\n", rval);
+			return -1;
+		}
+		return 1;
+	} else if (route_type == FAILURE_ROUTE) {
+		act.type = APPEND_BRANCH_T;
+		act.p1_type = STRING_ST;
+		act.p1.string = val.s->s;
+		act.p2_type = NUMBER_ST;
+		act.p2.number = 0;
+		rval = do_action(&act, _m);
+		destroy_avp(avp);
+		if (rval != 1) {
+			LOG(L_ERR, "next_gw(): ERROR: do_action failed with return "
+				"value <%d>\n", rval);
+			return -1;
+		}
+		return 1;
 	}
-
-	return 1;
-
-    } else { /* MODE_ONFAILURE */
-
-	act.type = APPEND_BRANCH_T;
-	act.p1_type = STRING_ST;
-	act.p1.string = val.s->s;
-	act.p2_type = NUMBER_ST;
-	act.p2.number = 0;
-	rval = do_action(&act, _m);
-	destroy_avp(avp);
-	if (rval != 1) {
-	    LOG(L_ERR, "next_gw(): ERROR: do_action failed with return value <%d>\n", rval);
-	    return -1;
-	}
-
-	return 1;
-    }	    
+	/* unsupported route type */
+	return -1;
 }
 
 
@@ -1075,98 +1074,103 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
     struct action act;
     int rval;
 
-    if (*(tmb.route_mode) == MODE_REQUEST) {
-	
-	/* Find first lcr_contact_avp value */
-	avp = search_first_avp(contact_avp_name_str, contact_name, &val);
-	if (!avp) {
-	    DBG("next_contacts(): DEBUG: No AVPs -- we are done!\n");
-	    return 1;
-	}
-
-	/* Set Request-URI */
-	act.type = SET_URI_T;
-	act.p1_type = STRING_ST;
-	act.p1.string = val.s->s;
-	rval = do_action(&act, msg);
-	if (rval != 1) {
-	    destroy_avp(avp);
-	    return rval;
-	}
-	DBG("next_contacts(): DEBUG: R-URI is <%s>\n", val.s->s);
-	if (avp->flags & Q_FLAG) {
-	    destroy_avp(avp);
-	    /* Set fr_inv_timer */
-	    val.n = inv_timer_next;
-	    if (add_avp(AVP_NAME_STR, inv_timer_name, val) != 0) {
-		LOG(L_ERR, "next_contacts(): ERROR: setting of fr_inv_timer_avp failed\n");
-		return -1;
-	    }
-	    return 1;
-	}
-	    
-	/* Append branches until out of branches or Q_FLAG is set */
-	prev = avp;
-	while ((avp = search_next_avp(avp, &val))) {
-	    destroy_avp(prev);
-	    act.type = APPEND_BRANCH_T;
-	    act.p1_type = STRING_ST;
-	    act.p1.string = val.s->s;
-	    act.p2_type = NUMBER_ST;
-	    act.p2.number = 0;
-	    rval = do_action(&act, msg);
-	    if (rval != 1) {
-		destroy_avp(avp);
-		LOG(L_ERR, "next_contacts(): ERROR: do_action failed with return value <%d>\n", rval);
-		return -1;
-	    }
-	    DBG("next_contacts(): DEBUG: Branch is <%s>\n", val.s->s);
-	    if (avp->flags & Q_FLAG) {
-		destroy_avp(avp);
-		val.n = inv_timer_next;
-		if (add_avp(AVP_NAME_STR, inv_timer_name, val) != 0) {
-		    LOG(L_ERR, "next_contacts(): ERROR: setting of fr_inv_timer_avp failed\n");
-		    return -1;
+	if ( route_type == REQUEST_ROUTE) {
+		/* Find first lcr_contact_avp value */
+		avp = search_first_avp(contact_avp_name_str, contact_name, &val);
+		if (!avp) {
+			DBG("next_contacts(): DEBUG: No AVPs -- we are done!\n");
+			return 1;
 		}
-		return 1;
-	    }
-	    prev = avp;
+
+		/* Set Request-URI */
+		act.type = SET_URI_T;
+		act.p1_type = STRING_ST;
+		act.p1.string = val.s->s;
+		rval = do_action(&act, msg);
+		if (rval != 1) {
+			destroy_avp(avp);
+			return rval;
+		}
+		DBG("next_contacts(): DEBUG: R-URI is <%s>\n", val.s->s);
+		if (avp->flags & Q_FLAG) {
+			destroy_avp(avp);
+			/* Set fr_inv_timer */
+			val.n = inv_timer_next;
+			if (add_avp(AVP_NAME_STR, inv_timer_name, val) != 0) {
+				LOG(L_ERR, "next_contacts(): ERROR: setting of "
+					"fr_inv_timer_avp failed\n");
+				return -1;
+			}
+			return 1;
+		}
+		/* Append branches until out of branches or Q_FLAG is set */
+		prev = avp;
+		while ((avp = search_next_avp(avp, &val))) {
+			destroy_avp(prev);
+			act.type = APPEND_BRANCH_T;
+			act.p1_type = STRING_ST;
+			act.p1.string = val.s->s;
+			act.p2_type = NUMBER_ST;
+			act.p2.number = 0;
+			rval = do_action(&act, msg);
+			if (rval != 1) {
+				destroy_avp(avp);
+				LOG(L_ERR, "next_contacts(): ERROR: do_action failed "
+					"with return value <%d>\n", rval);
+				return -1;
+			}
+			DBG("next_contacts(): DEBUG: Branch is <%s>\n", val.s->s);
+			if (avp->flags & Q_FLAG) {
+				destroy_avp(avp);
+				val.n = inv_timer_next;
+				if (add_avp(AVP_NAME_STR, inv_timer_name, val) != 0) {
+					LOG(L_ERR, "next_contacts(): ERROR: setting of "
+						"fr_inv_timer_avp failed\n");
+					return -1;
+				}
+				return 1;
+			}
+			prev = avp;
+		}
+
+	} else if ( route_type == FAILURE_ROUTE) {
+		avp = search_first_avp(contact_avp_name_str, contact_name, &val);
+		if (!avp) return -1;
+
+		prev = avp;
+		do {
+			act.type = APPEND_BRANCH_T;
+			act.p1_type = STRING_ST;
+			act.p1.string = val.s->s;
+			act.p2_type = NUMBER_ST;
+			act.p2.number = 0;
+			rval = do_action(&act, msg);
+			if (rval != 1) {
+				destroy_avp(avp);
+				return rval;
+			}
+			DBG("next_contacts(): DEBUG: New branch is <%s>\n", val.s->s);
+			if (avp->flags & Q_FLAG) {
+				destroy_avp(avp);
+				return 1;
+			}
+			prev = avp;
+			avp = search_next_avp(avp, &val);
+			destroy_avp(prev);
+		} while (avp);
+
+		/* Restore fr_inv_timer */
+		val.n = inv_timer;
+		if (add_avp(AVP_NAME_STR, inv_timer_name, val) != 0) {
+			LOG(L_ERR, "next_contacts(): ERROR: setting of "
+				"fr_inv_timer_avp failed\n");
+			return -1;
+		}
+
+	} else {
+		/* unsupported rout type */
+		return -1;
 	}
 
-    } else { /* MODE_ONFAILURE */
-	
-	avp = search_first_avp(contact_avp_name_str, contact_name, &val);
-	if (!avp) return -1;
-
-	prev = avp;
-	do {
-	    act.type = APPEND_BRANCH_T;
-	    act.p1_type = STRING_ST;
-	    act.p1.string = val.s->s;
-	    act.p2_type = NUMBER_ST;
-	    act.p2.number = 0;
-	    rval = do_action(&act, msg);
-	    if (rval != 1) {
-		destroy_avp(avp);
-		return rval;
-	    }
-	    DBG("next_contacts(): DEBUG: New branch is <%s>\n", val.s->s);
-	    if (avp->flags & Q_FLAG) {
-		destroy_avp(avp);
-		return 1;
-	    }
-	    prev = avp;
-	    avp = search_next_avp(avp, &val);
-	    destroy_avp(prev);
-	} while (avp);
-
-	/* Restore fr_inv_timer */
-	val.n = inv_timer;
-	if (add_avp(AVP_NAME_STR, inv_timer_name, val) != 0) {
-	    LOG(L_ERR, "next_contacts(): ERROR: setting of fr_inv_timer_avp failed\n");
-	    return -1;
-	}
-    }
-
-    return 1;
+	return 1;
 }

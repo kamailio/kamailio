@@ -455,9 +455,6 @@ int load_tm( struct tm_binds *tmb)
 	tmb->free_dlg = free_dlg;
 	tmb->print_dlg = print_dlg;
 
-	/* variables */
-	tmb->route_mode = &rmode;
-
 	return 1;
 }
 
@@ -481,9 +478,6 @@ static int script_init( struct sip_msg *foo, void *bar)
 	t_on_reply(0);
 	/* reset the kr status */
 	set_kr(0);
-	/* set request mode so that multiple-mode actions know
-	 * how to behave */
-	rmode=MODE_REQUEST;
 	return 1;
 }
 
@@ -643,18 +637,18 @@ static int t_check_status(struct sip_msg* msg, char *regexp, char *foo)
 	}
 	backup = 0;
 
-	switch (rmode) {
-		case MODE_REQUEST:
+	switch (route_type) {
+		case REQUEST_ROUTE:
 			/* use the status of the last sent reply */
 			status = int2str( t->uas.status, 0);
 			break;
-		case MODE_ONREPLY:
+		case ONREPLY_ROUTE:
 			/* use the status of the current reply */
 			status = msg->first_line.u.reply.status.s;
 			backup = status[msg->first_line.u.reply.status.len];
 			status[msg->first_line.u.reply.status.len] = 0;
 			break;
-		case MODE_ONFAILURE:
+		case FAILURE_ROUTE:
 			/* use the status of the winning reply */
 			if (t_pick_branch( -1, 0, t, &lowest_status)<0 ) {
 				LOG(L_CRIT,"BUG:t_check_status: t_pick_branch failed to get "
@@ -664,7 +658,8 @@ static int t_check_status(struct sip_msg* msg, char *regexp, char *foo)
 			status = int2str( lowest_status , 0);
 			break;
 		default:
-			LOG(L_ERR,"ERROR:t_check_status: unsupported mode %d\n",rmode);
+			LOG(L_ERR,"ERROR:t_check_status: unsupported route_type %d\n",
+					route_type);
 			return -1;
 	}
 
@@ -811,14 +806,16 @@ inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2)
 	 * is called; we are already in a mutex and another mutex in
 	 * the safe version would lead to a deadlock
 	 */
-	if (rmode==MODE_ONFAILURE) { 
-		DBG("DEBUG: t_reply_unsafe called from w_t_reply\n");
-		return t_reply_unsafe(t, msg, (unsigned int)(long) str, str2);
-	} else if (rmode==MODE_REQUEST) {
-		return t_reply( t, msg, (unsigned int)(long) str, str2);
-	} else {
-		LOG(L_CRIT, "BUG: w_t_reply entered in unsupported mode\n");
-		return -1;
+	switch (route_type) {
+		case FAILURE_ROUTE:
+			DBG("DEBUG: t_reply_unsafe called from w_t_reply\n");
+			return t_reply_unsafe(t, msg, (unsigned int)(long) str, str2);
+		case REQUEST_ROUTE:
+			return t_reply( t, msg, (unsigned int)(long) str, str2);
+		default:
+			LOG(L_CRIT, "BUG:tm:w_t_reply: unsupported route_type (%d)\n",
+				route_type);
+			return -1;
 	}
 }
 
@@ -876,12 +873,11 @@ inline static int w_t_on_reply( struct sip_msg* msg, char *go_to, char *foo )
 
 
 
-inline static int _w_t_relay_to( struct sip_msg  *p_msg , 
-	struct proxy_l *proxy )
+inline static int _w_t_relay_to( struct sip_msg  *p_msg, struct proxy_l *proxy)
 {
 	struct cell *t;
 
-	if (rmode==MODE_ONFAILURE) { 
+	if (route_type==FAILURE_ROUTE) {
 		t=get_t();
 		if (!t || t==T_UNDEFINED) {
 			LOG(L_CRIT, "BUG: w_t_relay_to: undefined T\n");
@@ -893,10 +889,14 @@ inline static int _w_t_relay_to( struct sip_msg  *p_msg ,
 		}
 		return 1;
 	}
-	if (rmode==MODE_REQUEST) 
+
+	if (route_type==REQUEST_ROUTE) {
 		return t_relay_to( p_msg, proxy, PROTO_NONE,
 			0 /* no replication */ );
-	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported mode: %d\n", rmode);
+	}
+
+	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported route type: %d\n",
+		route_type);
 	return 0;
 }
 
@@ -971,24 +971,5 @@ inline static int w_t_replicate_tls( struct sip_msg  *p_msg ,
 inline static int w_t_relay( struct sip_msg  *p_msg , 
 						char *_foo, char *_bar)
 {
-	struct cell *t;
-
-	if (rmode==MODE_ONFAILURE) { 
-		t=get_t();
-		if (!t || t==T_UNDEFINED) {
-			LOG(L_CRIT, "BUG: w_t_relay: undefined T\n");
-			return -1;
-		} 
-		if (t_forward_nonack(t, p_msg, ( struct proxy_l *) 0, PROTO_NONE)<=0) {
-			LOG(L_ERR, "ERROR: w_t_relay (failure mode): forwarding failed\n");
-			return -1;
-		}
-		return 1;
-	}
-	if (rmode==MODE_REQUEST) 
-		return t_relay_to( p_msg, 
-		(struct proxy_l *) 0 /* no proxy */, PROTO_NONE,
-		0 /* no replication */ );
-	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported mode: %d\n", rmode);
-	return 0;
+	return _w_t_relay_to( p_msg, 0);
 }
