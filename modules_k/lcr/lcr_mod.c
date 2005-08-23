@@ -182,7 +182,6 @@ unsigned short rpid_avp_name_str;
 struct gw_info **gws;	/* Pointer to current gw table pointer */
 struct gw_info *gws_1;	/* Pointer to gw table 1 */
 struct gw_info *gws_2;	/* Pointer to gw table 2 */
-struct tm_binds tmb;
 
 
 /*
@@ -346,12 +345,6 @@ static int mod_init(void)
 	unsigned int par;
 
 	DBG("lcr - initializing\n");
-
-	/* load the TM API */
-	if (load_tm_api(&tmb)!=0) {
-		LOG(L_ERR, "ERROR: lcr:mod_init(): can't load TM API\n");
-		goto err;
-	}
 
 	/* Bind database */
 	if (lcr_db_bind(db_url.s)) {
