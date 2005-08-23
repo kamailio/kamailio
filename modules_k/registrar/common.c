@@ -73,25 +73,23 @@ int extract_aor(str* _uri, str* _a)
 	user_len = _a->len;
 
 	if (use_domain) {
-		aor_buf[_a->len] = '@';
-		     /* ** stripping patch ** -jiri
-			memcpy(aor_buf + _a->len + 1, puri.host.s, puri.host.len);
-			_a->len += 1 + puri.host.len;
-		     */
-		if (realm_prefix.len && realm_prefix.len < puri.host.len &&
-		    (memcmp(realm_prefix.s, puri.host.s, realm_prefix.len) == 0)) {
-			memcpy(aor_buf + _a->len + 1, puri.host.s + realm_prefix.len, puri.host.len - realm_prefix.len);
-			_a->len += 1 + puri.host.len - realm_prefix.len;
+		if (user_len)
+			aor_buf[_a->len++] = '@';
+		/* strip prefix (if defined) */
+		if (realm_prefix.len && realm_prefix.len<puri.host.len &&
+		(memcmp(realm_prefix.s, puri.host.s, realm_prefix.len)==0) ) {
+			memcpy(aor_buf + _a->len, puri.host.s + realm_prefix.len,
+					puri.host.len - realm_prefix.len);
+			_a->len += puri.host.len - realm_prefix.len;
 		} else {
-			memcpy(aor_buf + _a->len + 1, puri.host.s, puri.host.len);
-			_a->len += 1 + puri.host.len;
+			memcpy(aor_buf + _a->len, puri.host.s, puri.host.len);
+			_a->len += puri.host.len;
 		}
-		     /* end of stripping patch */
 	}
 
-	if (case_sensitive) {
+	if (case_sensitive && user_len) {
 		tmp.s = _a->s + user_len + 1;
-		tmp.len = puri.host.len;
+		tmp.len = _a->s + _a->len - tmp.s;
 		strlower(&tmp);
 	} else {
 		strlower(_a);
