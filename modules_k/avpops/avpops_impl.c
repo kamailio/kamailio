@@ -1413,7 +1413,11 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 				if (src[0]->ops&AVPOPS_FLAG_DELETE || src[1]==0)
 					destroy_avp( prev_avp );
 			}
+		} else {
+			prev_avp = avp;
+			avp = search_next_avp(prev_avp, &avp_val);
 		}
+
 	}
 	DBG("avpops:ops_subst: subst to %d avps\n", n);
 	return n?1:-1;
