@@ -39,13 +39,15 @@
 
 #include "../../dprint.h"
 #include "../../config.h"
-#include "../../parser/parser_f.h"
 #include "../../ut.h"
+#include "../../dset.h"
 #include "../../timer.h"
 #include "../../hash_func.h"
 #include "../../globals.h"
+#include "../../action.h"
+#include "../../data_lump.h"
 #include "../../mem/mem.h"
-#include "../../dset.h"
+#include "../../parser/parser_f.h"
 #include "t_funcs.h"
 #include "t_hooks.h"
 #include "t_msgbuilder.h"
@@ -56,16 +58,38 @@
 #include "fix_lumps.h"
 #include "config.h"
 
+/* route to execute for the branches */
+static int goto_on_branch;
+
+void t_on_branch( unsigned int go_to )
+{
+	struct cell *t = get_t();
+
+	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
+	 * in MODE_REQUEST T will be set only if the transaction was already 
+	 * created; if not -> use the static variable */
+	if (route_type==BRANCH_ROUTE || !t || t==T_UNDEFINED )
+		goto_on_branch=go_to;
+	else
+		t->on_branch = go_to;
+}
+
+
+unsigned int get_on_branch()
+{
+	return goto_on_branch;
+}
+
 
 char *print_uac_request( struct cell *t, struct sip_msg *i_req,
-	int branch, str *uri, unsigned int *len, struct socket_info *send_sock,
+	int branch, unsigned int *len, struct socket_info *send_sock,
 	enum sip_protos proto )
 {
 	char *buf, *shbuf;
 
 	shbuf=0;
 
-	/* ... we calculate branch ... */	
+	/* ... we calculate branch ... */
 	if (!t_calc_branch(t, branch, i_req->add_to_branch_s,
 			&i_req->add_to_branch_len ))
 	{
@@ -73,30 +97,16 @@ char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 		goto error01;
 	}
 
-	/* ... update uri ... */
-	i_req->new_uri=*uri;
-
 	/* run the specific callbacks for this transaction */
 	run_trans_callbacks( TMCB_REQUEST_FWDED , t, i_req, 0, -i_req->REQ_METHOD);
 
 	/* ... and build it now */
 	buf=build_req_buf_from_sip_req( i_req, len, send_sock, proto );
-#ifdef DBG_MSG_QA
-	if (buf[*len-1]==0) {
-		LOG(L_ERR, "ERROR: print_uac_request: sanity check failed\n");
-		abort();
-	}
-#endif
 	if (!buf) {
 		LOG(L_ERR, "ERROR: print_uac_request: no pkg_mem\n"); 
 		ser_error=E_OUT_OF_MEM;
 		goto error01;
 	}
-	/*	clean Via's we created now -- they would accumulate for
-		other branches  and for  shmem i_req they would mix up
-	 	shmem with pkg_mem
-	*/
-	free_via_clen_lump(&i_req->add_rm);
 
 	shbuf=(char *)shm_malloc(*len);
 	if (!shbuf) {
@@ -111,6 +121,7 @@ error02:
 error01:
 	return shbuf;
 }
+
 
 /* introduce a new uac, which is blind -- it only creates the
    data structures and starts FR timer, but that's it; it does
@@ -151,6 +162,8 @@ int add_blind_uac( /*struct cell *t*/ )
 	return 1; /* success */
 }
 
+
+
 /* introduce a new uac to transaction; returns its branch id (>=0)
    or error (<0); it doesn't send a message yet -- a reply to it
    might interfere with the processes of adding multiple branches
@@ -158,7 +171,6 @@ int add_blind_uac( /*struct cell *t*/ )
 int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	struct proxy_l *proxy, int proto )
 {
-
 	int ret;
 	short temp_proxy;
 	union sockaddr_union to;
@@ -166,6 +178,9 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	struct socket_info* send_sock;
 	char *shbuf;
 	unsigned int len;
+	int backup_route_type;
+	int reset_hop;
+	char *p;
 
 	branch=t->nr_of_outgoings;
 	if (branch==MAX_BRANCHES) {
@@ -181,15 +196,45 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 		goto error;
 	}
 
+	/* set proper RURI to request to reflect the branch */
+	request->new_uri=*uri;
+	request->parsed_uri_ok=0;
+	reset_hop = 0;
+
+	/* from now on, flag all new lumps with LUMPFLAG_BRANCH flag in order to
+	 * be able to remove them later --bogdan */
+	set_init_lump_flags(LUMPFLAG_BRANCH);
+
+	/* run branch route, if any; run it before RURI's DNS lookup 
+	 * to allow to be changed --bogdan */
+	if (t->on_branch) {
+		/* need to pkg_malloc the new_uri */
+		if ( (p=pkg_malloc(request->new_uri.len))==0 ) {
+			LOG(L_ERR,"ERROR:tm:add_uac: no more pkg mem\n");
+			ret=ser_error=E_OUT_OF_MEM;
+			goto error01;
+		}
+		memcpy( p, request->new_uri.s, request->new_uri.len);
+		request->new_uri.s = p;
+		/* run branch route */
+		swap_route_type( backup_route_type, BRANCH_ROUTE);
+		if (run_actions(branch_rlist[t->on_branch], request) < 0)
+			LOG(L_ERR, "ERROR:tm:add_uac: run_actions(branch_route) failed\n");
+		set_route_type( backup_route_type );
+		/* was new_uri changed? */
+		reset_hop = (request->new_uri.s!=p) || (request->new_uri.len!=uri->len);
+	}
+
 	/* check DNS resolution */
 	if (proxy){
 		temp_proxy=0;
 		proto=get_proto(proto, proxy->proto);
 	}else {
-		proxy=uri2proxy( next_hop ? next_hop : uri, proto );
+		proxy=uri2proxy( (next_hop && !reset_hop)? next_hop : &request->new_uri,
+			proto );
 		if (proxy==0)  {
 			ret=E_BAD_ADDRESS;
-			goto error;
+			goto error01;
 		}
 		proto=proxy->proto; /* uri2proxy will fix it for us */
 		temp_proxy=1;
@@ -211,15 +256,14 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 			" (no corresponding listening socket)\n",
 			to.s.sa_family, proto );
 		ret=ser_error=E_NO_SOCKET;
-		goto error01;
+		goto error02;
 	}
 
 	/* now message printing starts ... */
-	shbuf=print_uac_request( t, request, branch, uri, 
-		&len, send_sock, proto );
+	shbuf=print_uac_request( t, request, branch, &len, send_sock, proto );
 	if (!shbuf) {
 		ret=ser_error=E_OUT_OF_MEM;
-		goto error01;
+		goto error02;
 	}
 
 	/* things went well, move ahead and install new buffer! */
@@ -231,7 +275,8 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	t->uac[branch].request.buffer_len=len;
 	t->uac[branch].uri.s=t->uac[branch].request.buffer+
 		request->first_line.u.request.method.len+1;
-	t->uac[branch].uri.len=uri->len;
+	t->uac[branch].uri.len=request->new_uri.len;
+	t->uac[branch].sc_flags = request->flags;
 	t->nr_of_outgoings++;
 
 	/* update stats */
@@ -240,15 +285,29 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 
 	/* done! */	
 	ret=branch;
-		
-error01:
+
+error02:
 	if (temp_proxy) {
 		free_proxy( proxy );
 		pkg_free( proxy );
 	}
+error01:
+	reset_init_lump_flags();
+	/* delete inserted branch lumps */
+	del_flaged_lumps( &request->add_rm, LUMPFLAG_BRANCH);
+	del_flaged_lumps( &request->body_lumps, LUMPFLAG_BRANCH);
+	/* free any potential new uri */
+	if (request->new_uri.s!=uri->s) {
+		pkg_free(request->new_uri.s);
+		/* and just to be sure */
+		request->new_uri.s = 0;
+		request->new_uri.len = 0;
+		request->parsed_uri_ok = 0;
+	}
 error:
 	return ret;
 }
+
 
 int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel, 
 	struct cell *t_invite, int branch )
@@ -266,10 +325,10 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 	/* note -- there is a gap in proxy stats -- we don't update 
 	   proxy stats with CANCEL (proxy->ok, proxy->tx, etc.)
 	*/
+	cancel_msg->new_uri = t_invite->uac[branch].uri;
 
 	/* print */
-	shbuf=print_uac_request( t_cancel, cancel_msg, branch, 
-		&t_invite->uac[branch].uri, &len, 
+	shbuf=print_uac_request( t_cancel, cancel_msg, branch, &len,
 		t_invite->uac[branch].request.dst.send_sock,
 		t_invite->uac[branch].request.dst.proto);
 	if (!shbuf) {
@@ -308,7 +367,10 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	cancel_bm=0;
 	lowest_error=0;
 
-	backup_uri=cancel_msg->new_uri;
+	/* e2e_cancel_branch() makes no RURI parsing, so no need to 
+	 * save the ->parse_uri_ok */
+	backup_uri = cancel_msg->new_uri;
+
 	/* determine which branches to cancel ... */
 	which_cancel( t_invite, &cancel_bm );
 	t_cancel->nr_of_outgoings=t_invite->nr_of_outgoings;
@@ -323,7 +385,8 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 			if (ret<lowest_error) lowest_error=ret;
 		}
 	}
-	cancel_msg->new_uri=backup_uri;
+	/* restore new_uri */
+	cancel_msg->new_uri = backup_uri;
 
 	/* send them out */
 	for (i=t_cancel->first_branch; i<t_cancel->nr_of_outgoings; i++) {
@@ -414,6 +477,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	int try_new;
 	str dst_uri;
 	struct socket_info *bk_sock;
+	int bk_flags;
 
 	/* make -Wall happy */
 	current_uri.s=0;
@@ -429,9 +493,11 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		}
 	}
 
-	/* backup current uri ... add_uac changes it */
+	/* backup current uri, sock and flags ... add_uac changes it */
 	backup_uri = p_msg->new_uri;
 	bk_sock = p_msg->force_send_socket;
+	bk_flags = p_msg->flags;
+
 	/* if no more specific error code is known, use this */
 	lowest_ret=E_BUG;
 	/* branches added */
@@ -440,7 +506,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	t->first_branch=t->nr_of_outgoings;
 
 	/* on first-time forwarding, use current uri, later only what
-	   is in additional branches (which may be continuously refilled
+	   is in additional branches (which may be continuously refilled)
 	*/
 	if (t->first_branch==0) {
 		try_new=1;
@@ -457,8 +523,8 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	&dst_uri.s, &dst_uri.len, &p_msg->force_send_socket))) {
 		try_new++;
 		branch_ret=add_uac( t, p_msg, &current_uri, 
-				    (dst_uri.len) ? (&dst_uri) : &current_uri, 
-				    proxy, proto);
+				(dst_uri.len) ? (&dst_uri) : &current_uri, 
+				proxy, proto);
 		/* pick some of the errors in case things go wrong;
 		   note that picking lowest error is just as good as
 		   any other algorithm which picks any other negative
@@ -471,9 +537,13 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	/* consume processed branches */
 	clear_branches();
 
-	/* restore original URI */
+	/* restore original stuff */
 	p_msg->new_uri=backup_uri;
+	p_msg->parsed_uri_ok = 0;/* just to be sure; add_uac may parse other uris*/
 	p_msg->force_send_socket = bk_sock;
+	p_msg->flags = bk_flags;
+	/* update on_branch, if modified */
+	t->on_branch = get_on_branch();
 
 	/* don't forget to clear all branches processed so far */
 

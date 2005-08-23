@@ -132,6 +132,7 @@ inline static int w_t_forward_nonack_tls(struct sip_msg* msg, char* str,char*);
 #endif
 inline static int w_t_on_negative(struct sip_msg* msg, char *go_to, char *foo);
 inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
+inline static int w_t_on_branch(struct sip_msg* msg, char *go_to, char *foo );
 inline static int t_check_status(struct sip_msg* msg, char *regexp, char *foo);
 inline static int t_flush_flags(struct sip_msg* msg, char *foo, char *bar);
 inline static int t_local_replied(struct sip_msg* msg, char *type, char *bar);
@@ -194,6 +195,8 @@ static cmd_export_t cmds[]={
 	{"t_on_failure",         w_t_on_negative,         1, fixup_str2int,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_on_reply",           w_t_on_reply,            1, fixup_str2int,
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+	{"t_on_branch",          w_t_on_branch,           1, fixup_str2int,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_check_status",       t_check_status,          1, fixup_str2regexp,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
@@ -476,6 +479,7 @@ static int script_init( struct sip_msg *foo, void *bar)
 	 */
 	t_on_negative( 0 );
 	t_on_reply(0);
+	t_on_branch(0);
 	/* reset the kr status */
 	set_kr(0);
 	return 1;
@@ -871,6 +875,12 @@ inline static int w_t_on_reply( struct sip_msg* msg, char *go_to, char *foo )
 	return 1;
 }
 
+
+inline static int w_t_on_branch( struct sip_msg* msg, char *go_to, char *foo )
+{
+	t_on_branch( (unsigned int )(long) go_to );
+	return 1;
+}
 
 
 inline static int _w_t_relay_to( struct sip_msg  *p_msg, struct proxy_l *proxy)

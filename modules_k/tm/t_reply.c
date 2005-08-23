@@ -127,7 +127,7 @@ void t_on_negative( unsigned int go_to )
 	if (!t || t==T_UNDEFINED )
 		goto_on_negative=go_to;
 	else
-		get_t()->on_negative = go_to;
+		t->on_negative = go_to;
 }
 
 
@@ -141,7 +141,7 @@ void t_on_reply( unsigned int go_to )
 	if (!t || t==T_UNDEFINED )
 		goto_on_reply=go_to;
 	else
-		get_t()->on_reply = go_to;
+		t->on_reply = go_to;
 }
 
 
@@ -545,8 +545,8 @@ void inline static free_faked_req(struct sip_msg *faked_req, struct cell *t)
 	}
 
 	/* free all types of lump that were added in failure handlers */
-	del_nonshm_lump( &(faked_req->add_rm) );
-	del_nonshm_lump( &(faked_req->body_lumps) );
+	del_flaged_lumps( &(faked_req->add_rm), LUMPFLAG_SHMEM );
+	del_flaged_lumps( &(faked_req->body_lumps), LUMPFLAG_SHMEM );
 	del_nonshm_lump_rpl( &(faked_req->reply_lump) );
 
 	/* free header's parsed structures that were added by failure handlers */
@@ -1265,14 +1265,14 @@ int reply_received( struct sip_msg  *p_msg )
 
 	/* processing of on_reply block */
 	if (t->on_reply) {
-		/* transfer transaction flag to message context */
-		if (t->uas.request) p_msg->flags = t->uas.request->flags;
+		/* transfer transaction flag to branch context */
+		p_msg->flags = t->uac[branch].sc_flags;
 		/* set the as avp_list the one from transaction */
 		backup_list = set_avp_list(&t->user_avps);
 		/* run block */
 		run_actions(onreply_rlist[t->on_reply], p_msg);
 		/* transfer current message context back to t */
-		if (t->uas.request) t->uas.request->flags=p_msg->flags;
+		t->uac[branch].sc_flags=p_msg->flags;
 		/* restore original avp list */
 		set_avp_list( backup_list );
 	}

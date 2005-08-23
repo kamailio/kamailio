@@ -150,6 +150,8 @@ typedef struct ua_client
 	short            last_received;
 	/* UAC specific flags */
 	short            flags;
+	/* script flags, psecific to this branch */
+	int              sc_flags;
 }ua_client_type;
 
 
@@ -240,6 +242,8 @@ typedef struct cell
 	unsigned int on_negative;
 	/* the onreply_route to be processed if registered to do so */
 	unsigned int on_reply;
+	/* the branch_route to be processed separately for each branch */
+	unsigned int on_branch;
 
 	/* MD5checksum  (meaningful only if syn_branch=0 */
 	char md5[MD5_LEN];
