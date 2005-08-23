@@ -171,7 +171,7 @@ static int extract_hdrs( char *buf, int len, str *from, str *to, str *cseq)
 		p++;
 	}
 
-	LOG(L_CRIT,"BUG:tm:extract_from: no hdrs found in outgoing buffer\n");
+	LOG(L_CRIT,"BUG:tm:extract_hdrs: no hdrs found in outgoing buffer\n");
 	return -1;
 done:
 	return 0;
@@ -200,7 +200,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	cseq_n = Trans->cseq_n;
 	to = *uas_to;
 
-	if (req || req->msg_flags&(FL_USE_UAC_FROM|FL_USE_UAC_TO|FL_USE_UAC_CSEQ)) {
+	if (req && req->msg_flags&(FL_USE_UAC_FROM|FL_USE_UAC_TO|FL_USE_UAC_CSEQ)) {
 		if ( extract_hdrs( Trans->uac[branch].request.buffer,
 		Trans->uac[branch].request.buffer_len,
 		(req->msg_flags&FL_USE_UAC_FROM)?&from:0 ,
