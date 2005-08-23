@@ -46,6 +46,7 @@
 #include "../../globals.h"
 #include "../../action.h"
 #include "../../data_lump.h"
+#include "../../usr_avp.h"
 #include "../../mem/mem.h"
 #include "../../parser/parser_f.h"
 #include "t_funcs.h"
@@ -179,6 +180,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	char *shbuf;
 	unsigned int len;
 	int backup_route_type;
+	struct usr_avp **backup_list;
 	int reset_hop;
 	char *p;
 
@@ -216,11 +218,15 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 		}
 		memcpy( p, request->new_uri.s, request->new_uri.len);
 		request->new_uri.s = p;
+		/* make available the avp list from transaction */
+		backup_list = set_avp_list( &t->user_avps );
 		/* run branch route */
 		swap_route_type( backup_route_type, BRANCH_ROUTE);
 		if (run_actions(branch_rlist[t->on_branch], request) < 0)
 			LOG(L_ERR, "ERROR:tm:add_uac: run_actions(branch_route) failed\n");
 		set_route_type( backup_route_type );
+		/* restore original avp list */
+		set_avp_list( backup_list );
 		/* was new_uri changed? */
 		reset_hop = (request->new_uri.s!=p) || (request->new_uri.len!=uri->len);
 	}
