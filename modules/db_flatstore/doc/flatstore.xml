@@ -27,7 +27,7 @@
 
     <title>Flatstore Module</title>
 
-    <section id="overview">
+    <section id="flatstore.overview">
 	<title>Overview</title>
 	<para>
 	    Flatstore is one of so-called SER database modules. It does not
