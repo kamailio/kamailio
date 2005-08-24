@@ -28,7 +28,7 @@
     
     <title>Avpops Module</title>
     
-    <section id="overview">
+    <section id="avpops.overview">
 	<title>Overview</title>
 	<para>
 	    AVPops (AVP-operations) modules implements a set of script
@@ -48,7 +48,7 @@
 	</para>
     </section>
 
-    <section id="dependencies">
+    <section id="avpops.dep">
 	<title>Dependencies</title>
 	<section id="modules">
 	    <title>SER Modules</title>

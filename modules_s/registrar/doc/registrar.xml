@@ -28,7 +28,7 @@
 
     <title>Registrar Module</title>
 
-    <section id="overview">
+    <section id="registrar.overview">
 	<title>Overview</title>
 	<para>The module contains REGISTER processing logic.</para>
     </section>
@@ -150,7 +150,7 @@ sip:1.2.3.4:5060;dstip=5.6.7.8;dstport=5090
 	</para>
     </section>
 
-    <section id="dependencies">
+    <section id="registrar.dep">
 	<title>Dependencies</title>
 	<para>
 	    Registrar module depends on the following SER modules:

@@ -12,6 +12,8 @@
 	</revhistory>
     </sectioninfo>
 
+    <title>Parameters</title>
+
     <section id="secret">
 	<title><varname>secret</varname> (string)</title>
 	<para>

@@ -40,10 +40,12 @@ sip_uri = '$from' | '$to' | '$ruri'
 		    <emphasis>name</emphasis> - which AVPs will be loaded
 		    from DB into memory. Parameter syntax is:
 		    <itemizedlist>
-			<programlisting>
+		    	<listitem>
+			    <programlisting>
 name = avp_spec [ '/' ( table_name | '$' db_scheme ) ]
 avp_spec = '' | 's:' | 'i:' | avp_name | avp_alias
-			</programlisting>
+			    </programlisting>
+			</listitem>
 		    </itemizedlist>
 		</para>
 	    </listitem>

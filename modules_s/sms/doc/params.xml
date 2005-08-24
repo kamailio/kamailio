@@ -230,7 +230,7 @@ modparam("sms", "domain_str", "foo.bar")
 	</example>
     </section>
 
-    <section id="use_contact">
+    <section id="sms.use_contact">
 	<title><varname>use_contact</varname> (integer)</title>
 	<para>
 	    If a contact header should be added to the outgoing SIP messages. Even if the

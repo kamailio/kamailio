@@ -14,7 +14,7 @@
 
     <title>Parameters</title>
 
-    <section id="db_url">
+    <section id="domain.db_url">
 	<title><varname>db_url</varname> (string)</title>
 	<para>
 	    This is <acronym>URL</acronym> of the database to be used.
@@ -64,7 +64,7 @@ modparam("domain", "domain_table", "new_name")
 	</example>
     </section>
     
-    <section id="domain_column">
+    <section id="domain.domain_column">
 	<title><varname>domain_column</varname> (string)</title>
 	<para>
 	    Name of column containing domains in domain table.

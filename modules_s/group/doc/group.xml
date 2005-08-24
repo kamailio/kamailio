@@ -28,7 +28,7 @@
 
     <title>Group Module</title>
 
-    <section id="overview">
+    <section id="group.overview">
 	<title>Overview</title>
 	<para>
 	    This module export functions necessary for group membership
@@ -38,7 +38,7 @@
 	</para>
     </section>
 
-    <section id="dependencies">
+    <section id="group.dep">
 	<title>Dependencies</title>
 	<para>
 	    The following modules must be loaded before this module:

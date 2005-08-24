@@ -28,7 +28,7 @@
 
     <title>PDT module</title>
 
-    <section id="overview">
+    <section id="pdt.overview">
 	<title>Overview</title>
 	<para>
 	    This module translates a numerical prefix into a domain and updates
@@ -83,7 +83,7 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
 	</itemizedlist>
     </section>
 
-    <section id="dependencies">
+    <section id="pdt.dep">
 	<title>Dependencies</title>
 	<section>
 	    <title>SER Modules</title>

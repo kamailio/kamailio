@@ -14,7 +14,7 @@
 
     <title>Parameters</title>
 
-    <section id="radius_config">
+    <section id="uri_radius.radius_config">
 	<title><varname>radius_config</varname> (string)</title>
 	<para>
 	    Radiusclient configuration file.
@@ -32,7 +32,7 @@ modparam("uri_radius", "radius_config", "/etc/radiusclient.conf")
 	</example>
     </section>
 
-    <section id="service_type">
+    <section id="uri_radius.service_type">
 	<title><varname>service_type</varname> (integer)</title>
 	<para>
 	    Radius service type used in <function>radius_does_uri_exist check</function>.

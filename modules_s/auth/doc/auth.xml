@@ -35,7 +35,7 @@
 
     <title>Auth Module</title>
     
-    <section id="overview">
+    <section id="auth.overview">
 	<title>Overview</title>
 	<para>
 	    This is a generic module that itself doesn't provide all functions
@@ -53,7 +53,7 @@
 	</para>
     </section>
 
-    <section id="dependencies">
+    <section id="auth.dep">
 	<title>Dependencies</title>
 	<para>
 	    The module depends on the following modules (in the other words the listed modules

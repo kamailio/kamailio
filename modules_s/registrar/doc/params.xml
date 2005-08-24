@@ -14,7 +14,7 @@
 
     <title>Parameters</title>
 
-    <section id="default_expires">
+    <section id="registar.default_expires">
 	<title><varname>default_expires</varname> (integer)</title>
 	<para>
 	    If the processed message contains neither Expires
@@ -122,7 +122,7 @@ modparam("registrar", "append_branches", 0)
 	</example>
     </section>
 
-    <section id="use_domain">
+    <section id="registrar.use_domain">
 	<title><varname>use_domain</varname> (integer)</title>
 	<para>
 	    If set to 1 then the registrar will use username@domain as address
@@ -182,7 +182,7 @@ modparam("registrar", "desc_time_order", 1)
 	</example>
     </section>
 
-    <section id="received_avp">
+    <section id="registrar.received_avp">
 	<title><varname>received_avp</varname> (integer)</title>
 	<para>
 	    Registrar will store the value of the AVP configured by this

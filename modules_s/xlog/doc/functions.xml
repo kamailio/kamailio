@@ -14,7 +14,7 @@
 
     <title>Functions</title>
     
-    <section id="xlog">
+    <section id="xlog.xlog">
 	<title>
 	    <function>xlog(level, format)</function>
 	</title>

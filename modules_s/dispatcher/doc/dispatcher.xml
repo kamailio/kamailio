@@ -28,7 +28,7 @@
 
     <title>Dispatcher Module</title>
 
-    <section id="overview">
+    <section id="dispatcher.overview">
 	<title>Overview</title>
 	<para>
 	    This modules implements a dispatcher for destination addresses. It
@@ -45,7 +45,7 @@
     <xi:include href="params.xml"/>
     <xi:include href="functions.xml"/>
 
-    <section id="install_run">
+    <section id="dispatcher.install_run">
 	<title>Installation And Running</title>
 
 	<example>

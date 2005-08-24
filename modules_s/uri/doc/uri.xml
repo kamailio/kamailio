@@ -28,7 +28,7 @@
 
     <title>Uri Module</title>
 
-    <section id="overview">
+    <section id="uri.overview">
 	<title>Overview</title>
 	<para>Various checks related to SIP URI.</para>
     </section>

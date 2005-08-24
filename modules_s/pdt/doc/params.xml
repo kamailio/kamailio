@@ -14,7 +14,7 @@
 
     <title>Parameters</title>
 
-    <section id="db_url">
+    <section id="pdt.db_url">
 	<title><varname>db_url</varname> (string)</title>
 	<para>
 	    <acronym>SQL</acronym> URL of database--username, password, host,
@@ -33,7 +33,7 @@ modparam("pdt", "db_url", "mysql://user:xxx@127.0.0.1/ser")
 	</example>
     </section>
     
-    <section id="db_table">
+    <section id="pdt.db_table">
 	<title><varname>db_table</varname> (string)</title>
 	<para>
 	    Table name.
@@ -71,7 +71,7 @@ modparam("pdt", "prefix_column", "code")
 	</example>
     </section>
 
-    <section id="domain_column">
+    <section id="pdt.domain_column">
 	<title><varname>domain_column</varname> (string)</title>
 	<para>
 	    Name of 'domain' column.

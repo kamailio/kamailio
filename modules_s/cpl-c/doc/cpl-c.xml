@@ -28,7 +28,7 @@
     
     <title>CPL Module</title>
 
-    <section id="overview">
+    <section id="cpl-c.overview">
 	<title>Overview</title>
 	<para>
 	    cpl-c modules implements a CPL (Call Processing Language)
@@ -37,9 +37,9 @@
 	</para>
     </section>
     
-    <section id="dependencies">
+    <section id="cpl-c.dep">
 	<title>Dependencies</title>
-	<section id="modules">
+	<section id="cpl-c.modules">
 	    <title>SER Modules</title>
 	    <para>
 		The following modules must be loaded before this module:

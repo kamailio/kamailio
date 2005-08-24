@@ -28,7 +28,7 @@
 
     <title>Msilo Module</title>
 
-    <section id="overview">
+    <section id="msilo.overview">
 	<title>Overview</title>
 	<para>
 	    This modules provides offline message storage for SER. It stores
@@ -61,9 +61,9 @@
 	</para>
     </section>
 
-    <section id="dependencies">
+    <section id="msilo.dep">
 	<title>Dependencies</title>
-	<section id="modules">
+	<section id="msilo.modules">
 	    <title>SER modules</title>
 	    <para>
 		The following modules must be loaded before this module:

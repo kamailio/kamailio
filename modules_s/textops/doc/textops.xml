@@ -28,13 +28,13 @@
 
     <title>Textops Module</title>
 
-    <section id="overview">
+    <section id="textops.overview">
 	<title>Overview</title>
 	<para>
 	    This is mostly an example module. It implements text based
 	    operation (search, replace, append a.s.o).
 	</para>
-	<section id="known_limitations">
+	<section id="textops.known_limitations">
 	    <title>Known Limitations</title>
 	    <para>
 		search ignores folded lines. For example,

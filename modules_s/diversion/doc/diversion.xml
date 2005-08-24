@@ -29,7 +29,7 @@
 
     <title>Diversion Module</title>
 
-    <section id="overview">
+    <section id="diversion.overview">
 	<title>Overview</title>
 	<para>
 	    The module implements the Diversion extensions as per

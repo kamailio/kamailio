@@ -14,7 +14,7 @@
 
     <title>Parameters</title>
 
-    <section id="db_url">
+    <section id="auth_db.db_url">
 	<title><varname>db_url</varname> (string)</title>
 	<para>
 	    This is URL of the database to be used. Value of the parameter

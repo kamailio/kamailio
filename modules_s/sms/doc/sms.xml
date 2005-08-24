@@ -28,7 +28,7 @@
 
     <title>SMS Module</title>
 
-    <section id="overview">
+    <section id="sms.overview">
 	<title>Overview</title>
 	<para>
 	    This module provides a way of communication between SIP network
@@ -104,7 +104,7 @@
 	</section>
     </section>
 
-    <section id="dependencies">
+    <section id="sms.dep">
 	<title>Dependencies</title>
 	<para>
 	    The following modules must be loaded before this module:

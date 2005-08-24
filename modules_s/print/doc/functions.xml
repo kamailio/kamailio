@@ -14,7 +14,7 @@
 
     <title>Functions</title>
 
-    <section id="print">
+    <section id="print.print">
 	<title>
 	    <function>print(txt)</function>
 	</title>

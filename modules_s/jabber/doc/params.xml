@@ -14,7 +14,7 @@
 
     <title>Parameters</title>
 
-    <section id="db_url">
+    <section id="jabber.db_url">
 	<title><varname>db_url</varname> (string)</title>
 	<para>
 	    <acronym>SQL</acronym> URL of database.
@@ -154,7 +154,7 @@ modparam("jabber", "proxy", "10.0.0.1:5060 sipserver.com:5060")
 	</example>
     </section>
 
-    <section id="registrar">
+    <section id="jabber.registrar">
 	<title><varname>registrar</varname> (string)</title>
 	<para>
 	    The address in whose behalf the INFO and ERROR messages are sent.

@@ -14,7 +14,7 @@
 
     <title>Parameters</title>
 
-    <section id="radius_config">
+    <section id="group_radius.radius_config">
 	<title><varname>radius_config</varname> (string)</title>
 	<para>
 	    Location of the configuration file of the radius client library.
@@ -32,7 +32,7 @@ modparam("group", "radius_config", "/etc/radiusclient.conf")
 	</example>
     </section>
 
-    <section id="use_domain">
+    <section id="group_radius.use_domain">
 	<title><varname>use_domain</varname> (integer)</title>
 	<para>
 	    If set to 1 then username@domain will be used for lookup, if set to 0 then only

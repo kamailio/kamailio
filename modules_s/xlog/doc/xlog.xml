@@ -32,7 +32,7 @@
 
     <title>Xlog Module</title>
 
-    <section id="overview">
+    <section id="xlog.overview">
 	<title>Overview</title>
 	<para>
 	    This module provides the possibility to print user formatted log or

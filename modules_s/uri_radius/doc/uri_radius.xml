@@ -28,12 +28,12 @@
 
     <title>Uri_radius Module</title>
 
-    <section id="overview">
+    <section id="uri_radius.overview">
 	<title>Overview</title>
 	<para>URI check using Radius server.</para>
     </section>
     
-    <section id="dependencies">
+    <section id="uri_radius.dep">
 	<title>Dependencies</title>
 	<para>
 	    The following libraries or applications must be installed before

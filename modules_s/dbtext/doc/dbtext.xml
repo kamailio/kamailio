@@ -30,7 +30,7 @@
     <title>Dbtext Module</title>
 
 
-    <section id="overview">
+    <section id="dbtext.overview">
 	<title>Overview</title>
 	<para>
 	    The module implements a simplified database engine based on text

@@ -28,7 +28,7 @@
 
     <title>Usrloc Module</title>
 
-    <section id="overview">
+    <section id="usrloc.overview">
 	<title>Overview</title>
 	<para>
 	    User location module. The module keeps a user location table and
@@ -37,7 +37,7 @@
 	</para>
     </section>
 
-    <section id="dependencies">
+    <section id="usrloc.dep">
 	<title>Dependencies</title>
 	<para>
 	    The following modules must be loaded before this module:

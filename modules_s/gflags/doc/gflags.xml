@@ -25,7 +25,7 @@
 
     <title>Gflags Module</title>
 
-    <section id="overview">
+    <section id="gflags.overview">
 	<title>Overview</title>
 	<para>
 	    The module implements global flags. The difference between the

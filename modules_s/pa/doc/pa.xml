@@ -38,7 +38,7 @@
     
     <title>Pa Module</title>
 
-    <section id="overview">
+    <section id="pa.overview">
 	<title>Overview</title>
 	<para>
 	    This module implements a presence server, i.e. entity that receives SUBSCRIBE messages

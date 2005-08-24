@@ -31,7 +31,7 @@
     
     <title>Speedial Module</title>
     
-    <section id="overview">
+    <section id="speeddial.overview">
 	<title>Overview</title>
 	<para>
 	    This module provides on-server speed dial facilities. An user can
@@ -42,7 +42,7 @@
 	</para>
     </section>
 
-    <section id="dependencies">
+    <section id="speeddial.dep">
 	<title>Dependencies</title>
 	<para>
 	    The following modules must be loaded before this module:
@@ -61,7 +61,7 @@
 	</para>
     </section>
 
-    <section id="install_and_run">
+    <section id="speeddial.nstall_and_run">
 	<title>Installation And Running</title>
 	<section id="database">
 	    <title>Database setup</title>

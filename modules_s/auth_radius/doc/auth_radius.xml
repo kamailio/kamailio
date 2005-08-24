@@ -37,7 +37,7 @@
 
     <title>Auth_radius Module</title>
 
-    <section id="overview">
+    <section id="auth_radius.overview">
 	<title>Overview</title>
 	<para>
 	    This module contains functions that are used to perform
@@ -56,18 +56,20 @@
 	</para>
     </section>
 
-    <section id="dependencies">
+    <section id="auth_radius.dep">
 	<title>Dependencies</title>
 	<para>
 	    The module depends on the following modules (in the other words the listed modules
 	    must be loaded before this module):
 	    <itemizedlist>
-		<formalpara>
-		    <title>auth</title>
-		    <para>
-			Generic authentication functions.
-		    </para>
-		</formalpara>
+	    	<listitem>
+		    <formalpara>
+		        <title>auth</title>
+		        <para>
+			    Generic authentication functions.
+		        </para>
+		    </formalpara>
+		</listitem>
 	    </itemizedlist>
 	</para>
     </section>

@@ -36,7 +36,7 @@
 
     <title>Group_radius Module</title>
 
-    <section id="overview">
+    <section id="group_radius.overview">
 	<title>Overview</title>
 	<para>
 	    This module export functions necessary for group membership
@@ -46,7 +46,7 @@
 	</para>
     </section>
 
-    <section id="dependencies">
+    <section id="group_radius.dep">
 	<title>Dependencies</title>
 	<para>
 	    The following libraries or applications must be installed before

@@ -28,7 +28,7 @@
 
     <title>Print Module</title>
 
-    <section id="overview">
+    <section id="print.overview">
 	<title>Overview</title>
 	<para>
 	    This is an example module. It implements only one function that

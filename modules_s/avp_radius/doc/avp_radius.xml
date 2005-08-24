@@ -25,7 +25,7 @@
 
     <title>Avp_radius Module</title>
 
-    <section id="overview">
+    <section id="avp_radius.overview">
 	<title>Overview</title>
 	<para>
 	    avp_radius module allows loading of user's attributes into AVPs

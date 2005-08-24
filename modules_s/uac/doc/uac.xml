@@ -28,7 +28,7 @@
 
     <title>UAC Module</title>
 
-    <section id="overview">
+    <section id="uac.overview">
 	<title>Overview</title>
 	<para>
 	    UAC (User Agent Client) module provides some basic UAC
@@ -47,7 +47,7 @@
 	</itemizedlist>
     </section>
 
-    <section id="dependencies">
+    <section id="uac.dep">
 	<title>Dependencies</title>
 	<para>
 	    The following modules must be loaded before this module:
@@ -61,7 +61,7 @@
 	</para>
     </section>
 
-    <section id="install_and_run">
+    <section id="uac.install_and_run">
 	<title>Installation And Running</title>
 	<para>
 	    The UAC module requires additional functionality in TM module for

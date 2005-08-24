@@ -25,8 +25,10 @@
 	    </revision>
 	</revhistory>
     </sectioninfo>
+
+    <title>Avp_db Module</title>
     
-    <section id="overview">
+    <section id="avp_db.overview">
 	<title>Overview</title>
 	<para>
 	    This module contains several functions that can be used to
@@ -51,7 +53,7 @@
 	</para>
     </section>
     
-    <section id="dependencies">
+    <section id="avp_db.dep">
 	<title>Dependencies</title>
 	<para>
 	    A database module, such as mysql, postgres, or dbtext.

@@ -68,7 +68,7 @@ modparam("avpops","avp_aliases","uuid=I:660;email=s:email_addr;fwd=i:753")
 	</example>
     </section>
 
-    <section id="use_domain">
+    <section id="avpops.use_domain">
 	<title><varname>use_domain</varname> (integer)</title>
 	<para>
 	    If the domain part of the an URI should be used for identifying an
@@ -88,7 +88,7 @@ modparam("avpops","use_domain","1")
 	</example>
     </section>
 
-    <section id="uuid_column">
+    <section id="avpops.uuid_column">
 	<title><varname>uuid_column</varname> (string)</title>
 	<para>
 	    Name of column containing the uuid (unique user id).
@@ -106,7 +106,7 @@ modparam("avpops","uuid_column","uuid")
 	</example>
     </section>
 
-    <section id="username_column">
+    <section id="avpops.username_column">
 	<title><varname>username_column</varname> (string)</title>
 	<para>
 	    Name of column containing the username.

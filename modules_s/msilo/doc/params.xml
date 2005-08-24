@@ -14,7 +14,7 @@
 
     <title>Parameters</title>
 
-    <section id="db_url">
+    <section id="msilo.db_url">
 	<title><varname>db_url</varname> (string)</title>
 	<para>
 	    Database URL.
@@ -50,7 +50,7 @@ modparam("msilo", "db_table", "silo")
 	</example>
     </section>
 
-    <section id="registrar">
+    <section id="msilo.registrar">
 	<title><varname>registrar</varname> (string)</title>
 	<para>
 	    The SIP address used to inform users that destination of their
@@ -91,7 +91,7 @@ modparam("msilo", "expire_time", 36000)
 	</example>
     </section>
     
-    <section id="check_time">
+    <section id="msilo.check_time">
 	<title><varname>check_time</varname> (int)</title>
 	<para>
 	    Timer interval to check if dumped messages are sent OK -

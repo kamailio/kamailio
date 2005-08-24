@@ -78,7 +78,7 @@ modparam("options", "accept_language", "de")
 	</example>
     </section>
     
-    <section id="support">
+    <section id="options.support">
 	<title><varname>support</varname> (string)</title>
 	<para>
 	    This parameter is the content of the Support header field.  Please

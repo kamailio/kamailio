@@ -29,7 +29,7 @@
 
     <title>Nathelper Module</title>
 
-    <section id="overview">
+    <section id="nathelper.overview">
 	<title>Overview</title>
 	<para>
 	    This is a module to help with NAT traversal. In particular, it

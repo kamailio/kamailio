@@ -14,7 +14,7 @@
 
     <title>Parameters</title>
 
-    <section id="db_url">
+    <section id="group.db_url">
 	<title><varname>db_url</varname> (string)</title>
 	<para>
 	    URL of the database table to be used.
@@ -52,7 +52,7 @@ modparam("group", "table", "grp_table")
 	</example>
     </section>
 
-    <section id="user_column">
+    <section id="group.user_column">
 	<title><varname>user_column</varname> (string)</title>
 	<para>
 	    Name of the column holding usernames.
@@ -70,7 +70,7 @@ modparam("group", "user_column", "user")
 	</example>
     </section>
 
-    <section id="domain_column">
+    <section id="group.domain_column">
 	<title><varname>domain_column</varname> (string)</title>
 	<para>
 	    Name of the column holding domains.
@@ -106,7 +106,7 @@ modparam("group", "group_column", "grp")
 	</example>
     </section>
     
-    <section id="use_domain">
+    <section id="group.use_domain">
 	<title><varname>use_domain</varname> (integer)</title>
 	<para>
 	    If set to 1 then username@domain will be used for lookup, if set to

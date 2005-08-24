@@ -14,7 +14,7 @@
 
     <title>Parameters</title>
 
-    <section id="radius_config">
+    <section id="avp_radius.radius_config">
 	<title><varname>radius_config</varname> (string)</title>
 	<para>
 	    This is the location of the configuration file of radius client

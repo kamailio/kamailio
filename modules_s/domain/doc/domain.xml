@@ -26,7 +26,7 @@
 
     <title>Domain Module</title>
 
-    <section id="overview">
+    <section id="domain.overview">
 	<title>Overview</title>
 	<para>
 	    Domain module implements checks that based on domain table
@@ -51,7 +51,7 @@
 	</para>
     </section>
 
-    <section id="dependencies">
+    <section id="domain.dep">
 	<title>Dependencies</title>
 	<para>
 	    The module depends on the following modules (in the other words the listed modules

@@ -14,7 +14,7 @@
 
     <title>Parameters</title>
     
-    <section id="secret">
+    <section id="auth.secret">
 	<title><varname>secret</varname> (string)</title>
 	<para>
 	    Default value is randomly generated string.

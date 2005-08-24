@@ -28,7 +28,7 @@
 
     <title>Pike Module</title>
 
-    <section id="overview">
+    <section id="pike.overview">
 	<title>Overview</title>
 	<para>
 	    The module keeps trace of all (or selected ones) incoming request's

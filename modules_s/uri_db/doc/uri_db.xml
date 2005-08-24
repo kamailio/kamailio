@@ -28,12 +28,12 @@
 
     <title>Uri_db Module</title>
 
-    <section id="overvies">
+    <section id="uri_db.overview">
 	<title>Overview</title>
 	<para>Various checks related to SIP URI.</para>
     </section>
 
-    <section id="dependencies">
+    <section id="uri_db.dep">
 	<title>Dependencies</title>
 	<para>
 	    The following modules must be loaded before this module:

@@ -28,7 +28,7 @@
 
     <title>Options Module</title>
 
-    <section id="overview">
+    <section id="options.overview">
 	<title>Overview</title>
 	<para>
 	    This module provides a function to answer OPTIONS requests which
@@ -45,7 +45,7 @@
 	</para>
     </section>
     
-    <section id="dependencies">
+    <section id="options.dep">
 	<title>Dependencies</title>
 	<para>
 	    The following modules must be loaded before this module:
