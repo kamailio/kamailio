@@ -36,10 +36,12 @@ CATALOG=$(ROOT_DIR)/doc/catalog.xml
 LYNX     ?= lynx
 DIA      ?= dia
 XSLTPROC ?= xsltproc
+XMLLINT ?= /usr/bin/xmllint
 
 LYNX_FLAGS     ?= -nolist
 DIA_ARGS       ?=
 XSLTPROC_FLAGS ?=
+XMLLINT_FLAGS ?= --xinclude --postvalid --noout
 
 ifeq ($(VALIDATE), 0)
 	override XSLTPROC_FLAGS := $(XSLTPROC_FLAGS) --novalid
@@ -71,11 +73,10 @@ txt: $(txt_files)
 %.d: %.xml $(alldep) 
 	$(XSLTPROC) $(XSLTPROC_FLAGS) --nonet --novalid --stringparam output $@ $(DEP_XSL) $< 
 
-
 .PHONY: check
 check: $(xml_files)
-	@XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) --xinclude --nowrite --nomkdir --noout $(DEP_XSL) $<
-	
+	XML_CATALOG_FILES=$(CATALOG) $(XMLLINT) $(XMLLINT_FLAGS) $<
+
 .PHONY: clean
 clean:
 	rm -f $(txt_files)
