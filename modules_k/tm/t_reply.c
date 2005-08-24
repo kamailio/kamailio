@@ -545,8 +545,8 @@ void inline static free_faked_req(struct sip_msg *faked_req, struct cell *t)
 	}
 
 	/* free all types of lump that were added in failure handlers */
-	del_flaged_lumps( &(faked_req->add_rm), LUMPFLAG_SHMEM );
-	del_flaged_lumps( &(faked_req->body_lumps), LUMPFLAG_SHMEM );
+	del_notflaged_lumps( &(faked_req->add_rm), LUMPFLAG_SHMEM );
+	del_notflaged_lumps( &(faked_req->body_lumps), LUMPFLAG_SHMEM );
 	del_nonshm_lump_rpl( &(faked_req->reply_lump) );
 
 	/* free header's parsed structures that were added by failure handlers */

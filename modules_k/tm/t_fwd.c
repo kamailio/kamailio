@@ -289,7 +289,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	proxy->tx++;
 	proxy->tx_bytes+=len;
 
-	/* done! */	
+	/* done! */
 	ret=branch;
 
 error02:
@@ -516,7 +516,8 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	*/
 	if (t->first_branch==0) {
 		try_new=1;
-		branch_ret=add_uac( t, p_msg, GET_RURI(p_msg), GET_NEXT_HOP(p_msg),
+		current_uri = *GET_RURI(p_msg);
+		branch_ret=add_uac( t, p_msg, &current_uri, GET_NEXT_HOP(p_msg),
 			proxy, proto );
 		if (branch_ret>=0)
 			added_branches |= 1<<branch_ret;
