@@ -12,7 +12,7 @@ ROOT_DIR=../..
 # Validate docbook documents before generating output
 # (may be slow)
 #
-#VALIDATE=1
+VALIDATE=0
 
 #
 # You can override the stylesheet used to generate

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4//EN"
-                      "file:///usr/share/sgml/docbook/dtd/xml/4/docbookx.dtd">
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="sip_intro" xmlns:xi="http://www.w3.org/2001/XInclude">
     <sectioninfo>
