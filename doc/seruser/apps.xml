@@ -11,9 +11,8 @@
 	    </revision>
 	</revhistory>
     </sectioninfo>
-
-    <section>
-	<title>Application Writing</title>
+	
+    <title>Application Writing</title>
 	<para>
 	    <application>ser</application> offers several
 	    ways to couple its functionality with applications. The coupling
@@ -805,6 +804,5 @@ bye succeeded
 -->
 
 	</section> <!-- FIFO server -->
-    </section>
 </section>
 	

@@ -12,8 +12,6 @@
 	</revhistory>
     </sectioninfo>
     
-    <title>The Server Startup</title>
-
     <title>Structure <structname>via_body</structname></title>
     <para>
 	The structure represents parsed Via header field. See file

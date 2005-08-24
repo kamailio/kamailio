@@ -38,7 +38,5 @@
     <xi:include href="sip_msg.xml"/>
     <xi:include href="to_body.xml"/>
     <xi:include href="cseq_body.xml"/>
-    <xi:include href="event_t.xml"/>
-    <xi:include href="exp_body_t.xml"/>
 
 </section>

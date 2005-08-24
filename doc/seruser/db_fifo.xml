@@ -14,7 +14,7 @@
 
     <title>Database FIFO interface</title>
 
-    <section id="introduction">
+    <section id="db_fifo_intro">
 	<title>Introduction</title>
 	<para>
 	<application>SER</application> offers to its module developers a common 
@@ -63,7 +63,7 @@
 	</para>
     </section>
 
-    <section id="configuration">
+    <section id="db_fifo_config">
 	<title>Configuration</title>
 	<para>
 	FIFO server presents is required, so configure in your config file the FIFO

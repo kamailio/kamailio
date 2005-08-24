@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <book id="ser_doc" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
+    <bookinfo>
 	<revhistory>
 	    <revision>
 		<revnumber>$Revision$</revnumber>
 		<date>$Date$</date>
 	    </revision>
 	</revhistory>
-    </sectioninfo>
+    </bookinfo>
 
     <chapter>
 	<title>SIP Introduction</title>
@@ -78,12 +78,11 @@
 	<xi:include href="../modules/usrloc/doc/usrloc.xml"/>
 	<xi:include href="../modules/xlog/doc/xlog.xml"/>
     </chapter>
-    
+   
     <chapter>
 	<title>Developer's Guide</title>
 	<xi:include href="serdev/serdev.xml"/>
     </chapter>
-
     <chapter>
 	<title>Frequently Asked Questions</title>
 	<xi:include href="serfaq/serfaq.xml"/>

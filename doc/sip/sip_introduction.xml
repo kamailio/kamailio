@@ -269,7 +269,7 @@
 		</simpara>
 	    </section>
 	</section>
-	<section id="registrar">
+	<section id="sip_intro.registrar">
 	    <title>Registrar</title>
 	    <simpara>
 		We mentioned that the SIP proxy at proxy.b.com knows current Bob's location

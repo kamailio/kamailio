@@ -82,8 +82,10 @@
 	</qandaentry>
 	<qandaentry>
 	    <question>
-		What is the difference between proxy server and back to back
-		user agent (B2BUA) ?
+	    	<simpara>
+		    What is the difference between proxy server and back to back
+		    user agent (B2BUA) ?
+		</simpara>
 	    </question>
 	    <answer>
 		<simpara>
