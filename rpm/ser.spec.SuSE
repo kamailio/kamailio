@@ -1,5 +1,5 @@
 %define name    ser
-%define ver     0.8.14
+%define ver     0.9.3
 %define rel     0
 
 %define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgres snmp cpl cpl-c extcmd 
@@ -11,10 +11,10 @@
 Summary:      SIP Express Router, very fast and flexible SIP Proxy
 Name:         %name
 Version:      %ver
-Release:      %rel
+Release:      %{rel}.suse%{suse_version}
 Packager:     Nils Ohlmeier <nils@iptel.org>
 Copyright:    GPL
-Group:        Networking/Daemons
+Group:        Productivity/Telephony/SIP/Servers
 Source:       http://iptel.org/ser/stable/%{name}-%{ver}_src.tar.gz
 Source2:      ser.init.SuSE
 URL:          http://www.iptel.org/ser
@@ -22,7 +22,6 @@ Vendor:       FhG Fokus
 BuildRoot:    /var/tmp/%{name}-%{ver}-root
 Conflicts:    ser < %ver, ser-mysql < %ver, ser-jabber < %ver, ser-radius < %ver
 BuildPrereq:  make flex bison 
-
 
 %description
 Ser or SIP Express Router is a very fast and flexible SIP (RFC3621)
@@ -37,7 +36,7 @@ transaction module, registrar and user location.
 
 %package  mysql
 Summary:  MySQL connectivity for the SIP Express Router.
-Group:    System Environment/Daemons
+Group:    Productivity/Telephony/SIP/Servers
 Requires: ser = %ver
 BuildPrereq: mysql-devel zlib-devel
 
@@ -48,18 +47,18 @@ entries.
 
 %package  jabber
 Summary:  sip jabber message translation support for the SIP Express Router.
-Group:    System Environment/Daemons
+Group:    Productivity/Telephony/SIP/Servers
 Requires: ser = %ver
 BuildPrereq: expat
 
 %description jabber
 The ser-jabber package contains a sip to jabber message translator.
 
-#%package  radius
-#Summary:  ser radius authentication, group and uri check modules.
-#Group:    System Environment/Daemons
-#Requires: ser = %ver
-#BuildPrereq:  radiusclient
+%package  radius
+Summary:  ser radius authentication, group and uri check modules.
+Group:    Productivity/Telephony/SIP/Servers
+Requires: ser = %ver
+BuildPrereq:  radiusclient
 
 %description radius
 The ser-radius package contains modules for radius authentication, group
@@ -72,7 +71,7 @@ The ser-radius package contains modules for radius authentication, group
 make all skip_modules="%EXCLUDED_MODULES"      cfg-target=/%{_sysconfdir}/ser/
 make modules modules="modules/%MYSQL_MODULES"  cfg-target=/%{_sysconfdir}/ser/
 make modules modules="modules/%JABBER_MODULES" cfg-target=/%{_sysconfdir}/ser/
-#make modules modules="%RADIUS_MOD_PATH"        cfg-target=/%{_sysconfdir}/ser/
+make modules modules="%RADIUS_MOD_PATH"        cfg-target=/%{_sysconfdir}/ser/
 
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
@@ -98,13 +97,13 @@ make install-modules modules="modules/%JABBER_MODULES" \
 		cfg-target=/%{_sysconfdir}/ser/ \
 		doc-prefix=$RPM_BUILD_ROOT \
 		doc-dir=/%{_docdir}/ser/
-#make install-modules modules="%RADIUS_MOD_PATH" \
-#		basedir=$RPM_BUILD_ROOT \
-#		prefix=/usr \
-#		cfg-prefix=$RPM_BUILD_ROOT \
-#		cfg-target=/%{_sysconfdir}/ser/ \
-#		doc-prefix=$RPM_BUILD_ROOT \
-#		doc-dir=/%{_docdir}/ser/
+make install-modules modules="%RADIUS_MOD_PATH" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/ser/ \
+		doc-prefix=$RPM_BUILD_ROOT \
+		doc-dir=/%{_docdir}/ser/
 make install-doc modules="modules/%JABBER_MODULES %RADIUS_MOD_PATH" \
 		basedir=$RPM_BUILD_ROOT \
 		prefix=/usr \
@@ -115,6 +114,7 @@ make install-doc modules="modules/%JABBER_MODULES %RADIUS_MOD_PATH" \
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/init.d
 install -m755 $RPM_SOURCE_DIR/ser.init.SuSE \
               $RPM_BUILD_ROOT/%{_sysconfdir}/init.d/ser
+ln -sf ../../etc/init.d/ser $RPM_BUILD_ROOT/usr/sbin/rcser
 
 %clean
 rm -rf "$RPM_BUILD_ROOT"
@@ -142,17 +142,23 @@ sbin/insserv etc/init.d/
 %doc %{_docdir}/ser/README.auth
 %doc %{_docdir}/ser/README.auth_db
 %doc %{_docdir}/ser/README.auth_diameter
+%doc %{_docdir}/ser/README.avp
+%doc %{_docdir}/ser/README.avp_db
+%doc %{_docdir}/ser/README.avpops
 %doc %{_docdir}/ser/README.dbtext
+%doc %{_docdir}/ser/README.dispatcher
+%doc %{_docdir}/ser/README.diversion
 %doc %{_docdir}/ser/README.domain
 %doc %{_docdir}/ser/README.enum
 %doc %{_docdir}/ser/README.exec
-%doc %{_docdir}/ser/README.ext
+%doc %{_docdir}/ser/README.flatstore
+%doc %{_docdir}/ser/README.gflags
 %doc %{_docdir}/ser/README.group
 %doc %{_docdir}/ser/README.mangler
 %doc %{_docdir}/ser/README.maxfwd
 %doc %{_docdir}/ser/README.msilo
 %doc %{_docdir}/ser/README.nathelper
-%doc %{_docdir}/ser/README.pa
+%doc %{_docdir}/ser/README.options
 %doc %{_docdir}/ser/README.pdt
 %doc %{_docdir}/ser/README.permissions
 %doc %{_docdir}/ser/README.pike
@@ -161,11 +167,12 @@ sbin/insserv etc/init.d/
 %doc %{_docdir}/ser/README.rr
 %doc %{_docdir}/ser/README.sl
 %doc %{_docdir}/ser/README.sms
+%doc %{_docdir}/ser/README.speeddial
 %doc %{_docdir}/ser/README.textops
 %doc %{_docdir}/ser/README.tm
 %doc %{_docdir}/ser/README.uri
+%doc %{_docdir}/ser/README.uri_db
 %doc %{_docdir}/ser/README.usrloc
-%doc %{_docdir}/ser/README.vm
 %doc %{_docdir}/ser/README.xlog
 
 %dir %{_sysconfdir}/ser
@@ -182,14 +189,12 @@ sbin/insserv etc/init.d/
 %{_libdir}/ser/modules/domain.so
 %{_libdir}/ser/modules/enum.so
 %{_libdir}/ser/modules/exec.so
-%{_libdir}/ser/modules/ext.so
 %{_libdir}/ser/modules/group.so
 %{_libdir}/ser/modules/mangler.so
 %{_libdir}/ser/modules/maxfwd.so
 %{_libdir}/ser/modules/mediaproxy.so
 %{_libdir}/ser/modules/msilo.so
 %{_libdir}/ser/modules/nathelper.so
-%{_libdir}/ser/modules/pa.so
 %{_libdir}/ser/modules/pdt.so
 %{_libdir}/ser/modules/permissions.so
 %{_libdir}/ser/modules/pike.so
@@ -202,12 +207,24 @@ sbin/insserv etc/init.d/
 %{_libdir}/ser/modules/tm.so
 %{_libdir}/ser/modules/uri.so
 %{_libdir}/ser/modules/usrloc.so
-%{_libdir}/ser/modules/vm.so
 %{_libdir}/ser/modules/xlog.so
+
+%{_libdir}/ser/modules/avp.so
+%{_libdir}/ser/modules/avp_db.so
+%{_libdir}/ser/modules/avpops.so
+%{_libdir}/ser/modules/dispatcher.so
+%{_libdir}/ser/modules/diversion.so
+%{_libdir}/ser/modules/flatstore.so
+%{_libdir}/ser/modules/gflags.so
+%{_libdir}/ser/modules/options.so
+%{_libdir}/ser/modules/speeddial.so
+%{_libdir}/ser/modules/uri_db.so
 
 %{_sbindir}/ser
 %{_sbindir}/serctl
+%{_sbindir}/serunix
 %{_sbindir}/gen_ha1
+/usr/sbin/rcser
 
 %{_mandir}/man5/*
 %{_mandir}/man8/*
@@ -224,17 +241,25 @@ sbin/insserv etc/init.d/
 %{_libdir}/ser/modules/jabber.so
 %doc %{_docdir}/ser/README.jabber
 
-#%files radius
-#%defattr(-,root,root)
+%files radius
+%defattr(-,root,root)
 #%{_libdir}/ser/modules/auth_radius.so
 #%{_libdir}/ser/modules/group_radius.so
 #%{_libdir}/ser/modules/uri_radius.so
-#%doc %{_docdir}/ser/README.auth_radius
-#%doc %{_docdir}/ser/README.group_radius
-#%doc %{_docdir}/ser/README.uri_radius
+%doc %{_docdir}/ser/README.auth_radius
+%doc %{_docdir}/ser/README.group_radius
+%doc %{_docdir}/ser/README.uri_radius
 
 
 %changelog
+
+* Tue Jul 26 2005 Peter Nixon <peter+rpmspam@peternixon.net>
+- include SUSE version in the rpm filename(s)
+- changed version to 0.9.3 (new upstream release)
+- update rpm package group to match SUSE 9.3
+- removed files no longer in tarball
+- enabled radius modules
+- add symlink for rcser
 
 * Tue Jul 27 2004 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
 - changed vesion to 0.8.14 (new upstream release)
