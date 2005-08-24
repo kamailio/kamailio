@@ -136,6 +136,7 @@ inline static int w_t_on_branch(struct sip_msg* msg, char *go_to, char *foo );
 inline static int t_check_status(struct sip_msg* msg, char *regexp, char *foo);
 inline static int t_flush_flags(struct sip_msg* msg, char *foo, char *bar);
 inline static int t_local_replied(struct sip_msg* msg, char *type, char *bar);
+inline static int t_check_trans(struct sip_msg* msg, char *foo, char *bar);
 
 
 /* strings with avp definition */
@@ -208,6 +209,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE },
 	{"t_local_replied",     t_local_replied,          1, fixup_local_replied,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE  },
+	{"t_check_trans",       t_check_trans,            0, 0,
+			REQUEST_ROUTE },
 	{"load_tm",             (cmd_function)load_tm,    0, 0,
 			0},
 	{0,0,0,0,0}
@@ -674,6 +677,49 @@ static int t_check_status(struct sip_msg* msg, char *regexp, char *foo)
 	if (backup) status[msg->first_line.u.reply.status.len] = backup;
 	if (n!=0) return -1;
 	return 1;
+}
+
+
+inline static int t_check_trans(struct sip_msg* msg, char *foo, char *bar)
+{
+	struct cell *trans;
+	struct cell *bkup;
+	int ret;
+
+	if (msg->REQ_METHOD==METHOD_CANCEL) {
+		/* parse needed hdrs*/
+		if (check_transaction_quadruple(msg)==0) {
+			LOG(L_ERR, "ERROR:tm:t_check_trans: too few headers\n");
+			return 0; /*drop request!*/
+		}
+		if (!msg->hash_index)
+			msg->hash_index = hash(msg->callid->body,get_cseq(msg)->number);
+		/* performe lookup */
+		trans = t_lookupOriginalT(  msg );
+		if (trans) {
+			UNREF( trans );
+			return 1;
+		} else {
+			return -1;
+		}
+	} else {
+		bkup = get_t();
+		ret = t_lookup_request( msg , 0);
+		if ( (trans=get_t())!=0 ) UNREF(trans);
+		set_t( bkup );
+		switch (ret) {
+			case 1:
+				/* transaction found */
+				return 1;
+			case -2:
+				/* e2e ACK found */
+				return 1;
+			default:
+				/* notfound */
+				return -1;
+		}
+	}
+	return ret;
 }
 
 
