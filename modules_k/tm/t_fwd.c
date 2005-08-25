@@ -181,7 +181,6 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	unsigned int len;
 	int backup_route_type;
 	struct usr_avp **backup_list;
-	int reset_hop;
 	char *p;
 
 	branch=t->nr_of_outgoings;
@@ -201,7 +200,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	/* set proper RURI to request to reflect the branch */
 	request->new_uri=*uri;
 	request->parsed_uri_ok=0;
-	reset_hop = 0;
+	request->dst_uri=*next_hop;
 
 	/* from now on, flag all new lumps with LUMPFLAG_BRANCH flag in order to
 	 * be able to remove them later --bogdan */
@@ -210,6 +209,16 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	/* run branch route, if any; run it before RURI's DNS lookup 
 	 * to allow to be changed --bogdan */
 	if (t->on_branch) {
+		/* need to pkg_malloc the dst_uri */
+		if ( next_hop->len ) {
+			if ( (request->dst_uri.s=pkg_malloc(next_hop->len))==0 ) {
+				LOG(L_ERR,"ERROR:tm:add_uac: no more pkg mem\n");
+				ret=ser_error=E_OUT_OF_MEM;
+				goto error01;
+			}
+			memcpy( request->dst_uri.s, next_hop->s, next_hop->len);
+			request->dst_uri.len = next_hop->len;
+		}
 		/* need to pkg_malloc the new_uri */
 		if ( (p=pkg_malloc(request->new_uri.len))==0 ) {
 			LOG(L_ERR,"ERROR:tm:add_uac: no more pkg mem\n");
@@ -227,8 +236,6 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 		set_route_type( backup_route_type );
 		/* restore original avp list */
 		set_avp_list( backup_list );
-		/* was new_uri changed? */
-		reset_hop = (request->new_uri.s!=p) || (request->new_uri.len!=uri->len);
 	}
 
 	/* check DNS resolution */
@@ -236,8 +243,8 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 		temp_proxy=0;
 		proto=get_proto(proto, proxy->proto);
 	}else {
-		proxy=uri2proxy( (next_hop && !reset_hop)? next_hop : &request->new_uri,
-			proto );
+		proxy=uri2proxy( request->dst_uri.len ?
+			&request->dst_uri:&request->new_uri, proto );
 		if (proxy==0)  {
 			ret=E_BAD_ADDRESS;
 			goto error01;
@@ -309,6 +316,13 @@ error01:
 		request->new_uri.s = 0;
 		request->new_uri.len = 0;
 		request->parsed_uri_ok = 0;
+	}
+	/* free any potential dst uri */
+	if (request->dst_uri.s!=next_hop->s) {
+		pkg_free(request->dst_uri.s);
+		/* and just to be sure */
+		request->new_uri.s = 0;
+		request->new_uri.len = 0;
 	}
 error:
 	return ret;
@@ -474,6 +488,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	struct proxy_l * proxy, int proto)
 {
 	str backup_uri;
+	str backup_dst;
 	int branch_ret, lowest_ret;
 	str current_uri;
 	branch_bm_t  added_branches;
@@ -501,6 +516,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 
 	/* backup current uri, sock and flags ... add_uac changes it */
 	backup_uri = p_msg->new_uri;
+	backup_dst = p_msg->dst_uri;
 	bk_sock = p_msg->force_send_socket;
 	bk_flags = p_msg->flags;
 
@@ -517,8 +533,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	if (t->first_branch==0) {
 		try_new=1;
 		current_uri = *GET_RURI(p_msg);
-		branch_ret=add_uac( t, p_msg, &current_uri, GET_NEXT_HOP(p_msg),
-			proxy, proto );
+		branch_ret=add_uac( t, p_msg, &current_uri, &backup_dst, proxy, proto );
 		if (branch_ret>=0)
 			added_branches |= 1<<branch_ret;
 		else
@@ -529,9 +544,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	while((current_uri.s=next_branch( &current_uri.len, &q,
 	&dst_uri.s, &dst_uri.len, &p_msg->force_send_socket))) {
 		try_new++;
-		branch_ret=add_uac( t, p_msg, &current_uri, 
-				(dst_uri.len) ? (&dst_uri) : &current_uri, 
-				proxy, proto);
+		branch_ret=add_uac( t, p_msg, &current_uri, &dst_uri, proxy, proto);
 		/* pick some of the errors in case things go wrong;
 		   note that picking lowest error is just as good as
 		   any other algorithm which picks any other negative
@@ -547,6 +560,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	/* restore original stuff */
 	p_msg->new_uri=backup_uri;
 	p_msg->parsed_uri_ok = 0;/* just to be sure; add_uac may parse other uris*/
+	p_msg->dst_uri = backup_dst;
 	p_msg->force_send_socket = bk_sock;
 	p_msg->flags = bk_flags;
 	/* update on_branch, if modified */
