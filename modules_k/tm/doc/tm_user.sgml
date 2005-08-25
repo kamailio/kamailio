@@ -904,6 +904,45 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 		</example>
 	</section>
 
+	<section>
+		<title>
+		<function moreinfo="none">t_check_trans()</function>
+		</title>
+		<para>
+		Returns true if the current request is associated to a transaction. The
+		relationship between the request ans transaction is defined as follow:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>non-CANCEL/non-ACK requests</emphasis> - is true if
+			the request belongs to a transaction; if so, it means that the 
+			request is a retransmision.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>CANCEL request</emphasis> - true if the cancelled
+			INVITE transaction exists.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>ACK request</emphasis> - true if the ACK is a
+			local end-to-end ACK for an existent INVITE transaction.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>t_check_trans</function> usage</title>
+		<programlisting format="linespecific">
+...
+if ( is_method("CANCEL") ) {
+	if ( t_check_trans() )
+		t_relay();
+	exit;
+}
+...
+</programlisting>
+		</example>
+	</section>
 
 
 

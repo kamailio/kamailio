@@ -75,6 +75,8 @@ Bogdan-Andrei Iancu
               1.4.15. t_write_fifo(info,fifo)
                       t_write_unix(info,sock)
 
+              1.4.16. t_check_trans()
+
    2. Developer's Guide
 
         2.1. Functions
@@ -115,6 +117,7 @@ Bogdan-Andrei Iancu
    1-29. t_flush_flags usage
    1-30. t_local_replied usage
    1-31. t_local_replied usage
+   1-32. t_check_trans usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -705,6 +708,30 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 ...
      _________________________________________________________
 
+1.4.16. t_check_trans()
+
+   Returns true if the current request is associated to a
+   transaction. The relationship between the request ans
+   transaction is defined as follow:
+
+     * non-CANCEL/non-ACK requests - is true if the request
+       belongs to a transaction; if so, it means that the request
+       is a retransmision.
+     * CANCEL request - true if the cancelled INVITE transaction
+       exists.
+     * ACK request - true if the ACK is a local end-to-end ACK
+       for an existent INVITE transaction.
+
+   Example 1-32. t_check_trans usage
+...
+if ( is_method("CANCEL") ) {
+        if ( t_check_trans() )
+                t_relay();
+        exit;
+}
+...
+     _________________________________________________________
+
 Chapter 2. Developer's Guide
 
 2.1. Functions
@@ -736,9 +763,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions
