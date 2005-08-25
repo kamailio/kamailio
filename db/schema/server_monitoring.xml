@@ -9,6 +9,8 @@
 
 <table xmlns:my="http://iptel.org/dbschema/mysql">
     <name>server_monitoring</name>
+    <version>1</version>
+
     <column>
 	<name>time</name>
 	<type>datetime</type>

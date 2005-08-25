@@ -2,125 +2,125 @@
 <!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
   "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd">
 
-<table id="version" xmlns:my="http://iptel.org/dbschema/mysql" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:dt="http://iptel.org/dbschema/dbtext">
+<table id="version" xmlns:xi="http://www.w3.org/2001/XInclude">
     <name>
 	version
     </name>
-    <my:type>MyISAm</my:type>
+
     <column id="tn">
 	<name>table_name</name>
 	<type>string</type>
 	<size>32</size>
     </column>
-    
     <column id="tv">
 	<name>table_version</name>
 	<type>unsigned int</type>
 	<default>0</default>
     </column>
-
+    
     <row>
-	<value col="tn">acc</value>
-	<dt:value col="tv">2</dt:value>
-    </row>
-
-    <row>
-	<value col="tn">active_sessions</value>
-	<value col="tv">1</value></row>
-    <row>
-	<value col="tn">aliases</value>
-	<value col="tv">6</value>
+	<value col="tn"><xi:include href="acc.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="acc.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">event</value>
-	<value col="tv">1</value>
+	<value col="tn"><xi:include href="active_sessions.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="active_sessions.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">grp</value>
-	<value col="tv">2</value>
+	<value col="tn"><xi:include href="aliases.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="aliases.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">location</value>
-	<value col="tv">6</value>
+	<value col="tn"><xi:include href="event.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="event.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">missed_calls</value>
-	<value col="tv">2</value>
+	<value col="tn"><xi:include href="grp.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="grp.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">pending</value>
-	<value col="tv">4</value>
+	<value col="tn"><xi:include href="location.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="location.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">phonebook</value>
-	<value col="tv">1</value>
+	<value col="tn"><xi:include href="missed_calls.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="missed_calls.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">reserved</value>
-	<value col="tv">1</value>
+	<value col="tn"><xi:include href="pending.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="pending.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">subscriber</value>
-	<value col="tv">5</value>
+	<value col="tn"><xi:include href="phonebook.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="phonebook.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">config</value>
-	<value col="tv">1</value>
+	<value col="tn"><xi:include href="reserved.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="reserved.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">silo</value>
-	<value col="tv">3</value>
+	<value col="tn"><xi:include href="subscriber.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="subscriber.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">domain</value>
-	<value col="tv">1</value>
+	<value col="tn"><xi:include href="config.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="config.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">uri</value>
-	<value col="tv">1</value>
+	<value col="tn"><xi:include href="silo.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="silo.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">server_monitoring</value>
-	<value col="tv">1</value>
+	<value col="tn"><xi:include href="domain.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="domain.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">usr_preferences</value>
-	<value col="tv">2</value>
+	<value col="tn"><xi:include href="uri.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="uri.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">usr_preferences_types</value>
-	<value col="tv">1</value>
+	<value col="tn"><xi:include href="server_monitoring.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="server_monitoring.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">trusted</value>
-	<value col="tv">1</value>
+	<value col="tn"><xi:include href="usr_preferences.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="usr_preferences.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">server_monitoring_agg</value>
-	<value col="tv">1</value>
+	<value col="tn"><xi:include href="usr_preferences_types.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="usr_preferences_types.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">admin_privileges</value>
-	<value col="tv">1</value>
+	<value col="tn"><xi:include href="trusted.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="trusted.xml" xpointer="xpointer(table/version/text())"/></value>
+	
     </row>
     <row>
-	<value col="tn">call_forwarding</value>
-	<value col="tv">1</value>
+	<value col="tn"><xi:include href="server_monitoring_agg.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="server_monitoring_agg.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">speed_dial</value>
-	<value col="tv">2</value>
+	<value col="tn"><xi:include href="admin_privileges.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="admin_privileges.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">gw</value>
-	<value col="tv">2</value>
+	<value col="tn"><xi:include href="call_forwarding.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="call_forwarding.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn">gw_grp</value>
-	<value col="tv">2</value>
+	<value col="tn"><xi:include href="speed_dial.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="speed_dial.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-    	<value col="tn">lcr</value>
-	<value col="tv">1</value>
+	<value col="tn"><xi:include href="gw.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="gw.xml" xpointer="xpointer(table/version/text())"/></value>
+    </row>
+    <row>
+	<value col="tn"><xi:include href="gw_grp.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="gw_grp.xml" xpointer="xpointer(table/version/text())"/></value>
+    </row>
+    <row>
+	<value col="tn"><xi:include href="lcr.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="lcr.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
 </table>

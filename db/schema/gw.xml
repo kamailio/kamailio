@@ -9,6 +9,7 @@
 
 <table xmlns:my="http://iptel.org/dbschema/mysql">
     <name>gw</name>
+    <version>2</version>
     <column id="gw_name">
 	<name>gw_name</name>
 	<type>string</type>

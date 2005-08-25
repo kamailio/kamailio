@@ -9,6 +9,8 @@
 
 <table xmlns:my="http://iptel.org/dbschema/mysql">
     <name>grp</name>
+    <version>2</version>
+    
     <column id="username">
 	<name>username</name>
 	<type>string</type>

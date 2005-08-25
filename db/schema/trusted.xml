@@ -9,6 +9,7 @@
 
 <table xmlns:my="http://iptel.org/dbschema/mysql">
     <name>trusted</name>
+    <version>1</version>
     <column id="src_ip">
 	<name>src_ip</name>
 	<type>string</type>

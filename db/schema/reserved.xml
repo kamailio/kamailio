@@ -9,6 +9,8 @@
 
 <table xmlns:my="http://iptel.org/dbschema/mysql">
     <name>reserved</name>
+    <version>1</version>
+
     <description>
 	Table structure for table 'reserved' -- reserved username which should
 	be never allowed for subscription.

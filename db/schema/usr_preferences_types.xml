@@ -9,6 +9,7 @@
 
 <table xmlns:my="http://iptel.org/dbschema/mysql">
     <name>usr_preferences_types</name>
+    <version>1</version>
     <column id="att_name">
 	<name>att_name</name>
 	<type>string</type>

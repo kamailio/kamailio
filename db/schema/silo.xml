@@ -9,6 +9,8 @@
 
 <table xmlns:my="http://iptel.org/dbschema/mysql">
     <name>silo</name>
+    <version>3</version>
+
     <column id="mid">
 	<name>mid</name>
 	<type auto_increment="yes">unsigned int</type>

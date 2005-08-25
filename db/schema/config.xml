@@ -9,6 +9,8 @@
 
 <table xmlns:my="http://iptel.org/dbschema/mysql">
     <name>config</name>
+    <version>1</version>
+
     <column>
 	<name>attribute</name>
 	<type>string</type>

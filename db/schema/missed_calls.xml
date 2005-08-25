@@ -9,6 +9,7 @@
 
 <table xmlns:my="http://iptel.org/dbschema/mysql">
     <name>missed_calls</name>
+    <version>2</version>
     <column>
 	<name>sip_from</name>
 	<type>string</type>

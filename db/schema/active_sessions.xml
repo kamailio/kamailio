@@ -8,7 +8,8 @@
 ]>
 <table xmlns:my="http://iptel.org/dbschema/mysql">
     <name>active_sessions</name>
-
+    <version>1</version>
+    
     <column id="sid">
 	<name>sid</name>
 	<type>string</type>

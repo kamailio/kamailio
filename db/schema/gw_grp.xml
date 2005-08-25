@@ -9,6 +9,8 @@
 
 <table xmlns:my="http://iptel.org/dbschema/mysql">
     <name>gw_grp</name>
+    <version>2</version>
+
     <column>
 	<name>grp_id</name>
 	<type auto_increment="yes">int</type>

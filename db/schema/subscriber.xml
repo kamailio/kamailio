@@ -9,6 +9,8 @@
 
 <table xmlns:my="http://iptel.org/dbschema/mysql">
     <name>subscriber</name>
+    <version>5</version>
+
     <column id="phplib_id">
 	<name>phplib_id</name>
 	<type>string</type>

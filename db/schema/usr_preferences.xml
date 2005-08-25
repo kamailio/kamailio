@@ -9,6 +9,7 @@
 
 <table xmlns:my="http://iptel.org/dbschema/mysql">
     <name>usr_preferences</name>
+    <version>2</version>
     <column>
 	<name>uuid</name>
 	<type>string</type>
