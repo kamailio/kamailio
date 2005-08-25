@@ -501,7 +501,7 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 
 
 static inline int fake_req(struct sip_msg *faked_req, 
-				struct sip_msg *shmem_msg)
+				struct sip_msg *shmem_msg, str *uri)
 {
 	/* on_negative_reply faked msg now copied from shmem msg (as opposed
 	 * to zero-ing) -- more "read-only" actions (exec in particular) will
@@ -518,20 +518,20 @@ static inline int fake_req(struct sip_msg *faked_req,
 	faked_req->parsed_uri_ok = 0;
 
 	/* new_uri can change -- make a private copy */
-	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
-		faked_req->new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
-		if (!faked_req->new_uri.s) {
-			LOG(L_ERR, "ERROR: fake_req: no uri/pkg mem\n");
-			goto error00;
-		}
-		faked_req->new_uri.len=shmem_msg->new_uri.len;
-		memcpy( faked_req->new_uri.s, shmem_msg->new_uri.s, 
-			faked_req->new_uri.len);
-		faked_req->new_uri.s[faked_req->new_uri.len]=0;
+	faked_req->new_uri.s=pkg_malloc( uri->len+1 );
+	if (!faked_req->new_uri.s) {
+		LOG(L_ERR, "ERROR:tm:fake_req: no uri/pkg mem\n");
+		goto error;
 	}
+	faked_req->new_uri.len = uri->len;
+	memcpy( faked_req->new_uri.s, uri->s, uri->len);
+	faked_req->new_uri.s[faked_req->new_uri.len]=0;
+
+	/* dst_set is imposible to restore (since it's not saved),
+	 * so let it set to NULL */
 
 	return 1;
-error00:
+error:
 	return 0;
 }
 
@@ -567,7 +567,7 @@ void inline static free_faked_req(struct sip_msg *faked_req, struct cell *t)
 
 /* return 1 if a failure_route processes */
 static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
-																	int code)
+													int branch, int code)
 {
 	static struct sip_msg faked_req;
 	struct sip_msg *shmem_msg = t->uas.request;
@@ -589,7 +589,7 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		return 1;
 	}
 
-	if (!fake_req(&faked_req, shmem_msg)) {
+	if (!fake_req(&faked_req, shmem_msg, &t->uac[branch].uri)) {
 		LOG(L_ERR, "ERROR: run_failure_handlers: fake_req failed\n");
 		return 0;
 	}
@@ -749,9 +749,8 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 
 		/* run ON_FAILURE handlers ( route and callbacks) */
 		if ( has_tran_tmcbs( Trans, TMCB_ON_FAILURE) || Trans->on_negative ) {
-			run_failure_handlers( Trans,
-				picked_branch==branch?reply:Trans->uac[picked_branch].reply, 
-				picked_code);
+			run_failure_handlers( Trans, Trans->uac[picked_branch].reply,
+				picked_branch, picked_code);
 		}
 
 		/* now reset it; after the failure logic, the reply may
