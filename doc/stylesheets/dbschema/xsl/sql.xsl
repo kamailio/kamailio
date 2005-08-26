@@ -19,37 +19,6 @@
 
 <!-- ################ DATABASE ################# -->
 
-    <xsl:template match="database">
-	<xsl:variable name="database.name">
-	    <xsl:call-template name="get-name"/>
-	</xsl:variable>
-
-	<xsl:text>CREATE DATABASE </xsl:text>
-	<xsl:value-of select="$database.name"/>
-	<xsl:text>;&#x0A;</xsl:text>
-
-	<xsl:text>USE </xsl:text>
-	<xsl:value-of select="$database.name"/>
-	<xsl:text>;&#x0A;&#x0A;</xsl:text>
-
-	<xsl:apply-imports/>
-    </xsl:template>
-
-    <xsl:template match="database" mode="drop">
-	<xsl:variable name="database.name">
-	    <xsl:call-template name="get-name"/>
-	</xsl:variable>
-
-	<xsl:text>USE </xsl:text>
-	<xsl:value-of select="$database.name"/>
-	<xsl:text>;&#x0A;&#x0A;</xsl:text>
-	<xsl:apply-templates mode="drop" select="table"/>
-	<xsl:text>&#x0A;</xsl:text>
-	<xsl:text>DROP DATABASE </xsl:text>
-	<xsl:value-of select="$database.name"/>
-	<xsl:text>;&#x0A;</xsl:text>
-    </xsl:template>
-    
 <!-- ################ /DATABASE ################# -->
 
     
@@ -78,16 +47,10 @@
 	<xsl:apply-templates select="row"/>
     </xsl:template>
 
-    <xsl:template match="table" mode="drop">
-	<xsl:text>DROP TABLE </xsl:text>
-	<xsl:call-template name="get-name"/>
-	<xsl:text>;&#x0A;</xsl:text>
-    </xsl:template>
-
     <xsl:template name="table.close">
 	<xsl:text>);&#x0A;&#x0A;</xsl:text>
     </xsl:template>
-
+    
 <!-- ################ /TABLE ################  -->
 
 <!-- ################ COLUMN ################  -->
@@ -98,10 +61,6 @@
 	<xsl:text> </xsl:text>
 
 	<xsl:call-template name="column.type"/>
-
-	<xsl:call-template name="column.size"/>
-
-	<xsl:call-template name="column.sign"/>
 
 	<xsl:variable name="null">
 	    <xsl:call-template name="get-null"/>
@@ -146,7 +105,10 @@
     </xsl:template>
 
     <xsl:template name="column.type">
+	<!-- FIXME -->
 	<xsl:call-template name="get-type"/>
+	<xsl:call-template name="column.size"/>
+	<xsl:call-template name="column.trailing"/>
     </xsl:template>
 
     <xsl:template name="column.size">
@@ -161,7 +123,7 @@
 	</xsl:if>
     </xsl:template>
 
-    <xsl:template name="column.sign"/>
+    <xsl:template name="column.trailing"/>
 
 <!-- ################ /COLUMN ################  -->
 
