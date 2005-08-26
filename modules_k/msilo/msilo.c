@@ -296,7 +296,7 @@ static int m_store(struct sip_msg* msg, char* mode, char* str2)
 	db_val_t db_vals[NR_KEYS-1];
 	
 	int nr_keys = 0, val, lexpire;
-	t_content_type ctype;
+	content_type_t ctype;
 	static char buf[512];
 	static char buf1[1024];
 	int mime;
@@ -525,6 +525,7 @@ static int m_store(struct sip_msg* msg, char* mode, char* str2)
 			db_vals[nr_keys].val.str_val.len = ctype.type.len;
 		}
 	}
+	nr_keys++;
 
 	/* check 'expires' -- no more parsing - already done by get_body() */
 	if(msg->expires && msg->expires->body.len > 0)

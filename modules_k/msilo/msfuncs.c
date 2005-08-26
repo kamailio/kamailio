@@ -41,24 +41,6 @@
 #define CONTACT_PREFIX_LEN (sizeof(CONTACT_PREFIX)-1)
 #define CONTACT_SUFFIX_LEN  (sizeof(CONTACT_SUFFIX)-1)
 
-#define EAT_SPACES(_p, _e)	\
-			while((*(_p)) && ((_p) <= (_e)) && (*(_p)==' '\
-					|| *(_p)=='\t')) (_p)++; \
-				if((_p)>(_e)) return -2
-
-#define SKIP_CHARS(_p, _n, _e) \
-			if( (_p)+(_n) < (_e) ) (_p) += (_n); \
-			else goto error
-
-
-#define NEXT_SEP(_p, _pos, _e) \
-			(_pos) = 0; \
-			while( (*((_p)+(_pos))) && ((_p)+(_pos) <= (_e)) && \
-					(*((_p)+(_pos)) != ' ') \
-					&& (*((_p)+(_pos)) != '\t') && (*((_p)+(_pos)) != '=') \
-					&& (*((_p)+(_pos)) != ';') && (*((_p)+(_pos)) != '\n')) \
-				(_pos)++; \
-			if((_p)+(_pos) > (_e)) goto error
 
 /**
  * apostrophes escaping
@@ -110,39 +92,59 @@ int m_apo_escape(char* src, int slen, char* dst, int dlen)
  *
  * #return: 0 OK ; -1 error
   */
-int m_extract_content_type(char* src, int len, t_content_type* ctype, int flag)
+int m_extract_content_type(char* src, int len, content_type_t* ctype, int flag)
 {
 	char *p, *end;
-	int f = 0, pos;
+	int f = 0;
 
 	if( !src || len <=0 )
 		goto error;
 	p = src;
 	end = p + len;
-	while((p < end) && f != flag)
+	while((p < end) && (f != flag))
 	{
-		EAT_SPACES(p, end);
+		while((p < end) && (*p==' ' || *p=='\t'))
+			p++;
+		if(p >= end)
+			goto done;
 		if((flag & CT_TYPE) && !(f & CT_TYPE))
 		{
-			NEXT_SEP(p, pos, end);
-			if(p[pos] == ';')
-			{
-				ctype->type.s = p;
-				ctype->type.len = pos;
-				SKIP_CHARS(p, pos+1, end);
-				f |= CT_TYPE;
+			ctype->type.s = p;
+			while(p < end && *p!=' ' && *p!='\t' && *p!='\0'
+					 && *p!=';' && *p!='\r' && *p!='\n')
+				p++;
+			
+			DBG("MSILO:m_extract_content_type: content-type found\n");
+			f |= CT_TYPE;
+			ctype->type.len = p - ctype->type.s;
+			if(f == flag) {
+				return 0;
+			} else {
+				p++;
 				continue;
 			}
-		}
-		if((flag & CT_CHARSET) && !(f & CT_CHARSET))
-		{
-		}
-		if((flag & CT_MSGR) && !(f & CT_MSGR))
-		{
+		} else {
+			if((flag & CT_CHARSET) && !(f & CT_CHARSET))
+			{
+				return -1;
+			} else {
+				if((flag & CT_MSGR) && !(f & CT_MSGR))
+				{
+					return -1;
+				} else {
+					return 0;
+				}
+			}
 		}
 	}
-	return 0;
+
+done:
+	if(f==flag)
+		return 0;
+	else
+		return -1;
 error:
+	DBG("MSILO:m_extract_content_type: error\n");
 	return -1;
 }
 

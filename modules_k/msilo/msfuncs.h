@@ -40,13 +40,13 @@ typedef struct _content_type
 	str type;
 	str charset;
 	str msgr;
-} t_content_type;
+} content_type_t;
 
 /** apostrophes escape - useful for MySQL strings */
 int m_apo_escape(char*, int, char*, int);
 
 /** extract content-type value */
-int m_extract_content_type(char*, int, t_content_type*, int);
+int m_extract_content_type(char*, int, content_type_t*, int);
 
 /** build MESSAGE headers */
 int m_build_headers(str *buf, str ctype, str contact);
