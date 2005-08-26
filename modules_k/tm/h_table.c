@@ -245,18 +245,18 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	new_cell->user_avps = *old;
 	*old = 0;
 
-	/* move the pending callbacks to transaction -bogdan */
-	if (p_msg->id==tmcb_pending_id) {
-		new_cell->tmcb_hl = tmcb_pending_hl;
-		tmcb_pending_hl.first = 0;
-	}
-
-	/* enter callback, which may potentially want to parse some stuff,
-	 * before the request is shmem-ized */
-	if ( p_msg && has_reqin_tmcbs() )
-		run_reqin_callbacks( new_cell, p_msg, p_msg->REQ_METHOD);
-
 	if (p_msg) {
+		/* move the pending callbacks to transaction -bogdan */
+		if (p_msg->id==tmcb_pending_id) {
+			new_cell->tmcb_hl = tmcb_pending_hl;
+			tmcb_pending_hl.first = 0;
+		}
+
+		/* enter callback, which may potentially want to parse some stuff,
+		 * before the request is shmem-ized */
+		if (has_reqin_tmcbs() )
+			run_reqin_callbacks( new_cell, p_msg, p_msg->REQ_METHOD);
+
 		/* clean possible previous added vias/clen header or else they would
 		 * get propagated in the failure routes */
 		free_via_clen_lump(&p_msg->add_rm);
