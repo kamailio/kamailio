@@ -414,6 +414,7 @@ static int fixup_write_avp(void** param, int param_no)
 			if ( (!strcasecmp( "from", s) && (flags|=AVPOPS_USE_FROM))
 				|| (!strcasecmp( "to", s) && (flags|=AVPOPS_USE_TO))
 				|| (!strcasecmp( "ruri", s) && (flags|=AVPOPS_USE_RURI))
+				|| (!strcasecmp( "duri", s) && (flags|=AVPOPS_USE_DURI))
 				|| (!strcasecmp( "dst_ip", s) && (flags|=AVPOPS_USE_DST_IP))
 				|| (!strcasecmp( "src_ip", s) && (flags|=AVPOPS_USE_SRC_IP))
 				|| (!strncasecmp( "hdr", s, 3) && (flags|=AVPOPS_USE_HDRREQ)) )
@@ -591,6 +592,14 @@ static int fixup_pushto_avp(void** param, int param_no)
 					" ruri flag \"%s\"!\n",p);
 				return E_UNSPEC;
 			}
+		} else if (!strcasecmp( "duri", s)) {
+			if ( p!=0 )
+			{
+				LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: unknown "
+					" duri flag \"%s\"!\n",p);
+				return E_UNSPEC;
+			}
+			ap->opd = AVPOPS_VAL_NONE|AVPOPS_USE_DURI;
 		} else {
 			/* what's the hdr destination ? request or reply? */
 			if ( p==0 )

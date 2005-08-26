@@ -67,6 +67,7 @@
 #define AVPOPS_USE_HDRRPL    (1<<11)
 #define AVPOPS_USE_SRC_IP    (1<<12)
 #define AVPOPS_USE_DST_IP    (1<<13)
+#define AVPOPS_USE_DURI      (1<<14)
 
 /* flags for operation flags    24..31 */
 #define AVPOPS_FLAG_USER0    (1<<24)

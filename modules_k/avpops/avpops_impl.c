@@ -740,6 +740,10 @@ int ops_write_avp(struct sip_msg* msg, struct fis_param *src,
 				DBG("DEBUG:avpops:write_avp: hdr not found\n");
 				goto error;
 			}
+		} else if (src->opd&AVPOPS_USE_DURI) {
+			if(msg->dst_uri.s==NULL)
+				goto error;
+			avp_val.s = &msg->dst_uri;
 		} else {
 			/* get data from uri (from,to,ruri) */
 			if (src->opd&(AVPOPS_FLAG_USER0|AVPOPS_FLAG_DOMAIN0))
@@ -940,6 +944,10 @@ int ops_pushto_avp ( struct sip_msg* msg, struct fis_param* dst,
 				LOG(L_ERR,"ERROR:avpops:pushto_avp: failed to build hdr\n");
 				goto error;
 			}
+		} else if (dst->opd&AVPOPS_USE_DURI) {
+			if (!(avp->flags&AVP_VAL_STR)) {
+				goto error;
+			}
 		} else {
 			LOG(L_CRIT,"BUG:avpops:pushto_avp: destination unknown (%d/%d)\n",
 				dst->opd, dst->ops);
@@ -970,7 +978,13 @@ int ops_pushto_avp ( struct sip_msg* msg, struct fis_param* dst,
 					" failed\n");
 				goto error;
 			}
-		} else if (dst->opd==AVPOPS_USE_HDRRPL) {
+		} else if (dst->opd&AVPOPS_USE_DURI) {
+			if(set_dst_uri(msg, &val)!=0)
+			{
+				LOG(L_ERR,"ERROR:avpops:pushto_avp: changing dst uri failed\n");
+				goto error;
+			}
+		} else if (dst->opd&AVPOPS_USE_HDRRPL) {
 			/* set a header for reply */
 			if (add_lump_rpl( msg , val.s, val.len, LUMP_RPL_HDR )==0)
 			{

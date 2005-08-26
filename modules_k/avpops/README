@@ -325,7 +325,7 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
        syntax:
           + value = (variable) | (fix_value) 
           + variable = '$src_ip' | '$dst_ip' | '$hdr[name]' |
-            (sip_uri)['/'('username'|'domain')]) 
+            '$duri' | (sip_uri)['/'('username'|'domain')]) 
           + sip_uri = '$from' | '$to' | '$ruri' 
           + fix_value = 'i:'integer | 's:'string | string 
        Integer values can be given in hexadecimal using notation
@@ -339,6 +339,7 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
 avp_write("$to","i:678");
 avp_write("$ruri/username","$email");
 avp_write("$src_ip","s:ip");
+avp_write("$duri","s:next_hop");
 avp_write("$hdr[call-id]","i:11");
 avp_write("i:333","i:6");
 ...
@@ -372,7 +373,7 @@ avp_delete("");
 
      * destination - as what will be the AVP value pushed into
        SIP message. Parameter syntax:
-          + destination = ruri_dst | hdr_dst 
+          + destination = ruri_dst | hdr_dst | '$duri' 
           + ruri_dst = '$ruri'['/'('username'|'domain')] 
           + hdr_dst = '$hdr_name'['/'('request'|'reply')] 
      * name - which AVP(s) should be pushed into the SIP message.
@@ -384,6 +385,7 @@ avp_delete("");
 ...
 avp_pushto("$ruri","i:678");
 avp_pushto("$ruri/domain","s:backup_domains/g");
+avp_pushto("$duri","i:679");
 avp_pushto("$Email/reply","s:email");
 avp_pushto("$Foo","$bar/g");
 ...
@@ -552,7 +554,7 @@ avp_op("$number","sub/$number2/d");
 
    Example 1-23. is_avp_set usage
 ...
-if(is_avp_set("i:678/g"))
+if(is_avp_set("i:678"))
     log("AVP with integer id 678 exists\n");
 ...
      _________________________________________________________
@@ -596,9 +598,9 @@ Chapter 3. Frequently Asked Questions
    answered on one of OpenSER mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    3.3. How can I report a bug?
 

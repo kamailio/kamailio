@@ -389,7 +389,7 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
 					value = (variable) | (fix_value)
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					variable = '$src_ip' | '$dst_ip' | '$hdr[name]' | (sip_uri)['/'('username'|'domain')])
+					variable = '$src_ip' | '$dst_ip' | '$hdr[name]' | '$duri' | (sip_uri)['/'('username'|'domain')])
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
 					sip_uri = '$from' | '$to' | '$ruri'
@@ -423,6 +423,7 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
 avp_write("$to","i:678");
 avp_write("$ruri/username","$email");
 avp_write("$src_ip","s:ip");
+avp_write("$duri","s:next_hop");
 avp_write("$hdr[call-id]","i:11");
 avp_write("i:333","i:6");
 ...
@@ -483,7 +484,7 @@ avp_delete("");
 				Parameter syntax:
 				<itemizedlist>
 					<listitem><para><emphasis>
-					destination = ruri_dst | hdr_dst
+					destination = ruri_dst | hdr_dst | '$duri'
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
 					ruri_dst = '$ruri'['/'('username'|'domain')]
@@ -515,6 +516,7 @@ avp_delete("");
 ...
 avp_pushto("$ruri","i:678");
 avp_pushto("$ruri/domain","s:backup_domains/g");
+avp_pushto("$duri","i:679");
 avp_pushto("$Email/reply","s:email");
 avp_pushto("$Foo","$bar/g");
 ...
