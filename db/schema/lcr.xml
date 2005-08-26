@@ -17,7 +17,7 @@
     </column>
     <column id="from_uri">
 	<name>from_uri</name>
-	<type>int</type>
+	<type>string</type>
 	<default>%</default>
 	<size>&uri_len;</size>
     </column>
@@ -32,12 +32,15 @@
 	<null/>
     </column>
     <index>
+	<name>lcr_idx1</name>
 	<colref linkend="prefix"/>
     </index>
     <index>
+	<name>lcr_idx2</name>
 	<colref linkend="from_uri"/>
     </index>
     <index>
+	<name>lcr_idx3</name>
 	<colref linkend="grp_id"/>
     </index>
 </table>

@@ -14,7 +14,7 @@
     <column>
 	<name>time</name>
 	<type>datetime</type>
-	<default>0</default>
+	<default>1970-01-01 00:00:00</default>
     </column>
     <column id="id">
 	<name>id</name>
@@ -38,6 +38,7 @@
 	<default>0</default>
     </column>
     <index>
+	<name>sm_idx1</name>
 	<colref linkend="id"/>
 	<colref linkend="param"/>
     </index>

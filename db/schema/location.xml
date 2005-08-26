@@ -38,7 +38,7 @@
     <column>
 	<name>expires</name>
 	<type>datetime</type>
-	<default>1234</default>
+	<default>1970-01-01 00:00:00</default>
     </column>
     <column>
 	<name>q</name>
@@ -59,7 +59,7 @@
     <column>
 	<name>last_modified</name>
 	<type>datetime</type>
-	<default></default>
+	<default>1970-01-01 00:00:00</default>
     </column>
     <column>
 	<name>replicate</name>
@@ -83,13 +83,13 @@
 	<size>64</size>
     </column>
     <index>
-	<name>main_key</name>
+	<name>location_key</name>
 	<colref linkend="username"/>
 	<colref linkend="domain"/>
 	<colref linkend="contact"/>
     </index>
     <index>
-	<name>aliases_contact</name>
+	<name>location_contact</name>
 	<colref linkend="contact"/>
     </index>
 </table>

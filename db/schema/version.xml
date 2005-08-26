@@ -2,7 +2,9 @@
 <!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
   "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd">
 
-<table id="version" xmlns:xi="http://www.w3.org/2001/XInclude">
+<table id="version" xmlns:xi="http://www.w3.org/2001/XInclude"
+   xmlns:pg="http://iptel.org/dbschema/postgres"
+>
     <name>
 	version
     </name>

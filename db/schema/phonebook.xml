@@ -14,7 +14,7 @@
     <column id="id">
 	<name>id</name>
 	<type>unsigned int</type>
-	<default></default>
+	<default>0</default>
     </column>
     <column>
 	<name>username</name>
@@ -47,6 +47,7 @@
 	<size>&uri_len;</size>
     </column>
     <index>
+	<name>pb_idx</name>
 	<colref linkend="id"/>
     </index>
 </table>

@@ -32,9 +32,10 @@
     <column>
 	<name>last_modified</name>
 	<type>datetime</type>
-	<default></default>
+	<default>1970-01-01 00:00:00</default>
     </column>
     <index>
+	<name>grp_idx</name>
 	<colref linkend="username"/>
 	<colref linkend="domain"/>
 	<colref linkend="grp"/>

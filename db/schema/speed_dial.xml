@@ -66,6 +66,7 @@
 	<size>64</size>
     </column>
     <index>
+	<name>speeddial_idx1</name>
 	<colref linkend="username"/>
 	<colref linkend="domain"/>
 	<colref linkend="sd_username"/>

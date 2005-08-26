@@ -50,6 +50,7 @@
 	<type>datetime</type>
     </column>
     <index>
+	<name>up_idx</name>
 	<colref linkend="attribute"/>
 	<colref linkend="username"/>
 	<colref linkend="domain"/>

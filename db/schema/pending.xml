@@ -62,12 +62,12 @@
     <column>
 	<name>datetime_created</name>
 	<type>datetime</type>
-	<default>0</default>
+	<default>1970-01-01 00:00:00</default>
     </column>
     <column>
 	<name>datetime_modified</name>
 	<type>datetime</type>
-	<default>0</default>
+	<default>1970-01-01 00:00:00</default>
     </column>
     <column>
 	<name>confirmation</name>
@@ -126,7 +126,7 @@
     <column>
 	<name>domn</name>
 	<type>unsigned int</type>
-	<default></default>
+	<default>0</default>
 	<size>10</size>
     </column>
     <column>
@@ -136,6 +136,7 @@
 	<size>&uuid_len;</size>
     </column>
     <index>
+	<name>pending_idx1</name>
 	<colref linkend="username"/>
 	<colref linkend="domain"/>
     </index>
@@ -144,7 +145,7 @@
 	<colref linkend="username"/>
     </index>
     <index>
-	<name>phplib_id</name>
+	<name>php</name>
 	<colref linkend="phplib_id"/>
     </index>
 </table>

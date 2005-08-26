@@ -26,6 +26,7 @@
 	<size>64</size>
     </column>
     <index>
+	<name>trusted_idx</name>
 	<colref linkend="src_ip"/>
 	<colref linkend="proto"/>
 	<colref linkend="from_pattern"/>
