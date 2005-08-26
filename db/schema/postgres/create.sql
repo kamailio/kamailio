@@ -1,12 +1,9 @@
-CREATE DATABASE pg_ser;
-USE pg_ser;
-
 CREATE TABLE version (
-    table_name string(32) NOT NULL,
-    table_version int NOT NULL DEFAULT '0'
+    table_name VARCHAR(32) NOT NULL,
+    table_version INTEGER NOT NULL DEFAULT '0'
 );
 
-INSERT INTO version (table_name) VALUES ('acc');
+INSERT INTO version (table_name, table_version) VALUES ('acc', '2');
 INSERT INTO version (table_name, table_version) VALUES ('active_sessions', '1');
 INSERT INTO version (table_name, table_version) VALUES ('aliases', '6');
 INSERT INTO version (table_name, table_version) VALUES ('event', '1');
@@ -34,292 +31,345 @@ INSERT INTO version (table_name, table_version) VALUES ('gw_grp', '2');
 INSERT INTO version (table_name, table_version) VALUES ('lcr', '1');
 
 CREATE TABLE acc (
-    caller_UUID string(255) NOT NULL,
-    callee_UUID string(255) NOT NULL,
-    sip_from string(255) NOT NULL,
-    sip_to string(255) NOT NULL,
-    sip_status string(128) NOT NULL,
-    sip_method string(16) NOT NULL,
-    i_uri string(255) NOT NULL,
-    o_uri string(255) NOT NULL,
-    from_uri string(255) NOT NULL,
-    to_uri string(255) NOT NULL,
-    sip_callid string(255) NOT NULL,
-    username string(64) NOT NULL,
-    domain string(128) NOT NULL,
-    fromtag string(128) NOT NULL,
-    totag string(128) NOT NULL,
-    time datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-    timestamp datetime NOT NULL DEFAULT '',
-    caller_deleted char NOT NULL DEFAULT '',
-    callee_deleted char NOT NULL DEFAULT ''
+    caller_UUID VARCHAR(255) NOT NULL,
+    callee_UUID VARCHAR(255) NOT NULL,
+    sip_from VARCHAR(255) NOT NULL,
+    sip_to VARCHAR(255) NOT NULL,
+    sip_status VARCHAR(128) NOT NULL,
+    sip_method VARCHAR(16) NOT NULL,
+    i_uri VARCHAR(255) NOT NULL,
+    o_uri VARCHAR(255) NOT NULL,
+    from_uri VARCHAR(255) NOT NULL,
+    to_uri VARCHAR(255) NOT NULL,
+    sip_callid VARCHAR(255) NOT NULL,
+    username VARCHAR(64) NOT NULL,
+    domain VARCHAR(128) NOT NULL,
+    fromtag VARCHAR(128) NOT NULL,
+    totag VARCHAR(128) NOT NULL,
+    time TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
+    timestamp TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
+    caller_deleted SMALLINT NOT NULL DEFAULT '0',
+    callee_deleted SMALLINT NOT NULL DEFAULT '0'
 );
+
+CREATE INDEX acc_user ON acc (username, domain);
+CREATE INDEX sip_callid ON acc (sip_callid);
 
 CREATE TABLE active_sessions (
-    sid string(32) NOT NULL DEFAULT '',
-    name string(32) NOT NULL DEFAULT '',
-    val string(32) NOT NULL DEFAULT '',
-    changed string(14) NOT NULL
+    sid VARCHAR(32) NOT NULL DEFAULT '',
+    name VARCHAR(32) NOT NULL DEFAULT '',
+    val VARCHAR(32) NOT NULL DEFAULT '',
+    changed VARCHAR(14) NOT NULL
 );
+
+CREATE INDEX name ON active_sessions (name, sid);
+CREATE INDEX changed ON active_sessions (changed);
 
 CREATE TABLE aliases (
-    username string(64) NOT NULL DEFAULT '',
-    domain string(128) NOT NULL DEFAULT '',
-    contact string(255) NOT NULL DEFAULT '',
-    received string(255) DEFAULT NULL,
-    expires datetime NOT NULL DEFAULT '1234',
-    q float NOT NULL DEFAULT '1.0',
-    callid string(255) NOT NULL DEFAULT 'default_callid',
-    cseq int NOT NULL DEFAULT '42',
-    last_modified datetime NOT NULL DEFAULT '',
-    replicate int NOT NULL DEFAULT '0',
-    state int NOT NULL DEFAULT '0',
-    flags int NOT NULL DEFAULT '0',
-    user_agent string(64) NOT NULL DEFAULT ''
+    username VARCHAR(64) NOT NULL DEFAULT '',
+    domain VARCHAR(128) NOT NULL DEFAULT '',
+    contact VARCHAR(255) NOT NULL DEFAULT '',
+    received VARCHAR(255) DEFAULT NULL,
+    expires TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
+    q REAL NOT NULL DEFAULT '1.0',
+    callid VARCHAR(255) NOT NULL DEFAULT 'default_callid',
+    cseq INTEGER NOT NULL DEFAULT '42',
+    last_modified TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
+    replicate INTEGER NOT NULL DEFAULT '0',
+    state INTEGER NOT NULL DEFAULT '0',
+    flags INTEGER NOT NULL DEFAULT '0',
+    user_agent VARCHAR(64) NOT NULL DEFAULT ''
 );
+
+CREATE INDEX main_key ON aliases (username, domain, contact);
+CREATE INDEX aliases_contact ON aliases (contact);
 
 CREATE TABLE event (
-    id int NOT NULL,
-    username string(64) NOT NULL DEFAULT '',
-    domain string(128) NOT NULL DEFAULT '',
-    uri string(255) NOT NULL DEFAULT '',
-    description string(128) NOT NULL DEFAULT ''
+    id INTEGER NOT NULL,
+    username VARCHAR(64) NOT NULL DEFAULT '',
+    domain VARCHAR(128) NOT NULL DEFAULT '',
+    uri VARCHAR(255) NOT NULL DEFAULT '',
+    description VARCHAR(128) NOT NULL DEFAULT ''
 );
+
+CREATE INDEX id ON event (id);
 
 CREATE TABLE grp (
-    username string(64) NOT NULL DEFAULT '',
-    domain string(128) NOT NULL DEFAULT '',
-    grp string(64) NOT NULL DEFAULT '',
-    last_modified datetime NOT NULL DEFAULT ''
+    username VARCHAR(64) NOT NULL DEFAULT '',
+    domain VARCHAR(128) NOT NULL DEFAULT '',
+    grp VARCHAR(64) NOT NULL DEFAULT '',
+    last_modified TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00'
 );
+
+CREATE INDEX grp_idx ON grp (username, domain, grp);
 
 CREATE TABLE location (
-    username string(64) NOT NULL DEFAULT '',
-    domain string(128) NOT NULL DEFAULT '',
-    contact string(255) NOT NULL DEFAULT '',
-    received string(255) DEFAULT NULL,
-    expires datetime NOT NULL DEFAULT '1234',
-    q float NOT NULL DEFAULT '1.0',
-    callid string(255) NOT NULL DEFAULT 'default_callid',
-    cseq int NOT NULL DEFAULT '42',
-    last_modified datetime NOT NULL DEFAULT '',
-    replicate int NOT NULL DEFAULT '0',
-    state int NOT NULL DEFAULT '0',
-    flags int NOT NULL DEFAULT '0',
-    user_agent string(64) NOT NULL DEFAULT ''
+    username VARCHAR(64) NOT NULL DEFAULT '',
+    domain VARCHAR(128) NOT NULL DEFAULT '',
+    contact VARCHAR(255) NOT NULL DEFAULT '',
+    received VARCHAR(255) DEFAULT NULL,
+    expires TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
+    q REAL NOT NULL DEFAULT '1.0',
+    callid VARCHAR(255) NOT NULL DEFAULT 'default_callid',
+    cseq INTEGER NOT NULL DEFAULT '42',
+    last_modified TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
+    replicate INTEGER NOT NULL DEFAULT '0',
+    state INTEGER NOT NULL DEFAULT '0',
+    flags INTEGER NOT NULL DEFAULT '0',
+    user_agent VARCHAR(64) NOT NULL DEFAULT ''
 );
+
+CREATE INDEX location_key ON location (username, domain, contact);
+CREATE INDEX location_contact ON location (contact);
 
 CREATE TABLE missed_calls (
-    sip_from string(255) NOT NULL DEFAULT '',
-    sip_to string(255) NOT NULL DEFAULT '',
-    sip_status string(128) NOT NULL DEFAULT '',
-    sip_method string(16) NOT NULL DEFAULT '',
-    i_uri string(255) NOT NULL DEFAULT '',
-    o_uri string(255) NOT NULL DEFAULT '',
-    from_uri string(255) NOT NULL DEFAULT '',
-    to_uri string(255) NOT NULL DEFAULT '',
-    sip_callid string(255) NOT NULL DEFAULT '',
-    username string(64) NOT NULL DEFAULT '',
-    domain string(128) NOT NULL DEFAULT '',
-    fromtag string(128) NOT NULL DEFAULT '',
-    totag string(128) NOT NULL DEFAULT '',
-    time datetime NOT NULL DEFAULT '0',
-    timestamp datetime NOT NULL DEFAULT ''
+    sip_from VARCHAR(255) NOT NULL DEFAULT '',
+    sip_to VARCHAR(255) NOT NULL DEFAULT '',
+    sip_status VARCHAR(128) NOT NULL DEFAULT '',
+    sip_method VARCHAR(16) NOT NULL DEFAULT '',
+    i_uri VARCHAR(255) NOT NULL DEFAULT '',
+    o_uri VARCHAR(255) NOT NULL DEFAULT '',
+    from_uri VARCHAR(255) NOT NULL DEFAULT '',
+    to_uri VARCHAR(255) NOT NULL DEFAULT '',
+    sip_callid VARCHAR(255) NOT NULL DEFAULT '',
+    username VARCHAR(64) NOT NULL DEFAULT '',
+    domain VARCHAR(128) NOT NULL DEFAULT '',
+    fromtag VARCHAR(128) NOT NULL DEFAULT '',
+    totag VARCHAR(128) NOT NULL DEFAULT '',
+    time TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
+    timestamp TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00'
 );
+
+CREATE INDEX mc_user ON missed_calls (username, domain);
 
 CREATE TABLE pending (
-    phplib_id string(32) NOT NULL DEFAULT '',
-    username string(64) NOT NULL DEFAULT '',
-    domain string(128) NOT NULL DEFAULT '',
-    password string(25) NOT NULL DEFAULT '',
-    first_name string(25) NOT NULL DEFAULT '',
-    last_name string(45) NOT NULL DEFAULT '',
-    phone string(15) NOT NULL DEFAULT '',
-    email_address string(50) NOT NULL DEFAULT '',
-    datetime_created datetime NOT NULL DEFAULT '0',
-    datetime_modified datetime NOT NULL DEFAULT '0',
-    confirmation string(64) NOT NULL DEFAULT '',
-    flag string(1) NOT NULL DEFAULT 'o',
-    sendnotification string(50) NOT NULL DEFAULT '',
-    greeting string(50) NOT NULL DEFAULT '',
-    ha1 string(128) NOT NULL DEFAULT '',
-    ha1b string(128) NOT NULL DEFAULT '',
-    allow_find string(1) NOT NULL DEFAULT '',
-    timezone string(128) NOT NULL DEFAULT '',
-    rpid string(255) NOT NULL DEFAULT '',
-    domn int(10) NOT NULL DEFAULT '',
-    uuid string(255) NOT NULL DEFAULT ''
+    phplib_id VARCHAR(32) NOT NULL DEFAULT '',
+    username VARCHAR(64) NOT NULL DEFAULT '',
+    domain VARCHAR(128) NOT NULL DEFAULT '',
+    password VARCHAR(25) NOT NULL DEFAULT '',
+    first_name VARCHAR(25) NOT NULL DEFAULT '',
+    last_name VARCHAR(45) NOT NULL DEFAULT '',
+    phone VARCHAR(15) NOT NULL DEFAULT '',
+    email_address VARCHAR(50) NOT NULL DEFAULT '',
+    datetime_created TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
+    datetime_modified TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
+    confirmation VARCHAR(64) NOT NULL DEFAULT '',
+    flag VARCHAR(1) NOT NULL DEFAULT 'o',
+    sendnotification VARCHAR(50) NOT NULL DEFAULT '',
+    greeting VARCHAR(50) NOT NULL DEFAULT '',
+    ha1 VARCHAR(128) NOT NULL DEFAULT '',
+    ha1b VARCHAR(128) NOT NULL DEFAULT '',
+    allow_find VARCHAR(1) NOT NULL DEFAULT '',
+    timezone VARCHAR(128) NOT NULL DEFAULT '',
+    rpid VARCHAR(255) NOT NULL DEFAULT '',
+    domn INTEGER NOT NULL DEFAULT '0',
+    uuid VARCHAR(255) NOT NULL DEFAULT ''
 );
+
+CREATE INDEX pending_idx1 ON pending (username, domain);
+CREATE INDEX user_2 ON pending (username);
+CREATE INDEX php ON pending (phplib_id);
 
 CREATE TABLE phonebook (
-    id int NOT NULL DEFAULT '',
-    username string(64) NOT NULL DEFAULT '',
-    domain string(128) NOT NULL DEFAULT '',
-    fname string(32) NOT NULL DEFAULT '',
-    lname string(32) NOT NULL DEFAULT '',
-    sip_uri string(255) NOT NULL DEFAULT ''
+    id INTEGER NOT NULL DEFAULT '0',
+    username VARCHAR(64) NOT NULL DEFAULT '',
+    domain VARCHAR(128) NOT NULL DEFAULT '',
+    fname VARCHAR(32) NOT NULL DEFAULT '',
+    lname VARCHAR(32) NOT NULL DEFAULT '',
+    sip_uri VARCHAR(255) NOT NULL DEFAULT ''
 );
 
+CREATE INDEX pb_idx ON phonebook (id);
+
 CREATE TABLE reserved (
-    username string(64) NOT NULL,
-    user2 UNIQUE (username, )
+    username VARCHAR(64) NOT NULL,
+    CONSTRAINT user2 UNIQUE (username)
 );
 
 CREATE TABLE subscriber (
-    phplib_id string(32) NOT NULL DEFAULT '',
-    username string(64) NOT NULL DEFAULT '',
-    domain string(128) NOT NULL DEFAULT '',
-    password string(25) NOT NULL DEFAULT '',
-    first_name string(25) NOT NULL DEFAULT '',
-    last_name string(45) NOT NULL DEFAULT '',
-    phone string(15) NOT NULL DEFAULT '',
-    email_address string(50) NOT NULL DEFAULT '',
-    datetime_created datetime NOT NULL DEFAULT '0',
-    datetime_modified datetime NOT NULL DEFAULT '0',
-    confirmation string(64) NOT NULL DEFAULT '',
-    flag string(1) NOT NULL DEFAULT 'o',
-    sendnotification string(50) NOT NULL DEFAULT '',
-    greeting string(50) NOT NULL DEFAULT '',
-    ha1 string(128) NOT NULL DEFAULT '',
-    ha1b string(128) NOT NULL DEFAULT '',
-    allow_find string(1) NOT NULL DEFAULT '',
-    timezone string(128) NOT NULL DEFAULT '',
-    rpid string(255) NOT NULL DEFAULT '',
-    domn int(10) NOT NULL DEFAULT '',
-    uuid string(255) NOT NULL DEFAULT '',
-     UNIQUE (username, domain, ),
-
+    phplib_id VARCHAR(32) NOT NULL DEFAULT '',
+    username VARCHAR(64) NOT NULL DEFAULT '',
+    domain VARCHAR(128) NOT NULL DEFAULT '',
+    password VARCHAR(25) NOT NULL DEFAULT '',
+    first_name VARCHAR(25) NOT NULL DEFAULT '',
+    last_name VARCHAR(45) NOT NULL DEFAULT '',
+    phone VARCHAR(15) NOT NULL DEFAULT '',
+    email_address VARCHAR(50) NOT NULL DEFAULT '',
+    datetime_created TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
+    datetime_modified TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
+    confirmation VARCHAR(64) NOT NULL DEFAULT '',
+    flag VARCHAR(1) NOT NULL DEFAULT 'o',
+    sendnotification VARCHAR(50) NOT NULL DEFAULT '',
+    greeting VARCHAR(50) NOT NULL DEFAULT '',
+    ha1 VARCHAR(128) NOT NULL DEFAULT '',
+    ha1b VARCHAR(128) NOT NULL DEFAULT '',
+    allow_find VARCHAR(1) NOT NULL DEFAULT '',
+    timezone VARCHAR(128) NOT NULL DEFAULT '',
+    rpid VARCHAR(255) NOT NULL DEFAULT '',
+    domn INTEGER NOT NULL DEFAULT '0',
+    uuid VARCHAR(255) NOT NULL DEFAULT '',
+    UNIQUE (username, domain)
 );
 
+CREATE INDEX sub_idx1 ON subscriber (username);
+CREATE INDEX phplib_id ON subscriber (phplib_id);
+
 CREATE TABLE config (
-    attribute string(32) NOT NULL,
-    value string(128) NOT NULL,
-    username string(64) NOT NULL DEFAULT '',
-    domain string(128) NOT NULL DEFAULT '',
-    modified datetime
+    attribute VARCHAR(32) NOT NULL,
+    value VARCHAR(128) NOT NULL,
+    username VARCHAR(64) NOT NULL DEFAULT '',
+    domain VARCHAR(128) NOT NULL DEFAULT '',
+    modified TIMESTAMP
 );
 
 CREATE TABLE silo (
-    mid int NOT NULL,
-    src_addr string(255) NOT NULL DEFAULT '',
-    dst_addr string(255) NOT NULL DEFAULT '',
-    r_uri string(255) NOT NULL DEFAULT '',
-    username string(64) NOT NULL DEFAULT '',
-    domain string(128) NOT NULL DEFAULT '',
-    inc_time datetime NOT NULL DEFAULT '0',
-    exp_time datetime NOT NULL DEFAULT '0',
-    ctype string(128) NOT NULL DEFAULT 'text/plain',
-    body binary NOT NULL DEFAULT ''
+    mid INTEGER NOT NULL,
+    src_addr VARCHAR(255) NOT NULL DEFAULT '',
+    dst_addr VARCHAR(255) NOT NULL DEFAULT '',
+    r_uri VARCHAR(255) NOT NULL DEFAULT '',
+    username VARCHAR(64) NOT NULL DEFAULT '',
+    domain VARCHAR(128) NOT NULL DEFAULT '',
+    inc_time TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
+    exp_time TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
+    ctype VARCHAR(128) NOT NULL DEFAULT 'text/plain',
+    body BYTEA NOT NULL DEFAULT ''
 );
+
+CREATE INDEX silo_idx1 ON silo (mid);
 
 CREATE TABLE domain (
-    domain string(128) NOT NULL DEFAULT '',
-    last_modified datetime NOT NULL DEFAULT '0'
+    domain VARCHAR(128) NOT NULL DEFAULT '',
+    last_modified TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00'
 );
+
+CREATE INDEX domain_idx1 ON domain (domain);
 
 CREATE TABLE uri (
-    username string(64) NOT NULL DEFAULT '',
-    domain string(128) NOT NULL DEFAULT '',
-    uri_user string(64) NOT NULL DEFAULT '',
-    last_modified datetime NOT NULL DEFAULT ''
+    username VARCHAR(64) NOT NULL DEFAULT '',
+    domain VARCHAR(128) NOT NULL DEFAULT '',
+    uri_user VARCHAR(64) NOT NULL DEFAULT '',
+    last_modified TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00'
 );
+
+CREATE INDEX uri_idx1 ON uri (username, domain, uri_user);
 
 CREATE TABLE server_monitoring (
-    time datetime NOT NULL DEFAULT '0',
-    id int NOT NULL DEFAULT '0',
-    param string(32) NOT NULL DEFAULT '',
-    value int NOT NULL DEFAULT '0',
-    increment int NOT NULL DEFAULT '0'
+    time TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
+    id INTEGER NOT NULL DEFAULT '0',
+    param VARCHAR(32) NOT NULL DEFAULT '',
+    value INTEGER NOT NULL DEFAULT '0',
+    increment INTEGER NOT NULL DEFAULT '0'
 );
+
+CREATE INDEX sm_idx1 ON server_monitoring (id, param);
 
 CREATE TABLE usr_preferences (
-    uuid string(255) NOT NULL DEFAULT '',
-    username string(64) NOT NULL DEFAULT '',
-    domain string(128) NOT NULL DEFAULT '',
-    attribute string(32) NOT NULL DEFAULT '',
-    value string(128) NOT NULL DEFAULT '',
-    type int NOT NULL DEFAULT '0',
-    modified datetime NOT NULL
+    uuid VARCHAR(255) NOT NULL DEFAULT '',
+    username VARCHAR(64) NOT NULL DEFAULT '',
+    domain VARCHAR(128) NOT NULL DEFAULT '',
+    attribute VARCHAR(32) NOT NULL DEFAULT '',
+    value VARCHAR(128) NOT NULL DEFAULT '',
+    type INTEGER NOT NULL DEFAULT '0',
+    modified TIMESTAMP NOT NULL
 );
+
+CREATE INDEX up_idx ON usr_preferences (attribute, username, domain);
 
 CREATE TABLE usr_preferences_types (
-    att_name string(32) NOT NULL DEFAULT '',
-    att_rich_type string(32) NOT NULL DEFAULT 'string',
-    att_raw_type int NOT NULL DEFAULT '2',
-    att_type_spec string(255),
-    default_value string(100) NOT NULL DEFAULT ''
+    att_name VARCHAR(32) NOT NULL DEFAULT '',
+    att_rich_type VARCHAR(32) NOT NULL DEFAULT 'string',
+    att_raw_type INTEGER NOT NULL DEFAULT '2',
+    att_type_spec VARCHAR(255),
+    default_value VARCHAR(100) NOT NULL DEFAULT ''
 );
+
+CREATE INDEX upt_idx1 ON usr_preferences_types (att_name);
 
 CREATE TABLE trusted (
-    src_ip string(39) NOT NULL,
-    proto string(4) NOT NULL,
-    from_pattern string(64) NOT NULL
+    src_ip VARCHAR(39) NOT NULL,
+    proto VARCHAR(4) NOT NULL,
+    from_pattern VARCHAR(64) NOT NULL
 );
+
+CREATE INDEX trusted_idx ON trusted (src_ip, proto, from_pattern);
 
 CREATE TABLE server_monitoring_agg (
-    param string(32) NOT NULL DEFAULT '',
-    s_value int NOT NULL DEFAULT '0',
-    s_increment int NOT NULL DEFAULT '0',
-    last_aggregated_increment int NOT NULL DEFAULT '0',
-    av double NOT NULL DEFAULT '0',
-    mv int NOT NULL DEFAULT '0',
-    ad double NOT NULL DEFAULT '0',
-    lv int NOT NULL DEFAULT '0',
-    min_val int NOT NULL DEFAULT '0',
-    max_val int NOT NULL DEFAULT '0',
-    min_inc int NOT NULL DEFAULT '0',
-    max_inc int NOT NULL DEFAULT '0',
-    lastupdate datetime NOT NULL DEFAULT '0'
+    param VARCHAR(32) NOT NULL DEFAULT '',
+    s_value INTEGER NOT NULL DEFAULT '0',
+    s_increment INTEGER NOT NULL DEFAULT '0',
+    last_aggregated_increment INTEGER NOT NULL DEFAULT '0',
+    av DOUBLE PRECISION NOT NULL DEFAULT '0',
+    mv INTEGER NOT NULL DEFAULT '0',
+    ad DOUBLE PRECISION NOT NULL DEFAULT '0',
+    lv INTEGER NOT NULL DEFAULT '0',
+    min_val INTEGER NOT NULL DEFAULT '0',
+    max_val INTEGER NOT NULL DEFAULT '0',
+    min_inc INTEGER NOT NULL DEFAULT '0',
+    max_inc INTEGER NOT NULL DEFAULT '0',
+    lastupdate TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00'
 );
+
+CREATE INDEX smagg_idx1 ON server_monitoring_agg (param);
 
 CREATE TABLE admin_privileges (
-    username string(64) NOT NULL DEFAULT '',
-    domain string(128) NOT NULL DEFAULT '',
-    priv_name string(64) NOT NULL DEFAULT '',
-    priv_value string(64) NOT NULL DEFAULT '0'
+    username VARCHAR(64) NOT NULL DEFAULT '',
+    domain VARCHAR(128) NOT NULL DEFAULT '',
+    priv_name VARCHAR(64) NOT NULL DEFAULT '',
+    priv_value VARCHAR(64) NOT NULL DEFAULT '0'
 );
 
+CREATE INDEX adminpriv_idx1 ON admin_privileges (username, priv_name, priv_value, domain);
+
 CREATE TABLE call_forwarding (
-    username string(64) NOT NULL DEFAULT '',
-    domain string(128) NOT NULL DEFAULT '',
-    uri_re string(128) NOT NULL DEFAULT '',
-    purpose string(32) NOT NULL DEFAULT '',
-    action string(32) NOT NULL DEFAULT '',
-    param1 string(128) DEFAULT '',
-    param2 string(128) DEFAULT '',
-    cf_key UNIQUE (username, domain, uri_re, purpose, )
+    username VARCHAR(64) NOT NULL DEFAULT '',
+    domain VARCHAR(128) NOT NULL DEFAULT '',
+    uri_re VARCHAR(128) NOT NULL DEFAULT '',
+    purpose VARCHAR(32) NOT NULL DEFAULT '',
+    action VARCHAR(32) NOT NULL DEFAULT '',
+    param1 VARCHAR(128) DEFAULT '',
+    param2 VARCHAR(128) DEFAULT '',
+    CONSTRAINT cf_key UNIQUE (username, domain, uri_re, purpose)
 );
 
 CREATE TABLE speed_dial (
-    uuid string(255) NOT NULL DEFAULT '',
-    username string(64) NOT NULL DEFAULT '',
-    domain string(128) NOT NULL DEFAULT '',
-    sd_username string(64) NOT NULL DEFAULT '',
-    sd_domain string(128) NOT NULL DEFAULT '',
-    new_uri string(255) NOT NULL DEFAULT '',
-    fname string(128) NOT NULL DEFAULT '',
-    lname string(128) NOT NULL DEFAULT '',
-    description string(64) NOT NULL DEFAULT ''
+    uuid VARCHAR(255) NOT NULL DEFAULT '',
+    username VARCHAR(64) NOT NULL DEFAULT '',
+    domain VARCHAR(128) NOT NULL DEFAULT '',
+    sd_username VARCHAR(64) NOT NULL DEFAULT '',
+    sd_domain VARCHAR(128) NOT NULL DEFAULT '',
+    new_uri VARCHAR(255) NOT NULL DEFAULT '',
+    fname VARCHAR(128) NOT NULL DEFAULT '',
+    lname VARCHAR(128) NOT NULL DEFAULT '',
+    description VARCHAR(64) NOT NULL DEFAULT ''
 );
+
+CREATE INDEX speeddial_idx1 ON speed_dial (username, domain, sd_username, sd_domain);
 
 CREATE TABLE gw (
-    gw_name string(128) NOT NULL,
-    ip_addr int NOT NULL,
-    port short,
-    uri_scheme char,
-    transport short,
-    grp_id int NOT NULL
+    gw_name VARCHAR(128) NOT NULL,
+    ip_addr INTEGER NOT NULL,
+    port SMALLINT,
+    uri_scheme SMALLINT,
+    transport SMALLINT,
+    grp_id INTEGER NOT NULL
 );
 
+CREATE INDEX gw_idx1 ON gw (gw_name);
+CREATE INDEX gw_idx2 ON gw (grp_id);
+
 CREATE TABLE gw_grp (
-    grp_id int NOT NULL,
-    grp_name string(64) NOT NULL
+    grp_id INTEGER NOT NULL,
+    grp_name VARCHAR(64) NOT NULL
 );
 
 CREATE TABLE lcr (
-    prefix string(16) NOT NULL,
-    from_uri int(255) NOT NULL DEFAULT '%',
-    grp_id int,
-    priority int
+    prefix VARCHAR(16) NOT NULL,
+    from_uri VARCHAR(255) NOT NULL DEFAULT '%',
+    grp_id INTEGER,
+    priority INTEGER
 );
+
+CREATE INDEX lcr_idx1 ON lcr (prefix);
+CREATE INDEX lcr_idx2 ON lcr (from_uri);
+CREATE INDEX lcr_idx3 ON lcr (grp_id);
 

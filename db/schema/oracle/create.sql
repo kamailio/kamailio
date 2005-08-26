@@ -1,12 +1,9 @@
-CREATE DATABASE or_ser;
-USE or_ser;
-
 CREATE TABLE version (
     table_name string(32) NOT NULL,
     table_version int NOT NULL DEFAULT '0'
 );
 
-INSERT INTO version (table_name) VALUES ('acc');
+INSERT INTO version (table_name, table_version) VALUES ('acc', '2');
 INSERT INTO version (table_name, table_version) VALUES ('active_sessions', '1');
 INSERT INTO version (table_name, table_version) VALUES ('aliases', '6');
 INSERT INTO version (table_name, table_version) VALUES ('event', '1');
@@ -49,10 +46,10 @@ CREATE TABLE acc (
     domain string(128) NOT NULL,
     fromtag string(128) NOT NULL,
     totag string(128) NOT NULL,
-    time datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-    timestamp datetime NOT NULL DEFAULT '',
-    caller_deleted char NOT NULL DEFAULT '',
-    callee_deleted char NOT NULL DEFAULT ''
+    time datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+    timestamp datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+    caller_deleted char NOT NULL DEFAULT '0',
+    callee_deleted char NOT NULL DEFAULT '0'
 );
 
 CREATE TABLE active_sessions (
@@ -67,11 +64,11 @@ CREATE TABLE aliases (
     domain string(128) NOT NULL DEFAULT '',
     contact string(255) NOT NULL DEFAULT '',
     received string(255) DEFAULT NULL,
-    expires datetime NOT NULL DEFAULT '1234',
+    expires datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
     q float NOT NULL DEFAULT '1.0',
     callid string(255) NOT NULL DEFAULT 'default_callid',
     cseq int NOT NULL DEFAULT '42',
-    last_modified datetime NOT NULL DEFAULT '',
+    last_modified datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
     replicate int NOT NULL DEFAULT '0',
     state int NOT NULL DEFAULT '0',
     flags int NOT NULL DEFAULT '0',
@@ -90,7 +87,7 @@ CREATE TABLE grp (
     username string(64) NOT NULL DEFAULT '',
     domain string(128) NOT NULL DEFAULT '',
     grp string(64) NOT NULL DEFAULT '',
-    last_modified datetime NOT NULL DEFAULT ''
+    last_modified datetime NOT NULL DEFAULT '1970-01-01 00:00:00'
 );
 
 CREATE TABLE location (
@@ -98,11 +95,11 @@ CREATE TABLE location (
     domain string(128) NOT NULL DEFAULT '',
     contact string(255) NOT NULL DEFAULT '',
     received string(255) DEFAULT NULL,
-    expires datetime NOT NULL DEFAULT '1234',
+    expires datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
     q float NOT NULL DEFAULT '1.0',
     callid string(255) NOT NULL DEFAULT 'default_callid',
     cseq int NOT NULL DEFAULT '42',
-    last_modified datetime NOT NULL DEFAULT '',
+    last_modified datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
     replicate int NOT NULL DEFAULT '0',
     state int NOT NULL DEFAULT '0',
     flags int NOT NULL DEFAULT '0',
@@ -123,8 +120,8 @@ CREATE TABLE missed_calls (
     domain string(128) NOT NULL DEFAULT '',
     fromtag string(128) NOT NULL DEFAULT '',
     totag string(128) NOT NULL DEFAULT '',
-    time datetime NOT NULL DEFAULT '0',
-    timestamp datetime NOT NULL DEFAULT ''
+    time datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+    timestamp datetime NOT NULL DEFAULT '1970-01-01 00:00:00'
 );
 
 CREATE TABLE pending (
@@ -136,8 +133,8 @@ CREATE TABLE pending (
     last_name string(45) NOT NULL DEFAULT '',
     phone string(15) NOT NULL DEFAULT '',
     email_address string(50) NOT NULL DEFAULT '',
-    datetime_created datetime NOT NULL DEFAULT '0',
-    datetime_modified datetime NOT NULL DEFAULT '0',
+    datetime_created datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+    datetime_modified datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
     confirmation string(64) NOT NULL DEFAULT '',
     flag string(1) NOT NULL DEFAULT 'o',
     sendnotification string(50) NOT NULL DEFAULT '',
@@ -147,12 +144,12 @@ CREATE TABLE pending (
     allow_find string(1) NOT NULL DEFAULT '',
     timezone string(128) NOT NULL DEFAULT '',
     rpid string(255) NOT NULL DEFAULT '',
-    domn int(10) NOT NULL DEFAULT '',
+    domn int(10) NOT NULL DEFAULT '0',
     uuid string(255) NOT NULL DEFAULT ''
 );
 
 CREATE TABLE phonebook (
-    id int NOT NULL DEFAULT '',
+    id int NOT NULL DEFAULT '0',
     username string(64) NOT NULL DEFAULT '',
     domain string(128) NOT NULL DEFAULT '',
     fname string(32) NOT NULL DEFAULT '',
@@ -174,8 +171,8 @@ CREATE TABLE subscriber (
     last_name string(45) NOT NULL DEFAULT '',
     phone string(15) NOT NULL DEFAULT '',
     email_address string(50) NOT NULL DEFAULT '',
-    datetime_created datetime NOT NULL DEFAULT '0',
-    datetime_modified datetime NOT NULL DEFAULT '0',
+    datetime_created datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+    datetime_modified datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
     confirmation string(64) NOT NULL DEFAULT '',
     flag string(1) NOT NULL DEFAULT 'o',
     sendnotification string(50) NOT NULL DEFAULT '',
@@ -185,7 +182,7 @@ CREATE TABLE subscriber (
     allow_find string(1) NOT NULL DEFAULT '',
     timezone string(128) NOT NULL DEFAULT '',
     rpid string(255) NOT NULL DEFAULT '',
-    domn int(10) NOT NULL DEFAULT '',
+    domn int(10) NOT NULL DEFAULT '0',
     uuid string(255) NOT NULL DEFAULT '',
      UNIQUE (username, domain, ),
 
@@ -206,26 +203,26 @@ CREATE TABLE silo (
     r_uri string(255) NOT NULL DEFAULT '',
     username string(64) NOT NULL DEFAULT '',
     domain string(128) NOT NULL DEFAULT '',
-    inc_time datetime NOT NULL DEFAULT '0',
-    exp_time datetime NOT NULL DEFAULT '0',
+    inc_time datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+    exp_time datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
     ctype string(128) NOT NULL DEFAULT 'text/plain',
     body binary NOT NULL DEFAULT ''
 );
 
 CREATE TABLE domain (
     domain string(128) NOT NULL DEFAULT '',
-    last_modified datetime NOT NULL DEFAULT '0'
+    last_modified datetime NOT NULL DEFAULT '1970-01-01 00:00:00'
 );
 
 CREATE TABLE uri (
     username string(64) NOT NULL DEFAULT '',
     domain string(128) NOT NULL DEFAULT '',
     uri_user string(64) NOT NULL DEFAULT '',
-    last_modified datetime NOT NULL DEFAULT ''
+    last_modified datetime NOT NULL DEFAULT '1970-01-01 00:00:00'
 );
 
 CREATE TABLE server_monitoring (
-    time datetime NOT NULL DEFAULT '0',
+    time datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
     id int NOT NULL DEFAULT '0',
     param string(32) NOT NULL DEFAULT '',
     value int NOT NULL DEFAULT '0',
@@ -269,7 +266,7 @@ CREATE TABLE server_monitoring_agg (
     max_val int NOT NULL DEFAULT '0',
     min_inc int NOT NULL DEFAULT '0',
     max_inc int NOT NULL DEFAULT '0',
-    lastupdate datetime NOT NULL DEFAULT '0'
+    lastupdate datetime NOT NULL DEFAULT '1970-01-01 00:00:00'
 );
 
 CREATE TABLE admin_privileges (
@@ -318,7 +315,7 @@ CREATE TABLE gw_grp (
 
 CREATE TABLE lcr (
     prefix string(16) NOT NULL,
-    from_uri int(255) NOT NULL DEFAULT '%',
+    from_uri string(255) NOT NULL DEFAULT '%',
     grp_id int,
     priority int
 );

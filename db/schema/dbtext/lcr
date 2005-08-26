@@ -1,1 +1,1 @@
-prefix(str) from_uri(int) grp_id(int,null) priority(int,null) 
+prefix(str) from_uri(str) grp_id(int,null) priority(int,null) 

@@ -4,9 +4,9 @@ USE ser;
 CREATE TABLE version (
     table_name VARCHAR(32) NOT NULL,
     table_version INT UNSIGNED NOT NULL DEFAULT '0'
-) Type=MyISAm;
+);
 
-INSERT INTO version (table_name) VALUES ('acc');
+INSERT INTO version (table_name, table_version) VALUES ('acc', '2');
 INSERT INTO version (table_name, table_version) VALUES ('active_sessions', '1');
 INSERT INTO version (table_name, table_version) VALUES ('aliases', '6');
 INSERT INTO version (table_name, table_version) VALUES ('event', '1');
@@ -49,10 +49,10 @@ CREATE TABLE acc (
     domain VARCHAR(128) NOT NULL,
     fromtag VARCHAR(128) NOT NULL,
     totag VARCHAR(128) NOT NULL,
-    time DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
-    timestamp DATETIME NOT NULL DEFAULT '',
-    caller_deleted TINYINT NOT NULL DEFAULT '',
-    callee_deleted TINYINT NOT NULL DEFAULT '',
+    time DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
+    timestamp DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
+    caller_deleted TINYINT NOT NULL DEFAULT '0',
+    callee_deleted TINYINT NOT NULL DEFAULT '0',
     KEY acc_user (username, domain),
     KEY sip_callid (sip_callid)
 );
@@ -71,11 +71,11 @@ CREATE TABLE aliases (
     domain VARCHAR(128) NOT NULL DEFAULT '',
     contact VARCHAR(255) NOT NULL DEFAULT '',
     received VARCHAR(255) DEFAULT NULL,
-    expires DATETIME NOT NULL DEFAULT '1234',
+    expires DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
     q FLOAT NOT NULL DEFAULT '1.0',
     callid VARCHAR(255) NOT NULL DEFAULT 'default_callid',
     cseq INT UNSIGNED NOT NULL DEFAULT '42',
-    last_modified DATETIME NOT NULL DEFAULT '',
+    last_modified DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
     replicate INT UNSIGNED NOT NULL DEFAULT '0',
     state INT UNSIGNED NOT NULL DEFAULT '0',
     flags INT UNSIGNED NOT NULL DEFAULT '0',
@@ -90,15 +90,15 @@ CREATE TABLE event (
     domain VARCHAR(128) NOT NULL DEFAULT '',
     uri VARCHAR(255) NOT NULL DEFAULT '',
     description VARCHAR(128) NOT NULL DEFAULT '',
-    KEY (id)
+    KEY id (id)
 );
 
 CREATE TABLE grp (
     username VARCHAR(64) NOT NULL DEFAULT '',
     domain VARCHAR(128) NOT NULL DEFAULT '',
     grp VARCHAR(64) NOT NULL DEFAULT '',
-    last_modified DATETIME NOT NULL DEFAULT '',
-    KEY (username, domain, grp)
+    last_modified DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
+    KEY grp_idx (username, domain, grp)
 );
 
 CREATE TABLE location (
@@ -106,17 +106,17 @@ CREATE TABLE location (
     domain VARCHAR(128) NOT NULL DEFAULT '',
     contact VARCHAR(255) NOT NULL DEFAULT '',
     received VARCHAR(255) DEFAULT NULL,
-    expires DATETIME NOT NULL DEFAULT '1234',
+    expires DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
     q FLOAT NOT NULL DEFAULT '1.0',
     callid VARCHAR(255) NOT NULL DEFAULT 'default_callid',
     cseq INT UNSIGNED NOT NULL DEFAULT '42',
-    last_modified DATETIME NOT NULL DEFAULT '',
+    last_modified DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
     replicate INT UNSIGNED NOT NULL DEFAULT '0',
     state INT UNSIGNED NOT NULL DEFAULT '0',
     flags INT UNSIGNED NOT NULL DEFAULT '0',
     user_agent VARCHAR(64) NOT NULL DEFAULT '',
-    KEY main_key (username, domain, contact),
-    KEY aliases_contact (contact)
+    KEY location_key (username, domain, contact),
+    KEY location_contact (contact)
 );
 
 CREATE TABLE missed_calls (
@@ -133,8 +133,8 @@ CREATE TABLE missed_calls (
     domain VARCHAR(128) NOT NULL DEFAULT '',
     fromtag VARCHAR(128) NOT NULL DEFAULT '',
     totag VARCHAR(128) NOT NULL DEFAULT '',
-    time DATETIME NOT NULL DEFAULT '0',
-    timestamp DATETIME NOT NULL DEFAULT '',
+    time DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
+    timestamp DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
     KEY mc_user (username, domain)
 );
 
@@ -147,8 +147,8 @@ CREATE TABLE pending (
     last_name VARCHAR(45) NOT NULL DEFAULT '',
     phone VARCHAR(15) NOT NULL DEFAULT '',
     email_address VARCHAR(50) NOT NULL DEFAULT '',
-    datetime_created DATETIME NOT NULL DEFAULT '0',
-    datetime_modified DATETIME NOT NULL DEFAULT '0',
+    datetime_created DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
+    datetime_modified DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
     confirmation VARCHAR(64) NOT NULL DEFAULT '',
     flag VARCHAR(1) NOT NULL DEFAULT 'o',
     sendnotification VARCHAR(50) NOT NULL DEFAULT '',
@@ -158,21 +158,21 @@ CREATE TABLE pending (
     allow_find VARCHAR(1) NOT NULL DEFAULT '',
     timezone VARCHAR(128) NOT NULL DEFAULT '',
     rpid VARCHAR(255) NOT NULL DEFAULT '',
-    domn INT(10) UNSIGNED NOT NULL DEFAULT '',
+    domn INT(10) UNSIGNED NOT NULL DEFAULT '0',
     uuid VARCHAR(255) NOT NULL DEFAULT '',
-    KEY (username, domain),
+    KEY pending_idx1 (username, domain),
     KEY user_2 (username),
-    KEY phplib_id (phplib_id)
+    KEY php (phplib_id)
 );
 
 CREATE TABLE phonebook (
-    id INT UNSIGNED NOT NULL DEFAULT '',
+    id INT UNSIGNED NOT NULL DEFAULT '0',
     username VARCHAR(64) NOT NULL DEFAULT '',
     domain VARCHAR(128) NOT NULL DEFAULT '',
     fname VARCHAR(32) NOT NULL DEFAULT '',
     lname VARCHAR(32) NOT NULL DEFAULT '',
     sip_uri VARCHAR(255) NOT NULL DEFAULT '',
-    KEY (id)
+    KEY pb_idx (id)
 );
 
 CREATE TABLE reserved (
@@ -189,8 +189,8 @@ CREATE TABLE subscriber (
     last_name VARCHAR(45) NOT NULL DEFAULT '',
     phone VARCHAR(15) NOT NULL DEFAULT '',
     email_address VARCHAR(50) NOT NULL DEFAULT '',
-    datetime_created DATETIME NOT NULL DEFAULT '0',
-    datetime_modified DATETIME NOT NULL DEFAULT '0',
+    datetime_created DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
+    datetime_modified DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
     confirmation VARCHAR(64) NOT NULL DEFAULT '',
     flag VARCHAR(1) NOT NULL DEFAULT 'o',
     sendnotification VARCHAR(50) NOT NULL DEFAULT '',
@@ -200,10 +200,10 @@ CREATE TABLE subscriber (
     allow_find VARCHAR(1) NOT NULL DEFAULT '',
     timezone VARCHAR(128) NOT NULL DEFAULT '',
     rpid VARCHAR(255) NOT NULL DEFAULT '',
-    domn INT(10) UNSIGNED NOT NULL DEFAULT '',
+    domn INT(10) UNSIGNED NOT NULL DEFAULT '0',
     uuid VARCHAR(255) NOT NULL DEFAULT '',
     UNIQUE KEY (username, domain),
-    KEY user_2 (username),
+    KEY sub_idx1 (username),
     KEY phplib_id (phplib_id)
 );
 
@@ -222,34 +222,34 @@ CREATE TABLE silo (
     r_uri VARCHAR(255) NOT NULL DEFAULT '',
     username VARCHAR(64) NOT NULL DEFAULT '',
     domain VARCHAR(128) NOT NULL DEFAULT '',
-    inc_time DATETIME NOT NULL DEFAULT '0',
-    exp_time DATETIME NOT NULL DEFAULT '0',
+    inc_time DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
+    exp_time DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
     ctype VARCHAR(128) NOT NULL DEFAULT 'text/plain',
     body BLOB NOT NULL DEFAULT '',
-    KEY (mid)
+    KEY silo_idx1 (mid)
 );
 
 CREATE TABLE domain (
     domain VARCHAR(128) NOT NULL DEFAULT '',
-    last_modified DATETIME NOT NULL DEFAULT '0',
-    KEY (domain)
+    last_modified DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
+    KEY domain_idx1 (domain)
 );
 
 CREATE TABLE uri (
     username VARCHAR(64) NOT NULL DEFAULT '',
     domain VARCHAR(128) NOT NULL DEFAULT '',
     uri_user VARCHAR(64) NOT NULL DEFAULT '',
-    last_modified DATETIME NOT NULL DEFAULT '',
-    KEY (username, domain, uri_user)
+    last_modified DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
+    KEY uri_idx1 (username, domain, uri_user)
 );
 
 CREATE TABLE server_monitoring (
-    time DATETIME NOT NULL DEFAULT '0',
+    time DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
     id INT NOT NULL DEFAULT '0',
     param VARCHAR(32) NOT NULL DEFAULT '',
     value INT NOT NULL DEFAULT '0',
     increment INT NOT NULL DEFAULT '0',
-    KEY (id, param)
+    KEY sm_idx1 (id, param)
 );
 
 CREATE TABLE usr_preferences (
@@ -260,7 +260,7 @@ CREATE TABLE usr_preferences (
     value VARCHAR(128) NOT NULL DEFAULT '',
     type INT NOT NULL DEFAULT '0',
     modified DATETIME NOT NULL,
-    KEY (attribute, username, domain)
+    KEY up_idx (attribute, username, domain)
 );
 
 CREATE TABLE usr_preferences_types (
@@ -269,14 +269,14 @@ CREATE TABLE usr_preferences_types (
     att_raw_type INT NOT NULL DEFAULT '2',
     att_type_spec VARCHAR(255),
     default_value VARCHAR(100) NOT NULL DEFAULT '',
-    KEY (att_name)
+    KEY upt_idx1 (att_name)
 );
 
 CREATE TABLE trusted (
     src_ip VARCHAR(39) NOT NULL,
     proto VARCHAR(4) NOT NULL,
     from_pattern VARCHAR(64) NOT NULL,
-    KEY (src_ip, proto, from_pattern)
+    KEY trusted_idx (src_ip, proto, from_pattern)
 );
 
 CREATE TABLE server_monitoring_agg (
@@ -292,8 +292,8 @@ CREATE TABLE server_monitoring_agg (
     max_val INT NOT NULL DEFAULT '0',
     min_inc INT NOT NULL DEFAULT '0',
     max_inc INT NOT NULL DEFAULT '0',
-    lastupdate DATETIME NOT NULL DEFAULT '0',
-    KEY (param)
+    lastupdate DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
+    KEY smagg_idx1 (param)
 );
 
 CREATE TABLE admin_privileges (
@@ -301,7 +301,7 @@ CREATE TABLE admin_privileges (
     domain VARCHAR(128) NOT NULL DEFAULT '',
     priv_name VARCHAR(64) NOT NULL DEFAULT '',
     priv_value VARCHAR(64) NOT NULL DEFAULT '0',
-    KEY (username, priv_name, priv_value, domain)
+    KEY adminpriv_idx1 (username, priv_name, priv_value, domain)
 );
 
 CREATE TABLE call_forwarding (
@@ -325,7 +325,7 @@ CREATE TABLE speed_dial (
     fname VARCHAR(128) NOT NULL DEFAULT '',
     lname VARCHAR(128) NOT NULL DEFAULT '',
     description VARCHAR(64) NOT NULL DEFAULT '',
-    KEY (username, domain, sd_username, sd_domain)
+    KEY speeddial_idx1 (username, domain, sd_username, sd_domain)
 );
 
 CREATE TABLE gw (
@@ -335,8 +335,8 @@ CREATE TABLE gw (
     uri_scheme TINYINT UNSIGNED,
     transport SMALLINT UNSIGNED,
     grp_id INT NOT NULL,
-    KEY (gw_name),
-    KEY (grp_id)
+    KEY gw_idx1 (gw_name),
+    KEY gw_idx2 (grp_id)
 );
 
 CREATE TABLE gw_grp (
@@ -346,11 +346,11 @@ CREATE TABLE gw_grp (
 
 CREATE TABLE lcr (
     prefix VARCHAR(16) NOT NULL,
-    from_uri INT(255) NOT NULL DEFAULT '%',
+    from_uri VARCHAR(255) NOT NULL DEFAULT '%',
     grp_id INT,
     priority INT,
-    KEY (prefix),
-    KEY (from_uri),
-    KEY (grp_id)
+    KEY lcr_idx1 (prefix),
+    KEY lcr_idx2 (from_uri),
+    KEY lcr_idx3 (grp_id)
 );
 
