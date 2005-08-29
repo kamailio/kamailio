@@ -76,6 +76,7 @@ Bogdan-Andrei Iancu
                       t_write_unix(info,sock)
 
               1.4.16. t_check_trans()
+              1.4.17. t_was_cancelled()
 
    2. Developer's Guide
 
@@ -116,8 +117,9 @@ Bogdan-Andrei Iancu
    1-28. t_check_status usage
    1-29. t_flush_flags usage
    1-30. t_local_replied usage
-   1-31. t_local_replied usage
+   1-31. t_write_fifo/unix usage
    1-32. t_check_trans usage
+   1-33. t_was_cancelled usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -697,7 +699,7 @@ if (t_local_replied("all")) {
    regarding the request. Which information should be written may
    be control via the "tw_append" parameter.
 
-   Example 1-31. t_local_replied usage
+   Example 1-31. t_write_fifo/unix usage
 ...
 modparam("tm","tw_append","append1:Email=avp[i:12];UA=hdr[User-Agent]")
 modparam("tm","tw_append","append2:body=msg[body]")
@@ -728,6 +730,19 @@ if ( is_method("CANCEL") ) {
         if ( t_check_trans() )
                 t_relay();
         exit;
+}
+...
+     _________________________________________________________
+
+1.4.17. t_was_cancelled()
+
+   Retuns true if called for an INVITE transaction that was
+   explicitly cancelled by UAC side via a CANCEL request.
+
+   Example 1-33. t_was_cancelled usage
+...
+if (t_was_cancelled()) {
+    log("transaction was cancelled by UAC\n");
 }
 ...
      _________________________________________________________

@@ -890,7 +890,7 @@ if (t_local_replied("all")) {
 		<quote>tw_append</quote> parameter.
 		</para>
 		<example>
-		<title><function>t_local_replied</function> usage</title>
+		<title><function>t_write_fifo/unix</function> usage</title>
 		<programlisting format="linespecific">
 ...
 modparam("tm","tw_append","append1:Email=avp[i:12];UA=hdr[User-Agent]")
@@ -909,13 +909,14 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 		<function moreinfo="none">t_check_trans()</function>
 		</title>
 		<para>
-		Returns true if the current request is associated to a transaction. The
-		relationship between the request ans transaction is defined as follow:
+		Returns true if the current request is associated to a transaction. 
+		The relationship between the request ans transaction is defined as 
+		follow:
 		</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>non-CANCEL/non-ACK requests</emphasis> - is true if
-			the request belongs to a transaction; if so, it means that the 
+			<para><emphasis>non-CANCEL/non-ACK requests</emphasis> - is true 
+			if the request belongs to a transaction; if so, it means that the 
 			request is a retransmision.
 			</para>
 		</listitem>
@@ -943,6 +944,27 @@ if ( is_method("CANCEL") ) {
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_was_cancelled()</function>
+		</title>
+		<para>
+		Retuns true if called for an INVITE transaction that was explicitly
+		cancelled by UAC side via a CANCEL request.
+		</para>
+		<example>
+		<title><function>t_was_cancelled</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (t_was_cancelled()) {
+    log("transaction was cancelled by UAC\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 
 
 
