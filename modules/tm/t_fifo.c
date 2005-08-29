@@ -87,7 +87,12 @@ int tm_unix_tx_timeout = 2; /* Default is 2 seconds */
 #define TWRITE_PARAMS          20
 #define TWRITE_VERSION_S       "0.3"
 #define TWRITE_VERSION_LEN     (sizeof(TWRITE_VERSION_S)-1)
-#define eol_line(_i_)          ( lines_eol[2*(_i_)] )
+
+#define eol_line_s(_i_)        ( iov_lines_eol[2*(_i_)].iov_base )
+#define eol_line_len(_i_)      ( iov_lines_eol[2*(_i_)].iov_len )
+
+#define eol_line(_i_,_s_)      { eol_line_s(_i_) = (_s_).s; \
+                                 eol_line_len(_i_) = (_s_).len; }
 
 #define IDBUF_LEN              128
 #define ROUTE_BUFFER_MAX       512
@@ -118,8 +123,8 @@ int tm_unix_tx_timeout = 2; /* Default is 2 seconds */
 		append_chr(s,'>');len++;\
 	} while(0)
 
-static str   lines_eol[2*TWRITE_PARAMS];
-static str   eol={"\n",1};
+static struct iovec iov_lines_eol[2*TWRITE_PARAMS];
+static struct iovec eol={"\n",1};
 
 static int sock;
 
@@ -506,14 +511,14 @@ int init_twrite_lines()
 
 	/* init the line table */
 	for(i=0;i<TWRITE_PARAMS;i++) {
-		lines_eol[2*i].s = 0;
-		lines_eol[2*i].len = 0;
-		lines_eol[2*i+1] = eol;
+		iov_lines_eol[2*i].iov_base = 0;
+		iov_lines_eol[2*i].iov_len = 0;
+		iov_lines_eol[2*i+1] = eol;
 	}
 
 	/* first line is the version - fill it now */
-	eol_line(0).s   = TWRITE_VERSION_S;
-	eol_line(0).len = TWRITE_VERSION_LEN;
+	eol_line_s(0)   = TWRITE_VERSION_S;
+	eol_line_len(0) = TWRITE_VERSION_LEN;
 
 	return 0;
 }
@@ -538,7 +543,7 @@ static int inline write_to_fifo(char *fifo, int cnt )
 
 	/* write now (unbuffered straight-down write) */
 repeat:
-	if (writev(fd_fifo, (struct iovec*)lines_eol, 2*cnt)<0) {
+	if (writev(fd_fifo, iov_lines_eol, 2*cnt)<0) {
 		if (errno!=EINTR) {
 			LOG(L_ERR, "ERROR:tm:write_to_fifo: writev failed: %s\n",
 				strerror(errno));
@@ -842,7 +847,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	append_chr(s,'.');
 	append.len = s-append.s;
 
-	eol_line(1).s = s = cmd_buf;
+	eol_line_s(1) = s = cmd_buf;
 	if(twi->action.len+12 >= CMD_BUFFER_MAX){
 		LOG(L_ERR,"assemble_msg: buffer overflow while "
 		    "copying command name\n");
@@ -850,31 +855,31 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	}
 	append_str(s,"sip_request.",12);
 	append_str(s,twi->action.s,twi->action.len);
-	eol_line(1).len = s-eol_line(1).s;
+	eol_line_len(1) = s - (char*)eol_line_s(1);
 
-	eol_line(2)=REQ_LINE(msg).method;     /* method type */
-	eol_line(3)=msg->parsed_uri.user;     /* user from r-uri */
-	eol_line(4)=msg->parsed_uri.host;     /* domain */
+	eol_line(2,REQ_LINE(msg).method);     /* method type */
+	eol_line(3,msg->parsed_uri.user);     /* user from r-uri */
+	eol_line(4,msg->parsed_uri.host);     /* domain */
 
-	eol_line(5)=msg->rcv.bind_address->address_str; /* dst ip */
+	eol_line(5,msg->rcv.bind_address->address_str); /* dst ip */
 
-	eol_line(6)=msg->rcv.dst_port==SIP_PORT ?
-			empty_param : msg->rcv.bind_address->port_no_str; /* port */
+	eol_line(6,msg->rcv.dst_port==SIP_PORT ?
+			empty_param : msg->rcv.bind_address->port_no_str); /* port */
 
 	/* r_uri ('Contact:' for next requests) */
-	eol_line(7)=msg->first_line.u.request.uri;
+	eol_line(7,msg->first_line.u.request.uri);
 
 	/* r_uri for subsequent requests */
-	eol_line(8)=str_uri.len?str_uri:empty_param;
+	eol_line(8,str_uri.len?str_uri:empty_param);
 
-	eol_line(9)=get_from(msg)->body;		/* from */
-	eol_line(10)=msg->to->body;			/* to */
-	eol_line(11)=msg->callid->body;		/* callid */
-	eol_line(12)=get_from(msg)->tag_value;	/* from tag */
-	eol_line(13)=get_to(msg)->tag_value;	/* to tag */
-	eol_line(14)=get_cseq(msg)->number;	/* cseq number */
+	eol_line(9,get_from(msg)->body);		/* from */
+	eol_line(10,msg->to->body);			/* to */
+	eol_line(11,msg->callid->body);		/* callid */
+	eol_line(12,get_from(msg)->tag_value);	/* from tag */
+	eol_line(13,get_to(msg)->tag_value);	/* to tag */
+	eol_line(14,get_cseq(msg)->number);	/* cseq number */
 
-	eol_line(15).s=id_buf;       /* hash:label */
+	eol_line_s(15)=id_buf;       /* hash:label */
 	s = int2str(hash_index, &l);
 	if (l+1>=IDBUF_LEN) {
 		LOG(L_ERR, "assemble_msg: too big hash\n");
@@ -882,19 +887,19 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	}
 	memcpy(id_buf, s, l);
 	id_buf[l]=':';
-	eol_line(15).len=l+1;
+	eol_line_len(15)=l+1;
 	s = int2str(label, &l);
-	if (l+1+eol_line(15).len>=IDBUF_LEN) {
+	if (l+1+eol_line_len(15)>=IDBUF_LEN) {
 		LOG(L_ERR, "assemble_msg: too big label\n");
 		goto error;
 	}
-	memcpy(id_buf+eol_line(15).len, s, l);
-	eol_line(15).len+=l;
+	memcpy(id_buf+eol_line_len(15), s, l);
+	eol_line_len(15) += l;
 
-	eol_line(16) = route.len ? route : empty_param;
-	eol_line(17) = next_hop;
-	eol_line(18) = append;
-	eol_line(19) = body;
+	eol_line(16, route.len ? route : empty_param );
+	eol_line(17, next_hop );
+	eol_line(18, append );
+	eol_line(19, body );
 
 	/* success */
 	return 1;
@@ -947,7 +952,7 @@ static int write_to_unixsock(char* sockname, int cnt)
 		return -1;
 	}
 
-	if (tsend_dgram_ev(sock, (struct iovec*)lines_eol, 2 * cnt, tm_unix_tx_timeout * 1000) < 0) {
+	if (tsend_dgram_ev(sock, iov_lines_eol, 2 * cnt, tm_unix_tx_timeout * 1000) < 0) {
 		LOG(L_ERR, "write_to_unixsock: writev failed: %s\n", strerror(errno));
 		return -1;
 	}
