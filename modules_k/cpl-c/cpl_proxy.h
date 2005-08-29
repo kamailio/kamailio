@@ -179,6 +179,12 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 	intr->flags |= CPL_PROXY_DONE;
 	intr->msg = ps->req;
 
+	/* is the negative reply triggered by a cancel from UAC side? */
+	if (was_cancelled(t)) {
+		/* stop whole interpretation */
+		return;
+	}
+
 	/* if it's a redirect-> do I have to added to the location set ? */
 	if (intr->proxy.recurse && (ps->code)/100==3) {
 		DBG("DEBUG:cpl-c:negativ_reply: recurse level %d processing..\n",
