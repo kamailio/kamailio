@@ -114,8 +114,8 @@ static cmd_export_t cmds[] = {
 	{"proxy_challenge",     proxy_challenge,         2, challenge_fixup, REQUEST_ROUTE},
 	{"consume_credentials", consume_credentials,     0, 0,               REQUEST_ROUTE},
 	{"is_rpid_user_e164",   is_rpid_user_e164,       0, 0,               REQUEST_ROUTE},
-        {"append_rpid_hf",      append_rpid_hf,          0, 0,               REQUEST_ROUTE},
-	{"append_rpid_hf",      append_rpid_hf_p,        2, rpid_fixup,      REQUEST_ROUTE},
+        {"append_rpid_hf",      append_rpid_hf,          0, 0,               REQUEST_ROUTE|BRANCH_ROUTE},
+	{"append_rpid_hf",      append_rpid_hf_p,        2, rpid_fixup,      REQUEST_ROUTE|BRANCH_ROUTE},
 	{"bind_auth",           (cmd_function)bind_auth, 0, 0,               0            },
 	{0, 0, 0, 0, 0}
 };
