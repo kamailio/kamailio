@@ -508,10 +508,18 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	if (p_msg->REQ_METHOD==METHOD_CANCEL) {
 		t_invite=t_lookupOriginalT(  p_msg );
 		if (t_invite!=T_NULL_CELL) {
+			t_invite->flags |= T_WAS_CANCELLED_FLAG;
 			e2e_cancel( p_msg, t, t_invite );
 			UNREF(t_invite);
 			return 1;
 		}
+	}
+
+	/* do not fooward requests which were already cancelled*/
+	if (was_cancelled(t)) {
+		LOG(L_ERR,"ERROR:tm:t_forward_nonack: discarding fwd for "
+				"a cancelled transaction\n");
+		return -1;
 	}
 
 	/* backup current uri, sock and flags ... add_uac changes it */

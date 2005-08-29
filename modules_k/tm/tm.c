@@ -137,6 +137,7 @@ inline static int t_check_status(struct sip_msg* msg, char *regexp, char *foo);
 inline static int t_flush_flags(struct sip_msg* msg, char *foo, char *bar);
 inline static int t_local_replied(struct sip_msg* msg, char *type, char *bar);
 inline static int t_check_trans(struct sip_msg* msg, char *foo, char *bar);
+inline static int t_was_cancelled(struct sip_msg* msg, char *foo, char *bar);
 
 
 /* strings with avp definition */
@@ -211,6 +212,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE  },
 	{"t_check_trans",       t_check_trans,            0, 0,
 			REQUEST_ROUTE },
+	{"t_was_cancelled",     t_was_cancelled,          0, 0,
+			FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"load_tm",             (cmd_function)load_tm,    0, 0,
 			0},
 	{0,0,0,0,0}
@@ -766,6 +769,21 @@ inline static int t_local_replied(struct sip_msg* msg, char *all, char *bar)
 	}
 
 	return 1;
+}
+
+
+static int t_was_cancelled(struct sip_msg* msg, char *foo, char *bar)
+{
+	struct cell *t;
+
+	/* first get the transaction */
+	if (t_check( msg , 0 )==-1) return -1;
+	if ( (t=get_t())==0) {
+		LOG(L_ERR, "ERROR:tm:t_was_cancelled: cannot check cancel flag for "
+			"a reply without a transaction\n");
+		return -1;
+	}
+	return (t->flags&T_WAS_CANCELLED_FLAG)?1:-1;
 }
 
 

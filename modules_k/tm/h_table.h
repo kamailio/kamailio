@@ -171,6 +171,8 @@ struct totag_elem {
 /* set to one if you want to disallow silent transaction
    dropping when C timer hits */
 #define T_NOISY_CTIMER_FLAG  (1<<2)
+/* set if a CANCEL was received for the transaction */
+#define T_WAS_CANCELLED_FLAG (1<<3)
 
 
 /* transaction UAC's flags */
@@ -312,6 +314,7 @@ struct s_table
 #define is_invite(_t_)           ((_t_)->flags&T_IS_INVITE_FLAG)
 #define is_local(_t_)            ((_t_)->flags&T_IS_LOCAL_FLAG)
 #define has_noisy_ctimer(_t_)    ((_t_)->flags&T_NOISY_CTIMER_FLAG)
+#define was_cancelled(_t_)       ((_t_)->flags&T_WAS_CANCELLED_FLAG)
 
 
 void set_kr( enum kill_reason kr );
