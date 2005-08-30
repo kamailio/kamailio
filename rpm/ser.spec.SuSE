@@ -1,28 +1,34 @@
-%define name    ser
-%define ver     0.8.12
-%define rel     0
-
-%define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgress snmp cpl cpl-c ext extcmd 
+%define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgres snmp cpl cpl-c extcmd 
 %define MYSQL_MODULES		mysql
 %define JABBER_MODULES		jabber
 %define RADIUS_MODULES		auth_radius group_radius uri_radius
 %define RADIUS_MOD_PATH		modules/auth_radius modules/group_radius modules/uri_radius
 
+%define distroversion generic
+%{!?suse_version:%define suse_version 0}
+%{!?sles_version:%define sles_version 0}
+%if %suse_version > 0
+	%define distroversion	suse%{suse_version}
+%endif
+%if %sles_version > 0
+	%define distroversion	sles%{sles_version}
+%endif
+
+
 Summary:      SIP Express Router, very fast and flexible SIP Proxy
-Name:         %name
-Version:      %ver
-Release:      %rel
+Name:         ser
+Version:      0.9.3
+Release:      0.%{distroversion}
 Packager:     Nils Ohlmeier <nils@iptel.org>
 Copyright:    GPL
-Group:        Networking/Daemons
-Source:       http://iptel.org/ser/stable/%{name}-%{ver}_src.tar.gz
+Group:        Productivity/Telephony/SIP/Servers
+Source:       http://iptel.org/ser/stable/%{name}-%{version}_src.tar.gz
 Source2:      ser.init.SuSE
 URL:          http://www.iptel.org/ser
 Vendor:       FhG Fokus
 BuildRoot:    /var/tmp/%{name}-%{ver}-root
-Conflicts:    ser < %ver, ser-mysql < %ver, ser-jabber < %ver, ser-radius < %ver
+Conflicts:    ser < %{version}, ser-mysql < %{version}, ser-jabber < %{version}, ser-radius < %{version}
 BuildPrereq:  make flex bison 
-
 
 %description
 Ser or SIP Express Router is a very fast and flexible SIP (RFC3621)
@@ -37,8 +43,8 @@ transaction module, registrar and user location.
 
 %package  mysql
 Summary:  MySQL connectivity for the SIP Express Router.
-Group:    System Environment/Daemons
-Requires: ser = %ver
+Group:    Productivity/Telephony/SIP/Servers
+Requires: ser = %{version}
 BuildPrereq: mysql-devel zlib-devel
 
 %description mysql
@@ -48,8 +54,8 @@ entries.
 
 %package  jabber
 Summary:  sip jabber message translation support for the SIP Express Router.
-Group:    System Environment/Daemons
-Requires: ser = %ver
+Group:    Productivity/Telephony/SIP/Servers
+Requires: ser = %{version}
 BuildPrereq: expat
 
 %description jabber
@@ -57,8 +63,8 @@ The ser-jabber package contains a sip to jabber message translator.
 
 %package  radius
 Summary:  ser radius authentication, group and uri check modules.
-Group:    System Environment/Daemons
-Requires: ser = %ver
+Group:    Productivity/Telephony/SIP/Servers
+Requires: ser = %{version}
 BuildPrereq:  radiusclient
 
 %description radius
@@ -115,6 +121,7 @@ make install-doc modules="modules/%JABBER_MODULES %RADIUS_MOD_PATH" \
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/init.d
 install -m755 $RPM_SOURCE_DIR/ser.init.SuSE \
               $RPM_BUILD_ROOT/%{_sysconfdir}/init.d/ser
+ln -sf ../../etc/init.d/ser $RPM_BUILD_ROOT/usr/sbin/rcser
 
 %clean
 rm -rf "$RPM_BUILD_ROOT"
@@ -142,16 +149,23 @@ sbin/insserv etc/init.d/
 %doc %{_docdir}/ser/README.auth
 %doc %{_docdir}/ser/README.auth_db
 %doc %{_docdir}/ser/README.auth_diameter
+%doc %{_docdir}/ser/README.avp
+%doc %{_docdir}/ser/README.avp_db
+%doc %{_docdir}/ser/README.avpops
 %doc %{_docdir}/ser/README.dbtext
+%doc %{_docdir}/ser/README.dispatcher
+%doc %{_docdir}/ser/README.diversion
 %doc %{_docdir}/ser/README.domain
 %doc %{_docdir}/ser/README.enum
 %doc %{_docdir}/ser/README.exec
+%doc %{_docdir}/ser/README.flatstore
+%doc %{_docdir}/ser/README.gflags
 %doc %{_docdir}/ser/README.group
 %doc %{_docdir}/ser/README.mangler
 %doc %{_docdir}/ser/README.maxfwd
 %doc %{_docdir}/ser/README.msilo
 %doc %{_docdir}/ser/README.nathelper
-%doc %{_docdir}/ser/README.pa
+%doc %{_docdir}/ser/README.options
 %doc %{_docdir}/ser/README.pdt
 %doc %{_docdir}/ser/README.permissions
 %doc %{_docdir}/ser/README.pike
@@ -160,11 +174,12 @@ sbin/insserv etc/init.d/
 %doc %{_docdir}/ser/README.rr
 %doc %{_docdir}/ser/README.sl
 %doc %{_docdir}/ser/README.sms
+%doc %{_docdir}/ser/README.speeddial
 %doc %{_docdir}/ser/README.textops
 %doc %{_docdir}/ser/README.tm
 %doc %{_docdir}/ser/README.uri
+%doc %{_docdir}/ser/README.uri_db
 %doc %{_docdir}/ser/README.usrloc
-%doc %{_docdir}/ser/README.vm
 %doc %{_docdir}/ser/README.xlog
 
 %dir %{_sysconfdir}/ser
@@ -184,9 +199,9 @@ sbin/insserv etc/init.d/
 %{_libdir}/ser/modules/group.so
 %{_libdir}/ser/modules/mangler.so
 %{_libdir}/ser/modules/maxfwd.so
+%{_libdir}/ser/modules/mediaproxy.so
 %{_libdir}/ser/modules/msilo.so
 %{_libdir}/ser/modules/nathelper.so
-%{_libdir}/ser/modules/pa.so
 %{_libdir}/ser/modules/pdt.so
 %{_libdir}/ser/modules/permissions.so
 %{_libdir}/ser/modules/pike.so
@@ -199,12 +214,24 @@ sbin/insserv etc/init.d/
 %{_libdir}/ser/modules/tm.so
 %{_libdir}/ser/modules/uri.so
 %{_libdir}/ser/modules/usrloc.so
-%{_libdir}/ser/modules/vm.so
 %{_libdir}/ser/modules/xlog.so
+
+%{_libdir}/ser/modules/avp.so
+%{_libdir}/ser/modules/avp_db.so
+%{_libdir}/ser/modules/avpops.so
+%{_libdir}/ser/modules/dispatcher.so
+%{_libdir}/ser/modules/diversion.so
+%{_libdir}/ser/modules/flatstore.so
+%{_libdir}/ser/modules/gflags.so
+%{_libdir}/ser/modules/options.so
+%{_libdir}/ser/modules/speeddial.so
+%{_libdir}/ser/modules/uri_db.so
 
 %{_sbindir}/ser
 %{_sbindir}/serctl
+%{_sbindir}/serunix
 %{_sbindir}/gen_ha1
+/usr/sbin/rcser
 
 %{_mandir}/man5/*
 %{_mandir}/man8/*
@@ -223,15 +250,33 @@ sbin/insserv etc/init.d/
 
 %files radius
 %defattr(-,root,root)
-%{_libdir}/ser/modules/auth_radius.so
-%{_libdir}/ser/modules/group_radius.so
-%{_libdir}/ser/modules/uri_radius.so
+#%{_libdir}/ser/modules/auth_radius.so
+#%{_libdir}/ser/modules/group_radius.so
+#%{_libdir}/ser/modules/uri_radius.so
 %doc %{_docdir}/ser/README.auth_radius
 %doc %{_docdir}/ser/README.group_radius
 %doc %{_docdir}/ser/README.uri_radius
 
 
+
+
 %changelog
+
+* Fri Aug 26 2005 Peter Nixon - Suntel Communications <peter+rpmspam@suntel.com.tr>
+- Remove some needless junk
+- Add a generic tag for non SUSE versions of linux so build doesnt fail on them
+
+* Tue Jul 26 2005 Peter Nixon - Suntel Communications <peter+rpmspam@suntel.com.tr>
+- changed version to 0.9.3 (new upstream release)
+- include SUSE version in the rpm filename(s)
+- update rpm package group to match SUSE 9.3
+- removed files no longer in tarball
+- enabled radius module
+- add symlink for rcser
+
+* Tue Jul 27 2004 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
+- changed vesion to 0.8.14 (new upstream release)
+- added ext to the modules list, removed the radius modules (they depend on radiusclient-ng now)
 
 * Fri Nov 14 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
 - changed vesion to 0.8.12 (new upstream release)
