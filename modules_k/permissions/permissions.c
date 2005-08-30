@@ -258,7 +258,8 @@ static int check_routing(struct sip_msg* msg, int idx)
 	static char ruri_str[EXPRESSION_LENGTH+1];
 	char* uri_str;
 	str branch;
-	
+	int br_idx;
+
 	/* turn off control, allow any routing */
 	if ((!allow[idx].rules) && (!deny[idx].rules)) {
 		DBG("check_routing(): No rules => allow any routing\n");
@@ -329,8 +330,8 @@ static int check_routing(struct sip_msg* msg, int idx)
 	}
 
  check_branches:
-	init_branch_iterator();
-	while((branch.s = next_branch(&branch.len, &q, 0, 0, 0))) {
+	for( br_idx=0 ; (branch.s=get_branch(br_idx,&branch.len,&q,0,0,0))!=0 ;
+	br_idx++ ) {
 		uri_str = get_plain_uri(&branch);
 		if (!uri_str) {
 			LOG(L_ERR, "check_uri(): Error while extracting plain URI\n");

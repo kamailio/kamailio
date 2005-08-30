@@ -950,11 +950,12 @@ static inline void free_contact_list(struct contact *curr) {
  * all branches from destination set.
  */
 int load_contacts(struct sip_msg* msg, char* key, char* value)
-{	
-    	str branch, *ruri;
+{
+	str branch, *ruri;
 	qvalue_t q, ruri_q;
 	struct contact *contacts, *next, *prev, *curr;
 	int_str val;
+	int idx;
 
 	/* Check if anything needs to be done */
 	if (nr_branches == 0) {
@@ -969,8 +970,7 @@ int load_contacts(struct sip_msg* msg, char* key, char* value)
 	}
 	ruri_q = get_ruri_q();
 
-	init_branch_iterator();
-	while((branch.s = next_branch(&branch.len, &q, 0, 0, 0))) {
+	for( idx=0 ; (branch.s=get_branch(idx,&branch.len,&q,0,0,0))!=0 ; idx++ ) {
 	    if (q != ruri_q) {
 		goto rest;
 	    }
@@ -991,8 +991,7 @@ rest:
 	contacts->next = (struct contact *)0;
 
 	/* Insert branch URIs to contact list in increasing q order */
-	init_branch_iterator();
-	while((branch.s = next_branch(&branch.len, &q, 0, 0, 0))) {
+	for( idx=0 ; (branch.s=get_branch(idx,&branch.len,&q,0,0,0))!=0 ; idx++ ) {
 	    next = (struct contact *)pkg_malloc(sizeof(struct contact));
 	    if (!next) {
 		LOG(L_ERR, "ERROR: load_contacts(): No memory for branch URI\n");
