@@ -14,14 +14,5 @@ NAME=avp_radius.so
 DEFS+= -DWITH_RADIUS_SUPPORT -I$(LOCALBASE)/include
 LIBS=-L$(LOCALBASE)/lib -lradiusclient-ng
 
-ifeq ($(MAKELEVEL), 0)
-# make called directly in the module dir!
-
-all::
-	cd ../..; make all
-
-else
-
 include ../../Makefile.modules
 
-endif

@@ -119,7 +119,10 @@ static int mod_init(void)
 	vals[V_SIP_CALLEE_AVPS].n = "SIP-Callee-AVPs";
 
 	/* open log */
-	rc_openlog("openser");
+#ifndef NAME
+#define NAME "openser"
+#endif
+	rc_openlog(NAME);
 	
 	/* read config */
 	if ((rh = rc_read_config(radius_config)) == NULL) {

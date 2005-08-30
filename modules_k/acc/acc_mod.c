@@ -402,7 +402,10 @@ static int mod_init( void )
 	nr_extra_rad = extra2attrs( rad_extra, attrs, A_MAX);
 
 	/* open log */
-	rc_openlog("ser");
+#ifndef NAME
+#define NAME "openser"
+#endif
+	rc_openlog(NAME);
 	/* read config */
 	if ((rh = rc_read_config(radius_config)) == NULL) {
 		LOG(L_ERR, "ERROR: acc: error opening radius config file: %s\n", 
