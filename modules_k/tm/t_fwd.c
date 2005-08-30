@@ -82,29 +82,80 @@ unsigned int get_on_branch()
 }
 
 
-char *print_uac_request( struct cell *t, struct sip_msg *i_req,
-	int branch, unsigned int *len, struct socket_info *send_sock,
-	enum sip_protos proto )
+static inline int pre_print_uac_request( struct cell *t, int branch, 
+		struct sip_msg *request)
+{
+	int backup_route_type;
+	struct usr_avp **backup_list;
+	char *p;
+
+
+	/* ... we calculate branch ... */
+	if (!t_calc_branch(t, branch, request->add_to_branch_s,
+			&request->add_to_branch_len ))
+	{
+		LOG(L_ERR, "ERROR:pre_print_uac_request: branch computation failed\n");
+		goto error;
+	}
+
+	/* from now on, flag all new lumps with LUMPFLAG_BRANCH flag in order to
+	 * be able to remove them later --bogdan */
+	set_init_lump_flags(LUMPFLAG_BRANCH);
+
+	/********** run route & callback ************/
+
+	/* run branch route, if any; run it before RURI's DNS lookup 
+	 * to allow to be changed --bogdan */
+	if (t->on_branch) {
+		/* need to pkg_malloc the dst_uri */
+		if ( request->dst_uri.len ) {
+			if ( (p=pkg_malloc(request->dst_uri.len))==0 ) {
+				LOG(L_ERR,"ERROR:tm:pre_print_uac_request: no more pkg mem\n");
+				ser_error=E_OUT_OF_MEM;
+				goto error;
+			}
+			memcpy( p, request->dst_uri.s, request->dst_uri.len);
+			request->dst_uri.s = p;
+		}
+		/* need to pkg_malloc the new_uri */
+		if ( (p=pkg_malloc(request->new_uri.len))==0 ) {
+			LOG(L_ERR,"ERROR:tm:pre_print_uac_request: no more pkg mem\n");
+			ser_error=E_OUT_OF_MEM;
+			goto error;
+		}
+		memcpy( p, request->new_uri.s, request->new_uri.len);
+		request->new_uri.s = p;
+		/* make available the avp list from transaction */
+		backup_list = set_avp_list( &t->user_avps );
+		/* run branch route */
+		swap_route_type( backup_route_type, BRANCH_ROUTE);
+		run_actions(branch_rlist[t->on_branch], request);
+		set_route_type( backup_route_type );
+		/* restore original avp list */
+		set_avp_list( backup_list );
+	}
+
+	/* run the specific callbacks for this transaction */
+	run_trans_callbacks( TMCB_REQUEST_FWDED, t, request, 0,
+			-request->REQ_METHOD);
+
+	return 0;
+error:
+	return -1;
+}
+
+/* be aware and use it *all* the time between pre_* and post_* functions! */
+static inline char *print_uac_request(struct sip_msg *i_req, unsigned int *len,
+		struct socket_info *send_sock, enum sip_protos proto )
 {
 	char *buf, *shbuf;
 
 	shbuf=0;
 
-	/* ... we calculate branch ... */
-	if (!t_calc_branch(t, branch, i_req->add_to_branch_s,
-			&i_req->add_to_branch_len ))
-	{
-		LOG(L_ERR, "ERROR: print_uac_request: branch computation failed\n");
-		goto error01;
-	}
-
-	/* run the specific callbacks for this transaction */
-	run_trans_callbacks( TMCB_REQUEST_FWDED , t, i_req, 0, -i_req->REQ_METHOD);
-
-	/* ... and build it now */
+	/* build the shm buffer now */
 	buf=build_req_buf_from_sip_req( i_req, len, send_sock, proto );
 	if (!buf) {
-		LOG(L_ERR, "ERROR: print_uac_request: no pkg_mem\n"); 
+		LOG(L_ERR, "ERROR:tm:print_uac_request: no pkg_mem\n"); 
 		ser_error=E_OUT_OF_MEM;
 		goto error01;
 	}
@@ -112,7 +163,7 @@ char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	shbuf=(char *)shm_malloc(*len);
 	if (!shbuf) {
 		ser_error=E_OUT_OF_MEM;
-		LOG(L_ERR, "ERROR: print_uac_request: no shmem\n");
+		LOG(L_ERR, "ERROR:tm:print_uac_request: no shmem\n");
 		goto error02;
 	}
 	memcpy( shbuf, buf, *len );
@@ -121,6 +172,31 @@ error02:
 	pkg_free( buf );
 error01:
 	return shbuf;
+}
+
+
+static inline void post_print_uac_request(struct sip_msg *request,
+		str *org_uri, str *org_dst)
+{
+	reset_init_lump_flags();
+	/* delete inserted branch lumps */
+	del_flaged_lumps( &request->add_rm, LUMPFLAG_BRANCH);
+	del_flaged_lumps( &request->body_lumps, LUMPFLAG_BRANCH);
+	/* free any potential new uri */
+	if (request->new_uri.s!=org_uri->s) {
+		pkg_free(request->new_uri.s);
+		/* and just to be sure */
+		request->new_uri.s = 0;
+		request->new_uri.len = 0;
+		request->parsed_uri_ok = 0;
+	}
+	/* free any potential dst uri */
+	if (request->dst_uri.s!=org_dst->s) {
+		pkg_free(request->dst_uri.s);
+		/* and just to be sure */
+		request->dst_uri.s = 0;
+		request->dst_uri.len = 0;
+	}
 }
 
 
@@ -179,20 +255,17 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	struct socket_info* send_sock;
 	char *shbuf;
 	unsigned int len;
-	int backup_route_type;
-	struct usr_avp **backup_list;
-	char *p;
 
 	branch=t->nr_of_outgoings;
 	if (branch==MAX_BRANCHES) {
-		LOG(L_ERR, "ERROR: add_uac: maximum number of branches exceeded\n");
+		LOG(L_ERR, "ERROR:tm:add_uac: maximum number of branches exceeded\n");
 		ret=E_CFG;
 		goto error;
 	}
 
 	/* check existing buffer -- rewriting should never occur */
 	if (t->uac[branch].request.buffer) {
-		LOG(L_CRIT, "ERROR: add_uac: buffer rewrite attempt\n");
+		LOG(L_CRIT, "ERROR:tm:add_uac: buffer rewrite attempt\n");
 		ret=ser_error=E_BUG;
 		goto error;
 	}
@@ -202,40 +275,9 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	request->parsed_uri_ok=0;
 	request->dst_uri=*next_hop;
 
-	/* from now on, flag all new lumps with LUMPFLAG_BRANCH flag in order to
-	 * be able to remove them later --bogdan */
-	set_init_lump_flags(LUMPFLAG_BRANCH);
-
-	/* run branch route, if any; run it before RURI's DNS lookup 
-	 * to allow to be changed --bogdan */
-	if (t->on_branch) {
-		/* need to pkg_malloc the dst_uri */
-		if ( next_hop->len ) {
-			if ( (request->dst_uri.s=pkg_malloc(next_hop->len))==0 ) {
-				LOG(L_ERR,"ERROR:tm:add_uac: no more pkg mem\n");
-				ret=ser_error=E_OUT_OF_MEM;
-				goto error01;
-			}
-			memcpy( request->dst_uri.s, next_hop->s, next_hop->len);
-			request->dst_uri.len = next_hop->len;
-		}
-		/* need to pkg_malloc the new_uri */
-		if ( (p=pkg_malloc(request->new_uri.len))==0 ) {
-			LOG(L_ERR,"ERROR:tm:add_uac: no more pkg mem\n");
-			ret=ser_error=E_OUT_OF_MEM;
-			goto error01;
-		}
-		memcpy( p, request->new_uri.s, request->new_uri.len);
-		request->new_uri.s = p;
-		/* make available the avp list from transaction */
-		backup_list = set_avp_list( &t->user_avps );
-		/* run branch route */
-		swap_route_type( backup_route_type, BRANCH_ROUTE);
-		if (run_actions(branch_rlist[t->on_branch], request) < 0)
-			LOG(L_ERR, "ERROR:tm:add_uac: run_actions(branch_route) failed\n");
-		set_route_type( backup_route_type );
-		/* restore original avp list */
-		set_avp_list( backup_list );
+	if ( pre_print_uac_request( t, branch, request)!= 0 ) {
+		ret = -1;
+		goto error01;
 	}
 
 	/* check DNS resolution */
@@ -265,7 +307,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 
 	send_sock=get_send_socket( request, &to , proto);
 	if (send_sock==0) {
-		LOG(L_ERR, "ERROR: add_uac: can't fwd to af %d, proto %d "
+		LOG(L_ERR, "ERROR:tm:add_uac: can't fwd to af %d, proto %d "
 			" (no corresponding listening socket)\n",
 			to.s.sa_family, proto );
 		ret=ser_error=E_NO_SOCKET;
@@ -273,7 +315,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	}
 
 	/* now message printing starts ... */
-	shbuf=print_uac_request( t, request, branch, &len, send_sock, proto );
+	shbuf=print_uac_request( request, &len, send_sock, proto );
 	if (!shbuf) {
 		ret=ser_error=E_OUT_OF_MEM;
 		goto error02;
@@ -305,25 +347,7 @@ error02:
 		pkg_free( proxy );
 	}
 error01:
-	reset_init_lump_flags();
-	/* delete inserted branch lumps */
-	del_flaged_lumps( &request->add_rm, LUMPFLAG_BRANCH);
-	del_flaged_lumps( &request->body_lumps, LUMPFLAG_BRANCH);
-	/* free any potential new uri */
-	if (request->new_uri.s!=uri->s) {
-		pkg_free(request->new_uri.s);
-		/* and just to be sure */
-		request->new_uri.s = 0;
-		request->new_uri.len = 0;
-		request->parsed_uri_ok = 0;
-	}
-	/* free any potential dst uri */
-	if (request->dst_uri.s!=next_hop->s) {
-		pkg_free(request->dst_uri.s);
-		/* and just to be sure */
-		request->new_uri.s = 0;
-		request->new_uri.len = 0;
-	}
+	post_print_uac_request( request, uri, next_hop);
 error:
 	return ret;
 }
@@ -335,28 +359,43 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 	int ret;
 	char *shbuf;
 	unsigned int len;
+	str bk_dst_uri;
 
 	if (t_cancel->uac[branch].request.buffer) {
 		LOG(L_CRIT, "ERROR: e2e_cancel_branch: buffer rewrite attempt\n");
 		ret=ser_error=E_BUG;
 		goto error;
-	}	
+	}
 
 	/* note -- there is a gap in proxy stats -- we don't update 
-	   proxy stats with CANCEL (proxy->ok, proxy->tx, etc.)
-	*/
+	   proxy stats with CANCEL (proxy->ok, proxy->tx, etc.) */
 	cancel_msg->new_uri = t_invite->uac[branch].uri;
+	cancel_msg->parsed_uri_ok=0;
+	bk_dst_uri = cancel_msg->dst_uri;
+
+	if ( pre_print_uac_request( t_cancel, branch, cancel_msg)!= 0 ) {
+		ret = -1;
+		goto error01;
+	}
+
+	/* force same uri as in INVITE */
+	if (cancel_msg->new_uri.s!=t_invite->uac[branch].uri.s) {
+		pkg_free(cancel_msg->new_uri.s);
+		cancel_msg->new_uri = t_invite->uac[branch].uri;
+		/* and just to be sure */
+		cancel_msg->parsed_uri_ok = 0;
+	}
 
 	/* print */
-	shbuf=print_uac_request( t_cancel, cancel_msg, branch, &len,
+	shbuf=print_uac_request( cancel_msg, &len,
 		t_invite->uac[branch].request.dst.send_sock,
 		t_invite->uac[branch].request.dst.proto);
 	if (!shbuf) {
 		LOG(L_ERR, "ERROR: e2e_cancel_branch: printing e2e cancel failed\n");
 		ret=ser_error=E_OUT_OF_MEM;
-		goto error;
+		goto error01;
 	}
-	
+
 	/* install buffer */
 	t_cancel->uac[branch].request.dst=t_invite->uac[branch].request.dst;
 	t_cancel->uac[branch].request.buffer=shbuf;
@@ -364,12 +403,14 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 	t_cancel->uac[branch].uri.s=t_cancel->uac[branch].request.buffer+
 		cancel_msg->first_line.u.request.method.len+1;
 	t_cancel->uac[branch].uri.len=t_invite->uac[branch].uri.len;
-	
 
 	/* success */
 	ret=1;
 
-
+error01:
+	post_print_uac_request( cancel_msg, &t_invite->uac[branch].uri,
+		&bk_dst_uri);
+	cancel_msg->dst_uri = bk_dst_uri;
 error:
 	return ret;
 }
@@ -407,6 +448,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	}
 	/* restore new_uri */
 	cancel_msg->new_uri = backup_uri;
+	cancel_msg->parsed_uri_ok = 0;
 
 	/* send them out */
 	for (i=t_cancel->first_branch; i<t_cancel->nr_of_outgoings; i++) {
