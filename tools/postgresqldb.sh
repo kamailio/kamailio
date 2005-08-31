@@ -144,7 +144,10 @@ EOF
 # execute sql command
 sql_query()
 {
-	echo $CMD "$@"
+	# uncomment next line for psql debugging
+	# echo $CMD "$@"
+
+	$CMD "$@"
 }
 
 # dump all rows
@@ -509,7 +512,7 @@ CREATE INDEX lcr_grp_id_indx ON lcr (grp_id);
  *
  */
 
-CREATE FUNCTION "concat" (text,text) RETURNS text AS 'SELECT $1 || $2;' LANGUAGE 'sql';
+CREATE FUNCTION "concat" (text,text) RETURNS text AS 'SELECT \$1 || \$2;' LANGUAGE 'sql';
 CREATE FUNCTION "rand" () RETURNS double precision AS 'SELECT random();' LANGUAGE 'sql';
 
 
