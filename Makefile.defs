@@ -58,7 +58,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 9
 SUBLEVEL = 4
-EXTRAVERSION = -rc3
+EXTRAVERSION = -rc4
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -326,8 +326,8 @@ DEFS+= $(extra_defs) \
 	 -DUSE_MCAST \
 	 -DUSE_TCP \
 	 -DDISABLE_NAGLE \
+	 -DF_MALLOC \
 	 #-DDBG_QM_MALLOC \
-	 #-DF_MALLOC \
 	 #-DDBG_F_MALLOC \
 	 #-DNO_DEBUG \
 	 #-DNO_LOG \

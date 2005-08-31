@@ -96,13 +96,16 @@ int send_fd(int unix_socket, void* data, int data_len, int fd)
 	int ret;
 #ifdef HAVE_MSGHDR_MSG_CONTROL
 	struct cmsghdr* cmsg;
+	/* make sure msg_control will point to properly aligned data */
 	union {
 		struct cmsghdr cm;
 		char control[CMSG_SPACE(sizeof(fd))];
 	}control_un;
 	
 	msg.msg_control=control_un.control;
-	msg.msg_controllen=sizeof(control_un.control);
+	/* openbsd doesn't like "more space", msg_controllen must not
+	 * include the end padding */
+	msg.msg_controllen=CMSG_LEN(sizeof(fd));
 	
 	cmsg=CMSG_FIRSTHDR(&msg);
 	cmsg->cmsg_level = SOL_SOCKET;
