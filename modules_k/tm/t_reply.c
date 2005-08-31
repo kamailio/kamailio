@@ -1212,7 +1212,7 @@ int reply_received( struct sip_msg  *p_msg )
 	msg_status=p_msg->REPLY_STATUS;
 
 	uac=&t->uac[branch];
-	DBG("DEBUG: reply_received: org. status uas=%d, "
+	DBG("DEBUG:tm:reply_received: org. status uas=%d, "
 		"uac[%d]=%d local=%d is_invite=%d)\n",
 		t->uas.status, branch, uac->last_received, 
 		is_local(t), is_invite(t));
@@ -1228,7 +1228,7 @@ int reply_received( struct sip_msg  *p_msg )
 		if ( msg_status >= 200 ) {
 				reset_timer( &uac->local_cancel.fr_timer);
 		}
-		DBG("DEBUG: reply to local CANCEL processed\n");
+		DBG("DEBUG:tm:reply_received: reply to local CANCEL processed\n");
 		goto done;
 	}
 
@@ -1255,7 +1255,8 @@ int reply_received( struct sip_msg  *p_msg )
 			ack = build_local_ack(p_msg, t, branch, &ack_len, &next_hop);
 			if (ack) {
 				if (send_local_ack(p_msg, &next_hop, ack, ack_len) < 0) {
-					LOG(L_ERR, "Error while sending local ACK\n");
+					LOG(L_ERR, "ERROR:tm:reply_received: failed to send "
+						"local ACK\n");
 				}
 				shm_free(ack);
 			}
@@ -1269,7 +1270,12 @@ int reply_received( struct sip_msg  *p_msg )
 		/* set the as avp_list the one from transaction */
 		backup_list = set_avp_list(&t->user_avps);
 		/* run block */
-		run_actions(onreply_rlist[t->on_reply], p_msg);
+		if (run_actions(onreply_rlist[t->on_reply], p_msg)==0 &&
+		(msg_status<200) && (action_flags&ACT_FL_DROP) ) {
+			DBG("DEBUG:tm:reply_received: dropping provisional reply %d\n",
+				msg_status);
+			goto done;
+		}
 		/* transfer current message context back to t */
 		t->uac[branch].sc_flags=p_msg->flags;
 		/* restore original avp list */
@@ -1323,7 +1329,7 @@ int reply_received( struct sip_msg  *p_msg )
 			 */
 			backup_list = set_avp_list(&t->user_avps);
 			if (!fr_inv_avp2timer(&timer)) {
-				DBG("reply_received: FR_INV_TIMER = %d\n", timer);
+				DBG("DEBUG:tm:reply_received: FR_INV_TIMER = %d\n", timer);
 				set_timer(&uac->request.fr_timer,
 					  FR_INV_TIMER_LIST, &timer);
 			} else {

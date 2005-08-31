@@ -129,7 +129,12 @@ static inline int pre_print_uac_request( struct cell *t, int branch,
 		backup_list = set_avp_list( &t->user_avps );
 		/* run branch route */
 		swap_route_type( backup_route_type, BRANCH_ROUTE);
-		run_actions(branch_rlist[t->on_branch], request);
+		if (run_actions(branch_rlist[t->on_branch], request)==0 &&
+		(action_flags&ACT_FL_DROP) ) {
+			DBG("DEBUG:tm:pre_print_uac_request: dropping branch <%.*s>\n",
+				request->dst_uri.len, request->dst_uri.s);
+			goto error;
+		}
 		set_route_type( backup_route_type );
 		/* restore original avp list */
 		set_avp_list( backup_list );
@@ -621,10 +626,10 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	/* things went wrong ... no new branch has been fwd-ed at all */
 	if (added_branches==0) {
 		if (try_new==0) {
-			LOG(L_ERR, "ERROR: t_forward_nonack: no branched for forwarding\n");
+			LOG(L_ERR, "ERROR:t_forward_nonack: no branched for forwarding\n");
 			return -1;
 		}
-		LOG(L_ERR, "ERROR: t_forward_nonack: failure to add branches\n");
+		LOG(L_ERR, "ERROR:t_forward_nonack: failure to add branches\n");
 		return lowest_ret;
 	}
 
