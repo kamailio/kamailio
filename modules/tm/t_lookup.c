@@ -84,7 +84,6 @@
 #include "defs.h"
 
 
-#include <assert.h>
 #include "../../comp_defs.h"
 #include "../../dprint.h"
 #include "../../config.h"

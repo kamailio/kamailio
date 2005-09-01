@@ -64,10 +64,11 @@
  *  2004-10-01  added a new param.: restart_fr_on_each_reply (andrei)
  *  2005-03-01  force for statefull replies the incoming interface of 
  *              the request (bogdan)
+ *  2005-09-01  reverted to the old way of checking response.dst.send_sock
+ *               in t_retransmit_reply & reply_light (andrei)
  */
 
 
-#include <assert.h>
 
 #include "../../comp_defs.h"
 #include "../../hash_func.h"
@@ -411,16 +412,19 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	   not yet, don't try to retransmit
 	*/
 	/*
-	   response.dst.send_sock is valid all the time now, as it's taken
-	   from original request -bogdan
+	   response.dst.send_sock might be unset if the process that created
+	   the original transaction has not finished initialising the 
+	   retransmission buffer (see t_newtran/ init_rb).
+	   If reply_to_via is set and via contains a host name (and not an ip)
+	   the chances for this increase a lot.
+	 */
 	if (!trans->uas.response.dst.send_sock) {
 		LOG(L_ERR, "ERROR: _reply_light: no resolved dst to send reply to\n");
 	} else {
-	*/
-	assert(trans->uas.response.dst.send_sock);
-	SEND_PR_BUFFER( rb, buf, len );
-	DBG("DEBUG: reply sent out. buf=%p: %.9s..., shmem=%p: %.9s\n", 
-		buf, buf, rb->buffer, rb->buffer );
+		SEND_PR_BUFFER( rb, buf, len );
+		DBG("DEBUG: reply sent out. buf=%p: %.9s..., shmem=%p: %.9s\n", 
+			buf, buf, rb->buffer, rb->buffer );
+	}
 	pkg_free( buf ) ;
 	DBG("DEBUG: _reply_light: finished\n");
 	return 1;
@@ -861,15 +865,18 @@ int t_retransmit_reply( struct cell *t )
 	/* first check if we managed to resolve topmost Via -- if
 	   not yet, don't try to retransmit
 	*/
-	/* response.dst.send_sock is valid all the time now, as it's taken
-	   from original request -bogdan
+	/*
+	   response.dst.send_sock might be unset if the process that created
+	   the original transaction has not finished initialising the 
+	   retransmission buffer (see t_newtran/ init_rb).
+	   If reply_to_via is set and via contains a host name (and not an ip)
+	   the chances for this increase a lot.
+	 */
 	if (!t->uas.response.dst.send_sock) {
 		LOG(L_WARN, "WARNING: t_retransmit_reply: "
 			"no resolved dst to retransmit\n");
 		return -1;
 	}
-	*/
-	assert(t->uas.response.dst.send_sock);
 
 	/* we need to lock the transaction as messages from
 	   upstream may change it continuously
