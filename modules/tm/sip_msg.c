@@ -295,6 +295,9 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 	/*the new uri (if any)*/
 	if (org_msg->new_uri.s && org_msg->new_uri.len)
 		len+= ROUND4(org_msg->new_uri.len);
+	/*the dst uri (if any)*/
+	if (org_msg->dst_uri.s && org_msg->dst_uri.len)
+		len+= ROUND4(org_msg->dst_uri.len);
 	/*all the headers*/
 	for( hdr=org_msg->headers ; hdr ; hdr=hdr->next )
 	{
@@ -422,6 +425,13 @@ do { \
 		new_msg->new_uri.s = p;
 		memcpy( p , org_msg->new_uri.s , org_msg->new_uri.len);
 		p += ROUND4(org_msg->new_uri.len);
+	}
+	/* dst_uri */
+	if (org_msg->dst_uri.s && org_msg->dst_uri.len)
+	{
+		new_msg->dst_uri.s = p;
+		memcpy( p , org_msg->dst_uri.s , org_msg->dst_uri.len);
+		p += ROUND4(org_msg->dst_uri.len);
 	}
 	/* message buffers(org and scratch pad) */
 	memcpy( p , org_msg->buf, org_msg->len);
