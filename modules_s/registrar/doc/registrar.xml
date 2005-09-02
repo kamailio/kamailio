@@ -150,6 +150,46 @@ sip:1.2.3.4:5060;dstip=5.6.7.8;dstport=5090
 	</para>
     </section>
 
+    <section>
+	<title>Synchronizing UA Internal Clock</title>
+	<para>
+	    Many existing user agents support date and time synchronization
+	    from the registrar. Registrar can append "Date" header field to the
+	    200 OK to REGISTER message received from the user agent. User
+	    agents that support time synchronization would read the current
+	    date and time from the header field and set internal clock to
+	    it. For example:
+	</para>
+	<programlisting>
+<![CDATA[
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 62.240.165.98;branch=z9hG4bK3E66B9EB
+CSeq: 1469 REGISTER
+To: "1 1" <sip:jan@charon.ok2rab.cz>;tag=2bd21cbe8bf183397d829c66d62463e6.0aea
+From: "1 1" <sip:jan@charon.ok2rab.cz>
+Call-ID: 1767561454@62.240.165.98]]>
+<emphasis>Date: Fri, 02 Sep 2005 11:20:12 GMT</emphasis>
+	</programlisting>
+	<para>
+	    You can use <function>append_time</function> function from textops
+	    module to append the header field to the reply. Put the function
+	    before <function>save("location");</function> in the configuration file.
+	</para>
+
+	<example>
+	    <title>Adding Date header to Replies</title>
+	    <programlisting>
+if (uri == myself) {
+    if (method == "REGISTER") {
+        <emphasis>append_time();</emphasis>
+        save("location");
+        break;
+    };
+};
+	    </programlisting>
+	</example>
+    </section>
+
     <section id="registrar.dep">
 	<title>Dependencies</title>
 	<para>
