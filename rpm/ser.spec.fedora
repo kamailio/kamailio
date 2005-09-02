@@ -11,7 +11,7 @@
 
 Summary:      SIP Express Router, very fast and flexible SIP Proxy
 Name:         ser
-Version:      0.9.3
+Version:      0.9.4
 Release:      fc2.0
 Copyright:    GPL
 Group:        System Environment/Daemons
@@ -226,6 +226,9 @@ fi
 
 
 %changelog
+
+* Fri Sep 02 2005 Andrei Pelinescu - Onciul <andrei@iptel.org>
+- changed vesion to 0.9.4 (new upstream release)
 
 * Fri Jun 28 2005 Andrei Pelinescu - Onciul <andrei@iptel.org>
 - changed vesion to 0.9.3 (new upstream release)

@@ -1,5 +1,5 @@
 %define name    ser
-%define ver     0.9.3
+%define ver     0.9.4
 %define rel     0
 
 %define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgres snmp cpl cpl-c extcmd 
@@ -252,6 +252,9 @@ sbin/insserv etc/init.d/
 
 
 %changelog
+
+* Fri Sep 02 2005 Andrei Pelinescu - Onciul <andrei@iptel.org>
+- changed vesion to 0.9.4 (new upstream release)
 
 * Tue Jul 26 2005 Peter Nixon <peter+rpmspam@peternixon.net>
 - include SUSE version in the rpm filename(s)

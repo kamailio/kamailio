@@ -9,9 +9,9 @@
 
 
 PORTNAME= ser
-PORTVERSION= 0.9.3
+PORTVERSION= 0.9.4
 CATEGORIES= net
-MASTER_SITES= ftp://ftp.berlios.de/pub/ser/0.9.3/src/
+MASTER_SITES= ftp://ftp.berlios.de/pub/ser/0.9.4/src/
 
 MAINTAINER= andrei@iptel.org
 
