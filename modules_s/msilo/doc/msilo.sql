@@ -8,6 +8,16 @@ CREATE DATABASE msilo;
 
 USE msilo;
 
+-- create version table
+CREATE TABLE version (
+      -- the name of the table
+   table_name varchar(64) NOT NULL,
+      -- version of the table
+   table_version smallint(5) DEFAULT '0' NOT NULL
+);
+
+INSERT INTO version (table_name, table_version) VALUES ('silo', 3);
+
 -- create the table
 CREATE TABLE silo(
       -- unique ID per message
