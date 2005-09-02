@@ -269,8 +269,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 	for ( i=0 ; i<n ; i++ ) {
 		DBG("DEBUG:uac_redirect:shmcontact2dset: adding contact <%.*s>\n",
 			scontacts[i]->uri.len, scontacts[i]->uri.s);
-		if (append_branch( 0, scontacts[i]->uri.s, scontacts[i]->uri.len,
-		0,0,0,0)<0 ) {
+		if (append_branch( 0, &scontacts[i]->uri, 0, Q_UNSPECIFIED, 0, 0)<0 ) {
 			LOG(L_ERR,"ERROR:uac_redirect:shmcontact2dset: failed to add "
 				"contact to dset\n");
 		} else {

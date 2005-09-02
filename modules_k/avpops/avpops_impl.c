@@ -961,7 +961,7 @@ int ops_pushto_avp ( struct sip_msg* msg, struct fis_param* dst,
 			{
 				/* if is not the first modification, push the current uri as
 				 * branch */
-				if (append_branch( msg, 0, 0, 0, 0, Q_UNSPECIFIED,0)!=1 )
+				if (append_branch( msg, 0, 0, Q_UNSPECIFIED, 0, 0)!=1 )
 				{
 					LOG(L_ERR,"ERROR:avpops:pushto_avp: append_branch action"
 						" failed\n");

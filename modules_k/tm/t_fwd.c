@@ -597,7 +597,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	} else try_new=0;
 
 	for( idx=0; (current_uri.s=get_branch( idx, &current_uri.len, &q,
-	&dst_uri.s, &dst_uri.len, &p_msg->force_send_socket))!=0 ; idx++ ) {
+	&dst_uri, 0, &p_msg->force_send_socket))!=0 ; idx++ ) {
 		try_new++;
 		branch_ret=add_uac( t, p_msg, &current_uri, &dst_uri, proxy, proto);
 		/* pick some of the errors in case things go wrong;

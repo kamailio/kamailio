@@ -99,7 +99,7 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 	int l1;
 	char uri_line[MAX_URI_SIZE+1];
 	int uri_cnt;
-	int uri_len;
+	str uri;
 	int exit_status;
 
 	/* pessimist: assume error by default */
@@ -128,32 +128,32 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 	/* read now line by line */
 	uri_cnt=0;
 	while( fgets(uri_line, MAX_URI_SIZE, pipe)!=NULL){
-		uri_len=strlen(uri_line);
+		uri.s = uri_line;
+		uri.len=strlen(uri.s);
 		/* trim from right */
-		while(uri_len && (uri_line[uri_len-1]=='\r' 
-				|| uri_line[uri_len-1]=='\n' 
-				|| uri_line[uri_len-1]=='\t'
-				|| uri_line[uri_len-1]==' ' )) {
+		while(uri.len && (uri.s[uri.len-1]=='\r' 
+				|| uri.s[uri.len-1]=='\n' 
+				|| uri.s[uri.len-1]=='\t'
+				|| uri.s[uri.len-1]==' ' )) {
 			DBG("exec_str: rtrim\n");
-			uri_len--;
+			uri.len--;
 		}
 		/* skip empty line */
-		if (uri_len==0) continue;
+		if (uri.len==0) continue;
 		/* ZT */
-		uri_line[uri_len]=0;
+		uri.s[uri.len]=0;
 		if (uri_cnt==0) {
 			memset(&act, 0, sizeof(act));
 			act.type = SET_URI_T;
 			act.p1_type = STRING_ST;
-			act.p1.string = uri_line;
+			act.p1.string = uri.s;
 			if (do_action(&act, msg)<0) {
 				LOG(L_ERR,"ERROR:exec_str : SET_URI_T action failed\n");
 				ser_error=E_OUT_OF_MEM;
 				goto error02;
 			}
 		} else {
-			if (append_branch(msg, uri_line, uri_len, 0, 0,
-			Q_UNSPECIFIED, 0)==-1) {
+			if (append_branch(msg, &uri, 0, Q_UNSPECIFIED, 0, 0)==-1) {
 				LOG(L_ERR, "ERROR: exec_str: append_branch failed;"
 					" too many or too long URIs?\n");
 				goto error02;

@@ -113,23 +113,21 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	     /* Append branches if enabled */
 	if (!append_branches) goto skip;
 
-	while(ptr) {
+	for( ; ptr ; ptr = ptr->next ) {
 		if (VALID_CONTACT(ptr, act_time)) {
-			if (append_branch(_m, ptr->c.s, ptr->c.len, ptr->received.s,
-			ptr->received.len, ptr->q, ptr->sock) == -1) {
+			if (append_branch(_m, &ptr->c, &ptr->received, ptr->q, 
+			0, ptr->sock) == -1) {
 				LOG(L_ERR, "lookup(): Error while appending a branch\n");
-				/* Return 1 here so the function succeeds even if 
-				 * appending of a branch failed
-				 */
-				goto skip; 
+				/* Return 1 here so the function succeeds even if
+				 * appending of a branch failed */
+				/* Also give a chance to the next branches*/
+				continue;
 			}
-			
 			nat |= ptr->flags & FL_NAT; 
 		}
-		ptr = ptr->next; 
 	}
-	
- skip:
+
+skip:
 	ul.unlock_udomain((udomain_t*)_t);
 	if (nat && nat_flag!=-1)
 		_m->flags |= nat_flag;
