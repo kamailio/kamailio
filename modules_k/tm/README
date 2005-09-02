@@ -47,6 +47,7 @@ Bogdan-Andrei Iancu
               1.3.14. fr_timer_avp (string)
               1.3.15. fr_inv_timer_avp (string)
               1.3.16. tw_append (string)
+              1.3.17. branch_flag_mask (string)
 
         1.4. Exported Functions
 
@@ -103,23 +104,24 @@ Bogdan-Andrei Iancu
    1-14. Set fr_timer_avp parameter
    1-15. Set fr_inv_timer_avp parameter
    1-16. Set tw_append parameter
-   1-17. t_relay_to_udp usage
-   1-18. t_relay usage
-   1-19. t_on_negative usage
-   1-20. append_branch usage
-   1-21. t_newtran usage
-   1-22. t_reply usage
-   1-23. t_lookup_request usage
-   1-24. t_retransmit_reply usage
-   1-25. t_release usage
-   1-26. t_forward_nonack_xxx usage
+   1-17. Set branch_flag_mask parameter
+   1-18. t_relay_to_udp usage
+   1-19. t_relay usage
+   1-20. t_on_negative usage
+   1-21. append_branch usage
+   1-22. t_newtran usage
+   1-23. t_reply usage
+   1-24. t_lookup_request usage
+   1-25. t_retransmit_reply usage
+   1-26. t_release usage
    1-27. t_forward_nonack_xxx usage
-   1-28. t_check_status usage
-   1-29. t_flush_flags usage
-   1-30. t_local_replied usage
-   1-31. t_write_fifo/unix usage
-   1-32. t_check_trans usage
-   1-33. t_was_cancelled usage
+   1-28. t_forward_nonack_xxx usage
+   1-29. t_check_status usage
+   1-30. t_flush_flags usage
+   1-31. t_local_replied usage
+   1-32. t_write_fifo/unix usage
+   1-33. t_check_trans usage
+   1-34. t_was_cancelled usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -438,6 +440,29 @@ modparam("tm", "tw_append",
 ...
      _________________________________________________________
 
+1.3.17. branch_flag_mask (string)
+
+   Defined which flags shall be as branch flags. The branch flags
+   will be visible only in the messages belonging to that branch
+   (in branch, onreply and failure route). The global flags are
+   visible for all messages of the corresponding transaction.
+
+   The value of the parameter is a 32-bits mask. It may be
+   defined using 2, 10 or 16 bases.
+
+   Default value is NULL (no branch flags, all being global). 
+
+   Example 1-17. Set branch_flag_mask parameter
+...
+# using base 16
+modparam("tm", "branch_flag_mask", "0xff000000")
+# or using base 2
+modparam("tm", "branch_flag_mask", "b11111111000000000000000000000000")
+# or using base 10
+modparam("tm", "branch_flag_mask", "4278190080")
+...
+     _________________________________________________________
+
 1.4. Exported Functions
 
 1.4.1. t_relay_to_udp(ip, port), t_relay_to_tcp(ip, port)
@@ -453,7 +478,7 @@ modparam("tm", "tw_append",
      * ip - IP address where the message should be sent.
      * port - Port number.
 
-   Example 1-17. t_relay_to_udp usage
+   Example 1-18. t_relay_to_udp usage
 ...
 t_relay_to_udp("1.2.3.4", "5060");
 ...
@@ -468,7 +493,7 @@ t_relay_to_udp("1.2.3.4", "5060");
    negative reply upstream statelessly not to leave upstream UAC
    in lurch.
 
-   Example 1-18. t_relay usage
+   Example 1-19. t_relay usage
 ...
 if (!t_relay()) { sl_reply_error(); break; };
 ...
@@ -497,7 +522,7 @@ if (!t_relay()) { sl_reply_error(); break; };
 
      * reply_route - Reply route block to be called.
 
-   Example 1-19. t_on_negative usage
+   Example 1-20. t_on_negative usage
 ...
 route {
         t_on_negative("1");
@@ -521,7 +546,7 @@ reply_route[1] {
    entry. The difference is that current URI is taken as new
    entry.
 
-   Example 1-20. append_branch usage
+   Example 1-21. append_branch usage
 ...
 set_user("john");
 t_fork();
@@ -537,7 +562,7 @@ t_relay();
    This is the only way a script can add a new transaction in an
    atomic way. Typically, it is used to deploy a UAS.
 
-   Example 1-21. t_newtran usage
+   Example 1-22. t_newtran usage
 ...
 if (t_newtran()) {
         log("UAS logic");
@@ -558,7 +583,7 @@ if (t_newtran()) {
      * code - Reply code number.
      * reason_phrase - Reason string.
 
-   Example 1-22. t_reply usage
+   Example 1-23. t_reply usage
 ...
 t_reply("404", "Not found");
 ...
@@ -572,7 +597,7 @@ t_reply("404", "Not found");
    new transaction if none was found. However this is safely
    (atomically) done using t_newtran.
 
-   Example 1-23. t_lookup_request usage
+   Example 1-24. t_lookup_request usage
 ...
 if (t_lookup_request()) {
         ...
@@ -584,7 +609,7 @@ if (t_lookup_request()) {
 
    Retransmits a reply sent previously by UAS transaction.
 
-   Example 1-24. t_retransmit_reply usage
+   Example 1-25. t_retransmit_reply usage
 ...
 t_retransmit_reply();
 ...
@@ -595,7 +620,7 @@ t_retransmit_reply();
    Remove transaction from memory (it will be first put on a wait
    timer to absorb delayed messages).
 
-   Example 1-25. t_release usage
+   Example 1-26. t_release usage
 ...
 t_release();
 ...
@@ -617,7 +642,7 @@ t_forward_nonack_tcp(ip, port) t_forward_nonack_uri()
    t_forward_nonack_uri() will determin the detination address
    (proto:IP:port) based on the RURI.
 
-   Example 1-26. t_forward_nonack_xxx usage
+   Example 1-27. t_forward_nonack_xxx usage
 ...
 t_forward_nonack("1.2.3.4", "5060");
 t_forward_nonack_udp("1.2.3.4", "5060"); # force UDP proto
@@ -638,7 +663,7 @@ t_replicate_tcp(ip, port)
      * ip - IP address where the message should be sent.
      * port - Port number.
 
-   Example 1-27. t_forward_nonack_xxx usage
+   Example 1-28. t_forward_nonack_xxx usage
 ...
 t_replicate("1.2.3.4", "5060");
 t_replicate_udp("1.2.3.4", "5060"); # force UDP proto
@@ -657,7 +682,7 @@ t_replicate_tcp("1.2.3.4", "5060"); # force TCP proto
      * in on_failure block - the code of the selected negative
        final reply.
 
-   Example 1-28. t_check_status usage
+   Example 1-29. t_check_status usage
 ...
 if (t_check_status("(487)|(408)")) {
     log("487 or 408 negative reply\n");
@@ -672,7 +697,7 @@ if (t_check_status("(487)|(408)")) {
    trnasaction was created via t_newtran() and the flags have
    been altered since.
 
-   Example 1-29. t_flush_flags usage
+   Example 1-30. t_flush_flags usage
 ...
 t_flush_flags();
 ...
@@ -685,7 +710,7 @@ t_flush_flags();
 
    Parameter may be "all" or "last".
 
-   Example 1-30. t_local_replied usage
+   Example 1-31. t_local_replied usage
 ...
 if (t_local_replied("all")) {
         log ("no reply received\n");
@@ -699,7 +724,7 @@ if (t_local_replied("all")) {
    regarding the request. Which information should be written may
    be control via the "tw_append" parameter.
 
-   Example 1-31. t_write_fifo/unix usage
+   Example 1-32. t_write_fifo/unix usage
 ...
 modparam("tm","tw_append","append1:Email=avp[i:12];UA=hdr[User-Agent]")
 modparam("tm","tw_append","append2:body=msg[body]")
@@ -724,7 +749,7 @@ t_write_unix("logger/append2","/var/run/logger.sock");
      * ACK request - true if the ACK is a local end-to-end ACK
        for an existent INVITE transaction.
 
-   Example 1-32. t_check_trans usage
+   Example 1-33. t_check_trans usage
 ...
 if ( is_method("CANCEL") ) {
         if ( t_check_trans() )
@@ -739,7 +764,7 @@ if ( is_method("CANCEL") ) {
    Retuns true if called for an INVITE transaction that was
    explicitly cancelled by UAC side via a CANCEL request.
 
-   Example 1-33. t_was_cancelled usage
+   Example 1-34. t_was_cancelled usage
 ...
 if (t_was_cancelled()) {
     log("transaction was cancelled by UAC\n");

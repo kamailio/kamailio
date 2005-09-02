@@ -483,8 +483,40 @@ modparam("tm", "tw_append",
 		</example>
 	</section>
 
-
+	<section>
+		<title><varname>branch_flag_mask</varname> (string)</title>
+		<para>
+		Defined which flags shall be as branch flags. The branch flags will be
+		visible only in the messages belonging to that branch (in branch, 
+		onreply and failure route). The global flags are visible for all 
+		messages of the corresponding transaction.
+		</para>
+		<para>
+		The value of the parameter is a 32-bits mask. It may be defined using
+		2, 10 or 16 bases.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL (no branch flags, all being global).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>branch_flag_mask</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# using base 16
+modparam("tm", "branch_flag_mask", "0xff000000")
+# or using base 2
+modparam("tm", "branch_flag_mask", "b11111111000000000000000000000000")
+# or using base 10
+modparam("tm", "branch_flag_mask", "4278190080")
+...
+</programlisting>
+		</example>
 	</section>
+	</section>
+
+
 	<section>
 	<title>Exported Functions</title>
 	<section>
