@@ -82,6 +82,7 @@ typedef struct ucontact {
 	cstate_t state;           /* State of the contact */
 	unsigned int flags;       /* Various flags (NAT, supported methods etc) */
 	str user_agent;		  /* User-Agent header field */
+	str instance;             /* sip.instance parameter */
 	struct ucontact* next;    /* Next contact in the linked list */
 	struct ucontact* prev;    /* Previous contact in the linked list */
 } ucontact_t;
@@ -98,7 +99,7 @@ typedef struct ucontact {
  */
 int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, qvalue_t _q, 
 		 str* _callid, int _cseq, unsigned int _flags, ucontact_t** _c, 
-		 str* _ua, str* _recv, struct socket_info* sock);
+		 str* _ua, str* _recv, struct socket_info* sock, str* _inst);
 
 
 /*
@@ -116,9 +117,9 @@ void print_ucontact(FILE* _f, ucontact_t* _c);
 /*
  * Update existing contact in memory with new values
  */
-int mem_update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs,
+int mem_update_ucontact(ucontact_t* _c, str* _u, time_t _e, qvalue_t _q, str* _cid, int _cs,
 			unsigned int _set, unsigned int _res, str* _ua, str* _recv,
-			struct socket_info* sock);
+			struct socket_info* sock, str* _inst);
 
 
 /* ===== State transition functions - for write back cache scheme ======== */
@@ -185,11 +186,11 @@ int db_delete_ucontact(ucontact_t* _c);
 /*
  * Update ucontact with new values without replication
  */
-typedef int (*update_ucontact_t)(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
+typedef int (*update_ucontact_t)(ucontact_t* _c, str* _u, time_t _e, qvalue_t _q, str* _cid, int _cs, 
 				 unsigned int _set, unsigned int _res, str* _ua, str* _recv,
-				 struct socket_info* sock);
-int update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs,
+				 struct socket_info* sock, str* _inst);
+int update_ucontact(ucontact_t* _c, str* _u, time_t _e, qvalue_t _q, str* _cid, int _cs,
 		    unsigned int _set, unsigned int _res, str* _ua, str* _recv,
-		    struct socket_info* sock);
+		    struct socket_info* sock, str* _inst);
 
 #endif /* UCONTACT_H */

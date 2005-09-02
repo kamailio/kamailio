@@ -70,6 +70,7 @@ MODULE_VERSION
 #define FLAGS_COL      "flags"
 #define USER_AGENT_COL "user_agent"
 #define RECEIVED_COL   "received"
+#define INSTANCE_COL   "instance"
 
 static int mod_init(void);                          /* Module initialization function */
 static void destroy(void);                          /* Module destroy function */
@@ -93,6 +94,7 @@ str state_col       = {STATE_COL, sizeof(STATE_COL) - 1};           /* Name of c
 str flags_col       = {FLAGS_COL, sizeof(FLAGS_COL) - 1};           /* Name of column containing flags */
 str user_agent_col  = {USER_AGENT_COL, sizeof(USER_AGENT_COL) - 1}; /* Name of column containing user agent string */
 str received_col    = {RECEIVED_COL, sizeof(RECEIVED_COL) - 1};     /* Name of column containing transport info of REGISTER */
+str instance_col    = {INSTANCE_COL, sizeof(INSTANCE_COL) -1};      /* Name of column containing sip-instance parameter */
 str db_url          = {DEFAULT_DB_URL, sizeof(DEFAULT_DB_URL) - 1}; /* Database URL */
 int timer_interval  = 60;             /* Timer interval in seconds */
 int db_mode         = 0;              /* Database sync scheme: 0-no db, 1-write through, 2-write back */
@@ -118,6 +120,7 @@ static cmd_export_t cmds[] = {
 	{"ul_insert_ucontact",    (cmd_function)insert_ucontact,    1, 0, 0},
 	{"ul_delete_ucontact",    (cmd_function)delete_ucontact,    1, 0, 0},
 	{"ul_get_ucontact",       (cmd_function)get_ucontact,       1, 0, 0},
+	{"ul_get_ucontact_by_inst", (cmd_function)get_ucontact_by_instance, 1, 0, 0},
 	{"ul_get_all_ucontacts",  (cmd_function)get_all_ucontacts,  1, 0, 0},
 	{"ul_update_ucontact",    (cmd_function)update_ucontact,    1, 0, 0},
 	{"ul_register_watcher",   (cmd_function)register_watcher,   1, 0, 0},
@@ -148,6 +151,7 @@ static param_export_t params[] = {
 	{"desc_time_order",   INT_PARAM, &desc_time_order},
 	{"user_agent_column", STR_PARAM, &user_agent_col },
 	{"received_column",   STR_PARAM, &received_col   },
+	{"instance_column",   STR_PARAM, &instance_col   },
 	{0, 0, 0}
 };
 
@@ -183,6 +187,7 @@ static int mod_init(void)
 	flags_col.len = strlen(flags_col.s);
 	user_agent_col.len = strlen(user_agent_col.s);
 	received_col.len = strlen(received_col.s);
+	instance_col.len = strlen(instance_col.s);
 	db_url.len = strlen(db_url.s);
 
 	     /* Register cache timer */

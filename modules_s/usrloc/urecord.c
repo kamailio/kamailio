@@ -123,11 +123,11 @@ void print_urecord(FILE* _f, urecord_t* _r)
  */
 int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
 			unsigned int _flags, struct ucontact** _con, str* _ua, str* _recv,
-			struct socket_info* sock)
+			struct socket_info* sock, str* _inst)
 {
 	ucontact_t* ptr, *prev = 0;
 
-	if (new_ucontact(_r->domain, &_r->aor, _c, _e, _q, _cid, _cs, _flags, _con, _ua, _recv, sock) < 0) {
+	if (new_ucontact(_r->domain, &_r->aor, _c, _e, _q, _cid, _cs, _flags, _con, _ua, _recv, sock, _inst) < 0) {
 		LOG(L_ERR, "mem_insert_ucontact(): Can't create new contact\n");
 		return -1;
 	}
@@ -436,9 +436,9 @@ void release_urecord(urecord_t* _r)
  */
 int insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, 
 			int _cs, unsigned int _flags, struct ucontact** _con, str* _ua, str* _recv,
-			struct socket_info* sock)
+			struct socket_info* sock, str* _inst)
 {
-	if (mem_insert_ucontact(_r, _c, _e, _q, _cid, _cs, _flags, _con, _ua, _recv, sock) < 0) {
+	if (mem_insert_ucontact(_r, _c, _e, _q, _cid, _cs, _flags, _con, _ua, _recv, sock, _inst) < 0) {
 		LOG(L_ERR, "insert_ucontact(): Error while inserting contact\n");
 		return -1;
 	}
@@ -495,8 +495,34 @@ int get_ucontact(urecord_t* _r, str* _c, struct ucontact** _co)
 	
 	ptr = _r->contacts;
 	while(ptr) {
-		if ((_c->len == ptr->c.len) &&
-		    !memcmp(_c->s, ptr->c.s, _c->len)) {
+		if ((_c->len == ptr->c.len &&
+		    !memcmp(_c->s, ptr->c.s, _c->len))) {
+			*_co = ptr;
+			return 0;
+		}
+		
+		ptr = ptr->next;
+	}
+	return 1;
+}
+
+/*
+ * Get pointer to ucontact with given contact and given sip.instance
+ */
+int get_ucontact_by_instance(urecord_t* _r, str* _c, str* _i, struct ucontact** _co)
+{
+	ucontact_t* ptr;
+	
+	if (_i == NULL) {
+		return get_ucontact(_r, _c, _co);
+	}
+
+	ptr = _r->contacts;
+	while(ptr) {
+		if ((_i->len == ptr->instance.len &&
+			!memcmp(_i->s, ptr->instance.s, _i->len)) ||
+			(_c->len == ptr->c.len &&
+		    !memcmp(_c->s, ptr->c.s, _c->len))) {
 			*_co = ptr;
 			return 0;
 		}

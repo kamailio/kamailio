@@ -106,6 +106,12 @@ int bind_usrloc(usrloc_api_t* api)
 		return -1;
 	}
 
+	api->get_ucontact_by_instance = (get_ucontact_by_inst_t)find_export("ul_get_ucontact_by_inst", 1, 0);
+	if (api->get_ucontact_by_instance == 0) {
+		LOG(L_ERR, "bind_usrloc(): Can't bind get_ucontact_by_instance\n");
+		return -1;
+	}
+
 	api->update_ucontact = (update_ucontact_t)find_export("ul_update_ucontact", 1, 0);
 	if (api->update_ucontact == 0) {
 		LOG(L_ERR, "bind_usrloc(): Can't bind update_ucontact\n");

@@ -155,7 +155,7 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 	qvalue_t q;
 	str callid;
 	unsigned int flags;
-	str* recv;
+	str* recv, *inst;
 	int_str rcv_avp;
 	int_str val;
 	int num;
@@ -217,8 +217,14 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 			recv = 0;
 		}
 
+		if(_c->instance) {
+			inst = &_c->instance->body;
+		} else {
+			inst = 0;
+		}
+
 		if (ul.insert_ucontact(r, &_c->uri, e, q, &callid, cseq, flags, &c, ua, recv, 
-				       _m->rcv.bind_address) < 0) {
+				       _m->rcv.bind_address, inst) < 0) {
 			rerrno = R_UL_INS_C;
 			LOG(L_ERR, "insert(): Error while inserting contact\n");
 			ul.delete_urecord(_d, _a);
@@ -302,7 +308,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 	int set, reset;
 	qvalue_t q;
 	unsigned int nated;
-	str* recv;
+	str* recv, *inst;
 	int_str rcv_avp;
 	int_str val;
 	
@@ -330,7 +336,13 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 			return -1;
 		}
 
-		if (ul.get_ucontact(_r, &_c->uri, &c) > 0) {
+		if(_c->instance) {
+			inst = &_c->instance->body;
+		} else {
+			inst = 0;
+		}
+
+		if (ul.get_ucontact_by_instance(_r, &_c->uri, inst, &c) > 0) {
 			     /* Contact not found */
 			if (e != 0) {
 				     /* Calculate q value of the contact */
@@ -362,7 +374,8 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 				if (ul.insert_ucontact(_r, &_c->uri, e, q, &callid, cseq, 
 						       nated | mem_only,
 						       &c2, _ua, recv, 
-						       _m->rcv.bind_address) < 0) {
+						       _m->rcv.bind_address,
+							   inst) < 0) {
 					rerrno = R_UL_INS_C;
 					LOG(L_ERR, "update(): Error while inserting contact\n");
 					return -4;
@@ -410,7 +423,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 
 				set = nated | mem_only;
 				reset = ~(nated | mem_only) & (FL_NAT | FL_MEM);
-				if (ul.update_ucontact(c, e, q, &callid, cseq, set, reset, _ua, recv, _m->rcv.bind_address) < 0) {
+				if (ul.update_ucontact(c, &_c->uri, e, q, &callid, cseq, set, reset, _ua, recv, _m->rcv.bind_address, inst) < 0) {
 					rerrno = R_UL_UPD_C;
 					LOG(L_ERR, "update(): Error while updating contact\n");
 					return -8;

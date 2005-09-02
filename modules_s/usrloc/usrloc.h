@@ -54,6 +54,7 @@ typedef struct usrloc_api {
 	insert_ucontact_t    insert_ucontact;
 	delete_ucontact_t    delete_ucontact;
 	get_ucontact_t       get_ucontact;
+	get_ucontact_by_inst_t get_ucontact_by_instance;
 
 	update_ucontact_t    update_ucontact;
 

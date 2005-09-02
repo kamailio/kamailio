@@ -84,13 +84,13 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue
 	ua.len = UNIXSOCK_UA_LEN;
 
 	if (c) {
-		if (update_ucontact(c, _e + act_time, _q, &cid, UNIXSOCK_CSEQ, _f, FL_NONE, &ua, 0, 0) < 0) {
+		if (update_ucontact(c, _c, _e + act_time, _q, &cid, UNIXSOCK_CSEQ, _f, FL_NONE, &ua, 0, 0, 0) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while updating contact\n");
 			release_urecord(r);
 			return -5;
 		}
 	} else {
-		if (insert_ucontact(r, _c, _e + act_time, _q, &cid, UNIXSOCK_CSEQ, _f, &c, &ua, 0, 0) < 0) {
+		if (insert_ucontact(r, _c, _e + act_time, _q, &cid, UNIXSOCK_CSEQ, _f, &c, &ua, 0, 0, 0) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while inserting contact\n");
 			release_urecord(r);
 			return -6;

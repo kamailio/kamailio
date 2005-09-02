@@ -89,7 +89,7 @@ void print_urecord(FILE* _f, urecord_t* _r);
  */
 int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
 			unsigned int _flags, struct ucontact** _con, str *_ua, str* _recv,
-			struct socket_info* sock);
+			struct socket_info* sock, str* _inst);
 
 
 
@@ -134,20 +134,10 @@ void release_urecord(urecord_t* _r);
  */
 typedef int (*insert_ucontact_t)(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
 				 unsigned int _flags, struct ucontact** _con, str *_ua, str* _recv,
-				 struct socket_info* sock);
+				 struct socket_info* sock, str* _inst);
 int insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
 			unsigned int _flags, struct ucontact** _con, str *_ua, str* _recv,
-			struct socket_info* sock);
-
-/*
- * Create and insert new contact
- * into urecord without replication
- */
-
-int insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
-		    unsigned int _flags, struct ucontact** _con, str *_ua, str* _recv,
-		    struct socket_info* sock);
-
+			struct socket_info* sock, str* _inst);
 
 /*
  * Delete ucontact from urecord
@@ -162,5 +152,6 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c);
 typedef int (*get_ucontact_t)(urecord_t* _r, str* _c, struct ucontact** _co);
 int get_ucontact(urecord_t* _r, str* _c, struct ucontact** _co);
 
-
+typedef int (*get_ucontact_by_inst_t)(urecord_t* _r, str* _c, str* _i, struct ucontact** _co);
+int get_ucontact_by_instance(urecord_t* _r, str* _c, str* _i, struct ucontact** _co);
 #endif /* URECORD_H */
