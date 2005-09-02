@@ -30,6 +30,8 @@
 
 #include "../../proxy.h"
 
+extern unsigned int gflags_mask;
+
 typedef int (*tfwd_f)(struct sip_msg* p_msg , struct proxy_l * proxy );
 typedef int (*taddblind_f)( /*struct cell *t */ );
 

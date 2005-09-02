@@ -151,7 +151,7 @@ typedef struct ua_client
 	/* UAC specific flags */
 	short            flags;
 	/* script flags, psecific to this branch */
-	int              sc_flags;
+	int              br_flags;
 }ua_client_type;
 
 

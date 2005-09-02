@@ -500,35 +500,38 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 }
 
 
-static inline int fake_req(struct sip_msg *faked_req, 
-				struct sip_msg *shmem_msg, str *uri)
+static inline int fake_req(struct sip_msg *faked_req, struct sip_msg *shm_msg,
+		struct ua_server *uas, struct ua_client *uac)
 {
 	/* on_negative_reply faked msg now copied from shmem msg (as opposed
 	 * to zero-ing) -- more "read-only" actions (exec in particular) will
 	 * work from reply_route as they will see msg->from, etc.; caution,
 	 * rw actions may append some pkg stuff to msg, which will possibly be
 	 * never released (shmem is released in a single block) */
-	memcpy( faked_req, shmem_msg, sizeof(struct sip_msg));
+	memcpy( faked_req, shm_msg, sizeof(struct sip_msg));
 
 	/* if we set msg_id to something different from current's message
 	 * id, the first t_fork will properly clean new branch URIs */
-	faked_req->id=shmem_msg->id-1;
+	faked_req->id=shm_msg->id-1;
 	/* msg->parsed_uri_ok must be reset since msg_parsed_uri is
 	 * not cloned (and cannot be cloned) */
 	faked_req->parsed_uri_ok = 0;
 
 	/* new_uri can change -- make a private copy */
-	faked_req->new_uri.s=pkg_malloc( uri->len+1 );
+	faked_req->new_uri.s=pkg_malloc( uac->uri.len+1 );
 	if (!faked_req->new_uri.s) {
 		LOG(L_ERR, "ERROR:tm:fake_req: no uri/pkg mem\n");
 		goto error;
 	}
-	faked_req->new_uri.len = uri->len;
-	memcpy( faked_req->new_uri.s, uri->s, uri->len);
+	faked_req->new_uri.len = uac->uri.len;
+	memcpy( faked_req->new_uri.s, uac->uri.s, uac->uri.len);
 	faked_req->new_uri.s[faked_req->new_uri.len]=0;
 
 	/* dst_set is imposible to restore (since it's not saved),
 	 * so let it set to NULL */
+
+	/* set as flags the global flags and the flags from the elected branch */
+	faked_req->flags = uas->request->flags | uac->br_flags;
 
 	return 1;
 error:
@@ -589,7 +592,7 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		return 1;
 	}
 
-	if (!fake_req(&faked_req, shmem_msg, &t->uac[branch].uri)) {
+	if (!fake_req(&faked_req, shmem_msg, &t->uas, &t->uac[branch])) {
 		LOG(L_ERR, "ERROR: run_failure_handlers: fake_req failed\n");
 		return 0;
 	}
@@ -616,7 +619,7 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	free_faked_req(&faked_req,t);
 
 	/* if failure handler changed flag, update transaction context */
-	shmem_msg->flags = faked_req.flags;
+	shmem_msg->flags = faked_req.flags & gflags_mask;
 	return 1;
 }
 
@@ -1266,7 +1269,8 @@ int reply_received( struct sip_msg  *p_msg )
 	/* processing of on_reply block */
 	if (t->on_reply) {
 		/* transfer transaction flag to branch context */
-		p_msg->flags = t->uac[branch].sc_flags;
+		p_msg->flags = ((p_msg->flags | t->uas.request->flags) & gflags_mask) |
+			t->uac[branch].br_flags;
 		/* set the as avp_list the one from transaction */
 		backup_list = set_avp_list(&t->user_avps);
 		/* run block */
@@ -1277,7 +1281,8 @@ int reply_received( struct sip_msg  *p_msg )
 			goto done;
 		}
 		/* transfer current message context back to t */
-		t->uac[branch].sc_flags=p_msg->flags;
+		t->uac[branch].br_flags = p_msg->flags & (~gflags_mask);
+		t->uas.request->flags = p_msg->flags & gflags_mask;
 		/* restore original avp list */
 		set_avp_list( backup_list );
 	}

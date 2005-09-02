@@ -56,6 +56,7 @@
 #include "h_table.h"
 #include "fix_lumps.h" /* free_via_clen_lump */
 #include "t_hooks.h"
+#include "t_fwd.h"
 
 static enum kill_reason kr;
 
@@ -264,6 +265,8 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 		if (!new_cell->uas.request)
 			goto error;
 		new_cell->uas.end_request=((char*)new_cell->uas.request)+sip_msg_len;
+		/* keep in UAS side only the global flags */
+		new_cell->uas.request->flags &= gflags_mask;
 	}
 
 	/* UAC */

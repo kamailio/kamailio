@@ -1010,6 +1010,7 @@ static inline int new_t(struct sip_msg *p_msg)
 	return 1;
 }
 
+
 /* atomic "new_tran" construct; it returns:
 
 	<0	on error
@@ -1026,7 +1027,6 @@ static inline int new_t(struct sip_msg *p_msg)
 int t_newtran( struct sip_msg* p_msg )
 {
 	int lret, my_err;
-
 
 	/* is T still up-to-date ? */
 	DBG("DEBUG: t_newtran: msg id=%d , global msg id=%d ,"

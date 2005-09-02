@@ -211,7 +211,6 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	ret=0;
 
 	new_tran = t_newtran( p_msg );
-	
 
 	/* parsing error, memory alloc, whatever ... if via is bad
 	   and we are forced to reply there, return with 0 (->break),
@@ -231,7 +230,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 
 	/* ACKs do not establish a transaction and are fwd-ed statelessly */
 	if ( p_msg->REQ_METHOD==METHOD_ACK) {
-		DBG( "SER: forwarding ACK  statelessly \n");
+		DBG( "SER:tm:t_relay: forwarding ACK  statelessly \n");
 		if (proxy==0) {
 			uri = GET_RURI(p_msg);
 			proxy=uri2proxy(GET_NEXT_HOP(p_msg), proto);
