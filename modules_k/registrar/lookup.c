@@ -50,10 +50,8 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	str aor, uri;
 	ucontact_t* ptr;
 	int res;
-	unsigned int nat;
+	int bflags;
 
-	nat = 0;
-	
 	if (_m->new_uri.s) uri = _m->new_uri;
 	else uri = _m->first_line.u.request.uri;
 	
@@ -98,39 +96,42 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 
 		set_ruri_q(ptr->q);
 
-		nat |= ptr->flags & FL_NAT;
+		/* for RURI branch, the nat flag goes into msg */
+		if ( ptr->flags&FL_NAT )
+			_m->flags |= nat_flag;
 
 		if (ptr->sock)
 			_m->force_send_socket = ptr->sock;
 
 		ptr = ptr->next;
 	} else {
-		     /* All contacts expired */
+		/* All contacts expired */
 		ul.unlock_udomain((udomain_t*)_t);
 		return -5;
 	}
-	
-	     /* Append branches if enabled */
+
+	/* Append branches if enabled */
 	if (!append_branches) goto skip;
 
 	for( ; ptr ; ptr = ptr->next ) {
 		if (VALID_CONTACT(ptr, act_time)) {
-			if (append_branch(_m, &ptr->c, &ptr->received, ptr->q, 
-			0, ptr->sock) == -1) {
+			/* for additional branches, the nat flag goes into dset */
+			bflags = (use_branch_flags && (ptr->flags & FL_NAT))?nat_flag:0;
+			if (append_branch(_m, &ptr->c, &ptr->received, ptr->q,
+			bflags, ptr->sock) == -1) {
 				LOG(L_ERR, "lookup(): Error while appending a branch\n");
 				/* Return 1 here so the function succeeds even if
 				 * appending of a branch failed */
 				/* Also give a chance to the next branches*/
 				continue;
 			}
-			nat |= ptr->flags & FL_NAT; 
+			if (!use_branch_flags && (ptr->flags & FL_NAT))
+				_m->flags |= nat_flag;
 		}
 	}
 
 skip:
 	ul.unlock_udomain((udomain_t*)_t);
-	if (nat && nat_flag!=-1)
-		_m->flags |= nat_flag;
 	return 1;
 }
 

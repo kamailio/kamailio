@@ -424,7 +424,7 @@ modparam("registrar", "sock_flag", 18)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>retry_after</varname> parameter</title>
+		<title>Set <varname>sock_hdr_namer</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("registrar", "sock_hdr_name", "Sock-Info")
@@ -433,8 +433,34 @@ modparam("registrar", "sock_hdr_name", "Sock-Info")
 		</example>
 	</section>
 
-
+	<section>
+		<title><varname>use_branch_flags</varname> (integer)</title>
+		<para>
+		If enabled (has a non zero value), the NAT flag for the additional
+		branches will be pushed in branch flags (in dset/branch array).
+		Otherwise it will be pushed in the message flags. In both cases, the
+		NAT flag for the RURI will be push into message flags.
+		</para>
+		<para>
+		This make sens to be enabled only if branch route will be used.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>use_branch_flagsr</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "use_branch_flags", 1)
+...
+		</programlisting>
+		</example>
 	</section>
+	</section>
+
+
 	<section>
 	<title>Exported Functions</title>
 	<section>
@@ -442,17 +468,19 @@ modparam("registrar", "sock_hdr_name", "Sock-Info")
 		<function moreinfo="none">save(domain)</function>
 		</title>
 		<para>
-		The function processes a REGISTER message. It can add, remove or modify usrloc
-		records depending on Contact and Expires HFs in the REGISTER message. On success,
-		200 OK will be returned listing all contacts that are currently in usrloc. On an
-		error, error message will be send with a short description in reason phrase.
+		The function processes a REGISTER message. It can add, remove or 
+		modify usrloc records depending on Contact and Expires HFs in the 
+		REGISTER message. On success, 200 OK will be returned listing all 
+		contacts that are currently in usrloc. On an error, error message 
+		will be send with a short description in reason phrase.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>domain</emphasis> - Logical domain within registrar. If database
-			is used then this must be name of the table which stores the contacts.
+			<emphasis>domain</emphasis> - Logical domain within registrar. 
+			If database is used then this must be name of the table which 
+			stores the contacts.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -477,8 +505,9 @@ save("location");
 		<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>domain</emphasis> - Logical domain within registrar. If database is
-			used then this must be na e of the table which stores the contacts.
+			<emphasis>domain</emphasis> - Logical domain within registrar. 
+			If database is used then this must be na e of the table which 
+			stores the contacts.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -497,18 +526,19 @@ save_noreply("location");
 		<function moreinfo="none">lookup(domain)</function>
 		</title>
 		<para>
-		The functions extracts username from Request-URI and tries to find all contacts for
-		the username in usrloc. If there are no such contacts, -1 will be returned.  If
-		there are such contacts, Request-URI will be overwritten with the contact that has
-		the highest q value and optionally the rest will be appended to the message
-		(depending on append_branches parameter value).
+		The functions extracts username from Request-URI and tries to find 
+		all contacts for the username in usrloc. If there are no such 
+		contacts, -1 will be returned.  If there are such contacts, 
+		Request-URI will be overwritten with the contact that has
+		the highest q value and optionally the rest will be appended to 
+		the message (depending on append_branches parameter value).
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>domain</emphasis> - Name of table that should be used for the
-			lookup.
+			<emphasis>domain</emphasis> - Name of table that should be used 
+			for the lookup.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -527,16 +557,17 @@ lookup("location");
 		<function moreinfo="none">registered(domain)</function>
 		</title>
 		<para>
-		The function returns true if the AOR in the Request-URI is registered, false
-		otherwise.  The function does not modify the message being process, it neither
-		rewrites the Request-URI if a contact is found not append branches.
+		The function returns true if the AOR in the Request-URI is 
+		registered, false otherwise.  The function does not modify the 
+		message being process, it neither rewrites the Request-URI if a 
+		contact is found not append branches.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>domain</emphasis> - Name of table that should be used for the
-			lookup.
+			<emphasis>domain</emphasis> - Name of table that should be 
+			used for the lookup.
 			</para>
 		</listitem>
 		</itemizedlist>

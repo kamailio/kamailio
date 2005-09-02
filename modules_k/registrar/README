@@ -41,6 +41,7 @@ Bogdan-Andre Iancu
               1.3.14. retry_after (integer)
               1.3.15. sock_flag (integer)
               1.3.16. sock_hdr_name (string)
+              1.3.17. use_branch_flags (integer)
 
         1.4. Exported Functions
 
@@ -69,12 +70,13 @@ Bogdan-Andre Iancu
    1-13. Set max_contacts parameter
    1-14. Set retry_after parameter
    1-15. Set sock_flag parameter
-   1-16. Set retry_after parameter
-   1-17. save usage
-   1-18. save_noreply usage
-   1-19. lookup usage
-   1-20. registered usage
-   1-21. add_sock_hdr usage
+   1-16. Set sock_hdr_namer parameter
+   1-17. Set use_branch_flagsr parameter
+   1-18. save usage
+   1-19. save_noreply usage
+   1-20. lookup usage
+   1-21. registered usage
+   1-22. add_sock_hdr usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -351,9 +353,28 @@ modparam("registrar", "sock_flag", 18)
 
    Default value is NULL. 
 
-   Example 1-16. Set retry_after parameter
+   Example 1-16. Set sock_hdr_namer parameter
 ...
 modparam("registrar", "sock_hdr_name", "Sock-Info")
+...
+     _________________________________________________________
+
+1.3.17. use_branch_flags (integer)
+
+   If enabled (has a non zero value), the NAT flag for the
+   additional branches will be pushed in branch flags (in
+   dset/branch array). Otherwise it will be pushed in the message
+   flags. In both cases, the NAT flag for the RURI will be push
+   into message flags.
+
+   This make sens to be enabled only if branch route will be
+   used.
+
+   Default value is 0 (disabled). 
+
+   Example 1-17. Set use_branch_flagsr parameter
+...
+modparam("registrar", "use_branch_flags", 1)
 ...
      _________________________________________________________
 
@@ -374,7 +395,7 @@ modparam("registrar", "sock_hdr_name", "Sock-Info")
        used then this must be name of the table which stores the
        contacts.
 
-   Example 1-17. save usage
+   Example 1-18. save usage
 ...
 save("location");
 ...
@@ -390,7 +411,7 @@ save("location");
        used then this must be na e of the table which stores the
        contacts.
 
-   Example 1-18. save_noreply usage
+   Example 1-19. save_noreply usage
 ...
 save_noreply("location");
 ...
@@ -410,7 +431,7 @@ save_noreply("location");
 
      * domain - Name of table that should be used for the lookup.
 
-   Example 1-19. lookup usage
+   Example 1-20. lookup usage
 ...
 lookup("location");
 ...
@@ -427,7 +448,7 @@ lookup("location");
 
      * domain - Name of table that should be used for the lookup.
 
-   Example 1-20. registered usage
+   Example 1-21. registered usage
 ...
 if (registered("location")) {
         sl_send_reply("100", "Trying");
@@ -448,7 +469,7 @@ if (registered("location")) {
 
      * hdr_name - header name to be used.
 
-   Example 1-21. add_sock_hdr usage
+   Example 1-22. add_sock_hdr usage
 ...
 add_sock_hdr("Sock-Info");
 ...
@@ -476,9 +497,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

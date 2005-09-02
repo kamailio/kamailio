@@ -55,6 +55,7 @@ extern str rcv_param;
 extern int rcv_avp_no;
 extern int max_contacts;
 extern int retry_after;
+extern int use_branch_flags;
 
 extern str sock_hdr_name;
 extern int sock_flag;

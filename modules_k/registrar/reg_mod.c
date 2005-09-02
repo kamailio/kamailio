@@ -78,6 +78,9 @@ int max_expires     = 0;
 int max_contacts = 0;
 /* The value of Retry-After HF in 5xx replies */
 int retry_after = 0;
+/* if the NAT flag should be pushed in branch flags or msg flags */
+int use_branch_flags = 0;
+
 
 int use_domain = 0;
 char* realm_pref    = "";   /* Realm prefix to be removed */
@@ -134,6 +137,7 @@ static param_export_t params[] = {
 	{"retry_after",       INT_PARAM, &retry_after       },
 	{"sock_flag",         INT_PARAM, &sock_flag         },
 	{"sock_hdr_name",     STR_PARAM, &sock_hdr_name.s   },
+	{"use_branch_flags",  INT_PARAM, &use_branch_flags  },
 	{0, 0, 0}
 };
 
