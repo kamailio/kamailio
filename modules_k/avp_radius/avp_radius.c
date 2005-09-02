@@ -118,12 +118,6 @@ static int mod_init(void)
 	vals[V_SIP_CALLER_AVPS].n = "SIP-Caller-AVPs";
 	vals[V_SIP_CALLEE_AVPS].n = "SIP-Callee-AVPs";
 
-	/* open log */
-#ifndef NAME
-#define NAME "openser"
-#endif
-	rc_openlog(NAME);
-	
 	/* read config */
 	if ((rh = rc_read_config(radius_config)) == NULL) {
 		LOG(L_ERR, "ERROR:avp_radius:init: Error opening radius "
