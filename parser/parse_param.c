@@ -89,6 +89,13 @@ static inline void parse_contact_class(param_hooks_t* _h, param_t* _p)
 			_h->contact.received = _p;
 		}
 		break;
+	case '+':
+		if ((_p->name.len == 13) &&
+			(!strncasecmp(_p->name.s + 1, "sip.instance", 12))) {
+			_p->type = P_INSTANCE;
+			_h->contact.instance = _p;
+		}
+		break;
 	}
 }
 
@@ -491,6 +498,7 @@ static inline void print_param(FILE* _o, param_t* _p)
 	case P_RECEIVED:  type = "P_RECEIVED";  break;
 	case P_DSTIP:     type = "P_DSTIP";     break;
 	case P_DSTPORT:   type = "P_DSTPORT";   break;
+	case P_INSTANCE:  type = "P_INSTANCE";  break;
 	default:          type = "UNKNOWN";     break;
 	}
 	

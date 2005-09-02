@@ -240,7 +240,7 @@ INSERT INTO version VALUES ( 'reserved', '1');
 INSERT INTO version VALUES ( 'phonebook', '1');
 INSERT INTO version VALUES ( 'pending', '4');
 INSERT INTO version VALUES ( 'missed_calls', '2');
-INSERT INTO version VALUES ( 'location', '6');
+INSERT INTO version VALUES ( 'location', '7');
 INSERT INTO version VALUES ( 'grp', '2');
 INSERT INTO version VALUES ( 'event', '1');
 INSERT INTO version VALUES ( 'aliases', '6');
@@ -387,6 +387,7 @@ CREATE TABLE location (
   state tinyint(1) unsigned NOT NULL default '0',
   flags int(11) NOT NULL default '0',
   user_agent varchar(50) NOT NULL default '',
+  instance varchar(80) NOT NULL default '',
   PRIMARY KEY($USERCOL, domain, contact)
 ) $TABLE_TYPE;
 
