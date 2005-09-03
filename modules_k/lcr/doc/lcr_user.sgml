@@ -33,12 +33,13 @@
 		</itemizedlist>
 	</para>
 	<para>
-		Gateway selection is based on caller's RPID URI (if available in
-		caller's RPID AVP after authentication) or From URI and user part of
-		Request-URI (telephone number).  Gateway patterns matching RPID or
-		From URI and telephone number are ordered for forwarding purpose (1)
-		according to longest user part match, (2) according to priority, and
-		(3) randomly.
+   Gateway selection is based on caller's RPID URI (if available in
+   caller's RPID AVP after authentication) or From URI and user part of
+   Request-URI (telephone number).  A gateway matches a request if user
+   part of Request-URI and "From" URI match the prefix and From pattern
+   of the gateway.  Matching gateways are then ordered for forwarding
+   purpose (1) according to longest user part match, (2) according to
+   gateway's priority, and (3) randomly.
 	</para>
 	<para>
 		Each gateway belongs to a gateway group either alone or among other
@@ -308,11 +309,11 @@ modparam("lcr","priority_column","priority")
 	</section>
 
 <section>
-		<title><varname>gw_addr_port_avp</varname> (string)</title>
+		<title><varname>gw_uri_avp</varname> (string)</title>
 		<para>
-		Overrides the name of the AVP containing the addres:port of the 
-		gateway. If the string name of the AVP contains only digits, the 
-		name of the AVP is integer value of the string.
+   Overrides the name of the AVP containing URI scheme, host, port, and
+   transport of a gateway.  If the string name of the AVP contains only
+   digits, the name of the AVP is integer value of the string.
 		</para>
 		<para>
 		<emphasis>
@@ -320,10 +321,32 @@ modparam("lcr","priority_column","priority")
 		</emphasis>
 		</para>
 		<example>
-		<title>Setting <varname>gw_addr_port_avp</varname> module parameter</title>
+		<title>Setting <varname>gw_uri_avp</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","gw_addr_port_avp","1400")
+modparam("lcr","gw_uri_avp","1400")
+...
+</programlisting>
+		</example>
+	</section>
+<section>
+		<title><varname>ruri_user_avp</varname> (string)</title>
+		<para>
+   Overrides the name of the AVP containing user part of Request-URI
+   after the first next_gw() call.  If the string
+   name of the AVP contains only digits, the name of the AVP is integer
+   value of the string.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1402</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>ruri_user_avp</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","ruri_user_avp","500")
 ...
 </programlisting>
 		</example>
@@ -429,9 +452,9 @@ modparam("lcr","fr_inv_timer_next",30)
 		<function moreinfo="none">load_gws()</function>
 		</title>
 		<para>
-			Loads addresses and ports of gateways matching RPID AVP (if
-			available) or From URI and user part of Request-URI to
-			gw_addr_port_avp AVPs.  Returns 1 or -1 depending on success.
+   Loads URI schemes, addresses, ports, and transports of gateways
+   that match user part of Request-URI to gw_uri_avp AVPs (see Overview
+   section).  Returns 1 or -1 depending on success.
 		</para>
 		<example>
 		<title><function>load_gws</function> usage</title>
@@ -450,14 +473,17 @@ if (!load_gws()) {
 		<function moreinfo="none">next_gw()</function>
 		</title>	
 		<para>
-			If called from a route block, replaces host:port part of 
-			Request-URI by the first gw_addr_port_avp AVP value and destroys 
-			that AVP.
+   If called from a route block, replaces URI scheme, host, port, and
+   transport of Request-URI by the values stored in first gw_uri_avp AVP
+   and destroys that AVP.  Saves user part of Request-URI into
+   ruri_user_avp AVP for use in subsequent next_gw() calls.
 		</para>
 		<para>
-			If called from a failure route block, appends a new branch to 
-			request, where host:port part of Request-URI is replaced by the 
-			first gw_addr_port_avp AVP value and destroys that AVP.
+   If called from a failure route block, appends a new branch to
+   request, where  URI scheme, host, port, and transport of Request-URI
+   is replaced by the values stored in the first gw_uri_avp AVP and
+   destroys that AVP.  Request-URI user is taken from ruri_user_avp
+   AVP.
 		</para>
 		<para>
 			Returns 1 on success and -1 if there were no gateways left or if an

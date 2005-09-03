@@ -30,6 +30,8 @@
  *  2005-07-28: Added support for gw URI scheme and transport, 
  *              backport from ser (kd)
  *  2005-08-20: Added support for gw prefixes (jh)
+ *  2005-09-03: Request-URI user part can be modified between load_gws()
+ *              and first next_gw() calls.
  */
 
 #include <stdio.h>
@@ -114,6 +116,7 @@ int reload_gws ( void );
 /* Default avp names */
 #define DEF_GW_URI_AVP "1400"
 #define DEF_CONTACT_AVP "1401"
+#define DEF_RURI_USER_AVP "1402"
 #define DEF_FR_INV_TIMER_AVP "fr_inv_timer_avp"
 #define DEF_FR_INV_TIMER 90
 #define DEF_FR_INV_TIMER_NEXT 30
@@ -155,7 +158,9 @@ str lcr_table        = {LCR_TABLE, LCR_TABLE_LEN};
 str prefix_col       = {PREFIX_COL, PREFIX_COL_LEN};
 str from_uri_col     = {FROM_URI_COL, FROM_URI_COL_LEN};
 str priority_col     = {PRIORITY_COL, PRIORITY_COL_LEN};
+
 str gw_uri_avp       = {DEF_GW_URI_AVP,	sizeof(DEF_GW_URI_AVP) - 1};
+str ruri_user_avp    = {DEF_RURI_USER_AVP, sizeof(DEF_RURI_USER_AVP) - 1};
 str contact_avp      = {DEF_CONTACT_AVP, sizeof(DEF_CONTACT_AVP) - 1};
 str inv_timer_avp    = {DEF_FR_INV_TIMER_AVP, sizeof(DEF_FR_INV_TIMER_AVP)
 			-1 };
@@ -174,8 +179,9 @@ struct contact {
     struct contact *next;
 };
 
-int_str gw_uri_name, contact_name, rpid_name, inv_timer_name;
+int_str gw_uri_name, ruri_user_name, contact_name, rpid_name, inv_timer_name;
 unsigned short gw_uri_avp_name_str;
+unsigned short ruri_user_avp_name_str;
 unsigned short contact_avp_name_str;
 unsigned short rpid_avp_name_str;
 
@@ -225,9 +231,10 @@ static param_export_t params[] = {
 	{"prefix_column",            STR_PARAM, &prefix_col.s   },
 	{"from_uri_column",          STR_PARAM, &from_uri_col.s },
 	{"priority_column",          STR_PARAM, &priority_col.s },
-	{"gw_uri_avp",               STR_PARAM, &gw_uri_avp.s },
+	{"gw_uri_avp",               STR_PARAM, &gw_uri_avp.s   },
+	{"ruri_user_avp",            STR_PARAM, &ruri_user_avp.s },
 	{"contact_avp",              STR_PARAM, &contact_avp.s  },
-	{"fr_inv_timer_avp",         STR_PARAM, &inv_timer_avp.s  },
+	{"fr_inv_timer_avp",         STR_PARAM, &inv_timer_avp.s },
 	{"fr_inv_timer",             INT_PARAM, &inv_timer      },
 	{"fr_inv_timer_next",        INT_PARAM, &inv_timer_next },
 	{"rpid_avp",                 STR_PARAM, &rpid_avp.s     },
@@ -366,6 +373,7 @@ static int mod_init(void)
 	from_uri_col.len = strlen(from_uri_col.s);
 	priority_col.len = strlen(priority_col.s);
 	gw_uri_avp.len = strlen(gw_uri_avp.s);
+	ruri_user_avp.len = strlen(ruri_user_avp.s);
 	contact_avp.len = strlen(contact_avp.s);
 	inv_timer_avp.len = strlen(inv_timer_avp.s);
 	rpid_avp.len = strlen(rpid_avp.s);
@@ -430,6 +438,13 @@ static int mod_init(void)
 	} else {
 	    gw_uri_name.s = &gw_uri_avp;
 	    gw_uri_avp_name_str = AVP_NAME_STR;
+	}
+	if (str2int(&ruri_user_avp, &par) == 0) {
+	    ruri_user_name.n = par;
+	    ruri_user_avp_name_str = 0;
+	} else {
+	    ruri_user_name.s = &ruri_user_avp;
+	    ruri_user_avp_name_str = AVP_NAME_STR;
 	}
 	if (str2int(&contact_avp, &par) == 0) {
 	    contact_name.n = par;
@@ -652,7 +667,7 @@ void print_gws (FILE *reply_file)
 
 
 /*
- * Load GW info from database to lcr_gw_addr_port AVPs
+ * Load info of matching GWs from database to gw_uri AVPs
  */
 int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 {
@@ -757,7 +772,7 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 	    prefix = (char *)VAL_STRING(ROW_VALUES(row) + 4);
 	    prefix_len = strlen(prefix);
 	}
-	if (5 + prefix_len + ruri_user.len + 1 + 15 + 1 + 5 + 1 + 14 >
+	if (5 + prefix_len + 1 + 15 + 1 + 5 + 1 + 14 >
 	    MAX_URI_SIZE) {
 	    LOG(L_ERR, "load_gws(): Request URI would be too long\n");
 	    goto skip;
@@ -774,7 +789,6 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 	if (prefix_len) {
 	    memcpy(at, prefix, prefix_len); at = at + prefix_len;
 	}
-	memcpy(at, ruri_user.s, ruri_user.len); at = at + ruri_user.len;
 	*at = '@'; at = at + 1;
 	address.af = AF_INET;
 	address.len = 4;
@@ -821,52 +835,120 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 
 
 /*
- * If called from route block, rewrites host:port part of R-URI with the
- * first lcr_gw_addr:lcr_gw_port AVP values, which are then destroyed. 
- * If called from failure route block, appends a new branch to request,
- * where host:port part of its R-URI is replaced by the first
- * lcr_gw_addr:lcr_gw_port AVP value, which is then destroyed.
+ * If called from request route block, rewrites scheme, host, port, and
+ * transport parts of R-URI based on first gw_uri AVP value, which is then
+ * destroyed.  Also saves R-URI user to ruri_user AVP for later use in
+ * failure route block.
+ * If called from failure route block, appends a new branch to request
+ * where scheme, host, port, and transport of URI are taken from the first
+ * gw_uri AVP value, which is then destroyed.  URI user is taken from
+ * ruri_user AVP value saved earlier.
  * Returns 1 upon success and -1 upon failure.
  */
 int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 {
-    int_str val;
+    int_str gw_uri_val, ruri_user_val, val;
     struct action act;
     int rval;
-    struct usr_avp *avp;
+    struct usr_avp *gw_uri_avp, *ruri_user_avp;
+    str new_ruri;
+    char *at, *at_char;
 
-    avp = search_first_avp(gw_uri_avp_name_str, gw_uri_name, &val);
-    if (!avp) return -1;
+    gw_uri_avp = search_first_avp(gw_uri_avp_name_str,
+				  gw_uri_name, &gw_uri_val);
+    if (!gw_uri_avp) return -1;
 
-	if (route_type == REQUEST_ROUTE) {
-		act.type = SET_URI_T;
-		act.p1_type = STRING_ST;
-		act.p1.string = val.s->s;
-		rval = do_action(&act, _m);
-		destroy_avp(avp);
-		if (rval != 1) {
-			LOG(L_ERR, "next_gw(): ERROR: do_action failed with return "
-				"value <%d>\n", rval);
-			return -1;
-		}
-		return 1;
-	} else if (route_type == FAILURE_ROUTE) {
-		act.type = APPEND_BRANCH_T;
-		act.p1_type = STRING_ST;
-		act.p1.string = val.s->s;
-		act.p2_type = NUMBER_ST;
-		act.p2.number = 0;
-		rval = do_action(&act, _m);
-		destroy_avp(avp);
-		if (rval != 1) {
-			LOG(L_ERR, "next_gw(): ERROR: do_action failed with return "
-				"value <%d>\n", rval);
-			return -1;
-		}
-		return 1;
+    if (route_type == REQUEST_ROUTE) {
+	/* Create new Request-URI taking URI user from current Request-URI
+	   and other parts of from gw_uri AVP. */
+	if (parse_sip_msg_uri(_m) < 0) {
+	    LOG(L_ERR, "next_gw(): Parsing of R-URI failed.\n");
+	    return -1;
 	}
-	/* unsupported route type */
-	return -1;
+	new_ruri.len = gw_uri_val.s->len + _m->parsed_uri.user.len + 1;
+	new_ruri.s = pkg_malloc(new_ruri.len);
+	if (!new_ruri.s) {
+	    LOG(L_ERR, "next_gw(): No memory for new R-URI.\n");
+	    return -1;
+	}
+	at_char = memchr(gw_uri_val.s->s, '@', gw_uri_val.s->len);
+	if (!at_char) {
+	    pkg_free(new_ruri.s);
+	    LOG(L_ERR, "next_gw(): No @ in gateway URI.\n");
+	    return -1;
+	}
+	at = new_ruri.s;
+	memcpy(at, gw_uri_val.s->s, at_char - gw_uri_val.s->s);
+	at = at + (at_char - gw_uri_val.s->s);
+	memcpy(at, _m->parsed_uri.user.s, _m->parsed_uri.user.len);
+	at = at + _m->parsed_uri.user.len;
+	memcpy(at, at_char, gw_uri_val.s->len - (at_char - gw_uri_val.s->s));
+	at = at + gw_uri_val.s->len - (at_char - gw_uri_val.s->s);
+	*at = '\0';
+	/* Save Request-URI user for use in FAILURE_ROUTE */
+	val.s = &(_m->parsed_uri.user);
+	add_avp(ruri_user_avp_name_str|AVP_VAL_STR, ruri_user_name, val);
+	DBG("load_gws(): DEBUG: Added ruri_user_avp <%.*s>\n",
+	    val.s->len, val.s->s);
+	/* Rewrite Request URI */
+	act.type = SET_URI_T;
+	act.p1_type = STRING_ST;
+	act.p1.string = new_ruri.s;
+	rval = do_action(&act, _m);
+	pkg_free(new_ruri.s);
+	destroy_avp(gw_uri_avp);
+	if (rval != 1) {
+	    LOG(L_ERR, "next_gw(): ERROR: do_action failed with return "
+		"value <%d>\n", rval);
+	    return -1;
+	}
+	return 1;
+    } else if (route_type == FAILURE_ROUTE) {
+	/* Create new Request-URI taking URI user from ruri_user AVP
+	   and other parts of from gateway URI AVP. */
+	ruri_user_avp = search_first_avp(ruri_user_avp_name_str,
+					 ruri_user_name, &ruri_user_val);
+	if (!ruri_user_avp) {
+	    LOG(L_ERR, "next_gw(): No ruri_user AVP\n");
+	    return -1;
+	}
+	new_ruri.len = gw_uri_val.s->len + ruri_user_val.s->len + 1;
+	new_ruri.s = pkg_malloc(new_ruri.len);
+	if (!new_ruri.s) {
+	    LOG(L_ERR, "next_gw(): No memory for new R-URI.\n");
+	    return -1;
+	}
+	at_char = memchr(gw_uri_val.s->s, '@', gw_uri_val.s->len);
+	if (!at_char) {
+	    pkg_free(new_ruri.s);
+	    LOG(L_ERR, "next_gw(): No @ in gateway URI.\n");
+	    return -1;
+	}
+	at = new_ruri.s;
+	memcpy(at, gw_uri_val.s->s, at_char - gw_uri_val.s->s);
+	at = at + (at_char - gw_uri_val.s->s);
+	memcpy(at, ruri_user_val.s->s, ruri_user_val.s->len);
+	at = at + ruri_user_val.s->len;
+	memcpy(at, at_char, gw_uri_val.s->len - (at_char - gw_uri_val.s->s));
+	at = at + gw_uri_val.s->len - (at_char - gw_uri_val.s->s);
+	*at = '\0';
+	act.type = APPEND_BRANCH_T;
+	act.p1_type = STRING_ST;
+	act.p1.string = new_ruri.s;
+	act.p2_type = NUMBER_ST;
+	act.p2.number = 0;
+	rval = do_action(&act, _m);
+	pkg_free(new_ruri.s);
+	destroy_avp(gw_uri_avp);
+	if (rval != 1) {
+	    LOG(L_ERR, "next_gw(): ERROR: do_action failed with return "
+		"value <%d>\n", rval);
+	    return -1;
+	}
+	return 1;
+    }
+    /* unsupported route type */
+    return -1;
 }
 
 

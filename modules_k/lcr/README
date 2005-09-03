@@ -31,11 +31,12 @@ Juha Heinanen
               1.3.8. prefix_column (string)
               1.3.9. from_uri_column (string)
               1.3.10. priority_column (string)
-              1.3.11. gw_addr_port_avp (string)
-              1.3.12. contact_avp (string)
-              1.3.13. fr_inv_timer_avp (string)
-              1.3.14. fr_inv_timer (integer)
-              1.3.15. fr_inv_timer_next (integer)
+              1.3.11. gw_uri_avp (string)
+              1.3.12. ruri_user_avp (string)
+              1.3.13. contact_avp (string)
+              1.3.14. fr_inv_timer_avp (string)
+              1.3.15. fr_inv_timer (integer)
+              1.3.16. fr_inv_timer_next (integer)
 
         1.4. Exported Functions
 
@@ -68,19 +69,20 @@ Juha Heinanen
    1-8. Setting prefix_column module parameter
    1-9. Setting from_uri_column module parameter
    1-10. Setting priority_column module parameter
-   1-11. Setting gw_addr_port_avp module parameter
-   1-12. Setting contact_avp module parameter
-   1-13. Setting fr_inv_timer_avp module parameter
-   1-14. Setting fr_inv_timer module parameter
-   1-15. Setting fr_inv_timer_next module parameter
-   1-16. load_gws usage
-   1-17. next_gw usage from a route block
-   1-18. next_gw usage from a failure route block
-   1-19. from_gw usage
-   1-20. to_gw usage
-   1-21. load_contacts usage
-   1-22. next_contacts usage from route block
-   1-23. next_contacts usage from failure route block
+   1-11. Setting gw_uri_avp module parameter
+   1-12. Setting ruri_user_avp module parameter
+   1-13. Setting contact_avp module parameter
+   1-14. Setting fr_inv_timer_avp module parameter
+   1-15. Setting fr_inv_timer module parameter
+   1-16. Setting fr_inv_timer_next module parameter
+   1-17. load_gws usage
+   1-18. next_gw usage from a route block
+   1-19. next_gw usage from a failure route block
+   1-20. from_gw usage
+   1-21. to_gw usage
+   1-22. load_contacts usage
+   1-23. next_contacts usage from route block
+   1-24. next_contacts usage from failure route block
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -98,10 +100,12 @@ Chapter 1. User's Guide
 
    Gateway selection is based on caller's RPID URI (if available
    in caller's RPID AVP after authentication) or From URI and
-   user part of Request-URI (telephone number). Gateway patterns
-   matching RPID or From URI and telephone number are ordered for
-   forwarding purpose (1) according to longest user part match,
-   (2) according to priority, and (3) randomly.
+   user part of Request-URI (telephone number). A gateway matches
+   a request if user part of Request-URI and "From" URI match the
+   prefix and From pattern of the gateway. Matching gateways are
+   then ordered for forwarding purpose (1) according to longest
+   user part match, (2) according to gateway's priority, and (3)
+   randomly.
 
    Each gateway belongs to a gateway group either alone or among
    other gateways. All gateways in a group share the same
@@ -267,21 +271,37 @@ modparam("lcr","priority_column","priority")
 ...
      _________________________________________________________
 
-1.3.11. gw_addr_port_avp (string)
+1.3.11. gw_uri_avp (string)
 
-   Overrides the name of the AVP containing the addres:port of
-   the gateway. If the string name of the AVP contains only
-   digits, the name of the AVP is integer value of the string.
+   Overrides the name of the AVP containing URI scheme, host,
+   port, and transport of a gateway. If the string name of the
+   AVP contains only digits, the name of the AVP is integer value
+   of the string.
 
    Default value is "1400". 
 
-   Example 1-11. Setting gw_addr_port_avp module parameter
+   Example 1-11. Setting gw_uri_avp module parameter
 ...
-modparam("lcr","gw_addr_port_avp","1400")
+modparam("lcr","gw_uri_avp","1400")
 ...
      _________________________________________________________
 
-1.3.12. contact_avp (string)
+1.3.12. ruri_user_avp (string)
+
+   Overrides the name of the AVP containing user part of
+   Request-URI after the first next_gw() call. If the string name
+   of the AVP contains only digits, the name of the AVP is
+   integer value of the string.
+
+   Default value is "1402". 
+
+   Example 1-12. Setting ruri_user_avp module parameter
+...
+modparam("lcr","ruri_user_avp","500")
+...
+     _________________________________________________________
+
+1.3.13. contact_avp (string)
 
    Overrides the name of the AVP containing the contact. If the
    string name of the AVP contains only digits, the name of the
@@ -289,40 +309,40 @@ modparam("lcr","gw_addr_port_avp","1400")
 
    Default value is "1401". 
 
-   Example 1-12. Setting contact_avp module parameter
+   Example 1-13. Setting contact_avp module parameter
 ...
 modparam("lcr","contact_avp","1401")
 
 ...
      _________________________________________________________
 
-1.3.13. fr_inv_timer_avp (string)
+1.3.14. fr_inv_timer_avp (string)
 
    Overrides the name of the AVP carrying the Final Response
    timeout for INVITEs.
 
    Default value is "fr_inv_timer_avp". 
 
-   Example 1-13. Setting fr_inv_timer_avp module parameter
+   Example 1-14. Setting fr_inv_timer_avp module parameter
 ...
 modparam("lcr","fr_inv_timer_avp","fr_inv_timer_avp")
 ...
      _________________________________________________________
 
-1.3.14. fr_inv_timer (integer)
+1.3.15. fr_inv_timer (integer)
 
    Sets the value of the fist INVITE's Final Response timeout to
    be used during sequential forwarding:
 
    Default value is 90. 
 
-   Example 1-14. Setting fr_inv_timer module parameter
+   Example 1-15. Setting fr_inv_timer module parameter
 ...
 modparam("lcr","fr_inv_timer",90)
 ...
      _________________________________________________________
 
-1.3.15. fr_inv_timer_next (integer)
+1.3.16. fr_inv_timer_next (integer)
 
    Sets the value of the next INVITE's Final Response timeouts to
    be used during sequential forwarding:
@@ -334,7 +354,7 @@ modparam("lcr","fr_inv_timer",90)
 
    Default value is 30. 
 
-   Example 1-15. Setting fr_inv_timer_next module parameter
+   Example 1-16. Setting fr_inv_timer_next module parameter
 ...
 modparam("lcr","fr_inv_timer_next",30)
 ...
@@ -344,11 +364,12 @@ modparam("lcr","fr_inv_timer_next",30)
 
 1.4.1. load_gws()
 
-   Loads addresses and ports of gateways matching RPID AVP (if
-   available) or From URI and user part of Request-URI to
-   gw_addr_port_avp AVPs. Returns 1 or -1 depending on success.
+   Loads URI schemes, addresses, ports, and transports of
+   gateways that match user part of Request-URI to gw_uri_avp
+   AVPs (see Overview section). Returns 1 or -1 depending on
+   success.
 
-   Example 1-16. load_gws usage
+   Example 1-17. load_gws usage
 ...
 if (!load_gws()) {
     sl_send_reply("500", "Server Internal Error - Cannot load gateways"
@@ -360,20 +381,24 @@ if (!load_gws()) {
 
 1.4.2. next_gw()
 
-   If called from a route block, replaces host:port part of
-   Request-URI by the first gw_addr_port_avp AVP value and
-   destroys that AVP.
+   If called from a route block, replaces URI scheme, host, port,
+   and transport of Request-URI by the values stored in first
+   gw_uri_avp AVP and destroys that AVP. Saves user part of
+   Request-URI into ruri_user_avp AVP for use in subsequent
+   next_gw() calls.
 
    If called from a failure route block, appends a new branch to
-   request, where host:port part of Request-URI is replaced by
-   the first gw_addr_port_avp AVP value and destroys that AVP.
+   request, where URI scheme, host, port, and transport of
+   Request-URI is replaced by the values stored in the first
+   gw_uri_avp AVP and destroys that AVP. Request-URI user is
+   taken from ruri_user_avp AVP.
 
    Returns 1 on success and -1 if there were no gateways left or
    if an error occurred (see syslog).
 
    Must be preceded by successful load_gws() call.
 
-   Example 1-17. next_gw usage from a route block
+   Example 1-18. next_gw usage from a route block
 ...
 if (!next_gw()) {
     sl_send_reply("503", "Service not available - No gateways");
@@ -381,7 +406,7 @@ if (!next_gw()) {
 };
 ...
 
-   Example 1-18. next_gw usage from a failure route block 
+   Example 1-19. next_gw usage from a failure route block 
 ...
 if (!next_gw()) {
     t_reply("503", "Service not available - No more gateways");
@@ -394,7 +419,7 @@ if (!next_gw()) {
 
    Checks if request came from IP address of a gateway.
 
-   Example 1-19. from_gw usage
+   Example 1-20. from_gw usage
 ...
 if (from_gw()) {
     ...
@@ -407,7 +432,7 @@ if (from_gw()) {
 
    Checks if in-dialog request goes to a gateway.
 
-   Example 1-20. to_gw usage
+   Example 1-21. to_gw usage
 ...
 if (to_gw()) {
     ...
@@ -426,7 +451,7 @@ if (to_gw()) {
    of contacts succeeded or there was nothing to do. Returns -1
    on error (see syslog).
 
-   Example 1-21. load_contacts usage
+   Example 1-22. load_contacts usage
 ...
 if (!load_contacts()) {
     sl_send_reply("500", "Server Internal Error - Cannot load contacts"
@@ -454,7 +479,7 @@ if (!load_contacts()) {
 
    Must be preceded by successful load_contacts() call.
 
-   Example 1-22. next_contacts usage from route block 
+   Example 1-23. next_contacts usage from route block 
 ...
 if (!next_contacts()) {
     sl_send_reply("500", "Server Internal Error");
@@ -464,7 +489,7 @@ if (!next_contacts()) {
 };
 ...
 
-   Example 1-23. next_contacts usage from failure route block
+   Example 1-24. next_contacts usage from failure route block
 if (next_contacts()) {
     t_relay();
 };
