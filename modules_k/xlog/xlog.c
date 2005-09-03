@@ -49,7 +49,8 @@ int force_color=0;
 static int mod_init(void);
 static int child_init(int);
 
-static int xlog(struct sip_msg*, char*, char*);
+static int xlog_1(struct sip_msg*, char*, char*);
+static int xlog_2(struct sip_msg*, char*, char*);
 static int xdbg(struct sip_msg*, char*, char*);
 
 static int xlog_fixup(void** param, int param_no); 
@@ -58,9 +59,11 @@ static int xdbg_fixup(void** param, int param_no);
 void destroy(void);
 
 static cmd_export_t cmds[]={
-	{"xlog",  xlog,  2, xlog_fixup, REQUEST_ROUTE | FAILURE_ROUTE |
+	{"xlog",  xlog_1,  1, xdbg_fixup, REQUEST_ROUTE | FAILURE_ROUTE |
 		ONREPLY_ROUTE | BRANCH_ROUTE},
-	{"xdbg",  xdbg,  1, xdbg_fixup, REQUEST_ROUTE | FAILURE_ROUTE | 
+	{"xlog",  xlog_2,  2, xlog_fixup, REQUEST_ROUTE | FAILURE_ROUTE |
+		ONREPLY_ROUTE | BRANCH_ROUTE},
+	{"xdbg",  xdbg,    1, xdbg_fixup, REQUEST_ROUTE | FAILURE_ROUTE | 
 		ONREPLY_ROUTE | BRANCH_ROUTE },
 	{0,0,0,0,0}
 };
@@ -113,7 +116,24 @@ static int child_init(int rank)
 
 /**
  */
-static int xlog(struct sip_msg* msg, char* lev, char* frm)
+static int xlog_1(struct sip_msg* msg, char* frm, char* str2)
+{
+	int log_len;
+
+	log_len = buf_size;
+
+	if(xl_print_log(msg, (xl_elem_t*)frm, log_buf, &log_len)<0)
+		return -1;
+
+	/* log_buf[log_len] = '\0'; */
+	LOG(L_ERR, "%.*s", log_len, log_buf);
+
+	return 1;
+}
+
+/**
+ */
+static int xlog_2(struct sip_msg* msg, char* lev, char* frm)
 {
 	int log_len;
 

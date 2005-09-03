@@ -132,7 +132,7 @@ modparam("xlog", "force_color", 0)
 	<title>Exported Functions</title>
 	<section>
 	    <title>
-		<function moreinfo="none">xlog(level, format)</function>
+		<function moreinfo="none">xlog([level,] format)</function>
 	    </title>
 	    <para>
 		Print a formated message using LOG function.
@@ -181,6 +181,9 @@ modparam("xlog", "force_color", 0)
 		    </itemizedlist>
 		    <para>
 			What really matters is the third letter of the value.
+		    </para>
+		    <para>
+			If this parameter is missing, the implicit log level is 'L_ERR'.
 		    </para>
 		</listitem>
 		<listitem>
