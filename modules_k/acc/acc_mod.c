@@ -138,7 +138,7 @@ struct acc_extra *dia_extra = 0;
 #endif
 
 #ifdef SQL_ACC
-static char *db_url=DEFAULT_DB_URL; /* Database url */
+static char *db_url = 0; /* Database url */
 
 /* sql flags, that need to be set for a transaction to 
  * be reported; 0=any, 1..MAX_FLAG otherwise; by default
@@ -178,6 +178,7 @@ struct acc_extra *db_extra = 0;
 char *db_table_mc="missed_calls";
 #endif
 
+static int comment_fixup(void** param, int param_no);
 static int w_acc_log_request(struct sip_msg *rq, char *comment, char *foo);
 #ifdef SQL_ACC
 static int w_acc_db_request(struct sip_msg *rq, char *comment, char *foo);
@@ -192,15 +193,19 @@ static int w_acc_diam_request(struct sip_msg *rq, char *comment, char *foo);
 
 
 static cmd_export_t cmds[] = {
-	{"acc_log_request", w_acc_log_request, 1, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"acc_log_request", w_acc_log_request, 1, comment_fixup,
+			REQUEST_ROUTE|FAILURE_ROUTE},
 #ifdef SQL_ACC
-	{"acc_db_request",  w_acc_db_request,  2, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"acc_db_request",  w_acc_db_request,  2, comment_fixup,
+			REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
 #ifdef RAD_ACC
-	{"acc_rad_request", w_acc_rad_request, 1, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"acc_rad_request", w_acc_rad_request, 1, comment_fixup,
+			REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
 #ifdef DIAM_ACC
-	{"acc_diam_request",w_acc_diam_request,1, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"acc_diam_request",w_acc_diam_request,1, comment_fixup,
+			REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
 	{0, 0, 0, 0, 0}
 };
@@ -279,6 +284,25 @@ struct module_exports exports= {
 
 
 
+/* --------------- fixup function ---------------- */
+static int comment_fixup(void** param, int param_no)
+{
+	str* s;
+
+	if (param_no == 1) {
+		s = (str*)pkg_malloc(sizeof(str));
+		if (!s) {
+			LOG(L_ERR, "ERROR:acc:comment_fixup: no more pkg mem\n");
+			return E_OUT_OF_MEM;
+		}
+		s->s = (char*)*param;
+		s->len = strlen(s->s);
+		*param = (void*)s;
+	}
+	return 0;
+}
+
+
 /* ------------- Callback handlers --------------- */
 
 static void acc_onreq( struct cell* t, int type, struct tmcb_params *ps );
@@ -353,19 +377,19 @@ static int mod_init( void )
 	}
 
 #ifdef SQL_ACC
-	if (db_url==0 || db_url[0]==0) {
-		LOG(L_ERR,"ERROR:acc:mod_init: no DB_URL specified!!\n");
-		return -1;
-	}
-	if (acc_db_bind(db_url)<0){
-		LOG(L_ERR, "ERROR:acc:mod_init: acc_db_init: failed..."
+	if (db_url && db_url[0]) {
+		if (acc_db_bind(db_url)<0){
+			LOG(L_ERR, "ERROR:acc:mod_init: acc_db_init: failed..."
 				"did you load a database module?\n");
-		return -1;
-	}
-	/* parse the extra string, if any */
-	if (db_extra_str && (db_extra=parse_acc_extra(db_extra_str))==0 ) {
-		LOG(L_ERR,"ERROR:acc:mod_init: failed to parse db_extra param\n");
-		return -1;
+			return -1;
+		}
+		/* parse the extra string, if any */
+		if (db_extra_str && (db_extra=parse_acc_extra(db_extra_str))==0 ) {
+			LOG(L_ERR,"ERROR:acc:mod_init: failed to parse db_extra param\n");
+			return -1;
+		}
+	} else {
+		db_url = 0;
 	}
 #endif
 
@@ -440,11 +464,11 @@ static int mod_init( void )
 static int child_init(int rank)
 {
 #ifdef SQL_ACC
-	if (acc_db_init(db_url)<0)
+	if (db_url && acc_db_init(db_url)<0)
 		return -1;
 #endif
 
-/* DIAMETER */
+	/* DIAMETER */
 #ifdef DIAM_ACC
 	/* open TCP connection */
 	DBG(M_NAME": Initializing TCP connection\n");
@@ -543,6 +567,7 @@ static void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 	}
 }
 
+
 /* is this reply of interest for accounting ? */
 static inline int should_acc_reply(struct cell *t, int code)
 {
@@ -616,7 +641,7 @@ static inline void on_missed(struct cell *t, struct sip_msg *reply,
 			reset_lmf=1;
 		} else reset_lmf=0;
 #ifdef SQL_ACC
-		if (is_db_mc_on(t->uas.request)) {
+		if (db_url && is_db_mc_on(t->uas.request)) {
 			acc_db_missed( t, reply, code);
 			reset_dmf=1;
 		} else reset_dmf=0;
@@ -674,7 +699,7 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *reply,
 	if (is_log_acc_on(t->uas.request))
 		acc_log_reply(t, reply, code);
 #ifdef SQL_ACC
-	if (is_db_acc_on(t->uas.request))
+	if (db_url && is_db_acc_on(t->uas.request))
 		acc_db_reply(t, reply, code);
 #endif
 #ifdef RAD_ACC
@@ -702,7 +727,7 @@ static inline void acc_onack( struct cell* t , struct sip_msg *ack,
 		acc_log_ack(t, ack);
 	}
 #ifdef SQL_ACC
-	if (is_db_acc_on(t->uas.request)) {
+	if (db_url && is_db_acc_on(t->uas.request)) {
 		acc_preparse_req(ack);
 		acc_db_ack(t, ack);
 	}
@@ -744,26 +769,24 @@ static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps )
  */
 static int w_acc_log_request(struct sip_msg *rq, char *comment, char *foo)
 {
-	str txt; str phrase;
+	str txt;
 
 	txt.s=ACC_REQUEST;
 	txt.len=ACC_REQUEST_LEN;
-	phrase.s=comment;
-	phrase.len=strlen(comment);	/* fix_param would be faster! */
 	acc_preparse_req(rq);
-	return acc_log_request(rq, rq->to, &txt, &phrase);
+	return acc_log_request(rq, rq->to, &txt, (str*)comment);
 }
 
 
 #ifdef SQL_ACC
 static int w_acc_db_request(struct sip_msg *rq, char *comment, char *table)
 {
-	str phrase;
-
-	phrase.s=comment;
-	phrase.len=strlen(comment);	/* fix_param would be faster! */
+	if (!db_url) {
+		LOG(L_ERR,"ERROR:acc:w_acc_db_request: DB support not configured\n");
+		return -1;
+	}
 	acc_preparse_req(rq);
-	return acc_db_request(rq, rq->to,&phrase,table, SQL_MC_FMT );
+	return acc_db_request(rq, rq->to, (str*)comment, table, SQL_MC_FMT );
 }
 #endif
 
@@ -772,12 +795,8 @@ static int w_acc_db_request(struct sip_msg *rq, char *comment, char *table)
 static int w_acc_rad_request(struct sip_msg *rq, char *comment, 
 				char *foo)
 {
-	str phrase;
-
-	phrase.s=comment;
-	phrase.len=strlen(comment);	/* fix_param would be faster! */
 	acc_preparse_req(rq);
-	return acc_rad_request(rq, rq->to,&phrase);
+	return acc_rad_request(rq, rq->to, (str*)comment);
 }
 #endif
 
@@ -792,7 +811,7 @@ static int w_acc_diam_request(struct sip_msg *rq, char *comment,
 	phrase.s=comment;
 	phrase.len=strlen(comment);	/* fix_param would be faster! */
 	acc_preparse_req(rq);
-	return acc_diam_request(rq, rq->to,&phrase);
+	return acc_diam_request(rq, rq->to, (str*)comment);
 }
 #endif
 
