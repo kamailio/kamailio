@@ -84,9 +84,6 @@ int tm_unix_tx_timeout = 2; /* Default is 2 seconds */
 #define APPEND_BUFFER_MAX      4096
 #define CMD_BUFFER_MAX         128
 
-#define BODY_SPEC_S    "msg(body)"
-#define BODY_SPEC_LEN  (sizeof(BODY_SPEC_S)-1)
-
 #define append_str(_dest,_src,_len) \
 	do{ \
 		memcpy( (_dest) , (_src) , (_len) );\
@@ -146,6 +143,7 @@ int parse_tw_append( modparam_t type, void* val)
 	struct append_elem *last;
 	struct append_elem *elem;
 	struct tw_append *app;
+	xl_spec_t lspec;
 	char *s;
 	str  foo;
 	int  xl_flags;
@@ -213,64 +211,60 @@ int parse_tw_append( modparam_t type, void* val)
 		if ( *s && *s!='=' && *s!=';' )
 			goto parse_error;
 
-		/* body or element? */
-		if (*s==0 || *s==';')
-		{
-			/* only body allowed in this format */
-			if (foo.len!=BODY_SPEC_LEN ||
-			strncasecmp(foo.s,BODY_SPEC_S,BODY_SPEC_LEN)!=0 )
-			{
-				LOG(L_ERR,"ERROR:tm:parse_tw_append: short spec '%.*s' unknown"
-					"(aceepted only %s)\n",foo.len, foo.s, BODY_SPEC_S);
+		/* short element (without name) ? */
+		if (*s=='=' ) {
+			/* skip '=' */
+			s++;
+
+			/* new append_elem structure */
+			elem = (struct append_elem*)pkg_malloc(sizeof(struct append_elem));
+			if (elem==0) {
+				LOG(L_ERR,"ERROR:tm:parse_tw_append: no more pkg memory\n");
+				goto error;
+			}
+			memset( elem, 0, sizeof(struct append_elem));
+
+			/* set and link the element */
+			elem->name = foo;
+			if (last==0) {
+				app->elems = elem;
+			} else {
+				last->next = elem;
+			}
+			last = elem;
+
+			/* skip spaces */
+			while (*s && isspace((int)*s))
+				s++;
+		} else {
+			/* go back to reparse as value */
+			s = foo.s;
+			elem = 0;
+		}
+
+		/* get value type */
+		if ( (foo.s=xl_parse_spec( s, &lspec, xl_flags))==0 )
+			goto parse_error;
+
+		/* if short element....which one? */
+		if (elem==0) {
+			if (lspec.type!=XL_MSG_BODY) {
+			LOG(L_ERR,"ERROR:tm:parse_tw_append: short spec '%.*s' unknown"
+					"(aceepted only body)\n",foo.s-s, s);
 				goto error;
 			}
 			app->add_body = 1;
-
-			if (*s && *(s++)!=';')
-				goto parse_error;
-			continue;
-		}
-
-		/* skip '=' */
-		s++;
-
-		/* new append_elem structure */
-		elem = (struct append_elem*)pkg_malloc( sizeof(struct append_elem) );
-		if (elem==0) {
-			LOG(L_ERR,"ERROR:tm:parse_tw_append: no more pkg memory\n");
-			goto error;
-		}
-		memset( elem, 0, sizeof(struct append_elem));
-
-		/* set and link the element */
-		elem->name = foo;
-		if (last==0) {
-			app->elems = elem;
 		} else {
-			last->next = elem;
+			elem->spec = lspec;
 		}
-		last = elem;
 
-		/* skip spaces */
-		while (*s && isspace((int)*s))
-			s++;
-
-		/* get value type */
-		if ( (foo.s=xl_parse_spec( s, &elem->spec, xl_flags))==0 )
-			goto parse_error;
+		/* continue parsing*/
 		s = foo.s;
 
 		/* skip spaces */
 		while (*s && isspace((int)*s))  s++;
 		if (*s && *(s++)!=';')
 			goto parse_error;
-#if 0
-		if (*s){
-			if (*s!=';')
-				goto parse_error;
-			s++;
-		}
-#endif
 	}
 
 	/* go throught all elements and make the names null terminated */

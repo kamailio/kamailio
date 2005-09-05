@@ -423,20 +423,21 @@ modparam("tm", "fr_inv_timer_avp", "i:25")
    Syntax of the parameter is:
 
      * tw_append = append_name':' element (';'element)* 
-     * element = (name '=' pseudo_variable) | 'msg(body)' 
+     * element = ( [name '='] pseudo_variable) 
 
    The full list of supported pseudo-variables in OpenSER is
    availabe at: http://openser.org/docs/pseudo-variables.html
 
    Each element will be appended per line in "name: value"
-   format. Element "msg(body)" is the only one which does not
-   accept name; the body it will be printed all the time at the
-   end, disregarding its position in the definition string.
+   format. Element "$rb (message body)" is the only one which
+   does not accept name; the body it will be printed all the time
+   at the end, disregarding its position in the definition
+   string.
 
    Example 1-16. Set tw_append parameter
 ...
 modparam("tm", "tw_append",
-   "test: ua=$hdr(User-Agent) ;avp=$avp(i:10);msg(body);time=$Ts")
+   "test: ua=$hdr(User-Agent) ;avp=$avp(i:10);$rb;time=$Ts")
 ...
      _________________________________________________________
 

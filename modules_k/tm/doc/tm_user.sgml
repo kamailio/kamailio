@@ -456,7 +456,7 @@ modparam("tm", "fr_inv_timer_avp", "i:25")
 			tw_append = append_name':' element (';'element)*
 			</emphasis></para></listitem>
 			<listitem><para><emphasis>
-			element = (name '=' pseudo_variable) | 'msg(body)'
+			element = ( [name '='] pseudo_variable)
 			</emphasis></para></listitem>
 		</itemizedlist>
 		</para>
@@ -467,7 +467,8 @@ modparam("tm", "fr_inv_timer_avp", "i:25")
 		</para>
 		<para>
 		Each element will be appended per line in 
-		<quote>name: value</quote> format. Element <quote>msg(body)</quote>
+		<quote>name: value</quote> format. Element 
+		<quote>$rb (message body)</quote>
 		is the only one which does not accept name; the body it will be
 		printed all the time at the end, disregarding its position in the
 		definition string.
@@ -477,7 +478,7 @@ modparam("tm", "fr_inv_timer_avp", "i:25")
 		<programlisting format="linespecific">
 ...
 modparam("tm", "tw_append",
-   "test: ua=$hdr(User-Agent) ;avp=$avp(i:10);msg(body);time=$Ts")
+   "test: ua=$hdr(User-Agent) ;avp=$avp(i:10);$rb;time=$Ts")
 ...
 </programlisting>
 		</example>
