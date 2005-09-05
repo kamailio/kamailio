@@ -279,13 +279,13 @@ USE_CMD='\connect'
 GRANT_CMD="CREATE USER $DBRWUSER WITH PASSWORD '$DEFAULT_PW';
 	CREATE USER $DBROUSER WITH PASSWORD '$RO_PW';
 	GRANT ALL PRIVILEGES ON TABLE version, acc, active_sessions, aliases, dbaliases, grp,
-		location, missed_calls, pending, phonebook, subscriber, silo, domain,
-		uri, server_monitoring, usr_preferences, trusted, server_monitoring_agg,
-		admin_privileges, speed_dial, gw, gw_grp, lcr TO $DBRWUSER;
+		location, missed_calls, pending, phonebook, phonebook_id_seq, subscriber, silo, silo_mid_seq, domain,
+		uri, server_monitoring, usr_preferences, usr_preferences_types, trusted, server_monitoring_agg,
+		admin_privileges, speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr TO $DBRWUSER;
 	GRANT SELECT ON TABLE version, acc, active_sessions, aliases, dbaliases, grp,
-		location, missed_calls, pending, phonebook, subscriber, silo, domain,
-		uri, server_monitoring, usr_preferences, trusted, server_monitoring_agg,
-		admin_privileges, speed_dial, gw, gw_grp, lcr TO $DBROUSER;"
+		location, missed_calls, pending, phonebook, phonebook_id_seq, subscriber, silo, silo_mid_seq, domain,
+		uri, server_monitoring, usr_preferences, usr_preferences_types, trusted, server_monitoring_agg,
+		admin_privileges, speed_dial, gw, gw_grp, gw_grp_grp_id_seq, lcr TO $DBROUSER;"
 TIMESTAMP="timestamp NOT NULL DEFAULT NOW()"
 DATETIME="TIMESTAMP WITHOUT TIME ZONE NOT NULL default '$DUMMY_DATE'"
 DATETIMEALIAS="TIMESTAMP WITHOUT TIME ZONE NOT NULL default '$DEFAULT_ALIASES_EXPIRES'"
@@ -295,8 +295,8 @@ AUTO_INCREMENT="SERIAL PRIMARY KEY"
 
 echo "creating database $1 ..."
 
-#cat <<EOF
-sql_query <<EOF
+cat <<EOF
+#sql_query <<EOF
 create database $1;
 $USE_CMD $1;
 
@@ -330,17 +330,17 @@ INSERT INTO version VALUES ( 'location', '1001');
 INSERT INTO version VALUES ( 'missed_calls', '2');
 INSERT INTO version VALUES ( 'pending', '4');
 INSERT INTO version VALUES ( 'phonebook', '1');
-INSERT INTO version VALUES ( 'preferences_types', '1');
 INSERT INTO version VALUES ( 'realm', '1');
 INSERT INTO version VALUES ( 'reserved', '1');
 INSERT INTO version VALUES ( 'server_monitoring', '1');
 INSERT INTO version VALUES ( 'server_monitoring_agg', '1');
 INSERT INTO version VALUES ( 'silo', '3');
-INSERT INTO version VALUES ( 'speed_dial', '1');
+INSERT INTO version VALUES ( 'speed_dial', '2');
 INSERT INTO version VALUES ( 'subscriber', '5');
 INSERT INTO version VALUES ( 'trusted', '1');
 INSERT INTO version VALUES ( 'uri', '1');
-INSERT INTO version VALUES ( 'usr_preferences', '1');
+INSERT INTO version VALUES ( 'usr_preferences', '2');
+INSERT INTO version VALUES ( 'usr_preferences_types', '1');
 
 
 /*
@@ -348,6 +348,8 @@ INSERT INTO version VALUES ( 'usr_preferences', '1');
  */
 
 CREATE TABLE acc (
+  caller_UUID varchar(64) NOT NULL default '',
+  callee_UUID varchar(64) NOT NULL default '',
   sip_from varchar(128) NOT NULL default '',
   sip_to varchar(128) NOT NULL default '',
   sip_status varchar(128) NOT NULL default '',
@@ -363,6 +365,8 @@ CREATE TABLE acc (
   totag varchar(128) NOT NULL default '',
   time $DATETIME,
   timestamp $TIMESTAMP,
+  caller_deleted char(1) NOT NULL default '0',
+  callee_deleted char(1) NOT NULL default '0',
   src varchar(128) default NULL,
   dst varchar(128) default NULL
 ) $TABLE_TYPE;
@@ -658,7 +662,7 @@ CREATE TABLE silo(
     src_addr VARCHAR(255) NOT NULL DEFAULT '',
     dst_addr VARCHAR(255) NOT NULL DEFAULT '',
     r_uri VARCHAR(255) NOT NULL DEFAULT '',
-    username VARCHAR(64) NOT NULL DEFAULT '',
+    $USERCOL VARCHAR(64) NOT NULL DEFAULT '',
     domain VARCHAR(128) NOT NULL DEFAULT '',
     inc_time INTEGER NOT NULL DEFAULT 0,
     exp_time INTEGER NOT NULL DEFAULT 0,
@@ -672,13 +676,16 @@ CREATE TABLE silo(
  */
 
 CREATE TABLE speed_dial (
-  username varchar(64) NOT NULL default '',
+  uuid varchar(64) NOT NULL default '',
+  $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   sd_username varchar(64) NOT NULL default '',
   sd_domain varchar(128) NOT NULL default '',
   new_uri varchar(192) NOT NULL default '',
+  fname varchar(128) NOT NULL default '',
+  lname varchar(128) NOT NULL default '',
   description varchar(64) NOT NULL default '',
-  PRIMARY KEY  (username,domain,sd_domain,sd_username)
+  PRIMARY KEY  ($USERCOL,domain,sd_domain,sd_username)
 ) $TABLE_TYPE;
 
 
@@ -750,10 +757,24 @@ CREATE TABLE usr_preferences (
   $USERCOL varchar(100) NOT NULL default '0',
   domain varchar(128) NOT NULL default '',
   attribute varchar(32) NOT NULL default '',
-  type int NOT NULL default '0',
   value varchar(128) NOT NULL default '',
+  type int NOT NULL default '0',
   modified $TIMESTAMP,
   PRIMARY KEY  (attribute,$USERCOL,domain)
+) $TABLE_TYPE;
+
+
+/*
+ * Table structure for table 'usr_preferences_types' -- types of atributes in preferences
+ */
+
+CREATE TABLE usr_preferences_types (
+  att_name varchar(32) NOT NULL default '',
+  att_rich_type varchar(32) NOT NULL default 'string',
+  att_raw_type int NOT NULL default '2',
+  att_type_spec text,
+  default_value varchar(100) NOT NULL default '',
+  PRIMARY KEY  (att_name)
 ) $TABLE_TYPE;
 
 

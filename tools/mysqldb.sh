@@ -294,11 +294,11 @@ INSERT INTO version VALUES ( 'uri', '1');
 INSERT INTO version VALUES ( 'server_monitoring', '1');
 INSERT INTO version VALUES ( 'server_monitoring_agg', '1');
 INSERT INTO version VALUES ( 'trusted', '1');
-INSERT INTO version VALUES ( 'usr_preferences', '1');
-INSERT INTO version VALUES ( 'preferences_types', '1');
+INSERT INTO version VALUES ( 'usr_preferences', '2');
+INSERT INTO version VALUES ( 'usr_preferences_types', '1');
 INSERT INTO version VALUES ( 'admin_privileges', '1');
 INSERT INTO version VALUES ( 'calls_forwarding', '1');
-INSERT INTO version VALUES ( 'speed_dial', '1');
+INSERT INTO version VALUES ( 'speed_dial', '2');
 INSERT INTO version VALUES ( 'dbaliases', '1');
 INSERT INTO version VALUES ( 'gw', '3');
 INSERT INTO version VALUES ( 'gw_grp', '1');
@@ -310,6 +310,8 @@ INSERT INTO version VALUES ( 'lcr', '1');
 
 
 CREATE TABLE acc (
+  caller_UUID varchar(64) NOT NULL default '',
+  callee_UUID varchar(64) NOT NULL default '',
   sip_from varchar(128) NOT NULL default '',
   sip_to varchar(128) NOT NULL default '',
   sip_status varchar(128) NOT NULL default '',
@@ -325,6 +327,8 @@ CREATE TABLE acc (
   totag varchar(128) NOT NULL default '',
   time datetime NOT NULL default '0000-00-00 00:00:00',
   timestamp timestamp(14) NOT NULL,
+  caller_deleted char(1) NOT NULL default '0',
+  callee_deleted char(1) NOT NULL default '0',
   src varchar(128) default NULL,
   dst varchar(128) default NULL,
   INDEX acc_user ($USERCOL, domain),
@@ -548,7 +552,7 @@ CREATE TABLE silo(
     src_addr VARCHAR(255) NOT NULL DEFAULT "",
     dst_addr VARCHAR(255) NOT NULL DEFAULT "",
     r_uri VARCHAR(255) NOT NULL DEFAULT "",
-    username VARCHAR(64) NOT NULL DEFAULT "",
+    $USERCOL VARCHAR(64) NOT NULL DEFAULT "",
     domain VARCHAR(128) NOT NULL DEFAULT "",
     inc_time INTEGER NOT NULL DEFAULT 0,
     exp_time INTEGER NOT NULL DEFAULT 0,
@@ -611,6 +615,21 @@ CREATE TABLE usr_preferences (
 
 
 #
+# Table structure for table 'usr_preferences_type'
+#
+
+DROP TABLE IF EXISTS usr_preferences_types;
+CREATE TABLE usr_preferences_types (
+  att_name varchar(32) NOT NULL default '',
+  att_rich_type varchar(32) NOT NULL default 'string',
+  att_raw_type int NOT NULL default '2',
+  att_type_spec text,
+  default_value varchar(100) NOT NULL default '',
+  PRIMARY KEY  (att_name)
+) $TABLE_TYPE;
+
+
+#
 # Table structure for table trusted
 CREATE TABLE trusted (
   src_ip varchar(39) NOT NULL,
@@ -659,13 +678,16 @@ CREATE TABLE admin_privileges (
 #
 
 CREATE TABLE speed_dial (
-  username varchar(64) NOT NULL default '',
+  uuid varchar(64) NOT NULL default '',
+  $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   sd_username varchar(64) NOT NULL default '',
   sd_domain varchar(128) NOT NULL default '',
   new_uri varchar(192) NOT NULL default '',
+  fname varchar(128) NOT NULL default '',
+  lname varchar(128) NOT NULL default '',
   description varchar(64) NOT NULL default '',
-  PRIMARY KEY  (username,domain,sd_domain,sd_username)
+  PRIMARY KEY  ($USERCOL,domain,sd_domain,sd_username)
 ) $TABLE_TYPE;
 
 
