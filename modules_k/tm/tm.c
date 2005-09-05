@@ -496,33 +496,34 @@ static int script_init( struct sip_msg *foo, void *bar)
 }
 
 
-static int init_gf_mask( char* bf_mask_param )
+static int init_gf_mask( char* bf_mask )
 {
 	long long int l;
 	char *end;
 
-	if (bf_mask_param==0)
+	if (bf_mask==0)
 		return 0;
 
+	errno = 0;
 	/* ry bases 2, 10 and 16 */
-	if (bf_mask_param[0]=='b' || bf_mask_param[0]=='B') {
-		l = strtoll( bf_mask_param+1, &end, 2);
+	if (bf_mask[0]=='b' || bf_mask[0]=='B') {
+		l = strtoll( bf_mask+1, &end, 2);
 		if (*end==0 && errno==0)
 			goto ok;
 	}
-	if (bf_mask_param[0]=='0' && bf_mask_param[1]=='x') {
-		l = strtoll( bf_mask_param+2, &end, 16);
+	if (bf_mask[0]=='0' && bf_mask[1]=='x') {
+		l = strtoll( bf_mask+2, &end, 16);
 		if (*end==0 && errno==0)
 			goto ok;
 	}
-	l = strtoll( bf_mask_param, &end, 10);
+	l = strtoll( bf_mask, &end, 10);
 	if (*end==0 && errno==0)
 		goto ok;
 
 	return -1;
 ok:
 	gflags_mask = ~((unsigned int)l);
-	DBG("DEBUG:tm:init_gf_mask: gflags_maks is %x\n",gflags_mask);
+	DBG("DEBUG:tm:init_gf_mask: gflags_mask is %x\n",gflags_mask);
 	return 0;
 }
 
