@@ -21,6 +21,7 @@
 # 2003-04-14  reinstall introduced (jiri)
 # 2004-07-05  new definition of table silo (dcm)
 # 2004-07-23  added uri_scheme and transport cols to table gw (jih)
+# 2005-09-05  new tables dom_preferences, customer and new columns in table domain
 
 
 #################################################################
@@ -249,7 +250,7 @@ INSERT INTO version VALUES ( 'acc', '2');
 INSERT INTO version VALUES ( 'config', '1');
 INSERT INTO version VALUES ( 'silo', '3');
 INSERT INTO version VALUES ( 'realm', '1');
-INSERT INTO version VALUES ( 'domain', '1');
+INSERT INTO version VALUES ( 'domain', '2');
 INSERT INTO version VALUES ( 'uri', '1');
 INSERT INTO version VALUES ( 'server_monitoring', '1');
 INSERT INTO version VALUES ( 'server_monitoring_agg', '1');
@@ -262,6 +263,8 @@ INSERT INTO version VALUES ( 'speed_dial', '2');
 INSERT INTO version VALUES ( 'gw', '3');
 INSERT INTO version VALUES ( 'gw_grp', '1');
 INSERT INTO version VALUES ( 'lcr', '1');
+INSERT INTO version VALUES ( 'customer', '1');
+INSERT INTO version VALUES ( 'dom_preferences', '1');
 
 #
 # Table structure for table 'acc' -- accounted calls
@@ -553,9 +556,23 @@ CREATE TABLE silo(
 #
 
 CREATE TABLE domain (
+  d_id int NOT NULL,
   domain varchar(128) NOT NULL default '',
+  f_disabled TINYINT(1) default 0,
   last_modified datetime NOT NULL default '0000-00-00 00:00:00',
-  PRIMARY KEY  (domain)
+  UNIQUE KEY domain (domain),
+  PRIMARY KEY  (d_id, domain)
+) $TABLE_TYPE;
+
+#
+# Table structure for table 'customer'
+#
+
+CREATE TABLE customer (
+  c_id int NOT NULL AUTO_INCREMENT,
+  name varchar(128) NOT NULL,
+  last_modified datetime NOT NULL default '0000-00-00 00:00:00',
+  PRIMARY KEY  (c_id)
 ) $TABLE_TYPE;
 
 
@@ -614,6 +631,19 @@ CREATE TABLE usr_preferences_types (
   att_type_spec text,
   default_value varchar(100) NOT NULL default '',
   PRIMARY KEY  (att_name)
+) $TABLE_TYPE;
+
+
+#
+# Table structure for table 'dom_preferences'
+#
+
+DROP TABLE IF EXISTS dom_preferences;
+CREATE TABLE dom_preferences (
+  d_id int NOT NULL,
+  att_name varchar(32) NOT NULL,
+  att_value varchar(255),
+  PRIMARY KEY  (d_id)
 ) $TABLE_TYPE;
 
 #
