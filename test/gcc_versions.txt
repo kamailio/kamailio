@@ -1,0 +1,18 @@
+2.7.1
+2.8.1
+egcs-2.91.66
+2.95.3
+2.95.4
+3.0.4
+gcc (GCC) 3.2
+gcc-3.2 (GCC) 3.2.3 (Debian)
+gcc (GCC) 3.3.3 (NetBSD nb3 20040520)
+gcc (GCC) 3.3.5 (propolice)
+gcc-3.3 (GCC) 3.3.5 (Debian 1:3.3.5-6)
+gcc-3.3 (GCC) 3.3.5 (Debian 1:3.3.5-13)
+gcc (GCC) 3.4.2 [FreeBSD] 20040728
+gcc (GCC) 3.4.3 (csl-sol210-3_4-branch+sol_rpath)
+gcc-3.4 (GCC) 3.4.4 20041218 (prerelease) (Debian 3.4.3-7)
+powerpc-apple-darwin8-gcc-4.0.0 (GCC) 4.0.0 20041026 (Apple Computer, Inc. build 4061)
+gcc-4.0 (GCC) 4.0.2 20050821 (prerelease) (Debian 4.0.1-6)
+
