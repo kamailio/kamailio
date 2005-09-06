@@ -519,7 +519,6 @@ CREATE INDEX lcr_grp_id_indx ON lcr (grp_id);
 CREATE FUNCTION "concat" (text,text) RETURNS text AS 'SELECT \$1 || \$2;' LANGUAGE 'sql';
 CREATE FUNCTION "rand" () RETURNS double precision AS 'SELECT random();' LANGUAGE 'sql';
 
-
 /*
  * Table structure for table 'location' -- that is persistent UsrLoc
  */
@@ -651,6 +650,15 @@ CREATE TABLE server_monitoring_agg (
   lastupdate $DATETIME,
   PRIMARY KEY  (param)
 ) $TABLE_TYPE;
+
+/*
+ * emulate mysql proprietary functions used by the serweb
+ * in postgresql
+ *
+ */
+
+CREATE FUNCTION "truncate" (numeric,int) RETURNS numeric AS 'SELECT trunc(\$1,\$2);' LANGUAGE 'sql';
+create function unix_timestamp(timestamp) returns integer as 'select date_part(''epoch'', \$1)::int4 as result' language 'sql';
 
 
 /*
