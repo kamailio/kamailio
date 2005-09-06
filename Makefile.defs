@@ -832,7 +832,7 @@ ifeq		($(CC_NAME), gcc)
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= powerpc
-					CFLAGS+=-minline-all-stringops  -ftree-vectorize \
+					CFLAGS+=-ftree-vectorize \
 							-mtune=$(CPU) -maltivec
 else
 			#if gcc 3.4+
@@ -871,7 +871,7 @@ ifeq		($(CC_NAME), gcc)
 				CFLAGS= -O9 -funroll-loops $(PROFILE)  -Wall 
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= powerpc64
-					CFLAGS+=-minline-all-stringops  -ftree-vectorize \
+					CFLAGS+=-ftree-vectorize \
 							-mtune=$(CPU) -maltivec
 else
 			#if gcc 3.4+
