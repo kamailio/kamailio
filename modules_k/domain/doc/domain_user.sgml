@@ -133,8 +133,13 @@ if (is_from_local()) {
 	<section>
 		<title><function moreinfo="none">is_uri_host_local()</function></title>
 		<para>
-		Checks based on domain table if host part of RURI is
-		one of the local domains that the proxy is responsible for
+		If called from route or failure route block, checks
+		based on domain table if host part of Request-URI is one
+		of the local domains that the proxy is responsible for.
+		If called from branch route, the test is made on host
+		part of URI of first branch, which thus must have been
+		appended to the transaction before is_uri_host_local()
+ 		is called.
 		</para>
 		<example>
 		<title>is_uri_host_local usage</title>
