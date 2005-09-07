@@ -69,13 +69,18 @@
 #define PRESENTITY_END ";method=SUBSCRIBE\"/>"
 #define PRESENTITY_END_L (sizeof(PRESENTITY_END) - 1)
 
-#define ATOM_STAG "<atom id=\"9r28r49\">"
+#define ATOM_STAG "<atom id=\""
+/* #define ATOM_STAG "<atom id=\"9r28r49\">" */
 #define ATOM_STAG_L (sizeof(ATOM_STAG) - 1)
+
+#define ATOM_STAG_CLOSE "\">"
+/* #define ATOM_STAG "<atom id=\"9r28r49\">" */
+#define ATOM_STAG_CLOSE_L (sizeof(ATOM_STAG_CLOSE) - 1)
 
 #define ADDRESS_START "<address uri=\"sip:"
 #define ADDRESS_START_L (sizeof(ADDRESS_START) - 1)
 
-#define ADDRESS_END ";user=ip\" priority=\"0,800000\">"
+#define ADDRESS_END ";user=ip\" priority=\"0.8\">"
 #define ADDRESS_END_L (sizeof(ADDRESS_END) - 1)
 
 #define STATUS_OPEN "<status status=\"open\"/>"
@@ -147,12 +152,14 @@ int xpidf_add_presentity(str* _b, int _l, str* _uri)
 /*
  * Add a contact address with given status
  */
-int xpidf_add_address(str* _b, int _l, str* _addr, xpidf_status_t _st)
+int xpidf_add_address(str* _b, int _l, str* _addr, str *id, xpidf_status_t _st)
 {
 	int len = 0;
 	char* p;
+#ifdef WITH_MSN
 	int len_available = 0;
 	char * available;
+#endif
 
 	switch(_st) {
 	case XPIDF_ST_OPEN:
@@ -189,6 +196,8 @@ int xpidf_add_address(str* _b, int _l, str* _addr, xpidf_status_t _st)
 	}
 
 	if (_l < (ATOM_STAG_L + 
+		  id->len +
+		  ATOM_STAG_CLOSE_L +
 		  CRLF_L +
 		  ADDRESS_START_L + 
 		  _addr->len + 
@@ -210,7 +219,9 @@ int xpidf_add_address(str* _b, int _l, str* _addr, xpidf_status_t _st)
 		return -1;
 	}
 
-	str_append(_b, ATOM_STAG CRLF ADDRESS_START, ATOM_STAG_L + CRLF_L + ADDRESS_START_L);
+	str_append(_b, ATOM_STAG, ATOM_STAG_L);
+	str_append(_b, id->s, id->len);
+	str_append(_b, ATOM_STAG_CLOSE CRLF ADDRESS_START, ATOM_STAG_CLOSE_L + CRLF_L + ADDRESS_START_L);
 	str_append(_b, _addr->s, _addr->len);
 	str_append(_b, ADDRESS_END CRLF, ADDRESS_END_L + CRLF_L);
 	str_append(_b, p, len);

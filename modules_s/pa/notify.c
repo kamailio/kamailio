@@ -292,18 +292,19 @@ static inline int add_subs_state_hf(str* _h, int _l, subs_state_t _s, ss_reason_
 
 static int add_contact_hf(str* _h, int _l, str *_c)
 {
+	if ((_c->len < 1) || (!_c->s)) {
+		LOG(L_WARN, "add_contact_hf(): Can't add empty contact to NOTIFY.\n");
+		return 0;
+	}
 	if (_l < CONTACT_L + _c->len + CRLF_L) {
 		paerrno = PA_SMALL_BUFFER;
 		LOG(L_ERR, "add_contact_hf(): Buffer too small\n");
 		return -1;
 	}
 
-	/* prevent double insertion of Content-Type with SIP URI */
-#if 0
-	str_append(_h, CONTENT_TYPE, CONTENT_TYPE_L);
+	str_append(_h, CONTACT, CONTACT_L);
 	str_append(_h, _c->s, _c->len);
 	str_append(_h, CRLF, CRLF_L);
-#endif
 	return 0;
 }
 
@@ -324,7 +325,8 @@ static inline int create_headers(struct watcher* _w)
 		return -2;
 	}
 
-	if (add_contact_hf(&headers, BUF_LEN - headers.len, &_w->uri) < 0) {
+	/* if (add_contact_hf(&headers, BUF_LEN - headers.len, &_w->uri) < 0) { */
+	if (add_contact_hf(&headers, BUF_LEN - headers.len, &_w->server_contact) < 0) {
 		LOG(L_ERR, "create_headers(): Error while adding Contact header field\n");
 		return -3;
 	}
@@ -351,6 +353,7 @@ static int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 {
 	xpidf_status_t st;
 	presence_tuple_t *tuple = _p->tuples;
+	str none = { s: "none", len: 4 };
 
 	/* Send a notify, saved Contact will be put in
 	 * Request-URI, To will be put in from and new tag
@@ -370,7 +373,7 @@ static int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 	if (!tuple) {
 		 LOG(L_ERR, "send_xpidf_notify() NO TUPLE\n");
 		 st = XPIDF_ST_CLOSED;
-		 if (xpidf_add_address(&body, BUF_LEN - body.len, &_p->uri, st) < 0) {
+		 if (xpidf_add_address(&body, BUF_LEN - body.len, &_p->uri, &none, st) < 0) {
              LOG(L_ERR, "send_xpidf_notify(): xpidf_add_address failed\n");
              return -3;
          }
@@ -382,7 +385,8 @@ static int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 		default: st = XPIDF_ST_CLOSED; break;
 		}
 
-		if (xpidf_add_address(&body, BUF_LEN - body.len, &_p->uri, st) < 0) {
+		LOG(L_ERR, "send_xpidf_notify(): %.*s\n", tuple->id.len, tuple->id.s);
+		if (xpidf_add_address(&body, BUF_LEN - body.len, &_p->uri, &tuple->id, st) < 0) {
 			LOG(L_ERR, "send_xpidf_notify(): xpidf_add_address failed\n");
 			return -3;
 		}

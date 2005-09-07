@@ -98,6 +98,24 @@ int codes[] = {
 	500  /* EI_PA_INTERNAL_ERROR */
 };
 
+static int extract_contact_rpl(struct sip_msg *m, str *dst)
+{
+	if (!dst) return -1;
+	dst->s = NULL;
+	dst->len = 0;
+
+	dst->len = 18 + m->rcv.bind_address->name.len + m->rcv.bind_address->port_no_str.len;
+	dst->s = (char *)shm_malloc(dst->len + 1);
+	if (!dst->s) {
+		dst->len = 0;
+		return -1;
+	}
+	snprintf(dst->s, dst->len + 1, "Contact: <sip:%.*s:%.*s>\r\n",
+			m->rcv.bind_address->name.len, m->rcv.bind_address->name.s,
+			m->rcv.bind_address->port_no_str.len, m->rcv.bind_address->port_no_str.s);
+
+	return 0;
+}
 
 /*
  * Send a reply
@@ -119,6 +137,18 @@ int send_reply(struct sip_msg* _m)
 		LUMP_RPL_HDR|LUMP_RPL_NODUP|LUMP_RPL_NOFREE)==0) {
 			LOG(L_ERR, "ERROR:pa:send_reply: cannot add rpl_lump hdr\n");
 			return -1;
+		}
+	}
+	else {
+		/* add Contact header field */
+		str s;
+		extract_contact_rpl(_m, &s);
+		if (s.len > 0) {
+			if (!add_lump_rpl(_m, s.s, s.len, LUMP_RPL_HDR)) {
+				LOG(L_ERR, "pa:send_reply: Can't add Contact header to the response\n");
+				return -1;
+			}
+			if (s.s) shm_free(s.s);
 		}
 	}
 

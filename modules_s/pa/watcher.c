@@ -179,7 +179,7 @@ static int watcher_assign_statement_id(presentity_t *presentity, watcher_t *watc
  * Create a new watcher structure but do not write to database
  */
 int new_watcher_no_wb(presentity_t *_p, str* _uri, time_t _e, int event_package, doctype_t _a, dlg_t* _dlg, 
-		      str *_dn, watcher_t** _w)
+		      str *_dn, str *server_contact, watcher_t** _w)
 {
 	watcher_t* watcher;
 
@@ -190,7 +190,7 @@ int new_watcher_no_wb(presentity_t *_p, str* _uri, time_t _e, int event_package,
 	}
 
 	/* Allocate memory buffer for watcher_t structure and uri string */
-	watcher = (watcher_t*)shm_malloc(sizeof(watcher_t) + _uri->len + _dn->len + S_ID_LEN);
+	watcher = (watcher_t*)shm_malloc(sizeof(watcher_t) + _uri->len + _dn->len + S_ID_LEN + server_contact->len);
 	if (!watcher) {
 		paerrno = PA_NO_MEMORY;
 	        LOG(L_ERR, "new_watcher(): No memory left\n");
@@ -207,6 +207,11 @@ int new_watcher_no_wb(presentity_t *_p, str* _uri, time_t _e, int event_package,
 	watcher->display_name.s = (char*)watcher + S_ID_LEN + sizeof(watcher_t) + _uri->len;
 	watcher->display_name.len = _dn->len;
 	memcpy(watcher->display_name.s, _dn->s, _dn->len);
+	
+	/* Copy server_contact string */
+	watcher->server_contact.s = (char*)watcher + S_ID_LEN + sizeof(watcher_t) + _uri->len + _dn->len;
+	watcher->server_contact.len = server_contact->len;
+	memcpy(watcher->server_contact.s, server_contact->s, server_contact->len);
 
 	watcher->s_id.s = (char*)watcher + sizeof(watcher_t);
 	watcher->s_id.len = 0;
@@ -225,7 +230,7 @@ int new_watcher_no_wb(presentity_t *_p, str* _uri, time_t _e, int event_package,
  * Create a new watcher structure
  */
 int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_package, doctype_t _a, dlg_t* _dlg, 
-		str *_dn, watcher_t** _w)
+		str *_dn, str *server_contact, watcher_t** _w)
 {
      int rc;
      watcher_t* watcher;
@@ -236,7 +241,7 @@ int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_package, docty
 	  return -1;
      }
 
-     rc = new_watcher_no_wb(_p, _uri, _e, event_package, _a, _dlg, _dn, _w);
+     rc = new_watcher_no_wb(_p, _uri, _e, event_package, _a, _dlg, _dn, server_contact, _w);
      if (rc < 0) {
 	  return rc;
      } else {
@@ -382,6 +387,8 @@ int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_package, docty
 	       query_vals[n_query_cols].val.int_val = watcher->expires;
 	       n_query_cols++;
 
+			/* FIXME: store server_contact to DB */
+		   
 	       /* insert new record into database */
 	       LOG(L_INFO, "new_watcher: inserting %d cols into table\n", n_query_cols);
 	       if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols)
@@ -457,6 +464,7 @@ int db_read_watcherinfo(presentity_t *_p)
 		    int expires = row_vals[expires_col].val.int_val;
 		    str status = { 0, 0 };
 		    str display_name = { 0, 0 };
+			str server_contact = { 0, 0};
 		    watcher_t *watcher = NULL;
 		    if (!row_vals[w_uri_col].nul) {
 			 w_uri.s = row_vals[w_uri_col].val.string_val;
@@ -484,9 +492,10 @@ int db_read_watcherinfo(presentity_t *_p)
 			 display_name.s = row_vals[display_name_col].val.string_val;
 			 display_name.len = strlen(display_name.s);
 		    }
+			/* FIXME: read server_contact from DB */
 
 		    if (find_watcher(_p, &w_uri, event_package, &watcher) != 0) {
-			 new_watcher_no_wb(_p, &w_uri, expires, event_package, accepts, NULL, &display_name, &watcher);
+			 new_watcher_no_wb(_p, &w_uri, expires, event_package, accepts, NULL, &display_name, &server_contact, &watcher);
 		    }
 		    if (watcher) {
 			 watcher_status_t ws = watcher_status_from_string(&status);
@@ -513,6 +522,7 @@ int db_read_watcherinfo(presentity_t *_p)
  */
 void free_watcher(watcher_t* _w)
 {
+	LOG(L_ERR, "free_watcher %p\n", _w);
 	tmb.free_dlg(_w->dialog);
 	shm_free(_w);	
 }

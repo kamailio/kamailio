@@ -164,7 +164,7 @@ void free_presence_tuple(presence_tuple_t * _t);
  * Add a watcher to the watcher list
  */
 int add_watcher(presentity_t* _p, str* _uri, time_t _e, int event_package, doctype_t _a, dlg_t* _dlg, 
-		str *_dn, struct watcher** _w);
+		str *_dn, str *server_contact, struct watcher** _w);
 
 
 /*
@@ -179,6 +179,11 @@ int remove_watcher(presentity_t* _p, watcher_t* _w);
 int find_watcher(presentity_t* _p, str* _uri, int _et, struct watcher** _w);
 
 /*
+ * Find a watcher in the list via dialog identifier
+ */
+int find_watcher_dlg(struct presentity* _p, dlg_id_t *dlg_id, int _et, watcher_t** _w);
+
+/*
  * Notify all watchers on the list
  */
 int notify_watchers(presentity_t* _p);
@@ -188,7 +193,7 @@ int notify_watchers(presentity_t* _p);
  * Add a watcher to the winfo watcher list
  */
 int add_winfo_watcher(presentity_t* _p, str* _uri, time_t _e, int event_package, doctype_t _a, dlg_t* _dlg, 
-		      str *_dn, struct watcher** _w);
+		      str *_dn, str *server_contact, struct watcher** _w);
 
 
 /*

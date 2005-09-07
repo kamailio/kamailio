@@ -85,6 +85,7 @@ typedef struct watcher {
         int preferred_mimetype; /* Type of document accepted by the watcher */
  	dlg_t* dialog;          /* Dialog handle */
 	str s_id;               /* id of this watcherinfo statement */
+	str server_contact;		/* used for contact header in NOTIFY messages */
 	wflags_t flags;
         watcher_event_t  event;
 	watcher_status_t status; /* status of subscription */
@@ -107,6 +108,7 @@ watcher_event_t watcher_event_from_string(str *wename);
  */
 struct presentity;
 int new_watcher(struct presentity *_p, str* _uri, time_t _e, int event_package, doctype_t _a, dlg_t* _dlg, str *display_name, 
+		str *server_contact,
 		watcher_t** _w);
 
 

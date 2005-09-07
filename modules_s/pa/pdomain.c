@@ -172,7 +172,7 @@ int timer_pdomain(pdomain_t* _d)
 		     /* Remove the entire record
 		      * if it is empty
 		      */
-		if (presentity->watchers == 0 && presentity->winfo_watchers==0) {
+		if ( (presentity->watchers == 0) && (presentity->winfo_watchers==0) && (presentity->tuples == 0)) { /* FIXME: experimental */
 			t = presentity;
 			presentity = presentity->next;
 			remove_presentity(_d, t);
@@ -240,6 +240,7 @@ int find_presentity(pdomain_t* _d, str* _uri, struct presentity** _p)
 	return 1;   /* Nothing found */
 }
 
+void callback(str* _user, str *_contact, int state, void* data);
 
 void add_presentity(pdomain_t* _d, struct presentity* _p)
 {
@@ -250,12 +251,20 @@ void add_presentity(pdomain_t* _d, struct presentity* _p)
 	sl = hash_func(_d, _p->uri.s, _p->uri.len);
 
 	slot_add(&_d->table[sl], _p, &_d->first, &_d->last);
+
+	/* FIXME: experimental */
+	_d->reg(&_p->uri, &_p->uri, (void*)callback, _p);
+	LOG(L_ERR, "registering callback to %.*s, %p\n", _p->uri.len, _p->uri.s,_p);
 }
 
 
 void remove_presentity(pdomain_t* _d, struct presentity* _p)
 {
 	return;
+	/* FIXME: experimental */
+	_d->unreg(&_p->uri, &_p->uri, (void*)callback, _p);	
+	LOG(L_ERR, "unregistering callback to %.*s, %p\n", _p->uri.len, _p->uri.s,_p);
+	
 	LOG(L_WARN, "remove_presentity _p=%p p_uri=%.*s\n", _p, _p->uri.len, _p->uri.s);
 	slot_rem(_p->slot, _p, &_d->first, &_d->last);
 }

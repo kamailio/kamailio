@@ -222,6 +222,7 @@ int new_presentity(struct pdomain *pdomain, str* _uri, presentity_t** _p)
  */
 void free_presentity(presentity_t* _p)
 {
+	/* LOG(L_ERR, "free_presentity %p\n", _p); */
 	watcher_t* ptr;
 	presence_tuple_t *tuple;
 
@@ -457,7 +458,7 @@ int new_presence_tuple(str* _contact, time_t expires, presentity_t *_p, presence
      tuple->contact.s = ((char*)tuple) + sizeof(presence_tuple_t);
      tuple->status.s = tuple->status_buf;
      strncpy(tuple->contact.s, _contact->s, _contact->len);
-     _contact->s[_contact->len] = 0;
+     tuple->contact.s[_contact->len] = 0;
      tuple->contact.len = _contact->len;
      tuple->location.loc.s = tuple->location.loc_buf;
      tuple->location.site.s = tuple->location.site_buf;
@@ -468,14 +469,15 @@ int new_presence_tuple(str* _contact, time_t expires, presentity_t *_p, presence
      tuple->expires = expires;
      tuple->priority = default_priority;
 
-     r = rand();
+     r = rand() + time(NULL);
      tuple->id.len = sprintf(tuple->id.s, "tid%x", r);
 
      *_t = tuple;
 
-     LOG(L_ERR, "new_tuple=%p for aor=%.*s contact=%.*s\n", tuple, 
+     LOG(L_ERR, "new_tuple=%p for aor=%.*s contact=%.*s id=%.*s\n", tuple, 
 	 _p->uri.len, _p->uri.s,
-	 tuple->contact.len, tuple->contact.s);
+	 tuple->contact.len, tuple->contact.s,
+	 tuple->id.len, tuple->id.s);
 	
      return 0;
 }
@@ -610,6 +612,7 @@ int timer_presentity(presentity_t* _p)
 	  if (tuple->expires < act_time) {
 	    LOG(L_ERR, "Expiring tuple %.*s\n", tuple->contact.len, tuple->contact.s);
 	    remove_presence_tuple(_p, tuple);
+		free_presence_tuple(tuple); /* FIXME: experimental */
 	  }
 	  tuple = next_tuple;
 	}
@@ -658,9 +661,9 @@ int timer_presentity(presentity_t* _p)
  * Add a new watcher to the list
  */
 int add_watcher(presentity_t* _p, str* _uri, time_t _e, int event_package, doctype_t _a, dlg_t* _dlg, 
-		str *_dn, struct watcher** _w)
+		str *_dn, str *server_contact, struct watcher** _w)
 {
-	if (new_watcher(_p, _uri, _e, event_package, _a, _dlg, _dn, _w) < 0) {
+	if (new_watcher(_p, _uri, _e, event_package, _a, _dlg, _dn, server_contact, _w) < 0) {
 		LOG(L_ERR, "add_watcher(): Error while creating new watcher structure\n");
 		return -1;
 	}
@@ -680,6 +683,8 @@ int remove_watcher(presentity_t* _p, watcher_t* _w)
 
 	watcher = _p->watchers;
 	prev = 0;
+			
+	LOG(L_ERR, "removing watcher %p (pres %p)\n", _w, _p);
 	
 	while(watcher) {
 		if (watcher == _w) {
@@ -688,6 +693,7 @@ int remove_watcher(presentity_t* _p, watcher_t* _w)
 			} else {
 				_p->watchers = watcher->next;
 			}
+			LOG(L_ERR, "removed watcher %p (pres %p)\n", _w, _p);
 			return 0;
 		}
 
@@ -747,9 +753,9 @@ int notify_winfo_watchers(presentity_t* _p)
  * Add a new watcher to the winfo_watcher list
  */
 int add_winfo_watcher(presentity_t* _p, str* _uri, time_t _e, int event_package, doctype_t _a, dlg_t* _dlg, 
-		      str *_dn, struct watcher** _w)
+		      str *_dn, str *server_contact, struct watcher** _w)
 {
-	if (new_watcher(_p, _uri, _e, event_package, _a, _dlg, _dn, _w) < 0) {
+	if (new_watcher(_p, _uri, _e, event_package, _a, _dlg, _dn, server_contact, _w) < 0) {
 		LOG(L_ERR, "add_winfo_watcher(): Error while creating new watcher structure\n");
 		return -1;
 	}
@@ -828,6 +834,69 @@ int find_watcher(struct presentity* _p, str* _uri, int _et, watcher_t** _w)
 			
 			watcher = watcher->next;
 		}
+	}
+	
+	return 1;
+}
+
+/* returns 0 if equal strings */
+static int str_case_equals(const str *a, const str *b)
+{
+	int i;
+
+	if (!a) {
+		if (!b) return 0;
+		else return 1;
+	}
+	if (!b) return 1;
+	if (a->len != b->len) return 1;
+
+	for (i = 0; i < a->len; i++) 
+		if (a->s[i] != b->s[i]) return 1;
+	return 0;
+}
+
+/* returns 0 if equal dialog IDs */
+static int cmp_dlg_ids(dlg_id_t *a, dlg_id_t *b)
+{
+	if (!a) {
+		if (!b) return -1;
+		else return 0;
+	}
+	if (!b) return 1;
+
+	if (str_case_equals(&a->call_id, &b->call_id) != 0) return 1;
+	if (str_case_equals(&a->rem_tag, &b->rem_tag) != 0) return 1; /* case sensitive ? */
+	if (str_case_equals(&a->loc_tag, &b->loc_tag) != 0) return 1; /* case sensitive ? */
+	return 0;
+}
+
+/*
+ * Find a watcher in the list via dialog identifier
+ */
+int find_watcher_dlg(struct presentity* _p, dlg_id_t *dlg_id, int _et, watcher_t** _w)
+{
+	watcher_t* watcher;
+
+	/* first look for watchers */
+
+	if (!dlg_id) return -1;
+
+	if (_et != EVENT_PRESENCE_WINFO)
+		watcher = _p->watchers;
+	else	
+		watcher = _p->winfo_watchers;
+	
+	while(watcher) {
+		if (watcher->dialog) {
+			if ((cmp_dlg_ids(&watcher->dialog->id, dlg_id) == 0) && 
+					(watcher->event_package == _et)) {
+				*_w = watcher;
+				return 0;
+			}
+		}
+		
+		watcher = watcher->next;
 	}
 	
 	return 1;

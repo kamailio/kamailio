@@ -54,7 +54,7 @@ int xpidf_add_presentity(str* _b, int _l, str* _uri);
 /*
  * Add a contact address with given status
  */
-int xpidf_add_address(str* _b, int _l, str* _addr, xpidf_status_t _st);
+int xpidf_add_address(str* _b, int _l, str* _addr, str *id, xpidf_status_t _st);
 
 
 /*

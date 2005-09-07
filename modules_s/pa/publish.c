@@ -54,6 +54,7 @@
 #include "publish.h"
 #include "pidf.h"
 #include "common.h"
+#include "../../data_lump_rpl.h"
 
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
@@ -172,7 +173,7 @@ int location_package_location_del_user(pdomain_t *pdomain, str *site, str *floor
 /*
  * Update existing presentity and watcher list
  */
-static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struct presentity* presentity, int *pchanged)
+static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struct presentity* presentity, int *pchanged, presence_tuple_t **modified_tuple)
 {
      char *body = get_body(_m);
      presence_tuple_t *tuple = NULL;
@@ -192,6 +193,12 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
      int changed = 0;
      int ret = 0;
 
+	 if (modified_tuple) *modified_tuple = 0;
+	 if (_m->expires) {
+		 if (_m->expires->parsed)
+			 expires = ((exp_body_t*)_m->expires->parsed)->val + act_time;
+	 }
+		
      flags = parse_pidf(body, &contact, &basic, &status, &location, &site, &floor, &room, &x, &y, &radius, 
 			&packet_loss, &priority, &expires, &prescaps);
      if (contact.len) {
@@ -199,6 +206,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 	  if (!tuple) {
 		  contact_t *sip_contact = NULL;
 		  /* get contact from SIP Headers*/
+		  /* FIXME: use SIP-If-Match header if present to find the tuple id */
 		  contact_iterator(&sip_contact, _m, NULL);
 		  if (sip_contact) {
 			  LOG(L_ERR, "publish_presentity: find tuple for contact %.*s\n", 
@@ -321,6 +329,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
        changed = 1;
        tuple->expires = expires;
      }
+	 LOG(L_ERR, "PUBLISH: tuple expires after %d s\n", (int)(tuple->expires - act_time));
 #ifdef HAVE_LOCATION_PACKAGE
      if (use_location_package)
 	  if (site.len && floor.len && room.len && changed) {
@@ -346,6 +355,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 	  return ret;
      }
 
+	 if (modified_tuple) *modified_tuple = tuple;
      LOG(L_INFO, "publish_presentity: -4-\n");
      return 0;
 }
@@ -376,16 +386,38 @@ static int publish_presentity_xcap_change(struct sip_msg* _m, struct pdomain* _d
 
 static int publish_presentity(struct sip_msg* _m, struct pdomain* _d, struct presentity* presentity, int *pchanged)
 {
+	presence_tuple_t *modified_tuple = NULL;
+	char *tmp;
+	int i;
 	event_t *parsed_event = NULL;
 	int event_package = EVENT_OTHER;
+	
 	if (_m->event) 
 		parsed_event = (event_t *)_m->event->parsed;
 	if (parsed_event)
 		event_package = parsed_event->parsed;
 
 	if (event_package == EVENT_PRESENCE) {
-		publish_presentity_pidf(_m, _d, presentity, pchanged);
+		if (publish_presentity_pidf(_m, _d, presentity, 
+					pchanged, &modified_tuple) == 0) {
+			/* add header fields into response */
+			if (modified_tuple) {
+				i = modified_tuple->expires - act_time;
+				if (i < 0) i = 0;
+				tmp = (char*)pkg_malloc(64 + modified_tuple->id.len);
+				if (tmp) {
+					sprintf(tmp, "Expires: %d\r\nSIP-ETag: %.*s\r\n", i, 
+							modified_tuple->id.len, ZSW(modified_tuple->id.s));
+					if (!add_lump_rpl(_m, tmp, strlen(tmp), LUMP_RPL_HDR)) {
+						LOG(L_ERR, "publish_presentity(): Can't add headers to the response\n");
+						/* return -1; */
+					}
+					pkg_free(tmp);
+				}
+			}
+		}
 	} else if (event_package == EVENT_XCAP_CHANGE) {
+		/* FIXME: add headers Expires and SIP-ETag */
 		publish_presentity_xcap_change(_m, _d, presentity, pchanged);
 	} else {
 		str callid = { 0, 0 };
@@ -450,7 +482,7 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 	LOG(L_ERR, "handle_publish -5- presentity=%p\n", p);
 	if (p)
 		publish_presentity(_m, d, p, &changed);
-
+	
 	unlock_pdomain(d);
 
 	if (send_reply(_m) < 0) return -1;
