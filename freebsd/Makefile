@@ -41,10 +41,10 @@ MAKE_ENV= include_modules="mysql jabber cpl-c pa"
 
 # depends on mysql and libexpat because of the above modules
 BUILD_DEPENDS= ${LOCALBASE}/include/expat.h:${PORTSDIR}/textproc/expat* \
-               ${LOCALBASE}/include/mysql/mysql.h:${PORTSDIR}/databases/mysql32*-client \
+               ${LOCALBASE}/include/mysql/mysql.h:${PORTSDIR}/databases/mysql*-client \
                ${LOCALBASE}/include/libxml2/libxml/uri.h:${PORTSDIR}/textproc/libxml2* 
 LIB_DEPENDS=   expat:${PORTSDIR}/textproc/expat* \
-               mysqlclient.10:${PORTSDIR}/databases/mysql32*-client \
+               mysqlclient:${PORTSDIR}/databases/mysql*-client \
                xml2:${PORTSDIR}/textproc/libxml2
 
 pre-fetch:

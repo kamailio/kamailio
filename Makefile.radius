@@ -20,7 +20,6 @@
 # need to look int /usr/local/lib as well
 #
 DEFS+=-I$(LOCALBASE)/include
-LIBS+=-L$(LOCALBASE)/lib
 
 ifneq ($(radiusclient_ng), 4)
 
@@ -34,3 +33,5 @@ DEFS+=-DRADIUSCLIENT_NG_4
 RADIUSCLIENT_LIB=radiusclient
 
 endif
+
+LIBS=-L$(LOCALBASE)/lib -l$(RADIUSCLIENT_LIB)
