@@ -781,7 +781,7 @@ static int t_flush_flags(struct sip_msg* msg, char *foo, char *bar)
 	}
 
 	/* do the flush */
-	t->uas.request->flags = msg->flags;
+	t->uas.request->flags = msg->flags&gflags_mask;
 	return 1;
 }
 
