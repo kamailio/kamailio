@@ -573,25 +573,34 @@ int timer_presentity(presentity_t* _p)
 	watcher_t* watcher, *t;
 	presence_tuple_t *tuple;
 	int changed;
+	int presentity_changed;
 
 	if (_p && _p->flags)
 	     LOG(L_ERR, "timer_presentity: _p=%p %.*s flags=%x watchers=%p\n", 
 		 _p, _p->uri.len, _p->uri.s, _p->flags, _p->watchers);
+
+	presentity_changed = _p->flags & (PFLAG_PRESENCE_CHANGED
+			|PFLAG_PRESENCE_LISTS_CHANGED
+			|PFLAG_XCAP_CHANGED
+			|PFLAG_LOCATION_CHANGED);
+		
 	if (_p->flags & PFLAG_WATCHERINFO_CHANGED) {
-		watcher_t *w = _p->watchers;
-		while (w) {
-		     if (w && w->flags)
-			  LOG(L_ERR, "\t w=%p %.*s flags=%x\n", w, w->uri.len, w->uri.s, w->flags);
-		     if (w->flags & WFLAG_SUBSCRIPTION_CHANGED) {
-				if (send_notify(_p, w) < 0) {
-					LOG(L_ERR, "handle_subscription(): Error while sending notify\n");
-					/* FIXME: watcher and presentity should be test for removal here
-					 * (and possibly in other error cases too
-					 */
+		if (!presentity_changed) { /* other will be notified below ! */
+			watcher_t *w = _p->watchers;
+			while (w) {
+				 if (w && w->flags)
+				  LOG(L_ERR, "\t w=%p %.*s flags=%x\n", w, w->uri.len, w->uri.s, w->flags);
+				 if (w->flags & WFLAG_SUBSCRIPTION_CHANGED) {
+					if (send_notify(_p, w) < 0) {
+						LOG(L_ERR, "handle_subscription(): Error while sending notify\n");
+						/* FIXME: watcher and presentity should be test for removal here
+						 * (and possibly in other error cases too
+						 */
+					}
+					w->flags &= ~WFLAG_SUBSCRIPTION_CHANGED;
 				}
-				w->flags &= ~WFLAG_SUBSCRIPTION_CHANGED;
+				w = w->next;
 			}
-			w = w->next;
 		}
 
 		notify_winfo_watchers(_p);
@@ -600,12 +609,11 @@ int timer_presentity(presentity_t* _p)
 		// if (p->slot == 0) free_presentity(p);
 	}
 
-	if (_p->flags & (PFLAG_PRESENCE_CHANGED
-			|PFLAG_PRESENCE_LISTS_CHANGED
-			|PFLAG_XCAP_CHANGED
-			|PFLAG_LOCATION_CHANGED)) {
+	if (presentity_changed) {
 		notify_watchers(_p);
 	}
+	
+	_p->flags &= ~PFLAG_WATCHERINFO_CHANGED; /* clean this flag - it is after */
 
 	changed = 0;
 	tuple = _p->tuples;
@@ -723,6 +731,7 @@ int notify_watchers(presentity_t* _p)
 
 	while(watcher) {
 		send_notify(_p, watcher);
+		watcher->flags &= ~WFLAG_SUBSCRIPTION_CHANGED; /* FIXME: move it somewhere else */
 		watcher = watcher->next;
 	}
 	/* clear the flags */
