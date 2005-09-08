@@ -244,7 +244,7 @@ INSERT INTO version VALUES ( 'missed_calls', '2');
 INSERT INTO version VALUES ( 'location', '7');
 INSERT INTO version VALUES ( 'grp', '2');
 INSERT INTO version VALUES ( 'event', '1');
-INSERT INTO version VALUES ( 'aliases', '6');
+INSERT INTO version VALUES ( 'aliases', '7');
 INSERT INTO version VALUES ( 'active_sessions', '1');
 INSERT INTO version VALUES ( 'acc', '2');
 INSERT INTO version VALUES ( 'config', '1');
@@ -333,6 +333,7 @@ CREATE TABLE aliases (
   state tinyint(1) unsigned NOT NULL default '0',
   flags int(11) NOT NULL default '0',
   user_agent varchar(50) NOT NULL default '',
+  instance varchar(80) NOT NULL default '',
   PRIMARY KEY($USERCOL, domain, contact),
   INDEX aliases_contact (contact)
 ) $TABLE_TYPE;
