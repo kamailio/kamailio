@@ -105,10 +105,14 @@ void callback(str* _user, str *_contact, int state, void* data)
 
 			orig = tuple->state;
 
-			if (state == 0) tuple->state = PS_OFFLINE;
-			else tuple->state = PS_ONLINE;
-
-			tuple->expires = act_time + default_expires;
+			if (state == 0) {
+				tuple->state = PS_OFFLINE;
+				tuple->expires = act_time + 2 * timer_interval;
+			}
+			else {
+				tuple->state = PS_ONLINE;
+				tuple->expires = act_time + default_expires;
+			}
 
 			db_update_presentity(presentity);
 

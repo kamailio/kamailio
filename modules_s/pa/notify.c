@@ -148,8 +148,7 @@ static str reason[] = {
 
 static str method = {METHOD_NOTIFY, METHOD_NOTIFY_L};
 
-
-#define BUF_LEN 4096
+#define BUF_LEN 16384
 
 static char headers_buf[BUF_LEN];
 static char buffer[BUF_LEN];

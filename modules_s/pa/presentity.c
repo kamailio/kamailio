@@ -572,6 +572,7 @@ int timer_presentity(presentity_t* _p)
 {
 	watcher_t* watcher, *t;
 	presence_tuple_t *tuple;
+	int changed;
 
 	if (_p && _p->flags)
 	     LOG(L_ERR, "timer_presentity: _p=%p %.*s flags=%x watchers=%p\n", 
@@ -606,6 +607,7 @@ int timer_presentity(presentity_t* _p)
 		notify_watchers(_p);
 	}
 
+	changed = 0;
 	tuple = _p->tuples;
 	while (tuple) {
 	  presence_tuple_t *next_tuple = tuple->next;
@@ -613,8 +615,13 @@ int timer_presentity(presentity_t* _p)
 	    LOG(L_ERR, "Expiring tuple %.*s\n", tuple->contact.len, tuple->contact.s);
 	    remove_presence_tuple(_p, tuple);
 		free_presence_tuple(tuple); /* FIXME: experimental */
+		changed = 1;
 	  }
 	  tuple = next_tuple;
+	}
+	if (changed == 1) {
+		db_update_presentity(_p);
+		_p->flags |= PFLAG_PRESENCE_CHANGED; /* FIXME: hack due to incorrect client's reaction on more tuples */
 	}
 
 	watcher = _p->watchers;

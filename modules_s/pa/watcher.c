@@ -695,7 +695,8 @@ int winfo_start_resource(str* _b, int _l, str* _uri, watcher_t *watcher)
 	add_string(WATCHERLIST_START, WATCHERLIST_START_L);
 	add_pstr(_uri);
 	add_string(PACKAGE_START, PACKAGE_START_L);
-	add_string(event_package_name[watcher->event_package], strlen(event_package_name[watcher->event_package]));
+/*	add_string(event_package_name[watcher->event_package], strlen(event_package_name[watcher->event_package]));*/
+	add_string(event_package_name[EVENT_PRESENCE], strlen(event_package_name[EVENT_PRESENCE])); /* FIXME */
 	add_string(PACKAGE_END, PACKAGE_END_L);
 	add_string(CRLF, CRLF_L);
 
