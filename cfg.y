@@ -770,7 +770,7 @@ route_stm:  ROUTE LBRACE actions RBRACE { push($3, &rlist[DEFAULT_RT]); }
 										if (($3<RT_NO) && ($3>=0)){
 											push($6, &rlist[$3]);
 										}else{
-											yyerror("invalid routing"
+											yyerror("invalid routing "
 													"table number");
 											YYABORT; }
 										}
