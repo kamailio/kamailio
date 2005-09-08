@@ -140,6 +140,11 @@ int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 				"can't be register along with types\n");
 			return E_BUG;
 		}
+		if (req_in_tmcb_hl==0) {
+			LOG(L_ERR, "ERROR:tm:register_tmcb: callback type TMCB_REQUEST_IN "
+				"registration attempt before TM module initialization\n");
+			return E_CFG;
+		}
 		cb_list = req_in_tmcb_hl;
 	} else {
 		if (!t) {
