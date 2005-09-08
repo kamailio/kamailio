@@ -140,13 +140,14 @@ static int mod_init(void)
 		goto error;
 	}
 
-	if (from_restore_mode!=FROM_NO_RESTORE) {
-		/* load the TM API */
-		if (load_tm_api(&uac_tmb)!=0) {
-			LOG(L_ERR, "ERROR:uac:mod_init: can't load TM API\n");
-			goto error;
-		}
+	/* load the TM API - FIXME it should be loaded only
+	 * if NO_RESTORE and AUTH */
+	if (load_tm_api(&uac_tmb)!=0) {
+		LOG(L_ERR, "ERROR:uac:mod_init: can't load TM API\n");
+		goto error;
+	}
 
+	if (from_restore_mode!=FROM_NO_RESTORE) {
 		/* load the RR API */
 		if (load_rr_api(&uac_rrb)!=0) {
 			LOG(L_ERR, "ERROR:uac:mod_init: can't load RR API\n");

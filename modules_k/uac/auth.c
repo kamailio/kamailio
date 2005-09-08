@@ -272,7 +272,7 @@ static inline int apply_urihdr_changes( struct sip_msg *req,
 {
 	struct lump* anchor;
 
-	/* add the uri */
+	/* add the uri - move it to branch directly FIXME (bogdan)*/
 	if (req->new_uri.s)
 	{
 		pkg_free(req->new_uri.s);
@@ -339,7 +339,7 @@ int uac_auth( struct sip_msg *msg)
 	/* pick the selected reply */
 	picked_br = -1;
 	picked_code = 999;
-	for ( b=0; b<t->nr_of_outgoings ; b++ )
+	for ( b=t->first_branch; b<t->nr_of_outgoings ; b++ )
 	{
 		/* skip 'empty branches' */
 		if (!t->uac[b].request.buffer)
@@ -421,6 +421,9 @@ int uac_auth( struct sip_msg *msg)
 		LOG(L_ERR,"ERROR:uac:uac_auth: failed to apply changes\n");
 		goto error;
 	}
+
+	/* increas the Cseq nr */
+
 
 	return 0;
 error:
