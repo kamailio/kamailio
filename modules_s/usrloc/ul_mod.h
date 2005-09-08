@@ -49,7 +49,7 @@
 #define WRITE_THROUGH 1
 #define WRITE_BACK    2
 
-#define TABLE_VERSION 6
+#define TABLE_VERSION 7
 
 extern str user_col;
 extern str domain_col;
