@@ -44,6 +44,7 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
+#include <signal.h>
 
 
 static char *id="$Id$";
@@ -94,6 +95,7 @@ int main (int argc, char** argv)
 	int t;
 	struct linger t_linger;
 	int k;
+	int err;
 	
 	/* init */
 	count=0;
@@ -107,6 +109,7 @@ int main (int argc, char** argv)
 	tcp=0;
 	tcp_rst=0;
 	con_no=1;
+	err=0;
 
 	opterr=0;
 	while ((c=getopt(argc,argv, "f:c:d:p:s:t:n:rTRvhV"))!=-1){
@@ -215,6 +218,12 @@ int main (int argc, char** argv)
 	}
 	if (!tcp) con_no=1;
 	
+	/* ignore sigpipe */
+	if (signal(SIGPIPE, SIG_IGN)==SIG_ERR){
+		fprintf(stderr, "failed to ignore SIGPIPE: %s\n", strerror(errno));
+		exit(-1);
+	}
+	
 	/* open packet file */
 	fd=open(fname, O_RDONLY);
 	if (fd<0){
@@ -277,8 +286,8 @@ int main (int argc, char** argv)
 		for (r=0; r<count; r++){
 			if ((verbose>1)&&((r%1000)==999)){  putchar('.'); fflush(stdout); }
 			if (send(sock, buf, n, 0)==-1) {
-				fprintf(stderr, "Error: send: %s\n",  strerror(errno));
-				exit(1);
+				fprintf(stderr, "Error(%d): send: %s\n", err, strerror(errno));
+				err++;;
 			}
 			if (usec){
 				t--;
@@ -296,13 +305,16 @@ int main (int argc, char** argv)
 	if (tcp){
 		printf("\n%d packets sent on %d tcp connections (%d on each of them),"
 				" %d bytes each => total %d bytes\n",
-				count*con_no, con_no, count, n, con_no*n*count);
+				count*con_no-err, con_no, count, n,
+				(con_no*count-err)*n);
 	}else{
 		printf("\n%d packets sent, %d bytes each => total %d bytes\n",
-				count, n, n*count);
+				count-err, n, n*(count-err));
 	}
+	if (err) printf("%d errors\n", err);
 	exit(0);
 
 error:
+	fprintf(stderr, "exiting due to error (%s)\n", strerror(errno));
 	exit(-1);
 }
