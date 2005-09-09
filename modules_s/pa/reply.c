@@ -100,19 +100,30 @@ int codes[] = {
 
 static int extract_contact_rpl(struct sip_msg *m, str *dst)
 {
+	char *tmp = "";
 	if (!dst) return -1;
 	dst->s = NULL;
 	dst->len = 0;
+	
+	switch(m->rcv.bind_address->proto){ 
+		case PROTO_NONE: break;
+		case PROTO_UDP: break;
+		case PROTO_TCP: tmp = ";transport=tcp";	break;
+		case PROTO_TLS: tmp = ";transport=tls"; break;
+		case PROTO_SCTP: tmp = ";transport=sctp"; break;
+		default: LOG(L_CRIT, "BUG: extract_server_contact: unknown proto %d\n", m->rcv.bind_address->proto); 
+	}
 
-	dst->len = 18 + m->rcv.bind_address->name.len + m->rcv.bind_address->port_no_str.len;
+	dst->len = 18 + m->rcv.bind_address->name.len + m->rcv.bind_address->port_no_str.len + strlen(tmp);
 	dst->s = (char *)shm_malloc(dst->len + 1);
 	if (!dst->s) {
 		dst->len = 0;
 		return -1;
 	}
-	snprintf(dst->s, dst->len + 1, "Contact: <sip:%.*s:%.*s>\r\n",
+	snprintf(dst->s, dst->len + 1, "Contact: <sip:%.*s:%.*s%s>\r\n",
 			m->rcv.bind_address->name.len, m->rcv.bind_address->name.s,
-			m->rcv.bind_address->port_no_str.len, m->rcv.bind_address->port_no_str.s);
+			m->rcv.bind_address->port_no_str.len, m->rcv.bind_address->port_no_str.s,
+			tmp);
 
 	return 0;
 }

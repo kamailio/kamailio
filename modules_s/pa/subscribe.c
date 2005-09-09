@@ -369,19 +369,30 @@ int get_preferred_event_mimetype(struct sip_msg *_m, int et)
 	return acc;
 }
 
-static int extract_contact(struct sip_msg *m, str *dst)
+int extract_server_contact(struct sip_msg *m, str *dst)
 {
+	char *tmp = "";
 	if (!dst) return -1;
 
-	dst->len = 7 + m->rcv.bind_address->name.len + m->rcv.bind_address->port_no_str.len;
+	switch(m->rcv.bind_address->proto){ 
+		case PROTO_NONE: break;
+		case PROTO_UDP: break;
+		case PROTO_TCP: tmp = ";transport=tcp";	break;
+		case PROTO_TLS: tmp = ";transport=tls"; break;
+		case PROTO_SCTP: tmp = ";transport=sctp"; break;
+		default: LOG(L_CRIT, "BUG: extract_server_contact: unknown proto %d\n", m->rcv.bind_address->proto); 
+	}
+	
+	dst->len = 7 + m->rcv.bind_address->name.len + m->rcv.bind_address->port_no_str.len + strlen(tmp);
 	dst->s = (char *)shm_malloc(dst->len + 1);
 	if (!dst->s) {
 		dst->len = 0;
 		return -1;
 	}
-	snprintf(dst->s, dst->len + 1, "<sip:%.*s:%.*s>",
+	snprintf(dst->s, dst->len + 1, "<sip:%.*s:%.*s%s>",
 			m->rcv.bind_address->name.len, m->rcv.bind_address->name.s,
-			m->rcv.bind_address->port_no_str.len, m->rcv.bind_address->port_no_str.s);
+			m->rcv.bind_address->port_no_str.len, m->rcv.bind_address->port_no_str.s,
+			tmp);
 
 	return 0;
 }
@@ -441,7 +452,7 @@ int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 		return -3;
 	}
 
-	if (extract_contact(_m, &server_contact) != 0) {
+	if (extract_server_contact(_m, &server_contact) != 0) {
 		paerrno = PA_DIALOG_ERR;
 		LOG(L_ERR, "create_presentity(): Error while extracting server contact\n");
 		free_presentity(*_p);
@@ -555,7 +566,7 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 				return -4;
 			}
 			
-			if (extract_contact(_m, &server_contact) != 0) {
+			if (extract_server_contact(_m, &server_contact) != 0) {
 				paerrno = PA_DIALOG_ERR;
 				LOG(L_ERR, "create_presentity(): Error while extracting server contact\n");
 				return -3;
