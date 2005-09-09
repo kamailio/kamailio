@@ -440,10 +440,12 @@ static int fixup_write_avp(void** param, int param_no)
 				if (flags&AVPOPS_USE_HDRREQ)
 				{
 					len = strlen(s);
-					if (len<6 || s[3]!='[' || s[len-1]!=']')
+					if (len<6 || 
+						((s[3]!='[' || s[len-1]!=']')
+							&& (s[3]!='(' || s[len-1]!=')')))
 					{
 						LOG(L_ERR,"ERROR:avpops:fixup_write_avp: invalid hdr "
-							"specificatoin \"%s\"\n",s);
+							"specification \"%s\"\n",s);
 						return E_UNSPEC;
 					}
 					s[len-1] = ':';

@@ -389,7 +389,7 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
 					value = (variable) | (fix_value)
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					variable = '$src_ip' | '$dst_ip' | '$hdr[name]' | '$duri' | (sip_uri)['/'('username'|'domain')])
+					variable = '$src_ip' | '$dst_ip' | '$hdr(name)' | '$duri' | (sip_uri)['/'('username'|'domain')])
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
 					sip_uri = '$from' | '$to' | '$ruri'
