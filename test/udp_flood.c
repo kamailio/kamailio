@@ -24,6 +24,10 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ *  2005-09-09  basic tcp support added (andrei)
+ */
 
 
 
@@ -38,11 +42,12 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 
 
 static char *id="$Id$";
-static char *version="udp_flood 0.1";
+static char *version="udp_flood 0.2";
 static char* help_msg="\
 Usage: udp_flood -f file -d address -p port -c count [-v]\n\
 Options:\n\
@@ -52,6 +57,10 @@ Options:\n\
     -c count      number of packets to be sent\n\
     -s usec       microseconds to sleep before sending \"throttle\" packets\n\
     -t throttle   number of packets to send before sleeping\n\
+    -r            sleep randomly up to -s usec packets (see -s) \n\
+    -T            use tcp instead of udp \n\
+    -n no         tcp connection number \n\
+    -R            close the tcp connections with RST (SO_LINGER) \n\
     -v            increase verbosity level\n\
     -V            version number\n\
     -h            this help message\n\
@@ -76,9 +85,15 @@ int main (int argc, char** argv)
 	char *fname;
 	char *dst;
 	int port;
-	long usec;
+	unsigned long usec;
 	int throttle;
+	int random_sleep;
+	int tcp;
+	int tcp_rst;
+	int con_no;
 	int t;
+	struct linger t_linger;
+	int k;
 	
 	/* init */
 	count=0;
@@ -88,9 +103,13 @@ int main (int argc, char** argv)
 	port=0;
 	usec=0;
 	throttle=0;
+	random_sleep=0;
+	tcp=0;
+	tcp_rst=0;
+	con_no=1;
 
 	opterr=0;
-	while ((c=getopt(argc,argv, "f:c:d:p:s:t:vhV"))!=-1){
+	while ((c=getopt(argc,argv, "f:c:d:p:s:t:n:rTRvhV"))!=-1){
 		switch(c){
 			case 'f':
 				fname=optarg;
@@ -128,6 +147,22 @@ int main (int argc, char** argv)
 					fprintf(stderr, "bad count: -c %s\n", optarg);
 					goto error;
 				}
+				break;
+			case 'n':
+				con_no=strtol(optarg, &tmp, 10);
+				if ((tmp==0)||(*tmp)||(con_no<1)){
+					fprintf(stderr, "bad count: -c %s\n", optarg);
+					goto error;
+				}
+				break;
+			case 'r':
+				random_sleep=1;
+				break;
+			case 'T':
+				tcp=1;
+				break;
+			case 'R':
+				tcp_rst=1;
 				break;
 			case 'V':
 				printf("version: %s\n", version);
@@ -178,6 +213,7 @@ int main (int argc, char** argv)
 		fprintf(stderr, "Invalid packet count (-c %d)\n", count);
 		exit(-1);
 	}
+	if (!tcp) con_no=1;
 	
 	/* open packet file */
 	fd=open(fname, O_RDONLY);
@@ -206,37 +242,65 @@ int main (int argc, char** argv)
 	addr.sin_port=htons(port);
 	memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], he->h_length);
 	
-	sock = socket(he->h_addrtype, SOCK_DGRAM, 0);
-	if (sock==-1){
-		fprintf(stderr, "ERROR: socket: %s\n", strerror(errno));
-		goto error;
-	}
-	if (connect(sock, (struct sockaddr*) &addr, sizeof(struct sockaddr))!=0){
-		fprintf(stderr, "ERROR: connect: %s\n", strerror(errno));
-		goto error;
-	}
-
-
-	/* flood loop */
-	t=throttle;
-	for (r=0; r<count; r++){
-		if ((verbose>1)&&(r%1000))  putchar('.');
-		if (send(sock, buf, n, 0)==-1) {
-			fprintf(stderr, "Error: send: %s\n",  strerror(errno));
-			exit(1);
+	for (k=0; k<con_no; k++){
+		sock = socket(he->h_addrtype, (tcp)?SOCK_STREAM:SOCK_DGRAM, 0);
+		if (sock==-1){
+			fprintf(stderr, "ERROR: socket: %s\n", strerror(errno));
+			goto error;
 		}
-		if (usec){
-			t--;
-			if (t==0){
-				usleep(usec);
-				t=throttle;
+		if (tcp){
+			t=1;
+			if (setsockopt(sock, SOL_TCP , TCP_NODELAY, &t, sizeof(t))<0){
+				fprintf(stderr, "ERROR: could not disable Nagle: %s\n",
+								strerror(errno));
+			}
+			if (tcp_rst){
+				t_linger.l_onoff=1;
+				t_linger.l_linger=0;
+				if (setsockopt(sock, SOL_SOCKET, SO_LINGER, &t_linger,
+									sizeof(t_linger))<0){
+					fprintf(stderr, "ERROR: could not set SO_LINGER: %s\n",
+									strerror(errno));
+				}
 			}
 		}
-	}
-	printf("\n%d packets sent, %d bytes each => total %d bytes\n",
-			count, n, n*count);
 
-	close(sock);
+		if (connect(sock, (struct sockaddr*) &addr,
+					sizeof(struct sockaddr))!=0){
+			fprintf(stderr, "ERROR: connect: %s\n", strerror(errno));
+			goto error;
+		}
+		
+		
+		/* flood loop */
+		t=throttle;
+		for (r=0; r<count; r++){
+			if ((verbose>1)&&((r%1000)==999)){  putchar('.'); fflush(stdout); }
+			if (send(sock, buf, n, 0)==-1) {
+				fprintf(stderr, "Error: send: %s\n",  strerror(errno));
+				exit(1);
+			}
+			if (usec){
+				t--;
+				if (t==0){
+					usleep(random_sleep?
+								(unsigned long)((double)usec*rand()/RAND_MAX):usec);
+					t=throttle;
+				}
+			}
+		}
+		
+		close(sock);
+		if ((verbose) && (k%1000==999)) { putchar('#'); fflush(stdout); }
+	}
+	if (tcp){
+		printf("\n%d packets sent on %d tcp connections (%d on each of them),"
+				" %d bytes each => total %d bytes\n",
+				count*con_no, con_no, count, n, con_no*n*count);
+	}else{
+		printf("\n%d packets sent, %d bytes each => total %d bytes\n",
+				count, n, n*count);
+	}
 	exit(0);
 
 error:

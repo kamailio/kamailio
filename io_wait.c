@@ -334,9 +334,9 @@ static unsigned int get_sys_version(int* major, int* minor, int* minor2)
 char* check_poll_method(enum poll_types poll_method)
 {
 	char* ret;
-	ret=0;
 	unsigned int os_ver;
 
+	ret=0;
 	os_ver=get_sys_version(0,0,0);	
 	switch(poll_method){
 		case POLL_NONE:

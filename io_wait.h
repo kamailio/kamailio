@@ -297,7 +297,7 @@ inline static int io_watch_add(	io_wait_h* h,
 	int check_io;
 	struct pollfd pf;
 	
-	check_io=0; /* set to 1 if we need to check for pre-existiing queued
+	check_io=0; /* set to 1 if we need to check for pre-existing queued
 				   io/data on the fd */
 	idx=-1;
 #endif
