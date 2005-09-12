@@ -43,6 +43,7 @@
 #  2005-07-04  HAVE_DEVPOLL added to solaris (andrei)
 #  2005-07-06  gcc 4.0 optimizations support (andrei)
 #  2005-07-25  better solaris arch detection (andrei)
+#  2005-09-12  -mallign-double removed (too many problems) (andrei)
 
 
 # check if already included/exported
@@ -59,7 +60,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 10
 SUBLEVEL =   99
-EXTRAVERSION = -dev17-tcp
+EXTRAVERSION = -dev18-tcp
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -489,7 +490,7 @@ ifeq		($(CC_NAME), gcc)
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= athlon64
-					CFLAGS+=-minline-all-stringops -malign-double \
+					CFLAGS+=-minline-all-stringops \
 							-falign-loops \
 							-ftree-vectorize \
 							-mtune=$(CPU) 
@@ -497,14 +498,14 @@ else
 			#if gcc 3.4+
 ifeq			($(CC_SHORTVER), 3.4)
 					CPU ?= athlon
-					CFLAGS+=-minline-all-stringops -malign-double \
+					CFLAGS+=-minline-all-stringops \
 							-falign-loops \
 							-mtune=$(CPU) 
 else
 			#if gcc 3.0+
 ifeq			($(CC_SHORTVER), 3.0)
 					CPU ?= athlon
-					CFLAGS+=-minline-all-stringops -malign-double \
+					CFLAGS+=-minline-all-stringops \
 							-falign-loops \
 							-mcpu=$(CPU) 
 else
@@ -1005,6 +1006,8 @@ ifeq ($(OS), linux)
 	ifeq ($(shell [ $(OSREL_N) -ge 2005044 ] && echo has_epoll), has_epoll)
 		ifeq ($(NO_EPOLL),)
 			DEFS+=-DHAVE_EPOLL
+			# linux + gcc >= 3.0 + -malign-double + epoll => problems
+			CFLAGS:=$(filter-out -malign-double, $(CFLAGS))
 		endif
 	endif
 	# check for >= 2.2.0

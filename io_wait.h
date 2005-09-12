@@ -538,7 +538,7 @@ inline static int io_watch_del(io_wait_h* h, int fd, int idx, int flags)
 			/* the O_ASYNC flag must be reset all the time, the fd
 			 *  can be changed only if  O_ASYNC is reset (if not and
 			 *  the fd is a duplicate, you will get signals from the dup. fd
-			 *  and not from the original, even if the dup. fd wa closed
+			 *  and not from the original, even if the dup. fd was closed
 			 *  and the signals re-set on the original) -- andrei
 			 */
 			/*if (!(flags & IO_FD_CLOSING)){*/
@@ -868,7 +868,8 @@ again:
 					handle_io(fm, -1);
 				else
 					LOG(L_ERR, "WARNING: io_wait_loop_sigio_rt: ignoring event"
-							"%x on fd %d\n", sigio_band, sigio_fd);
+							" %x on fd %d (fm->fd=%d, fm->data=%p)\n",
+							sigio_band, sigio_fd, fm->fd, fm->data);
 			}else{
 				LOG(L_ERR, "ERROR: io_wait_loop_sigio_rt: unexpected event"
 							" on fd %d: %x\n", sigio_fd, sigio_band);
