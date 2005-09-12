@@ -729,7 +729,7 @@ static int fixup_check_avp(void** param, int param_no)
 			pkg_free(ap->val.s);
 			ap->val.s = (str*)re;
 		} else if (ap->ops&AVPOPS_OP_FM) {
-			if ( !( ap->ops&AVPOPS_VAL_AVP ||
+			if ( !( ap->opd&AVPOPS_VAL_AVP ||
 			(!(ap->opd&AVPOPS_VAL_AVP) && ap->opd&AVPOPS_VAL_STR) ) )
 			{
 				LOG(L_ERR,"ERROR:avpops:fixup_check_avp: fast_match operation "
