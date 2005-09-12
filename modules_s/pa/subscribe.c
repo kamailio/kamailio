@@ -33,6 +33,7 @@
  */
 
 #include <string.h>
+#include <limits.h>
 #include "../../str.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
@@ -111,7 +112,8 @@ void callback(str* _user, str *_contact, int state, void* data)
 			}
 			else {
 				tuple->state = PS_ONLINE;
-				tuple->expires = act_time + default_expires;
+				tuple->expires = INT_MAX; /* act_time + default_expires; */
+				/* hack - re-registrations don't call the callback */
 			}
 
 			db_update_presentity(presentity);
