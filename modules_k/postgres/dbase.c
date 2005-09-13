@@ -52,7 +52,7 @@ static int connect_db(db_con_t* _h);
 static int disconnect_db(db_con_t* _h);
 static int free_query(db_con_t* _h);
 
-/*
+/*
 ** connect_db	Connect to a database
 **
 **	Arguments :
@@ -154,7 +154,7 @@ static int connect_db(db_con_t* _h)
 }
 
 
-/*
+/*
 ** disconnect_db	Disconnect a database
 **
 **	Arguments :
@@ -205,7 +205,7 @@ static int disconnect_db(db_con_t* _h)
 	return 0;
 }
 
-/*
+/*
 ** db_init	initialize database for future queries
 **
 **	Arguments :
@@ -252,7 +252,7 @@ db_con_t *db_init(const char* _sqlurl)
 }
 
 
-/*
+/*
 ** db_close	last function to call when db is no longer needed
 **
 **	Arguments :
@@ -288,7 +288,7 @@ void db_close(db_con_t* _h)
 
 }
 
-/*
+/*
 ** submit_query	run a query
 **
 **	Arguments :
@@ -370,7 +370,7 @@ static int submit_query(db_con_t* _h, const char* _s)
 	return(rv);
 }
 
-/*
+/*
 ** free_query	clear the db channel and clear any old query result status
 **
 **	Arguments :
@@ -392,7 +392,7 @@ static int free_query(db_con_t* _h)
 	return 0;
 }
 
-/*
+/*
 ** db_free_query	free the query and free the result memory
 **
 **	Arguments :
@@ -412,7 +412,7 @@ int db_free_query(db_con_t* _h, db_res_t* _r)
 	return 0;
 }
 
-/*
+/*
 ** begin_transaction	begin transaction
 **
 **	Arguments :
@@ -524,7 +524,7 @@ static int begin_transaction(db_con_t * _h, char *_s)
 	return(0);
 }
 
-/*
+/*
 ** commit_transaction	any begin_transaction must be terminated with this
 **
 **	Arguments :
@@ -543,6 +543,31 @@ static int commit_transaction(db_con_t * _h)
 	if(!mr || PQresultStatus(mr) != PGRES_COMMAND_OK)
 	{
 		PLOG("commit_transaction", "error");
+		return -1;
+	}
+	PQclear(mr);
+	return(0);
+}
+
+/*
+** rollback_transaction:	any failed begin_transaction must be terminated with this
+**
+**	Arguments :
+**		db_con_t *	as previously supplied by db_init()
+**
+**	Returns :
+**		0 upon success
+**		negative number upon failure
+*/
+
+static int rollback_transaction(db_con_t * _h)
+{
+	PGresult *mr;
+
+	mr = PQexec(CON_CONNECTION(_h), "ROLLBACK");
+	if(!mr || PQresultStatus(mr) != PGRES_COMMAND_OK)
+	{
+		PLOG("rollback_transaction", "error");
 		return -1;
 	}
 	PQclear(mr);
@@ -681,7 +706,8 @@ int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 
 	if(begin_transaction(_h, sql_buf)) return(-1);
 	if (submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "db_query(): Error while submitting query\n");
+		LOG(L_ERR, "db_query(): Error while submitting query, executing ROLLBACK\n");
+		rollback_transaction(_h);
 		return -2;
 	}
 	rv = get_result(_h, _r);
@@ -700,7 +726,8 @@ int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
 
 	if(begin_transaction(_h, sql_buf)) return(-1);
 	if (submit_query(_h, _s) < 0) {
-		LOG(L_ERR, "db_raw_query(): Error while submitting query\n");
+		LOG(L_ERR, "db_raw_query(): Error while submitting query, executing ROLLBACK\n");
+		rollback_transaction(_h);
 		return -2;
 	}
 	rv = get_result(_h, _r);
@@ -753,7 +780,8 @@ int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 
 	if(begin_transaction(_h, sql_buf)) return(-1);
 	if (submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "db_insert(): Error while inserting\n");
+		LOG(L_ERR, "db_insert(): Error while inserting, executing ROLLBACK\n");
+		rollback_transaction(_h);
 		return -2;
 	}
 	free_query(_h);
@@ -781,7 +809,8 @@ int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 	}
 	if(begin_transaction(_h, sql_buf)) return(-1);
 	if (submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "db_delete(): Error while deleting\n");
+		LOG(L_ERR, "db_delete(): Error while deleting, executing ROLLBACK\n");
+		rollback_transaction(_h);
 		return -2;
 	}
 	free_query(_h);
@@ -816,7 +845,8 @@ int db_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 
 	if(begin_transaction(_h, sql_buf)) return(-1);
 	if (submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "db_update(): Error while updating\n");
+		LOG(L_ERR, "db_update(): Error while updating, executing ROLLBACK\n");
+		rollback_transaction(_h);
 		return -2;
 	}
 	free_query(_h);
