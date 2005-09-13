@@ -428,7 +428,7 @@ again:
 			DBG("read= %d bytes, parsed=%d, state=%d, error=%d\n",
 					bytes, (int)(req->parsed-req->start), req->state,
 					req->error );
-			DBG("tcp_read_req: last char=%X, parsed msg=\n%.*s\n",
+			DBG("tcp_read_req: last char=0x%02X, parsed msg=\n%.*s\n",
 					*(req->parsed-1), (int)(req->parsed-req->start),
 					req->start);
 #endif
