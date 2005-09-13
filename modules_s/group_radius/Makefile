@@ -10,6 +10,5 @@ include ../../Makefile.radius
 
 auto_gen=
 NAME=group_radius.so
-LIBS=-l$(RADIUSCLIENT_LIB)
 
 include ../../Makefile.modules
