@@ -31,50 +31,121 @@ TOC
 
 
 
-+--------------------------------------------------------+
-| CAUTION: the 0.8.11 release include changes which      |
-| are incompatible with scripts and databases used       |
-| in previous versions. Care is advised when upgrading   |
-| from previous releases to 0.8.11.                      |
-+--------------------------------------------------------+
-
-
-
 1. Supported Architectures and Requirements
 -------------------------------------------
 
-Supported architectures: Linux/i386, Linux/armv4l, FreeBSD/i386, OpenBSD/i386
-Solaris/sparc64, NetBSD/sparc64
+Supported operating systems: Linux, FreeBSD, NetBSD, OpenBSD, Solaris, Darwin
+Supported architectures: i386, x86_64 (amd64), armv4l, sparc64, powerpc,
+ powerpc64
+Experimental architectures: mips1, mips2, sparc32, alpha
+
 (for other architectures the Makefiles might need to be edited)
 
 There are various configuration options defined in the Makefile.
 
-Requirements:
 
+Requirements:
 
 - gcc or icc : gcc >= 2.9x; 3.[12] recommended (it will work with older version
   but it might require some options tweaking for best performance)
 - bison or yacc (Berkley yacc)
 - flex
-- GNU make (on Linux this is the standard "make", on FreeBSD and Solaris is
+- GNU make (on Linux this is the standard "make", on *BSD and Solaris is
  called "gmake") version >= 3.79.
 - sed and tr (used in the makefiles)
 - GNU tar ("gtar" on Solaris) and gzip if you want "make tar" to work
-- GNU install or BSD install (on Solaris "ginstall") if you want "make
+- GNU install, BSD install or Solaris install if you want "make
   install", "make bin", "make sunpkg" to work
 - libmysqlclient & libz (zlib) if you want mysql support (the mysql module)
 - libexpat if you want the jabber gateway support (the jabber module)
+- libxml2 if you want to compile the cpl-c (CPL support) or pa (presence) 
+modules
+- libradiusclient-ng (> 5.0) if you need radius support (the auth_radius,
+group_radius, uri_radius and avp_radius modules)
+- libpq if you need postgres support (the postgres module)
 
 
 OS Notes:
 
-- FreeBSD/OpenBSD/NetBSD: make sure gmake, bison or yacc & flex are installed
-- Solaris: as above; you can use Solaris's yacc instead of bison. You might
-  need also gtar and ginstall.
-    
+ FreeBSD/OpenBSD/NetBSD: make sure gmake, bison or yacc & flex are installed.
+  
+  FreeBSD 5.4:
+  
+  If you want to compile all the modules, you will need the following packages:
+  - mysql-client-* (any version, install one of the mysql*-client ports) for
+  libmysqlclient
+  - postgresql-libpqxx-2.4.2_1 (/usr/ports/databases/postgresql-libpqxx) for
+  libpq
+  - expat-1.95.8 (/usr/ports/textproc/expat2) for libexpat
+  - libxml2-2.6.18 (/usr/ports/textproc/libxml2) for libxml2
+  - radiusclient-0.4.7 (/usr/ports/net/radiusclient) for libradiusclient-ng 
+  NOTE: you'll need to add radiusclient_ng=4 to the gmake command line if you
+  use the 0.4.* version.
+  
+  Compile example (all the modules and ser in a tar.gz):
+     gmake bin radiusclient_ng=4 include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius postgres pa"
+
+  OpenBSD 3.7
+  - mysql-client-4.0.23 (/usr/ports/databases/mysql) for libmysqlclient
+  - expat-1.95.6 (/usr/ports/textproc/expat) for libexpat
+  - libxml-2.6.16p0 (/usr/ports/textproc/libxml) for libxml2
+  - radiusclient-ng-0.5.1 from 
+   http://download.berlios.de/radiusclient-ng/radiusclient-ng-0.5.1.tar.gz
+   (you need to download and install it, since there is no "official" 
+   openbsd port for it) for libradiusclient-ng 
+  Compile example (all the modules and ser in a tar.gz):
+     gmake bin include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius pa"
+
+  NetBSD 2.0
+  - mysql-client-4.1.12 (/usr/pkgsrc/databases/mysql4-client) for libmysqlclient
+  - expat-1.95.8nb2 (/usr/pkgsrc/textproc/expat) for libexpat
+  - libxml2-2.6.19 (/usr/pkgsrc/textproc/libxml2) for libxml2
+  - radiusclient-ng-0.5.1 (see OpenBSD)
+  
+  Compile example (all the modules and ser in a tar.gz):
+     gmake bin include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius pa"
+
+ Solaris 10
+ 
+  As above; you can use Solaris's yacc instead of bison. You might
+  need also gtar and ginstall. If you don't have ginstall you can use Solaris
+  install, just make sure it's in the PATH (it's usually in /usr/sbin) and
+  add INSTALL=install either to the environment or to the make command line
+  (e.g.: gmake INSTALL=install all).
+  
+  Needed packages:
+  [TODO]
+  
+  Compile example (all the modules and ser in a tar.gz):
+     gmake bin INSTALL=install include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius postgres pa"
+
+ Linux
+
+ Needed packages for compiling all the modules:
+  Debian:
+      - libmysqlclient-dev for libmysqlclient
+      - libpq-dev for libpq
+      - libexpat1-dev for libexpat
+      - libxml2-dev for libxml2
+      - libradiusclient-ng-dev for libradiusclient (you can download the 
+      package from http://apt.sip-router.org/debian/dists/unstable/main/binary-i386/libradiusclient-ng-dev_0.5.1-0.5_i386.deb ).
+      NOTE: you can get up-to-date ser packages or libradiusclient packages
+      from http://apt.sip-router.org: add to your /etc/apt/sources.list the
+      following lines:
+         deb http://apt.sip-router.org/debian testing main contrib non-free
+         deb http://apt.sip-router.org/debian unstable main contrib non-free
+      and then: apt-get update; apt-get install libradiusclient-ng-dev
+      (or, if you want to use the pre-built modules:
+       apt-get install ser ser-cpl-module ser-jabber-module ser-mysq-module ser-pa-module ser-postgres-module ser-radius-modules )
+
+
+  Compile example (all the modules and ser in a tar.gz):
+     make bin include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius postgres pa"
+
 
 2. Howto Build ser From Source Distribution
 -------------------------------------------
+
 
 (NOTE: if make doesn't work try gmake  instead)
 
@@ -84,6 +155,19 @@ make   #builds only ser core, equivalent to make ser
 make modules
 
 or make all #builds everything
+
+By default make all will not build modules that require external libraries or
+that are considered to be "experimental". The modules that have external
+dependecies are: mysql, jabber, cpl-c, auth_radius, group_radius, uri_radius,
+avp_radius, postgres, pa.
+To build all of them (provided you have all the required libraries installed) 
+use:
+    make all include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius avp_radius postgres pa"
+If you want to install or to build a binary package (a tar.gz with ser and
+ the modules), substitute "all" in the above command with "install" or "bin".
+
+
+More compile examples:
 
 - compile with profiling
 
