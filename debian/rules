@@ -12,6 +12,11 @@
 #              & small fixes (andrei)
 #  2003-08-29  replaced modules-install with modules-install-all, to 
 #               install also the modules doc (andrei)
+#  2004-07-23  added ext and commented out the radius modules
+#              (the current radius modules depend on radiusclient-ng which
+#               is not yet part of debian)  (andrei)
+#  2005-06-23  added cpl-c, pa & re-enabled radius (with libradiusclient-ng)
+#                (andrei)
 
 
 # Uncomment this to turn on verbose mode.
@@ -25,20 +30,31 @@ export DEB_BUILD_OPTIONS:="$(DEB_BUILD_OPTIONS) nostrip"
 
 # modules not in the "main" package or unstable 
 EXCLUDED_MODULES=	mysql jabber auth_radius group_radius uri_radius \
-					postgress snmp cpl cpl-c ext extcmd 
+					avp_radius pa postgres snmp cpl cpl-c ext extcmd 
 
 # modules depending on mysql
 MYSQL_MODULES=mysql
 #jabber related modules
 JABBER_MODULES=jabber
 #module depending on radiusclient
-RADIUS_MODULES=auth_radius group_radius uri_radius
+RADIUS_MODULES=auth_radius group_radius uri_radius avp_radius
+#cpl related modules
+CPL_MODULES=cpl-c
+# pa related modules
+PA_MODULES=pa
+# postgres modules
+POSTGRES_MODULES=postgres
+# acc module
+ACC_MODULE=acc
 
 # the same but with path prepended (needed for modules="...")
 MYSQL_MOD_PATH=$(addprefix modules/, $(MYSQL_MODULES))
 JABBER_MOD_PATH=$(addprefix modules/, $(JABBER_MODULES))
 RADIUS_MOD_PATH=$(addprefix modules/, $(RADIUS_MODULES))
-
+CPL_MOD_PATH=$(addprefix modules/, $(CPL_MODULES))
+PA_MOD_PATH=$(addprefix modules/, $(PA_MODULES))
+POSTGRES_MOD_PATH=$(addprefix modules/, $(POSTGRES_MODULES))
+ACC_MOD_PATH=$(addprefix modules/, $(ACC_MODULE))
 
 
 
@@ -68,6 +84,12 @@ build-stamp: configure-stamp
 	$(MAKE) modules modules="$(MYSQL_MOD_PATH)" cfg-target=/etc/ser/
 	$(MAKE) modules modules="$(JABBER_MOD_PATH)" cfg-target=/etc/ser/
 	$(MAKE) modules modules="$(RADIUS_MOD_PATH)" cfg-target=/etc/ser/
+	$(MAKE) modules modules="$(CPL_MOD_PATH)" cfg-target=/etc/ser/
+	$(MAKE) modules modules="$(PA_MOD_PATH)" cfg-target=/etc/ser/
+	# postgres will generate lots of warnings
+	$(MAKE) modules modules="$(POSTGRES_MOD_PATH)" cfg-target=/etc/ser/
+	# acc-db & acc-radius are compiled on install, because they share
+	#  the same source tree with acc
 	#/usr/bin/docbook-to-man debian/ser.sgml > ser.1
 
 	touch build-stamp
@@ -79,8 +101,8 @@ clean:
 
 	# Add here commands to clean up after the build process.
 	-$(MAKE) \
-		include_modules="$(MYSQL_MODULES) $(JABBER_MODULES) $(RADIUS_MODULES)"\
-		 clean
+		include_modules="$(MYSQL_MODULES) $(JABBER_MODULES) $(RADIUS_MODULES)\
+							$(CPL_MODULES) $(PA_MODULES) " clean
 
 	dh_clean
 
@@ -117,6 +139,48 @@ install: build
 		cfg-prefix=$(CURDIR)/debian/ser-radius-modules \
 		cfg-target=/etc/ser/ \
 		doc-dir=share/doc/ser-radius-modules
+	#install only the cpl module
+	$(MAKE) install-modules-all modules="$(CPL_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/ser-cpl-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser-cpl-module \
+		cfg-target=/etc/ser/ \
+		doc-dir=share/doc/ser-cpl-module
+	#install only the pa module
+	$(MAKE) install-modules-all modules="$(PA_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/ser-pa-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser-pa-module \
+		cfg-target=/etc/ser/ \
+		doc-dir=share/doc/ser-pa-module
+	#install only the postgres module
+	$(MAKE) install-modules-all modules="$(POSTGRES_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/ser-postgres-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser-postgres-module \
+		cfg-target=/etc/ser/ \
+		doc-dir=share/doc/ser-postgres-module
+	# Ugly hacks to make 2 new versions from acc: ac_db & acc_radius
+	#install only the acc db version module
+	cd $(ACC_MOD_PATH); $(MAKE) proper; cd ../..; \
+	$(MAKE) install-modules-all modules="$(ACC_MOD_PATH)" \
+		basedir=$(CURDIR)/debian/ser-acc-db-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser-acc-db-module \
+		cfg-target=/etc/ser/ \
+		doc-dir=share/doc/ser-acc-db-module \
+		NAME=acc_db.so modules_names=acc_db.so EXTRA_DEFS=-DSQL_ACC ;\
+	cd $(ACC_MOD_PATH); $(MAKE) proper NAME=acc_db.so; cd ../..
+	#install only the acc radius version module
+	$(MAKE) install-modules-all modules="$(ACC_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/ser-acc-radius-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser-acc-radius-module \
+		cfg-target=/etc/ser/ \
+		doc-dir=share/doc/ser-acc-radius-module \
+		NAME=acc_radius.so modules_names=acc_radius.so EXTRA_DEFS=-DRAD_ACC \
+		LIBS=-lradiusclient-ng ; \
+	cd $(ACC_MOD_PATH); $(MAKE) proper NAME=acc_radius.so; cd ../..
 	#dh_movefiles
 
 

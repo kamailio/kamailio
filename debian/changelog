@@ -1,3 +1,31 @@
+ser (0.9.4-0.1) unstable; urgency=low
+
+  * new upstream minor release 
+
+ -- Andrei Pelinescu-Onciul <andrei@iptel.org>  Fri, 02 Sep 2005 14:49:37 +0200
+
+ser (0.9.3-0.2) unstable; urgency=low
+
+  * missing init.d/ser fixed 
+
+ -- Andrei Pelinescu-Onciul <andrei@iptel.org>  Tue, 28 Jun 2005 23:56:05 +0200
+
+ser (0.9.3-0.1) unstable; urgency=low
+
+  * new upstream release 
+  * added ser-cpl-module, ser-pa-module, ser-postgres-module,
+    ser-acc-db-module and ser-acc-radius-module
+  * ser-radius-modules depend now on libradiusclient-ng2 
+    (not in official Debian archives)
+
+ -- Andrei Pelinescu-Onciul <andrei@iptel.org>  Thu, 23 Jun 2005 16:43:35 +0200
+
+ser (0.8.14) unstable; urgency=low
+
+  * new upstream release 
+
+ -- Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.fraunhofer.de>  Fri, 23 Jul 2004 16:00:04 +0200
+
 ser (0.8.12) unstable; urgency=low
 
   * new upstream release (improved tcp support, set_advertised_address a.s.o)

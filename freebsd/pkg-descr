@@ -6,7 +6,7 @@ architecture allows only required functionality to be loaded.
 Currently the following modules are available: Digest Authentication,
 CPL scripts, Instant Messaging, MySQL support, Presence Agent, Radius
 Authentication, Record Routing, SMS Gateway, Jabber Gateway, Transaction
-Module, Registrar and User Location.
+Module, Registrar, User Location, NAT Traversal, a.s.o.
 
 
 WWW: http://www.iptel.org/ser/
