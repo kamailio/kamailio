@@ -274,6 +274,7 @@ static int query_db(str* prefix, str* uuid, str* username, str* domain)
 			LOG(L_ERR, "query_db: add_avp failed\n");
 			pkg_free(name_str.s);
 			dbf.free_result(db_handle, res);
+			return -1;
 		}
 	
 		DBG("query_db: AVP '%.*s'='%.*s' has been added\n", name_str.len, 
