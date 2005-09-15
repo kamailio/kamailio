@@ -75,17 +75,9 @@ int is_maxfwd_present( struct sip_msg* msg , str *foo)
 
 
 
-
 int decrement_maxfwd( struct sip_msg* msg , int x, str *s)
 {
 	int i;
-
-	/* double check */
-	if ( !msg->maxforwards ) {
-		LOG( L_ERR , "ERROR: decrement_maxfwd :"
-			" MAX_FORWARDS header not found !\n");
-		goto error;
-	}
 
 	/*rewriting the max-fwd value in the message (buf and orig)*/
 	x--;
@@ -100,10 +92,7 @@ int decrement_maxfwd( struct sip_msg* msg , int x, str *s)
 	while(i >= 0) s->s[i--] = ' ';
 
 	return 1;
-error:
-	return -1;
 }
-
 
 
 
@@ -113,20 +102,13 @@ int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
 	char          *buf;
 	struct lump*  anchor;
 
-	/* double check just to be sure */
-	if ( msg->maxforwards ) {
-		LOG( L_ERR , "ERROR: add_maxfwd_header :"
-			" MAX_FORWARDS header already exists (%p) !\n",msg->maxforwards);
-		goto error;
-	}
-
 	/* constructing the header */
 	len = MF_HDR_LEN /*"MAX-FORWARDS: "*/+ CRLF_LEN + 3/*val max on 3 digits*/;
 
 	buf = (char*)pkg_malloc( len );
 	if (!buf) {
-		LOG(L_ERR, "ERROR : add_maxfwd_header : No memory left\n");
-		return -1;
+		LOG(L_ERR, "ERROR:maxfwd:add_maxfwd_header: no more pkg memory\n");
+		goto error;
 	}
 	memcpy( buf , MF_HDR, MF_HDR_LEN );
 	len = MF_HDR_LEN ;
@@ -137,14 +119,13 @@ int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
 	/*inserts the header at the beginning of the message*/
 	anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0 , 0);
 	if (anchor == 0) {
-		LOG(L_ERR, "ERROR: add_maxfwd_header :"
-		   " Error, can't get anchor\n");
+		LOG(L_ERR, "ERROR:maxfwd:add_maxfwd_header: failed to get anchor\n");
 		goto error1;
 	}
 
 	if (insert_new_lump_before(anchor, buf, len, 0) == 0) {
-		LOG(L_ERR, "ERROR: add_maxfwd_header : "
-		    "Error, can't insert MAX-FORWARDS\n");
+		LOG(L_ERR, "ERROR:maxfwd:add_maxfwd_header: failed to insert "
+			"MAX-FORWARDS lump\n");
 		goto error1;
 	}
 

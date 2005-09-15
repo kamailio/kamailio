@@ -56,25 +56,24 @@
 		<title><varname>max_limit</varname> (integer)</title>
 		<para>
 		Set an upper limit for the max-forward value in the outgoing requests.
-		This is the default value if the header is not present in the incoming
-		request. If the header is present, the decremented value is not 
-		allowed to exceed this max_limits - if it does, the header value will
-		by decreased to <quote>max_limit</quote>.
+		If the header is present, the decremented value is not allowed to 
+		exceed this max_limits - if it does, the header value will by 
+		decreased to <quote>max_limit</quote>.
 		</para>
 		<para>
-		It's a good way to deal with clients which set max-forward value to 
-		a quite high values (like 80).
+		The range of values stretches from 1 to 256, which is the maximum 
+		MAX-FORWARDS value allowed by RFC 3261.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>16</quote>.
+			Default value is <quote>256</quote>.
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>max_limit</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("maxfwd", "max_limit", 8)
+modparam("maxfwd", "max_limit", 32)
 ...
 </programlisting>
 		</example>
@@ -94,17 +93,19 @@ modparam("maxfwd", "max_limit", 8)
 		<quote>max_value</quote>. An OK code is returned by the function.
 		</para>
 		<para>
-		If a Max-Forward header is already present, its value will be decremented. If after
-		this operation its value will be positive non-zero, an OK code will be
-		returned. Otherwise (for a zero value) an error code will be returned.  Note that an
-		error code will be also returned if the &sip; message couldn't be parsed or if the
-		Max-Forward header's body invalid (non numerical string or negative numerical value).
+		If a Max-Forward header is already present, its value will be 
+		decremented. If after this operation its value will be positive 
+		non-zero, an OK code will be returned. Otherwise (for a zero value) 
+		an error code will be returned.  Note that an error code will be also 
+		returned if the &sip; message couldn't be parsed or if the
+		Max-Forward header's body invalid (non numerical string or negative 
+		numerical value).
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>max_value</emphasis> - Value to be added if there is no
-			Max-Forwards header field in the message.
+			<para><emphasis>max_value</emphasis> - Value to be added if there 
+			is no Max-Forwards header field in the message.
 			</para>
 		</listitem>
 		</itemizedlist>

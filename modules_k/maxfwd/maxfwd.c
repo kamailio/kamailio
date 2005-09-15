@@ -28,6 +28,8 @@
  *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
  *  2004-08-15  max value of max-fwd header is configurable via max_limit
  *              module param (bogdan)
+ *  2005-09-15  max_limit param cannot be disabled anymore (according to RFC)
+ *              (bogdan)
  */
 
 
@@ -44,7 +46,9 @@
 
 MODULE_VERSION
 
-static int max_limit = 16;
+#define MAXFWD_UPPER_LIMIT 256
+
+static int max_limit = MAXFWD_UPPER_LIMIT;
 
 static int fixup_maxfwd_header(void** param, int param_no);
 static int w_process_maxfwd_header(struct sip_msg* msg,char* str,char* str2);
@@ -83,9 +87,9 @@ struct module_exports exports= {
 static int mod_init(void)
 {
 	LOG(L_NOTICE, "Maxfwd module- initializing\n");
-	if ( max_limit>255 ) {
-		LOG(L_ERR,"ERROR:maxfwd:init: max limit (%d) to high (<255)\n",
-			max_limit);
+	if ( max_limit<1 || max_limit>MAXFWD_UPPER_LIMIT ) {
+		LOG(L_ERR,"ERROR:maxfwd:init: invalid max limit (%d) [1,%d]\n",
+			max_limit,MAXFWD_UPPER_LIMIT);
 		return -1;
 	}
 	return 0;
@@ -101,12 +105,13 @@ static int fixup_maxfwd_header(void** param, int param_no)
 	if (param_no==1){
 		code=str2s(*param, strlen(*param), &err);
 		if (err==0){
-			if (code>255){
+			if (code<1 || code>MAXFWD_UPPER_LIMIT){
 				LOG(L_ERR, "ERROR:maxfwd:fixup_maxfwd_header: "
-					"number to big <%ld> (max=255)\n",code);
+					"invalid MAXFWD number <%ld> [1,%d\\n",
+					code,MAXFWD_UPPER_LIMIT);
 				return E_UNSPEC;
 			}
-			if ( max_limit && code>max_limit) {
+			if (code>max_limit) {
 				LOG(L_ERR, "ERROR:maxfwd:fixup_maxfwd_header: "
 					"default value <%ld> bigger than max limit(%d)\n",
 					code, max_limit);
@@ -126,7 +131,6 @@ static int fixup_maxfwd_header(void** param, int param_no)
 
 
 
-
 static int w_process_maxfwd_header(struct sip_msg* msg, char* str1,char* str2)
 {
 	int val;
@@ -142,7 +146,7 @@ static int w_process_maxfwd_header(struct sip_msg* msg, char* str1,char* str2)
 		case 0:
 			return -1;
 		default:
-			if (max_limit && val>max_limit){
+			if (val>max_limit){
 				DBG("DBG:maxfwd:process_maxfwd_header: "
 					"value %d decreased to %d\n", val, max_limit);
 				val = max_limit+1;
