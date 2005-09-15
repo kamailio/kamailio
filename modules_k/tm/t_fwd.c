@@ -423,6 +423,8 @@ error:
 	return ret;
 }
 
+
+
 void e2e_cancel( struct sip_msg *cancel_msg, 
 	struct cell *t_cancel, struct cell *t_invite )
 {
@@ -488,6 +490,15 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 				lowest_error = -1; /* force sending 500 error */
 		}
 	}
+
+	/* do not attmpt to send reply for CANCEL if we already did it once;
+	 * to work arround the reace between receiveing reply and generating
+	 * local reply, we better check if we are in failure route (which means that
+	 * the reply to UAC is /to be/ sent) or if was actually sent out */
+	/* calling here t_relay from within failure route will lead to dead lock
+	 * on the transaction's reply lock -bogdan */
+	if (route_type==FAILURE_ROUTE || t_cancel->uas.status>=200)
+		return;
 
 	/* if error occurred, let it know upstream (final reply
 	   will also move the transaction on wait state
