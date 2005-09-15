@@ -203,7 +203,7 @@ void print_udomain(FILE* _f, udomain_t* _d)
 
 int preload_udomain(db_con_t* _c, udomain_t* _d)
 {
-	char b[256];
+	char b[MAX_URI_SIZE];
 	db_key_t columns[11];
 	db_res_t* res;
 	db_row_t* row;
@@ -232,7 +232,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 				UL_TABLE_VERSION);
 		return -1;
 	}
-	
+
 	columns[0] = user_col.s;
 	columns[1] = contact_col.s;
 	columns[2] = expires_col.s;
@@ -244,7 +244,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	columns[8] = received_col.s;
 	columns[9] = sock_col.s;
 	columns[10] = domain_col.s;
-	
+
 	memcpy(b, _d->name->s, _d->name->len);
 	b[_d->name->len] = '\0';
 
@@ -269,75 +269,97 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 
 	for(i = 0; i < RES_ROW_N(res); i++) {
 		row = RES_ROWS(res) + i;
-		
-		user.s      = (char*)VAL_STRING(ROW_VALUES(row));
-		if (user.s == 0) {
-			LOG(L_CRIT, "preload_udomain: ERROR: bad username "
-							"record in table %s\n", b);
+
+		user.s = (char*)VAL_STRING(ROW_VALUES(row));
+		if (VAL_NULL(ROW_VALUES(row)) || user.s==0 || user.s[0]==0) {
+			LOG(L_CRIT, "preload_udomain: ERROR: empty username "
+				"record in table %s\n", b);
 			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
 			continue;
-		} else {
-			user.len = strlen(user.s);
 		}
+		user.len = strlen(user.s);
 
 		contact.s = (char*)VAL_STRING(ROW_VALUES(row) + 1);
-		if (contact.s == 0) {
+		if (VAL_NULL(ROW_VALUES(row)+1) || contact.s==0 || contact.s[0]==0) {
 			LOG(L_CRIT, "preload_udomain: ERROR: bad contact "
-							"record in table %s\n", b);
-			LOG(L_CRIT, "preload_udomain: ERROR: for username %.*s\n",
-							user.len, user.s);
+				"record in table %s for user %.*s\n", b, user.len, user.s);
 			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
 			continue;
-		} else {
-			contact.len = strlen(contact.s);
 		}
-		expires     = VAL_TIME  (ROW_VALUES(row) + 2);
-		q           = double2q(VAL_DOUBLE(ROW_VALUES(row) + 3));
-		cseq        = VAL_INT   (ROW_VALUES(row) + 5);
-		callid.s    = (char*)VAL_STRING(ROW_VALUES(row) + 4);
-		if (callid.s == 0) {
-			LOG(L_CRIT, "preload_udomain: ERROR: bad callid record in"
-							" table %s\n", b);
-			LOG(L_CRIT, "preload_udomain: ERROR: for username %.*s,"
-							" contact %.*s\n",
-							user.len, user.s, contact.len, contact.s);
-			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
-			continue;
-		} else {
-			callid.len  = strlen(callid.s);
-		}
+		contact.len = strlen(contact.s);
 
+		if (VAL_NULL(ROW_VALUES(row)+2)) {
+			LOG(L_CRIT, "preload_udomain: ERROR: empty expire "
+				"record in table %s for user %.*s\n", b, user.len, user.s);
+			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
+			continue;
+		}
+		expires = VAL_TIME(ROW_VALUES(row) + 2);
+
+		if (VAL_NULL(ROW_VALUES(row)+3)) {
+			LOG(L_CRIT, "preload_udomain: ERROR: empty q "
+				"record in table %s for user %.*s\n", b, user.len, user.s);
+			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
+			continue;
+		}
+		q = double2q(VAL_DOUBLE(ROW_VALUES(row) + 3));
+
+		if (VAL_NULL(ROW_VALUES(row)+5)) {
+			LOG(L_CRIT, "preload_udomain: ERROR: empty cseq_nr "
+				"record in table %s for user %.*s\n", b, user.len, user.s);
+			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
+			continue;
+		}
+		cseq = VAL_INT(ROW_VALUES(row) + 5);
+
+		callid.s = (char*)VAL_STRING(ROW_VALUES(row) + 4);
+		if (VAL_NULL(ROW_VALUES(row)+4) || callid.s==0 || callid.s[0]==0) {
+			LOG(L_CRIT, "preload_udomain: ERROR: bad callid "
+				"record in table %s for user %.*s\n", b, user.len, user.s);
+			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
+			continue;
+		}
+		callid.len  = strlen(callid.s);
+
+		if (VAL_NULL(ROW_VALUES(row)+6)) {
+			LOG(L_CRIT, "preload_udomain: ERROR: empty flag "
+				"record in table %s for user %.*s\n", b, user.len, user.s);
+			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
+			continue;
+		}
 		flags  = VAL_BITMAP(ROW_VALUES(row) + 6);
 
 		ua.s  = (char*)VAL_STRING(ROW_VALUES(row) + 7);
-		if (ua.s) {
-			ua.len = strlen(ua.s);
-		} else {
+		if (VAL_NULL(ROW_VALUES(row)+7) || ua.s==0 || ua.s[0]==0) {
+			ua.s = 0;
 			ua.len = 0;
-		}
-
-		if (!VAL_NULL(ROW_VALUES(row) + 8)) {
-			received.s  = (char*)VAL_STRING(ROW_VALUES(row) + 8);
-			if (received.s) {
-				received.len = strlen(received.s);
-				rec = &received;
-			} else {
-				received.len = 0;
-				rec = 0;
-			}
 		} else {
-			rec = 0;
+			ua.len = strlen(ua.s);
 		}
 
-		if (!VAL_NULL(ROW_VALUES(row) + 9)) {
-			sock_str.s  = (char*)VAL_STRING(ROW_VALUES(row) + 9);
+		received.s  = (char*)VAL_STRING(ROW_VALUES(row) + 8);
+		if (VAL_NULL(ROW_VALUES(row)+8) || received.s==0 || received.s[0]==0) {
+			received.len = 0;
+			received.s = 0;
+			rec = 0;
+		} else {
+			received.len = strlen(received.s);
+			rec = &received;
+		}
+
+		sock_str.s  = (char*)VAL_STRING(ROW_VALUES(row) + 9);
+		if (VAL_NULL(ROW_VALUES(row)+9) || sock_str.s==0 || sock_str.s[0]==0){
+			sock = 0;
+		} else {
 			if ( (p=strchr(sock_str.s,'_'))!=0 && *(p+1)) {
 				sock_str.s = p+1;
 				sock_str.len = strlen(sock_str.s);
 				if (str2int( &sock_str, &port)!=0) {
-					LOG(L_ERR,"preload_udomain(): bad port <%.*s> in "
-						"socket\n",sock_str.len,sock_str.s);
-					port = SIP_PORT;
+					LOG(L_ERR,"preload_udomain(): bad socket port <%.*s> in "
+						"table %s for user %.*s\n", sock_str.len,sock_str.s,
+						b, user.len, user.s);
+					LOG(L_CRIT,"preload_udomain: ERROR: skipping...\n");
+					continue;
 				}
 				sock_str.s = (char*)VAL_STRING(ROW_VALUES(row) + 9);
 				sock_str.len = p - sock_str.s;
@@ -346,17 +368,27 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 				port = SIP_PORT;
 			}
 			sock = grep_sock_info( &sock_str, (unsigned short)port,
-					PROTO_NONE /*FIXME - correct proto?*/);
-		} else {
-			sock = 0;
+				PROTO_NONE /*FIXME - correct proto?*/);
 		}
 
-
 		if (use_domain) {
-			domain    = (char*)VAL_STRING(ROW_VALUES(row) + 10);
-			snprintf(b, 256, "%.*s@%s", user.len, ZSW(user.s), domain);
+			domain = (char*)VAL_STRING(ROW_VALUES(row) + 10);
+			if (VAL_NULL(ROW_VALUES(row)+10) || domain==0 || domain[0]==0) {
+				LOG(L_CRIT, "preload_udomain: ERROR: empty domain "
+					"record in table %s for user %.*s\n", b, user.len, user.s);
+				LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
+				continue;
+			}
+			/* user.s cannot be NULL - checked previosly */
+			user.len = snprintf(b, MAX_URI_SIZE, "%.*s@%s",
+				user.len, user.s, domain);
 			user.s = b;
-			user.len = strlen(b);
+			if (user.s[user.len]!=0) {
+				LOG(L_CRIT,"preload_udomain(): URI '%.*s@%s' longer than %d\n",
+					user.len, user.s, domain,MAX_URI_SIZE);
+				LOG(L_CRIT,"preload_udomain: ERROR: skipping...\n");
+				continue;
+			}
 		}
 
 		if (get_urecord(_d, &user, &r) > 0) {
@@ -367,19 +399,17 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 				return -2;
 			}
 		}
-		
-		if (mem_insert_ucontact(r, &contact, expires, q, &callid, cseq, flags, &c, &ua, rec, sock) < 0) {
+
+		if (mem_insert_ucontact(r, &contact, expires, q, &callid, cseq,
+		flags, &c, &ua, rec, sock) < 0) {
 			LOG(L_ERR, "preload_udomain(): Error while inserting contact\n");
 			ul_dbf.free_result(_c, res);
 			unlock_udomain(_d);
 			return -3;
 		}
 
-		     /* We have to do this, because insert_ucontact sets state to CS_NEW
-		      * and we have the contact in the database already
-			  * we also store zombies in database so we have to restore
-			  * the correct state
-		      */
+		/* We have to do this, because insert_ucontact sets state to CS_NEW
+		 * and we have the contact in the database already */
 		c->state = CS_SYNC;
 	}
 
@@ -387,6 +417,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	unlock_udomain(_d);
 	return 0;
 }
+
 
 
 /*
