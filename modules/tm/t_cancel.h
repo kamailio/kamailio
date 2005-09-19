@@ -58,9 +58,6 @@ int fifo_uac_cancel( FILE* stream, char *response_file );
 
 int unixsock_uac_cancel(str* msg);
 
-char *build_cancel(struct cell *Trans,unsigned int branch,
-	unsigned int *len );
-
 inline short static should_cancel_branch( struct cell *t, int b )
 {
 	int last_received;

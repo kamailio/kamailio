@@ -92,21 +92,6 @@ int send_pr_buffer(	struct retr_buf *rb, void *buf, int len
 	}
 }
 
-#ifdef _OBSOLETED
-void start_retr( struct retr_buf *rb )
-{
-	if (rb->dst.proto==PROTO_UDP) {
-		rb->retr_list=RT_T1_TO_1;
-		set_timer( &rb->retr_timer, RT_T1_TO_1 );
-	}
-	set_timer( &rb->fr_timer, FR_TIMER_LIST );
-}
-#endif
-
-
-
-
-
 void tm_shutdown()
 {
 

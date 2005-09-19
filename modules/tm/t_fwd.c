@@ -358,7 +358,7 @@ error:
 void e2e_cancel( struct sip_msg *cancel_msg, 
 	struct cell *t_cancel, struct cell *t_invite )
 {
-	branch_bm_t cancel_bm;
+	branch_bm_t cancel_bm, tmp_bm;
 	int i;
 	int lowest_error;
 	str backup_uri;
@@ -389,15 +389,30 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	cancel_msg->parsed_uri=backup_parsed_uri;
 
 	/* send them out */
-	for (i=0; i<t_cancel->nr_of_outgoings; i++) {
-		if (cancel_bm & (1<<i)) {
-			if (SEND_BUFFER( &t_cancel->uac[i].request)==-1) {
+	for (i = 0; i < t_cancel->nr_of_outgoings; i++) {
+		if (cancel_bm & (1 << i)) {
+			     /* Provisional reply received on this branch, send CANCEL */
+			     /* No need to stop timers as they have already been stopped by the reply */
+			if (SEND_BUFFER(&t_cancel->uac[i].request) == -1) {
 				LOG(L_ERR, "ERROR: e2e_cancel: send failed\n");
 			}
-			start_retr( &t_cancel->uac[i].request );
+			start_retr(&t_cancel->uac[i].request);
+		} else {
+			if (t_invite->uac[i].last_received < 100) {
+				     /* No provisional response received, stop
+				      * retransmission timers
+				      */
+				reset_timer(&t_invite->uac[i].request.retr_timer);
+				reset_timer(&t_invite->uac[i].request.fr_timer);
+
+				     /* Generate faked reply */
+				LOCK_REPLIES(t_invite);
+				if (relay_reply(t_invite, FAKED_REPLY, i, 487, &tmp_bm) == RPS_ERROR) {
+					lowest_error = -1;
+				}
+			}
 		}
 	}
-
 
 	/* if error occurred, let it know upstream (final reply
 	   will also move the transaction on wait state
@@ -418,32 +433,6 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 		DBG("DEBUG: e2e_cancel: e2e cancel -- no more pending branches\n");
 		t_reply( t_cancel, cancel_msg, 200, CANCEL_DONE );
 	}
-
-#ifdef LOCAL_487
-
-	/* local 487s have been deprecated -- it better handles
-	 * race conditions (UAS sending 200); hopefully there are
-	 * no longer UACs who go crazy waiting for the 487 whose
-	 * forwarding is being blocked by other unresponsive branch
-	 */
-
-	/* we could await downstream UAS's 487 replies; however,
-	   if some of the branches does not do that, we could wait
-	   long time and annoy upstream UAC which wants to see 
-	   a result of CANCEL quickly
-	*/
-	DBG("DEBUG: e2e_cancel: sending 487\n");
-	/* in case that something in the meantime has been sent upstream
-	   (like if FR hit at the same time), don't try to send */
-	if (t_invite->uas.status>=200) return;
-	/* there is still a race-condition -- the FR can hit now; that's
-	   not too bad -- we take care in t_reply's REPLY_LOCK; in
-	   the worst case, both this t_reply and other replier will
-	   try, and the later one will result in error message 
-	   "can't reply twice"
-	*/
-	t_reply(t_invite, t_invite->uas.request, 487, CANCELED );
-#endif
 }
 
 

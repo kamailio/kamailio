@@ -89,15 +89,6 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	str branch_str;
 	struct hostport hp;
 
-#ifdef _OBSO
-	if ( Trans->uac[branch].last_received<100)
-	{
-		DBG("DEBUG: build_local: no response ever received"
-			" : dropping local request! \n");
-		goto error;
-	}
-#endif
-
 	/* method, separators, version: "CANCEL sip:p2@iptel.org SIP/2.0" */
 	*len=SIP_VERSION_LEN + method_len + 2 /* spaces */ + CRLF_LEN;
 	*len+=Trans->uac[branch].uri.len;

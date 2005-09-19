@@ -97,42 +97,35 @@ void cancel_branch( struct cell *t, int branch )
 	}
 #	endif
 
-	if (t->uac[branch].last_received<100) {
+	if (t->uac[branch].last_received < 100) {
 		DBG("DEBUG: cancel_branch: no response ever received: "
 		    "giving up on cancel\n");
 		return;
 	}
-
-	cancel=build_cancel(t, branch, &len);
+	
+	cancel = build_local(t, branch, &len, CANCEL, CANCEL_LEN, &t->to);
 	if (!cancel) {
 		LOG(L_ERR, "ERROR: attempt to build a CANCEL failed\n");
 		return;
 	}
-	/* install cancel now */
-	crb->buffer=cancel;
-	crb->buffer_len=len;
-	crb->dst=irb->dst;
-	crb->branch=branch;
-	/* TO_REMOVE
-	crb->retr_timer.payload=crb->fr_timer.payload=crb;
-	*/
+
+	     /* install cancel now */
+	crb->buffer = cancel;
+	crb->buffer_len = len;
+	crb->dst = irb->dst;
+	crb->branch = branch;
+
 	/* label it as cancel so that FR timer can better now how to
 	   deal with it */
-	crb->activ_type=TYPE_LOCAL_CANCEL;
+	crb->activ_type = TYPE_LOCAL_CANCEL;
 
-    DBG("DEBUG: cancel_branch: sending cancel...\n");
+	DBG("DEBUG: cancel_branch: sending cancel...\n");
 	SEND_BUFFER( crb );
-
-    /*sets and starts the FINAL RESPONSE timer */
+	
+	     /*sets and starts the FINAL RESPONSE timer */
 	start_retr( crb );
 }
 
-char *build_cancel(struct cell *Trans,unsigned int branch,
-	unsigned int *len )
-{
-	return build_local( Trans, branch, len,
-		CANCEL, CANCEL_LEN, &Trans->to );
-}
 
 /* fifo command to cancel a pending call (Uli)
   Syntax:

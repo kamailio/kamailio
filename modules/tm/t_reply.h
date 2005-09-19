@@ -95,11 +95,6 @@ int t_retransmit_reply( /* struct sip_msg * */  );
  * returns 1 if everything was OK or -1 for error
  */
 
-#ifdef _OBSO
-int t_reply_light( struct cell *trans, char* buf, unsigned int len,
-		   unsigned int code, char * text,
-		   char *to_tag, unsigned int to_tag_len);
-#endif
 
 int t_reply_with_body( struct cell *trans, unsigned int code, 
 		       char * text, char * body, char * new_header, char * to_tag );
@@ -149,4 +144,3 @@ int fifo_t_reply( FILE *stream, char *response_file );
 int unixsock_t_reply(str* msg);
 
 #endif
-

@@ -177,10 +177,6 @@ int get_ip_and_port_from_uri( str* uri , unsigned int *param_ip,
 
 void put_on_wait(  struct cell  *Trans  );
 
-#ifdef _OBSOLETED
-void start_retr( struct retr_buf *rb );
-#endif
-
 void cleanup_localcancel_timers( struct cell *t );
 
 int t_relay_to( struct sip_msg  *p_msg ,

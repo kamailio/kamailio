@@ -382,19 +382,6 @@ void insert_into_hash_table_unsafe( struct cell * p_cell, unsigned int _hash )
 }
 
 
-
-#ifdef _OBSOLETED
-void insert_into_hash_table( struct cell * p_cell)
-{
-	LOCK_HASH(p_cell->hash_index);
-	insert_into_hash_table_unsafe(  p_cell );
-	UNLOCK_HASH(p_cell->hash_index);
-}
-#endif
-
-
-
-
 /*  Un-link a  cell from hash_table, but the cell itself is not released */
 void remove_from_hash_table_unsafe( struct cell * p_cell)
 {
