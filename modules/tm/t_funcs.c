@@ -243,7 +243,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	}
 
 	/* if replication flag is set, mark the transaction as local
-	   so that replies will not be relaied */
+	   so that replies will not be relayed */
 	t=get_t();
 	if (replicate) t->flags|=T_IS_LOCAL_FLAG;
 

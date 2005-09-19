@@ -384,7 +384,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	   on current transactions status */
 	/* t_update_timers_after_sending_reply( rb ); */
 	update_reply_stats( code );
-	trans->relaied_reply_branch=-2;
+	trans->relayed_reply_branch=-2;
 	tm_stats->replied_localy++;
 	if (lock) UNLOCK_REPLIES( trans );
 	
@@ -943,7 +943,7 @@ void set_final_timer( /* struct s_table *h_table, */ struct cell *t )
 			return;
 		}
 		/* local UAS retransmits too */
-		if (t->relaied_reply_branch==-2 && t->uas.status>=200) {
+		if (t->relayed_reply_branch==-2 && t->uas.status>=200) {
 			/* we retransmit 200/INVs regardless of transport --
 			   even if TCP used, UDP could be used upstream and
 			   loose the 200, which is not retransmitted by proxies
@@ -1112,7 +1112,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 		/* update the status ... */
 		t->uas.status = relayed_code;
-		t->relaied_reply_branch = relay;
+		t->relayed_reply_branch = relay;
 
 		if (is_invite(t) && relayed_msg!=FAKED_REPLY
 		&& relayed_code>=200 && relayed_code < 300

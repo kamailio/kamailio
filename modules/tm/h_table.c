@@ -268,7 +268,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	/* UAC */
 	init_branches(new_cell);
 
-	new_cell->relaied_reply_branch   = -1;
+	new_cell->relayed_reply_branch   = -1;
 	/* new_cell->T_canceled = T_UNDEFINED; */
 #ifdef EXTRA_DEBUG
 	new_cell->wait_tl.tg=TG_WT;

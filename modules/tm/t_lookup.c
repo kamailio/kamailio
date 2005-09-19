@@ -237,7 +237,7 @@ static inline int ack_matching(struct cell *p_cell, struct sip_msg *p_msg)
 	 * done now -- we ignore to-tags; the ACK simply belongs to
 	 * this UAS part of dialog, whatever to-tag it gained
 	 */
-	if (p_cell->relaied_reply_branch!=-2) {
+	if (p_cell->relayed_reply_branch!=-2) {
 		return 2; /* e2e proxied ACK */
 	}
 	/* it's a local dialog -- we wish to verify to-tags too */
@@ -489,7 +489,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 			/* it is e2e ACK/200 */
 			if (p_cell->uas.status<300 && e2e_ack_trans==0) {
 				/* all criteria for proxied ACK are ok */
-				if (p_cell->relaied_reply_branch!=-2) {
+				if (p_cell->relayed_reply_branch!=-2) {
 					e2e_ack_trans=p_cell;
 					continue;
 				}
