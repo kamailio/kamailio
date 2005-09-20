@@ -70,7 +70,7 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 
 	RES_COL_N(_r) = n;
 
-	fields = mysql_fetch_fields(CON_RESULT(_h));
+	fields = mysql_fetch_fields(MYRES_RESULT(_r));
 	for(i = 0; i < n; i++) {
 		RES_NAMES(_r)[i] = fields[i].name;
 		switch(fields[i].type) {
@@ -143,7 +143,7 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 		return -1;
 	}
 
-	n = mysql_num_rows(CON_RESULT(_h));
+	n = mysql_num_rows(MYRES_RESULT(_r));
 	RES_ROW_N(_r) = n;
 	if (!n) {
 		RES_ROWS(_r) = 0;
@@ -156,8 +156,8 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 	}
 
 	for(i = 0; i < n; i++) {
-		CON_ROW(_h) = mysql_fetch_row(CON_RESULT(_h));
-		if (!CON_ROW(_h)) {
+		MYRES_ROW(_r) = mysql_fetch_row(MYRES_RESULT(_r));
+		if (!MYRES_ROW(_r)) {
 			LOG(L_ERR, "convert_rows: %s\n", mysql_error(CON_CONNECTION(_h)));
 			RES_ROW_N(_r) = i;
 			free_rows(_r);
@@ -201,6 +201,14 @@ db_res_t* new_result(void)
 		LOG(L_ERR, "new_result: No memory left\n");
 		return 0;
 	}
+	r->data = pkg_malloc(sizeof(struct my_res));
+	if(!r->data) {
+		pkg_free(r);
+		LOG(L_ERR, "store_result(): No memory left 2\n");
+		return 0;
+	}
+	MYRES_RESULT(r) = 0;
+	MYRES_ROW(r) = 0;
 	RES_NAMES(r) = 0;
 	RES_TYPES(r) = 0;
 	RES_COL_N(r) = 0;
@@ -246,6 +254,8 @@ int free_result(db_res_t* _r)
 
 	free_columns(_r);
 	free_rows(_r);
+	mysql_free_result(MYRES_RESULT(_r));
+	pkg_free(_r->data);
 	pkg_free(_r);
 	return 0;
 }

@@ -109,7 +109,6 @@ struct my_con* new_connection(struct db_id* id)
 void free_connection(struct my_con* con)
 {
 	if (!con) return;
-	if (con->res) mysql_free_result(con->res);
 	if (con->id) free_db_id(con->id);
 	if (con->con) {
 		mysql_close(con->con);

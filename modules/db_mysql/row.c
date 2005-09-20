@@ -33,6 +33,7 @@
 #include <mysql/mysql.h>
 #include "val.h"
 #include "my_con.h"
+#include "res.h"
 #include "row.h"
 
 
@@ -56,11 +57,11 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 		return -1;
 	}
 
-	lengths = mysql_fetch_lengths(CON_RESULT(_h));
+	lengths = mysql_fetch_lengths(MYRES_RESULT(_res));
 
 	for(i = 0; i < RES_COL_N(_res); i++) {
 		if (str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]), 
-			    ((MYSQL_ROW)CON_ROW(_h))[i], lengths[i]) < 0) {
+				((MYSQL_ROW)MYRES_ROW(_res))[i], lengths[i]) < 0) {
 			LOG(L_ERR, "convert_row: Error while converting value\n");
 			free_row(_r);
 			return -3;
