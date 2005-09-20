@@ -308,7 +308,7 @@ error:
 void e2e_cancel( struct sip_msg *cancel_msg, 
 	struct cell *t_cancel, struct cell *t_invite )
 {
-	branch_bm_t cancel_bm;
+	branch_bm_t cancel_bm, tmp_bm;
 	int i;
 	int lowest_error;
 	str backup_uri;
@@ -335,10 +335,26 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	/* send them out */
 	for (i=0; i<t_cancel->nr_of_outgoings; i++) {
 		if (cancel_bm & (1<<i)) {
+			/* Provisional reply received on this branch, send CANCEL */
+			/* No need to stop timers as they have already been stopped by the reply */
 			if (SEND_BUFFER( &t_cancel->uac[i].request)==-1) {
 				LOG(L_ERR, "ERROR: e2e_cancel: send failed\n");
 			}
 			start_retr( &t_cancel->uac[i].request );
+		} else {
+			if (t_invite->uac[i].last_received < 100) {
+				     /* No provisional response received, stop
+				      * retransmission timers
+				      */
+				reset_timer(&t_invite->uac[i].request.retr_timer);
+				reset_timer(&t_invite->uac[i].request.fr_timer);
+
+				/* Generate faked reply */
+				LOCK_REPLIES(t_invite);
+				if (relay_reply(t_invite, FAKED_REPLY, i, 487, &tmp_bm) == RPS_ERROR) {
+					lowest_error = -1;
+				}
+			}
 		}
 	}
 
