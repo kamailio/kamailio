@@ -330,8 +330,8 @@ static int store_result(db_con_t* _h, db_res_t** _r)
 		return -2;
 	}
 
-	CON_RESULT(_h) = mysql_store_result(CON_CONNECTION(_h));
-	if (!CON_RESULT(_h)) {
+	MYRES_RESULT(*_r) = mysql_store_result(CON_CONNECTION(_h));
+	if (!MYRES_RESULT(*_r)) {
 		if (mysql_field_count(CON_CONNECTION(_h)) == 0) {
 			(*_r)->col.n = 0;
 			(*_r)->n = 0;
@@ -344,15 +344,16 @@ static int store_result(db_con_t* _h, db_res_t** _r)
 		}
 	}
 
-        if (convert_result(_h, *_r) < 0) {
+	if (convert_result(_h, *_r) < 0) {
 		LOG(L_ERR, "store_result: Error while converting result\n");
+		pkg_free((*_r)->data);
 		pkg_free(*_r);
 
-		     /* This cannot be used because if convert_result fails,
-		      * free_result will try to free rows and columns too 
-		      * and free will be called two times
-		      */
-		     /* free_result(*_r); */
+		/* This cannot be used because if convert_result fails,
+		 * free_result will try to free rows and columns too 
+		 * and free will be called two times
+		 */
+		/* free_result(*_r); */
 		return -4;
 	}
 	
@@ -374,8 +375,6 @@ int db_free_result(db_con_t* _h, db_res_t* _r)
 	     LOG(L_ERR, "db_free_result: Unable to free result structure\n");
 	     return -1;
      }
-     mysql_free_result(CON_RESULT(_h));
-     CON_RESULT(_h) = 0;
      return 0;
 }
 
