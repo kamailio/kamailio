@@ -43,6 +43,7 @@ typedef struct db_res {
 	} col;
 	struct db_row* rows;       /* Rows */
 	int n;                     /* Number of rows */
+	void* data;                /* Auxiliary data */
 } db_res_t;
 
 
