@@ -836,6 +836,9 @@ int main_loop()
 #ifdef USE_TCP
 	int sockfd[2];
 #endif
+#ifdef DEBUG
+	int r;
+#endif
 
 	/* one "main" process and n children handling i/o */
 
