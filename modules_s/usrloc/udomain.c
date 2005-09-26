@@ -389,6 +389,8 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 				sock = 0;
 			}
 		} else {
+			received.s = 0;
+			received.len = 0;
 			rec = 0;
 			sock = 0;
 		}
