@@ -118,7 +118,6 @@ int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, qvalue_t _q,
 		(*_c)->instance.s = 0;
 		(*_c)->instance.len = 0;
 	}
-	
 
 	(*_c)->cseq = _cseq;
 	(*_c)->state = CS_NEW;
@@ -485,8 +484,8 @@ int db_insert_ucontact(ucontact_t* _c)
 	keys[6] = flags_col.s;
 	keys[7] = user_agent_col.s;
 	keys[8] = received_col.s;
-	keys[9] = domain_col.s;
-	keys[10] = instance_col.s;
+	keys[9] = instance_col.s;
+	keys[10] = domain_col.s;
 
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;
@@ -534,22 +533,23 @@ int db_insert_ucontact(ucontact_t* _c)
 		vals[8].val.str_val.len = _c->received.len;
 	}
 
+	vals[9].type = DB_STR;
+	if (_c->instance.s == 0) {
+		vals[9].nul = 1;
+	} else {
+		vals[9].nul = 0;
+		vals[9].val.str_val.s = _c->instance.s;
+		vals[9].val.str_val.len = _c->instance.len;
+	}
+
 	if (use_domain) {
 		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
 		vals[0].val.str_val.len = dom - _c->aor->s;
 
-		vals[9].type = DB_STR;
-		vals[9].nul = 0;
-		vals[9].val.str_val.s = dom + 1;
-		vals[9].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
-	}
-
-	if (_c->instance.s == 0) {
-		vals[10].nul = 1;
-	} else {
+		vals[10].type = DB_STR;
 		vals[10].nul = 0;
-		vals[10].val.str_val.s = _c->instance.s;
-		vals[10].val.str_val.len = _c->instance.len;
+		vals[10].val.str_val.s = dom + 1;
+		vals[10].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
 	}
 
 	     /* FIXME */
@@ -560,7 +560,7 @@ int db_insert_ucontact(ucontact_t* _c)
 		return -1;
 	}
 
-	if (ul_dbf.insert(ul_dbh, keys, vals, (use_domain) ? 10 : 9) < 0) {
+	if (ul_dbf.insert(ul_dbh, keys, vals, (use_domain) ? 11 : 10) < 0) {
 		LOG(L_ERR, "db_insert_ucontact(): Error while inserting contact\n");
 		return -1;
 	}
@@ -587,7 +587,13 @@ int db_update_ucontact(ucontact_t* _c)
 	}
 
 	keys1[0] = user_col.s;
-	keys1[1] = contact_col.s;
+	if (_c->instance.s == 0) {
+		keys1[1] = contact_col.s;
+		keys2[7] = instance_col.s;
+	} else {
+		keys1[1] = instance_col.s;
+		keys2[7] = contact_col.s;
+	}
 	keys1[2] = domain_col.s;
 	keys2[0] = expires_col.s;
 	keys2[1] = q_col.s;
@@ -596,7 +602,6 @@ int db_update_ucontact(ucontact_t* _c)
 	keys2[4] = flags_col.s;
 	keys2[5] = user_agent_col.s;
 	keys2[6] = received_col.s;
-	keys2[7] = instance_col.s;
 	
 	vals1[0].type = DB_STR;
 	vals1[0].nul = 0;
@@ -604,7 +609,11 @@ int db_update_ucontact(ucontact_t* _c)
 
 	vals1[1].type = DB_STR;
 	vals1[1].nul = 0;
-	vals1[1].val.str_val = _c->c;
+	if (_c->instance.s == 0) {
+		vals1[1].val.str_val = _c->c;
+	} else {
+		vals1[1].val.str_val = _c->instance;
+	}
 
 	vals2[0].type = DB_DATETIME;
 	vals2[0].nul = 0;
@@ -638,6 +647,14 @@ int db_update_ucontact(ucontact_t* _c)
 		vals2[6].val.str_val = _c->received;
 	}
 
+	vals2[7].type = DB_STR;
+	if (_c->instance.s == 0) {
+		vals2[7].nul = 1;
+	} else {
+		vals2[7].nul = 0;
+		vals2[7].val.str_val = _c->c;
+	}
+
 	if (use_domain) {
 		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
 		vals1[0].val.str_val.len = dom - _c->aor->s;
@@ -648,14 +665,6 @@ int db_update_ucontact(ucontact_t* _c)
 		vals1[2].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
 	}
 
-	vals2[7].type = DB_STR;
-	if (_c->instance.s == 0) {
-		vals2[7].nul = 1;
-	} else {
-		vals2[7].nul = 0;
-		vals2[7].val.str_val = _c->instance;
-	}
-
 	     /* FIXME */
 	memcpy(b, _c->domain->s, _c->domain->len);
 	b[_c->domain->len] = '\0';
@@ -664,7 +673,7 @@ int db_update_ucontact(ucontact_t* _c)
 		return -1;
 	}
 
-	if (ul_dbf.update(ul_dbh, keys1, 0, vals1, keys2, vals2, (use_domain) ? 3 : 2, 7) < 0) {
+	if (ul_dbf.update(ul_dbh, keys1, 0, vals1, keys2, vals2, (use_domain) ? 3 : 2, 8) < 0) {
 		LOG(L_ERR, "db_upd_ucontact(): Error while updating database\n");
 		return -1;
 	}

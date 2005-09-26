@@ -302,8 +302,8 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	columns[6] = flags_col.s;
 	columns[7] = user_agent_col.s;
 	columns[8] = received_col.s;
-	columns[9] = domain_col.s;
-	columns[10] = instance_col.s;
+	columns[9] = instance_col.s;
+	columns[10] = domain_col.s;
 	
 	memcpy(b, _d->name->s, _d->name->len);
 	b[_d->name->len] = '\0';
@@ -395,18 +395,23 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			sock = 0;
 		}
 
+		if (!VAL_NULL(ROW_VALUES(row) + 9)) {
+			instance.s  = (char*)VAL_STRING(ROW_VALUES(row) + 9);
+			if (instance.s) {
+				instance.len = strlen(instance.s);
+			} else {
+				instance.len = 0;
+			}
+		} else {
+			instance.s = 0;
+			instance.len = 0;
+		}
+
 		if (use_domain) {
-			domain  = (char*)VAL_STRING(ROW_VALUES(row) + 9);
+			domain  = (char*)VAL_STRING(ROW_VALUES(row) + 10);
 			snprintf(b, 256, "%.*s@%s", user.len, ZSW(user.s), domain);
 			user.s = b;
 			user.len = strlen(b);
-		}
-
-		instance.s  = (char*)VAL_STRING(ROW_VALUES(row) +  ((use_domain) ? 10 : 9) );
-		if (instance.s) {
-			instance.len = strlen(instance.s);
-		} else {
-			instance.len = 0;
 		}
 
 		if (get_urecord(_d, &user, &r) > 0) {
