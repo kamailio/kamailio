@@ -150,7 +150,7 @@ typedef struct ua_client
 	short            last_received;
 	/* UAC specific flags */
 	short            flags;
-	/* script flags, psecific to this branch */
+	/* script flags, specific to this branch */
 	int              br_flags;
 }ua_client_type;
 

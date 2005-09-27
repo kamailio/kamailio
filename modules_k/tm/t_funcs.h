@@ -127,7 +127,7 @@ static void inline _set_fr_retr( struct retr_buf *rb, int retr )
 	}
 
 	if (!fr_avp2timer(&timer)) {
-		DBG("_set_fr_retr: FR_TIMER = %d\n", timer);
+		DBG("DEBUG:tm:_set_fr_retr: FR_TIMER = %d\n", timer);
 		set_timer(&rb->fr_timer, FR_TIMER_LIST, &timer);
 		/* Automatically enable noisy_ctimer for the transaction */
 		rb->my_T->flags |= T_NOISY_CTIMER_FLAG;
@@ -136,10 +136,12 @@ static void inline _set_fr_retr( struct retr_buf *rb, int retr )
 	}
 }
 
+
 static void inline start_retr(struct retr_buf *rb)
 {
 	_set_fr_retr(rb, rb->dst.proto==PROTO_UDP);
 }
+
 
 static void inline force_retr(struct retr_buf *rb)
 {
@@ -167,14 +169,13 @@ int get_ip_and_port_from_uri( str* uri , unsigned int *param_ip,
 
 void put_on_wait(  struct cell  *Trans  );
 
-#ifdef _OBSOLETED
-void start_retr( struct retr_buf *rb );
-#endif
 
 void cleanup_localcancel_timers( struct cell *t );
 
+
 int t_relay_to( struct sip_msg  *p_msg ,
 	struct proxy_l *proxy, int proto, int replicate ) ;
+
 
 #endif
 

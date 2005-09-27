@@ -115,7 +115,8 @@
 	 p_msg->_via->name.s,\
 	 (t_msg->via1->bsize-(t_msg->_via->name.s-(t_msg->_via->hdr.s+t_msg->_via->hdr.len)))\
 	)==0 )
-
+#define EQ_STRS( _s1, _s2 ) \
+	( (_s1).len==(_s2).len && memcmp((_s1).s,(_s2).s,(_s2).len)==0)
 
 
 #define HF_LEN(_hf) ((_hf)->len)
@@ -676,15 +677,12 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 	char  *hashi, *branchi, *p, *n;
 	int hashl, branchl;
 	int scan_space;
-	str cseq_method;
-	str req_method;
+	struct cseq_body *cseq;
 
 	char *loopi;
 	int loopl;
 	char *syni;
 	int synl;
-	
-	short is_cancel;
 
 	/* make compiler warnings happy */
 	loopi=0;
@@ -756,23 +754,19 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 		goto nomatch2;
 	}
 
-
 	DBG("DEBUG: t_reply_matching: hash %d label %d branch %d\n",
 		hash_index, entry_label, branch_id );
 
+	cseq = get_cseq(p_msg);
 
 	/* search the hash table list at entry 'hash_index'; lock the
-	   entry first 
-	*/
-	cseq_method=get_cseq(p_msg)->method;
-	is_cancel=cseq_method.len==CANCEL_LEN 
-		&& memcmp(cseq_method.s, CANCEL, CANCEL_LEN)==0;
+	   entry first */
 	LOCK_HASH(hash_index);
+
 	for (p_cell = get_tm_table()->entrys[hash_index].first_cell; p_cell; 
 		p_cell=p_cell->next_cell) {
 
 		/* first look if branch matches */
-
 		if (syn_branch) {
 			if (p_cell->label != entry_label) 
 				continue;
@@ -787,18 +781,14 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 
 		/* does method match ? (remember -- CANCELs have the same branch
 		   as canceled transactions) */
-		req_method=p_cell->method;
-		if ( /* method match */
-			! ((cseq_method.len==req_method.len 
-			&& memcmp( cseq_method.s, req_method.s, cseq_method.len )==0)
-			/* or it is a local cancel */
-			|| (is_cancel && is_invite(p_cell)
-				/* commented out -- should_cancel_branch set it to
-				   BUSY_BUFFER to avoid collisions with replies;
-				   thus, we test here by buffer size
-				*/
-				/* && p_cell->uac[branch_id].local_cancel.buffer ))) */
-				&& p_cell->uac[branch_id].local_cancel.buffer_len ))) 
+		if (!( /* it's a local cancel */
+			(cseq->method_id==METHOD_CANCEL && is_invite(p_cell)
+				&& p_cell->uac[branch_id].local_cancel.buffer_len )
+			/* method match */
+			|| (cseq->method_id!=METHOD_OTHER)?
+				(cseq->method_id==REQ_LINE(p_cell->uas.request).method_value)
+				:(EQ_STRS(cseq->method,p_cell->method))
+		))
 			continue;
 
 
@@ -893,12 +883,9 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 			}
 
 			/* if that is an INVITE, we will also need to-tag
-			   for later ACK matching
-			*/
-            if ( get_cseq(p_msg)->method.len==INVITE_LEN 
-				&& memcmp( get_cseq(p_msg)->method.s, INVITE, INVITE_LEN )==0 ) {
-					if (parse_headers(p_msg, HDR_TO_F, 0)==-1
-						|| !p_msg->to)  {
+			   for later ACK matching */
+			if ( get_cseq(p_msg)->method_id==METHOD_INVITE ) {
+					if (parse_headers(p_msg, HDR_TO_F, 0)==-1 || !p_msg->to)  {
 						LOG(L_ERR, "ERROR: INVITE reply cannot be parsed\n");
 						return -1;
 					}
@@ -1160,74 +1147,83 @@ int t_unref( struct sip_msg* p_msg  )
 	return 1;
 }
 
-int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index, unsigned int* label)
-{
-    struct cell* t;
-    if(t_check(p_msg,0) != 1){
-	LOG(L_ERR,"ERROR: t_get_trans_ident: no transaction found\n");
-	return -1;
-    }
-    t = get_t();
-    if(!t){
-	LOG(L_ERR,"ERROR: t_get_trans_ident: transaction found is NULL\n");
-	return -1;
-    }
-    
-    *hash_index = t->hash_index;
-    *label = t->label;
 
-    return 1;
+
+int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index,
+															unsigned int* label)
+{
+	struct cell* t;
+	if(t_check(p_msg,0) != 1){
+		LOG(L_ERR,"ERROR:tm:t_get_trans_ident: no transaction found\n");
+		return -1;
+	}
+	t = get_t();
+	if(!t){
+		LOG(L_ERR,"ERROR:tm:t_get_trans_ident: transaction found is NULL\n");
+		return -1;
+	}
+
+	*hash_index = t->hash_index;
+	*label = t->label;
+
+	return 1;
 }
 
-int t_lookup_ident(struct cell ** trans, unsigned int hash_index, unsigned int label)
-{
-    struct cell* p_cell;
 
-    if(hash_index >= TABLE_ENTRIES){
+
+int t_lookup_ident(struct cell ** trans, unsigned int hash_index,
+															unsigned int label)
+{
+	struct cell* p_cell;
+
+	if(hash_index >= TABLE_ENTRIES){
 		LOG(L_ERR,"ERROR: t_lookup_ident: invalid hash_index=%u\n",hash_index);
 		return -1;
-    }
+	}
 
-    LOCK_HASH(hash_index);
+	LOCK_HASH(hash_index);
 
-    /* all the transactions from the entry are compared */
-    for ( p_cell = get_tm_table()->entrys[hash_index].first_cell;
-	  p_cell; p_cell = p_cell->next_cell ) 
-    {
+	/* all the transactions from the entry are compared */
+	for ( p_cell = get_tm_table()->entrys[hash_index].first_cell;
+		p_cell; p_cell = p_cell->next_cell ) 
+	{
 		if(p_cell->label == label){
 			REF_UNSAFE(p_cell);
-    			UNLOCK_HASH(hash_index);
+			UNLOCK_HASH(hash_index);
 			set_t(p_cell);
 			*trans=p_cell;
-			DBG("DEBUG: t_lookup_ident: transaction found\n");
+			DBG("DEBUG:tm:t_lookup_ident: transaction found\n");
 			return 1;
 		}
-    }
-	
+	}
+
 	UNLOCK_HASH(hash_index);
 	set_t(0);
 	*trans=p_cell;
 
-	DBG("DEBUG: t_lookup_ident: transaction not found\n");
-    
-    return -1;
+	DBG("DEBUG:tm:t_lookup_ident: transaction not found\n");
+	return -1;
 }
+
+
 
 int t_is_local(struct sip_msg* p_msg)
 {
-    struct cell* t;
-    if(t_check(p_msg,0) != 1){
-	LOG(L_ERR,"ERROR: t_is_local: no transaction found\n");
-	return -1;
-    }
-    t = get_t();
-    if(!t){
-	LOG(L_ERR,"ERROR: t_is_local: transaction found is NULL\n");
-	return -1;
-    }
-    
-    return is_local(t);
+	struct cell* t;
+	if(t_check(p_msg,0) != 1){
+		LOG(L_ERR,"ERROR:tm:t_is_local: no transaction found\n");
+		return -1;
+	}
+	t = get_t();
+	if(!t){
+		LOG(L_ERR,"ERROR:tm:t_is_local: transaction found is NULL\n");
+		return -1;
+	}
+
+	return is_local(t);
 }
+
+
 
 /* lookup a transaction by callid and cseq, parameters are pure
  * header field content only, e.g. "123@10.0.0.1" and "11"
@@ -1254,46 +1250,46 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 	hash_index=hash(callid, cseq);
 
 	if(hash_index >= TABLE_ENTRIES){
-		LOG(L_ERR,"ERROR: t_lookup_callid: invalid hash_index=%u\n",hash_index);
+		LOG(L_ERR,"ERROR:tm:t_lookup_callid: invalid hash_index=%u\n",hash_index);
 		return -1;
 	}
 
 	/* create header fields the same way tm does itself, then compare headers */
 	endpos = print_callid_mini(callid_header, callid);
-	DBG("created comparable call_id header field: >%.*s<\n", 
-			(int)(endpos - callid_header), callid_header); 
+	DBG("DEBUG:tm:t_lookup_callid: created comparable call_id header field:"
+		" >%.*s<\n", (int)(endpos - callid_header), callid_header); 
 
 	endpos = print_cseq_mini(cseq_header, &cseq, &invite_method);
-	DBG("created comparable cseq header field: >%.*s<\n", 
-			(int)(endpos - cseq_header), cseq_header); 
+	DBG("DEBUG:tm:t_lookup_callid: created comparable cseq header field: "
+		">%.*s<\n", (int)(endpos - cseq_header), cseq_header); 
 
 	LOCK_HASH(hash_index);
-	DBG("just locked hash index %u, looking for transactions there:\n", hash_index);
 
 	/* all the transactions from the entry are compared */
 	for ( p_cell = get_tm_table()->entrys[hash_index].first_cell;
 	  p_cell; p_cell = p_cell->next_cell ) {
-		
+
 		/* compare complete header fields, casecmp to make sure invite=INVITE */
 		if ( (strncmp(callid_header, p_cell->callid.s, p_cell->callid.len) == 0)
 			&& (strncasecmp(cseq_header, p_cell->cseq_n.s, p_cell->cseq_n.len) == 0) ) {
-			DBG("we have a match: callid=>>%.*s<< cseq=>>%.*s<<\n", p_cell->callid.len, 
+			DBG("DEBUG:tm:t_lookup_callid: we have a match: "
+				"callid=>>%.*s<< cseq=>>%.*s<<\n", p_cell->callid.len, 
 				p_cell->callid.s, p_cell->cseq_n.len, p_cell->cseq_n.s);
 			REF_UNSAFE(p_cell);
 			UNLOCK_HASH(hash_index);
 			set_t(p_cell);
 			*trans=p_cell;
-			DBG("DEBUG: t_lookup_callid: transaction found.\n");
+			DBG("DEBUG:tm:t_lookup_callid: transaction found.\n");
 			return 1;
 		}
-		DBG("NO match: callid=%.*s cseq=%.*s\n", p_cell->callid.len, 
-			p_cell->callid.s, p_cell->cseq_n.len, p_cell->cseq_n.s);
-			
+		DBG("DEBUG:tm:t_lookup_callid:: NO match: callid=%.*s cseq=%.*s\n",
+			p_cell->callid.len, p_cell->callid.s,
+			p_cell->cseq_n.len, p_cell->cseq_n.s);
 	}
 
 	UNLOCK_HASH(hash_index);
-	DBG("DEBUG: t_lookup_callid: transaction not found.\n");
-    
+	DBG("DEBUG:tm:t_lookup_callid: transaction not found.\n");
+
 	return -1;
 }
 

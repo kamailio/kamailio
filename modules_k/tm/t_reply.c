@@ -157,7 +157,7 @@ unsigned int get_on_reply()
 void tm_init_tags()
 {
 	init_tags(tm_tags, &tm_tag_suffix, 
-		"SER-TM/tags", TM_TAG_SEPARATOR );
+		"OpenSER-TM/tags", TM_TAG_SEPARATOR );
 }
 
 /* returns 0 if the message was previously acknowledged
@@ -684,12 +684,14 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	   >= 300 are not relayed because 200 was already sent
 	   out
 	*/
-	DBG("->>>>>>>>> T_code=%d, new_code=%d\n",Trans->uas.status,new_code);
+	DBG("DEBUG:tm:t_should_relay_response: T_code=%d, new_code=%d\n",
+		Trans->uas.status,new_code);
 	inv_through=new_code>=200 && new_code<300 && is_invite(Trans);
 	/* if final response sent out, allow only INVITE 2xx  */
 	if ( Trans->uas.status >= 200 ) {
 		if (inv_through) {
-			DBG("DBG: t_should_relay_response: 200 INV after final sent\n");
+			DBG("DEBUG:tm:t_should_relay_response: 200 OK for INVITE "
+				"after final sent\n");
 			*should_store=0;
 			Trans->uac[branch].last_received=new_code;
 			*should_relay=branch;
@@ -705,18 +707,19 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			&& !(inv_through && Trans->uac[branch].last_received<300)) {
 		/* don't report on retransmissions */
 		if (Trans->uac[branch].last_received==new_code) {
-			DBG("DEBUG: final reply retransmission\n");
+			DBG("DEBUG:tm:t_should_relay_response: final reply retransmission\n");
 			goto discard;
 		}
 		/* if you FR-timed-out, faked a local 408 and 487 came, don't
 		 * report on it either */
 		if (Trans->uac[branch].last_received==408 && new_code==487) {
-			DBG("DEBUG: 487 came for a timed-out branch\n");
+			DBG("DEBUG:tm:t_should_relay_response: 487 reply came for a "
+				"timed-out branch\n");
 			goto discard;
 		}
 		/* this looks however how a very strange status rewrite attempt;
 		 * report on it */
-		LOG(L_ERR, "ERROR: t_should_relay_response: status rewrite by UAS: "
+		LOG(L_ERR, "ERROR:tm:t_should_relay_response: status rewrite by UAS: "
 			"stored: %d, received: %d\n",
 			Trans->uac[branch].last_received, new_code );
 		goto discard;
@@ -737,8 +740,9 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			return RPS_STORE;
 		}
 		if (picked_branch==-1) {
-			LOG(L_CRIT, "ERROR: t_should_relay_response: lowest==-1\n");
-			goto error;
+			LOG(L_CRIT, "ERROR:tm:t_should_relay_response: pick_branch failed "
+				"(lowest==-1) for code %d\n",new_code);
+			goto discard;
 		}
 
 		/* no more pending branches -- try if that changes after
@@ -806,10 +810,6 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		} else return RPS_PROVISIONAL;
 	}
 
-error:
-	/* reply_status didn't match -- it must be something weird */
-	LOG(L_CRIT, "ERROR: Oh my gooosh! We don't know whether to relay %d\n",
-		new_code);
 discard:
 	*should_store=0;
 	*should_relay=-1;
@@ -831,28 +831,28 @@ int t_retransmit_reply( struct cell *t )
 	LOCK_REPLIES( t );
 
 	if (!t->uas.response.buffer) {
-		DBG("DBG: t_retransmit_reply: nothing to retransmit\n");
+		DBG("DEBUG:tm:t_retransmit_reply: nothing to retransmit\n");
 		goto error;
 	}
 
-	/* response.dst.send_sock is valid all the time now, as it's taken
+	/* response.dst.send_sock should be valid all the time now, as it's taken
 	   from original request -bogdan */
 	if (t->uas.response.dst.send_sock==0) {
-		LOG(L_CRIT,"BUG:t_retransmit_reply: something to retransmit, but"
+		LOG(L_CRIT,"BUG:tm:t_retransmit_reply: something to retransmit, but"
 			"send_sock is NULL\n");
 		goto error;
 	}
 
 	len=t->uas.response.buffer_len;
 	if ( len==0 || len>BUF_SIZE )  {
-		DBG("DBG: t_retransmit_reply: "
-			"zero length or too big to retransmit: %d\n", len);
+		DBG("DEBUG:tm:t_retransmit_reply: zero length or too big "
+			"to retransmit: %d\n", len);
 		goto error;
 	}
 	memcpy( b, t->uas.response.buffer, len );
 	UNLOCK_REPLIES( t );
 	SEND_PR_BUFFER( & t->uas.response, b, len );
-	DBG("DEBUG: reply retransmitted. buf=%p: %.9s..., shmem=%p: %.9s\n", 
+	DBG("DEBUG:tm:t_retransmit_reply: buf=%p: %.9s..., shmem=%p: %.9s\n", 
 		b, b, t->uas.response.buffer, t->uas.response.buffer );
 	return 1;
 
@@ -973,7 +973,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	/* *** store and relay message as needed *** */
 	reply_status = t_should_relay_response(t, msg_status, branch, 
 		&save_clone, &relay, cancel_bitmap, p_msg );
-	DBG("DEBUG: relay_reply: branch=%d, save=%d, relay=%d\n",
+	DBG("DEBUG:tm:relay_reply: branch=%d, save=%d, relay=%d\n",
 		branch, save_clone, relay );
 
 	/* store the message if needed */
@@ -1032,7 +1032,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		}
 		update_reply_stats( relayed_code );
 		if (!buf) {
-			LOG(L_ERR, "ERROR: relay_reply: "
+			LOG(L_ERR, "ERROR:tm:relay_reply: "
 				"no mem for outbound reply buffer\n");
 			goto error02;
 		}
@@ -1046,7 +1046,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		uas_rb->buffer = (char*)shm_resize( uas_rb->buffer, res_len +
 			(msg_status<200 ?  REPLY_OVERBUFFER_LEN : 0));
 		if (!uas_rb->buffer) {
-			LOG(L_ERR, "ERROR: relay_reply: cannot alloc reply shmem\n");
+			LOG(L_ERR, "ERROR:tm:relay_reply: cannot alloc reply shmem\n");
 			goto error03;
 		}
 		uas_rb->buffer_len = res_len;
@@ -1079,7 +1079,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	/* send it now (from the private buffer) */
 	if (relay >= 0) {
 		SEND_PR_BUFFER( uas_rb, buf, res_len );
-		DBG("DEBUG: reply relayed. buf=%p: %.9s..., shmem=%p: %.9s\n", 
+		DBG("DEBUG:tm:relay_reply: sent buf=%p: %.9s..., shmem=%p: %.9s\n", 
 			buf, buf, uas_rb->buffer, uas_rb->buffer );
 		if (!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT) ) {
 			run_trans_callbacks( TMCB_RESPONSE_OUT, t, t->uas.request,
@@ -1134,7 +1134,7 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 	reply_status=t_should_relay_response( t, msg_status, branch,
 		&local_store, &local_winner, cancel_bitmap, p_msg );
-	DBG("DEBUG: local_reply: branch=%d, save=%d, winner=%d\n",
+	DBG("DEBUG:tm:local_reply: branch=%d, save=%d, winner=%d\n",
 		branch, local_store, local_winner );
 	if (local_store) {
 		if (!store_reply(t, branch, p_msg))
@@ -1160,7 +1160,7 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	}
 	UNLOCK_REPLIES(t);
 	if (local_winner>=0 && winning_code>=200 ) {
-		DBG("DEBUG: local transaction completed\n");
+		DBG("DEBUG:tm:local_reply: local transaction completed\n");
 		if (!totag_retr) {
 			if ( has_tran_tmcbs(t,TMCB_LOCAL_COMPLETED) )
 				run_trans_callbacks( TMCB_LOCAL_COMPLETED, t, 0,
@@ -1173,8 +1173,7 @@ error:
 	which_cancel(t, cancel_bitmap);
 	UNLOCK_REPLIES(t);
 	cleanup_uac_timers(t);
-	if ( get_cseq(p_msg)->method.len==INVITE_LEN 
-		&& memcmp( get_cseq(p_msg)->method.s, INVITE, INVITE_LEN)==0)
+	if ( get_cseq(p_msg)->method_id==METHOD_INVITE )
 		cancel_uacs( t, *cancel_bitmap );
 	put_on_wait(t);
 	return RPS_ERROR;
@@ -1221,11 +1220,8 @@ int reply_received( struct sip_msg  *p_msg )
 		is_local(t), is_invite(t));
 	last_uac_status=uac->last_received;
 
-	/* it's a cancel ... ? */
-	if (get_cseq(p_msg)->method.len == CANCEL_LEN 
-	&& memcmp( get_cseq(p_msg)->method.s, CANCEL, CANCEL_LEN) == 0
-	 /* .. which is not e2e ? ... */
-	&& is_invite(t) ) {
+	/* it's a cancel which is not e2e ? */
+	if ( get_cseq(p_msg)->method_id==METHOD_CANCEL && is_invite(t) ) {
 		/* ... then just stop timers */
 		reset_timer( &uac->local_cancel.retr_timer);
 		if ( msg_status >= 200 ) {
@@ -1336,7 +1332,8 @@ int reply_received( struct sip_msg  *p_msg )
 			if (!fr_inv_avp2timer(&timer)) {
 				DBG("DEBUG:tm:reply_received: FR_INV_TIMER = %d\n", timer);
 				set_timer(&uac->request.fr_timer,
-					  FR_INV_TIMER_LIST, &timer);
+					FR_INV_TIMER_LIST, &timer);
+				t->flags |= T_NOISY_CTIMER_FLAG;
 			} else {
 				set_timer(& uac->request.fr_timer, FR_INV_TIMER_LIST, 0);
 			}
@@ -1425,14 +1422,11 @@ int t_reply_with_body( struct cell *trans, unsigned int code,
 		goto error;
 	}
 
-	DBG("t_reply_with_body: buffer computed\n");
-	// frees 'res.s' ... no panic !
+	DBG("DEBUG:tm:t_reply_with_body: buffer computed\n");
 	ret=_reply_light( trans, rpl.s, rpl.len, code, text, 
 		s_to_tag.s, s_to_tag.len, 1 /* lock replies */, &bm );
-	/* this is ugly hack -- the function caller may wish to continue with
-	 * transaction and I unref; however, there is now only one use from
-	 * vm/fifo_vm_reply and I'm currently to lazy to export UNREF; -jiri
-	 */
+
+	/* unref since this it's used only internaly */
 	UNREF(trans);
 
 	return ret;
@@ -1450,7 +1444,7 @@ error:
 /*
   Syntax:
 
-  ":vm_reply:[response file]\n
+  ":t_reply:[response file]\n
   code\n
   reason\n
   trans_id\n
@@ -1576,13 +1570,13 @@ static int parse_transid(str* s, unsigned int* index, unsigned int* label)
 	char* buf;
 
 	if (!s || !index || !label) {
-		LOG(L_ERR, "parse_transid: Invalid parameter value\n");
+		LOG(L_ERR, "ERROR:tm:parse_transid: Invalid parameter value\n");
 		return -1;
 	}
 
 	buf = (char*)pkg_malloc(s->len + 1);
 	if (!buf) {
-		LOG(L_ERR, "parse_transid: No memory left\n");
+		LOG(L_ERR, "ERROR:tm:parse_transid: No memory left\n");
 		return -1;
 	}
 
@@ -1590,59 +1584,62 @@ static int parse_transid(str* s, unsigned int* index, unsigned int* label)
 	buf[s->len] = '\0';
 	
 	if (sscanf(buf, "%u:%u", index, label) != 2) {
-		LOG(L_ERR, "parse_transid: Invalid trans_id (%s)\n", buf);
+		LOG(L_ERR, "ERROR:tm:parse_transid: Invalid trans_id (%s)\n", buf);
 		pkg_free(buf);
 		return -1;
 	}
 
-	DBG("parse_transid: hash_index=%u label=%u\n", *index, *label);
+	DBG("DEBUG:tm:parse_transid: hash_index=%u label=%u\n", *index, *label);
 	pkg_free(buf);
 	return 0;
 }
 
 
 
-static int send_reply(struct cell *trans, unsigned int code, str* text, str* body, str* headers, str* to_tag)
+static int send_reply(struct cell *trans, unsigned int code, str* text, str* body,
+													str* headers, str* to_tag)
 {
 	struct lump_rpl *hdr_lump, *body_lump;
 	str rpl;
 	int ret;
 	struct bookmark bm;
 
-	     /* mark the transaction as replied */
+	/* mark the transaction as replied */
 	if (code >= 200) set_kr(REQ_RPLD);
 
-	     /* add the lumps for new_header and for body (by bogdan) */
+	/* add the lumps for new_header and for body (by bogdan) */
 	if (headers && headers->len) {
-		hdr_lump = add_lump_rpl(trans->uas.request, headers->s, headers->len, LUMP_RPL_HDR);
+		hdr_lump = add_lump_rpl(trans->uas.request, headers->s, headers->len,
+			LUMP_RPL_HDR);
 		if (!hdr_lump) {
-			LOG(L_ERR, "send_reply: cannot add hdr lump\n");
+			LOG(L_ERR, "ERROR:tm:send_reply: cannot add hdr lump\n");
 			goto sr_error;
 		}
 	} else {
 		hdr_lump = 0;
 	}
 
-	     /* body lump */
+	/* body lump */
 	if (body && body->len) {
-		body_lump = add_lump_rpl(trans->uas.request, body->s, body->len, LUMP_RPL_BODY);
+		body_lump = add_lump_rpl(trans->uas.request, body->s, body->len,
+			LUMP_RPL_BODY);
 		if (body_lump == 0) {
-			LOG(L_ERR,"send_reply: cannot add body lump\n");
+			LOG(L_ERR,"ERROR:tm:send_reply: cannot add body lump\n");
 			goto sr_error_1;
 		}
 	} else {
 		body_lump = 0;
 	}
 
-	     /* We can safely zero-terminate the text here, because it is followed
-	      * by next line in the received message
-	      */
+	/* We can safely zero-terminate the text here, because it is followed
+	 * by next line in the received message */
 	text->s[text->len] = '\0';
-	rpl.s = build_res_buf_from_sip_req(code, text->s, to_tag, trans->uas.request, (unsigned int*)&rpl.len, &bm);
+	rpl.s = build_res_buf_from_sip_req(code, text->s, to_tag, 
+		trans->uas.request, (unsigned int*)&rpl.len, &bm);
 
-	     /* since the msg (trans->uas.request) is a clone into shm memory, to avoid
-	      * memory leak or crashing (lumps are create in private memory) I will
-	      * remove the lumps by myself here (bogdan) */
+	/* since the msg (trans->uas.request) is a clone into shm memory, to avoid
+	 * memory leak or crashing (lumps are create in private memory) I will
+	 * remove the lumps by myself here (bogdan) */
 	if (hdr_lump) {
 		unlink_lump_rpl(trans->uas.request, hdr_lump);
 		free_lump_rpl(hdr_lump);
@@ -1653,23 +1650,22 @@ static int send_reply(struct cell *trans, unsigned int code, str* text, str* bod
 	}
 
 	if (rpl.s == 0) {
-		LOG(L_ERR,"send_reply: failed in build_res_buf_from_sip_req\n");
+		LOG(L_ERR,"ERROR:tm:send_reply: failed in build_res_buf_from_sip_req\n");
 		goto sr_error;
 	}
 
-	ret = _reply_light(trans, rpl.s, rpl.len, code, text->s,  to_tag->s, to_tag->len, 1 /* lock replies */, &bm);
-	     /* this is ugly hack -- the function caller may wish to continue with
-	      * transaction and I unref; however, there is now only one use from
-	      * vm/fifo_vm_reply and I'm currently to lazy to export UNREF; -jiri
-	      */
+	ret = _reply_light(trans, rpl.s, rpl.len, code, text->s,  
+		to_tag->s, to_tag->len, 1 /* lock replies */, &bm);
+
+	/* unref since this it's used only internaly */
 	UNREF(trans);
 	return ret;
- sr_error_1:
+sr_error_1:
 	if (hdr_lump) {
 		unlink_lump_rpl(trans->uas.request, hdr_lump);
 		free_lump_rpl(hdr_lump);
 	}
- sr_error:
+sr_error:
 	return -1;
 }
 
@@ -1734,7 +1730,7 @@ int unixsock_t_reply(str* msg)
 	DBG("body: %.*s\n", body.len, body.s);
 	
 	if (t_lookup_ident(&trans, hash_index, label) < 0) {
-		LOG(L_ERR,"unixsock_t_reply: lookup failed\n");
+		LOG(L_ERR,"ERROR:tm:unixsock_t_reply: lookup failed\n");
 		unixsock_reply_asciiz("481 No such transaction\n");
 		goto err;
 	}
@@ -1744,7 +1740,7 @@ int unixsock_t_reply(str* msg)
 	      */
 	ret = send_reply(trans, icode, &reason, &body, &headers, &to_tag);
 	if (ret < 0) {
-		LOG(L_ERR, "unixsock_t_reply: reply failed\n");
+		LOG(L_ERR, "ERROR:tm:unixsock_t_reply: reply failed\n");
 		unixsock_reply_asciiz("500 Reply failed\n");
 		goto err;
 	}
