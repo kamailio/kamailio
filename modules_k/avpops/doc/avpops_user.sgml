@@ -128,7 +128,7 @@ modparam("avpops","avp_aliases","uuid=I:660;email=s:email_addr;fwd=i:753")
 				identifying an AVP in DB operations.
 			</para>
 			<para>
-				<emphasis>Default value is <quote>0 (no)</quote>.
+				<emphasis>Default value is 0 (no).
 				</emphasis>
 			</para>
 			<example>
@@ -136,7 +136,7 @@ modparam("avpops","avp_aliases","uuid=I:660;email=s:email_addr;fwd=i:753")
 				</title>
 				<programlisting format="linespecific">
 ...
-modparam("avpops","use_domain","1")
+modparam("avpops","use_domain",1)
 ...
 				</programlisting>
 			</example>

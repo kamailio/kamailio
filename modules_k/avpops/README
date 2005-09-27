@@ -161,11 +161,11 @@ modparam("avpops","avp_aliases","uuid=I:660;email=s:email_addr;fwd=i:75
    If the domain part of the an URI should be used for
    identifying an AVP in DB operations.
 
-   Default value is "0 (no)". 
+   Default value is 0 (no). 
 
    Example 1-4. Set use_domain parameter 
 ...
-modparam("avpops","use_domain","1")
+modparam("avpops","use_domain",1)
 ...
      _________________________________________________________
 
