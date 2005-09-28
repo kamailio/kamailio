@@ -26,6 +26,9 @@
  * 2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  */
 
+#ifdef EXTRA_DEBUG
+#include <stdlib.h>   /* required by abort() */
+#endif
 #include "mod_options.h"
 #include "../../sr_module.h"
 #include "../../mem/mem.h"

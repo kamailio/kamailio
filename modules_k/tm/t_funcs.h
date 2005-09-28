@@ -81,7 +81,7 @@ extern int noisy_ctimer;
 */
 #ifdef EXTRA_DEBUG
 int send_pr_buffer( struct retr_buf *rb,
-	void *buf, int len, char* file, char *function, int line );
+	void *buf, int len, char* file, const char *function, int line );
 #define SEND_PR_BUFFER(_rb,_bf,_le ) \
 	send_pr_buffer( (_rb), (_bf), (_le), __FILE__,  __FUNCTION__, __LINE__ )
 #else

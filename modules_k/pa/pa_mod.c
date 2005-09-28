@@ -171,7 +171,7 @@ static void test_mimetype_parser(void)
 	struct mimetype_test *mt = &mimetype_tests[0];
 	DBG("Presence Agent - testing mimetype parser\n");
 	while (mt->string) {
-		int pmt;
+		unsigned int pmt;
 		LOG(L_DBG, "Presence Agent - parsing mimetype %s\n", mt->string);
 		decode_mime_type((char*)mt->string,
 			(char*)(mt->string+strlen(mt->string)), &pmt);

@@ -63,10 +63,11 @@ static int_str fr_inv_timer_avp = (int_str)0;
 static str     fr_inv_timer_str;
 
 
+
 /* ----------------------------------------------------- */
-int send_pr_buffer(	struct retr_buf *rb, void *buf, int len
+int send_pr_buffer( struct retr_buf *rb, void *buf, int len
 #ifdef EXTRA_DEBUG
-						, char* file, char *function, int line
+						, char* file, const char *function, int line
 #endif
 					)
 {
@@ -84,19 +85,6 @@ int send_pr_buffer(	struct retr_buf *rb, void *buf, int len
 		return -1;
 	}
 }
-
-#ifdef _OBSOLETED
-void start_retr( struct retr_buf *rb )
-{
-	if (rb->dst.proto==PROTO_UDP) {
-		rb->retr_list=RT_T1_TO_1;
-		set_timer( &rb->retr_timer, RT_T1_TO_1 );
-	}
-	set_timer( &rb->fr_timer, FR_TIMER_LIST );
-}
-#endif
-
-
 
 
 

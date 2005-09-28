@@ -380,7 +380,8 @@ xmlDocPtr event_body_parse(char *event_body)
 /*
  * apply procedure f to each xmlNodePtr in doc matched by xpath
  */
-void xpath_map(xmlDocPtr doc, char *xpath, void (*f)(xmlNodePtr, void *), void *data)
+void xpath_map(xmlDocPtr doc, char *xpath, void (*f)(xmlNodePtr, void *),
+																void *data)
 {
 	xmlXPathContextPtr context;
 	xmlXPathObjectPtr result;
@@ -388,7 +389,7 @@ void xpath_map(xmlDocPtr doc, char *xpath, void (*f)(xmlNodePtr, void *), void *
 	int i;
 
 	context = xmlXPathNewContext(doc);
-	result = xmlXPathEvalExpression(xpath, context);
+	result = xmlXPathEvalExpression((unsigned char*)xpath, context);
 	if(!result || xmlXPathNodeSetIsEmpty(result->nodesetval)){
 		fprintf(stderr, "xpath_map: no result for xpath=%s\n", xpath);
 		return;
@@ -410,7 +411,7 @@ xmlNodePtr xpath_get_node(xmlDocPtr doc, char *xpath)
 	xmlNodePtr node;
 
 	context = xmlXPathNewContext(doc);
-	result = xmlXPathEvalExpression(xpath, context);
+	result = xmlXPathEvalExpression((unsigned char*)xpath, context);
 	if(xmlXPathNodeSetIsEmpty(result->nodesetval)){
 		fprintf(stderr, "xpath_get_node: no result for xpath=%s\n", xpath);
 		return NULL;
@@ -425,7 +426,7 @@ xmlAttrPtr xmlNodeGetAttrByName(xmlNodePtr node, const char *name)
 {
 	xmlAttrPtr attr = node->properties;
 	while (attr) {
-		if (xmlStrcasecmp(attr->name, name) == 0)
+		if (xmlStrcasecmp(attr->name, (unsigned char*)name) == 0)
 			return attr;
 		attr = attr->next;
 	}
@@ -434,31 +435,32 @@ xmlAttrPtr xmlNodeGetAttrByName(xmlNodePtr node, const char *name)
 
 char *xmlNodeGetAttrContentByName(xmlNodePtr node, const char *name)
 {
-     xmlAttrPtr attr = xmlNodeGetAttrByName(node, name);
-     if (attr)
-	  return xmlNodeGetContent(attr->children);
-     else
-	  return NULL;
+	xmlAttrPtr attr = xmlNodeGetAttrByName(node, name);
+	if (attr)
+		return (char*)xmlNodeGetContent(attr->children);
+	else
+		return NULL;
 }
 
 xmlNodePtr xmlNodeGetChildByName(xmlNodePtr node, const char *name)
 {
 	xmlNodePtr cur = node->children;
 	while (cur) {
-		if (xmlStrcasecmp(cur->name, name) == 0)
+		if (xmlStrcasecmp(cur->name, (unsigned char*)name) == 0)
 			return cur;
 		cur = cur->next;
 	}
 	return NULL;
 }
 
-xmlNodePtr xmlNodeGetNodeByName(xmlNodePtr node, const char *name, const char *ns)
+xmlNodePtr xmlNodeGetNodeByName(xmlNodePtr node, const char *name,
+															const char *ns)
 {
 	xmlNodePtr cur = node;
 	while (cur) {
 		xmlNodePtr match = NULL;
-		if (xmlStrcasecmp(cur->name, name) == 0) {
-			if (!ns || (cur->ns && xmlStrcasecmp(cur->ns->prefix, ns) == 0))
+		if (xmlStrcasecmp(cur->name, (unsigned char*)name) == 0) {
+			if (!ns || (cur->ns && xmlStrcasecmp(cur->ns->prefix, (unsigned char*)ns) == 0))
 				return cur;
 		}
 		match = xmlNodeGetNodeByName(cur->children, name, ns);
@@ -473,7 +475,7 @@ char *xmlNodeGetNodeContentByName(xmlNodePtr root, const char *name, const char 
 {
 	xmlNodePtr node = xmlNodeGetNodeByName(root, name, ns);
 	if (node)
-		return xmlNodeGetContent(node->children);
+		return (char*)xmlNodeGetContent(node->children);
 	else
 		return NULL;
 }
@@ -488,7 +490,7 @@ char *xmlDocGetNodeContentByName(xmlDocPtr doc, const char *name, const char *ns
 {
 	xmlNodePtr node = xmlDocGetNodeByName(doc, name, ns);
 	if (node)
-		return xmlNodeGetContent(node->children);
+		return (char*)xmlNodeGetContent(node->children);
 	else
 		return NULL;
 }
@@ -501,8 +503,8 @@ void xmlNodeMapByName(xmlNodePtr node, const char *name, const char *ns,
 	if (!f)
 		return;
 	while (cur) {
-		if (xmlStrcasecmp(cur->name, name) == 0) {
-			if (!ns || (cur->ns && xmlStrcasecmp(cur->ns->prefix, ns) == 0))
+		if (xmlStrcasecmp(cur->name, (unsigned char*)name) == 0) {
+			if (!ns || (cur->ns && xmlStrcasecmp(cur->ns->prefix, (unsigned char*)ns) == 0))
 				f(cur, data);
 		}
 		/* visit children */
@@ -716,15 +718,17 @@ int mangle_pidf(struct sip_msg* _msg, char* _domain, char* _s2)
 	  if (wav3substatusNode) {
 	       // add note node for Eyebeam with copy of contents of wav3substatus
 	       //LOG(L_ERR, "mangle_pidf -2-\n");
-	       noteNode = xmlNewNode(ns, "note");
+	       noteNode = xmlNewNode(ns, (unsigned char*)"note");
 	       xmlAddChild(presenceNode, noteNode);
-	       xmlNodeSetContent(noteNode, strdup(xmlNodeGetContent(wav3substatusNode)));
+	       xmlNodeSetContent(noteNode, (unsigned char*)
+				strdup((char*)xmlNodeGetContent(wav3substatusNode)));
 	       LOG(L_ERR, "mangle_pidf -3-\n");
 	       patch = 1;
 	  } else if (noteNode) {
 	       //LOG(L_ERR, "mangle_pidf -4-\n");
-	       wav3substatusNode = xmlNewNode(ns, "wav3substatus");
-	       xmlNodeSetContent(wav3substatusNode, strdup(xmlNodeGetContent(noteNode)));
+	       wav3substatusNode = xmlNewNode(ns,(unsigned char*)"wav3substatus");
+	       xmlNodeSetContent(wav3substatusNode, (unsigned char*)
+				strdup((char*)xmlNodeGetContent(noteNode)));
 	       xmlAddChild(presenceNode, wav3substatusNode);
 	       LOG(L_ERR, "mangle_pidf -5-\n");
 	       patch = 1;
@@ -737,7 +741,7 @@ int mangle_pidf(struct sip_msg* _msg, char* _domain, char* _s2)
 	       xmlDocDumpMemory(doc, &new_body, &new_body_len);
 	       if (new_body && new_body_len > 0) {
 		    nbp = pkg_malloc(new_body_len+1);
-		    strncpy(nbp, new_body, new_body_len+1);
+		    strncpy(nbp, (char*)new_body, new_body_len+1);
 		    if (1)
 			 LOG(L_ERR, "mangle_pidf -7- old_body_len=%d new_body_len=%d new_body=%s\n", 
 			     body_len, new_body_len, nbp);
