@@ -105,6 +105,7 @@ int register_watcher(str* _f, str* _t, notcb_t _c, void* _data)
 
 	if (get_urecord(d, _t, &r) > 0) {
 		if (insert_urecord(d, _t, &r) < 0) {
+			unlock_udomain(d);
 			LOG(L_ERR, "register_watcher(): Error while creating a new record\n");
 			return -2;
 		}
@@ -136,6 +137,7 @@ int unregister_watcher(str* _f, str* _t, notcb_t _c, void* _data)
 	lock_udomain(d);
 	
 	if (get_urecord(d, _t, &r) > 0) {
+		unlock_udomain(d);
 		DBG("unregister_watcher(): Record not found\n");
 		return 0;
 	}
