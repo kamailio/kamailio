@@ -295,8 +295,8 @@ AUTO_INCREMENT="SERIAL PRIMARY KEY"
 
 echo "creating database $1 ..."
 
-cat <<EOF
-#sql_query <<EOF
+#cat <<EOF
+sql_query <<EOF
 create database $1;
 $USE_CMD $1;
 
