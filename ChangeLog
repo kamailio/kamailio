@@ -1,4 +1,8 @@
-2005-09-05 11:32  Jan Janak <jan@iptel.org>
+2005-09-29  Jan Janak <jan@iptel.org>
+
+	* usrloc: Missing unlock_udomain added (SER-75)
+
+2005-09-05  Jan Janak <jan@iptel.org>
 
 	* tm: bugfix - terminate timers when canceling a transaction
 
