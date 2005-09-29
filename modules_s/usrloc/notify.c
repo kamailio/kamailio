@@ -82,6 +82,7 @@ int remove_watcher(struct urecord* _r, notcb_t _c, void* _d)
 		if ((ptr->cb == _c) && (ptr->data == _d)) {
 			if (prev) prev->next = ptr->next;
 			else _r->watchers = ptr->next;
+			shm_free(ptr);
 			return 0;
 		}
 		prev = ptr;
