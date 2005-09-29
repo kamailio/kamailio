@@ -133,8 +133,8 @@ static int dbrow2avp(struct db_row *row, int flags, int_str attr,
 			return -2;
 	} else {
 		/* check the validity of value column */
-		if (row->values[0].nul || 
-		(row->values[0].type!=DB_STRING && row->values[0].type!=DB_STR) )
+		if (row->values[0].nul || (row->values[0].type!=DB_STRING &&
+		row->values[0].type!=DB_STR && row->values[0].type!=DB_INT) )
 		{
 			LOG(L_ERR,"ERROR:avpops:dbrow2avp: empty or wrong type for"
 				" 'value' using scheme\n");
@@ -165,8 +165,8 @@ static int dbrow2avp(struct db_row *row, int flags, int_str attr,
 			/* name is ID */
 			if (str2int( &atmp, &uint)==-1)
 			{
-				LOG(L_ERR,"ERROR:avpops:dbrow2avp: name is not ID as flags say"
-					" <%s>\n", atmp.s);
+				LOG(L_ERR,"ERROR:avpops:dbrow2avp: name is not ID as "
+					"flags say <%s>\n", atmp.s);
 				return -1;
 			}
 			avp_attr.n = (int)uint;
@@ -178,22 +178,28 @@ static int dbrow2avp(struct db_row *row, int flags, int_str attr,
 	{
 		vtmp.s = (char*)row->values[0].val.string_val;
 		vtmp.len = strlen(vtmp.s);
-	} else {
+	} else if (row->values[0].type==DB_STR){
 		vtmp = row->values[0].val.str_val;
 	}
-	if (db_flags&AVP_VAL_STR)
-	{
-		/* value is string */
+	if (db_flags&AVP_VAL_STR) {
+		/* value must be saved as string */
+		if (row->values[0].type==DB_INT) {
+			vtmp.s = int2str( (unsigned long)row->values[0].val.int_val,
+				&vtmp.len);
+		}
 		avp_val.s = &vtmp;
 	} else {
-		/* name is ID */
-		if (str2int(&vtmp, &uint)==-1)
-		{
-			LOG(L_ERR,"ERROR:avpops:dbrow2avp: value is not int as flags say"
-				" <%s>\n", vtmp.s);
-			return -1;
+		/* value must be saved as integer */
+		if (row->values[0].type!=DB_INT) {
+			if (vtmp.len==0 || vtmp.s==0 || str2int(&vtmp, &uint)==-1) {
+				LOG(L_ERR,"ERROR:avpops:dbrow2avp: value is not int "
+					"as flags say <%s>\n", vtmp.s);
+				return -1;
+			}
+			avp_val.n = (int)uint;
+		} else {
+			avp_val.n = row->values[0].val.int_val;
 		}
-		avp_val.n = (int)uint;
 	}
 
 	/* added the avp */
