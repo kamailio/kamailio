@@ -93,7 +93,7 @@ int use_domain      = 0;              /* Whether usrloc should use domain part o
 int desc_time_order = 0;              /* By default do not enable timestamp ordering */                  
 
 
-db_con_t* ul_dbh; /* Database connection handle */
+db_con_t* ul_dbh = 0; /* Database connection handle */
 db_func_t ul_dbf;
 
 
@@ -165,7 +165,7 @@ static int mod_init(void)
 {
 	DBG("usrloc - initializing\n");
 
-	     /* Compute the lengths of string parameters */
+	/* Compute the lengths of string parameters */
 	user_col.len = strlen(user_col.s);
 	domain_col.len = strlen(domain_col.s);
 	contact_col.len = strlen(contact_col.s);
@@ -180,10 +180,10 @@ static int mod_init(void)
 	sock_col.len = strlen(sock_col.s);
 	db_url.len = strlen(db_url.s);
 
-	     /* Register cache timer */
+	/* Register cache timer */
 	register_timer(timer, 0, timer_interval);
 
-	     /* Initialize fifo interface */
+	/* Initialize fifo interface */
 	if (init_ul_fifo() < 0) {
 		LOG(L_ERR, "ERROR: usrloc/fifo initialization failed\n");
 		return -1;
@@ -213,14 +213,13 @@ static int mod_init(void)
 		}
 	}
 
-
 	return 0;
 }
 
 
 static int child_init(int _rank)
 {
- 	     /* Shall we use database ? */
+	/* Shall we use database ? */
 	if (db_mode != NO_DB) { /* Yes */
 		ul_dbh = ul_dbf.init(db_url.s); /* Get a new database connection */
 		if (!ul_dbh) {
@@ -242,7 +241,7 @@ static void destroy(void)
 	/* Parent only, synchronize the world
 	* and then nuke it */
 	if (is_main) {
-		if (synchronize_all_udomains() != 0) {
+		if (ul_dbh && synchronize_all_udomains() != 0) {
 			LOG(L_ERR, "timer(): Error while flushing cache\n");
 		}
 		free_all_udomains();
