@@ -1,5 +1,6 @@
 2005-10-04  Jan Janak <jan@iptel.org>
-
+	
+	* tm: timer avp race condition fix backported from head
 	* registrar: Race condition in registered function fixed (SER-79)
 
 2005-09-29  Jan Janak <jan@iptel.org>
