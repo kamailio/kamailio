@@ -785,7 +785,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 			(cseq->method_id==METHOD_CANCEL && is_invite(p_cell)
 				&& p_cell->uac[branch_id].local_cancel.buffer_len )
 			/* method match */
-			|| (cseq->method_id!=METHOD_OTHER)?
+			|| (cseq->method_id!=METHOD_OTHER && p_cell->uas.request)?
 				(cseq->method_id==REQ_LINE(p_cell->uas.request).method_value)
 				:(EQ_STRS(cseq->method,p_cell->method))
 		))
