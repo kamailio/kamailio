@@ -75,7 +75,14 @@ int new_urecord(str* _dom, str* _aor, urecord_t** _r)
  */
 void free_urecord(urecord_t* _r)
 {
+	notify_cb_t* watcher;
 	ucontact_t* ptr;
+
+	while(_r->watchers) {
+		watcher = _r->watchers;
+		_r->watchers = watcher->next;
+		shm_free(watcher);
+	}
 
 	while(_r->contacts) {
 		ptr = _r->contacts;
