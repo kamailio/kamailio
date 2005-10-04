@@ -1,3 +1,7 @@
+2005-10-04  Jan Janak <jan@iptel.org>
+
+	* registrar: Race condition in registered function fixed (SER-79)
+
 2005-09-29  Jan Janak <jan@iptel.org>
 
 	* usrloc: Missing unlock_udomain added (SER-75)
@@ -6,4 +10,4 @@
 
 	* tm: bugfix - terminate timers when canceling a transaction
 
-====================== Release 0.9.4 ==============================
+================================= Release 0.9.4 ==============================
