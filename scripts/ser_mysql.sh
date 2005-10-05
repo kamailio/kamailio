@@ -559,7 +559,6 @@ CREATE TABLE silo(
 CREATE TABLE domain (
   d_id int NOT NULL,
   domain varchar(128) NOT NULL default '',
-  f_disabled TINYINT(1) default 0,
   last_modified datetime NOT NULL default '0000-00-00 00:00:00',
   UNIQUE KEY domain (domain),
   PRIMARY KEY  (d_id, domain)
@@ -572,6 +571,9 @@ CREATE TABLE domain (
 CREATE TABLE customer (
   c_id int NOT NULL AUTO_INCREMENT,
   name varchar(128) NOT NULL,
+  address varchar(255),
+  phone varchar(64),
+  email varchar(255),
   last_modified datetime NOT NULL default '0000-00-00 00:00:00',
   PRIMARY KEY  (c_id)
 ) $TABLE_TYPE;
@@ -644,7 +646,7 @@ CREATE TABLE dom_preferences (
   d_id int NOT NULL,
   att_name varchar(32) NOT NULL,
   att_value varchar(255),
-  PRIMARY KEY  (d_id)
+  PRIMARY KEY  (d_id, att_name, att_value)
 ) $TABLE_TYPE;
 
 #
