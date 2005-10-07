@@ -318,6 +318,9 @@ modparam("uac_redirect","acc_db_table","acc_redirect")
 				</para>
 				</listitem>
 			</itemizedlist>
+			<para>
+			This function can be used from FAILURE_ROUTE.
+			</para>
 			<example>
 				<title><function>set_deny_filter</function> usage</title>
 				<programlisting format="linespecific">
@@ -365,6 +368,9 @@ set_deny_filter(".*@domain1.net","");
 				</para>
 				</listitem>
 			</itemizedlist>
+			<para>
+			This function can be used from FAILURE_ROUTE.
+			</para>
 			<example>
 				<title><function>set_accept_filter</function> usage</title>
 				<programlisting format="linespecific">
@@ -415,6 +421,9 @@ set_accept_filter(".*@domain1.net","");
 			<para>
 				This function will produce no accounting records.
 			</para>
+			<para>
+				This function can be used from FAILURE_ROUTE.
+			</para>
 			<example>
 				<title><function>get_redirects</function> usage</title>
 				<programlisting format="linespecific">
@@ -448,6 +457,9 @@ get_redirects("*");
 			<para>
 				If this function appears in the script, at startup, the module
 				will import the accounting function. Otherwise not.
+			</para>
+			<para>
+			This function can be used from FAILURE_ROUTE.
 			</para>
 			<example>
 				<title><function>get_redirects</function> usage</title>

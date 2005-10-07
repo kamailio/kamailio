@@ -98,6 +98,8 @@ Chapter 1. User's Guide
      * code - Return code.
      * reason - Reason phrase.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-1. sl_send_reply usage
 ...
 sl_send_reply("404", "Not found");
@@ -109,6 +111,8 @@ sl_send_reply("404", "Not found");
    Sends back an error reply describing the nature of the last
    internal error. Usually this function should be used after a
    script function that returned an error code.
+
+   This function can be used from REQUEST_ROUTE.
 
    Example 1-2. sl_reply_error usage
 ...
@@ -138,9 +142,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

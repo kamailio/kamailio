@@ -287,7 +287,10 @@ modparam("pdt", "clean_time", 600)
 		prefix is removed. If the values is <quote>2</quote> the user part
 		of the URI is not changed.
 		</para>
-	    <example>
+	    <para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
 		<title><function>prefix2domain</function> usage</title>
 		<programlisting format="linespecific">
 ...

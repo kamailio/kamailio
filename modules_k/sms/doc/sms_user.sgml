@@ -393,6 +393,9 @@ modparam("sms", "sms_report_type", 1)
 		    </para>
 		</listitem>
 	    </itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 	    <example>
 		<title><function>sms_send_msg_to_net</function> usage</title>
 		<programlisting format="linespecific">
@@ -424,6 +427,9 @@ if (sms_send_msg_to_net("D1"))
 	    <para>
 		The same as the previous one, but use the default network queue.
 	    </para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 	    <example>
 		<title><function>sms_send_msg</function> usage</title>
 		<programlisting format="linespecific">

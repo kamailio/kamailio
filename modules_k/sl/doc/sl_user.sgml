@@ -91,6 +91,9 @@
 		    </para>
 		</listitem>
 	    </itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 	    <example>
 		<title><function>sl_send_reply</function> usage</title>
 		<programlisting format="linespecific">
@@ -109,6 +112,9 @@ sl_send_reply("404", "Not found");
 		Sends back an error reply describing the nature of the last internal error.  Usually
 		this function should be used after a script function that returned an error code.
 	    </para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 	    <example>
 		<title><function>sl_reply_error</function> usage</title>
 		<programlisting format="linespecific">

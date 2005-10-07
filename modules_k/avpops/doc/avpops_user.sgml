@@ -315,6 +315,10 @@ modparam("avpops","db_scheme",
 				</para>
 			</listitem>
 			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>
+			
 			<example>
 				<title><function>avp_db_load</function> usage</title>
 				<programlisting format="linespecific">
@@ -339,6 +343,10 @@ avp_db_load("$ruri","i:123/$some_scheme");
 			<emphasis>avp_db_load(source,name)</emphasis>
 			function. Please refer to its description.
 			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>
+			
 			<example>
 				<title><function>avp_db_store</function> usage</title>
 				<programlisting format="linespecific">
@@ -359,6 +367,9 @@ avp_db_store("$ruri/username","$email");
 			<para>The meaning and usage of the parameters are identical as for
 			<emphasis>avp_db_load(source,name)</emphasis>
 			function. Please refer to its description.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
 			</para>
 			<example>
 				<title><function>avp_db_delete</function> usage</title>
@@ -416,6 +427,9 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
 				</para>
 			</listitem>
 			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>
 			<example>
 				<title><function>avp_write</function> usage</title>
 				<programlisting format="linespecific">
@@ -456,6 +470,9 @@ avp_write("i:333","i:6");
 				</para>
 			</listitem>
 			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>
 			<example>
 				<title><function>avp_delete</function> usage</title>
 				<programlisting format="linespecific">
@@ -510,6 +527,9 @@ avp_delete("");
 				</para>
 			</listitem>
 			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>
 			<example>
 				<title><function>avp_pushto</function> usage</title>
 				<programlisting format="linespecific">
@@ -575,6 +595,9 @@ avp_pushto("$Foo","$bar/g");
 				</para>
 			</listitem>
 			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>
 			<example>
 				<title><function>avp_check</function> usage</title>
 				<programlisting format="linespecific">
@@ -624,6 +647,9 @@ avp_check("s:foo","fm/$fm_avp/g");
 				</para>
 			</listitem>
 			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>
 			<example>
 				<title><function>avp_copy</function> usage</title>
 				<programlisting format="linespecific">
@@ -664,6 +690,9 @@ avp_copy("$old","$new/gd");
 				</para>
 			</listitem>
 			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>
 			<example>
 				<title><function>avp_printf</function> usage</title>
 				<programlisting format="linespecific">
@@ -725,6 +754,9 @@ avp_printf("i:20", "This is a $rm request with the call-id $hdr(call-id)");
 				</para>
 			</listitem>
 			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>
 			<example>
 				<title><function>avp_subst</function> usage</title>
 				<programlisting format="linespecific">
@@ -814,6 +846,9 @@ avp_subst("i:678/i:679/g", "/(.*)@(.*)/\1@$rd/");
 				</para>
 			</listitem>
 			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>
 			<example>
 				<title><function>avp_op</function> usage</title>
 				<programlisting format="linespecific">
@@ -848,6 +883,9 @@ avp_op("$number","sub/$number2/d");
 				</para>
 			</listitem>
 			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>
 			<example>
 				<title><function>is_avp_set</function> usage</title>
 				<programlisting format="linespecific">
@@ -866,6 +904,9 @@ if(is_avp_set("i:678"))
 			<para>
 			Prints the list with all the AVPs from memory. This is only a
 			helper/debug function.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
 			</para>
 			<example>
 				<title><function>avp_print</function> usage</title>

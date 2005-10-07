@@ -134,6 +134,8 @@ modparam("uac","credential","username:domain:password")
 
    display and URI parameters can include pseudo-variables.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-4. uac_replace_from usage
 ...
 uac_replace_from("$avp(s:display)","$avp(s:uri)");
@@ -150,6 +152,8 @@ uac_replace_from("batman","");
 
    URI parameter can include pseudo-variables.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-5. uac_replace_from usage
 ...
 uac_replace_from("sip:batman@gotham.org");
@@ -162,6 +166,8 @@ uac_replace_from("sip:batman@gotham.org");
    use the information stored in header parameter to restore the
    original FROM URI value.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-6. uac_restore_from usage
 ...
 uac_restore_from();
@@ -173,6 +179,8 @@ uac_restore_from();
    This function can be called only from failure route and will
    build the authentication response header and insert it into
    the request without sending anything.
+
+   This function can be used from FAILURE_ROUTE.
 
    Example 1-7. uac_auth usage
 ...
@@ -202,9 +210,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable version should be sent to
    <users@openser.org> and e-mail regarding development versions

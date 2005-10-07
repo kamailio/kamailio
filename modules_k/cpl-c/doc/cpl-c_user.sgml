@@ -423,6 +423,9 @@ modparam("cpl_c","lookup_append_branches",1)
 				</para>
 			</listitem>
 			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE.
+			</para>
 			<example>
 				<title><function>cpl_run_script</function> usage</title>
 				<programlisting format="linespecific">
@@ -457,6 +460,9 @@ cpl_run_script("incoming","force_stateful");
 				itself the necessary replies (stateless - using sl), including 
 				for errors.
 			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE.
+			</para>
 			<example>
 				<title><function>cpl_process_register</function> usage</title>
 				<programlisting format="linespecific">
@@ -482,6 +488,9 @@ if (method=="REGISTER") {
 				Main purpose of this function is to allow integration 
 				between CPL and UserLocation services via same REGISTER
 				messages.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE.
 			</para>
 			<example>
 				<title><function>cpl_process_register_norpl</function> usage

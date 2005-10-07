@@ -178,6 +178,9 @@ modparam("dispatcher", "force_dst", 1)
 			</itemizedlist>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>ds_select_dst</function> usage</title>
 		<programlisting format="linespecific">
@@ -196,6 +199,9 @@ ds_select_dst("1", "0");
  		host and port from R-URI. The parameters have same meaning as for
  		ds_select_dst().
  	    <para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
  	</section>
 	</section>
 	<section>

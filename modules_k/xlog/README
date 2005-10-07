@@ -139,6 +139,9 @@ modparam("xlog", "force_color", 0)
        'L_ERR'.
      * format - The formatted string to be printed.
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE.
+
    Example 1-3. xlog usage
 ...
 xlog("L_ERR", "time [$Tf] method <$rm> r-uri <$ru> 2nd via <$hdr(via[1]
@@ -153,6 +156,9 @@ xlog("L_ERR", "time [$Tf] method <$rm> r-uri <$ru> 2nd via <$hdr(via[1]
    Meaning of the parameters is as follows:
 
      * format - The formatted string to be printed.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE.
 
    Example 1-4. xdbg usage
 ...

@@ -237,6 +237,8 @@ modparam("uac_redirect","acc_db_table","acc_redirect")
      * reset_added - reset only the previous added deny filters;
      * empty - no reset, just add the filter.
 
+   This function can be used from FAILURE_ROUTE.
+
    Example 1-6. set_deny_filter usage
 ...
 set_deny_filter(".*@domain2.net","reset_all");
@@ -259,6 +261,8 @@ set_deny_filter(".*@domain1.net","");
      * reset_added - reset only the previous added accept
        filters;
      * empty - no reset, just add the filter.
+
+   This function can be used from FAILURE_ROUTE.
 
    Example 1-7. set_accept_filter usage
 ...
@@ -289,6 +293,8 @@ set_accept_filter(".*@domain1.net","");
 
    This function will produce no accounting records.
 
+   This function can be used from FAILURE_ROUTE.
+
    Example 1-8. get_redirects usage
 ...
 # max 2 contacts per branch, but no overall limit
@@ -311,6 +317,8 @@ get_redirects("*");
 
    If this function appears in the script, at startup, the module
    will import the accounting function. Otherwise not.
+
+   This function can be used from FAILURE_ROUTE.
 
    Example 1-9. get_redirects usage
 ...
@@ -387,9 +395,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable version should be sent to
    <users@openser.org> and e-mail regarding development versions

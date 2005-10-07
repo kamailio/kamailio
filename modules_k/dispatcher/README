@@ -145,6 +145,8 @@ modparam("dispatcher", "force_dst", 1)
           + "X" - if the algorithm is not implemented, the first
             entry in set is chosen.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-4. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
@@ -156,6 +158,8 @@ ds_select_dst("1", "0");
    The method selects a destination from addresses set and
    rewrites the host and port from R-URI. The parameters have
    same meaning as for ds_select_dst().
+
+   This function can be used from REQUEST_ROUTE.
      _________________________________________________________
 
 1.5. Installation & Running

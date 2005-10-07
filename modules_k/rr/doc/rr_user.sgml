@@ -223,6 +223,9 @@ modparam("rr", "add_username", 1)
 		The function performs loose routing as defined in &rfc3261;.
 		See the &rfc3261; for more details.
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>loose_route</function> usage</title>
 		<programlisting format="linespecific">
@@ -261,6 +264,9 @@ strict_route();
 		will be inserted in the message before any other Record-Route header 
 		fields.
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>record_route</function> usage</title>
 		<programlisting format="linespecific">
@@ -288,6 +294,9 @@ record_route();
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>record_route_preset</function> usage</title>
 		<programlisting format="linespecific">
@@ -317,6 +326,9 @@ record_route_preset("1.2.3.4:5090");
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>add_rr_param</function> usage</title>
 		<programlisting format="linespecific">
@@ -345,6 +357,9 @@ add_rr_param(";nat=yes");
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>check_route_param</function> usage</title>
 		<programlisting format="linespecific">
@@ -385,6 +400,9 @@ if (check_route_param("nat=yes")) {
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>check_route_param</function> usage</title>
 		<programlisting format="linespecific">

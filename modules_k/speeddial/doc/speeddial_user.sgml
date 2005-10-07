@@ -233,6 +233,9 @@ modparam("speeddial", "use_domain", 1)
 		    </para>
 		</listitem>
 	    </itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 	    <example>
 		<title><function>sd_lookup</function> usage</title>
 		<programlisting format="linespecific">

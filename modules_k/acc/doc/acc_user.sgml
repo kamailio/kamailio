@@ -786,6 +786,9 @@ modparam("acc", "dst_leg_avp_id", 110)
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title>acc_log_request usage</title>
 		<programlisting format="linespecific">
@@ -814,6 +817,9 @@ acc_log_request("Some comment");
 			<para><emphasis>table</emphasis> - Database table to be used.</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title>acc_db_request usage</title>
 		<programlisting format="linespecific">
@@ -838,6 +844,9 @@ acc_log_request("Some comment", "Some table");
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title>acc_rad_request usage</title>
 		<programlisting format="linespecific">
@@ -862,6 +871,9 @@ acc_rad_request("Some comment");
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title>acc_diam_request usage</title>
 		<programlisting format="linespecific">

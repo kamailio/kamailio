@@ -225,6 +225,9 @@ modparam("alias_db", "domain_prefix", "sip.")
 		    </para>
 		</listitem>
 	    </itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 	    <example>
 		<title><function>alias_db_lookup()</function> usage</title>
 		<programlisting format="linespecific">

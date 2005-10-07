@@ -191,6 +191,9 @@ modparam("xlog", "force_color", 0)
 		    </para>
 		</listitem>
 	    </itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE.
+		</para>
 	    <example>
 		<title><function>xlog</function> usage</title>
 		<programlisting format="linespecific">
@@ -215,6 +218,10 @@ xlog("L_ERR", "time [$Tf] method <$rm> r-uri <$ru> 2nd via <$hdr(via[1])>\n");
 		    </para>
 		</listitem>
 	    </itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE.
+		</para>
+
 	    <example>
 		<title><function>xdbg</function> usage</title>
 		<programlisting format="linespecific">

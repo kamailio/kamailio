@@ -613,22 +613,9 @@ modparam("jabber", "check_time", 20)
 	    <para>
 		Converts &sip; MESSAGE message to a Jabber message and sends it to Jabber server.
 	    </para>
-	    <example>
-		<title><function>jab_send_message()</function> usage</title>
-		<programlisting format="linespecific">
-...
-jab_send_message();
-...
-</programlisting>
-	    </example>
-	</section>
-	<section>
-	    <title>
-		<function moreinfo="none">jab_send_message()</function>
-	    </title>
-	    <para>
-		Converts &sip; MESSAGE message to a Jabber message and sends it to Jabber server.
-	    </para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 	    <example>
 		<title><function>jab_send_message()</function> usage</title>
 		<programlisting format="linespecific">
@@ -647,6 +634,9 @@ jab_send_message();
 		should be included in To header as: nickname%roomname%conference_server@jdomain . If
 		the nickname is missing, then the &sip; username is used.
 	    </para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 	    <example>
 		<title><function>jab_join_jconf()</function> usage</title>
 		<programlisting format="linespecific">
@@ -664,6 +654,9 @@ jab_join_jconf();
 		Leave a Jabber conference--the nickname, room name and conference server address
 		should be included in To header as: nickname%roomname%conference_server@jdomain .
 	    </para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 	    <example>
 		<title><function>jab_exit_jconf()</function> usage</title>
 		<programlisting format="linespecific">
@@ -681,6 +674,9 @@ jab_exit_jconf();
 	    <para>
 		Register to the Jabber server with associated Jabber <abbrev>ID</abbrev> of the &sip; user.
 	    </para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 	    <example>
 		<title><function>jab_go_online()</function> usage</title>
 		<programlisting format="linespecific">
@@ -698,6 +694,9 @@ jab_go_online();
 	    <para>
 		Log off from Jabber server the associated Jabber <abbrev>ID</abbrev> of the &sip; user.
 	    </para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 	    <example>
 		<title><function>jab_go_offline()</function> usage</title>
 		<programlisting format="linespecific">

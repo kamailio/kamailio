@@ -274,6 +274,9 @@ modparam("avpops","db_scheme",
           + name = avp_spec['/'(table_name|'$'db_scheme)] 
           + avp_spec = ''|'s:'|'i:'|avp_name|avp_alias 
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
+
    Example 1-12. avp_db_load usage
 ...
 avp_db_load("$from","i:678");
@@ -291,6 +294,9 @@ avp_db_load("$ruri","i:123/$some_scheme");
    avp_db_load(source,name) function. Please refer to its
    description.
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
+
    Example 1-13. avp_db_store usage
 ...
 avp_db_store("$to","i:678");
@@ -305,6 +311,9 @@ avp_db_store("$ruri/username","$email");
    The meaning and usage of the parameters are identical as for
    avp_db_load(source,name) function. Please refer to its
    description.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
 
    Example 1-14. avp_db_delete usage
 ...
@@ -334,6 +343,9 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
        is:
           + name = avp_name | avp_alias 
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
+
    Example 1-15. avp_write usage
 ...
 avp_write("$to","i:678");
@@ -355,6 +367,9 @@ avp_write("i:333","i:6");
        syntax is:
           + name = (''|'s:'|'i:'|avp_name|avp_alias)['/'flag] 
           + flag = 'g'|'G' 
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
 
    Example 1-16. avp_delete usage
 ...
@@ -380,6 +395,9 @@ avp_delete("");
        Parameter syntax is:
           + name = ( avp_name | avp_alias )['/'flags] 
           + flags = 'g' 
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
 
    Example 1-17. avp_pushto usage
 ...
@@ -413,6 +431,9 @@ avp_pushto("$Foo","$bar/g");
        Integer values can be given in hexadecimal using notation:
        'i:0xhex_number' (e.g.,: 'i:0xabcd');
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
+
    Example 1-18. avp_check usage
 ...
 avp_check("i:678", "lt/i:345/g");
@@ -437,6 +458,9 @@ avp_check("s:foo","fm/$fm_avp/g");
           + name = ( avp_name | avp_alias ) ['/'flags] 
           + flags = 'g' | 'G' | 'd' | 'D' | 'n' | 'N' | 's' | 'S'
        
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
+
    Example 1-19. avp_copy usage
 ...
 avp_copy("i:678", "s:345/g");
@@ -457,6 +481,9 @@ avp_copy("$old","$new/gd");
        syntax is:
           + name = ( avp_name | avp_alias ) 
      * format - the formatted string to be printed in 'dest' AVP.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
 
    Example 1-20. avp_printf usage
 ...
@@ -488,6 +515,9 @@ avp_printf("i:20", "This is a $rm request with the call-id $hdr(call-id
             \0 for whole matching text 
           + flags = 'g' | 'G' | 'i' | 'i' (g, G - replace all
             matching tokens; i, I - match ignore case) 
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
 
    Example 1-21. avp_subst usage
 ...
@@ -534,6 +564,9 @@ avp_subst("i:678/i:679/g", "/(.*)@(.*)/\1@$rd/");
        Integer values can be given in hexadecimal using notation
        'i:0xhex_number' (e.g.,: 'i:0xabcd');
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
+
    Example 1-22. avp_op usage
 ...
 avp_op("i:678", "add/i:345/g");
@@ -552,6 +585,9 @@ avp_op("$number","sub/$number2/d");
             flags = ('s'|'n') - s = value string; n = value
             number (int) 
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
+
    Example 1-23. is_avp_set usage
 ...
 if(is_avp_set("i:678"))
@@ -563,6 +599,9 @@ if(is_avp_set("i:678"))
 
    Prints the list with all the AVPs from memory. This is only a
    helper/debug function.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
 
    Example 1-24. avp_print usage
 ...

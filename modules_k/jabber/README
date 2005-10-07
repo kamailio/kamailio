@@ -45,11 +45,10 @@ Daniel-Constantin Mierla
         1.6. Exported Functions
 
               1.6.1. jab_send_message()
-              1.6.2. jab_send_message()
-              1.6.3. jab_join_jconf()
-              1.6.4. jab_exit_jconf()
-              1.6.5. jab_go_online()
-              1.6.6. jab_go_offline()
+              1.6.2. jab_join_jconf()
+              1.6.3. jab_exit_jconf()
+              1.6.4. jab_go_online()
+              1.6.5. jab_go_offline()
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -69,11 +68,10 @@ Daniel-Constantin Mierla
    1-12. Set sleep_time parameter
    1-13. Set check_time parameter
    1-14. jab_send_message() usage
-   1-15. jab_send_message() usage
-   1-16. jab_join_jconf() usage
-   1-17. jab_exit_jconf() usage
-   1-18. jab_go_online() usage
-   1-19. jab_go_offline() usage
+   1-15. jab_join_jconf() usage
+   1-16. jab_exit_jconf() usage
+   1-17. jab_go_online() usage
+   1-18. jab_go_offline() usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -450,65 +448,64 @@ modparam("jabber", "check_time", 20)
    Converts SIP MESSAGE message to a Jabber message and sends it
    to Jabber server.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-14. jab_send_message() usage
 ...
 jab_send_message();
 ...
      _________________________________________________________
 
-1.6.2. jab_send_message()
-
-   Converts SIP MESSAGE message to a Jabber message and sends it
-   to Jabber server.
-
-   Example 1-15. jab_send_message() usage
-...
-jab_send_message();
-...
-     _________________________________________________________
-
-1.6.3. jab_join_jconf()
+1.6.2. jab_join_jconf()
 
    Join a Jabber conference--the nickname, room name and
    conference server address should be included in To header as:
    nickname%roomname%conference_server@jdomain . If the nickname
    is missing, then the SIP username is used.
 
-   Example 1-16. jab_join_jconf() usage
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1-15. jab_join_jconf() usage
 ...
 jab_join_jconf();
 ...
      _________________________________________________________
 
-1.6.4. jab_exit_jconf()
+1.6.3. jab_exit_jconf()
 
    Leave a Jabber conference--the nickname, room name and
    conference server address should be included in To header as:
    nickname%roomname%conference_server@jdomain .
 
-   Example 1-17. jab_exit_jconf() usage
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1-16. jab_exit_jconf() usage
 ...
 jab_exit_jconf();
 ...
      _________________________________________________________
 
-1.6.5. jab_go_online()
+1.6.4. jab_go_online()
 
    Register to the Jabber server with associated Jabber ID of the
    SIP user.
 
-   Example 1-18. jab_go_online() usage
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1-17. jab_go_online() usage
 ...
 jab_go_online();
 ...
      _________________________________________________________
 
-1.6.6. jab_go_offline()
+1.6.5. jab_go_offline()
 
    Log off from Jabber server the associated Jabber ID of the SIP
    user.
 
-   Example 1-19. jab_go_offline() usage
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1-18. jab_go_offline() usage
 ...
 jab_go_offline();
 ...
@@ -536,9 +533,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

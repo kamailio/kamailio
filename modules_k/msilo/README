@@ -226,6 +226,8 @@ modparam("msilo", "use_contact", 0)
           + "1" - look first at R-URI and then at URI from "To"
             header.
           + "2" - look only at URI form "To" header.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
      _________________________________________________________
 
 1.4.2. m_dump()
@@ -234,6 +236,8 @@ modparam("msilo", "use_contact", 0)
    going to register to his actual contact address. The method
    should be called when a REGISTER request is received and the
    "Expire" header has a value greater than zero.
+
+   This function can be used from REQUEST_ROUTE.
      _________________________________________________________
 
 1.5. Installation & Running
@@ -469,9 +473,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

@@ -261,6 +261,9 @@ modparam("msilo", "use_contact", 0)
 		    </itemizedlist>
 		</listitem>
 	    </itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 	</section>
 	<section>
 	    <title><function moreinfo="none">m_dump()</function></title>
@@ -269,6 +272,9 @@ modparam("msilo", "use_contact", 0)
 		actual contact address. The method should be called when a REGISTER request is
 		received and the <quote>Expire</quote> header has a value greater than zero.
 	    </para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 	</section>
     </section>
     <section>

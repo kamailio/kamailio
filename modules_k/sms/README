@@ -313,6 +313,8 @@ modparam("sms", "sms_report_type", 1)
 
      * network_name - Name of network.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-9. sms_send_msg_to_net usage
 ...
 if (sms_send_msg_to_net("D1"))
@@ -337,6 +339,8 @@ if (sms_send_msg_to_net("D1"))
 
    The same as the previous one, but use the default network
    queue.
+
+   This function can be used from REQUEST_ROUTE.
 
    Example 1-10. sms_send_msg usage
 ...
@@ -381,9 +385,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

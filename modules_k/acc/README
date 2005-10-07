@@ -663,6 +663,8 @@ modparam("acc", "dst_leg_avp_id", 110)
 
      * comment - Comment to be appended.
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
    Example 1-27. acc_log_request usage
 ...
 acc_log_request("Some comment");
@@ -680,6 +682,8 @@ acc_log_request("Some comment");
      * comment - Comment to be appended.
      * table - Database table to be used.
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
    Example 1-28. acc_db_request usage
 ...
 acc_log_request("Some comment", "Some table");
@@ -695,6 +699,8 @@ acc_log_request("Some comment", "Some table");
 
      * comment - Comment to be appended.
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
    Example 1-29. acc_rad_request usage
 ...
 acc_rad_request("Some comment");
@@ -709,6 +715,8 @@ acc_rad_request("Some comment");
    Meaning of the parameters is as follows:
 
      * comment - Comment to be appended.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1-30. acc_diam_request usage
 ...
@@ -738,9 +746,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

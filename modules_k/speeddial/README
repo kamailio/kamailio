@@ -207,6 +207,8 @@ modparam("speeddial", "use_domain", 1)
      * table - The name of the table storing the speed dial
        records.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-9. sd_lookup usage
 ...
 if(uri=~"sip:[0-9]{2}@.*")
@@ -376,9 +378,9 @@ Chapter 3. Frequently Asked Questions
    answered on one of OpenSER mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    3.2. How can I report a bug?
 

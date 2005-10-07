@@ -221,6 +221,8 @@ modparam("rr", "add_username", 1)
    The function performs loose routing as defined in RFC3261. See
    the RFC3261 for more details.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-6. loose_route usage
 ...
 loose_route();
@@ -245,6 +247,8 @@ strict_route();
    field will be inserted in the message before any other
    Record-Route header fields.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-8. record_route usage
 ...
 record_route();
@@ -259,6 +263,8 @@ record_route();
    Meaning of the parameters is as follows:
 
      * string - String to be inserted into the header field.
+
+   This function can be used from REQUEST_ROUTE.
 
    Example 1-9. record_route_preset usage
 ...
@@ -277,6 +283,8 @@ record_route_preset("1.2.3.4:5090");
      * param - String containing the URI parameter to be added.
        It must follow the ";name=value" scheme.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-10. add_rr_param usage
 ...
 add_rr_param(";nat=yes");
@@ -294,6 +302,8 @@ add_rr_param(";nat=yes");
 
      * re - regular expression to check against the Route URI
        parameters.
+
+   This function can be used from REQUEST_ROUTE.
 
    Example 1-11. check_route_param usage
 ...
@@ -322,6 +332,8 @@ if (check_route_param("nat=yes")) {
      * dir - string containing the direction to be checked. It
        may be "upstream" (from UAS to UAC) or "downstream" (UAC
        to UAS).
+
+   This function can be used from REQUEST_ROUTE.
 
    Example 1-12. check_route_param usage
 ...

@@ -336,6 +336,8 @@ modparam("cpl_c","lookup_append_branches",1)
        time, if returning to script, it will be in stateless mode
        (easy to continue the routing script execution)
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-13. cpl_run_script usage
 ...
 cpl_run_script("incoming","force_stateful");
@@ -364,6 +366,8 @@ cpl_run_script("incoming","force_stateful");
    itself the necessary replies (stateless - using sl), including
    for errors.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-14. cpl_process_register usage
 ...
 if (method=="REGISTER") {
@@ -380,6 +384,8 @@ if (method=="REGISTER") {
 
    Main purpose of this function is to allow integration between
    CPL and UserLocation services via same REGISTER messages.
+
+   This function can be used from REQUEST_ROUTE.
 
    Example 1-15. cpl_process_register_norpl usage 
 ...
@@ -418,9 +424,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

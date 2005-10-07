@@ -165,6 +165,9 @@ modparam("uac","credential","username:domain:password")
 			<emphasis>display</emphasis> and <emphasis>URI</emphasis> parameters
 			can include pseudo-variables.
 			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE.
+			</para>
 			<example>
 				<title><function>uac_replace_from</function> usage</title>
 				<programlisting format="linespecific">
@@ -188,6 +191,9 @@ uac_replace_from("batman","");
 			<para>
 			<emphasis>URI</emphasis> parameter can include pseudo-variables.
 			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE.
+			</para>
 			<example>
 				<title><function>uac_replace_from</function> usage</title>
 				<programlisting format="linespecific">
@@ -206,6 +212,9 @@ uac_replace_from("sip:batman@gotham.org");
 			use the information stored in header parameter to restore
 			the original FROM URI value.
 			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE.
+			</para>
 			<example>
 				<title><function>uac_restore_from</function> usage</title>
 				<programlisting format="linespecific">
@@ -223,6 +232,9 @@ uac_restore_from();
 			This function can be called only from failure route and will 
 			build the authentication response header and insert it into the
 			request without sending anything.
+			</para>
+			<para>
+			This function can be used from FAILURE_ROUTE.
 			</para>
 			<example>
 				<title><function>uac_auth</function> usage</title>

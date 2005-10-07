@@ -159,6 +159,8 @@ modparam("auth_diameter", "use_domain", 1)
      * realm - the realm to be use for authentication and
        authorization.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-5. diameter_www_authorize usage
 ...
 if(!diameter_www_authorize("siphub.net"))
@@ -181,6 +183,8 @@ if(!diameter_www_authorize("siphub.net"))
      * realm - the realm to be use for authentication and
        authorization.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-6. diameter_proxy_authorize usage
 ...
 if(!diameter_proxy_authorize("siphub.net"))
@@ -201,6 +205,8 @@ if(!diameter_proxy_authorize("siphub.net"))
        can be: "Request-URI", "From", "To" or "Credentials".
      * group - the group name where to check if the user is part
        of.
+
+   This function can be used from REQUEST_ROUTE.
 
    Example 1-7. diameter_is_user_in usage
 ...
@@ -238,9 +244,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions
