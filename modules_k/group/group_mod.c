@@ -217,7 +217,9 @@ static int hf_fixup(void** param, int param_no)
 			gcp->id = 5;
 		}
 		*param = (void*)gcp;
-		pkg_free(ptr);
+		/* do not free all the time, needed by pseudo-variable spec */
+		if(gcp->id != 5)
+			pkg_free(ptr);
 	} else if (param_no == 2) {
 		s = (str*)pkg_malloc(sizeof(str));
 		if (!s) {
