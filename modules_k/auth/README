@@ -206,6 +206,8 @@ modparam("auth", "rpid_avp", "i:13")
        user agents that cannot handle request without qop
        parameter too.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-7. www_challenge usage
 ...
 if (www_authorize("siphub.net", "subscriber")) {
@@ -243,6 +245,8 @@ if (www_authorize("siphub.net", "subscriber")) {
        user agents that cannot handle request without qop
        parameter too.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-8. proxy_challenge usage
 ...
 if (!proxy_authorize("", "subscriber)) {
@@ -262,6 +266,8 @@ if (!proxy_authorize("", "subscriber)) {
    The function must be called after www_authorize or
    proxy_authorize.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-9. consume_credentials example
 ...
 if (www_authorize("", "subscriber)) {
@@ -279,6 +285,8 @@ if (www_authorize("", "subscriber)) {
    fails, if no such SIP URI exists (i.e. radius server or
    database didn't provide this information).
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-10. is_rpid_user_e164 usage
 ...
 if (is_rpid_user_e164()) {
@@ -294,6 +302,9 @@ if (is_rpid_user_e164()) {
    SIP URI received from the database or radius server followed
    by the value of module parameter radius_rpid_suffix. The
    function does nothing if no saved SIP URI exists.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
 
    Example 1-11. append_rpid_hf usage
 ...
@@ -317,6 +328,9 @@ append_rpid_hf();  # Append Remote-Party-ID header field
      * suffix - Suffix of the Remote-Party-ID header field. The
        string will be appended at the end of the header field. It
        can be used to set various URI parameters, for example.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
 
    Example 1-12. append_rpid_hf(prefix, suffix) usage
 ...
@@ -347,9 +361,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

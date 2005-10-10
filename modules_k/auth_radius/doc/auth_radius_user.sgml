@@ -175,6 +175,9 @@ modparam("auth_radius", "service_type", 15)
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function moreinfo="none">radius_www_authorize</function> usage</title>
 		<programlisting format="linespecific">
@@ -215,6 +218,9 @@ if (!radius_www_authorize("siphub.net")) {
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title>proxy_authorize usage</title>
 		<programlisting format="linespecific">

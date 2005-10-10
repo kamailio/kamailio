@@ -171,6 +171,9 @@ modparam("avp_radius", "callee_service_type", 19)
 		<quote>caller</quote> or <quote>digest</quote>, and by
 		<quote>callee_</quote>, if parameter is <quote>callee</quote>.
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function moreinfo="none">avp_load_radius()</function> usage</title>
 		<programlisting format="linespecific">

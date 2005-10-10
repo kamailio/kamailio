@@ -199,6 +199,10 @@ modparam("auth", "rpid_avp", "i:13")
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+
 		<example>
 		<title>www_challenge usage</title>
 		<programlisting format="linespecific">
@@ -249,6 +253,9 @@ if (www_authorize("siphub.net", "subscriber")) {
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title>proxy_challenge usage</title>
 		<programlisting format="linespecific">
@@ -274,6 +281,9 @@ if (!proxy_authorize("", "subscriber)) {
 		<function moreinfo="none">www_authorize</function> or 
 		<function moreinfo="none">proxy_authorize</function>. 
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title>consume_credentials example</title>
 		<programlisting format="linespecific">
@@ -296,6 +306,9 @@ if (www_authorize("", "subscriber)) {
 		in its user part.  Check fails, if no such SIP URI exists 
 		(i.e. radius server or database didn't provide this information).
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title>is_rpid_user_e164 usage</title>
 		<programlisting format="linespecific">
@@ -316,6 +329,10 @@ if (is_rpid_user_e164()) {
 		received from the database or radius server followed by the value of 
 		module parameter radius_rpid_suffix.  The function does nothing if 
 		no saved SIP URI exists.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		BRANCH_ROUTE.
 		</para>
 		<example>
 		<title>append_rpid_hf usage</title>
@@ -354,6 +371,10 @@ append_rpid_hf();  # Append Remote-Party-ID header field
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		BRANCH_ROUTE.
+		</para>
 		<example>
 		<title>append_rpid_hf(prefix, suffix) usage</title>
 		<programlisting format="linespecific">

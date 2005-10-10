@@ -246,6 +246,9 @@ modparam("auth_db", "load_credentials", "i:13=rpid;email_address")
 		    </para>
 		</listitem>
 	    </itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 	    <example>
 		<title><function moreinfo="none">www_authorize</function> usage</title>
 		<programlisting format="linespecific">
@@ -286,6 +289,9 @@ if (www_authorize("siphub.net", "subscriber")) {
 		    </para>
 		</listitem>
 	    </itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 	    <example>
 		<title>proxy_authorize usage</title>
 		<programlisting format="linespecific">

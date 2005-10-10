@@ -213,6 +213,9 @@ modparam("group", "use_domain", 1)
 		    </para>
 		</listitem>
 	    </itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 	    <example>
 		<title><function>is_user_in</function> usage</title>
 		<programlisting format="linespecific">
