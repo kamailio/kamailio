@@ -72,17 +72,6 @@ static int mod_init(void);
 
 static int challenge_fixup(void** param, int param_no);
 
-/*  
- * Convert char* parameter to str* parameter   
- */
-static int str_fixup(void** param, int param_no);
-
-
-/*
- * Convert both parameters to str* representation
- */
-static int rpid_fixup(void** param, int param_no);
-
 
 /*
  * Pointer to reply function in stateless module
@@ -115,7 +104,7 @@ static cmd_export_t cmds[] = {
 	{"consume_credentials", consume_credentials,     0, 0,               REQUEST_ROUTE},
 	{"is_rpid_user_e164",   is_rpid_user_e164,       0, 0,               REQUEST_ROUTE},
         {"append_rpid_hf",      append_rpid_hf,          0, 0,               REQUEST_ROUTE|BRANCH_ROUTE},
-	{"append_rpid_hf",      append_rpid_hf_p,        2, rpid_fixup,      REQUEST_ROUTE|BRANCH_ROUTE},
+	{"append_rpid_hf",      append_rpid_hf_p,        2, fixup_str_12,    REQUEST_ROUTE|BRANCH_ROUTE},
 	{"bind_auth",           (cmd_function)bind_auth, 0, 0,               0            },
 	{0, 0, 0, 0, 0}
 };
@@ -221,60 +210,11 @@ static void destroy(void)
 
 static int challenge_fixup(void** param, int param_no)
 {
-	unsigned long qop;
-	int err;
-	
 	if (param_no == 1) {
-		return str_fixup(param, param_no);
+		return fixup_str_12(param, param_no);
 	} else if (param_no == 2) {
-		qop = str2s(*param, strlen(*param), &err);
-		
-		if (err == 0) {
-			pkg_free(*param);
-			*param=(void*)qop;
-		} else {
-			LOG(L_ERR, "challenge_fixup(): Bad number <%s>\n",
-			    (char*)(*param));
-			return E_UNSPEC;
-		}
+		return fixup_int_12(param, param_no);
 	}
 
 	return 0;
-}
-
-
-/*  
- * Convert char* parameter to str* parameter   
- */
-static int str_fixup(void** param, int param_no)
-{
-	str* s;
-	
-	if (param_no == 1) {
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) {
-			LOG(L_ERR, "str_fixup(): No memory left\n");
-			return E_UNSPEC;
-		}
-		
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
-	}
-	
-	return 0;
-}
-
-
-/*
- * Convert both parameters to str* representation
- */
-static int rpid_fixup(void** param, int param_no)
-{
-       if (param_no == 1) {
-               return str_fixup(param, 1);
-       } else if (param_no == 2) {
-               return str_fixup(param, 1);
-       }
-       return 0;
 }
