@@ -62,7 +62,6 @@ void *rh;
 auth_api_t auth_api;
 
 static int mod_init(void);                        /* Module initialization function */
-static int str_fixup(void** param, int param_no); /* char* -> str* */
 
 
 /*
@@ -76,8 +75,8 @@ static int service_type = -1;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"radius_www_authorize",   radius_www_authorize,   1, str_fixup, REQUEST_ROUTE},
-	{"radius_proxy_authorize", radius_proxy_authorize, 1, str_fixup, REQUEST_ROUTE},
+	{"radius_www_authorize",   radius_www_authorize,   1, fixup_str_1, REQUEST_ROUTE},
+	{"radius_proxy_authorize", radius_proxy_authorize, 1, fixup_str_1, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -174,25 +173,3 @@ static int mod_init(void)
 	return 0;
 }
 
-
-/*
- * Convert char* parameter to str* parameter
- */
-static int str_fixup(void** param, int param_no)
-{
-	str* s;
-
-	if (param_no == 1) {
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) {
-			LOG(L_ERR, "auth_radius: str_fixup(): No memory left\n");
-			return E_UNSPEC;
-		}
-
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
-	}
-
-	return 0;
-}

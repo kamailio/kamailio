@@ -105,31 +105,29 @@ static int append_hf(struct sip_msg* msg, char* str1, char* str2);
 static int append_urihf(struct sip_msg* msg, char* str1, char* str2);
 static int append_time_f(struct sip_msg* msg, char* , char *);
 
-static int fixup_regex(void**, int);
 static int fixup_substre(void**, int);
-static int str_fixup(void** param, int param_no);
 
 static int mod_init(void);
 
 
 static cmd_export_t cmds[]={
-	{"search",           search_f,          1, fixup_regex, 
+	{"search",           search_f,          1, fixup_regex_1, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
-	{"search_append",    search_append_f,   2, fixup_regex, 
+	{"search_append",    search_append_f,   2, fixup_regex_1, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
-	{"replace",          replace_f,         2, fixup_regex, 
+	{"replace",          replace_f,         2, fixup_regex_1, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
-	{"replace_all",      replace_all_f,     2, fixup_regex, 
+	{"replace_all",      replace_all_f,     2, fixup_regex_1, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
 	{"append_to_reply",  append_to_reply_f, 1, 0, 
 			REQUEST_ROUTE},
-	{"append_hf",        append_hf,         1, str_fixup,
+	{"append_hf",        append_hf,         1, fixup_str_1,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE | BRANCH_ROUTE}, 
-	{"append_urihf",     append_urihf,      2, str_fixup,   
+	{"append_urihf",     append_urihf,      2, fixup_str_12,   
 			REQUEST_ROUTE|FAILURE_ROUTE},
-	{"remove_hf",        remove_hf_f,         1, str_fixup,
+	{"remove_hf",        remove_hf_f,         1, fixup_str_1,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
-	{"is_present_hf",        is_present_hf_f,         1, str_fixup,
+	{"is_present_hf",        is_present_hf_f,         1, fixup_str_1,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
 	{"subst",            subst_f,             1, fixup_substre,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
@@ -479,27 +477,6 @@ static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 
 
 
-static int fixup_regex(void** param, int param_no)
-{
-	regex_t* re;
-
-	DBG("module - fixing %s\n", (char*)(*param));
-	if (param_no!=1) return 0;
-	if ((re=pkg_malloc(sizeof(regex_t)))==0) return E_OUT_OF_MEM;
-	if (regcomp(re, *param, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ){
-		pkg_free(re);
-		LOG(L_ERR, "ERROR: %s : bad re %s\n", exports.name, (char*)*param);
-		return E_BAD_RE;
-	}
-	/* free string */
-	pkg_free(*param);
-	/* replace it with the compiled re */
-	*param=re;
-	return 0;
-}
-
-
-
 static int fixup_substre(void** param, int param_no)
 {
 	struct subst_expr* se;
@@ -621,26 +598,4 @@ static int append_hf(struct sip_msg *msg, char *str1, char *str2 )
 static int append_urihf(struct sip_msg *msg, char *str1, char *str2 )
 {
 	return append_hf_helper(msg, (str *) str1, (str *) str2);
-}
-
-
-
-/*
- * Convert char* parameter to str* parameter
- */
-static int str_fixup(void** param, int param_no)
-{
-	str* s;
-
-	s = (str*)pkg_malloc(sizeof(str));
-	if (!s) {
-		LOG(L_ERR, "str_fixup(): No memory left\n");
-		return E_UNSPEC;
-	}
-
-	s->s = (char*)*param;
-	s->len = strlen(s->s);
-	*param = (void*)s;
-
-	return 0;
 }

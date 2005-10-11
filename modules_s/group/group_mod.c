@@ -189,7 +189,6 @@ static void destroy(void)
 static int hf_fixup(void** param, int param_no)
 {
 	void* ptr;
-	str* s;
 
 	if (param_no == 1) {
 		ptr = *param;
@@ -209,15 +208,7 @@ static int hf_fixup(void** param, int param_no)
 
 		pkg_free(ptr);
 	} else if (param_no == 2) {
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) {
-			LOG(L_ERR, "hf_fixup(): No memory left\n");
-			return E_UNSPEC;
-		}
-
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
+		return fixup_str_12(param, param_no);
 	}
 
 	return 0;

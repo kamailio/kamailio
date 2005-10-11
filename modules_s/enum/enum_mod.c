@@ -50,13 +50,6 @@ static int mod_init(void);
 
 
 /*
- * Fixup functions
- */
-static int str_fixup(void** param, int param_no);
-static int enum_fixup(void** param, int param_no);
-
-
-/*
  * Module parameter variables
  */
 char* domain_suffix = "e164.arpa.";
@@ -75,10 +68,10 @@ str service;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"enum_query",        enum_query_0,      0, 0,          REQUEST_ROUTE},
-	{"enum_query",        enum_query_1,      1, str_fixup,  REQUEST_ROUTE},
-	{"enum_query",        enum_query_2,      2, enum_fixup, REQUEST_ROUTE},
-	{"is_from_user_e164", is_from_user_e164, 0, 0,          REQUEST_ROUTE},
+	{"enum_query",        enum_query_0,      0, 0,            REQUEST_ROUTE},
+	{"enum_query",        enum_query_1,      1, fixup_str_1,  REQUEST_ROUTE},
+	{"enum_query",        enum_query_2,      2, fixup_str_12, REQUEST_ROUTE},
+	{"is_from_user_e164", is_from_user_e164, 0, 0,            REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -123,38 +116,3 @@ static int mod_init(void)
 	return 0;
 }
 
-
-/*
- * Convert char* parameter to str* parameter
- */
-static int str_fixup(void** param, int param_no)
-{
-	str* s;
-
-	if (param_no == 1) {
-		s = (str*)malloc(sizeof(str));
-		if (!s) {
-			LOG(L_ERR, "authorize_fixup(): No memory left\n");
-			return E_UNSPEC;
-		}
-
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
-	}
-
-	return 0;
-}
-
-/*
- * Convert both enum_query parameters to str* representation
- */
-static int enum_fixup(void** param, int param_no)
-{
-       if (param_no == 1) {
-               return str_fixup(param, 1);
-       } else if (param_no == 2) {
-               return str_fixup(param, 1);
-       }
-       return 0;
-}

@@ -55,21 +55,20 @@ static int flags2attr(struct sip_msg*, char*, char*);
 static int avp_exists (struct sip_msg*, char*, char*);
 
 static int iattr_fixup(void** param, int param_no);
-static int str_fixup(void** param, int param_no);
 
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"set_iattr",    set_iattr,    2, iattr_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"flags2attr",   flags2attr,   0, 0,           REQUEST_ROUTE | FAILURE_ROUTE},
-	{"set_sattr",    set_sattr,    2, str_fixup,   REQUEST_ROUTE | FAILURE_ROUTE},
-	{"uri2attr",     uri2attr,     1, str_fixup,   REQUEST_ROUTE | FAILURE_ROUTE},
-	{"print_sattr",  print_sattr,  1, str_fixup,   REQUEST_ROUTE | FAILURE_ROUTE},
-	{"attr2uri",     attr2uri,     1, str_fixup,   REQUEST_ROUTE | FAILURE_ROUTE},
-	{"is_sattr_set", is_sattr_set, 1, str_fixup,   REQUEST_ROUTE | FAILURE_ROUTE},
-	{"avp_exists",   avp_exists,   2, str_fixup,   REQUEST_ROUTE | FAILURE_ROUTE},
+	{"set_iattr",    set_iattr,    2, iattr_fixup,  REQUEST_ROUTE | FAILURE_ROUTE},
+	{"flags2attr",   flags2attr,   0, 0,            REQUEST_ROUTE | FAILURE_ROUTE},
+	{"set_sattr",    set_sattr,    2, fixup_str_12, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"uri2attr",     uri2attr,     1, fixup_str_12, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"print_sattr",  print_sattr,  1, fixup_str_12, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"attr2uri",     attr2uri,     1, fixup_str_12, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"is_sattr_set", is_sattr_set, 1, fixup_str_12, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"avp_exists",   avp_exists,   2, fixup_str_12, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -269,56 +268,11 @@ static int avp_exists(struct sip_msg* msg, char* key, char* value)
 
 static int iattr_fixup(void** param, int param_no)
 {
-	unsigned long num;
-	int err;
-	
-	str* s;
-	
 	if (param_no == 1) {
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) {
-			LOG(L_ERR, "iattr_fixup: No memory left\n");
-			return E_UNSPEC;
-		}
-		
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
+		return fixup_str_12(param, param_no);
 	} else if (param_no == 2) {
-		num = str2s(*param, strlen(*param), &err);
-		
-		if (err == 0) {
-			pkg_free(*param);
-			*param=(void*)num;
-		} else {
-			LOG(L_ERR, "iattr_fixup: Bad number <%s>\n",
-			    (char*)(*param));
-			return E_UNSPEC;
-		}
+		return fixup_int_12(param, param_no);
 	}
 
-	return 0;
-}
-
-
-/*  
- * Convert char* parameter to str* parameter   
- */
-static int str_fixup(void** param, int param_no)
-{
-	str* s;
-	
-	if (param_no == 1 || param_no == 2 ) {
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) {
-			LOG(L_ERR, "str_fixup: No memory left\n");
-			return E_UNSPEC;
-		}
-		
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
-	}
-	
 	return 0;
 }

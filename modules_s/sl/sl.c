@@ -76,14 +76,13 @@ MODULE_VERSION
 
 static int w_sl_send_reply(struct sip_msg* msg, char* str, char* str2);
 static int w_sl_reply_error(struct sip_msg* msg, char* str, char* str2);
-static int fixup_sl_send_reply(void** param, int param_no);
 static int mod_init(void);
 static void mod_destroy();
 
 
 static cmd_export_t cmds[]={
-	{"sl_send_reply",  w_sl_send_reply,  2, fixup_sl_send_reply, REQUEST_ROUTE},
-	{"sl_reply_error", w_sl_reply_error, 0, 0,                   REQUEST_ROUTE},
+	{"sl_send_reply",  w_sl_send_reply,  2, fixup_int_1, REQUEST_ROUTE},
+	{"sl_reply_error", w_sl_reply_error, 0, 0,           REQUEST_ROUTE},
 	{0,0,0,0,0}
 };
 
@@ -132,33 +131,6 @@ static void mod_destroy()
 	sl_stats_destroy();
 	sl_shutdown();
 }
-
-
-
-
-static int fixup_sl_send_reply(void** param, int param_no)
-{
-	unsigned long code;
-	int err;
-
-	if (param_no==1){
-		code=str2s(*param, strlen(*param), &err);
-		if (err==0){
-			pkg_free(*param);
-			*param=(void*)code;
-			return 0;
-		}else{
-			LOG(L_ERR, "SL module:fixup_sl_send_reply: bad  number <%s>\n",
-					(char*)(*param));
-			return E_UNSPEC;
-		}
-	}
-	return 0;
-}
-
-
-
-
 
 
 static int w_sl_send_reply(struct sip_msg* msg, char* str, char* str2)

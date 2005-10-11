@@ -69,7 +69,7 @@ static int child_init(int rank);
 static int mod_init(void);
 
 
-static int str_fixup(void** param, int param_no);
+static int authdb_fixup(void** param, int param_no);
 
 
 /*
@@ -117,8 +117,8 @@ int credentials_n;         /* Number of credentials in the list */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"www_authorize",   www_authorize,   2, str_fixup, REQUEST_ROUTE},
-	{"proxy_authorize", proxy_authorize, 2, str_fixup, REQUEST_ROUTE},
+	{"www_authorize",   www_authorize,   2, authdb_fixup, REQUEST_ROUTE},
+	{"proxy_authorize", proxy_authorize, 2, authdb_fixup, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -222,39 +222,30 @@ static void destroy(void)
 /*
  * Convert char* parameter to str* parameter
  */
-static int str_fixup(void** param, int param_no)
+static int authdb_fixup(void** param, int param_no)
 {
 	db_con_t* dbh;
-	str* s;
 	int ver;
 	str name;
 
 	if (param_no == 1) {
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) {
-			LOG(L_ERR, "str_fixup(): No memory left\n");
-			return E_UNSPEC;
-		}
-
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
+		return fixup_str_12(param, param_no);
 	} else if (param_no == 2) {
 		name.s = (char*)*param;
 		name.len = strlen(name.s);
 
 		dbh = auth_dbf.init(db_url);
 		if (!dbh) {
-			LOG(L_ERR, "auth_db:str_fixup: Unable to open database connection\n");
+			LOG(L_ERR, "authdb_fixup: Unable to open database connection\n");
 			return -1;
 		}
 		ver = table_version(&auth_dbf, dbh, &name);
 		auth_dbf.close(dbh);
 		if (ver < 0) {
-			LOG(L_ERR, "auth_db:str_fixup: Error while querying table version\n");
+			LOG(L_ERR, "authdb_fixup: Error while querying table version\n");
 			return -1;
 		} else if (ver < TABLE_VERSION) {
-			LOG(L_ERR, "auth_db:str_fixup: Invalid table version (use ser_mysql.sh reinstall)\n");
+			LOG(L_ERR, "authdb_fixup: Invalid table version (use ser_mysql.sh reinstall)\n");
 			return -1;
 		}
 	}

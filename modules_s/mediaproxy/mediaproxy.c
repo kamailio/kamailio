@@ -138,7 +138,6 @@ static int UseMediaProxy(struct sip_msg *msg, char *str1, char *str2);
 static int EndMediaSession(struct sip_msg *msg, char *str1, char *str2);
 
 static int mod_init(void);
-static int fixstring2int(void **param, int param_count);
 
 static Bool testPrivateContact(struct sip_msg* msg);
 static Bool testSourceAddress(struct sip_msg* msg);
@@ -191,7 +190,7 @@ static cmd_export_t commands[] = {
     {"fix_contact",       FixContact,      0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
     {"use_media_proxy",   UseMediaProxy,   0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
     {"end_media_session", EndMediaSession, 0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
-    {"client_nat_test",   ClientNatTest,   1, fixstring2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
+    {"client_nat_test",   ClientNatTest,   1, fixup_int_1, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
     {0, 0, 0, 0, 0}
 };
 
@@ -1590,29 +1589,3 @@ mod_init(void)
 
     return 0;
 }
-
-
-// convert string parameter to integer for functions that expect an integer
-static int
-fixstring2int(void **param, int param_count)
-{
-    unsigned long number;
-    int err;
-
-    if (param_count == 1) {
-        number = str2s(*param, strlen(*param), &err);
-        if (err == 0) {
-            pkg_free(*param);
-            *param = (void*)number;
-            return 0;
-        } else {
-            LOG(L_ERR, "error: mediaproxy/fixstring2int(): bad number `%s'\n",
-                (char*)(*param));
-            return E_CFG;
-        }
-    }
-
-    return 0;
-}
-
-

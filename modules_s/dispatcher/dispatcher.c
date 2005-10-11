@@ -63,10 +63,8 @@ static int w_ds_select_dst(struct sip_msg*, char*, char*);
 
 void destroy(void);
 
-static int ds_fixup(void** param, int param_no);
-
 static cmd_export_t cmds[]={
-	{"ds_select_dst", w_ds_select_dst, 2, ds_fixup, REQUEST_ROUTE},
+	{"ds_select_dst", w_ds_select_dst, 2, fixup_str_12, REQUEST_ROUTE},
 	{0,0,0,0,0}
 };
 
@@ -135,25 +133,5 @@ void destroy(void)
 {
 	DBG("DISPATCHER: destroy module ...\n");
 	ds_destroy_list();
-}
-
-static int ds_fixup(void** param, int param_no)
-{
-	long n;
-	int err;
-	if(param_no==1 || param_no==2)
-	{
-		n = str2s(*param, strlen(*param), &err);
-		if (err == 0)
-		{
-			pkg_free(*param);
-			*param=(void*)n;
-		} else {
-			LOG(L_ERR, "DISPATCHER:ds_fixup: Bad number <%s>\n",
-			    (char*)(*param));
-			return E_UNSPEC;
-		}
-	}
-	return 0;
 }
 

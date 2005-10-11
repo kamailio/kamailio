@@ -65,8 +65,6 @@ static int set_gflag(struct sip_msg*, char *, char *);
 static int reset_gflag(struct sip_msg*, char *, char *);
 static int is_gflag(struct sip_msg*, char *, char *);
 
-static int fixup_str2int( void** param, int param_no);
-
 static int mod_init(void);
 
 static int initial=0;
@@ -76,11 +74,11 @@ static cmd_export_t cmds[]={
 	{"set_gflag", /* action name as in scripts */
 	  set_gflag,  /* C function name */
 	  1,          /* number of parameters */
-	  fixup_str2int,          /* */
+	  fixup_int_1,          /* */
       /* can be applied to original/failed requests and replies */
       REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
-	{"reset_gflag", reset_gflag, 1, fixup_str2int, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
-	{"is_gflag", is_gflag, 1, fixup_str2int, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
+	{"reset_gflag", reset_gflag, 1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
+	{"is_gflag", is_gflag, 1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
 	{0, 0, 0, 0, 0}
 };
 
@@ -101,37 +99,6 @@ struct module_exports exports = {
 	0         /* per-child init function */
 };
 
-
-/**************************** fixup functions ******************************/
-static int fixup_str2int( void** param, int param_no)
-{
-	unsigned int *myint;
-	str param_str;
-
-	/* we only fix the parameter #1 */
-	if (param_no!=1)
-		return 0;
-
-	myint=(unsigned int *) pkg_malloc(sizeof(unsigned int));
-	if (!myint) {
-		LOG(L_ERR, "ERROR: gflags initi: no memory\n");
-		return -1;
-	}
-
-
-	param_str.s=(char*) *param;
-	param_str.len=strlen(param_str.s);
-
-	if (str2int(&param_str, myint )<0) {
-		LOG(L_ERR, "ERROR: fixup_str2int: bad number <%s>\n",
-                (char *)(*param));
-		return E_CFG;
-    }
-	/* success -- change to int */
-	pkg_free(*param);
-	*param=(void *)myint;
-    return 0;
-}
 
 static unsigned int read_flag(FILE *pipe, char *response_file)
 {

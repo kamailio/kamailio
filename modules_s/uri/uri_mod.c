@@ -52,20 +52,16 @@
 MODULE_VERSION
 
 
-static int str_fixup(void** param, int param_no);
-static int uri_fixup(void** param, int param_no);
-
-
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"is_user",        is_user,        1, str_fixup, REQUEST_ROUTE},
-	{"has_totag", 	   has_totag,      0, 0,         REQUEST_ROUTE},
-	{"uri_param",      uri_param_1,    1, str_fixup, REQUEST_ROUTE},
-	{"uri_param",      uri_param_2,    2, uri_fixup, REQUEST_ROUTE},
-	{"add_uri_param",  add_uri_param,  1, str_fixup, REQUEST_ROUTE},
-	{"tel2sip",        tel2sip,        0, 0,         REQUEST_ROUTE},
+	{"is_user",        is_user,        1, fixup_str_1,  REQUEST_ROUTE},
+	{"has_totag", 	   has_totag,      0, 0,            REQUEST_ROUTE},
+	{"uri_param",      uri_param_1,    1, fixup_str_1,  REQUEST_ROUTE},
+	{"uri_param",      uri_param_2,    2, fixup_str_12, REQUEST_ROUTE},
+	{"add_uri_param",  add_uri_param,  1, fixup_str_1,  REQUEST_ROUTE},
+	{"tel2sip",        tel2sip,        0, 0,            REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -92,39 +88,3 @@ struct module_exports exports = {
 	0          /* child initialization function */
 };
 
-
-/*
- * Convert char* parameter to str* parameter
- */
-static int str_fixup(void** param, int param_no)
-{
-	str* s;
-	
-	if (param_no == 1) {
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) {
-			LOG(L_ERR, "str_fixup(): No memory left\n");
-			return E_UNSPEC;
-		}
-		
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
-	}
-	
-	return 0;
-}
-
-
-/*
- * Convert both uri_param parameters to str* representation
- */
-static int uri_fixup(void** param, int param_no)
-{
-       if (param_no == 1) {
-               return str_fixup(param, 1);
-       } else if (param_no == 2) {
-               return str_fixup(param, 1);
-       }
-       return 0;
-}

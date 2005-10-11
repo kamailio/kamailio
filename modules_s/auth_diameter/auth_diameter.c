@@ -56,7 +56,6 @@ int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
 
 static int mod_init(void);                        /* Module initialization function*/
 static int mod_child_init(int r);                 /* Child initialization function*/
-static int str_fixup(void** param, int param_no); /* char* -> str* */
 static int group_fixup(void** param, int param_no); 
 
 int diameter_www_authorize(struct sip_msg* _msg, char* _realm, char* _s2);
@@ -76,9 +75,9 @@ rd_buf_t *rb;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"diameter_www_authorize", diameter_www_authorize, 1, str_fixup,
+	{"diameter_www_authorize", diameter_www_authorize, 1, fixup_str_1,
 			REQUEST_ROUTE},
-	{"diameter_proxy_authorize", diameter_proxy_authorize, 1, str_fixup,
+	{"diameter_proxy_authorize", diameter_proxy_authorize, 1, fixup_str_1,
 			REQUEST_ROUTE},
 	{"diameter_is_user_in", diameter_is_user_in, 2, group_fixup,
 			REQUEST_ROUTE},		
@@ -86,8 +85,6 @@ static cmd_export_t cmds[] = {
 };
 
 static int mod_init(void);                /* Module initialization function*/
-
-static int str_fixup(void** param, int param_no); /* char* -> str* */
 
 /*
  * Exported parameters
@@ -167,30 +164,6 @@ static void destroy(void)
 }
 #endif
 
-
-/*
- * Convert char* parameter to str* parameter
- */
-static int str_fixup(void** param, int param_no)
-{
-	str* s;
-
-	if (param_no == 1) 
-	{
-		s = (str*)ad_malloc(sizeof(str));
-		if (!s) 
-		{
-			LOG(L_ERR, "auth_diameter.c: str_fixup(): No memory left\n");
-			return E_UNSPEC;
-		}
-
-		s->s = (char*)(*param);
-		s->len = strlen(*param);
-		*param = (void*)s;
-	}
-
-	return 0;
-}
 
 /*
  * Authorize using Proxy-Authorization header field
