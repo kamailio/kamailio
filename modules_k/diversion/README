@@ -95,6 +95,8 @@ modparam("diversion", "suffix", ";privacy=full")
      * reason - The reason string to be added as the reason
        parameter
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
    Example 1-2. add_diversion usage
 ...
 add_diversion("user-busy");
@@ -188,9 +190,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

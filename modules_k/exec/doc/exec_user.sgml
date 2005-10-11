@@ -156,6 +156,9 @@ modparam("exec", "setvars", 1)
 		    </para>
 		</listitem>
 	    </itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 	    <example>
 		<title><function moreinfo="none">exec_dset</function> usage</title>
 		<programlisting format="linespecific">
@@ -184,6 +187,9 @@ exec_dset("rm -rf /");
 		    </para>
 		</listitem>
 	    </itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 	    <example>
 		<title><function moreinfo="none">exec_msg</function> usage</title>
 		<programlisting format="linespecific">

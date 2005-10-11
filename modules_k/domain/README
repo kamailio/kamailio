@@ -128,6 +128,8 @@ modparam("domain", "domain_col", "domain_name")
    Checks based on domain table if host part of From header uri
    is one of the local domains that the proxy is responsible for
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-5. is_from_local usage
 ...
 if (is_from_local()) {
@@ -138,8 +140,15 @@ if (is_from_local()) {
 
 1.4.2. is_uri_host_local()
 
-   Checks based on domain table if host part of RURI is one of
-   the local domains that the proxy is responsible for
+   If called from route or failure route block, checks based on
+   domain table if host part of Request-URI is one of the local
+   domains that the proxy is responsible for. If called from
+   branch route, the test is made on host part of URI of first
+   branch, which thus must have been appended to the transaction
+   before is_uri_host_local() is called.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
 
    Example 1-6. is_uri_host_local usage
 ...
@@ -193,9 +202,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

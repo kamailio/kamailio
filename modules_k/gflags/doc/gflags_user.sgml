@@ -73,6 +73,10 @@ modparam("gflags", "initial", "15)
 	    <para>
 		<quote>flag</quote> can have a value from the range 1..31.
 	    </para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		ONREPLY_ROUTE.
+		</para>
 	    <example>
 		<title><function moreinfo="none">set_gflag()</function> usage</title>
 		<programlisting format="linespecific">
@@ -88,6 +92,10 @@ set_gflag("4");
 	    <para>
 		Reset the bit at the position <quote>flag</quote> in global flags.
 	    </para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		ONREPLY_ROUTE.
+		</para>
 	    <example>
 		<title><function moreinfo="none">reset_gflag()</function> usage</title>
 		<programlisting format="linespecific">
@@ -104,6 +112,10 @@ reset_gflag("4");
 		Check if bit at the position <quote>flag</quote> in global flags is
 		set.
 	    </para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		ONREPLY_ROUTE.
+		</para>
 	    <example>
 		<title><function moreinfo="none">is_gflag()</function> usage</title>
 		<programlisting format="linespecific">

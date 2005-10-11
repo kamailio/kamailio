@@ -137,6 +137,9 @@ modparam("enum", "tel_uri_params", ";npdi")
 		    </para>
 		</listitem>
 	    </itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 	    <example>
 		<title><function moreinfo="none">enum_query</function> usage</title>
 		<programlisting format="linespecific">
@@ -170,6 +173,9 @@ enum_query("e164.arpa.","+sip+voice:sip");
 		Checks if the user part of from <abbrev>URI</abbrev> an <abbrev>E164</abbrev> number
 		of the form +[0-9]{2,15}. Returns 1 if yes and -1 if not.
 	    </para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 	    <example>
 		<title><function moreinfo="none">is_from_user_e164</function> usage</title>
 		<programlisting format="linespecific">

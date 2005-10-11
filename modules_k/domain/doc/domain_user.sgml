@@ -119,6 +119,9 @@ modparam("domain", "domain_col", "domain_name")
 		Checks based on domain table if host part of From header uri is
 		one of the local domains that the proxy is responsible for
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title>is_from_local usage</title>
 		<programlisting format="linespecific">
@@ -140,6 +143,10 @@ if (is_from_local()) {
 		part of URI of first branch, which thus must have been
 		appended to the transaction before is_uri_host_local()
  		is called.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		BRANCH_ROUTE.
 		</para>
 		<example>
 		<title>is_uri_host_local usage</title>
