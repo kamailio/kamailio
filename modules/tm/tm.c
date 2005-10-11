@@ -111,10 +111,7 @@
 MODULE_VERSION
 
 /* fixup functions */
-static int fixup_t_send_reply(void** param, int param_no);
-static int fixup_str2int( void** param, int param_no);
 static int fixup_hostport2proxy(void** param, int param_no);
-static int fixup_str2regexp(void** param, int param_no);
 
 
 /* init functions */
@@ -180,7 +177,7 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE},
 	{"t_lookup_request",   w_t_check,               0, 0,
 			REQUEST_ROUTE},
-	{T_REPLY,              w_t_reply,               2, fixup_t_send_reply,
+	{T_REPLY,              w_t_reply,               2, fixup_int_1,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"t_retransmit_reply", w_t_retransmit_reply,    0, 0,
 			REQUEST_ROUTE},
@@ -224,13 +221,13 @@ static cmd_export_t cmds[]={
 	{T_FORWARD_NONACK_TLS, w_t_forward_nonack_tls,  2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 #endif
-	{"t_on_failure",       w_t_on_negative,         1, fixup_str2int,
+	{"t_on_failure",       w_t_on_negative,         1, fixup_int_1,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
-	{"t_on_reply",         w_t_on_reply,            1, fixup_str2int,
+	{"t_on_reply",         w_t_on_reply,            1, fixup_int_1,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
-	{"t_on_branch",       w_t_on_branch,         1, fixup_str2int,
+	{"t_on_branch",       w_t_on_branch,         1, fixup_int_1,
 			REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_check_status",     t_check_status,          1, fixup_str2regexp,
+	{"t_check_status",     t_check_status,          1, fixup_regex_1,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_write_req",       t_write_req,              2, fixup_t_write,
 			REQUEST_ROUTE | FAILURE_ROUTE },
@@ -300,29 +297,6 @@ struct module_exports exports= {
 };
 
 
-
-/**************************** fixup functions ******************************/
-static int fixup_str2int( void** param, int param_no)
-{
-	unsigned long go_to;
-	int err;
-
-	if (param_no==1) {
-		go_to=str2s(*param, strlen(*param), &err );
-		if (err==0) {
-			pkg_free(*param);
-			*param=(void *)go_to;
-			return 0;
-		} else {
-			LOG(L_ERR, "ERROR: fixup_str2int: bad number <%s>\n",
-				(char *)(*param));
-			return E_CFG;
-		}
-	}
-	return 0;
-}
-
-
 /* (char *hostname, char *port_nr) ==> (struct proxy_l *, -)  */
 static int fixup_hostport2proxy(void** param, int param_no)
 {
@@ -334,10 +308,8 @@ static int fixup_hostport2proxy(void** param, int param_no)
 	
 	DBG("TM module: fixup_hostport2proxy(%s, %d)\n", (char*)*param, param_no);
 	if (param_no==1){
-		DBG("TM module: fixup_hostport2proxy: param 1.. do nothing, wait for #2\n");
 		return 0;
 	} else if (param_no==2) {
-
 		host=(char *) (*(param-1)); 
 		port=str2s(*param, strlen(*param), &err);
 		if (err!=0) {
@@ -355,8 +327,6 @@ static int fixup_hostport2proxy(void** param, int param_no)
 		}
 		/* success -- fix the first parameter to proxy now ! */
 
-		/* FIXME: janakj, mk_proxy doesn't make copy of host !! */
-		/*pkg_free( *(param-1)); you're right --andrei*/
 		*(param-1)=proxy;
 		return 0;
 	} else {
@@ -364,55 +334,6 @@ static int fixup_hostport2proxy(void** param, int param_no)
 		return E_BUG;
 	}
 }
-
-
-/* (char *code, char *reason_phrase)==>(int code, r_p as is) */
-static int fixup_t_send_reply(void** param, int param_no)
-{
-	unsigned long code;
-	int err;
-
-	if (param_no==1){
-		code=str2s(*param, strlen(*param), &err);
-		if (err==0){
-			pkg_free(*param);
-			*param=(void*)code;
-			return 0;
-		}else{
-			LOG(L_ERR, "TM module:fixup_t_send_reply: bad  number <%s>\n",
-					(char*)(*param));
-			return E_UNSPEC;
-		}
-	}
-	/* second param => no conversion*/
-	return 0;
-}
-
-
-static int fixup_str2regexp(void** param, int param_no)
-{
-	regex_t* re;
-
-	if (param_no==1) {
-		if ((re=pkg_malloc(sizeof(regex_t)))==0)
-			return E_OUT_OF_MEM;
-		if (regcomp(re, *param, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ) {
-			pkg_free(re);
-			LOG(L_ERR,"ERROR: %s : bad re %s\n", exports.name, (char*)*param);
-			return E_BAD_RE;
-		}
-		/* free string */
-		pkg_free(*param);
-		/* replace it with the compiled re */
-		*param=re;
-	} else {
-		LOG(L_ERR,"ERROR: fixup_str2regexp called with parameter != 1\n");
-		return E_BUG;
-	}
-	return 0;
-}
-
-
 
 
 /***************************** init functions *****************************/
