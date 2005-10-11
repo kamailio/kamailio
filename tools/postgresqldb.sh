@@ -305,7 +305,7 @@ $USE_CMD $1;
  */
 
 CREATE TABLE version (
-   table_name varchar(64) NOT NULL,
+   table_name varchar(64) NOT NULL primary key,
    table_version smallint DEFAULT '0' NOT NULL
 ) $TABLE_TYPE;
 
