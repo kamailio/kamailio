@@ -267,7 +267,7 @@ GRANT SELECT ON $1.* TO ${DBROUSER}@$DBHOST IDENTIFIED BY '$RO_PW';
 #
 
 CREATE TABLE version (
-   table_name varchar(64) NOT NULL,
+   table_name varchar(64) NOT NULL primary key,
    table_version smallint(5) DEFAULT '0' NOT NULL
 ) $TABLE_TYPE;
 
