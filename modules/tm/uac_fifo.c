@@ -538,8 +538,6 @@ static void fifo_callback( struct cell *t, int type, struct tmcb_params *ps )
 	FILE* f;
 	str text;
 
-	DBG("!!!!! ref_counter: %d\n", t->ref_count);
-
 	DBG("DEBUG: fifo UAC completed with status %d\n", ps->code);
 	if (!*ps->param) {
 		LOG(L_INFO, "INFO: fifo UAC completed with status %d\n", ps->code);
