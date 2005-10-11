@@ -859,7 +859,7 @@ failure_route_stm: ROUTE_FAILURE LBRACK NUMBER RBRACK LBRACE actions RBRACE {
 		| ROUTE_FAILURE error { yyerror("invalid failure_route statement"); }
 	;
 
-onreply_route_stm: ROUTE LBRACE actions RBRACE {
+onreply_route_stm: ROUTE_ONREPLY LBRACE actions RBRACE {
 										push($3, &onreply_rlist[DEFAULT_RT]);
 											  }
 				| ROUTE_ONREPLY LBRACK NUMBER RBRACK LBRACE actions RBRACE {
