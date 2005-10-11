@@ -132,7 +132,6 @@ error:
  		if ((*_c)->user_agent.s) shm_free((*_c)->user_agent.s);
  		if ((*_c)->callid.s) shm_free((*_c)->callid.s);
  		if ((*_c)->c.s) shm_free((*_c)->c.s);
-		if ((*_c)->instance.s) shm_free((*_c)->instance.s);
  		shm_free(*_c);
 	}
 	return -1;	
