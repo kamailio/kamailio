@@ -395,6 +395,8 @@ modparam("registrar", "use_branch_flags", 1)
        used then this must be name of the table which stores the
        contacts.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-18. save usage
 ...
 save("location");
@@ -410,6 +412,8 @@ save("location");
      * domain - Logical domain within registrar. If database is
        used then this must be na e of the table which stores the
        contacts.
+
+   This function can be used from REQUEST_ROUTE.
 
    Example 1-19. save_noreply usage
 ...
@@ -431,6 +435,8 @@ save_noreply("location");
 
      * domain - Name of table that should be used for the lookup.
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
    Example 1-20. lookup usage
 ...
 lookup("location");
@@ -447,6 +453,8 @@ lookup("location");
    Meaning of the parameters is as follows:
 
      * domain - Name of table that should be used for the lookup.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1-21. registered usage
 ...
@@ -468,6 +476,8 @@ if (registered("location")) {
    Meaning of the parameters is as follows:
 
      * hdr_name - header name to be used.
+
+   This function can be used from REQUEST_ROUTE.
 
    Example 1-22. add_sock_hdr usage
 ...

@@ -115,6 +115,8 @@ modparam("module", "contact_flds_separator", "-")
      * newip - A string representing the new IP to be put inside
        SDP package if old IP address matches pattern.
 
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
+
    Example 1-2. sdp_mangle_ip usage
 ...
 sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
@@ -133,6 +135,8 @@ sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
 
      * offset - A string representing an integer which will be
        added/subtracted from the located port.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
    Example 1-3. sdp_mangle_port usage
 ...
@@ -156,6 +160,8 @@ sdp_mangle_port("-12000");
        a contact is encoded publicip--a routable IP,most probably
        you should put your external IP of your NAT box.
 
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
+
    Example 1-4. encode_contact usage
 ...
 if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38")
@@ -175,6 +181,8 @@ if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38")
 
    Meaning of the parameters is as follows:
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-5. decode_contact usage
 ...
 if (uri =~ "^enc*") { decode_contact(); }
@@ -192,6 +200,8 @@ if (uri =~ "^enc*") { decode_contact(); }
    The function returns negative on error, 1 on success.
 
    Meaning of the parameters is as follows:
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
    Example 1-6. decode_contact_header usage
 ...
@@ -221,9 +231,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

@@ -219,6 +219,8 @@ modparam("uri_db", "use_domain", 1)
 
    Check To username against URI table or digest credentials.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-11. check_to usage
 ...
 if (check_to()) {
@@ -230,6 +232,8 @@ if (check_to()) {
 1.4.2. check_from()
 
    Check From username against URI table or digest credentials.
+
+   This function can be used from REQUEST_ROUTE.
 
    Example 1-12. check_from usage
 ...
@@ -243,6 +247,8 @@ if (check_from()) {
 
    Check if username in the request URI belongs to an existing
    user.
+
+   This function can be used from REQUEST_ROUTE.
 
    Example 1-13. does_uri_exist usage
 ...
@@ -274,9 +280,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

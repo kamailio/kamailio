@@ -296,6 +296,9 @@ modparam("mediaproxy", "natping_interval", 20)
 				perform first 2 tests listen above and return true as soon as 
 				one succeeds if both fail will return false.
 			</para>
+			<para>
+				This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>			
 			<example>
 			<title><function>client_nat_test</function> usage</title>
 				<programlisting format="linespecific">
@@ -320,6 +323,9 @@ if (client_nat_test("3")) {
 			<para>
 				Usually called after an if (client_nat_test(type)) has succeded
 			</para>
+			<para>
+				This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE.
+			</para>		
 			<example>
 			<title><function>fix_contact</function> usage</title>
 				<programlisting format="linespecific">
@@ -344,6 +350,9 @@ if (client_nat_test("3")) {
 			<para>
 				Called when you want to make the session go through a proxy server.
 			</para>
+			<para>
+				This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>		
 			<example>
 			<title><function>use_media_proxy</function> usage</title>
 				<programlisting format="linespecific">
@@ -368,6 +377,9 @@ if (method==INVITE) {
 			<para>
 				Called when a session should end (BYE or CANCEL received).
 			</para>
+			<para>
+				This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>		
 			<example>
 			<title><function>end_media_session</function> usage</title>
 				<programlisting format="linespecific">

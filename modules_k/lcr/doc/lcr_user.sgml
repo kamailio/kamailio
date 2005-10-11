@@ -456,6 +456,9 @@ modparam("lcr","fr_inv_timer_next",30)
    that match user part of Request-URI to gw_uri_avp AVPs (see Overview
    section).  Returns 1 or -1 depending on success.
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>load_gws</function> usage</title>
 		<programlisting format="linespecific">
@@ -492,6 +495,9 @@ if (!load_gws()) {
 		<para>
 			Must be preceded by successful load_gws() call.
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function>next_gw</function> usage from a route block</title>
 		<programlisting format="linespecific">
@@ -523,6 +529,9 @@ if (!next_gw()) {
 		<para>
 			Checks if request came from IP address of a gateway.
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE.
+		</para>
 		<example>
 		<title><function>from_gw</function> usage</title>
 		<programlisting format="linespecific">
@@ -541,6 +550,9 @@ if (from_gw()) {
 		</title>
 		<para>
 			Checks if in-dialog request goes to a gateway.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
 		<title><function>to_gw</function> usage</title>
@@ -565,6 +577,9 @@ if (to_gw()) {
 			minimizing performance impact of sequential forking capability when
 			it is not needed.  Returns 1 if loading of contacts succeeded or
 			there was nothing to do.  Returns -1 on error (see syslog).
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>
 		<title><function>load_contacts</function> usage</title>
@@ -598,6 +613,9 @@ if (!load_contacts()) {
 		</para>
 		<para>
 			Must be preceded by successful load_contacts() call.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
 		<title><function>next_contacts</function> usage from route block

@@ -484,6 +484,9 @@ modparam("registrar", "use_branch_flags", 1)
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>save</function> usage</title>
 		<programlisting format="linespecific">
@@ -511,6 +514,9 @@ save("location");
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>save_noreply</function> usage</title>
 		<programlisting format="linespecific">
@@ -542,6 +548,9 @@ save_noreply("location");
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function>lookup</function> usage</title>
 		<programlisting format="linespecific">
@@ -571,6 +580,9 @@ lookup("location");
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function>registered</function> usage</title>
 		<programlisting format="linespecific">
@@ -604,6 +616,9 @@ if (registered("location")) {
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>add_sock_hdr</function> usage</title>
 		<programlisting format="linespecific">

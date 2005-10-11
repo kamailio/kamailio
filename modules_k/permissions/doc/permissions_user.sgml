@@ -482,6 +482,9 @@ modparam("permissions", "from_col", "regexp")
 		configuration files. This function uses default configuration files specified in
 		<varname>default_allow_file</varname> and <varname>default_deny_file</varname>.
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function>allow_routing</function> usage</title>
 		<programlisting format="linespecific">
@@ -517,6 +520,9 @@ if (allow_routing()) {
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function>allow_routing(basename)</function> usage</title>
 		<programlisting format="linespecific">
@@ -556,6 +562,9 @@ if (allow_routing("basename")) {
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function>allow_routing(allow_file, deny_file)</function> usage</title>
 		<programlisting format="linespecific">
@@ -591,6 +600,9 @@ if (allow_routing("rules.allow", "rules.deny")) {
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function>allow_register(basename)</function> usage</title>
 		<programlisting format="linespecific">
@@ -635,6 +647,9 @@ if (method=="REGISTER") {
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function>allow_register(allow_file, deny_file)</function> usage</title>
 		<programlisting format="linespecific">
@@ -675,6 +690,9 @@ if (method=="REGISTER") {
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function>allow_refer_to(basename)</function> usage</title>
 		<programlisting format="linespecific">
@@ -714,6 +732,9 @@ if (allow_refer_to("basename")) {
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function>allow_refer_to(allow_file, deny_file)</function> usage</title>
 		<programlisting format="linespecific">
@@ -735,7 +756,10 @@ if (allow_refer_to("rules.allow", "rules.deny")) {
                 authentication.  Returns 1 if a match is found
                 as described in <xref linkend="sec-trusted-requests">
                 and -1 otherwise.
-                </para>
+        </para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function>allow_trusted()</function> usage</title>
 		<programlisting format="linespecific">

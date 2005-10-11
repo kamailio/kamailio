@@ -102,6 +102,8 @@ modparam("uri_radius", "service_type", 11)
    after lookup has failed. Adds SIP-AVP reply items, that must
    have a string value of form "name:value", as AVPs.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-3. radius_does_uri_exist usage
 ...
 if (radius_does_uri_exist()) {
@@ -132,9 +134,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

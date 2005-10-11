@@ -105,6 +105,9 @@ From: medabeda
 
      * re - Regular expression.
 
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
    Example 1-1. search usage
 ...
 if ( search("[Ss][Ee][Rr]" ) { /*....*/ };
@@ -119,6 +122,9 @@ if ( search("[Ss][Ee][Rr]" ) { /*....*/ };
 
      * re - Regular expression.
      * txt - String to be appended.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1-2. search_append usage
 ...
@@ -135,6 +141,9 @@ search_append("[Ss]er", " blabla");
      * re - Regular expression.
      * txt - String.
 
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
    Example 1-3. replace usage
 ...
 replace("ser", "Sip Express Router");
@@ -149,6 +158,9 @@ replace("ser", "Sip Express Router");
 
      * re - Regular expression.
      * txt - String.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1-4. replace_all usage
 ...
@@ -169,6 +181,9 @@ replace_all("ser", "Sip Express Router");
        'repl' - is replacement string - may contain
        pseudo-varibales
        'flags' - substitution flags (i - ignore case, g - global)
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1-5. subst usage
 ...
@@ -197,6 +212,9 @@ if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)
        'repl' - is replacement string - may contain
        pseudo-varibales
        'flags' - substitution flags (i - ignore case, g - global)
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1-6. subst_uri usage
 ...
@@ -229,6 +247,9 @@ if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=
        pseudo-varibales
        'flags' - substitution flags (i - ignore case, g - global)
 
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
    Example 1-7. subst usage
 ...
 # adds 3463 prefix to uris ending with 3642 (just an example)
@@ -250,6 +271,8 @@ if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 
      * txt - String.
 
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE.
+
    Example 1-8. append_to_reply usage
 ...
 append_to_reply("Foo: bar\r\n");
@@ -263,6 +286,9 @@ append_to_reply("Foo: bar\r\n");
    Meaning of the parameters is as follows:
 
      * hf - Header field to be appended.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1-9. append_hf usage
 ...
@@ -278,6 +304,9 @@ append_hf("P-hint: VOICEMAIL\r\n");
 
      * prefix - string (usually at least header field name).
      * suffix - string (usually at least line terminator).
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
 
    Example 1-10. append_urihf usage
 ...
@@ -298,6 +327,9 @@ append_urihf("CC-Diversion: ", "\r\n");
 
      * hf_name - Header field name.
 
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
    Example 1-11. is_present_hf usage
 ...
 if (is_present_hf("From")) log(1, "From HF Present");
@@ -317,7 +349,10 @@ if (is_present_hf("From")) log(1, "From HF Present");
      * %M minutes
      * %S seconds
 
-   Return true if a header was succesfully appended
+   Return true if a header was succesfully appended.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
 
    Example 1-12. append_time usage
 ...
@@ -346,6 +381,9 @@ append_time();
    Meaning of the parameters is as follows:
 
      * name - SIP method name
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE.
 
    Example 1-13. is_method usage
 ...
@@ -389,9 +427,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

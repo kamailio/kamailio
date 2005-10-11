@@ -115,7 +115,7 @@ Bogdan-Andrei Iancu
    1-25. t_retransmit_reply usage
    1-26. t_release usage
    1-27. t_forward_nonack_xxx usage
-   1-28. t_forward_nonack_xxx usage
+   1-28. t_forward_replicate_xxx usage
    1-29. t_check_status usage
    1-30. t_flush_flags usage
    1-31. t_local_replied usage
@@ -479,6 +479,8 @@ modparam("tm", "branch_flag_mask", "4278190080")
      * ip - IP address where the message should be sent.
      * port - Port number.
 
+   This functions can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
    Example 1-18. t_relay_to_udp usage
 ...
 t_relay_to_udp("1.2.3.4", "5060");
@@ -493,6 +495,8 @@ t_relay_to_udp("1.2.3.4", "5060");
    negative value on failure--you may still want to send a
    negative reply upstream statelessly not to leave upstream UAC
    in lurch.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1-19. t_relay usage
 ...
@@ -563,6 +567,8 @@ t_relay();
    This is the only way a script can add a new transaction in an
    atomic way. Typically, it is used to deploy a UAS.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-22. t_newtran usage
 ...
 if (t_newtran()) {
@@ -584,6 +590,8 @@ if (t_newtran()) {
      * code - Reply code number.
      * reason_phrase - Reason string.
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
    Example 1-23. t_reply usage
 ...
 t_reply("404", "Not found");
@@ -598,6 +606,8 @@ t_reply("404", "Not found");
    new transaction if none was found. However this is safely
    (atomically) done using t_newtran.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-24. t_lookup_request usage
 ...
 if (t_lookup_request()) {
@@ -610,6 +620,8 @@ if (t_lookup_request()) {
 
    Retransmits a reply sent previously by UAS transaction.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-25. t_retransmit_reply usage
 ...
 t_retransmit_reply();
@@ -620,6 +632,8 @@ t_retransmit_reply();
 
    Remove transaction from memory (it will be first put on a wait
    timer to absorb delayed messages).
+
+   This function can be used from REQUEST_ROUTE.
 
    Example 1-26. t_release usage
 ...
@@ -643,6 +657,8 @@ t_forward_nonack_tcp(ip, port) t_forward_nonack_uri()
    t_forward_nonack_uri() will determin the detination address
    (proto:IP:port) based on the RURI.
 
+   This functions can be used from REQUEST_ROUTE.
+
    Example 1-27. t_forward_nonack_xxx usage
 ...
 t_forward_nonack("1.2.3.4", "5060");
@@ -664,7 +680,9 @@ t_replicate_tcp(ip, port)
      * ip - IP address where the message should be sent.
      * port - Port number.
 
-   Example 1-28. t_forward_nonack_xxx usage
+   This functions can be used from REQUEST_ROUTE.
+
+   Example 1-28. t_forward_replicate_xxx usage
 ...
 t_replicate("1.2.3.4", "5060");
 t_replicate_udp("1.2.3.4", "5060"); # force UDP proto
@@ -683,6 +701,9 @@ t_replicate_tcp("1.2.3.4", "5060"); # force TCP proto
      * in on_failure block - the code of the selected negative
        final reply.
 
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE.
+
    Example 1-29. t_check_status usage
 ...
 if (t_check_status("(487)|(408)")) {
@@ -698,6 +719,8 @@ if (t_check_status("(487)|(408)")) {
    trnasaction was created via t_newtran() and the flags have
    been altered since.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-30. t_flush_flags usage
 ...
 t_flush_flags();
@@ -710,6 +733,9 @@ t_flush_flags();
    reply(es) were local generated (and not received).
 
    Parameter may be "all" or "last".
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE.
 
    Example 1-31. t_local_replied usage
 ...
@@ -724,6 +750,8 @@ if (t_local_replied("all")) {
    Write via FIFO file or UNIX socket a lot of information
    regarding the request. Which information should be written may
    be control via the "tw_append" parameter.
+
+   This functions can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1-32. t_write_fifo/unix usage
 ...
@@ -750,6 +778,8 @@ t_write_unix("logger/append2","/var/run/logger.sock");
      * ACK request - true if the ACK is a local end-to-end ACK
        for an existent INVITE transaction.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-33. t_check_trans usage
 ...
 if ( is_method("CANCEL") ) {
@@ -764,6 +794,8 @@ if ( is_method("CANCEL") ) {
 
    Retuns true if called for an INVITE transaction that was
    explicitly cancelled by UAC side via a CANCEL request.
+
+   This function can be used from ONREPLY_ROUTE, FAILURE_ROUTE.
 
    Example 1-34. t_was_cancelled usage
 ...

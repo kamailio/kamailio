@@ -104,6 +104,8 @@ modparam("maxfwd", "max_limit", 32)
      * max_value - Value to be added if there is no Max-Forwards
        header field in the message.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-2. mx_process_maxfwd_header usage
 ...
 # initial sanity checks -- messages with

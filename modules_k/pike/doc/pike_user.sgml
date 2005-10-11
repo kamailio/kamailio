@@ -140,6 +140,9 @@ modparam("pike", "remove_latency", 130)
 		IMPORTANT: in case of internal error, the function returns true to
 		avoid reporting the current processed IP as blocked.
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>pike_check_req</function> usage</title>
 		<programlisting format="linespecific">

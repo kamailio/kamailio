@@ -545,6 +545,9 @@ modparam("tm", "branch_flag_mask", "4278190080")
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This functions can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function>t_relay_to_udp</function> usage</title>
 		<programlisting format="linespecific">
@@ -565,6 +568,9 @@ t_relay_to_udp("1.2.3.4", "5060");
 		the new URI will be taken). Returns a negative value on failure--you 
 		may still want to send a negative reply upstream statelessly not to 
 		leave upstream UAC in lurch.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
 		<title><function>t_relay</function> usage</title>
@@ -655,6 +661,9 @@ t_relay();
 		script can add a new transaction in an atomic way. Typically, it is used to deploy a
 		&uas;.
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>t_newtran</function> usage</title>
 		<programlisting format="linespecific">
@@ -690,6 +699,9 @@ if (t_newtran()) {
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function>t_reply</function> usage</title>
 		<programlisting format="linespecific">
@@ -710,6 +722,9 @@ t_reply("404", "Not found");
 		to introduce a new transaction if none was found. However this is safely
 		(atomically) done using <function>t_newtran</function>.
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>t_lookup_request</function> usage</title>
 		<programlisting format="linespecific">
@@ -729,6 +744,9 @@ if (t_lookup_request()) {
 		<para>
 		Retransmits a reply sent previously by &uas; transaction.
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>t_retransmit_reply</function> usage</title>
 		<programlisting format="linespecific">
@@ -746,6 +764,9 @@ t_retransmit_reply();
 		<para>
 		Remove transaction from memory (it will be first put on a wait timer to absorb
 		delayed messages).
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>
 		<title><function>t_release</function> usage</title>
@@ -785,6 +806,9 @@ t_release();
 		t_forward_nonack_uri() will determin the detination address 
 		(proto:IP:port) based on the RURI.
 		</para>
+		<para>
+		This functions can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>t_forward_nonack_xxx</function> usage</title>
 		<programlisting format="linespecific">
@@ -821,8 +845,11 @@ t_forward_nonack_uri();
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This functions can be used from REQUEST_ROUTE.
+		</para>
 		<example>
-		<title><function>t_forward_nonack_xxx</function> usage</title>
+		<title><function>t_forward_replicate_xxx</function> usage</title>
 		<programlisting format="linespecific">
 ...
 t_replicate("1.2.3.4", "5060");
@@ -858,6 +885,9 @@ t_replicate_tcp("1.2.3.4", "5060"); # force TCP proto
 		</listitem>
 		</itemizedlist>
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function>t_check_status</function> usage</title>
 		<programlisting format="linespecific">
@@ -878,6 +908,9 @@ if (t_check_status("(487)|(408)")) {
 		Flush the flags from current request into the already created 
 		transaction. It make sens only in routing block if the trnasaction was
 		created via t_newtran() and the flags have been altered since.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>
 		<title><function>t_flush_flags</function> usage</title>
@@ -900,6 +933,9 @@ t_flush_flags();
 		<para>
 		Parameter may be <quote>all</quote> or <quote>last</quote>.
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function>t_local_replied</function> usage</title>
 		<programlisting format="linespecific">
@@ -921,6 +957,9 @@ if (t_local_replied("all")) {
 		Write via FIFO file or UNIX socket a lot of information regarding the
 		request. Which information should be written may be control via the
 		<quote>tw_append</quote> parameter.
+		</para>
+		<para>
+		This functions can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
 		<title><function>t_write_fifo/unix</function> usage</title>
@@ -964,6 +1003,9 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>t_check_trans</function> usage</title>
 		<programlisting format="linespecific">
@@ -985,6 +1027,9 @@ if ( is_method("CANCEL") ) {
 		<para>
 		Retuns true if called for an INVITE transaction that was explicitly
 		cancelled by UAC side via a CANCEL request.
+		</para>
+		<para>
+		This function can be used from ONREPLY_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
 		<title><function>t_was_cancelled</function> usage</title>

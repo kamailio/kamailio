@@ -133,6 +133,8 @@ modparam("pike", "remove_latency", 130)
    IMPORTANT: in case of internal error, the function returns
    true to avoid reporting the current processed IP as blocked.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-4. pike_check_req usage
 ...
 if (!pike_check_req()) { break; };
@@ -204,9 +206,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

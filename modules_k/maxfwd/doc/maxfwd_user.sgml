@@ -109,6 +109,9 @@ modparam("maxfwd", "max_limit", 32)
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>mx_process_maxfwd_header</function> usage</title>
 		<programlisting format="linespecific">

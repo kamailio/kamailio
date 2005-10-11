@@ -78,6 +78,9 @@ From: medabeda
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
 		<example>
 		<title><function>search</function> usage</title>
 		<programlisting format="linespecific">
@@ -106,6 +109,9 @@ if ( search("[Ss][Ee][Rr]" ) { /*....*/ };
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
 		<example>
 		<title><function>search_append</function> usage</title>
 		<programlisting format="linespecific">
@@ -134,6 +140,9 @@ search_append("[Ss]er", " blabla");
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
 		<example>
 		<title><function>replace</function> usage</title>
 		<programlisting format="linespecific">
@@ -162,6 +171,9 @@ replace("ser", "Sip Express Router");
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
 		<example>
 		<title><function>replace_all</function> usage</title>
 		<programlisting format="linespecific">
@@ -197,6 +209,9 @@ replace_all("ser", "Sip Express Router");
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
 		<example>
 		<title><function>subst</function> usage</title>
 		<programlisting format="linespecific">
@@ -238,6 +253,9 @@ if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)\2/ig') )
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
 		<example>
 		<title><function>subst_uri</function> usage</title>
 		<programlisting format="linespecific">
@@ -281,6 +299,9 @@ if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=\0/i')){$
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
 		<example>
 		<title><function>subst</function> usage</title>
 		<programlisting format="linespecific">
@@ -311,6 +332,9 @@ if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE.
+		</para>
 		<example>
 		<title><function>append_to_reply</function> usage</title>
 		<programlisting format="linespecific">
@@ -335,6 +359,9 @@ append_to_reply("Foo: bar\r\n");
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
 		<example>
 		<title><function>append_hf</function> usage</title>
 		<programlisting format="linespecific">
@@ -363,6 +390,9 @@ append_hf("P-hint: VOICEMAIL\r\n");
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
 		<example>
 		<title><function>append_urihf</function> usage</title>
 		<programlisting format="linespecific">
@@ -393,6 +423,9 @@ append_urihf("CC-Diversion: ", "\r\n");
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
 		<example>
 		<title><function>is_present_hf</function> usage</title>
 		<programlisting format="linespecific">
@@ -442,7 +475,10 @@ if (is_present_hf("From")) log(1, "From HF Present");
 		</itemizedlist>
 		</para>
 		<para>
-		Return true if a header was succesfully appended
+		Return true if a header was succesfully appended.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>append_time</function> usage</title>
@@ -484,6 +520,9 @@ append_time();
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function>is_method</function> usage</title>
 		<programlisting format="linespecific">

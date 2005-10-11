@@ -304,6 +304,9 @@ modparam("nathelper", "sipping_method", "INFO")
 
    Rewrites Contact HF to contain request's source address:port.
 
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   BRANCH_ROUTE.
+
    Example 1-12. fix_nated_contact usage
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
@@ -326,6 +329,9 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
      * 0x08 - rewrite IP from origin description (o=) with source
        address of the message.
 
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
    Example 1-13. fix_nated_sdp usage
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
@@ -336,6 +342,9 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 
    Rewrites SDP body to ensure that media is passed through an
    RTP proxy.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1-14. force_rtp_proxy usage
 ...
@@ -370,9 +379,11 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
             Without this flag, nathelper ignores address in the
             SDP and uses source address of the SIP message as
             media address which is passed to the RTP proxy.
-          + o - flags that IP from the origin description
-            (o=).should be also changed.
-          +
+          + o - flags that IP from the origin description (o=)
+            should be also changed.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1-15. force_rtp_proxy usage
 ...
@@ -390,6 +401,9 @@ if (src_ip=1.2.3.4) {force_rtp_proxy("i");};
      * flags - flags to turn on some features.
      * ip_address - new SDP IP address.
 
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
    Example 1-16. force_rtp_proxy usage
 ...
 if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("","1.2.3.4");};
@@ -399,6 +413,9 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("","1.2.3.4");};
 1.5.6. unforce_rtp_proxy()
 
    Tears down the RTPProxy session for the current call.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1-17. unforce_rtp_proxy usage
 ...
@@ -415,6 +432,8 @@ unforce_rtp_proxy();
    useful, for example, when replicating register messages using
    t_replicate function to another registrar.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-18. add_rcv_paramer usage
 ...
 add_rcv_param();
@@ -428,6 +447,8 @@ add_rcv_param();
    The URI will be appended as "received" parameter to Contact in
    200 OK and registrar will store it in the user location
    database.
+
+   This function can be used from REQUEST_ROUTE.
 
    Example 1-19. fix_nated_register usage
 ...
@@ -454,6 +475,9 @@ fix_nated_register();
 
    All flags can be bitwise combined, the test returns true if
    any of the tests identified a NAT.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
      _________________________________________________________
 
 Chapter 2. Developer's Guide
@@ -478,9 +502,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

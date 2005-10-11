@@ -101,6 +101,9 @@ modparam("uri_radius", "service_type", 11)
 		reply items, that must have a string value of form
 		"name:value", as AVPs.
 	    </para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>radius_does_uri_exist</function> usage</title>
 		<programlisting format="linespecific">

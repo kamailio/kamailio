@@ -396,6 +396,8 @@ modparam("permissions", "from_col", "regexp")
    configuration files. This function uses default configuration
    files specified in default_allow_file and default_deny_file.
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
    Example 1-12. allow_routing usage
 ...
 if (allow_routing()) {
@@ -418,6 +420,8 @@ if (allow_routing()) {
        If the parameter doesn't contain full pathname then the
        function expects the file to be located in the same
        directory as the main configuration file of the server.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1-13. allow_routing(basename) usage
 ...
@@ -444,6 +448,8 @@ if (allow_routing("basename")) {
        function expects the file to be located in the same
        directory as the main configuration file of the server.
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
    Example 1-14. allow_routing(allow_file, deny_file) usage
 ...
 if (allow_routing("rules.allow", "rules.deny")) {
@@ -466,6 +472,8 @@ if (allow_routing("rules.allow", "rules.deny")) {
        If the parameter doesn't contain full pathname then the
        function expects the file to be located in the same
        directory as the main configuration file of the server.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1-15. allow_register(basename) usage
 ...
@@ -497,6 +505,8 @@ if (method=="REGISTER") {
        function expects the file to be located in the same
        directory as the main configuration file of the server.
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
    Example 1-16. allow_register(allow_file, deny_file) usage
 ...
 if (method=="REGISTER") {
@@ -525,6 +535,8 @@ if (method=="REGISTER") {
        function expects the file to be located in the same
        directory as the main configuration file of the server.
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
    Example 1-17. allow_refer_to(basename) usage
 ...
 if (allow_refer_to("basename")) {
@@ -550,6 +562,8 @@ if (allow_refer_to("basename")) {
        function expects the file to be located in the same
        directory as the main configuration file of the server.
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
    Example 1-18. allow_refer_to(allow_file, deny_file) usage
 ...
 if (allow_refer_to("rules.allow", "rules.deny")) {
@@ -564,6 +578,8 @@ if (allow_refer_to("rules.allow", "rules.deny")) {
    and From URI if request can be trusted without authentication.
    Returns 1 if a match is found as described in Section 1.1.4
    and -1 otherwise.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1-19. allow_trusted() usage
 ...

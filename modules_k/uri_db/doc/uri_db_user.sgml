@@ -262,6 +262,9 @@ modparam("uri_db", "use_domain", 1)
 		Check To username against &uri; table or digest
 		credentials.
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>check_to</function> usage</title>
 		<programlisting format="linespecific">
@@ -282,6 +285,9 @@ if (check_to()) {
 		Check From username against &uri; table or digest
 		credentials.
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>check_from</function> usage</title>
 		<programlisting format="linespecific">
@@ -300,6 +306,9 @@ if (check_from()) {
 		</title>
 		<para>
 		Check if username in the request &uri; belongs to an existing user.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>
 		<title><function>does_uri_exist</function> usage</title>

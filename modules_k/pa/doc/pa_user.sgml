@@ -92,7 +92,10 @@ modparam("pa", "default_expires", 3600)
 		    </para>
 		</listitem>
 	    </itemizedlist>
-	    <example>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
 		<title><function>handle_subscription</function> usage</title>
 		<programlisting format="linespecific">
 ...

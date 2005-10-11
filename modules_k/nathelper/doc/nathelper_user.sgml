@@ -356,6 +356,9 @@ modparam("nathelper", "sipping_method", "INFO")
 		<para>
 		Rewrites Contact <acronym>HF</acronym> to contain request's source address:port.
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE.
+		</para>
 		<example>
 		<title><function>fix_nated_contact</function> usage</title>
 		<programlisting format="linespecific">
@@ -396,6 +399,9 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 			origin description (o=) with source address of the message.
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
 		<example>
 		<title><function>fix_nated_sdp</function> usage</title>
 		<programlisting format="linespecific">
@@ -412,6 +418,9 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 		<para>
 		Rewrites &sdp; body to ensure that media is passed through 
 		an &rtp; proxy.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>force_rtp_proxy</function> usage</title>
@@ -475,6 +484,9 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 			</itemizedlist>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
 		<example>
 		<title><function>force_rtp_proxy</function> usage</title>
 		<programlisting format="linespecific">
@@ -500,6 +512,9 @@ if (src_ip=1.2.3.4) {force_rtp_proxy("i");};
 			<emphasis>ip_address</emphasis> - new SDP IP address.
 			</para></listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
 		<example>
 		<title><function>force_rtp_proxy</function> usage</title>
 		<programlisting format="linespecific">
@@ -515,6 +530,9 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("","1.2.3.4");};
 		</title>
 		<para>
 		Tears down the RTPProxy session for the current call.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>unforce_rtp_proxy</function> usage</title>
@@ -536,6 +554,9 @@ unforce_rtp_proxy();
 		for example, when replicating register messages using t_replicate function to
 		another registrar.
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>add_rcv_paramer</function> usage</title>
 		<programlisting format="linespecific">
@@ -553,6 +574,9 @@ add_rcv_param();
 		The function creates a URI consisting of the source IP, port, and protocol and
 		stores the URI in an Attribute-Value-Pair. The URI will be appended as "received"
 		parameter to Contact in 200 OK and registrar will store it in the user location database.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>
 		<title><function>fix_nated_register</function> usage</title>
@@ -597,6 +621,9 @@ fix_nated_register();
 		<para>
 		All flags can be bitwise combined, the test returns true if any of 
 		the tests identified a NAT.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 	</section>
 </chapter>

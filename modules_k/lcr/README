@@ -369,6 +369,8 @@ modparam("lcr","fr_inv_timer_next",30)
    AVPs (see Overview section). Returns 1 or -1 depending on
    success.
 
+   This function can be used from REQUEST_ROUTE.
+
    Example 1-17. load_gws usage
 ...
 if (!load_gws()) {
@@ -398,6 +400,8 @@ if (!load_gws()) {
 
    Must be preceded by successful load_gws() call.
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
    Example 1-18. next_gw usage from a route block
 ...
 if (!next_gw()) {
@@ -419,6 +423,9 @@ if (!next_gw()) {
 
    Checks if request came from IP address of a gateway.
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE.
+
    Example 1-20. from_gw usage
 ...
 if (from_gw()) {
@@ -431,6 +438,8 @@ if (from_gw()) {
 1.4.4. to_gw()
 
    Checks if in-dialog request goes to a gateway.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1-21. to_gw usage
 ...
@@ -450,6 +459,8 @@ if (to_gw()) {
    forking capability when it is not needed. Returns 1 if loading
    of contacts succeeded or there was nothing to do. Returns -1
    on error (see syslog).
+
+   This function can be used from REQUEST_ROUTE.
 
    Example 1-22. load_contacts usage
 ...
@@ -478,6 +489,8 @@ if (!load_contacts()) {
    lcr_contact AVPs.
 
    Must be preceded by successful load_contacts() call.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1-23. next_contacts usage from route block 
 ...

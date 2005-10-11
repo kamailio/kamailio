@@ -279,6 +279,9 @@ modparam("mediaproxy", "natping_interval", 20)
    perform first 2 tests listen above and return true as soon as
    one succeeds if both fail will return false.
 
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
    Example 1-5. client_nat_test usage
 ...
 if (client_nat_test("3")) {
@@ -297,6 +300,9 @@ if (client_nat_test("3")) {
 
    Usually called after an if (client_nat_test(type)) has
    succeded
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   BRANCH_ROUTE.
 
    Example 1-6. fix_contact usage
 ...
@@ -317,6 +323,9 @@ if (client_nat_test("3")) {
    Called when you want to make the session go through a proxy
    server.
 
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
    Example 1-7. use_media_proxy usage
 ...
 if (method==INVITE) {
@@ -333,6 +342,9 @@ if (method==INVITE) {
    well as to save log information about the call.
 
    Called when a session should end (BYE or CANCEL received).
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
 
    Example 1-8. end_media_session usage
 ...
@@ -441,9 +453,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

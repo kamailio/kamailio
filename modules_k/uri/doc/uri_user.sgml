@@ -58,6 +58,9 @@
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>is_user</function> usage</title>
 		<programlisting format="linespecific">
@@ -75,6 +78,9 @@ if (is_user("john")) {
 		</title>
 		<para>
 		Check if To header field uri contains tag parameter.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>
 		<title><function>has_totag</function> usage</title>
@@ -101,6 +107,9 @@ if (has_totag()) {
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>uri_param</function> usage</title>
 		<programlisting format="linespecific">
@@ -130,6 +139,9 @@ if (uri_param("param1")) {
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>uri_param</function> usage</title>
 		<programlisting format="linespecific">
@@ -156,6 +168,9 @@ if (uri_param("param1","value1")) {
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>add_uri_param</function> usage</title>
 		<programlisting format="linespecific">
@@ -173,6 +188,9 @@ add_uri_param("nat=yes");
 		Converts RURI, if it is tel URI, to SIP URI.  Returns true, only if
 		conversion succeeded or if no conversion was needed (like RURI
 		was not tel URI.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>
 		<title><function>tel2sip</function> usage</title>
