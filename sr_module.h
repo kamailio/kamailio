@@ -161,4 +161,26 @@ void* find_param_export(char* mod, char* name, modparam_t type);
  */
 
 
-#endif
+/*
+ * Common fixup functions shared across modules
+ */
+
+/* Convert both parameters from char* to str* */
+int fixup_str_12(void** param, int param_no);
+
+/* Convert first parameter from char* to str* */
+int fixup_str_1(void** param, int param_no);
+
+/* Convert second parameter from char* to str* */
+int fixup_str_2(void** param, int param_no);
+
+/* Convert both parameters from char* to long */
+int fixup_int_12(void** param, int param_no);
+
+/* Convert first parameter from char* to long */
+int fixup_int_1(void** param, int param_no);
+
+/* Convert second parameter from char* to long */
+int fixup_int_2(void** param, int param_no);
+
+#endif /* sr_module_h */

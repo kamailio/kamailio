@@ -40,6 +40,7 @@
 #include "dprint.h"
 #include "error.h"
 #include "mem/mem.h"
+#include "ut.h"
 
 #include <dlfcn.h>
 #include <strings.h>
@@ -498,3 +499,84 @@ int init_modules(void)
 }
 
 #endif
+
+
+/*
+ * Common fixup functions shared across modules
+ */
+
+int fixup_str_12(void** param, int param_no)
+{
+	str* s;
+	
+	s = (str*)pkg_malloc(sizeof(str));
+	if (!s) {
+		LOG(L_ERR, "fixup_str_12: No memory left\n");
+		return E_UNSPEC;
+	}
+	
+	s->s = (char*)*param;
+	s->len = strlen(s->s);
+	*param = (void*)s;
+	return 0;
+}
+
+
+int fixup_str_1(void** param, int param_no)
+{
+	if (param_no == 1) {
+		return fixup_str_12(param, param_no);
+	}
+
+	return 0;
+}
+
+
+int fixup_str_2(void** param, int param_no)
+{
+	if (param_no == 2) {
+		return fixup_str_12(param, param_no);
+	}
+
+	return 0;
+}
+
+
+int fixup_int_12(void** param, int param_no)
+{
+	unsigned long num;
+	int err;
+
+	num = str2s(*param, strlen(*param), &err);
+	
+	if (err == 0) {
+		pkg_free(*param);
+		*param=(void*)num;
+	} else {
+		LOG(L_ERR, "fixup_int_12: Bad number <%s>\n",
+		    (char*)(*param));
+		return E_UNSPEC;
+	}
+
+	return 0;
+}
+
+
+int fixup_int_1(void** param, int param_no)
+{
+	if (param_no == 1) {
+		return fixup_int_12(param, param_no);
+	}
+
+	return 0;
+}
+
+
+int fixup_int_2(void** param, int param_no)
+{
+	if (param_no == 2) {
+		return fixup_int_12(param, param_no);
+	}
+	
+	return 0;
+}
