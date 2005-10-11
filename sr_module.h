@@ -183,4 +183,13 @@ int fixup_int_1(void** param, int param_no);
 /* Convert second parameter from char* to long */
 int fixup_int_2(void** param, int param_no);
 
+/* Compile regular expressions in both parameters */
+int fixup_regex_12(void** param, int param_no);
+
+/* Compile regular expression in first parameter */
+int fixup_regex_1(void** param, int param_no);
+
+/* Compile regular expression in second parameter */
+int fixup_regex_2(void** param, int param_no);
+
 #endif /* sr_module_h */

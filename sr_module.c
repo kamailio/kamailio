@@ -42,6 +42,7 @@
 #include "mem/mem.h"
 #include "ut.h"
 
+#include <regex.h>
 #include <dlfcn.h>
 #include <strings.h>
 #include <stdlib.h>
@@ -578,5 +579,43 @@ int fixup_int_2(void** param, int param_no)
 		return fixup_int_12(param, param_no);
 	}
 	
+	return 0;
+}
+
+
+int fixup_regex_12(void** param, int param_no)
+{
+	regex_t* re;
+
+	if ((re=pkg_malloc(sizeof(regex_t)))==0) return E_OUT_OF_MEM;
+	if (regcomp(re, *param, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ){
+		pkg_free(re);
+		LOG(L_ERR, "ERROR: fixup_regex_12: Bad regular expression '%s'\n", (char*)*param);
+		return E_BAD_RE;
+	}
+	/* free string */
+	pkg_free(*param);
+	/* replace it with the compiled re */
+	*param=re;
+	return 0;
+}
+
+
+int fixup_regex_1(void** param, int param_no)
+{
+	if (param_no == 1) {
+		return fixup_regex_12(param, param_no);
+	}
+
+	return 0;
+}
+
+
+int fixup_regex_2(void** param, int param_no)
+{
+	if (param_no == 2) {
+		return fixup_regex_12(param, param_no);
+	}
+
 	return 0;
 }
