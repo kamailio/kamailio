@@ -331,7 +331,7 @@ inline static void retransmission_handler( struct timer_link *retr_tl )
 
 inline static void final_response_handler( struct timer_link *fr_tl )
 {
-	int silent;
+	int silent, reply_code;
 	struct retr_buf* r_buf;
 	struct cell *t;
 
@@ -408,7 +408,16 @@ inline static void final_response_handler( struct timer_link *fr_tl )
 	}
 
 	DBG("DEBUG: final_response_handler:stop retr. and send CANCEL (%p)\n", t);
-	fake_reply(t, r_buf->branch, 408 );
+
+	if (is_invite(t) && 
+	    r_buf->branch < MAX_BRANCHES && r_buf->branch >= 0 &&
+	    t->uac[r_buf->branch].last_received > 0) {
+		reply_code = 480; /* Request Terminated */
+	} else {
+		reply_code = 408; /* Request Timeout */
+	}
+
+	fake_reply(t, r_buf->branch, reply_code );
 
 	DBG("DEBUG: final_response_handler : done\n");
 }
