@@ -34,6 +34,10 @@
 #ifndef _SER_URS_AVP_H_
 #define _SER_URS_AVP_H_
 
+#include <sys/types.h>
+#include <regex.h>
+
+
 /*
  *   LIST with the allocated flags, their meaning and owner
  *   flag no.    owner            description
@@ -47,15 +51,29 @@
 
 #include "str.h"
 
+struct str_int_data {
+	str name;
+	int val;
+};
+
+struct str_str_data {
+	str name;
+	str val;
+};
+
 typedef union {
 	int  n;
 	str *s;
+	regex_t* re;
 } int_str;
 
 
 struct usr_avp {
 	unsigned short id;
+	     /* Flags that are kept for the AVP lifetime */
 	unsigned short flags;
+	     /* Type of search in progress */
+	unsigned short search_type;
 	struct usr_avp *next;
 	void *data;
 };
@@ -63,6 +81,7 @@ struct usr_avp {
 
 #define AVP_NAME_STR     (1<<0)
 #define AVP_VAL_STR      (1<<1)
+#define AVP_NAME_RE      (1<<2)
 
 #define GALIAS_CHAR_MARKER  '$'
 
@@ -94,4 +113,3 @@ int parse_avp_name( str *name, int *type, int_str *avp_name);
 int parse_avp_spec( str *name, int *type, int_str *avp_name);
 
 #endif
-

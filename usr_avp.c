@@ -47,17 +47,6 @@
 #include "usr_avp.h"
 
 
-/* usr_avp data bodies */
-struct str_int_data {
-	str  name;
-	int  val;
-};
-
-struct str_str_data {
-	str  name;
-	str  val;
-};
-
 /* avp aliases structs*/
 struct avp_spec {
 	int type;
@@ -74,7 +63,7 @@ static struct avp_galias *galiases = 0;
 static struct usr_avp *global_avps = 0;
 static struct usr_avp **crt_avps  = &global_avps;
 
-
+static regex_t* search_re;  /* Regex for use in subsequent searches */
 
 inline static unsigned short compute_ID( str *name )
 {
@@ -110,13 +99,17 @@ int add_avp(unsigned short flags, int_str name, int_str val)
 			LOG(L_ERR,"ERROR:avp:add_avp: EMPTY NAME AVP!");
 			goto error;
 		}
-		if (flags&AVP_VAL_STR)
-			len += sizeof(struct str_str_data)-sizeof(void*) + name.s->len
-				+ (val.s->len+1);
-		else
-			len += sizeof(struct str_int_data)-sizeof(void*) + name.s->len;
-	} else if (flags&AVP_VAL_STR)
-			len += sizeof(str)-sizeof(void*) + (val.s->len+1);
+		if (flags&AVP_VAL_STR) {
+			len += sizeof(struct str_str_data)-sizeof(void*) 
+				+ name.s->len + 1 /* Terminating zero for regex search */
+				+ val.s->len + 1; /* Value is zero terminated */
+		} else {
+			len += sizeof(struct str_int_data)-sizeof(void*) 
+				+ name.s->len + 1; /* Terminating zero for regex search */
+		}
+	} else if (flags&AVP_VAL_STR) {
+		len += sizeof(str)-sizeof(void*) + val.s->len + 1;
+	}
 
 	avp = (struct usr_avp*)shm_malloc( len );
 	if (avp==0) {
@@ -143,6 +136,7 @@ int add_avp(unsigned short flags, int_str name, int_str val)
 			sid->name.len =name.s->len;
 			sid->name.s = (char*)sid + sizeof(struct str_int_data);
 			memcpy( sid->name.s , name.s->s, name.s->len);
+			sid->name.s[name.s->len] = '\0'; /* Zero terminator */
 			break;
 		case AVP_VAL_STR:
 			/* avp type ID, str value */
@@ -158,8 +152,9 @@ int add_avp(unsigned short flags, int_str name, int_str val)
 			ssd->name.len = name.s->len;
 			ssd->name.s = (char*)ssd + sizeof(struct str_str_data);
 			memcpy( ssd->name.s , name.s->s, name.s->len);
+			ssd->name.s[name.s->len]='\0'; /* Zero terminator */
 			ssd->val.len = val.s->len;
-			ssd->val.s = ssd->name.s + ssd->name.len;
+			ssd->val.s = ssd->name.s + ssd->name.len + 1;
 			memcpy( ssd->val.s , val.s->s, val.s->len);
 			ssd->val.s[ssd->val.len] = 0;
 			break;
@@ -261,9 +256,36 @@ inline static struct usr_avp *internal_search_name_avp( struct usr_avp *avp,
 }
 
 
+/* find an attribute by name match against regular expression */
+static struct usr_avp *internal_search_avp_by_re(struct usr_avp *avp, regex_t* re)
+{
+	str * avp_name;
+	regmatch_t pmatch;
+	
+	     /* validation */
+	if (re==0) {
+		LOG(L_ERR, "ERROR: internal_search_avp_by_re: No regular expression\n");
+		return 0;
+	}
+	
+	for( ; avp ; avp=avp->next ) {
+		     /* AVP identifiable by name ? */
+		if (!(avp->flags&AVP_NAME_STR)) continue;
+		if ((avp_name=get_avp_name(avp))==0) /* valid AVP name ? */
+			continue;
+		if (!avp_name->s) /* AVP name validation */
+			continue;
+		if (regexec(re, avp_name->s, 1, &pmatch,0)==0) { /* re match ? */
+			avp->search_type|= AVP_NAME_RE;
+			return avp;
+		}
+	}
+	return 0;
+}
+
 
 struct usr_avp *search_first_avp( unsigned short name_type,
-										int_str name, int_str *val)
+				  int_str name, int_str *val)
 {
 	struct usr_avp *avp;
 
@@ -284,14 +306,20 @@ struct usr_avp *search_first_avp( unsigned short name_type,
 			return 0;
 		}
 		avp = internal_search_name_avp(*crt_avps,compute_ID(name.s),name.s);
+	} else if (name_type & AVP_NAME_RE) {
+		search_re = name.re;
+		avp = internal_search_avp_by_re(*crt_avps, search_re);
 	} else {
 		avp = internal_search_ID_avp( *crt_avps, name.n );
 	}
-
-	/* get the value - if required */
-	if (avp && val)
-		get_avp_val(avp, val);
-
+	
+	if (avp) {
+		     /* remember type of search for next searches */
+		avp->search_type=name_type;
+		if (val) /* get the value - if required */
+			get_avp_val(avp, val);
+	}
+	
 	return avp;
 }
 
@@ -299,18 +327,30 @@ struct usr_avp *search_first_avp( unsigned short name_type,
 
 struct usr_avp *search_next_avp( struct usr_avp *avp,  int_str *val )
 {
-	if (avp==0 || avp->next==0)
+	struct usr_avp* next;
+
+	if (avp == 0) {
 		return 0;
+	}
 
-	if (avp->flags&AVP_NAME_STR)
-		avp = internal_search_name_avp( avp->next, avp->id, get_avp_name(avp));
-	else
-		avp = internal_search_ID_avp( avp->next, avp->id );
+	next = avp->next;
+	if (next == 0) {
+		return 0;
+	}
 
-	if (avp && val)
-		get_avp_val(avp, val);
+	if (avp->search_type & AVP_NAME_RE) {
+		next = internal_search_avp_by_re(next, search_re);
+	} else if (avp->flags & AVP_NAME_STR) {
+		next = internal_search_name_avp(next, avp->id, get_avp_name(avp));
+	} else {
+		next = internal_search_ID_avp(next, avp->id);
+	}
 
-	return avp;
+	if (next && val) {
+		get_avp_val(next, val);
+	}
+	
+	return next;
 }
 
 
