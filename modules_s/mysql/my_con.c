@@ -65,7 +65,8 @@ struct my_con* new_connection(struct db_id* id)
 	mysql_init(ptr->con);
 
 	if (id->port) {
-		DBG("new_connection: Opening MySQL connection: mysql://%s:%s@%s:%d/%s\n",
+		DBG("new_connection: Opening MySQL connection: %s://%s:%s@%s:%d/%s\n",
+		    ZSW(id->scheme),
 		    ZSW(id->username),
 		    ZSW(id->password),
 		    ZSW(id->host),
@@ -73,7 +74,8 @@ struct my_con* new_connection(struct db_id* id)
 		    ZSW(id->database)
 		    );
 	} else {
-		DBG("new_connection: Opening MySQL connection: mysql://%s:%s@%s/%s\n",
+		DBG("new_connection: Opening MySQL connection: %s://%s:%s@%s/%s\n",
+		    ZSW(id->scheme),
 		    ZSW(id->username),
 		    ZSW(id->password),
 		    ZSW(id->host),
