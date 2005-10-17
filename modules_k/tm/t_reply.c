@@ -58,6 +58,9 @@
  *  2004-10-01  added a new param.: restart_fr_on_each_reply (andrei)
  *  2005-03-01  force for statefull replies the incoming interface of 
  *              the request (bogdan)
+ *  2005-03-01  local ACK sent to same address as INVITE ->
+ *              all [build|send]_[local]_ack functions merged into 
+ *              send_ack() (bogdan)
  */
 
 
@@ -255,67 +258,37 @@ inline static int update_totag_set(struct cell *t, struct sip_msg *ok)
 
 
 /*
- * Build an ACK to a negative reply
+ * Build and send an ACK to a negative reply
  */
-static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
-	unsigned int *ret_len)
+static int send_ack(struct sip_msg* rpl, struct cell *trans, int branch)
 {
 	str to;
+	char *ack_p;
+	unsigned int  ack_len;
 
-	if (parse_headers(rpl,HDR_TO_F, 0)==-1 || !rpl->to ) {
-		LOG(L_ERR, "ERROR: build_ack: "
+	if (parse_headers( rpl, is_local(trans)?HDR_EOH_F:HDR_TO_F, 0)==-1
+	|| !rpl->to ) {
+		LOG(L_ERR, "ERROR:tm:send_ack: "
 			"cannot generate a HBH ACK if key HFs in reply missing\n");
-		return NULL;
+		goto error;
 	}
 	to.s=rpl->to->name.s;
 	to.len=rpl->to->len;
 
-	return build_local( trans, branch, ret_len, ACK, ACK_LEN, &to );
-}
-
-
-/*
- * The function builds an ACK to 200 OK of local transactions, honor the
- * route set, the URI to which the message should be sent will be returned
- * in next_hop parameter
- */
-static char *build_local_ack(struct sip_msg* rpl, struct cell *trans,
-							int branch, unsigned int *ret_len, str* next_hop)
-{
-	str to;
-	if (parse_headers(rpl, HDR_EOH_F, 0) == -1 || !rpl->to) {
-		LOG(L_ERR, "ERROR: build_local_ack: Error while parsing headers\n");
-		return 0;
+	ack_p = is_local(trans)?
+		build_dlg_ack(rpl, trans, branch, &to, &ack_len):
+		build_local( trans, branch, &ack_len, ACK, ACK_LEN, &to );
+	if (ack_p==0) {
+		LOG(L_ERR, "ERROR:tm:send_ack: failed to build ACK\n");
+		goto error;
 	}
-	
-	to.s = rpl->to->name.s;
-	to.len = rpl->to->len;
-	return build_dlg_ack(rpl, trans, branch, &to, ret_len, next_hop);
-}
 
+	SEND_PR_BUFFER(&trans->uac[branch].request, ack_p, ack_len);
+	shm_free(ack_p);
 
-/*
- * The function is used to send a localy generated ACK to INVITE
- * (tm generates the ACK on behalf of application using UAC
- */
-static int send_local_ack(struct sip_msg* msg, str* next_hop,
-							char* ack, int ack_len)
-{
-	struct socket_info* send_sock;
-	union sockaddr_union to_su;
-	
-	if (!next_hop) {
-		LOG(L_ERR, "send_local_ack: Invalid parameter value\n");
-		return -1;
-	}
-	
-	send_sock = uri2sock(msg, next_hop, &to_su, PROTO_NONE);
-	if (!send_sock) {
-		LOG(L_ERR, "send_local_ack: no socket found\n");
-		return -1;
-	}
-	
-	return msg_send(send_sock, send_sock->proto, &to_su, 0, ack, ack_len);
+	return 0;
+error:
+	return -1;
 }
 
 
@@ -1193,14 +1166,11 @@ int reply_received( struct sip_msg  *p_msg )
 	int last_uac_status;
 	int branch;
 	int reply_status;
-	char *ack;
-	unsigned int ack_len;
 	unsigned int timer;
 	/* has the transaction completed now and we need to clean-up? */
 	branch_bm_t cancel_bitmap;
 	struct ua_client *uac;
 	struct cell *t;
-	str next_hop;
 	struct usr_avp **backup_list;
 
 	/* make sure we know the associated transaction ... */
@@ -1243,23 +1213,11 @@ int reply_received( struct sip_msg  *p_msg )
 	/* acknowledge negative INVITE replies (do it before detailed
 	 * on_reply processing, which may take very long, like if it
 	 * is attempted to establish a TCP connection to a fail-over dst */
-	if (is_invite(t)) {
-		if (msg_status >= 300) {
-			ack = build_ack(p_msg, t, branch, &ack_len);
-			if (ack) {
-				SEND_PR_BUFFER(&uac->request, ack, ack_len);
-				shm_free(ack);
-			}
-		} else if (is_local(t) && msg_status >= 200) {
-			ack = build_local_ack(p_msg, t, branch, &ack_len, &next_hop);
-			if (ack) {
-				if (send_local_ack(p_msg, &next_hop, ack, ack_len) < 0) {
-					LOG(L_ERR, "ERROR:tm:reply_received: failed to send "
-						"local ACK\n");
-				}
-				shm_free(ack);
-			}
-		}
+	if (is_invite(t) &&
+	((msg_status >= 300) || (is_local(t) && msg_status >= 200) )) {
+		if (send_ack(p_msg, t, branch)!=0)
+			LOG(L_ERR, "ERROR:tm:reply_received: failed to send ACK (local=%s)\n",
+				is_local(t)?"yes":"no");
 	}
 
 	/* processing of on_reply block */

@@ -474,14 +474,13 @@ static inline int get_contact_uri(struct sip_msg* msg, str* uri)
 
 
 
-     /*
-      * The function creates an ACK to 200 OK. Route set will be created
-      * and parsed and next_hop parameter will contain uri the which the
-      * request should be send. The function is used by tm when it generates
-      * local ACK to 200 OK (on behalf of applications using uac
-      */
+/*
+ * The function creates an ACK to 200 OK. Route set will be created
+ * and parsed. The function is used by tm when it generates
+ * local ACK to 200 OK (on behalf of applications using uac
+ */
 char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch,
-		    str* to, unsigned int *len, str *next_hop)
+												str* to, unsigned int *len)
 {
 	char *req_buf, *p, *via;
 	unsigned int via_len;
@@ -492,16 +491,16 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 	struct rte* list;
 	str contact, ruri, *cont;
 	struct socket_info* send_sock;
-	union sockaddr_union to_su;
-	
+	str *next_hop;
+
 	if (get_contact_uri(rpl, &contact) < 0) {
 		return 0;
 	}
-	
+
 	if (process_routeset(rpl, &contact, &list, &ruri, next_hop) < 0) {
 		return 0;
 	}
-	
+
 	if ((contact.s != ruri.s) || (contact.len != ruri.len)) {
 		     /* contact != ruri means that the next
 		      * hop is a strict router, cont will be non-zero
@@ -513,23 +512,20 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 		     /* Next hop is a loose router, nothing to append */
 		cont = 0;
 	}
-	
-	     /* method, separators, version: "ACK sip:p2@iptel.org SIP/2.0" */
+
+	/* method, separators, version: "ACK sip:p2@iptel.org SIP/2.0" */
 	*len = SIP_VERSION_LEN + ACK_LEN + 2 /* spaces */ + CRLF_LEN;
 	*len += ruri.len;
-	
-	
-	     /* via */
-	send_sock = uri2sock(rpl, next_hop, &to_su, PROTO_NONE);
-	if (!send_sock) {
-		LOG(L_ERR, "build_dlg_ack: no socket found\n");
-		goto error;
-	}
-	
+
+	/* use same socket as for INVITE -bogdan */
+	send_sock = Trans->uac[branch].request.dst.send_sock;
+
 	if (!t_calc_branch(Trans,  branch, branch_buf, &branch_len)) goto error;
 	branch_str.s = branch_buf;
 	branch_str.len = branch_len;
 	set_hostport(&hp, 0);
+
+	/* build via */
 	via = via_builder(&via_len, send_sock, &branch_str, 0, send_sock->proto, &hp);
 	if (!via) {
 		LOG(L_ERR, "build_dlg_ack: No via header got from builder\n");

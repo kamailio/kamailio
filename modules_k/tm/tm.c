@@ -607,7 +607,7 @@ static int mod_init(void)
 	 * will be started; however we started already our
 	 * timers, so we know and process_count should not
 	 * change any more
-	 */	
+	 */
 	if (init_tm_stats()<0) {
 		LOG(L_CRIT, "ERROR: mod_init: failed to init stats\n");
 		return -1;

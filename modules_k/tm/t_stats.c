@@ -177,7 +177,7 @@ int init_tm_stats(void)
 		goto error3;
 	}
 	memset(tm_stats->s_client_transactions, 0, size );
-		 
+
 	if (register_fifo_cmd(fifo_stats, "t_stats", 0)<0) {
 		LOG(L_CRIT, "cannot register fifo stats\n");
 		goto error4;
