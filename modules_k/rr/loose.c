@@ -27,6 +27,8 @@
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2005-04-10 check_route_param() and all hooks for keeping reference to
  *            Route params added (bogdan)
+ * 2005-10-17 fixed socket selection when double routing changes 
+ *            the port or the IP address (bogdan)
  */
 
 
@@ -36,6 +38,7 @@
 #include "../../dprint.h"
 #include "../../forward.h"
 #include "../../data_lump.h"
+#include "../../socket_info.h"
 #include "../../parser/parse_rr.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
@@ -648,6 +651,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	int ret;
 #endif
 	str* uri;
+	struct socket_info *si;
 
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
@@ -695,6 +699,21 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		} else rt = rt->next;
 		
 		if (enable_double_rr && is_2rr(&puri.params)) {
+			/* double rout may occure due different IP and port, so force as
+			 * send interface the one advertise in second Route */
+			if (parse_uri(rt->nameaddr.uri.s, rt->nameaddr.uri.len, &puri) < 0) {
+				LOG(L_ERR, "after_loose: Error while parsing the "
+					"double route URI\n");
+				return RR_ERROR;
+			}
+			si = grep_sock_info( &puri.host, puri.port_no, puri.proto);
+			if (si) {
+				_m->force_send_socket = si;
+			} else {
+				LOG(L_WARN,"WARNING:rr:after_loose: no socket found for "
+					"match second RR\n");
+			}
+
 			if (!rt->next) {
 				/* No next route in the same header, remove the whole header
 				 * field immediately */
