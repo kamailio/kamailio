@@ -491,13 +491,13 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 	struct rte* list;
 	str contact, ruri, *cont;
 	struct socket_info* send_sock;
-	str *next_hop;
+	str next_hop;
 
 	if (get_contact_uri(rpl, &contact) < 0) {
 		return 0;
 	}
 
-	if (process_routeset(rpl, &contact, &list, &ruri, next_hop) < 0) {
+	if (process_routeset(rpl, &contact, &list, &ruri, &next_hop) < 0) {
 		return 0;
 	}
 
