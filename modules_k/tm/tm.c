@@ -805,9 +805,10 @@ inline static int t_local_replied(struct sip_msg* msg, char *all, char *bar)
 		return -1;
 	/* were all replies local or none  */
 	if (all_rpls) {
-		for( i=t->first_branch ; i<t->nr_of_outgoings ; i++ )
-			if (t->uac[i].last_received!=0)
+		for( i=t->first_branch ; i<t->nr_of_outgoings ; i++ ) {
+			if (t->uac[i].flags&T_UAC_HAS_RECV_REPLY)
 				return -1;
+		}
 	}
 
 	return 1;

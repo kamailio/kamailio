@@ -218,7 +218,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 
 	/* ACKs do not establish a transaction and are fwd-ed statelessly */
 	if ( p_msg->REQ_METHOD==METHOD_ACK) {
-		DBG( "SER:tm:t_relay: forwarding ACK  statelessly \n");
+		DBG("DEBUG:tm:t_relay: forwarding ACK  statelessly \n");
 		if (proxy==0) {
 			uri = GET_RURI(p_msg);
 			proxy=uri2proxy(GET_NEXT_HOP(p_msg), proto);
@@ -246,7 +246,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	   look-ups -- let upstream know we're working on it */
 	if (p_msg->REQ_METHOD==METHOD_INVITE )
 	{
-		DBG( "SER: new INVITE\n");
+		DBG("DEBUG:tm:t_relay: new INVITE\n");
 		if (!t_reply( t, p_msg , 100 ,
 			"trying -- your call is important to us"))
 				DBG("SER: ERROR: t_reply (100)\n");

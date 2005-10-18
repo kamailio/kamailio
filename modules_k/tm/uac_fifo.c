@@ -510,7 +510,7 @@ static inline int print_uris(FILE* out, struct sip_msg* reply)
 		return 0;
 	}
 
-	if (dlg->hooks.request_uri->s) {	
+	if (dlg->hooks.request_uri->s) {
 		fprintf(out, "%.*s\n", dlg->hooks.request_uri->len, dlg->hooks.request_uri->s);
 	} else {
 		fprintf(out, ".\n");

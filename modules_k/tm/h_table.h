@@ -178,6 +178,8 @@ struct totag_elem {
 /* transaction UAC's flags */
 /* is the UAC pending for CANCEL ?  */
 #define T_UAC_TO_CANCEL_FLAG  (1<<0)
+/* have the UAC received any replies?  */
+#define T_UAC_HAS_RECV_REPLY  (1<<1)
 
 
 

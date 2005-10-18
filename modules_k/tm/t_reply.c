@@ -1243,6 +1243,8 @@ int reply_received( struct sip_msg  *p_msg )
 
 	/* lock the reply*/
 	LOCK_REPLIES( t );
+	/* mark that the UAC received replies */
+	uac->flags |= T_UAC_HAS_RECV_REPLY;
 
 	if (t->uac[branch].flags&T_UAC_TO_CANCEL_FLAG) {
 		/* reply for an UAC with a pending cancel -> do cancel now */
