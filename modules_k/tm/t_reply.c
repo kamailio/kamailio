@@ -431,19 +431,19 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 	}
 }
 
-
+#define FAILURE_ROUTE_STACK_SIZE 2
 /*if msg is set -> it will fake the env. vars conforming with the msg; if NULL
  * the env. will be restore to original */
-static inline void faked_env( struct cell *t,struct sip_msg *msg)
+static inline void faked_env( struct cell *t,struct sip_msg *msg, int level)
 {
-	static struct cell *backup_t;
-	static unsigned int backup_msgid;
-	static struct usr_avp **backup_list;
-	static struct socket_info* backup_si;
-	static int backup_route_type;
+	static struct cell *backup_t[FAILURE_ROUTE_STACK_SIZE];
+	static unsigned int backup_msgid[FAILURE_ROUTE_STACK_SIZE];
+	static struct usr_avp **backup_list[FAILURE_ROUTE_STACK_SIZE];
+	static struct socket_info* backup_si[FAILURE_ROUTE_STACK_SIZE];
+	static int backup_route_type[FAILURE_ROUTE_STACK_SIZE];
 
 	if (msg) {
-		swap_route_type( backup_route_type, FAILURE_ROUTE);
+		swap_route_type( backup_route_type[level], FAILURE_ROUTE);
 		/* tm actions look in beginning whether transaction is
 		 * set -- whether we are called from a reply-processing 
 		 * or a timer process, we need to set current transaction;
@@ -451,24 +451,24 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 		 * up (unnecessary overhead, refcounting)
 		 */
 		/* backup */
-		backup_t=get_t();
-		backup_msgid=global_msg_id;
+		backup_t[level] = get_t();
+		backup_msgid[level] = global_msg_id;
 		/* fake transaction and message id */
-		global_msg_id=msg->id;
+		global_msg_id = msg->id;
 		set_t(t);
 		/* make available the avp list from transaction */
-		backup_list = set_avp_list( &t->user_avps );
+		backup_list[level] = set_avp_list( &t->user_avps );
 		/* set default send address to the saved value */
-		backup_si=bind_address;
-		bind_address=t->uac[0].request.dst.send_sock;
+		backup_si[level] = bind_address;
+		bind_address = t->uac[0].request.dst.send_sock;
 	} else {
 		/* restore original environment */
-		set_t(backup_t);
-		global_msg_id=backup_msgid;
-		set_route_type( backup_route_type );
+		set_t(backup_t[level]);
+		global_msg_id = backup_msgid[level];
+		set_route_type( backup_route_type[level] );
 		/* restore original avp list */
-		set_avp_list( backup_list );
-		bind_address=backup_si;
+		set_avp_list( backup_list[level] );
+		bind_address = backup_si[level];
 	}
 }
 
@@ -545,13 +545,20 @@ void inline static free_faked_req(struct sip_msg *faked_req, struct cell *t)
 static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 													int branch, int code)
 {
-	static struct sip_msg faked_req;
+	static struct sip_msg faked_req[FAILURE_ROUTE_STACK_SIZE];
+	static int level = -1;
 	struct sip_msg *shmem_msg = t->uas.request;
 	int on_failure;
 
+	if (level+1==FAILURE_ROUTE_STACK_SIZE) {
+		LOG(L_CRIT,"BUG:tm:run_failure_handlers: stack level is 1!!\n");
+		return 0;
+	}
+	level++;
+
 	/* failure_route for a local UAC? */
 	if (!shmem_msg) {
-		LOG(L_WARN,"Warning: run_failure_handlers: no UAC support (%d, %d) \n",
+		LOG(L_WARN,"WARNING:tm:run_failure_handlers: no UAC support (%d, %d) \n",
 			t->on_negative, t->tmcb_hl.reg_types);
 		return 0;
 	}
@@ -565,16 +572,16 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		return 1;
 	}
 
-	if (!fake_req(&faked_req, shmem_msg, &t->uas, &t->uac[branch])) {
+	if (!fake_req(&faked_req[level], shmem_msg, &t->uas, &t->uac[branch])) {
 		LOG(L_ERR, "ERROR: run_failure_handlers: fake_req failed\n");
 		return 0;
 	}
 	/* fake also the env. conforming to the fake msg */
-	faked_env( t, &faked_req);
+	faked_env( t, &faked_req[level], level);
 	/* DONE with faking ;-) -> run the failure handlers */
 
 	if ( has_tran_tmcbs( t, TMCB_ON_FAILURE) ) {
-		run_trans_callbacks( TMCB_ON_FAILURE, t, &faked_req, rpl, code);
+		run_trans_callbacks( TMCB_ON_FAILURE, t, &faked_req[level], rpl, code);
 	}
 	if (t->on_negative) {
 		/* avoid recursion -- if failure_route forwards, and does not 
@@ -583,16 +590,17 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		on_failure = t->on_negative;
 		t->on_negative=0;
 		/* run a reply_route action if some was marked */
-		if (run_actions(failure_rlist[on_failure], &faked_req)<0)
+		if (run_actions(failure_rlist[on_failure], &faked_req[level])<0)
 			LOG(L_ERR, "ERROR: run_failure_handlers: Error in do_action\n");
 	}
 
 	/* restore original environment and free the fake msg */
-	faked_env( t, 0);
-	free_faked_req(&faked_req,t);
+	faked_env( t, 0, level);
+	free_faked_req(&faked_req[level],t);
 
 	/* if failure handler changed flag, update transaction context */
-	shmem_msg->flags = faked_req.flags & gflags_mask;
+	shmem_msg->flags = faked_req[level].flags & gflags_mask;
+	level--;
 	return 1;
 }
 
