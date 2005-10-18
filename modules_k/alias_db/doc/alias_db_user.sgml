@@ -1,17 +1,17 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    <chapterinfo>
+	<chapterinfo>
 	<revhistory>
-	    <revision>
+		<revision>
 		<revnumber>$Revision$</revnumber>
 		<date>$Date$</date>
-	    </revision>
+		</revision>
 	</revhistory>
-    </chapterinfo>
-    <title>User's Guide</title>
-    
-    <section>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
 	<title>Overview</title>
 	<para>
 	ALIAS_DB module can be used as an alternative for user aliases
@@ -25,228 +25,228 @@
 	penalty can be lowered. Also, the search can be performed on different
 	tables in the same script.
 	</para>
-    </section>
-    <section>
+	</section>
+	<section>
 	<title>Dependencies</title>
 	<section>
-	    <title>&ser; Modules</title>
-	    <para>
+		<title>&ser; Modules</title>
+		<para>
 		The following modules must be loaded before this module:
-	    	<itemizedlist>
-		    <listitem>
+			<itemizedlist>
+			<listitem>
 			<para>
-			    <emphasis>database module</emphasis> (mysql, dbtext, ...).
+				<emphasis>database module</emphasis> (mysql, dbtext, ...).
 			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
+			</listitem>
+			</itemizedlist>
+		</para>
 	</section>
 	<section>
-	    <title>External Libraries or Applications</title>
-	    <para>
-		The following libraries or applications must be installed before running
-		&ser; with this module loaded:
-	    	<itemizedlist>
-		    <listitem>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before 
+		running &ser; with this module loaded:
+			<itemizedlist>
+			<listitem>
 			<para>
-			    <emphasis>None</emphasis>.
+				<emphasis>None</emphasis>.
 			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
+			</listitem>
+			</itemizedlist>
+		</para>
 	</section>
-    </section>
-    <section>
+	</section>
+	<section>
 	<title>Exported Parameters</title>
 	<section>
-	    <title><varname>db_url</varname> (str)</title>
-	    <para>
+		<title><varname>db_url</varname> (str)</title>
+		<para>
 		Database URL.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>DEFAULT_RODB_URL</quote>.
+			Default value is <quote>DEFAULT_RODB_URL</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("alias_db", "db_url", "mysql://user:passwd@localhost/openser")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 	
 	<section>
-	    <title><varname>user_column</varname> (str)</title>
-	    <para>
+		<title><varname>user_column</varname> (str)</title>
+		<para>
 		Name of the column storing username.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>username</quote>.
+			Default value is <quote>username</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>user_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("alias_db", "user_column", "susername")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 	
 	<section>
-	    <title><varname>domain_column</varname> (str)</title>
-	    <para>
+		<title><varname>domain_column</varname> (str)</title>
+		<para>
 		Name of the column storing user's domain.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>domain</quote>.
+			Default value is <quote>domain</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>domain_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("alias_db", "domain_column", "sdomain")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 	
 	<section>
-	    <title><varname>alias_user_column</varname> (str)</title>
-	    <para>
+		<title><varname>alias_user_column</varname> (str)</title>
+		<para>
 		Name of the column storing alias username.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>alias_username</quote>.
+			Default value is <quote>alias_username</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>alias_user_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("alias_db", "alias_user_column", "auser")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 	
 	<section>
-	    <title><varname>alias_domain_column</varname> (str)</title>
-	    <para>
+		<title><varname>alias_domain_column</varname> (str)</title>
+		<para>
 		Name of the column storing alias domain.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>alias_domain</quote>.
+			Default value is <quote>alias_domain</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>alias_domain_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("alias_db", "alias_domain_column", "adomain")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 	
 	<section>
-	    <title><varname>use_domain</varname> (int)</title>
-	    <para>
+		<title><varname>use_domain</varname> (int)</title>
+		<para>
 		Specifies whether to use or not the domain from R-URI when searching
 		for alias. If set to 0, the domain from R-URI is not used, if set to
 		1 the domain from R-URI is used.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>o</quote>.
+			Default value is <quote>o</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>use_domain</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("alias_db", "use_domain", 1)
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 	
 	<section>
-	    <title><varname>domain_prefix</varname> (str)</title>
-	    <para>
+		<title><varname>domain_prefix</varname> (str)</title>
+		<para>
 		Specifies the prefix to be stripped from the domain in R-URI before
 		doing the search.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>NULL</quote>.
+			Default value is <quote>NULL</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>domain_prefix</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("alias_db", "domain_prefix", "sip.")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
-    </section>
-    
+	</section>
+	
 	<section>
 	<title>Exported Functions</title>
 	<section>
-	    <title>
+		<title>
 		<function moreinfo="none">alias_db_lookup(table_name)</function>
-	    </title>
-	    <para>
+		</title>
+		<para>
 		The function takes the R-URI and search to see whether it is an alias
 		or not. If it is an alias for a local user, the R-URI is replaced with
 		user's SIP uri.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		The function returns TRUE if R-URI is alias and it was replaced by
 		user's SIP uri.
-	    </para>
-	    <para>Meaning of the parameters is as follows:</para>
-	    <itemizedlist>
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
 		<listitem>
-		    <para><emphasis>table_name</emphasis> - the name of the table
+			<para><emphasis>table_name</emphasis> - the name of the table
 			where to search for alias.
-		    </para>
+			</para>
 		</listitem>
-	    </itemizedlist>
+		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
-	    <example>
+		<example>
 		<title><function>alias_db_lookup()</function> usage</title>
 		<programlisting format="linespecific">
 ...
 alias_db_lookup("dbaliases");
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
-    </section>
-    <section>
+	</section>
+	<section>
 	<title>Installation & Running</title>
 		<section>
-	    <title>Database setup</title>
+		<title>Database setup</title>
 		<para>
 		The table structure used by alias_db module is defined by next
 		<acronym>SQL</acronym> script (good for MySQL).
 		</para>
-	    <example>
+		<example>
 		<title>alias_db sql script</title>
 		<programlisting format="linespecific">
 ...
@@ -254,8 +254,11 @@ alias_db_lookup("dbaliases");
 ...
 </programlisting>
 		</example>
+		<para>
+		The table <quote>dbaliases</quote> is create by default.
+		</para>
 		</section>
-    </section>
+	</section>
 </chapter>
 
 <!-- Keep this element at the end of the file

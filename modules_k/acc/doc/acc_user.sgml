@@ -108,11 +108,11 @@
 		</itemizedlist>
 	</para>
 	<para>
-		Support for SQL, RADIUS and DIAMETER works analogously. You need to 
-		enable it by recompiling the module with properly set defines. 
-		Uncomment the SQL_ACC, RAD_ACC or DDIAM_ACC lines in
-		modules/acc/Makefile. To compile SQL support, you need to have 
-		mysqlclient package on your system. To compile RADIUS support, 
+		Support for SQL, RADIUS and DIAMETER works analogously. The SQL support
+		is compiled in the moduls. For RADIUS and DIAMETER you need to 
+		enable it by recompiling the module with properly set defines: 
+		uncomment the RAD_ACC or DDIAM_ACC lines in
+		modules/acc/Makefile. To compile RADIUS support, 
 		you need to have radiusclient-ng (only versions higher or equal 
 		to 0.5.0) installed on your system which is available from
 		<ulink url='http://developer.berlios.de/projects/radiusclient-ng/'>
@@ -130,9 +130,9 @@
 		reported to us.
 	</para>
 	<para>
-		Both mysql and radius libraries must be dynamically linkable. 
+		For Radius support, the radius libraries must be dynamically linkable. 
 		You need to configure your OS so that &ser;, when started, will 
-		find them. Typically, you do so by manipulating
+		find it. Typically, you do so by manipulating
 		LD_LIBRARY_PATH environment variable or configuring ld.so.
 	</para>
 	<section>
@@ -143,9 +143,9 @@ modparam("acc", "log_level", 1)
 modparam("acc", "log_flag", 1)
 
 if (uri=~"sip:+40") /* calls to Romania */ {
-    if (!proxy_authorize("siphub.net" /* realm */,
+    if (!proxy_authorize("sip_domain.net" /* realm */,
     "subscriber" /* table name */))  {
-        proxy_challenge("siphub.net" /* realm */, "0" /* no qop */ );
+        proxy_challenge("sip_domain.net" /* realm */, "0" /* no qop */ );
         break;
     }
 
@@ -358,37 +358,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 
 	<section>
 	<title>Exported Parameters</title>
-	<section>
-		<title><varname>log_level</varname> (integer)</title>
-		<para>
-		Log level at which accounting messages are issued to syslog.
-		</para>
-		<para>
-		Default value is L_NOTICE.
-		</para>
-		<example>
-		<title>log_level example</title>
-		<programlisting format="linespecific">
-modparam("acc", "log_level", 2)   # Set log_level to 2
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>log_fmt</varname> (string)</title>
-		<para>
-		Defines what parts of header fields will be printed to
-		syslog, see <quote>overview</quote> for list of accepted values.
-		</para>
-		<para>
-		Default value is <quote>miocfs</quote>.
-		</para>
-		<example>
-		<title>log_fmt example</title>
-		<programlisting format="linespecific">
-modparam("acc", "log_fmt", "mfs")
-</programlisting>
-		</example>
-	</section>
+	<!-- Generic ACC parameters -->
 	<section>
 		<title><varname>early_media</varname> (integer)</title>
 		<para>
@@ -421,41 +391,12 @@ modparam("acc", "failed_transaction_flag", 4)
 		</example>
 	</section>
 	<section>
-		<title><varname>log_flag</varname> (integer)</title>
-		<para>
-		Request flag which needs to be set to account a transaction.
-		</para>
-		<para>
-		Default value is 1.
-		</para>
-		<example>
-		<title>log_flag example</title>
-		<programlisting format="linespecific">
-modparam("acc", "log_flag", 2)
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>log_missed_flag</varname> (integer)</title>
-		<para>
-		Request flag which needs to be set to account missed calls.
-		</para>
-		<para>
-		Default value is 2.
-		</para>
-		<example>
-		<title>log_missed_flag example</title>
-		<programlisting format="linespecific">
-modparam("acc", "log_missed_flag", 3)
-</programlisting>
-		</example>
-	</section>
-	<section>
 		<title><varname>report_ack</varname> (integer)</title>
 		<para>
-		Shall acc attempt to account e2e ACKs too ? Note that this is really only an
-		 attempt, as e2e ACKs may take a different path (unless RR enabled) and mismatch
-		 original INVITE (e2e ACKs are a separate transaction).
+		Shall acc attempt to account e2e ACKs too ? Note that this is really 
+		only an attempt, as e2e ACKs may take a different path 
+		(unless RR enabled) and mismatch original INVITE (e2e ACKs are 
+		a separate transaction).
 		</para>
 		<para>
 		Default value is 1 (yes).
@@ -481,237 +422,6 @@ modparam("acc", "report_ack", 0)
 		<title>report_cancels example</title>
 		<programlisting format="linespecific">
 modparam("acc", "report_cancels", 1)
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>radius_config</varname> (string)</title>
-		<para>
-		<emphasis>This parameter is radius specific.</emphasis> Path to 
-		radius client configuration file, set the referred config file 
-		correctly and specify there address of server, shared secret 
-		(should equal that in /usr/local/etc/raddb/clients for
-		freeRadius servers) and dictionary, see etc for an example of 
-		config file and dictionary.
-		</para>
-		<para>
-		Default value is <quote>/usr/local/etc/radiusclient/radiusclient.conf</quote>.
-		</para>
-		<example>
-		<title>radius_config example</title>
-		<programlisting format="linespecific">
-modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>service_type</varname> (integer)</title>
-		<para>
-		Radius service type used for accounting.
-		</para>
-		<para>
-		Default value is 15 (SIP).
-		</para>
-		<example>
-		<title>service_type example</title>
-		<programlisting format="linespecific">
-modparam("acc", "service_type", 16)
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>radius_flag</varname> (integer)</title>
-		<para>
-		Request flag which needs to be set to account a transaction -- RADIUS specific.
-		</para>
-		<para>
-		Default value is 1.
-		</para>
-		<example>
-		<title>radius_flag example</title>
-		<programlisting format="linespecific">
-modparam("acc", "radius_flag", 2)
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>radius_missed_flag</varname> (integer)</title>
-		<para>
-		Request flag which needs to be set to account missed calls -- RADIUS specific.
-		</para>
-		<para>
-		Default value is 2.
-		</para>
-		<example>
-		<title>radius_missed_flag example</title>
-		<programlisting format="linespecific">
-modparam("acc", "radius_missed_flag", 3)
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>db_url</varname> (string)</title>
-		<para>
-		SQL address -- database specific.
-		</para>
-		<para>
-		Default value is <quote>mysql://openser:openserrw@localhost/openser</quote>
-		</para>
-		<example>
-		<title>db_url example</title>
-		<programlisting format="linespecific">
-modparam("acc", "db_url", "mysql://user:password@localhost/openser")
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>db_flag</varname> (integer)</title>
-		<para>
-		Request flag which needs to be set to account a transaction -- database specific.
-		</para>
-		<para>
-		Default value is 1.
-		</para>
-		<example>
-		<title>db_flag example</title>
-		<programlisting format="linespecific">
-modparam("acc", "db_flag", 2)
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>db_missed_flag</varname> (integer)</title>
-		<para>
-		Request flag which needs to be set to account missed calls -- database specific.
-		</para>
-		<para>
-		Default value is 2.
-		</para>
-		<example>
-		<title>db_missed_flag example</title>
-		<programlisting format="linespecific">
-modparam("acc", "db_missed_flag", 3)
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title><varname>diameter_flag</varname> (integer)</title>
-		<para>
-		Request flag which needs to be set to account a transaction -- DIAMETER specific.
-		</para>
-		<para>
-		Default value is 1.
-		</para>
-		<example>
-		<title>diameter_flag example</title>
-		<programlisting format="linespecific">
-modparam("acc", "diameter_flag", 2)
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>diameter_missed_flag</varname> (integer)</title>
-		<para>
-		Request flag which needs to be set to account missed calls -- DIAMETER specific.
-		</para>
-		<para>
-		Default value is 2.
-		</para>
-		<example>
-		<title>diameter_missed_flag example</title>
-		<programlisting format="linespecific">
-modparam("acc", "diameter_missed_flag", 3)
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>diameter_client_host</varname> (string)</title>
-		<para>
-		Hostname of the machine where the DIAMETER Client is running -- DIAMETER specific.
-		</para>
-		<para>
-		Default value is <quote>localhost</quote>.
-		</para>
-		<example>
-		<title>diameter_client_host example</title>
-		<programlisting format="linespecific">
-modparam("acc", "diameter_client_host", "3a_server.net")
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>diameter_client_port</varname> (int)</title>
-		<para>
-		Port number where the Diameter Client is listening -- DIAMETER specific.
-		</para>
-		<para>
-		Default value is 3000.
-		</para>
-		<example>
-		<title>diameter_client_host example</title>
-		<programlisting format="linespecific">
-modparam("acc", "diameter_client_port", 3000)
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>log_extra</varname> (string)</title>
-		<para>
-		Extra values to be logged.
-		</para>
-		<para>
-		Default value is NULL.
-		</para>
-		<example>
-		<title>log_extra example</title>
-		<programlisting format="linespecific">
-modparam("acc", "log_extra", "ua=hdr/User-Agent;uuid=avp/i:123")
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>db_extra</varname> (string)</title>
-		<para>
-		Extra values to be logged into database - DB specific.
-		</para>
-		<para>
-		Default value is NULL.
-		</para>
-		<example>
-		<title>db_extra example</title>
-		<programlisting format="linespecific">
-modparam("acc", "db_extra", "ct=hdr/Content-type; email=avp/s:email")
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>radius_extra</varname> (string)</title>
-		<para>
-		Extra values to be logged via RADIUS - RADIUS specific.
-		</para>
-		<para>
-		Default value is NULL.
-		</para>
-		<example>
-		<title>radius_extra example</title>
-		<programlisting format="linespecific">
-modparam("acc", "radius_extra", "via=hdr/Via/g; email=avp/s:email")
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>diamter_extra</varname> (string)</title>
-		<para>
-		Extra values to be logged via DIAMETER - DIAMETER specific.
-		</para>
-		<para>
-		Default value is NULL.
-		</para>
-		<example>
-		<title>diameter_extra example</title>
-		<programlisting format="linespecific">
-modparam("acc", "diameter_extra", "ct=7846/Content-type; 7847=avp/s:email")
 </programlisting>
 		</example>
 	</section>
@@ -766,16 +476,621 @@ modparam("acc", "dst_leg_avp_id", 110)
 </programlisting>
 		</example>
 	</section>
+	<!-- SYSLOG specific ACC parameters -->
+	<section>
+		<title><varname>log_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account a transaction.
+		</para>
+		<para>
+		Default value is 1.
+		</para>
+		<example>
+		<title>log_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "log_flag", 2)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>log_missed_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account missed calls.
+		</para>
+		<para>
+		Default value is 2.
+		</para>
+		<example>
+		<title>log_missed_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "log_missed_flag", 3)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>log_level</varname> (integer)</title>
+		<para>
+		Log level at which accounting messages are issued to syslog.
+		</para>
+		<para>
+		Default value is L_NOTICE.
+		</para>
+		<example>
+		<title>log_level example</title>
+		<programlisting format="linespecific">
+modparam("acc", "log_level", 2)   # Set log_level to 2
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>log_fmt</varname> (string)</title>
+		<para>
+		Defines what parts of header fields will be printed to
+		syslog, see <quote>overview</quote> for list of accepted values.
+		</para>
+		<para>
+		Default value is <quote>miocfs</quote>.
+		</para>
+		<example>
+		<title>log_fmt example</title>
+		<programlisting format="linespecific">
+modparam("acc", "log_fmt", "mfs")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>log_extra</varname> (string)</title>
+		<para>
+		Extra values to be logged.
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>log_extra example</title>
+		<programlisting format="linespecific">
+modparam("acc", "log_extra", "ua=$hdr(User-Agent);uuid=$avp(i:123)")
+</programlisting>
+		</example>
+	</section>
+	<!-- RADIUS specific ACC parameters -->
+	<section>
+		<title><varname>radius_config</varname> (string)</title>
+		<para>
+		<emphasis>This parameter is radius specific.</emphasis> Path to 
+		radius client configuration file, set the referred config file 
+		correctly and specify there address of server, shared secret 
+		(should equal that in /usr/local/etc/raddb/clients for
+		freeRadius servers) and dictionary, see etc for an example of 
+		config file and dictionary.
+		</para>
+		<para>
+		Default value is <quote>/usr/local/etc/radiusclient/radiusclient.conf
+		</quote>.
+		</para>
+		<example>
+		<title>radius_config example</title>
+		<programlisting format="linespecific">
+modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>radius_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account a 
+		transaction -- RADIUS specific.
+		</para>
+		<para>
+		Default value is 1.
+		</para>
+		<example>
+		<title>radius_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "radius_flag", 2)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>radius_missed_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account missed 
+		calls -- RADIUS specific.
+		</para>
+		<para>
+		Default value is 2.
+		</para>
+		<example>
+		<title>radius_missed_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "radius_missed_flag", 3)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>service_type</varname> (integer)</title>
+		<para>
+		Radius service type used for accounting.
+		</para>
+		<para>
+		Default value is 15 (SIP).
+		</para>
+		<example>
+		<title>service_type example</title>
+		<programlisting format="linespecific">
+modparam("acc", "service_type", 16)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>radius_extra</varname> (string)</title>
+		<para>
+		Extra values to be logged via RADIUS - RADIUS specific.
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>radius_extra example</title>
+		<programlisting format="linespecific">
+modparam("acc", "radius_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
+</programlisting>
+		</example>
+	</section>
+	<!-- DIAMETER specific ACC parameters -->
+	<section>
+		<title><varname>diameter_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account a 
+		transaction -- DIAMETER specific.
+		</para>
+		<para>
+		Default value is 1.
+		</para>
+		<example>
+		<title>diameter_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "diameter_flag", 2)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>diameter_missed_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account missed 
+		calls -- DIAMETER specific.
+		</para>
+		<para>
+		Default value is 2.
+		</para>
+		<example>
+		<title>diameter_missed_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "diameter_missed_flag", 3)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>diameter_client_host</varname> (string)</title>
+		<para>
+		Hostname of the machine where the DIAMETER Client is 
+		running -- DIAMETER specific.
+		</para>
+		<para>
+		Default value is <quote>localhost</quote>.
+		</para>
+		<example>
+		<title>diameter_client_host example</title>
+		<programlisting format="linespecific">
+modparam("acc", "diameter_client_host", "3a_server.net")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>diameter_client_port</varname> (int)</title>
+		<para>
+		Port number where the Diameter Client is 
+		listening -- DIAMETER specific.
+		</para>
+		<para>
+		Default value is 3000.
+		</para>
+		<example>
+		<title>diameter_client_host example</title>
+		<programlisting format="linespecific">
+modparam("acc", "diameter_client_port", 3000)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>diamter_extra</varname> (string)</title>
+		<para>
+		Extra values to be logged via DIAMETER - DIAMETER specific.
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>diameter_extra example</title>
+		<programlisting format="linespecific">
+modparam("acc", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:email)")
+</programlisting>
+		</example>
+	</section>
+	<!-- SQL specific ACC parameters -->
+	<section>
+		<title><varname>db_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account a 
+		transaction -- database specific.
+		</para>
+		<para>
+		Default value is 1.
+		</para>
+		<example>
+		<title>db_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "db_flag", 2)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_missed_flag</varname> (integer)</title>
+		<para>
+		Request flag which needs to be set to account missed 
+		calls -- database specific.
+		</para>
+		<para>
+		Default value is 2.
+		</para>
+		<example>
+		<title>db_missed_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "db_missed_flag", 3)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_table_acc</varname> (string)</title>
+		<para>
+		Table name of accounting successfull calls -- database specific.
+		</para>
+		<para>
+		Default value is <quote>acc</quote>
+		</para>
+		<example>
+		<title>db_table_acc example</title>
+		<programlisting format="linespecific">
+modparam("acc", "db_table_acc", "myacc_table")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_table_missed_calls</varname> (string)</title>
+		<para>
+		Table name for accounting missed calls -- database specific.
+		</para>
+		<para>
+		Default value is <quote>missed_calls</quote>
+		</para>
+		<example>
+		<title>db_table_missed_calls example</title>
+		<programlisting format="linespecific">
+modparam("acc", "db_table_missed_calls", "myMC_table")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_url</varname> (string)</title>
+		<para>
+		SQL address -- database specific.
+		</para>
+		<para>
+		Default value is 
+			<quote>mysql://openser:openserrw@localhost/openser</quote>
+		</para>
+		<example>
+		<title>db_url example</title>
+		<programlisting format="linespecific">
+modparam("acc", "db_url", "mysql://user:password@localhost/openser")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_localtime</varname> (int)</title>
+		<para>
+		If DB timestamps should follow localtime or GMT time. Any non-zero value
+		enables this option.
+		</para>
+		<para>
+		Default value is <quote>0</quote>.
+		</para>
+		<example>
+		<title>db_localtime example</title>
+		<programlisting format="linespecific">
+modparam("acc", "db_localtime", 1)  # use GMT time
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_sip_from_column</varname> (string)</title>
+		<para>
+		Column name in accouting table to store the 
+		<quote>sip_from</quote> value.
+		</para>
+		<para>
+		Default value is <quote>sip_from</quote>.
+		</para>
+		<example>
+		<title>acc_sip_from_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_sip_from_column", "sip_from")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_sip_to_column</varname> (string)</title>
+		<para>
+		Column name in accouting table to store the <quote>sip_to</quote> value.
+		</para>
+		<para>
+		Default value is <quote>sip_to</quote>.
+		</para>
+		<example>
+		<title>acc_sip_to_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_sip_to_column", "sip_to")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_sip_status_column</varname> (string)</title>
+		<para>
+		Column name in accouting table to store the 
+		<quote>sip_status</quote> value.
+		</para>
+		<para>
+		Default value is <quote>sip_status</quote>.
+		</para>
+		<example>
+		<title>acc_sip_status_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_sip_status_column", "sip_status")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_sip_method_column</varname> (string)</title>
+		<para>
+		Column name in accouting table to store the 
+		<quote>sip_method</quote> value.
+		</para>
+		<para>
+		Default value is <quote>sip_method</quote>.
+		</para>
+		<example>
+		<title>acc_sip_method_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_sip_method_column", "sip_method")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_i_uri_column</varname> (string)</title>
+		<para>
+		Column name in accouting table to store the 
+		<quote>incoming_URI</quote> value.
+		</para>
+		<para>
+		Default value is <quote>i_uri</quote>.
+		</para>
+		<example>
+		<title>acc_i_uri_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_i_uri_column", "in_uri")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_o_uri_column</varname> (string)</title>
+		<para>
+		Column name in accouting table to store the 
+		<quote>outgoing_uri</quote> value.
+		</para>
+		<para>
+		Default value is <quote>o_uri</quote>.
+		</para>
+		<example>
+		<title>acc_o_uri_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_o_uri_column", "out_uri")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_sip_callid_column</varname> (string)</title>
+		<para>
+		Column name in accouting table to store the 
+		<quote>sip_callid</quote> value.
+		</para>
+		<para>
+		Default value is <quote>sip_callid</quote>.
+		</para>
+		<example>
+		<title>acc_sip_callid_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_sip_callid_column", "sip_callid")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_user_column</varname> (string)</title>
+		<para>
+		Column name in accouting table to store the 
+		<quote>username</quote> value.
+		</para>
+		<para>
+		Default value is <quote>username</quote>.
+		</para>
+		<example>
+		<title>acc_user_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_user_column", "username")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_time_column</varname> (string)</title>
+		<para>
+		Column name in accouting table to store the <quote>time</quote> value.
+		</para>
+		<para>
+		Default value is <quote>time</quote>.
+		</para>
+		<example>
+		<title>acc_time_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_time_column", "time")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_from_uri_column</varname> (string)</title>
+		<para>
+		Column name in accouting table to store the 
+		<quote>from_uri</quote> value.
+		</para>
+		<para>
+		Default value is <quote>from_uri</quote>.
+		</para>
+		<example>
+		<title>acc_from_uri_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_from_uri_column", "from_uri")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_to_uri_column</varname> (string)</title>
+		<para>
+		Column name in accouting table to store the <quote>to_uri</quote> value.
+		</para>
+		<para>
+		Default value is <quote>to_uri</quote>.
+		</para>
+		<example>
+		<title>acc_to_uri_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_to_uri_column", "to_uri")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_totag_column</varname> (string)</title>
+		<para>
+		Column name in accouting table to store the <quote>to_tag</quote> value.
+		</para>
+		<para>
+		Default value is <quote>totag</quote>.
+		</para>
+		<example>
+		<title>acc_totag_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_totag_column", "totag")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_fromtag_column</varname> (string)</title>
+		<para>
+		Column name in accouting table to store the 
+		<quote>from_tag</quote> value.
+		</para>
+		<para>
+		Default value is <quote>fromtag</quote>.
+		</para>
+		<example>
+		<title>acc_fromtag_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_fromtag_column", "fromtag")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_domain_column</varname> (string)</title>
+		<para>
+		Column name in accouting table to store the <quote>domain</quote> value.
+		</para>
+		<para>
+		Default value is <quote>domain</quote>.
+		</para>
+		<example>
+		<title>acc_domain_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_domain_column", "domain")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_src_leg_column</varname> (string)</title>
+		<para>
+		Column name in accouting table to store the 
+		<quote>source_leg</quote> value in case of multi-leg accouting.
+		</para>
+		<para>
+		Default value is <quote>src_leg</quote>.
+		</para>
+		<example>
+		<title>acc_src_leg_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_src_leg_column", "src_leg")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>acc_dst_leg_column</varname> (string)</title>
+		<para>
+		Column name in accouting table to store the 
+		<quote>destination_leg</quote> value in case of multi-leg accouting.
+		</para>
+		<para>
+		Default value is <quote>dst_leg</quote>.
+		</para>
+		<example>
+		<title>acc_dst_leg_column example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_dst_leg_column", "dst_leg")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_extra</varname> (string)</title>
+		<para>
+		Extra values to be logged into database - DB specific.
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>db_extra example</title>
+		<programlisting format="linespecific">
+modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)")
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
 	<title>Exported Functions</title>
 	<section>
-		<title><function moreinfo="none">acc_log_request(comment)</function></title>
+		<title>
+			<function moreinfo="none">acc_log_request(comment)</function>
+		</title>
 		<para>
-		<function moreinfo="none">acc_request</function> reports on a request, for example,
-		it can be used to report on missed calls to off-line users who are replied 404. To
-		avoid multiple reports on UDP request retransmission, you would need to embed the
+		<function moreinfo="none">acc_request</function> reports on a request, 
+		for example, it can be used to report on missed calls to off-line users 
+		who are replied 404 - Not Found. To avoid multiple reports on UDP 
+		request retransmission, you would need to embed the
 		action in stateful processing.
 		</para> 
 		<para>
@@ -799,12 +1114,14 @@ acc_log_request("Some comment");
 		</example>
 	</section>
 	<section>
-		<title><function moreinfo="none">acc_db_request(comment, table)</function></title>
+		<title>
+			<function moreinfo="none">acc_db_request(comment, table)</function>
+		</title>
 		<para>
-		Like <function moreinfo="none">acc_log_request</function>, <function
-		moreinfo="none">acc_db_request</function> reports on a request. The report is sent
-		to database at <quote>db_url</quote>, in the table referred to in the second action
-		parameter
+		Like <function moreinfo="none">acc_log_request</function>, 
+		<function moreinfo="none">acc_db_request</function> reports on a 
+		request. The report is sent to database at <quote>db_url</quote>, in 
+		the table referred to in the second action parameter.
 		</para>
 		<para>
 		Meaning of the parameters is as follows:
@@ -830,12 +1147,15 @@ acc_log_request("Some comment", "Some table");
 		</example>
 	</section>
 	<section>
-		<title><function moreinfo="none">acc_rad_request(comment)</function></title>
+		<title>
+			<function moreinfo="none">acc_rad_request(comment)</function>
+		</title>
 		<para>
 		Like <function moreinfo="none">acc_log_request</function>, 
-		<function moreinfo="none">acc_rad_request</function> reports on a request. It
-		reports to radius server as configured in <quote>radius_config</quote>.
-		</para> 
+		<function moreinfo="none">acc_rad_request</function> reports on 
+		a request. It reports to radius server as configured in 
+		<quote>radius_config</quote>.
+		</para>
 		<para>
 		Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -857,11 +1177,13 @@ acc_rad_request("Some comment");
 		</example>
 	</section>
 	<section>
-		<title><function moreinfo="none">acc_diam_request(comment)</function></title>
+		<title>
+			<function moreinfo="none">acc_diam_request(comment)</function>
+		</title>
 		<para>
 		Like <function moreinfo="none">acc_log_request</function>, 
-		<function moreinfo="none">acc_diam_request</function> reports on a request. It
-		reports to Diameter server.
+		<function moreinfo="none">acc_diam_request</function> reports on 
+		a request. It reports to the configured Diameter server.
 		</para> 
 		<para>
 		Meaning of the parameters is as follows:</para>
