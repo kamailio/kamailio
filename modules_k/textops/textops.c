@@ -654,7 +654,7 @@ static int is_method_f(struct sip_msg *msg, char *meth, char *str2 )
 		return -1; /* should it be 0 ?!?! */
 	}
 	if(m->s==0)
-		return (get_cseq(msg)->method_id==m->len)?1:-1;
+		return (get_cseq(msg)->method_id&m->len)?1:-1;
 	else
 		return (get_cseq(msg)->method_id==METHOD_OTHER
 				&& get_cseq(msg)->method.len==m->len
