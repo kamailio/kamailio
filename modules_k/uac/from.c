@@ -212,7 +212,7 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 			goto error;
 		}
 		/* some new display to set? */
-		if (from_dsp->s)
+		if (from_dsp->len)
 		{
 			if (l==0)
 			{
@@ -253,6 +253,10 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 	}
 
 	/* now handle the URI */
+	if (from_uri==0 || from_uri->len==0 )
+		/* do not touch URI part */
+		return 0;
+
 	DBG("DEBUG:uac:replace_from: uri to replace [%.*s]\n",
 		from->uri.len, from->uri.s);
 	DBG("DEBUG:uac:replace_from: replacement uri is [%.*s]\n",
@@ -336,7 +340,8 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 	msg->msg_flags |= FL_USE_UAC_FROM;
 
 	/* add TM callback to restore the FROM hdr in reply */
-	if (uac_tmb.register_tmcb(msg,0,TMCB_RESPONSE_IN,restore_from_reply,0)!=1) {
+	if (uac_tmb.register_tmcb(msg,0,TMCB_RESPONSE_IN,restore_from_reply,0)!=1)
+	{
 		LOG(L_ERR,"ERROR:uac:replace_from: failed to install TM callback\n");
 		goto error1;
 	}

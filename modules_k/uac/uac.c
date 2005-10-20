@@ -186,14 +186,16 @@ static int fixup_replace_from1(void** param, int param_no)
 	xl_elem_t *model;
 
 	model=NULL;
-	if (param_no==1)
+	if(xl_parse_format((char*)(*param),&model,XL_DISABLE_COLORS)<0)
 	{
-		if(xl_parse_format((char*)(*param),&model,XL_DISABLE_COLORS)<0)
-		{
-			LOG(L_ERR, "uac:fixup_replace_from1: ERROR: wrong format[%s]!\n",
-				(char*)(*param));
-			return E_UNSPEC;
-		}
+		LOG(L_ERR, "ERROR:uac:fixup_replace_from1: wrong format[%s]!\n",
+			(char*)(*param));
+		return E_UNSPEC;
+	}
+	if (model==NULL)
+	{
+		LOG(L_ERR, "ERROR:uac:fixup_replace_from1: empty parameter!\n");
+		return E_UNSPEC;
 	}
 	*param = (void*)model;
 
@@ -210,15 +212,13 @@ static int fixup_replace_from2(void** param, int param_no)
 	/* convert to str */
 	s.s = (char*)*param;
 	s.len = strlen(s.s);
-	if (s.len==0)
-		s.s = 0;
 
 	model=NULL;
 	if (param_no==1)
 	{
 		if (s.len)
 		{
-			/* put " to display name */
+			/* put " around display name */
 			p = (char*)pkg_malloc(s.len+3);
 			if (p==0)
 			{
@@ -234,12 +234,12 @@ static int fixup_replace_from2(void** param, int param_no)
 			s.len += 2;
 		}
 	}
-	if(s.s!=0)
+	if(s.len!=0)
 	{
 		if(xl_parse_format(s.s,&model,XL_DISABLE_COLORS)<0)
 		{
-			LOG(L_ERR,
-				"uac:fixup_replace_from2: ERROR: wrong format[%s]!\n", s.s);
+			LOG(L_ERR, "ERROR:uac:fixup_replace_from2: wrong format [%s] "
+				"for param no %d!\n", s.s, param_no);
 			pkg_free(s.s);
 			return E_UNSPEC;
 		}
@@ -274,9 +274,6 @@ static int w_replace_from1(struct sip_msg* msg, char* uri, char* str2)
 {
 	str uri_s;
 
-	if(uri==NULL)
-		return -1;
-	
 	uri_s.len = UAC_URI_SIZE;
 	uri_s.s = uac_uri_buf;
 
@@ -290,22 +287,28 @@ static int w_replace_from2(struct sip_msg* msg, char* dsp, char* uri)
 {
 	str uri_s;
 	str dsp_s;
-	
-	if(uri==NULL && dsp==NULL)
-		return -1;
 
-	uri_s.len = UAC_URI_SIZE;
-	uri_s.s   = uac_uri_buf;
-	dsp_s.len = UAC_URI_SIZE;
-	dsp_s.s   = uac_dsp_buf;
+	if (dsp!=NULL)
+	{
+		dsp_s.s   = uac_dsp_buf;
+		dsp_s.len = UAC_URI_SIZE;
+		if(dsp!=NULL)
+			if(xl_printf(msg, (xl_elem_p)dsp, dsp_s.s, &dsp_s.len)!=0)
+				return -1;
+	} else {
+		dsp_s.s = 0;
+		dsp_s.len = 0;
+	}
 
 	if(uri!=NULL)
+	{
+		uri_s.s   = uac_uri_buf;
+		uri_s.len = UAC_URI_SIZE;
 		if(xl_printf(msg, (xl_elem_p)uri, uri_s.s, &uri_s.len)!=0)
 			return -1;
-	if(dsp!=NULL)
-		if(xl_printf(msg, (xl_elem_p)dsp, dsp_s.s, &dsp_s.len)!=0)
-			return -1;
-	return (replace_from(msg, (dsp)?&dsp_s:0, (uri)?&uri_s:0)==0)?1:-1;
+	}
+
+	return (replace_from(msg, &dsp_s, (uri)?&uri_s:0)==0)?1:-1;
 }
 
 
