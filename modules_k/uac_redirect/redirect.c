@@ -136,6 +136,7 @@ static int get_redirect_fixup(void** param, int param_no)
 	cmd_function fct;
 	char *p;
 	char *s;
+	str  *reason;
 
 	s = (char*)*param;
 	if (param_no==1) {
@@ -165,18 +166,31 @@ static int get_redirect_fixup(void** param, int param_no)
 				"enabled, but no acc function defined\n");
 			return E_UNSPEC;
 		}
-		if (s!=0 && *s!=0) {
-			fct = find_export(acc_fct_s, 2, REQUEST_ROUTE);
-			if ( fct==0 )
-				fct = find_export(acc_fct_s, 1, REQUEST_ROUTE);
-			if ( fct==0 ) {
-				LOG(L_ERR, "ERROR:uac_redirect:get_redirect_fixup: cannot "
-					"import %s function; is acc loaded and proper "
-					"compiled?\n", acc_fct_s);
-				return E_UNSPEC;
-			}
-			rd_acc_fct = fct;
+		fct = find_export(acc_fct_s, 2, REQUEST_ROUTE);
+		if ( fct==0 )
+			fct = find_export(acc_fct_s, 1, REQUEST_ROUTE);
+		if ( fct==0 ) {
+			LOG(L_ERR, "ERROR:uac_redirect:get_redirect_fixup: cannot "
+				"import %s function; is acc loaded and proper "
+				"compiled?\n", acc_fct_s);
+			return E_UNSPEC;
 		}
+		rd_acc_fct = fct;
+		/* set the reason str */
+		reason = (str*)pkg_malloc(sizeof(str));
+		if (reason==0) {
+			LOG(L_ERR,"ERROR:uac_redirect:get_redirect_fixup: no more "
+				"pkg mem\n");
+			return E_UNSPEC;
+		}
+		if (s!=0 && *s!=0) {
+			reason->s = s;
+			reason->len = strlen(s);
+		} else {
+			reason->s = "n/a";
+			reason->len = 3;
+		}
+		*param=(void*)reason;
 	}
 
 	return 0;
@@ -333,7 +347,7 @@ static int w_get_redirect2(struct sip_msg* msg, char *max_c, char *reason)
 	msg_tracer( msg, 0);
 	/* get the contacts */
 	max = (unsigned short)(long)max_c;
-	n = get_redirect( msg , (max>>8)&0xff, max&0xff, reason);
+	n = get_redirect( msg , (max>>8)&0xff, max&0xff, (str*)reason);
 	reset_filters();
 	/* reset the tracer */
 	msg_tracer( msg, 1);

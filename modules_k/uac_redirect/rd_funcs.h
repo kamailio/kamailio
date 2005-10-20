@@ -31,6 +31,7 @@
 
 #include "../../parser/msg_parser.h"
 #include "../../sr_module.h"
+#include "../../str.h"
 #include "../tm/tm_load.h"
 
 typedef int (*tm_get_trans_f)( struct sip_msg*, struct cell**);
@@ -40,7 +41,7 @@ extern cmd_function   rd_acc_fct;
 
 extern char *acc_db_table;
 
-int get_redirect( struct sip_msg *msg , int maxt, int maxb, char *reason);
+int get_redirect( struct sip_msg *msg , int maxt, int maxb, str *reason);
 
 #endif
 

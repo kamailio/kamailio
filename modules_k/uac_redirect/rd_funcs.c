@@ -40,10 +40,10 @@
 #define DEFAULT_Q_VALUE          10
 
 static int shmcontact2dset(struct sip_msg *req, struct sip_msg *shrpl,
-			long max, char *reason);
+			long max, str *reason);
 
 
-int get_redirect( struct sip_msg *msg , int maxt, int maxb, char *reason)
+int get_redirect( struct sip_msg *msg , int maxt, int maxb, str *reason)
 {
 	struct cell *t;
 	str backup_uri;
@@ -172,7 +172,7 @@ static int sort_contacts(contact_t *ct_list, contact_t **ct_array)
  *            n - ok and n contacts added
  */
 static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
-													long max, char *reason)
+													long max, str *reason)
 {
 	static struct sip_msg  dup_rpl;
 	static contact_t *scontacts[MAX_CONTACTS_PER_REPLY];
@@ -277,7 +277,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 			if (rd_acc_fct!=0 && reason) {
 				/* log the redirect */
 				req->new_uri =  scontacts[i]->uri;
-				rd_acc_fct( req, reason, acc_db_table);
+				rd_acc_fct( req, (char*)reason, acc_db_table);
 			}
 		}
 	}
