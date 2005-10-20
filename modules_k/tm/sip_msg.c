@@ -544,6 +544,10 @@ do { \
 				((struct to_body*)new_hdr->parsed)->uri.s =
 					translate_pointer( new_msg->buf , org_msg->buf ,
 					((struct to_body*)hdr->parsed)->uri.s );
+				if ( ((struct to_body*)hdr->parsed)->display.s )
+					((struct to_body*)new_hdr->parsed)->display.s =
+						translate_pointer( new_msg->buf , org_msg->buf ,
+						((struct to_body*)hdr->parsed)->display.s );
 				if ( ((struct to_body*)hdr->parsed)->tag_value.s )
 					((struct to_body*)new_hdr->parsed)->tag_value.s =
 						translate_pointer( new_msg->buf , org_msg->buf ,
