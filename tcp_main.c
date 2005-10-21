@@ -1082,7 +1082,13 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, int fd_i)
 {
 	int fd;
 	
-	/* FIXME: is refcnt!=0 really necessary? */
+	/*  is refcnt!=0 really necessary? 
+	 *  No, in fact it's a bug: I can have the following situation: a send only
+	 *   tcp connection used by n processes simultaneously => refcnt = n. In 
+	 *   the same time I can have a read event and this situation is perfectly
+	 *   valid. -- andrei
+	 */
+#if 0
 	if ((tcpconn->refcnt!=0)){
 		/* FIXME: might be valid for sigio_rt iff fd flags are not cleared
 		 *        (there is a short window in which it could generate a sig
@@ -1092,6 +1098,7 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, int fd_i)
 					tcpconn, tcpconn->refcnt, tcpconn->s);
 		return -1;
 	}
+#endif
 	/* pass it to child, so remove it from the io watch list */
 	DBG("handle_tcpconn_ev: data available on %p %d\n", tcpconn, tcpconn->s);
 	if (io_watch_del(&io_h, tcpconn->s, fd_i, 0)==-1) goto error;
