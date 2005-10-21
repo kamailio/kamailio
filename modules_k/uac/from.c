@@ -200,8 +200,7 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 	if (from_dsp && from->display.len)
 	{
 		/* must be replaced/ removed */
-		l = 0;
-		/* there is already a display -> remove it */
+		/* first remove the existing display */
 		DBG("DEBUG:uac:replace_from: removing display [%.*s]\n",
 			from->display.len,from->display.s);
 		/* build del lump */
@@ -214,26 +213,23 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 		/* some new display to set? */
 		if (from_dsp->len)
 		{
-			if (l==0)
+			/* add anchor just before uri's "<" */
+			offset = from->uri.s - msg->buf;
+			while( msg->buf[offset]!='<')
 			{
-				/* add anchor just before uri's "<" */
-				offset = from->uri.s - msg->buf;
-				while( msg->buf[offset]!='<')
+				offset--;
+				if (from->body.s>msg->buf+offset)
 				{
-					offset--;
-					if (from->body.s>msg->buf+offset)
-					{
-						LOG(L_ERR,"ERROR:uac:replace_from: no <> and there"
-								" is dispaly name\n");
-						goto error;
-					}
-				}
-				if ( (l=anchor_lump( msg, offset, 0, 0))==0)
-				{
-					LOG(L_ERR,"ERROR:uac:replace_from: display anchor lump "
-						"failed\n");
+					LOG(L_ERR,"ERROR:uac:replace_from: no <> and there"
+							" is dispaly name\n");
 					goto error;
 				}
+			}
+			if ( (l=anchor_lump( msg, offset, 0, 0))==0)
+			{
+				LOG(L_ERR,"ERROR:uac:replace_from: display anchor lump "
+					"failed\n");
+				goto error;
 			}
 			p = pkg_malloc( from_dsp->len);
 			if (p==0)
