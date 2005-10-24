@@ -27,8 +27,8 @@
  * 2004-10-20 - added header name specifier (ramona)
  * 2005-06-14 - added avp name specifier (ramona)
  * 2005-06-18 - added color printing support via escape sequesnces
- *              contributed by Ingo Wolfsberger (daniel)
- * 2005-06-22 - moved item methods to "items.{c,h}"
+ *              contributed by Ingo Flaschberger (daniel)
+ * 2005-06-22 - moved item methods to "items.{c,h}" (daniel)
  * 
  */
 
