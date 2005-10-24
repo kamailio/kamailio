@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.TH OpenSER-0.10.0 SECTION "June 07, 2005"
+.TH OpenSER-1.0.0 SECTION "June 07, 2005"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 .\" Some roff macros, for reference:
@@ -16,16 +16,16 @@
 .\" .sp <n>    insert n+1 empty lines
 .\" for manpage-specific macros, see man(7)
 .SH NAME
-openser-0.10.0 \- program to do something
+openser-1.0.0 \- program to do something
 .SH SYNOPSIS
-.B openser-0.10.0
+.B openser-1.0.0
 .RI [ options ] " files" ...
 .br
 .B bar
 .RI [ options ] " files" ...
 .SH DESCRIPTION
 This manual page documents briefly the
-.B openser-0.10.0
+.B openser-1.0.0
 and
 .B bar
 commands.
@@ -36,7 +36,7 @@ Instead, it has documentation in the GNU Info format; see below.
 .\" TeX users may be more comfortable with the \fB<whatever>\fP and
 .\" \fI<whatever>\fP escape sequences to invode bold face and italics, 
 .\" respectively.
-\fBopenser-0.10.0\fP is a program that...
+\fBopenser-1.0.0\fP is a program that...
 .SH OPTIONS
 These programs follow the usual GNU command line syntax, with long
 options starting with two dashes (`-').

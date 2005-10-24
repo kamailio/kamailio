@@ -26,8 +26,8 @@ manpage.1: manpage.sgml
   <!ENTITY dhsection   "<manvolnum>SECTION</manvolnum>">
   <!ENTITY dhemail     "<email>pelinescu-onciul@fokus.gmd.de</email>">
   <!ENTITY dhusername  "Andrei Pelinescu-Onciul">
-  <!ENTITY dhucpackage "<refentrytitle>OpenSER-0.10.0</refentrytitle>">
-  <!ENTITY dhpackage   "openser-0.10.0">
+  <!ENTITY dhucpackage "<refentrytitle>OpenSER-1.0.0</refentrytitle>">
+  <!ENTITY dhpackage   "openser-1.0.0">
 
   <!ENTITY debian      "<productname>Debian</productname>">
   <!ENTITY gnu         "<acronym>GNU</acronym>">

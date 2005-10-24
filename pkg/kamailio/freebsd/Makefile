@@ -9,9 +9,9 @@
 
 
 PORTNAME= openser
-PORTVERSION= 0.10.0
+PORTVERSION= 1.0.0
 CATEGORIES= net
-MASTER_SITES= http://openser.org/pub/openser/0.10.0/src/
+MASTER_SITES= http://openser.org/pub/openser/1.0.0/src/
 
 MAINTAINER= daniel@voice-system.ro
 

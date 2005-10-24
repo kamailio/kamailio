@@ -1,4 +1,4 @@
 #
-# Regular cron jobs for the openser-0.10.0 package
+# Regular cron jobs for the openser-1.0.0 package
 #
-0 4	* * *	root	openser-0.10.0_maintenance
+0 4	* * *	root	openser-1.0.0_maintenance

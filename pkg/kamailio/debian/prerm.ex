@@ -1,5 +1,5 @@
 #! /bin/sh
-# prerm script for openser-0.10.0
+# prerm script for openser-1.0.0
 #
 # see: dh_installdeb(1)
 
@@ -19,7 +19,7 @@ set -e
 
 case "$1" in
     remove|upgrade|deconfigure)
-#       install-info --quiet --remove /usr/info/openser-0.10.0.info.gz
+#       install-info --quiet --remove /usr/info/openser-1.0.0.info.gz
         ;;
     failed-upgrade)
         ;;

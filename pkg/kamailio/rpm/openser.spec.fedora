@@ -8,7 +8,7 @@
 
 Summary:      OpenSIP Express Router, very fast and flexible SIP Proxy
 Name:         openser
-Version:      0.10.0
+Version:      1.0.0
 Release:      fc2.0
 Packager:     Daniel-Constantin Mierla <daniel@voice-system.ro>
 Copyright:    GPL

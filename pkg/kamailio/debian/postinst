@@ -1,6 +1,6 @@
 #! /bin/sh
 # $Id$
-# postinst script for openser-0.10.0
+# postinst script for openser-1.0.0
 #
 # see: dh_installdeb(1)
 

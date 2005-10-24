@@ -1,6 +1,6 @@
 PKG=OpenSER
 ARCH=sparc
-VERSION=0.10.0
+VERSION=1.0.0
 CATEGORY=application
 EMAIL=daniel@voice-system.ro
 NAME= openser or Open SIP Express Router is a very fast and flexible SIP proxy server

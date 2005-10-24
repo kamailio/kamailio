@@ -3,4 +3,4 @@
 # to check for upstream updates and more.
 # Site		Directory		Pattern			Version	Script
 version=2
-sunsite.unc.edu	/pub/Linux/Incoming	openser-0.10.0-(.*)\.tar\.gz	debian	uupdate
+sunsite.unc.edu	/pub/Linux/Incoming	openser-1.0.0-(.*)\.tar\.gz	debian	uupdate

@@ -1,11 +1,11 @@
 # Copyright 1999-2003 Fraunhofer Fokus
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /cvsroot/openser/sip-server/packaging/gentoo/openser-0.10.0.10.0
+# $Header: /cvsroot/openser/sip-server/packaging/gentoo/openser-1.0.0.10.0 
 
 DESCRIPTION="Open SIP Express Router"
 
 HOMEPAGE="http://www.openser.org/"
-SRC_URI="ftp://ftp.openser.org/pub/openser/0.10.0{P}_src.tar.gz".10.0{P}_src.tar.gz"
+SRC_URI="ftp://ftp.openser.org/pub/openser/1.0.0{P}_src.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"
