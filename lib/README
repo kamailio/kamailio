@@ -1,0 +1,18 @@
+Libraries common to modules:
+---------------------------
+
+cds - Common Data Structures (basic string operations, dynamic string,
+      vector, message queue, ...)
+
+presence - Library holding common structures and functions abaut presence
+           (API for internal subscriptions, common presence structures,
+           common presence data formats)
+           requires internal libraries: cds
+
+xcap - Common XCAP operations and structures (XCAP authorization documents
+       and XCAP resource lists processing)
+       requires external libraries: libxml2, libcurl3
+       requires internal libraries: cds
+
+Used by modules: pa, rls, dialog, rpa
+

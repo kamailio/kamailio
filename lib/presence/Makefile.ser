@@ -1,0 +1,6 @@
+LIBNAME  = presence
+OUT_NAME = libpresence.so
+OUT_TYPE = lib
+
+include ../Makefile.ser.defs
+

@@ -1,0 +1,126 @@
+# lib-type may be given from commandline to control 
+# if resulting library will be static or shared
+# possible values: static, shared
+lib-type ?= shared
+
+# install directories
+prefix ?= /usr/local
+bin-dir ?= ${prefix}/bin
+include-dir ?= ${prefix}/include
+lib-dir ?= ${prefix}/lib
+
+# install programs
+install          ?= install
+install-bin      ?= $(install) -m 755
+install-lib      ?= $(install) -m 755
+install-includes ?= $(install) -m 644
+
+# working variables
+SRCS := $(wildcard *.c)
+HDRS := $(wildcard *.h)
+DEP_IN = ${SRCS} ${HDRS}
+OBJS := $(patsubst %.c,%.o,$(SRCS))
+
+####################################
+# make rules
+
+static_lib_name  = lib${NAME}.a
+dynamic_lib_name = lib${NAME}.so
+prg_name = ${NAME}
+
+out_name = ${prg_name}
+
+ifeq ($(TYPE),lib)
+INCLUDES += -I$(CURDIR)/..
+ifeq ($(lib-type),static)
+out_name = ${static_lib_name}
+else
+out_name = ${dynamic_lib_name}
+endif
+endif
+
+default:	${out_name}
+
+#static library
+
+${static_lib_name}:	${OBJS}
+		ar -r $@ ${OBJS}
+
+# dynamic library
+
+${dynamic_lib_name}:	${OBJS}
+		${CC} -shared ${DEFS} ${CFLAGS} ${INCLUDES} -o $@ ${OBJS} ${LIBS}
+
+# executable
+
+${NAME}:	${OBJS}
+		${CC} ${DEFS} ${CFLAGS} ${INCLUDES} -o $@ ${OBJS} ${LIBS}
+		
+# common rules
+
+%.o:	%.c
+		${CC} ${DEFS} ${CFLAGS} ${INCLUDES} -c $<
+
+.PHONY:	install clean proper
+
+proper: clean
+
+clean:
+		-@rm -f ${prg_name} ${static_lib_name} ${dynamic_lib_name} *.o *.so *.d core core.* *~ tags Makefile.deps
+
+
+ifneq ($(MAKECMDGOALS),proper)
+ifneq ($(MAKECMDGOALS),clean)
+-include $(SRCS:.c=.d)
+endif
+endif
+
+%.d:	%.c
+		@$(CC) -M ${DEFS} $(CFLAGS) $(INCLUDES) $< > $@.$$$$; \
+		sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+		rm -f $@.$$$$
+
+
+# -include Makefile.deps
+#
+# Makefile.deps: ${DEP_IN}
+#		@echo "" > Makefile.deps
+#		@makedepend -fMakefile.deps -- ${DEFS} ${CFLAGS} ${INCLUDES} -- ${DEP_IN} 2>/dev/null
+#		-@rm -f Makefile.deps.bak
+
+# instalation rules
+
+ifeq ($(TYPE),lib)
+
+# library instalation
+
+install:	${out_name} install_dirs
+			$(install-lib) ${out_name} $(lib-dir)
+			@for hdr in ${HDRS} ; do \
+				$(install-includes) $$hdr $(include-dir)/$(NAME); \
+			done
+
+install_dirs:	$(lib-dir) $(include-dir)/$(NAME)
+
+else
+
+# executable instalation
+
+install:	${out_name} install_dirs
+			$(install-bin) ${out_name} $(bin-dir)
+
+install_dirs:	$(bin-dir)
+				
+endif
+
+# creating install directories
+
+$(bin-dir):	
+			mkdir -p $(bin-dir)
+
+$(lib-dir):	
+			mkdir -p $(lib-dir)
+			
+$(include-dir)/$(NAME):	
+			mkdir -p $(include-dir)/$(NAME)
+
