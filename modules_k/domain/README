@@ -60,7 +60,7 @@ Chapter 1. User's Guide
    cache memory when the module is loaded. After that domain
    table is re-read only when module is given domain_reload fifo
    command. Any changes in domain table must thus be followed by
-   domain_reload command in order to reflect them in module
+   "domain_reload" command in order to reflect them in module
    behavior. In non-caching mode domain module always queries
    domain table in the database.
 
@@ -83,7 +83,8 @@ Chapter 1. User's Guide
 
    This is URL of the database to be used.
 
-   Default value is "mysql://serro:47serro11@localhost/ser"
+   Default value is
+   "mysql://openserro:openserro@localhost/openser"
 
    Example 1-1. Setting db_url parameter
 modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
@@ -91,7 +92,7 @@ modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
 
 1.3.2. db_mode (integer)
 
-   Database mode. 0 means non-caching, 1 means caching.
+   Database mode: 0 means non-caching, 1 means caching.
 
    Default value is 0 (non-caching).
 

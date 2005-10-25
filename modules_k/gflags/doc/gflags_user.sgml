@@ -1,17 +1,17 @@
 <!-- Auth_radius Module User's Guide -->
 
 <chapter>
-    <chapterinfo>
+	<chapterinfo>
 	<revhistory>
-	    <revision>
+		<revision>
 		<revnumber>$Revision$</revnumber>
 		<date>$Date$</date>
-	    </revision>
+		</revision>
 	</revhistory>
-    </chapterinfo>
-    <title>User's Guide</title>
-    
-    <section>
+	</chapterinfo>
+	<title>User's Guide</title>
+
+	<section>
 	<title>Overview</title>
 	<para>
 	gflags module (global flags) keeps a bitmap of flags in shared memory
@@ -31,19 +31,21 @@
 	<quote>is_gflag</quote>.
 	</para>
 	</section>
+
 	<section>
 	<title>Dependencies</title>
 	<para>
-	    The module depends on the following modules (in the other words the
+		The module depends on the following modules (in the other words the
 		listed modules must be loaded before this module):
-	    <itemizedlist>
+		<itemizedlist>
 		<listitem>
-		    <para><emphasis>none</emphasis></para>
+			<para><emphasis>none</emphasis></para>
 		</listitem>
-	    </itemizedlist>
+		</itemizedlist>
 	</para>
-    </section>
-    <section>
+	</section>
+
+	<section>
 	<title>Exported Parameters</title>
 	<section>
 		<title><varname>initial</varname> (string)</title>
@@ -63,72 +65,72 @@ modparam("gflags", "initial", "15)
 	</section>
 	</section>
 
-    <section>
+	<section>
 	<title>Exported Functions</title>
 	<section>
-	    <title><function moreinfo="none">set_gflag(flag)</function></title>
-	    <para>
+		<title><function moreinfo="none">set_gflag(flag)</function></title>
+		<para>
 		Set the bit at the position <quote>flag</quote> in global flags.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<quote>flag</quote> can have a value from the range 1..31.
-	    </para>
+		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
 		ONREPLY_ROUTE.
 		</para>
-	    <example>
+		<example>
 		<title><function moreinfo="none">set_gflag()</function> usage</title>
 		<programlisting format="linespecific">
 ...
 set_gflag("4");
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section>
-	    <title><function moreinfo="none">reset_gflag(flag)</function></title>
-	    <para>
+		<title><function moreinfo="none">reset_gflag(flag)</function></title>
+		<para>
 		Reset the bit at the position <quote>flag</quote> in global flags.
-	    </para>
+		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
 		ONREPLY_ROUTE.
 		</para>
-	    <example>
+		<example>
 		<title><function moreinfo="none">reset_gflag()</function> usage</title>
 		<programlisting format="linespecific">
 ...
 reset_gflag("4");
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section>
-	    <title><function moreinfo="none">is_gflag(flag)</function></title>
-	    <para>
+		<title><function moreinfo="none">is_gflag(flag)</function></title>
+		<para>
 		Check if bit at the position <quote>flag</quote> in global flags is
 		set.
-	    </para>
+		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
 		ONREPLY_ROUTE.
 		</para>
-	    <example>
+		<example>
 		<title><function moreinfo="none">is_gflag()</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if(is_gflag("4"))
 {
-    log("global flag 4 is set\n");
+	log("global flag 4 is set\n");
 } else {
-    log("global flag 4 is not set\n");
+	log("global flag 4 is not set\n");
 };
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	</section>

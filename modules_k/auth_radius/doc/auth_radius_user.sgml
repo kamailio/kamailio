@@ -14,14 +14,17 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module contains functions that are used to perform authentication using a Radius
-		server. Basically the proxy will pass along the credentials to the radius server which
-		will in turn send a reply containing result of the authentication. So basically the
-		whole authentication is done in the Radius server. Before sending the request to the
-		radius server we perform some sanity checks over the credentials to make sure that only
-		well formed credentials will get to the server. We have implemented radius
-		authentication according to draft-sterman-aaa-sip-00. This module requires radiusclient-ng
-		library version 0.5.0 or higher which is available from <ulink url='http://developer.berlios.de/projects/radiusclient-ng/'>
+		This module contains functions that are used to perform authentication 
+		using a Radius server. Basically the proxy will pass along the 
+		credentials to the radius server which will in turn send a reply 
+		containing result of the authentication. So basically the whole
+		authentication is done in the Radius server. Before sending the request 
+		to the radius server we perform some sanity checks over the 
+		credentials to make sure that only well formed credentials will get to 
+		the server. We have implemented radius authentication according to 
+		draft-sterman-aaa-sip-00. This module requires radiusclient-ng
+		library version 0.5.0 or higher which is available from 
+		<ulink url='http://developer.berlios.de/projects/radiusclient-ng/'>
 		http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
 	</para>
 	</section>
@@ -148,30 +151,34 @@ modparam("auth_radius", "service_type", 15)
 	<section>
 		<title><function moreinfo="none">radius_www_authorize(realm)</function></title>
 		<para>
-		The function verifies credentials according to RFC2617. If the credentials are
-		verified successfully then the function will succeed and mark the credentials as
-		authorized (marked credentials can be later used by some other functions). If the
-		function was unable to verify the credentials for some reason then it will fail and
-		the script should call <function moreinfo="none">www_challenge</function> which will
-		challenge the user again.
+		The function verifies credentials according to 
+		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If 
+		the credentials are verified successfully then the function will 
+		succeed and mark the credentials as authorized (marked credentials can 
+		be later used by some other functions). If the function was unable to 
+		verify the credentials for some reason then it will fail and
+		the script should call <function moreinfo="none">www_challenge</function>
+		which will challenge the user again.
 		</para>
 		<para>
-		This function will, in fact, perform sanity checks over the received credentials and
-		then pass them along to the radius server which will verify the credentials and
-		return whether they are valid or not.
+		This function will, in fact, perform sanity checks over the received 
+		credentials and then pass them along to the radius server which will 
+		verify the credentials and return whether they are valid or not.
 		</para>
 		<para>Meaning of the parameter is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>realm</emphasis> - Realm is a opaque string that the user agent
-			should present to the user so he can decide what username and password to
-			use. Usually this is domain of the host the server is running on.
+			<para><emphasis>realm</emphasis> - Realm is a opaque string that 
+			the user agent should present to the user so he can decide what 
+			username and password to use. Usually this is domain of the host 
+			the server is running on.
 			</para>
 			<para>
-			If an empty string <quote></quote> is used then the server will generate it
-			from the request. In case of REGISTER requests To header field domain will
-			be used (because this header field represents a user being registered), for
-			all other messages From header field domain will be used.
+			If an empty string <quote></quote> is used then the server will 
+			generate it from the request. In case of REGISTER requests To 
+			header field domain will be used (because this header field 
+			represents a user being registered), for all other messages From 
+			header field domain will be used.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -193,28 +200,32 @@ if (!radius_www_authorize("siphub.net")) {
 	<section>
 		<title><function moreinfo="none">radius_proxy_authorize(realm)</function></title>
 		<para>
-		The function verifies credentials according to RFC2617. If the credentials are
-		verified successfully then the function will succeed and mark the credentials as
-		authorized (marked credentials can be later used by some other functions). If the
-		function was unable to verify the credentials for some reason then it will fail and
-		the script should call <function moreinfo="none">proxy_challenge</function> which will
-		challenge the user again.
+		The function verifies credentials according to 
+		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If 
+		the credentials are verified successfully then the function will 
+		succeed and mark the credentials as authorized (marked credentials can 
+		be later used by some other functions). If the function was unable to 
+		verify the credentials for some reason then it will fail and the script 
+		should call <function moreinfo="none">proxy_challenge</function> which 
+		will challenge the user again.
 		</para>
 		<para>
-		This function will, in fact, perform sanity checks over the received credentials and
-		then pass them along to the radius server which will verify the credentials and
-		return whether they are valid or not.
+		This function will, in fact, perform sanity checks over the received 
+		credentials and then pass them along to the radius server which will 
+		verify the credentials and return whether they are valid or not.
 		</para>
 		<para>Meaning of the parameter is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>realm</emphasis> - Realm is a opaque string that the user agent
-			should present to the user so he can decide what username and password to
-			use. Usually this is domain of the host the server is running on.
+			<para><emphasis>realm</emphasis> - Realm is a opaque string that 
+			the user agent should present to the user so he can decide what 
+			username and password to use. Usually this is domain of the host 
+			the server is running on.
 			</para>
 			<para>
-			If an empty string <quote></quote> is used then the server will generate it
-			from the request. From header field domain will be used as realm.
+			If an empty string <quote></quote> is used then the server will 
+			generate it from the request. From header field domain will be 
+			used as realm.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -222,7 +233,7 @@ if (!radius_www_authorize("siphub.net")) {
 		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>
-		<title>proxy_authorize usage</title>
+		<title><function moreinfo="none">proxy_authorize</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if (!radius_proxy_authorize("")) {

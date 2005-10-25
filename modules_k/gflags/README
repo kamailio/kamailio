@@ -116,9 +116,9 @@ reset_gflag("4");
 ...
 if(is_gflag("4"))
 {
-    log("global flag 4 is set\n");
+        log("global flag 4 is set\n");
 } else {
-    log("global flag 4 is not set\n");
+        log("global flag 4 is not set\n");
 };
 ...
      _________________________________________________________

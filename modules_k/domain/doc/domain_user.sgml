@@ -14,30 +14,34 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		Domain module implements checks that based on domain table determine if a host part of
-		an <acronym>URI</acronym> is <quote>local</quote> or not.  A <quote>local</quote> domain
-		is one that the proxy is responsible for.
+		Domain module implements checks that based on domain table determine 
+		if a host part of an <acronym>URI</acronym> is <quote>local</quote> or 
+		not.  A <quote>local</quote> domain is one that the proxy is responsible 
+		for.
 	</para>
 	<para>
-		Domain module operates in caching or non-caching mode depending on value of module
-		parameter <parameter moreinfo="none">db_mode</parameter>. In caching mode domain module
-		reads the contents of domain table into cache memory when the module is loaded.  After
-		that domain table is re-read only when module is given domain_reload fifo command.  Any
-		changes in domain table must thus be followed by domain_reload command in order to
-		reflect them in module behavior. In non-caching mode domain module always queries domain
+		Domain module operates in caching or non-caching mode depending on 
+		value of module parameter <parameter moreinfo="none">db_mode</parameter>.
+		In caching mode domain module reads the contents of domain table into 
+		cache memory when the module is loaded.  After that domain table is 
+		re-read only when module is given domain_reload fifo command.  Any
+		changes in domain table must thus be followed by 
+		<quote>domain_reload</quote> command in order to reflect them in 
+		module behavior. In non-caching mode domain module always queries domain
 		table in the database.
 	</para>
 	<para>
-		Caching is implemented using a hash table. The size of the hash table is given by
-		HASH_SIZE constant defined in domain_mod.h. Its <quote>factory default</quote> value is
-		128.
+		Caching is implemented using a hash table. The size of the hash table 
+		is given by HASH_SIZE constant defined in domain_mod.h. 
+		Its <quote>factory default</quote> value is 128.
 	</para>
 	</section>
+
 	<section>
 	<title>Dependencies</title>
 	<para>
-		The module depends on the following modules (in the other words the listed modules
-		must be loaded before this module):
+		The module depends on the following modules (in the other words the 
+		listed modules must be loaded before this module):
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>database</emphasis> -- Any database module</para>
@@ -45,6 +49,7 @@
 		</itemizedlist>
 	</para>
 	</section>
+
 	<section>
 	<title>Exported Parameters</title>
 	<section>
@@ -53,7 +58,8 @@
 		This is <acronym>URL</acronym> of the database to be used.
 		</para>
 		<para>
-		Default value is <quote>mysql://serro:47serro11@localhost/ser</quote>
+		Default value is 
+			<quote>mysql://openserro:openserro@localhost/openser</quote>
 		</para>
 		<example>
 		<title>Setting db_url parameter</title>
@@ -65,7 +71,7 @@ modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
 	<section>
 		<title><varname>db_mode</varname> (integer)</title>
 		<para>
-		Database mode. 0 means non-caching, 1 means caching.
+		Database mode: 0 means non-caching, 1 means caching.
 		</para>
 		<para>
 		Default value is 0 (non-caching).
@@ -80,9 +86,9 @@ modparam("domain", "db_mode", 1)   # Use caching
 	<section>
 		<title><varname>domain_table</varname> (string)</title>
 		<para>
-		Name of table containing names of local domains that the proxy is responsible for.
-		Local users must have in their sip uri a host part that is equal to one of these
-		domains.
+		Name of table containing names of local domains that the proxy is 
+		responsible for. Local users must have in their sip uri a host part 
+		that is equal to one of these domains.
 		</para>
 		<para>
 		Default value is <quote>domain</quote>.
@@ -180,9 +186,10 @@ if (is_uri_host_local()) {
 	<section>
 	<title>Known Limitations</title>
 	<para>
-		There is an unlikely race condition on domain list update.  If a process uses a table,
-		which is reloaded at the same time twice through <acronym>FIFO</acronym>, the second
-		reload will delete the original table still in use by the process.
+		There is an unlikely race condition on domain list update.  If a 
+		process uses a table, which is reloaded at the same time twice 
+		through <acronym>FIFO</acronym>, the second reload will delete the 
+		original table still in use by the process.
 	</para>
 	</section>
 </chapter>

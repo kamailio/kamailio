@@ -48,6 +48,11 @@ Chapter 1. User's Guide
    Typically one needs to communicate the original recipient of
    the call to the PSTN gateway and this is what the diversion
    extensions can be used for.
+
+   Warning
+
+   The draft-levy-sip-diversion-08 is expired!! See IETF I-D
+   tracker.
      _________________________________________________________
 
 1.2. Dependencies

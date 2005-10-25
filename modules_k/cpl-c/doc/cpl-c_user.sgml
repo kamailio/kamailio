@@ -94,7 +94,7 @@
 ...
 modparam("cpl_c","cpl_db","mysql://user:passwd@host/database")
 ...
-				</programlisting>
+</programlisting>
 			</example>
 		</section>
 		<section>
@@ -116,7 +116,7 @@ modparam("cpl_c","cpl_db","mysql://user:passwd@host/database")
 ...
 modparam("cpl_c","cpl_table","cpltable")
 ...
-				</programlisting>
+</programlisting>
 			</example>
 		</section>
 		<section>
@@ -138,7 +138,7 @@ modparam("cpl_c","cpl_table","cpltable")
 ...
 modparam("cpl_c","cpl_dtd_file","/etc/ser/cpl-06.dtd")
 ...
-				</programlisting>
+</programlisting>
 			</example>
 		</section>
 		<section>
@@ -160,7 +160,7 @@ modparam("cpl_c","cpl_dtd_file","/etc/ser/cpl-06.dtd")
 ...
 modparam("cpl_c","log_dir","/var/log/ser/cpl")
 ...
-				</programlisting>
+</programlisting>
 			</example>
 		</section>
 		<section>
@@ -184,7 +184,7 @@ modparam("cpl_c","log_dir","/var/log/ser/cpl")
 ...
 modparam("cpl_c","proxy_recurse",2)
 ...
-				</programlisting>
+</programlisting>
 			</example>
 		</section>
 		<section>
@@ -205,7 +205,7 @@ modparam("cpl_c","proxy_recurse",2)
 ...
 modparam("cpl_c","proxy_route",1)
 ...
-				</programlisting>
+</programlisting>
 			</example>
 		</section>
 		<section>
@@ -226,7 +226,7 @@ modparam("cpl_c","proxy_route",1)
 ...
 modparam("cpl_c","case_sensitive",1)
 ...
-				</programlisting>
+</programlisting>
 			</example>
 		</section>
 		<section>
@@ -246,7 +246,7 @@ modparam("cpl_c","case_sensitive",1)
 ...
 modparam("cpl_c","realm_prefix","sip.")
 ...
-				</programlisting>
+</programlisting>
 			</example>
 		</section>
 		<section>
@@ -271,7 +271,7 @@ modparam("cpl_c","realm_prefix","sip.")
 ...
 modparam("cpl_c","timer_avp","i:14")
 ...
-				</programlisting>
+</programlisting>
 			</example>
 		</section>
 		<section>
@@ -292,7 +292,7 @@ modparam("cpl_c","timer_avp","i:14")
 ...
 modparam("cpl_c","nat_flag",4)
 ...
-				</programlisting>
+</programlisting>
 			</example>
 		</section>
 		<section>
@@ -313,7 +313,7 @@ modparam("cpl_c","nat_flag",4)
 ...
 modparam("cpl_c","lookup_domain",1)
 ...
-				</programlisting>
+</programlisting>
 			</example>
 		</section>
 		<section>
@@ -336,7 +336,7 @@ modparam("cpl_c","lookup_domain",1)
 ...
 modparam("cpl_c","lookup_append_branches",1)
 ...
-				</programlisting>
+</programlisting>
 			</example>
 		</section>
 	</section>
@@ -432,7 +432,7 @@ modparam("cpl_c","lookup_append_branches",1)
 ...
 cpl_run_script("incoming","force_stateful");
 ...
-				</programlisting>
+</programlisting>
 			</example>
 		</section>
 		<section>
@@ -471,7 +471,7 @@ if (method=="REGISTER") {
 	cpl_process_register();
 }
 ...
-				</programlisting>
+</programlisting>
 			</example>
 		</section>
 		<section>
@@ -503,7 +503,7 @@ if (method=="REGISTER") {
 	save("location");
 }
 ...
-				</programlisting>
+</programlisting>
 			</example>
 		</section>
 	</section>

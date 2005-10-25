@@ -92,10 +92,10 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",		STR_PARAM, &db_url.s	  },
-	{"db_mode",             INT_PARAM, &db_mode       },
-	{"domain_table",        STR_PARAM, &domain_table.s},
-	{"domain_col",          STR_PARAM, &domain_col.s  },
+	{"db_url",         STR_PARAM, &db_url.s      },
+	{"db_mode",        INT_PARAM, &db_mode       },
+	{"domain_table",   STR_PARAM, &domain_table.s},
+	{"domain_col",     STR_PARAM, &domain_col.s  },
 	{0, 0, 0}
 };
 

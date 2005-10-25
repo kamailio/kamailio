@@ -1,213 +1,223 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    <chapterinfo>
+	<chapterinfo>
 	<revhistory>
-	    <revision>
+		<revision>
 		<revnumber>$Revision$</revnumber>
 		<date>$Date$</date>
-	    </revision>
+		</revision>
 	</revhistory>
-    </chapterinfo>
-    <title>User's Guide</title>
-    
-    <section>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
 	<title>Overview</title>
 	<para>
-	    Exec module allows to start an external command from a &ser; script. The commands may
-	    be any valid shell commands--the command string is passed to shell using <quote>popen</quote>
-	    command. &ser; passes additionally lot of information about request in environment
-	    variables:
+		Exec module allows to start an external command from a &ser; script. 
+		The commands may be any valid shell commands--the command string is 
+		passed to shell using <quote>popen</quote> command. &ser; passes 
+		additionally lot of information about request in environment
+		variables:
 	</para>
 	<itemizedlist>
-	    <listitem>
+		<listitem>
 		<para>
-		    SIP_HF_&lt;hf_name&gt; contains value of each header field in request. If a
-	            header field occurred multiple times, values are concatenated and
-	            comma-separated. &lt;hf_name&gt; is in capital letters. Ff a header-field name
-	            occurred in compact form, &lt;hf_name&gt; is canonical.
+			SIP_HF_&lt;hf_name&gt; contains value of each header field in 
+			request. If a header field occurred multiple times, values are 
+			concatenated and comma-separated. &lt;hf_name&gt; is in capital 
+			letters. Ff a header-field name occurred in compact form, 
+			&lt;hf_name&gt; is canonical.
 		</para>
-	    </listitem>
-	    <listitem>
+		</listitem>
+		<listitem>
 		<para>
-		    SIP_TID is transaction identifier. All request retransmissions or CANCELs/ACKs
-		    associated with a previous INVITE result in the same value.
+			SIP_TID is transaction identifier. All request retransmissions or 
+			CANCELs/ACKs associated with a previous INVITE result in the same 
+			value.
 		</para>
-	    </listitem>
-	    <listitem>
+		</listitem>
+		<listitem>
 		<para>
-		    SIP_DID is dialog identifier, which is the same as to-tag. Initially, it is
-		    empty.
+			SIP_DID is dialog identifier, which is the same as to-tag. 
+			Initially, it is empty.
 		</para>
-	    </listitem>
-	    <listitem>
+		</listitem>
+		<listitem>
 		<para>
-		    SIP_SRCIP is source &ip; address from which request came.
+			SIP_SRCIP is source &ip; address from which request came.
 		</para>
-	    </listitem>
-	    <listitem>
+		</listitem>
+		<listitem>
 		<para>
-		    SIP_ORURI is original request &uri;.
+			SIP_ORURI is original request &uri;.
 		</para>
-	    </listitem>
-	    <listitem>
+		</listitem>
+		<listitem>
 		<para>
-		    SIP_RURI is <emphasis>current</emphasis> request &uri; (if unchanged, equal to original).
+			SIP_RURI is <emphasis>current</emphasis> request &uri; (if 
+			unchanged, equal to original).
 		</para>
-	    </listitem>
-	    <listitem>
+		</listitem>
+		<listitem>
 		<para>
-		    SIP_USER is userpart of <emphasis>current</emphasis> request &uri;.
+			SIP_USER is userpart of <emphasis>current</emphasis> request &uri;.
 		</para>
-	    </listitem>
-	    <listitem>
+		</listitem>
+		<listitem>
 		<para>
-		    SIP_OUSER is userpart of original request &uri;.
+			SIP_OUSER is userpart of original request &uri;.
 		</para>
-	    </listitem>
+		</listitem>
 	</itemizedlist>
-    </section>
-    <section>
+	</section>
+
+	<section>
 	<title>Dependencies</title>
 	<section>
-	    <title>&ser; Modules</title>
-	    <para>
+		<title>&ser; Modules</title>
+		<para>
 		The following  modules must be loaded before this module:
-	    	<itemizedlist>
-		    <listitem>
+			<itemizedlist>
+			<listitem>
 			<para>
-			    <emphasis>No dependencies on other &ser; modules</emphasis>.
+				<emphasis>No dependencies on other &ser; modules</emphasis>.
 			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
+			</listitem>
+			</itemizedlist>
+		</para>
 	</section>
 	<section>
-	    <title>External Libraries or Applications</title>
-	    <para>
+		<title>External Libraries or Applications</title>
+		<para>
 		The following libraries or applications must be installed before running
 		&ser; with this module loaded:
-	    	<itemizedlist>
-		    <listitem>
+			<itemizedlist>
+			<listitem>
 			<para>
-			    <emphasis>None</emphasis>.
+				<emphasis>None</emphasis>.
 			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
+			</listitem>
+			</itemizedlist>
+		</para>
 	</section>
-    </section>
-    <section>
+	</section>
+
+	<section>
 	<title>Exported Parameters</title>
 	<section>
-	    <title><varname>setvars</varname> (integer)</title>
-	    <para>
+		<title><varname>setvars</varname> (integer)</title>
+		<para>
 		Turn off to disable setting environment variables for executed commands.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is 1.
+			Default value is 1.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <quote>setvars</quote> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("exec", "setvars", 1)
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 	<section>
-	    <title><varname>exec_timer</varname> (UNUSED, placeholder only) (integer)</title>
-	    <para>
-		Specifies the longest time a program is allowed to execute. If the time is exceeded,
-		the program is killed.
-	    </para>
-	    <para>
+		<title>
+			<varname>exec_timer</varname> (UNUSED, placeholder only) (integer)
+		</title>
+		<para>
+		Specifies the longest time a program is allowed to execute. If the 
+		time is exceeded, the program is killed.
+		</para>
+		<para>
 		<emphasis>
-		    Default value is 0.
+			Default value is 0.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <quote>setvars</quote> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("exec", "setvars", 1)
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
-    </section>
-    <section>
+	</section>
+	<section>
 	<title>Exported Functions</title>
 	<section>
-	    <title>
+		<title>
 		<function moreinfo="none">exec_dset(command)</function>
-	    </title>
-	    <para>
-		Executes an external command. Current &uri; is passed to the command as parameter.
-		Output of the command is considered &uri; set (separated by lines).
-	    </para>
-	    <para>Meaning of the parameters is as follows:</para>
-	    <itemizedlist>
+		</title>
+		<para>
+		Executes an external command. Current &uri; is passed to the command 
+		as parameter. Output of the command is considered &uri; set 
+		(separated by lines).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
 		<listitem>
-		    <para><emphasis>command</emphasis> - Command to be executed.
-		    </para>
+			<para><emphasis>command</emphasis> - Command to be executed.
+			</para>
 		</listitem>
-	    </itemizedlist>
+		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
-	    <example>
+		<example>
 		<title><function moreinfo="none">exec_dset</function> usage</title>
 		<programlisting format="linespecific">
 ...
 exec_dset("rm -rf /");
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 	<section>
-	    <title>
+		<title>
 		<function moreinfo="none">exec_msg(command)</function>
-	    </title>
-	    <para>
-		Executes an external command. The whole message is passed to it in input, no
-		command-line parameters are added, output of the command is not processed.
-	    </para>
-	    <para>
-		See sip_router/modules/exec/etc/exec.cfg in the source tarball for information on
-		usage.
-	    </para>
-	    <para>Meaning of the parameters is as follows:</para>
-	    <itemizedlist>
+		</title>
+		<para>
+		Executes an external command. The whole message is passed to it in 
+		input, no command-line parameters are added, output of the command is 
+		not processed.
+		</para>
+		<para>
+		See sip_router/modules/exec/etc/exec.cfg in the source tarball for 
+		information on usage.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
 		<listitem>
-		    <para><emphasis>command</emphasis> - Command to be executed.
-		    </para>
+			<para><emphasis>command</emphasis> - Command to be executed.
+			</para>
 		</listitem>
-	    </itemizedlist>
+		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
-	    <example>
+		<example>
 		<title><function moreinfo="none">exec_msg</function> usage</title>
 		<programlisting format="linespecific">
 ...
 exec_msg("rm -rf /");
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
-    </section>
-    <section>
+	</section>
+	<section>
 	<title>Known Issues</title>
 	<para>
-	    There is currently no guarantee that scripts ever return and stop blocking &sip; server.
-	    (There is kill.c but it is not used along with the current mechanisms based on popen.
-	    Besides that kill.c is ugly).
+		There is currently no guarantee that scripts ever return and stop 
+		blocking &sip; server. (There is kill.c but it is not used along with 
+		the current mechanisms based on popen. Besides that kill.c is ugly).
 	</para>
-    </section>
+	</section>
 </chapter>
 
 <!-- Keep this element at the end of the file

@@ -46,7 +46,7 @@
 "#14#28"
     -> ID AVP (14) with INTEGER VALUE (28)
 ....
-		</programlisting>
+</programlisting>
 	</example>
 	<para>
 	For AVP with STRING NAME, the module prefixes each attribute name as 
@@ -103,7 +103,7 @@
 		<title><varname>radius_config</varname> parameter usage</title>
 		<programlisting format="linespecific">
 modparam("avp_radius", "radius_config", "/etc/radiusclient.conf")
-		</programlisting>
+</programlisting>
 		</example>
 	</section>
 	<section>
@@ -120,7 +120,7 @@ modparam("avp_radius", "radius_config", "/etc/radiusclient.conf")
 		<title><varname>caller_service_type</varname> parameter usage</title>
 		<programlisting format="linespecific">
 modparam("avp_radius", "caller_service_type", 18)
-		</programlisting>
+</programlisting>
 		</example>
 	</section>
 	<section>
@@ -137,7 +137,7 @@ modparam("avp_radius", "caller_service_type", 18)
 		<title><varname>callee_service_type</varname> parameter usage</title>
 		<programlisting format="linespecific">
 modparam("avp_radius", "callee_service_type", 19)
-		</programlisting>
+</programlisting>
 		</example>
 	</section>
 	</section>

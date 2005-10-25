@@ -190,19 +190,19 @@ modparam("module_name", "database_URL", "/path/to/dbtext/database")
 
    Example 1-5. Definition of 'subscriber' table (one line)
 ...
-username(str) domn(str) password(str) first_name(str) last_name(str) ph
-one(str) email_address(str) datetime_created(int) datetime_modified(int
-) confirmation(str) flag(str) sendnotification(str) greeting(str) ha1(s
-tr) ha1b(str) perms(str) allow_find(str) timezone(str,null) rpid(str,nu
-ll) uuid(str,null)
+username(str) domain(str) password(str) first_name(str) last_name(str)
+phone(str) email_address(str) datetime_created(int) datetime_modified(i
+nt) confirmation(str) flag(str) sendnotification(str) greeting(str) ha1
+(str) ha1b(str) perms(str) allow_find(str) timezone(str,null) rpid(str,
+null)
 ...
 
    Example 1-6. Definition of 'location' and 'aliases' tables
    (one line)
 ...
-username(str) domain(str,null) contact(str,null) expires(int,null) q(do
-uble,null) callid(str,null) cseq(int,null) last_modified(str) replicate
-(int,null) state(int,null) flags(int) user_agent(str) received(str)
+username(str) domain(str,null) contact(str,null) received(str) expires(
+int,null) q(double,null) callid(str,null) cseq(int,null) last_modified(
+str) flags(int) user_agent(str) socket(str)
 ...
 
    Example 1-7. Definition of 'version' table and sample records
@@ -380,9 +380,9 @@ Chapter 3. Frequently Asked Questions
    one of our mailing lists:
 
      * User Mailing List -
-       http://openser.org/mailman/listinfo/users
+       http://openser.org/cgi-bin/mailman/listinfo/users
      * Developer Mailing List -
-       http://openser.org/mailman/listinfo/devel
+       http://openser.org/cgi-bin/mailman/listinfo/devel
 
    E-mails regarding any stable OpenSER release should be sent to
    <users@openser.org> and e-mails regarding development versions

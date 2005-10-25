@@ -1,81 +1,90 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    <chapterinfo>
+	<chapterinfo>
 	<revhistory>
-	    <revision>
+		<revision>
 		<revnumber>$Revision$</revnumber>
 		<date>$Date$</date>
-	    </revision>
+		</revision>
 	</revhistory>
-    </chapterinfo>
-    <title>User's Guide</title>
-    
-    <section>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
 	<title>Overview</title>
 	<para>
-	    The module implements the Diversion extensions as per draft-levy-sip-diversion-08.  The
-	    diversion extensions are useful in various scenarios involving call
-	    forwarding. Typically one needs to communicate the original recipient of the call to the
-	    PSTN gateway and this is what the diversion extensions can be used for.
+		The module implements the Diversion extensions as per 
+		draft-levy-sip-diversion-08.  The
+		diversion extensions are useful in various scenarios involving call
+		forwarding. Typically one needs to communicate the original recipient 
+		of the call to the PSTN gateway and this is what the diversion 
+		extensions can be used for.
 	</para>
-    </section>
-    <section>
+	<warning><para>
+		The draft-levy-sip-diversion-08 is expired!! See
+		<ulink url="https://datatracker.ietf.org/public/idindex.cgi?command=id_detail&and;id=6002"> IETF I-D tracker</ulink>.
+	</para></warning>
+	</section>
+
+	<section>
 	<title>Dependencies</title>
 	<section>
-	    <title>&ser; Modules</title>
-	    <para>None.</para>
+		<title>&ser; Modules</title>
+		<para>None.</para>
 	</section>
 	<section>
-	    <title>External Libraries or Applications</title>
-	    <para>
+		<title>External Libraries or Applications</title>
+		<para>
 		The following libraries or applications must be installed before running
 		&ser; with this module loaded:
-	    	<itemizedlist>
-		    <listitem>
+			<itemizedlist>
+			<listitem>
 			<para>
-			    <emphasis>None</emphasis>.
+				<emphasis>None</emphasis>.
 			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
+			</listitem>
+			</itemizedlist>
+		</para>
 	</section>
-    </section>
-    <section>
+	</section>
+	<section>
 	<title>Exported Parameters</title>
 	<section>
-	    <title><varname>suffix</varname> (string)</title>
-	    <para>
-		The suffix to be appended to the end of the header field. You can use the parameter
-		to specify additional parameters to be added to the header field, see the example.
-	    </para>
-	    <para>
+		<title><varname>suffix</varname> (string)</title>
+		<para>
+		The suffix to be appended to the end of the header field. You can use 
+		the parameter to specify additional parameters to be added to the 
+		header field, see the example.
+		</para>
+		<para>
 		Default value is <quote></quote> (empty string).
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title><varname>suffix</varname> usage</title>
 		<programlisting format="linespecific">
 modparam("diversion", "suffix", ";privacy=full")
 </programlisting>
-	    </example>
+		</example>
 	</section>
-    </section>
-    <section>
+	</section>
+	<section>
 	<title>Exported Functions</title>
 	<section>
-	    <title><function moreinfo="none">add_diversion(reason)</function></title>
-	    <para>
-		The function adds a new diversion header field before any other existing Diversion
-		header field in the message (the newly added Diversion header field will become the
-		topmost Diversion header field). The inbound (without any modifications done by the
+		<title><function moreinfo="none">add_diversion(reason)</function></title>
+		<para>
+		The function adds a new diversion header field before any other 
+		existing Diversion header field in the message (the newly added 
+		Diversion header field will become the topmost Diversion header field).
+		The inbound (without any modifications done by the
 		proxy server) Request-URI will be used as the Diversion URI.
-	    </para>
-	    <para>Meaning of the parameters is as follows:</para>
-	    <itemizedlist>
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
 		<listitem>
-		    <para><emphasis>reason</emphasis> - The reason string to be added as the reason
-			parameter
-		    </para>
+			<para><emphasis>reason</emphasis> - The reason string to be added 
+			as the reason parameter
+			</para>
 		</listitem>
 	</itemizedlist>
 	<para>
@@ -90,7 +99,7 @@ add_diversion("user-busy");
 </programlisting>
 	</example>
 	</section>
-	
+
 	<section>
 		<title>Diversion Example</title>
 		<para>
@@ -125,8 +134,8 @@ Diversion: &lt;sip:bob@sip.org&gt;;reason=user-busy
 Contact: &lt;sip:mark@1.2.3.4&gt;
 Content-Length: 0
 </programlisting>
-	    </section>
-    </section>
+		</section>
+	</section>
 </chapter>
 
 <!-- Keep this element at the end of the file
