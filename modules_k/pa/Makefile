@@ -10,7 +10,7 @@ auto_gen=
 NAME=pa.so
 LIBS=
 
-DEFS+=-I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2
+DEFS+=-I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 -I$(LOCALBASE)/include
 LIBS+=-L/usr/include/lib  -L$(LOCALBASE)/lib -lxml2
 
 include ../../Makefile.modules
