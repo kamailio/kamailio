@@ -1,11 +1,11 @@
 /*
  * $Id$
- * 
+ *
  * cloning a message into shared memory (TM keeps a snapshot
  * of messages in memory); note that many operations, which
  * allocate pkg memory (such as parsing) cannot be used with
  * a cloned message -- it would result in linking pkg structures
- * to shmem msg and eventually in a memory error 
+ * to shmem msg and eventually in a memory error
  *
  * the cloned message is stored in a single memory fragment to
  * save too many shm_mallocs -- these are expensive as they
@@ -31,8 +31,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -61,7 +61,7 @@
 #include "../../parser/digest/digest.h"
 
 
-/* rounds to the first 4 byte multiple on 32 bit archs 
+/* rounds to the first 4 byte multiple on 32 bit archs
  * and to the first 8 byte multiple on 64 bit archs */
 #define ROUND4(s) \
 	(((s)+(sizeof(char*)-1))&(~(sizeof(char*)-1)))
@@ -136,7 +136,7 @@ inline struct via_body* via_body_cloner( char* new_buf,
 				new_vp->name.s=translate_pointer(new_buf,org_buf,vp->name.s);
 				new_vp->value.s=translate_pointer(new_buf,org_buf,vp->value.s);
 				new_vp->start=translate_pointer(new_buf,org_buf,vp->start);
-				
+
 				/* "translate" the shortcuts */
 				switch(new_vp->type){
 					case PARAM_BRANCH:
@@ -197,7 +197,7 @@ static inline struct auth_body* auth_body_cloner(char* new_buf, char *org_buf, s
 	new_auth = (struct auth_body*)(*p);
 	memcpy(new_auth , auth , sizeof(struct auth_body));
 	(*p) += ROUND4(sizeof(struct auth_body));
-	
+
 	/* authorized field must be cloned elsewhere */
 	new_auth->digest.username.whole.s =
 		translate_pointer(new_buf, org_buf, auth->digest.username.whole.s);
@@ -235,7 +235,7 @@ static inline int clone_authorized_hooks(struct sip_msg* new,
 
 	get_authorized_cred(old->authorization, &hook1);
 	if (!hook1) stop = 1;
-	
+
 	get_authorized_cred(old->proxy_auth, &hook2);
 	if (!hook2) stop |= 2;
 
@@ -247,12 +247,12 @@ static inline int clone_authorized_hooks(struct sip_msg* new,
 			if (!new->authorization || !new->authorization->parsed) {
 				LOG(L_CRIT, "BUG: Error in message cloner (authorization)\n");
 				return -1;
-			}				
+			}
 			((struct auth_body*)new->authorization->parsed)->authorized =
 				new_ptr;
 			stop |= 1;
 		}
-		
+
 		if (ptr == hook2) {
 			if (!new->proxy_auth || !new->proxy_auth->parsed) {
 				LOG(L_CRIT, "BUG: Error in message cloner (proxy_auth)\n");
@@ -275,6 +275,8 @@ static inline int clone_authorized_hooks(struct sip_msg* new,
 #define AUTH_BODY_SIZE sizeof(struct auth_body)
 
 #define HOOK_SET(hook) (new_msg->hook != org_msg->hook)
+
+/* Warning: Cloner does not clone all hdr_field headers (From, To, etc.). Pointers will reference pkg memory. Dereferencing will crash ser!!! */
 
 struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 {
@@ -400,7 +402,7 @@ do { \
 
 	LUMP_LIST_LEN(len, org_msg->add_rm);
 	LUMP_LIST_LEN(len, org_msg->body_lumps);
-	
+
 	/*length of reply lump structures*/
 	for(rpl_lump=org_msg->reply_lump;rpl_lump;rpl_lump=rpl_lump->next)
 			len+=ROUND4(sizeof(struct lump_rpl))+ROUND4(rpl_lump->text.len);
@@ -525,7 +527,7 @@ do { \
 				}
 				else if ( new_msg->via2 && new_msg->via1 )
 				{
-					new_hdr->parsed =  
+					new_hdr->parsed =
 						via_body_cloner( new_msg->buf , org_msg->buf ,
 						(struct via_body*)hdr->parsed , &p);
 				}
