@@ -37,6 +37,9 @@
 #include "hslot.h"
 #include "pstate.h"
 
+#include <cds/msg_queue.h>
+#include <presence/notifier.h>
+
 enum prescaps {
 	PRESCAP_AUDIO = (1 << 0),
 	PRESCAP_VIDEO = (1 << 1),
@@ -93,6 +96,7 @@ typedef struct presence_tuple {
 	struct presence_tuple *prev;
 	char status_buf[TUPLE_STATUS_STR_LEN];
 	char id_buf[TUPLE_ID_STR_LEN];
+	int is_published;	/* 1 for published tuples - these are stored into DB */
 } presence_tuple_t;
 
 struct pdomain;
@@ -104,6 +108,15 @@ typedef enum pflag {
 	PFLAG_XCAP_CHANGED=8,
 	PFLAG_LOCATION_CHANGED=16
 } pflag_t;
+
+struct _internal_pa_subscription_t {
+	struct _internal_pa_subscription_t *prev, *next;
+	watcher_status_t status;
+	subscription_t *subscription;
+	/* msg_queue_t *dst;
+	 * str_t package; 
+	 * str_t watcher_uri; */
+};
 
 typedef struct presentity {
 	str uri;                 /* URI of presentity */
@@ -117,6 +130,8 @@ typedef struct presentity {
 	struct presentity* next; /* Next presentity */
 	struct presentity* prev; /* Previous presentity in list */
 	struct hslot* slot;      /* Hash table collision slot we belong to */
+	
+	internal_pa_subscription_t *first_qsa_subscription, *last_qsa_subscription;
 } presentity_t;
 
 /*
@@ -144,14 +159,19 @@ int timer_presentity(presentity_t* _p);
 /*
  * Create a new presence_tuple
  */
-int new_presence_tuple(str* _contact, time_t expires, presentity_t *_p, presence_tuple_t ** _t);
+int new_presence_tuple(str* _contact, time_t expires, presentity_t *_p, presence_tuple_t ** _t, int is_published);
 
 /*
  * Find a presence_tuple for contact _contact on presentity _p
  */
 int find_presence_tuple(str* _contact, presentity_t *_p, presence_tuple_t ** _t);
+int find_presence_tuple_id(str* id, presentity_t *_p, presence_tuple_t ** _t);
 void add_presence_tuple(presentity_t *_p, presence_tuple_t *_t);
 void remove_presence_tuple(presentity_t *_p, presence_tuple_t *_t);
+
+int db_update_presence_tuple(presentity_t *_p, presence_tuple_t *t);
+
+void set_tuple_published(presentity_t *p, presence_tuple_t *t);
 
 /*
  * Free all memory associated with a presence_tuple
@@ -163,8 +183,7 @@ void free_presence_tuple(presence_tuple_t * _t);
 /*
  * Add a watcher to the watcher list
  */
-int add_watcher(presentity_t* _p, str* _uri, time_t _e, int event_package, doctype_t _a, dlg_t* _dlg, 
-		str *_dn, str *server_contact, struct watcher** _w);
+int add_watcher(presentity_t* _p, struct watcher* _w);
 
 
 /*
@@ -192,8 +211,7 @@ int notify_watchers(presentity_t* _p);
 /*
  * Add a watcher to the winfo watcher list
  */
-int add_winfo_watcher(presentity_t* _p, str* _uri, time_t _e, int event_package, doctype_t _a, dlg_t* _dlg, 
-		      str *_dn, str *server_contact, struct watcher** _w);
+int add_winfo_watcher(presentity_t* _p, struct watcher* _w);
 
 
 /*
@@ -215,6 +233,7 @@ void print_presentity(FILE* _f, presentity_t* _p);
 resource_list_t *resource_list_append_unique(resource_list_t *list, str *uri);
 resource_list_t *resource_list_remove(resource_list_t *list, str *uri);
 
+int db_remove_presentity(presentity_t* presentity);
 
 /*
  * Create a new presentity but no watcher list

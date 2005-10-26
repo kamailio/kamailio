@@ -55,6 +55,7 @@
 #include "pidf.h"
 #include "common.h"
 #include "../../data_lump_rpl.h"
+#include "../../parser/parse_sipifmatch.h"
 
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
@@ -68,7 +69,7 @@ extern str str_strdup(str string);
 static int parse_publish_hfs(struct sip_msg* _m)
 {
 	int rc = 0;
-	if ((rc = parse_headers(_m, HDR_FROM_F | HDR_EVENT_F | HDR_EXPIRES_F, 0))
+	if ((rc = parse_headers(_m, HDR_FROM_F | HDR_EVENT_F | HDR_EXPIRES_F | HDR_SIPIFMATCH_F, 0))
 	    == -1) {
 		paerrno = PA_PARSE_ERR;
 		LOG(L_ERR, "parse_publish_hfs(): Error while parsing headers\n");
@@ -101,6 +102,15 @@ static int parse_publish_hfs(struct sip_msg* _m)
 		}
 	}
 
+	/* patch from PIC-SER */
+	if (_m->sipifmatch) {
+		if (parse_sipifmatch(_m->sipifmatch) < 0) {
+			paerrno = PA_PARSE_ERR;
+			LOG(L_ERR, "parse_hfs(): Error while parsing SIP-If-Match header field\n");
+			return -10;
+		}
+	}
+	
 	return 0;
 }
 
@@ -170,194 +180,213 @@ int location_package_location_del_user(pdomain_t *pdomain, str *site, str *floor
 }
 #endif /* HAVE_LOCATION_PACKAGE */
 
+static int basic_status2status(str *s)
+{
+	if ((strcasecmp(s->s, "online") == 0)
+		|| (strcasecmp(s->s, "open") == 0)) return PS_ONLINE;
+	if ((strcasecmp(s->s, "closed") == 0)
+		|| (strcasecmp(s->s, "offline") == 0)) return PS_OFFLINE;
+	/* return basic2status(*s); */
+	return PS_OFFLINE;
+}
 /*
  * Update existing presentity and watcher list
  */
 static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struct presentity* presentity, int *pchanged, presence_tuple_t **modified_tuple)
 {
-     char *body = get_body(_m);
-     presence_tuple_t *tuple = NULL;
-     str contact = { NULL, 0 };
-     str basic = { NULL, 0 };
-     str status = { NULL, 0 };
-     str location = { NULL, 0 };
-     str site = { NULL, 0 };
-     str floor = { NULL, 0 };
-     str room = { NULL, 0 };
-     str packet_loss = { NULL, 0 };
-     double x=0, y=0, radius=0;
-     time_t expires = act_time + default_expires;
-     double priority = default_priority;
-     int prescaps = 0;
-     int flags = 0;
-     int changed = 0;
-     int ret = 0;
+	char *body = get_body(_m);
+	presence_tuple_t *tuple = NULL;
+	str contact = { NULL, 0 };
+	str basic = { NULL, 0 };
+	str status = { NULL, 0 };
+	str location = { NULL, 0 };
+	str site = { NULL, 0 };
+	str floor = { NULL, 0 };
+	str room = { NULL, 0 };
+	str packet_loss = { NULL, 0 };
+	double x=0, y=0, radius=0;
+	time_t expires = act_time + default_expires;
+	time_t msg_expires = 0;
+	double priority = default_priority;
+	int prescaps = 0;
+	int flags = 0;
+	int changed = 0;
+	int ret = 0;
+	str id = { 0, 0 };
+	 
+	if (modified_tuple) *modified_tuple = 0;
+	if (_m->expires) {
+		if (_m->expires->parsed) {
+			expires = ((exp_body_t*)_m->expires->parsed)->val + act_time;
+			msg_expires = expires;
+		}
+	}
+	if (_m->sipifmatch) {
+		str *s = (str*)_m->sipifmatch->parsed;
+		if (s) id = *s;
+	}
 
-	 if (modified_tuple) *modified_tuple = 0;
-	 if (_m->expires) {
-		 if (_m->expires->parsed)
-			 expires = ((exp_body_t*)_m->expires->parsed)->val + act_time;
-	 }
-		
-     flags = parse_pidf(body, &contact, &basic, &status, &location, &site, &floor, &room, &x, &y, &radius, 
+	flags = parse_pidf(body, &contact, &basic, &status, &location, &site, &floor, &room, &x, &y, &radius, 
 			&packet_loss, &priority, &expires, &prescaps);
-     if (contact.len) {
-	  find_presence_tuple(&contact, presentity, &tuple);
-	  if (!tuple) {
-		  contact_t *sip_contact = NULL;
-		  /* get contact from SIP Headers*/
-		  /* FIXME: use SIP-If-Match header if present to find the tuple id */
-		  contact_iterator(&sip_contact, _m, NULL);
-		  if (sip_contact) {
-			  LOG(L_ERR, "publish_presentity: find tuple for contact %.*s\n", 
-			      sip_contact->uri.len, sip_contact->uri.s);
-			  find_presence_tuple(&sip_contact->uri, presentity, &tuple);
-		  }
-	  }
-	  if (!tuple && new_tuple_on_publish) {
-	       new_presence_tuple(&contact, expires, presentity, &tuple);
-	       add_presence_tuple(presentity, tuple);
-	       changed = 1;
-	  }
-     } else {
-	  tuple = presentity->tuples;
-     }
-     if (!tuple) {
-	     contact_t *sip_contact = NULL;
-	     /* get contact from SIP Headers*/
-	     contact_iterator(&sip_contact, _m, NULL);
-	     if (sip_contact) {
-		     LOG(L_ERR, "publish_presentity: find tuple for contact %.*s\n", 
-			 sip_contact->uri.len, sip_contact->uri.s);
-		     find_presence_tuple(&sip_contact->uri, presentity, &tuple);
-	     }
-     }
-     if (!tuple) {
-	  LOG(L_ERR, "publish_presentity: no tuple for %.*s\n", 
-	      presentity->uri.len, presentity->uri.s);
-	  return -1;
-     }
+	if (msg_expires > 0) {
+		/* this has more power than those in PIDF document */
+		expires = msg_expires;
+	}
+	
+	/* use etag in SIP-If-Match header if present to find the tuple */
+	if (id.len > 0) {
+		LOG(L_ERR, "trying to find presetity using SIP-If-Match %.*s\n",
+				id.len, ZSW(id.s));
+		find_presence_tuple_id(&id, presentity, &tuple);
+		if (!tuple) {
+			LOG(L_ERR, "publish_presentity: No matching tuple found\n");
+			paerrno = PA_NO_MATCHING_TUPLE;
+			return -1;
+		}
+	} else {
+		LOG(L_ERR, "NO SIP-If-Match header found\n");
+	}
+	
+	/* try to find tuple using contact from document */
+	if ((!tuple) && (contact.len > 0))
+		find_presence_tuple(&contact, presentity, &tuple);
+	
+	/* try to find tuple using contact from message headers */
+	if (!tuple) {
+		contact_t *sip_contact = NULL;
+		/* get contact from SIP Headers*/
+		contact_iterator(&sip_contact, _m, NULL);
+		if (sip_contact) {
+			LOG(L_ERR, "publish_presentity: find tuple for contact %.*s\n", 
+					sip_contact->uri.len, sip_contact->uri.s);
+			find_presence_tuple(&sip_contact->uri, presentity, &tuple);
+		}
+	}
+	if (!tuple && new_tuple_on_publish) {
+		new_presence_tuple(&contact, expires, presentity, &tuple, 1);
+		add_presence_tuple(presentity, tuple);
+		changed = 1;
+	}
+	if (!tuple) {
+		LOG(L_ERR, "publish_presentity: no tuple for %.*s\n", 
+				presentity->uri.len, presentity->uri.s);
+		return -1;
+	}
 
-     LOG(L_INFO, "publish_presentity_pidf: -1-\n");
-     if (basic.len && basic.s) {
-	  int origstate = tuple->state;
-	  tuple->state =
-	       ((strcasecmp(basic.s, "online") == 0) || (strcasecmp(basic.s, "open") == 0)) ? PS_ONLINE : PS_OFFLINE;
-	  if (tuple->state != origstate)
-	       changed = 1;
-     }
-     if (status.len && status.s) {
-	  if (tuple->status.len && str_strcasecmp(&tuple->status, &status) != 0)
-	       changed = 1;
-	  tuple->status.len = status.len;
-	  strncpy(tuple->status.s, status.s, status.len);
-	  tuple->status.s[status.len] = 0;
-     }
-     LOG(L_INFO, "publish_presentity: -2-\n");
-     if (location.len && location.s) {
-	  if (tuple->location.loc.len && str_strcasecmp(&tuple->location.loc, &location) != 0)
-	       changed = 1;
-	  tuple->location.loc.len = location.len;
-	  strncpy(tuple->location.loc.s, location.s, location.len);
-	  tuple->location.loc.s[location.len] = 0;
-     } else if (flags & PARSE_PIDF_LOCATION_MASK) {
-	  tuple->location.loc.len = 0;
-     }
-     if (site.len && site.s) {
-	  if (tuple->location.site.len && str_strcasecmp(&tuple->location.site, &site) != 0)
-	       changed = 1;
-	  tuple->location.site.len = site.len;
-	  strncpy(tuple->location.site.s, site.s, site.len);
-	  tuple->location.site.s[site.len] = 0;
-     } else if (flags & PARSE_PIDF_LOCATION_MASK) {
-	  tuple->location.site.len = 0;
-     }
-     if (floor.len && floor.s) {
-	  if (tuple->location.floor.len && str_strcasecmp(&tuple->location.floor, &floor) != 0)
-	       changed = 1;
-	  tuple->location.floor.len = floor.len;
-	  strncpy(tuple->location.floor.s, floor.s, floor.len);
-	  tuple->location.floor.s[floor.len] = 0;
-     }else if (flags & PARSE_PIDF_LOCATION_MASK) {
-	  tuple->location.floor.len = 0;
-     }
-     if (room.len && room.s) {
-	  if (tuple->location.room.len && str_strcasecmp(&tuple->location.room, &room) != 0)
-	       changed = 1;
-	  tuple->location.room.len = room.len;
-	  strncpy(tuple->location.room.s, room.s, room.len);
-	  tuple->location.room.s[room.len] = 0;
-     } else if (flags & PARSE_PIDF_LOCATION_MASK) {
-	  tuple->location.room.len = 0;
-     }
-     if (packet_loss.len && packet_loss.s) {
-	  if (tuple->location.packet_loss.len && str_strcasecmp(&tuple->location.packet_loss, &packet_loss) != 0)
-	       changed = 1;
-	  tuple->location.packet_loss.len = packet_loss.len;
-	  strncpy(tuple->location.packet_loss.s, packet_loss.s, packet_loss.len);
-	  tuple->location.packet_loss.s[packet_loss.len] = 0;
-     } else if (flags & PARSE_PIDF_LOCATION_MASK) {
-	  tuple->location.packet_loss.len = 0;
-     }
-     if (x) {
-	  if (tuple->location.x != x)
-	       changed = 1;
-	  tuple->location.x = x;
-     } else if (flags & PARSE_PIDF_LOCATION_MASK) {
-	  tuple->location.x = 0;
-     }
-     if (y) {
-	  if (tuple->location.y != y)
-	       changed = 1;
-	  tuple->location.y = y;
-     } else if (flags & PARSE_PIDF_LOCATION_MASK) {
-	  tuple->location.y = 0;
-     }
-     if (radius) {
-	  if (tuple->location.radius != radius)
-	       changed = 1;
-	  tuple->location.radius = radius;
-     } else if (flags & PARSE_PIDF_LOCATION_MASK) {
-	  tuple->location.radius = 0;
-     }
+	if (basic.len && basic.s) {
+		int origstate = tuple->state;
+		tuple->state = basic_status2status(&basic);
+		if (tuple->state != origstate)
+			changed = 1;
+	}
+	if (status.len && status.s) {
+		if (tuple->status.len && str_strcasecmp(&tuple->status, &status) != 0)
+			changed = 1;
+		tuple->status.len = status.len;
+		strncpy(tuple->status.s, status.s, status.len);
+		tuple->status.s[status.len] = 0;
+	}
+	if (location.len && location.s) {
+		if (tuple->location.loc.len && str_strcasecmp(&tuple->location.loc, &location) != 0)
+			changed = 1;
+		tuple->location.loc.len = location.len;
+		strncpy(tuple->location.loc.s, location.s, location.len);
+		tuple->location.loc.s[location.len] = 0;
+	} else if (flags & PARSE_PIDF_LOCATION_MASK) {
+		tuple->location.loc.len = 0;
+	}
+	if (site.len && site.s) {
+		if (tuple->location.site.len && str_strcasecmp(&tuple->location.site, &site) != 0)
+			changed = 1;
+		tuple->location.site.len = site.len;
+		strncpy(tuple->location.site.s, site.s, site.len);
+		tuple->location.site.s[site.len] = 0;
+	} else if (flags & PARSE_PIDF_LOCATION_MASK) {
+		tuple->location.site.len = 0;
+	}
+	if (floor.len && floor.s) {
+		if (tuple->location.floor.len && str_strcasecmp(&tuple->location.floor, &floor) != 0)
+			changed = 1;
+		tuple->location.floor.len = floor.len;
+		strncpy(tuple->location.floor.s, floor.s, floor.len);
+		tuple->location.floor.s[floor.len] = 0;
+	}else if (flags & PARSE_PIDF_LOCATION_MASK) {
+		tuple->location.floor.len = 0;
+	}
+	if (room.len && room.s) {
+		if (tuple->location.room.len && str_strcasecmp(&tuple->location.room, &room) != 0)
+			changed = 1;
+		tuple->location.room.len = room.len;
+		strncpy(tuple->location.room.s, room.s, room.len);
+		tuple->location.room.s[room.len] = 0;
+	} else if (flags & PARSE_PIDF_LOCATION_MASK) {
+		tuple->location.room.len = 0;
+	}
+	if (packet_loss.len && packet_loss.s) {
+		if (tuple->location.packet_loss.len && str_strcasecmp(&tuple->location.packet_loss, &packet_loss) != 0)
+			changed = 1;
+		tuple->location.packet_loss.len = packet_loss.len;
+		strncpy(tuple->location.packet_loss.s, packet_loss.s, packet_loss.len);
+		tuple->location.packet_loss.s[packet_loss.len] = 0;
+	} else if (flags & PARSE_PIDF_LOCATION_MASK) {
+		tuple->location.packet_loss.len = 0;
+	}
+	if (x) {
+		if (tuple->location.x != x)
+			changed = 1;
+		tuple->location.x = x;
+	} else if (flags & PARSE_PIDF_LOCATION_MASK) {
+		tuple->location.x = 0;
+	}
+	if (y) {
+		if (tuple->location.y != y)
+			changed = 1;
+		tuple->location.y = y;
+	} else if (flags & PARSE_PIDF_LOCATION_MASK) {
+		tuple->location.y = 0;
+	}
+	if (radius) {
+		if (tuple->location.radius != radius)
+			changed = 1;
+		tuple->location.radius = radius;
+	} else if (flags & PARSE_PIDF_LOCATION_MASK) {
+		tuple->location.radius = 0;
+	}
 
-     if (tuple->priority != priority) {
-       changed = 1;
-       tuple->priority = priority;
-     }
-     if (tuple->expires != expires) {
-       changed = 1;
-       tuple->expires = expires;
-     }
-	 LOG(L_ERR, "PUBLISH: tuple expires after %d s\n", (int)(tuple->expires - act_time));
+	if (tuple->priority != priority) {
+		changed = 1;
+		tuple->priority = priority;
+	}
+	if (tuple->expires != expires) {
+		changed = 1;
+		tuple->expires = expires;
+	}
+	LOG(L_ERR, "PUBLISH: tuple expires after %d s\n", (int)(tuple->expires - act_time));
 #ifdef HAVE_LOCATION_PACKAGE
-     if (use_location_package)
-	  if (site.len && floor.len && room.len && changed) {
-	       location_package_location_add_user(_d, &site, &floor, &room, presentity);
-	  }
+	if (use_location_package)
+		if (site.len && floor.len && room.len && changed) {
+			location_package_location_add_user(_d, &site, &floor, &room, presentity);
+		}
 #endif /* HAVE_LOCATION_PACKAGE */
-     if (flags & PARSE_PIDF_PRESCAPS) {
-       if (tuple->prescaps != prescaps)
-	 changed = 1;
-       tuple->prescaps = prescaps;
-     }
+	if (flags & PARSE_PIDF_PRESCAPS) {
+		if (tuple->prescaps != prescaps)
+			changed = 1;
+		tuple->prescaps = prescaps;
+	}
 
-     changed = 1;
-     if (changed)
-	  presentity->flags |= PFLAG_PRESENCE_CHANGED;
+	changed = 1;
+	if (changed) presentity->flags |= PFLAG_PRESENCE_CHANGED;
+	if (pchanged && changed) *pchanged = 1;
 
-     LOG(L_INFO, "publish_presentity: -3-: changed=%d\n", changed);
-     if (pchanged && changed) {
-	  *pchanged = 1;
-     }
-
-     if ((ret = db_update_presentity(presentity)) < 0) {
-	  return ret;
-     }
-
-	 if (modified_tuple) *modified_tuple = tuple;
-     LOG(L_INFO, "publish_presentity: -4-\n");
-     return 0;
+	if ((ret = db_update_presentity(presentity)) < 0) {
+		return ret;
+	}
+	if (!tuple->is_published)
+		set_tuple_published(presentity, tuple);
+	if (use_db) db_update_presence_tuple(presentity, tuple);
+	
+	if (modified_tuple) *modified_tuple = tuple;
+	return 0;
 }
 
 /*
@@ -384,11 +413,44 @@ static int publish_presentity_xcap_change(struct sip_msg* _m, struct pdomain* _d
 	return 0;
 }
 
+static void add_expires_to_rpl(struct sip_msg *_m, int expires)
+{
+	char tmp[64];
+	
+	if (expires < 0) expires = 0;
+	
+	sprintf(tmp, "Expires: %d\r\n", expires);
+	if (!add_lump_rpl(_m, tmp, strlen(tmp), LUMP_RPL_HDR)) {
+		LOG(L_ERR, "Can't add expires header to the response\n");
+	}
+}
+
+static void add_etag_to_rpl(struct sip_msg *_m, str *etag)
+{
+	char *tmp;
+
+	if (!etag) {
+		LOG(L_ERR, "Can't add empty SIP-ETag header to the response\n");
+		return;
+	}
+	
+	tmp = (char*)pkg_malloc(32 + etag->len);
+	if (!tmp) {
+		LOG(L_ERR, "Can't allocate package memory for SIP-ETag header to the response\n");
+		return;
+	}
+	
+	sprintf(tmp, "SIP-ETag: %.*s\r\n", etag->len, ZSW(etag->s));
+	if (!add_lump_rpl(_m, tmp, strlen(tmp), LUMP_RPL_HDR)) {
+		LOG(L_ERR, "Can't add SIP-ETag header to the response\n");
+		/* return -1; */
+	}
+	pkg_free(tmp);
+}
+
 static int publish_presentity(struct sip_msg* _m, struct pdomain* _d, struct presentity* presentity, int *pchanged)
 {
 	presence_tuple_t *modified_tuple = NULL;
-	char *tmp;
-	int i;
 	event_t *parsed_event = NULL;
 	int event_package = EVENT_OTHER;
 	
@@ -400,20 +462,10 @@ static int publish_presentity(struct sip_msg* _m, struct pdomain* _d, struct pre
 	if (event_package == EVENT_PRESENCE) {
 		if (publish_presentity_pidf(_m, _d, presentity, 
 					pchanged, &modified_tuple) == 0) {
-			/* add header fields into response */
 			if (modified_tuple) {
-				i = modified_tuple->expires - act_time;
-				if (i < 0) i = 0;
-				tmp = (char*)pkg_malloc(64 + modified_tuple->id.len);
-				if (tmp) {
-					sprintf(tmp, "Expires: %d\r\nSIP-ETag: %.*s\r\n", i, 
-							modified_tuple->id.len, ZSW(modified_tuple->id.s));
-					if (!add_lump_rpl(_m, tmp, strlen(tmp), LUMP_RPL_HDR)) {
-						LOG(L_ERR, "publish_presentity(): Can't add headers to the response\n");
-						/* return -1; */
-					}
-					pkg_free(tmp);
-				}
+				/* add header fields into response */
+				add_expires_to_rpl(_m, modified_tuple->expires - act_time);
+				add_etag_to_rpl(_m, &modified_tuple->id);
 			}
 		}
 	} else if (event_package == EVENT_XCAP_CHANGE) {
@@ -445,12 +497,10 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 	get_act_time();
 	paerrno = PA_OK;
 
-	LOG(L_ERR, "handle_publish -1- _m=%p\n", _m);
 	if (parse_publish_hfs(_m) < 0) {
 		LOG(L_ERR, "handle_publish(): Error while parsing message header\n");
 		goto error;
 	}
-	LOG(L_ERR, "handle_publish -1b-\n");
 
 #if 0
 	if (check_message(_m) < 0) {
@@ -459,6 +509,7 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 	}
 	LOG(L_ERR, "handle_publish -1c-\n");
 #endif
+	LOG(L_ERR, "handle_publish entered\n");
 
 	d = (struct pdomain*)_domain;
 
@@ -467,32 +518,32 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 		goto error;
 	}
 
-	LOG(L_ERR, "handle_publish -2-\n");
 	lock_pdomain(d);
-	
-	LOG(L_ERR, "handle_publish -4- p_uri=%*.s p_uri.len=%d\n", p_uri.len, p_uri.s, p_uri.len);
+
 	if (find_presentity(d, &p_uri, &p) > 0) {
 		changed = 1;
 		if (create_presentity_only(_m, d, &p_uri, &p) < 0) {
+			LOG(L_ERR, "handle_publish can't create presentity\n");
 			goto error2;
 		}
 	}
 
+	LOG(L_ERR, "handle_publish - publishing status\n");
+	
 	/* update presentity event state */
-	LOG(L_ERR, "handle_publish -5- presentity=%p\n", p);
 	if (p)
 		publish_presentity(_m, d, p, &changed);
-	
+
 	unlock_pdomain(d);
 
 	if (send_reply(_m) < 0) return -1;
 
-	LOG(L_ERR, "handle_publish -8- paerrno=%d\n", paerrno);
+	LOG(L_ERR, "handle_publish finished\n");
 	return 1;
-	
- error2:
+
+error2:
 	unlock_pdomain(d);
- error:
+error:
 	send_reply(_m);
 	return 0;
 }
@@ -705,7 +756,7 @@ int fifo_pa_presence_contact(FILE *fifo, char *response_file)
        find_presence_tuple(&p_uri, presentity, &tuple);
      }
      if (!tuple && new_tuple_on_publish) {
-       new_presence_tuple(&p_contact, expires, presentity, &tuple);
+       new_presence_tuple(&p_contact, expires, presentity, &tuple, 1);
        add_presence_tuple(presentity, tuple);
        changed = 1;
      }
@@ -965,7 +1016,7 @@ int fifo_pa_location_contact(FILE *fifo, char *response_file)
 
      find_presence_tuple(&p_contact, presentity, &tuple);
      if (!tuple && new_tuple_on_publish) {
-       new_presence_tuple(&p_contact, expires, presentity, &tuple);
+       new_presence_tuple(&p_contact, expires, presentity, &tuple, 1);
        add_presence_tuple(presentity, tuple);
        tuple->state = PS_ONLINE;
        changed = 1;
@@ -1072,7 +1123,7 @@ int fifo_pa_watcherinfo(FILE *fifo, char *response_file)
 
      find_presentity(pdomain, &p_uri, &presentity);
      if (presentity) {
-       db_read_watcherinfo(presentity);
+       db_read_watcherinfo(presentity, pa_db);
      }
 
      unlock_pdomain(pdomain);

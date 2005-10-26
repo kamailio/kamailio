@@ -56,6 +56,10 @@ extern dlist_t* root;
  */
 int register_pdomain(const char* _n, pdomain_t** _d);
 
+/*
+ * Function finds existing domain with presence agent
+ */
+int find_pdomain(const char* _n, pdomain_t** _d);
 
 /*
  * Free all registered domains

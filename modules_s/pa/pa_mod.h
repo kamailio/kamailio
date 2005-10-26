@@ -33,6 +33,7 @@
 #include "../../parser/msg_parser.h"
 #include "../tm/tm_load.h"
 #include "../../db/db.h"
+#include "../dialog/dlg_mod.h"
 
 extern int default_expires;
 extern double default_priority;
@@ -40,6 +41,8 @@ extern int timer_interval;
 
 /* TM bind */
 extern struct tm_binds tmb;
+
+extern dlg_func_t dlg_func;
 
 /* DB module bind */
 extern db_func_t pa_dbf;
@@ -56,7 +59,7 @@ extern char *watcherinfo_table;
 extern char *place_table;
 extern int use_bsearch;
 extern int use_location_package;
-extern int new_watcher_pending;
+extern int authorize_watchers;
 extern int watcherinfo_notify;
 extern int callback_update_db;
 extern int callback_lock_pdomain;
@@ -71,5 +74,8 @@ int str_strcmp(const str *stra, const str *strb);
  * case-insensitive compare two str's
  */
 int str_strcasecmp(const str *stra, const str *strb);
+
+db_con_t* create_pa_db_connection();
+void close_pa_db_connection(db_con_t* db);
 
 #endif /* PA_MOD_H */

@@ -202,7 +202,6 @@ static int pa_location(str* msg)
      return -1;
 }
 
-
 int init_unixsock_iface(void)
 {
 	if (unixsock_register_cmd("pa_publish", pa_publish) < 0) {
@@ -216,5 +215,6 @@ int init_unixsock_iface(void)
 	if (unixsock_register_cmd("pa_location", pa_location) < 0) {
 		return -1;
 	}
+	
 	return 0;
 }

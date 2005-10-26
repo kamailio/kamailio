@@ -38,7 +38,7 @@
 #include "common.h"
 #include "watcher.h"
 #include "presentity.h"
-
+#include "auth.h"
 
 char *doctype_name[] = {
 	[DOC_XPIDF] = "DOC_XPIDF",
@@ -55,7 +55,7 @@ char *doctype_name[] = {
 	[DOC_LOCATION] = "DOC_LOCATION"
 #endif
 };
-
+/*
 char *event_package_name[] = {
 	[EVENT_OTHER] = "unknown",
 	[EVENT_PRESENCE] = "presence",
@@ -67,13 +67,14 @@ char *event_package_name[] = {
 	[EVENT_LOCATION] = "location",
 #endif
 	NULL
-};
+};*/
 
-static str watcher_status_names[] = {
+str watcher_status_names[] = {
      [WS_PENDING] = { "pending", 7 },
      [WS_ACTIVE] = { "active", 6 },
-     [WS_WAITING] = { "waiting", 7 },
+     [WS_REJECTED] = { "rejected", 8 },
      [WS_TERMINATED] = { "terminated", 10 },
+     [WS_PENDING_TERMINATED] = { "terminated", 10 },
      { 0, 0 }
 };
 
@@ -89,7 +90,35 @@ static str watcher_event_names[] = {
      { 0, 0 }
 };
 
-int event_package_from_string(str *epname) 
+static const char *event_package2str(int et) /* FIXME: change working with this to enum ?*/
+{
+	/* added due to incorrect package handling */
+	switch (et) {
+		case EVENT_PRESENCE: return "presence";
+		case EVENT_PRESENCE_WINFO: return "presence.winfo";
+		default: return "unknown";
+	}
+}
+
+int str2event_package(const char *epname) 
+{
+	/* work only with packages supported by PA! */
+	if (strcmp(epname, "presence") == 0) return EVENT_PRESENCE;
+	if (strcmp(epname, "presence.winfo") == 0) return EVENT_PRESENCE_WINFO;
+	return -1; /* unsupported */
+}
+
+/* returns 1 if package supported by PA */
+int verify_event_package(int et)
+{
+	switch (et) {
+		case EVENT_PRESENCE:
+		case EVENT_PRESENCE_WINFO: return 0;
+		default: return -1;
+	}
+}
+
+/*int event_package_from_string(str *epname) 
 {
      int i;
      for (i = 0; event_package_name[i]; i++) {
@@ -98,7 +127,7 @@ int event_package_from_string(str *epname)
 	  }
      }
      return 0;
-}
+}*/
 
 watcher_status_t watcher_status_from_string(str *wsname) 
 {
@@ -151,11 +180,11 @@ unsigned int compute_hash(unsigned int _h, char* s, int len)
 	return h;
 }
 
-static char hbuf[2048];
+/* static char hbuf[2048]; */
 
 static int watcher_assign_statement_id(presentity_t *presentity, watcher_t *watcher)
 {
-	unsigned int h = 0;
+	/*unsigned int h = 0;
 	char *dn = doctype_name[watcher->preferred_mimetype];
 	if (1) {
 		int len = 0;
@@ -171,7 +200,9 @@ static int watcher_assign_statement_id(presentity_t *presentity, watcher_t *watc
 		h = compute_hash(h, dn, strlen(dn));
 		h = compute_hash(h, watcher->uri.s, watcher->uri.len);
 	}
-	watcher->s_id.len = sprintf(watcher->s_id.s, "SID%08x", h);
+	watcher->s_id.len = sprintf(watcher->s_id.s, "SID%08x", h);*/
+	watcher->s_id.len = sprintf(watcher->s_id.s, "SID%dx%px%dx%d", 
+			presentity->presid, watcher, (int)time(NULL), rand());
 	return 0;
 }
 
@@ -216,12 +247,198 @@ int new_watcher_no_wb(presentity_t *_p, str* _uri, time_t _e, int event_package,
 	watcher->s_id.s = (char*)watcher + sizeof(watcher_t);
 	watcher->s_id.len = 0;
 
+	watcher->document_index = 0;
 	watcher->event_package = event_package;
 	watcher->expires = _e; /* Expires value */
 	watcher->preferred_mimetype = _a;  /* Accepted document type */
 	watcher->dialog = _dlg; /* Dialog handle */
 	watcher->event = WE_SUBSCRIBE;
+	watcher->status = WS_PENDING;
+	
 	*_w = watcher;
+
+	return 0;
+}
+
+static int set_watcher_db_data(presentity_t *_p, watcher_t *watcher,
+		db_key_t *cols, db_val_t *vals, int *col_cnt)
+{
+	int n_cols = 0;
+	char *package = (char*)event_package2str(watcher->event_package);
+	str dialog; /* serialized dialog */
+
+	if (dlg_func.dlg2str(watcher->dialog, &dialog) != 0) {	
+		LOG(L_ERR, "Error while serializing dialog\n");
+		return -1;
+	}
+	
+	cols[n_cols] = "r_uri";
+	vals[n_cols].type = DB_STR;
+	vals[n_cols].nul = n_cols;
+	vals[n_cols].val.str_val.s = _p->uri.s;
+	vals[n_cols].val.str_val.len = _p->uri.len;
+	n_cols++;
+
+	cols[n_cols] = "w_uri";
+	vals[n_cols].type = DB_STR;
+	vals[n_cols].nul = 0;
+	vals[n_cols].val.str_val.s = watcher->uri.s;
+	vals[n_cols].val.str_val.len = watcher->uri.len;
+	n_cols++;
+
+	cols[n_cols] = "package";
+	vals[n_cols].type = DB_STR;
+	vals[n_cols].nul = 0;
+	vals[n_cols].val.str_val.s = package;
+	vals[n_cols].val.str_val.len = strlen(package);
+	n_cols++;
+
+	cols[n_cols] = "s_id";
+	vals[n_cols].type = DB_STR;
+	vals[n_cols].nul = 0;
+	vals[n_cols].val.str_val.s = watcher->s_id.s;
+	vals[n_cols].val.str_val.len = watcher->s_id.len;
+	n_cols++;
+
+	cols[n_cols] = "status";
+	vals[n_cols].type = DB_STR;
+	vals[n_cols].nul = 0;
+	vals[n_cols].val.str_val = watcher_status_names[watcher->status];
+	n_cols++;
+
+	cols[n_cols] = "event";
+	vals[n_cols].type = DB_STR;
+	vals[n_cols].nul = 0;
+	vals[n_cols].val.str_val = watcher_event_names[watcher->event];
+	n_cols++;
+
+	cols[n_cols] = "display_name";
+	vals[n_cols].type = DB_STR;
+	vals[n_cols].nul = 0;
+	vals[n_cols].val.str_val.s = watcher->display_name.s;
+	vals[n_cols].val.str_val.len = watcher->display_name.len;
+	n_cols++;
+	
+	cols[n_cols] = "accepts";
+	vals[n_cols].type = DB_INT;
+	vals[n_cols].nul = 0;
+	vals[n_cols].val.int_val = watcher->preferred_mimetype;
+	n_cols++;
+
+	cols[n_cols] = "expires";
+	vals[n_cols].type = DB_INT;
+	vals[n_cols].nul = 0;
+	vals[n_cols].val.int_val = watcher->expires;
+	n_cols++;
+
+	cols[n_cols] = "dialog";
+	vals[n_cols].type = DB_BLOB;
+	vals[n_cols].nul = 0;
+	vals[n_cols].val.blob_val = dialog;
+	n_cols++;
+	
+	cols[n_cols] = "server_contact";
+	vals[n_cols].type = DB_STR;
+	vals[n_cols].nul = 0;
+	vals[n_cols].val.str_val = watcher->server_contact;
+	n_cols++;
+	
+	cols[n_cols] = "presid";
+	vals[n_cols].type = DB_INT;
+	vals[n_cols].nul = 0;
+	vals[n_cols].val.int_val = _p->presid;
+	n_cols++;
+
+	cols[n_cols] = "doc_index";
+	vals[n_cols].type = DB_INT;
+	vals[n_cols].nul = 0;
+	vals[n_cols].val.int_val = watcher->document_index;
+	n_cols++;
+	
+	*col_cnt = n_cols;
+
+	return 0;
+}
+
+int db_add_watcher(presentity_t *_p, watcher_t *watcher)
+{
+	db_key_t query_cols[20];
+	db_val_t query_vals[20];
+	
+	int n_query_cols = 0;
+
+	if (!use_db) return 0;
+	
+	if (watcher->s_id.len < 1) /* id not assigned yet */
+		watcher_assign_statement_id(_p, watcher);
+	
+	if (set_watcher_db_data(_p, watcher, 
+				query_cols, query_vals, &n_query_cols) != 0) {
+		return -1;
+	}
+
+	if (pa_dbf.use_table(pa_db, watcherinfo_table) < 0) {
+		LOG(L_ERR, "db_add_watcher: Error in use_table\n");
+		return -1;
+	}
+	
+	/* insert new record into database */
+	if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols) < 0) {
+		LOG(L_ERR, "db_add_watcher: Error while inserting watcher\n");
+		return -1;
+	}
+	
+	return 0;
+}
+
+int db_update_watcher(presentity_t *_p, watcher_t *watcher)
+{
+	db_key_t query_cols[20];
+	db_val_t query_vals[20];
+	int n_query_cols = 0;
+	
+	db_key_t keys[] = { "s_id" };
+	db_op_t ops[] = { OP_EQ };
+	db_val_t k_vals[] = { { DB_STR, 0, { .str_val = watcher->s_id } } };
+
+	if (!use_db) return 0;
+
+	if (set_watcher_db_data(_p, watcher, 
+				query_cols, query_vals, &n_query_cols) != 0) {
+		return -1;
+	}
+
+	if (pa_dbf.use_table(pa_db, watcherinfo_table) < 0) {
+		LOG(L_ERR, "db_update_watcher: Error in use_table\n");
+		return -1;
+	}
+
+	if (pa_dbf.update(pa_db, keys, ops, k_vals, 
+				query_cols, query_vals, 1, n_query_cols) < 0) {
+		LOG(L_ERR, "Error while updating watcher in DB\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+int db_remove_watcher(struct presentity *_p, watcher_t *w)
+{
+	db_key_t keys[] = { "s_id" };
+	db_op_t ops[] = { OP_EQ };
+	db_val_t k_vals[] = { { DB_STR, 0, { .str_val = w->s_id } } };
+
+	if (!use_db) return 0;
+	
+	if (pa_dbf.use_table(pa_db, watcherinfo_table) < 0) {
+		LOG(L_ERR, "db_update_watcher: Error in use_table\n");
+		return -1;
+	}
+
+	if (pa_dbf.delete(pa_db, keys, ops, k_vals, 1) < 0) {
+		LOG(L_ERR, "Error while deleting watcher from DB\n");
+		return -1;
+	}
 
 	return 0;
 }
@@ -229,292 +446,177 @@ int new_watcher_no_wb(presentity_t *_p, str* _uri, time_t _e, int event_package,
 /*
  * Create a new watcher structure
  */
-int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_package, doctype_t _a, dlg_t* _dlg, 
+/*int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_package, doctype_t _a, dlg_t* _dlg, 
 		str *_dn, str *server_contact, watcher_t** _w)
 {
-     int rc;
-     watcher_t* watcher;
+	int rc = 0;
 
-     /* Check parameters */
-     if (!_uri && !_dlg && !_w) {
-	  LOG(L_ERR, "new_watcher(): Invalid parameter value\n");
-	  return -1;
-     }
+	/ * Check parameters * /
+	if (!_uri && !_dlg && !_w) {
+		LOG(L_ERR, "new_watcher(): Invalid parameter value\n");
+		return -1;
+	}
 
-     rc = new_watcher_no_wb(_p, _uri, _e, event_package, _a, _dlg, _dn, server_contact, _w);
-     if (rc < 0) {
-	  return rc;
-     } else {
-	  watcher = *_w;
-     }
+	rc = new_watcher_no_wb(_p, _uri, _e, event_package, _a, _dlg, _dn, server_contact, _w);
+	if (rc < 0) return rc;
+	if (use_db) {
+		rc = db_add_watcher(_p, *_w);
+		if (rc != 0) free_watcher(*_w);
+	}
 
-     if (use_db) {
-	  db_key_t query_cols[11];
-	  db_op_t query_ops[11];
-	  db_val_t query_vals[11];
-
-	  db_key_t result_cols[5];
-	  db_res_t *res;
-	  int n_query_cols = 0;
-	  int n_result_cols = 0;
-	  int s_id_col, status_col, display_name_col, event_col;
-	  char *package = event_package_name[watcher->event_package];
-
-	  LOG(L_ERR, "new_watcher starting\n");
-	  query_cols[n_query_cols] = "r_uri";
-	  query_ops[n_query_cols] = OP_EQ;
-	  query_vals[n_query_cols].type = DB_STR;
-	  query_vals[n_query_cols].nul = n_query_cols;
-	  query_vals[n_query_cols].val.str_val.s = _p->uri.s;
-	  query_vals[n_query_cols].val.str_val.len = _p->uri.len;
-	  n_query_cols++;
-	  LOG(L_ERR, "new_watcher:  _p->uri=%.*s\n", _p->uri.len, _p->uri.s);
-
-	  query_cols[n_query_cols] = "w_uri";
-	  query_ops[n_query_cols] = OP_EQ;
-	  query_vals[n_query_cols].type = DB_STR;
-	  query_vals[n_query_cols].nul = 0;
-	  query_vals[n_query_cols].val.str_val.s = watcher->uri.s;
-	  query_vals[n_query_cols].val.str_val.len = watcher->uri.len;
-	  n_query_cols++;
-	  LOG(L_ERR, "db_new_watcher:  watcher->uri=%.*s\n", watcher->uri.len, watcher->uri.s);
-
-
-	  query_cols[n_query_cols] = "package";
-	  query_ops[n_query_cols] = OP_EQ;
-	  query_vals[n_query_cols].type = DB_STR;
-	  query_vals[n_query_cols].nul = 0;
-	  query_vals[n_query_cols].val.str_val.s = package;
-	  query_vals[n_query_cols].val.str_val.len = strlen(package);
-	  n_query_cols++;
-	  LOG(L_ERR, "new_watcher:  watcher->package=%s\n", package);
-
-	  result_cols[s_id_col = n_result_cols++] = "s_id";
-	  result_cols[status_col = n_result_cols++] = "status";
-	  result_cols[event_col = n_result_cols++] = "event";
-	  result_cols[display_name_col = n_result_cols++] = "display_name";
-		
-	  if (pa_dbf.use_table(pa_db, watcherinfo_table) < 0) {
-		  LOG(L_ERR, "new_watcher: Error in use_table\n");
-		  return -1;
-	  }
-	  
-	  if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
-			result_cols, n_query_cols, n_result_cols, 0, &res) < 0) {
-		  LOG(L_ERR, "new_watcher: Error while querying tuple\n");
-		  return -1;
-	  }
-	  LOG(L_INFO, "new_watcher: getting values: res=%p res->n=%d\n",
-	      res, (res ? res->n : 0));
-	  if (res && res->n > 0) {
-	       /* fill in tuple structure from database query result */
-	       db_row_t *row = &res->rows[0];
-	       db_val_t *row_vals = ROW_VALUES(row);
-	       str s_id = { 0, 0 };
-	       str status = { 0, 0 };
-	       str event_str = { 0, 0 };
-	       watcher_event_t watcher_event = WE_SUBSCRIBE;
-	       if (!row_vals[s_id_col].nul) {
-		    s_id.s = row_vals[s_id_col].val.string_val;
-		    s_id.len = strlen(s_id.s);
-	       }
-	       if (!row_vals[status_col].nul) {
-		    status.s = row_vals[status_col].val.string_val;
-		    status.len = strlen(status.s);
-	       }
-	       if (!row_vals[event_col].nul) {
-		    event_str.s = row_vals[event_col].val.string_val;
-		    event_str.len = strlen(event_str.s);
-		    watcher_event = watcher_event_from_string(&event_str);
-	       }
-	       watcher->event = watcher_event;
-	       
-	       LOG(L_ERR, "new_watcher: status=%.*s\n", status.len, status.s);
-	       if (status.len) {
-		    watcher->status = watcher_status_from_string(&status);
-	       } else {
-		    watcher->status = WS_ACTIVE;
-	       }
-	       if (s_id.s) {
-		    strncpy(watcher->s_id.s, s_id.s, S_ID_LEN);
-		    watcher->s_id.len = strlen(s_id.s);
-	       }
-	  } else {
-
-	       watcher_assign_statement_id(_p, watcher);
-
-	       query_cols[n_query_cols] = "s_id";
-	       query_vals[n_query_cols].type = DB_STR;
-	       query_vals[n_query_cols].nul = 0;
-	       query_vals[n_query_cols].val.str_val.s = watcher->s_id.s;
-	       query_vals[n_query_cols].val.str_val.len = watcher->s_id.len;
-	       n_query_cols++;
-
-	       query_cols[n_query_cols] = "status";
-	       query_vals[n_query_cols].type = DB_STR;
-	       query_vals[n_query_cols].nul = 0;
-	       if (new_watcher_pending) {
-		    query_vals[n_query_cols].val.str_val.s = "pending";
-		    query_vals[n_query_cols].val.str_val.len = strlen("pending");
-	       } else {
-		    query_vals[n_query_cols].val.str_val.s = "active";
-		    query_vals[n_query_cols].val.str_val.len = strlen("active");
-	       }
-	       n_query_cols++;
-
-	       query_cols[n_query_cols] = "event";
-	       query_vals[n_query_cols].type = DB_STR;
-	       query_vals[n_query_cols].nul = 0;
-	       query_vals[n_query_cols].val.str_val = watcher_event_names[watcher->event];
-	       n_query_cols++;
-
-	       query_cols[n_query_cols] = "display_name";
-	       query_vals[n_query_cols].type = DB_STR;
-	       query_vals[n_query_cols].nul = 0;
-	       query_vals[n_query_cols].val.str_val.s = watcher->display_name.s;
-	       query_vals[n_query_cols].val.str_val.len = watcher->display_name.len;
-	       n_query_cols++;
-
-	       query_cols[n_query_cols] = "accepts";
-	       query_vals[n_query_cols].type = DB_INT;
-	       query_vals[n_query_cols].nul = 0;
-	       query_vals[n_query_cols].val.int_val = watcher->preferred_mimetype;
-	       n_query_cols++;
-
-	       query_cols[n_query_cols] = "expires";
-	       query_vals[n_query_cols].type = DB_INT;
-	       query_vals[n_query_cols].nul = 0;
-	       query_vals[n_query_cols].val.int_val = watcher->expires;
-	       n_query_cols++;
-
-			/* FIXME: store server_contact to DB */
-		   
-	       /* insert new record into database */
-	       LOG(L_INFO, "new_watcher: inserting %d cols into table\n", n_query_cols);
-	       if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols)
-				   < 0) {
-		    LOG(L_ERR, "new_watcher: Error while inserting tuple\n");
-		    return -1;
-	       }
-	  }
-	  if (res)
-	       pa_dbf.free_result(pa_db, res);
-     }
-
-     return 0;
-}
+	return rc;
+}*/
 
 
 /*
  * Read watcherinfo table from database for presentity _p
  */
-int db_read_watcherinfo(presentity_t *_p)
+int db_read_watcherinfo(presentity_t *_p, db_con_t* db)
 {
-     if (use_db) {
-	  db_key_t query_cols[5];
-	  db_op_t query_ops[5];
-	  db_val_t query_vals[5];
+	db_key_t query_cols[5];
+	db_op_t query_ops[5];
+	db_val_t query_vals[5];
 
-	  db_key_t result_cols[9];
-	  db_res_t *res;
-	  int n_query_cols = 1;
-	  int n_result_cols = 0;
-	  int w_uri_col, s_id_col, event_package_col, status_col, watcher_event_col, display_name_col, accepts_col, expires_col;
+	str dialog = { 0, 0 };
+	dlg_t *dlg = NULL;
+	db_key_t result_cols[11];
+	db_res_t *res;
+	int r = 0;
+	int n_query_cols = 1;
+	int n_result_cols = 0;
+	int w_uri_col, s_id_col, event_package_col, status_col, watcher_event_col, 
+		display_name_col, accepts_col, expires_col, dialog_col, server_contact_col,
+		doc_index_col;
+	
+	if (!use_db) return 0;
+	
+/*	LOG(L_ERR, "db_read_watcherinfo starting\n");*/
+	query_cols[0] = "presid";
+	query_ops[0] = OP_EQ;
+	query_vals[0].type = DB_INT;
+	query_vals[0].nul = 0;
+	query_vals[0].val.int_val = _p->presid;
+	LOG(L_ERR, "db_read_watcherinfo:  _p->uri='%s', presid=%d\n", 
+			_p->uri.s, _p->presid);
 
-	  // LOG(L_ERR, "db_read_watcherinfo starting\n");
-	  query_cols[0] = "r_uri";
-	  query_ops[0] = OP_EQ;
-	  query_vals[0].type = DB_STRING;
-	  query_vals[0].nul = 0;
-	  query_vals[0].val.string_val = _p->uri.s;
-	  LOG(L_ERR, "db_read_watcherinfo:  _p->uri='%s'\n", _p->uri.s);
-
-	  result_cols[w_uri_col = n_result_cols++] = "w_uri";
-	  result_cols[s_id_col = n_result_cols++] = "s_id";
-	  result_cols[event_package_col = n_result_cols++] = "package";
-	  result_cols[status_col = n_result_cols++] = "status";
-	  result_cols[display_name_col = n_result_cols++] = "display_name";
-	  result_cols[accepts_col = n_result_cols++] = "accepts";
-	  result_cols[expires_col = n_result_cols++] = "expires";
-	  result_cols[watcher_event_col = n_result_cols++] = "event";
+	result_cols[w_uri_col = n_result_cols++] = "w_uri";
+	result_cols[s_id_col = n_result_cols++] = "s_id";
+	result_cols[event_package_col = n_result_cols++] = "package";
+	result_cols[status_col = n_result_cols++] = "status";
+	result_cols[display_name_col = n_result_cols++] = "display_name";
+	result_cols[accepts_col = n_result_cols++] = "accepts";
+	result_cols[expires_col = n_result_cols++] = "expires";
+	result_cols[watcher_event_col = n_result_cols++] = "event";
+	result_cols[dialog_col = n_result_cols++] = "dialog";
+	result_cols[server_contact_col = n_result_cols++] = "server_contact";
+	result_cols[doc_index_col = n_result_cols++] = "doc_index";
 		
-	  if (pa_dbf.use_table(pa_db, watcherinfo_table) < 0) {
-		  LOG(L_ERR, "db_read_watcherinfo: Error in use_table\n");
-		  return -1;
-	  }
+	if (pa_dbf.use_table(db, watcherinfo_table) < 0) {
+		LOG(L_ERR, "db_read_watcherinfo: Error in use_table\n");
+		return -1;
+	}
 
-	  if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
+	if (pa_dbf.query (db, query_cols, query_ops, query_vals,
 			result_cols, n_query_cols, n_result_cols, 0, &res) < 0) {
-	       LOG(L_ERR, "db_read_watcherinfo(): Error while querying watcherinfo\n");
-	       return -1;
-	  }
-	  if (res && res->n > 0) {
-	       /* fill in tuple structure from database query result */
-	       int i;
-	       for (i = 0; i < res->n; i++) {
-		    db_row_t *row = &res->rows[i];
-		    db_val_t *row_vals = ROW_VALUES(row);
-		    str w_uri = { 0, 0 };
-		    str s_id = { 0, 0 };
-		    str event_package_str = { 0, 0 };
-		    int event_package = EVENT_PRESENCE;
-		    str watcher_event_str = { 0, 0 };
-		    watcher_event_t watcher_event = WE_SUBSCRIBE;
-		    int accepts = row_vals[accepts_col].val.int_val;
-		    int expires = row_vals[expires_col].val.int_val;
-		    str status = { 0, 0 };
-		    str display_name = { 0, 0 };
-			str server_contact = { 0, 0};
-		    watcher_t *watcher = NULL;
-		    if (!row_vals[w_uri_col].nul) {
-			 w_uri.s = row_vals[w_uri_col].val.string_val;
-			 w_uri.len = strlen(w_uri.s);
-		    }
-		    if (!row_vals[s_id_col].nul) {
-			 s_id.s = row_vals[s_id_col].val.string_val;
-			 s_id.len = strlen(s_id.s);
-		    }
-		    if (!row_vals[event_package_col].nul) {
-			 event_package_str.s = row_vals[event_package_col].val.string_val;
-			 event_package_str.len = strlen(event_package_str.s);
-			 event_package = event_package_from_string(&event_package_str);
-		    }
-		    if (!row_vals[status_col].nul) {
-			 status.s = row_vals[status_col].val.string_val;
-			 status.len = strlen(status.s);
-		    }
-		    if (!row_vals[watcher_event_col].nul) {
-			 watcher_event_str.s = row_vals[watcher_event_col].val.string_val;
-			 watcher_event_str.len = strlen(watcher_event_str.s);
-			 watcher_event = watcher_event_from_string(&watcher_event_str);
-		    }
-		    if (!row_vals[display_name_col].nul) {
-			 display_name.s = row_vals[display_name_col].val.string_val;
-			 display_name.len = strlen(display_name.s);
-		    }
-			/* FIXME: read server_contact from DB */
+		LOG(L_ERR, "db_read_watcherinfo(): Error while querying watcherinfo\n");
+		return -1;
+	}
 
-		    if (find_watcher(_p, &w_uri, event_package, &watcher) != 0) {
-			 new_watcher_no_wb(_p, &w_uri, expires, event_package, accepts, NULL, &display_name, &server_contact, &watcher);
-		    }
-		    if (watcher) {
-			 watcher_status_t ws = watcher_status_from_string(&status);
-			 if (watcher->status != ws)
-			      watcher->flags |= WFLAG_SUBSCRIPTION_CHANGED;
-			 watcher->status = ws;
-			 watcher->event = watcher_event;
-			     
-			 if (s_id.s) {
-			      strncpy(watcher->s_id.s, s_id.s, S_ID_LEN);
-			      watcher->s_id.len = strlen(s_id.s);
-			 }
-		    }
-	       }
-	  }
-	  pa_dbf.free_result(pa_db, res);
-	  LOG(L_ERR, "db_read_watcherinfo:  _p->uri='%s' done\n", _p->uri.s);
-     }
-     return 0;
+	if (res && (res->n > 0)) {
+		/* fill in tuple structure from database query result */
+		int i;
+	
+		dlg = NULL;
+		for (i = 0; i < res->n; i++) {
+			db_row_t *row = &res->rows[i];
+			db_val_t *row_vals = ROW_VALUES(row);
+			str w_uri = { 0, 0 };
+			str s_id = { 0, 0 };
+			char *event_package_str = NULL;
+			int event_package = EVENT_PRESENCE;
+			str watcher_event_str = { 0, 0 };
+			watcher_event_t watcher_event = WE_SUBSCRIBE;
+			int accepts = row_vals[accepts_col].val.int_val;
+			int expires = row_vals[expires_col].val.int_val;
+			int doc_index = row_vals[doc_index_col].val.int_val;
+			str status = { 0, 0 };
+			str display_name = { 0, 0 };
+			str server_contact = { 0, 0};
+			watcher_t *watcher = NULL;
+			
+			if (!row_vals[w_uri_col].nul) {
+				w_uri.s = (char *)row_vals[w_uri_col].val.string_val;
+				w_uri.len = strlen(w_uri.s);
+			}
+			if (!row_vals[s_id_col].nul) {
+				s_id.s = (char *)row_vals[s_id_col].val.string_val;
+				s_id.len = strlen(s_id.s);
+			}
+			if (!row_vals[event_package_col].nul) {
+				event_package_str = (char *)row_vals[event_package_col].val.string_val;
+				event_package = str2event_package(event_package_str);
+			}
+			if (!row_vals[status_col].nul) {
+				status.s = (char *)row_vals[status_col].val.string_val;
+				status.len = strlen(status.s);
+			}
+			if (!row_vals[watcher_event_col].nul) {
+				watcher_event_str.s = (char *)row_vals[watcher_event_col].val.string_val;
+				watcher_event_str.len = strlen(watcher_event_str.s);
+				watcher_event = watcher_event_from_string(&watcher_event_str);
+			}
+			if (!row_vals[display_name_col].nul) {
+				display_name.s = (char *)row_vals[display_name_col].val.string_val;
+				display_name.len = strlen(display_name.s);
+			}
+			if (!row_vals[dialog_col].nul) {
+				dialog = row_vals[dialog_col].val.blob_val;
+				dlg = (dlg_t*)shm_malloc(sizeof(*dlg));
+				if (!dlg) {
+					LOG(L_ERR, "db_read_watcher: Can't allocate dialog\n");
+					r = -1;
+				}
+				else 
+					if (dlg_func.str2dlg(&dialog, dlg) != 0) {	
+						LOG(L_ERR, "db_read_watcher: Error while deserializing dialog\n");
+						r = -1;
+					}
+			}
+			if (!row_vals[server_contact_col].nul) {
+				server_contact.s = (char *)row_vals[server_contact_col].val.string_val;
+				server_contact.len = strlen(server_contact.s);
+			}
+
+			if (new_watcher_no_wb(_p, &w_uri, expires, 
+						event_package, accepts, dlg, &display_name, 
+						&server_contact, &watcher) == 0) {
+				
+				watcher_status_t ws = watcher_status_from_string(&status);
+				/* if (watcher->status != ws)
+					watcher->flags |= WFLAG_SUBSCRIPTION_CHANGED; */
+				watcher->status = ws;
+				watcher->event = watcher_event;
+				watcher->document_index = doc_index;
+
+				if (s_id.s) {
+					strncpy(watcher->s_id.s, s_id.s, S_ID_LEN);
+					watcher->s_id.len = strlen(s_id.s);
+				}
+				if (event_package == EVENT_PRESENCE_WINFO)
+					r = add_winfo_watcher(_p, watcher);
+				else r = add_watcher(_p, watcher);
+				if (r < 0) {
+					LOG(L_ERR, "db_read_watcher(): Error while adding watcher\n");
+					free_watcher(watcher);
+				}
+			}
+			else r = -1;
+		}
+	}
+	pa_dbf.free_result(db, res);
+	LOG(L_ERR, "db_read_watcherinfo:  _p->uri='%s' done\n", _p->uri.s);
+
+	return r;
 }
 
 /*
@@ -522,7 +624,6 @@ int db_read_watcherinfo(presentity_t *_p)
  */
 void free_watcher(watcher_t* _w)
 {
-	LOG(L_ERR, "free_watcher %p\n", _w);
 	tmb.free_dlg(_w->dialog);
 	shm_free(_w);	
 }
@@ -546,10 +647,11 @@ void print_watcher(FILE* _f, watcher_t* _w)
 /*
  * Update a watcher structure
  */
-int update_watcher(watcher_t* _w, time_t _e)
+int update_watcher(struct presentity *p, watcher_t* _w, time_t _e)
 {
 	_w->expires = _e;
-	return 0;
+	if (use_db) return db_update_watcher(p, _w);
+	else return 0;
 }
 
 #define CRLF "\r\n"
@@ -561,8 +663,10 @@ int update_watcher(watcher_t* _w, time_t _e)
 #define XML_VERSION "<?xml version=\"1.0\"?>"
 #define XML_VERSION_L (sizeof(XML_VERSION) - 1)
 
-#define WATCHERINFO_STAG "<watcherinfo xmlns=\"urn:ietf:params:xml:ns:watcherinfo\" version=\"0\" state=\"partial\">"
-#define WATCHERINFO_STAG_L (sizeof(WATCHERINFO_STAG) - 1)
+#define WATCHERINFO_STAG_A "<watcherinfo xmlns=\"urn:ietf:params:xml:ns:watcherinfo\" version=\""
+#define WATCHERINFO_STAG_A_L (sizeof(WATCHERINFO_STAG_A) - 1)
+#define WATCHERINFO_STAG_B "\" state=\"full\">"
+#define WATCHERINFO_STAG_B_L (sizeof(WATCHERINFO_STAG_B) - 1)
 #define WATCHERINFO_ETAG "</watcherinfo>"
 #define WATCHERINFO_ETAG_L (sizeof(WATCHERINFO_ETAG) - 1)
 
@@ -612,6 +716,7 @@ int winfo_add_watcher(str* _b, int _l, watcher_t *watcher)
 	int i;
 	int len = 0;
 	int status = watcher->status;
+	char id[64];
 
 #define add_string(_s, _l) ((strs[n_strs].s = (_s)), (strs[n_strs].len = (_l)), (len += _l), n_strs++)
 #define add_str(_s) (strs[n_strs].s = (_s.s), strs[n_strs].len = (_s.len), len += _s.len, n_strs++)
@@ -623,7 +728,11 @@ int winfo_add_watcher(str* _b, int _l, watcher_t *watcher)
 	add_string(EVENT_START, EVENT_START_L);
 	add_str(watcher_event_names[watcher->event]);
 	add_string(SID_START, SID_START_L);
-	add_str(watcher->s_id);
+	if (watcher->s_id.len < 1) {
+		sprintf(id, "%p", watcher);
+		add_string(id, strlen(id));
+	}
+	else add_str(watcher->s_id);
 	if (0)
 	if (watcher->display_name.len > 0) {
 	  add_string(DISPLAY_NAME_START, DISPLAY_NAME_START_L);
@@ -648,11 +757,50 @@ int winfo_add_watcher(str* _b, int _l, watcher_t *watcher)
 }
 
 /*
+ * Add an internal watcher information
+ */
+int winfo_add_internal_watcher(str* _b, int _l, internal_pa_subscription_t *iwatcher)
+{
+	str strs[20];
+	int n_strs = 0;
+	int i;
+	int len = 0;
+	char id[64];
+
+	sprintf(id, "%p", iwatcher);
+	add_string(WATCHER_START, WATCHER_START_L);
+	add_string(STATUS_START, STATUS_START_L);
+	add_str(watcher_status_names[0]); /* TODO: authorization and status remeber ! */
+	add_string(EVENT_START, EVENT_START_L);
+	add_str(watcher_event_names[0]); /* TODO: auth */
+	add_string(SID_START, SID_START_L);
+	add_string(id, strlen(id));
+	add_string(URI_START, URI_START_L);
+	add_string(iwatcher->subscription->subscriber_id.s, 
+			iwatcher->subscription->subscriber_id.len);
+	add_string(WATCHER_ETAG, WATCHER_ETAG_L);
+	add_string(CRLF, CRLF_L);
+
+	if (_l < len) {
+		paerrno = PA_SMALL_BUFFER;
+		LOG(L_ERR, "winfo_add_watcher(): Buffer too small\n");
+		return -1;
+	}
+
+	for (i = 0; i < n_strs; i++)
+		str_append(_b, strs[i].s, strs[i].len);
+
+	return 0;
+}
+
+
+/*
  * Create start of winfo document
  */
-int start_winfo_doc(str* _b, int _l)
+int start_winfo_doc(str* _b, int _l, struct watcher *w)
 {
 	str strs[10];
+	char version[32];
 	int n_strs = 0;
 	int i;
 	int len = 0;
@@ -664,10 +812,13 @@ int start_winfo_doc(str* _b, int _l)
 		LOG(L_ERR, "start_pidf_doc(): Buffer too small\n");
 		return -1;
 	}
-
+	if (w) sprintf(version, "%d", w->document_index++);
+	else strcpy(version, "0");
 	add_string(XML_VERSION, XML_VERSION_L);
 	add_string(CRLF, CRLF_L);
-	add_string(WATCHERINFO_STAG, WATCHERINFO_STAG_L);
+	add_string(WATCHERINFO_STAG_A, WATCHERINFO_STAG_A_L);
+	add_string(version, strlen(version));
+	add_string(WATCHERINFO_STAG_B, WATCHERINFO_STAG_B_L);
 	add_string(CRLF, CRLF_L);
 
 	if (_l < len) {
@@ -691,12 +842,14 @@ int winfo_start_resource(str* _b, int _l, str* _uri, watcher_t *watcher)
 	int n_strs = 0;
 	int i;
 	int len = 0;
+	char *package;
 
+	package = (char*)event_package2str(EVENT_PRESENCE);
 	add_string(WATCHERLIST_START, WATCHERLIST_START_L);
 	add_pstr(_uri);
 	add_string(PACKAGE_START, PACKAGE_START_L);
 /*	add_string(event_package_name[watcher->event_package], strlen(event_package_name[watcher->event_package]));*/
-	add_string(event_package_name[EVENT_PRESENCE], strlen(event_package_name[EVENT_PRESENCE])); /* FIXME */
+	add_string(package, strlen(package)); /* FIXME */
 	add_string(PACKAGE_END, PACKAGE_END_L);
 	add_string(CRLF, CRLF_L);
 
@@ -750,4 +903,45 @@ int end_winfo_doc(str* _b, int _l)
 
 	str_append(_b, WATCHERINFO_ETAG CRLF, WATCHERINFO_ETAG_L + CRLF_L);
 	return 0;
+}
+
+int is_watcher_terminated(watcher_t *w)
+{
+	if (!w) return -1;
+	
+	if ((w->status == WS_TERMINATED) || 
+		(w->status == WS_REJECTED) ||
+			(w->status == WS_PENDING_TERMINATED)) return 1;
+	return 0;
+}
+
+int is_watcher_authorized(watcher_t *w)
+{
+	if (!w) return 0;
+	
+	switch (w->status) {
+		case WS_PENDING: ;
+		case WS_PENDING_TERMINATED: ;
+		case WS_REJECTED: return 0;
+		case WS_ACTIVE: ;
+		case WS_TERMINATED: return 1;
+	}
+	return 0;
+}
+
+void set_watcher_terminated_status(watcher_t *w)
+{
+	if (!w) return;
+	
+	switch (w->status) {
+		case WS_REJECTED: break;
+		case WS_PENDING: ;
+			w->status = WS_PENDING_TERMINATED; 
+			break;
+		case WS_PENDING_TERMINATED: break;
+		case WS_TERMINATED: break;
+		case WS_ACTIVE: ;
+			w->status = WS_TERMINATED; 
+			break;
+	}
 }

@@ -47,6 +47,8 @@
 #include "pa_mod.h"
 #include "pidf.h"
 #include "watcher.h"
+#include "fifo.h"
+#include "qsa_interface.h"
 
 MODULE_VERSION
 
@@ -65,8 +67,11 @@ int watcherinfo_notify = 1; /* send watcherinfo notifications */
 /** TM bind */
 struct tm_binds tmb;
 
+dlg_func_t dlg_func;
+
+
 /** database */
-db_con_t* pa_db; /* Database connection handle */
+db_con_t* pa_db = NULL; /* Database connection handle */
 db_func_t pa_dbf;
 
 int use_db = 1;
@@ -81,7 +86,7 @@ char *watcherinfo_table = "watcherinfo";
 char *place_table = "place";
 int use_bsearch = 0;
 int use_location_package = 0;
-int new_watcher_pending = 0;
+int authorize_watchers = 1;
 int callback_update_db = 1;
 int callback_lock_pdomain = 1;
 int new_tuple_on_publish = 1;
@@ -121,7 +126,7 @@ static param_export_t params[]={
 	{"presentity_contact_table", STR_PARAM, &presentity_contact_table     },
 	{"watcherinfo_table",    STR_PARAM, &watcherinfo_table    },
 	{"place_table",          STR_PARAM, &place_table          },
-	{"new_watcher_pending",  INT_PARAM, &new_watcher_pending  },
+	{"authorize_watchers",   INT_PARAM, &authorize_watchers  },
 	{"callback_update_db",   INT_PARAM, &callback_update_db   },
 	{"callback_lock_pdomain", INT_PARAM, &callback_lock_pdomain },
 	{"new_tuple_on_publish", INT_PARAM, &new_tuple_on_publish  },
@@ -175,13 +180,14 @@ static void test_mimetype_parser(void)
 	struct mimetype_test *mt = &mimetype_tests[0];
 	DBG("Presence Agent - testing mimetype parser\n");
 	while (mt->string) {
-		int pmt;
+/*		int pmt;
 		LOG(L_DBG, "Presence Agent - parsing mimetype %s\n", mt->string);
 		decode_mime_type(mt->string, mt->string+strlen(mt->string), &pmt);
 		if (pmt != mt->parsed) {
 			LOG(L_ERR, "Parsed mimetype %s got %x expected %x\n",
 			    mt->string, pmt, mt->parsed);
 		}
+		*/
 		mt++;
 	}
 }
@@ -189,6 +195,7 @@ static void test_mimetype_parser(void)
 static int pa_mod_init(void)
 {
 	load_tm_f load_tm;
+	bind_dlg_mod_f bind_dlg;
 
 	test_mimetype_parser();
 	DBG("Presence Agent - initializing\n");
@@ -200,6 +207,15 @@ static int pa_mod_init(void)
 	}
 	     /* let the auto-loading function load all TM stuff */
 	if (load_tm( &tmb )==-1) {
+		return -1;
+	}
+	     
+	bind_dlg = (bind_dlg_mod_f)find_export("bind_dlg_mod", -1, 0);
+	if (!bind_dlg) {
+		LOG(L_ERR, "Can't import dlg\n");
+		return -1;
+	}
+	if (bind_dlg(&dlg_func) != 0) {
 		return -1;
 	}
 	
@@ -228,6 +244,11 @@ static int pa_mod_init(void)
 		return -1;
 	}
 
+	if (pa_fifo_register() != 0) {
+		LOG(L_CRIT, "cannot register fifo commands for pa\n");
+		return -1;
+	}
+	
 	if (init_unixsock_iface() < 0) {
 		LOG(L_ERR, "pa_mod_init: Error while initializing unix socket interface\n");
 		return -1;
@@ -268,18 +289,34 @@ static int pa_mod_init(void)
 
 	default_priority = ((double)default_priority_percentage) / 100.0;
 
+	if (pa_qsa_interface_init() != 0) {
+		LOG(L_CRIT, "pa_mod_init(): QSA interface initialization failed!\n");
+		return -1;
+	}
+	
 	LOG(L_CRIT, "pa_mod_init done\n");
 	return 0;
 }
 
+/* can be called after pa_mod_init and creates new PA DB connection */
+db_con_t* create_pa_db_connection()
+{
+	if (!use_db) return NULL;
+	if (!pa_dbf.init) return NULL;
+	
+	return pa_dbf.init(db_url.s);
+}
+
+void close_pa_db_connection(db_con_t* db)
+{
+	if (db && pa_dbf.close) pa_dbf.close(db);
+}
 
 static int pa_child_init(int _rank)
 {
  	     /* Shall we use database ? */
 	if (use_db) { /* Yes */
-		pa_db = NULL;
-		pa_db = pa_dbf.init(db_url.s); /* Initialize a new separate 
-										  connection */
+		pa_db = create_pa_db_connection();
 		if (!pa_db) {
 			LOG(L_ERR, "ERROR: pa_child_init(%d): "
 					"Error while connecting database\n", _rank);
@@ -294,10 +331,11 @@ static int pa_child_init(int _rank)
 
 static void pa_destroy(void)
 {
+	pa_qsa_interface_destroy();
+
 	free_all_pdomains();
-	if (use_db && (pa_dbf.close != NULL) && (pa_db != NULL)) {
-		pa_dbf.close(pa_db);
-	}
+	if (use_db) close_pa_db_connection(pa_db);
+	pa_db = NULL;
 }
 
 

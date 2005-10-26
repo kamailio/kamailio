@@ -37,6 +37,7 @@
 #define MSG_200 "OK"
 #define MSG_400 "Bad Request"
 #define MSG_500 "Server Internal Error"
+#define MSG_403 "Forbidden"
 
 #define	EI_PA_OK             "No problem"
 #define	EI_PA_PARSE_ERR      "Error while parsing headers"
@@ -55,6 +56,7 @@
 #define	EI_PA_SMALL_BUFFER   "Buffer too small on the server"
 #define	EI_PA_UNSUPP_DOC     "Unsupported document format"
 #define EI_PA_INTERNAL_ERROR "Internal Server Error"
+#define EI_PA_SUBSCRIPTION_REJECTED  "Subscription rejected"
 
 
 str error_info[] = {
@@ -74,7 +76,8 @@ str error_info[] = {
 	{EI_PA_FROM_ERROR,     sizeof(EI_PA_FROM_ERROR) - 1    },
 	{EI_PA_SMALL_BUFFER,   sizeof(EI_PA_SMALL_BUFFER) - 1  },
 	{EI_PA_UNSUPP_DOC,     sizeof(EI_PA_UNSUPP_DOC) - 1    },
-	{EI_PA_INTERNAL_ERROR, sizeof(EI_PA_INTERNAL_ERROR) - 1}
+	{EI_PA_INTERNAL_ERROR, sizeof(EI_PA_INTERNAL_ERROR) - 1},
+	{EI_PA_SUBSCRIPTION_REJECTED, sizeof(EI_PA_SUBSCRIPTION_REJECTED) - 1}
 };
 
 
@@ -95,7 +98,8 @@ int codes[] = {
 	400, /* EI_PA_FROM_ERROR */
 	500, /* EI_PA_SMALL_BUFFER */
 	500, /* EI_PA_UNSUPP_DOC */
-	500  /* EI_PA_INTERNAL_ERROR */
+	500,  /* EI_PA_INTERNAL_ERROR */
+	403 /* EI_PA_SUBSCRIPTION_REJECTED */
 };
 
 static int extract_contact_rpl(struct sip_msg *m, str *dst)
@@ -133,22 +137,54 @@ static int extract_contact_rpl(struct sip_msg *m, str *dst)
  */
 int send_reply(struct sip_msg* _m)
 {
-	int code;
+	int code = 200;
 	char* msg = MSG_200; /* makes gcc shut up */
 
-	code = codes[paerrno];
-	switch(code) {
-	case 200: msg = MSG_200; break;
-	case 400: msg = MSG_400; break;
-	case 500: msg = MSG_500; break;
-	}
+	/* code = codes[paerrno]; */
+	switch (paerrno) {
+		case PA_OK: msg = MSG_200; code = 200; break;
+		case PA_PARSE_ERR: msg = MSG_400; code = 400; break;
+		case PA_FROM_MISS: msg = MSG_400; code = 400; break;
+		case PA_EVENT_MISS: 
+					msg = "Unsupported event package"; 
+					code = 489;
+					break;
+		case PA_EVENT_PARSE: msg = MSG_400; code = 400; break;
+		case PA_EXPIRES_PARSE: msg = MSG_400; code = 400; break;
+		case PA_EVENT_UNSUPP: 
+					msg = "Unsupported event package"; 
+					code = 489;
+					break;
+		case PA_WRONG_ACCEPTS: msg = MSG_400; code = 400; break; /* ? */
+		case PA_NO_MEMORY: msg = MSG_500; code = 500; break;
+		case PA_TIMER_ERROR: msg = MSG_500; code = 500; break;
+		case PA_EXTRACT_USER: msg = MSG_400; code = 400; break;
+		case PA_FROM_ERR: msg = MSG_400; code = 400; break;
+		case PA_TO_ERR: msg = MSG_400; code = 400; break;
+		case PA_SMALL_BUFFER: msg = MSG_500; code = 500; break;
+		case PA_UNSUPP_DOC: msg = MSG_400; code = 400; break; /* ? */
+		case PA_ACCEPT_PARSE: msg = MSG_400; code = 400; break;
+		case PA_URI_PARSE: msg = MSG_400; code = 400; break;
+		case PA_DIALOG_ERR: msg = MSG_500; code = 500; break;
+		case PA_INTERNAL_ERROR: msg = MSG_500; code = 500; break;
+		case PA_SUBSCRIPTION_REJECTED: msg = MSG_403; code = 403; break;
+		case PA_NO_MATCHING_TUPLE: msg = "Conditional Request Failed"; 
+								   code = 412; 
+								   break;
+		case PA_OK_WAITING_FOR_AUTH:
+						msg = "Accepted"; 
+						/* FIXME: code = 202;  */ /* eyeBeam beta dies on 202 ! */
+						code = 200;
+						break;
+						/* OK but waiting for auth -> should return 202 */
+	}	
 	
 	if (code != 200) {
-		if (add_lump_rpl( _m, error_info[paerrno].s, error_info[paerrno].len,
+		/*if (add_lump_rpl( _m, error_info[paerrno].s, error_info[paerrno].len,
 		LUMP_RPL_HDR|LUMP_RPL_NODUP|LUMP_RPL_NOFREE)==0) {
 			LOG(L_ERR, "ERROR:pa:send_reply: cannot add rpl_lump hdr\n");
 			return -1;
-		}
+		}*/
 	}
 	else {
 		/* add Contact header field */

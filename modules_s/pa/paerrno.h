@@ -30,7 +30,6 @@
 #ifndef PAERRNO_H
 #define PAERRNO_H
 
-
 typedef enum paerr {
 	PA_OK,            /* Everything went OK */
 	PA_PARSE_ERR,     /* Error while parsing headers */
@@ -50,7 +49,10 @@ typedef enum paerr {
 	PA_ACCEPT_PARSE,  /* Error while parsing Accept header field */
 	PA_URI_PARSE,     /* Error while parsing URI */
 	PA_DIALOG_ERR,    /* Error while creating dialog */
-	PA_INTERNAL_ERROR /* Internal server error */
+	PA_INTERNAL_ERROR, /* Internal server error */
+	PA_SUBSCRIPTION_REJECTED,
+	PA_NO_MATCHING_TUPLE,	/* there is no tuple with published SIP-ETag */
+	PA_OK_WAITING_FOR_AUTH	/* OK but waiting for auth -> should return 202 */
 } paerr_t;
 
 

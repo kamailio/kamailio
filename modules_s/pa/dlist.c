@@ -144,6 +144,21 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 	return 0;
 }
 
+int find_pdomain(const char* _n, pdomain_t** _d)
+{
+	dlist_t* d;
+	str s;
+
+	s.s = (char*)_n;
+	s.len = strlen(_n);
+
+	if (find_dlist(&s, &d) == 0) {
+	        *_d = d->d;
+		return 0;
+	}
+	
+	return 1;
+}
 
 /*
  * Function registers a new domain with presence agent
@@ -171,6 +186,8 @@ int register_pdomain(const char* _n, pdomain_t** _d)
 	} 
 
 	pdomain = d->d;
+	lock_pdomain(pdomain);	/* do not enable timer to delete presentities in it */
+	pdomain->initialized = 0;
 	d->next = root;
 	root = d;
 	
@@ -179,6 +196,9 @@ int register_pdomain(const char* _n, pdomain_t** _d)
 	/* Preload domain with data from database if we are gonna
 	 * to use database
 	 */
+	pdomain_load_presentities(pdomain);
+	pdomain->initialized = 1;
+	unlock_pdomain(pdomain);
 
 	return 0;
 }

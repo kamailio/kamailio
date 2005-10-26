@@ -56,6 +56,7 @@ typedef struct pdomain {
 	int expired;                /* Number of expired presentities */
 	register_watcher_t reg;     /* Register watcher function */
 	unregister_watcher_t unreg; /* Unregister watcher function */
+	int initialized;	/* FIXME: changed to asynchronous callback processing */
 } pdomain_t;
 
 

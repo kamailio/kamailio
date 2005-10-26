@@ -53,7 +53,7 @@
 #include "ptime.h"
 #include "reply.h"
 #include "subscribe.h"
-
+#include "auth.h"
 
 #define DOCUMENT_TYPE "application/cpim-pidf+xml"
 #define DOCUMENT_TYPE_L (sizeof(DOCUMENT_TYPE) - 1)
@@ -87,7 +87,12 @@ void callback(str* _user, str *_contact, int state, void* data)
 
 	presentity = (struct presentity*)data;
 
+	/* FIXME asynchronize this due to locking and reloading from DB 
+	 * after restart */
 	if (presentity && callback_update_db) {
+		if (!presentity->pdomain) return; /*FIXME: change this to asynchronous processing ! */
+		if (!presentity->pdomain->initialized) return; /*FIXME: change this to asynchronous processing ! */
+		
 		presence_tuple_t *tuple = NULL;
 		int orig;
 		LOG(L_ERR, "callback: uri=%.*s contact=%.*s state=%d presentity=%p\n",
@@ -100,28 +105,26 @@ void callback(str* _user, str *_contact, int state, void* data)
 
 			find_presence_tuple(_contact, presentity, &tuple);
 			if (!tuple) {
-				new_presence_tuple(_contact, act_time + default_expires, presentity, &tuple);
+				new_presence_tuple(_contact, act_time + default_expires, presentity, &tuple, 0);
 				add_presence_tuple(presentity, tuple);
-			};
-
-			orig = tuple->state;
-
-			if (state == 0) {
-				tuple->state = PS_OFFLINE;
-				tuple->expires = act_time + 2 * timer_interval;
 			}
-			else {
-				tuple->state = PS_ONLINE;
-				tuple->expires = INT_MAX; /* act_time + default_expires; */
-				/* hack - re-registrations don't call the callback */
+			if (!tuple->is_published) {	/* not overwrite published information */
+				orig = tuple->state;
+				if (state == 0) {
+					tuple->state = PS_OFFLINE;
+					tuple->expires = act_time + 2 * timer_interval;
+				}
+				else {
+					tuple->state = PS_ONLINE;
+					tuple->expires = INT_MAX; /* act_time + default_expires; */
+					/* hack - re-registrations don't call the callback */
+				}
+				db_update_presentity(presentity);
+				
+				if (orig != state) {
+					presentity->flags |= PFLAG_PRESENCE_CHANGED;
+				}
 			}
-
-			db_update_presentity(presentity);
-
-			if (orig != state) {
-				presentity->flags |= PFLAG_PRESENCE_CHANGED;
-			}
-
 			if (callback_lock_pdomain) {
 				unlock_pdomain(presentity->pdomain);
 			}
@@ -269,12 +272,9 @@ static int parse_hfs(struct sip_msg* _m, int accept_header_required)
  */
 int check_message(struct sip_msg* _m)
 {
-	LOG(L_ERR, "check_message -0- _m=%p\n", _m);
 	if (_m->event) {
 		event_t *parsed_event;
 		int *accepts_mimes = NULL;
-
-		LOG(L_ERR, "check_message -1-");
 
 		if (_m->accept) {
 			accepts_mimes = get_accept(_m);
@@ -287,37 +287,36 @@ int check_message(struct sip_msg* _m)
 					offset += sprintf(buf+offset, ":%#06x", *a);
 					a++;
 				}
-				LOG(L_ERR, "pa check_message: accept=%.*s parsed=%s\n",
-				    _m->accept->body.len, _m->accept->body.s, buf);
+				/* LOG(L_ERR, "pa check_message: accept=%.*s parsed=%s\n",
+				    _m->accept->body.len, _m->accept->body.s, buf); */
 			}
 		}
-		LOG(L_ERR, "check_message -2- accepts_mimes=%p\n", accepts_mimes);
+		/* LOG(L_ERR, "check_message -2- accepts_mimes=%p\n", accepts_mimes); */
 
 		if (!_m->event->parsed)
 			parse_event(_m->event);
-		LOG(L_ERR, "check_message -3-\n");
 		parsed_event = (event_t*)(_m->event->parsed);
 
-		LOG(L_ERR, "check_message -4- parsed_event=%p\n", parsed_event);
+		/* LOG(L_ERR, "check_message -4- parsed_event=%p\n", parsed_event); */
 		if (parsed_event && accepts_mimes) {
 			int i = 0;
 			int eventtype = parsed_event->parsed;
-			LOG(L_ERR, "check_message -4- eventtype=%#06x\n", eventtype);
+			/* LOG(L_ERR, "check_message -4- eventtype=%#06x\n", eventtype); */
 			while (event_package_mimetypes[i].event_type != -1) {
-				LOG(L_ERR, "check_message -4a- eventtype=%#x epm[i].event_type=%#x", 
-				    eventtype, event_package_mimetypes[i].event_type);
+				/* LOG(L_ERR, "check_message -4a- eventtype=%#x epm[i].event_type=%#x", 
+				    eventtype, event_package_mimetypes[i].event_type); */
 				if (eventtype == event_package_mimetypes[i].event_type) {
 					int j = 0;
 					int mimetype;
 					while ((mimetype = event_package_mimetypes[i].mimes[j]) != 0) {
 						int k = 0;
 						while (accepts_mimes[k]) {
-							LOG(L_ERR, "check_message -4c- eventtype=%#x mimetype=%#x accepts_mimes[k]=%#x\n", eventtype, mimetype, accepts_mimes[k]);
+							/* LOG(L_ERR, "check_message -4c- eventtype=%#x mimetype=%#x accepts_mimes[k]=%#x\n", eventtype, mimetype, accepts_mimes[k]); */
 
 							if (accepts_mimes[k] == mimetype) {
 								int am0 = accepts_mimes[0];
 								/* we have a match */
-								LOG(L_ERR, "check_message -4b- eventtype=%#x accepts_mime=%#x\n", eventtype, mimetype);
+								/*LOG(L_ERR, "check_message -4b- eventtype=%#x accepts_mime=%#x\n", eventtype, mimetype); */
 								/* move it to front for later */
 								accepts_mimes[0] = mimetype;
 								accepts_mimes[k] = am0;
@@ -343,7 +342,6 @@ int check_message(struct sip_msg* _m)
 				return -1;
 			}
 		}
-		LOG(L_ERR, "check_message -5-\n");
 	}
 	return 0;
 }
@@ -368,6 +366,7 @@ int get_preferred_event_mimetype(struct sip_msg *_m, int et)
 			i++;
 		}
 	}
+	if (et == EVENT_PRESENCE_WINFO) acc = DOC_WINFO;
 	return acc;
 }
 
@@ -399,112 +398,80 @@ int extract_server_contact(struct sip_msg *m, str *dst)
 	return 0;
 }
 
-/*
- * Create a new presentity and corresponding watcher list
- */
-int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri, 
-			     struct presentity** _p, struct watcher** _w)
+static int create_watcher(struct sip_msg* _m, struct presentity* _p, struct watcher** _w, int et, time_t expires)
 {
-	time_t e;
 	dlg_t* dialog;
+	str server_contact = {0, 0};
+	int acc = 0;
 	str watch_uri;
 	str watch_dn;
-	str server_contact = {0, 0};
-	event_t *event = NULL;
-	int et = 0;
-	int acc = 0;
-	if (_m->event) {
-		event = (event_t*)(_m->event->parsed);
-		et = event->parsed;
-	} else {
-		et = EVENT_PRESENCE;
-	}
-	acc = get_preferred_event_mimetype(_m, et);
-
-	if (_m->expires) {
-		e = ((exp_body_t*)_m->expires->parsed)->val;
-	} else {
-		e = default_expires;
-	}
+	int res;
 	
-	if (e == 0) {
-		*_p = 0;
-		*_w = 0;
-		DBG("create_presentity(): expires = 0\n");
-		return 0;
-	}
-
-	/* Convert to absolute time */
-	e += act_time;
-
 	if (get_watch_uri(_m, &watch_uri, &watch_dn) < 0) {
-		LOG(L_ERR, "create_presentity(): Error while extracting watcher URI\n");
+		paerrno = PA_URI_PARSE;
+		LOG(L_ERR, "create_watcher(): Error while extracting watcher URI\n");
 		return -1;
 	}
-
-	if (new_presentity(_d, _puri, _p) < 0) {
-		LOG(L_ERR, "create_presentity(): Error while creating presentity\n");
-		return -2;
-	}
-
+	acc = get_preferred_event_mimetype(_m, et);
 	if (tmb.new_dlg_uas(_m, 200, &dialog) < 0) {
 		paerrno = PA_DIALOG_ERR;
-		LOG(L_ERR, "create_presentity(): Error while creating dialog state\n");
-		free_presentity(*_p);
-		return -3;
-	}
-
-	if (extract_server_contact(_m, &server_contact) != 0) {
-		paerrno = PA_DIALOG_ERR;
-		LOG(L_ERR, "create_presentity(): Error while extracting server contact\n");
-		free_presentity(*_p);
-		return -3;
+		LOG(L_ERR, "create_watcher(): Error while creating dialog state\n");
+		return -4;
 	}
 	
-	if (et != EVENT_PRESENCE_WINFO) {
-		if (add_watcher(*_p, &watch_uri, e, et, acc, dialog, &watch_dn, &server_contact, _w) < 0) {
-			LOG(L_ERR, "create_presentity(): Error while adding a watcher\n");
-			if (server_contact.s) shm_free(server_contact.s);
-			tmb.free_dlg(dialog);
-			free_presentity(*_p);
-			return -4;
-		}
-	} else if (et == EVENT_PRESENCE_WINFO) {
-		if (add_winfo_watcher(*_p, &watch_uri, e, et, acc, dialog, &watch_dn, &server_contact, _w) < 0) {
-			LOG(L_ERR, "create_presentity(): Error while adding a winfo watcher\n");
-			if (server_contact.s) shm_free(server_contact.s);
-			tmb.free_dlg(dialog);
-			free_presentity(*_p);
-			return -5;
-		}
+	if (extract_server_contact(_m, &server_contact) != 0) {
+		paerrno = PA_DIALOG_ERR;
+		LOG(L_ERR, "create_watcher(): Error while extracting server contact\n");
+		return -3;
+	}
+
+	if (new_watcher_no_wb(_p, &watch_uri, expires, et, acc, dialog, &watch_dn, &server_contact, _w) < 0) {
+		LOG(L_ERR, "create_watcher(): Error while creating watcher\n");
+		tmb.free_dlg(dialog);
+		if (server_contact.s) shm_free(server_contact.s);
+		paerrno = PA_NO_MEMORY;
+		return -5;
 	}
 	if (server_contact.s) shm_free(server_contact.s);
-	add_presentity(_d, *_p);
+	
+	(*_w)->status = authorize_watcher(_p, (*_w));
+	if ((*_w)->status == WS_REJECTED) {
+		free_watcher((*_w));
+		LOG(L_ERR, "create_watcher(): watcher rejected\n");
+		paerrno = PA_SUBSCRIPTION_REJECTED;
+		return -6;
+	}
+	if ((*_w)->status == WS_PENDING) {
+		paerrno = PA_OK_WAITING_FOR_AUTH;
+	}
 
-	/* FIXME: experimental */
-/*	_d->reg(&watch_uri, _puri, (void*)callback, *_p);
-	LOG(L_ERR, "registering callback to %.*s (%p),  %.*s, %p (%p)\n",
-			watch_uri.len, watch_uri.s, &watch_uri,
-			_puri->len, _puri->s, *_p, _p); */
+	res = 0;
+	if (et == EVENT_PRESENCE_WINFO) res = add_winfo_watcher(_p, *_w);
+	else res = add_watcher(_p, *_w);
+	if (res < 0) {
+		LOG(L_ERR, "create_watcher(): Error while adding watcher\n");
+		free_watcher(*_w);
+		paerrno = PA_INTERNAL_ERROR;
+		return -5;
+	}
+	
+	res = db_add_watcher(_p, *_w);
+	if (res != 0) {
+		if (et == EVENT_PRESENCE_WINFO) remove_winfo_watcher(_p, *_w);
+		else remove_watcher(_p, *_w);
+		LOG(L_ERR, "create_watcher(): Error while adding watcher into DB\n");
+		free_watcher(*_w);
+		paerrno = PA_INTERNAL_ERROR;
+		return -7;
+	}
+		
 	return 0;
 }
 
-
-/*
- * Update existing presentity and watcher list
- */
-static int update_presentity(struct sip_msg* _m, struct pdomain* _d, 
-			     struct presentity* _p, struct watcher** _w)
+static int get_event(struct sip_msg *_m)
 {
-	time_t e;
-	dlg_t* dialog;
-	str watch_uri;
-	str watch_dn;
-	str server_contact = {0, 0};
-	event_t *event = NULL;
 	int et = 0;
-	int acc = 0;
-	dlg_id_t dlg_id;
+	event_t *event = NULL;
 	
 	if (_m->event) {
 		event = (event_t*)(_m->event->parsed);
@@ -513,12 +480,81 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 		LOG(L_ERR, "update_presentity defaulting to EVENT_PRESENCE\n");
 		et = EVENT_PRESENCE;
 	}
-	acc = get_preferred_event_mimetype(_m, et);
+	return et;
+}
 
+static time_t get_expires(struct sip_msg *_m)
+{
+	time_t e;
+	
 	if (_m->expires) {
 		e = ((exp_body_t*)_m->expires->parsed)->val;
 	} else {
 		e = default_expires;
+	}
+	return e;
+}
+
+/*
+ * Create a new presentity and corresponding watcher list
+ */
+int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri, 
+			     struct presentity** _p, struct watcher** _w)
+{
+	time_t e;
+	int et = 0;
+	int res = 0;
+
+	et = get_event(_m);
+	e = get_expires(_m);
+
+	if (verify_event_package(et) != 0) {
+		LOG(L_ERR, "update_presentity(): Unsupported event package\n");
+		paerrno = PA_EVENT_UNSUPP;
+		return -1;
+	}
+
+	/* Convert to absolute time if nonzero (zero = polling) */
+	if (e > 0) e += act_time;
+
+	if (new_presentity(_d, _puri, _p) < 0) {
+		LOG(L_ERR, "create_presentity(): Error while creating presentity\n");
+		return -2;
+	}
+
+	res = create_watcher(_m, *_p, _w, et, e);
+	if (res != 0) {
+		/* remove presentity from database !!*/
+		db_remove_presentity(*_p);
+		free_presentity(*_p);
+		return res;
+	}
+
+	add_presentity(_d, *_p);
+
+	return 0;
+}
+
+/*
+ * Update existing presentity and watcher list
+ */
+static int update_presentity(struct sip_msg* _m, struct pdomain* _d, 
+			     struct presentity* _p, struct watcher** _w)
+{
+	time_t e;
+	str watch_uri;
+	str watch_dn;
+	int et = 0;
+	int res = 0;
+	dlg_id_t dlg_id;
+
+	et = get_event(_m);
+	e = get_expires(_m);
+	
+	if (verify_event_package(et) != 0) {
+		LOG(L_ERR, "update_presentity(): Unsupported event package\n");
+		paerrno = PA_EVENT_UNSUPP;
+		return -1;
 	}
 
 	if (get_watch_uri(_m, &watch_uri, &watch_dn) < 0) {
@@ -526,79 +562,26 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 		return -1;
 	}
 
+	LOG(L_ERR, "update_presentity: after get_watch_uri\n");
+	
 	get_dlg_id(_m, &dlg_id);
 	
-	if (find_watcher_dlg(_p, &dlg_id, et, _w) == 0) { /* FIXME: experimental */
-	/* if (find_watcher(_p, &watch_uri, et, _w) == 0) { */
-		LOG(L_ERR, "update_presentity() found watcher\n");
-		if (e == 0) {
-			/* FIXME: experimental */
-/*			
-			if (et != EVENT_PRESENCE_WINFO) {
-				if (remove_watcher(_p, *_w) < 0) {
-					LOG(L_ERR, "update_presentity(): Error while deleting winfo watcher\n");
-					return -2;
-				} 
-			} else {
-				if (remove_winfo_watcher(_p, *_w) < 0) {
-					LOG(L_ERR, "update_presentity(): Error while deleting winfo watcher\n");
-					return -2;
-				} 
-			}
-*/			
-			(*_w)->expires = 0;   /* The watcher will be freed after NOTIFY is sent */
-			/* FIXME: experimental */
-/*			if (!_p->watchers && !_p->winfo_watchers) {
-				remove_presentity(_d, _p); 
-			}*/
-		} else {
-			e += act_time;
-			if (update_watcher(*_w, e) < 0) {
-				LOG(L_ERR, "update_presentity(): Error while updating watcher\n");
-				return -3;
-			}
+	LOG(L_ERR, "update_presentity: searching watcher\n");
+	
+	if (find_watcher_dlg(_p, &dlg_id, et, _w) == 0) { 
+		LOG(L_ERR, "update_presentity: watcher found\n");
+		if (e > 0) e += act_time;
+		if (update_watcher(_p, *_w, e) < 0) {
+			LOG(L_ERR, "update_presentity(): Error while updating watcher\n");
+			return -3;
 		}
 	} else {
-		if (e) {
-			e += act_time;
-
-			if (tmb.new_dlg_uas(_m, 200, &dialog) < 0) {
-				paerrno = PA_DIALOG_ERR;
-				LOG(L_ERR, "update_presentity(): Error while creating dialog state\n");
-				return -4;
-			}
-			
-			if (extract_server_contact(_m, &server_contact) != 0) {
-				paerrno = PA_DIALOG_ERR;
-				LOG(L_ERR, "create_presentity(): Error while extracting server contact\n");
-				return -3;
-			}
-
-			if (et != EVENT_PRESENCE_WINFO) {
-				if (add_watcher(_p, &watch_uri, e, et, acc, dialog, &watch_dn, &server_contact, _w) < 0) {
-					LOG(L_ERR, "update_presentity(): Error while creating presentity\n");
-					tmb.free_dlg(dialog);
-					if (server_contact.s) shm_free(server_contact.s);
-					return -5;
-				}
-			} else {
-				if (add_winfo_watcher(_p, &watch_uri, e, et, acc, dialog, &watch_dn, &server_contact, _w) < 0) {
-					LOG(L_ERR, "update_presentity(): Error while creating winfo watcher\n");
-					tmb.free_dlg(dialog);
-					if (server_contact.s) shm_free(server_contact.s);
-					return -5;
-				}			
-			}
-			
-			if (server_contact.s) shm_free(server_contact.s);
-			
-		} else {
-			DBG("update_presentity(): expires = 0 but no watcher found\n");
-			*_w = 0;
-		}
+		LOG(L_ERR, "update_presentity: watcher not found\n");
+		if (e) e += act_time;
+		res = create_watcher(_m, _p, _w, et, e);
 	}
 
-	return 0;
+	return res;
 }
 
 
@@ -771,22 +754,23 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	}
 
 	lock_pdomain(d);
+
+	LOG(L_ERR, "handle_subscription: locked domain\n");
 	
-	LOG(L_ERR, "handle_subscription(): -1-\n");
 	if (find_presentity(d, &p_uri, &p) > 0) {
-		LOG(L_ERR, "handle_subscription(): -2-\n");
 		if (create_presentity(_m, d, &p_uri, &p, &w) < 0) {
 			LOG(L_ERR, "handle_subscription(): Error while creating new presentity\n");
 			goto error2;
 		}
 	} else {
-		LOG(L_ERR, "handle_subscription(): -3-\n");
 		if (update_presentity(_m, d, p, &w) < 0) {
 			LOG(L_ERR, "handle_subscription(): Error while updating presentity\n");
 			goto error2;
 		}
 	}
 
+	LOG(L_ERR, "handle_subscription: generating response\n");
+	
 	/* add expires header field into response */
 	if (w) i = w->expires - act_time;
 	else i = 0;
@@ -799,7 +783,8 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	
 	if (send_reply(_m) < 0) {
 	  LOG(L_ERR, "handle_subscription(): Error while sending reply\n");
-	  goto error2;
+	  unlock_pdomain(d);
+	  return -3;
 	}
 
 	if (p) {
@@ -817,6 +802,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
  error2:
 	LOG(L_ERR, "handle_subscription about to return -1\n");
 	unlock_pdomain(d);
+	send_reply(_m);
 	return -1;
  error:
 	LOG(L_ERR, "handle_subscription about to send_reply and return -2\n");

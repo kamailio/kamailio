@@ -123,16 +123,6 @@
 #define METHOD_NOTIFY_L (sizeof(METHOD_NOTIFY) - 1)
 
 
-/*
- * Subscription-State values
- */
-static str subs_states[] = {
-	{ST_ACTIVE,     ST_ACTIVE_L    },
-	{ST_TERMINATED, ST_TERMINATED_L},
-	{ST_PENDING,    ST_PENDING_L   }
-};
-
-
 /* 
  * Subscription-State reason parameter values
  */
@@ -254,12 +244,15 @@ static inline int add_cont_type_hf(str* _h, int _l, doctype_t _d)
 }
 
 
-static inline int add_subs_state_hf(str* _h, int _l, subs_state_t _s, ss_reason_t _r, time_t _e)
+static inline int add_subs_state_hf(str* _h, int _l, watcher_status_t _s, ss_reason_t _r, time_t _e)
 {
 	char* num;
 	int len;
+	str s;
 
-	if (_l < SUBSCRIPTION_STATE_L + subs_states[_s].len + SS_EXPIRES_L + 
+	s = watcher_status_names[_s];
+	
+	if (_l < SUBSCRIPTION_STATE_L + s.len + SS_EXPIRES_L + 
 	    SS_REASON_L + reason[_r].len + CRLF_L) {
 		paerrno = PA_SMALL_BUFFER;
 		LOG(L_ERR, "add_subs_state_hf(): Buffer too small\n");
@@ -267,22 +260,22 @@ static inline int add_subs_state_hf(str* _h, int _l, subs_state_t _s, ss_reason_
 	}
 
 	str_append(_h, SUBSCRIPTION_STATE, SUBSCRIPTION_STATE_L);
-	str_append(_h, subs_states[_s].s, subs_states[_s].len);
+	str_append(_h, s.s, s.len);
 	
 	switch(_s) {
-	case SS_ACTIVE:
+	case WS_ACTIVE:
 		str_append(_h, SS_EXPIRES, SS_EXPIRES_L);
 		num = int2str((unsigned int)_e, &len);
 		str_append(_h, num, len);
 		break;
 
-	case SS_TERMINATED:
+	case WS_TERMINATED:
 		str_append(_h, SS_REASON, SS_REASON_L);
 		str_append(_h, reason[_r].s, reason[_r].len);
 		break;
 
-	case SS_PENDING:
-		break;
+	case WS_PENDING:
+	default: break;
 	}
 
 	str_append(_h, CRLF, CRLF_L);
@@ -310,8 +303,8 @@ static int add_contact_hf(str* _h, int _l, str *_c)
 static inline int create_headers(struct watcher* _w)
 {
 	time_t t;
-	subs_state_t s;
-
+	ss_reason_t reason;
+	
 	headers.len = 0;
 	
 	if (add_event_hf(&headers, BUF_LEN, _w->preferred_mimetype) < 0) {
@@ -333,13 +326,13 @@ static inline int create_headers(struct watcher* _w)
 	if (_w && _w->expires) t = _w->expires - time(0);
 	else t = 0;
 
-	if (t == 0) {
-		s = SS_TERMINATED;
+	if (t <= 0) {
+		reason = SR_TIMEOUT;
 	} else {
-		s = SS_ACTIVE;
+		reason = SR_REJECTED;
 	}
 
-	if (add_subs_state_hf(&headers, BUF_LEN - headers.len, s, SR_TIMEOUT, t) < 0) {
+	if (add_subs_state_hf(&headers, BUF_LEN - headers.len, _w->status, SR_TIMEOUT, t) < 0) {
 		LOG(L_ERR, "create_headers(): Error while adding Subscription-State\n");
 		return -3;
 	}
@@ -554,9 +547,10 @@ static int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
 {
 	watcher_t *watcher = _p->watchers;
+	internal_pa_subscription_t *subscription = _p->first_qsa_subscription;
 
 	LOG(L_INFO, "send_winfo_notify: watcher=%p winfo_watcher=%p\n", watcher, _w);
-	if (start_winfo_doc(&body, BUF_LEN) < 0) {
+	if (start_winfo_doc(&body, BUF_LEN, _w) < 0) {
 		LOG(L_ERR, "send_winfo_notify(): start_winfo_doc failed\n");
 		return -1;
 	}
@@ -573,6 +567,15 @@ static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
 		}
 
 		watcher = watcher->next;
+	}
+	
+	while (subscription) {
+		if (winfo_add_internal_watcher(&body, BUF_LEN - body.len, subscription) < 0) {
+			LOG(L_ERR, "send_winfo_notify(): winfo_add_internal_watcher failed\n");
+			return -3;
+		}
+
+		subscription = subscription->next;
 	}
 
 	if (winfo_end_resource(&body, BUF_LEN - body.len) < 0) {
@@ -674,6 +677,19 @@ int send_location_notify(struct presentity* _p, struct watcher* _w)
 	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
 	return 0;
 }
+		
+int notify_unauthorized_watcher(struct presentity* _p, struct watcher* _w)
+{
+	/* send notifications to unauthorized (pending) watchers */
+	if (create_headers(_w) < 0) {
+		LOG(L_ERR, "notify_unauthorized_watcher(): Error while adding headers\n");
+		return -7;
+	}
+
+	/* tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0); */
+	tmb.t_request_within(&method, &headers, 0, _w->dialog, 0, 0);
+	return 0;
+}
 
 int send_notify(struct presentity* _p, struct watcher* _w)
 {
@@ -691,9 +707,16 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 
 	LOG(L_ERR, "notifying %.*s _p->flags=%x _w->event_package=%d _w->preferred_mimetype=%d _w->status=%d\n", 
 	    _w->uri.len, _w->uri.s, _p->flags, _w->event_package, _w->preferred_mimetype, _w->status);
-	if ((_p->flags & (PFLAG_PRESENCE_CHANGED|PFLAG_WATCHERINFO_CHANGED)) 
-	    && (_w->event_package == EVENT_PRESENCE)
-	    && (_w->status = WS_ACTIVE)) {
+
+	if ((_w->status == WS_PENDING) || 
+			(_w->status == WS_PENDING_TERMINATED) ||
+			(_w->status == WS_REJECTED)) {
+		notify_unauthorized_watcher(_p, _w);
+		if (use_db) db_update_watcher(_p, _w);
+		return 0;
+	}
+	
+	if ((_w->event_package == EVENT_PRESENCE)) {
 		switch(_w->preferred_mimetype) {
 		case DOC_XPIDF:
 			rc = send_xpidf_notify(_p, _w);
@@ -714,17 +737,14 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 			if (rc) LOG(L_ERR, "send_pidf_notify returned %d\n", rc);
 		}
 	}
-	if ((_p->flags & PFLAG_WATCHERINFO_CHANGED) 
-	    && (_w->event_package == EVENT_PRESENCE_WINFO)) {
+	if (_w->event_package == EVENT_PRESENCE_WINFO) {
 		switch(_w->preferred_mimetype) {
 		case DOC_WINFO:
 			if (watcherinfo_notify) {
 				rc = send_winfo_notify(_p, _w);
 				if (rc) LOG(L_ERR, "send_winfo_notify returned %d\n", rc);
-				return rc;
-			} else {
-				return 0;
 			}
+			break;
 		default:
 			/* inapplicable */
 		  ;
@@ -750,7 +770,7 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 		case DOC_LOCATION:
 			rc = send_location_notify(_p, _w);
 			if (rc) LOG(L_ERR, "send_location_notify returned %d\n", rc);
-			return rc;
+			break;
 		default:
 		  rc = -1;
 		  ;
@@ -758,5 +778,6 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 	}
 #endif /* PFLAG_LOCATION_CHANGED */
 
+	if (use_db) db_update_watcher(_p, _w);
 	return rc;
 }

@@ -49,15 +49,16 @@ void deinit_slot(hslot_t* _s)
 {
 	presentity_t* ptr;
 	
-	     /* Remove all elements */
-	while(_s->first) {
+	/* Remove all elements */
+	while ((_s->first) && (_s->n > 0)) {
 		ptr = _s->first;
 		_s->first = _s->first->next;
+		_s->n--;
 		free_presentity(ptr);
 	}
-	
+
 	_s->n = 0;
-        _s->d = 0;
+	_s->d = 0;
 }
 
 

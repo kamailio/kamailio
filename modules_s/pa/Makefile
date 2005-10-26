@@ -10,7 +10,11 @@ auto_gen=
 NAME=pa.so
 LIBS=
 
-DEFS+=-I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2
-LIBS+=-L/usr/include/lib  -L$(LOCALBASE)/lib -lxml2
+# DEFS+=-I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2
+# LIBS+=-L/usr/include/lib  -L$(LOCALBASE)/lib -lxml2
+
+# experimental (vku)
+DEFS += -I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 -Wall -I../../lib -DSER -I../..
+LIBS += -L$(LOCALBASE)/lib -L/usr/pkg/lib -lxml2 -lcurl -L../../lib/presence -L../../lib/cds -lpresence -lcds
 
 include ../../Makefile.modules
