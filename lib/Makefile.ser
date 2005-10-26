@@ -12,6 +12,12 @@ LIBS     += -L$(CURDIR)/cds -L$(CURDIR)/qsa
 
 include ../Makefile.defs
 
+# exports needed by libraries (this exports here allow to run make
+# in libraries independently on make in main ser directory)
+export INSTALL INSTALL-CFG INSTALL-BIN INSTALL-MODULES INSTALL-DOC INSTALL-MAN 
+export INSTALL-TOUCH
+export modules-prefix 
+
 lib-dir     = lib/ser
 INSTALL-LIB = $(INSTALL-BIN)
 LIBDIR      = $(modules-prefix)/$(lib-dir)
