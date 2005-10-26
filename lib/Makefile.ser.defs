@@ -22,9 +22,12 @@ ifeq ($(OUT_TYPE),lib)
 $(OUT_NAME):	$(OBJS)
 		$(CC) -shared $(DEFS) $(CFLAGS) $(INCLUDES) -o $@ $(OBJS) $(LIBS)
 
-install:	$(OUT_NAME)
+install:	$(OUT_NAME) $(LIBDIR)
 			$(INSTALL-TOUCH) $(LIBDIR)/$(OUT_NAME)
 			$(INSTALL-LIB) $(OUT_NAME) $(LIBDIR)
+
+$(LIBDIR):
+		mkdir -p $(LIBDIR)
 endif
 
 # common rules 

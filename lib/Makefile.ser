@@ -38,7 +38,7 @@ SUBDIRS=cds xcap presence
 subdirs:	$(SUBDIRS)
 
 $(SUBDIRS):	
-			@echo "Making $(MAKECMDGOALS) in $@" ; $(MAKE) -f Makefile.ser $(MAKECMDGOALS) -C $@
+			-@echo "Making $(MAKECMDGOALS) in $@" ; $(MAKE) -f Makefile.ser $(MAKECMDGOALS) -C $@
 
 all:	subdirs
 
