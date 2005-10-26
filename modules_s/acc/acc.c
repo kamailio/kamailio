@@ -160,7 +160,7 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 	static struct sip_uri from_uri, to_uri;
 	static str mycode;
 	str *cr;
-	struct cseq_body *cseq, cseq2;
+	struct cseq_body *cseq;
 
 	cnt=tl=al=0;
 
