@@ -140,6 +140,10 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'" T_GETT "' not found\n");
 		return -1;
 	}
+	if (!(tmb->calculate_hooks=(calculate_hooks_f)find_export("calculate_hooks",NO_SCRIPT,0))) {
+		LOG( L_ERR, LOAD_ERROR "' calculate_hooks ' not found\n");
+		return -1;
+	}
 
 	tmb->route_mode = &rmode;
 	return 1;

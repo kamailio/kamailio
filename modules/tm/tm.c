@@ -252,6 +252,7 @@ static cmd_export_t cmds[]={
 	{"free_dlg",           (cmd_function)free_dlg,          NO_SCRIPT,   0, 0},
 	{"print_dlg",          (cmd_function)print_dlg,         NO_SCRIPT,   0, 0},
 	{T_GETT,               (cmd_function)get_t,             NO_SCRIPT,   0,0},
+	{"calculate_hooks",    (cmd_function)w_calculate_hooks, NO_SCRIPT,   0, 0},
 	{0,0,0,0,0}
 };
 

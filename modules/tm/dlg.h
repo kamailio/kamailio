@@ -164,5 +164,6 @@ char* print_routeset(char* buf, dlg_t* _d);
  * added by dcm
  */
 int w_calculate_hooks(dlg_t* _d);
+typedef int (*calculate_hooks_f)(dlg_t* _d);
 
 #endif /* DLG_H */
