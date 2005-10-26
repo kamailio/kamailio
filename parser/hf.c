@@ -42,6 +42,7 @@
 #include "digest/digest.h" /* free_credentials */
 #include "parse_event.h"
 #include "parse_expires.h"
+#include "parse_sipifmatch.h"
 #include "parse_rr.h"
 #include "contact/parse_contact.h"
 #include "parse_disposition.h"
@@ -73,6 +74,10 @@ void clean_hdr_field(struct hdr_field* hf)
 			break;
 
 		case HDR_CALLID_T:
+			break;
+
+		case HDR_SIPIFMATCH_T:
+			free_sipifmatch((str **)(&(hf->parsed)));
 			break;
 
 		case HDR_CONTACT_T:

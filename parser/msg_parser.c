@@ -206,6 +206,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		case HDR_ACCEPTDISPOSITION_T:
 		case HDR_DIVERSION_T:
 		case HDR_RPID_T:
+		case HDR_SIPIFMATCH_T:
 		case HDR_REFER_TO_T:
 		case HDR_OTHER_T:
 			/* just skip over it */
@@ -304,6 +305,10 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 			case HDR_CALLID_T:
 				if (msg->callid==0) msg->callid=hf;
 				msg->parsed_flag|=HDR_CALLID_F;
+				break;
+			case HDR_SIPIFMATCH_T:
+				if (msg->sipifmatch==0) msg->sipifmatch=hf;
+				msg->parsed_flag|=HDR_SIPIFMATCH_F;
 				break;
 			case HDR_TO_T:
 				if (msg->to==0) msg->to=hf;

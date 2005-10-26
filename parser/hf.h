@@ -86,6 +86,7 @@ enum _hdr_types_t {
 	HDR_DIVERSION_T				       /* Diversion header field */,
 	HDR_RPID_T					       /* Remote-Party-ID header field */,
 	HDR_REFER_TO_T				       /* Refer-To header fiels */,
+	HDR_SIPIFMATCH_T                   /* SIP-If-Match header field */,
 	HDR_EOH_T				       /* Some other header field */
 };
 
@@ -135,6 +136,7 @@ typedef unsigned long long hdr_flags_t;
 #define HDR_DIVERSION_F				HDR_F_DEF(DIVERSION)
 #define HDR_RPID_F					HDR_F_DEF(RPID)
 #define HDR_REFER_TO_F				HDR_F_DEF(REFER_TO)
+#define HDR_SIPIFMATCH_F			HDR_F_DEF(SIPIFMATCH)
 #define HDR_OTHER_F					HDR_F_DEF(OTHER)
 
 typedef enum _hdr_types_t hdr_types_t;

@@ -76,6 +76,7 @@ static inline char* skip_ws(char* p, unsigned int size)
 #include "case_allo.h"     /* Allow */
 #include "case_unsu.h"     /* Unsupported */
 #include "case_even.h"     /* Event */
+#include "case_sip.h"      /* Sip-If-Match */
 #include "case_acce.h"     /* Accept, Accept-Language */
 #include "case_orga.h"     /* Organization */
 #include "case_prio.h"     /* Priority */
@@ -109,6 +110,7 @@ static inline char* skip_ws(char* p, unsigned int size)
 	case _allo_: allo_CASE; \
 	case _unsu_: unsu_CASE; \
         case _even_: even_CASE; \
+        case _sip_: sip_CASE; \
         case _acce_: acce_CASE; \
         case _orga_: orga_CASE; \
         case _prio_: prio_CASE; \
