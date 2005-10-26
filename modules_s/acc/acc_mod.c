@@ -2,7 +2,7 @@
  * Accounting module
  *
  * $Id$
- * 
+ *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -29,7 +29,7 @@
  * History:
  * -------
  * 2003-03-06: aligned to change in callback names (jiri)
- * 2003-03-06: fixed improper sql connection, now from 
+ * 2003-03-06: fixed improper sql connection, now from
  * 	           child_init (jiri)
  * 2003-03-11: New module interface (janakj)
  * 2003-03-16: flags export parameter added (janakj)
@@ -99,13 +99,14 @@ int report_cancels = 0;
 /* report e2e ACKs too */
 int report_ack = 1;
 
-/* syslog flags, that need to be set for a transaction to 
+/* syslog flags, that need to be set for a transaction to
  * be reported; 0=any, 1..MAX_FLAG otherwise */
 int log_flag = 0;
 int log_missed_flag = 0;
 /* noisiness level logging facilities are used */
 int log_level=L_NOTICE;
 char *log_fmt=DEFAULT_LOG_FMT;
+
 #ifdef RAD_ACC
 static char *radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
 int radius_flag = 0;
@@ -125,9 +126,10 @@ int diameter_client_port=3000;
 #endif
 
 #ifdef SQL_ACC
+regex_t attrs_re;
 static char *db_url=DEFAULT_DB_URL; /* Database url */
 
-/* sql flags, that need to be set for a transaction to 
+/* sql flags, that need to be set for a transaction to
  * be reported; 0=any, 1..MAX_FLAG otherwise; by default
  * set to the same values as syslog -> reporting for both
  * takes place
@@ -154,6 +156,7 @@ char* acc_to_uri			= "to_uri";
 char* acc_sip_callid_col    = "sip_callid";
 char* acc_user_col          = "username";
 char* acc_time_col          = "time";
+char* attrs                 = "$^";         /* non-sense which never matches; */
 
 /* name of missed calls table, default=="missed_calls" */
 char *db_table_mc="missed_calls";
@@ -195,8 +198,8 @@ static param_export_t params[] = {
 	/* syslog specific */
 	{"log_flag",			INT_PARAM, &log_flag         	},
 	{"log_missed_flag",		INT_PARAM, &log_missed_flag		},
-	{"log_level",			INT_PARAM, &log_level            },
-	{"log_fmt",				STR_PARAM, &log_fmt				},
+	{"log_level",			INT_PARAM, &log_level           },
+	{"log_fmt",				STR_PARAM, &log_fmt             },
 #ifdef RAD_ACC
 	{"radius_config",		STR_PARAM, &radius_config		},
 	{"radius_flag",				INT_PARAM, &radius_flag			},
@@ -214,7 +217,7 @@ static param_export_t params[] = {
 #ifdef SQL_ACC
 	{"db_flag",				INT_PARAM, &db_flag			},
 	{"db_missed_flag",		INT_PARAM, &db_missed_flag		},
-	{"db_table_acc",          STR_PARAM, &db_table_acc         }, 
+	{"db_table_acc",          STR_PARAM, &db_table_acc         },
 	{"db_table_missed_calls", STR_PARAM, &db_table_mc },
 	{"db_url",                STR_PARAM, &db_url               },
 	{"db_localtime", 	  INT_PARAM, &db_localtime},
@@ -227,11 +230,12 @@ static param_export_t params[] = {
 	{"acc_sip_callid_column", STR_PARAM, &acc_sip_callid_col},
 	{"acc_user_column",       STR_PARAM, &acc_user_col      },
 	{"acc_time_column",       STR_PARAM, &acc_time_col      },
-	{"acc_from_uri_column",		STR_PARAM, &acc_from_uri },
-	{"acc_to_uri_column",		STR_PARAM, &acc_to_uri },
-	{"acc_totag_column",		STR_PARAM, &acc_totag_col },
-	{"acc_fromtag_column", 		STR_PARAM, &acc_fromtag_col },
-	{"acc_domain_column", 		STR_PARAM, &acc_domain_col },
+	{"acc_from_uri_column",   STR_PARAM, &acc_from_uri      },
+	{"acc_to_uri_column",     STR_PARAM, &acc_to_uri        },
+	{"acc_totag_column",      STR_PARAM, &acc_totag_col     },
+	{"acc_fromtag_column",    STR_PARAM, &acc_fromtag_col   },
+	{"acc_domain_column",     STR_PARAM, &acc_domain_col    },
+        {"attrs",                 STR_PARAM, &attrs             },
 #endif
 	{0,0,0}
 };
@@ -273,7 +277,7 @@ static int verify_fmt(char *fmt) {
 
 	while(*fmt) {
 		if (!strchr(ALL_LOG_FMT,*fmt)) {
-			LOG(L_ERR, "ERROR: verify_fmt: char in log_fmt invalid: %c\n", 
+			LOG(L_ERR, "ERROR: verify_fmt: char in log_fmt invalid: %c\n",
 				*fmt);
 			return -1;
 		}
@@ -313,6 +317,10 @@ static int mod_init( void )
 				"did you load a database module?\n");
 		return -1;
 	}
+	if (regcomp(&attrs_re, attrs, REG_EXTENDED|REG_ICASE) ){
+		LOG(L_ERR, "ERROR: acc: can't compile attr  RegExp\n");
+		return -1;
+	}
 #endif
 
 #ifdef RAD_ACC
@@ -339,7 +347,7 @@ static int mod_init( void )
 	rc_openlog("ser");
 	/* read config */
 	if ((rh = rc_read_config(radius_config)) == NULL) {
-		LOG(L_ERR, "ERROR: acc: error opening radius config file: %s\n", 
+		LOG(L_ERR, "ERROR: acc: error opening radius config file: %s\n",
 			radius_config );
 		return -1;
 	}
@@ -354,7 +362,6 @@ static int mod_init( void )
 	if (service_type != -1)
 		vals[V_SIP_SESSION].v = service_type;
 #endif
-
 	return 0;
 }
 
@@ -371,7 +378,7 @@ static int child_init(int rank)
 	DBG(M_NAME": Initializing TCP connection\n");
 
 	sockfd = init_mytcp(diameter_client_host, diameter_client_port);
-	if(sockfd==-1) 
+	if(sockfd==-1)
 	{
 		DBG(M_NAME": TCP connection not established\n");
 		return -1;
@@ -406,8 +413,8 @@ static void destroy(void)
 
 static inline void acc_preparse_req(struct sip_msg *rq)
 {
-	/* try to parse from for From-tag for accounted transactions; 
-	 * don't be worried about parsing outcome -- if it failed, 
+	/* try to parse from for From-tag for accounted transactions;
+	 * don't be worried about parsing outcome -- if it failed,
 	 * we will report N/A
 	 */
 	parse_headers(rq, HDR_CALLID_F| HDR_FROM_F| HDR_TO_F, 0 );
@@ -423,6 +430,7 @@ static inline void acc_preparse_req(struct sip_msg *rq)
 static void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 {
 	int tmcb_types;
+	DBG("acc: onreq(%d)\n", type);
 
 	if (is_acc_on(ps->req) || is_mc_on(ps->req)) {
 		/* install addaitional handlers */
@@ -463,7 +471,7 @@ static inline int should_acc_reply(struct cell *t, int code)
 		return 0;
 	}
 
-	/* negative transactions reported otherwise only if explicitly 
+	/* negative transactions reported otherwise only if explicitly
 	 * demanded */
 	if (!failed_transactions && code >=300) return 0;
 	if (!is_acc_on(r))
@@ -480,6 +488,7 @@ static inline int should_acc_reply(struct cell *t, int code)
 static inline void acc_onreply_in(struct cell *t, struct sip_msg *reply,
 	int code, void *param)
 {
+	DBG("acc: onreply_in\n");
 	/* validation */
 	if (t->uas.request==0) {
 		LOG(L_ERR, "ERROR: acc: should_acc_reply: 0 request\n");
@@ -489,7 +498,7 @@ static inline void acc_onreply_in(struct cell *t, struct sip_msg *reply,
 	/* don't parse replies in which we are not interested */
 	/* missed calls enabled ? */
 	if (((is_invite(t) && code>=300 && is_mc_on(t->uas.request))
-					|| should_acc_reply(t,code)) 
+					|| should_acc_reply(t,code))
 				&& (reply && reply!=FAKED_REPLY)) {
 		parse_headers(reply, HDR_TO_F, 0 );
 	}
@@ -499,7 +508,8 @@ static inline void acc_onreply_in(struct cell *t, struct sip_msg *reply,
 static inline void on_missed(struct cell *t, struct sip_msg *reply,
 	int code, void *param )
 {
-	int reset_lmf; 
+	DBG("acc: onmissed\n");
+	int reset_lmf;
 #ifdef SQL_ACC
 	int reset_dmf;
 #endif
@@ -543,7 +553,7 @@ static inline void on_missed(struct cell *t, struct sip_msg *reply,
 #endif
 		/* we report on missed calls when the first
 		 * forwarding attempt fails; we do not wish to
-		 * report on every attempt; so we clear the flags; 
+		 * report on every attempt; so we clear the flags;
 		 * we do it after all reporting is over to be sure
 		 * that all reporting functions got a fair chance
 		 */
@@ -554,7 +564,7 @@ static inline void on_missed(struct cell *t, struct sip_msg *reply,
 #ifdef RAD_ACC
 		if (reset_rmf) resetflag(t->uas.request, radius_missed_flag);
 #endif
-/* DIAMETER */	
+/* DIAMETER */
 #ifdef DIAM_ACC
 		if (reset_dimf) resetflag(t->uas.request, diameter_missed_flag);
 #endif
@@ -566,6 +576,7 @@ static inline void on_missed(struct cell *t, struct sip_msg *reply,
 static inline void acc_onreply( struct cell* t, struct sip_msg *reply,
 	int code, void *param )
 {
+	DBG("acc: onreply\n");
 	/* validation */
 	if (t->uas.request==0) {
 		DBG("DBG: acc: onreply: no uas.request, local t; skipping\n");
@@ -602,7 +613,7 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *reply,
 static inline void acc_onack( struct cell* t , struct sip_msg *ack,
 	int code, void *param )
 {
-	/* only for those guys who insist on seeing ACKs as well */
+	DBG("acc: onack_in\n");	/* only for those guys who insist on seeing ACKs as well */
 	if (!report_ack) return;
 	/* if acc enabled for flagged transaction, check if flag matches */
 	if (is_log_acc_on(t->uas.request)) {
@@ -628,12 +639,13 @@ static inline void acc_onack( struct cell* t , struct sip_msg *ack,
 		acc_diam_ack(t,ack);
 	}
 #endif
-	
+
 }
 
 
 static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps )
 {
+	DBG("acc: tmcb_func(%d)\n", type);
 	if (type&TMCB_RESPONSE_OUT) {
 		acc_onreply( t, ps->rpl, ps->code, ps->param );
 	} else if (type&TMCB_E2EACK_IN) {
@@ -659,7 +671,7 @@ static int w_acc_log_request(struct sip_msg *rq, char *comment, char *foo)
 	phrase.s=comment;
 	phrase.len=strlen(comment);	/* fix_param would be faster! */
 	acc_preparse_req(rq);
-	return acc_log_request(rq, rq->to, &txt, &phrase);
+	return acc_log_request(rq, rq, rq->to, &txt, &phrase);
 }
 
 
@@ -671,13 +683,13 @@ static int w_acc_db_request(struct sip_msg *rq, char *comment, char *table)
 	phrase.s=comment;
 	phrase.len=strlen(comment);	/* fix_param would be faster! */
 	acc_preparse_req(rq);
-	return acc_db_request(rq, rq->to,&phrase,table, SQL_MC_FMT );
+	return acc_db_request(rq, rq, rq->to,&phrase,table, SQL_MC_FMT );
 }
 #endif
 
 
 #ifdef RAD_ACC
-static int w_acc_rad_request(struct sip_msg *rq, char *comment, 
+static int w_acc_rad_request(struct sip_msg *rq, char *comment,
 				char *foo)
 {
 	str phrase;
@@ -685,14 +697,14 @@ static int w_acc_rad_request(struct sip_msg *rq, char *comment,
 	phrase.s=comment;
 	phrase.len=strlen(comment);	/* fix_param would be faster! */
 	acc_preparse_req(rq);
-	return acc_rad_request(rq, rq->to,&phrase);
+	return acc_rad_request(rq, rq, rq->to,&phrase);
 }
 #endif
 
 
 /* DIAMETER */
 #ifdef DIAM_ACC
-static int w_acc_diam_request(struct sip_msg *rq, char *comment, 
+static int w_acc_diam_request(struct sip_msg *rq, char *comment,
 				char *foo)
 {
 	str phrase;
@@ -700,7 +712,7 @@ static int w_acc_diam_request(struct sip_msg *rq, char *comment,
 	phrase.s=comment;
 	phrase.len=strlen(comment);	/* fix_param would be faster! */
 	acc_preparse_req(rq);
-	return acc_diam_request(rq, rq->to,&phrase);
+	return acc_diam_request(rq, rq, rq->to,&phrase);
 }
 #endif
 

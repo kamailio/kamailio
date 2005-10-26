@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -33,6 +33,8 @@
 
 #ifndef _ACC_H
 #define _ACC_H
+
+#define ACC_MAX_ELEMENT (ALL_LOG_FMT_LEN+80)
 
 /* what is printed if value unknown */
 #define NA "n/a"
@@ -107,7 +109,7 @@ extern struct val vals[];
 #endif
 
 
-int acc_log_request( struct sip_msg *rq, struct hdr_field *to,
+int acc_log_request( struct sip_msg *rq, struct sip_msg *rq_rp, struct hdr_field *to,
 		str *txt, str* phrase);
 void acc_log_missed( struct cell* t, struct sip_msg *reply,
 	unsigned int code );
@@ -119,17 +121,19 @@ void acc_log_reply(  struct cell* t , struct sip_msg *reply,
 int acc_db_bind(char* db_url);
 int acc_db_init();
 void acc_db_close();
-int acc_db_request( struct sip_msg *rq, struct hdr_field *to,
+int acc_db_request( struct sip_msg *rq, struct sip_msg *rq_rp, struct hdr_field *to,
 		str* phrase,  char *table, char *fmt);
 void acc_db_missed( struct cell* t, struct sip_msg *reply,
 	unsigned int code );
 void acc_db_ack(  struct cell* t , struct sip_msg *ack );
 void acc_db_reply(  struct cell* t , struct sip_msg *reply,
 	unsigned int code);
+
+regex_t attrs_re;
 #endif
 
 #ifdef RAD_ACC
-int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
+int acc_rad_request( struct sip_msg *rq, struct sip_msg *rq_rp, struct hdr_field *to,
 		str* phrase);
 void acc_rad_missed( struct cell* t, struct sip_msg *reply,
 	unsigned int code );
@@ -139,7 +143,7 @@ void acc_rad_reply(  struct cell* t , struct sip_msg *reply,
 #endif
 
 #ifdef DIAM_ACC
-int acc_diam_request( struct sip_msg *rq, struct hdr_field *to,
+int acc_diam_request( struct sip_msg *rq, struct sip_msg *rq_rp, struct hdr_field *to,
 		str* phrase);
 void acc_diam_missed( struct cell* t, struct sip_msg *reply,
 	unsigned int code );

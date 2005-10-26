@@ -40,11 +40,13 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../ut.h"      /* q_memchr */
+#include "../../usr_avp.h"
 #include "../../mem/mem.h"
 #include "../../parser/hf.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/digest/digest.h"
+#include "../../parser/parse_uri.h"
 #include "../tm/t_funcs.h"
 #include "acc_mod.h"
 #include "acc.h"
@@ -84,7 +86,7 @@ extern char *diameter_client_host;
 extern int diameter_client_port;
 
 /* caution: keep these aligned to DIAM_ACC_FMT !! */
-static int diam_attr[] = { AVP_SIP_FROM_URI, AVP_SIP_TO_URI, AVP_SIP_OURI, 
+static int diam_attr[] = { AVP_SIP_FROM_URI, AVP_SIP_TO_URI, AVP_SIP_OURI,
 	AVP_SIP_CALLID, AVP_SIP_TO_TAG, AVP_SIP_FROM_TAG, AVP_SIP_CSEQ };
 #endif
 
@@ -97,10 +99,10 @@ static db_con_t* db_handle=0;
 #endif
 
 
-static inline struct hdr_field *valid_to( struct cell *t, 
+static inline struct hdr_field *valid_to( struct cell *t,
 				struct sip_msg *reply)
 {
-	if (reply==FAKED_REPLY || !reply || !reply->to) 
+	if (reply==FAKED_REPLY || !reply || !reply->to)
 		return t->uas.request->to;
 	return reply->to;
 }
@@ -114,7 +116,7 @@ static inline str *cred_user(struct sip_msg *rq)
 	if (!h) get_authorized_cred(rq->authorization, &h);
 	if (!h) return 0;
 	cred=(auth_body_t*)(h->parsed);
-	if (!cred || !cred->digest.username.user.len) 
+	if (!cred || !cred->digest.username.user.len)
 			return 0;
 	return &cred->digest.username.user;
 }
@@ -139,12 +141,15 @@ static inline str *cred_realm(struct sip_msg *rq)
 
 /* create an array of str's for accounting using a formatting string;
  * this is the heart of the accounting module -- it prints whatever
- * requested in a way, that can be used for syslog, radius, 
- * sql, whatsoever */
+ * requested in a way, that can be used for syslog, radius,
+ * sql, whatsoever
+ * tm sip_msg_clones does not clone (shmmem-zed) parsed fields, other then Via1,2. Such fields clone now or use from rq_rp
+ */
 static int fmt2strar( char *fmt, /* what would you like to account ? */
 		struct sip_msg *rq, /* accounted message */
-		struct hdr_field *to, 
-		str *phrase, 
+		struct sip_msg *rq_rp, /* accounted message */
+		struct hdr_field *to,
+		str *phrase,
 		int *total_len, /* total length of accounted values */
 		int *attr_len,  /* total length of accounted attribute names */
 		str **val_arr, /* that's the output -- must have MAX_ACC_COLUMNS */
@@ -155,7 +160,7 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 	static struct sip_uri from_uri, to_uri;
 	static str mycode;
 	str *cr;
-	struct cseq_body *cseq;
+	struct cseq_body *cseq, cseq2;
 
 	cnt=tl=al=0;
 
@@ -174,14 +179,14 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 		}
 		switch(*fmt) {
 			case 'n': /* CSeq number */
-				if (rq->cseq && (cseq=get_cseq(rq)) && cseq->number.len) 
+				if (rq_rp->cseq && (cseq=get_cseq(rq_rp)) && cseq->number.len)
 					val_arr[cnt]=&cseq->number;
 				else val_arr[cnt]=&na;
 				ATR(CSEQ);
 				break;
 			case 'c':	/* Callid */
-				val_arr[cnt]=rq->callid && rq->callid->body.len
-						? &rq->callid->body : &na;
+				val_arr[cnt]=rq_rp->callid && rq_rp->callid->body.len
+						? &rq_rp->callid->body : &na;
 				ATR(CALLID);
 				break;
 			case 'i': /* incoming uri */
@@ -198,12 +203,12 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 				ATR(OURI);
 				break;
 			case 'f':
-				val_arr[cnt]=(rq->from && rq->from->body.len) 
-					? &rq->from->body : &na;
+				val_arr[cnt]=(rq_rp->from && rq_rp->from->body.len)
+					? &rq_rp->from->body : &na;
 				ATR(FROM);
 				break;
 			case 'r': /* from-tag */
-				if (rq->from && (from=get_from(rq))
+				if (rq_rp->from && (from=get_from(rq_rp))
 							&& from->tag_value.len) {
 						val_arr[cnt]=&from->tag_value;
 				} else val_arr[cnt]=&na;
@@ -218,7 +223,7 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 				}
 				/* fallback to from-uri if digest unavailable ... */
 			case 'F': /* from-uri */
-				if (rq->from && (from=get_from(rq))
+				if (rq_rp->from && (from=get_from(rq_rp))
 							&& from->uri.len) {
 						val_arr[cnt]=&from->uri;
 				} else val_arr[cnt]=&na;
@@ -226,49 +231,50 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 				break;
 			case '0': /* from user */
 				val_arr[cnt]=&na;
-				if (rq->from && (from=get_from(rq))
+				if (rq_rp->from && (from=get_from(rq_rp))
 						&& from->uri.len) {
 					parse_uri(from->uri.s, from->uri.len, &from_uri);
-					if (from_uri.user.len) 
+					if (from_uri.user.len)
 							val_arr[cnt]=&from_uri.user;
-				} 
+				}
 				ATR(FROMUSER);
 				break;
 			case 'X': /* from user */
 				val_arr[cnt]=&na;
-				if (rq->from && (from=get_from(rq))
+				if (rq_rp->from && (from=get_from(rq_rp))
 						&& from->uri.len) {
 					parse_uri(from->uri.s, from->uri.len, &from_uri);
-					if (from_uri.host.len) 
+					if (from_uri.host.len)
 							val_arr[cnt]=&from_uri.host;
-				} 
+				}
 				ATR(FROMDOMAIN);
 				break;
 			case 't':
 				val_arr[cnt]=(to && to->body.len) ? &to->body : &na;
 				ATR(TO);
 				break;
-			case 'd':	
+			case 'd':
 				val_arr[cnt]=(to && (pto=(struct to_body*)(to->parsed))
-					&& pto->tag_value.len) ? 
+					&& pto->tag_value.len) ?
 					& pto->tag_value : &na;
 				ATR(TOTAG);
 				break;
 			case 'T': /* to-uri */
-				if (rq->to && (pto=get_to(rq))
-							&& pto->uri.len) {
+				if (rq_rp->to && (pto=get_to(rq_rp)) && pto->uri.len) {
 						val_arr[cnt]=&pto->uri;
-				} else val_arr[cnt]=&na;
+				} else
+					 val_arr[cnt]=&na;
+
 				ATR(TOURI);
 				break;
-			case '1': /* to user */ 
+			case '1': /* to user */
 				val_arr[cnt]=&na;
-				if (rq->to && (pto=get_to(rq))
+				if (rq_rp->to && (pto=get_to(rq_rp))
 							&& pto->uri.len) {
 					parse_uri(pto->uri.s, pto->uri.len, &to_uri);
 					if (to_uri.user.len)
 						val_arr[cnt]=&to_uri.user;
-				} 
+				}
 				ATR(TOUSER);
 				break;
 			case 'S':
@@ -315,32 +321,32 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 
 	/* skip leading text and begin with first item's
 	 * separator ", " which will be overwritten by the
-	 * leading text later 
+	 * leading text later
 	 * */
 /********************************************
  *        acc_request
  ********************************************/
-int acc_log_request( struct sip_msg *rq, struct hdr_field *to, 
+int acc_log_request( struct sip_msg *rq, struct sip_msg *rq_rp, struct hdr_field *to,
 				str *txt, str *phrase)
 {
+	static str* val_arr[ACC_MAX_ELEMENT];
+	static str atr_arr[ACC_MAX_ELEMENT];
 	int len;
 	char *log_msg;
 	char *p;
 	int attr_cnt;
 	int attr_len;
-	str* val_arr[ALL_LOG_FMT_LEN];
-	str atr_arr[ALL_LOG_FMT_LEN];
 	int i;
 
 	if (skip_cancel(rq)) return 1;
 
-	attr_cnt=fmt2strar( log_fmt, rq, to, phrase, 
+	attr_cnt=fmt2strar( log_fmt, rq, rq_rp, to, phrase,
 					&len, &attr_len, val_arr, atr_arr);
 	if (!attr_cnt) {
 		LOG(L_ERR, "ERROR: acc_log_request: fmt2strar failed\n");
 		return -1;
 	}
-	len+=attr_len+ACC_LEN+txt->len+A_EOL_LEN 
+	len+=attr_len+ACC_LEN+txt->len+A_EOL_LEN
 		+attr_cnt*(A_SEPARATOR_LEN+A_EQ_LEN)-A_SEPARATOR_LEN;
 	log_msg=pkg_malloc(len);
 	if (!log_msg) {
@@ -350,7 +356,7 @@ int acc_log_request( struct sip_msg *rq, struct hdr_field *to,
 
 	/* skip leading text and begin with first item's
 	 * separator ", " which will be overwritten by the
-	 * leading text later 
+	 * leading text later
 	 * */
 	p=log_msg+(ACC_LEN+txt->len-A_SEPARATOR_LEN);
 	for (i=0; i<attr_cnt; i++) {
@@ -397,7 +403,7 @@ void acc_log_missed( struct cell* t, struct sip_msg *reply,
 		return;
 	}
 
-	acc_log_request(t->uas.request, 
+	acc_log_request(t->uas.request, reply,
 			valid_to(t, reply), &leading_text, &acc_text);
 	pkg_free(acc_text.s);
 }
@@ -414,7 +420,7 @@ void acc_log_reply(  struct cell* t , struct sip_msg *reply,
 	static str lead={ACC_ANSWERED, ACC_ANSWERED_LEN};
 
 	code_str.s=int2str(code, &code_str.len);
-	acc_log_request(t->uas.request, 
+	acc_log_request(t->uas.request, reply,
 			valid_to(t,reply), &lead, &code_str );
 }
 
@@ -433,13 +439,43 @@ void acc_log_ack(  struct cell* t , struct sip_msg *ack )
 
 	if (ack->to) to=ack->to; else to=rq->to;
 	code_str.s=int2str(t->uas.status, &code_str.len);
-	acc_log_request(ack, to, &lead, &code_str );
+	acc_log_request(ack, ack, to, &lead, &code_str );
 }
 
 /**************** SQL Support *************************/
 
 #ifdef SQL_ACC
 
+static void init_keys(db_key_t *keys)
+{
+	int i;
+
+	i=0;
+	keys[i++]=acc_from_uri;
+/*
+	keys[i++]=acc_sip_from_uuid_col;
+*/
+	keys[i++]=acc_to_uri;
+/*
+	keys[i++]=acc_sip_to_uuid_col;
+*/
+	keys[i++]=acc_sip_method_col;
+	keys[i++]=acc_i_uri_col;
+	keys[i++]=acc_o_uri_col;
+	keys[i++]=acc_sip_from_col;
+	keys[i++]=acc_sip_callid_col;
+	keys[i++]=acc_sip_to_col;
+	keys[i++]=acc_sip_status_col;
+	keys[i++]=acc_user_col;
+	keys[i++]=acc_totag_col;
+	keys[i++]=acc_fromtag_col;
+	keys[i++]=acc_domain_col;
+	keys[i++]=acc_time_col;
+	if (i>=ACC_MAX_ELEMENT) {
+		LOG(L_CRIT, "BUG: ALL_LOG_FMT_LEN underdimensioned\n");
+		abort();
+	}
+}
 
 /* binds to the corresponding database module
  * returns 0 on success, -1 on error */
@@ -451,12 +487,12 @@ int acc_db_bind(char* db_url)
 		return -1;
 	}
 
-	     /* Check database capabilities */
+	/* Check database capabilities */
 	if (!DB_CAPABILITY(acc_dbf, DB_CAP_INSERT)) {
-		LOG(L_ERR, "ERROR: acc_db_init: Database module does not implement insert function\n");
+		LOG(L_ERR, "ERROR: acc_db_init: Database module does not implement "
+			"insert function\n");
 		return -1;
 	}
-	
 	return 0;
 }
 
@@ -481,7 +517,6 @@ int acc_db_init()
 }
 
 
-
 /* close a db connection */
 void acc_db_close()
 {
@@ -489,19 +524,68 @@ void acc_db_close()
 }
 
 
+inline static void add_acc_avps( db_val_t *vals, db_key_t *keys, int *i)
+{
+	struct usr_avp *avp;
+	int_str avp_id, avp_val;
+	struct str_int_data *sid;
+	struct str_str_data *ssd;
 
-int acc_db_request( struct sip_msg *rq, struct hdr_field *to, 
+	str x;
+
+	/* now scan all AVPs, find those that match and include such in report */
+	avp_id.re=&attrs_re;
+	for(avp=search_first_avp(AVP_NAME_RE,avp_id,&avp_val);
+				avp;
+				avp=search_next_avp(avp, &avp_val)) {
+
+		/* check if there is still enough VAL memory .. */
+		if (*i>=ACC_MAX_ELEMENT) {
+			LOG(L_ERR, "ERROR: acc: too many attributes; dropping... (%d/%d)\n", *i, ACC_MAX_ELEMENT);
+			break;
+		}
+		if (!(avp->flags & AVP_NAME_STR )) {
+			LOG(L_ERR, "ERROR: acc: AVP not identifiable by name\n");
+			continue;
+		}
+		/* key determination */
+		if ((avp->flags&(AVP_NAME_STR|AVP_VAL_STR))==AVP_NAME_STR) {
+			/* avp type str, int value */
+			sid = (struct str_int_data*)&(avp->data);
+			x=sid->name;
+			keys[*i]=sid->name.s;
+			DBG("DEBUG: add_acc_avps: str/int \n");
+		} else if ((avp->flags&(AVP_NAME_STR|AVP_VAL_STR))== (AVP_NAME_STR|AVP_VAL_STR)) {
+			/* avp type str, str value */
+			ssd = (struct str_str_data*)&(avp->data);
+			keys[*i]=ssd->name.s;
+			DBG("DEBUG: add_acc_avps: str/str\n");
+		} else {
+			LOG(L_ERR, "ERROR: acc: AVP not identifiable by string key\n");
+			continue;
+		}
+		/* value definition */
+		if (avp->flags&AVP_VAL_STR) {
+			VAL_TYPE(vals+*i)=DB_STRING;
+			VAL_NULL(vals+*i)=0;
+			VAL_STRING(vals+*i)=avp_val.s->s;
+		} else {
+			VAL_TYPE(vals+*i)=DB_INT;
+			VAL_NULL(vals+*i)=0;
+			VAL_INT(vals+*i)=avp_val.n;
+		}
+		(*i)++;
+	}
+}
+
+int acc_db_request( struct sip_msg *rq, struct sip_msg *rq_rp, struct hdr_field *to,
 				str *phrase, char *table, char *fmt)
 {
-	db_val_t vals[ALL_LOG_FMT_LEN+1];
-	str* val_arr[ALL_LOG_FMT_LEN+1];
-	str atr_arr[ALL_LOG_FMT_LEN+1];
+	static db_val_t vals[ACC_MAX_ELEMENT+1];
+	static str* val_arr[ACC_MAX_ELEMENT+1];
+	static str atr_arr[ACC_MAX_ELEMENT+1];
 	/* caution: keys need to be aligned to formatting strings */
-	db_key_t keys[] = {acc_from_uri, acc_to_uri,
-		acc_sip_method_col, acc_i_uri_col, 
-		acc_o_uri_col, acc_sip_from_col, acc_sip_callid_col,
-   		acc_sip_to_col, acc_sip_status_col, acc_user_col, 
-		acc_totag_col, acc_fromtag_col, acc_domain_col, acc_time_col };
+	static db_key_t keys[ACC_MAX_ELEMENT+1];
 
 	struct tm *tm;
 	time_t timep;
@@ -514,11 +598,11 @@ int acc_db_request( struct sip_msg *rq, struct hdr_field *to,
 	if (skip_cancel(rq)) return 1;
 
 	/* database columns:
-	 * "sip_method", "i_uri", "o_uri", "sip_from", "sip_callid", 
+	 * "sip_method", "i_uri", "o_uri", "sip_from", "sip_callid",
 	 * "sip_to", "sip_status", "user", "time"
 	 */
-	attr_cnt=fmt2strar( fmt, rq, to, phrase, 
-					&dummy_len, &dummy_len, val_arr, atr_arr);
+	attr_cnt=fmt2strar( fmt, rq, rq_rp, to, phrase,
+					&dummy_len, &dummy_len, &val_arr[0], &atr_arr[0]);
 	if (!attr_cnt) {
 		LOG(L_ERR, "ERROR: acc_db_request: fmt2strar failed\n");
 		return -1;
@@ -533,24 +617,28 @@ int acc_db_request( struct sip_msg *rq, struct hdr_field *to,
 	tm = db_localtime ? localtime(&timep) : gmtime(&timep);
 	strftime(time_s, 20, "%Y-%m-%d %H:%M:%S", tm);
 
+	init_keys(keys);
 
 	for(i=0; i<attr_cnt; i++) {
 		VAL_TYPE(vals+i)=DB_STR;
-		VAL_NULL(vals+i)=0;
+		VAL_NULL(vals+i)= 0;
 		VAL_STR(vals+i)=*val_arr[i];
 	}
 	/* time */
 	VAL_TYPE(vals+i)=DB_STRING;
 	VAL_NULL(vals+i)=0;
 	VAL_STRING(vals+i)=time_s;
+	keys[i++] = acc_time_col;
+
+	add_acc_avps(vals,keys,&i);
 
 	if (acc_dbf.use_table(db_handle, table) < 0) {
 		LOG(L_ERR, "ERROR: acc_request: "
 		           "Error in use_table\n");
 		return -1;
 	}
-	
-	if (acc_dbf.insert(db_handle, keys, vals, i+1) < 0) {
+
+	if (acc_dbf.insert(db_handle, keys, vals, i) < 0) {
 		LOG(L_ERR, "ERROR: acc_request: "
 				"Error while inserting to database\n");
 		return -1;
@@ -570,7 +658,7 @@ void acc_db_missed( struct cell* t, struct sip_msg *reply,
 						"get_reply_status failed\n" );
 		return;
 	}
-	acc_db_request(t->uas.request, valid_to(t,reply), &acc_text,
+	acc_db_request(t->uas.request, reply, valid_to(t,reply), &acc_text,
 				db_table_mc, SQL_MC_FMT );
 	pkg_free(acc_text.s);
 }
@@ -580,7 +668,7 @@ void acc_db_ack(  struct cell* t , struct sip_msg *ack )
 	str code_str;
 
 	code_str.s=int2str(t->uas.status, &code_str.len);
-	acc_db_request(ack, ack->to ? ack->to : t->uas.request->to,
+	acc_db_request(ack, ack, ack->to ? ack->to : t->uas.request->to,
 			&code_str, db_table_acc, SQL_ACC_FMT);
 }
 
@@ -592,7 +680,7 @@ void acc_db_reply(  struct cell* t , struct sip_msg *reply,
 	str code_str;
 
 	code_str.s=int2str(code, &code_str.len);
-	acc_db_request(t->uas.request, valid_to(t,reply), &code_str,
+	acc_db_request(t->uas.request, reply, valid_to(t,reply), &code_str,
 				db_table_acc, SQL_ACC_FMT);
 }
 #endif
@@ -623,19 +711,19 @@ inline UINT4 rad_status(struct sip_msg *rq, str *phrase)
 	if (code==0)
 		return vals[V_STATUS_FAILED].v;
 	if ((rq->REQ_METHOD==METHOD_INVITE || rq->REQ_METHOD==METHOD_ACK)
-				&& code>=200 && code<300) 
+				&& code>=200 && code<300)
 		return vals[V_STATUS_START].v;
-	if ((rq->REQ_METHOD==METHOD_BYE 
-					|| rq->REQ_METHOD==METHOD_CANCEL)) 
+	if ((rq->REQ_METHOD==METHOD_BYE
+					|| rq->REQ_METHOD==METHOD_CANCEL))
 		return vals[V_STATUS_STOP].v;
 	return vals[V_STATUS_FAILED].v;
 }
 
-int acc_rad_request( struct sip_msg *rq, struct hdr_field *to, 
+int acc_rad_request( struct sip_msg *rq, struct sip_msg, *rq_rp, struct hdr_field *to,
 		     str *phrase )
 {
-	str* val_arr[ALL_LOG_FMT_LEN+1];
-	str atr_arr[ALL_LOG_FMT_LEN+1];
+	static str* val_arr[RAD_ACC_FMT_LEN];
+	static str atr_arr[RAD_ACC_FMT_LEN];
 	int attr_cnt;
 	VALUE_PAIR *send;
 	UINT4 av_type;
@@ -656,9 +744,9 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 
 	if (skip_cancel(rq)) return 1;
 
-	attr_cnt=fmt2strar( RAD_ACC_FMT, rq, to, phrase, 
+	attr_cnt=fmt2strar( RAD_ACC_FMT, rq, rq_rp, to, phrase,
 					&dummy_len, &dummy_len, val_arr, atr_arr);
-	if (attr_cnt!=(sizeof(RAD_ACC_FMT)-1)) {
+	if (attr_cnt!=RAD_ACC_FMT_LEN) {
 		LOG(L_ERR, "ERROR: acc_rad_request: fmt2strar failed\n");
 		goto error;
 	}
@@ -699,7 +787,7 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 			memcpy(user_name.s, user->s, user->len);
 			user_name.s[user->len] = '@';
 			memcpy(user_name.s+user->len+1, realm->s, realm->len);
-			if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, 
+			if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v,
 					   user_name.s, user_name.len, 0)) {
 				LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
 				    "failed for %d\n", attrs[A_USER_NAME].v );
@@ -710,7 +798,7 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 		} else {
 			user_name.len = user->len;
 			user_name.s = user->s;
-			if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, 
+			if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v,
 					   user_name.s, user_name.len, 0)) {
 				LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
 				    "failed for %d\n", attrs[A_USER_NAME].v );
@@ -718,7 +806,7 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 			}
 		}
 	} else {  /* from from uri */
-		if (rq->from && (from=get_from(rq)) && from->uri.len) {
+		if (rq_rp->from && (from=get_from(rq_rp)) && from->uri.len) {
 			if (parse_uri(from->uri.s, from->uri.len, &puri) < 0 ) {
 				LOG(L_ERR, "ERROR: acc_rad_request: Bad From URI\n");
 				goto error;
@@ -732,7 +820,7 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 			memcpy(user_name.s, puri.user.s, puri.user.len);
 			user_name.s[puri.user.len] = '@';
 			memcpy(user_name.s+puri.user.len+1, puri.host.s, puri.host.len);
-			if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, 
+			if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v,
 					   user_name.s, user_name.len, 0)) {
 				LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
 				    "failed for %d\n", attrs[A_USER_NAME].v );
@@ -743,7 +831,7 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 		} else {
 			user_name.len = na.len;
 			user_name.s = na.s;
-			if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, 
+			if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v,
 					   user_name.s, user_name.len, 0)) {
 				LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
 				    "failed for %d\n", attrs[A_USER_NAME].v );
@@ -751,16 +839,18 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 			}
 		}
 	}
-        /* Remaining attributes from rad_attr vector */
+
+	/* Remaining attributes from rad_attr vector */
 	for(i=0; i<attr_cnt; i++) {
-		if (!rc_avpair_add(rh, &send, attrs[rad_attr[i]].v, 
+		if (!rc_avpair_add(rh, &send, attrs[rad_attr[i]].v,
 				   val_arr[i]->s,val_arr[i]->len, 0)) {
 			LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
 			    "failed for %s\n", attrs[rad_attr[i]].n );
 			goto error;
 		}
 	}
-		
+	/* add extra also */
+
 	if (rc_acct(rh, SIP_PORT, send)!=OK_RC) {
 		LOG(L_ERR, "ERROR: acc_rad_request: radius-ing failed\n");
 		goto error;
@@ -784,7 +874,7 @@ void acc_rad_missed( struct cell* t, struct sip_msg *reply,
 						"get_reply_status failed\n" );
 		return;
 	}
-	acc_rad_request(t->uas.request, valid_to(t,reply), &acc_text);
+	acc_rad_request(t->uas.request, reply, valid_to(t,reply), &acc_text);
 	pkg_free(acc_text.s);
 }
 
@@ -803,7 +893,7 @@ void acc_rad_reply(  struct cell* t , struct sip_msg *reply,
 	str code_str;
 
 	code_str.s=int2str(code, &code_str.len);
-	acc_rad_request(t->uas.request, valid_to(t,reply), &code_str);
+	acc_rad_request(t->uas.request, reply, valid_to(t,reply), &code_str);
 }
 #endif
 
@@ -835,23 +925,23 @@ inline unsigned long diam_status(struct sip_msg *rq, str *phrase)
 		return -1;
 
 	if ((rq->REQ_METHOD==METHOD_INVITE || rq->REQ_METHOD==METHOD_ACK)
-				&& code>=200 && code<300) 
+				&& code>=200 && code<300)
 		return AAA_ACCT_START;
-	
-	if ((rq->REQ_METHOD==METHOD_BYE 
-					|| rq->REQ_METHOD==METHOD_CANCEL)) 
+
+	if ((rq->REQ_METHOD==METHOD_BYE
+					|| rq->REQ_METHOD==METHOD_CANCEL))
 		return AAA_ACCT_STOP;
-	
-	if (rq->REQ_METHOD==METHOD_OTHER/*MESSAGE */ && code>=200 && code <=300)  
+
+	if (rq->REQ_METHOD==METHOD_OTHER/*MESSAGE */ && code>=200 && code <=300)
 		return AAA_ACCT_EVENT;
-	
+
 	return -1;
 }
 
-int acc_diam_request( struct sip_msg *rq, struct hdr_field *to, str *phrase )
+int acc_diam_request( struct sip_msg *rq, struct sip_msg *rq_rp, struct hdr_field *to, str *phrase )
 {
-	str* val_arr[ALL_LOG_FMT_LEN+1];
-	str atr_arr[ALL_LOG_FMT_LEN+1];
+	static str* val_arr[ACC_MAX_ELEMENT+1];
+	static str atr_arr[ACC_MAX_ELEMENT+1];
 	int attr_cnt;
 	AAAMessage *send = NULL;
 	AAA_AVP *avp;
@@ -872,15 +962,15 @@ int acc_diam_request( struct sip_msg *rq, struct hdr_field *to, str *phrase )
 
 	if (skip_cancel(rq)) return 1;
 
-	attr_cnt=fmt2strar( DIAM_ACC_FMT, rq, to, phrase, 
+	attr_cnt=fmt2strar( DIAM_ACC_FMT, rq, rq_rp, to, phrase,
 					&dummy_len, &dummy_len, val_arr, atr_arr);
-	
-	if (attr_cnt!=(sizeof(DIAM_ACC_FMT)-1)) 
+
+	if (attr_cnt!=DIAM_ACC_FMT_LEN)
 	{
 		LOG(L_ERR, "ERROR: acc_diam_request: fmt2strar failed\n");
 		return -1;
 	}
-	
+
 	if ( (send=AAAInMessage(ACCOUNTING_REQUEST, AAA_APP_NASREQ))==NULL)
 	{
 		LOG(L_ERR, "ERROR: acc_diam_request: new AAA message not created\n");
@@ -896,7 +986,7 @@ int acc_diam_request( struct sip_msg *rq, struct hdr_field *to, str *phrase )
 	}
 	tmp[0] = status+'0';
 	tmp[1] = 0;
-	if( (avp=AAACreateAVP(AVP_Accounting_Record_Type, 0, 0, tmp, 
+	if( (avp=AAACreateAVP(AVP_Accounting_Record_Type, 0, 0, tmp,
 						1, AVP_DUPLICATE_DATA)) == 0)
 	{
 		LOG(L_ERR,"ERROR: acc_diam_request: no more free memory!\n");
@@ -911,7 +1001,7 @@ int acc_diam_request( struct sip_msg *rq, struct hdr_field *to, str *phrase )
 	/* SIP_MSGID AVP */
 	DBG("**ACC***** m_id=%d\n", rq->id);
 	mid = rq->id;
-	if( (avp=AAACreateAVP(AVP_SIP_MSGID, 0, 0, (char*)(&mid), 
+	if( (avp=AAACreateAVP(AVP_SIP_MSGID, 0, 0, (char*)(&mid),
 				sizeof(mid), AVP_DUPLICATE_DATA)) == 0)
 	{
 		LOG(L_ERR, M_NAME":diameter_authorize(): no more free memory!\n");
@@ -925,7 +1015,7 @@ int acc_diam_request( struct sip_msg *rq, struct hdr_field *to, str *phrase )
 	}
 
 	/* SIP Service AVP */
-	if( (avp=AAACreateAVP(AVP_Service_Type, 0, 0, SIP_ACCOUNTING, 
+	if( (avp=AAACreateAVP(AVP_Service_Type, 0, 0, SIP_ACCOUNTING,
 				SERVICE_LEN, AVP_DUPLICATE_DATA)) == 0)
 	{
 		LOG(L_ERR,"ERROR: acc_diam_request: no more free memory!\n");
@@ -939,7 +1029,7 @@ int acc_diam_request( struct sip_msg *rq, struct hdr_field *to, str *phrase )
 	}
 
 	/* SIP_STATUS avp */
-	if( (avp=AAACreateAVP(AVP_SIP_STATUS, 0, 0, phrase->s, 
+	if( (avp=AAACreateAVP(AVP_SIP_STATUS, 0, 0, phrase->s,
 						phrase->len, AVP_DUPLICATE_DATA)) == 0)
 	{
 		LOG(L_ERR,"ERROR: acc_diam_request: no more free memory!\n");
@@ -954,7 +1044,7 @@ int acc_diam_request( struct sip_msg *rq, struct hdr_field *to, str *phrase )
 
 	/* SIP_METHOD avp */
 	value = rq->first_line.u.request.method;
-	if( (avp=AAACreateAVP(AVP_SIP_METHOD, 0, 0, value.s, 
+	if( (avp=AAACreateAVP(AVP_SIP_METHOD, 0, 0, value.s,
 						value.len, AVP_DUPLICATE_DATA)) == 0)
 	{
 		LOG(L_ERR,"ERROR: acc_diam_request: no more free memory!\n");
@@ -970,14 +1060,14 @@ int acc_diam_request( struct sip_msg *rq, struct hdr_field *to, str *phrase )
 	/* Handle AVP_USER_NAME as a special case */
 	free_user_name = 0;
 	user=cred_user(rq);  /* try to take it from credentials */
-	if (user) 
+	if (user)
 	{
 		realm = cred_realm(rq);
-		if (realm) 
+		if (realm)
 		{
 			user_name.len = user->len+1+realm->len;
 			user_name.s = pkg_malloc(user_name.len);
-			if (!user_name.s) 
+			if (!user_name.s)
 			{
 				LOG(L_ERR, "ERROR: acc_diam_request: no memory\n");
 				goto error;
@@ -986,18 +1076,18 @@ int acc_diam_request( struct sip_msg *rq, struct hdr_field *to, str *phrase )
 			user_name.s[user->len] = '@';
 			memcpy(user_name.s+user->len+1, realm->s, realm->len);
 			free_user_name = 1;
-		} 
-		else 
+		}
+		else
 		{
 			user_name.len = user->len;
 			user_name.s = user->s;
 		}
-	} 
-	else 
+	}
+	else
 	{  /* from from uri */
-		if (rq->from && (from=get_from(rq)) && from->uri.len) 
+		if (rq_rp->from && (from=get_from(rq_rp)) && from->uri.len)
 		{
-			if (parse_uri(from->uri.s, from->uri.len, &puri) < 0 ) 
+			if (parse_uri(from->uri.s, from->uri.len, &puri) < 0 )
 			{
 				LOG(L_ERR, "ERROR: acc_diam_request: Bad From URI\n");
 				goto error;
@@ -1012,15 +1102,15 @@ int acc_diam_request( struct sip_msg *rq, struct hdr_field *to, str *phrase )
 			user_name.s[puri.user.len] = '@';
 			memcpy(user_name.s+puri.user.len+1, puri.host.s, puri.host.len);
 			free_user_name = 1;
-		} 
-		else 
+		}
+		else
 		{
 			user_name.len = na.len;
 			user_name.s = na.s;
 		}
 	}
 
-	if( (avp=AAACreateAVP(AVP_User_Name, 0, 0, user_name.s, user_name.len, 
+	if( (avp=AAACreateAVP(AVP_User_Name, 0, 0, user_name.s, user_name.len,
 					free_user_name?AVP_FREE_DATA:AVP_DUPLICATE_DATA)) == 0)
 	{
 		LOG(L_ERR,"ERROR: acc_diam_request: no more free memory!\n");
@@ -1035,11 +1125,11 @@ int acc_diam_request( struct sip_msg *rq, struct hdr_field *to, str *phrase )
 		goto error;
 	}
 
-	
+
     /* Remaining attributes from diam_attr vector */
-	for(i=0; i<attr_cnt; i++) 
+	for(i=0; i<attr_cnt; i++)
 	{
-		if((avp=AAACreateAVP(diam_attr[i], 0,0, val_arr[i]->s, val_arr[i]->len, 
+		if((avp=AAACreateAVP(diam_attr[i], 0,0, val_arr[i]->s, val_arr[i]->len,
 					AVP_DUPLICATE_DATA)) == 0)
 		{
 			LOG(L_ERR,"ERROR: acc_diam_request: no more free memory!\n");
@@ -1052,20 +1142,20 @@ int acc_diam_request( struct sip_msg *rq, struct hdr_field *to, str *phrase )
 			goto error;
 		}
 	}
-		
-	if (get_uri(rq, &uri) < 0) 
+
+	if (get_uri(rq, &uri) < 0)
 	{
 		LOG(L_ERR, "ERROR: acc_diam_request: From/To URI not found\n");
 		goto error;
 	}
-	
-	if (parse_uri(uri->s, uri->len, &puri) < 0) 
+
+	if (parse_uri(uri->s, uri->len, &puri) < 0)
 	{
 		LOG(L_ERR, "ERROR: acc_diam_request: Error parsing From/To URI\n");
 		goto error;
 	}
 
-	
+
 	/* Destination-Realm AVP */
 	if( (avp=AAACreateAVP(AVP_Destination_Realm, 0, 0, puri.host.s,
 						puri.host.len, AVP_DUPLICATE_DATA)) == 0)
@@ -1099,7 +1189,7 @@ int acc_diam_request( struct sip_msg *rq, struct hdr_field *to, str *phrase )
 			goto error;
 		}
 	}
-		
+
 	/* send the message to the DIAMETER client */
 	ret = tcp_send_recv(sockfd, send->buf.s, send->buf.len, rb, rq->id);
 
@@ -1114,7 +1204,7 @@ int acc_diam_request( struct sip_msg *rq, struct hdr_field *to, str *phrase )
 
 	if(ret != ACC_SUCCESS) /* a transmission error occurred */
 	{
-		LOG(L_ERR, M_NAME":acc_diam_request: message sending to the" 
+		LOG(L_ERR, M_NAME":acc_diam_request: message sending to the"
 					" DIAMETER backend authorization server failed\n");
 		goto error;
 	}
@@ -1133,7 +1223,7 @@ void acc_diam_missed( struct cell* t, struct sip_msg *reply, unsigned int code )
 	str acc_text;
 
 	get_reply_status(&acc_text, reply, code);
-	acc_diam_request(t->uas.request, valid_to(t,reply), &acc_text);
+	acc_diam_request(t->uas.request, reply, valid_to(t,reply), &acc_text);
 }
 void acc_diam_ack( struct cell* t, struct sip_msg *ack )
 {
@@ -1149,7 +1239,7 @@ void acc_diam_reply( struct cell* t , struct sip_msg *reply, unsigned int code )
 	str code_str;
 
 	code_str.s=int2str(code, &code_str.len);
-	acc_diam_request(t->uas.request, valid_to(t, reply), &code_str);
+	acc_diam_request(t->uas.request, reply, valid_to(t, reply), &code_str);
 }
 
 #endif
