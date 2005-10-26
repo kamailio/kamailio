@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
@@ -82,7 +82,7 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {
-	"avp", 
+	"avp",
 	cmds,           /* Exported commands */
 	params,         /* Exported parameters */
 	0,              /* module initialization function */
@@ -93,7 +93,7 @@ struct module_exports exports = {
 };
 
 
-static int set_sattr(struct sip_msg* msg, char* attr, char* val) 
+static int set_sattr(struct sip_msg* msg, char* attr, char* val)
 {
 	int_str name, value;
 
@@ -110,7 +110,7 @@ static int set_sattr(struct sip_msg* msg, char* attr, char* val)
 }
 
 
-static int set_iattr(struct sip_msg* msg, char* attr, char* nr) 
+static int set_iattr(struct sip_msg* msg, char* attr, char* nr)
 {
 	int_str name, value;
 
@@ -124,7 +124,7 @@ static int set_iattr(struct sip_msg* msg, char* attr, char* nr)
 
 	LOG(L_DBG, "set_iattr ok\n");
 	return 1;
-}	
+}
 
 
 static int flags2attr(struct sip_msg* msg, char* foo, char* bar)
@@ -155,6 +155,7 @@ static int print_sattr(struct sip_msg* msg, char* attr, char* s2)
 	struct usr_avp *avp_entry;
 
 	name.s = (str*)attr;
+	DBG("print_sattr('%.*s')\n", name.s->len, name.s->s);
 
 	avp_entry = search_first_avp(AVP_NAME_STR, name, &value);
 	if (avp_entry == 0) {
@@ -162,10 +163,17 @@ static int print_sattr(struct sip_msg* msg, char* attr, char* s2)
 		return -1;
 	}
 
-	s_value.s = value.s->s;
-	s_value.len = value.s->len;
-	LOG(L_INFO, "AVP: '%.*s'='%.*s'\n",
-	    ((str*)attr)->len, ZSW(((str*)attr)->s), s_value.len, ZSW(s_value.s));
+	if (avp_entry->flags & AVP_VAL_STR) {
+		s_value.s = value.s->s;
+		s_value.len = value.s->len;
+		LOG(L_INFO, "AVP: '%.*s'='%.*s'\n",
+			((str*)attr)->len, ZSW(((str*)attr)->s), s_value.len, ZSW(s_value.s));
+	}
+	else {
+		LOG(L_INFO, "AVP: '%.*s'=%d\n",
+			((str*)attr)->len, ZSW(((str*)attr)->s), value.n);
+
+	}
 	return 1;
 }
 
@@ -219,21 +227,21 @@ static int attr2uri(struct sip_msg* msg, char* attr, char* foo)
 
 
 /*
- *  returns 1 if msg contains an AVP with the given name and value, 
+ *  returns 1 if msg contains an AVP with the given name and value,
  *  returns -1 otherwise
  */
 static int avp_exists(struct sip_msg* msg, char* key, char* value)
-{	
+{
 	int_str avp_key, avp_value;
 	struct usr_avp *avp_entry;
 	str* val_str, *key_str;
 
-	key_str = (str*)key;	
+	key_str = (str*)key;
 	val_str = (str*)value;
-	
+
 	avp_key.s = (str*)key;
 	avp_entry = search_first_avp(AVP_NAME_STR, avp_key, &avp_value);
-	
+
 	if (avp_entry == 0) {
 		DBG("avp_exists: AVP '%.*s' not found\n", key_str->len, ZSW(key_str->s));
 		return -1;
@@ -243,15 +251,15 @@ static int avp_exists(struct sip_msg* msg, char* key, char* value)
 		if (avp_entry->flags & AVP_VAL_STR) {
 			if ((avp_value.s->len == val_str->len) &&
 			    !memcmp(avp_value.s->s, val_str->s, avp_value.s->len)) {
-				DBG("avp_exists str ('%.*s', '%.*s'): TRUE\n", 
+				DBG("avp_exists str ('%.*s', '%.*s'): TRUE\n",
 				    key_str->len, ZSW(key_str->s),
 				    val_str->len, ZSW(val_str->s));
 				return 1;
 			}
 		} else {
 			if (avp_value.n == str2s(val_str->s, val_str->len, 0)){
-				DBG("avp_exists (%.*s, %.*s): TRUE\n", 
-				    key_str->len, ZSW(key_str->s), 
+				DBG("avp_exists (%.*s, %.*s): TRUE\n",
+				    key_str->len, ZSW(key_str->s),
 				    val_str->len, ZSW(val_str->s));
 				return 1;
 			}
@@ -259,8 +267,8 @@ static int avp_exists(struct sip_msg* msg, char* key, char* value)
 		avp_entry = search_next_avp (avp_entry, &avp_value);
 	}
 
-	DBG("avp_exists ('%.*s', '%.*s'): FALSE\n", 
-	    key_str->len, ZSW(key_str->s), 
+	DBG("avp_exists ('%.*s', '%.*s'): FALSE\n",
+	    key_str->len, ZSW(key_str->s),
 	    val_str->len, ZSW(val_str->s));
 	return -1;
 }
