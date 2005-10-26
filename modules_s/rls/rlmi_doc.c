@@ -1,0 +1,210 @@
+#include "rlmi_doc.h"
+#include "result_codes.h"
+#include <cds/dstring.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "../../mem/mem.h"
+#include "../../mem/shm_mem.h"
+#include "../../str.h"
+	
+static void add_virtual_subscriptions_to_rlmi(dstring_t *doc, rl_subscription_t *s, const char *part_id)
+{
+	int i, j, ncnt;
+	virtual_subscription_t *vs;
+	vs_display_name_t dn;
+	char tmp[32];
+	
+	/* add all list elements */
+	vs = s->first_vs;
+	i = 0;
+	while (vs) {
+		dstr_append_zt(doc, "\t<resource uri=\"");
+		dstr_append_str(doc, &vs->uri);
+		dstr_append_zt(doc, "\">\n");
+
+		/* add display names */
+		ncnt = vector_size(&vs->display_names);
+		for (j = 0; j < ncnt; j++) {
+			if (vector_get(&vs->display_names, j, &dn) != 0) continue;
+
+			if (dn.lang.len > 0) {
+				dstr_append_zt(doc, "\t\t<name language=\"");
+				dstr_append_str(doc, &dn.lang);
+				dstr_append_zt(doc, "\">");
+			}
+			else dstr_append_zt(doc, "\t\t<name>");
+			dstr_append_str(doc, &dn.name);
+			dstr_append_zt(doc, "</name>\n");
+		}
+	
+		sprintf(tmp, "vs%di%d", i, 1);
+		dstr_append_zt(doc, "\t\t<instance id=\"");
+		dstr_append_zt(doc, tmp);
+		dstr_append_zt(doc, "\" state=\"");
+		switch (vs->status) {
+			case subscription_active: 
+					dstr_append_zt(doc, "active\"");
+					break;
+			case subscription_pending: 
+					dstr_append_zt(doc, "pending\"");
+					break;
+			case subscription_terminated_pending: 
+			case subscription_terminated: 
+					dstr_append_zt(doc, "terminated\" reason=\"closed\"");
+					break;
+			case subscription_terminated_pending_to: 
+			case subscription_terminated_to: 
+					dstr_append_zt(doc, 
+						"terminated\" reason=\"timeout\"");
+					break;
+			case subscription_uninitialized: 
+					dstr_append_zt(doc, "pending\"");
+					/* this is an error ! */
+					LOG(L_ERR, "generating RLMI for an unitialized virtual subscription!\n");
+					break;
+		}
+	
+		if (vs->state_document.len > 0) {
+			sprintf(tmp, "%d", i);
+			dstr_append_zt(doc, " cid=\"");
+			dstr_append_zt(doc, part_id);
+			dstr_append_zt(doc, tmp);
+			dstr_append_zt(doc, "\"/>\n");
+		}
+		else dstr_append_zt(doc, "/>\n");
+		
+		dstr_append_zt(doc, "\t</resource>\n");
+		vs = vs->next;
+		i++;
+	}
+}
+
+static void add_virtual_subscriptions_documents(dstring_t *doc, 
+		rl_subscription_t *s, const char *boundary_str, const char *part_id)
+{
+	int i;
+	virtual_subscription_t *vs;
+	char tmp[32];
+
+	/* add all list elements */
+	vs = s->first_vs;
+	i = 0;
+	while (vs) {
+		if (vs->state_document.len < 1) {
+			i++;
+			vs = vs->next;
+			continue;
+		}
+		if (vs->content_type.len < 1) {
+			LOG(L_ERR, "can't send resource status document for unknown type\n");
+			vs = vs->next;
+			i++;
+			continue;
+		}
+
+		dstr_append(doc, "--", 2);
+		dstr_append_zt(doc, boundary_str);
+		dstr_append(doc, "\r\n", 2);
+		sprintf(tmp, "%d", i);
+		dstr_append_zt(doc, "Content-Transfer-Encoding: binary\r\nContent-ID: ");
+		dstr_append_zt(doc, part_id);
+		dstr_append_zt(doc, tmp);
+		dstr_append_zt(doc, "\r\nContent-Type: ");
+		dstr_append_str(doc, &vs->content_type);
+		dstr_append_zt(doc, "\r\n\r\n");
+
+		dstr_append_str(doc, &vs->state_document);
+		dstr_append(doc, "\r\n", 2);
+		vs = vs->next;
+		i++;
+	}
+	
+	
+}
+
+int create_rlmi_document(str *dst, str *content_type_dst, rl_subscription_t *s, int full_info)
+{
+	dstring_t doc, cont;
+	char tmp[32];
+	char start_str[64];
+	char boundary_str[64];
+	char part_id[64];
+
+	if ((!s) || (!dst) || (!content_type_dst)) return RES_INTERNAL_ERR;
+
+	sprintf(start_str, "qwW%dpPdxX%d", rand(), rand());
+	sprintf(boundary_str, "RewXdpxR%dxA%d", rand(), rand());
+	sprintf(part_id, "id%di%dx", rand(), rand());
+	
+	/* --- build NOTIFY body --- */
+	dstr_init(&doc, 256);
+
+	dstr_append(&doc, "--", 2);
+	dstr_append_zt(&doc, boundary_str);
+	dstr_append(&doc, "\r\n", 2);
+	dstr_append_zt(&doc, 
+			"Content-Transfer-Encoding: binary\r\n"
+			"Content-ID: ");
+	dstr_append_zt(&doc, start_str);
+	dstr_append_zt(&doc, 
+			"\r\n"
+			"Content-Type: application/rlmi+xml;charset=\"UTF-8\"\r\n");
+	dstr_append(&doc, "\r\n", 2);
+	
+	/* -- RLMI document -- */
+	dstr_append_zt(&doc, 
+		"<?xml version=\"1.0\"?>\n"
+		"<list xmlns=\"urn:ietf:params:xml:ns:rlmi\" "
+		"uri=\"");
+	dstr_append_str(&doc, rls_get_uri(s));
+	dstr_append_zt(&doc, "\" version=\"");
+	sprintf(tmp, "%d", s->doc_version); 
+	dstr_append_zt(&doc, tmp);
+	if (full_info) dstr_append_zt(&doc, "\" fullState=\"true\">\n");
+	else dstr_append_zt(&doc, "\" fullState=\"false\">\n");
+
+	/* add all virtual subscriptions to the RLMI document */
+	add_virtual_subscriptions_to_rlmi(&doc, s, part_id);
+
+	dstr_append_zt(&doc, "</list>\n\r\n");
+	
+	/* add all virtual subscriptions status documents */
+	add_virtual_subscriptions_documents(&doc, s, boundary_str, part_id);
+	
+	dstr_append(&doc, "--", 2);
+	dstr_append_zt(&doc, boundary_str);
+	dstr_append(&doc, "--\r\n", 4);
+	dstr_append(&doc, "\r\n", 2);
+	
+	/* --- build content type --- */
+	dstr_init(&cont, 256);
+	dstr_append_zt(&cont, 
+			"Content-Type: multipart/related;type=\"application/rlmi+xml\";"
+			"start=\"");
+	dstr_append_zt(&cont, start_str);
+	dstr_append_zt(&cont, "\";boundary=\"");
+	dstr_append_zt(&cont, boundary_str);
+	dstr_append_zt(&cont, "\";\r\n");
+	
+	/* --- store output strings --- */
+	
+	dst->len = dstr_get_data_length(&doc);
+	dst->s = pkg_malloc(dst->len);
+	if (!dst->s) dst->len = 0;
+	else dstr_get_data(&doc, dst->s);
+	dstr_destroy(&doc);
+	
+	content_type_dst->len = dstr_get_data_length(&cont);
+	content_type_dst->s = pkg_malloc(content_type_dst->len);
+	if (!content_type_dst->s) content_type_dst->len = 0;
+	else dstr_get_data(&cont, content_type_dst->s);
+	dstr_destroy(&cont);
+	
+	/* increment version for next NOTIFY document */
+	s->doc_version++;
+
+	return RES_OK;
+}
+
