@@ -3,7 +3,9 @@
  *
  * Postgres module interface
  *
- * Copyright (C) 2001-2003 FhG Fokus
+ * Portions Copyright (C) 2001-2003 FhG FOKUS
+ * Copyright (C) 2003 August.Net Services, LLC
+ * Portions Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -26,58 +28,52 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-/*
- * History:
- * --------
- *  2003-03-11  updated to the new module exports interface (andrei)
- *  2003-03-16  flags export parameter added (janakj)
- */
 
 #include <stdio.h>
 #include "../../sr_module.h"
-#include "../../db/db_con.h"
 #include "dbase.h"
 
 MODULE_VERSION
 
-static int mod_init(void);
+int connect_timeout = 0; /* Default is unlimited */
+int reconnect_attempts = 2; /* How many times should the module try to reconnect if
+			     * the connection is lost. 0 disables reconnecting */
+
+/*
+ * Postgres database module interface
+ */
+static cmd_export_t cmds[]={
+	{"db_use_table",   (cmd_function)use_table,      2, 0, 0},
+	{"db_init",        (cmd_function)db_init,        1, 0, 0},
+	{"db_close",       (cmd_function)db_close,       2, 0, 0},
+	{"db_query",       (cmd_function)db_query,       2, 0, 0},
+	{"db_raw_query",   (cmd_function)db_raw_query,   2, 0, 0},
+	{"db_free_result", (cmd_function)db_free_result, 2, 0, 0},
+	{"db_insert",      (cmd_function)db_insert,      2, 0, 0},
+	{"db_delete",      (cmd_function)db_delete,      2, 0, 0},
+	{"db_update",      (cmd_function)db_update,      2, 0, 0},
+	{0, 0, 0, 0, 0}
+};
 
 
 /*
- * MySQL database module interface
+ * Exported parameters
  */
-
-
-static cmd_export_t cmds[]={
-	{"db_use_table",   (cmd_function)use_table,     2, 0, 0},
-	{"db_init",        (cmd_function)db_init,       1, 0, 0},
-	{"db_close",       (cmd_function)db_close,      2, 0, 0},
-	{"db_query",       (cmd_function)db_query,      2, 0, 0},
-	{"db_raw_query",   (cmd_function)db_raw_query,  2, 0, 0},
-	{"db_free_result", (cmd_function)db_free_query, 2, 0, 0},
-	{"db_insert",      (cmd_function)db_insert,     2, 0, 0},
-	{"db_delete",      (cmd_function)db_delete,     2, 0, 0},
-	{"db_update",      (cmd_function)db_update,     2, 0, 0},
-	{0,0,0,0,0}
+static param_export_t params[] = {
+	{"connect_timeout",    INT_PARAM, &connect_timeout   },
+	{"reconnect_attempts", INT_PARAM, &reconnect_attempts},
+	{0, 0, 0}
 };
-
 
 
 struct module_exports exports = {	
 	"postgres",
 	cmds,
-	0,   /*  module parameters */
-
-	mod_init, /* module initialization function */
-	0,        /* response function*/
-	0,        /* destroy function */
-	0,        /* oncancel function */
-	0         /* per-child init function */
+	params,    /*  module parameters */
+        0,         /* module initialization function */
+	0,         /* response function*/
+	0,         /* destroy function */
+	0,         /* oncancel function */
+	0          /* per-child init function */
 };
 
-
-static int mod_init(void)
-{
-	fprintf(stderr, "postgres - initializing\n");
-	return 0;
-}
