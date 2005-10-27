@@ -18,13 +18,12 @@
 
 
 # Check for missing binaries (stale symlinks should not happen)
-SER_BIN=/usr/sbin/openser
-test -x $SER_BIN || exit 5
+OSER_BIN=/usr/sbin/openser
+test -x $OSER_BIN || exit 5
 
 # Check for existence of needed config file and read it
-SER_CONFIG=/etc/openser/openser.cfg
-test -r $SER_CONFIG || exit 6
-#. $FOO_CONFIG
+OSER_CONFIG=/etc/openser/openser.cfg
+test -r $OSER_CONFIG || exit 6
 
 # Shell functions sourced from /etc/rc.status:
 #      rc_check         check and set local and overall rc status
@@ -65,7 +64,7 @@ case "$1" in
 	echo -n "Starting Open SIP Express Router "
 	## Start daemon with startproc(8). If this fails
 	## the return value is set appropriately by startproc.
-	startproc $SER_BIN -f $SER_CONFIG
+	startproc $OSER_BIN -f $OSER_CONFIG
 
 	# Remember status and be verbose
 	rc_status -v
@@ -75,7 +74,7 @@ case "$1" in
 	## Stop daemon with killproc(8) and if this fails
 	## killproc sets the return value according to LSB.
 
-	killproc -TERM $SER_BIN
+	killproc -TERM $OSER_BIN
 
 	# Remember status and be verbose
 	rc_status -v
@@ -121,7 +120,7 @@ case "$1" in
 	# 5--199 reserved (5--99 LSB, 100--149 distro, 150--199 appl.)
 	
 	# NOTE: checkproc returns LSB compliant status values.
-	checkproc $SER_BIN
+	checkproc $OSER_BIN
 	# NOTE: rc_status knows that we called this init script with
 	# "status" option and adapts its messages accordingly.
 	rc_status -v

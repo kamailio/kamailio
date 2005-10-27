@@ -12,13 +12,13 @@
 # Source function library.
 . /etc/rc.d/init.d/functions
 
-ser=/usr/sbin/openser
+oser=/usr/sbin/openser
 prog=openser
 RETVAL=0
 
 start() {
         echo -n $"Starting $prog: "
-        daemon $ser $OPTIONS
+        daemon $oser $OPTIONS
         RETVAL=$?
         echo
         [ $RETVAL = 0 ] && touch /var/lock/subsys/openser
@@ -27,7 +27,7 @@ start() {
 
 stop() {
 	echo -n $"Stopping $prog: "
-	killproc $ser
+	killproc $oser
 	RETVAL=$?
 	echo
 	[ $RETVAL = 0 ] && rm -f /var/lock/subsys/openser /var/run/openser.pid
@@ -35,7 +35,7 @@ stop() {
 
 reload() {
 	echo -n $"Reloading $prog: "
-	killproc $ser -HUP
+	killproc $oser -HUP
 	RETVAL=$?
 	echo
 }
@@ -49,7 +49,7 @@ case "$1" in
 	stop
 	;;
   status)
-        status $ser
+        status $oser
 	RETVAL=$?
 	;;
   restart)

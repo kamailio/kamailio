@@ -168,6 +168,7 @@ sbin/insserv etc/init.d/
 %doc %{_docdir}/openser/README.diversion
 %doc %{_docdir}/openser/README.domain
 %doc %{_docdir}/openser/README.enum
+%doc %{_docdir}/openser/README.flatstore
 %doc %{_docdir}/openser/README.exec
 %doc %{_docdir}/openser/README.gflags
 %doc %{_docdir}/openser/README.group
@@ -185,6 +186,8 @@ sbin/insserv etc/init.d/
 %doc %{_docdir}/openser/README.speeddial
 %doc %{_docdir}/openser/README.textops
 %doc %{_docdir}/openser/README.tm
+%doc %{_docdir}/openser/README.uac
+%doc %{_docdir}/openser/README.uac_redirect
 %doc %{_docdir}/openser/README.uri
 %doc %{_docdir}/openser/README.uri_db
 %doc %{_docdir}/openser/README.usrloc
@@ -225,6 +228,8 @@ sbin/insserv etc/init.d/
 %{_libdir}/openser/modules/speeddial.so
 %{_libdir}/openser/modules/textops.so
 %{_libdir}/openser/modules/tm.so
+%{_libdir}/openser/modules/uac.so
+%{_libdir}/openser/modules/uac_redirect.so
 %{_libdir}/openser/modules/uri.so
 %{_libdir}/openser/modules/uri_db.so
 %{_libdir}/openser/modules/usrloc.so
@@ -267,6 +272,11 @@ sbin/insserv etc/init.d/
 
 
 %changelog
+
+* Thu Oct 27 2005 Daniel-Constantin Mierla <daniel@voice-system.ro>
+- version set to 1.0.0
+- added readme for flatstore
+- added uac and uac_redirect modules
 
 * Wed Jun 08 2005 Daniel-Constantin Mierla <daniel@voice-system.ro>
 - First version of the spec file.
