@@ -1,96 +1,83 @@
-/*
- * $Id$
+/*-------------------------------------------------------------------------
  *
- * POSTGRES module, portions of this code were templated using
- * the mysql module, thus it's similarity.
+ * pg_type.h
+ *	  definition of the system "type" relation (pg_type)
+ *	  along with the relation's initial contents.
  *
  *
- * Copyright (C) 2003 August.Net Services, LLC
+ * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * This file is part of ser, a free SIP server.
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.158 2004/12/31 22:03:26 pgsql Exp $
  *
- * ser is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version
+ * NOTES
+ *	  the genbki.sh script reads this file and generates .bki
+ *	  information from the DATA() statements.
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * ---
- *
- * History
- * -------
- * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
- *
+ *-------------------------------------------------------------------------
  */
-#define BOOLOID			16
-#define BYTEAOID		17
-#define CHAROID			18
-#define NAMEOID			19
-#define INT8OID			20
-#define INT2OID			21
-#define INT2VECTOROID	22
-#define INT4OID			23
-#define REGPROCOID		24
-#define TEXTOID			25
-#define OIDOID			26
-#define TIDOID		27
-#define XIDOID 28
-#define CIDOID 29
-#define OIDVECTOROID	30
-#define POINTOID		600
-#define LSEGOID			601
-#define PATHOID			602
-#define BOXOID			603
-#define POLYGONOID		604
-#define LINEOID			628
-#define FLOAT4OID 700
-#define FLOAT8OID 701
-#define ABSTIMEOID		702
-#define RELTIMEOID		703
-#define TINTERVALOID	704
-#define UNKNOWNOID		705
-#define CIRCLEOID		718
-#define CASHOID 790
-#define MACADDROID 829
-#define INETOID 869
-#define CIDROID 650
-#define ACLITEMOID		1033
-#define BPCHAROID		1042
-#define VARCHAROID		1043
-#define DATEOID			1082
-#define TIMEOID			1083
-#define TIMESTAMPOID	1114
-#define TIMESTAMPTZOID	1184
-#define INTERVALOID		1186
-#define TIMETZOID		1266
-#define BITOID	 1560
-#define VARBITOID	  1562
-#define NUMERICOID		1700
-#define REFCURSOROID	1790
-#define REGPROCEDUREOID 2202
-#define REGOPEROID		2203
-#define REGOPERATOROID	2204
-#define REGCLASSOID		2205
-#define REGTYPEOID		2206
-#define RECORDOID		2249
-#define CSTRINGOID		2275
-#define ANYOID			2276
-#define ANYARRAYOID		2277
-#define VOIDOID			2278
-#define TRIGGEROID		2279
-#define LANGUAGE_HANDLEROID		2280
-#define INTERNALOID		2281
-#define OPAQUEOID		2282
+#ifndef _PG_TYPE_H
+#define _PG_TYPE_H
+
+/* OIDS 1 - 99 */
+
+#define BOOLOID	         16  /* boolean, 'true'/'false' */
+#define BYTEAOID         17  /* variable-length string, binary values escaped" */
+#define CHAROID	         18  /* single character */
+#define NAMEOID	         19  /* 63-character type for storing system identifiers */
+#define INT8OID	         20  /* ~18 digit integer, 8-byte storage */
+#define INT2OID	         21  /* -32 thousand to 32 thousand, 2-byte storage */
+#define INT2VECTOROID    22  /* array of INDEX_MAX_KEYS int2 integers, used in system tables */
+#define INT4OID	         23  /* -2 billion to 2 billion integer, 4-byte storage */
+#define REGPROCOID       24  /* registered procedure */
+#define TEXTOID	         25  /* variable-length string, no limit specified */
+#define OIDOID	         26  /* object identifier(oid), maximum 4 billion */
+#define TIDOID	         27  /* (Block, offset), physical location of tuple */
+#define XIDOID           28  /* transaction id */
+#define CIDOID           29  /* command identifier type, sequence in transaction id */
+#define OIDVECTOROID     30  /* array of INDEX_MAX_KEYS oids, used in system tables */
+
+/* OIDS 700 - 799 */
+
+#define FLOAT4OID       700  /* single-precision floating point number, 4-byte storage */
+#define FLOAT8OID       701  /* double-precision floating point number, 8-byte storage */
+#define ABSTIMEOID      702  /* absolute, limited-range date and time (Unix system time) */
+#define RELTIMEOID      703  /* relative, limited-range time interval (Unix delta time) */
+#define TINTERVALOID    704  /* (abstime,abstime), time interval */
+#define UNKNOWNOID      705
+#define CIRCLEOID       718  /* geometric circle '(center,radius)' */
+#define CASHOID         790  /* monetary amounts, $d,ddd.cc */
+
+/* OIDS 800 - 899 */
+
+#define MACADDROID      829  /* XX:XX:XX:XX:XX:XX, MAC address */
+#define INETOID         869  /* IP address/netmask, host address, netmask optional */
+#define CIDROID         650  /* network IP address/netmask, network address */
+
+/* OIDS 1000 - 1099 */
+
+#define BPCHAROID      1042  /* char(length), blank-padded string, fixed storage length */
+#define VARCHAROID     1043  /* varchar(length), non-blank-padded string, variable storage length */
+#define DATEOID	       1082  /* ANSI SQL date */
+#define TIMEOID	       1083  /* hh:mm:ss, ANSI SQL time */
+
+/* OIDS 1100 - 1199 */
+
+#define TIMESTAMPOID   1114  /* date and time */
+#define TIMESTAMPTZOID 1184  /* date and time with time zone */
+#define INTERVALOID    1186  /* @ <number> <units>, time interval */
+
+/* OIDS 1200 - 1299 */
+
+#define TIMETZOID      1266  /* hh:mm:ss, ANSI SQL time */
+
+/* OIDS 1500 - 1599 */
+
+#define BITOID	       1560  /* fixed-length bit string */
+#define VARBITOID      1562  /* variable-length bit string */
+
+/* OIDS 1700 - 1799 */
+
+#define NUMERICOID     1700  /* numeric(precision, decimal), arbitrary precision number */
+
+#endif /* _PG_TYPE_H */

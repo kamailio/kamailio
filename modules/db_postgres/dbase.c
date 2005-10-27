@@ -1,11 +1,11 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * POSTGRES module, portions of this code were templated using
- * the mysql module, thus it's similarity.
+ * MySQL module core functions
  *
- *
+ * Portions Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2003 August.Net Services, LLC
+ * Portions Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -27,795 +27,1009 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * ---
- *
- * History
- * -------
- * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
- *
  */
 
-#define MAXCOLUMNS	512
-
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
-#include "../../dprint.h"
+#include <time.h>
+#include <libpq-fe.h>
+#include <netinet/in.h>
 #include "../../mem/mem.h"
-#include "db_utils.h"
-#include "defs.h"
+#include "../../dprint.h"
+#include "../../db/db_pool.h"
+#include "../../ut.h"
+#include "pg_con.h"
+#include "pg_type.h"
+#include "db_mod.h"
+#include "res.h"
 #include "dbase.h"
-#include "con_postgres.h"
-#include "aug_std.h"
 
-long getpid();
 
-static char sql_buf[SQL_BUF_LEN];
+#define SELECTALL "select * "
+#define SELECT    "select "
+#define FROM      "from "
+#define ORDER     "order by "
+#define WHERE     "where "
+#define AND       " and "
+#define INSERT    "insert into "
+#define VALUES    ") values ("
+#define DELETE    "delete from "
+#define UPDATE    "update "
+#define SET       "set "
 
-static int submit_query(db_con_t* _h, const char* _s);
-static int connect_db(db_con_t* _h, const char* _db_url);
-static int disconnect_db(db_con_t* _h);
-static int free_query(db_con_t* _h);
 
-/*
-** connect_db	Connect to a database
-**
-**	Arguments :
-**		db_con_t *	as previously supplied by db_init()
-**		char *_db_url	the database to connect to
-**
-**	Returns :
-**		0 upon success
-**		negative number upon failure
-**
-**	Notes :
-**		If currently connected, a disconnect is done first
-**		if this process did the connection, otherwise the
-**		disconnect is not done before the new connect.
-**		This is important, as the process that owns the connection
-**		should clean up after itself.
-*/
+struct pg_params {
+	int n;
+	int cur;
+	const char** data;
+	int* len;
+	int* formats;
+};
 
-static int connect_db(db_con_t* _h, const char* _db_url)
+
+static void free_pg_params(struct pg_params* ptr)
 {
-	char* user, *password, *host, *port, *database;
+	if (!ptr) return;
+	if (ptr->data) pkg_free(ptr->data);
+	if (ptr->len) pkg_free(ptr->len);
+	if (ptr->formats) pkg_free(ptr->formats);
+	pkg_free(ptr);
+}
 
-	if(! _h)
-	{
-		PLOG("connect_db", "must pass db_con_t!");
-		return(-1);
-	}
 
-	if(CON_CONNECTED(_h))
-	{
-		DLOG("connect_db", "disconnect first!");
-		disconnect_db(_h);
-	}
+static struct pg_params* new_pg_params(int n)
+{
+	struct pg_params* ptr;
+	
+	ptr = (struct pg_params*)pkg_malloc(sizeof(struct pg_params));
+	if (!ptr) goto error;
 
-	/*
-	** CON_CONNECTED(_h) is now 0, set by disconnect_db()
-	*/
+	ptr->formats = (int*)pkg_malloc(sizeof(int) * n);
+	if (!ptr->formats) goto error;
 
-	/*
-	** Note :
-	** Make a scratch pad copy of given SQL URL.
-	** all memory allocated to this connection is rooted
-	** from this.
-	** This is an important concept.
-	** as long as you always allocate memory using the function:
-	** mem = aug_alloc(size, CON_SQLURL(_h)) or
-	** str = aug_strdup(string, CON_SQLURL(_h))
-	** where size is the amount of memory, then in the future
-	** when CON_SQLURL(_h) is freed (in the function disconnect_db())
-	** all other memory allocated in this manner is freed.
-	** this will keep memory leaks from happening.
-	*/
-	CON_SQLURL(_h) = aug_strdup((char *) _db_url, (char *) _h);
+	ptr->data = (const char**)pkg_malloc(sizeof(const char*) * n);
+	if (!ptr->data) goto error;
 
-	/*
-	** get the connection parameters parsed from the db_url string
-	** it looks like: postgres://username:userpass@dbhost:dbport/dbname
-	** username/userpass : name and password for the database
-	** dbhost :            the host name or ip address hosting the database
-	** dbport :            the port to connect to database on
-	** dbname :            the name of the database
-	*/
-	if(parse_sql_url(CON_SQLURL(_h),
-		&user,&password,&host,&port,&database) < 0)
-	{
-		char buf[256];
-		sprintf(buf, "Error while parsing %s", _db_url);
-		PLOG("connect_db", buf);
+	ptr->len = (int*)pkg_malloc(sizeof(int) * n);
+	if (!ptr->len) goto error;
+	
+	memset((char*)ptr->data, 0, sizeof(const char*) * n);
+	memset(ptr->len, 0, sizeof(int) * n);
+	ptr->n = n;
+	ptr->cur = 0;
+	return ptr;
 
-		aug_free(CON_SQLURL(_h));
-		return -3;
-	}
-
-	/*
-	** finally, actually connect to the database
-	*/
-	CON_CONNECTION(_h) =
-		PQsetdbLogin(host,port,NULL,NULL,database,user, password);
-
-	if(CON_CONNECTION(_h) == 0
-	    || PQstatus(CON_CONNECTION(_h)) != CONNECTION_OK)
-	{
-		PLOG("connect_db", PQerrorMessage(CON_CONNECTION(_h)));
-		PQfinish(CON_CONNECTION(_h));
-		aug_free(CON_SQLURL(_h));
-		return -4;
-	}
-
-	CON_PID(_h) = getpid();
-
-	/*
-	** all is well, database was connected, we can now submit_query's
-	*/
-	CON_CONNECTED(_h) = 1;
+ error:
+	LOG(L_ERR, "postgres:new_pg_params: No memory left\n");
+	free_pg_params(ptr);
 	return 0;
 }
 
 
-/*
-** disconnect_db	Disconnect a database
-**
-**	Arguments :
-**		db_con_t *	as previously supplied by db_init()
-**
-**	Returns :
-**		0 upon success
-**		negative number upon failure
-**
-**	Notes :
-**		All memory associated with CON_SQLURL is freed.
-**		
-*/
-
-static int disconnect_db(db_con_t* _h)
+static inline int params_add(struct pg_params* p, db_con_t* con, db_val_t* vals, int n)
 {
-	if(! _h)
-	{
-		DLOG("disconnect_db", "null db_con_t, ignored!\n");
-		return(0);
+	int i, i1, i2;
+	db_val_t* val;
+
+	if (!p) {
+		LOG(L_ERR, "postgres:params_add: Invalid parameter value\n");
+		return -1;
 	}
 
-	/*
-	** free lingering memory tree if it exists
-	*/
-	if(CON_SQLURL(_h))
-	{
-		aug_free(CON_SQLURL(_h));
-		CON_SQLURL(_h) = (char *) 0;
+	if (p->cur + n > p->n) {
+		LOG(L_ERR, "postgres:params_add: Arrays too short (bug in postgres module)\n");
+		return -1;
 	}
 
-	/*
-	** ignore if there is no current connection
-	*/
-	if(CON_CONNECTED(_h) != 1)
-	{
-		DLOG("disconnect_db", "not connected, ignored!\n");
+	for(i = 0; i < n; i++) {
+		val = &vals[i];
+		p->formats[p->cur] = 1;
+		switch(val->type) {
+		case DB_INT:      
+			if (!val->nul) {
+				val->val.int_val = ntohl(val->val.int_val);
+				p->data[p->cur] = (const char*)&val->val.int_val;
+				p->len[p->cur] = 4;
+			}
+			break;
+			
+		case DB_DOUBLE:
+			if (!val->nul) {
+				     /* Change the byte order of 8-byte value to network
+				      * byte order if necessary
+				      */
+				i1 = htonl(val->val.int8_val >> 32);
+				i2 = htonl(val->val.int8_val & 0xffffffff);
+				val->val.int_val = i1;
+				(&val->val.int_val)[1] = i2;
+				p->data[p->cur] = (const char*)&val->val.int_val;
+				p->len[p->cur] = 8;
+			}
+			break;
+			
+		case DB_STRING:
+			p->formats[p->cur] = 0;
+			if (!val->nul) {
+				p->data[p->cur] = val->val.string_val;
+			}
+			break;
+			
+		case DB_STR:
+			if (!val->nul) {
+				p->data[p->cur] = val->val.str_val.s;
+				p->len[p->cur] = val->val.str_val.len;
+			}
+			break;
+			
+		case DB_DATETIME:
+			if (!val->nul) {
+				if (CON_FLAGS(con) & PG_INT8_TIMESTAMP) {
+					val->val.int8_val = ((long long)val->val.time_val - PG_EPOCH_TIME) * 1000000;
+				} else {
+					val->val.double_val = (double)val->val.time_val - (double)PG_EPOCH_TIME;
+					
+				}
+				i1 = htonl(val->val.int8_val >> 32);
+				i2 = htonl(val->val.int8_val & 0xffffffff);
+				val->val.int_val = i1;
+				(&val->val.int_val)[1] = i2;
+				p->data[p->cur] = (const char*)&val->val.int_val;
+				p->len[p->cur] = 8;
+			}
+			break;
+			
+		case DB_BLOB:
+			if (!val->nul) {
+				p->data[p->cur] = val->val.blob_val.s;
+				p->len[p->cur] = val->val.blob_val.len;
+			}
+			break;
+			
+		case DB_BITMAP: 
+			if (!val->nul) {
+				(&val->val.int_val)[1] = htonl(val->val.int_val);
+				val->val.int_val = htonl(32);
+				p->data[p->cur] = (const char*)&val->val.int_val;
+				p->len[p->cur] = 8;
+			}
+			break;
+		}
+		
+		p->cur++;
+	}
+	
+	return 0;
+}
+
+static inline void free_params(struct pg_params* p)
+{
+	if (p->data) pkg_free(p->data);
+	if (p->len) pkg_free(p->len);
+	if (p->formats) pkg_free(p->formats);
+}
+
+
+/*
+ * Initialize database module
+ * No function should be called before this
+ */
+db_con_t* db_init(const char* url)
+{
+	struct db_id* id;
+	struct pg_con* con;
+	db_con_t* res;
+
+	id = 0;
+	res = 0;
+
+	if (!url) {
+		LOG(L_ERR, "postgres:db_init: Invalid parameter value\n");
 		return 0;
 	}
 
-	/*
-	** make sure we are trying to close a connection that was opened
-	** by our process ID
-	*/
-	if(CON_PID(_h) == getpid())
-	{
-		PQfinish(CON_CONNECTION(_h));
-		CON_CONNECTED(_h) = 0;
+	res = pkg_malloc(sizeof(db_con_t) + sizeof(struct pg_con*));
+	if (!res) {
+		LOG(L_ERR, "postgres:db_init: No memory left\n");
+		return 0;
 	}
-	else
-	{
-		DLOG("disconnect_db",
-			"attempt to release connection not owned, ignored!\n");
+	memset(res, 0, sizeof(db_con_t) + sizeof(struct pg_con*));
+
+	id = new_db_id(url);
+	if (!id) {
+		LOG(L_ERR, "postgres:db_init: Cannot parse URL '%s'\n", url);
+		goto err;
 	}
 
+	     /* Find the connection in the pool */
+	con = (struct pg_con*)pool_get(id);
+	if (!con) {
+		DBG("postgres:db_init: Connection '%s' not found in pool\n", url);
+		     /* Not in the pool yet */
+		con = new_connection(id);
+		if (!con) {
+			goto err;
+		}
+		pool_insert((struct pool_con*)con);
+	} else {
+		DBG("postgres:db_init: Connection '%s' found in pool\n", url);
+	}
+
+	res->tail = (unsigned long)con;
+	return res;
+
+ err:
+	if (id) free_db_id(id);
+	if (res) pkg_free(res);
 	return 0;
 }
 
-/*
-** db_init	initialize database for future queries
-**
-**	Arguments :
-**		char *_sqlurl;	sql database to open
-**
-**	Returns :
-**		db_con_t * NULL upon error
-**		db_con_t * if successful
-**
-**	Notes :
-**		db_init must be called prior to any database
-**		functions.
-*/
 
-db_con_t *db_init(const char* _sqlurl)
+/*
+ * Shut down database module
+ * No function should be called after this
+ */
+void db_close(db_con_t* handle)
 {
-	db_con_t* res;
-	void* t;
+	struct pool_con* con;
 
-	DLOG("db_init", "entry");
-
-	/*
-	** this is the root memory for this database connection.
-	*/
-	res = aug_alloc(sizeof(db_con_t), 0);
-	memset(res, 0, sizeof(db_con_t));
-	t = aug_alloc(sizeof(struct con_postgres), (char*)res);
-	res->tail = (unsigned long) t;
-	memset((struct con_postgres*)res->tail, 0, sizeof(struct con_postgres));
-
-	if (connect_db(res, _sqlurl) < 0)
-	{
-		PLOG("db_init", "Error while trying to open database, FATAL\n");
-		aug_free(res);
-		return((db_con_t *) 0);
-	}
-
-	return res;
-}
-
-
-/*
-** db_close	last function to call when db is no longer needed
-**
-**	Arguments :
-**		db_con_t * the connection to shut down, as supplied by db_init()
-**
-**	Returns :
-**		(void)
-**
-**	Notes :
-**		All memory and resources are freed.
-*/
-
-void db_close(db_con_t* _h)
-{
-	DLOG("db_close", "entry");
-	if(! _h)
-	{
-		PLOG("db_close", "no handle passed, ignored");
+	if (!handle) {
+		LOG(L_ERR, "postgres:db_close: Invalid parameter value\n");
 		return;
 	}
 
-	disconnect_db(_h);
-	aug_free(_h);
+	con = (struct pool_con*)handle->tail;
+	if (pool_remove(con) != 0) {
+		free_connection((struct pg_con*)con);
+	}
 
+	pkg_free(handle);
 }
 
-/*
-** submit_query	run a query
-**
-**	Arguments :
-**		db_con_t *	as previously supplied by db_init()
-**		char *_s	the text query to run
-**
-**	Returns :
-**		0 upon success
-**		negative number upon failure
-*/
 
-static int submit_query(db_con_t* _h, const char* _s)
-{	
-	int rv;
-
-	/*
-	** this bit of nonsense in case our connection get screwed up 
-	*/
-	switch(rv = PQstatus(CON_CONNECTION(_h)))
-	{
-		case CONNECTION_OK: break;
-		case CONNECTION_BAD:
-			PLOG("submit_query", "connection reset");
-			PQreset(CON_CONNECTION(_h));
-		break;
-	}
-
-	/*
-	** free any previous query that is laying about
-	*/
-	if(CON_RESULT(_h))
-	{
-		free_query(_h);
-	}
-
-	/*
-	** exec the query
-	*/
-	CON_RESULT(_h) = PQexec(CON_CONNECTION(_h), _s);
-
-	rv = 0;
-	if(PQresultStatus(CON_RESULT(_h)) == 0)
-	{
-		PLOG("submit_query", "initial failure, FATAL");
-		/* 
-		** terrible error??
-		*/
-		rv = -3;
-	}
-	else
-	{
-		/*
-		** the query ran, get the status
-		*/
-		switch(PQresultStatus(CON_RESULT(_h)))
-		{
-			case PGRES_EMPTY_QUERY: rv = -9; break;
-			case PGRES_COMMAND_OK: rv = 0; break;
-			case PGRES_TUPLES_OK: rv = 0; break;
-			case PGRES_COPY_OUT: rv = -4; break;
-			case PGRES_COPY_IN: rv = -5; break;
-			case PGRES_BAD_RESPONSE: rv = -6; break;
-			case PGRES_NONFATAL_ERROR: rv = -7; break;
-			case PGRES_FATAL_ERROR: rv = -8; break;
-			default: rv = -2; break;
-		}
-	}
-	if(rv < 0)
-	{
-		/*
-		** log the error
-		*/
-		char buf[256];
-		sprintf(buf, "query '%s', result '%s'\n",
-			_s, PQerrorMessage(CON_CONNECTION(_h)));
-		PLOG("submit_query", buf);
-	}
-
-	return(rv);
-}
-
-/*
-** free_query	clear the db channel and clear any old query result status
-**
-**	Arguments :
-**		db_con_t *	as previously supplied by db_init()
-**
-**	Returns :
-**		0 upon success
-**		negative number upon failure
-*/
-
-static int free_query(db_con_t* _h)
+static int calc_param_len(start, num)
 {
-	if(CON_RESULT(_h))
-	{
-		PQclear(CON_RESULT(_h));
-		CON_RESULT(_h) = 0;
+	int max, len, order;
+
+	if (!num) return 0;
+
+	max = start + num - 1;
+	len = num; /* $ */
+	
+	order = 0;
+	while(max) {
+		order++;
+		max /= 10;
 	}
 
-	return 0;
-}
-
-/*
-** db_free_query	free the query and free the result memory
-**
-**	Arguments :
-**		db_con_t *	as previously supplied by db_init()
-**		db_res_t *	the result of a query
-**
-**	Returns :
-**		0 upon success
-**		negative number upon failure
-*/
-
-int db_free_query(db_con_t* _h, db_res_t* _r)
-{
-	free_query(_h);
-	free_result(_r);
-
-	return 0;
-}
-
-/*
-** begin_transaction	begin transaction
-**
-**	Arguments :
-**		db_con_t *	as previously supplied by db_init()
-**		char *		this is just in case an error message
-**				is printed, we will know which query
-**				was going to be run, giving us a code debug hint
-**
-**	Returns :
-**		0 upon success
-**		negative number upon failure
-**
-**	Notes :
-**		This function may be called with a messed up communication
-**		channel.  Therefore, alot of this function is dealing with
-**		that.  Wen the layering gets corrected later this stuff
-**		should continue to work correctly, it will just be
-**		way to defensive.
-*/
-
-static int begin_transaction(db_con_t * _h, char *_s)
-{
-	PGresult *mr;
-	int rv;
-
-	/*
-	** Note:
-	**  The upper layers of code may attempt a transaction
-	**  before opening or having a valid connection to the
-	**  database.  We try to sense this, and open the database
-	**  if we have the sqlurl in the _h structure.  Otherwise,
-	**  all we can do is return an error.
-	*/
-
-	if(_h)
-	{
-		if(CON_CONNECTED(_h))
-		{
-			mr = PQexec(CON_CONNECTION(_h), "BEGIN");
-			if(!mr || PQresultStatus(mr) != PGRES_COMMAND_OK)
-			{
-				/*
-				** We get here if the connection to the
-				** db is corrupt, which can happen a few
-				** different ways, but all of them are
-				** related to the parent process forking,
-				** or being forked.
-				*/
-				PLOG("begin_transaction","corrupt connection");
-				CON_CONNECTED(_h) = 0;
-			}
-			else
-			{
-				/*
-				** this is the normal way out.
-				** the transaction ran fine.
-				*/
-				PQclear(mr);
-				return(0);
-			}
-		}
-		else
-		{
-			DLOG("begin_transaction", "called before db_init");
-		}
-
-		/*
-		** if we get here we have a corrupt db connection,
-		** but we probably have a valid db_con_t structure.
-		** attempt to open the db.
-		*/
-
-		if((rv = connect_db(_h, CON_SQLURL(_h))) != 0)
-		{
-			/*
-			** our attempt to fix the connection failed
-			*/
-			char buf[256];
-			sprintf(buf, "no connection, FATAL %d!", rv);
-			PLOG("begin_transaction",buf);
-			return(rv);
-		}
-	}
-	else
-	{
-		PLOG("begin_transaction","must call db_init first!");
-		return(-1);
-	}
-
-	/*
-	** we get here if the database connection was corrupt,
-	** i didn't want to use recursion ...
-	*/
-
-	mr = PQexec(CON_CONNECTION(_h), "BEGIN");
-	if(!mr || PQresultStatus(mr) != PGRES_COMMAND_OK)
-	{
-		char buf[256];
-		sprintf("FATAL %s, '%s'!\n",
-			PQerrorMessage(CON_CONNECTION(_h)), _s);
-		PLOG("begin_transaction", buf);
-		return(-1);
-	}
-
-	DLOG("begin_transaction", "db channel reset successful");
-
-	PQclear(mr);
-	return(0);
-}
-
-/*
-** commit_transaction	any begin_transaction must be terminated with this
-**
-**	Arguments :
-**		db_con_t *	as previously supplied by db_init()
-**
-**	Returns :
-**		0 upon success
-**		negative number upon failure
-*/
-
-static int commit_transaction(db_con_t * _h)
-{
-	PGresult *mr;
-
-	mr = PQexec(CON_CONNECTION(_h), "COMMIT");
-	if(!mr || PQresultStatus(mr) != PGRES_COMMAND_OK)
-	{
-		PLOG("commit_transaction", "error");
-		return -1;
-	}
-	PQclear(mr);
-	return(0);
+	return len + order * num;
 }
 
 /*
- * Print list of columns separated by comma
+ * Append a constant string, uses sizeof to figure the length
+ * of the string
  */
-static int print_columns(char* _b, int _l, db_key_t* _c, int _n)
+#define append(buf, ptr)                                  \
+    do {                                                  \
+        if ((buf).len < (sizeof(ptr) - 1)) goto shortbuf; \
+        memcpy((buf).s, (ptr), sizeof(ptr) - 1);          \
+        (buf).s += sizeof(ptr) - 1;                       \
+        (buf).len -= sizeof(ptr) - 1;                     \
+    } while(0);
+
+
+/*
+ * Append zero terminated string, uses strlen to obtain the
+ * length of the string
+ */
+#define append_str(buf, op)                  \
+    do {                                     \
+	int len;                             \
+        len = strlen(op);                    \
+        if ((buf).len < len) goto shortbuf;  \
+        memcpy((buf).s, (op), len);          \
+        (buf).s += len;                      \
+        (buf).len -= len;                    \
+    } while(0);
+
+
+/*
+ * Append a parameter, accepts the number of the
+ * parameter to be appended
+ */
+#define append_param(buf, num)                  \
+    do {                                        \
+        const char* c;                          \
+        int len;                                \
+        c = int2str((num), &len);               \
+        if ((buf).len < len + 1) goto shortbuf; \
+        *(buf).s='$'; (buf).s++; (buf).len--;   \
+        memcpy((buf).s, c, len);                \
+        (buf).s += len; (buf).len -= len;       \
+    } while(0); 
+
+
+/*
+ * Calculate the length of buffer needed to hold the insert query
+ */
+static unsigned int calc_insert_len(db_con_t* con, db_key_t* keys, int n)
 {
 	int i;
-	int res = 0;
-	for(i = 0; i < _n; i++) {
-		if (i == (_n - 1)) {
-			res += snprintf(_b + res, _l - res, "%s ", _c[i]);
-		} else {
-			res += snprintf(_b + res, _l - res, "%s,", _c[i]);
-		}
+	unsigned int len;
+
+	if (!n) return 0;
+
+	len = sizeof(INSERT) - 1;
+	len += strlen(CON_TABLE(con)); /* Table name */
+	len += 2; /* _( */
+	for(i = 0; i < n; i++) {
+		len += strlen(keys[i]); /* Key names */
 	}
-	return res;
+	len += n - 1; /* , */
+	len += sizeof(VALUES);
+	len += calc_param_len(1, n);
+	len += n - 1;
+	len += 1; /* ) */
+	return len;
 }
 
 
 /*
- * Print list of values separated by comma
+ * Calculate the length of buffer needed to hold the delete query
  */
-static int print_values(char* _b, int _l, db_val_t* _v, int _n)
+static unsigned int calc_delete_len(db_con_t* con, db_key_t* keys, int n)
 {
-	int i, res = 0, l;
+	int i;
+	unsigned int len;
 
-	for(i = 0; i < _n; i++) {
-		l = _l - res;
-/*		LOG(L_ERR, "%d sizes l = _l - res %d = %d - %d\n", i, l,_l,res);
-*/
-		if (val2str(_v + i, _b + res, &l) < 0) {
-			LOG(L_ERR,
-			 "print_values(): Error converting value to string\n");
+	len = sizeof(DELETE) - 1;
+	len += strlen(CON_TABLE(con));
+	if (n) {
+		len += 1; /* _ */
+		len += sizeof(WHERE) - 1;
+		len += n * 2; /* <= */
+		len += (sizeof(AND) - 1) * (n - 1);
+		for(i = 0; i < n; i++) {
+			len += strlen(keys[i]);
+		}
+		len += calc_param_len(1, n);
+	}
+	return len;
+}
+
+static unsigned int calc_select_len(db_con_t* con, db_key_t* cols, db_key_t* keys, int n, int ncol, db_key_t order)
+{
+	int i;
+	unsigned int len;
+
+	if (!cols) {
+		len = sizeof(SELECTALL) - 1;
+	} else {
+		len = sizeof(SELECT);
+		for(i = 0; i < ncol; i++) {
+			len += strlen(cols[i]);
+		}
+		len += ncol - 1; /* , */
+		len++; /* space */
+	}
+	len += sizeof(FROM) - 1;
+	len += strlen(CON_TABLE(con));
+	len += 1; /* _ */
+	if (n) {
+		len += sizeof(WHERE) - 1;
+		len += n * 2; /* <= */
+		len += (sizeof(AND) - 1) * (n - 1);
+		for(i = 0; i < n; i++) {
+			len += strlen(keys[i]);
+		}
+		len += calc_param_len(1, n);
+		len++; /* space */
+	}
+	if (order) {
+		len += sizeof(ORDER);
+		len += strlen(order);
+	}
+	return len;
+}
+
+static unsigned int calc_update_len(db_con_t* con, db_key_t* ukeys, db_key_t* keys, int un, int n)
+{
+	int i;
+	unsigned int len;
+
+	if (!un) return 0;
+
+	len = sizeof(UPDATE) - 1;
+	len += strlen(CON_TABLE(con));
+	len += 1; /* _ */
+	len += sizeof(SET) - 1;
+	len += un;  /* = */
+	for (i = 0; i < un; i++) {
+		len += strlen(ukeys[i]);
+	}
+	len += calc_param_len(1, un);
+	len += un; /* , and last space */
+	
+	if (n) {
+		len += sizeof(WHERE) - 1;
+		len += n * 2; /* <= */
+		len += (sizeof(AND) - 1) * (n - 1);
+		for(i = 0; i < n; i++) {
+			len += strlen(keys[i]);
+		}
+		len += calc_param_len(1 + un, n);
+	}
+	return len;
+}
+
+
+char* print_insert(db_con_t* con, db_key_t* keys, int n)
+{
+	unsigned int len;
+	int i;
+	char* s;
+	str p;
+
+	if (!n || !keys) {
+		LOG(L_ERR, "postgres:print_insert: Nothing to insert\n");
+		return 0;
+	}
+
+	len = calc_insert_len(con, keys, n);
+	
+	s = (char*)pkg_malloc(len + 1);
+	if (!s) {
+		LOG(L_ERR, "postgres:print_insert: Unable to allocate %d of memory\n", len);
+		return 0;
+	}
+	p.s = s;
+	p.len = len;
+	
+	append(p, INSERT);
+	append_str(p, CON_TABLE(con));
+	append(p, " (");
+
+	append_str(p, keys[0]);
+	for(i = 1; i < n; i++) {
+		append(p, ",");
+		append_str(p, keys[i]);
+	}
+	append(p, VALUES);
+
+	append_param(p, 1);
+	for(i = 1; i < n; i++) {
+		append(p, ",");
+		append_param(p, i + 1);
+	}
+	append(p, ")");
+	*p.s = '\0';
+	return s;
+
+ shortbuf:
+	LOG(L_ERR, "postgres:print_insert: Buffer too short (bug in postgres module)\n");
+	pkg_free(s);
+	return 0;
+}
+
+
+
+char* print_select(db_con_t* con, db_key_t* cols, db_key_t* keys, int n, int ncol, db_op_t* ops, db_key_t order)
+{
+	unsigned int len;
+	int i;
+	char* s;
+	str p;
+
+	len = calc_select_len(con, cols, keys, n, ncol, order);
+
+	s = (char*)pkg_malloc(len + 1);
+	if (!s) {
+		LOG(L_ERR, "postrgres:print_select: Unable to allocate %d of memory\n", len);
+		return 0;
+	}
+	p.s = s;
+	p.len = len;
+	
+	if (!cols || !ncol) {
+		append(p, SELECTALL);
+	} else {
+		append(p, SELECT);
+		append_str(p, cols[0]);
+		for(i = 1; i < ncol; i++) {
+			append(p, ",");
+			append_str(p, cols[i]);
+		}
+		append(p, " ");
+	}
+	append(p, FROM);
+	append_str(p, CON_TABLE(con));
+	append(p, " ");
+	if (n) {
+		append(p, WHERE);
+		append_str(p, keys[0]);
+		if (ops) {
+			append_str(p, *ops);
+			ops++;
+		} else {
+			append(p, "=");
+		}
+		append_param(p, 1);
+		for(i = 1; i < n; i++) {
+			append(p, AND);
+			append_str(p, keys[i]);
+			if (ops) {
+				append_str(p, *ops);
+				ops++;
+			} else {
+				append(p, "=");
+			}
+			append_param(p, i + 1);
+		}
+		append(p, " ");
+	}
+	if (order) {
+		append(p, ORDER);
+		append_str(p, order);
+	}
+
+	*p.s = '\0'; /* Zero termination */
+	return s;
+
+ shortbuf:
+	LOG(L_ERR, "postgres:print_select: Buffer too short (bug in postgres module)\n");
+	pkg_free(s);
+	return 0;
+}
+
+
+char* print_delete(db_con_t* con, db_key_t* keys, db_op_t* ops, int n)
+{
+	unsigned int len;
+	int i;
+	char* s;
+	str p;
+
+	len = calc_delete_len(con, keys, n);
+
+	s = (char*)pkg_malloc(len + 1);
+	if (!s) {
+		LOG(L_ERR, "postrgres:print_delete: Unable to allocate %d of memory\n", len);
+		return 0;
+	}
+	p.s = s;
+	p.len = len;
+
+	append(p, DELETE);
+	append_str(p, CON_TABLE(con));
+	append(p, " ");
+	if (n) {
+		append(p, WHERE);
+		append_str(p, keys[0]);
+		if (ops) {
+			append_str(p, *ops);
+			ops++;
+		} else {
+			append(p, "=");
+		}
+		append_param(p, 1);
+		for(i = 1; i < n; i++) {
+			append(p, AND);
+			append_str(p, keys[i]);
+			if (ops) {
+				append_str(p, *ops);
+				ops++;
+			} else {
+				append(p, "=");
+			}
+			append_param(p, i + 1);
+		}
+	}
+
+	*p.s = '\0';
+	return s;
+
+ shortbuf:
+	LOG(L_ERR, "postgres:print_delete: Buffer too short (bug in postgres module)\n");
+	pkg_free(s);
+	return 0;
+}
+
+
+char* print_update(db_con_t* con, db_key_t* ukeys, db_key_t* keys, db_op_t* ops, int un, int n)
+{
+	unsigned int len, param_no;
+	char* s;
+	int i;
+	str p;
+
+	if (!un) {
+		LOG(L_ERR, "postgres:print_update: Nothing to update\n");
+		return 0;
+	}
+
+	param_no = 1;
+	len = calc_update_len(con, ukeys, keys, un, n);
+
+	s = (char*)pkg_malloc(len + 1);
+	if (!s) {
+		LOG(L_ERR, "postrgres:print_update: Unable to allocate %d of memory\n", len);
+		return 0;
+	}
+	p.s = s;
+	p.len = len;
+
+	append(p, UPDATE);
+	append_str(p, CON_TABLE(con));
+	append(p, " " SET);
+
+	append_str(p, ukeys[0]);
+	append(p, "=");
+	append_param(p, param_no++);
+
+	for(i = 1; i < un; i++) {
+		append(p, ",");
+		append_str(p, ukeys[i]);
+		append(p, "=");
+		append_param(p, param_no++);
+	}
+	append(p, " ");
+
+	if (n) {
+		append(p, WHERE);
+		append_str(p, keys[0]);
+		if (ops) {
+			append_str(p, *ops);
+			ops++;
+		} else {
+			append(p, "=");
+		}
+		append_param(p, param_no++);
+		
+		for(i = 1; i < n; i++) {
+			append(p, AND);
+			append_str(p, keys[i]);
+			if (ops) {
+				append_str(p, *ops);
+				ops++;
+			} else {
+				append(p, "=");
+			}
+			append_param(p, param_no++);
+		}
+	}	
+
+	*p.s = '\0';
+	return s;
+
+ shortbuf:
+	LOG(L_ERR, "postgres:print_update: Buffer too short (bug in postgres module)\n");
+	pkg_free(s);
+	return 0; 
+}
+
+/*
+ * Return values: 1 Query failed, bad connection
+ *                0 Query succeeded
+ *               -1 Query failed due to some other reason
+ */
+static int submit_query(db_res_t** res, db_con_t* con, const char* query, struct pg_params* params)
+{
+	PGresult* pgres;
+
+	DBG("postgres: Executing '%s'\n", query);
+	if (params) {
+	        pgres = PQexecParams(CON_CONNECTION(con), query,
+				     params->n, 0,
+				     params->data, params->len,
+				     params->formats, 1);
+	} else {
+		pgres = PQexecParams(CON_CONNECTION(con), query, 0, 0, 0, 0, 0, 1);
+	}
+	switch(PQresultStatus(pgres)) {
+	case PGRES_EMPTY_QUERY:
+		LOG(L_ERR, "postgres:submit_query:BUG: db_raw_query received an empty query\n");
+		goto error;
+		
+	case PGRES_COMMAND_OK:
+	case PGRES_NONFATAL_ERROR:
+	case PGRES_TUPLES_OK:
+		     /* Success */
+		break;
+		
+	case PGRES_COPY_OUT:
+	case PGRES_COPY_IN:
+		LOG(L_ERR, "postgres:submit_query: Unsupported transfer mode\n");
+		goto error;
+
+	case PGRES_BAD_RESPONSE:
+	case PGRES_FATAL_ERROR:
+		LOG(L_ERR, "postgres: Error: %s", PQresultErrorMessage(pgres));
+		if (PQstatus(CON_CONNECTION(con)) != CONNECTION_BAD) {
+				LOG(L_ERR, "postgres: Unknown error occurred, giving up\n");
+				goto error;
+		}
+		LOG(L_ERR, "postgres:submit_query: Bad connection\n");
+		PQclear(pgres);
+		return 1;
+	}
+
+	if (res) {
+		*res = new_result(pgres);
+		if (!(*res)) goto error;
+	} else {
+		PQclear(pgres);
+	}
+	return 0;
+
+ error:
+	PQclear(pgres);
+	return -1;
+}
+
+
+static int reconnect(db_con_t* con)
+{
+	int attempts_left = reconnect_attempts;
+	while(attempts_left) {
+		LOG(L_ERR, "postgres: Trying to recover the connection\n");
+		PQreset(CON_CONNECTION(con));
+		if (PQstatus(CON_CONNECTION(con)) == CONNECTION_OK) {
+			LOG(L_ERR, "postgres: Successfuly reconnected\n");
 			return 0;
 		}
-		res += l;
-		if (i != (_n - 1)) {
-			*(_b + res) = ',';
-			res++;
-		}
+		LOG(L_ERR, "postgres: Reconnect attempt failed\n");
+		attempts_left--;
 	}
-	return res;
-}
-
-
-/*
- * Print where clause of SQL statement
- */
-static int print_where(char* _b, int _l, db_key_t* _k,
-	db_op_t* _o, db_val_t* _v, int _n)
-{
-	int i;
-	int res = 0;
-	int l;
-	for(i = 0; i < _n; i++) {
-		if (_o) {
-			res += snprintf(_b + res, _l - res, "%s%s",
-				_k[i], _o[i]);
-		} else {
-			res += snprintf(_b + res, _l - res, "%s=", _k[i]);
-		}
-		l = _l - res;
-		val2str(&(_v[i]), _b + res, &l);
-		res += l;
-		if (i != (_n - 1)) {
-			res += snprintf(_b + res, _l - res, " AND ");
-		}
-	}
-	return res;
-}
-
-
-/*
- * Print set clause of update SQL statement
- */
-static int print_set(char* _b, int _l, db_key_t* _k,
-	db_val_t* _v, int _n)
-{
-	int i;
-	int res = 0;
-	int l;
-	for(i = 0; i < _n; i++) {
-		res += snprintf(_b + res, _l - res, "%s=", _k[i]);
-		l = _l - res;
-		val2str(&(_v[i]), _b + res, &l);
-		res += l;
-		if (i != (_n - 1)) {
-			if ((_l - res) >= 1) {
-				*(_b + res++) = ',';
-			}
-		}
-	}
-	return res;
+	LOG(L_ERR, "postgres: No more reconnect attempts left, giving up\n");
+	return -1;
 }
 
 
 /*
  * Query table for specified rows
- * _h: structure representing database connection
- * _k: key names
- * _op: operators
- * _v: values of the keys that must match
- * _c: column names to return
- * _n: nmber of key=values pairs to compare
- * _nc: number of columns to return
- * _o: order by the specified column
+ * con:   structure representing database connection
+ * keys:  key names
+ * ops:   operators
+ * vals:  values of the keys that must match
+ * cols:  column names to return
+ * n:     number of key=values pairs to compare
+ * ncol:  number of columns to return
+ * order: order by the specified column
+ * res:   query result
  */
-int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
-	     db_val_t* _v, db_key_t* _c, int _n, int _nc,
-	     db_key_t _o, db_res_t** _r)
+int db_query(db_con_t* con, db_key_t* keys, db_op_t* ops,
+	     db_val_t* vals, db_key_t* cols, int n, int ncols,
+	     db_key_t order, db_res_t** res)
 {
-	int off, rv;
-	if (!_c) {
-		off = snprintf(sql_buf, SQL_BUF_LEN,
-			"select * from %s ", CON_TABLE(_h));
-	} else {
-		off = snprintf(sql_buf, SQL_BUF_LEN, "select ");
-		off += print_columns(sql_buf + off, SQL_BUF_LEN - off, _c, _nc);
-		off += snprintf(sql_buf + off, SQL_BUF_LEN - off,
-			"from %s ", CON_TABLE(_h));
-	}
-	if (_n) {
-		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, "where ");
-		off += print_where(sql_buf + off, SQL_BUF_LEN - off,
-			_k, _op, _v, _n);
-	}
-	if (_o) {
-		off += snprintf(sql_buf + off, SQL_BUF_LEN - off,
-			"order by %s", _o);
+	int ret;
+	char* select;
+	struct pg_params* params;
+	
+	params = 0;
+	select = 0;
+
+	if (!con) {
+		LOG(L_ERR, "postgres:db_query: Invalid parameter value\n");
+		return -1;
 	}
 
-	if(begin_transaction(_h, sql_buf)) return(-1);
-	if (submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "db_query(): Error while submitting query\n");
-		return -2;
+	select = print_select(con, cols, keys, n, ncols, ops, order);
+	if (!select) goto err;
+
+	params = new_pg_params(n);
+	if (!params) goto err;
+	if (params_add(params, con, vals, n) < 0) goto err;
+
+	do {
+		ret = submit_query(res, con, select, params);
+		if (ret < 0) goto err;                       /* Unknown error, bail out */
+		if (ret > 0) {                               /* Disconnected, try to reconnect */
+			if (reconnect(con) < 0) goto err;    /* Failed to reconnect */
+			else continue;                       /* Try one more time (ret is > 0) */
+		}
+	} while(ret != 0);
+	
+	if (res && convert_result(*res, con) < 0) {
+		free_result(*res);
+		goto err;
 	}
-	rv = get_result(_h, _r);
-	free_query(_h);
-	commit_transaction(_h);
-	return(rv);
+
+	free_pg_params(params);
+	pkg_free(select);
+	return 0;
+
+ err:
+	if (params) free_pg_params(params);
+	if (select) pkg_free(select);
+	return -1;
 }
 
 
 /*
  * Execute a raw SQL query
  */
-int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
+int db_raw_query(db_con_t* con, char* query, db_res_t** res)
 {
-	int rv;
+	int ret;
 
-	if(begin_transaction(_h, sql_buf)) return(-1);
-	if (submit_query(_h, _s) < 0) {
-		LOG(L_ERR, "db_raw_query(): Error while submitting query\n");
-		return -2;
-	}
-	rv = get_result(_h, _r);
-	free_query(_h);
-	commit_transaction(_h);
-	return(rv);
-}
-
-/*
- * Retrieve result set
- */
-int get_result(db_con_t* _h, db_res_t** _r)
-{
-	*_r = new_result_pg(CON_SQLURL(_h));
-
-	if (!CON_RESULT(_h)) {
-		LOG(L_ERR, "get_result(): error");
-		free_result(*_r);
-		*_r = 0;
-		return -3;
+	if (!con || !query) {
+		LOG(L_ERR, "postgres:db_raw_query: Invalid parameter value\n");
+		return -1;
 	}
 
-        if (convert_result(_h, *_r) < 0) {
-		LOG(L_ERR, "get_result(): Error while converting result\n");
-		free_result(*_r);
-		*_r = 0;
-
-		return -4;
+	do {
+		ret = submit_query(res, con, query, 0);
+		if (ret < 0) return -1;                      /* Unknown error, bail out */
+		if (ret > 0) {                               /* Disconnected, try to reconnect */
+			if (reconnect(con) < 0) return -1;   /* Failed to reconnect */
+			else continue;                       /* Try one more time (ret is > 0) */
+		}
+	} while(ret != 0);
+	
+	if (res && (convert_result(*res, con) < 0)) {
+		free_result(*res);
+		return -1;
 	}
-
 	return 0;
 }
 
+
 /*
  * Insert a row into specified table
- * _h: structure representing database connection
- * _k: key names
- * _v: values of the keys
- * _n: number of key=value pairs
+ * con:  structure representing database connection
+ * keys: key names
+ * vals: values of the keys
+ * n:    number of key=value pairs
  */
-int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
+int db_insert(db_con_t* con, db_key_t* keys, db_val_t* vals, int n)
 {
-	int off;
-	off = snprintf(sql_buf, SQL_BUF_LEN, "insert into %s (", CON_TABLE(_h));
-	off += print_columns(sql_buf + off, SQL_BUF_LEN - off, _k, _n);
-	off += snprintf(sql_buf + off, SQL_BUF_LEN - off, ") values (");
-	off += print_values(sql_buf + off, SQL_BUF_LEN - off, _v, _n);
-	*(sql_buf + off++) = ')';
-	*(sql_buf + off) = '\0';
+	int ret;
+	char* insert;
+	struct pg_params* params;
 
-	if(begin_transaction(_h, sql_buf)) return(-1);
-	if (submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "db_insert(): Error while inserting\n");
-		return -2;
+	if (!con || !keys || !vals || !n) {
+		LOG(L_ERR, "postgres:db_insert: Invalid parameter value\n");
+		return -1;
 	}
-	free_query(_h);
-	commit_transaction(_h);
-	return(0);
+
+	params = 0;
+	insert = 0;
+
+	insert = print_insert(con, keys, n);
+	if (!insert) goto err;
+
+	params = new_pg_params(n);
+	if (!params) goto err;
+	if (params_add(params, con, vals, n) < 0) goto err;
+
+	do {
+		ret = submit_query(0, con, insert, params);
+		if (ret < 0) goto err;                       /* Unknown error, bail out */
+		if (ret > 0) {                               /* Disconnected, try to reconnect */
+			if (reconnect(con) < 0) goto err;    /* Failed to reconnect */
+			else continue;                       /* Try one more time (ret is > 0) */
+		}
+	} while(ret != 0);
+	
+	free_pg_params(params);
+	pkg_free(insert);
+	return 0;
+
+ err:
+	if (params) free_pg_params(params);
+	if (insert) pkg_free(insert);
+	return -1;
 }
 
 
 /*
  * Delete a row from the specified table
- * _h: structure representing database connection
- * _k: key names
- * _o: operators
- * _v: values of the keys that must match
- * _n: number of key=value pairs
+ * con : structure representing database connection
+ * keys: key names
+ * ops : operators
+ * vals: values of the keys that must match
+ * n   : number of key=value pairs
  */
-int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
+int db_delete(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals, int n)
 {
-	int off;
-	off = snprintf(sql_buf, SQL_BUF_LEN, "delete from %s", CON_TABLE(_h));
-	if (_n) {
-		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
-		off += print_where(sql_buf + off, SQL_BUF_LEN - off, _k,
-			_o, _v, _n);
+	int ret;
+	char* delete;
+	struct pg_params* params;
+
+	if (!con) {
+		LOG(L_ERR, "postgres:db_insert: Invalid parameter value\n");
+		return -1;
 	}
-	if(begin_transaction(_h, sql_buf)) return(-1);
-	if (submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "db_delete(): Error while deleting\n");
-		return -2;
-	}
-	free_query(_h);
-	commit_transaction(_h);
-	return(0);
+
+	params = 0;
+	delete = 0;
+
+        delete = print_delete(con, keys, ops, n);
+	if (!delete) goto err;
+
+	params = new_pg_params(n);
+	if (!params) goto err;
+	if (params_add(params, con, vals, n) < 0) goto err;
+
+	do {
+		ret = submit_query(0, con, delete, params);
+		if (ret < 0) goto err;                       /* Unknown error, bail out */
+		if (ret > 0) {                               /* Disconnected, try to reconnect */
+			if (reconnect(con) < 0) goto err;    /* Failed to reconnect */
+			else continue;                       /* Try one more time (ret is > 0) */
+		}
+	} while(ret != 0);
+	
+	free_pg_params(params);
+	pkg_free(delete);
+	return 0;
+
+ err:
+	if (params) free_pg_params(params);
+	if (delete) pkg_free(delete);
+	return -1;
 }
 
 
 /*
  * Update some rows in the specified table
- * _h: structure representing database connection
- * _k: key names
- * _o: operators
- * _v: values of the keys that must match
- * _uk: updated columns
- * _uv: updated values of the columns
- * _n: number of key=value pairs
- * _un: number of columns to update
+ * con  : structure representing database connection
+ * keys : key names
+ * ops  : operators
+ * vals : values of the keys that must match
+ * ucols: updated columns
+ * uvals: updated values of the columns
+ * n    : number of key=value pairs
+ * un   : number of columns to update
  */
-int db_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
-	      db_key_t* _uk, db_val_t* _uv, int _n, int _un)
+int db_update(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals,
+	      db_key_t* ucols, db_val_t* uvals, int n, int un)
 {
-	int off;
-	off = snprintf(sql_buf, SQL_BUF_LEN, "update %s set ", CON_TABLE(_h));
-	off += print_set(sql_buf + off, SQL_BUF_LEN - off, _uk, _uv, _un);
-	if (_n) {
-		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
-		off += print_where(sql_buf + off, SQL_BUF_LEN - off, _k,
-			_o, _v, _n);
-		*(sql_buf + off) = '\0';
+	int ret;
+	char* update;
+	struct pg_params* params;
+
+	if (!con || !ucols || !uvals || !un) {
+		LOG(L_ERR, "db_update: Invalid parameter value\n");
+		return -1;
 	}
 
-	if(begin_transaction(_h, sql_buf)) return(-1);
-	if (submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "db_update(): Error while updating\n");
-		return -2;
-	}
-	free_query(_h);
-	commit_transaction(_h);
-	return(0);
+	params = 0;
+	update = 0;
+
+	update = print_update(con, ucols, keys, ops, un, n);
+	if (!update) goto err;
+
+	params = new_pg_params(n + un);
+	if (!params) goto err;
+	if (params_add(params, con, uvals, un) < 0) goto err;
+	if (params_add(params, con, vals, n) < 0) goto err;
+
+	do {
+		ret = submit_query(0, con, update, params);
+		if (ret < 0) goto err;                       /* Unknown error, bail out */
+		if (ret > 0) {                               /* Disconnected, try to reconnect */
+			if (reconnect(con) < 0) goto err;    /* Failed to reconnect */
+			else continue;                       /* Try one more time (ret is > 0) */
+		}
+	} while(ret != 0);
+
+	free_pg_params(params);
+	pkg_free(update);
+	return 0;
+
+ err:
+	if (params) free_pg_params(params);
+	if (update) pkg_free(update);
+	return -1;
+}
+
+
+/*
+ * Release a result set from memory
+ */
+int db_free_result(db_con_t* con, db_res_t* res)
+{
+	free_result(res);
+	return 0;
 }

@@ -1,11 +1,11 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * POSTGRES module, portions of this code were templated using
- * the mysql module, thus it's similarity.
+ * Postgres module result related functions
  *
- *
- * Copyright (C) 2003 August.Net Services, LLC
+ * Portions Copyright (C) 2001-2003 FhG FOKUS
+ * Copyright (C) 2003 August.Net Services,, LLC
+ * Portions Copyright (C) iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -27,29 +27,31 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * ---
- *
- * History
- * -------
- * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
- *
  */
 
+#ifndef _RES_H
+#define _RES_H
 
-#ifndef DB_UTILS_H
-#define DB_UTILS_H
+#include <libpq-fe.h>
+#include "../../db/db_res.h"
+#include "../../db/db_con.h"
 
-#ifndef _XOPEN_SOURCE
-#define _XOPEN_SOURCE
-#endif
-#include <time.h>
+/*
+ * Create a new result structure and initialize it
+ */
+db_res_t* new_result(PGresult* pgres);
 
 
 /*
- * SQL URL parser
+ * Fill the structure with data from database
  */
-int parse_sql_url(char* _url, char** _user, char** _pass, 
-		  char** _host, char** _port, char** _db);
+int convert_result(db_res_t* res, db_con_t* con);
 
-#endif
+
+/*
+ * Release memory used by a result structure
+ */
+int free_result(db_res_t* res);
+
+
+#endif /* _RES_H */

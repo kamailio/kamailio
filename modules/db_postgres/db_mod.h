@@ -1,11 +1,11 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * POSTGRES module, portions of this code were templated using
- * the mysql module, thus it's similarity.
+ * Postgres module interface
  *
- *
+ * Portions Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2003 August.Net Services, LLC
+ * Portions Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -27,20 +27,14 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * ---
- *
- * History
- * -------
- * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
- *
  */
+#ifndef _DB_MOD_H
+#define _DB_MOD_H
 
+/* 2000-01-01 00:00:00 +0000 as the value of time_t in UTC */
+#define PG_EPOCH_TIME ((long long)946684800)
 
-#ifndef DEFS_H
-#define DEFS_H
+extern int connect_timeout;
+extern int reconnect_attempts;
 
-#define PARANOID
-#define SQL_BUF_LEN 65535
-
-#endif /* DEFS_H */
+#endif /* _DB_MOD_H */

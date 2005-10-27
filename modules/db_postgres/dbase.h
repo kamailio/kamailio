@@ -1,11 +1,11 @@
 /*
  * $Id$
  *
- * POSTGRES module, portions of this code were templated using
- * the mysql module, thus it's similarity.
+ * Postgres module core functions
  *
- *
+ * Portions Copyright (C) 2001-2005 FhG FOKUS
  * Copyright (C) 2003 August.Net Services, LLC
+ * Portions Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -27,18 +27,12 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * ---
- *
- * History
- * -------
- * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
- *
  */
 
 
-#ifndef DBASE_H
-#define DBASE_H
+#ifndef _DBASE_H
+#define _DBASE_H
+
 
 #include "../../db/db_con.h"
 #include "../../db/db_res.h"
@@ -50,72 +44,59 @@
 /*
  * Initialize database connection
  */
-db_con_t* db_init(const char* _sqlurl);
+db_con_t* db_init(const char* uri);
+
 
 /*
  * Close a database connection
  */
-void db_close(db_con_t* _h);
-
-/*
- * Return result of previous query
- */
-int get_result(db_con_t* _h, db_res_t** _r);
-
-/*
- * create a new result anchored on parent memory
- */
-db_res_t* new_result_pg(char *parent);
+void db_close(db_con_t* con);
 
 
 /*
  * Free all memory allocated by get_result
  */
-int db_free_query(db_con_t* _h, db_res_t* _r);
+int db_free_result(db_con_t* con, db_res_t* res);
 
 
 /*
  * Do a query
  */
-int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, db_key_t* _c, int _n, int _nc,
-	     db_key_t _o, db_res_t** _r);
+int db_query(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals, db_key_t* cols, int n, int nc,
+	     db_key_t order, db_res_t** res);
 
 
 /*
  * Raw SQL query
  */
-int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r);
+int db_raw_query(db_con_t* con, char* query, db_res_t** res);
 
 
 /*
  * Insert a row into table
  */
-int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+int db_insert(db_con_t* con, db_key_t* keys, db_val_t* vals, int n);
 
 
 /*
  * Delete a row from table
  */
-int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
+int db_delete(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals, int n);
 
 
 /*
  * Update a row in table
  */
-int db_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
-	      db_key_t* _uk, db_val_t* _uv, int _n, int _un);
+int db_update(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals,
+	      db_key_t* ucols, db_val_t* uvals, int n, int un);
+
 
 
 /*
  * Store name of table that will be used by
  * subsequent database functions
  */
-int use_table(db_con_t* _h, const char* _t);
+int use_table(db_con_t* con, const char* table);
 
-int val2str(db_val_t* _v, char* _s, int* _len);
 
-int free_result(db_res_t* _r);
-
-int convert_result(db_con_t* _h, db_res_t* _r);
-
-#endif /* DBASE_H */
+#endif /* _DBASE_H */

@@ -1,11 +1,11 @@
-/*
- * $Id$
+/* 
+ * $Id$ 
  *
- * POSTGRES module, portions of this code were templated using
- * the mysql module, thus it's similarity.
+ * Database connection related functions
  *
- *
+ * Portions Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2003 August.Net Services, LLC
+ * Portions Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -27,22 +27,14 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * ---
- *
- * History
- * -------
- * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
- *
  */
 
+
 #include <string.h>
+#include "../../db/db.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
-#include "../../db/db_con.h"
-#include "defs.h"
-#include "con_postgres.h"
-#include "aug_std.h"
+
 
 /*
  * Store name of table that will be used by
@@ -50,8 +42,11 @@
  */
 int use_table(db_con_t* _h, const char* _t)
 {
-	if(CON_TABLE(_h))
-		aug_free(CON_TABLE(_h));
-	CON_TABLE(_h) = aug_strdup((char *) _t, _h);
+	if ((!_h) || (!_t)) {
+		LOG(L_ERR, "use_table: Invalid parameter value\n");
+		return -1;
+	}
+
+	CON_TABLE(_h) = _t;
 	return 0;
 }
