@@ -22,6 +22,7 @@ lib/openser/modules/jabber.so
 lib/openser/modules/lcr.so
 lib/openser/modules/mangler.so
 lib/openser/modules/maxfwd.so
+lib/openser/modules/mediaproxy.so
 lib/openser/modules/msilo.so
 lib/openser/modules/mysql.so
 lib/openser/modules/nathelper.so
@@ -57,12 +58,14 @@ share/doc/openser/README.diversion
 share/doc/openser/README.domain
 share/doc/openser/README.enum
 share/doc/openser/README.exec
+share/doc/openser/README.flatstore
 share/doc/openser/README.gflags
 share/doc/openser/README.group
 share/doc/openser/README.jabber
 share/doc/openser/README.lcr
 share/doc/openser/README.mangler
 share/doc/openser/README.maxfwd
+share/doc/openser/README.mediaproxy
 share/doc/openser/README.msilo
 share/doc/openser/README.nathelper
 share/doc/openser/README.pa
@@ -76,6 +79,8 @@ share/doc/openser/README.sms
 share/doc/openser/README.speeddial
 share/doc/openser/README.textops
 share/doc/openser/README.tm
+share/doc/openser/README.uac
+share/doc/openser/README.uac_redirect
 share/doc/openser/README.uri
 share/doc/openser/README.uri_db
 share/doc/openser/README.usrloc
