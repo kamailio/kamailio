@@ -95,20 +95,23 @@ static void parse_uri(const str_t *uri, str_t *user, str_t *domain)
 {
 	char *a;
 	char *d;
-	char *s;
+	str_t s;
 	
 	str_clear(user);
 	str_clear(domain);
 	if (uri->len > 0) {
-		d = strchr(uri->s, ':');
-		if (d) s = d + 1;
-		else s = uri->s;
-		a = strchr(s, '@');
-		if (a) {
-			user->s = s;
-			user->len = a - s;
+		d = str_strchr(uri, ':');
+		if (d) {
+			s.s = d + 1;
+			s.len = uri->len - (s.s - uri->s);
 		}
-		domain->s = s + user->len;
+		else s = *uri;
+		a = str_strchr(&s, '@');
+		if (a) {
+			user->s = s.s;
+			user->len = a - s.s;
+		}
+		domain->s = s.s + user->len;
 		if (a) domain->s++;
 		domain->len = uri->len - (domain->s - uri->s);
 		
@@ -139,6 +142,10 @@ int is_rule_for_uri(cp_rule_t *rule, const str_t *uri)
 	i = id->ids;
 	while (i) {
 		parse_uri(&i->entity, &u_, &d_);
+/*		TRACE_LOG("comparing uris \'%.*s\' \'%.*s\' "
+				"domains \'%.*s\' \'%.*s\'\n", 
+				FMT_STR(user), FMT_STR(u_),
+				FMT_STR(domain), FMT_STR(d_));*/
 		if (str_case_equals(&user, &u_) == 0) {
 			if (str_nocase_equals(&domain, &d_) == 0) {
 /*				TRACE_LOG("id found\n");*/
@@ -150,6 +157,8 @@ int is_rule_for_uri(cp_rule_t *rule, const str_t *uri)
 	
 	d = id->domains;
 	while (d) {
+/*		TRACE_LOG("comparing domains \'%.*s\' \'%.*s\'\n",
+				FMT_STR(domain), FMT_STR(d->domain));*/
 		if (str_nocase_equals(&domain, &d->domain) == 0) ok = 1;
 		d = d->next;
 	}
@@ -194,6 +203,8 @@ int get_pres_rules_action(cp_ruleset_t *r, const str_t *wuri,
 	
 	rule = r->rules;
 	while (rule) {
+		TRACE_LOG("TRYING rule %.*s for uri %.*s\n", 
+					FMT_STR(rule->id), FMT_STR(*wuri));
 		if (is_rule_for_uri(rule, wuri)) {
 			TRACE_LOG("rule %.*s matches for uri %.*s\n", 
 					FMT_STR(rule->id), FMT_STR(*wuri));

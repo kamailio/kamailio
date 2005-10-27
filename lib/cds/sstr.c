@@ -187,3 +187,13 @@ void str_clear(str_t *s)
 	}
 }
 
+char *str_strchr(const str *s, char c)
+{
+	if (s) {
+		int i;
+		for (i = 0; i < s->len; i++)
+			if (s->s[i] == c) return s->s + i;
+	}
+	return NULL;
+}
+

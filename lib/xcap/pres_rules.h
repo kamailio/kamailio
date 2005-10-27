@@ -30,6 +30,8 @@
 #include <xcap/xcap_client.h>
 #include <xcap/common_policy.h>
 
+typedef cp_ruleset_t presence_rules_t;
+
 /* Type defining action for pres_rules */
 typedef enum {
 	sub_handling_block,
