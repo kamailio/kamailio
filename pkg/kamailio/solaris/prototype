@@ -30,6 +30,7 @@ f none lib/openser/modules/lcr.so 0755 bin bin
 f none lib/openser/modules/jabber.so 0755 bin bin
 f none lib/openser/modules/mangler.so 0755 bin bin
 f none lib/openser/modules/maxfwd.so 0755 bin bin
+f none lib/openser/modules/mediaproxy.so 0755 bin bin
 f none lib/openser/modules/msilo.so 0755 bin bin
 f none lib/openser/modules/mysql.so 0755 bin bin
 f none lib/openser/modules/nathelper.so 0755 bin bin
@@ -43,6 +44,8 @@ f none lib/openser/modules/sms.so 0755 bin bin
 f none lib/openser/modules/speeddial.so 0755 bin bin
 f none lib/openser/modules/textops.so 0755 bin bin
 f none lib/openser/modules/tm.so 0755 bin bin
+f none lib/openser/modules/uac.so 0755 bin bin
+f none lib/openser/modules/uac_redirect.so 0755 bin bin
 f none lib/openser/modules/uri.so 0755 bin bin
 f none lib/openser/modules/uri_db.so 0755 bin bin
 f none lib/openser/modules/usrloc.so 0755 bin bin
@@ -65,12 +68,14 @@ f none doc/openser/README.diversion  0644 bin bin
 f none doc/openser/README.domain  0644 bin bin
 f none doc/openser/README.enum    0644 bin bin
 f none doc/openser/README.exec 0644 bin bin
+f none doc/openser/README.flatstore 0644 bin bin
 f none doc/openser/README.gflags 0644 bin bin
 f none doc/openser/README.group 0644 bin bin
 f none doc/openser/README.jabber 0644 bin bin
 f none doc/openser/README.lcr 0644 bin bin
 f none doc/openser/README.mangler 0644 bin bin
 f none doc/openser/README.maxfwd 0644 bin bin
+f none doc/openser/README.mediaproxy 0644 bin bin
 f none doc/openser/README.msilo 0644 bin bin
 f none doc/openser/README.nathelper 0644 bin bin
 f none doc/openser/README.pdt 0644 bin bin
@@ -83,6 +88,8 @@ f none doc/openser/README.sms 0644 bin bin
 f none doc/openser/README.speeddial 0644 bin bin
 f none doc/openser/README.textops 0644 bin bin
 f none doc/openser/README.tm 0644 bin bin
+f none doc/openser/README.uac 0644 bin bin
+f none doc/openser/README.uac_redirect 0644 bin bin
 f none doc/openser/README.uri 0644 bin bin
 f none doc/openser/README.uri_db 0644 bin bin
 f none doc/openser/README.usrloc 0644 bin bin
