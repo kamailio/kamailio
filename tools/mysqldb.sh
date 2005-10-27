@@ -390,7 +390,7 @@ CREATE TABLE dbaliases (
   INDEX alias_user ($USERCOL, domain)
 ) $TABLE_TYPE;
 
-		  
+
 #
 # Table structure for table 'grp' -- group membership
 # table; used primarily for ACLs
@@ -539,7 +539,6 @@ CREATE TABLE subscriber (
   rpid varchar(128) default NULL,
   domn int(10) default NULL,
   uuid varchar(64) default NULL,
-  nickname varchar(64) NOT NULL default '',
   UNIQUE KEY phplib_id (phplib_id),
   PRIMARY KEY ($USERCOL, domain),
   KEY user_2 ($USERCOL)

@@ -723,7 +723,6 @@ CREATE TABLE subscriber (
   rpid varchar(128) default NULL,
   domn int default NULL,
   uuid varchar(64) default NULL,
-  nickname varchar(64) NOT NULL default '',
   UNIQUE (phplib_id),
   PRIMARY KEY ($USERCOL, domain)
 ) $TABLE_TYPE;
