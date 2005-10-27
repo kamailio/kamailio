@@ -71,7 +71,60 @@
 		in uac.h for more details. Who wants to see the transaction result 
 		may register for a callback.
 	</para>
+	<section id="branch-flags">
+		<title>Per-Branch flags</title>
+		<para>
+		First what is the idea with the branch concept: branch route is a 
+		route to be execute separately for each branch before being sent 
+		out - changes in that route should reflect only on that branch.
+		</para>
+		<para>
+		There are two types of flags in &ser; :
+		</para>
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>global</emphasis> flags - global because they are 
+				visible everywhere in the transaction (in all routes and in 
+				all sequential replies/request).
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>branch</emphasis> flags - flags that are visible only
+				from a specific branch - in all replies and routes connected 
+				to this branch.
+			</para>
+			</listitem>
+			</itemizedlist>
+		<para>
+		For example: I have a call parallel forking to GW and to a user. And I 
+		would like to know from which branch I will get the final negative 
+		reply (if so). I will set a branch route before relaying the calls 
+		(with the 2 branches). The branch route will be separately executed for 
+		each branch; in the branch going to GW (I can identified it by looking 
+		to RURI), I will set a branch flag. This flag will appear only in the 
+		onreply route run for replied from GW. It will be also be visible in 
+		failure route if the final elected reply belongs to the GW branch. 
+		This flags will not be visible in the other branch (in routes executing 
+		replies from the other branch).
+		</para>
+		<para>
+		For how to define branch flags and use via script, see 
+		<xref linkend="branch-flag-mask"> and <xref linkend="branch-route">.
+		</para>
+		<para>
+		Also, modules may set branch flags before transaction creation 
+		(for the moment this feature is not available in script). The REGISTRAR 
+		module is the first to use this feature. If the 
+		<quote>use_branch_flags</quote> param is enabled, the NAT flag will be 
+		push in branch flags instead in message flags - IMPORTANT: be sure that 
+		NAT flag is in the range of the branch flags ad defined in TM. Using 
+		this, NAT traversal per branch may be implemented.
+		</para>
 	</section>
+	</section>
+
 	<section>
 	<title>Dependencies</title>
 	<section>
@@ -102,6 +155,7 @@
 		</para>
 	</section>
 	</section>
+
 	<section>
 	<title>Exported Parameters</title>
 	<section>
@@ -484,7 +538,7 @@ modparam("tm", "tw_append",
 		</example>
 	</section>
 
-	<section>
+	<section id="branch-flag-mask">
 		<title><varname>branch_flag_mask</varname> (string)</title>
 		<para>
 		Defined which flags shall be as branch flags. The branch flags will be
@@ -522,8 +576,66 @@ modparam("tm", "branch_flag_mask", "4278190080")
 	<title>Exported Functions</title>
 	<section>
 		<title>
+		<function moreinfo="none">t_newtran()</function>
+		</title>
+		<para>
+		Creates a new transaction, returns a negative value on error. This is 
+		the only way a script can add a new transaction in an atomic way. 
+		Typically, it is used to deploy a &uas;.
+		</para>
+		<warning>
+			<para>
+			NOTE that the changes on the request that are made after this 
+			function call will not be saved into transaction!!!
+			</para>
+		</warning>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>t_newtran</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (t_newtran()) { 
+	log("UAS logic"); 
+	t_reply("999","hello"); 
+} else sl_reply_error();
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_lookup_request()</function>
+		</title>
+		<para>
+		Checks if a transaction exists. Returns a positive value if so, 
+		negative otherwise. Most likely you will not want to use it, as a 
+		typical application of a looku-up is to introduce a new transaction if 
+		none was found. However this is safely (atomically) done using 
+		<function>t_newtran</function>.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>t_lookup_request</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (t_lookup_request()) {
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
 		<function moreinfo="none">t_relay_to_udp(ip, port)</function>,
-		<function moreinfo="none">t_relay_to_tcp(ip, port)</function>
+		<function moreinfo="none">t_relay_to_tcp(ip, port)</function>,
+		<function moreinfo="none">t_relay_to_tls(ip, port)</function>
 		</title>
 		<para>
 		Relay a message statefully to a fixed destination. This along with 
@@ -584,100 +696,48 @@ if (!t_relay()) { sl_reply_error(); break; };
 
 	<section>
 		<title>
-		<function moreinfo="none">t_on_negative(reply_route)</function>
+		<function moreinfo="none">t_forward_nonack(ip, port)</function>
+		<function moreinfo="none">t_forward_nonack_udp(ip, port)</function>
+		<function moreinfo="none">t_forward_nonack_tcp(ip, port)</function>
+		<function moreinfo="none">t_forward_nonack_tls(ip, port)</function>
+		<function moreinfo="none">t_forward_nonack_uri()</function>
 		</title>
 		<para>
-		Sets reply routing block, to which control is passed after a transaction completed
-		with a negative result but before sending a final reply. In the referred block, you
-		can either start a new branch (good for services such as forward_on_no_reply) or
-		send a final reply on your own (good for example for message silo, which received a
-		negative reply from upstream and wants to tell upstream <quote>202 I will take care
-		of it</quote>). Note that the set of command which are usable within reply_routes
-		is strictly limited to rewriting &uri;, initiating new branches, logging, and
-		sending stateful replies (<function>t_reply</function>). Any other commands may
-		result in unpredictable behavior and possible server failure. Note that whenever
-		reply_route is entered, uri is reset to value which it had on relaying. If it
-		temporarily changed during a reply_route processing, subsequent reply_route will
-		ignore the changed value and use again the original one.
+		Similar to t_relay() but it expects the transaction to be aleady
+		created - this why it cannot handle ACK (which are statelessly
+		forwarded). It should be used along with t_newtran().
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>reply_route</emphasis> - Reply route block to be called.
+			<para><emphasis>ip</emphasis> - IP address where the message 
+			should be sent.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>port</emphasis> - Port number.
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		t_forward_nonack_uri() will determin the detination address 
+		(proto:IP:port) based on the RURI.
+		</para>
+		<para>
+		This functions can be used from REQUEST_ROUTE.
+		</para>
 		<example>
-		<title><function>t_on_negative</function> usage</title>
+		<title><function>t_forward_nonack_xxx</function> usage</title>
 		<programlisting format="linespecific">
 ...
-route { 
-	t_on_negative("1"); 
-	t_relay(); 
-} 
-
-reply_route[1] {
-	revert_uri(); 
-	setuser("voicemail"); 
-	append_branch(); 
-}
+t_forward_nonack("1.2.3.4", "5060");
+t_forward_nonack_udp("1.2.3.4", "5060"); # force UDP proto
+t_forward_nonack_tcp("1.2.3.4", "5060"); # force TCP proto
+t_forward_nonack_tls("1.2.3.4", "5060"); # force TLS proto
+t_forward_nonack_uri();
 ...
 </programlisting>
 		</example>
-		<para>
-		See test/onr.cfg for a more complex example of combination
-		of serial with parallel forking.
-		</para>
-	</section>
-
-	<section>
-		<title>
-		<function moreinfo="none">append_branch()</function>
-		</title>
-		<para>
-		Similarly to <function>t_fork_to</function>, it extends destination set by a new
-		entry. The difference is that current &uri; is taken as new entry.
-		</para>
-		<example>
-		<title><function>append_branch</function> usage</title>
-		<programlisting format="linespecific">
-...
-set_user("john"); 
-t_fork(); 
-set_user("alice");
-t_fork(); 
-t_relay();
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title>
-		<function moreinfo="none">t_newtran()</function>
-		</title>
-		<para>
-		Creates a new transaction, returns a negative value on error. This is the only way a
-		script can add a new transaction in an atomic way. Typically, it is used to deploy a
-		&uas;.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE.
-		</para>
-		<example>
-		<title><function>t_newtran</function> usage</title>
-		<programlisting format="linespecific">
-...
-if (t_newtran()) { 
-	log("UAS logic"); 
-	t_reply("999","hello"); 
-} else sl_reply_error();
-...
-</programlisting>
-		</example>
-		<para>
-		See test/uas.cfg for more examples.
-		</para>
 	</section>
 
 	<section>
@@ -714,31 +774,6 @@ t_reply("404", "Not found");
 
 	<section>
 		<title>
-		<function moreinfo="none">t_lookup_request()</function>
-		</title>
-		<para>
-		Checks if a transaction exists. Returns a positive value if so, negative otherwise.
-		Most likely you will not want to use it, as a typical application of a looku-up is
-		to introduce a new transaction if none was found. However this is safely
-		(atomically) done using <function>t_newtran</function>.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE.
-		</para>
-		<example>
-		<title><function>t_lookup_request</function> usage</title>
-		<programlisting format="linespecific">
-...
-if (t_lookup_request()) {
-	...
-};
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title>
 		<function moreinfo="none">t_retransmit_reply()</function>
 		</title>
 		<para>
@@ -752,71 +787,6 @@ if (t_lookup_request()) {
 		<programlisting format="linespecific">
 ...
 t_retransmit_reply();
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title>
-		<function moreinfo="none">t_release()</function>
-		</title>
-		<para>
-		Remove transaction from memory (it will be first put on a wait timer to absorb
-		delayed messages).
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE.
-		</para>
-		<example>
-		<title><function>t_release</function> usage</title>
-		<programlisting format="linespecific">
-...
-t_release();
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title>
-		<function moreinfo="none">t_forward_nonack(ip, port)</function>
-		<function moreinfo="none">t_forward_nonack_udp(ip, port)</function>
-		<function moreinfo="none">t_forward_nonack_tcp(ip, port)</function>
-		<function moreinfo="none">t_forward_nonack_uri()</function>
-		</title>
-		<para>
-		Similar to t_relay() but it expects the transaction to be aleady
-		created - this why it cannot handle ACK (which are statelessly
-		forwarded). It should be used along with t_newtran().
-		</para>
-		<para>Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-		<listitem>
-			<para><emphasis>ip</emphasis> - IP address where the message 
-			should be sent.
-			</para>
-		</listitem>
-		<listitem>
-			<para><emphasis>port</emphasis> - Port number.
-			</para>
-		</listitem>
-		</itemizedlist>
-		<para>
-		t_forward_nonack_uri() will determin the detination address 
-		(proto:IP:port) based on the RURI.
-		</para>
-		<para>
-		This functions can be used from REQUEST_ROUTE.
-		</para>
-		<example>
-		<title><function>t_forward_nonack_xxx</function> usage</title>
-		<programlisting format="linespecific">
-...
-t_forward_nonack("1.2.3.4", "5060");
-t_forward_nonack_udp("1.2.3.4", "5060"); # force UDP proto
-t_forward_nonack_tcp("1.2.3.4", "5060"); # force TCP proto
-t_forward_nonack_uri();
 ...
 </programlisting>
 		</example>
@@ -855,6 +825,27 @@ t_forward_nonack_uri();
 t_replicate("1.2.3.4", "5060");
 t_replicate_udp("1.2.3.4", "5060"); # force UDP proto
 t_replicate_tcp("1.2.3.4", "5060"); # force TCP proto
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_release()</function>
+		</title>
+		<para>
+		Remove transaction from memory (it will be first put on a wait timer to absorb
+		delayed messages).
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>t_release</function> usage</title>
+		<programlisting format="linespecific">
+...
+t_release();
 ...
 </programlisting>
 		</example>
@@ -1043,8 +1034,161 @@ if (t_was_cancelled()) {
 		</example>
 	</section>
 
+	<section>
+		<title>
+		<function moreinfo="none">t_on_failure(failure_route)</function>
+		</title>
+		<para>
+		Sets reply routing block, to which control is passed after a 
+		transaction completed with a negative result but before sending a 
+		final reply. In the referred block, you can either start a new branch 
+		(good for services such as forward_on_no_reply) or send a final reply 
+		on your own (good for example for message silo, which received a 
+		negative reply from upstream and wants to tell upstream <quote>202 I 
+		will take care of it</quote>).
+		</para>
+		<para>
+		As not all functions are available from failure route, please check 
+		the documentation for each function to see the permissions.
+		Any other commands may result in unpredictable behavior and 
+		possible server failure.
+		</para>
+		<para>
+		Note that whenever failure_route is entered, RURI is set to value 
+		of the winning branch.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>failure_route</emphasis> - Reply route block to be 
+			called.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>t_on_failure</function> usage</title>
+		<programlisting format="linespecific">
+...
+route { 
+	t_on_failure("1"); 
+	t_relay();
+} 
 
+failure_route[1] {
+	seturi("sip:user@voicemail");
+	append_branch();
+	t_relay();
+}
+...
+</programlisting>
+		</example>
+	</section>
 
+	<section>
+		<title>
+		<function moreinfo="none">t_on_reply(reply_route)</function>
+		</title>
+		<para>
+		Sets reply routing block, to which control is passed each time a reply
+		(provisional or final) for the transaction is received. 
+		The route is not called for local generated replies! In the referred 
+		block, you can inspect the reply and perform text operations on it.
+		</para>
+		<para>
+		As not all functions are available from this type of route, please 
+		check  the documentation for each function to see the permissions.
+		Any other commands may result in unpredictable behavior and 
+		possible server failure.
+		</para>
+		<para>
+		If the processed reply is provisionla reply (1xx code), by calling
+		the drop() function (exported by core), the execution of the route
+		will end and the reply will not be forwarded further.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>reply_route</emphasis> - Reply route block to be 
+			called.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>t_on_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+route { 
+	t_on_reply("1"); 
+	t_relay();
+} 
+
+onreply_route[1] {
+	if (t_check_status("1[0-9][0-9]")) {
+		setflag(1);
+		log("provisional reply received\n");
+		if (t_check_status("183"))
+			drop;
+	}
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="branch-route">
+		<title>
+		<function moreinfo="none">t_on_branch(branch_route)</function>
+		</title>
+		<para>
+		Sets a branch route to be execute separately for each branch of the
+		transaction before being sent out - changes in that route should 
+		reflect only on that branch.
+		</para>
+		<para>
+		As not all functions are available from this type of route, please 
+		check  the documentation for each function to see the permissions.
+		Any other commands may result in unpredictable behavior and 
+		possible server failure.
+		</para>
+		<para>
+		The per-branch flags which are modified in the branch route will be
+		visible only in the replies related to that branch.
+		See <xref linkend="branch-flag-mask"> also.
+		</para>
+		<para>
+		By calling the drop() function (exported by core), the execution of 
+		the branch route will end and the branch will not be forwarded further.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>branch_route</emphasis> - Branch route block to be 
+			called.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>t_on_branch</function> usage</title>
+		<programlisting format="linespecific">
+...
+route { 
+	t_on_reply("1"); 
+	t_relay();
+} 
+
+branch_route[1] {
+	if (uri=~"bad_uri") {
+		xlog("dropping branch $ru \n");
+		drop;
+	}
+	if (uri=~"GW_uri") {
+		append_rpid();
+	}
+}
+...
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 </chapter>

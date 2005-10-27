@@ -94,13 +94,13 @@ modparam("uri_radius", "service_type", 11)
 		<title>
 		<function moreinfo="none">radius_does_uri_exist()</function>
 		</title>
-	    <para>
+		<para>
 		Checks from Radius if user@host in Request-&uri; is a
 		local user. Can be used to decide if 404 or 480 should
 		be returned after lookup has failed.   Adds SIP-AVP
 		reply items, that must have a string value of form
 		"name:value", as AVPs.
-	    </para>
+		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
 		</para>

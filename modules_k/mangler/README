@@ -79,9 +79,9 @@ Chapter 1. User's Guide
    Warning
 
    First char of this field must be set to a value which is not
-   used inside username,password or other fields of
-   contact.Otherwise it is possible for the decoding step to
-   fail/produce wrong results.
+   used inside username,password or other fields of contact.
+   Otherwise it is possible for the decoding step to fail/produce
+   wrong results.
 
    Default value is "*". 
 
@@ -157,8 +157,8 @@ sdp_mangle_port("-12000");
    Meaning of the parameters is as follows:
 
      * encoding_prefix - Something to allow us to determine that
-       a contact is encoded publicip--a routable IP,most probably
-       you should put your external IP of your NAT box.
+       a contact is encoded publicip--a routable IP, most
+       probably you should put your external IP of your NAT box.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 

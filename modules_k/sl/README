@@ -50,11 +50,11 @@ Chapter 1. User's Guide
    ACKs are absorbed.
 
    To speed up the filtering process, the module uses a timeout
-   mechanism. When a reply is sent, a timer us set. As time as
-   the timer is valid, The incoming ACK requests will be checked
-   using TO tag value Once the timer expires, all the ACK are let
-   through - a long time passed till it sent a reply, so it does
-   not expect any ACK that have to be blocked.
+   mechanism. When a reply is sent, a timer is set. As time as
+   the timeout didn't hit, the incoming ACK requests will be
+   checked using TO tag value. Once the timer expires, all the
+   ACK are let through - a long time passed till it sent a reply,
+   so it does not expect any ACK that have to be blocked.
 
    The ACK filtering may fail in some rare cases. If you think
    these matter to you, better use stateful processing (tm

@@ -98,7 +98,8 @@ Chapter 1. User's Guide
 
    Example 1-1. Set db_url parameter
 ...
-modparam("speeddial", "db_url", "mysql://ser:xxx@localhost/ser")
+modparam("speeddial", "db_url", "mysql://openser:xxx@localhost/openser"
+)
 ...
      _________________________________________________________
 
@@ -212,7 +213,7 @@ modparam("speeddial", "use_domain", 1)
    Example 1-9. sd_lookup usage
 ...
 if(uri=~"sip:[0-9]{2}@.*")
-    sd_lookup("speeddial");
+        sd_lookup("speeddial");
 ...
      _________________________________________________________
 

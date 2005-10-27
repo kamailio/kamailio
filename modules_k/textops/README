@@ -110,7 +110,7 @@ From: medabeda
 
    Example 1-1. search usage
 ...
-if ( search("[Ss][Ee][Rr]" ) { /*....*/ };
+if ( search("[Ss][Ii][Pp]" ) { /*....*/ };
 ...
      _________________________________________________________
 
@@ -128,7 +128,7 @@ if ( search("[Ss][Ee][Rr]" ) { /*....*/ };
 
    Example 1-2. search_append usage
 ...
-search_append("[Ss]er", " blabla");
+search_append("[Oo]pen[Ss]er", " SIP Proxy");
 ...
      _________________________________________________________
 
@@ -146,7 +146,7 @@ search_append("[Ss]er", " blabla");
 
    Example 1-3. replace usage
 ...
-replace("ser", "Sip Express Router");
+replace("openser", "OpenSER SIP Proxy");
 ...
      _________________________________________________________
 
@@ -164,7 +164,7 @@ replace("ser", "Sip Express Router");
 
    Example 1-4. replace_all usage
 ...
-replace_all("ser", "Sip Express Router");
+replace_all("openser", "OpenSER SIP Proxy");
 ...
      _________________________________________________________
 
@@ -320,12 +320,12 @@ append_urihf("CC-Diversion: ", "\r\n");
 
    Note
 
-   Takes header field names "as is" and doesn't distinguish
-   compact names.
+   The function is also able to distinguish the compact names.
+   For exmaple "From" will match with "f"
 
    Meaning of the parameters is as follows:
 
-     * hf_name - Header field name.
+     * hf_name - Header field name.(long or compact form)
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
@@ -402,7 +402,7 @@ if(is_method("OPTION|UPDATE"))
 
    Search functions are applied to the original request, i.e.,
    they ignore all changes resulting from message processing in
-   OPENSER script.
+   OpenSER script.
      _________________________________________________________
 
 Chapter 2. Developer's Guide

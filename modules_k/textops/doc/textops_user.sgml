@@ -30,6 +30,7 @@ From: medabeda
 </programlisting>
 	</section>
 	</section>
+
 	<section>
 	<title>Dependencies</title>
 	<section>
@@ -79,13 +80,14 @@ From: medabeda
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>search</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if ( search("[Ss][Ee][Rr]" ) { /*....*/ };
+if ( search("[Ss][Ii][Pp]" ) { /*....*/ };
 ...
 </programlisting>
 		</example>
@@ -110,13 +112,14 @@ if ( search("[Ss][Ee][Rr]" ) { /*....*/ };
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>search_append</function> usage</title>
 		<programlisting format="linespecific">
 ...
-search_append("[Ss]er", " blabla");
+search_append("[Oo]pen[Ss]er", " SIP Proxy");
 ...
 </programlisting>
 		</example>
@@ -141,13 +144,14 @@ search_append("[Ss]er", " blabla");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>replace</function> usage</title>
 		<programlisting format="linespecific">
 ...
-replace("ser", "Sip Express Router");
+replace("openser", "OpenSER SIP Proxy");
 ...
 </programlisting>
 		</example>
@@ -172,13 +176,14 @@ replace("ser", "Sip Express Router");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>replace_all</function> usage</title>
 		<programlisting format="linespecific">
 ...
-replace_all("ser", "Sip Express Router");
+replace_all("openser", "OpenSER SIP Proxy");
 ...
 </programlisting>
 		</example>
@@ -210,7 +215,8 @@ replace_all("ser", "Sip Express Router");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>subst</function> usage</title>
@@ -360,7 +366,8 @@ append_to_reply("Foo: bar\r\n");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>append_hf</function> usage</title>
@@ -377,21 +384,25 @@ append_hf("P-hint: VOICEMAIL\r\n");
 		<function moreinfo="none">append_urihf(prefix, suffix)</function>
 		</title>
 		<para>
-		Append header field name with original <acronym>Request-URI</acronym> in middle.
+		Append header field name with original <acronym>Request-URI</acronym> 
+		in middle.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>prefix</emphasis> - string (usually at least header field name).
+			<para><emphasis>prefix</emphasis> - string (usually at least 
+			header field name).
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>suffix</emphasis> - string (usually at least line terminator).
+			<para><emphasis>suffix</emphasis> - string (usually at least 
+			line terminator).
 			</para>
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, 
+		BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>append_urihf</function> usage</title>
@@ -412,19 +423,21 @@ append_urihf("CC-Diversion: ", "\r\n");
 		</para>
 		<note>
 		<para>
-			Takes header field names <quote>as is</quote> and doesn't distinguish compact
-			names.
+			The function is also able to distinguish the compact names. For
+			exmaple <quote>From</quote> will match with <quote>f</quote>
 		</para>
 		</note>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>hf_name</emphasis> - Header field name.
+			<para><emphasis>hf_name</emphasis> - Header field name.(long or 
+			compact form)
 			</para>
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>is_present_hf</function> usage</title>
@@ -478,7 +491,8 @@ if (is_present_hf("From")) log(1, "From HF Present");
 		Return true if a header was succesfully appended.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, 
+		BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>append_time</function> usage</title>
@@ -521,7 +535,8 @@ append_time();
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE.
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE.
 		</para>
 		<example>
 		<title><function>is_method</function> usage</title>
@@ -546,7 +561,7 @@ if(is_method("OPTION|UPDATE"))
 		<para>
 			Search functions are applied to the original request,
 			i.e., they ignore all changes resulting from message
-			processing in OPENSER script.
+			processing in &ser; script.
 		</para>
 	</section>
 </chapter>

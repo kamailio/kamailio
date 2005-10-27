@@ -23,8 +23,8 @@ Ramona-Elena Modroiu
 
         1.3. Exported Parameters
 
-              1.3.1. from_store_param (string)
-              1.3.2. from_restore_mode (integer)
+              1.3.1. rr_store_param (string)
+              1.3.2. from_restore_mode (string)
               1.3.3. credential (string)
 
         1.4. Exported Functions
@@ -38,7 +38,7 @@ Ramona-Elena Modroiu
    3. Frequently Asked Questions
 
    List of Examples
-   1-1. Set from_store_param parameter
+   1-1. Set rr_store_param parameter
    1-2. Set from_restore_mode parameter
    1-3. Set credential parameter
    1-4. uac_replace_from usage
@@ -69,6 +69,8 @@ Chapter 1. User's Guide
    The following modules must be loaded before this module:
 
      * TM - Transaction Module
+     * RR - Record-Route Module, but only if restore mode for
+       FROM URI is set to "auto".
      _________________________________________________________
 
 1.2.2. External Libraries or Applications
@@ -81,35 +83,36 @@ Chapter 1. User's Guide
 
 1.3. Exported Parameters
 
-1.3.1. from_store_param (string)
+1.3.1. rr_store_param (string)
 
-   Name of FROM header parameter that will be used to store
-   (encoded) the original FROM URI.
+   Name of Record-Route header parameter that will be used to
+   store (encoded) the original FROM URI.
 
    This parameter is optional, it's default value being "vsf". 
 
-   Example 1-1. Set from_store_param parameter
+   Example 1-1. Set rr_store_param parameter
 ...
-modparam("uac","from_store_param","my_param")
+modparam("uac","rr_store_param","my_param")
 ...
      _________________________________________________________
 
-1.3.2. from_restore_mode (integer)
+1.3.2. from_restore_mode (string)
 
    There are 3 mode of restoring the original FROM URI:
 
-     * 0 - NO RESTORE - no information about original URI is
-       stored.
-     * 1 - AUTO RESTORE - all sequential request will be
+     * "none" - no information about original URI is stored;
+       restoretion is not possible.
+     * "manual" - all following replies will be restored, but not
+       also the sequential requests - this must be manually
+       updated based on original URI.
+     * "auto" - all sequential requests and replies will be
        automatically updated based on stored original URI.
-     * 2 - MANUAL RESTORE - all sequential requests/replies must
-       be manually updated based on original URI.
 
-   This parameter is optional, it's default value being 0. 
+   This parameter is optional, it's default value being "auto". 
 
    Example 1-2. Set from_restore_mode parameter 
 ...
-modparam("uac","from_restore_mode","1")
+modparam("uac","from_restore_mode","none")
 ...
      _________________________________________________________
 
@@ -138,10 +141,14 @@ modparam("uac","credential","username:domain:password")
 
    Example 1-4. uac_replace_from usage
 ...
+# replace both display and uri
 uac_replace_from("$avp(s:display)","$avp(s:uri)");
-uac_replace_from("batman","sip:batman@gotham.org");
-uac_replace_from("","sip:robin@gotham.org");
+# replace only display and do not touch uri
 uac_replace_from("batman","");
+# remove display and replace uri
+uac_replace_from("","sip:robin@gotham.org");
+# remove display and do not touch uri
+uac_replace_from("","");
 ...
      _________________________________________________________
 

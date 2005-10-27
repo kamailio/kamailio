@@ -33,40 +33,40 @@
 		</itemizedlist>
 	</para>
 	<para>
-   Gateway selection is based on caller's RPID URI (if available in
-   caller's RPID AVP after authentication) or From URI and user part of
-   Request-URI (telephone number).  A gateway matches a request if user
-   part of Request-URI and "From" URI match the prefix and From pattern
-   of the gateway.  Matching gateways are then ordered for forwarding
-   purpose (1) according to longest user part match, (2) according to
-   gateway's priority, and (3) randomly.
+	Gateway selection is based on caller's RPID URI (if available in
+	caller's RPID AVP after authentication) or From URI and user part of
+	Request-URI (telephone number).  A gateway matches a request if user
+	part of Request-URI and "From" URI match the prefix and From pattern
+	of the gateway.  Matching gateways are then ordered for forwarding
+	purpose (1) according to longest user part match, (2) according to
+	gateway's priority, and (3) randomly.
 	</para>
 	<para>
-		Each gateway belongs to a gateway group either alone or among other
-		gateways.  All gateways in a group share the same priority.
+	Each gateway belongs to a gateway group either alone or among other
+	gateways.  All gateways in a group share the same priority.
 	</para>
-        <para>
-                Gateway and routing information is kept in two tables:  gw and lcr.
-        </para>
 	<para>
-                When a gateway is selected, Request-URI is rewritten with information
-                from gw table: URI scheme, prefix, IP address, port, and transport
-                protocol.  Valid URI scheme values are NULL = sip, 1 = sip and 2 =
-                sips.  Prefix is appended in front of Request-URI user part.
-                Currently valid transport protocol values are NULL = none, 1 = udp, 2
-                = tcp, and 3 = tls.
+	Gateway and routing information is kept in two tables: gw and lcr.
 	</para>
-        <para>
-                Table lcr contains prefix of user part of Request-URI, From URI,
-                gateway group id, and priority.  From URI can contain special
-                characters % and _ matching any number of any characters and any one
-                character, respectively.  
-        </para>
-        <para>
-                In addition to gw and lcr tables there is third table gw_grp that is
-                used for administrative purposes only to associate names with gateway
-                group ids.
-        </para>
+	<para>
+	When a gateway is selected, Request-URI is rewritten with information
+	from gw table: URI scheme, prefix, IP address, port, and transport
+	protocol.  Valid URI scheme values are NULL = sip, 1 = sip and 2 =
+	sips.  Prefix is appended in front of Request-URI user part.
+	Currently valid transport protocol values are NULL = none, 1 = udp, 2
+	= tcp, and 3 = tls.
+	</para>
+	<para>
+	Table lcr contains prefix of user part of Request-URI, From URI,
+	gateway group id, and priority.  From URI can contain special
+	characters % and _ matching any number of any characters and any one
+	character, respectively.  
+	</para>
+	<para>
+	In addition to gw and lcr tables there is third table gw_grp that is
+	used for administrative purposes only to associate names with gateway
+	group ids.
+	</para>
 	</section>
 
 	<section>
@@ -83,7 +83,8 @@
 		</listitem>
 		<listitem>
 		<para>
-			<emphasis>A database module</emphasis>.
+			<emphasis>A database module like mysql, postgres or 
+			dbtext</emphasis>.
 		</para>
 		</listitem>
 		</itemizedlist>
@@ -114,7 +115,8 @@
 		</para>
 		<para>
 		<emphasis>
-			Default value is system default.
+			Default value is 
+			<quote>mysql://openserro:openserro@localhost/openser</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -202,6 +204,49 @@ modparam("lcr","ip_addr_column","ip_addr")
 		<programlisting format="linespecific">
 ...
 modparam("lcr","port_column","port")
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>uri_scheme_column</varname> (string)</title>
+		<para>
+		Name of the column holding the uri scheme of the gateway.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>uri_scheme</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>uri_scheme_column</varname> module 
+		parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","uri_scheme_column","scheme")
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>transport_column</varname> (string)</title>
+		<para>
+		Name of the column holding the transport type to be used for 
+		the gateway.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>transport</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>transport_column</varname> module 
+		parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","transport_column","transport")
 ...
 </programlisting>
 		</example>
@@ -443,6 +488,26 @@ modparam("lcr","fr_inv_timer_next",30)
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title><varname>rpid_avp</varname> (string)</title>
+		<para>
+		Sets the string name of the AVP containing the RPID.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>rpid</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>rpid_avp</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","rpid_avp","rpid")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
@@ -452,9 +517,9 @@ modparam("lcr","fr_inv_timer_next",30)
 		<function moreinfo="none">load_gws()</function>
 		</title>
 		<para>
-   Loads URI schemes, addresses, ports, and transports of gateways
-   that match user part of Request-URI to gw_uri_avp AVPs (see Overview
-   section).  Returns 1 or -1 depending on success.
+		Loads URI schemes, addresses, ports, and transports of gateways
+		that match user part of Request-URI to gw_uri_avp AVPs (see Overview
+		section).  Returns 1 or -1 depending on success.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -464,8 +529,8 @@ modparam("lcr","fr_inv_timer_next",30)
 		<programlisting format="linespecific">
 ...
 if (!load_gws()) {
-    sl_send_reply("500", "Server Internal Error - Cannot load gateways");
-    break;
+	sl_send_reply("500", "Server Internal Error - Cannot load gateways");
+	break;
 };
 ...
 </programlisting>
@@ -476,24 +541,24 @@ if (!load_gws()) {
 		<function moreinfo="none">next_gw()</function>
 		</title>	
 		<para>
-   If called from a route block, replaces URI scheme, host, port, and
-   transport of Request-URI by the values stored in first gw_uri_avp AVP
-   and destroys that AVP.  Saves user part of Request-URI into
-   ruri_user_avp AVP for use in subsequent next_gw() calls.
+		If called from a route block, replaces URI scheme, host, port, and
+		transport of Request-URI by the values stored in first gw_uri_avp AVP
+		and destroys that AVP.  Saves user part of Request-URI into
+		ruri_user_avp AVP for use in subsequent next_gw() calls.
 		</para>
 		<para>
-   If called from a failure route block, appends a new branch to
-   request, where  URI scheme, host, port, and transport of Request-URI
-   is replaced by the values stored in the first gw_uri_avp AVP and
-   destroys that AVP.  Request-URI user is taken from ruri_user_avp
-   AVP.
+		If called from a failure route block, appends a new branch to
+		request, where  URI scheme, host, port, and transport of Request-URI
+		is replaced by the values stored in the first gw_uri_avp AVP and
+		destroys that AVP.  Request-URI user is taken from ruri_user_avp
+		AVP.
 		</para>
 		<para>
-			Returns 1 on success and -1 if there were no gateways left or if an
-			error occurred (see syslog).
+		Returns 1 on success and -1 if there were no gateways left or if an
+		error occurred (see syslog).
 		</para>
 		<para>
-			Must be preceded by successful load_gws() call.
+		Must be preceded by successful load_gws() call.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -503,8 +568,8 @@ if (!load_gws()) {
 		<programlisting format="linespecific">
 ...
 if (!next_gw()) {
-    sl_send_reply("503", "Service not available - No gateways");
-    break;
+	sl_send_reply("503", "Service not available - No gateways");
+	break;
 };
 ...
 </programlisting>
@@ -515,8 +580,8 @@ if (!next_gw()) {
 		<programlisting format="linespecific">
 ...
 if (!next_gw()) {
-    t_reply("503", "Service not available - No more gateways");
-    break;
+	t_reply("503", "Service not available - No more gateways");
+	break;
 };
 ...
 </programlisting>
@@ -530,15 +595,16 @@ if (!next_gw()) {
 			Checks if request came from IP address of a gateway.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE.
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		ONREPLY_ROUTE.
 		</para>
 		<example>
 		<title><function>from_gw</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if (from_gw()) {
-    ...
-    break;
+	...
+	break;
 };
 ...
 </programlisting>
@@ -559,8 +625,8 @@ if (from_gw()) {
 		<programlisting format = "linespecific">
 ...
 if (to_gw()) {
-    ...
-    break;
+	...
+	break;
 };
 ...
 </programlisting>
@@ -571,12 +637,12 @@ if (to_gw()) {
 		<function moreinfo="none">load_contacts()</function>
 		</title>
 		<para>
-			Loads contacts in destination set in increasing qvalue order as
-			values of lcr_contact AVP.  If all contacts in the destination set
-			have the same qvalue, load_contacts() does not do anything thus
-			minimizing performance impact of sequential forking capability when
-			it is not needed.  Returns 1 if loading of contacts succeeded or
-			there was nothing to do.  Returns -1 on error (see syslog).
+		Loads contacts in destination set in increasing qvalue order as
+		values of lcr_contact AVP.  If all contacts in the destination set
+		have the same qvalue, load_contacts() does not do anything thus
+		minimizing performance impact of sequential forking capability when
+		it is not needed.  Returns 1 if loading of contacts succeeded or
+		there was nothing to do.  Returns -1 on error (see syslog).
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -586,8 +652,8 @@ if (to_gw()) {
 		<programlisting format = "linespecific">
 ...
 if (!load_contacts()) {
-    sl_send_reply("500", "Server Internal Error - Cannot load contacts");
-    break;
+	sl_send_reply("500", "Server Internal Error - Cannot load contacts");
+	break;
 };
 ...
 </programlisting>
@@ -598,21 +664,21 @@ if (!load_contacts()) {
 		<function moreinfo="none">next_contacts()</function>
 		</title>
 		<para>
-			If called from a route block, replaces Request-URI with the first
-			lcr_contact AVP value, adds the remaining lcr_contact AVP values 
-			with the same qvalue as branches, and destroys those AVPs. It does
-			nothing if there are no lcr_contact AVPs.  Returns 1 if there were 
-			no errors and -1 if an error occurred (see syslog).
+		If called from a route block, replaces Request-URI with the first
+		lcr_contact AVP value, adds the remaining lcr_contact AVP values 
+		with the same qvalue as branches, and destroys those AVPs. It does
+		nothing if there are no lcr_contact AVPs.  Returns 1 if there were 
+		no errors and -1 if an error occurred (see syslog).
 		</para>
 		<para>
-			If called from a failure route block, adds the first lcr_contact 
-			AVP value and all following lcr_contact AVP values with the same 
-			qvalue as new branches to request and destroys those AVPs. 
-			Returns 1 if new branches were successfully added and -1 on error 
-			(see syslog) or if there were no more lcr_contact AVPs.
+		If called from a failure route block, adds the first lcr_contact 
+		AVP value and all following lcr_contact AVP values with the same 
+		qvalue as new branches to request and destroys those AVPs. 
+		Returns 1 if new branches were successfully added and -1 on error 
+		(see syslog) or if there were no more lcr_contact AVPs.
 		</para>
 		<para>
-			Must be preceded by successful load_contacts() call.
+		Must be preceded by successful load_contacts() call.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -623,19 +689,21 @@ if (!load_contacts()) {
 		<programlisting format = "linespecific">
 ...
 if (!next_contacts()) {
-    sl_send_reply("500", "Server Internal Error");
-    break;
+	sl_send_reply("500", "Server Internal Error");
+	break;
 } else {
-    t_relay();
+	t_relay();
 };
 ...
 </programlisting>
 		</example>
 		<example>
-		<title><function>next_contacts</function> usage from failure route block</title>
+		<title><function>next_contacts</function> usage from 
+			failure route block
+		</title>
 		<programlisting format = "linespecific">
 if (next_contacts()) {
-    t_relay();
+	t_relay();
 };
 </programlisting>
 		</example>

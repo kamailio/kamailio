@@ -1,21 +1,21 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    <chapterinfo>
+	<chapterinfo>
 	<revhistory>
-	    <revision>
+		<revision>
 		<revnumber>$Revision$</revnumber>
 		<date>$Date$</date>
-	    </revision>
+		</revision>
 	</revhistory>
-    </chapterinfo>
-    <title>User's Guide</title>
-    
-    <section>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
 	<title>Overview</title>
 	<para>
 		This module provides a function to answer OPTIONS requests which 
-		are directed to the	server itself. This means an OPTIONS request 
+		are directed to the server itself. This means an OPTIONS request 
 		which has the address of the server in the request URI, and no 
 		username in the URI. The request will be answered with a 200 OK 
 		which the capabilities of the server.
@@ -26,141 +26,143 @@
 		(similar to	ICMP echo requests, also known as <quote>ping</quote>, 
 		on the network layer).
 	</para>
-    </section>
-    <section>
+	</section>
+
+	<section>
 	<title>Dependencies</title>
 	<section>
-	    <title>&ser; Modules</title>
-	    <para>
+		<title>&ser; Modules</title>
+		<para>
 		The following modules must be loaded before this module:
-	    	<itemizedlist>
-		    <listitem>
+			<itemizedlist>
+			<listitem>
 			<para>
-			    <emphasis>sl</emphasis> -- Stateless replies.
+				<emphasis>sl</emphasis> -- Stateless replies.
 			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
+			</listitem>
+			</itemizedlist>
+		</para>
 	</section>
 	<section>
-	    <title>External Libraries or Applications</title>
-	    <para>
+		<title>External Libraries or Applications</title>
+		<para>
 		The following libraries or applications must be installed before running
 		&ser; with this module loaded:
-	    	<itemizedlist>
-		    <listitem>
+			<itemizedlist>
+			<listitem>
 			<para>
-			    <emphasis>None</emphasis>.
+				<emphasis>None</emphasis>.
 			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
+			</listitem>
+			</itemizedlist>
+		</para>
 	</section>
-    </section>
-    <section>
+	</section>
+
+	<section>
 	<title>Exported Parameters</title>
 	<section>
-	    <title><varname>accept</varname> (string)</title>
-	    <para>
+		<title><varname>accept</varname> (string)</title>
+		<para>
 			This parameter is the content of the Accept header field.
 			Note: it is not clearly written in RFC3261 if a proxy should
 			accept any content (the default <quote>*/*</quote>) because 
 			it does not care about content. Or if it does not accept 
 			any content, which is <quote></quote>.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>*/*</quote>.
+			Default value is <quote>*/*</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>accept</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("options", "accept", "application/*")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
-   	<section>
-	    <title><varname>accept_encoding</varname> (string)</title>
-	    <para>
+	<section>
+		<title><varname>accept_encoding</varname> (string)</title>
+		<para>
 			This parameter is the content of the Accept-Encoding header field.
 			Please do not change the default value because &ser; 
 			does not support any encodings yet.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote></quote>.
+			Default value is <quote></quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>accept_encoding</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("options", "accept_encoding", "gzip")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 	<section>
-	    <title><varname>accept_language</varname> (string)</title>
-	    <para>
+		<title><varname>accept_language</varname> (string)</title>
+		<para>
 			This parameter is the content of the Accept-Language header field.
 			You can set any language code which you prefer for error 
 			descriptions from other devices, but presumably there are not
 			much devices around which support other languages then the 
 			default English.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>en</quote>.
+			Default value is <quote>en</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>accept_language</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("options", "accept_language", "de")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 	<section>
-	    <title><varname>support</varname> (string)</title>
-	    <para>
+		<title><varname>support</varname> (string)</title>
+		<para>
 			This parameter is the content of the Support header field.
 			Please do not change the default value, because &ser; currently 
 			does not support any of the SIP extensions registered at the IANA.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote></quote>.
+			Default value is <quote></quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>support</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("options", "support", "100rel")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 	</section>
-    <section>
+	<section>
 	<title>Exported Functions</title>
 	<section>
-	    <title>
+		<title>
 		<function moreinfo="none">options_reply()</function>
-	    </title>
-	    <para>
+		</title>
+		<para>
 			This function checks if the request method is OPTIONS and
 			if the request URI does not contain an username. If both
 			is true the request will be answered stateless with 
 			<quote>200 OK</quote> and the capabilities from the modules
 			parameters.
-	    </para>
+		</para>
 		<para>
 			It sends <quote>500 Server Internal Error</quote> for some errors
 			and returns false if it is called for a wrong request.
@@ -177,7 +179,7 @@ modparam("options", "support", "100rel")
 		<para>
 		This function can be used from REQUEST_ROUTE.
 		</para>
-	    <example>
+		<example>
 		<title><function>options_reply</function> usage</title>
 		<programlisting format="linespecific">
 ...
@@ -188,9 +190,9 @@ if (uri==myself) {
 }
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
-    </section>
+	</section>
 </chapter>
 
 <!-- Keep this element at the end of the file

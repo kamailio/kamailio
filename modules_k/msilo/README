@@ -113,7 +113,8 @@ Chapter 1. User's Guide
 
    Database URL.
 
-   Default value is "mysql://root@localhost/msilo". 
+   Default value is
+   "mysql://openser:openserrw@localhost/openser". 
 
    Example 1-1. Set the "db_url" parameter
 ...

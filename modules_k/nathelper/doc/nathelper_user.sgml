@@ -354,7 +354,8 @@ modparam("nathelper", "sipping_method", "INFO")
 		<function moreinfo="none">fix_nated_contact()</function>
 		</title>
 		<para>
-		Rewrites Contact <acronym>HF</acronym> to contain request's source address:port.
+		Rewrites Contact <acronym>HF</acronym> to contain request's source 
+		address:port.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE.
@@ -400,7 +401,8 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>fix_nated_sdp</function> usage</title>
@@ -420,7 +422,8 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 		an &rtp; proxy.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>force_rtp_proxy</function> usage</title>
@@ -485,7 +488,8 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>force_rtp_proxy</function> usage</title>
@@ -548,10 +552,11 @@ unforce_rtp_proxy();
 		<function moreinfo="none">add_rcv_param()</function>
 		</title>
 		<para>
-		Add received parameter to Contact header fields. The parameter will contain URI
-		created from the source IP, port, and protocol of the packet containing the SIP
-		message. The parameter can be then processed by another registrar, this is useful,
-		for example, when replicating register messages using t_replicate function to
+		Add received parameter to Contact header fields. The parameter will 
+		contain URI created from the source IP, port, and protocol of the 
+		packet containing the SIP message. The parameter can be then 
+		processed by another registrar, this is useful, for example, when 
+		replicating register messages using t_replicate function to
 		another registrar.
 		</para>
 		<para>
@@ -571,9 +576,10 @@ add_rcv_param();
 		<function moreinfo="none">fix_nated_register()</function>
 		</title>
 		<para>
-		The function creates a URI consisting of the source IP, port, and protocol and
-		stores the URI in an Attribute-Value-Pair. The URI will be appended as "received"
-		parameter to Contact in 200 OK and registrar will store it in the user location database.
+		The function creates a URI consisting of the source IP, port, and 
+		protocol and stores the URI in an Attribute-Value-Pair. The URI will 
+		be appended as "received" parameter to Contact in 200 OK and 
+		registrar will store it in the user location database.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.

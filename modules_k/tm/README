@@ -24,6 +24,9 @@ Bogdan-Andrei Iancu
    1. User's Guide
 
         1.1. Overview
+
+              1.1.1. Per-Branch flags
+
         1.2. Dependencies
 
               1.2.1. OpenSER Modules
@@ -51,33 +54,35 @@ Bogdan-Andrei Iancu
 
         1.4. Exported Functions
 
-              1.4.1. t_relay_to_udp(ip, port), t_relay_to_tcp(ip,
-                      port)
+              1.4.1. t_newtran()
+              1.4.2. t_lookup_request()
+              1.4.3. t_relay_to_udp(ip, port), t_relay_to_tcp(ip,
+                      port), t_relay_to_tls(ip, port)
 
-              1.4.2. t_relay()
-              1.4.3. t_on_negative(reply_route)
-              1.4.4. append_branch()
-              1.4.5. t_newtran()
-              1.4.6. t_reply(code, reason_phrase)
-              1.4.7. t_lookup_request()
-              1.4.8. t_retransmit_reply()
-              1.4.9. t_release()
-              1.4.10. t_forward_nonack(ip, port)
+              1.4.4. t_relay()
+              1.4.5. t_forward_nonack(ip, port)
                       t_forward_nonack_udp(ip, port)
                       t_forward_nonack_tcp(ip, port)
+                      t_forward_nonack_tls(ip, port)
                       t_forward_nonack_uri()
 
-              1.4.11. t_replicate(ip, port) t_replicate_udp(ip,
+              1.4.6. t_reply(code, reason_phrase)
+              1.4.7. t_retransmit_reply()
+              1.4.8. t_replicate(ip, port) t_replicate_udp(ip,
                       port) t_replicate_tcp(ip, port)
 
-              1.4.12. t_check_status(re)
-              1.4.13. t_flush_flags()
-              1.4.14. t_local_replied(reply)
-              1.4.15. t_write_fifo(info,fifo)
+              1.4.9. t_release()
+              1.4.10. t_check_status(re)
+              1.4.11. t_flush_flags()
+              1.4.12. t_local_replied(reply)
+              1.4.13. t_write_fifo(info,fifo)
                       t_write_unix(info,sock)
 
-              1.4.16. t_check_trans()
-              1.4.17. t_was_cancelled()
+              1.4.14. t_check_trans()
+              1.4.15. t_was_cancelled()
+              1.4.16. t_on_failure(failure_route)
+              1.4.17. t_on_reply(reply_route)
+              1.4.18. t_on_branch(branch_route)
 
    2. Developer's Guide
 
@@ -105,23 +110,24 @@ Bogdan-Andrei Iancu
    1-15. Set fr_inv_timer_avp parameter
    1-16. Set tw_append parameter
    1-17. Set branch_flag_mask parameter
-   1-18. t_relay_to_udp usage
-   1-19. t_relay usage
-   1-20. t_on_negative usage
-   1-21. append_branch usage
-   1-22. t_newtran usage
+   1-18. t_newtran usage
+   1-19. t_lookup_request usage
+   1-20. t_relay_to_udp usage
+   1-21. t_relay usage
+   1-22. t_forward_nonack_xxx usage
    1-23. t_reply usage
-   1-24. t_lookup_request usage
-   1-25. t_retransmit_reply usage
+   1-24. t_retransmit_reply usage
+   1-25. t_forward_replicate_xxx usage
    1-26. t_release usage
-   1-27. t_forward_nonack_xxx usage
-   1-28. t_forward_replicate_xxx usage
-   1-29. t_check_status usage
-   1-30. t_flush_flags usage
-   1-31. t_local_replied usage
-   1-32. t_write_fifo/unix usage
-   1-33. t_check_trans usage
-   1-34. t_was_cancelled usage
+   1-27. t_check_status usage
+   1-28. t_flush_flags usage
+   1-29. t_local_replied usage
+   1-30. t_write_fifo/unix usage
+   1-31. t_check_trans usage
+   1-32. t_was_cancelled usage
+   1-33. t_on_failure usage
+   1-34. t_on_reply usage
+   1-35. t_on_branch usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -177,6 +183,47 @@ Chapter 1. User's Guide
    machinery: retransmissions , FR timeouts, forking, etc. See
    t_uac prototype in uac.h for more details. Who wants to see
    the transaction result may register for a callback.
+     _________________________________________________________
+
+1.1.1. Per-Branch flags
+
+   First what is the idea with the branch concept: branch route
+   is a route to be execute separately for each branch before
+   being sent out - changes in that route should reflect only on
+   that branch.
+
+   There are two types of flags in OpenSER :
+
+     * global flags - global because they are visible everywhere
+       in the transaction (in all routes and in all sequential
+       replies/request).
+     * branch flags - flags that are visible only from a specific
+       branch - in all replies and routes connected to this
+       branch.
+
+   For example: I have a call parallel forking to GW and to a
+   user. And I would like to know from which branch I will get
+   the final negative reply (if so). I will set a branch route
+   before relaying the calls (with the 2 branches). The branch
+   route will be separately executed for each branch; in the
+   branch going to GW (I can identified it by looking to RURI), I
+   will set a branch flag. This flag will appear only in the
+   onreply route run for replied from GW. It will be also be
+   visible in failure route if the final elected reply belongs to
+   the GW branch. This flags will not be visible in the other
+   branch (in routes executing replies from the other branch).
+
+   For how to define branch flags and use via script, see Section
+   1.3.17 and Section 1.4.18.
+
+   Also, modules may set branch flags before transaction creation
+   (for the moment this feature is not available in script). The
+   REGISTRAR module is the first to use this feature. If the
+   "use_branch_flags" param is enabled, the NAT flag will be push
+   in branch flags instead in message flags - IMPORTANT: be sure
+   that NAT flag is in the range of the branch flags ad defined
+   in TM. Using this, NAT traversal per branch may be
+   implemented.
      _________________________________________________________
 
 1.2. Dependencies
@@ -466,7 +513,48 @@ modparam("tm", "branch_flag_mask", "4278190080")
 
 1.4. Exported Functions
 
-1.4.1. t_relay_to_udp(ip, port), t_relay_to_tcp(ip, port)
+1.4.1. t_newtran()
+
+   Creates a new transaction, returns a negative value on error.
+   This is the only way a script can add a new transaction in an
+   atomic way. Typically, it is used to deploy a UAS.
+
+   Warning
+
+   NOTE that the changes on the request that are made after this
+   function call will not be saved into transaction!!!
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1-18. t_newtran usage
+...
+if (t_newtran()) {
+        log("UAS logic");
+        t_reply("999","hello");
+} else sl_reply_error();
+...
+     _________________________________________________________
+
+1.4.2. t_lookup_request()
+
+   Checks if a transaction exists. Returns a positive value if
+   so, negative otherwise. Most likely you will not want to use
+   it, as a typical application of a looku-up is to introduce a
+   new transaction if none was found. However this is safely
+   (atomically) done using t_newtran.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1-19. t_lookup_request usage
+...
+if (t_lookup_request()) {
+        ...
+};
+...
+     _________________________________________________________
+
+1.4.3. t_relay_to_udp(ip, port), t_relay_to_tcp(ip, port),
+t_relay_to_tls(ip, port)
 
    Relay a message statefully to a fixed destination. This along
    with t_relay is the function most users want to use--all other
@@ -481,13 +569,13 @@ modparam("tm", "branch_flag_mask", "4278190080")
 
    This functions can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-18. t_relay_to_udp usage
+   Example 1-20. t_relay_to_udp usage
 ...
 t_relay_to_udp("1.2.3.4", "5060");
 ...
      _________________________________________________________
 
-1.4.2. t_relay()
+1.4.4. t_relay()
 
    Relay a message statefully to destination indicated in current
    URI. (If the original URI was rewritten by UsrLoc, RR,
@@ -498,86 +586,39 @@ t_relay_to_udp("1.2.3.4", "5060");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-19. t_relay usage
+   Example 1-21. t_relay usage
 ...
 if (!t_relay()) { sl_reply_error(); break; };
 ...
      _________________________________________________________
 
-1.4.3. t_on_negative(reply_route)
+1.4.5. t_forward_nonack(ip, port) t_forward_nonack_udp(ip, port)
+t_forward_nonack_tcp(ip, port) t_forward_nonack_tls(ip, port)
+t_forward_nonack_uri()
 
-   Sets reply routing block, to which control is passed after a
-   transaction completed with a negative result but before
-   sending a final reply. In the referred block, you can either
-   start a new branch (good for services such as
-   forward_on_no_reply) or send a final reply on your own (good
-   for example for message silo, which received a negative reply
-   from upstream and wants to tell upstream "202 I will take care
-   of it"). Note that the set of command which are usable within
-   reply_routes is strictly limited to rewriting URI, initiating
-   new branches, logging, and sending stateful replies (t_reply).
-   Any other commands may result in unpredictable behavior and
-   possible server failure. Note that whenever reply_route is
-   entered, uri is reset to value which it had on relaying. If it
-   temporarily changed during a reply_route processing,
-   subsequent reply_route will ignore the changed value and use
-   again the original one.
+   Similar to t_relay() but it expects the transaction to be
+   aleady created - this why it cannot handle ACK (which are
+   statelessly forwarded). It should be used along with
+   t_newtran().
 
    Meaning of the parameters is as follows:
 
-     * reply_route - Reply route block to be called.
+     * ip - IP address where the message should be sent.
+     * port - Port number.
 
-   Example 1-20. t_on_negative usage
+   t_forward_nonack_uri() will determin the detination address
+   (proto:IP:port) based on the RURI.
+
+   This functions can be used from REQUEST_ROUTE.
+
+   Example 1-22. t_forward_nonack_xxx usage
 ...
-route {
-        t_on_negative("1");
-        t_relay();
-}
-
-reply_route[1] {
-        revert_uri();
-        setuser("voicemail");
-        append_branch();
-}
+t_forward_nonack("1.2.3.4", "5060");
+t_forward_nonack_udp("1.2.3.4", "5060"); # force UDP proto
+t_forward_nonack_tcp("1.2.3.4", "5060"); # force TCP proto
+t_forward_nonack_tls("1.2.3.4", "5060"); # force TLS proto
+t_forward_nonack_uri();
 ...
-
-   See test/onr.cfg for a more complex example of combination of
-   serial with parallel forking.
-     _________________________________________________________
-
-1.4.4. append_branch()
-
-   Similarly to t_fork_to, it extends destination set by a new
-   entry. The difference is that current URI is taken as new
-   entry.
-
-   Example 1-21. append_branch usage
-...
-set_user("john");
-t_fork();
-set_user("alice");
-t_fork();
-t_relay();
-...
-     _________________________________________________________
-
-1.4.5. t_newtran()
-
-   Creates a new transaction, returns a negative value on error.
-   This is the only way a script can add a new transaction in an
-   atomic way. Typically, it is used to deploy a UAS.
-
-   This function can be used from REQUEST_ROUTE.
-
-   Example 1-22. t_newtran usage
-...
-if (t_newtran()) {
-        log("UAS logic");
-        t_reply("999","hello");
-} else sl_reply_error();
-...
-
-   See test/uas.cfg for more examples.
      _________________________________________________________
 
 1.4.6. t_reply(code, reason_phrase)
@@ -598,33 +639,37 @@ t_reply("404", "Not found");
 ...
      _________________________________________________________
 
-1.4.7. t_lookup_request()
-
-   Checks if a transaction exists. Returns a positive value if
-   so, negative otherwise. Most likely you will not want to use
-   it, as a typical application of a looku-up is to introduce a
-   new transaction if none was found. However this is safely
-   (atomically) done using t_newtran.
-
-   This function can be used from REQUEST_ROUTE.
-
-   Example 1-24. t_lookup_request usage
-...
-if (t_lookup_request()) {
-        ...
-};
-...
-     _________________________________________________________
-
-1.4.8. t_retransmit_reply()
+1.4.7. t_retransmit_reply()
 
    Retransmits a reply sent previously by UAS transaction.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-25. t_retransmit_reply usage
+   Example 1-24. t_retransmit_reply usage
 ...
 t_retransmit_reply();
+...
+     _________________________________________________________
+
+1.4.8. t_replicate(ip, port) t_replicate_udp(ip, port)
+t_replicate_tcp(ip, port)
+
+   Replicates a request to another address. No information due
+   the replicated request (like reply code) will be forwarded to
+   the original SIP UAC.
+
+   Meaning of the parameters is as follows:
+
+     * ip - IP address where the message should be sent.
+     * port - Port number.
+
+   This functions can be used from REQUEST_ROUTE.
+
+   Example 1-25. t_forward_replicate_xxx usage
+...
+t_replicate("1.2.3.4", "5060");
+t_replicate_udp("1.2.3.4", "5060"); # force UDP proto
+t_replicate_tcp("1.2.3.4", "5060"); # force TCP proto
 ...
      _________________________________________________________
 
@@ -641,56 +686,7 @@ t_release();
 ...
      _________________________________________________________
 
-1.4.10. t_forward_nonack(ip, port) t_forward_nonack_udp(ip, port)
-t_forward_nonack_tcp(ip, port) t_forward_nonack_uri()
-
-   Similar to t_relay() but it expects the transaction to be
-   aleady created - this why it cannot handle ACK (which are
-   statelessly forwarded). It should be used along with
-   t_newtran().
-
-   Meaning of the parameters is as follows:
-
-     * ip - IP address where the message should be sent.
-     * port - Port number.
-
-   t_forward_nonack_uri() will determin the detination address
-   (proto:IP:port) based on the RURI.
-
-   This functions can be used from REQUEST_ROUTE.
-
-   Example 1-27. t_forward_nonack_xxx usage
-...
-t_forward_nonack("1.2.3.4", "5060");
-t_forward_nonack_udp("1.2.3.4", "5060"); # force UDP proto
-t_forward_nonack_tcp("1.2.3.4", "5060"); # force TCP proto
-t_forward_nonack_uri();
-...
-     _________________________________________________________
-
-1.4.11. t_replicate(ip, port) t_replicate_udp(ip, port)
-t_replicate_tcp(ip, port)
-
-   Replicates a request to another address. No information due
-   the replicated request (like reply code) will be forwarded to
-   the original SIP UAC.
-
-   Meaning of the parameters is as follows:
-
-     * ip - IP address where the message should be sent.
-     * port - Port number.
-
-   This functions can be used from REQUEST_ROUTE.
-
-   Example 1-28. t_forward_replicate_xxx usage
-...
-t_replicate("1.2.3.4", "5060");
-t_replicate_udp("1.2.3.4", "5060"); # force UDP proto
-t_replicate_tcp("1.2.3.4", "5060"); # force TCP proto
-...
-     _________________________________________________________
-
-1.4.12. t_check_status(re)
+1.4.10. t_check_status(re)
 
    Returns true if the regualr expresion "re" match the reply
    code of the response message as follows:
@@ -704,7 +700,7 @@ t_replicate_tcp("1.2.3.4", "5060"); # force TCP proto
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE.
 
-   Example 1-29. t_check_status usage
+   Example 1-27. t_check_status usage
 ...
 if (t_check_status("(487)|(408)")) {
     log("487 or 408 negative reply\n");
@@ -712,7 +708,7 @@ if (t_check_status("(487)|(408)")) {
 ...
      _________________________________________________________
 
-1.4.13. t_flush_flags()
+1.4.11. t_flush_flags()
 
    Flush the flags from current request into the already created
    transaction. It make sens only in routing block if the
@@ -721,13 +717,13 @@ if (t_check_status("(487)|(408)")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-30. t_flush_flags usage
+   Example 1-28. t_flush_flags usage
 ...
 t_flush_flags();
 ...
      _________________________________________________________
 
-1.4.14. t_local_replied(reply)
+1.4.12. t_local_replied(reply)
 
    Returns true if all or last (depending of the parameter)
    reply(es) were local generated (and not received).
@@ -737,7 +733,7 @@ t_flush_flags();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE.
 
-   Example 1-31. t_local_replied usage
+   Example 1-29. t_local_replied usage
 ...
 if (t_local_replied("all")) {
         log ("no reply received\n");
@@ -745,7 +741,7 @@ if (t_local_replied("all")) {
 ...
      _________________________________________________________
 
-1.4.15. t_write_fifo(info,fifo) t_write_unix(info,sock)
+1.4.13. t_write_fifo(info,fifo) t_write_unix(info,sock)
 
    Write via FIFO file or UNIX socket a lot of information
    regarding the request. Which information should be written may
@@ -753,7 +749,7 @@ if (t_local_replied("all")) {
 
    This functions can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-32. t_write_fifo/unix usage
+   Example 1-30. t_write_fifo/unix usage
 ...
 modparam("tm","tw_append","append1:Email=avp[i:12];UA=hdr[User-Agent]")
 modparam("tm","tw_append","append2:body=msg[body]")
@@ -764,7 +760,7 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 ...
      _________________________________________________________
 
-1.4.16. t_check_trans()
+1.4.14. t_check_trans()
 
    Returns true if the current request is associated to a
    transaction. The relationship between the request ans
@@ -780,7 +776,7 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-33. t_check_trans usage
+   Example 1-31. t_check_trans usage
 ...
 if ( is_method("CANCEL") ) {
         if ( t_check_trans() )
@@ -790,17 +786,137 @@ if ( is_method("CANCEL") ) {
 ...
      _________________________________________________________
 
-1.4.17. t_was_cancelled()
+1.4.15. t_was_cancelled()
 
    Retuns true if called for an INVITE transaction that was
    explicitly cancelled by UAC side via a CANCEL request.
 
    This function can be used from ONREPLY_ROUTE, FAILURE_ROUTE.
 
-   Example 1-34. t_was_cancelled usage
+   Example 1-32. t_was_cancelled usage
 ...
 if (t_was_cancelled()) {
     log("transaction was cancelled by UAC\n");
+}
+...
+     _________________________________________________________
+
+1.4.16. t_on_failure(failure_route)
+
+   Sets reply routing block, to which control is passed after a
+   transaction completed with a negative result but before
+   sending a final reply. In the referred block, you can either
+   start a new branch (good for services such as
+   forward_on_no_reply) or send a final reply on your own (good
+   for example for message silo, which received a negative reply
+   from upstream and wants to tell upstream "202 I will take care
+   of it").
+
+   As not all functions are available from failure route, please
+   check the documentation for each function to see the
+   permissions. Any other commands may result in unpredictable
+   behavior and possible server failure.
+
+   Note that whenever failure_route is entered, RURI is set to
+   value of the winning branch.
+
+   Meaning of the parameters is as follows:
+
+     * failure_route - Reply route block to be called.
+
+   Example 1-33. t_on_failure usage
+...
+route {
+        t_on_failure("1");
+        t_relay();
+}
+
+failure_route[1] {
+        seturi("sip:user@voicemail");
+        append_branch();
+        t_relay();
+}
+...
+     _________________________________________________________
+
+1.4.17. t_on_reply(reply_route)
+
+   Sets reply routing block, to which control is passed each time
+   a reply (provisional or final) for the transaction is
+   received. The route is not called for local generated replies!
+   In the referred block, you can inspect the reply and perform
+   text operations on it.
+
+   As not all functions are available from this type of route,
+   please check the documentation for each function to see the
+   permissions. Any other commands may result in unpredictable
+   behavior and possible server failure.
+
+   If the processed reply is provisionla reply (1xx code), by
+   calling the drop() function (exported by core), the execution
+   of the route will end and the reply will not be forwarded
+   further.
+
+   Meaning of the parameters is as follows:
+
+     * reply_route - Reply route block to be called.
+
+   Example 1-34. t_on_reply usage
+...
+route {
+        t_on_reply("1");
+        t_relay();
+}
+
+onreply_route[1] {
+        if (t_check_status("1[0-9][0-9]")) {
+                setflag(1);
+                log("provisional reply received\n");
+                if (t_check_status("183"))
+                        drop;
+        }
+}
+...
+     _________________________________________________________
+
+1.4.18. t_on_branch(branch_route)
+
+   Sets a branch route to be execute separately for each branch
+   of the transaction before being sent out - changes in that
+   route should reflect only on that branch.
+
+   As not all functions are available from this type of route,
+   please check the documentation for each function to see the
+   permissions. Any other commands may result in unpredictable
+   behavior and possible server failure.
+
+   The per-branch flags which are modified in the branch route
+   will be visible only in the replies related to that branch.
+   See Section 1.3.17 also.
+
+   By calling the drop() function (exported by core), the
+   execution of the branch route will end and the branch will not
+   be forwarded further.
+
+   Meaning of the parameters is as follows:
+
+     * branch_route - Branch route block to be called.
+
+   Example 1-35. t_on_branch usage
+...
+route {
+        t_on_reply("1");
+        t_relay();
+}
+
+branch_route[1] {
+        if (uri=~"bad_uri") {
+                xlog("dropping branch $ru \n");
+                drop;
+        }
+        if (uri=~"GW_uri") {
+                append_rpid();
+        }
 }
 ...
      _________________________________________________________

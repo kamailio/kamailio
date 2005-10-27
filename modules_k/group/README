@@ -63,7 +63,7 @@ Chapter 1. User's Guide
 
    The following modules must be loaded before this module:
 
-     * A database module.
+     * A database module, like mysql, postgres or dbtext
      _________________________________________________________
 
 1.2.2. External Libraries or Applications
@@ -80,11 +80,12 @@ Chapter 1. User's Guide
 
    URL of the database table to be used.
 
-   Default value is "mysql://serro:47serro11@localhost/ser". 
+   Default value is
+   "mysql://openserro:openserro@localhost/openser". 
 
    Example 1-1. Set db_url parameter
 ...
-modparam("group", "db_url", "mysql://username:password@dbhost/ser")
+modparam("group", "db_url", "mysql://username:password@dbhost/openser")
 ...
      _________________________________________________________
 
@@ -174,7 +175,7 @@ modparam("group", "use_domain", 1)
    Example 1-7. is_user_in usage
 ...
 if (is_user_in("Request-URI", "ld")) {
-    ...
+        ...
 };
 ...
      _________________________________________________________

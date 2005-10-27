@@ -92,7 +92,7 @@ Chapter 1. User's Guide
    The gateway accepts and advertises phone numbers in
    international format, more specific like: +(international
    code)(area code)(number). Ex: Germany, D1 = +49 170 5678181
-   Romania, Connex = +40 722 123456 A number in this format is
+   Romania, Connex = +40 722 123456. A number in this format is
    expected to be placed as username into RURI or in the To
    header. If RURI misses the username, the To header will be
    consider. Also, the gateway will advertise in this format the
@@ -105,14 +105,14 @@ Chapter 1. User's Guide
    To identify the destination number of the SMS, the gateway
    expects to have a mobile number in username of the SIP
    destination address (for example
-   sip:+401704678811@siphub.net). For the reverse direction,
+   sip:+401704678811@sidomain.net). For the reverse direction,
    because the gateway has only one GSM number, the destination
    SIP address has to be encapsulated into the SMS body. The
    gateway expects to find a SIP address at the beginning of the
    SMS body in "sip:user.host" format. Everything before the SIP
    address will be discarded, the useful text begins exactly
    after the address (for example SMS="For sip:user@host hello
-   world!!" -> SIP="hello world") In order to facilitate
+   world!!" -> SIP= "hello world") In order to facilitate
    replying, the gateway sends all the SMS messages with a header
    containing the source SIP address in the following format:
    "From sip:user@host (if you reply DONOT remove it)<new_line>".
@@ -146,7 +146,7 @@ Chapter 1. User's Guide
 modems_value     = modem_definition *( ";" modem_definition )
 modem_definition = modem_name "[" list_of_params "]"
 list_of_params   = modem_param *( ";" modem_param )
-modem_param      = name "=" value
+modem_param       = name "=" value
 
    The following parameters can be used:
 
@@ -154,7 +154,7 @@ modem_param      = name "=" value
        (/dev/ttyS0, /dev/modem, etc.).
      * p=pin (optional) - SIM PIN - default is NULL.
      * m=mode (optional) - Modem working mode
-       ("ASCII","OLD","DIGICOM","NEW"). Default value is "NEW".
+       ("ASCII","OLD","DIGICOM", "NEW"). Default value is "NEW".
      * c=SMS_Center (optional) - SMS center number for that
        modem. Default is the SMS center set on the SIM card.
      * b=baudrate (optional) - Default is 19600.
@@ -179,7 +179,7 @@ modparam("sms", "modems", "Nokia[d=/dev/ttyS1];Siemens[d=/dev/ttyS2]")
 networks_value = net_definition *( ";" net_definition )
 net_definition = net_name "[" list_of_params "]"
 list_of_params = set_param *( ";" set_param )
-set_param      = name "=" value
+set_param         = name "=" value
 
    The following parameters can be used:
 
@@ -319,18 +319,18 @@ modparam("sms", "sms_report_type", 1)
 ...
 if (sms_send_msg_to_net("D1"))
 {
-    if (!t_reply("202", "yes sir, SMS sent over"))
-    {
-        # if replying failed, retry statelessly
-        sl_reply_error();
-    };
+        if (!t_reply("202", "yes sir, SMS sent over"))
+        {
+                # if replying failed, retry statelessly
+                sl_reply_error();
+        };
 } else {
-    if (!t_reply("502", "Bad gateway - SMS error"))
-    {
-        # if replying failed, retry statelessly
-        sl_reply_error();
-    };
-    break;
+        if (!t_reply("502", "Bad gateway - SMS error"))
+        {
+                # if replying failed, retry statelessly
+                sl_reply_error();
+        };
+        break;
 };
 ...
      _________________________________________________________
@@ -346,18 +346,18 @@ if (sms_send_msg_to_net("D1"))
 ...
 if (sms_send_msg_to_net())
 {
-    if (!t_reply("202", "yes sir, SMS sent over"))
-    {
-        # if replying failed, retry statelessly
-        sl_reply_error();
-    };
+        if (!t_reply("202", "yes sir, SMS sent over"))
+        {
+                # if replying failed, retry statelessly
+                sl_reply_error();
+        };
 } else {
-    if (!t_reply("502", "Bad gateway - SMS error"))
-    {
-        # if replying failed, retry statelessly
-        sl_reply_error();
-    };
-    break;
+        if (!t_reply("502", "Bad gateway - SMS error"))
+        {
+                # if replying failed, retry statelessly
+                sl_reply_error();
+        };
+        break;
 };
 ...
      _________________________________________________________

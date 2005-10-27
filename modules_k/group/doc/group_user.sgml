@@ -1,233 +1,237 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    <chapterinfo>
+	<chapterinfo>
 	<revhistory>
-	    <revision>
+		<revision>
 		<revnumber>$Revision$</revnumber>
 		<date>$Date$</date>
-	    </revision>
+		</revision>
 	</revhistory>
-    </chapterinfo>
-    <title>User's Guide</title>
-    
-    <section>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
 	<title>Overview</title>
 	<para>
-	    This module export functions necessary for group membership checking. There is a
-	    database table that contains list of users and groups they belong to. The table is used
-	    by functions of this module.
+		This module export functions necessary for group membership checking. 
+		There is a database table that contains list of users and groups they
+		belong to. The table is used by functions of this module.
 	</para>
-    </section>
-    <section>
-	<title>Dependencies</title>
-	<section>
-	    <title>&ser; Modules</title>
-	    <para>
-		The following modules must be loaded before this module:
-	    	<itemizedlist>
-		    <listitem>
-			<para>
-			    A database module.
-			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
-	</section>
-	<section>
-	    <title>External Libraries or Applications</title>
-	    <para>
-		The following libraries or applications must be installed before running
-		&ser; with this module loaded:
-	    	<itemizedlist>
-		    <listitem>
-			<para>
-			    <emphasis>None</emphasis>.
-			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
-	</section>
-    </section>
-    <section>
-	<title>Exported Parameters</title>
-	<section>
-	    <title><varname>db_url</varname> (string)</title>
-	    <para>
-		&url; of the database table to be used.
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is <quote>mysql://serro:47serro11@localhost/ser</quote>.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>db_url</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("group", "db_url", "mysql://username:password@dbhost/ser")
-...
-</programlisting>
-	    </example>
 	</section>
 
 	<section>
-	    <title><varname>table</varname> (string)</title>
-	    <para>
-		Name of the table holding groups and their members.
-	    </para>
-	    <para>
+	<title>Dependencies</title>
+	<section>
+		<title>&ser; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				A database module, like mysql, postgres or dbtext
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>db_url</varname> (string)</title>
+		<para>
+		&url; of the database table to be used.
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>grp</quote>.
+			Default value is 
+			<quote>mysql://openserro:openserro@localhost/openser</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("group", "db_url", "mysql://username:password@dbhost/openser")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>table</varname> (string)</title>
+		<para>
+		Name of the table holding groups and their members.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>grp</quote>.
+		</emphasis>
+		</para>
+		<example>
 		<title>Set <varname>table</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("group", "table", "grp_table")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section>
-	    <title><varname>user_column</varname> (string)</title>
-	    <para>
+		<title><varname>user_column</varname> (string)</title>
+		<para>
 		Name of the column holding usernames.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>username</quote>.
+			Default value is <quote>username</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>user_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("group", "user_column", "user")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section>
-	    <title><varname>domain_column</varname> (string)</title>
-	    <para>
+		<title><varname>domain_column</varname> (string)</title>
+		<para>
 		Name of the column holding domains.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>domain</quote>.
+			Default value is <quote>domain</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>domain_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("group", "domain_column", "realm")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section>
-	    <title><varname>group_column</varname> (string)</title>
-	    <para>
+		<title><varname>group_column</varname> (string)</title>
+		<para>
 		Name of the column holding groups.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>grp</quote>.
+			Default value is <quote>grp</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>group_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("group", "group_column", "grp")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section>
-	    <title><varname>use_domain</varname> (integer)</title>
-	    <para>
-		If set to 1 then username@domain will be used for lookup, if set to 0 then only
-		username will be used.
-	    </para>
-	    <para>
+		<title><varname>use_domain</varname> (integer)</title>
+		<para>
+		If set to 1 then username@domain will be used for lookup, if set 
+		to 0 then only username will be used.
+		</para>
+		<para>
 		<emphasis>
-		    Default value is 0 (no).
+			Default value is 0 (no).
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>use_domain</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("group", "use_domain", 1)
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
-    </section>
-    <section>
+	</section>
+	<section>
 	<title>Exported Functions</title>
 	<section>
-	    <title>
+		<title>
 		<function moreinfo="none">is_user_in(URI, group)</function>
-	    </title>
-	    <para>
-		The function returns true if username in the given &uri; is member of the given
-		group and false if not.
-	    </para>
-	    <para>Meaning of the parameters is as follows:</para>
-	    <itemizedlist>
+		</title>
+		<para>
+		The function returns true if username in the given &uri; is member of 
+		the given group and false if not.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
 		<listitem>
-		    <para><emphasis>&uri;</emphasis> - &uri; whose username and optionally domain to be
-			used, this can be one of:
+			<para><emphasis>&uri;</emphasis> - &uri; whose username and 
+			optionally domain to be used, this can be one of:
 			<itemizedlist>
-			    <listitem>
-				<para>Request-URI - Use Request-URI username and (optionally) domain.</para>
-			    </listitem>
-			    <listitem>
+				<listitem>
+				<para>Request-URI - Use Request-URI username and (optionally) 
+				domain.</para>
+				</listitem>
+				<listitem>
 				<para>To - Use To username and (optionally) domain.</para>
-			    </listitem>
-			    <listitem>
+				</listitem>
+				<listitem>
 				<para>From - Use From username and (optionally) domain.</para>
-			    </listitem>
-			    <listitem>
+				</listitem>
+				<listitem>
 				<para>Credentials - Use digest credentials username.</para>
-			    </listitem>
-			    <listitem>
+				</listitem>
+				<listitem>
 				<para>$avp[avp_name|avp_alias] - Use the URI from the AVP
 				specified by this pseudo-variable.</para>
-			    </listitem>
+				</listitem>
 			</itemizedlist>
-		    </para>
+			</para>
 		</listitem>
 		<listitem>
-		    <para><emphasis>group</emphasis> - Name of the group to check.
-		    </para>
+			<para><emphasis>group</emphasis> - Name of the group to check.
+			</para>
 		</listitem>
-	    </itemizedlist>
+		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE.
 		</para>
-	    <example>
+		<example>
 		<title><function>is_user_in</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if (is_user_in("Request-URI", "ld")) {
-    ...
+	...
 };
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
-    </section>
+	</section>
 </chapter>
 
 <!-- Keep this element at the end of the file

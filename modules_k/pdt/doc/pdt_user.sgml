@@ -1,284 +1,286 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    <chapterinfo>
+	<chapterinfo>
 	<revhistory>
-	    <revision>
+		<revision>
 		<revnumber>$Revision$</revnumber>
 		<date>$Date$</date>
-	    </revision>
+		</revision>
 	</revhistory>
-    </chapterinfo>
-    <title>User's Guide</title>
-    
-    <section>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
 	<title>Overview</title>
 	<para>
-	    This module translates a numerical prefix into a domain and updates
+		This module translates a numerical prefix into a domain and updates
 		accordingly the request &uri;.
 	</para>
 	<para>
-	    The module looks up at the R-&uri; part of a message and if the user
+		The module looks up at the R-&uri; part of a message and if the user
 		part begins with an established prefix it will update the &uri;.
 		Updating the uri consists of: remove the prefix from the user part of
 		the uri and keep the rest as the user part of the new uri. The host
 		and port are changed with the domain matched for the leading prefix.
 	</para>
 	<para>
-	    &lt;prefix&gt;&lt;userid&gt;&lt;:password&gt;@&lt;mydomain.com&gt; ...
+		&lt;prefix&gt;&lt;userid&gt;&lt;:password&gt;@&lt;mydomain.com&gt; ...
 	</para>
 	<para>
-	    and the result will be:
+		and the result will be:
 	</para>
 	<para>
-	    &lt;userid&gt;&lt;:password&gt;@&lt;domain[:port]&gt;...
+		&lt;userid&gt;&lt;:password&gt;@&lt;domain[:port]&gt;...
 	</para>
 	<example>
-	    <title>prefix-domain translation</title>
-	    <programlisting format="linespecific">
+		<title>prefix-domain translation</title>
+		<programlisting format="linespecific">
 prefix=123
 domain[123]=alpha.org
 
-sip:12391001@mydomain.com  => sip:91001@alpha.org    
+sip:12391001@mydomain.com  => sip:91001@alpha.org	
 </programlisting>
 	</example>
 	<para>
-	    The prefix could be prefixed by other digits. These digits
-	    will not be used to look up the domain (the classic example, 00 used
+		The prefix could be prefixed by other digits. These digits
+		will not be used to look up the domain (the classic example, 00 used
 		for international calls, then follows the country prefix). For more
 		information on this, see 'prefix' parameter.
 	</para>
 	<itemizedlist>
-	    <listitem>
+		<listitem>
 		<para>
-		    A sample config file and the <acronym>MySQL</acronym> script to
+			A sample config file and the <acronym>MySQL</acronym> script to
 			create the database needed by PDT are located in './doc/'.
 		</para>
-	    </listitem>
-	    <listitem>
+		</listitem>
+		<listitem>
 		<para>
-		    Sample shell scripts to manage prefix-domain pairs are also located
+			Sample shell scripts to manage prefix-domain pairs are also located
 			in './doc/' (pdt_fifo_add.sh, pdt_fifo_delete.sh, pdt_fifo_list.sh).
 		</para>
-	    </listitem>
+		</listitem>
 	</itemizedlist>
-    </section>
-    <section>
+	</section>
+
+	<section>
 	<title>Dependencies</title>
 	<section>
-	    <title>&ser; Modules</title>
-	    <para>
+		<title>&ser; Modules</title>
+		<para>
 		The following modules must be loaded before this module:
-	    	<itemizedlist>
-		    <listitem>
+			<itemizedlist>
+			<listitem>
 			<para>
-			    <emphasis>A &ser; database module (e.g., mysql,
+				<emphasis>A &ser; database module (e.g., mysql,
 				dbtext)</emphasis>.
 			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
+			</listitem>
+			</itemizedlist>
+		</para>
 	</section>
 	<section>
-	    <title>External Libraries or Applications</title>
-	    <para>
+		<title>External Libraries or Applications</title>
+		<para>
 		The following libraries or applications must be installed before running
 		&ser; with this module loaded:
-	    	<itemizedlist>
-		    <listitem>
+			<itemizedlist>
+			<listitem>
 			<para>
-			    <emphasis>None</emphasis>.
+				<emphasis>None</emphasis>.
 			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
+			</listitem>
+			</itemizedlist>
+		</para>
 	</section>
-    </section>
-    <section>
+	</section>
+
+	<section>
 	<title>Exported Parameters</title>
 	<section>
-	    <title><varname>db_url</varname> (string)</title>
-	    <para>
+		<title><varname>db_url</varname> (string)</title>
+		<para>
 		<acronym>SQL</acronym> &url; of database--username, password, host,
 		port and database (ex: mysql://username:password@hostname.com/database)
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>mysql://root@127.0.0.1/pdt</quote>.
+			Default value is <quote>mysql://root@127.0.0.1/pdt</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("pdt", "db_url", "mysql://user:xxx@127.0.0.1/ser")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section>
-	    <title><varname>db_table</varname> (string)</title>
-	    <para>
+		<title><varname>db_table</varname> (string)</title>
+		<para>
 		Table name.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>prefix_domain</quote>.
+			Default value is <quote>prefix_domain</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>db_table</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("pdt", "db_table", "pdt")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section>
-	    <title><varname>prefix_column</varname> (string)</title>
-	    <para>
+		<title><varname>prefix_column</varname> (string)</title>
+		<para>
 		Name of 'prefix' column.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>prefix</quote>.
+			Default value is <quote>prefix</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>prefix_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("pdt", "prefix_column", "code")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section>
-	    <title><varname>domain_column</varname> (string)</title>
-	    <para>
+		<title><varname>domain_column</varname> (string)</title>
+		<para>
 		Name of 'domain' column.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is <quote>domain</quote>.
+			Default value is <quote>domain</quote>.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>domain_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("pdt", "domain_column", "hostname")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section>
-	    <title><varname>prefix</varname> (string)</title>
-	    <para>
+		<title><varname>prefix</varname> (string)</title>
+		<para>
 		Default leading prefix who denotes what &uri; needs to be translated
 		- if it is NULL the module will not check the R-&uri; against it and
 		the PDT prefix is considered starting from the first digit. Otherwise,
 		the module will check first if the R-&uri; starts with it and will
 		skip it to look up the domain.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is NULL.
+			Default value is NULL.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>prefix</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("pdt", "prefix", "00")
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section>
-	    <title><varname>hsize_2pow</varname> (integer)</title>
-	    <para>
+		<title><varname>hsize_2pow</varname> (integer)</title>
+		<para>
 		Number of the hash entries = 2^hash_size.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is 4.
+			Default value is 4.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>hsize_2pow</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("pdt", "hsize_2pow", 4)
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section>
-	    <title><varname>sync_time</varname> (integer)</title>
-	    <para>
+		<title><varname>sync_time</varname> (integer)</title>
+		<para>
 		Time in seconds to synchronize the cache of each process with the
 		changes made through FIFO. Any prefix-domain change made through FIFO
 		is guaranteed to have efect after this period of time past.
 		</para>
-	    <para>
+		<para>
 		<emphasis>
-		    Default value is 600.
+			Default value is 600.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>sync_time</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("pdt", "sync_time", 300)
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section>
-	    <title><varname>clean_time</varname> (integer)</title>
-	    <para>
+		<title><varname>clean_time</varname> (integer)</title>
+		<para>
 		Time in seconds to clean the changes inserted via FIFO. The changes
 		will be removed from FIFO diff list only when all &ser; processes
 		applied these changes.
 		</para>
-	    <para>
+		<para>
 		<emphasis>
-		    Default value is 900.
+			Default value is 900.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>clean_time</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("pdt", "clean_time", 600)
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
-    </section>
-    <section>
+	</section>
+	<section>
 	<title>Exported Functions</title>
 	<section>
-	    <title>
+		<title>
 		<function moreinfo="none">prefix2domain(mode)</function>
-	    </title>
-	    <para>
+		</title>
+		<para>
 		Build a new &uri; if it is necessary. Returns 1 when the translation
 		was made or there was nothing to translate (user part of the &uri; is
 		empty, it does not match the prefix parameter or there is no domain
 		associated with a possible prefix from user part).
 		Returns -1 in error cases.
-	    </para>
+		</para>
 		<para>
 		The <quote>mode</quote> parameter specifies whether to strip or not
 		the prefix from user part. If the parameter is missing or it has the
@@ -287,7 +289,7 @@ modparam("pdt", "clean_time", 600)
 		prefix is removed. If the values is <quote>2</quote> the user part
 		of the URI is not changed.
 		</para>
-	    <para>
+		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
@@ -299,10 +301,10 @@ prefix2domain();
 prefix2domain("2");
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
-    </section>
-    <section>
+	</section>
+	<section>
 	<title>Installation & Running</title>
 	<para>Make sure you have created the table needed by this module.</para>
 		<section>
@@ -317,21 +319,21 @@ prefix2domain("2");
 		There are three FIFO commands to use with PDT.
 		</para>
 		<itemizedlist>
-	    <listitem>
+		<listitem>
 		<para>
-		    pdt_add - add a new prefix-domain pair
+			pdt_add - add a new prefix-domain pair
 		</para>
-	    </listitem>
-	    <listitem>
+		</listitem>
+		<listitem>
 		<para>
-		    pdt_delete - remove a prefix-domain pair
+			pdt_delete - remove a prefix-domain pair
 		</para>
-	    </listitem>
-	    <listitem>
+		</listitem>
+		<listitem>
 		<para>
-		    pdt_list - list the prefixes and the domains
+			pdt_list - list the prefixes and the domains
 		</para>
-	    </listitem>
+		</listitem>
 		</itemizedlist>
 		<para>
 		Example shell scripts for these commands are placed in './doc/'
@@ -340,7 +342,7 @@ prefix2domain("2");
 		the 'pdt.c' file.
 		</para>
 		</section>
-    </section>
+	</section>
 </chapter>
 
 <!-- Keep this element at the end of the file

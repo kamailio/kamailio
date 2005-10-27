@@ -16,19 +16,22 @@
 	<section id="sec-call-routing">
 		<title>Call Routing</title>
 		<para>
-		The module can be used to determine if a call has appropriate permission to be
-		established. Permission rules are stored in plaintext configuration files similar to
+		The module can be used to determine if a call has appropriate 
+		permission to be established. Permission rules are stored in 
+		plaintext configuration files similar to
 		<filename moreinfo="none">hosts.allow</filename> and <filename
 		moreinfo="none">hosts.deny</filename> files used by tcpd.
 		</para>
 		<para>
-		When <function moreinfo="none">allow_routing</function> function is called it tries
-		to find a rule that matches selected fields of the message.
+		When <function moreinfo="none">allow_routing</function> function is 
+		called it tries to find a rule that matches selected fields of the 
+		message.
 		</para>
 		<para>
-		&ser; is a forking proxy and therefore a single message can be sent to different
-		destinations simultaneously. When checking permissions all the destinations must be
-		checked and if one of them fails, the forwarding will fail.
+		&ser; is a forking proxy and therefore a single message can be sent 
+		to different destinations simultaneously. When checking permissions 
+		all the destinations must be checked and if one of them fails, the 
+		forwarding will fail.
 		</para>
 		<para>
 		The matching algorithm is as follows, first match wins:
@@ -36,19 +39,20 @@
 		<itemizedlist>
 		<listitem>
 			<para>
-			Create a set of pairs of form (From, R-URI of branch 1), (From, R-URI of
-			branch 2), etc.
+			Create a set of pairs of form (From, R-URI of branch 1), 
+			(From, R-URI of branch 2), etc.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			Routing will be allowed when all pairs match an entry in the allow file.
+			Routing will be allowed when all pairs match an entry in the 
+			allow file.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			Otherwise routing will be denied when one of pairs matches an entry in the
-			deny file.
+			Otherwise routing will be denied when one of pairs matches an 
+			entry in the deny file.
 			</para>
 		</listitem>
 		<listitem>
@@ -58,64 +62,71 @@
 		</listitem>
 		</itemizedlist>
 		<para>
-		A non-existing permission control file is treated as if it were an empty file. Thus,
-		permission control can be turned off by providing no permission control files.
+		A non-existing permission control file is treated as if it were an 
+		empty file. Thus, permission control can be turned off by providing 
+		no permission control files.
 		</para>
 		<para>
-		From header field and Request-URIs are always compared with regular expressions! For
-		the syntax see the sample file: <filename moreinfo="none">config/permissions.allow</filename>.
+		From header field and Request-URIs are always compared with regular 
+		expressions! For the syntax see the sample file: 
+		<filename moreinfo="none">config/permissions.allow</filename>.
 		</para>
 	</section>
 	<section id="sec-registration-permissions">
 		<title>Registration Permissions</title>
 		<para>
-		In addition to call routing it is also possible to check REGISTER messages and
-		decide--based on the configuration files--whether the message should be allowed and
-		the registration accepted or not.
+		In addition to call routing it is also possible to check REGISTER 
+		messages and decide--based on the configuration files--whether the 
+		message should be allowed and the registration accepted or not.
 		</para>
 		<para>
-		Main purpose of the function is to prevent registration of "prohibited" IP
-		addresses. One example, when a malicious user registers a contact containing IP
-		address of a PSTN gateway, he might be able to bypass authorization checks performed
-		by the SIP proxy. That is undesirable and therefore attempts to register IP address
-		of a PSTN gateway should be rejected. Files <filename
+		Main purpose of the function is to prevent registration of "prohibited" 
+		IP addresses. One example, when a malicious user registers a contact 
+		containing IP address of a PSTN gateway, he might be able to bypass 
+		authorization checks performed by the SIP proxy. That is undesirable 
+		and therefore attempts to register IP address of a PSTN gateway should 
+		be rejected. Files <filename
 		moreinfo="none">config/register.allow</filename> and <filename
-		moreinfo="none">config/register.deny</filename> contain an example configuration.
+		moreinfo="none">config/register.deny</filename> contain an example 
+		configuration.
 		</para>
 		<para>
 		Function for registration checking is called <function
-		moreinfo="none">allow_register</function> and the algorithm is very similar to the
-		algorithm described in <xref linkend="sec-call-routing">. The only difference is in
-		the way how pairs are created.
+		moreinfo="none">allow_register</function> and the algorithm is very 
+		similar to the algorithm described in 
+		<xref linkend="sec-call-routing">. The only difference is in the way 
+		how pairs are created.
 		</para>
 		<para>
-		Instead of From header field the function uses To header field because To header
-		field in REGISTER messages contains the URI of the person being registered. Instead
-		of the Request-URI of branches the function uses Contact header field.
+		Instead of From header field the function uses To header field because 
+		To header field in REGISTER messages contains the URI of the person 
+		being registered. Instead of the Request-URI of branches the function 
+		uses Contact header field.
 		</para>
 		<para>
-		Thus, pairs used in matching will look like this: (To, Contact 1), (To, Contact
-		2), (To, Contact 3), and so on..
+		Thus, pairs used in matching will look like this: (To, Contact 1), 
+		(To, Contact 2), (To, Contact 3), and so on..
 		</para>
 		<para>
-		The algorithm of matching is same as described in <xref linkend="sec-call-routing">.
+		The algorithm of matching is same as described in 
+		<xref linkend="sec-call-routing">.
 		</para>
 	</section>
 	<section id="sec-referral-permissions">
 		<title>Referral Permissions</title>
 		<para>
-                The module can be used to determine if referral is
-                allowed to the destination specified by Refer-To header
-                of REFER request. Permission rules are stored in
-                plaintext configuration files similar to
-                <filename moreinfo="none">hosts.allow</filename> and
-                <filename moreinfo="none">hosts.deny</filename> used by tcpd.
+		The module can be used to determine if referral is
+		allowed to the destination specified by Refer-To header
+		of REFER request. Permission rules are stored in
+		plaintext configuration files similar to
+		<filename moreinfo="none">hosts.allow</filename> and
+		<filename moreinfo="none">hosts.deny</filename> used by tcpd.
 		</para>
 		<para>
-                When <function moreinfo="none">allow_refer_to</function>
-                function is called, it tries to find a rule that matches
-                selected fields of the message.
-                The matching algorithm is as follows, first match wins:
+		When <function moreinfo="none">allow_refer_to</function>
+		function is called, it tries to find a rule that matches
+		selected fields of the message.
+		The matching algorithm is as follows, first match wins:
 		</para>
 		<itemizedlist>
 		<listitem>
@@ -126,12 +137,12 @@
 		<listitem>
 			<para>
 			Referral will be allowed when the pair matches
-                        an entry in the allow file.
+			an entry in the allow file.
 		</listitem>
 		<listitem>
 			<para>
 			Otherwise referral will be denied when the pair
-                        matches an entry in the	deny file.
+			matches an entry in the	deny file.
 			</para>
 		</listitem>
 		<listitem>
@@ -141,30 +152,32 @@
 		</listitem>
 		</itemizedlist>
 		<para>
-		A non-existing permission control file is treated as if it were an empty file. Thus,
-		permission control can be turned off by providing no permission control files.
+		A non-existing permission control file is treated as if it were an 
+		empty file. Thus, permission control can be turned off by providing 
+		no permission control files.
 		</para>
 		<para>
-		From URI and Refer-To URI are always compared with regular expressions! For
-		the syntax see the sample file: <filename moreinfo="none">config/permissions.allow</filename>.
+		From URI and Refer-To URI are always compared with regular 
+		expressions! For the syntax see the sample file: 
+		<filename moreinfo="none">config/permissions.allow</filename>.
 		</para>
 	</section>
 	<section id="sec-trusted-requests">
 		<title>Trusted Requests</title>
 		<para>
-                The module can be used to determine if an incoming
-                request can be trusted without authentication.  
+		The module can be used to determine if an incoming
+		request can be trusted without authentication.
 		</para>
 		<para>
-                When <function moreinfo="none">allow_trusted</function>
-                function is called, it tries to find a rule that matches
-                the request.  Rules contain the following fields:
-                &lt;source address, transport protocol, regular
-                expression&gt;.
+		When <function moreinfo="none">allow_trusted</function>
+		function is called, it tries to find a rule that matches
+		the request.  Rules contain the following fields:
+		&lt;source address, transport protocol, regular
+		expression&gt;.
 		<para>
-                A requests is accepted if there exists a rule, where 
+		A requests is accepted if there exists a rule, where 
 		</para>
-      		<itemizedlist>
+		<itemizedlist>
 		<listitem>
 			<para>
 			source address is equal to source address of request,
@@ -177,22 +190,23 @@
 		</listitem>
 		<listitem>
 			<para>
-                        regular expression matches From URI of request.
+			regular expression matches From URI of request.
 			</para>
 		</listitem>
 		</itemizedlist>
 		<para>
-                Otherwise the request is rejected.
-                </para>
+		Otherwise the request is rejected.
+		</para>
 		<para>
-                Rules are stored in a database table specified by module
-                parameters.  There also exists a module parameter that
-                determines if rules are cached into memory for faster
-                matching or if database is consulted for each invocation
-                of allow_trusted function call.
+		Rules are stored in a database table specified by module
+		parameters.  There also exists a module parameter that
+		determines if rules are cached into memory for faster
+		matching or if database is consulted for each invocation
+		of allow_trusted function call.
 		</para>
 	</section>
 	</section>
+
 	<section>
 	<title>Dependencies</title>
 	<section>
@@ -223,13 +237,15 @@
 		</para>
 	</section>
 	</section>
+
 	<section>
 	<title>Exported Parameters</title>
 	<section>
 		<title><varname>default_allow_file</varname> (string)</title>
 		<para>
-		Default allow file used by functions without parameters. If you don't specify full
-		pathname then the directory in which is the main config file is located will be used.
+		Default allow file used by functions without parameters. If you 
+		don't specify full pathname then the directory in which is the main 
+		config file is located will be used.
 		</para>
 		<para>
 		<emphasis>
@@ -248,9 +264,9 @@ modparam("permissions", "default_allow_file", "/etc/permissions.allow")
 	<section>
 		<title><varname>default_deny_file</varname> (string)</title>
 		<para>
-		Default file containing deny rules. The file is used by functions without
-		parameters. If you don't specify full pathname then the directory in which the
-		main config file is located will be used.
+		Default file containing deny rules. The file is used by functions
+		without parameters. If you don't specify full pathname then the 
+		directory in which the main config file is located will be used.
 		</para>
 		<para>
 		<emphasis>
@@ -269,12 +285,14 @@ modparam("permissions", "default_deny_file", "/etc/permissions.deny")
 	<section>
 		<title><varname>check_all_branches</varname> (integer)</title>
 		<para>
-		If set then allow_routing functions will check Request-URI of all branches
-		(default). If disabled then only Request-URI of the first branch will be checked.
+		If set then allow_routing functions will check Request-URI of all 
+		branches (default). If disabled then only Request-URI of the first 
+		branch will be checked.
 		</para>
 		<warning>
 		<para>
-			Do not disable this parameter unless you really know what you are doing.
+		Do not disable this parameter unless you really know what you 
+		are doing.
 		</para>
 		</warning>
 		<para>
@@ -294,8 +312,9 @@ modparam("permissions", "check_all_branches", 0)
 	<section>
 		<title><varname>allow_suffix</varname> (string)</title>
 		<para>
-		Suffix to be appended to basename to create filename of the allow file when version
-		with one parameter of either <function moreinfo="none">allow_routing</function> or
+		Suffix to be appended to basename to create filename of the allow 
+		file when version with one parameter of either 
+		<function moreinfo="none">allow_routing</function> or
 		<function moreinfo="none">allow_register</function> is used.
 		</para>
 		<note>
@@ -320,8 +339,9 @@ modparam("permissions", "allow_suffix", ".allow")
 	<section>
 		<title><varname>deny_suffix</varname> (string)</title>
 		<para>
-		Suffix to be appended to basename to create filename of the deny file when version
-		with one parameter of either <function moreinfo="none">allow_routing</function> or
+		Suffix to be appended to basename to create filename of the deny file 
+		when version with one parameter of either 
+		<function moreinfo="none">allow_routing</function> or
 		<function moreinfo="none">allow_register</function> is used.
 		</para>
 		<note>
@@ -346,20 +366,19 @@ modparam("permissions", "deny_suffix", ".deny")
 	<section>
 		<title><varname>db_url</varname> (string)</title>
 		<para>
-		This is URL of the database to be used to store rules
-		used by <function
-		moreinfo="none">allow_trusted</function> function.
+		This is URL of the database to be used to store rules used by 
+		<function moreinfo="none">allow_trusted</function> function.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>mysql://serro:47serro11@localhost/ser</quote>.
+			Default value is <quote>NULL</quote>.
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("permissions", "db_url", "mysql://ser:pass@db_host/ser")
+modparam("permissions", "db_url", "mysql://openser:pass@db_host/openser")
 ...
 </programlisting>
 		</example>
@@ -386,12 +405,12 @@ modparam("permissions", "db_mode", 1)
 	<section>
 		<title><varname>trusted_table</varname> (string)</title>
 		<para>
-                Name of database table containing matching rules used by
+		Name of database table containing matching rules used by
 		<function moreinfo="none">allow_register</function> function.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>trusted</quote>.
+		Default value is <quote>trusted</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -406,13 +425,13 @@ modparam("permissions", "trusted_table", "pbx")
 	<section>
 		<title><varname>source_col</varname> (string)</title>
 		<para>
-                Name of trusted table column containing source IP
+		Name of trusted table column containing source IP
 		address that is matched against source IP address of
 		received request.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>src_ip</quote>.
+		Default value is <quote>src_ip</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -427,13 +446,11 @@ modparam("permissions", "source_col", "source_ip_address")
 	<section>
 		<title><varname>proto_col</varname> (string)</title>
 		<para>
-                Name of trusted table column containing transport
-                protocol that is matched against transport protocol of
-                received request.  Possible values that can be stored in
-                proto_col are
-                <quote>any</quote>, <quote>udp</quote>,
-                <quote>tcp</quote>, <quote>tls</quote>, and
-                <quote>sctp</quote>.
+		Name of trusted table column containing transport
+		protocol that is matched against transport protocol of
+		received request.  Possible values that can be stored in
+		proto_col are <quote>any</quote>, <quote>udp</quote>,
+		<quote>tcp</quote>, <quote>tls</quote>, and <quote>sctp</quote>.
 		</para>
 		<para>
 		<emphasis>
@@ -452,12 +469,12 @@ modparam("permissions", "proto_col", "transport")
 	<section>
 		<title><varname>from_col</varname> (string)</title>
 		<para>
-                Name of trusted table column containing regular
-                expression that is matched against From URI.
+		Name of trusted table column containing regular
+		expression that is matched against From URI.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>from_pattern</quote>.
+		Default value is <quote>from_pattern</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -470,6 +487,7 @@ modparam("permissions", "from_col", "regexp")
 		</example>
 	</section>
 	</section>
+
 	<section>
 	<title>Exported Functions</title>
 	<section>
@@ -478,9 +496,10 @@ modparam("permissions", "from_col", "regexp")
 		</title>
 		<para>
 		Returns true if all pairs constructed as described in <xref
-		linkend="sec-call-routing"> have appropriate permissions according to the
-		configuration files. This function uses default configuration files specified in
-		<varname>default_allow_file</varname> and <varname>default_deny_file</varname>.
+		linkend="sec-call-routing"> have appropriate permissions according to 
+		the configuration files. This function uses default configuration 
+		files specified in <varname>default_allow_file</varname> and
+		<varname>default_deny_file</varname>.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -502,21 +521,21 @@ if (allow_routing()) {
 		</title>
 		<para>
 		Returns true if all pairs constructed as described in <xref
-		linkend="sec-call-routing"> have appropriate permissions according to the
-		configuration files given as parameters.
+		linkend="sec-call-routing"> have appropriate permissions according 
+		to the configuration files given as parameters.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>basename</emphasis> - Basename from which allow and deny
-			filenames will be created by appending contents of
+			<para><emphasis>basename</emphasis> - Basename from which allow 
+			and deny filenames will be created by appending contents of
 			<varname>allow_suffix</varname> and <varname>deny_suffix</varname>
 			parameters.
 			</para>
 			<para>
-			If the parameter doesn't contain full pathname then the function expects the
-			file to be located in the same directory as the main configuration file of
-			the server.
+			If the parameter doesn't contain full pathname then the function 
+			expects the file to be located in the same directory as the main 
+			configuration file of the server.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -536,29 +555,31 @@ if (allow_routing("basename")) {
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">allow_routing(allow_file, deny_file)</function>
+		<function moreinfo="none">allow_routing(allow_file,deny_file)</function>
 		</title>
 		<para>
-		Returns true if all pairs constructed as described in <xref
-		linkend="sec-call-routing"> have appropriate permissions according to the
-		configuration files given as parameters.
+		Returns true if all pairs constructed as described in 
+		<xref linkend="sec-call-routing"> have appropriate permissions 
+		according to the configuration files given as parameters.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>allow_file</emphasis> - File containing allow rules.</para>
+			<para><emphasis>allow_file</emphasis> - File containing allow rules.
+			</para>
 			<para>
-			If the parameter doesn't contain full pathname then the function expects the
-			file to be located in the same directory as the main configuration file of
-			the server.
+			If the parameter doesn't contain full pathname then the function 
+			expects the file to be located in the same directory as the main 
+			configuration file of the server.
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>deny_file</emphasis> - File containing deny rules.</para>
+			<para><emphasis>deny_file</emphasis> - File containing deny rules.
+			</para>
 			<para>
-			If the parameter doesn't contain full pathname then the function expects the
-			file to be located in the same directory as the main configuration file of
-			the server.
+			If the parameter doesn't contain full pathname then the function 
+			expects the file to be located in the same directory as the main 
+			configuration file of the server.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -582,21 +603,21 @@ if (allow_routing("rules.allow", "rules.deny")) {
 		</title>
 		<para>
 		The function returns true if all pairs constructed as described in <xref
-		linkend="sec-registration-permissions"> have appropriate permissions according to
-		the configuration files given as parameters.
+		linkend="sec-registration-permissions"> have appropriate permissions 
+		according to the configuration files given as parameters.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>basename</emphasis> - Basename from which allow and deny
-			filenames will be created by appending contents of
+			<para><emphasis>basename</emphasis> - Basename from which allow 
+			and deny filenames will be created by appending contents of
 			<varname>allow_suffix</varname> and <varname>deny_suffix</varname>
 			parameters.
 			</para>
 			<para>
-			If the parameter doesn't contain full pathname then the function expects the
-			file to be located in the same directory as the main configuration file of
-			the server.
+			If the parameter doesn't contain full pathname then the function 
+			expects the file to be located in the same directory as the main 
+			configuration file of the server.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -624,26 +645,28 @@ if (method=="REGISTER") {
 		<function moreinfo="none">allow_register(allow_file, deny_file)</function>
 		</title>
 		<para>
-		The function returns true if all pairs constructed as described in <xref
-		linkend="sec-registration-permissions"> have appropriate permissions according to
-		the configuration files given as parameters.
+		The function returns true if all pairs constructed as described in 
+		<xref linkend="sec-registration-permissions"> have appropriate 
+		permissions according to the configuration files given as parameters.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>allow_file</emphasis> - File containing allow rules.</para>
+			<para><emphasis>allow_file</emphasis> - File containing allow rules.
+			</para>
 			<para>
-			If the parameter doesn't contain full pathname then the function expects the
-			file to be located in the same directory as the main configuration file of
-			the server.
+			If the parameter doesn't contain full pathname then the function 
+			expects the file to be located in the same directory as the main 
+			configuration file of the server.
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>deny_file</emphasis> - File containing deny rules.</para>
+			<para><emphasis>deny_file</emphasis> - File containing deny rules.
+			</para>
 			<para>
-			If the parameter doesn't contain full pathname then the function expects the
-			file to be located in the same directory as the main configuration file of
-			the server.
+			If the parameter doesn't contain full pathname then the function 
+			expects the file to be located in the same directory as the main 
+			configuration file of the server.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -672,21 +695,21 @@ if (method=="REGISTER") {
 		</title>
 		<para>
 		Returns true if the pair constructed as described in <xref
-		linkend="sec-referral-permissions"> have appropriate permissions according to the
-		configuration files specified by the parameter.
+		linkend="sec-referral-permissions"> have appropriate permissions 
+		according to the configuration files specified by the parameter.
 		</para>
 		<para>Meaning of the parameter is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>basename</emphasis> - Basename from which allow and deny
-			filenames will be created by appending contents of
+			<para><emphasis>basename</emphasis> - Basename from which allow 
+			and deny filenames will be created by appending contents of
 			<varname>allow_suffix</varname> and <varname>deny_suffix</varname>
 			parameters.
 			</para>
 			<para>
-			If the parameter doesn't contain full pathname then the function expects the
-			file to be located in the same directory as the main configuration file of
-			the server.
+			If the parameter doesn't contain full pathname then the function 
+			expects the file to be located in the same directory as the main 
+			configuration file of the server.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -710,25 +733,27 @@ if (allow_refer_to("basename")) {
 		</title>
 		<para>
 		Returns true if the pair constructed as described in <xref
-		linkend="sec-referral-permissions"> have appropriate permissions according to the
-		configuration files specified by parameters.
+		linkend="sec-referral-permissions"> have appropriate permissions 
+		according to the configuration files specified by parameters.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>allow_file</emphasis> - File containing allow rules.</para>
+			<para><emphasis>allow_file</emphasis> - File containing allow rules.
+			</para>
 			<para>
-			If the parameter doesn't contain full pathname then the function expects the
-			file to be located in the same directory as the main configuration file of
-			the server.
+			If the parameter doesn't contain full pathname then the function 
+			expects the file to be located in the same directory as the main 
+			configuration file of the server.
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>deny_file</emphasis> - File containing deny rules.</para>
+			<para><emphasis>deny_file</emphasis> - File containing deny rules.
+			</para>
 			<para>
-			If the parameter doesn't contain full pathname then the function expects the
-			file to be located in the same directory as the main configuration file of
-			the server.
+			If the parameter doesn't contain full pathname then the function
+			expects the file to be located in the same directory as the main 
+			configuration file of the server.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -752,11 +777,11 @@ if (allow_refer_to("rules.allow", "rules.deny")) {
 		</title>
 		<para>
 		Checks based on request's source address, transport
-                protocol, and From URI if request can be trusted without
-                authentication.  Returns 1 if a match is found
-                as described in <xref linkend="sec-trusted-requests">
-                and -1 otherwise.
-        </para>
+				protocol, and From URI if request can be trusted without
+				authentication.  Returns 1 if a match is found
+				as described in <xref linkend="sec-trusted-requests">
+				and -1 otherwise.
+		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
@@ -779,18 +804,18 @@ if (allow_trusted()) {
 		<function moreinfo="none">trusted_reload</function>
 		</title>
 		<para>
-                Causes permissions module to re-read the contents of
-                trusted table into cache memory.
-                </para>
+				Causes permissions module to re-read the contents of
+				trusted table into cache memory.
+				</para>
 	</section>
 	<section>
 		<title>
 		<function moreinfo="none">trusted_dump</function>
 		</title>
 		<para>
-                Causes permissions module to dump contents of trusted
-                table from cache memory.
-                </para>
+				Causes permissions module to dump contents of trusted
+				table from cache memory.
+				</para>
 	</section>
 	</section>
 

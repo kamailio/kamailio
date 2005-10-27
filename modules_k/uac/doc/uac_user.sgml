@@ -36,6 +36,7 @@
 			</listitem>
 		</itemizedlist>
 	</section>
+
 	<section>
 		<title>Dependencies</title>
 		<section>
@@ -46,6 +47,12 @@
 			<listitem>
 			<para>
 				<emphasis>TM - Transaction Module</emphasis>
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>RR - Record-Route Module</emphasis>, but only if
+				restore mode for FROM URI is set to <quote>auto</quote>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -70,52 +77,56 @@
 	<section>
 		<title>Exported Parameters</title>
 		<section>
-			<title><varname>from_store_param</varname> (string)</title>
+			<title><varname>rr_store_param</varname> (string)</title>
 			<para>
-			Name of FROM header parameter that will be used to store (encoded)
-			the original FROM URI.
+			Name of Record-Route header parameter that will be used to store 
+			(encoded) the original FROM URI.
 			</para>
 			<para>
 				<emphasis>
-					This parameter is optional, it's default value being "vsf".
+					This parameter is optional, it's default value being 
+					<quote>vsf</quote>.
 				</emphasis>
 			</para>
 			<example>
-				<title>Set <varname>from_store_param</varname> parameter</title>
+				<title>Set <varname>rr_store_param</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("uac","from_store_param","my_param")
+modparam("uac","rr_store_param","my_param")
 ...
 				</programlisting>
 			</example>
 		</section>
 		<section>
-			<title><varname>from_restore_mode</varname> (integer)</title>
+			<title><varname>from_restore_mode</varname> (string)</title>
 			<para>
 			There are 3 mode of restoring the original FROM URI:
 			<itemizedlist>
 			<listitem>
 				<para>
-				0 - NO RESTORE - no information about original URI is stored.
+				<quote>none</quote> - no information about original URI is 
+				stored; restoretion is not possible.
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				1 - AUTO RESTORE - all sequential request will be 
-				automatically updated based on stored original URI.
+				<quote>manual</quote> - all following replies will be restored,
+				but not also the sequential requests - this must be manually 
+				updated based on original URI.
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				2 - MANUAL RESTORE - all sequential requests/replies must 
-				be manually updated based on original URI.
+				<quote>auto</quote> - all sequential requests and replies will 
+				be automatically updated based on stored original URI.
 				</para>
 			</listitem>
 			</itemizedlist>
 			</para>
 			<para>
 				<emphasis>
-					This parameter is optional, it's default value being 0.
+					This parameter is optional, it's default value being 
+					<quote>auto</quote>.
 				</emphasis>
 			</para>
 			<example>
@@ -123,7 +134,7 @@ modparam("uac","from_store_param","my_param")
 				</title>
 				<programlisting format="linespecific">
 ...
-modparam("uac","from_restore_mode","1")
+modparam("uac","from_restore_mode","none")
 ...
 				</programlisting>
 			</example>
@@ -172,10 +183,14 @@ modparam("uac","credential","username:domain:password")
 				<title><function>uac_replace_from</function> usage</title>
 				<programlisting format="linespecific">
 ...
+# replace both display and uri
 uac_replace_from("$avp(s:display)","$avp(s:uri)");
-uac_replace_from("batman","sip:batman@gotham.org");
-uac_replace_from("","sip:robin@gotham.org");
+# replace only display and do not touch uri
 uac_replace_from("batman","");
+# remove display and replace uri
+uac_replace_from("","sip:robin@gotham.org");
+# remove display and do not touch uri
+uac_replace_from("","");
 ...
 				</programlisting>
 			</example>
