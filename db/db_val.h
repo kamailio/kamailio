@@ -63,6 +63,7 @@ typedef struct {
 		str           str_val;    /* str string value */
 		str           blob_val;   /* Blob data */
 		unsigned int  bitmap_val; /* Bitmap data type, 32 flags, should be enough */ 
+		long long     int8_val;   /* 8-byte integer */
 	} val;                            /* union of all possible types */
 } db_val_t;
 
