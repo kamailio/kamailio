@@ -223,6 +223,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	struct cell* new_cell;
 	int          sip_msg_len;
 	struct usr_avp **old;
+	struct tm_callback *cbs, *cbs_tmp;
 
 	/* allocs a new cell */
 	new_cell = (struct cell*)shm_malloc( sizeof( struct cell ) );
@@ -284,6 +285,15 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	return new_cell;
 
 error:
+	if (new_cell->user_avps)
+		destroy_avp_list( &new_cell->user_avps );
+	if (new_cell->tmcb_hl.first) {
+		for( cbs=new_cell->tmcb_hl.first ; cbs ; ) {
+			cbs_tmp = cbs;
+			cbs = cbs->next;
+			shm_free( cbs_tmp );
+		}
+	}
 	shm_free(new_cell);
 	/* unlink transaction AVP list and link back the global AVP list (bogdan)*/
 	reset_avps();

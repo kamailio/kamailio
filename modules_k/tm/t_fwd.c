@@ -492,7 +492,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	}
 
 	/* do not attmpt to send reply for CANCEL if we already did it once;
-	 * to work arround the reace between receiveing reply and generating
+	 * to work arround the race between receiveing reply and generating
 	 * local reply, we better check if we are in failure route (which means that
 	 * the reply to UAC is /to be/ sent) or if was actually sent out */
 	/* calling here t_relay from within failure route will lead to dead lock

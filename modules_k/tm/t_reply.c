@@ -557,9 +557,9 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	level++;
 
 	/* failure_route for a local UAC? */
-	if (!shmem_msg) {
-		LOG(L_WARN,"WARNING:tm:run_failure_handlers: no UAC support (%d, %d) \n",
-			t->on_negative, t->tmcb_hl.reg_types);
+	if (!shmem_msg || REQ_LINE(shmem_msg).method_value==METHOD_CANCEL ) {
+		LOG(L_WARN,"WARNING:tm:run_failure_handlers: no UAC or CANCEL "
+			"support (%d, %d) \n", t->on_negative, t->tmcb_hl.reg_types);
 		return 0;
 	}
 
@@ -987,7 +987,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 			if (relayed_code>=180 && t->uas.request->to 
 					&& (get_to(t->uas.request)->tag_value.s==0 
-			    		|| get_to(t->uas.request)->tag_value.len==0)) {
+					|| get_to(t->uas.request)->tag_value.len==0)) {
 				calc_crc_suffix( t->uas.request, tm_tag_suffix );
 				buf = build_res_buf_from_sip_req(
 						relayed_code,
