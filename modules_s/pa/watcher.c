@@ -650,6 +650,14 @@ void print_watcher(FILE* _f, watcher_t* _w)
 int update_watcher(struct presentity *p, watcher_t* _w, time_t _e)
 {
 	_w->expires = _e;
+	/*if (_w->status == WS_PENDING) {*/
+	if (!is_watcher_terminated(_w)) {
+		/* do reauthorization for non-terminated watchers (policy may
+		 * change) - in the future should be done elsewhere using 
+		 * "subscriptions to XCAP changes" */
+		_w->status = authorize_watcher(p,_w);
+		/* handle rejected watchers here? */
+	}
 	if (use_db) return db_update_watcher(p, _w);
 	else return 0;
 }

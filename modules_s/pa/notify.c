@@ -244,13 +244,29 @@ static inline int add_cont_type_hf(str* _h, int _l, doctype_t _d)
 }
 
 
-static inline int add_subs_state_hf(str* _h, int _l, watcher_status_t _s, ss_reason_t _r, time_t _e)
+static inline int add_subs_state_hf(str* _h, int _l, watcher_status_t _s, time_t _e)
 {
 	char* num;
 	int len;
-	str s;
+	str s = { 0, 0 };
+	ss_reason_t _r;
+	
+	if (_e <= 0) _r = SR_TIMEOUT;
+	else _r = SR_REJECTED;
 
-	s = watcher_status_names[_s];
+	switch(_s) {
+		case WS_ACTIVE: ;
+			s = watcher_status_names[WS_ACTIVE];
+			break;
+		case WS_REJECTED:
+		case WS_PENDING_TERMINATED:
+		case WS_TERMINATED:
+			s = watcher_status_names[WS_TERMINATED];
+			break;
+		case WS_PENDING: 
+			s = watcher_status_names[WS_PENDING];
+			break;
+	}
 	
 	if (_l < SUBSCRIPTION_STATE_L + s.len + SS_EXPIRES_L + 
 	    SS_REASON_L + reason[_r].len + CRLF_L) {
@@ -263,19 +279,20 @@ static inline int add_subs_state_hf(str* _h, int _l, watcher_status_t _s, ss_rea
 	str_append(_h, s.s, s.len);
 	
 	switch(_s) {
-	case WS_ACTIVE:
-		str_append(_h, SS_EXPIRES, SS_EXPIRES_L);
-		num = int2str((unsigned int)_e, &len);
-		str_append(_h, num, len);
-		break;
+		case WS_ACTIVE:
+			str_append(_h, SS_EXPIRES, SS_EXPIRES_L);
+			num = int2str((unsigned int)_e, &len);
+			str_append(_h, num, len);
+			break;
 
-	case WS_TERMINATED:
-		str_append(_h, SS_REASON, SS_REASON_L);
-		str_append(_h, reason[_r].s, reason[_r].len);
-		break;
+		case WS_REJECTED:
+		case WS_PENDING_TERMINATED:
+		case WS_TERMINATED:
+			str_append(_h, SS_REASON, SS_REASON_L);
+			str_append(_h, reason[_r].s, reason[_r].len);
+			break;
 
-	case WS_PENDING:
-	default: break;
+		case WS_PENDING: break;
 	}
 
 	str_append(_h, CRLF, CRLF_L);
@@ -303,7 +320,6 @@ static int add_contact_hf(str* _h, int _l, str *_c)
 static inline int create_headers(struct watcher* _w)
 {
 	time_t t;
-	ss_reason_t reason;
 	
 	headers.len = 0;
 	
@@ -326,13 +342,7 @@ static inline int create_headers(struct watcher* _w)
 	if (_w && _w->expires) t = _w->expires - time(0);
 	else t = 0;
 
-	if (t <= 0) {
-		reason = SR_TIMEOUT;
-	} else {
-		reason = SR_REJECTED;
-	}
-
-	if (add_subs_state_hf(&headers, BUF_LEN - headers.len, _w->status, SR_TIMEOUT, t) < 0) {
+	if (add_subs_state_hf(&headers, BUF_LEN - headers.len, _w->status, t) < 0) {
 		LOG(L_ERR, "create_headers(): Error while adding Subscription-State\n");
 		return -3;
 	}

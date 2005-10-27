@@ -37,6 +37,7 @@
 #include "hslot.h"
 #include "pstate.h"
 
+#include <xcap/pres_rules.h>
 #include <cds/msg_queue.h>
 #include <presence/notifier.h>
 
@@ -132,6 +133,7 @@ typedef struct presentity {
 	struct hslot* slot;      /* Hash table collision slot we belong to */
 	
 	internal_pa_subscription_t *first_qsa_subscription, *last_qsa_subscription;
+	presence_rules_t *authorization_info;
 } presentity_t;
 
 /*

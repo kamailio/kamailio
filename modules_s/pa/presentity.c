@@ -113,6 +113,7 @@ int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, presentity_t** _p)
 	presentity->first_qsa_subscription = 0;
 	presentity->last_qsa_subscription = 0;
 	presentity->presid = 0;
+	presentity->authorization_info = NULL;
 
 	*_p = presentity;
 
@@ -346,6 +347,10 @@ void free_presentity(presentity_t* _p)
 		iw = niw;
 	}
 
+	if (_p->authorization_info) {
+		free_pres_rules(_p->authorization_info);
+	}
+	
 	shm_free(_p);
 }
 
