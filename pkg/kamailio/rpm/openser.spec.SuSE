@@ -174,6 +174,7 @@ sbin/insserv etc/init.d/
 %doc %{_docdir}/openser/README.group
 %doc %{_docdir}/openser/README.mangler
 %doc %{_docdir}/openser/README.maxfwd
+%doc %{_docdir}/openser/README.mediaproxy
 %doc %{_docdir}/openser/README.msilo
 %doc %{_docdir}/openser/README.nathelper
 %doc %{_docdir}/openser/README.pdt
@@ -216,6 +217,7 @@ sbin/insserv etc/init.d/
 %{_libdir}/openser/modules/group.so
 %{_libdir}/openser/modules/mangler.so
 %{_libdir}/openser/modules/maxfwd.so
+%{_libdir}/openser/modules/mediaproxy.so
 %{_libdir}/openser/modules/msilo.so
 %{_libdir}/openser/modules/nathelper.so
 %{_libdir}/openser/modules/pdt.so
