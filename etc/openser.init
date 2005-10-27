@@ -2,11 +2,6 @@
 #
 # $Id$
 #
-#
-# 3w-xxxx:      Starts the sip_router process
-#
-# Version:      @(#) /etc/rc.d/init.d/3w-xxxx
-#
 # chkconfig: 2345 20 80
 # description: controls execution of SIP router
 # processname: openser
@@ -24,9 +19,7 @@ OSRDIR=/usr/local/sbin
 OSRWDIR=/var/tmp
 ETC=/usr/local/etc/openser/openser.cfg
 PIDFILE=/var/run/openser.pid
-NOTIFY=team@openser.org
-USR=510
-GRP=510
+#NOTIFY=alert@mycompany.com
 
 MONIT=/usr/local/bin/monit
 MONITRC=/usr/local/etc/monitrc
@@ -45,10 +38,10 @@ openser_start() {
 		NEWCORE=$OSRWDIR/core.$DATE
 		mv $CORE $NEWCORE
 		echo core stored in $NEWCORE >> $TMP
-		gdb $BIN $NEWCORE -x test/bt.gdb -batch >> $TMP
+		#gdb $BIN $NEWCORE -x test/bt.gdb -batch >> $TMP
 		chmod a+r $NEWCORE
 		cd $OSRDIR; tar czf $OSRWDIR/openser.$DATE.tgz .
-		mail -s "openser core found" $NOTIFY < $TMP
+		#mail -s "openser core found" $NOTIFY < $TMP
 		rm -f $TMP
 	fi
 	cd $OSRWDIR
@@ -67,46 +60,46 @@ openser_stop() {
 }
 
 monit_start() {
-   echo "Command Monit to start OpenSER..."
-   ${MONIT} -c ${MONITRC} start openser
-   RETVAL=$?
-   echo
+	echo "Command Monit to start OpenSER..."
+	${MONIT} -c ${MONITRC} start openser
+	RETVAL=$?
+	echo
 }
 
 monit_stop() {
-   echo "Command Monit to stop OpenSER..."
-   ${MONIT} -c ${MONITRC} stop openser
-   RETVAL=$?
-   echo
+	echo "Command Monit to stop OpenSER..."
+	${MONIT} -c ${MONITRC} stop openser
+	RETVAL=$?
+	echo
 }
 
 # See how we were called.
 case "$1" in
-  openserstart)
-	openser_start
+	openserstart)
+		openser_start
+		;;
+	openserstop)
+		openser_stop
+		;;
+	openserrestart)
+		openser_stop
+		echo
+		openser_start
+		;;
+	start)
+		monit_start
 	;;
-  openserstop)
-    openser_stop
+	stop)
+		monit_stop
 	;;
-  openserrestart)
-	openser_stop
-	echo
-	openser_start
-	;;
-  start)
-    monit_start
-	;;
-  stop)
-    monit_stop
-	;;
-  restart)
-	monit_stop
-	sleep 1
-	monit_start
-	;;
-  *)
-	echo "Usage: $0 {start|stop|restart}"
-	exit 1
+	restart)
+		monit_stop
+		sleep 1
+		monit_start
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart|openserstart|openserstop|openserrestart}"
+		exit 1
 esac
 
 exit $RETVAL
