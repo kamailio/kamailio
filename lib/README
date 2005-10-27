@@ -16,3 +16,38 @@ xcap - Common XCAP operations and structures (XCAP authorization documents
 
 Used by modules: pa, rls, dialog, rpa
 
+Usage:
+-----
+
+All libraries can be compiled "with ser" or "without ser". Compilation
+without ser may be useful for debugging purposes or for example for 
+searching for memory leaks with some tool like valgrind.
+
+Compilation with ser:
+--------------------
+
+Compilation and installation of these libraries is NOT DONE by running
+main ser makefile now - it MUST be done MANUALLY. For this purpose
+is there Makefile.ser. To compile and install libraries simply run
+
+   make -f Makefile.ser install
+
+in lib directory. You can select destination directory like in the case
+of ser, for example:
+
+   make -f Makefile.ser install prefix="/my/ser/directory"
+   
+AFTER COMPILATION of libraries you can COMPILE MODULES using this 
+libraries like PA, RLS or dialog.
+
+
+Running with ser (Linux):
+----------------
+
+The path to installed libraries must be known to linker on startup. This
+can be done by setting variable LD_LIBRARY_PATH before running ser. For
+example, if libraries were installed to default directory (/usr/local),
+you should set LD_LIBRARY_PATH=/usr/local/lib/ser. In the case of 
+nonstandard installation, you can use something like 
+LD_LIBRARY_PATH=/my/ser/directory/lib/ser.
+
