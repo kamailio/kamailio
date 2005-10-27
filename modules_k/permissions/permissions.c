@@ -102,13 +102,13 @@ static cmd_export_t cmds[] = {
 	{"allow_trusted",  allow_trusted,    0, 0,             REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_refer_to", allow_refer_to_1, 1, single_fixup,  REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_refer_to", allow_refer_to_2, 2, load_fixup,    REQUEST_ROUTE | FAILURE_ROUTE},
-        {0, 0, 0, 0, 0}
+	{0, 0, 0, 0, 0}
 };
 
 /* Exported parameters */
 static param_export_t params[] = {
-        {"default_allow_file", STR_PARAM, &default_allow_file},
-        {"default_deny_file",  STR_PARAM, &default_deny_file },
+	{"default_allow_file", STR_PARAM, &default_allow_file},
+	{"default_deny_file",  STR_PARAM, &default_deny_file },
 	{"check_all_branches", INT_PARAM, &check_all_branches},
 	{"allow_suffix",       STR_PARAM, &allow_suffix      },
 	{"deny_suffix",        STR_PARAM, &deny_suffix       },
