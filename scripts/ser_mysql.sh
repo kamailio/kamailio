@@ -237,15 +237,12 @@ CREATE TABLE version (
 #
 
 INSERT INTO version VALUES ( 'subscriber', '5');
-INSERT INTO version VALUES ( 'reserved', '1');
 INSERT INTO version VALUES ( 'phonebook', '1');
 INSERT INTO version VALUES ( 'pending', '4');
 INSERT INTO version VALUES ( 'missed_calls', '2');
 INSERT INTO version VALUES ( 'location', '7');
 INSERT INTO version VALUES ( 'grp', '2');
-INSERT INTO version VALUES ( 'event', '1');
 INSERT INTO version VALUES ( 'aliases', '7');
-INSERT INTO version VALUES ( 'active_sessions', '1');
 INSERT INTO version VALUES ( 'acc', '2');
 INSERT INTO version VALUES ( 'config', '1');
 INSERT INTO version VALUES ( 'silo', '3');
@@ -258,7 +255,6 @@ INSERT INTO version VALUES ( 'trusted', '1');
 INSERT INTO version VALUES ( 'usr_preferences', '2');
 INSERT INTO version VALUES ( 'usr_preferences_types', '1');
 INSERT INTO version VALUES ( 'admin_privileges', '1');
-INSERT INTO version VALUES ( 'calls_forwarding', '1');
 INSERT INTO version VALUES ( 'speed_dial', '2');
 INSERT INTO version VALUES ( 'gw', '3');
 INSERT INTO version VALUES ( 'gw_grp', '1');
@@ -295,25 +291,6 @@ CREATE TABLE acc (
   KEY sip_callid (sip_callid)
 ) $TABLE_TYPE;
 
-
-
-
-#
-# Table structure for table 'active_sessions' -- web stuff
-#
-
-
-CREATE TABLE active_sessions (
-  sid varchar(32) NOT NULL default '',
-  name varchar(32) NOT NULL default '',
-  val text,
-  changed varchar(14) NOT NULL default '',
-  PRIMARY KEY  (name,sid),
-  KEY changed (changed)
-) $TABLE_TYPE;
-
-
-
 #
 # Table structure for table 'aliases' -- location-like table
 # (aliases_contact index makes lookup of missed calls much faster)
@@ -337,24 +314,6 @@ CREATE TABLE aliases (
   PRIMARY KEY($USERCOL, domain, contact),
   INDEX aliases_contact (contact)
 ) $TABLE_TYPE;
-
-
-#
-# Table structure for table 'event' -- track of predefined
-# events to which a user subscribed
-#
-
-
-CREATE TABLE event (
-  id int(10) unsigned NOT NULL auto_increment,
-  $USERCOL varchar(64) NOT NULL default '',
-  domain varchar(128) NOT NULL default '',
-  uri varchar(255) NOT NULL default '',
-  description varchar(255) NOT NULL default '',
-  PRIMARY KEY (id)
-) $TABLE_TYPE;
-
-
 
 
 #
@@ -476,22 +435,6 @@ CREATE TABLE phonebook (
   sip_uri varchar(128) NOT NULL default '',
   PRIMARY KEY  (id)
 ) $TABLE_TYPE;
-
-
-
-
-#
-# Table structure for table 'reserved' -- reserved username
-# which should be never allowed for subscription
-#
-
-
-CREATE TABLE reserved (
-  $USERCOL char(64) NOT NULL default '',
-  UNIQUE KEY user2(username)
-) $TABLE_TYPE;
-
-
 
 
 #
@@ -690,21 +633,6 @@ CREATE TABLE admin_privileges (
   priv_name varchar(64) NOT NULL default '',
   priv_value varchar(64) NOT NULL default '',
   PRIMARY KEY  ($USERCOL,priv_name,priv_value,domain)
-) $TABLE_TYPE;
-
-#
-# Table structure for table 'calls_forwarding'  -- curently used only for caller screening
-#
-
-CREATE TABLE calls_forwarding (
-  $USERCOL varchar(64) NOT NULL default '',
-  domain varchar(128) NOT NULL default '',
-  uri_re varchar(128) NOT NULL default '',
-  purpose varchar(32) NOT NULL default '',
-  action varchar(32) NOT NULL default '',
-  param1 varchar(128) default NULL,
-  param2 varchar(128) default NULL,
-  PRIMARY KEY  ($USERCOL,domain,uri_re,purpose)
 ) $TABLE_TYPE;
 
 #
