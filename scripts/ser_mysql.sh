@@ -441,7 +441,6 @@ CREATE TABLE phonebook (
 
 
 CREATE TABLE subscriber (
-  phplib_id varchar(32) NOT NULL default '',
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   password varchar(25) NOT NULL default '',
@@ -453,8 +452,6 @@ CREATE TABLE subscriber (
   datetime_modified datetime NOT NULL default '0000-00-00 00:00:00',
   confirmation varchar(64) NOT NULL default '',
   flag char(1) NOT NULL default 'o',
-  sendnotification varchar(50) NOT NULL default '',
-  greeting varchar(50) NOT NULL default '',
   ha1 varchar(128) NOT NULL default '',
   ha1b varchar(128) NOT NULL default '',
   allow_find char(1) NOT NULL default '0',
