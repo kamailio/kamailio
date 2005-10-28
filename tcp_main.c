@@ -414,6 +414,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	c->rcv.proto_reserved2=0;
 	c->state=state;
 	c->extra_data=0;
+	c->flags|=F_CONN_REMOVED;
 #ifdef USE_TLS
 	if (type==PROTO_TLS){
 		if (tls_tcpconn_init(c, sock)==-1) goto error;
@@ -1102,6 +1103,7 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, int fd_i)
 	/* pass it to child, so remove it from the io watch list */
 	DBG("handle_tcpconn_ev: data available on %p %d\n", tcpconn, tcpconn->s);
 	if (io_watch_del(&io_h, tcpconn->s, fd_i, 0)==-1) goto error;
+	tcpconn->flags|=F_CONN_REMOVED;
 	tcpconn_ref(tcpconn); /* refcnt ++ */
 	if (send2child(tcpconn)<0){
 		LOG(L_ERR,"ERROR: handle_tcpconn_ev: no children available\n");
@@ -1205,6 +1207,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			tcpconn_put(tcpconn);
 			/* must be after the de-ref*/
 			io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
+			tcpconn->flags&=~F_CONN_REMOVED;
 			DBG("handle_tcp_child: CONN_RELEASE  %p refcnt= %d\n", 
 											tcpconn, tcpconn->refcnt);
 			break;
@@ -1311,8 +1314,10 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 	}
 	switch(cmd){
 		case CONN_ERROR:
-			if (tcpconn->s!=-1)
+			if (!(tcpconn->flags & F_CONN_REMOVED) && (tcpconn->s!=-1)){
 				io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
+				tcpconn->flags|=F_CONN_REMOVED;
+			}
 			tcpconn_destroy(tcpconn); /* will close also the fd */
 			break;
 		case CONN_GET_FD:
@@ -1339,6 +1344,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			/* update the timeout*/
 			tcpconn->timeout=get_ticks()+tcp_con_lifetime;
 			io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
+			tcpconn->flags&=~F_CONN_REMOVED;
 			break;
 		default:
 			LOG(L_CRIT, "BUG: handle_ser_child: unknown cmd %d\n", cmd);
@@ -1423,7 +1429,10 @@ static inline void tcpconn_timeout(int force)
 #endif
 				_tcpconn_rm(c);
 				if ((fd>0)&&(c->refcnt==0)) {
-					io_watch_del(&io_h, fd, -1, IO_FD_CLOSING);
+					if (!(c->flags & F_CONN_REMOVED)){
+						io_watch_del(&io_h, fd, -1, IO_FD_CLOSING);
+						c->flags|=F_CONN_REMOVED;
+					}
 					close(fd);
 				}
 				tcp_connections_no--;

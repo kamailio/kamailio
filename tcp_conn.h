@@ -58,6 +58,7 @@
 
 /* tcp connection flags */
 #define F_CONN_NON_BLOCKING 1
+#define F_CONN_REMOVED      2 /* no longer  in "main" listen fd list */
 
 
 enum tcp_req_errors {	TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR,

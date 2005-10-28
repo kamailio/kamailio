@@ -369,6 +369,12 @@ int add_listen_iface(char* name, unsigned short port, unsigned short proto,
 #endif
 				port_no;
 		}
+#ifdef USE_TLS
+		else if ((c_proto==PROTO_TLS) && (proto==0)){
+			/* -l  ip:port => on udp:ip:port; tcp:ip:port and tls:ip:port+1? */
+			port++;
+		}
+#endif
 		if (new_sock2list(name, port, c_proto, flags, list)<0){
 			LOG(L_ERR, "ERROR: add_listen_iface: new_sock2list failed\n");
 			goto error;

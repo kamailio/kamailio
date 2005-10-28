@@ -400,6 +400,7 @@ skip:
 int tcp_read_req(struct tcp_connection* con, int* bytes_read)
 {
 	int bytes;
+	int total_bytes;
 	int resp;
 	long size;
 	struct tcp_req* req;
@@ -407,6 +408,7 @@ int tcp_read_req(struct tcp_connection* con, int* bytes_read)
 	char c;
 		
 		bytes=-1;
+		total_bytes=0;
 		resp=CONN_RELEASE;
 		s=con->fd;
 		req=&con->req;
@@ -437,6 +439,7 @@ again:
 				resp=CONN_ERROR;
 				goto end_req;
 			}
+			total_bytes+=bytes;
 			/* eof check:
 			 * is EOF if eof on fd and req.  not complete yet,
 			 * if req. is complete we might have a second unparsed
@@ -533,7 +536,7 @@ again:
 		
 		
 	end_req:
-		if (bytes_read) *bytes_read=bytes;
+		if (bytes_read) *bytes_read=total_bytes;
 		return resp;
 }
 
