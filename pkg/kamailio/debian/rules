@@ -66,7 +66,7 @@ build-stamp: configure-stamp
 	# Add here commands to compile the package.
 	$(MAKE) all  skip_modules="$(EXCLUDED_MODULES)" cfg-target=/etc/openser/
 	$(MAKE) modules modules="$(MYSQL_MOD_PATH)" cfg-target=/etc/openser/
-	$(MAKE) modules modules="$(POSTGRE_MOD_PATH)" cfg-target=/etc/openser/
+	$(MAKE) modules modules="$(POSTGRES_MOD_PATH)" cfg-target=/etc/openser/
 	$(MAKE) modules modules="$(JABBER_MOD_PATH)" cfg-target=/etc/openser/
 	$(MAKE) modules modules="$(CPL_MOD_PATH)" cfg-target=/etc/openser/
 	$(MAKE) modules modules="$(RADIUS_MOD_PATH)" cfg-target=/etc/openser/
