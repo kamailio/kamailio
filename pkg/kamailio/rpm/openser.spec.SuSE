@@ -20,7 +20,7 @@ Group:        Networking/Daemons
 Source:       http://openser.org/pub/openser/stable/%{name}-%{ver}_src.tar.gz
 Source2:      openser.init.SuSE
 URL:          http://www.openser.org/
-Vendor:       Voice-System.RO
+Vendor:       openser.org
 BuildRoot:    /var/tmp/%{name}-%{ver}-root
 Conflicts:    openser < %ver, openser-mysql < %ver, openser-jabber < %ver, openser-radius < %ver
 BuildPrereq:  make flex bison 
