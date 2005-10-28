@@ -244,7 +244,6 @@ INSERT INTO version VALUES ( 'location', '7');
 INSERT INTO version VALUES ( 'grp', '2');
 INSERT INTO version VALUES ( 'aliases', '7');
 INSERT INTO version VALUES ( 'acc', '2');
-INSERT INTO version VALUES ( 'config', '1');
 INSERT INTO version VALUES ( 'silo', '3');
 INSERT INTO version VALUES ( 'realm', '1');
 INSERT INTO version VALUES ( 'domain', '2');
@@ -469,16 +468,6 @@ CREATE TABLE subscriber (
   KEY user_2 ($USERCOL)
 ) $TABLE_TYPE;
 
-# hook-table for all posssible future config values
-# (currently unused)
-
-CREATE TABLE config (
-   attribute varchar(32) NOT NULL,
-   value varchar(128) NOT NULL,
-   $USERCOL varchar(64) NOT NULL default '',
-   domain varchar(128) NOT NULL default '',
-   modified timestamp(14)
-) $TABLE_TYPE;
 
 # "instant" message silo
 
