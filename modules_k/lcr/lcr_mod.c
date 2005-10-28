@@ -657,8 +657,8 @@ void print_gws (FILE *reply_file)
 		}
 		prefix_len = (*gws)[i].prefix_len;
 		if (prefix_len) {
-		    fprintf(reply_file, "%.*s\n",
-			    prefix_len, (*gws)[i].prefix);
+			fprintf(reply_file, "%.*s\n",
+				(int)prefix_len, (*gws)[i].prefix);
 		} else {
 		    fprintf(reply_file, "\n");
 		}
