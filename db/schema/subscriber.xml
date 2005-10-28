@@ -11,12 +11,6 @@
     <name>subscriber</name>
     <version>5</version>
 
-    <column id="phplib_id">
-	<name>phplib_id</name>
-	<type>string</type>
-	<default></default>
-	<size>32</size>
-    </column>
     <column id="username">
 	<name>username</name>
 	<type>string</type>
@@ -80,18 +74,6 @@
 	<type>string</type>
 	<default>o</default>
 	<size>1</size>
-    </column>
-    <column>
-	<name>sendnotification</name>
-	<type>string</type>
-	<default></default>
-	<size>50</size>
-    </column>
-    <column>
-	<name>greeting</name>
-	<type>string</type>
-	<default></default>
-	<size>50</size>
     </column>
     <column>
 	<name>ha1</name>
