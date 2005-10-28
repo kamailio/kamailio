@@ -25,16 +25,8 @@
 	<value col="tv"><xi:include href="acc.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn"><xi:include href="active_sessions.xml" xpointer="xpointer(table/name/text())"/></value>
-	<value col="tv"><xi:include href="active_sessions.xml" xpointer="xpointer(table/version/text())"/></value>
-    </row>
-    <row>
 	<value col="tn"><xi:include href="aliases.xml" xpointer="xpointer(table/name/text())"/></value>
 	<value col="tv"><xi:include href="aliases.xml" xpointer="xpointer(table/version/text())"/></value>
-    </row>
-    <row>
-	<value col="tn"><xi:include href="event.xml" xpointer="xpointer(table/name/text())"/></value>
-	<value col="tv"><xi:include href="event.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
 	<value col="tn"><xi:include href="grp.xml" xpointer="xpointer(table/name/text())"/></value>
@@ -57,16 +49,8 @@
 	<value col="tv"><xi:include href="phonebook.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
-	<value col="tn"><xi:include href="reserved.xml" xpointer="xpointer(table/name/text())"/></value>
-	<value col="tv"><xi:include href="reserved.xml" xpointer="xpointer(table/version/text())"/></value>
-    </row>
-    <row>
 	<value col="tn"><xi:include href="subscriber.xml" xpointer="xpointer(table/name/text())"/></value>
 	<value col="tv"><xi:include href="subscriber.xml" xpointer="xpointer(table/version/text())"/></value>
-    </row>
-    <row>
-	<value col="tn"><xi:include href="config.xml" xpointer="xpointer(table/name/text())"/></value>
-	<value col="tv"><xi:include href="config.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
 	<value col="tn"><xi:include href="silo.xml" xpointer="xpointer(table/name/text())"/></value>
@@ -104,10 +88,6 @@
     <row>
 	<value col="tn"><xi:include href="admin_privileges.xml" xpointer="xpointer(table/name/text())"/></value>
 	<value col="tv"><xi:include href="admin_privileges.xml" xpointer="xpointer(table/version/text())"/></value>
-    </row>
-    <row>
-	<value col="tn"><xi:include href="call_forwarding.xml" xpointer="xpointer(table/name/text())"/></value>
-	<value col="tv"><xi:include href="call_forwarding.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
     <row>
 	<value col="tn"><xi:include href="speed_dial.xml" xpointer="xpointer(table/name/text())"/></value>

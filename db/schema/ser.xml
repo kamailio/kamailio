@@ -20,17 +20,13 @@
 
     <xi:include href="version.xml"/>
     <xi:include href="acc.xml"/>
-    <xi:include href="active_sessions.xml"/>
     <xi:include href="aliases.xml"/>
-    <xi:include href="event.xml"/>
     <xi:include href="grp.xml"/>
     <xi:include href="location.xml"/>
     <xi:include href="missed_calls.xml"/>
     <xi:include href="pending.xml"/>
     <xi:include href="phonebook.xml"/>
-    <xi:include href="reserved.xml"/>
     <xi:include href="subscriber.xml"/>
-    <xi:include href="config.xml"/>
     <xi:include href="silo.xml"/>
     <xi:include href="domain.xml"/>
     <xi:include href="uri.xml"/>
@@ -40,7 +36,6 @@
     <xi:include href="trusted.xml"/>
     <xi:include href="server_monitoring_agg.xml"/>
     <xi:include href="admin_privileges.xml"/>
-    <xi:include href="call_forwarding.xml"/>
     <xi:include href="speed_dial.xml"/>
     <xi:include href="gw.xml"/>
     <xi:include href="gw_grp.xml"/>
