@@ -1,0 +1,593 @@
+                                   OSP Module
+
+  Ulrich Abend
+
+   FhG Fokus
+
+    Edited by
+
+  Di-Shi Sun
+
+   Copyright (c) 2003 FhG Fokus
+
+   ---------------------------------------------------------------------------
+
+   Table of Contents
+
+   [1]User's Guide
+
+                [2]Overview
+
+                [3]Dependencies
+
+                [4]Exported Parameters
+
+                             [5]sp1_uri (string), sp2_uri (string)
+
+                             [6]sp1_weight (integer), sp2_weight (integer)
+
+                             [7]device_ip (string)
+
+                             [8]device_port (string)
+
+                             [9]private_key (string)
+
+                             [10]local_certificate (string)
+
+                             [11]ca_certificates (string)
+
+                             [12]token_format (integer)
+
+                             [13]enable_crypto_hardware_support (integer)
+
+                             [14]ssl_lifetime (integer)
+
+                             [15]persistence (integer)
+
+                             [16]retry_delay (integer)
+
+                             [17]retry_limit (integer)
+
+                             [18]timeout (integer)
+
+                             [19]max_destinations (integer)
+
+                             [20]validate_call_id (integer)
+
+                [21]Exported Functions
+
+                             [22]checkospheader()
+
+                             [23]validateospheader()
+
+                             [24]requestosprouting()
+
+                             [25]preparefirstosproute()
+
+                             [26]preparenextosproute()
+
+                             [27]prepareallosproute()
+
+                             [28]reportospusage()
+
+   [29]Developer's Guide
+
+   [30]Frequently Asked Questions
+
+   ---------------------------------------------------------------------------
+
+                                  User's Guide
+
+Overview
+
+   This module implements the client part of the Open Settlement Protocol
+   (OSP) defined by ETSI (ETSI TS 101 321 V4.1.1). OSP can be used to request
+   a validation, request a route and validate a request.
+
+   This module has been tested with the OSP server from TransNexus
+   (www.transnexus.com).
+
+   ---------------------------------------------------------------------------
+
+Dependencies
+
+   The module depends on the following modules (in the other words, the
+   listed modules must be loaded before this module):
+
+     * textops -- text based operation
+
+   ---------------------------------------------------------------------------
+
+Exported Parameters
+
+  sp1_uri (string), sp2_uri (string)
+
+   Defines the one or two OSP servers to be used for requesting authorization
+   and routing information. One OSP server MUST be configured. sp2_uri is
+   required only if there are two OSP servers.
+
+   This parameter has no default value and must be specified. To use a test
+   server hosted by TransNexus, send an email to support@transnexus.com and
+   request an account. Each service point takes the form of a standard URL,
+   and may consist of up to four components:
+
+     * An optional indication of the protocol to be used for communicating
+       with the service point. Both HTTP and HTTP secured with SSL are
+       supported; they are indicated by "http://" and "https://"
+       respectively. If the protocol is not explicitly indicated, the Toolkit
+       defaults to HTTP secured with SSL.
+
+     * The Internet domain name for the service point. Raw IP addresses may
+       also be used, provided they are enclosed in square brackets such as
+       "[172.16.1.1]".
+
+     * An optional TCP port number for communicating with the service point.
+       If the port number is omitted, the Toolkit defaults to port 1080 (for
+       HTTP) or port 1443 (for HTTP secured with SSL).
+
+     * The uniform resource identifier for requests to the service point.
+       This component is not optional and must be included.
+
+   Example 1. Setting the OSP server
+
+   modparam ("osp", "sp1_uri", "http://osptestserver.transnexus.com:1080/osp") 
+                                                                               
+
+   ---------------------------------------------------------------------------
+
+  sp1_weight (integer), sp2_weight (integer)
+
+   The number of messages that can be sent over each connection to the
+   various service points configured. This variable can be used to load
+   balance messages across a set of OSP servers.
+
+   Default value is set to 0.
+
+   Example 2. Setting the OSP server weight
+
+   modparam ("osp", "sp1_weight", 0)                                          
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  device_ip (string)
+
+   This is an optional field; if configured the information is sent out as
+   "SourceAlternate/transport" in the OSP message.
+
+   Example 3. Setting the device IP address
+
+   modparam ("osp", "device_ip", "[1.1.1.1]")                                 
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  device_port (string)
+
+   This is an optional field; if configured the information is sent out as
+   "SourceAlternate/network" in the OSP message.
+
+   Example 4. Setting the device port
+
+   modparam ("osp", "device_port", "5060")                                    
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  private_key (string)
+
+   Defines the private key owned by this device. The crypto files are used
+   for validating OSP authorization tokens and establishing a secure channel
+   between the Proxy and OSP server using SSL. The files can be generated
+   using an enrollment process and the utility 'enroll' from the OSP Toolkit.
+   By default, the proxy will look for pkey.pem, localcert.pem, and
+   cacart_0.pem in the default configuration directory. The default
+   configuration directory is set at compile time using CFG_DIR and defaults
+   to /usr/local/etc/ser/.
+
+   Test files are distributed with the module in the osp/etc folder. You can
+   copy the files to the expected location and/or change the parameters.
+
+   This parameter defaults to "/usr/local/etc/ser/pkey.pem", if the default
+   CFG_DIR value was used at compile time.
+
+   Example 5. Setting the private key
+
+   modparam ("osp", "private_key", "/usr/local/etc/ser/pkey.pem")             
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  local_certificate (string)
+
+   Defines the local certificate of this device. The crypto files are used
+   for validating OSP authorization tokens and establishing a secure channel
+   between the Proxy and OSP server using SSL. The files can be generated
+   using an enrollment process and the utility 'enroll' from the OSP toolkit.
+   By default, the proxy will look for pkey.pem, localcert.pem, and
+   cacart_0.pem in the default configuration directory. The default
+   configuration directory is set at compile time using CFG_DIR and defaults
+   to /usr/local/etc/ser/.
+
+   Test files are distributed with the module in the osp/etc folder. You can
+   copy the files to the expected location and/or change the parameters.
+
+   This parameter defaults to "/usr/local/etc/ser/localcert.pem", if the
+   default CFG_DIR value was used at compile time.
+
+   Example 6. Setting the local certificate
+
+   modparam ("osp", "local_certificate", "/usr/local/etc/ser/localcert.pem")  
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  ca_certificates (string)
+
+   Defines the CA certificate of the OSP server. The crypto files are used
+   for validating OSP authorization tokens and establishing a secure channel
+   between the Proxy and OSP server using SSL. The files can be generated
+   using an enrollment process and the utility 'enroll' from the OSP toolkit.
+   By default, the proxy will look for pkey.pem, localcert.pem, and
+   cacart_0.pem in the default configuration directory. The default
+   configuration directory is set at compile time using CFG_DIR and defaults
+   to /usr/local/etc/ser/.
+
+   Test files are distributed with the module in the osp/etc folder. You can
+   copy the files to the expected location and/or change the parameters.
+
+   This parameter defaults to "/usr/local/etc/ser/cacert.pem", if the default
+   CFG_DIR value was used at compile time.
+
+   Example 7. Setting the CA certificate
+
+   modparam ("osp", "ca_certificates", "/usr/local/etc/ser/cacert.pem")       
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  token_format (integer)
+
+   Defines the token format that the OSP module can validate. 0 - signed
+   tokens only, 1 - unsigned tokens only, 2 - both signed and unsigned.
+
+   This parameter is an optional field, the defaults to 2, i.e. the OSP
+   module can validate both signed and unsigned tokens.
+
+   Example 8. Setting the token format
+
+   modparam ("osp", "token_format", 2)                                        
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  enable_crypto_hardware_support (integer)
+
+   This is an optional field used to set cryptographic hardware acceleration
+   engine in the openssl library.
+
+   Default value is False (0). True is 1.
+
+   Example 9. Setting the hardware support
+
+   modparam ("osp", "enable_crypto_hardware_support", 0)                      
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  ssl_lifetime (integer)
+
+   The lifetime, in seconds, of a single SSL session key. Once this time
+   limit is exceeded, the Toolkit library will negotiate a new session key.
+   Communication exchanges in progress will not be interrupted when this time
+   limit expires.
+
+   This is an optional field with default value is 200 seconds.
+
+   Example 10. Setting the ssl lifetime
+
+   modparam ("osp", "ssl_lifetime", 200)                                      
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  persistence (integer)
+
+   The time, in seconds, that an HTTP connection should be maintained after
+   the completion of a communication exchange. The library will maintain the
+   connection for this time period in anticipation of future communication
+   exchanges to the same server.
+
+   This is an optional field with default value is 1000 seconds.
+
+   Example 11. Setting the persistence
+
+   modparam ("osp", "persistence", 1000)                                      
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  retry_delay (integer)
+
+   The time, in seconds, between retrying connection attempts to the
+   provider. After exhausting all service points for the provider, the
+   library will delay for this amount of time before resuming connection
+   attempts.
+
+   This is an optional field with default value is 1 second.
+
+   Example 12. Setting the retry delay
+
+   modparam ("osp", "retry_delay", 1)                                         
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  retry_limit (integer)
+
+   The maximum number of retries for connection attempts to the provider. If
+   no connection is established after this many retry attempts to all service
+   points, then the library will cease connection attempts and return
+   appropriate error codes. This number does not count the initial connection
+   attempt, so that a retry_limit of 1 will result in a total of two
+   connection attempts to every service point.
+
+   This is an optional field with default value is 2.
+
+   Example 13. Setting the retry limit
+
+   modparam ("osp", "retry_limit", 2)                                         
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  timeout (integer)
+
+   The maximum time in milliseconds, to wait for a response from a server. If
+   no response is received within this time, the current connection is
+   aborted and the library attempts to contact the next service point.
+
+   This is an optional field with default value is 10 seconds.
+
+   Example 14. Setting the timeout
+
+   modparam ("osp", "timeout", 10)                                            
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  max_destinations (integer)
+
+   The maximum number of destinations that the client wants the server to
+   return. Valid range is 1 through 5.
+
+   This is an optional field.
+
+   Example 15. Setting the number of destination
+
+   modparam ("osp", "max_destinations", 3)                                    
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  validate_call_id (integer)
+
+   Instructs the module to validate call id in the OSP token. Valid range is
+   0 (No) or 1 (Yes).
+
+   This is an optional field.
+
+   Default value is 1 (Yes).
+
+   Example 16. Instructing the module to validate call id
+
+   modparam ("osp", "validate_call_id", 1)                                    
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+Exported Functions
+
+  checkospheader()
+
+   This function checks for the existence of the OSP-Auth-Token header field.
+
+   Example 17. checkospheader usage
+
+   ...                                                                        
+   if (checkospheader()) {                                                    
+     log("OSP header field found.\n");                                        
+   } else {                                                                   
+     log("no OSP header field present\n");                                    
+   };                                                                         
+   ...                                                                        
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  validateospheader()
+
+   This function validates an OSP-Token specified in the OSP-Auth-Token
+   header field of the SIP message. If a token is present, it will be
+   validated locally. If no OSP header is found or the header token is
+   invalid or expired, -1 is returned; on successful validation 1 is
+   returned.
+
+   Example 18. validateospheader usage
+
+   ...                                                                        
+   if (validateospheader()) {                                                 
+     log("valid OSP header found\n");                                         
+   } else {                                                                   
+     log("OSP header not found, invalid or expired\n");                       
+   };                                                                         
+   ...                                                                        
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  requestosprouting()
+
+   This function tries to acquire a valid call destination and an
+   authorization token from the OSP server. If the OSP server accepts the
+   request, an OSP-Auth-Token Header field is inserted into the SIP message
+   and the SIP uri is rewritten to the destination the OSP server sent to
+   this site.
+
+   The destination of the call must be a valid E164 number, otherwise this
+   function returns -1. If the transaction was accepted by the OSP server,
+   the uri is being rewritten and 1 returned, on errors (OSP service points
+   are not available, authentication failed or there is no route to
+   destination or the route is blocked) -1 is returned.
+
+   Example 19. requestosprouting usage
+
+   ...                                                                        
+   if (requestosprouting()) {                                                 
+     log("successfully queried OSP server, now relaying call\n");             
+   } else {                                                                   
+     log("Authorization request was rejected from OSP server\n");             
+   };                                                                         
+   ...                                                                        
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  preparefirstosproute()
+
+   This function tries to prepare the INVITE to be forwarded or redirected
+   using the first destination in the list returned by the OSP server. If the
+   route could not be prepared, the function returns 'FALSE' back to the
+   script, which can then decide how to handle the failure.
+
+   Example 20. preparefirstosproute usage
+
+   ...                                                                        
+   if (preparefirstosproute ()) {                                             
+     log("successfully prepared the first route, now relaying call\n");       
+   } else {                                                                   
+     log("could not prepare the route. The first destination was blocked\n"); 
+   };                                                                         
+   ...                                                                        
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  preparenextosproute()
+
+   Once the call could not be completed through the first destination, this
+   function tries to prepare the INVITE message using the next destination in
+   the list returned by the OSP Server. If it succeeds in preparing the
+   route, the message is either redirected or relayed on (using the t_relay
+   call), or else the function returns 'FALSE' back to the script, which can
+   then decide how to handle the failure.
+
+   Example 21. preparenextosproute usage
+
+   ...                                                                        
+   if (preparenextosproute ()) {                                              
+     log("successfully prepared the next route, now relaying call\n");        
+   } else {                                                                   
+     log("could not prepare the route. No next destination available\n");     
+   };                                                                         
+   ...                                                                        
+                                                                              
+
+   ---------------------------------------------------------------------------
+
+  prepareallosproute()
+
+   This function tries to prepare all the routes in the list returned by the
+   OSP server. The message is then either forked off or redirected to the
+   destination. If unsuccessful in preparing the routes a SIP 500 is sent
+   back and a trace message is logged.
+
+   Example 22. prepareallosproute usage
+
+...                                                                                      
+if (prepareallosproute ()) {                                                             
+  log("successfully prepared the routes, now either forking or redirecting the call\n"); 
+} else {                                                                                 
+  log("could not prepare the route. No destination available\n");                        
+};                                                                                       
+...                                                                                      
+                                                                                         
+
+   ---------------------------------------------------------------------------
+
+  reportospusage()
+
+   This function should be called after receiving a BYE message. If the
+   message contains an OSP cooky, the function will forward originating
+   and/or terminating duration usage information to an OSP server. The
+   function returns TRUE if the BYE includes an OSP cooky. The actual usage
+   message will be send on a different thread and will not delay BYE
+   processing. The function should be called before relaying the message.
+
+   Example 23. reportospusage usage
+
+...                                                                                                  
+if (reportospusage ()) {                                                                             
+  log("OSP call duration usage will be reported\n");                                                 
+} else {                                                                                             
+  log("The BYE message does not include OSP information, it was not authorized by an OSP server\n"); 
+};                                                                                                   
+...                                                                                                  
+                                                                                                     
+
+   ---------------------------------------------------------------------------
+
+                               Developer's Guide
+
+   Use of the osp modules' functions by other SER modules is not useful.
+
+   ---------------------------------------------------------------------------
+
+                           Frequently Asked Questions
+
+   Q: [31]What platforms does this module work on?
+
+   Q: [32]Where can I get more information on this module?
+
+   Q: [33]Where can I get more information on OSP?
+
+   Q: [34]How do I obtain an OSP server for testing?
+
+   Q: [35]How are the exported functions used by the OSP module?
+
+   Q: What platforms does this module work on?
+
+   A: The module has been implemented using linux, the underlying toolkit and
+   the module code itself should compile and work on Solaris, *BSD, and
+   probably most other unix platforms with ssl and pthreads available, but
+   all platforms other than linux are completely untested.
+
+   Q: Where can I get more information on this module?
+
+   A: Please contact TransNexus by sending email to support@transnexus.com or
+   posting a message on email lists @
+   http://developer.berlios.de/mail/?group_id=3799 or at the sipfoundry
+   website (www.sipfoundry.org).
+
+   Q: Where can I get more information on OSP?
+
+   A: The OSP technical specification (ETSI TS 101 321) may be obtained from
+   www.etsi.org. Additional documentation on OSP is available from
+   www.sipfoundry.org.
+
+   Q: How do I obtain an OSP server for testing?
+
+   A: OSP servers are available from the following sources:
+
+     * OpenOSP server from www.sipfoundry.org is a complete OSP server
+       written in C.
+
+     * RAMS from www.sipfoundry.org is a new java based open source OSP
+       server project.
+
+     * TransNexus provides free access to a hosted OSP server on the Internet
+       for testing. Contact support@transnexus.com.
+
+   Q: How are the exported functions used by the OSP module?
+
+   A: See sample-osp-ser.cfg in modules/osp/etc for examples
