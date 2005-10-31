@@ -130,7 +130,7 @@ static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps )
         }
 
 	if (t) {
-		recordEvent(t->uac[t->first_branch].last_received,t->uas.status);
+		recordEvent(t->uac[t->nr_of_outgoings-1].last_received,t->uas.status);
 	} else {
                 DBG("osp:tmcb: cell is empty\n");
 	}
