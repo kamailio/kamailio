@@ -51,7 +51,7 @@ int mod_init_tm()
         LOG(L_INFO, "osp/tm - initializing\n");
 
         /* import the TM auto-loading function */
-        if ( !(load_tm=(load_tm_f)find_export("load_tm", 0, 0))) {
+        if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
                 LOG(L_ERR,"ERROR:osp:mod_init_tm: can't import load_tm\n");
                 LOG(L_ERR,"ERROR:osp:mod_init_tm: tm is required for reporting call set up usage info\n");
                 return -1;
