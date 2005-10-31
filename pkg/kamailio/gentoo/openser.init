@@ -8,15 +8,15 @@ depend() {
 }
 
 start() {
-	ebegin "Starting ser"
-	start-stop-daemon --start --quiet --pidfile /var/run/ser.pid \
-		--exec /usr/sbin/ser -- -P /var/run/ser.pid
+	ebegin "Starting OpenSER"
+	start-stop-daemon --start --quiet --pidfile /var/run/openser.pid \
+		--exec /usr/sbin/openser -- -P /var/run/openser.pid
 	eend $?
 }
 
 stop() {
-	ebegin "Stopping ser"
-	start-stop-daemon --stop --quiet --pidfile /var/run/ser.pid
+	ebegin "Stopping OpenSER"
+	start-stop-daemon --stop --quiet --pidfile /var/run/openser.pid
 	eend $?
 }
 
