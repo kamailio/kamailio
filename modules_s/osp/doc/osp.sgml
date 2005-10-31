@@ -1,0 +1,40 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+<!ENTITY ser "SIP Express Router">
+<!ENTITY user SYSTEM "osp_user.sgml">
+<!ENTITY devel SYSTEM "osp_devel.sgml">
+<!ENTITY faq SYSTEM "osp_faq.sgml">
+]>
+
+<book>
+  <bookinfo>
+    <title>OSP Module</title>
+    <productname class="trade">&ser;</productname>
+    <authorgroup>
+      <author>
+        <firstname>Ulrich</firstname>
+        <surname>Abend</surname>
+        <affiliation><orgname>FhG Fokus</orgname></affiliation>
+        <email>ullstar@iptel.org</email>
+      </author>
+      <editor>
+        <firstname>Di-Shi</firstname>
+        <surname>Sun</surname>
+        <email>support@transnexus.com</email>
+      </editor>
+    </authorgroup>
+    <copyright>
+      <year>2003</year>
+      <holder>FhG Fokus</holder>
+    </copyright>
+    <revhistory>
+      <revision>
+        <revnumber>$Revision$</revnumber>
+        <date>$Date$</date>
+      </revision>
+    </revhistory>
+  </bookinfo>
+  <toc></toc>
+    &user;
+    &devel;
+    &faq;
+</book>

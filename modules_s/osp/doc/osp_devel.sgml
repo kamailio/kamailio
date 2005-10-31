@@ -1,0 +1,20 @@
+<!-- OSP Module Developer's Guide -->
+
+<chapter>
+  <chapterinfo>
+    <revhistory>
+      <revision>
+        <revnumber>$Revision$</revnumber>
+        <date>$Date$</date>
+      </revision>
+    </revhistory>
+  </chapterinfo>
+  <title>Developer's Guide</title>
+  <para>Use of the osp modules' functions by other SER modules is not useful.</para>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("osp.sgml" "book" "chapter")
+End:
+-->
