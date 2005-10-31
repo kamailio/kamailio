@@ -157,10 +157,10 @@ int getOspHeader(struct sip_msg* msg, char* token, int* sizeoftoken) {
 	int code;
 	int retVal = 1;
 
-	parse_headers(msg, HDR_EOH, 0);
+	parse_headers(msg, HDR_EOH_T, 0);
 
 	for (hf=msg->headers; hf; hf=hf->next) {
-		if ( (hf->type == HDR_OTHER) && (hf->name.len == OSP_HEADER_LEN-2)) {
+		if ( (hf->type == HDR_OTHER_T) && (hf->name.len == OSP_HEADER_LEN-2)) {
 			// possible hit
 			if (strncasecmp(hf->name.s, OSP_HEADER, OSP_HEADER_LEN) == 0) {
 				if ( (code=OSPPBase64Decode(hf->body.s, hf->body.len, token, sizeoftoken)) == 0) {
@@ -214,7 +214,7 @@ int getSourceAddress(struct sip_msg* msg, char* source_address, int buffer_size)
 	 * anyway by default 
 	 */
 	for (hf=msg->headers; hf; hf=hf->next) {
-		if (hf->type == HDR_VIA) {
+		if (hf->type == HDR_VIA_T) {
 			// found first VIA
 			via_body = (struct via_body*)hf->parsed;	
 			copy_from_str_to_buffer(&via_body->host, source_address, buffer_size);
@@ -285,7 +285,7 @@ void getNextHop(struct sip_msg* msg, char* next_hope, int buffer_size)
 	DBG("osp: getNextHop: will iterate through the 'Route' header-fields\n");
 
 	for (hf=msg->headers; hf; hf=hf->next) {
-		if (hf->type == HDR_ROUTE) {
+		if (hf->type == HDR_ROUTE_T) {
 			route = (rr_t*)hf->parsed;	
 			if (parse_uri(route->nameaddr.uri.s,route->nameaddr.uri.len,&puri) == 0) {
 				DBG("osp: getNextHop: host '%.*s' port '%d'\n",puri.host.len,puri.host.s,puri.port_no);
