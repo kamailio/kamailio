@@ -99,15 +99,42 @@ static watcher_status_t xcap_authorize(presentity_t *p,
 	return WS_PENDING;
 }
 
+static watcher_status_t winfo_implicit_auth(presentity_t *p, watcher_t *w)
+{
+	/* implicit authorization rules for watcher info */
+	/*str_t p_user, w_user;
+	
+	if (get_user_from_uri(&p->uri, p_user) != 0) return WS_REJECTED;
+	if (get_user_from_uri(&w->uri, w_user) != 0) return WS_REJECTED;*/
+
+	if (str_case_equals(&p->uri, &w->uri) == 0) {
+		/* DEBUG_LOG("winfo_implicit_auth(%.*s): enabled for %.*s\n", 
+				FMT_STR(p->uri), FMT_STR(w->uri)); */
+		return WS_ACTIVE;
+	}
+	else {
+		DEBUG_LOG("winfo_implicit_auth(%.*s): disabled for %.*s\n", 
+				FMT_STR(p->uri), FMT_STR(w->uri));
+		return WS_REJECTED;
+	}
+}
+
 watcher_status_t authorize_watcher(presentity_t *p, watcher_t *w)
 {
 	if (w->event_package == EVENT_PRESENCE_WINFO) {
-		/* TODO: watcherinfo enable only for the URIs */
-		return WS_ACTIVE; /* enable all winfo watchers for tests */
+		switch (winfo_auth_params.type) {
+			case auth_none: return WS_ACTIVE;
+			case auth_implicit: return winfo_implicit_auth(p, w);
+			case auth_xcap: 
+						ERROR_LOG("XCAP authorization for winfo is not implemented! "
+								"Using \'implicit\' auth.\n");
+						return winfo_implicit_auth(p, w);
+		}
 	}
 	else {
 		switch (pa_auth_params.type) {
 			case auth_none: return WS_ACTIVE;
+			case auth_implicit: return WS_PENDING;
 			case auth_xcap: return xcap_authorize(p, &w->uri, &pa_auth_params);
 		}
 	}
@@ -118,6 +145,7 @@ watcher_status_t authorize_internal_watcher(presentity_t *p, internal_pa_subscri
 {
 	switch (pa_auth_params.type) {
 		case auth_none: return WS_ACTIVE;
+		case auth_implicit: return WS_PENDING;
 		case auth_xcap: return xcap_authorize(p, 
 								&is->subscription->subscriber_id,
 								&pa_auth_params);

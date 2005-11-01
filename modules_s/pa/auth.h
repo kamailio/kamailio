@@ -5,6 +5,7 @@
 
 typedef enum {
 	auth_none, 
+	auth_implicit, /* implicit authorization rules (may differ for packages, ...) */
 	auth_xcap
 } authorization_type_t;
 

@@ -61,6 +61,7 @@ extern char *place_table;
 extern int use_bsearch;
 extern int use_location_package;
 extern auth_params_t pa_auth_params;
+extern auth_params_t winfo_auth_params;
 extern int watcherinfo_notify;
 extern int callback_update_db;
 extern int callback_lock_pdomain;

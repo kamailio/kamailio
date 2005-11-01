@@ -88,7 +88,10 @@ char *place_table = "place";
 /* authorization parameters */
 char *auth_type_str = NULL; /* type of authorization */
 char *auth_xcap_root = NULL;	/* must be set if xcap authorization */
+char *winfo_auth_type_str = "implicit"; /* type of authorization */
+char *winfo_auth_xcap_root = NULL;	/* must be set if xcap authorization */
 auth_params_t pa_auth_params;	/* structure filled according to parameters */
+auth_params_t winfo_auth_params;	/* structure for watcherinfo filled according to parameters */
 
 int use_bsearch = 0;
 int use_location_package = 0;
@@ -138,8 +141,10 @@ static param_export_t params[]={
 	{"new_tuple_on_publish", INT_PARAM, &new_tuple_on_publish  },
 	{"pidf_priority",        INT_PARAM, &pa_pidf_priority  },
 	{"watcherinfo_notify",   INT_PARAM, &watcherinfo_notify   },
-	{"auth", STR_PARAM, &auth_type_str }, /* type of authorization: none, xcap, ... */
+	{"auth", STR_PARAM, &auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
 	{"auth_xcap_root", STR_PARAM, &auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
+	{"winfo_auth", STR_PARAM, &auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
+	{"winfo_auth_xcap_root", STR_PARAM, &auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
 	{0, 0, 0}
 };
 
@@ -200,30 +205,34 @@ static void test_mimetype_parser(void)
 	}
 }
 
-static int set_pa_auth_params()
+static int set_auth_params(auth_params_t *dst, const char *auth_type_str, char *xcap_root)
 {
-	pa_auth_params.xcap_root = NULL;
+	dst->xcap_root = NULL;
 	if (!auth_type_str) {
-		LOG(L_ERR, "no subscription authorization type given, using \'none\'!\n");
-		pa_auth_params.type = auth_none;
+		LOG(L_ERR, "no subscription authorization type given, using \'implicit\'!\n");
+		dst->type = auth_none;
 		return 0;
 	}
 	if (strcmp(auth_type_str, "xcap") == 0) {
-		if (!auth_xcap_root) {
+		if (!xcap_root) {
 			LOG(L_ERR, "XCAP authorization selected, but no auth_xcap_root given!\n");
 			return -1;
 		}
-		pa_auth_params.xcap_root = auth_xcap_root;
-		if (!(*pa_auth_params.xcap_root)) {
+		dst->xcap_root = xcap_root;
+		if (!(*dst->xcap_root)) {
 			LOG(L_ERR, "XCAP authorization selected, but empty auth_xcap_root given!\n");
 			return -1;
 		}
-		pa_auth_params.type = auth_xcap;
+		dst->type = auth_xcap;
 		return 0;
 	}
 	if (strcmp(auth_type_str, "none") == 0) {
-		pa_auth_params.type = auth_none;
+		dst->type = auth_none;
 		LOG(L_WARN, "using \'none\' subscription authorization!\n");
+		return 0;
+	}
+	if (strcmp(auth_type_str, "implicit") == 0) {
+		dst->type = auth_implicit;
 		return 0;
 	}
 	
@@ -242,7 +251,12 @@ static int pa_mod_init(void)
 
 	/* set authorization type according to requested "auth type name"
 	 * and other (type specific) parameters */
-	if (set_pa_auth_params() != 0) return -1;
+	if (set_auth_params(&pa_auth_params, auth_type_str, auth_xcap_root) != 0) return -1;
+	
+	/* set authorization type for watcherinfo 
+	 * according to requested "auth type name"
+	 * and other (type specific) parameters */
+	if (set_auth_params(&winfo_auth_params, winfo_auth_type_str, winfo_auth_xcap_root) != 0) return -1;
 	
 	     /* import the TM auto-loading function */
 	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
