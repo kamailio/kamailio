@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='iso-8859-2'?>
+
+<!DOCTYPE article PUBLIC '-//OASIS//DTD DocBook XML V4.2//EN'
+'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd'>
+
+<article xmlns:xi="http://www.w3.org/2001/XInclude">
+	<title>SER presence handbook</title>
+<!--    <bookinfo>
+	<title>SER presence handbook</title>
+	<authorgroup>
+		<author>
+		<firstname>Václav</firstname>
+		<surname>Kubart</surname>
+		<address>
+			<email>vaclav.kubart@iptel.org</email>
+		</address>
+		</author>
+	</authorgroup>
+	</bookinfo>-->
+	<!-- <toc></toc> -->
+	
+<!--	<chapter id="pres"><title>Presence in SER</title>-->
+		<xi:include href="presence.xml"/>
+		<xi:include href="../../modules/pa/doc/pa.xml"/>
+		<xi:include href="../../modules/rls/doc/rls.xml"/>
+		<xi:include href="biblio.xml"/>
+<!--		<xi:include href="todo.xml"/>-->
+<!--	</chapter>-->
+
+<!--	<chapter><title>Module documentation</title>
+		<xi:include href="../../modules/pa/doc/pa.xml"/> 
+		<xi:include href="../../modules/rls/doc/rls.xml"/>
+	</chapter>-->
+	
+</article>

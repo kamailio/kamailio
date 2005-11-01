@@ -33,6 +33,12 @@
     </chapter>
 
     <chapter>
+	<title>Presence Handbook</title>
+	<xi:include href="presence/presence.xml"/>
+	<xi:include href="presence/biblio.xml"/>
+    </chapter>
+	
+    <chapter>
     	<title>Module Documentation</title>
 	<xi:include href="../modules/acc/doc/acc.xml"/>
 	<xi:include href="../modules/auth/doc/auth.xml"/>
@@ -65,6 +71,7 @@
 	<xi:include href="../modules/pike/doc/pike.xml"/>
 	<xi:include href="../modules/print/doc/print.xml"/>
 	<xi:include href="../modules/registrar/doc/registrar.xml"/>
+	<xi:include href="../modules/rls/doc/rls.xml"/>
 	<xi:include href="../modules/rr/doc/rr.xml"/>
 	<xi:include href="../modules/sl/doc/sl.xml"/>
 	<xi:include href="../modules/sms/doc/sms.xml"/>

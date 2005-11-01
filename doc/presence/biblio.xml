@@ -1,0 +1,110 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<!DOCTYPE bibliography PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<!--********************** BILBIOGRAPHY ***************************-->
+
+<bibliography id="pres_biblio">
+
+<bibliodiv><title>XCAP</title>
+
+<biblioentry id="pres_draft_xcap">
+<abbrev>xcap</abbrev>
+<title><ulink url="http://www.ietf.org/internet-drafts/draft-ietf-simple-xcap-07.txt"
+>draft-ietf-simple-xcap-07.txt</ulink> - XCAP specification</title></biblioentry>
+
+<biblioentry id="pres_draft_xcap_change">
+<abbrev>xcap_diff</abbrev>
+<title><ulink url="http://www.ietf.org/internet-drafts/draft-ietf-simple-xcap-diff-01.txt"
+>draft-ietf-simple-xcap-diff-01.txt</ulink> - XCAP changes notifications format</title>
+</biblioentry>
+
+<biblioentry>
+<abbrev>xcap_profiles</abbrev>
+<title><ulink url="http://www.ietf.org/internet-drafts/draft-ietf-sipping-config-framework-07.txt"
+>draft-ietf-sipping-config-framework-07.txt</ulink> -XCAP user profiles</title>
+</biblioentry>
+
+</bibliodiv>
+
+<bibliodiv><title>Presence</title>
+
+<biblioentry id="pres_rfc_events">
+<abbrev>events</abbrev>
+<title><ulink url="http://www.ietf.org/rfc/rfc3265.txt">RFC 3265 - SIP Events</ulink></title>
+</biblioentry>
+
+<biblioentry id="pres_rfc_presence">
+<abbrev>presence</abbrev>
+<title><ulink url="http://www.ietf.org/rfc/rfc3856.txt">RFC 3856 - Presence Event 
+package</ulink></title>
+</biblioentry>
+
+<biblioentry id="pres_rfc_pidf">
+<abbrev>pidf</abbrev>
+<title><ulink url="http://www.ietf.org/rfc/rfc3863.txt">RFC 3863 - Presence Information 
+Data Format</ulink></title>
+</biblioentry>
+
+<biblioentry id="pres_rfc_publish">
+<abbrev>pidf</abbrev>
+<title><ulink url="http://www.ietf.org/rfc/rfc3903.txt">RFC 3903 - Event state 
+publication</ulink></title>
+</biblioentry>
+
+<biblioentry id="pres_rfc_winfo">
+<abbrev>winfo</abbrev>
+<title><ulink url="http://www.ietf.org/rfc/rfc3857.txt">RFC 3857 - Watcher info event 
+package</ulink></title>
+</biblioentry>
+
+<biblioentry id="pres_rfc_winfo_doc">
+<abbrev>winfo_doc</abbrev>
+<title><ulink url="http://www.ietf.org/rfc/rfc3858.txt">RFC 3858 - Data Format for watcher
+info</ulink></title>
+</biblioentry>
+
+<biblioentry>
+<abbrev>reg</abbrev>
+<title><ulink url="http://www.ietf.org/rfc/rfc3680.txt">RFC 3680 - SIP Reg Events</ulink></title>
+</biblioentry>
+
+</bibliodiv>
+
+<bibliodiv><title>Authorization</title>
+<biblioentry id="pres_draft_common_auth">
+<abbrev>common auth</abbrev>
+<title><ulink
+url="http://www.ietf.org/internet-drafts/draft-ietf-geopriv-common-policy-05.txt"
+>draft-ietf-geopriv-common-policy-05.txt</ulink></title>
+</biblioentry>
+
+<biblioentry id="pres_draft_auth">
+<abbrev>presence auth</abbrev>
+<title><ulink url="http://www.ietf.org/internet-drafts/draft-ietf-simple-presence-rules-03.txt"
+>draft-ietf-simple-presence-rules-03.txt</ulink> - presence authorization XML based data format 
+and usage with XCAP</title>
+</biblioentry>
+</bibliodiv>
+
+<bibliodiv><title>Resource lists</title>
+
+<biblioentry id="pres_draft_rls">
+<abbrev>rls</abbrev>
+<title><ulink url="http://www.ietf.org/internet-drafts/draft-ietf-simple-xcap-list-usage-05.txt"
+>draft-ietf-simple-xcap-list-usage-05.txt</ulink> - XML formats for representing resource 
+lists</title>
+</biblioentry>
+
+<biblioentry id="pres_draft_rls_sip">
+<abbrev>sip rls</abbrev>
+<title><ulink url="http://www.ietf.org/internet-drafts/draft-ietf-simple-event-list-07.txt"
+>draft-ietf-simple-event-list-07.txt</ulink> - Event Notification Extension for Resource 
+Lists</title>
+</biblioentry>
+
+</bibliodiv>
+
+</bibliography>
+
