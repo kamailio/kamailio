@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="rls.functions"><title>Functions</title>
+<variablelist>
+<varlistentry>
+	<term><varname>handle_rls_subscription(xcap_root,
+	create_error_response)</varname></term>
+	<listitem>
+		<para>Handle subscription to resource list uri.</para>
+			<variablelist><title>Parameters:</title>
+			<varlistentry>
+				<term>xcap_root (string)</term>
+				<listitem><para>String representing XCAP root for resource
+				lists. For example <quote>http://localhost/xcap-root</quote>.
+				</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term>create_error_response (integer)</term>
+				<listitem><para>If set to 0 error responses are not sent
+				to the client. This may be useful, if used together with PA
+				module.
+				</para></listitem>
+			</varlistentry>
+			</variablelist>
+		<example>
+		<programlisting>
+...
+if (method=="SUBSCRIBE") {
+	if (!t_newtran()) {
+		sl_reply_error();
+	};
+	
+	if (!handle_rls_subscription("http://localhost/xcap-root", "0")) {
+		# message is not for RLS but for PA ?			
+		log(1, "SUBSCRIBE not handled by RLS");
+		handle_subscription("registrar");
+	}
+	break;
+};
+...
+		</programlisting>
+		</example>
+	</listitem>
+</varlistentry>
+</variablelist>
+
+</section>
+

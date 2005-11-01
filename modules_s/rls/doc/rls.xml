@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="pres_rls" xmlns:xi="http://www.w3.org/2001/XInclude"><title>RLS module (Resource Lists Server)</title>
+
+<para>Resource lists server is a server which allows subscriptions to lists of
+users. Its behaviour is defined in <xref linkend="pres_draft_rls"/> and
+<xref linkend="pres_draft_rls_sip"/>. As described there, it uses XCAP server
+for storing data about lists of users. These data can be manipulated in any way
+by user's client software.
+</para>
+
+<!-- RLS authorization rules -->
+<section id="rls_auth"><title>Authorization (not done yet!)</title>
+<para>RLS module uses <quote>implicit authorization rules</quote> now. Only user
+<quote>xyz</quote> can subscribe to <quote>xyz-list</quote> resource list.
+</para>
+</section>
+
+<!-- standard incompliances -->
+<section><title>Standard incompatibility</title>
+<para>There is a few of standard incompliances:
+<itemizedlist>
+	<listitem><para><emphasis>only internal subscriptions</emphasis> - at
+	this moment are supported only internal subscriptions to PA module. Module
+	can not handle subscriptions to external presence servers.</para></listitem>
+</itemizedlist>
+</para>
+</section>
+
+<!-- DB storage -->
+<section><title>Persistence (not done yet!)</title>
+</section>
+
+<!-- TODO -->
+
+<section><title>TODO</title>
+<para>
+<itemizedlist>
+	<listitem><para>implicit authorization</para></listitem>
+	<listitem><para>XCAP authorization</para></listitem>
+	<listitem><para>DB authorization (presence rules like in XCAP stored in
+	local DB)</para></listitem>
+	<listitem><para>reaction on failed NOTIFY (408, ...) as soon as will be
+	corrected <varname>req_within</varname></para></listitem>
+	<listitem><para>remote subscriptions (SIP events client)</para></listitem>
+	<listitem><para>storing subscriptions into db and reloading on startup (in
+	subscription_manager)</para></listitem>
+</itemizedlist>
+</para>
+</section>
+
+<xi:include href="params.xml"/>
+<xi:include href="functions.xml"/>
+
+</section>
+

@@ -32,4 +32,73 @@ modparam("pa", "default_expires", 3600)
 	    </programlisting>
 	</example>
     </section>
+
+<section><title><varname>auth</varname> (string)</title>
+<para>This variable specifies authorization type for presence watchers (event
+package is <quote>presence</quote>). Value can be one of:
+<variablelist>
+<varlistentry>
+	<term>none</term>
+	<listitem><para>All watchers are <emphasis>always authorized</emphasis>. This is not recommended
+	because it ignores user's wish.</para></listitem>
+</varlistentry>
+<varlistentry>
+	<term>implicit</term>
+	<listitem><para>All watchers are <emphasis>always pending</emphasis>. This is not recommended
+	because it means, that no presence data is sent to all watchers.</para></listitem>
+</varlistentry>
+<varlistentry>
+	<term>xcap</term>
+	<listitem><para>This type of authorization means, that authorization rules
+	are read from XCAP server and processed <xref linkend="pres_draft_auth"/>.
+	In this case the <varname>auth_xcap_root</varname> must be set.</para></listitem>
+</varlistentry>
+</variablelist>
+</para>
+<para>Default value is empty. In this case <quote>implict</quote> authorization
+is used with an error message.</para>
+</section>
+
+<section><title><varname>auth_xcap_root</varname> (string)</title>
+<para>This parameter holds value of XCAP root URI used for reading authorization
+rules. Value must be set to nonempty value if <quote>xcap</quote> authorization
+is used.</para>
+<para>Authorization document is loaded using HTTP GET method from URI composed
+from <varname>auth_xcap_root</varname> and user's name as follows:
+<varname>auth_xcap_root</varname>/pres-rules/users/<varname>username</varname>/presence-rules.xml.</para>
+<example><title>XCAP authorization settings</title>
+<programlisting>
+...
+modparam("pa", "auth", "xcap")
+modparam("pa", "auth_xcap_root", "http://localhost/xcap-root")
+...
+</programlisting>
+<para>Settings above will result for presentity <quote>smith@iptel.org</quote> in authorization
+queries to http://localhost/xcap-root/pres-rules/users/smith/presence-rules.xml.</para>
+</example>
+
+</section>
+
+<section><title><varname>winfo_auth</varname> (string)</title>
+<para>This variable specifies authorization type for watcher info watchers (event
+package is <quote>presence.winfo</quote>). Value can be one of:
+<variablelist>
+<varlistentry>
+	<term>none</term>
+	<listitem><para>All watcher info watchers are <emphasis>always authorized</emphasis>. 
+	This is not recommended.</para></listitem>
+</varlistentry>
+<varlistentry>
+	<term>implicit</term>
+	<listitem><para>This value means, that presentity can subscribe to its
+	own watcher info data and nobody else. This is done via comparing watcher's
+	and presentity's uri. If these values equals, the subscription is allowed.
+	In other cases is the subscription rejected.
+	</para></listitem>
+</varlistentry>
+</variablelist>
+</para>
+<para>Default value is <quote>implict</quote></para>
+</section>
+	
 </section>

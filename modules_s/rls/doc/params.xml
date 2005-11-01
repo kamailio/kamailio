@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="rls.parameters"><title>Parameters</title>
+
+<variablelist>
+<varlistentry>
+	<term><varname>min_expiration</varname> (integer)</term>
+	<listitem>
+		<para>Minimal subscription expiration timeout in seconds.</para>
+		<para>If client supplies 
+		value, which is less than value of <varname>min_expiration</varname>,
+		the server returns response "423 Interval too small" as described
+		in <xref linkend="pres_rfc_events"/>.</para>
+		<para>Default value is 60.</para>
+	</listitem>
+</varlistentry>
+<varlistentry>
+	<term><varname>max_expiration</varname> (integer)</term>
+	<listitem>
+		<para>Maximal subscription expiration timeout in seconds.</para>
+		<para>If client supplies 
+		value, which is more than value of <varname>max_expiration</varname>,
+		the server shortens this value to value of this variable as described
+		in <xref linkend="pres_rfc_events"/>.</para>
+		<para>Default value is 7200.</para>
+	</listitem>
+</varlistentry>
+<varlistentry>
+	<term><varname>default_expiration</varname> (integer)</term>
+	<listitem>
+		<para>Default subscription expiration timeout in seconds.</para>
+		<para>If client doesn't supply subscription expiration timeout this 
+		value is used.</para>
+		<para>Default value is 3761.</para>
+	</listitem>
+</varlistentry>
+</variablelist>
+</section>
+
