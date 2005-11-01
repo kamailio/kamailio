@@ -31,6 +31,27 @@ subscription_manager_t *rls_manager = NULL;
 #define METHOD_NOTIFY "NOTIFY"
 #define METHOD_NOTIFY_L (sizeof(METHOD_NOTIFY) - 1)
 
+static int get_user_from_uri(str_t *uri, str_t *user)
+{
+	char *a;
+	char *d;
+	char *s;
+	
+	str_clear(user);
+	if (uri->len > 0) {
+		d = strchr(uri->s, ':');
+		if (d) s = d + 1;
+		else s = uri->s;
+		a = strchr(s, '@');
+		if (a) {
+			user->s = s;
+			user->len = a - s;
+			return 0;
+		}
+	}
+	return -1;
+}
+
 /************* subscription callback functions ************/
 
 static int send_notify_cb(struct _subscription_data_t *s)
@@ -48,9 +69,29 @@ static int terminate_subscription_cb(struct _subscription_data_t *s)
 
 static authorization_result_t authorize_subscription_cb(struct _subscription_data_t *s)
 {
-/*	return auth_rejected; */
-	/* TODO: better authorization function :-) */
-	return auth_granted;
+	str_t user, list;
+	str_t list_user, list_rest;
+	str_t appendix = { s: "-list", len: 5 };
+	
+	if (get_user_from_uri(&s->subscriber, &user) != 0) 
+		return auth_unresolved; /* we can't decide - it is not "implicit" uri */
+	if (get_user_from_uri(&s->record_id, &list) != 0)
+		return auth_unresolved; /* we can't decide - it is not "implicit" uri */
+	
+	if (list.len <= appendix.len)
+		return auth_unresolved; /* we can't decide - it is not "implicit" uri */
+	
+	list_rest.len = appendix.len;
+	list_rest.s = list.s + list.len - appendix.len;
+	if (str_case_equals(&list_rest, &appendix) != 0) 
+		return auth_unresolved; /* we can't decide - it is not "implicit" uri */
+
+	/* now we know, that it ends with implicit uri ending */
+	
+	list_user.s = list.s;
+	list_user.len = list.len - appendix.len;
+	if (str_case_equals(&user, &list_user) != 0) return auth_rejected;
+	else return auth_granted;
 }
 
 /************* global functions ************/

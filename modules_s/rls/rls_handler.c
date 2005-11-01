@@ -117,6 +117,9 @@ static int handle_new_subscription(struct sip_msg *m, const char *xcap_server, i
 				send_reply(m, 400, "Bad Request");
 				break;
 			case RES_SUBSCRIPTION_REJECTED:
+				/* if (!send_error_responses) return -1; */
+				/* FIXME: authorization is done before XCAP query, so though it is NOT 
+				 * resource-list subscription it may be marked as rejected !!! */
 				TRACE_LOG("subscription rejected\n");
 				add_response_header(m, "Reason-Phrase: Subscription rejected\r\n");
 				send_reply(m, 403, "Forbidden");
@@ -270,7 +273,8 @@ int handle_rls_subscription(struct sip_msg* _m, const char *xcap_server, char *s
 		/* handle SUBSCRIBE for a new subscription */
 		res = handle_new_subscription(_m, xcap_server, send_err);
 	}
-	
-	return res;
+
+	if (res == 0) return 1;
+	else return -1;
 }
 
