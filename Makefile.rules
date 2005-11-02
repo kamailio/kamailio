@@ -6,8 +6,8 @@
 #
 
 #
-# Uses: NAME, ALLDEP, CC, CFLAGS, DEFS, LIBS, MKDEP, auto_gen, depends, objs,
-# extra_objs, static_modules, static_modules_path
+# Uses: NAME, ALLDEP, CC, CFLAGS, DEFS, LIBS, MKDEP, auto_gen, auto_gen_others,
+# depends, objs, extra_objs, static_modules, static_modules_path
 # (all this must  be defined previously!,  see Makefile.defs & Makefile)
 #
 
@@ -55,7 +55,7 @@ clean:
 .PHONY: distclean
 .PHONY: realclean
 proper realclean distclean: clean 
-	-@rm -f $(depends) $(auto_gen) 2>/dev/null
+	-@rm -f $(depends) $(auto_gen) $(auto_gen_others) 2>/dev/null
 	-@for r in $(modules) "" ; do \
 		if [ -d "$$r" ]; then \
 			 $(MAKE) -C $$r proper ; \
