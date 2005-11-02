@@ -207,8 +207,8 @@ MKTAGS=ctags -R .
 
 ifneq (,$(findstring gcc, $(CC_LONGVER)))
 	CC_NAME=gcc
-	CC_VER=$(CC) $(shell $(CC) - --version|head -n 1|cut -d" " -f 3| \
-				 sed -e 's/^.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/' \
+	CC_VER=$(word 1,$(CC)) $(shell $(CC) - --version|head -n 1|cut -d" " -f 3|\
+				 sed -e 's/^.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/'\
 				 	 -e 's/^[^0-9].*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
 	# sun sed is a little brain damaged => this complicated expression
 	MKDEP=$(CC) -MM 
