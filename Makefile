@@ -31,7 +31,8 @@
 #               referred in the man pages
 #
 
-auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
+auto_gen=lex.yy.c cfg.tab.c #lexx, yacc etc
+auto_gen_others=cfg.tab.h  # auto generated, non-c
 
 #include  source related defs
 include Makefile.sources
@@ -113,6 +114,8 @@ export PREFIX LOCALBASE
 #export INSTALL INSTALL-CFG INSTALL-BIN INSTALL-MODULES INSTALL-DOC INSTALL-MAN 
 #export INSTALL-TOUCH
 
+tar_extra_args+=$(addprefix --exclude=$(notdir $(CURDIR))/, \
+					$(auto_gen) $(auto_gen_others))
 ifneq ($(TLS),)
 	tar_extra_args+=
 else
