@@ -179,7 +179,7 @@ static int init_sock_opt(int s)
 	}
 #endif
 	/* tos*/
-	optval=IPTOS_LOWDELAY;
+	optval = tos;
 	if (setsockopt(s, IPPROTO_IP, IP_TOS, (void*)&optval,sizeof(optval)) ==-1){
 		LOG(L_WARN, "WARNING: init_sock_opt: setsockopt tos: %s\n",
 				strerror(errno));
@@ -898,7 +898,7 @@ int tcp_init(struct socket_info* sock_info)
 	}
 #endif
 	/* tos */
-	optval=IPTOS_LOWDELAY;
+	optval = tos;
 	if (setsockopt(sock_info->socket, IPPROTO_IP, IP_TOS, (void*)&optval, 
 				sizeof(optval)) ==-1){
 		LOG(L_WARN, "WARNING: tcp_init: setsockopt tos: %s\n", strerror(errno));

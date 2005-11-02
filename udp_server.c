@@ -298,7 +298,7 @@ int udp_init(struct socket_info* sock_info)
 		goto error;
 	}
 	/* tos */
-	optval=IPTOS_LOWDELAY;
+	optval = tos;
 	if (setsockopt(sock_info->socket, IPPROTO_IP, IP_TOS, (void*)&optval, 
 			sizeof(optval)) ==-1){
 		LOG(L_WARN, "WARNING: udp_init: setsockopt tos: %s\n", strerror(errno));

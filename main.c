@@ -73,6 +73,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <sys/utsname.h>
 #include <sys/types.h>
@@ -290,6 +291,8 @@ int reply_to_via=0;
 int mcast_loopback = 0;
 int mcast_ttl = -1; /* if -1, don't touch it, use the default (usually 1) */
 #endif /* USE_MCAST */
+
+int tos = IPTOS_LOWDELAY;
 
 #if 0
 char* names[MAX_LISTEN];              /* our names */

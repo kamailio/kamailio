@@ -35,6 +35,7 @@ core:
     onreply route that will be executed for any reply (usefull to catch
     replies without using tm)
 new config variables:
+   tos = number  - ip type of service (TOS) value
    dns_try_ipv6 = yes/no - if yes and a dns lookup fails, it will retry it
       for ipv6 (AAAA record). Default: yes
    dns_retr_time = time - time in s before retrying a dns request.

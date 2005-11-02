@@ -260,6 +260,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token OPEN_FD_LIMIT
 %token MCAST_LOOPBACK
 %token MCAST_TTL
+%token TOS
 
 
 
@@ -749,6 +750,8 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 								#endif
 		  }
 		| MCAST_TTL EQUAL error { yyerror("number expected"); }
+		| TOS EQUAL NUMBER { tos=$3; }
+		| TOS EQUAL error { yyerror("number expected"); }
 		| error EQUAL { yyerror("unknown config variable"); }
 	;
 

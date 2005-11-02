@@ -238,7 +238,8 @@ ADVERTISED_PORT		"advertised_port"
 DISABLE_CORE		"disable_core_dump"
 OPEN_FD_LIMIT		"open_files_limit"
 MCAST_LOOPBACK		"mcast_loopback"
-MCAST_TTL			"mcast_ttl"
+MCAST_TTL		"mcast_ttl"
+TOS			"tos"
 
 LOADMODULE	loadmodule
 MODPARAM        modparam
@@ -442,6 +443,8 @@ EAT_ABLE	[\ \t\b\r]
 									return MCAST_LOOPBACK; }
 <INITIAL>{MCAST_TTL}		{	count(); yylval.strval=yytext;
 									return MCAST_TTL; }
+<INITIAL>{TOS}			{	count(); yylval.strval=yytext;
+									return TOS; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
 <INITIAL>{MODPARAM}     { count(); yylval.strval=yytext; return MODPARAM; }
 

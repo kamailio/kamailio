@@ -112,6 +112,8 @@ extern int mcast_loopback;
 extern int mcast_ttl;
 #endif /* USE_MCAST */
 
+extern int tos;
+
 /*
  * debug & log_stderr moved to dprint.h*/
 
