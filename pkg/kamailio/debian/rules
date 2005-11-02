@@ -133,6 +133,49 @@ install: build
 		cfg-prefix=$(CURDIR)/debian/openser-radius-modules \
 		cfg-target=/etc/openser/ \
 		doc-dir=share/doc/openser-radius-modules
+	# compile and install all TLS related packages 
+	$(MAKE) exclude_modules="" proper
+	# openser base package
+	TLS=1 $(MAKE) install skip_modules="$(EXCLUDED_MODULES)" \
+		basedir=$(CURDIR)/debian/openser-tls \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-tls \
+		cfg-target=/etc/openser/
+	# install only the mysql-tls module
+	TLS=1 $(MAKE) install-modules-all modules="$(MYSQL_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-tls-mysql-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-tls-mysql-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-tls-mysql-module
+	# install only the postgres-tls module
+	TLS=1 $(MAKE) install-modules-all modules="$(POSTGRES_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-tls-postgres-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-tls-postgres-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-tls-postgres-module
+	#install only the jabber-tls module
+	TLS=1 $(MAKE) install-modules-all modules="$(JABBER_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-tls-jabber-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-tls-jabber-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-tls-jabber-module
+	#install only the cpl-tls module
+	TLS=1 $(MAKE) install-modules-all modules="$(CPL_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-tls-cpl-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-tls-cpl-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-tls-cpl-module
+	#install only the radius-tls modules
+	TLS=1 $(MAKE) install-modules-all modules="$(RADIUS_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-tls-radius-modules \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-tls-radius-modules \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-tls-radius-modules
 	#dh_movefiles
 
 
