@@ -1,3 +1,9 @@
+ser (0.9.4-0.2) unstable; urgency=low
+
+  * minor debian rules clean target fix 
+
+ -- Andrei Pelinescu-Onciul <andrei@iptel.org>  Wed, 02 Nov 2005 17:46:55 +0200
+
 ser (0.9.4-0.1) unstable; urgency=low
 
   * new upstream minor release 
