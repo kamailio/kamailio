@@ -42,6 +42,7 @@
 #  2005-06-06  ppc64 support & missing ppc optimizations section added (andrei)
 #  2005-07-06  gcc 4.0 optimizations support (andrei)
 #  2005-07-25  better solaris arch detection (andrei)
+#  2005-10-02  distcc get gcc version hack (andrei)
 
 
 # check if already included/exported
@@ -197,7 +198,7 @@ MKTAGS=ctags -R .
 
 ifneq (,$(findstring gcc, $(CC_LONGVER)))
 	CC_NAME=gcc
-	CC_VER=$(CC) $(shell $(CC) --version|head -n 1| \
+	CC_VER=$(CC) $(shell $(CC) - --version|head -n 1| \
 				 sed -e 's/^.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/' \
 				 	 -e 's/^[^0-9].*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
 	# sun sed is a little brain damaged => this complicated expression
