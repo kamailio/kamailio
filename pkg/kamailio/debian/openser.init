@@ -57,7 +57,7 @@ case "$1" in
 	#
 	# Check if openser configuration is valid before restarting the server
 	out=`($DAEMON -c >/dev/null || true) 2>&1`
-	if [ "$out" != 'config file ok, exiting...' ]; then
+	if [ "$?" != '0' ]; then
 	    echo -e "\nThere are errors in the configuration file. Please fix them first"
 	    echo -e "\n$out\n"
 	    exit 0
