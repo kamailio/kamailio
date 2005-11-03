@@ -41,7 +41,7 @@ typedef struct dstr_buff {
 
 /** Dynamic string structure. It is used
  * for muliple appends of any strings. */
-typedef struct dstring {
+typedef struct _dstring_t {
 	dlink_t buffers;
 	/** the length of whole string */
 	int len;

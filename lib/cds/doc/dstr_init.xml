@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="dstr_init">
+
+<refmeta><refentrytitle>dstr_init</refentrytitle>
+<manvolnum>3</manvolnum></refmeta>
+
+<refnamediv>
+<refname>dstr_init</refname>
+<refname>dstr_destroy</refname>
+<refpurpose>initialization and destruction of <structname>dstring_t</structname>
+structure</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+
+<funcsynopsisinfo>
+#include &lt;cds/dstring.h&gt;
+</funcsynopsisinfo>
+
+<funcprototype>
+  <funcdef>int <function>dstr_init</function></funcdef>
+  <paramdef>dstring_t *<parameter>dstr</parameter></paramdef>
+  <paramdef>int <parameter>buff_size</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+  <funcdef>int <function>dstr_destroy</function></funcdef>
+  <paramdef>dstring_t *<parameter>dstr</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para><function>dstr_init</function> function initializes
+<structname>dstring_t</structname> structure. The
+value of <varname>buff_size</varname> is the size of newly allocated data
+buffers. These buffers are internal and are allocated if needed by any of
+dstring functions.</para>
+
+<para><function>dstr_destroy</function> function destroys all allocated data
+buffers. After calling <function>dstr_destroy</function> can't be called any of
+dstring manipulation functions except <function>dstr_init</function>.
+</para>
+</refsect1>
+
+<refsect1><title>Return value</title>
+<para>Both functions return 0 if successful, nonzero otherwise.
+</para>
+</refsect1>
+
+</refentry> 

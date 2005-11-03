@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<reference id="serialization">
+<title>Serialization</title>
+
+<partintro>
+<para>Serialization is a simple way to store and load data structures. It is
+used for example for storing SIP dialogs into database in SER's PA module.</para>
+<para>There is a set of functions for serializing basic data elements (strings,
+numbers, ...). These functions can be used as base for complex structures
+serialization (see <xref linkend="sstream_t.example"/>).</para>
+</partintro>
+
+<include xmlns="http://www.w3.org/2001/XInclude" href="sstream_t.xml"/>
+
+</reference>

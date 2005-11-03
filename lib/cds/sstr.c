@@ -187,7 +187,7 @@ void str_clear(str_t *s)
 	}
 }
 
-char *str_strchr(const str *s, char c)
+char *str_strchr(const str_t *s, char c)
 {
 	if (s) {
 		int i;

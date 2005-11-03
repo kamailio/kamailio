@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<reference><title>Dynamic string</title>
+
+<partintro>
+<para>Dynamic string is data structure used for simple string operations
+hiding internal operations like memory allocations from the user.</para>
+
+<para>Functions and data structures for dynamic string are declared in 
+<filename class='headerfile'>dstring.h</filename>.</para>
+</partintro>
+
+<include xmlns="http://www.w3.org/2001/XInclude" href="dstring_t.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="dstr_init.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="dstr_append.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="dstr_get_data.xml"/>
+
+</reference>

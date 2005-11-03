@@ -87,7 +87,7 @@ int str_prefix(const str_t *a, const str_t *b); /* ss_start */
 void str_clear(str_t *s);
 
 /** locate character in string */
-char *str_strchr(const str *s, char c);
+char *str_strchr(const str_t *s, char c);
 
 #ifdef __cplusplus
 }

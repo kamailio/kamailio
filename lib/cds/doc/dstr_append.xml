@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="dstr_append">
+
+<refmeta><refentrytitle>dstr_append</refentrytitle>
+<manvolnum>3</manvolnum></refmeta>
+
+<refnamediv>
+<refname>dstr_append</refname>
+<refname id="dstr_append_str">dstr_append_str</refname>
+<refname id="dstr_append_zt">dstr_append_zt</refname>
+<refpurpose>append string to <structname>dstring_t</structname>
+structure</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+
+<funcsynopsisinfo>
+#include &lt;cds/dstring.h&gt;
+</funcsynopsisinfo>
+
+<funcprototype>
+  <funcdef>int <function>dstr_append</function></funcdef>
+  <paramdef>dstring_t *<parameter>dstr</parameter></paramdef>
+  <paramdef>const char *<parameter>s</parameter></paramdef>
+  <paramdef>int <parameter>len</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+  <funcdef>int <function>dstr_append_str</function></funcdef>
+  <paramdef>dstring_t *<parameter>dstr</parameter></paramdef>
+  <paramdef>const str_t *<parameter>s</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+  <funcdef>int <function>dstr_append_zt</function></funcdef>
+  <paramdef>dstring_t *<parameter>dstr</parameter></paramdef>
+  <paramdef>const char *<parameter>s</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>All these functions are used for appending strings to dynamic string. They
+differ only in the string and its length specification.
+<variablelist>
+<varlistentry>
+	<term><function>dstr_append</function></term>
+	<listitem><para>appends data from buffer <parameter>s</parameter> of
+	length <parameter>len</parameter></para></listitem>
+</varlistentry>
+<varlistentry>
+	<term><function>dstr_append_str</function></term>
+	<listitem><para>appends content of string <parameter>s</parameter>
+	(see <xref linkend="str_t"/>)</para></listitem>
+</varlistentry>
+<varlistentry>
+	<term><function>dstr_append_zt</function></term>
+	<listitem><para>appends content of zero terminated string <parameter>s</parameter></para></listitem>
+</varlistentry>
+</variablelist>
+</para>
+</refsect1>
+
+<refsect1><title>Return value</title>
+<para>All these functions return 0 if successful, nonzero otherwise.</para>
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para><xref linkend="dstring_t"/></para>
+</refsect1>
+
+</refentry> 
+

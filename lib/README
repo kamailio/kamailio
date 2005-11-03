@@ -51,3 +51,14 @@ you should set LD_LIBRARY_PATH=/usr/local/lib/ser. In the case of
 nonstandard installation, you can use something like 
 LD_LIBRARY_PATH=/my/ser/directory/lib/ser.
 
+Documentation
+-------------
+Documentation for all libraries is (or will be) in 
+docbook-XML format and it is stored in doc directory (for example cds/doc 
+contains documentation for Common Data Structures library).
+
+Documentation can be translated into HTML using a XSLT processor
+which is able to work with "include" directives.
+For example
+   xmlto html cds/doc/cds.xml
+will create HTML documentation for CDS library in current directory.

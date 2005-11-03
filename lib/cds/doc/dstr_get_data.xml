@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="dstr_get_data">
+
+<refmeta><refentrytitle>dstr_get_data</refentrytitle>
+<manvolnum>3</manvolnum></refmeta>
+
+<refnamediv>
+<refname>dstr_get_data</refname>
+<refname id="dstr_get_data_length">dstr_get_data_length</refname>
+<refname id="dstr_get_data_str">dstr_get_data_str</refname>
+<refpurpose>exporting data from <structname>dstring_t</structname>
+structure</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+
+<funcsynopsisinfo>
+#include &lt;cds/dstring.h&gt;
+</funcsynopsisinfo>
+
+<funcprototype>
+  <funcdef>int <function>dstr_get_data_length</function></funcdef>
+  <paramdef>dstring_t *<parameter>dstr</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+  <funcdef>int <function>dstr_get_data</function></funcdef>
+  <paramdef>dstring_t *<parameter>dstr</parameter></paramdef>
+  <paramdef>char *<parameter>dst</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+  <funcdef>int <function>dstr_get_data_str</function></funcdef>
+  <paramdef>dstring_t *<parameter>dstr</parameter></paramdef>
+  <paramdef>str_t *<parameter>dst</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para><function>dstr_get_data_length</function> function is used to determine
+the size of data present in dynamic string. It returns negative value on error.</para>
+
+<para><function>dstr_get_data</function> copies data from internal buffers into
+given character array allocated by caller. The data size can be 
+determined by <function>dstr_get_data_length</function> call.
+</para>
+
+<para><function>dstr_get_data_str</function> copies data from internal buffers into
+internally allocated string. This string is returned in the <varname>dst</varname>
+parameter.
+</para>
+
+</refsect1>
+
+<refsect1><title>Return value</title>
+<para>Functions <function>dstr_get_data</function> and
+<function>dstr_get_data_str</function> return 0 if successful, nonzero otherwise.
+</para>
+<para>Function <function>dstr_get_data_length</function> returns negative value
+on error, zero if there is no data in dynamic string and positive if there was
+no error and data present.
+</para>
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para><xref linkend="dstring_t"/></para>
+</refsect1>
+
+</refentry> 

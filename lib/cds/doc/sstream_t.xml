@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="sstream_t">
+
+<refmeta><refentrytitle>sstream_t</refentrytitle>
+<manvolnum>3</manvolnum></refmeta>
+
+<refnamediv><refname>sstream_t</refname>
+<refpurpose>input/output serialization stream</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><synopsis>
+#include &lt;cds/serialize.h&gt;
+
+typedef struct {
+	dstring_t out;
+	str_t in;
+	int in_pos;
+	enum { sstream_in, sstream_out } type;
+} sstream_t;
+</synopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>This structure represents input and output serialization stream.</para> 
+<refsect2><title>Members</title>
+<para><variablelist>
+<varlistentry>
+	<term><varname>out</varname></term>
+	<listitem><para>Dynamic string holding output data in the case of output
+	stream.</para></listitem>
+</varlistentry>
+<varlistentry>
+	<term><varname>in</varname></term>
+	<listitem><para>String holding input data in the case of input 
+	stream.</para></listitem>
+</varlistentry>
+<varlistentry>
+	<term><varname>in_pos</varname></term>
+	<listitem><para>Actual position in input data (points to first unread char) 
+	in the case of input stream.</para></listitem>
+</varlistentry>
+<varlistentry>
+	<term><varname>type</varname></term>
+	<listitem><para>Member holding stream type - input or output.</para></listitem>
+</varlistentry>
+</variablelist></para>
+<para>Warning - internals of this data structure may change! Use it only through
+manipulation functions.
+</para>
+</refsect2>
+</refsect1>
+
+<refsect1 id="sstream_t.example"><title>Example</title>
+<programlisting>
+#include &lt;cds/sstr.h&gt;
+#include &lt;cds/serialize.h&gt;
+
+typedef struct {
+	str_t name;
+	int number;
+	char c;
+} test_t;
+
+int serialize_test_struct(sstream_t *store, test_t *t)
+{
+	if (serialize_str(store, &amp;t->name) != 0) return -1;
+	if (serialize_int(store, &amp;t->number) != 0) return -1;
+	if (serialize_char(store, &amp;t->c) != 0) return -1;
+	return 0;
+}
+
+int main(int argc, char **argv)
+{
+	sstream_t store;
+	str_t data;
+	test_t a = { name: {"test A", 6}, number: 13, c: 'x' };
+	test_t b;
+
+	str_clear(&amp;data);
+
+	/* storing structure to the string */
+	
+	init_output_sstream(&amp;store, 256);
+	if (serialize_test_struct(&amp;store, &amp;a) == 0) {
+		if (get_serialized_sstream(&amp;store, &amp;data) != 0)
+			printf("can't get data\n");
+	}
+	else printf("can't serialize\n");
+	destroy_sstream(&amp;store);
+
+	/* loading structure from the string */
+	
+	init_input_sstream(&amp;store, data.s, data.len);
+	if (serialize_test_struct(&amp;store, &amp;b) == 0) {
+		printf("test_t = { %.*s, %d, %c }\n", 
+			FMT_STR(b.name), b.number, b.c);
+		
+		/* cleanup */
+		str_free_content(&amp;b.name);
+	}
+	else printf("can't deserialize\n");
+	destroy_sstream(&amp;store);
+
+	/* cleanup */
+	str_free_content(&amp;data);
+
+	return 0;
+}
+
+</programlisting>
+</refsect1>
+
+</refentry> 
+
+
