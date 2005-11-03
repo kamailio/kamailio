@@ -1,0 +1,81 @@
+--- Makefile.orig	Fri Oct 28 23:27:18 2005
++++ Makefile	Sun Oct 30 22:14:24 2005
+@@ -46,7 +46,7 @@
+ skip_modules?=
+ 
+ # if not set on the cmd. line or the env, exclude this modules:
+-exclude_modules?= 		jabber cpl-c pa postgres mysql \
++exclude_modules?= 		jabber $(POSTGRESQL) $(MYSQL) \
+ 						avp_radius auth_radius group_radius uri_radius
+ # always exclude the CVS dir
+ override exclude_modules+= CVS $(skip_modules)
+@@ -320,17 +320,9 @@
+ 		
+ # note: on solaris 8 sed: ? or \(...\)* (a.s.o) do not work
+ install-cfg: $(cfg-prefix)/$(cfg-dir)
+-		sed -e "s#/usr/.*lib/$(NAME)/modules/#$(modules-target)#g" \
+-			< etc/$(NAME).cfg > $(cfg-prefix)/$(cfg-dir)$(NAME).cfg.sample
+-		chmod 644 $(cfg-prefix)/$(cfg-dir)$(NAME).cfg.sample
+-		if [ -z "${skip_cfg_install}" -a \
+-				! -f $(cfg-prefix)/$(cfg-dir)$(NAME).cfg ]; then \
+-			mv -f $(cfg-prefix)/$(cfg-dir)$(NAME).cfg.sample \
+-				$(cfg-prefix)/$(cfg-dir)$(NAME).cfg; \
+-		fi
+ 		# radius dictionary
+ 		$(INSTALL-TOUCH) $(cfg-prefix)/$(cfg-dir)/dictionary.radius
+-		$(INSTALL-CFG) etc/dictionary.radius $(cfg-prefix)/$(cfg-dir)
++		$(INSTALL-CFG) etc/dictionary.radius $(cfg-prefix)/$(cfg-dir)/dictionary.radius.default
+ 		#$(INSTALL-CFG) etc/$(NAME).cfg $(cfg-prefix)/$(cfg-dir)
+ 		if [ -z $(TLS) ]; then \
+ 			echo  "No TLS scripts installed" ; \
+@@ -341,36 +333,16 @@
+ 			mkdir $(cfg-prefix)/$(cfg-dir)/tls/rootCA/private ; \
+ 			mkdir $(cfg-prefix)/$(cfg-dir)/tls/user ; \
+ 			$(INSTALL-TOUCH) etc/tls/README $(cfg-prefix)/$(cfg-dir)/tls/; \
+-			$(INSTALL) etc/tls/README $(cfg-prefix)/$(cfg-dir)/tls/; \
+-			$(INSTALL-TOUCH) etc/tls/rootCA/index.txt $(cfg-prefix)/$(cfg-dir)/tls/rootCA/; \
+-			$(INSTALL) etc/tls/rootCA/index.txt $(cfg-prefix)/$(cfg-dir)/tls/rootCA/; \
+-			$(INSTALL-TOUCH) etc/tls/rootCA/serial $(cfg-prefix)/$(cfg-dir)/tls/rootCA/; \
+-			$(INSTALL) etc/tls/rootCA/serial $(cfg-prefix)/$(cfg-dir)/tls/rootCA/; \
+-			$(INSTALL-TOUCH) etc/tls/rootCA/cacert.pem $(cfg-prefix)/$(cfg-dir)/tls/rootCA/; \
+-			$(INSTALL) etc/tls/rootCA/cacert.pem $(cfg-prefix)/$(cfg-dir)/tls/rootCA/; \
+-			$(INSTALL-TOUCH) etc/tls/rootCA/certs/01.pem $(cfg-prefix)/$(cfg-dir)/tls/rootCA/certs/; \
+-			$(INSTALL) etc/tls/rootCA/certs/01.pem $(cfg-prefix)/$(cfg-dir)/tls/rootCA/certs/; \
+-			$(INSTALL-TOUCH) etc/tls/rootCA/private/cakey.pem $(cfg-prefix)/$(cfg-dir)/tls/rootCA/private/; \
+-			$(INSTALL) etc/tls/rootCA/private/cakey.pem $(cfg-prefix)/$(cfg-dir)/tls/rootCA/private/; \
+-			$(INSTALL-TOUCH) etc/tls/user/user-calist.pem $(cfg-prefix)/$(cfg-dir)/tls/user/; \
+-			$(INSTALL) etc/tls/user/user-calist.pem $(cfg-prefix)/$(cfg-dir)/tls/user/; \
+-			$(INSTALL-TOUCH) etc/tls/user/user-cert.pem $(cfg-prefix)/$(cfg-dir)/tls/users/; \
+-			$(INSTALL) etc/tls/user/user-cert.pem $(cfg-prefix)/$(cfg-dir)/tls/user/; \
+-			$(INSTALL-TOUCH) etc/tls/user/user-privkey.pem $(cfg-prefix)/$(cfg-dir)/tls/user/; \
+-			$(INSTALL) etc/tls/user/user-privkey.pem $(cfg-prefix)/$(cfg-dir)/tls/user/; \
+-			$(INSTALL-TOUCH) etc/tls/user/user-cert_req.pem $(cfg-prefix)/$(cfg-dir)/tls/user/; \
+-			$(INSTALL) etc/tls/user/user-cert_req.pem $(cfg-prefix)/$(cfg-dir)/tls/user/; \
++			$(BSD_INSTALL_DATA) etc/tls/README $(cfg-prefix)/$(cfg-dir)/tls/; \
+ 		fi
+ 
+ install-bin: $(bin-prefix)/$(bin-dir) utils/gen_ha1/gen_ha1 utils/$(NAME)unix/$(NAME)unix
+ 		$(INSTALL-TOUCH) $(bin-prefix)/$(bin-dir)/$(NAME) 
+ 		$(INSTALL-BIN) $(NAME) $(bin-prefix)/$(bin-dir)
+ 		$(INSTALL-TOUCH)   $(bin-prefix)/$(bin-dir)/sc
+-		$(INSTALL-BIN) scripts/sc $(bin-prefix)/$(bin-dir)
+-		mv -f $(bin-prefix)/$(bin-dir)/sc $(bin-prefix)/$(bin-dir)/$(NAME)ctl
++		$(BSD_INSTALL_SCRIPT) scripts/sc $(bin-prefix)/$(bin-dir)/$(NAME)ctl
+ 		$(INSTALL-TOUCH)   $(bin-prefix)/$(bin-dir)/mysqldb.sh  
+-		$(INSTALL-BIN) scripts/mysqldb.sh  $(bin-prefix)/$(bin-dir)
+-		mv -f $(bin-prefix)/$(bin-dir)/mysqldb.sh $(bin-prefix)/$(bin-dir)/$(NAME)_mysql.sh
++		$(BSD_INSTALL_SCRIPT) scripts/mysqldb.sh  $(bin-prefix)/$(bin-dir)/$(NAME)_mysql.sh
+ 		$(INSTALL-TOUCH)   $(bin-prefix)/$(bin-dir)/$(NAME)_gen_ha1
+ 		$(INSTALL-BIN) utils/gen_ha1/gen_ha1 $(bin-prefix)/$(bin-dir)/$(NAME)_gen_ha1
+ 		$(INSTALL-TOUCH)   $(bin-prefix)/$(bin-dir)/$(NAME)unix
+@@ -418,9 +390,7 @@
+ 			if [ -f modules/"$$r"/README ]; then \
+ 				$(INSTALL-TOUCH)  $(doc-prefix)/$(doc-dir)/README ; \
+ 				$(INSTALL-DOC)  modules/"$$r"/README  \
+-									$(doc-prefix)/$(doc-dir)/README ; \
+-				mv -f $(doc-prefix)/$(doc-dir)/README \
+-						$(doc-prefix)/$(doc-dir)/README."$$r" ; \
++									$(doc-prefix)/$(doc-dir)/README."$$r" ; \
+ 			fi ; \
+ 		fi ; \
+ 	done 

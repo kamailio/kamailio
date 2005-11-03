@@ -1,0 +1,59 @@
+--- Makefile.defs.orig	Fri Oct 28 18:32:39 2005
++++ Makefile.defs	Sun Oct 30 20:09:02 2005
+@@ -147,13 +147,13 @@
+ TAR ?= tar
+ endif
+ 
+-INSTALL-TOUCH = touch          # used to create the file first (good to 
++INSTALL-TOUCH = :              # used to create the file first (good to 
+                                #  make solaris install work)
+-INSTALL-CFG = $(INSTALL) -m 644
+-INSTALL-BIN = $(INSTALL) -m 755
+-INSTALL-MODULES = $(INSTALL) -m 755
+-INSTALL-DOC = $(INSTALL) -m 644
+-INSTALL-MAN = $(INSTALL) -m 644
++INSTALL-CFG = $(BSD_INSTALL_DATA)
++INSTALL-BIN = $(BSD_INSTALL_PROGRAM)
++INSTALL-MODULES = $(BSD_INSTALL_PROGRAM)
++INSTALL-DOC = $(BSD_INSTALL_DATA)
++INSTALL-MAN = $(BSD_INSTALL_MAN)
+ 
+ #set some vars from the environment (and not make builtins)
+ CC   := $(shell echo "$${CC}")
+@@ -449,7 +449,7 @@
+ 	found_lock_method=yes
+ endif
+ 
+-CFLAGS=
++saved_CFLAGS:=$(CFLAGS)
+ LDFLAGS=
+ # setting CFLAGS
+ ifeq ($(mode), release)
+@@ -970,7 +970,8 @@
+ 	ifneq ($(found_lock_method), yes)
+ 		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
+ 		found_lock_method=yes
+-		LIBS= -pthread -lfl  #dlopen is in libc
++		saved_CFLAGS+= $(PTHREAD_CFLAGS)
++		LIBS= $(PTHREAD_LIBS) -lfl  #dlopen is in libc
+ 	else
+ 		LIBS= -lfl  #dlopen is in libc
+ 	endif
+@@ -1045,10 +1046,15 @@
+ 	endif
+ endif
+ 
++CFLAGS=		$(saved_CFLAGS) -I$(LOCALBASE)/include
++MOD_CFLAGS=	-fPIC $(CFLAGS)
++LDFLAGS=	-L$(LOCALBASE)/lib
++MOD_LDFLAGS=	-shared $(LDFLAGS)
++
+ #add libssl if needed
+ ifneq ($(TLS),)
+-DEFS+= -I$(LOCALBASE)/ssl/include
+-LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lssl  -lcrypto
++DEFS+= -I$(OPENSSLINC)
++LIBS+= -L$(OPENSSLLIB) -lssl  -lcrypto
+ endif
+ 
+ ifneq ($(found_lock_method), yes)
