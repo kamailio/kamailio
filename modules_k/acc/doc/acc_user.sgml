@@ -807,11 +807,11 @@ modparam("acc", "db_table_missed_calls", "myMC_table")
 	<section>
 		<title><varname>db_url</varname> (string)</title>
 		<para>
-		SQL address -- database specific.
+		SQL address -- database specific. If is set to NULL or emty string,
+		the SQL support is disabled.
 		</para>
 		<para>
-		Default value is 
-			<quote>mysql://openser:openserrw@localhost/openser</quote>
+		Default value is <quote>NULL</quote> (SQL disabled).
 		</para>
 		<example>
 		<title>db_url example</title>

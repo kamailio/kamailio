@@ -701,9 +701,10 @@ modparam("acc", "db_table_missed_calls", "myMC_table")
 
 1.5.27. db_url (string)
 
-   SQL address -- database specific.
+   SQL address -- database specific. If is set to NULL or emty
+   string, the SQL support is disabled.
 
-   Default value is "mysql://openser:openserrw@localhost/openser"
+   Default value is "NULL" (SQL disabled).
 
    Example 1-27. db_url example
 modparam("acc", "db_url", "mysql://user:password@localhost/openser")
