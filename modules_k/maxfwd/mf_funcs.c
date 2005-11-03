@@ -24,6 +24,7 @@
  * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2002-01-28 scratchpad removed (jiri)
  * 2004-08-15 max value of max-fwd header is configurable (bogdan)
+ * 2005-11-03 MF value saved in msg->maxforwards->parsed (bogdan)
  */
 
 
@@ -39,6 +40,15 @@
 #define MF_HDR "Max-Forwards: "
 #define MF_HDR_LEN (sizeof(MF_HDR) - 1)
 
+/* do a tricky thing and keep the parsed value of MAXFWD hdr incremented 
+ * by one in order to make difference between 0 (not set)
+ * and 0 (zero value) - bogdan */
+#define IS_MAXWD_STORED(_msg_) \
+	((_msg_)->maxforwards->parsed)
+#define STORE_MAXWD_VAL(_msg_,_val_) \
+	(_msg_)->maxforwards->parsed = ((void*)(long)(_val_)+1)
+#define FETCH_MAXWD_VAL(_msg_) \
+	(((int)(long)(_msg_)->maxforwards->parsed)-1)
 
 /* looks for the MAX FORWARDS header
    returns the its value, -1 if is not present or -2 for error */
@@ -57,6 +67,8 @@ int is_maxfwd_present( struct sip_msg* msg , str *foo)
 			DBG("DEBUG: is_maxfwd_present: max_forwards header not found!\n");
 			return -1;
 		}
+	} else if (IS_MAXWD_STORED(msg)) {
+		return FETCH_MAXWD_VAL(msg);
 	}
 
 	/* if header is present, trim to get only the string containing numbers */
@@ -69,6 +81,8 @@ int is_maxfwd_present( struct sip_msg* msg , str *foo)
 			" unable to parse the max forwards number !\n");
 		return -2;
 	}
+	/* store the parsed values */
+	STORE_MAXWD_VAL(msg, x);
 	DBG("DEBUG:maxfwd:is_maxfwd_present: value = %d \n",x);
 	return x;
 }
@@ -91,7 +105,10 @@ int decrement_maxfwd( struct sip_msg* msg , int x, str *s)
 	}
 	while(i >= 0) s->s[i--] = ' ';
 
-	return 1;
+	/* update the stored value */
+	STORE_MAXWD_VAL(msg, x);
+
+	return 0;
 }
 
 
@@ -129,8 +146,7 @@ int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
 		goto error1;
 	}
 
-	return 1;
-
+	return 0;
 error1:
 	pkg_free( buf );
 error:

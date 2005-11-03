@@ -90,22 +90,40 @@ modparam("maxfwd", "max_limit", 32)
 		<para>
 		If no Max-Forward header is present in the received request, a header 
 		will be added having the original value equal with 
-		<quote>max_value</quote>. An OK code is returned by the function.
+		<quote>max_value</quote>. If a Max-Forward header is already present,
+		its value will be decremented (if not 0).
 		</para>
+		<para>Retuning codes:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>2 (true)</emphasis> - header was not found and
+			a new header was succesfully added.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>1 (true)</emphasis> - header was found and its 
+			value was successfully decremented (had a non-0 value).
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>-1 (false)</emphasis> - the header was found and
+			its value is 0 (cannot be decremented).
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>-2 (false)</emphasis> - error during processing.
+			</para>
+		</listitem>
+		</itemizedlist>
 		<para>
-		If a Max-Forward header is already present, its value will be 
-		decremented. If after this operation its value will be positive 
-		non-zero, an OK code will be returned. Otherwise (for a zero value) 
-		an error code will be returned.  Note that an error code will be also 
-		returned if the &sip; message couldn't be parsed or if the
-		Max-Forward header's body invalid (non numerical string or negative 
-		numerical value).
+		The return code may be extensivly tested via script variable 
+		<quote>retcode</quote> (or <quote>$?</quote>).
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>max_value</emphasis> - Value to be added if there 
-			is no Max-Forwards header field in the message.
+			<para><emphasis>max_value</emphasis> - Value to be added if 
+			there is no Max-Forwards header field in the message.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -118,14 +136,73 @@ modparam("maxfwd", "max_limit", 32)
 ...
 # initial sanity checks -- messages with
 # max_forwards==0, or excessively long requests
-if (!mf_process_maxfwd_header("10")) {
+if (!mf_process_maxfwd_header("10") && retcode==-1) {
 	sl_send_reply("483","Too Many Hops");
-	break;
+	exit;
 };
 ...
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">is_maxfwd_lt(max_value)</function>
+		</title>
+		<para>
+		Checks if the Max-Forward header value is less then the 
+		<quote>max_value</quote> parameter value. It considers also the value
+		of the new inserted header (if locally added).
+		</para>
+		<para>Retuning codes:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>1 (true)</emphasis> - header was found or set and 
+			its value is stricly less than <quote>max_value</quote>.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>-1 (false)</emphasis> - the header was found or 
+			set and its value is greater or equal to <quote>max_value</quote>.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>-2 (false)</emphasis> - header was not found or
+			not set.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>-3 (false)</emphasis> - error during processing.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		The return code may be extensivly tested via script variable 
+		<quote>retcode</quote> (or <quote>$?</quote>).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>max_value</emphasis> - value to check the 
+			Max-Forward.value against (as less than).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>is_maxfwd_lt</function> usage</title>
+		<programlisting format="linespecific">
+...
+# next hope is a gateway, so make no sens to
+# forward if MF is 0 (after decrement)
+if ( is_maxfwd_lt("1") ) {
+	sl_send_reply("483","Too Many Hops");
+	exit;
+};
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 </chapter>
 
