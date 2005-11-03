@@ -82,7 +82,7 @@ clean:
 	# Add here commands to clean up after the build process.
 	-$(MAKE) \
 		include_modules="$(MYSQL_MODULES) $(POSTGRES_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES)"\
-		 clean
+		 proper
 
 	dh_clean
 
@@ -196,6 +196,7 @@ binary-common:
 #	dh_installpam
 #	dh_installmime
 	dh_installinit  -- defaults 23
+	dh_installinit -popenser-tls --name=openser  -- defaults 23
 	dh_installcron
 	dh_installman
 	dh_installinfo
