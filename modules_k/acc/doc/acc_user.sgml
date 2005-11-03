@@ -40,7 +40,7 @@
 			<para>d = To tag (Dst)</para>
 		</listitem>
 		<listitem>
-			<para>f = From</para>
+			<para>f = From header</para>
 		</listitem>
 		<listitem>
 			<para>i = Inbound Request-URI</para>
@@ -52,19 +52,43 @@
 			<para>o = Outbound Request-URI</para>
 		</listitem>
 		<listitem>
-			<para>r = fRom</para>
+			<para>r = From TAG</para>
 		</listitem>
 		<listitem>
 			<para>s = Status</para>
 		</listitem>
 		<listitem>
-			<para>t = To</para>
+			<para>t = To header</para>
 		</listitem>
 		<listitem>
 			<para>u = digest Username</para>
 		</listitem>
 		<listitem>
 			<para>p = username Part of inbound Request-URI</para>
+		</listitem>
+		<listitem>
+			<para>0 = From URI user part</para>
+		</listitem>
+		<listitem>
+			<para>1 = To URI user part</para>
+		</listitem>
+		<listitem>
+			<para>F = From URI</para>
+		</listitem>
+		<listitem>
+			<para>T = To URI</para>
+		</listitem>
+		<listitem>
+			<para>U = User name (digest, From URI otherwise)</para>
+		</listitem>
+		<listitem>
+			<para>S = 3-digit Status code from reply</para>
+		</listitem>
+		<listitem>
+			<para>n = Cseq number</para>
+		</listitem>
+		<listitem>
+			<para>D = domain</para>
 		</listitem>
 		</itemizedlist>
 		If a value is not present in request, "n/a" is accounted instead.

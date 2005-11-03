@@ -175,15 +175,23 @@ Chapter 1. User's Guide
 
      * c = Call-Id
      * d = To tag (Dst)
-     * f = From
+     * f = From header
      * i = Inbound Request-URI
      * m = Method
      * o = Outbound Request-URI
-     * r = fRom
+     * r = From TAG
      * s = Status
-     * t = To
+     * t = To header
      * u = digest Username
      * p = username Part of inbound Request-URI
+     * 0 = From URI user part
+     * 1 = To URI user part
+     * F = From URI
+     * T = To URI
+     * U = User name (digest, From URI otherwise)
+     * S = 3-digit Status code from reply
+     * n = Cseq number
+     * D = domain
 
    If a value is not present in request, "n/a" is accounted
    instead.
