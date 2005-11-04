@@ -34,7 +34,7 @@ MODULE_VERSION
 
 /* "public" data members */
 
-int db_mode = 1;
+int db_mode = 0;
 str db_url = { 0, 0};
 
 /* internal data members */
@@ -68,7 +68,7 @@ static param_export_t params[]={
 
 
 struct module_exports exports = {
-	"dlg", 
+	"dialog", 
 	cmds,        /* Exported functions */
 	params,      /* Exported parameters */
 	dlg_mod_init, /* module initialization function */
@@ -95,11 +95,12 @@ static int dlg_mod_init(void)
 	db_initialized = 0;
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
 	if (db_mode > 0) {
-		LOG(L_ERR,"%.*s", FMT_STR(db_url));
 		if (!db_url.len) {
 			LOG(L_ERR, "dlg_mod_init(): no db_url specified but use_db=1\n");
-			return -1;
+			db_mode = 0;
 		}
+	}
+	if (db_mode > 0) {
 		if (bind_dbmod(db_url.s, &dlg_dbf) < 0) {
 			LOG(L_ERR, "dlg_mod_init(): Can't bind database module via url %s\n", db_url.s);
 			return -1;
