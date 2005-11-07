@@ -1,0 +1,344 @@
+<!-- OSP Module User's Guide -->
+
+<chapter>
+  <chapterinfo>
+    <revhistory>
+      <revision>
+        <revnumber>$Revision$</revnumber>
+        <date>$Date$</date>
+      </revision>
+    </revhistory>
+  </chapterinfo>
+  <title>User's Guide</title>
+  <section>
+    <title>Overview</title>
+    <para>This module implements the client part of the Open Settlement Protocol (OSP) defined by ETSI (ETSI TS 101 321 V4.1.1). OSP can be used to request a validation, request a route and validate a request.</para>
+    <para>This module has been tested with the OSP server from TransNexus (www.transnexus.com).</para>
+  </section>
+  <section>
+    <title>Dependencies</title>
+    <para>The module depends on the following modules (in the other words, the listed modules must be loaded before this module):</para>
+    <itemizedlist>
+      <listitem>
+        <para><emphasis>textops</emphasis> -- text based operation</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+  <section>
+    <title>Exported Parameters</title>
+    <section>
+      <title><varname>sp1_uri</varname> (string), <varname>sp2_uri</varname> (string)</title>
+      <para>Defines the one or two OSP servers to be used for requesting authorization and routing information. One OSP server MUST be configured. sp2_uri is required only if there are two OSP servers.</para>
+      <para>This parameter has no default value and must be specified. To use a test server hosted by TransNexus, send an email to support@transnexus.com and request an account. Each service point takes the form of a standard URL, and may consist of up to four components:</para>
+      <itemizedlist>
+        <listitem>
+          <para>An optional indication of the protocol to be used for communicating with the service point. Both HTTP and HTTP secured with SSL are supported; they are indicated by "http://" and "https://" respectively. If the protocol is not explicitly indicated, the Toolkit defaults to HTTP secured with SSL.</para>
+        </listitem>
+        <listitem>
+          <para>The Internet domain name for the service point. Raw IP addresses may also be used, provided they are enclosed in square brackets such as "[172.16.1.1]".</para>
+        </listitem>
+        <listitem>
+          <para>An optional TCP port number for communicating with the service point. If the port number is omitted, the Toolkit defaults to port 1080 (for HTTP) or port 1443 (for HTTP secured with SSL).</para>
+        </listitem>
+        <listitem>
+          <para>The uniform resource identifier for requests to the service point. This component is not optional and must be included.</para>
+        </listitem>
+      </itemizedlist>
+      <example>
+        <title>Setting the OSP server</title>
+        <programlisting format="linespecific">
+modparam ("osp", "sp1_uri", "http://osptestserver.transnexus.com:1080/osp")
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>sp1_weight</varname> (integer), <varname>sp2_weight</varname> (integer)</title>
+      <para>The number of messages that can be sent over each connection to the various service points configured. This variable can be used to load balance messages across a set of OSP servers.</para>
+      <para>Default value is set to 0.</para>
+      <example>
+        <title>Setting the OSP server weight</title>
+        <programlisting format="linespecific">
+modparam ("osp", "sp1_weight", 0)
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>device_ip </varname> (string)</title>
+      <para>This is an optional field; if configured the information is sent out as "SourceAlternate/transport" in the OSP message. </para>
+      <example>
+        <title>Setting the device IP address</title>
+        <programlisting format="linespecific">
+modparam ("osp", "device_ip", "[1.1.1.1]")
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>device_port</varname> (string)</title>
+      <para>This is an optional field; if configured the information is sent out as "SourceAlternate/network" in the OSP message.</para>
+      <example>
+        <title>Setting the device port</title>
+        <programlisting format="linespecific">
+modparam ("osp", "device_port", "5060")
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>private_key</varname> (string)</title>
+      <para>Defines the private key owned by this device. The crypto files are used for validating OSP authorization tokens and establishing a secure channel between the Proxy and OSP server using SSL. The files can be generated using an enrollment process and the utility 'enroll' from the OSP Toolkit. By default, the proxy will look for pkey.pem, localcert.pem, and cacart_0.pem in the default configuration directory. The default configuration directory is set at compile time using CFG_DIR and defaults to /usr/local/etc/ser/.</para>
+      <para>Test files are distributed with the module in the osp/etc folder. You can copy the files to the expected location and/or change the parameters.</para>
+      <para>This parameter defaults to "/usr/local/etc/ser/pkey.pem", if the default CFG_DIR value was used at compile time.</para>
+      <example>
+        <title>Setting the private key</title>
+        <programlisting format="linespecific">
+modparam ("osp", "private_key", "/usr/local/etc/ser/pkey.pem")
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>local_certificate</varname> (string)</title>
+      <para>Defines the local certificate of this device. The crypto files are used for validating OSP authorization tokens and establishing a secure channel between the Proxy and OSP server using SSL. The files can be generated using an enrollment process and the utility 'enroll' from the OSP toolkit. By default, the proxy will look for pkey.pem, localcert.pem, and cacart_0.pem in the default configuration directory. The default configuration directory is set at compile time using CFG_DIR and defaults to /usr/local/etc/ser/.</para>
+      <para>Test files are distributed with the module in the osp/etc folder. You can copy the files to the expected location and/or change the parameters.</para>
+      <para>This parameter defaults to "/usr/local/etc/ser/localcert.pem", if the default CFG_DIR value was used at compile time.</para>
+      <example>
+        <title>Setting the local certificate</title>
+        <programlisting format="linespecific">
+modparam ("osp", "local_certificate", "/usr/local/etc/ser/localcert.pem")
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>ca_certificates</varname> (string)</title>
+      <para>Defines the CA certificate of the OSP server. The crypto files are used for validating OSP authorization tokens and establishing a secure channel between the Proxy and OSP server using SSL. The files can be generated using an enrollment process and the utility 'enroll' from the OSP toolkit. By default, the proxy will look for pkey.pem, localcert.pem, and cacart_0.pem in the default configuration directory. The default configuration directory is set at compile time using CFG_DIR and defaults to /usr/local/etc/ser/.</para>
+      <para>Test files are distributed with the module in the osp/etc folder. You can copy the files to the expected location and/or change the parameters.</para>
+      <para>This parameter defaults to "/usr/local/etc/ser/cacert.pem", if the default CFG_DIR value was used at compile time.</para>
+      <example>
+        <title>Setting the CA certificate</title>
+        <programlisting format="linespecific">
+modparam ("osp", "ca_certificates", "/usr/local/etc/ser/cacert.pem")
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>token_format</varname> (integer)</title>
+      <para>Defines the token format that the OSP module can validate. 0 - signed tokens only, 1 - unsigned tokens only, 2 - both signed and unsigned.</para>
+      <para>This parameter is an optional field, the defaults to 2, i.e. the OSP module can validate both signed and unsigned tokens.</para>
+      <example>
+        <title>Setting the token format</title>
+        <programlisting format="linespecific">
+modparam ("osp", "token_format", 2)
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>enable_crypto_hardware_support</varname> (integer)</title>
+      <para>This is an optional field used to set cryptographic hardware acceleration engine in the openssl library.</para>
+      <para>Default value is False (0). True is 1.</para>
+      <example>
+        <title>Setting the hardware support</title>
+        <programlisting format="linespecific">
+modparam ("osp", "enable_crypto_hardware_support", 0)
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>ssl_lifetime</varname> (integer)</title>
+      <para>The lifetime, in seconds, of a single SSL session key. Once this time limit is exceeded, the Toolkit library will negotiate a new session key. Communication exchanges in progress will not be interrupted when this time limit expires.</para>
+      <para>This is an optional field with default value is 200 seconds.</para>
+      <example>
+        <title>Setting the ssl lifetime</title>
+        <programlisting format="linespecific">
+modparam ("osp", "ssl_lifetime", 200)
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>persistence</varname> (integer)</title>
+      <para>The time, in seconds, that an HTTP connection should be maintained after the completion of a communication exchange. The library will maintain the connection for this time period in anticipation of future communication exchanges to the same server.</para>
+      <para>This is an optional field with default value is 1000 seconds.</para>
+      <example>
+        <title>Setting the persistence</title>
+        <programlisting format="linespecific">
+modparam ("osp", "persistence", 1000)
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>retry_delay</varname> (integer)</title>
+      <para>The time, in seconds, between retrying connection attempts to the provider. After exhausting all service points for the provider, the library will delay for this amount of time before resuming connection attempts.</para>
+      <para>This is an optional field with default value is 1 second.</para> 
+      <example>
+        <title>Setting the retry delay</title>
+        <programlisting format="linespecific">
+modparam ("osp", "retry_delay", 1)
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>retry_limit</varname> (integer)</title>
+      <para>The maximum number of retries for connection attempts to the provider. If no connection is established after this many retry attempts to all service points, then the library will cease connection attempts and return appropriate error codes. This number does not count the initial connection attempt, so that a retry_limit of 1 will result in a total of two connection attempts to every service point.</para> 
+      <para>This is an optional field with default value is 2.</para> 
+      <example>
+        <title>Setting the retry limit</title>
+        <programlisting format="linespecific">
+modparam ("osp", "retry_limit", 2)
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>timeout</varname> (integer)</title>
+      <para>The maximum time in milliseconds, to wait for a response from a server. If no response is received within this time, the current connection is aborted and the library attempts to contact the next service point.</para> 
+      <para>This is an optional field with default value is 10 seconds.</para> 
+      <example>
+        <title>Setting the timeout</title>
+        <programlisting format="linespecific">
+modparam ("osp", "timeout", 10)
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>max_destinations</varname> (integer)</title>
+      <para>The maximum number of destinations that the client wants the server to return. Valid range is 1 through 5.</para>  
+      <para>This is an optional field.</para>  
+      <example>
+        <title>Setting the number of destination</title>
+        <programlisting format="linespecific">
+modparam ("osp", "max_destinations", 3)
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>validate_call_id</varname> (integer)</title>
+      <para>Instructs the module to validate call id in the OSP token. Valid range is 0 (No) or 1 (Yes).</para>  
+      <para>This is an optional field.</para>  
+      <para>Default value is 1 (Yes).</para>
+      <example>
+        <title>Instructing the module to validate call id</title>
+        <programlisting format="linespecific">
+modparam ("osp", "validate_call_id", 1)
+        </programlisting>
+      </example>
+    </section>
+  </section>
+  <section>
+    <title>Exported Functions</title>
+    <section>
+      <title><function moreinfo="none">checkospheader()</function></title>
+      <para>This function checks for the existence of the OSP-Auth-Token header field.</para>
+      <example>
+        <title>checkospheader usage</title>
+        <programlisting format="linespecific">
+...
+if (checkospheader()) {
+  log("OSP header field found.\n");
+} else {
+  log("no OSP header field present\n");
+};
+...
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><function moreinfo="none">validateospheader()</function></title>
+      <para>This function validates an OSP-Token specified in the OSP-Auth-Token header field of the SIP message. If a token is present, it will be validated locally. If no OSP header is found or the header token is invalid or expired, -1 is returned; on successful validation 1 is returned.</para>
+      <example>
+        <title>validateospheader usage</title>
+        <programlisting format="linespecific">
+...
+if (validateospheader()) {
+  log("valid OSP header found\n");
+} else {
+  log("OSP header not found, invalid or expired\n");
+};
+...
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><function moreinfo="none">requestosprouting()</function></title>
+      <para>This function tries to acquire a valid call destination and an authorization token from the OSP server. If the OSP server accepts the request, an OSP-Auth-Token Header field is inserted into the SIP message and the SIP uri is rewritten to the destination the OSP server sent to this site.</para>
+      <para>The destination of the call must be a valid E164 number, otherwise this function returns -1. If the transaction was accepted by the OSP server, the uri is being rewritten and 1 returned, on errors (OSP service points are not available, authentication failed or there is no route to destination or the route is blocked) -1 is returned.</para>
+      <example>
+        <title>requestosprouting usage</title>
+        <programlisting format="linespecific">
+...
+if (requestosprouting()) {
+  log("successfully queried OSP server, now relaying call\n");
+} else {
+  log("Authorization request was rejected from OSP server\n");
+};
+...
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><function moreinfo="none">preparefirstosproute()</function></title>
+      <para>This function tries to prepare the INVITE to be forwarded or redirected using the first destination in the list returned by the OSP server. If the route could not be prepared, the function returns 'FALSE' back to the script, which can then decide how to handle the failure.</para>
+      <example>
+        <title>preparefirstosproute usage</title>
+        <programlisting format="linespecific">
+...
+if (preparefirstosproute ()) {
+  log("successfully prepared the first route, now relaying call\n");
+} else {
+  log("could not prepare the route. The first destination was blocked\n");
+};
+...
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><function moreinfo="none">preparenextosproute()</function></title>
+      <para>Once the call could not be completed through the first destination, this function tries to prepare the INVITE message using the next destination in the list returned by the OSP Server. If it succeeds in preparing the route, the message is either redirected or relayed on (using the t_relay call), or else the function returns 'FALSE' back to the script, which can then decide how to handle the failure.</para>
+      <example>
+        <title>preparenextosproute usage</title>
+        <programlisting format="linespecific">
+...
+if (preparenextosproute ()) {
+  log("successfully prepared the next route, now relaying call\n");
+} else {
+  log("could not prepare the route. No next destination available\n");
+};
+...
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><function moreinfo="none">prepareallosproute()</function></title>
+      <para>This function tries to prepare all the routes in the list returned by the OSP server. The message is then either forked off or redirected to the destination. If unsuccessful in preparing the routes a SIP 500 is sent back and a trace message is logged.</para>
+      <example>
+        <title>prepareallosproute usage</title>
+        <programlisting format="linespecific">
+...
+if (prepareallosproute ()) {
+  log("successfully prepared the routes, now either forking or redirecting the call\n");
+} else {
+  log("could not prepare the route. No destination available\n");
+};
+...
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><function moreinfo="none">reportospusage()</function></title>
+      <para>This function should be called after receiving a BYE message.  If the message contains an OSP cooky, the function will forward originating and/or terminating duration usage information to an OSP server.  The function returns TRUE if the BYE includes an OSP cooky.  The actual usage message will be send on a different thread and will not delay BYE processing.  The function should be called before relaying the message.</para>
+      <example>
+        <title>reportospusage usage</title>
+        <programlisting format="linespecific">
+...
+if (reportospusage ()) {
+  log("OSP call duration usage will be reported\n");
+} else {
+  log("The BYE message does not include OSP information, it was not authorized by an OSP server\n");
+};
+...
+        </programlisting>
+      </example>
+    </section>
+  </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("osp.sgml" "Book" "chapter")
+End:
+-->
