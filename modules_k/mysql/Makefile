@@ -8,7 +8,7 @@ NAME=mysql.so
 
 # mysql.h locations (freebsd,openbsd  solaris)
 DEFS +=-I$(LOCALBASE)/include -I$(LOCALBASE)/include/mysql \
-		-I$(LOCALBASE)/mysql/include \
+		-I$(LOCALBASE)/mysql/include/mysql -I$(LOCALBASE)/mysql/include \
 		-I/usr/include/mysql
 
 # libmysqlclient locations on RH/Suse, Solaris /OpenBSD, FreeBSD
