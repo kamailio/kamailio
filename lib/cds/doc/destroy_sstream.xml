@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="destroy_sstream"> <!-- ID for references -->
+
+<refmeta>
+<refentrytitle>destroy_sstream</refentrytitle> <!-- title shown in references -->
+<manvolnum>3</manvolnum></refmeta> <!-- man volume id (3 for libraries) -->
+
+<refnamediv>
+<refname>destroy_sstream</refname> <!-- function name -->
+<refpurpose>destroys input/output serialization stream</refpurpose> <!-- short function description -->
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;cds/serialize.h&gt; <!-- included headers -->
+</funcsynopsisinfo>
+
+<funcprototype> <!-- function prototype -->
+  <funcdef>void <function>destroy_sstream</function></funcdef>
+  <paramdef>sstream_t *<parameter>ss</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>
+Destroys serialization stream and frees all internal data buffers. After calling
+this function can NOT be called any other serialization stream manipulation
+function except <function>init_input_sstream</function> or
+<function>init_ouput_stream</function>.
+<!-- detailed description -->
+</para>
+
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para>
+<xref linkend="sstream_t"/>, <xref linkend="init_input_sstream"/>, <xref
+linkend="init_output_sstream"/>
+<!-- references to other pages -->
+</para>
+</refsect1>
+
+</refentry> 
+

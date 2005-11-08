@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<reference id="sync">
+<title>Synchronization</title>
+
+<partintro>
+<para>Interprocess synchronization functions and data structures are 
+specific for SER. There are some wrapper macros for them in 
+the CDS library.
+</para>
+
+</partintro>
+
+<include xmlns="http://www.w3.org/2001/XInclude" href="cds_mutex_t.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="cds_mutex_init.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="cds_mutex_destroy.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="cds_mutex_lock.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="cds_mutex_unlock.xml"/>
+
+</reference>

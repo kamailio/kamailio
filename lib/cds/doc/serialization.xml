@@ -15,5 +15,22 @@ serialization (see <xref linkend="sstream_t.example"/>).</para>
 </partintro>
 
 <include xmlns="http://www.w3.org/2001/XInclude" href="sstream_t.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="init_input_sstream.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="init_output_sstream.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="get_serialized_sstream.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="destroy_sstream.xml"/>
+
+<include xmlns="http://www.w3.org/2001/XInclude" href="sstream_put.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="sstream_put_str.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="sstream_put_zt.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="sstream_get.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="sstream_get_str.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="sstream_get_str_ex.xml"/>
+
+<include xmlns="http://www.w3.org/2001/XInclude" href="serialize_int.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="serialize_uint.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="serialize_char.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="serialize_uchar.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="serialize_str.xml"/>
 
 </reference>

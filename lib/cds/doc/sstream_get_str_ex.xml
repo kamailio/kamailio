@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="sstream_get_str_ex"> <!-- ID for references -->
+
+<refmeta>
+<refentrytitle>sstream_get_str_ex</refentrytitle> <!-- title shown in references -->
+<manvolnum>3</manvolnum></refmeta> <!-- man volume id (3 for libraries) -->
+
+<refnamediv>
+<refname>sstream_get_str_ex</refname> <!-- function name -->
+<refpurpose>read data from input stream</refpurpose> <!-- short function description -->
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;cds/serialize.h&gt; <!-- included headers -->
+</funcsynopsisinfo>
+
+<funcprototype> <!-- function prototype -->
+  <funcdef>int <function>sstream_get_str_ex</function></funcdef>
+  <paramdef>sstream_t *<parameter>ss</parameter></paramdef>
+  <paramdef>int <parameter>len</parameter></paramdef>
+  <paramdef>str_t *<parameter>dst</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>Returns data buffer of requested length (<parameter>len</parameter>). If
+there is not enough data to read (less than <parameter>len</parameter> bytes), 
+the function returns error. The memory can NOT be freed becausse it is a part of
+input buffer!
+<!-- detailed description -->
+</para>
+
+</refsect1>
+
+<refsect1><title>Return value</title>
+<para>
+<!-- return value description -->
+Returns 0 on success, non-zero on error. 
+</para>
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para>
+<xref linkend="sstream_t"/>, <xref linkend="sstream_get"/>, <xref
+linkend="sstream_get_str"/>
+<!-- references to other pages -->
+</para>
+</refsect1>
+
+</refentry> 
+

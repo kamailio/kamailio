@@ -40,6 +40,31 @@ mq_message_t *create_message_ex(int data_len)
 	return m;
 }
 
+mq_message_t *create_message(void *data, int data_len)
+{
+	mq_message_t *m;
+	/* if (data_len < 0) data_len = 0; */
+	m = cds_malloc(sizeof(mq_message_t));
+	if (!m) return NULL;
+	m->data_len = data_len;
+	m->data = data;
+	m->next = NULL;
+	m->allocation_style = message_holding_data_ptr;
+	return m;
+}
+
+void init_message_ex(mq_message_t *m, void *data, int data_len, int auto_free)
+{
+	/* if (data_len < 0) data_len = 0; */
+	if (!m) return;
+	
+	m->data_len = data_len;
+	m->data = data;
+	m->next = NULL;
+	if (auto_free) m->allocation_style = message_holding_data_ptr;
+	else m->allocation_style = message_holding_data_ptr_no_free;
+}
+
 void free_message(mq_message_t *msg)
 {
 	switch (msg->allocation_style) {
@@ -48,6 +73,9 @@ void free_message(mq_message_t *msg)
 		case message_holding_data_ptr: 
 				if (msg->data) cds_free(msg->data);
 				break;
+		case message_holding_data_ptr_no_free:
+				/* not automaticaly freed !! */
+				return;
 	}
 	cds_free(msg);
 }
@@ -127,10 +155,10 @@ int msg_queue_init_ex(msg_queue_t *q, int synchronize)
 	return 0;
 }
 
-int msg_queue_destroy(msg_queue_t *q)
+void msg_queue_destroy(msg_queue_t *q)
 {
 	mq_message_t *m,*n;
-	if (!q) return -1;
+	if (!q) return;
 	
 	if (q->use_mutex) cds_mutex_lock(&q->q_mutex);
 	m = q->first;
@@ -145,7 +173,6 @@ int msg_queue_destroy(msg_queue_t *q)
 		cds_mutex_unlock(&q->q_mutex);
 		cds_mutex_destroy(&q->q_mutex);
 	}
-	return 0;
 }
 
 

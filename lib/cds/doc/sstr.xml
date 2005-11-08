@@ -19,5 +19,10 @@ often duplictly in SER's modules.</para>
 </partintro>
 
 <include xmlns="http://www.w3.org/2001/XInclude" href="str_t.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="str_dup.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="str_clear.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="str_free.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="str_free_content.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="str_other.xml"/>
 
 </reference>

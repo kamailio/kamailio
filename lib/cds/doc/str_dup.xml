@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="str_dup">
+
+<refmeta><refentrytitle>str_dup</refentrytitle>
+<manvolnum>3</manvolnum></refmeta>
+
+<refnamediv>
+<refname>str_dup</refname>
+<refname>str_dup_new</refname>
+<refname>str_dup_zt</refname>
+<refpurpose>string duplication functions</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+
+<funcsynopsisinfo>
+#include &lt;cds/sstr.h&gt;
+</funcsynopsisinfo>
+
+<funcprototype>
+  <funcdef>int <function>str_dup</function></funcdef>
+  <paramdef>str_t *<parameter>dst</parameter></paramdef>
+  <paramdef>const str_t *<parameter>src</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+  <funcdef>int <function>str_dup_new</function></funcdef>
+  <paramdef>str_t *<parameter>dst</parameter></paramdef>
+  <paramdef>const char *<parameter>src</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+  <funcdef>int <function>str_dup_zt</function></funcdef>
+  <paramdef>const str_t *<parameter>src</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>All these functions allocates necessary memory using
+<function>cds_malloc</function>.</para>
+
+<para><function>str_dup</function> takes as source the string given in
+<parameter>src</parameter></para>
+
+<para><function>str_dup_zt</function> takes as source zero-terminated string given in
+<parameter>src</parameter></para>
+
+<para><function>str_dup_new</function> works like <function>str_dup</function>
+with the difference, that it allocates not only the data buffer, but the 
+destination <structname>str_t</structname> structure too.
+</para>
+</refsect1>
+
+<refsect1><title>Return value</title>
+<para>All these functions return 0 if successful, nonzero otherwise.
+</para>
+</refsect1>
+
+</refentry> 
+

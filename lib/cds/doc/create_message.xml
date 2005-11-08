@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="create_message"> <!-- ID for references -->
+
+<refmeta>
+<refentrytitle>create_message</refentrytitle> <!-- title shown in references -->
+<manvolnum>3</manvolnum></refmeta> <!-- man volume id (3 for libraries) -->
+
+<refnamediv>
+<refname>create_message</refname> <!-- function name -->
+<refpurpose>allocates and initializes message</refpurpose> <!-- short function description -->
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;cds/msg_queue.h&gt; <!-- included headers -->
+</funcsynopsisinfo>
+
+<funcprototype> <!-- function prototype -->
+  <funcdef>int <function>create_message</function></funcdef>
+  <paramdef>void *<parameter>data</parameter></paramdef>
+  <paramdef>int <parameter>data_len</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+
+<para>Allocates message using <function>cds_malloc</function> and initializes
+its content so it will be freed automaticaly. Pointer to the explicitly
+allocated data is set to <parameter>data</parameter> and its length is set to
+<parameter>data_len</parameter>. Message created by <function>create_message</function> 
+should be freed using <function>message_free</function>.</para>
+
+<para>Unremoved messages created this way are freed automaticaly in
+<function>msg_queue_destroy</function> using <function>free_message</function>.
+</para>
+
+<para>Calling <function>free_message</function> to such message frees the
+message and the data given by parameter <parameter>data</parameter> too, thus
+they can NOT be freed by the caller!
+</para>
+
+</refsect1>
+
+<refsect1><title>Return value</title>
+<para>
+<!-- return value description -->
+Returns NULL on error, pointer to initialized message structure otherwise.
+</para>
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para>
+<xref linkend="create_message_ex"/>, <xref linkend="init_message_ex"/>
+<!-- references to other pages -->
+</para>
+</refsect1>
+
+</refentry> 
+

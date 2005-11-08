@@ -37,5 +37,12 @@ length of this buffer.
 </para> 
 </refsect1>
 
+<refsect1><title>See Also</title>
+<para><xref linkend="str_dup"/>, <xref linkend="str_clear"/>, 
+<xref linkend="str_free_content"/>,	<xref linkend="str_free"/>
+<xref linkend="str_other"/>
+</para>
+</refsect1>
+
 </refentry> 
 

@@ -7,16 +7,15 @@
 
 <book lang="en">
 <bookinfo>
-	<title>Common Data Structures (libcds)</title>
+	<title>Presence utilities and data types (libpresence)</title>
 	<author><firstname>Václav</firstname><surname>Kubart</surname></author>
-	<abstract><para>Description of CDS (Common Data Structures) library.
+	<abstract><para>Description of helper Presence library.
 	</para></abstract>
 </bookinfo>
 
 <preface><title>Preface</title>
-<para>This library contains many useful functions and data structures. It is
-possible to use it with Sip Express Router (SER) or without it. In the first case it
-is able to use some internal SER's data types like strings.
+<para>This library contains data structures for presence documents
+representation and helper functions.
 </para>
 
 <section><title>Conventions</title>
@@ -34,20 +33,14 @@ is able to use some internal SER's data types like strings.
 </para>
 </section>
 
-<section id="libcds.dependencies"><title>Dependencies</title>
-<para>This library depends only on standard C libraries and needs no other
-external libraries.</para>
+<section id="libpresence.dependencies"><title>Dependencies</title>
+<para>
+<itemizedlist>
+	<listitem><para><application>libcds</application> (distributed with SER)</para></listitem>
+</itemizedlist>
+</para>
 </section>
 
 </preface>
-
-<part><title>Reference</title>
-<include xmlns="http://www.w3.org/2001/XInclude" href="memory.xml"/>
-<include xmlns="http://www.w3.org/2001/XInclude" href="sstr.xml"/>
-<include xmlns="http://www.w3.org/2001/XInclude" href="dstring.xml"/>
-<include xmlns="http://www.w3.org/2001/XInclude" href="serialization.xml"/>
-<include xmlns="http://www.w3.org/2001/XInclude" href="sync.xml"/>
-<include xmlns="http://www.w3.org/2001/XInclude" href="msg_queue.xml"/>
-</part>
 
 </book>

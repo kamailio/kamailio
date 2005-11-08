@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="get_serialized_sstream"> <!-- ID for references -->
+
+<refmeta>
+<refentrytitle>get_serialized_sstream</refentrytitle> <!-- title shown in references -->
+<manvolnum>3</manvolnum></refmeta> <!-- man volume id (3 for libraries) -->
+
+<refnamediv>
+<refname>get_serialized_sstream</refname> <!-- function name -->
+<refpurpose>get output stream data</refpurpose> <!-- short function description -->
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;cds/serialize.h&gt; <!-- included headers -->
+</funcsynopsisinfo>
+
+<funcprototype> <!-- function prototype -->
+  <funcdef>int <function>get_serialized_sstream</function></funcdef>
+  <paramdef>sstream_t *<parameter>ss</parameter></paramdef>
+  <paramdef>str_t *<parameter>dst</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>
+Copies data stored during output serialization into given destination. It allocates buffer
+necessary for serialized data using cds_malloc function. These data can be freed
+using <function>str_free_content</function>.
+<!-- detailed description -->
+</para>
+
+</refsect1>
+
+<refsect1><title>Return value</title>
+<para>
+<!-- return value description -->
+Returns 0 on success, non-zero on error.
+</para>
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para>
+<xref linkend="sstream_t"/>, <xref linkend="str_free_content"/>
+<!-- references to other pages -->
+</para>
+</refsect1>
+
+</refentry> 
+

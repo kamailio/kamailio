@@ -1,0 +1,121 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE book PUBLIC '-//OASIS//DTD DocBook XML V4.2//EN'
+	'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd'[
+	<!ENTITY % local.common.attrib "xml:base  CDATA  #IMPLIED">
+]> 
+
+<book lang="en">
+	<bookinfo>
+		<title>Usage of common libraries</title>
+		<author><firstname>Václav</firstname><surname>Kubart</surname></author>
+		<abstract><para>Installation and usage of common libraries.
+		</para></abstract>
+	</bookinfo>
+
+<chapter><title>Introduction</title>
+
+<section><title>About</title>
+<para>Common libraries are originaly determined for usage with SER - as a
+collection of useful functions which are not present in the SER's code. 
+But as the time goes it seems to be good to make them usable without SER too, 
+at least for testing parts of SER modules and thus it is possible to use 
+them alone now.</para>
+</section>
+
+<section id="lib.dependencies"><title>Dependencies</title>
+<!-- <para>Individual libraries may need some external libraries to compile and work. These
+dependencies are in detail described in their documentation. But dependencies may
+exist between standalone libraries too. For example the CDS library is a basis
+for others because it offers useful common functions and data structures used by
+them.</para>-->
+
+<section><title>libcds dependencies</title>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+	href="../cds/doc/cds.xml"
+	xpointer="xpointer(id('libcds.dependencies')/child::*[not(self::title)])">
+	<xi:fallback>
+		<para><emphasis>Missing dependencies for CDS library!
+		Add section with <markup>id</markup> <quote><constant>libcds.dependencies</constant></quote>
+		to CDS library documentation.</emphasis></para>
+	</xi:fallback>
+</xi:include>
+</section>
+
+<section><title>libxcap dependencies</title>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+	href="../xcap/doc/xcap.xml"
+	xpointer="xpointer(id('libxcap.dependencies')/child::*[not(self::title)])">
+	<xi:fallback>
+		<para><emphasis>Missing dependencies for XCAP library!
+		Add section with <markup>id</markup> <quote><constant>libxcap.dependencies</constant></quote>
+		to XCAP library documentation.</emphasis></para>
+	</xi:fallback>
+</xi:include>
+</section>
+
+<section><title>libpresence dependencies</title>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+	href="../presence/doc/presence.xml"
+	xpointer="xpointer(id('libpresence.dependencies')/child::*[not(self::title)])">
+	<xi:fallback>
+		<para><emphasis>Missing dependencies for Presence library!
+		Add section with <markup>id</markup> <quote><constant>libpresence.dependencies</constant></quote>
+		to Presence library documentation.</emphasis></para>
+	</xi:fallback>
+</xi:include>
+</section>
+</section>
+
+</chapter>
+
+<chapter><title>Installation and usage</title>
+
+<para>Before installation is needed to install external libraries according to
+<link linkend="lib.dependencies">dependencies</link>.
+</para>
+
+<section id="lib.usage-ser"><title>Usage with SIP Express Router</title>
+
+<para>These libraries are distributed together with SER, but they are not
+compiled together with other SER code. They must be compiled separately, before
+compiling SER modules which use them.
+</para>
+
+<para>There is standalone makefile for compilation with SER named
+<filename>Makefile.ser</filename>.</para>
+
+<section><title>Installation steps</title>
+<para>There is an example of steps which need to be done while installing SER
+with these libraries into directory /base/ser/directory (if no directory specified - 
+no prefix parameter given - default value is used: /usr/local/)
+<orderedlist>
+	<listitem><para>Download current ser sources:</para>
+	<para><userinput>cvs -d :pserver:anonymous@cvs.berlios.de:/cvsroot/ser checkout sip_router</userinput>
+	</para></listitem>
+
+	<listitem><para>Compile and install libraries for usage with SER:</para>
+	<para><userinput>cd sip_router/lib</userinput></para>
+	<para><userinput>make -f Makefile.ser install prefix=/base/ser/directory</userinput></para>
+	</listitem>
+
+	<listitem><para>Compile and install SER</para>
+	<para><userinput>cd ..</userinput></para>
+	<para><userinput>make install prefix=/base/ser/directory</userinput></para>
+	</listitem>
+</orderedlist>
+</para>
+</section><!-- installation steps (with SER) -->
+
+<section><title>Running SER</title>
+<para>Linker used for dynamic linking must know, where to find these libraries.
+This may be done by setting <varname>LD_LIBRARY_PATH</varname> before
+startup.</para>
+<para><userinput>export LD_LIBRARY_PATH=/base/ser/directory/lib/ser</userinput></para>
+<para><userinput>/base/ser/directory/sbin/ser -f /base/ser/directory/etc/ser/ser.cfg</userinput></para>
+</section> <!-- running SER -->
+
+</section> <!-- installation with SER -->
+
+</chapter>
+
+</book>

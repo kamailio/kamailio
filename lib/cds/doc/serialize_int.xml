@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="serialize_int"> <!-- ID for references -->
+
+<refmeta>
+<refentrytitle>serialize_int</refentrytitle> <!-- title shown in references -->
+<manvolnum>3</manvolnum></refmeta> <!-- man volume id (3 for libraries) -->
+
+<refnamediv>
+<refname>serialize_int</refname> <!-- function name -->
+<refpurpose>integer serialization</refpurpose> <!-- short function description -->
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;cds/serialize.h&gt; <!-- included headers -->
+</funcsynopsisinfo>
+
+<funcprototype> <!-- function prototype -->
+  <funcdef>int <function>serialize_int</function></funcdef>
+  <paramdef>sstream_t *<parameter>ss</parameter></paramdef>
+  <paramdef>int *<parameter>num</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>Serializes number. This means that in case of input stream this
+functions sets value of given integer parameter to value read from stream, 
+in case of output stream it
+writes the number given in parameter into that stream.
+<!-- detailed description -->
+</para>
+
+</refsect1>
+
+<refsect1><title>Return value</title>
+<para>
+<!-- return value description -->
+Returns 0 on success, non-zero on error.
+</para>
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para>
+<xref linkend="sstream_t"/>
+<xref linkend="serialize_uint"/>, 
+<xref linkend="serialize_char"/>, 
+<xref linkend="serialize_uchar"/>, 
+<xref linkend="serialize_str"/>
+<!-- references to other pages -->
+</para>
+</refsect1>
+
+</refentry> 
+

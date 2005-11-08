@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="push_message"> <!-- ID for references -->
+
+<refmeta>
+<refentrytitle>push_message</refentrytitle> <!-- title shown in references -->
+<manvolnum>3</manvolnum></refmeta> <!-- man volume id (3 for libraries) -->
+
+<refnamediv>
+<refname>push_message</refname> <!-- function name -->
+<refpurpose>push message into message queue</refpurpose> <!-- short function description -->
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;cds/msg_queue.h&gt; <!-- included headers -->
+</funcsynopsisinfo>
+
+<funcprototype> <!-- function prototype -->
+  <funcdef>int <function>push_message</function></funcdef>
+  <paramdef>msg_queue_t *<parameter>q</parameter></paramdef>
+  <paramdef>mq_message_t *<parameter>msg</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>Function pushes initialized message into message queue. This
+message may be removed from the queue using <function>pop_message</function>.
+Unremoved messages are automaticaly freed by <function>msg_queue_destroy</function> 
+(depending on message initialization, see <xref
+linkend="create_message"/>, <xref linkend="create_message_ex"/> and <xref
+linkend="init_message_ex"/>).
+<!-- detailed description -->
+</para>
+
+</refsect1>
+
+<refsect1><title>Return value</title>
+<para>
+<!-- return value description -->
+Returns 0 on success, non-zero on error.
+</para>
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para>
+<!-- references to other pages -->
+<xref linkend="pop_message"/>, 
+<xref linkend="create_message"/>, 
+<xref linkend="create_message_ex"/>, 
+<xref linkend="init_message_ex"/>
+</para>
+</refsect1>
+
+</refentry> 
+

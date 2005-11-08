@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="msg_queue_init_ex"> <!-- ID for references -->
+
+<refmeta>
+<refentrytitle>msg_queue_init_ex</refentrytitle> <!-- title shown in references -->
+<manvolnum>3</manvolnum></refmeta> <!-- man volume id (3 for libraries) -->
+
+<refnamediv>
+<refname>msg_queue_init_ex</refname> <!-- function name -->
+<refpurpose>message queue initialization</refpurpose> <!-- short function description -->
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;cds/msg_queue.h&gt; <!-- included headers -->
+</funcsynopsisinfo>
+
+<funcprototype> <!-- function prototype -->
+  <funcdef>int <function>msg_queue_init_ex</function></funcdef>
+  <paramdef>msg_queue_t *<parameter>q</parameter></paramdef>
+  <paramdef>int <parameter>synchronized</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>Initializes message queue structure. The value of
+<parameter>synchronized</parameter> may be 0 or 1. Zero means, that the message
+queue will not use mutex for internal data access (will be NOT synchronized), 1
+means that message queue will be synchronized by mutex created internaly.
+<!-- detailed description -->
+</para>
+
+</refsect1>
+
+<refsect1><title>Return value</title>
+<para>
+<!-- return value description -->
+Returns 0 on success, non-zero on error.
+</para>
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para>
+<xref linkend="msg_queue_init"/>, <xref linkend="msg_queue_destroy"/>
+<!-- references to other pages -->
+</para>
+</refsect1>
+
+</refentry> 
+

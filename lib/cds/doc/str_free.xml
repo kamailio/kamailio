@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="str_free">
+
+<refmeta><refentrytitle>str_free</refentrytitle>
+<manvolnum>3</manvolnum></refmeta>
+
+<refnamediv>
+<refname>str_free</refname>
+<refpurpose>destroys string</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+
+<funcsynopsisinfo>
+#include &lt;cds/sstr.h&gt;
+</funcsynopsisinfo>
+
+<funcprototype>
+  <funcdef>void <function>str_free</function></funcdef>
+  <paramdef>str_t *<parameter>s</parameter></paramdef>
+</funcprototype>
+
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>Frees string's data like str_free_content, 
+and the frees the <structname>str_t</structname> structure too.
+It uses <function>cds_free</function> as memory deallocation function.</para>
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para>
+<xref linkend="str_t"/>, <xref linkend="str_free_content"/>, <xref linkend="str_clear"/>
+<!-- references to other pages -->
+</para>
+</refsect1>
+
+</refentry> 
+

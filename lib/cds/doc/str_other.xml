@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="str_other">
+
+<refmeta><refentrytitle>helper functions</refentrytitle>
+<manvolnum>3</manvolnum></refmeta>
+
+<refnamediv>
+<refname>zt2str</refname>
+<refname>is_str_empty</refname>
+<refname>zt_strdup</refname>
+<refname>str_prefix</refname>
+<refname>str_strchr</refname>
+<refpurpose>various string helper functions</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+
+<funcsynopsisinfo>
+#include &lt;cds/sstr.h&gt;
+</funcsynopsisinfo>
+
+<funcprototype>
+  <funcdef>str_t <function>zt2str</function></funcdef>
+  <paramdef>char *<parameter>s</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+  <funcdef>int <function>is_str_empty</function></funcdef>
+  <paramdef>const str_t *<parameter>s</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+  <funcdef>char *<function>zt_strdup</function></funcdef>
+  <paramdef>const char *<parameter>src</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+  <funcdef>int <function>str_prefix</function></funcdef>
+  <paramdef>const str_t *<parameter>a</parameter></paramdef>
+  <paramdef>const str_t *<parameter>b</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+  <funcdef>char *<function>str_strchr</function></funcdef>
+  <paramdef>const str_t *<parameter>s</parameter></paramdef>
+  <paramdef>char <parameter>c</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para><function>zt2str</function> converts zero terminated string to
+<structname>str_t</structname>. It doesn't copy data - both strings use the same
+buffer!
+</para>
+
+<para><function>is_str_empty</function> returns 1 if given string is empty (NULL
+pointer or length &lt; 1 or NULL pointer to string data)
+</para>
+
+<para><function>zt_strdup</function> duplicates given zero terminated string to
+another zero terminated string using cds_malloc function
+</para>
+
+<para><function>str_prefix</function> returns 0 if string
+<parameter>b</parameter> is prefix of <parameter>a</parameter>, nonzero
+otherwise (deprecated)
+</para>
+
+<para><function>str_strchr</function> searches for given character. It returns
+pointer to it in the string or NULL if not found.
+</para>
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para><xref linkend="str_t"/></para>
+</refsect1>
+
+</refentry> 
+

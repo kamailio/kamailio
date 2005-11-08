@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="msg_queue_t">
+
+<refmeta><refentrytitle>msg_queue_t</refentrytitle>
+<manvolnum>3</manvolnum></refmeta>
+
+<refnamediv><refname>msg_queue_t</refname>
+<refpurpose>message queue data structure</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><synopsis>
+#include &lt;cds/msg_queue.h&gt;
+
+typedef struct msg_queue {
+	mq_message_t *first;
+	mq_message_t *last;
+	cds_mutex_t q_mutex;
+	int use_mutex;
+} msg_queue_t;
+
+</synopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>Message queue is implemented as simple linked list of elements. Message
+queue may be locked or not - it depends on initialization.
+</para> 
+<para>Warning: internal implementation of this structure may change, use it only
+through existing functions.
+</para>
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para>
+<xref linkend="mq_message_t"/>
+</para>
+</refsect1>
+
+</refentry> 
+

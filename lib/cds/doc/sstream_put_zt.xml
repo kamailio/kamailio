@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="sstream_put_zt"> <!-- ID for references -->
+
+<refmeta>
+<refentrytitle>sstream_put_zt</refentrytitle> <!-- title shown in references -->
+<manvolnum>3</manvolnum></refmeta> <!-- man volume id (3 for libraries) -->
+
+<refnamediv>
+<refname>sstream_put_zt</refname> <!-- function name -->
+<refpurpose>store data into output stream</refpurpose> <!-- short function description -->
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;cds/serialize.h&gt; <!-- included headers -->
+</funcsynopsisinfo>
+
+<funcprototype> <!-- function prototype -->
+  <funcdef>int <function>sstream_put_zt</function></funcdef>
+  <paramdef>sstream_t *<parameter>ss</parameter></paramdef>
+  <paramdef>const char *<parameter>s</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>Stores data into output stream. It copies data from zero-terminated string
+<parameter>s</parameter> into internal data buffers.
+<!-- detailed description -->
+</para>
+
+</refsect1>
+
+<refsect1><title>Return value</title>
+<para>
+<!-- return value description -->
+Returns 0 on success, non-zero on error.
+</para>
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para>
+<xref linkend="sstream_t"/>
+<!-- references to other pages -->
+</para>
+</refsect1>
+
+</refentry> 
+

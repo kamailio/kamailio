@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="init_input_sstream"> <!-- ID for references -->
+
+<refmeta>
+<refentrytitle>init_input_sstream</refentrytitle> <!-- title shown in references -->
+<manvolnum>3</manvolnum></refmeta> <!-- man volume id (3 for libraries) -->
+
+<refnamediv>
+<refname>init_input_sstream</refname> <!-- function name -->
+<refpurpose>initializes input serialization stream</refpurpose> <!-- short function description -->
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis> <!-- usage -->
+
+<funcsynopsisinfo>
+#include &lt;cds/serialize.h&gt; <!-- included headers -->
+</funcsynopsisinfo>
+
+<funcprototype> <!-- function prototype -->
+  <funcdef>int <function>init_input_sstream</function></funcdef>
+  <paramdef>sstream_t *<parameter>ss</parameter></paramdef>
+  <paramdef>char *<parameter>data_in</parameter></paramdef>
+  <paramdef>int <parameter>data_len</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>Initializes serialization stream as input. Input data are read from char
+array given by pointer <parameter>data_in</parameter> and length
+<parameter>data_len</parameter>.
+<!-- detailed description -->
+</para>
+
+</refsect1>
+
+<refsect1><title>Return value</title>
+<para>
+Returns 0 if successful, nonzero otherwise.
+<!-- return value description -->
+</para>
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para>
+<xref linkend="sstream_t"/>
+<!-- references to other pages -->
+</para>
+</refsect1>
+
+</refentry> 
+

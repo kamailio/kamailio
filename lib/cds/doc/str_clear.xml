@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="str_clear">
+
+<refmeta><refentrytitle>str_clear</refentrytitle>
+<manvolnum>3</manvolnum></refmeta>
+
+<refnamediv>
+<refname>str_clear</refname>
+<refpurpose>string initialization function</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+
+<funcsynopsisinfo>
+#include &lt;cds/sstr.h&gt;
+</funcsynopsisinfo>
+
+<funcprototype>
+  <funcdef>void <function>str_clear</function></funcdef>
+  <paramdef>str_t *<parameter>s</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>Clears the given string - it sets string length 
+to 0 and pointer to data to NULL</para>
+</refsect1>
+
+
+<refsect1><title>See Also</title>
+<para>
+<xref linkend="str_t"/>, <xref linkend="str_free"/>, <xref
+linkend="str_free_content"/>
+<!-- references to other pages -->
+</para>
+</refsect1>
+
+</refentry> 
+

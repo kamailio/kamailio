@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE set PUBLIC '-//OASIS//DTD DocBook XML V4.2//EN'
+'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd' [
+<!ENTITY % local.common.attrib "xml:base  CDATA  #IMPLIED"> 
+<!-- needed for DocBook version <= 4.2, see 
+http://www.sagehill.net/docbookxsl/ValidXinclude.htm -->
+]>
+
+<set>
+<setinfo>
+	<title>Common libraries for SIP Express Router</title>
+	<author><firstname>Václav</firstname><surname>Kubart</surname></author>
+	<!--<abstract><para>Description of common libraries.
+	</para></abstract>-->
+</setinfo>
+
+<!--<preface><title>Preface</title>
+<para>...</para>
+</preface>-->
+
+<include xmlns="http://www.w3.org/2001/XInclude" href="libraries.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="../cds/doc/cds.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="../xcap/doc/xcap.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="../presence/doc/presence.xml"/>
+</set>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="init_message_ex"> <!-- ID for references -->
+
+<refmeta>
+<refentrytitle>init_message_ex</refentrytitle> <!-- title shown in references -->
+<manvolnum>3</manvolnum></refmeta> <!-- man volume id (3 for libraries) -->
+
+<refnamediv>
+<refname>init_message_ex</refname> <!-- function name -->
+<refpurpose>initialize message</refpurpose> <!-- short function description -->
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;cds/msg_queue.h&gt; <!-- included headers -->
+</funcsynopsisinfo>
+
+<funcprototype> <!-- function prototype -->
+  <funcdef>void <function>init_message_ex</function></funcdef>
+  <paramdef>mq_message_t *<parameter>m</parameter></paramdef>
+  <paramdef>void *<parameter>data</parameter></paramdef>
+  <paramdef>int <parameter>data_len</parameter></paramdef>
+  <paramdef>int <parameter>auto_free</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>Initializes message structure with given data and given data length. If
+<parameter>auto_free</parameter> is set, the message can be be freed
+using <function>free_message</function> and such unremoved messages are freed
+automaticaly with <function>msg_queue_destroy</function>. If this flag is not set,
+calling <function>free message</function> will not do anything and the message
+and message data must be freed explicitly by caller.
+<!-- detailed description -->
+</para>
+
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para>
+<!-- references to other pages -->
+<xref linkend="create_message"/>, <xref linkend="create_message_ex"/>, <xref
+linkend="free_message"/>
+</para>
+</refsect1>
+
+</refentry> 
+

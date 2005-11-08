@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="cds_mutex_t">
+
+<refmeta><refentrytitle>cds_mutex_t</refentrytitle>
+<manvolnum>3</manvolnum></refmeta>
+
+<refnamediv><refname>cds_mutex_t</refname>
+<refpurpose>wrapper type for mutex</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><synopsis>
+#include &lt;cds/sync.h&gt;
+
+outside of SIP Express Router:
+
+#include &lt;pthread.h&gt;
+#define cds_mutex_t   pthread_mutex_t
+
+inside of SIP Express Router:
+
+#define cds_mutex_t   gen_lock_t
+
+</synopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>Wrapper type for mutex. It is defined as macro now, but this may change.
+</para> 
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para><xref linkend="cds_mutex_init"/>, <xref linkend="cds_mutex_destroy"/>,
+<xref linkend="cds_mutex_lock"/>, <xref linkend="cds_mutex_unlock"/>
+</para>
+</refsect1>
+
+</refentry> 
+

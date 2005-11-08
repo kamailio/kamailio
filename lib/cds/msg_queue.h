@@ -28,13 +28,14 @@
 
 #include <cds/sync.h>
 
-typedef struct mq_message_t {
+typedef struct _mq_message_t {
 	void *data;
 	int data_len;
-	struct mq_message_t *next;
+	struct _mq_message_t *next;
 	enum { 
 		message_allocated_with_data, 
-		message_holding_data_ptr 
+		message_holding_data_ptr, 
+		message_holding_data_ptr_no_free /* not automaticaly freed */
 	} allocation_style;
 	char data_buf[1];
 } mq_message_t;
@@ -46,6 +47,9 @@ typedef struct msg_queue {
 	int use_mutex;
 } msg_queue_t;
 
+#define get_message_data(msg)		(msg ? msg->data: NULL)
+#define get_message_data_len(msg)	(msg ? msg->data_len: 0)
+
 /** the space for data is allocated in messages data
  * (they are automaticaly freed!)! Pointer to allocated
  * data bytes is in data variable in the message structure. */
@@ -54,6 +58,11 @@ mq_message_t *create_message_ex(int data_len);
 /** data must be allocated using cds_malloc and they
  * are automacicaly freed! */
 mq_message_t *create_message(void *data, int data_len);
+
+/** initializes message, 
+ * if auto_free set, data must be allocated using cds_malloc and are automaticaly freed by free_message 
+ * (and if msg_queue_destroy called) */
+void init_message_ex(mq_message_t *m, void *data, int data_len, int auto_free);
 
 /** frees the message and data holding by the message !!!! */
 void free_message(mq_message_t *msg);
@@ -67,7 +76,7 @@ int is_msg_queue_empty(msg_queue_t *q);
 /** initializes synchronized message queue */
 int msg_queue_init(msg_queue_t *q);
 int msg_queue_init_ex(msg_queue_t *q, int synchronize);
-int msg_queue_destroy(msg_queue_t *q);
+void msg_queue_destroy(msg_queue_t *q);
 
 #endif
 

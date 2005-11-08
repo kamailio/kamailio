@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="cds_mutex_destroy"> <!-- ID for references -->
+
+<refmeta>
+<refentrytitle>cds_mutex_destroy</refentrytitle> <!-- title shown in references -->
+<manvolnum>3</manvolnum></refmeta> <!-- man volume id (3 for libraries) -->
+
+<refnamediv>
+<refname>cds_mutex_destroy</refname> <!-- function name -->
+<refpurpose>mutex destruction</refpurpose> <!-- short function description -->
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;cds/sync.h&gt; <!-- included headers -->
+</funcsynopsisinfo>
+
+<funcprototype> <!-- function prototype -->
+  <funcdef>int <function>cds_mutex_destroy</function></funcdef>
+  <paramdef>cds_mutex_t *<parameter>m</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>Destroys mutex. It is defined as macro now thus type control and return
+value specification may be problematic!
+<!-- detailed description -->
+</para>
+
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para>
+<!-- references to other pages -->
+<xref linkend="cds_mutex_t"/>, <xref linkend="cds_mutex_init"/>,
+<xref linkend="cds_mutex_lock"/>, <xref linkend="cds_mutex_unlock"/>
+</para>
+</refsect1>
+
+</refentry> 
+
