@@ -1,0 +1,70 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE section PUBLIC '-//OASIS//DTD DocBook XML V4.2//EN'
+	'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd'[
+	<!ENTITY % local.common.attrib "xml:base  CDATA  #IMPLIED">
+]>
+
+<section><title>Installation and running</title>
+
+<para>Presence modules use some dynamic libraries distributed with SER and the
+compilation procedure and running is a bit more difficult than usual. For detailed
+description of libraries see their separate documentation (stored in
+<filename>lib/doc</filename> subdirectory of main SER directory).</para>
+
+<section id="pres.dependencies"><title>Dependencies</title>
+<para>Presence module dependecies may be found in sections <link
+linkend="pa.dependencies">PA module dependencies</link> and <link
+linkend="rls.dependencies">RLS module dependencies</link>. These modules depend
+on common libraries which have their own dependencies as mentioned below.
+</para>
+
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+	href="../../lib/doc/libraries.xml"
+	xpointer="xpointer(id('lib.dependencies')/child::*[not(self::title)])">
+	<xi:fallback>
+		<para><emphasis>Missing dependencies for common
+		libraries!</emphasis></para>
+	</xi:fallback>
+</xi:include>
+<!--<para>Presence modules and common libraries need these external libraries installed
+(development versions, with header files):</para>
+<itemizedlist>
+	<listitem><para>libxml2</para></listitem>
+	<listitem><para>libcurl3</para></listitem>
+</itemizedlist>-->
+</section>
+
+<section><title>Installation steps</title>
+<para>There is an example of steps which need to be done while installing SER
+with these libraries into directory /base/ser/directory (if no directory specified - 
+no prefix parameter given - default value is used: /usr/local/)
+<orderedlist>
+	<listitem><para>Download current ser sources:</para>
+	<para><userinput>cvs -d :pserver:anonymous@cvs.berlios.de:/cvsroot/ser checkout sip_router</userinput>
+	</para></listitem>
+
+	<listitem><para>Compile and install libraries for usage with SER:</para>
+	<para><userinput>cd sip_router/lib</userinput></para>
+	<para><userinput>make -f Makefile.ser install prefix=/base/ser/directory</userinput></para>
+	<para>This procedure may fail in the case of unsatisfied library
+	dependencies. You need to install all external libraries introduced in <xref
+	linkend="pres.dependencies"/></para>
+	</listitem>
+
+	<listitem><para>Compile and install SER with presence modules</para>
+	<para><userinput>cd ..</userinput></para>
+	<para><userinput>make install include_modules="pa rls mysql" prefix=/base/ser/directory</userinput></para>
+	</listitem>
+</orderedlist>
+</para>
+</section> <!-- Installation steps -->
+
+<section><title>Running SER</title>
+<para>Linker used for dynamic linking must know, where to find these libraries.
+This may be done by setting <varname>LD_LIBRARY_PATH</varname> before
+startup.</para>
+<para><userinput>export LD_LIBRARY_PATH=/base/ser/directory/lib/ser</userinput></para>
+<para><userinput>/base/ser/directory/sbin/ser -f /base/ser/directory/etc/ser/ser.cfg</userinput></para>
+</section> <!-- running SER -->
+
+</section>

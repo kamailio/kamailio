@@ -6,6 +6,9 @@
 <!--********************** BILBIOGRAPHY ***************************-->
 
 <bibliography id="pres_biblio">
+<note><para>There might be new versions of internet drafts and thus links to
+them my be obsolete. In such case try increment version in link or find the
+draft on <ulink url="http://www.ietf.org">IETF</ulink> by name.</para></note>
 
 <bibliodiv><title>XCAP</title>
 
@@ -20,7 +23,7 @@
 >draft-ietf-simple-xcap-diff-01.txt</ulink> - XCAP changes notifications format</title>
 </biblioentry>
 
-<biblioentry>
+<biblioentry id="pres_draft_xcap_profiles">
 <abbrev>xcap_profiles</abbrev>
 <title><ulink url="http://www.ietf.org/internet-drafts/draft-ietf-sipping-config-framework-07.txt"
 >draft-ietf-sipping-config-framework-07.txt</ulink> -XCAP user profiles</title>

@@ -1,35 +1,36 @@
-<?xml version='1.0' encoding='iso-8859-2'?>
+<?xml version='1.0' encoding='UTF-8'?>
 
 <!DOCTYPE article PUBLIC '-//OASIS//DTD DocBook XML V4.2//EN'
-'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd'>
+'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd' [
+<!ENTITY % local.common.attrib "xml:base  CDATA  #IMPLIED"> 
+<!-- needed for DocBook version <= 4.2, see 
+http://www.sagehill.net/docbookxsl/ValidXinclude.htm -->
+]>
 
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
+
+<article>
 	<title>SER presence handbook</title>
-<!--    <bookinfo>
-	<title>SER presence handbook</title>
-	<authorgroup>
-		<author>
-		<firstname>Václav</firstname>
-		<surname>Kubart</surname>
-		<address>
-			<email>vaclav.kubart@iptel.org</email>
-		</address>
-		</author>
-	</authorgroup>
-	</bookinfo>-->
-	<!-- <toc></toc> -->
+	
+	<include xmlns="http://www.w3.org/2001/XInclude" href="intro.xml"/>
+	<include xmlns="http://www.w3.org/2001/XInclude" href="xcap.xml"/>
+	<include xmlns="http://www.w3.org/2001/XInclude" href="install.xml"/>
+	<section><title>Presence modules</title>
+	<include xmlns="http://www.w3.org/2001/XInclude" href="../../modules/pa/doc/pa.xml"/>
+	<include xmlns="http://www.w3.org/2001/XInclude" href="../../modules/rls/doc/rls.xml"/>
+	</section>
+<!-- <include xmlns="http://www.w3.org/2001/XInclude" href="examples.xml"/> -->
+	<include xmlns="http://www.w3.org/2001/XInclude" href="biblio.xml"/>
+	
 	
 <!--	<chapter id="pres"><title>Presence in SER</title>-->
-		<xi:include href="presence.xml"/>
-		<xi:include href="../../modules/pa/doc/pa.xml"/>
-		<xi:include href="../../modules/rls/doc/rls.xml"/>
-		<xi:include href="biblio.xml"/>
+<!--
+		<include xmlns="http://www.w3.org/2001/XInclude" href="presence.xml"/>
+		<include xmlns="http://www.w3.org/2001/XInclude" href="install.xml"/>
+		<include xmlns="http://www.w3.org/2001/XInclude" href="../../modules/pa/doc/pa.xml"/>
+		<include xmlns="http://www.w3.org/2001/XInclude" href="../../modules/rls/doc/rls.xml"/>
+		<include xmlns="http://www.w3.org/2001/XInclude" href="biblio.xml"/>
+		-->
 <!--		<xi:include href="todo.xml"/>-->
 <!--	</chapter>-->
 
-<!--	<chapter><title>Module documentation</title>
-		<xi:include href="../../modules/pa/doc/pa.xml"/> 
-		<xi:include href="../../modules/rls/doc/rls.xml"/>
-	</chapter>-->
-	
 </article>

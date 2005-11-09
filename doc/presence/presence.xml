@@ -3,7 +3,7 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section xmlns:xi="http://www.w3.org/2001/XInclude">
+<section>
 <title>SER presence basics</title>
 
 <para>Presence is one of quite important components of SER. It allows users to

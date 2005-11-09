@@ -1,0 +1,350 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE section PUBLIC '-//OASIS//DTD DocBook XML V4.2//EN'
+	'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd'>
+
+<section><title>XCAP</title>
+
+<section><title>Introduction</title>
+
+<para>XCAP is a HTTP based protocol for access remote configuration data. Data
+is stored in XML format and XCAP protocol allows to query, modify or delete
+parts of such data. This is in detail described in <xref
+linkend="pres_draft_xcap"/>. XCAP server is server able to handle XCAP requests.
+</para>
+
+<para>XCAP server may be used for storing <quote>presence interesting</quote>
+data. From the SER's point of view are interesting:
+<itemizedlist>
+	<listitem><para>authorization data</para></listitem>
+	<listitem><para><quote>buddy lists</quote></para></listitem>
+</itemizedlist>
+</para>
+
+<section><title>XCAP authorization</title>
+<para>Definition of authorization documents and theirs usage is specified in <xref 
+linkend="pres_draft_common_auth"/> and especially for presence purposes in <xref 
+linkend="pres_draft_auth"/>. Both documents are quite common and in SER's
+presence modules implemented only partialy.
+</para>
+</section> <!-- XCAP authorization -->
+
+<section><title>Buddy lists</title>
+<para>XCAP server may be used for storing lists of users too. These lists may be
+used for presence subscriptions - subscription to such list means subscription
+to all users at once. This reduces number of created subscriptions and may
+reduce data transfers between server and client too; but presence documents for
+lists of users may be very big.</para>
+
+<para>There may be not only lists for individual users with their contacts but 
+there may be other sort of lists representing some <quote>logical
+entities</quote> such <quote>businessmen</quote>, <quote>technical
+support</quote>, ... which are used in cases like if some customer needs someone
+from technical support department and doesn't want to remeber all people
+there. Such customer may simply watch presence state of
+<quote>technical-support@somewhere.net</quote> if he needs help from them.
+</para>
+
+<para>Lists of users - more common resource lists - are defined in <xref
+linkend="pres_draft_rls"/> and their usage with SIP in <xref
+linkend="pres_draft_rls_sip"/>. These lists are partialy implemented in <link
+linkend="pres_rls">RLS module</link>.
+</para>
+</section> <!-- buddy lists -->
+
+<section><title>Manipulation with XCAP documents</title>
+<para>Manipulating with XCAP documents is quite simple because XCAP uses
+standard HTTP methods like GET, PUT or DELETE. Every web browser may be
+used to read XCAP data and it is quite simple to write utility to write data
+to XCAP server. These features allow to use XCAP with SER although there are is 
+not much client software supporting it.
+</para>
+</section> <!-- manipulating documents -->
+
+</section> <!-- XCAP introduction -->
+
+<section><title>XCAP authorization and SER</title>
+
+<section><title>Authorization document URI</title>
+<para>Authorization documents are read for presentities according to their presentity
+URIs. Presentity URI is AOR of SUBSCRIBE request. Resulting URI will be:</para>
+<para>
+<filename>&lt;xcap-root&gt;/pres-rules/users/&lt;username&gt;/presence-rules.xml</filename>
+where <parameter>&lt;xcap-root&gt;</parameter> is set in configuration and
+<parameter>&lt;username&gt;</parameter> is username from presentity URI.
+</para>
+
+<example><title>authorization document uri</title>
+<para>For example for presentity <literal>sip:smith@iptel.org</literal> and
+<parameter>xcap-root</parameter> <literal>http://localhost/xcap-root</literal> will be
+the URI for the authorization document
+<filename>http://localhost/xcap-root/pres-rules/users/smith/presence-rules.xml</filename>
+</para>
+</example>
+
+</section>
+
+<section><title>Disadvantages</title>
+<para>One of the worst disadvantages of XCAP authorization is slowness of XCAP
+queries compared to - for example - data stored in local database. This is the
+reason for caching XCAP queries and responses, but there is a problem - how to
+detect changes in data stored on XCAP server. One of possible solutions is to 
+implement client for <quote>XCAP change notifications</quote> described in <xref
+linkend="pres_draft_xcap_change"/> and <xref linkend="pres_draft_xcap_profiles"/>
+(planned in future versions).</para>
+</section>
+
+<section><title>Standard incompliances</title>
+<para>SER's resource lists support is not finished yet, there are some standard
+incompliances now:
+<itemizedlist>
+	<listitem><para>ignored sphere</para></listitem>
+	<listitem><para>ignored date and time conditions</para></listitem>
+	<listitem><para>ignored transformations</para></listitem>
+</itemizedlist>
+</para>
+</section>
+
+</section> <!-- XCAP authorization in SER -->
+
+<section><title>Resource lists and SER</title>
+<para>There is a problem of resource lists usage: The draft <xref
+linkend="pres_draft_rls"/> describes that a Resource Lists Server operates with
+<quote>rls-services</quote> document - NOT directly with the user's buddy list,
+but tested client software doesn't store <quote>rls-services</quote> documents,
+only <quote>resource list documents</quote> (buddy lists).</para>
+
+<para>This problem is not solved yet, but it is possible, that the RLS module 
+will try both variants in the future. Now it scans and process only
+<quote>rls-services</quote> documents (there must be stored links onto user's
+buddy lists - as shown in <link linkend="xcap.examples">examples</link>).</para>
+
+<section><title>RLS document URI</title>
+<para>The construction of rls-services document URI is described in <xref
+linkend="pres_draft_rls"/>. Only in short: the AOR from SIP SUBSCRIBE request is
+combined with XCAP root given in configuration like this:</para>
+<para>
+<filename>&lt;xcap-root&gt;/rls-services/global/index/~~/rls-services/service[@uri=%22&lt;AOR&gt;%22]</filename>.
+</para>
+<para><emphasis>
+This URI doesn't not specify namespaces as mentioned in definition, but this is 
+due to problems with XCAP server used for tests (problems querying
+parts of documents with namespaces).</emphasis></para>
+<example><title>rls-services uri example</title>
+<itemizedlist>
+	<listitem><para><varname>xcap-root</varname> = <literal>http://localhost/xcap-root</literal></para></listitem>
+	<listitem><para><varname>AOR</varname> = <literal>sip:smith-list@iptel.org</literal></para></listitem>
+</itemizedlist>
+<para>Resulting rls-services document describing the list will be get from URI: 
+<filename>http://localhost/xcap-root/rls-services/global/index/~~/rls-services/service[@uri=%22&lt;smith-list@iptel.org&gt;%22]</filename>,
+which means the <literal>service</literal> element with
+<parameter>uri</parameter> parameter value
+<literal>smith-list@iptel.org</literal> stored in rls-services document named
+index.
+</para></example>
+</section>
+
+<section><title>Standard incompliances</title>
+<para>SER's resource lists support is not finished yet, there are some standard
+incompliances now:
+<itemizedlist>
+	<listitem><para>uri canonicalization not done yet according to definition</para></listitem>
+	<listitem><para>no subscriptions made to external servers (subscriptions
+	only within one SER instance)</para></listitem>
+	<listitem><para>full status documents only</para></listitem>
+</itemizedlist>
+</para>
+</section>
+
+</section> <!-- resource lists and SER -->
+
+<section id="xcap.examples"><title>XCAP examples</title>
+<note><para>XCAP documents examples published there doesn't use correct XML
+namespaces due to problems with XCAP server used for tests (probles querying
+partial documents with namespaces).</para></note>
+
+<example><title>Storing XCAP documents</title>
+<para>There is a sample script in Python which stores XCAP documents onto a XCAP
+server. Documents are:
+<itemizedlist>
+	<listitem><para><link linkend="rls.xml">rls-services document</link> stored
+	under name <filename>index</filename>
+	</para></listitem>
+	<listitem><para><link linkend="list.xml">buddy list</link> for user Smith
+	stored under name <filename>smith</filename></para></listitem>
+	<listitem><para><link linkend="pres-rules.xml">presence authorization
+	document</link> for user Smith stored under name
+	<filename>presence-rules.xml</filename></para></listitem>
+</itemizedlist>
+</para>
+<programlisting>
+#!/usr/bin/python
+import httplib, urllib
+
+machine = "localhost"
+
+#
+# store rls-services document
+#
+
+uri = "/xcap-root/rls-services/global/index"
+headers = {"Content-Type": "application/rls-services+xml"}
+bf = file("rls.xml", "r")
+body = bf.read(65536);
+conn = httplib.HTTPConnection(machine)
+conn.request("PUT", uri, body, headers)
+
+response = conn.getresponse()
+print "Storing rls-services document: ", response.status, response.reason
+data = response.read()
+conn.close()
+
+#
+# store resource-list document for user
+#
+
+uri = "/xcap-root/resource-lists/users/smith"
+headers = {"Content-Type": "application/resource-lists+xml"}
+bf = file("list.xml", "r")
+body = bf.read(65536);
+conn = httplib.HTTPConnection(machine)
+conn.request("PUT", uri, body, headers)
+
+response = conn.getresponse()
+print "Storing resource-lists document: ", response.status, response.reason
+data = response.read()
+conn.close()
+
+#
+# store presence authorization rules
+#
+
+uri = "/xcap-root/pres-rules/users/smith/presence-rules.xml"
+headers = {"Content-Type": "application/pres-rules+xml"}
+bf = file("presence-rules.xml", "r")
+body = bf.read(65536);
+conn = httplib.HTTPConnection(machine)
+conn.request("PUT", uri, body, headers)
+
+response = conn.getresponse()
+print "Storing pres-rules document: ", response.status, response.reason
+data = response.read()
+conn.close()
+</programlisting>
+</example>
+
+<example id="list.xml"><title>Example resource list document (list.xml)</title>
+<para>Simple buddy lists which shows the possibility of nested lists.
+</para>
+<programlisting>
+&lt;?xml version="1.0" ?&gt;
+&lt;resource-lists&gt;
+	&lt;list name="default"&gt;
+		&lt;list name="work"&gt;
+			&lt;entry uri="sip:someone@iptel.org"&gt;
+				&lt;display-name&gt;Someone&lt;/display-name&gt;
+			&lt;/entry&gt;
+			&lt;entry uri="sip:smith@iptel.org"&gt;
+				&lt;display-name&gt;Jonathan Smith&lt;/display-name&gt;
+			&lt;/entry&gt;
+		&lt;/list&gt;
+		&lt;entry uri="sip:vasek@iptel.org"&gt;
+			&lt;display-name&gt;Vasek&lt;/display-name&gt;
+		&lt;/entry&gt;
+		&lt;entry uri="sip:vaclav.kubart@iptel.org"&gt;
+			&lt;display-name&gt;Vaclav Kubart&lt;/display-name&gt;
+		&lt;/entry&gt;
+	&lt;/list&gt;
+&lt;/resource-lists&gt;
+</programlisting>
+</example>
+
+<example id="rls.xml"><title>Example rls-services document (rls.xml)</title>
+<para>Example document which is processed by Resource List Server (RLS module).
+This document can contain references to users buddy lists like
+<quote>smith-list@iptel.org</quote> which points to buddy list for user smith
+named <quote>default</quote> and can contain such lists directly.
+<caution><para>EyeBeam stores user's <quote>buddy list</quote> in 
+<filename>&lt;XCAP-root&gt;/users/&lt;username&gt;/resource-list.xml</filename>, 
+not in
+<filename>&lt;XCAP-root&gt;/users/&lt;username&gt;</filename> which was used in 
+these examples.</para></caution>
+</para>
+<programlisting>
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;rls-services&gt;
+	&lt;service uri="sip:smith-list@iptel.org"&gt;
+		&lt;resource-list&gt;http://localhost/xcap-root/resource-lists/users/smith/~~/resource-lists/list[@name=%22default%22]&lt;/resource-list&gt;
+		&lt;packages&gt;
+			&lt;package&gt;presence&lt;/package&gt;
+		&lt;/packages&gt;
+	&lt;/service&gt;
+	&lt;service uri="sip:cz@iptel.org"&gt;
+		&lt;list name="czech iptel"&gt;
+			&lt;entry uri="sip:abc@iptel.org"&gt;
+				&lt;display-name&gt;A B&lt;/display-name&gt;
+			&lt;/entry&gt;
+			&lt;entry uri="sip:cde@iptel.org"&gt;
+				&lt;display-name&gt;C D&lt;/display-name&gt;
+			&lt;/entry&gt;
+			&lt;entry uri="sip:efg@iptel.org"&gt;
+				&lt;display-name&gt;Ef Ge&lt;/display-name&gt;
+			&lt;/entry&gt;
+		&lt;/list&gt;
+		&lt;packages&gt;
+			&lt;package&gt;presence&lt;/package&gt;
+			&lt;package&gt;email&lt;/package&gt;
+		&lt;/packages&gt;
+	&lt;/service&gt;
+&lt;/rls-services&gt;
+</programlisting>
+</example>
+
+<example id="pres-rules.xml"><title>Example presence authorization document (presence-rules.xml)</title>
+<para>This document contains two rules: 
+<itemizedlist>
+	<listitem><para><quote>white list</quote>, which allows
+	access to presence information from all from domain iptel.org
+	</para></listitem>
+	<listitem><para><quote>black list</quote>, which denies access for user
+	nemo@somewhere.net</para></listitem>	
+</itemizedlist></para>
+<programlisting>
+&lt;?xml version="1.0" ?&gt;
+&lt;ruleset xmlns="urn:ietf:params:xml:ns:common-policy" xmlns:pr="urn:ietf:params:xml:ns:pres-rules"&gt;
+	&lt;rule id="blacklist"&gt;
+		&lt;conditions&gt;
+			&lt;identity&gt;
+				&lt;id&gt;sip:nemo@somewhere.net&lt;/id&gt;
+			&lt;/identity&gt;
+		&lt;/conditions&gt;
+		&lt;actions&gt;
+			&lt;pr:sub-handling&gt;block&lt;/pr:sub-handling&gt;
+		&lt;/actions&gt;
+		&lt;transformations/&gt;
+	&lt;/rule&gt;
+	
+	&lt;rule id="whitelist"&gt;
+		&lt;conditions&gt;
+			&lt;identity&gt;
+				&lt;domain domain="iptel.org"/&gt;
+			&lt;/identity&gt;
+		&lt;/conditions&gt;
+		&lt;actions&gt;
+			&lt;pr:sub-handling&gt;allow&lt;/pr:sub-handling&gt;
+		&lt;/actions&gt;
+		&lt;transformations/&gt;
+	&lt;/rule&gt;
+&lt;/ruleset&gt;
+</programlisting>
+</example>
+
+</section>
+
+<!-- There
+exist extensions for particular types of configuration - for purpose of this
+document only configuration from presence area will be mentioned.
+</para>-->
+
+
+
+</section>
