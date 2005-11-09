@@ -2,7 +2,7 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="pa" xmlns:xi="http://www.w3.org/2001/XInclude">
+<section id="pa">
     <sectioninfo>
 	<authorgroup>
 	    <author>
@@ -52,9 +52,28 @@
 	</para>
     </section>
 
-    <xi:include href="params.xml"/>
-    <xi:include href="functions.xml"/>
-    <!-- <xi:include href="biblio.xml"/> -->
+    <include xmlns="http://www.w3.org/2001/XInclude" href="params.xml"/>
+    <include xmlns="http://www.w3.org/2001/XInclude" href="functions.xml"/>
+    <!-- <include xmlns="http://www.w3.org/2001/XInclude" href="biblio.xml"/> -->
+
+	<section id="pa.dependencies"><title>Dependencies</title>
+	<itemizedlist><title>Modules</title>
+		<listitem><para><application>tm</application></para></listitem>
+		<listitem><para><application>dialog</application></para></listitem>
+		<listitem><para><application>usrloc</application></para></listitem>
+		<listitem><para>optionaly database module
+		(<application>mysql</application>, ...)</para></listitem>
+	</itemizedlist>
+	<itemizedlist><title>Libraries</title>
+			<listitem><para><application>libxml2</application> - external
+			library for parsing XML documents</para></listitem>
+			<listitem><para><application>libcds (internal)</application></para></listitem>
+			<listitem><para><application>libxcap (internal)</application> - XCAP queries
+			(authorization)</para></listitem>
+			<listitem><para><application>libpresence (internal)</application> - used for
+			internal subscriptions from RLS</para></listitem>
+	</itemizedlist>
+	</section>
 
 </section>
 

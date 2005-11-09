@@ -2,7 +2,7 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="pres_rls" xmlns:xi="http://www.w3.org/2001/XInclude"><title>RLS module (Resource Lists Server)</title>
+<section id="pres_rls"><title>RLS module (Resource Lists Server)</title>
 
 <para>Resource lists server is a server which allows subscriptions to lists of
 users. Its behaviour is defined in <xref linkend="pres_draft_rls"/> and
@@ -31,6 +31,7 @@ by user's client software.
 
 <!-- DB storage -->
 <section><title>Persistence (not done yet!)</title>
+<para></para>
 </section>
 
 <!-- TODO -->
@@ -38,6 +39,10 @@ by user's client software.
 <section><title>TODO</title>
 <para>
 <itemizedlist>
+	<listitem><para>optional authorization scheme like in pa =&gt; needs
+	additional data member in subscription structure (storing data loaded from xcap)
+	</para></listitem>
+	
 	<listitem><para>implicit authorization</para></listitem>
 	<listitem><para>XCAP authorization</para></listitem>
 	<listitem><para>DB authorization (presence rules like in XCAP stored in
@@ -51,8 +56,25 @@ by user's client software.
 </para>
 </section>
 
-<xi:include href="params.xml"/>
-<xi:include href="functions.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="params.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="functions.xml"/>
+
+<section id="rls.dependencies"><title>Dependencies</title>
+<itemizedlist><title>Modules</title>
+	<listitem><para><application>tm</application></para></listitem>
+	<listitem><para><application>pa</application></para></listitem>
+<!--	<listitem><para><application>dialog</application></para></listitem> 
+	<listitem><para><application>usrloc</application></para></listitem>
+	<listitem><para>optionaly database module
+	(<application>mysql</application>, ...)</para></listitem>-->
+</itemizedlist>
+<itemizedlist><title>Libraries</title>
+		<listitem><para><application>libcds (internal)</application></para></listitem>
+		<listitem><para><application>libxcap (internal)</application> - XCAP queries</para></listitem>
+		<listitem><para><application>libpresence (internal)</application> - used for
+		internal subscriptions ta PA</para></listitem>
+</itemizedlist>
+</section>
 
 </section>
 

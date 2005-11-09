@@ -2,7 +2,7 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="pa.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+<section id="pa.parameters">
     <sectioninfo>
 	<revhistory>
 	    <revision>

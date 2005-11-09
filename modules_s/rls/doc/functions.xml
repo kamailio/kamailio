@@ -24,7 +24,7 @@
 				</para></listitem>
 			</varlistentry>
 			</variablelist>
-		<example>
+		<example><title>handling subscription</title>
 		<programlisting>
 ...
 if (method=="SUBSCRIBE") {
