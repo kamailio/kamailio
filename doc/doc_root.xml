@@ -37,6 +37,7 @@
 	<xi:include href="presence/intro.xml"/>
 	<xi:include href="presence/xcap.xml"/>
 	<xi:include href="presence/install.xml"/>
+	<xi:include href="presence/examples.xml"/>
 	<xi:include href="presence/biblio.xml"/>
     </chapter>
 	

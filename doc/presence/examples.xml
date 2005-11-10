@@ -1,0 +1,162 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE section PUBLIC '-//OASIS//DTD DocBook XML V4.2//EN'
+	'http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd'>
+
+<section><title>Examples</title>
+
+<example><title>ser.cfg</title>
+<para>There is a sample config file containing simple usage of PA and RLS
+module without authentication.</para>
+<programlisting><![CDATA[
+# ----------- global configuration parameters ------------------------
+
+check_via=no	# (cmd. line: -v)
+dns=no           # (cmd. line: -r)
+rev_dns=no      # (cmd. line: -R)
+fifo="/tmp/ser_fifo"
+
+# ------------------ module loading ----------------------------------
+
+loadmodule "/home/kubartv/sercvs/lib/ser/modules/sl.so"
+loadmodule "/home/kubartv/sercvs/lib/ser/modules/tm.so"
+loadmodule "/home/kubartv/sercvs/lib/ser/modules/rr.so"
+loadmodule "/home/kubartv/sercvs/lib/ser/modules/maxfwd.so"
+loadmodule "/home/kubartv/sercvs/lib/ser/modules/usrloc.so"
+loadmodule "/home/kubartv/sercvs/lib/ser/modules/registrar.so"
+loadmodule "/home/kubartv/sercvs/lib/ser/modules/textops.so"
+loadmodule "/home/kubartv/sercvs/lib/ser/modules/mysql.so"
+loadmodule "/home/kubartv/sercvs/lib/ser/modules/dialog.so"
+loadmodule "/home/kubartv/sercvs/lib/ser/modules/rls.so"
+loadmodule "/home/kubartv/sercvs/lib/ser/modules/pa.so"
+
+loadmodule "/home/kubartv/sercvs/lib/ser/modules/auth.so"
+loadmodule "/home/kubartv/sercvs/lib/ser/modules/auth_db.so"
+
+# ----------------- setting module-specific parameters ---------------
+
+modparam("usrloc|registrar", "use_domain",   1)
+modparam("auth_db", "calculate_ha1", yes)
+modparam("auth_db", "password_column", "password")
+
+modparam("rr", "enable_full_lr", 1)
+
+modparam("rls", "min_expiration", 60)
+modparam("rls", "max_expiration", 3600)
+modparam("rls", "default_expiration", 600)
+
+modparam("usrloc", "db_mode", 1)
+modparam("pa", "use_db", 1)
+modparam("domain|uri|acc|auth_db|usrloc|pa", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
+
+modparam("pa", "auth", "xcap")
+modparam("pa", "auth_xcap_root", "http://localhost/xcap-root")
+
+# -------------------------  request routing logic -------------------
+
+route {
+	if (!mf_process_maxfwd_header("10")) {
+		sl_send_reply("483","Too Many Hops");
+		break;
+	};
+	if (msg:len >=  max_len ) {
+		sl_send_reply("513", "Message too big");
+		break;
+	};
+	
+	if (!method=="REGISTER") record_route();	
+	if (loose_route()) {
+		# mark routing logic in request
+		append_hf("P-hint: rr-enforced\r\n"); 
+		route(1);
+		break;
+	};
+
+	if (!uri==myself) {
+		# mark routing logic in request
+		append_hf("P-hint: outbound\r\n"); 
+		route(1);
+		break;
+	};
+
+	if (uri==myself) {
+
+		if (method=="REGISTER") {
+			save("location");
+			break;
+		};
+		
+		if (method=="SUBSCRIBE") {
+			if (!t_newtran()) {
+				sl_reply_error();
+			};
+			
+			if (!handle_rls_subscription("http://localhost/xcap-root", "0")) {
+				# message is not for RLS but for PA ?			
+				log(1, "SUBSCRIBE not handled by RLS");
+				handle_subscription("registrar");
+			}
+			break;
+		};
+
+		if (method=="PUBLISH") {
+			if (!t_newtran()) {
+			   log(1, "newtran error\n");
+			   sl_reply_error();
+			};
+			handle_publish("registrar");
+			break;
+		};
+
+		lookup("aliases");
+		if (!uri==myself) {
+			append_hf("P-hint: outbound alias\r\n"); 
+			route(1);
+			break;
+		};
+
+		# native SIP destinations are handled using our USRLOC DB
+		if (!lookup("location")) {
+			sl_send_reply("404", "Not Found");
+			break;
+		};
+	};
+	append_hf("P-hint: usrloc applied\r\n"); 
+	route(1);
+}
+
+route[1] 
+{
+	if (!t_relay()) {
+		sl_reply_error();
+	};
+}
+]]>
+</programlisting>
+</example>
+
+<example><title>cfg with authentication</title>
+<para>There is a modification of <filename>ser.cfg</filename> shown above with
+user authentication of SUBSCRIBE requests. </para>
+<programlisting><![CDATA[
+		...
+		if (method=="SUBSCRIBE") {
+			if (!proxy_authorize("iptel.org", "subscriber")) {
+				proxy_challenge( "iptel.org", "0");
+				break;
+			};
+			
+			if (!t_newtran()) {
+				sl_reply_error();
+			};
+			
+			if (!handle_rls_subscription("http://localhost/xcap-root", "0")) {
+				# message is not for RLS but for PA ?			
+				log(1, "SUBSCRIBE not handled by RLS");
+				handle_subscription("registrar");
+			}
+			break;
+		};
+		...
+]]></programlisting>
+</example>
+</section>
