@@ -330,15 +330,19 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 	int hdr_len;
 
 	from = 0;
+	user.len = 0;
 
-	if (get_username(_m, &user) < 0) {
-		LOG(L_ERR, "record_route_preset(): Error while extracting username\n");
-		return -1;
+	if (add_username) {
+		if (get_username(_m, &user) < 0) {
+			LOG(L_ERR, "ERROR:rr:record_route_preset: failed to "
+				"extract username\n");
+			return -1;
+		}
 	}
 
 	if (append_fromtag) {
 		if (parse_from_header(_m) < 0) {
-			LOG(L_ERR, "record_route_preset(): From parsing failed\n");
+			LOG(L_ERR, "ERROR:rr:record_route_preset: From parsing failed\n");
 			return -2;
 		}
 		from = (struct to_body*)_m->from->parsed;
@@ -346,13 +350,14 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 	
 	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 	if (!l) {
-		LOG(L_ERR, "record_route_preset(): Error while creating an anchor\n");
+		LOG(L_ERR, "ERROR:rr:record_route_preset: failed to create "
+			"lump anchor\n");
 		return -3;
 	}
 
 	hdr_len = RR_PREFIX_LEN;
-	hdr_len += user.len;
-	if (user.len) hdr_len += 1; /* @ */
+	if (user.len)
+		hdr_len += user.len + 1; /* @ */
 	hdr_len += ((str*)_data)->len;
 
 	if (append_fromtag && from->tag_value.len) {
@@ -369,7 +374,7 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 
 	hdr = pkg_malloc(hdr_len);
 	if (!hdr) {
-		LOG(L_ERR, "record_route_preset(): No memory left\n");
+		LOG(L_ERR, "ERROR:rr:record_route_preset: no pkg memory left\n");
 		return -4;
 	}
 
