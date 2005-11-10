@@ -7,7 +7,7 @@
 
 <book>
   <bookinfo>
-    <title>OSP Module</title>
+    <title>OSP Module for Secure, Multi-Lateral Peering</title>
     <productname class="trade">&ser;</productname>
     <authorgroup>
       <author>
@@ -19,6 +19,7 @@
       <editor>
         <firstname>Di-Shi</firstname>
         <surname>Sun</surname>
+        <affiliation><orgname>TransNexus, Inc.</orgname></affiliation>
         <email>support@transnexus.com</email>
       </editor>
     </authorgroup>
@@ -34,7 +35,7 @@
     </revhistory>
   </bookinfo>
   <toc></toc>
-    &user;
-    &devel;
-    &faq;
+  &user;
+  &devel;
+  &faq;
 </book>
