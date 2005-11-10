@@ -46,19 +46,6 @@
 #define TOTAG_LEN (sizeof(TOTAG)-1)
 
 
-/* convenience macros */
-#define memapp(_d,_s,_len) \
-	do{\
-		memcpy((_d),(_s),(_len));\
-		(_d) += (_len);\
-	}while(0);
-
-#define  append_mem_block(_d,_s,_len) \
-	do{\
-		memcpy((_d),(_s),(_len));\
-		(_d) += (_len);\
-	}while(0);
-
 char *build_local(struct cell *Trans, unsigned int branch,
 	unsigned int *len, char *method, int method_len, str *to);
 

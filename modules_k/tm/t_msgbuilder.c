@@ -54,11 +54,12 @@
 #define ROUTE_SEPARATOR ", "
 #define ROUTE_SEPARATOR_LEN (sizeof(ROUTE_SEPARATOR) - 1)
 
+/* convenience macros */
 #define  append_string(_d,_s,_len) \
-		do{\
-			memcpy((_d),(_s),(_len));\
-			(_d) += (_len);\
-		}while(0);
+	do{\
+		memcpy((_d),(_s),(_len));\
+		(_d) += (_len);\
+	}while(0);
 
 #define LC(_cp) ((*(_cp))|0x20)
 #define SET_FOUND(_new_state) \
@@ -244,7 +245,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 
 	/* User Agent */
 	if (server_signature) {
-		*len += USER_AGENT_LEN + CRLF_LEN;
+		*len += user_agent_header.len + CRLF_LEN;
 	}
 	/* Content Length, EoM */
 	*len+=CONTENT_LENGTH_LEN+1 + CRLF_LEN + CRLF_LEN;
@@ -282,13 +283,15 @@ char *build_local(struct cell *Trans,unsigned int branch,
 			}
 	}
 
-	/* User Agent header */
+	/* User Agent header, Content Length, EoM */
 	if (server_signature) {
-		append_string(p,USER_AGENT CRLF, USER_AGENT_LEN+CRLF_LEN );
+		append_string(p, user_agent_header.s, user_agent_header.len);
+		append_string(p, CRLF CONTENT_LENGTH "0" CRLF CRLF ,
+			CRLF_LEN+CONTENT_LENGTH_LEN+1 + CRLF_LEN + CRLF_LEN);
+	} else {
+		append_string(p, CONTENT_LENGTH "0" CRLF CRLF ,
+			CONTENT_LENGTH_LEN+1 + CRLF_LEN + CRLF_LEN);
 	}
-	/* Content Length, EoM */
-	append_string(p, CONTENT_LENGTH "0" CRLF CRLF ,
-		CONTENT_LENGTH_LEN+1 + CRLF_LEN + CRLF_LEN);
 	*p=0;
 
 	pkg_free(via);
@@ -410,15 +413,15 @@ static inline int calc_routeset_len(struct rte* list, str* contact)
 }
 
 
-     /*
-      * Print the route set
-      */
+/*
+ * Print the route set
+ */
 static inline char* print_rs(char* p, struct rte* list, str* contact)
 {
 	struct rte* ptr;
 	
 	if (list || contact) {
-		memapp(p, ROUTE_PREFIX, ROUTE_PREFIX_LEN);
+		append_string(p, ROUTE_PREFIX, ROUTE_PREFIX_LEN);
 	} else {
 		return p;
 	}
@@ -426,29 +429,29 @@ static inline char* print_rs(char* p, struct rte* list, str* contact)
 	ptr = list;
 	while(ptr) {
 		if (ptr != list) {
-			memapp(p, ROUTE_SEPARATOR, ROUTE_SEPARATOR_LEN);
+			append_string(p, ROUTE_SEPARATOR, ROUTE_SEPARATOR_LEN);
 		}
 		
-		memapp(p, ptr->ptr->nameaddr.name.s, ptr->ptr->len);
+		append_string(p, ptr->ptr->nameaddr.name.s, ptr->ptr->len);
 		ptr = ptr->next;
 	}
 	
 	if (contact) {
-		if (list) memapp(p, ROUTE_SEPARATOR, ROUTE_SEPARATOR_LEN);
+		if (list) append_string(p, ROUTE_SEPARATOR, ROUTE_SEPARATOR_LEN);
 		*p++ = '<';
 		append_string(p, contact->s, contact->len);
 		*p++ = '>';
 	}
 	
-	memapp(p, CRLF, CRLF_LEN);
+	append_string(p, CRLF, CRLF_LEN);
 	return p;
 }
 
 
-     /*
-      * Parse Contact header field body and extract URI
-      * Does not parse headers !
-      */
+/*
+ * Parse Contact header field body and extract URI
+ * Does not parse headers !
+ */
 static inline int get_contact_uri(struct sip_msg* msg, str* uri)
 {
 	contact_t* c;
@@ -533,16 +536,17 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 	}
 	*len+= via_len;
 	
-	     /*headers*/
+	/*headers*/
 	*len += Trans->from.len + Trans->callid.len + to->len + Trans->cseq_n.len + 1 + ACK_LEN + CRLF_LEN;
 	
-	     /* copy'n'paste Route headers */
-	
+	/* copy'n'paste Route headers */
 	*len += calc_routeset_len(list, cont);
 	
-	     /* User Agent */
-	if (server_signature) *len += USER_AGENT_LEN + CRLF_LEN;
-	     /* Content Length, EoM */
+	/* User Agent */
+	if (server_signature)
+		*len += user_agent_header.len + CRLF_LEN;
+	
+	/* Content Length, EoM */
 	*len += CONTENT_LENGTH_LEN + 1 + CRLF_LEN + CRLF_LEN;
 	
 	req_buf = shm_malloc(*len + 1);
@@ -571,14 +575,15 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 	/* Routeset */
 	p = print_rs(p, list, cont);
 
-	/* User Agent header */
+	/* User Agent header, Content Length, EoM */
 	if (server_signature) {
-		append_string(p, USER_AGENT CRLF, USER_AGENT_LEN + CRLF_LEN);
+		append_string(p, user_agent_header.s, user_agent_header.len);
+		append_string(p, CRLF CONTENT_LENGTH "0" CRLF CRLF,
+			CRLF_LEN+CONTENT_LENGTH_LEN + 1 + CRLF_LEN + CRLF_LEN);
+	} else {
+		append_string(p, CONTENT_LENGTH "0" CRLF CRLF,
+			CONTENT_LENGTH_LEN + 1 + CRLF_LEN + CRLF_LEN);
 	}
-
-	/* Content Length, EoM */
-	append_string(p, CONTENT_LENGTH "0" CRLF CRLF,
-		CONTENT_LENGTH_LEN + 1 + CRLF_LEN + CRLF_LEN);
 	*p = 0;
 
 	pkg_free(via);
@@ -684,14 +689,14 @@ static inline int assemble_via(str* dest, struct cell* t, struct socket_info* so
  */
 static inline char* print_request_uri(char* w, str* method, dlg_t* dialog, struct cell* t, int branch)
 {
-	memapp(w, method->s, method->len); 
-	memapp(w, " ", 1); 
+	append_string(w, method->s, method->len); 
+	append_string(w, " ", 1); 
 
 	t->uac[branch].uri.s = w; 
 	t->uac[branch].uri.len = dialog->hooks.request_uri->len;
 
-	memapp(w, dialog->hooks.request_uri->s, dialog->hooks.request_uri->len); 
-	memapp(w, " " SIP_VERSION CRLF, 1 + SIP_VERSION_LEN + CRLF_LEN);
+	append_string(w, dialog->hooks.request_uri->s, dialog->hooks.request_uri->len); 
+	append_string(w, " " SIP_VERSION CRLF, 1 + SIP_VERSION_LEN + CRLF_LEN);
 
 	return w;
 }
@@ -705,16 +710,16 @@ static inline char* print_to(char* w, dlg_t* dialog, struct cell* t)
 	t->to.s = w;
 	t->to.len = TO_LEN + dialog->rem_uri.len + CRLF_LEN;
 
-	memapp(w, TO, TO_LEN);
-	memapp(w, dialog->rem_uri.s, dialog->rem_uri.len);
+	append_string(w, TO, TO_LEN);
+	append_string(w, dialog->rem_uri.s, dialog->rem_uri.len);
 
 	if (dialog->id.rem_tag.len) {
 		t->to.len += TOTAG_LEN + dialog->id.rem_tag.len ;
-		memapp(w, TOTAG, TOTAG_LEN);
-		memapp(w, dialog->id.rem_tag.s, dialog->id.rem_tag.len);
+		append_string(w, TOTAG, TOTAG_LEN);
+		append_string(w, dialog->id.rem_tag.s, dialog->id.rem_tag.len);
 	}
 
-	memapp(w, CRLF, CRLF_LEN);
+	append_string(w, CRLF, CRLF_LEN);
 	return w;
 }
 
@@ -727,16 +732,16 @@ static inline char* print_from(char* w, dlg_t* dialog, struct cell* t)
 	t->from.s = w;
 	t->from.len = FROM_LEN + dialog->loc_uri.len + CRLF_LEN;
 
-	memapp(w, FROM, FROM_LEN);
-	memapp(w, dialog->loc_uri.s, dialog->loc_uri.len);
+	append_string(w, FROM, FROM_LEN);
+	append_string(w, dialog->loc_uri.s, dialog->loc_uri.len);
 
 	if (dialog->id.loc_tag.len) {
 		t->from.len += FROMTAG_LEN + dialog->id.loc_tag.len;
-		memapp(w, FROMTAG, FROMTAG_LEN);
-		memapp(w, dialog->id.loc_tag.s, dialog->id.loc_tag.len);
+		append_string(w, FROMTAG, FROMTAG_LEN);
+		append_string(w, dialog->id.loc_tag.s, dialog->id.loc_tag.len);
 	}
 
-	memapp(w, CRLF, CRLF_LEN);
+	append_string(w, CRLF, CRLF_LEN);
 	return w;
 }
 
@@ -745,10 +750,10 @@ static inline char* print_from(char* w, dlg_t* dialog, struct cell* t)
  * Print CSeq header field
  */
 char* print_cseq_mini(char* target, str* cseq, str* method) {
-	memapp(target, CSEQ, CSEQ_LEN);
-	memapp(target, cseq->s, cseq->len);
-	memapp(target, " ", 1);
-	memapp(target, method->s, method->len);
+	append_string(target, CSEQ, CSEQ_LEN);
+	append_string(target, cseq->s, cseq->len);
+	append_string(target, " ", 1);
+	append_string(target, method->s, method->len);
 	return target;
 }
 
@@ -768,16 +773,16 @@ static inline char* print_cseq(char* w, str* cseq, str* method, struct cell* t)
  * t_uac_cancel FIFO function.
  */
 char* print_callid_mini(char* target, str callid) {
-	memapp(target, CALLID, CALLID_LEN);
-	memapp(target, callid.s, callid.len);
-	memapp(target, CRLF, CRLF_LEN);
+	append_string(target, CALLID, CALLID_LEN);
+	append_string(target, callid.s, callid.len);
+	append_string(target, CRLF, CRLF_LEN);
 	return target;
 }
 
 static inline char* print_callid(char* w, dlg_t* dialog, struct cell* t)
 {
 	/* begins with CRLF, not included in t->callid, don`t know why...?!? */
-	memapp(w, CRLF, CRLF_LEN);
+	append_string(w, CRLF, CRLF_LEN);
 	t->callid.s = w;
 	t->callid.len = CALLID_LEN + dialog->id.call_id.len + CRLF_LEN;
 
@@ -815,18 +820,30 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	}
 	*len += via.len;
 
+	/* To */
 	*len += TO_LEN + dialog->rem_uri.len
-		+ (dialog->id.rem_tag.len ? (TOTAG_LEN + dialog->id.rem_tag.len) : 0) + CRLF_LEN;    /* To */
+		+ (dialog->id.rem_tag.len ? (TOTAG_LEN + dialog->id.rem_tag.len) : 0)
+		+ CRLF_LEN;
+	/* From */
 	*len += FROM_LEN + dialog->loc_uri.len
-		+ (dialog->id.loc_tag.len ? (FROMTAG_LEN + dialog->id.loc_tag.len) : 0) + CRLF_LEN;  /* From */
-	*len += CALLID_LEN + dialog->id.call_id.len + CRLF_LEN;                                      /* Call-ID */
-	*len += CSEQ_LEN + cseq.len + 1 + method->len + CRLF_LEN;                                    /* CSeq */
-	*len += calculate_routeset_length(dialog);                                                   /* Route set */
-	*len += (body ? (CONTENT_LENGTH_LEN + content_length.len + CRLF_LEN) : 0);                   /* Content-Length */
-	*len += (server_signature ? (USER_AGENT_LEN + CRLF_LEN) : 0);                                /* Signature */
-	*len += (headers ? headers->len : 0);                                                        /* Additional headers */
-	*len += (body ? body->len : 0);                                                              /* Message body */
-	*len += CRLF_LEN;                                                                            /* End of Header */
+		+ (dialog->id.loc_tag.len ? (FROMTAG_LEN + dialog->id.loc_tag.len):0)
+		+ CRLF_LEN;
+	/* Call-ID */
+	*len += CALLID_LEN + dialog->id.call_id.len + CRLF_LEN;
+	/* CSeq */
+	*len += CSEQ_LEN + cseq.len + 1 + method->len + CRLF_LEN;
+	/* Route set */
+	*len += calculate_routeset_length(dialog);
+	/* Content-Length */
+	*len += (body ? (CONTENT_LENGTH_LEN + content_length.len + CRLF_LEN) : 0);
+	/* Signature */
+	*len += (server_signature ? (user_agent_header.len + CRLF_LEN) : 0);
+	/* Additional headers */
+	*len += (headers ? headers->len : 0);
+	/* Message body */
+	*len += (body ? body->len : 0);
+	/* End of Header */
+	*len += CRLF_LEN;
 
 	buf = shm_malloc(*len + 1);
 	if (!buf) {
@@ -837,7 +854,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	w = buf;
 
 	w = print_request_uri(w, method, dialog, t, branch);  /* Request-URI */
-	memapp(w, via.s, via.len);                            /* Top-most Via */
+	append_string(w, via.s, via.len);                     /* Top-most Via */
 	w = print_to(w, dialog, t);                           /* To */
 	w = print_from(w, dialog, t);                         /* From */
 	w = print_cseq(w, &cseq, method, t);                  /* CSeq */
@@ -846,16 +863,21 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 
 	     /* Content-Length */
 	if (body) {
-		memapp(w, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
-		memapp(w, content_length.s, content_length.len);
-		memapp(w, CRLF, CRLF_LEN);
+		append_string(w, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
+		append_string(w, content_length.s, content_length.len);
+		append_string(w, CRLF, CRLF_LEN);
 	}
 	
 	     /* Server signature */
-	if (server_signature) memapp(w, USER_AGENT CRLF, USER_AGENT_LEN + CRLF_LEN);
-	if (headers) memapp(w, headers->s, headers->len);
-	memapp(w, CRLF, CRLF_LEN);
-     	if (body) memapp(w, body->s, body->len);
+	if (server_signature) {
+		append_string(w, user_agent_header.s, user_agent_header.len);
+		append_string(w, CRLF, CRLF_LEN);
+	}
+	if (headers)
+		append_string(w, headers->s, headers->len);
+	append_string(w, CRLF, CRLF_LEN);
+	if (body)
+		append_string(w, body->s, body->len);
 
 #ifdef EXTRA_DEBUG
 	if (w-buf != *len ) abort();
