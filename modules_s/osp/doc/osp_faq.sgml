@@ -13,24 +13,24 @@
   <qandaset>
     <qandaentry>
       <question><para>What platforms does this module work on?</para></question>
-      <answer><para>The module has been implemented using linux, the underlying toolkit and the module code itself should compile and work on Solaris, *BSD, and probably most other unix platforms with ssl and pthreads available, but all platforms other than linux are completely untested.</para></answer>
+      <answer><para>The module has been implemented using Linux, the underlying toolkit and the module code itself should compile and work on Solaris, *BSD, and probably most other unix platforms with ssl and pthreads available, but the OSP Module has only been tested Linux.</para></answer>
     </qandaentry>
     <qandaentry>
       <question><para>Where can I get more information on this module?</para></question>
-      <answer><para>Please contact TransNexus by sending email to support@transnexus.com or posting a message on email lists @ http://developer.berlios.de/mail/?group_id=3799 or at the sipfoundry website (www.sipfoundry.org).</para></answer>
+      <answer><para>Please see the document "Multi-Lateral Peering with SER" located at http://developer.berlios.de/docman/?group_id=3799 or post a message on the SER mailing list. You may also send an e-mail to support@transnexus.com.</para></answer>
     </qandaentry>
     <qandaentry>
       <question><para>Where can I get more information on OSP?</para></question>
-      <answer><para>The OSP technical specification (ETSI TS 101 321) may be obtained from www.etsi.org.  Additional documentation on OSP is available from www.sipfoundry.org.</para></answer>
+      <answer><para>The OSP technical specification (ETSI TS 101 321) may be obtained from www.etsi.org. Additional documentation on OSP is available from www.sipfoundry.org.</para></answer>
     </qandaentry>
     <qandaentry>
       <question><para>How do I obtain an OSP server for testing?</para></question>
       <answer>
-        <para>OSP servers are available from the following sources:</para>
+        <para>OSP peering servers are available from the following sources:</para>
         <itemizedlist>
-          <listitem><para>OpenOSP server from www.sipfoundry.org is a complete OSP server written in C.</para></listitem>
-          <listitem><para>RAMS from www.sipfoundry.org is a new java based open source OSP server project.</para></listitem>
-          <listitem><para>TransNexus provides free access to a hosted OSP server on the Internet for testing. Contact support@transnexus.com.</para></listitem>
+          <listitem><para>OpenOSP server from www.sipfoundry.org is a complete OSP server</para></listitem>
+          <listitem><para>RAMS from www.sipfoundry.org is a new java based open source OSP</para></listitem>
+          <listitem><para>TransNexus provides free access to a hosted OSP peering server on the Internet for testing. Contact support@transnexus.com.</para></listitem>
         </itemizedlist>
       </answer>
     </qandaentry>

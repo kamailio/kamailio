@@ -10,7 +10,7 @@
     </revhistory>
   </chapterinfo>
   <title>Developer's Guide</title>
-  <para>Use of the osp modules' functions by other SER modules is not useful.</para>
+  <para>The functions of the OSP modules are not used by other SER modules.</para>
 </chapter>
 
 <!-- Keep this element at the end of the file
