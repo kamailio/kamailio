@@ -108,11 +108,11 @@ modparam("uac","rr_store_param","my_param")
      * "auto" - all sequential requests and replies will be
        automatically updated based on stored original URI.
 
-   This parameter is optional, it's default value being "auto". 
+   This parameter is optional, it's default value being "none". 
 
    Example 1-2. Set from_restore_mode parameter 
 ...
-modparam("uac","from_restore_mode","none")
+modparam("uac","from_restore_mode","auto")
 ...
      _________________________________________________________
 

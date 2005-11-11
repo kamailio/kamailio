@@ -126,7 +126,7 @@ modparam("uac","rr_store_param","my_param")
 			<para>
 				<emphasis>
 					This parameter is optional, it's default value being 
-					<quote>auto</quote>.
+					<quote>none</quote>.
 				</emphasis>
 			</para>
 			<example>
@@ -134,7 +134,7 @@ modparam("uac","rr_store_param","my_param")
 				</title>
 				<programlisting format="linespecific">
 ...
-modparam("uac","from_restore_mode","none")
+modparam("uac","from_restore_mode","auto")
 ...
 				</programlisting>
 			</example>
