@@ -203,10 +203,10 @@ int get_pres_rules_action(cp_ruleset_t *r, const str_t *wuri,
 	
 	rule = r->rules;
 	while (rule) {
-		TRACE_LOG("TRYING rule %.*s for uri %.*s\n", 
+		DEBUG_LOG("TRYING rule %.*s for uri %.*s\n", 
 					FMT_STR(rule->id), FMT_STR(*wuri));
 		if (is_rule_for_uri(rule, wuri)) {
-			TRACE_LOG("rule %.*s matches for uri %.*s\n", 
+			DEBUG_LOG("rule %.*s matches for uri %.*s\n", 
 					FMT_STR(rule->id), FMT_STR(*wuri));
 
 			if (!rule->actions) continue;

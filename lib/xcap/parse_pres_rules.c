@@ -283,7 +283,7 @@ static int read_transformations(xmlNode *tn, cp_transformations_t **dst)
 	if (!dst) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(cp_transformations_t));
 
-	WARN_LOG("transformations for pres_rules not used\n");
+	DEBUG_LOG("transformations for pres_rules not used\n");
 
 	return res;
 }
