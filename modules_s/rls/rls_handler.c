@@ -104,7 +104,7 @@ static int handle_new_subscription(struct sip_msg *m, const char *xcap_server, i
 	
 	rls_lock();
 
-	TRACE_LOG("handle_new_subscription(rls)\n");
+	DEBUG_LOG("handle_new_subscription(rls)\n");
 	/* create a new subscription structure */
 	res = rls_create_subscription(m, &s, xcap_server);
 	if (res != RES_OK) {
@@ -120,7 +120,7 @@ static int handle_new_subscription(struct sip_msg *m, const char *xcap_server, i
 				/* if (!send_error_responses) return -1; */
 				/* FIXME: authorization is done before XCAP query, so though it is NOT 
 				 * resource-list subscription it may be marked as rejected !!! */
-				TRACE_LOG("subscription rejected\n");
+				DEBUG_LOG("subscription rejected\n");
 				add_response_header(m, "Reason-Phrase: Subscription rejected\r\n");
 				send_reply(m, 403, "Forbidden");
 				break;
@@ -163,7 +163,7 @@ static int handle_new_subscription(struct sip_msg *m, const char *xcap_server, i
 	
 	/* create NOTIFY message 
 	 * FIXME - this may be a nonsense for polling, because the notifier might not
-	 * catch up sending notification */
+	 * catch up sent notification */
 	rls_generate_notify(s, 1);	
 
 	/* free subscription if only polling */
@@ -189,12 +189,13 @@ static int handle_renew_subscription(struct sip_msg *m, int send_error_responses
 	call_id = NULL;
 	if (m->callid) call_id = &m->callid->body;
 	
-	TRACE_LOG("handle_renew_subscription(rls)\n");
+	DEBUG_LOG("handle_renew_subscription(rls)\n");
 	
 	rls_lock();
 	
 	res = rls_find_subscription(from_tag, to_tag, call_id, &s);
 	if ((res != RES_OK) || (!s)) {
+		ERROR_LOG("handle_renew_subscription(): can't refresh unknown subscription\n");
 		rls_unlock();
 		if (send_error_responses)
 			send_reply(m, 481, "Call/Transaction Does Not Exist");

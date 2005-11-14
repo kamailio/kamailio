@@ -10,6 +10,17 @@
 
 #include <presence/subscriber.h>
 
+typedef enum {
+	rls_auth_none, 
+	rls_auth_implicit,
+	rls_auth_xcap
+} rls_authorization_type_t;
+
+typedef struct {
+	rls_authorization_type_t type;
+	char *xcap_root; /* zero terminated (using libcurl, why not?) */
+} rls_auth_params_t;
+
 struct _virtual_subscription_t;
 struct _rl_subscription_t;
 typedef struct _rl_subscription_t rl_subscription_t;

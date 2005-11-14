@@ -67,7 +67,7 @@ static int terminate_subscription_cb(struct _subscription_data_t *s)
 	return 0;
 }
 
-static authorization_result_t authorize_subscription_cb(struct _subscription_data_t *s)
+static authorization_result_t authorize_implicit(struct _subscription_data_t *s)
 {
 	str_t user, list;
 	str_t list_user, list_rest;
@@ -92,6 +92,20 @@ static authorization_result_t authorize_subscription_cb(struct _subscription_dat
 	list_user.len = list.len - appendix.len;
 	if (str_case_equals(&user, &list_user) != 0) return auth_rejected;
 	else return auth_granted;
+}
+
+static authorization_result_t authorize_subscription_cb(struct _subscription_data_t *s)
+{
+	switch (rls_auth_params.type) {
+		case rls_auth_none:
+			return auth_granted; /* ! no auth done ! */
+		case rls_auth_implicit:
+			return authorize_implicit(s);
+		case rls_auth_xcap:
+			LOG(L_ERR, "XCAP auth for resource lists not done yet!\n");
+			return auth_unresolved;
+	}
+	return auth_unresolved;
 }
 
 /************* global functions ************/
@@ -140,6 +154,7 @@ int rls_init()
 
 int rls_destroy()
 {
+	DEBUG_LOG("rls_destroy() called\n");
 	/* FIXME: destroy the whole rl_subscription list */
 	/* sm_destroy(rls_manager); */
 	return 0;
@@ -159,7 +174,7 @@ static int create_virtual_subscriptions(struct sip_msg *m, rl_subscription_t *ss
 	
 	/* XCAP query */
 	memset(&xcap, 0, sizeof(xcap));
-	TRACE_LOG("rli_create_content(): doing XCAP query\n");
+	DEBUG_LOG("rli_create_content(): doing XCAP query\n");
 	res = get_rls(xcap_root, rls_get_uri(ss), &xcap, 
 			rls_get_package(ss), &flat);
 	if (res != RES_OK) return res;
@@ -179,7 +194,7 @@ static int create_virtual_subscriptions(struct sip_msg *m, rl_subscription_t *ss
 		e = e->next;
 	}
 
-	TRACE_LOG("rli_create_content(): freeing flat list\n");
+	DEBUG_LOG("rli_create_content(): freeing flat list\n");
 	free_flat_list(flat);
 	return RES_OK;
 }
@@ -362,7 +377,7 @@ int rls_generate_notify(rl_subscription_t *s, int full_info)
 	else dstr_get_data(&dstr, headers.s);
 	dstr_destroy(&dstr);
 
-	TRACE_LOG("sending NOTIFY message to %.*s (subscription %p)\n", 
+	DEBUG_LOG("sending NOTIFY message to %.*s (subscription %p)\n", 
 			dlg->rem_uri.len, 
 			ZSW(dlg->rem_uri.s), s);
 	

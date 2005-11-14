@@ -36,6 +36,40 @@
 		<para>Default value is 3761.</para>
 	</listitem>
 </varlistentry>
+<varlistentry><term><varname>auth</varname> (string)</term>
+	<listitem>
+	<para>This variable specifies authorization type for list watchers. 
+	Value can be one of:
+	<variablelist>
+	<varlistentry>
+		<term>none</term>
+		<listitem><para>All watchers are <emphasis>always authorized</emphasis>. This is not recommended
+		because it ignores user's wish.</para></listitem>
+	</varlistentry>
+	<varlistentry>
+		<term>implicit</term>
+		<listitem><para>In this case is implicit authorization done. This means,
+		that for list URIs in the form
+		<quote><literal>&lt;username&gt;-list@domain</literal></quote> is subscription allowed
+		only for user with username <literal>&lt;username&gt;</literal>,
+		rejected for others.</para>
+		<para>If the URI is not in the form presented above, the subscription is
+		marked as pending.</para></listitem>
+	</varlistentry>
+	<!--
+	<varlistentry>
+		<term>xcap</term>
+		<listitem><para>This type of authorization means, that authorization rules
+		are read from XCAP server and processed <xref linkend="pres_draft_auth"/>.
+		In this case the <varname>auth_xcap_root</varname> must be set.</para></listitem>
+	</varlistentry>
+	-->
+	</variablelist>
+	</para>
+	<para>Default value is empty. In this case <quote>implict</quote> authorization
+	is used with an error message.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 </section>
 

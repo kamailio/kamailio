@@ -22,6 +22,11 @@ void rls_mod_destroy(void);
 int rls_child_init(int _rank);
 static int rls_subscribe_fixup(void** param, int param_no);
 
+/* authorization parameters */
+char *auth_type_str = NULL; /* type of authorization: none,implicit,xcap */
+char *auth_xcap_root = NULL;	/* must be set if xcap authorization */
+
+
 /** Exported functions */
 static cmd_export_t cmds[]={
 	/* {"handle_r_subscription", handle_r_subscription, 0, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE}, */
@@ -35,6 +40,8 @@ static param_export_t params[]={
 	{"min_expiration", INT_PARAM, &rls_min_expiration }, 
 	{"max_expiration", INT_PARAM, &rls_max_expiration }, 
 	{"default_expiration", INT_PARAM, &rls_default_expiration }, 
+	{"auth", STR_PARAM, &auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
+	{"auth_xcap_root", STR_PARAM, &auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
 	{0, 0, 0}
 };
 
@@ -54,11 +61,48 @@ struct tm_binds tmb;
 int rls_min_expiration = 60;
 int rls_max_expiration = 7200;
 int rls_default_expiration = 3761;
+rls_auth_params_t rls_auth_params;	/* structure filled according to parameters (common for all XCAP servers now) */
 
-/* FIXME: settings of other xcap parameters (auth, ssl, ...) */
+/* TODO: settings of other xcap parameters (auth, ssl, ...) */
 
 /* internal data members */
 static ptr_vector_t *xcap_servers = NULL;
+
+static int set_auth_params(rls_auth_params_t *dst, const char *auth_type_str, char *xcap_root)
+{
+	dst->xcap_root = NULL;
+	if (!auth_type_str) {
+		LOG(L_ERR, "no subscription authorization type given, using \'implicit\'!\n");
+		dst->type = rls_auth_none;
+		return 0;
+	}
+	if (strcmp(auth_type_str, "xcap") == 0) {
+		if (!xcap_root) {
+			LOG(L_ERR, "XCAP authorization selected, but no auth_xcap_root given!\n");
+			return -1;
+		}
+		dst->xcap_root = xcap_root;
+		if (!(*dst->xcap_root)) {
+			LOG(L_ERR, "XCAP authorization selected, but empty auth_xcap_root given!\n");
+			return -1;
+		}
+		dst->type = rls_auth_xcap;
+		return 0;
+	}
+	if (strcmp(auth_type_str, "none") == 0) {
+		dst->type = rls_auth_none;
+		LOG(L_WARN, "using \'none\' rls-subscription authorization!\n");
+		return 0;
+	}
+	if (strcmp(auth_type_str, "implicit") == 0) {
+		dst->type = rls_auth_implicit;
+		return 0;
+	}
+	
+	LOG(L_ERR, "Can't resolve subscription authorization type: \'%s\'."
+			" Use one of: none, implicit, xcap.\n", auth_type_str);
+	return -1;
+}
 
 int rls_mod_init(void)
 {
@@ -99,6 +143,11 @@ int rls_mod_init(void)
 		LOG(L_ERR, "rls_mod_init(): can't allocate memory for XCAP servers vector\n");
 		return -1;
 	}
+	ptr_vector_init(xcap_servers, 8);
+
+	/* set authorization type according to requested "auth type name"
+	 * and other (type specific) parameters */
+	if (set_auth_params(&rls_auth_params, auth_type_str, auth_xcap_root) != 0) return -1;
 
 	/* ??? if other module uses this libraries it might be a problem ??? */
 	xmlInitParser();
@@ -117,23 +166,36 @@ void rls_mod_destroy(void)
 	int i, cnt;
 	char *s;
 
+	DEBUG_LOG("rls_mod_destroy()\n");
+	
+	DEBUG_LOG(" ... xcap servers\n");
 	/* destroy used XCAP servers */
 	if (xcap_servers) {
 		cnt = ptr_vector_size(xcap_servers);
+		DEBUG_LOG(" count = %d\n", cnt);
 		for (i = 0; i < cnt; i++) {
 			s = ptr_vector_get(xcap_servers, i);
-			if (s) shm_free(s);
+			if (s) {
+				DEBUG_LOG(" ... freeing %s (%p)\n", s, s);
+				cds_free(s);
+			}
 		}
 		ptr_vector_destroy(xcap_servers);
 		shm_free(xcap_servers);
 		xcap_servers = NULL;
 	}
 	
+	DEBUG_LOG(" ... rls\n");
 	rls_destroy();
+	DEBUG_LOG(" ... vs\n");
+	vs_destroy();
+
+	DEBUG_LOG(" ... time event management\n");
+	time_event_management_destroy();
 	
 	/* ??? if other module uses this libraries it might be a problem ??? */
 /*	xmlCleanupParser();
-	curl_global_cleanup(); */
+	curl_global_cleanup();*/
 }
 
 static int rls_subscribe_fixup(void** param, int param_no)
@@ -155,14 +217,14 @@ static int rls_subscribe_fixup(void** param, int param_no)
 		/* store not only the root string? (create a structure rather?) */
 		ptr_vector_add(xcap_servers, xcap_server);
 		
-		TRACE_LOG("rls_subscribe_fixup(): XCAP server is %s\n", xcap_server);
+		DEBUG_LOG("rls_subscribe_fixup(): XCAP server is %s (%p)\n", xcap_server, xcap_server);
 		*param = (void*)xcap_server;
 	}
 	if (param_no == 2) {
 		if (param) {
 			if (*param) send_errors = atoi(*param);
 		}
-		TRACE_LOG("rls_subscribe_fixup(): send errors: %d\n", send_errors);
+		DEBUG_LOG("rls_subscribe_fixup(): send errors: %d\n", send_errors);
 		*param = (void*)send_errors;
 	}
 	return 0;

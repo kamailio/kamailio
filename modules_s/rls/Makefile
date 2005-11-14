@@ -9,6 +9,17 @@ include ../../Makefile.defs
 auto_gen=
 NAME = rls.so
 
+# .PHONY:	libraries
+#
+# $(NAME):	libraries
+# 
+# install:	libraries
+# 
+# clean:	libraries
+# 
+# libraries:	
+# 			make $(MAKECMDGOALS) -f Makefile.ser -C ../../lib
+
 # if using libcds, the directive SER must be defined !
 # and root ser directory must be in include directories
 

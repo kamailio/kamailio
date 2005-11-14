@@ -11,13 +11,6 @@ for storing data about lists of users. These data can be manipulated in any way
 by user's client software.
 </para>
 
-<!-- RLS authorization rules -->
-<section id="rls_auth"><title>Authorization (not done yet!)</title>
-<para>RLS module uses <quote>implicit authorization rules</quote> now. Only user
-<quote>xyz</quote> can subscribe to <quote>xyz-list</quote> resource list.
-</para>
-</section>
-
 <!-- standard incompliances -->
 <section><title>Standard incompatibility</title>
 <para>There is a few of standard incompliances:
@@ -32,28 +25,6 @@ by user's client software.
 <!-- DB storage -->
 <section><title>Persistence (not done yet!)</title>
 <para></para>
-</section>
-
-<!-- TODO -->
-
-<section><title>TODO</title>
-<para>
-<itemizedlist>
-	<listitem><para>optional authorization scheme like in pa =&gt; needs
-	additional data member in subscription structure (storing data loaded from xcap)
-	</para></listitem>
-	
-	<listitem><para>implicit authorization</para></listitem>
-	<listitem><para>XCAP authorization</para></listitem>
-	<listitem><para>DB authorization (presence rules like in XCAP stored in
-	local DB)</para></listitem>
-	<listitem><para>reaction on failed NOTIFY (408, ...) as soon as will be
-	corrected <varname>req_within</varname></para></listitem>
-	<listitem><para>remote subscriptions (SIP events client)</para></listitem>
-	<listitem><para>storing subscriptions into db and reloading on startup (in
-	subscription_manager)</para></listitem>
-</itemizedlist>
-</para>
 </section>
 
 <include xmlns="http://www.w3.org/2001/XInclude" href="params.xml"/>
@@ -75,6 +46,32 @@ by user's client software.
 		internal subscriptions ta PA</para></listitem>
 </itemizedlist>
 </section>
+
+<section><title>TODO</title>
+<para>
+<itemizedlist>
+	<listitem><para>storing subscriptions into db and reloading on startup (in
+	subscription_manager)</para></listitem>
+
+	<listitem><para>XCAP authorization</para></listitem>
+	<listitem><para>DB authorization (presence rules like in XCAP stored in
+	local DB)</para></listitem>
+	<listitem><para>separate authorization settings (type, server) for each XCAP
+	server</para></listitem>
+	<listitem><para>combination of XCAP and implicit authorization (no XCAP
+	rules, try implicit)</para></listitem>
+	
+	<listitem><para>reaction on failed NOTIFY (408, ...) as soon as will be
+	corrected <varname>req_within</varname></para></listitem>
+	<listitem><para>remote subscriptions (SIP events client)</para></listitem>
+	<listitem><para>BUG: long run (kphone) => stops process resubscriptions so
+	they start to be processed by PA</para></listitem>
+	<listitem><para>pending subscriptions should return 202 on SUBSCRIBE instead of
+	200 (but 202 kills eyeBeam!)</para></listitem>	
+</itemizedlist>
+</para>
+</section>
+
 
 </section>
 

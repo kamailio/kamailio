@@ -18,7 +18,9 @@ static void tem_do_step(time_event_manager_t *tem);
 static void tem_timer_cb(unsigned int ticks, void *param)
 {
 	time_event_manager_t *e, *n;
-	
+
+	if (!tem_info) return;
+
 	e = tem_info->first;
 	while (e) {
 		n = e->next;
@@ -32,6 +34,8 @@ static void tem_timer_cb(unsigned int ticks, void *param)
 
 int time_event_management_init()
 {
+	if (tem_info) return 0; /* already initialized */
+	
 	tem_info = (tem_info_t *)shm_malloc(sizeof(tem_info_t));
 	if (!tem_info) {
 		LOG(L_ERR, "time_event_management_init(): can't allocate shared memory\n");
@@ -51,8 +55,22 @@ int time_event_management_init()
 
 void time_event_management_destroy()
 {
-	/* F I X M E: unregister SER timer */
-	/* TODO: destroy all timers */
+	time_event_manager_t *e, *n;
+	tem_info_t *ti = tem_info;
+
+	tem_info = NULL;
+	/* F I X M E: unregister SER timer ? */
+	
+	if (!ti) return;
+
+	e = ti->first;
+	while (e) {
+		n = e->next;
+		tem_destroy(n);
+		e = n;
+	}
+
+	shm_free(ti);
 }
 
 int tem_init(time_event_manager_t *tm, unsigned int atomic_time, 

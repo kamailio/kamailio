@@ -124,7 +124,7 @@ static int create_subscription_dialog(subscription_data_t *dst,
 		return -1;
 	}
 	else {
-		TRACE_LOG("create_subscription_dialog(): new dialog created (%.*s, %.*s, %.*s)\n", 
+		DEBUG_LOG("create_subscription_dialog(): new dialog created (%.*s, %.*s, %.*s)\n", 
 				dst->dialog->id.call_id.len, dst->dialog->id.call_id.s,
 				dst->dialog->id.rem_tag.len, dst->dialog->id.rem_tag.s,
 				dst->dialog->id.loc_tag.len, dst->dialog->id.loc_tag.s);
@@ -171,6 +171,7 @@ static int get_subscription_expiration(subscription_manager_t *mng,
 
 static int extract_contact(struct sip_msg *m, str_t *dst)
 {
+	int res = 0;
 	dstring_t contact_buf;
 	int use_ruri = 0;
 	
@@ -195,19 +196,11 @@ static int extract_contact(struct sip_msg *m, str_t *dst)
 		}
 	}
 	dstr_append_zt(&contact_buf, ">\r\n");
-	
-	dst->len = dstr_get_data_length(&contact_buf);
-	if (dst->len > 0) {
-		dst->s = (char*)shm_malloc(dst->len);
-		if (dst->s) dstr_get_data(&contact_buf, dst->s);
-		else {
-			dst->len = 0;
-			return -1;
-		}
-	}
+
+	res = dstr_get_str(&contact_buf, dst);
 			
 	dstr_destroy(&contact_buf);
-	return -1;
+	return res;
 }
 
 static void free_subscription_dialog(subscription_data_t *dst)
@@ -340,10 +333,10 @@ static int set_subscription_info(struct sip_msg *m, subscription_data_t *s)
 	
 	extract_contact(m, &s->contact);
 	
-	TRACE_LOG("set_subscription_info(): uri=\'%.*s\'\n", FMT_STR(uri));
-	TRACE_LOG("set_subscription_info(): package=\'%.*s\'\n", FMT_STR(package));
-	TRACE_LOG("set_subscription_info(): subscriber_uri=\'%.*s\'\n", FMT_STR(subscriber_uri));
-	TRACE_LOG("set_subscription_info(): contact=\'%.*s\'\n", FMT_STR(s->contact));
+	DEBUG_LOG("set_subscription_info(): uri=\'%.*s\'\n", FMT_STR(uri));
+	DEBUG_LOG("set_subscription_info(): package=\'%.*s\'\n", FMT_STR(package));
+	DEBUG_LOG("set_subscription_info(): subscriber_uri=\'%.*s\'\n", FMT_STR(subscriber_uri));
+	DEBUG_LOG("set_subscription_info(): contact=\'%.*s\'\n", FMT_STR(s->contact));
 
 	r = str_dup(&s->record_id, &uri);
 	r = r | str_dup(&s->subscriber, &subscriber_uri);
@@ -354,6 +347,7 @@ static int set_subscription_info(struct sip_msg *m, subscription_data_t *s)
 
 static void free_subscription(subscription_data_t *s)
 {
+	DEBUG_LOG("subscription manager: freeing subscription\n");
 	str_free_content(&s->record_id);
 	str_free_content(&s->package);
 	str_free_content(&s->subscriber);
@@ -373,7 +367,7 @@ void subscription_expiration_cb(struct _time_event_data_t *ted)
 	
 	mng = ted->cb_param1;
 	s = ted->cb_param;
-	TRACE_LOG("subscription %p(%p) expired at: %s\n", s, mng, ctime(&t));
+	DEBUG_LOG("subscription %p(%p) expired at: %s\n", s, mng, ctime(&t));
 
 	if (mng && s) {
 		if (s->status == subscription_pending)
@@ -448,7 +442,7 @@ int sm_init_subscription_nolock(subscription_manager_t *mng,
 		/* start timeout timer for this subscription */
 		tem_add_event_nolock(&mng->timer, e, &dst->expiration);
 		
-		TRACE_LOG("subscription will expire in %d s\n", e);
+		DEBUG_LOG("subscription will expire in %d s\n", e);
 	}
 	else {	/* polling */
 		if (dst->status == subscription_pending)
@@ -494,7 +488,7 @@ int sm_refresh_subscription_nolock(subscription_manager_t *mng,
 		/* start timeout timer for this subscription */
 		tem_add_event_nolock(&mng->timer, e, &s->expiration);
 		
-		TRACE_LOG("subscription refreshed,  will expire in %d s\n", e);
+		DEBUG_LOG("subscription refreshed,  will expire in %d s\n", e);
 	}
 	
 	return RES_OK;
