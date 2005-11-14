@@ -34,7 +34,7 @@ int pa_qsa_interface_init()
 		LOG(L_ERR, "pa_qsa_interface_init(): can't register notifier domain\n");
 		return -1;	
 	}
-	DEBUG_LOG("QSA (pa) domain: %p\n", domain);
+	/* DEBUG_LOG("QSA (pa) domain: %p\n", domain); */
 
 	notifier = register_notifier(domain, &presence_package, 
 			pa_subscribe, pa_unsubscribe, NULL);
@@ -42,14 +42,14 @@ int pa_qsa_interface_init()
 		LOG(L_ERR, "pa_qsa_interface_init(): can't register notifier\n");
 		return -1;	
 	}
-	DEBUG_LOG("pa_qsa_interface_init(): created notifier %.*s\n", FMT_STR(notifier_name));
+	/* DEBUG_LOG("pa_qsa_interface_init(): created notifier %.*s\n", FMT_STR(notifier_name)); */
 	return 0;
 }
 
 void pa_qsa_interface_destroy()
 {
-	/* FIXME: unregister_notifier(); */
-	/* FIXME: qsa_destroy(); */
+	if (domain && notifier) unregister_notifier(domain, notifier);
+	qsa_cleanup();
 }
 
 /* notifier functions */
@@ -158,9 +158,9 @@ static void pa_unsubscribe(notifier_t *n, subscription_t *subscription)
 	dlist_t *dl;
 	presentity_t *p = NULL;
 	
-	DEBUG_LOG("UNBSCRIBE from PA for %.*s [%.*s]\n", 
+	/* DEBUG_LOG("UNBSCRIBE from PA for %.*s [%.*s]\n", 
 			FMT_STR(subscription->record_id),
-			FMT_STR(subscription->package->name));
+			FMT_STR(subscription->package->name)); */
 
 	dl = root;	/* FIXME: ugly and possibly unsafe (locking needed?) */
 	while (dl) {
@@ -182,7 +182,7 @@ presentity_info_t *presentity2presentity_info(presentity_t *p)
 	presence_tuple_status_t s;
 	presence_tuple_t *t;
 
-	DEBUG_LOG("p2p_info()\n");
+	/* DEBUG_LOG("p2p_info()\n"); */
 	if (!p) return NULL;
 /*	pinfo = (presentity_info_t*)cds_malloc(sizeof(*pinfo)); */
 	pinfo = create_presentity_info(&p->uri);
@@ -190,7 +190,7 @@ presentity_info_t *presentity2presentity_info(presentity_t *p)
 		ERROR_LOG("can't allocate memory\n");
 		return NULL;
 	}
-	DEBUG_LOG("p2p_info(): created presentity info\n");
+	/* DEBUG_LOG("p2p_info(): created presentity info\n"); */
 
 	t = p->tuples;
 	while (t) {
@@ -204,7 +204,7 @@ presentity_info_t *presentity2presentity_info(presentity_t *p)
 		add_tuple_info(pinfo, tinfo);
 		t = t->next;
 	}
-	DEBUG_LOG("p2p_info() finished\n");
+	/* DEBUG_LOG("p2p_info() finished\n"); */
 	return pinfo;
 }
 

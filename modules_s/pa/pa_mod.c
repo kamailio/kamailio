@@ -50,6 +50,8 @@
 #include "fifo.h"
 #include "qsa_interface.h"
 
+#include <cds/logger.h>
+
 MODULE_VERSION
 
 static int pa_mod_init(void);  /* Module initialization function */
@@ -237,7 +239,7 @@ static int set_auth_params(auth_params_t *dst, const char *auth_type_str, char *
 	}
 	
 	LOG(L_ERR, "Can't resolve subscription authorization type: \'%s\'."
-			" Use one of: none, xcap.\n", auth_type_str);
+			" Use one of: none, implicit, xcap.\n", auth_type_str);
 	return -1;
 }
 
@@ -312,22 +314,19 @@ static int pa_mod_init(void)
 		return -1;
 	}
 
-	     /* Register cache timer */
+	/* Register cache timer */
 	register_timer(timer, 0, timer_interval);
 
-	LOG(L_CRIT, "db_url=%p\n", db_url.s);
-	LOG(L_CRIT, "db_url=%s\n", ZSW(db_url.s));
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
-	LOG(L_CRIT, "db_url.len=%d\n", db_url.len);
 #ifdef HAVE_LOCATION_PACKAGE
 	if (pa_domain.len == 0) {
 		LOG(L_ERR, "pa_mod_init(): pa_domain must be specified\n");
 		return -1;
 	}
-	LOG(L_CRIT, "pa_mod: pa_mod=%s\n", ZSW(pa_domain.s));
+	LOG(L_DBG, "pa_mod: pa_mod=%s\n", ZSW(pa_domain.s));
 #endif /* HAVE_LOCATION_PACKAGE */
 
-	LOG(L_CRIT, "pa_mod: use_db=%d db_url.s=%s\n", 
+	LOG(L_DBG, "pa_mod: use_db=%d db_url.s=%s\n", 
 	    use_db, ZSW(db_url.s));
 	if (use_db) {
 		if (!db_url.len) {
@@ -352,7 +351,7 @@ static int pa_mod_init(void)
 		return -1;
 	}
 
-	LOG(L_CRIT, "pa_mod_init done\n");
+	LOG(L_DBG, "pa_mod_init done\n");
 	return 0;
 }
 
@@ -389,10 +388,16 @@ static int pa_child_init(int _rank)
 
 static void pa_destroy(void)
 {
+	DEBUG_LOG("destroying PA module\n");
+	DEBUG_LOG(" ... qsa interface\n");
 	pa_qsa_interface_destroy();
 
+	DEBUG_LOG(" ... pdomains\n");
 	free_all_pdomains();
-	if (use_db) close_pa_db_connection(pa_db);
+	if (use_db && pa_db) {
+		DEBUG_LOG(" ... closing db connection\n");
+		close_pa_db_connection(pa_db);
+	}
 	pa_db = NULL;
 }
 
@@ -405,7 +410,7 @@ static int subscribe_fixup(void** param, int param_no)
 	pdomain_t* d;
 
 	if (param_no == 1) {
-		LOG(L_ERR, "subscribe_fixup: pdomain name is %s\n", (char*)*param);
+		LOG(L_DBG, "subscribe_fixup: pdomain name is %s\n", (char*)*param);
 		if (register_pdomain((char*)*param, &d) < 0) {
 			LOG(L_ERR, "subscribe_fixup(): Error while registering domain\n");
 			return E_UNSPEC;

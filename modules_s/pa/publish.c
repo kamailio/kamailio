@@ -235,7 +235,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 	
 	/* use etag in SIP-If-Match header if present to find the tuple */
 	if (id.len > 0) {
-		LOG(L_ERR, "trying to find presetity using SIP-If-Match %.*s\n",
+		LOG(L_DBG, "trying to find presetity using SIP-If-Match %.*s\n",
 				id.len, ZSW(id.s));
 		find_presence_tuple_id(&id, presentity, &tuple);
 		if (!tuple) {
@@ -244,7 +244,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 			return -1;
 		}
 	} else {
-		LOG(L_ERR, "NO SIP-If-Match header found\n");
+		LOG(L_DBG, "NO SIP-If-Match header found\n");
 	}
 	
 	/* try to find tuple using contact from document */
@@ -361,7 +361,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 		changed = 1;
 		tuple->expires = expires;
 	}
-	LOG(L_ERR, "PUBLISH: tuple expires after %d s\n", (int)(tuple->expires - act_time));
+	LOG(L_DBG, "PUBLISH: tuple expires after %d s\n", (int)(tuple->expires - act_time));
 #ifdef HAVE_LOCATION_PACKAGE
 	if (use_location_package)
 		if (site.len && floor.len && room.len && changed) {
@@ -509,7 +509,7 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 	}
 	LOG(L_ERR, "handle_publish -1c-\n");
 #endif
-	LOG(L_ERR, "handle_publish entered\n");
+	LOG(L_DBG, "handle_publish entered\n");
 
 	d = (struct pdomain*)_domain;
 
@@ -528,7 +528,7 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 		}
 	}
 
-	LOG(L_ERR, "handle_publish - publishing status\n");
+	LOG(L_DBG, "handle_publish - publishing status\n");
 	
 	/* update presentity event state */
 	if (p)
@@ -538,7 +538,7 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 
 	if (send_reply(_m) < 0) return -1;
 
-	LOG(L_ERR, "handle_publish finished\n");
+	LOG(L_DBG, "handle_publish finished\n");
 	return 1;
 
 error2:

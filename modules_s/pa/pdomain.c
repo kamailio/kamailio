@@ -95,7 +95,6 @@ int new_pdomain(str* _n, int _s, pdomain_t** _d, register_watcher_t _r, unregist
 	lock_init(&ptr->lock);
 	ptr->users = 0;
 	ptr->expired = 0;
-	ptr->initialized = 1;
 	
 	ptr->reg = _r;
 	ptr->unreg = _u;
@@ -162,7 +161,6 @@ int timer_pdomain(pdomain_t* _d)
 
 	presentity = _d->first;
 
-	if (0) LOG(L_ERR, "timer_pdomain: _d=%s d->first=%p\n", _d->name->s, presentity);
 	while(presentity) {
 		if (timer_presentity(presentity) < 0) {
 			LOG(L_ERR, "timer_pdomain(): Error in timer_pdomain\n");
@@ -177,11 +175,11 @@ int timer_pdomain(pdomain_t* _d)
 				(presentity->winfo_watchers==0) && 
 				(presentity->tuples == 0) &&
 				(!presentity->first_qsa_subscription)) {
-			LOG(L_ERR, "timer_pdomain(): removing empty presentity\n");
+			LOG(L_DBG, "timer_pdomain(): removing empty presentity\n");
 			t = presentity;
 			presentity = presentity->next;
 			remove_presentity(_d, t);
-			LOG(L_ERR, "freeing presentity from timer_pdomain\n");
+			LOG(L_DBG, "freeing presentity from timer_pdomain\n");
 			free_presentity(t);
 		} else {
 			presentity = presentity->next;
@@ -252,23 +250,23 @@ void add_presentity(pdomain_t* _d, struct presentity* _p)
 {
 	int sl;
 
-	LOG(L_WARN, "add_presentity _p=%p p_uri=%.*s\n", _p, _p->uri.len, _p->uri.s);
+	/* LOG(L_WARN, "add_presentity _p=%p p_uri=%.*s\n", _p, _p->uri.len, _p->uri.s); */
 
 	sl = hash_func(_d, _p->uri.s, _p->uri.len);
 
 	slot_add(&_d->table[sl], _p, &_d->first, &_d->last);
 
 	_d->reg(&_p->uri, &_p->uri, (void*)callback, _p);
-	LOG(L_ERR, "registering callback to %.*s, %p\n", _p->uri.len, _p->uri.s,_p);
+	/* LOG(L_ERR, "registering callback to %.*s, %p\n", _p->uri.len, _p->uri.s,_p); */
 }
 
 
 void remove_presentity(pdomain_t* _d, struct presentity* _p)
 {
 	_d->unreg(&_p->uri, &_p->uri, (void*)callback, _p);
-	LOG(L_ERR, "unregistering callback to %.*s, %p\n", _p->uri.len, _p->uri.s,_p);
+	LOG(L_DBG, "unregistering callback to %.*s, %p\n", _p->uri.len, _p->uri.s,_p);
 	
-	LOG(L_WARN, "remove_presentity _p=%p p_uri=%.*s\n", _p, _p->uri.len, _p->uri.s);
+	LOG(L_DBG, "remove_presentity _p=%p p_uri=%.*s\n", _p, _p->uri.len, _p->uri.s);
 	slot_rem(_p->slot, _p, &_d->first, &_d->last);
 
 	/* remove presentity from database */

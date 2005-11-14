@@ -261,12 +261,16 @@ int new_watcher_no_wb(presentity_t *_p, str* _uri, time_t _e, int event_package,
 }
 
 static int set_watcher_db_data(presentity_t *_p, watcher_t *watcher,
-		db_key_t *cols, db_val_t *vals, int *col_cnt)
+		db_key_t *cols, db_val_t *vals, int *col_cnt,
+		str *dialog_str /* destination for dialog string -> must be freed after ! */
+		)
 {
 	int n_cols = 0;
 	char *package = (char*)event_package2str(watcher->event_package);
 	str dialog; /* serialized dialog */
 
+	str_clear(dialog_str);
+	
 	if (dlg_func.dlg2str(watcher->dialog, &dialog) != 0) {	
 		LOG(L_ERR, "Error while serializing dialog\n");
 		return -1;
@@ -357,11 +361,14 @@ static int set_watcher_db_data(presentity_t *_p, watcher_t *watcher,
 	
 	*col_cnt = n_cols;
 
+	if (dialog_str) *dialog_str = dialog;
+	
 	return 0;
 }
 
 int db_add_watcher(presentity_t *_p, watcher_t *watcher)
 {
+	str_t tmp;
 	db_key_t query_cols[20];
 	db_val_t query_vals[20];
 	
@@ -372,27 +379,33 @@ int db_add_watcher(presentity_t *_p, watcher_t *watcher)
 	if (watcher->s_id.len < 1) /* id not assigned yet */
 		watcher_assign_statement_id(_p, watcher);
 	
-	if (set_watcher_db_data(_p, watcher, 
-				query_cols, query_vals, &n_query_cols) != 0) {
-		return -1;
-	}
+	str_clear(&tmp);
 
 	if (pa_dbf.use_table(pa_db, watcherinfo_table) < 0) {
 		LOG(L_ERR, "db_add_watcher: Error in use_table\n");
 		return -1;
 	}
 	
+	if (set_watcher_db_data(_p, watcher, 
+				query_cols, query_vals, &n_query_cols,
+				&tmp) != 0) {
+		return -1;
+	}
+
 	/* insert new record into database */
 	if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols) < 0) {
 		LOG(L_ERR, "db_add_watcher: Error while inserting watcher\n");
+		str_free_content(&tmp);
 		return -1;
 	}
+	str_free_content(&tmp);
 	
 	return 0;
 }
 
 int db_update_watcher(presentity_t *_p, watcher_t *watcher)
 {
+	str tmp;
 	db_key_t query_cols[20];
 	db_val_t query_vals[20];
 	int n_query_cols = 0;
@@ -403,21 +416,26 @@ int db_update_watcher(presentity_t *_p, watcher_t *watcher)
 
 	if (!use_db) return 0;
 
-	if (set_watcher_db_data(_p, watcher, 
-				query_cols, query_vals, &n_query_cols) != 0) {
-		return -1;
-	}
-
+	str_clear(&tmp);
+	
 	if (pa_dbf.use_table(pa_db, watcherinfo_table) < 0) {
 		LOG(L_ERR, "db_update_watcher: Error in use_table\n");
+		return -1;
+	}
+	
+	if (set_watcher_db_data(_p, watcher, 
+				query_cols, query_vals, &n_query_cols,
+				&tmp) != 0) {
 		return -1;
 	}
 
 	if (pa_dbf.update(pa_db, keys, ops, k_vals, 
 				query_cols, query_vals, 1, n_query_cols) < 0) {
 		LOG(L_ERR, "Error while updating watcher in DB\n");
+		str_free_content(&tmp);
 		return -1;
 	}
+	str_free_content(&tmp);
 
 	return 0;
 }
@@ -496,7 +514,7 @@ int db_read_watcherinfo(presentity_t *_p, db_con_t* db)
 	query_vals[0].type = DB_INT;
 	query_vals[0].nul = 0;
 	query_vals[0].val.int_val = _p->presid;
-	LOG(L_ERR, "db_read_watcherinfo:  _p->uri='%s', presid=%d\n", 
+	LOG(L_DBG, "db_read_watcherinfo:  _p->uri='%s', presid=%d\n", 
 			_p->uri.s, _p->presid);
 
 	result_cols[w_uri_col = n_result_cols++] = "w_uri";
@@ -587,6 +605,7 @@ int db_read_watcherinfo(presentity_t *_p, db_con_t* db)
 				server_contact.len = strlen(server_contact.s);
 			}
 
+			LOG(L_DBG, "db_read_watcherinfo(): creating watcher\n");
 			if (new_watcher_no_wb(_p, &w_uri, expires, 
 						event_package, accepts, dlg, &display_name, 
 						&server_contact, &watcher) == 0) {
@@ -614,7 +633,7 @@ int db_read_watcherinfo(presentity_t *_p, db_con_t* db)
 		}
 	}
 	pa_dbf.free_result(db, res);
-	LOG(L_ERR, "db_read_watcherinfo:  _p->uri='%s' done\n", _p->uri.s);
+	LOG(L_DBG, "db_read_watcherinfo:  _p->uri='%s' done\n", _p->uri.s);
 
 	return r;
 }
@@ -857,7 +876,7 @@ int winfo_start_resource(str* _b, int _l, str* _uri, watcher_t *watcher)
 	add_pstr(_uri);
 	add_string(PACKAGE_START, PACKAGE_START_L);
 /*	add_string(event_package_name[watcher->event_package], strlen(event_package_name[watcher->event_package]));*/
-	add_string(package, strlen(package)); /* FIXME */
+	add_string(package, strlen(package));
 	add_string(PACKAGE_END, PACKAGE_END_L);
 	add_string(CRLF, CRLF_L);
 

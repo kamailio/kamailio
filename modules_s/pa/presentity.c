@@ -105,6 +105,8 @@ int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, presentity_t** _p)
 	}
 	memset(presentity, 0, sizeof(presentity_t));
 
+	msg_queue_init(&presentity->mq);
+
 	presentity->uri.s = ((char*)presentity) + sizeof(presentity_t);
 	strncpy(presentity->uri.s, _uri->s, _uri->len);
 	presentity->uri.s[_uri->len] = 0;
@@ -117,7 +119,7 @@ int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, presentity_t** _p)
 
 	*_p = presentity;
 
-	LOG(L_ERR, "new_presentity_no_wb=%p for uri=%.*s\n", 
+	LOG(L_DBG, "new_presentity_no_wb=%p for uri=%.*s\n", 
 			presentity, presentity->uri.len, presentity->uri.s);
 
 	return 0;
@@ -171,7 +173,7 @@ static int db_add_presentity(presentity_t* presentity)
 			db_val_t *row_vals = ROW_VALUES(row);
 			presid = presentity->presid = row_vals[presid_col].val.int_val;
 
-			LOG(L_INFO, "  presid=%d\n", presid);
+			LOG(L_DBG, "  presid=%d\n", presid);
 
 		} else {
 			/* insert new record into database */
@@ -350,7 +352,8 @@ void free_presentity(presentity_t* _p)
 	if (_p->authorization_info) {
 		free_pres_rules(_p->authorization_info);
 	}
-	
+
+	msg_queue_destroy(&_p->mq);
 	shm_free(_p);
 }
 
@@ -637,7 +640,7 @@ static int db_read_tuples(presentity_t *_p, db_con_t* db)
 			tuple->state = basic2status(basic);
 			memcpy(tuple->status.s, status.s, status.len);
 			tuple->status.len = status.len;
-			LOG(L_ERR, "read tuple %.*s\n", id.len, id.s);
+			LOG(L_DBG, "read tuple %.*s\n", id.len, id.s);
 			memcpy(tuple->id.s, id.s, id.len);
 			tuple->id.len = id.len;
 			tuple->priority = priority;
@@ -715,7 +718,7 @@ int new_presence_tuple(str* _contact, time_t expires, presentity_t *_p, presence
 
 	*_t = tuple;
 
-	LOG(L_ERR, "new_tuple=%p for aor=%.*s contact=%.*s id=%.*s\n", tuple, 
+	LOG(L_DBG, "new_tuple=%p for aor=%.*s contact=%.*s id=%.*s\n", tuple, 
 			_p->uri.len, _p->uri.s,
 			tuple->contact.len, tuple->contact.s,
 			tuple->id.len, tuple->id.s);
@@ -858,7 +861,7 @@ static void process_watchers(presentity_t* _p, int *changed)
 	while (w) {
 		/* changes status of expired watcher */
 		if (w->expires <= act_time) {
-			LOG(L_ERR, "Expired watcher %.*s\n", w->uri.len, w->uri.s);
+			LOG(L_DBG, "Expired watcher %.*s\n", w->uri.len, w->uri.s);
 			w->expires = 0;
 			set_watcher_terminated_status(w);
 			_p->flags |= PFLAG_WATCHERINFO_CHANGED;
@@ -905,7 +908,7 @@ static void process_winfo_watchers(presentity_t* _p, int *changed)
 	while (w) {
 		/* changes status of expired watcher */
 		if (w->expires <= act_time) {
-			LOG(L_ERR, "Expired watcher %.*s\n", w->uri.len, w->uri.s);
+			LOG(L_DBG, "Expired watcher %.*s\n", w->uri.len, w->uri.s);
 			w->expires = 0;
 			set_watcher_terminated_status(w);
 			w->flags |= WFLAG_SUBSCRIPTION_CHANGED;
@@ -962,7 +965,7 @@ static void remove_expired_tuples(presentity_t *_p, int *changed)
 	while (t) {
 		n = t->next;
 		if (t->expires < act_time) {
-			LOG(L_ERR, "Expiring tuple %.*s\n", t->contact.len, t->contact.s);
+			LOG(L_DBG, "Expiring tuple %.*s\n", t->contact.len, t->contact.s);
 			remove_presence_tuple(_p, t);
 			free_presence_tuple(t);
 			if (changed) *changed = 1;
@@ -972,22 +975,63 @@ static void remove_expired_tuples(presentity_t *_p, int *changed)
 	}
 }
 
+static void process_presentity_messages(presentity_t *p)
+{
+	mq_message_t *msg;
+	tuple_change_info_t *info;
+	presence_tuple_t *tuple = NULL;
+	int orig;
+
+	while ((msg = pop_message(&p->mq)) != NULL) {
+		info = get_message_data(msg);
+		if (!info) continue; /* error */
+		
+		LOG(L_DBG, "processing presentity message: %.*s, %.*s, %d\n",
+				FMT_STR(info->user), FMT_STR(info->contact), info->state);
+		if (info->contact.len > 0) {
+			tuple = NULL;
+			if (find_presence_tuple(&info->contact, p, &tuple) != 0) {
+				new_presence_tuple(&info->contact, act_time + default_expires, p, &tuple, 0);
+				add_presence_tuple(p, tuple);
+			}
+			if (tuple) {
+				if (!tuple->is_published) {	/* not overwrite published information */
+					orig = tuple->state;
+					tuple->state = info->state;
+					if (tuple->state == PS_OFFLINE)
+						tuple->expires = act_time + 2 * timer_interval;
+					else {
+						tuple->expires = INT_MAX; /* act_time + default_expires; */
+						/* hack - re-registrations don't call the callback */
+					}
+					db_update_presentity(p);
+					
+					if (orig != tuple->state) {
+						p->flags |= PFLAG_PRESENCE_CHANGED;
+					}
+				}
+			}
+		}
+			
+		free_message(msg);
+	}
+}
+
 int timer_presentity(presentity_t* _p)
 {
-	int changed, old_flags;
+	int old_flags;
 	int presentity_changed;
 
-	changed = 0;
 	old_flags = _p->flags;
 
-	/* mark expired tuples (or remove them ?) */
-	/* mark_expired_tuples(_p, &changed); */
-	remove_expired_tuples(_p, &changed); /* FIXME: use changed here is useless */
+	process_presentity_messages(_p);
+	
+	remove_expired_tuples(_p, NULL);
 	
 	/* notify watchers and remove expired */
-	process_watchers(_p, &changed);	/* FIXME: use changed here is useless */
+	process_watchers(_p, NULL);	
 	/* notify winfo watchers and remove expired */
-	process_winfo_watchers(_p, &changed); /* FIXME: use changed here is useless */
+	process_winfo_watchers(_p, NULL); 
 	
 	/* notify internal watchers */
 	presentity_changed = _p->flags & (PFLAG_PRESENCE_CHANGED
@@ -1005,11 +1049,7 @@ int timer_presentity(presentity_t* _p)
 			| PFLAG_XCAP_CHANGED
 			| PFLAG_LOCATION_CHANGED
 			| PFLAG_WATCHERINFO_CHANGED);
-	if (_p->flags != old_flags) changed = 1; /* ??? */
 	
-	/* remove expired tuples */
-	/* remove_expired_tuples(_p, &changed); */
-
 	/* update DB record if something changed - USELESS */
 /*	if (changed) {
 		db_update_presentity(_p);
@@ -1040,7 +1080,7 @@ int remove_watcher(presentity_t* _p, watcher_t* _w)
 	watcher = _p->watchers;
 	prev = 0;
 			
-	LOG(L_ERR, "removing watcher %p (pres %p)\n", _w, _p);
+	LOG(L_DBG, "removing watcher %p (pres %p)\n", _w, _p);
 	
 	while(watcher) {
 		if (watcher == _w) {
@@ -1049,7 +1089,7 @@ int remove_watcher(presentity_t* _p, watcher_t* _w)
 			} else {
 				_p->watchers = watcher->next;
 			}
-			LOG(L_ERR, "removed watcher %p (pres %p)\n", _w, _p);
+			LOG(L_DBG, "removed watcher %p (pres %p)\n", _w, _p);
 			return 0;
 		}
 
@@ -1094,9 +1134,9 @@ int notify_winfo_watchers(presentity_t* _p)
 	watcher = _p->winfo_watchers;
 
 	if (watcher)
-	  LOG(L_ERR, "notify_winfo_watchers: presentity=%.*s winfo_watchers=%p\n", _p->uri.len, _p->uri.s, watcher);
+	  LOG(L_DBG, "notify_winfo_watchers: presentity=%.*s winfo_watchers=%p\n", _p->uri.len, _p->uri.s, watcher);
 	while(watcher) {
-		LOG(L_ERR, "notify_winfo_watchers: watcher=%.*s\n", watcher->uri.len, watcher->uri.s);
+		LOG(L_DBG, "notify_winfo_watchers: watcher=%.*s\n", watcher->uri.len, watcher->uri.s);
 		send_notify(_p, watcher);
 		watcher = watcher->next;
 	}

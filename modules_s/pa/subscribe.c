@@ -54,6 +54,8 @@
 #include "reply.h"
 #include "subscribe.h"
 #include "auth.h"
+#include <cds/sstr.h>
+#include <cds/msg_queue.h>
 
 #define DOCUMENT_TYPE "application/cpim-pidf+xml"
 #define DOCUMENT_TYPE_L (sizeof(DOCUMENT_TYPE) - 1)
@@ -75,61 +77,34 @@ static struct {
 	{ -1, { 0 }},
 };
 
+static void free_tuple_change_info_content(tuple_change_info_t *i)
+{
+	str_free_content(&i->user);
+	str_free_content(&i->contact);
+}
+
 /*
  * contact will be NULL if user is offline
  * fixme:locking
  */
 void callback(str* _user, str *_contact, int state, void* data)
 {
-	presentity_t *presentity;
-
-	get_act_time();
-
-	presentity = (struct presentity*)data;
-
-	/* FIXME asynchronize this due to locking and reloading from DB 
-	 * after restart */
-	if (presentity && callback_update_db) {
-		if (!presentity->pdomain) return; /*FIXME: change this to asynchronous processing ! */
-		if (!presentity->pdomain->initialized) return; /*FIXME: change this to asynchronous processing ! */
-		
-		presence_tuple_t *tuple = NULL;
-		int orig;
-		LOG(L_ERR, "callback: uri=%.*s contact=%.*s state=%d presentity=%p\n",
-			presentity->uri.len, presentity->uri.s, (_contact ? _contact->len : 0), (_contact ? _contact->s : ""), state,
-			presentity);
-		if (_contact) {
-			if (callback_lock_pdomain) {
-				lock_pdomain(presentity->pdomain);
-			}
-
-			find_presence_tuple(_contact, presentity, &tuple);
-			if (!tuple) {
-				new_presence_tuple(_contact, act_time + default_expires, presentity, &tuple, 0);
-				add_presence_tuple(presentity, tuple);
-			}
-			if (!tuple->is_published) {	/* not overwrite published information */
-				orig = tuple->state;
-				if (state == 0) {
-					tuple->state = PS_OFFLINE;
-					tuple->expires = act_time + 2 * timer_interval;
-				}
-				else {
-					tuple->state = PS_ONLINE;
-					tuple->expires = INT_MAX; /* act_time + default_expires; */
-					/* hack - re-registrations don't call the callback */
-				}
-				db_update_presentity(presentity);
-				
-				if (orig != state) {
-					presentity->flags |= PFLAG_PRESENCE_CHANGED;
-				}
-			}
-			if (callback_lock_pdomain) {
-				unlock_pdomain(presentity->pdomain);
-			}
-		}
+	mq_message_t *msg;
+	tuple_change_info_t *info;
+	
+	/* asynchronous processing */
+	msg = create_message_ex(sizeof(tuple_change_info_t));
+	if (!msg) {
+		LOG(L_ERR, "can't create message with tuple status change\n");
+		return;
 	}
+	set_data_destroy_function(msg, (destroy_function_f)free_tuple_change_info_content);
+	info = get_message_data(msg);
+	if (state == 0) info->state = PS_OFFLINE;
+	else info->state = PS_ONLINE;
+	str_dup(&info->user, _user);
+	str_dup(&info->contact, _contact);
+	if (data) push_message(&((struct presentity*)data)->mq, msg);
 }
 
 /*
@@ -170,12 +145,12 @@ int get_pres_uri(struct sip_msg* _m, str* _puri)
 		_puri->s = _m->first_line.u.request.uri.s;
 		_puri->len = _m->first_line.u.request.uri.len;
 	}
-	LOG(L_ERR, "get_pres_uri: _puri=%.*s\n", _puri->len, _puri->s);
+	LOG(L_DBG, "get_pres_uri: _puri=%.*s\n", _puri->len, _puri->s);
 
 	if (extract_plain_uri(_puri) < 0) {
 		_puri->s = get_to(_m)->uri.s;
 		_puri->len = get_to(_m)->uri.len;
-		LOG(L_ERR, "get_pres_uri(2): _puri=%.*s\n", _puri->len, _puri->s);
+		LOG(L_DBG, "get_pres_uri(2): _puri=%.*s\n", _puri->len, _puri->s);
 	
 		if (extract_plain_uri(_puri) < 0) {
 			LOG(L_ERR, "get_pres_uri(): Error while extracting plain URI\n");
@@ -252,7 +227,7 @@ static int parse_hfs(struct sip_msg* _m, int accept_header_required)
 
 	/* now look for Accept header */
 	if (_m->accept) {
-		LOG(L_ERR, "parsing accept header\n");
+		/* LOG(L_ERR, "parsing accept header\n"); */
 		if (parse_accept_hdr(_m) < 0) {
 			paerrno = PA_ACCEPT_PARSE;
 			LOG(L_ERR, "parse_hfs(): Error while parsing Accept header field\n");
@@ -562,21 +537,21 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 		return -1;
 	}
 
-	LOG(L_ERR, "update_presentity: after get_watch_uri\n");
+	/* LOG(L_ERR, "update_presentity: after get_watch_uri\n"); */
 	
 	get_dlg_id(_m, &dlg_id);
 	
-	LOG(L_ERR, "update_presentity: searching watcher\n");
+	/* LOG(L_ERR, "update_presentity: searching watcher\n"); */
 	
 	if (find_watcher_dlg(_p, &dlg_id, et, _w) == 0) { 
-		LOG(L_ERR, "update_presentity: watcher found\n");
+		/* LOG(L_ERR, "update_presentity: watcher found\n"); */
 		if (e > 0) e += act_time;
 		if (update_watcher(_p, *_w, e) < 0) {
 			LOG(L_ERR, "update_presentity(): Error while updating watcher\n");
 			return -3;
 		}
 	} else {
-		LOG(L_ERR, "update_presentity: watcher not found\n");
+		/* LOG(L_ERR, "update_presentity: watcher not found\n"); */
 		if (e) e += act_time;
 		res = create_watcher(_m, _p, _w, et, e);
 	}
@@ -707,16 +682,16 @@ int pa_handle_registration(struct sip_msg* _m, char* _domain, char* _s2)
 	  d->reg(&presentity->uri, &presentity->uri, (void*)callback, presentity);
      }
 
-     LOG(L_ERR, "pa_handle_registration about to return 1");
+     /* LOG(L_ERR, "pa_handle_registration about to return 1"); */
      unlock_pdomain(d);
      return 1;
 	
  error2:
-     LOG(L_ERR, "pa_handle_registration about to return -1\n");
+     LOG(L_DBG, "pa_handle_registration about to return -1\n");
      unlock_pdomain(d);
      return -1;
  error:
-     LOG(L_ERR, "pa_handle_registration about to return -2\n");
+     LOG(L_DBG, "pa_handle_registration about to return -2\n");
      return -1;
 }
 
@@ -732,7 +707,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	char tmp[64];
 	int i;
 
-	LOG(L_ERR, "handle_subscription() entered\n");
+	LOG(L_DBG, "handle_subscription() entered\n");
 	get_act_time();
 	paerrno = PA_OK;
 
@@ -755,7 +730,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 
 	lock_pdomain(d);
 
-	LOG(L_ERR, "handle_subscription: locked domain\n");
+	LOG(L_DBG, "handle_subscription: locked domain\n");
 	
 	if (find_presentity(d, &p_uri, &p) > 0) {
 		if (create_presentity(_m, d, &p_uri, &p, &w) < 0) {
@@ -769,7 +744,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 		}
 	}
 
-	LOG(L_ERR, "handle_subscription: generating response\n");
+	LOG(L_DBG, "handle_subscription: generating response\n");
 	
 	/* add expires header field into response */
 	if (w) i = w->expires - act_time;
@@ -794,7 +769,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 		w->flags |= WFLAG_SUBSCRIPTION_CHANGED;
 	}
 
-	LOG(L_ERR, "handle_subscription about to return 1: w->event_package=%d w->accept=%d p->flags=%x w->flags=%x w=%p\n",
+	LOG(L_DBG, "handle_subscription about to return 1: w->event_package=%d w->accept=%d p->flags=%x w->flags=%x w=%p\n",
 	    (w ? w->event_package : -1), (w ? w->preferred_mimetype : -1), (p ? p->flags : -1), (w ? w->flags : -1), w);
 	unlock_pdomain(d);
 	return 1;
@@ -857,8 +832,7 @@ int existing_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	lock_pdomain(d);
 	
 	if (find_presentity(d, &p_uri, &p) == 0) {
-		if (find_watcher_dlg(p, &w_dlg_id, et, &w) == 0) { /* FIXME: experimental */
-		/* if (find_watcher(p, &w_uri, et, &w) == 0) { */
+		if (find_watcher_dlg(p, &w_dlg_id, et, &w) == 0) { 
 			LOG(L_ERR, "existing_subscription() found watcher\n");
 			unlock_pdomain(d);
 			return 1;

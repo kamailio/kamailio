@@ -455,7 +455,7 @@ static int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 	 * from will be put in to including tag
 	 */
 
-	LOG(L_ERR, "  send_pidf_notify\n");
+	LOG(L_DBG, "  send_pidf_notify\n");
 
 	if (start_pidf_doc(&body, BUF_LEN) < 0) {
 		LOG(L_ERR, "send_pidf_notify(): start_pidf_doc failed\n");
@@ -559,12 +559,12 @@ static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
 	watcher_t *watcher = _p->watchers;
 	internal_pa_subscription_t *subscription = _p->first_qsa_subscription;
 
-	LOG(L_INFO, "send_winfo_notify: watcher=%p winfo_watcher=%p\n", watcher, _w);
+	LOG(L_DBG, "send_winfo_notify: watcher=%p winfo_watcher=%p\n", watcher, _w);
 	if (start_winfo_doc(&body, BUF_LEN, _w) < 0) {
 		LOG(L_ERR, "send_winfo_notify(): start_winfo_doc failed\n");
 		return -1;
 	}
-
+	
 	if (winfo_start_resource(&body, BUF_LEN - body.len, &_p->uri, _w) < 0) {
 		LOG(L_ERR, "send_winfo_notify(): winfo_add_resource failed\n");
 		return -3;
@@ -578,7 +578,7 @@ static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
 
 		watcher = watcher->next;
 	}
-	
+
 	while (subscription) {
 		if (winfo_add_internal_watcher(&body, BUF_LEN - body.len, subscription) < 0) {
 			LOG(L_ERR, "send_winfo_notify(): winfo_add_internal_watcher failed\n");
@@ -587,7 +587,7 @@ static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
 
 		subscription = subscription->next;
 	}
-
+	
 	if (winfo_end_resource(&body, BUF_LEN - body.len) < 0) {
 		LOG(L_ERR, "send_winfo_notify(): winfo_add_resource failed\n");
 		return -5;
@@ -715,7 +715,7 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 		return -2;
 	}
 
-	LOG(L_ERR, "notifying %.*s _p->flags=%x _w->event_package=%d _w->preferred_mimetype=%d _w->status=%d\n", 
+	LOG(L_DBG, "notifying %.*s _p->flags=%x _w->event_package=%d _w->preferred_mimetype=%d _w->status=%d\n", 
 	    _w->uri.len, _w->uri.s, _p->flags, _w->event_package, _w->preferred_mimetype, _w->status);
 
 	if ((_w->status == WS_PENDING) || 
