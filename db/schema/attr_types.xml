@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table xmlns:my="http://iptel.org/dbschema/mysql" role="serweb">
+    <name>attr_types</name>
+    <version>1</version>
+    <column id="name">
+	<name>name</name>
+	<type>string</type>
+	<size>32</size>
+    </column>
+    <column role="serweb">
+	<name>rich_type</name>
+	<type>string</type>
+	<default>string</default>
+	<size>32</size>
+    </column>
+    <column>
+	<name>raw_type</name>
+	<type>int</type>
+	<default>2</default>
+    </column>
+    <column role="serweb">
+	<name>type_spec</name>
+	<type>string</type>
+	<size>255</size>
+	<null/>
+    </column>
+    <index>
+	<name>upt_idx1</name>
+	<colref linkend="name"/>
+    </index>
+</table>
