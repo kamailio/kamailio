@@ -14,30 +14,66 @@
           xmlns:xi="http://www.w3.org/2001/XInclude"
 >
     <name>ser</name>
-    <pg:name>pg_ser</pg:name>
-    <or:name>or_ser</or:name>
-    <dt:name>dt_ser</dt:name>
 
     <xi:include href="version.xml"/>
+
+    <!-- Accounting related tables -->
     <xi:include href="acc.xml"/>
-    <xi:include href="aliases.xml"/>
-    <xi:include href="grp.xml"/>
-    <xi:include href="location.xml"/>
     <xi:include href="missed_calls.xml"/>
-    <xi:include href="pending.xml"/>
-    <xi:include href="phonebook.xml"/>
-    <xi:include href="subscriber.xml"/>
-    <xi:include href="silo.xml"/>
+
+    <!-- Table that stores credentials for digest and serweb authentication -->
+    <xi:include href="credentials.xml"/>
+
+    <!-- Attribute types -->
+    <xi:include href="attr_types.xml"/>
+
+    <!-- Various attribute tables -->
+    <xi:include href="global_attrs.xml"/>
+    <xi:include href="domain_attrs.xml"/>
+    <xi:include href="user_attrs.xml"/>
+
+    <!-- Multi-domain support -->
     <xi:include href="domain.xml"/>
-    <xi:include href="uri.xml"/>
-    <xi:include href="server_monitoring.xml"/>
-    <xi:include href="usr_preferences.xml"/>
-    <xi:include href="usr_preferences_types.xml"/>
+
+    <!-- User location database -->
+    <xi:include href="location.xml"/>
+
+    <!-- Table containing list of trusted peers -->
     <xi:include href="trusted.xml"/>
+
+    <!-- SER monitoring data (used by serweb -->
+    <xi:include href="server_monitoring.xml"/>
     <xi:include href="server_monitoring_agg.xml"/>
-    <xi:include href="admin_privileges.xml"/>
-    <xi:include href="speed_dial.xml"/>
+
+    <xi:include href="phonebook.xml"/>
+
+    <!-- Least Cost Routing related tables -->
     <xi:include href="gw.xml"/>
     <xi:include href="gw_grp.xml"/>
     <xi:include href="lcr.xml"/>
+
+    <!-- Instant Messages Scheduled for later delivery -->
+    <xi:include href="silo.xml"/>
+
+    <!-- The table mapping SIP URIs to subscribers -->
+    <xi:include href="uri.xml"/>
+
+    <!-- Speeddial module -->
+    <xi:include href="speed_dial.xml"/>
+    <xi:include href="sd_attrs.xml"/>
+
+    <!-- User with read/write access -->
+    <user>
+	<username>ser</username>
+	<password>heslo</password>
+	<privileges>ALL</privileges>
+    </user>
+
+    <!-- User with read-only access -->
+    <user>
+	<username>serro</username>
+	<password>47serro11</password>
+	<privileges>SELECT</privileges>
+    </user>
+
 </database>
