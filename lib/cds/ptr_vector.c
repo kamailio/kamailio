@@ -23,7 +23,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "ptr_vector.h"
+#include <cds/ptr_vector.h>
 #include <stdio.h>
 
 int ptr_vector_add(ptr_vector_t *vector, void *ptr)

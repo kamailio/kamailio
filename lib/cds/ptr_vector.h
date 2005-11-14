@@ -26,7 +26,7 @@
 #ifndef __PTR_VECTOR_H
 #define __PTR_VECTOR_H
 
-#include "vector.h"
+#include <cds/vector.h>
 
 typedef vector_t ptr_vector_t;
 
