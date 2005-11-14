@@ -189,7 +189,7 @@ static int create_virtual_subscriptions(struct sip_msg *m, rl_subscription_t *ss
 		res = vs_create(&s, rls_get_package(ss), &vs, e->names, ss);
 		
 		if (res != RES_OK) return res;
-		DOUBLE_LINKED_LIST_ADD(ss->first_vs, ss->last_vs, vs);
+		ptr_vector_add(&ss->vs, vs);
 
 		e = e->next;
 	}
@@ -220,8 +220,9 @@ int rls_create_subscription(struct sip_msg *m, rl_subscription_t **dst, const ch
 	s->subscription.status = subscription_uninitialized;
 	s->doc_version = 0;
 	s->changed = 0;
-	s->first_vs = NULL;
-	s->last_vs = NULL;
+	/* s->first_vs = NULL;
+	s->last_vs = NULL; */
+	ptr_vector_init(&s->vs, 4);
 
 	res = sm_init_subscription_nolock(rls_manager, &s->subscription, m);
 	if (res != RES_OK) {
@@ -280,17 +281,20 @@ int rls_refresh_subscription(struct sip_msg *m, rl_subscription_t *s)
 
 void rls_free(rl_subscription_t *s)
 {
-	virtual_subscription_t *vs, *nvs;
+	int i, cnt;
+	virtual_subscription_t *vs;
 	
 	if (!s) return;
-	
+
+	DEBUG_LOG("rls_free(): %.*s\n", FMT_STR(s->subscription.record_id));
 	sm_release_subscription_nolock(rls_manager, &s->subscription);
-	vs = s->first_vs;
-	while (vs) {
-		nvs = vs->next;
+	cnt = ptr_vector_size(&s->vs);
+	for (i = 0; i < cnt; i++) {
+		vs = ptr_vector_get(&s->vs, i);
+		if (!vs) continue;
 		vs_free(vs);
-		vs = nvs;
 	}
+	ptr_vector_destroy(&s->vs);
 	shm_free(s);
 }
 

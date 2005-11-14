@@ -6,6 +6,7 @@
 #include "subscription_manager.h"
 #include <xcap/resource_lists_parser.h>
 #include <cds/vector.h>
+#include <cds/ptr_vector.h>
 #include <cds/sstr.h>
 
 #include <presence/subscriber.h>
@@ -66,10 +67,8 @@ struct _rl_subscription_t {
 	 * (enough changes = send notify) */
 	int changed;
 	
-	/** pointer to the first virtual subscription for this resource list subscription */
-	virtual_subscription_t *first_vs;
-	/** pointer to the last virtual subscription for this resource list subscription */
-	virtual_subscription_t *last_vs;
+	/* virtual subscriptions for this rls */
+	ptr_vector_t vs;
 };
 
 #define rls_get_uri(s)			&((s)->subscription.record_id)

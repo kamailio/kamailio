@@ -350,7 +350,7 @@ void vs_free(virtual_subscription_t *vs)
 	vs_display_name_t dn;
 	
 	if (vs) {
-/*		LOG(L_TRACE, "freeing Virtual Subscription\n");*/
+		DEBUG_LOG("freeing Virtual Subscription %p to %.*s\n", vs, FMT_STR(vs->uri));
 		remove_from_vs_list(vs);
 		
 /*		if ( (vs->package.len > 0) && (vs->package.s) ) 

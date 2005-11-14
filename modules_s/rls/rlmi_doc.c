@@ -11,15 +11,17 @@
 	
 static void add_virtual_subscriptions_to_rlmi(dstring_t *doc, rl_subscription_t *s, const char *part_id)
 {
-	int i, j, ncnt;
+	int i, j, ncnt, cnt;
 	virtual_subscription_t *vs;
 	vs_display_name_t dn;
 	char tmp[32];
 	
 	/* add all list elements */
-	vs = s->first_vs;
-	i = 0;
-	while (vs) {
+	cnt = ptr_vector_size(&s->vs);
+	for (i = 0; i < cnt; i++) {
+		vs = ptr_vector_get(&s->vs, i);
+		if (!vs) continue;
+
 		dstr_append_zt(doc, "\t<resource uri=\"");
 		dstr_append_str(doc, &vs->uri);
 		dstr_append_zt(doc, "\">\n");
@@ -76,31 +78,29 @@ static void add_virtual_subscriptions_to_rlmi(dstring_t *doc, rl_subscription_t 
 		else dstr_append_zt(doc, "/>\n");
 		
 		dstr_append_zt(doc, "\t</resource>\n");
-		vs = vs->next;
-		i++;
 	}
 }
 
 static void add_virtual_subscriptions_documents(dstring_t *doc, 
 		rl_subscription_t *s, const char *boundary_str, const char *part_id)
 {
-	int i;
+	int i, cnt;
 	virtual_subscription_t *vs;
 	char tmp[32];
 
 	/* add all list elements */
-	vs = s->first_vs;
-	i = 0;
-	while (vs) {
+	cnt = ptr_vector_size(&s->vs);
+	for (i = 0; i < cnt; i++) {
+		vs = ptr_vector_get(&s->vs, i);
+		if (!vs) continue;
+		
 		if (vs->state_document.len < 1) {
-			i++;
 			vs = vs->next;
 			continue;
 		}
 		if (vs->content_type.len < 1) {
 			LOG(L_ERR, "can't send resource status document for unknown type\n");
 			vs = vs->next;
-			i++;
 			continue;
 		}
 
@@ -117,8 +117,6 @@ static void add_virtual_subscriptions_documents(dstring_t *doc,
 
 		dstr_append_str(doc, &vs->state_document);
 		dstr_append(doc, "\r\n", 2);
-		vs = vs->next;
-		i++;
 	}
 	
 	
