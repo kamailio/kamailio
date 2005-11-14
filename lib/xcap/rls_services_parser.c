@@ -260,7 +260,7 @@ void free_service(service_t *s)
 
 	switch (s->content_type) {
 		case stc_list: free_list(s->content.list); break;
-		case stc_resource_list: free(s->content.resource_list); break;
+		case stc_resource_list: cds_free(s->content.resource_list); break;
 	}
 	
 	free_packages(s->packages);

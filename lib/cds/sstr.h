@@ -26,6 +26,8 @@
 #ifndef __SIMPLE_STR_H
 #define __SIMPLE_STR_H
 
+#include <cds/memory.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -66,10 +68,19 @@ int str_dup_zt(str_t* dst, const char* src);
 char *zt_strdup(const char*src);
 
 /** frees string content if allocated */
-void str_free_content(str_t *s);
+/* void str_free_content(str_t *s); */
+#define str_free_content(str)	if (str) { \
+		if (((str)->len > 0) && ((str)->s)) cds_free((str)->s);\
+		(str)->len = 0; \
+		(str)->s = 0; \
+	}
 
 /** frees string content if allocated and then the string itself */
-void str_free(str_t *s);
+/* void str_free(str_t *s); */
+#define str_free(str)	if (str) { \
+		str_free_content(str); \
+		cds_free(str); \
+	}
 
 /** case sensitive comparation - returns 0 if equal, nonzero otherwise */
 int str_case_equals(const str_t *a, const str_t *b);

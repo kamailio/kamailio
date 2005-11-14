@@ -24,6 +24,7 @@
  */
 
 #include <cds/hash_table.h>
+#include <cds/memory.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,7 +34,7 @@ int ht_init(hash_table_t *ht, hash_func_t hash_func, key_cmp_func_t cmp_keys, in
 	if (!ht) return -1;
 	if ((!hash_func) || (!cmp_keys)) return -1;
 
-	ht->cslots = (ht_cslot_t*)malloc(size * sizeof(ht_cslot_t));
+	ht->cslots = (ht_cslot_t*)cds_malloc(size * sizeof(ht_cslot_t));
 	if (!ht->cslots) return -1;
 	memset(ht->cslots, 0, size * sizeof(ht_cslot_t));
 
@@ -59,11 +60,11 @@ void ht_destroy(hash_table_t *ht)
 			e = ht->cslots[i].first;
 			while (e) {
 				n = e->next;
-				free(e);
+				cds_free(e);
 				e = n;
 			}
 		}
-		free(ht->cslots);
+		cds_free(ht->cslots);
 	}
 	ht->cslots = NULL;
 }
@@ -74,7 +75,7 @@ int ht_add(hash_table_t *ht, ht_key_t key, ht_data_t data)
 	ht_element_t *new_e;
 	
 	if (!ht) return -1;
-	new_e = (ht_element_t*)malloc(sizeof(ht_element_t));
+	new_e = (ht_element_t*)cds_malloc(sizeof(ht_element_t));
 	if (!new_e) return -1;
 	new_e->next = NULL;
 	new_e->key = key;
@@ -136,7 +137,7 @@ ht_data_t ht_remove(hash_table_t *ht, ht_key_t key)
 			ht->cslots[h].cnt--;
 			if (!e->next) ht->cslots[h].last = p;
 			data = e->data;
-			free(e);
+			cds_free(e);
 			return data;
 		}
 		p = e;

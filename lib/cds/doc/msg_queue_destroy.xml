@@ -33,9 +33,8 @@ manipulation functions except <function>msg_queue_init</function>.
 <!-- detailed description -->
 </para>
 
-<para>All messages which stay in the queue and have <parameter>auto_free</parameter> flag set 
+<para>All messages which stay in the queue  
 are automaticaly freed using <function>free_message</function>. 
-It depends on allocation manner of messages if it is sufficient.
 </para>
 
 </refsect1>

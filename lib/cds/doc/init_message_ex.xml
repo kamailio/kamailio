@@ -24,18 +24,20 @@
   <paramdef>mq_message_t *<parameter>m</parameter></paramdef>
   <paramdef>void *<parameter>data</parameter></paramdef>
   <paramdef>int <parameter>data_len</parameter></paramdef>
-  <paramdef>int <parameter>auto_free</parameter></paramdef>
+  <paramdef>destroy_function_f <parameter>func</parameter></paramdef>
 </funcprototype>
 
 </funcsynopsis></refsynopsisdiv>
 
 <refsect1><title>Description</title>
-<para>Initializes message structure with given data and given data length. If
-<parameter>auto_free</parameter> is set, the message can be be freed
-using <function>free_message</function> and such unremoved messages are freed
-automaticaly with <function>msg_queue_destroy</function>. If this flag is not set,
-calling <function>free message</function> will not do anything and the message
-and message data must be freed explicitly by caller.
+<para>Initializes message structure with given data and given data length like
+<function>create_message</function> but without its allocation. </para>
+<para>
+Parameter <parameter>func</parameter> specifies function called on data pointer
+before freeing the message in <function>free_message</function>. It can be NULL.
+This function may be used for example for memory deallocation (for example may
+have value of <function>cds_free_ptr</function>) or some more complicated
+function for freeing complex data structure with pointers inside or so.
 <!-- detailed description -->
 </para>
 

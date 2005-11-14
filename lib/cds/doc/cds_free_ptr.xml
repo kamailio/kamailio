@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="cds_free_ptr"> <!-- ID for references -->
+
+<refmeta>
+<refentrytitle>cds_free_ptr</refentrytitle> <!-- title shown in references -->
+<manvolnum>3</manvolnum></refmeta> <!-- man volume id (3 for libraries) -->
+
+<refnamediv>
+<refname>cds_free_ptr</refname> <!-- function name -->
+<refpurpose>pointer to cds_free function independent on cds_free
+implementation (macro, ...)</refpurpose> <!-- short function description -->
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;cds/memory.h&gt; <!-- included headers -->
+</funcsynopsisinfo>
+
+<funcprototype> <!-- function prototype -->
+  <funcdef>void <function>cds_free_ptr</function></funcdef>
+  <paramdef>void *<parameter>ptr</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>Pointer to memory deallocation function. It is independent on
+<function>cds_free</function> implementation.
+<!-- detailed description -->
+</para>
+
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para>
+<xref linkend="cds_free"/>
+<!-- references to other pages -->
+</para>
+</refsect1>
+
+</refentry> 
+

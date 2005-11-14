@@ -32,15 +32,9 @@
 if they are allocated implicitly, it is freed together with message. Thus simple
 data strutures are deallocated automaticaly in both cases. There might be a
 problem with more complicated structures with internal pointers to other
-structures - these are NOT deallocated automaticaly because this function can't
-know the internal data structure and they must be freed by the
-caller!
+structures - for these you can set destroy function using
+<function>set_data_destroy_function</function>.
 <!-- detailed description -->
-</para>
-
-<para>This function does NOT free messages which were initialized using
-<function>message_init_ex</function> with <parameter>auto_free</parameter> not
-set, they must be freed explicitly by caller!
 </para>
 
 </refsect1>
@@ -48,7 +42,7 @@ set, they must be freed explicitly by caller!
 <refsect1><title>See Also</title>
 <para>
 <xref linkend="create_message"/>, <xref linkend="create_message_ex"/>, <xref
-linkend="init_message_ex"/>
+linkend="init_message_ex"/>, <xref linkend="set_data_destroy_function"/>
 <!-- references to other pages -->
 </para>
 </refsect1>

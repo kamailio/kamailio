@@ -19,6 +19,7 @@ typedef struct _mq_message_t {
 	void *data;
 	int data_len;
 	struct _mq_message_t *next;
+	destroy_function_f destroy_function;
 	enum { 
 		message_allocated_with_data, 
 		message_holding_data_ptr 
@@ -45,14 +46,9 @@ message data should be obtained by <function>get_message_data</function>.
 	it after structure allocation, see <xref linkend="create_message_ex"/></para></listitem>
 
 	<listitem><para>there is third possibility, that data and message - both -
-	are allocated/freed by caller without using
+	are allocated by caller without using
 	<function>create_message</function>, <function>create_message_ex</function> and 
 	<function>msg_free</function>, see <xref linkend="init_message_ex"/></para>
-<!--	<para>In this case might be the <structname>mq_message_t</structname> for
-	example a part of the data structure.</para>
-	<para>This is not recomended because of
-	future possibility of <quote>network message queues</quote> and the
-	framework between could not free message memory.</para>-->
 	</listitem>
 </itemizedlist>
 </para>

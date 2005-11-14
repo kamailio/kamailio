@@ -163,13 +163,13 @@ int str_case_equals(const str_t *a, const str_t *b)
 	return 0;
 }
 
-void str_free_content(str_t *s)
+/* void str_free_content(str_t *s)
 {
 	if (!s) return;
 	if ((s->len > 0) && (s->s)) cds_free(s->s);
 	s->len = 0;
 	s->s = NULL;
-}
+} 
 
 void str_free(str_t *s)
 {
@@ -177,7 +177,7 @@ void str_free(str_t *s)
 		str_free_content(s);
 		cds_free(s);
 	}
-}
+}*/
 
 void str_clear(str_t *s)
 {

@@ -249,6 +249,8 @@ void unregister_notifier(notifier_domain_t *domain, notifier_t *info)
 {
 	notifier_package_t *p;
 
+	if ((!info) || (!domain)) return;
+
 	/* maybe: test if the NOTIFIER is registered before unregistration */
 
 	lock_notifier_domain(domain);

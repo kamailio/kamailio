@@ -28,14 +28,16 @@
 
 #include <cds/sync.h>
 
+typedef void (*destroy_function_f)(void *);
+
 typedef struct _mq_message_t {
 	void *data;
 	int data_len;
 	struct _mq_message_t *next;
+	destroy_function_f destroy_function; /* see doc */
 	enum { 
 		message_allocated_with_data, 
-		message_holding_data_ptr, 
-		message_holding_data_ptr_no_free /* not automaticaly freed */
+		message_holding_data_ptr
 	} allocation_style;
 	char data_buf[1];
 } mq_message_t;
@@ -59,10 +61,12 @@ mq_message_t *create_message_ex(int data_len);
  * are automacicaly freed! */
 mq_message_t *create_message(void *data, int data_len);
 
+void set_data_destroy_function(mq_message_t *msg, destroy_function_f func);
+
 /** initializes message, 
  * if auto_free set, data must be allocated using cds_malloc and are automaticaly freed by free_message 
  * (and if msg_queue_destroy called) */
-void init_message_ex(mq_message_t *m, void *data, int data_len, int auto_free);
+void init_message_ex(mq_message_t *m, void *data, int data_len, destroy_function_f func);
 
 /** frees the message and data holding by the message !!!! */
 void free_message(mq_message_t *msg);

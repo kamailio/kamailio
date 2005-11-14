@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="set_data_destroy_function"> <!-- ID for references -->
+
+<refmeta>
+<refentrytitle>set_data_destroy_function</refentrytitle> <!-- title shown in references -->
+<manvolnum>3</manvolnum></refmeta> <!-- man volume id (3 for libraries) -->
+
+<refnamediv>
+<refname>set_data_destroy_function</refname> <!-- function name -->
+<refpurpose>set function used to deallocate message data</refpurpose> <!-- short function description -->
+</refnamediv>
+
+<refsynopsisdiv><funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;cds/msg_queue.h&gt; <!-- included headers -->
+
+typedef void (*destroy_function_f)(void *);
+</funcsynopsisinfo>
+
+<funcprototype> <!-- function prototype -->
+  <funcdef>void <function>set_data_destroy_function</function></funcdef>
+  <paramdef>mq_message_t *<parameter>msg</parameter></paramdef>
+  <paramdef>destroy_function_f <parameter>func</parameter></paramdef>
+</funcprototype>
+
+</funcsynopsis></refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>Set destroy function for message data. This function is called from
+<function>free_message</function> and is primarily used for deallocation of
+complex data structures or their content. It can be used on all types of
+messages (allocated using <function>create_message</function> or
+<function>create_message_ex</function> or initialized using
+<function>init_message_ex</function>).
+<!-- detailed description -->
+</para>
+
+<example><title>Usage with create_message_ex</title>
+<programlisting>
+str_t *s;
+mq_message_t *msg = create_message_ex(sizeof(str_t));
+set_data_destroy_function((destroy_function_f)str_free_content);
+s = (str_t*)get_message_data(msg);
+str_dup_zt(s, "something happened");
+</programlisting>
+</example>
+
+<example><title>Usage with create_message</title>
+<programlisting>
+str_t *s = cds_malloc(sizeof(str_t));
+mq_message_t *msg = create_message(s, sizeof(str_t));
+set_data_destroy_function((destroy_function_f)str_free);
+str_dup_zt(s, "something happened");
+</programlisting>
+</example>
+
+</refsect1>
+
+<refsect1><title>See Also</title>
+<para><xref linkend="create_message"/>, <xref linkend="create_message_ex"/>,
+<xref linkend="init_message_ex"/>
+<!-- references to other pages -->
+</para>
+</refsect1>
+
+</refentry> 
+

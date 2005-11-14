@@ -37,6 +37,7 @@ mq_message_t *create_message_ex(int data_len)
 	m->data = (((char *)m) + sizeof(mq_message_t));
 	m->next = NULL;
 	m->allocation_style = message_allocated_with_data;
+	m->destroy_function = NULL;
 	return m;
 }
 
@@ -50,10 +51,11 @@ mq_message_t *create_message(void *data, int data_len)
 	m->data = data;
 	m->next = NULL;
 	m->allocation_style = message_holding_data_ptr;
+	m->destroy_function = cds_free_ptr;
 	return m;
 }
 
-void init_message_ex(mq_message_t *m, void *data, int data_len, int auto_free)
+void init_message_ex(mq_message_t *m, void *data, int data_len, destroy_function_f func)
 {
 	/* if (data_len < 0) data_len = 0; */
 	if (!m) return;
@@ -61,21 +63,25 @@ void init_message_ex(mq_message_t *m, void *data, int data_len, int auto_free)
 	m->data_len = data_len;
 	m->data = data;
 	m->next = NULL;
-	if (auto_free) m->allocation_style = message_holding_data_ptr;
-	else m->allocation_style = message_holding_data_ptr_no_free;
+	m->destroy_function = func;
+	m->allocation_style = message_holding_data_ptr;
+}
+
+void set_data_destroy_function(mq_message_t *msg, destroy_function_f func)
+{
+	if (msg) msg->destroy_function = func;
 }
 
 void free_message(mq_message_t *msg)
 {
+	if (msg->destroy_function && msg->data) 
+		msg->destroy_function(msg->data);
 	switch (msg->allocation_style) {
 		case message_allocated_with_data: 
 				break;
 		case message_holding_data_ptr: 
-				if (msg->data) cds_free(msg->data);
+				/* if (msg->data) cds_free(msg->data); */
 				break;
-		case message_holding_data_ptr_no_free:
-				/* not automaticaly freed !! */
-				return;
 	}
 	cds_free(msg);
 }

@@ -30,6 +30,7 @@
 <include xmlns="http://www.w3.org/2001/XInclude" href="create_message.xml"/>
 <include xmlns="http://www.w3.org/2001/XInclude" href="create_message_ex.xml"/>
 <include xmlns="http://www.w3.org/2001/XInclude" href="init_message_ex.xml"/>
+<include xmlns="http://www.w3.org/2001/XInclude" href="set_data_destroy_function.xml"/>
 <include xmlns="http://www.w3.org/2001/XInclude" href="free_message.xml"/>
 
 </reference>

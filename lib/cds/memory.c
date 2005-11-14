@@ -29,137 +29,97 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <cds/memory.h>
+#include <cds/sync.h>
+#include <cds/logger.h>
 
-#ifdef SER
+#ifdef TRACE_CDS_MEMORY
 
-#include <mem/mem.h>
-#include <mem/shm_mem.h>
+cds_mutex_t *mem_mutex = NULL;
+int *allocated_cnt = NULL;
+char *debug_file = "/tmp/mem.log";
 
-static void* shm_malloc_x(unsigned int size);
-static void shm_free_x(void *ptr);
-
-cds_malloc_func cds_malloc = shm_malloc_x;
-cds_free_func cds_free = shm_free_x;
-
-#else
-
-cds_malloc_func cds_malloc = malloc;
-cds_free_func cds_free = free;
-
-#endif
-
-void cds_set_memory_functions(cds_malloc_func _malloc, cds_free_func _free)
-{
-	cds_malloc = _malloc;
-	cds_free = _free;
+#define write_debug(s,args...)	if (1) { \
+	FILE *f = fopen(debug_file, "a"); \
+	if (f) { \
+		fprintf(f,s,##args); \
+		fclose(f); \
+	} \
+	TRACE_LOG(s,##args); \
 }
 
+void *debug_malloc(int size, const char *file, int line)
+{
+	void *m = NULL;
+	if (allocated_cnt && mem_mutex) {
+		cds_mutex_lock(mem_mutex);
+		(*allocated_cnt)++;
+		cds_mutex_unlock(mem_mutex);
+	}
+#ifdef SER
+	m = shm_malloc(size);
+#else
+	m = malloc(size);
+#endif
+	write_debug("ALLOC %p size %u from %s(%d)\n", m, size, file, line);
+	/* LOG(L_INFO, "debug_malloc(): %p\n", m); */
+	return m;
+}
+
+void debug_free(void *block, const char *file, int line)
+{
+	if (allocated_cnt && mem_mutex) {
+		cds_mutex_lock(mem_mutex);
+		(*allocated_cnt)--;
+		cds_mutex_unlock(mem_mutex);
+	}
+#ifdef SER
+	shm_free(block);
+#else
+	free(block);
+#endif
+	write_debug("FREE %p from %s(%d)\n", block, file, line);
+}
+
+void *debug_malloc_ex(unsigned int size)
+{
+	return debug_malloc(size, "<none>", 0);
+}
+
+void debug_free_ex(void *block)
+{
+	debug_free(block, "<none>", 0);
+}
+
+void cds_memory_trace_init()
+{
+	cds_mutex_init(mem_mutex);
+	allocated_cnt = cds_malloc(sizeof(int));
+	*allocated_cnt = 0;
+}
+
+void cds_memory_trace(char *dst, int dst_len)
+{
+	if (allocated_cnt && mem_mutex) {
+		cds_mutex_lock(mem_mutex);
+		snprintf(dst, dst_len, "There are allocated: %d memory blocks\n", *allocated_cnt);
+		cds_mutex_unlock(mem_mutex);
+	}
+}
+
+#else /* ! CDS_TRACE_MEMORY */
+
 #ifdef SER
 
-static void* shm_malloc_x(unsigned int size)
+void* shm_malloc_x(unsigned int size)
 {
 	return shm_malloc(size);
 }
 
-static void shm_free_x(void *ptr)
+void shm_free_x(void *ptr)
 {
 	shm_free(ptr);
 }
 
 #endif
 
-/*
-#ifdef SER
-
-static gen_lock_t *mem_mutex = NULL;
-int *allocated_cnt = NULL;
-
-#else
-
-static int allocated_cnt = 0;
-
 #endif
-
-void debug_mem_init()
-{
-#ifdef SER
-	mem_mutex = lock_alloc();
-	allocated_cnt = shm_malloc(sizeof(int));
-	*allocated_cnt = 0;
-	debug_print_allocated_mem();
-#else
-	allocated_cnt = 0;
-#endif
-}
-
-void *debug_malloc(int size)
-{
-#ifdef SER
-	void *m = NULL;
-	lock_get(mem_mutex);
-	if (allocated_cnt) (*allocated_cnt)++;
-	lock_release(mem_mutex);
-	m = shm_malloc(size);
-	LOG(L_INFO, "debug_malloc(): %p\n", m);
-	return m;
-#else
-	allocated_cnt++;
-	return malloc(size);
-#endif
-}
-
-void debug_free(void *block)
-{
-#ifdef SER
-	LOG(L_INFO, "debug_free(): %p\n", block);
-	shm_free(block);
-	lock_get(mem_mutex);
-	if (allocated_cnt) (*allocated_cnt)--;
-	lock_release(mem_mutex);
-#else
-	free(block);
-	allocated_cnt--;
-#endif
-}
-
-void *debug_malloc_ex(int size, const char *file, int line)
-{
-#ifdef SER
-	void *m = NULL;
-	lock_get(mem_mutex);
-	if (allocated_cnt) (*allocated_cnt)++;
-	lock_release(mem_mutex);
-	m = shm_malloc(size);
-	LOG(L_INFO, "ALLOC: %s:%d -> %p\n", file, line, m);
-	return m;
-#else
-	allocated_cnt++;
-	return malloc(size);
-#endif
-}
-
-void debug_free_ex(void *block, const char *file, int line)
-{
-#ifdef SER
-	LOG(L_INFO, "FREE: %s:%d -> %p\n", file, line, block);
-	shm_free(block);
-	lock_get(mem_mutex);
-	if (allocated_cnt) (*allocated_cnt)--;
-	lock_release(mem_mutex);
-#else
-	free(block);
-	allocated_cnt--;
-#endif
-}
-
-void debug_print_allocated_mem()
-{
-#ifdef SER
-	lock_get(mem_mutex);
-	LOG(L_INFO, "There are allocated: %d memory blocks\n", *allocated_cnt);
-	lock_release(mem_mutex);
-#else
-	printf("There are allocated: %d memory blocks\n", allocated_cnt);
-#endif
-}
-*/

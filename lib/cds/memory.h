@@ -26,17 +26,64 @@
 #ifndef __CDS_MEMORY_H
 #define __CDS_MEMORY_H
 
+/* #define TRACE_CDS_MEMORY */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef void*(*cds_malloc_func)(unsigned int size);
+/* typedef void*(*cds_malloc_func)(unsigned int size);
 typedef void(*cds_free_func)(void *ptr);
 
 extern cds_malloc_func cds_malloc;
 extern cds_free_func cds_free;
 
-void cds_set_memory_functions(cds_malloc_func _malloc, cds_free_func _free);
+void cds_set_memory_functions(cds_malloc_func _malloc, cds_free_func _free); */
+
+#ifdef TRACE_CDS_MEMORY
+
+void *debug_malloc(int size, const char *file, int line);
+void debug_free(void *block, const char *file, int line);
+void *debug_malloc_ex(unsigned int size);
+void debug_free_ex(void *block);
+
+/* trace function */
+void cds_memory_trace(char *dst, int dst_len);
+/* initializes internal variables for memory tracing */
+void cds_memory_trace_init();
+
+#define cds_malloc(s)	debug_malloc(s,__FILE__, __LINE__)
+#define cds_free(p)		debug_free(p,__FILE__, __LINE__)
+#define cds_free_ptr	debug_free_ex
+#define cds_malloc_ptr	debug_malloc_ex
+
+#else /* !TRACE */
+
+#ifdef SER
+
+#include <mem/mem.h>
+#include <mem/shm_mem.h>
+
+void* shm_malloc_x(unsigned int size);
+void shm_free_x(void *ptr);
+
+#define cds_malloc(s)	shm_malloc(s)
+#define cds_free(p)		shm_free(p)
+#define cds_malloc_ptr	shm_malloc_x
+#define cds_free_ptr	shm_free_x
+
+#else /* !SER */
+
+#include <stdlib.h>
+
+#define cds_malloc(s)	malloc(s)
+#define cds_free(p)		free(p)
+#define cds_malloc_ptr	malloc
+#define cds_free_ptr	free
+
+#endif /* !SER */
+
+#endif /* !TRACE_CDS_MEMORY */
 
 #ifdef __cplusplus
 }
