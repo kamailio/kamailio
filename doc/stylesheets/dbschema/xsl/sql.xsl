@@ -6,17 +6,17 @@
     <xsl:import href="common.xsl"/>
 
     <xsl:template match="/">
-	<xsl:variable name="createfile" select="concat($prefix, concat('/', 'create.sql'))"/>
+	<xsl:variable name="createfile" select="concat($dir, concat('/', concat($prefix, 'create.sql')))"/>
 	<xsl:document href="{$createfile}" method="text" indent="no" omit-xml-declaration="yes">
 	    <xsl:apply-templates select="/database[1]"/>
 	</xsl:document>
 
-	<xsl:variable name="dropfile" select="concat($prefix, concat('/', 'drop.sql'))"/>
+	<xsl:variable name="dropfile" select="concat($dir, concat('/', concat($prefix, 'drop.sql')))"/>
 	<xsl:document href="{$dropfile}" method="text" indent="no" omit-xml-declaration="yes">
 	    <xsl:apply-templates mode="drop" select="/database[1]"/>
 	</xsl:document>
     </xsl:template>
-
+    
 <!-- ################ DATABASE ################# -->
 
 <!-- ################ /DATABASE ################# -->

@@ -3,7 +3,8 @@
     
     <xsl:key name="column_id" match="column" use="@id|xml:id"/>
 
-    <xsl:param name="prefix" select="."/>
+    <xsl:param name="prefix" select="_"/>
+    <xsl:param name="dir" select="mm"/>
 
     <xsl:variable name="sign-prefix">unsigned </xsl:variable>
     
@@ -56,6 +57,7 @@
 
 	<!-- Create all tables -->
 	<xsl:apply-templates select="table"/>
+	<xsl:apply-templates select="user"/>
     </xsl:template>
 
     <!-- ################ /DATABASE ################# -->
@@ -192,4 +194,10 @@
     <xsl:template match="value"/>
 
     <!-- ################ /VALUE ################# -->
+
+    <!-- ################ USER ################# -->
+
+    <xsl:template match="user"/>
+
+    <!-- ################ /USER ################# -->
 </xsl:stylesheet>

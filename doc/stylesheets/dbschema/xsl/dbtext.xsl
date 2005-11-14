@@ -13,7 +13,7 @@
 	    <xsl:call-template name="get-name"/>
 	</xsl:variable>
 	
-	<xsl:variable name="path" select="concat($prefix, concat('/', $name))"/>
+	<xsl:variable name="path" select="concat($dir, concat('/', concat($prefix, $name)))"/>
 	<xsl:document 
 	    href="{$path}"
 	    method="text"
@@ -36,6 +36,9 @@
 	<xsl:call-template name="get-name"/>
 	<xsl:text>(</xsl:text>
 	<xsl:choose>
+	    <xsl:when test="db:type">
+		<xsl:value-of select="normalize-space(db:type)"/>
+	    </xsl:when>
 	    <xsl:when test="$type='char' or 
 		            $type='short' or 
                             $type='int' or
