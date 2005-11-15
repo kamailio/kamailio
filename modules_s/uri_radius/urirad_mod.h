@@ -34,9 +34,7 @@
 #ifndef URIRAD_MOD_H
 #define URIRAD_MOD_H
 
-#include "../acc/dict.h"
-
-#include "../../modules/acc/dict.h" /* attr & val */
+#include "../../rad_dict.h" /* attr & val */
 
 extern struct attr attrs[];
 extern struct val vals[];

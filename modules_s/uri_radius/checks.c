@@ -37,7 +37,7 @@
 #include "../../dprint.h"
 #include "../../usr_avp.h"
 #include "../../ut.h"
-#include "../../modules/acc/dict.h"
+#include "../../rad_dict.h"
 #include "checks.h"
 #include "urirad_mod.h"
 
@@ -89,7 +89,7 @@ static int generate_avps(VALUE_PAIR* received)
 	name.s = &name_str;
 	val.s = &val_str;
 
-	while ((vp = rc_avpair_get(vp, attrs[A_SIP_AVP].v, 0))) {
+	while ((vp = rc_avpair_get(vp, attrs[A_SER_ATTRS].v, 0))) {
 		attr_name_value(vp, &name_str, &val_str);
 		
 		if (add_avp(AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) {

@@ -36,7 +36,7 @@
 #include "../../sr_module.h"
 #include "urirad_mod.h"
 #include "checks.h"
-#include "../../modules/acc/dict.h"
+#include "../../rad_dict.h"
 
 #ifdef RADIUSCLIENT_NG_4
 #  include <radiusclient.h>
@@ -99,10 +99,12 @@ static int mod_init(void)
 
 	memset(attrs, 0, sizeof(attrs));
 	memset(attrs, 0, sizeof(vals));
-	attrs[A_SERVICE_TYPE].n	= "Service-Type";
+
 	attrs[A_USER_NAME].n	= "User-Name";
+	attrs[A_SERVICE_TYPE].n	= "Service-Type";
+
+	attrs[A_SER_ATTRS].n	= "SER-Attrs";
 	vals[V_CALL_CHECK].n	= "Call-Check";
-	attrs[A_SIP_AVP].n	= "SIP-AVP";
 
 	if ((rh = rc_read_config(radius_config)) == NULL) {
 		LOG(L_ERR, "uri_radius: Error opening configuration file \n");
