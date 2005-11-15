@@ -49,7 +49,7 @@
 #include "../../parser/hf.h"
 #include "../../parser/digest/digest.h"
 #include "group.h"
-#include "../../modules/acc/dict.h"
+#include "../../rad_dict.h"
 #include "grouprad_mod.h"
 
 
@@ -207,12 +207,12 @@ int radius_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 
 	if (use_domain) pkg_free(user_name.s);
 
-	if (!rc_avpair_add(rh, &send, attrs[A_SIP_GROUP].v, grp->s, grp->len, 0)) {
+	if (!rc_avpair_add(rh, &send, attrs[A_SER_GROUP].v, grp->s, grp->len, 0)) {
 		LOG(L_ERR, "radius_is_user_in(): Error adding Sip-Group attribute\n");
 	 	return -8;  	
 	}
 
-	service = vals[V_GROUP_CHECK].v;
+	service = vals[V_SER_GROUP_CHECK].v;
 	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &service, -1, 0)) {
 		LOG(L_ERR, "radius_is_user_in(): Error adding Service-Type attribute\n");
 		rc_avpair_free(send);

@@ -46,7 +46,6 @@
 #include "../../dprint.h"
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
-#include "../../modules/acc/dict.h"
 #include "grouprad_mod.h"
 #include "group.h"
 
@@ -107,10 +106,10 @@ static int mod_init(void)
 
 	memset(attrs, 0, sizeof(attrs));
 	memset(attrs, 0, sizeof(vals));
-	attrs[A_SERVICE_TYPE].n	= "Service-Type";
-	attrs[A_USER_NAME].n	= "User-Name";
-	attrs[A_SIP_GROUP].n    = "Sip-Group";
-	vals[V_GROUP_CHECK].n	= "Group-Check";
+	attrs[A_SERVICE_TYPE].n	  = "Service-Type";
+	attrs[A_USER_NAME].n	  = "User-Name";
+	attrs[A_SER_GROUP].n      = "SER-Group";
+	vals[V_SER_GROUP_CHECK].n = "SER-Group-Check";
 
 	if ((rh = rc_read_config(radius_config)) == NULL) {
 		LOG(L_ERR, "group_radius: Error opening configuration file \n");

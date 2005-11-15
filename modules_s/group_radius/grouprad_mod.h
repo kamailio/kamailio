@@ -34,6 +34,8 @@
 #ifndef GROUPRAD_MOD_H
 #define GROUPRAD_MOD_H
 
+#include "../../rad_dict.h"
+
 extern struct attr attrs[];
 extern struct val vals[];
 extern void *rh;
