@@ -1,0 +1,21 @@
+table_name(str) table_version(int) 
+acc:3
+missed_calls:3
+location:8
+credentials:6
+domain:2
+attr_types:1
+global_attrs:1
+domain_attrs:1
+user_attrs:3
+phonebook:1
+silo:3
+uri:2
+server_monitoring:1
+trusted:1
+server_monitoring_agg:1
+speed_dial:2
+sd_attrs:1
+gw:2
+gw_grp:2
+lcr:1

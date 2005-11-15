@@ -1,0 +1,1 @@
+id(int,auto) uid(str) fname(str,null) lname(str,null) sip_uri(str) 

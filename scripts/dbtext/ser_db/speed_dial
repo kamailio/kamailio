@@ -1,0 +1,1 @@
+id(int,auto) uid(str) dial_username(str) dial_did(str) new_uri(str) 
