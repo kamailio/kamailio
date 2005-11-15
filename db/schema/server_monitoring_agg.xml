@@ -7,78 +7,91 @@
 
 ]>
 
-<table xmlns:my="http://iptel.org/dbschema/mysql">
+<table role="serweb">
     <name>server_monitoring_agg</name>
     <version>1</version>
 
-    <column id="param">
+    <column id="smagg.param">
 	<name>param</name>
 	<type>string</type>
 	<default></default>
 	<size>32</size>
     </column>
+
     <column>
 	<name>s_value</name>
 	<type>int</type>
 	<default>0</default>
     </column>
+
     <column>
 	<name>s_increment</name>
 	<type>int</type>
 	<default>0</default>
     </column>
+
     <column>
 	<name>last_aggregated_increment</name>
 	<type>int</type>
 	<default>0</default>
     </column>
+
     <column>
 	<name>av</name>
 	<type>double</type>
 	<default>0</default>
     </column>
+
     <column>
 	<name>mv</name>
 	<type>int</type>
 	<default>0</default>
     </column>
+
     <column>
 	<name>ad</name>
 	<type>double</type>
 	<default>0</default>
     </column>
+
     <column>
 	<name>lv</name>
 	<type>int</type>
 	<default>0</default>
     </column>
+
     <column>
 	<name>min_val</name>
 	<type>int</type>
 	<default>0</default>
     </column>
+
     <column>
 	<name>max_val</name>
 	<type>int</type>
 	<default>0</default>
     </column>
+
     <column>
 	<name>min_inc</name>
 	<type>int</type>
 	<default>0</default>
     </column>
+
     <column>
 	<name>max_inc</name>
 	<type>int</type>
 	<default>0</default>
     </column>
+
     <column>
 	<name>lastupdate</name>
 	<type>datetime</type>
 	<default>1970-01-01 00:00:00</default>
     </column>
+
     <index>
 	<name>smagg_idx1</name>
-	<colref linkend="param"/>
+	<colref linkend="smagg.param"/>
     </index>
 </table>

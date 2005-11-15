@@ -7,43 +7,52 @@
 
 ]>
 
-<table xmlns:my="http://iptel.org/dbschema/mysql">
+<table>
     <name>gw</name>
     <version>2</version>
-    <column id="gw_name">
+
+    <column id="gw.gw_name">
 	<name>gw_name</name>
 	<type>string</type>
 	<size>128</size>
     </column>
+
     <column>
 	<name>ip_addr</name>
 	<type>unsigned int</type>
     </column>
+
     <column>
 	<name>port</name>
 	<type>unsigned short</type>
 	<null/>
     </column>
+
     <column>
 	<name>uri_scheme</name>
 	<type>unsigned char</type>
 	<null/>
     </column>
+
     <column>
 	<name>transport</name>
 	<type>unsigned short</type>
 	<null/>
     </column>
-    <column id="grp_id">
+
+    <column id="gw.grp_id">
 	<name>grp_id</name>
 	<type>int</type>
     </column>
+
     <index>
 	<name>gw_idx1</name>
-	<colref linkend="gw_name"/>
+	<colref linkend="gw.gw_name"/>
+	<unique/>
     </index>
+
     <index>
 	<name>gw_idx2</name>
-	<colref linkend="grp_id"/>
+	<colref linkend="gw.grp_id"/>
     </index>
 </table>

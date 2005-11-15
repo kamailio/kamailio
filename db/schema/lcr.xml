@@ -7,40 +7,47 @@
 
 ]>
 
-<table xmlns:my="http://iptel.org/dbschema/mysql">
+<table>
     <name>lcr</name>
     <version>1</version>
-    <column id="prefix">
+
+    <column id="lcr.prefix">
 	<name>prefix</name>
 	<type>string</type>
 	<size>16</size>
     </column>
-    <column id="from_uri">
+
+    <column id="lcr.from_uri">
 	<name>from_uri</name>
 	<type>string</type>
 	<default>%</default>
 	<size>&uri_len;</size>
     </column>
-    <column id="grp_id">
+
+    <column id="lcr.grp_id">
 	<name>grp_id</name>
 	<type>int</type>
 	<null/>
     </column>
+
     <column>
 	<name>priority</name>
 	<type>int</type>
 	<null/>
     </column>
+
     <index>
 	<name>lcr_idx1</name>
-	<colref linkend="prefix"/>
+	<colref linkend="lcr.prefix"/>
     </index>
+
     <index>
 	<name>lcr_idx2</name>
-	<colref linkend="from_uri"/>
+	<colref linkend="lcr.from_uri"/>
     </index>
+
     <index>
 	<name>lcr_idx3</name>
-	<colref linkend="grp_id"/>
+	<colref linkend="lcr.grp_id"/>
     </index>
 </table>

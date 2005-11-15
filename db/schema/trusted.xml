@@ -7,28 +7,33 @@
 
 ]>
 
-<table xmlns:my="http://iptel.org/dbschema/mysql">
+<table>
     <name>trusted</name>
     <version>1</version>
-    <column id="src_ip">
+
+    <column id="trusted.src_ip">
 	<name>src_ip</name>
 	<type>string</type>
 	<size>39</size>
     </column>
-    <column id="proto">
+
+    <column id="trusted.proto">
 	<name>proto</name>
 	<type>string</type>
 	<size>4</size>
     </column>
-    <column id="from_pattern">
+
+    <column id="trusted.from_pattern">
 	<name>from_pattern</name>
 	<type>string</type>
 	<size>64</size>
     </column>
+
     <index>
 	<name>trusted_idx</name>
-	<colref linkend="src_ip"/>
-	<colref linkend="proto"/>
-	<colref linkend="from_pattern"/>
+	<unique/>
+	<colref linkend="trusted.src_ip"/>
+	<colref linkend="trusted.proto"/>
+	<colref linkend="trusted.from_pattern"/>
     </index>
 </table>
