@@ -342,6 +342,7 @@ DEFS+= $(extra_defs) \
 	 -DDISABLE_NAGLE \
 	 -DHAVE_RESOLV_RES \
 	 -DDBG_QM_MALLOC \
+         -DHAVE_TIMEGM \
 	 #-DF_MALLOC \
 	 #-DDBG_F_MALLOC \
 	 #-DNO_DEBUG \
