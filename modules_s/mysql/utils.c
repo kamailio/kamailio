@@ -35,11 +35,48 @@
 
 #define _XOPEN_SOURCE 4     /* bsd */
 #define _XOPEN_SOURCE_EXTENDED 1    /* solaris */
+#define _SVID_SOURCE 1 /* timegm */
 
 #include <strings.h>
 #include <string.h>
 #include <time.h>  /*strptime, XOPEN issue must be >=4 */
 #include "utils.h"
+
+time_t _timegm(struct tm *t);
+
+/*
+ * Replacement of timegm (does not exists on all platforms
+ * Taken from 
+ * http://lists.samba.org/archive/samba-technical/2002-November/025737.html
+ */
+time_t _timegm(struct tm* t)
+{
+	time_t tl, tb;
+	struct tm* tg;
+	
+	tl = mktime(t);
+	if (tl == -1) {
+		t->tm_hour--;
+		tl = mktime (t);
+		if (tl == -1) {
+			return -1; /* can't deal with output from strptime */
+		}
+		tl += 3600;
+	}
+	
+	tg = gmtime(&tl);
+	tg->tm_isdst = 0;
+	tb = mktime(tg);
+	if (tb == -1) {
+		tg->tm_hour--;
+		tb = mktime (tg);
+		if (tb == -1) {
+			return -1; /* can't deal with output from gmtime */
+		}
+		tb += 3600;
+	}
+	return (tl - (tb - tl));
+}
 
 
 /*
@@ -55,7 +92,7 @@ int time2mysql(time_t _time, char* _result, int _res_len)
 	       }
 	     */
 
-	t = localtime(&_time);
+	t = gmtime(&_time);
 	return strftime(_result, _res_len, "%Y-%m-%d %H:%M:%S", t);
 }
 
@@ -72,10 +109,14 @@ time_t mysql2time(const char* _str)
 	strptime(_str, "%Y-%m-%d %H:%M:%S", &time);
 
 	     /* Daylight saving information got lost in the database
-	      * so let mktime to guess it. This eliminates the bug when
+	      * so let timegm to guess it. This eliminates the bug when
 	      * contacts reloaded from the database have different time
 	      * of expiration by one hour when daylight saving is used
 	      */ 
 	time.tm_isdst = -1;   
-	return mktime(&time);
+#ifdef HAVE_TIMEGM
+	return timegm(&time);
+#else
+	return _timegm(&time);
+#endif /* HAVE_TIMEGM */
 }
