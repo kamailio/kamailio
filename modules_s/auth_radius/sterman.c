@@ -35,7 +35,7 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../auth/api.h"
-#include "../../modules/acc/dict.h"
+#include "../../rad_dict.h"
 #include "../../usr_avp.h"
 #include "../../ut.h"
 #include "sterman.h"
@@ -88,10 +88,10 @@ static int generate_avps(VALUE_PAIR* received)
 	name.s = &name_str;
 	val.s = &val_str;
 
-	while ((vp = rc_avpair_get(vp, attrs[A_SIP_AVP].v, 0))) {
+	while ((vp = rc_avpair_get(vp, attrs[A_SER_ATTRS].v, 0))) {
 		attr_name_value(vp, &name_str, &val_str);
 		
-		if (add_avp(AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) {
+		if (add_user_avp(AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) {
 			LOG(L_ERR, "generate_avps: Unable to create a new AVP\n");
 		} else {
 			DBG("generate_avps: AVP '%.*s'='%.*s' has been added\n",
@@ -268,7 +268,7 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 	}
 
 	/* Add SIP URI as a check item */
-	if (!rc_avpair_add(rh, &send, attrs[A_SIP_URI_USER].v, user.s, user.len, 0)) {
+	if (!rc_avpair_add(rh, &send, attrs[A_SER_URI_USER].v, user.s, user.len, 0)) {
 		LOG(L_ERR, "sterman(): Unable to add Sip-URI-User attribute\n");
 		goto err;
 	}
