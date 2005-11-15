@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# SIP RADIUS attributes
+# RADIUS Attributes used by SER
 #
 # Schulzrinne indicates attributes according to
 # draft-schulzrinne-sipping-radius-accounting-00
@@ -9,8 +9,7 @@
 # Sterman indicates attributes according to
 # draft-sterman-aaa-sip-00
 #
-# Proprietary indicates an attribute that hasn't
-# been standardized
+# SER indicates implementation specific attributes of SER
 #
 # Check out http://www.iana.org/assignments/radius-types
 # for up-to-date list of standard RADIUS attributes
@@ -26,23 +25,29 @@
 
 
 #### Attributes ###
-#ATTRIBUTE User-Name		         1  string     # RFC2865, acc, auth_radius, avp_radius, group_radius, uri_radius
-#ATTRIBUTE Service-Type		         6  integer    # RFC2865, acc, auth_radius, avp_radius, group_radius, uri_radius
-#ATTRIBUTE Called-Station-Id             30  string     # RFC2865, acc
-#ATTRIBUTE Calling-Station-Id            31  string     # RFC2865, acc
-#ATTRIBUTE Acct-Status-Type              40  integer    # RFC2865, acc
-#ATTRIBUTE Acct-Session-Id               44  string     # RFC2865, acc
-ATTRIBUTE Sip-Method                   101  integer    # Schulzrinne, acc
-ATTRIBUTE Sip-Response-Code            102  integer    # Schulzrinne, acc
-ATTRIBUTE Sip-Cseq                     103  string     # Schulzrinne, acc
-ATTRIBUTE Sip-To-Tag                   104  string     # Schulzrinne, acc
-ATTRIBUTE Sip-From-Tag                 105  string     # Schulzrinne, acc
-ATTRIBUTE Sip-Translated-Request-URI   107  string     # Proprietary, acc
+#ATTRIBUTE User-Name		         1  string     # RFC2865, acc_radius, auth_radius, avp_radius, group_radius, uri_radius
+#ATTRIBUTE NAS-IP-Address                4  ipaddr     # RFC2865, acc_radius, auth_radius
+#ATTRIBUTE NAS-Port                      5  integer    # RFC2865, acc_radius, auth_radius
+#ATTRIBUTE Service-Type		         6  integer    # RFC2865, acc_radius, auth_radius, avp_radius, group_radius, uri_radius
+#ATTRIBUTE Called-Station-Id            30  string     # RFC2865, acc_radius
+#ATTRIBUTE Calling-Station-Id           31  string     # RFC2865, acc_radius
+#ATTRIBUTE Acct-Status-Type             40  integer    # RFC2866, acc_radius
+#ATTRIBUTE Acct-Session-Id              44  string     # RFC2866, acc_radius
+#ATTRIBUTE Acct-Session-Time            46  integer    # RFC2866, acc_radius
+
+ATTRIBUTE Sip-Method                   101  string     # Schulzrinne, acc_radius
+ATTRIBUTE Sip-Response-Code            102  integer    # Schulzrinne, acc_radius
+ATTRIBUTE Sip-Cseq                     103  integer    # Schulzrinne, acc_radius
+ATTRIBUTE Sip-To-Tag                   104  string     # Schulzrinne, acc_radius
+ATTRIBUTE Sip-From-Tag                 105  string     # Schulzrinne, acc_radius
+ATTRIBUTE Sip-Branch-Id                106  string     # Schulzrinne, not used
+ATTRIBUTE Sip-Translated-Request-ID    107  string     # Schulzrinne, acc_radius
+ATTRIBUTE Sip-Source-IP-Address        108  ipaddr     # Schulzrinne, acc_radius
+ATTRIBUTE Sip-Source-Port              109  integer    # Schulzrinne, acc_radius
+
 ATTRIBUTE Digest-Response              206  string     # Sterman, auth_radius
-ATTRIBUTE Sip-Uri-User                 208  string     # Proprietary, auth_radius
-ATTRIBUTE Sip-Group                    211  string     # Proprietary, group_radius
-ATTRIBUTE Sip-Rpid                     213  string     # Proprietary, auth_radius
-ATTRIBUTE SIP-AVP                      225  string     # Proprietary, avp_radius
+
+# Digest-Response attribute sub-types
 ATTRIBUTE Digest-Realm                1063  string     # Sterman, auth_radius
 ATTRIBUTE Digest-Nonce                1064  string     # Sterman, auth_radius
 ATTRIBUTE Digest-Method               1065  string     # Sterman, auth_radius
@@ -54,18 +59,45 @@ ATTRIBUTE Digest-CNonce               1070  string     # Sterman, auth_radius
 ATTRIBUTE Digest-Nonce-Count          1071  string     # Sterman, auth_radius
 ATTRIBUTE Digest-User-Name            1072  string     # Sterman, auth_radius
 
+#
+# The following three attributes are used for URI and group membership
+# checking. They will be deprecated in favor of generic attributes in
+# a future version of SER
+#
+# The following group of attributes is mapped into the experimental range
+ATTRIBUTE SER-Uri-User                 208  string     # SER, auth_radius
+ATTRIBUTE SER-Group                    211  string     # SER, group_radius
+ATTRIBUTE SER-Rpid                     213  string     # SER, auth_radius
+
+# The following group of attributes is mapped into the implementation-specific range
+ATTRIBUTE SER-Attrs                    225  string     # SER, acc_radius
+ATTRIBUTE SER-From                     226  string     # SER, acc_radius
+ATTRIBUTE SER-Flags                    227  integer    # SER, acc_radius
+ATTRIBUTE SER-Original-Request-ID      228  string     # SER, acc_radius
+ATTRIBUTE SER-To                       229  string     # SER, acc_radius
+ATTRIBUTE SER-Digest-Username          230  string     # SER, acc_radius
+ATTRIBUTE SER-Digest-Realm             231  string     # SER, acc_radius
+ATTRIBUTE SER-Request-Timestamp        232  integer    # SER, acc_radius
+ATTRIBUTE SER-To-DID                   233  string     # SER, acc_radius
+ATTRIBUTE SER-From-UID                 234  string     # SER, acc_radius
+ATTRIBUTE SER-From-DID                 235  string     # SER, acc_radius
+ATTRIBUTE SER-To-UID                   236  string     # SER, acc_radius
+ATTRIBUTE SER-Response-Timestamp       237  integer    # SER, acc_radius
+
+
 ### CISCO Vendor Specific Attributes ###
 #VENDOR Cisco              9
-#ATTRIBUTE Cisco-AVPair    1   string   Cisco           # VSA, auth_radius
+#ATTRIBUTE Cisco-AVPair    1   string   Cisco          # VSA, auth_radius
 
 ### Acct-Status-Type Values ###
-#VALUE Acct-Status-Type     Start             1         # RFC2866, acc
-#VALUE Acct-Status-Type     Stop              2         # RFC2866, acc
-VALUE Acct-Status-Type     Failed           15         # RFC2866, acc
+#VALUE Acct-Status-Type     Start            1         # RFC2866, acc_radius
+#VALUE Acct-Status-Type     Stop             2         # RFC2866, acc_radius
+VALUE Acct-Status-Type      Interim-Update   3         # RFC2866, acc_radius
+VALUE Acct-Status-Type      Failed          15         # RFC2866, acc_radius
 
 ### Service-Type Values ###
 VALUE Service-Type         Call-Check       10         # RFC2865, uri_radius
-VALUE Service-Type         Group-Check      12         # Proprietary, group_radius
-VALUE Service-Type         Sip-Session      15         # Schulzrinne, acc, auth_radius
-VALUE Service-Type         SIP-Caller-AVPs  30         # Proprietary, avp_radius
-VALUE Service-Type         SIP-Callee-AVPs  31         # Proprietary, avp_radius
+VALUE Service-Type         SER-Group-Check  12         # SER, group_radius
+VALUE Service-Type         Sip-Session      15         # Schulzrinne, acc_radius, auth_radius
+VALUE Service-Type         SER-Caller-AVPs  30         # SER, avp_radius
+VALUE Service-Type         SER-Callee-AVPs  31         # SER, avp_radius
