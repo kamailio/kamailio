@@ -62,6 +62,11 @@
     <xi:include href="speed_dial.xml"/>
     <xi:include href="sd_attrs.xml"/>
 
+    <!-- Presence related tables -->
+    <xi:include href="presentity.xml"/>
+    <xi:include href="presentity_contact.xml"/>
+    <xi:include href="watcherinfo.xml"/>
+
     <!-- User with read/write access -->
     <user>
 	<username>ser</username>
@@ -75,5 +80,4 @@
 	<password>47serro11</password>
 	<privileges>SELECT</privileges>
     </user>
-
 </database>

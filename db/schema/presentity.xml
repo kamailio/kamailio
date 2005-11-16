@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table role="presence"
+    xmlns:db="http://docbook.org/ns/docbook"
+    xmlns:my="http://iptel.org/dbschema/mysql"
+    xmlns:pg="http://iptel.org/dbschema/postgres"
+    xmlns:dt="http://iptel.org/dbschema/dbtext">
+    <name>presentity</name>
+    <version>1</version>
+    
+    <column id="presentity.presid">
+	<name>presid</name>
+	<type>unsigned int</type>
+	<size>10</size>
+	<my:type>INT(10) UNSIGNED AUTO_INCREMENT</my:type>
+	<pg:type>SERIAL</pg:type>
+	<dt:type>int,auto</dt:type>
+    </column>
+	
+    <column id="presentity.uri">
+	<name>uri</name>
+	<type>string</type>
+	<size>&uri_len;</size>
+    </column>
+
+    <column>
+	<name>pdomain</name>
+	<type>string</type>
+	<size>128</size>
+    </column>
+
+    <index>
+	<name>presentity_key</name>
+	<colref linkend="presentity.presid"/>
+	<unique/>
+    </index>
+
+    <index>
+	<name>presentity_key2</name>
+	<colref linkend="presentity.uri"/>
+    </index>
+</table>

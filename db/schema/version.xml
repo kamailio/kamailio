@@ -103,4 +103,16 @@
 	<value col="tn"><xi:include href="lcr.xml" xpointer="xpointer(table/name/text())"/></value>
 	<value col="tv"><xi:include href="lcr.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
+    <row>
+	<value col="tn"><xi:include href="presentity.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="presentity.xml" xpointer="xpointer(table/version/text())"/></value>
+    </row>
+    <row role="presence">
+	<value col="tn"><xi:include href="presentity_contact.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="presentity_contact.xml" xpointer="xpointer(table/version/text())"/></value>
+    </row>
+    <row role="presence">
+	<value col="tn"><xi:include href="watcherinfo.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="watcherinfo.xml" xpointer="xpointer(table/version/text())"/></value>
+    </row>
 </table>
