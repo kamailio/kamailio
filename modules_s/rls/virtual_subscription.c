@@ -280,6 +280,7 @@ int vs_create(str *uri, str *package, virtual_subscription_t **dst, display_name
 	(*dst)->status = subscription_pending;
 	(*dst)->local_subscription = NULL;
 	(*dst)->subscription = subscription;
+	generate_db_id(&(*dst)->dbid, *dst);
 
 	add_to_vs_list(*dst);
 

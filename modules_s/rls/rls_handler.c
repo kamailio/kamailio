@@ -71,6 +71,32 @@ static int parse_rls_headers(struct sip_msg* _m)
 	return 0;
 }
 
+static int get_event(struct sip_msg *_m)
+{
+	int et = 0;
+	event_t *event = NULL;
+	
+	if (_m->event) {
+		event = (event_t*)(_m->event->parsed);
+		et = event->parsed;
+	} else {
+		LOG(L_ERR, "no event package for RLS - using EVENT_PRESENCE\n");
+		et = EVENT_PRESENCE;
+	}
+	return et;
+}
+
+/* returns 1 if package supported by RLS */
+static int verify_event_package(struct sip_msg *m)
+{
+	int et = get_event(m);
+	switch (et) {
+		case EVENT_PRESENCE: return 0;
+		default: return -1;
+	}
+	return -1;
+}
+
 static int add_response_header(struct sip_msg *_m, char *hdr)
 {
 	if (!add_lump_rpl(_m, hdr, strlen(hdr), LUMP_RPL_HDR)) return -1;
@@ -168,7 +194,7 @@ static int handle_new_subscription(struct sip_msg *m, const char *xcap_server, i
 
 	/* free subscription if only polling */
 	if (sm_subscription_terminated(&s->subscription) == 0) {
-		rls_free(s);
+		rls_remove(s);
 	}
 	
 	rls_unlock();
@@ -195,7 +221,7 @@ static int handle_renew_subscription(struct sip_msg *m, int send_error_responses
 	
 	res = rls_find_subscription(from_tag, to_tag, call_id, &s);
 	if ((res != RES_OK) || (!s)) {
-		ERROR_LOG("handle_renew_subscription(): can't refresh unknown subscription\n");
+		DEBUG_LOG("handle_renew_subscription(): can't refresh unknown subscription\n");
 		rls_unlock();
 		if (send_error_responses)
 			send_reply(m, 481, "Call/Transaction Does Not Exist");
@@ -236,7 +262,7 @@ static int handle_renew_subscription(struct sip_msg *m, int send_error_responses
 
 	/* free subscription if only polling */
 	if (sm_subscription_terminated(&s->subscription) == 0) {
-		rls_free(s);
+		rls_remove(s);
 	}
 	
 	rls_unlock();
@@ -263,6 +289,15 @@ int handle_rls_subscription(struct sip_msg* _m, const char *xcap_server, char *s
 		if (send_err) {
 			add_response_header(_m, "Reason-Phrase: Bad or missing headers\r\n");
 			send_reply(_m, 400, "Bad Request");
+		}
+		return -1;
+	}
+	if (verify_event_package(_m) != 0) { 
+		LOG(L_INFO, "handle_rls_subscription(): unsupported events.\n");
+		/* allow only selected packages independently on rls document */
+		if (send_err) {
+			add_response_header(_m, "Allow-Events: presence\r\n");
+			send_reply(_m, 489, "Bad Event");
 		}
 		return -1;
 	}

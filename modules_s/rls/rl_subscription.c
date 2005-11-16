@@ -17,7 +17,7 @@
 #include "../../parser/parse_from.h"
 #include "../../data_lump_rpl.h"
 
-/* shared structure holding the data */
+/* shared data - access due to tracing */
 typedef struct {
 	rl_subscription_t *first;
 	rl_subscription_t *last;
@@ -63,7 +63,7 @@ static int send_notify_cb(struct _subscription_data_t *s)
 
 static int terminate_subscription_cb(struct _subscription_data_t *s)
 {
-	if (s) rls_free((rl_subscription_t*)s->usr_data);
+	if (s) rls_remove((rl_subscription_t*)s->usr_data);
 	return 0;
 }
 
@@ -200,6 +200,25 @@ static int create_virtual_subscriptions(struct sip_msg *m, rl_subscription_t *ss
 }
 /************* RL subscription manipulation function  ************/
 
+rl_subscription_t *rls_alloc_subscription()
+{
+	rl_subscription_t *s;
+	
+	s = (rl_subscription_t*)shm_malloc(sizeof(rl_subscription_t));
+	if (!s) {
+		LOG(L_ERR, "rls_alloc_subscription(): can't allocate memory\n");
+		return NULL;
+	}
+	s->subscription.status = subscription_uninitialized;
+	s->doc_version = 0;
+	s->changed = 0;
+	/* s->first_vs = NULL;
+	s->last_vs = NULL; */
+	ptr_vector_init(&s->vs, 4);
+	
+	return s;
+}
+
 int rls_create_subscription(struct sip_msg *m, rl_subscription_t **dst, const char *xcap_root)
 {
 	rl_subscription_t *s;
@@ -212,18 +231,13 @@ int rls_create_subscription(struct sip_msg *m, rl_subscription_t **dst, const ch
 	 * it is probbably not a message for RLS! */
 	/* FIXME: test if Accept = multipart/related, application/rlmi+xml! */
 	
-	s = (rl_subscription_t*)shm_malloc(sizeof(rl_subscription_t));
+	s = rls_alloc_subscription();
 	if (!s) {
 		LOG(L_ERR, "rls_create_new(): can't allocate memory\n");
 		return RES_MEMORY_ERR;
 	}
-	s->subscription.status = subscription_uninitialized;
-	s->doc_version = 0;
-	s->changed = 0;
-	/* s->first_vs = NULL;
-	s->last_vs = NULL; */
-	ptr_vector_init(&s->vs, 4);
-
+	generate_db_id(&s->dbid, s);
+			
 	res = sm_init_subscription_nolock(rls_manager, &s->subscription, m);
 	if (res != RES_OK) {
 		rls_free(s);
@@ -245,6 +259,13 @@ int rls_create_subscription(struct sip_msg *m, rl_subscription_t **dst, const ch
 		return res;
 	}
 
+	if (use_db) {
+		if (rls_db_add(s) != 0) {
+			rls_free(s);
+			return RES_INTERNAL_ERR; /* FIXME RES_DB_ERR */
+		}
+	}
+	
 	*dst = s;
 	return RES_OK;
 }
@@ -276,7 +297,18 @@ int rls_refresh_subscription(struct sip_msg *m, rl_subscription_t *s)
 	if (!s) return RES_INTERNAL_ERR;
 	res = sm_refresh_subscription_nolock(rls_manager, &s->subscription, m);
 
+	if (use_db) rls_db_update(s);
+
 	return res;
+}
+
+void rls_remove(rl_subscription_t *s)
+{
+	if (!s) return;
+	
+	if (use_db) rls_db_remove(s);
+
+	rls_free(s);
 }
 
 void rls_free(rl_subscription_t *s)
@@ -285,8 +317,11 @@ void rls_free(rl_subscription_t *s)
 	virtual_subscription_t *vs;
 	
 	if (!s) return;
-
+	
 	DEBUG_LOG("rls_free(): %.*s\n", FMT_STR(s->subscription.record_id));
+
+	if (use_db) rls_db_remove(s);
+
 	sm_release_subscription_nolock(rls_manager, &s->subscription);
 	cnt = ptr_vector_size(&s->vs);
 	for (i = 0; i < cnt; i++) {
@@ -311,7 +346,7 @@ void rls_notify_cb(struct cell* t, int type, struct tmcb_params* params)
 		LOG(L_ERR, "rls_notify_cb(): %d response on NOTIFY - removing subscription %p\n", params->code, s);
 
 		rls_lock();
-		if (s) rls_free(s);
+		if (s) rls_remove(s);
 		rls_unlock();
 	}
 }
@@ -402,13 +437,16 @@ int rls_generate_notify(rl_subscription_t *s, int full_info)
 		if (res < 0) {
 			/* does this mean, that the callback was not called ??? */
 			LOG(L_ERR, "rls_generate_notify(): t_request_within FAILED: %d! Freeing RL subscription.\n", res);
-			rls_free(s); /* ?????? */
+			rls_remove(s); /* ?????? */
 		}
 	}
 	
 	if (doc.s) pkg_free(doc.s);
 	if (content_type.s) pkg_free(content_type.s);
 	if (headers.s) pkg_free(headers.s);
+	
+	if (use_db) rls_db_update(s);
+	
 	return res;
 }
 	
@@ -420,3 +458,8 @@ int rls_prepare_subscription_response(rl_subscription_t *s, struct sip_msg *m) {
 	return sm_prepare_subscription_response(rls_manager, &s->subscription, m);
 }
 
+/** returns the count of seconds remaining to subscription expiration */
+int rls_subscription_expires_in(rl_subscription_t *s) 
+{
+	return sm_subscription_expires_in(rls_manager, &s->subscription);
+}

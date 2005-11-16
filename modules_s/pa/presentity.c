@@ -177,7 +177,7 @@ static int db_add_presentity(presentity_t* presentity)
 
 		} else {
 			/* insert new record into database */
-			LOG(L_INFO, "new_presentity: inserting %d cols into table\n", n_query_cols);
+			LOG(L_DBG, "new_presentity: inserting %d cols into table\n", n_query_cols);
 			if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols)
 					< 0) {
 				LOG(L_ERR, "new_presentity: Error while inserting tuple\n");

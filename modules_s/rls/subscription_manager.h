@@ -130,4 +130,19 @@ int sm_subscription_terminated(subscription_data_t *s);
 /** returns 0 if the subscriptions is in one of pending states */
 int sm_subscription_pending(subscription_data_t *s);
 
+/** returns the count of seconds remaining to subscription expiration */
+int sm_subscription_expires_in(subscription_manager_t *mng,
+		subscription_data_t *s);
+
+int sm_init_subscription_nolock_ex(subscription_manager_t *mng,
+		subscription_data_t *dst, 
+		dlg_t *dialog,
+		subscription_status_t status,
+		const str_t *contact,
+		const str_t *record_id,
+		const str_t *package,
+		const str_t *subscriber,
+		int expires_after,
+		void *subscription_data);
+
 #endif

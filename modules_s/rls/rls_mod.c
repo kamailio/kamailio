@@ -1,4 +1,5 @@
 #include "rls_mod.h"
+#include "fifo.h"
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
@@ -25,7 +26,8 @@ static int rls_subscribe_fixup(void** param, int param_no);
 /* authorization parameters */
 char *auth_type_str = NULL; /* type of authorization: none,implicit,xcap */
 char *auth_xcap_root = NULL;	/* must be set if xcap authorization */
-
+int db_mode = 0; /* 0 -> no DB, 1 -> write through */
+char *db_url = NULL;
 
 /** Exported functions */
 static cmd_export_t cmds[]={
@@ -42,6 +44,8 @@ static param_export_t params[]={
 	{"default_expiration", INT_PARAM, &rls_default_expiration }, 
 	{"auth", STR_PARAM, &auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
 	{"auth_xcap_root", STR_PARAM, &auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
+	{"db_mode", INT_PARAM, &db_mode },
+	{"db_url", STR_PARAM, &db_url },
 	{0, 0, 0}
 };
 
@@ -57,7 +61,9 @@ struct module_exports exports = {
 };
 
 struct tm_binds tmb;
-	
+dlg_func_t dlg_func;
+int use_db = 0;
+
 int rls_min_expiration = 60;
 int rls_max_expiration = 7200;
 int rls_default_expiration = 3761;
@@ -67,6 +73,8 @@ rls_auth_params_t rls_auth_params;	/* structure filled according to parameters (
 
 /* internal data members */
 static ptr_vector_t *xcap_servers = NULL;
+db_con_t* rls_db = NULL; /* database connection handle */
+db_func_t rls_dbf;	/* database functions */
 
 static int set_auth_params(rls_auth_params_t *dst, const char *auth_type_str, char *xcap_root)
 {
@@ -107,6 +115,7 @@ static int set_auth_params(rls_auth_params_t *dst, const char *auth_type_str, ch
 int rls_mod_init(void)
 {
     load_tm_f load_tm;
+	bind_dlg_mod_f bind_dlg;
 
 	if (time_event_management_init() != 0) {
 		LOG(L_ERR, "rls_mod_init(): Can't initialize time event management!\n");
@@ -123,10 +132,18 @@ int rls_mod_init(void)
 		LOG(L_ERR, "rls_mod_init(): Can't import tm!\n");
 		return -1;
 	}
-
 	/* let the auto-loading function load all TM stuff */
 	if (load_tm(&tmb)==-1) {
 		LOG(L_ERR, "rls_mod_init(): load_tm() failed\n");
+		return -1;
+	}
+	
+	bind_dlg = (bind_dlg_mod_f)find_export("bind_dlg_mod", -1, 0);
+	if (!bind_dlg) {
+		LOG(L_ERR, "Can't import dlg\n");
+		return -1;
+	}
+	if (bind_dlg(&dlg_func) != 0) {
 		return -1;
 	}
 	
@@ -149,6 +166,30 @@ int rls_mod_init(void)
 	 * and other (type specific) parameters */
 	if (set_auth_params(&rls_auth_params, auth_type_str, auth_xcap_root) != 0) return -1;
 
+
+	use_db = 0;
+	if (db_mode > 0) {
+		int db_url_len = db_url ? strlen(db_url) : 0;
+		if (!db_url_len) {
+			LOG(L_ERR, "rls_mod_init(): no db_url specified but db_mode > 0\n");
+			db_mode = 0;
+		}
+	}
+	if (db_mode > 0) {
+		if (bind_dbmod(db_url, &rls_dbf) < 0) {
+			LOG(L_ERR, "rls_mod_init(): Can't bind database module via url %s\n", db_url);
+			return -1;
+		}
+
+		if (!DB_CAPABILITY(rls_dbf, DB_CAP_ALL)) { /* ? */
+			LOG(L_ERR, "rls_mod_init(): Database module does not implement all functions needed by the module\n");
+			return -1;
+		}
+		use_db = 1;
+	}
+
+	rls_fifo_register();
+	
 	/* ??? if other module uses this libraries it might be a problem ??? */
 	xmlInitParser();
 	curl_global_init(CURL_GLOBAL_ALL);
@@ -158,6 +199,21 @@ int rls_mod_init(void)
 
 int rls_child_init(int _rank)
 {
+	rls_db = NULL;
+	if (use_db) {
+		if (rls_dbf.init) rls_db = rls_dbf.init(db_url);
+		if (!rls_db) {
+			LOG(L_ERR, "ERROR: rls_child_init(%d): "
+					"Error while connecting database\n", _rank);
+			return -1;
+		}
+		if (_rank == 0) {
+			rls_lock();
+			db_load_rls();
+			rls_unlock();
+		}
+	}
+
 	return 0;
 }
 
@@ -192,6 +248,12 @@ void rls_mod_destroy(void)
 
 	DEBUG_LOG(" ... time event management\n");
 	time_event_management_destroy();
+
+	DEBUG_LOG(" %s: ... db\n", __func__);
+	if (use_db) {
+		if (rls_db && rls_dbf.close) rls_dbf.close(rls_db);
+		rls_db = NULL;
+	}
 	
 	/* ??? if other module uses this libraries it might be a problem ??? */
 /*	xmlCleanupParser();

@@ -278,7 +278,7 @@ static int set_watcher_db_data(presentity_t *_p, watcher_t *watcher,
 	
 	cols[n_cols] = "r_uri";
 	vals[n_cols].type = DB_STR;
-	vals[n_cols].nul = n_cols;
+	vals[n_cols].nul = 0;
 	vals[n_cols].val.str_val.s = _p->uri.s;
 	vals[n_cols].val.str_val.len = _p->uri.len;
 	n_cols++;

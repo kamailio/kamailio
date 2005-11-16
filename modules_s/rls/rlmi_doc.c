@@ -24,7 +24,7 @@ static void add_virtual_subscriptions_to_rlmi(dstring_t *doc, rl_subscription_t 
 
 		dstr_append_zt(doc, "\t<resource uri=\"");
 		dstr_append_str(doc, &vs->uri);
-		dstr_append_zt(doc, "\">\n");
+		dstr_append_zt(doc, "\">\r\n");
 
 		/* add display names */
 		ncnt = vector_size(&vs->display_names);
@@ -38,7 +38,7 @@ static void add_virtual_subscriptions_to_rlmi(dstring_t *doc, rl_subscription_t 
 			}
 			else dstr_append_zt(doc, "\t\t<name>");
 			dstr_append_str(doc, &dn.name);
-			dstr_append_zt(doc, "</name>\n");
+			dstr_append_zt(doc, "</name>\r\n");
 		}
 	
 		sprintf(tmp, "vs%di%d", i, 1);
@@ -73,11 +73,11 @@ static void add_virtual_subscriptions_to_rlmi(dstring_t *doc, rl_subscription_t 
 			dstr_append_zt(doc, " cid=\"");
 			dstr_append_zt(doc, part_id);
 			dstr_append_zt(doc, tmp);
-			dstr_append_zt(doc, "\"/>\n");
+			dstr_append_zt(doc, "\"/>\r\n");
 		}
-		else dstr_append_zt(doc, "/>\n");
+		else dstr_append_zt(doc, "/>\r\n");
 		
-		dstr_append_zt(doc, "\t</resource>\n");
+		dstr_append_zt(doc, "\t</resource>\r\n");
 	}
 }
 
@@ -153,20 +153,20 @@ int create_rlmi_document(str *dst, str *content_type_dst, rl_subscription_t *s, 
 	
 	/* -- RLMI document -- */
 	dstr_append_zt(&doc, 
-		"<?xml version=\"1.0\"?>\n"
+		"<?xml version=\"1.0\"?>\r\n"
 		"<list xmlns=\"urn:ietf:params:xml:ns:rlmi\" "
 		"uri=\"");
 	dstr_append_str(&doc, rls_get_uri(s));
 	dstr_append_zt(&doc, "\" version=\"");
 	sprintf(tmp, "%d", s->doc_version); 
 	dstr_append_zt(&doc, tmp);
-	if (full_info) dstr_append_zt(&doc, "\" fullState=\"true\">\n");
-	else dstr_append_zt(&doc, "\" fullState=\"false\">\n");
+	if (full_info) dstr_append_zt(&doc, "\" fullState=\"true\">\r\n");
+	else dstr_append_zt(&doc, "\" fullState=\"false\">\r\n");
 
 	/* add all virtual subscriptions to the RLMI document */
 	add_virtual_subscriptions_to_rlmi(&doc, s, part_id);
 
-	dstr_append_zt(&doc, "</list>\n\r\n");
+	dstr_append_zt(&doc, "</list>\r\n\r\n");
 	
 	/* add all virtual subscriptions status documents */
 	add_virtual_subscriptions_documents(&doc, s, boundary_str, part_id);

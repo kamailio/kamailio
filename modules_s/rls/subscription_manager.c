@@ -435,10 +435,12 @@ int sm_init_subscription_nolock(subscription_manager_t *mng,
 		free_subscription(dst);
 		return e; /* it contains the error number */
 	}
-	if (e > 0) {
-		/* add this subscription to the list of subscriptions */
-		sm_add_subscription_nolock(mng, dst);
+	
+	/* add this subscription to the list of subscriptions */
+	sm_add_subscription_nolock(mng, dst); 
+	/* FIXME - bug? - add if e == 0 too? */
 		
+	if (e > 0) {
 		/* start timeout timer for this subscription */
 		tem_add_event_nolock(&mng->timer, e, &dst->expiration);
 		
@@ -452,6 +454,63 @@ int sm_init_subscription_nolock(subscription_manager_t *mng,
 	}
 
 	return RES_OK;
+}
+
+int sm_init_subscription_nolock_ex(subscription_manager_t *mng,
+		subscription_data_t *dst, 
+		dlg_t *dialog,
+		subscription_status_t status,
+		const str_t *contact,
+		const str_t *record_id,
+		const str_t *package,
+		const str_t *subscriber,
+		int expires_after,
+		void *subscription_data)
+{
+	int r = 0;
+	
+	if (!dst) return RES_INTERNAL_ERR;
+	
+	dst->usr_data = subscription_data;
+	dst->prev = NULL;
+	dst->next = NULL;
+	dst->dialog = dialog;
+	r = str_dup(&dst->contact, contact);
+	dst->status = status;
+	r = r | str_dup(&dst->record_id, record_id);
+	r = r | str_dup(&dst->subscriber, subscriber);
+	r = r | str_dup(&dst->package, package);
+	
+	/* fill time event structure */
+	dst->expiration.cb = subscription_expiration_cb;
+	dst->expiration.cb_param = dst;	
+	dst->expiration.cb_param1 = mng;	
+	
+	DEBUG_LOG("uri=\'%.*s\'\n", FMT_STR(dst->record_id));
+	DEBUG_LOG("package=\'%.*s\'\n", FMT_STR(dst->package));
+	DEBUG_LOG("subscriber_uri=\'%.*s\'\n", FMT_STR(dst->subscriber));
+	DEBUG_LOG("contact=\'%.*s\'\n", FMT_STR(dst->contact));
+
+	/* set expiration timeout from min, max, default and Expires header field */
+	if (expires_after < 0) expires_after = 0;
+	if (expires_after > 0) {
+		/* start timeout timer for this subscription */
+		tem_add_event_nolock(&mng->timer, expires_after, &dst->expiration);
+		
+		DEBUG_LOG("subscription will expire in %d s\n", expires_after);
+	}
+	else {	/* polling */
+		if (dst->status == subscription_pending)
+			dst->status = subscription_terminated_pending; 
+		else
+			dst->status = subscription_terminated; 
+	}
+
+	/* add this subscription to the list of subscriptions */
+	sm_add_subscription_nolock(mng, dst);
+	/* FIXME - bug? - add if e == 0 too? */
+
+	return r;
 }
 
 int sm_refresh_subscription_nolock(subscription_manager_t *mng,
@@ -523,15 +582,22 @@ int sm_prepare_subscription_response(subscription_manager_t *mng,
 			return -1;
 		}
 	}
-	if (sm_subscription_terminated(s) != 0) /* NOT terminated */
-		t = (s->expiration.tick_time - mng->timer.tick_counter) * mng->timer.atomic_time;
-	else t = 0;
+	t = sm_subscription_expires_in(mng, s);
 	sprintf(tmp, "Expires: %d\r\n", t);
 	if (!add_lump_rpl(m, tmp, strlen(tmp), LUMP_RPL_HDR)) {
 		LOG(L_ERR, "sm_prepare_subscription_response(): Can't add Expires header to the response\n");
 		return -1;
 	}
 	return 0;
+}
+
+int sm_subscription_expires_in(subscription_manager_t *mng,
+		subscription_data_t *s)
+{
+	int t = 0;
+	if (sm_subscription_terminated(s) != 0) /* NOT terminated */
+		t = (s->expiration.tick_time - mng->timer.tick_counter) * mng->timer.atomic_time;
+	return t;
 }
 
 int sm_find_subscription(subscription_manager_t *mng,

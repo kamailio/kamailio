@@ -145,6 +145,7 @@ static int dlg_mod_child_init(int _rank)
 
 static void dlg_mod_destroy(void)
 {
+	/* FIXME: ??? is this the right place? not st like child_destroy ??? */
 	if (db_mode) close_dlg_db_connection(dlg_db);
 	dlg_db = NULL;
 }
