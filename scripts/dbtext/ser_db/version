@@ -19,3 +19,6 @@ sd_attrs:1
 gw:2
 gw_grp:2
 lcr:1
+presentity:1
+presentity_contact:1
+watcherinfo:1
