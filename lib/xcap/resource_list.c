@@ -450,7 +450,7 @@ static int create_flat_list(service_t *srv, xcap_query_t *xcap_params, const cha
 /* ------- helper functions for rls examining ------- */
 
 /** compare str_t and zero terminated string */
-int str_strcmp(const str_t *a, const char *b)
+static int str_strcmp(const str_t *a, const char *b)
 {
 	int i;
 	
