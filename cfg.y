@@ -63,6 +63,7 @@
  * 2005-07-11 added DNS_RETR_TIME, DNS_RETR_NO, DNS_SERVERS_NO, DNS_USE_SEARCH,
  *             DNS_TRY_IPV6 (andrei)
  * 2005-07-12  default onreply route added (andrei)
+ * 2005-11-16  fixed if (cond) cmd; (andrei)
  *
  */
 
@@ -304,7 +305,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 
 /*non-terminals */
 %type <expr> exp exp_elem /*, condition*/
-%type <action> action actions cmd if_cmd stm
+%type <action> action actions cmd if_cmd stm exp_stm
 %type <ipaddr> ipv4 ipv6 ipv6addr ip
 %type <ipnet> ipnet
 %type <strval> host
@@ -338,7 +339,6 @@ statement:	assign_stm
 		| {rt=FAILURE_ROUTE;} failure_route_stm
 		| {rt=ONREPLY_ROUTE;} onreply_route_stm
 		| {rt=BRANCH_ROUTE;} branch_route_stm
-
 		| CR	/* null statement*/
 	;
 
@@ -1050,7 +1050,7 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem(	$2, STRING_ST,
 		| MYSELF error	{ $$=0; 
 							yyerror ("invalid operator, == or != expected");
 						}
-		| stm				{ $$=mk_elem( NO_OP, ACTIONS_ST, ACTION_O, $1 ); }
+		| exp_stm			{ $$=mk_elem( NO_OP, ACTIONS_ST, ACTION_O, $1 );  }
 		| NUMBER		{$$=mk_elem( NO_OP, NUMBER_ST, NUMBER_O, (void*)$1 ); }
 	;
 
@@ -1095,9 +1095,13 @@ host:	ID				{ $$=$1; }
 	;
 
 
-stm:		cmd						{ $$=$1; }
+exp_stm:	cmd						{ $$=$1; }
 		|	if_cmd					{ $$=$1; }
 		|	LBRACE actions RBRACE	{ $$=$2; }
+	;
+
+stm:		action					{ $$=$1; }
+		|	LBRACE actions	RBRACE	{ $$=$2; }
 	;
 
 actions:	actions action	{$$=append_action($1, $2); }
