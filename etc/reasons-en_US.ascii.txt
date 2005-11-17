@@ -1,0 +1,60 @@
+#
+# $Id$
+#
+# English reason phrases
+#
+# Format:
+#    <code>:<reason_regex>:<lang>:<new_reason>
+#
+100::en_US.ascii:Trying
+180::en_US.ascii:Ringing
+181::en_US.ascii:Call Is Being Forwarded
+182::en_US.ascii:Queued
+183::en_US.ascii:Session Progress
+200::en_US.ascii:OK
+202::en_US.ascii:Pending
+300::en_US.ascii:Multiple Choices
+301::en_US.ascii:Moved Permanently
+302::en_US.ascii:Moved Temporarily
+305::en_US.ascii:Use Proxy
+380::en_US.ascii:Alternative Service
+400::en_US.ascii:Bad Request
+401::en_US.ascii:Unauthorized
+402::en_US.ascii:Payment Required
+403::en_US.ascii:Forbidden
+404::en_US.ascii:Not Found
+405::en_US.ascii:Method Not Allowed
+406::en_US.ascii:Not Acceptable
+407::en_US.ascii:Proxy Authentication Required
+408::en_US.ascii:Request Timeout
+410::en_US.ascii:Gone
+413::en_US.ascii:Request Entity Too Large
+414::en_US.ascii:Request-URI Too Long
+415::en_US.ascii:Unsupported Media Type
+416::en_US.ascii:Unsupported URI Scheme
+420::en_US.ascii:Bad Extension
+421::en_US.ascii:Extension Required
+423::en_US.ascii:Interval Too Brief
+480::en_US.ascii:Temporarily Unavailable
+481::en_US.ascii:Call/Transaction Does Not Exist
+482::en_US.ascii:Loop Detected
+483::en_US.ascii:Too Many Hops
+484::en_US.ascii:Address Incomplete
+485::en_US.ascii:Ambiguous
+486::en_US.ascii:Busy Here
+487::en_US.ascii:Request Terminated
+488::en_US.ascii:Not Acceptable Here
+491::en_US.ascii:Request Pending
+493::en_US.ascii:Undecipherable
+500::en_US.ascii:Server Internal Error
+501::en_US.ascii:Not Implemented
+502::en_US.ascii:Bad Gateway
+503::en_US.ascii:Service Unavailable
+504::en_US.ascii:Server Time-out
+505::en_US.ascii:Version Not Supported
+513::en_US.ascii:Message Too Large
+600::en_US.ascii:Busy Everywhere
+603::en_US.ascii:Decline
+604::en_US.ascii:Does Not Exist Anywhere
+606::en_US.ascii:Not Acceptable
+

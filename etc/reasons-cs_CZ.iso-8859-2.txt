@@ -1,0 +1,60 @@
+#
+# $Id$
+#
+# Czech translation of reason phrases
+#
+# Format:
+#    <code>:<reason_regex>:<lang>:<new_reason>
+#
+ 
+100::cs_CZ.iso-8859-2:Navazuji spojeni
+180::cs_CZ.iso-8859-2:Vyzvani
+181::cs_CZ.iso-8859-2:Hovor byl presmerovan
+182::cs_CZ.iso-8859-2:Jste v poradi
+183::cs_CZ.iso-8859-2:Probiha navazovani spojeni
+200::cs_CZ.iso-8859-2:Uspesne zpracovano
+202::cs_CZ.iso-8859-2:Bude vyrizeno pozdeji
+300::cs_CZ.iso-8859-2:Vice moznosti
+301::cs_CZ.iso-8859-2:Trvale presmerovano
+302::cs_CZ.iso-8859-2:Docasne presmerovano
+305::cs_CZ.iso-8859-2:Pouzijte jiny server
+380::cs_CZ.iso-8859-2:Alternativni sluzba
+400::cs_CZ.iso-8859-2:Chyba protokolu
+402::cs_CZ.iso-8859-2:Placena sluzba
+403::cs_CZ.iso-8859-2:Zakazano
+404::cs_CZ.iso-8859-2:Nenalezeno
+405::cs_CZ.iso-8859-2:Nepovoleny prikaz
+406::cs_CZ.iso-8859-2:Neni povoleno
+407::cs_CS.iso-8859-2:Server vyzaduje autentizaci
+408::cs_CZ.iso-8859-2:Vyprsel casovy limit
+410::cs_CZ.iso-8859-2:Nenalezeno
+413::cs_CZ.iso-8859-2:Dotaz je prilis dlouhy
+414::cs_CZ.iso-8859-2:Request-URI je prilis dlouhe
+415::cs_CZ.iso-8859-2:Nepodporovany typ medii
+416::cs_CZ.iso-8859-2:Nepodporovany typ identifikatoru
+420::cs_CZ.iso-8859-2:Spatne cislo linky
+421::cs_CZ.iso-8859-2:Zadejte cislo linky
+423::cs_CZ.iso-8859-2:Prilis kratky interval
+480::cs_CZ.iso-8859-2:Docasne nedostupne
+481::cs_CZ.iso-8859-2:Spojeni nenalezeno
+482::cs_CZ.iso-8859-2:Zprava se zacyklila (chyba serveru)
+483::cs_CZ.iso-8859-2:Prilis mnoho mezikroku
+484::cs_CZ.iso-8859-2:Neuplna adresa
+485::cs_CZ.iso-8859-2:Neni jednoznacne
+486::cs_CZ.iso-8859-2:Volany je zaneprazdnen
+487::cs_CZ.iso-8859-2:Prikaz predcasne ukoncen
+488::cs_CZ.iso-8859-2:Nebylo akceptovano
+491::cs_CZ.iso-8859-2:Cekam na odpoved
+493::cs_CZ.iso-8859-2:Nelze dekodovat
+500::cs_CZ.iso-8859-2:Interni chyba serveru
+501::cs_CZ.iso-8859-2:Neni implementovano
+502::cs_CZ.iso-8859-2:Spatna brana
+503::cs_CZ.iso-8859-2:Sluzba neni dostupna
+504::cs_CZ.iso-8859-2:Casovy limit serveru vyprsel
+505::cs_CZ.iso-8859-2:Nepodporovana verze protokolu
+513::cs_CZ.iso-8859-2:Zprava je prilis dlouha
+600::cs_CZ.iso-8859-2:Uzivatel je zaneprazdnen
+603::cs_CZ.iso-8859-2:Odmitnuto
+604::cs_CZ.iso-8859-2:Neexistujici uzivatel nebo sluzba
+606::cs_CZ.iso-8859-2:Nelze akceptovat
+
