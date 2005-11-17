@@ -33,6 +33,16 @@
     </chapter>
 
     <chapter>
+	<title>SER Remote Procedure Call Interface</title>
+	<xi:include href="rpc/ser_rpc.xml"/>
+    </chapter>
+
+    <chapter>
+	<title>SER Database Schema and Administration</title>
+	<xi:include href="database/ser_db.xml"/>
+    </chapter>
+
+    <chapter>
 	<title>Presence Handbook</title>
 	<xi:include href="presence/intro.xml"/>
 	<xi:include href="presence/xcap.xml"/>
