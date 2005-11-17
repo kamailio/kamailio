@@ -346,7 +346,7 @@ avp_t *search_first_avp(unsigned short flags, int_str name, int_str *val, struct
 	}
 	s->name = name;
 
-	if (!(flags & AVP_NAME_STR) && !(flags & AVP_NAME_RE)) {
+	if (flags & AVP_NAME_STR) {
 		s->id = compute_ID(name.s);
 	}
 
