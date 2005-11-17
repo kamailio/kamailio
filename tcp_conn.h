@@ -126,14 +126,14 @@ struct tcp_connection{
 	int flags; /* connection related flags */
 	enum tcp_conn_states state; /* connection state */
 	void* extra_data; /* extra data associated to the connection, 0 for tcp*/
-	int timeout; /* connection timeout, after this it will be removed*/
+	unsigned int timeout;/* connection timeout, after this it will be removed*/
 	unsigned id_hash; /* hash index in the id_hash */
-	int aliases; /* aliases number, at least 1 */
-	struct tcp_conn_alias con_aliases[TCP_CON_MAX_ALIASES];
 	struct tcp_connection* id_next; /* next, prev in id hash table */
 	struct tcp_connection* id_prev;
 	struct tcp_connection* c_next; /* child next prev (use locally) */
 	struct tcp_connection* c_prev;
+	struct tcp_conn_alias con_aliases[TCP_CON_MAX_ALIASES];
+	int aliases; /* aliases number, at least 1 */
 };
 
 

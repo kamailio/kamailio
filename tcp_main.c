@@ -414,7 +414,6 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	c->rcv.proto_reserved2=0;
 	c->state=state;
 	c->extra_data=0;
-	c->flags|=F_CONN_REMOVED;
 #ifdef USE_TLS
 	if (type==PROTO_TLS){
 		if (tls_tcpconn_init(c, sock)==-1) goto error;
@@ -423,11 +422,10 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	{
 		c->type=PROTO_TCP;
 		c->rcv.proto=PROTO_TCP;
-		c->flags=0;
 		c->timeout=get_ticks()+tcp_con_lifetime;
 	}
-			
-		
+	c->flags|=F_CONN_REMOVED;
+	
 	tcp_connections_no++;
 	return c;
 	
@@ -1014,8 +1012,8 @@ static inline int handle_new_connect(struct socket_info* si)
 		tcpconn->refcnt++; /* safe, not yet available to the
 							  outside world */
 		tcpconn_add(tcpconn);
-		DBG("handle_new_connect: new connection: %p %d\n",
-			tcpconn, tcpconn->s);
+		DBG("handle_new_connect: new connection: %p %d flags: %04x\n",
+			tcpconn, tcpconn->s, tcpconn->flags);
 		/* pass it to a child */
 		if(send2child(tcpconn)<0){
 			LOG(L_ERR,"ERROR: handle_new_connect: no children "
@@ -1047,7 +1045,8 @@ static void tcpconn_destroy(struct tcp_connection* tcpconn)
 	TCPCONN_LOCK; /*avoid races w/ tcp_send*/
 	tcpconn->refcnt--;
 	if (tcpconn->refcnt==0){ 
-		DBG("tcpconn_destroy: destroying connection\n");
+		DBG("tcpconn_destroy: destroying connection %p, flags %04x\n",
+				tcpconn, tcpconn->flags);
 		fd=tcpconn->s;
 #ifdef USE_TLS
 		/*FIXME: lock ->writelock ? */
@@ -1061,7 +1060,8 @@ static void tcpconn_destroy(struct tcp_connection* tcpconn)
 		/* force timeout */
 		tcpconn->timeout=0;
 		tcpconn->state=S_CONN_BAD;
-		DBG("tcpconn_destroy: delaying ...\n");
+		DBG("tcpconn_destroy: delaying (%p, flags %04x) ...\n",
+				tcpconn, tcpconn->flags);
 		
 	}
 	TCPCONN_UNLOCK;
