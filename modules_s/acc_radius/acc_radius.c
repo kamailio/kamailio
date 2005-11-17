@@ -55,6 +55,8 @@
  *   set to failed (rad_status does not work properly in this case), it
  *   should generate Interim-Update
  * - INVITEs with to tag should generate Interim-Update
+ * - Configurable option which allows to switch From/To based on the
+ *   value of ftag route parameter
  */
 
 /*
@@ -306,7 +308,7 @@ static int fmt2rad(char *fmt,
 	static time_t rq_time, rs_time;
 	int cnt;
 	struct to_body* from, *pto;
-	str tm_s, rqtm_s, val, *cr;
+	str val, *cr;
 	struct cseq_body *cseq;
 	struct attr* attr;
 
