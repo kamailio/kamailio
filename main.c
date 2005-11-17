@@ -71,12 +71,15 @@
 #include <string.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <sys/types.h>
 #include <sys/socket.h>
+#if defined(HAVE_NETINET_IN_SYSTM)
+#include <netinet/in_systm.h>
+#endif
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <sys/utsname.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <fcntl.h>
