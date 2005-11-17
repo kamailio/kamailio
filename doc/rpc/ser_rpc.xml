@@ -1,0 +1,1296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="ser_rpc" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <!--
+    <sectioninfo>
+        <releaseinfo role="cvs">$Revision$</releaseinfo>
+        <pubdate role="cvs">$Date$</pubdate>
+    </sectioninfo>
+    -->
+    
+    <title>
+	SER Management Interface
+    </title>
+
+    <section id="rpc.design">
+	<title>Design Goals</title>
+	<para>
+	    
+	</para>
+	<itemizedlist>
+	    <listitem>
+		<para>Implemented as a module.</para>
+	    </listitem>
+	    <listitem>
+		<para>API independent of transport protocols.</para>
+	    </listitem>
+	    <listitem>
+		<para>Reuse transports available in SER.</para>
+	    </listitem>
+	    <listitem>
+		<para>The possibility to encrypt all communication.</para>
+	    </listitem>
+	    <listitem>
+		<para>The possibility to authenticate clients.</para>
+	    </listitem>
+	    <listitem>
+		<para>Easy integration with existing languages and
+		    implementations.</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    Easy and straightforward implementation of management
+		    functions in SER modules.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+
+    <section id="rpc.overview">
+	<title>Overview of Operation</title>
+	<para>
+	    The RPC (Remote Procedure Call) interface of SER is based on the
+	    XML-RPC <ulink url="http://www.xmlrpc.com">de-facto
+	    standard</ulink>. XML-RPC protocol encodes the name of the method
+	    to be called along with its parameter in an XML document which is
+	    then conveyed using HTTP (Hyper Text Transfer Protocol) to the
+	    server. The server will extract the name of the function to be
+	    called along with its parameters from the XML document, execute the
+	    function, and encode any data returned by the function into another
+	    XML document which is then returned to the client in the body of a
+	    200 OK reply to the HTTP request.
+	</para>
+	<para>
+	    XML-RPC is similar to more popular <ulink
+		url="http://www.w3.org/TR/soap/">SOAP</ulink> (Simple Object
+		Access Protocol), which is an XML-based messaging framework
+		used in Web Services developed within the <ulink
+		url="http://www.w3c.org">World Wide Web
+		Consortium</ulink>. Both protocols are using HTTP as the
+		transport protocol for XML documents, but XML-RPC is much
+		simpler and easier to implement than SOAP.
+	</para>
+	<para>
+	    Here is an example of single XML-RPC function call to determine
+	    current time:
+	</para>
+	<programlisting>
+<![CDATA[
+POST /RPC2 HTTP/1.0
+User-Agent: Radio UserLand/7.1b7 (WinNT)
+Host: time.xmlrpc.com
+Content-Type: text/xml
+Content-length: 131
+	    
+<?xml version="1.0"?>
+<methodCall>
+<methodName>currentTime.getCurrentTime</methodName>
+<params>
+</params>
+</methodCall>
+]]>
+	</programlisting>
+	<para>
+	    And the response returned by the server:
+	</para>
+	<programlisting>
+<![CDATA[
+HTTP/1.1 200 OK
+Connection: close
+Content-Length: 183
+Content-Type: text/xml
+Date: Wed, 03 Oct 2001 15:53:38 GMT
+Server: UserLand Frontier/7.0.1-WinNT
+
+<?xml version="1.0"?>
+<methodResponse>
+<params>
+<param>
+<value><dateTime.iso8601>20011003T08:53:38</dateTime.iso8601>
+</value>
+</param>
+</params>
+</methodResponse>
+]]>
+	</programlisting>
+	<para>
+	    XML-RPC specification spells HTTP as the official transport
+	    protocol for XML-RPC documents. SER does not directly support
+	    HTTP, it is a SIP server so SIP is the only protocol supported by
+	    SER. Because we would like to reuse all transport protocols
+	    available in SER, such as TCP and TLS, it would be natural to use
+	    modified version of XML-RPC which would run on top of SIP instead
+	    of HTTP. XML-RPC documents would be then encoded in the bodies of
+	    SIP requests and replies would be sent by the server in the bodies of
+	    SIP replies. This way we could reuse all transport protocols
+	    (including UDP) and message parsers available in SER.
+	</para>
+	<para>
+	    Although this approach seems to be the logical choice, there is one
+	    big drawback. No existing XML-RPC implementations support SIP as the
+	    transport protocol, and there are many existing implementations
+	    available for vast majority of existing languages. See the <ulink
+	    url="http://www.xmlrpc.com/directory/1568/implementations">XML-RPC
+	    implementation page</ulink> for more details. Extending existing
+	    implementations with SIP support would not be easy.
+	</para>
+	<para>
+	    Because  extending available XML-RPC implementation would be too
+	    expensive, we could also do it the other way around, keep existing
+	    XML-RPC implementations and extend SER to support HTTP. Extending
+	    SER with HTTP support is easier than it might seem at a first
+	    glance, due to the similarity between SIP requests and HTTP
+	    requests.
+	</para>
+	<para>
+	    SER already supports TCP, so existing HTTP implementations can send
+	    HTTP requests to it. HTTP requests are missing certain mandatory
+	    SIP header fields, such as Via, From, and CSeq. The contents of the
+	    header fields is mainly used for transaction matching. A SIP server
+	    could perform two basic operations when processing an HTTP
+	    request:
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			Terminate the request, execute the function and send a
+			reply back.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			Forward the request to another SIP server.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+	<para>
+	    Nothing special is needed on the SIP server terminating the
+	    request, except that it has to know where it should send the
+	    reply. Parsing of HTTP header field bodies would fail because we do
+	    not have parsers for them in SER, but that does not matter anyway
+	    because all the information is encoded in the body of the
+	    request. HTTP requests contain no Via header fields. Via header
+	    fields are used by SIP implementations to determine the destination
+	    (IP, transport protocol, and port number) for replies. When
+	    processing HTTP requests the SIP server needs to create a fake Via
+	    header field based on the source IP address and port number of the
+	    TCP connection. The SIP server will use this information when
+	    sending a reply back.
+	</para>
+	<para>
+	    Forwarding of HTTP requests by SIP proxies is a little bit more
+	    complicated and there are several limitations. First of all, we can
+	    only use stateless forwarding, no transactional forwarding, because
+	    HTTP requests do not contain all the header fields needed for
+	    transaction matching. Any attempt to call t_relay on an HTTP
+	    requests would fail. HTTP requests always use TCP and thus we could
+	    use stateless forwarding on the SIP server, provided that the
+	    request will be also forwarded over TCP. Stateless forwarding does
+	    not require the mandatory header fields (which are missing here)
+	    and it would work. In addition to that, the SIP server would also
+	    append fake Via header field to the request and change the contents
+	    of the Request-URI. The Request-URI of HTTP requests sent by XML-RPC
+	    implementations typically contain something like "/RPC2" and the
+	    first SIP server processing the request should rewrite the value
+	    with a valid SIP URI.
+	</para>
+	<para>
+	    <xref linkend="fig.rpc_example"/> shows a scenario which involves
+	    two SIP servers, one performs HTTP request "normalization" and
+	    forwarding, and the other terminates the request, executes
+	    corresponding function, and generates a reply.
+	</para>
+	<mediaobject id="fig.rpc_example" xreflabel="Figure RPC Example">
+	    <imageobject>
+		<imagedata align="center" fileref="rpc_example.png" format="PNG"/>
+	    </imageobject>
+	    <textobject>
+		<para>Example RPC Scenario</para>
+	    </textobject>
+	    <caption>
+		Example RPC Scenario
+	    </caption>
+	</mediaobject>
+	<para>
+	    <emphasis>Step 1.</emphasis> An HTTP user agent sends an ordinary
+	    HTTP request to a SIP server. The user agent can either establish a
+	    connection directly to port 5060 or the SIP server can be
+	    configured to listen on port 80. The request contains standard HTTP
+	    headers and an XML-RPC document in the body:
+	    <programlisting>
+<![CDATA[
+POST / HTTP/1.0.
+Host: localhost:5060
+User-Agent: xmlrpclib.py/1.0.1 (by www.pythonware.com)
+Content-Type: text/xml
+Content-Length: 111
+
+<?xml version='1.0'?>
+<methodCall>
+<methodName>]]><emphasis>usrloc.statistics</emphasis><![CDATA[</methodName>
+<params>
+</params>
+</methodCall>
+]]>
+	    </programlisting>
+	    This particular request calls method "statistics" from from usrloc
+	    module of SER. The method has no parameters.
+	</para>
+	<para>
+	    The outbound SIP server receives the HTTP request and performs a
+	    set of actions called "SIP-normalization". This includes creation
+	    of fake Via header field based on the source IP and port of the TCP
+	    connection, looking up of the target SIP server that should
+	    terminate and process the request, and rewriting of the Request-URI
+	    with the SIP URI of the target SIP server. Modified HTTP request
+	    will be then forwarded statelessly to the target SIP server.
+	    <programlisting>
+POST <emphasis>sip:proxy01.sip-server.net</emphasis> HTTP/1.0
+<emphasis>Via: SIP/2.0/TCP 127.0.0.1:3571</emphasis>
+Host: localhost:5060
+User-Agent: xmlrpclib.py/1.0.1 (by www.pythonware.com)
+Content-Type: text/xml
+Content-Length: 111
+<![CDATA[
+<?xml version='1.0'?>
+<methodCall>
+<methodName>usrloc.statistics</methodName>
+<params>
+</params>
+</methodCall>
+]]>
+	    </programlisting>
+	</para>
+	<para>
+	    <emphasis>Step 2.</emphasis> "normalized" HTTP request is
+	    statelessly forwarded to the target SIP server over TCP.
+	</para>
+	<para>
+	    <emphasis>Step 3.</emphasis> The target SIP server receives the
+	    HTTP request and executes function called
+	    <function>dispatch_rpc</function> from xmlrpc SER module. This
+	    function will parse the XML-RPC document in the body of the request
+	    and lookup the function to be called among all RPC functions
+	    exported by the SER core and modules. Function
+	    <function>dispatch_rpc</function> will be called from the
+	    configuration file just like any other function:
+	    <programlisting>
+if (method == "POST" || method == "GET") {
+    <emphasis>dispatch_rpc();</emphasis>
+    break;
+};
+	    </programlisting>
+	    This particular configuration snippet executes the function
+	    whenever SER receives GET or POST requests. These two method names
+	    indicate HTTP.
+	</para>
+	<para>
+	    <emphasis>Step 4.</emphasis> Function
+	    <function>dispatch_rpc</function> scans through the list of all
+	    exported RPC functions searching for
+	    <function>statistics</function> function of usrloc module. <xref
+	    linkend="rpc.module_api"/> describes in detail how modules export
+	    RPC functions.
+	</para>
+	<para>
+	    <emphasis>Step 5.</emphasis> As the RPC function from usrloc module
+	    is running and gathering statistics, it calls functions of RPC
+	    interface to prepare the result for the caller.
+	</para>
+	<para>
+	    <emphasis>Step 6.</emphasis> Once the RPC function finishes, xmlrpc
+	    module will build the XML-RPC document from the data received from
+	    usrloc module and generate a reply which will be sent to the caller.
+	</para>
+	<para>
+	    <emphasis>Steps 7. and 8.</emphasis> HTTP reply is sent back to the
+	    caller and the remote procedure call finishes.
+	    <programlisting>
+<![CDATA[
+HTTP/1.0 200 OK
+Via: SIP/2.0/TCP 127.0.0.1:3571
+Server: Sip EXpress router (0.10.99-janakj_experimental (i386/linux))
+Content-Length: 651
+Warning: 392 127.0.0.1:5060 "Noisy feedback tells:  pid=9975 req_src_ip=127.0.0
+1 req_src_port=3571 in_uri=/ out_uri=sip:proxy01.sip-server.net via_cnt==1"
+
+<?xml version="1.0" encoding="UTF-8"?>
+<methodResponse>
+<params>
+<param><value><array><data>
+<value><struct>
+<member><name>domain</name>
+<value><string>aliases</string></value></member>
+<member><name>users</name>
+<value><i4>0</i4></value></member>
+<member><name>expired</name>
+<value><i4>0</i4></value></member>
+</struct></value>
+<value><struct>
+<member><name>domain</name>
+<value><string>location</string></value></member>
+<member><name>users</name>
+<value><i4>0</i4></value></member>
+<member><name>expired</name>
+<value><i4>0</i4></value></member>
+</struct></value>
+</data></array></value></param>
+</params>
+</methodResponse>
+]]>
+	    </programlisting>
+	</para>
+	<note>
+	    <para>
+		The scenario described on <xref linkend="fig.rpc_example"/>
+		involves two SIP servers. This is just to demonstrate that in
+		setups containing more SIP servers it is possible to forward
+		HTTP requests from one SIP server to another and use standard
+		SIP routing mechanisms to decide which SIP server should
+		process the request. There is no need to have multiple SIP
+		servers in simple setups, because one SIP server can both add 
+		fake Via header field and process the RPC at the same
+		time. Modified configuration file snipped could then look like
+		this:
+		<programlisting>
+if (method == "POST" || method == "GET") {
+    <emphasis>create_via();</emphasis>   # Create fake Via
+    <emphasis>dispatch_rpc();</emphasis> # Process the request
+    break;
+};
+		</programlisting>
+	    </para>
+	</note>
+    </section>
+
+    <section id="rpc.module_api">
+	<title>Module API</title>
+	<para>
+	    Each SER module can export RPC functions just like it can export
+	    parameters and functions to be called from the script. Whenever SER
+	    receives an RPC request, it will search through the list of
+	    exported RPC functions and the function with matching name will be
+	    executed. A couple of essential RPC functions is also embedded into
+	    the SER core.
+	</para>
+	<para>
+	    This section gives a detailed overview of the whole RPC API. <xref
+	    linkend="rpc.rpc_functions"/> describes the prototype and
+	    conventions used in RPC functions. <xref linkend="rpc.data_types"/>
+	    gives a detailed overview of available data types that can be used
+	    in function parameters and return value. <xref
+	    linkend="rpc.getting_parameters"/> describes functions of the RPC
+	    API that can be used to retrieve parameters of the function, and
+	    finally <xref linkend="rpc.creating_result"/> describes functions of
+	    the API that can be used to build the result value that will be
+	    sent in the reply to the caller.
+	</para>
+	<para>
+	    The whole RPC API is described in header file
+	    <filename>sip_router/rpc.h</filename>.  This file defines the set
+	    of functions that must be implemented by RPC transport modules, as
+	    described in <xref linkend="rpc.new_transport"/>, prototypes of RPC
+	    functions and structures used for the communication between RPC
+	    transport modules and ordinary modules exporting RPC functions.
+	</para>
+	<section id="rpc.rpc_functions">
+	    <title>RPC Functions</title>
+	    <para>
+		RPC functions are standard C functions with the following
+		prototype:
+		<programlisting>
+typedef void (*rpc_function_t)(rpc_t* rpc);
+		</programlisting>
+		RPC functions take one parameter, this parameter is a pointer
+		to rpc_t structure and is called RPC context. The context
+		contains references to all API functions available to the RPC
+		function as well as all data necessary to create the
+		response. RPC functions do not return any value, instead the
+		return value is created using functions from the context. The
+		motivation for this decision is the fact that RPC functions
+		should always return a response and even the API functions
+		called from RPC functions should have the possibility to
+		indicate an error (and should not rely on RPC functions doing so).
+	    </para>
+	    <para>
+		The RPC transport module creates initial reply before calling
+		any RPC function. The default value of the reply is 200 OK with
+		empty body. This is the value that will be returned to the
+		caller and the function has to explicitly modify it if it wishes
+		to either indicate a failure or add some data to the reply. The
+		reply is sent automatically immediately after the RPC function
+		finishes or the function can send the reply explicitly during
+		its runtime. Even RPC API functions modify the reply upon a
+		failure.
+	    </para>
+	    <para>
+		Each RPC function has associated an array of documentation
+		strings. The purpose of the documentation strings is to give a
+		short overview of the function, accepted parameters, and format
+		of the reply. By convention the name of the documentation string
+		array is same as the name of the function with "_doc" suffix.
+	    </para>
+	    <para>
+		Each module containing RPC functions has to export all the
+		functions to SER core in order to make them visible to RPC
+		transport modules. For this purpose, the
+		<varname>module_exports</varname> structure of SER module API
+		contains a new attribute called <varname>rpc_methods</varname>:
+		<programlisting>
+struct module_exports {
+    char* name;                 /* null terminated module name */	
+    cmd_export_t* cmds;         /* null terminated array of the exported commands */
+    <emphasis>rpc_export_t* rpc_methods;</emphasis>  /* null terminated array of exported rpc methods */
+    param_export_t* params;     /* null terminated array of the exported module parameters */
+    
+    init_function init_f;         /* Initialization function */
+    response_function response_f; /* function used for responses */
+    destroy_function destroy_f;   /* function called upon SER shutdown */
+    onbreak_function onbreak_f;
+    child_init_function init_child_f;  /* function called by all processes after the fork */
+};
+
+<emphasis>
+typedef struct rpc_export {
+    const char* name;        /* Name of the RPC function (null terminated) */
+    rpc_function_t function; /* Pointer to the function */
+    const char** doc_str;    /* Documentation strings, method signature and description */
+    unsigned int flags;      /* Various flags, reserved for future use */
+} rpc_export_t;
+</emphasis>
+		</programlisting>
+		<varname>rpc_methods</varname> is pointer to an array of
+		rpc_export_t structures. The last element of the array is a
+		bumper containing zeroes in all attributes of the
+		structure. The following program listing shows exported RPC
+		functions of usrloc module: 
+		<programlisting>
+struct module_exports exports = {
+    "usrloc",
+    cmds,      /* Exported functions */ 
+    <emphasis>ul_rpc</emphasis>,    /* RPC methods */
+    params,    /* Export parameters */ 
+    mod_init,  /* Module initialization function */ 
+    0,         /* Response function */ 
+    destroy,   /* Destroy function */ 
+    0,         /* OnCancel function */ 
+    child_init /* Child initialization function */ };
+
+<emphasis>
+rpc_export_t ul_rpc[] = {
+    {"usrloc.statistics",      rpc_stats,           rpc_stats_doc,          0},
+    {"usrloc.delete_aor",      rpc_delete_aor,      rpc_delete_aor_doc,     0},
+    {"usrloc.delete_contact",  rpc_delete_contact,  rpc_delete_contact_doc, 0},
+    {"usrloc.dump",            rpc_dump,            rpc_dump_doc,           0},
+    {"usrloc.flush",           rpc_flush,           rpc_flush_doc,          0},
+    {"usrloc.add_contact",     rpc_add_contact,     rpc_add_contact_doc,    0},
+    {"usrloc.show_contacts",   rpc_show_contacts,   rpc_show_contacts_doc,  0},
+    {0, 0, 0, 0}
+};
+</emphasis>
+		</programlisting>
+		By convention the name of every exported function consists of
+		two parts delimited by a dot. The first part is the name of the
+		module or SER subsystem this function belongs to. The second
+		part is the name of the function. 
+	    </para>
+	    <para>
+		Attribute <varname>flags</varname> of
+		<varname>rpc_export</varname> structure is reserved for future
+		use and is currently unused.
+	    </para>
+	</section>
+
+	<section id="rpc.data_types">
+	    <title>Data Types</title>
+	    <para>
+		The RPC API defines several basic and 1 compound data type
+		that can be used in communication with the caller of RPC
+		functions. The RPC API uses formating strings to describe data
+		types. Each data type is described by exactly one character in
+		the formating string. For example, if an RPC function calls
+		function <function>add</function> of the RPC API and it passes
+		two parameters to it, the first one of type string and the
+		second one of type integer, the function parameters will look
+		like:
+		<programlisting>
+add("sd", string_param, int_param);
+		</programlisting>
+		Character "s" in the formating string tells to the function
+		that the 2nd parameter should be interpreted as string,
+		character "d" in the formating string tells to the function
+		that the 3rd parameter should be interpreted as signed integer.
+	    </para>
+	    <formalpara>
+		<title>Integer</title>
+		<para>
+		    Integer type represents a signed 32-bit
+		    integer. Corresponding character in the formating string is
+		    "d". This parameter can be stored in C-style variable with
+		    type <varname>int</varname>.
+		</para>
+	    </formalpara>
+	    <formalpara>
+		<title>Float</title>
+		<para>
+		    Float type represents a signed floating point
+		    number. Corresponding character in the formating string is
+		    "f". Data of this type can be stored in C-style variables
+		    of type <varname>double</varname>.
+		</para>
+	    </formalpara>
+	    <formalpara>
+		<title>String</title>
+		<para>
+		    String type represents a string of characters. The string
+		    may contain zeroes. This data type is represented by two
+		    characters in the formatting string, either "s" or "S". "s"
+		    indicates to the conversion function that the result should
+		    be stored in a variable of type <varname>char*</varname>
+		    and it should be zero terminated. "S" indicates to the
+		    conversion function that the result will be stored in
+		    a variable of type <varname>str</varname> which contains
+		    both the pointer to the beginning of the string and its
+		    length.
+		</para>
+	    </formalpara>
+	    <formalpara>
+		<title>Structure</title>
+		<para>
+		    Structure is the only compound data type currently defined
+		    in the API. A structure is a collection of attributes. Each
+		    attribute is identified using name (string) and each
+		    attribute can be one of the basic data types, that
+		    is integer, float, or string. Nesting of structures is not
+		    allowed (in other words, structure attributes cannot be of
+		    type struct again). Corresponding character in the
+		    formatting string is "{". 
+		</para>
+	    </formalpara>
+	    <table>
+		<title>Data Type Overview</title>
+		<tgroup cols="3">
+		    <tbody>
+			<row rowsep="1">
+			    <entry>Name</entry>
+			    <entry>Formating String Char</entry>
+			    <entry>C-Style Variable</entry>
+			</row>
+			<row>
+			    <entry>Integer</entry>
+			    <entry>d</entry>
+			    <entry>int</entry>
+			</row>
+			<row>
+			    <entry>Float</entry>
+			    <entry>f</entry>
+			    <entry>double</entry>
+			</row>
+			<row>
+			    <entry>String</entry>
+			    <entry>s</entry>
+			    <entry>char*</entry>
+			</row>
+			<row>
+			    <entry>String</entry>
+			    <entry>S</entry>
+			    <entry>str</entry>
+			</row>
+		    </tbody>
+		</tgroup>
+	    </table>
+	</section>
+
+	<section id="rpc.getting_parameters">
+	    <title>Getting Parameters</title>
+	    <para>
+		Each RPC function call can contain parameters. Parameters have
+		no name, their meaning is determined by their position in the
+		parameter set.
+		<note>
+		    <para>
+			You can pass all parameters to a function within a
+			structure if you want to make them position
+			independent. Then each parameter can be retrieved by
+			its name regardless of its position.
+		    </para>
+		</note>
+		There are two functions in the RPC API that can be used to
+		obtain function call parameters: <function>scan</function> and
+		<function>struct_scan</function>.
+	    </para>
+	    <section id="rpc.scan">
+		<title><function>scan</function></title>
+		<para>
+		    Function <function>scan</function> can be used to retrieve
+		    parameters from the parameter set. The function accepts
+		    variable number of parameters. The first parameter is the
+		    formatting string that determines the type of the
+		    parameters to be retrieved. Each parameter is represented by
+		    exactly one character in the string. The variable part of
+		    parameters must contain as many pointers to C variables as
+		    there are formatting characters in the formatting
+		    string.
+		    <warning>
+			<para>
+			    The function will crash if you fail to provide
+			    enough parameters.
+			</para>
+		    </warning>
+		    The function indicates success by returning 0. When a
+		    failure occurs (incorrect parameter type or no more
+		    parameters in the parameter set) then the function will
+		    return -1 and it will also automatically change the reply
+		    that will be sent to the caller to indicate that a failure
+		    has occurred on the server. Prototype of the function is:
+		    <programlisting>
+int scan(char* fmt, ...)
+		    </programlisting>
+		    It is possible to either call the function once to scan all
+		    the parameters:
+		    <programlisting>
+rpc->scan("sdf", &amp;string_val, &amp;int_val, &amp;double_val);
+		    </programlisting>
+		    Or you can call the same function several times and it will
+		    continue where it left off previously:
+		    <programlisting>
+rpc->scan("s", &amp;string_val);
+rpc->scan("d", &amp;int_val);
+rpc->scan("f", &amp;double_val);
+		    </programlisting>
+		</para>
+	    </section>
+	    <section>
+		<title><function>struct_scan</function></title>
+		<para>
+		    Function <function>struct_scan</function> can be used to
+		    retrieve named attributes from a parameter of type
+		    structure. When retrieving a structure parameter from the
+		    parameter set:
+		    <programlisting>
+rpc->scan("{", &amp;handle);
+		    </programlisting>
+		    The corresponding variable (named 
+		    <varname>handle</varname>in the example above) will contain
+		    the index of the structure parameter within the parameter
+		    set, but the index cannot be used to retrieve the contents
+		    of the structure. To retrieve the contents of the structure
+		    you can use function <function>struct_scan</function>. The
+		    function gets the handle as the first parameter:
+		    <programlisting>
+rpc->struct_scan(handle, "sd", "str_attr", &amp;str_val, "int_attr", &amp;int_val);
+		    </programlisting>
+		    The second parameter is the formatting string followed by
+		    pairs of parameters. First parameter in each pair is the
+		    name of the attribute to retrieve (string) and the second
+		    parameter in each pair is the pointer to the variable to
+		    store the value of the parameter. The function returns 0 on
+		    success and -1 on an error (just like
+		    <function>scan</function> function). The function also
+		    indicates an error if a requested attribute is missing in
+		    the structure.
+		</para>
+	    </section>
+
+	    <example>
+		<title>Retrieving Parameters</title>
+		<programlisting>
+<![CDATA[
+static void rpc_delete_contact(rpc_t* rpc)
+{
+    str aor, contact;
+    char* table;
+    int handle, expires;
+    double q;
+
+    if (rpc->scan("sS{", &table, &aor, &handle) < 0) {
+        /* Reply is set automatically by scan upon failure,
+         * no need to do anything here
+         */
+        return;
+    }
+
+    if (rpc->struct_scan(handle, "Sdf", &contact, &expires, &q) < 0) {
+        /* Reply is set automatically by struct_scan upon failure,
+         * no need to do anything here
+         */
+        return;
+    }
+
+    /* Process retrieved parameters here */
+}
+]]>
+		</programlisting>
+	    </example>
+	</section>
+
+	<section id="rpc.creating_result">
+	    <title>Building Reply</title>
+	    <para>
+		The RPC API contains several functions that can be used to
+		modify and/or send a reply. The functions use formatting
+		strings and parameter lists just like functions described in
+		<xref linkend="rpc.getting_parameters"/>.
+	    </para>
+	    <para>
+		Each RPC function call must return a reply. The reply can be
+		either a failure reply or success reply. Failure replies
+		contain only the status code and reason phrase. Success
+		replies can have arbitrary amount of data attached to
+		them. Status codes 3xx, 4xx, 5xx, and 6xx indicate
+		failures. Status code 2xx indicates success.
+	    </para>
+	    <para>
+		The default reply is 200 OK with no data attached to it. This
+		is what will be returned by the RPC transport module if you do
+		not call any of the reply-related functions described in this
+		section.
+		<example>
+		    <title>Sending default reply</title>
+		    <programlisting>
+<![CDATA[
+static void rpc_dummy(rpc_t* rpc)
+{
+  /* 200 OK with no data will be returned */
+}
+]]>
+		    </programlisting>
+		</example>
+	    </para>
+	    <section>
+		<title>fault</title>
+		<para>
+		    You can use <function>fault</function> function to indicate
+		    that an error has occurred on the server to the caller. The
+		    function accepts two parameters. The first parameter is the
+		    status code and the second parameter is the reason phrase.
+		    <programlisting>
+<![CDATA[
+static void rpc_my_function(rpc_t* rpc)
+{
+    rpc->fault(600, "Not Yet Implemented");
+}
+]]>
+		    </programlisting>
+		    If your function first creates some result using
+		    <function>add</function>, or <function>printf</function>
+		    functions then all the data will be lost once you call
+		    <function>fault</function> function. Failure replies must
+		    not contain any data:
+		    <programlisting>
+<![CDATA[
+static void rpc_my_function(rpc_t* rpc)
+{
+    rpc->add("s", "result1");
+    rpc->add("d", variable);
+
+    /* Reply created by previous functions will be
+     * deleted and a failure reply 600 Not Yet Implemented
+     * will be created instead
+     */
+    rpc->fault(600, "Not Yet Implemented");
+
+    /* You can also add data here, but that will have no
+     * effect
+     */
+    rpc->add("s", "result2");
+}
+]]>
+		    </programlisting>
+		    Similarly you can also call <function>add</function> or
+		    <function>printf</function> functions after calling
+		    <function>fault</function>, in this case they will have no
+		    effect:
+		    <programlisting>
+<![CDATA[
+static void rpc_my_function(rpc_t* rpc)
+{
+    rpc->fault(600, "Not Yet Implemented");
+
+    /* You can also add data here, but that will have no
+     * effect and only 600 Not Yet Implemented will be returned
+     */
+    rpc->add("s", "result2");
+}
+]]>
+		    </programlisting>
+		</para>
+	    </section>
+	    <section>
+		<title>send</title>
+		<para>
+		    RPC functions can use function <function>send</function> to
+		    explicitly send the reply. Each RPC function call generates
+		    exactly one reply. No reply will be sent after the function
+		    finishes if it already sent the reply using
+		    <function>send</function> function explicitly. This
+		    function is especially useful if the RPC function needs to
+		    perform some (potentially destructive) actions after the
+		    reply has been sent.
+		</para>
+		<example>
+		    <title>Kill the server</title>
+		    <programlisting>
+<![CDATA[
+static void core_kill(rpc_t* rpc)
+{
+    int sig_no;
+
+    if (rpc->scan("d", &sig_no) < 0) return;
+    rpc->send();     /* First send a reply */
+    kill(0, sig_no); /* Then kill the server */
+}
+]]>
+		    </programlisting>
+		</example>
+		
+	    </section>
+	    <section>
+		<title>add</title>
+		<para>
+		    Function <function>add</function> can be used to add
+		    arbitrary data to the result set. Its parameters and use
+		    are analogical to <function>scan</function> function
+		    described in <xref linkend="rpc.scan"/>. The first
+		    parameter of the function is the formatting string that
+		    determines the types of additional parameters:
+		    <programlisting>
+<![CDATA[
+static void rpc_func(rpc_t* rpc)
+{
+    str str_result;
+    int int_result, handle;
+    double float_result;
+
+    if (rpc->add("Sdf{", &str_result, int_result, float_result, &handle) < 0) return;
+}
+]]>
+		    </programlisting>
+		    Naturally you can call this function several times, adding
+		    only one piece of data at a time. The function returns 0 on
+		    success and -1 on an error. In case of an error the reply
+		    is set automatically with corresponding error code and
+		    reason phrase.
+		</para>
+		<para>
+		    The last character in the formatting string of the function
+		    above indicates that the last data to be added will be a
+		    structure. This deserves some clarification. In this case,
+		    the function will create an empty structure and the handle
+		    to the newly created structure will be stored in
+		    <varname>handle</varname> variable (hence the last
+		    parameter is pointer to an integer). In this particular
+		    example parameters <varname>str_result</varname>,
+		    <varname>int_result</varname>, and
+		    <varname>float_result</varname> will be used for reading
+		    while parameter <varname>handle</varname> will be used for
+		    writing by the function.
+		</para>
+		<para>
+		    You can set the attributes of the newly created structure
+		    using <function>struct_add</function> function described in
+		    <xref linkend="rpc.struct_add"/>.
+		</para>
+	    </section>
+	    <section>
+		<title>printf</title>
+		<para>
+		    <varname>printf</varname> is a convenience function. The
+		    function adds data of type string to the result set. The
+		    first parameter of the function is again a formatting
+		    string, but this time it is <function>printf</function>-like formatting string:
+		    <programlisting>
+<![CDATA[
+if (rpc->printf("Unable to delete %d entries from table %s", num_entries, table_name) < 0) return;
+]]>
+		    </programlisting>
+		    The return value of the function is the same as of
+		    <function>add</function> function.
+		</para>
+	    </section>
+	    <section id="rpc.struct_add">
+		<title>struct_add</title>
+		<para>
+		    Function <function>struct_add</function> can be used to add
+		    attributes to a structure (created previously by
+		    <function>add</function> function). The first parameter of
+		    the function is handle obtained through
+		    <function>add</function> function, the second parameters is
+		    formatting string that determines the types of attributes
+		    to be added. There must be two parameters per each
+		    character in the formatting string, the first one is the
+		    name of the attribute, the second parameter is the value
+		    of the attribute. If a parameter with such a name already
+		    exist in the structure then it will be overwritten with the
+		    new value.
+		    <programlisting>
+<![CDATA[
+static void rpc_func(rpc_t* rpc)
+{
+    int handle;
+
+      /* Create empty structure and obtain its handle */
+    if (rpc->add("{", &handle) < 0) return;
+      /* Fill-in the structure */
+    if (rpc->struct_add(handle, "sd", "attr1", str_val, "attr2", int_val) < 0) return;
+}
+]]>
+		    </programlisting>
+		    The function returns -1 on an error (and sets the status
+		    code and reason phrase of the reply accordingly) and 0 on success.
+		</para>
+	    </section>
+	</section>
+
+	<section>
+	    <title>Real World Example</title>
+	    <para>
+		The following example illustrates the use of most of the
+		functions from the API together:
+	    </para>
+	    <example>
+		<title>Real World Example RPC Function</title>
+		<programlisting>
+<![CDATA[
+static void rpc_register(rpc_t* rpc)
+{
+    char* domain;
+    str aor;
+    contact_t contact, new_contact;
+    int handle;
+
+        /* Extract the domain, address of record from the request */
+    if (rpc->scan("sS{", &domain, &aor, &handle) < 0) return;
+        /* Extract the structure describing the contact to be processed */
+    if (rpc->struct_scan(handle, "Sdf", &contact.c, &contact.expires, &contact.q) < 0) return;
+
+        /* Process the contact, new_contact will contain updated value after processing */
+    if (process_contact(domain, &aor, &new_contact, &contact) < 0) {
+           /* Processing failed, indicate the failure to the caller */
+        rpc->fault(500, "Error While Processing Contact");
+        return;
+    }
+
+        /* Return the domain and the address of record */
+    rpc->add("sS{", &domain, &aor, &handle) < 0) return;
+        /* And also add the new values for contact, q, and expires parameters */
+    rpc->struct_add(handle, "Sdf", &new_contact.c, &new_contact.expires, &new_contact.q);
+}
+]]>
+		</programlisting>
+	    </example>
+	</section>
+    </section>
+    
+    <section id="rpc.xmlrpc">
+	<title>XML-RPC Transport</title>
+	<para>
+	    The XML-RPC transport is implemented in xmlrpc SER module. The
+	    purpose of the functions of the module is to convert XML-RPC
+	    document carried in the body of HTTP requests into data returned by
+	    the RPC interface and back. The module also contains functions
+	    necessary to "normalize" HTTP requests. The module uses <ulink
+		url="http://xmlrpc-c.sourceforge.net">xmlrpc-c</ulink>
+	    library to perform XML-RPC related functions.
+	</para>
+	<para>
+	    The module always returns 200 OK HTTP reply, it will never return
+	    any other HTTP reply. Failures are expressed in XML-RPC documents
+	    in the body of the reply. There is basic method introspection
+	    support in the module. Currently the module can list all functions
+	    exported by the server and for each function it can return the
+	    documentation string describing the function.
+	</para>
+	<section>
+	    <title>Requests</title>
+	    <para>
+		Requests processed by the module are standard XML-RPC requests
+		encoded in bodies of HTTP requests.
+		<programlisting>
+<![CDATA[
+POST / HTTP/1.0
+Host: localhost:5060
+User-Agent: xmlrpclib.py/1.0.1 (by www.pythonware.com)
+Content-Type: text/xml
+Content-Length: 112
+
+<?xml version='1.0'?>
+<methodCall>
+]]><emphasis><![CDATA[<methodName>system.listMethods</methodName>]]></emphasis><![CDATA[
+<params>
+</params>
+</methodCall>
+]]>
+		</programlisting>
+		The name of the method to be called in this example is
+		"listMethods". This is one of the introspection methods. SER
+		will call <function>dispatch_rpc</function> function of xmlrpc
+		module to handle the request. The function will parse the
+		XML-RPC document, lookup <function>listMethods</function>
+		function in the list of all export RPC functions, prepare the
+		context for the function and execute it.
+	    </para>
+	</section>
+	<section>
+	    <title>Replies</title>
+	    <para>
+		The module will always generate 200 OK. Other response codes
+		and classes are reserved for SER. The status code of the
+		XML-RPC reply, response code, and additional data will be
+		encoded in the body of the reply. Failure replies do not
+		contain any data, just the response code and reason phrase:
+		<programlisting>
+<![CDATA[
+HTTP/1.0 200 OK
+Via: SIP/2.0/TCP 127.0.0.1:2464
+Server: Sip EXpress router (0.10.99-janakj_experimental (i386/linux))
+Content-Length: 301
+
+<?xml version="1.0" encoding="UTF-8"?>
+<methodResponse>
+]]><emphasis><![CDATA[
+<fault>
+<value><struct>
+<member><name>faultCode</name>
+<value><i4>501</i4></value></member>
+<member><name>faultString</name>
+<value><string>Method Not Implemented</string></value></member>
+</struct></value>
+</fault>
+]]></emphasis><![CDATA[
+</methodResponse>
+]]>
+		</programlisting>
+		This particular reply indicates that there is no such RPC
+		method available on the server.
+	    </para>
+	    <para>
+		Success replies always contain at least one return value. In
+		our case the simplest success replies contain single boolean
+		with value 1:
+		<programlisting>
+<![CDATA[
+HTTP/1.0 200 OK
+Via: SIP/2.0/TCP 127.0.0.1:4626
+Server: Sip EXpress router (0.10.99-janakj_experimental (i386/linux))
+Content-Length: 150
+
+<?xml version="1.0" encoding="UTF-8"?>
+<methodResponse>
+<params>
+]]><emphasis><![CDATA[<param><value><boolean>1</boolean></value></param>]]></emphasis><![CDATA[
+</params>
+</methodResponse>
+]]>
+		</programlisting>
+		This is exactly how the reply looks like when an RPC function
+		does not add any data to the reply set.
+	    </para>
+	    <para>
+		If an RPC function adds just a single item (it calls
+		<function>add</function> once
+		with just one character in the formatting string) then the data
+		will be converted to XML-RPC representation according to the
+		rules described in <xref linkend="rpc.type_conversion"/> and
+		the reply will contain just the single value:
+		<programlisting>
+<![CDATA[
+HTTP/1.0 200 OK
+Via: SIP/2.0/TCP 127.0.0.1:3793
+Server: Sip EXpress router (0.10.99-janakj_experimental (i386/linux))
+Content-Length: 216
+
+<?xml version="1.0" encoding="UTF-8"?>
+<methodResponse>
+<params>
+]]><emphasis><![CDATA[<param><value><string>Server: Sip EXpress router (0.10.99-janakj_experimental (i386/linux))</string></value></param>]]></emphasis><![CDATA[
+</params>
+</methodResponse>
+]]>
+		</programlisting>
+	    </para>
+	    <para>
+		If an RPC function adds more than one data items to the result
+		set then the module will return an array containing all the
+		data items:
+		<programlisting>
+<![CDATA[
+HTTP/1.0 200 OK
+Via: SIP/2.0/TCP 127.0.0.1:2932
+Server: Sip EXpress router (0.10.99-janakj_experimental (i386/linux))
+Content-Length: 276
+
+<?xml version="1.0" encoding="UTF-8"?>
+<methodResponse>
+<params>
+<param><value>]]><emphasis><![CDATA[<array><data>
+<value><string>./ser</string></value>
+<value><string>-f</string></value>
+<value><string>ser.cfg</string></value>
+</data></array>]]></emphasis><![CDATA[</value></param>
+</params>
+</methodResponse>
+]]>
+		</programlisting>
+		This is probably the most common scenario.
+	    </para>
+	</section>
+	<section id="rpc.type_conversion">
+	    <title>Type Conversion</title>
+	    <para>
+		The data types of the RPC API are converted to the data types
+		of XML-RPC and vice versa. <xref
+		linkend="tab.type_conversion"/> shows for each RPC API data
+		type corresponding XML-RPC data type.
+		<table id="tab.type_conversion">
+		    <title>Data Type Conversion</title>
+		    <tgroup cols="3">
+			<tbody>
+			    <row>
+				<entry>RPC API</entry>
+				<entry>XML-RPC</entry>
+				<entry>RPC Example</entry>
+				<entry>XML-RPC Example</entry>
+			    </row>
+			    <row>
+				<entry>Integer</entry>
+				<entry>
+				    <markup role="xmlrpc">
+					<![CDATA[
+					<i4></i4>
+					]]>
+				    </markup>
+				</entry>
+				<entry>rpc->add("d", 42)</entry>
+				<entry>
+				    <markup role="xmlrpc">
+					<![CDATA[
+					<i4>42</i4>
+					]]>
+				    </markup>
+				</entry>
+			    </row>
+			    <row>
+				<entry>Float</entry>
+				<entry>
+				    <markup role="xmlrpc">
+					<![CDATA[
+					<double></double>
+					]]>
+				    </markup>
+				</entry>
+				<entry>rpc->add("f", -12.214)</entry>
+				<entry>
+				    <markup role="xmlrpc">
+					<![CDATA[
+					<double>-12.214</double>
+					]]>
+				    </markup>
+				</entry>
+			    </row>
+			    <row>
+				<entry>String</entry>
+				<entry>
+				    <markup role="xmlrpc">
+					<![CDATA[
+					<string></string>
+					]]>
+				    </markup>
+				</entry>
+				<entry>rpc->add("s","Don't panic")</entry>
+				<entry>
+				    <markup role="xmlrpc">
+					<![CDATA[
+					<string>Don't panic</string>
+					]]>
+				    </markup>
+				</entry>
+			    </row>
+			    <row>
+				<entry>Struct</entry>
+				<entry>
+				    <markup role="xmlrpc">
+					<![CDATA[
+					<struct></struct>
+					]]>
+				    </markup>
+				</entry>
+				<entry>rpc->struct_add(handle,"sd","param1",42,"param2",-12.214)</entry>
+				<entry>
+				    <programlisting>
+<![CDATA[
+<struct>
+  <member>
+    <name>param1</name>
+    <value>
+      <i4>42</i4>
+    </value>
+  </member>
+  <member>
+    <name>param2</name>
+    <value>
+      <double>-12.214</i4>
+    </value>
+  </member>
+</struct>
+]]>
+				    </programlisting>
+				</entry>
+			    </row>
+			</tbody>
+		    </tgroup>
+		</table>
+	    </para>
+	</section>
+	<section>
+	    <title>Limitations</title>
+	    <para>
+		SER xmlrpc modules does not implement all data types allowed in
+		XML-RPC. As well it does not implement arrays and nested
+		structures. This simplification is a feature, not bug. In our
+		case the XML-RPC interface will be used mainly for management
+		purposes and we do not need all the bells and whistles of
+		XML-RPC. Parsing and interpreting nested structures is
+		complex and we try to avoid it.
+	    </para>
+	</section>
+    </section>
+
+    <section>
+	<title>Client Examples</title>
+	To be done.
+	<!--
+	    implement clients in various languages 
+	- pros, cons 
+	- How failures
+	    are mapped to XMLRPC 
+	- How success replies are mapped 
+	- How data
+	    types of the API are mapped to XMLRPC elements 
+	- 200 OK with no
+	    data transformed to one value - True
+	-->
+    </section>
+
+    <section id="rpc.new_transport">
+	<title>Implementing New Transports</title>
+	To be done.
+	<!--
+	- create a new module
+	- take a look at sip_router/rpc.h
+	- implement all functions in that header field
+	- no garbage collection in rpc functions, the module needs to keep
+	track of all allocated data
+	- return value default to true
+	- parameter type conflict is an error
+	- missing struct attribute is an error
+	- always send a reply, prepare replies so that you do not have to
+	allocate memory at runtime
+	- str strings do not have to be zero terminated
+	- no structure/array nesting allowed
+	- printf creates string attribute
+        -->
+    </section>
+</section>
