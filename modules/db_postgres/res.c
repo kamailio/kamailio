@@ -173,7 +173,7 @@ static inline void free_rows(db_res_t* res)
 
 static inline int convert_cell(db_con_t* con, db_res_t* res, int row, int col)
 {
-	static str dummy_str = {"", 0};
+	static str dummy_str = STR_STATIC_INIT("");
 	PGresult* pgres;
 	db_val_t* val;
 	int type, pglen;
