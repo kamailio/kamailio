@@ -32,13 +32,13 @@
 #  include <radiusclient-ng.h>
 #endif
 
+#include "../../rad_dict.h"
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
 #include "../../parser/digest/digest_parser.h"
 #include "../../parser/digest/digest.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
-#include "../../rad_dict.h"
 #include "../../usr_avp.h"
 #include "../../ut.h"
 
@@ -115,11 +115,12 @@ static int mod_init(void)
 	memset(attrs, 0, sizeof(attrs));
 	memset(attrs, 0, sizeof(vals));
 
-	attrs[A_SERVICE_TYPE].n	  = "Service-Type";
 	attrs[A_USER_NAME].n	  = "User-Name";
-	attrs[A_SIP_AVP].n	  = "SIP-AVP";
-	vals[V_SIP_CALLER_AVPS].n = "SIP-Caller-AVPs";
-	vals[V_SIP_CALLEE_AVPS].n = "SIP-Callee-AVPs";
+	attrs[A_SERVICE_TYPE].n	  = "Service-Type";
+
+	attrs[A_SER_ATTRS].n	  = "SER-Attrs";
+	vals[V_SER_CALLER_AVPS].n = "SER-Caller-AVPs";
+	vals[V_SER_CALLEE_AVPS].n = "SER-Callee-AVPs";
 
 	     /* open log */
 	rc_openlog("ser");
@@ -140,11 +141,11 @@ static int mod_init(void)
 	INIT_AV(rh, attrs, vals, "avp", -1, -1);
 
 	if (caller_service_type != -1) {
-		vals[V_SIP_CALLER_AVPS].v = caller_service_type;
+		vals[V_SER_CALLER_AVPS].v = caller_service_type;
 	}
 
 	if (callee_service_type != -1) {
-		vals[V_SIP_CALLEE_AVPS].v = callee_service_type;
+		vals[V_SER_CALLEE_AVPS].v = callee_service_type;
 	}
 
 	return 0;
@@ -212,7 +213,7 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 
 		user = &puri.user;
 		domain = &puri.host;
-		service = vals[V_SIP_CALLER_AVPS].v;
+		service = vals[V_SER_CALLER_AVPS].v;
 		break;
 
 	case LOAD_CALLEE:
@@ -229,7 +230,7 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 		
 		user = &msg->parsed_uri.user; 
 		domain = &msg->parsed_uri.host;
-		service = vals[V_SIP_CALLEE_AVPS].v;
+		service = vals[V_SER_CALLEE_AVPS].v;
 		break;
 
 	case LOAD_DIGEST:
@@ -243,7 +244,7 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 		cred = &((auth_body_t*)(h->parsed))->digest;
 		user = &cred->username.user;
 		domain = &cred->realm;
-		service = vals[V_SIP_CALLER_AVPS].v;
+		service = vals[V_SER_CALLER_AVPS].v;
 		break;
 
 	default:
@@ -280,7 +281,7 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 		pkg_free(user_domain.s);
 
 		vp = received;
-		while ((vp = rc_avpair_get(vp, attrs[A_SIP_AVP].v, 0))) {
+		while ((vp = rc_avpair_get(vp, attrs[A_SER_ATTRS].v, 0))) {
 			attr_name_value(vp, &name_str, &val_str);
 			if (name_str.len == 0) {
 			    LOG(L_ERR, "avp_load_user: Missing attribute name\n");
