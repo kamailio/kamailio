@@ -32,13 +32,13 @@
 #  include <radiusclient-ng.h>
 #endif
 
-#include "../acc/dict.h"
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
 #include "../../parser/digest/digest_parser.h"
 #include "../../parser/digest/digest.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
+#include "../../rad_dict.h"
 #include "../../usr_avp.h"
 #include "../../ut.h"
 
