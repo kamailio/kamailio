@@ -669,7 +669,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	static char     route_buffer[ROUTE_BUFFER_MAX];
 	static char     append_buf[APPEND_BUFFER_MAX];
 	static char     cmd_buf[CMD_BUFFER_MAX];
-	static str      empty_param = {".",1};
+	static str      empty_param = STR_STATIC_INIT(".");
 	unsigned int      hash_index, label;
 	contact_body_t*   cb=0;
 	contact_t*        c=0;

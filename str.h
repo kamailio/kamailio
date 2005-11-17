@@ -37,5 +37,7 @@ struct _str{
 
 typedef struct _str str;
 
+#define STR_STATIC_INIT(v) {(v), sizeof(v) - 1}
+#define STR_NULL {NULL, 0}
 
 #endif
