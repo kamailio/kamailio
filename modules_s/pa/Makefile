@@ -14,7 +14,7 @@ LIBS=
 # LIBS+=-L/usr/include/lib  -L$(LOCALBASE)/lib -lxml2
 
 # experimental (vku)
-DEFS += -I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 -Wall -I../../lib -DSER -I../..
+DEFS += -I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 -I$(LOCALBASE)/include -Wall -I../../lib -DSER -I../..
 # LIBS += -L$(LOCALBASE)/lib -L/usr/pkg/lib -L../../lib/xcap -L../../lib/presence -L../../lib/cds -lxcap -lpresence -lcds -lxml2 -lcurl 
 LIBS += -L$(LOCALBASE)/lib -L/usr/pkg/lib -L../../lib/xcap -L../../lib/presence -L../../lib/cds -lxcap -lpresence -lcds
 
