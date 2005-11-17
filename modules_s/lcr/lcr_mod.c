@@ -678,7 +678,7 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
     ruri_user = _m->parsed_uri.user;
 
    /* Look for Caller RPID or From URI */
-    if (search_first_avp(rpid_avp_name_str, rpid_name, &val) &&
+    if (search_first_avp(rpid_avp_name_str, rpid_name, &val, 0) &&
 	val.s->s && val.s->len) {
 	/* Get URI user from RPID */
 	from_uri.len = val.s->len;
@@ -834,7 +834,7 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     int rval;
     struct usr_avp *avp;
 
-    avp = search_first_avp(gw_uri_avp_name_str, gw_uri_name, &val);
+    avp = search_first_avp(gw_uri_avp_name_str, gw_uri_name, &val, 0);
     if (!avp) return -1;
 
     if (*(tmb.route_mode) == MODE_REQUEST) {
@@ -1062,15 +1062,16 @@ rest:
  */
 int next_contacts(struct sip_msg* msg, char* key, char* value)
 {
+    struct search_state st;
     struct usr_avp *avp, *prev;
     int_str val;
     struct action act;
     int rval;
-
+	
     if (*(tmb.route_mode) == MODE_REQUEST) {
 	
 	/* Find first lcr_contact_avp value */
-	avp = search_first_avp(contact_avp_name_str, contact_name, &val);
+	avp = search_first_avp(contact_avp_name_str, contact_name, &val, &st);
 	if (!avp) {
 	    DBG("next_contacts(): DEBUG: No AVPs -- we are done!\n");
 	    return 1;
@@ -1099,7 +1100,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 	    
 	/* Append branches until out of branches or Q_FLAG is set */
 	prev = avp;
-	while ((avp = search_next_avp(avp, &val))) {
+	while ((avp = search_next_avp(&st, &val))) {
 	    destroy_avp(prev);
 	    act.type = APPEND_BRANCH_T;
 	    act.p1_type = STRING_ST;
@@ -1127,7 +1128,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 
     } else { /* MODE_ONFAILURE */
 	
-	avp = search_first_avp(contact_avp_name_str, contact_name, &val);
+	avp = search_first_avp(contact_avp_name_str, contact_name, &val, &st);
 	if (!avp) return -1;
 
 	prev = avp;
@@ -1148,7 +1149,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 		return 1;
 	    }
 	    prev = avp;
-	    avp = search_next_avp(avp, &val);
+	    avp = search_next_avp(&st, &val);
 	    destroy_avp(prev);
 	} while (avp);
 

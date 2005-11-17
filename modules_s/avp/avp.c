@@ -157,7 +157,7 @@ static int print_sattr(struct sip_msg* msg, char* attr, char* s2)
 	name.s = (str*)attr;
 	DBG("print_sattr('%.*s')\n", name.s->len, name.s->s);
 
-	avp_entry = search_first_avp(AVP_NAME_STR, name, &value);
+	avp_entry = search_first_avp(AVP_NAME_STR, name, &value, 0);
 	if (avp_entry == 0) {
 		LOG(L_ERR, "print_sattr: AVP '%.*s' not found\n", name.s->len, ZSW(name.s->s));
 		return -1;
@@ -193,7 +193,7 @@ static int is_sattr_set(struct sip_msg* msg, char* attr, char* foo)
 	struct usr_avp* avp_entry;
 
 	name.s = (str*)attr;
-	avp_entry = search_first_avp(AVP_NAME_STR, name, &value);
+	avp_entry = search_first_avp(AVP_NAME_STR, name, &value, 0);
 	if (avp_entry == 0) {
 		return -1;
 	}
@@ -210,7 +210,7 @@ static int attr2uri(struct sip_msg* msg, char* attr, char* foo)
 
 	name.s=(str*)attr;
 
-	avp_entry = search_first_avp(AVP_NAME_STR, name, &value);
+	avp_entry = search_first_avp(AVP_NAME_STR, name, &value, 0);
 	if (avp_entry == 0) {
 		LOG(L_ERR, "attr2uri: AVP '%.*s' not found\n", name.s->len, ZSW(name.s->s));
 		return -1;
@@ -232,6 +232,7 @@ static int attr2uri(struct sip_msg* msg, char* attr, char* foo)
  */
 static int avp_exists(struct sip_msg* msg, char* key, char* value)
 {
+	struct search_state st;
 	int_str avp_key, avp_value;
 	struct usr_avp *avp_entry;
 	str* val_str, *key_str;
@@ -240,7 +241,7 @@ static int avp_exists(struct sip_msg* msg, char* key, char* value)
 	val_str = (str*)value;
 
 	avp_key.s = (str*)key;
-	avp_entry = search_first_avp(AVP_NAME_STR, avp_key, &avp_value);
+	avp_entry = search_first_avp(AVP_NAME_STR, avp_key, &avp_value, &st);
 
 	if (avp_entry == 0) {
 		DBG("avp_exists: AVP '%.*s' not found\n", key_str->len, ZSW(key_str->s));
@@ -264,7 +265,7 @@ static int avp_exists(struct sip_msg* msg, char* key, char* value)
 				return 1;
 			}
 		}
-		avp_entry = search_next_avp (avp_entry, &avp_value);
+		avp_entry = search_next_avp(&st, &avp_value);
 	}
 
 	DBG("avp_exists ('%.*s', '%.*s'): FALSE\n",
