@@ -23,12 +23,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+
 #include <xcap/resource_lists_parser.h>
 #include <xcap/xml_utils.h>
 #include <cds/logger.h>
-
-#include <stdio.h>
-#include <string.h>
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
