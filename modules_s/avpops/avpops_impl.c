@@ -289,7 +289,7 @@ static int get_avp_as_str(struct fis_param *ap ,str *val)
 	int_str         avp_val;
 
 	name_type = ((ap->flags&AVPOPS_VAL_INT)?0:AVP_NAME_STR);
-	avp = search_first_avp( name_type, ap->val, &avp_val);
+	avp = search_first_avp( name_type, ap->val, &avp_val, 0);
 	if (avp==0)
 	{
 		DBG("DEBUG:avpops:get_val_as_str: no avp found\n");
@@ -369,6 +369,7 @@ error:
 int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 									struct db_param *dbp, int use_domain)
 {
+	struct search_state st;
 	struct sip_uri   uri;
 	struct usr_avp   **avp_list;
 	struct usr_avp   *avp;
@@ -430,8 +431,8 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 		/* avp name is known ->set it and its type */
 		name_type = (((dbp->a.flags&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
 		store_vals[1].val.str_val = dbp->sa; /*attr name*/
-		avp = search_first_avp( name_type, dbp->a.val, &i_s);
-		for( ; avp; avp=search_next_avp(avp,&i_s))
+		avp = search_first_avp( name_type, dbp->a.val, &i_s, &st);
+		for( ; avp; avp=search_next_avp(&st,&i_s))
 		{
 			/* don't insert avps which were loaded */
 			if (avp->flags&AVP_IS_IN_DB)
@@ -453,7 +454,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 		}
 	} else {
 		/* avp name is unknown -> go through all list */
-		avp_list = get_avp_list();
+		avp_list = get_user_avp_list();
 		avp = *avp_list;
 
 		for ( ; avp ; avp=avp->next )
@@ -669,7 +670,7 @@ int ops_delete_avp(struct sip_msg* msg, struct fis_param *ap)
 	{
 		/* avp name is known ->search by name */
 		name_type = (((ap->flags&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
-		while ( (avp=search_first_avp( name_type, ap->val, 0))!=0 )
+		while ( (avp=search_first_avp( name_type, ap->val, 0, 0))!=0 )
 		{
 			destroy_avp( avp );
 			n++;
@@ -679,7 +680,7 @@ int ops_delete_avp(struct sip_msg* msg, struct fis_param *ap)
 	} else {
 		/* avp name is not given - we have just flags */
 		/* -> go through all list */
-		avp_list = get_avp_list();
+		avp_list = get_user_avp_list();
 		avp = *avp_list;
 
 		for ( ; avp ; avp=avp_next )
@@ -764,6 +765,7 @@ inline static int append_0(str *in, str *out)
 int ops_pushto_avp ( struct sip_msg* msg, struct fis_param* dst,
 													struct fis_param* ap)
 {
+	struct search_state st;
 	struct lump    *anchor;
 	struct action  act;
 	struct usr_avp *avp;
@@ -775,7 +777,7 @@ int ops_pushto_avp ( struct sip_msg* msg, struct fis_param* dst,
 
 	/* search for the avp */
 	name_type = (((ap->flags&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
-	avp = search_first_avp( name_type, ap->val, &avp_val);
+	avp = search_first_avp( name_type, ap->val, &avp_val, &st);
 	if (avp==0)
 	{
 		DBG("DEBUG:avpops:pushto_avp: no avp found\n");
@@ -873,7 +875,7 @@ int ops_pushto_avp ( struct sip_msg* msg, struct fis_param* dst,
 		n++;
 		if ( !(ap->flags&AVPOPS_FLAG_ALL) )
 			break;
-		avp = search_next_avp( avp, &avp_val);
+		avp = search_next_avp(&st, &avp_val);
 	} /* end while */
 
 	DBG("DEBUG:avpops:pushto_avps: %d avps were processed\n",n);
@@ -886,6 +888,7 @@ error:
 int ops_check_avp( struct sip_msg* msg, struct fis_param* ap,
 													struct fis_param* val)
 {
+	struct search_state st1, st2;
 	unsigned short    name_type;
 	struct usr_avp    *avp1;
 	struct usr_avp    *avp2;
@@ -898,7 +901,7 @@ int ops_check_avp( struct sip_msg* msg, struct fis_param* ap,
 
 	/* look if the required avp(s) is/are present */
 	name_type = (((ap->flags&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
-	avp1 = search_first_avp( name_type, ap->val, &avp_val);
+	avp1 = search_first_avp( name_type, ap->val, &avp_val, &st1);
 	if (avp1==0)
 	{
 		DBG("DEBUG:avpops:check_avp: no avp found to check\n");
@@ -910,7 +913,7 @@ cycle1:
 	{
 		/* the 2nd operator is an avp name -> get avp val */
 		name_type = (((val->flags&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
-		avp2 = search_first_avp( name_type, val->val, &ck_val);
+		avp2 = search_first_avp( name_type, val->val, &ck_val, &st2);
 		if (avp2==0)
 		{
 			DBG("DEBUG:avpops:check_avp: no avp2 found to check\n");
@@ -1025,13 +1028,13 @@ cycle2:
 
 next:
 	/* cycle for the second value (only if avp can have multiple vals) */
-	if ((val->flags&AVPOPS_VAL_AVP)&&(avp2=search_next_avp(avp2,&ck_val))!=0)
+	if ((val->flags&AVPOPS_VAL_AVP)&&(avp2=search_next_avp(&st2,&ck_val))!=0)
 	{
 		ck_flg = avp2->flags&AVP_VAL_STR?AVPOPS_VAL_STR:AVPOPS_VAL_INT;
 		goto cycle2;
 	/* cycle for the first value -> next avp */
 	} else {
-		avp1=(val->flags&AVPOPS_FLAG_ALL)?search_next_avp(avp1,&avp_val):0;
+		avp1=(val->flags&AVPOPS_FLAG_ALL)?search_next_avp(&st1,&avp_val):0;
 		if (avp1)
 			goto cycle1;
 	}
@@ -1043,10 +1046,14 @@ error:
 }
 
 
-
+/*
+ * FIXME: janakj: I need to check this function to make sure it works
+ * properly with domain and global attributes
+ */
 int ops_copy_avp( struct sip_msg* msg, struct fis_param* name1,
-													struct fis_param* name2)
+		  struct fis_param* name2)
 {
+	struct search_state st;
 	struct usr_avp *avp;
 	struct usr_avp *prev_avp;
 	int_str         avp_val;
@@ -1061,11 +1068,11 @@ int ops_copy_avp( struct sip_msg* msg, struct fis_param* name1,
 	name_type1 = (((name1->flags&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
 	name_type2 = (((name2->flags&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
 
-	avp = search_first_avp( name_type1, name1->val, &avp_val);
+	avp = search_first_avp( name_type1, name1->val, &avp_val, &st);
 	while ( avp )
 	{
 		/* build a new avp with new name, but old value */
-		if ( add_avp( name_type2|(avp->flags&AVP_VAL_STR), name2->val,
+		if ( add_avp( name_type2|(avp->flags&AVP_VAL_STR)|AVP_USER, name2->val,
 		avp_val)==-1 ) {
 			LOG(L_ERR,"ERROR:avpops:copy_avp: failed to create new avp\n");
 			goto error;
@@ -1079,7 +1086,7 @@ int ops_copy_avp( struct sip_msg* msg, struct fis_param* name1,
 			break;
 		} else {
 			prev_avp = avp;
-			avp = search_next_avp( prev_avp, &avp_val);
+			avp = search_next_avp(&st, &avp_val);
 			/* delete the old one? */
 			if (name2->flags&AVPOPS_FLAG_DELETE)
 				destroy_avp( prev_avp );
@@ -1101,7 +1108,7 @@ int ops_print_avp()
 	str            *name;
 
 	/* go through all list */
-	avp_list = get_avp_list();
+	avp_list = get_user_avp_list();
 	avp = *avp_list;
 
 	for ( ; avp ; avp=avp->next)
