@@ -143,10 +143,9 @@ static char *relative2absolute_uri(const char *xcap_root, const char *relative)
 	int rel_len = 0;
 	int slash_len = 0;
 	char *dst = NULL;
-	
+
 	if (xcap_root) {
 		root_len = strlen(xcap_root);
-		len += root_len;
 		if (xcap_root[root_len - 1] != '/') slash_len = 1;
 	}
 	if (relative) rel_len = strlen(relative);
