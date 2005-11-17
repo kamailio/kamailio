@@ -501,6 +501,7 @@ static inline int after_strict(struct sip_msg* _m)
 	rr_t* rt, *prev;
 	char* rem_off;
 	str* uri;
+	struct socket_info *si;
 
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
@@ -511,17 +512,22 @@ static inline int after_strict(struct sip_msg* _m)
 		return RR_ERROR;
 	}
 
+	if ( enable_double_rr && is_2rr(&puri.params) &&
 #ifdef ENABLE_USER_CHECK
-	if (is_myself(&puri.user, &puri.host, puri.port_no))
+	is_myself(&puri.user, &puri.host, puri.port_no)
 #else
-	if (is_myself(&puri.host, puri.port_no))
+	is_myself(&puri.host, puri.port_no)
 #endif
-	{
-		/* set the hooks for the params -bogdan */
-		routed_msg_id = _m->id;
-		routed_params = puri.params;
-		/* run RR callbacks -bogdan */
-		run_rr_callbacks( _m, &routed_params );
+	) {
+		/* double route may occure due different IP and port, so force as
+		 * send interface the one advertise in second Route */
+		si = grep_sock_info( &puri.host, puri.port_no, puri.proto);
+		if (si) {
+			_m->force_send_socket = si;
+		} else {
+			LOG(L_WARN,"WARNING:rr:after_loose: no socket found for "
+				"match second RR\n");
+		}
 
 		if (!rt->next) {
 			/* No next route in the same header, remove the whole header
@@ -549,6 +555,12 @@ static inline int after_strict(struct sip_msg* _m)
 		LOG(L_ERR, "after_strict: Error while parsing URI\n");
 		return RR_ERROR;
 	}
+
+	/* set the hooks for the params -bogdan */
+	routed_msg_id = _m->id;
+	routed_params = puri.params;
+	/* run RR callbacks -bogdan */
+	run_rr_callbacks( _m, &routed_params );
 
 	if (is_strict(&puri.params)) {
 		DBG("after_strict: Next hop: '%.*s' is strict router\n",
@@ -699,9 +711,9 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		} else rt = rt->next;
 		
 		if (enable_double_rr && is_2rr(&puri.params)) {
-			/* double rout may occure due different IP and port, so force as
+			/* double route may occure due different IP and port, so force as
 			 * send interface the one advertise in second Route */
-			if (parse_uri(rt->nameaddr.uri.s, rt->nameaddr.uri.len, &puri) < 0) {
+			if (parse_uri(rt->nameaddr.uri.s,rt->nameaddr.uri.len,&puri)<0) {
 				LOG(L_ERR, "after_loose: Error while parsing the "
 					"double route URI\n");
 				return RR_ERROR;
