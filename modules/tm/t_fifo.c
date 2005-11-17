@@ -598,11 +598,11 @@ static inline char* append2buf( char *buf, int len, struct sip_msg *req,
 			/* search for the AVP */
 			if (ha->sval.s) {
 				avp_name.s=&ha->sval;
-				avp = search_first_avp( AVP_NAME_STR, avp_name, &avp_val);
+				avp = search_first_avp( AVP_NAME_STR, avp_name, &avp_val, 0);
 				DBG("AVP <%.*s>: %p\n",avp_name.s->len,avp_name.s->s,avp);
 			} else {
 				avp_name.n=ha->ival;
-				avp = search_first_avp( 0, avp_name, &avp_val);
+				avp = search_first_avp( 0, avp_name, &avp_val, 0);
 				DBG("AVP <%i>: %p\n",avp_name.n,avp);
 			}
 			if (avp) {

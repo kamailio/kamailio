@@ -559,6 +559,9 @@ do { \
 				((struct to_body*)new_hdr->parsed)->body.s =
 					translate_pointer( new_msg->buf , org_msg->buf ,
 					((struct to_body*)hdr->parsed)->body.s );
+				((struct to_body*)new_hdr->parsed)->display.s = 
+					translate_pointer( new_msg->buf, org_msg->buf,
+					((struct to_body*)hdr->parsed)->display.s);
 				((struct to_body*)new_hdr->parsed)->uri.s =
 					translate_pointer( new_msg->buf , org_msg->buf ,
 					((struct to_body*)hdr->parsed)->uri.s );

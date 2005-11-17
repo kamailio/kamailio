@@ -513,7 +513,7 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 		global_msg_id=msg->id;
 		set_t(t);
 		/* make available the avp list from transaction */
-		backup_list = set_avp_list( &t->user_avps );
+		backup_list = set_user_avp_list( &t->user_avps );
 		/* set default send address to the saved value */
 		backup_si=bind_address;
 		bind_address=t->uac[0].request.dst.send_sock;
@@ -523,7 +523,7 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 		global_msg_id=backup_msgid;
 		rmode=backup_mode;
 		/* restore original avp list */
-		set_avp_list( backup_list );
+		set_user_avp_list( backup_list );
 		bind_address=backup_si;
 	}
 }
@@ -1324,13 +1324,13 @@ int reply_received( struct sip_msg  *p_msg )
 		/* transfer transaction flag to message context */
 		if (t->uas.request) p_msg->flags=t->uas.request->flags;
 		/* set the as avp_list the one from transaction */
-		backup_list = set_avp_list( &t->user_avps );
+		backup_list = set_user_avp_list( &t->user_avps );
 		if (run_actions(onreply_rlist[t->on_reply], p_msg)<0)
 			LOG(L_ERR, "ERROR: on_reply processing failed\n");
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
 		/* restore original avp list */
-		set_avp_list( backup_list );
+		set_user_avp_list( backup_list );
 	}
 	LOCK_REPLIES( t );
 	if ( is_local(t) ) {
@@ -1372,7 +1372,7 @@ int reply_received( struct sip_msg  *p_msg )
 			   attempt to restart retransmission any more
 			*/
 
-			backup_list = set_avp_list( &t->user_avps );
+			backup_list = set_user_avp_list( &t->user_avps );
 			if (!fr_inv_avp2timer(&timer)) {
 				DBG("reply_received: FR_INV_TIMER = %d\n", timer);
 				set_timer( & uac->request.fr_timer,
@@ -1382,7 +1382,7 @@ int reply_received( struct sip_msg  *p_msg )
 				set_timer( & uac->request.fr_timer,
 					   FR_INV_TIMER_LIST, 0 );
 			}
-			set_avp_list( backup_list );
+			set_user_avp_list( backup_list );
 		} else {
 			     /* non-invite: restart retransmissions (slow now) */
 			uac->request.retr_list=RT_T2;

@@ -181,7 +181,7 @@ void run_trans_callbacks( int type , struct cell *trans,
 	if (trans->tmcb_hl.first==0 || ((trans->tmcb_hl.reg_types)&type)==0 )
 		return;
 
-	backup = set_avp_list( &trans->user_avps );
+	backup = set_user_avp_list( &trans->user_avps );
 	for (cbp=trans->tmcb_hl.first; cbp; cbp=cbp->next)  {
 		if ( (cbp->types)&type ) {
 			DBG("DBG: trans=%p, callback type %d, id %d entered\n",
@@ -189,7 +189,7 @@ void run_trans_callbacks( int type , struct cell *trans,
 			params.param = &(cbp->param);
 			cbp->callback( trans, type, &params );
 		}
-	set_avp_list( backup );
+	set_user_avp_list( backup );
 	}
 }
 
@@ -207,13 +207,13 @@ void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code )
 	if (req_in_tmcb_hl->first==0)
 		return;
 
-	backup = set_avp_list( &trans->user_avps );
+	backup = set_user_avp_list( &trans->user_avps );
 	for (cbp=req_in_tmcb_hl->first; cbp; cbp=cbp->next)  {
 		DBG("DBG: trans=%p, callback type %d, id %d entered\n",
 			trans, cbp->types, cbp->id );
 		params.param = &(cbp->param);
 		cbp->callback( trans, cbp->types, &params );
 	}
-	set_avp_list( backup );
+	set_user_avp_list( backup );
 }
 
