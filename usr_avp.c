@@ -60,10 +60,15 @@ struct avp_galias {
 };
 
 static struct avp_galias *galiases = 0;
-static struct usr_avp *global_avps = 0;
-static struct usr_avp **crt_avps  = &global_avps;
 
-static regex_t* search_re;  /* Regex for use in subsequent searches */
+static avp_t *global_avps = 0;  /* Global attribute list */
+static avp_t *domain_avps = 0;  /* Domain-specific attribute list */
+static avp_t *user_avps = 0;    /* User-specific attribute list */
+
+static avp_t **crt_global_avps = &global_avps; /* Pointer to the current list of global attributes */
+static avp_t **crt_domain_avps = &domain_avps; /* Pointer to the current list of domain attributes */
+static avp_t **crt_user_avps   = &user_avps;   /* Pointer to the current list of user attributes */
+
 
 inline static unsigned short compute_ID( str *name )
 {
@@ -79,13 +84,33 @@ inline static unsigned short compute_ID( str *name )
 
 int add_avp(unsigned short flags, int_str name, int_str val)
 {
-	struct usr_avp *avp;
+	avp_t **list;
+	avp_t *avp;
 	str *s;
 	struct str_int_data *sid;
 	struct str_str_data *ssd;
+	unsigned short avp_class;
 	int len;
 
-	assert( crt_avps!=0 );
+	if ((flags & ALL_AVP_CLASSES) == 0) {
+		     /* The caller did not specify any class to search in, so enable
+		      * all of them by default
+		      */
+		flags |= ALL_AVP_CLASSES;
+	}
+
+	if (IS_USER_AVP(flags)) {
+		list = crt_user_avps;
+		avp_class = AVP_USER;
+	} else if (IS_DOMAIN_AVP(flags)) {
+		list = crt_domain_avps;
+		avp_class = AVP_DOMAIN;
+	} else {
+		list = crt_global_avps;
+		avp_class = AVP_GLOBAL;
+	}
+
+	assert(list != 0);
 
 	if ( name.s==0 ) {
 		LOG(L_ERR,"ERROR:avp:add_avp: 0 ID or NULL NAME AVP!");
@@ -117,11 +142,14 @@ int add_avp(unsigned short flags, int_str name, int_str val)
 		goto error;
 	}
 
-	avp->flags = flags;
+		 /* Make that only the selected class is set
+		  * if the caller set more classes in flags
+		  */
+	avp->flags = flags & (~(ALL_AVP_CLASSES) | avp_class);
 	avp->id = (flags&AVP_NAME_STR)? compute_ID(name.s) : name.n ;
 
-	avp->next = *crt_avps;
-	*crt_avps = avp;
+	avp->next = *list;
+	*list = avp;
 
 	switch ( flags&(AVP_NAME_STR|AVP_VAL_STR) )
 	{
@@ -167,8 +195,7 @@ error:
 
 
 /* get value functions */
-
-inline str* get_avp_name(struct usr_avp *avp)
+inline str* get_avp_name(avp_t *avp)
 {
 	switch ( avp->flags&(AVP_NAME_STR|AVP_VAL_STR) )
 	{
@@ -191,7 +218,7 @@ inline str* get_avp_name(struct usr_avp *avp)
 }
 
 
-inline void get_avp_val(struct usr_avp *avp, int_str *val)
+inline void get_avp_val(avp_t *avp, int_str *val)
 {
 	if (avp==0 || val==0)
 		return;
@@ -217,140 +244,157 @@ inline void get_avp_val(struct usr_avp *avp, int_str *val)
 }
 
 
-struct usr_avp** get_avp_list( )
+/* Return the current list of user attributes */
+avp_t** get_user_avp_list(void)
 {
-	assert( crt_avps!=0 );
-	return crt_avps;
+	assert(crt_user_avps != 0);
+	return crt_user_avps;
+}
+
+/* Return the current list of domain attributes */
+avp_t** get_domain_avp_list(void)
+{
+	assert(crt_domain_avps != 0);
+	return crt_domain_avps;
 }
 
 
-
-
-/* search functions */
-
-inline static struct usr_avp *internal_search_ID_avp( struct usr_avp *avp,
-												unsigned short id)
+/* Return the current list of domain attributes */
+avp_t** get_global_avp_list(void)
 {
-	for( ; avp ; avp=avp->next ) {
-		if ( id==avp->id && (avp->flags&AVP_NAME_STR)==0  ) {
-			return avp;
-		}
+	assert(crt_global_avps != 0);
+	return crt_global_avps;
+}
+
+
+/*
+ * Compare given id with id in avp, return true if they match
+ */
+static inline int match_by_id(avp_t* avp, unsigned short id)
+{
+	if (avp->id == id && (avp->flags&AVP_NAME_STR)==0) {
+		return 1;
 	}
 	return 0;
 }
 
 
-
-inline static struct usr_avp *internal_search_name_avp( struct usr_avp *avp,
-												unsigned short id, str *name)
+/*
+ * Compare given name with name in avp, return true if they are same
+ */
+static inline int match_by_name(avp_t* avp, unsigned short id, str* name)
 {
-	str * avp_name;
-
-	for( ; avp ; avp=avp->next )
-		if ( id==avp->id && avp->flags&AVP_NAME_STR &&
-		(avp_name=get_avp_name(avp))!=0 && avp_name->len==name->len
-		 && !strncasecmp( avp_name->s, name->s, name->len) ) {
-			return avp;
-		}
+	str* avp_name;
+	if (id==avp->id && avp->flags&AVP_NAME_STR &&
+	    (avp_name=get_avp_name(avp))!=0 && avp_name->len==name->len
+	    && !strncasecmp( avp_name->s, name->s, name->len) ) {
+		return 1;
+	}
 	return 0;
 }
 
 
-/* find an attribute by name match against regular expression */
-static struct usr_avp *internal_search_avp_by_re(struct usr_avp *avp, regex_t* re)
+/*
+ * Compare name with name in AVP using regular expressions, return
+ * true if they match
+ */
+static inline int match_by_re(avp_t* avp, regex_t* re)
 {
-	str * avp_name;
 	regmatch_t pmatch;
-	
-	     /* validation */
-	if (re==0) {
-		LOG(L_ERR, "ERROR: internal_search_avp_by_re: No regular expression\n");
+	str * avp_name;
+	     /* AVP identifiable by name ? */
+	if (!(avp->flags&AVP_NAME_STR)) return 0;
+	if ((avp_name=get_avp_name(avp))==0) /* valid AVP name ? */
 		return 0;
-	}
-	
-	for( ; avp ; avp=avp->next ) {
-		     /* AVP identifiable by name ? */
-		if (!(avp->flags&AVP_NAME_STR)) continue;
-		if ((avp_name=get_avp_name(avp))==0) /* valid AVP name ? */
-			continue;
-		if (!avp_name->s) /* AVP name validation */
-			continue;
-		if (regexec(re, avp_name->s, 1, &pmatch,0)==0) { /* re match ? */
-			avp->search_type|= AVP_NAME_RE;
-			return avp;
-		}
+	if (!avp_name->s) /* AVP name validation */
+		return 0;
+	if (regexec(re, avp_name->s, 1, &pmatch,0)==0) { /* re match ? */
+		return 1;
 	}
 	return 0;
 }
 
 
-struct usr_avp *search_first_avp( unsigned short name_type,
-				  int_str name, int_str *val)
+avp_t *search_first_avp(unsigned short flags, int_str name, int_str *val, struct search_state* s)
 {
-	struct usr_avp *avp;
+	static struct search_state st;
 
-	assert( crt_avps!=0 );
-	
-	if (*crt_avps==0)
-		return 0;
+	assert( crt_user_avps != 0 );
+	assert( crt_domain_avps != 0);
+	assert( crt_global_avps != 0);
 
-	if ( name.s==0) {
+	if (name.s==0) {
 		LOG(L_ERR,"ERROR:avp:search_first_avp: 0 ID or NULL NAME AVP!");
 		return 0;
 	}
 
-	/* search for the AVP by ID (&name) */
-	if (name_type&AVP_NAME_STR) {
-		if ( name.s->s==0 || name.s->len==0) {
-			LOG(L_ERR,"ERROR:avp:search_first_avp: EMPTY NAME AVP!");
-			return 0;
-		}
-		avp = internal_search_name_avp(*crt_avps,compute_ID(name.s),name.s);
-	} else if (name_type & AVP_NAME_RE) {
-		search_re = name.re;
-		avp = internal_search_avp_by_re(*crt_avps, search_re);
+	if (!s) s = &st;
+
+	if ((flags & ALL_AVP_CLASSES) == 0) {
+		     /* The caller did not specify any class to search in, so enable
+		      * all of them by default
+		      */
+		flags |= ALL_AVP_CLASSES;
+	}
+	s->flags = flags;
+	if (IS_USER_AVP(flags)) {
+		s->avp = *crt_user_avps;
+	} else if (IS_DOMAIN_AVP(flags)) {
+		s->avp = *crt_domain_avps;
 	} else {
-		avp = internal_search_ID_avp( *crt_avps, name.n );
+		s->avp = *crt_global_avps;
 	}
-	
-	if (avp) {
-		     /* remember type of search for next searches */
-		avp->search_type=name_type;
-		if (val) /* get the value - if required */
-			get_avp_val(avp, val);
+	s->name = name;
+
+	if (!(flags & AVP_NAME_STR) && !(flags & AVP_NAME_RE)) {
+		s->id = compute_ID(name.s);
 	}
-	
-	return avp;
+
+	return search_next_avp(s, val);
 }
 
 
 
-struct usr_avp *search_next_avp( struct usr_avp *avp,  int_str *val )
+avp_t *search_next_avp(struct search_state* s, int_str *val )
 {
-	struct usr_avp* next;
+	avp_t* avp;
+	int matched;
 
-	if (avp == 0) {
+	if (s == 0) {
+		LOG(L_ERR, "search_next:avp: Invalid parameter value\n");
 		return 0;
 	}
 
-	next = avp->next;
-	if (next == 0) {
-		return 0;
+	while(1) {
+		for( ; s->avp; s->avp = s->avp->next) {
+			if (s->flags & AVP_NAME_RE) {
+				matched = match_by_re(s->avp, s->name.re);
+			} else if (s->flags & AVP_NAME_STR) {
+				matched = match_by_name(s->avp, s->id, s->name.s);
+			} else {
+				matched = match_by_id(s->avp, s->name.n);
+			}
+			if (matched) {
+				avp = s->avp;
+				s->avp = s->avp->next;
+				if (val) get_avp_val(avp, val);
+				return avp;
+			}
+		}
+
+		if (IS_USER_AVP(s->flags)) {
+			s->flags &= ~AVP_USER;
+			s->avp = *crt_domain_avps;
+		} else if (IS_DOMAIN_AVP(s->flags)) {
+			s->flags &= ~AVP_DOMAIN;
+			s->avp = *crt_global_avps;
+		} else {
+			s->flags &= ~AVP_GLOBAL;
+			return 0;
+		}
 	}
 
-	if (avp->search_type & AVP_NAME_RE) {
-		next = internal_search_avp_by_re(next, search_re);
-	} else if (avp->flags & AVP_NAME_STR) {
-		next = internal_search_name_avp(next, avp->id, get_avp_name(avp));
-	} else {
-		next = internal_search_ID_avp(next, avp->id);
-	}
-
-	if (next && val) {
-		get_avp_val(next, val);
-	}
-	
-	return next;
+	return 0;
 }
 
 
@@ -358,17 +402,16 @@ struct usr_avp *search_next_avp( struct usr_avp *avp,  int_str *val )
 
 /********* free functions ********/
 
-void destroy_avp( struct usr_avp *avp_del)
+void destroy_avp( avp_t *avp_del)
 {
-	struct usr_avp *avp;
-	struct usr_avp *avp_prev;
+	avp_t *avp, *avp_prev;
 
-	for( avp_prev=0,avp=*crt_avps ; avp ; avp_prev=avp,avp=avp->next ) {
+	for( avp_prev=0,avp=*crt_user_avps ; avp ; avp_prev=avp,avp=avp->next ) {
 		if (avp==avp_del) {
 			if (avp_prev)
 				avp_prev->next=avp->next;
 			else
-				*crt_avps = avp->next;
+				*crt_user_avps = avp->next;
 			shm_free(avp);
 			return;
 		}
@@ -376,9 +419,9 @@ void destroy_avp( struct usr_avp *avp_del)
 }
 
 
-void destroy_avp_list_unsafe( struct usr_avp **list )
+void destroy_avp_list_unsafe( avp_t **list )
 {
-	struct usr_avp *avp, *foo;
+	avp_t *avp, *foo;
 
 	avp = *list;
 	while( avp ) {
@@ -390,9 +433,9 @@ void destroy_avp_list_unsafe( struct usr_avp **list )
 }
 
 
-inline void destroy_avp_list( struct usr_avp **list )
+inline void destroy_avp_list( avp_t **list )
 {
-	struct usr_avp *avp, *foo;
+	avp_t *avp, *foo;
 
 	DBG("DEBUG:destroy_avp_list: destroying list %p\n", *list);
 	avp = *list;
@@ -405,29 +448,50 @@ inline void destroy_avp_list( struct usr_avp **list )
 }
 
 
-void reset_avps( )
+void reset_user_avps(void)
 {
-	assert( crt_avps!=0 );
+	assert( crt_user_avps!=0 );
 	
-	if ( crt_avps!=&global_avps) {
-		crt_avps = &global_avps;
+	if ( crt_user_avps!=&user_avps) {
+		crt_user_avps = &user_avps;
 	}
-	destroy_avp_list( crt_avps );
+	destroy_avp_list( crt_user_avps );
 }
 
 
-struct usr_avp** set_avp_list( struct usr_avp **list )
+avp_t** set_user_avp_list( avp_t **list )
 {
-	struct usr_avp **foo;
-	
-	assert( crt_avps!=0 );
+	avp_t **foo;
 
-	foo = crt_avps;
-	crt_avps = list;
+	assert( crt_user_avps!=0 );
+
+	foo = crt_user_avps;
+	crt_user_avps = list;
 	return foo;
 }
 
 
+avp_t** set_domain_avp_list( avp_t **list )
+{
+	avp_t **foo;
+
+	assert( crt_domain_avps!=0 );
+
+	foo = crt_domain_avps;
+	crt_domain_avps = list;
+	return foo;
+}
+
+avp_t** set_global_avp_list( avp_t **list )
+{
+	avp_t **foo;
+
+	assert( crt_global_avps!=0 );
+
+	foo = crt_global_avps;
+	crt_global_avps = list;
+	return foo;
+}
 
 
 /********* global aliases functions ********/
@@ -673,5 +737,3 @@ parse_error:
 error:
 	return -1;
 }
-
-

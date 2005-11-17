@@ -228,7 +228,7 @@ end:
 	skipped = 0;
 #endif
 	/* free possible loaded avps -bogdan */
-	reset_avps();
+	reset_user_avps();
 	DBG("receive_msg: cleaning up\n");
 	free_sip_msg(msg);
 	pkg_free(msg);
@@ -239,14 +239,14 @@ end:
 error_rpl:
 	/* execute post reply-script callbacks */
 	exec_post_rpl_cb(msg);
-	reset_avps();
+	reset_user_avps();
 	goto error02;
 error_req:
 	DBG("receive_msg: error:...\n");
 	/* execute post request-script callbacks */
 	exec_post_req_cb(msg);
 	/* free possible loaded avps -bogdan */
-	reset_avps();
+	reset_user_avps();
 error02:
 	free_sip_msg(msg);
 	pkg_free(msg);

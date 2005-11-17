@@ -44,12 +44,17 @@
  *   -------------------------------------------------------
  *     0        avp_core          avp has a string name
  *     1        avp_core          avp has a string value
+ *     2        avp_core          regex search in progress
  *     3        avpops module     avp was loaded from DB
  *     4        lcr module        contact avp qvalue change
+ *     5        core              avp is in user list
+ *     6        core              avp is in domain list
+ *     7        core              avp is in global list
  *
  */
 
 #include "str.h"
+
 
 struct str_int_data {
 	str name;
@@ -68,42 +73,74 @@ typedef union {
 } int_str;
 
 
-struct usr_avp {
+typedef struct usr_avp {
 	unsigned short id;
 	     /* Flags that are kept for the AVP lifetime */
 	unsigned short flags;
-	     /* Type of search in progress */
-	unsigned short search_type;
 	struct usr_avp *next;
 	void *data;
+} avp_t;
+
+
+/*
+ * AVP search state
+ */
+struct search_state {
+	unsigned short flags;  /* Type of search and additional flags */
+	unsigned short id;
+	int_str name;
+	avp_t* avp;            /* Current AVP */
+	regex_t* search_re;    /* Compiled regular expression */
 };
 
 
 #define AVP_NAME_STR     (1<<0)
 #define AVP_VAL_STR      (1<<1)
 #define AVP_NAME_RE      (1<<2)
+#define AVP_USER         (1<<5)
+#define AVP_DOMAIN       (1<<6)
+#define AVP_GLOBAL       (1<<7)
+
+#define ALL_AVP_CLASSES (AVP_USER|AVP_DOMAIN|AVP_GLOBAL)
+
+/* True for user avps */
+#define IS_USER_AVP(flags) ((flags) & AVP_USER)
+
+/* True for domain avps */
+#define IS_DOMAIN_AVP(flags) ((flags) & AVP_DOMAIN)
+
+/* true for global avps */
+#define IS_GLOBAL_AVP(flags) ((flags) & AVP_GLOBAL)
 
 #define GALIAS_CHAR_MARKER  '$'
 
 /* add functions */
-int add_avp( unsigned short flags, int_str name, int_str val);
+int add_avp(unsigned short flags, int_str name, int_str val);
 
 /* search functions */
-struct usr_avp *search_first_avp( unsigned short name_type, int_str name,
-															int_str *val );
-struct usr_avp *search_next_avp( struct usr_avp *avp, int_str *val  );
+avp_t *search_first_avp( unsigned short flags, int_str name,
+			 int_str *val, struct search_state* state);
+avp_t *search_next_avp(struct search_state* state, int_str *val);
 
 /* free functions */
-void reset_avps( );
-void destroy_avp( struct usr_avp *avp);
-void destroy_avp_list( struct usr_avp **list );
-void destroy_avp_list_unsafe( struct usr_avp **list );
+void reset_user_avps(void);
+
+void destroy_avp(avp_t *avp);
+void destroy_avp_list(avp_t **list );
+void destroy_avp_list_unsafe(avp_t **list );
 
 /* get func */
-void get_avp_val(struct usr_avp *avp, int_str *val );
-str* get_avp_name(struct usr_avp *avp);
-struct usr_avp** set_avp_list( struct usr_avp **list );
-struct usr_avp** get_avp_list( );
+void get_avp_val(avp_t *avp, int_str *val );
+str* get_avp_name(avp_t *avp);
+
+avp_t** get_user_avp_list(void);   /* Return current list of user avps */
+avp_t** get_domain_avp_list(void); /* Return current list of domain avps */
+avp_t** get_global_avp_list(void); /* Return current list of global avps */
+
+avp_t** set_user_avp_list(avp_t **list);   /* Set current list of user avps to list */
+avp_t** set_domain_avp_list(avp_t **list); /* Set current list of domain avps to list */
+avp_t** set_global_avp_list(avp_t **list); /* Set current list of global avps to list */
+
 
 /* global alias functions (manipulation and parsing)*/
 int add_avp_galias_str(char *alias_definition);
