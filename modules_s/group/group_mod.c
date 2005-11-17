@@ -75,26 +75,22 @@ static int hf_fixup(void** param, int param_no);
 
 
 #define TABLE "grp"
-#define TABLE_LEN (sizeof(TABLE) - 1)
 
 #define USER_COL "username"
-#define USER_COL_LEN (sizeof(USER_COL) - 1)
 
 #define DOMAIN_COL "domain"
-#define DOMAIN_COL_LEN (sizeof(DOMAIN_COL) - 1)
 
 #define GROUP_COL "grp"
-#define GROUP_COL_LEN (sizeof(GROUP_COL) - 1)
 
 
 /*
  * Module parameter variables
  */
-static str db_url        = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
-str table         = {TABLE, TABLE_LEN};         /* Table name where group definitions are stored */
-str user_column   = {USER_COL, USER_COL_LEN};
-str domain_column = {DOMAIN_COL, DOMAIN_COL_LEN};
-str group_column  = {GROUP_COL, GROUP_COL_LEN};
+static str db_url        = STR_STATIC_INIT(DEFAULT_RODB_URL);
+str table         = STR_STATIC_INIT(TABLE);         /* Table name where group definitions are stored */
+str user_column   = STR_STATIC_INIT(USER_COL);
+str domain_column = STR_STATIC_INIT(DOMAIN_COL);
+str group_column  = STR_STATIC_INIT(GROUP_COL);
 int use_domain    = 0;
 
 

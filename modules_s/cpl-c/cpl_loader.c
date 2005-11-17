@@ -253,9 +253,9 @@ int cpl_load( FILE *fifo_stream, char *response_file )
 	static char cpl_file[MAX_STATIC_BUF];
 	int user_len;
 	int cpl_file_len;
-	str xml = {0,0};
-	str bin = {0,0};
-	str enc_log = {0,0};
+	str xml = STR_NULL;
+	str bin = STR_NULL;
+	str enc_log = STR_NULL;
 	str logs[2];
 
 	DBG("DEBUG:cpl-c:cpl_load: \"LOAD_CPL\" FIFO command received!\n");
@@ -418,7 +418,7 @@ int cpl_get( FILE *fifo_stream, char *response_file )
 {
 	static char user_s[MAX_STATIC_BUF];
 	str user = {user_s,0};
-	str script = {0,0};
+	str script = STR_NULL;
 	str logs[2];
 
 	/* check the name of the response file */

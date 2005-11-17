@@ -82,20 +82,20 @@ extern int bind_usrloc(usrloc_api_t* api);
 /*
  * Module parameters and their default values
  */
-str user_col        = {USER_COL, sizeof(USER_COL) - 1};             /* Name of column containing usernames */
-str domain_col      = {DOMAIN_COL, sizeof(DOMAIN_COL) - 1};         /* Name of column containing domains */
-str contact_col     = {CONTACT_COL, sizeof(CONTACT_COL) - 1};       /* Name of column containing contact addresses */
-str expires_col     = {EXPIRES_COL, sizeof(EXPIRES_COL) - 1};       /* Name of column containing expires values */
-str q_col           = {Q_COL, sizeof(Q_COL) - 1};                   /* Name of column containing q values */
-str callid_col      = {CALLID_COL, sizeof(CALLID_COL) - 1};         /* Name of column containing callid string */
-str cseq_col        = {CSEQ_COL, sizeof(CSEQ_COL) - 1};             /* Name of column containing cseq values */
-str method_col      = {METHOD_COL, sizeof(METHOD_COL) - 1};         /* Name of column containing supported method */
-str state_col       = {STATE_COL, sizeof(STATE_COL) - 1};           /* Name of column containing contact state */
-str flags_col       = {FLAGS_COL, sizeof(FLAGS_COL) - 1};           /* Name of column containing flags */
-str user_agent_col  = {USER_AGENT_COL, sizeof(USER_AGENT_COL) - 1}; /* Name of column containing user agent string */
-str received_col    = {RECEIVED_COL, sizeof(RECEIVED_COL) - 1};     /* Name of column containing transport info of REGISTER */
-str instance_col    = {INSTANCE_COL, sizeof(INSTANCE_COL) -1};      /* Name of column containing sip-instance parameter */
-str db_url          = {DEFAULT_DB_URL, sizeof(DEFAULT_DB_URL) - 1}; /* Database URL */
+str user_col        = STR_STATIC_INIT(USER_COL);       /* Name of column containing usernames */
+str domain_col      = STR_STATIC_INIT(DOMAIN_COL);     /* Name of column containing domains */
+str contact_col     = STR_STATIC_INIT(CONTACT_COL);    /* Name of column containing contact addresses */
+str expires_col     = STR_STATIC_INIT(EXPIRES_COL);    /* Name of column containing expires values */
+str q_col           = STR_STATIC_INIT(Q_COL);          /* Name of column containing q values */
+str callid_col      = STR_STATIC_INIT(CALLID_COL);     /* Name of column containing callid string */
+str cseq_col        = STR_STATIC_INIT(CSEQ_COL);       /* Name of column containing cseq values */
+str method_col      = STR_STATIC_INIT(METHOD_COL);     /* Name of column containing supported method */
+str state_col       = STR_STATIC_INIT(STATE_COL);      /* Name of column containing contact state */
+str flags_col       = STR_STATIC_INIT(FLAGS_COL);      /* Name of column containing flags */
+str user_agent_col  = STR_STATIC_INIT(USER_AGENT_COL); /* Name of column containing user agent string */
+str received_col    = STR_STATIC_INIT(RECEIVED_COL);   /* Name of column containing transport info of REGISTER */
+str instance_col    = STR_STATIC_INIT(INSTANCE_COL);   /* Name of column containing sip-instance parameter */
+str db_url          = STR_STATIC_INIT(DEFAULT_DB_URL); /* Database URL */
 int timer_interval  = 60;             /* Timer interval in seconds */
 int db_mode         = 0;              /* Database sync scheme: 0-no db, 1-write through, 2-write back */
 int use_domain      = 0;              /* Whether usrloc should use domain part of aor */

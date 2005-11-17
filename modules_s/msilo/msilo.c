@@ -137,7 +137,7 @@ int  ms_check_time=30;
 int  ms_clean_period=5;
 int  ms_use_contact=1;
 
-str msg_type = { "MESSAGE", 7 };
+str msg_type = STR_STATIC_INIT("MESSAGE");
 
 str reg_addr;
 

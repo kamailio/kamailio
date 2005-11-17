@@ -380,8 +380,8 @@ int db_load_vs_names(db_con_t *rls_db, virtual_subscription_t *vs)
 		for (i = 0; i < res->n; i++) {
 			db_row_t *row = &res->rows[i];
 			db_val_t *row_vals = ROW_VALUES(row);
-			str name = {0, 0};
-			str lang = {0, 0};
+			str name = STR_NULL;
+			str lang = STR_NULL;
 
 			get_str_val(row_vals[0], name);
 			get_str_val(row_vals[1], lang);
@@ -428,8 +428,8 @@ int db_load_vs(db_con_t *rls_db, rl_subscription_t *s)
 		for (i = 0; i < res->n; i++) {
 			db_row_t *row = &res->rows[i];
 			db_val_t *row_vals = ROW_VALUES(row);
-			str id = {0, 0};
-			str uri = {0, 0};
+			str id = STR_NULL;
+			str uri = STR_NULL;
 
 			get_str_val(row_vals[0], id);
 			get_str_val(row_vals[1], uri);
@@ -492,12 +492,12 @@ int db_load_rls()
 		for (i = 0; i < res->n; i++) {
 			db_row_t *row = &res->rows[i];
 			db_val_t *row_vals = ROW_VALUES(row);
-			str id = {0, 0};
-			str contact = {0, 0};
-			str dialog = {0, 0};
-			str uri = {0, 0};
-			str package = {0, 0};
-			str w_uri = {0, 0};
+			str id = STR_NULL;
+			str contact = STR_NULL;
+			str dialog = STR_NULL;
+			str uri = STR_NULL;
+			str package = STR_NULL;
+			str w_uri = STR_NULL;
 			subscription_status_t status;
 			time_t expires = 0;
 			int expires_after;

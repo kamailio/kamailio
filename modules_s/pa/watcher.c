@@ -70,24 +70,24 @@ char *event_package_name[] = {
 };*/
 
 str watcher_status_names[] = {
-     [WS_PENDING] = { "pending", 7 },
-     [WS_ACTIVE] = { "active", 6 },
-     [WS_REJECTED] = { "rejected", 8 },
-     [WS_TERMINATED] = { "terminated", 10 },
-     [WS_PENDING_TERMINATED] = { "terminated", 10 },
-     { 0, 0 }
+     [WS_PENDING] = STR_STATIC_INIT("pending"),
+     [WS_ACTIVE] = STR_STATIC_INIT("active"),
+     [WS_REJECTED] = STR_STATIC_INIT("rejected"),
+     [WS_TERMINATED] = STR_STATIC_INIT("terminated"),
+     [WS_PENDING_TERMINATED] = STR_STATIC_INIT("terminated"),
+     STR_NULL
 };
 
 static str watcher_event_names[] = {
-     [WE_SUBSCRIBE]   = { "subscribe",   9 },
-     [WE_APPROVED]    = { "approved",    8 },
-     [WE_DEACTIVATED] = { "deactivated", 11 },
-     [WE_PROBATION]   = { "probation",   9 },
-     [WE_REJECTED]    = { "rejected",    8 },
-     [WE_TIMEOUT]     = { "timeout",     7 },
-     [WE_GIVEUP]      = { "giveup",      6 },
-     [WE_NORESOURCE]  = { "noresource",  10 },
-     { 0, 0 }
+     [WE_SUBSCRIBE]   = STR_STATIC_INIT("subscribe"),
+     [WE_APPROVED]    = STR_STATIC_INIT("approved"),
+     [WE_DEACTIVATED] = STR_STATIC_INIT("deactivated"),
+     [WE_PROBATION]   = STR_STATIC_INIT("probation"),
+     [WE_REJECTED]    = STR_STATIC_INIT("rejected"),
+     [WE_TIMEOUT]     = STR_STATIC_INIT("timeout"),
+     [WE_GIVEUP]      = STR_STATIC_INIT("giveup"),
+     [WE_NORESOURCE]  = STR_STATIC_INIT("noresource"),
+     STR_NULL
 };
 
 static const char *event_package2str(int et) /* FIXME: change working with this to enum ?*/
@@ -495,7 +495,7 @@ int db_read_watcherinfo(presentity_t *_p, db_con_t* db)
 	db_op_t query_ops[5];
 	db_val_t query_vals[5];
 
-	str dialog = { 0, 0 };
+	str dialog = STR_NULL;
 	dlg_t *dlg = NULL;
 	db_key_t result_cols[11];
 	db_res_t *res;
@@ -548,18 +548,18 @@ int db_read_watcherinfo(presentity_t *_p, db_con_t* db)
 		for (i = 0; i < res->n; i++) {
 			db_row_t *row = &res->rows[i];
 			db_val_t *row_vals = ROW_VALUES(row);
-			str w_uri = { 0, 0 };
-			str s_id = { 0, 0 };
+			str w_uri = STR_NULL;
+			str s_id = STR_NULL;
 			char *event_package_str = NULL;
 			int event_package = EVENT_PRESENCE;
-			str watcher_event_str = { 0, 0 };
+			str watcher_event_str = STR_NULL;
 			watcher_event_t watcher_event = WE_SUBSCRIBE;
 			int accepts = row_vals[accepts_col].val.int_val;
 			int expires = row_vals[expires_col].val.int_val;
 			int doc_index = row_vals[doc_index_col].val.int_val;
-			str status = { 0, 0 };
-			str display_name = { 0, 0 };
-			str server_contact = { 0, 0};
+			str status = STR_NULL;
+			str display_name = STR_NULL;
+			str server_contact = STR_NULL;
 			watcher_t *watcher = NULL;
 			
 			if (!row_vals[w_uri_col].nul) {

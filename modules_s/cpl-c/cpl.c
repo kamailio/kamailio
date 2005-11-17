@@ -704,10 +704,10 @@ static struct cpl_error *cpl_err = &bad_req;
 
 static inline int do_script_action(struct sip_msg *msg, int action)
 {
-	str  body = {0,0};
-	str  user = {0,0};
-	str  bin  = {0,0};
-	str  log  = {0,0};
+	str  body = STR_NULL;
+	str  user = STR_NULL;
+	str  bin  = STR_NULL;
+	str  log  = STR_NULL;
 
 	/* content-length (if present) */
 	if ( !msg->content_length && 
@@ -780,8 +780,8 @@ error:
 
 static inline int do_script_download(struct sip_msg *msg)
 {
-	str  user  = {0,0};
-	str script = {0,0};
+	str  user  = STR_NULL;
+	str script = STR_NULL;
 
 	/* get the destination user name */
 	if (get_dest_user( msg, &user, 0)==-1)

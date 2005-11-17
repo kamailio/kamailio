@@ -94,13 +94,9 @@
 #define ACC_LEN (sizeof(ACC) - 1)
 
 #define ACC_REQUEST "request accounted: "
-#define ACC_REQUEST_LEN (sizeof(ACC_REQUEST) - 1)
 #define ACC_MISSED "call missed: "
-#define ACC_MISSED_LEN (sizeof(ACC_MISSED) - 1)
 #define ACC_ANSWERED "transaction answered: "
-#define ACC_ANSWERED_LEN (sizeof(ACC_ANSWERED) - 1)
 #define ACC_ACKED "request acknowledged: "
-#define ACC_ACKED_LEN (sizeof(ACC_ACKED) - 1)
 
 #define NA "n/a"
 
@@ -153,7 +149,7 @@ static char* attrs = "$^"; /* non-sense which never matches; */
 
 static int acc_log_request(struct sip_msg *rq, char *comment, char *foo);
 
-static str na = {NA, sizeof(NA) - 1};
+static str na = STR_STATIC_INIT(NA);
 
 
 static cmd_export_t cmds[] = {
@@ -638,7 +634,7 @@ static int log_request(struct sip_msg* rq, struct hdr_field* to, str* txt, str* 
 static void log_reply(struct cell* t , struct sip_msg* reply, unsigned int code, time_t req_time)
 {
 	str code_str;
-	static str lead = {ACC_ANSWERED, ACC_ANSWERED_LEN};
+	static str lead = STR_STATIC_INIT(ACC_ANSWERED);
 	static char code_buf[INT2STR_MAX_LEN];
 	char* p;
 	
@@ -653,7 +649,7 @@ static void log_ack(struct cell* t , struct sip_msg *ack, time_t req_time)
 {
 	struct sip_msg *rq;
 	struct hdr_field *to;
-	static str lead = {ACC_ACKED, ACC_ACKED_LEN};
+	static str lead = STR_STATIC_INIT(ACC_ACKED);
 	static char code_buf[INT2STR_MAX_LEN];
 	str code_str;
 	char* p;
@@ -671,7 +667,7 @@ static void log_ack(struct cell* t , struct sip_msg *ack, time_t req_time)
 static void log_missed(struct cell* t, struct sip_msg* reply, unsigned int code, time_t req_time)
 {
         str acc_text;
-        static str leading_text = {ACC_MISSED, ACC_MISSED_LEN};
+        static str leading_text = STR_STATIC_INIT(ACC_MISSED);
 
         get_reply_status(&acc_text, reply, code);
         if (acc_text.s == 0) {
@@ -690,10 +686,9 @@ static void log_missed(struct cell* t, struct sip_msg* reply, unsigned int code,
  */
 static int acc_log_request(struct sip_msg *rq, char* comment, char* s2)
 {
-	str txt, phrase;
+	str phrase;
+	str txt = STR_STATIC_INIT(ACC_REQUEST);
 
-	txt.s = ACC_REQUEST;
-	txt.len = ACC_REQUEST_LEN;
 	phrase.s = comment;
 	phrase.len = strlen(comment);	/* fix_param would be faster! */
 	preparse_req(rq);

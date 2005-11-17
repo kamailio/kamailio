@@ -376,7 +376,7 @@ int extract_server_contact(struct sip_msg *m, str *dst)
 static int create_watcher(struct sip_msg* _m, struct presentity* _p, struct watcher** _w, int et, time_t expires)
 {
 	dlg_t* dialog;
-	str server_contact = {0, 0};
+	str server_contact = STR_NULL;
 	int acc = 0;
 	str watch_uri;
 	str watch_dn;

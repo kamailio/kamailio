@@ -126,34 +126,34 @@ static char* log_fmt = ALL_LOG_FMT; /* Formating string that controls what infor
 #define DEFAULT_ACC_TABLE "acc"
 #define DEFAULT_MC_TABLE "missed_calls"
 
-static str db_url = {DEFAULT_DB_URL, DEFAULT_DB_URL_LEN};
-static str acc_table = {DEFAULT_ACC_TABLE, sizeof(DEFAULT_ACC_TABLE) - 1};
-static str mc_table = {DEFAULT_MC_TABLE, sizeof(DEFAULT_MC_TABLE) - 1};
+static str db_url = STR_STATIC_INIT(DEFAULT_DB_URL);
+static str acc_table = STR_STATIC_INIT(DEFAULT_ACC_TABLE);
+static str mc_table = STR_STATIC_INIT(DEFAULT_MC_TABLE);
 
-static str attrs_col = {A_ATTRS, sizeof(A_ATTRS) - 1};
-static str callid_col = {A_CALLID, sizeof(A_CALLID) - 1};
-static str totag_col = {A_TOTAG, sizeof(A_TOTAG) - 1};
-static str from_col = {A_FROM, sizeof(A_FROM) - 1};
-static str flags_col = {A_FLAGS, sizeof(A_FLAGS) - 1};
-static str iuri_col = {A_IURI, sizeof(A_IURI) - 1};
-static str method_col = {A_METHOD, sizeof(A_METHOD) - 1};
-static str cseq_col = {A_CSEQ, sizeof(A_CSEQ) - 1};
-static str ouri_col = {A_OURI, sizeof(A_OURI) - 1};
-static str fromtag_col = {A_FROMTAG, sizeof(A_FROMTAG) - 1};
-static str to_col = {A_TO, sizeof(A_TO) - 1};
-static str diguser_col = {A_DIGUSER, sizeof(A_DIGUSER) - 1};
-static str reqtimestamp_col = {A_REQTIMESTAMP, sizeof(A_REQTIMESTAMP) - 1};
-static str todid_col = {A_TODID, sizeof(A_TODID) - 1};
-static str fromuri_col = {A_FROMURI, sizeof(A_FROMURI) - 1};
-static str fromuid_col = {A_FROMUID, sizeof(A_FROMUID) - 1};
-static str fromdid_col = {A_FROMDID, sizeof(A_FROMDID) - 1};
-static str digrealm_col = {A_DIGREALM, sizeof(A_DIGREALM) - 1};
-static str status_col = {A_STATUS, sizeof(A_STATUS) - 1};
-static str touri_col = {A_TOURI, sizeof(A_TOURI) - 1};
-static str touid_col = {A_TOUID, sizeof(A_TOUID) - 1};
-static str restimestamp_col = {A_RESTIMESTAMP, sizeof(A_RESTIMESTAMP) - 1};
-static str src_ip_col = {A_SRCIP, sizeof(A_SRCIP) - 1};
-static str src_port_col = {A_SRCPORT, sizeof(A_SRCPORT) - 1};
+static str attrs_col = STR_STATIC_INIT(A_ATTRS);
+static str callid_col = STR_STATIC_INIT(A_CALLID);
+static str totag_col = STR_STATIC_INIT(A_TOTAG);
+static str from_col = STR_STATIC_INIT(A_FROM);
+static str flags_col = STR_STATIC_INIT(A_FLAGS);
+static str iuri_col = STR_STATIC_INIT(A_IURI);
+static str method_col = STR_STATIC_INIT(A_METHOD);
+static str cseq_col = STR_STATIC_INIT(A_CSEQ);
+static str ouri_col = STR_STATIC_INIT(A_OURI);
+static str fromtag_col = STR_STATIC_INIT(A_FROMTAG);
+static str to_col = STR_STATIC_INIT(A_TO);
+static str diguser_col = STR_STATIC_INIT(A_DIGUSER);
+static str reqtimestamp_col = STR_STATIC_INIT(A_REQTIMESTAMP);
+static str todid_col = STR_STATIC_INIT(A_TODID);
+static str fromuri_col = STR_STATIC_INIT(A_FROMURI);
+static str fromuid_col = STR_STATIC_INIT(A_FROMUID);
+static str fromdid_col = STR_STATIC_INIT(A_FROMDID);
+static str digrealm_col = STR_STATIC_INIT(A_DIGREALM);
+static str status_col = STR_STATIC_INIT(A_STATUS);
+static str touri_col = STR_STATIC_INIT(A_TOURI);
+static str touid_col = STR_STATIC_INIT(A_TOUID);
+static str restimestamp_col = STR_STATIC_INIT(A_RESTIMESTAMP);
+static str src_ip_col = STR_STATIC_INIT(A_SRCIP);
+static str src_port_col = STR_STATIC_INIT(A_SRCPORT);
 
 static db_func_t acc_dbf;
 static db_con_t* db_handle = 0;

@@ -52,13 +52,13 @@ extern int use_db;
 extern char *presentity_table;
 
 str pstate_name[PS_NSTATES] = {
-	{ "unknown", sizeof("unknown") - 1 },
-	{ "online", sizeof("online") - 1 },
-	{ "offline", sizeof("offline") - 1 },
-	{ "away", sizeof("away") - 1 },
-	{ "xaway", sizeof("xaway") - 1 },
-	{ "dnd", sizeof("dnd") - 1 },
-	{ "typing", sizeof("typing") - 1 },
+	STR_STATIC_INIT("unknown"),
+	STR_STATIC_INIT("online"),
+	STR_STATIC_INIT("offline"),
+	STR_STATIC_INIT("away"),
+	STR_STATIC_INIT("xaway"),
+	STR_STATIC_INIT("dnd"),
+	STR_STATIC_INIT("typing"),
 };
 
 int basic2status(str basic)
@@ -610,11 +610,11 @@ static int db_read_tuples(presentity_t *_p, db_con_t* db)
 		presence_tuple_t *tuple = NULL;
 		db_row_t *row = &res->rows[i];
 		db_val_t *row_vals = ROW_VALUES(row);
-		str contact = { 0, 0 }; 
-		str basic = { 0, 0 }; 
-		str status = { 0, 0 }; 
-		str location = { 0, 0 }; 
-		str id = { 0, 0 }; 
+		str contact = STR_NULL;
+		str basic = STR_NULL; 
+		str status = STR_NULL; 
+		str location = STR_NULL; 
+		str id = STR_NULL; 
 		
 		/* int contactid = row_vals[0].val.int_val; */
 		time_t expires = 0;

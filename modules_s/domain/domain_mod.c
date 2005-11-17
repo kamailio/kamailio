@@ -62,18 +62,16 @@ MODULE_VERSION
 #define TABLE_VERSION 1
 
 #define DOMAIN_TABLE "domain"
-#define DOMAIN_TABLE_LEN (sizeof(DOMAIN_TABLE) - 1)
 
 #define DOMAIN_COL "domain"
-#define DOMAIN_COL_LEN (sizeof(DOMAIN_COL) - 1)
 
 /*
  * Module parameter variables
  */
-static str db_url = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
+static str db_url = STR_STATIC_INIT(DEFAULT_RODB_URL);
 int db_mode = 0;			/* Database usage mode: 0 = no cache, 1 = cache */
-str domain_table = {DOMAIN_TABLE, DOMAIN_TABLE_LEN};     /* Name of domain table */
-str domain_col = {DOMAIN_COL, DOMAIN_COL_LEN};           /* Name of domain column */
+str domain_table = STR_STATIC_INIT(DOMAIN_TABLE);     /* Name of domain table */
+str domain_col = STR_STATIC_INIT(DOMAIN_COL);           /* Name of domain column */
 
 /*
  * Other module variables

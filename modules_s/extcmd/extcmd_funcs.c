@@ -633,8 +633,8 @@ inline void FD_CLR_AND_MAX( fd_set *fdset, int fd, int *max_fd)
 
 void extcmd_server_process( int server_sock )
 {
-	str message_req = { "MESSAGE", 7};
-	//str invite_req = { "INVITE", 6};
+	str message_req = STR_STATIC_INIT("MESSAGE");
+	//str invite_req = STR_STATIC_INIT("INVITE");
 	fd_set read_set;
 	fd_set wait_set;
 	client_t *client;

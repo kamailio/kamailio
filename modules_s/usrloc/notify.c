@@ -33,7 +33,7 @@
 #include "udomain.h"
 
 
-str dom = {"location", 8};
+str dom = STR_STATIC_INIT("location");
 
 
 void notify_watchers(struct urecord* _r, ucontact_t *_c, int state)

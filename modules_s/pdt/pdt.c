@@ -85,7 +85,7 @@ char *prefix_column = "prefix";
 char *domain_column = "domain";
 
 /** pstn prefix */
-str prefix = {"", 0};
+str prefix = STR_STATIC_INIT("");
 int sync_time = 600;
 int clean_time = 900;
 

@@ -54,9 +54,9 @@
 
 #include "xl_lib.h"
 
-static str str_null  = { "<null>", 6 };
-static str str_empty = { "", 0 };
-static str str_per   = { "%", 1 };
+static str str_null  = STR_STATIC_INIT("<null>");
+static str str_empty = STR_STATIC_INIT("");
+static str str_per   = STR_STATIC_INIT("%");
 
 int msg_id = 0;
 time_t msg_tm = 0;

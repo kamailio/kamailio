@@ -93,7 +93,7 @@ int main_loop = 1;
 
 /** **/
 extern char *registrar;
-static str jab_gw_name = {"jabber_gateway@127.0.0.1", 24};
+static str jab_gw_name = STR_STATIC_INIT("jabber_gateway@127.0.0.1");
 
 /**
  * address correction
@@ -1162,7 +1162,7 @@ void xj_sig_handler(int s)
  */
 int xj_send_sip_msg(str *proxy, str *to, str *from, str *msg, int *cbp)
 {
-	str  msg_type = { "MESSAGE", 7};
+	str  msg_type = STR_STATIC_INIT("MESSAGE");
 	char buf[512];
 	str  tfrom;
 	str  str_hdr;

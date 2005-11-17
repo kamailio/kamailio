@@ -39,7 +39,7 @@
  */
 static inline char *run_address_switch( struct cpl_interpreter *intr )
 {
-	static str def_port_str = {"5060",4};
+	static str def_port_str = STR_STATIC_INIT("5060");
 	unsigned short field, subfield;
 	char  *p;
 	char  *kid;
@@ -479,7 +479,7 @@ script_error:
  */
 static inline char *run_priority_switch( struct cpl_interpreter *intr )
 {
-	static str default_val={"normal",6};
+	static str default_val=STR_STATIC_INIT("normal");
 	unsigned short n;
 	char *p;
 	char *kid;
@@ -489,8 +489,8 @@ static inline char *run_priority_switch( struct cpl_interpreter *intr )
 	unsigned short msg_attr_val;
 	unsigned short msg_prio;
 	int i;
-	str cpl_val = {0,0};
-	str msg_val = {0,0};
+	str cpl_val = STR_NULL;
+	str msg_val = STR_NULL;
 
 	not_present_node = 0;
 	msg_attr_val = NORMAL_VAL;
@@ -704,7 +704,7 @@ static inline char *run_time_switch( struct cpl_interpreter *intr )
 	unsigned char  flags = 0;
 	int nr_attrs;
 	int i,j;
-	str user_tz = {0,0};
+	str user_tz = STR_NULL;
 	ac_tm_t att;
 	tmrec_t trt;
 
@@ -893,8 +893,8 @@ inline static int is_lang_tag_matching(str *range,str *cpl_tag,str *cpl_subtag)
 {
 	char *c;
 	char *end;
-	str tag = {0,0};
-	str subtag = {0,0};
+	str tag = STR_NULL;
+	str subtag = STR_NULL;
 
 	c = range->s;
 	end = range->s + range->len;
@@ -984,10 +984,10 @@ static inline char *run_language_switch( struct cpl_interpreter *intr )
 	unsigned short attr_name;
 	int nr_attr;
 	int i,j;
-	str attr = {0,0};
-	str msg_val = {0,0};
-	str lang_tag = {0,0};
-	str lang_subtag = {0,0};
+	str attr = STR_NULL;
+	str msg_val = STR_NULL;
+	str lang_tag = STR_NULL;
+	str lang_subtag = STR_NULL;
 
 	not_present_node = 0;
 

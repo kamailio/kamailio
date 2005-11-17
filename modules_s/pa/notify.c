@@ -102,41 +102,34 @@
 #define ST_PENDING_L (sizeof(ST_PENDING) - 1)
 
 #define REASON_DEACTIVATED "deactivated"
-#define REASON_DEACTIVATED_L (sizeof(REASON_DEACTIVATED) - 1)
 
 #define REASON_NORESOURCE "noresource"
-#define REASON_NORESOURCE_L (sizeof(REASON_NORESOURCE) - 1)
 
 #define REASON_PROBATION "probation"
-#define REASON_PROBATION_L (sizeof(REASON_PROBATION) - 1)
 
 #define REASON_REJECTED "rejected"
-#define REASON_REJECTED_L (sizeof(REASON_REJECTED) - 1)
 
 #define REASON_TIMEOUT "timeout"
-#define REASON_TIMEOUT_L (sizeof(REASON_TIMEOUT) - 1)
 
 #define REASON_GIVEUP "giveup"
-#define REASON_GIVEUP_L (sizeof(REASON_GIVEUP) - 1)
 
 #define METHOD_NOTIFY "NOTIFY"
-#define METHOD_NOTIFY_L (sizeof(METHOD_NOTIFY) - 1)
 
 
 /* 
  * Subscription-State reason parameter values
  */
 static str reason[] = {
-	{REASON_DEACTIVATED, REASON_DEACTIVATED_L},
-	{REASON_NORESOURCE,  REASON_NORESOURCE_L },
-	{REASON_PROBATION,   REASON_PROBATION_L  },
-	{REASON_REJECTED,    REASON_REJECTED_L   },
-	{REASON_TIMEOUT,     REASON_TIMEOUT_L    },
-	{REASON_GIVEUP,      REASON_GIVEUP_L     }
+	STR_STATIC_INIT(REASON_DEACTIVATED),
+	STR_STATIC_INIT(REASON_NORESOURCE),
+	STR_STATIC_INIT(REASON_PROBATION),
+	STR_STATIC_INIT(REASON_REJECTED),
+	STR_STATIC_INIT(REASON_TIMEOUT),
+	STR_STATIC_INIT(REASON_GIVEUP),
 };
 
 
-static str method = {METHOD_NOTIFY, METHOD_NOTIFY_L};
+static str method = STR_STATIC_INIT(METHOD_NOTIFY);
 
 #define BUF_LEN 16384
 
@@ -248,7 +241,7 @@ static inline int add_subs_state_hf(str* _h, int _l, watcher_status_t _s, time_t
 {
 	char* num;
 	int len;
-	str s = { 0, 0 };
+	str s = STR_NULL;
 	ss_reason_t _r;
 	
 	if (_e <= 0) _r = SR_TIMEOUT;
@@ -355,7 +348,7 @@ static int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 {
 	xpidf_status_t st;
 	presence_tuple_t *tuple = _p->tuples;
-	str none = { s: "none", len: 4 };
+	str none = STR_STATIC_INIT("none");
 
 	/* Send a notify, saved Contact will be put in
 	 * Request-URI, To will be put in from and new tag
@@ -510,8 +503,8 @@ static int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 			tuple = tuple->next;
 		}
 	} else {
-		str id = { "ser", 3 };
-		str contact = { NULL, 0 };
+		str id = STR_STATIC_INIT("ser");
+		str contact = STR_NULL;
 		float priority = 0.8;
 		st = XPIDF_ST_CLOSED;
 		if (pidf_start_tuple(&body, &id, BUF_LEN - body.len) < 0) {

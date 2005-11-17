@@ -29,7 +29,6 @@ static gen_lock_t *rls_mutex = NULL;
 subscription_manager_t *rls_manager = NULL;
 
 #define METHOD_NOTIFY "NOTIFY"
-#define METHOD_NOTIFY_L (sizeof(METHOD_NOTIFY) - 1)
 
 static int get_user_from_uri(str_t *uri, str_t *user)
 {
@@ -358,7 +357,7 @@ int rls_generate_notify(rl_subscription_t *s, int full_info)
 	str doc;
 	dstring_t dstr;
 	str headers, content_type;
-	static str method = {s: METHOD_NOTIFY, len: METHOD_NOTIFY_L};
+	static str method = STR_STATIC_INIT(METHOD_NOTIFY);
 	dlg_t *dlg;
 	
 	if (!s) {

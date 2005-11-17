@@ -51,10 +51,8 @@ MODULE_VERSION
 
 
 #define CALLER_PREFIX "caller_"
-#define CALLER_PREFIX_LEN (sizeof(CALLER_PREFIX) - 1)
 
 #define CALLEE_PREFIX "callee_"
-#define CALLEE_PREFIX_LEN (sizeof(CALLEE_PREFIX) - 1)
 
 
 typedef enum load_avp_param {
@@ -76,8 +74,8 @@ char* db_list_table    	      = "usr_preferences_types";
 char* attr_name_column        = "att_name";
 char* attr_type_column        = "att_raw_type";
 char* attr_dval_column        = "default_value";
-static str caller_prefix      = {CALLER_PREFIX, CALLER_PREFIX_LEN};
-static str callee_prefix      = {CALLEE_PREFIX, CALLEE_PREFIX_LEN};
+static str caller_prefix      = STR_STATIC_INIT(CALLER_PREFIX);
+static str callee_prefix      = STR_STATIC_INIT(CALLEE_PREFIX);
 static int caller_uuid_avp    = 1;
 static int callee_uuid_avp    = 2;
 static int use_domain         = 0;

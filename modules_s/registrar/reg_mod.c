@@ -71,9 +71,8 @@ char* realm_pref    = "";   /* Realm prefix to be removed */
 str realm_prefix;
 
 #define RCV_NAME "received"
-#define RCV_NAME_LEN (sizeof(RCV_NAME) - 1)
 
-str rcv_param = {RCV_NAME, RCV_NAME_LEN};
+str rcv_param = STR_STATIC_INIT(RCV_NAME);
 int rcv_avp_no=42;
 
 

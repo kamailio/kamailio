@@ -77,37 +77,26 @@ static int mod_init(void);       /* Module initialization function */
 int reload_gws ( void );
 
 #define GW_TABLE "gw"
-#define GW_TABLE_LEN (sizeof(GW_TABLE) - 1)
 
 #define GW_NAME_COL "gw_name"
-#define GW_NAME_COL_LEN (sizeof(GW_NAME_COL) - 1)
 
 #define IP_ADDR_COL "ip_addr"
-#define IP_ADDR_COL_LEN (sizeof(IP_ADDR_COL) - 1)
 
 #define PORT_COL "port"
-#define PORT_COL_LEN (sizeof(PORT_COL) - 1)
 
 #define URI_SCHEME_COL "uri_scheme"
-#define URI_SCHEME_COL_LEN (sizeof(URI_SCHEME_COL) - 1)
 
 #define TRANSPORT_COL "transport"
-#define TRANSPORT_COL_LEN (sizeof(TRANSPORT_COL) - 1)
 
 #define GRP_ID_COL "grp_id"
-#define GRP_ID_COL_LEN (sizeof(GRP_ID_COL) - 1)
 
 #define LCR_TABLE "lcr"
-#define LCR_TABLE_LEN (sizeof(LCR_TABLE) - 1)
 
 #define PREFIX_COL "prefix"
-#define PREFIX_COL_LEN (sizeof(PREFIX_COL) - 1)
 
 #define FROM_URI_COL "from_uri"
-#define FROM_URI_COL_LEN (sizeof(FROM_URI_COL) - 1)
 
 #define PRIORITY_COL "priority"
-#define PRIORITY_COL_LEN (sizeof(PRIORITY_COL) - 1)
 
 #define MAX_QUERY_SIZE 512
 #define MAX_NO_OF_GWS 32
@@ -145,25 +134,24 @@ static db_func_t lcr_dbf;
 /*
  * Module parameter variables
  */
-static str db_url    = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
-str gw_table         = {GW_TABLE, GW_TABLE_LEN};
-str gw_name_col      = {GW_NAME_COL, GW_NAME_COL_LEN};
-str ip_addr_col      = {IP_ADDR_COL, IP_ADDR_COL_LEN};
-str port_col         = {PORT_COL, PORT_COL_LEN};
-str uri_scheme_col   = {URI_SCHEME_COL, URI_SCHEME_COL_LEN};
-str transport_col    = {TRANSPORT_COL, TRANSPORT_COL_LEN};
-str grp_id_col       = {GRP_ID_COL, GRP_ID_COL_LEN};
-str lcr_table        = {LCR_TABLE, LCR_TABLE_LEN};
-str prefix_col       = {PREFIX_COL, PREFIX_COL_LEN};
-str from_uri_col     = {FROM_URI_COL, FROM_URI_COL_LEN};
-str priority_col     = {PRIORITY_COL, PRIORITY_COL_LEN};
-str gw_uri_avp       = {DEF_GW_URI_AVP,	sizeof(DEF_GW_URI_AVP) - 1};
-str contact_avp      = {DEF_CONTACT_AVP, sizeof(DEF_CONTACT_AVP) - 1};
-str inv_timer_avp    = {DEF_FR_INV_TIMER_AVP, sizeof(DEF_FR_INV_TIMER_AVP)
-			-1 };
+static str db_url    = STR_STATIC_INIT(DEFAULT_RODB_URL);
+str gw_table         = STR_STATIC_INIT(GW_TABLE);
+str gw_name_col      = STR_STATIC_INIT(GW_NAME_COL);
+str ip_addr_col      = STR_STATIC_INIT(IP_ADDR_COL);
+str port_col         = STR_STATIC_INIT(PORT_COL);
+str uri_scheme_col   = STR_STATIC_INIT(URI_SCHEME_COL);
+str transport_col    = STR_STATIC_INIT(TRANSPORT_COL);
+str grp_id_col       = STR_STATIC_INIT(GRP_ID_COL);
+str lcr_table        = STR_STATIC_INIT(LCR_TABLE);
+str prefix_col       = STR_STATIC_INIT(PREFIX_COL);
+str from_uri_col     = STR_STATIC_INIT(FROM_URI_COL);
+str priority_col     = STR_STATIC_INIT(PRIORITY_COL);
+str gw_uri_avp       = STR_STATIC_INIT(DEF_GW_URI_AVP);
+str contact_avp      = STR_STATIC_INIT(DEF_CONTACT_AVP);
+str inv_timer_avp    = STR_STATIC_INIT(DEF_FR_INV_TIMER_AVP);
 int inv_timer        = DEF_FR_INV_TIMER;
 int inv_timer_next   = DEF_FR_INV_TIMER_NEXT;
-str rpid_avp         = {DEF_RPID_AVP, sizeof(DEF_RPID_AVP) - 1};
+str rpid_avp         = STR_STATIC_INIT(DEF_RPID_AVP);
 
 /*
  * Other module types and variables

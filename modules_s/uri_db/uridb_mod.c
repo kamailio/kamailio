@@ -64,32 +64,27 @@ static int mod_init(void);       /* Module initialization function */
 
 
 #define URI_TABLE "uri"
-#define URI_TABLE_LEN (sizeof(URI_TABLE) - 1)
 
 #define USER_COL "username"
-#define USER_COL_LEN (sizeof(USER_COL) - 1)
 
 #define DOMAIN_COL "domain"
-#define DOMAIN_COL_LEN (sizeof(DOMAIN_COL) - 1)
 
 #define URI_USER_COL "uri_user"
-#define URI_USER_COL_LEN (sizeof(URI_USER_COL) - 1)
 
 #define SUBSCRIBER_TABLE "subscriber"
-#define SUBSCRIBER_TABLE_LEN (sizeof(SUBSCRIBER_TABLE) - 1)
 
 
 /*
  * Module parameter variables
  */
-static str db_url         = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
-str uri_table             = {URI_TABLE, URI_TABLE_LEN};               /* Name of URI table */
-str uri_user_col          = {USER_COL, USER_COL_LEN};                 /* Name of username column in URI table */
-str uri_domain_col        = {DOMAIN_COL, DOMAIN_COL_LEN};             /* Name of domain column in URI table */
-str uri_uriuser_col       = {URI_USER_COL, URI_USER_COL_LEN};         /* Name of uri_user column in URI table */
-str subscriber_table      = {SUBSCRIBER_TABLE, SUBSCRIBER_TABLE_LEN}; /* Name of subscriber table */
-str subscriber_user_col   = {USER_COL, USER_COL_LEN};                 /* Name of user column in subscriber table */
-str subscriber_domain_col = {DOMAIN_COL, DOMAIN_COL_LEN};             /* Name of domain column in subscriber table */
+static str db_url         = STR_STATIC_INIT(DEFAULT_RODB_URL);
+str uri_table             = STR_STATIC_INIT(URI_TABLE);        /* Name of URI table */
+str uri_user_col          = STR_STATIC_INIT(USER_COL);         /* Name of username column in URI table */
+str uri_domain_col        = STR_STATIC_INIT(DOMAIN_COL);       /* Name of domain column in URI table */
+str uri_uriuser_col       = STR_STATIC_INIT(URI_USER_COL);     /* Name of uri_user column in URI table */
+str subscriber_table      = STR_STATIC_INIT(SUBSCRIBER_TABLE); /* Name of subscriber table */
+str subscriber_user_col   = STR_STATIC_INIT(USER_COL);         /* Name of user column in subscriber table */
+str subscriber_domain_col = STR_STATIC_INIT(DOMAIN_COL);       /* Name of domain column in subscriber table */
 
 int use_uri_table = 0;     /* Should uri table be used */
 int use_domain = 0;        /* Should does_uri_exist honor the domain part ? */

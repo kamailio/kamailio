@@ -160,7 +160,7 @@ static inline int time2str(time_t _v, char* _s, int* _l)
  */
 int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 {
-	static str dummy_string = {"", 0};
+	static str dummy_string = STR_STATIC_INIT("");
 	
 	if (!_v) {
 		LOG(L_ERR, "str2val: Invalid parameter value\n");

@@ -773,8 +773,8 @@ static inline char *run_log( struct cpl_interpreter *intr )
 	char  *p;
 	unsigned short attr_name;
 	unsigned short n;
-	str name    = {0,0};
-	str comment = {0,0};
+	str name    = STR_NULL;
+	str comment = STR_NULL;
 	str user;
 	int i;
 
@@ -856,9 +856,9 @@ static inline char *run_mail( struct cpl_interpreter *intr )
 	unsigned short attr_name;
 	unsigned short n;
 	char  *p;
-	str subject = {0,0};
-	str body    = {0,0};
-	str to      = {0,0};
+	str subject = STR_NULL;
+	str body    = STR_NULL;
+	str to      = STR_NULL;
 	int i;
 
 	/* sanity check */

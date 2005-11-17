@@ -302,7 +302,7 @@ int push_on_network(struct sip_msg *msg, int net)
 
 int send_sip_msg_request(str *to, str *from_user, str *body)
 {
-	str msg_type = { "MESSAGE", 7};
+	str msg_type = STR_STATIC_INIT("MESSAGE");
 	str from;
 	str hdrs;
 	int foo;

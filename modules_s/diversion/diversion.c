@@ -50,7 +50,7 @@ MODULE_VERSION
 
 
 
-str suffix = {"", 0};
+str suffix = STR_STATIC_INIT("");
 
 int add_diversion(struct sip_msg* msg, char* r, char* s);
 

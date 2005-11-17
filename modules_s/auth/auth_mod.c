@@ -89,10 +89,10 @@ str secret;
 char* sec_rand = 0;
 
 
-str rpid_prefix = {DEF_RPID_PREFIX, sizeof(DEF_RPID_PREFIX) - 1}; /* Default Remote-Party-ID prefix */
-str rpid_suffix = {DEF_RPID_SUFFIX, sizeof(DEF_RPID_SUFFIX) - 1}; /* Default Remote-Party-IDD suffix */
-str realm_prefix = {DEF_STRIP_REALM, sizeof(DEF_STRIP_REALM) - 1}; /* Prefix to strip from realm */
-str rpid_avp = {DEF_RPID_AVP, sizeof(DEF_RPID_AVP) - 1}; /* Name of AVP containing rpid value */
+str rpid_prefix = STR_STATIC_INIT(DEF_RPID_PREFIX); /* Default Remote-Party-ID prefix */
+str rpid_suffix = STR_STATIC_INIT(DEF_RPID_SUFFIX); /* Default Remote-Party-IDD suffix */
+str realm_prefix = STR_STATIC_INIT(DEF_STRIP_REALM); /* Prefix to strip from realm */
+str rpid_avp = STR_STATIC_INIT(DEF_RPID_AVP); /* Name of AVP containing rpid value */
 
 
 /*

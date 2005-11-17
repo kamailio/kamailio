@@ -645,7 +645,7 @@ error:
 static inline int encode_time_switch_attr(xmlNodePtr  node, char *node_ptr,
 																char *buf_end)
 {
-	static str     tz_str = {"TZ=",3};
+	static str     tz_str = STR_STATIC_INIT("TZ=");
 	xmlAttrPtr     attr;
 	char           *p, *p_orig;
 	unsigned char  *nr_attr;

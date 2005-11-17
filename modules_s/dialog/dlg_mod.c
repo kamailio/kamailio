@@ -35,7 +35,7 @@ MODULE_VERSION
 /* "public" data members */
 
 int db_mode = 0;
-str db_url = { 0, 0};
+str db_url = STR_NULL;
 
 /* internal data members */
 

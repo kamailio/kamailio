@@ -196,14 +196,14 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 {
 	char *body = get_body(_m);
 	presence_tuple_t *tuple = NULL;
-	str contact = { NULL, 0 };
-	str basic = { NULL, 0 };
-	str status = { NULL, 0 };
-	str location = { NULL, 0 };
-	str site = { NULL, 0 };
-	str floor = { NULL, 0 };
-	str room = { NULL, 0 };
-	str packet_loss = { NULL, 0 };
+	str contact = STR_NULL;
+	str basic = STR_NULL;
+	str status = STR_NULL;
+	str location = STR_NULL;
+	str site = STR_NULL;
+	str floor = STR_NULL;
+	str room = STR_NULL;
+	str packet_loss = STR_NULL;
 	double x=0, y=0, radius=0;
 	time_t expires = act_time + default_expires;
 	time_t msg_expires = 0;
@@ -212,7 +212,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 	int flags = 0;
 	int changed = 0;
 	int ret = 0;
-	str id = { 0, 0 };
+	str id = STR_NULL;
 	 
 	if (modified_tuple) *modified_tuple = 0;
 	if (_m->expires) {
@@ -472,7 +472,7 @@ static int publish_presentity(struct sip_msg* _m, struct pdomain* _d, struct pre
 		/* FIXME: add headers Expires and SIP-ETag */
 		publish_presentity_xcap_change(_m, _d, presentity, pchanged);
 	} else {
-		str callid = { 0, 0 };
+		str callid = STR_NULL;
 		if (_m->callid)
 			callid = _m->callid->body;
 		LOG(L_WARN, "publish_presentity: no handler for event_package=%d"
@@ -491,7 +491,7 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 {
 	struct pdomain* d;
 	struct presentity *p;
-	str p_uri = { NULL, 0 };
+	str p_uri = STR_NULL;
 	int changed;
 
 	get_act_time();
