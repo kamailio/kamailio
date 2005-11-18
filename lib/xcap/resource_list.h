@@ -43,6 +43,7 @@ typedef struct _flat_list_t {
 char *xcap_uri_for_rls_resource(const char *xcap_root, const str_t *uri);
 void canonicalize_uri(const str_t *uri, str_t *dst);
 int get_rls(const char *xcap_root, const str_t *uri, xcap_query_t *xcap_params, const str_t *package, flat_list_t **dst);
+int get_resource_list_as_rls(const char *xcap_root, const str_t *user, xcap_query_t *xcap_params, flat_list_t **dst);
 void free_flat_list(flat_list_t *list);
 
 #endif

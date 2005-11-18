@@ -560,3 +560,103 @@ int get_rls(const char *xcap_root, const str_t *uri, xcap_query_t *xcap_params, 
 	
 	return RES_OK;
 }
+
+char *xcap_uri_for_resource_list(const char *xcap_root, const str_t *user)
+{
+	dstring_t s;
+	int l;
+	char *dst = NULL;
+
+	if (!xcap_root) return NULL;
+	l = strlen(xcap_root);
+	dstr_init(&s, 2 * l + 32);
+	dstr_append(&s, xcap_root, l);
+	if (xcap_root[l - 1] != '/') dstr_append(&s, "/", 1);
+	dstr_append_zt(&s, "resource-lists/users/");
+	dstr_append_str(&s, user);
+	dstr_append_zt(&s, "/resource-list.xml");
+	
+	l = dstr_get_data_length(&s);
+	if (l > 0) {
+		dst = (char *)cds_malloc(l + 1);
+		if (dst) {
+			dstr_get_data(&s, dst);
+			dst[l] = 0;
+		}
+	}
+	dstr_destroy(&s);
+	return dst;
+}
+
+/* catches and processes user's resource list as rls-services document */
+int get_resource_list_as_rls(const char *xcap_root, const str_t *user, xcap_query_t *xcap_params, flat_list_t **dst)
+{
+	char *data = NULL;
+	int dsize = 0;
+	service_t *service = NULL; 
+	list_t *list = NULL;
+	xcap_query_t xcap;
+	int res;
+
+	if (!dst) return RES_INTERNAL_ERR;
+	
+	if (xcap_params) {
+		xcap = *xcap_params;
+	}
+	else memset(&xcap, 0, sizeof(xcap));
+
+	/* get basic document */
+	xcap.uri = xcap_uri_for_resource_list(xcap_root, user);
+	TRACE_LOG("get_resource_list_as_rls(): XCAP uri \'%s\'\n", xcap.uri ? xcap.uri: "???");
+	res = xcap_query(&xcap, &data, &dsize);
+	if (res != 0) {
+		ERROR_LOG("get_rls(): XCAP problems for uri \'%s\'\n", xcap.uri ? xcap.uri: "???");
+		if (data) {
+			cds_free(data);
+		}
+		if (xcap.uri) cds_free(xcap.uri);
+		return RES_XCAP_QUERY_ERR;
+	}
+	if (xcap.uri) cds_free(xcap.uri);
+	xcap.uri = NULL;
+	
+	/* parse document as a list element in rls-sources */
+	if (parse_list_xml(data, dsize, &list) != 0) {
+		ERROR_LOG("Parsing problems!\n");
+		if (list) free_list(list);
+		if (data) {
+			cds_free(data);
+		}
+		return RES_XCAP_PARSE_ERR;
+	}
+/*	DEBUG_LOG("%.*s\n", dsize, data);*/
+	if (data) cds_free(data);
+	
+	if (!list) {
+		ERROR_LOG("Empty resource list!\n");
+		return RES_INTERNAL_ERR;
+	}
+
+	service = (service_t*)cds_malloc(sizeof(*service));
+	if (!service) {
+		ERROR_LOG("Can't allocate memory!\n");
+		return RES_MEMORY_ERR;
+	}
+	memset(service, 0, sizeof(*service));
+	service->content_type = stc_list;
+	service->content.list = list;
+	/*service->uri = ??? */
+	
+	/* create flat document */
+	res = create_flat_list(service, &xcap, xcap_root, dst);
+	if (res != RES_OK) {
+		ERROR_LOG("Flat list creation error\n");
+		free_service(service);
+		free_flat_list(*dst);
+		*dst = NULL;
+		return res;
+	}
+	free_service(service);
+	
+	return RES_OK;
+}
