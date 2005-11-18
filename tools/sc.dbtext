@@ -208,7 +208,7 @@ parameter usage:
 
            * control and diagnostics *
  dbtext [dbtext_path] ... create the needed dbtext files (default 
-                          location is /usr/local/etc/ser/dbtext)
+                          location is /usr/local/etc/openser/dbtext)
 
            * Database Selection *
  
@@ -680,8 +680,36 @@ case $1 in
 		echo "username(str) domain(str) grp(str) last_modified(int)" > $ACL_FILE
 		#Version file
 		echo "table_name(str) table_version(int)" > $VER_FILE
+		echo "subscriber:5" >> $VER_FILE
+		echo "reserved:1" >> $VER_FILE
+		echo "phonebook:1" >> $VER_FILE
+		echo "pending:4" >> $VER_FILE
+		echo "missed_calls:2" >> $VER_FILE
+		echo "location:1001" >> $VER_FILE
+		echo "aliases:1001" >> $VER_FILE
+		echo "grp:2" >> $VER_FILE
+		echo "event:1" >> $VER_FILE
+		echo "active_sessions:1" >> $VER_FILE
+		echo "acc:2" >> $VER_FILE
+		echo "config:1" >> $VER_FILE
+		echo "silo:3" >> $VER_FILE
+		echo "realm:1" >> $VER_FILE
+		echo "domain:1" >> $VER_FILE
+		echo "uri:1" >> $VER_FILE
+		echo "server_monitoring:1" >> $VER_FILE
+		echo "server_monitoring_agg:1" >> $VER_FILE
+		echo "trusted:1" >> $VER_FILE
+		echo "usr_preferences:2" >> $VER_FILE
+		echo "usr_preferences_types:1" >> $VER_FILE
+		echo "admin_privileges:1" >> $VER_FILE
+		echo "calls_forwarding:1" >> $VER_FILE
+		echo "speed_dial:2" >> $VER_FILE
+		echo "dbaliases:1" >> $VER_FILE
+		echo "gw:3" >> $VER_FILE
+		echo "gw_grp:1" >> $VER_FILE
+		echo "lcr:1" >> $VER_FILE
 		
-		echo -e "DBText files created.\n\nRemeber to set the SER_DB and DBTEXT_PATH variables (read usage)\n"
+		echo -e "DBText files created.\n\nRemeber to set the DBTEXT_PATH variable (read usage)\n"
 		;;
 	
 	version)
