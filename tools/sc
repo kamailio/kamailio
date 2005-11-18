@@ -346,7 +346,7 @@ cat <<EOF
 
            * usrloc *
  ul show [<username>]................ show in-RAM online users
- ul rm <username> ................... delete user's UsrLoc entries
+ ul rm <username> [<contact URI>].... delete user's UsrLoc entries
  ul add <username> <uri> ............ introduce a permanent UrLoc entry
  showdb [<username>] ................ show online users flushed in DB
 
@@ -712,16 +712,28 @@ usrloc() {
 			exit $?
 			;;
 		rm)
-			if [ $# -ne 2 ] ; then
-                		usage
-                		exit 1
-            		fi
+			if [ $# -eq 2 ] ; then
+				shift
+				set_user $1
+				fifo_cmd ul_rm $USRLOC_TABLE "$SERUSER@$SERDOMAIN"
 
-			shift
-			set_user $1
-			fifo_cmd ul_rm $USRLOC_TABLE "$SERUSER@$SERDOMAIN"
+			elif [ $# -eq 3 ] ; then
+				shift
+				set_user $1
+				check_uri "$2"
+				if [ "$?" -ne "0" ] ; then
+					echo "ul rm: $2 is not a valid SIP URI (sip:[user@]domain)"
+                                exit 1
+                        fi
 
-            ;;
+				fifo_cmd ul_rm_contact $USRLOC_TABLE "$SERUSER@$SERDOMAIN" "$2"
+
+			else
+				echo "wrong number of params"
+				usage
+				exit 1
+			fi
+			;;
 
 		*)
 			usage
@@ -1471,7 +1483,7 @@ speed_dial() {
 			
 			check_sipaor "$3"
 			if [ "$?" -ne "0" ] ; then
-				echo "speeddial: $2 is not a valid SIP AoR (sip:user@domain)"
+				echo "speeddial: $3 is not a valid SIP AoR (sip:user@domain)"
 				exit 1
 			fi
 			
