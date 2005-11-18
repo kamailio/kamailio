@@ -70,6 +70,32 @@
 	is used with an error message.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+	<term>mode</term>
+	<listitem><para>Mode of operations: 
+	<variablelist>
+	<varlistentry>
+		<term><literal>full</literal></term>
+		<listitem><para>If set to this value, the resource-list is read
+		according to <xref linkend="pres_draft_rls"/> from <quote>index</quote>
+		rls-services document.
+		</para></listitem>
+	</varlistentry>
+	<varlistentry>
+		<term><literal>simple</literal></term>
+		<listitem><para>In this case is supposed that list uri is in the form of
+		<literal>&lt;username&gt;-list@domain</literal> and the list is
+		taken as resource-lists document from XCAP URI
+		<literal>&lt;xcap-root&gt;/resource-lists/users/&lt;username&gt;/resource-list.xml</literal>
+		</para>
+		<para>This allows usage of standard web server instead of XCAP server
+		(querying only full documents, not using xpointer expressions) and
+		direct usage with clients which don't set rls-services documents (eyeBeam).
+		</para></listitem>
+	</varlistentry>
+	</variablelist>
+	</para></listitem>
+</varlistentry>
 </variablelist>
 </section>
 

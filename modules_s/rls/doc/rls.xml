@@ -18,12 +18,13 @@ by user's client software.
 	<listitem><para><emphasis>only internal subscriptions</emphasis> - at
 	this moment are supported only internal subscriptions to PA module. Module
 	can not handle subscriptions to external presence servers.</para></listitem>
+	<listitem><para>nested lists (lists in list) are not possible</para></listitem>
 </itemizedlist>
 </para>
 </section>
 
 <!-- DB storage -->
-<section><title>Persistence (not done yet!)</title>
+<section><title>Persistence</title>
 <para></para>
 </section>
 
@@ -50,9 +51,6 @@ by user's client software.
 <section><title>TODO</title>
 <para>
 <itemizedlist>
-	<listitem><para>storing subscriptions into db and reloading on startup (in
-	subscription_manager)</para></listitem>
-
 	<listitem><para>XCAP authorization</para></listitem>
 	<listitem><para>DB authorization (presence rules like in XCAP stored in
 	local DB)</para></listitem>

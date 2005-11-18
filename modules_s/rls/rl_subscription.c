@@ -35,6 +35,8 @@ static int get_user_from_uri(str_t *uri, str_t *user)
 	char *a;
 	char *d;
 	char *s;
+
+	/* we can't use SER's parser - the uri may have not the protocol prefix! */
 	
 	str_clear(user);
 	if (uri->len > 0) {
@@ -161,21 +163,58 @@ int rls_destroy()
 
 /************* Helper functions for RL subscription manipulation ************/
 
+static int get_user_from_list_uri(str_t *uri, str_t *user)
+{
+	str_t list, list_rest;
+	str_t appendix = { s: "-list", len: 5 };
+
+	if (!uri) return -1;
+	if (get_user_from_uri(uri, &list) != 0) return -1;
+
+	if (user) *user = list;
+	
+	/* remove suffix -list */
+	if (list.len <= appendix.len) 
+		return 1; /* it is not something like xxx-list@... */
+
+	list_rest.len = appendix.len;
+	list_rest.s = list.s + list.len - appendix.len;
+	if (str_case_equals(&list_rest, &appendix) != 0) 
+		return 1; /* it is not something like xxx-list@... */
+
+	if (user) {
+		user->s = list.s;
+		user->len = list.len - appendix.len;
+	}
+	return 0;
+}
+
 static int create_virtual_subscriptions(struct sip_msg *m, rl_subscription_t *ss, const char *xcap_root)
 {
 	flat_list_t *e, *flat = NULL;
 	xcap_query_t xcap;
 	virtual_subscription_t *vs;
-	int res;
+	int res = 0;
 	str s;
+	str_t user;
 	
 	/* TODO: create virtual subscriptions using Accept headers ... (for remote subscriptions) */
-	
+
 	/* XCAP query */
 	memset(&xcap, 0, sizeof(xcap));
 	DEBUG_LOG("rli_create_content(): doing XCAP query\n");
-	res = get_rls(xcap_root, rls_get_uri(ss), &xcap, 
-			rls_get_package(ss), &flat);
+	switch (rls_mode) {
+		case rls_mode_full:
+			res = get_rls(xcap_root, rls_get_uri(ss), &xcap, 
+				rls_get_package(ss), &flat);
+			break;
+		case rls_mode_simple:
+			if (get_user_from_list_uri(rls_get_uri(ss), &user) != 0) 
+				user = *rls_get_uri(ss);
+			res = get_resource_list_as_rls(xcap_root, &user, &xcap, &flat);
+			break;
+	}
+			
 	if (res != RES_OK) return res;
 
 	/* go through flat list and find/create virtual subscriptions */
@@ -415,7 +454,7 @@ int rls_generate_notify(rl_subscription_t *s, int full_info)
 	else dstr_get_data(&dstr, headers.s);
 	dstr_destroy(&dstr);
 
-	DEBUG_LOG("sending NOTIFY message to %.*s (subscription %p)\n", 
+	TRACE_LOG("sending NOTIFY message to %.*s (subscription %p)\n", 
 			dlg->rem_uri.len, 
 			ZSW(dlg->rem_uri.s), s);
 	

@@ -6,6 +6,11 @@
 #include "rl_subscription.h"
 #include "../dialog/dlg_mod.h"
 
+typedef enum {
+	rls_mode_full, /* according to drafts */
+	rls_mode_simple /* subscription to "xxx-list@domain.com" -> get buddy list for user xxx */
+} rls_mode_t;
+
 extern struct tm_binds tmb;
 
 /** min interval for subscription expiration */
@@ -25,5 +30,6 @@ extern db_con_t* rls_db; /* database connection handle */
 extern db_func_t rls_dbf;	/* database functions */
 extern dlg_func_t dlg_func;
 extern char *db_url;
+extern rls_mode_t rls_mode;
 
 #endif

@@ -26,8 +26,12 @@ static int rls_subscribe_fixup(void** param, int param_no);
 /* authorization parameters */
 char *auth_type_str = NULL; /* type of authorization: none,implicit,xcap */
 char *auth_xcap_root = NULL;	/* must be set if xcap authorization */
+
 int db_mode = 0; /* 0 -> no DB, 1 -> write through */
 char *db_url = NULL;
+
+char *rls_mode_str = "full"; /* full, simple */
+rls_mode_t rls_mode = rls_mode_full;
 
 /** Exported functions */
 static cmd_export_t cmds[]={
@@ -46,6 +50,7 @@ static param_export_t params[]={
 	{"auth_xcap_root", STR_PARAM, &auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
 	{"db_mode", INT_PARAM, &db_mode },
 	{"db_url", STR_PARAM, &db_url },
+	{"mode", STR_PARAM, &rls_mode_str },
 	{0, 0, 0}
 };
 
@@ -112,6 +117,28 @@ static int set_auth_params(rls_auth_params_t *dst, const char *auth_type_str, ch
 	return -1;
 }
 
+static int set_rls_mode(rls_mode_t *dst, const char *mode)
+{
+	if (!mode) {
+		LOG(L_ERR, "RLS operation mode not set! Using full.\n");
+		if (dst) *dst = rls_mode_full;
+		return 0;
+	}
+	if (strcmp(mode, "full") == 0) {
+		if (dst) *dst = rls_mode_full;
+		LOG(L_INFO, "Using \'full\' rls operation mode.\n");
+		return 0;
+	}
+	if (strcmp(mode, "simple") == 0) {
+		if (dst) *dst = rls_mode_simple;
+		LOG(L_INFO, "Using \'simple\' rls operation mode.\n");
+		return 0;
+	}
+	
+	LOG(L_ERR, "Can't resolve operation mode for rls \'%s\'. Use full or simple\n", mode);
+	return -1;
+}
+
 int rls_mod_init(void)
 {
     load_tm_f load_tm;
@@ -166,6 +193,8 @@ int rls_mod_init(void)
 	 * and other (type specific) parameters */
 	if (set_auth_params(&rls_auth_params, auth_type_str, auth_xcap_root) != 0) return -1;
 
+	/* set RLS operation mode according to user's wish */
+	if (set_rls_mode(&rls_mode, rls_mode_str) != 0) return -1;
 
 	use_db = 0;
 	if (db_mode > 0) {

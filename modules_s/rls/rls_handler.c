@@ -186,6 +186,7 @@ static int handle_new_subscription(struct sip_msg *m, const char *xcap_server, i
 	/* send a response */
 	rls_prepare_subscription_response(s, m);
 	send_reply(m, 200, "OK");
+	TRACE_LOG("RLS subscription successfully handled\n");
 	
 	/* create NOTIFY message 
 	 * FIXME - this may be a nonsense for polling, because the notifier might not
