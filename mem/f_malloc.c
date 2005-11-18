@@ -191,6 +191,12 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size)
 	
 	/* make address and size multiple of 8*/
 	start=(char*)ROUNDUP((unsigned long) address);
+	DBG("fm_malloc_init: F_OPTIMIZE=%lu, /ROUNDTO=%lu\n",
+			F_MALLOC_OPTIMIZE, F_MALLOC_OPTIMIZE/ROUNDTO);
+	DBG("fm_malloc_init: F_HASH_SIZE=%lu, fm_block size=%lu\n",
+			F_HASH_SIZE, (long)sizeof(struct fm_block));
+	DBG("fm_malloc_init(%p, %lu), start=%p\n", address, size, start);
+
 	if (size<start-address) return 0;
 	size-=(start-address);
 	if (size <(MIN_FRAG_SIZE+FRAG_OVERHEAD)) return 0;
