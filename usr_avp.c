@@ -82,33 +82,13 @@ inline static unsigned short compute_ID( str *name )
 }
 
 
-int add_avp(unsigned short flags, int_str name, int_str val)
+int add_avp_list(avp_t** list, unsigned short flags, int_str name, int_str val)
 {
-	avp_t **list;
 	avp_t *avp;
 	str *s;
 	struct str_int_data *sid;
 	struct str_str_data *ssd;
-	unsigned short avp_class;
 	int len;
-
-	if ((flags & ALL_AVP_CLASSES) == 0) {
-		     /* The caller did not specify any class to search in, so enable
-		      * all of them by default
-		      */
-		flags |= ALL_AVP_CLASSES;
-	}
-
-	if (IS_USER_AVP(flags)) {
-		list = crt_user_avps;
-		avp_class = AVP_USER;
-	} else if (IS_DOMAIN_AVP(flags)) {
-		list = crt_domain_avps;
-		avp_class = AVP_DOMAIN;
-	} else {
-		list = crt_global_avps;
-		avp_class = AVP_GLOBAL;
-	}
 
 	assert(list != 0);
 
@@ -142,10 +122,7 @@ int add_avp(unsigned short flags, int_str name, int_str val)
 		goto error;
 	}
 
-		 /* Make that only the selected class is set
-		  * if the caller set more classes in flags
-		  */
-	avp->flags = flags & (~(ALL_AVP_CLASSES) | avp_class);
+	avp->flags = flags;
 	avp->id = (flags&AVP_NAME_STR)? compute_ID(name.s) : name.n ;
 
 	avp->next = *list;
@@ -191,6 +168,36 @@ int add_avp(unsigned short flags, int_str name, int_str val)
 	return 0;
 error:
 	return -1;
+}
+
+
+int add_avp(unsigned short flags, int_str name, int_str val)
+{
+	unsigned short avp_class;
+	avp_t **list;
+
+	if ((flags & ALL_AVP_CLASSES) == 0) {
+		     /* The caller did not specify any class to search in, so enable
+		      * all of them by default
+		      */
+		flags |= ALL_AVP_CLASSES;
+	}
+
+	if (IS_USER_AVP(flags)) {
+		list = crt_user_avps;
+		avp_class = AVP_USER;
+	} else if (IS_DOMAIN_AVP(flags)) {
+		list = crt_domain_avps;
+		avp_class = AVP_DOMAIN;
+	} else {
+		list = crt_global_avps;
+		avp_class = AVP_GLOBAL;
+	}
+
+		 /* Make that only the selected class is set
+		  * if the caller set more classes in flags
+		  */
+	return add_avp_list(list, flags & (~(ALL_AVP_CLASSES) | avp_class), name, val);
 }
 
 
@@ -456,6 +463,17 @@ void reset_user_avps(void)
 		crt_user_avps = &user_avps;
 	}
 	destroy_avp_list( crt_user_avps );
+}
+
+
+void reset_domain_avps(void)
+{
+	assert( crt_user_avps!=0 );
+	
+	if ( crt_user_avps!=&domain_avps) {
+		crt_domain_avps = &domain_avps;
+	}
+	     /* Do not destroy avps here, domain module takes care of it */
 }
 
 

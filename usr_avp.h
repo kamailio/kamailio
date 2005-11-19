@@ -56,6 +56,14 @@
 #include "str.h"
 
 
+#define AVP_UID          "uid"           /* Unique user identifier */
+#define AVP_DID          "did"           /* Unique domain identifier */
+#define AVP_REALM        "digest_realm"  /* Digest realm */
+#define AVP_FR_TIMER     "fr_timer"      /* Value of final response timer */
+#define AVP_FR_INV_TIMER "fr_inv_timer"  /* Value of final response invite timer */
+#define AVP_RPID         "rpid"          /* Remote-Party-ID */
+
+
 struct str_int_data {
 	str name;
 	int val;
@@ -117,6 +125,8 @@ struct search_state {
 /* add functions */
 int add_avp(unsigned short flags, int_str name, int_str val);
 
+int add_avp_list(avp_t** list, unsigned short flags, int_str name, int_str val);
+
 /* search functions */
 avp_t *search_first_avp( unsigned short flags, int_str name,
 			 int_str *val, struct search_state* state);
@@ -124,6 +134,7 @@ avp_t *search_next_avp(struct search_state* state, int_str *val);
 
 /* free functions */
 void reset_user_avps(void);
+void reset_domain_avps(void);
 
 void destroy_avp(avp_t *avp);
 void destroy_avp_list(avp_t **list );
