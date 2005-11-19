@@ -42,6 +42,16 @@
 #include "db_res.h"
 #include "db_cap.h"
 
+/*
+ * Various database flags shared by modules 
+ */
+#define DB_LOAD_SER   (1 << 0)  /* The row should be loaded by SER */
+#define DB_DISABLED   (1 << 1)  /* The row is disabled */
+#define DB_CANON      (1 << 2)  /* Canonical entry (domain or uri) */
+#define DB_IS_TO      (1 << 3)  /* The URI can be used in To */
+#define DB_IS_FROM    (1 << 4)  /* The URI can be used in From */
+#define DB_FOR_SERWEB (1 << 5)  /* Credentials instance can be used by serweb */
+
 
 /*
  * Specify table name that will be used for
