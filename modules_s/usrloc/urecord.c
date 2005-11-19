@@ -51,7 +51,7 @@
 /*
  * Create and initialize new record structure
  */
-int new_urecord(str* _dom, str* _aor, urecord_t** _r)
+int new_urecord(str* _dom, str* _uid, urecord_t** _r)
 {
 	*_r = (urecord_t*)shm_malloc(sizeof(urecord_t));
 	if (*_r == 0) {
@@ -60,14 +60,14 @@ int new_urecord(str* _dom, str* _aor, urecord_t** _r)
 	}
 	memset(*_r, 0, sizeof(urecord_t));
 
-	(*_r)->aor.s = (char*)shm_malloc(_aor->len);
-	if ((*_r)->aor.s == 0) {
+	(*_r)->uid.s = (char*)shm_malloc(_uid->len);
+	if ((*_r)->uid.s == 0) {
 		LOG(L_ERR, "new_urecord(): No memory left\n");
 		shm_free(*_r);
 		return -2;
 	}
-	memcpy((*_r)->aor.s, _aor->s, _aor->len);
-	(*_r)->aor.len = _aor->len;
+	memcpy((*_r)->uid.s, _uid->s, _uid->len);
+	(*_r)->uid.len = _uid->len;
 	(*_r)->domain = _dom;
 	return 0;
 }
@@ -95,7 +95,7 @@ void free_urecord(urecord_t* _r)
 		free_ucontact(ptr);
 	}
 	
-	if (_r->aor.s) shm_free(_r->aor.s);
+	if (_r->uid.s) shm_free(_r->uid.s);
 	shm_free(_r);
 }
 
@@ -109,7 +109,7 @@ void print_urecord(FILE* _f, urecord_t* _r)
 
 	fprintf(_f, "...Record(%p)...\n", _r);
 	fprintf(_f, "domain: '%.*s'\n", _r->domain->len, ZSW(_r->domain->s));
-	fprintf(_f, "aor   : '%.*s'\n", _r->aor.len, ZSW(_r->aor.s));
+	fprintf(_f, "uid   : '%.*s'\n", _r->uid.len, ZSW(_r->uid.s));
 	
 	if (_r->contacts) {
 		ptr = _r->contacts;
@@ -134,7 +134,7 @@ int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _ci
 {
 	ucontact_t* ptr, *prev = 0;
 
-	if (new_ucontact(_r->domain, &_r->aor, _c, _e, _q, _cid, _cs, _flags, _con, _ua, _recv, sock, _inst) < 0) {
+	if (new_ucontact(_r->domain, &_r->uid, _c, _e, _q, _cid, _cs, _flags, _con, _ua, _recv, sock, _inst) < 0) {
 		LOG(L_ERR, "mem_insert_ucontact(): Can't create new contact\n");
 		return -1;
 	}
@@ -221,7 +221,7 @@ static inline int nodb_timer(urecord_t* _r)
 			notify_watchers(_r, ptr, PRES_OFFLINE);
 
 			LOG(L_NOTICE, "Binding '%.*s','%.*s' has expired\n",
-			    ptr->aor->len, ZSW(ptr->aor->s),
+			    ptr->uid->len, ZSW(ptr->uid->s),
 			    ptr->c.len, ZSW(ptr->c.s));
 			
 			t = ptr;
@@ -264,7 +264,7 @@ static inline int wt_timer(urecord_t* _r)
 			notify_watchers(_r, ptr, PRES_OFFLINE);
 
 			LOG(L_NOTICE, "Binding '%.*s','%.*s' has expired\n",
-			    ptr->aor->len, ZSW(ptr->aor->s),
+			    ptr->uid->len, ZSW(ptr->uid->s),
 			    ptr->c.len, ZSW(ptr->c.s));
 			
 			t = ptr;
@@ -314,7 +314,7 @@ static inline int wb_timer(urecord_t* _r)
 			notify_watchers(_r, ptr, PRES_OFFLINE);
 
 			LOG(L_NOTICE, "Binding '%.*s','%.*s' has expired\n",
-			    ptr->aor->len, ZSW(ptr->aor->s),
+			    ptr->uid->len, ZSW(ptr->uid->s),
 			    ptr->c.len, ZSW(ptr->c.s));
 			if (ptr->next == 0) not=1;
 			_r->slot->d->expired++;
@@ -385,27 +385,15 @@ int timer_urecord(urecord_t* _r)
 
 int db_delete_urecord(urecord_t* _r)
 {
-	char b[256];
-	db_key_t keys[2];
-	db_val_t vals[2];
-	char* dom;
+	static char b[256];
+	db_key_t keys[1];
+	db_val_t vals[1];
 
-	keys[0] = user_col.s;
-	keys[1] = domain_col.s;
+	keys[0] = uid_col.s;
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;
-	vals[0].val.str_val.s = _r->aor.s;
-	vals[0].val.str_val.len = _r->aor.len;
-
-	if (use_domain) {
-		dom = q_memchr(_r->aor.s, '@', _r->aor.len);
-		vals[0].val.str_val.len = dom - _r->aor.s;
-
-		vals[1].type = DB_STR;
-		vals[1].nul = 0;
-		vals[1].val.str_val.s = dom + 1;
-		vals[1].val.str_val.len = _r->aor.s + _r->aor.len - dom - 1;
-	}
+	vals[0].val.str_val.s = _r->uid.s;
+	vals[0].val.str_val.len = _r->uid.len;
 
 	     /* FIXME */
 	memcpy(b, _r->domain->s, _r->domain->len);
@@ -416,7 +404,7 @@ int db_delete_urecord(urecord_t* _r)
 		return -1;
 	}
 
-	if (ul_dbf.delete(ul_dbh, keys, 0, vals, (use_domain) ? (2) : (1)) < 0) {
+	if (ul_dbf.delete(ul_dbh, keys, 0, vals, 1) < 0) {
 		LOG(L_ERR, "ERROR: db_delete_urecord():"
 				" Error while deleting from database\n");
 		return -1;

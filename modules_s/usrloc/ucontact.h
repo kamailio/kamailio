@@ -71,7 +71,7 @@ typedef enum flags {
 
 typedef struct ucontact {
 	str* domain;              /* Pointer to domain name */
-	str* aor;                 /* Pointer to the address of record string in record structure*/
+	str* uid;                 /* UID of owner of contact*/
 	str c;                    /* Contact address */
 	str received;             /* IP, port, and protocol we received the REGISTER from */
 	struct socket_info* sock; /* Socket to be used when sending SIP messages to this contact */
@@ -97,7 +97,7 @@ typedef struct ucontact {
 /*
  * Create a new contact structure
  */
-int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, qvalue_t _q, 
+int new_ucontact(str* _dom, str* _uid, str* _contact, time_t _e, qvalue_t _q, 
 		 str* _callid, int _cseq, unsigned int _flags, ucontact_t** _c, 
 		 str* _ua, str* _recv, struct socket_info* sock, str* _inst);
 

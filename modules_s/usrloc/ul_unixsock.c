@@ -45,7 +45,7 @@
 #define UNIXSOCK_UA "SIP Express Router UNIXSOCK"
 #define UNIXSOCK_UA_LEN (sizeof(UNIXSOCK_UA)-1)
 
-static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue_t _q, int _f)
+static inline int add_contact(udomain_t* _d, str* _uid, str* _c, time_t _e, qvalue_t _q, int _f)
 {
 	urecord_t* r;
 	ucontact_t* c = 0;
@@ -59,14 +59,14 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue
 
 	get_act_time();
 
-	res = get_urecord(_d, _u, &r);
+	res = get_urecord(_d, _uid, &r);
 	if (res < 0) {
 		LOG(L_ERR, "fifo_add_contact(): Error while getting record\n");
 		return -2;
 	}
 
 	if (res >  0) { /* Record not found */
-		if (insert_urecord(_d, _u, &r) < 0) {
+		if (insert_urecord(_d, _uid, &r) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while creating new urecord\n");
 			return -3;
 		}
@@ -153,50 +153,34 @@ static int ul_stats_cmd(str* msg)
 static int ul_rm(str* msg)
 {
 	udomain_t* d;
-	str table, user;
-	char* at;
+	str table, uid;
 
 	if (unixsock_read_line(&table, msg) != 0) {
 		unixsock_reply_asciiz("400 Table name expected\n");
 		goto err;
 	}
 
-	if (unixsock_read_line(&user, msg) != 0) {
+	if (unixsock_read_line(&uid, msg) != 0) {
 		unixsock_reply_asciiz("400 User name expected\n");
 		goto err;
 	}
 
-	at = q_memchr(user.s, '@', user.len);
-
-	if (use_domain) {
-		if (!at) {
-			unixsock_reply_asciiz("400 Domain missing\n");
-			goto err;
-		}
-	} else {
-		if (at) {
-			user.len = at - user.s;
-		}
-	}
-
-	strlower(&user);
-
 	unixsock_find_domain(&table, &d);
 
 	LOG(L_INFO, "INFO: Deleting entry (%.*s,%.*s)\n",
-	    table.len, ZSW(table.s), user.len, ZSW(user.s));
+	    table.len, ZSW(table.s), uid.len, ZSW(uid.s));
 	
 	if (d) {
 		lock_udomain(d);
-		if (delete_urecord(d, &user) < 0) {
-			LOG(L_ERR, "ul_rm(): Error while deleting user %.*s\n", user.len, ZSW(user.s));
+		if (delete_urecord(d, &uid) < 0) {
+			LOG(L_ERR, "ul_rm(): Error while deleting user %.*s\n", uid.len, ZSW(uid.s));
 			unlock_udomain(d);
-			unixsock_reply_printf("500 Error while deleting user %.*s\n", user.len, ZSW(user.s));
+			unixsock_reply_printf("500 Error while deleting user %.*s\n", uid.len, ZSW(uid.s));
 			goto err;
 		}
 		unlock_udomain(d);
 		unixsock_reply_printf("200 user (%.*s, %.*s) deleted\n",
-				      table.len, ZSW(table.s), user.len, ZSW(user.s));
+				      table.len, ZSW(table.s), uid.len, ZSW(uid.s));
 		unixsock_reply_send();
 		return 0;
 	} else {
@@ -214,31 +198,17 @@ static int ul_rm_contact(str* msg)
 	udomain_t* d;
 	urecord_t* r;
 	ucontact_t* con;
-	str table, user, contact;
+	str table, uid, contact;
 	int res;
-	char* at;
 
 	if (unixsock_read_line(&table, msg) != 0) {
 		unixsock_reply_asciiz("400 Table name expected\n");
 		goto err;
 	}
 
-	if (unixsock_read_line(&user, msg) != 0) {
+	if (unixsock_read_line(&uid, msg) != 0) {
 		unixsock_reply_asciiz("400 Username expected\n");
 		goto err;
-	}
-
-	at = q_memchr(user.s, '@', user.len);
-
-	if (use_domain) {
-		if (!at) {
-			unixsock_reply_asciiz("400 Domain missing\n");
-			goto err;
-		}
-	} else {
-		if (at) {
-			user.len = at - user.s;
-		}
 	}
 
 	if (unixsock_read_line(&contact, msg) != 0) {
@@ -246,28 +216,26 @@ static int ul_rm_contact(str* msg)
 		goto err;
 	}
 
-	strlower(&user);
-
 	unixsock_find_domain(&table, &d);
 
 	LOG(L_INFO, "INFO: Deleting contact (%.*s,%.*s,%.*s)\n",
 	    table.len, ZSW(table.s), 
-	    user.len, ZSW(user.s), 
+	    uid.len, ZSW(uid.s), 
 	    contact.len, ZSW(contact.s));
 
 	if (d) {
 		lock_udomain(d);
 
-		res = get_urecord(d, &user, &r);
+		res = get_urecord(d, &uid, &r);
 		if (res < 0) {
 			unixsock_reply_printf("500 Error while looking for username %.*s in table %.*s\n",
-					      user.len, ZSW(user.s), table.len, ZSW(table.s));
+					      uid.len, ZSW(uid.s), table.len, ZSW(table.s));
 			goto err_unlock;
 		}
 		
 		if (res > 0) {
 			unixsock_reply_printf("404 Username %.*s in table %.*s not found\n",
-					      user.len, ZSW(user.s), table.len, ZSW(table.s));
+					      uid.len, ZSW(uid.s), table.len, ZSW(table.s));
 			goto err_unlock;
 		}
 
@@ -292,7 +260,7 @@ static int ul_rm_contact(str* msg)
 		release_urecord(r);
 		unlock_udomain(d);
 		unixsock_reply_printf("200 Contact (%.*s, %.*s) deleted from table %.*s\n", 
-				      user.len, ZSW(user.s), 
+				      uid.len, ZSW(uid.s), 
 				      contact.len, ZSW(contact.s), 
 				      table.len, ZSW(table.s));
 		unixsock_reply_send();
@@ -335,30 +303,16 @@ static int ul_add(str* msg)
 	udomain_t* d;
 	qvalue_t qval;
 	int exp_i, flags_i;
-	char* at;
-	str table, user, contact, expires, q, rep, flags;
+	str table, uid, contact, expires, q, rep, flags;
 
 	if (unixsock_read_line(&table, msg) != 0) {
 		unixsock_reply_asciiz("400 Table name expected\n");
 		goto err;
 	}
 	
-	if (unixsock_read_line(&user, msg) != 0) {
+	if (unixsock_read_line(&uid, msg) != 0) {
 		unixsock_reply_asciiz("400 AOR name expected\n");
 		goto err;
-	}
-
-	at = q_memchr(user.s, '@', user.len);
-
-	if (use_domain) {
-		if (!at) {
-			unixsock_reply_asciiz("400 Username@domain expected\n");
-			goto err;
-		}
-	} else {
-		if (at) {
-			user.len = at - user.s;
-		}
 	}
 
 	if (unixsock_read_line(&contact, msg) != 0) {
@@ -387,7 +341,6 @@ static int ul_add(str* msg)
 		goto err;
 	}
 	
-	strlower(&user);
 	unixsock_find_domain(&table, &d);
 	
 	if (d) {
@@ -408,20 +361,20 @@ static int ul_add(str* msg)
 		
 		lock_udomain(d);
 		
-		if (add_contact(d, &user, &contact, exp_i, qval, flags_i) < 0) {
+		if (add_contact(d, &uid, &contact, exp_i, qval, flags_i) < 0) {
 			unlock_udomain(d);
 			LOG(L_ERR, "ul_add(): Error while adding contact ('%.*s','%.*s') in table '%.*s'\n",
-			    user.len, ZSW(user.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
+			    uid.len, ZSW(uid.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
 			unixsock_reply_printf("500 Error while adding contact\n"
 					      " ('%.*s','%.*s') in table '%.*s'\n",
-					      user.len, ZSW(user.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
+					      uid.len, ZSW(uid.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
 			goto err;
 		}
 		unlock_udomain(d);
 		
 		unixsock_reply_printf("200 Added to table\n"
 				      "('%.*s','%.*s') to '%.*s'\n",
-				      user.len, ZSW(user.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
+				      uid.len, ZSW(uid.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
 		unixsock_reply_send();
 		return 0;
 	} else {
@@ -466,48 +419,33 @@ static inline int ul_show_contact(str* msg)
 	udomain_t* d;
 	urecord_t* r;
 	int res;
-	str table, aor;
-	char* at;
+	str table, uid;
 
 	if (unixsock_read_line(&table, msg) != 0) {
 		unixsock_reply_asciiz("400 Table name expected\n");
 		goto err;
 	}
 
-	if (unixsock_read_line(&aor, msg) != 0) {
+	if (unixsock_read_line(&uid, msg) != 0) {
 		unixsock_reply_asciiz("400 Address of Record expected\n");
 		goto err;
 	}
 	
-	at = q_memchr(aor.s, '@', aor.len);
-
-	if (use_domain) {
-		if (!at) {
-			unixsock_reply_asciiz("400 User@domain expected\n");
-			goto err;
-		}
-	} else {
-		if (at) {
-			aor.len = at - aor.s;
-		}
-	}
-
-	strlower(&aor);
 	unixsock_find_domain(&table, &d);
 
 	if (d) {
 		lock_udomain(d);	
 
-		res = get_urecord(d, &aor, &r);
+		res = get_urecord(d, &uid, &r);
 		if (res < 0) {
 			unixsock_reply_printf("500 Error while looking for username %.*s in table %.*s\n", 
-					      aor.len, ZSW(aor.s), table.len, ZSW(table.s));
+					      uid.len, ZSW(uid.s), table.len, ZSW(table.s));
 			goto err_unlock;
 		}
 		
 		if (res > 0) {
 			unixsock_reply_printf("404 Username %.*s in table %.*s not found\n", 
-					      aor.len, ZSW(aor.s), table.len, ZSW(table.s));
+					      uid.len, ZSW(uid.s), table.len, ZSW(table.s));
 			goto err_unlock;
 		}
 		

@@ -43,7 +43,7 @@
 
 /* buffer dimensions */
 #define MAX_TABLE 128
-#define MAX_USER 256
+#define MAX_UID 256
 
 int init_ul_fifo(void);
 

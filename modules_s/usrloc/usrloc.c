@@ -139,7 +139,5 @@ int bind_usrloc(usrloc_api_t* api)
 		return -1;
 	}
 
-	api->use_domain = use_domain;
-
 	return 0;
 }

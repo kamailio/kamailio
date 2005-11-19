@@ -40,7 +40,6 @@
 
 
 typedef struct usrloc_api {
-	int use_domain;
 	register_udomain_t   register_udomain;
 	get_all_ucontacts_t  get_all_ucontacts;
 

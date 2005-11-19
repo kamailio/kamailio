@@ -53,7 +53,7 @@ struct hslot;
  */
 typedef struct urecord {
 	str* domain;                   /* Pointer to domain we belong to */
-	str aor;                       /* Address of record */
+	str uid;                       /* User id */
 	ucontact_t* contacts;          /* One or more contact fields */
 	
 	struct hslot* slot;            /* Collision slot in the hash table array we belong to */
@@ -71,7 +71,7 @@ typedef struct urecord {
 
 
 /* Create a new record */
-int new_urecord(str* _dom, str* _aor, urecord_t** _r);
+int new_urecord(str* _dom, str* _uid, urecord_t** _r);
 
 
 /* Free all memory associated with the element */

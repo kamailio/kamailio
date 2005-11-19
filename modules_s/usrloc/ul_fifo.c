@@ -140,7 +140,7 @@ static inline void fifo_find_domain(str* _name, udomain_t** _d)
 }
 
 
-static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue_t _q, int _f)
+static inline int add_contact(udomain_t* _d, str* _uid, str* _c, time_t _e, qvalue_t _q, int _f)
 {
 	urecord_t* r;
 	ucontact_t* c = 0;
@@ -155,14 +155,14 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue
 
 	get_act_time();
 
-	res = get_urecord(_d, _u, &r);
+	res = get_urecord(_d, _uid, &r);
 	if (res < 0) {
 		LOG(L_ERR, "fifo_add_contact(): Error while getting record\n");
 		return -2;
 	}
 
 	if (res >  0) { /* Record not found */
-		if (insert_urecord(_d, _u, &r) < 0) {
+		if (insert_urecord(_d, _uid, &r) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while creating new urecord\n");
 			return -3;
 		}
@@ -200,19 +200,18 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue
 
 static int ul_add(FILE* pipe, char* response_file)
 {
-	char table_s[MAX_TABLE];
-	char user_s[MAX_USER];
-	char contact_s[MAX_CONTACT_LEN];
-	char expires_s[MAX_EXPIRES_LEN];
-	char q_s[MAX_Q_LEN];
-	char rep_s[MAX_REPLICATE_LEN];
-	char flags_s[MAX_FLAGS_LEN];
+	static char table_s[MAX_TABLE];
+	static char uid_s[MAX_UID];
+	static char contact_s[MAX_CONTACT_LEN];
+	static char expires_s[MAX_EXPIRES_LEN];
+	static char q_s[MAX_Q_LEN];
+	static char rep_s[MAX_REPLICATE_LEN];
+	static char flags_s[MAX_FLAGS_LEN];
 	udomain_t* d;
 	int exp_i, flags_i;
-	char* at;
 	qvalue_t qval;
 
-	str table, user, contact, expires, q, rep, flags;
+	str table, uid, contact, expires, q, rep, flags;
 
 	if (!read_line(table_s, MAX_TABLE, pipe, &table.len) || table.len == 0) {
 		fifo_reply(response_file,
@@ -221,26 +220,11 @@ static int ul_add(FILE* pipe, char* response_file)
 		return 1;
 	}
 	
-	if (!read_line(user_s, MAX_USER, pipe, &user.len) || user.len  == 0) {
+	if (!read_line(uid_s, MAX_UID, pipe, &uid.len) || uid.len  == 0) {
 		fifo_reply(response_file,
-			   "400 ul_add: aor name expected\n");
-		LOG(L_ERR, "ERROR: ul_add: aor expected\n");
+			   "400 ul_add: UID expected\n");
+		LOG(L_ERR, "ERROR: ul_add: UID expected\n");
 		return 1;
-	}
-
-	at = memchr(user_s, '@', user.len);
-
-	if (use_domain) {
-		if (!at) {
-			fifo_reply(response_file,
-				   "400 ul_add: username@domain expected\n");
-			LOG(L_ERR, "ERROR: ul_add: Domain missing\n");
-			return 1;
-		}
-	} else {
-		if (at) {
-			user.len = at - user_s;
-		}
 	}
 
 	if (!read_line(contact_s, MAX_CONTACT_LEN, pipe, &contact.len) || contact.len == 0) {
@@ -280,8 +264,7 @@ static int ul_add(FILE* pipe, char* response_file)
 	}
 	
 	table.s = table_s;
-	user.s = user_s;
-	strlower(&user);
+	uid.s = uid_s;
 
 	contact.s = contact_s;
 	expires.s = expires_s;
@@ -308,20 +291,20 @@ static int ul_add(FILE* pipe, char* response_file)
 		
 		lock_udomain(d);
 		
-		if (add_contact(d, &user, &contact, exp_i, qval, flags_i) < 0) {
+		if (add_contact(d, &uid, &contact, exp_i, qval, flags_i) < 0) {
 			unlock_udomain(d);
 			LOG(L_ERR, "ul_add(): Error while adding contact ('%.*s','%.*s') in table '%.*s'\n",
-			    user.len, ZSW(user.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
+			    uid.len, ZSW(uid.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
 			fifo_reply(response_file, "500 Error while adding contact\n"
 				   " ('%.*s','%.*s') in table '%.*s'\n",
-				   user.len, ZSW(user.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
+				   uid.len, ZSW(uid.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
 			return 1;
 		}
 		unlock_udomain(d);
 		
 		fifo_reply(response_file, "200 Added to table\n"
 				"('%.*s','%.*s') to '%.*s'\n",
-			   user.len, ZSW(user.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
+			   uid.len, ZSW(uid.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
 		return 1;
 	} else {
 		fifo_reply(response_file, "400 Table '%.*s' not found in memory, use save(\"%.*s\") or lookup(\"%.*s\") in the configuration script first\n", 
@@ -333,11 +316,10 @@ static int ul_add(FILE* pipe, char* response_file)
 
 int static ul_rm( FILE *pipe, char *response_file )
 {
-	char table[MAX_TABLE];
-	char user[MAX_USER];
+	static char table[MAX_TABLE];
+	static char uid_s[MAX_UID];
 	udomain_t* d;
-	str aor, t;
-	char* at;
+	str uid, t;
 
 	if (!read_line(table, MAX_TABLE, pipe, &t.len) || t.len ==0) {
 		fifo_reply(response_file, 
@@ -345,49 +327,33 @@ int static ul_rm( FILE *pipe, char *response_file )
 		LOG(L_ERR, "ERROR: ul_rm: table name expected\n");
 		return 1;
 	}
-	if (!read_line(user, MAX_USER, pipe, &aor.len) || aor.len==0) {
+	if (!read_line(uid_s, MAX_UID, pipe, &uid.len) || uid.len==0) {
 		fifo_reply(response_file, 
 			   "400 ul_rm: user name expected\n");
 		LOG(L_ERR, "ERROR: ul_rm: user name expected\n");
 		return 1;
 	}
 
-	at = memchr(user, '@', aor.len);
-
-	if (use_domain) {
-		if (!at) {
-			fifo_reply(response_file,
-				   "400 ul_rm: username@domain expected\n");
-			LOG(L_ERR, "ERROR: ul_rm: Domain missing\n");
-			return 1;
-		}
-	} else {
-		if (at) {
-			aor.len = at - user;
-		}
-	}
-
-	aor.s = user;
-	strlower(&aor);
+	uid.s = uid_s;
 
 	t.s = table;
 
 	fifo_find_domain(&t, &d);
 
 	LOG(L_INFO, "INFO: deleting user-loc (%s,%s)\n",
-	    table, user );
+	    table, uid_s );
 	
 	if (d) {
 		lock_udomain(d);
-		if (delete_urecord(d, &aor) < 0) {
-			LOG(L_ERR, "ul_rm(): Error while deleting user %s\n", user);
+		if (delete_urecord(d, &uid) < 0) {
+			LOG(L_ERR, "ul_rm(): Error while deleting user %s\n", uid_s);
 			unlock_udomain(d);
-			fifo_reply(response_file, "500 Error while deleting user %s\n", user);
+			fifo_reply(response_file, "500 Error while deleting user %s\n", uid_s);
 			return 1;
 		}
 		unlock_udomain(d);
 		fifo_reply(response_file, "200 user (%s, %s) deleted\n", 
-			table, user);
+			table, uid_s);
 		return 1;
 	} else {
 		fifo_reply(response_file, "400 table (%s) not found\n", table);
@@ -398,15 +364,14 @@ int static ul_rm( FILE *pipe, char *response_file )
 
 static int ul_rm_contact(FILE* pipe, char* response_file)
 {
-	char table[MAX_TABLE];
-	char user[MAX_USER];
-	char contact[MAX_CONTACT_LEN];
+	static char table[MAX_TABLE];
+	static char uid_s[MAX_UID];
+	static char contact[MAX_CONTACT_LEN];
 	udomain_t* d;
 	urecord_t* r;
 	ucontact_t* con;
-	str aor, t, c;
+	str uid, t, c;
 	int res;
-	char* at;
 
 	if (!read_line(table, MAX_TABLE, pipe, &t.len) || t.len ==0) {
 		fifo_reply(response_file, 
@@ -414,28 +379,12 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 		LOG(L_ERR, "ERROR: ul_rm_contact: table name expected\n");
 		return 1;
 	}
-	if (!read_line(user, MAX_USER, pipe, &aor.len) || aor.len==0) {
+	if (!read_line(uid_s, MAX_UID, pipe, &uid.len) || uid.len==0) {
 		fifo_reply(response_file, 
 			   "400 ul_rm_contact: user name expected\n");
 		LOG(L_ERR, "ERROR: ul_rm_contact: user name expected\n");
 		return 1;
 	}
-
-	at = memchr(user, '@', aor.len);
-
-	if (use_domain) {
-		if (!at) {
-			fifo_reply(response_file,
-				   "400 ul_rm_contact: user@domain expected\n");
-			LOG(L_ERR, "ERROR: ul_rm_contact: Domain missing\n");
-			return 1;
-		}
-	} else {
-		if (at) {
-			aor.len = at - user;
-		}
-	}
-
 
 	if (!read_line(contact, MAX_CONTACT_LEN, pipe, &c.len) || c.len == 0) {
 		fifo_reply(response_file,
@@ -444,8 +393,7 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 		return 1;
 	}
 
-	aor.s = user;
-	strlower(&aor);
+	uid.s = uid_s;
 
 	t.s = table;
 	c.s = contact;
@@ -453,22 +401,22 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 	fifo_find_domain(&t, &d);
 
 	LOG(L_INFO, "INFO: deleting user-loc contact (%s,%s,%s)\n",
-	    table, user, contact );
+	    table, uid_s, contact );
 
 
 	if (d) {
 		lock_udomain(d);
 
-		res = get_urecord(d, &aor, &r);
+		res = get_urecord(d, &uid, &r);
 		if (res < 0) {
-			fifo_reply(response_file, "500 Error while looking for username %s in table %s\n", user, table);
-			LOG(L_ERR, "ERROR: ul_rm_contact: Error while looking for username %s in table %s\n", user, table);
+			fifo_reply(response_file, "500 Error while looking for username %s in table %s\n", uid_s, table);
+			LOG(L_ERR, "ERROR: ul_rm_contact: Error while looking for username %s in table %s\n", uid_s, table);
 			unlock_udomain(d);
 			return 1;
 		}
 		
 		if (res > 0) {
-			fifo_reply(response_file, "404 Username %s in table %s not found\n", user, table);
+			fifo_reply(response_file, "404 Username %s in table %s not found\n", uid_s, table);
 			unlock_udomain(d);
 			return 1;
 		}
@@ -496,7 +444,7 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 		release_urecord(r);
 		unlock_udomain(d);
 		fifo_reply(response_file, "200 Contact (%s, %s) deleted from table %s\n", 
-			user, contact, table);
+			uid_s, contact, table);
 		return 1;
 	} else {
 		fifo_reply(response_file, "400 table (%s) not found\n", table);
@@ -533,14 +481,13 @@ static inline int print_contacts(FILE* _o, ucontact_t* _c)
 
 static inline int ul_show_contact(FILE* pipe, char* response_file)
 {
-	char table[MAX_TABLE];
-	char user[MAX_USER];
+	static char table[MAX_TABLE];
+	static char uid_s[MAX_UID];
 	FILE* reply_file;
 	udomain_t* d;
 	urecord_t* r;
 	int res;
-	str t, aor;
-	char* at;
+	str t, uid;
 
 	if (!read_line(table, MAX_TABLE, pipe, &t.len) || t.len ==0) {
 		fifo_reply(response_file, 
@@ -548,30 +495,14 @@ static inline int ul_show_contact(FILE* pipe, char* response_file)
 		LOG(L_ERR, "ERROR: ul_show_contact: table name expected\n");
 		return 1;
 	}
-	if (!read_line(user, MAX_USER, pipe, &aor.len) || aor.len==0) {
+	if (!read_line(uid_s, MAX_UID, pipe, &uid.len) || uid.len==0) {
 		fifo_reply(response_file, 
 			   "400 ul_show_contact: user name expected\n");
 		LOG(L_ERR, "ERROR: ul_show_contact: user name expected\n");
 		return 1;
 	}
 	
-	at = memchr(user, '@', aor.len);
-
-	if (use_domain) {
-		if (!at) {
-			fifo_reply(response_file,
-				   "400 ul_show_contact: user@domain expected\n");
-			LOG(L_ERR, "ERROR: ul_show_contact: Domain missing\n");
-			return 1;
-		}
-	} else {
-		if (at) {
-			aor.len = at - user;
-		}
-	}
-
-	aor.s = user;
-	strlower(&aor);
+	uid.s = uid_s;
 
 	t.s = table;
 	
@@ -580,16 +511,16 @@ static inline int ul_show_contact(FILE* pipe, char* response_file)
 	if (d) {
 		lock_udomain(d);	
 
-		res = get_urecord(d, &aor, &r);
+		res = get_urecord(d, &uid, &r);
 		if (res < 0) {
-			fifo_reply(response_file, "500 Error while looking for username %s in table %s\n", user, table);
-			LOG(L_ERR, "ERROR: ul_show_contact: Error while looking for username %s in table %s\n", user, table);
+			fifo_reply(response_file, "500 Error while looking for username %s in table %s\n", uid_s, table);
+			LOG(L_ERR, "ERROR: ul_show_contact: Error while looking for username %s in table %s\n", uid_s, table);
 			unlock_udomain(d);
 			return 1;
 		}
 		
 		if (res > 0) {
-			fifo_reply(response_file, "404 Username %s in table %s not found\n", user, table);
+			fifo_reply(response_file, "404 Username %s in table %s not found\n", uid_s, table);
 			unlock_udomain(d);
 			return 1;
 		}

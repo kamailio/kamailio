@@ -278,22 +278,21 @@ static struct socket_info* find_socket(str* received)
 int preload_udomain(db_con_t* _c, udomain_t* _d)
 {
 	char b[256];
-	db_key_t columns[11];
+	db_key_t columns[10];
 	db_res_t* res;
 	db_row_t* row;
 	int i, cseq;
 	unsigned int flags;
 	struct socket_info* sock;
-	str user, contact, callid, ua, received, instance;
+	str uid, contact, callid, ua, received, instance;
 	str* rec;
-	char* domain;
 	time_t expires;
 	qvalue_t q;
 
 	urecord_t* r;
 	ucontact_t* c;
 
-	columns[0] = user_col.s;
+	columns[0] = uid_col.s;
 	columns[1] = contact_col.s;
 	columns[2] = expires_col.s;
 	columns[3] = q_col.s;
@@ -303,7 +302,6 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	columns[7] = user_agent_col.s;
 	columns[8] = received_col.s;
 	columns[9] = instance_col.s;
-	columns[10] = domain_col.s;
 	
 	memcpy(b, _d->name->s, _d->name->len);
 	b[_d->name->len] = '\0';
@@ -313,8 +311,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		return -1;
 	}
 
-	if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? 11 : 10, 0,
-				&res) < 0) {
+	if (ul_dbf.query(_c, 0, 0, 0, columns, 0, 10, 0, &res) < 0) {
 		LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
 		return -1;
 	}
@@ -330,14 +327,14 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	for(i = 0; i < RES_ROW_N(res); i++) {
 		row = RES_ROWS(res) + i;
 		
-		user.s      = (char*)VAL_STRING(ROW_VALUES(row));
-		if (user.s == 0) {
-			LOG(L_CRIT, "preload_udomain: ERROR: bad username "
+		uid.s      = (char*)VAL_STRING(ROW_VALUES(row));
+		if (uid.s == 0) {
+			LOG(L_CRIT, "preload_udomain: ERROR: bad uid "
 							"record in table %s\n", b);
 			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
 			continue;
 		} else {
-			user.len = strlen(user.s);
+			uid.len = strlen(uid.s);
 		}
 
 		contact.s = (char*)VAL_STRING(ROW_VALUES(row) + 1);
@@ -345,7 +342,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			LOG(L_CRIT, "preload_udomain: ERROR: bad contact "
 							"record in table %s\n", b);
 			LOG(L_CRIT, "preload_udomain: ERROR: for username %.*s\n",
-							user.len, user.s);
+							uid.len, uid.s);
 			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
 			continue;
 		} else {
@@ -360,7 +357,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 							" table %s\n", b);
 			LOG(L_CRIT, "preload_udomain: ERROR: for username %.*s,"
 							" contact %.*s\n",
-							user.len, user.s, contact.len, contact.s);
+							uid.len, uid.s, contact.len, contact.s);
 			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
 			continue;
 		} else {
@@ -407,15 +404,8 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			instance.len = 0;
 		}
 
-		if (use_domain) {
-			domain  = (char*)VAL_STRING(ROW_VALUES(row) + 10);
-			snprintf(b, 256, "%.*s@%s", user.len, ZSW(user.s), domain);
-			user.s = b;
-			user.len = strlen(b);
-		}
-
-		if (get_urecord(_d, &user, &r) > 0) {
-			if (mem_insert_urecord(_d, &user, &r) < 0) {
+		if (get_urecord(_d, &uid, &r) > 0) {
+			if (mem_insert_urecord(_d, &uid, &r) < 0) {
 				LOG(L_ERR, "preload_udomain(): Can't create a record\n");
 				ul_dbf.free_result(_c, res);
 				unlock_udomain(_d);
@@ -447,16 +437,16 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 /*
  * Insert a new record into domain
  */
-int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
+int mem_insert_urecord(udomain_t* _d, str* _uid, struct urecord** _r)
 {
 	int sl;
 	
-	if (new_urecord(_d->name, _aor, _r) < 0) {
+	if (new_urecord(_d->name, _uid, _r) < 0) {
 		LOG(L_ERR, "insert_urecord(): Error while creating urecord\n");
 		return -1;
 	}
 
-	sl = hash_func(_d, (unsigned char*)_aor->s, _aor->len);
+	sl = hash_func(_d, (unsigned char*)_uid->s, _uid->len);
 	slot_add(&_d->table[sl], *_r);
 	udomain_add(_d, *_r);
 	_d->users++;
@@ -534,9 +524,9 @@ void unlock_udomain(udomain_t* _d)
 /*
  * Create and insert a new record
  */
-int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
+int insert_urecord(udomain_t* _d, str* _uid, struct urecord** _r)
 {
-	if (mem_insert_urecord(_d, _aor, _r) < 0) {
+	if (mem_insert_urecord(_d, _uid, _r) < 0) {
 		LOG(L_ERR, "insert_urecord(): Error while inserting record\n");
 		return -1;
 	}
@@ -547,17 +537,17 @@ int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 /*
  * Obtain a urecord pointer if the urecord exists in domain
  */
-int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
+int get_urecord(udomain_t* _d, str* _uid, struct urecord** _r)
 {
 	int sl, i;
 	urecord_t* r;
 
-	sl = hash_func(_d, (unsigned char*)_aor->s, _aor->len);
+	sl = hash_func(_d, (unsigned char*)_uid->s, _uid->len);
 
 	r = _d->table[sl].first;
 
 	for(i = 0; i < _d->table[sl].n; i++) {
-		if ((r->aor.len == _aor->len) && !memcmp(r->aor.s, _aor->s, _aor->len)) {
+		if ((r->uid.len == _uid->len) && !memcmp(r->uid.s, _uid->s, _uid->len)) {
 			*_r = r;
 			return 0;
 		}
@@ -572,12 +562,12 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 /*
  * Delete a urecord from domain
  */
-int delete_urecord(udomain_t* _d, str* _aor)
+int delete_urecord(udomain_t* _d, str* _uid)
 {
 	struct ucontact* c, *t;
 	struct urecord* r;
 
-	if (get_urecord(_d, _aor, &r) > 0) {
+	if (get_urecord(_d, _uid, &r) > 0) {
 		return 0;
 	}
 		

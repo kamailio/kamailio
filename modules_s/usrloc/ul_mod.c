@@ -58,8 +58,7 @@
 
 MODULE_VERSION
 
-#define USER_COL       "username"
-#define DOMAIN_COL     "domain"
+#define UID_COL        "uid"
 #define CONTACT_COL    "contact"
 #define EXPIRES_COL    "expires"
 #define Q_COL          "q"
@@ -82,8 +81,7 @@ extern int bind_usrloc(usrloc_api_t* api);
 /*
  * Module parameters and their default values
  */
-str user_col        = STR_STATIC_INIT(USER_COL);       /* Name of column containing usernames */
-str domain_col      = STR_STATIC_INIT(DOMAIN_COL);     /* Name of column containing domains */
+str uid_col         = STR_STATIC_INIT(UID_COL);        /* Name of column containing usernames */
 str contact_col     = STR_STATIC_INIT(CONTACT_COL);    /* Name of column containing contact addresses */
 str expires_col     = STR_STATIC_INIT(EXPIRES_COL);    /* Name of column containing expires values */
 str q_col           = STR_STATIC_INIT(Q_COL);          /* Name of column containing q values */
@@ -96,9 +94,9 @@ str user_agent_col  = STR_STATIC_INIT(USER_AGENT_COL); /* Name of column contain
 str received_col    = STR_STATIC_INIT(RECEIVED_COL);   /* Name of column containing transport info of REGISTER */
 str instance_col    = STR_STATIC_INIT(INSTANCE_COL);   /* Name of column containing sip-instance parameter */
 str db_url          = STR_STATIC_INIT(DEFAULT_DB_URL); /* Database URL */
+
 int timer_interval  = 60;             /* Timer interval in seconds */
 int db_mode         = 0;              /* Database sync scheme: 0-no db, 1-write through, 2-write back */
-int use_domain      = 0;              /* Whether usrloc should use domain part of aor */
 int desc_time_order = 0;              /* By default do not enable timestamp ordering */                  
 
 
@@ -135,8 +133,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters 
  */
 static param_export_t params[] = {
-	{"user_column",       STR_PARAM, &user_col.s     },
-	{"domain_column",     STR_PARAM, &domain_col.s   },
+	{"uid_column",        STR_PARAM, &uid_col.s      },
 	{"contact_column",    STR_PARAM, &contact_col.s  },
 	{"expires_column",    STR_PARAM, &expires_col.s  },
 	{"q_column",          STR_PARAM, &q_col.s        },
@@ -147,7 +144,6 @@ static param_export_t params[] = {
 	{"db_url",            STR_PARAM, &db_url.s       },
 	{"timer_interval",    INT_PARAM, &timer_interval },
 	{"db_mode",           INT_PARAM, &db_mode        },
-	{"use_domain",        INT_PARAM, &use_domain     },
 	{"desc_time_order",   INT_PARAM, &desc_time_order},
 	{"user_agent_column", STR_PARAM, &user_agent_col },
 	{"received_column",   STR_PARAM, &received_col   },
@@ -176,8 +172,7 @@ static int mod_init(void)
 	DBG("usrloc - initializing\n");
 
 	     /* Compute the lengths of string parameters */
-	user_col.len = strlen(user_col.s);
-	domain_col.len = strlen(domain_col.s);
+	uid_col.len = strlen(uid_col.s);
 	contact_col.len = strlen(contact_col.s);
 	expires_col.len = strlen(expires_col.s);
 	q_col.len = strlen(q_col.s);
@@ -235,7 +230,7 @@ static int child_init(int _rank)
 		ul_dbh = ul_dbf.init(db_url.s); /* Get a new database connection */
 		if (!ul_dbh) {
 			LOG(L_ERR, "ERROR: child_init(%d): "
-					"Error while connecting database\n", _rank);
+			    "Error while connecting database\n", _rank);
 			return -1;
 		}
 	}
