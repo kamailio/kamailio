@@ -10,7 +10,7 @@
 <table xmlns:my="http://iptel.org/dbschema/mysql" role="serweb">
     <name>attr_types</name>
     <version>1</version>
-    <column id="name">
+    <column id="at.name">
 	<name>name</name>
 	<type>string</type>
 	<size>32</size>
@@ -21,7 +21,7 @@
 	<default>string</default>
 	<size>32</size>
     </column>
-    <column>
+    <column id="at.type">
 	<name>raw_type</name>
 	<type>int</type>
 	<default>2</default>
@@ -30,10 +30,19 @@
 	<name>type_spec</name>
 	<type>string</type>
 	<size>255</size>
+	<default><null/></default>
 	<null/>
     </column>
     <index>
 	<name>upt_idx1</name>
-	<colref linkend="name"/>
+	<colref linkend="at.name"/>
     </index>
+
+    <row><value col="at.name">uid</value>         <value col="at.type">2</value></row>
+    <row><value col="at.name">did</value>         <value col="at.type">2</value></row>
+    <row><value col="at.name">digest_realm</value><value col="at.type">2</value></row>
+    <row><value col="at.name">rpid</value>        <value col="at.type">2</value></row>
+    <row><value col="at.name">fr_timer</value>    <value col="at.type">0</value></row>
+    <row><value col="at.name">fr_inv_timer</value><value col="at.type">2</value></row>
+    <row><value col="at.name">flags</value>       <value col="at.type">0</value></row>
 </table>

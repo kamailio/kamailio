@@ -1,1 +1,8 @@
 name(str) rich_type(str) raw_type(int) type_spec(str,null) 
+uid:string:2:
+did:string:2:
+digest_realm:string:2:
+rpid:string:2:
+fr_timer:string:0:
+fr_inv_timer:string:2:
+flags:string:0:

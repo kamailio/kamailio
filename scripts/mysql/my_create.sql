@@ -104,9 +104,17 @@ CREATE TABLE attr_types (
     name VARCHAR(32) NOT NULL,
     rich_type VARCHAR(32) NOT NULL DEFAULT 'string',
     raw_type INT NOT NULL DEFAULT '2',
-    type_spec VARCHAR(255),
+    type_spec VARCHAR(255) DEFAULT NULL,
     KEY upt_idx1 (name)
 );
+
+INSERT INTO attr_types (name, raw_type) VALUES ('uid', '2');
+INSERT INTO attr_types (name, raw_type) VALUES ('did', '2');
+INSERT INTO attr_types (name, raw_type) VALUES ('digest_realm', '2');
+INSERT INTO attr_types (name, raw_type) VALUES ('rpid', '2');
+INSERT INTO attr_types (name, raw_type) VALUES ('fr_timer', '0');
+INSERT INTO attr_types (name, raw_type) VALUES ('fr_inv_timer', '2');
+INSERT INTO attr_types (name, raw_type) VALUES ('flags', '0');
 
 CREATE TABLE global_attrs (
     name VARCHAR(32) NOT NULL,
