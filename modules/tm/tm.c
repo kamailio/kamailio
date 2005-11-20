@@ -484,6 +484,7 @@ static int mod_init(void)
 		return -1;
 	}
 
+	tm_init = 1;
 	return 0;
 }
 

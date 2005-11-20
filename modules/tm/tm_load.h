@@ -102,6 +102,7 @@ struct tm_binds {
 	enum route_mode*   route_mode;
 };
 
+extern int tm_init;
 
 typedef int(*load_tm_f)( struct tm_binds *tmb );
 int load_tm( struct tm_binds *tmb);
