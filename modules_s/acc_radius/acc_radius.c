@@ -45,6 +45,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/digest/digest.h"
 #include "../../usr_avp.h"
+#include "../../id.h"
 
 #include "../tm/tm_load.h"
 
@@ -432,6 +433,9 @@ static int fmt2rad(char *fmt,
 			break;
 
 		case 'I': /* from_uid */
+			if (get_from_uid(&val, rq) < 0) {
+				attr = &attrs[A_SER_FROM_UID];
+			}
 			break;
 
 		case 'M': /* from_did */
@@ -466,6 +470,9 @@ static int fmt2rad(char *fmt,
 			break;
 
 		case 'U': /* to_uid */
+			if (get_from_uid(&val, rq) < 0) {
+				attr = &attrs[A_SER_TO_UID];
+			}
 			break;
 
 		case 'X': /* response_timestamp */
