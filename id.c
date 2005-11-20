@@ -26,6 +26,9 @@
  */
 
 #include "id.h"
+#include "parser/parse_from.h"
+#include "parser/parse_uri.h"
+#include "ut.h"
 
 
 /*
@@ -52,8 +55,11 @@ void set_from_uid(str* uid)
 /*
  * Set From UID
  */
-int get_from_uid(str* uid)
+int get_from_uid(str* uid, struct sip_msg* msg)
 {
+	static char buf[MAX_URI_SIZE];
+	struct to_body* from;
+	struct sip_uri puri;
 	static str name_s = STR_STATIC_INIT(AVP_UID);
 	int_str name, val;
 
@@ -62,8 +68,28 @@ int get_from_uid(str* uid)
 		*uid = *val.s;
 		return 1;
 	} else {
-		uid->s = 0;
-		uid->len = 0;
+		     /* Get From URI username */
+		if (parse_from_header(msg) < 0) {
+			LOG(L_ERR, "get_from_uid: Error while parsing From header\n");
+			return -1;
+		}
+		from = get_from(msg);
+		if (parse_uri(from->uri.s, from->uri.len, &puri) == -1) {
+			LOG(L_ERR, "get_from_uid: Error while parsing From URI\n");
+			return -1;
+		}
+		
+		if (puri.user.len > MAX_URI_SIZE) {
+			LOG(L_ERR, "get_from_uid: Username too long\n");
+			return -1;
+		}
+		memcpy(buf, puri.user.s, puri.user.len);
+		uid->s = buf;
+		uid->len = puri.user.len;
+		strlower(uid);
+
+		val.s = uid;
+		add_avp(AVP_USER | AVP_NAME_STR | AVP_VAL_STR, name, val);
 		return 0;
 	}
 }
@@ -89,12 +115,14 @@ void set_to_uid(str* uid)
 }
 
 
-
 /*
- * Set To UID
+ * Get To UID
  */
-int get_to_uid(str* uid)
+int get_to_uid(str* uid, struct sip_msg* msg)
 {
+	static char buf[MAX_URI_SIZE];
+	struct to_body* to;
+	struct sip_uri puri;
 	static str name_s = STR_STATIC_INIT(AVP_UID);
 	int_str name, val;
 
@@ -103,8 +131,23 @@ int get_to_uid(str* uid)
 		*uid = *val.s;
 		return 1;
 	} else {
-		uid->s = 0;
-		uid->len = 0;
+		to = get_to(msg);
+		if (parse_uri(to->uri.s, to->uri.len, &puri) == -1) {
+			LOG(L_ERR, "get_to_uid: Error while parsing To URI\n");
+			return -1;
+		}
+		
+		if (puri.user.len > MAX_URI_SIZE) {
+			LOG(L_ERR, "get_to_uid: Username too long\n");
+			return -1;
+		}
+		memcpy(buf, puri.user.s, puri.user.len);
+		uid->s = buf;
+		uid->len = puri.user.len;
+		strlower(uid);
+
+		val.s = uid;
+		add_avp(AVP_USER | AVP_NAME_STR | AVP_VAL_STR, name, val);
 		return 0;
 	}
 }
@@ -113,18 +156,36 @@ int get_to_uid(str* uid)
 /*
  * Return the current domain id
  */
-int get_did(str* did)
+int get_did(str* did, struct sip_msg* msg)
 {
+	static char buf[MAX_URI_SIZE];
+	struct to_body* from;
+	struct sip_uri puri;
 	static str name_s = STR_STATIC_INIT(AVP_DID);
 	int_str name, val;
-	
+
 	name.s = &name_s;
-	if (search_first_avp(AVP_DOMAIN | AVP_NAME_STR, name, &val, 0)) {
+	if (search_first_avp(AVP_USER | AVP_NAME_STR, name, &val, 0)) {
 		*did = *val.s;
 		return 1;
 	} else {
-		did->s = 0;
-		did->len = 0;
+		from = get_to(msg);
+		if (parse_uri(from->uri.s, from->uri.len, &puri) == -1) {
+			LOG(L_ERR, "get_did: Error while parsing From URI\n");
+			return -1;
+		}
+		
+		if (puri.host.len > MAX_URI_SIZE) {
+			LOG(L_ERR, "get_did: Username too long\n");
+			return -1;
+		}
+		memcpy(buf, puri.host.s, puri.host.len);
+		did->s = buf;
+		did->len = puri.host.len;
+		strlower(did);
+
+		val.s = did;
+		add_avp(AVP_USER | AVP_NAME_STR | AVP_VAL_STR, name, val);
 		return 0;
-	}	
+	}
 }
