@@ -161,6 +161,7 @@ CREATE TABLE location (
     cseq INT UNSIGNED,
     flags INT UNSIGNED NOT NULL DEFAULT '0',
     user_agent VARCHAR(64),
+    instance VARCHAR(255),
     UNIQUE KEY location_key (uid, contact),
     KEY location_contact (contact)
 );

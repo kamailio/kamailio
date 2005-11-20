@@ -68,6 +68,13 @@
 	<null/>
     </column>
 
+    <column>
+	<name>instance</name>
+	<type>string</type>
+        <null/>
+	<size>&uri_len;</size>
+    </column>
+
     <index>
 	<name>location_key</name>
 	<unique/>
