@@ -1,4 +1,4 @@
-/* 
+/*
  * $Id$ 
  *
  * Group membership - module interface
@@ -29,6 +29,7 @@
  *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free
  *  2003-04-05  default_uri #define used (jiri)
  *  2004-06-07  updated to the new DB api: calls to group_db_* (andrei)
+ *  2005-10-06 - added support for regexp-based groups (bogdan)
  */
 
 
@@ -40,12 +41,15 @@
 #include "../../ut.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
+#include "../../usr_avp.h"
 #include "group_mod.h"
 #include "group.h"
+#include "re_group.h"
 
 MODULE_VERSION
 
-#define TABLE_VERSION 2
+#define TABLE_VERSION    2
+#define RE_TABLE_VERSION 1
 
 /*
  * Module destroy function prototype
@@ -69,6 +73,9 @@ static int mod_init(void);
 static int hf_fixup(void** param, int param_no);
 
 
+static int get_gid_fixup(void** param, int param_no);
+
+
 #define TABLE "grp"
 #define TABLE_LEN (sizeof(TABLE) - 1)
 
@@ -81,24 +88,45 @@ static int hf_fixup(void** param, int param_no);
 #define GROUP_COL "grp"
 #define GROUP_COL_LEN (sizeof(GROUP_COL) - 1)
 
+#define RE_TABLE "re_grp"
+#define RE_TABLE_LEN (sizeof(TABLE) - 1)
+
+#define RE_EXP_COL "reg_exp"
+#define RE_EXP_COL_LEN (sizeof(USER_COL) - 1)
+
+#define RE_GID_COL "group_id"
+#define RE_GID_COL_LEN (sizeof(DOMAIN_COL) - 1)
 
 /*
  * Module parameter variables
  */
-static str db_url        = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
-str table         = {TABLE, TABLE_LEN};         /* Table name where group definitions are stored */
+static str db_url = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
+/* Table name where group definitions are stored */
+str table         = {TABLE, TABLE_LEN}; 
 str user_column   = {USER_COL, USER_COL_LEN};
 str domain_column = {DOMAIN_COL, DOMAIN_COL_LEN};
 str group_column  = {GROUP_COL, GROUP_COL_LEN};
 int use_domain    = 0;
 
+/* tabel and columns used for re-based groups */
+str re_table      = {RE_TABLE, RE_TABLE_LEN};
+str re_exp_column = {RE_EXP_COL, RE_EXP_COL_LEN};
+str re_gid_column = {RE_GID_COL, RE_GID_COL_LEN};
+int multiple_gid  = 1;
+
+/* DB functions and handlers */
+db_func_t group_dbf;
+db_con_t* group_dbh = 0;
 
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"is_user_in", is_user_in, 2, hf_fixup, REQUEST_ROUTE},
+	{"is_user_in",      is_user_in,      2,  hf_fixup,
+			REQUEST_ROUTE|FAILURE_ROUTE},
+	{"get_user_group",  get_user_group,  2,  get_gid_fixup,
+			REQUEST_ROUTE|FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -112,7 +140,11 @@ static param_export_t params[] = {
 	{"user_column",   STR_PARAM, &user_column.s  },
 	{"domain_column", STR_PARAM, &domain_column.s},
 	{"group_column",  STR_PARAM, &group_column.s },
-	{"use_domain",    INT_PARAM, &use_domain},
+	{"use_domain",    INT_PARAM, &use_domain     },
+	{"re_table",      STR_PARAM, &re_table.s     },
+	{"re_exp_column", STR_PARAM, &re_exp_column.s},
+	{"re_gid_column", STR_PARAM, &re_gid_column.s},
+	{"multiple_gid",  INT_PARAM, &multiple_gid   },
 	{0, 0, 0}
 };
 
@@ -144,27 +176,60 @@ static int mod_init(void)
 
 	DBG("group module - initializing\n");
 
-	     /* Calculate lengths */
+	/* Calculate lengths */
 	db_url.len = strlen(db_url.s);
 	table.len = strlen(table.s);
 	user_column.len = strlen(user_column.s);
 	domain_column.len = strlen(domain_column.s);
 	group_column.len = strlen(group_column.s);
 
-	     /* Find a database module */
+	re_table.len = strlen(re_table.s);
+	re_exp_column.len = strlen(re_exp_column.s);
+	re_gid_column.len = strlen(re_gid_column.s);
+
+	/* Find a database module */
 	if (group_db_bind(db_url.s)) {
 		return -1;
 	}
-	ver = group_db_ver(db_url.s, &table);
-	if (ver < 0) {
-		LOG(L_ERR, "group:mod_init(): Error while querying table version\n");
-		return -1;
-	} else if (ver < TABLE_VERSION) {
-		LOG(L_ERR, "group:mod_init(): Invalid table version "
-				"(use ser_mysql.sh reinstall)\n");
+
+	if (group_db_init(db_url.s) < 0 ){
+		LOG(L_ERR, "ERROR:group:mod_init: unable to open database "
+				"connection\n");
 		return -1;
 	}
-	
+
+	/* check version for group table */
+	ver = group_db_ver( &table );
+	if (ver < 0) {
+		LOG(L_ERR, "ERROR:group:mod_init: failed to query table version\n");
+		return -1;
+	} else if (ver < TABLE_VERSION) {
+		LOG(L_ERR, "ERROR:group:mod_init: Invalid table version for %s "
+				"(use ser_mysql.sh reinstall)\n",table.s);
+		return -1;
+	}
+
+	if (re_table.len) {
+		/* check version for re_group table */
+		ver = group_db_ver( &re_table );
+		if (ver < 0) {
+			LOG(L_ERR, "ERROR:group:mod_init: failed to query "
+				"table version\n");
+			return -1;
+		} else if (ver < RE_TABLE_VERSION) {
+			LOG(L_ERR, "ERROR:group:mod_init: Invalid table version for %s "
+					"(use ser_mysql.sh reinstall)\n",re_table.s);
+			return -1;
+		}
+
+		if (load_re( &re_table )!=0 ) {
+			LOG(L_ERR, "ERROR:group:mod_init: failed to load <%s> table\n",
+					re_table.s);
+			return -1;
+		}
+	}
+
+	group_db_close();
 	return 0;
 }
 
@@ -181,55 +246,95 @@ static void destroy(void)
  * Supported strings: 
  * "Request-URI", "To", "From", "Credentials"
  */
+static group_check_p get_hf( char *str)
+{
+	group_check_p gcp=NULL;
+
+	gcp = (group_check_p)pkg_malloc(sizeof(group_check_t));
+	if(gcp == NULL) {
+		LOG(L_ERR, "ERROR:group:get_hf: no more memory\n");
+		return 0;
+	}
+	memset(gcp, 0, sizeof(group_check_t));
+
+	if (!strcasecmp( str, "Request-URI")) {
+		gcp->id = 1;
+	} else if (!strcasecmp( str, "To")) {
+		gcp->id = 2;
+	} else if (!strcasecmp( str, "From")) {
+		gcp->id = 3;
+	} else if (!strcasecmp( str, "Credentials")) {
+		gcp->id = 4;
+	} else {
+		if(xl_parse_spec( str, &gcp->sp,
+				XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==NULL
+			|| gcp->sp.type!=XL_AVP)
+		{
+			LOG(L_ERR, "ERROR:group:get_hf: Unsupported User Field "
+				"identifier\n");
+			pkg_free( gcp );
+			return 0;
+		}
+		gcp->id = 5;
+	}
+
+	/* do not free all the time, needed by pseudo-variable spec */
+	if(gcp->id!=5)
+		pkg_free(str);
+
+	return gcp;
+}
+
+
 static int hf_fixup(void** param, int param_no)
 {
 	void* ptr;
 	str* s;
-	group_check_p gcp=NULL;
-	
+
 	if (param_no == 1) {
-		gcp = (group_check_p)pkg_malloc(sizeof(group_check_t));
-		if(gcp == NULL)
-		{
-			LOG(L_ERR, "group:hf_fixup: no more memory\n");
-			return E_UNSPEC;
-		}
-		memset(gcp, 0, sizeof(group_check_t));
 		ptr = *param;
-		
-		if (!strcasecmp((char*)*param, "Request-URI")) {
-			gcp->id = 1;
-		} else if (!strcasecmp((char*)*param, "To")) {
-			gcp->id = 2;
-		} else if (!strcasecmp((char*)*param, "From")) {
-			gcp->id = 3;
-		} else if (!strcasecmp((char*)*param, "Credentials")) {
-			gcp->id = 4;
-		} else {
-			if(xl_parse_spec((char*)*param, &gcp->sp,
-					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS)==NULL
-				|| gcp->sp.type!=XL_AVP)
-			{
-				LOG(L_ERR,
-					"group:hf_fixup: Unsupported User Field identifier\n");
-				return E_UNSPEC;
-			}
-			gcp->id = 5;
-		}
-		*param = (void*)gcp;
-		/* do not free all the time, needed by pseudo-variable spec */
-		if(gcp->id != 5)
-			pkg_free(ptr);
+		if ( (*param = (void*)get_hf( ptr ))==0 )
+			return E_UNSPEC;
 	} else if (param_no == 2) {
 		s = (str*)pkg_malloc(sizeof(str));
 		if (!s) {
-			LOG(L_ERR, "hf_fixup(): No memory left\n");
+			LOG(L_ERR, "ERROR:group:hf_fixup: No pkg memory left\n");
 			return E_UNSPEC;
 		}
-
 		s->s = (char*)*param;
 		s->len = strlen(s->s);
 		*param = (void*)s;
+	}
+
+	return 0;
+}
+
+
+static int get_gid_fixup(void** param, int param_no)
+{
+	struct gid_spec *gid;
+	void *ptr;
+	str  name;
+
+	if (param_no == 1) {
+		ptr = *param;
+		if ( (*param = (void*)get_hf( ptr ))==0 )
+			return E_UNSPEC;
+	} else if (param_no == 2) {
+		name.s = (char*)*param;
+		name.len = strlen(name.s);
+		gid = (struct gid_spec*)pkg_malloc(sizeof(struct gid_spec));
+		if (gid == NULL) {
+			LOG(L_ERR, "ERROR:group:get_gid_fixup: no more pkg memory\n");
+			return E_UNSPEC;
+		}
+		if ( parse_avp_spec( &name, &gid->avp_type, &gid->avp_name)!=0 ) {
+			LOG(L_ERR,"ERROR:group:get_gid_fixup: bad AVP spec <%s>\n",
+				name.s);
+			pkg_free( gid );
+			return E_UNSPEC;
+		}
+		*param = gid;
 	}
 
 	return 0;

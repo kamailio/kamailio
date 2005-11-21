@@ -42,9 +42,6 @@
 #include "group_mod.h"                   /* Module parameters */
 
 
-static db_con_t* db_handle = 0;   /* Database connection handle */
-static db_func_t group_dbf;
-
 
 /*
  * Get Request-URI
@@ -97,6 +94,87 @@ static inline int get_from_uri(struct sip_msg* _m, str* _u)
 }
 
 
+int get_username_domain(struct sip_msg *msg, group_check_p gcp,
+											str *username, str *domain)
+{
+	struct sip_uri puri;
+	struct hdr_field* h;
+	struct auth_body* c = 0; /* Makes gcc happy */
+	xl_value_t value;
+	str uri;
+
+	uri.s = 0;
+	uri.len = 0;
+
+	switch(gcp->id) {
+		case 1: /* Request-URI */
+			if (get_request_uri( msg, &uri) < 0) {
+				LOG(L_ERR, "ERROR:group:get_username_domain: failed to get "
+					"Request-URI\n");
+				return -1;
+			}
+			break;
+
+		case 2: /* To */
+			if (get_to_uri( msg, &uri) < 0) {
+				LOG(L_ERR, "ERROR:group:get_username_domain: failed to get "
+					"To URI\n");
+				return -1;
+			}
+			break;
+
+		case 3: /* From */
+			if (get_from_uri( msg, &uri) < 0) {
+				LOG(L_ERR, "ERROR:group:get_username_domain: failed to get "
+					"From URI\n");
+				return -1;
+			}
+			break;
+
+		case 4: /* Credentials */
+			get_authorized_cred( msg->authorization, &h);
+			if (!h) {
+				get_authorized_cred( msg->proxy_auth, &h);
+				if (!h) {
+					LOG(L_ERR, "ERROR:group:get_username_domain: no "
+						"authorized credentials found (error in scripts)\n");
+					return -1;
+				}
+			}
+			c = (auth_body_t*)(h->parsed);
+			break;
+
+		case 5: /* AVP spec */
+			if(xl_get_spec_value( msg, &gcp->sp, &value)!=0 
+				|| value.flags&XL_VAL_NULL || value.rs.len<=0)
+			{
+				LOG(L_ERR,"ERROR:group:get_username_domain: no AVP found"
+					" (error in scripts)\n");
+				return -1;
+			}
+			uri.s = value.rs.s;
+			uri.len = value.rs.len;
+			break;
+	}
+
+	if (gcp->id != 4) {
+		if (parse_uri(uri.s, uri.len, &puri) < 0) {
+			LOG(L_ERR, "ERROR:group:get_username_domain: failed to parse "
+				"URI <%.*s>\n",uri.len,uri.s);
+			return -1;
+		}
+
+		*username = puri.user;
+		*domain = puri.host;
+	} else {
+		*username = c->digest.username.user;
+		*domain = *(GET_REALM(&c->digest));
+	}
+	return 0;
+}
+
+
+
 /*
  * Check if username in specified header field is in a table
  */
@@ -106,110 +184,43 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 	db_val_t vals[3];
 	db_key_t col[1];
 	db_res_t* res;
-	str uri;
-	long hf_type;
-	struct sip_uri puri;
-	struct hdr_field* h;
-	struct auth_body* c = 0; /* Makes gcc happy */
-	group_check_p gcp=NULL;
-	xl_value_t value;
-	
+
 	keys[0] = user_column.s;
 	keys[1] = group_column.s;
 	keys[2] = domain_column.s;
 	col[0] = group_column.s;
-	
-	gcp = (group_check_p)_hf;
-	hf_type = (long)gcp->id;
 
-	uri.s = 0;
-	uri.len = 0;
-
-	switch(hf_type) {
-	case 1: /* Request-URI */
-		if (get_request_uri(_msg, &uri) < 0) {
-			LOG(L_ERR, "is_user_in(): Error while obtaining username from Request-URI\n");
-			return -1;
-		}
-		break;
-
-	case 2: /* To */
-		if (get_to_uri(_msg, &uri) < 0) {
-			LOG(L_ERR, "is_user_in(): Error while extracting To username\n");
-			return -2;
-		}
-		break;
-
-	case 3: /* From */
-		if (get_from_uri(_msg, &uri) < 0) {
-			LOG(L_ERR, "is_user_in(): Error while extracting From username\n");
-			return -3;
-		}
-		break;
-
-	case 4: /* Credentials */
-		get_authorized_cred(_msg->authorization, &h);
-		if (!h) {
-			get_authorized_cred(_msg->proxy_auth, &h);
-			if (!h) {
-				LOG(L_ERR, "is_user_in(): No authorized credentials found (error in scripts)\n");
-				return -1;
-			}
-		}
-	
-		c = (auth_body_t*)(h->parsed);
-		break;
-	case 5: /* AVP spec */
-		if(xl_get_spec_value(_msg, &gcp->sp, &value)!=0 
-				|| value.flags&XL_VAL_NULL || value.rs.len<=0)
-		{
-			LOG(L_ERR,
-				"is_user_in(): no AVP found (error in scripts)\n");
-			return -1;
-		}
-		uri.s = value.rs.s;
-		uri.len = value.rs.len;
-		break;
+	if ( get_username_domain( _msg, (group_check_p)_hf, &(VAL_STR(vals)),
+	&(VAL_STR(vals+2)))!=0) {
+		LOG(L_ERR, "is_user_in(): Error while getting username@domain\n");
+		return -1;
 	}
 
-	if (hf_type != 4) {
-		if (parse_uri(uri.s, uri.len, &puri) < 0) {
-			LOG(L_ERR, "is_user_in(): Error while parsing URI\n");
-			return -5;
-		}
-
-		VAL_STR(vals) = puri.user;
-		VAL_STR(vals + 2) = puri.host;
-	} else {
-		VAL_STR(vals) = c->digest.username.user;
-		VAL_STR(vals + 2) = *(GET_REALM(&c->digest));
-	}
-	
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = DB_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = VAL_NULL(vals + 2) = 0;
 
 	VAL_STR(vals + 1) = *((str*)_grp);
-	
-	if (group_dbf.use_table(db_handle, table.s) < 0) {
+
+	if (group_dbf.use_table(group_dbh, table.s) < 0) {
 		LOG(L_ERR, "is_user_in(): Error in use_table\n");
 		return -5;
 	}
 
-	if (group_dbf.query(db_handle, keys, 0, vals, col, (use_domain) ? (3): (2),
+	if (group_dbf.query(group_dbh, keys, 0, vals, col, (use_domain) ? (3): (2),
 				1, 0, &res) < 0) {
 		LOG(L_ERR, "is_user_in(): Error while querying database\n");
 		return -5;
 	}
-	
+
 	if (RES_ROW_N(res) == 0) {
 		DBG("is_user_in(): User is not in group '%.*s'\n", 
 		    ((str*)_grp)->len, ZSW(((str*)_grp)->s));
-		group_dbf.free_result(db_handle, res);
+		group_dbf.free_result(group_dbh, res);
 		return -6;
 	} else {
 		DBG("is_user_in(): User is in group '%.*s'\n", 
 		    ((str*)_grp)->len, ZSW(((str*)_grp)->s));
-		group_dbf.free_result(db_handle, res);
+		group_dbf.free_result(group_dbh, res);
 		return 1;
 	}
 }
@@ -221,8 +232,8 @@ int group_db_init(char* db_url)
 		LOG(L_CRIT, "BUG: group_db_bind: null dbf \n");
 		goto error;
 	}
-	db_handle=group_dbf.init(db_url);
-	if (db_handle==0){
+	group_dbh=group_dbf.init(db_url);
+	if (group_dbh==0){
 		LOG(L_ERR, "ERROR: group_db_bind: unable to connect to the "
 				"database\n");
 		goto error;
@@ -252,29 +263,14 @@ int group_db_bind(char* db_url)
 
 void group_db_close()
 {
-	if (db_handle && group_dbf.close){
-		group_dbf.close(db_handle);
-		db_handle=0;
+	if (group_dbh && group_dbf.close){
+		group_dbf.close(group_dbh);
+		group_dbh=0;
 	}
 }
 
 
-int group_db_ver(char* db_url, str* name)
+int group_db_ver(str* name)
 {
-	db_con_t* dbh;
-	int ver;
-
-	if (group_dbf.init==0){
-		LOG(L_CRIT, "BUG: group_db_ver: unbound database\n");
-		return -1;
-	}
-	dbh=group_dbf.init(db_url);
-	if (dbh==0){
-		LOG(L_ERR, "ERROR: group_db_ver: unable to open database "
-				"connection\n");
-		return -1;
-	}
-	ver=table_version(&group_dbf, dbh, name);
-	group_dbf.close(dbh);
-	return ver;
+	return table_version( &group_dbf, group_dbh, name);
 }

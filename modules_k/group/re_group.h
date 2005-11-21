@@ -1,9 +1,7 @@
 /*
- * $Id$
+ * $Id$ 
  *
- * Group membership
- *
- * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2005-2007 Voice Sistem SRL
  *
  * This file is part of openser, a free SIP server.
  *
@@ -23,42 +21,24 @@
  *
  * History:
  * --------
- * 2003-02-25 - created by janakj
- *
+ *  2005-10-06 - created by bogdan
  */
 
+#ifndef RE_GROUP_H
+#define RE_GROUP_H
 
-#ifndef GROUP_H
-#define GROUP_H
-
-#include "../../parser/msg_parser.h"
-#include "../../items.h"
+#include "../../str.h"
 #include "../../usr_avp.h"
+#include "../../parser/msg_parser.h"
+
+typedef struct gid_spec {
+	int     avp_type;
+	int_str avp_name;
+} gid_spec_t;
 
 
-typedef struct _group_check
-{
-	int id;
-	xl_spec_t sp;
-} group_check_t, *group_check_p;
+int load_re(str *table);
 
+int get_user_group(struct sip_msg *req, char *user, char *avp);
 
-/*
- * extracts username and domain from MSG
- */
-int get_username_domain(struct sip_msg *msg, group_check_p gcp,
-	str *username, str *domain);
-
-
-/*
- * Check if username in specified header field is in a table
- */
-int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp);
-
-
-int group_db_init(char* db_url);
-int group_db_bind(char* db_url);
-void group_db_close();
-int group_db_ver(str* name);
-
-#endif /* GROUP_H */
+#endif

@@ -45,5 +45,14 @@ extern str domain_column;   /* 'domain' column name in group table */
 extern str group_column;    /* "group' column name in group table */
 extern int use_domain;      /* Use domain in is_user_in */
 
+extern str re_table;
+extern str re_exp_column;
+extern str re_gid_column;
+extern int multiple_gid;
+
+/* DB functions and handlers */
+extern db_func_t group_dbf;
+extern db_con_t* group_dbh;
+
 
 #endif /* GROUP_MOD_H */
