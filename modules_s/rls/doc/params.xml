@@ -72,7 +72,7 @@
 </varlistentry>
 <varlistentry>
 	<term>mode</term>
-	<listitem><para>Mode of operations: 
+	<listitem><para>Mode of processing subscriptions: 
 	<variablelist>
 	<varlistentry>
 		<term><literal>full</literal></term>

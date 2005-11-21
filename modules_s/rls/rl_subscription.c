@@ -209,9 +209,17 @@ static int create_virtual_subscriptions(struct sip_msg *m, rl_subscription_t *ss
 				rls_get_package(ss), &flat);
 			break;
 		case rls_mode_simple:
-			if (get_user_from_list_uri(rls_get_uri(ss), &user) != 0) 
-				user = *rls_get_uri(ss);
-			res = get_resource_list_as_rls(xcap_root, &user, &xcap, &flat);
+			if (get_user_from_list_uri(rls_get_uri(ss), &user) == 0) {
+				/* it is uri in the form user-list@domain */
+				res = get_resource_list_as_rls(xcap_root, &user, &xcap, &flat);
+			}
+			else {
+				/* it is NOT uri in the form xxx-list@domain -> try to use
+				 * standard RLS subscription processing */
+				TRACE_LOG("getting RLS from full doc\n");
+				res = get_rls_from_full_doc(xcap_root, rls_get_uri(ss), &xcap, 
+					rls_get_package(ss), &flat);
+			}
 			break;
 	}
 			
