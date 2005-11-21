@@ -27,31 +27,56 @@
  */
 
 
-#ifndef DOMAIN_H
-#define DOMAIN_H
-		
+#ifndef _DOMAIN_H
+#define _DOMAIN_H
 
-#include "../../parser/msg_parser.h"
+#include <time.h>
+#include <stdio.h>
+#include "../../str.h"
+#include "../../usr_avp.h"
+
+
+/* 
+ * Flags stored in flags column and their meaning 
+ */
+enum domain_flags {
+	DOMAIN_DISABLED  = (1 << 0), /* Domain has been disabled and should not be loaded from the database */
+	DOMAIN_CANONICAL = (1 << 1) /* Canonical domain name (to be used in user interfaces a.s.o.) */
+};
 
 
 /*
- * Check if host in From uri is local
+ * This structure represents a virtual domain within SER
+ * Each virtual domain is identified by unique domain ID.
+ * Each domain can have several domain names (also called
+ * aliases
  */
-int is_from_local(struct sip_msg* _msg, char* _s1, char* _s2);
+typedef struct domain {
+	str did;                /* Unique domain ID */
+	int n;                  /* Number of domain names */
+	str* domain;            /* Array of all domains associated with did */
+	unsigned int* flags;    /* Flags of each domain in the domain array */
+	avp_t* attrs;           /* List of domain attributes */
+	struct domain* next;    /* Next domain in the list */
+} domain_t;
 
 
 /*
- * Check if host in Request URI is local
+ * Create domain list from domain table
  */
-int is_uri_host_local(struct sip_msg* _msg, char* _s1, char* _s2);
-
-int domain_db_bind(char* db_url);
-int domain_db_init(char* db_url);
-void domain_db_close();
-int domain_db_ver(str* name);
-
-int reload_domain_table();
+int load_domains(domain_t** dest);
 
 
+/*
+ * Release all memory allocated for entire domain list
+ */
+void free_domain_list(domain_t* list);
 
-#endif /* DOMAIN_H */
+
+/*
+ * Print domain list
+ */
+void dump_domain_list(FILE* f, domain_t* list);
+
+
+#endif /* _DOMAIN_H */

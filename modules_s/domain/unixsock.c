@@ -35,40 +35,63 @@
 #include "unixsock.h"
 #include "fifo.h" /* Because of reload_domain_table */
 
+/* FIXME: Check for value of db_mode and return immediately if 0 */
 
 /*
  * Fifo function to reload domain table
  */
 static int domain_reload(str* msg)
 {
-	if (reload_domain_table () == 1) {
-		unixsock_reply_asciiz("200 OK\n");
-		unixsock_reply_send();
-		return 0;
-	} else {
+	if (reload_domain_list() < 0) {
 		unixsock_reply_asciiz("400 Domain table reload failed\n");
-		unixsock_reply_send();
-		return -1;
+	} else {
+		unixsock_reply_asciiz("200 OK\n");
+	}
+	unixsock_reply_send();
+	return 0;
+}
+
+
+static void dump_domain_unx(domain_t* d)
+{
+	int i;
+	avp_t* a;
+	str* name;
+	int_str val;
+
+	unixsock_reply_printf("did: %.*s\n", d->did.len, d->did.s);
+	unixsock_reply_asciiz("  domains: ");
+	for(i = 0; i < d->n; i++) {
+		unixsock_reply_printf("%.*s (%u)", d->domain[i].len, d->domain[i].s, d->flags[i]);
+		if (i < d->n-1) unixsock_reply_asciiz(", ");
+	}
+	unixsock_reply_asciiz("\n");
+	unixsock_reply_asciiz("  attrs: ");
+	a = d->attrs;
+	while(a) {
+		name = get_avp_name(a);
+		get_avp_val(a, &val);
+		unixsock_reply_printf("%.*s", name->len, name->s);
+		if (a->flags & AVP_VAL_STR) {
+			if (val.s->len && val.s->s) {
+				unixsock_reply_printf("=\"%.*s\"", val.s->len, val.s->s);
+			}
+		} else {
+			unixsock_reply_printf("=%d", val.n);
+		}
+		if (a->next) unixsock_reply_asciiz(", ");
+		a = a->next;
 	}
 }
 
 
-/* Print domains stored in hash table */
-static int hash_table_print_unixsock(struct domain_list **hash_table)
+static void dump_domain_list_unx(domain_t* list)
 {
-	int i;
-	struct domain_list *np;
-
-	for (i = 0; i < HASH_SIZE; i++) {
-		np = hash_table[i];
-		while (np) {
-			if (unixsock_reply_printf("%4d %.*s\n", i, np->domain.len, ZSW(np->domain.s)) < 0) {
-				return -1;
-			}
-			np = np->next;
-		}
+	while(list) {
+		dump_domain_unx(list);
+		unixsock_reply_asciiz("\n");
+		list = list->next;
 	}
-	return 0;
 }
 
 
@@ -77,13 +100,12 @@ static int hash_table_print_unixsock(struct domain_list **hash_table)
  */
 static int domain_dump(str* msg)
 {
+	domain_t* list;
+	if (*active_hash == hash_1) list = *domains_1;
+	else list = *domains_2;
+
 	unixsock_reply_asciiz("200 OK\n");
-	if (hash_table_print_unixsock(*hash_table) < 0) {
-		unixsock_reply_reset();
-		unixsock_reply_asciiz("500 Could not print the contents\n");
-		unixsock_reply_send();
-		return -1;
-	}
+	dump_domain_list_unx(list);
 	unixsock_reply_send();
 	return 0;
 }
@@ -95,7 +117,7 @@ static int domain_dump(str* msg)
 int init_domain_unixsock(void) 
 {
 	if (unixsock_register_cmd("domain_reload", domain_reload) < 0) {
-		LOG(L_ERR, "init_domain_unixsock: Cannot register domain_reload\n");
+		LOG(L_ERR, "domain:init_domain_unixsock: Cannot register domain_reload\n");
 		return -1;
 	}
 

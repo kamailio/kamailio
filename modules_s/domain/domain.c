@@ -26,231 +26,368 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
- /*
-  * History:
-  * --------
-  *  2004-06-07  updated to the new DB api, moved reload_table here, created 
-  *               domain_db_{init.bind,ver,close} (andrei)
-  */
 
+#include <string.h>
 #include "domain_mod.h"
-#include "hash.h"
+#include "../../dprint.h"
+#include "../../mem/shm_mem.h"
 #include "../../db/db.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_from.h"
 #include "../../ut.h"
 
-static db_con_t* db_handle=0;
-static db_func_t domain_dbf;
 
-/* helper db functions*/
-
-int domain_db_bind(char* db_url)
+/*
+ * Search the list of domains for domain with given did
+ */
+static domain_t* domain_search(domain_t* list, str* did)
 {
-	if (bind_dbmod(db_url, &domain_dbf )) {
-		LOG(L_CRIT, "ERROR: domain_db_bind: cannot bind to database module! "
-		"Did you forget to load a database module ?\n");
-		return -1;
+	while(list) {
+		if (list->did.len == did->len &&
+		    !memcmp(list->did.s, did->s, did->len)) {
+			return list;
+		}
+		list = list->next;
 	}
 	return 0;
 }
 
 
-
-int domain_db_init(char* db_url)
+/*
+ * Add a new domain name to did
+ */
+static int domain_add(domain_t* d, str* domain, unsigned int flags)
 {
-	if (domain_dbf.init==0){
-		LOG(L_CRIT, "BUG: domain_db_init: unbound database module\n");
-		goto error;
+	str* p1;
+	unsigned int* p2;
+	str dom;
+
+	if (!d || !domain) {
+		LOG(L_ERR, "domain:domain_add: Invalid parameter value\n");
+		return -1;
 	}
-	db_handle=domain_dbf.init(db_url);
-	if (db_handle==0){
-		LOG(L_CRIT, "ERROR:domain_db_init: cannot initialize database "
-							"connection\n");
-		goto error;
-	}
+
+	dom.s = shm_malloc(domain->len);
+	if (!dom.s) goto error;
+	memcpy(dom.s, domain->s, domain->len);
+	dom.len = domain->len;
+	strlower(&dom);
+
+	p1 = (str*)shm_realloc(d->domain, sizeof(str) * (d->n + 1));
+	if (!p1) goto error;
+	p2 = (unsigned int*)shm_realloc(d->flags, sizeof(unsigned int) * (d->n + 1));
+	if (!p2) goto error;
+	
+	d->domain = p1;
+	d->domain[d->n] = dom;
+	d->flags[d->n] = flags;
+	d->n++;
 	return 0;
-error:
+
+ error:
+	LOG(L_ERR, "domain:domain_add: Unable to add new domain name (out of memory)\n");
+	if (dom.s) shm_free(dom.s);
 	return -1;
 }
 
 
-void domain_db_close()
+/*
+ * Release all memory allocated for given domain structure
+ */
+static void free_domain(domain_t* d)
 {
-	if (db_handle && domain_dbf.close){
-		domain_dbf.close(db_handle);
-		db_handle=0;
+	int i;
+	if (!d) return;
+	if (d->did.s) shm_free(d->did.s);
+
+	for(i = 0; i < d->n; i++) {
+		if (d->domain[i].s) shm_free(d->domain[i].s);
 	}
+	shm_free(d->domain);
+	shm_free(d->flags);
+	if (d->attrs) destroy_avp_list(&d->attrs);
+	shm_free(d);
 }
 
 
 
-int domain_db_ver(str* name)
-{
-	int ver;
 
-	if (db_handle==0){
-		LOG(L_CRIT, "BUG:domain_db_ver: null database handler\n");
+/*
+ * Create a new domain structure which will initialy have
+ * one domain name
+ */
+static domain_t* new_domain(str* did, str* domain, unsigned int flags)
+{
+	domain_t* d;
+	int_str name, val;
+	str name_s = STR_STATIC_INIT(AVP_DID);
+
+	d = (domain_t*)shm_malloc(sizeof(domain_t));
+	if (!d) goto error;
+	memset(d, 0, sizeof(domain_t));
+	d->did.s = shm_malloc(did->len);
+	if (!d->did.s) goto error;
+	memcpy(d->did.s, did->s, did->len);
+	d->did.len = did->len;
+
+	d->domain = (str*)shm_malloc(sizeof(str));
+	if (!d->domain) goto error;
+	d->domain[0].s = shm_malloc(domain->len);
+	if (!d->domain[0].s) goto error;
+	memcpy(d->domain[0].s, domain->s, domain->len);
+	d->domain[0].len = domain->len;
+	strlower(d->domain);
+	
+	d->flags = (unsigned int*)shm_malloc(sizeof(unsigned int));
+	if (!d->flags) goto error;
+	d->flags[0] = flags;
+	d->n = 1;
+
+	     /* Create an attribute containing did of the domain */
+	name.s = &name_s;
+	val.s = did;
+	if (add_avp_list(&d->attrs, AVP_DOMAIN | AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) goto error;
+
+	return d;
+
+ error:
+	LOG(L_ERR, "domain:new_domain: Unable to create new domain structure\n");
+	free_domain(d);
+	return 0;
+}
+
+
+/*
+ * Release all memory allocated for entire domain list
+ */
+void free_domain_list(domain_t* list)
+{
+	domain_t* ptr;
+	if (!list) return;
+
+	while(list) {
+		ptr = list;
+		list = list->next;
+		free_domain(ptr);
+	}
+}
+
+
+/*
+ * Load attributes from domain_attrs table
+ */
+static int load_attrs(domain_t* d)
+{
+	int_str name, v;
+
+	str avp_name, avp_val;
+	int i, type, n;
+	db_key_t keys[1], cols[4];
+	db_res_t* res;
+	db_val_t kv[1], *val;
+	unsigned short flags;
+
+	if (!con) {
+		LOG(L_ERR, "domain:load_attrs: Invalid database handle\n");
 		return -1;
 	}
-	ver=table_version(&domain_dbf, db_handle, name);
-	return ver;
-}
+	
+	keys[0] = domattr_did.s;
+	kv[0].type = DB_STR;
+	kv[0].nul = 0;
+	kv[0].val.str_val = d->did;
 
+	cols[0] = domattr_name.s;
+	cols[1] = domattr_type.s;
+	cols[2] = domattr_value.s;
+	cols[3] = domattr_flags.s;
 
+	if (db.use_table(con, domattr_table.s) < 0) {
+		LOG(L_ERR, "domain:load_attrs Error in use_table\n");
+		return -1;
+	}
 
-/*
- * Check if domain is local
- */
-int is_domain_local(str* _host)
-{
-	if (db_mode == 0) {
-		db_key_t keys[1];
-		db_val_t vals[1];
-		db_key_t cols[1]; 
-		db_res_t* res;
+	if (db.query(con, keys, 0, kv, cols, 1, 4, 0, &res) < 0) {
+		LOG(L_ERR, "domain:load_attrs: Error while quering database\n");
+		return -1;
+	}
 
-		keys[0]=domain_col.s;
-		cols[0]=domain_col.s;
-		
-		if (domain_dbf.use_table(db_handle, domain_table.s) < 0) {
-			LOG(L_ERR, "is_local(): Error while trying to use domain table\n");
-			return -1;
+	n = 0;
+	for(i = 0; i < res->n; i++) {
+		val = res->rows[i].values;
+
+		if (val[0].nul || val[1].nul || val[3].nul) {
+			LOG(L_ERR, "domain:load_attrs: Skipping row containing NULL entries\n");
+			continue;
 		}
 
-		VAL_TYPE(vals) = DB_STR;
-		VAL_NULL(vals) = 0;
-		
-		VAL_STR(vals).s = _host->s;
-		VAL_STR(vals).len = _host->len;
+		if ((val[3].val.int_val & DB_LOAD_SER) == 0) continue;
 
-		if (domain_dbf.query(db_handle, keys, 0, vals, cols, 1, 1, 0, &res) < 0
-				) {
-			LOG(L_ERR, "is_local(): Error while querying database\n");
-			return -1;
-		}
+		n++;
+		     /* Get AVP name */
+		avp_name.s = (char*)val[0].val.string_val;
+		avp_name.len = strlen(avp_name.s);
+		name.s = &avp_name;
 
-		if (RES_ROW_N(res) == 0) {
-			DBG("is_local(): Realm '%.*s' is not local\n", 
-			    _host->len, ZSW(_host->s));
-			domain_dbf.free_result(db_handle, res);
-			return -1;
+		     /* Get AVP type */
+		type = val[1].val.int_val;
+
+		     /* Test for NULL value */
+		if (val[2].nul) {
+			avp_val.s = 0;
+			avp_val.len = 0;
 		} else {
-			DBG("is_local(): Realm '%.*s' is local\n", 
-			    _host->len, ZSW(_host->s));
-			domain_dbf.free_result(db_handle, res);
-			return 1;
+			avp_val.s = (char*)val[2].val.string_val;
+			avp_val.len = strlen(avp_val.s);
 		}
-	} else {
-		return hash_table_lookup (_host);
+
+		flags = AVP_DOMAIN | AVP_NAME_STR;
+		if (type == AVP_VAL_STR) {
+			     /* String AVP */
+			v.s = &avp_val;
+			flags |= AVP_VAL_STR;
+		} else {
+			     /* Integer AVP */
+			str2int(&avp_val, (unsigned*)&v.n);
+		}
+
+		if (add_avp_list(&d->attrs, flags, name, v) < 0) {
+			LOG(L_ERR, "domain:load_attrs: Error while adding domain attribute %.*s to domain %.*s, skipping\n",
+			    avp_name.len, ZSW(avp_name.s),
+			    d->did.len, ZSW(d->did.s));
+			continue;
+		}
 	}
-			
-}
-
-/*
- * Check if host in From uri is local
- */
-int is_from_local(struct sip_msg* _msg, char* _s1, char* _s2)
-{
-	str uri;
-	struct sip_uri puri;
-
-	if (parse_from_header(_msg) < 0) {
-		LOG(L_ERR, "is_from_local(): Error while parsing From header\n");
-		return -2;
-	}
-
-	uri = get_from(_msg)->uri;
-
-	if (parse_uri(uri.s, uri.len, &puri) < 0) {
-		LOG(L_ERR, "is_from_local(): Error while parsing URI\n");
-		return -3;
-	}
-
-	return is_domain_local(&(puri.host));
-
-}
-
-/*
- * Check if host in Request URI is local
- */
-int is_uri_host_local(struct sip_msg* _msg, char* _s1, char* _s2)
-{
-	if (parse_sip_msg_uri(_msg) < 0) {
-	    LOG(L_ERR, "is_uri_host_local(): Error while parsing URI\n");
-	    return -1;
-	}
-
-	return is_domain_local(&(_msg->parsed_uri.host));
+	DBG("domain:load_attrs: %d domain attributes found, %d loaded\n", res->n, n);
+	db.free_result(con, res);
+	return 0;	
 }
 
 
-
 /*
- * Reload domain table to new hash table and when done, make new hash table
- * current one.
+ * Create domain list from domain table
  */
-int reload_domain_table ( void )
+int load_domains(domain_t** dest)
 {
-/*	db_key_t keys[] = {domain_col}; */
-	db_val_t vals[1];
-	db_key_t cols[1];
+	db_key_t cols[3];
 	db_res_t* res;
 	db_row_t* row;
 	db_val_t* val;
+	unsigned int flags, i;
+	str did, domain;
+	domain_t* d, *list;
 
-	struct domain_list **new_hash_table;
-	int i;
+	list = 0;
+	cols[0] = did_col.s;
+	cols[1] = domain_col.s;
+	cols[2] = flags_col.s;
 
-	cols[0] = domain_col.s;
-
-	if (domain_dbf.use_table(db_handle, domain_table.s) < 0) {
-		LOG(L_ERR, "reload_domain_table(): Error while trying to use domain table\n");
+	if (db.use_table(con, domain_table.s) < 0) {
+		LOG(L_ERR, "domain:load_domains: Error while trying to use domain table\n");
 		return -1;
 	}
 
-	VAL_TYPE(vals) = DB_STR;
-	VAL_NULL(vals) = 0;
-    
-	if (domain_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 1, 0, &res) < 0) {
-		LOG(L_ERR, "reload_domain_table(): Error while querying database\n");
+	if (db.query(con, NULL, 0, NULL, cols, 0, 3, 0, &res) < 0) {
+		LOG(L_ERR, "domain:load_domains: Error while querying database\n");
 		return -1;
 	}
 
-	/* Choose new hash table and free its old contents */
-	if (*hash_table == hash_table_1) {
-		hash_table_free(hash_table_2);
-		new_hash_table = hash_table_2;
-	} else {
-		hash_table_free(hash_table_1);
-		new_hash_table = hash_table_1;
-	}
-
-	row = RES_ROWS(res);
-
-	DBG("Number of rows in domain table: %d\n", RES_ROW_N(res));
+	row = res->rows;
+	DBG("domain:load_domains: Number of rows in domain table: %d\n", res->n);
 		
-	for (i = 0; i < RES_ROW_N(res); i++) {
-		val = ROW_VALUES(row + i);
-		if ((ROW_N(row) == 1) && (VAL_TYPE(val) == DB_STRING)) {
-			
-			DBG("Value: %s inserted into domain hash table\n", VAL_STRING(val));
+	for (i = 0; i < res->n; i++) {
+		val = row[i].values;
 
-			if (hash_table_install(new_hash_table, (char *)(VAL_STRING(val))) == -1) {
-				LOG(L_ERR, "domain_reload(): Hash table problem\n");
-				domain_dbf.free_result(db_handle, res);
-				return -1;
-			}
+		     /* Do not assume that the database server performs any constrain
+		      * checking (dbtext does not) and perform sanity checks here to
+		      * make sure that we only load good entried
+		      */
+		if (val[0].nul || val[1].nul || val[2].nul) {
+			LOG(L_ERR, "domain:load_domains: Row with NULL column(s), skipping\n");
+			continue;
+		}
+
+		did.s = (char*)val[0].val.string_val;
+		did.len = strlen(did.s);
+		domain.s = (char*)val[1].val.string_val;
+		domain.len = strlen(domain.s);
+		flags = val[2].val.int_val;
+
+		if (flags & DB_DISABLED) continue;
+		
+		DBG("domain:load_domains: Processing entry (%.*s, %.*s, %u)\n",
+		    did.len, ZSW(did.s),
+		    domain.len, ZSW(domain.s),
+		    flags);
+
+		d = domain_search(list, &did);
+		if (d) {
+			     /* DID exists in the list, update it */
+			if (domain_add(d, &domain, flags) < 0) goto error;
 		} else {
-			LOG(L_ERR, "domain_reload(): Database problem\n");
-			domain_dbf.free_result(db_handle, res);
-			return -1;
+			     /* DID does not exist yet, create a new entry */
+			d = new_domain(&did, &domain, flags);
+			if (!d) goto error;
+			d->next = list;
+			list = d;
 		}
 	}
-	domain_dbf.free_result(db_handle, res);
 
-	*hash_table = new_hash_table;
-	
+	db.free_result(con, res);
+
+	if (load_domain_attrs) {
+		d = list;
+		while(d) {
+			if (load_attrs(d) < 0) goto error;
+			d = d->next;
+		}
+	}
+
+	*dest = list;
+	return 0;
+
+ error:
+	free_domain_list(list);
 	return 1;
 }
 
+
+static void dump_domain(FILE* f, domain_t* d)
+{
+	int i;
+	avp_t* a;
+	str* name;
+	int_str val;
+
+	fprintf(f, "did: %.*s\n", d->did.len, d->did.s);
+	fprintf(f, "  domains: ");
+	for(i = 0; i < d->n; i++) {
+		fprintf(f, "%.*s (%u)", d->domain[i].len, d->domain[i].s, d->flags[i]);
+		if (i < d->n-1) fprintf(f, ", ");
+	}
+	fprintf(f, "\n");
+	fprintf(f, "  attrs: ");
+	a = d->attrs;
+	while(a) {
+		name = get_avp_name(a);
+		get_avp_val(a, &val);
+		fprintf(f, "%.*s", name->len, name->s);
+		if (a->flags & AVP_VAL_STR) {
+			if (val.s->len && val.s->s) {
+				fprintf(f, "=\"%.*s\"", val.s->len, val.s->s);
+			}
+		} else {
+			fprintf(f, "=%d", val.n);
+		}
+		if (a->next) fprintf(f, ", ");
+		a = a->next;
+	}
+}
+
+
+void dump_domain_list(FILE* f, domain_t* list)
+{
+	while(list) {
+		dump_domain(f, list);
+		fprintf(f, "\n");
+		list = list->next;
+	}
+}

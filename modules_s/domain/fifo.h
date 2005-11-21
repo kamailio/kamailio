@@ -36,8 +36,7 @@
 #define DOMAIN_DUMP "domain_dump"
 
 
-int init_domain_fifo( void );
-int reload_domain_table( void );
-
+int init_domain_fifo(void);
+int reload_domain_table(void);
 
 #endif

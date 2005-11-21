@@ -28,26 +28,15 @@
  */
 
 
-#ifndef DOMAIN_MOD_H
-#define DOMAIN_MOD_H
-
+#ifndef _DOMAIN_MOD_H
+#define _DOMAIN_MOD_H
 
 #include "../../db/db.h"
 #include "../../str.h"
+#include "../../usr_avp.h"
+#include "../../parser/msg_parser.h"
+#include "domain.h"
 
-
-/*
- * Constants
- */
-#define HASH_SIZE 128
-
-/*
- * Type definitions
- */
-struct domain_list {
-	str domain;
-	struct domain_list *next;
-};
 
 /*
  * Module parameters variables
@@ -55,14 +44,36 @@ struct domain_list {
 extern int db_mode;             /* Database usage mode: 0 = no cache, 1 = cache */
 extern str domain_table;	/* Domain table name */
 extern str domain_col;   	/* Domain column name */
+extern str did_col;             /* Domain id col */
+extern str flags_col;           /* Flags column */
 
+/*
+ * Table containing domain attributes (in form of AVPs)
+ */
+extern str domattr_table;       /* Name of table containing domain attributes */
+extern str domattr_did;         /* Column containing domain id */
+extern str domattr_name;        /* Column containing name of attribute */
+extern str domattr_type;        /* Column containing type of attribute */
+extern str domattr_value;       /* Column containing value of attribute */
+extern str domattr_flags;       /* Column containing domain attribute flags */
+
+extern int load_domain_attrs;   /* Turn on/off domain attributes */
 
 /*
  * Other module variables
  */
-extern struct domain_list **hash_table_1; /* Hash table for domains */
-extern struct domain_list **hash_table_2; /* Hash table for domains */
-extern struct domain_list ***hash_table;  /* Current hash table */
 
+extern struct hash_entry*** active_hash; /* Pointer to current hash table */
+extern domain_t** domains_1;      /* List of domains 1 */
+extern domain_t** domains_2;      /* List of domains 2 */
 
-#endif /* DOMAIN_MOD_H */
+extern struct hash_entry*** hash;  /* Pointer to the current hash table */
+extern struct hash_entry** hash_1; /* Hash table 1 */
+extern struct hash_entry** hash_2; /* Hash table 2 */
+
+extern db_con_t* con;
+extern db_func_t db;
+
+int reload_domain_list(void);
+
+#endif /* _DOMAIN_MOD_H */

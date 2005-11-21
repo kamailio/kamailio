@@ -41,20 +41,20 @@
 #include "../../dprint.h"
 #include "../../db/db.h"
 
-
+/* FIXME: Check for value of db_mode and return immediately if set to 0 */
 
 
 /*
  * Fifo function to reload domain table
  */
-static int domain_reload ( FILE* pipe, char* response_file )
+static int domain_reload(FILE* pipe, char* response_file)
 {
-	if (reload_domain_table () == 1) {
-		fifo_reply (response_file, "200 OK\n");
-		return 1;
-	} else {
+	if (reload_domain_list() < 0) {
 		fifo_reply (response_file, "400 Domain table reload failed\n");
 		return -1;
+	} else {
+		fifo_reply (response_file, "200 OK\n");
+		return 1;
 	}
 }
 
@@ -62,17 +62,27 @@ static int domain_reload ( FILE* pipe, char* response_file )
 /*
  * Fifo function to print domains from current hash table
  */
-static int domain_dump ( FILE* pipe, char* response_file )
+static int domain_dump(FILE* pipe, char* response_file)
 {
+	domain_t* list;
 	FILE *reply_file;
+
+	if (db_mode == 0) {
+		fifo_reply(response_file, "400 This command only works with domain memory cache enabled\n");
+		return -1;
+	}
 	
 	reply_file=open_reply_pipe(response_file);
 	if (reply_file==0) {
-		LOG(L_ERR, "domain_dump(): Opening of response file failed\n");
+		LOG(L_ERR, "domain:domain_dump: Opening of response file failed\n");
 		return -1;
 	}
-	fputs( "200 OK\n", reply_file );
-	hash_table_print( *hash_table, reply_file );
+	
+	if (*active_hash == hash_1) list = *domains_1;
+	else list = *domains_2;
+
+	fputs( "200 OK\n", reply_file);
+	dump_domain_list(reply_file, list);
 	fclose(reply_file);
 	return 1;
 }
@@ -81,7 +91,7 @@ static int domain_dump ( FILE* pipe, char* response_file )
 /*
  * Register domain fifo functions
  */
-int init_domain_fifo( void ) 
+int init_domain_fifo(void)
 {
 	if (register_fifo_cmd(domain_reload, DOMAIN_RELOAD, 0) < 0) {
 		LOG(L_CRIT, "Cannot register domain_reload\n");

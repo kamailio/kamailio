@@ -33,10 +33,41 @@
 
 #include <stdio.h>
 #include "domain_mod.h"
+#include "domain.h"
 
-extern int hash_table_install (struct domain_list **hash_table, char *domain);
-int hash_table_lookup (str *domain);
-extern void hash_table_print (struct domain_list **hash_table, FILE *reply_file);
-extern void hash_table_free (struct domain_list **hash_table);
+#define HASH_SIZE 128
 
-#endif
+/*
+ * Hash table entry
+ */
+struct hash_entry {
+	str key;                  /* Hash key */
+        domain_t* domain;         /* Pointer to the domain structure */
+	struct hash_entry* next;  /* Next element in hash table colision slot */
+};
+
+
+/*
+ * Generate hash table, use domain names as hash keys
+ */
+int gen_domain_table(struct hash_entry** table, domain_t* list);
+
+
+/*
+ * Lookup key in the table
+ */
+int hash_lookup(domain_t** d, struct hash_entry** table, str* key);
+
+
+/*
+ * Generate hash table, use did as hash key
+ */
+int gen_did_table(struct hash_entry** table, domain_t* list);
+
+
+/*
+ * Free memory allocated for entire hash table
+ */
+void free_table(struct hash_entry** table);
+
+#endif /* _HASH_H */
