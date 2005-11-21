@@ -1,0 +1,103 @@
+code(int) reason_re(str,null) lang(str) new_reason(str,null) 
+100::en_US.ascii:Trying
+180::en_US.ascii:Ringing
+181::en_US.ascii:Call Is Being Forwarded
+182::en_US.ascii:Queued
+183::en_US.ascii:Session Progress
+200::en_US.ascii:OK
+202::en_US.ascii:Pending
+300::en_US.ascii:Multiple Choices
+301::en_US.ascii:Moved Permanently
+302::en_US.ascii:Moved Temporarily
+305::en_US.ascii:Use Proxy
+380::en_US.ascii:Alternative Service
+400::en_US.ascii:Bad Request
+401::en_US.ascii:Unauthorized
+402::en_US.ascii:Payment Required
+403::en_US.ascii:Forbidden
+404::en_US.ascii:Not Found
+405::en_US.ascii:Method Not Allowed
+406::en_US.ascii:Not Acceptable
+407::en_US.ascii:Proxy Authentication Required
+408::en_US.ascii:Request Timeout
+410::en_US.ascii:Gone
+413::en_US.ascii:Request Entity Too Large
+414::en_US.ascii:Request-URI Too Long
+415::en_US.ascii:Unsupported Media Type
+416::en_US.ascii:Unsupported URI Scheme
+420::en_US.ascii:Bad Extension
+421::en_US.ascii:Extension Required
+423::en_US.ascii:Interval Too Brief
+480::en_US.ascii:Temporarily Unavailable
+481::en_US.ascii:Call/Transaction Does Not Exist
+482::en_US.ascii:Loop Detected
+483::en_US.ascii:Too Many Hops
+484::en_US.ascii:Address Incomplete
+485::en_US.ascii:Ambiguous
+486::en_US.ascii:Busy Here
+487::en_US.ascii:Request Terminated
+488::en_US.ascii:Not Acceptable Here
+491::en_US.ascii:Request Pending
+493::en_US.ascii:Undecipherable
+500::en_US.ascii:Server Internal Error
+501::en_US.ascii:Not Implemented
+502::en_US.ascii:Bad Gateway
+503::en_US.ascii:Service Unavailable
+504::en_US.ascii:Server Time-out
+505::en_US.ascii:Version Not Supported
+513::en_US.ascii:Message Too Large
+600::en_US.ascii:Busy Everywhere
+603::en_US.ascii:Decline
+604::en_US.ascii:Does Not Exist Anywhere
+606::en_US.ascii:Not Acceptable
+100::cs_CZ.ascii:Navazuji spojeni
+180::cs_CZ.ascii:Vyzvani
+181::cs_CZ.ascii:Hovor je presmerovan
+182::cs_CZ.ascii:Jste v poradi
+183::cs_CZ.ascii:Probiha navazovani spojeni
+200::cs_CZ.ascii:Uspesne provedeno
+202::cs_CZ.ascii:Bude vyrizeno pozdeji
+300::cs_CZ.ascii:Existuje vice moznosti
+301::cs_CZ.ascii:Trvale presmerovano
+302::cs_CZ.ascii:Docasne presmerovano
+305::cs_CZ.ascii:Pouzijte jiny server
+380::cs_CZ.ascii:Alternativni sluzba
+400::cs_CZ.ascii:Chyba protokolu
+401::cs_CZ.ascii:Overeni totoznosti
+402::cs_CZ.ascii:Placena sluzba
+403::cs_CZ.ascii:Zakazano
+404::cs_CZ.ascii:Nenalezeno
+405::cs_CZ.ascii:Nepovoleny prikaz
+406::cs_CZ.ascii:Neni povoleno
+407::cs_CZ.ascii:Server vyzaduje overeni totoznosti
+408::cs_CZ.ascii:Casovy limit vyprsel
+410::cs_CZ.ascii:Nenalezeno
+413::cs_CZ.ascii:Prilis dlouhy identifikator
+414::cs_CZ.ascii:Request-URI je prilis dlouhe
+415::cs_CZ.ascii:Nepodporovany typ dat
+416::cs_CZ.ascii:Nepodporovany typ identifikatoru
+420::cs_CZ.ascii:Neplatne cislo linky
+421::cs_CZ.ascii:Zadejte cislo linky
+423::cs_CZ.ascii:Prilis kratky interval
+480::cs_CZ.ascii:Docasne nedostupne
+481::cs_CZ.ascii:Spojeni nenalezeno
+482::cs_CZ.ascii:Zprava se zacyklila
+483::cs_CZ.ascii:Prilis mnoho kroku
+484::cs_CZ.ascii:Neuplna adresa
+485::cs_CZ.ascii:Nejednoznacne
+486::cs_CZ.ascii:Volany je zaneprazdnen
+487::cs_CZ.ascii:Prikaz predcasne ukoncen
+488::cs_CZ.ascii:Nebylo akceptovano
+491::cs_CZ.ascii:Cekam na odpoved
+493::cs_CZ.ascii:Nelze dekodovat
+500::cs_CZ.ascii:Interni chyba serveru
+501::cs_CZ.ascii:Neni implementovano
+502::cs_CZ.ascii:Chybna brana
+503::cs_CZ.ascii:Sluzba neni dostupna
+504::cs_CZ.ascii:Casovy limit serveru vyprsel
+505::cs_CZ.ascii:Nepodporovana verze protokolu
+513::cs_CZ.ascii:Zprava je prilis dlouha
+600::cs_CZ.ascii:Uzivatel je zaneprazdnen
+603::cs_CZ.ascii:Odmitnuto
+604::cs_CZ.ascii:Neexistujici uzivatel nebo sluzba
+606::cs_CZ.ascii:Nelze akceptovat

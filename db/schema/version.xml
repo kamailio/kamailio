@@ -115,4 +115,8 @@
 	<value col="tn"><xi:include href="watcherinfo.xml" xpointer="xpointer(table/name/text())"/></value>
 	<value col="tv"><xi:include href="watcherinfo.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
+    <row>
+	<value col="tn"><xi:include href="i18n.xml" xpointer="xpointer(table/name/text())"/></value>
+	<value col="tv"><xi:include href="i18n.xml" xpointer="xpointer(table/version/text())"/></value>
+    </row>
 </table>

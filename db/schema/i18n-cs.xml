@@ -1,0 +1,525 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE data PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+<data>
+    <row>
+	<value col="i18n.code">100</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Navazuji spojeni</value>
+    </row>
+    <row>
+	<value col="i18n.code">180</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Vyzvani</value>
+    </row>
+    <row>
+	<value col="i18n.code">181</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Hovor je presmerovan</value>
+    </row>
+
+    <row>
+	<value col="i18n.code">182</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Jste v poradi</value>
+    </row>
+    <row>
+	<value col="i18n.code">183</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Probiha navazovani spojeni</value>
+    </row>
+    <row>
+	<value col="i18n.code">200</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Uspesne provedeno</value>
+    </row>
+    <row>
+	<value col="i18n.code">202</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Bude vyrizeno pozdeji</value>
+    </row>
+    <row>
+	<value col="i18n.code">300</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Existuje vice moznosti</value>
+    </row>
+    <row>
+	<value col="i18n.code">301</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Trvale presmerovano</value>
+    </row>
+    <row>
+	<value col="i18n.code">302</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Docasne presmerovano</value>
+    </row>
+    <row>
+	<value col="i18n.code">305</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Pouzijte jiny server</value>
+    </row>
+    <row>
+	<value col="i18n.code">380</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Alternativni sluzba</value>
+    </row>
+    <row>
+	<value col="i18n.code">400</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Chyba protokolu</value>
+    </row>
+    <row>
+	<value col="i18n.code">401</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Overeni totoznosti</value>
+    </row>
+    <row>
+	<value col="i18n.code">402</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Placena sluzba</value>
+    </row>
+    <row>
+	<value col="i18n.code">403</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Zakazano</value>
+    </row>
+    <row>
+	<value col="i18n.code">404</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Nenalezeno</value>
+    </row>
+    <row>
+	<value col="i18n.code">405</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Nepovoleny prikaz</value>
+    </row>    
+    <row>
+	<value col="i18n.code">406</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Neni povoleno</value>
+    </row>
+    <row>
+	<value col="i18n.code">407</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Server vyzaduje overeni totoznosti</value>
+    </row>
+    <row>
+	<value col="i18n.code">408</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Casovy limit vyprsel</value>
+    </row>
+    <row>
+	<value col="i18n.code">410</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Nenalezeno</value>
+    </row>
+    <row>
+	<value col="i18n.code">413</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Prilis dlouhy identifikator</value>
+    </row>
+    <row>
+	<value col="i18n.code">414</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Request-URI je prilis dlouhe</value>
+    </row>
+    <row>
+	<value col="i18n.code">415</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Nepodporovany typ dat</value>
+    </row>
+    <row>
+	<value col="i18n.code">416</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Nepodporovany typ identifikatoru</value>
+    </row>
+    <row>
+	<value col="i18n.code">420</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Neplatne cislo linky</value>
+    </row>
+    <row>
+	<value col="i18n.code">421</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Zadejte cislo linky</value>
+    </row>
+    <row>
+	<value col="i18n.code">423</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Prilis kratky interval</value>
+    </row>
+    <row>
+	<value col="i18n.code">480</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Docasne nedostupne</value>
+    </row>
+    <row>
+	<value col="i18n.code">481</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Spojeni nenalezeno</value>
+    </row>
+    <row>
+	<value col="i18n.code">482</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Zprava se zacyklila</value>
+    </row>
+    <row>
+	<value col="i18n.code">483</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Prilis mnoho kroku</value>
+    </row>
+    <row>
+	<value col="i18n.code">484</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Neuplna adresa</value>
+    </row>
+    <row>
+	<value col="i18n.code">485</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Nejednoznacne</value>
+    </row>
+    <row>
+	<value col="i18n.code">486</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Volany je zaneprazdnen</value>
+    </row>
+    <row>
+	<value col="i18n.code">487</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Prikaz predcasne ukoncen</value>
+    </row>
+    <row>
+	<value col="i18n.code">488</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Nebylo akceptovano</value>
+    </row>
+    <row>
+	<value col="i18n.code">491</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Cekam na odpoved</value>
+    </row>
+    <row>
+	<value col="i18n.code">493</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Nelze dekodovat</value>
+    </row>
+    <row>
+	<value col="i18n.code">500</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Interni chyba serveru</value>
+    </row>
+    <row>
+	<value col="i18n.code">501</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Neni implementovano</value>
+    </row>
+    <row>
+	<value col="i18n.code">502</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Chybna brana</value>
+    </row>
+    <row>
+	<value col="i18n.code">503</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Sluzba neni dostupna</value>
+    </row>
+    <row>
+	<value col="i18n.code">504</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Casovy limit serveru vyprsel</value>
+    </row>
+    <row>
+	<value col="i18n.code">505</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Nepodporovana verze protokolu</value>
+    </row>
+    <row>
+	<value col="i18n.code">513</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Zprava je prilis dlouha</value>
+    </row>
+    <row>
+	<value col="i18n.code">600</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Uzivatel je zaneprazdnen</value>
+    </row>
+    <row>
+	<value col="i18n.code">603</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Odmitnuto</value>
+    </row>
+    <row>
+	<value col="i18n.code">604</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Neexistujici uzivatel nebo sluzba</value>
+    </row>
+    <row>
+	<value col="i18n.code">606</value>
+	<value col="i18n.lang">cs_CZ.ascii</value>
+	<value col="i18n.nr">Nelze akceptovat</value>
+    </row>
+
+<!--
+
+    <row>
+	<value col="i18n.code">100</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Navazuji spojeni</value>
+    </row>
+    <row>
+	<value col="i18n.code">180</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Vyzvani</value>
+    </row>
+    <row>
+	<value col="i18n.code">181</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Hovor je presmerovan</value>
+    </row>
+    <row>
+	<value col="i18n.code">182</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Jste v poradi</value>
+    </row>
+    <row>
+	<value col="i18n.code">183</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Probiha navazovani spojeni</value>
+    </row>
+    <row>
+	<value col="i18n.code">200</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Uspesne provedeno</value>
+    </row>
+    <row>
+	<value col="i18n.code">202</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Bude vyrizeno pozdeji</value>
+    </row>
+    <row>
+	<value col="i18n.code">300</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Existuje vice moznosti</value>
+    </row>
+    <row>
+	<value col="i18n.code">301</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Trvale presmerovano</value>
+    </row>
+    <row>
+	<value col="i18n.code">302</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Docasne presmerovano</value>
+    </row>
+    <row>
+	<value col="i18n.code">305</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Pouzijte jiny server</value>
+    </row>
+    <row>
+	<value col="i18n.code">380</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Alternativni sluzba</value>
+    </row>
+    <row>
+	<value col="i18n.code">400</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Chyba protokolu</value>
+    </row>
+    <row>
+	<value col="i18n.code">401</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Overeni totoznosti</value>
+    </row>
+    <row>
+	<value col="i18n.code">402</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Placena sluzba</value>
+    </row>
+    <row>
+	<value col="i18n.code">403</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Zakazano</value>
+    </row>
+    <row>
+	<value col="i18n.code">404</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Nenalezeno</value>
+    </row>
+    <row>
+	<value col="i18n.code">405</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Nepovoleny prikaz</value>
+    </row>    
+    <row>
+	<value col="i18n.code">406</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Neni povoleno</value>
+    </row>
+    <row>
+	<value col="i18n.code">407</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Server vyzaduje overeni totoznosti</value>
+    </row>
+    <row>
+	<value col="i18n.code">408</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Casovy limit vyprsel</value>
+    </row>
+    <row>
+	<value col="i18n.code">410</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Nenalezeno</value>
+    </row>
+    <row>
+	<value col="i18n.code">413</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Prilis dlouhy identifikator</value>
+    </row>
+    <row>
+	<value col="i18n.code">414</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Request-URI je prilis dlouhe</value>
+    </row>
+    <row>
+	<value col="i18n.code">415</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Nepodporovany typ dat</value>
+    </row>
+    <row>
+	<value col="i18n.code">416</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Nepodporovany typ identifikatoru</value>
+    </row>
+    <row>
+	<value col="i18n.code">420</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Neplatne cislo linky</value>
+    </row>
+    <row>
+	<value col="i18n.code">421</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Zadejte cislo linky</value>
+    </row>
+    <row>
+	<value col="i18n.code">423</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Prilis kratky interval</value>
+    </row>
+    <row>
+	<value col="i18n.code">480</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Docasne nedostupne</value>
+    </row>
+    <row>
+	<value col="i18n.code">481</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Spojeni nenalezeno</value>
+    </row>
+    <row>
+	<value col="i18n.code">482</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Zprava se zacyklila</value>
+    </row>
+    <row>
+	<value col="i18n.code">483</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Prilis mnoho kroku</value>
+    </row>
+    <row>
+	<value col="i18n.code">484</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Neuplna adresa</value>
+    </row>
+    <row>
+	<value col="i18n.code">485</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Nejednoznacne</value>
+    </row>
+    <row>
+	<value col="i18n.code">486</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Volany je zaneprazdnen</value>
+    </row>
+    <row>
+	<value col="i18n.code">487</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Prikaz predcasne ukoncen</value>
+    </row>
+    <row>
+	<value col="i18n.code">488</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Nebylo akceptovano</value>
+    </row>
+    <row>
+	<value col="i18n.code">491</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Cekam na odpoved</value>
+    </row>
+    <row>
+	<value col="i18n.code">493</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Nelze dekodovat</value>
+    </row>
+    <row>
+	<value col="i18n.code">500</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Interni chyba serveru</value>
+    </row>
+    <row>
+	<value col="i18n.code">501</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Neni implementovano</value>
+    </row>
+    <row>
+	<value col="i18n.code">502</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Chybna brana</value>
+    </row>
+    <row>
+	<value col="i18n.code">503</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Sluzba neni dostupna</value>
+    </row>
+    <row>
+	<value col="i18n.code">504</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Casovy limit serveru vyprsel</value>
+    </row>
+    <row>
+	<value col="i18n.code">505</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Nepodporovana verze protokolu</value>
+    </row>
+    <row>
+	<value col="i18n.code">513</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Zprava je prilis dlouha</value>
+    </row>
+    <row>
+	<value col="i18n.code">600</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Uzivatel je zaneprazdnen</value>
+    </row>
+    <row>
+	<value col="i18n.code">603</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Odmitnuto</value>
+    </row>
+    <row>
+	<value col="i18n.code">604</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Neexistujici uzivatel nebo sluzba</value>
+    </row>
+    <row>
+	<value col="i18n.code">606</value>
+	<value col="i18n.lang">cs_CZ.iso-8859-2</value>
+	<value col="i18n.nr">Nelze akceptovat</value>
+    </row>
+-->
+</data>

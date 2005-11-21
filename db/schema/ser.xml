@@ -67,6 +67,8 @@
     <xi:include href="presentity_contact.xml"/>
     <xi:include href="watcherinfo.xml"/>
 
+    <xi:include href="i18n.xml"/>
+
     <!-- User with read/write access -->
     <user>
 	<username>ser</username>

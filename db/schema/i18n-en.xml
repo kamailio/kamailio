@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE data PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+<data>
+    <row>
+	<value col="i18n.code">100</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Trying</value>
+    </row>
+    <row>
+	<value col="i18n.code">180</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Ringing</value>
+    </row>
+    <row>
+	<value col="i18n.code">181</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Call Is Being Forwarded</value>
+    </row>
+
+    <row>
+	<value col="i18n.code">182</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Queued</value>
+    </row>
+    <row>
+	<value col="i18n.code">183</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Session Progress</value>
+    </row>
+    <row>
+	<value col="i18n.code">200</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">OK</value>
+    </row>
+    <row>
+	<value col="i18n.code">202</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Pending</value>
+    </row>
+    <row>
+	<value col="i18n.code">300</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Multiple Choices</value>
+    </row>
+    <row>
+	<value col="i18n.code">301</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Moved Permanently</value>
+    </row>
+    <row>
+	<value col="i18n.code">302</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Moved Temporarily</value>
+    </row>
+    <row>
+	<value col="i18n.code">305</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Use Proxy</value>
+    </row>
+    <row>
+	<value col="i18n.code">380</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Alternative Service</value>
+    </row>
+    <row>
+	<value col="i18n.code">400</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Bad Request</value>
+    </row>
+    <row>
+	<value col="i18n.code">401</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Unauthorized</value>
+    </row>
+    <row>
+	<value col="i18n.code">402</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Payment Required</value>
+    </row>
+    <row>
+	<value col="i18n.code">403</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Forbidden</value>
+    </row>
+    <row>
+	<value col="i18n.code">404</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Not Found</value>
+    </row>
+    <row>
+	<value col="i18n.code">405</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Method Not Allowed</value>
+    </row>
+    <row>
+	<value col="i18n.code">406</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Not Acceptable</value>
+    </row>
+    <row>
+	<value col="i18n.code">407</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Proxy Authentication Required</value>
+    </row>
+    <row>
+	<value col="i18n.code">408</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Request Timeout</value>
+    </row>
+    <row>
+	<value col="i18n.code">410</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Gone</value>
+    </row>
+    <row>
+	<value col="i18n.code">413</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Request Entity Too Large</value>
+    </row>
+    <row>
+	<value col="i18n.code">414</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Request-URI Too Long</value>
+    </row>
+    <row>
+	<value col="i18n.code">415</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Unsupported Media Type</value>
+    </row>
+    <row>
+	<value col="i18n.code">416</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Unsupported URI Scheme</value>
+    </row>
+    <row>
+	<value col="i18n.code">420</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Bad Extension</value>
+    </row>
+    <row>
+	<value col="i18n.code">421</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Extension Required</value>
+    </row>
+    <row>
+	<value col="i18n.code">423</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Interval Too Brief</value>
+    </row>
+    <row>
+	<value col="i18n.code">480</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Temporarily Unavailable</value>
+    </row>
+    <row>
+	<value col="i18n.code">481</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Call/Transaction Does Not Exist</value>
+    </row>
+    <row>
+	<value col="i18n.code">482</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Loop Detected</value>
+    </row>
+    <row>
+	<value col="i18n.code">483</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Too Many Hops</value>
+    </row>
+    <row>
+	<value col="i18n.code">484</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Address Incomplete</value>
+    </row>
+    <row>
+	<value col="i18n.code">485</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Ambiguous</value>
+    </row>
+    <row>
+	<value col="i18n.code">486</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Busy Here</value>
+    </row>
+    <row>
+	<value col="i18n.code">487</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Request Terminated</value>
+    </row>
+    <row>
+	<value col="i18n.code">488</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Not Acceptable Here</value>
+    </row>
+    <row>
+	<value col="i18n.code">491</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Request Pending</value>
+    </row>
+    <row>
+	<value col="i18n.code">493</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Undecipherable</value>
+    </row>
+    <row>
+	<value col="i18n.code">500</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Server Internal Error</value>
+    </row>
+    <row>
+	<value col="i18n.code">501</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Not Implemented</value>
+    </row>
+    <row>
+	<value col="i18n.code">502</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Bad Gateway</value>
+    </row>
+    <row>
+	<value col="i18n.code">503</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Service Unavailable</value>
+    </row>
+    <row>
+	<value col="i18n.code">504</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Server Time-out</value>
+    </row>
+    <row>
+	<value col="i18n.code">505</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Version Not Supported</value>
+    </row>
+    <row>
+	<value col="i18n.code">513</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Message Too Large</value>
+    </row>
+    <row>
+	<value col="i18n.code">600</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Busy Everywhere</value>
+    </row>
+    <row>
+	<value col="i18n.code">603</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Decline</value>
+    </row>
+    <row>
+	<value col="i18n.code">604</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Does Not Exist Anywhere</value>
+    </row>
+    <row>
+	<value col="i18n.code">606</value>
+	<value col="i18n.lang">en_US.ascii</value>
+	<value col="i18n.nr">Not Acceptable</value>
+    </row>
+</data>

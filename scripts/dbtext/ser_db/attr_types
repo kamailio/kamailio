@@ -6,3 +6,4 @@ rpid:string:2:
 fr_timer:string:0:
 fr_inv_timer:string:2:
 flags:string:0:
+gflags:string:0:

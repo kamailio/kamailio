@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table xmlns:xi="http://www.w3.org/2001/XInclude" 
+    xmlns:my="http://iptel.org/dbschema/mysql">
+    <name>i18n</name>
+    <version>1</version>
+    
+    <column id="i18n.code">
+	<name>code</name>
+	<type>int</type>
+    </column>
+    <column>
+	<name>reason_re</name>
+	<type>string</type>
+	<default><null/></default>
+	<null/>
+    </column>
+    <column id="i18n.lang">
+	<name>lang</name>
+	<type>string</type>
+    </column>
+    <column id="i18n.nr">
+	<name>new_reason</name>
+	<type>string</type>
+	<null/>
+    </column>
+    <index>
+	<name>i18n_idx</name>
+	<colref linkend="i18n.code"/>
+    </index>
+
+    <xi:include href="i18n-en.xml" xpointer="xpointer(data/row)"/>
+    <xi:include href="i18n-cs.xml" xpointer="xpointer(data/row)"/>
+</table>
