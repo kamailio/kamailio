@@ -38,31 +38,10 @@
 
 
 /*
- * if realm determined from request, look if there are some
- * modification rules
- */
-void strip_realm(str* _realm)
-{
-	/* no param defined -- return */
-	if (!realm_prefix.len) return;
-
-	/* prefix longer than realm -- return */
-	if (realm_prefix.len > _realm->len) return;
-
-	/* match ? -- if so, shorten realm -*/
-	if (memcmp(realm_prefix.s, _realm->s, realm_prefix.len) == 0) {
-		_realm->s += realm_prefix.len;
-		_realm->len -= realm_prefix.len;
-	}
-	return;
-}
-
-
-/*
  * Find credentials with given realm in a SIP message header
  */
-static inline int find_credentials(struct sip_msg* _m, str* _realm,
-									hdr_types_t _hftype, struct hdr_field** _h)
+static inline int find_credentials(struct sip_msg* msg, str* realm,
+				   hdr_types_t hftype, struct hdr_field** hdr)
 {
 	struct hdr_field** hook, *ptr, *prev;
 	hdr_flags_t hdr_flags;
@@ -74,19 +53,19 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm,
 	      * Proxy-Authorization header fields, this parameter
 	      * is set in www_authorize and proxy_authorize
 	      */
-	switch(_hftype) {
+	switch(hftype) {
 	case HDR_AUTHORIZATION_T: 
-							hook = &(_m->authorization);
-							hdr_flags=HDR_AUTHORIZATION_F;
-							break;
+		hook = &(msg->authorization);
+		hdr_flags=HDR_AUTHORIZATION_F;
+		break;
 	case HDR_PROXYAUTH_T:
-							hook = &(_m->proxy_auth);
-							hdr_flags=HDR_PROXYAUTH_F;
-							break;
+		hook = &(msg->proxy_auth);
+		hdr_flags=HDR_PROXYAUTH_F;
+		break;
 	default:				
-							hook = &(_m->authorization);
-							hdr_flags=HDR_T2F(_hftype);
-							break;
+		hook = &(msg->authorization);
+		hdr_flags=HDR_T2F(hftype);
+		break;
 	}
 
 	     /*
@@ -94,8 +73,8 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm,
 	      */
 	if (*hook == 0) {
 		     /* No credentials parsed yet */
-		if (parse_headers(_m, hdr_flags, 0) == -1) {
-			LOG(L_ERR, "find_credentials(): Error while parsing headers\n");
+		if (parse_headers(msg, hdr_flags, 0) == -1) {
+			LOG(L_ERR, "auth:find_credentials: Error while parsing headers\n");
 			return -1;
 		}
 	}
@@ -109,26 +88,26 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm,
 	while(ptr) {
 		res = parse_credentials(ptr);
 		if (res < 0) {
-			LOG(L_ERR, "find_credentials(): Error while parsing credentials\n");
+			LOG(L_ERR, "auth:find_credentials: Error while parsing credentials\n");
 			return (res == -1) ? -2 : -3;
 		} else if (res == 0) {
 			r = &(((auth_body_t*)(ptr->parsed))->digest.realm);
 
-			if (r->len == _realm->len) {
-				if (!strncasecmp(_realm->s, r->s, r->len)) {
-					*_h = ptr;
+			if (r->len == realm->len) {
+				if (!strncasecmp(realm->s, r->s, r->len)) {
+					*hdr = ptr;
 					return 0;
 				}
 			}
 		}
 
 		prev = ptr;
-		if (parse_headers(_m, hdr_flags, 1) == -1) {
-			LOG(L_ERR, "find_credentials(): Error while parsing headers\n");
+		if (parse_headers(msg, hdr_flags, 1) == -1) {
+			LOG(L_ERR, "auth:find_credentials: Error while parsing headers\n");
 			return -4;
 		} else {
-			if (prev != _m->last_header) {
-				if (_m->last_header->type == _hftype) ptr = _m->last_header;
+			if (prev != msg->last_header) {
+				if (msg->last_header->type == hftype) ptr = msg->last_header;
 				else break;
 			} else break;
 		}
@@ -147,69 +126,65 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm,
  * we should really authenticate (there must be no authentication for
  * ACK and CANCEL
  */
-auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
-						struct hdr_field** _h)
+auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
+						struct hdr_field**  hdr)
 {
 	int ret;
 	auth_body_t* c;
-	struct sip_uri uri;
 
-	     /* ACK and CANCEL must be always authorized, there is
+	     /* ACK and CANCEL must be always authenticated, there is
 	      * no way how to challenge ACK and CANCEL cannot be
 	      * challenged because it must have the same CSeq as
 	      * the request to be canceled
 	      */
 
-	if ((_m->REQ_METHOD == METHOD_ACK) ||  (_m->REQ_METHOD == METHOD_CANCEL)) return AUTHORIZED;
+	if ((msg->REQ_METHOD == METHOD_ACK) ||  (msg->REQ_METHOD == METHOD_CANCEL)) return AUTHENTICATED;
 
-	if (_realm->len == 0) {
-		if (get_realm(_m, _hftype, &uri) < 0) {
-			LOG(L_ERR, "pre_auth(): Error while extracting realm\n");
-			if (send_resp(_m, 400, MESSAGE_400, 0, 0) == -1) {
-				LOG(L_ERR, "pre_auth(): Error while sending 400 reply\n");
+	if (realm->len == 0) {
+		if (get_realm(msg, hftype, realm) < 0) {
+			LOG(L_ERR, "auth:pre_auth: Error while extracting realm\n");
+			if (send_resp(msg, 400, MESSAGE_400, 0, 0) == -1) {
+				LOG(L_ERR, "auth:pre_auth: Error while sending 400 reply\n");
 			}
 			return ERROR;
 		}
-		
-		*_realm = uri.host;
-		strip_realm(_realm);
 	}
 
 	     /* Try to find credentials with corresponding realm
 	      * in the message, parse them and return pointer to
 	      * parsed structure
 	      */
-	ret = find_credentials(_m, _realm, _hftype, _h);
+	ret = find_credentials(msg, realm, hftype, hdr);
 	if (ret < 0) {
-		LOG(L_ERR, "pre_auth(): Error while looking for credentials\n");
-		if (send_resp(_m, (ret == -2) ? 500 : 400, 
+		LOG(L_ERR, "auth:pre_auth: Error while looking for credentials\n");
+		if (send_resp(msg, (ret == -2) ? 500 : 400, 
 			      (ret == -2) ? MESSAGE_500 : MESSAGE_400, 0, 0) == -1) {
-			LOG(L_ERR, "pre_auth(): Error while sending 400 reply\n");
+			LOG(L_ERR, "auth:pre_auth: Error while sending 400 reply\n");
 		}
 		return ERROR;
 	} else if (ret > 0) {
-		DBG("pre_auth(): Credentials with given realm not found\n");
-		return NOT_AUTHORIZED;
+		DBG("auth:pre_auth: Credentials with given realm not found\n");
+		return NOT_AUTHENTICATED;
 	}
 
 	     /* Pointer to the parsed credentials */
-	c = (auth_body_t*)((*_h)->parsed);
+	c = (auth_body_t*)((*hdr)->parsed);
 
 	     /* Check credentials correctness here */
 	if (check_dig_cred(&(c->digest)) != E_DIG_OK) {
-		LOG(L_ERR, "pre_auth(): Credentials received are not filled properly\n");
-		if (send_resp(_m, 400, MESSAGE_400, 0, 0) == -1) {
-			LOG(L_ERR, "pre_auth(): Error while sending 400 reply\n");
+		LOG(L_ERR, "auth:pre_auth: Credentials received are not filled properly\n");
+		if (send_resp(msg, 400, MESSAGE_400, 0, 0) == -1) {
+			LOG(L_ERR, "auth:pre_auth: Error while sending 400 reply\n");
 		}
 		return ERROR;
 	}
 
-	if (check_nonce(&c->digest.nonce, &secret) != 0) {
-		DBG("pre_auth(): Invalid nonce value received\n");
-		return NOT_AUTHORIZED;
+	if (check_nonce(&c->digest.nonce, &secret, msg) != 0) {
+		DBG("auth:pre_auth: Invalid nonce value received\n");
+		return NOT_AUTHENTICATED;
 	}
 
-	return DO_AUTHORIZATION;
+	return DO_AUTHENTICATION;
 }
 
 
@@ -217,16 +192,16 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
  * Purpose of this function is to do post authentication steps like
  * marking authorized credentials and so on.
  */
-auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h)
+auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr)
 {
-	int res = AUTHORIZED;
+	int res = AUTHENTICATED;
 	auth_body_t* c;
 
-	c = (auth_body_t*)((_h)->parsed);
+	c = (auth_body_t*)((hdr)->parsed);
 
 	if (is_nonce_stale(&c->digest.nonce)) {
-		if ((_m->REQ_METHOD == METHOD_ACK) || 
-		    (_m->REQ_METHOD == METHOD_CANCEL)) {
+		if ((msg->REQ_METHOD == METHOD_ACK) || 
+		    (msg->REQ_METHOD == METHOD_CANCEL)) {
 			     /* Method is ACK or CANCEL, we must accept stale
 			      * nonces because there is no way how to challenge
 			      * with new nonce (ACK has no response associated 
@@ -234,16 +209,16 @@ auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h)
 			      * to be canceled)
 			      */
 		} else {
-			DBG("post_auth(): Response is OK, but nonce is stale\n");
+			DBG("auth:post_auth: Response is OK, but nonce is stale\n");
 			c->stale = 1;
-			res = NOT_AUTHORIZED;
+			res = NOT_AUTHENTICATED;
 		}
 	}
 
-	if (mark_authorized_cred(_m, _h) < 0) {
-		LOG(L_ERR, "post_auth(): Error while marking parsed credentials\n");
-		if (send_resp(_m, 500, MESSAGE_500, 0, 0) == -1) {
-			LOG(L_ERR, "post_auth(): Error while sending 500 reply\n");
+	if (mark_authorized_cred(msg, hdr) < 0) {
+		LOG(L_ERR, "auth:post_auth: Error while marking parsed credentials\n");
+		if (send_resp(msg, 500, MESSAGE_500, 0, 0) == -1) {
+			LOG(L_ERR, "auth:post_auth: Error while sending 500 reply\n");
 		}
 		res = ERROR;
 	}
@@ -261,8 +236,6 @@ int bind_auth(auth_api_t* api)
 
 	api->pre_auth = pre_auth;
 	api->post_auth = post_auth;
-
-	api->rpid_avp = rpid_avp;
 
 	return 0;
 }

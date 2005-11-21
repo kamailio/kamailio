@@ -46,17 +46,11 @@
 #include "../../ut.h"
 #include "auth_mod.h"
 #include "challenge.h"
-#include "rpid.h"
 #include "api.h"
 
 MODULE_VERSION
 
 #define RAND_SECRET_LEN 32
-
-#define DEF_RPID_PREFIX ""
-#define DEF_RPID_SUFFIX ";party=calling;id-type=subscriber;screen=yes"
-#define DEF_STRIP_REALM ""
-#define DEF_RPID_AVP "rpid"
 
 
 /*
@@ -76,23 +70,18 @@ static int challenge_fixup(void** param, int param_no);
 /*
  * Pointer to reply function in stateless module
  */
-int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
+int (*sl_reply)(struct sip_msg* msg, char* str1, char* str2);
 
 
 /*
  * Module parameter variables
  */
-char* sec_param    = 0;   /* If the parameter was not used, the secret phrase will be auto-generated */
-int   nonce_expire = 300; /* Nonce lifetime */
+char* sec_param    = 0;     /* If the parameter was not used, the secret phrase will be auto-generated */
+int   nonce_expire = 300;   /* Nonce lifetime */
+int   protect_contacts = 0; /* Do not include contacts in nonce by default */
 
 str secret;
 char* sec_rand = 0;
-
-
-str rpid_prefix = STR_STATIC_INIT(DEF_RPID_PREFIX); /* Default Remote-Party-ID prefix */
-str rpid_suffix = STR_STATIC_INIT(DEF_RPID_SUFFIX); /* Default Remote-Party-IDD suffix */
-str realm_prefix = STR_STATIC_INIT(DEF_STRIP_REALM); /* Prefix to strip from realm */
-str rpid_avp = STR_STATIC_INIT(DEF_RPID_AVP); /* Name of AVP containing rpid value */
 
 
 /*
@@ -102,9 +91,6 @@ static cmd_export_t cmds[] = {
 	{"www_challenge",       www_challenge,           2, challenge_fixup, REQUEST_ROUTE},
 	{"proxy_challenge",     proxy_challenge,         2, challenge_fixup, REQUEST_ROUTE},
 	{"consume_credentials", consume_credentials,     0, 0,               REQUEST_ROUTE},
-	{"is_rpid_user_e164",   is_rpid_user_e164,       0, 0,               REQUEST_ROUTE},
-        {"append_rpid_hf",      append_rpid_hf,          0, 0,               REQUEST_ROUTE|BRANCH_ROUTE},
-	{"append_rpid_hf",      append_rpid_hf_p,        2, fixup_str_12,    REQUEST_ROUTE|BRANCH_ROUTE},
 	{"bind_auth",           (cmd_function)bind_auth, 0, 0,               0            },
 	{0, 0, 0, 0, 0}
 };
@@ -114,12 +100,9 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"secret",          STR_PARAM, &sec_param      },
-	{"nonce_expire",    INT_PARAM, &nonce_expire   },
-	{"rpid_prefix",     STR_PARAM, &rpid_prefix.s  },
-	{"rpid_suffix",     STR_PARAM, &rpid_suffix.s  },
-	{"realm_prefix",    STR_PARAM, &realm_prefix.s },
-	{"rpid_avp",        STR_PARAM, &rpid_avp.s     },
+	{"secret",           STR_PARAM, &sec_param       },
+	{"nonce_expire",     INT_PARAM, &nonce_expire    },
+	{"protect_contacts", INT_PARAM, &protect_contacts},
 	{0, 0, 0}
 };
 
@@ -149,7 +132,7 @@ static inline int generate_random_secret(void)
 
 	sec_rand = (char*)pkg_malloc(RAND_SECRET_LEN);
 	if (!sec_rand) {
-		LOG(L_ERR, "generate_random_secret(): No memory left\n");		
+		LOG(L_ERR, "auth:generate_random_secret: No memory left\n");
 		return -1;
 	}
 
@@ -175,7 +158,7 @@ static int mod_init(void)
 	sl_reply = find_export("sl_send_reply", 2, 0);
 
 	if (!sl_reply) {
-		LOG(L_ERR, "auth:mod_init(): This module requires sl module\n");
+		LOG(L_ERR, "auth:mod_init: This module requires sl module\n");
 		return -2;
 	}
 
@@ -183,7 +166,7 @@ static int mod_init(void)
 	if (sec_param == 0) {
 		     /* Generate secret using random generator */
 		if (generate_random_secret() < 0) {
-			LOG(L_ERR, "mod_init(): Error while generating random secret\n");
+			LOG(L_ERR, "auth:mod_init: Error while generating random secret\n");
 			return -3;
 		}
 	} else {
@@ -192,11 +175,6 @@ static int mod_init(void)
 		secret.len = strlen(secret.s);
 	}
 	
-	rpid_prefix.len = strlen(rpid_prefix.s);
-	rpid_suffix.len = strlen(rpid_suffix.s);
-	realm_prefix.len = strlen(realm_prefix.s);
-	rpid_avp.len = strlen(rpid_avp.s);
-
 	return 0;
 }
 

@@ -38,9 +38,9 @@
 
 typedef enum auth_result {
 	ERROR = -2 ,        /* Error occurred, a reply has been sent out -> return 0 to the ser core */
-	NOT_AUTHORIZED,     /* Don't perform authorization, credentials missing */
-	DO_AUTHORIZATION,   /* Perform digest authorization */
-        AUTHORIZED          /* Authorized by default, no digest authorization necessary */
+	NOT_AUTHENTICATED,  /* Don't perform authentication, credentials missing */
+	DO_AUTHENTICATION,  /* Perform digest authentication */
+        AUTHENTICATED       /* Authenticated by default, no digest authentication necessary */
 } auth_result_t;
 
 
@@ -50,30 +50,24 @@ typedef enum auth_result {
  * we should really authenticate (there must be no authentication for
  * ACK and CANCEL
  */
-typedef auth_result_t (*pre_auth_t)(struct sip_msg* _m, str* _realm,
-								hdr_types_t _hftype, struct hdr_field** _h);
-auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
-						struct hdr_field** _h);
+typedef auth_result_t (*pre_auth_t)(struct sip_msg* msg, str* realm,
+				    hdr_types_t hftype, struct hdr_field** hdr);
+auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
+		       struct hdr_field** hdr);
 
 
 /*
  * Purpose of this function is to do post authentication steps like
  * marking authorized credentials and so on.
  */
-typedef auth_result_t (*post_auth_t)(struct sip_msg* _m, struct hdr_field* _h);
-auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h);
-
-/*
- * Strip the beginning of realm
- */
-void strip_realm(str *_realm);
+typedef auth_result_t (*post_auth_t)(struct sip_msg* msg, struct hdr_field* hdr);
+auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr);
 
 
 /*
  * Auth module API
  */
 typedef struct auth_api {
-	str rpid_avp;           /* Name of AVP containing Remote-Party-ID */
 	pre_auth_t pre_auth;    /* The function to be called before authentication */
 	post_auth_t post_auth;  /* The function to be called after authentication */
 } auth_api_t;

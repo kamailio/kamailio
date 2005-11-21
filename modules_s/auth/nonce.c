@@ -44,29 +44,29 @@
  * destination array must be at least 8 bytes long,
  * this string is NOT zero terminated
  */
-static inline void integer2hex(char* _d, int _s)
+static inline void integer2hex(char* dst, int src)
 {
 	int i;
 	unsigned char j;
 	char* s;
 
-	_s = htonl(_s);
-	s = (char*)&_s;
+	src = htonl(src);
+	s = (char*)&src;
     
 	for (i = 0; i < 4; i++) {
 		
 		j = (s[i] >> 4) & 0xf;
 		if (j <= 9) {
-			_d[i * 2] = (j + '0');
+			dst[i * 2] = (j + '0');
 		} else { 
-			_d[i * 2] = (j + 'a' - 10);
+			dst[i * 2] = (j + 'a' - 10);
 		}
 
 		j = s[i] & 0xf;
 		if (j <= 9) {
-			_d[i * 2 + 1] = (j + '0');
+			dst[i * 2 + 1] = (j + '0');
 		} else {
-		       _d[i * 2 + 1] = (j + 'a' - 10);
+		       dst[i * 2 + 1] = (j + 'a' - 10);
 		}
 	}
 }
@@ -75,18 +75,18 @@ static inline void integer2hex(char* _d, int _s)
 /*
  * Convert hex string to integer
  */
-static inline int hex2integer(char* _s)
+static inline int hex2integer(char* src)
 {
 	unsigned int i, res = 0;
 
 	for(i = 0; i < 8; i++) {
 		res *= 16;
-		if ((_s[i] >= '0') && (_s[i] <= '9')) {
-			res += _s[i] - '0';
-		} else if ((_s[i] >= 'a') && (_s[i] <= 'f')) {
-			res += _s[i] - 'a' + 10;
-		} else if ((_s[i] >= 'A') && (_s[i] <= 'F')) {
-			res += _s[i] - 'A' + 10;
+		if ((src[i] >= '0') && (src[i] <= '9')) {
+			res += src[i] - '0';
+		} else if ((src[i] >= 'a') && (src[i] <= 'f')) {
+			res += src[i] - 'a' + 10;
+		} else if ((src[i] >= 'A') && (src[i] <= 'F')) {
+			res += src[i] - 'A' + 10;
 		} else return 0;
 	}
 
@@ -99,29 +99,29 @@ static inline int hex2integer(char* _s)
  * Nonce value consists of time in seconds since 1.1 1970 and
  * secret phrase
  */
-void calc_nonce(char* _nonce, int _expires, str* _secret)
+void calc_nonce(char* nonce, int expires, str* secret, struct sip_msg* msg)
 {
 	MD5_CTX ctx;
 	unsigned char bin[16];
 
 	MD5Init(&ctx);
 	
-	integer2hex(_nonce, _expires);
-	MD5Update(&ctx, _nonce, 8);
+	integer2hex(nonce, expires);
+	MD5Update(&ctx, nonce, 8);
 
-	MD5Update(&ctx, _secret->s, _secret->len);
+	MD5Update(&ctx, secret->s, secret->len);
 	MD5Final(bin, &ctx);
-	string2hex(bin, 16, _nonce + 8);
-	_nonce[8 + 32] = '\0';
+	string2hex(bin, 16, nonce + 8);
+	nonce[8 + 32] = '\0';
 }
 
 
 /*
  * Get expiry time from nonce string
  */
-time_t get_nonce_expires(str* _n)
+time_t get_nonce_expires(str* n)
 {
-	return (time_t)hex2integer(_n->s);
+	return (time_t)hex2integer(n->s);
 }
 
 
@@ -129,26 +129,26 @@ time_t get_nonce_expires(str* _n)
  * Check, if the nonce received from client is
  * correct
  */
-int check_nonce(str* _nonce, str* _secret)
+int check_nonce(str* nonce, str* secret, struct sip_msg* msg)
 {
 	int expires;
 	char non[NONCE_LEN + 1];
 
-	if (_nonce->s == 0) {
+	if (nonce->s == 0) {
 		return -1;  /* Invalid nonce */
 	}
 
-	if (NONCE_LEN != _nonce->len) {
+	if (NONCE_LEN != nonce->len) {
 		return 1; /* Lengths must be equal */
 	}
 
-	expires = get_nonce_expires(_nonce);
-	calc_nonce(non, expires, _secret);
+	expires = get_nonce_expires(nonce);
+	calc_nonce(non, expires, secret, msg);
 
-	DBG("check_nonce(): comparing [%.*s] and [%.*s]\n",
-	    _nonce->len, ZSW(_nonce->s), NONCE_LEN, non);
+	DBG("auth:check_nonce: comparing [%.*s] and [%.*s]\n",
+	    nonce->len, ZSW(nonce->s), NONCE_LEN, non);
 	
-	if (!memcmp(non, _nonce->s, _nonce->len)) {
+	if (!memcmp(non, nonce->s, nonce->len)) {
 		return 0;
 	}
 
@@ -159,11 +159,11 @@ int check_nonce(str* _nonce, str* _secret)
 /*
  * Check if a nonce is stale
  */
-int is_nonce_stale(str* _n) 
+int is_nonce_stale(str* n) 
 {
-	if (!_n->s) return 0;
+	if (!n->s) return 0;
 
-	if (get_nonce_expires(_n) < time(0)) {
+	if (get_nonce_expires(n) < time(0)) {
 		return 1;
 	} else {
 		return 0;

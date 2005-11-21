@@ -72,46 +72,46 @@
 /*
  * Create {WWW,Proxy}-Authenticate header field
  */
-static inline char *build_auth_hf(int _retries, int _stale, str* _realm, 
-				  int* _len, int _qop, char* _hf_name)
+static inline char *build_auth_hf(struct sip_msg* msg, int retries, int stale, str* realm, 
+				  int* len, int qop, char* hf_name)
 {
 	
 	int hf_name_len;
 	char *hf, *p;
 
 	     /* length calculation */
-	*_len=hf_name_len=strlen(_hf_name);
-	*_len+=DIGEST_REALM_LEN
-		+_realm->len
+	*len=hf_name_len=strlen(hf_name);
+	*len+=DIGEST_REALM_LEN
+		+realm->len
 		+DIGEST_NONCE_LEN
 		+NONCE_LEN
 		+1 /* '"' */
-		+((_qop)? QOP_PARAM_LEN:0)
-		+((_stale)? STALE_PARAM_LEN : 0)
+		+((qop)? QOP_PARAM_LEN:0)
+		+((stale)? STALE_PARAM_LEN : 0)
 #ifdef _PRINT_MD5
 		+DIGEST_MD5_LEN
 #endif
 		+CRLF_LEN ;
 	
-	p=hf=pkg_malloc(*_len+1);
+	p=hf=pkg_malloc(*len+1);
 	if (!hf) {
-		LOG(L_ERR, "ERROR: build_auth_hf: no memory\n");
-		*_len=0;
+		LOG(L_ERR, "ERROR: auth:build_auth_hf: no memory\n");
+		*len=0;
 		return 0;
 	}
 
-	memcpy(p, _hf_name, hf_name_len); p+=hf_name_len;
+	memcpy(p, hf_name, hf_name_len); p+=hf_name_len;
 	memcpy(p, DIGEST_REALM, DIGEST_REALM_LEN);p+=DIGEST_REALM_LEN;
-	memcpy(p, _realm->s, _realm->len);p+=_realm->len;
+	memcpy(p, realm->s, realm->len);p+=realm->len;
 	memcpy(p, DIGEST_NONCE, DIGEST_NONCE_LEN);p+=DIGEST_NONCE_LEN;
-	calc_nonce(p, time(0) + nonce_expire, &secret);
+	calc_nonce(p, time(0) + nonce_expire, &secret, msg);
 	p+=NONCE_LEN;
 	*p='"';p++;
-	if (_qop) {
+	if (qop) {
 		memcpy(p, QOP_PARAM, QOP_PARAM_LEN);
 		p+=QOP_PARAM_LEN;
 	}
-	if (_stale) {
+	if (stale) {
 		memcpy(p, STALE_PARAM, STALE_PARAM_LEN);
 		p+=STALE_PARAM_LEN;
 	}
@@ -121,15 +121,15 @@ static inline char *build_auth_hf(int _retries, int _stale, str* _realm,
 	memcpy(p, CRLF, CRLF_LEN ); p+=CRLF_LEN;
 	*p=0; /* zero terminator, just in case */
 	
-	DBG("build_auth_hf(): '%s'\n", hf);
+	DBG("auth:build_auth_hf: '%s'\n", hf);
 	return hf;
 }
 
 /*
  * Create and send a challenge
  */
-static inline int challenge(struct sip_msg* _msg, str* _realm, int _qop, 
-			    int _code, char* _message, char* _challenge_msg)
+static inline int challenge(struct sip_msg* msg, str* realm, int qop, 
+			    int code, char* message, char* challenge_msg)
 {
 	int auth_hf_len;
 	struct hdr_field* h;
@@ -137,45 +137,41 @@ static inline int challenge(struct sip_msg* _msg, str* _realm, int _qop,
 	char *auth_hf;
 	int ret;
 	hdr_types_t hftype = 0; /* Makes gcc happy */
-	struct sip_uri uri;
 
-	switch(_code) {
+	switch(code) {
 	case 401: 
-		get_authorized_cred(_msg->authorization, &h); 
+		get_authorized_cred(msg->authorization, &h); 
 		hftype = HDR_AUTHORIZATION_T;
 		break;
 	case 407: 
-		get_authorized_cred(_msg->proxy_auth, &h);
+		get_authorized_cred(msg->proxy_auth, &h);
 		hftype = HDR_PROXYAUTH_T;
 		break;
 	}
 
 	if (h) cred = (auth_body_t*)(h->parsed);
 
-	if (_realm->len == 0) {
-		if (get_realm(_msg, hftype, &uri) < 0) {
-			LOG(L_ERR, "challenge(): Error while extracting URI\n");
-			if (send_resp(_msg, 400, MESSAGE_400, 0, 0) == -1) {
-				LOG(L_ERR, "challenge(): Error while sending response\n");
+	if (realm->len == 0) {
+		if (get_realm(msg, hftype, realm) < 0) {
+			LOG(L_ERR, "auth:challenge: Error while extracting URI\n");
+			if (send_resp(msg, 400, MESSAGE_400, 0, 0) == -1) {
+				LOG(L_ERR, "auth:challenge: Error while sending response\n");
 				return -1;
 			}
 			return 0;
 		}
-
-		_realm = &uri.host;
-		strip_realm(_realm);
 	}
 
-	auth_hf = build_auth_hf(0, (cred ? cred->stale : 0), _realm, &auth_hf_len, _qop, _challenge_msg);
+	auth_hf = build_auth_hf(msg, 0, (cred ? cred->stale : 0), realm, &auth_hf_len, qop, challenge_msg);
 	if (!auth_hf) {
-		LOG(L_ERR, "ERROR: challenge: no mem w/cred\n");
+		LOG(L_ERR, "ERROR: auth:challenge: no mem w/cred\n");
 		return -1;
 	}
 	
-	ret = send_resp(_msg, _code, _message, auth_hf, auth_hf_len);
+	ret = send_resp(msg, code, message, auth_hf, auth_hf_len);
 	if (auth_hf) pkg_free(auth_hf);
 	if (ret == -1) {
-		LOG(L_ERR, "challenge(): Error while sending response\n");
+		LOG(L_ERR, "auth:challenge: Error while sending response\n");
 		return -1;
 	}
 	
@@ -186,39 +182,39 @@ static inline int challenge(struct sip_msg* _msg, str* _realm, int _qop,
 /*
  * Challenge a user to send credentials using WWW-Authorize header field
  */
-int www_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
+int www_challenge(struct sip_msg* msg, char* realm, char* qop)
 {
-	return challenge(_msg, (str*)_realm, (int)(long)_qop, 401, MESSAGE_401,
-						WWW_AUTH_CHALLENGE);
+	return challenge(msg, (str*)realm, (int)(long)qop, 401, MESSAGE_401,
+			 WWW_AUTH_CHALLENGE);
 }
 
 
 /*
  * Challenge a user to send credentials using Proxy-Authorize header field
  */
-int proxy_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
+int proxy_challenge(struct sip_msg* msg, char* realm, char* qop)
 {
-	return challenge(_msg, (str*)_realm, (int)(long)_qop, 407, MESSAGE_407, 
-						PROXY_AUTH_CHALLENGE);
+	return challenge(msg, (str*)realm, (int)(long)qop, 407, MESSAGE_407, 
+			 PROXY_AUTH_CHALLENGE);
 }
 
 
 /*
  * Remove used credentials from a SIP message header
  */
-int consume_credentials(struct sip_msg* _m, char* _s1, char* _s2)
+int consume_credentials(struct sip_msg* msg, char* s1, char* s2)
 {
 	struct hdr_field* h;
 	int len;
 
-	get_authorized_cred(_m->authorization, &h);
+	get_authorized_cred(msg->authorization, &h);
 	if (!h) {
-		get_authorized_cred(_m->proxy_auth, &h);
+		get_authorized_cred(msg->proxy_auth, &h);
 		if (!h) { 
-			if (_m->REQ_METHOD!=METHOD_ACK 
-					&& _m->REQ_METHOD!=METHOD_CANCEL) {
-				LOG(L_ERR, "consume_credentials(): No authorized "
-					"credentials found (error in scripts)\n");
+			if (msg->REQ_METHOD!=METHOD_ACK 
+			    && msg->REQ_METHOD!=METHOD_CANCEL) {
+				LOG(L_ERR, "auth:consume_credentials: No authorized "
+				    "credentials found (error in scripts)\n");
 			}
 			return -1;
 		}
@@ -226,10 +222,10 @@ int consume_credentials(struct sip_msg* _m, char* _s1, char* _s2)
 
 	len=h->len;
 
-	if (del_lump(_m, h->name.s - _m->buf, len, 0) == 0) {
-		LOG(L_ERR, "consume_credentials(): Can't remove credentials\n");
+	if (del_lump(msg, h->name.s - msg->buf, len, 0) == 0) {
+		LOG(L_ERR, "auth:consume_credentials: Can't remove credentials\n");
 		return -1;
 	}
-
+	
 	return 1;
 }

@@ -38,7 +38,7 @@
 #include <string.h>
 
 /*
- * Parse list of tokens separated by some char and put each tocken
+ * Parse list of tokens separated by some char and put each token
  * into result array. Caller frees result array!
  */
 static inline int

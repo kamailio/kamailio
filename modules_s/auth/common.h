@@ -39,13 +39,13 @@
 /* 
  * Return parsed To or From, host part of the parsed uri is realm
  */
-int get_realm(struct sip_msg* _m, int _hftype, struct sip_uri* _u);
+int get_realm(struct sip_msg* msg, int hftype, str* realm);
 
 
 /*
  * Create a response with given code and reason phrase
  * Optionally add new headers specified in _hdr
  */
-int send_resp(struct sip_msg* _m, int _code, char* _reason, char* _hdr, int _hdr_len);
+int send_resp(struct sip_msg* msg, int code, char* reason, char* hdr, int hdr_len);
 
 #endif /* COMMON_H */

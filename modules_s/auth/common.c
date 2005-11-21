@@ -40,42 +40,56 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
 #include "../../data_lump_rpl.h"
+#include "../../usr_avp.h"
 #include "auth_mod.h"
 #include "common.h"
 
 
 /* 
- * Return parsed To or From, host part of the parsed uri is realm
+ * Find out the digest realm to be used in challenge in the following order:
+ *
+ * 1) "realm" avp
+ * 2) To/From URI host part
  */
-int get_realm(struct sip_msg* _m, hdr_types_t _hftype, struct sip_uri* _u)
+int get_realm(struct sip_msg* msg, hdr_types_t hftype, str* realm)
 {
-	str uri;
+	static struct sip_uri puri;
+	int_str name, val;
+	str u;
+	static str n = STR_STATIC_INIT(AVP_REALM);
+	
+	name.s = &n;
+	if (search_first_avp(AVP_NAME_STR, name, &val, 0)) {
+		*realm = *val.s;
+		return 0;
+	}
 
-	if ((REQ_LINE(_m).method.len == 8) 
-	    && !memcmp(REQ_LINE(_m).method.s, "REGISTER", 8) 
-	    && (_hftype == HDR_AUTHORIZATION_T)
+	if ((REQ_LINE(msg).method.len == 8) 
+	    && !memcmp(REQ_LINE(msg).method.s, "REGISTER", 8) 
+	    && (hftype == HDR_AUTHORIZATION_T)
 	   ) {
-		if (!_m->to && ((parse_headers(_m, HDR_TO_F, 0) == -1) || (!_m->to))) {
-			LOG(L_ERR, "get_realm(): Error while parsing headers\n");
+		if (!msg->to && ((parse_headers(msg, HDR_TO_F, 0) == -1) || (!msg->to))) {
+			LOG(L_ERR, "auth:get_realm: Error while parsing headers\n");
 			return -1;
 		}
 		
 		     /* Body of To header field is parsed automatically */
-		uri = get_to(_m)->uri; 
+		u = get_to(msg)->uri; 
 	} else {
-		if (parse_from_header(_m) < 0) {
-			LOG(L_ERR, "get_realm(): Error while parsing headers\n");
+		if (parse_from_header(msg) < 0) {
+			LOG(L_ERR, "auth:get_realm: Error while parsing headers\n");
 			return -2;
 		}
 
-		uri = get_from(_m)->uri;
+		u = get_from(msg)->uri;
 	}
 
-	if (parse_uri(uri.s, uri.len, _u) < 0) {
-		LOG(L_ERR, "get_realm(): Error while parsing URI\n");
+	if (parse_uri(u.s, u.len, &puri) < 0) {
+		LOG(L_ERR, "auth:get_realm: Error while parsing URI\n");
 		return -3;
 	}
-	
+
+	*realm = puri.host;
 	return 0;
 }
 
@@ -84,16 +98,16 @@ int get_realm(struct sip_msg* _m, hdr_types_t _hftype, struct sip_uri* _u)
  * Create a response with given code and reason phrase
  * Optionally add new headers specified in _hdr
  */
-int send_resp(struct sip_msg* _m, int _code, char* _reason,
-					char* _hdr, int _hdr_len)
+int send_resp(struct sip_msg* msg, int code, char* reason,
+					char* hdr, int hdr_len)
 {
 	/* Add new headers if there are any */
-	if ((_hdr) && (_hdr_len)) {
-		if (add_lump_rpl( _m, _hdr, _hdr_len, LUMP_RPL_HDR)==0) {
+	if ((hdr) && (hdr_len)) {
+		if (add_lump_rpl(msg, hdr, hdr_len, LUMP_RPL_HDR)==0) {
 			LOG(L_ERR,"ERROR:auth:send_resp: unable to append hdr\n");
 			return -1;
 		}
 	}
 
-	return sl_reply(_m, (char*)(long)_code, _reason);
+	return sl_reply(msg, (char*)(long)code, reason);
 }

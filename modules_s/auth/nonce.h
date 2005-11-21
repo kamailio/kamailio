@@ -31,6 +31,7 @@
 #ifndef NONCE_H
 #define NONCE_H
 
+#include "../../parser/msg_parser.h"
 #include "../../str.h"
 #include <time.h>
 
@@ -44,25 +45,25 @@
 /*
  * Calculate nonce value
  */
-void calc_nonce(char* _nonce, int _expires, str* _secret);
+void calc_nonce(char* nonce, int expires, str* secret, struct sip_msg* msg);
 
 
 /*
  * Check nonce value received from UA
  */
-int check_nonce(str* _nonce, str* _secret);
+int check_nonce(str* nonce, str* secret, struct sip_msg* msg);
 
 
 /*
  * Get expiry time from nonce string
  */
-time_t get_nonce_expires(str* _nonce);
+time_t get_nonce_expires(str* nonce);
 
 
 /*
  * Check if the nonce is stale
  */
-int is_nonce_stale(str* _nonce);
+int is_nonce_stale(str* nonce);
 
 
 #endif /* NONCE_H */

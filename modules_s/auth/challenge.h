@@ -37,19 +37,19 @@
 /* 
  * Challenge a user agent using WWW-Authenticate header field
  */
-int www_challenge(struct sip_msg* _msg, char* _realm, char* _str2);
+int www_challenge(struct sip_msg* msg, char* realm, char* str2);
 
 
 /*
  * Challenge a user agent using Proxy-Authenticate header field
  */
-int proxy_challenge(struct sip_msg* _msg, char* _realm, char* _str2);
+int proxy_challenge(struct sip_msg* msg, char* realm, char* str2);
 
 
 /*
  * Remove used credentials from a SIP message header
  */
-int consume_credentials(struct sip_msg* _m, char* _s1, char* _s2);
+int consume_credentials(struct sip_msg* msg, char* s1, char* s2);
 
 
 #endif /* AUTH_H */

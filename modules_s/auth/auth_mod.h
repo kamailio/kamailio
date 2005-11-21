@@ -43,13 +43,10 @@
  */
 extern str secret;            /* secret phrase used to generate nonce */
 extern int nonce_expire;      /* nonce expire interval */
-extern str rpid_prefix;       /* Remote-Party-ID prefix */
-extern str rpid_suffix;       /* Remote-Party-ID suffix */
-extern str realm_prefix;      /* strip off auto-generated realm */
-extern str rpid_avp;          /* The name of AVP containing the rpid value */
+extern int protect_contacts;  /* Enable/disable contact hashing in nonce */
 
 
 /* Stateless reply function pointer */
-extern int (*sl_reply)(struct sip_msg* _m, char* _str1, char* _str2);
+extern int (*sl_reply)(struct sip_msg* msg, char* str1, char* str2);
 
 #endif /* AUTH_MOD_H */
