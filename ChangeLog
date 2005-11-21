@@ -1,3 +1,14 @@
+2005-11-21  Jan Janak <jan@iptel.org>
+
+	* domain: Fixed hash problem (was not case-insensitive)
+	    reported and patch provided by
+	    Axel Böger <Axel.Boeger@freenet-ag.de>
+
+2005-11-01  Jan Janak <jan@iptel.org>
+
+        * domain: Free memory allocated for hash table entry in case
+	          of failure
+
 2005-10-04  Jan Janak <jan@iptel.org>
 	
 	* tm: timer avp race condition fix backported from head
