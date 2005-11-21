@@ -66,10 +66,6 @@ int max_expires     = 0;              /* Minimum expires the phones are allowed 
 int max_contacts = 0;                 /* Maximum number of contacts per AOR */
 int retry_after = 0;                  /* The value of Retry-After HF in 5xx replies */
 
-int use_domain = 0;
-char* realm_pref    = "";   /* Realm prefix to be removed */
-str realm_prefix;
-
 #define RCV_NAME "received"
 
 str rcv_param = STR_STATIC_INIT(RCV_NAME);
@@ -102,14 +98,11 @@ static param_export_t params[] = {
 	{"default_expires", INT_PARAM, &default_expires},
 	{"default_q",       INT_PARAM, &default_q      },
 	{"append_branches", INT_PARAM, &append_branches},
-	{"case_sensitive",  INT_PARAM, &case_sensitive },
 	{"nat_flag",        INT_PARAM, &nat_flag       },
-	{"realm_prefix",    STR_PARAM, &realm_pref     },
 	{"min_expires",     INT_PARAM, &min_expires    },
 	{"max_expires",     INT_PARAM, &max_expires    },
-        {"received_param",  STR_PARAM, &rcv_param  },
+        {"received_param",  STR_PARAM, &rcv_param      },
 	{"received_avp",    INT_PARAM, &rcv_avp_no     },
-	{"use_domain",      INT_PARAM, &use_domain     },
 	{"max_contacts",    INT_PARAM, &max_contacts   },
 	{"retry_after",     INT_PARAM, &retry_after    },
 	{0, 0, 0}
@@ -150,9 +143,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	realm_prefix.s = realm_pref;
-	realm_prefix.len = strlen(realm_pref);
-	
 	rcv_param.len = strlen(rcv_param.s);
 
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
@@ -174,18 +164,6 @@ static int mod_init(void)
 	
 
 	if (bind_usrloc(&ul) < 0) {
-		return -1;
-	}
-
-	     /*
-	      * Test if use_domain parameters of usrloc and registrar
-	      * module are equal
-	      */
-	if (ul.use_domain != use_domain) {
-		LOG(L_ERR, "ERROR: 'use_domain' parameters of 'usrloc' and 'registrar' modules"
-		    " must have the same value !\n");
-		LOG(L_ERR, "(Hint: Did you forget to use modparam(\"registrar\", \"use_domain\", 1) in"
-			" in your ser.cfg ?)\n");
 		return -1;
 	}
 

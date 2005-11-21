@@ -40,6 +40,7 @@
 #include "../../config.h"
 #include "../../action.h"
 #include "../usrloc/usrloc.h"
+#include "../../id.h"
 #include "common.h"
 #include "regtime.h"
 #include "reg_mod.h"
@@ -53,25 +54,19 @@
 int lookup(struct sip_msg* _m, char* _t, char* _s)
 {
 	urecord_t* r;
-	str aor, uri;
+	str uid;
 	ucontact_t* ptr;
 	int res;
 	unsigned int nat;
 
 	nat = 0;
 	
-	if (_m->new_uri.s) uri = _m->new_uri;
-	else uri = _m->first_line.u.request.uri;
-	
-	if (extract_aor(&uri, &aor) < 0) {
-		LOG(L_ERR, "lookup(): Error while extracting address of record\n");
-		return -1;
-	}
-	
+	if (get_to_uid(&uid, _m) < 0) return -1;
+
 	get_act_time();
 
 	ul.lock_udomain((udomain_t*)_t);
-	res = ul.get_urecord((udomain_t*)_t, &aor, &r);
+	res = ul.get_urecord((udomain_t*)_t, &uid, &r);
 	if (res < 0) {
 		LOG(L_ERR, "lookup(): Error while querying usrloc\n");
 		ul.unlock_udomain((udomain_t*)_t);
@@ -79,7 +74,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	}
 	
 	if (res > 0) {
-		DBG("lookup(): '%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
+		DBG("lookup(): '%.*s' Not found in usrloc\n", uid.len, ZSW(uid.s));
 		ul.unlock_udomain((udomain_t*)_t);
 		return -3;
 	}
@@ -148,21 +143,15 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
  */
 int registered(struct sip_msg* _m, char* _t, char* _s)
 {
-	str uri, aor;
+	str uid;
 	urecord_t* r;
         ucontact_t* ptr;
 	int res;
 
-	if (_m->new_uri.s) uri = _m->new_uri;
-	else uri = _m->first_line.u.request.uri;
-	
-	if (extract_aor(&uri, &aor) < 0) {
-		LOG(L_ERR, "registered(): Error while extracting address of record\n");
-		return -1;
-	}
-	
+	if (get_to_uid(&uid, _m) < 0) return -1;
+
 	ul.lock_udomain((udomain_t*)_t);
-	res = ul.get_urecord((udomain_t*)_t, &aor, &r);
+	res = ul.get_urecord((udomain_t*)_t, &uid, &r);
 
 	if (res < 0) {
 		ul.unlock_udomain((udomain_t*)_t);
@@ -178,12 +167,12 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 
 		if (ptr) {
 			ul.unlock_udomain((udomain_t*)_t);
-			DBG("registered(): '%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
+			DBG("registered(): '%.*s' found in usrloc\n", uid.len, ZSW(uid.s));
 			return 1;
 		}
 	}
 
 	ul.unlock_udomain((udomain_t*)_t);
-	DBG("registered(): '%.*s' not found in usrloc\n", aor.len, ZSW(aor.s));
+	DBG("registered(): '%.*s' not found in usrloc\n", uid.len, ZSW(uid.s));
 	return -1;
 }

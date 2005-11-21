@@ -33,11 +33,4 @@
 
 #include "../../str.h"
 
-
-/*
- * Extract Address Of Record
- */
-int extract_aor(str* _uri, str* _a);
-
-
 #endif /* COMMON_H */

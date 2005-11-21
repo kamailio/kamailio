@@ -39,13 +39,10 @@
 extern int default_expires;
 extern qvalue_t default_q;
 extern int append_branches;
-extern int case_sensitive;
 extern int nat_flag;
 extern int min_expires;
 extern int max_expires;
 extern int received_avp;
-extern int use_domain;
-extern str realm_prefix;
 extern float def_q;
 
 extern str rcv_param;
