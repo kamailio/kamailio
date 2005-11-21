@@ -70,7 +70,7 @@ MODULE_VERSION
 static int set_gflag(struct sip_msg*, char *, char *);
 static int reset_gflag(struct sip_msg*, char *, char *);
 static int is_gflag(struct sip_msg*, char *, char *);
-static int flush_gflag(struct sip_msg*, char*, char*);
+static int flush_gflags(struct sip_msg*, char*, char*);
 static int fifo_flush_gflags( FILE* pipe, char* response_file);
 static int fifo_dump_gflags(FILE* pipe, char* response_file);
 
@@ -98,7 +98,7 @@ static cmd_export_t cmds[]={
 	{"set_gflag",   set_gflag,   1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
 	{"reset_gflag", reset_gflag, 1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
 	{"is_gflag",    is_gflag,    1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
-	{"flush_gflag", flush_gflag, 0, 0,           REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
+	{"flush_gflags", flush_gflags, 0, 0,         REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -451,7 +451,7 @@ int save_gflags(unsigned int flags)
 /*
  * Flush the state of global flags into database
  */
-static int flush_gflag(struct sip_msg* msg, char* s1, char* s2)
+static int flush_gflags(struct sip_msg* msg, char* s1, char* s2)
 {
 	if (save_gflags(*gflags) < 0)  return -1;
 	else return 1;
