@@ -10,7 +10,7 @@
  * or command line tools.
  *
  *
- * Copyright (C) 2004 FhG
+ * Copyright (C) 2004 FhG FOKUS
  *
  * This file is part of ser, a free SIP server.
  *
@@ -50,6 +50,8 @@
 #define FIFO_SET_GFLAG "set_gflag"
 #define FIFO_IS_GFLAG "is_gflag"
 #define FIFO_RESET_GFLAG "reset_gflag"
+#define FIFO_FLUSH_GFLAGS "flush_gflags"
+#define FIFO_DUMP_GFLAGS "dump_gflags"
 
 #include <stdio.h>
 #include "../../sr_module.h"
@@ -68,14 +70,18 @@ MODULE_VERSION
 static int set_gflag(struct sip_msg*, char *, char *);
 static int reset_gflag(struct sip_msg*, char *, char *);
 static int is_gflag(struct sip_msg*, char *, char *);
+static int flush_gflag(struct sip_msg*, char*, char*);
+static int fifo_flush_gflags( FILE* pipe, char* response_file);
+static int fifo_dump_gflags(FILE* pipe, char* response_file);
 
 static int mod_init(void);
 static void mod_destroy(void);
+static int child_init(int rank);
 
 static int initial=0;
 static unsigned int *gflags; 
 
-static char* db_url = DEFAULT_RODB_URL;
+static char* db_url = DEFAULT_DB_URL;
 static int load_global_attrs = 0;
 static char* attr_table = "global_attrs";
 static char* attr_name = "name";
@@ -83,7 +89,7 @@ static char* attr_type = "type";
 static char* attr_value = "value";
 static char* attr_flags = "flags";
 
-static db_con_t* con;
+static db_con_t* con = 0;
 static db_func_t db;
 
 static avp_t* global_avps;
@@ -92,6 +98,7 @@ static cmd_export_t cmds[]={
 	{"set_gflag",   set_gflag,   1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
 	{"reset_gflag", reset_gflag, 1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
 	{"is_gflag",    is_gflag,    1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
+	{"flush_gflag", flush_gflag, 0, 0,           REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -115,7 +122,7 @@ struct module_exports exports = {
 	0,           /* response function*/
 	mod_destroy, /* destroy function */
 	0,           /* oncancel function */
-	0            /* per-child init function */
+	child_init   /* per-child init function */
 };
 
 
@@ -290,6 +297,10 @@ static int load_attrs(void)
 		} else {
 			     /* Integer AVP */
 			str2int(&avp_val, (unsigned*)&v.n);
+			if (!strcmp(AVP_GFLAGS, avp_name.s)) {
+				     /* Restore gflags */
+				*gflags = v.n;
+			}
 		}
 
 		if (add_avp(flags, name, v) < 0) {
@@ -325,6 +336,16 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if (register_fifo_cmd(fifo_flush_gflags, FIFO_FLUSH_GFLAGS, 0) < 0) {
+		LOG(L_CRIT, "Cannot register FIFO_FLUSH_GFLAGS\n");
+		return -1;
+	}
+
+	if (register_fifo_cmd(fifo_dump_gflags, FIFO_DUMP_GFLAGS, 0) < 0) {
+		LOG(L_CRIT, "Cannot register FIFO_DUMP_GFLAGS\n");
+		return -1;
+	}
+
 	if (load_global_attrs) {
 		if (bind_dbmod(db_url, &db) < 0) { /* Find database module */
 			LOG(L_ERR, "gflags:mod_init: Can't bind database module\n");
@@ -356,8 +377,116 @@ static int mod_init(void)
 	return 0;
 }
 
+static int child_init(int rank)
+{
+	con = db.init(db_url);
+	if (!con) {
+		LOG(L_ERR, "gflags:mod_init: Error while connecting database\n");
+		return -1;
+	}
+	return 0;
+}
+
 
 static void mod_destroy(void)
 {
 	destroy_avp_list(&global_avps);
+}
+
+
+int save_gflags(unsigned int flags)
+{
+	db_key_t keys[4];
+	db_val_t vals[4];
+        str fl;
+
+	if (!load_global_attrs) {
+		LOG(L_ERR, "gflags:save_gflags: You must enable load_global_attrs to make flush_gflag work\n");
+		return -1;
+	}
+	
+	if (db.use_table(con,attr_table) < 0) {
+		LOG(L_ERR, "gflags:save_gflags: Error in use_table\n");
+		return -1;
+	}
+
+	keys[0] = attr_name;
+	vals[0].type = DB_STRING;
+	vals[0].nul = 0;
+	vals[0].val.string_val = AVP_GFLAGS;
+
+	if (db.delete(con, keys, 0, vals, 1) < 0) {
+		LOG(L_ERR, "gflags:save_gflag: Error while deleting previous value\n");
+		return -1;
+	}
+
+	keys[1] = attr_type;
+	keys[2] = attr_value;
+	keys[3] = attr_flags;
+
+	vals[1].type = DB_INT;
+	vals[1].nul = 0;
+	vals[1].val.int_val = 0; /* Integer */
+
+	fl.s = int2str(flags, &fl.len);
+
+	vals[2].type = DB_STR;
+	vals[2].nul = 0;
+	vals[2].val.str_val = fl;
+
+	vals[3].type = DB_INT;
+	vals[3].nul = 0;
+	vals[3].val.int_val = DB_LOAD_SER;
+
+	if (db.insert(con, keys, vals, 4) < 0) {
+		LOG(L_ERR, "gflags:save_gflag: Unable to store new value\n");
+		return -1;
+	}
+
+	DBG("gflags:save_gflags: Successfuly stored in database\n");
+	return 0;
+}
+
+
+/*
+ * Flush the state of global flags into database
+ */
+static int flush_gflag(struct sip_msg* msg, char* s1, char* s2)
+{
+	if (save_gflags(*gflags) < 0)  return -1;
+	else return 1;
+}
+
+
+static int fifo_flush_gflags( FILE* pipe, char* response_file )
+{
+	if (save_gflags(*gflags) < 0) {
+		fifo_reply (response_file, "400 Error while flushing global flags\n");
+		return -1;
+	} else {
+		fifo_reply (response_file, "200 OK\n");
+		return 1;
+	}
+}
+
+static int fifo_dump_gflags( FILE* pipe, char* response_file )
+{
+	FILE* reply_file;
+	int i;
+	unsigned int flags;
+
+	reply_file = open_reply_pipe(response_file);
+	if (reply_file == 0) {
+		LOG(L_ERR, "domain:fifo_dump_gflags: Opening of response file failed\n");
+		return -1;
+	}
+
+	fprintf(reply_file, "200 OK\n");
+	flags = *gflags;
+	for(i = 0; i < 32; i++) {
+		fprintf(reply_file, "%02d: %d\n", i, (flags & (1 << i)) ? 1 : 0);
+	}
+
+	fclose(reply_file);
+	return 1;
 }
