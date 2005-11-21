@@ -49,7 +49,7 @@
 
 MODULE_VERSION
 
-#define TABLE_VERSION 3
+#define TABLE_VERSION 6
 
 /*
  * Module destroy function prototype
@@ -75,46 +75,48 @@ static int authdb_fixup(void** param, int param_no);
 /*
  * Pointer to reply function in stateless module
  */
-int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
+int (*sl_reply)(struct sip_msg* msg, char* str1, char* str2);
 
 
-#define USER_COL "username"
 
-#define DOMAIN_COL "domain"
-
+#define USERNAME_COL "auth_username"
+#define REALM_COL "realm"
 #define PASS_COL "ha1"
-
 #define PASS_COL_2 "ha1b"
-
-#define DEFAULT_CRED_LIST "rpid"
+#define DEFAULT_CRED_LIST "uid"
+#define FLAGS_COL "flags"
 
 /*
  * Module parameter variables
  */
 static char* db_url         = DEFAULT_RODB_URL;
-str user_column             = STR_STATIC_INIT(USER_COL);
-str domain_column           = STR_STATIC_INIT(DOMAIN_COL);
+
+str username_column         = STR_STATIC_INIT(USERNAME_COL);
+str realm_column            = STR_STATIC_INIT(REALM_COL);
 str pass_column             = STR_STATIC_INIT(PASS_COL);
 str pass_column_2           = STR_STATIC_INIT(PASS_COL_2);
-
+str flags_column            = STR_STATIC_INIT(FLAGS_COL);
 
 int calc_ha1                = 0;
-int use_domain              = 0;   /* Use also domain when looking up a table row */
 
 db_con_t* auth_db_handle = 0;      /* database connection handle */
 db_func_t auth_dbf;
 auth_api_t auth_api;
 
 str credentials_list        = STR_STATIC_INIT(DEFAULT_CRED_LIST);
+
 str* credentials;          /* Parsed list of credentials to load */
 int credentials_n;         /* Number of credentials in the list */
+
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"www_authorize",   www_authorize,   2, authdb_fixup, REQUEST_ROUTE},
-	{"proxy_authorize", proxy_authorize, 2, authdb_fixup, REQUEST_ROUTE},
+	{"www_authenticate",   www_authenticate,    2, authdb_fixup, REQUEST_ROUTE},
+	{"www_authenticate",   www_authenticate1,   1, authdb_fixup, REQUEST_ROUTE},
+	{"proxy_authenticate", proxy_authenticate,  2, authdb_fixup, REQUEST_ROUTE},
+	{"proxy_authenticate", proxy_authenticate1, 1, authdb_fixup, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -124,12 +126,12 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"db_url",            STR_PARAM, &db_url             },
-	{"user_column",       STR_PARAM, &user_column.s      },
-	{"domain_column",     STR_PARAM, &domain_column.s    },
+	{"username_column",   STR_PARAM, &username_column.s  },
+	{"realm_column",      STR_PARAM, &realm_column.s     },
 	{"password_column",   STR_PARAM, &pass_column.s      },
 	{"password_column_2", STR_PARAM, &pass_column_2.s    },
+	{"flags_column",      STR_PARAM, &flags_column.s     },
 	{"calculate_ha1",     INT_PARAM, &calc_ha1           },
-	{"use_domain",        INT_PARAM, &use_domain         },
 	{"load_credentials",  STR_PARAM, &credentials_list.s },
 	{0, 0, 0}
 };
@@ -168,10 +170,11 @@ static int mod_init(void)
 
 	DBG("auth_db module - initializing\n");
 
-	user_column.len = strlen(user_column.s);
-	domain_column.len = strlen(domain_column.s);
+	username_column.len = strlen(username_column.s);
+	realm_column.len = strlen(realm_column.s);
 	pass_column.len = strlen(pass_column.s);
 	pass_column_2.len = strlen(pass_column.s);
+	flags_column.len = strlen(flags_column.s);
 
 	credentials_list.len = strlen(credentials_list.s);
 
@@ -195,7 +198,7 @@ static int mod_init(void)
 
 	sl_reply = find_export("sl_send_reply", 2, 0);
 	if (!sl_reply) {
-		LOG(L_ERR, "auth_db:mod_init(): This module requires sl module\n");
+		LOG(L_ERR, "auth_db:mod_init: This module requires sl module\n");
 		return -4;
 	}
 

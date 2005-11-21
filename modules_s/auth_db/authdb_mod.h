@@ -41,15 +41,15 @@
  * Module parameters variables
  */
 
-extern str user_column;     /* 'username' column name */
-extern str domain_column;   /* 'domain' column name */
+extern str username_column; /* 'username' column name */
+extern str realm_column;    /* 'realm' column name */
 extern str pass_column;     /* 'password' column name */
 extern str pass_column_2;   /* Column containing HA1 string constructed
 			     * of user@domain username
 			     */
+extern str flags_column;    /* Flags column in credentials table */
 
 extern int calc_ha1;          /* if set to 1, ha1 is calculated by the server */
-extern int use_domain;        /* If set to 1 then the domain will be used when selecting a row */
 
 extern db_con_t* auth_db_handle; /* database connection handle */
 extern db_func_t auth_dbf;
@@ -62,6 +62,6 @@ extern int credentials_n;
 /*
  * Pointer to reply function in stateless module
  */
-extern int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
+extern int (*sl_reply)(struct sip_msg* msg, char* str1, char* str2);
 
 #endif /* AUTHDB_MOD_H */

@@ -52,73 +52,88 @@
 #define MESSAGE_500 "Server Internal Error"
 
 
-static inline int get_ha1(struct username* _username, str* _domain,
-			  char* _table, char* _ha1, db_res_t** res)
+static inline int get_ha1(struct username* username, str* realm,
+			  char* table, char* ha1, db_res_t** res, int* row)
 {
 	db_key_t keys[2];
 	db_val_t vals[2];
-	db_key_t *col;
+	db_val_t* val;
+	db_key_t* col;
 	str result;
-	int n, nc;
+	int n, nc, i;
 
-	col = pkg_malloc(sizeof(*col) * (credentials_n + 1));
+	col = pkg_malloc(sizeof(*col) * (credentials_n + 2));
 	if (col == NULL) {
-		LOG(L_ERR, "get_ha1(): Error while allocating memory\n");
+		LOG(L_ERR, "auth_db:get_ha1: Error while allocating memory\n");
 		return -1;
 	}
 
-	keys[0] = user_column.s;
-	keys[1] = domain_column.s;
-	col[0] = (_username->domain.len && !calc_ha1) ? (pass_column_2.s) : (pass_column.s);
+	keys[0] = username_column.s;
+	keys[1] = realm_column.s;
+	col[0] = (username->domain.len && !calc_ha1) ? (pass_column_2.s) : (pass_column.s);
+	col[1] = flags_column.s;
 
 	for (n = 0; n < credentials_n; n++) {
-		col[1 + n] = credentials[n].s;
+		col[2 + n] = credentials[n].s;
 	}
 
-	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
-	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
+	vals[0].type = vals[1].type = DB_STR;
+	vals[0].nul = vals[1].nul = 0;
+	vals[0].val.str_val = username->user;
 
-	VAL_STR(vals).s = _username->user.s;
-	VAL_STR(vals).len = _username->user.len;
-
-	if (_username->domain.len) {
-		VAL_STR(vals + 1) = _username->domain;
+	if (username->domain.len) {
+		vals[1].val.str_val = username->domain;
 	} else {
-		VAL_STR(vals + 1) = *_domain;
+		vals[1].val.str_val = *realm;
 	}
 
-	n = (use_domain ? 2 : 1);
-	nc = 1 + credentials_n;
-	if (auth_dbf.use_table(auth_db_handle, _table) < 0) {
-		LOG(L_ERR, "get_ha1(): Error in use_table\n");
+	n = 2;
+	nc = 2 + credentials_n;
+	if (auth_dbf.use_table(auth_db_handle, table) < 0) {
+		LOG(L_ERR, "auth_db:get_ha1: Error in use_table\n");
 		pkg_free(col);
 		return -1;
 	}
 
 	if (auth_dbf.query(auth_db_handle, keys, 0, vals, col, n, nc, 0, res) < 0) {
-		LOG(L_ERR, "get_ha1(): Error while querying database\n");
+		LOG(L_ERR, "auth_db:get_ha1: Error while querying database\n");
 		pkg_free(col);
 		return -1;
 	}
 	pkg_free(col);
 
-	if ((RES_ROW_N(*res) == 0) || VAL_NULL(ROW_VALUES(RES_ROWS(*res)))) {
-		DBG("get_ha1(): no result for user \'%.*s@%.*s\'\n",
-		    _username->user.len, ZSW(_username->user.s), (use_domain ? (_domain->len) : 0), ZSW(_domain->s));
-		return 1;
+	for(i = 0; i < (*res)->n; i++) {
+		val = ((*res)->rows[i].values);
+
+		if (val[0].nul || val[1].nul) {
+			LOG(L_ERR, "auth_db:get_ha1: Credentials for '%.*s'@'%.*s' contain NULL value, skipping\n",
+			    username->user.len, ZSW(username->user.s), realm->len, ZSW(realm->s));
+			return 1;
+		}
+
+		if (val[1].val.int_val & DB_LOAD_SER) {
+			*row = i;
+			break;
+		}
 	}
 
-        result.s = (char*)ROW_VALUES(RES_ROWS(*res))[0].val.string_val;
+	if (i == (*res)->n) {
+		DBG("auth_db:get_ha1: Credentials for '%.*s'@'%.*s' not found",
+		    username->user.len, ZSW(username->user.s), realm->len, ZSW(realm->s));
+		return 1;
+	}		
+
+        result.s = (char*)val[0].val.string_val;
 	result.len = strlen(result.s);
 
 	if (calc_ha1) {
 		     /* Only plaintext passwords are stored in database,
 		      * we have to calculate HA1 */
-		calc_HA1(HA_MD5, &_username->whole, _domain, &result, 0, 0, _ha1);
-		DBG("HA1 string calculated: %s\n", _ha1);
+		calc_HA1(HA_MD5, &username->whole, realm, &result, 0, 0, ha1);
+		DBG("auth_db:get_ha1: HA1 string calculated: %s\n", ha1);
 	} else {
-		memcpy(_ha1, result.s, result.len);
-		_ha1[result.len] = '\0';
+		memcpy(ha1, result.s, result.len);
+		ha1[result.len] = '\0';
 	}
 
 	return 0;
@@ -128,7 +143,7 @@ static inline int get_ha1(struct username* _username, str* _domain,
  * Calculate the response and compare with the given response string
  * Authorization is successful if this two strings are same
  */
-static inline int check_response(dig_cred_t* _cred, str* _method, char* _ha1)
+static inline int check_response(dig_cred_t* cred, str* method, char* ha1)
 {
 	HASHHEX resp, hent;
 
@@ -136,8 +151,8 @@ static inline int check_response(dig_cred_t* _cred, str* _method, char* _ha1)
 	      * First, we have to verify that the response received has
 	      * the same length as responses created by us
 	      */
-	if (_cred->response.len != 32) {
-		DBG("check_response(): Receive response len != 32\n");
+	if (cred->response.len != 32) {
+		DBG("auth_db:check_response: Receive response len != 32\n");
 		return 1;
 	}
 
@@ -145,22 +160,22 @@ static inline int check_response(dig_cred_t* _cred, str* _method, char* _ha1)
 	      * Now, calculate our response from parameters received
 	      * from the user agent
 	      */
-	calc_response(_ha1, &(_cred->nonce), 
-		      &(_cred->nc), &(_cred->cnonce), 
-		      &(_cred->qop.qop_str), _cred->qop.qop_parsed == QOP_AUTHINT,
-		      _method, &(_cred->uri), hent, resp);
+	calc_response(ha1, &(cred->nonce), 
+		      &(cred->nc), &(cred->cnonce), 
+		      &(cred->qop.qop_str), cred->qop.qop_parsed == QOP_AUTHINT,
+		      method, &(cred->uri), hent, resp);
 	
-	DBG("check_response(): Our result = \'%s\'\n", resp);
+	DBG("auth_db:check_response: Our result = \'%s\'\n", resp);
 	
 	     /*
 	      * And simply compare the strings, the user is
 	      * authorized if they match
 	      */
-	if (!memcmp(resp, _cred->response.s, 32)) {
-		DBG("check_response(): Authorization is OK\n");
+	if (!memcmp(resp, cred->response.s, 32)) {
+		DBG("auth_db:check_response: Authorization is OK\n");
 		return 0;
 	} else {
-		DBG("check_response(): Authorization failed\n");
+		DBG("auth_db:check_response: Authorization failed\n");
 		return 2;
 	}
 }
@@ -169,30 +184,30 @@ static inline int check_response(dig_cred_t* _cred, str* _method, char* _ha1)
 /*
  * Generate AVPs from the database result
  */
-static int generate_avps(db_res_t* result)
+static int generate_avps(db_res_t* result, unsigned int row)
 {
 	int i;
 	int_str iname, ivalue;
 	str value;
 
-	for (i = 1; i <= credentials_n; i++) {
-		value.s = (char*)VAL_STRING(&(result->rows[0].values[i]));
+	for (i = 2; i < credentials_n + 2; i++) {
+		value.s = (char*)VAL_STRING(&(result->rows[row].values[i]));
 
-		if (VAL_NULL(&(result->rows[0].values[i]))
+		if (VAL_NULL(&(result->rows[row].values[i]))
 		    || value.s == NULL) {
 			continue;
 		}
 		
-		iname.s = &credentials[i - 1];
+		iname.s = &credentials[i - 2];
 		value.len = strlen(value.s);
 		ivalue.s = &value;
 
 		if (add_avp(AVP_NAME_STR | AVP_VAL_STR, iname, ivalue) < 0) {
-			LOG(L_ERR, "generate_avps: Error while creating AVPs\n");
+			LOG(L_ERR, "auth_db:generate_avps: Error while creating AVPs\n");
 			return -1;
 		}
 
-		DBG("generate_avps: set string AVP \'%.*s = %.*s\'\n",
+		DBG("auth_db:generate_avps: set string AVP \'%.*s = %.*s\'\n",
 		    iname.s->len, ZSW(iname.s->s), value.len, ZSW(value.s));
 	}
 
@@ -201,37 +216,37 @@ static int generate_avps(db_res_t* result)
 
 
 /*
- * Authorize digest credentials
+ * Authenticate digest credentials
  */
-static inline int authorize(struct sip_msg* _m, str* _realm, char* _table,
-								hdr_types_t _hftype)
+static inline int authenticate(struct sip_msg* msg, str* realm, char* table,
+			       hdr_types_t hftype)
 {
 	char ha1[256];
-	int res;
+	int res, row;
 	struct hdr_field* h;
 	auth_body_t* cred;
 	auth_result_t ret;
-	str domain;
+	str r;
 	db_res_t* result;
 
-	domain = *_realm;
+	r = *realm;
 
-	ret = auth_api.pre_auth(_m, &domain, _hftype, &h);
+	ret = auth_api.pre_auth(msg, &r, hftype, &h);
 
 	switch(ret) {
-	case ERROR:            return 0;
-	case NOT_AUTHORIZED:   return -1;
-	case DO_AUTHORIZATION: break;
-	case AUTHORIZED:       return 1;
+	case ERROR:             return 0;
+	case NOT_AUTHENTICATED: return -1;
+	case DO_AUTHENTICATION: break;
+	case AUTHENTICATED:     return 1;
 	}
 
 	cred = (auth_body_t*)h->parsed;
 
-	res = get_ha1(&cred->digest.username, &domain, _table, ha1, &result);
+	res = get_ha1(&cred->digest.username, &r, table, ha1, &result, &row);
         if (res < 0) {
 		     /* Error while accessing the database */
-		if (sl_reply(_m, (char*)500, MESSAGE_500) == -1) {
-			LOG(L_ERR, "authorize(): Error while sending 500 reply\n");
+		if (sl_reply(msg, (char*)500, MESSAGE_500) == -1) {
+			LOG(L_ERR, "auth_db:authenticate: Error while sending 500 reply\n");
 		}
 		return 0;
 	}
@@ -242,19 +257,19 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table,
 	}
 
 	     /* Recalculate response, it must be same to authorize successfully */
-        if (!check_response(&(cred->digest), &_m->first_line.u.request.method, ha1)) {
-		ret = auth_api.post_auth(_m, h);
+        if (!check_response(&(cred->digest), &msg->first_line.u.request.method, ha1)) {
+		ret = auth_api.post_auth(msg, h);
 		switch(ret) {
 		case ERROR:
 			auth_dbf.free_result(auth_db_handle, result);
 			return 1;
 
-		case NOT_AUTHORIZED:
+		case NOT_AUTHENTICATED:
 			auth_dbf.free_result(auth_db_handle, result);
 			return -1;
 
-		case AUTHORIZED:
-			generate_avps(result);
+		case AUTHENTICATED:
+			generate_avps(result, row);
 			auth_dbf.free_result(auth_db_handle, result);
 			return 1;
 		default:
@@ -269,19 +284,38 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table,
 
 
 /*
- * Authorize using Proxy-Authorize header field
+ * Authenticate using Proxy-Authorize header field
  */
-int proxy_authorize(struct sip_msg* _m, char* _realm, char* _table)
+int proxy_authenticate(struct sip_msg* msg, char* realm, char* table)
 {
 	     /* realm parameter is converted to str* in str_fixup */
-	return authorize(_m, (str*)_realm, _table, HDR_PROXYAUTH_T);
+	return authenticate(msg, (str*)realm, table, HDR_PROXYAUTH_T);
 }
 
 
 /*
  * Authorize using WWW-Authorize header field
  */
-int www_authorize(struct sip_msg* _m, char* _realm, char* _table)
+int www_authenticate(struct sip_msg* msg, char* realm, char* table)
 {
-	return authorize(_m, (str*)_realm, _table, HDR_AUTHORIZATION_T);
+	return authenticate(msg, (str*)realm, table, HDR_AUTHORIZATION_T);
+}
+
+
+/*
+ * Authorize using Proxy-Authorize header field
+ */
+int proxy_authenticate1(struct sip_msg* msg, char* table)
+{
+	     /* realm parameter is converted to str* in str_fixup */
+	return authenticate(msg, 0, table, HDR_PROXYAUTH_T);
+}
+
+
+/*
+ * Authorize using WWW-Authorize header field
+ */
+int www_authenticate1(struct sip_msg* msg, char* table)
+{
+	return authenticate(msg, 0, table, HDR_AUTHORIZATION_T);
 }
