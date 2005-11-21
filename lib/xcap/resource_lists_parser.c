@@ -149,7 +149,7 @@ static int read_external(xmlNode *entry_node, external_t **dst)
 	return 0;
 }
 
-int read_list(xmlNode *list_node, list_t **dst)
+int read_list(xmlNode *list_node, list_t **dst, int read_content_only)
 {
 	int res = 0;
 	xmlAttr *a;
@@ -164,10 +164,12 @@ int read_list(xmlNode *list_node, list_t **dst)
 	memset(*dst, 0, sizeof(list_t));
 
 	/* get attributes */
-	a = find_attr(list_node->properties, "name");
-	if (a) {
-		a_val = get_attr_value(a);
-		if (a_val) (*dst)->name = zt_strdup(a_val);
+	if (!read_content_only) {
+		a = find_attr(list_node->properties, "name");
+		if (a) {
+			a_val = get_attr_value(a);
+			if (a_val) (*dst)->name = zt_strdup(a_val);
+		}
 	}
 
 	/* read entries */
@@ -180,7 +182,7 @@ int read_list(xmlNode *list_node, list_t **dst)
 			memset(l, 0, sizeof(*l));
 			
 			if (cmp_node(n, "list", rl_namespace) >= 0) {
-				res = read_list(n, &l->u.list);
+				res = read_list(n, &l->u.list, 0);
 				if (res == 0) {
 					if (l->u.list) {
 						l->type = lct_list;
@@ -266,7 +268,7 @@ static int read_resource_lists(xmlNode *root, resource_lists_t **dst)
 	while (n) {
 		if (n->type == XML_ELEMENT_NODE) {
 			if (cmp_node(n, "list", rl_namespace) >= 0) {
-				res = read_list(n, &l);
+				res = read_list(n, &l, 0);
 				if (res == 0) {
 					if (l) SEQUENCE_ADD(rl->lists, last_l, l);
 				}
@@ -309,7 +311,25 @@ int parse_list_xml(const char *data, int data_len, list_t **dst)
 		return -1;
 	}
 	
-	res = read_list(xmlDocGetRootElement(doc), dst);
+	res = read_list(xmlDocGetRootElement(doc), dst, 0);
+
+	xmlFreeDoc(doc);
+	return res;
+}
+
+int parse_as_list_content_xml(const char *data, int data_len, list_t **dst)
+{
+	int res = 0;
+	xmlDocPtr doc; /* the resulting document tree */
+
+	if (dst) *dst = NULL;
+	doc = xmlReadMemory(data, data_len, NULL, NULL, xml_parser_flags);
+	if (doc == NULL) {
+		ERROR_LOG("can't parse document\n");
+		return -1;
+	}
+	
+	res = read_list(xmlDocGetRootElement(doc), dst, 1);
 
 	xmlFreeDoc(doc);
 	return res;

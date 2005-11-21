@@ -130,7 +130,7 @@ int read_service(xmlNode *list_node, service_t **dst)
 			if (first_node) {
 				/* element must be list or resource-list */
 				if (cmp_node(n, "list", rls_namespace) >= 0) {
-					res = read_list(n, &(*dst)->content.list);
+					res = read_list(n, &(*dst)->content.list, 0);
 					if ( (res == 0) && ((*dst)->content.list) ) {
 						(*dst)->content_type = stc_list;
 					}

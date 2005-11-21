@@ -90,11 +90,16 @@ typedef struct {
 
 int parse_resource_lists_xml(const char *data, int data_len, resource_lists_t **dst);
 int parse_list_xml(const char *data, int data_len, list_t **dst);
+int parse_as_list_content_xml(const char *data, int data_len, list_t **dst);
 int parse_entry_xml(const char *data, int data_len, entry_t **dst);
 void free_resource_lists(resource_lists_t *rl);
 void free_list(list_t *l);
 void free_entry(entry_t *e);
 void free_display_names(display_name_t *sequence_first);
-int read_list(xmlNode *list_node, list_t **dst);
+
+/* if read_content_only set then the root element need not to be a list element
+ * it may be whatever, but content is parsed as if it is list (useful for reading
+ * resource-list as list */
+int read_list(xmlNode *list_node, list_t **dst, int read_content_only);
 
 #endif

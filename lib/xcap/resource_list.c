@@ -108,6 +108,31 @@ char *xcap_uri_for_rls_resource(const char *xcap_root, const str_t *uri)
 	return dst;
 }
 
+char *xcap_uri_for_rls_services(const char *xcap_root)
+{
+	dstring_t s;
+	int l;
+	char *dst = NULL;
+
+	if (!xcap_root) return NULL;
+	l = strlen(xcap_root);
+	dstr_init(&s, 2 * l + 32);
+	dstr_append(&s, xcap_root, l);
+	if (xcap_root[l - 1] != '/') dstr_append(&s, "/", 1);
+	dstr_append_zt(&s, "rls-services/global/index");
+	
+	l = dstr_get_data_length(&s);
+	if (l > 0) {
+		dst = (char *)cds_malloc(l + 1);
+		if (dst) {
+			dstr_get_data(&s, dst);
+			dst[l] = 0;
+		}
+	}
+	dstr_destroy(&s);
+	return dst;
+}
+
 void free_flat_list(flat_list_t *list)
 {
 	flat_list_t *f, *e;
@@ -492,6 +517,21 @@ static int verify_package(service_t *srv, const str_t *package)
 	return 0;
 }
 
+static service_t *find_service(rls_services_t *rls, const str_t *uri)
+{
+	service_t *srv;
+	
+	if (!rls) return NULL;
+	
+	srv = SEQUENCE_FIRST(rls->rls_services);
+	while (srv) {
+		TRACE_LOG("comparing %s to %.*s\n", srv->uri, FMT_STR(*uri));
+		if (str_strcmp(uri, srv->uri) == 0) return srv;
+		srv = SEQUENCE_NEXT(srv);
+	}
+	return NULL;
+}
+
 /* ------- rls examining ------- */
 
 int get_rls(const char *xcap_root, const str_t *uri, xcap_query_t *xcap_params, const str_t *package, flat_list_t **dst)
@@ -543,7 +583,7 @@ int get_rls(const char *xcap_root, const str_t *uri, xcap_query_t *xcap_params, 
 
 	/* verify the package */
 	if (verify_package(service, package) != 0) {
-		cds_free(service);
+		free_service(service);
 		return RES_BAD_EVENT_PACKAGE_ERR;
 	}
 	
@@ -557,6 +597,81 @@ int get_rls(const char *xcap_root, const str_t *uri, xcap_query_t *xcap_params, 
 		return res;
 	}
 	free_service(service);
+	
+	return RES_OK;
+}
+
+int get_rls_from_full_doc(const char *xcap_root, const str_t *uri, xcap_query_t *xcap_params, const str_t *package, flat_list_t **dst)
+{
+	char *data = NULL;
+	int dsize = 0;
+	rls_services_t *rls = NULL;
+	service_t *service = NULL;
+	xcap_query_t xcap;
+	str_t curi;
+	int res;
+
+	if (!dst) return RES_INTERNAL_ERR;
+	
+	if (xcap_params) {
+		xcap = *xcap_params;
+	}
+	else memset(&xcap, 0, sizeof(xcap));
+
+	/* get basic document */
+	xcap.uri = xcap_uri_for_rls_services(xcap_root);
+	TRACE_LOG("XCAP uri \'%s\'\n", xcap.uri ? xcap.uri: "???");
+	res = xcap_query(&xcap, &data, &dsize);
+	if (res != 0) {
+		ERROR_LOG("get_rls(): XCAP problems for uri \'%s\'\n", xcap.uri ? xcap.uri: "???");
+		if (data) {
+			cds_free(data);
+		}
+		if (xcap.uri) cds_free(xcap.uri);
+		return RES_XCAP_QUERY_ERR;
+	}
+	if (xcap.uri) cds_free(xcap.uri);
+	xcap.uri = NULL;
+	
+	/* parse document as a service element in rls-sources */
+	if (parse_rls_services_xml(data, dsize, &rls) != 0) {
+		ERROR_LOG("Parsing problems!\n");
+		if (rls) free_rls_services(rls);
+		if (data) {
+			cds_free(data);
+		}
+		return RES_XCAP_PARSE_ERR;
+	}
+/*	DEBUG_LOG("%.*s\n", dsize, data);*/
+	if (data) cds_free(data);
+
+	/* try to find given service according to uri */
+	canonicalize_uri(uri, &curi);
+	service = find_service(rls, &curi); 
+	str_free_content(&curi);
+	
+	if (!service) {
+		if (rls) free_rls_services(rls);
+		ERROR_LOG("Empty service!\n");
+		return RES_INTERNAL_ERR;
+	}
+
+	/* verify the package */
+	if (verify_package(service, package) != 0) {
+		free_rls_services(rls);
+		return RES_BAD_EVENT_PACKAGE_ERR;
+	}
+	
+	/* create flat document */
+	res = create_flat_list(service, &xcap, xcap_root, dst);
+	if (res != RES_OK) {
+		ERROR_LOG("Flat list creation error\n");
+		free_rls_services(rls);
+		free_flat_list(*dst);
+		*dst = NULL;
+		return res;
+	}
+	free_rls_services(rls);
 	
 	return RES_OK;
 }
@@ -620,8 +735,8 @@ int get_resource_list_as_rls(const char *xcap_root, const str_t *user, xcap_quer
 	if (xcap.uri) cds_free(xcap.uri);
 	xcap.uri = NULL;
 	
-	/* parse document as a list element in rls-sources */
-	if (parse_list_xml(data, dsize, &list) != 0) {
+	/* parse document as a list element in resource-lists */
+	if (parse_as_list_content_xml(data, dsize, &list) != 0) {
 		ERROR_LOG("Parsing problems!\n");
 		if (list) free_list(list);
 		if (data) {
@@ -631,6 +746,8 @@ int get_resource_list_as_rls(const char *xcap_root, const str_t *user, xcap_quer
 	}
 /*	DEBUG_LOG("%.*s\n", dsize, data);*/
 	if (data) cds_free(data);
+
+	/* rs -> list */
 	
 	if (!list) {
 		ERROR_LOG("Empty resource list!\n");

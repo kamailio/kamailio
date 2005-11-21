@@ -202,7 +202,7 @@ conn.close()
 # store resource-list document for user
 #
 
-uri = "/xcap-root/resource-lists/users/smith"
+uri = "/xcap-root/resource-lists/users/smith/resource-list.xml"
 headers = {"Content-Type": "application/resource-lists+xml"}
 bf = file("list.xml", "r")
 body = bf.read(65536);
@@ -263,17 +263,17 @@ conn.close()
 This document can contain references to users buddy lists like
 <quote>smith-list@iptel.org</quote> which points to buddy list for user smith
 named <quote>default</quote> and can contain such lists directly.
-<caution><para>EyeBeam stores user's <quote>buddy list</quote> in 
+<!--<caution><para>EyeBeam stores user's <quote>buddy list</quote> in 
 <filename>&lt;XCAP-root&gt;/users/&lt;username&gt;/resource-list.xml</filename>, 
 not in
 <filename>&lt;XCAP-root&gt;/users/&lt;username&gt;</filename> which was used in 
-these examples.</para></caution>
+these examples.</para></caution>-->
 </para>
 <programlisting>
 &lt;?xml version="1.0" encoding="UTF-8"?&gt;
 &lt;rls-services&gt;
 	&lt;service uri="sip:smith-list@iptel.org"&gt;
-		&lt;resource-list&gt;http://localhost/xcap-root/resource-lists/users/smith/~~/resource-lists/list[@name=%22default%22]&lt;/resource-list&gt;
+		&lt;resource-list&gt;http://localhost/xcap-root/resource-lists/users/smith/resource-list.xml/~~/resource-lists/list[@name=%22default%22]&lt;/resource-list&gt;
 		&lt;packages&gt;
 			&lt;package&gt;presence&lt;/package&gt;
 		&lt;/packages&gt;
@@ -345,6 +345,189 @@ exist extensions for particular types of configuration - for purpose of this
 document only configuration from presence area will be mentioned.
 </para>-->
 
+<section><title>XCAP server simulation</title>
+<para>XCAP server is a HTTP server with some features like document validation
+or ability of working with parts of stored documents. If you have no XCAP
+server, you can simulate it using standard web server. There are not many XCAP
+servers available today, thus the simulation may be interesting for - at least -
+demonstration or testing purposes.
+</para>
 
+<para>Depending on your needs you can
+<itemizedlist>
+	<listitem><para>create hierarchical directory structure of XML documents according to
+	<xref linkend="pres_draft_xcap"/></para></listitem>
+	<listitem><para>allow upload (handle HTTP PUT method) which stores documents into the 
+	directory structure</para></listitem>
+	<listitem><para>improve upload to validate documents according to schema
+	(every sort of XCAP document should have their XSD published)</para></listitem>
+	<listitem><para>allow document removing (handle DELETE method)</para></listitem>
+	<listitem><para>process HTTP GET requests with a CGI-script so it processes
+	queries for partial documents</para></listitem>
+</itemizedlist>
+</para>
+
+<section><title>Directory structure</title>
+<para>Presence modules use XCAP documents stored in structure like this:
+<itemizedlist><title>xcap-root</title>
+	<listitem><para><filename>pres-rules</filename></para>
+	<itemizedlist>
+		<listitem><para><filename>users</filename></para>
+		<itemizedlist>
+			<listitem><para><filename>smith</filename></para>
+			<itemizedlist>
+				<listitem><para><filename>presence-rules.xml</filename> (file
+				containg presence authorization rules for user smith)</para></listitem>
+			</itemizedlist>
+			</listitem>
+			<listitem><para><filename>joe</filename></para>
+			<itemizedlist>
+				<listitem><para><filename>presence-rules.xml</filename> (file containing
+				presence authorization rules for user joe)</para></listitem>
+			</itemizedlist>
+			</listitem>
+			<listitem><para>... (directories for other users)</para></listitem>
+		</itemizedlist>
+		</listitem>
+	</itemizedlist></listitem>
+	
+	<listitem><para><filename>resource-lists</filename></para>
+	<itemizedlist>
+		<listitem><para><filename>users</filename></para>
+		<itemizedlist>
+			<listitem><para><filename>smith</filename></para>
+			<itemizedlist>
+				<listitem><para><filename>resource-list.xml</filename> (file
+				containing resources lists for user smith)</para></listitem>
+			</itemizedlist>
+			</listitem>
+			<listitem><para><filename>joe</filename></para>
+			<itemizedlist>
+				<listitem><para><filename>resource-list.xml</filename> (file
+				containing resource lists for user joe)</para></listitem>
+			</itemizedlist>
+			</listitem>
+			<listitem><para>... (directories for other users)</para></listitem>
+		</itemizedlist>
+		</listitem>
+		<!-- rls-services globals used instead this
+		<listitem><para><filename>global</filename></para>
+		<itemizedlist>
+			<listitem><para><filename>index</filename> (file containing global
+			resource lists)</para></listitem>
+		</itemizedlist>
+		</listitem>-->
+	</itemizedlist></listitem>
+	
+	<listitem><para><filename>rls-services</filename></para>
+	<itemizedlist>
+		<listitem><para><filename>global</filename></para>
+		<itemizedlist>
+			<listitem><para><filename>index</filename> (file containing global
+			rls-services documents)</para></listitem>
+		</itemizedlist>
+		</listitem>
+	</itemizedlist></listitem>
+	
+</itemizedlist>
+</para>
+</section> <!-- directory structure -->
+
+<section><title>Usage with SER</title>
+<para>You don't need a full XCAP server for presence authorization documents -
+these are read as standalone documents from directories of standalone users.
+</para>
+
+<para>For resource lists you have to install a full XCAP server. Only if you use
+<quote>simple</quote> mode of list subscription processing (see <link
+linkend="rls.parameters">RLS module parameters</link>) you do not need it.
+</para>
+</section>
+
+<section><title>XCAP simulation examples</title>
+<para>Examples presented here can be used as simple XCAP server simulation. It
+is able to handle PUT method (for whole XML documents).
+</para>
+
+<example><title>Apache2 configuration</title>
+<programlisting><![CDATA[
+...
+Alias /xcap-root /var/simulated-xcap-root
+<Directory /var/simulated-xcap-root>
+	Options Indexes FollowSymLinks MultiViews
+	Script PUT /cgi-bin/upload
+	<Limit PUT DELETE GET>
+		Order Allow,Deny
+		Deny from none
+		Allow from all
+	</Limit>
+</Directory>
+...
+]]></programlisting>
+</example>
+
+<example><title>Simple (and dangerous) cgi-script for upload</title>
+<para>This code is written in C and it is able to create directories if needed, but its usage in
+presented form is realy unsafe! You have to compile it and put into directory
+with other CGI scripts.</para>
+<programlisting><![CDATA[
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <sys/stat.h>
+#include <sys/types.h>
+
+void copy_file(const char *filename)
+{
+	char buf[2048];
+	int r;
+	FILE *f;
+	
+	f = fopen(filename, "wb");
+	if (f) {
+		while (!feof(stdin)) {
+			r = fread(buf, 1, sizeof(buf), stdin);
+			fwrite(buf, 1, r, f);
+		}
+		fclose(f);
+	}
+}
+
+int main(int argc, char **argv)
+{
+	char *filename, *x;
+	char tmp[1024];
+	int res = 0;
+	
+	filename = getenv ("PATH_TRANSLATED");
+
+	strcpy(tmp, filename);
+	x = strrchr(tmp, '/');
+	if (x) {
+		*x = 0;
+		res = mkdir(tmp, 0755);		/* ! dangerous ! */
+	}
+	else {
+		printf("Status: 500\n");
+		printf("Content-Type: text/html\n\n");
+		printf("<html><head/>\n<body>Incorrect filename</body></html>\n");	
+		return -1;
+	}
+	
+	copy_file(filename); /* ! dangerous ! */
+		
+	printf("Status: 200\n");
+	printf("Content-Type: text/html\n\n");
+	printf("<html><head><title>Upload</title>\n</head>\n<body>Finished...</body></html>\n");
+	
+	return 0;
+}
+]]></programlisting>
+</example>
+
+</section><!-- XCAP simulation examples -->
+
+</section> <!-- XCAP server simulation -->
 
 </section>
