@@ -45,4 +45,5 @@
     <row><value col="at.name">fr_timer</value>    <value col="at.type">0</value></row>
     <row><value col="at.name">fr_inv_timer</value><value col="at.type">2</value></row>
     <row><value col="at.name">flags</value>       <value col="at.type">0</value></row>
+    <row><value col="at.name">gflags</value>      <value col="at.type">0</value></row>
 </table>
