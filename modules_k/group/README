@@ -54,8 +54,8 @@ Jan Janak
    1-5. Set group_column parameter
    1-6. Set use_domain parameter
    1-7. Set re_table parameter
-   1-8. Set reg_exp parameter
-   1-9. Set group_id parameter
+   1-8. Set reg_exp_column parameter
+   1-9. Set re_gid_column parameter
    1-10. Set multiple_gid parameter
    1-11. is_user_in usage
    1-12. get_user_group usage
@@ -206,9 +206,9 @@ modparam("group", "re_table", "re_grp_table")
 
    Default value is "reg_exp". 
 
-   Example 1-8. Set reg_exp parameter
+   Example 1-8. Set reg_exp_column parameter
 ...
-modparam("group", "reg_exp", "re")
+modparam("group", "reg_exp_column", "re")
 ...
      _________________________________________________________
 
@@ -218,9 +218,9 @@ modparam("group", "reg_exp", "re")
 
    Default value is "group_id". 
 
-   Example 1-9. Set group_id parameter
+   Example 1-9. Set re_gid_column parameter
 ...
-modparam("group", "group_id", "grp_id")
+modparam("group", "re_gid_column", "grp_id")
 ...
      _________________________________________________________
 
