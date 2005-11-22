@@ -372,8 +372,9 @@ cat <<EOF
  lcr addgw_grp <grp_name> ...................... add gateway group, autocreate grp_id
  lcr addgw_grp <grp_name> <grp_id> ............. add gateway group with grp_id
  lcr rmgw_grp  <grp_id> ........................ delete the gw_grp
- lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> .. add a gateway
- lcr rmgw  <gw_name> ............................................ delete a gateway
+ lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> ........... add a gateway
+ lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <prefix> .. add a gateway with prefix
+ lcr rmgw  <gw_name> ..................................................... delete a gateway
  lcr addroute <prefix> <from> <grp_id> <prio> .. add a route
  lcr rmroute  <prefix> <from> <grp_id> <prio> .. delete a route
 
@@ -913,7 +914,7 @@ lcr() {
 						floor((ip_addr - floor(ip_addr / 16777216) * 16777216 - floor((ip_addr - floor(ip_addr / 16777216) * 16777216) / 65536) * 65536) / 256),
 						floor((ip_addr - floor(ip_addr / 16777216) * 16777216) / 65536),
 						floor(ip_addr / 16777216) ), ') ') as ip, 
-				port, uri_scheme, transport, grp_id 
+				port, uri_scheme, transport, grp_id, prefix
 				FROM $GW_TABLE ORDER BY grp_id; "
 			sql_ro_query "$QUERY"
 			;;
@@ -990,10 +991,15 @@ lcr() {
 			;;
 		addgw)
 			shift
-			if [ $# -ne 6 ] ; then
+			if [ $# -lt 6 ] ; then
 				echo too few paramters
 				usage
 				exit 1
+			fi
+			if [ $# -gt 6 ] ; then
+				GW_PREFIX=$7
+			else
+				GW_PREFIX=""
 			fi
 			GW_NAME=$1
 			GW_PORT=$3
@@ -1018,8 +1024,7 @@ lcr() {
 			GW_IP=$(($1+$2*256+$3*65536+$4*16777216))
 			IFS=$oldIFS
 			prompt_pw
-			#QUERY="insert into $GW_TABLE VALUES ('$GW_NAME', $GW_IP, $GW_PORT, $GW_URI_SCHEME, $GW_TRANSPORT, $GW_GRP_ID);"
-			QUERY="insert into $GW_TABLE VALUES ('$GW_NAME', $GW_IP, $GW_PORT, $GW_GRP_ID);"
+			QUERY="insert into $GW_TABLE VALUES ('$GW_NAME', $GW_GRP_ID, $GW_IP, $GW_PORT, $GW_URI_SCHEME, $GW_TRANSPORT, '$GW_PREFIX');"
 			sql_query "$QUERY"
 			if [ $? -ne 0 ] ; then
 				echo "SQL Error"
