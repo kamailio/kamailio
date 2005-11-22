@@ -49,8 +49,8 @@ From: medabeda
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before running
-		&ser; with this module loaded:
+		The following libraries or applications must be installed before 
+		running &ser; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -260,7 +260,8 @@ if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)\2/ig') )
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>subst_uri</function> usage</title>
@@ -306,7 +307,8 @@ if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=\0/i')){$
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>subst</function> usage</title>
@@ -554,6 +556,44 @@ if(is_method("OPTION|UPDATE"))
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">remove_hf(hname)</function>
+		</title>
+		<para>
+		Remove from message all headers with name <quote>hname</quote>
+		</para>
+		<para>
+		Returns true if at least one header is found and removed.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>hname</emphasis> - header name to be removed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE and BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>remove_hf</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(remove_hf("User-Agent"))
+{
+    # User Agent header removed
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+
+
+
 
 	</section>
 	<section>
