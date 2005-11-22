@@ -205,8 +205,14 @@ static int create_virtual_subscriptions(struct sip_msg *m, rl_subscription_t *ss
 	DEBUG_LOG("rli_create_content(): doing XCAP query\n");
 	switch (rls_mode) {
 		case rls_mode_full:
-			res = get_rls(xcap_root, rls_get_uri(ss), &xcap, 
-				rls_get_package(ss), &flat);
+			if (reduce_xcap_needs) {
+				res = get_rls_from_full_doc(xcap_root, rls_get_uri(ss), &xcap, 
+					rls_get_package(ss), &flat);
+			}
+			else {
+				res = get_rls(xcap_root, rls_get_uri(ss), &xcap, 
+					rls_get_package(ss), &flat);
+			}
 			break;
 		case rls_mode_simple:
 			if (get_user_from_list_uri(rls_get_uri(ss), &user) == 0) {
@@ -216,9 +222,14 @@ static int create_virtual_subscriptions(struct sip_msg *m, rl_subscription_t *ss
 			else {
 				/* it is NOT uri in the form xxx-list@domain -> try to use
 				 * standard RLS subscription processing */
-				TRACE_LOG("getting RLS from full doc\n");
-				res = get_rls_from_full_doc(xcap_root, rls_get_uri(ss), &xcap, 
-					rls_get_package(ss), &flat);
+				if (reduce_xcap_needs) {
+					res = get_rls_from_full_doc(xcap_root, rls_get_uri(ss), &xcap, 
+						rls_get_package(ss), &flat);
+				}
+				else {
+					res = get_rls(xcap_root, rls_get_uri(ss), &xcap, 
+						rls_get_package(ss), &flat);
+				}
 			}
 			break;
 	}
@@ -462,9 +473,9 @@ int rls_generate_notify(rl_subscription_t *s, int full_info)
 	else dstr_get_data(&dstr, headers.s);
 	dstr_destroy(&dstr);
 
-	TRACE_LOG("sending NOTIFY message to %.*s (subscription %p)\n", 
+	/* DEBUG_LOG("sending NOTIFY message to %.*s (subscription %p)\n",  
 			dlg->rem_uri.len, 
-			ZSW(dlg->rem_uri.s), s);
+			ZSW(dlg->rem_uri.s), s); */
 	
 	if (sm_subscription_terminated(&s->subscription) == 0) {
 		/* doesn't matter if delivered or not, it will be freed otherwise !!! */

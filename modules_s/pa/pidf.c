@@ -63,7 +63,7 @@
 #define DOCTYPE "<!DOCTYPE presence PUBLIC \"" PUBLIC_ID "\" \"" PIDF_DTD "\">"
 #define DOCTYPE_L (sizeof(DOCTYPE) - 1)
 
-#define PRESENCE_START "<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"sip:"
+#define PRESENCE_START "<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\""
 #define PRESENCE_START_L (sizeof(PRESENCE_START) - 1)
 
 #define PRESENCE_END "\">"

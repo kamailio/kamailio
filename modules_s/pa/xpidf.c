@@ -63,7 +63,7 @@
 #define DOCTYPE "<!DOCTYPE presence PUBLIC \"" PUBLIC_ID "\" \"" XPIDF_DTD "\">"
 #define DOCTYPE_L (sizeof(DOCTYPE) - 1)
 
-#define PRESENTITY_START "<presentity uri=\"sip:"
+#define PRESENTITY_START "<presentity uri=\""
 #define PRESENTITY_START_L (sizeof(PRESENTITY_START) - 1)
 
 #define PRESENTITY_END ";method=SUBSCRIBE\"/>"
@@ -77,7 +77,7 @@
 /* #define ATOM_STAG "<atom id=\"9r28r49\">" */
 #define ATOM_STAG_CLOSE_L (sizeof(ATOM_STAG_CLOSE) - 1)
 
-#define ADDRESS_START "<address uri=\"sip:"
+#define ADDRESS_START "<address uri=\""
 #define ADDRESS_START_L (sizeof(ADDRESS_START) - 1)
 
 #define ADDRESS_END ";user=ip\" priority=\"0.8\">"

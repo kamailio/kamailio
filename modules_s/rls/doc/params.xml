@@ -71,7 +71,7 @@
 </listitem>
 </varlistentry>
 <varlistentry>
-	<term>mode</term>
+	<term><varname>mode</varname> (string)</term>
 	<listitem><para>Mode of processing subscriptions: 
 	<variablelist>
 	<varlistentry>
@@ -95,6 +95,17 @@
 	</varlistentry>
 	</variablelist>
 	</para></listitem>
+</varlistentry>
+<varlistentry>
+	<term><varname>reduce_xcap_needs</varname> (int)</term>
+	<listitem><para>If set to 1 the module tries to do simplify XCAP queries -
+	queries will be done for whole documents, not partial, thus the XCAP server may be simulated
+	using standard web server. It has influence only on querying resource lists
+	and it will work correctly only if there are no links to resource
+	lists containg partial documents URIs (lists should be contained directly in
+	main rls-services document).
+	</para>
+	<para>Default value is 0.</para></listitem>
 </varlistentry>
 </variablelist>
 </section>

@@ -196,6 +196,12 @@ static int get_local_uri(const str_t *src_uri, str_t* dst_uri)
 	struct sip_uri parsed;
 	int res = -1;
 
+	if (dst_uri && src_uri) {
+		*dst_uri = *src_uri;
+		return 0;
+	}
+	else return -1;
+	
 	uri.s = src_uri->s;
 	uri.len = src_uri->len;
 	

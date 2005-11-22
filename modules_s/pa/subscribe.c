@@ -122,12 +122,12 @@ static int extract_plain_uri(str* _uri)
 		return -1;
 	}
 	
-	_uri->s = puri.user.s;
+	/* _uri->s = puri.user.s;
 	if ((!_uri->s) || (puri.user.len < 1)) {
 		_uri->s = puri.host.s;
 		_uri->len = puri.host.len;
 		return -1;
-	}
+	}*/
 	_uri->len = puri.host.s + puri.host.len - _uri->s;
 	return 0;
 }

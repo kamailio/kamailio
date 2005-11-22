@@ -141,6 +141,8 @@ typedef struct presentity {
 	internal_pa_subscription_t *first_qsa_subscription, *last_qsa_subscription;
 	presence_rules_t *authorization_info;
 	msg_queue_t mq;	/* message queue supplying direct usrloc callback processing */
+	
+	str uuid; /* use after usrloc uuid-zation - callbacks are registered to this */
 } presentity_t;
 
 /*

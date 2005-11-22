@@ -697,7 +697,7 @@ int update_watcher(struct presentity *p, watcher_t* _w, time_t _e)
 #define WATCHERINFO_ETAG "</watcherinfo>"
 #define WATCHERINFO_ETAG_L (sizeof(WATCHERINFO_ETAG) - 1)
 
-#define WATCHERLIST_START "  <watcher-list resource=\"sip:"
+#define WATCHERLIST_START "  <watcher-list resource=\""
 #define WATCHERLIST_START_L (sizeof(WATCHERLIST_START) - 1)
 #define WATCHERLIST_ETAG "  </watcher-list>"
 #define WATCHERLIST_ETAG_L (sizeof(WATCHERLIST_ETAG) - 1)

@@ -81,6 +81,25 @@ str str_strdup(str string)
 	new_string.s[string.len] = 0;
 	return new_string;
 }
+	
+int get_presentity_uuid(str *uuid, const str *uri)
+{
+	struct sip_uri puri;
+	
+	str_clear(uuid);
+		
+	if (parse_uri(uri->s, uri->len, &puri) == -1) {
+		LOG(L_ERR, "get_from_uid: Error while parsing From URI\n");
+		return -1;
+	}
+	
+	str_dup(uuid, &puri.user);
+	strlower(uuid);
+
+	ERROR_LOG("TESTING VERSION of get_presentity_uuid()!\n");
+	/* extract name in lowercase ! */
+	return 0;
+}
 
 /*
  * Create a new presentity but do not update database
@@ -88,6 +107,7 @@ str str_strdup(str string)
 int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, presentity_t** _p)
 {
 	presentity_t* presentity;
+	str uuid;
 	int size = 0;
 
 	if (!_uri || !_p) {
@@ -96,7 +116,9 @@ int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, presentity_t** _p)
 		return -1;
 	}
 
-	size = sizeof(presentity_t) + _uri->len + 1;
+	get_presentity_uuid(&uuid, _uri);
+	
+	size = sizeof(presentity_t) + _uri->len + 1 + uuid.len + 1;
 	presentity = (presentity_t*)shm_malloc(size);
 	if (!presentity) {
 		paerrno = PA_NO_MEMORY;
@@ -116,11 +138,17 @@ int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, presentity_t** _p)
 	presentity->last_qsa_subscription = 0;
 	presentity->presid = 0;
 	presentity->authorization_info = NULL;
+	presentity->uuid.s = presentity->uri.s + presentity->uri.len + 1;
+	strncpy(presentity->uuid.s, uuid.s, uuid.len);
+	presentity->uuid.s[uuid.len] = 0;
+	presentity->uuid.len = uuid.len;
 
 	*_p = presentity;
+	str_free_content(&uuid);
 
-	LOG(L_DBG, "new_presentity_no_wb=%p for uri=%.*s\n", 
-			presentity, presentity->uri.len, presentity->uri.s);
+	LOG(L_DBG, "new_presentity_no_wb=%p for uri=%.*s uuid=%.*s\n", 
+			presentity, presentity->uri.len, ZSW(presentity->uri.s),
+			presentity->uuid.len, ZSW(presentity->uuid.s));
 
 	return 0;
 }

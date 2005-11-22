@@ -33,6 +33,8 @@ char *db_url = NULL;
 char *rls_mode_str = "full"; /* full, simple */
 rls_mode_t rls_mode = rls_mode_full;
 
+int reduce_xcap_needs = 0;
+
 /** Exported functions */
 static cmd_export_t cmds[]={
 	/* {"handle_r_subscription", handle_r_subscription, 0, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE}, */
@@ -51,6 +53,7 @@ static param_export_t params[]={
 	{"db_mode", INT_PARAM, &db_mode },
 	{"db_url", STR_PARAM, &db_url },
 	{"mode", STR_PARAM, &rls_mode_str },
+	{"reduce_xcap_needs", INT_PARAM, &reduce_xcap_needs },
 	{0, 0, 0}
 };
 

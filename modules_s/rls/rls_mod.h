@@ -31,5 +31,5 @@ extern db_func_t rls_dbf;	/* database functions */
 extern dlg_func_t dlg_func;
 extern char *db_url;
 extern rls_mode_t rls_mode;
-
+extern int reduce_xcap_needs; /* allows XCAP simulation with web server if possible */
 #endif

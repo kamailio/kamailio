@@ -256,7 +256,7 @@ void add_presentity(pdomain_t* _d, struct presentity* _p)
 
 	slot_add(&_d->table[sl], _p, &_d->first, &_d->last);
 
-	_d->reg(&_p->uri, &_p->uri, (void*)callback, _p);
+	_d->reg(&_p->uri, &_p->uuid, (void*)callback, _p);
 	/* LOG(L_ERR, "registering callback to %.*s, %p\n", _p->uri.len, _p->uri.s,_p); */
 }
 
