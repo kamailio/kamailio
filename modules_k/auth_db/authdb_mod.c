@@ -259,7 +259,7 @@ static int str_fixup(void** param, int param_no)
 			LOG(L_ERR, "auth_db:str_fixup: Error while querying table version\n");
 			return -1;
 		} else if (ver < TABLE_VERSION) {
-			LOG(L_ERR, "auth_db:str_fixup: Invalid table version (use ser_mysql.sh reinstall)\n");
+			LOG(L_ERR, "auth_db:str_fixup: Invalid table version (use openser_mysql.sh reinstall)\n");
 			return -1;
 		}
 	}

@@ -173,7 +173,7 @@ static int mod_init(void)
 		goto err;
 	} else if (ver < URI_TABLE_VERSION) {
 		LOG(L_ERR, "ERROR: uri_db:mod_init(): Invalid table version"
-				" of uri table (use ser_mysql.sh reinstall)\n");
+				" of uri table (use openser_mysql.sh reinstall)\n");
 		goto err;
 	}		
 
@@ -185,7 +185,7 @@ static int mod_init(void)
 		goto err;
 	} else if (ver < SUBSCRIBER_TABLE_VERSION) {
 		LOG(L_ERR, "ERROR: uri_db:mod_init(): Invalid table version of"
-				" subscriber table (use ser_mysql.sh reinstall)\n");
+				" subscriber table (use openser_mysql.sh reinstall)\n");
 		goto err;
 	}		
 

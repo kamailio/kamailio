@@ -254,7 +254,7 @@ int register_udomain(const char* _n, udomain_t** _d)
 			LOG(L_ERR, "register_udomain(): Error while querying table version\n");
 			goto err;
 		} else if (ver < TABLE_VERSION) {
-			LOG(L_ERR, "register_udomain(): Invalid table version (use ser_mysql.sh reinstall)\n");
+			LOG(L_ERR, "register_udomain(): Invalid table version (use openser_mysql.sh reinstall)\n");
 			goto err;
 		}
 		

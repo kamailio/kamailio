@@ -398,7 +398,7 @@ static int mod_init(void)
 		goto err;
 	} else if (ver < LCR_TABLE_VERSION) {
 		LOG(L_ERR, "ERROR: lcr:mod_init(): Invalid table version of"
-				" lcr table (use ser_mysql.sh reinstall)\n");
+				" lcr table (use openser_mysql.sh reinstall)\n");
 		goto err;
 	}		
 	

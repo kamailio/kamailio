@@ -140,7 +140,7 @@ static int mod_init(void)
 			return -1;
 		} else if (ver < TABLE_VERSION) {
 			LOG(L_ERR, "ERROR: domain:mod_init(): invalid table"
-					" version (use ser_mysql.sh reinstall)\n");
+					" version (use openser_mysql.sh reinstall)\n");
 			domain_db_close();
 			return -1;
 		}		

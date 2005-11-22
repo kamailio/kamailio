@@ -97,7 +97,7 @@ int init_trusted(void)
 			perm_dbf.close(db_handle);
 			return -1;
 		} else if (ver < TABLE_VERSION) {
-			LOG(L_ERR, "permissions:init_trusted(): Invalid table version (use ser_mysql.sh reinstall)\n");
+			LOG(L_ERR, "permissions:init_trusted(): Invalid table version (use openser_mysql.sh reinstall)\n");
 			perm_dbf.close(db_handle);
 			return -1;
 		}		
@@ -173,7 +173,7 @@ int init_child_trusted(int rank)
 			return -1;
 		} else if (ver < TABLE_VERSION) {
 			LOG(L_ERR, "ERROR: permissions: init_child_trusted():"
-					" Invalid table version (use ser_mysql.sh reinstall)\n");
+					" Invalid table version (use openser_mysql.sh reinstall)\n");
 			perm_dbf.close(db_handle);
 			return -1;
 		}		

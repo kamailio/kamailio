@@ -205,7 +205,7 @@ static int mod_init(void)
 		return -1;
 	} else if (ver < TABLE_VERSION) {
 		LOG(L_ERR, "ERROR:group:mod_init: Invalid table version for %s "
-				"(use ser_mysql.sh reinstall)\n",table.s);
+				"(use openser_mysql.sh reinstall)\n",table.s);
 		return -1;
 	}
 
@@ -218,7 +218,7 @@ static int mod_init(void)
 			return -1;
 		} else if (ver < RE_TABLE_VERSION) {
 			LOG(L_ERR, "ERROR:group:mod_init: Invalid table version for %s "
-					"(use ser_mysql.sh reinstall)\n",re_table.s);
+					"(use openser_mysql.sh reinstall)\n",re_table.s);
 			return -1;
 		}
 
