@@ -94,7 +94,7 @@ linkend="pres_draft_xcap_change"/> and <xref linkend="pres_draft_xcap_profiles"/
 </section>
 
 <section><title>Standard incompliances</title>
-<para>SER's resource lists support is not finished yet, there are some standard
+<para>SER's XCAP authorization support is not finished yet, there are some standard
 incompliances now:
 <itemizedlist>
 	<listitem><para>ignored sphere</para></listitem>
@@ -113,10 +113,10 @@ linkend="pres_draft_rls"/> describes that a Resource Lists Server operates with
 but tested client software doesn't store <quote>rls-services</quote> documents,
 only <quote>resource list documents</quote> (buddy lists).</para>
 
-<para>This problem is not solved yet, but it is possible, that the RLS module 
-will try both variants in the future. Now it scans and process only
-<quote>rls-services</quote> documents (there must be stored links onto user's
-buddy lists - as shown in <link linkend="xcap.examples">examples</link>).</para>
+<para>It is possible now to change mode of processing subscriptions (see <link
+linkend="rls.parameters">RLS module parameters</link> so it works directly with
+resource list documents published by client instead of rls-services document.
+</para>
 
 <section><title>RLS document URI</title>
 <para>The construction of rls-services document URI is described in <xref
@@ -141,6 +141,23 @@ which means the <literal>service</literal> element with
 <literal>smith-list@iptel.org</literal> stored in rls-services document named
 index.
 </para></example>
+
+<section><title>Disadvantages</title>
+<para>Working with URIs presented in this section have one big disadvantage - it
+needs full XCAP server which is able to work with partial documents and able to
+process XPointer expressions in XCAP queries.</para>
+
+<para>Due to unavailability of free XCAP servers is there a possibility to
+use SER's RLS server in mode of <emphasis>reduced XCAP server needs</emphasis> 
+(see <link linkend="rls.parameters">RLS module parameters</link>). If operating 
+in this mode, RLS requests full rls-service document from uri 
+<filename>&lt;xcap-root&gt;/rls-services/global/index</filename>, inspects it
+and finds requested resource list according to URI and AOR by itself.
+(Only if possible! There can't be links 
+to partial documents in rls-services document.)
+</para>
+</section> <!-- disadvantages -->
+
 </section>
 
 <section><title>Standard incompliances</title>
@@ -438,9 +455,10 @@ demonstration or testing purposes.
 these are read as standalone documents from directories of standalone users.
 </para>
 
-<para>For resource lists you have to install a full XCAP server. Only if you use
-<quote>simple</quote> mode of list subscription processing (see <link
-linkend="rls.parameters">RLS module parameters</link>) you do not need it.
+<para>For resource lists you have to set <link linkend="rls.parameters">RLS module 
+parameters</link> <varname>mode</varname> and/or
+<varname>reduce_xcap_needs</varname> 
+to work as much as possible with XCAP server simulation.
 </para>
 </section>
 
@@ -464,6 +482,9 @@ Alias /xcap-root /var/simulated-xcap-root
 </Directory>
 ...
 ]]></programlisting>
+<para>If apache is running on machine with SER, you can use as xcap-root
+<literal>http://localhost/xcap-root</literal>.
+</para>
 </example>
 
 <example><title>Simple (and dangerous) cgi-script for upload</title>

@@ -525,7 +525,7 @@ static service_t *find_service(rls_services_t *rls, const str_t *uri)
 	
 	srv = SEQUENCE_FIRST(rls->rls_services);
 	while (srv) {
-		TRACE_LOG("comparing %s to %.*s\n", srv->uri, FMT_STR(*uri));
+		/* TRACE_LOG("comparing %s to %.*s\n", srv->uri, FMT_STR(*uri)); */
 		if (str_strcmp(uri, srv->uri) == 0) return srv;
 		srv = SEQUENCE_NEXT(srv);
 	}
