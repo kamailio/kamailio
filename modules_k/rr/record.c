@@ -331,6 +331,7 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 
 	from = 0;
 	user.len = 0;
+	user.s = 0;
 
 	if (add_username) {
 		if (get_username(_m, &user) < 0) {
