@@ -323,6 +323,7 @@ INSERT INTO version VALUES ( 'dbaliases', '1');
 INSERT INTO version VALUES ( 'domain', '1');
 INSERT INTO version VALUES ( 'event', '1');
 INSERT INTO version VALUES ( 'grp', '2');
+INSERT INTO version VALUES ( 're_grp', '1');
 INSERT INTO version VALUES ( 'gw', '3');
 INSERT INTO version VALUES ( 'gw_grp', '1');
 INSERT INTO version VALUES ( 'lcr', '1');
@@ -464,6 +465,18 @@ CREATE TABLE grp (
   grp varchar(50) NOT NULL default '',
   last_modified $DATETIME,
   PRIMARY KEY($USERCOL, domain, grp)
+) $TABLE_TYPE;
+
+
+/*
+ * Table structure for table 're_grp' -- group membership
+ * based on regular expressions
+ */
+
+CREATE TABLE re_grp (
+  reg_exp varchar(128) NOT NULL default '',
+  group_id int(11) NOT NULL default '0',
+  UNIQUE (reg_exp)
 ) $TABLE_TYPE;
 
 

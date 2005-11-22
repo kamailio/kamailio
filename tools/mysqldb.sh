@@ -283,6 +283,7 @@ INSERT INTO version VALUES ( 'missed_calls', '2');
 INSERT INTO version VALUES ( 'location', '1001');
 INSERT INTO version VALUES ( 'aliases', '1001');
 INSERT INTO version VALUES ( 'grp', '2');
+INSERT INTO version VALUES ( 're_grp', '1');
 INSERT INTO version VALUES ( 'event', '1');
 INSERT INTO version VALUES ( 'active_sessions', '1');
 INSERT INTO version VALUES ( 'acc', '2');
@@ -406,6 +407,17 @@ CREATE TABLE grp (
 ) $TABLE_TYPE;
 
 
+#
+# Table structure for table 're_grp' -- group membership
+# based on regular expressions
+#
+
+
+CREATE TABLE re_grp (
+  reg_exp varchar(128) NOT NULL default '',
+  group_id int(11) NOT NULL default '0',
+  UNIQUE KEY reg_exp (reg_exp)
+) $TABLE_TYPE;
 
 
 #
@@ -652,7 +664,7 @@ CREATE TABLE server_monitoring_agg (
   ad float NOT NULL default '0',
   lv int(10) NOT NULL default '0',
   min_val int(10) NOT NULL default '0',
-  max_val int(10) NOT NULL default '0',
+  pax_val int(10) NOT NULL default '0',
   min_inc int(10) NOT NULL default '0',
   max_inc int(10) NOT NULL default '0',
   lastupdate datetime NOT NULL default '0000-00-00 00:00:00',
