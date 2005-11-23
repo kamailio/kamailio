@@ -94,7 +94,10 @@ static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo);
 static int replace_all_f(struct sip_msg* msg, char* key, char* str);
 static int search_append_f(struct sip_msg*, char*, char*);
 static int append_to_reply_f(struct sip_msg* msg, char* key, char* str);
-static int append_hf(struct sip_msg* msg, char* str1, char* str2);
+static int append_hf_1(struct sip_msg* msg, char* str1, char* str2);
+static int append_hf_2(struct sip_msg* msg, char* str1, char* str2);
+static int insert_hf_1(struct sip_msg* msg, char* str1, char* str2);
+static int insert_hf_2(struct sip_msg* msg, char* str1, char* str2);
 static int append_urihf(struct sip_msg* msg, char* str1, char* str2);
 static int append_time_f(struct sip_msg* msg, char* , char *);
 static int is_method_f(struct sip_msg* msg, char* , char *);
@@ -104,6 +107,7 @@ static int fixup_substre(void**, int);
 static int str_fixup(void** param, int param_no);
 static int hname_fixup(void** param, int param_no);
 static int fixup_method(void** param, int param_no);
+static int add_header_fixup(void** param, int param_no);
 
 static int mod_init(void);
 
@@ -119,8 +123,14 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
 	{"append_to_reply",  append_to_reply_f, 1, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE},
-	{"append_hf",        append_hf,         1, str_fixup,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
+	{"append_hf",        append_hf_1,       1, add_header_fixup,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"append_hf",        append_hf_2,       2, add_header_fixup,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"insert_hf",        insert_hf_1,       1, add_header_fixup,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"insert_hf",        insert_hf_2,       2, add_header_fixup,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"append_urihf",     append_urihf,      2, str_fixup,   
 			REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"remove_hf",        remove_hf_f,       1, hname_fixup,
@@ -583,54 +593,130 @@ static int append_to_reply_f(struct sip_msg* msg, char* key, char* str)
 
 /* add str1 to end of header or str1.r-uri.str2 */
 
-static int append_hf_helper(struct sip_msg* msg, str *str1, str *str2)
+static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
+		xl_elem_t *model, int mode, str *hfs)
 {
 	struct lump* anchor;
+	struct hdr_field *hf;
 	char *s;
 	int len;
+#define ADD_HF_PRINTBUF_SIZE   1024
+	static char printbuf[ADD_HF_PRINTBUF_SIZE];
+	int printbuf_len;
+	str s0;
 
 	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
-		LOG(L_ERR, "append_hf(): Error while parsing message\n");
+		LOG(L_ERR, "textops:add_hf_helper: Error while parsing message\n");
+		return -1;
+	}
+	
+	hf = 0;
+	if(hfs!=NULL) {
+		for (hf=msg->headers; hf; hf=hf->next) {
+			if((str*)hfs->s==NULL)
+			{
+				if (((str*)hfs)->len!=hf->type)
+				continue;
+			} else {
+				if (hf->name.len!=((str*)hfs)->len)
+					continue;
+				if (strncasecmp(hf->name.s,((str*)hfs)->s,hf->name.len)!=0)
+					continue;
+			}
+			break;
+		}
+	}
+
+	if(mode == 0) { /* append */
+		if(hf==0) { /* after last header */
+			anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
+		} else { /* after hf */
+			anchor = anchor_lump(msg, hf->name.s + hf->len - msg->buf, 0, 0);
+		}
+	} else { /* insert */
+		if(hf==0) { /* before first header */
+			anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0, 0);
+		} else { /* before hf */
+			anchor = anchor_lump(msg, hf->name.s - msg->buf, 0, 0);
+		}
+	}
+
+	if(anchor == 0) {
+		LOG(L_ERR, "textops:add_hf_helper: Can't get anchor\n");
 		return -1;
 	}
 
-	anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
-	if (anchor == 0) {
-		LOG(L_ERR, "append_hf(): Can't get anchor\n");
-		return -1;
+	if(str1) {
+		s0 = *str1;
+	} else {
+		if(model) {
+			if(model->next==0 && model->spec.itf==0) {
+				s0 = model->text;
+			} else {
+				printbuf_len = ADD_HF_PRINTBUF_SIZE-1;
+				if(xl_printf(msg, model, printbuf, &printbuf_len)<0)
+				{
+					LOG(L_ERR,
+					"textops:add_hf_helper: error - cannot print the format\n");
+					return -1;
+				}
+				s0.s   = printbuf;
+				s0.len = printbuf_len;
+			}
+		} else {
+			s0.len = 0;
+			s0.s   = 0;
+		}
 	}
-
-	len=str1->len;
+		
+	len=s0.len;
 	if (str2) len+= str2->len + REQ_LINE(msg).uri.len;
 
 	s = (char*)pkg_malloc(len);
 	if (!s) {
-		LOG(L_ERR, "append_hf(): No memory left\n");
+		LOG(L_ERR, "textops:add_hf_helper: No memory left\n");
 		return -1;
 	}
 
-	memcpy(s, str1->s, str1->len);
+	memcpy(s, s0.s, s0.len);
 	if (str2) {
 		memcpy(s+str1->len, REQ_LINE(msg).uri.s, REQ_LINE(msg).uri.len);
 		memcpy(s+str1->len+REQ_LINE(msg).uri.len, str2->s, str2->len );
 	}
 
 	if (insert_new_lump_before(anchor, s, len, 0) == 0) {
-		LOG(L_ERR, "append_hf(): Can't insert lump\n");
+		LOG(L_ERR, "textops:add_hf_helper: Can't insert lump\n");
 		pkg_free(s);
 		return -1;
 	}
 	return 1;
 }
 
-static int append_hf(struct sip_msg *msg, char *str1, char *str2 )
+static int append_hf_1(struct sip_msg *msg, char *str1, char *str2 )
 {
-	return append_hf_helper(msg, (str *) str1, (str *) 0);
+	return add_hf_helper(msg, 0, 0, (xl_elem_t*)str1, 0, 0);
 }
 
-static int append_urihf(struct sip_msg *msg, char *str1, char *str2 )
+static int append_hf_2(struct sip_msg *msg, char *str1, char *str2 )
 {
-	return append_hf_helper(msg, (str *) str1, (str *) str2);
+	return add_hf_helper(msg, 0, 0, (xl_elem_t*)str1, 0,
+			(str*)str2);
+}
+
+static int insert_hf_1(struct sip_msg *msg, char *str1, char *str2 )
+{
+	return add_hf_helper(msg, 0, 0, (xl_elem_t*)str1, 1, 0);
+}
+
+static int insert_hf_2(struct sip_msg *msg, char *str1, char *str2 )
+{
+	return add_hf_helper(msg, 0, 0, (xl_elem_t*)str1, 1, 
+			(str*)str2);
+}
+
+static int append_urihf(struct sip_msg *msg, char *str1, char *str2)
+{
+	return add_hf_helper(msg, (str*)str1, (str*)str2, 0, 0, 0);
 }
 
 static int is_method_f(struct sip_msg *msg, char *meth, char *str2 )
@@ -809,3 +895,36 @@ static int fixup_method(void** param, int param_no)
 	return 0;
 }
 
+
+/*
+ * Convert char* parameter to xl_elem parameter
+ */
+static int it_list_fixup(void** param, int param_no)
+{
+	xl_elem_t *model;
+	if(*param)
+	{
+		if(xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS)<0)
+		{
+			LOG(L_ERR, "ERROR:textops:item_list_fixup: wrong format[%s]\n",
+				(char*)(*param));
+			return E_UNSPEC;
+		}
+		*param = (void*)model;
+	}
+	return 0;
+}
+
+static int add_header_fixup(void** param, int param_no)
+{
+	if(param_no==1)
+	{
+		return it_list_fixup(param, param_no);
+	} else if(param_no==2) {
+		return hname_fixup(param, param_no);
+	} else {
+		LOG(L_ERR,
+			"ERROR:textops:add_header_fixup: wrong number of parameters\n");
+		return E_UNSPEC;
+	}
+}

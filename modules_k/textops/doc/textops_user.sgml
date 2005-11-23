@@ -355,15 +355,17 @@ append_to_reply("Foo: bar\r\n");
 
 	<section>
 		<title>
-		<function moreinfo="none">append_hf(hf)</function>
+		<function moreinfo="none">append_hf(txt)</function>
 		</title>
 		<para>
-		Appends txt after the last header field.
+			Appends 'txt' as header after the last header field. 
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>hf</emphasis> - Header field to be appended.
+			<para><emphasis>txt</emphasis> - Header field to be appended. The
+			value can contain pseudo-variables which will be replaced at run
+			time.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -376,6 +378,111 @@ append_to_reply("Foo: bar\r\n");
 		<programlisting format="linespecific">
 ...
 append_hf("P-hint: VOICEMAIL\r\n");
+append_hf("From-username: $fU\r\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">append_hf(txt, hdr)</function>
+		</title>
+		<para>
+		Appends 'txt' as header after first 'hdr' header field.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>txt</emphasis> - Header field to be appended. The
+			value can contain pseudo-variables which will be replaced at run
+			time.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>hdr</emphasis> - Header name after which the 'txt'
+			is appended.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>append_hf</function> usage</title>
+		<programlisting format="linespecific">
+...
+append_hf("P-hint: VOICEMAIL\r\n", "Call-ID");
+append_hf("From-username: $fU\r\n", "Call-ID");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">insert_hf(txt)</function>
+		</title>
+		<para>
+		Inserts 'txt' as header before the first header field.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>txt</emphasis> - Header field to be inserted. The
+			value can contain pseudo-variables which will be replaced at run
+			time.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>insert_hf</function> usage</title>
+		<programlisting format="linespecific">
+...
+insert_hf("P-hint: VOICEMAIL\r\n");
+insert_hf("To-username: $tU\r\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+
+	<section>
+		<title>
+		<function moreinfo="none">insert_hf(txt, hdr)</function>
+		</title>
+		<para>
+		Inserts 'txt' as header before first 'hdr' header field.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>txt</emphasis> - Header field to be inserted. The
+			value can contain pseudo-variables which will be replaced at run
+			time.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>hdr</emphasis> - Header name before which the 'txt'
+			is inserted.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>insert_hf</function> usage</title>
+		<programlisting format="linespecific">
+...
+insert_hf("P-hint: VOICEMAIL\r\n", "Call-ID");
+insert_hf("To-username: $tU\r\n", "Call-ID");
 ...
 </programlisting>
 		</example>
