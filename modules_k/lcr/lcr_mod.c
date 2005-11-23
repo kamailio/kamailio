@@ -100,6 +100,9 @@ int reload_gws ( void );
 #define LCR_TABLE "lcr"
 #define LCR_TABLE_LEN (sizeof(LCR_TABLE) - 1)
 
+#define STRIP_COL "strip"
+#define STRIP_COL_LEN (sizeof(STRIP_COL) - 1)
+
 #define PREFIX_COL "prefix"
 #define PREFIX_COL_LEN (sizeof(PREFIX_COL) - 1)
 
@@ -133,6 +136,7 @@ struct gw_info {
     unsigned int port;
     uri_type scheme;
     uri_transport transport;
+    unsigned int strip;
     unsigned int prefix_len;
     char prefix[16];
 };
@@ -155,6 +159,7 @@ str uri_scheme_col   = {URI_SCHEME_COL, URI_SCHEME_COL_LEN};
 str transport_col    = {TRANSPORT_COL, TRANSPORT_COL_LEN};
 str grp_id_col       = {GRP_ID_COL, GRP_ID_COL_LEN};
 str lcr_table        = {LCR_TABLE, LCR_TABLE_LEN};
+str strip_col       = {STRIP_COL, STRIP_COL_LEN};
 str prefix_col       = {PREFIX_COL, PREFIX_COL_LEN};
 str from_uri_col     = {FROM_URI_COL, FROM_URI_COL_LEN};
 str priority_col     = {PRIORITY_COL, PRIORITY_COL_LEN};
@@ -369,6 +374,7 @@ static int mod_init(void)
 	transport_col.len = strlen(transport_col.s);
 	grp_id_col.len = strlen(grp_id_col.s);
 	lcr_table.len = strlen(lcr_table.s);
+	strip_col.len = strlen(strip_col.s);
 	prefix_col.len = strlen(prefix_col.s);
 	from_uri_col.len = strlen(from_uri_col.s);
 	priority_col.len = strlen(priority_col.s);
@@ -482,7 +488,7 @@ static void destroy(void)
 int reload_gws ( void )
 {
     int q_len, i;
-    unsigned int ip_addr, port, prefix_len;
+    unsigned int ip_addr, port, strip, prefix_len;
     uri_type scheme;
     uri_transport transport;
     db_con_t* dbh;
@@ -490,11 +496,12 @@ int reload_gws ( void )
     db_res_t* res;
     db_row_t* row;
 
-    q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s, %.*s, %.*s, %.*s, %.*s FROM %.*s",
+    q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s, %.*s, %.*s, %.*s, %.*s, %.*s FROM %.*s",
                      ip_addr_col.len, ip_addr_col.s,
                      port_col.len, port_col.s,
                      uri_scheme_col.len, uri_scheme_col.s,
                      transport_col.len, transport_col.s,
+		     strip_col.len, strip_col.s,
 		     prefix_col.len, prefix_col.s,
                      gw_table.len, gw_table.s);
     
@@ -570,10 +577,15 @@ int reload_gws ( void )
 	    }
 	}
 	if (VAL_NULL(ROW_VALUES(row) + 4) == 1) {
+	    strip = 0;
+	} else {
+	    strip = VAL_INT(ROW_VALUES(row) + 4);
+	}
+	if (VAL_NULL(ROW_VALUES(row) + 5) == 1) {
 	    prefix_len = 0;
 	    prefix = (char *)0;
 	} else {
-	    prefix = (char *)VAL_STRING(ROW_VALUES(row) + 4);
+	    prefix = (char *)VAL_STRING(ROW_VALUES(row) + 5);
 	    prefix_len = strlen(prefix);
 	    if (prefix_len > MAX_PREFIX_LEN) {
 		LOG(L_ERR, "reload_gws(): too long prefix\n");
@@ -587,6 +599,7 @@ int reload_gws ( void )
 		gws_2[i].port = port;
 		gws_2[i].scheme = scheme;
 		gws_2[i].transport = transport;
+		gws_2[i].strip = strip;
 		gws_2[i].prefix_len = prefix_len;
 		if (prefix_len)
 		    memcpy(&(gws_2[i].prefix[0]), prefix, prefix_len);
@@ -595,6 +608,7 @@ int reload_gws ( void )
 		gws_1[i].port = port;
 		gws_1[i].scheme = scheme;
 		gws_1[i].transport = transport;
+		gws_1[i].strip = strip;
 		gws_1[i].prefix_len = prefix_len;
 		if (prefix_len)
 		    memcpy(&(gws_1[i].prefix[0]), prefix, prefix_len);
@@ -620,6 +634,7 @@ int reload_gws ( void )
 void print_gws (FILE *reply_file)
 {
         unsigned int i, prefix_len;
+	unsigned int strip;
 	uri_transport transport;
 
 	for (i = 0; i < MAX_NO_OF_GWS; i++) {
@@ -655,6 +670,8 @@ void print_gws (FILE *reply_file)
 		} else {
 		    fprintf(reply_file, ":");
 		}
+		strip = (*gws)[i].strip;
+		fprintf(reply_file, "%d", strip);
 		prefix_len = (*gws)[i].prefix_len;
 		if (prefix_len) {
 			fprintf(reply_file, "%.*s\n",
@@ -676,8 +693,9 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
     str ruri_user, from_uri, value;
     char query[MAX_QUERY_SIZE];
     char ruri[MAX_URI_SIZE];
-    unsigned int q_len, i, j, prefix_len;
+    unsigned int q_len, i, j, strip_len, prefix_len;
     unsigned int addr, port;
+    unsigned int strip;
     uri_type scheme;
     uri_transport transport;
     struct ip_addr address;
@@ -715,11 +733,12 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 	from_uri = get_from(_m)->uri;
     }
     
-    q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s FROM %.*s, %.*s WHERE '%.*s' LIKE %.*s.%.*s AND '%.*s' LIKE CONCAT(%.*s.%.*s, '%%') AND %.*s.%.*s = %.*s.%.*s ORDER BY CHAR_LENGTH(%.*s.%.*s), %.*s.%.*s DESC, RAND()",
+    q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s FROM %.*s, %.*s WHERE '%.*s' LIKE %.*s.%.*s AND '%.*s' LIKE CONCAT(%.*s.%.*s, '%%') AND %.*s.%.*s = %.*s.%.*s ORDER BY CHAR_LENGTH(%.*s.%.*s), %.*s.%.*s DESC, RAND()",
 		     gw_table.len, gw_table.s, ip_addr_col.len, ip_addr_col.s,
 		     gw_table.len, gw_table.s, port_col.len, port_col.s,
 		     gw_table.len, gw_table.s, uri_scheme_col.len, uri_scheme_col.s,
 		     gw_table.len, gw_table.s, transport_col.len, transport_col.s,
+		     gw_table.len, gw_table.s, strip_col.len, strip_col.s,
 		     gw_table.len, gw_table.s, prefix_col.len, prefix_col.s,
 		     gw_table.len, gw_table.s, lcr_table.len, lcr_table.s,
 		     from_uri.len, from_uri.s,
@@ -766,13 +785,25 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 	    transport = (uri_transport)VAL_INT(ROW_VALUES(row) + 3);
 	}
 	if (VAL_NULL(ROW_VALUES(row) + 4) == 1) {
+	    strip = 0;
+	    strip_len = 1;
+	} else {
+	    strip = VAL_INT(ROW_VALUES(row) + 4);
+	    if (strip<10) strip_len = 1;
+	    else
+	        if (strip < 100)
+	            strip_len = 2;
+		else
+	            strip_len = 3;
+	}
+	if (VAL_NULL(ROW_VALUES(row) + 5) == 1) {
 	    prefix_len = 0;
 	    prefix = (char *)0;
 	} else {
-	    prefix = (char *)VAL_STRING(ROW_VALUES(row) + 4);
+	    prefix = (char *)VAL_STRING(ROW_VALUES(row) + 5);
 	    prefix_len = strlen(prefix);
 	}
-	if (5 + prefix_len + 1 + 15 + 1 + 5 + 1 + 14 >
+	if (5 + prefix_len + 1 + strip_len + 1 + 15 + 1 + 5 + 1 + 14 >
 	    MAX_URI_SIZE) {
 	    LOG(L_ERR, "load_gws(): Request URI would be too long\n");
 	    goto skip;
@@ -789,6 +820,11 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 	if (prefix_len) {
 	    memcpy(at, prefix, prefix_len); at = at + prefix_len;
 	}
+	//Add strip in this form |number. For example: |3 means strip first 3 characters
+	*at = '|'; at = at + 1;
+	sprintf(at,"%d", strip);
+	at = at + strip_len;
+	
 	*at = '@'; at = at + 1;
 	address.af = AF_INET;
 	address.len = 4;
@@ -853,6 +889,8 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     struct usr_avp *gw_uri_avp, *ruri_user_avp;
     str new_ruri;
     char *at, *at_char;
+    char *strip_char;
+    unsigned int strip;
 
     gw_uri_avp = search_first_avp(gw_uri_avp_name_str,
 				  gw_uri_name, &gw_uri_val);
@@ -871,17 +909,21 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	    LOG(L_ERR, "next_gw(): No memory for new R-URI.\n");
 	    return -1;
 	}
+	strip_char = memchr(gw_uri_val.s->s, '|', gw_uri_val.s->len);
 	at_char = memchr(gw_uri_val.s->s, '@', gw_uri_val.s->len);
+	if (!strip_char || strip_char > at_char)
+		strip = 0;
 	if (!at_char) {
 	    pkg_free(new_ruri.s);
 	    LOG(L_ERR, "next_gw(): No @ in gateway URI.\n");
 	    return -1;
 	}
 	at = new_ruri.s;
-	memcpy(at, gw_uri_val.s->s, at_char - gw_uri_val.s->s);
-	at = at + (at_char - gw_uri_val.s->s);
-	memcpy(at, _m->parsed_uri.user.s, _m->parsed_uri.user.len);
-	at = at + _m->parsed_uri.user.len;
+	memcpy(at, gw_uri_val.s->s, strip_char - gw_uri_val.s->s);
+	sscanf(strip_char+1,"%d",&strip);
+	at = at + (strip_char - gw_uri_val.s->s);
+	memcpy(at, _m->parsed_uri.user.s+strip, _m->parsed_uri.user.len-strip);
+	at = at + _m->parsed_uri.user.len-strip;
 	memcpy(at, at_char, gw_uri_val.s->len - (at_char - gw_uri_val.s->s));
 	at = at + gw_uri_val.s->len - (at_char - gw_uri_val.s->s);
 	*at = '\0';

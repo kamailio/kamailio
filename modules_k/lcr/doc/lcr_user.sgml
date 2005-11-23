@@ -49,12 +49,13 @@
 	Gateway and routing information is kept in two tables: gw and lcr.
 	</para>
 	<para>
-	When a gateway is selected, Request-URI is rewritten with information
-	from gw table: URI scheme, prefix, IP address, port, and transport
-	protocol.  Valid URI scheme values are NULL = sip, 1 = sip and 2 =
-	sips.  Prefix is appended in front of Request-URI user part.
-	Currently valid transport protocol values are NULL = none, 1 = udp, 2
-	= tcp, and 3 = tls.
+	When a gateway is selected, the Request-URI user part is stripped by 
+	the number of digits specified in the strip parameter. Subsequently,
+	the Request-URI is rewritten with information from gw table:
+	URI scheme, prefix, IP address, port, and transport protocol.  Valid
+	URI scheme values are NULL = sip, 1 = sip and 2 = sips.  Prefix is
+	appended in front of Request-URI user part. Currently valid transport
+	protocol values are NULL = none, 1 = udp, 2 = tcp, and 3 = tls.
 	</para>
 	<para>
 	Table lcr contains prefix of user part of Request-URI, From URI,
@@ -287,6 +288,26 @@ modparam("lcr","grp_id_column","grp_id")
 		<programlisting format="linespecific">
 ...
 modparam("lcr","lcr_table","lcr")
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>strip_column</varname> (string)</title>
+		<para>
+		Name of the column holding the number of digits to strip from the RURI before applying the prefix.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>strip</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>strip_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","strip_column","strip")
 ...
 </programlisting>
 		</example>
