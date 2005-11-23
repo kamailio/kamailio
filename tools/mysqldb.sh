@@ -713,6 +713,7 @@ CREATE TABLE gw (
   port SMALLINT UNSIGNED,
   uri_scheme TINYINT UNSIGNED,
   transport TINYINT UNSIGNED,
+  strip TINYINT UNSIGNED,
   prefix varchar(16) default NULL,
   PRIMARY KEY (gw_name),
   KEY (grp_id)

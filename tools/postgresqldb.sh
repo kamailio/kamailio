@@ -491,6 +491,7 @@ CREATE TABLE gw (
   port INT CHECK (port > 0 AND port < 65536),
   uri_scheme SMALLINT CHECK (uri_scheme >= 0 and uri_scheme < 256),
   transport SMALLINT CHECK (transport >= 0 and transport < 256),
+  strip SMALLINT CHECK (strip >= 0),
   prefix varchar(16) default NULL,
   PRIMARY KEY (gw_name)
 );
