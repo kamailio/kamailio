@@ -9,14 +9,5 @@ include ../../Makefile.defs
 auto_gen=
 NAME=avp.so
 
-ifeq ($(MAKELEVEL), 0)
-# make called directly in the module dir!
-
-all::
-	cd ../..; make all
-
-else
-
 include ../../Makefile.modules
 
-endif

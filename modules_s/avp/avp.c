@@ -97,8 +97,8 @@ static int set_sattr(struct sip_msg* msg, char* attr, char* val)
 {
 	int_str name, value;
 
-	name.s = (str*)attr;
-	value.s = (str*)val;
+	name.s = *(str*)attr;
+	value.s = *(str*)val;
 
 	if (add_avp(AVP_NAME_STR | AVP_VAL_STR, name, value) !=0 ) {
 		LOG(L_ERR, "set_sattr: add_avp failed\n");
@@ -115,7 +115,7 @@ static int set_iattr(struct sip_msg* msg, char* attr, char* nr)
 	int_str name, value;
 
 	value.n = (int)(long)nr;
-	name.s = (str*)attr;
+	name.s = *(str*)attr;
 
 	if (add_avp(AVP_NAME_STR, name, value) != 0) {
 		LOG(L_ERR, "set_iattr: add_avp failed\n");
@@ -135,7 +135,7 @@ static int flags2attr(struct sip_msg* msg, char* foo, char* bar)
 	s_name.s = FLAGS_ATTR;
 	s_name.len = FLAGS_ATTR_LEN;
 
-	name.s = &s_name;
+	name.s = s_name;
 	value.n = msg->flags;
 
 	if (add_avp(AVP_NAME_STR, name, value) != 0) {
@@ -152,28 +152,30 @@ static int print_sattr(struct sip_msg* msg, char* attr, char* s2)
 {
 	str s_value;
 	int_str name, value;
-	struct usr_avp *avp_entry;
+	struct usr_avp *avp;
+	struct search_state st;
 
-	name.s = (str*)attr;
-	DBG("print_sattr('%.*s')\n", name.s->len, name.s->s);
+	name.s = *(str*)attr;
+	DBG("print_sattr('%.*s')\n", name.s.len, ZSW(name.s.s));
 
-	avp_entry = search_first_avp(AVP_NAME_STR, name, &value, 0);
-	if (avp_entry == 0) {
-		LOG(L_ERR, "print_sattr: AVP '%.*s' not found\n", name.s->len, ZSW(name.s->s));
+	avp = search_first_avp(AVP_NAME_STR, name, &value, &st);
+	if (avp == 0) {
+		LOG(L_ERR, "print_sattr: AVP '%.*s' not found\n", name.s.len, ZSW(name.s.s));
 		return -1;
 	}
 
-	if (avp_entry->flags & AVP_VAL_STR) {
-		s_value.s = value.s->s;
-		s_value.len = value.s->len;
-		LOG(L_INFO, "AVP: '%.*s'='%.*s'\n",
-			((str*)attr)->len, ZSW(((str*)attr)->s), s_value.len, ZSW(s_value.s));
+	while(avp) {	
+		if (avp->flags & AVP_VAL_STR) {
+			s_value = value.s;
+			LOG(L_INFO, "AVP: '%.*s'='%.*s'\n",
+			    ((str*)attr)->len, ZSW(((str*)attr)->s), s_value.len, ZSW(s_value.s));
+		} else {
+			LOG(L_INFO, "AVP: '%.*s'=%d\n",
+			    ((str*)attr)->len, ZSW(((str*)attr)->s), value.n);
+		}
+		avp = search_next_avp(&st, &value);
 	}
-	else {
-		LOG(L_INFO, "AVP: '%.*s'=%d\n",
-			((str*)attr)->len, ZSW(((str*)attr)->s), value.n);
 
-	}
 	return 1;
 }
 
@@ -192,7 +194,7 @@ static int is_sattr_set(struct sip_msg* msg, char* attr, char* foo)
 	int_str name, value;
 	struct usr_avp* avp_entry;
 
-	name.s = (str*)attr;
+	name.s = *(str*)attr;
 	avp_entry = search_first_avp(AVP_NAME_STR, name, &value, 0);
 	if (avp_entry == 0) {
 		return -1;
@@ -208,16 +210,15 @@ static int attr2uri(struct sip_msg* msg, char* attr, char* foo)
 	int_str name, value;
 	struct usr_avp *avp_entry;
 
-	name.s=(str*)attr;
+	name.s=*(str*)attr;
 
 	avp_entry = search_first_avp(AVP_NAME_STR, name, &value, 0);
 	if (avp_entry == 0) {
-		LOG(L_ERR, "attr2uri: AVP '%.*s' not found\n", name.s->len, ZSW(name.s->s));
+		LOG(L_ERR, "attr2uri: AVP '%.*s' not found\n", name.s.len, ZSW(name.s.s));
 		return -1;
 	}
 
-	s_value.s = value.s->s;
-	s_value.len = value.s->len;
+	s_value = value.s;
 	if (rewrite_uri(msg, &s_value) < 0) {
 		LOG(L_ERR, "attr2uri: no attribute found\n");
 		return -1;
@@ -240,7 +241,7 @@ static int avp_exists(struct sip_msg* msg, char* key, char* value)
 	key_str = (str*)key;
 	val_str = (str*)value;
 
-	avp_key.s = (str*)key;
+	avp_key.s = *(str*)key;
 	avp_entry = search_first_avp(AVP_NAME_STR, avp_key, &avp_value, &st);
 
 	if (avp_entry == 0) {
@@ -250,8 +251,8 @@ static int avp_exists(struct sip_msg* msg, char* key, char* value)
 
 	while (avp_entry != 0) {
 		if (avp_entry->flags & AVP_VAL_STR) {
-			if ((avp_value.s->len == val_str->len) &&
-			    !memcmp(avp_value.s->s, val_str->s, avp_value.s->len)) {
+			if ((avp_value.s.len == val_str->len) &&
+			    !memcmp(avp_value.s.s, val_str->s, avp_value.s.len)) {
 				DBG("avp_exists str ('%.*s', '%.*s'): TRUE\n",
 				    key_str->len, ZSW(key_str->s),
 				    val_str->len, ZSW(val_str->s));
