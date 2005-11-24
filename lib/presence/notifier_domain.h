@@ -30,6 +30,7 @@
 #include <cds/ptr_vector.h>
 #include <cds/sync.h>
 #include <cds/msg_queue.h>
+#include <cds/ref_cntr.h>
 
 #include <presence/client_notify_info.h>
 
@@ -53,12 +54,14 @@ typedef struct _notifier_domain_t notifier_domain_t;
  */
 struct _subscription_t {
 	/* client_notify_func notify; */
+	cds_mutex_t *mutex;
 	msg_queue_t *dst;
 	str_t record_id;
 	str_t subscriber_id;
 	notifier_package_t *package;
 	void *subscriber_data;
 	struct _subscription_t *prev, *next;
+	reference_counter_data_t ref;
 };
 
 typedef int (*server_subscribe_func)(notifier_t *n, subscription_t *subscription);
@@ -85,8 +88,10 @@ struct _notifier_package_t {
 
 struct _notifier_domain_t {
 	cds_mutex_t mutex;
+	cds_mutex_t data_mutex; /* mutex for locking standalone subscription data, may be changed to mutex pool */
 	str_t name;
 	notifier_package_t *first_package, *last_package;
+	reference_counter_data_t ref;
 };
 
 /* -------- Domain initialization/destruction functions -------- */

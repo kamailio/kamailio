@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <cds/msg_queue.h>
 #include <cds/memory.h>
+#include <cds/ref_cntr.h>
 
 mq_message_t *create_message_ex(int data_len)
 {
@@ -155,6 +156,7 @@ int msg_queue_init(msg_queue_t *q)
 int msg_queue_init_ex(msg_queue_t *q, int synchronize)
 {
 	if (synchronize) cds_mutex_init(&q->q_mutex);
+	init_reference_counter(&q->ref);
 	q->use_mutex = synchronize;
 	q->first = NULL;
 	q->last = NULL;
@@ -181,4 +183,11 @@ void msg_queue_destroy(msg_queue_t *q)
 	}
 }
 
+void msg_queue_free(msg_queue_t *q)
+{
+	if (remove_reference(&q->ref)) {
+		msg_queue_destroy(q);
+		cds_free(q);
+	}
+}
 

@@ -31,6 +31,10 @@
 #include <presence/notifier.h>
 #include <presence/subscriber.h>
 #include <cds/list.h>
+#include <cds/cds.h>
+
+#define lock_subscription_data(s) if (s->mutex) cds_mutex_lock(s->mutex);
+#define unlock_subscription_data(s) if (s->mutex) cds_mutex_unlock(s->mutex);
 
 static void free_notifier(notifier_t *info);
 static void free_subscription(subscription_t *s);
@@ -89,27 +93,27 @@ static notifier_package_t *get_package(notifier_domain_t *d, const str_t *name)
 	
 static void destroy_package(notifier_package_t *p) 
 {
-	notifier_t *e, *n;
+	/* notifier_t *e, *n; */
 	subscription_t *s, *ns;
 	
-	/* release all subscriptions  */
+	/* release all subscriptions ???  */
 	s = p->first_subscription;
 	while (s) {
 		ns = s->next;
-		/* unsubscribe(p->domain, s) */
-		/* release_subscription(s); */
-		free_subscription(s);
+		/* CAN NOT be called !!!! : unsubscribe(p->domain, s) */
+		release_subscription(s);
 		s = ns;
 	}
 	
-	/* release all registered notifiers */
-	e = p->first_notifier;
+	/* !!! don't release notifiers - its their job !!! */
+	/* it may lead to errors there */
+	/* e = p->first_notifier;
 	while (e) {
 		n = e->next;
 		free_notifier(e);
-		/* maybe: call some notifier callback ? */
 		e = n;
-	}
+	} */
+	
 	p->first_notifier = NULL;
 	p->last_notifier = NULL;
 	str_free_content(&p->name);
@@ -170,6 +174,8 @@ notifier_domain_t *create_notifier_domain(const str_t *name)
 		d->last_package = NULL;
 		str_dup(&d->name, name);
 		cds_mutex_init(&d->mutex);
+		cds_mutex_init(&d->data_mutex);
+		init_reference_counter(&d->ref);
 	}
 	return d;
 }
@@ -180,6 +186,10 @@ notifier_domain_t *create_notifier_domain(const str_t *name)
 void destroy_notifier_domain(notifier_domain_t *domain)
 {
 	notifier_package_t *p, *n;
+
+	/* this function is always called only if no only one reference
+	 * to domain exists (see domain maintainer), this should mean, that 
+	 * all subscribers freed their subscriptions */
 	
 	lock_notifier_domain(domain);
 	
@@ -197,6 +207,7 @@ void destroy_notifier_domain(notifier_domain_t *domain)
 	
 	str_free_content(&domain->name);
 	cds_mutex_destroy(&domain->mutex);
+	cds_mutex_init(&domain->data_mutex);
 	cds_free(domain);
 }
 
@@ -257,10 +268,13 @@ void unregister_notifier(notifier_domain_t *domain, notifier_t *info)
 	
 	p = info->package;
 	if (p) {
+		/* accepted subscriptions MUST be removed by the notifier 
+		 * how to solve this ? */
+		
 		/* subscription_t *s;
 		s = p->first_subscription;
 		while (s) {
-			info->unsubscribe(info, s);
+			CAN NOT be called !!!!! info->unsubscribe(info, s);
 			s = s->next;
 		}*/
 
@@ -303,18 +317,25 @@ subscription_t *subscribe(notifier_domain_t *domain,
 
 	s->package = p;
 	s->dst = dst;
+	s->mutex = &domain->data_mutex;
 	s->subscriber_data = subscriber_data;
 	str_dup(&s->record_id, record_id);
 	str_dup(&s->subscriber_id, subscriber_id);
+	init_reference_counter(&s->ref);
 
 	DOUBLE_LINKED_LIST_ADD(p->first_subscription, p->last_subscription, s);
 
+	/* add a reference for calling subscriber */
+	add_reference(&s->ref);
+	
 	/* browse all notifiers in given package and subscribe to them
 	 * and add them to notifiers list */
 	cnt = 0;
 	e = p->first_notifier;
 	while (e) {
 		cnt++;
+		/* each notifier MUST add its own reference if
+		 * it wants to accept the subscription !!! */
 		e->subscribe(e, s);
 		e = e->next;
 	}
@@ -323,12 +344,29 @@ subscription_t *subscribe(notifier_domain_t *domain,
 	
 	return s;
 }
+	
+void release_subscription(subscription_t *s)
+{
+	if (!s) return;
+	if (remove_reference(&s->ref)) free_subscription(s);
+}
 
-/** Destroys an existing subscription */
+void accept_subscription(subscription_t *s)
+{
+	if (!s) return;
+	add_reference(&s->ref);
+}
+
+/** Destroys an existing subscription - can be called ONLY by client !!! */
 void unsubscribe(notifier_domain_t *domain, subscription_t *s)
 {
 	notifier_package_t *p;
 	notifier_t *e;
+
+	/* mark subscription as un-notifyable */
+	lock_subscription_data(s);
+	s->dst = NULL;
+	unlock_subscription_data(s);
 
 	lock_notifier_domain(domain);
 	
@@ -349,6 +387,28 @@ void unsubscribe(notifier_domain_t *domain, subscription_t *s)
 	
 	unlock_notifier_domain(domain);
 	
-	free_subscription(s);
+	/* remove clients reference (dont give references to client?) */
+	remove_reference(&s->ref);
+	
+	release_subscription(s); 
 }
 
+void notify_subscriber(subscription_t *s, mq_message_t *msg)
+{
+	int sent = 0;
+	
+	if (s) {
+		lock_subscription_data(s);
+		if (s->dst) {
+			push_message(s->dst, msg);
+			sent = 1;
+		}
+		else free_message(msg);
+		unlock_subscription_data(s);
+	}
+	
+	if (!sent) {
+		/* free unsent messages */
+		free_message(msg);
+	}
+}

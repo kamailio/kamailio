@@ -46,12 +46,17 @@ void destroy_domain_maintainer(domain_maintainer_t *dm)
 	notifier_domain_t *d;
 	
 	if (!dm) return;
+			
+	DEBUG_LOG("destroying domain maintainer\n");
 
 	cnt = ptr_vector_size(&dm->registered_domains);
 	for (i = 0; i < cnt; i++) {
 		d = ptr_vector_get(&dm->registered_domains, i);
 		if (!d) continue;
-		destroy_notifier_domain(d);
+		if (remove_reference(&d->ref)) {
+			DEBUG_LOG("freeing domain: \'%.*s\'\n", FMT_STR(d->name));
+			destroy_notifier_domain(d);
+		}
 	}
 	ptr_vector_destroy(&dm->registered_domains);
 	cds_mutex_destroy(&dm->mutex);
@@ -77,13 +82,14 @@ static notifier_domain_t *add_domain_nolock(domain_maintainer_t *dm, const str_t
 	notifier_domain_t *d = create_notifier_domain(name);
 	
 	if (d) {
+		DEBUG_LOG("created domain: \'%.*s\'\n", FMT_STR(d->name));
 		ptr_vector_add(&dm->registered_domains, d);
 		return d;
 	}
 	else return NULL;
 }
 
-notifier_domain_t *find_notifier_domain(domain_maintainer_t *dm, const str_t *name)
+/* notifier_domain_t *find_notifier_domain(domain_maintainer_t *dm, const str_t *name)
 {
 	notifier_domain_t *d = NULL;
 	
@@ -92,7 +98,7 @@ notifier_domain_t *find_notifier_domain(domain_maintainer_t *dm, const str_t *na
 	d = find_domain_nolock(dm, name);
 	cds_mutex_unlock(&dm->mutex);
 	return d;
-}
+} */
 
 notifier_domain_t *register_notifier_domain(domain_maintainer_t *dm, const str_t *name)
 {
@@ -103,12 +109,39 @@ notifier_domain_t *register_notifier_domain(domain_maintainer_t *dm, const str_t
 	cds_mutex_lock(&dm->mutex);
 	d = find_domain_nolock(dm, name);
 	if (!d) d = add_domain_nolock(dm, name);
+	if (d) {
+		add_reference(&d->ref); /* add reference for client */
+	}
 	cds_mutex_unlock(&dm->mutex);
 	return d;
 }
 
+static void remove_notifier_domain(domain_maintainer_t *dm, notifier_domain_t *domain)
+{
+	notifier_domain_t *d = NULL;
+	int i, cnt;
+	
+	cnt = ptr_vector_size(&dm->registered_domains);
+	for (i = 0; i < cnt; i++) {
+		d = ptr_vector_get(&dm->registered_domains, i);
+		if (d == domain) {
+			ptr_vector_remove(&dm->registered_domains, i);
+			break;
+		}
+	}
+}
+
 void release_notifier_domain(domain_maintainer_t *dm, notifier_domain_t *domain)
 {
-	/* TODO: decrement "domain counter", if 0 => destroy domain */
+	if ((!dm) || (!domain)) return;
+	
+	cds_mutex_lock(&dm->mutex);
+	if (remove_reference(&domain->ref)) {
+		/* last reference */
+		DEBUG_LOG("freeing domain: \'%.*s\'\n", FMT_STR(domain->name));
+		remove_notifier_domain(dm, domain);
+		destroy_notifier_domain(domain);
+	}
+	cds_mutex_unlock(&dm->mutex);
 }
 

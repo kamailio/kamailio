@@ -27,6 +27,11 @@
 #define __MSG_QUEUE_H
 
 #include <cds/sync.h>
+#include <cds/ref_cntr.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef void (*destroy_function_f)(void *);
 
@@ -43,6 +48,7 @@ typedef struct _mq_message_t {
 } mq_message_t;
 
 typedef struct msg_queue {
+	reference_counter_data_t ref;
 	mq_message_t *first;
 	mq_message_t *last;
 	cds_mutex_t q_mutex;
@@ -81,6 +87,13 @@ int is_msg_queue_empty(msg_queue_t *q);
 int msg_queue_init(msg_queue_t *q);
 int msg_queue_init_ex(msg_queue_t *q, int synchronize);
 void msg_queue_destroy(msg_queue_t *q);
+
+/* removes reference to message queue and frees it if no other references exist */
+void msg_queue_free(msg_queue_t *q);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

@@ -25,43 +25,74 @@
 
 #include <presence/qsa.h>
 #include <cds/logger.h>
+#include <cds/cds.h>
 #include <presence/domain_maintainer.h>
 
-static domain_maintainer_t *dm = NULL;
-static int initialized = 0;
+typedef struct {
+	int init_cnt;
+	domain_maintainer_t *dm;
+} init_data_t;
+
+static init_data_t *init = NULL;
 
 int qsa_initialize()
 {
-	if (!initialized) {
-		dm = create_domain_maintainer();
-		if (dm) initialized = 1;
-		else {
-			ERROR_LOG("qsa_initialize error - can't initialize domain maintainer\n");
-			return -1;
-		}
-		DEBUG_LOG("QSA initialized\n");
+	int res = 0;
+
+	cds_initialize();
+	
+	/* initialization should be called from one process/thread 
+	 * it is not synchronized because it is impossible ! */
+	if (!init) {
+		init = (init_data_t*)cds_malloc(sizeof(init_data_t));
+		if (!init) return -1;
+		init->init_cnt = 0;
 	}
-	return 0;
+
+	if (init->init_cnt > 0) { /* already initialized */
+		init->init_cnt++;
+		return 0;
+	}
+	else {
+		DEBUG_LOG("qsa_initialize(): init the content\n");
+
+		/* !!! put the real initialization here !!! */
+		init->dm = create_domain_maintainer();
+		if (!init->dm) {
+			ERROR_LOG("qsa_initialize error - can't initialize domain maintainer\n");
+			res = -1;
+		}
+	}
+			
+	if (res == 0) init->init_cnt++;
+	return res;
 }
 
 void qsa_cleanup() 
 {
-	if (initialized && dm) {
-		destroy_domain_maintainer(dm);
-		dm = NULL;
-		initialized = 0;
+	if (init) {
+		if (--init->init_cnt == 0) {
+			DEBUG_LOG("qsa_cleanup(): cleaning the content\n");
+			
+			/* !!! put the real destruction here !!! */
+			if (init->dm) destroy_domain_maintainer(init->dm);
+			
+			cds_free(init);
+			init = NULL;
+		}
 	}
+	cds_cleanup();
 }
 
 notifier_domain_t *qsa_register_domain(const str_t *name)
 {
 	notifier_domain_t *d = NULL;
 
-	if (!dm) {
+	if (!init) {
 		ERROR_LOG("qsa_initialize was not called - can't register domain\n");
 		return NULL;
 	}
-	d = register_notifier_domain(dm, name);
+	if (init->dm) d = register_notifier_domain(init->dm, name);
 	return d;
 }
 
@@ -72,5 +103,6 @@ notifier_domain_t *qsa_get_default_domain()
 
 void qsa_release_domain(notifier_domain_t *domain)
 {
-	if (dm) release_notifier_domain(dm, domain);
+	if (init) 
+		if (init->dm) release_notifier_domain(init->dm, domain);
 }

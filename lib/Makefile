@@ -2,11 +2,13 @@
 
 INCLUDES += -I$(CURDIR)
 LIBS     += -L$(CURDIR)/cds -L$(CURDIR)/qsa
+DEFS     += -Wall
 
 ####################################
 # make rules
 
 export LIBS
+export DEFS
 export INCLUDES
 
 SUBDIRS=cds xcap presence
