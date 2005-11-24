@@ -92,7 +92,7 @@ static char* attr_flags = "flags";
 static db_con_t* con = 0;
 static db_func_t db;
 
-static avp_t* global_avps;
+static avp_list_t global_avps;
 
 static cmd_export_t cmds[]={
 	{"set_gflag",   set_gflag,   1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
@@ -289,7 +289,7 @@ static int load_attrs(void)
 			avp_val.len = strlen(avp_val.s);
 		}
 
-		flags = AVP_GLOBAL | AVP_NAME_STR;
+		flags = AVP_CLASS_GLOBAL | AVP_NAME_STR;
 		if (type == AVP_VAL_STR) {
 			     /* String AVP */
 			v.s = &avp_val;
@@ -368,7 +368,7 @@ static int mod_init(void)
 			return -1;
 		}
 
-		set_global_avp_list(&global_avps);
+		set_avp_list(AVP_CLASS_GLOBAL, &global_avps);
 		
 		db.close(con);
 	}
