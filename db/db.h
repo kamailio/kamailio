@@ -51,7 +51,8 @@
 #define DB_IS_TO      (1 << 3)  /* The URI can be used in To */
 #define DB_IS_FROM    (1 << 4)  /* The URI can be used in From */
 #define DB_FOR_SERWEB (1 << 5)  /* Credentials instance can be used by serweb */
-
+#define DB_PENDING    (1 << 6)
+#define DB_DELETED    (1 << 7)
 
 /*
  * Specify table name that will be used for
