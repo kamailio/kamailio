@@ -27,6 +27,7 @@ INSERT INTO version (table_name, table_version) VALUES ('presentity', '1');
 INSERT INTO version (table_name, table_version) VALUES ('presentity_contact', '1');
 INSERT INTO version (table_name, table_version) VALUES ('watcherinfo', '1');
 INSERT INTO version (table_name, table_version) VALUES ('i18n', '1');
+INSERT INTO version (table_name, table_version) VALUES ('gw', '2');
 
 CREATE TABLE acc (
     id int NOT NULL,
@@ -225,6 +226,13 @@ CREATE TABLE lcr (
     from_uri string(255) NOT NULL DEFAULT '%',
     grp_id int,
     priority int
+);
+
+CREATE TABLE grp (
+    username string(64) NOT NULL DEFAULT '',
+    domain string(128) NOT NULL DEFAULT '',
+    grp string(64) NOT NULL DEFAULT '',
+    last_modified datetime NOT NULL DEFAULT '1970-01-01 00:00:00'
 );
 
 CREATE TABLE silo (

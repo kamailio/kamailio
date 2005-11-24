@@ -52,6 +52,8 @@
     <xi:include href="gw_grp.xml"/>
     <xi:include href="lcr.xml"/>
 
+    <xi:include href="grp.xml"/>
+
     <!-- Instant Messages Scheduled for later delivery -->
     <xi:include href="silo.xml"/>
 

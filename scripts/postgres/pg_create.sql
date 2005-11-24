@@ -27,6 +27,7 @@ INSERT INTO version (table_name, table_version) VALUES ('presentity', '1');
 INSERT INTO version (table_name, table_version) VALUES ('presentity_contact', '1');
 INSERT INTO version (table_name, table_version) VALUES ('watcherinfo', '1');
 INSERT INTO version (table_name, table_version) VALUES ('i18n', '1');
+INSERT INTO version (table_name, table_version) VALUES ('gw', '2');
 
 CREATE TABLE acc (
     id SERIAL NOT NULL,
@@ -245,6 +246,15 @@ CREATE TABLE lcr (
 CREATE INDEX lcr_idx1 ON lcr (prefix);
 CREATE INDEX lcr_idx2 ON lcr (from_uri);
 CREATE INDEX lcr_idx3 ON lcr (grp_id);
+
+CREATE TABLE grp (
+    username VARCHAR(64) NOT NULL DEFAULT '',
+    domain VARCHAR(128) NOT NULL DEFAULT '',
+    grp VARCHAR(64) NOT NULL DEFAULT '',
+    last_modified TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00'
+);
+
+CREATE INDEX grp_idx ON grp (username, domain, grp);
 
 CREATE TABLE silo (
     mid SERIAL NOT NULL,
