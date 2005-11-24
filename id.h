@@ -58,9 +58,15 @@ int get_to_uid(str* uid, struct sip_msg* msg);
 
 
 /*
- * Return the current domain id
+ * Return current To domain id
  */
-int get_did(str* did, struct sip_msg* msg);
+int get_to_did(str* did, struct sip_msg* msg);
+
+
+/*
+ * Return current From domain id
+ */
+int get_from_did(str* did, struct sip_msg* msg);
 
 
 #endif /* _ID_H */

@@ -40,16 +40,15 @@ void set_from_uid(str* uid)
 	int_str name, val;
 	avp_t* a;
 
-	a = search_first_avp(AVP_USER | AVP_NAME_STR, name, 0, &s);
+	a = search_first_avp(AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR, name, 0, &s);
 	while(a) {
 		destroy_avp(a);
 		a = search_next_avp(&s, 0);
 	}
 
-	val.s = uid;
-	add_avp(AVP_USER | AVP_NAME_STR | AVP_VAL_STR, name, val);
+	val.s = *uid;
+	add_avp(AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR | AVP_VAL_STR, name, val);
 }
-
 
 
 /*
@@ -63,9 +62,9 @@ int get_from_uid(str* uid, struct sip_msg* msg)
 	static str name_s = STR_STATIC_INIT(AVP_UID);
 	int_str name, val;
 
-	name.s = &name_s;
-	if (search_first_avp(AVP_USER | AVP_NAME_STR, name, &val, 0)) {
-		*uid = *val.s;
+	name.s = name_s;
+	if (search_first_avp(AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR, name, &val, 0)) {
+		*uid = val.s;
 		return 1;
 	} else {
 		     /* Get From URI username */
@@ -88,8 +87,8 @@ int get_from_uid(str* uid, struct sip_msg* msg)
 		uid->len = puri.user.len;
 		strlower(uid);
 
-		val.s = uid;
-		add_avp(AVP_USER | AVP_NAME_STR | AVP_VAL_STR, name, val);
+		val.s = *uid;
+		add_avp(AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR | AVP_VAL_STR, name, val);
 		return 0;
 	}
 }
@@ -104,14 +103,14 @@ void set_to_uid(str* uid)
 	int_str name, val;
 	avp_t* a;
 
-	a = search_first_avp(AVP_USER | AVP_NAME_STR, name, 0, &s);
+	a = search_first_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR, name, 0, &s);
 	while(a) {
 		destroy_avp(a);
 		a = search_next_avp(&s, 0);
 	}
 
-	val.s = uid;
-	add_avp(AVP_USER | AVP_NAME_STR | AVP_VAL_STR, name, val);
+	val.s = *uid;
+	add_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR | AVP_VAL_STR, name, val);
 }
 
 
@@ -126,9 +125,9 @@ int get_to_uid(str* uid, struct sip_msg* msg)
 	static str name_s = STR_STATIC_INIT(AVP_UID);
 	int_str name, val;
 
-	name.s = &name_s;
-	if (search_first_avp(AVP_USER | AVP_NAME_STR, name, &val, 0)) {
-		*uid = *val.s;
+	name.s = name_s;
+	if (search_first_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR, name, &val, 0)) {
+		*uid = val.s;
 		return 1;
 	} else {
 		to = get_to(msg);
@@ -146,46 +145,43 @@ int get_to_uid(str* uid, struct sip_msg* msg)
 		uid->len = puri.user.len;
 		strlower(uid);
 
-		val.s = uid;
-		add_avp(AVP_USER | AVP_NAME_STR | AVP_VAL_STR, name, val);
+		val.s = *uid;
+		add_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR | AVP_VAL_STR, name, val);
 		return 0;
 	}
 }
 
 
 /*
- * Return the current domain id
+ * Return current To domain id
  */
-int get_did(str* did, struct sip_msg* msg)
+int get_to_did(str* did, struct sip_msg* msg)
 {
-	static char buf[MAX_URI_SIZE];
-	struct to_body* from;
-	struct sip_uri puri;
 	static str name_s = STR_STATIC_INIT(AVP_DID);
 	int_str name, val;
 
-	name.s = &name_s;
-	if (search_first_avp(AVP_USER | AVP_NAME_STR, name, &val, 0)) {
-		*did = *val.s;
+	name.s = name_s;
+	if (search_first_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR, name, &val, 0)) {
+		*did = val.s;
 		return 1;
-	} else {
-		from = get_to(msg);
-		if (parse_uri(from->uri.s, from->uri.len, &puri) == -1) {
-			LOG(L_ERR, "get_did: Error while parsing From URI\n");
-			return -1;
-		}
-		
-		if (puri.host.len > MAX_URI_SIZE) {
-			LOG(L_ERR, "get_did: Username too long\n");
-			return -1;
-		}
-		memcpy(buf, puri.host.s, puri.host.len);
-		did->s = buf;
-		did->len = puri.host.len;
-		strlower(did);
-
-		val.s = did;
-		add_avp(AVP_USER | AVP_NAME_STR | AVP_VAL_STR, name, val);
-		return 0;
-	}
+	} 
+	return 0;
 }
+
+
+/*
+ * Return current To domain id
+ */
+int get_from_did(str* did, struct sip_msg* msg)
+{
+	static str name_s = STR_STATIC_INIT(AVP_DID);
+	int_str name, val;
+
+	name.s = name_s;
+	if (search_first_avp(AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR, name, &val, 0)) {
+		*did = val.s;
+		return 1;
+	} 
+	return 0;
+}
+
