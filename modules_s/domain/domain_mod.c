@@ -503,10 +503,9 @@ static int lookup_from_domain(struct sip_msg* msg, char* s1, char* s2)
 
 	if (get_from_host(&host, msg) < 0) return -1;
 	if (hash_lookup(&d, *active_hash, &host) == 1) {
-		set_domain_avp_list(&d->attrs);
+		set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_FROM, &d->attrs);
 		return 1;
 	} else {
-		reset_domain_avps();
 		return -1;
 	}
 }
@@ -514,12 +513,21 @@ static int lookup_from_domain(struct sip_msg* msg, char* s1, char* s2)
 
 static int lookup_to_domain(struct sip_msg* msg, char* s1, char* s2)
 {
+	str host;
+	domain_t* d;
+	
 	if (db_mode == 0) {
 		LOG(L_ERR, "domain:lookup_to_domain only works in cache mode\n");
 		return -1;
 	} 
 
-	return 1;
+	if (get_ruri_host(&host, msg) < 0) return -1;
+	if (hash_lookup(&d, *active_hash, &host) == 1) {
+		set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO, &d->attrs);
+		return 1;
+	} else {
+		return -1;
+	}
 }
 
 

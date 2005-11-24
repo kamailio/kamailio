@@ -56,7 +56,7 @@ typedef struct domain {
 	int n;                  /* Number of domain names */
 	str* domain;            /* Array of all domains associated with did */
 	unsigned int* flags;    /* Flags of each domain in the domain array */
-	avp_t* attrs;           /* List of domain attributes */
+	avp_list_t attrs;       /* List of domain attributes */
 	struct domain* next;    /* Next domain in the list */
 } domain_t;
 

@@ -144,7 +144,7 @@ static domain_t* new_domain(str* did, str* domain, unsigned int flags)
 	     /* Create an attribute containing did of the domain */
 	name.s = &name_s;
 	val.s = did;
-	if (add_avp_list(&d->attrs, AVP_DOMAIN | AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) goto error;
+	if (add_avp_list(&d->attrs, AVP_CLASS_DOMAIN | AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) goto error;
 
 	return d;
 
@@ -239,7 +239,7 @@ static int load_attrs(domain_t* d)
 			avp_val.len = strlen(avp_val.s);
 		}
 
-		flags = AVP_DOMAIN | AVP_NAME_STR;
+		flags = AVP_CLASS_DOMAIN | AVP_NAME_STR;
 		if (type == AVP_VAL_STR) {
 			     /* String AVP */
 			v.s = &avp_val;
