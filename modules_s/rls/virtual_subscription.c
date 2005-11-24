@@ -26,8 +26,6 @@ static void vs_timer_cb(unsigned int ticks, void *param);
 
 int vs_init()
 {
-	qsa_initialize();
-
 	vsd = (vs_data_t*)shm_malloc(sizeof(vs_data_t));
 	if (!vsd) {
 		LOG(L_ERR, "vs_init(): memory allocation error\n");
@@ -52,10 +50,13 @@ int vs_init()
 
 int vs_destroy()
 {
-	/* FIXME: destroy the whole vs list */
-	qsa_release_domain(vsd->domain);
-
-	/* qsa_destroy(); */
+	/* virtual subscriptions are freed in rls_free */
+	if (vsd) {
+		qsa_release_domain(vsd->domain);
+		vsd->domain = NULL;
+		shm_free(vsd);
+		vsd = NULL;
+	}
 	return 0;
 }
 

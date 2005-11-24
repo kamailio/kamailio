@@ -155,9 +155,18 @@ int rls_init()
 
 int rls_destroy()
 {
-	DEBUG_LOG("rls_destroy() called\n");
+	TRACE_LOG("rls_destroy() called\n");
 	/* FIXME: destroy the whole rl_subscription list */
 	/* sm_destroy(rls_manager); */
+
+	if (rls_mutex) {
+		lock_destroy(rls_mutex);
+		lock_dealloc(rls_mutex);
+	}
+	if (rls) {
+		shm_free(rls);
+		rls = NULL;
+	}
 	return 0;
 }
 

@@ -27,8 +27,6 @@ extern dlist_t* root; /* ugly !!!!! */
 /* QSA interface initialization */
 int pa_qsa_interface_init()
 {
-	qsa_initialize();
-	
 	domain = qsa_get_default_domain();
 	if (!domain) {
 		LOG(L_ERR, "pa_qsa_interface_init(): can't register notifier domain\n");
@@ -49,7 +47,15 @@ int pa_qsa_interface_init()
 void pa_qsa_interface_destroy()
 {
 	if (domain && notifier) unregister_notifier(domain, notifier);
-	qsa_cleanup();
+	notifier = NULL;
+	/* no new qsa subscriptions will be created now - now can be
+	 * released all existing ones */
+	
+	qsa_release_domain(domain);
+	/* no QSA operations should be done there (don't send 
+	 * notification messages, ...) only subscriptions may
+	 * be released */
+	domain = NULL;
 }
 
 /* notifier functions */

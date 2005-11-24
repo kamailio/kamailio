@@ -115,6 +115,7 @@ void callback(str* _user, str *_contact, int state, void* data)
 static int extract_plain_uri(str* _uri)
 {
 	struct sip_uri puri;
+	int res = 0;
 
 	if (parse_uri(_uri->s, _uri->len, &puri) < 0) {
 		paerrno = PA_URI_PARSE;
@@ -128,8 +129,11 @@ static int extract_plain_uri(str* _uri)
 		_uri->len = puri.host.len;
 		return -1;
 	}*/
+	if (puri.user.len < 1) {
+		res = -1; /* it is uri without username ! */
+	}
 	_uri->len = puri.host.s + puri.host.len - _uri->s;
-	return 0;
+	return res;
 }
 
 

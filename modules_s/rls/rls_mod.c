@@ -9,6 +9,8 @@
 #include <cds/memory.h>
 #include <cds/ptr_vector.h>
 #include <cds/logger.h>
+#include <cds/cds.h>
+#include <presence/qsa.h>
 
 #include "rl_subscription.h"
 #include "rls_handler.h"
@@ -146,6 +148,12 @@ int rls_mod_init(void)
 {
     load_tm_f load_tm;
 	bind_dlg_mod_f bind_dlg;
+	
+	DEBUG_LOG("RLS module initialization\n");
+
+	DEBUG_LOG(" ... common libraries\n");
+	cds_initialize();
+	qsa_initialize();	
 
 	if (time_event_management_init() != 0) {
 		LOG(L_ERR, "rls_mod_init(): Can't initialize time event management!\n");
@@ -254,7 +262,7 @@ void rls_mod_destroy(void)
 	int i, cnt;
 	char *s;
 
-	DEBUG_LOG("rls_mod_destroy()\n");
+	TRACE_LOG("RLS module cleanup\n");
 	
 	DEBUG_LOG(" ... xcap servers\n");
 	/* destroy used XCAP servers */
@@ -287,9 +295,14 @@ void rls_mod_destroy(void)
 		rls_db = NULL;
 	}
 	
+	DEBUG_LOG(" ... common libs\n");
+	qsa_cleanup();
+	cds_cleanup();
+	
 	/* ??? if other module uses this libraries it might be a problem ??? */
 /*	xmlCleanupParser();
 	curl_global_cleanup();*/
+	DEBUG_LOG("RLS module cleanup finished\n");
 }
 
 static int rls_subscribe_fixup(void** param, int param_no)

@@ -51,6 +51,8 @@
 #include "qsa_interface.h"
 
 #include <cds/logger.h>
+#include <cds/cds.h>
+#include <presence/qsa.h>
 
 MODULE_VERSION
 
@@ -249,7 +251,11 @@ static int pa_mod_init(void)
 	bind_dlg_mod_f bind_dlg;
 
 	test_mimetype_parser();
-	DBG("Presence Agent - initializing\n");
+	DEBUG_LOG("Presence Agent - initializing\n");
+	
+	DEBUG_LOG(" ... common libraries\n");
+	cds_initialize();
+	qsa_initialize();	
 
 	/* set authorization type according to requested "auth type name"
 	 * and other (type specific) parameters */
@@ -388,6 +394,7 @@ static int pa_child_init(int _rank)
 
 static void pa_destroy(void)
 {
+	TRACE_LOG("PA module cleanup\n");
 	DEBUG_LOG("destroying PA module\n");
 	DEBUG_LOG(" ... qsa interface\n");
 	pa_qsa_interface_destroy();
@@ -399,6 +406,10 @@ static void pa_destroy(void)
 		close_pa_db_connection(pa_db);
 	}
 	pa_db = NULL;
+	
+	DEBUG_LOG(" ... cleaning common libs\n");
+	qsa_cleanup();
+	cds_cleanup();
 }
 
 

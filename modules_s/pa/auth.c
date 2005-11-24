@@ -108,8 +108,8 @@ static watcher_status_t winfo_implicit_auth(presentity_t *p, watcher_t *w)
 	if (get_user_from_uri(&w->uri, w_user) != 0) return WS_REJECTED;*/
 
 	if (str_case_equals(&p->uri, &w->uri) == 0) {
-		/* DEBUG_LOG("winfo_implicit_auth(%.*s): enabled for %.*s\n", 
-				FMT_STR(p->uri), FMT_STR(w->uri)); */
+		DEBUG_LOG("winfo_implicit_auth(%.*s): enabled for %.*s\n", 
+				FMT_STR(p->uri), FMT_STR(w->uri));
 		return WS_ACTIVE;
 	}
 	else {
