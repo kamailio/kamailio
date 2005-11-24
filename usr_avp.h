@@ -31,8 +31,8 @@
  *  2005-02-14  list with FLAGS USAGE added (bogdan)
  */
 
-#ifndef _SER_URS_AVP_H_
-#define _SER_URS_AVP_H_
+#ifndef _SER_USR_AVP_H_
+#define _SER_USR_AVP_H_
 
 #include <sys/types.h>
 #include <regex.h>
@@ -50,6 +50,8 @@
  *     5        core              avp is in user list
  *     6        core              avp is in domain list
  *     7        core              avp is in global list
+ *     8        core              avp is in the from avp list
+ *     9        core              avp is in the to avp list
  *
  */
 
@@ -62,8 +64,7 @@
 #define AVP_FR_TIMER     "fr_timer"      /* Value of final response timer */
 #define AVP_FR_INV_TIMER "fr_inv_timer"  /* Value of final response invite timer */
 #define AVP_RPID         "rpid"          /* Remote-Party-ID */
-#define AVP_GFLAGS        "gflags"       /* global flags */
-
+#define AVP_GFLAGS       "gflags"        /* global flags */
 
 struct str_int_data {
 	str name;
@@ -77,7 +78,7 @@ struct str_str_data {
 
 typedef union {
 	int  n;
-	str *s;
+	str  s;
 	regex_t* re;
 } int_str;
 
@@ -89,6 +90,8 @@ typedef struct usr_avp {
 	struct usr_avp *next;
 	void *data;
 } avp_t;
+
+typedef avp_t* avp_list_t;
 
 
 /*
@@ -102,31 +105,40 @@ struct search_state {
 	regex_t* search_re;    /* Compiled regular expression */
 };
 
+/* avp aliases structs*/
+struct avp_spec {
+	int type;
+	int_str name;
+};
 
+/* AVP types */
 #define AVP_NAME_STR     (1<<0)
 #define AVP_VAL_STR      (1<<1)
 #define AVP_NAME_RE      (1<<2)
-#define AVP_USER         (1<<5)
-#define AVP_DOMAIN       (1<<6)
-#define AVP_GLOBAL       (1<<7)
 
-#define ALL_AVP_CLASSES (AVP_USER|AVP_DOMAIN|AVP_GLOBAL)
+/* AVP classes */
+#define AVP_CLASS_USER   (1<<5)
+#define AVP_CLASS_DOMAIN (1<<6)
+#define AVP_CLASS_GLOBAL (1<<7)
 
-/* True for user avps */
-#define IS_USER_AVP(flags) ((flags) & AVP_USER)
+/* AVP track (either from or to) */
+#define AVP_TRACK_FROM   (1<<8)
+#define AVP_TRACK_TO     (1<<9)
+#define AVP_TRACK_ALL    (AVP_TRACK_FROM|AVP_TRACK_TO)
 
-/* True for domain avps */
-#define IS_DOMAIN_AVP(flags) ((flags) & AVP_DOMAIN)
-
-/* true for global avps */
-#define IS_GLOBAL_AVP(flags) ((flags) & AVP_GLOBAL)
+#define AVP_CLASS_ALL (AVP_CLASS_USER|AVP_CLASS_DOMAIN|AVP_CLASS_GLOBAL)
 
 #define GALIAS_CHAR_MARKER  '$'
 
-/* add functions */
-int add_avp(unsigned short flags, int_str name, int_str val);
+/* Initialize memory structures */
+int init_avps(void);
 
-int add_avp_list(avp_t** list, unsigned short flags, int_str name, int_str val);
+/* add avp to the list of avps */
+int add_avp(unsigned short flags, int_str name, int_str val);
+int add_avp_list(avp_list_t* list, unsigned short flags, int_str name, int_str val);
+
+/* Delete avps with given type and name */
+int delete_avp(unsigned short flags, int_str name);
 
 /* search functions */
 avp_t *search_first_avp( unsigned short flags, int_str name,
@@ -134,24 +146,18 @@ avp_t *search_first_avp( unsigned short flags, int_str name,
 avp_t *search_next_avp(struct search_state* state, int_str *val);
 
 /* free functions */
-void reset_user_avps(void);
-void reset_domain_avps(void);
+void reset_avps(void);
 
 void destroy_avp(avp_t *avp);
-void destroy_avp_list(avp_t **list );
-void destroy_avp_list_unsafe(avp_t **list );
+void destroy_avp_list(avp_list_t *list );
+void destroy_avp_list_unsafe(avp_list_t *list );
 
 /* get func */
 void get_avp_val(avp_t *avp, int_str *val );
 str* get_avp_name(avp_t *avp);
 
-avp_t** get_user_avp_list(void);   /* Return current list of user avps */
-avp_t** get_domain_avp_list(void); /* Return current list of domain avps */
-avp_t** get_global_avp_list(void); /* Return current list of global avps */
-
-avp_t** set_user_avp_list(avp_t **list);   /* Set current list of user avps to list */
-avp_t** set_domain_avp_list(avp_t **list); /* Set current list of domain avps to list */
-avp_t** set_global_avp_list(avp_t **list); /* Set current list of global avps to list */
+avp_list_t get_avp_list(unsigned short flags);
+avp_list_t set_avp_list(unsigned short flags, avp_list_t* list);
 
 
 /* global alias functions (manipulation and parsing)*/

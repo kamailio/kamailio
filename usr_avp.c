@@ -46,12 +46,14 @@
 #include "mem/mem.h"
 #include "usr_avp.h"
 
-
-/* avp aliases structs*/
-struct avp_spec {
-	int type;
-	int_str name;
+enum idx {
+	IDX_FROM_USER = 0,
+	IDX_TO_USER,
+	IDX_FROM_DOMAIN,
+	IDX_TO_DOMAIN,
+	IDX_MAX
 };
+
 
 struct avp_galias {
 	str alias;
@@ -61,14 +63,61 @@ struct avp_galias {
 
 static struct avp_galias *galiases = 0;
 
-static avp_t *global_avps = 0;  /* Global attribute list */
-static avp_t *domain_avps = 0;  /* Domain-specific attribute list */
-static avp_t *user_avps = 0;    /* User-specific attribute list */
+static avp_list_t def_list[IDX_MAX];    /* Default AVP lists */
+static avp_list_t* crt_list[IDX_MAX];  /* Pointer to current AVP lists */
 
-static avp_t **crt_global_avps = &global_avps; /* Pointer to the current list of global attributes */
-static avp_t **crt_domain_avps = &domain_avps; /* Pointer to the current list of domain attributes */
-static avp_t **crt_user_avps   = &user_avps;   /* Pointer to the current list of user attributes */
+/* Global AVP related variables go to shm mem */
+static avp_list_t* def_glist;
+static avp_list_t** crt_glist;
 
+
+/* Initialize AVP lists in private memory and allocate memory
+ * for shared lists
+ */
+int init_avps(void)
+{
+	int i;
+	     /* Empty default lists */
+	memset(def_list, 0, sizeof(avp_list_t) * IDX_MAX);
+	
+	     /* Point current pointers to default lists */
+	for(i = 0; i < IDX_MAX; i++) {
+		crt_list[i] = &def_list[i];
+	}
+
+	def_glist = (avp_list_t*)shm_malloc(sizeof(avp_list_t));
+	crt_glist = (avp_list_t**)shm_malloc(sizeof(avp_list_t*));
+	if (!def_glist || !crt_glist) {
+		LOG(L_ERR, "ERROR: No memory to allocate default global AVP list\n");
+		return -1;
+	}
+	*def_glist = 0;
+	*crt_glist = def_glist;
+	return 0;
+}
+
+
+/*
+ * Select active AVP list based on the value of flags
+ */
+static avp_list_t* select_list(unsigned short flags)
+{
+	if (flags & AVP_CLASS_USER) {
+		if (flags & AVP_TRACK_TO) {
+			return crt_list[IDX_TO_USER];
+		} else {
+			return crt_list[IDX_FROM_USER];
+		}
+	} else if (flags & AVP_CLASS_DOMAIN) {
+		if (flags & AVP_TRACK_TO) {
+			return crt_list[IDX_TO_DOMAIN];
+		} else {
+			return crt_list[IDX_FROM_DOMAIN];
+		}
+	}
+
+	return *crt_glist;
+}
 
 inline static unsigned short compute_ID( str *name )
 {
@@ -82,7 +131,7 @@ inline static unsigned short compute_ID( str *name )
 }
 
 
-int add_avp_list(avp_t** list, unsigned short flags, int_str name, int_str val)
+int add_avp_list(avp_list_t* list, unsigned short flags, int_str name, int_str val)
 {
 	avp_t *avp;
 	str *s;
@@ -92,7 +141,7 @@ int add_avp_list(avp_t** list, unsigned short flags, int_str name, int_str val)
 
 	assert(list != 0);
 
-	if ( name.s==0 ) {
+	if (name.s.s == 0 && name.s.len == 0) {
 		LOG(L_ERR,"ERROR:avp:add_avp: 0 ID or NULL NAME AVP!");
 		goto error;
 	}
@@ -100,20 +149,20 @@ int add_avp_list(avp_t** list, unsigned short flags, int_str name, int_str val)
 	/* compute the required mem size */
 	len = sizeof(struct usr_avp);
 	if (flags&AVP_NAME_STR) {
-		if ( name.s->s==0 || name.s->len==0) {
+		if ( name.s.s==0 || name.s.len==0) {
 			LOG(L_ERR,"ERROR:avp:add_avp: EMPTY NAME AVP!");
 			goto error;
 		}
 		if (flags&AVP_VAL_STR) {
 			len += sizeof(struct str_str_data)-sizeof(void*) 
-				+ name.s->len + 1 /* Terminating zero for regex search */
-				+ val.s->len + 1; /* Value is zero terminated */
+				+ name.s.len + 1 /* Terminating zero for regex search */
+				+ val.s.len + 1; /* Value is zero terminated */
 		} else {
 			len += sizeof(struct str_int_data)-sizeof(void*) 
-				+ name.s->len + 1; /* Terminating zero for regex search */
+				+ name.s.len + 1; /* Terminating zero for regex search */
 		}
 	} else if (flags&AVP_VAL_STR) {
-		len += sizeof(str)-sizeof(void*) + val.s->len + 1;
+		len += sizeof(str)-sizeof(void*) + val.s.len + 1;
 	}
 
 	avp = (struct usr_avp*)shm_malloc( len );
@@ -123,7 +172,7 @@ int add_avp_list(avp_t** list, unsigned short flags, int_str name, int_str val)
 	}
 
 	avp->flags = flags;
-	avp->id = (flags&AVP_NAME_STR)? compute_ID(name.s) : name.n ;
+	avp->id = (flags&AVP_NAME_STR)? compute_ID(&name.s) : name.n ;
 
 	avp->next = *list;
 	*list = avp;
@@ -138,29 +187,29 @@ int add_avp_list(avp_t** list, unsigned short flags, int_str name, int_str val)
 			/* avp type str, int value */
 			sid = (struct str_int_data*)&(avp->data);
 			sid->val = val.n;
-			sid->name.len =name.s->len;
+			sid->name.len =name.s.len;
 			sid->name.s = (char*)sid + sizeof(struct str_int_data);
-			memcpy( sid->name.s , name.s->s, name.s->len);
-			sid->name.s[name.s->len] = '\0'; /* Zero terminator */
+			memcpy( sid->name.s , name.s.s, name.s.len);
+			sid->name.s[name.s.len] = '\0'; /* Zero terminator */
 			break;
 		case AVP_VAL_STR:
 			/* avp type ID, str value */
 			s = (str*)&(avp->data);
-			s->len = val.s->len;
+			s->len = val.s.len;
 			s->s = (char*)s + sizeof(str);
-			memcpy( s->s, val.s->s , s->len);
+			memcpy( s->s, val.s.s , s->len);
 			s->s[s->len] = 0;
 			break;
 		case AVP_NAME_STR|AVP_VAL_STR:
 			/* avp type str, str value */
 			ssd = (struct str_str_data*)&(avp->data);
-			ssd->name.len = name.s->len;
+			ssd->name.len = name.s.len;
 			ssd->name.s = (char*)ssd + sizeof(struct str_str_data);
-			memcpy( ssd->name.s , name.s->s, name.s->len);
-			ssd->name.s[name.s->len]='\0'; /* Zero terminator */
-			ssd->val.len = val.s->len;
+			memcpy( ssd->name.s , name.s.s, name.s.len);
+			ssd->name.s[name.s.len]='\0'; /* Zero terminator */
+			ssd->val.len = val.s.len;
 			ssd->val.s = ssd->name.s + ssd->name.len + 1;
-			memcpy( ssd->val.s , val.s->s, val.s->len);
+			memcpy( ssd->val.s , val.s.s, val.s.len);
 			ssd->val.s[ssd->val.len] = 0;
 			break;
 	}
@@ -174,30 +223,23 @@ error:
 int add_avp(unsigned short flags, int_str name, int_str val)
 {
 	unsigned short avp_class;
-	avp_t **list;
+	avp_list_t* list;
 
-	if ((flags & ALL_AVP_CLASSES) == 0) {
-		     /* The caller did not specify any class to search in, so enable
-		      * all of them by default
-		      */
-		flags |= ALL_AVP_CLASSES;
-	}
+	     /* Add avp to user class if no class has been
+	      * specified by the caller
+	      */
+	if ((flags & AVP_CLASS_ALL) == 0) flags |= AVP_CLASS_USER;
+	if ((flags & AVP_TRACK_ALL) == 0) flags |= AVP_TRACK_FROM;
+	list = select_list(flags);
 
-	if (IS_USER_AVP(flags)) {
-		list = crt_user_avps;
-		avp_class = AVP_USER;
-	} else if (IS_DOMAIN_AVP(flags)) {
-		list = crt_domain_avps;
-		avp_class = AVP_DOMAIN;
-	} else {
-		list = crt_global_avps;
-		avp_class = AVP_GLOBAL;
-	}
+	if (flags & AVP_CLASS_USER) avp_class = AVP_CLASS_USER;
+	else if (flags & AVP_CLASS_DOMAIN) avp_class = AVP_CLASS_DOMAIN;
+	else avp_class = AVP_CLASS_GLOBAL;
 
-		 /* Make that only the selected class is set
-		  * if the caller set more classes in flags
-		  */
-	return add_avp_list(list, flags & (~(ALL_AVP_CLASSES) | avp_class), name, val);
+	     /* Make that only the selected class is set
+	      * if the caller set more classes in flags
+	      */
+	return add_avp_list(list, flags & (~(AVP_CLASS_ALL) | avp_class), name, val);
 }
 
 
@@ -220,7 +262,7 @@ inline str* get_avp_name(avp_t *avp)
 	}
 
 	LOG(L_ERR,"BUG:avp:get_avp_name: unknown avp type (name&val) %d\n",
-		avp->flags&(AVP_NAME_STR|AVP_VAL_STR));
+	    avp->flags&(AVP_NAME_STR|AVP_VAL_STR));
 	return 0;
 }
 
@@ -241,36 +283,20 @@ inline void get_avp_val(avp_t *avp, int_str *val)
 			break;
 		case AVP_VAL_STR:
 			/* avp type ID, str value */
-			val->s = (str*)(&avp->data);
+			val->s = *(str*)(avp->data);
 			break;
 		case AVP_NAME_STR|AVP_VAL_STR:
 			/* avp type str, str value */
-			val->s = &(((struct str_str_data*)(&avp->data))->val);
+			val->s = (((struct str_str_data*)(&avp->data))->val);
 			break;
 	}
 }
 
 
 /* Return the current list of user attributes */
-avp_t** get_user_avp_list(void)
+avp_list_t get_avp_list(unsigned short flags)
 {
-	assert(crt_user_avps != 0);
-	return crt_user_avps;
-}
-
-/* Return the current list of domain attributes */
-avp_t** get_domain_avp_list(void)
-{
-	assert(crt_domain_avps != 0);
-	return crt_domain_avps;
-}
-
-
-/* Return the current list of domain attributes */
-avp_t** get_global_avp_list(void)
-{
-	assert(crt_global_avps != 0);
-	return crt_global_avps;
+	return *select_list(flags);
 }
 
 
@@ -324,48 +350,49 @@ static inline int match_by_re(avp_t* avp, regex_t* re)
 
 avp_t *search_first_avp(unsigned short flags, int_str name, int_str *val, struct search_state* s)
 {
+	avp_t* ret;
 	static struct search_state st;
+	avp_list_t* list;
 
-	assert( crt_user_avps != 0 );
-	assert( crt_domain_avps != 0);
-	assert( crt_global_avps != 0);
-
-	if (name.s==0) {
+	if (name.s.s==0 && name.s.len == 0) {
 		LOG(L_ERR,"ERROR:avp:search_first_avp: 0 ID or NULL NAME AVP!");
 		return 0;
 	}
 
 	if (!s) s = &st;
 
-	if ((flags & ALL_AVP_CLASSES) == 0) {
+	if ((flags & AVP_CLASS_ALL) == 0) {
 		     /* The caller did not specify any class to search in, so enable
 		      * all of them by default
 		      */
-		flags |= ALL_AVP_CLASSES;
+		flags |= AVP_CLASS_ALL;
 	}
+
+	list = select_list(flags);
+
 	s->flags = flags;
-	if (IS_USER_AVP(flags)) {
-		s->avp = *crt_user_avps;
-	} else if (IS_DOMAIN_AVP(flags)) {
-		s->avp = *crt_domain_avps;
-	} else {
-		s->avp = *crt_global_avps;
-	}
+	s->avp = *list;
 	s->name = name;
 
 	if (flags & AVP_NAME_STR) {
-		s->id = compute_ID(name.s);
+		s->id = compute_ID(&name.s);
 	}
 
-	return search_next_avp(s, val);
+        ret = search_next_avp(s, val);
+
+	     /* Make sure that search next avp stays in the same class as the first
+	      * avp found
+	      */
+	if (s && ret) s->flags = (flags & ~AVP_CLASS_ALL) | (ret->flags & AVP_CLASS_ALL);
+	return ret;
 }
 
 
 
 avp_t *search_next_avp(struct search_state* s, int_str *val )
 {
-	avp_t* avp;
 	int matched;
+	avp_t* avp;
 
 	if (s == 0) {
 		LOG(L_ERR, "search_next:avp: Invalid parameter value\n");
@@ -377,7 +404,7 @@ avp_t *search_next_avp(struct search_state* s, int_str *val )
 			if (s->flags & AVP_NAME_RE) {
 				matched = match_by_re(s->avp, s->name.re);
 			} else if (s->flags & AVP_NAME_STR) {
-				matched = match_by_name(s->avp, s->id, s->name.s);
+				matched = match_by_name(s->avp, s->id, &s->name.s);
 			} else {
 				matched = match_by_id(s->avp, s->name.n);
 			}
@@ -389,14 +416,14 @@ avp_t *search_next_avp(struct search_state* s, int_str *val )
 			}
 		}
 
-		if (IS_USER_AVP(s->flags)) {
-			s->flags &= ~AVP_USER;
-			s->avp = *crt_domain_avps;
-		} else if (IS_DOMAIN_AVP(s->flags)) {
-			s->flags &= ~AVP_DOMAIN;
-			s->avp = *crt_global_avps;
+		if (s->flags & AVP_CLASS_USER) {
+			s->flags &= ~AVP_CLASS_USER;
+			s->avp = *select_list(s->flags);
+		} else if (s->flags & AVP_CLASS_DOMAIN) {
+			s->flags &= ~AVP_CLASS_DOMAIN;
+			s->avp = *select_list(s->flags);
 		} else {
-			s->flags &= ~AVP_GLOBAL;
+			s->flags &= ~AVP_CLASS_GLOBAL;
 			return 0;
 		}
 	}
@@ -405,20 +432,37 @@ avp_t *search_next_avp(struct search_state* s, int_str *val )
 }
 
 
-
-
+/* FIXME */
 /********* free functions ********/
 
-void destroy_avp( avp_t *avp_del)
+void destroy_avp(avp_t *avp_del)
 {
+	int i;
 	avp_t *avp, *avp_prev;
 
-	for( avp_prev=0,avp=*crt_user_avps ; avp ; avp_prev=avp,avp=avp->next ) {
+	for (i = 0; i < IDX_MAX; i++) {
+		for( avp_prev=0,avp=*crt_list[i] ; avp ; 
+		     avp_prev=avp,avp=avp->next ) {
+			if (avp==avp_del) {
+				if (avp_prev) {
+					avp_prev->next=avp->next;
+				} else {
+					*crt_list[i] = avp->next;
+				}
+				shm_free(avp);
+				return;
+			}
+		}
+	}
+
+	for( avp_prev=0,avp=**crt_glist ; avp ; 
+	     avp_prev=avp,avp=avp->next ) {
 		if (avp==avp_del) {
-			if (avp_prev)
+			if (avp_prev) {
 				avp_prev->next=avp->next;
-			else
-				*crt_user_avps = avp->next;
+			} else {
+				**crt_glist = avp->next;
+			}
 			shm_free(avp);
 			return;
 		}
@@ -426,7 +470,7 @@ void destroy_avp( avp_t *avp_del)
 }
 
 
-void destroy_avp_list_unsafe( avp_t **list )
+void destroy_avp_list_unsafe(avp_list_t* list)
 {
 	avp_t *avp, *foo;
 
@@ -440,7 +484,7 @@ void destroy_avp_list_unsafe( avp_t **list )
 }
 
 
-inline void destroy_avp_list( avp_t **list )
+inline void destroy_avp_list(avp_list_t* list)
 {
 	avp_t *avp, *foo;
 
@@ -455,60 +499,42 @@ inline void destroy_avp_list( avp_t **list )
 }
 
 
-void reset_user_avps(void)
+void reset_avps(void)
 {
-	assert( crt_user_avps!=0 );
-	
-	if ( crt_user_avps!=&user_avps) {
-		crt_user_avps = &user_avps;
+	int i;
+	for(i = 0; i < IDX_MAX; i++) {
+		crt_list[i] = &def_list[i];
+		destroy_avp_list(crt_list[i]);
 	}
-	destroy_avp_list( crt_user_avps );
 }
 
 
-void reset_domain_avps(void)
+avp_list_t set_avp_list( unsigned short flags, avp_list_t* list )
 {
-	assert( crt_user_avps!=0 );
-	
-	if ( crt_user_avps!=&domain_avps) {
-		crt_domain_avps = &domain_avps;
+	avp_list_t* prev;
+
+	if (flags & AVP_CLASS_USER) {
+		if (flags & AVP_TRACK_FROM) {
+			prev = crt_list[IDX_FROM_USER];
+			crt_list[IDX_FROM_USER] = list;
+		} else {
+			prev = crt_list[IDX_TO_USER];
+			crt_list[IDX_TO_USER] = list;
+		}
+	} else if (flags & AVP_CLASS_DOMAIN) {
+		if (flags & AVP_TRACK_FROM) {
+			prev = crt_list[IDX_FROM_DOMAIN];
+			crt_list[IDX_FROM_DOMAIN] = list;
+		} else {
+			prev = crt_list[IDX_TO_DOMAIN];
+			crt_list[IDX_TO_DOMAIN] = list;
+		}
+	} else {
+		prev = *crt_glist;
+	        *crt_glist = list;
 	}
-	     /* Do not destroy avps here, domain module takes care of it */
-}
 
-
-avp_t** set_user_avp_list( avp_t **list )
-{
-	avp_t **foo;
-
-	assert( crt_user_avps!=0 );
-
-	foo = crt_user_avps;
-	crt_user_avps = list;
-	return foo;
-}
-
-
-avp_t** set_domain_avp_list( avp_t **list )
-{
-	avp_t **foo;
-
-	assert( crt_domain_avps!=0 );
-
-	foo = crt_domain_avps;
-	crt_domain_avps = list;
-	return foo;
-}
-
-avp_t** set_global_avp_list( avp_t **list )
-{
-	avp_t **foo;
-
-	assert( crt_global_avps!=0 );
-
-	foo = crt_global_avps;
-	crt_global_avps = list;
-	return foo;
+	return *prev;
 }
 
 
@@ -528,9 +554,9 @@ static inline int check_avp_galias(str *alias, int type, int_str avp_name)
 		/*check for duplicated avp names */
 		if (type==ga->avp.type) {
 			if (type&AVP_NAME_STR){
-				if (avp_name.s->len==ga->avp.name.s->len &&
-				(strncasecmp(avp_name.s->s, ga->avp.name.s->s,
-							 					avp_name.s->len)==0) )
+				if (avp_name.s.len==ga->avp.name.s.len &&
+				    (strncasecmp(avp_name.s.s, ga->avp.name.s.s,
+						 avp_name.s.len)==0) )
 					return -1;
 			} else {
 				if (avp_name.n==ga->avp.name.n)
@@ -546,8 +572,8 @@ int add_avp_galias(str *alias, int type, int_str avp_name)
 {
 	struct avp_galias *ga;
 
-	if ((type&AVP_NAME_STR && (!avp_name.s || !avp_name.s->s ||
-								!avp_name.s->len)) ||!alias || !alias->s ||
+	if ((type&AVP_NAME_STR && (!avp_name.s.s ||
+				   !avp_name.s.len)) ||!alias || !alias->s ||
 		!alias->len ){
 		LOG(L_ERR, "ERROR:add_avp_galias: null params received\n");
 		goto error;
@@ -575,17 +601,16 @@ int add_avp_galias(str *alias, int type, int_str avp_name)
 	ga->avp.type = type&AVP_NAME_STR;
 
 	if (type&AVP_NAME_STR) {
-		ga->avp.name.s = (str*)pkg_malloc( sizeof(str)+avp_name.s->len+1 );
-		if (ga->avp.name.s==0) {
+		ga->avp.name.s.s = (char*)pkg_malloc( avp_name.s.len+1 );
+		if (ga->avp.name.s.s==0) {
 			LOG(L_ERR, "ERROR:add_avp_galias: no more pkg memory\n");
 			goto error2;
 		}
-		ga->avp.name.s->s = ((char*)ga->avp.name.s)+sizeof(str);
-		ga->avp.name.s->len = avp_name.s->len;
-		memcpy( ga->avp.name.s->s, avp_name.s->s, avp_name.s->len);
-		ga->avp.name.s->s[avp_name.s->len] = 0;
+		ga->avp.name.s.len = avp_name.s.len;
+		memcpy( ga->avp.name.s.s, avp_name.s.s, avp_name.s.len);
+		ga->avp.name.s.s[avp_name.s.len] = 0;
 		DBG("DEBUG:add_avp_galias: registering <%s> for avp name <%s>\n",
-			ga->alias.s, ga->avp.name.s->s);
+			ga->alias.s, ga->avp.name.s.s);
 	} else {
 		ga->avp.name.n = avp_name.n;
 		DBG("DEBUG:add_avp_galias: registering <%s> for avp id <%d>\n",
@@ -640,7 +665,7 @@ int parse_avp_name( str *name, int *type, int_str *avp_name)
 		switch (c) {
 			case 's': case 'S':
 				*type = AVP_NAME_STR;
-				avp_name->s = name;
+				avp_name->s = *name;
 				break;
 			case 'i': case 'I':
 				*type = 0;
@@ -659,7 +684,7 @@ int parse_avp_name( str *name, int *type, int_str *avp_name)
 	} else {
 		/*default is string name*/
 		*type = AVP_NAME_STR;
-		avp_name->s = name;
+		avp_name->s = *name;
 	}
 
 	return 0;
@@ -754,4 +779,17 @@ parse_error:
 		"pos %ld\n", alias_definition, (long)(s-alias_definition));
 error:
 	return -1;
+}
+
+
+int delete_avp(unsigned short flags, int_str name)
+{
+	struct search_state st;
+	avp_t* avp;
+
+	avp = search_first_avp(flags, name, 0, &st);
+	while(avp) {
+		destroy_avp(avp);
+		avp = search_next_avp(&st, 0);
+	}
 }
