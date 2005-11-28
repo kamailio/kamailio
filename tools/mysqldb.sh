@@ -330,8 +330,8 @@ CREATE TABLE acc (
   timestamp timestamp(14) NOT NULL,
   caller_deleted char(1) NOT NULL default '0',
   callee_deleted char(1) NOT NULL default '0',
-  src varchar(128) default NULL,
-  dst varchar(128) default NULL,
+  src_leg varchar(128) default NULL,
+  dst_leg varchar(128) default NULL,
   INDEX acc_user ($USERCOL, domain),
   KEY sip_callid (sip_callid)
 ) $TABLE_TYPE;

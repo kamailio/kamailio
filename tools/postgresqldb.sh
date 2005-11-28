@@ -368,8 +368,8 @@ CREATE TABLE acc (
   timestamp $TIMESTAMP,
   caller_deleted char(1) NOT NULL default '0',
   callee_deleted char(1) NOT NULL default '0',
-  src varchar(128) default NULL,
-  dst varchar(128) default NULL
+  src_leg varchar(128) default NULL,
+  dst_leg varchar(128) default NULL
 ) $TABLE_TYPE;
 
 CREATE INDEX acc_user_indx ON acc ($USERCOL, domain);
