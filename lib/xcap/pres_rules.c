@@ -165,7 +165,8 @@ int is_rule_for_uri(cp_rule_t *rule, const str_t *uri)
 	if (ok) {
 		e = id->excepts;
 		while (e) {
-			if (str_case_equals(&user, &e->entity) == 0);
+			if (str_case_equals(&user, &e->entity) == 0)
+				return 0; /* excepts matched */
 			e = e->next;
 		}
 /*		TRACE_LOG("domain found and excepts not matched\n");*/
