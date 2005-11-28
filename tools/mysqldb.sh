@@ -664,7 +664,7 @@ CREATE TABLE server_monitoring_agg (
   ad float NOT NULL default '0',
   lv int(10) NOT NULL default '0',
   min_val int(10) NOT NULL default '0',
-  pax_val int(10) NOT NULL default '0',
+  max_val int(10) NOT NULL default '0',
   min_inc int(10) NOT NULL default '0',
   max_inc int(10) NOT NULL default '0',
   lastupdate datetime NOT NULL default '0000-00-00 00:00:00',
