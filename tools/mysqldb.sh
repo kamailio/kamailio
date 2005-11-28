@@ -464,8 +464,8 @@ CREATE TABLE missed_calls (
   totag varchar(128) NOT NULL default '',
   time datetime NOT NULL default '0000-00-00 00:00:00',
   timestamp timestamp(14) NOT NULL,
-  src varchar(128) default NULL,
-  dst varchar(128) default NULL,
+  src_leg varchar(128) default NULL,
+  dst_leg varchar(128) default NULL,
   INDEX mc_user ($USERCOL, domain)
 ) $TABLE_TYPE;
 

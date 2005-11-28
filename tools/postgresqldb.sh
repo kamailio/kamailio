@@ -575,8 +575,8 @@ CREATE TABLE missed_calls (
   totag varchar(128) NOT NULL default '',
   time $DATETIME,
   timestamp $TIMESTAMP,
-  src varchar(128) default NULL,
-  dst varchar(128) default NULL
+  src_leg varchar(128) default NULL,
+  dst_leg varchar(128) default NULL
 ) $TABLE_TYPE;
 
 CREATE INDEX mc_user_indx ON missed_calls ($USERCOL, domain);
