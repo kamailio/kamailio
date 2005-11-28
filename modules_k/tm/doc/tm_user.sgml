@@ -515,9 +515,9 @@ modparam("tm", "fr_inv_timer_avp", "i:25")
 		</itemizedlist>
 		</para>
 		<para>
-		The full list of supported pseudo-variables in &ser; is availabe 
-		at: <ulink url="http://openser.org/docs/pseudo-variables.html">
-		http://openser.org/docs/pseudo-variables.html</ulink>
+		The full list of supported pseudo-variables in &ser; is availabe at: 
+		<ulink url="http://openser.org/docs/pseudo-variables.html-1.1.x">
+		http://openser.org/docs/pseudo-variables-1.1.x.html</ulink>
 		</para>
 		<para>
 		Each element will be appended per line in 

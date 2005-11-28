@@ -473,7 +473,7 @@ avp_copy("$old","$new/gd");
    Prints the formatted string 'format' in the AVP 'dest'. The
    'format' parameter can include any pseudo-variable defined in
    OpenSER. The list with all pseudo-variables in OpenSER can be
-   found at: http://openser.org/docs/pseudo-variables.html.
+   found at: http://openser.org/docs/pseudo-variables-1.1.x.html.
 
    Meaning of the parameters is as follows:
 

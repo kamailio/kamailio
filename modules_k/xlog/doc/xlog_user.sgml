@@ -1,28 +1,28 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    <chapterinfo>
+	<chapterinfo>
 	<revhistory>
-	    <revision>
+		<revision>
 		<revnumber>$Revision$</revnumber>
 		<date>$Date$</date>
-	    </revision>
+		</revision>
 	</revhistory>
-    </chapterinfo>
-    <title>User's Guide</title>
-    
-    <section>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
 	<title>Overview</title>
 	<para>
-	    This module provides the possibility to print user formatted log or
+		This module provides the possibility to print user formatted log or
 		debug messages from &ser; scripts, similar to printf function but now
 		a specifier is replaced with a part of the &sip; request or other
 		variables from system.
 		<xref linkend="sec-implemented-specifiers"> shows what can be printed
-	    out.
+		out.
 	</para>
-    </section>
-    <section id="sec-implemented-specifiers">
+	</section>
+	<section id="sec-implemented-specifiers">
 	<title>Implemented Specifiers</title>
 	<para>
 	The specifiers have been replaced by pseudo-variables which are
@@ -33,205 +33,206 @@
 	The most important changes are:
 	</para>
 	<itemizedlist>
-	    <listitem>
+		<listitem>
 		<para>
 		- '%' has been replaced by '$'
 		</para>
-	    </listitem>
-	    <listitem>
+		</listitem>
+		<listitem>
 		<para>
 		- to print a header, use now $hdr(header_name[index]) instead of
 		%{header_name[index]}
 		</para>
-	    </listitem>
-	    <listitem>
+		</listitem>
+		<listitem>
 		<para>
 		- to print an AVP, use now $avp([si]:avp_id[index]) instead of
 		%{[si]:avp_id[index]} or $avp([$avp_alias[index]) instead of
 		%{[$avp_alias[index]}
 		</para>
-	    </listitem>
+		</listitem>
 	</itemizedlist>
 	<para>
 	The full list of available pseudo-variables in &ser; is availabe at:
-	 <ulink url="http://openser.org/docs/pseudo-variables.html">http://openser.org/docs/pseudo-variables.html</ulink>
+	<ulink url="http://openser.org/docs/pseudo-variables-1.1.x.html">
+	http://openser.org/docs/pseudo-variables-1.1.x.html</ulink>
 	</para>
-    </section>
-    <section>
+	</section>
+	<section>
 	<title>Dependencies</title>
 	<section>
-	    <title>&ser; Modules</title>
-	    <para>
+		<title>&ser; Modules</title>
+		<para>
 		The following modules must be loaded before this module:
-	    	<itemizedlist>
-		    <listitem>
+			<itemizedlist>
+			<listitem>
 			<para>
-			    <emphasis>No dependencies on other &ser; modules</emphasis>.
+				<emphasis>No dependencies on other &ser; modules</emphasis>.
 			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
+			</listitem>
+			</itemizedlist>
+		</para>
 	</section>
 	<section>
-	    <title>External Libraries or Applications</title>
-	    <para>
+		<title>External Libraries or Applications</title>
+		<para>
 		The following libraries or applications must be installed before running
 		&ser; with this module loaded:
-	    	<itemizedlist>
-		    <listitem>
+			<itemizedlist>
+			<listitem>
 			<para>
-			    <emphasis>None</emphasis>.
+				<emphasis>None</emphasis>.
 			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
+			</listitem>
+			</itemizedlist>
+		</para>
 	</section>
-    </section>
-    <section>
+	</section>
+	<section>
 	<title>Exported Parameters</title>
 	<section>
-	    <title><varname>buf_size</varname> (integer)</title>
-	    <para>
+		<title><varname>buf_size</varname> (integer)</title>
+		<para>
 		Maximum size of the log message.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is 4096.
+			Default value is 4096.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>buf_size</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("xlog", "buf_size", 8192)
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 	<section>
-	    <title><varname>force_color</varname> (integer)</title>
-	    <para>
+		<title><varname>force_color</varname> (integer)</title>
+		<para>
 		When set to 1, forces color printing even if log_stderror=0.
-	    </para>
-	    <para>
+		</para>
+		<para>
 		<emphasis>
-		    Default value is 0.
+			Default value is 0.
 		</emphasis>
-	    </para>
-	    <example>
+		</para>
+		<example>
 		<title>Set <varname>force_color</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("xlog", "force_color", 0)
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
-    </section>
-    <section>
+	</section>
+	<section>
 	<title>Exported Functions</title>
 	<section>
-	    <title>
+		<title>
 		<function moreinfo="none">xlog([level,] format)</function>
-	    </title>
-	    <para>
+		</title>
+		<para>
 		Print a formated message using LOG function.
-	    </para>
-	    <para>Meaning of the parameters is as follows:</para>
-	    <itemizedlist>
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
 		<listitem>
-		    <para><emphasis>level</emphasis> - The level that will be used in LOG function. It can be:
-		    </para>
-		    <itemizedlist>
+			<para><emphasis>level</emphasis> - The level that will be used in LOG function. It can be:
+			</para>
+			<itemizedlist>
 			<listitem>
-			    <para>
+				<para>
 				L_ALERT
-			    </para>
+				</para>
 			</listitem>
 			<listitem>
-			    <para>
+				<para>
 				L_CRIT
-			    </para>
+				</para>
 			</listitem>
 			<listitem>
-			    <para>
+				<para>
 				L_ERR
-			    </para>
+				</para>
 			</listitem>
 			<listitem>
-			    <para>
+				<para>
 				L_WARN
-			    </para>
+				</para>
 			</listitem>
 			<listitem>
-			    <para>
+				<para>
 				L_NOTICE
-			    </para>
+				</para>
 			</listitem>
 			<listitem>
-			    <para>
+				<para>
 				L_INFO
-			    </para>
+				</para>
 			</listitem>
 			<listitem>
-			    <para>
+				<para>
 				L_DBG
-			    </para>
+				</para>
 			</listitem>
-		    </itemizedlist>
-		    <para>
+			</itemizedlist>
+			<para>
 			What really matters is the third letter of the value.
-		    </para>
-		    <para>
+			</para>
+			<para>
 			If this parameter is missing, the implicit log level is 'L_ERR'.
-		    </para>
+			</para>
 		</listitem>
 		<listitem>
-		    <para><emphasis>format</emphasis> - The formatted string to be printed. 
-		    </para>
+			<para><emphasis>format</emphasis> - The formatted string to be printed. 
+			</para>
 		</listitem>
-	    </itemizedlist>
+		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE.
 		</para>
-	    <example>
+		<example>
 		<title><function>xlog</function> usage</title>
 		<programlisting format="linespecific">
 ...
 xlog("L_ERR", "time [$Tf] method <$rm> r-uri <$ru> 2nd via <$hdr(via[1])>\n");
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section>
-	    <title>
+		<title>
 		<function moreinfo="none">xdbg(format)</function>
-	    </title>
-	    <para>
+		</title>
+		<para>
 		Print a formatted message using DBG function.
-	    </para>
-	    <para>Meaning of the parameters is as follows:</para>
-	    <itemizedlist>
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
 		<listitem>
-		    <para><emphasis>format</emphasis> - The formatted string to be printed.
-		    </para>
+			<para><emphasis>format</emphasis> - The formatted string to be printed.
+			</para>
 		</listitem>
-	    </itemizedlist>
+		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE.
 		</para>
 
-	    <example>
+		<example>
 		<title><function>xdbg</function> usage</title>
 		<programlisting format="linespecific">
 ...
 xdbg("time $Cbx[$Tf]$Cxx method <$rm> r-uri <$ru>\n");
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
-    </section>
+	</section>
 </chapter>
 
 <!-- Keep this element at the end of the file
