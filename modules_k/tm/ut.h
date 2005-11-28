@@ -124,35 +124,48 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
 }
 
 
+static inline int uri2su(str *uri, union sockaddr_union *to_su, int proto)
+{
+	struct proxy_l *proxy;
+
+	proxy = uri2proxy(uri, proto);
+	if (!proxy) {
+		ser_error = E_BAD_ADDRESS;
+		LOG(L_ERR, "ERROR: uri2sock: Can't create a dst proxy\n");
+		return -1;
+	}
+
+	hostent2su(to_su, &proxy->host, proxy->addr_idx, 
+		(proxy->port) ? proxy->port : SIP_PORT);
+	proto = proxy->proto;
+
+	free_proxy(proxy);
+	pkg_free(proxy);
+	return proto;
+}
+
+
+
 /*
  * Convert a URI into socket_info
  */
 static inline struct socket_info *uri2sock(struct sip_msg* msg, str *uri,
 									union sockaddr_union *to_su, int proto)
 {
-	struct proxy_l *proxy;
 	struct socket_info* send_sock;
 
-	proxy = uri2proxy(uri, proto);
-	if (!proxy) {
-		ser_error = E_BAD_ADDRESS;
-		LOG(L_ERR, "ERROR: uri2sock: Can't create a dst proxy\n");
+	if ( (proto=uri2su(uri, to_su, proto))==-1 )
 		return 0;
-	}
-	
-	hostent2su(to_su, &proxy->host, proxy->addr_idx, 
-		   (proxy->port) ? proxy->port : SIP_PORT);
-			/* we use proxy->proto since uri2proxy just set it correctly*/
-	send_sock = get_send_socket(msg, to_su, proxy->proto);
+
+	send_sock = get_send_socket(msg, to_su, proto);
 	if (!send_sock) {
 		LOG(L_ERR, "ERROR: uri2sock: no corresponding socket for af %d\n", 
 		    to_su->s.sa_family);
 		ser_error = E_NO_SOCKET;
 	}
 
-	free_proxy(proxy);
-	pkg_free(proxy);
 	return send_sock;
 }
+
 
 #endif /* _TM_UT_H */

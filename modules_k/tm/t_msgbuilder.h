@@ -68,7 +68,7 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
  * Create a request
  */
 char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog,
-		int branch, struct cell *t, int* len, struct socket_info* send_sock);
+		int branch, struct cell *t, int* len);
 
 
 int t_calc_branch(struct cell *t,

@@ -794,8 +794,8 @@ static inline char* print_callid(char* w, dlg_t* dialog, struct cell* t)
 /*
  * Create a request
  */
-char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int branch, 
-			struct cell *t, int* len, struct socket_info* send_sock)
+char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, 
+										int branch, struct cell *t, int* len)
 {
 	char* buf, *w;
 	str content_length, cseq, via;
@@ -812,9 +812,10 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 		LOG(L_ERR, "build_uac_req(): Error while printing CSeq number\n");
 		return 0;
 	}
-	*len = method->len + 1 + dialog->hooks.request_uri->len + 1 + SIP_VERSION_LEN + CRLF_LEN;
+	*len = method->len + 1 + dialog->hooks.request_uri->len + 1 + 
+		SIP_VERSION_LEN + CRLF_LEN;
 
-	if (assemble_via(&via, t, send_sock, branch) < 0) {
+	if (assemble_via(&via, t, dialog->send_sock, branch) < 0) {
 		LOG(L_ERR, "build_uac_req(): Error while assembling Via\n");
 		return 0;
 	}

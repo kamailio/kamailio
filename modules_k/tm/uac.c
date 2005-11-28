@@ -159,7 +159,6 @@ static inline unsigned int dlg2hash( dlg_t* dlg )
 int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 												transaction_cb cb, void* cbp)
 {
-	struct socket_info* send_sock;
 	union sockaddr_union to_su;
 	struct cell *new_cell;
 	struct retr_buf *request;
@@ -179,12 +178,20 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	DBG("DEBUG:tm:t_uac: next_hop=<%.*s>\n",dialog->hooks.next_hop->len,
 			dialog->hooks.next_hop->s);
 	/* it's a new message, so we will take the default socket */
-	send_sock = uri2sock(0, dialog->hooks.next_hop, &to_su, PROTO_NONE);
-	if (!send_sock) {
-		ret=ser_error;
-		LOG(L_ERR, "t_uac: no socket found\n");
-		goto error2;
-	}	
+	if (dialog->send_sock) {
+		if (uri2su( dialog->hooks.next_hop, &to_su,
+		dialog->send_sock->proto)==-1) {
+			goto error2;
+		}
+	} else {
+		dialog->send_sock = uri2sock(0, dialog->hooks.next_hop, &to_su,
+			PROTO_NONE);
+		if (dialog->send_sock==0) {
+			ret=ser_error;
+			LOG(L_ERR, "t_uac: no socket found\n");
+			goto error2;
+		}
+	}
 
 	new_cell = build_cell(0); 
 	if (!new_cell) {
@@ -211,8 +218,8 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 
 	request = &new_cell->uac[0].request;
 	request->dst.to = to_su;
-	request->dst.send_sock = send_sock;
-	request->dst.proto = send_sock->proto;
+	request->dst.send_sock = dialog->send_sock;
+	request->dst.proto = dialog->send_sock->proto;
 	request->dst.proto_reserved1 = 0;
 
 	hi=dlg2hash(dialog);
@@ -220,8 +227,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	insert_into_hash_table_unsafe(new_cell, hi);
 	UNLOCK_HASH(hi);
 
-	buf = build_uac_req(method, headers, body, dialog, 0, new_cell,
-		&buf_len, send_sock);
+	buf = build_uac_req(method, headers, body, dialog, 0, new_cell, &buf_len);
 	if (!buf) {
 		LOG(L_ERR, "t_uac: Error while building message\n");
 		ret=E_OUT_OF_MEM;

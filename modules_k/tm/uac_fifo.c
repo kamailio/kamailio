@@ -35,6 +35,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
 #include "../../ip_addr.h"
+#include "../../trim.h"
 #include "config.h"
 #include "ut.h"
 #include "uac.h"
@@ -102,27 +103,62 @@ static inline int fifo_get_ruri(FILE* stream, char* response_file, str* ruri, st
 /*
  * Get and parse next hop URI
  */
-static inline int fifo_get_nexthop(FILE* stream, char* response_file, str* nexthop, struct sip_uri* pnexthop)
+static inline int fifo_get_nexthop(FILE* stream, char* response_file, 
+		str* nexthop, struct sip_uri* pnexthop, struct socket_info** socket)
 {
 	static char nexthop_buf[MAX_URI_SIZE];
+	str ssock;
+	str host;
+	int proto;
+	int port;
 
-	if (!read_line(nexthop_buf, MAX_URI_SIZE, stream, &nexthop->len) || !nexthop->len) {
+	if (!read_line(nexthop_buf, MAX_URI_SIZE, stream, &nexthop->len) ||
+	!nexthop->len) {
 		fifo_uac_error(response_file, 400, "next hop address expected\n");
 		return -1;
 	}
 
-	if (nexthop->len == 1 && nexthop_buf[0] == '.' ) {
+	nexthop->s = nexthop_buf;
+	*socket = 0;
+
+	if ( (ssock.s=strchr(nexthop_buf,(int)'|'))!=0 ) {
+		/* we have send socket specified */
+		ssock.s ++;
+		ssock.len = (nexthop->s + nexthop->len) - ssock.s;
+		nexthop->len = ssock.s - nexthop->s - 1;
+		trim_trailing(nexthop);
+		/* extract socket */
+		trim_leading(&ssock);
+		if (ssock.len!=0 && !(ssock.len==1 && ssock.s[0]=='.')) {
+			if (parse_phostport(ssock.s,&host.s,&host.len,&port,&proto)!=0) {
+				LOG(L_ERR,"ERROR:tm:fifo_get_nexthop: bad socket <%.*s> \n",
+					ssock.len,ssock.s);
+				fifo_uac_error(response_file, 400, "socket invalid\n");
+				return -1;
+			}
+			*socket = grep_sock_info( &host, (unsigned short)port, proto);
+			if (*socket==0) {
+				LOG(L_ERR,"ERROR:tm:fifo_get_nexthop: socket <%.*s> "
+					"not local\n", 	ssock.len,ssock.s);
+				fifo_uac_error(response_file, 400, "socket not local\n");
+				return -1;
+			}
+		}
+	}
+
+	if (nexthop->len == 1 && nexthop->s[0] == '.' ) {
 		DBG("DEBUG: fifo_get_nexthop: next hop empty\n");
 		nexthop->s = 0; 
 		nexthop->len = 0;
-	} else if (parse_uri(nexthop_buf, nexthop->len, pnexthop) < 0 ) {
-		fifo_uac_error(response_file, 400, "next hop uri invalid\n");
-		return -2;
-	} else {
-		nexthop->s = nexthop_buf;
-		DBG("DEBUG: fifo_get_nexthop: hop: '%.*s'\n", nexthop->len, nexthop->s);
+		return 0;
 	}
 
+	if (parse_uri(nexthop->s, nexthop->len, pnexthop) < 0 ) {
+		fifo_uac_error(response_file, 400, "next hop uri invalid\n");
+		return -2;
+	}
+
+	DBG("DEBUG: fifo_get_nexthop: hop: '%.*s'\n", nexthop->len, nexthop->s);
 	return 0;
 }
 
@@ -224,14 +260,14 @@ static inline struct str_list *new_str(char *s, int len, struct str_list **last,
 }
 
 
-static char *get_hfblock(str *uri, struct hdr_field *hf, int *l, int proto) 
+static char *get_hfblock(str *uri, struct hdr_field *hf, int *l, int proto,
+										struct socket_info** send_sock)
 {
 	struct str_list sl, *last, *new, *i, *foo;
 	int hf_avail, frag_len, total_len;
 	char *begin, *needle, *dst, *ret, *d;
 	str *sock_name, *portname;
 	union sockaddr_union to_su;
-	struct socket_info* send_sock;
 
 	ret=0; /* pessimist: assume failure */
 	total_len=0;
@@ -262,13 +298,16 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int *l, int proto)
 						if (!new) goto error;
 						/* substitute */
 						if (!sock_name) {
-							send_sock=uri2sock(0, uri, &to_su, proto );
-							if (!send_sock) {
-								LOG(L_ERR, "ERROR: get_hfblock: send_sock failed\n");
-								goto error;
+							if (*send_sock==0){
+								*send_sock=uri2sock(0, uri, &to_su, proto );
+								if (!*send_sock) {
+									LOG(L_ERR, "ERROR:tm:get_hfblock: "
+										"send_sock failed\n");
+									goto error;
+								}
 							}
-							sock_name=&send_sock->address_str;
-							portname=&send_sock->port_no_str;
+							sock_name=&(*send_sock)->address_str;
+							portname=&(*send_sock)->port_no_str;
 						}
 						new=new_str(sock_name->s, sock_name->len,
 								&last, &total_len );
@@ -571,20 +610,25 @@ done:
 
 int fifo_uac(FILE *stream, char *response_file)
 {
+	static dlg_t dlg;
+	static struct sip_msg faked_msg;
 	str method, ruri, nexthop, headers, body, hfb, callid;
 	struct sip_uri puri, pnexthop;
-	struct sip_msg faked_msg;
+	struct socket_info* sock;
 	int ret, sip_error, err_ret;
 	int fromtag, cseq_is, cseq;
 	struct cb_data;
 	char err_buf[MAX_REASON_LEN];
 	char* shm_file;
-	dlg_t dlg;
 
-	if (fifo_get_method(stream, response_file, &method) < 0) return 1;
-	if (fifo_get_ruri(stream, response_file, &ruri, &puri) < 0) return 1;
-	if (fifo_get_nexthop(stream, response_file, &nexthop, &pnexthop) < 0) return 1;
-	if (fifo_get_headers(stream, response_file, &headers) < 0) return 1;
+	if (fifo_get_method(stream, response_file, &method) < 0)
+		return 1;
+	if (fifo_get_ruri(stream, response_file, &ruri, &puri) < 0)
+		return 1;
+	if (fifo_get_nexthop(stream, response_file, &nexthop, &pnexthop, &sock)<0)
+		return 1;
+	if (fifo_get_headers(stream, response_file, &headers) < 0)
+		return 1;
 
 	/* use SIP parser to look at what is in the FIFO request */
 	memset(&faked_msg, 0, sizeof(struct sip_msg));
@@ -599,37 +643,37 @@ int fifo_uac(FILE *stream, char *response_file)
 
 	if (fifo_get_body(stream, response_file, &body) < 0) goto error;
 	
-	     /* at this moment, we collected all the things we got, let's
-	      * verify user has not forgotten something */
+	/* at this moment, we collected all the things we got, let's
+	 * verify user has not forgotten something */
 	if (fifo_check_msg(&faked_msg, &method, response_file, &body, &fromtag, 
-			   &cseq_is, &cseq, &callid) < 0) goto error;
+			&cseq_is, &cseq, &callid) < 0) goto error;
 
 	hfb.s = get_hfblock(nexthop.len ? &nexthop : &ruri, 
-			    faked_msg.headers, &hfb.len, PROTO_UDP);
+			faked_msg.headers, &hfb.len, PROTO_UDP, &sock);
 	if (!hfb.s) {
 		fifo_uac_error(response_file, 500, "no mem for hf block");
 		goto error;
 	}
 
-	DBG("DEBUG: fifo_uac: EoL -- proceeding to transaction creation\n");
+	DBG("DEBUG:tm:fifo_uac: EoL -- proceeding to transaction creation\n");
 
 	memset(&dlg, 0, sizeof(dlg_t));
-	     /* Fill in Call-ID, use given Call-ID if
-	      * present and generate it if not present
-	      */
+	/* Fill in Call-ID, use given Call-ID if
+	 * present and generate it if not present
+	 */
 	if (callid.s && callid.len) dlg.id.call_id = callid;
 	else generate_callid(&dlg.id.call_id);
 	
-	     /* We will not fill in dlg->id.rem_tag because
-	      * if present it will be printed within To HF
-	      */
+	/* We will not fill in dlg->id.rem_tag because
+	 * if present it will be printed within To HF
+	 */
 	
-	     /* Generate fromtag if not present */
+	/* Generate fromtag if not present */
 	if (!fromtag) {
 		generate_fromtag(&dlg.id.loc_tag, &dlg.id.call_id);
 	}
 
-	     /* Fill in CSeq */
+	/* Fill in CSeq */
 	if (cseq_is) dlg.loc_seq.value = cseq;
 	else dlg.loc_seq.value = DEFAULT_CSEQ;
 	dlg.loc_seq.is_set = 1;
@@ -638,6 +682,7 @@ int fifo_uac(FILE *stream, char *response_file)
 	dlg.rem_uri = faked_msg.to->body;
 	dlg.hooks.request_uri = &ruri;
 	dlg.hooks.next_hop = (nexthop.len ? &nexthop : &ruri);
+	dlg.send_sock = sock;
 
 #ifdef XL_DEBUG
 	print_dlg(stderr, &dlg);
@@ -658,12 +703,11 @@ int fifo_uac(FILE *stream, char *response_file)
 			fifo_uac_error(response_file, 500, "FIFO/UAC error");
 		}
 	}
-	
- error01:
+
+error01:
 	pkg_free(hfb.s);
-	
- error:
-	     /* free_sip_msg(&faked_msg); */
+error:
+	/* free_sip_msg(&faked_msg); */
 	if (faked_msg.headers) free_hdr_field_lst(faked_msg.headers);
 	return 1;
 }
