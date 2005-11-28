@@ -57,6 +57,10 @@ OPTIONS=	MYSQL "MySQL support" on \
 
 .include <bsd.port.pre.mk>
 
+.if ${ARCH} != "i386"
+BROKEN=		"the postgres module does not build on non-i386"
+.endif
+
 .if defined(WITH_MYSQL)
 USE_MYSQL=	yes
 MODULES+=	mysql
