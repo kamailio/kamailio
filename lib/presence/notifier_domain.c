@@ -130,6 +130,7 @@ static void free_notifier(notifier_t *info)
 
 static void free_subscription(subscription_t *s)
 {
+	DEBUG_LOG("freeing subscription to %.*s\n", FMT_STR(s->record_id));
 	str_free_content(&s->record_id);
 	str_free_content(&s->subscriber_id);
 	cds_free(s);

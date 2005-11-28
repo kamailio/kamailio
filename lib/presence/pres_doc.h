@@ -27,6 +27,7 @@
 #define __PRESENCE_INFO_H
 
 #include <cds/sstr.h>
+#include <cds/ptr_vector.h>
 #include <time.h>
 
 typedef enum {
@@ -57,10 +58,27 @@ typedef struct {
 	char presentity_data[1];
 } presentity_info_t;
 
+typedef struct {
+	str_t list_uri; /* do not modify this !*/
+	
+	/* vector of pointers to structures presentity_info_t */
+	/* ptr_vector_t presentity_infos; */
+	
+	/* FIXME: the presence tree may include many lists
+	 * and may be deep - isn't better to work with
+	 * whole documents than with some structures? */
+	
+	str_t pres_doc;
+	str_t content_type;
+	char uri_data[1];
+} list_presence_info_t;
+
 presentity_info_t *create_presentity_info(const str_t *presentity);
 presence_tuple_info_t *create_tuple_info(const str_t *contact, presence_tuple_status_t status);
 void add_tuple_info(presentity_info_t *p, presence_tuple_info_t *t);
 void free_presentity_info(presentity_info_t *p);
 
+list_presence_info_t *create_list_presence_info(const str_t *uri);
+void free_list_presence_info(list_presence_info_t *p);
 
 #endif

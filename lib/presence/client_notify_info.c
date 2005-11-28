@@ -27,11 +27,15 @@
 
 #include <cds/memory.h>
 #include <cds/sstr.h>
+#include <cds/logger.h>
 
 void free_client_notify_info_content(client_notify_info_t *info)
 {
+	TRACE_LOG(" ... freeing notify info content\n");
 	str_free_content(&info->package);
 	str_free_content(&info->record_id);
 	str_free_content(&info->notifier);
+	TRACE_LOG(" ... calling destroy func on data\n");
+	if (info->destroy_func) info->destroy_func(info->data);
 }
 

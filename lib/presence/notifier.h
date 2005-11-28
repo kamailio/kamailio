@@ -47,13 +47,21 @@ void unregister_notifier(notifier_domain_t *domain, notifier_t *info);
 /** accepts subscription (internaly adds reference to it), thus it can 
  * be handled by notifier which called this function 
  * MUST be called in notifier's subscribe function, otherwise the 
- * subscription can NOT be accepted */
+ * subscription can NOT be accepted 
+ *
+ * Note: only for asynchonously processed subscriptions (synchronous 
+ * don't need it) */
 void accept_subscription(subscription_t *s);
 
 /** releases accepted subscription - MUST be called on all accepted 
- * subscriptions (only on them!) to be freed from memory !*/
+ * subscriptions (only on them!) to be freed from memory !
+ * Note: only for asynchonously processed subscriptions (synchronous 
+ * don't need it) */
 void release_subscription(subscription_t *s);
-	
+
+/* notifications SHOULD be sent through this method */
+void notify_subscriber(subscription_t *s, mq_message_t *msg);
+
 #ifdef __cplusplus
 }
 #endif

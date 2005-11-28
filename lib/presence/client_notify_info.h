@@ -31,6 +31,7 @@
  * for processing the status info. */
 
 #include <cds/sstr.h>
+#include <cds/msg_queue.h>
 
 typedef struct {
 	str_t package;
@@ -38,6 +39,7 @@ typedef struct {
 	str_t notifier;
 	void *data;
 	int data_len;
+	destroy_function_f destroy_func; /* function used to destroy data */
 } client_notify_info_t;
 
 

@@ -51,7 +51,7 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p)
 	presence_tuple_info_t *t;
 
 	DEBUG_LOG("doc_add_presentity()\r\n");
-	dstr_append_zt(buf, "<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"sip:");
+	dstr_append_zt(buf, "<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"");
 	dstr_append_str(buf, &p->presentity);
 	dstr_append_zt(buf, "\">\r\n");
 	
