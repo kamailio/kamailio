@@ -210,10 +210,10 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	int i, cseq;
 	unsigned int flags;
 	struct socket_info  *sock;
-	unsigned int port;
+	int port, proto;
 	char *p;
 
-	str user, contact, callid, ua, received, sock_str;
+	str user, contact, callid, ua, received, host;
 	str* rec;
 	char* domain;
 	time_t expires;
@@ -347,28 +347,23 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			rec = &received;
 		}
 
-		sock_str.s  = (char*)VAL_STRING(ROW_VALUES(row) + 9);
-		if (VAL_NULL(ROW_VALUES(row)+9) || sock_str.s==0 || sock_str.s[0]==0){
+		/* socket name */
+		p  = (char*)VAL_STRING(ROW_VALUES(row) + 9);
+		if (VAL_NULL(ROW_VALUES(row)+9) || p==0 || p[0]==0){
 			sock = 0;
 		} else {
-			if ( (p=strchr(sock_str.s,'_'))!=0 && *(p+1)) {
-				sock_str.s = p+1;
-				sock_str.len = strlen(sock_str.s);
-				if (str2int( &sock_str, &port)!=0) {
-					LOG(L_ERR,"preload_udomain(): bad socket port <%.*s> in "
-						"table %s for user %.*s\n", sock_str.len,sock_str.s,
-						b, user.len, user.s);
-					LOG(L_CRIT,"preload_udomain: ERROR: skipping...\n");
-					continue;
-				}
-				sock_str.s = (char*)VAL_STRING(ROW_VALUES(row) + 9);
-				sock_str.len = p - sock_str.s;
-			} else {
-				sock_str.len = strlen(sock_str.s);
-				port = SIP_PORT;
+			if (parse_phostport( p, &host.s, &host.len, &port, &proto)!=0) {
+				LOG(L_ERR,"ERROR:usrloc:preload_udomain: bad socket <%s> in "
+						"table %s for user %.*s\n", p, b, user.len, user.s);
+				LOG(L_CRIT,"preload_udomain: ERROR: skipping...\n");
+				continue;
 			}
-			sock = grep_sock_info( &sock_str, (unsigned short)port,
-				PROTO_NONE /*FIXME - correct proto?*/);
+			sock = grep_sock_info( &host, (unsigned short)port, proto);
+			if (sock==0) {
+				LOG(L_WARN,"ERROR:usrloc:preload_udomain: non-local socket "
+						"<%s> in table %s for user %.*s...ignoring\n",
+						p , b, user.len, user.s);
+			}
 		}
 
 		if (use_domain) {
