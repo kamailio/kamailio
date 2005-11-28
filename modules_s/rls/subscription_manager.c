@@ -388,7 +388,7 @@ int sm_init_subscription_nolock(subscription_manager_t *mng,
 	
 	if (!dst) return RES_INTERNAL_ERR;
 	
-	dst->usr_data = NULL;
+	/* dst->usr_data = NULL; */ /* !!! do not initialize this - its user's and may be already initialized !!! */
 	dst->prev = NULL;
 	dst->next = NULL;
 	dst->dialog = NULL;
@@ -635,5 +635,5 @@ int sm_subscription_pending(subscription_data_t *s)
 	if (s->status == subscription_pending) return 0;
 	if (s->status == subscription_terminated_pending) return 0;
 	if (s->status == subscription_terminated_pending_to) return 0;
-	return 1; /* 1 means NOT terminated ! */
+	return 1; /* 1 means NOT pending ! */
 }

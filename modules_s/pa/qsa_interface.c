@@ -8,7 +8,6 @@
 #include <presence/notifier.h>
 #include <cds/logger.h>
 #include <cds/memory.h>
-#include "qsa_interface.h"
 #include <cds/list.h>
 #include <presence/pres_doc.h>
 
@@ -232,6 +231,7 @@ int notify_internal_watcher(presentity_t *p, internal_pa_subscription_t *ss)
 		free_presentity_info(pinfo);
 		return -1; 
 	}
+	set_data_destroy_function(msg, (destroy_function_f)free_client_notify_info_content);
 	info = (client_notify_info_t*)msg->data;
 
 	str_dup(&info->package, &ss->subscription->package->name); /* ? */
@@ -239,8 +239,10 @@ int notify_internal_watcher(presentity_t *p, internal_pa_subscription_t *ss)
 	str_dup(&info->notifier, &notifier_name);
 	info->data = pinfo;
 	info->data_len = sizeof(*pinfo);
+	info->destroy_func = (destroy_function_f)free_presentity_info;
 
-	push_message(ss->subscription->dst, msg);
+	/* push_message(ss->subscription->dst, msg); */
+	notify_subscriber(ss->subscription, msg);
 	
 	return 0;
 }

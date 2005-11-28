@@ -9,6 +9,7 @@
 #include <presence/qsa.h>
 #include <presence/pres_doc.h>
 #include <presence/pidf.h>
+#include "qsa_rls.h"
 
 /* shared structure holding the data */
 typedef struct {
@@ -64,19 +65,41 @@ int vs_destroy()
 static void process_notify_info(virtual_subscription_t *vs, client_notify_info_t *info) 
 {
 	presentity_info_t *pinfo;
+	list_presence_info_t *linfo;
 
 	if ((!vs) || (!info)) return;
-	pinfo = (presentity_info_t*)info->data;	/* TODO: only for "presence" package, not for "presence-list" */
-	if (!pinfo) return;
-	
-	str_free_content(&vs->state_document); /* release old document if set */
-	create_pidf_document(pinfo, &vs->state_document, &vs->content_type);
-	vs->status = subscription_active;
-	
-	DEBUG_LOG("created pidf document:\n %.*s\n", FMT_STR(vs->state_document));
 
-	free_presentity_info(pinfo); /* destroy !*/
-	info->data = NULL;
+	if (is_presence_list_package(&info->package)) {
+		TRACE_LOG("Processing internal list notification\n");
+		
+		linfo = (list_presence_info_t*)info->data;	/* TODO: test for "presence" package? */
+		if (!linfo) return;
+		
+		/* release old document if set */
+		TRACE_LOG(" ... freeing old documents\n");
+		str_free_content(&vs->state_document); 		
+		str_free_content(&vs->content_type);
+		
+		/* create_presence_rlmi_document(linfo, &vs->state_document, &vs->content_type); */
+		TRACE_LOG(" ... duplicating documents\n");
+		str_dup(&vs->state_document, &linfo->pres_doc);
+		str_dup(&vs->content_type, &linfo->content_type);
+		
+		vs->status = subscription_active;
+	}
+	else {
+		pinfo = (presentity_info_t*)info->data;	/* TODO: test for "presence" package? */
+		if (!pinfo) return;
+		
+		/* release old document if set */
+		str_free_content(&vs->state_document); 		
+		str_free_content(&vs->content_type);
+		
+		create_pidf_document(pinfo, &vs->state_document, &vs->content_type);
+		vs->status = subscription_active;
+		
+		/* DEBUG_LOG("created pidf document:\n %.*s\n", FMT_STR(vs->state_document)); */
+	}
 }
 
 /* returns positive value if status of this VS changed */
@@ -86,18 +109,19 @@ static int process_vs_messages(virtual_subscription_t *vs)
 	client_notify_info_t *info;
 	mq_message_t *msg;
 	
-	if (!vs->local_subscription) return 0;
+	if ((!vs->local_subscription_pres) && (!vs->local_subscription_list)) return 0;
 
 	while (!is_msg_queue_empty(&vs->mq)) {
 		msg = pop_message(&vs->mq);
 		if (!msg) continue;
 		info = (client_notify_info_t *)msg->data;
 		if (info) {
-			DEBUG_LOG("received NOTIFY MESSAGE for %.*s\n", FMT_STR(info->record_id));
+			DEBUG_LOG("received NOTIFY MESSAGE for %.*s from %.*s\n", 
+					FMT_STR(info->record_id), FMT_STR(info->notifier));
 			process_notify_info(vs, info);
-			free_client_notify_info_content(info);
 			cnt++;
 		}
+		TRACE_LOG(" ... freeing message\n");
 		free_message(msg);
 	}
 	return cnt;
@@ -105,13 +129,25 @@ static int process_vs_messages(virtual_subscription_t *vs)
 
 static void mark_as_modified(virtual_subscription_t *vs)
 {
-	if (sm_subscription_pending(&vs->subscription->subscription) != 0) {
-		/* NOTIFY should be send only for nonpending subscriptions (or active?)*/
-		vs->subscription->changed++;
-		DEBUG_LOG("RL subscription status changed (%p, %d)\n", 
-			vs->subscription,
-			vs->subscription->changed);
+	rl_subscription_t *rls = vs->subscription;
+
+	switch (rls->type) {
+		case rls_external_subscription:
+			if (sm_subscription_pending(&rls->external) == 0) {
+				/* pending subscription will not be notified */
+				return; 
+			}
+			break;
+		case rls_internal_subscription:
+			/* FIXME: something like above? */
+			break;
 	}
+				
+	/* NOTIFY should be send only for nonpending subscriptions (or active?)*/
+
+	vs->subscription->changed++;
+	DEBUG_LOG("RL subscription status changed (%p, %d)\n", 
+		rls, rls->changed);
 }
 
 static void notify_all_modified()
@@ -222,22 +258,51 @@ static int create_local_subscription(virtual_subscription_t *vs)
 {
 	/* create concrete local subscription */
 	str uri;
+	str *package = NULL;
+	str list_package;
+	str *subscriber = NULL;
 	
 	/* remove sip:, ... so pa/usrloc will be satisfied */
 	get_local_uri(&vs->uri, &uri); 	
 
-	DEBUG_LOG("creating local subscription to %.*s [%.*s]\n",
-			FMT_STR(vs->uri), FMT_STR(*rls_get_package(vs->subscription)));
+	DEBUG_LOG("creating local subscription to %.*s\n", FMT_STR(vs->uri));
 	if (msg_queue_init(&vs->mq) != 0) {
 		LOG(L_ERR, "can't initialize message queue!\n");
 		return -1;
 	}
-	vs->local_subscription = subscribe(vsd->domain, 
-			rls_get_package(vs->subscription), 
-			&uri, &vs->subscription->subscription.subscriber, &vs->mq, vs);
-	if (!vs->local_subscription) {
-		LOG(L_ERR, "can't create local subscription!\n");
+
+	package = rls_get_package(vs->subscription);
+	subscriber = rls_get_subscriber(vs->subscription);
+
+	/* FIXME: list_package should be computed from package */
+	if (package) {
+		str append = STR_STATIC_INIT(".list");
+		list_package.len = package->len + append.len;
+		list_package.s = (char *)shm_malloc(list_package.len);
+		if (list_package.s) {
+			if (package->s) memcpy(list_package.s, package->s, package->len);
+			memcpy(list_package.s + package->len, append.s, append.len);
+		}
+		else list_package.len = 0;
+	}
+	else str_clear(&list_package);
+	
+	vs->local_subscription_pres = subscribe(vsd->domain, 
+			package, 
+			&uri, subscriber, &vs->mq, vs);
+	if (!vs->local_subscription_pres) {
+		LOG(L_ERR, "can't create local subscription (pres)!\n");
 		return -1;
+	}
+	if (list_package.len > 0) {
+		vs->local_subscription_list = subscribe(vsd->domain, 
+				&list_package, 
+				&uri, subscriber, &vs->mq, vs);
+		if (!vs->local_subscription_list) {
+			LOG(L_ERR, "can't create local subscription (list)!\n");
+			return -1;
+		}
+		shm_free(list_package.s);
 	}
 	return 0;
 }
@@ -285,7 +350,8 @@ int vs_create(str *uri, str *package, virtual_subscription_t **dst, display_name
 	(*dst)->content_type.len = 0;
 	(*dst)->content_type.s = NULL;
 	(*dst)->status = subscription_pending;
-	(*dst)->local_subscription = NULL;
+	(*dst)->local_subscription_pres = NULL;
+	(*dst)->local_subscription_list = NULL;
 	(*dst)->subscription = subscription;
 	generate_db_id(&(*dst)->dbid, *dst);
 
@@ -375,8 +441,11 @@ void vs_free(virtual_subscription_t *vs)
 		}
 		vector_destroy(&vs->display_names);
 
-		if (vs->local_subscription) {
-			unsubscribe(vsd->domain, vs->local_subscription);
+		if (vs->local_subscription_pres)
+			unsubscribe(vsd->domain, vs->local_subscription_pres);
+		if (vs->local_subscription_list) 
+			unsubscribe(vsd->domain, vs->local_subscription_list);
+		if (vs->local_subscription_pres || vs->local_subscription_list) {
 			msg_queue_destroy(&vs->mq);
 		}
 

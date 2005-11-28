@@ -117,6 +117,7 @@ static void add_virtual_subscriptions_documents(dstring_t *doc,
 
 		dstr_append_str(doc, &vs->state_document);
 		dstr_append(doc, "\r\n", 2);
+		dstr_append(doc, "\r\n", 2);
 	}
 	
 	
@@ -146,9 +147,10 @@ int create_rlmi_document(str *dst, str *content_type_dst, rl_subscription_t *s, 
 			"Content-Transfer-Encoding: binary\r\n"
 			"Content-ID: ");
 	dstr_append_zt(&doc, start_str);
+	dstr_append_zt(&doc, "\r\n");
+
 	dstr_append_zt(&doc, 
-			"\r\n"
-			"Content-Type: application/rlmi+xml;charset=\"UTF-8\"\r\n");
+		"Content-Type: application/rlmi+xml;charset=\"UTF-8\"\r\n");
 	dstr_append(&doc, "\r\n", 2);
 	
 	/* -- RLMI document -- */
@@ -189,13 +191,13 @@ int create_rlmi_document(str *dst, str *content_type_dst, rl_subscription_t *s, 
 	/* --- store output strings --- */
 	
 	dst->len = dstr_get_data_length(&doc);
-	dst->s = pkg_malloc(dst->len);
+	dst->s = cds_malloc(dst->len);
 	if (!dst->s) dst->len = 0;
 	else dstr_get_data(&doc, dst->s);
 	dstr_destroy(&doc);
 	
 	content_type_dst->len = dstr_get_data_length(&cont);
-	content_type_dst->s = pkg_malloc(content_type_dst->len);
+	content_type_dst->s = cds_malloc(content_type_dst->len);
 	if (!content_type_dst->s) content_type_dst->len = 0;
 	else dstr_get_data(&cont, content_type_dst->s);
 	dstr_destroy(&cont);

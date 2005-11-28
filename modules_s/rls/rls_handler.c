@@ -194,7 +194,7 @@ static int handle_new_subscription(struct sip_msg *m, const char *xcap_server, i
 	rls_generate_notify(s, 1);	
 
 	/* free subscription if only polling */
-	if (sm_subscription_terminated(&s->subscription) == 0) {
+	if (sm_subscription_terminated(&s->external) == 0) {
 		rls_remove(s);
 	}
 	
@@ -262,7 +262,7 @@ static int handle_renew_subscription(struct sip_msg *m, int send_error_responses
 	rls_generate_notify(s, 1);	
 
 	/* free subscription if only polling */
-	if (sm_subscription_terminated(&s->subscription) == 0) {
+	if (sm_subscription_terminated(&s->external) == 0) {
 		rls_remove(s);
 	}
 	

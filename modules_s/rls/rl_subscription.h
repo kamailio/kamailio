@@ -10,6 +10,7 @@
 #include <cds/sstr.h>
 
 #include <presence/subscriber.h>
+#include <presence/notifier.h>
 
 /* type for generated database ID */
 typedef char db_id_t[48];
@@ -36,7 +37,8 @@ typedef struct {
 
 typedef struct _virtual_subscription_t {
 	/* local subscription data */
-	subscription_t *local_subscription;
+	subscription_t *local_subscription_pres;
+	subscription_t *local_subscription_list;
 	msg_queue_t mq;
 	
 	vector_t display_names;
@@ -62,9 +64,26 @@ typedef struct _virtual_subscription_t {
 	char uri_str[1];
 } virtual_subscription_t;
 
+typedef enum { 
+	rls_internal_subscription, 
+	rls_external_subscription 
+} rls_subscription_type_t;
+
+typedef struct _internal_rl_subscription_t {
+	subscription_t *s;
+	struct _internal_rl_subscription_t *next, *prev;
+	rl_subscription_t *rls; /* pointer to its rl subscription */
+} internal_rl_subscription_t;
+
 /** subscription to the list of resources */
 struct _rl_subscription_t {
-	subscription_data_t subscription;
+	rls_subscription_type_t type;
+
+	/* data of external subscription */
+	subscription_data_t external;
+
+	/* data of internal subscription */
+	internal_rl_subscription_t internal;
 	
 	/** sequence number of NOTIFY */
 	int doc_version;
@@ -80,9 +99,9 @@ struct _rl_subscription_t {
 	db_id_t dbid;
 };
 
-#define rls_get_uri(s)			&((s)->subscription.record_id)
-#define rls_get_package(s)		&((s)->subscription.package)
-#define rls_get_subscriber(s)	&((s)->subscription.subscriber)
+str_t * rls_get_package(rl_subscription_t *s);
+str_t * rls_get_uri(rl_subscription_t *s);
+str_t * rls_get_subscriber(rl_subscription_t *subscription);
 
 extern subscription_manager_t *rls_manager;
 
@@ -111,6 +130,7 @@ int vs_destroy();
 int vs_create(str *uri, str *package, virtual_subscription_t **dst, display_name_t *dnames, rl_subscription_t *subscription);
 int vs_add_display_name(virtual_subscription_t *vs, const char *name, const char *lang);
 void vs_free(virtual_subscription_t *vs);
+int create_virtual_subscriptions(rl_subscription_t *ss, const char *xcap_root);
 
 /* database operations */
 int rls_db_add(rl_subscription_t *s);
@@ -125,7 +145,7 @@ void generate_db_id(db_id_t *id, void *data);
 int rls_subscription_expires_in(rl_subscription_t *s);
 
 /* allocates and initializes structure */
-rl_subscription_t *rls_alloc_subscription();
+rl_subscription_t *rls_alloc_subscription(rls_subscription_type_t type);
 
 
 #endif

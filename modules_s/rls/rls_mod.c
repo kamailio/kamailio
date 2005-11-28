@@ -14,6 +14,7 @@
 
 #include "rl_subscription.h"
 #include "rls_handler.h"
+#include "qsa_rls.h"
 
 #include "time_event_manager.h"
 #include <time.h>
@@ -150,7 +151,11 @@ int rls_mod_init(void)
 	bind_dlg_mod_f bind_dlg;
 	
 	DEBUG_LOG("RLS module initialization\n");
-
+	
+	/* ??? if other module uses this libraries it might be a problem ??? */
+	xmlInitParser();
+	curl_global_init(CURL_GLOBAL_ALL);
+	
 	DEBUG_LOG(" ... common libraries\n");
 	cds_initialize();
 	qsa_initialize();	
@@ -228,11 +233,9 @@ int rls_mod_init(void)
 		use_db = 1;
 	}
 
-	rls_fifo_register();
-	
-	/* ??? if other module uses this libraries it might be a problem ??? */
-	xmlInitParser();
-	curl_global_init(CURL_GLOBAL_ALL);
+	if (rls_fifo_register() != 0) return -1;
+
+	if (rls_qsa_interface_init() != 0) return -1;
 	
 	return 0;
 }
@@ -263,6 +266,9 @@ void rls_mod_destroy(void)
 	char *s;
 
 	TRACE_LOG("RLS module cleanup\n");
+
+	DEBUG_LOG(" ... qsa interface\n");
+	rls_qsa_interface_destroy();
 	
 	DEBUG_LOG(" ... xcap servers\n");
 	/* destroy used XCAP servers */

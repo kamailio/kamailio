@@ -181,6 +181,9 @@ int rls_db_add(rl_subscription_t *s)
 	time_t t;
 
 	if (!use_db) return 0;
+
+	/* store only external subscriptions */
+	if (s->type != rls_external_subscription) return 0;
 	
 	TRACE_LOG("storing into database\n");
 	
@@ -193,14 +196,14 @@ int rls_db_add(rl_subscription_t *s)
 	int_val(vals[n], s->doc_version);
 	
 	cols[++n] = "status";
-	int_val(vals[n], s->subscription.status);
+	int_val(vals[n], s->external.status);
 	
 	t = time(NULL);
 	t += rls_subscription_expires_in(s);
 	cols[++n] = "expires";
 	time_val(vals[n], t);
 	
-	if (dlg_func.dlg2str(s->subscription.dialog, &dialog) != 0) {	
+	if (dlg_func.dlg2str(s->external.dialog, &dialog) != 0) {	
 		LOG(L_ERR, "Error while serializing dialog\n");
 		return -1;
 	}
@@ -208,16 +211,16 @@ int rls_db_add(rl_subscription_t *s)
 	blob_val(vals[n], dialog);
 	
 	cols[++n] = "contact";
-	string_val(vals[n], s->subscription.contact);
+	string_val(vals[n], s->external.contact);
 	
 	cols[++n] = "uri";
-	string_val(vals[n], s->subscription.record_id);
+	string_val(vals[n], s->external.record_id);
 	
 	cols[++n] = "package";
-	string_val(vals[n], s->subscription.package);
+	string_val(vals[n], s->external.package);
 	
 	cols[++n] = "w_uri";
-	string_val(vals[n], s->subscription.subscriber);
+	string_val(vals[n], s->external.subscriber);
 	
 	cols[++n] = "id";
 	string_val_ex(vals[n], s->dbid, strlen(s->dbid));
@@ -247,6 +250,9 @@ int rls_db_remove(rl_subscription_t *s)
 	};
 	
 	if (!use_db) return 0;
+	
+	/* only external subscriptions are stored */
+	if (s->type != rls_external_subscription) return 0;
 
 	if (rls_dbf.use_table(rls_db, rls_table) < 0) {
 		LOG(L_ERR, "db_remove_presence_tuple: Error in use_table\n");
@@ -280,6 +286,9 @@ int rls_db_update(rl_subscription_t *s)
 
 	if (!use_db) return 0;
 	
+	/* only external subscriptions are stored */
+	if (s->type != rls_external_subscription) return 0;
+
 /* 	TRACE_LOG("updating rls database\n"); */
 	
 	if (rls_dbf.use_table(rls_db, rls_table) < 0) {
@@ -291,14 +300,14 @@ int rls_db_update(rl_subscription_t *s)
 	int_val(vals[n], s->doc_version);
 	
 	cols[++n] = "status";
-	int_val(vals[n], s->subscription.status);
+	int_val(vals[n], s->external.status);
 	
 	t = time(NULL);
 	t += rls_subscription_expires_in(s);
 	cols[++n] = "expires";
 	time_val(vals[n], t);
 	
-	if (dlg_func.dlg2str(s->subscription.dialog, &dialog) != 0) {	
+	if (dlg_func.dlg2str(s->external.dialog, &dialog) != 0) {	
 		LOG(L_ERR, "Error while serializing dialog\n");
 		return -1;
 	}
@@ -306,16 +315,16 @@ int rls_db_update(rl_subscription_t *s)
 	blob_val(vals[n], dialog);
 	
 	cols[++n] = "contact";
-	string_val(vals[n], s->subscription.contact);
+	string_val(vals[n], s->external.contact);
 	
 	cols[++n] = "uri";
-	string_val(vals[n], s->subscription.record_id);
+	string_val(vals[n], s->external.record_id);
 	
 	cols[++n] = "package";
-	string_val(vals[n], s->subscription.package);
+	string_val(vals[n], s->external.package);
 	
 	cols[++n] = "w_uri";
-	string_val(vals[n], s->subscription.subscriber);
+	string_val(vals[n], s->external.subscriber);
 	
 	if (rls_dbf.update(rls_db, keys, ops, k_vals, 
 				cols, vals, 1, n + 1) < 0) {
@@ -503,7 +512,7 @@ int db_load_rls()
 			int expires_after;
 			dlg_t *dlg = NULL;
 
-			s = rls_alloc_subscription();
+			s = rls_alloc_subscription(rls_external_subscription);
 			if (!s) { r = -1; break; }
 			
 			get_str_val(row_vals[0], id);
@@ -519,7 +528,7 @@ int db_load_rls()
 			if (expires != 0) expires_after = expires - time(NULL);
 			else expires_after = 0;
 			dlg = dlg2str(&dialog);
-			sm_init_subscription_nolock_ex(rls_manager, &s->subscription, 
+			sm_init_subscription_nolock_ex(rls_manager, &s->external, 
 					dlg,
 					status,
 					&contact,
