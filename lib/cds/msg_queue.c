@@ -27,6 +27,7 @@
 #include <cds/msg_queue.h>
 #include <cds/memory.h>
 #include <cds/ref_cntr.h>
+#include <cds/logger.h>
 
 mq_message_t *create_message_ex(int data_len)
 {

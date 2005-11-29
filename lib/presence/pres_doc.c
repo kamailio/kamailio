@@ -126,11 +126,11 @@ list_presence_info_t *create_list_presence_info(const str_t *uri)
 void free_list_presence_info(list_presence_info_t *p)
 {
 	if (p) {
-		TRACE_LOG(" ... freeing doc\n");
+		DEBUG_LOG(" ... freeing doc\n");
 		str_free_content(&p->pres_doc);
-		TRACE_LOG(" ... freeing content type\n");
+		DEBUG_LOG(" ... freeing content type\n");
 		str_free_content(&p->content_type);
-		TRACE_LOG(" ... freeing list presence info\n");
+		DEBUG_LOG(" ... freeing list presence info\n");
 		cds_free(p);
 	}
 }

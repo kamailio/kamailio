@@ -108,7 +108,8 @@ int read_service(xmlNode *list_node, service_t **dst)
 	const char *a_val;
 	xmlNode *n;
 	int first_node;
-	
+
+	DEBUG_LOG("read_service(): called\n");
 	/* allocate memory and prepare empty node */
 	if (!dst) return -1;
 	*dst = (service_t*)cds_malloc(sizeof(service_t));
