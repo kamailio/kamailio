@@ -265,7 +265,7 @@ void rls_mod_destroy(void)
 	int i, cnt;
 	char *s;
 
-	TRACE_LOG("RLS module cleanup\n");
+	DEBUG_LOG("RLS module cleanup\n");
 
 	DEBUG_LOG(" ... qsa interface\n");
 	rls_qsa_interface_destroy();

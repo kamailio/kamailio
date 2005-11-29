@@ -394,7 +394,7 @@ static int pa_child_init(int _rank)
 
 static void pa_destroy(void)
 {
-	TRACE_LOG("PA module cleanup\n");
+	DEBUG_LOG("PA module cleanup\n");
 	DEBUG_LOG("destroying PA module\n");
 	DEBUG_LOG(" ... qsa interface\n");
 	pa_qsa_interface_destroy();

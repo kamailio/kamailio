@@ -50,7 +50,7 @@ static int virtual_subscription_db_add(virtual_subscription_t *vs, rl_subscripti
 	int i, cnt;
 	vs_display_name_t *dn;
 
-	TRACE_LOG("storing into database\n");
+	DEBUG_LOG("storing into database\n");
 	
 	if (rls_dbf.use_table(rls_db, vs_table) < 0) {
 		LOG(L_ERR, "vsub_db_add: Error in use_table\n");
@@ -185,7 +185,7 @@ int rls_db_add(rl_subscription_t *s)
 	/* store only external subscriptions */
 	if (s->type != rls_external_subscription) return 0;
 	
-	TRACE_LOG("storing into database\n");
+	DEBUG_LOG("storing into database\n");
 	
 	if (rls_dbf.use_table(rls_db, rls_table) < 0) {
 		LOG(L_ERR, "rls_db_add: Error in use_table\n");
@@ -395,7 +395,7 @@ int db_load_vs_names(db_con_t *rls_db, virtual_subscription_t *vs)
 			get_str_val(row_vals[0], name);
 			get_str_val(row_vals[1], lang);
 	
-			TRACE_LOG("     adding name %.*s\n", FMT_STR(name));
+			DEBUG_LOG("     adding name %.*s\n", FMT_STR(name));
 			vs_add_display_name(vs, name.s, lang.s);
 		}
 
@@ -447,7 +447,7 @@ int db_load_vs(db_con_t *rls_db, rl_subscription_t *s)
 			if ((r != 0) || (!vs)) { r = -1; break; }
 			
 			strcpy(vs->dbid, id.s);
-			TRACE_LOG("  created VS to %.*s\n", FMT_STR(uri));
+			DEBUG_LOG("  created VS to %.*s\n", FMT_STR(uri));
 		
 			ptr_vector_add(&s->vs, vs);
 			
@@ -476,7 +476,7 @@ int db_load_rls()
 
 	if (!use_db) return 0;
 
-	TRACE_LOG("loading rls from db\n");
+	DEBUG_LOG("loading rls from db\n");
 
 	/* open own database connection */
 	if (rls_dbf.init) rls_db = rls_dbf.init(db_url);
@@ -537,7 +537,7 @@ int db_load_rls()
 					&w_uri,
 					expires_after,
 					s);
-			TRACE_LOG("  created RLS to %.*s from %.*s\n", 
+			DEBUG_LOG("  created RLS to %.*s from %.*s\n", 
 					FMT_STR(uri), FMT_STR(w_uri));
 		
 			/* load virtual subscriptions */
@@ -550,7 +550,7 @@ int db_load_rls()
 	/* close db connection */
 	if (rls_dbf.close) rls_dbf.close(rls_db);
 
-	TRACE_LOG("rls loaded\n");
+	DEBUG_LOG("rls loaded\n");
 
 	return r;
 }

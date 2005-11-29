@@ -56,6 +56,7 @@
 #include "auth.h"
 #include <cds/sstr.h>
 #include <cds/msg_queue.h>
+#include <cds/logger.h>
 
 #define DOCUMENT_TYPE "application/cpim-pidf+xml"
 #define DOCUMENT_TYPE_L (sizeof(DOCUMENT_TYPE) - 1)
@@ -91,6 +92,13 @@ void callback(str* _user, str *_contact, int state, void* data)
 {
 	mq_message_t *msg;
 	tuple_change_info_t *info;
+
+	if ((!_user) || (!_contact) || (!data)) {
+		ERROR_LOG("callback(): error!\n");
+	}
+		
+	DEBUG_LOG("callback(): user=%.*s, contact=%.*s, %p, state=%d!\n",
+			FMT_STR(*_user), FMT_STR(*_contact), data, state);
 	
 	/* asynchronous processing */
 	msg = create_message_ex(sizeof(tuple_change_info_t));
@@ -488,7 +496,7 @@ int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 	e = get_expires(_m);
 
 	if (verify_event_package(et) != 0) {
-		LOG(L_ERR, "update_presentity(): Unsupported event package\n");
+		LOG(L_ERR, "create_presentity(): Unsupported event package\n");
 		paerrno = PA_EVENT_UNSUPP;
 		return -1;
 	}
@@ -773,7 +781,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 		w->flags |= WFLAG_SUBSCRIPTION_CHANGED;
 	}
 
-	LOG(L_DBG, "handle_subscription about to return 1: w->event_package=%d w->accept=%d p->flags=%x w->flags=%x w=%p\n",
+	DEBUG_LOG("handle_subscription about to return 1: w->event_package=%d w->accept=%d p->flags=%x w->flags=%x w=%p\n",
 	    (w ? w->event_package : -1), (w ? w->preferred_mimetype : -1), (p ? p->flags : -1), (w ? w->flags : -1), w);
 	unlock_pdomain(d);
 	return 1;

@@ -108,7 +108,7 @@ int str2event_package(const char *epname)
 	return -1; /* unsupported */
 }
 
-/* returns 1 if package supported by PA */
+/* returns 0 if package supported by PA */
 int verify_event_package(int et)
 {
 	switch (et) {

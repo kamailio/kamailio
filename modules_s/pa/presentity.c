@@ -146,7 +146,7 @@ int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, presentity_t** _p)
 	*_p = presentity;
 	str_free_content(&uuid);
 
-	LOG(L_DBG, "new_presentity_no_wb=%p for uri=%.*s uuid=%.*s\n", 
+	DEBUG_LOG("new_presentity_no_wb=%p for uri=%.*s uuid=%.*s\n", 
 			presentity, presentity->uri.len, ZSW(presentity->uri.s),
 			presentity->uuid.len, ZSW(presentity->uuid.s));
 

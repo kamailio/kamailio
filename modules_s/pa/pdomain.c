@@ -39,7 +39,7 @@
 #include "../../ut.h"
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
-
+#include <cds/logger.h>
 
 /*
  * Hash function
@@ -256,19 +256,20 @@ void add_presentity(pdomain_t* _d, struct presentity* _p)
 
 	slot_add(&_d->table[sl], _p, &_d->first, &_d->last);
 
+	DEBUG_LOG("! registering callback to %.*s, %p\n", _p->uri.len, _p->uri.s,_p);
 	_d->reg(&_p->uri, &_p->uuid, (void*)callback, _p);
-	/* LOG(L_ERR, "registering callback to %.*s, %p\n", _p->uri.len, _p->uri.s,_p); */
 }
 
 
 void remove_presentity(pdomain_t* _d, struct presentity* _p)
 {
-	_d->unreg(&_p->uri, &_p->uri, (void*)callback, _p);
-	LOG(L_DBG, "unregistering callback to %.*s, %p\n", _p->uri.len, _p->uri.s,_p);
+	DEBUG_LOG("! unregistering callback to %.*s, %p\n", _p->uri.len, _p->uri.s,_p);
+	_d->unreg(&_p->uri, &_p->uuid, (void*)callback, _p);
 	
 	LOG(L_DBG, "remove_presentity _p=%p p_uri=%.*s\n", _p, _p->uri.len, _p->uri.s);
 	slot_rem(_p->slot, _p, &_d->first, &_d->last);
 
 	/* remove presentity from database */
+	DEBUG_LOG("! unregistered callback to %.*s, %p\n", _p->uri.len, _p->uri.s,_p);
 	db_remove_presentity(_p);
 }

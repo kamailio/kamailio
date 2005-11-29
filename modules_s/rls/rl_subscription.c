@@ -157,7 +157,7 @@ int rls_init()
 
 int rls_destroy()
 {
-	TRACE_LOG("rls_destroy() called\n");
+	DEBUG_LOG("rls_destroy() called\n");
 	/* FIXME: destroy the whole rl_subscription list */
 	/* sm_destroy(rls_manager); */
 
@@ -216,14 +216,15 @@ str_t * rls_get_uri(rl_subscription_t *s)
 str_t * rls_get_package(rl_subscription_t *s)
 {
 	static str presence = STR_STATIC_INIT("presence");
+	str_t *package = NULL;
 	
 	if (!s) return NULL;
 	
 	if (s->type == rls_external_subscription)
-		return &((s)->external.package);
-	else return &presence;
+		package = &((s)->external.package);
+	if (!package) package = &presence;
 
-	return NULL;
+	return package;
 }
 
 str_t * rls_get_subscriber(rl_subscription_t *subscription)
@@ -260,7 +261,7 @@ int create_virtual_subscriptions(rl_subscription_t *ss, const char *xcap_root)
 
 	/* XCAP query */
 	memset(&xcap, 0, sizeof(xcap));
-	DEBUG_LOG("rli_create_content(): doing XCAP query\n");
+	/* DEBUG_LOG("doing XCAP query\n"); */
 	switch (rls_mode) {
 		case rls_mode_full:
 			if (reduce_xcap_needs) {
@@ -278,6 +279,8 @@ int create_virtual_subscriptions(rl_subscription_t *ss, const char *xcap_root)
 				res = get_resource_list_as_rls(xcap_root, &user, &xcap, &flat);
 			}
 			else {
+				/* DEBUG_LOG("xcap_root: %s, ss_uri: %.*s, package: %.*s\n", xcap_root, 
+						FMT_STR(*ss_uri), FMT_STR(*ss_package)); */
 				/* it is NOT uri in the form xxx-list@domain -> try to use
 				 * standard RLS subscription processing */
 				if (reduce_xcap_needs) {
@@ -593,7 +596,7 @@ static list_presence_info_t* rls2list_presence_info(rl_subscription_t *s)
 
 	str_clear(&info->pres_doc);
 	str_clear(&info->content_type);
-	TRACE_LOG(" ... create RLMI document\n");
+	DEBUG_LOG(" ... create RLMI document\n");
 	create_rlmi_document(&info->pres_doc, &info->content_type, s, 1);
 
 	return info;
@@ -619,18 +622,18 @@ static int rls_generate_notify_int(rl_subscription_t *s)
 	set_data_destroy_function(msg, (destroy_function_f)free_client_notify_info_content);
 	info = (client_notify_info_t*)msg->data;
 
-	TRACE_LOG(" ... setting info\n");
+	DEBUG_LOG(" ... setting info\n");
 	str_dup(&info->record_id, &s->internal.s->record_id);
 	str_dup(&info->package, &s->internal.s->package->name);
 	str_dup(&info->notifier, &notifier_name);
-	TRACE_LOG(" ... setting list presence info\n");
+	DEBUG_LOG(" ... setting list presence info\n");
 	info->data = rls2list_presence_info(s);
 	info->data_len = sizeof(list_presence_info_t);
 	info->destroy_func = (destroy_function_f)free_list_presence_info;
 
-	TRACE_LOG(" ... before notify_subscriber\n");
+	DEBUG_LOG(" ... before notify_subscriber\n");
 	notify_subscriber(s->internal.s, msg);
-	TRACE_LOG(" ... after notify_subscriber\n");
+	DEBUG_LOG(" ... after notify_subscriber\n");
 	return 0;
 }
 

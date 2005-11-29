@@ -70,18 +70,18 @@ static void process_notify_info(virtual_subscription_t *vs, client_notify_info_t
 	if ((!vs) || (!info)) return;
 
 	if (is_presence_list_package(&info->package)) {
-		TRACE_LOG("Processing internal list notification\n");
+		DEBUG_LOG("Processing internal list notification\n");
 		
 		linfo = (list_presence_info_t*)info->data;	/* TODO: test for "presence" package? */
 		if (!linfo) return;
 		
 		/* release old document if set */
-		TRACE_LOG(" ... freeing old documents\n");
+		DEBUG_LOG(" ... freeing old documents\n");
 		str_free_content(&vs->state_document); 		
 		str_free_content(&vs->content_type);
 		
 		/* create_presence_rlmi_document(linfo, &vs->state_document, &vs->content_type); */
-		TRACE_LOG(" ... duplicating documents\n");
+		DEBUG_LOG(" ... duplicating documents\n");
 		str_dup(&vs->state_document, &linfo->pres_doc);
 		str_dup(&vs->content_type, &linfo->content_type);
 		
@@ -121,7 +121,7 @@ static int process_vs_messages(virtual_subscription_t *vs)
 			process_notify_info(vs, info);
 			cnt++;
 		}
-		TRACE_LOG(" ... freeing message\n");
+		DEBUG_LOG(" ... freeing message\n");
 		free_message(msg);
 	}
 	return cnt;
