@@ -41,7 +41,7 @@
 #define DEFAULT_CSEQ 10 /* Default CSeq number */
 
 extern char *uac_from;  /* UAC From parameter */
-
+extern int pass_provisional_replies; /* Pass provisional replies to fifo applications */
 
 /*
  * Function prototypes

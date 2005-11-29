@@ -50,6 +50,13 @@ struct str_list {
 	struct str_list *next;
 };
 
+struct uac_cb_param {
+    
+    str from;
+    str callid;
+    str cseq;
+    struct sockaddr_un addr;
+};
 
 #define skip_hf(_hf) (             \
     ((_hf)->type == HDR_FROM_T)   || \
@@ -426,10 +433,67 @@ static int print_uris(struct sip_msg* reply)
 	return 0;
 }
 
+static int new_uac_cb_param(struct uac_cb_param** param,
+			    struct sip_msg* msg, 
+			    struct sockaddr_un* addr)
+{
+    int len=0;
+    struct uac_cb_param* p_param=0;
+
+    if(msg && addr) {
+
+	*param = shm_malloc(sizeof(struct uac_cb_param));
+	if (!*param) {
+	    unixsock_reply_asciiz("500 No shared memory");
+	    return -1;
+	}
+	
+	p_param = *param;
+
+	len += msg->from->len;
+	len += msg->callid->len;
+	len += msg->cseq->len;
+
+	p_param->from.s = shm_malloc(len);
+	if(!p_param->from.s){
+
+	    shm_free(p_param);
+	    *param = 0;
+
+	    unixsock_reply_asciiz("500 No shared memory");
+	    return -1;
+	}
+
+	memcpy(p_param->from.s,msg->from->name.s,msg->from->len);
+	p_param->from.len = msg->from->len;
+
+	p_param->callid.s = p_param->from.s + p_param->from.len;
+	memcpy(p_param->callid.s,msg->callid->name.s,msg->callid->len);
+	p_param->callid.len = msg->callid->len;
+
+	p_param->cseq.s = p_param->callid.s + p_param->callid.len;
+	memcpy(p_param->cseq.s,msg->cseq->name.s,msg->cseq->len);
+	p_param->cseq.len = msg->cseq->len;
+
+	memcpy(&(p_param->addr), addr, sizeof(struct sockaddr_un));
+
+    } else {
+	*param = 0;
+    }
+    return 0;
+}
+
+static void free_uac_cb_param(struct uac_cb_param* param)
+{
+    shm_free(param->from.s);
+    shm_free(param);
+}
 
 static void callback(struct cell *t, int type, struct tmcb_params *ps)
 {
-	struct sockaddr_un* to;
+	struct sockaddr_un*  to;
+	struct uac_cb_param* param=0;
+
 	str text;
 
 	if (!*ps->param) {
@@ -437,7 +501,8 @@ static void callback(struct cell *t, int type, struct tmcb_params *ps)
 		return;
 	}
 	
-	to = (struct sockaddr_un*)(*ps->param);
+	param = (struct uac_cb_param*)(*ps->param);
+	to = &param->addr;
 	unixsock_reply_reset();
 
 	if (ps->rpl == FAKED_REPLY) {
@@ -447,8 +512,15 @@ static void callback(struct cell *t, int type, struct tmcb_params *ps)
 			unixsock_reply_asciiz("500 callback: get_reply_status failed\n");
 			goto done;
 		}
-		unixsock_reply_printf("%.*s\n", text.len, text.s);
+
+		unixsock_reply_printf("%.*s\n.\n.\n.\n", text.len, text.s);
+
+		unixsock_reply_printf("%.*s", param->from.len, param->from.s);
+		unixsock_reply_printf("%.*s", param->callid.len, param->callid.s);
+		unixsock_reply_printf("%.*s\n", param->cseq.len, param->cseq.s);
+
 		pkg_free(text.s);
+
 	} else {
 		text.s = ps->rpl->first_line.u.reply.reason.s;
 		text.len = ps->rpl->first_line.u.reply.reason.len;
@@ -460,9 +532,13 @@ static void callback(struct cell *t, int type, struct tmcb_params *ps)
 	}
 done:
 	unixsock_reply_sendto(to);
-	shm_free(to);
-	*ps->param=0; /* 0 it so the callback won't do anything if called
-					 for a retransmission */
+
+        if (ps->code >= 200) {
+
+	    free_uac_cb_param(param);
+	    *ps->param=0; /* 0 it so the callback won't do 
+			     anything if called for a retransmission */
+	}
 }
 
 
@@ -484,7 +560,6 @@ static int duplicate_addr(struct sockaddr_un** dest, struct sockaddr_un* addr)
 	return 0;
 }
 
-
 int unixsock_uac(str* msg)
 {
 	str method, ruri, nexthop, headers, body, hfb, callid;
@@ -493,6 +568,7 @@ int unixsock_uac(str* msg)
 	int ret, sip_error, err_ret, fromtag, cseq_is, cseq;
 	char err_buf[MAX_REASON_LEN];
 	struct sockaddr_un* shm_sockaddr;
+	struct uac_cb_param* shm_param;
 	dlg_t dlg;
 
 	if (get_method(&method, msg) < 0) return -1;
@@ -551,10 +627,14 @@ int unixsock_uac(str* msg)
 	dlg.hooks.request_uri = &ruri;
 	dlg.hooks.next_hop = (nexthop.len ? &nexthop : &ruri);
 	
-	     /* we got it all, initiate transaction now! */
-	if (duplicate_addr(&shm_sockaddr, unixsock_sender_addr()) < 0) goto error01;
+	if (new_uac_cb_param(&shm_param,&faked_msg,unixsock_sender_addr()) < 0) {
+	    
+	    unixsock_reply_send();
+	    goto error01;
+	}
 
-	ret = t_uac(&method, &hfb, &body, &dlg, callback, shm_sockaddr);
+	     /* we got it all, initiate transaction now! */
+	ret = t_uac(&method, &hfb, &body, &dlg, callback, shm_param);
 	if (ret <= 0) {
 		err_ret = err2reason_phrase(ret, &sip_error, err_buf, sizeof(err_buf), "FIFO/UAC");
 		if (err_ret > 0) {
@@ -563,7 +643,7 @@ int unixsock_uac(str* msg)
 			unixsock_reply_asciiz("500 UNIXSOCK/UAC error");
 		}
 		unixsock_reply_send();
-		shm_free(shm_sockaddr);
+		free_uac_cb_param(shm_param);
 		goto error01;
 	}
 
