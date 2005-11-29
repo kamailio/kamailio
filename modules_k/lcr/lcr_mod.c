@@ -68,7 +68,7 @@ MODULE_VERSION
 #define LCR_TABLE_VERSION 1
 
 /* usr_avp flag for sequential forking */
-#define Q_FLAG      (1<<4)
+#define Q_FLAG      (1<<2)
 
 static void destroy(void);       /* Module destroy function */
 static int child_init(int rank); /* Per-child initialization function */

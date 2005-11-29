@@ -45,8 +45,8 @@
 
 
 /* flags used inside avps */
-/* IMPORTANT: falgs 0,1 are reserved by avp core */
-#define AVP_IS_IN_DB    (1<<3)
+/* IMPORTANT: flagss 0-7 are reserved by core */
+#define AVP_IS_IN_DB    (1<<8)
 
 /* DB flags */
 #define AVPOPS_DB_NAME_INT   (1<<1)
@@ -105,7 +105,7 @@
 struct fis_param
 {
 	int     ops;    /* operation flags */
-	int		opd;	/* operand flags */
+	int     opd;    /* operand flags */
 	int_str val;    /* values int or str */
 };
 

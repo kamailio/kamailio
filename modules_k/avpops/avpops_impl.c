@@ -806,13 +806,7 @@ int ops_delete_avp(struct sip_msg* msg, struct fis_param *ap)
 	{
 		/* avp name is known ->search by name */
 		name_type = (((ap->opd&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
-		while ( (avp=search_first_avp( name_type, ap->val, 0))!=0 )
-		{
-			destroy_avp( avp );
-			n++;
-			if ( !(ap->ops&AVPOPS_FLAG_ALL) )
-				break;
-		}
+		n = destroy_avps( name_type, ap->val, ap->ops&AVPOPS_FLAG_ALL );
 	} else {
 		/* avp name is not given - we have just flags */
 		/* -> go through all list */
