@@ -680,9 +680,9 @@ found:
 int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 {
 	struct cell*  p_cell;
-	int hash_index   = 0;
+	unsigned int hash_index   = 0;
 	int entry_label  = 0;
-	int branch_id    = 0;
+	unsigned int branch_id    = 0;
 	char  *hashi, *branchi, *p, *n;
 	int hashl, branchl;
 	int scan_space;
@@ -754,15 +754,15 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 	branchi=p;
 
 	/* sanity check */
-	if ((hash_index=reverse_hex2int(hashi, hashl))<0
+	if (reverse_hex2int(hashi, hashl, &hash_index)<0
 		||hash_index>=TABLE_ENTRIES
-		|| (branch_id=reverse_hex2int(branchi, branchl))<0
+		|| reverse_hex2int(branchi, branchl, &branch_id)<0
 		||branch_id>=MAX_BRANCHES
-		|| (syn_branch ? (entry_label=reverse_hex2int(syni, synl))<0 
+		|| (syn_branch ? (reverse_hex2int(syni, synl, &entry_label))<0 
 			: loopl!=MD5_LEN )
 	) {
 		DBG("DEBUG: t_reply_matching: poor reply labels %d label %d "
-			"branch %d\n",hash_index, entry_label, branch_id );
+			"branch %d\n", hash_index, entry_label, branch_id );
 		goto nomatch2;
 	}
 
@@ -816,7 +816,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 		   matched !
 		*/
 		set_t(p_cell);
-		*p_branch = branch_id;
+		*p_branch =(int) branch_id;
 		REF_UNSAFE( T );
 		UNLOCK_HASH(hash_index);
 		DBG("DEBUG: t_reply_matching: reply matched (T=%p)!\n",T);

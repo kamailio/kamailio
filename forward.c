@@ -432,7 +432,7 @@ int forward_reply(struct sip_msg* msg)
 	unsigned int new_len;
 	struct sr_module *mod;
 	int proto;
-	int id; /* used only by tcp*/
+	unsigned int id; /* used only by tcp*/
 #ifdef USE_TCP
 	char* s;
 	int len;
@@ -497,14 +497,18 @@ int forward_reply(struct sip_msg* msg)
 		if (msg->via1->i&&msg->via1->i->value.s){
 			s=msg->via1->i->value.s;
 			len=msg->via1->i->value.len;
-			DBG("forward_reply: i=%.*s\n",len, s);
-			id=reverse_hex2int(s, len);
+			DBG("forward_reply: i=%.*s\n",len, ZSW(s));
+			if (reverse_hex2int(s, len, &id)<0){
+				LOG(L_ERR, "ERROR: forward_reply: bad via i param \"%.*s\"\n",
+						len, ZSW(s));
+					id=0;
+			}
 			DBG("forward_reply: id= %x\n", id);
 		}		
 				
 	} 
 #endif
-	if (msg_send(0, proto, to, id, new_buf, new_len)<0) goto error;
+	if (msg_send(0, proto, to, (int)id, new_buf, new_len)<0) goto error;
 #ifdef STATS
 	STATS_TX_RESPONSE(  (msg->first_line.u.reply.statuscode/100) );
 #endif
