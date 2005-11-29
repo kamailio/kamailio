@@ -1307,20 +1307,20 @@ int ops_print_avp()
 
 	for ( ; avp ; avp=avp->next)
 	{
-		DBG("DEBUG:avpops:print_avp: p=%p, flags=%X\n",avp, avp->flags);
+		LOG(L_INFO,"INFO:avpops:print_avp: p=%p, flags=%X\n",avp, avp->flags);
 		if (avp->flags&AVP_NAME_STR)
 		{
 			name = get_avp_name(avp);
-			DBG("DEBUG:\t\t\tname=<%.*s>\n",name->len,name->s);
+			LOG(L_INFO,"INFO:\t\t\tname=<%.*s>\n",name->len,name->s);
 		} else {
-			DBG("DEBUG:\t\t\tid=<%d>\n",avp->id);
+			LOG(L_INFO,"INFO:\t\t\tid=<%d>\n",avp->id);
 		}
 		get_avp_val( avp, &val);
 		if (avp->flags&AVP_VAL_STR)
 		{
-			DBG("DEBUG:\t\t\tval_str=<%.*s>\n",val.s->len,val.s->s);
+			LOG(L_INFO,"INFO:\t\t\tval_str=<%.*s>\n",val.s->len,val.s->s);
 		} else {
-			DBG("DEBUG:\t\t\tval_int=<%d>\n",val.n);
+			LOG(L_INFO,"INFO:\t\t\tval_int=<%d>\n",val.n);
 		}
 	}
 
