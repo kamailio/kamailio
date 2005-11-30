@@ -275,7 +275,7 @@ static int load_attrs(void)
 		     /* Get AVP name */
 		avp_name.s = (char*)val[0].val.string_val;
 		avp_name.len = strlen(avp_name.s);
-		name.s = &avp_name;
+		name.s = avp_name;
 
 		     /* Get AVP type */
 		type = val[1].val.int_val;
@@ -292,7 +292,7 @@ static int load_attrs(void)
 		flags = AVP_CLASS_GLOBAL | AVP_NAME_STR;
 		if (type == AVP_VAL_STR) {
 			     /* String AVP */
-			v.s = &avp_val;
+			v.s = avp_val;
 			flags |= AVP_VAL_STR;
 		} else {
 			     /* Integer AVP */
@@ -303,13 +303,13 @@ static int load_attrs(void)
 			}
 		}
 
-		if (add_avp(flags, name, v) < 0) {
+		if (add_avp_list(&global_avps, flags, name, v) < 0) {
 			LOG(L_ERR, "gflags:load_attrs: Error while adding global attribute %.*s, skipping\n",
 			    avp_name.len, ZSW(avp_name.s));
 			continue;
 		}
 	}
-	DBG("gflags:load_attrs: %d domain attributes found, %d loaded\n", res->n, n);
+	DBG("gflags:load_attrs: %d global attributes found, %d loaded\n", res->n, n);
 	db.free_result(con, res);
 	return 0;
 }
@@ -346,6 +346,7 @@ static int mod_init(void)
 		return -1;
 	}
 
+	global_avps = 0;
 	if (load_global_attrs) {
 		if (bind_dbmod(db_url, &db) < 0) { /* Find database module */
 			LOG(L_ERR, "gflags:mod_init: Can't bind database module\n");
@@ -373,7 +374,6 @@ static int mod_init(void)
 		db.close(con);
 	}
 
-	global_avps = 0;
 	return 0;
 }
 
