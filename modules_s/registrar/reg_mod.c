@@ -82,11 +82,13 @@ int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"save",         save,         1, domain_fixup, REQUEST_ROUTE                },
-	{"save_noreply", save_noreply, 1, domain_fixup, REQUEST_ROUTE                },
-	{"save_memory",  save_memory,  1, domain_fixup, REQUEST_ROUTE                },
-	{"lookup",       lookup,       1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"registered",   registered,   1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"save_contacts",   save,         1, domain_fixup, REQUEST_ROUTE                },
+	{"save",            save,         1, domain_fixup, REQUEST_ROUTE                },
+	{"save_noreply",    save_noreply, 1, domain_fixup, REQUEST_ROUTE                },
+	{"save_memory",     save_memory,  1, domain_fixup, REQUEST_ROUTE                },
+	{"lookup_contacts", lookup,       1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"lookup",          lookup,       1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"registered",      registered,   1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
