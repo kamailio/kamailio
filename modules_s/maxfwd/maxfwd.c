@@ -60,6 +60,8 @@ static int mod_init(void);
 static cmd_export_t cmds[]={
 	{"mf_process_maxfwd_header", w_process_maxfwd_header, 1, 
 		fixup_maxfwd_header, REQUEST_ROUTE},
+	{"process_maxfwd", w_process_maxfwd_header, 1, 
+		fixup_maxfwd_header, REQUEST_ROUTE},
 	{0,0,0,0,0}
 };
 
