@@ -198,9 +198,9 @@ static int generate_avps(db_res_t* result, unsigned int row)
 			continue;
 		}
 		
-		iname.s = &credentials[i - 2];
+		iname.s = credentials[i - 2];
 		value.len = strlen(value.s);
-		ivalue.s = &value;
+		ivalue.s = value;
 
 		if (add_avp(AVP_NAME_STR | AVP_VAL_STR, iname, ivalue) < 0) {
 			LOG(L_ERR, "auth_db:generate_avps: Error while creating AVPs\n");
@@ -208,7 +208,7 @@ static int generate_avps(db_res_t* result, unsigned int row)
 		}
 
 		DBG("auth_db:generate_avps: set string AVP \'%.*s = %.*s\'\n",
-		    iname.s->len, ZSW(iname.s->s), value.len, ZSW(value.s));
+		    iname.s.len, ZSW(iname.s.s), value.len, ZSW(value.s));
 	}
 
 	return 0;

@@ -194,8 +194,8 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 	send = received = 0;
 	user_domain.s = 0;
 
-	name.s = &buffer;
-	val.s = &val_str;
+	name.s = buffer;
+	val.s = val_str;
 
 	switch(type) {
 	case LOAD_CALLER:

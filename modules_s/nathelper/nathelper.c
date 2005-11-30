@@ -2077,7 +2077,7 @@ fix_nated_register_f(struct sip_msg* msg, char* str1, char* str2)
 		return -1;
 	}
 
-	val.s = &uri;
+	val.s = uri;
 
 	rcv_avp.n=rcv_avp_no;
 	if (add_avp(AVP_VAL_STR, rcv_avp, val) < 0) {

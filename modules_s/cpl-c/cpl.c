@@ -235,12 +235,8 @@ static int cpl_init(void)
 				timer_avp);
 			goto error;
 		}
-		if (cpl_env.timer_avp_type&AVP_NAME_STR && cpl_env.timer_avp.s==&foo) {
-			if ( (cpl_env.timer_avp.s=(str*)pkg_malloc(sizeof(str)))==0 ) {
-				LOG(L_ERR, "ERROR:cpl_init: no more pkg mem\n");
-				goto error;
-			}
-			*(cpl_env.timer_avp.s) = foo;
+		if (cpl_env.timer_avp_type&AVP_NAME_STR && cpl_env.timer_avp.s.s==foo.s) {
+			cpl_env.timer_avp.s = foo;
 		}
 	}
 

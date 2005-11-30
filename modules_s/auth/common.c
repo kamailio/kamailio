@@ -58,9 +58,9 @@ int get_realm(struct sip_msg* msg, hdr_types_t hftype, str* realm)
 	str u;
 	static str n = STR_STATIC_INIT(AVP_REALM);
 	
-	name.s = &n;
+	name.s = n;
 	if (search_first_avp(AVP_NAME_STR, name, &val, 0)) {
-		*realm = *val.s;
+		*realm = val.s;
 		return 0;
 	}
 
