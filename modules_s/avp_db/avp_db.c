@@ -43,58 +43,40 @@
 #include "../../db/db.h"
 #include "../../config.h"
 #include "../../usr_avp.h"
+#include "../../ut.h"
+#include "../../id.h"
 #include "avp_db.h"
-#include "avp_list.h"
-
 
 MODULE_VERSION
 
-
-#define CALLER_PREFIX "caller_"
-
-#define CALLEE_PREFIX "callee_"
-
-
 typedef enum load_avp_param {
-	LOAD_CALLER_UUID,  /* Use the caller's UUID as the key */
-	LOAD_CALLEE_UUID,  /* Use the callee's UUID as the key */
-	LOAD_CALLER,       /* Use the caller's username and domain as the key */
-	LOAD_CALLEE        /* Use the callee's username and domain as the key */
+	LOAD_FROM_UID,  /* Use the caller's UID as the key */
+	LOAD_TO_UID,    /* Use the callee's UID as the key */
 } load_avp_param_t;
 
 
 static char* db_url           = DEFAULT_RODB_URL;    /* Database URL */
-static char* db_table         = "usr_preferences";
-static char* uuid_column      = "uuid";
-static char* username_column  = "username";
-static char* domain_column    = "domain";
-static char* attr_column      = "attribute";
+static char* db_table         = "user_attrs";
+static char* uid_column       = "uid";
+static char* name_column      = "name";
+static char* type_column      = "type";
 static char* val_column       = "value";
-char* db_list_table    	      = "usr_preferences_types";
-char* attr_name_column        = "att_name";
-char* attr_type_column        = "att_raw_type";
-char* attr_dval_column        = "default_value";
-static str caller_prefix      = STR_STATIC_INIT(CALLER_PREFIX);
-static str callee_prefix      = STR_STATIC_INIT(CALLEE_PREFIX);
-static int caller_uuid_avp    = 1;
-static int callee_uuid_avp    = 2;
-static int use_domain         = 0;
+static char* flags_column     = "flags";
 
-db_con_t* db_handle;
-db_func_t dbf;
+db_con_t* con = 0;
+db_func_t db;
 
-static int load_avp(struct sip_msg*, char*, char*);
 static int mod_init(void);
 static int child_init(int);
-static int load_avp_fixup(void**, int);
-
+static int load_avps(struct sip_msg* msg, char* s1, char* s2);
+static int load_avps_fixup(void** param, int param_no);
 
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"avp_load", load_avp, 1, load_avp_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"load_attrs", load_avps, 1, load_avps_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -103,23 +85,14 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"caller_uuid_avp",  INT_PARAM, &caller_uuid_avp },
-	{"callee_uuid_avp",  INT_PARAM, &callee_uuid_avp },
-	{"db_url",           STR_PARAM, &db_url          },
-	{"pref_table",       STR_PARAM, &db_table        },
-	{"uuid_column",      STR_PARAM, &uuid_column     },
-	{"username_column",  STR_PARAM, &username_column },
-	{"domain_column",    STR_PARAM, &domain_column   },
-	{"attr_column",      STR_PARAM, &attr_column     },
-	{"val_column",       STR_PARAM, &val_column      },
-	{"use_domain",       INT_PARAM, &use_domain      },
-	{"pref_list_table",  STR_PARAM, &db_list_table   },
-	{"attr_name_column", STR_PARAM, &attr_name_column},
-	{"attr_type_column", STR_PARAM, &attr_type_column},
-	{"attr_dval_column", STR_PARAM, &attr_dval_column},
+	{"db_url",       STR_PARAM, &db_url      },
+	{"uid_column",   STR_PARAM, &uid_column  },
+	{"name_column",  STR_PARAM, &name_column },
+	{"type_column",  STR_PARAM, &name_column },
+	{"value_column", STR_PARAM, &val_column  },
+	{"flags_column", STR_PARAM, &flags_column  },
 	{0, 0, 0}
 };
-
 
 
 
@@ -138,262 +111,161 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	DBG("avp_db - initializing\n");
-
-	if (bind_dbmod(db_url, &dbf) < 0) {
-		LOG(L_ERR, "avpdb_mod_init: Unable to bind a database driver\n");
+	if (bind_dbmod(db_url, &db) < 0) {
+		LOG(L_ERR, "avp_db:mod_init: Unable to bind a database driver\n");
 		return -1;
 	}
 
-	if (!DB_CAPABILITY(dbf, DB_CAP_QUERY)) {
-		LOG(L_ERR, "avpdb_mod_init: Selected database driver does not suppor the query capability\n");
+	if (!DB_CAPABILITY(db, DB_CAP_QUERY)) {
+		LOG(L_ERR, "avp_db:mod_init: Selected database driver does not suppor the query capability\n");
 		return -1;
 	}
 
-	caller_prefix.len = strlen(caller_prefix.s);
-	callee_prefix.len = strlen(callee_prefix.s);
-
-	if (init_avp_list() < 0) return -1;
-    
 	return 0;
 }
 
 
 static int child_init(int rank)
 {
-	DBG("avp_db - Initializing child %i\n", rank);
-
-	if (avp_db_init() < 0) return -1;
-	
-	return 0;
-}
-
-
-int avp_db_init(){
-	DBG("avp_db - Initializing DB\n");
-
-	db_handle = dbf.init(db_url);
-	
-	if (!db_handle) {
-		LOG(L_ERR, "avp_db_init: could not initialize connection to %s\n",  db_url);
+	con = db.init(db_url);
+	if (!con) {
+		LOG(L_ERR, "avp_db:child_init: Could not initialize connection to %s\n", db_url);
 		return -1;
 	}
-	
 	return 0;
 }
 
-void avp_db_close(){
-	DBG("avp_db - Closeing DB\n");
 
-	if (db_handle && dbf.close){
-		dbf.close(db_handle);
-		db_handle=0;
-	}
-}
-
-static int query_db(str* prefix, str* uuid, str* username, str* domain)
+/*
+ * Load attributes from domain_attrs table
+ */
+static int load_attrs(str* uid, int track)
 {
-	int name_len, err = -1;
-	
-	db_key_t  cols[2], keys[2];
-	db_val_t  vals[2];
+	int_str name, v;
+
+	str avp_name, avp_val;
+	int i, type, n;
+	db_key_t keys[1], cols[4];
 	db_res_t* res;
-	db_row_t* cur_row;
-	
-	int_str name, val;
-	str name_str, val_str, att_name_str;
+	db_val_t kv[1], *val;
+	unsigned short flags;
 
-	avp_list_t*   avp_l = *avp_list;
-	int           avp_use_default[avp_l->n];
-	
-	init_avp_use_def(avp_use_default, avp_l);
-
-	cols[0] = attr_column;
-	cols[1] = val_column;
-	
-	if (uuid) {
-		keys[0] = uuid_column;
-		VAL_TYPE(vals) = DB_STR;
-		VAL_NULL(vals) = 0;
-		VAL_STR(vals)  = *uuid;
-	} else {
-		keys[0] = username_column;
-		VAL_TYPE(vals) = DB_STR;
-		VAL_NULL(vals) = 0;
-		VAL_STR(vals) = *username;
-	}
-
-	if (use_domain) {
-		keys[1] = domain_column;
-		VAL_TYPE(vals + 1) = DB_STR;
-		VAL_NULL(vals + 1) = 0;
-		VAL_STR(vals + 1) = *domain;
-	}
-	
-	if (dbf.use_table(db_handle, db_table) < 0) {
-		LOG(L_ERR, "query_db: Unable to change the table\n");
-	}
-
-	err = dbf.query(db_handle, keys, 0, vals, cols, (use_domain ? 2 : 1), 2, 0, &res);
-	if (err) {
-		LOG(L_ERR,"query_db: db_query failed.");
+	if (!con) {
+		LOG(L_ERR, "avp_db:load_attrs: Invalid database handle\n");
 		return -1;
 	}
 	
-	name.s = &name_str;
-	val.s  = &val_str;
+	keys[0] = uid_column;
+	kv[0].type = DB_STR;
+	kv[0].nul = 0;
+	kv[0].val.str_val = *uid;
 
-	for (cur_row = res->rows; cur_row < res->rows + res->n; cur_row++) {
-		if (VAL_NULL(ROW_VALUES(cur_row)) || VAL_NULL(ROW_VALUES(cur_row) + 1)) {
+	cols[0] = name_column;
+	cols[1] = type_column;
+	cols[2] = val_column;
+	cols[3] = flags_column;
+
+	if (db.use_table(con, db_table) < 0) {
+		LOG(L_ERR, "avp_db:load_attrs: Error in use_table\n");
+		return -1;
+	}
+
+	if (db.query(con, keys, 0, kv, cols, 1, 4, 0, &res) < 0) {
+		LOG(L_ERR, "avp_db:load_attrs: Error while quering database\n");
+		return -1;
+	}
+
+	n = 0;
+	for(i = 0; i < res->n; i++) {
+		val = res->rows[i].values;
+
+		if (val[0].nul || val[1].nul || val[3].nul) {
+			LOG(L_ERR, "avp_db:load_attrs: Skipping row containing NULL entries\n");
 			continue;
 		}
 
-		name_len = strlen((char*)VAL_STRING(ROW_VALUES(cur_row)));
-		name_str.len = prefix->len + name_len;
-		name_str.s = pkg_malloc(name_str.len);
-		if (name_str.s == 0) {
-			LOG(L_ERR, "query_db: Out of memory");
-			dbf.free_result(db_handle, res);
-			return -1;
-		}
-		    
-		memcpy(name_str.s, prefix->s, prefix->len);
-		memcpy(name_str.s + prefix->len, 
-		       (char*)VAL_STRING(ROW_VALUES(cur_row)), name_len);
-	
-		att_name_str.len = strlen((char*)VAL_STRING(ROW_VALUES(cur_row)));
-		att_name_str.s = (char*)VAL_STRING(ROW_VALUES(cur_row));
+		if ((val[3].val.int_val & DB_LOAD_SER) == 0) continue;
 
-		val_str.len = strlen((char*)VAL_STRING(ROW_VALUES(cur_row) + 1));
-		val_str.s = (char*)VAL_STRING(ROW_VALUES(cur_row) + 1);
-		
-		err = add_avp(AVP_NAME_STR | AVP_VAL_STR, name, val);
-		if (err != 0) {
-			LOG(L_ERR, "query_db: add_avp failed\n");
-			pkg_free(name_str.s);
-			dbf.free_result(db_handle, res);
-			return -1;
-		}
-	
-		DBG("query_db: AVP '%.*s'='%.*s' has been added\n", name_str.len, 
-		    name_str.s,
-		    val_str.len,
-		    val_str.s);
+		n++;
+		     /* Get AVP name */
+		avp_name.s = (char*)val[0].val.string_val;
+		avp_name.len = strlen(avp_name.s);
+		name.s = avp_name;
 
-		reset_avp_use_def_flag(avp_use_default, avp_l, &att_name_str);
+		     /* Get AVP type */
+		type = val[1].val.int_val;
+
+		     /* Test for NULL value */
+		if (val[2].nul) {
+			avp_val.s = 0;
+			avp_val.len = 0;
+		} else {
+			avp_val.s = (char*)val[2].val.string_val;
+			avp_val.len = strlen(avp_val.s);
+		}
+
+		flags = AVP_CLASS_USER | AVP_NAME_STR;
+		if (track == LOAD_FROM_UID) {
+			flags |= AVP_TRACK_FROM;
+		} else {
+			flags |= AVP_TRACK_TO;
+		}
+
+		if (type == AVP_VAL_STR) {
+			     /* String AVP */
+			v.s = avp_val;
+			flags |= AVP_VAL_STR;
+		} else {
+			     /* Integer AVP */
+			str2int(&avp_val, (unsigned*)&v.n);
+		}
+
+		if (add_avp(flags, name, v) < 0) {
+			LOG(L_ERR, "avp_db:load_attrs: Error while adding user attribute %.*s, skipping\n",
+			    avp_name.len, ZSW(avp_name.s));
+			continue;
+		}
 	}
-
-	add_default_avps(avp_use_default, avp_l, prefix);
-	
-	dbf.free_result(db_handle, res);
-	return 1;
-}
-
-
-static int load_avp_uuid(struct sip_msg* msg, str* prefix, int avp_id)
-{
-	struct usr_avp *uuid;
-	int_str attr_istr, val_istr;
-
-	attr_istr.n = avp_id;
-	
-	uuid = search_first_avp(AVP_NAME_STR, attr_istr, &val_istr, 0);
-	if (!uuid) {
-		LOG(L_ERR, "load_avp_uuid: no AVP with id %d was found\n", avp_id);
-		return -1;
-	}
-	
-	if (!(uuid->flags & AVP_VAL_STR)) {
-		LOG(L_ERR, "load_avp_uuid: value for <%d> should "
-		    "be of type string\n", avp_id);
-		return -1;
-	}
-	
-	return query_db(prefix, val_istr.s, 0, 0);
-
-}
-
-
-static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t param)
-{
-	str* uri;
-	struct sip_uri puri;
-
-	if (param == LOAD_CALLER) {
-		if (parse_from_header(msg) < 0) {
-			LOG(L_ERR, "load_avp_user: Error while parsing From header field\n");
-			return -1;
-		}
-
-		uri = &get_from(msg)->uri;
-		if (parse_uri(uri->s, uri->len, &puri) == -1) {
-			LOG(L_ERR, "load_avp_user: Error while parsing From URI\n");
-			return -1;
-		}
-
-		return query_db(prefix, 0, &puri.user, &puri.host);
-	} else if (param == LOAD_CALLEE) {
-		if (parse_sip_msg_uri(msg) < 0) {
-			LOG(L_ERR, "load_avp_user: Request-URI parsing failed\n");
-			return -1;
-		}
-
-		if (msg->parsed_uri_ok != 1) {
-			LOG(L_ERR, "load_avp_user: Unable to parse Request-URI\n");
-			return -1;
-		}
-
-		return query_db(prefix, 0, &msg->parsed_uri.user, &msg->parsed_uri.host);
-
-	} else {
-		LOG(L_ERR, "load_avp_user: Unknown header field type\n");
-		return -1;
-	}
+	DBG("avp_db:load_attrs: %d user attributes found, %d loaded\n", res->n, n);
+	db.free_result(con, res);
+	return 0;	
 }
 
 
 
-static int load_avp(struct sip_msg* msg, char* attr, char* _dummy)
+static int load_avps(struct sip_msg* msg, char* attr, char* dummy)
 {
+	str uid;
+
 	switch((load_avp_param_t)attr) {
-	case LOAD_CALLER_UUID:
-		return load_avp_uuid(msg, &caller_prefix, caller_uuid_avp);
+	case LOAD_FROM_UID:
+		if (get_from_uid(&uid, msg) < 0) return -1;
+		return load_attrs(&uid, LOAD_FROM_UID);
 		break;
 
-	case LOAD_CALLEE_UUID:
-		return load_avp_uuid(msg, &callee_prefix, callee_uuid_avp);
+	case LOAD_TO_UID:
+		if (get_to_uid(&uid, msg) < 0) return -1;
+		return load_attrs(&uid, LOAD_TO_UID);
 		break;
 
-	case LOAD_CALLER:
-		return load_avp_user(msg, &caller_prefix, LOAD_CALLER);
-		break;
-
-	case LOAD_CALLEE:
-		return load_avp_user(msg, &callee_prefix, LOAD_CALLEE);
-		break;
-		
 	default:
-		LOG(L_ERR, "load_avp: Unknown parameter value\n");
+		LOG(L_ERR, "load_avps: Unknown parameter value\n");
 		return -1;
 	}
 }
 
 
-static int load_avp_fixup(void** param, int param_no)
+static int load_avps_fixup(void** param, int param_no)
 {
 	long id = 0;
 
 	if (param_no == 1) {
-		if (!strcasecmp(*param, "caller_uuid")) {
-			id = LOAD_CALLER_UUID;
-		} else if (!strcasecmp(*param, "callee_uuid")) {
-			id = LOAD_CALLEE_UUID;
-		} else if (!strcasecmp(*param, "caller")) {
-			id = LOAD_CALLER;
-		} else if (!strcasecmp(*param, "callee")) {
-			id = LOAD_CALLEE;
+		if (!strcasecmp(*param, "from.uid")) {
+			id = LOAD_FROM_UID;
+		} else if (!strcasecmp(*param, "to.uid")) {
+			id = LOAD_TO_UID;
 		} else {
-			LOG(L_ERR, "load_avp_fixup: Unknown parameter\n");
+			LOG(L_ERR, "avp_db:load_avps_fixup: Unknown parameter\n");
 			return -1;
 		}
 	}
