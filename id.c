@@ -28,6 +28,7 @@
 #include "id.h"
 #include "parser/parse_from.h"
 #include "parser/parse_uri.h"
+#include "parser/digest/digest.h"
 #include "ut.h"
 
 
@@ -51,6 +52,20 @@ void set_from_uid(str* uid)
 }
 
 
+/* Extract username attribute from authorized credentials */
+static inline str* cred_user(struct sip_msg* msg)
+{
+	struct hdr_field* h;
+	auth_body_t* cred;
+
+	get_authorized_cred(msg->proxy_auth, &h);
+	if (!h) get_authorized_cred(msg->authorization, &h);
+	if (!h) return 0;
+	cred = (auth_body_t*)(h->parsed);
+	if (!cred || !cred->digest.username.user.len) return 0;
+	return &cred->digest.username.user;
+}
+
 /*
  * Set From UID
  */
@@ -59,6 +74,7 @@ int get_from_uid(str* uid, struct sip_msg* msg)
 	static char buf[MAX_URI_SIZE];
 	struct to_body* from;
 	struct sip_uri puri;
+	str* du;
 	static str name_s = STR_STATIC_INIT(AVP_UID);
 	int_str name, val;
 
@@ -67,26 +83,32 @@ int get_from_uid(str* uid, struct sip_msg* msg)
 		*uid = val.s;
 		return 1;
 	} else {
-		     /* Get From URI username */
-		if (parse_from_header(msg) < 0) {
-			LOG(L_ERR, "get_from_uid: Error while parsing From header\n");
-			return -1;
-		}
-		from = get_from(msg);
-		if (parse_uri(from->uri.s, from->uri.len, &puri) == -1) {
-			LOG(L_ERR, "get_from_uid: Error while parsing From URI\n");
-			return -1;
+		du = cred_user(msg);
+		if (du) {
+			     /* Try digest username first */
+			*uid = *du;
+		} else {
+			     /* Get From URI username */
+			if (parse_from_header(msg) < 0) {
+				LOG(L_ERR, "get_from_uid: Error while parsing From header\n");
+				return -1;
+			}
+			from = get_from(msg);
+			if (parse_uri(from->uri.s, from->uri.len, &puri) == -1) {
+				LOG(L_ERR, "get_from_uid: Error while parsing From URI\n");
+				return -1;
+			}
+		
+			if (puri.user.len > MAX_URI_SIZE) {
+				LOG(L_ERR, "get_from_uid: Username too long\n");
+				return -1;
+			}
+			memcpy(buf, puri.user.s, puri.user.len);
+			uid->s = buf;
+			uid->len = puri.user.len;
+			strlower(uid);
 		}
 		
-		if (puri.user.len > MAX_URI_SIZE) {
-			LOG(L_ERR, "get_from_uid: Username too long\n");
-			return -1;
-		}
-		memcpy(buf, puri.user.s, puri.user.len);
-		uid->s = buf;
-		uid->len = puri.user.len;
-		strlower(uid);
-
 		val.s = *uid;
 		add_avp(AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR | AVP_VAL_STR, name, val);
 		return 0;
