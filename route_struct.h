@@ -39,6 +39,9 @@
 #ifndef route_struct_h
 #define route_struct_h
 
+#include <regex.h>
+#include "usr_avp.h"
+
 #define EXPR_DROP -127  /* used only by the expression and if evaluator */
 /*
  * Other important values (no macros for them yet):
@@ -53,11 +56,11 @@
 
 
 enum { EXP_T=1, ELEM_T };
-enum { AND_OP=1, OR_OP, NOT_OP };
+enum { LOGAND_OP=1, LOGOR_OP, NOT_OP, BINAND_OP, BINOR_OP };
 enum { EQUAL_OP=10, MATCH_OP, GT_OP, LT_OP, GTE_OP, LTE_OP, DIFF_OP, NO_OP };
 enum { METHOD_O=1, URI_O, FROM_URI_O, TO_URI_O, SRCIP_O, SRCPORT_O,
 	   DSTIP_O, DSTPORT_O, PROTO_O, AF_O, MSGLEN_O, DEFAULT_O, ACTION_O,
-	   NUMBER_O};
+	   NUMBER_O, AVP_O};
 
 enum { FORWARD_T=1, SEND_T, DROP_T, LOG_T, ERROR_T, ROUTE_T, EXEC_T,
 		SET_HOST_T, SET_HOSTPORT_T, SET_USER_T, SET_USERPASS_T, 
@@ -76,26 +79,34 @@ enum { FORWARD_T=1, SEND_T, DROP_T, LOG_T, ERROR_T, ROUTE_T, EXEC_T,
 		FORCE_TCP_ALIAS_T,
 		LOAD_AVP_T,
 		AVP_TO_URI_T,
-		FORCE_SEND_SOCKET_T
+                FORCE_SEND_SOCKET_T,
+                ASSIGN_T,
+                ADD_T
+       
 };
 enum { NOSUBTYPE=0, STRING_ST, NET_ST, NUMBER_ST, IP_ST, RE_ST, PROXY_ST,
 		EXPR_ST, ACTIONS_ST, CMDF_ST, MODFIXUP_ST, URIHOST_ST, URIPORT_ST,
-		MYSELF_ST, STR_ST, SOCKID_ST, SOCKETINFO_ST };
+		MYSELF_ST, STR_ST, SOCKID_ST, SOCKETINFO_ST, ACTION_ST, AVP_ST };
 
+
+/* Expression operand */
+union exp_op {
+	struct expr* expr;
+	str str;
+	char* string;
+	void* param;
+	int intval;
+	avp_spec_t* attr;
+	regex_t* re;
+	struct net* net;
+};
 	
 struct expr{
 	int type; /* exp, exp_elem */
 	int op; /* and, or, not | ==,  =~ */
-	int  subtype;
-	union {
-		struct expr* expr;
-		int operand;
-	}l;
-	union {
-		struct expr* expr;
-		void* param;
-		int   intval;
-	}r;
+	int l_type, r_type;
+	union exp_op l;
+	union exp_op r;
 };
 
 
@@ -107,15 +118,16 @@ struct action{
 	union {
 		long number;
 		char* string;
+		str str;
 		void* data;
+		avp_spec_t* attr;
 	}p1, p2, p3;
 	struct action* next;
 };
 
-
-
 struct expr* mk_exp(int op, struct expr* left, struct expr* right);
-struct expr* mk_elem(int op, int subtype, int operand, void* param);
+struct expr* mk_elem(int op, int ltype, void* lparam, int rtype, void* rparam);
+
 struct action* mk_action(int type, int p1_type, int p2_type,
 							void* p1, void* p2);
 struct action* mk_action3(int type, int p1_type, int p2_type, int p3_type, 
@@ -124,6 +136,7 @@ struct action* append_action(struct action* a, struct action* b);
 
 
 void print_action(struct action* a);
+void print_actions(struct action* a);
 void print_expr(struct expr* exp);
 
 

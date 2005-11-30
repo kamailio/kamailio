@@ -126,7 +126,7 @@
 #include "tls/tls_init.h"
 #endif
 #endif
-
+#include "usr_avp.h"
 
 
 #include "stats.h"
@@ -1568,6 +1568,8 @@ try_again:
 		goto error;
 	}
 	
+	if (init_avps()<0) goto error;
+
 #ifdef USE_TCP
 	if (!tcp_disable){
 		/*init tcp*/

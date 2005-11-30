@@ -46,6 +46,7 @@
 #include "dprint.h"
 #include "ip_addr.h"
 #include "mem/mem.h"
+#include "usr_avp.h"
 #include "ut.h" /* ZSW() */
 
 
@@ -65,16 +66,17 @@ error:
 }
 
 
-struct expr* mk_elem(int op, int subtype, int operand, void* param)
+struct expr* mk_elem(int op, int ltype, void* lparam, int rtype, void* rparam)
 {
 	struct expr * e;
 	e=(struct expr*)pkg_malloc(sizeof (struct expr));
 	if (e==0) goto error;
 	e->type=ELEM_T;
 	e->op=op;
-	e->subtype=subtype;
-	e->l.operand=operand;
-	e->r.param=param;
+	e->l_type=ltype;
+	e->l.param=lparam;
+	e->r_type = rtype;
+	e->r.param=rparam;
 	return e;
 error:
 	LOG(L_CRIT, "ERROR: mk_elem: memory allocation failure\n");
@@ -84,7 +86,7 @@ error:
 
 
 struct action* mk_action(int type, int p1_type, int p2_type,
-											void* p1, void* p2)
+			 void* p1, void* p2)
 {
 	struct action* a;
 	a=(struct action*)pkg_malloc(sizeof(struct action));
@@ -140,7 +142,7 @@ void print_expr(struct expr* exp)
 		return;
 	}
 	if (exp->type==ELEM_T){
-		switch(exp->l.operand){
+		switch(exp->l_type){
 			case METHOD_O:
 				DBG("method");
 				break;
@@ -169,6 +171,10 @@ void print_expr(struct expr* exp)
 				break;
 			case ACTION_O:
 				break;
+		        case AVP_ST:
+				DBG("attr");
+				break;
+			
 			default:
 				DBG("UNKNOWN");
 		}
@@ -199,7 +205,7 @@ void print_expr(struct expr* exp)
 			default:
 				DBG("<UNKNOWN>");
 		}
-		switch(exp->subtype){
+		switch(exp->r_type){
 			case NOSUBTYPE: 
 					DBG("N/A");
 					break;
@@ -213,7 +219,7 @@ void print_expr(struct expr* exp)
 					print_ip("", (struct ip_addr*)exp->r.param, "");
 					break;
 			case ACTIONS_ST:
-					print_action((struct action*)exp->r.param);
+					print_actions((struct action*)exp->r.param);
 					break;
 			case NUMBER_ST:
 					DBG("%d",exp->r.intval);
@@ -221,19 +227,23 @@ void print_expr(struct expr* exp)
 			case MYSELF_ST:
 					DBG("_myself_");
 					break;
+		        case AVP_ST:
+				DBG("attr");
+				break;
+			
 			default:
-					DBG("type<%d>", exp->subtype);
+					DBG("type<%d>", exp->r_type);
 		}
 	}else if (exp->type==EXP_T){
 		switch(exp->op){
-			case AND_OP:
+			case LOGAND_OP:
 					DBG("AND( ");
 					print_expr(exp->l.expr);
 					DBG(", ");
 					print_expr(exp->r.expr);
 					DBG(" )");
 					break;
-			case OR_OP:
+			case LOGOR_OP:
 					DBG("OR( ");
 					print_expr(exp->l.expr);
 					DBG(", ");
@@ -257,201 +267,214 @@ void print_expr(struct expr* exp)
 
 					
 
-void print_action(struct action* a)
+void print_action(struct action* t)
 {
-	struct action* t;
-	for(t=a; t!=0;t=t->next){
-		switch(t->type){
-			case FORWARD_T:
-					DBG("forward(");
-					break;
-			case FORWARD_TCP_T:
-					DBG("forward_tcp(");
-					break;
-			case FORWARD_UDP_T:
-					DBG("forward_udp(");
-					break;
-			case SEND_T:
-					DBG("send(");
-					break;
-			case SEND_TCP_T:
-					DBG("send_tcp(");
-					break;
-			case DROP_T:
-					DBG("drop(");
-					break;
-			case LOG_T:
-					DBG("log(");
-					break;
-			case ERROR_T:
-					DBG("error(");
-					break;
-			case ROUTE_T:
-					DBG("route(");
-					break;
-			case EXEC_T:
-					DBG("exec(");
-					break;
-			case REVERT_URI_T:
-					DBG("revert_uri(");
-					break;
-			case STRIP_T:
-					DBG("strip(");
-					break;
-			case APPEND_BRANCH_T:
-					DBG("append_branch(");
-					break;
-			case PREFIX_T:
-					DBG("prefix(");
-					break;
-			case LEN_GT_T:
-					DBG("len_gt(");
-					break;
-			case SETFLAG_T:
-					DBG("setflag(");
-					break;
-			case RESETFLAG_T:
-					DBG("resetflag(");
-					break;
-			case ISFLAGSET_T:
-					DBG("isflagset(");
-					break;
-			case SET_HOST_T:
-					DBG("sethost(");
-					break;
-			case SET_HOSTPORT_T:
-					DBG("sethostport(");
-					break;
-			case SET_USER_T:
-					DBG("setuser(");
-					break;
-			case SET_USERPASS_T:
-					DBG("setuserpass(");
-					break;
-			case SET_PORT_T:
-					DBG("setport(");
-					break;
-			case SET_URI_T:
-					DBG("seturi(");
-					break;
-			case IF_T:
-					DBG("if (");
-					break;
-			case MODULE_T:
-					DBG(" external_module_call(");
-					break;
-			case FORCE_RPORT_T:
-					DBG("force_rport(");
-					break;
-			case SET_ADV_ADDR_T:
-					DBG("set_advertised_address(");
-					break;
-			case SET_ADV_PORT_T:
-					DBG("set_advertised_port(");
-					break;
-			case FORCE_TCP_ALIAS_T:
-					DBG("force_tcp_alias(");
-					break;
-			case LOAD_AVP_T:
-					DBG("load_avp(");
-					break;
-			case AVP_TO_URI_T:
-					DBG("avp_to_attr");
-					break;
-			case FORCE_SEND_SOCKET_T:
-					DBG("force_send_socket");
-					break;
-			default:
-					DBG("UNKNOWN(");
-		}
-		switch(t->p1_type){
-			case STRING_ST:
-					DBG("\"%s\"", ZSW(t->p1.string));
-					break;
-			case NUMBER_ST:
-					DBG("%lu",t->p1.number);
-					break;
-			case IP_ST:
-					print_ip("", (struct ip_addr*)t->p1.data, "");
-					break;
-			case EXPR_ST:
-					print_expr((struct expr*)t->p1.data);
-					break;
-			case ACTIONS_ST:
-					print_action((struct action*)t->p1.data);
-					break;
-			case CMDF_ST:
-					DBG("f_ptr<%p>",t->p1.data);
-					break;
-			case SOCKID_ST:
-					DBG("%d:%s:%d",
-							((struct socket_id*)t->p1.data)->proto,
-							ZSW(((struct socket_id*)t->p1.data)->name),
-							((struct socket_id*)t->p1.data)->port
-							);
-					break;
-			default:
-					DBG("type<%d>", t->p1_type);
-		}
-		if (t->type==IF_T) DBG(") {");
-		switch(t->p2_type){
-			case NOSUBTYPE:
-					break;
-			case STRING_ST:
-					DBG(", \"%s\"", ZSW(t->p2.string));
-					break;
-			case NUMBER_ST:
-					DBG(", %lu",t->p2.number);
-					break;
-			case EXPR_ST:
-					print_expr((struct expr*)t->p2.data);
-					break;
-			case ACTIONS_ST:
-					print_action((struct action*)t->p2.data);
-					break;
-			case SOCKID_ST:
-					DBG("%d:%s:%d",
-							((struct socket_id*)t->p1.data)->proto,
-							ZSW(((struct socket_id*)t->p1.data)->name),
-							((struct socket_id*)t->p1.data)->port
-							);
-					break;
-			default:
-					DBG(", type<%d>", t->p2_type);
-		}
-		if (t->type==IF_T) DBG("} else {");
-		switch(t->p3_type){
-			case NOSUBTYPE:
-					break;
-			case STRING_ST:
-					DBG(", \"%s\"", ZSW(t->p3.string));
-					break;
-			case NUMBER_ST:
-					DBG(", %lu",t->p3.number);
-					break;
-			case EXPR_ST:
-					print_expr((struct expr*)t->p3.data);
-					break;
-			case ACTIONS_ST:
-					print_action((struct action*)t->p3.data);
-					break;
-			case SOCKID_ST:
-					DBG("%d:%s:%d",
-							((struct socket_id*)t->p1.data)->proto,
-							ZSW(((struct socket_id*)t->p1.data)->name),
-							((struct socket_id*)t->p1.data)->port
-							);
-					break;
-			default:
-					DBG(", type<%d>", t->p3_type);
-		}
-		if (t->type==IF_T) DBG("}; ");
-		else	DBG("); ");
+	switch(t->type){
+	case FORWARD_T:
+		DBG("forward(");
+		break;
+	case FORWARD_TCP_T:
+		DBG("forward_tcp(");
+		break;
+	case FORWARD_UDP_T:
+		DBG("forward_udp(");
+		break;
+	case SEND_T:
+		DBG("send(");
+		break;
+	case SEND_TCP_T:
+		DBG("send_tcp(");
+		break;
+	case DROP_T:
+		DBG("drop(");
+		break;
+	case LOG_T:
+		DBG("log(");
+		break;
+	case ERROR_T:
+		DBG("error(");
+		break;
+	case ROUTE_T:
+		DBG("route(");
+		break;
+	case EXEC_T:
+		DBG("exec(");
+		break;
+	case REVERT_URI_T:
+		DBG("revert_uri(");
+		break;
+	case STRIP_T:
+		DBG("strip(");
+		break;
+	case APPEND_BRANCH_T:
+		DBG("append_branch(");
+		break;
+	case PREFIX_T:
+		DBG("prefix(");
+		break;
+	case LEN_GT_T:
+		DBG("len_gt(");
+		break;
+	case SETFLAG_T:
+		DBG("setflag(");
+		break;
+	case RESETFLAG_T:
+		DBG("resetflag(");
+		break;
+	case ISFLAGSET_T:
+		DBG("isflagset(");
+		break;
+	case SET_HOST_T:
+		DBG("sethost(");
+		break;
+	case SET_HOSTPORT_T:
+		DBG("sethostport(");
+		break;
+	case SET_USER_T:
+		DBG("setuser(");
+		break;
+	case SET_USERPASS_T:
+		DBG("setuserpass(");
+		break;
+	case SET_PORT_T:
+		DBG("setport(");
+		break;
+	case SET_URI_T:
+		DBG("seturi(");
+		break;
+	case IF_T:
+		DBG("if (");
+		break;
+	case MODULE_T:
+		DBG(" external_module_call(");
+		break;
+	case FORCE_RPORT_T:
+		DBG("force_rport(");
+		break;
+	case SET_ADV_ADDR_T:
+		DBG("set_advertised_address(");
+		break;
+	case SET_ADV_PORT_T:
+		DBG("set_advertised_port(");
+		break;
+	case FORCE_TCP_ALIAS_T:
+		DBG("force_tcp_alias(");
+		break;
+	case LOAD_AVP_T:
+		DBG("load_avp(");
+		break;
+	case AVP_TO_URI_T:
+		DBG("avp_to_attr");
+		break;
+	case FORCE_SEND_SOCKET_T:
+		DBG("force_send_socket");
+		break;
+	case ASSIGN_T
+:		DBG("assign(");
+		break;
+	case ADD_T:
+		DBG("assign_add(");
+		break;
+	default:
+		DBG("UNKNOWN(");
+	}
+	switch(t->p1_type){
+	case STRING_ST:
+		DBG("\"%s\"", ZSW(t->p1.string));
+		break;
+	case NUMBER_ST:
+		DBG("%lu",t->p1.number);
+		break;
+	case IP_ST:
+		print_ip("", (struct ip_addr*)t->p1.data, "");
+		break;
+	case EXPR_ST:
+		print_expr((struct expr*)t->p1.data);
+		break;
+	case ACTIONS_ST:
+		print_actions((struct action*)t->p1.data);
+		break;
+	case CMDF_ST:
+		DBG("f_ptr<%p>",t->p1.data);
+		break;
+	case SOCKID_ST:
+		DBG("%d:%s:%d",
+		    ((struct socket_id*)t->p1.data)->proto,
+		    ZSW(((struct socket_id*)t->p1.data)->name),
+		    ((struct socket_id*)t->p1.data)->port
+		    );
+		break;
+	case AVP_ST:
+		DBG("avp(%u,%.*s)", t->p1.attr->type, t->p1.attr->name.s.len, ZSW(t->p1.attr->name.s.s));
+		break;
+	default:
+		DBG("type<%d>", t->p1_type);
+	}
+	if (t->type==IF_T) DBG(") {");
+	switch(t->p2_type){
+	case NOSUBTYPE:
+		break;
+	case STRING_ST:
+		DBG(", \"%s\"", ZSW(t->p2.string));
+		break;
+	case NUMBER_ST:
+		DBG(", %lu",t->p2.number);
+		break;
+	case EXPR_ST:
+		print_expr((struct expr*)t->p2.data);
+		break;
+	case ACTION_ST:
+	case ACTIONS_ST:
+		print_actions((struct action*)t->p2.data);
+		break;
+		
+	case SOCKID_ST:
+		DBG("%d:%s:%d",
+		    ((struct socket_id*)t->p1.data)->proto,
+		    ZSW(((struct socket_id*)t->p1.data)->name),
+		    ((struct socket_id*)t->p1.data)->port
+		    );
+		break;
+	case AVP_ST:
+		DBG(", avp(%u,%.*s)", t->p2.attr->type, t->p2.attr->name.s.len, ZSW(t->p2.attr->name.s.s));
+		break;
+	default:
+		DBG(", type<%d>", t->p2_type);
+	}
+	if (t->type==IF_T) DBG("} else {");
+	switch(t->p3_type){
+	case NOSUBTYPE:
+		break;
+	case STRING_ST:
+		DBG(", \"%s\"", ZSW(t->p3.string));
+		break;
+	case NUMBER_ST:
+		DBG(", %lu",t->p3.number);
+		break;
+	case EXPR_ST:
+		print_expr((struct expr*)t->p3.data);
+		break;
+	case ACTIONS_ST:
+		print_actions((struct action*)t->p3.data);
+		break;
+	case SOCKID_ST:
+		DBG("%d:%s:%d",
+		    ((struct socket_id*)t->p1.data)->proto,
+		    ZSW(((struct socket_id*)t->p1.data)->name),
+		    ((struct socket_id*)t->p1.data)->port
+		    );
+		break;
+	default:
+		DBG(", type<%d>", t->p3_type);
+	}
+	if (t->type==IF_T) DBG("}; ");
+	else	DBG("); ");
+}
+
+void print_actions(struct action* a)
+{
+	while(a) {
+		print_action(a);
+		a = a->next;
 	}
 }
-			
-	
-
-	
-	
-

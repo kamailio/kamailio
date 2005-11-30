@@ -92,6 +92,8 @@ int do_action(struct action* a, struct sip_msg* msg)
 	struct sip_uri *u;
 	unsigned short port;
 	int proto;
+	unsigned short flags;
+	int_str name, value;
 
 	/* reset the value of error to E_UNSPEC so avoid unknowledgable
 	   functions to return with error (status<0) and not setting it
@@ -271,7 +273,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				ret=E_BUG;
 				break;
 			}
-			LOG(a->p1.number, a->p2.string);
+			LOG(a->p1.number, "%s", a->p2.string);
 			ret=1;
 			break;
 
@@ -675,6 +677,83 @@ int do_action(struct action* a, struct sip_msg* msg)
 			msg->force_send_socket=(struct socket_info*)a->p1.data;
 			ret=1; /* continue processing */
 			break;
+
+	        case ADD_T:
+	        case ASSIGN_T:
+			if (a->p2_type == STRING_ST) {
+				value.s = a->p2.str;
+				flags = a->p1.attr->type | AVP_VAL_STR;
+				name = a->p1.attr->name;
+				ret = 1;
+			} else if (a->p2_type == NUMBER_ST) {
+				value.n = a->p2.number;
+				flags = a->p1.attr->type;
+				name = a->p1.attr->name;
+				ret = 1;
+			} else if (a->p2_type == ACTION_ST) {
+				flags = a->p1.attr->type;
+				name = a->p1.attr->name;
+				if (&a->p2.data) {
+					value.n = run_actions((struct action*)a->p2.data, msg);
+				} else {
+					value.n = -1;
+				}
+				ret = value.n;
+			} else if(a->p2_type == EXPR_ST && a->p2.data) {
+				v = eval_expr((struct expr*)a->p2.data, msg);
+				if (v < 0) {
+					if (v == EXPR_DROP){ /* hack to quit on DROP*/
+						ret = 0;
+						break;
+					} else {
+						LOG(L_WARN,"WARNING: do_action: error in expression\n");
+					}
+				}
+				
+				flags = a->p1.attr->type;
+				name = a->p1.attr->name;
+				value.n = v;
+			} else if (a->p2_type == AVP_ST) {
+				struct search_state st;
+				avp_t* avp; 
+				
+				     /* If the action is assign then remove the old avp value before adding
+				      * new ones
+				      */
+				if ((unsigned char)a->type == ASSIGN_T) delete_avp(a->p1.attr->type, a->p1.attr->name);
+
+				avp = search_first_avp(a->p2.attr->type, a->p2.attr->name, &value, &st);
+				while(avp) {
+					     /* We take only the type of value and name from the source avp
+					      * and reset class and track flags
+					      */
+					flags = a->p1.attr->type | (avp->flags & ~(AVP_CLASS_ALL|AVP_TRACK_ALL));
+					if (add_avp(flags, name, value) < 0) {
+						LOG(L_CRIT, "ERROR: Failed to assign value to attribute\n");
+					 	ret=E_UNSPEC;
+						break;
+					}
+					avp = search_next_avp(&st, &value);
+				}
+				ret = 1;
+				break;
+			} else {
+				LOG(L_CRIT, "BUG: do_action: Bad right side of avp assignment\n");
+				ret=E_BUG;
+				break;
+			}
+
+			     /* If the action is assign then remove the old avp value before adding
+			      * new ones
+			      */
+			if ((unsigned char)a->type == ASSIGN_T) delete_avp(flags, name);
+			if (add_avp(flags, name, value) < 0) {
+				LOG(L_CRIT, "ERROR: Failed to assign value to attribute\n");
+				ret=E_UNSPEC;
+				break;
+			}
+			break;
+
 		default:
 			LOG(L_CRIT, "BUG: do_action: unknown type %d\n", a->type);
 	}

@@ -91,7 +91,6 @@
 #include "ut.h"
 #include "dset.h"
 
-
 #include "config.h"
 #ifdef USE_TLS
 #include "tls/tls_config.h"
@@ -116,10 +115,10 @@ static int rt;  /* Type of route block for find_export */
 static str* str_tmp;
 static str s_tmp;
 static struct ip_addr* ip_tmp;
+static struct avp_spec* s_attr;
 
 static void warn(char* s);
 static struct socket_id* mk_listen_id(char*, int, int);
- 
 
 %}
 
@@ -132,6 +131,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 	struct net* ipnet;
 	struct ip_addr* ipaddr;
 	struct socket_id* sockid;
+	struct avp_spec* attr;
 }
 
 /* terminals */
@@ -263,8 +263,13 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token MCAST_TTL
 %token TOS
 
-
-
+%token ATTR_MARK
+%token ATTR_FROM
+%token ATTR_TO
+%token ATTR_USER
+%token ATTR_DOMAIN
+%token ATTR_GLOBAL
+%token ADD
 
 /* operators */
 %nonassoc EQUAL
@@ -275,11 +280,12 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %nonassoc LTE
 %nonassoc DIFF
 %nonassoc MATCH
-%left OR
-%left AND
-%left NOT
-%left PLUS
-%left MINUS
+%left LOG_OR
+%left LOG_AND
+%left BIN_OR
+%left BIN_AND 
+%left PLUS MINUS
+%right NOT
 
 /* values */
 %token <intval> NUMBER
@@ -305,7 +311,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 
 /*non-terminals */
 %type <expr> exp exp_elem /*, condition*/
-%type <action> action actions cmd if_cmd stm exp_stm
+%type <action> action actions cmd if_cmd stm exp_stm assign_action
 %type <ipaddr> ipv4 ipv6 ipv6addr ip
 %type <ipnet> ipnet
 %type <strval> host
@@ -313,9 +319,12 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %type <sockid>  id_lst
 %type <sockid>  phostport
 %type <intval> proto port
-%type <intval> equalop strop intop
+%type <intval> equalop strop intop binop
 %type <strval> host_sep
 %type <intval> uri_type
+%type <attr> attr_id
+%type <intval> class_id
+%type <intval> assign_op
 /*%type <route_el> rules;
   %type <route_el> rule;
 */
@@ -908,8 +917,8 @@ rule:	condition	actions CR {
 condition:	exp {$$=$1;}
 */
 
-exp:	exp AND exp 	{ $$=mk_exp(AND_OP, $1, $3); }
-	| exp OR  exp		{ $$=mk_exp(OR_OP, $1, $3);  }
+exp:	exp LOG_AND exp 	{ $$=mk_exp(LOGAND_OP, $1, $3); }
+	| exp LOG_OR  exp		{ $$=mk_exp(LOGOR_OP, $1, $3);  }
 	| NOT exp 			{ $$=mk_exp(NOT_OP, $2, 0);  }
 	| LPAREN exp RPAREN	{ $$=$2; }
 	| exp_elem			{ $$=$1; }
@@ -925,6 +934,10 @@ intop:	equalop	{$$=$1; }
 		| GTE	{$$=GTE_OP; }
 		| LTE	{$$=LTE_OP; }
 		;
+
+binop : BIN_OR { $$= BINOR_OP; }
+      | BIN_AND { $$ = BINAND_OP; }
+;
 		
 strop:	equalop	{$$=$1; }
 		| MATCH	{$$=MATCH_OP; }
@@ -935,82 +948,74 @@ uri_type:	URI			{$$=URI_O;}
 		|	TO_URI		{$$=TO_URI_O;}
 		;
 
-exp_elem:	METHOD strop STRING	{$$= mk_elem(	$2, STRING_ST, 
-													METHOD_O, $3);
-									}
-		| METHOD strop  ID	{$$ = mk_elem(	$2, STRING_ST,
-											METHOD_O, $3); 
-				 			}
+exp_elem:	METHOD strop STRING	{$$= mk_elem($2, METHOD_O, 0, STRING_ST, $3);}
+                | METHOD strop attr_id  {$$ = mk_elem($2, METHOD_O, 0, AVP_ST, $3); }
+		| METHOD strop  ID	{$$ = mk_elem($2, METHOD_O, 0, STRING_ST,$3); }
 		| METHOD strop error { $$=0; yyerror("string expected"); }
 		| METHOD error	{ $$=0; yyerror("invalid operator,"
 										"== , !=, or =~ expected");
 						}
-		| uri_type strop STRING	{$$ = mk_elem(	$2, STRING_ST,
-												$1, $3); 
-				 				}
-		| uri_type strop host 	{$$ = mk_elem(	$2, STRING_ST,
-											$1, $3); 
-				 			}
-		| uri_type equalop MYSELF	{ $$=mk_elem(	$2, MYSELF_ST,
-													$1, 0);
-								}
+		| uri_type strop STRING	{$$ = mk_elem($2, $1, 0, STRING_ST, $3); }
+                | uri_type strop host 	{$$ = mk_elem($2, $1, 0, STRING_ST, $3); }
+                | uri_type strop attr_id {$$ = mk_elem($2, $1, 0, AVP_ST, $3); }
+                | uri_type equalop MYSELF {$$=mk_elem($2, $1, 0, MYSELF_ST, 0); }
 		| uri_type strop error { $$=0; yyerror("string or MYSELF expected"); }
 		| uri_type error	{ $$=0; yyerror("invalid operator,"
 									" == , != or =~ expected");
 					}
-		| SRCPORT intop NUMBER	{ $$=mk_elem(	$2, NUMBER_ST,
-												SRCPORT_O, (void *) $3 ); }
+		| SRCPORT intop NUMBER	{ $$=mk_elem($2, SRCPORT_O, 0, NUMBER_ST, (void*)$3 ); }
+                | SRCPORT intop attr_id { $$=mk_elem($2, SRCPORT_O, 0, AVP_ST, (void*)$3 ); }
 		| SRCPORT intop error { $$=0; yyerror("number expected"); }
 		| SRCPORT error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
-		| DSTPORT intop NUMBER	{ $$=mk_elem(	$2, NUMBER_ST,
-												DSTPORT_O, (void *) $3 ); }
+
+		| DSTPORT intop NUMBER	{ $$=mk_elem($2, DSTPORT_O, 0, NUMBER_ST, (void*)$3 ); }
+		| DSTPORT intop attr_id	{ $$=mk_elem($2, DSTPORT_O, 0, AVP_ST, (void*)$3 ); }
 		| DSTPORT intop error { $$=0; yyerror("number expected"); }
 		| DSTPORT error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
-		| PROTO intop proto	{ $$=mk_elem(	$2, NUMBER_ST,
-												PROTO_O, (void *) $3 ); }
+
+		| PROTO intop proto	{ $$=mk_elem($2, PROTO_O, 0, NUMBER_ST, (void*)$3 ); }
+		| PROTO intop attr_id	{ $$=mk_elem($2, PROTO_O, 0, AVP_ST, (void*)$3 ); }
 		| PROTO intop error { $$=0;
 								yyerror("protocol expected (udp, tcp or tls)");
 							}
 		| PROTO error { $$=0; yyerror("equal/!= operator expected"); }
-		| AF intop NUMBER	{ $$=mk_elem(	$2, NUMBER_ST,
-												AF_O, (void *) $3 ); }
+
+		| AF intop NUMBER	{ $$=mk_elem($2, AF_O, 0, NUMBER_ST,(void *) $3 ); }
+		| AF intop attr_id	{ $$=mk_elem($2, AF_O, 0, AVP_ST,(void *) $3 ); }
 		| AF intop error { $$=0; yyerror("number expected"); }
 		| AF error { $$=0; yyerror("equal/!= operator expected"); }
-		| MSGLEN intop NUMBER	{ $$=mk_elem(	$2, NUMBER_ST,
-												MSGLEN_O, (void *) $3 ); }
-		| MSGLEN intop MAX_LEN	{ $$=mk_elem(	$2, NUMBER_ST,
-												MSGLEN_O, (void *) BUF_SIZE); }
+
+		| MSGLEN intop NUMBER	{ $$=mk_elem($2, MSGLEN_O, 0, NUMBER_ST, (void *) $3 ); }
+		| MSGLEN intop attr_id	{ $$=mk_elem($2, MSGLEN_O, 0, AVP_ST, (void *) $3 ); }
+		| MSGLEN intop MAX_LEN	{ $$=mk_elem($2, MSGLEN_O, 0, NUMBER_ST, (void *) BUF_SIZE); }
 		| MSGLEN intop error { $$=0; yyerror("number expected"); }
 		| MSGLEN error { $$=0; yyerror("equal/!= operator expected"); }
-		| SRCIP equalop ipnet	{ $$=mk_elem(	$2, NET_ST,
-												SRCIP_O, $3);
-								}
+
+		| SRCIP equalop ipnet	{ $$=mk_elem($2, SRCIP_O, 0, NET_ST, $3); }
 		| SRCIP strop STRING	{	s_tmp.s=$3;
 									s_tmp.len=strlen($3);
 									ip_tmp=str2ip(&s_tmp);
 									if (ip_tmp==0)
 										ip_tmp=str2ip6(&s_tmp);
 									if (ip_tmp){
-										$$=mk_elem(	$2, NET_ST, SRCIP_O,
+										$$=mk_elem(	$2, SRCIP_O, 0, NET_ST,
 												mk_net_bitlen(ip_tmp, 
 														ip_tmp->len*8) );
 									}else{
-										$$=mk_elem(	$2, STRING_ST,
-												SRCIP_O, $3);
+										$$=mk_elem(	$2, SRCIP_O, 0, STRING_ST,
+												$3);
 									}
 								}
-		| SRCIP strop host	{ $$=mk_elem(	$2, STRING_ST,
-												SRCIP_O, $3);
-								}
-		| SRCIP equalop MYSELF  { $$=mk_elem(	$2, MYSELF_ST,
-												SRCIP_O, 0);
+		| SRCIP strop host	{ $$=mk_elem(	$2, SRCIP_O, 0, STRING_ST, $3); }
+		| SRCIP equalop MYSELF  { $$=mk_elem(	$2, SRCIP_O, 0, MYSELF_ST,
+												0);
 								}
 		| SRCIP strop error { $$=0; yyerror( "ip address or hostname"
 						 "expected" ); }
 		| SRCIP error  { $$=0; 
 						 yyerror("invalid operator, ==, != or =~ expected");}
-		| DSTIP equalop ipnet	{ $$=mk_elem(	$2, NET_ST,
-												DSTIP_O, $3);
+		| DSTIP equalop ipnet	{ $$=mk_elem(	$2, DSTIP_O, 0, NET_ST,
+												(void*)$3);
 								}
 		| DSTIP strop STRING	{	s_tmp.s=$3;
 									s_tmp.len=strlen($3);
@@ -1018,41 +1023,49 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem(	$2, STRING_ST,
 									if (ip_tmp==0)
 										ip_tmp=str2ip6(&s_tmp);
 									if (ip_tmp){
-										$$=mk_elem(	$2, NET_ST, DSTIP_O,
+										$$=mk_elem(	$2, DSTIP_O, 0, NET_ST,
 												mk_net_bitlen(ip_tmp, 
 														ip_tmp->len*8) );
 									}else{
-										$$=mk_elem(	$2, STRING_ST,
-												DSTIP_O, $3);
+										$$=mk_elem(	$2, DSTIP_O, 0, STRING_ST,
+												$3);
 									}
 								}
-		| DSTIP strop host	{ $$=mk_elem(	$2, STRING_ST,
-												DSTIP_O, $3);
+		| DSTIP strop host	{ $$=mk_elem(	$2, DSTIP_O, 0, STRING_ST,
+												$3);
 								}
-		| DSTIP equalop MYSELF  { $$=mk_elem(	$2, MYSELF_ST,
-												DSTIP_O, 0);
+		| DSTIP equalop MYSELF  { $$=mk_elem(	$2, DSTIP_O, 0, MYSELF_ST,
+												0);
 								}
 		| DSTIP strop error { $$=0; yyerror( "ip address or hostname"
 						 			"expected" ); }
 		| DSTIP error { $$=0; 
 						yyerror("invalid operator, ==, != or =~ expected");}
-		| MYSELF equalop uri_type	{ $$=mk_elem(	$2, MYSELF_ST,
-													$3, 0);
+
+		| MYSELF equalop uri_type	{ $$=mk_elem(	$2, $3, 0, MYSELF_ST,
+												       0);
 								}
-		| MYSELF equalop SRCIP  { $$=mk_elem(	$2, MYSELF_ST,
-												SRCIP_O, 0);
+		| MYSELF equalop SRCIP  { $$=mk_elem(	$2, SRCIP_O, 0, MYSELF_ST,
+												0);
 								}
-		| MYSELF equalop DSTIP  { $$=mk_elem(	$2, MYSELF_ST,
-												DSTIP_O, 0);
+                | MYSELF equalop DSTIP  { $$=mk_elem(	$2, DSTIP_O, 0, MYSELF_ST,
+							0);
 								}
 		| MYSELF equalop error {	$$=0; 
 									yyerror(" URI, SRCIP or DSTIP expected"); }
 		| MYSELF error	{ $$=0; 
 							yyerror ("invalid operator, == or != expected");
 						}
-		| exp_stm			{ $$=mk_elem( NO_OP, ACTIONS_ST, ACTION_O, $1 );  }
-		| NUMBER		{$$=mk_elem( NO_OP, NUMBER_ST, NUMBER_O, (void*)$1 ); }
-	;
+		| exp_stm			{ $$=mk_elem( NO_OP, ACTION_O, 0, ACTIONS_ST, $1);  }
+		| NUMBER		{$$=mk_elem( NO_OP, NUMBER_O, 0, NUMBER_ST, (void*)$1 ); }
+
+		| attr_id		{$$=mk_elem( NO_OP, AVP_ST, (void*)$1, 0, 0); }
+		| attr_id strop STRING	{$$=mk_elem( $2, AVP_ST, (void*)$1, STRING_ST, $3); }
+		| attr_id intop NUMBER	{$$=mk_elem( $2, AVP_ST, (void*)$1, NUMBER_ST, (void*)$3); }
+		| attr_id binop NUMBER	{$$=mk_elem( $2, AVP_ST, (void*)$1, NUMBER_ST, (void*)$3); }
+                | attr_id strop attr_id {$$=mk_elem( $2, AVP_ST, (void*)$1, AVP_ST, (void*)$3); }
+;
+
 
 ipnet:	ip SLASH ip	{ $$=mk_net($1, $3); } 
 	| ip SLASH NUMBER 	{	if (($3<0) || ($3>$1->len*8)){
@@ -1097,6 +1110,7 @@ host:	ID				{ $$=$1; }
 
 exp_stm:	cmd						{ $$=$1; }
 		|	if_cmd					{ $$=$1; }
+                |       assign_action { $$ = $1; }
 		|	LBRACE actions RBRACE	{ $$=$2; }
 	;
 
@@ -1111,6 +1125,7 @@ actions:	actions action	{$$=append_action($1, $2); }
 
 action:		cmd SEMICOLON {$$=$1;}
 		| if_cmd {$$=$1;}
+                | assign_action SEMICOLON {$$=$1}
 		| SEMICOLON /* null action */ {$$=0;}
 		| cmd error { $$=0; yyerror("bad command: missing ';'?"); }
 	;
@@ -1132,6 +1147,61 @@ if_cmd:		IF exp stm				{ $$=mk_action3( IF_T,
 													 $5);
 									}
 	;
+
+class_id : LBRACK ATTR_USER RBRACK { $$ = AVP_CLASS_USER; }
+         | LBRACK ATTR_DOMAIN RBRACK { $$ = AVP_CLASS_DOMAIN; }
+         | LBRACK ATTR_GLOBAL RBRACK { $$ = AVP_CLASS_GLOBAL; }
+;
+
+attr_id : ATTR_MARK ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
+                         if (!s_attr) { LOG(L_CRIT, "No memory left"); return 0;}
+                         s_attr->type = AVP_NAME_STR;                   
+                         s_attr->name.s.s = $2; s_attr->name.s.len = strlen($2); 
+                         $$ = s_attr; 
+                       }
+        | ATTR_MARK class_id DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
+                                      if (!s_attr) { LOG(L_CRIT, "No memory left"); return 0;}
+                                      s_attr->type = AVP_NAME_STR | $2;
+                                      s_attr->name.s.s = $4; s_attr->name.s.len = strlen($4); 
+                                      $$ = s_attr; 
+                                    }
+        | ATTR_MARK ATTR_FROM DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
+                                       if (!s_attr) { LOG(L_CRIT, "No memory left"); return 0;}
+                                       s_attr->type = AVP_NAME_STR | AVP_TRACK_FROM;
+                                       s_attr->name.s.s = $4; s_attr->name.s.len = strlen($4);
+                                       $$ = s_attr;
+                                     }
+        | ATTR_MARK ATTR_TO DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
+                                     if (!s_attr) { LOG(L_CRIT, "No memory left"); return 0;}
+                                     s_attr->type = AVP_NAME_STR | AVP_TRACK_TO; 
+                                     s_attr->name.s.s = $4; s_attr->name.s.len = strlen($4); 
+                                     $$ = s_attr;
+                                   }
+        | ATTR_MARK ATTR_FROM class_id DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
+                                               if (!s_attr) { LOG(L_CRIT, "No memory left"); return 0;}
+                                               s_attr->type = AVP_NAME_STR | AVP_TRACK_FROM | $3; 
+                                               s_attr->name.s.s = $5; 
+                                               s_attr->name.s.len = strlen($5);
+                                               $$ = s_attr;
+                                              }
+        | ATTR_MARK ATTR_TO class_id DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
+                                              if (!s_attr) { LOG(L_CRIT, "No memory left"); return 0;}
+                                              s_attr->type = AVP_NAME_STR | AVP_TRACK_TO | $3;
+                                              s_attr->name.s.s = $5; s_attr->name.s.len = strlen($5);
+                                             $$ = s_attr;
+                                            }
+;
+
+assign_op : ADD { $$ = ADD_T; }
+          | EQUAL { $$ = ASSIGN_T; }
+;
+
+assign_action:   attr_id assign_op STRING  { $$=mk_action($2, AVP_ST, STRING_ST, $1, $3); }
+               | attr_id assign_op NUMBER  { $$=mk_action($2, AVP_ST, NUMBER_ST, $1, (void*)$3); }
+               | attr_id assign_op cmd     { $$=mk_action($2, AVP_ST, ACTION_ST, $1, $3); }
+               | attr_id assign_op attr_id { $$=mk_action($2, AVP_ST, AVP_ST, $1, $3); }
+               | attr_id assign_op LPAREN exp RPAREN { $$ = mk_action($2, AVP_ST, EXPR_ST, $1, $4); }
+;
 
 cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 														STRING_ST,

@@ -92,8 +92,8 @@ static int fix_expr(struct expr* exp)
 	}
 	if (exp->type==EXP_T){
 		switch(exp->op){
-			case AND_OP:
-			case OR_OP:
+			case LOGAND_OP:
+			case LOGOR_OP:
 						if ((ret=fix_expr(exp->l.expr))!=0)
 							return ret;
 						ret=fix_expr(exp->r.expr);
@@ -107,7 +107,11 @@ static int fix_expr(struct expr* exp)
 		}
 	}else if (exp->type==ELEM_T){
 			if (exp->op==MATCH_OP){
-				if (exp->subtype==STRING_ST){
+				     /* right side either has to be string, in which case
+				      * we turn it into regular expression, or it is regular
+				      * expression already. In that case we do nothing
+				      */
+				if (exp->r_type==STRING_ST){
 					re=(regex_t*)pkg_malloc(sizeof(regex_t));
 					if (re==0){
 						LOG(L_CRIT, "ERROR: fix_expr: memory allocation"
@@ -123,19 +127,34 @@ static int fix_expr(struct expr* exp)
 					}
 					/* replace the string with the re */
 					pkg_free(exp->r.param);
-					exp->r.param=re;
-					exp->subtype=RE_ST;
-				}else if (exp->subtype!=RE_ST){
+					exp->r.re=re;
+					exp->r_type=RE_ST;
+				}else if (exp->r_type!=RE_ST && exp->r_type != AVP_ST){
 					LOG(L_CRIT, "BUG: fix_expr : invalid type for match\n");
 					return E_BUG;
 				}
 			}
-			if (exp->l.operand==ACTION_O){
+			if (exp->l_type==ACTION_O){
 				ret=fix_actions((struct action*)exp->r.param);
 				if (ret!=0){
 					LOG(L_CRIT, "ERROR: fix_expr : fix_actions error\n");
 					return ret;
 				}
+			}
+			     /* Calculate lengths of strings */
+			if (exp->l_type==STRING_ST) {
+				int len;
+				if (exp->l.string) len = strlen(exp->l.string);
+				else len = 0;
+				exp->l.str.s = exp->l.string;
+				exp->l.str.len = len;
+			}
+			if (exp->r_type==STRING_ST) {
+				int len;
+				if (exp->l.string) len = strlen(exp->r.string);
+				else len = 0;
+				exp->r.str.s = exp->r.string;
+				exp->r.str.len = len;
 			}
 			ret=0;
 	}
@@ -230,6 +249,37 @@ static int fix_actions(struct action* a)
 						return ret;
 				}
 				break;
+
+		        case ASSIGN_T:
+		        case ADD_T:
+				if (t->p1_type != AVP_ST) {
+					LOG(L_CRIT, "BUG: fix_actions: Invalid left side of assignment\n");
+					return E_BUG;
+				}
+				if (t->p1.attr->type & AVP_CLASS_DOMAIN) {
+					LOG(L_ERR, "ERROR: You cannot change domain attributes from the script, they are read-only\n");
+					return E_BUG;
+				} else if (t->p1.attr->type & AVP_CLASS_GLOBAL) {
+					LOG(L_ERR, "ERROR: You cannot change global attributes from the script, they are read-only\n");
+					return E_BUG;
+				}
+
+				if (t->p2_type == ACTION_ST && t->p2.data) {
+					if ((ret = fix_actions((struct action*)t->p2.data)) < 0) {
+						return ret;
+					}
+				} else if (t->p2_type == EXPR_ST && t->p2.data) {
+					if ((ret = fix_expr((struct expr*)t->p2.data)) < 0) {
+						return ret;
+					}
+				} else if (t->p2_type == STRING_ST) {
+					int len;
+					len = strlen(t->p2.data);
+					t->p2.str.s = t->p2.data;
+					t->p2.str.len = len;
+				}
+				break;
+
 			case MODULE_T:
 				if ((mod=find_module(t->p1.data, &cmd))!=0){
 					DBG("fixing %s %s\n", mod->path, cmd->name);
@@ -280,78 +330,113 @@ static int fix_actions(struct action* a)
 }
 
 
-inline static int comp_no( int port, void *param, int op, int subtype )
+/* Compare parameters as ordinary numbers
+ *
+ * Left and right operands can be either numbers or
+ * attributes. If either of the attributes if of string type then the length of
+ * its value will be used.
+ */
+inline static int comp_num(int op, long left, int rtype, union exp_op* r)
 {
+	int_str val;
+	avp_t* avp;
+	long right;
 	
-	if (subtype!=NUMBER_ST) {
-		LOG(L_CRIT, "BUG: comp_no: number expected: %d\n", subtype );
+	if (rtype == AVP_ST) {
+		avp = search_first_avp(r->attr->type, r->attr->name, &val, 0);
+		if (avp && !(avp->flags & AVP_VAL_STR)) right = val.n;
+		else return 0; /* Always fail */
+	} else if (rtype == NUMBER_ST) {
+		right = r->intval;
+	} else {
+		LOG(L_CRIT, "BUG: comp_num: Invalid right operand (%d)\n", rtype);
 		return E_BUG;
 	}
+
 	switch (op){
-		case EQUAL_OP:
-			return port==(long)param;
-		case DIFF_OP:
-			return port!=(long)param;
-		case GT_OP:
-			return port>(long)param;
-		case LT_OP:
-			return port<(long)param;
-		case GTE_OP:
-			return port>=(long)param;
-		case LTE_OP:
-			return port<=(long)param;
-		default:
-		LOG(L_CRIT, "BUG: comp_no: unknown operator: %d\n", op );
+	case EQUAL_OP: return (long)left == (long)right;
+	case DIFF_OP:  return (long)left != (long)right;
+	case GT_OP:    return (long)left >  (long)right;
+	case LT_OP:    return (long)left <  (long)right;
+	case GTE_OP:   return (long)left >= (long)right;
+	case LTE_OP:   return (long)left <= (long)right;
+	default:
+		LOG(L_CRIT, "BUG: comp_num: unknown operator: %d\n", op);
 		return E_BUG;
 	}
 }
 
-/* eval_elem helping function, returns str op param */
-inline static int comp_strstr(str* str, void* param, int op, int subtype)
+/*
+ * Compare given string "left" with right side of expression
+ */
+inline static int comp_str(int op, str* left, int rtype, union exp_op* r)
 {
+	str* right;
+	int_str val;
+	avp_t* avp;
 	int ret;
 	char backup;
 	
+	if (rtype == AVP_ST) {
+		avp = search_first_avp(r->attr->type, r->attr->name, &val, 0);
+		if (avp && (avp->flags & AVP_VAL_STR)) right = &val.s;
+		else return 0;
+	} else if ((op == MATCH_OP && rtype == RE_ST)) {
+	} else if (op != MATCH_OP && rtype == STRING_ST) {
+		right = &r->str;
+	} else {
+		LOG(L_CRIT, "BUG: comp_str: Bad type %d, "
+		    "string or RE expected\n", rtype);
+		goto error;
+	}
+
 	ret=-1;
 	switch(op){
 		case EQUAL_OP:
-			if (subtype!=STRING_ST){
-				LOG(L_CRIT, "BUG: comp_str: bad type %d, "
-						"string expected\n", subtype);
-				goto error;
-			}
-			ret=(strncasecmp(str->s, (char*)param, str->len)==0);
+			if (left->len != right->len) return 0;
+			ret=(strncasecmp(left->s, right->s, left->len)==0);
 			break;
 		case DIFF_OP:
-			if (subtype!=STRING_ST){
-				LOG(L_CRIT, "BUG: comp_str: bad type %d, "
-						"string expected\n", subtype);
-				goto error;
-			}
-			ret=(strncasecmp(str->s, (char*)param, str->len)!=0);
+			if (left->len != right->len) return 1;
+			ret = (strncasecmp(left->s, right->s, left->len)!=0);
 			break;
 		case MATCH_OP:
-			if (subtype!=RE_ST){
-				LOG(L_CRIT, "BUG: comp_str: bad type %d, "
-						" RE expected\n", subtype);
-				goto error;
+			     /* this is really ugly -- we put a temporary zero-terminating
+			      * character in the original string; that's because regexps
+			      * take 0-terminated strings and our messages are not
+			      * zero-terminated; it should not hurt as long as this function
+			      * is applied to content of pkg mem, which is always the case
+			      * with calls from route{}; the same goes for fline in reply_route{};
+			      *
+			      * also, the received function should always give us an extra
+			      * character, into which we can put the 0-terminator now;
+			      * an alternative would be allocating a new piece of memory,
+			      * which might be too slow
+			      * -jiri
+			      *
+			      * janakj: AVPs are zero terminated too so this is not problem either
+			      */
+			backup=left->s[left->len];
+			left->s[left->len]='\0';
+			if (rtype == AVP_ST) {
+				regex_t* re;
+				     /* For AVPs we need to compile the RE on the fly */
+				re=(regex_t*)pkg_malloc(sizeof(regex_t));
+				if (re==0){
+					LOG(L_CRIT, "ERROR: comp_strstr: memory allocation"
+					    " failure\n");
+					goto error;
+				}
+				if (regcomp(re, right->s, REG_EXTENDED|REG_NOSUB|REG_ICASE)) {
+					pkg_free(re);
+					goto error;
+				}				
+				ret=(regexec(re, left->s, 0, 0, 0)==0);
+				pkg_free(re);
+			} else {
+				ret=(regexec(r->re, left->s, 0, 0, 0)==0);
 			}
-		/* this is really ugly -- we put a temporary zero-terminating
-		 * character in the original string; that's because regexps
-         * take 0-terminated strings and our messages are not
-         * zero-terminated; it should not hurt as long as this function
-		 * is applied to content of pkg mem, which is always the case
-		 * with calls from route{}; the same goes for fline in reply_route{};
-         *
-         * also, the received function should always give us an extra
-         * character, into which we can put the 0-terminator now;
-         * an alternative would be allocating a new piece of memory,
-         * which might be too slow
-         * -jiri
-         */
-			backup=str->s[str->len];str->s[str->len]=0;
-			ret=(regexec((regex_t*)param, str->s, 0, 0, 0)==0);
-			str->s[str->len]=backup;
+			left->s[left->len] = backup;
 			break;
 		default:
 			LOG(L_CRIT, "BUG: comp_str: unknown op %d\n", op);
@@ -363,39 +448,40 @@ error:
 	return -1;
 }
 
+
 /* eval_elem helping function, returns str op param */
-inline static int comp_str(char* str, void* param, int op, int subtype)
+inline static int comp_string(int op, char* left, int rtype, union exp_op* r)
 {
 	int ret;
 	
 	ret=-1;
 	switch(op){
 		case EQUAL_OP:
-			if (subtype!=STRING_ST){
-				LOG(L_CRIT, "BUG: comp_str: bad type %d, "
-						"string expected\n", subtype);
+			if (rtype!=STRING_ST){
+				LOG(L_CRIT, "BUG: comp_string: bad type %d, "
+						"string expected\n", rtype);
 				goto error;
 			}
-			ret=(strcasecmp(str, (char*)param)==0);
+			ret=(strcasecmp(left, r->str.s)==0);
 			break;
 		case DIFF_OP:
-			if (subtype!=STRING_ST){
-				LOG(L_CRIT, "BUG: comp_str: bad type %d, "
-						"string expected\n", subtype);
+			if (rtype!=STRING_ST){
+				LOG(L_CRIT, "BUG: comp_string: bad type %d, "
+						"string expected\n", rtype);
 				goto error;
 			}
-			ret=(strcasecmp(str, (char*)param)!=0);
+			ret=(strcasecmp(left, r->str.s)!=0);
 			break;
 		case MATCH_OP:
-			if (subtype!=RE_ST){
-				LOG(L_CRIT, "BUG: comp_str: bad type %d, "
-						" RE expected\n", subtype);
+			if (rtype!=RE_ST){
+				LOG(L_CRIT, "BUG: comp_string: bad type %d, "
+						" RE expected\n", rtype);
 				goto error;
 			}
-			ret=(regexec((regex_t*)param, str, 0, 0, 0)==0);
+			ret=(regexec(r->re, left, 0, 0, 0)==0);
 			break;
 		default:
-			LOG(L_CRIT, "BUG: comp_str: unknown op %d\n", op);
+			LOG(L_CRIT, "BUG: comp_string: unknown op %d\n", op);
 			goto error;
 	}
 	return ret;
@@ -403,6 +489,42 @@ inline static int comp_str(char* str, void* param, int op, int subtype)
 error:
 	return -1;
 }
+
+
+inline static int comp_avp(int op, avp_spec_t* spec, int rtype, union exp_op* r)
+{
+	avp_t* avp;
+	int_str val;
+
+	avp = search_first_avp(spec->type, spec->name, &val, 0);
+	if (!avp) return 0;
+
+	switch(op) {
+	case NO_OP:
+		if (avp->flags & AVP_VAL_STR) {
+			return val.s.len;
+		} else {
+			return val.n != 0;
+		}
+		break;
+
+	case BINOR_OP:
+		return val.n | r->intval;
+		break;
+
+	case BINAND_OP:
+		return val.n & r->intval;
+		break;
+	}
+
+	if (avp->flags & AVP_VAL_STR) {
+		return comp_str(op, &val.s, rtype, r);
+	} else {
+		return comp_num(op, val.n, rtype, r);
+	}
+}
+
+
 
 
 /* check_self wrapper -- it checks also for the op */
@@ -426,7 +548,7 @@ inline static int check_self_op(int op, str* s, unsigned short p)
 
 
 /* eval_elem helping function, returns an op param */
-inline static int comp_ip(struct ip_addr* ip, void* param, int op, int subtype)
+inline static int comp_ip(int op, struct ip_addr* ip, int rtype, union exp_op* r)
 {
 	struct hostent* he;
 	char ** h;
@@ -434,14 +556,14 @@ inline static int comp_ip(struct ip_addr* ip, void* param, int op, int subtype)
 	str tmp;
 
 	ret=-1;
-	switch(subtype){
+	switch(rtype){
 		case NET_ST:
 			switch(op){
 				case EQUAL_OP:
-					ret=(matchnet(ip, (struct net*) param)==1);
+					ret=(matchnet(ip, r->net)==1);
 					break;
 				case DIFF_OP:
-					ret=(matchnet(ip, (struct net*) param)!=1);
+					ret=(matchnet(ip, r->net)!=1);
 					break;
 				default:
 					goto error_op;
@@ -453,14 +575,14 @@ inline static int comp_ip(struct ip_addr* ip, void* param, int op, int subtype)
 				case EQUAL_OP:
 				case MATCH_OP:
 					/* 1: compare with ip2str*/
-					ret=comp_str(ip_addr2a(ip), param, op, subtype);
+					ret=comp_string(op, ip_addr2a(ip), rtype, r);
 					if (ret==1) break;
 					/* 2: resolve (name) & compare w/ all the ips */
-					if (subtype==STRING_ST){
-						he=resolvehost((char*)param);
+					if (rtype==STRING_ST){
+						he=resolvehost(r->str.s);
 						if (he==0){
 							DBG("comp_ip: could not resolve %s\n",
-									(char*)param);
+							    r->str.s);
 						}else if (he->h_addrtype==ip->af){
 							for(h=he->h_addr_list;(ret!=1)&& (*h); h++){
 								ret=(memcmp(ip->u.addr, *h, ip->len)==0);
@@ -478,15 +600,15 @@ inline static int comp_ip(struct ip_addr* ip, void* param, int op, int subtype)
 					ret=0;
 					}else{
 						/*  compare with primary host name */
-						ret=comp_str(he->h_name, param, op, subtype);
+						ret=comp_string(op, he->h_name, rtype, r);
 						/* compare with all the aliases */
 						for(h=he->h_aliases; (ret!=1) && (*h); h++){
-							ret=comp_str(*h, param, op, subtype);
+							ret=comp_string(op, *h, rtype, r);
 						}
 					}
 					break;
 				case DIFF_OP:
-					ret=comp_ip(ip, param, EQUAL_OP, subtype);
+					ret=comp_ip(EQUAL_OP, ip, rtype, r);
 					if (ret>=0) ret=!ret;
 					break;
 				default:
@@ -500,7 +622,7 @@ inline static int comp_ip(struct ip_addr* ip, void* param, int op, int subtype)
 			break;
 		default:
 			LOG(L_CRIT, "BUG: comp_ip: invalid type for "
-						" src_ip or dst_ip (%d)\n", subtype);
+						" src_ip or dst_ip (%d)\n", rtype);
 			ret=-1;
 	}
 	return ret;
@@ -511,11 +633,9 @@ error_op:
 }
 
 
-
 /* returns: 0/1 (false/true) or -1 on error, -127 EXPR_DROP */
 static int eval_elem(struct expr* e, struct sip_msg* msg)
 {
-
 	struct sip_uri uri;
 	int ret;
 	ret=E_BUG;
@@ -524,110 +644,127 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 		LOG(L_CRIT," BUG: eval_elem: invalid type\n");
 		goto error;
 	}
-	switch(e->l.operand){
-		case METHOD_O:
-				ret=comp_strstr(&msg->first_line.u.request.method, e->r.param,
-								e->op, e->subtype);
-				break;
-		case URI_O:
-				if(msg->new_uri.s){
-					if (e->subtype==MYSELF_ST){
-						if (parse_sip_msg_uri(msg)<0) ret=-1;
-						else	ret=check_self_op(e->op, &msg->parsed_uri.host,
-									msg->parsed_uri.port_no?
-									msg->parsed_uri.port_no:SIP_PORT);
-					}else{
-						ret=comp_strstr(&msg->new_uri, e->r.param,
-										e->op, e->subtype);
-					}
-				}else{
-					if (e->subtype==MYSELF_ST){
-						if (parse_sip_msg_uri(msg)<0) ret=-1;
-						else	ret=check_self_op(e->op, &msg->parsed_uri.host,
-									msg->parsed_uri.port_no?
-									msg->parsed_uri.port_no:SIP_PORT);
-					}else{
-						ret=comp_strstr(&msg->first_line.u.request.uri,
-										 e->r.param, e->op, e->subtype);
-					}
-				}
-				break;
-		case FROM_URI_O:
-				if (parse_from_header(msg)!=0){
-					LOG(L_ERR, "ERROR: eval_elem: bad or missing"
-								" From: header\n");
-					goto error;
-				}
-				if (e->subtype==MYSELF_ST){
-					if (parse_uri(get_from(msg)->uri.s, get_from(msg)->uri.len,
-									&uri) < 0){
-						LOG(L_ERR, "ERROR: eval_elem: bad uri in From:\n");
-						goto error;
-					}
-					ret=check_self_op(e->op, &uri.host,
-										uri.port_no?uri.port_no:SIP_PORT);
-				}else{
-					ret=comp_strstr(&get_from(msg)->uri,
-							e->r.param, e->op, e->subtype);
-				}
-				break;
-		case TO_URI_O:
-				if ((msg->to==0) && ((parse_headers(msg, HDR_TO_F, 0)==-1) ||
-							(msg->to==0))){
-					LOG(L_ERR, "ERROR: eval_elem: bad or missing"
-								" To: header\n");
-					goto error;
-				}
-				/* to content is parsed automatically */
-				if (e->subtype==MYSELF_ST){
-					if (parse_uri(get_to(msg)->uri.s, get_to(msg)->uri.len,
-									&uri) < 0){
-						LOG(L_ERR, "ERROR: eval_elem: bad uri in To:\n");
-						goto error;
-					}
-					ret=check_self_op(e->op, &uri.host,
-										uri.port_no?uri.port_no:SIP_PORT);
-				}else{
-					ret=comp_strstr(&get_to(msg)->uri,
-										e->r.param, e->op, e->subtype);
-				}
-				break;
-		case SRCIP_O:
-				ret=comp_ip(&msg->rcv.src_ip, e->r.param, e->op, e->subtype);
-				break;
-		case DSTIP_O:
-				ret=comp_ip(&msg->rcv.dst_ip, e->r.param, e->op, e->subtype);
-				break;
-		case NUMBER_O:
-				ret=!(!e->r.intval); /* !! to transform it in {0,1} */
-				break;
-		case ACTION_O:
-				ret=run_actions( (struct action*)e->r.param, msg);
-				if (ret<=0) ret=(ret==0)?EXPR_DROP:0;
-				else ret=1;
-				break;
-		case SRCPORT_O:
-				ret=comp_no(msg->rcv.src_port, 
-					e->r.param, /* e.g., 5060 */
-					e->op, /* e.g. == */
-					e->subtype /* 5060 is number */);
-				break;
-		case DSTPORT_O:
-				ret=comp_no(msg->rcv.dst_port, e->r.param, e->op, 
-							e->subtype);
-				break;
-		case PROTO_O:
-				ret=comp_no(msg->rcv.proto, e->r.param, e->op, e->subtype);
-				break;
-		case AF_O:
-				ret=comp_no(msg->rcv.src_ip.af, e->r.param, e->op, e->subtype);
-				break;
-		case MSGLEN_O:
-				ret=comp_no(msg->len, e->r.param, e->op, e->subtype);
-				break;
-		default:
-				LOG(L_CRIT, "BUG: eval_elem: invalid operand %d\n",
-							e->l.operand);
+	switch(e->l_type){
+	case METHOD_O:
+		ret=comp_str(e->op, &msg->first_line.u.request.method, 
+			     e->r_type, &e->r);
+		break;
+	case URI_O:
+		if(msg->new_uri.s) {
+			if (e->r_type==MYSELF_ST){
+				if (parse_sip_msg_uri(msg)<0) ret=-1;
+				else ret=check_self_op(e->op, &msg->parsed_uri.host,
+						       msg->parsed_uri.port_no?
+						       msg->parsed_uri.port_no:SIP_PORT);
+			}else{
+				ret=comp_str(e->op, &msg->new_uri, 
+					     e->r_type, &e->r);
+			}
+		}else{
+			if (e->r_type==MYSELF_ST){
+				if (parse_sip_msg_uri(msg)<0) ret=-1;
+				else ret=check_self_op(e->op, &msg->parsed_uri.host,
+						       msg->parsed_uri.port_no?
+						       msg->parsed_uri.port_no:SIP_PORT);
+			}else{
+				ret=comp_str(e->op, &msg->first_line.u.request.uri,
+					     e->r_type, &e->r);
+			}
+		}
+		break;
+		
+	case FROM_URI_O:
+		if (parse_from_header(msg)!=0){
+			LOG(L_ERR, "ERROR: eval_elem: bad or missing"
+			    " From: header\n");
+			goto error;
+		}
+		if (e->r_type==MYSELF_ST){
+			if (parse_uri(get_from(msg)->uri.s, get_from(msg)->uri.len,
+				      &uri) < 0){
+				LOG(L_ERR, "ERROR: eval_elem: bad uri in From:\n");
+				goto error;
+			}
+			ret=check_self_op(e->op, &uri.host,
+					  uri.port_no?uri.port_no:SIP_PORT);
+		}else{
+			ret=comp_str(e->op, &get_from(msg)->uri,
+				     e->r_type, &e->r);
+		}
+		break;
+
+	case TO_URI_O:
+		if ((msg->to==0) && ((parse_headers(msg, HDR_TO_F, 0)==-1) ||
+				     (msg->to==0))){
+			LOG(L_ERR, "ERROR: eval_elem: bad or missing"
+			    " To: header\n");
+			goto error;
+		}
+		     /* to content is parsed automatically */
+		if (e->r_type==MYSELF_ST){
+			if (parse_uri(get_to(msg)->uri.s, get_to(msg)->uri.len,
+				      &uri) < 0){
+				LOG(L_ERR, "ERROR: eval_elem: bad uri in To:\n");
+				goto error;
+			}
+			ret=check_self_op(e->op, &uri.host,
+					  uri.port_no?uri.port_no:SIP_PORT);
+		}else{
+			ret=comp_str(e->op, &get_to(msg)->uri,
+				     e->r_type, &e->r);
+		}
+		break;
+		
+	case SRCIP_O:
+		ret=comp_ip(e->op, &msg->rcv.src_ip, e->r_type, &e->r);
+		break;
+		
+	case DSTIP_O:
+		ret=comp_ip(e->op, &msg->rcv.dst_ip, e->r_type, &e->r);
+		break;
+
+	case NUMBER_O:
+		ret=!(!e->r.intval); /* !! to transform it in {0,1} */
+		break;
+
+	case ACTION_O:
+		ret=run_actions( (struct action*)e->r.param, msg);
+		if (ret<=0) ret=(ret==0)?EXPR_DROP:0;
+		else ret=1;
+		break;
+		
+	case SRCPORT_O:
+		ret=comp_num(e->op, (int)msg->rcv.src_port, 
+			     e->r_type, &e->r);
+		break;
+		
+	case DSTPORT_O:
+		ret=comp_num(e->op, (int)msg->rcv.dst_port, 
+			     e->r_type, &e->r);
+		break;
+		
+	case PROTO_O:
+		ret=comp_num(e->op, msg->rcv.proto, 
+			     e->r_type, &e->r);
+		break;
+		
+	case AF_O:
+		ret=comp_num(e->op, (int)msg->rcv.src_ip.af, 
+			     e->r_type, &e->r);
+		break;
+
+	case MSGLEN_O:
+		ret=comp_num(e->op, (int)msg->len, 
+				e->r_type, &e->r);
+		break;
+
+	case AVP_ST:
+		ret = comp_avp(e->op, e->l.attr, e->r_type, &e->r);
+		break;
+		
+	default:
+		LOG(L_CRIT, "BUG: eval_elem: invalid operand %d\n",
+		    e->l_type);
 	}
 	return ret;
 error:
@@ -654,13 +791,13 @@ int eval_expr(struct expr* e, struct sip_msg* msg)
 		ret=eval_elem(e, msg);
 	}else if (e->type==EXP_T){
 		switch(e->op){
-			case AND_OP:
+			case LOGAND_OP:
 				ret=eval_expr(e->l.expr, msg);
 				/* if error or false stop evaluating the rest */
 				if (ret!=1) break;
 				ret=eval_expr(e->r.expr, msg); /*ret1 is 1*/
 				break;
-			case OR_OP:
+			case LOGOR_OP:
 				ret=eval_expr(e->l.expr, msg);
 				/* if true or error stop evaluating the rest */
 				if (ret!=0) break;
@@ -756,8 +893,7 @@ int fix_rls()
 /* debug function, prints main routing table */
 void print_rl()
 {
-	struct action* t;
-	int i,j;
+	int j;
 
 	for(j=0; j<RT_NO; j++){
 		if (rlist[j]==0){
@@ -765,9 +901,7 @@ void print_rl()
 			continue;
 		}
 		DBG("routing table %d:\n",j);
-		for (t=rlist[j],i=0; t; i++, t=t->next){
-			print_action(t);
-		}
+		print_actions(rlist[j]);
 		DBG("\n");
 	}
 	for(j=0; j<ONREPLY_RT_NO; j++){
@@ -775,9 +909,7 @@ void print_rl()
 			continue;
 		}
 		DBG("onreply routing table %d:\n",j);
-		for (t=onreply_rlist[j],i=0; t; i++, t=t->next){
-			print_action(t);
-		}
+		print_actions(onreply_rlist[j]);
 		DBG("\n");
 	}
 	for(j=0; j<FAILURE_RT_NO; j++){
@@ -785,9 +917,7 @@ void print_rl()
 			continue;
 		}
 		DBG("failure routing table %d:\n",j);
-		for (t=failure_rlist[j],i=0; t; i++, t=t->next){
-			print_action(t);
-		}
+		print_actions(failure_rlist[j]);
 		DBG("\n");
 	}
 	for(j=0; j<BRANCH_RT_NO; j++){
@@ -795,9 +925,7 @@ void print_rl()
 			continue;
 		}
 		DBG("branch routing table %d:\n",j);
-		for (t=branch_rlist[j],i=0; t; i++, t=t->next){
-			print_action(t);
-		}
+		print_actions(branch_rlist[j]);
 		DBG("\n");
 	}
 }
