@@ -45,58 +45,57 @@
 #include "../../ut.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
+#include "../../id.h"
+#include "../../parser/parse_from.h"
+#include "../../parser/parse_uri.h"
 #include "uridb_mod.h"
-#include "checks.h"
 
 MODULE_VERSION
+
+#define LOAD_RURI 0
+#define LOAD_FROM 1
+#define LOAD_TO 2
+
 
 /*
  * Version of domain table required by the module,
  * increment this value if you change the table in
  * an backwards incompatible way
  */
-#define URI_TABLE_VERSION 1
-#define SUBSCRIBER_TABLE_VERSION 3
+#define URI_TABLE_VERSION 2
 
 static void destroy(void);       /* Module destroy function */
 static int child_init(int rank); /* Per-child initialization function */
 static int mod_init(void);       /* Module initialization function */
+static int lookup_user(struct sip_msg* msg, char* s1, char* s2);
+static int lookup_user_fixup(void** param, int param_no);
 
-
-#define URI_TABLE "uri"
-
-#define USER_COL "username"
-
-#define DOMAIN_COL "domain"
-
-#define URI_USER_COL "uri_user"
-
-#define SUBSCRIBER_TABLE "subscriber"
+#define URI_TABLE    "uri"
+#define UID_COL      "uid"
+#define DID_COL      "did"
+#define USERNAME_COL "username"
+#define FLAGS_COL    "flags"
 
 
 /*
  * Module parameter variables
  */
-static str db_url         = STR_STATIC_INIT(DEFAULT_RODB_URL);
-str uri_table             = STR_STATIC_INIT(URI_TABLE);        /* Name of URI table */
-str uri_user_col          = STR_STATIC_INIT(USER_COL);         /* Name of username column in URI table */
-str uri_domain_col        = STR_STATIC_INIT(DOMAIN_COL);       /* Name of domain column in URI table */
-str uri_uriuser_col       = STR_STATIC_INIT(URI_USER_COL);     /* Name of uri_user column in URI table */
-str subscriber_table      = STR_STATIC_INIT(SUBSCRIBER_TABLE); /* Name of subscriber table */
-str subscriber_user_col   = STR_STATIC_INIT(USER_COL);         /* Name of user column in subscriber table */
-str subscriber_domain_col = STR_STATIC_INIT(DOMAIN_COL);       /* Name of domain column in subscriber table */
+str db_url       = STR_STATIC_INIT(DEFAULT_RODB_URL);
+str uri_table    = STR_STATIC_INIT(URI_TABLE);
+str uid_col      = STR_STATIC_INIT(UID_COL);      
+str did_col      = STR_STATIC_INIT(DID_COL);
+str username_col = STR_STATIC_INIT(USERNAME_COL);
+str flags_col    = STR_STATIC_INIT(FLAGS_COL);
 
-int use_uri_table = 0;     /* Should uri table be used */
-int use_domain = 0;        /* Should does_uri_exist honor the domain part ? */
+db_con_t* con = 0;
+db_func_t db;
 
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"check_to",       check_to,       0, 0,         REQUEST_ROUTE},
-	{"check_from",     check_from,     0, 0,         REQUEST_ROUTE},
-	{"does_uri_exist", does_uri_exist, 0, 0,         REQUEST_ROUTE},
+	{"lookup_user", lookup_user, 1, lookup_user_fixup, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -105,16 +104,12 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",                   STR_PARAM, &db_url.s               },
-	{"uri_table",                STR_PARAM, &uri_table.s            },
-	{"uri_user_column",          STR_PARAM, &uri_user_col.s         },
-	{"uri_domain_column",        STR_PARAM, &uri_domain_col.s       },
-	{"uri_uriuser_column",       STR_PARAM, &uri_uriuser_col.s      },
-	{"subscriber_table",         STR_PARAM, &subscriber_table.s     },
-	{"subscriber_user_column",   STR_PARAM, &subscriber_user_col.s  },
-	{"subscriber_domain_column", STR_PARAM, &subscriber_domain_col.s},
-	{"use_uri_table",            INT_PARAM, &use_uri_table          },
-	{"use_domain",               INT_PARAM, &use_domain             },
+	{"db_url",          STR_PARAM, &db_url.s       },
+	{"uri_table",       STR_PARAM, &uri_table.s    },
+	{"uid_column",      STR_PARAM, &uid_col.s      },
+	{"did_column",      STR_PARAM, &did_col.s      },
+	{"username_column", STR_PARAM, &username_col.s },
+	{"flags_column",    STR_PARAM, &flags_col.s    },
 	{0, 0, 0}
 };
 
@@ -139,7 +134,14 @@ struct module_exports exports = {
  */
 static int child_init(int rank)
 {
-	return uridb_db_init(db_url.s);
+	con = db.init(db_url.s);
+	if (con == 0) {
+		LOG(L_ERR, "uri_db:child_init: Unable to connect to the database\n");
+		goto error;
+	}
+	return 0;
+error:
+	return -1;
 }
 
 
@@ -150,45 +152,46 @@ static int mod_init(void)
 {
 	int ver;
 
-	DBG("uri_db - initializing\n");
-
 	db_url.len = strlen(db_url.s);
         uri_table.len = strlen(uri_table.s);
-	uri_user_col.len = strlen(uri_user_col.s);
-	uri_domain_col.len = strlen(uri_domain_col.s);
-        uri_uriuser_col.len = strlen(uri_uriuser_col.s);
-	subscriber_table.len = strlen(subscriber_table.s);
-	subscriber_user_col.len = strlen(subscriber_user_col.s);
-        subscriber_domain_col.len = strlen(subscriber_domain_col.s);
+	uid_col.len = strlen(uid_col.s);
+        did_col.len = strlen(did_col.s);
+        username_col.len = strlen(username_col.s);
+        flags_col.len = strlen(flags_col.s);
 
-	if (uridb_db_bind(db_url.s)) {
-		LOG(L_ERR, "ERROR: uri_db:mod_init(): No database module found\n");
+	if (bind_dbmod(db_url.s, &db) < 0) {
+		LOG(L_ERR, "uri_db:mod_init: Unable to bind to the database module\n");
 		return -1;
 	}
-	     /* Check table version */
-	ver = uridb_db_ver(db_url.s, &uri_table);
+
+	if (!DB_CAPABILITY(db, DB_CAP_QUERY)) {
+		LOG(L_ERR, "uri_db:mod_init: Database module does not implement 'query' function\n");
+		return -1;
+	}
+
+	if (db.init == 0) {
+		LOG(L_CRIT, "uri_db:mod_init: Broken database driver\n");
+		return -1;
+	}
+
+        con = db.init(db_url.s);
+	if (con == 0) {
+		LOG(L_ERR, "uri_db:mod_init: Unable to open database connection\n");
+		return -1;
+	}
+	ver = table_version(&db, con, &uri_table);
+	db.close(con);
+	con = 0;
+
 	if (ver < 0) {
-		LOG(L_ERR, "ERROR: uri_db:mod_init():"
-				" Error while querying table version\n");
+		LOG(L_ERR, "uri_db:mod_init:"
+		    " Error while querying table version\n");
 		goto err;
 	} else if (ver < URI_TABLE_VERSION) {
-		LOG(L_ERR, "ERROR: uri_db:mod_init(): Invalid table version"
-				" of uri table (use ser_mysql.sh reinstall)\n");
+		LOG(L_ERR, "uri_db:mod_init: Invalid table version"
+		    " of uri table (use ser_mysql.sh reinstall)\n");
 		goto err;
 	}		
-
-	     /* Check table version */
-	ver = uridb_db_ver(db_url.s, &subscriber_table);
-	if (ver < 0) {
-		LOG(L_ERR, "ERROR: uri_db:mod_init():"
-				" Error while querying table version\n");
-		goto err;
-	} else if (ver < SUBSCRIBER_TABLE_VERSION) {
-		LOG(L_ERR, "ERROR: uri_db:mod_init(): Invalid table version of"
-				" subscriber table (use ser_mysql.sh reinstall)\n");
-		goto err;
-	}		
-
 	return 0;
 
  err:
@@ -198,6 +201,122 @@ static int mod_init(void)
 
 static void destroy(void)
 {
-	uridb_db_close();
+	if (con && db.close) {
+		db.close(con);
+		con = 0;
+	}
 }
 
+
+static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
+{
+	struct to_body* from;
+	struct sip_uri puri;
+	str did, uid;
+	long id;
+	db_key_t keys[2], cols[2];
+	db_val_t vals[2], *val;
+	db_res_t* res;
+	int flag, i;
+
+	id = (long)s1;
+
+	keys[0] = username_col.s;
+	keys[1] = did_col.s;
+	cols[0] = uid_col.s;
+	cols[1] = flags_col.s;
+
+	vals[0].type = DB_STR;
+	vals[0].nul = 0;
+
+	did.s = 0; did.len = 0;
+
+	if (id == LOAD_FROM) {
+		get_from_did(&did, msg);
+		flag = DB_IS_FROM;
+		
+		if (parse_from_header(msg) < 0) {
+			return -1;
+		}
+		from = get_from(msg);
+		if (!from) {
+			LOG(L_ERR, "uri_db:lookup_user: Unable to get From username\n");
+			return -1;
+		}
+		if (parse_uri(from->uri.s, from->uri.len, &puri) < 0) {
+			LOG(L_ERR, "uri_db:lookup_user: Error while parsing From URI\n");
+			return -1;
+		}
+		vals[0].val.str_val = puri.user;
+	} else {
+		get_to_did(&did, msg);
+		flag = DB_IS_TO;
+
+		if (parse_sip_msg_uri(msg) < 0) return -1;
+		vals[0].val.str_val = msg->parsed_uri.user;
+	}
+
+	vals[1].type = DB_STR;
+	if (did.s && did.len) {
+		vals[1].nul = 0;
+		vals[1].val.str_val = did;
+	} else {
+		vals[1].nul = 1;
+	}
+
+	if (db.use_table(con, uri_table.s) < 0) {
+		LOG(L_ERR, "uri_db:lookup_user: Error in use_table\n");
+		return -1;
+	}
+
+	if (db.query(con, keys, 0, vals, cols, 2, 2, 0, &res) < 0) {
+		LOG(L_ERR, "uri_db:lookup_user: Error in db_query\n");
+		return -1;
+	}
+
+	for(i = 0; i < res->n; i++) {
+		val = res->rows[i].values;
+
+		if (val[0].nul || val[1].nul) {
+			LOG(L_ERR, "uri_db:lookup_user: Bogus line in %s table\n", uri_table.s);
+			continue;
+		}
+
+		if ((val[1].val.int_val && DB_LOAD_SER) == 0) continue; /* Not for SER */
+		if ((val[1].val.int_val && flag) == 0) continue;        /* Not allowed in the header we are interested in */
+		goto found;
+	}
+	return -1; /* Not found -> not allowed */
+ found:
+	uid.s = (char*)val[0].val.string_val;
+	uid.len = strlen(uid.s);
+	if (id == LOAD_FROM) {
+		set_from_uid(&uid);
+	} else {
+		set_to_uid(&uid);
+	}
+	return 1;
+}
+
+
+static int lookup_user_fixup(void** param, int param_no)
+{
+	long id = 0;
+
+	if (param_no == 1) {
+		if (!strcasecmp(*param, "Request-URI")) {
+			id = LOAD_RURI;
+		} else if (!strcasecmp(*param, "From")) {
+			id = LOAD_FROM;
+		} else if (!strcasecmp(*param, "To")) {
+			id = LOAD_TO;
+		} else {
+			LOG(L_ERR, "uri_db:: Unknown parameter\n");
+			return -1;
+		}
+	}
+
+	pkg_free(*param);
+	*param=(void*)id;
+	return 0;
+}
