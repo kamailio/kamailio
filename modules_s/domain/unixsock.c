@@ -73,8 +73,8 @@ static void dump_domain_unx(domain_t* d)
 		get_avp_val(a, &val);
 		unixsock_reply_printf("%.*s", name->len, name->s);
 		if (a->flags & AVP_VAL_STR) {
-			if (val.s->len && val.s->s) {
-				unixsock_reply_printf("=\"%.*s\"", val.s->len, val.s->s);
+			if (val.s.len && val.s.s) {
+				unixsock_reply_printf("=\"%.*s\"", val.s.len, val.s.s);
 			}
 		} else {
 			unixsock_reply_printf("=%d", val.n);

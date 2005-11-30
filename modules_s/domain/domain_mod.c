@@ -58,10 +58,14 @@ static void destroy(void);
 static int child_init(int rank);
 static int is_from_local(struct sip_msg* msg, char* s1, char* s2);
 static int is_ruri_local(struct sip_msg* msg, char* s1, char* s2);
-static int lookup_from_domain(struct sip_msg* msg, char* s1, char* s2);
-static int lookup_to_domain(struct sip_msg* msg, char* s1, char* s2);
+static int lookup_domain(struct sip_msg* msg, char* s1, char* s2);
+static int lookup_domain_fixup(void** param, int param_no);
 
 MODULE_VERSION
+
+#define LOAD_RURI 0
+#define LOAD_FROM 1
+#define LOAD_TO 2
 
 /*
  * Version of domain table required by the module,
@@ -120,10 +124,9 @@ domain_t** domains_2 = 0;    /* List of domains 2 */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"is_from_local",      is_from_local,      0, 0, REQUEST_ROUTE                },
-	{"is_uri_host_local",  is_ruri_local,      0, 0, REQUEST_ROUTE | BRANCH_ROUTE },
-	{"lookup_from_domain", lookup_from_domain, 0, 0, REQUEST_ROUTE },
-	{"lookup_to_domain",   lookup_to_domain,   0, 0, REQUEST_ROUTE },
+	{"is_from_local",     is_from_local,  0, 0, REQUEST_ROUTE                },
+	{"is_uri_host_local", is_ruri_local,  0, 0, REQUEST_ROUTE | BRANCH_ROUTE },
+	{"lookup_domain",     lookup_domain,  1, lookup_domain_fixup, REQUEST_ROUTE },
 	{0, 0, 0, 0, 0}
 };
 
@@ -437,6 +440,37 @@ static int get_from_host(str* res, struct sip_msg* msg)
 	return 0;
 }
 
+/*
+ * Extract From host and convert it to lower case, the
+ * result must be disposed using pkg_free after use
+ */
+static int get_to_host(str* res, struct sip_msg* msg)
+{
+	struct sip_uri puri;
+	str uri;
+
+	if (!msg->to) {
+		LOG(L_ERR, "domain:get_to_host: No To header field found in message\n");
+		return -1;
+	}
+	uri = get_to(msg)->uri;
+
+	if (parse_uri(uri.s, uri.len, &puri) < 0) {
+		LOG(L_ERR, "domain:get_to_host: Error while parsing From URI\n");
+		return -3;
+	}
+
+	res->s = pkg_malloc(puri.host.len);
+	if (!res->s) {
+		LOG(L_ERR, "domain:get_to_host: No memory left\n");
+		return -1;
+	}
+	memcpy(res->s, puri.host.s, puri.host.len);
+	res->len = puri.host.len;
+	strlower(res);
+	return 0;
+}
+
 
 /*
  * Extract Request-URI host and convert it to lower case, the
@@ -491,41 +525,44 @@ static int is_ruri_local(struct sip_msg* msg, char* s1, char* s2)
 }
 
 
-static int lookup_from_domain(struct sip_msg* msg, char* s1, char* s2)
+static int lookup_domain(struct sip_msg* msg, char* s1, char* s2)
 {
+	long id;
 	str host;
 	domain_t* d;
+	unsigned int track;
+
+	id = (long)s1;
+	track = 0;
 
 	if (db_mode == 0) {
-		LOG(L_ERR, "domain:lookup_from_domain only works in cache mode\n");
+		LOG(L_ERR, "domain:lookup_domain only works in cache mode\n");
 		return -1;
 	} 
 
-	if (get_from_host(&host, msg) < 0) return -1;
-	if (hash_lookup(&d, *active_hash, &host) == 1) {
-		set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_FROM, &d->attrs);
-		return 1;
-	} else {
-		return -1;
+	switch(id) {
+	case LOAD_FROM:
+		if (get_from_host(&host, msg) < 0) return -1;
+		track = AVP_TRACK_FROM;
+		break;
+
+	case LOAD_RURI:
+		if (get_ruri_host(&host, msg) < 0) return -1;
+		track = AVP_TRACK_TO;
+		break;
+
+	case LOAD_TO:
+		if (get_to_host(&host, msg) < 0) return -1;
+		track = AVP_TRACK_TO;
+		break;
 	}
-}
 
-
-static int lookup_to_domain(struct sip_msg* msg, char* s1, char* s2)
-{
-	str host;
-	domain_t* d;
-	
-	if (db_mode == 0) {
-		LOG(L_ERR, "domain:lookup_to_domain only works in cache mode\n");
-		return -1;
-	} 
-
-	if (get_ruri_host(&host, msg) < 0) return -1;
 	if (hash_lookup(&d, *active_hash, &host) == 1) {
-		set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO, &d->attrs);
+		set_avp_list(AVP_CLASS_DOMAIN | track, &d->attrs);
+		pkg_free(host.s);
 		return 1;
 	} else {
+		pkg_free(host.s);
 		return -1;
 	}
 }
@@ -555,4 +592,27 @@ int reload_domain_list(void)
 	free_table(new_table);
 	free_domain_list(*new_list);
 	return -1;
+}
+
+
+static int lookup_domain_fixup(void** param, int param_no)
+{
+	long id = 0;
+
+	if (param_no == 1) {
+		if (!strcasecmp(*param, "Request-URI")) {
+			id = LOAD_RURI;
+		} else if (!strcasecmp(*param, "From")) {
+			id = LOAD_FROM;
+		} else if (!strcasecmp(*param, "To")) {
+			id = LOAD_TO;
+		} else {
+			LOG(L_ERR, "domain:lookup_domain_fixup: Unknown parameter\n");
+			return -1;
+		}
+	}
+
+	pkg_free(*param);
+	*param=(void*)id;
+	return 0;
 }

@@ -142,8 +142,8 @@ static domain_t* new_domain(str* did, str* domain, unsigned int flags)
 	d->n = 1;
 
 	     /* Create an attribute containing did of the domain */
-	name.s = &name_s;
-	val.s = did;
+	name.s = name_s;
+	val.s = *did;
 	if (add_avp_list(&d->attrs, AVP_CLASS_DOMAIN | AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) goto error;
 
 	return d;
@@ -225,7 +225,7 @@ static int load_attrs(domain_t* d)
 		     /* Get AVP name */
 		avp_name.s = (char*)val[0].val.string_val;
 		avp_name.len = strlen(avp_name.s);
-		name.s = &avp_name;
+		name.s = avp_name;
 
 		     /* Get AVP type */
 		type = val[1].val.int_val;
@@ -242,7 +242,7 @@ static int load_attrs(domain_t* d)
 		flags = AVP_CLASS_DOMAIN | AVP_NAME_STR;
 		if (type == AVP_VAL_STR) {
 			     /* String AVP */
-			v.s = &avp_val;
+			v.s = avp_val;
 			flags |= AVP_VAL_STR;
 		} else {
 			     /* Integer AVP */
@@ -371,8 +371,8 @@ static void dump_domain(FILE* f, domain_t* d)
 		get_avp_val(a, &val);
 		fprintf(f, "%.*s", name->len, name->s);
 		if (a->flags & AVP_VAL_STR) {
-			if (val.s->len && val.s->s) {
-				fprintf(f, "=\"%.*s\"", val.s->len, val.s->s);
+			if (val.s.len && val.s.s) {
+				fprintf(f, "=\"%.*s\"", val.s.len, val.s.s);
 			}
 		} else {
 			fprintf(f, "=%d", val.n);
