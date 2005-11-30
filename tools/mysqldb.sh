@@ -371,7 +371,7 @@ CREATE TABLE aliases (
   cseq int(11) NOT NULL default '$DEFAULT_CSEQ',
   last_modified timestamp(14) NOT NULL,
   flags int(11) NOT NULL default '0',
-  user_agent varchar(50) NOT NULL default '',
+  user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
   PRIMARY KEY($USERCOL, domain, contact),
   INDEX aliases_contact (contact)
@@ -434,7 +434,7 @@ CREATE TABLE location (
   cseq int(11) NOT NULL default '$DEFAULT_CSEQ',
   last_modified timestamp(14) NOT NULL,
   flags int(11) NOT NULL default '0',
-  user_agent varchar(50) NOT NULL default '',
+  user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
   PRIMARY KEY($USERCOL, domain, contact)
 ) $TABLE_TYPE;
