@@ -509,7 +509,7 @@ void reset_avps(void)
 }
 
 
-avp_list_t set_avp_list( unsigned short flags, avp_list_t* list )
+avp_list_t* set_avp_list( unsigned short flags, avp_list_t* list )
 {
 	avp_list_t* prev;
 
@@ -534,7 +534,7 @@ avp_list_t set_avp_list( unsigned short flags, avp_list_t* list )
 	        *crt_glist = list;
 	}
 
-	return *prev;
+	return prev;
 }
 
 
