@@ -178,9 +178,7 @@ int timer_pdomain(pdomain_t* _d)
 			LOG(L_DBG, "timer_pdomain(): removing empty presentity\n");
 			t = presentity;
 			presentity = presentity->next;
-			remove_presentity(_d, t);
-			LOG(L_DBG, "freeing presentity from timer_pdomain\n");
-			free_presentity(t);
+			release_presentity(t);
 		} else {
 			presentity = presentity->next;
 		}
@@ -215,6 +213,8 @@ void unlock_pdomain(pdomain_t* _d)
 	     lock_release(&_d->lock);
 }
 
+/* FIXME: this is only temporarily - till this function in core */
+int get_presentity_uuid(str *uuid, const str *uri);
 
 /*
  * Find a presentity in domain
@@ -223,25 +223,27 @@ int find_presentity(pdomain_t* _d, str* _uri, struct presentity** _p)
 {
 	int sl, i;
 	struct presentity* p;
-	
-/*	if (!_d->first) {
-	     pdomain_load_presentities(_d);
-	}*/
+	str uuid;
+	int res = 1;
 
-	sl = hash_func(_d, _uri->s, _uri->len);
+	if (get_presentity_uuid(&uuid, _uri) != 0) return -1;
+	
+	sl = hash_func(_d, uuid.s, uuid.len);
 	
 	p = _d->table[sl].first;
 	
 	for(i = 0; i < _d->table[sl].n; i++) {
-		if ((p->uri.len == _uri->len) && !memcmp(p->uri.s, _uri->s, _uri->len)) {
+		if ((p->uuid.len == uuid.len) && !memcmp(p->uuid.s, uuid.s, uuid.len)) {
 			*_p = p;
-			return 0;
+			res = 0;
+			break;
 		}
-		
 		p = p->next;
 	}
+	
+	str_free_content(&uuid);
 
-	return 1;   /* Nothing found */
+	return res;   /* Nothing found */
 }
 
 void callback(str* _user, str *_contact, int state, void* data);
@@ -250,26 +252,26 @@ void add_presentity(pdomain_t* _d, struct presentity* _p)
 {
 	int sl;
 
-	/* LOG(L_WARN, "add_presentity _p=%p p_uri=%.*s\n", _p, _p->uri.len, _p->uri.s); */
+	LOG(L_DBG, "add_presentity _p=%p p_uri=%.*s\n", _p, _p->uri.len, _p->uri.s);
 
-	sl = hash_func(_d, _p->uri.s, _p->uri.len);
+	sl = hash_func(_d, _p->uuid.s, _p->uuid.len);
 
 	slot_add(&_d->table[sl], _p, &_d->first, &_d->last);
 
-	DEBUG_LOG("! registering callback to %.*s, %p\n", _p->uri.len, _p->uri.s,_p);
+	DEBUG_LOG("! registering callback to %.*s, %p\n", _p->uuid.len, _p->uuid.s,_p);
 	_d->reg(&_p->uri, &_p->uuid, (void*)callback, _p);
 }
 
 
 void remove_presentity(pdomain_t* _d, struct presentity* _p)
 {
-	DEBUG_LOG("! unregistering callback to %.*s, %p\n", _p->uri.len, _p->uri.s,_p);
+	DEBUG_LOG("! unregistering callback to %.*s, %p\n", _p->uuid.len, _p->uuid.s,_p);
 	_d->unreg(&_p->uri, &_p->uuid, (void*)callback, _p);
 	
 	LOG(L_DBG, "remove_presentity _p=%p p_uri=%.*s\n", _p, _p->uri.len, _p->uri.s);
 	slot_rem(_p->slot, _p, &_d->first, &_d->last);
 
 	/* remove presentity from database */
-	DEBUG_LOG("! unregistered callback to %.*s, %p\n", _p->uri.len, _p->uri.s,_p);
-	db_remove_presentity(_p);
+	DEBUG_LOG("! unregistered callback to %.*s, %p\n", _p->uuid.len, _p->uuid.s,_p);
 }
+

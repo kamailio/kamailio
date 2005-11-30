@@ -157,6 +157,11 @@ int new_presentity(struct pdomain *pdomain, str* _uri, presentity_t** _p);
 void free_presentity(presentity_t* _p);
 
 /*
+ * Free all memory associated with a presentity and remove it from DB
+ */
+void release_presentity(presentity_t* _p);
+
+/*
  * Sync presentity to db if db is in use
  */
 int db_update_presentity(presentity_t* _p);

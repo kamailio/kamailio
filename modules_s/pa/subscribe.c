@@ -512,12 +512,9 @@ int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 	res = create_watcher(_m, *_p, _w, et, e);
 	if (res != 0) {
 		/* remove presentity from database !!*/
-		db_remove_presentity(*_p);
-		free_presentity(*_p);
+		release_presentity(*_p);
 		return res;
 	}
-
-	add_presentity(_d, *_p);
 
 	return 0;
 }

@@ -150,6 +150,9 @@ int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, presentity_t** _p)
 			presentity, presentity->uri.len, ZSW(presentity->uri.s),
 			presentity->uuid.len, ZSW(presentity->uuid.s));
 
+	/* add presentity into domain */
+	add_presentity(pdomain, *_p);
+
 	return 0;
 }
 
@@ -340,7 +343,14 @@ int new_presentity(struct pdomain *pdomain, str* _uri, presentity_t** _p)
 	return res;
 }
 
-
+void release_presentity(presentity_t *_p)
+{
+	/* remove presentity from DB and free its memory */
+	if (_p) {
+		db_remove_presentity(_p);
+		free_presentity(_p);
+	}
+}
 
 /*
  * Free all memory associated with a presentity
@@ -351,6 +361,9 @@ void free_presentity(presentity_t* _p)
 	presence_tuple_t *tuple;
 	internal_pa_subscription_t *iw, *niw;
 
+	/* remove presentity from domain */
+	remove_presentity(_p->pdomain, _p);
+	
 	/* watchers should be released already */
 	while(_p->watchers) {
 		ptr = _p->watchers;
@@ -1393,8 +1406,6 @@ int create_presentity_only(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 		return -2;
 	}
 
-	add_presentity(_d, *_p);
-
 	return 0;
 }
 
@@ -1462,7 +1473,6 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 			new_presentity_no_wb(pdomain, &uri, &presentity);
 			if (presentity) {
 				presentity->presid = presid;
-				add_presentity(pdomain, presentity);
 			}
 		}
 		pa_dbf.free_result(db, res);

@@ -65,7 +65,6 @@ static int create_presentity_ex(pdomain_t *_d, str_t *_puri, presentity_t **_p)
 		return -2;
 	}
 
-	add_presentity(_d, *_p);
 	/*(*_p)->flags |= PFLAG_PRESENCE_CHANGED; */
 
 	return 0;

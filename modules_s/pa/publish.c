@@ -739,7 +739,6 @@ int fifo_pa_presence_contact(FILE *fifo, char *response_file)
      find_presentity(pdomain, &p_uri, &presentity);
      if (!presentity) {
 	  new_presentity(pdomain, &p_uri, &presentity);
-	  add_presentity(pdomain, presentity);
 	  changed = 1;
      }
      if (!presentity) {
@@ -870,7 +869,6 @@ int fifo_pa_location(FILE *fifo, char *response_file)
      find_presentity(pdomain, &p_uri, &presentity);
      if (!presentity) {
 	  new_presentity(pdomain, &p_uri, &presentity);
-	  add_presentity(pdomain, presentity);
 	  changed = 1;
      }
      if (!presentity) {
@@ -1004,7 +1002,6 @@ int fifo_pa_location_contact(FILE *fifo, char *response_file)
      find_presentity(pdomain, &p_uri, &presentity);
      if (!presentity) {
 	  new_presentity(pdomain, &p_uri, &presentity);
-	  add_presentity(pdomain, presentity);
 	  changed = 1;
      }
      if (!presentity) {
