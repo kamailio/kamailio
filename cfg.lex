@@ -60,20 +60,21 @@
 
 
 %{
-	#include "cfg.tab.h"
 	#include "dprint.h"
 	#include "globals.h"
 	#include "mem/mem.h"
 	#include <string.h>
 	#include <stdlib.h>
 	#include "ip_addr.h"
-
+	#include "usr_avp.h"
+	#include "cfg.tab.h"
 
 	/* states */
 	#define INITIAL_S		0
 	#define COMMENT_S		1
-	#define COMMENT_LN_S	2
+	#define COMMENT_LN_S	        2
 	#define STRING_S		3
+	#define ATTR_S                  4
 
 	#define STR_BUF_ALLOC_UNIT	128
 	struct str_buf{
@@ -98,7 +99,7 @@
 %}
 
 /* start conditions */
-%x STRING1 STRING2 COMMENT COMMENT_LN
+%x STRING1 STRING2 COMMENT COMMENT_LN ATTR
 
 /* action keywords */
 FORWARD	forward
@@ -170,11 +171,22 @@ GTE	>=
 LTE	<=
 DIFF	!=
 MATCH	=~
+ADD     "+="
 NOT		!|"not"
-AND		"and"|"&&"|"&"
-OR		"or"|"||"|"|"
+LOG_AND		"and"|"&&"
+BIN_AND         "&"
+LOG_OR		"or"|"||"
+BIN_OR          "|"
 PLUS	"+"
 MINUS	"-"
+
+/* Attribute specification */
+ATTR_MARK   "$"|"%"|"@"   /* Prefix */
+ATTR_FROM   "from"|"f"    /* Track specification */ 
+ATTR_TO     "to"|"t"      /* Track specification */
+ATTR_USER   "user"|"u"    /* Class specification */
+ATTR_DOMAIN "domain"|"d"  /* Class specification */
+ATTR_GLOBAL "global"|"g"  /* Class specification */
 
 /* config vars. */
 DEBUG	debug
@@ -260,11 +272,12 @@ TLSv1			"tlsv1"|"TLSv1"|"TLSV1"
 LETTER		[a-zA-Z]
 DIGIT		[0-9]
 ALPHANUM	{LETTER}|{DIGIT}|[_]
-NUMBER		0|([1-9]{DIGIT}*)
 ID			{LETTER}{ALPHANUM}*
 HEX			[0-9a-fA-F]
 HEXNUMBER	0x{HEX}+
 OCTNUMBER	0[0-7]+
+DECNUMBER       0|-?([1-9]{DIGIT}*)
+BINNUMBER       [0-1]+b
 HEX4		{HEX}{1,4}
 IPV6ADDR	({HEX4}":"){7}{HEX4}|({HEX4}":"){1,7}(":"{HEX4}){1,7}|":"(":"{HEX4}){1,7}|({HEX4}":"){1,7}":"|"::"
 QUOTES		\"
@@ -449,6 +462,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{MODPARAM}     { count(); yylval.strval=yytext; return MODPARAM; }
 
 <INITIAL>{EQUAL}	{ count(); return EQUAL; }
+<INITIAL>{ADD}          { count(); return ADD; }
 <INITIAL>{EQUAL_T}	{ count(); return EQUAL_T; }
 <INITIAL>{GT}	{ count(); return GT; }
 <INITIAL>{LT}	{ count(); return LT; }
@@ -457,19 +471,37 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{DIFF}	{ count(); return DIFF; }
 <INITIAL>{MATCH}	{ count(); return MATCH; }
 <INITIAL>{NOT}		{ count(); return NOT; }
-<INITIAL>{AND}		{ count(); return AND; }
-<INITIAL>{OR}		{ count(); return OR;  }
+<INITIAL>{LOG_AND}	{ count(); return LOG_AND; }
+<INITIAL>{BIN_AND}	{ count(); return BIN_AND; }
+<INITIAL>{LOG_OR}	{ count(); return LOG_OR;  }
+<INITIAL>{BIN_OR}	{ count(); return BIN_OR;  }
 <INITIAL>{PLUS}		{ count(); return PLUS; }
 <INITIAL>{MINUS}	{ count(); return MINUS; }
 
-
+<INITIAL>{ATTR_MARK}    { count(); state = ATTR_S; BEGIN(ATTR); return ATTR_MARK; }
+<ATTR>{ATTR_FROM}       { count(); return ATTR_FROM; }
+<ATTR>{ATTR_TO}         { count(); return ATTR_TO; }
+<ATTR>{LBRACK}          { count(); return LBRACK; }
+<ATTR>{RBRACK}          { count(); return RBRACK; }
+<ATTR>{ATTR_USER}       { count(); return ATTR_USER; }
+<ATTR>{ATTR_DOMAIN}     { count(); return ATTR_DOMAIN; }
+<ATTR>{ATTR_GLOBAL}     { count(); return ATTR_GLOBAL; }
+<ATTR>{DOT}             { count(); return DOT; }
+<ATTR>{ID}		{ count(); addstr(&s_buf, yytext, yyleng); 
+                           yylval.strval=s_buf.s;
+			   memset(&s_buf, 0, sizeof(s_buf));
+                           state = INITIAL_S;
+                           BEGIN(INITIAL);
+			   return ID; 
+                        }
 
 <INITIAL>{IPV6ADDR}		{ count(); yylval.strval=yytext; return IPV6ADDR; }
-<INITIAL>{NUMBER}		{ count(); yylval.intval=atoi(yytext);return NUMBER; }
+<INITIAL>{DECNUMBER}		{ count(); yylval.intval=atoi(yytext);return NUMBER; }
 <INITIAL>{HEXNUMBER}	{ count(); yylval.intval=(int)strtol(yytext, 0, 16);
 							return NUMBER; }
 <INITIAL>{OCTNUMBER}	{ count(); yylval.intval=(int)strtol(yytext, 0, 8);
 							return NUMBER; }
+<INITIAL>{BINNUMBER}    { count(); yylval.intval=(int)strtol(yytext, 0, 2); return NUMBER; }
 <INITIAL>{YES}			{ count(); yylval.intval=1; return NUMBER; }
 <INITIAL>{NO}			{ count(); yylval.intval=0; return NUMBER; }
 <INITIAL>{TCP}			{ count(); return TCP; }
