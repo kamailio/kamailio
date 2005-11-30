@@ -82,6 +82,7 @@ static void mod_destroy();
 
 static cmd_export_t cmds[]={
 	{"sl_send_reply",  w_sl_send_reply,  2, fixup_int_1, REQUEST_ROUTE},
+	{"sl_reply",  w_sl_send_reply,  2, fixup_int_1, REQUEST_ROUTE},
 	{"sl_reply_error", w_sl_reply_error, 0, 0,           REQUEST_ROUTE},
 	{0,0,0,0,0}
 };
