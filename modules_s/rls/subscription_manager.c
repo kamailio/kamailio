@@ -265,10 +265,12 @@ static inline int get_from_uri(struct sip_msg* _m, str* _u)
 static int get_subscribers_uri(struct sip_msg* _m, str* dst_uri)
 {
 	/* FIXME: skip uri parameters !!! */
-	str uri;
+	/* str uri; */
 	str u;
 	struct sip_uri s;
 
+	if (!dst_uri) return RES_INTERNAL_ERR;
+	
 	if (parse_from_header(_m) < 0) {
 		LOG(L_ERR, "get_subscribers_uri(): Error while parsing From header\n");
 		return RES_PARSE_HEADERS_ERR;
@@ -280,13 +282,16 @@ static int get_subscribers_uri(struct sip_msg* _m, str* dst_uri)
 		LOG(L_ERR, "get_subscribers_uri(): Error while parsing From content\n");
 		return RES_PARSE_HEADERS_ERR;
 	}
-
+	
+	dst_uri->s = u.s;
+	dst_uri->len = s.host.s + s.host.len - dst_uri->s;
+/*
 	if (s.user.len > 0) uri.s = s.user.s;
 	else uri.s = u.s;
 	if (s.host.len <= 0) uri = u;
 	else uri.len = s.host.s - uri.s + s.host.len;
 	
-	if (dst_uri) *dst_uri = uri;
+	if (dst_uri) *dst_uri = uri;*/
 	return RES_OK;
 }
 

@@ -545,8 +545,9 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 	dstr_append_zt(&dstr, "Event: ");
 	dstr_append_str(&dstr, rls_get_package(s));
 	dstr_append_zt(&dstr, "\r\n");
-	dstr_append_zt(&dstr, "Require: eventlist\r\n");
+	dstr_append_zt(&dstr, "Require: eventlist\r\nContent-Type: ");
 	dstr_append_str(&dstr, &content_type);
+	dstr_append_zt(&dstr, "\r\n");
 
 	headers.len = dstr_get_data_length(&dstr);
 	headers.s = cds_malloc(headers.len);

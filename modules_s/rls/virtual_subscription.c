@@ -229,16 +229,16 @@ static int is_local_uri(str *uri)
 
 static int get_local_uri(const str_t *src_uri, str_t* dst_uri)
 {
-	str uri;
+	/* str uri;
 	struct sip_uri parsed;
-	int res = -1;
+	int res = -1;*/
 
 	if (dst_uri && src_uri) {
 		*dst_uri = *src_uri;
 		return 0;
 	}
 	else return -1;
-	
+/*	
 	uri.s = src_uri->s;
 	uri.len = src_uri->len;
 	
@@ -251,7 +251,7 @@ static int get_local_uri(const str_t *src_uri, str_t* dst_uri)
 	}
 	
 	if (dst_uri) *dst_uri = uri;
-	return res;
+	return res;*/
 }
 
 static int create_local_subscription(virtual_subscription_t *vs)
@@ -264,15 +264,14 @@ static int create_local_subscription(virtual_subscription_t *vs)
 	
 	/* remove sip:, ... so pa/usrloc will be satisfied */
 	get_local_uri(&vs->uri, &uri); 	
+	package = rls_get_package(vs->subscription);
+	subscriber = rls_get_subscriber(vs->subscription);
 
 	DEBUG_LOG("creating local subscription to %.*s\n", FMT_STR(vs->uri));
 	if (msg_queue_init(&vs->mq) != 0) {
 		LOG(L_ERR, "can't initialize message queue!\n");
 		return -1;
 	}
-
-	package = rls_get_package(vs->subscription);
-	subscriber = rls_get_subscriber(vs->subscription);
 
 	/* FIXME: list_package should be computed from package */
 	if (package) {

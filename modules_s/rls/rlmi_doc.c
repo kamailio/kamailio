@@ -181,12 +181,12 @@ int create_rlmi_document(str *dst, str *content_type_dst, rl_subscription_t *s, 
 	/* --- build content type --- */
 	dstr_init(&cont, 256);
 	dstr_append_zt(&cont, 
-			"Content-Type: multipart/related;type=\"application/rlmi+xml\";"
+			"multipart/related;type=\"application/rlmi+xml\";"
 			"start=\"");
 	dstr_append_zt(&cont, start_str);
 	dstr_append_zt(&cont, "\";boundary=\"");
 	dstr_append_zt(&cont, boundary_str);
-	dstr_append_zt(&cont, "\";\r\n");
+	dstr_append_zt(&cont, "\";");
 	
 	/* --- store output strings --- */
 	
