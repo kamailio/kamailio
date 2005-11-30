@@ -721,15 +721,15 @@ int mangle_pidf(struct sip_msg* _msg, char* _domain, char* _s2)
 	  if (wav3substatusNode) {
 	       // add note node for Eyebeam with copy of contents of wav3substatus
 	       //LOG(L_ERR, "mangle_pidf -2-\n");
-	       noteNode = xmlNewNode(ns, "note");
+	       noteNode = xmlNewNode(ns, (unsigned char*)"note");
 	       xmlAddChild(presenceNode, noteNode);
-	       xmlNodeSetContent(noteNode, strdup(xmlNodeGetContent(wav3substatusNode)));
+	       xmlNodeSetContent(noteNode, (unsigned char*)strdup((char*)xmlNodeGetContent(wav3substatusNode)));
 	       LOG(L_ERR, "mangle_pidf -3-\n");
 	       patch = 1;
 	  } else if (noteNode) {
 	       //LOG(L_ERR, "mangle_pidf -4-\n");
-	       wav3substatusNode = xmlNewNode(ns, "wav3substatus");
-	       xmlNodeSetContent(wav3substatusNode, strdup(xmlNodeGetContent(noteNode)));
+	       wav3substatusNode = xmlNewNode(ns, (unsigned char*)"wav3substatus");
+	       xmlNodeSetContent(wav3substatusNode, (unsigned char*)strdup((char*)xmlNodeGetContent(noteNode)));
 	       xmlAddChild(presenceNode, wav3substatusNode);
 	       LOG(L_ERR, "mangle_pidf -5-\n");
 	       patch = 1;
@@ -742,7 +742,7 @@ int mangle_pidf(struct sip_msg* _msg, char* _domain, char* _s2)
 	       xmlDocDumpMemory(doc, &new_body, &new_body_len);
 	       if (new_body && new_body_len > 0) {
 		    nbp = pkg_malloc(new_body_len+1);
-		    strncpy(nbp, new_body, new_body_len+1);
+		    strncpy(nbp, (char*)new_body, new_body_len+1);
 		    if (1)
 			 LOG(L_ERR, "mangle_pidf -7- old_body_len=%d new_body_len=%d new_body=%s\n", 
 			     body_len, new_body_len, nbp);
