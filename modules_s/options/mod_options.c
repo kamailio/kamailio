@@ -31,6 +31,7 @@
  * 2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  */
 
+#include <stdlib.h>
 #include "mod_options.h"
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
