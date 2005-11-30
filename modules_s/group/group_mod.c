@@ -50,7 +50,7 @@
 
 MODULE_VERSION
 
-#define TABLE_VERSION 2
+#define TABLE_VERSION 3
 
 /*
  * Module destroy function prototype
@@ -76,10 +76,7 @@ static int hf_fixup(void** param, int param_no);
 
 #define TABLE "grp"
 
-#define USER_COL "username"
-
-#define DOMAIN_COL "domain"
-
+#define UID_COL "uid"
 #define GROUP_COL "grp"
 
 
@@ -88,18 +85,15 @@ static int hf_fixup(void** param, int param_no);
  */
 static str db_url        = STR_STATIC_INIT(DEFAULT_RODB_URL);
 str table         = STR_STATIC_INIT(TABLE);         /* Table name where group definitions are stored */
-str user_column   = STR_STATIC_INIT(USER_COL);
-str domain_column = STR_STATIC_INIT(DOMAIN_COL);
+str uid_column   = STR_STATIC_INIT(UID_COL);
 str group_column  = STR_STATIC_INIT(GROUP_COL);
-int use_domain    = 0;
-
 
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"is_user_in", is_user_in, 2, hf_fixup, REQUEST_ROUTE},
+	{"is_user_in", is_user_in, 1, hf_fixup, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -110,10 +104,8 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"db_url",        STR_PARAM, &db_url.s       },
 	{"table",         STR_PARAM, &table.s        },
-	{"user_column",   STR_PARAM, &user_column.s  },
-	{"domain_column", STR_PARAM, &domain_column.s},
+	{"uid_column",    STR_PARAM, &uid_column.s  },
 	{"group_column",  STR_PARAM, &group_column.s },
-	{"use_domain",    INT_PARAM, &use_domain},
 	{0, 0, 0}
 };
 
@@ -148,8 +140,7 @@ static int mod_init(void)
 	     /* Calculate lengths */
 	db_url.len = strlen(db_url.s);
 	table.len = strlen(table.s);
-	user_column.len = strlen(user_column.s);
-	domain_column.len = strlen(domain_column.s);
+	uid_column.len = strlen(uid_column.s);
 	group_column.len = strlen(group_column.s);
 
 	     /* Find a database module */
@@ -180,7 +171,7 @@ static void destroy(void)
  * Convert HF description string to hdr_field pointer
  *
  * Supported strings: 
- * "Request-URI", "To", "From", "Credentials"
+ * "$t.uid", "$f.uid"
  */
 static int hf_fixup(void** param, int param_no)
 {
@@ -189,24 +180,17 @@ static int hf_fixup(void** param, int param_no)
 	if (param_no == 1) {
 		ptr = *param;
 		
-		if (!strcasecmp((char*)*param, "Request-URI")) {
+		if (!strcasecmp((char*)*param, "$t.uid")) {
 			*param = (void*)1;
-		} else if (!strcasecmp((char*)*param, "To")) {
+		} else if (!strcasecmp((char*)*param, "$f.uid")) {
 			*param = (void*)2;
-		} else if (!strcasecmp((char*)*param, "From")) {
-			*param = (void*)3;
-		} else if (!strcasecmp((char*)*param, "Credentials")) {
-			*param = (void*)4;
 		} else {
-			LOG(L_ERR, "hf_fixup(): Unsupported Header Field identifier\n");
+			LOG(L_ERR, "group:hf_fixup: Unsupported Header Field identifier\n");
 			return E_UNSPEC;
 		}
 
 		pkg_free(ptr);
-	} else if (param_no == 2) {
-		return fixup_str_12(param, param_no);
 	}
-
 	return 0;
 }
 

@@ -42,7 +42,7 @@
 /*
  * Check if username in specified header field is in a table
  */
-int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp);
+int is_user_in(struct sip_msg* _msg, char* _id, char* _grp);
 
 
 int group_db_init(char* db_url);

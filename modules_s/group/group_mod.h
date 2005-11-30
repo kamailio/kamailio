@@ -45,10 +45,8 @@
  * Module parameters variables
  */
 extern str table;           /* 'group' table name */
-extern str user_column;     /* 'user' column name in group table */
-extern str domain_column;   /* 'domain' column name in group table */
+extern str uid_column;      /* 'uid' column name in group table */
 extern str group_column;    /* "group' column name in group table */
-extern int use_domain;      /* Use domain in is_user_in */
 
 
 #endif /* GROUP_MOD_H */

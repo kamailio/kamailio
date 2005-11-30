@@ -43,6 +43,7 @@
 #include "../../parser/hf.h"            /* Header Field types */
 #include "../../parser/parse_from.h"    /* From parser */
 #include "../../parser/parse_uri.h"
+#include "../../id.h"
 #include "group.h"
 #include "group_mod.h"                   /* Module parameters */
 
@@ -52,152 +53,65 @@ static db_func_t group_dbf;
 
 
 /*
- * Get Request-URI
- */
-static inline int get_request_uri(struct sip_msg* _m, str* _u)
-{
-	if (_m->new_uri.s) {
-		_u->s = _m->new_uri.s;
-		_u->len = _m->new_uri.len;
-	} else {
-		_u->s = _m->first_line.u.request.uri.s;
-		_u->len = _m->first_line.u.request.uri.len;
-	}
-
-	return 0;
-}
-
-
-/*
- * Get To header field URI
- */
-static inline int get_to_uri(struct sip_msg* _m, str* _u)
-{
-	if (!_m->to && ((parse_headers(_m, HDR_TO_F, 0) == -1) || (!_m->to))) {
-		LOG(L_ERR, "get_to_uri(): Can't get To header field\n");
-		return -1;
-	}
-	
-	_u->s = ((struct to_body*)_m->to->parsed)->uri.s;
-	_u->len = ((struct to_body*)_m->to->parsed)->uri.len;
-
-	return 0;
-}
-
-
-/*
- * Get From header field URI
- */
-static inline int get_from_uri(struct sip_msg* _m, str* _u)
-{
-	if (parse_from_header(_m) < 0) {
-		LOG(L_ERR, "get_from_uri(): Error while parsing From body\n");
-		return -1;
-	}
-	
-	_u->s = ((struct to_body*)_m->from->parsed)->uri.s;
-	_u->len = ((struct to_body*)_m->from->parsed)->uri.len;
-
-	return 0;
-}
-
-
-/*
  * Check if username in specified header field is in a table
  */
-int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
+int is_user_in(struct sip_msg* _msg, char* _id, char* _grp)
 {
 	db_key_t keys[3];
 	db_val_t vals[3];
 	db_key_t col[1];
 	db_res_t* res;
-	str uri;
-	long hf_type;
-	struct sip_uri puri;
-	struct hdr_field* h;
-	struct auth_body* c = 0; /* Makes gcc happy */
+	str uid;
+	long id;
 
-	uri.s=0; /* fixes gcc 4.0 warning */
-	uri.len=0;
-	keys[0] = user_column.s;
+	keys[0] = uid_column.s;
 	keys[1] = group_column.s;
-	keys[2] = domain_column.s;
 	col[0] = group_column.s;
 	
-	hf_type = (long)_hf;
+	id = (long)_id;
 
-	switch(hf_type) {
-	case 1: /* Request-URI */
-		if (get_request_uri(_msg, &uri) < 0) {
-			LOG(L_ERR, "is_user_in(): Error while obtaining username from Request-URI\n");
+	switch(id) {
+	case 1: /* $to.uid*/
+		if (get_to_uid(&uid, _msg) < 0) {
+			LOG(L_ERR, "group:is_user_in: Unable to get To UID\n");
 			return -1;
 		}
 		break;
-
-	case 2: /* To */
-		if (get_to_uri(_msg, &uri) < 0) {
-			LOG(L_ERR, "is_user_in(): Error while extracting To username\n");
-			return -2;
+		
+	case 2: /* $from.uid */
+		if (get_from_uid(&uid, _msg) < 0) {
+			LOG(L_ERR, "group:is_user_in: Unable to get From UID\n");
+			return -1;
 		}
-		break;
-
-	case 3: /* From */
-		if (get_from_uri(_msg, &uri) < 0) {
-			LOG(L_ERR, "is_user_in(): Error while extracting From username\n");
-			return -3;
-		}
-		break;
-
-	case 4: /* Credentials */
-		get_authorized_cred(_msg->authorization, &h);
-		if (!h) {
-			get_authorized_cred(_msg->proxy_auth, &h);
-			if (!h) {
-				LOG(L_ERR, "is_user_in(): No authorized credentials found (error in scripts)\n");
-				return -1;
-			}
-		}
-	
-		c = (auth_body_t*)(h->parsed);
 		break;
 	}
 
-	if (hf_type != 4) {
-		if (parse_uri(uri.s, uri.len, &puri) < 0) {
-			LOG(L_ERR, "is_user_in(): Error while parsing URI\n");
-			return -5;
-		}
+	vals[0].type = DB_STR;
+	vals[0].nul = 0;
+	vals[0].val.str_val = uid;
 
-		VAL_STR(vals) = puri.user;
-		VAL_STR(vals + 2) = puri.host;
-	} else {
-		VAL_STR(vals) = c->digest.username.user;
-		VAL_STR(vals + 2) = *(GET_REALM(&c->digest));
-	}
-	
-	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = DB_STR;
-	VAL_NULL(vals) = VAL_NULL(vals + 1) = VAL_NULL(vals + 2) = 0;
+	vals[1].type = DB_STR;
+	vals[1].nul = 0;
+	vals[1].val.str_val = *(str*)_grp;
 
-	VAL_STR(vals + 1) = *((str*)_grp);
-	
 	if (group_dbf.use_table(db_handle, table.s) < 0) {
-		LOG(L_ERR, "is_user_in(): Error in use_table\n");
+		LOG(L_ERR, "group:is_user_in: Error in use_table\n");
 		return -5;
 	}
 
-	if (group_dbf.query(db_handle, keys, 0, vals, col, (use_domain) ? (3): (2),
-				1, 0, &res) < 0) {
-		LOG(L_ERR, "is_user_in(): Error while querying database\n");
+	if (group_dbf.query(db_handle, keys, 0, vals, col, 2,
+			    1, 0, &res) < 0) {
+		LOG(L_ERR, "group:is_user_in: Error while querying database\n");
 		return -5;
 	}
 	
-	if (RES_ROW_N(res) == 0) {
-		DBG("is_user_in(): User is not in group '%.*s'\n", 
+	if (res->n == 0) {
+		DBG("group:is_user_in: User is not in group '%.*s'\n", 
 		    ((str*)_grp)->len, ZSW(((str*)_grp)->s));
 		group_dbf.free_result(db_handle, res);
 		return -6;
 	} else {
-		DBG("is_user_in(): User is in group '%.*s'\n", 
+		DBG("group:is_user_in: User is in group '%.*s'\n", 
 		    ((str*)_grp)->len, ZSW(((str*)_grp)->s));
 		group_dbf.free_result(db_handle, res);
 		return 1;
