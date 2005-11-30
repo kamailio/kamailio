@@ -388,8 +388,13 @@ acl() {
 				set_user $2
 				is_user 
 				if [ $? -ne 0 ] ; then
-					echo -e "\nnon-existent user\n"
-					exit 1;
+					echo -e "\nNon-existen user. Still proceeding? [Y|N] " > /dev/stderr
+					read answer
+					if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
+						echo -e "\nProceeding with non-local user\n"
+					else
+						exit 1
+					fi
 				fi
 				EGREP_COND="^$SERUSER:$SERDOMAIN:"
 			elif [ $# -ne 1 ] ; then
@@ -412,8 +417,13 @@ acl() {
 			set_user $2
 			is_user 
 			if [ $? -ne 0 ] ; then
-				echo -e "\nnon-existent user\n"
-				exit 1
+				echo -e "\nNon-existen user. Still proceeding? [Y|N] " > /dev/stderr
+				read answer
+				if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
+					echo -e "\nProceeding with non-local user\n"
+				else
+					exit 1
+				fi
 			fi
 			shift 2
 			while [ $# -gt 0 ] ; do

@@ -1060,8 +1060,13 @@ acl() {
 				set_user $2
 				is_user $2 
 				if [ $? -ne 0 ] ; then
-					echo non-existent user
-					exit 1;
+					printf "Non-existen user. Still proceeding? [Y|N] " > /dev/stderr
+					read answer
+					if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
+						echo "Proceeding with non-local user"
+					else
+						exit 1
+					fi
 				fi
 				CLAUSE=" WHERE $ACL_USER_COLUMN='$SERUSER' AND $ACL_DOMAIN_COLUMN='$SERDOMAIN' "
 			elif [ $# -ne 1 ] ; then
@@ -1082,8 +1087,13 @@ acl() {
 			set_user $2
 			is_user $2 
 			if [ $? -ne 0 ] ; then
-				echo non-existent user
-				exit 1
+				printf "Non-existen user. Still proceeding? [Y|N] " > /dev/stderr
+				read answer
+				if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
+					echo "Proceeding with non-local user"
+				else
+					exit 1
+				fi
 			fi
 			shift 2
 			while [ $# -gt 0 ] ; do
