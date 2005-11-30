@@ -9,21 +9,15 @@
 
 <table xmlns:my="http://iptel.org/dbschema/mysql">
     <name>grp</name>
-    <version>2</version>
+    <version>3</version>
     
-    <column id="username">
-	<name>username</name>
+    <column id="grp.uid">
+	<name>uid</name>
 	<type>string</type>
 	<default></default>
 	<size>&user_len;</size>
     </column>
-    <column id="domain">
-	<name>domain</name>
-	<type>string</type>
-	<default></default>
-	<size>&domain_len;</size>
-    </column>
-    <column id="grp">
+    <column id="grp.grp">
 	<name>grp</name>
 	<type>string</type>
 	<default></default>
@@ -36,8 +30,7 @@
     </column>
     <index>
 	<name>grp_idx</name>
-	<colref linkend="username"/>
-	<colref linkend="domain"/>
-	<colref linkend="grp"/>
+	<colref linkend="grp.uid"/>
+	<colref linkend="grp.grp"/>
     </index>
 </table>

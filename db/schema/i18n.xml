@@ -19,16 +19,19 @@
     <column>
 	<name>reason_re</name>
 	<type>string</type>
+	<size>255</size>
 	<default><null/></default>
 	<null/>
     </column>
     <column id="i18n.lang">
 	<name>lang</name>
 	<type>string</type>
+	<size>32</size>
     </column>
     <column id="i18n.nr">
 	<name>new_reason</name>
 	<type>string</type>
+	<size>255</size>
 	<null/>
     </column>
     <index>

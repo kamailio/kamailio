@@ -9,7 +9,7 @@ global_attrs:1
 domain_attrs:1
 user_attrs:3
 phonebook:1
-silo:3
+silo:4
 uri:2
 server_monitoring:1
 trusted:1

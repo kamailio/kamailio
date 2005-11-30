@@ -6,4 +6,4 @@
 <!ENTITY hf_len "255">
 <!ENTITY method_len "16">
 <!ENTITY avp_name_len "32">
-<!ENTITY avp_val_len "64">
+<!ENTITY avp_val_len "255">

@@ -1,1 +1,1 @@
-username(str) domain(str) grp(str) last_modified(int) 
+uid(str) grp(str) last_modified(int) 

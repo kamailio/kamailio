@@ -13,7 +13,7 @@ INSERT INTO version (table_name, table_version) VALUES ('global_attrs', '1');
 INSERT INTO version (table_name, table_version) VALUES ('domain_attrs', '1');
 INSERT INTO version (table_name, table_version) VALUES ('user_attrs', '3');
 INSERT INTO version (table_name, table_version) VALUES ('phonebook', '1');
-INSERT INTO version (table_name, table_version) VALUES ('silo', '3');
+INSERT INTO version (table_name, table_version) VALUES ('silo', '4');
 INSERT INTO version (table_name, table_version) VALUES ('uri', '2');
 INSERT INTO version (table_name, table_version) VALUES ('server_monitoring', '1');
 INSERT INTO version (table_name, table_version) VALUES ('trusted', '1');
@@ -116,7 +116,7 @@ INSERT INTO attr_types (name, raw_type) VALUES ('gflags', '0');
 CREATE TABLE global_attrs (
     name string(32) NOT NULL,
     type int NOT NULL DEFAULT '0',
-    value string(64),
+    value string(255),
     flags int NOT NULL DEFAULT '0',
     global_attrs_idx UNIQUE (name, value, )
 );
@@ -125,7 +125,7 @@ CREATE TABLE domain_attrs (
     did string(64),
     name string(32) NOT NULL,
     type int NOT NULL DEFAULT '0',
-    value string(64),
+    value string(255),
     flags int NOT NULL DEFAULT '0',
     domain_attr_idx UNIQUE (did, name, value, ),
 
@@ -134,7 +134,7 @@ CREATE TABLE domain_attrs (
 CREATE TABLE user_attrs (
     uid string(64) NOT NULL,
     name string(32) NOT NULL,
-    value string(64),
+    value string(255),
     type int NOT NULL DEFAULT '0',
     flags int NOT NULL DEFAULT '0',
     userattrs_idx UNIQUE (uid, name, value, )
@@ -229,17 +229,16 @@ CREATE TABLE lcr (
 );
 
 CREATE TABLE grp (
-    username string(64) NOT NULL DEFAULT '',
-    domain string(128) NOT NULL DEFAULT '',
+    uid string(64) NOT NULL DEFAULT '',
     grp string(64) NOT NULL DEFAULT '',
     last_modified datetime NOT NULL DEFAULT '1970-01-01 00:00:00'
 );
 
 CREATE TABLE silo (
     mid int NOT NULL,
-    src_addr string(255) NOT NULL,
-    dst_addr string(255) NOT NULL,
-    r_uri string(255) NOT NULL,
+    from string(255) NOT NULL,
+    to string(255) NOT NULL,
+    ruri string(255) NOT NULL,
     uid string(64) NOT NULL,
     inc_time datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
     exp_time datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
@@ -271,7 +270,7 @@ CREATE TABLE speed_dial (
 CREATE TABLE sd_attrs (
     id string(64) NOT NULL,
     name string(32) NOT NULL,
-    value string(64),
+    value string(255),
     type int NOT NULL DEFAULT '0',
     flags int NOT NULL DEFAULT '0',
     userattrs_idx UNIQUE (id, name, value, )
@@ -321,9 +320,9 @@ CREATE TABLE watcherinfo (
 
 CREATE TABLE i18n (
     code int NOT NULL,
-    reason_re string DEFAULT NULL,
-    lang string NOT NULL,
-    new_reason string
+    reason_re string(255) DEFAULT NULL,
+    lang string(32) NOT NULL,
+    new_reason string(255)
 );
 
 INSERT INTO i18n (code, lang, new_reason) VALUES ('100', 'en_US.ascii', 'Trying');

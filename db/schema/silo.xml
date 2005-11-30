@@ -11,7 +11,7 @@
     xmlns:pg="http://iptel.org/dbschema/postgres"
     xmlns:dt="http://iptel.org/dbschema/dbtext">
     <name>silo</name>
-    <version>3</version>
+    <version>4</version>
 
     <column id="silo.mid">
 	<name>mid</name>
@@ -22,19 +22,19 @@
     </column>
 
     <column>
-	<name>src_addr</name>
+	<name>from</name>
 	<type>string</type>
 	<size>255</size>
     </column>
 
     <column>
-	<name>dst_addr</name>
+	<name>to</name>
 	<type>string</type>
 	<size>255</size>
     </column>
 
     <column>
-	<name>r_uri</name>
+	<name>ruri</name>
 	<type>string</type>
 	<size>&uri_len;</size>
     </column>

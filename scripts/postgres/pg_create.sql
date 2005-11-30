@@ -13,7 +13,7 @@ INSERT INTO version (table_name, table_version) VALUES ('global_attrs', '1');
 INSERT INTO version (table_name, table_version) VALUES ('domain_attrs', '1');
 INSERT INTO version (table_name, table_version) VALUES ('user_attrs', '3');
 INSERT INTO version (table_name, table_version) VALUES ('phonebook', '1');
-INSERT INTO version (table_name, table_version) VALUES ('silo', '3');
+INSERT INTO version (table_name, table_version) VALUES ('silo', '4');
 INSERT INTO version (table_name, table_version) VALUES ('uri', '2');
 INSERT INTO version (table_name, table_version) VALUES ('server_monitoring', '1');
 INSERT INTO version (table_name, table_version) VALUES ('trusted', '1');
@@ -123,7 +123,7 @@ INSERT INTO attr_types (name, raw_type) VALUES ('gflags', '0');
 CREATE TABLE global_attrs (
     name VARCHAR(32) NOT NULL,
     type INTEGER NOT NULL DEFAULT '0',
-    value VARCHAR(64),
+    value VARCHAR(255),
     flags INTEGER NOT NULL DEFAULT '0',
     CONSTRAINT global_attrs_idx UNIQUE (name, value)
 );
@@ -132,7 +132,7 @@ CREATE TABLE domain_attrs (
     did VARCHAR(64),
     name VARCHAR(32) NOT NULL,
     type INTEGER NOT NULL DEFAULT '0',
-    value VARCHAR(64),
+    value VARCHAR(255),
     flags INTEGER NOT NULL DEFAULT '0',
     CONSTRAINT domain_attr_idx UNIQUE (did, name, value)
 );
@@ -142,7 +142,7 @@ CREATE INDEX domain_did ON domain_attrs (did, flags);
 CREATE TABLE user_attrs (
     uid VARCHAR(64) NOT NULL,
     name VARCHAR(32) NOT NULL,
-    value VARCHAR(64),
+    value VARCHAR(255),
     type INTEGER NOT NULL DEFAULT '0',
     flags INTEGER NOT NULL DEFAULT '0',
     CONSTRAINT userattrs_idx UNIQUE (uid, name, value)
@@ -248,19 +248,18 @@ CREATE INDEX lcr_idx2 ON lcr (from_uri);
 CREATE INDEX lcr_idx3 ON lcr (grp_id);
 
 CREATE TABLE grp (
-    username VARCHAR(64) NOT NULL DEFAULT '',
-    domain VARCHAR(128) NOT NULL DEFAULT '',
+    uid VARCHAR(64) NOT NULL DEFAULT '',
     grp VARCHAR(64) NOT NULL DEFAULT '',
     last_modified TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00'
 );
 
-CREATE INDEX grp_idx ON grp (username, domain, grp);
+CREATE INDEX grp_idx ON grp (uid, grp);
 
 CREATE TABLE silo (
     mid SERIAL NOT NULL,
-    src_addr VARCHAR(255) NOT NULL,
-    dst_addr VARCHAR(255) NOT NULL,
-    r_uri VARCHAR(255) NOT NULL,
+    from VARCHAR(255) NOT NULL,
+    to VARCHAR(255) NOT NULL,
+    ruri VARCHAR(255) NOT NULL,
     uid VARCHAR(64) NOT NULL,
     inc_time TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
     exp_time TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
@@ -293,7 +292,7 @@ CREATE INDEX speeddial_uid ON speed_dial (uid);
 CREATE TABLE sd_attrs (
     id VARCHAR(64) NOT NULL,
     name VARCHAR(32) NOT NULL,
-    value VARCHAR(64),
+    value VARCHAR(255),
     type INTEGER NOT NULL DEFAULT '0',
     flags INTEGER NOT NULL DEFAULT '0',
     CONSTRAINT userattrs_idx UNIQUE (id, name, value)
@@ -349,9 +348,9 @@ CREATE INDEX wi_wuri_idx ON watcherinfo (w_uri);
 
 CREATE TABLE i18n (
     code INTEGER NOT NULL,
-    reason_re VARCHAR DEFAULT NULL,
-    lang VARCHAR NOT NULL,
-    new_reason VARCHAR
+    reason_re VARCHAR(255) DEFAULT NULL,
+    lang VARCHAR(32) NOT NULL,
+    new_reason VARCHAR(255)
 );
 
 CREATE INDEX i18n_idx ON i18n (code);

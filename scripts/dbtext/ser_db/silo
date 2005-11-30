@@ -1,1 +1,1 @@
-mid(int,auto) src_addr(str) dst_addr(str) r_uri(str) uid(str) inc_time(int) exp_time(int) ctype(str) body(str) 
+mid(int,auto) from(str) to(str) ruri(str) uid(str) inc_time(int) exp_time(int) ctype(str) body(str) 
