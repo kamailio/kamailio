@@ -1,0 +1,145 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	<chapterinfo>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</chapterinfo>
+	<title>User's Guide</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+	This module allows to use the unixodbc package with &ser;. It have been 
+	tested with mysql and the odbc connector, but it should work also with 
+	other database. The auth_db module works.
+	</para>
+	<para>
+	For more information, see the <ulink url="http://www.unixodbc.org/">
+	http://www.unixodbc.org/</ulink> project web page.
+	</para>
+	<para>
+	To see what DB engines can be used via unixodbc, look at 
+	<ulink url="http://www.unixodbc.org/drivers.html">
+	http://www.unixodbc.org/drivers.html</ulink>.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&ser; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &ser; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Exported Parameters</title>
+		<para>
+		NONE
+		</para>
+	</section>
+
+	<section>
+	<title>Exported Functions</title>
+		<para>
+		NONE
+		</para>
+	</section>
+
+	<section>
+	<title>Installation & Running</title>
+
+	<section>
+	<title>Installing</title>
+	<para>
+	Prerequirement: you should first install unixodbc (or another program that 
+	implements the odbc standard, such iodbc), your database, and the right 
+	connector. Set the DSN in the odbc.ini file and the connector drivers in 
+	the odbcinst.ini file.
+	</para>
+	</section>
+
+	<section>
+	<title>Configuring & Running</title>
+	<para>
+	In the openser.conf file, add the line:
+	</para>
+	<programlisting format="linespecific">
+....
+loadmodule "/usr/local/lib/openser/modules/unixodbc.so"
+....
+</programlisting>
+	<para>
+	You should also uncomment this:
+	</para>
+	<programlisting format="linespecific">
+....
+loadmodule "/usr/local/lib/openser/modules/auth.so"
+loadmodule "/usr/local/lib/openser/modules/auth_db.so"
+modparam("usrloc", "db_mode", 2)
+modparam("auth_db", "calculate_ha1", yes)
+modparam("auth_db", "password_column", "password")
+....
+</programlisting>
+	<para>
+	and setting the DSN specified in the odbc.ini, inserting this with the 
+	url adding this line:
+	</para>
+	<programlisting format="linespecific">
+....
+modparam("usrloc|auth_db", "db_url", 
+    "unixodbc://openser:openserrw@localhost/my_dsn")
+....
+</programlisting>
+	<para>
+	replacing my_dsn with the correct value.
+	</para>
+	<para>
+	HINT: if unixodbc don't want to connect to mysql server, try restarting 
+	mysql server with:
+	</para>
+	<programlisting format="linespecific">
+shell>safe_mysqld --user=mysql --socket=/var/lib/mysql/mysql.sock
+</programlisting>
+	<para>
+	The connector search the socket in /var/lib/mysql/mysql.sock and not 
+	in /tmp/mysql.sock
+	</para>
+	</section>
+
+	</section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("unixodbc.sgml" "Book" "chapter")
+End:
+-->
