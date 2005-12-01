@@ -57,16 +57,10 @@ static int mod_init(void);
 
 /* Module parameter variables */
 char* db_url           = DEFAULT_RODB_URL;
-char* user_column      = "username";
-char* domain_column    = "domain";
-char* sd_user_column   = "sd_username";
-char* sd_domain_column = "sd_domain";
-char* new_uri_column   = "new_uri";
-int   use_domain       = 0;
-char* domain_prefix    = NULL;
-
-str   dstrip_s;
-
+char* uid_column            = "uid";
+char* dial_username_column  = "dial_username";
+char* dial_did_column       = "dial_did";
+char* new_uri_column        = "new_uri";
 
 db_func_t db_funcs;      /* Database functions */
 db_con_t* db_handle=0;   /* Database connection handle */
@@ -79,21 +73,18 @@ int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-	{"sd_lookup", sd_lookup, 1, 0, REQUEST_ROUTE},
+	{"sd_lookup",         sd_lookup, 1, 0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
 
 /* Exported parameters */
 static param_export_t params[] = {
-	{"db_url",           STR_PARAM, &db_url          },
-	{"user_column",      STR_PARAM, &user_column     },
-	{"domain_column",    STR_PARAM, &domain_column   },
-	{"sd_user_column",   STR_PARAM, &sd_user_column     },
-	{"sd_domain_column", STR_PARAM, &sd_domain_column   },
-	{"new_uri_column",   STR_PARAM, &new_uri_column     },
-	{"use_domain",       INT_PARAM, &use_domain      },
-	{"domain_prefix",    STR_PARAM, &domain_prefix   },
+	{"db_url",               STR_PARAM, &db_url               },
+	{"uid_column",           STR_PARAM, &uid_column           },
+	{"dial_username_column", STR_PARAM, &dial_username_column },
+	{"dial_did_column",      STR_PARAM, &dial_did_column      },
+	{"new_uri_column",       STR_PARAM, &new_uri_column       },
 	{0, 0, 0}
 };
 
@@ -157,17 +148,6 @@ static int mod_init(void)
 	{
 		LOG(L_ERR, "sd: This module requires sl module\n");
 		return -1;
-	}
-
-	if(domain_prefix==NULL || strlen(domain_prefix)==0)
-	{
-		dstrip_s.s   = 0;
-		dstrip_s.len = 0;
-	}
-	else
-	{
-		dstrip_s.s   = domain_prefix;
-		dstrip_s.len = strlen(domain_prefix);
 	}
 
 	return 0;

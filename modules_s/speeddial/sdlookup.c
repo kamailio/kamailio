@@ -44,35 +44,15 @@
 
 #define MAX_USERURI_SIZE	256
 
+static char useruri_buf[MAX_USERURI_SIZE];
 
-char useruri_buf[MAX_USERURI_SIZE];
-
-/**
- * Rewrite Request-URI
- */
-static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
-{
-	struct action act;
-
-	act.type = SET_URI_T;
-	act.p1_type = STRING_ST;
-	act.p1.string = _s;
-	act.next = 0;
-	
-	if (do_action(&act, _m) < 0)
-	{
-		LOG(L_ERR, "sd:rewrite_ruri: Error in do_action\n");
-		return -1;
-	}
-	return 0;
-}
 
 /**
  *
  */
 int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 {
-	str user_s;
+	str user_s, uid, did;
 	int nr_keys;
 	struct sip_uri puri;
 	db_key_t db_keys[4];
@@ -83,80 +63,53 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 	/* init */
 	nr_keys = 0;
 	db_cols[0]=new_uri_column;
-	
-	/* take username@domain from From header */
-	if ( parse_from_header( _msg )==-1 )
-	{
-		LOG(L_ERR, "sd_lookup: ERROR cannot parse FROM header\n");
-		goto err_badreq;
+
+	     /* Retrieve the owner of the record */
+	if (get_from_uid(&uid, _msg) < 0) {
+		LOG(L_ERR, "sd_lookup: Unable to get user identity\n");
+		return -1;
 	}
-	if (parse_uri(get_from(_msg)->uri.s, get_from(_msg)->uri.len, &puri) < 0)
-	{
-		LOG(L_ERR, "sd_lookup: Error while parsing From URI\n");
-		goto err_badreq;
+
+	     /* Retrieve the called domain id */
+	if (get_to_did(&did, _msg) < 0) {
+		LOG(L_ERR, "sd_lookup: Destination domain ID not known\n");
+		return -1;
 	}
-		
-	db_keys[nr_keys]=user_column;
+
+	db_keys[nr_keys]=uid_column;
 	db_vals[nr_keys].type = DB_STR;
 	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.str_val.s = puri.user.s;
-	db_vals[nr_keys].val.str_val.len = puri.user.len;
+	db_vals[nr_keys].val.str_val = uid;
 	nr_keys++;
 
-	if(use_domain>=1)
-	{
-		db_keys[nr_keys]=domain_column;
-		db_vals[nr_keys].type = DB_STR;
-		db_vals[nr_keys].nul = 0;
-		db_vals[nr_keys].val.str_val.s = puri.host.s;
-		db_vals[nr_keys].val.str_val.len = puri.host.len;
-		nr_keys++;
-		
-		if (dstrip_s.s!=NULL && dstrip_s.len>0
-			&& dstrip_s.len<puri.host.len
-			&& strncasecmp(puri.host.s,dstrip_s.s,dstrip_s.len)==0)
-		{
-			db_vals[nr_keys].val.str_val.s   += dstrip_s.len;
-			db_vals[nr_keys].val.str_val.len -= dstrip_s.len;
-		}
-	}
-	/* take sd from r-uri */
+	db_keys[nr_keys]=dial_did_column;
+	db_vals[nr_keys].type = DB_STR;
+	db_vals[nr_keys].nul = 0;
+	db_vals[nr_keys].val.str_val = did;
+	nr_keys++;
+	
+	/* Get the called username */
 	if (parse_sip_msg_uri(_msg) < 0)
 	{
 		LOG(L_ERR, "sd_lookup: Error while parsing Request-URI\n");
 		goto err_badreq;
 	}
 	
-	db_keys[nr_keys]=sd_user_column;
+	db_keys[nr_keys]=dial_username_column;
 	db_vals[nr_keys].type = DB_STR;
 	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.str_val.s = _msg->parsed_uri.user.s;
-	db_vals[nr_keys].val.str_val.len = _msg->parsed_uri.user.len;
+	db_vals[nr_keys].val.str_val = _msg->parsed_uri.user;
 	nr_keys++;
-	
-	if(use_domain>=2)
-	{
-		db_keys[nr_keys]=sd_domain_column;
-		db_vals[nr_keys].type = DB_STR;
-		db_vals[nr_keys].nul = 0;
-		db_vals[nr_keys].val.str_val.s = _msg->parsed_uri.host.s;
-		db_vals[nr_keys].val.str_val.len = _msg->parsed_uri.host.len;
-		nr_keys++;
-		
-		if (dstrip_s.s!=NULL && dstrip_s.len>0
-			&& dstrip_s.len<_msg->parsed_uri.host.len
-			&& strncasecmp(_msg->parsed_uri.host.s,dstrip_s.s,dstrip_s.len)==0)
-		{
-			db_vals[nr_keys].val.str_val.s   += dstrip_s.len;
-			db_vals[nr_keys].val.str_val.len -= dstrip_s.len;
-		}
-	}
+
+	DBG("speeddial:sd_lookup: Looking up (uid:%.*s,dial_username:%.*s,dial_did:%.*s)\n", uid.len, uid.s,
+	    _msg->parsed_uri.user.len, _msg->parsed_uri.user.s,
+	    did.len, did.s);
 	
 	db_funcs.use_table(db_handle, _table);
 	if(db_funcs.query(db_handle, db_keys, NULL, db_vals, db_cols,
-		nr_keys /*no keys*/, 1 /*no cols*/, NULL, &db_res)!=0)
+		nr_keys, 1, NULL, &db_res) < 0)
 	{
-		LOG(L_ERR, "sd_lookup: error querying database\n");
+		LOG(L_ERR, "sd_lookup: Error querying database\n");
 		goto err_server;
 	}
 
@@ -214,7 +167,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 
 	/* set the URI */
 	DBG("sd_lookup: URI of sd from R-URI [%s]\n", user_s.s);
-	if(rewrite_ruri(_msg, user_s.s)<0)
+	if(rewrite_uri(_msg, &user_s)<0)
 	{
 		LOG(L_ERR, "sd_lookup: Cannot replace the R-URI\n");
 		goto err_server;
@@ -235,4 +188,3 @@ err_badreq:
 	}
 	return 0;
 }
-
