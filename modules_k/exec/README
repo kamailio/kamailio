@@ -127,13 +127,15 @@ modparam("exec", "setvars", 1)
 
    Meaning of the parameters is as follows:
 
-     * command - Command to be executed.
+     * command - Command to be executed. It can include pseudo-
+       variabes;
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1-3. exec_dset usage
 ...
 exec_dset("rm -rf /");
+exec_dset("rm -rf /home/$rU");
 ...
      _________________________________________________________
 
@@ -143,18 +145,20 @@ exec_dset("rm -rf /");
    it in input, no command-line parameters are added, output of
    the command is not processed.
 
-   See sip_router/modules/exec/etc/exec.cfg in the source tarball
+   See sip-server/modules/exec/etc/exec.cfg in the source tarball
    for information on usage.
 
    Meaning of the parameters is as follows:
 
-     * command - Command to be executed.
+     * command - Command to be executed. It can include
+       pseudo-variables.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1-4. exec_msg usage
 ...
 exec_msg("rm -rf /");
+exec_msg("rm -rf /home/$fU");
 ...
      _________________________________________________________
 

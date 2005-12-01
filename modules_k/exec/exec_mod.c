@@ -34,6 +34,7 @@
 #include "../../str.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
+#include "../../items.h"
 #include "../../parser/parse_uri.h"
 
 #include "exec.h"
@@ -49,14 +50,16 @@ static int mod_init( void );
 inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo);
 inline static int w_exec_msg(struct sip_msg* msg, char* cmd, char* foo);
 
+static int it_list_fixup(void** param, int param_no);
+
 inline static void exec_shutdown();
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"exec_dset", w_exec_dset, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"exec_msg",  w_exec_msg,  1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"exec_dset", w_exec_dset, 1, it_list_fixup, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"exec_msg",  w_exec_msg,  1, it_list_fixup, REQUEST_ROUTE|FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -104,7 +107,15 @@ inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo)
 	str *uri;
 	environment_t *backup;
 	int ret;
-
+#define EXEC_DSET_PRINTBUF_SIZE   1024
+	static char exec_dset_printbuf[EXEC_DSET_PRINTBUF_SIZE];
+	int printbuf_len;
+	xl_elem_t *model;
+	char *cp;
+	
+	if(msg==0 || cmd==0)
+		return -1;
+	
 	backup=0;
 	if (setvars) {
 		backup=set_env(msg);
@@ -118,8 +129,24 @@ inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo)
 		uri=&msg->new_uri;
 	else
 		uri=&msg->first_line.u.request.uri;
+	
+	model = (xl_elem_t*)cmd;
+	if(model->next==0 && model->spec.itf==0) {
+		cp = model->text.s;
+	} else {
+		printbuf_len = EXEC_DSET_PRINTBUF_SIZE-1;
+		if(xl_printf(msg, model, exec_dset_printbuf, &printbuf_len)<0)
+		{
+			LOG(L_ERR,
+				"exec:w_exec_dset: error - cannot print the format\n");
+			return -1;
+		}
+		cp = exec_dset_printbuf;
+	}
+	
+	DBG("exec:w_exec_dset: executing [%s]\n", cp);
 
-	ret=exec_str(msg, cmd, uri->s, uri->len);
+	ret=exec_str(msg, cp, uri->s, uri->len);
 	if (setvars) {
 		unset_env(backup);
 	}
@@ -131,18 +158,70 @@ inline static int w_exec_msg(struct sip_msg* msg, char* cmd, char* foo)
 {
 	environment_t *backup;
 	int ret;
+#define EXEC_MSG_PRINTBUF_SIZE   1024
+	static char exec_msg_printbuf[EXEC_MSG_PRINTBUF_SIZE];
+	int printbuf_len;
+	xl_elem_t *model;
+	char *cp;
+	
+	if(msg==0 || cmd==0)
+		return -1;
 
 	backup=0;
 	if (setvars) {
 		backup=set_env(msg);
 		if (!backup) {
-			LOG(L_ERR, "ERROR: w_exec_msg: no env created\n");
+			LOG(L_ERR, "ERROR:w_exec_msg: no env created\n");
 			return -1;
 		}
 	}
-	ret=exec_msg(msg,cmd);
+	
+	model = (xl_elem_t*)cmd;
+	if(model->next==0 && model->spec.itf==0) {
+		cp = model->text.s;
+	} else {
+		printbuf_len = EXEC_MSG_PRINTBUF_SIZE-1;
+		if(xl_printf(msg, model, exec_msg_printbuf, &printbuf_len)<0)
+		{
+			LOG(L_ERR,
+				"exec:w_exec_msg: error - cannot print the format\n");
+			return -1;
+		}
+		cp = exec_msg_printbuf;
+	}
+	
+	DBG("exec:w_exec_msg: executing [%s]\n", cp);
+	
+	ret=exec_msg(msg, cp);
 	if (setvars) {
 		unset_env(backup);
 	}
 	return ret;
 }
+
+/*
+ * Convert char* parameter to xl_elem parameter
+ */
+static int it_list_fixup(void** param, int param_no)
+{
+	xl_elem_t *model;
+	if(param_no==1)
+	{
+		if(*param)
+		{
+			if(xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS)<0)
+			{
+				LOG(L_ERR, "ERROR:exec:it_list_fixup: wrong format[%s]\n",
+					(char*)(*param));
+				return E_UNSPEC;
+			}
+			*param = (void*)model;
+		}
+	} else {
+		LOG(L_ERR, "ERROR:exec:it_list_fixup: wrong format[%s]\n",
+					(char*)(*param));
+		return E_UNSPEC;
+	}
+	return 0;
+}
+
