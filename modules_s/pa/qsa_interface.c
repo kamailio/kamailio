@@ -171,6 +171,7 @@ static void pa_unsubscribe(notifier_t *n, subscription_t *subscription)
 		if (!p) continue;
 			
 		remove_internal_subscription(p, subscription);
+		p->flags |= PFLAG_WATCHERINFO_CHANGED;
 		
 		unlock_pdomain(dl->d);
 		dl = dl->next;
