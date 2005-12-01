@@ -210,7 +210,7 @@ static void destroy(void)
 
 static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 {
-	struct to_body* from;
+	struct to_body* from, *to;
 	struct sip_uri puri;
 	str did, uid;
 	long id;
@@ -236,6 +236,7 @@ static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 		flag = DB_IS_FROM;
 		
 		if (parse_from_header(msg) < 0) {
+			LOG(L_ERR, "uri_db:lookup_user: Error while parsing From header\n");
 			return -1;
 		}
 		from = get_from(msg);
@@ -248,6 +249,18 @@ static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 			return -1;
 		}
 		vals[0].val.str_val = puri.user;
+	} else if (id == LOAD_TO) {
+		get_to_did(&did, msg);
+		to = get_to(msg);
+		if (!to) {
+			LOG(L_ERR, "uri_db:lookup_user: Unable to get To username\n");
+			return -1;
+		}
+		if (parse_uri(to->uri.s, to->uri.len, &puri) < 0) {
+			LOG(L_ERR, "uri_db:lookup_user: Error while parsing To URI\n");
+			return -1;
+		}
+		vals[0].val.str_val = puri.user;			
 	} else {
 		get_to_did(&did, msg);
 		flag = DB_IS_TO;
@@ -282,8 +295,8 @@ static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 			continue;
 		}
 
-		if ((val[1].val.int_val && DB_LOAD_SER) == 0) continue; /* Not for SER */
-		if ((val[1].val.int_val && flag) == 0) continue;        /* Not allowed in the header we are interested in */
+		if ((val[1].val.int_val & DB_LOAD_SER) == 0) continue; /* Not for SER */
+		if ((val[1].val.int_val & flag) == 0) continue;        /* Not allowed in the header we are interested in */
 		goto found;
 	}
 	return -1; /* Not found -> not allowed */
