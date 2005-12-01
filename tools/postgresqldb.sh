@@ -29,8 +29,8 @@
 
 
 # include resource files, if any
-if [ -f /etc/ser/.openserpostgresqlrc ]; then
-	. /etc/ser/.openserpostgresqlrc
+if [ -f /etc/openser/.openserpostgresqlrc ]; then
+	. /etc/openser/.openserpostgresqlrc
 fi
 if [ -f /usr/local/etc/openser/.openserpostgresqlrc ]; then
 	. /usr/local/etc/openser/.openserpostgresqlrc

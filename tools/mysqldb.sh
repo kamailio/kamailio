@@ -23,8 +23,8 @@
 
 
 # include resource files, if any
-if [ -f /etc/ser/.opensermysqlrc ]; then
-	. /etc/ser/.opensermysqlrc
+if [ -f /etc/openser/.opensermysqlrc ]; then
+	. /etc/openser/.opensermysqlrc
 fi
 if [ -f /usr/local/etc/openser/.opensermysqlrc ]; then
 	. /usr/local/etc/openser/.opensermysqlrc
