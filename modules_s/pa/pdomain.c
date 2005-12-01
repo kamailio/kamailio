@@ -213,9 +213,6 @@ void unlock_pdomain(pdomain_t* _d)
 	     lock_release(&_d->lock);
 }
 
-/* FIXME: this is only temporarily - till this function in core */
-int get_presentity_uuid(str *uuid, const str *uri);
-
 /*
  * Find a presentity in domain
  */

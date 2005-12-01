@@ -251,6 +251,9 @@ resource_list_t *resource_list_remove(resource_list_t *list, str *uri);
 
 int db_remove_presentity(presentity_t* presentity);
 
+/* helper function - will be removed - FIXME */
+int get_presentity_uuid(str *uuid, const str *uri);
+	
 /*
  * Create a new presentity but no watcher list
  */

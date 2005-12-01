@@ -102,7 +102,6 @@ static int pa_subscribe(notifier_t *n, subscription_t *subscription)
 	dlist_t *dl;
 	presentity_t *p = NULL;
 	internal_pa_subscription_t *ss;
-	int send_notify = 1;
 	
 	DEBUG_LOG("SUBSCRIBE to PA for %.*s [%.*s]\n", 
 			FMT_STR(subscription->record_id),
@@ -123,14 +122,13 @@ static int pa_subscribe(notifier_t *n, subscription_t *subscription)
 			DEBUG_LOG("creating presentity\n");
 			if (create_presentity_ex(dl->d, &subscription->record_id, &p) < 0) {
 				ERROR_LOG("can't create presentity\n");
-				send_notify = 0; /* will be sent after callback adds tuple */
 			}
 		}
 		if (p) {
 			/* add server subscription to p */
 			if (add_internal_subscription(p, ss) == 0) {
-				/* send first notify info ? it will be done from callback ? */
-				if (send_notify) notify_qsa_watchers(p);
+				p->flags |= PFLAG_WATCHERINFO_CHANGED;
+				notify_internal_watcher(p, ss);
 			}
 			else {
 				/* error adding subscription to p (auth failed, ...) */
@@ -217,6 +215,10 @@ int notify_internal_watcher(presentity_t *p, internal_pa_subscription_t *ss)
 	client_notify_info_t *info;
 	mq_message_t *msg;
 	presentity_info_t *pinfo;
+
+	/* notify only accepted watchers */
+	if ((ss->status == WS_PENDING) || (ss->status == WS_REJECTED)) 
+		return 1;
 	
 	pinfo = presentity2presentity_info(p);
 	if (!pinfo) {
@@ -254,12 +256,7 @@ int notify_qsa_watchers(presentity_t *p)
 	/* DEBUG_LOG("notify_qsa_watchers for %.*s\n", FMT_STR(p->uri)); */
 	ss = p->first_qsa_subscription;
 	while (ss) {
-		if ((ss->status == WS_PENDING) || (ss->status == WS_REJECTED)) {
-			/* don't notify unauthorized watchers */
-			ss = ss->next;
-			continue;
-		}
-		if (res == 0) res = notify_internal_watcher(p, ss);
+		if (notify_internal_watcher(p, ss) < 0) res = -1;
 		ss = ss->next;
 	}
 	return res;

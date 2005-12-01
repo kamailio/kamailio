@@ -147,8 +147,8 @@ static param_export_t params[]={
 	{"watcherinfo_notify",   INT_PARAM, &watcherinfo_notify   },
 	{"auth", STR_PARAM, &auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
 	{"auth_xcap_root", STR_PARAM, &auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
-	{"winfo_auth", STR_PARAM, &auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
-	{"winfo_auth_xcap_root", STR_PARAM, &auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
+	{"winfo_auth", STR_PARAM, &winfo_auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
+	{"winfo_auth_xcap_root", STR_PARAM, &winfo_auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
 	{0, 0, 0}
 };
 

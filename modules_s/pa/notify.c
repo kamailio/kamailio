@@ -272,6 +272,7 @@ static inline int add_subs_state_hf(str* _h, int _l, watcher_status_t _s, time_t
 	str_append(_h, s.s, s.len);
 	
 	switch(_s) {
+		case WS_PENDING:;
 		case WS_ACTIVE:
 			str_append(_h, SS_EXPIRES, SS_EXPIRES_L);
 			num = int2str((unsigned int)_e, &len);
@@ -285,7 +286,6 @@ static inline int add_subs_state_hf(str* _h, int _l, watcher_status_t _s, time_t
 			str_append(_h, reason[_r].s, reason[_r].len);
 			break;
 
-		case WS_PENDING: break;
 	}
 
 	str_append(_h, CRLF, CRLF_L);
