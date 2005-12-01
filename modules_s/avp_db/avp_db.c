@@ -228,7 +228,7 @@ static int load_attrs(str* uid, int track)
 	}
 	DBG("avp_db:load_attrs: %d user attributes found, %d loaded\n", res->n, n);
 	db.free_result(con, res);
-	return 0;	
+	return 1;
 }
 
 
