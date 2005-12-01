@@ -151,7 +151,7 @@ static int fix_expr(struct expr* exp)
 			}
 			if (exp->r_type==STRING_ST) {
 				int len;
-				if (exp->l.string) len = strlen(exp->r.string);
+				if (exp->r.string) len = strlen(exp->r.string);
 				else len = 0;
 				exp->r.str.s = exp->r.string;
 				exp->r.str.len = len;
