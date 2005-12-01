@@ -96,7 +96,7 @@ static int mod_init(void)
 	DBG("group_radius - initializing\n");
 
 	memset(attrs, 0, sizeof(attrs));
-	memset(attrs, 0, sizeof(vals));
+	memset(vals, 0, sizeof(vals));
 	attrs[A_SERVICE_TYPE].n	= "Service-Type";
 	attrs[A_USER_NAME].n	= "User-Name";
 	attrs[A_SIP_GROUP].n    = "Sip-Group";

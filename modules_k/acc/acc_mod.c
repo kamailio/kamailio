@@ -401,7 +401,7 @@ static int mod_init( void )
 	}
 
 	memset(attrs, 0, sizeof(attrs));
-	memset(attrs, 0, sizeof(vals));
+	memset(vals, 0, sizeof(vals));
 	attrs[A_CALLING_STATION_ID].n			= "Calling-Station-Id";
 	attrs[A_CALLED_STATION_ID].n			= "Called-Station-Id";
 	attrs[A_SIP_TRANSLATED_REQUEST_URI].n	= "Sip-Translated-Request-URI";
