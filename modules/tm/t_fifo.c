@@ -321,13 +321,13 @@ int parse_tw_append( modparam_t type, void* val)
 			}
 			if (n&AVP_NAME_STR) {
 				/* string name */
-				ha->sval.s = (char*)pkg_malloc(avp_name.s->len+1);
+				ha->sval.s = (char*)pkg_malloc(avp_name.s.len+1);
 				if (ha->sval.s==0) {
 					LOG(L_ERR,"ERROR:tm:parse_tw_append: no more pkg mem\n");
 					goto error;
 				}
-				memcpy( ha->sval.s, avp_name.s->s, avp_name.s->len);
-				ha->sval.len = avp_name.s->len;
+				memcpy( ha->sval.s, avp_name.s.s, avp_name.s.len);
+				ha->sval.len = avp_name.s.len;
 				ha->sval.s[ha->sval.len] = 0;
 				if (ha->title.s==0)
 					ha->title = ha->sval;
@@ -597,9 +597,9 @@ static inline char* append2buf( char *buf, int len, struct sip_msg *req,
 		if (ha->type==ELEM_IS_AVP) {
 			/* search for the AVP */
 			if (ha->sval.s) {
-				avp_name.s=&ha->sval;
+				avp_name.s=ha->sval;
 				avp = search_first_avp( AVP_NAME_STR, avp_name, &avp_val, 0);
-				DBG("AVP <%.*s>: %p\n",avp_name.s->len,avp_name.s->s,avp);
+				DBG("AVP <%.*s>: %p\n",avp_name.s.len, avp_name.s.s, avp);
 			} else {
 				avp_name.n=ha->ival;
 				avp = search_first_avp( 0, avp_name, &avp_val, 0);
@@ -608,7 +608,7 @@ static inline char* append2buf( char *buf, int len, struct sip_msg *req,
 			if (avp) {
 				if (avp->flags&AVP_VAL_STR) {
 					buf=add2buf( buf, end, ha->title.s, ha->title.len,
-						avp_val.s->s , avp_val.s->len);
+						avp_val.s.s , avp_val.s.len);
 					if (!buf)
 						goto overflow_err;
 				} else {

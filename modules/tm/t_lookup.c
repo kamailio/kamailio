@@ -293,7 +293,7 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 	struct via_body *via1;
 	int is_ack;
 	int dlg_parsed;
-	int ret;
+	int ret = 0;
 	struct cell *e2e_ack_trans;
 
 	e2e_ack_trans=0;
@@ -338,6 +338,7 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 			ret=ack_matching(p_cell /* t w/invite */, p_msg /* ack */);
 			if (ret>0) {
 				e2e_ack_trans=p_cell;
+				break;
 			}
 			/* this ACK is neither local "negative" one, nor a proxied
 			 * end-2-end one, nor an end-2-end one for a UAS transaction
@@ -360,7 +361,7 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 	/* just check if it we found an e2e ACK previously */
 	if (e2e_ack_trans) {
 		*trans=e2e_ack_trans;
-		return 2;
+		return ret;
 	}
 	DBG("DEBUG: RFC3261 transaction matching failed\n");
 	return 0;

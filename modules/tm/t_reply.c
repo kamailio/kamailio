@@ -491,7 +491,7 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 	static enum route_mode backup_mode;
 	static struct cell *backup_t;
 	static unsigned int backup_msgid;
-	static struct usr_avp **backup_list;
+	static avp_list_t* backup_list;
 	static struct socket_info* backup_si;
 
 	if (msg) {
@@ -514,7 +514,7 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 		global_msg_id=msg->id;
 		set_t(t);
 		/* make available the avp list from transaction */
-		backup_list = set_user_avp_list( &t->user_avps );
+		backup_list = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps );
 		/* set default send address to the saved value */
 		backup_si=bind_address;
 		bind_address=t->uac[0].request.dst.send_sock;
@@ -524,7 +524,7 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 		global_msg_id=backup_msgid;
 		rmode=backup_mode;
 		/* restore original avp list */
-		set_user_avp_list( backup_list );
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, backup_list );
 		bind_address=backup_si;
 	}
 }
@@ -1267,7 +1267,7 @@ int reply_received( struct sip_msg  *p_msg )
 	struct ua_client *uac;
 	struct cell *t;
 	str next_hop;
-	struct usr_avp **backup_list;
+	avp_list_t* backup_list;
 	unsigned int timer;
 
 	/* make sure we know the associated transaction ... */
@@ -1334,13 +1334,13 @@ int reply_received( struct sip_msg  *p_msg )
 		/* transfer transaction flag to message context */
 		if (t->uas.request) p_msg->flags=t->uas.request->flags;
 		/* set the as avp_list the one from transaction */
-		backup_list = set_user_avp_list( &t->user_avps );
+		backup_list = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps );
 		if (run_actions(onreply_rlist[t->on_reply], p_msg)<0)
 			LOG(L_ERR, "ERROR: on_reply processing failed\n");
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
 		/* restore original avp list */
-		set_user_avp_list( backup_list );
+		set_avp_list( AVP_TRACK_FROM | AVP_CLASS_USER, backup_list );
 	}
 	LOCK_REPLIES( t );
 	if ( is_local(t) ) {
@@ -1382,7 +1382,7 @@ int reply_received( struct sip_msg  *p_msg )
 			   attempt to restart retransmission any more
 			*/
 
-			backup_list = set_user_avp_list( &t->user_avps );
+			backup_list = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER,  &t->user_avps );
 			if (!fr_inv_avp2timer(&timer)) {
 				DBG("reply_received: FR_INV_TIMER = %d\n", timer);
 				set_timer( & uac->request.fr_timer,
@@ -1392,7 +1392,7 @@ int reply_received( struct sip_msg  *p_msg )
 				set_timer( & uac->request.fr_timer,
 					   FR_INV_TIMER_LIST, 0 );
 			}
-			set_user_avp_list( backup_list );
+			set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER,  backup_list );
 		} else {
 			     /* non-invite: restart retransmissions (slow now) */
 			uac->request.retr_list=RT_T2;

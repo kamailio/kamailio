@@ -203,7 +203,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 
 	/* better reset avp list now - anyhow, it's useless from
 	 * this point (bogdan) */
-	reset_user_avps();
+	reset_avps();
 
 	/* add the callback the the transaction for LOCAL_COMPLETED event */
  

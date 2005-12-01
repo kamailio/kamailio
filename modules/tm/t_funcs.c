@@ -73,7 +73,7 @@ static str     fr_inv_timer_str;
 /* ----------------------------------------------------- */
 int send_pr_buffer(	struct retr_buf *rb, void *buf, int len
 #ifdef EXTRA_DEBUG
-						, char* file, char *function, int line
+						, char* file, const char *function, int line
 #endif
 					)
 {
@@ -326,7 +326,7 @@ static inline int avp2timer(unsigned int* timer, int type, int_str name)
 	int_str val_istr;
 	int err;
 
-	avp = search_first_avp( type, name, &val_istr, 0);
+	avp = search_first_avp( type | AVP_TRACK_TO, name, &val_istr, 0);
 	if (!avp) {
 		/*
 		 DBG("avp2timer: AVP '%.*s' not found\n", param.s->len, ZSW(param.s->s));
@@ -335,7 +335,7 @@ static inline int avp2timer(unsigned int* timer, int type, int_str name)
 	}
 	
 	if (avp->flags & AVP_VAL_STR) {
-		*timer = str2s(val_istr.s->s, val_istr.s->len, &err);
+		*timer = str2s(val_istr.s.s, val_istr.s.len, &err);
 		if (err) {
 			LOG(L_ERR, "avp2timer: Error while converting string to integer\n");
 			return -1;
