@@ -31,6 +31,9 @@
 #include "parser/digest/digest.h"
 #include "ut.h"
 
+static str uid_name = STR_STATIC_INIT(AVP_UID);
+static str did_name = STR_STATIC_INIT(AVP_DID);
+
 
 /*
  * Set From UID
@@ -38,9 +41,10 @@
 void set_from_uid(str* uid)
 {
 	struct search_state s;
-	int_str name, val;
+	int_str val, name;
 	avp_t* a;
 
+	name.s = uid_name;
 	a = search_first_avp(AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR, name, 0, &s);
 	while(a) {
 		destroy_avp(a);
@@ -75,10 +79,9 @@ int get_from_uid(str* uid, struct sip_msg* msg)
 	struct to_body* from;
 	struct sip_uri puri;
 	str* du;
-	static str name_s = STR_STATIC_INIT(AVP_UID);
-	int_str name, val;
+	int_str val, name;
 
-	name.s = name_s;
+	name.s = uid_name;
 	if (search_first_avp(AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR, name, &val, 0)) {
 		*uid = val.s;
 		return 1;
@@ -122,9 +125,10 @@ int get_from_uid(str* uid, struct sip_msg* msg)
 void set_to_uid(str* uid)
 {
 	struct search_state s;
-	int_str name, val;
+	int_str val, name;
 	avp_t* a;
 
+	name.s = uid_name;
 	a = search_first_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR, name, 0, &s);
 	while(a) {
 		destroy_avp(a);
@@ -144,10 +148,9 @@ int get_to_uid(str* uid, struct sip_msg* msg)
 	static char buf[MAX_URI_SIZE];
 	struct to_body* to;
 	struct sip_uri puri;
-	static str name_s = STR_STATIC_INIT(AVP_UID);
-	int_str name, val;
+	int_str val, name;
 
-	name.s = name_s;
+	name.s = uid_name;
 	if (search_first_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR, name, &val, 0)) {
 		*uid = val.s;
 		return 1;
@@ -179,11 +182,10 @@ int get_to_uid(str* uid, struct sip_msg* msg)
  */
 int get_to_did(str* did, struct sip_msg* msg)
 {
-	static str name_s = STR_STATIC_INIT(AVP_DID);
-	int_str name, val;
+	int_str val, name;
 
-	name.s = name_s;
-	if (search_first_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR, name, &val, 0)) {
+	name.s = did_name;
+	if (search_first_avp(AVP_TRACK_TO | AVP_NAME_STR, name, &val, 0)) {
 		*did = val.s;
 		return 1;
 	} 
@@ -196,11 +198,10 @@ int get_to_did(str* did, struct sip_msg* msg)
  */
 int get_from_did(str* did, struct sip_msg* msg)
 {
-	static str name_s = STR_STATIC_INIT(AVP_DID);
-	int_str name, val;
+	int_str val, name;
 
-	name.s = name_s;
-	if (search_first_avp(AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR, name, &val, 0)) {
+	name.s = did_name;
+	if (search_first_avp(AVP_TRACK_FROM | AVP_NAME_STR, name, &val, 0)) {
 		*did = val.s;
 		return 1;
 	} 
