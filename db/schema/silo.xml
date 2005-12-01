@@ -22,13 +22,13 @@
     </column>
 
     <column>
-	<name>from</name>
+	<name>from_hdr</name>
 	<type>string</type>
 	<size>255</size>
     </column>
 
     <column>
-	<name>to</name>
+	<name>to_hdr</name>
 	<type>string</type>
 	<size>255</size>
     </column>

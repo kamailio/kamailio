@@ -236,8 +236,8 @@ CREATE TABLE grp (
 
 CREATE TABLE silo (
     mid int NOT NULL,
-    from string(255) NOT NULL,
-    to string(255) NOT NULL,
+    from_hdr string(255) NOT NULL,
+    to_hdr string(255) NOT NULL,
     ruri string(255) NOT NULL,
     uid string(64) NOT NULL,
     inc_time datetime NOT NULL DEFAULT '1970-01-01 00:00:00',

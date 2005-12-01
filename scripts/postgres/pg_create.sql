@@ -257,8 +257,8 @@ CREATE INDEX grp_idx ON grp (uid, grp);
 
 CREATE TABLE silo (
     mid SERIAL NOT NULL,
-    from VARCHAR(255) NOT NULL,
-    to VARCHAR(255) NOT NULL,
+    from_hdr VARCHAR(255) NOT NULL,
+    to_hdr VARCHAR(255) NOT NULL,
     ruri VARCHAR(255) NOT NULL,
     uid VARCHAR(64) NOT NULL,
     inc_time TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
