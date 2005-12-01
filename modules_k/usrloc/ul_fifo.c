@@ -514,9 +514,10 @@ static inline int print_contacts(FILE* _o, ucontact_t* _c)
 			if (cnt==1) {
 				fputs( "200 OK\n", _o);
 			}
-			fprintf(_o, "<%.*s>;q=%s;expires=%d\n",
+			fprintf(_o, "<%.*s>;q=%s;expires=%d;flags=0x%X;received=<%.*s>\n",
 				_c->c.len, ZSW(_c->c.s),
-				q2str(_c->q, 0), (int)(_c->expires - act_time));
+				q2str(_c->q, 0), (int)(_c->expires - act_time),
+				_c->flags,_c->received.len, ZSW(_c->received.s) );
 		}
 
 		_c = _c->next;
