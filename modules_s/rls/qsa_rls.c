@@ -121,10 +121,10 @@ static int rls_subscribe(notifier_t *n, subscription_t *subscription)
 	
 	if ((!subscription) || (!rls_internal_data)) return -1;
 	
-	DEBUG_LOG("internal subscribe to RLS for %.*s [%.*s]\n", 
+/*	DEBUG_LOG("internal subscribe to RLS for %.*s [%.*s]\n", 
 			FMT_STR(subscription->record_id),
 			FMT_STR(subscription->package->name));
-	
+	*/
 	/* subscriptions MUST be processed asynchronously due to
 	 * locking the same mutex in subscriber and NOTIFIER 
 	 * (RLS subscribes to itself) !!! */
@@ -149,9 +149,9 @@ static void rls_unsubscribe(notifier_t *n, subscription_t *subscription)
 	
 	if ((!subscription) || (!rls_internal_data)) return;
 	
-	DEBUG_LOG("internal unsubscribe to RLS for %.*s [%.*s]\n", 
+/*	DEBUG_LOG("internal unsubscribe to RLS for %.*s [%.*s]\n", 
 			FMT_STR(subscription->record_id),
-			FMT_STR(subscription->package->name));
+			FMT_STR(subscription->package->name));*/
 	
 	/* subscriptions MUST be processed asynchronously due to
 	 * locking the same mutex in subscriber and NOTIFIER 
@@ -171,12 +171,12 @@ static void rls_unsubscribe(notifier_t *n, subscription_t *subscription)
 static void process_subscription(subscription_t *subscription)
 {
 	rl_subscription_t *rls;
-	char *xcap_root = "http://localhost/simulated-xcap";
+	char *xcap_root = "http://localhost/simulated-xcap"; /* FIXME: testing only!!! */
 	
 	/* try to make subscription and release it if internal subscription 
 	 * not created */
 	
-	DEBUG_LOG("*** processing INTERNAL RLS subscription ***\n");
+	/* DEBUG_LOG("*** processing INTERNAL RLS subscription ***\n"); */
 	
 	/* FIXME: test if no such subscription exists yet (possibility of cyclus) */
 
@@ -184,25 +184,26 @@ static void process_subscription(subscription_t *subscription)
 
 	rls = rls_alloc_subscription(rls_internal_subscription);
 	if (!rls) {
+		DEBUG_LOG("processing INTERNAL RLS subscription - memory allocation error\n");
 		release_subscription(subscription);
 		rls_unlock();
 		return;
 	}
 
 	rls->internal.s = subscription;
+	DOUBLE_LINKED_LIST_ADD(rls_internal_data->first, 
+			rls_internal_data->last, &rls->internal);
 
 	if (create_virtual_subscriptions(rls, xcap_root) != 0) {
-		DEBUG_LOG("*** INTERNAL RLS subscription not for list - removing it ***\n");
-		release_subscription(subscription);
-		rls->internal.s = NULL; /* disable freeing of it in rls_free !!! */
+		/* DEBUG_LOG("*** INTERNAL RLS subscription not for list - removing it ***\n"); */
 		rls_free(rls);
 		rls_unlock();
 		return;
 	}
 	
-	DEBUG_LOG("*** INTERNAL RLS subscription is for list - added ***\n");
-	DOUBLE_LINKED_LIST_ADD(rls_internal_data->first, 
-			rls_internal_data->last, &rls->internal);
+	DEBUG_LOG("*** added INTERNAL RLS subscription to %.*s (%p)***\n", 
+			FMT_STR(subscription->record_id), subscription);
+	
 	rls_unlock();
 }
 
@@ -213,7 +214,8 @@ static void process_unsubscription(subscription_t *subscription)
 	
 	/* verify if subscription is processed and release it if yes */
 	rls_lock();
-	DEBUG_LOG("*** processing INTERNAL RLS unsubscription ***\n");
+	DEBUG_LOG("*** processing INTERNAL RLS unsubscription (%p) ***\n", 
+			subscription);
 
 	/* find the subscription - FIXME: use hashing? */
 	is = rls_internal_data->first;
@@ -225,7 +227,8 @@ static void process_unsubscription(subscription_t *subscription)
 		is = is->next;
 	}
 
-	if (rls) release_internal_subscription(rls);
+	if (rls) rls_free(rls);
+		/* release_internal_subscription(rls); */
 	
 	rls_unlock();
 }

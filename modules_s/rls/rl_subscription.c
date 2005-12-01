@@ -503,6 +503,8 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 	str headers, content_type;
 	static str method = STR_STATIC_INIT(METHOD_NOTIFY);
 	dlg_t *dlg;
+	int exp_time = 0;
+	char expiration[32];
 	
 	dlg = s->external.dialog;
 	if (!dlg) return -1;
@@ -516,14 +518,19 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 		}
 	}
 	
+	exp_time = sm_subscription_expires_in(rls_manager, &s->external);
+	sprintf(expiration, ";expires=%d\r\n", exp_time);
+		
 	dstr_init(&dstr, 256);
 	dstr_append_zt(&dstr, "Subscription-State: ");
 	switch (s->external.status) {
 		case subscription_active: 
-				dstr_append_zt(&dstr, "active\r\n");
+				dstr_append_zt(&dstr, "active");
+				dstr_append_zt(&dstr, expiration);
 				break;
 		case subscription_pending: 
-				dstr_append_zt(&dstr, "pending\r\n");
+				dstr_append_zt(&dstr, "pending");
+				dstr_append_zt(&dstr, expiration);
 				break;
 		case subscription_terminated_pending: 
 		case subscription_terminated: 
@@ -565,14 +572,14 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 	}
 	else {
 		/* the subscritpion will be destroyed if NOTIFY delivery problems */
-		rls_unlock(); /* the callback locks this mutex ! */
+		/* rls_unlock();  the callback locks this mutex ! */
 		
 		/* !!!! FIXME: callbacks can't be safely used (may be called or not,
 		 * may free memory automaticaly or not) !!! */
 		res = tmb.t_request_within(&method, &headers, &doc, dlg, 0, 0);
 		
 /*		res = tmb.t_request_within(&method, &headers, &doc, dlg, rls_notify_cb, s); */
-		rls_lock(); /* the callback locks this mutex ! */
+		/* rls_lock(); the callback locks this mutex ! */
 		if (res < 0) {
 			/* does this mean, that the callback was not called ??? */
 			LOG(L_ERR, "rls_generate_notify(): t_request_within FAILED: %d! Freeing RL subscription.\n", res);
