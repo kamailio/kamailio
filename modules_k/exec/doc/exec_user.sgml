@@ -167,6 +167,11 @@ modparam("exec", "setvars", 1)
 		</listitem>
 		</itemizedlist>
 		<para>
+		WARNING: if the var you are passing out has a bash special
+		character in it, the var needs to be placed inside quotes, for ex:
+		exec_msg("print-contact.sh '$ct'");
+		</para>
+		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
@@ -200,6 +205,11 @@ exec_dset("rm -rf /home/$rU");
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		WARNING: if the var you are passing out has a bash special
+		character in it, the var needs to be placed inside quotes, for ex:
+		exec_msg("print-contact.sh '$ct'");
+		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>

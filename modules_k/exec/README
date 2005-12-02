@@ -130,6 +130,10 @@ modparam("exec", "setvars", 1)
      * command - Command to be executed. It can include pseudo-
        variabes;
 
+   WARNING: if the var you are passing out has a bash special
+   character in it, the var needs to be placed inside quotes, for
+   ex: exec_msg("print-contact.sh '$ct'");
+
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1-3. exec_dset usage
@@ -152,6 +156,10 @@ exec_dset("rm -rf /home/$rU");
 
      * command - Command to be executed. It can include
        pseudo-variables.
+
+   WARNING: if the var you are passing out has a bash special
+   character in it, the var needs to be placed inside quotes, for
+   ex: exec_msg("print-contact.sh '$ct'");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
