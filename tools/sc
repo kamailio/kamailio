@@ -364,17 +364,18 @@ cat <<EOF
    * <uri_scheme> and <transport> must be entered in integer or text,*
    * e.g. transport '2' is identical to transport 'tcp'.             *
    *   scheme: 1=sip, 2=sips;   transport: 1=udp, 2=tcp, 3=tls       *
-   * Examples:  serctl lcr addgw_grp usa 1                           *
-   *            serctl lcr addgw level3 1.2.3.4 5080 sip tcp 1       *
-   *            serctl lcr addroute +1 % 1 1                         *
+   * Examples:  lcr addgw_grp usa 1                                  *
+   *            lcr addgw level3 1.2.3.4 5080 sip tcp 1              *
+   *            lcr addroute +1 % 1 1                                *
  lcr show ...................................... show routes, gateways and groups
  lcr reload .................................... reload lcr gateways
  lcr addgw_grp <grp_name> ...................... add gateway group, autocreate grp_id
  lcr addgw_grp <grp_name> <grp_id> ............. add gateway group with grp_id
  lcr rmgw_grp  <grp_id> ........................ delete the gw_grp
- lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> ........... add a gateway
- lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <prefix> .. add a gateway with prefix
- lcr rmgw  <gw_name> ..................................................... delete a gateway
+ lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> .................. add a gateway
+ lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <prefix> ......... add a gateway with prefix
+ lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <prefix> <strip>.. add a gateway with prefix and strip
+ lcr rmgw  <gw_name> ............................................................ delete a gateway
  lcr addroute <prefix> <from> <grp_id> <prio> .. add a route
  lcr rmroute  <prefix> <from> <grp_id> <prio> .. delete a route
 
@@ -914,7 +915,7 @@ lcr() {
 						floor((ip_addr - floor(ip_addr / 16777216) * 16777216 - floor((ip_addr - floor(ip_addr / 16777216) * 16777216) / 65536) * 65536) / 256),
 						floor((ip_addr - floor(ip_addr / 16777216) * 16777216) / 65536),
 						floor(ip_addr / 16777216) ), ') ') as ip, 
-				port, uri_scheme, transport, grp_id, prefix
+				port, uri_scheme, transport, grp_id, strip, prefix
 				FROM $GW_TABLE ORDER BY grp_id; "
 			sql_ro_query "$QUERY"
 			;;
@@ -998,8 +999,14 @@ lcr() {
 			fi
 			if [ $# -gt 6 ] ; then
 				GW_PREFIX=$7
+				if [ $# -gt 7 ] ; then
+					STRIP=$8
+				else
+					STRIP=0
+				fi
 			else
 				GW_PREFIX=""
+				STRIP=0
 			fi
 			GW_NAME=$1
 			GW_PORT=$3
@@ -1024,7 +1031,7 @@ lcr() {
 			GW_IP=$(($1+$2*256+$3*65536+$4*16777216))
 			IFS=$oldIFS
 			prompt_pw
-			QUERY="insert into $GW_TABLE VALUES ('$GW_NAME', $GW_GRP_ID, $GW_IP, $GW_PORT, $GW_URI_SCHEME, $GW_TRANSPORT, '$GW_PREFIX');"
+			QUERY="insert into $GW_TABLE VALUES ('$GW_NAME', $GW_GRP_ID, $GW_IP, $GW_PORT, $GW_URI_SCHEME, $GW_TRANSPORT, $STRIP, '$GW_PREFIX');"
 			sql_query "$QUERY"
 			if [ $? -ne 0 ] ; then
 				echo "SQL Error"
