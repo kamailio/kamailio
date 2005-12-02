@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table role="presence"
+    xmlns:db="http://docbook.org/ns/docbook"
+    xmlns:my="http://iptel.org/dbschema/mysql"
+    xmlns:pg="http://iptel.org/dbschema/postgres"
+    xmlns:dt="http://iptel.org/dbschema/dbtext">
+    <name>rls_vs_names</name>
+    <version>1</version>
+	
+	<!-- table holding information about names of standalone
+	resources in list (i. e. standalone virtual subscriptions) 
+	-->
+    
+	<!-- id of "parent" virtual subscription (related to 
+	rls_vs.id) -->
+    <column>
+		<name>id</name>
+		<type>string</type>
+		<size>48</size>
+    </column>
+	
+	<column>
+		<name>name</name>
+		<type>string</type>
+		<size>64</size>
+		<null/> <!-- ? -->
+	</column>
+	
+	<column>
+		<name>lang</name>
+		<type>string</type>
+		<size>64</size>
+		<null/>
+	</column>
+	
+</table>

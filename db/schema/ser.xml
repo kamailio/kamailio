@@ -68,6 +68,11 @@
     <xi:include href="presentity.xml"/>
     <xi:include href="presentity_contact.xml"/>
     <xi:include href="watcherinfo.xml"/>
+    
+	<!-- Resource-lists related tables -->
+    <xi:include href="rls_subscription.xml"/>
+    <xi:include href="rls_vs.xml"/>
+    <xi:include href="rls_vs_names.xml"/>
 
     <xi:include href="i18n.xml"/>
 
