@@ -181,12 +181,12 @@ PLUS	"+"
 MINUS	"-"
 
 /* Attribute specification */
-ATTR_MARK   "$"|"%"|"@"   /* Prefix */
-ATTR_FROM   "from"|"f"    /* Track specification */ 
-ATTR_TO     "to"|"t"      /* Track specification */
-ATTR_USER   "user"|"u"    /* Class specification */
-ATTR_DOMAIN "domain"|"d"  /* Class specification */
-ATTR_GLOBAL "global"|"g"  /* Class specification */
+ATTR_MARK   "$"|"%"|"@"
+ATTR_FROM   "from"|"f"
+ATTR_TO     "to"|"t"
+ATTR_USER   "user"|"u"
+ATTR_DOMAIN "domain"|"d"
+ATTR_GLOBAL "global"|"g"
 
 /* config vars. */
 DEBUG	debug
