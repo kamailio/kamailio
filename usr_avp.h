@@ -138,7 +138,7 @@ int add_avp(unsigned short flags, int_str name, int_str val);
 int add_avp_list(avp_list_t* list, unsigned short flags, int_str name, int_str val);
 
 /* Delete avps with given type and name */
-int delete_avp(unsigned short flags, int_str name);
+void delete_avp(unsigned short flags, int_str name);
 
 /* search functions */
 avp_t *search_first_avp( unsigned short flags, int_str name,

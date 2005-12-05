@@ -782,7 +782,7 @@ error:
 }
 
 
-int delete_avp(unsigned short flags, int_str name)
+void delete_avp(unsigned short flags, int_str name)
 {
 	struct search_state st;
 	avp_t* avp;

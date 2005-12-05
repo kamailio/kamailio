@@ -376,6 +376,9 @@ inline static int comp_str(int op, str* left, int rtype, union exp_op* r)
 	avp_t* avp;
 	int ret;
 	char backup;
+	regex_t* re;
+	
+	right=0; /* warning fix */
 	
 	if (rtype == AVP_ST) {
 		avp = search_first_avp(r->attr->type, r->attr->name, &val, 0);
@@ -419,19 +422,21 @@ inline static int comp_str(int op, str* left, int rtype, union exp_op* r)
 			backup=left->s[left->len];
 			left->s[left->len]='\0';
 			if (rtype == AVP_ST) {
-				regex_t* re;
 				     /* For AVPs we need to compile the RE on the fly */
 				re=(regex_t*)pkg_malloc(sizeof(regex_t));
 				if (re==0){
 					LOG(L_CRIT, "ERROR: comp_strstr: memory allocation"
 					    " failure\n");
+					left->s[left->len] = backup;
 					goto error;
 				}
 				if (regcomp(re, right->s, REG_EXTENDED|REG_NOSUB|REG_ICASE)) {
 					pkg_free(re);
+					left->s[left->len] = backup;
 					goto error;
 				}				
 				ret=(regexec(re, left->s, 0, 0, 0)==0);
+				regfree(re);
 				pkg_free(re);
 			} else {
 				ret=(regexec(r->re, left->s, 0, 0, 0)==0);

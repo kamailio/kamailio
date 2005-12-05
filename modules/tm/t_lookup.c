@@ -682,7 +682,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 {
 	struct cell*  p_cell;
 	unsigned int hash_index   = 0;
-	int entry_label  = 0;
+	unsigned int entry_label  = 0;
 	unsigned int branch_id    = 0;
 	char  *hashi, *branchi, *p, *n;
 	int hashl, branchl;
