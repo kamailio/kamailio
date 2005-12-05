@@ -14,17 +14,24 @@ DOCUMENTS ?= index
 #
 ROOT_DIR ?= ../../..
 
+#
+# Output directory where files produced by XSL stylesheets should be stored,
+# by default we output to the same directory, documents that are chunked may
+# choose to override this to write all chunks in a subdirectory instead
+#
+OUTPUT_DIR ?= .
+
 # Stylesheet used to generate dependencies from XML files
 DEP_XSL ?= $(ROOT_DIR)/doc/stylesheets/dep.xsl
 
-# Default stylesheet used to generate HTML
+# Default stylesheet used to generate XHTML
 XHTML_XSL ?= $(ROOT_DIR)/doc/stylesheets/xhtml.xsl
 
 #
 # Stylesheet used to generate plain text documents,
 # this is usually the one used for xhtml
 #
-TXT_XSL ?= $(XHTML_XSL)
+TXT_XSL ?= $(ROOT_DIR)/doc/stylesheets/txt.xsl
 
 #
 # Disable document validation by default
@@ -56,22 +63,31 @@ dep_files = $(addsuffix .d, $(DOCUMENTS))
 xhtml_files = $(addsuffix .xhtml, $(DOCUMENTS))
 txt_files = $(addsuffix .txt, $(DOCUMENTS))
 
-
 xhtml: $(xhtml_files)
 txt: $(txt_files)
 
 %.xhtml: %.xml %.d $(alldep) $(XHTML_XSL)
-	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) --xinclude -o $@ $(XHTML_XSL) $<
+	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
+        --xinclude \
+        --stringparam base.dir "$(OUTPUT_DIR)/" \
+        --stringparam root.filename "$(basename $<)" \
+        --stringparam html.ext ".xhtml" \
+        $(XHTML_XSL) $<
 
 %.txt: %.xml %.d $(alldep)
-	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) --xinclude $(TXT_XSL) $< | \
-	$(LYNX) $(LYNX_FLAGS) -stdin -dump > $@
+	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
+        --xinclude \
+        $(TXT_XSL) $< | $(LYNX) $(LYNX_FLAGS) -stdin -dump > $@
 
 %.png: %.dia $(alldep)
 	$(DIA) $(DIA_ARGS) -t png -e $@ $<
 
 %.d: %.xml $(alldep) 
-	$(XSLTPROC) $(XSLTPROC_FLAGS) --nonet --novalid --stringparam output $@ $(DEP_XSL) $< 
+	$(XSLTPROC) $(XSLTPROC_FLAGS) \
+        --nonet \
+        --novalid \
+        --stringparam output "$@" \
+        $(DEP_XSL) $< 
 
 .PHONY: check
 check: $(xml_files)
@@ -93,4 +109,3 @@ endif
 ifneq (,$(filter-out clean proper realclean distclean check, $(MAKECMDGOALS)))
 include $(dep_files)
 endif
-

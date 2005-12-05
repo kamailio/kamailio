@@ -8,6 +8,8 @@ DOCUMENTS = doc_root
 #
 ROOT_DIR=..
 
+OUTPUT_DIR=xhtml
+
 #
 # Validate docbook documents before generating output
 # (may be slow)
@@ -18,7 +20,7 @@ ROOT_DIR=..
 # You can override the stylesheet used to generate
 # xhtml documents here
 #
-#XHTML_XSL=$(ROOT_DIR)/doc/stylesheets/xhtml.xsl
+XHTML_XSL=$(ROOT_DIR)/doc/stylesheets/xhtml.chunked.xsl
 
 #
 # You can override the stylesheet used to generate
