@@ -118,9 +118,6 @@ FixContact(struct sip_msg* msg, char* str1, char* str2)
     if (!getContactURI(msg, &uri, &contact))
         return -1;
 
-    if (uri.proto != PROTO_UDP && uri.proto != PROTO_NONE)
-        return -1;
-
     newip = ip_addr2a(&msg->rcv.src_ip);
     newiplen = strlen(newip);
 
