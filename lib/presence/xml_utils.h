@@ -23,13 +23,30 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __PRESENCE_PIDF_H
-#define __PRESENCE_PIDF_H
+#include <libxml/parser.h>
+#include <libxml/tree.h>
 
 #include <cds/sstr.h>
-#include <presence/pres_doc.h>
 
-int create_pidf_document(presentity_info_t *p, str_t *dst, str_t *dst_content_type);
-int parse_pidf_document(presentity_info_t **dst, const char *data, int data_len);
+int xmlstrcmp(const xmlChar *xmls, const char *name);
+xmlAttr *find_attr(xmlAttr *first, const char *name);
+const char *find_value(xmlNode *first_child);
+const char *get_node_value(xmlNode *n);
+xmlNode *find_node(xmlNode *parent, const char *name, const char *nspace);
+const char *get_attr_value(xmlAttr *a);
+int cmp_node(xmlNode *node, const char *name, const char *nspace);
+void get_int_attr(xmlNode *n, const char *attr_name, int *dst);
+void get_str_attr(xmlNode *n, const char *attr_name, str_t *dst);
 
-#endif
+time_t xmltime2time(const char *xt);
+
+#define SEQUENCE(type)	type*
+#define SEQUENCE_ABLE(type)	type *__next;
+#define SEQUENCE_ADD(first,last,e) do { \
+	if (last) last->__next = e; \
+	else first = e; \
+	last = e; } while(0);
+#define SEQUENCE_FIRST(first) first
+#define SEQUENCE_NEXT(e) (e)->__next
+
+extern int xml_parser_flags;

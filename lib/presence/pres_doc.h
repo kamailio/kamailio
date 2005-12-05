@@ -30,6 +30,12 @@
 #include <cds/ptr_vector.h>
 #include <time.h>
 
+typedef struct _presence_note_t {
+	str_t value;
+	str_t lang;
+	struct _presence_note_t *prev, *next;
+} presence_note_t;
+
 typedef enum {
 	presence_tuple_open,
 	presence_tuple_closed
@@ -42,19 +48,23 @@ typedef enum {
 	presence_auth_granted
 } presence_authorization_status_t;
 
-typedef struct _presence_typle_info_t {
+typedef struct _presence_tuple_info_t {
 	str_t contact;
+	str_t id;
 	double priority;
 	time_t expires;
 	presence_tuple_status_t status;
 	str_t extra_status;
-	struct _presence_typle_info_t *next, *prev;
+	struct _presence_tuple_info_t *next, *prev;
+	presence_note_t *first_note, *last_note;/* published notes */
 } presence_tuple_info_t;
 
 typedef struct {
 	str_t presentity; /* do not modify this !*/
 	presence_tuple_info_t *first_tuple, *last_tuple;
 	presence_authorization_status_t auth;
+	presence_note_t *first_note, *last_note;/* published notes */
+		
 	char presentity_data[1];
 } presentity_info_t;
 
@@ -74,11 +84,15 @@ typedef struct {
 } list_presence_info_t;
 
 presentity_info_t *create_presentity_info(const str_t *presentity);
-presence_tuple_info_t *create_tuple_info(const str_t *contact, presence_tuple_status_t status);
+presence_tuple_info_t *create_tuple_info(const str_t *contact, const str_t *id, presence_tuple_status_t status);
 void add_tuple_info(presentity_info_t *p, presence_tuple_info_t *t);
 void free_presentity_info(presentity_info_t *p);
 
 list_presence_info_t *create_list_presence_info(const str_t *uri);
 void free_list_presence_info(list_presence_info_t *p);
+
+presence_note_t *create_presence_note(const str_t *note, const str_t *lang);
+presence_note_t *create_presence_note_zt(const char *note, const char *lang);
+void free_presence_note(presence_note_t *n);
 
 #endif

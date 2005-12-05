@@ -49,11 +49,14 @@ presentity_info_t *create_presentity_info(const str_t *presentity)
 	else p->presentity.s = NULL;
 	p->first_tuple = NULL;
 	p->last_tuple = NULL;
+	p->first_note = NULL;
+	p->last_note = NULL;
+	p->auth = presence_auth_unresolved;
 	
 	return p;
 }
 
-presence_tuple_info_t *create_tuple_info(const str_t *contact, presence_tuple_status_t status)
+presence_tuple_info_t *create_tuple_info(const str_t *contact, const str_t *id, presence_tuple_status_t status)
 {
 	presence_tuple_info_t *t;
 	t = (presence_tuple_info_t*)cds_malloc(sizeof(*t));
@@ -63,12 +66,15 @@ presence_tuple_info_t *create_tuple_info(const str_t *contact, presence_tuple_st
 	}
 	/* str_clear(&t->contact.s); */
 	str_dup(&t->contact, contact);
+	str_dup(&t->id, id);
 	str_clear(&t->extra_status);
 	t->prev = NULL;
 	t->next = NULL;
 	t->status = status;
 	t->priority = 0.0;
 	t->expires = 0;
+	t->first_note = NULL;
+	t->last_note = NULL;
 	return t;
 }
 
@@ -77,24 +83,54 @@ void add_tuple_info(presentity_info_t *p, presence_tuple_info_t *t)
 	DOUBLE_LINKED_LIST_ADD(p->first_tuple, p->last_tuple, t);
 }
 
+void free_presence_note(presence_note_t *n)
+{
+	if (n) {
+		str_free_content(&n->value);
+		str_free_content(&n->lang);
+		cds_free(n);
+	}
+}
+
 void free_tuple_info(presence_tuple_info_t *t)
 {
+	presence_note_t *n, *nn;
+	
 	if (!t) return;
 	str_free_content(&t->contact);
+	str_free_content(&t->id);
 	str_free_content(&t->extra_status);
+	
+	n = t->first_note;
+	while (n) {
+		nn = n->next;
+		free_presence_note(n);
+		n = nn;
+	}
+	
 	cds_free(t);
 }
 
 void free_presentity_info(presentity_info_t *p)
 {
-	presence_tuple_info_t *t;
+	presence_tuple_info_t *t, *tt;
+	presence_note_t *n, *nn;
 	
 	if (!p) return;
 	t = p->first_tuple;
 	while (t) {
+		tt = t->next;
 		free_tuple_info(t);
-		t = t->next;
+		t = tt;
 	}
+	
+	n = p->first_note;
+	while (n) {
+		nn = n->next;
+		free_presence_note(n);
+		n = nn;
+	}
+	
 	cds_free(p);
 }
 
@@ -133,4 +169,31 @@ void free_list_presence_info(list_presence_info_t *p)
 		DEBUG_LOG(" ... freeing list presence info\n");
 		cds_free(p);
 	}
+}
+
+presence_note_t *create_presence_note(const str_t *note, const str_t *lang)
+{
+	presence_note_t *t;
+	t = (presence_note_t*)cds_malloc(sizeof(*t));
+	if (!t) {
+		ERROR_LOG("can't allocate memory for presence note\n");
+		return t;
+	}
+	/* str_clear(&t->contact.s); */
+	str_dup(&t->value, note);
+	str_dup(&t->lang, lang);
+	t->prev = NULL;
+	t->next = NULL;
+	return t;
+}
+
+presence_note_t *create_presence_note_zt(const char *note, const char *lang)
+{
+	str_t note_s;
+	str_t lang_s;
+
+	note_s = zt2str((char*)note);
+	lang_s = zt2str((char*)lang);
+	
+	return create_presence_note(&note_s, &lang_s);
 }

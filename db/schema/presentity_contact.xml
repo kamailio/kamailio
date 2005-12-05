@@ -87,6 +87,18 @@
 	<size>10</size>
     </column>
 
+    <column>
+		<name>etag</name>
+		<type>string</type>
+		<size>64</size>
+    </column>
+    
+	<column>
+		<name>published_id</name>
+		<type>string</type>
+		<size>64</size>
+    </column>
+	
     <index>
 	<name>pc_idx1</name>
 	<colref linkend="prescontact.contactid"/>

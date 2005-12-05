@@ -26,7 +26,7 @@ void reference_counter_cleanup()
 {
 	if (ref_cntr_mutex) {
 		cds_mutex_destroy(ref_cntr_mutex);
-		cds_free(ref_cntr_mutex);
+		cds_free((void*)ref_cntr_mutex);
 		ref_cntr_mutex = NULL;
 	}
 }

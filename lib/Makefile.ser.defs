@@ -20,7 +20,7 @@ endif
 
 ifeq ($(OUT_TYPE),lib)
 $(OUT_NAME):	$(OBJS)
-		$(CC) -shared $(DEFS) $(CFLAGS) $(INCLUDES) -o $@ $(OBJS) $(LIBS)
+		$(CC) -shared $(DEFS) $(CFLAGS) $(INCLUDES) $(LIBS) -o $@ $(OBJS)
 
 install:	$(OUT_NAME) $(LIBDIR)
 			$(INSTALL-TOUCH) $(LIBDIR)/$(OUT_NAME)

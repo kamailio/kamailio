@@ -577,8 +577,8 @@ int get_rls(const char *xcap_root, const str_t *uri, xcap_query_t *xcap_params, 
 	if (data) cds_free(data);
 	
 	if (!service) {
-		ERROR_LOG("Empty service!\n");
-		return RES_INTERNAL_ERR;
+		DEBUG_LOG("Empty service!\n");
+		return RES_XCAP_QUERY_ERR;
 	}
 
 	/* verify the package */
@@ -652,8 +652,8 @@ int get_rls_from_full_doc(const char *xcap_root, const str_t *uri, xcap_query_t 
 	
 	if (!service) {
 		if (rls) free_rls_services(rls);
-		ERROR_LOG("Empty service!\n");
-		return RES_INTERNAL_ERR;
+		DEBUG_LOG("Empty service!\n");
+		return RES_XCAP_QUERY_ERR;
 	}
 
 	/* verify the package */

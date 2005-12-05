@@ -2,5 +2,8 @@ LIBNAME  = presence
 OUT_NAME = libpresence.so
 OUT_TYPE = lib
 
+INCLUDES += -I/usr/include/libxml2
+LIBS     += -lxml2 -lcds
+
 include ../Makefile.ser.defs
 
