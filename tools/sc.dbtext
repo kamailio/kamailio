@@ -388,7 +388,7 @@ acl() {
 				set_user $2
 				is_user 
 				if [ $? -ne 0 ] ; then
-					echo -e "\nNon-existen user. Still proceeding? [Y|N] " > /dev/stderr
+					echo -e "\nNon-existent user. Still proceeding? [Y|N] " > /dev/stderr
 					read answer
 					if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
 						echo -e "\nProceeding with non-local user\n"
@@ -417,7 +417,7 @@ acl() {
 			set_user $2
 			is_user 
 			if [ $? -ne 0 ] ; then
-				echo -e "\nNon-existen user. Still proceeding? [Y|N] " > /dev/stderr
+				echo -e "\nNon-existent user. Still proceeding? [Y|N] " > /dev/stderr
 				read answer
 				if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
 					echo -e "\nProceeding with non-local user\n"

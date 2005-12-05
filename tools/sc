@@ -636,9 +636,9 @@ sql_query() {
 		savetty=`stty -g`
 		printf "MySql password for user '$SQL_USER@$SQL_HOST': " > /dev/stderr
 		stty -echo
-    	read PW >&2
+		read PW >&2
 		stty $savetty
-    	echo >&2
+		echo >&2
 	fi
 	$MYSQL $2 -h $SQL_HOST -u $SQL_USER "-p$PW" -e "$1 ;" $SQL_DB
 }
@@ -1067,7 +1067,8 @@ acl() {
 				set_user $2
 				is_user $2 
 				if [ $? -ne 0 ] ; then
-					printf "Non-existen user. Still proceeding? [Y|N] " > /dev/stderr
+					printf "Non-existent user. Still proceeding? \
+						[Y|N] " > /dev/stderr
 					read answer
 					if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
 						echo "Proceeding with non-local user"
@@ -1075,7 +1076,8 @@ acl() {
 						exit 1
 					fi
 				fi
-				CLAUSE=" WHERE $ACL_USER_COLUMN='$SERUSER' AND $ACL_DOMAIN_COLUMN='$SERDOMAIN' "
+				CLAUSE=" WHERE $ACL_USER_COLUMN='$SERUSER' AND \
+					$ACL_DOMAIN_COLUMN='$SERDOMAIN' "
 			elif [ $# -ne 1 ] ; then
 				usage
 				exit 1
@@ -1094,7 +1096,8 @@ acl() {
 			set_user $2
 			is_user $2 
 			if [ $? -ne 0 ] ; then
-				printf "Non-existen user. Still proceeding? [Y|N] " > /dev/stderr
+				printf "Non-existent user. Still proceeding?\
+					[Y|N] " > /dev/stderr
 				read answer
 				if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
 					echo "Proceeding with non-local user"
@@ -1120,9 +1123,10 @@ acl() {
 					fi
 				fi
 
-        		QUERY="insert into $ACL_TABLE \
-                	($ACL_USER_COLUMN,$ACL_GROUP_COLUMN,$ACL_MODIFIED_COLUMN, $ACL_DOMAIN_COLUMN ) \
-                	values ('$SERUSER','$1', now(), '$SERDOMAIN' );"
+				QUERY="insert into $ACL_TABLE \
+					($ACL_USER_COLUMN,$ACL_GROUP_COLUMN,$ACL_MODIFIED_COLUMN,\
+					$ACL_DOMAIN_COLUMN ) values \
+					('$SERUSER','$1', now(), '$SERDOMAIN' );"
 				sql_query "$QUERY"
 				if [ $? -ne 0 ] ; then
 					echo "SQL Error"
@@ -1142,6 +1146,7 @@ acl() {
 				usage
 				exit 1
 			fi	
+			prompt_pw
 
 			set_user $2
 
