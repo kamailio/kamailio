@@ -13,36 +13,43 @@
     </bookinfo>
 
     <chapter>
+        <?dbhtml dir="sip_intro"?>
 	<title>SIP Introduction</title>
 	<xi:include href="sip/sip_introduction.xml"/>
     </chapter>
 
     <chapter>
+        <?dbhtml dir="ser_howto"?>
 	<title>Howto</title>
 	<xi:include href="serhowto/ser-howto.xml"/>
     </chapter>
 
     <chapter>
+        <?dbhtml dir="radius_howto"?>
 	<title>RADIUS Howto</title>
 	<xi:include href="ser_radius/ser_radius.xml"/>
     </chapter>
 
     <chapter>
+        <?dbhtml dir="admin_guide"?>
 	<title>Administrator's Guide</title>
 	<xi:include href="seruser/seruser.xml"/>
     </chapter>
 
     <chapter>
+        <?dbhtml dir="xmlrpc"?>
 	<title>SER Remote Procedure Call Interface</title>
 	<xi:include href="rpc/ser_rpc.xml"/>
     </chapter>
 
     <chapter>
+        <?dbhtml dir="db_schema"?>
 	<title>SER Database Schema and Administration</title>
 	<xi:include href="database/ser_db.xml"/>
     </chapter>
 
     <chapter>
+        <?dbhtml dir="presence"?>
 	<title>Presence Handbook</title>
 	<xi:include href="presence/intro.xml"/>
 	<xi:include href="presence/xcap.xml"/>
@@ -52,8 +59,9 @@
     </chapter>
 	
     <chapter>
+        <?dbhtml dir="modules"?>
     	<title>Module Documentation</title>
-	<xi:include href="../modules/acc/doc/acc.xml"/>
+<!--	<xi:include href="../modules/acc/doc/acc.xml"/> -->
 	<xi:include href="../modules/auth/doc/auth.xml"/>
 	<xi:include href="../modules/auth_db/doc/auth_db.xml"/>
 	<xi:include href="../modules/auth_radius/doc/auth_radius.xml"/>
@@ -100,10 +108,12 @@
     </chapter>
    
     <chapter>
+        <?dbhtml dir="devel"?>
 	<title>Developer's Guide</title>
 	<xi:include href="serdev/serdev.xml"/>
     </chapter>
     <chapter>
+        <?dbhtml dir="faq"?>
 	<title>Frequently Asked Questions</title>
 	<xi:include href="serfaq/serfaq.xml"/>
     </chapter>
