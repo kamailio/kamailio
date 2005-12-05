@@ -42,4 +42,3 @@
     
     <xsl:template match="text()|@*" mode="subroot"/>
 </xsl:stylesheet>
-
