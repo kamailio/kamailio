@@ -15,4 +15,5 @@ gcc (GCC) 3.4.3 (csl-sol210-3_4-branch+sol_rpath)
 gcc-3.4 (GCC) 3.4.4 20041218 (prerelease) (Debian 3.4.3-7)
 powerpc-apple-darwin8-gcc-4.0.0 (GCC) 4.0.0 20041026 (Apple Computer, Inc. build 4061)
 gcc-4.0 (GCC) 4.0.2 20050821 (prerelease) (Debian 4.0.1-6)
+gcc-4.0.1 (GCC) 3.3.6 (Gentoo 3.3.6, ssp-3.3.6-1.0, pie-8.7.8)
 

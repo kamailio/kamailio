@@ -57,6 +57,24 @@ void dprint (char* format, ...);
 
 int str2facility(char *s);
 
+/* C >= 99 has __func__, older gcc versions have __FUNCTION__ */
+#if __STDC_VERSION__ < 199901L
+# if __GNUC__ >= 2
+#  define _FUNC_NAME_ __FUNCTION__
+# else
+#  define _FUNC_NAME_ ""
+# endif
+#else
+# define _FUNC_NAME_ __func__
+#endif
+
+
+#define XCT2STR(i) #i
+#define CT2STR(l) XCT2STR(l)
+
+#define LOC_INFO	__FILE__ ":" CT2STR(__LINE__) ": "
+
+
 
 #ifdef NO_DEBUG
 	#ifdef __SUNPRO_C
@@ -142,25 +160,25 @@ int str2facility(char *s);
 					else { \
 						switch(lev){ \
 							case L_CRIT: \
-								syslog(LOG_CRIT|log_facility, "CRIT: " fmt, ##args); \
+								syslog(LOG_CRIT|log_facility, fmt, ##args); \
 								break; \
 							case L_ALERT: \
-								syslog(LOG_ALERT|log_facility, "ALERT: " fmt, ##args); \
+								syslog(LOG_ALERT|log_facility, fmt, ##args); \
 								break; \
 							case L_ERR: \
-								syslog(LOG_ERR|log_facility, "ERROR: " fmt, ##args); \
+								syslog(LOG_ERR|log_facility, fmt, ##args); \
 								break; \
 							case L_WARN: \
-								syslog(LOG_WARNING|log_facility, "WARNING: " fmt, ##args);\
+								syslog(LOG_WARNING|log_facility, fmt, ##args);\
 								break; \
 							case L_NOTICE: \
-								syslog(LOG_NOTICE|log_facility, "NOTICE: " fmt, ##args); \
+								syslog(LOG_NOTICE|log_facility, fmt, ##args); \
 								break; \
 							case L_INFO: \
-								syslog(LOG_INFO|log_facility, "INFO: " fmt, ##args); \
+								syslog(LOG_INFO|log_facility, fmt, ##args); \
 								break; \
 							case L_DBG: \
-								syslog(LOG_DEBUG|log_facility, "DEBUG: " fmt, ##args); \
+								syslog(LOG_DEBUG|log_facility, fmt, ##args); \
 								break; \
 						} \
 					} \
@@ -183,5 +201,20 @@ int str2facility(char *s);
 		#define DBG(fmt, args...) LOG(L_DBG, fmt, ## args)
 	#endif
 #endif
+
+#ifdef __SUNPRO_C
+		#define DEBUG(...) DBG("DEBUG"            LOC_INFO __VA_ARGS__)
+		#define ERR(...)  LOG(L_ERR, "ERROR: "    LOC_INFO __VA_ARGS__)
+		#define WARN(...) LOG(L_WARN, "WARNING: " LOC_INFO __VA_ARGS__)
+		#define INFO(...) LOG(L_INFO, "INFO: "    LOC_INFO __VA_ARGS__)
+		#define BUG(...) LOG(L_CRIT, "BUG: "      LOC_INFO __VA_ARGS__)
+#else
+		#define DEBUG(fmt, args...) DBG("DEBUG "        LOC_INFO fmt, ## args)
+		#define ERR(fmt, args...) LOG(L_ERR, "ERROR: "  LOC_INFO fmt, ## args)
+		#define WARN(fmt, args...) LOG(L_WARN, "WARN: " LOC_INFO fmt, ## args)
+		#define INFO(fmt, args...) LOG(L_INFO, "INFO: " LOC_INFO fmt, ## args)
+		#define BUG(fmt, args...) LOG(L_CRIT, "BUG: "   LOC_INFO fmt, ## args)
+#endif
+
 
 #endif /* ifndef dprint_h */

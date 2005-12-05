@@ -371,7 +371,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{AF}	{ count(); yylval.strval=yytext; return AF; }
 <INITIAL>{MYSELF}	{ count(); yylval.strval=yytext; return MYSELF; }
 
-<INITIAL>{DEBUG}	{ count(); yylval.strval=yytext; return DEBUG; }
+<INITIAL>{DEBUG}	{ count(); yylval.strval=yytext; return DEBUG_V; }
 <INITIAL>{FORK}		{ count(); yylval.strval=yytext; return FORK; }
 <INITIAL>{LOGSTDERROR}	{ yylval.strval=yytext; return LOGSTDERROR; }
 <INITIAL>{LOGFACILITY}	{ yylval.strval=yytext; return LOGFACILITY; }

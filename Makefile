@@ -52,7 +52,7 @@ exclude_modules?= 			cpl ext extcmd \
 							jabber mysql \
 							cpl-c \
 							auth_radius group_radius uri_radius avp_radius \
-							pa
+							pa rls
 # always exclude the CVS dir
 override exclude_modules+= CVS $(skip_modules)
 
