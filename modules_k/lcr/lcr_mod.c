@@ -159,7 +159,7 @@ str uri_scheme_col   = {URI_SCHEME_COL, URI_SCHEME_COL_LEN};
 str transport_col    = {TRANSPORT_COL, TRANSPORT_COL_LEN};
 str grp_id_col       = {GRP_ID_COL, GRP_ID_COL_LEN};
 str lcr_table        = {LCR_TABLE, LCR_TABLE_LEN};
-str strip_col       = {STRIP_COL, STRIP_COL_LEN};
+str strip_col        = {STRIP_COL, STRIP_COL_LEN};
 str prefix_col       = {PREFIX_COL, PREFIX_COL_LEN};
 str from_uri_col     = {FROM_URI_COL, FROM_URI_COL_LEN};
 str priority_col     = {PRIORITY_COL, PRIORITY_COL_LEN};
@@ -233,6 +233,7 @@ static param_export_t params[] = {
 	{"transport_column",         STR_PARAM, &transport_col.s },
 	{"grp_id_column",            STR_PARAM, &grp_id_col.s   },
 	{"lcr_table",                STR_PARAM, &lcr_table.s    },
+	{"strip_column",             STR_PARAM, &strip_col.s    },
 	{"prefix_column",            STR_PARAM, &prefix_col.s   },
 	{"from_uri_column",          STR_PARAM, &from_uri_col.s },
 	{"priority_column",          STR_PARAM, &priority_col.s },
