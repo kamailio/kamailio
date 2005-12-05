@@ -109,7 +109,7 @@ int err2reason_phrase(
 
 		case E_OUT_OF_MEM:
 		/* dont disclose lack of mem in release mode */
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 			error_txt="Excuse me I ran out of memory";
 			*sip_error=500;
 			break;

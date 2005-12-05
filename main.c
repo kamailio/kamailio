@@ -119,6 +119,7 @@
 #include "pt.h"
 #include "script_cb.h"
 #include "ut.h"
+#include "signals.h"
 #ifdef USE_TCP
 #include "poll_types.h"
 #include "tcp_init.h"
@@ -255,6 +256,8 @@ int check_via =  0;
 int syn_branch = 1;
 /* debugging level for memory stats */
 int memlog = L_DBG;
+/* debugging level for timer debugging */
+int timerlog = L_WARN;
 /* should replies include extensive warnings? by default yes,
    good for trouble-shooting
 */
@@ -421,28 +424,6 @@ static void kill_all_children(int signum)
 		for (r=1; r<process_count(); r++)
 			if (pt[r].pid) kill(pt[r].pid, signum);
 }
-
-
-
-#ifdef USE_SIGACTION
-static void (*set_sig_h(int sig, void (*handler) (int) ))(int)
-{
-	struct sigaction act;
-	struct sigaction old;
-	
-	memset(&act, 0, sizeof(act));
-	act.sa_handler=handler;
-	/*
-	sigemptyset(&act.sa_mask);
-	act.sa_flags=0;
-	*/
-	LOG(L_CRIT, "setting signal %d to %p\n", sig, handler);
-	/* sa_sigaction not set, we use sa_hanlder instead */ 
-	return (sigaction (sig, &act, &old)==-1)?SIG_ERR:old.sa_handler;
-}
-#else
-#define set_sig_h signal
-#endif
 
 
 
@@ -842,7 +823,7 @@ int main_loop()
 #ifdef USE_TCP
 	int sockfd[2];
 #endif
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	int r;
 #endif
 
@@ -884,23 +865,38 @@ int main_loop()
 		   as new processes are forked (while skipping 0 reserved for main 
 		*/
 
-		/* we need another process to act as the timer*/
-#ifdef USE_TCP
-		/* if we are using tcp we always need a timer process,
-		 * we cannot count on select timeout to measure time
-		 * (it works only on linux)
-		 */
-		if ((!tcp_disable)||(timer_list))
-#else
-		if (timer_list)
-#endif
-		{
+#ifdef USE_SLOW_TIMER
+		/* we need another process to act as the "slow" timer*/
 				process_no++;
 				if ((pid=fork())<0){
 					LOG(L_CRIT,  "ERROR: main_loop: Cannot fork\n");
 					goto error;
 				}
-				
+				if (pid==0){
+					/* child */
+					pt[process_no].pid=getpid();
+					/* timer!*/
+					/* process_bit = 0; */
+					if (init_child(PROC_TIMER) < 0) {
+						LOG(L_ERR, "slow timer: init_child failed\n");
+						goto error;
+					}
+					
+					if (arm_slow_timer()<0) goto error;
+					slow_timer_main();
+				}else{
+					pt[process_no].pid=pid; /*should be shared mem anyway*/
+					strncpy(pt[process_no].desc, "slow timer", MAX_PT_DESC );
+					slow_timer_pid=pid;
+					
+				}
+#endif
+				/* we need another process to act as the "main" timer*/
+				process_no++;
+				if ((pid=fork())<0){
+					LOG(L_CRIT,  "ERROR: main_loop: Cannot fork\n");
+					goto error;
+				}
 				if (pid==0){
 					/* child */
 					/* record pid twice to avoid the child using it, before
@@ -912,15 +908,13 @@ int main_loop()
 						LOG(L_ERR, "timer: init_child failed\n");
 						goto error;
 					}
-					for(;;){
-						sleep(TIMER_TICK);
-						timer_ticker();
-					}
+					
+					if (arm_timer()<0) goto error;
+					timer_main();
 				}else{
 						pt[process_no].pid=pid; /*should be shared mem anyway*/
 						strncpy(pt[process_no].desc, "timer", MAX_PT_DESC );
 				}
-		}
 
 		/* if configured, start a server for accepting FIFO commands,
 		 * we need to do it after all the sockets are initialized, to 
@@ -1101,13 +1095,8 @@ int main_loop()
 	bind_address=0;				/* main proc -> it shouldn't send anything, */
 	
 
-#ifdef USE_TCP
-	/* if we are using tcp we always need the timer */
-	if ((!tcp_disable)||(timer_list))
-#else
-	if (timer_list)
-#endif
 	{
+#ifdef USE_SLOW_TIMER
 #ifdef USE_TCP
 		if (!tcp_disable){
  			if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
@@ -1117,7 +1106,53 @@ int main_loop()
 			}
 		}
 #endif
-		/* fork again for the attendant process*/
+		/* fork again for the "slow" timer process*/
+		process_no++;
+		if ((pid=fork())<0){
+			LOG(L_CRIT, "main_loop: cannot fork \"slow\" timer process\n");
+			goto error;
+		}else if (pid==0){
+			/* child */
+			/* is_main=0; */
+#ifdef USE_TCP
+			if (!tcp_disable){
+				close(sockfd[0]);
+				unix_tcp_sock=sockfd[1];
+			}
+#endif
+			/* record pid twice to avoid the child using it, before
+			 * parent gets a chance to set it*/
+			pt[process_no].pid=getpid();
+			if (init_child(PROC_TIMER) < 0) {
+				LOG(L_ERR, "slow timer: init_child failed\n");
+				goto error;
+			}
+			if (arm_slow_timer()<0) goto error;
+			slow_timer_main();
+		}else{
+			pt[process_no].pid=pid;
+			strncpy(pt[process_no].desc, "slow timer", MAX_PT_DESC );
+			slow_timer_pid=pid;
+#ifdef USE_TCP
+			if(!tcp_disable){
+						close(sockfd[1]);
+						pt[process_no].unix_sock=sockfd[0];
+						pt[process_no].idx=-1; /* this is not a "tcp" process*/
+			}
+#endif
+		}
+#endif /* USE_SLOW_TIMER */
+	
+		/* fork again for the "main" timer process*/
+#ifdef USE_TCP
+		if (!tcp_disable){
+ 			if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
+				LOG(L_ERR, "ERROR: main_loop: socketpair failed: %s\n",
+					strerror(errno));
+				goto error;
+			}
+		}
+#endif
 		process_no++;
 		if ((pid=fork())<0){
 			LOG(L_CRIT, "main_loop: cannot fork timer process\n");
@@ -1138,14 +1173,8 @@ int main_loop()
 				LOG(L_ERR, "timer: init_child failed\n");
 				goto error;
 			}
-			
-			for(;;){
-				/* debug:  instead of doing something useful */
-				/* (placeholder for timers, etc.) */
-				sleep(TIMER_TICK);
-				/* if we received a signal => TIMER_TICK may have not elapsed*/
-				timer_ticker();
-			}
+			if (arm_timer()<0) goto error;
+			timer_main();
 		}else{
 			pt[process_no].pid=pid;
 			strncpy(pt[process_no].desc, "timer", MAX_PT_DESC );
@@ -1198,11 +1227,14 @@ int main_loop()
 	}
 #endif
 	/*DEBUG- remove it*/
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf(stderr, "\n% 3d processes (%3d), % 3d children * "
 			"listening addresses + tcp listeners + tls listeners"
-			"+ main + fifo %s\n", process_no+1, process_count(), children_no,
-			(timer_list)?"+ timer":"");
+			"+ main + fifo + timer"
+# ifdef USE_SLOW_TIMER
+			" + slow_timer"
+# endif
+			"\n", process_no+1, process_count(), children_no);
 	for (r=0; r<=process_no; r++){
 		fprintf(stderr, "% 3d   % 5d - %s\n", r, pt[r].pid, pt[r].desc);
 	}

@@ -1,0 +1,174 @@
+# $Id$
+#
+# History:
+# --------
+# 2005-11-30    created by andrei
+
+
+New timer interface
+
+
+1. Introduction
+---------------
+
+ ser's new timer interface is based on a 3 level hierarchical timing wheel
+(see [1]). Most timeouts will go in the first "wheel" (all timeouts < 1<<14 
+ ticks, which by default mean 1024 s). Each wheel acts as a circular buffer.
+ The big advantage of this scheme is that most of the time you just run all the timer handlers from the current entry in the first wheel (no comparisons necessary). Each 2^14 ticks, all the timers in the second wheel's current entry are redistributed and each 2^23 ticks all the timers in the third wheel's current entry are redistributed.
+
+ The new timer interfaces allows adding timers dynamically, supports one shot
+ and periodic timers, is precise and fast (very low overhead) and supports
+"fast" and "slow" timers. For now it uses setitimer to "generate" the ticks and form time to time it re-adjusts them based on the real system time.
+
+
+[1] - G. Varghese, T. Lauck,  Hashed and Hierarchical Timing Wheels: Efficient
+      Data Structures for Implementing a Timer Facility, 1996
+
+
+2. include files
+-----------------
+
+All the public functions are defined in timer.h. timer_ticks.h contains
+ ticks conversion related macros (ticks to seconds, ms or viceversa).
+
+
+3. Example usage
+----------------
+
+#include "../../timer.h"
+#include "../../timer_ticks.h"
+
+/* simple periodic timer handler */
+static ticks_t timer_h(ticks_t ticks, struct timer_ln* tl, void* data)
+{
+	DBG("timer habdler called at %d ticks, foo is %d \n", ticks, *(int*)data);
+	return (ticks_t)(-1); /* periodical */
+}
+
+struct timer_ln *t;
+int foo;
+
+t=timer_alloc();
+if (t==0)
+	goto error;
+timer_init(t, timer_handle, &foo, 0);
+foo=0;
+timer_add(t, MS_TO_TICKS(1500)); /* start it after 1500ms */
+/* ....  */
+/* remove it and change the period to 2 s */
+timer_del(t);
+timer_reinit(t); /* without init or reinit timer_add will refuse to re-add it*/
+timer_add(t, S_TO_TICKS(2));
+/* .... */
+/* remove it at the end (optional) */
+timer_del(t);
+timer_free(t);
+
+
+4. Notes
+---------
+
+4.1 alloc & init
+----------------
+
+To use a timer you need a timer_ln structure. This structure must be stored
+ in shared memory.
+You can either use timer_alloc() which will return a pointer to a shared memory allocated timer_ln structure or you can "attach" timer_ln as a member to one
+ of your structures which is already stored in the shared memory.
+
+The timer_ln structure must be always initialized. Use the timer_init(...) macro for this. To the timer_init macro takes as parameters a pointer to the timer_ln structure, a pointer to a timer_handler_f function, a void* parameter for this
+ function and some timer flags.
+Example:
+
+struct foo{
+	int bar;
+	struct timer_ln timer;
+};
+
+struct foo* f;
+f=shm_malloc(sizeof(struct foo));
+
+time_init(&f->timer, timer_handle, &f->bar, 0);
+
+
+The timer flags can be either 0 (if it's a "slow" timer) or F_TIMER_FAST if
+ this is a "fast" timer.
+A "fast" timer is a timer that does very little work in its timer handler (it always exits fast). You should use a "slow" timer if you don't care so much if your timer call is a little bit delayed or if you do  dns lookups, query databases, blocking sends/writes. If you don't know which one to choose, choose "slow".
+
+
+4.2 timer handlers
+------------------
+
+The timer handler can be periodic, one shot or it can change from call to call. It all depends on what value you return from it. If you always return (ticks_t)(-1) or timer_ln->initial_timeout you have a periodic timer. If you return 0 you have an one shot timer (the timer will be removed when your timer handler function exits). For any other value v, your timer will be automatically re-added with the next expire set to v (expressed in ticks).
+
+4.3 timer_add
+-------------
+
+The timer becomes active after you add it with timer_add. timer_add takes as parameters a pointer to the corresponding timer_ln structure and an expire interval (in ticks, use the macros from timer_ticks.h to convert from s/ms).
+The timer must be intialized (with timer_init()) before adding it the first time.
+If you want to re-add a deleted timer (timer_del was called on it) or an expired one shot timer (the timer handlers returned 0 on the last run), you have to re-init it first, either by calling timer_reinit(t) or by calling again timer_init(...). If you don't re-initialize the timer, timer_add will refuse to add it and it will return -1. So if timer_add returns error (-1) it means that either you're trying to re-add a running timer or a deleted/expired timer that was not re-initialized.
+WARNING: do not initialize/re-initialize a running timer!
+
+4.4 timer_del
+-------------
+
+To remove a timer from the active timer list call timer_del(struct timer_ln*).
+timer_del is the slowest of all the timer functions. If you are trying to delete a timer whose timer is executing. timer_del will wait until it finishes.
+WARNING: if you have an one shot timer that frees its memory before exiting, make sure you don't call timer_del afterwards (e.g. use some reference counters and free the memory only if the counter is 0).
+
+Race example (using the struct foo defined above):
+
+/* simple one shot timer handler */
+static ticks_t timer_h(ticks_t ticks, struct timer_ln* tl, void* data)
+{
+	
+	/* free the mem. */
+	shm_free(data);
+	return 0;
+}
+
+struct foo* f;
+f=shm_malloc(sizeof(struct foo));
+
+time_init(&f->timer, timer_handle, f, 0);
+timer_add(&f->timer, rand());
+/* ... */
+/* random amount of time spent doing other things */
+timer_del(&f->timer); /* if the timer is already expired => f is already
+                         deleted => problems */
+
+The above timer_del/free_in_one_shot_timer race example is very simple, but consider that you can have much more complex scenarios, when timer_del can be called from different processes on some asynchronous events. If this looks like you're intended usage, make sure you use some  reference counters or some other protection mechanism to avoid the above race.
+
+
+4.5 Getting the ticks value
+----------------------------
+
+If you need the current ticks value you can get with get_ticks_raw().
+WARNING: don't use get_ticks(). get_ticks() returns the number of ticks converted to seconds and it was kept only for compatibility reasons with the existing code.
+
+4.6 Conversion
+---------------
+
+To convert between ticks & time and viceversa, include timer_ticks.h and use
+one of the following macros:
+
+MS_TO_TICKS(ms) /* converts from milliseconds to ticks, rounds up */
+S_TO_TICKS(s)   /* convert from seconds to ticks */
+TICKS_TO_MS(t)  /* converts from ticks to milliseconds, can overflow for
+                   very large values (use long long and
+                   TICKS_TO_MS((long long)t) to try to avoid it if you know
+                   that you'll deal with such large values */
+TICKS_TO_S(t)  /* converts from ticks to s, rounded down */
+
+
+4.7 Backward compatibility
+--------------------------
+
+The old  register_timer and get_ticks() are still supported for backward compatibility. This means that you don't have to change your existing working code.
+
+
+
+[Todo]:
+- SLOW, DRIFT, RESYNC, FREQUENCY
+
+

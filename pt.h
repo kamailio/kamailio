@@ -74,6 +74,9 @@ inline static int process_count()
 		/* timer process */
 		+ 1 /* always, we need it in most cases, and we can't tell here
 			   & now if we don't need it */
+#ifdef USE_SLOW_TIMER
+		+ 1 /* slow timer process */
+#endif
 		/* fifo server */
 		+((fifo==NULL || strlen(fifo)==0) ? 0 : 1 )
 		/* unixsock server*/

@@ -150,6 +150,9 @@ extern int is_main;
 /* debugging level for dumping memory status */
 extern int memlog;
 
+/* debugging level for timer debugging (see -DTIMER_DEBUG) */
+extern int timerlog;
+
 /* looking up outbound interface ? */
 extern int mhomed;
 
