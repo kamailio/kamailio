@@ -200,8 +200,8 @@ void run_trans_callbacks( int type , struct cell *trans,
 			params.param = &(cbp->param);
 			cbp->callback( trans, type, &params );
 		}
-	set_avp_list( backup );
 	}
+	set_avp_list( backup );
 }
 
 
