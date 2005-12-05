@@ -178,12 +178,26 @@ static void pa_unsubscribe(notifier_t *n, subscription_t *subscription)
 	}
 }
 
+void copy_tuple_notes(presence_tuple_info_t *dst_info, const presence_tuple_t *src)
+{
+	presence_note_t *n, *nn;
+
+	n = src->notes;
+	while (n) {
+		nn = create_presence_note(&n->value, &n->lang);
+		DOUBLE_LINKED_LIST_ADD(dst_info->first_note, dst_info->last_note, nn);
+		n = n->next;
+	}
+}
+
 presentity_info_t *presentity2presentity_info(presentity_t *p)
 {
 	presentity_info_t *pinfo;
 	presence_tuple_info_t *tinfo;
 	presence_tuple_status_t s;
 	presence_tuple_t *t;
+	pa_presence_note_t *pan;
+	presence_note_t *n;
 
 	/* DEBUG_LOG("p2p_info()\n"); */
 	if (!p) return NULL;
@@ -199,13 +213,24 @@ presentity_info_t *presentity2presentity_info(presentity_t *p)
 	while (t) {
 		s = presence_tuple_open;
 		if (t->state == PS_OFFLINE) s = presence_tuple_closed;
-		tinfo = create_tuple_info(&t->contact, s);
+		tinfo = create_tuple_info(&t->contact, &t->id, s);
 		if (!tinfo) {
 			ERROR_LOG("can't create tuple info\n");
 			break;
 		}
+		tinfo->priority = t->priority;
+		tinfo->expires = t->expires;
 		add_tuple_info(pinfo, tinfo);
+		copy_tuple_notes(tinfo, t);
 		t = t->next;
+	}
+
+	/* notes */
+	pan = p->notes;
+	while (pan) {
+		n = create_presence_note(&pan->note, &pan->lang);
+		if (n) DOUBLE_LINKED_LIST_ADD(pinfo->first_note, pinfo->last_note, n);
+		pan = pan->next;
 	}
 	/* DEBUG_LOG("p2p_info() finished\n"); */
 	return pinfo;

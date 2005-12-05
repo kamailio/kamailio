@@ -46,6 +46,8 @@
 #include "watcher.h"
 #include "location.h"
 
+#include <presence/pidf.h>
+#include "qsa_interface.h"
 
 #define CONTACT "Contact: "
 #define CONTACT_L  (sizeof(CONTACT) - 1)
@@ -380,7 +382,7 @@ static int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 		default: st = XPIDF_ST_CLOSED; break;
 		}
 
-		LOG(L_ERR, "send_xpidf_notify(): %.*s\n", tuple->id.len, tuple->id.s);
+		LOG(L_DBG, "send_xpidf_notify(): %.*s\n", tuple->id.len, tuple->id.s);
 		if (xpidf_add_address(&body, BUF_LEN - body.len, &_p->uri, &tuple->id, st) < 0) {
 			LOG(L_ERR, "send_xpidf_notify(): xpidf_add_address failed\n");
 			return -3;
@@ -439,111 +441,37 @@ static int send_lpidf_notify(struct presentity* _p, struct watcher* _w)
 
 static int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 {
-	xpidf_status_t st;
-	presence_tuple_t *tuple = _p->tuples;
-
 	/* Send a notify, saved Contact will be put in
 	 * Request-URI, To will be put in from and new tag
 	 * will be generated, callid will be callid,
 	 * from will be put in to including tag
 	 */
-
+	str doc;
+	str content_type;
+	presentity_info_t *pinfo = NULL;
+	
 	LOG(L_DBG, "  send_pidf_notify\n");
-
-	if (start_pidf_doc(&body, BUF_LEN) < 0) {
-		LOG(L_ERR, "send_pidf_notify(): start_pidf_doc failed\n");
-		return -1;
-	}
-
-	if (pidf_add_presentity(&body, BUF_LEN - body.len, &_p->uri) < 0) {
-		LOG(L_ERR, "send_pidf_notify(): pidf_add_presentity failed\n");
-		return -3;
-	}
-	/* XXX add !tuple handler */
-	if (tuple) {
-		while (tuple) {
-			if (pidf_start_tuple(&body, &tuple->id, BUF_LEN - body.len) < 0) {
-				LOG(L_ERR, "send_pidf_notify(): start_pidf_tuple failed\n");
-				return -4;
-			}
-
-			switch(tuple->state) {
-			case PS_ONLINE: st = XPIDF_ST_OPEN; break;
-			default: st = XPIDF_ST_CLOSED; break;
-			}
-
-			if (pidf_add_contact(&body, BUF_LEN - body.len, &tuple->contact, tuple->priority) < 0) {
-				LOG(L_ERR, "send_pidf_notify(): pidf_add_contact failed\n");
-				return -3;
-			}
-
-			if (pidf_start_status(&body, BUF_LEN - body.len, st) < 0) {
-				LOG(L_ERR, "send_pidf_notify(): pidf_start_status failed\n");
-				return -3;
-			}
-
-			if (pidf_add_location(&body, BUF_LEN - body.len,
-					      &tuple->location.loc,
-					      &tuple->location.site, &tuple->location.floor, &tuple->location.room,
-					      tuple->location.x, tuple->location.y, tuple->location.radius, 
-					      tuple->prescaps) < 0) {
-				LOG(L_ERR, "send_pidf_notify(): pidf_add_location failed\n");
-				return -4;
-			}
-
-			if (pidf_end_status(&body, BUF_LEN - body.len) < 0) {
-				LOG(L_ERR, "send_pidf_notify(): pidf_end_status failed\n");
-				return -5;
-			}
-
-			if (pidf_end_tuple(&body, BUF_LEN - body.len) < 0) {
-				LOG(L_ERR, "send_pidf_notify(): end_pidf_tuple failed\n");
-				return -5;
-			}
-			tuple = tuple->next;
-		}
-	} else {
-		str id = STR_STATIC_INIT("ser");
-		str contact = STR_NULL;
-		float priority = 0.8;
-		st = XPIDF_ST_CLOSED;
-		if (pidf_start_tuple(&body, &id, BUF_LEN - body.len) < 0) {
-			LOG(L_ERR, "send_pidf_notify(): start_pidf_tuple failed\n");
-			return -4;
-		}
-
-		if (pidf_add_contact(&body, BUF_LEN - body.len, &contact, priority) < 0) {
-			LOG(L_ERR, "send_pidf_notify(): pidf_add_contact failed\n");
-			return -3;
-		}
-
-		if (pidf_start_status(&body, BUF_LEN - body.len, st) < 0) {
-			LOG(L_ERR, "send_pidf_notify(): pidf_start_status failed\n");
-			return -3;
-		}
-
-		if (pidf_end_status(&body, BUF_LEN - body.len) < 0) {
-			LOG(L_ERR, "send_pidf_notify(): pidf_end_status failed\n");
-			return -5;
-		}
-
-		if (pidf_end_tuple(&body, BUF_LEN - body.len) < 0) {
-			LOG(L_ERR, "send_pidf_notify(): end_pidf_tuple failed\n");
-			return -5;
-		}
-	}
-
-	if (end_pidf_doc(&body, BUF_LEN - body.len) < 0) {
-		LOG(L_ERR, "send_pidf_notify(): end_xpidf_doc failed\n");
-		return -6;
-	}
 
 	if (create_headers(_w) < 0) {
 		LOG(L_ERR, "send_pidf_notify(): Error while adding headers\n");
 		return -7;
 	}
 
-	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
+	pinfo = presentity2presentity_info(_p);
+	if (!pinfo) {
+		LOG(L_ERR, "can't create PIDF document (0)\n");
+		return -1;
+	}
+	if (create_pidf_document(pinfo, &doc, &content_type) != 0) {
+		LOG(L_ERR, "can't create PIDF document\n");
+		free_presentity_info(pinfo);
+		return -2;
+	}
+
+	tmb.t_request_within(&method, &headers, &doc, _w->dialog, 0, 0);
+	str_free_content(&doc);
+	str_free_content(&content_type);
+	free_presentity_info(pinfo);
 	return 0;
 }
 

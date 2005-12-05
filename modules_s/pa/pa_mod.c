@@ -64,8 +64,8 @@ static void timer(unsigned int ticks, void* param); /* Delete timer for all doma
 
 int default_expires = 3600;  /* Default expires value if not present in the message */
 int timer_interval = 10;     /* Expiration timer interval in seconds */
-double default_priority = 0.5; /* Default priority of presence tuple */
-static int default_priority_percentage = 50; /* expressed as percentage because config file grammar does not support floats */
+double default_priority = 0.0; /* Default priority of presence tuple */
+static int default_priority_percentage = 0; /* expressed as percentage because config file grammar does not support floats */
 int watcherinfo_notify = 1; /* send watcherinfo notifications */
 
 /** TM bind */
@@ -209,22 +209,23 @@ static void test_mimetype_parser(void)
 	}
 }
 
-static int set_auth_params(auth_params_t *dst, const char *auth_type_str, char *xcap_root)
+static int set_auth_params(auth_params_t *dst, const char *auth_type_str, 
+		char *xcap_root, const char *log_str)
 {
 	dst->xcap_root = NULL;
 	if (!auth_type_str) {
-		LOG(L_ERR, "no subscription authorization type given, using \'implicit\'!\n");
+		LOG(L_ERR, "no subscription authorization type for %s given, using \'implicit\'!\n", log_str);
 		dst->type = auth_none;
 		return 0;
 	}
 	if (strcmp(auth_type_str, "xcap") == 0) {
 		if (!xcap_root) {
-			LOG(L_ERR, "XCAP authorization selected, but no auth_xcap_root given!\n");
+			LOG(L_ERR, "XCAP authorization for %s selected, but no auth_xcap_root given!\n", log_str);
 			return -1;
 		}
 		dst->xcap_root = xcap_root;
 		if (!(*dst->xcap_root)) {
-			LOG(L_ERR, "XCAP authorization selected, but empty auth_xcap_root given!\n");
+			LOG(L_ERR, "XCAP authorization for %s selected, but empty auth_xcap_root given!\n", log_str);
 			return -1;
 		}
 		dst->type = auth_xcap;
@@ -232,7 +233,7 @@ static int set_auth_params(auth_params_t *dst, const char *auth_type_str, char *
 	}
 	if (strcmp(auth_type_str, "none") == 0) {
 		dst->type = auth_none;
-		LOG(L_WARN, "using \'none\' subscription authorization!\n");
+		LOG(L_WARN, "using \'none\' subscription authorization for %s!\n", log_str);
 		return 0;
 	}
 	if (strcmp(auth_type_str, "implicit") == 0) {
@@ -240,8 +241,8 @@ static int set_auth_params(auth_params_t *dst, const char *auth_type_str, char *
 		return 0;
 	}
 	
-	LOG(L_ERR, "Can't resolve subscription authorization type: \'%s\'."
-			" Use one of: none, implicit, xcap.\n", auth_type_str);
+	LOG(L_ERR, "Can't resolve subscription authorization for %s type: \'%s\'."
+			" Use one of: none, implicit, xcap.\n", log_str, auth_type_str);
 	return -1;
 }
 
@@ -259,12 +260,14 @@ static int pa_mod_init(void)
 
 	/* set authorization type according to requested "auth type name"
 	 * and other (type specific) parameters */
-	if (set_auth_params(&pa_auth_params, auth_type_str, auth_xcap_root) != 0) return -1;
+	if (set_auth_params(&pa_auth_params, auth_type_str, 
+				auth_xcap_root, "presence") != 0) return -1;
 	
 	/* set authorization type for watcherinfo 
 	 * according to requested "auth type name"
 	 * and other (type specific) parameters */
-	if (set_auth_params(&winfo_auth_params, winfo_auth_type_str, winfo_auth_xcap_root) != 0) return -1;
+	if (set_auth_params(&winfo_auth_params, winfo_auth_type_str, 
+				winfo_auth_xcap_root, "watcher info") != 0) return -1;
 	
 	     /* import the TM auto-loading function */
 	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
@@ -357,6 +360,8 @@ static int pa_mod_init(void)
 		return -1;
 	}
 
+	WARN_LOG("TESTING VERSION of get_presentity_uuid()!\n");
+	
 	LOG(L_DBG, "pa_mod_init done\n");
 	return 0;
 }

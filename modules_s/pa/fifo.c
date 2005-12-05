@@ -19,15 +19,16 @@ static void trace_presentity(presentity_t *p, char *response_file)
 	watcher_t *w;
 	presence_tuple_t *t;
 	internal_pa_subscription_t *iw;
+	pa_presence_note_t *n;
 	
 	fifo_reply(response_file, "* %.*s\n", FMT_STR(p->uri));
 	
 	fifo_reply(response_file, " - tuples:\n");
 	t = p->tuples;
 	while (t) {		
-		fifo_reply(response_file, "    %.*s contact=\'%.*s\' exp=%u status=%d published=%d\n", 
+		fifo_reply(response_file, "    %.*s contact=\'%.*s\' exp=%u status=%d published=%d (id=%.*s)\n", 
 				FMT_STR(t->id), FMT_STR(t->contact), t->expires - time(NULL),
-				(int)t->state, t->is_published);
+				(int)t->state, t->is_published, FMT_STR(t->published_id));
 		t = t->next;
 	}
 	
@@ -53,6 +54,14 @@ static void trace_presentity(presentity_t *p, char *response_file)
 		fifo_reply(response_file, "     %.*s %d\n", 
 				FMT_STR(iw->subscription->subscriber_id), (int)iw->status);
 		iw = iw->next;
+	}
+	
+	fifo_reply(response_file, " - notes:\n");
+	n = p->notes;
+	while (n) {
+		fifo_reply(response_file, "     %.*s (%.*s) exp=%s", 
+				FMT_STR(n->note), FMT_STR(n->lang), ctime(&n->expires));
+		n = n->next;
 	}
 }
 

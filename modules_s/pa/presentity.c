@@ -95,9 +95,6 @@ int get_presentity_uuid(str *uuid, const str *uri)
 	
 	str_dup(uuid, &puri.user);
 	strlower(uuid);
-
-	ERROR_LOG("TESTING VERSION of get_presentity_uuid()!\n");
-	/* extract name in lowercase ! */
 	return 0;
 }
 
@@ -449,10 +446,22 @@ static int set_tuple_db_data(presentity_t *_p, presence_tuple_t *tuple,
 	vals[n_updates].nul = 0;
 	vals[n_updates].val.str_val = tuple->contact;
 	n_updates++;	
+	
+	cols[n_updates] = "etag";
+	vals[n_updates].type = DB_STR;
+	vals[n_updates].nul = 0;
+	vals[n_updates].val.str_val = tuple->etag;
+	n_updates++;	
 
+	cols[n_updates] = "published_id";
+	vals[n_updates].type = DB_STR;
+	vals[n_updates].nul = 0;
+	vals[n_updates].val.str_val = tuple->published_id;
+	n_updates++;	
+	
 	if (use_place_table) {
 		int placeid = 0;
-		LOG(L_ERR, "set_duple_db_data: room=%.*s loc=%.*s\n", 
+		LOG(L_ERR, "set_tuple_db_data: room=%.*s loc=%.*s\n", 
 				tuple->location.room.len, tuple->location.room.s,
 				tuple->location.loc.len, tuple->location.loc.s);
 
@@ -629,7 +638,8 @@ static int db_read_tuples(presentity_t *_p, db_con_t* db)
 	db_key_t result_cols[] = { "contactid", "basic", "status", 
 		"location", "expires", "placeid", 
 		"priority", "contact", "tupleid",
-		"prescaps" } ;
+		"prescaps", "etag", "published_id"
+	} ;
 	
 	if (!use_db) return 0;
 
@@ -656,6 +666,8 @@ static int db_read_tuples(presentity_t *_p, db_con_t* db)
 		str status = STR_NULL; 
 		str location = STR_NULL; 
 		str id = STR_NULL; 
+		str etag = STR_NULL;
+		str published_id = STR_NULL;
 		
 		/* int contactid = row_vals[0].val.int_val; */
 		time_t expires = 0;
@@ -672,11 +684,13 @@ static int db_read_tuples(presentity_t *_p, db_con_t* db)
 		get_time_val(4, expires);
 		get_str_val(7, contact);
 		get_str_val(8, id);
+		get_str_val(10, etag);
+		get_str_val(11, published_id);
 		
 #undef get_str_val		
 #undef get_time_val		
 
-		r = new_presence_tuple(&contact, expires, _p, &tuple, 1) | r;
+		r = new_presence_tuple(&contact, expires, &tuple, 1) | r;
 		if (tuple) {
 			tuple->state = basic2status(basic);
 			memcpy(tuple->status.s, status.s, status.len);
@@ -692,7 +706,9 @@ static int db_read_tuples(presentity_t *_p, db_con_t* db)
 			else {
 				/* FIXME: copy location, x, y, ... */
 			}
-			
+			str_dup(&tuple->etag, &etag);
+			str_dup(&tuple->published_id, &published_id);
+
 			add_presence_tuple_no_wb(_p, tuple);
 		}
 	}
@@ -717,7 +733,7 @@ int db_update_presentity(presentity_t* _p)
 /*
  * Create a new presence_tuple
  */
-int new_presence_tuple(str* _contact, time_t expires, presentity_t *_p, presence_tuple_t ** _t, int is_published)
+int new_presence_tuple(str* _contact, time_t expires, presence_tuple_t ** _t, int is_published)
 {
 	presence_tuple_t* tuple;
 	int size = 0;
@@ -753,16 +769,18 @@ int new_presence_tuple(str* _contact, time_t expires, presentity_t *_p, presence
 	tuple->expires = expires;
 	tuple->priority = default_priority;
 	tuple->is_published = is_published;
+	str_clear(&tuple->etag);
+	str_clear(&tuple->published_id);
 
 	tuple->id.len = sprintf(tuple->id.s, "%px%xx%x", 
 			tuple, rand(), (unsigned int)time(NULL));
 
 	*_t = tuple;
 
-	LOG(L_DBG, "new_tuple=%p for aor=%.*s contact=%.*s id=%.*s\n", tuple, 
+/*	LOG(L_DBG, "new_tuple=%p for aor=%.*s contact=%.*s id=%.*s\n", tuple, 
 			_p->uri.len, _p->uri.s,
 			tuple->contact.len, tuple->contact.s,
-			tuple->id.len, tuple->id.s);
+			tuple->id.len, tuple->id.s);*/
 
 	return 0;
 }
@@ -1032,7 +1050,7 @@ static void process_presentity_messages(presentity_t *p)
 		if (info->contact.len > 0) {
 			tuple = NULL;
 			if (find_presence_tuple(&info->contact, p, &tuple) != 0) {
-				new_presence_tuple(&info->contact, act_time + default_expires, p, &tuple, 0);
+				new_presence_tuple(&info->contact, act_time + default_expires, &tuple, 0);
 				add_presence_tuple(p, tuple);
 			}
 			if (tuple) {

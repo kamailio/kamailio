@@ -40,6 +40,7 @@
 #include <xcap/pres_rules.h>
 #include <cds/msg_queue.h>
 #include <presence/notifier.h>
+#include <presence/pres_doc.h>
 
 enum prescaps {
 	PRESCAP_AUDIO = (1 << 0),
@@ -98,7 +99,19 @@ typedef struct presence_tuple {
 	char status_buf[TUPLE_STATUS_STR_LEN];
 	char id_buf[TUPLE_ID_STR_LEN];
 	int is_published;	/* 1 for published tuples - these are stored into DB */
+
+	str etag;	/* etag for published tuples */
+	str published_id;	/* tuple id used for publish */
+	presence_note_t *notes; /* notes for this tuple */
 } presence_tuple_t;
+
+typedef struct pa_presence_note {
+	str etag; /* published via this etag */
+	str note; /* note string */
+	str lang; /* language, may be empty */
+	time_t expires; /* note expires on ... */
+	struct pa_presence_note *next; /* linking members */
+} pa_presence_note_t;
 
 typedef struct {
 	str user;
@@ -142,6 +155,8 @@ typedef struct presentity {
 	presence_rules_t *authorization_info;
 	msg_queue_t mq;	/* message queue supplying direct usrloc callback processing */
 	
+	pa_presence_note_t *notes;
+	
 	str uuid; /* use after usrloc uuid-zation - callbacks are registered to this */
 } presentity_t;
 
@@ -175,7 +190,7 @@ int timer_presentity(presentity_t* _p);
 /*
  * Create a new presence_tuple
  */
-int new_presence_tuple(str* _contact, time_t expires, presentity_t *_p, presence_tuple_t ** _t, int is_published);
+int new_presence_tuple(str* _contact, time_t expires, presence_tuple_t ** _t, int is_published);
 
 /*
  * Find a presence_tuple for contact _contact on presentity _p
