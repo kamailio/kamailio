@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 
 
 /* String hash function */
@@ -44,7 +45,7 @@ unsigned int hash (str *domain)
   len = domain->len;
 
   for (i = 0; i < len; i++) {
-	  h = ( h << 5 ) - h + *(p + i);
+	  h = ( h << 5 ) - h + tolower(*(p + i));
   }
 
   return h % HASH_SIZE;
