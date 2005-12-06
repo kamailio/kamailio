@@ -186,8 +186,6 @@ static int mod_init(void)
 	re_table.len = (re_table.s && re_table.s[0])?strlen(re_table.s):0;
 	re_exp_column.len = strlen(re_exp_column.s);
 	re_gid_column.len = strlen(re_gid_column.s);
-	re_exp_column.len = strlen(re_exp_column.s);
-	re_gid_column.len = strlen(re_gid_column.s);
 
 	/* Find a database module */
 	if (group_db_bind(db_url.s)) {
