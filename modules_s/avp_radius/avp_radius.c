@@ -181,7 +181,7 @@ static inline void attr_name_value(VALUE_PAIR* vp, str* name, str* value)
 static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type)
 {
 	static char rad_msg[4096];
-	str user_domain, name_str, val_str, buffer;
+	str user_domain, name_str;
 	str* user, *domain, *uri;
 	struct hdr_field* h;
 	dig_cred_t* cred = 0;
@@ -193,9 +193,6 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 	
 	send = received = 0;
 	user_domain.s = 0;
-
-	name.s = buffer;
-	val.s = val_str;
 
 	switch(type) {
 	case LOAD_CALLER:
@@ -282,27 +279,27 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 
 		vp = received;
 		while ((vp = rc_avpair_get(vp, attrs[A_SER_ATTRS].v, 0))) {
-			attr_name_value(vp, &name_str, &val_str);
-			if (name_str.len == 0) {
+			attr_name_value(vp, &name_str, &val.s);
+			if (name.s.len == 0) {
 			    LOG(L_ERR, "avp_load_user: Missing attribute name\n");
 			    return -1;
 			}
 
-			buffer.s = (char*)pkg_malloc(prefix->len + name_str.len);
-			if (!buffer.s) {
+			name.s.s = (char*)pkg_malloc(prefix->len + name_str.len);
+			if (!name.s.s) {
 				LOG(L_ERR, "avp_load_user: No memory left\n");
 				return -1;
 			}
-			buffer.len = prefix->len + name_str.len;
-			memcpy(buffer.s, prefix->s, prefix->len);
-			memcpy(buffer.s + prefix->len, name_str.s, name_str.len);
+			name.s.len = prefix->len + name_str.len;
+			memcpy(name.s.s, prefix->s, prefix->len);
+			memcpy(name.s.s + prefix->len, name_str.s, name_str.len);
 
-			add_avp(AVP_NAME_STR | AVP_VAL_STR, name, val);
+			add_avp(AVP_TRACK_FROM | AVP_CLASS_USER | AVP_NAME_STR | AVP_VAL_STR, name, val);
 			DBG("avp_load_user: AVP '%.*s'='%.*s' has been added\n",
 			    name_str.len, ZSW(name_str.s), 
-			    val_str.len, ZSW(val_str.s));
-
-			pkg_free(buffer.s);
+			    val.s.len, ZSW(val.s.s));
+			
+			pkg_free(name.s.s);
 			vp = vp->next;
 		}
 		
