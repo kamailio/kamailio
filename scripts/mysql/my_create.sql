@@ -308,6 +308,8 @@ CREATE TABLE presentity_contact (
     contact VARCHAR(255),
     tupleid VARCHAR(64) NOT NULL,
     prescaps INT(10) NOT NULL,
+    etag VARCHAR(64) NOT NULL,
+    published_id VARCHAR(64) NOT NULL,
     UNIQUE KEY pc_idx1 (contactid),
     KEY presid_index (presid),
     KEY location_index (location),
@@ -331,6 +333,32 @@ CREATE TABLE watcherinfo (
     UNIQUE KEY wi_idx1 (s_id),
     KEY wi_ruri_idx (r_uri),
     KEY wi_wuri_idx (w_uri)
+);
+
+CREATE TABLE rls_subscription (
+    id VARCHAR(48) NOT NULL,
+    doc_version INT NOT NULL,
+    dialog BLOB NOT NULL,
+    expires DATETIME NOT NULL DEFAULT '2005-12-02 09:00:13',
+    status INT NOT NULL,
+    contact VARCHAR(255) NOT NULL,
+    uri VARCHAR(255) NOT NULL,
+    package VARCHAR(128) NOT NULL,
+    w_uri VARCHAR(255) NOT NULL,
+    UNIQUE KEY rls_subscription_key (id)
+);
+
+CREATE TABLE rls_vs (
+    id VARCHAR(48),
+    rls_id VARCHAR(48) NOT NULL,
+    uri VARCHAR(255) NOT NULL,
+    UNIQUE KEY rls_vs_key (id)
+);
+
+CREATE TABLE rls_vs_names (
+    id VARCHAR(48) NOT NULL,
+    name VARCHAR(64),
+    lang VARCHAR(64)
 );
 
 CREATE TABLE i18n (

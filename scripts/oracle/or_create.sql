@@ -296,6 +296,8 @@ CREATE TABLE presentity_contact (
     contact string(255),
     tupleid string(64) NOT NULL,
     prescaps int(10) NOT NULL,
+    etag string(64) NOT NULL,
+    published_id string(64) NOT NULL,
     pc_idx1 UNIQUE (contactid, ),
 
 );
@@ -316,6 +318,32 @@ CREATE TABLE watcherinfo (
     doc_index int NOT NULL,
     wi_idx1 UNIQUE (s_id, ),
 
+);
+
+CREATE TABLE rls_subscription (
+    id string(48) NOT NULL,
+    doc_version int NOT NULL,
+    dialog binary NOT NULL,
+    expires datetime NOT NULL DEFAULT '2005-12-02 09:00:13',
+    status int NOT NULL,
+    contact string(255) NOT NULL,
+    uri string(255) NOT NULL,
+    package string(128) NOT NULL,
+    w_uri string(255) NOT NULL,
+    rls_subscription_key UNIQUE (id, )
+);
+
+CREATE TABLE rls_vs (
+    id string(48),
+    rls_id string(48) NOT NULL,
+    uri string(255) NOT NULL,
+    rls_vs_key UNIQUE (id, )
+);
+
+CREATE TABLE rls_vs_names (
+    id string(48) NOT NULL,
+    name string(64),
+    lang string(64)
 );
 
 CREATE TABLE i18n (
