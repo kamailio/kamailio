@@ -21,7 +21,6 @@
  *
  * History:
  * ---------
- * 2003-03-12 added support for replication mark
  */
 
 
@@ -135,7 +134,8 @@ static inline void fifo_find_domain(str* _name, udomain_t** _d)
 }
 
 
-static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue_t _q, int _f)
+static inline int add_contact(udomain_t* _d, str* _u, str* _c,
+														ucontact_info_t *_ci)
 {
 	urecord_t* r;
 	ucontact_t* c = 0;
@@ -143,8 +143,9 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue
 	str cid;
 	str ua;
 	
-	if (_e == 0 && !(_f & FL_PERMANENT)) {
-		LOG(L_ERR, "fifo_add_contact(): expires == 0 and not persistent contact, giving up\n");
+	if (_ci->expires == 0 && !(_ci->flags1 & FL_PERMANENT)) {
+		LOG(L_ERR, "fifo_add_contact(): expires == 0 and not "
+			"persistent contact, giving up\n");
 		return -1;
 	}
 
@@ -153,48 +154,57 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue
 	res = get_urecord(_d, _u, &r);
 	if (res < 0) {
 		LOG(L_ERR, "fifo_add_contact(): Error while getting record\n");
-		return -2;
+		goto error0;
 	}
 
 	if (res >  0) { /* Record not found */
 		if (insert_urecord(_d, _u, &r) < 0) {
-			LOG(L_ERR, "fifo_add_contact(): Error while creating new urecord\n");
-			return -3;
+			LOG(L_ERR, "fifo_add_contact(): Error while creating "
+				"new urecord\n");
+			goto error0;
 		}
 	} else {
 		if (get_ucontact(r, _c, &c) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while obtaining ucontact\n");
-			return -4;
+			goto error0;
 		}
 	}
 		
 	cid.s = FIFO_CALLID;
 	cid.len = FIFO_CALLID_LEN;
+	_ci->callid = &cid;
 
 	ua.s = FIFO_UA;
 	ua.len = FIFO_UA_LEN;
+	_ci->user_agent = &ua;
+
+	_ci->cseq = FIFO_CSEQ;
+	_ci->expires += act_time;
 
 	if (c) {
-		if (update_ucontact(c, _e + act_time, _q, &cid, FIFO_CSEQ, _f, FL_NONE, &ua, 0, 0) < 0) {
+		if (update_ucontact(c, _ci) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while updating contact\n");
-			release_urecord(r);
-			return -5;
+			goto error1;
 		}
 	} else {
-		if (insert_ucontact(r, _c, _e + act_time, _q, &cid, FIFO_CSEQ, _f, &c, &ua, 0, 0) < 0) {
+		if ( new_ucontact( r->domain, &r->aor, _c, _ci)==0 ) {
 			LOG(L_ERR, "fifo_add_contact(): Error while inserting contact\n");
-			release_urecord(r);
-			return -6;
+			goto error1;
 		}
 	}
 	
 	release_urecord(r);
 	return 0;
+error1:
+	release_urecord(r);
+error0:
+	return -1;
 }
 
 
 static int ul_add(FILE* pipe, char* response_file)
 {
+	ucontact_info_t ci;
 	char table_s[MAX_TABLE];
 	char user_s[MAX_USER];
 	char contact_s[MAX_CONTACT_LEN];
@@ -203,9 +213,7 @@ static int ul_add(FILE* pipe, char* response_file)
 	char rep_s[MAX_REPLICATE_LEN];
 	char flags_s[MAX_FLAGS_LEN];
 	udomain_t* d;
-	int exp_i, flags_i;
 	char* at;
-	qvalue_t qval;
 
 	str table, user, contact, expires, q, rep, flags;
 
@@ -286,41 +294,46 @@ static int ul_add(FILE* pipe, char* response_file)
 	fifo_find_domain(&table, &d);
 	
 	if (d) {
-		if (str2int(&expires, (unsigned int*)&exp_i) < 0) {
+		memset( &ci, 0, sizeof(ucontact_info_t));
+
+		if (str2int(&expires, (unsigned int*)&ci.expires) < 0) {
 			fifo_reply(response_file, "400 Invalid expires format\n");
 			return 1;
 		}
 
-		if (str2q(&qval, q.s, q.len) < 0) {
+		if (str2q(&ci.q, q.s, q.len) < 0) {
 			fifo_reply(response_file, "400 Invalid q value\n");
 			return 1;
 		}
 
-		if (str2int(&flags, (unsigned int*)&flags_i) < 0) {
+		if (str2int(&flags, (unsigned int*)&ci.flags1) < 0) {
 			fifo_reply(response_file, "400 Invalid flags format\n");
 			return 1;
 		}
 		
 		lock_udomain(d);
 		
-		if (add_contact(d, &user, &contact, exp_i, qval, flags_i) < 0) {
+		if (add_contact(d, &user, &contact, &ci) < 0) {
 			unlock_udomain(d);
-			LOG(L_ERR, "ul_add(): Error while adding contact ('%.*s','%.*s') in table '%.*s'\n",
-			    user.len, ZSW(user.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
+			LOG(L_ERR, "ul_add(): Error while adding contact ('%.*s','%.*s') "
+				"in table '%.*s'\n", user.len, ZSW(user.s), contact.len, 
+				ZSW(contact.s), table.len, ZSW(table.s));
 			fifo_reply(response_file, "500 Error while adding contact\n"
-				   " ('%.*s','%.*s') in table '%.*s'\n",
-				   user.len, ZSW(user.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
+				" ('%.*s','%.*s') in table '%.*s'\n", user.len, ZSW(user.s), 
+				contact.len, ZSW(contact.s), table.len, ZSW(table.s));
 			return 1;
 		}
 		unlock_udomain(d);
-		
+
 		fifo_reply(response_file, "200 Added to table\n"
-				"('%.*s','%.*s') to '%.*s'\n",
-			   user.len, ZSW(user.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
+			"('%.*s','%.*s') to '%.*s'\n", user.len, ZSW(user.s), 
+			contact.len, ZSW(contact.s), table.len, ZSW(table.s));
 		return 1;
 	} else {
-		fifo_reply(response_file, "400 Table '%.*s' not found in memory, use save(\"%.*s\") or lookup(\"%.*s\") in the configuration script first\n", 
-			table.len, ZSW(table.s), table.len, ZSW(table.s), table.len, ZSW(table.s));
+		fifo_reply(response_file, "400 Table '%.*s' not found in memory, "
+			"use save(\"%.*s\") or lookup(\"%.*s\") in the configuration "
+			"script first\n", table.len, ZSW(table.s), table.len, 
+			ZSW(table.s), table.len, ZSW(table.s));
 		return 1;
 	}
 }
@@ -374,7 +387,7 @@ int static ul_rm( FILE *pipe, char *response_file )
 	
 	if (d) {
 		lock_udomain(d);
-		if (delete_urecord(d, &aor) < 0) {
+		if (delete_urecord(d, &aor, 0) < 0) {
 			LOG(L_ERR, "ul_rm(): Error while deleting user %s\n", user);
 			unlock_udomain(d);
 			fifo_reply(response_file, "500 Error while deleting user %s\n", user);

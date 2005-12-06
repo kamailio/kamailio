@@ -203,21 +203,17 @@ void print_udomain(FILE* _f, udomain_t* _d)
 
 int preload_udomain(db_con_t* _c, udomain_t* _d)
 {
+	ucontact_info_t ci;
 	char b[MAX_URI_SIZE];
 	db_key_t columns[11];
 	db_res_t* res;
 	db_row_t* row;
-	int i, cseq;
-	unsigned int flags;
-	struct socket_info  *sock;
+	int i;
 	int port, proto;
 	char *p;
 
 	str user, contact, callid, ua, received, host;
-	str* rec;
 	char* domain;
-	time_t expires;
-	qvalue_t q;
 	int ver;
 
 	urecord_t* r;
@@ -269,6 +265,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 
 	for(i = 0; i < RES_ROW_N(res); i++) {
 		row = RES_ROWS(res) + i;
+		memset( &ci, 0, sizeof(ucontact_info_t));
 
 		user.s = (char*)VAL_STRING(ROW_VALUES(row));
 		if (VAL_NULL(ROW_VALUES(row)) || user.s==0 || user.s[0]==0) {
@@ -294,7 +291,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
 			continue;
 		}
-		expires = VAL_TIME(ROW_VALUES(row) + 2);
+		ci.expires = VAL_TIME(ROW_VALUES(row) + 2);
 
 		if (VAL_NULL(ROW_VALUES(row)+3)) {
 			LOG(L_CRIT, "preload_udomain: ERROR: empty q "
@@ -302,7 +299,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
 			continue;
 		}
-		q = double2q(VAL_DOUBLE(ROW_VALUES(row) + 3));
+		ci.q = double2q(VAL_DOUBLE(ROW_VALUES(row) + 3));
 
 		if (VAL_NULL(ROW_VALUES(row)+5)) {
 			LOG(L_CRIT, "preload_udomain: ERROR: empty cseq_nr "
@@ -310,16 +307,17 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
 			continue;
 		}
-		cseq = VAL_INT(ROW_VALUES(row) + 5);
+		ci.cseq = VAL_INT(ROW_VALUES(row) + 5);
 
 		callid.s = (char*)VAL_STRING(ROW_VALUES(row) + 4);
-		if (VAL_NULL(ROW_VALUES(row)+4) || callid.s==0 || callid.s[0]==0) {
+		if (VAL_NULL(ROW_VALUES(row)+4) || !callid.s || !callid.s[0]) {
 			LOG(L_CRIT, "preload_udomain: ERROR: bad callid "
 				"record in table %s for user %.*s\n", b, user.len, user.s);
 			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
 			continue;
 		}
 		callid.len  = strlen(callid.s);
+		ci.callid = &callid;
 
 		if (VAL_NULL(ROW_VALUES(row)+6)) {
 			LOG(L_CRIT, "preload_udomain: ERROR: empty flag "
@@ -327,30 +325,30 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
 			continue;
 		}
-		flags  = VAL_BITMAP(ROW_VALUES(row) + 6);
+		ci.flags1  = VAL_BITMAP(ROW_VALUES(row) + 6);
 
 		ua.s  = (char*)VAL_STRING(ROW_VALUES(row) + 7);
-		if (VAL_NULL(ROW_VALUES(row)+7) || ua.s==0 || ua.s[0]==0) {
+		if (VAL_NULL(ROW_VALUES(row)+7) || !ua.s || !ua.s[0]==0) {
 			ua.s = 0;
 			ua.len = 0;
 		} else {
 			ua.len = strlen(ua.s);
 		}
+		ci.user_agent = &ua;
 
 		received.s  = (char*)VAL_STRING(ROW_VALUES(row) + 8);
-		if (VAL_NULL(ROW_VALUES(row)+8) || received.s==0 || received.s[0]==0) {
+		if (VAL_NULL(ROW_VALUES(row)+8) || !received.s || !received.s[0]) {
 			received.len = 0;
 			received.s = 0;
-			rec = 0;
 		} else {
 			received.len = strlen(received.s);
-			rec = &received;
 		}
+		ci.received = &received;
 
 		/* socket name */
 		p  = (char*)VAL_STRING(ROW_VALUES(row) + 9);
 		if (VAL_NULL(ROW_VALUES(row)+9) || p==0 || p[0]==0){
-			sock = 0;
+			ci.sock = 0;
 		} else {
 			if (parse_phostport( p, &host.s, &host.len, &port, &proto)!=0) {
 				LOG(L_ERR,"ERROR:usrloc:preload_udomain: bad socket <%s> in "
@@ -358,8 +356,8 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 				LOG(L_CRIT,"preload_udomain: ERROR: skipping...\n");
 				continue;
 			}
-			sock = grep_sock_info( &host, (unsigned short)port, proto);
-			if (sock==0) {
+			ci.sock = grep_sock_info( &host, (unsigned short)port, proto);
+			if (ci.sock==0) {
 				LOG(L_WARN,"ERROR:usrloc:preload_udomain: non-local socket "
 						"<%s> in table %s for user %.*s...ignoring\n",
 						p , b, user.len, user.s);
@@ -389,18 +387,13 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		if (get_urecord(_d, &user, &r) > 0) {
 			if (mem_insert_urecord(_d, &user, &r) < 0) {
 				LOG(L_ERR, "preload_udomain(): Can't create a record\n");
-				ul_dbf.free_result(_c, res);
-				unlock_udomain(_d);
-				return -2;
+				goto error;
 			}
 		}
 
-		if (mem_insert_ucontact(r, &contact, expires, q, &callid, cseq,
-		flags, &c, &ua, rec, sock) < 0) {
+		if ( (c=mem_insert_ucontact(r, &contact, &ci)) < 0) {
 			LOG(L_ERR, "preload_udomain(): Error while inserting contact\n");
-			ul_dbf.free_result(_c, res);
-			unlock_udomain(_d);
-			return -3;
+			goto error1;
 		}
 
 		/* We have to do this, because insert_ucontact sets state to CS_NEW
@@ -411,6 +404,12 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	ul_dbf.free_result(_c, res);
 	unlock_udomain(_d);
 	return 0;
+error1:
+	free_ucontact(c);
+error:
+	ul_dbf.free_result(_c, res);
+	unlock_udomain(_d);
+	return -1;
 }
 
 
@@ -543,24 +542,25 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 /*
  * Delete a urecord from domain
  */
-int delete_urecord(udomain_t* _d, str* _aor)
+int delete_urecord(udomain_t* _d, str* _aor, struct urecord* _r)
 {
 	struct ucontact* c, *t;
-	struct urecord* r;
 
-	if (get_urecord(_d, _aor, &r) > 0) {
-		return 0;
+	if (_r==0) {
+		if (get_urecord(_d, _aor, &_r) > 0) {
+			return 0;
+		}
 	}
-		
-	c = r->contacts;
+
+	c = _r->contacts;
 	while(c) {
 		t = c;
 		c = c->next;
-		if (delete_ucontact(r, t) < 0) {
+		if (delete_ucontact(_r, t) < 0) {
 			LOG(L_ERR, "delete_urecord(): Error while deleting contact\n");
 			return -1;
 		}
 	}
-	release_urecord(r);
+	release_urecord(_r);
 	return 0;
 }

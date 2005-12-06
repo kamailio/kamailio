@@ -23,7 +23,6 @@
  *
  * History:
  * ---------
- * 2003-03-12 added replication mark support (nils)
  */
 
 
@@ -51,17 +50,19 @@ typedef struct urecord {
 	str aor;                       /* Address of record */
 	ucontact_t* contacts;          /* One or more contact fields */
 	
-	struct hslot* slot;            /* Collision slot in the hash table array we belong to */
+	struct hslot* slot;            /* Collision slot in the hash table 
+                                    * array we belong to */
 	struct {
-		struct urecord* prev;  /* Next item in the linked list */
-		struct urecord* next;  /* Previous item in the linked list */
+		struct urecord* prev;      /* Next item in the linked list */
+		struct urecord* next;      /* Previous item in the linked list */
 	} d_ll;
-	struct {                         /* Linked list of all elements in hash table */
-		struct urecord* prev;  /* Previous item in the list */
-		struct urecord* next;  /* Next item in the list */
+	struct {                       /* Linked list of all elements in 
+                                    * hash table */
+		struct urecord* prev;      /* Previous item in the list */
+		struct urecord* next;      /* Next item in the list */
 	} s_ll;
 
-	struct notify_cb* watchers;         /* List of watchers */
+	struct notify_cb* watchers;    /* List of watchers */
 } urecord_t;
 
 
@@ -82,10 +83,7 @@ void print_urecord(FILE* _f, urecord_t* _r);
 /*
  * Add a new contact
  */
-int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q,
-		str* _cid, int _cs, unsigned int _flags,
-		struct ucontact** _con, str *_ua, str* _recv,struct socket_info *sock);
-
+ucontact_t* mem_insert_ucontact(urecord_t* _r, str* _c, ucontact_info_t* _ci);
 
 
 /*
@@ -124,21 +122,12 @@ void release_urecord(urecord_t* _r);
 
 
 /*
- * Create and insert new contact
- * into urecord with additional replication argument
+ * Insert new contact
  */
-typedef int (*insert_ucontact_t)(urecord_t* _r, str* _c, time_t _e,
-		qvalue_t _q, str* _cid, int _cs, unsigned int _flags, 
-		struct ucontact** _con, str *_ua, str* _recv,struct socket_info *sock);
-
-/*
- * Create and insert new contact
- * into urecord without replication
- */
-
-int insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid,
-		int _cs, unsigned int _flags, struct ucontact** _con,
-		str *_ua, str* _recv, struct socket_info *sock);
+typedef int (*insert_ucontact_t)(urecord_t* _r, str* _contact,
+		ucontact_info_t* _ci, ucontact_t** _c);
+int insert_ucontact(urecord_t* _r, str* _contact,
+		ucontact_info_t* _ci, ucontact_t** _c);
 
 
 /*

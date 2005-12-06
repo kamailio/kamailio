@@ -44,76 +44,55 @@
 /*
  * Create a new contact structure
  */
-int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, qvalue_t _q,
-		 str* _callid, int _cseq, unsigned int _flags,
-		 ucontact_t** _c, str* _ua, str* _recv, struct socket_info *sock)
+ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact,
+														ucontact_info_t* _ci)
 {
-	*_c = (ucontact_t*)shm_malloc(sizeof(ucontact_t));
-	if (!(*_c)) {
-	        LOG(L_ERR, "new_ucontact(): No memory left\n");
-		return -1;
+#define str_dup(_new,_org) \
+	do{ \
+		(_new)->s = (char*)shm_malloc((_org)->len); \
+		if ( (_new)->s == 0) { \
+			LOG(L_ERR, "ERROR:usrloc:new_contact: no more shm memory\n"); \
+			goto error;\
+		}\
+		memcpy((_new)->s, (_org)->s, (_org)->len);\
+		(_new)->len = (_org)->len; \
+	}while(0)
+
+	ucontact_t *c;
+
+	c = (ucontact_t*)shm_malloc(sizeof(ucontact_t));
+	if (!c) {
+		LOG(L_ERR, "ERROR:usrloc:new_ucontact: no more shm memory\n");
+		return 0;
 	}
-	memset(*_c, 0, sizeof(ucontact_t));
+	memset(c, 0, sizeof(ucontact_t));
 
-	(*_c)->domain = _dom;
-	(*_c)->aor = _aor;
-
-	(*_c)->c.s = (char*)shm_malloc(_contact->len);
-	if ((*_c)->c.s == 0) {
-		LOG(L_ERR, "new_ucontact(): No memory left 2\n");
-		goto error;
-	}
-	memcpy((*_c)->c.s, _contact->s, _contact->len);
-	(*_c)->c.len = _contact->len;
-
-	(*_c)->expires = _e;
-	(*_c)->q = _q;
-	(*_c)->sock = sock;
-
-	(*_c)->callid.s = (char*)shm_malloc(_callid->len);
-	if ((*_c)->callid.s == 0) {
-		LOG(L_ERR, "new_ucontact(): No memory left 4\n");
-		goto error;
-	}
-	memcpy((*_c)->callid.s, _callid->s, _callid->len);
-	(*_c)->callid.len = _callid->len;
-
-	(*_c)->user_agent.s = (char*)shm_malloc(_ua->len);
-	if ((*_c)->user_agent.s == 0) {
-		LOG(L_ERR, "new_ucontact(): No memory left 8\n");
-		goto error;
-	}
-	memcpy((*_c)->user_agent.s, _ua->s, _ua->len);
-	(*_c)->user_agent.len = _ua->len;
-
-	if (_recv) {
-		(*_c)->received.s = (char*)shm_malloc(_recv->len);
-		if ((*_c)->received.s == 0) {
-			LOG(L_ERR, "new_ucontact(): No memory left\n");
-			goto error;
-		}
-		memcpy((*_c)->received.s, _recv->s, _recv->len);
-		(*_c)->received.len = _recv->len;
-	} else {
-		(*_c)->received.s = 0;
-		(*_c)->received.len = 0;
+	str_dup( &c->c, _contact);
+	str_dup( &c->callid, _ci->callid);
+	str_dup( &c->user_agent, _ci->user_agent);
+	if (_ci->received && _ci->received->len) {
+		str_dup( &c->received, _ci->received);
 	}
 
-	(*_c)->cseq = _cseq;
-	(*_c)->state = CS_NEW;
-	(*_c)->flags = _flags;
-        return 0;
+	c->domain = _dom;
+	c->aor = _aor;
+	c->expires = _ci->expires;
+	c->q = _ci->q;
+	c->sock = _ci->sock;
+	c->cseq = _ci->cseq;
+	c->state = CS_NEW;
+	c->flags = _ci->flags1;
 
- error:
-	if (*_c) {
-		if ((*_c)->received.s) shm_free((*_c)->received.s);
-		if ((*_c)->user_agent.s) shm_free((*_c)->user_agent.s);
-		if ((*_c)->callid.s) shm_free((*_c)->callid.s);
-		if ((*_c)->c.s) shm_free((*_c)->c.s);
-		shm_free(*_c);
-	}
-	return -1;
-}	
+	return c;
+error:
+	if (c->received.s) shm_free(c->received.s);
+	if (c->user_agent.s) shm_free(c->user_agent.s);
+	if (c->callid.s) shm_free(c->callid.s);
+	if (c->c.s) shm_free(c->c.s);
+	shm_free(c);
+	return 0;
+}
+
 
 
 /*
@@ -186,70 +165,46 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 /*
  * Update ucontact structure in memory
  */
-int mem_update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid,
-		int _cs, unsigned int _set, unsigned int _res,
-		str* _ua, str* _recv, struct socket_info *sock)
+int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 {
+#define update_str(_old,_new) \
+	do{\
+		if ((_old)->len < (_new)->len) { \
+			ptr = (char*)shm_malloc((_new)->len); \
+			if (ptr == 0) { \
+				LOG(L_ERR, "ERROR:usrloc:update_ucontact: no "\
+					"more shm memory\n"); \
+				return -1; \
+			}\
+			memcpy(ptr, (_new)->s, (_new)->len);\
+			shm_free((_old)->s);\
+			(_old)->s = ptr;\
+		} else {\
+			memcpy((_old)->s, (_new)->s, (_new)->len);\
+		}\
+		(_old)->len = (_new)->len;\
+	} while(0)
+
 	char* ptr;
-	
-	if (_c->callid.len < _cid->len) {
-		ptr = (char*)shm_malloc(_cid->len);
-		if (ptr == 0) {
-			LOG(L_ERR, "update_ucontact(): No memory left\n");
-			return -1;
-		}
-		
-		memcpy(ptr, _cid->s, _cid->len);
-		shm_free(_c->callid.s);
-		_c->callid.s = ptr;
-	} else {
-		memcpy(_c->callid.s, _cid->s, _cid->len);
-	}
-	_c->callid.len = _cid->len;
 
-	if (_c->user_agent.len < _ua->len) {
-		ptr = (char*)shm_malloc(_ua->len);
-		if (ptr == 0) {
-			LOG(L_ERR, "update_ucontact(): No memory left\n");
-			return -1;
-		}
+	update_str( &_c->callid, _ci->callid);
 
-		memcpy(ptr, _ua->s, _ua->len);
-		shm_free(_c->user_agent.s);
-		_c->user_agent.s = ptr;
-	} else {
-		memcpy(_c->user_agent.s, _ua->s, _ua->len);
-	}
-	_c->user_agent.len = _ua->len;
+	update_str( &_c->user_agent, _ci->user_agent);
 
-	if (_recv) {
-		if (_c->received.len < _recv->len) {
-			ptr = (char*)shm_malloc(_recv->len);
-			if (ptr == 0) {
-				LOG(L_ERR, "update_ucontact(): No memory left\n");
-				return -1;
-			}
-			
-			memcpy(ptr, _recv->s, _recv->len);
-			if (_c->received.s)
-				shm_free(_c->received.s);
-			_c->received.s = ptr;
-		} else {
-			memcpy(_c->received.s, _recv->s, _recv->len);
-		}
-		_c->received.len = _recv->len;
+	if (_ci->received) {
+		update_str( &_c->received, _ci->received);
 	} else {
 		if (_c->received.s) shm_free(_c->received.s);
 		_c->received.s = 0;
 		_c->received.len = 0;
 	}
 
-	_c->sock = sock;
-	_c->expires = _e;
-	_c->q = _q;
-	_c->cseq = _cs;
-	_c->flags |= _set;
-	_c->flags &= ~_res;
+	_c->sock = _ci->sock;
+	_c->expires = _ci->expires;
+	_c->q = _ci->q;
+	_c->cseq = _ci->cseq;
+	_c->flags |= _ci->flags1;
+	_c->flags &= ~_ci->flags2;
 
 	return 0;
 }
@@ -445,7 +400,7 @@ static inline char* build_recv_sock(struct socket_info *sock, int *len)
 	memcpy( p, sock->port_no_str.s, sock->port_no_str.len);
 	p += sock->port_no_str.len;
 	*len = (int)(long)(p-buf);
-	DBG("build_recv_sock: <%.*s>\n",*len,buf);
+	DBG("DEBUG:usrloc:build_recv_sock: <%.*s>\n",*len,buf);
 	return buf;
 }
 
@@ -722,9 +677,7 @@ int db_delete_ucontact(ucontact_t* _c)
 /*
  * Update ucontact with new values
  */
-int update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid,
-		int _cs, unsigned int _set, unsigned int _res,
-		str* _ua, str* _recv, struct socket_info *sock)
+int update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 {
 	/* run callbacks for UPDATE event */
 	if (exists_ulcb_type(UL_CONTACT_UPDATE)) {
@@ -733,14 +686,15 @@ int update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid,
 
 	/* we have to update memory in any case, but database directly
 	 * only in db_mode 1 */
-	if (mem_update_ucontact(_c,_e,_q,_cid,_cs,_set,_res,_ua,_recv,sock) < 0) {
-		LOG(L_ERR, "update_ucontact(): Error while updating\n");
+	if (mem_update_ucontact( _c, _ci) < 0) {
+		LOG(L_ERR, "ERROR:usrloc:update_ucontact: failed to update memory\n");
 		return -1;
 	}
 	st_update_ucontact(_c);
 	if (db_mode == WRITE_THROUGH) {
 		if (db_update_ucontact(_c) < 0) {
-			LOG(L_ERR, "update_ucontact(): Error while updating database\n");
+			LOG(L_ERR, "ERROR:usrloc:update_ucontact: failed to update "
+				"database\n");
 		}
 	}
 	return 0;

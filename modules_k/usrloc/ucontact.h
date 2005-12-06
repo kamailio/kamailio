@@ -83,19 +83,30 @@ typedef struct ucontact {
 	struct ucontact* prev;  /* Previous contact in the linked list */
 } ucontact_t;
 
+typedef struct ucontact_info {
+	str* received;
+	time_t expires;
+	qvalue_t q;
+	str* callid;
+	int cseq;
+	unsigned int flags1;
+	unsigned int flags2;
+	str *user_agent;
+	struct socket_info *sock;
+} ucontact_info_t;
 
 /*
  * Valid contact is a contact that either didn't expire yet or is permanent
  */
-#define VALID_CONTACT(c, t) (((c->expires > t) || (c->flags & FL_PERMANENT)))
+#define VALID_CONTACT(c, t) \
+	(((c->expires > t) || (c->flags & FL_PERMANENT)))
 
 
 /*
  * Create a new contact structure
  */
-int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, qvalue_t _q, 
-		 str* _callid, int _cseq, unsigned int _flags,
-		 ucontact_t** _c, str* _ua, str* _recv, struct socket_info *sock);
+ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact,
+		ucontact_info_t* _ci);
 
 
 /*
@@ -113,9 +124,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c);
 /*
  * Update existing contact in memory with new values
  */
-int mem_update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid,
-		int _cs, unsigned int _set, unsigned int _res,
-		str* _ua, str* _recv, struct socket_info *sock);
+int mem_update_ucontact(ucontact_t* _c, ucontact_info_t *_ci);
 
 
 /* ===== State transition functions - for write back cache scheme ======== */
@@ -182,13 +191,7 @@ int db_delete_ucontact(ucontact_t* _c);
 /*
  * Update ucontact with new values
  */
-typedef int (*update_ucontact_t)(ucontact_t* _c, time_t _e, qvalue_t _q,
-		str* _cid, int _cs, unsigned int _set, unsigned int _res,
-		str* _ua, str* _recv, struct socket_info *sock);
-
-int update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid,
-		int _cs, unsigned int _set, unsigned int _res,
-		str* _ua, str* _recv, struct socket_info *sock);
-
+typedef int (*update_ucontact_t)(ucontact_t* _c, ucontact_info_t* _ci);
+int update_ucontact(ucontact_t* _c, ucontact_info_t* _ci);
 
 #endif /* UCONTACT_H */

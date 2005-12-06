@@ -40,16 +40,18 @@
 #define UNIXSOCK_UA "SIP Express Router UNIXSOCK"
 #define UNIXSOCK_UA_LEN (sizeof(UNIXSOCK_UA)-1)
 
-static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue_t _q, int _f)
+static inline int add_contact(udomain_t* _d, str* _u, str* _c,
+														ucontact_info_t *_ci)
 {
 	urecord_t* r;
 	ucontact_t* c = 0;
 	int res;
 	str cid, ua;
 	
-	if (_e == 0 && !(_f & FL_PERMANENT)) {
-		LOG(L_ERR, "fifo_add_contact(): expires == 0 and not persistent contact, giving up\n");
-		return -1;
+	if (_ci->expires == 0 && !(_ci->flags1 & FL_PERMANENT)) {
+		LOG(L_ERR, "fifo_add_contact(): expires == 0 and not persistent "
+			"contact, giving up\n");
+		goto error0;
 	}
 
 	get_act_time();
@@ -57,43 +59,51 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue
 	res = get_urecord(_d, _u, &r);
 	if (res < 0) {
 		LOG(L_ERR, "fifo_add_contact(): Error while getting record\n");
-		return -2;
+		goto error0;
 	}
 
 	if (res >  0) { /* Record not found */
 		if (insert_urecord(_d, _u, &r) < 0) {
-			LOG(L_ERR, "fifo_add_contact(): Error while creating new urecord\n");
-			return -3;
+			LOG(L_ERR, "fifo_add_contact(): Error while creating "
+				"new urecord\n");
+			goto error0;
 		}
 	} else {
 		if (get_ucontact(r, _c, &c) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while obtaining ucontact\n");
-			return -4;
+			goto error0;
 		}
 	}
 		
 	cid.s = UNIXSOCK_CALLID;
 	cid.len = UNIXSOCK_CALLID_LEN;
+	_ci->callid = &cid;
 
 	ua.s = UNIXSOCK_UA;
 	ua.len = UNIXSOCK_UA_LEN;
+	_ci->user_agent = &ua;
+
+	_ci->cseq = UNIXSOCK_CSEQ;
+	_ci->expires += act_time;
 
 	if (c) {
-		if (update_ucontact(c, _e + act_time, _q, &cid, UNIXSOCK_CSEQ, _f, FL_NONE, &ua, 0, 0) < 0) {
+		if (update_ucontact(c, _ci) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while updating contact\n");
-			release_urecord(r);
-			return -5;
+			goto error1;
 		}
 	} else {
-		if (insert_ucontact(r, _c, _e + act_time, _q, &cid, UNIXSOCK_CSEQ, _f, &c, &ua, 0, 0) < 0) {
+		if ( new_ucontact( r->domain, &r->aor, _c, _ci)==0 ) {
 			LOG(L_ERR, "fifo_add_contact(): Error while inserting contact\n");
-			release_urecord(r);
-			return -6;
+			goto error1;
 		}
 	}
-	
+
 	release_urecord(r);
 	return 0;
+error1:
+	release_urecord(r);
+error0:
+	return -1;
 }
 
 
@@ -183,7 +193,7 @@ static int ul_rm(str* msg)
 	
 	if (d) {
 		lock_udomain(d);
-		if (delete_urecord(d, &user) < 0) {
+		if (delete_urecord(d, &user, 0) < 0) {
 			LOG(L_ERR, "ul_rm(): Error while deleting user %.*s\n", user.len, ZSW(user.s));
 			unlock_udomain(d);
 			unixsock_reply_printf("500 Error while deleting user %.*s\n", user.len, ZSW(user.s));
@@ -327,9 +337,8 @@ static int ul_dump(str* msg)
 
 static int ul_add(str* msg)
 {
+	ucontact_info_t ci;
 	udomain_t* d;
-	qvalue_t qval;
-	int exp_i, flags_i;
 	char* at;
 	str table, user, contact, expires, q, rep, flags;
 
@@ -386,46 +395,51 @@ static int ul_add(str* msg)
 	unixsock_find_domain(&table, &d);
 	
 	if (d) {
-		if (str2int(&expires, (unsigned int*)&exp_i) < 0) {
+		memset( &ci, 0, sizeof(ucontact_info_t));
+		
+		if (str2int(&expires, (unsigned int*)&ci.expires) < 0) {
 			unixsock_reply_asciiz("400 Invalid expires format\n");
 			goto err;
 		}
 		
-		if (str2q(&qval, q.s, q.len) < 0) {
+		if (str2q(&ci.q, q.s, q.len) < 0) {
 			unixsock_reply_asciiz("400 invalid q value\n");
 			goto err;
 		}
 		
-		if (str2int(&flags, (unsigned int*)&flags_i) < 0) {
+		if (str2int(&flags, (unsigned int*)&ci.flags1) < 0) {
 			unixsock_reply_asciiz("400 Invalid flags format\n");
 			goto err;
 		}
 		
 		lock_udomain(d);
 		
-		if (add_contact(d, &user, &contact, exp_i, qval, flags_i) < 0) {
+		if (add_contact(d, &user, &contact, &ci) < 0) {
 			unlock_udomain(d);
-			LOG(L_ERR, "ul_add(): Error while adding contact ('%.*s','%.*s') in table '%.*s'\n",
-			    user.len, ZSW(user.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
+			LOG(L_ERR, "ul_add(): Error while adding contact ('%.*s','%.*s') "
+				"in table '%.*s'\n", user.len, ZSW(user.s), contact.len, 
+				ZSW(contact.s), table.len, ZSW(table.s));
 			unixsock_reply_printf("500 Error while adding contact\n"
-					      " ('%.*s','%.*s') in table '%.*s'\n",
-					      user.len, ZSW(user.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
+				" ('%.*s','%.*s') in table '%.*s'\n", user.len, ZSW(user.s),
+				contact.len, ZSW(contact.s), table.len, ZSW(table.s));
 			goto err;
 		}
 		unlock_udomain(d);
 		
 		unixsock_reply_printf("200 Added to table\n"
-				      "('%.*s','%.*s') to '%.*s'\n",
-				      user.len, ZSW(user.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
+			"('%.*s','%.*s') to '%.*s'\n", user.len, ZSW(user.s), 
+			contact.len, ZSW(contact.s), table.len, ZSW(table.s));
 		unixsock_reply_send();
 		return 0;
 	} else {
-		unixsock_reply_printf("400 Table '%.*s' not found in memory, use save(\"%.*s\") or lookup(\"%.*s\") in the configuration script first\n", 
-				      table.len, ZSW(table.s), table.len, ZSW(table.s), table.len, ZSW(table.s));
+		unixsock_reply_printf("400 Table '%.*s' not found in memory, use "
+			"save(\"%.*s\") or lookup(\"%.*s\") in the configuration script "
+			"first\n", table.len, ZSW(table.s), table.len, ZSW(table.s), 
+			table.len, ZSW(table.s));
 		unixsock_reply_send();
 		return 0;
 	}
- err:
+err:
 	unixsock_reply_send();
 	return -1;
 }

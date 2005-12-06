@@ -34,7 +34,7 @@ str dom = {"location", 8};
 void notify_watchers(struct urecord* _r, ucontact_t *_c, int state)
 {
 	notify_cb_t* n;
-       
+
 	n = _r->watchers;
         while(n) {
 		n->cb(&_r->aor, &_c->c, state, n->data);

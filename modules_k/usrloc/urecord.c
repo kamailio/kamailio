@@ -37,8 +37,6 @@
 #include "../../ut.h"
 #include "ul_mod.h"
 #include "utime.h"
-/* #include "del_list.h" */
-/* #include "ins_list.h" */
 #include "notify.h"
 #include "ul_callback.h"
 
@@ -50,14 +48,14 @@ int new_urecord(str* _dom, str* _aor, urecord_t** _r)
 {
 	*_r = (urecord_t*)shm_malloc(sizeof(urecord_t));
 	if (*_r == 0) {
-		LOG(L_ERR, "new_urecord(): No memory left\n");
+		LOG(L_ERR, "ERROR:usrloc:new_urecord: no shm memory left\n");
 		return -1;
 	}
 	memset(*_r, 0, sizeof(urecord_t));
 
 	(*_r)->aor.s = (char*)shm_malloc(_aor->len);
 	if ((*_r)->aor.s == 0) {
-		LOG(L_ERR, "new_urecord(): No memory left\n");
+		LOG(L_ERR, "ERROR:usrloc:new_urecord: no shm memory left\n");
 		shm_free(*_r);
 		return -2;
 	}
@@ -123,23 +121,22 @@ void print_urecord(FILE* _f, urecord_t* _r)
  * Contacts are ordered by: 1) q 
  *                          2) descending modification time
  */
-int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q,
-		str* _cid, int _cs, unsigned int _flags,
-		struct ucontact** _con, str* _ua, str* _recv, struct socket_info *sock)
+ucontact_t* mem_insert_ucontact(urecord_t* _r, str* _c, ucontact_info_t* _ci)
 {
 	ucontact_t* ptr, *prev = 0;
+	ucontact_t* c;
 
-	if (new_ucontact(_r->domain, &_r->aor, _c, _e, _q, _cid, _cs, _flags,
-	_con, _ua, _recv, sock) < 0) {
-		LOG(L_ERR, "mem_insert_ucontact(): Can't create new contact\n");
-		return -1;
+	if ( (c=new_ucontact(_r->domain, &_r->aor, _c, _ci)) < 0) {
+		LOG(L_ERR, "ERROR:usrloc:mem_insert_ucontact: failed to "
+			"create new contact\n");
+		return 0;
 	}
-	
+
 	ptr = _r->contacts;
 
 	if (!desc_time_order) {
 		while(ptr) {
-			if (ptr->q < _q) break;
+			if (ptr->q < c->q) break;
 			prev = ptr;
 			ptr = ptr->next;
 		}
@@ -147,23 +144,23 @@ int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q,
 
 	if (ptr) {
 		if (!ptr->prev) {
-			ptr->prev = *_con;
-			(*_con)->next = ptr;
-			_r->contacts = *_con;
+			ptr->prev = c;
+			c->next = ptr;
+			_r->contacts = c;
 		} else {
-			(*_con)->next = ptr;
-			(*_con)->prev = ptr->prev;
-			ptr->prev->next = *_con;
-			ptr->prev = *_con;
+			c->next = ptr;
+			c->prev = ptr->prev;
+			ptr->prev->next = c;
+			ptr->prev = c;
 		}
 	} else if (prev) {
-		prev->next = *_con;
-		(*_con)->prev = prev;
+		prev->next = c;
+		c->prev = prev;
 	} else {
-		_r->contacts = *_con;
+		_r->contacts = c;
 	}
 
-	return 0;
+	return c;
 }
 
 
@@ -399,14 +396,13 @@ int db_delete_urecord(urecord_t* _r)
 	memcpy(b, _r->domain->s, _r->domain->len);
 	b[_r->domain->len] = '\0';
 	if (ul_dbf.use_table(ul_dbh, b) < 0) {
-		LOG(L_ERR, "ERROR: db_delete_urecord():"
-		                " Error in use_table\n");
+		LOG(L_ERR, "ERROR:usrloc:db_delete_urecord: use_table failed\n");
 		return -1;
 	}
 
 	if (ul_dbf.delete(ul_dbh, keys, 0, vals, (use_domain) ? (2) : (1)) < 0) {
-		LOG(L_ERR, "ERROR: db_delete_urecord():"
-				" Error while deleting from database\n");
+		LOG(L_ERR, "ERROR:usrloc:db_delete_urecord:"
+				" failed to delete from database\n");
 		return -1;
 	}
 
@@ -425,32 +421,32 @@ void release_urecord(urecord_t* _r)
 	}
 }
 
+
 /*
  * Create and insert new contact
  * into urecord
  */
-int insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q,
-		str* _cid, int _cs, unsigned int _flags,
-		struct ucontact** _con, str* _ua, str* _recv, struct socket_info *sock)
+int insert_ucontact(urecord_t* _r, str* _contact, ucontact_info_t* _ci,
+															ucontact_t** _c)
 {
-	if (mem_insert_ucontact(_r, _c, _e, _q, _cid, _cs, _flags,
-	_con, _ua, _recv, sock) < 0) {
-		LOG(L_ERR, "insert_ucontact(): Error while inserting contact\n");
+	if ( ((*_c)=mem_insert_ucontact(_r, _contact, _ci)) == 0) {
+		LOG(L_ERR, "ERROR:usrloc:insert_ucontact: failed to insert contact\n");
 		return -1;
 	}
 
-	notify_watchers(_r, *_con, (_e > 0) ? PRES_ONLINE : PRES_OFFLINE);
+	notify_watchers(_r, (*_c),
+		((*_c)->expires > 0) ? PRES_ONLINE : PRES_OFFLINE);
 
 	if (exists_ulcb_type(UL_CONTACT_INSERT)) {
-		run_ul_callbacks( UL_CONTACT_INSERT, *_con);
+		run_ul_callbacks( UL_CONTACT_INSERT, *_c);
 	}
 
 	if (db_mode == WRITE_THROUGH) {
-		if (db_insert_ucontact(*_con) < 0) {
-			LOG(L_ERR, "insert_ucontact(): Error while inserting "
+		if (db_insert_ucontact(*_c) < 0) {
+			LOG(L_ERR, "ERROR:usrloc:insert_ucontact: failed to insert "
 				"in database\n");
 		}
-		(*_con)->state = CS_SYNC;
+		(*_c)->state = CS_SYNC;
 	}
 
 	return 0;
