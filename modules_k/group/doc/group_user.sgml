@@ -205,18 +205,19 @@ modparam("group", "use_domain", 1)
 		<title><varname>re_table</varname> (string)</title>
 		<para>
 		Name of the table holding definitions for regular-expression 
-		based groups.
+		based groups. If no table is defined, the regular-expression
+		support is disabled.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>re_grp</quote>.
+			Default value is <quote>NULL</quote>.
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>re_table</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("group", "re_table", "re_grp_table")
+modparam("group", "re_table", "re_grp")
 ...
 </programlisting>
 		</example>

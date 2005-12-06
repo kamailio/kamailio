@@ -109,7 +109,7 @@ str group_column  = {GROUP_COL, GROUP_COL_LEN};
 int use_domain    = 0;
 
 /* tabel and columns used for re-based groups */
-str re_table      = {RE_TABLE, RE_TABLE_LEN};
+str re_table      = {0, 0};
 str re_exp_column = {RE_EXP_COL, RE_EXP_COL_LEN};
 str re_gid_column = {RE_GID_COL, RE_GID_COL_LEN};
 int multiple_gid  = 1;

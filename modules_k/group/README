@@ -189,13 +189,14 @@ modparam("group", "use_domain", 1)
 1.3.7. re_table (string)
 
    Name of the table holding definitions for regular-expression
-   based groups.
+   based groups. If no table is defined, the regular-expression
+   support is disabled.
 
-   Default value is "re_grp". 
+   Default value is "NULL". 
 
    Example 1-7. Set re_table parameter
 ...
-modparam("group", "re_table", "re_grp_table")
+modparam("group", "re_table", "re_grp")
 ...
      _________________________________________________________
 
@@ -339,4 +340,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.
