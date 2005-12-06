@@ -181,8 +181,7 @@ PLUS	"+"
 MINUS	"-"
 
 /* Attribute specification */
-ATTR_MARK   "$"|"%"
-FUNC_MARK   "@"
+ATTR_MARK   "$"|"%"|"@"
 ATTR_FROM   "from"|"f"
 ATTR_TO     "to"|"t"
 ATTR_USER   "user"|"u"
@@ -495,7 +494,6 @@ EAT_ABLE	[\ \t\b\r]
                            BEGIN(INITIAL);
 			   return ID; 
                         }
-<INITIAL>{FUNC_MARK}    { count(); return FUNC_MARK; }
 
 <INITIAL>{IPV6ADDR}		{ count(); yylval.strval=yytext; return IPV6ADDR; }
 <INITIAL>{DECNUMBER}		{ count(); yylval.intval=atoi(yytext);return NUMBER; }
@@ -676,5 +674,4 @@ static void count()
 		}
 	}
 }
-
 

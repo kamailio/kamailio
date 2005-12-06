@@ -67,7 +67,6 @@
  *
  */
 
-
 %{
 
 #include <stdlib.h>
@@ -264,7 +263,6 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token TOS
 
 %token ATTR_MARK
-%token FUNC_MARK
 %token ATTR_FROM
 %token ATTR_TO
 %token ATTR_USER
@@ -1192,9 +1190,6 @@ attr_id : ATTR_MARK ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp
                                              $$ = s_attr;
                                             }
 ;
-
-func_id : FUNC_MARK ID
-       
 
 assign_op : ADDEQ { $$ = ADD_T; }
           | EQUAL { $$ = ASSIGN_T; }
