@@ -183,7 +183,9 @@ static int mod_init(void)
 	domain_column.len = strlen(domain_column.s);
 	group_column.len = strlen(group_column.s);
 
-	re_table.len = strlen(re_table.s);
+	re_table.len = (re_table.s && re_table.s[0])?strlen(re_table.s):0;
+	re_exp_column.len = strlen(re_exp_column.s);
+	re_gid_column.len = strlen(re_gid_column.s);
 	re_exp_column.len = strlen(re_exp_column.s);
 	re_gid_column.len = strlen(re_gid_column.s);
 
