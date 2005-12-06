@@ -269,7 +269,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token ATTR_USER
 %token ATTR_DOMAIN
 %token ATTR_GLOBAL
-%token ADD
+%token ADDEQ
 
 /* operators */
 %nonassoc EQUAL
@@ -1125,7 +1125,7 @@ actions:	actions action	{$$=append_action($1, $2); }
 
 action:		cmd SEMICOLON {$$=$1;}
 		| if_cmd {$$=$1;}
-                | assign_action SEMICOLON {$$=$1}
+		| assign_action SEMICOLON {$$=$1;}
 		| SEMICOLON /* null action */ {$$=0;}
 		| cmd error { $$=0; yyerror("bad command: missing ';'?"); }
 	;
@@ -1192,7 +1192,7 @@ attr_id : ATTR_MARK ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp
                                             }
 ;
 
-assign_op : ADD { $$ = ADD_T; }
+assign_op : ADDEQ { $$ = ADD_T; }
           | EQUAL { $$ = ASSIGN_T; }
 ;
 

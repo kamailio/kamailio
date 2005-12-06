@@ -171,7 +171,7 @@ GTE	>=
 LTE	<=
 DIFF	!=
 MATCH	=~
-ADD     "+="
+ADDEQ     "+="
 NOT		!|"not"
 LOG_AND		"and"|"&&"
 BIN_AND         "&"
@@ -462,7 +462,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{MODPARAM}     { count(); yylval.strval=yytext; return MODPARAM; }
 
 <INITIAL>{EQUAL}	{ count(); return EQUAL; }
-<INITIAL>{ADD}          { count(); return ADD; }
+<INITIAL>{ADDEQ}          { count(); return ADDEQ; }
 <INITIAL>{EQUAL_T}	{ count(); return EQUAL_T; }
 <INITIAL>{GT}	{ count(); return GT; }
 <INITIAL>{LT}	{ count(); return LT; }
