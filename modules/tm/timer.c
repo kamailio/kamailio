@@ -640,7 +640,12 @@ static void remove_timer_unsafe(  struct timer_link* tl )
 	}
 }
 
+/* undefine TIMER_ORDERED for a little bit more performance at the expense of
+ * the variable fr_inv_timers */
+#define TIMER_ORDERED
+/*#define TIMER_SKIP_DELETED */
 
+#ifdef TIMER_ORDERED /* can be very slow if coupled with TIMER_SKIP_DELETED */
 /* put a new cell into a list nr. list_id */
 static void insert_timer_unsafe( struct timer *timer_list, struct timer_link *tl,
 	unsigned int time_out )
@@ -653,7 +658,11 @@ static void insert_timer_unsafe( struct timer *timer_list, struct timer_link *tl
 	for(ptr = timer_list->last_tl.prev_tl; 
 	    ptr != &timer_list->first_tl; 
 	    ptr = ptr->prev_tl) {
-		if ((ptr->time_out != TIMER_DELETED) && (ptr->time_out <= time_out)) break;
+		if (
+#ifdef TIMER_SKIP_DELETED
+				(ptr->time_out != TIMER_DELETED) && 
+#endif
+				(ptr->time_out <= time_out)) break;
 	}
 
 	tl->prev_tl = ptr;
@@ -664,9 +673,8 @@ static void insert_timer_unsafe( struct timer *timer_list, struct timer_link *tl
 	DBG("DEBUG: add_to_tail_of_timer[%d]: %p\n",timer_list->id,tl);
 }
 
+#else
 
-
-#if 0  /* not used anymore */
 /* put a new cell into a list nr. list_id */
 static void add_timer_unsafe( struct timer *timer_list, struct timer_link *tl,
 	unsigned int time_out )
@@ -693,6 +701,8 @@ static void add_timer_unsafe( struct timer *timer_list, struct timer_link *tl,
 #endif
 	DBG("DEBUG: add_timer_unsafe[%d]: %p\n",timer_list->id,tl);
 }
+
+#define insert_timer_unsafe(tlist, tl, to) add_timer_unsafe((tlist),(tl),(to))
 #endif
 
 
