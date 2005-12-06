@@ -62,6 +62,7 @@ static inline int get_ha1(struct username* username, str* realm,
 	str result;
 	int n, nc, i;
 
+	val = 0; /* Fixes gcc warning */
 	col = pkg_malloc(sizeof(*col) * (credentials_n + 2));
 	if (col == NULL) {
 		LOG(L_ERR, "auth_db:get_ha1: Error while allocating memory\n");
