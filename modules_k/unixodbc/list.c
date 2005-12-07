@@ -49,11 +49,10 @@ int insert(list l, int n, strn* value)
 		ln->data=malloc(sizeof(strn)*n);
 		for(i=0; i<n; i++)
 			strcpy(ln->data[i].s, value[i].s);
-	} 
-        else 
-	        return insert(l->end, n, value);
-	
-	
+		return 0;
+	}
+	else
+		return insert(l->end, n, value);
 }
 
 void destroy(list l)
