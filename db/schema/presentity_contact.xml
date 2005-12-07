@@ -52,7 +52,7 @@
     <column>
 	<name>expires</name>
 	<type>datetime</type>
-	<default>2020-05-28 21:32:15</default>
+	<default>2004-05-28 21:32:15</default>
     </column>
 
     <column id="prescontact.placeid">

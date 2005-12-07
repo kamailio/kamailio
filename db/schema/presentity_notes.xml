@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table role="presence"
+    xmlns:db="http://docbook.org/ns/docbook"
+    xmlns:my="http://iptel.org/dbschema/mysql"
+    xmlns:pg="http://iptel.org/dbschema/postgres"
+    xmlns:dt="http://iptel.org/dbschema/dbtext">
+    <name>presentity_notes</name>
+    <version>1</version>
+    
+    <column id="presnotes.dbid">
+		<name>dbid</name>
+		<type>string</type>
+		<size>64</size>
+    </column>
+	
+	<!-- foreign key (presentity) -->
+    <column>
+		<name>presid</name>
+		<type>unsigned int</type>
+		<size>10</size>
+    </column>
+    
+	<column>
+		<name>etag</name>
+		<type>string</type>
+		<size>64</size>
+    </column>
+    
+	<column>
+		<name>note</name>
+		<type>string</type>
+		<size>128</size>
+    </column>
+	
+	<column>
+		<name>lang</name>
+		<type>string</type>
+		<size>64</size>
+    </column>
+
+    <column>
+		<name>expires</name>
+		<type>datetime</type>
+		<default>2005-12-07 08:13:15</default>
+    </column>
+
+    <index>
+		<name>pnotes_idx1</name>
+		<colref linkend="presnotes.dbid"/>
+		<unique/>
+    </index>
+    
+</table>

@@ -296,13 +296,23 @@ CREATE TABLE presentity (
     KEY presentity_key2 (uri)
 );
 
+CREATE TABLE presentity_notes (
+    dbid VARCHAR(64) NOT NULL,
+    presid INT(10) UNSIGNED NOT NULL,
+    etag VARCHAR(64) NOT NULL,
+    note VARCHAR(128) NOT NULL,
+    lang VARCHAR(64) NOT NULL,
+    expires DATETIME NOT NULL DEFAULT '2005-12-07 08:13:15',
+    UNIQUE KEY pnotes_idx1 (dbid)
+);
+
 CREATE TABLE presentity_contact (
     contactid INT(10) UNSIGNED AUTO_INCREMENT NOT NULL,
     presid INT(10) UNSIGNED NOT NULL,
     basic VARCHAR(32) NOT NULL DEFAULT 'offline',
     status VARCHAR(32) NOT NULL,
     location VARCHAR(128) NOT NULL,
-    expires DATETIME NOT NULL DEFAULT '2020-05-28 21:32:15',
+    expires DATETIME NOT NULL DEFAULT '2004-05-28 21:32:15',
     placeid INT(10),
     priority FLOAT NOT NULL DEFAULT '0.5',
     contact VARCHAR(255),

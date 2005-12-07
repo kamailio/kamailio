@@ -284,13 +284,23 @@ CREATE TABLE presentity (
 
 );
 
+CREATE TABLE presentity_notes (
+    dbid string(64) NOT NULL,
+    presid int(10) NOT NULL,
+    etag string(64) NOT NULL,
+    note string(128) NOT NULL,
+    lang string(64) NOT NULL,
+    expires datetime NOT NULL DEFAULT '2005-12-07 08:13:15',
+    pnotes_idx1 UNIQUE (dbid, )
+);
+
 CREATE TABLE presentity_contact (
     contactid int(10) NOT NULL,
     presid int(10) NOT NULL,
     basic string(32) NOT NULL DEFAULT 'offline',
     status string(32) NOT NULL,
     location string(128) NOT NULL,
-    expires datetime NOT NULL DEFAULT '2020-05-28 21:32:15',
+    expires datetime NOT NULL DEFAULT '2004-05-28 21:32:15',
     placeid int(10),
     priority float NOT NULL DEFAULT '0.5',
     contact string(255),
