@@ -147,7 +147,7 @@ static int read_note(xmlNode *node, presence_note_t **dst)
 }
 
 
-static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst)
+static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst, int ignore_ns)
 {
 	str_t contact, id;
 	presence_tuple_status_t status;
@@ -156,12 +156,13 @@ static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst)
 	const char *s;
 	int res = 0;
 	presence_note_t *note;
+	char *ns = ignore_ns ? NULL: pidf_ns;
 
 	*dst = NULL;
 
 	DEBUG_LOG("read_tuple()\n");
 	/* process contact (only one node) */
-	n = find_node(tuple, "contact", pidf_ns);
+	n = find_node(tuple, "contact", ns);
 	if (!n) {
 		ERROR_LOG("contact not found\n");
 		return -1;
@@ -178,12 +179,12 @@ static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst)
 	}	
 	
 	/* process status (only one node) */
-	n = find_node(tuple, "status", pidf_ns);
+	n = find_node(tuple, "status", ns);
 	if (!n) {
 		ERROR_LOG("status not found\n");
 		return -1;
 	}
-	n = find_node(n, "basic", pidf_ns);
+	n = find_node(n, "basic", ns);
 	if (!n) {
 		ERROR_LOG("basic status not found\n");
 		return -1;
@@ -214,7 +215,7 @@ static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst)
 	n = tuple->children;
 	while (n) {
 		if (n->type == XML_ELEMENT_NODE) {
-			if (cmp_node(n, "note", pidf_ns) >= 0) {
+			if (cmp_node(n, "note", ns) >= 0) {
 				res = read_note(n, &note);
 				if ((res == 0) && note) {
 					DOUBLE_LINKED_LIST_ADD((*dst)->first_note, 
@@ -229,16 +230,17 @@ static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst)
 	return res;
 }
 
-static int read_presentity(xmlNode *root, presentity_info_t **dst)
+static int read_presentity(xmlNode *root, presentity_info_t **dst, int ignore_ns)
 {
 	xmlNode *n;
 	str_t entity;
 	presence_tuple_info_t *t;
 	presence_note_t *note;
 	int res = 0;
+	char *ns = ignore_ns ? NULL: pidf_ns;
 	
 	DEBUG_LOG("read_presentity()\n");
-	if (cmp_node(root, "presence", pidf_ns) < 0) {
+	if (cmp_node(root, "presence", ns) < 0) {
 		ERROR_LOG("document is not presence \n");
 		return -1;
 	}
@@ -250,12 +252,12 @@ static int read_presentity(xmlNode *root, presentity_info_t **dst)
 	n = root->children;
 	while (n) {
 		if (n->type == XML_ELEMENT_NODE) {
-			if (cmp_node(n, "tuple", pidf_ns) >= 0) {
-				res = read_tuple(n, &t);
+			if (cmp_node(n, "tuple", ns) >= 0) {
+				res = read_tuple(n, &t, ignore_ns);
 				if ((res == 0) && t) add_tuple_info(*dst, t);
 				else break;
 			}
-			if (cmp_node(n, "note", pidf_ns) >= 0) {
+			if (cmp_node(n, "note", ns) >= 0) {
 				res = read_note(n, &note);
 				if ((res == 0) && note) {
 					DOUBLE_LINKED_LIST_ADD((*dst)->first_note, 
@@ -271,7 +273,7 @@ static int read_presentity(xmlNode *root, presentity_info_t **dst)
 }
 
 /* libxml2 must be initialized before calling this function ! */
-int parse_pidf_document(presentity_info_t **dst, const char *data, int data_len)
+int parse_pidf_document(presentity_info_t **dst, const char *data, int data_len, int ignore_ns)
 {
 	int res = 0;
 	xmlDocPtr doc;
@@ -286,7 +288,7 @@ int parse_pidf_document(presentity_info_t **dst, const char *data, int data_len)
 		return -1;
 	}
 	
-	res = read_presentity(xmlDocGetRootElement(doc), dst);
+	res = read_presentity(xmlDocGetRootElement(doc), dst, ignore_ns);
 	if (res != 0) {
 		/* may be set => must be freed */
 		if (*dst) free_presentity_info(*dst);

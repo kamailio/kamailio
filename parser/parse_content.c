@@ -112,30 +112,39 @@ static type_node_t subtype_tree[] = {
 	{'s',SUBTYPE_UNKNOWN,1,16}, /* 13 */
 		{'d',SUBTYPE_UNKNOWN,1,-1},
 			{'p',SUBTYPE_SDP,0,-1},
-	{'c',SUBTYPE_UNKNOWN,1,25}, /* 16 */
+	{'c',SUBTYPE_UNKNOWN,1,34}, /* 16 */
 		{'p',SUBTYPE_UNKNOWN,2,-1},
-			{'i',SUBTYPE_UNKNOWN,1,20},
-				{'m',SUBTYPE_CPIM,0,-1},
-			{'l',SUBTYPE_UNKNOWN,1,-1},
+			{'i',SUBTYPE_UNKNOWN,1,29},
+				{'m',SUBTYPE_CPIM,1,-1},
+					{'-',SUBTYPE_UNKNOWN,1,-1},
+						{'p',SUBTYPE_UNKNOWN,1,-1},
+							{'i',SUBTYPE_UNKNOWN,1,-1},
+								{'d',SUBTYPE_UNKNOWN,1,-1},
+									{'f',SUBTYPE_UNKNOWN,1,-1},
+										{'+',SUBTYPE_UNKNOWN,1,-1},
+											{'x',SUBTYPE_UNKNOWN,1,-1},
+												{'m',SUBTYPE_UNKNOWN,1,-1},
+													{'l',SUBTYPE_CPIM_PIDFXML,0,-1},
+			{'l',SUBTYPE_UNKNOWN,1,-1}, /* 29 */
 				{'+',TYPE_UNKNOWN,1,-1},
 					{'x',TYPE_UNKNOWN,1,-1},
 						{'m',TYPE_UNKNOWN,1,-1},
 							{'l',SUBTYPE_CPLXML,0,-1},
-	{'r',SUBTYPE_UNKNOWN,2,39}, /* 25 */
-		{'l',SUBTYPE_UNKNOWN,1,33},/* 26 */
+	{'r',SUBTYPE_UNKNOWN,2,48}, /* 34 */
+		{'l',SUBTYPE_UNKNOWN,1,42},/* 35 */
 			{'m',SUBTYPE_UNKNOWN,1,-1},
 				{'i',SUBTYPE_UNKNOWN,1,-1},
 					{'+',TYPE_UNKNOWN,1,-1},
 						{'x',TYPE_UNKNOWN,1,-1},
 							{'m',TYPE_UNKNOWN,1,-1},
 								{'l',SUBTYPE_RLMIXML,0,-1},
-		{'e',SUBTYPE_UNKNOWN,1,-1}, /* 33 */
+		{'e',SUBTYPE_UNKNOWN,1,-1}, /* 42 */
 			{'l',SUBTYPE_UNKNOWN,1,-1},
 				{'a',SUBTYPE_UNKNOWN,1,-1},
 					{'t',SUBTYPE_UNKNOWN,1,-1},
 						{'e',SUBTYPE_UNKNOWN,1,-1},
 							{'d',SUBTYPE_RELATED,0,-1},
-	{'l',SUBTYPE_UNKNOWN,1,48}, /* 39 */
+	{'l',SUBTYPE_UNKNOWN,1,57}, /* 48 */
 		{'p',SUBTYPE_UNKNOWN,1,-1},
 			{'i',SUBTYPE_UNKNOWN,1,-1},
 				{'d',SUBTYPE_UNKNOWN,1,-1},
@@ -144,7 +153,7 @@ static type_node_t subtype_tree[] = {
 							{'x',SUBTYPE_UNKNOWN,1,-1},
 								{'m',SUBTYPE_UNKNOWN,1,-1},
 									{'l',SUBTYPE_LPIDFXML,0,-1},
-	{'w',SUBTYPE_UNKNOWN,1,63}, /* 48 */
+	{'w',SUBTYPE_UNKNOWN,1,72}, /* 57 */
 		{'a',SUBTYPE_UNKNOWN,1,-1},
 			{'t',SUBTYPE_UNKNOWN,1,-1},
 				{'c',SUBTYPE_UNKNOWN,1,-1},
@@ -159,8 +168,8 @@ static type_node_t subtype_tree[] = {
 													{'x',TYPE_UNKNOWN,1,-1},
 														{'m',TYPE_UNKNOWN,1,-1},
 															{'l',SUBTYPE_WATCHERINFOXML,0,-1},
-	{'x',SUBTYPE_UNKNOWN,2,85}, /* 63 */
-		{'p',SUBTYPE_UNKNOWN,1,72}, /* 64 */
+	{'x',SUBTYPE_UNKNOWN,2,94}, /* 72 */
+		{'p',SUBTYPE_UNKNOWN,1,81}, /* 73 */
 			{'i',SUBTYPE_UNKNOWN,1,-1},
 				{'d',SUBTYPE_UNKNOWN,1,-1},
 					{'f',SUBTYPE_UNKNOWN,1,-1},
@@ -168,7 +177,7 @@ static type_node_t subtype_tree[] = {
 							{'x',SUBTYPE_UNKNOWN,1,-1},
 								{'m',SUBTYPE_UNKNOWN,1,-1},
 									{'l',SUBTYPE_XPIDFXML,0,-1},
-		{'m',SUBTYPE_UNKNOWN,1,-1}, /* 72 */
+		{'m',SUBTYPE_UNKNOWN,1,-1}, /* 81 */
 			{'l',SUBTYPE_UNKNOWN,1,-1},
 				{'+',SUBTYPE_UNKNOWN,1,-1},
 					{'m',SUBTYPE_UNKNOWN,1,-1},
@@ -181,7 +190,7 @@ static type_node_t subtype_tree[] = {
 												{'i',SUBTYPE_UNKNOWN,1,-1}, 
 													{'d',SUBTYPE_UNKNOWN,1,-1},
 														{'f',SUBTYPE_XML_MSRTC_PIDF,0,-1},
-	{'e',SUBTYPE_UNKNOWN,1,-1}, /* 85 */
+	{'e',SUBTYPE_UNKNOWN,1,-1}, /* 94 */
 		{'x',SUBTYPE_UNKNOWN,1,-1},
 			{'t',SUBTYPE_UNKNOWN,1,-1},
 				{'e',SUBTYPE_UNKNOWN,1,-1},
@@ -269,7 +278,9 @@ char* decode_mime_type(char *start, char *end, unsigned int *mime_type)
 				node = type_tree[node].next;
 			}
 			if (node!=-1 && type_tree[node].nr_sons)
-				node++;
+				node++; 
+				/* ? increment only for (p < end - 1), 
+				 * otherwise will not work for final nodes with children */
 			p++;
 		}
 		if (p==end || mark==p)
@@ -304,7 +315,7 @@ char* decode_mime_type(char *start, char *end, unsigned int *mime_type)
 		while (p<end && is_mime_char(*p) ) {
 			while(node!=-1 && !is_char_equal(*p,subtype_tree[node].c) )
 				node = subtype_tree[node].next;
-			if (node!=-1 && subtype_tree[node].nr_sons)
+			if (node!=-1 && subtype_tree[node].nr_sons && (p < end - 1))
 				node++;
 			p++;
 		}
