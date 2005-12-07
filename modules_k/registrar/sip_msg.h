@@ -67,7 +67,7 @@ contact_t* get_next_contact(contact_t* _c);
  * 3) If the message contained no expires header field, use
  *    the default value
  */
-int calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e);
+void calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e);
 
 
 /*

@@ -283,6 +283,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 	if(_c!=0) {
 		/* Calculate q value of the contact */
 		if (calc_contact_q(_c->q, &ci.q) < 0) {
+			rerrno = R_INV_Q;
 			LOG(L_ERR, "ERROR:usrloc:pack_ci: failed to calculate q\n");
 			goto error;
 		}
@@ -297,8 +298,10 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		/* Get methods of contact */
 		if (_c->methods) {
 			if (parse_methods(&(_c->methods->body), &ci.methods) < 0) {
+				rerrno = R_PARSE;
 				LOG(L_ERR, "ERROR:usrloc:pack_ci: failed to parse "
 					"contact methods\n");
+				goto error;
 			}
 		} else {
 			ci.methods = allowed;
@@ -340,16 +343,15 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 	flags |= mem_only;
 
 	for( num=0,r=0,ci=0 ; _c ; _c = get_next_contact(_c) ) {
-		if (calc_contact_expires(_m, _c->expires, &e) < 0) {
-			LOG(L_ERR,"ERROR:usrloc:insert_contacts: failed to "
-				"calculate expires\n");
-			goto error;
-		}
+		/* calculate expires */
+		calc_contact_expires(_m, _c->expires, &e);
 		/* Skip contacts with zero expires */
 		if (e == 0)
 			continue;
 
 		if (max_contacts && (num >= max_contacts)) {
+			LOG(L_INFO,"INFO:usrloc:insert_contacts: too many contacts "
+				"(%d) for AOR <%.*s>\n", num, _a->len, _a->s);
 			rerrno = R_TOO_MANY;
 			goto error;
 		}
@@ -365,8 +367,11 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 		}
 
 		/* pack the contact_info */
-		if ( (ci=pack_ci( (ci==0)?_m:0, _c, e, flags, 0))==0 )
+		if ( (ci=pack_ci( (ci==0)?_m:0, _c, e, flags, 0))==0 ) {
+			LOG(L_ERR, "ERROR:usrloc:insert_contacts: failed to extract "
+				"contact info\n");
 			goto error;
+		}
 
 		if (ul.insert_ucontact( r, &_c->uri, ci, &c) < 0) {
 			rerrno = R_UL_INS_C;
@@ -406,16 +411,14 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 		}
 		ptr = ptr->next;
 	}
-	DBG("test_max_contacts: %d valid contacts\n", num);
+	DBG("DEBUG:usrloc:test_max_contacts: %d valid contacts\n", num);
 	
 	while(_c) {
-		if (calc_contact_expires(_m, _c->expires, &e) < 0) {
-			LOG(L_ERR, "test_max_contacts: Error while calculating expires\n");
-			return -1;
-		}
+		/* calculate expires */
+		calc_contact_expires(_m, _c->expires, &e);
 		
 		if (ul.get_ucontact(_r, &_c->uri, &cont) > 0) {
-			     /* Contact not found */
+			/* Contact not found */
 			if (e != 0) num++;
 		} else {
 			if (e == 0) num--;
@@ -424,12 +427,10 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 		_c = get_next_contact(_c);
 	}
 	
-	DBG("test_max_contacts: %d contacts after commit\n", num);
-	if (num > max_contacts) {
-		rerrno = R_TOO_MANY;
-		return 1;
-	}
-	
+	DBG("DEBUG:usrloc:test_max_contacts: %d contacts after commit\n", num);
+	if (num > max_contacts)
+		return -1;
+
 	return 0;
 }
 
@@ -466,18 +467,20 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 		flags |= FL_NAT_SIPPING;
 
 	if (max_contacts) {
-		if (test_max_contacts(_m, _r, _c) != 0 )
+		if (test_max_contacts(_m, _r, _c) != 0 ) {
+			rerrno = R_TOO_MANY;
+			LOG(L_INFO,"INFO:usrloc:update_contacts: too many contacts "
+				"for AOR <%.*s>\n", _r->aor.len, _r->aor.s);
 			goto error;
+		}
 	}
 
 	_c = get_first_contact(_m);
 	ci = 0;
 
 	while(_c) {
-		if (calc_contact_expires(_m, _c->expires, &e) < 0) {
-			LOG(L_ERR, "update(): Error while calculating expires\n");
-			goto error;
-		}
+		/* calculate expires */
+		calc_contact_expires(_m, _c->expires, &e);
 
 		if (ul.get_ucontact(_r, &_c->uri, &c) > 0) {
 			/* Contact not found -> expired? */
@@ -485,8 +488,11 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 				continue;
 
 			/* pack the contact_info */
-			if ( (ci=pack_ci( (ci==0)?_m:0, _c, e, flags, 0))==0 )
+			if ( (ci=pack_ci( (ci==0)?_m:0, _c, e, flags, 0))==0 ) {
+				LOG(L_ERR, "ERROR:usrloc:update_contacts: failed to extract "
+					"contact info\n");
 				goto error;
+			}
 
 			if (ul.insert_ucontact( _r, &_c->uri, ci, &c) < 0) {
 				rerrno = R_UL_INS_C;
@@ -507,7 +513,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 				if (ul.delete_ucontact(_r, c) < 0) {
 					rerrno = R_UL_DEL_C;
 					LOG(L_ERR, "update(): Error while deleting contact\n");
-					return -5;
+					goto error;
 				}
 			} else {
 				/* do updated */
@@ -515,13 +521,16 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 				reset = ~(flags | mem_only) & (FL_NAT|FL_MEM|FL_NAT_SIPPING);
 
 				/* pack the contact_info */
-				if ( (ci=pack_ci( (ci==0)?_m:0, _c, e, set, reset))==0 )
+				if ( (ci=pack_ci( (ci==0)?_m:0, _c, e, set, reset))==0 ) {
+					LOG(L_ERR, "ERROR:usrloc:update_contacts: failed to "
+						"extract contact info\n");
 					goto error;
+				}
 
 				if (ul.update_ucontact(c, ci) < 0) {
 					rerrno = R_UL_UPD_C;
 					LOG(L_ERR, "update(): Error while updating contact\n");
-					return -8;
+					goto error;
 				}
 
 				if (desc_time_order) {
@@ -552,14 +561,14 @@ static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
 	res = ul.get_urecord(_d, _a, &r);
 	if (res < 0) {
 		rerrno = R_UL_GET_R;
-		LOG(L_ERR, "contacts(): Error while retrieving record from usrloc\n");
+		LOG(L_ERR, "ERROR:usrloc:add_contacts: failed to retrieve record "
+			"from usrloc\n");
 		ul.unlock_udomain(_d);
 		return -2;
 	}
 
 	if (res == 0) { /* Contacts found */
 		if (update_contacts(_m, r, _c) < 0) {
-			LOG(L_ERR, "contacts(): Error while updating record\n");
 			build_contact(r->contacts);
 			ul.release_urecord(r);
 			ul.unlock_udomain(_d);
@@ -569,7 +578,6 @@ static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
 		ul.release_urecord(r);
 	} else {
 		if (insert_contacts(_m, _c, _d, _a) < 0) {
-			LOG(L_ERR, "contacts(): Error while inserting record\n");
 			ul.unlock_udomain(_d);
 			return -4;
 		}
@@ -618,8 +626,8 @@ static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* _s, int dor
 
 	if (doreply && (send_reply(_m) < 0)) return -1;
 	else return 1;
-	
- error:
+
+error:
 	if (doreply) send_reply(_m);
 	return 0;
 }

@@ -215,7 +215,7 @@ contact_t* get_next_contact(contact_t* _c)
  * 3) If the message contained no expires header field, use
  *    the default value
  */
-int calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
+void calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
 {
 	if (!_ep || !_ep->body.len) {
 		*_e = get_expires_hf(_m);
@@ -223,9 +223,9 @@ int calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
 		if (str2int(&_ep->body, (unsigned int*)_e) < 0) {
 			*_e = 3600;
 		}
-		     /* Convert to absolute value */
+		/* Convert to absolute value */
 		if (*_e != 0) *_e += act_time;
-	}		
+	}
 
 	if ((*_e != 0) && ((*_e - act_time) < min_expires)) {
 		*_e = min_expires + act_time;
@@ -234,8 +234,6 @@ int calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
 	if ((*_e != 0) && max_expires && ((*_e - act_time) > max_expires)) {
 		*_e = max_expires + act_time;
 	}
-
-	return 0;
 }
 
 
