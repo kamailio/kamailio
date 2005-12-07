@@ -23,7 +23,6 @@
  *
  * History:
  * ---------
- * 2003-03-12 added replication and state column (nils)
  */
 
 
@@ -44,7 +43,7 @@
 #define WRITE_THROUGH 1
 #define WRITE_BACK    2
 
-#define TABLE_VERSION 1001
+#define UL_TABLE_VERSION 1002
 
 extern str user_col;
 extern str domain_col;
@@ -58,6 +57,7 @@ extern str flags_col;
 extern str user_agent_col;
 extern str received_col;
 extern str sock_col;
+extern str methods_col;
 
 extern str db_url;
 extern int timer_interval;

@@ -180,9 +180,9 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 {
 	dlist_t* ptr;
 
-	     /* Domains are created before ser forks,
-	      * so we can create them using pkg_malloc
-	      */
+	/* Domains are created before ser forks,
+	 * so we can create them using pkg_malloc
+	 */
 	ptr = (dlist_t*)shm_malloc(sizeof(dlist_t));
 	if (ptr == 0) {
 		LOG(L_ERR, "new_dlist(): No memory left\n");
@@ -229,38 +229,41 @@ int register_udomain(const char* _n, udomain_t** _d)
 	s.len = strlen(_n);
 
 	if (find_dlist(&s, &d) == 0) {
-	        *_d = d->d;
+		*_d = d->d;
 		return 0;
 	}
 	
 	if (new_dlist(&s, &d) < 0) {
 		LOG(L_ERR, "register_udomain(): Error while creating new domain\n");
 		return -1;
-	} 
+	}
 
-	     /* Preload domain with data from database if we are gonna
-	      * to use database
-	      */
+	/* Preload domain with data from database if we are gonna
+	 * to use database
+	 */
 	if (db_mode != NO_DB) {
 		con = ul_dbf.init(db_url.s);
 		if (!con) {
-			LOG(L_ERR, "register_udomain(): Can not open database connection\n");
+			LOG(L_ERR, "register_udomain(): Can not open "
+				"database connection\n");
 			goto err;
 		}
 
 		ver = table_version(&ul_dbf, con, &s);
 
 		if (ver < 0) {
-			LOG(L_ERR, "register_udomain(): Error while querying table version\n");
+			LOG(L_ERR, "register_udomain(): Error while querying "
+				"table version\n");
 			goto err;
-		} else if (ver < TABLE_VERSION) {
-			LOG(L_ERR, "register_udomain(): Invalid table version (use openser_mysql.sh reinstall)\n");
+		} else if (ver < UL_TABLE_VERSION) {
+			LOG(L_ERR, "register_udomain(): Invalid table version "
+				"(use openser_mysql.sh reinstall)\n");
 			goto err;
 		}
 		
 		if (preload_udomain(con, d->d) < 0) {
-			LOG(L_ERR, "register_udomain(): Error while preloading domain '%.*s'\n",
-			    s.len, ZSW(s.s));
+			LOG(L_ERR, "register_udomain(): Error while preloading "
+				"domain '%.*s'\n", s.len, ZSW(s.s));
 			goto err;
 		}
 
@@ -273,7 +276,7 @@ int register_udomain(const char* _n, udomain_t** _d)
 	*_d = d->d;
 	return 0;
 
- err:
+err:
 	if (con) ul_dbf.close(con);
 	free_udomain(d->d);
 	shm_free(d->name.s);

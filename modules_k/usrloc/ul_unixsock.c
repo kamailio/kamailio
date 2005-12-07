@@ -37,7 +37,7 @@
 #define UNIXSOCK_CALLID "The-Answer-To-The-Ultimate-Question-Of-Life-Universe-And-Everything"
 #define UNIXSOCK_CALLID_LEN (sizeof(UNIXSOCK_CALLID)-1)
 #define UNIXSOCK_CSEQ 42
-#define UNIXSOCK_UA "SIP Express Router UNIXSOCK"
+#define UNIXSOCK_UA "OpenSER Server UNIXSOCK"
 #define UNIXSOCK_UA_LEN (sizeof(UNIXSOCK_UA)-1)
 
 static inline int add_contact(udomain_t* _d, str* _u, str* _c,
@@ -340,7 +340,7 @@ static int ul_add(str* msg)
 	ucontact_info_t ci;
 	udomain_t* d;
 	char* at;
-	str table, user, contact, expires, q, rep, flags;
+	str table, user, contact, expires, q, rep, flags, methods;
 
 	if (unixsock_read_line(&table, msg) != 0) {
 		unixsock_reply_asciiz("400 Table name expected\n");
@@ -380,14 +380,19 @@ static int ul_add(str* msg)
 		goto err;
 	}
 	
-	     /* Kept for backwards compatibility */
+	/* Kept for backwards compatibility */
 	if (unixsock_read_line(&rep, msg) != 0) {
 		unixsock_reply_asciiz("400 Replicate expected\n");
 		goto err;
 	}
-
+	
 	if (unixsock_read_line(&flags, msg) != 0) {
 		unixsock_reply_asciiz("400 Flags expected\n");
+		goto err;
+	}
+	
+	if (unixsock_read_line(&methods, msg) != 0) {
+		unixsock_reply_asciiz("400 Methods expected\n");
 		goto err;
 	}
 	
@@ -409,6 +414,10 @@ static int ul_add(str* msg)
 		
 		if (str2int(&flags, (unsigned int*)&ci.flags1) < 0) {
 			unixsock_reply_asciiz("400 Invalid flags format\n");
+			goto err;
+		}
+		if (str2int(&methods, (unsigned int*)&ci.methods) < 0) {
+			unixsock_reply_asciiz("400 Invalid methods format\n");
 			goto err;
 		}
 		

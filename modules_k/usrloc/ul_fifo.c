@@ -49,8 +49,8 @@
 #define FIFO_CALLID "The-Answer-To-The-Ultimate-Question-Of-Life-Universe-And-Everything"
 #define FIFO_CALLID_LEN (sizeof(FIFO_CALLID)-1)
 #define FIFO_CSEQ 42
-#define FIFO_UA "SIP Express Router FIFO"
-#define FIFO_UA_LEN 23
+#define FIFO_UA "OpenSER Server FIFO"
+#define FIFO_UA_LEN (sizeof(FIFO_UA)-1)
 
 
 
@@ -212,21 +212,20 @@ static int ul_add(FILE* pipe, char* response_file)
 	char q_s[MAX_Q_LEN];
 	char rep_s[MAX_REPLICATE_LEN];
 	char flags_s[MAX_FLAGS_LEN];
+	char methods_s[MAX_FLAGS_LEN];
 	udomain_t* d;
 	char* at;
 
-	str table, user, contact, expires, q, rep, flags;
+	str table, user, contact, expires, q, rep, flags, methods;
 
 	if (!read_line(table_s, MAX_TABLE, pipe, &table.len) || table.len == 0) {
-		fifo_reply(response_file,
-			   "400 ul_add: table name expected\n");
+		fifo_reply(response_file, "400 ul_add: table name expected\n");
 		LOG(L_ERR, "ERROR: ul_add: table name expected\n");
 		return 1;
 	}
 	
 	if (!read_line(user_s, MAX_USER, pipe, &user.len) || user.len  == 0) {
-		fifo_reply(response_file,
-			   "400 ul_add: aor name expected\n");
+		fifo_reply(response_file, "400 ul_add: aor name expected\n");
 		LOG(L_ERR, "ERROR: ul_add: aor expected\n");
 		return 1;
 	}
@@ -235,8 +234,7 @@ static int ul_add(FILE* pipe, char* response_file)
 
 	if (use_domain) {
 		if (!at) {
-			fifo_reply(response_file,
-				   "400 ul_add: username@domain expected\n");
+			fifo_reply(response_file,"400 ul_add: username@domain expected\n");
 			LOG(L_ERR, "ERROR: ul_add: Domain missing\n");
 			return 1;
 		}
@@ -246,42 +244,47 @@ static int ul_add(FILE* pipe, char* response_file)
 		}
 	}
 
-	if (!read_line(contact_s, MAX_CONTACT_LEN, pipe, &contact.len) || contact.len == 0) {
-		fifo_reply(response_file,
-			   "400 ul_add: contact expected\n");
+	if (!read_line(contact_s, MAX_CONTACT_LEN, pipe, &contact.len)
+	|| contact.len == 0) {
+		fifo_reply(response_file, "400 ul_add: contact expected\n");
 		LOG(L_ERR, "ERROR: ul_add: contact expected\n");
 		return 1;
 	}
 	
-	if (!read_line(expires_s, MAX_EXPIRES_LEN, pipe, &expires.len) || expires.len == 0) {
-		fifo_reply(response_file,
-			   "400 ul_add: expires expected\n");
+	if (!read_line(expires_s, MAX_EXPIRES_LEN, pipe, &expires.len)
+	|| expires.len == 0) {
+		fifo_reply(response_file, "400 ul_add: expires expected\n");
 		LOG(L_ERR, "ERROR: ul_add: expires expected\n");
 		return 1;
 	}
 	
 	if (!read_line(q_s, MAX_Q, pipe, &q.len) || q.len == 0) {
-		fifo_reply(response_file,
-			   "400 ul_add: q expected\n");
+		fifo_reply(response_file, "400 ul_add: q expected\n");
 		LOG(L_ERR, "ERROR: ul_add: q expected\n");
 		return 1;
 	}
-
-	     /* Kept for backwards compatibility */
+	
+	/* Kept for backwards compatibility */
 	if (!read_line(rep_s, MAX_REPLICATE_LEN, pipe, &rep.len) || rep.len == 0) {
-		fifo_reply(response_file,
-			   "400 ul_add: replicate expected\n");
+		fifo_reply(response_file, "400 ul_add: replicate expected\n");
 		LOG(L_ERR, "ERROR: ul_add: replicate expected\n");
 		return 1;
 	}
-
-	if (!read_line(flags_s, MAX_FLAGS_LEN, pipe, &flags.len) || flags.len == 0) {
-		fifo_reply(response_file,
-			   "400 ul_add: flags expected\n");
+	
+	if (!read_line(flags_s, MAX_FLAGS_LEN, pipe, &flags.len)
+	|| flags.len == 0) {
+		fifo_reply(response_file, "400 ul_add: flags expected\n");
 		LOG(L_ERR, "ERROR: ul_add: flags expected\n");
 		return 1;
 	}
-	
+
+	if (!read_line(methods_s, MAX_FLAGS_LEN, pipe, &methods.len)
+	|| methods.len == 0) {
+		fifo_reply(response_file,"400 ul_add: methods expected\n");
+		LOG(L_ERR, "ERROR: ul_add: methods expected\n");
+		return 1;
+	}
+
 	table.s = table_s;
 	user.s = user_s;
 	strlower(&user);
@@ -290,6 +293,7 @@ static int ul_add(FILE* pipe, char* response_file)
 	expires.s = expires_s;
 	q.s = q_s;
 	flags.s = flags_s;
+	methods.s = methods_s;
 	
 	fifo_find_domain(&table, &d);
 	
@@ -310,7 +314,12 @@ static int ul_add(FILE* pipe, char* response_file)
 			fifo_reply(response_file, "400 Invalid flags format\n");
 			return 1;
 		}
-		
+
+		if (str2int(&methods, (unsigned int*)&ci.methods) < 0) {
+			fifo_reply(response_file, "400 Invalid methods format\n");
+			return 1;
+		}
+
 		lock_udomain(d);
 		
 		if (add_contact(d, &user, &contact, &ci) < 0) {

@@ -48,7 +48,7 @@ struct urecord; /* Usrloc record */
  * The structure represents a usrloc domain
  */
 typedef struct udomain {
-	str* name;                     /* Domain name */
+	str* name;                     /* Domain name (NULL terminated) */
 	int size;                      /* Hash table size */
 	int users;                     /* Number of registered users */
 	int expired;                   /* Number of expired contacts */

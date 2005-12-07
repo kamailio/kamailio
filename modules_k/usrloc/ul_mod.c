@@ -39,6 +39,7 @@
 #include "../../dprint.h"
 #include "../../timer.h"     /* register_timer */
 #include "../../globals.h"   /* is_main */
+#include "../../ut.h"        /* str_init */
 #include "dlist.h"           /* register_udomain */
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
 #include "urecord.h"         /* {insert,delete,get}_ucontact */
@@ -63,6 +64,7 @@ MODULE_VERSION
 #define USER_AGENT_COL "user_agent"
 #define RECEIVED_COL   "received"
 #define SOCK_COL       "socket"
+#define METHODS_COL    "methods"
 
 static int mod_init(void);                          /* Module initialization function */
 static void destroy(void);                          /* Module destroy function */
@@ -74,23 +76,44 @@ extern int bind_usrloc(usrloc_api_t* api);
 /*
  * Module parameters and their default values
  */
-str user_col        = {USER_COL, sizeof(USER_COL) - 1};             /* Name of column containing usernames */
-str domain_col      = {DOMAIN_COL, sizeof(DOMAIN_COL) - 1};         /* Name of column containing domains */
-str contact_col     = {CONTACT_COL, sizeof(CONTACT_COL) - 1};       /* Name of column containing contact addresses */
-str expires_col     = {EXPIRES_COL, sizeof(EXPIRES_COL) - 1};       /* Name of column containing expires values */
-str q_col           = {Q_COL, sizeof(Q_COL) - 1};                   /* Name of column containing q values */
-str callid_col      = {CALLID_COL, sizeof(CALLID_COL) - 1};         /* Name of column containing callid string */
-str cseq_col        = {CSEQ_COL, sizeof(CSEQ_COL) - 1};             /* Name of column containing cseq values */
-str method_col      = {METHOD_COL, sizeof(METHOD_COL) - 1};         /* Name of column containing supported method */
-str flags_col       = {FLAGS_COL, sizeof(FLAGS_COL) - 1};           /* Name of column containing flags */
-str user_agent_col  = {USER_AGENT_COL, sizeof(USER_AGENT_COL) - 1}; /* Name of column containing user agent string */
-str received_col    = {RECEIVED_COL, sizeof(RECEIVED_COL) - 1};     /* Name of column containing transport info of REGISTER */
-str sock_col        = {SOCK_COL, sizeof(SOCK_COL) - 1};             /* Name of column containing the received socket */
-str db_url          = {DEFAULT_DB_URL, DEFAULT_DB_URL_LEN}; /* Database URL */
-int timer_interval  = 60;             /* Timer interval in seconds */
-int db_mode         = 0;              /* Database sync scheme: 0-no db, 1-write through, 2-write back */
-int use_domain      = 0;              /* Whether usrloc should use domain part of aor */
-int desc_time_order = 0;              /* By default do not enable timestamp ordering */                  
+
+/* Name of column containing usernames */
+str user_col        = str_init(USER_COL);
+/* Name of column containing domains */
+str domain_col      = str_init(DOMAIN_COL);
+/* Name of column containing contact addresses */
+str contact_col     = str_init(CONTACT_COL);
+/* Name of column containing expires values */
+str expires_col     = str_init(EXPIRES_COL);
+/* Name of column containing q values */
+str q_col           = str_init(Q_COL);
+/* Name of column containing callid string */
+str callid_col      = str_init(CALLID_COL);
+/* Name of column containing cseq values */
+str cseq_col        = str_init(CSEQ_COL);
+/* Name of column containing supported method */
+str method_col      = str_init(METHOD_COL);
+/* Name of column containing flags */
+str flags_col       = str_init(FLAGS_COL);
+/* Name of column containing user agent string */
+str user_agent_col  = str_init(USER_AGENT_COL);
+/* Name of column containing transport info of REGISTER */
+str received_col    = str_init(RECEIVED_COL);
+/* Name of column containing the received socket */
+str sock_col        = str_init(SOCK_COL);
+/* Name of column containing the supported methods */
+str methods_col        = str_init(METHODS_COL);
+
+/* Database URL */
+str db_url          = str_init(DEFAULT_DB_URL);
+/* Timer interval in seconds */
+int timer_interval  = 60;
+/* Database sync scheme: 0-no db, 1-write through, 2-write back */
+int db_mode         = 0;
+/* Whether usrloc should use domain part of aor */
+int use_domain      = 0;
+/* By default do not enable timestamp ordering */
+int desc_time_order = 0;
 
 
 db_con_t* ul_dbh = 0; /* Database connection handle */
@@ -142,6 +165,7 @@ static param_export_t params[] = {
 	{"user_agent_column", STR_PARAM, &user_agent_col.s },
 	{"received_column",   STR_PARAM, &received_col.s   },
 	{"socket_column",     STR_PARAM, &sock_col.s       },
+	{"methods_column",    STR_PARAM, &methods_col.s    },
 	{0, 0, 0}
 };
 
@@ -178,6 +202,7 @@ static int mod_init(void)
 	user_agent_col.len = strlen(user_agent_col.s);
 	received_col.len = strlen(received_col.s);
 	sock_col.len = strlen(sock_col.s);
+	methods_col.len = strlen(methods_col.s);
 	db_url.len = strlen(db_url.s);
 
 	/* Register cache timer */

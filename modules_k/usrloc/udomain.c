@@ -39,7 +39,6 @@
 #include "ul_mod.h"            /* usrloc module parameters */
 #include "notify.h"
 
-#define UL_TABLE_VERSION	1001
 
 /*
  * Hash function
@@ -205,7 +204,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 {
 	ucontact_info_t ci;
 	char b[MAX_URI_SIZE];
-	db_key_t columns[11];
+	db_key_t columns[12];
 	db_res_t* res;
 	db_row_t* row;
 	int i;
@@ -239,8 +238,10 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	columns[7] = user_agent_col.s;
 	columns[8] = received_col.s;
 	columns[9] = sock_col.s;
-	columns[10] = domain_col.s;
+	columns[10] = methods_col.s;
+	columns[11] = domain_col.s;
 
+	/* FIXME */
 	memcpy(b, _d->name->s, _d->name->len);
 	b[_d->name->len] = '\0';
 
@@ -249,7 +250,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		return -1;
 	}
 
-	if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? (11) : (10), 0,
+	if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? (12) : (11), 0,
 				&res) < 0) {
 		LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
 		return -1;
@@ -364,9 +365,16 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			}
 		}
 
+		/* supported methods */
+		if (VAL_NULL(ROW_VALUES(row)+10)) {
+			ci.methods = 0xFFFFFFFF;
+		} else {
+			ci.methods = VAL_BITMAP(ROW_VALUES(row) + 10);
+		}
+
 		if (use_domain) {
-			domain = (char*)VAL_STRING(ROW_VALUES(row) + 10);
-			if (VAL_NULL(ROW_VALUES(row)+10) || domain==0 || domain[0]==0) {
+			domain = (char*)VAL_STRING(ROW_VALUES(row) + 11);
+			if (VAL_NULL(ROW_VALUES(row)+11) || domain==0 || domain[0]==0) {
 				LOG(L_CRIT, "preload_udomain: ERROR: empty domain "
 					"record in table %s for user %.*s\n", b, user.len, user.s);
 				LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");

@@ -14,9 +14,9 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		User location module. The module keeps a user location table and provides access to the
-		table to other modules. The module exports no functions that could be used directly from
-		scripts.
+		User location module. The module keeps a user location table and 
+		provides access to the table to other modules. The module exports no 
+		functions that could be used directly from scripts.
 	</para>
 	</section>
 	<section>
@@ -37,8 +37,8 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before running
-		&ser; with this module loaded:
+		The following libraries or applications must be installed before 
+		running &ser; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -192,20 +192,20 @@ modparam("usrloc", "cseq_column", "cseq")
 	</section>
 
 	<section>
-		<title><varname>method_column</varname> (string)</title>
+		<title><varname>methods_column</varname> (string)</title>
 		<para>
 		Name of column containing supported methods.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>method</quote>.
+			Default value is <quote>methods</quote>.
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>method_column</varname> parameter</title>
+		<title>Set <varname>methods_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("usrloc", "method_column", "method")
+modparam("usrloc", "methods_column", "methods")
 ...
 </programlisting>
 		</example>

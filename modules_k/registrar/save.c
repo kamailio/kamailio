@@ -34,6 +34,7 @@
 
 #include "../../str.h"
 #include "../../parser/parse_to.h"
+#include "../../parser/parse_methods.h"
 #include "../../dprint.h"
 #include "../../trim.h"
 #include "../../ut.h"
@@ -214,68 +215,101 @@ static inline int no_contacts(udomain_t* _d, str* _a)
 }
 
 
+
 /*
- *
+ * Fills the common part (for all contacts) of the info structure
  */
-static inline ucontact_info_t* pack_contact(struct sip_msg* _m, contact_t* _c,
-			int _e, int _f1, int _f2)
+static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
+													int _e, int _f1, int _f2)
 {
 	static ucontact_info_t ci;
+	static str no_ua = str_init("n/a");
 	static str callid;
+	static unsigned int allowed;
 	int_str rcv_avp;
 	int_str val;
 
-	rcv_avp.n=rcv_avp_no;
-	memset( &ci, 0, sizeof(ucontact_info_t));
+	if (_m!=0) {
+		memset( &ci, 0, sizeof(ucontact_info_t));
+		rcv_avp.n=rcv_avp_no;
 
-	/* Calculate q value of the contact */
-	if (calc_contact_q(_c->q, &ci.q) < 0) {
-		LOG(L_ERR, "ERROR:usrloc:pack_contact: failed to calculate q\n");
-		goto error;
-	}
+		/* Get callid of the message */
+		callid = _m->callid->body;
+		trim_trailing(&callid);
+		ci.callid = &callid;
 
-	/* Get callid of the message */
-	callid = _m->callid->body;
-	trim_trailing(&callid);
-	ci.callid = &callid;
+		/* Get CSeq number of the message */
+		if (str2int(&get_cseq(_m)->number, (unsigned int*)&ci.cseq) < 0) {
+			rerrno = R_INV_CSEQ;
+			LOG(L_ERR, "ERROR:usrloc:pack_ci: failed to convert "
+				"cseq number\n");
+			goto error;
+		}
 
-	/* Get CSeq number of the message */
-	if (str2int(&get_cseq(_m)->number, (unsigned int*)&ci.cseq) < 0) {
-		rerrno = R_INV_CSEQ;
-		LOG(L_ERR, "ERROR:usrloc:pack_contact: failed to convert "
-			"cseq number\n");
-		goto error;
-	}
+		/* set received URI */
+		if (_c->received) {
+			ci.received = &_c->received->body;
+		} else if (search_first_avp(0, rcv_avp, &val)) {
+			ci.received = val.s;
+		} else {
+			ci.received = 0;
+		}
 
-	/* set received URI */
-	if (_c->received) {
-		ci.received = &_c->received->body;
-	} else if (search_first_avp(0, rcv_avp, &val)) {
-		ci.received = val.s;
-	} else {
-		ci.received = 0;
-	}
-
-	/* set received socket */
-	if (sock_flag!=-1 && (_m->flags&sock_flag)!=0) {
-		ci.sock = get_sock_hdr(_m);
-		if (ci.sock==0)
+		/* set received socket */
+		if (sock_flag!=-1 && (_m->flags&sock_flag)!=0) {
+			ci.sock = get_sock_hdr(_m);
+			if (ci.sock==0)
+				ci.sock = _m->rcv.bind_address;
+		} else {
 			ci.sock = _m->rcv.bind_address;
-	} else {
-		ci.sock = _m->rcv.bind_address;
+		}
+
+		/* additional info from message */
+		if (parse_headers(_m, HDR_USERAGENT_F, 0) != -1 && _m->user_agent &&
+		_m->user_agent->body.len > 0) {
+			ci.user_agent = &_m->user_agent->body;
+		} else {
+			ci.user_agent = &no_ua;
+		}
+
+		if (parse_headers(_m, HDR_ALLOW_F, 0) != -1 && _m->allow &&
+		_m->allow->parsed != 0) {
+			allowed = *((unsigned int *)_m->allow->parsed);
+		} else {
+			allowed = 0xFFFFFFFF;
+		}
 	}
 
-	/* set expire time */
-	ci.expires = _e;
+	if(_c!=0) {
+		/* Calculate q value of the contact */
+		if (calc_contact_q(_c->q, &ci.q) < 0) {
+			LOG(L_ERR, "ERROR:usrloc:pack_ci: failed to calculate q\n");
+			goto error;
+		}
 
-	/* set flags */
-	ci.flags1 = _f1;
-	ci.flags2 = _f2;
+		/* set expire time */
+		ci.expires = _e;
+
+		/* set flags */
+		ci.flags1 = _f1;
+		ci.flags2 = _f2;
+
+		/* Get methods of contact */
+		if (_c->methods) {
+			if (parse_methods(&(_c->methods->body), &ci.methods) < 0) {
+				LOG(L_ERR, "ERROR:usrloc:pack_ci: failed to parse "
+					"contact methods\n");
+			}
+		} else {
+			ci.methods = allowed;
+		}
+	}
 
 	return &ci;
 error:
 	return 0;
 }
+
 
 
 /*
@@ -285,7 +319,7 @@ error:
  * > 0
  */
 static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
-											udomain_t* _d, str* _a, str *_ua)
+													udomain_t* _d, str* _a)
 {
 	ucontact_info_t* ci;
 	urecord_t* r;
@@ -305,7 +339,7 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 
 	flags |= mem_only;
 
-	for( num=0,r=0 ; _c ; _c = get_next_contact(_c) ) {
+	for( num=0,r=0,ci=0 ; _c ; _c = get_next_contact(_c) ) {
 		if (calc_contact_expires(_m, _c->expires, &e) < 0) {
 			LOG(L_ERR,"ERROR:usrloc:insert_contacts: failed to "
 				"calculate expires\n");
@@ -330,12 +364,9 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 			}
 		}
 
-		/* pack a contact_info */
-		if ( (ci=pack_contact( _m, _c, e, flags, 0))==0 )
+		/* pack the contact_info */
+		if ( (ci=pack_ci( (ci==0)?_m:0, _c, e, flags, 0))==0 )
 			goto error;
-
-		/* add user-agent */
-		ci->user_agent = _ua;
 
 		if (ul.insert_ucontact( r, &_c->uri, ci, &c) < 0) {
 			rerrno = R_UL_INS_C;
@@ -414,8 +445,8 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
  * 3) If contact in usrloc exists and expires
  *    == 0, delete contact
  */
-static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
-																	str* _ua)
+static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
+																contact_t* _c)
 {
 	ucontact_info_t *ci;
 	ucontact_t* c;
@@ -440,6 +471,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 	}
 
 	_c = get_first_contact(_m);
+	ci = 0;
 
 	while(_c) {
 		if (calc_contact_expires(_m, _c->expires, &e) < 0) {
@@ -452,12 +484,9 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 			if (e==0)
 				continue;
 
-			/* pack a contact_info */
-			if ( (ci=pack_contact( _m, _c, e, flags, 0))==0 )
-			goto error;
-
-			/* add user-agent */
-			ci->user_agent = _ua;
+			/* pack the contact_info */
+			if ( (ci=pack_ci( (ci==0)?_m:0, _c, e, flags, 0))==0 )
+				goto error;
 
 			if (ul.insert_ucontact( _r, &_c->uri, ci, &c) < 0) {
 				rerrno = R_UL_INS_C;
@@ -485,12 +514,9 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 				set = flags | mem_only;
 				reset = ~(flags | mem_only) & (FL_NAT|FL_MEM|FL_NAT_SIPPING);
 
-				/* pack a contact_info */
-				if ( (ci=pack_contact( _m, _c, e, set, reset))==0 )
+				/* pack the contact_info */
+				if ( (ci=pack_ci( (ci==0)?_m:0, _c, e, set, reset))==0 )
 					goto error;
-
-				/* add user-agent */
-				ci->user_agent = _ua;
 
 				if (ul.update_ucontact(c, ci) < 0) {
 					rerrno = R_UL_UPD_C;
@@ -519,17 +545,8 @@ error:
 static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
 													udomain_t* _d, str* _a)
 {
-	str ua = {"n/a",3};
 	int res;
 	urecord_t* r;
-
-	ua.s = 0;
-	ua.len = 0;
-	if (parse_headers(_m, HDR_USERAGENT_F, 0) != -1 && _m->user_agent &&
-	_m->user_agent->body.len > 0) {
-		ua.len = _m->user_agent->body.len;
-		ua.s = _m->user_agent->body.s;
-	}
 
 	ul.lock_udomain(_d);
 	res = ul.get_urecord(_d, _a, &r);
@@ -541,7 +558,7 @@ static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
 	}
 
 	if (res == 0) { /* Contacts found */
-		if (update(_m, r, _c, &ua) < 0) {
+		if (update_contacts(_m, r, _c) < 0) {
 			LOG(L_ERR, "contacts(): Error while updating record\n");
 			build_contact(r->contacts);
 			ul.release_urecord(r);
@@ -551,7 +568,7 @@ static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
 		build_contact(r->contacts);
 		ul.release_urecord(r);
 	} else {
-		if (insert_contacts(_m, _c, _d, _a, &ua) < 0) {
+		if (insert_contacts(_m, _c, _d, _a) < 0) {
 			LOG(L_ERR, "contacts(): Error while inserting record\n");
 			ul.unlock_udomain(_d);
 			return -4;

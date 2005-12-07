@@ -79,6 +79,7 @@ typedef struct ucontact {
 	unsigned int flags;     /* Various flags (NAT, supported methods etc) */
 	str user_agent;         /* User-Agent header field */
 	struct socket_info *sock; /* received soket */
+	unsigned int methods;   /* Supported methods */
 	struct ucontact* next;  /* Next contact in the linked list */
 	struct ucontact* prev;  /* Previous contact in the linked list */
 } ucontact_t;
@@ -93,6 +94,7 @@ typedef struct ucontact_info {
 	unsigned int flags2;
 	str *user_agent;
 	struct socket_info *sock;
+	unsigned int methods;
 } ucontact_info_t;
 
 /*

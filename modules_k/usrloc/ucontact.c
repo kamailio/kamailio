@@ -82,6 +82,7 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact,
 	c->cseq = _ci->cseq;
 	c->state = CS_NEW;
 	c->flags = _ci->flags1;
+	c->methods = _ci->methods;
 
 	return c;
 error:
@@ -156,6 +157,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 	} else {
 		fprintf(_f, "Sock      : none (null)\n");
 	}
+	fprintf(_f, "Methods   : %u\n", _c->methods);
 	fprintf(_f, "next      : %p\n", _c->next);
 	fprintf(_f, "prev      : %p\n", _c->prev);
 	fprintf(_f, "~~~/Contact~~~~\n");
@@ -203,6 +205,7 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 	_c->expires = _ci->expires;
 	_c->q = _ci->q;
 	_c->cseq = _ci->cseq;
+	_c->methods = _ci->methods;
 	_c->flags |= _ci->flags1;
 	_c->flags &= ~_ci->flags2;
 
@@ -413,8 +416,8 @@ int db_insert_ucontact(ucontact_t* _c)
 {
 	char b[256];
 	char* dom;
-	db_key_t keys[11];
-	db_val_t vals[11];
+	db_key_t keys[12];
+	db_val_t vals[12];
 	int len;
 	
 	if (_c->flags & FL_MEM) {
@@ -431,7 +434,8 @@ int db_insert_ucontact(ucontact_t* _c)
 	keys[7] = user_agent_col.s;
 	keys[8] = received_col.s;
 	keys[9] = sock_col.s;
-	keys[10] = domain_col.s;
+	keys[10] = methods_col.s;
+	keys[11] = domain_col.s;
 
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;
@@ -488,14 +492,22 @@ int db_insert_ucontact(ucontact_t* _c)
 		vals[9].nul = 1;
 	}
 
+	vals[10].type = DB_BITMAP;
+	if (_c->methods == 0xFFFFFFFF) {
+		vals[10].nul = 1;
+	} else {
+		vals[10].val.bitmap_val = _c->methods;
+		vals[10].nul = 0;
+	}
+
 	if (use_domain) {
 		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
 		vals[0].val.str_val.len = dom - _c->aor->s;
 
-		vals[10].type = DB_STR;
-		vals[10].nul = 0;
-		vals[10].val.str_val.s = dom + 1;
-		vals[10].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+		vals[11].type = DB_STR;
+		vals[11].nul = 0;
+		vals[11].val.str_val.s = dom + 1;
+		vals[11].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
 	}
 
 	     /* FIXME */
@@ -506,7 +518,7 @@ int db_insert_ucontact(ucontact_t* _c)
 		return -1;
 	}
 
-	if (ul_dbf.insert(ul_dbh, keys, vals, (use_domain) ? (11) : (10)) < 0) {
+	if (ul_dbf.insert(ul_dbh, keys, vals, (use_domain) ? (12) : (11)) < 0) {
 		LOG(L_ERR, "db_insert_ucontact(): Error while inserting contact\n");
 		return -1;
 	}
@@ -526,8 +538,8 @@ int db_update_ucontact(ucontact_t* _c)
 	db_key_t keys1[3];
 	db_val_t vals1[3];
 
-	db_key_t keys2[8];
-	db_val_t vals2[8];
+	db_key_t keys2[9];
+	db_val_t vals2[9];
 
 	if (_c->flags & FL_MEM) {
 		return 0;
@@ -544,6 +556,7 @@ int db_update_ucontact(ucontact_t* _c)
 	keys2[5] = user_agent_col.s;
 	keys2[6] = received_col.s;
 	keys2[7] = sock_col.s;
+	keys2[8] = methods_col.s;
 	
 	vals1[0].type = DB_STR;
 	vals1[0].nul = 0;
@@ -594,6 +607,14 @@ int db_update_ucontact(ucontact_t* _c)
 		vals2[7].nul = 1;
 	}
 
+	vals2[8].type = DB_BITMAP;
+	if (_c->methods == 0xFFFFFFFF) {
+		vals2[8].nul = 1;
+	} else {
+		vals2[8].val.bitmap_val = _c->methods;
+		vals2[8].nul = 0;
+	}
+
 	if (use_domain) {
 		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
 		vals1[0].val.str_val.len = dom - _c->aor->s;
@@ -612,7 +633,8 @@ int db_update_ucontact(ucontact_t* _c)
 		return -1;
 	}
 
-	if (ul_dbf.update(ul_dbh, keys1, 0, vals1, keys2, vals2, (use_domain) ? (3) : (2), 8) < 0) {
+	if (ul_dbf.update(ul_dbh, keys1, 0, vals1, keys2, vals2, 
+	(use_domain) ? (3) : (2), 9) < 0) {
 		LOG(L_ERR, "db_upd_ucontact(): Error while updating database\n");
 		return -1;
 	}
