@@ -801,7 +801,7 @@ int new_presence_tuple(str* _contact, time_t expires, presence_tuple_t ** _t, in
 /*
  * Find a presence_tuple for contact _contact on presentity _p
  */
-int find_presence_tuple(str* _contact, presentity_t *_p, presence_tuple_t ** _t)
+int find_registered_presence_tuple(str* _contact, presentity_t *_p, presence_tuple_t ** _t)
 {
 	presence_tuple_t *tuple;
 	if (!_contact || !_contact->len || !_p || !_t) {
@@ -810,11 +810,14 @@ int find_presence_tuple(str* _contact, presentity_t *_p, presence_tuple_t ** _t)
 		return -1;
 	}
 	tuple = _p->tuples;
-	//LOG(L_ERR, "find_presence_tuple: _p=%p _p->tuples=%p\n", _p, _p->tuples);
 	while (tuple) {
-		if (str_strcasecmp(&tuple->contact, _contact) == 0) {
-			*_t = tuple;
-			return 0;
+		/* only contacts from usrloc should be unique - published
+		 * may be more times !!! */
+		if (!tuple->is_published) {
+			if (str_strcasecmp(&tuple->contact, _contact) == 0) {
+				*_t = tuple;
+				return 0;
+			}
 		}
 		tuple = tuple->next;
 	}
@@ -822,7 +825,7 @@ int find_presence_tuple(str* _contact, presentity_t *_p, presence_tuple_t ** _t)
 }
 
 /*
- * Find a presence_tuple _contact on presentity _p
+ * Find a presence_tuple on presentity _p
  */
 int find_presence_tuple_id(str* id, presentity_t *_p, presence_tuple_t ** _t)
 {
@@ -1082,7 +1085,7 @@ static void process_presentity_messages(presentity_t *p)
 				FMT_STR(info->user), FMT_STR(info->contact), info->state);
 		if (info->contact.len > 0) {
 			tuple = NULL;
-			if (find_presence_tuple(&info->contact, p, &tuple) != 0) {
+			if (find_registered_presence_tuple(&info->contact, p, &tuple) != 0) {
 				new_presence_tuple(&info->contact, act_time + default_expires, &tuple, 0);
 				add_presence_tuple(p, tuple);
 			}

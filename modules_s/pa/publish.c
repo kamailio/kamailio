@@ -61,6 +61,7 @@
 #include <libxml/xpath.h>
 
 #include <presence/pidf.h>
+#include <cds/logger.h>
 
 extern str str_strdup(str string);
 
@@ -71,7 +72,9 @@ extern str str_strdup(str string);
 static int parse_publish_hfs(struct sip_msg* _m)
 {
 	int rc = 0;
-	if ((rc = parse_headers(_m, HDR_FROM_F | HDR_EVENT_F | HDR_EXPIRES_F | HDR_SIPIFMATCH_F, 0))
+	if ((rc = parse_headers(_m, HDR_FROM_F | HDR_EVENT_F | 
+					HDR_EXPIRES_F | HDR_SIPIFMATCH_F | 
+					HDR_CONTENTTYPE_F | HDR_CONTENTLENGTH_F, 0))
 	    == -1) {
 		paerrno = PA_PARSE_ERR;
 		LOG(L_ERR, "parse_publish_hfs(): Error while parsing headers\n");
@@ -110,6 +113,13 @@ static int parse_publish_hfs(struct sip_msg* _m)
 			paerrno = PA_PARSE_ERR;
 			LOG(L_ERR, "parse_hfs(): Error while parsing SIP-If-Match header field\n");
 			return -10;
+		}
+	}
+
+	if (_m->content_type) {
+		if (parse_content_type_hdr(_m) < 0) {
+			LOG(L_ERR, "parse_hfs(): Can't parse Content-Type\n");
+			return -12;
 		}
 	}
 	
@@ -251,7 +261,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct presentity* presen
 	
 	/* try to find tuple using contact from document */
 	if ((!tuple) && (contact.len > 0))
-		find_presence_tuple(&contact, presentity, &tuple);
+		find_registered_presence_tuple(&contact, presentity, &tuple);
 	
 	/* try to find tuple using contact from message headers */
 	if (!tuple) {
@@ -261,7 +271,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct presentity* presen
 		if (sip_contact) {
 			LOG(L_ERR, "publish_presentity: find tuple for contact %.*s\n", 
 					sip_contact->uri.len, sip_contact->uri.s);
-			find_presence_tuple(&sip_contact->uri, presentity, &tuple);
+			find_registered_presence_tuple(&sip_contact->uri, presentity, &tuple);
 		}
 	}
 	if (!tuple && new_tuple_on_publish) {
@@ -671,25 +681,46 @@ static int publish_presence(struct sip_msg* _m, struct presentity* presentity)
 {
 	char *body = get_body(_m);
 	int body_len = strlen(body);
-	int msg_expires = 0;
+	int msg_expires = default_expires;
 	time_t expires = 0;
 	str etag;
 	presentity_info_t *p = NULL;
+	int content_type = -1;
+	
+	if (_m->content_type) content_type = get_content_type(_m);
 	
 	if (_m->expires) {
 		if (_m->expires->parsed) {
 			msg_expires = ((exp_body_t*)_m->expires->parsed)->val;
-			expires = msg_expires + act_time;
 		}
 	}
+	if (msg_expires != 0) expires = msg_expires + act_time;
+
 	if (_m->sipifmatch) str_dup(&etag, (str*)_m->sipifmatch->parsed);
 	else str_clear(&etag);
-
-	/* FIXME: parse according to Content-Type ! */
-
+				
+	/* TRACE_LOG("pidf: %d\n", MIMETYPE(APPLICATION,PIDFXML)); */
 	if (body_len > 0) {
-		if (parse_pidf_document(&p, body, body_len) != 0) {
-			LOG(L_ERR, "can't parse PIDF document\n");
+		switch (content_type) {
+			case MIMETYPE(APPLICATION,PIDFXML):
+				if (parse_pidf_document(&p, body, body_len, 0) != 0) {
+					LOG(L_ERR, "can't parse PIDF document\n");
+					paerrno = PA_UNSUPP_DOC; /* ? PA_PARSE_ERR */
+				}
+				break;
+			case MIMETYPE(APPLICATION,CPIM_PIDFXML):
+				if (parse_pidf_document(&p, body, body_len, 1) != 0) {
+					LOG(L_ERR, "can't parse PIDF document\n");
+					paerrno = PA_UNSUPP_DOC;
+				}
+				break;
+			default:
+				LOG(L_ERR, "unsupported Content-Type \'%.*s\' (0x%x) for PUBLISH handling\n", 
+						FMT_STR(_m->content_type->body), content_type);
+				paerrno = PA_UNSUPP_DOC;
+		}
+		
+		if (paerrno != PA_OK) {
 			str_free_content(&etag);
 			return -1;
 		}
@@ -1001,11 +1032,11 @@ int fifo_pa_presence_contact(FILE *fifo, char *response_file)
 	  return 1;
      }
 
-     find_presence_tuple(&p_contact, presentity, &tuple);
+     find_registered_presence_tuple(&p_contact, presentity, &tuple);
      if (!tuple) {
        LOG(L_ERR, "publish_presentity: no tuple for contact %.*s\n", 
 	   p_contact.len, p_contact.s);
-       find_presence_tuple(&p_uri, presentity, &tuple);
+       find_registered_presence_tuple(&p_uri, presentity, &tuple);
      }
      if (!tuple && new_tuple_on_publish) {
        new_presence_tuple(&p_contact, expires, &tuple, 1);
@@ -1264,7 +1295,7 @@ int fifo_pa_location_contact(FILE *fifo, char *response_file)
 	  return 1;
      }
 
-     find_presence_tuple(&p_contact, presentity, &tuple);
+     find_registered_presence_tuple(&p_contact, presentity, &tuple);
      if (!tuple && new_tuple_on_publish) {
        new_presence_tuple(&p_contact, expires, &tuple, 1);
        add_presence_tuple(presentity, tuple);

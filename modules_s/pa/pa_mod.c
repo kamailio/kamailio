@@ -62,7 +62,7 @@ static void pa_destroy(void);  /* Module destroy function */
 static int subscribe_fixup(void** param, int param_no); /* domain name -> domain pointer */
 static void timer(unsigned int ticks, void* param); /* Delete timer for all domains */
 
-int default_expires = 3600;  /* Default expires value if not present in the message */
+int default_expires = 3600;  /* Default expires value if not present in the message (for SUBSCRIBE and PUBLISH) */
 int timer_interval = 10;     /* Expiration timer interval in seconds */
 double default_priority = 0.0; /* Default priority of presence tuple */
 static int default_priority_percentage = 0; /* expressed as percentage because config file grammar does not support floats */
@@ -172,9 +172,10 @@ void pa_sig_handler(int s)
 }
 
 static struct mimetype_test {
-	const char *string;
+	char *string;
 	int parsed;
 } mimetype_tests[] = {
+	{ "application/cpim", MIMETYPE(APPLICATION,CPIM) },
 	{ "text/plain", MIMETYPE(TEXT,PLAIN) },
 	{ "message/cpim", MIMETYPE(MESSAGE,CPIM) },
 	{ "application/sdp", MIMETYPE(APPLICATION,SDP) },
@@ -188,24 +189,27 @@ static struct mimetype_test {
 	{ "application/external-body", MIMETYPE(APPLICATION,EXTERNAL_BODY) },
 	{ "application/*", MIMETYPE(APPLICATION,ALL) },
 #ifdef SUBTYPE_XML_MSRTC_PIDF
-	{ "text/xml+msrtcp.pidf", MIMETYPE(TEXT,XML_MSRTC_PIDF) },
+	{ "text/xml+msrtc.pidf", MIMETYPE(TEXT,XML_MSRTC_PIDF) },
 #endif
+	{ "application/cpim-pidf+xml", MIMETYPE(APPLICATION,CPIM_PIDFXML) },
 	{ NULL, 0 }
 };
+
+char* decode_mime_type(char *start, char *end, unsigned int *mime_type);
 
 static void test_mimetype_parser(void)
 {
 	struct mimetype_test *mt = &mimetype_tests[0];
-	DBG("Presence Agent - testing mimetype parser\n");
+	LOG(L_DBG, "Presence Agent - testing mimetype parser\n");
 	while (mt->string) {
-/*		int pmt;
+		int pmt;
 		LOG(L_DBG, "Presence Agent - parsing mimetype %s\n", mt->string);
 		decode_mime_type(mt->string, mt->string+strlen(mt->string), &pmt);
 		if (pmt != mt->parsed) {
 			LOG(L_ERR, "Parsed mimetype %s got %x expected %x\n",
 			    mt->string, pmt, mt->parsed);
 		}
-		*/
+		
 		mt++;
 	}
 }

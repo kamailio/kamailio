@@ -162,7 +162,10 @@ int send_reply(struct sip_msg* _m)
 		case PA_FROM_ERR: msg = MSG_400; code = 400; break;
 		case PA_TO_ERR: msg = MSG_400; code = 400; break;
 		case PA_SMALL_BUFFER: msg = MSG_500; code = 500; break;
-		case PA_UNSUPP_DOC: msg = MSG_400; code = 400; break; /* ? */
+		case PA_UNSUPP_DOC: 
+					msg = "Unsupported document format"; 
+					code = 415; 
+					break;
 		case PA_ACCEPT_PARSE: msg = MSG_400; code = 400; break;
 		case PA_URI_PARSE: msg = MSG_400; code = 400; break;
 		case PA_DIALOG_ERR: msg = MSG_500; code = 500; break;

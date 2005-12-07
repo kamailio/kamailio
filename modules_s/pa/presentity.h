@@ -194,9 +194,9 @@ int timer_presentity(presentity_t* _p);
 int new_presence_tuple(str* _contact, time_t expires, presence_tuple_t ** _t, int is_published);
 
 /*
- * Find a presence_tuple for contact _contact on presentity _p
+ * Find a presence_tuple for contact _contact on presentity _p - only registered contacts !
  */
-int find_presence_tuple(str* _contact, presentity_t *_p, presence_tuple_t ** _t);
+int find_registered_presence_tuple(str* _contact, presentity_t *_p, presence_tuple_t ** _t);
 int find_presence_tuple_id(str* id, presentity_t *_p, presence_tuple_t ** _t);
 void add_presence_tuple(presentity_t *_p, presence_tuple_t *_t);
 void remove_presence_tuple(presentity_t *_p, presence_tuple_t *_t);
