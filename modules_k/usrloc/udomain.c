@@ -31,6 +31,7 @@
 
 #include "udomain.h"
 #include <string.h>
+#include "../../parser/parse_methods.h"
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
 #include "../../db/db.h"
@@ -370,7 +371,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 
 		/* supported methods */
 		if (VAL_NULL(ROW_VALUES(row)+10)) {
-			ci.methods = 0xFFFFFFFF;
+			ci.methods = ALL_METHODS;
 		} else {
 			ci.methods = VAL_BITMAP(ROW_VALUES(row) + 10);
 		}

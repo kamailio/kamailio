@@ -33,7 +33,7 @@
 
 
 #include "../../str.h"
-#include "../../parser/parse_to.h"
+#include "../../parser/parse_allow.h"
 #include "../../parser/parse_methods.h"
 #include "../../dprint.h"
 #include "../../trim.h"
@@ -272,12 +272,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 			ci.user_agent = &no_ua;
 		}
 
-		if (parse_headers(_m, HDR_ALLOW_F, 0) != -1 && _m->allow &&
-		_m->allow->parsed != 0) {
-			allowed = *((unsigned int *)_m->allow->parsed);
-		} else {
-			allowed = 0xFFFFFFFF;
-		}
+		allowed = 0; /* not set yet */
 	}
 
 	if(_c!=0) {
@@ -304,7 +299,16 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 				goto error;
 			}
 		} else {
-			ci.methods = allowed;
+			/* check on Allow hdr */
+			if (allowed) {
+				ci.methods = allowed;
+			} else {
+				if (parse_allow( _m ) != -1) {
+					allowed = get_allow_methods(_m);
+				} else {
+					allowed = ALL_METHODS;
+				}
+			}
 		}
 	}
 
