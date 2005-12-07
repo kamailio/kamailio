@@ -280,8 +280,8 @@ INSERT INTO version VALUES ( 'reserved', '1');
 INSERT INTO version VALUES ( 'phonebook', '1');
 INSERT INTO version VALUES ( 'pending', '4');
 INSERT INTO version VALUES ( 'missed_calls', '2');
-INSERT INTO version VALUES ( 'location', '1001');
-INSERT INTO version VALUES ( 'aliases', '1001');
+INSERT INTO version VALUES ( 'location', '1002');
+INSERT INTO version VALUES ( 'aliases', '1002');
 INSERT INTO version VALUES ( 'grp', '2');
 INSERT INTO version VALUES ( 're_grp', '1');
 INSERT INTO version VALUES ( 'event', '1');
@@ -373,6 +373,7 @@ CREATE TABLE aliases (
   flags int(11) NOT NULL default '0',
   user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
+  methods int(11) default NULL,
   PRIMARY KEY($USERCOL, domain, contact),
   INDEX aliases_contact (contact)
 ) $TABLE_TYPE;
@@ -436,6 +437,7 @@ CREATE TABLE location (
   flags int(11) NOT NULL default '0',
   user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
+  methods int(11) default NULL,
   PRIMARY KEY($USERCOL, domain, contact)
 ) $TABLE_TYPE;
 
