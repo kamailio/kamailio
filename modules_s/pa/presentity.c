@@ -290,6 +290,7 @@ int db_remove_presentity(presentity_t* presentity)
 
 	res = db_remove_tuples(presentity);
 	res = db_remove_watchers(presentity) | res;
+	res = db_remove_pres_notes(presentity) | res;
 	 
 	query_cols[0] = "uri";
 	query_ops[0] = OP_EQ;
@@ -357,6 +358,7 @@ void free_presentity(presentity_t* _p)
 	watcher_t* ptr;
 	presence_tuple_t *tuple;
 	internal_pa_subscription_t *iw, *niw;
+	pa_presence_note_t *n, *nn;
 
 	/* remove presentity from domain */
 	remove_presentity(_p->pdomain, _p);
@@ -385,6 +387,14 @@ void free_presentity(presentity_t* _p)
 		niw = iw->next;
 		free_internal_subscription(iw);
 		iw = niw;
+	}
+	
+	/* remove notes */
+	n = _p->notes;
+	while (n) {
+		nn = n->next;
+		free_pres_note(n);
+		n = nn;
 	}
 
 	if (_p->authorization_info) {
@@ -712,6 +722,9 @@ static int db_read_tuples(presentity_t *_p, db_con_t* db)
 			add_presence_tuple_no_wb(_p, tuple);
 		}
 	}
+	
+	pa_dbf.free_result(db, res);
+
 	return r;
 }
 
@@ -863,13 +876,17 @@ void remove_presence_tuple(presentity_t *_p, presence_tuple_t *_t)
 	if (use_db) db_remove_presence_tuple(_p, _t);
 }
 
-
 /*
  * Free all memory associated with a presence_tuple
  */
 void free_presence_tuple(presence_tuple_t * _t)
 {
-	shm_free(_t);
+	if (_t) {
+		str_free_content(&_t->etag);
+		str_free_content(&_t->published_id);
+
+		shm_free(_t);
+	}
 }
 
 /*
@@ -1034,6 +1051,22 @@ static void remove_expired_tuples(presentity_t *_p, int *changed)
 	}
 }
 
+static void remove_expired_notes(presentity_t *_p)
+{
+	pa_presence_note_t *n, *nn;
+
+	n = _p->notes;
+	while (n) {
+		nn = n->next;
+		if (n->expires < act_time) {
+			LOG(L_DBG, "Expiring note %.*s\n", FMT_STR(n->note));
+			remove_pres_note(_p, n);
+			_p->flags |= PFLAG_PRESENCE_CHANGED;
+		}
+		n = nn;
+	}
+}
+
 static void process_presentity_messages(presentity_t *p)
 {
 	mq_message_t *msg;
@@ -1086,6 +1119,8 @@ int timer_presentity(presentity_t* _p)
 	process_presentity_messages(_p);
 	
 	remove_expired_tuples(_p, NULL);
+	
+	remove_expired_notes(_p);
 	
 	/* notify watchers and remove expired */
 	process_watchers(_p, NULL);	
@@ -1499,6 +1534,7 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 	for (presentity = pdomain->first; presentity; presentity = presentity->next) {
 		db_read_watcherinfo(presentity, db);
 		db_read_tuples(presentity, db);
+		db_read_notes(presentity, db);
 	}
 	
 	close_pa_db_connection(db);

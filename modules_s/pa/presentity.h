@@ -110,7 +110,8 @@ typedef struct pa_presence_note {
 	str note; /* note string */
 	str lang; /* language, may be empty */
 	time_t expires; /* note expires on ... */
-	struct pa_presence_note *next; /* linking members */
+	str dbid; /* id for database ops - needed for removing expired notes */
+	struct pa_presence_note *prev, *next; /* linking members */
 } pa_presence_note_t;
 
 typedef struct {
@@ -268,7 +269,16 @@ int db_remove_presentity(presentity_t* presentity);
 
 /* helper function - will be removed - FIXME */
 int get_presentity_uuid(str *uuid, const str *uri);
-	
+
+/* presence note functions */
+void add_pres_note(presentity_t *_p, pa_presence_note_t *n);
+void free_pres_note(pa_presence_note_t *n);
+void remove_pres_note(presentity_t *_p, pa_presence_note_t *n);
+int remove_pres_notes(presentity_t *p, str *etag);
+pa_presence_note_t *create_pres_note(str *etag, str *note, str *lang, time_t expires, str *dbid);
+int db_read_notes(presentity_t *p, db_con_t* db);
+int db_remove_pres_notes(presentity_t *p); /* remove all notes for presentity */
+
 /*
  * Create a new presentity but no watcher list
  */

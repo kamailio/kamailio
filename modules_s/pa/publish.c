@@ -461,14 +461,7 @@ static void generate_etag(str *dst, presentity_t *p)
 
 static pa_presence_note_t *presence_note2pa(presence_note_t *n, str *etag, time_t expires)
 {
-	pa_presence_note_t *pan = (pa_presence_note_t*)shm_malloc(sizeof(pa_presence_note_t));
-	if (!pan) return pan;
-	pan->next = NULL;
-	pan->expires = expires;
-	str_dup(&pan->etag, etag);
-	str_dup(&pan->note, &n->value);
-	str_dup(&pan->lang, &n->lang);
-	return pan;
+	return create_pres_note(etag, &n->value, &n->lang, expires, NULL);
 }
 
 static void add_presentity_notes(presentity_t *presentity, presentity_info_t *p, str *etag, time_t expires)
@@ -481,10 +474,7 @@ static void add_presentity_notes(presentity_t *presentity, presentity_info_t *p,
 	n = p->first_note;
 	while (n) {
 		pan = presence_note2pa(n, etag, expires);
-		if (pan) {
-			pan->next = presentity->notes;
-			presentity->notes = pan;
-		}
+		if (pan) add_pres_note(presentity, pan);
 		n = n->next;
 	}
 }
@@ -586,11 +576,23 @@ static presence_tuple_t *find_published_tuple(presentity_t *presentity, str *eta
 static int update_published_tuples(presentity_t *presentity, presentity_info_t *p, str *etag, time_t expires)
 {
 	presence_tuple_info_t *i;
-	presence_tuple_t *t;
+	presence_tuple_t *t, *tt;
 	int found = 0;
+	double mark = -149.386;
 
 	if (!p) return 0;
 	
+	/* mark tuples as unprocessed */
+	t = presentity->tuples;
+	while (t) {
+		if (str_case_equals(&t->etag, etag) == 0) {
+			t->priority = mark;
+			found++;
+		}
+		t = t->next;
+	}
+	
+	/* add previously not published tuples and update previously published */
 	i = p->first_tuple;
 	while (i) {
 		t = find_published_tuple(presentity, etag, &i->id);
@@ -606,29 +608,18 @@ static int update_published_tuples(presentity_t *presentity, presentity_info_t *
 		}
 		i = i->next;
 	}
-	return found;
-}
-
-static int remove_all_notes(presentity_t *p, str *etag)
-{
-	pa_presence_note_t *n, *nn, *prev;
-	int found = 0;
-
-	prev = NULL;
-	n = p->notes;
-	while (n) {
-		nn = n->next;
-		if (str_strcasecmp(&n->etag, etag) == 0) {
-			/* remove this */
-			found++;
-			if (prev) prev->next = nn;
-			else p->notes = nn;
-			/* FIXME: free_pa_pres_note(n); */
-		}
-		else prev = n;
-		n = nn;
-	}
 	
+	/* remove previously published tuples which were not processed (not present now) */
+	t = presentity->tuples;
+	while (t) {
+		tt = t->next;
+		if (t->priority == mark) {
+			remove_presence_tuple(presentity, t);
+			free_presence_tuple(t);
+		}
+		t = tt;
+	}
+
 	return found;
 }
 
@@ -663,7 +654,7 @@ static int process_presentity_info(presentity_t *presentity, presentity_info_t *
 	}
 	else {
 		/* remove all notes for this etag */
-		remove_all_notes(presentity, etag);
+		remove_pres_notes(presentity, etag);
 		
 		if (p) {
 			/* add all notes for presentity */

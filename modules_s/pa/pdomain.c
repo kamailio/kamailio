@@ -171,9 +171,10 @@ int timer_pdomain(pdomain_t* _d)
 		/* Remove the entire record
 		 * if it is empty
 		 */
-		if ( (presentity->watchers == 0) && 
-				(presentity->winfo_watchers==0) && 
-				(presentity->tuples == 0) &&
+		if ( (!presentity->watchers) && 
+				(!presentity->winfo_watchers) && 
+				(!presentity->tuples) &&
+				(!presentity->notes) &&
 				(!presentity->first_qsa_subscription)) {
 			LOG(L_DBG, "timer_pdomain(): removing empty presentity\n");
 			t = presentity;
