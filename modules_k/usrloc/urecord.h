@@ -46,10 +46,11 @@ struct hslot;
  * Basic hash table element
  */
 typedef struct urecord {
-	str* domain;                   /* Pointer to domain we belong to */
+	str* domain;                   /* Pointer to domain we belong to 
+                                    * ( null terminated string) */
 	str aor;                       /* Address of record */
 	ucontact_t* contacts;          /* One or more contact fields */
-	
+
 	struct hslot* slot;            /* Collision slot in the hash table 
                                     * array we belong to */
 	struct {

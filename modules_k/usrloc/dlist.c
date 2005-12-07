@@ -190,7 +190,8 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 	}
 	memset(ptr, 0, sizeof(dlist_t));
 
-	ptr->name.s = (char*)shm_malloc(_n->len);
+	/* copy domain name as null terminated string */
+	ptr->name.s = (char*)shm_malloc(_n->len+1);
 	if (ptr->name.s == 0) {
 		LOG(L_ERR, "new_dlist(): No memory left 2\n");
 		shm_free(ptr);
@@ -199,6 +200,7 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 
 	memcpy(ptr->name.s, _n->s, _n->len);
 	ptr->name.len = _n->len;
+	ptr->name.s[ptr->name.len] = 0;
 
 	if (new_udomain(&(ptr->name), 512, &(ptr->d)) < 0) {
 		LOG(L_ERR, "new_dlist(): Error while creating domain structure\n");

@@ -67,7 +67,7 @@ typedef enum flags {
 
 
 typedef struct ucontact {
-	str* domain;            /* Pointer to domain name */
+	str* domain;            /* Pointer to domain name (NULL terminated) */
 	str* aor;               /* Pointer to the address of record string in record structure*/
 	str c;                  /* Contact address */
 	str received;           /* IP, port, and protocol we received the REGISTER from */

@@ -35,7 +35,7 @@
  * List of all domains registered with usrloc
  */
 typedef struct dlist {
-	str name;            /* Name of the domain */
+	str name;            /* Name of the domain (null terminated) */
 	udomain_t* d;        /* Payload */
 	struct dlist* next;  /* Next element in the list */
 } dlist_t;

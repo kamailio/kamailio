@@ -370,7 +370,6 @@ int timer_urecord(urecord_t* _r)
 
 int db_delete_urecord(urecord_t* _r)
 {
-	char b[256];
 	db_key_t keys[2];
 	db_val_t vals[2];
 	char* dom;
@@ -392,10 +391,7 @@ int db_delete_urecord(urecord_t* _r)
 		vals[1].val.str_val.len = _r->aor.s + _r->aor.len - dom - 1;
 	}
 
-	     /* FIXME */
-	memcpy(b, _r->domain->s, _r->domain->len);
-	b[_r->domain->len] = '\0';
-	if (ul_dbf.use_table(ul_dbh, b) < 0) {
+	if (ul_dbf.use_table(ul_dbh, _r->domain->s) < 0) {
 		LOG(L_ERR, "ERROR:usrloc:db_delete_urecord: use_table failed\n");
 		return -1;
 	}

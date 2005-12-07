@@ -414,7 +414,6 @@ static inline char* build_recv_sock(struct socket_info *sock, int *len)
  */
 int db_insert_ucontact(ucontact_t* _c)
 {
-	char b[256];
 	char* dom;
 	db_key_t keys[12];
 	db_val_t vals[12];
@@ -510,10 +509,7 @@ int db_insert_ucontact(ucontact_t* _c)
 		vals[11].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
 	}
 
-	     /* FIXME */
-	memcpy(b, _c->domain->s, _c->domain->len);
-	b[_c->domain->len] = '\0';
-	if (ul_dbf.use_table(ul_dbh, b) < 0) {
+	if (ul_dbf.use_table(ul_dbh, _c->domain->s) < 0) {
 		LOG(L_ERR, "db_insert_ucontact(): Error in use_table\n");
 		return -1;
 	}
@@ -532,7 +528,6 @@ int db_insert_ucontact(ucontact_t* _c)
  */
 int db_update_ucontact(ucontact_t* _c)
 {
-	char b[256];
 	char* dom;
 	int len;
 	db_key_t keys1[3];
@@ -625,10 +620,7 @@ int db_update_ucontact(ucontact_t* _c)
 		vals1[2].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
 	}
 
-	     /* FIXME */
-	memcpy(b, _c->domain->s, _c->domain->len);
-	b[_c->domain->len] = '\0';
-	if (ul_dbf.use_table(ul_dbh, b) < 0) {
+	if (ul_dbf.use_table(ul_dbh, _c->domain->s) < 0) {
 		LOG(L_ERR, "db_upd_ucontact(): Error in use_table\n");
 		return -1;
 	}
@@ -648,7 +640,6 @@ int db_update_ucontact(ucontact_t* _c)
  */
 int db_delete_ucontact(ucontact_t* _c)
 {
-	char b[256];
 	char* dom;
 	db_key_t keys[3];
 	db_val_t vals[3];
@@ -679,10 +670,7 @@ int db_delete_ucontact(ucontact_t* _c)
 		vals[2].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
 	}
 
-	     /* FIXME */
-	memcpy(b, _c->domain->s, _c->domain->len);
-	b[_c->domain->len] = '\0';
-	if (ul_dbf.use_table(ul_dbh, b) < 0) {
+	if (ul_dbf.use_table(ul_dbh, _c->domain->s) < 0) {
 		LOG(L_ERR, "db_del_ucontact: Error in use_table\n");
 		return -1;
 	}
