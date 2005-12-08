@@ -469,7 +469,7 @@ if (registered("location")) {
 
    Adds to the current REGISTER request a new header with
    "hdr_name" which contains the description of the received
-   socket (ip:port)
+   socket (proto:ip:port)
 
    This make sens only in multiple replicated servers scenarios.
 

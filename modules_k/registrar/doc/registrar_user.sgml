@@ -603,7 +603,7 @@ if (registered("location")) {
 		<para>
 		Adds to the current REGISTER request a new header with 
 		<quote>hdr_name</quote> which contains the description of the
-		received socket (ip:port)
+		received socket (proto:ip:port)
 		</para>
 		<para>
 		This make sens only in multiple replicated servers scenarios.
