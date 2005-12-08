@@ -35,6 +35,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../ut.h"
 #include "../../ip_addr.h"
+#include "../../socket_info.h"
 #include "../../dprint.h"
 #include "../../db/db.h"
 #include "ul_mod.h"
@@ -361,54 +362,6 @@ int st_flush_ucontact(ucontact_t* _c)
 
 /* ============== Database related functions ================ */
 
-
-static inline char* build_recv_sock(struct socket_info *sock, int *len)
-{
-#define PROTO2UINT(a, b, c, d) htonl((	(((unsigned int)(a))<<24)+ \
-								(((unsigned int)(b))<<16)+  \
-								(((unsigned int)(c))<<8)+  \
-								((unsigned int)(d)) ) | 0x20202020)
-
-	static char buf[ 4 + 1 + IP_ADDR_MAX_STR_SIZE+1+INT2STR_MAX_LEN+1];
-	char *p;
-
-	p = buf;
-	switch (sock->proto) {
-		case PROTO_UDP:
-			*((unsigned int*)p) = PROTO2UINT('u', 'd', 'p', ':');
-			p += 4;
-			break;
-		case PROTO_TCP:
-			*((unsigned int*)p) = PROTO2UINT('t', 'c', 'p', ':');
-			p += 4;
-			break;
-		case PROTO_TLS:
-			*((unsigned int*)p) = PROTO2UINT('t', 'l', 's', ':');
-			p += 4;
-			break;
-		case PROTO_SCTP:
-			*((unsigned int*)p) = PROTO2UINT('s', 'c', 't', 'p');
-			p += 4;
-			*(p++) = ':';
-			break;
-		default:
-			LOG(L_CRIT,"BUG:usrloc:build_recv_sock: unsupported proto %d\n",
-				sock->proto);
-			*len = 0;
-			return 0;
-	}
-	memcpy( p, sock->address_str.s, sock->address_str.len);
-	p += sock->address_str.len;
-	*(p++) = ':';
-	memcpy( p, sock->port_no_str.s, sock->port_no_str.len);
-	p += sock->port_no_str.len;
-	*len = (int)(long)(p-buf);
-	DBG("DEBUG:usrloc:build_recv_sock: <%.*s>\n",*len,buf);
-	return buf;
-}
-
-
-
 /*
  * Insert contact into the database
  */
@@ -484,7 +437,7 @@ int db_insert_ucontact(ucontact_t* _c)
 
 	vals[9].type = DB_STR;
 	if (_c->sock) {
-		vals[9].val.str_val.s = build_recv_sock(_c->sock, &len);
+		vals[9].val.str_val.s = socket2str(_c->sock, 0, &len);
 		vals[9].val.str_val.len = len;
 		vals[9].nul = vals[9].val.str_val.s?0:1;
 	} else {
@@ -595,7 +548,7 @@ int db_update_ucontact(ucontact_t* _c)
 
 	vals2[7].type = DB_STR;
 	if (_c->sock) {
-		vals2[7].val.str_val.s = build_recv_sock(_c->sock, &len);
+		vals2[7].val.str_val.s = socket2str(_c->sock, 0, &len);
 		vals2[7].val.str_val.len = len;
 		vals2[7].nul = vals2[7].val.str_val.s?0:1;
 	} else {
