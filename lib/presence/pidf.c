@@ -44,7 +44,7 @@ static void doc_add_tuple(dstring_t *buf, presentity_info_t *p, presence_tuple_i
 	
 	if (t->status == presence_tuple_open) dstr_append_zt(buf, "\t\t<status><basic>open</basic></status>\r\n");
 	else dstr_append_zt(buf, "\t\t<status><basic>closed</basic></status>\r\n");
-	
+
 	dstr_append_zt(buf, "\t\t<contact priority=\"");
 	sprintf(tmp, "%1.2f", t->priority);
 	dstr_append_zt(buf, tmp);
@@ -70,14 +70,40 @@ static void doc_add_note(dstring_t *buf, presentity_info_t *p, presence_note_t *
 	dstr_append_zt(buf, "</note>\r\n");
 }
 
-static void doc_add_presentity(dstring_t *buf, presentity_info_t *p)
+static void dstr_put_pres_uri(dstring_t *buf, str_t *uri)
+{
+	char *c;
+	int len = 0;
+	
+	if (!uri) return;
+	
+	c = str_strchr(uri, ':');
+	if (c) {
+		len = uri->len - (c - uri->s) - 1;
+		if (len > 0) c++;
+	}
+	else {
+		c = uri->s;
+		len = uri->len;
+	}
+	if (len > 0) {
+		dstr_append_zt(buf, "pres:");
+		dstr_append(buf, c, len);
+	}
+}
+
+static void doc_add_presentity(dstring_t *buf, presentity_info_t *p, int use_cpim_pidf_ns)
 {
 	presence_tuple_info_t *t;
 	presence_note_t *n;
 
 	DEBUG_LOG("doc_add_presentity()\n");
-	dstr_append_zt(buf, "<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"");
-	dstr_append_str(buf, &p->presentity);
+	if (use_cpim_pidf_ns)
+		dstr_append_zt(buf, "<presence xmlns=\"urn:ietf:params:xml:ns:cpim-pidf\" entity=\"");
+	else 
+		dstr_append_zt(buf, "<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"");
+	/* !!! there SHOULD be pres URI of presentity !!! */
+	dstr_put_pres_uri(buf, &p->presentity);
 	dstr_append_zt(buf, "\">\r\n");
 	
 	DEBUG_LOG("doc_add_presentity(): adding tuples\n");
@@ -97,8 +123,7 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p)
 	dstr_append_zt(buf, "</presence>");
 }
 
-		
-int create_pidf_document(presentity_info_t *p, str_t *dst, str_t *dst_content_type)
+int create_pidf_document_ex(presentity_info_t *p, str_t *dst, str_t *dst_content_type, int use_cpim_pidf_ns)
 {
 	dstring_t buf;
 	
@@ -117,7 +142,7 @@ int create_pidf_document(presentity_info_t *p, str_t *dst, str_t *dst_content_ty
 	dstr_init(&buf, 2048);
 	
 	dstr_append_zt(&buf, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n");
-	doc_add_presentity(&buf, p);
+	doc_add_presentity(&buf, p, use_cpim_pidf_ns);
 	
 	dst->len = dstr_get_data_length(&buf);
 	dst->s = cds_malloc(dst->len);
@@ -126,6 +151,11 @@ int create_pidf_document(presentity_info_t *p, str_t *dst, str_t *dst_content_ty
 	dstr_destroy(&buf);
 	
 	return 0;
+}
+
+int create_pidf_document(presentity_info_t *p, str_t *dst, str_t *dst_content_type)
+{
+	return create_pidf_document_ex(p, dst, dst_content_type, 0);
 }
 
 /* ------------------------------ PIDF document parsing ------------------------------ */
@@ -272,8 +302,8 @@ static int read_presentity(xmlNode *root, presentity_info_t **dst, int ignore_ns
 	return res;
 }
 
-/* libxml2 must be initialized before calling this function ! */
-int parse_pidf_document(presentity_info_t **dst, const char *data, int data_len, int ignore_ns)
+/* ignore ns added for cpim-pidf+xml, draft version 07 (differs only in ns) */
+int parse_pidf_document_ex(presentity_info_t **dst, const char *data, int data_len, int ignore_ns)
 {
 	int res = 0;
 	xmlDocPtr doc;
@@ -297,5 +327,23 @@ int parse_pidf_document(presentity_info_t **dst, const char *data, int data_len,
 
 	xmlFreeDoc(doc);
 	return res;
+}
+
+/* libxml2 must be initialized before calling this function ! */
+int parse_pidf_document(presentity_info_t **dst, const char *data, int data_len)
+{
+	return parse_pidf_document_ex(dst, data, data_len, 0);
+}
+
+/* --------------- CPIM_PIDF document creation/parsing ---------------- */
+
+int parse_cpim_pidf_document(presentity_info_t **dst, const char *data, int data_len)
+{
+	return parse_pidf_document_ex(dst, data, data_len, 1);
+}
+
+int create_cpim_pidf_document(presentity_info_t *p, str_t *dst, str_t *dst_content_type)
+{
+	return create_pidf_document_ex(p, dst, dst_content_type, 1);
 }
 

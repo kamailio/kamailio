@@ -405,7 +405,63 @@ error:
 	return -1;
 }
 
+int parse_accept_body(struct hdr_field *hdr)
+{
+	static unsigned int mimes[MAX_MIMES_NR];
+	int nr_mimes;
+	unsigned int mime;
+	char *end;
+	char *ret;
 
+	if (!hdr) return -1;
+	
+	/* maybe the header is already parsed! */
+	if (hdr->parsed!=0) return 1;
+	
+	/* it seams we have to parse it! :-( */
+	ret = hdr->body.s;
+	end = ret + hdr->body.len;
+	nr_mimes = 0;
+	while (1){
+		ret = decode_mime_type(ret, end , &mime);
+		if (ret==0)
+			goto error;
+		/* a new mime was found  -> put it into array */
+		if (nr_mimes==MAX_MIMES_NR) {
+			LOG(L_ERR,"ERROR:parse_accept_hdr: Accept hdr contains more than"
+				" %d mime type -> buffer overflow!!\n",MAX_MIMES_NR);
+			goto error;
+		}
+		mimes[nr_mimes++] = mime;
+		/* is another mime following? */
+		if (ret==end )
+			break;
+		/* parse the mime separator ',' */
+		if (*ret!=',' || ret+1==end) {
+			LOG(L_ERR,"ERROR:parse_accept_hdr: parse error between mimes at "
+				"char <%x> (offset=%d) in <%.*s>!\n",
+				*ret, (int)(ret-hdr->body.s),
+				hdr->body.len, hdr->body.s);
+			goto error;
+		}
+		/* skip the ',' */
+		ret++;
+	}
+
+	/* copy and link the mime buffer into the message */
+	hdr->parsed = (void*)pkg_malloc((nr_mimes+1)*sizeof(int));
+	if (hdr->parsed==0) {
+		LOG(L_ERR,"ERROR:parse_accept: no more pkg memory\n");
+		goto error;
+	}
+	memcpy(hdr->parsed,mimes,nr_mimes*sizeof(int));
+	/* make the buffer null terminated */
+	((int*)hdr->parsed)[nr_mimes] = 0;
+
+	return 1;
+error:
+	return -1;
+}
 
 /* returns: > 0 ok
  *          = 0 hdr not found

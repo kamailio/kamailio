@@ -30,8 +30,9 @@
 #include <presence/pres_doc.h>
 
 int create_pidf_document(presentity_info_t *p, str_t *dst, str_t *dst_content_type);
+int create_cpim_pidf_document(presentity_info_t *p, str_t *dst, str_t *dst_content_type);
 
-/* ignore ns added for cpim-pidf+xml, draft version 07 (differs only in ns) */
-int parse_pidf_document(presentity_info_t **dst, const char *data, int data_len, int ignore_ns);
+int parse_pidf_document(presentity_info_t **dst, const char *data, int data_len);
+int parse_cpim_pidf_document(presentity_info_t **dst, const char *data, int data_len);
 
 #endif

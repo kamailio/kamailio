@@ -98,6 +98,8 @@ struct mime_type {
  */
 int parse_content_type_hdr( struct sip_msg *msg);
 
+int parse_accept_body(struct hdr_field *hdr);
+
 /*
  * parse the the body of the Accept header. It's values are also converted
  * as an null-terminated array of ints.
