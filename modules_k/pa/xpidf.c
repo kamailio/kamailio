@@ -146,8 +146,10 @@ int xpidf_add_address(str* _b, int _l, str* _addr, xpidf_status_t _st)
 {
 	int len = 0;
 	char* p;
+#ifdef WITH_MSN
 	int len_available = 0;
 	char * available;
+#endif
 
 	switch(_st) {
 	case XPIDF_ST_OPEN:
