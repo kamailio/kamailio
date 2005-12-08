@@ -209,8 +209,8 @@ static int watcher_assign_statement_id(presentity_t *presentity, watcher_t *watc
 /*
  * Create a new watcher structure but do not write to database
  */
-int new_watcher_no_wb(presentity_t *_p, str* _uri, time_t _e, int event_package, doctype_t _a, dlg_t* _dlg, 
-		      str *_dn, str *server_contact, watcher_t** _w)
+int new_watcher_no_wb(presentity_t *_p, str* _uri, time_t _e, int event_package, 
+		int doc_type, dlg_t* _dlg, str *_dn, str *server_contact, watcher_t** _w)
 {
 	watcher_t* watcher;
 
@@ -250,7 +250,7 @@ int new_watcher_no_wb(presentity_t *_p, str* _uri, time_t _e, int event_package,
 	watcher->document_index = 0;
 	watcher->event_package = event_package;
 	watcher->expires = _e; /* Expires value */
-	watcher->preferred_mimetype = _a;  /* Accepted document type */
+	watcher->preferred_mimetype = doc_type;  /* Accepted document type */
 	watcher->dialog = _dlg; /* Dialog handle */
 	watcher->event = WE_SUBSCRIBE;
 	watcher->status = WS_PENDING;

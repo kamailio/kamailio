@@ -171,34 +171,33 @@ void pa_sig_handler(int s)
 	DBG("PA:pa_worker:%d: SIGNAL received=%d\n **************", getpid(), s);
 }
 
-static struct mimetype_test {
-	char *string;
-	int parsed;
-} mimetype_tests[] = {
-	{ "application/cpim", MIMETYPE(APPLICATION,CPIM) },
-	{ "text/plain", MIMETYPE(TEXT,PLAIN) },
-	{ "message/cpim", MIMETYPE(MESSAGE,CPIM) },
-	{ "application/sdp", MIMETYPE(APPLICATION,SDP) },
-	{ "application/cpl+xml", MIMETYPE(APPLICATION,CPLXML) },
-	{ "application/pidf+xml", MIMETYPE(APPLICATION,PIDFXML) },
-	{ "application/rlmi+xml", MIMETYPE(APPLICATION,RLMIXML) },
-	{ "multipart/related", MIMETYPE(MULTIPART,RELATED) },
-	{ "application/lpidf+xml", MIMETYPE(APPLICATION,LPIDFXML) },
-	{ "application/xpidf+xml", MIMETYPE(APPLICATION,XPIDFXML) },
-	{ "application/watcherinfo+xml", MIMETYPE(APPLICATION,WATCHERINFOXML) },
-	{ "application/external-body", MIMETYPE(APPLICATION,EXTERNAL_BODY) },
-	{ "application/*", MIMETYPE(APPLICATION,ALL) },
-#ifdef SUBTYPE_XML_MSRTC_PIDF
-	{ "text/xml+msrtc.pidf", MIMETYPE(TEXT,XML_MSRTC_PIDF) },
-#endif
-	{ "application/cpim-pidf+xml", MIMETYPE(APPLICATION,CPIM_PIDFXML) },
-	{ NULL, 0 }
-};
-
 char* decode_mime_type(char *start, char *end, unsigned int *mime_type);
 
 static void test_mimetype_parser(void)
 {
+	static struct mimetype_test {
+		char *string;
+		int parsed;
+	} mimetype_tests[] = {
+		{ "application/cpim", MIMETYPE(APPLICATION,CPIM) },
+		{ "text/plain", MIMETYPE(TEXT,PLAIN) },
+		{ "message/cpim", MIMETYPE(MESSAGE,CPIM) },
+		{ "application/sdp", MIMETYPE(APPLICATION,SDP) },
+		{ "application/cpl+xml", MIMETYPE(APPLICATION,CPLXML) },
+		{ "application/pidf+xml", MIMETYPE(APPLICATION,PIDFXML) },
+		{ "application/rlmi+xml", MIMETYPE(APPLICATION,RLMIXML) },
+		{ "multipart/related", MIMETYPE(MULTIPART,RELATED) },
+		{ "application/lpidf+xml", MIMETYPE(APPLICATION,LPIDFXML) },
+		{ "application/xpidf+xml", MIMETYPE(APPLICATION,XPIDFXML) },
+		{ "application/watcherinfo+xml", MIMETYPE(APPLICATION,WATCHERINFOXML) },
+		{ "application/external-body", MIMETYPE(APPLICATION,EXTERNAL_BODY) },
+		{ "application/*", MIMETYPE(APPLICATION,ALL) },
+#ifdef SUBTYPE_XML_MSRTC_PIDF
+		{ "text/xml+msrtc.pidf", MIMETYPE(TEXT,XML_MSRTC_PIDF) },
+#endif
+		{ "application/cpim-pidf+xml", MIMETYPE(APPLICATION,CPIM_PIDFXML) },
+		{ NULL, 0 }
+	};
 	struct mimetype_test *mt = &mimetype_tests[0];
 	LOG(L_DBG, "Presence Agent - testing mimetype parser\n");
 	while (mt->string) {

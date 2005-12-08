@@ -699,18 +699,17 @@ static int publish_presence(struct sip_msg* _m, struct presentity* presentity)
 	if (_m->sipifmatch) str_dup(&etag, (str*)_m->sipifmatch->parsed);
 	else str_clear(&etag);
 				
-	/* TRACE_LOG("pidf: %d\n", MIMETYPE(APPLICATION,PIDFXML)); */
 	if (body_len > 0) {
 		switch (content_type) {
 			case MIMETYPE(APPLICATION,PIDFXML):
-				if (parse_pidf_document(&p, body, body_len, 0) != 0) {
+				if (parse_pidf_document(&p, body, body_len) != 0) {
 					LOG(L_ERR, "can't parse PIDF document\n");
 					paerrno = PA_UNSUPP_DOC; /* ? PA_PARSE_ERR */
 				}
 				break;
 			case MIMETYPE(APPLICATION,CPIM_PIDFXML):
-				if (parse_pidf_document(&p, body, body_len, 1) != 0) {
-					LOG(L_ERR, "can't parse PIDF document\n");
+				if (parse_cpim_pidf_document(&p, body, body_len) != 0) {
+					LOG(L_ERR, "can't parse CPIM-PIDF document\n");
 					paerrno = PA_UNSUPP_DOC;
 				}
 				break;

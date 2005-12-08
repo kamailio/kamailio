@@ -76,6 +76,9 @@
 #define CONT_TYPE_PIDF "application/pidf+xml"
 #define CONT_TYPE_PIDF_L (sizeof(CONT_TYPE_PIDF) - 1)
 
+#define CONT_TYPE_CPIM_PIDF "application/cpim-pidf+xml"
+#define CONT_TYPE_CPIM_PIDF_L (sizeof(CONT_TYPE_CPIM_PIDF) - 1)
+
 #define CONT_TYPE_WINFO "application/watcherinfo+xml"
 #define CONT_TYPE_WINFO_L (sizeof(CONT_TYPE_WINFO) - 1)
 
@@ -142,21 +145,25 @@ static str headers = {headers_buf, 0};
 static str body = {buffer, 0};
 
 
-static inline int add_event_hf(str* _h, int _l, int preferred_mimetype)
+static inline int add_event_hf(str* _h, int _l, int event_package)
 {
 	int event_l;
 	char *event;
-	if (preferred_mimetype == DOC_WINFO) {
-		event = WINFO_TEXT;
-		event_l = WINFO_TEXT_L;
+
+	switch (event_package) {
+		case EVENT_PRESENCE_WINFO:
+			event = WINFO_TEXT;
+			event_l = WINFO_TEXT_L;
+			break;
 #ifdef DOC_XCAP_CHANGE
-	} else if (preferred_mimetype == DOC_XCAP_CHANGE) {
-		event = XCAP_CHANGE_TEXT;
-		event_l = XCAP_CHANGE_TEXT_L;
+		case EVENT_XCAP_CHANGE:
+			event = XCAP_CHANGE_TEXT;
+			event_l = XCAP_CHANGE_TEXT_L;
+			break;
 #endif
-	} else {
-		event = PRESENCE_TEXT;
-		event_l = PRESENCE_TEXT_L;
+		default:
+			event = PRESENCE_TEXT;
+			event_l = PRESENCE_TEXT_L;
 	}
 
 	if (_l < EVENT_L + event_l + CRLF_L) {
@@ -172,9 +179,9 @@ static inline int add_event_hf(str* _h, int _l, int preferred_mimetype)
 }
 
 
-static inline int add_cont_type_hf(str* _h, int _l, doctype_t _d)
+static inline int add_cont_type_hf(str* _h, int _l, int doc_type)
 {
-	switch(_d) {
+	switch(doc_type) {
 	case DOC_XPIDF:
 		if (_l < CONTENT_TYPE_L + CONT_TYPE_XPIDF_L + CRLF_L) {
 			paerrno = PA_SMALL_BUFFER;
@@ -208,6 +215,16 @@ static inline int add_cont_type_hf(str* _h, int _l, doctype_t _d)
 		str_append(_h, CONTENT_TYPE CONT_TYPE_PIDF CRLF,
 			   CONTENT_TYPE_L + CONT_TYPE_PIDF_L + CRLF_L);
 		return 0;
+		
+	case DOC_CPIM_PIDF:
+			if (_l < CONTENT_TYPE_L + CONT_TYPE_CPIM_PIDF_L + CRLF_L) {
+				paerrno = PA_SMALL_BUFFER;
+				LOG(L_ERR, "add_cont_type_hf(): Buffer too small\n");
+				return -2;
+			}
+			str_append(_h, CONTENT_TYPE CONT_TYPE_CPIM_PIDF CRLF,
+					CONTENT_TYPE_L + CONT_TYPE_CPIM_PIDF_L + CRLF_L);
+			return 0;
 
 	case DOC_WINFO:
 		if (_l < CONTENT_TYPE_L + CONT_TYPE_WINFO_L + CRLF_L) {
@@ -318,7 +335,7 @@ static inline int create_headers(struct watcher* _w)
 	
 	headers.len = 0;
 	
-	if (add_event_hf(&headers, BUF_LEN, _w->preferred_mimetype) < 0) {
+	if (add_event_hf(&headers, BUF_LEN, _w->event_package) < 0) {
 		LOG(L_ERR, "create_headers(): Error while adding Event header field\n");
 		return -1;
 	}
@@ -463,6 +480,42 @@ static int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 		return -1;
 	}
 	if (create_pidf_document(pinfo, &doc, &content_type) != 0) {
+		LOG(L_ERR, "can't create PIDF document\n");
+		free_presentity_info(pinfo);
+		return -2;
+	}
+
+	tmb.t_request_within(&method, &headers, &doc, _w->dialog, 0, 0);
+	str_free_content(&doc);
+	str_free_content(&content_type);
+	free_presentity_info(pinfo);
+	return 0;
+}
+
+static int send_cpim_pidf_notify(struct presentity* _p, struct watcher* _w)
+{
+	/* Send a notify, saved Contact will be put in
+	 * Request-URI, To will be put in from and new tag
+	 * will be generated, callid will be callid,
+	 * from will be put in to including tag
+	 */
+	str doc;
+	str content_type;
+	presentity_info_t *pinfo = NULL;
+	
+	LOG(L_DBG, "  send_cpim_pidf_notify\n");
+
+	if (create_headers(_w) < 0) {
+		LOG(L_ERR, "send_pidf_notify(): Error while adding headers\n");
+		return -7;
+	}
+
+	pinfo = presentity2presentity_info(_p);
+	if (!pinfo) {
+		LOG(L_ERR, "can't create PIDF document (0)\n");
+		return -1;
+	}
+	if (create_cpim_pidf_document(pinfo, &doc, &content_type) != 0) {
 		LOG(L_ERR, "can't create PIDF document\n");
 		free_presentity_info(pinfo);
 		return -2;
@@ -658,6 +711,11 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 			rc = send_lpidf_notify(_p, _w);
 			if (rc) LOG(L_ERR, "send_lpidf_notify returned %d\n", rc);
 			break;
+		
+		case DOC_CPIM_PIDF:
+			rc = send_cpim_pidf_notify(_p, _w);
+			if (rc) LOG(L_ERR, "send_pidf_notify returned %d\n", rc);
+			break;
 
 #ifdef SUBTYPE_XML_MSRTC_PIDF
 		case DOC_MSRTC_PIDF:
@@ -668,17 +726,14 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 			if (rc) LOG(L_ERR, "send_pidf_notify returned %d\n", rc);
 		}
 	}
-	if (_w->event_package == EVENT_PRESENCE_WINFO) {
+	if ((_w->event_package == EVENT_PRESENCE_WINFO) && (watcherinfo_notify)) {
 		switch(_w->preferred_mimetype) {
 		case DOC_WINFO:
-			if (watcherinfo_notify) {
-				rc = send_winfo_notify(_p, _w);
-				if (rc) LOG(L_ERR, "send_winfo_notify returned %d\n", rc);
-			}
+			rc = send_winfo_notify(_p, _w);
+			if (rc) LOG(L_ERR, "send_winfo_notify returned %d\n", rc);
 			break;
 		default:
-			/* inapplicable */
-		  ;
+			LOG(L_ERR, "winfo notify for unknow doctype\n");
 		}
 	}
 #ifdef HAVE_XCAP_CHANGE_NOTIFY

@@ -39,19 +39,16 @@
 
 #define MIMETYPE(x_,y_) ((TYPE_##x_ << 16) | (SUBTYPE_##y_))
 
-typedef enum doctype {
-	DOC_XPIDF = MIMETYPE(APPLICATION,XPIDFXML),
-	DOC_LPIDF = MIMETYPE(APPLICATION,LPIDFXML),
-	DOC_PIDF =  MIMETYPE(APPLICATION,PIDFXML),
-#ifdef SUBTYPE_XML_MSRTC_PIDF
-	DOC_MSRTC_PIDF =  MIMETYPE(APPLICATION,XML_MSRTC_PIDF),
-#endif
-	DOC_WINFO = MIMETYPE(APPLICATION,WATCHERINFOXML),
-//	DOC_XCAP_CHANGE = (1 << 4),
-//	DOC_LOCATION = (1 << 5),
-	DOC_MULTIPART_RELATED = MIMETYPE(MULTIPART,RELATED),
-	DOC_RLMI_XML = MIMETYPE(APPLICATION,RLMIXML)
-} doctype_t;
+#define DOC_XPIDF        MIMETYPE(APPLICATION,XPIDFXML)
+#define DOC_LPIDF        MIMETYPE(APPLICATION,LPIDFXML)
+#define DOC_PIDF         MIMETYPE(APPLICATION,PIDFXML)
+#define DOC_CPIM_PIDF    MIMETYPE(APPLICATION,CPIM_PIDFXML)
+#define DOC_MSRTC_PIDF   MIMETYPE(APPLICATION,XML_MSRTC_PIDF)
+#define DOC_WINFO        MIMETYPE(APPLICATION,WATCHERINFOXML)
+/*	DOC_XCAP_CHANGE = (1 << 4),
+	DOC_LOCATION = (1 << 5),*/
+#define DOC_MULTIPART_RELATED MIMETYPE(MULTIPART,RELATED),
+#define DOC_RLMI_XML          MIMETYPE(APPLICATION,RLMIXML)
 
 typedef enum watcher_status {
 	WS_PENDING = 0,
@@ -112,7 +109,8 @@ watcher_event_t watcher_event_from_string(str *wename);
  * Create a new watcher structure
  */
 struct presentity;
-int new_watcher_no_wb(struct presentity *_p, str* _uri, time_t _e, int event_package, doctype_t _a, dlg_t* _dlg, str *display_name, 
+int new_watcher_no_wb(struct presentity *_p, str* _uri, time_t _e, int event_package, 
+		int doc_type, dlg_t* _dlg, str *display_name, 
 		str *server_contact, watcher_t** _w);
 
 /* add watcher into db */

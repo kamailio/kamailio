@@ -61,20 +61,30 @@
 #define DOCUMENT_TYPE "application/cpim-pidf+xml"
 #define DOCUMENT_TYPE_L (sizeof(DOCUMENT_TYPE) - 1)
 
-static struct {
+typedef struct {
 	int event_type;
 	int mimes[MAX_MIMES_NR];
-} event_package_mimetypes[] = {
-	{ EVENT_PRESENCE, { MIMETYPE(APPLICATION,PIDFXML), 
+} event_mimetypes_t;
+
+static event_mimetypes_t event_package_mimetypes[] = {
+	{ EVENT_PRESENCE, {
+			MIMETYPE(APPLICATION,PIDFXML), 
 #ifdef SUBTYPE_XML_MSRTC_PIDF
-			    MIMETYPE(APPLICATION,XML_MSRTC_PIDF),
+		    MIMETYPE(APPLICATION,XML_MSRTC_PIDF),
 #endif
-			    MIMETYPE(APPLICATION,XPIDFXML), MIMETYPE(APPLICATION,LPIDFXML), 0 } },
-	{ EVENT_PRESENCE_WINFO, { MIMETYPE(APPLICATION,WATCHERINFOXML), 0 }},
+			MIMETYPE(APPLICATION,CPIM_PIDFXML), 
+		    MIMETYPE(APPLICATION,XPIDFXML), 
+			MIMETYPE(APPLICATION,LPIDFXML), 
+			0 } },
+	{ EVENT_PRESENCE_WINFO, { 
+			MIMETYPE(APPLICATION,WATCHERINFOXML), 
+			0 } },
 #ifdef EVENT_SIP_PROFILE
-	{ EVENT_SIP_PROFILE, { MIMETYPE(MESSAGE,EXTERNAL_BODY), 0 }},
+	{ EVENT_SIP_PROFILE, { 
+			MIMETYPE(MESSAGE,EXTERNAL_BODY), 
+			0 } },
 #endif
-//	{ EVENT_XCAP_CHANGE, { MIMETYPE(APPLICATION,WINFO+XML), 0 } },
+/*	{ EVENT_XCAP_CHANGE, { MIMETYPE(APPLICATION,WINFO+XML), 0 } }, */
 	{ -1, { 0 }},
 };
 
@@ -208,7 +218,11 @@ static int get_dlg_id(struct sip_msg *_m, dlg_id_t *dst)
 static int parse_hfs(struct sip_msg* _m, int accept_header_required)
 {
 	int rc = 0;
-	if ( ((rc = parse_headers(_m, HDR_FROM_F | HDR_EVENT_F | HDR_EXPIRES_F | HDR_ACCEPT_F, 0)) == -1) 
+	struct hdr_field *acc;
+	
+	/* EOH instead HDR_FROM_F | HDR_EVENT_F | HDR_EXPIRES_F | HDR_ACCEPT_F  
+	 * because we need all Accept headers */
+	if ( ((rc = parse_headers(_m, HDR_EOH_F, 0)) == -1) 
 	     || (_m->from==0) || (_m->event==0) ) {
 		paerrno = PA_PARSE_ERR;
 		LOG(L_ERR, "parse_hfs(): Error while parsing headers: rc=%d\n", rc);
@@ -228,6 +242,11 @@ static int parse_hfs(struct sip_msg* _m, int accept_header_required)
 			return -8;
 		}
 	}
+	else { 
+		paerrno = PA_EVENT_PARSE;
+		LOG(L_ERR, "parse_hfs(): Error while parsing Event header field\n");
+		return -8;
+	}
 
 	if (_m->expires) {
 		if (parse_expires(_m->expires) < 0) {
@@ -238,122 +257,169 @@ static int parse_hfs(struct sip_msg* _m, int accept_header_required)
 	}
 
 	/* now look for Accept header */
-	if (_m->accept) {
-		/* LOG(L_ERR, "parsing accept header\n"); */
-		if (parse_accept_hdr(_m) < 0) {
-			paerrno = PA_ACCEPT_PARSE;
-			LOG(L_ERR, "parse_hfs(): Error while parsing Accept header field\n");
-			return -10;
-		}
-	} else if (accept_header_required) {
+	acc = _m->accept;
+	if (accept_header_required && (!acc)) {
 		LOG(L_ERR, "no accept header\n");
 		return -11;
+	}
+	
+	while (acc) { /* parse all accept headers */
+		if (acc->type == HDR_ACCEPT_T) {
+			DEBUG_LOG("parsing accept header: %.*s\n", FMT_STR(acc->body));
+			if (parse_accept_body(acc) < 0) {
+				paerrno = PA_ACCEPT_PARSE;
+				LOG(L_ERR, "parse_hfs(): Error while parsing Accept header field\n");
+				return -10;
+			}
+		}
+		acc = acc->next;
 	}
 
 	return 0;
 }
 
+/* returns -1 if m is NOT found in mimes
+ * index to the found element otherwise (non-negative value) */
+static int find_mime(int *mimes, int m)
+{
+	int i;
+	for (i = 0; mimes[i]; i++) {
+		if (mimes[i] == m) return i;
+	}
+	return -1;
+}
+
+static event_mimetypes_t *find_event_mimetypes(int et)
+{
+	int i;
+	event_mimetypes_t *em;
+		
+	i = 0;
+	while (et != event_package_mimetypes[i].event_type) {
+		if (event_package_mimetypes[i].event_type == -1) break;
+		i++;
+	}
+	em = &event_package_mimetypes[i]; /* if not found is it the "separator" (-1, 0)*/
+	return em;
+}
+
+static int check_mime_types(int *accepts_mimes, event_mimetypes_t *em)
+{
+	/* LOG(L_ERR, "check_message -2- accepts_mimes=%p\n", accepts_mimes); */
+	if (accepts_mimes) {
+		int j = 0, k;
+		int mimetype;
+		while ((mimetype = em->mimes[j]) != 0) {
+			k = find_mime(accepts_mimes, mimetype);
+			if (k >= 0) {
+				int am0 = accepts_mimes[0];
+				/* we have a match */
+				/*LOG(L_ERR, "check_message -4b- eventtype=%#x accepts_mime=%#x\n", eventtype, mimetype); */
+				/* move it to front for later */
+				accepts_mimes[0] = mimetype;
+				accepts_mimes[k] = am0;
+				return 0; /* ! this may be useful, but it modifies the parsed content !!! */
+			}
+			j++;
+		}
+		
+		return -1;
+	}
+	return 0;
+}
 
 /*
  * Check if a message received has been constructed properly
  */
 int check_message(struct sip_msg* _m)
 {
-	if (_m->event) {
-		event_t *parsed_event;
-		int *accepts_mimes = NULL;
+	event_t *parsed_event;
+	int eventtype = 0;
+	int *accepts_mimes = NULL;
+	event_mimetypes_t *em;
+	struct hdr_field *acc;
 
-		if (_m->accept) {
-			accepts_mimes = get_accept(_m);
-			if (accepts_mimes) {
-				char buf[100];
-				int offset = 0;
-				int *a = accepts_mimes;
-				buf[0] = '0';
-				while (*a) {
-					offset += sprintf(buf+offset, ":%#06x", *a);
-					a++;
-				}
-				/* LOG(L_ERR, "pa check_message: accept=%.*s parsed=%s\n",
-				    _m->accept->body.len, _m->accept->body.s, buf); */
-			}
-		}
-		/* LOG(L_ERR, "check_message -2- accepts_mimes=%p\n", accepts_mimes); */
-
-		if (!_m->event->parsed)
-			parse_event(_m->event);
-		parsed_event = (event_t*)(_m->event->parsed);
-
-		/* LOG(L_ERR, "check_message -4- parsed_event=%p\n", parsed_event); */
-		if (parsed_event && accepts_mimes) {
-			int i = 0;
-			int eventtype = parsed_event->parsed;
-			/* LOG(L_ERR, "check_message -4- eventtype=%#06x\n", eventtype); */
-			while (event_package_mimetypes[i].event_type != -1) {
-				/* LOG(L_ERR, "check_message -4a- eventtype=%#x epm[i].event_type=%#x", 
-				    eventtype, event_package_mimetypes[i].event_type); */
-				if (eventtype == event_package_mimetypes[i].event_type) {
-					int j = 0;
-					int mimetype;
-					while ((mimetype = event_package_mimetypes[i].mimes[j]) != 0) {
-						int k = 0;
-						while (accepts_mimes[k]) {
-							/* LOG(L_ERR, "check_message -4c- eventtype=%#x mimetype=%#x accepts_mimes[k]=%#x\n", eventtype, mimetype, accepts_mimes[k]); */
-
-							if (accepts_mimes[k] == mimetype) {
-								int am0 = accepts_mimes[0];
-								/* we have a match */
-								/*LOG(L_ERR, "check_message -4b- eventtype=%#x accepts_mime=%#x\n", eventtype, mimetype); */
-								/* move it to front for later */
-								accepts_mimes[0] = mimetype;
-								accepts_mimes[k] = am0;
-								return 0;
-							}
-							k++;
-						}
-						j++;
-					}
-				}
-				i++;
-			}
-			/* else, none of the mimetypes accepted are generated for this event package */
-			{
-				char *accept_s = NULL;
-				int accept_len = 0;
-				if (_m->accept && _m->accept->body.len) {
-					accept_s = _m->accept->body.s;
-					accept_len = _m->accept->body.len;
-				}
-				LOG(L_ERR, "check_message(): Accepts %.*s not valid for event package et=%.*s\n",
-				    _m->accept->body.len, _m->accept->body.s, _m->event->body.len, _m->event->body.s);
-				return -1;
-			}
-		}
+	if ((!_m->event) || (!_m->event->parsed)) {
+		paerrno = PA_EXPIRES_PARSE;
+		LOG(L_ERR, "check_message(): Event header field not found\n");
+		return -1; /* should be verified in parse_hfs before */
 	}
-	return 0;
+
+	/* event package verification */
+	parsed_event = (event_t*)(_m->event->parsed);
+	eventtype = parsed_event->parsed;
+	em = find_event_mimetypes(eventtype);
+	if (em) 
+		if (em->event_type == -1) em = NULL;
+	if (!em) {
+		paerrno = PA_EVENT_UNSUPP;
+		LOG(L_ERR, "check_message(): Unsupported event package\n");
+		return -1;
+	}
+
+	acc = _m->accept;
+	if (!acc) return 0; /* default will be used */
+	
+	while (acc) { /* go through all Accept headers */
+		if (acc->type == HDR_ACCEPT_T) {
+			/* it MUST be parsed from parse_hdr !!! */
+			accepts_mimes = acc->parsed;
+			if (check_mime_types(accepts_mimes, em) == 0) return 0;
+			
+			/* else, none of the mimetypes accepted are generated for this event package */
+			LOG(L_INFO, "check_message(): Accepts %.*s not valid for event package et=%.*s\n",
+				acc->body.len, acc->body.s, _m->event->body.len, _m->event->body.s);
+		}
+		acc = acc->next;
+	}
+	LOG(L_ERR, "no satisfactory document type found\n");
+	return -1;
 }
 
-
-int get_preferred_event_mimetype(struct sip_msg *_m, int et)
+/* returns index of mimetype, the lowest index = highest priority */
+static int get_accepted_mime_type_idx(int *accepts_mimes, event_mimetypes_t *em)
 {
-	int acc = 0;
-	if (_m->accept) {
-		//LOG(L_ERR, "%s: has accept header\n", __FUNCTION__);
-		int *accepts_mimes = get_accept(_m);
-		acc = accepts_mimes[0];
-	} else {
-		int i = 0;
-		//LOG(L_ERR, "%s: no accept header\n", __FUNCTION__);
-		while (event_package_mimetypes[i].event_type != -1) {
-			if (event_package_mimetypes[i].event_type == et) {
-				acc = event_package_mimetypes[i].mimes[0];
-				LOG(L_ERR, "%s: defaulting to mimetype %x for event_type=%d\n", __FUNCTION__, acc, et);
-				break;
-			}
+	int i, mt;
+	if (accepts_mimes) {
+		/* try find "preferred" mime type */
+		i = 0;
+		while ((mt = em->mimes[i]) != 0) {
+			TRACE_LOG("searching for %x\n", mt);
+			if (find_mime(accepts_mimes, mt) >= 0) return i;
 			i++;
 		}
 	}
-	if (et == EVENT_PRESENCE_WINFO) acc = DOC_WINFO;
+	return -1;
+}
+
+int get_preferred_event_mimetype(struct sip_msg *_m, int et)
+{
+	int idx, tmp, acc = 0;
+	int *accepts_mimes;
+	struct hdr_field *accept;
+
+	event_mimetypes_t *em = find_event_mimetypes(et);
+	if (!em) return 0; /* never happens, but ... */
+
+	accept = _m->accept;
+	idx = -1;
+	while (accept) { /* go through all Accept headers */
+		if (accept->type == HDR_ACCEPT_T) {
+			/* it MUST be parsed from parse_hdr !!! */
+			accepts_mimes = (int *)accept->parsed;
+			tmp = get_accepted_mime_type_idx(accepts_mimes, em);
+			if (idx == -1) idx = tmp;
+			else
+				if ((tmp != -1) && (tmp < idx)) idx = tmp;
+			/* TRACE_LOG("%s: found mimetype %x (idx %d), %p\n", __FUNCTION__, (idx >= 0) ? em->mimes[idx]: -1, idx, accepts_mimes); */
+			if (idx == 0) break; /* the lowest value */
+		}
+		accept = accept->next;
+	}
+	if (idx != -1) return em->mimes[idx]; /* found value with highest priority */
+
+	acc = em->mimes[0];
+	LOG(L_WARN, "%s: defaulting to mimetype %x for event_type=%d\n", __FUNCTION__, acc, et);
 	return acc;
 }
 
