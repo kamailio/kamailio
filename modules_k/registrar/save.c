@@ -135,10 +135,10 @@ static struct socket_info *get_sock_hdr(struct sip_msg *msg)
 {
 	struct socket_info *sock;
 	struct hdr_field *hf;
-	unsigned int port_no;
-	str sock_str;
-	str port;
-	char *p;
+	str socks;
+	str hosts;
+	int port;
+	int proto;
 
 	if (parse_headers( msg, HDR_EOH_F, 0) == -1) {
 		LOG(L_ERR,"ERROR:registrar:get_sock_hdr: failed to parse message\n");
@@ -155,32 +155,24 @@ static struct socket_info *get_sock_hdr(struct sip_msg *msg)
 	if (hf==0)
 		return 0;
 
-	trim_len( sock_str.len, sock_str.s, hf->body );
-	if (sock_str.len==0)
+	trim_len( socks.len, socks.s, hf->body );
+	if (socks.len==0)
 		return 0;
 
-	for(p=sock_str.s+(sock_str.len-1) ; p>sock_str.s && *p!='_' ; p-- );
-
-	if (p!=sock_str.s) {
-		/* has port */
-		port.s = p+1;
-		port.len = (sock_str.s + sock_str.len) - port.s;
-		if (str2int( &port, &port_no)!=0) {
-			LOG(L_ERR,"ERROR:registrar:get_sock_hdr: bad port <%.*s> in "
-				"socket\n",port.len,port.s);
-			port_no = SIP_PORT;
-		}
-		sock_str.len = (port.s - sock_str.s) - 1;
-	} else {
-		/* no port */
-		port_no = SIP_PORT;
+	if (parse_phostport( socks.s, &hosts.s, &hosts.len, &port, &proto)!=0) {
+		LOG(L_ERR,"ERROR:registrar:get_sock_hdr: bad socket <%.*s> in \n",
+			socks.len, socks.s);
+		return 0;
+	}
+	sock = grep_sock_info(&hosts,(unsigned short)port,(unsigned short)proto);
+	if (sock==0) {
+		LOG(L_WARN,"ERROR:registrar:get_sock_hdr: non-local socket <%.*s>\n",
+			socks.len, socks.s);
+		return 0;
 	}
 
-	sock = grep_sock_info( &sock_str, (unsigned short)port_no,
-			PROTO_NONE /*FIXME - correct proto?*/);
-
-	DBG("DEBUG:registrar:get_sock_hdr: <%.*s>:%d -> p=%p\n",
-		sock_str.len,sock_str.s,port_no,sock );
+	DBG("DEBUG:registrar:get_sock_hdr: %d:<%.*s>:%d -> p=%p\n",
+		proto,socks.len,socks.s,port_no,sock );
 
 	return sock;
 }

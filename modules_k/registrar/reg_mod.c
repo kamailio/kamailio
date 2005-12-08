@@ -36,6 +36,7 @@
 #include "../../timer.h"
 #include "../../dprint.h"
 #include "../../error.h"
+#include "../../socket_info.h"
 #include "save.h"
 #include "lookup.h"
 #include "reply.h"
@@ -306,6 +307,7 @@ static int add_sock_hdr(struct sip_msg* msg, char *name, char *foo)
 	struct lump* anchor;
 	str *hdr_name;
 	str hdr;
+	int len;
 	char *p;
 
 	hdr_name = (str*)name;
@@ -321,8 +323,8 @@ static int add_sock_hdr(struct sip_msg* msg, char *name, char *foo)
 		goto error;
 	}
 
-	hdr.len = hdr_name->len + 2 + msg->rcv.bind_address->address_str.len + 1
-		+ msg->rcv.bind_address->port_no_str.len + CRLF_LEN;
+	hdr.len = hdr_name->len + 2 + sock_str_len(msg->rcv.bind_address)
+		+ CRLF_LEN;
 	if ( (hdr.s=(char*)pkg_malloc(hdr.len))==0 ) {
 		LOG(L_ERR,"ERROR:registrar:add_sock_hdr: no more pkg mem\n");
 		goto error;
@@ -333,13 +335,15 @@ static int add_sock_hdr(struct sip_msg* msg, char *name, char *foo)
 	p += hdr_name->len;
 	*(p++) = ':';
 	*(p++) = ' ';
-	memcpy( p, msg->rcv.bind_address->address_str.s,
-		msg->rcv.bind_address->address_str.len);
-	p += msg->rcv.bind_address->address_str.len;
-	*(p++) = '_';
-	memcpy( p, msg->rcv.bind_address->port_no_str.s,
-		msg->rcv.bind_address->port_no_str.len);
-	p += msg->rcv.bind_address->port_no_str.len;
+
+	len = hdr.len - (p - hdr.s);
+	p = socket2str(msg->rcv.bind_address, p, &len);
+	if (p==0) {
+		LOG(L_CRIT,"BUG:registrar:add_sock_hdr: socket2str failed\n");
+		goto error1;
+	}
+	p += len;
+
 	memcpy( p, CRLF, CRLF_LEN);
 	p += CRLF_LEN;
 
