@@ -72,6 +72,8 @@
  *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  *  2004-02-18  t_reply exported via FIFO - imported from VM (bogdan)
  *  2004-10-01  added a new param.: restart_fr_on_each_reply (andrei)
+ *  2005-12-09  fixup_hostport2proxy uses route_struct to access param #1
+ *              when fixing param #2
  */
 
 
@@ -91,6 +93,7 @@
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
 #include "../../unixsock_server.h"
+#include "../../route_struct.h"
 
 #include "sip_msg.h"
 #include "h_table.h"
@@ -312,7 +315,7 @@ static int fixup_hostport2proxy(void** param, int param_no)
 	if (param_no==1){
 		return 0;
 	} else if (param_no==2) {
-		host=(char *) (*(param-1)); 
+		host=((action_u_t*)(param)-1)->string;
 		port=str2s(*param, strlen(*param), &err);
 		if (err!=0) {
 			LOG(L_ERR, "TM module:fixup_hostport2proxy: bad port number <%s>\n",
@@ -329,7 +332,7 @@ static int fixup_hostport2proxy(void** param, int param_no)
 		}
 		/* success -- fix the first parameter to proxy now ! */
 
-		*(param-1)=proxy;
+		((action_u_t*)(param)-1)->data=proxy;
 		return 0;
 	} else {
 		LOG(L_ERR,"ERROR: fixup_hostport2proxy called with parameter #<>{1,2}\n");

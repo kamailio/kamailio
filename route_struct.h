@@ -109,19 +109,20 @@ struct expr{
 	union exp_op r;
 };
 
+typedef union {
+	long number;
+	char* string;
+	str str;
+	void* data;
+	avp_spec_t* attr;
+} action_u_t;
 
 struct action{
 	int type;  /* forward, drop, log, send ...*/
 	int p1_type;
 	int p2_type;
 	int p3_type;
-	union {
-		long number;
-		char* string;
-		str str;
-		void* data;
-		avp_spec_t* attr;
-	}p1, p2, p3;
+	action_u_t p1, p2, p3; /* tm module expects these parameters to be adjacent */
 	struct action* next;
 };
 
