@@ -37,6 +37,8 @@
  * 2003-03-30 str2int and str2float added (janakj)
  * 2003-04-26 ZSW (jiri)
  * 2004-03-08 updated int2str (64 bits, INT2STR_MAX_LEN used) (andrei)
+ * 2005-11-29 reverse_hex2int/int2reverse_hex switched to unsigned int (andrei)
+ * 2005-12-09 added msgid_var (andrei)
  */
 
 
@@ -56,7 +58,6 @@
 #include "str.h"
 
 
-struct sip_msg;
 
 /* zero-string wrapper */
 #define ZSW(_c) ((_c)?(_c):"")
@@ -91,6 +92,20 @@ struct sip_msg;
 	((_via)->bsize-((_via)->name.s-\
 		((_via)->hdr.s+(_via)->hdr.len)))
 
+
+/* links a value to a msgid */
+struct msgid_var{
+	union{
+		char char_val;
+		int int_val;
+		long long_val;
+	}u;
+	unsigned int msgid;
+};
+
+/* return the value or 0 if the msg_id doesn't match */
+#define get_msgid_val(var, id, type)\
+	(type)((type)((var).msgid!=(id))-1)&((var).u.type##_val)
 
 /* char to hex conversion table */
 static char fourbits2char[16] = { '0', '1', '2', '3', '4', '5',
