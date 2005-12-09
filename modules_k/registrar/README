@@ -460,7 +460,7 @@ save_noreply("location");
      * 1 - contacts found and returned.
        -1 - no contact found.
        -2 - contacts found, but method not supported.
-       1 - internal error during processing.
+       -3 - internal error during processing.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 

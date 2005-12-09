@@ -588,7 +588,7 @@ save_noreply("location");
 			<emphasis>-2</emphasis> - contacts found, but method not supported.
 			</para>
 			<para>
-			<emphasis>1</emphasis> - internal error during processing.
+			<emphasis>-3</emphasis> - internal error during processing.
 			</para>
 		</listitem>
 		</itemizedlist>
