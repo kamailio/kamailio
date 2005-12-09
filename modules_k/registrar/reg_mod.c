@@ -81,6 +81,8 @@ int max_contacts = 0;
 int retry_after = 0;
 /* if the NAT flag should be pushed in branch flags or msg flags */
 int use_branch_flags = 0;
+/* if the looked up contacts should be filtered based on supported methods */
+int method_filtering = 0;
 
 
 int use_domain = 0;
@@ -145,6 +147,7 @@ static param_export_t params[] = {
 	{"sock_flag",         INT_PARAM, &sock_flag         },
 	{"sock_hdr_name",     STR_PARAM, &sock_hdr_name.s   },
 	{"use_branch_flags",  INT_PARAM, &use_branch_flags  },
+	{"method_filtering",  INT_PARAM, &method_filtering  },
 	{0, 0, 0}
 };
 

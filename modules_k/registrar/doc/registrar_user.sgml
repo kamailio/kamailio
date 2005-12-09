@@ -450,10 +450,32 @@ modparam("registrar", "sock_hdr_name", "Sock-Info")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>use_branch_flagsr</varname> parameter</title>
+		<title>Set <varname>use_branch_flags</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("registrar", "use_branch_flags", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>method_filtering</varname> (integer)</title>
+		<para>
+		Tells if the contact filtering based on supported methods should be
+		performed during lookup. It's enabled only if it has a non zero 
+		value.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>method_filtering</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "method_filtering", 1)
 ...
 		</programlisting>
 		</example>
@@ -539,6 +561,11 @@ save_noreply("location");
 		the highest q value and optionally the rest will be appended to 
 		the message (depending on append_branches parameter value).
 		</para>
+		<para>
+		If the method_filtering option is enabled, the lookup function
+		will return only the contacts that support the method of the
+		processed request.
+		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
@@ -548,6 +575,24 @@ save_noreply("location");
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>Return codes:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>1</emphasis> - contacts found and returned.
+			</para>
+			<para>
+			<emphasis>-1</emphasis> - no contact found.
+			</para>
+			<para>
+			<emphasis>-2</emphasis> - contacts found, but method not supported.
+			</para>
+			<para>
+			<emphasis>1</emphasis> - internal error during processing.
+			</para>
+		</listitem>
+		</itemizedlist>
+
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
@@ -556,6 +601,15 @@ save_noreply("location");
 		<programlisting format="linespecific">
 ...
 lookup("location");
+switch ($?) {
+    case -1:
+    case -3:
+        sl_send_reply("404", "Not Found");
+        exit;
+    case -2:
+        sl_send_reply("405", "Not Found");
+        exit;
+};
 ...
 </programlisting>
 		</example>

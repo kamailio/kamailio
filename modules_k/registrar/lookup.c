@@ -40,9 +40,15 @@
 #include "lookup.h"
 
 
+#define supported_method(_msg, _c) \
+	( !method_filtering || ((_msg)->REQ_METHOD)&((_c)->methods) )
+
 
 /*
  * Lookup contact in the database and rewrite Request-URI
+ * Returns: -1 : not found
+ *          -2 : found but method not supported
+ *          -3 : error
  */
 int lookup(struct sip_msg* _m, char* _t, char* _s)
 {
@@ -57,7 +63,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	
 	if (extract_aor(&uri, &aor) < 0) {
 		LOG(L_ERR, "lookup(): Error while extracting address of record\n");
-		return -1;
+		return -3;
 	}
 	
 	get_act_time();
@@ -67,30 +73,44 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	if (res < 0) {
 		LOG(L_ERR, "lookup(): Error while querying usrloc\n");
 		ul.unlock_udomain((udomain_t*)_t);
-		return -2;
+		return -3;
 	}
 	
 	if (res > 0) {
 		DBG("lookup(): '%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
 		ul.unlock_udomain((udomain_t*)_t);
-		return -3;
+		return -1;
 	}
 
 	ptr = r->contacts;
-	while ((ptr) && !VALID_CONTACT(ptr, act_time))
+	/* look first first un-expired and suported contact */
+	while ( (ptr) && !VALID_CONTACT(ptr, act_time) )
 		ptr = ptr->next;
-	
+	if (ptr==0) {
+		/* All contacts expired -> not found */
+		ul.unlock_udomain((udomain_t*)_t);
+		return -1;
+	}
+
+	while ( (ptr) && !supported_method(_m, ptr) )
+		ptr = ptr->next;
+	if (ptr==0) {
+		/* no contact with supported method */
+		ul.unlock_udomain((udomain_t*)_t);
+		return -2;
+	}
+
 	if (ptr) {
 		if (rewrite_uri(_m, &ptr->c) < 0) {
 			LOG(L_ERR, "lookup(): Unable to rewrite Request-URI\n");
 			ul.unlock_udomain((udomain_t*)_t);
-			return -4;
+			return -3;
 		}
 
 		if (ptr->received.s && ptr->received.len) {
 			if (set_dst_uri(_m, &ptr->received) < 0) {
 				ul.unlock_udomain((udomain_t*)_t);
-				return -4;
+				return -3;
 			}
 		}
 
@@ -104,17 +124,13 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 			_m->force_send_socket = ptr->sock;
 
 		ptr = ptr->next;
-	} else {
-		/* All contacts expired */
-		ul.unlock_udomain((udomain_t*)_t);
-		return -5;
 	}
 
 	/* Append branches if enabled */
 	if (!append_branches) goto skip;
 
 	for( ; ptr ; ptr = ptr->next ) {
-		if (VALID_CONTACT(ptr, act_time)) {
+		if (VALID_CONTACT(ptr, act_time) && supported_method(_m, ptr)) {
 			/* for additional branches, the nat flag goes into dset */
 			bflags = (use_branch_flags && (ptr->flags & FL_NAT))?nat_flag:0;
 			if (append_branch(_m, &ptr->c, &ptr->received, ptr->q,

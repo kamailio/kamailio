@@ -42,6 +42,7 @@ Bogdan-Andre Iancu
               1.3.15. sock_flag (integer)
               1.3.16. sock_hdr_name (string)
               1.3.17. use_branch_flags (integer)
+              1.3.18. method_filtering (integer)
 
         1.4. Exported Functions
 
@@ -71,12 +72,13 @@ Bogdan-Andre Iancu
    1-14. Set retry_after parameter
    1-15. Set sock_flag parameter
    1-16. Set sock_hdr_namer parameter
-   1-17. Set use_branch_flagsr parameter
-   1-18. save usage
-   1-19. save_noreply usage
-   1-20. lookup usage
-   1-21. registered usage
-   1-22. add_sock_hdr usage
+   1-17. Set use_branch_flags parameter
+   1-18. Set method_filtering parameter
+   1-19. save usage
+   1-20. save_noreply usage
+   1-21. lookup usage
+   1-22. registered usage
+   1-23. add_sock_hdr usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -372,9 +374,23 @@ modparam("registrar", "sock_hdr_name", "Sock-Info")
 
    Default value is 0 (disabled). 
 
-   Example 1-17. Set use_branch_flagsr parameter
+   Example 1-17. Set use_branch_flags parameter
 ...
 modparam("registrar", "use_branch_flags", 1)
+...
+     _________________________________________________________
+
+1.3.18. method_filtering (integer)
+
+   Tells if the contact filtering based on supported methods
+   should be performed during lookup. It's enabled only if it has
+   a non zero value.
+
+   Default value is 0 (disabled). 
+
+   Example 1-18. Set method_filtering parameter
+...
+modparam("registrar", "method_filtering", 1)
 ...
      _________________________________________________________
 
@@ -397,7 +413,7 @@ modparam("registrar", "use_branch_flags", 1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-18. save usage
+   Example 1-19. save usage
 ...
 save("location");
 ...
@@ -415,7 +431,7 @@ save("location");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-19. save_noreply usage
+   Example 1-20. save_noreply usage
 ...
 save_noreply("location");
 ...
@@ -431,15 +447,35 @@ save_noreply("location");
    appended to the message (depending on append_branches
    parameter value).
 
+   If the method_filtering option is enabled, the lookup function
+   will return only the contacts that support the method of the
+   processed request.
+
    Meaning of the parameters is as follows:
 
      * domain - Name of table that should be used for the lookup.
 
+   Return codes:
+
+     * 1 - contacts found and returned.
+       -1 - no contact found.
+       -2 - contacts found, but method not supported.
+       1 - internal error during processing.
+
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-20. lookup usage
+   Example 1-21. lookup usage
 ...
 lookup("location");
+switch ($?) {
+    case -1:
+    case -3:
+        sl_send_reply("404", "Not Found");
+        exit;
+    case -2:
+        sl_send_reply("405", "Not Found");
+        exit;
+};
 ...
      _________________________________________________________
 
@@ -456,7 +492,7 @@ lookup("location");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-21. registered usage
+   Example 1-22. registered usage
 ...
 if (registered("location")) {
         sl_send_reply("100", "Trying");
@@ -479,7 +515,7 @@ if (registered("location")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-22. add_sock_hdr usage
+   Example 1-23. add_sock_hdr usage
 ...
 add_sock_hdr("Sock-Info");
 ...
@@ -521,4 +557,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.
