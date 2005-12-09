@@ -71,23 +71,23 @@ if (!t_relay())
 	</example>
     </section>
     
-    <section id="t_on_negative">
+    <section id="t_on_failure">
 	<title>
-	    <function>t_on_negative(reply_route)</function>
+	    <function>t_on_failure(failure_route)</function>
 	</title>
 	<para>
-	    Sets reply routing block, to which control is passed after a
+	    Sets failure routing block, to which control is passed after a
 	    transaction completed with a negative result but before sending a
 	    final reply. In the referred block, you can either start a new
 	    branch (good for services such as forward_on_no_reply) or send a
 	    final reply on your own (good for example for message silo, which
 	    received a negative reply from upstream and wants to tell upstream
 	    "202 I will take care of it"). Note that the set of
-	    command which are usable within reply_routes is strictly limited to
+	    commands which are usable within failure_routes is strictly limited to
 	    rewriting URI, initiating new branches, logging, and sending
 	    stateful replies (<function>t_reply</function>). Any other commands
 	    may result in unpredictable behavior and possible server
-	    failure. Note that whenever reply_route is entered, uri is reset to
+	    failure. Note that whenever failure_route is entered, uri is reset to
 	    value which it had on relaying. If it temporarily changed during a
 	    reply_route processing, subsequent reply_route will ignore the
 	    changed value and use again the original one.
@@ -95,20 +95,20 @@ if (!t_relay())
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>
 	    <listitem>
-		<para><emphasis>reply_route</emphasis> - Reply route block to be called.
+		<para><emphasis>failure_route</emphasis> - Failure route block to be called.
 		</para>
 	    </listitem>
 	</itemizedlist>
 	<example>
-	    <title><function>t_on_negative</function> usage</title>
+	    <title><function>t_on_failure</function> usage</title>
 	    <programlisting>
 ...
 route { 
-    t_on_negative("1"); 
+    t_on_failure("1"); 
     t_relay(); 
 } 
 
-reply_route[1] {
+failure_route[1] {
     revert_uri(); 
     setuser("voicemail"); 
     append_branch(); 
@@ -121,7 +121,88 @@ reply_route[1] {
 	    combination of serial with parallel forking.
 	</para>
     </section>
-    
+ 
+	 <section id="t_on_reply">
+	<title>
+	    <function>t_on_reply(onreply_route)</function>
+	</title>
+	<para>
+	    Sets the reply routing block, to which control is passed when a
+	    reply for the current transaction is received.
+	    Note that the set of commands which are usable within onreply_routes is
+	     limited.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>onreply_route</emphasis> - Onreply route block to be
+			called.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>t_on_reply</function> usage</title>
+	    <programlisting>
+...
+loadmodule "/usr/local/lib/ser/modules/nathelper.so"
+...
+route { 
+	/* if natted */
+	t_on_reply("1"); 
+	t_relay(); 
+} 
+
+onreply_route[1] {
+	if (status=~ "(183)|2[0-9][0-9]"){
+		force_rtp_proxy();
+		search_append('^(Contact|m)[ \t]*:.*sip:[^>[:cntrl:]]*', ';nat=yes');
+	}
+	if (nat_uac_test("1")){
+		fix_nated_contact();
+	}
+}
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="t_on_branch">
+	<title>
+	    <function>t_on_branch(branch_route)</function>
+	</title>
+	<para>
+	    Sets the branch routing block, to which control is passed after
+	    forking (when a new branch is created). For now branch routes
+	    are intended only for last minute changes of the SIP messages
+	    (like adding new headers).
+	    Note that the set of commands which are usable within branch_routes is
+	    very limited. It is not possible to drop a message or generate a reply.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>branch_route</emphasis> - branch route block to be
+			called.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>t_on_branch</function> usage</title>
+	    <programlisting>
+...
+route { 
+	t_on_branch("1"); 
+	t_relay(); 
+} 
+
+branch_route[1] {
+	if (uri=~"sip:[0-9]+"){
+		append_hf("P-Warn: numeric uri\r\n");
+	}
+}
+	    </programlisting>
+	</example>
+	</section>
+
     <section id="append_branch">
 	<title>
 	    <function>append_branch()</function>
