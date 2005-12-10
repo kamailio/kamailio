@@ -219,6 +219,7 @@ static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 	db_res_t* res;
 	int flag, i;
 
+	flag=0; /*warning fix*/
 	id = (long)s1;
 
 	keys[0] = username_col.s;

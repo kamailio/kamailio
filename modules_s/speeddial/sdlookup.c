@@ -38,6 +38,8 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../db/db.h"
+#include "../../dset.h" /* rewrite_uri */
+#include "../../id.h"   /* get_from_uid, get_to_did */
 
 #include "speeddial.h"
 #include "sdlookup.h"
@@ -54,7 +56,6 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 {
 	str user_s, uid, did;
 	int nr_keys;
-	struct sip_uri puri;
 	db_key_t db_keys[4];
 	db_val_t db_vals[4];
 	db_key_t db_cols[1];

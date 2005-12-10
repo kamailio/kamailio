@@ -303,7 +303,7 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 		goto error1;
 	}
 	
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	AAAPrintMessage(req);
 #endif
 

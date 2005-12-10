@@ -50,7 +50,6 @@
 #include "../../ut.h"
 #include "../../parser/msg_parser.h"	/* struct sip_msg */
 
-//#define DEBUG 1
 
 int
 sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
@@ -100,7 +99,7 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 	}
 	
 	//offsetValue = (int)offset;
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf (stdout,"---START--------MANGLE PORT-----------------\n");
 	fprintf(stdout,"===============OFFSET = %d\n",offsetValue);
 #endif
@@ -118,7 +117,7 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 	if (portExpression != NULL) 
 		{
 		re = portExpression;
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 		fprintf(stdout,"Using PRECOMPILED expression for port ...\n");
 #endif
 		}
@@ -136,7 +135,7 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 				LOG(L_ERR,"ERROR: sdp_mangle_port: Unable to compile %s \n",key);
 				return -5;
 				}
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 		fprintf(stdout,"Using ALLOCATED expression for port ...\n");
 #endif
 
@@ -161,7 +160,7 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
                 pos = (char *) memrchr (begin + pmatch.rm_so, ' ',pmatch.rm_eo - pmatch.rm_so); 
                 */
                 pos = begin+pmatch.rm_eo;
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
                 printf("begin=%c pos=%c rm_so=%d rm_eo=%d\n",*begin,*pos,pmatch.rm_so,pmatch.rm_eo);
 #endif
                 do pos--; while (*pos != ' '); /* we should find ' ' because we matched m=audio port */
@@ -171,7 +170,7 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 
 		/* convert port to int */
 		oldPort = str2s (pos, oldlen, &err);
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
                 printf("port to convert [%.*s] to int\n",oldlen,pos);
 #endif
 		if (err)
@@ -185,7 +184,7 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 			}
 		if ((oldPort < MIN_ORIGINAL_PORT) || (oldPort > MAX_ORIGINAL_PORT))	/* we silently fail,we ignore this match or return -11 */
 		{
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
                 printf("WARNING: sdp_mangle_port: Silent fail for not matching old port %d\n",oldPort);
 #endif
 
@@ -201,7 +200,7 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 		/* new port is between 1 and 65536, or so should be */
 		if ((newPort < MIN_MANGLED_PORT) || (newPort > MAX_MANGLED_PORT))	/* we silently fail,we ignore this match */
 		{
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
                 printf("WARNING: sdp_mangle_port: Silent fail for not matching new port %d\n",newPort);
 #endif
                 
@@ -213,7 +212,7 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 #endif
 		}
 
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 		fprintf(stdout,"Extracted port is %d and mangling to %d\n",oldPort,newPort);
 #endif
 
@@ -268,7 +267,7 @@ continue1:
 		{
 		regfree (re);
 		pkg_free(re);
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 		fprintf(stdout,"Deallocating expression for port ...\n");
 #endif
 		}
@@ -279,7 +278,7 @@ continue1:
 		patch_content_length (msg, newContentLength);
 	}
 
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf (stdout,"---END--------MANGLE PORT-----------------\n");
 #endif
 
@@ -298,7 +297,7 @@ sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip)
 	char *s, *pos,*begin,*key;
 	char buffer[16];	/* 123.456.789.123\0 */
 
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf (stdout,"---START--------MANGLE IP-----------------\n");
 #endif
 
@@ -370,7 +369,7 @@ sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip)
 	if (ipExpression != NULL) 
 		{
 		re = ipExpression;
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 		fprintf(stdout,"Using PRECOMPILED expression for ip ...\n");
 #endif
 
@@ -389,7 +388,7 @@ sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip)
 				LOG(L_ERR,"ERROR: sdp_mangle_ip: Unable to compile %s \n",key);
 				return -8;
 				}
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 		fprintf(stdout,"Using ALLOCATED expression for ip ...\n");
 #endif
 			}
@@ -445,12 +444,12 @@ sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip)
 		if (same_net (locatedIp, address, mask) == 0)
 		{
 			LOG(L_WARN,"WARNING: sdp_mangle_ip: Silent fail because matched address is not in network\n");
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 		fprintf(stdout,"Extracted ip is %s and not mangling \n",buffer);
 #endif
 			goto continue2;	/* not in the same net, skipping */
 		}
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 		fprintf(stdout,"Extracted ip is %s and mangling to %s\n",buffer,newip);
 #endif
 
@@ -489,7 +488,7 @@ continue2:
 	{
 	regfree (re);		/* if I am going to use pre-compiled expressions to be removed */
 	pkg_free(re);
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 		fprintf(stdout,"Deallocating expression for ip ...\n");
 #endif
 	}
@@ -500,7 +499,7 @@ continue2:
 		patch_content_length (msg, newContentLength);
 	}
 
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf (stdout,"---END--------MANGLE IP-----------------\n");
 #endif
 

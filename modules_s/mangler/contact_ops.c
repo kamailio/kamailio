@@ -46,7 +46,6 @@
 #include <string.h>
 
 
-//#define DEBUG
 int
 encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 {
@@ -68,7 +67,7 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 	 * struct contact *next;
 	 * I just have to visit each uri and encode each uri according to a scheme
 	 */
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf (stdout,"---START--------ENCODE CONTACT-----------------\n");
         fprintf (stdout,"%.*s\n",50,msg->buf);
 #endif
@@ -86,7 +85,7 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 		if (strlen(contact_flds_separator)>=1)
 			separator = contact_flds_separator[0];
 
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf (stdout,"Using separator %c\n",separator);
 #endif
 		
@@ -100,7 +99,7 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 		if (c != NULL)
 		{
 			uri = c->uri;
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 			fprintf (stdout, "olduri.s=[%.*s]\n", uri.len, uri.s);
 #endif
 			res = encode_uri (uri, encoding_prefix, public_ip,separator, &newUri);
@@ -108,7 +107,7 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 			if (res != 0)
 				{
 				LOG (L_ERR,"ERROR: encode_contact: Failed encoding contact.Code %d\n", res);
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 				fprintf (stdout, "Encoding uri failed with code %d\n",res);
 #endif
 #ifdef STRICT_CHECK
@@ -122,7 +121,7 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 					return -2;
 				}
 			
-	#ifdef DEBUG
+	#ifdef EXTRA_DEBUG
 			if (res == 0) fprintf (stdout, "newuri.s=[%.*s]\nnewlen=%d\n", newUri.len, newUri.s,newUri.len);
 	#endif
 			/* encoding next contacts too?*/
@@ -154,12 +153,12 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 	else /* after parsing still NULL */
 		{
 			LOG(L_ERR,"ERROR: encode_contact: Unable to parse Contact header\n");
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
     			printf("ERROR: encode_contact: Unable to parse Contact header\n");
 #endif                        
 			return -4;
 		}
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf (stdout,"---END--------ENCODE CONTACT-----------------\n");
 #endif
 	return 1;
@@ -176,7 +175,7 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 	
 	uri.s=0; /* fixes gcc 4.0 warning */
 	uri.len=0;
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf (stdout,"---START--------DECODE CONTACT-----------------\n");
         fprintf (stdout,"%.*s\n",50,msg->buf);
 	fprintf (stdout, "INITIAL.s=[%.*s]\n", uri.len, uri.s);
@@ -195,7 +194,7 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 	
 		res = decode_uri (uri, separator, &newUri);
 	
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 		if (res == 0) fprintf (stdout, "newuri.s=[%.*s]\n", newUri.len, newUri.s);
 #endif
 		if (res != 0)
@@ -237,7 +236,7 @@ decode_contact_header (struct sip_msg *msg,char *unused1,char *unused2)
 	int res;
 	
 	
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf (stdout,"---START--------DECODE CONTACT HEADER-----------------\n");
 #endif
 
@@ -253,7 +252,7 @@ decode_contact_header (struct sip_msg *msg,char *unused1,char *unused2)
 		if (strlen(contact_flds_separator)>=1)
 			separator = contact_flds_separator[0];
 
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf (stdout,"Using separator %c\n",separator);
 	str* ruri;
 	ruri = GET_RURI(msg);
@@ -273,7 +272,7 @@ decode_contact_header (struct sip_msg *msg,char *unused1,char *unused2)
 		uri = c->uri;
 
 		res = decode_uri (uri, separator, &newUri);
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 		fprintf (stdout, "newuri.s=[%.*s]\n", newUri.len, newUri.s);
 #endif
 		if (res != 0)
@@ -319,7 +318,7 @@ decode_contact_header (struct sip_msg *msg,char *unused1,char *unused2)
 			LOG(L_ERR,"ERROR: decode_contact: Unable to parse Contact header\n");
 			return -4;
 		}
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf (stdout,"---END--------DECODE CONTACT HEADER-----------------\n");fflush(stdout);
 #endif
 	return 1;
@@ -371,7 +370,7 @@ encode2format (str uri, struct uri_format *format)
 	if (foo != 0)
 	{
 		LOG(L_ERR,"ERROR: encode2format: parse_uri failed on [%.*s].Code %d \n",uri.len,uri.s,foo);
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 		fprintf (stdout, "PARSING uri with parse uri not ok %d\n", foo);
 #endif
 		return foo-10;
@@ -384,7 +383,7 @@ encode2format (str uri, struct uri_format *format)
 	format->port = sipUri.port;
 	format->protocol = sipUri.transport_val;
 	
-#ifdef DEBUG	
+#ifdef EXTRA_DEBUG	
 	fprintf (stdout, "transport=[%.*s] transportval=[%.*s]\n", sipUri.transport.len,sipUri.transport.s,sipUri.transport_val.len,sipUri.transport_val.s);
 	fprintf(stdout,"First %d,second %d\n",format->first,format->second);
 	#endif
@@ -411,7 +410,7 @@ encode_uri (str uri, char *encoding_prefix, char *public_ip,char separator, str 
 			LOG(L_ERR,"ERROR: encode_uri: Invalid NULL value for public_ip parameter\n");
 			return -2;
 		}
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf (stdout, "Primit cerere de encodare a [%.*s] cu %s-%s\n", uri.len,uri.s, encoding_prefix, public_ip);
 #endif
 	fflush (stdout);
@@ -421,7 +420,7 @@ encode_uri (str uri, char *encoding_prefix, char *public_ip,char separator, str 
 		LOG(L_ERR,"ERROR: encode_uri: Unable to encode Contact URI [%.*s].Return code %d\n",uri.len,uri.s,foo);
 		return foo - 20;
 		}
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf(stdout,"user=%.*s ip=%.*s port=%.*s protocol=%.*s\n",format.username.len,format.username.s,format.ip.len,format.ip.s,
 	     format.port.len,format.port.s,format.protocol.len,format.protocol.s);   
 #endif
@@ -442,13 +441,13 @@ encode_uri (str uri, char *encoding_prefix, char *public_ip,char separator, str 
 	pos = result->s;
 	if (pos == NULL)
 		{
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 			fprintf (stdout, "Unable to alloc result [%d] end=%d\n",result->len, format.second);
 #endif
 			LOG(L_ERR,"ERROR: encode_uri:Unable to alloc memory\n");
 			return -3;
 		}
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf (stdout, "[pass=%d][Allocated %d bytes][first=%d][lengthsec=%d]\nAdding [%d] ->%.*s\n",format.password.len,result->len,format.first,uri.len-format.second,format.first, format.first,uri.s);fflush (stdout);
 #endif
 	 	
@@ -462,7 +461,7 @@ encode_uri (str uri, char *encoding_prefix, char *public_ip,char separator, str 
 			if (result->s != NULL) pkg_free(result->s);
 			return -4;
 		}
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf(stdout,"res= %d\npos=%s\n",res,pos);
 #endif
 	pos = pos + res ;/* overwriting the \0 from snprintf */
@@ -470,7 +469,7 @@ encode_uri (str uri, char *encoding_prefix, char *public_ip,char separator, str 
 	pos = pos + strlen (public_ip);
 	memcpy (pos, uri.s + format.second, uri.len - format.second);
 
-#ifdef DEBUG	
+#ifdef EXTRA_DEBUG	
 	fprintf (stdout, "Adding2 [%d] ->%.*s\n", uri.len - format.second,uri.len - format.second, uri.s + format.second);
 	fprintf (stdout, "NEW NEW uri is->[%.*s]\n", result->len, result->s);
 #endif
@@ -515,8 +514,8 @@ decode2format (str uri, char separator, struct uri_format *format)
 		return -3;/* no host address found */
 		}
 
-#ifdef DEBUG
-		fprintf (stdout, "Decoding %.*s\n",end-start,start);
+#ifdef EXTRA_DEBUG
+		fprintf (stdout, "Decoding %.*s\n",(int)(long)(end-start), start);
 #endif
 	
 	state = EX_PREFIX;
@@ -564,7 +563,7 @@ decode2format (str uri, char separator, struct uri_format *format)
 		else format->protocol.s = NULL;
 	/* I should check perhaps that 	after @ there is something */
 		
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 		fprintf (stdout, "username=%.*s\n", format->username.len,format->username.s);
 		fprintf (stdout, "password=%.*s\n", format->password.len,format->password.s);
 		fprintf (stdout, "ip=%.*s\n", format->ip.len, format->ip.s);
@@ -636,7 +635,7 @@ decode_uri (str uri, char separator, str * result)
 		
 	if (format.port.len > 0)     result->len += 1 + format.port.len;	//:
 	if (format.protocol.len > 0) result->len += 1 + 10 + format.protocol.len;	//;transport=
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf (stdout, "Result size is %d.Original Uri size is %d\n",result->len, uri.len);
 #endif
 	
@@ -648,7 +647,7 @@ decode_uri (str uri, char separator, str * result)
 			return -4;
 		}
 	pos = result->s;
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf (stdout, "Adding [%d] ->%.*s\n", format.first, format.first,uri.s);fflush (stdout);
 #endif
 	memcpy (pos, uri.s, format.first);	/* till sip: */
@@ -691,13 +690,13 @@ decode_uri (str uri, char separator, str * result)
 		pos = pos + format.protocol.len;
 	}
 
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf (stdout, "Adding2 [%d] ->%.*s\n", uri.len - format.second,uri.len - format.second, uri.s + format.second);fflush (stdout);
 #endif
 
 	memcpy (pos, uri.s + format.second, uri.len - format.second);	/* till end: */
 
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	fprintf (stdout, "New decoded uri is->[%.*s]\n", result->len,result->s);
 #endif
 

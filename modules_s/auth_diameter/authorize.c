@@ -534,7 +534,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 		goto error;
 	}
 
-#ifdef DEBUG	
+#ifdef EXTRA_DEBUG	
 	DBG("Destination Realm: %.*s\n", uri.host.len, uri.host.s);	
 #endif
 
@@ -567,7 +567,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 	}	
 	memcpy(user_name.s+ruri.user.len+ruri.host.len+name_flag+port_flag, 
 					ruri.port.s, ruri.port.len);
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG	
 	DBG(M_NAME": AVP_Resource=%.*s\n", user_name.len, user_name.s);
 #endif
 
@@ -621,7 +621,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 
 	
 	}			
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG	
 	AAAPrintMessage(req);
 #endif
 
