@@ -217,7 +217,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 	static ucontact_info_t ci;
 	static str no_ua = str_init("n/a");
 	static str callid;
-	static unsigned int allowed;
+	static unsigned int allowed, allow_parsed;
 	int_str rcv_avp;
 	int_str val;
 
@@ -264,7 +264,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 			ci.user_agent = &no_ua;
 		}
 
-		allowed = 0; /* not set yet */
+		allow_parsed = 0; /* not parsed yet */
 	}
 
 	if(_c!=0) {
@@ -292,15 +292,15 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 			}
 		} else {
 			/* check on Allow hdr */
-			if (allowed) {
-				ci.methods = allowed;
-			} else {
-				if (parse_allow( _m ) != -1) {
-					allowed = get_allow_methods(_m);
-				} else {
-					allowed = ALL_METHODS;
-				}
+			if (allow_parsed == 0) {
+			    if (parse_allow( _m ) != -1) {
+				allowed = get_allow_methods(_m);
+			    } else {
+				allowed = ALL_METHODS;
+			    }
+			    allow_parsed = 1;
 			}
+			ci.methods = allowed;
 		}
 	}
 
