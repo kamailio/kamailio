@@ -542,6 +542,7 @@ done:
 }
 
 
+#if 0
 /*
  * Create shm_copy of filename
  */
@@ -559,6 +560,8 @@ static int duplicate_addr(struct sockaddr_un** dest, struct sockaddr_un* addr)
 	}
 	return 0;
 }
+#endif
+
 
 int unixsock_uac(str* msg)
 {
@@ -567,7 +570,6 @@ int unixsock_uac(str* msg)
 	struct sip_msg faked_msg;
 	int ret, sip_error, err_ret, fromtag, cseq_is, cseq;
 	char err_buf[MAX_REASON_LEN];
-	struct sockaddr_un* shm_sockaddr;
 	struct uac_cb_param* shm_param;
 	dlg_t dlg;
 

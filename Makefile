@@ -46,13 +46,13 @@ skip_cfg_install?=
 skip_modules?=
 
 # if not set on the cmd. line or the env, exclude this modules:
-exclude_modules?= 			cpl ext extcmd \
+exclude_modules?= 			acc cpl ext extcmd radius_acc radius_auth vm \
 							postgres snmp \
 							im \
 							jabber mysql \
 							cpl-c \
 							auth_radius group_radius uri_radius avp_radius \
-							pa rls
+							acc_radius dialog pa rls 
 # always exclude the CVS dir
 override exclude_modules+= CVS $(skip_modules)
 
