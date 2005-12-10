@@ -27,6 +27,8 @@ modules:
                          delete_timer, retr_timer1, retr_timer2
                        - retr_timer1 (first retransmission) changed to 500 ms
                        - delete_timer changed to 200 ms
+                       - unix_tx_timeout expressed now in milliseconds; default
+                         value changed to 500 ms
              - functions:
                        - new t_set_fr(timeout_fr_inv, timeout_fr) -- allows
                          changing the transaction timer from script, even if

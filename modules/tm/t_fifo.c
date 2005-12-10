@@ -82,7 +82,7 @@
 
 
 
-int tm_unix_tx_timeout = 2; /* Default is 2 seconds */
+int tm_unix_tx_timeout = 500; /* Default is 500 ms */
 
 #define TWRITE_PARAMS          20
 #define TWRITE_VERSION_S       "0.3"
@@ -952,7 +952,7 @@ static int write_to_unixsock(char* sockname, int cnt)
 		return -1;
 	}
 
-	if (tsend_dgram_ev(sock, iov_lines_eol, 2 * cnt, tm_unix_tx_timeout * 1000) < 0) {
+	if (tsend_dgram_ev(sock, iov_lines_eol, 2 * cnt, tm_unix_tx_timeout) < 0) {
 		LOG(L_ERR, "write_to_unixsock: writev failed: %s\n", strerror(errno));
 		return -1;
 	}

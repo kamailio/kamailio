@@ -155,4 +155,26 @@ modparam("tm", "noisy_ctimer", 1)
 	</example>
     </section>
 
+	<section id="unix_tx_timeout">
+	<title><varname>unix_tx_timeout</varname> (integer)</title>
+	<para>
+		Unix socket transmission timeout, in milliseconds.
+	</para>
+	<para>
+		If unix sockets are used (e.g.: to communicate with sems) and sending
+		a message on a unix socket takes longer then 
+		<varname>unix_tx_timeout</varname>, the send will fail.
+	</para>
+	<para>
+	    The default value is 500 milliseconds.
+	</para>
+	<example>
+	    <title>Set <varname>unix_tx_timeout</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "unix_tx_timeout", 250)
+...
+	    </programlisting>
+	</example>
+	</section>
 </section>
