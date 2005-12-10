@@ -402,10 +402,11 @@ inline static void adjust_ticks()
 			delta=(s_ticks_t)(diff_time_ticks-diff_ticks_raw);
 			if (delta<-1){
 				LOG(L_WARN, "WARNING: our timer runs faster then real-time"
-						" (%u ms / %u ticks our time .->"
-						 " %ld ms / %u ticks real time)\n", 
-						diff_ticks_raw*1000/TIMER_TICKS_HZ, diff_ticks_raw,
-						(long)(diff_time/1000), diff_time_ticks);
+						" (%lu ms / %u ticks our time .->"
+						 " %lu ms / %u ticks real time)\n", 
+						(unsigned long)(diff_ticks_raw*1000L/TIMER_TICKS_HZ),
+						diff_ticks_raw,
+						(unsigned long)(diff_time/1000), diff_time_ticks);
 				last_time=crt_time;
 				last_ticks=*ticks;
 			}else{

@@ -107,6 +107,12 @@ struct msgid_var{
 #define get_msgid_val(var, id, type)\
 	(type)((type)((var).msgid!=(id))-1)&((var).u.type##_val)
 
+#define set_msgid_val(var, id, type, value)\
+	do{\
+		(var).msgid=(id); \
+		(var).u.type##_val=(value); \
+	}while(0)
+
 /* char to hex conversion table */
 static char fourbits2char[16] = { '0', '1', '2', '3', '4', '5',
 	'6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
