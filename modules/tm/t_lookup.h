@@ -30,6 +30,7 @@
  *  2003-02-24  s/T_NULL/T_NULL_CELL/ to avoid redefinition conflict w/
  *               nameser_compat.h (andrei)
  *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
+ *  2005-12-09  added t_set_fr()  (andrei)
  */
 
 
@@ -93,6 +94,8 @@ int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index, unsigned 
 int t_lookup_ident(struct cell** trans, unsigned int hash_index, unsigned int label);
 /* lookup a transaction by callid and cseq */
 int t_lookup_callid(struct cell** trans, str callid, str cseq);
+
+int t_set_fr(struct sip_msg* msg, unsigned int fr_inv_to, unsigned int fr_to );
 
 #endif
 

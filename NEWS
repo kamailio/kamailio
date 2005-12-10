@@ -16,8 +16,25 @@ modules:
                 hashing after an uri (to, from or request uri)
               - improved uri hashing (password is ignored, port is used only
                 if != 5060 or 5061)
+ - tm        - migrated to the new timers (tm timers completely rewritten)
+             - improved speed and less memory usage
+             - much more precise reptransmissions timing
+             - params: - retr_timer1p1, retr_timer1p2, retr_timer1p3 removed
+                         and replaced by retr_timer1 and retr_timer2
+                       - all timer values are now expressed in milliseconds
+                         (they were in seconds before).
+                         Affected params: fr_timer, fr_inv_timer, wt_timer,
+                         delete_timer, retr_timer1, retr_timer2
+                       - retr_timer1 (first retransmission) changed to 500 ms
+                       - delete_timer changed to 200 ms
+             - functions:
+                       - new t_set_fr(timeout_fr_inv, timeout_fr) -- allows
+                         changing the transaction timer from script, even if
+                         the transaction was already created (see tm docs for
+                         more).
  
 core:
+ - timer: - improved performance/precision, new api, see doc/timers.txt 
  - tcp: - improved  performance (io event handling), using OS specific
            optimizations
         - 1024 connections limit removed (see tcp_max_connections)
@@ -34,6 +51,9 @@ core:
 - default on reply route added: onreply_route {.. } will add a default 
     onreply route that will be executed for any reply (usefull to catch
     replies without using tm)
+- branch_routes added (tm triggered), only a very limited number of commands
+   are available (see tm docs)
+- avps directly accessible from script with %avp_name (variable style)
 new config variables:
    tos = number  - ip type of service (TOS) value
    dns_try_ipv6 = yes/no - if yes and a dns lookup fails, it will retry it

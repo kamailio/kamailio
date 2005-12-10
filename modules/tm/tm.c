@@ -72,8 +72,10 @@
  *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  *  2004-02-18  t_reply exported via FIFO - imported from VM (bogdan)
  *  2004-10-01  added a new param.: restart_fr_on_each_reply (andrei)
+ *  2005-11-14  new timer support, changed timer related module params (andrei)
  *  2005-12-09  fixup_hostport2proxy uses route_struct to access param #1
  *              when fixing param #2
+ *  2005-12-09  added t_set_fr() (andrei)
  */
 
 
@@ -110,6 +112,7 @@
 #include "callid.h"
 #include "t_cancel.h"
 #include "t_fifo.h"
+#include "timer.h"
 
 MODULE_VERSION
 
@@ -169,6 +172,8 @@ inline static int w_t_on_negative(struct sip_msg* msg, char *go_to, char *foo);
 inline static int w_t_on_branch(struct sip_msg* msg, char *go_to, char *foo);
 inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
 inline static int t_check_status(struct sip_msg* msg, char *regexp, char *foo);
+static int t_set_fr_inv(struct sip_msg* msg, char* fr_inv, char* foo);
+static int t_set_fr_all(struct sip_msg* msg, char* fr_inv, char* fr);
 
 
 static char *fr_timer_param = FR_TIMER_AVP;
@@ -236,6 +241,10 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"t_write_unix",      t_write_unix,             2, fixup_t_write,
 	                REQUEST_ROUTE | FAILURE_ROUTE },
+	{"t_set_fr",          t_set_fr_inv,             1, fixup_int_1,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"t_set_fr",          t_set_fr_all,             2, fixup_int_12,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 
 	/* not applicable from the script */
 	{"register_tmcb",      (cmd_function)register_tmcb,     NO_SCRIPT,   0, 0},
@@ -263,14 +272,12 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"ruri_matching",       INT_PARAM, &ruri_matching                        },
 	{"via1_matching",       INT_PARAM, &via1_matching                        },
-	{"fr_timer",            INT_PARAM, &(timer_id2timeout[FR_TIMER_LIST])    },
-	{"fr_inv_timer",        INT_PARAM, &(timer_id2timeout[FR_INV_TIMER_LIST])},
-	{"wt_timer",            INT_PARAM, &(timer_id2timeout[WT_TIMER_LIST])    },
-	{"delete_timer",        INT_PARAM, &(timer_id2timeout[DELETE_LIST])      },
-	{"retr_timer1p1",       INT_PARAM, &(timer_id2timeout[RT_T1_TO_1])       },
-	{"retr_timer1p2",       INT_PARAM, &(timer_id2timeout[RT_T1_TO_2])       },
-	{"retr_timer1p3",       INT_PARAM, &(timer_id2timeout[RT_T1_TO_3])       },
-	{"retr_timer2",         INT_PARAM, &(timer_id2timeout[RT_T2])            },
+	{"fr_timer",            INT_PARAM, &fr_timeout                           },
+	{"fr_inv_timer",        INT_PARAM, &fr_inv_timeout                       },
+	{"wt_timer",            INT_PARAM, &wait_timeout                         },
+	{"delete_timer",        INT_PARAM, &delete_timeout                       },
+	{"retr_timer1",         INT_PARAM, &rt_t1_timeout                        },
+	{"retr_timer2"  ,       INT_PARAM, &rt_t2_timeout                        },
 	{"noisy_ctimer",        INT_PARAM, &noisy_ctimer                         },
 	{"uac_from",            STR_PARAM, &uac_from                             },
 	{"unix_tx_timeout",     INT_PARAM, &tm_unix_tx_timeout                   },
@@ -371,7 +378,7 @@ static int script_init( struct sip_msg *foo, void *bar)
 
 static int mod_init(void)
 {
-	DBG( "TM - (size of cell=%ld, sip_msg=%ld) initializing...\n", 
+	DBG( "TM - (sizeof cell=%ld, sip_msg=%ld) initializing...\n", 
 			(long)sizeof(struct cell), (long)sizeof(struct sip_msg));
 	/* checking if we have sufficient bitmap capacity for given
 	   maximum number of  branches */
@@ -435,13 +442,10 @@ static int mod_init(void)
 	/* init static hidden values */
 	init_t();
 
-	if (!tm_init_timers()) {
+	if (tm_init_timers()==-1) {
 		LOG(L_ERR, "ERROR: mod_init: timer init failed\n");
 		return -1;
 	}
-	/* register the timer function */
-	register_timer( timer_routine , 0 /* empty attr */, 1 );
-
 	/* init_tm_stats calls process_count, which should
 	 * NOT be called from mod_init, because one does not
 	 * now, if a timer is used and thus how many processes
@@ -833,3 +837,17 @@ inline static int w_t_relay( struct sip_msg  *p_msg ,
 	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported mode: %d\n", rmode);
 	return 0;
 }
+
+
+/* set fr_inv_timeout & or fr_timeout; 0 means: use the default value */
+static int t_set_fr_all(struct sip_msg* msg, char* fr_inv, char* fr)
+{
+	
+	return t_set_fr(msg, (unsigned int)(long)fr_inv, (unsigned int)(long)fr);
+}
+
+static int t_set_fr_inv(struct sip_msg* msg, char* fr_inv, char* foo)
+{
+	return t_set_fr_all(msg, fr_inv, (char*)0);
+}
+

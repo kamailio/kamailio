@@ -96,13 +96,10 @@ void tm_shutdown()
 {
 
 	DBG("DEBUG: tm_shutdown : start\n");
-	unlink_timer_lists();
 
 	/* destroy the hash table */
 	DBG("DEBUG: tm_shutdown : emptying hash table\n");
 	free_hash_table( );
-	DBG("DEBUG: tm_shutdown : releasing timers\n");
-	free_timer_table();
 	DBG("DEBUG: tm_shutdown : removing semaphores\n");
 	lock_cleanup();
 	DBG("DEBUG: tm_shutdown : destroying tmcb lists\n");
@@ -118,9 +115,7 @@ int t_release_transaction( struct cell *trans )
 {
 	set_kr(REQ_RLSD);
 
-	reset_timer( & trans->uas.response.fr_timer );
-	reset_timer( & trans->uas.response.retr_timer );
-
+	stop_rb_timers(&trans->uas.response);
 	cleanup_uac_timers( trans );
 	
 	put_on_wait( trans );
@@ -158,7 +153,12 @@ void put_on_wait(  struct cell  *Trans  )
 		4.									WAIT timer executed,
 											transaction deleted
 	*/
-	set_1timer( &Trans->wait_tl, WT_TIMER_LIST, 0 );
+	if (timer_add(&Trans->wait_timer, wait_timeout)==0){
+		/* sucess */
+		t_stats_wait();
+	}else{
+		DBG("tm: put_on_wait: transaction %p already on wait\n", Trans);
+	}
 }
 
 

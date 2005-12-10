@@ -35,6 +35,7 @@
  * 2004-02-13  t->is_invite, t->local, t->noisy_ctimer replaced
  *             with flags (bogdan)
  * 2004-08-23  avp support added - avp list linked in transaction (bogdan)
+ * 2005-11-03  updated to the new timer interface (dropped tm timers) (andrei)
  */
 
 #include "defs.h"
@@ -50,6 +51,7 @@
 #include "../../types.h"
 #include "../../md5utils.h"
 #include "../../usr_avp.h"
+#include "../../timer.h"
 #include "config.h"
 
 struct s_table;
@@ -63,7 +65,7 @@ struct retr_buf;
 #include "sip_msg.h"
 #include "t_reply.h"
 #include "t_hooks.h"
-#include "timer.h"
+#include "../../timer.h"
 
 #define LOCK_HASH(_h) lock_hash((_h))
 #define UNLOCK_HASH(_h) unlock_hash((_h))
@@ -98,25 +100,28 @@ void unlock_hash(int i);
 enum kill_reason { REQ_FWDED=1, REQ_RPLD=2, REQ_RLSD=4, REQ_EXIST=8 };
 
 
+/* #define F_RB_T_ACTIVE		0x01  (obsolete) fr or retr active */
+#define F_RB_T2				0x02
+#define F_RB_RETR_DISABLED	0x04 /* retransmission disabled */
+#define F_RB_FR_INV	0x08 /* timer switched to FR_INV */
+
+
 typedef struct retr_buf
 {
-	int activ_type;
+	short activ_type;
 	/* set to status code if the buffer is a reply,
 	0 if request or -1 if local CANCEL */
-
+	volatile unsigned char flags; /* DISABLED, T2 */
+	volatile unsigned char t_active; /* timer active */
+	unsigned short branch; /* no more then 65k branches :-) */
+	short   buffer_len;
 	char *buffer;
-	int   buffer_len;
-	
-	struct dest_info dst;
-
-	/* a message can be linked just to retransmission and FR list */
-	struct timer_link retr_timer;
-	struct timer_link fr_timer;
-	enum lists retr_list;
-
 	/*the cell that contains this retrans_buff*/
 	struct cell* my_T;
-	unsigned int branch;
+	struct timer_ln timer;
+	struct dest_info dst;
+	ticks_t retr_expire;
+	ticks_t fr_expire; /* ticks value after which fr. will fire */
 }retr_buf_type;
 
 
@@ -128,11 +133,11 @@ typedef struct ua_server
 	struct sip_msg   *request;
 	char             *end_request;
 	struct retr_buf  response;
-	unsigned int     status;
 	/* keep to-tags for local 200 replies for INVITE -- 
 	 * we need them for dialog-wise matching of ACKs;
 	 * the pointer shows to shmem-ed reply */
 	str				 local_totag;
+	unsigned int     status;
 }ua_server_type;
 
 
@@ -160,9 +165,9 @@ typedef struct ua_client
 
 
 struct totag_elem {
+	struct totag_elem *next;
 	str tag;
 	short acked;
-	struct totag_elem *next;
 };
 
 
@@ -176,7 +181,8 @@ struct totag_elem {
    dropping when C timer hits */
 #define T_NOISY_CTIMER_FLAG  (1<<2)
 
-
+#define T_IN_AGONY (1<<3) /* set if waiting to die (delete timer)
+                             TODO: replace it with del on unref */
 
 /* transaction context */
 
@@ -190,7 +196,9 @@ typedef struct cell
 	/* sequence number within hash collision slot */
 	unsigned int  label;
 	/* different information about the transaction */
-	unsigned int flags;
+	unsigned short flags;
+	/* number of forks */
+	short nr_of_outgoings;
 
 	/* how many processes are currently processing this transaction ;
 	   note that only processes working on a request/reply belonging
@@ -218,44 +226,40 @@ typedef struct cell
 	struct tmcb_head_list tmcb_hl;
 
 	/* bindings to wait and delete timer */
-	struct timer_link wait_tl;
-	struct timer_link dele_tl;
+	struct timer_ln wait_timer; /* used also for delete */
 
-	/* number of forks */
-	int nr_of_outgoings;
-	/* nr of replied branch; 0..MAX_BRANCHES=branch value,
-	 * -1 no reply, -2 local reply */
-	int relayed_reply_branch;
 	/* UA Server */
 	struct ua_server  uas;
 	/* UA Clients */
 	struct ua_client  uac[ MAX_BRANCHES ];
-
-	/* protection against concurrent reply processing */
-	ser_lock_t   reply_mutex;
-
-	/* the route to take if no final positive reply arrived */
-	unsigned int on_negative;
-	/* the onreply_route to be processed if registered to do so */
-	unsigned int on_reply;
-	     /* The route to take for each downstream branch separately */
-	unsigned int on_branch;
-
-	/* MD5checksum  (meaningful only if syn_branch=0 */
-	char md5[MD5_LEN];
-
-#ifdef	EXTRA_DEBUG
-	/* scheduled for deletion ? */
-	short damocles;
-#endif
-
+	
 	/* to-tags of 200/INVITEs which were received from downstream and 
 	 * forwarded or passed to UAC; note that there can be arbitrarily 
 	 * many due to downstream forking; */
 	struct totag_elem *fwded_totags;
-
 	/* list with user avp */
 	struct usr_avp *user_avps;
+	
+	/* protection against concurrent reply processing */
+	ser_lock_t   reply_mutex;
+	
+	ticks_t fr_timeout;     /* final response interval for retr_bufs */
+	ticks_t fr_inv_timeout; /* final inv. response interval for retr_bufs */
+
+	/* nr of replied branch; 0..MAX_BRANCHES=branch value,
+	 * -1 no reply, -2 local reply */
+	short relayed_reply_branch;
+
+	/* the route to take if no final positive reply arrived */
+	unsigned short on_negative;
+	/* the onreply_route to be processed if registered to do so */
+	unsigned short on_reply;
+	 /* The route to take for each downstream branch separately */
+	unsigned short on_branch;
+
+	/* MD5checksum  (meaningful only if syn_branch=0) */
+	char md5[MD5_LEN];
+
 }cell_type;
 
 

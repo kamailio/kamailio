@@ -202,7 +202,9 @@ int add_blind_uac( /*struct cell *t*/ )
 	/* start FR timer -- protocol set by default to PROTO_NONE,
        which means retransmission timer will not be started
     */
-	start_retr(&t->uac[branch].request);
+	if (start_retr(&t->uac[branch].request)!=0)
+		LOG(L_CRIT, "BUG: add_blind_uac: start retr failed for %p\n",
+				&t->uac[branch].request);
 	/* we are on a timer -- don't need to put on wait on script
 	   clean-up	
 	*/
@@ -263,7 +265,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	}
 
 	hostent2su( &to, &proxy->host, proxy->addr_idx, 
-		proxy->port ? proxy->port:SIP_PORT);
+		proxy->port ? proxy->port:((proto==PROTO_TLS)?SIPS_PORT:SIP_PORT));
 
 	send_sock=get_send_socket( request, &to , proto);
 	if (send_sock==0) {
@@ -396,18 +398,20 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 			if (SEND_BUFFER(&t_cancel->uac[i].request) == -1) {
 				LOG(L_ERR, "ERROR: e2e_cancel: send failed\n");
 			}
-			start_retr(&t_cancel->uac[i].request);
+			if (start_retr( &t_cancel->uac[i].request )!=0)
+				LOG(L_CRIT, "BUG: e2e_cancel: failed to start retr. for %p\n",
+							&t_cancel->uac[i].request);
 		} else {
 			if (t_invite->uac[i].last_received < 100) {
-				     /* No provisional response received, stop
-				      * retransmission timers
-				      */
-				reset_timer(&t_invite->uac[i].request.retr_timer);
-				reset_timer(&t_invite->uac[i].request.fr_timer);
-
-				     /* Generate faked reply */
+				/* No provisional response received, stop
+				 * retransmission timers */
+				stop_rb_retr(&t_invite->uac[i].request);
+				/* no need to stop fr, it will be stoped by relay_reply
+				 * put_on_wait -- andrei */
+				/* Generate faked reply */
 				LOCK_REPLIES(t_invite);
-				if (relay_reply(t_invite, FAKED_REPLY, i, 487, &tmp_bm) == RPS_ERROR) {
+				if (relay_reply(t_invite, FAKED_REPLY, i, 487, &tmp_bm) == 
+						RPS_ERROR) {
 					lowest_error = -1;
 				}
 			}
@@ -553,7 +557,9 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 			} else {
 				success_branch++;
 			}
-			start_retr( &t->uac[i].request );
+			if (start_retr( &t->uac[i].request )!=0)
+				LOG(L_CRIT, "BUG: t_forward_non_ack: "
+						"failed to start retr. for %p\n", &t->uac[i].request);
 		}
 	}
 	if (success_branch<=0) {

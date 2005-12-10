@@ -68,7 +68,6 @@ enum timer_groups {
 
 
 #include "h_table.h"
-#include "timer.h" 
 
 /* Uni*x permissions for IPC */
 #define IPC_PERMISSIONS 0666
@@ -133,7 +132,6 @@ static inline void _unlock( ser_lock_t* s )
 #endif
 }
 
-int init_timerlist_lock(  enum lists timerlist_id);
 
 
 #endif

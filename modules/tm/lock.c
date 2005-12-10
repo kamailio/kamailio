@@ -294,10 +294,3 @@ int release_timerlist_lock( struct timer *timerlist )
 	/* the same as above */
 	return 0;
 }
-
-int init_timerlist_lock( enum lists timerlist_id)
-{
-	get_timertable()->timers[timerlist_id].mutex=
-		&(timer_group_lock[ timer_group[timerlist_id] ]);
-	return 0;
-}

@@ -66,6 +66,7 @@
  *              the request (bogdan)
  *  2005-09-01  reverted to the old way of checking response.dst.send_sock
  *               in t_retransmit_reply & reply_light (andrei)
+ *  2005-11-09  updated to the new timers interface (andrei)
  */
 
 
@@ -940,7 +941,9 @@ void set_final_timer( /* struct s_table *h_table, */ struct cell *t )
 	if ( !is_local(t) && t->uas.request->REQ_METHOD==METHOD_INVITE ) {
 		/* crank timers for negative replies */
 		if (t->uas.status>=300) {
-			start_retr(&t->uas.response);
+			if (start_retr(&t->uas.response)!=0)
+				LOG(L_CRIT, "BUG: set_final_timer: start retr failed for %p\n",
+						&t->uas.response);
 			return;
 		}
 		/* local UAS retransmits too */
@@ -949,7 +952,9 @@ void set_final_timer( /* struct s_table *h_table, */ struct cell *t )
 			   even if TCP used, UDP could be used upstream and
 			   loose the 200, which is not retransmitted by proxies
 			*/
-			force_retr( &t->uas.response );
+			if (force_retr( &t->uas.response )!=0)
+				LOG(L_CRIT, "BUG: set_final_timer: force retr failed for %p\n",
+						&t->uas.response);
 			return;
 		}
 	}
@@ -961,9 +966,8 @@ void cleanup_uac_timers( struct cell *t )
 	int i;
 
 	/* reset FR/retransmission timers */
-	for (i=0; i<t->nr_of_outgoings; i++ )  {
-		reset_timer( &t->uac[i].request.retr_timer );
-		reset_timer( &t->uac[i].request.fr_timer );
+	for (i=0; i<t->nr_of_outgoings; i++ ){
+		stop_rb_timers(&t->uac[i].request);
 	}
 	DBG("DEBUG: cleanup_uac_timers: RETR/FR timers reset\n");
 }
@@ -1268,7 +1272,6 @@ int reply_received( struct sip_msg  *p_msg )
 	struct cell *t;
 	str next_hop;
 	avp_list_t* backup_list;
-	unsigned int timer;
 
 	/* make sure we know the associated transaction ... */
 	if (t_check( p_msg  , &branch )==-1)
@@ -1293,39 +1296,45 @@ int reply_received( struct sip_msg  *p_msg )
 		/* .. which is not e2e ? ... */
 		&& is_invite(t) ) {
 			/* ... then just stop timers */
-			reset_timer( &uac->local_cancel.retr_timer);
 			if ( msg_status >= 200 )
-				reset_timer( &uac->local_cancel.fr_timer);
+				stop_rb_timers(&uac->local_cancel); /* stop retr & fr */
+			else
+				stop_rb_retr(&uac->local_cancel);  /* stop only retr */
 			DBG("DEBUG: reply to local CANCEL processed\n");
 			goto done;
 	}
 
 
-	/* *** stop timers *** */
-	/* stop retransmission */
-	reset_timer( &uac->request.retr_timer);
-	/* stop final response timer only if I got a final response */
-	if ( msg_status >= 200 )
-		reset_timer( &uac->request.fr_timer);
+	if ( msg_status >= 200 ){
+		/* stop final response timer  & retr. only if I got a final response */
+		stop_rb_timers(&uac->request); 
 		/* acknowledge negative INVITE replies (do it before detailed
 		 * on_reply processing, which may take very long, like if it
 		 * is attempted to establish a TCP connection to a fail-over dst */
-
-	if (is_invite(t)) {
-		if (msg_status >= 300) {
-			ack = build_ack(p_msg, t, branch, &ack_len);
-			if (ack) {
-				SEND_PR_BUFFER(&uac->request, ack, ack_len);
-				shm_free(ack);
-			}
-		} else if (is_local(t) && msg_status >= 200) {
-			ack = build_local_ack(p_msg, t, branch, &ack_len, &next_hop);
-			if (ack) {
-				if (send_local_ack(p_msg, &next_hop, ack, ack_len) < 0) {
-					LOG(L_ERR, "Error while sending local ACK\n");
+		if (is_invite(t)) {
+			if (msg_status >= 300) {
+				ack = build_ack(p_msg, t, branch, &ack_len);
+				if (ack) {
+					SEND_PR_BUFFER(&uac->request, ack, ack_len);
+					shm_free(ack);
 				}
-				shm_free(ack);
+			} else if (is_local(t) /*&& msg_status >= 200*/) {
+				ack = build_local_ack(p_msg, t, branch, &ack_len, &next_hop);
+				if (ack) {
+					if (send_local_ack(p_msg, &next_hop, ack, ack_len) < 0) {
+						LOG(L_ERR, "Error while sending local ACK\n");
+					}
+					shm_free(ack);
+				}
 			}
+		}
+	}else{
+		if (is_invite(t)){
+			/* stop only retr. (and not fr) */
+			stop_rb_retr(&uac->request);
+		}else{
+			/* non-invite: increase retransmissions interval (slow now) */
+			switch_rb_retr_to_t2(&uac->request);
 		}
 	}
 	/* processing of on_reply block */
@@ -1351,7 +1360,8 @@ int reply_received( struct sip_msg  *p_msg )
 			      */
 			cleanup_uac_timers( t );
 			if (is_invite(t)) cancel_uacs( t, cancel_bitmap );
-			     /* FR for negative INVITES, WAIT anything else */
+			/* There is no need to call set_final_timer because we know
+>--->--->--- * that the transaction is local */
 			put_on_wait(t);
 		}
 	} else {
@@ -1363,8 +1373,11 @@ int reply_received( struct sip_msg  *p_msg )
 			     */
 			cleanup_uac_timers( t );
 			if (is_invite(t)) cancel_uacs( t, cancel_bitmap );
-			     /* FR for negative INVITES, WAIT anything else */
-			     /* set_final_timer(t) */
+			/* FR for negative INVITES, WAIT anything else */
+			/* Call to set_final_timer is embedded in relay_reply to avoid
+			 * race conditions when reply is sent out and an ACK to stop
+			 * retransmissions comes before retransmission timer is set.*/
+			/* set_final_timer(t) */
 		}
 
 	}
@@ -1378,25 +1391,11 @@ int reply_received( struct sip_msg  *p_msg )
 					((msg_status>=180) || (last_uac_status==0)) )
 			) ) { /* provisional now */
 		if (is_invite(t)) {
-			/* invite: change FR to longer FR_INV, do not
-			   attempt to restart retransmission any more
-			*/
-
-			backup_list = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER,  &t->user_avps );
-			if (!fr_inv_avp2timer(&timer)) {
-				DBG("reply_received: FR_INV_TIMER = %d\n", timer);
-				set_timer( & uac->request.fr_timer,
-					   FR_INV_TIMER_LIST, &timer );
-				t->flags |= T_NOISY_CTIMER_FLAG;
-			} else {
-				set_timer( & uac->request.fr_timer,
-					   FR_INV_TIMER_LIST, 0 );
-			}
+			backup_list = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, 
+										&t->user_avps );
+			restart_rb_fr(& uac->request, t->fr_inv_timeout);
+			uac->request.flags|=F_RB_FR_INV; /* mark fr_inv */
 			set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER,  backup_list );
-		} else {
-			     /* non-invite: restart retransmissions (slow now) */
-			uac->request.retr_list=RT_T2;
-			set_timer(  & uac->request.retr_timer, RT_T2, 0 );
 		}
 	} /* provisional replies */
 

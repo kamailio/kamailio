@@ -46,20 +46,20 @@
 
 /* FINAL_RESPONSE_TIMER ... tells how long should the transaction engine
    wait if no final response comes back*/
-#define FR_TIME_OUT       30
-#define INV_FR_TIME_OUT   120
+#define FR_TIME_OUT        30000 /* ms */
+#define INV_FR_TIME_OUT   120000 /* ms */
 
 /* WAIT timer ... tells how long state should persist in memory after
    a transaction was finalized*/
-#define WT_TIME_OUT       5
+#define WT_TIME_OUT       5000 /* ms */
 
 /* DELETE timer ... tells how long should the transaction persist in memory
    after it was removed from the hash table and before it will be deleted */
-#define DEL_TIME_OUT      2
+#define DEL_TIME_OUT      200 /* ms */
  
 /* retransmission timers */
-#define RETR_T1           1
-#define RETR_T2           4
+#define RETR_T1           500 /* ms */
+#define RETR_T2          4000 /* ms */
 
 /* when first reply is sent, this additional space is allocated so that
    one does not have to reallocate share memory when the message is

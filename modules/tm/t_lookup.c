@@ -79,6 +79,7 @@
  * 2004-10-10: use of mhomed disabled for replies (jiri)
  * 2005-02-01: use the incoming request interface for sending the replies
  *             - changes in init_rb() (bogdan)
+ *  2005-12-09  added t_set_fr()  (andrei)
  */
 
 #include "defs.h"
@@ -91,6 +92,7 @@
 #include "../../parser/parse_from.h"
 #include "../../ut.h"
 #include "../../timer.h"
+#include "../../timer_ticks.h"
 #include "../../hash_func.h"
 #include "../../globals.h"
 #include "../../forward.h"
@@ -920,9 +922,9 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 
 		}
 #ifdef EXTRA_DEBUG
-		if ( T && T!=T_UNDEFINED && T->damocles) {
+		if ( T && T!=T_UNDEFINED && T->flags & (T_IN_AGONY)) {
 			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion "
-				"and called from t_check\n", T);
+				"and called from t_check (flags=%x)\n", T, T->flags);
 			abort();
 		}
 #endif
@@ -945,6 +947,7 @@ int init_rb( struct retr_buf *rb, struct sip_msg *msg)
 	int proto;
 	int backup_mhomed;
 
+	/* rb. timers are init. init_t()/new_cell() */
 	via=msg->via1;
 	if (!reply_to_via) {
 		update_sock_struct_from_ip( &rb->dst.to, msg );
@@ -983,6 +986,7 @@ int init_rb( struct retr_buf *rb, struct sip_msg *msg)
 static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 {
 	struct sip_msg *shm_msg;
+	unsigned int timeout; /* avp timeout gets stored here (in s) */
 
 	shm_msg=new_cell->uas.request;
 	new_cell->from.s=shm_msg->from->name.s;
@@ -1000,6 +1004,27 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 	if (p_msg->REQ_METHOD==METHOD_INVITE) new_cell->flags |= T_IS_INVITE_FLAG;
 	new_cell->on_negative=get_on_negative();
 	new_cell->on_reply=get_on_reply();
+	new_cell->fr_timeout=(ticks_t)get_msgid_val(user_fr_timeout,
+												p_msg->id, int);
+	new_cell->fr_inv_timeout=(ticks_t)get_msgid_val(user_fr_inv_timeout,
+												p_msg->id, int);
+	if (new_cell->fr_timeout==0){
+		if (!fr_avp2timer(&timeout)) {
+			DBG("init_new_t: FR__TIMER = %d s\n", timeout);
+			new_cell->fr_timeout=S_TO_TICKS((ticks_t)timeout);
+		}else{
+			new_cell->fr_timeout=fr_timeout;
+		}
+	}
+	if (new_cell->fr_inv_timeout==0){
+		if (!fr_inv_avp2timer(&timeout)) {
+			DBG("init_new_t: FR_INV_TIMER = %d s\n", timeout);
+			new_cell->fr_inv_timeout=S_TO_TICKS((ticks_t)timeout);
+			new_cell->flags |= T_NOISY_CTIMER_FLAG;
+		}else{
+			new_cell->fr_inv_timeout=fr_inv_timeout;
+		}
+	}
 	new_cell->on_branch=get_on_branch();
 }
 
@@ -1322,3 +1347,36 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 	return -1;
 }
 
+
+
+/* params: fr_inv & fr value in ms, 0 means "do not touch"
+ * ret: 1 on success, -1 on error (script safe)*/
+int t_set_fr(struct sip_msg* msg, unsigned int fr_inv_to, unsigned int fr_to)
+{
+	struct cell *t;
+	ticks_t fr_inv, fr;
+	
+	
+	fr_inv=MS_TO_TICKS((ticks_t)fr_inv_to);
+	if ((fr_inv==0) && (fr_inv_to!=0)){
+		ERR("t_set_fr_inv: fr_inv_timeout too small (%d)\n", fr_inv_to);
+		return -1;
+	}
+	fr=MS_TO_TICKS((ticks_t)fr_to);
+	if ((fr==0) && (fr_to!=0)){
+		ERR("t_set_fr_inv: fr_timeout too small (%d)\n", fr_to);
+		return -1;
+	}
+	
+	t=get_t();
+	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
+	 * in MODE_REQUEST T will be set only if the transaction was already
+	 * created; if not -> use the static variable */
+	if (!t || t==T_UNDEFINED ){
+		set_msgid_val(user_fr_inv_timeout, msg->id, int, (int)fr_inv);
+		set_msgid_val(user_fr_timeout, msg->id, int, (int)fr);
+	}else{
+		change_fr(t, fr_inv, fr); /* change running uac timers */
+	}
+	return 1;
+}

@@ -61,6 +61,7 @@
 #include "t_stats.h"
 #include "h_table.h"
 #include "fix_lumps.h" /* free_via_clen_lump */
+#include "timer.h"
 
 static enum kill_reason kr;
 
@@ -213,10 +214,7 @@ static void inline init_branches(struct cell *t)
 		uac=&t->uac[i];
 		uac->request.my_T = t;
 		uac->request.branch = i;
-#ifdef EXTRA_DEBUG
-		uac->request.fr_timer.tg = TG_FR;
-		uac->request.retr_timer.tg = TG_RT;
-#endif
+		init_rb_timers(&uac->request);
 		uac->local_cancel=uac->request;
 	}
 }
@@ -239,11 +237,10 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	memset( new_cell, 0, sizeof( struct cell ) );
 
 	/* UAS */
-#ifdef EXTRA_DEBUG
-	new_cell->uas.response.retr_timer.tg=TG_RT;
-	new_cell->uas.response.fr_timer.tg=TG_FR;
-#endif
 	new_cell->uas.response.my_T=new_cell;
+	init_rb_timers(&new_cell->uas.response);
+	/* timers */
+	init_cell_timers(new_cell);
 
 	/* move the current avp list to transaction -bogdan */
 	old = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER,  &new_cell->user_avps );
@@ -270,10 +267,6 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 
 	new_cell->relayed_reply_branch   = -1;
 	/* new_cell->T_canceled = T_UNDEFINED; */
-#ifdef EXTRA_DEBUG
-	new_cell->wait_tl.tg=TG_WT;
-	new_cell->dele_tl.tg=TG_DEL;
-#endif
 
 	init_synonym_id(new_cell);
 	init_cell_lock(  new_cell );

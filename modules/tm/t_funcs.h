@@ -32,6 +32,8 @@
   *  2003-03-13  now send_pr_buffer will be called w/ function/line info
   *               only when compiling w/ -DEXTRA_DEBUG (andrei)
   *  2003-03-31  200 for INVITE/UAS resent even for UDP (jiri) 
+  *  2005-11-09  added stop_rb_timers, updated to the new timer interface 
+  *               (andrei)
   */
 
 
@@ -124,37 +126,26 @@ int fr_avp2timer(unsigned int* timer);
 int fr_inv_avp2timer(unsigned int* timer);
 
 
+#ifdef TIMER_DEBUG
+#define start_retr(rb) \
+	_set_fr_retr((rb), \
+				((rb)->dst.proto==PROTO_UDP)?rt_t1_timeout:(ticks_t)(-1), \
+				__FILE__, __FUNCTION__, __LINE__)
 
-static void inline _set_fr_retr( struct retr_buf *rb, int retr )
-{
-	unsigned int timer;
+#define force_retr(rb) \
+	_set_fr_retr((rb), rt_t1_timeout, __FILE__, __FUNCTION__, __LINE__)
 
-	if (retr) {
-		rb->retr_list=RT_T1_TO_1;
-		set_timer( &rb->retr_timer, RT_T1_TO_1, 0 );
-	}
+#else
+#define start_retr(rb) \
+	_set_fr_retr((rb), \
+				((rb)->dst.proto==PROTO_UDP)?rt_t1_timeout:(ticks_t)(-1))
 
-	if (!fr_avp2timer(&timer)) {
-		DBG("_set_fr_retr: FR_TIMER = %d\n", timer);
-		set_timer(&rb->fr_timer, FR_TIMER_LIST, &timer);
-		     /* Automatically enable noisy_ctimer for the
-		      * transaction
-		      */
-		rb->my_T->flags |= T_NOISY_CTIMER_FLAG;
-	} else {
-		set_timer(&rb->fr_timer, FR_TIMER_LIST, 0);
-	}
-}
+#define force_retr(rb) \
+	_set_fr_retr((rb), rt_t1_timeout)
 
-static void inline start_retr(struct retr_buf *rb)
-{
-	_set_fr_retr(rb, rb->dst.proto==PROTO_UDP);
-}
+#endif
 
-static void inline force_retr(struct retr_buf *rb)
-{
-	_set_fr_retr(rb, 1);
-}
+
 
 
 void tm_shutdown();
@@ -177,7 +168,6 @@ int get_ip_and_port_from_uri( str* uri , unsigned int *param_ip,
 
 void put_on_wait(  struct cell  *Trans  );
 
-void cleanup_localcancel_timers( struct cell *t );
 
 int t_relay_to( struct sip_msg  *p_msg ,
 	struct proxy_l *proxy, int proto, int replicate ) ;

@@ -18,7 +18,7 @@
 	<title><varname>fr_timer</varname> (integer)</title>
 	<para>
 	    Timer which hits if no final reply for a request or ACK for a
-	    negative INVITE reply arrives (in seconds).
+	    negative INVITE reply arrives (in milliseconds).
 	</para>
 	<para>
 	    Default value is 30 seconds.
@@ -37,7 +37,7 @@ modparam("tm", "fr_timer", 10)
 	<title><varname>fr_inv_timer</varname> (integer)</title>
 	<para>
 	    Timer which hits if no final reply for an INVITE arrives after a
-	    provisional message was received (in seconds).
+	    provisional message was received (in milliseconds).
 	</para>
 	<para>
 	    Default value is 120 seconds.
@@ -81,7 +81,7 @@ modparam("tm", "wt_timer", 10)
 	    process will be tried to be deleted again.
 	</para>
 	<para>
-	    Default value is 2 seconds.
+	    Default value is 200 milliseconds.
 	</para>
 	<example>
 	    <title>Set <varname>delete_timer</varname> parameter</title>
@@ -93,55 +93,19 @@ modparam("tm", "delete_timer", 5)
 	</example>
     </section>
     
-    <section id="retr_timer1p1">
-	<title><varname>retr_timer1p1</varname> (integer)</title>
+    <section id="retr_timer1">
+	<title><varname>retr_timer1</varname> (integer)</title>
 	<para>
-	    Retransmission period.
+	    Initial retransmission period (in milliseconds).
 	</para>
 	<para>
-	    Default value is 1 second.
-	</para>
-	<example>
-	    <title>Set <varname>retr_timer1p1</varname> parameter</title>
-	    <programlisting>
-...
-modparam("tm", "retr_timer1p1", 2)
-...
-	    </programlisting>
-	</example>
-    </section>
-
-    <section id="retr_timer1p2">
-	<title><varname>retr_timer1p2</varname> (integer)</title>
-	<para>
-	    Retransmission period.
-	</para>
-	<para>
-	    Default value is 2 * <varname>retr_timer1p1</varname> second.
+	    Default value is 500 milliseconds.
 	</para>
 	<example>
-	    <title>Set <varname>retr_timer1p2</varname> parameter</title>
+	    <title>Set <varname>retr_timer1</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("tm", "retr_timer1p2", 4)
-...
-	    </programlisting>
-	</example>
-    </section>
-
-    <section id="retr_timer1p3">
-	<title><varname>retr_timer1p3</varname> (integer)</title>
-	<para>
-	    Retransmission period.
-	</para>
-	<para>
-	    Default value is 4 * <varname>retr_timer1p1</varname> second.
-	</para>
-	<example>
-	    <title>Set <varname>retr_timer1p4</varname> parameter</title>
-	    <programlisting>
-...
-modparam("tm", "retr_timer1p3", 8)
+modparam("tm", "retr_timer1", 1000)
 ...
 	    </programlisting>
 	</example>
@@ -150,16 +114,19 @@ modparam("tm", "retr_timer1p3", 8)
     <section id="retr_timer2">
 	<title><varname>retr_timer2</varname> (integer)</title>
 	<para>
-	    Maximum retransmission period.
+	    Maximum retransmission period (in milliseconds). The retransmission
+		interval starts with <varname>retr_timer1</varname> and increases until
+		it reaches this value. After this it stays constant at 
+		<varname>retr_timer2</varname>.
 	</para>
 	<para>
-	    Default value is 4 seconds.
+	    Default value is 4000 milliseconds.
 	</para>
 	<example>
 	    <title>Set <varname>retr_timer2</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("tm", "retr_timer2", 8)
+modparam("tm", "retr_timer2", 2000)
 ...
 	    </programlisting>
 	</example>

@@ -108,22 +108,21 @@ void cancel_branch( struct cell *t, int branch )
 		LOG(L_ERR, "ERROR: attempt to build a CANCEL failed\n");
 		return;
 	}
-
-	     /* install cancel now */
+	/* install cancel now */
 	crb->buffer = cancel;
 	crb->buffer_len = len;
 	crb->dst = irb->dst;
 	crb->branch = branch;
-
 	/* label it as cancel so that FR timer can better now how to
 	   deal with it */
 	crb->activ_type = TYPE_LOCAL_CANCEL;
 
 	DBG("DEBUG: cancel_branch: sending cancel...\n");
 	SEND_BUFFER( crb );
-	
-	     /*sets and starts the FINAL RESPONSE timer */
-	start_retr( crb );
+	/*sets and starts the FINAL RESPONSE timer */
+	if (start_retr( crb )!=0)
+		LOG(L_CRIT, "BUG: cancel_branch: failed to start retransmission"
+					" for %p\n", crb);
 }
 
 
