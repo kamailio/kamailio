@@ -46,6 +46,8 @@
  *  2003-10-24  converted to the new socket_info lists (andrei)
  *  2004-10-10  modified check_self to use grep_sock_info (andrei)
  *  2004-11-08  added force_send_socket support in get_send_socket (andrei)
+ *  2005-12-11  onsend_router support; forward_request to no longer
+ *              pkg_malloc'ed (andrei)
  */
 
 
@@ -75,6 +77,7 @@
 #include "resolve.h"
 #include "name_alias.h"
 #include "socket_info.h"
+#include "onsend.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -261,22 +264,13 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p, int proto)
 {
 	unsigned int len;
 	char* buf;
-	union sockaddr_union* to;
+	union sockaddr_union to;
 	struct socket_info* send_sock;
 	char md5[MD5_LEN];
 	int id; /* used as branch for tcp! */
 	
-	to=0;
 	buf=0;
 	id=0;
-	
-	to=(union sockaddr_union*)pkg_malloc(sizeof(union sockaddr_union));
-	if (to==0){
-		ser_error=E_OUT_OF_MEM;
-		LOG(L_ERR, "ERROR: forward_request: out of memory\n");
-		goto error;
-	}
-	
 	
 	/* if error try next ip address if possible */
 	if (p->ok==0){
@@ -286,18 +280,18 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p, int proto)
 		p->ok=1;
 	}
 	
-	hostent2su(to, &p->host, p->addr_idx, 
+	hostent2su(&to, &p->host, p->addr_idx, 
 				(p->port)?p->port:SIP_PORT);
 	p->tx++;
 	p->tx_bytes+=len;
 	
 
-	send_sock=get_send_socket(msg, to, proto);
+	send_sock=get_send_socket(msg, &to, proto);
 	if (send_sock==0){
 		LOG(L_ERR, "forward_req: ERROR: cannot forward to af %d, proto %d "
-				"no corresponding listening socket\n", to->s.sa_family, proto);
+				"no corresponding listening socket\n", to.s.sa_family, proto);
 		ser_error=E_NO_SOCKET;
-		goto error1;
+		goto error;
 	}
 
 	/* calculate branch for outbound request;  if syn_branch is turned off,
@@ -315,43 +309,45 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p, int proto)
 	} else {
 		if (!char_msg_val( msg, md5 )) 	{ /* parses transaction key */
 			LOG(L_ERR, "ERROR: forward_request: char_msg_val failed\n");
-			goto error1;
+			goto error;
 		}
 		msg->hash_index=hash( msg->callid->body, get_cseq(msg)->number);
 		if (!branch_builder( msg->hash_index, 0, md5, id /* 0-th branch */,
 					msg->add_to_branch_s, &msg->add_to_branch_len )) {
 			LOG(L_ERR, "ERROR: forward_request: branch_builder failed\n");
-			goto error1;
+			goto error;
 		}
 	}
 
 	buf = build_req_buf_from_sip_req( msg, &len, send_sock,  proto);
 	if (!buf){
 		LOG(L_ERR, "ERROR: forward_request: building failed\n");
-		goto error1;
+		goto error;
 	}
 	 /* send it! */
 	DBG("Sending:\n%.*s.\n", (int)len, buf);
 	DBG("orig. len=%d, new_len=%d, proto=%d\n", msg->len, len, proto );
 	
-	if (msg_send(send_sock, proto, to, 0, buf, len)<0){
+	if (run_onsend(msg, send_sock, proto, &to, buf, len)==0){
+		LOG(L_INFO, "forward_request: request dropped (onsend_route)\n");
+		STATS_TX_DROPS;
+		goto error; /* error ? */
+	}
+	if (msg_send(send_sock, proto, &to, 0, buf, len)<0){
 		ser_error=E_SEND;
 		p->errors++;
 		p->ok=0;
 		STATS_TX_DROPS;
-		goto error1;
+		goto error;
 	}
 	
 	/* sent requests stats */
 	STATS_TX_REQUEST(  msg->first_line.u.request.method_value );
 	
 	pkg_free(buf);
-	pkg_free(to);
 	/* received_buf & line_buf will be freed in receive_msg by free_lump_list*/
 	return 0;
 
-error1:
-	pkg_free(to);
 error:
 	if (buf) pkg_free(buf);
 	return -1;

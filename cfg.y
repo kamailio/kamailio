@@ -64,6 +64,8 @@
  *             DNS_TRY_IPV6 (andrei)
  * 2005-07-12  default onreply route added (andrei)
  * 2005-11-16  fixed if (cond) cmd; (andrei)
+ * 2005-12-11  added onsend_route support, fcmd (filtered cmd),
+ *             snd_{ip,port,proto,af}, to_{ip,proto} (andrei)
  *
  */
 
@@ -103,6 +105,10 @@
  with no built in alloca, like icc*/
 #undef _ALLOCA_H
 
+#define onsend_check(s) \
+	do{\
+		if (rt!=ONSEND_ROUTE) yyerror( s " allowed only in onsend_routes");\
+	}while(0)
 
 extern int yylex();
 static void yyerror(char* s);
@@ -150,6 +156,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token ROUTE_FAILURE
 %token ROUTE_ONREPLY
 %token ROUTE_BRANCH
+%token ROUTE_SEND
 %token EXEC
 %token SET_HOST
 %token SET_HOSTPORT
@@ -183,6 +190,12 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token SRCPORT
 %token DSTIP
 %token DSTPORT
+%token TOIP
+%token TOPORT
+%token SNDIP
+%token SNDPORT
+%token SNDPROTO
+%token SNDAF
 %token PROTO
 %token AF
 %token MYSELF
@@ -310,7 +323,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 
 /*non-terminals */
 %type <expr> exp exp_elem /*, condition*/
-%type <action> action actions cmd if_cmd stm exp_stm assign_action
+%type <action> action actions cmd fcmd if_cmd stm exp_stm assign_action
 %type <ipaddr> ipv4 ipv6 ipv6addr ip
 %type <ipnet> ipnet
 %type <strval> host
@@ -347,6 +360,7 @@ statement:	assign_stm
 		| {rt=FAILURE_ROUTE;} failure_route_stm
 		| {rt=ONREPLY_ROUTE;} onreply_route_stm
 		| {rt=BRANCH_ROUTE;} branch_route_stm
+		| {rt=ONSEND_ROUTE;}   send_route_stm
 		| CR	/* null statement*/
 	;
 
@@ -896,6 +910,19 @@ branch_route_stm: ROUTE_BRANCH LBRACE actions RBRACE {
 										}
 		| ROUTE_BRANCH error { yyerror("invalid branch_route statement"); }
 	;
+send_route_stm: ROUTE_SEND LBRACE actions RBRACE {
+									push($3, &onsend_rlist[DEFAULT_RT]);
+									}
+			|   ROUTE_SEND LBRACK NUMBER RBRACK LBRACE actions RBRACE {
+									if (($3<ONSEND_RT_NO)&&($3>=1)){
+										push($6, &onsend_rlist[$3]);
+									} else {
+										yyerror("invalid onsend routing"
+												"table number");
+										YYABORT; }
+								}
+			| ROUTE_SEND error { yyerror("invalid onsend_route statement"); }
+	;
 /*
 rules:	rules rule { push($2, &$1); $$=$1; }
 	| rule {$$=$1; }
@@ -963,7 +990,7 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem($2, METHOD_O, 0, STRING_ST, $3);}
 									" == , != or =~ expected");
 					}
 		| SRCPORT intop NUMBER	{ $$=mk_elem($2, SRCPORT_O, 0, NUMBER_ST, (void*)$3 ); }
-                | SRCPORT intop attr_id { $$=mk_elem($2, SRCPORT_O, 0, AVP_ST, (void*)$3 ); }
+		| SRCPORT intop attr_id { $$=mk_elem($2, SRCPORT_O, 0, AVP_ST, (void*)$3 ); }
 		| SRCPORT intop error { $$=0; yyerror("number expected"); }
 		| SRCPORT error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
 
@@ -972,6 +999,24 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem($2, METHOD_O, 0, STRING_ST, $3);}
 		| DSTPORT intop error { $$=0; yyerror("number expected"); }
 		| DSTPORT error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
 
+		| SNDPORT intop NUMBER	{	onsend_check("snd_port");
+									$$=mk_elem($2, SNDPORT_O, 0, NUMBER_ST,
+												(void*)$3 ); }
+		| SNDPORT intop attr_id {	onsend_check("snd_port");
+									$$=mk_elem($2, SNDPORT_O, 0, AVP_ST,
+												(void*)$3 ); }
+		| SNDPORT intop error { $$=0; yyerror("number expected"); }
+		| SNDPORT error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
+
+		| TOPORT intop NUMBER	{	onsend_check("to_port");
+									$$=mk_elem($2, TOPORT_O, 0, NUMBER_ST,
+												(void*)$3 ); }
+		| TOPORT intop attr_id {	onsend_check("to_port");
+									$$=mk_elem($2, TOPORT_O, 0, AVP_ST,
+												(void*)$3 ); }
+		| TOPORT intop error { $$=0; yyerror("number expected"); }
+		| TOPORT error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
+
 		| PROTO intop proto	{ $$=mk_elem($2, PROTO_O, 0, NUMBER_ST, (void*)$3 ); }
 		| PROTO intop attr_id	{ $$=mk_elem($2, PROTO_O, 0, AVP_ST, (void*)$3 ); }
 		| PROTO intop error { $$=0;
@@ -979,10 +1024,30 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem($2, METHOD_O, 0, STRING_ST, $3);}
 							}
 		| PROTO error { $$=0; yyerror("equal/!= operator expected"); }
 
+		| SNDPROTO intop proto	{	onsend_check("snd_proto");
+									$$=mk_elem($2, SNDPROTO_O, 0, NUMBER_ST,
+										(void*)$3 ); }
+		| SNDPROTO intop attr_id {	onsend_check("snd_proto");
+									$$=mk_elem($2, SNDPROTO_O, 0, AVP_ST,
+										(void*)$3 ); }
+		| SNDPROTO intop error { $$=0;
+								yyerror("protocol expected (udp, tcp or tls)");
+							}
+		| SNDPROTO error { $$=0; yyerror("equal/!= operator expected"); }
+
 		| AF intop NUMBER	{ $$=mk_elem($2, AF_O, 0, NUMBER_ST,(void *) $3 ); }
 		| AF intop attr_id	{ $$=mk_elem($2, AF_O, 0, AVP_ST,(void *) $3 ); }
 		| AF intop error { $$=0; yyerror("number expected"); }
 		| AF error { $$=0; yyerror("equal/!= operator expected"); }
+
+		| SNDAF intop NUMBER	{	onsend_check("snd_af");
+									$$=mk_elem($2, SNDAF_O, 0, NUMBER_ST,
+										(void *) $3 ); }
+		| SNDAF intop attr_id	{	onsend_check("snd_af");
+									$$=mk_elem($2, SNDAF_O, 0, AVP_ST,
+										(void *) $3 ); }
+		| SNDAF intop error { $$=0; yyerror("number expected"); }
+		| SNDAF error { $$=0; yyerror("equal/!= operator expected"); }
 
 		| MSGLEN intop NUMBER	{ $$=mk_elem($2, MSGLEN_O, 0, NUMBER_ST, (void *) $3 ); }
 		| MSGLEN intop attr_id	{ $$=mk_elem($2, MSGLEN_O, 0, AVP_ST, (void *) $3 ); }
@@ -1040,6 +1105,58 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem($2, METHOD_O, 0, STRING_ST, $3);}
 						 			"expected" ); }
 		| DSTIP error { $$=0; 
 						yyerror("invalid operator, ==, != or =~ expected");}
+		| SNDIP equalop ipnet	{ onsend_check("snd_ip");
+									$$=mk_elem($2, SNDIP_O, 0, NET_ST, $3); }
+		| SNDIP strop STRING	{	onsend_check("snd_ip");
+									s_tmp.s=$3;
+									s_tmp.len=strlen($3);
+									ip_tmp=str2ip(&s_tmp);
+									if (ip_tmp==0)
+										ip_tmp=str2ip6(&s_tmp);
+									if (ip_tmp){
+										$$=mk_elem(	$2, SNDIP_O, 0, NET_ST,
+												mk_net_bitlen(ip_tmp, 
+														ip_tmp->len*8) );
+									}else{
+										$$=mk_elem(	$2, SNDIP_O, 0, STRING_ST,
+												$3);
+									}
+								}
+		| SNDIP strop host	{ 	onsend_check("snd_ip");
+								$$=mk_elem(	$2, SNDIP_O, 0, STRING_ST, $3); }
+		| SNDIP equalop MYSELF  {	onsend_check("snd_ip");
+									$$=mk_elem(	$2, SNDIP_O, 0, MYSELF_ST, 0);
+								}
+		| SNDIP strop error { $$=0; yyerror( "ip address or hostname"
+						 "expected" ); }
+		| SNDIP error  { $$=0; 
+						 yyerror("invalid operator, ==, != or =~ expected");}
+		| TOIP equalop ipnet	{ onsend_check("to_ip");
+									$$=mk_elem($2, TOIP_O, 0, NET_ST, $3); }
+		| TOIP strop STRING	{	onsend_check("to_ip");
+									s_tmp.s=$3;
+									s_tmp.len=strlen($3);
+									ip_tmp=str2ip(&s_tmp);
+									if (ip_tmp==0)
+										ip_tmp=str2ip6(&s_tmp);
+									if (ip_tmp){
+										$$=mk_elem(	$2, TOIP_O, 0, NET_ST,
+												mk_net_bitlen(ip_tmp, 
+														ip_tmp->len*8) );
+									}else{
+										$$=mk_elem(	$2, TOIP_O, 0, STRING_ST,
+												$3);
+									}
+								}
+		| TOIP strop host	{ 	onsend_check("to_ip");
+								$$=mk_elem(	$2, TOIP_O, 0, STRING_ST, $3); }
+		| TOIP equalop MYSELF  {	onsend_check("to_ip");
+									$$=mk_elem(	$2, TOIP_O, 0, MYSELF_ST, 0);
+								}
+		| TOIP strop error { $$=0; yyerror( "ip address or hostname"
+						 "expected" ); }
+		| TOIP error  { $$=0; 
+						 yyerror("invalid operator, ==, != or =~ expected");}
 
 		| MYSELF equalop uri_type	{ $$=mk_elem(	$2, $3, 0, MYSELF_ST,
 												       0);
@@ -1047,8 +1164,14 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem($2, METHOD_O, 0, STRING_ST, $3);}
 		| MYSELF equalop SRCIP  { $$=mk_elem(	$2, SRCIP_O, 0, MYSELF_ST,
 												0);
 								}
-                | MYSELF equalop DSTIP  { $$=mk_elem(	$2, DSTIP_O, 0, MYSELF_ST,
-							0);
+		| MYSELF equalop DSTIP  { $$=mk_elem(	$2, DSTIP_O, 0, MYSELF_ST,
+												0);
+								}
+		| MYSELF equalop SNDIP  {	onsend_check("snd_ip");
+									$$=mk_elem(	$2, SNDIP_O, 0, MYSELF_ST, 0);
+								}
+		| MYSELF equalop TOIP  {	onsend_check("to_ip");
+									$$=mk_elem(	$2, TOIP_O, 0, MYSELF_ST, 0);
 								}
 		| MYSELF equalop error {	$$=0; 
 									yyerror(" URI, SRCIP or DSTIP expected"); }
@@ -1058,11 +1181,11 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem($2, METHOD_O, 0, STRING_ST, $3);}
 		| exp_stm			{ $$=mk_elem( NO_OP, ACTION_O, 0, ACTIONS_ST, $1);  }
 		| NUMBER		{$$=mk_elem( NO_OP, NUMBER_O, 0, NUMBER_ST, (void*)$1 ); }
 
-		| attr_id		{$$=mk_elem( NO_OP, AVP_ST, (void*)$1, 0, 0); }
-		| attr_id strop STRING	{$$=mk_elem( $2, AVP_ST, (void*)$1, STRING_ST, $3); }
-		| attr_id intop NUMBER	{$$=mk_elem( $2, AVP_ST, (void*)$1, NUMBER_ST, (void*)$3); }
-		| attr_id binop NUMBER	{$$=mk_elem( $2, AVP_ST, (void*)$1, NUMBER_ST, (void*)$3); }
-                | attr_id strop attr_id {$$=mk_elem( $2, AVP_ST, (void*)$1, AVP_ST, (void*)$3); }
+		| attr_id		{$$=mk_elem( NO_OP, AVP_O, (void*)$1, 0, 0); }
+		| attr_id strop STRING	{$$=mk_elem( $2, AVP_O, (void*)$1, STRING_ST, $3); }
+		| attr_id intop NUMBER	{$$=mk_elem( $2, AVP_O, (void*)$1, NUMBER_ST, (void*)$3); }
+		| attr_id binop NUMBER	{$$=mk_elem( $2, AVP_O, (void*)$1, NUMBER_ST, (void*)$3); }
+		| attr_id strop attr_id {$$=mk_elem( $2, AVP_O, (void*)$1, AVP_ST, (void*)$3); }
 ;
 
 
@@ -1106,8 +1229,33 @@ host:	ID				{ $$=$1; }
 	| host DOT error { $$=0; pkg_free($1); yyerror("invalid hostname"); }
 	;
 
+/* filtered cmd */
+fcmd:	cmd	{ /* check if allowed */
+				if (rt==ONSEND_ROUTE){
+					switch($1->type){
+						case DROP_T:
+						case SEND_T:
+						case SEND_TCP_T:
+						case LOG_T:
+						case SETFLAG_T:
+						case RESETFLAG_T:
+						case ISFLAGSET_T:
+						case IF_T:
+						case MODULE_T:
+							$$=$1;
+							break;
+						default:
+							$$=0;
+							yyerror("command not allowed in onsend_route\n");
+					}
+				}else{
+					$$=$1;
+				}
+			}
+	;
 
-exp_stm:	cmd						{ $$=$1; }
+
+exp_stm:	fcmd						{ $$=$1; }
 		|	if_cmd					{ $$=$1; }
                 |       assign_action { $$ = $1; }
 		|	LBRACE actions RBRACE	{ $$=$2; }
@@ -1122,11 +1270,11 @@ actions:	actions action	{$$=append_action($1, $2); }
 		| actions error { $$=0; yyerror("bad command"); }
 	;
 
-action:		cmd SEMICOLON {$$=$1;}
+action:		fcmd SEMICOLON {$$=$1;}
 		| if_cmd {$$=$1;}
 		| assign_action SEMICOLON {$$=$1;}
 		| SEMICOLON /* null action */ {$$=0;}
-		| cmd error { $$=0; yyerror("bad command: missing ';'?"); }
+		| fcmd error { $$=0; yyerror("bad command: missing ';'?"); }
 	;
 
 if_cmd:		IF exp stm				{ $$=mk_action3( IF_T,
@@ -1197,7 +1345,7 @@ assign_op : ADDEQ { $$ = ADD_T; }
 
 assign_action:   attr_id assign_op STRING  { $$=mk_action($2, AVP_ST, STRING_ST, $1, $3); }
                | attr_id assign_op NUMBER  { $$=mk_action($2, AVP_ST, NUMBER_ST, $1, (void*)$3); }
-               | attr_id assign_op cmd     { $$=mk_action($2, AVP_ST, ACTION_ST, $1, $3); }
+               | attr_id assign_op fcmd    { $$=mk_action($2, AVP_ST, ACTION_ST, $1, $3); }
                | attr_id assign_op attr_id { $$=mk_action($2, AVP_ST, AVP_ST, $1, $3); }
                | attr_id assign_op LPAREN exp RPAREN { $$ = mk_action($2, AVP_ST, EXPR_ST, $1, $4); }
 ;

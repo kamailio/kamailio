@@ -42,6 +42,8 @@
  *  2004-02-13  t->is_invite and t->local replaced with flags (bogdan)
  *  2005-02-16  fr_*_timer acceps full AVP specifications; empty AVP
  *              desable variable timer feature (bogdan)
+ *  2005-12-11  t_relay doesn't return 0 (stop script) on send error 
+ *              anymore (andrei)
  */
 
 #include <limits.h>
@@ -270,7 +272,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 			  	script */
 				DBG("ERROR: generation of a stateful reply "
 					"on error succeeded\n");
-				ret=0;
+				/*ret=0; -- we don't want to stop the script */
 			}  else {
 				DBG("ERROR: generation of a stateful reply "
 					"on error failed\n");

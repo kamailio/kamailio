@@ -66,6 +66,7 @@
 #include "parser/parse_from.h"
 #include "parser/parse_to.h"
 #include "mem/mem.h"
+#include "onsend.h"
 
 
 /* main routing script table  */
@@ -74,6 +75,7 @@ struct action* rlist[RT_NO];
 struct action* onreply_rlist[ONREPLY_RT_NO];
 struct action* failure_rlist[FAILURE_RT_NO];
 struct action* branch_rlist[BRANCH_RT_NO];
+struct action* onsend_rlist[ONSEND_RT_NO];
 
 static int fix_actions(struct action* a); /*fwd declaration*/
 
@@ -643,6 +645,8 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 {
 	struct sip_uri uri;
 	int ret;
+	struct onsend_info* snd_inf;
+	struct ip_addr ip;
 	ret=E_BUG;
 	
 	if (e->type!=ELEM_T){
@@ -727,6 +731,25 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 	case DSTIP_O:
 		ret=comp_ip(e->op, &msg->rcv.dst_ip, e->r_type, &e->r);
 		break;
+	
+	case SNDIP_O:
+		snd_inf=get_onsend_info();
+		if (snd_inf && snd_inf->send_sock){
+			ret=comp_ip(e->op, &snd_inf->send_sock->address, e->r_type, &e->r);
+		}else{
+			BUG("eval_elem: snd_ip unknown (not in a onsend_route?)\n");
+		}
+		break;
+	
+	case TOIP_O:
+		snd_inf=get_onsend_info();
+		if (snd_inf && snd_inf->to){
+			su2ip_addr(&ip, snd_inf->to);
+			ret=comp_ip(e->op, &ip, e->r_type, &e->r);
+		}else{
+			BUG("eval_elem: to_ip unknown (not in a onsend_route?)\n");
+		}
+		break;
 
 	case NUMBER_O:
 		ret=!(!e->r.intval); /* !! to transform it in {0,1} */
@@ -748,22 +771,67 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 			     e->r_type, &e->r);
 		break;
 		
+	case SNDPORT_O:
+		snd_inf=get_onsend_info();
+		if (snd_inf && snd_inf->send_sock){
+			ret=comp_num(e->op, (int)snd_inf->send_sock->port_no, 
+				     e->r_type, &e->r);
+		}else{
+			BUG("eval_elem: snd_port unknown (not in a onsend_route?)\n");
+		}
+		break;
+		
+	case TOPORT_O:
+		snd_inf=get_onsend_info();
+		if (snd_inf && snd_inf->to){
+			ret=comp_num(e->op, (int)su_getport(snd_inf->to), 
+				     e->r_type, &e->r);
+		}else{
+			BUG("eval_elem: to_port unknown (not in a onsend_route?)\n");
+		}
+		break;
+		
 	case PROTO_O:
 		ret=comp_num(e->op, msg->rcv.proto, 
 			     e->r_type, &e->r);
+		break;
+		
+	case SNDPROTO_O:
+		snd_inf=get_onsend_info();
+		if (snd_inf && snd_inf->send_sock){
+			ret=comp_num(e->op, snd_inf->send_sock->proto, 
+				     e->r_type, &e->r);
+		}else{
+			BUG("eval_elem: snd_proto unknown (not in a onsend_route?)\n");
+		}
 		break;
 		
 	case AF_O:
 		ret=comp_num(e->op, (int)msg->rcv.src_ip.af, 
 			     e->r_type, &e->r);
 		break;
-
-	case MSGLEN_O:
-		ret=comp_num(e->op, (int)msg->len, 
-				e->r_type, &e->r);
+		
+	case SNDAF_O:
+		snd_inf=get_onsend_info();
+		if (snd_inf && snd_inf->send_sock){
+			ret=comp_num(e->op, snd_inf->send_sock->address.af,
+							e->r_type, &e->r);
+		}else{
+			BUG("eval_elem: snd_af unknown (not in a onsend_route?)\n");
+		}
 		break;
 
-	case AVP_ST:
+	case MSGLEN_O:
+		if ((snd_inf=get_onsend_info())!=0){
+			ret=comp_num(e->op, (int)snd_inf->len, 
+					e->r_type, &e->r);
+		}else{
+			ret=comp_num(e->op, (int)msg->len, 
+					e->r_type, &e->r);
+		}
+		break;
+
+	case AVP_O:
 		ret = comp_avp(e->op, e->l.attr, e->r_type, &e->r);
 		break;
 		
@@ -887,6 +955,13 @@ int fix_rls()
 	for(i=0;i<BRANCH_RT_NO;i++){
 		if(branch_rlist[i]){
 			if ((ret=fix_actions(branch_rlist[i]))!=0){
+				return ret;
+			}
+		}
+	}
+	for(i=0;i<ONSEND_RT_NO;i++){
+		if(onsend_rlist[i]){
+			if ((ret=fix_actions(onsend_rlist[i]))!=0){
 				return ret;
 			}
 		}

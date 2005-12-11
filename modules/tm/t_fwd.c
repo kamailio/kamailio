@@ -44,6 +44,7 @@
  *  2004-02-13: t->is_invite and t->local replaced with flags (bogdan)
  *  2005-08-04  msg->parsed_uri and parsed_uri_ok are no saved & restored
  *               before & after handling the branches (andrei)
+ *  2005-12-11  onsend_route support added for forwarding (andrei)
  */
 
 #include "defs.h"
@@ -60,6 +61,7 @@
 #include "../../dset.h"
 #include "../../action.h"
 #include "../../data_lump.h"
+#include "../../onsend.h"
 #include "t_funcs.h"
 #include "t_hooks.h"
 #include "t_msgbuilder.h"
@@ -551,6 +553,13 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	success_branch=0;
 	for (i=first_branch; i<t->nr_of_outgoings; i++) {
 		if (added_branches & (1<<i)) {
+			if (run_onsend(p_msg,	t->uac[i].request.dst.send_sock,
+									t->uac[i].request.dst.proto,
+									&t->uac[i].request.dst.to,
+									t->uac[i].request.buffer,
+									t->uac[i].request.buffer_len)==0)
+				continue; /* if onsend drop, try next branch */
+			
 			if (SEND_BUFFER( &t->uac[i].request)==-1) {
 				LOG(L_ERR, "ERROR: t_forward_nonack: sending request failed\n");
 				if (proxy) { proxy->errors++; proxy->ok=0; }

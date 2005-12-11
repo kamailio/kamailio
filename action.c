@@ -57,6 +57,7 @@
 #include "mem/mem.h"
 #include "globals.h"
 #include "dset.h"
+#include "onsend.h"
 #ifdef USE_TCP
 #include "tcp_server.h"
 #endif
@@ -73,6 +74,8 @@
 #include <dmalloc.h>
 #endif
 
+
+struct onsend_info* p_onsend=0; /* onsend route send info */
 
 /* ret= 0! if action -> end of list(e.g DROP), 
       > 0 to continue processing next actions
@@ -241,13 +244,20 @@ int do_action(struct action* a, struct sip_msg* msg)
 			ret=hostent2su(	to, &p->host, p->addr_idx,
 						(p->port)?p->port:SIP_PORT );
 			if (ret==0){
+				if (p_onsend){
+					tmp=p_onsend->buf;
+					len=p_onsend->len;
+				}else{
+					tmp=msg->buf;
+					len=msg->len;
+				}
 				p->tx++;
-				p->tx_bytes+=msg->len;
+				p->tx_bytes+=len;
 				if (a->type==SEND_T){
 					/*udp*/
 					send_sock=get_send_socket(msg, to, PROTO_UDP);
 					if (send_sock!=0){
-						ret=udp_send(send_sock, msg->buf, msg->len, to);
+						ret=udp_send(send_sock, tmp, len, to);
 					}else{
 						ret=-1;
 					}
@@ -255,7 +265,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 #ifdef USE_TCP
 					else{
 					/*tcp*/
-					ret=tcp_send(PROTO_TCP, msg->buf, msg->len, to, 0);
+					ret=tcp_send(PROTO_TCP, tmp, len, to, 0);
 				}
 #endif
 			}
@@ -743,9 +753,8 @@ int do_action(struct action* a, struct sip_msg* msg)
 				break;
 			}
 
-			     /* If the action is assign then remove the old avp value before adding
-			      * new ones
-			      */
+			/* If the action is assign then remove the old avp value
+			 * before adding new ones */
 			if ((unsigned char)a->type == ASSIGN_T) delete_avp(flags, name);
 			if (add_avp(flags, name, value) < 0) {
 				LOG(L_CRIT, "ERROR: Failed to assign value to attribute\n");

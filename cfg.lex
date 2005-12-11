@@ -56,6 +56,8 @@
  *               tcp_max_connections (andrei)
  *  2005-07-11  added dns_retr_{time,no}, dns_servers_no, dns_use_search_list,
  *              dns_try_ipv6 (andrei)
+ *  2005-12-11  added onsend_route, snd_{ip,port,proto,af},
+ *              to_{ip,port} (andrei)
  */
 
 
@@ -115,6 +117,7 @@ ROUTE	route
 ROUTE_FAILURE failure_route
 ROUTE_ONREPLY onreply_route
 ROUTE_BRANCH branch_route
+ROUTE_SEND onsend_route
 EXEC	exec
 FORCE_RPORT		"force_rport"|"add_rport"
 FORCE_TCP_ALIAS		"force_tcp_alias"|"add_tcp_alias"
@@ -158,6 +161,12 @@ SRCIP	src_ip
 SRCPORT	src_port
 DSTIP	dst_ip
 DSTPORT	dst_port
+SNDIP	snd_ip
+SNDPORT	snd_port
+SNDPROTO	snd_proto|to_proto
+SNDAF		snd_af|to_af
+TOIP	to_ip
+TOPORT	to_port
 PROTO	proto
 AF		af
 MYSELF	myself
@@ -328,6 +337,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{ROUTE_FAILURE}	{ count(); yylval.strval=yytext;
 								return ROUTE_FAILURE; }
 <INITIAL>{ROUTE_BRANCH} { count(); yylval.strval=yytext; return ROUTE_BRANCH; }
+<INITIAL>{ROUTE_SEND} { count(); yylval.strval=yytext; return ROUTE_SEND; }
 <INITIAL>{EXEC}	{ count(); yylval.strval=yytext; return EXEC; }
 <INITIAL>{SET_HOST}	{ count(); yylval.strval=yytext; return SET_HOST; }
 <INITIAL>{SET_HOSTPORT}	{ count(); yylval.strval=yytext; return SET_HOSTPORT; }
@@ -367,6 +377,12 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{SRCPORT}	{ count(); yylval.strval=yytext; return SRCPORT; }
 <INITIAL>{DSTIP}	{ count(); yylval.strval=yytext; return DSTIP; }
 <INITIAL>{DSTPORT}	{ count(); yylval.strval=yytext; return DSTPORT; }
+<INITIAL>{SNDIP}	{ count(); yylval.strval=yytext; return SNDIP; }
+<INITIAL>{SNDPORT}	{ count(); yylval.strval=yytext; return SNDPORT; }
+<INITIAL>{SNDPROTO}	{ count(); yylval.strval=yytext; return SNDPROTO; }
+<INITIAL>{SNDAF}	{ count(); yylval.strval=yytext; return SNDAF; }
+<INITIAL>{TOIP}		{ count(); yylval.strval=yytext; return TOIP; }
+<INITIAL>{TOPORT}	{ count(); yylval.strval=yytext; return TOPORT; }
 <INITIAL>{PROTO}	{ count(); yylval.strval=yytext; return PROTO; }
 <INITIAL>{AF}	{ count(); yylval.strval=yytext; return AF; }
 <INITIAL>{MYSELF}	{ count(); yylval.strval=yytext; return MYSELF; }

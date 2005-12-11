@@ -34,8 +34,41 @@ modules:
                          changing the transaction timer from script, even if
                          the transaction was already created (see tm docs for
                          more).
+            - t_relay will not stop script execution anymore in case of
+              send error
+ - textops  - search() can be used in the onsend_route where it will search
+              on the "new" message (after applying all script changes, adding
+              Vias a.s.o) and not on the original message
  
 core:
+ - onsend_route added: special route executed before a request is sent.
+                       Only a limited number of commands are allowed (drop, if
+                       + all the checks, msg flag manipulations, send(), log(),
+                       textops::search()). In this route the final destination
+                       of the message is available an can be checked (with
+                       snd_ip, snd_port, to_ip, to_port, snd_proto, snd_af).
+                       This route is executed only when forwarding requests.
+                       It's not executed for replies, retransmissions, or
+                       locally generated messages (e.g. via fifo uac).
+      short example:
+            onsend_route{  if(to_ip==1.2.3.4 && !isflagset(12)){
+                              log(1, "message blocked\n");
+                              drop;
+                           }
+                         }
+ - onsend_route specific checks:
+     - snd_ip, snd_port - behave like src_ip/src_port, but contain the
+       ip/port ser will use to send the message
+     - to_ip, to_port - like above, but contain the ip/port the message will
+       be sent to (not to be confused with dst_ip/dst-port, which are the
+       destination of the original message: ser's ip and port on which the
+       message was received)
+     - snd_proto, snd_af - behave like proto/af but contain the 
+       protocol/address family that ser will use to send the message
+     - msg:len - when used in an onsend_route, msg:len will contain the length
+       of the message on the wire (after all the changes in the script are
+       applied, Vias are added a.s.o) and not the lentgh of the original 
+       message
  - timer: - improved performance/precision, new api, see doc/timers.txt 
  - tcp: - improved  performance (io event handling), using OS specific
            optimizations
@@ -368,33 +401,33 @@ actual workload (malloc is a little bit faster now)
 New features
 =============
 - RFC3261 support
-	- TCP support and cross-transport forwarding [core]
-	- loose routing support [rr module]
+    - TCP support and cross-transport forwarding [core]
+    - loose routing support [rr module]
 - New modules
-	- vm -- voicemail interface [vm]
-	- ENUM support [enum]
-	- presence agent [pa]
-	- dynamic domain management -- allows to manipulate 
-	  hosting of multiple domains in run-time [module]
-	- flat-text-file database support [dbtext]
-	- rich access control lists [permissions]
+    - vm -- voicemail interface [vm]
+    - ENUM support [enum]
+    - presence agent [pa]
+    - dynamic domain management -- allows to manipulate 
+      hosting of multiple domains in run-time [module]
+    - flat-text-file database support [dbtext]
+    - rich access control lists [permissions]
 - Feature Improvements
-	- click-to-dial, which is based on improved tm/FIFO 
-	  that better supports external applications [tm module]
-	- web accounting -- acc module can report to serweb
-  	  on placed calls [acc module]
-	- improved exec module (header fields passed now
+    - click-to-dial, which is based on improved tm/FIFO 
+      that better supports external applications [tm module]
+    - web accounting -- acc module can report to serweb
+        on placed calls [acc module]
+    - improved exec module (header fields passed now
       as environment variables to scripts) [exec module]
 - Architectural Improvements
-	- powerpc fast locking support
-	- netbsd support
-	- 64 bits arch. support (e.g. netbsd/sparc64).
+    - powerpc fast locking support
+    - netbsd support
+    - 64 bits arch. support (e.g. netbsd/sparc64).
 - New Experimental Features (not tested at all yet)
-	- nathelper utility for Cisco/ATA NAT traversal [nathelper]
-	- another NAT traversal utility [mangler]
-	- postgress support [postgress]
-	- fcp module [fcp]
-	- pdt module (prefix2domain) [pdt]
+    - nathelper utility for Cisco/ATA NAT traversal [nathelper]
+    - another NAT traversal utility [mangler]
+    - postgress support [postgress]
+    - fcp module [fcp]
+    - pdt module (prefix2domain) [pdt]
 
 Changes to use of ser scripts
 =============================
