@@ -70,6 +70,7 @@
 #include "../../mem/mem.h"
 #include "../../re.h"
 #include "../../parser/parse_uri.h"
+#include "../../onsend.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -112,7 +113,7 @@ static int mod_init(void);
 
 static cmd_export_t cmds[]={
 	{"search",           search_f,          1, fixup_regex_1, 
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE}, 
 	{"search_append",    search_append_f,   2, fixup_regex_1, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
 	{"replace",          replace_f,         2, fixup_regex_1, 
@@ -171,8 +172,15 @@ static int search_f(struct sip_msg* msg, char* key, char* str2)
 {
 	/*we registered only 1 param, so we ignore str2*/
 	regmatch_t pmatch;
-
-	if (regexec((regex_t*) key, msg->buf, 1, &pmatch, 0)!=0) return -1;
+	char* buf;
+	struct onsend_info* snd_inf;
+	
+	if ((snd_inf=get_onsend_info())!=0)
+		buf=snd_inf->buf;
+	else
+		buf=msg->buf;
+	
+	if (regexec((regex_t*) key, buf, 1, &pmatch, 0)!=0) return -1;
 	return 1;
 }
 
