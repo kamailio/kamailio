@@ -57,6 +57,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	ucontact_t* ptr;
 	int res;
 	int bflags;
+	int ret;
 
 	if (_m->new_uri.s) uri = _m->new_uri;
 	else uri = _m->first_line.u.request.uri;
@@ -83,21 +84,15 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	}
 
 	ptr = r->contacts;
+	ret = -1;
 	/* look first first un-expired and suported contact */
-	while ( (ptr) && !VALID_CONTACT(ptr, act_time) )
+	while ( (ptr) &&
+	!(VALID_CONTACT(ptr,act_time) && (ret=-2) && supported_method(_m,ptr)))
 		ptr = ptr->next;
 	if (ptr==0) {
-		/* All contacts expired -> not found */
+		/* nothing found */
 		ul.unlock_udomain((udomain_t*)_t);
-		return -1;
-	}
-
-	while ( (ptr) && !supported_method(_m, ptr) )
-		ptr = ptr->next;
-	if (ptr==0) {
-		/* no contact with supported method */
-		ul.unlock_udomain((udomain_t*)_t);
-		return -2;
+		return ret;
 	}
 
 	if (ptr) {
