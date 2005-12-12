@@ -5,17 +5,16 @@
 <section id="rls.functions"><title>Functions</title>
 <variablelist>
 <varlistentry>
-	<term><varname>handle_rls_subscription(xcap_root,
-	create_error_response)</varname></term>
+	<term><varname>handle_rls_subscription(create_error_response)</varname></term>
 	<listitem>
 		<para>Handle subscription to resource list uri.</para>
 			<variablelist><title>Parameters:</title>
-			<varlistentry>
+<!--			<varlistentry>
 				<term>xcap_root (string)</term>
 				<listitem><para>String representing XCAP root for resource
 				lists. For example <quote>http://localhost/xcap-root</quote>.
 				</para></listitem>
-			</varlistentry>
+			</varlistentry>-->
 			<varlistentry>
 				<term>create_error_response (integer)</term>
 				<listitem><para>If set to 0 error responses are not sent
@@ -32,7 +31,7 @@ if (method=="SUBSCRIBE") {
 		sl_reply_error();
 	};
 	
-	if (!handle_rls_subscription("http://localhost/xcap-root", "0")) {
+	if (!handle_rls_subscription("0")) {
 		# message is not for RLS but for PA ?			
 		log(1, "SUBSCRIBE not handled by RLS");
 		handle_subscription("registrar");

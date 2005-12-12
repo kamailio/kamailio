@@ -384,7 +384,7 @@ static int get_accepted_mime_type_idx(int *accepts_mimes, event_mimetypes_t *em)
 		/* try find "preferred" mime type */
 		i = 0;
 		while ((mt = em->mimes[i]) != 0) {
-			TRACE_LOG("searching for %x\n", mt);
+			/* TRACE_LOG("searching for %x\n", mt); */
 			if (find_mime(accepts_mimes, mt) >= 0) return i;
 			i++;
 		}

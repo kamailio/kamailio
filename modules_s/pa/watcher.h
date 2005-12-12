@@ -37,8 +37,6 @@
 #include <stdio.h>
 #include <time.h>
 
-#define MIMETYPE(x_,y_) ((TYPE_##x_ << 16) | (SUBTYPE_##y_))
-
 #define DOC_XPIDF        MIMETYPE(APPLICATION,XPIDFXML)
 #define DOC_LPIDF        MIMETYPE(APPLICATION,LPIDFXML)
 #define DOC_PIDF         MIMETYPE(APPLICATION,PIDFXML)

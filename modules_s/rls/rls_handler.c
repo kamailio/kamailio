@@ -14,6 +14,7 @@
 #include "../../parser/parse_expires.h"
 #include "../../parser/parse_event.h"
 #include "../../parser/parse_expires.h"
+#include "../../parser/parse_content.h"
 #include "../../data_lump_rpl.h"
 
 
@@ -28,8 +29,9 @@ static int send_reply(struct sip_msg* _m, int code, char *msg)
 
 static int parse_rls_headers(struct sip_msg* _m)
 {
-	if ( (parse_headers(_m, HDR_FROM_T | HDR_TO_T | HDR_EXPIRES_T | 
-					HDR_CALLID_T | HDR_EVENT_T | HDR_ACCEPT_T, 0) == -1) || 
+	struct hdr_field *acc;
+
+	if ( (parse_headers(_m, HDR_EOH_T, 0) == -1) ||  /* we need all Accept headers... */
 			(_m->from==0)||(_m->to==0)||(_m->event==0) ) {
 		LOG(L_ERR, "parse_rls_headers(): Error while parsing headers\n");
 		return -1;
@@ -61,12 +63,17 @@ static int parse_rls_headers(struct sip_msg* _m)
 		
 	}
 	
-	/*if (_m->accept) {
-		if (parse_accept(_m->accept, &acc) < 0) {
-			LOG(L_ERR, "parse_rls_headers(): Error while parsing Accept header field\n");
-			return -1;
+	acc = _m->accept;
+	while (acc) { /* parse all accept headers */
+		if (acc->type == HDR_ACCEPT_T) {
+			/* DEBUG_LOG("parsing accept header: %.*s\n", FMT_STR(acc->body)); */
+			if (parse_accept_body(acc) < 0) {
+				LOG(L_ERR, "parse_rls_headers(): Error while parsing Accept header field\n");
+				return -1;
+			}
 		}
-	}*/
+		acc = acc->next;
+	}
 
 	return 0;
 }
@@ -108,6 +115,69 @@ static int add_response_min_expires_header(struct sip_msg *_m)
 	char tmp[64];
 	sprintf(tmp, "Min-Expires: %d\r\n", rls_min_expiration);
 	if (!add_lump_rpl(_m, tmp, strlen(tmp), LUMP_RPL_HDR)) return -1;
+	return 0;
+}
+
+struct accepted_types {
+	char *mime_txt;
+	int mime;
+	int needed;
+	int found;
+};
+
+/* marks mime_type as found */
+void mark_accepted_type(struct accepted_types *types, int mime_type)
+{
+	int i;
+	for (i = 0; types[i].mime_txt; i++) 
+		if (mime_type == types[i].mime) types[i].found = 1;
+}
+
+static int check_message(struct sip_msg *_m, int send_err)
+{
+	int *accepts_mimes = NULL;
+	int i;
+	struct hdr_field *acc;
+	struct accepted_types accepts[] = {
+		{ "multipart/related", MIMETYPE(MULTIPART,RELATED), 1, 0 },
+		{ "application/rlmi+xml", MIMETYPE(APPLICATION,RLMIXML), 1, 0 },
+		{ "application/pidf+xml", MIMETYPE(APPLICATION, PIDFXML), 1, 0 },
+		{ NULL, 0, 0, 0 } 
+	};
+	
+	if (verify_event_package(_m) != 0) { 
+		LOG(L_INFO, "handle_rls_subscription(): unsupported events.\n");
+		/* allow only selected packages independently on rls document */
+		if (send_err) {
+			add_response_header(_m, "Allow-Events: presence\r\n");
+			send_reply(_m, 489, "Bad Event");
+		}
+		return -1;
+	}
+
+	/* verify Accept: multipart/related, application/rlmi+xml, application/pidf+xml */
+	acc = _m->accept;
+	while (acc) { /* go through all Accept headers */
+		if (acc->type == HDR_ACCEPT_T) {
+			/* it MUST be parsed from parse_hdr !!! */
+			accepts_mimes = acc->parsed;
+
+			/* go through all in accept mimes and test our */
+			for (i = 0; accepts_mimes[i]; i++) 
+				mark_accepted_type(accepts, accepts_mimes[i]);
+		}
+		acc = acc->next;
+	}
+	for (i = 0; accepts[i].mime_txt; i++) 
+		if ((!accepts[i].found) && (accepts[i].needed)) {
+			if (send_err) 
+				LOG(L_ERR, "required type %s not in Accept headers\n", 
+					accepts[i].mime_txt);
+			return -1;
+		}
+
+	/* verify Supported: eventlist */
+	
 	return 0;
 }
 
@@ -270,10 +340,11 @@ static int handle_renew_subscription(struct sip_msg *m, int send_error_responses
 	return 0;
 }
 
-int handle_rls_subscription(struct sip_msg* _m, const char *xcap_server, char *send_bad_resp)
+int handle_rls_subscription(struct sip_msg* _m, /*const char *xcap_server,*/ char *send_bad_resp)
 {
 	int res;
 	int send_err = 1;
+	char *xcap_server = rls_xcap_root;
 
 	if (!xcap_server) {
 		LOG(L_ERR, "handle_rls_subscription(): No XCAP server given!\n");
@@ -293,13 +364,7 @@ int handle_rls_subscription(struct sip_msg* _m, const char *xcap_server, char *s
 		}
 		return -1;
 	}
-	if (verify_event_package(_m) != 0) { 
-		LOG(L_INFO, "handle_rls_subscription(): unsupported events.\n");
-		/* allow only selected packages independently on rls document */
-		if (send_err) {
-			add_response_header(_m, "Allow-Events: presence\r\n");
-			send_reply(_m, 489, "Bad Event");
-		}
+	if (check_message(_m, send_err) != 0) {
 		return -1;
 	}
 	if (has_to_tag(_m)) {

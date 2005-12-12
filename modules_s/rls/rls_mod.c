@@ -30,6 +30,8 @@ static int rls_subscribe_fixup(void** param, int param_no);
 char *auth_type_str = NULL; /* type of authorization: none,implicit,xcap */
 char *auth_xcap_root = NULL;	/* must be set if xcap authorization */
 
+char *rls_xcap_root = NULL;	/* must be set if xcap authorization */
+
 int db_mode = 0; /* 0 -> no DB, 1 -> write through */
 char *db_url = NULL;
 
@@ -41,7 +43,7 @@ int reduce_xcap_needs = 0;
 /** Exported functions */
 static cmd_export_t cmds[]={
 	/* {"handle_r_subscription", handle_r_subscription, 0, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE}, */
-	{"handle_rls_subscription", (cmd_function)handle_rls_subscription, 2, 
+	{"handle_rls_subscription", (cmd_function)handle_rls_subscription, 1, 
 		rls_subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
@@ -57,6 +59,7 @@ static param_export_t params[]={
 	{"db_url", STR_PARAM, &db_url },
 	{"mode", STR_PARAM, &rls_mode_str },
 	{"reduce_xcap_needs", INT_PARAM, &reduce_xcap_needs },
+	{"xcap_root", STR_PARAM, &rls_xcap_root }, /* xcap root settings - only one XCAP root allowed !!! */
 	{0, 0, 0}
 };
 
@@ -79,11 +82,12 @@ int rls_min_expiration = 60;
 int rls_max_expiration = 7200;
 int rls_default_expiration = 3761;
 rls_auth_params_t rls_auth_params;	/* structure filled according to parameters (common for all XCAP servers now) */
+char *xcap_server = NULL; /* XCAP server URI */
 
 /* TODO: settings of other xcap parameters (auth, ssl, ...) */
 
 /* internal data members */
-static ptr_vector_t *xcap_servers = NULL;
+/* static ptr_vector_t *xcap_servers = NULL; */
 db_con_t* rls_db = NULL; /* database connection handle */
 db_func_t rls_dbf;	/* database functions */
 
@@ -198,12 +202,17 @@ int rls_mod_init(void)
 		return -1;
 	}
 
-	xcap_servers = (ptr_vector_t*)shm_malloc(sizeof(ptr_vector_t));
+/*	xcap_servers = (ptr_vector_t*)shm_malloc(sizeof(ptr_vector_t));
 	if (!xcap_servers) {
 		LOG(L_ERR, "rls_mod_init(): can't allocate memory for XCAP servers vector\n");
 		return -1;
 	}
-	ptr_vector_init(xcap_servers, 8);
+	ptr_vector_init(xcap_servers, 8); */
+
+	if (!rls_xcap_root) {
+		LOG(L_ERR, "rls_mod_init(): \'xcap_root\' not set (global XCAP root)!\n");
+		return -1;
+	}
 
 	/* set authorization type according to requested "auth type name"
 	 * and other (type specific) parameters */
@@ -262,16 +271,16 @@ int rls_child_init(int _rank)
 
 void rls_mod_destroy(void)
 {
-	int i, cnt;
-	char *s;
+	/*int i, cnt;
+	char *s;*/
 
 	DEBUG_LOG("RLS module cleanup\n");
 
 	DEBUG_LOG(" ... qsa interface\n");
 	rls_qsa_interface_destroy();
 	
-	DEBUG_LOG(" ... xcap servers\n");
 	/* destroy used XCAP servers */
+/*	DEBUG_LOG(" ... xcap servers\n");
 	if (xcap_servers) {
 		cnt = ptr_vector_size(xcap_servers);
 		DEBUG_LOG(" count = %d\n", cnt);
@@ -285,7 +294,7 @@ void rls_mod_destroy(void)
 		ptr_vector_destroy(xcap_servers);
 		shm_free(xcap_servers);
 		xcap_servers = NULL;
-	}
+	} */
 	
 	DEBUG_LOG(" ... rls\n");
 	rls_destroy();
@@ -313,10 +322,10 @@ void rls_mod_destroy(void)
 
 static int rls_subscribe_fixup(void** param, int param_no)
 {
-	char *xcap_server = NULL;
+	/* char *xcap_server = NULL; */
 	int send_errors = 0;
 	
-	if (param_no == 1) {
+/*	if (param_no == 1) {
 		if (!param) {
 			LOG(L_ERR, "rls_subscribe_fixup(): XCAP server address not set!\n");
 			return E_UNSPEC;
@@ -327,13 +336,13 @@ static int rls_subscribe_fixup(void** param, int param_no)
 			return E_UNSPEC;
 		}
 		
-		/* store not only the root string? (create a structure rather?) */
+		/ * store not only the root string? (create a structure rather?) * /
 		ptr_vector_add(xcap_servers, xcap_server);
 		
 		DEBUG_LOG("rls_subscribe_fixup(): XCAP server is %s (%p)\n", xcap_server, xcap_server);
 		*param = (void*)xcap_server;
-	}
-	if (param_no == 2) {
+	} */
+	if (param_no == 1) {
 		if (param) {
 			if (*param) send_errors = atoi(*param);
 		}

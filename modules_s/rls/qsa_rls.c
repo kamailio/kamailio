@@ -101,7 +101,7 @@ void rls_qsa_interface_destroy()
 	/* no new qsa subscriptions will be created now - now can be
 	 * released all existing ones */
 	
-	qsa_release_domain(domain);
+	if (domain) qsa_release_domain(domain);
 	/* no QSA operations should be done there (don't send 
 	 * notification messages, ...) only subscriptions may
 	 * be released */
@@ -110,8 +110,10 @@ void rls_qsa_interface_destroy()
 	d = rls_internal_data;
 	rls_internal_data = NULL;
 	/* FIXME: may be problems with timer? */
-	msg_queue_destroy(&d->s_msgs);
-	shm_free(d);
+	if (d) {
+		msg_queue_destroy(&d->s_msgs);
+		shm_free(d);
+	}
 }
 
 static int rls_subscribe(notifier_t *n, subscription_t *subscription)
@@ -171,7 +173,7 @@ static void rls_unsubscribe(notifier_t *n, subscription_t *subscription)
 static void process_subscription(subscription_t *subscription)
 {
 	rl_subscription_t *rls;
-	char *xcap_root = "http://localhost/simulated-xcap"; /* FIXME: testing only!!! */
+	char *xcap_root = rls_xcap_root; /* one global XCAP root !!! */
 	
 	/* try to make subscription and release it if internal subscription 
 	 * not created */

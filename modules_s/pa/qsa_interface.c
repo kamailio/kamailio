@@ -50,7 +50,7 @@ void pa_qsa_interface_destroy()
 	/* no new qsa subscriptions will be created now - now can be
 	 * released all existing ones */
 	
-	qsa_release_domain(domain);
+	if (domain) qsa_release_domain(domain);
 	/* no QSA operations should be done there (don't send 
 	 * notification messages, ...) only subscriptions may
 	 * be released */

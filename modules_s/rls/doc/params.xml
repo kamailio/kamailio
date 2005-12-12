@@ -107,6 +107,16 @@
 	</para>
 	<para>Default value is 0.</para></listitem>
 </varlistentry>
+<varlistentry>
+	<term><varname>xcap_root</varname> (string)</term>
+	<listitem><para>Globaly defined XCAP root. This parameter was added due to
+	simplification of configuration. Previous versions were able to work with
+	more XCAP servers (given as parameter to handle_rls_subscription, but this
+	may lead to problems with nested lists, thus it was removed).
+	</para>
+	<para>Default value: not set.
+	</para></listitem>
+</varlistentry>
 </variablelist>
 </section>
 
