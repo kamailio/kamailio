@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="rr.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -20,7 +20,8 @@
 	</title>
 	<para>
 	    The function performs loose routing as defined in <ulink
-		url="http://www.ietf.org/rfc/rfc3261.txt">RFC3261</ulink>
+		url="http://www.ietf.org/rfc/rfc3261.txt">RFC3261</ulink> and
+		will set Avp value passed in Route header that were created by <function>record_route</function>.
 	</para>
 	<example>
 	    <title><function>loose_route</function> usage</title>
@@ -31,7 +32,7 @@ loose_route();
 	    </programlisting>
 	</example>
     </section>
-    
+
     <section id="strict_route">
 	<title>
 	    <function>strict_route()</function> -- deprecated
@@ -48,6 +49,34 @@ loose_route();
 strict_route();
 ...
 	    </programlisting>
+	</example>
+    </section>
+
+    <section id="rr_add_avp_cookie">
+	<title>
+		<function moreinfo="none">rr_add_avp_cookie(string)</function>
+	</title>
+	<para>
+		The function copies Avp for a new Record-Route header field. The header field will be inserted
+		in the message before any other Record-Route header fields.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>string</emphasis> - Avp to be inserted into the Record-route in <function>record_route</function>.
+		    </para>
+		</listitem>
+	</itemizedlist>
+	<example>
+		<title><function>rr_add_avp_cookie</function> usage</title>
+		<programlisting format="linespecific">
+...
+rr_add_avp_cookie("s:avp_identified_by_name");
+rr_add_avp_cookie("i:10");  # identified by number
+rr_add_avp_cookie("avp_*"); # identified by regex
+...
+</programlisting>
 	</example>
     </section>
 
@@ -69,7 +98,7 @@ record_route();
 	    </programlisting>
 	</example>
     </section>
-    
+
     <section id="record_route_preset">
 	<title>
 	    <function>record_route_preset(string)</function>

@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -45,7 +45,7 @@
 #include "../../dset.h"
 #include "loose.h"
 #include "rr_mod.h"
-
+#include "avp_cookie.h"
 
 #define RR_ERROR -1       /* An error occured while processing route set */
 #define RR_DRIVEN 1       /* The next hop is determined from the route set */
@@ -89,7 +89,7 @@ static int is_preloaded(struct sip_msg* msg)
 
 /*
  * Parse the message and find first occurrence of
- * Route header field. The function returns -1 or -2 
+ * Route header field. The function returns -1 or -2
  * on a parser error, 0 if there is a Route HF and
  * 1 if there is no Route HF.
  */
@@ -177,7 +177,7 @@ static inline int is_2rr(str* _params)
 			default:              break;
 			}
 			break;
-			
+
 		case 5:
 			switch(s.s[i]) {
 			case '\\': state = 6; break;
@@ -189,7 +189,7 @@ static inline int is_2rr(str* _params)
 		case 6: state = 5; break;
 		}
 	}
-	
+
 	if ((state == 2) || (state == 3)) return 1;
 	else return 0;
 }
@@ -205,7 +205,7 @@ static inline int is_myself(str* _host, unsigned short _port)
 #endif
 {
 	int ret;
-	
+
 	ret = check_self(_host, _port ? _port : SIP_PORT, 0);/* match all protos*/
 	if (ret < 0) return 0;
 
@@ -217,7 +217,7 @@ static inline int is_myself(str* _host, unsigned short _port)
 		return -1;
 	}
 #endif
-	
+
 	return ret;
 }
 
@@ -329,7 +329,7 @@ static inline int is_strict(str* _params)
 			default:              break;
 			}
 			break;
-			
+
 		case 5:
 			switch(s.s[i]) {
 			case '\\': state = 6; break;
@@ -341,11 +341,134 @@ static inline int is_strict(str* _params)
 		case 6: state = 5; break;
 		}
 	}
-	
+
 	if ((state == 2) || (state == 3)) return 0;
 	else return 1;
 }
 
+void get_avp_cookie_from_uri(str* _params, str *_avp_cookie) {
+	str s;
+	int i, state = 0;
+
+	_avp_cookie->len = 0;
+	_avp_cookie->s = 0;
+	if (_params->len == 0) return;
+
+	s.s = _params->s;
+	s.len = _params->len;
+
+	for(i = 0; i < s.len; i++) {
+		switch(state) {
+			case 0:
+				switch(s.s[i]) {
+					case ' ':
+					case '\r':
+					case '\n':
+					case '\t':           break;
+					case 'a':
+					case 'A': state = 1; break;
+					default:  state = 7; break;
+				}
+				break;
+
+			case 1:
+				switch(s.s[i]) {
+					case 'v':
+					case 'V': state = 2; break;
+					default:  state = 7; break;
+				}
+				break;
+
+			case 2:
+				switch(s.s[i]) {
+					case 'p':
+					case 'P': state = 3; break;
+					default:  state = 7; break;
+				}
+				break;
+
+			case 3:
+				switch(s.s[i]) {
+					case ';':  return;
+					case '=':  state = 5; break;
+					case ' ':
+					case '\r':
+					case '\n':
+					case '\t': state = 4; break;
+					default:   state = 7; break;
+				}
+				break;
+			case 4:
+				switch(s.s[i]) {
+					case ';':  return;
+					case '=':  state = 5; break;
+					case ' ':
+					case '\r':
+					case '\n':
+					case '\t': break;
+					default:   state = 7; break;
+				}
+				break;
+
+			case 5:
+				switch(s.s[i]) {
+					case '\"': state=101; break;
+					case ';':  return;
+					case ' ':
+					case '\r':
+					case '\n':
+					case '\t': break;
+					default:   state = 100; _avp_cookie->s = s.s+i; break;
+				}
+				break;
+
+			case 7:
+				switch(s.s[i]) {
+					case '\"': state = 8; break;
+					case ';':  state = 0; break;
+					default:              break;
+				}
+				break;
+
+			case 8:
+				switch(s.s[i]) {
+					case '\\': state = 9; break;
+					case '\"': state = 7; break;
+					default:              break;
+				}
+				break;
+
+			case 9: state = 8;
+				break;
+
+			case 100:
+				switch(s.s[i]) {
+					case '\"':  return;
+					case ';':
+					case ' ':
+					case '\r':
+					case '\n':
+					case '\t': _avp_cookie->len = s.s+i - _avp_cookie->s; break;
+				}
+				break;
+
+			case 101:	// no escape chars supported in base64 algorithm
+				switch(s.s[i]) {
+					case '\"': _avp_cookie->len = s.s+i - _avp_cookie->s; break;
+					case '\\':  state = 102; break;
+					default:                 break;
+				}
+				break;
+
+			case 102:
+				state = 101;
+				break;
+		}
+	}
+
+	if (state == 100)
+		_avp_cookie->len = s.s+i - _avp_cookie->s;
+}
 
 /*
  * Put Request-URI as last Route header of a SIP
@@ -418,7 +541,7 @@ static inline int handle_sr(struct sip_msg* _m, struct hdr_field* _hdr, rr_t* _r
 		LOG(L_ERR, "handle_sr: Error while saving Request-URI\n");
 		return -1;
 	}
-	
+
 	     /* Put the first Route in Request-URI */
 	if (rewrite_uri(_m, uri) < 0) {
 		LOG(L_ERR, "handle_sr: Error while rewriting request URI\n");
@@ -436,7 +559,7 @@ static inline int handle_sr(struct sip_msg* _m, struct hdr_field* _hdr, rr_t* _r
 	if (!del_lump(_m, rem_off - _m->buf, rem_len, 0)) {
 		LOG(L_ERR, "handle_sr: Can't remove Route HF\n");
 		return -9;
-	}			
+	}
 
 	return 0;
 }
@@ -495,6 +618,11 @@ static inline int after_strict(struct sip_msg* _m)
 	rr_t* rt, *prev;
 	char* rem_off;
 	str* uri;
+	str avp_cookie;
+
+	get_avp_cookie_from_uri(&_m->parsed_uri.params, &avp_cookie);
+	if (avp_cookie.len > 0)
+		rr_set_avp_cookies(&avp_cookie, 0);
 
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
@@ -511,7 +639,7 @@ static inline int after_strict(struct sip_msg* _m)
 	if (is_myself(&puri.host, puri.port_no))
 #endif
 	{
-		     /*	if (enable_double_rr && is_2rr(&_ruri->params)) { */ 
+		     /*	if (enable_double_rr && is_2rr(&_ruri->params)) { */
 	      /* DBG("ras(): Removing 2nd URI of mine: '%.*s'\n", rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s)); */
  		if (!rt->next) {
 			     /* No next route in the same header, remove the whole header
@@ -557,7 +685,7 @@ static inline int after_strict(struct sip_msg* _m)
 			LOG(L_ERR, "after_strict: Error while rewriting request URI\n");
 			return RR_ERROR;
 		}
-		
+
 		if (rt->next) {
 			rem_off = hdr->body.s;
 			rem_len = rt->next->nameaddr.name.s - hdr->body.s;
@@ -578,8 +706,8 @@ static inline int after_strict(struct sip_msg* _m)
 		}
 
 		     /* Next hop is a loose router - Which means that is is not endpoint yet
-		      * In This case we have to recover from previous strict routing, that 
-		      * means we have to find the last Route URI and put in in R-URI and 
+		      * In This case we have to recover from previous strict routing, that
+		      * means we have to find the last Route URI and put in in R-URI and
 		      * remove the last Route URI.
 		      */
 		if (rt != hdr->parsed) {
@@ -591,7 +719,7 @@ static inline int after_strict(struct sip_msg* _m)
 			if (!del_lump(_m, rem_off - _m->buf, rem_len, 0)) {
 				LOG(L_ERR, "after_strict: Can't remove Route HF\n");
 				return RR_ERROR;
-			}			
+			}
 		}
 
 
@@ -609,11 +737,11 @@ static inline int after_strict(struct sip_msg* _m)
 			LOG(L_ERR, "after_strict: Can't rewrite R-URI\n");
 			return RR_ERROR;
 		}
-		
+
 		     /* The first character if uri will be either '<' when it is the only URI in a
 		      * Route header field or ',' if there is more than one URI in the header field
 		      */
-		DBG("after_strict: The last route URI: '%.*s'\n", 
+		DBG("after_strict: The last route URI: '%.*s'\n",
 		    rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
 
 		if (prev) {
@@ -628,7 +756,7 @@ static inline int after_strict(struct sip_msg* _m)
 			return RR_ERROR;
 		}
 	}
-	
+
 	return RR_DRIVEN;
 }
 
@@ -638,11 +766,12 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	struct hdr_field* hdr;
 	struct sip_uri puri;
 	rr_t* rt;
-	int res;	
+	int res;
 #ifdef ENABLE_USER_CHECK
 	int ret;
 #endif
 	str* uri;
+	str avp_cookie;
 
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
@@ -662,6 +791,9 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 #endif
 	{
 		DBG("after_loose: Topmost route URI: '%.*s' is me\n", uri->len, ZSW(uri->s));
+		get_avp_cookie_from_uri(&puri.params, &avp_cookie);
+		if (avp_cookie.len > 0)
+			rr_set_avp_cookies(&avp_cookie, 0);
 		if (!rt->next) {
 			     /* No next route in the same header, remove the whole header
 			      * field immediately
@@ -681,7 +813,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			}
 			rt = (rr_t*)hdr->parsed;
 		} else rt = rt->next;
-		
+
 		if (enable_double_rr && is_2rr(&puri.params)) {
 			if (!rt->next) {
 				     /* No next route in the same header, remove the whole header
@@ -703,7 +835,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 				rt = (rr_t*)hdr->parsed;
 			} else rt = rt->next;
 		}
-		
+
 		uri = &rt->nameaddr.uri;
 		if (parse_uri(uri->s, uri->len, &puri) < 0) {
 			LOG(L_ERR, "after_loose: Error while parsing the first route URI\n");
@@ -714,10 +846,10 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		/* check if it the ignored user */
 		if(ret < 0)
 			return NOT_RR_DRIVEN;
-#endif	
+#endif
 		DBG("after_loose: Topmost URI is NOT myself\n");
 	}
-	
+
 	DBG("after_loose: URI to be processed: '%.*s'\n", uri->len, ZSW(uri->s));
 	if (is_strict(&puri.params)) {
 		DBG("after_loose: Next URI is a strict router\n");
@@ -741,7 +873,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			if (!del_lump(_m, hdr->body.s - _m->buf, rt->nameaddr.name.s - hdr->body.s, 0)) {
 				LOG(L_ERR, "after_loose: Can't remove Route HF\n");
 				return RR_ERROR;
-			}			
+			}
 		}
 	}
 
@@ -760,7 +892,7 @@ int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
 		DBG("loose_route: There is no Route HF\n");
 		return -1;
 	}
-		
+
 	if (parse_sip_msg_uri(_m) == -1) {
 		LOG(L_ERR, "loose_route: Error while parsing Request URI\n");
 		return -1;

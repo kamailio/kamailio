@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /* History:
@@ -44,6 +44,10 @@
 #include "../../mem/mem.h"
 #include "loose.h"
 #include "record.h"
+#include "avp_cookie.h"
+#include <sys/types.h> /* for regex */
+#include <regex.h>
+#include "../../script_cb.h"
 
 #ifdef ENABLE_USER_CHECK
 #include <string.h>
@@ -60,6 +64,7 @@ int add_username = 0;     /* Do not add username by default */
 MODULE_VERSION
 
 static int mod_init(void);
+static int fixup_avp_regex(void** param, int param_no);
 
 
 /*
@@ -77,6 +82,7 @@ static cmd_export_t cmds[] = {
 	{"record_route",         record_route,        0, 0,           REQUEST_ROUTE},
 	{"record_route_preset",  record_route_preset, 1, fixup_str_1, REQUEST_ROUTE},
 	{"record_route_strict" , record_route_strict, 0, 0,           0            },
+	{"rr_add_avp_cookie",    rr_add_avp_cookie,   1, fixup_avp_regex, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -84,7 +90,7 @@ static cmd_export_t cmds[] = {
 /*
  * Exported parameters
  */
-static param_export_t params[] ={ 
+static param_export_t params[] ={
 	{"append_fromtag",   INT_PARAM, &append_fromtag  },
 	{"enable_double_rr", INT_PARAM, &enable_double_rr},
 	{"enable_full_lr",   INT_PARAM, &enable_full_lr  },
@@ -123,6 +129,42 @@ static int mod_init(void)
 		i_user.len = 0;
 	}
 #endif
+	register_script_cb(rr_before_script_cb, REQ_TYPE_CB | PRE_SCRIPT_CB, 0);
+	return 0;
+}
+
+static int fixup_avp_regex(void** param, int param_no)
+{
+	avp_save_item_t* re;
+
+	DBG("rr:fixup_avp_regex: #%d, '%s'\n", param_no, (char*)(*param));
+	if (param_no!=1) return 0;
+	if ((re=pkg_malloc(sizeof(avp_save_item_t)))==0) return E_OUT_OF_MEM;
+	if (strncmp(*param, "s:", 2) == 0) {
+		re->type = AVP_NAME_STR;
+		re->u.s.s = *param +2;
+		re->u.s.len = strlen(re->u.s.s);
+	}
+	else if (strncmp(*param, "i:", 2) == 0) {
+		re->type = 0;
+		re->u.n = atol(*param +2);
+		if (re->u.n == 0) {
+			LOG(L_ERR, "ERROR: %s : bad AVP number %s\n", exports.name, (char*)*param);
+			return E_CFG;
+		}
+	}
+	else {
+		re->type = AVP_NAME_RE;
+		if (regcomp(&re->u.re, *param, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ){
+			pkg_free(re);
+			LOG(L_ERR, "ERROR: %s : bad re %s\n", exports.name, (char*)*param);
+			return E_BAD_RE;
+		}
+	}
+	/* free string */
+	pkg_free(*param);
+	/* replace it with the compiled re */
+	*param=re;
 	return 0;
 }
 

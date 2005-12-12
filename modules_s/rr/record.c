@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -40,6 +40,7 @@
 #include "../../data_lump.h"
 #include "record.h"
 #include "rr_mod.h"
+#include "avp_cookie.h"
 
 
 #define RR_PREFIX "Record-Route: <sip:"
@@ -56,6 +57,9 @@
 
 #define RR_FROMTAG ";ftag="
 #define RR_FROMTAG_LEN (sizeof(RR_FROMTAG)-1)
+
+#define RR_AVPCOOKIETAG ";avp="
+#define RR_AVPCOOKIETAG_LEN (sizeof(RR_AVPCOOKIETAG)-1)
 
 #define RR_R2 ";r2=on"
 #define RR_R2_LEN (sizeof(RR_R2)-1)
@@ -82,7 +86,7 @@ static inline int get_username(struct sip_msg* _m, str* _user)
 	/* no username in original uri -- hmm; maybe it is a uri
 	 * with just host address and username is in a preloaded route,
 	 * which is now no rewritten r-uri (assumed rewriteFromRoute
-	 * was called somewhere in script's beginning) 
+	 * was called somewhere in script's beginning)
 	 */
 	if (!puri.user.len && _m->new_uri.s) {
 		if (parse_uri(_m->new_uri.s, _m->new_uri.len, &puri) < 0) {
@@ -100,22 +104,23 @@ static inline int get_username(struct sip_msg* _m, str* _user)
 /*
  * build a Record-Route header field
  */
-static inline int build_rr(struct lump* _l, struct lump* _l2, int _lr, str* user, str* tag, int _inbound)
+static inline int build_rr(struct lump* _l, struct lump* _l2, int _lr, str* user, str* tag, str* avp_cookie, int _inbound)
 {
 	char* prefix, *suffix, *crlf, *r2;
-	int suffix_len, prefix_len;
+	int suffix_len, prefix_len, suffix_pos;
 
 	prefix_len = RR_PREFIX_LEN + (user->len ? (user->len + 1) : 0);
 	prefix = pkg_malloc(prefix_len);
 	if (enable_full_lr) {
-		suffix_len = (_lr ? RR_LR_FULL_TERM_LEN : RR_SR_TERM_LEN) + 
-				((tag && tag->len) ? (RR_FROMTAG_LEN + tag->len) : 0);
+		suffix_len = (_lr ? RR_LR_FULL_TERM_LEN : RR_SR_TERM_LEN);
 	} else {
-		suffix_len = (_lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN) + 
-				((tag && tag->len) ? (RR_FROMTAG_LEN + tag->len) : 0);
+		suffix_len = (_lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN);
 	}
+	suffix_len += ((tag && tag->len) ? (RR_FROMTAG_LEN + tag->len) : 0);
+	suffix_len += ((avp_cookie && avp_cookie->len) ? (RR_AVPCOOKIETAG_LEN + avp_cookie->len) : 0);
+
 	suffix = pkg_malloc(suffix_len);
-	
+
 	crlf = pkg_malloc(2);
 
 	r2 = pkg_malloc(RR_R2_LEN);
@@ -128,13 +133,13 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, int _lr, str* user
 		if (r2) pkg_free(r2);
 		return -3;
 	}
-	
+
 	memcpy(prefix, RR_PREFIX, RR_PREFIX_LEN);
 	if (user->len) {
 		memcpy(prefix + RR_PREFIX_LEN, user->s, user->len);
 #ifdef ENABLE_USER_CHECK
 		/* don't add the ignored user into a RR */
-		if(i_user.len && i_user.len == user->len && 
+		if(i_user.len && i_user.len == user->len &&
 				!strncmp(i_user.s, user->s, i_user.len))
 		{
 			if(prefix[RR_PREFIX_LEN]=='x')
@@ -145,23 +150,26 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, int _lr, str* user
 #endif
 		prefix[RR_PREFIX_LEN + user->len] = '@';
 	}
-	
+
+	suffix_pos = 0;
 	if (tag && tag->len) {
-		memcpy(suffix, RR_FROMTAG, RR_FROMTAG_LEN);
-		memcpy(suffix + RR_FROMTAG_LEN, tag->s, tag->len);
-		if (enable_full_lr) {
-			memcpy(suffix + RR_FROMTAG_LEN + tag->len, _lr ? RR_LR_FULL_TERM : RR_SR_TERM, _lr ? RR_LR_FULL_TERM_LEN : RR_SR_TERM_LEN);
-		} else {
-			memcpy(suffix + RR_FROMTAG_LEN + tag->len, _lr ? RR_LR_TERM : RR_SR_TERM, _lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN);
-		}
-	} else {
-		if (enable_full_lr) {
-			memcpy(suffix, _lr ? RR_LR_FULL_TERM : RR_SR_TERM, _lr ? RR_LR_FULL_TERM_LEN : RR_SR_TERM_LEN);
-		} else {
-			memcpy(suffix, _lr ? RR_LR_TERM : RR_SR_TERM, _lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN);
-		}
+		memcpy(suffix + suffix_pos, RR_FROMTAG, RR_FROMTAG_LEN);
+		memcpy(suffix + suffix_pos + RR_FROMTAG_LEN, tag->s, tag->len);
+		suffix_pos += RR_FROMTAG_LEN + tag->len;
 	}
-	
+
+	if (avp_cookie && avp_cookie->len) {
+		memcpy(suffix + suffix_pos, RR_AVPCOOKIETAG, RR_AVPCOOKIETAG_LEN);
+		memcpy(suffix + suffix_pos + RR_AVPCOOKIETAG_LEN, avp_cookie->s, avp_cookie->len);
+		suffix_pos += RR_AVPCOOKIETAG_LEN + avp_cookie->len;
+	}
+
+	if (enable_full_lr) {
+		memcpy(suffix + suffix_pos, _lr ? RR_LR_FULL_TERM : RR_SR_TERM, _lr ? RR_LR_FULL_TERM_LEN : RR_SR_TERM_LEN);
+	} else {
+		memcpy(suffix + suffix_pos, _lr ? RR_LR_TERM : RR_SR_TERM, _lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN);
+	}
+
 	memcpy(crlf, CRLF, 2);
 	memcpy(r2, RR_R2, RR_R2_LEN);
 
@@ -181,7 +189,7 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, int _lr, str* user
 	if (!(_l2 = insert_new_lump_before(_l2, crlf, 2, 0))) goto lump_err;
 	crlf = 0;
 	return 0;
-	
+
  lump_err:
 	LOG(L_ERR, "build_rr(): Error while inserting lumps\n");
 	if (prefix) pkg_free(prefix);
@@ -203,10 +211,12 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 	str user;
 	struct to_body* from;
 	str* tag;
-	
+	str* avp_cookie;
+	int res = 0;
+
 	from = 0; /* Makes gcc happy */
 	user.len = 0;
-	
+
 	if (add_username) {
 		if (get_username(_m, &user) < 0) {
 			LOG(L_ERR, "insert_RR(): Error while extracting username\n");
@@ -225,38 +235,45 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 		tag = 0;
 	}
 
+	avp_cookie = rr_get_avp_cookies();
 	if (enable_double_rr) {
 		l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 		l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 		if (!l || !l2) {
 			LOG(L_ERR, "insert_RR(): Error while creating an anchor\n");
-			return -5;
+			res = -5;
+			goto exit;
 		}
 		l = insert_cond_lump_after(l, COND_IF_DIFF_REALMS, 0);
 		l2 = insert_cond_lump_before(l2, COND_IF_DIFF_REALMS, 0);
 		if (!l || !l2) {
 			LOG(L_ERR, "insert_RR(): Error while inserting conditional lump\n");
-			return -6;
+			res = -6;
+			goto exit;
 		}
-		if (build_rr(l, l2, _lr, &user, tag, OUTBOUND) < 0) {
+		if (build_rr(l, l2, _lr, &user, tag, avp_cookie, OUTBOUND) < 0) {
 			LOG(L_ERR, "insert_RR(): Error while inserting outbound Record-Route\n");
-			return -7;
+			res = -7;
+			goto exit;
 		}
 	}
-	
+
 	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 	l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 	if (!l || !l2) {
 		LOG(L_ERR, "insert_RR(): Error while creating an anchor\n");
-		return -3;
-	}
-	
-	if (build_rr(l, l2, _lr, &user, tag, INBOUND) < 0) {
-		LOG(L_ERR, "insert_RR(): Error while inserting inbound Record-Route\n");
-		return -4;
+		res = -3;
+		goto exit;
 	}
 
-	return 0;
+	if (build_rr(l, l2, _lr, &user, tag, avp_cookie, INBOUND) < 0) {
+		LOG(L_ERR, "insert_RR(): Error while inserting inbound Record-Route\n");
+		res = -4;
+	}
+exit:
+        if (avp_cookie)
+		pkg_free(avp_cookie);
+	return res;
 }
 
 
@@ -272,13 +289,13 @@ static inline int do_RR(struct sip_msg* _m, int _lr)
 			LOG(L_ERR, "record_route(): Double attempt to record-route\n");
 			return -1;
 	}
-	
+
 	if (insert_RR(_m, _lr) < 0) {
 		LOG(L_ERR, "record_route(): Error while inserting Record-Route line\n");
 		return -3;
 	}
 
-	last_rr_msg=_m->id;	
+	last_rr_msg=_m->id;
 	return 1;
 }
 
@@ -318,7 +335,7 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 		}
 		from = (struct to_body*)_m->from->parsed;
 	}
-	
+
 	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 	if (!l) {
 		LOG(L_ERR, "record_route_preset(): Error while creating an anchor\n");
@@ -333,7 +350,7 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 	if (append_fromtag && from->tag_value.len) {
 		hdr_len += RR_FROMTAG_LEN + from->tag_value.len;
 	}
-	
+
 	if (enable_full_lr) {
 		hdr_len += RR_LR_FULL_TERM_LEN;
 	} else {
@@ -361,7 +378,7 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 
 	memcpy(p, ((str*)_data)->s, ((str*)_data)->len);
 	p += ((str*)_data)->len;
-	
+
 	if (append_fromtag && from->tag_value.len) {
 		memcpy(p, RR_FROMTAG, RR_FROMTAG_LEN);
 		p += RR_FROMTAG_LEN;
