@@ -37,6 +37,7 @@
  *  2003-10-02  added SET_ADV_ADDR_T & SET_ADV_PORT_T (andrei)
  *  2003-10-29  added FORCE_TCP_ALIAS_T (andrei)
  *  2004-11-30  added FORCE_SEND_SOCKET_T (andrei)
+ *  2005-12-12  return & drop/exit differentiation (andrei)
  */
 
 
@@ -70,12 +71,20 @@
 #include <arpa/inet.h>
 #include <string.h>
 
+#define USE_LONGJMP
+
+#ifdef USE_LONGJMP
+#include <setjmp.h>
+#endif
+
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
 #endif
 
 
 struct onsend_info* p_onsend=0; /* onsend route send info */
+static unsigned int run_flags=0;
+int last_retcode=0; /* last return from a route() */
 
 /* ret= 0! if action -> end of list(e.g DROP), 
       > 0 to continue processing next actions
@@ -108,7 +117,11 @@ int do_action(struct action* a, struct sip_msg* msg)
 	ret=E_BUG;
 	switch ((unsigned char)a->type){
 		case DROP_T:
-				ret=0;
+				if (a->p1_type==RETCODE_ST)
+					ret=last_retcode;
+				else
+					ret=(int)a->p1.number;
+				run_flags|=(unsigned int)a->p2.number;
 			break;
 		case FORWARD_T:
 #ifdef USE_TCP
@@ -385,7 +398,10 @@ int do_action(struct action* a, struct sip_msg* msg)
 				ret=E_CFG;
 				break;
 			}
-			ret=((ret=run_actions(rlist[a->p1.number], msg))<0)?ret:1;
+			/*ret=((ret=run_actions(rlist[a->p1.number], msg))<0)?ret:1;*/
+			ret=run_actions(rlist[a->p1.number], msg);
+			last_retcode=ret;
+			run_flags&=~RETURN_R_F; /* absorb returns */
 			break;
 		case EXEC_T:
 			if (a->p1_type!=STRING_ST){
@@ -597,6 +613,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				/* if null expr => ignore if? */
 				if ((a->p1_type==EXPR_ST)&&a->p1.data){
 					v=eval_expr((struct expr*)a->p1.data, msg);
+#if 0
 					if (v<0){
 						if (v==EXPR_DROP){ /* hack to quit on DROP*/
 							ret=0;
@@ -606,7 +623,12 @@ int do_action(struct action* a, struct sip_msg* msg)
 										"error in expression\n");
 						}
 					}
-					
+#endif
+					if (run_flags & EXIT_R_F){
+						ret=0;
+						break;
+					}
+					run_flags &= ~RETURN_R_F; /* catch returns in expr */
 					ret=1;  /*default is continue */
 					if (v>0) {
 						if ((a->p2_type==ACTIONS_ST)&&a->p2.data){
@@ -622,6 +644,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 					((a->p2_type==STRING_ST)&&a->p2.data)*/ ){
 				ret=((cmd_function)(a->p1.data))(msg, (char*)a->p2.data,
 													  (char*)a->p3.data);
+				if (ret==0) run_flags|=EXIT_R_F;
 			}else{
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
 			}
@@ -787,6 +810,7 @@ int run_actions(struct action* a, struct sip_msg* msg)
 	struct action* t;
 	int ret=E_UNSPEC;
 	static int rec_lev=0;
+	static jmp_buf jmp_env;
 	struct sr_module *mod;
 
 	rec_lev++;
@@ -795,6 +819,15 @@ int run_actions(struct action* a, struct sip_msg* msg)
 					" giving up!\n", rec_lev);
 		ret=E_UNSPEC;
 		goto error;
+	}
+	if (rec_lev==1){
+		run_flags=0;
+		last_retcode=0;
+		if (setjmp(jmp_env)){
+			rec_lev=0;
+			ret=last_retcode;
+			goto end;
+		}
 	}
 		
 	if (a==0){
@@ -805,12 +838,18 @@ int run_actions(struct action* a, struct sip_msg* msg)
 
 	for (t=a; t!=0; t=t->next){
 		ret=do_action(t, msg);
-		if(ret==0) break;
-		/* ignore errors */
-		/*else if (ret<0){ ret=-1; goto error; }*/
+		if (run_flags & (RETURN_R_F|EXIT_R_F)){
+			if (run_flags & EXIT_R_F){
+				last_retcode=ret;
+				longjmp(jmp_env, ret);
+			}
+			break;
+		}
+		/* ignore error returns */
 	}
 	
 	rec_lev--;
+end:
 	/* process module onbreak handlers if present */
 	if (rec_lev==0 && ret==0) 
 		for (mod=modules;mod;mod=mod->next) 

@@ -40,6 +40,7 @@
  *              the ip with all the addresses (andrei)
  *  2003-10-10  added more operators support to comp_* (<,>,<=,>=,!=) (andrei)
  *  2004-10-19  added from_uri & to_uri (andrei)
+ *  2005-12-12  added retcode support (anrei)
  */
 
  
@@ -640,7 +641,7 @@ error_op:
 }
 
 
-/* returns: 0/1 (false/true) or -1 on error, -127 EXPR_DROP */
+/* returns: 0/1 (false/true) or -1 on error */
 static int eval_elem(struct expr* e, struct sip_msg* msg)
 {
 	struct sip_uri uri;
@@ -757,7 +758,7 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 
 	case ACTION_O:
 		ret=run_actions( (struct action*)e->r.param, msg);
-		if (ret<=0) ret=(ret==0)?EXPR_DROP:0;
+		if (ret<=0) ret=0;
 		else ret=1;
 		break;
 		
@@ -831,6 +832,10 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 		}
 		break;
 
+	case RETCODE_O:
+		ret=comp_num(e->op, last_retcode, e->r_type, &e->r);
+		break;
+
 	case AVP_O:
 		ret = comp_avp(e->op, e->l.attr, e->r_type, &e->r);
 		break;
@@ -846,7 +851,7 @@ error:
 
 
 
-/* ret= 0/1 (true/false) ,  -1 on error or EXPR_DROP (-127)  */
+/* ret= 0/1 (true/false) ,  -1 on error */
 int eval_expr(struct expr* e, struct sip_msg* msg)
 {
 	static int rec_lev=0;

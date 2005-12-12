@@ -150,6 +150,8 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token SEND
 %token SEND_TCP
 %token DROP
+%token RETURN 
+%token BREAK
 %token LOG_TOK
 %token ERROR
 %token ROUTE
@@ -200,6 +202,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token AF
 %token MYSELF
 %token MSGLEN 
+%token RETCODE 
 %token UDP
 %token TCP
 %token TLS
@@ -1055,6 +1058,13 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem($2, METHOD_O, 0, STRING_ST, $3);}
 		| MSGLEN intop error { $$=0; yyerror("number expected"); }
 		| MSGLEN error { $$=0; yyerror("equal/!= operator expected"); }
 
+		| RETCODE intop NUMBER	{ $$=mk_elem($2, RETCODE_O, 0,
+												NUMBER_ST, (void *) $3 ); }
+		| RETCODE intop attr_id	{ $$=mk_elem($2, RETCODE_O, 0,
+												AVP_ST, (void *) $3 ); }
+		| RETCODE intop error { $$=0; yyerror("number expected"); }
+		| RETCODE error { $$=0; yyerror("equal/!= operator expected"); }
+
 		| SRCIP equalop ipnet	{ $$=mk_elem($2, SRCIP_O, 0, NET_ST, $3); }
 		| SRCIP strop STRING	{	s_tmp.s=$3;
 									s_tmp.len=strlen($3);
@@ -1742,8 +1752,24 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| SEND_TCP error { $$=0; yyerror("missing '(' or ')' ?"); }
 		| SEND_TCP LPAREN error RPAREN { $$=0; yyerror("bad send_tcp"
 													"argument"); }
-		| DROP LPAREN RPAREN	{$$=mk_action(DROP_T,0, 0, 0, 0); }
-		| DROP					{$$=mk_action(DROP_T,0, 0, 0, 0); }
+		| DROP LPAREN RPAREN	{$$=mk_action(DROP_T,0, 0,
+												0, (void*)EXIT_R_F); }
+		| DROP LPAREN NUMBER RPAREN	{$$=mk_action(DROP_T,0, 0,
+												(void*)$3, (void*)EXIT_R_F); }
+		| DROP NUMBER 			{$$=mk_action(DROP_T,0, 0,
+												(void*)$2, (void*)EXIT_R_F); }
+		| DROP RETCODE 			{$$=mk_action(DROP_T, RETCODE_ST, 0,
+													0, (void*)EXIT_R_F); }
+		| DROP					{$$=mk_action(DROP_T,0, 0,
+												0, (void*)EXIT_R_F); }
+		| RETURN				{$$=mk_action(DROP_T,0, 0,
+												(void*)1, (void*)RETURN_R_F); }
+		| RETURN NUMBER			{$$=mk_action(DROP_T,0, 0, 
+												(void*)$2, (void*)RETURN_R_F);}
+		| RETURN RETCODE		{$$=mk_action(DROP_T, RETCODE_ST, 0, 
+														0, (void*)RETURN_R_F);}
+		| BREAK					{$$=mk_action(DROP_T,0, 0,
+												0, (void*)RETURN_R_F); }
 		| LOG_TOK LPAREN STRING RPAREN	{$$=mk_action(	LOG_T, NUMBER_ST, 
 													STRING_ST,(void*)4,$3);
 									}

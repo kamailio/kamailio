@@ -58,6 +58,7 @@
  *              dns_try_ipv6 (andrei)
  *  2005-12-11  added onsend_route, snd_{ip,port,proto,af},
  *              to_{ip,port} (andrei)
+ *  2005-12-12  separated drop, exit, break, return, added RETCODE (andrei)
  */
 
 
@@ -108,7 +109,9 @@ FORWARD	forward
 FORWARD_TCP	forward_tcp
 FORWARD_UDP	forward_udp
 FORWARD_TLS	forward_tls
-DROP	"drop"|"break"
+DROP	"drop"|"exit"
+RETURN	"return"
+BREAK	"break"
 SEND	send
 SEND_TCP	send_tcp
 LOG		log
@@ -171,6 +174,7 @@ PROTO	proto
 AF		af
 MYSELF	myself
 MSGLEN			"msg:len"
+RETCODE	\$\?|\$retcode
 /* operators */
 EQUAL	=
 EQUAL_T	==
@@ -323,6 +327,8 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{FORWARD_TLS}	{count(); yylval.strval=yytext; return FORWARD_TLS; }
 <INITIAL>{FORWARD_UDP}	{count(); yylval.strval=yytext; return FORWARD_UDP; }
 <INITIAL>{DROP}	{ count(); yylval.strval=yytext; return DROP; }
+<INITIAL>{RETURN}	{ count(); yylval.strval=yytext; return RETURN; }
+<INITIAL>{BREAK}	{ count(); yylval.strval=yytext; return BREAK; }
 <INITIAL>{SEND}	{ count(); yylval.strval=yytext; return SEND; }
 <INITIAL>{SEND_TCP}	{ count(); yylval.strval=yytext; return SEND_TCP; }
 <INITIAL>{LOG}	{ count(); yylval.strval=yytext; return LOG_TOK; }
@@ -331,6 +337,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{RESETFLAG}	{ count(); yylval.strval=yytext; return RESETFLAG; }
 <INITIAL>{ISFLAGSET}	{ count(); yylval.strval=yytext; return ISFLAGSET; }
 <INITIAL>{MSGLEN}	{ count(); yylval.strval=yytext; return MSGLEN; }
+<INITIAL>{RETCODE}	{ count(); yylval.strval=yytext; return RETCODE; }
 <INITIAL>{ROUTE}	{ count(); yylval.strval=yytext; return ROUTE; }
 <INITIAL>{ROUTE_ONREPLY}	{ count(); yylval.strval=yytext;
 								return ROUTE_ONREPLY; }

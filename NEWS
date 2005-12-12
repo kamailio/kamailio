@@ -41,6 +41,15 @@ modules:
               Vias a.s.o) and not on the original message
  
 core:
+ - added return [val] which returns from a route. if no value is specified, or
+   a route reaches its end without executing a return statement, it returns 1.
+   If return is used in the top level route is equivalent with exit [val].
+ - drop /exit [n] now will end the script execution
+   exit n will exit with code n (usefull in onreply/onsend routes where
+   if script code !=0 a reply is generated/the message is sent or to force
+   script errors)
+ - added $? which can be used to check the return code of the last executed
+   route{} (e.g. route(1); if ($?==1){ /* ... */}else if ($?==2) ... )
  - onsend_route added: special route executed before a request is sent.
                        Only a limited number of commands are allowed (drop, if
                        + all the checks, msg flag manipulations, send(), log(),
