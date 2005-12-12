@@ -107,16 +107,15 @@ char *parse_avp_attr(char *s, struct fis_param *attr, char end)
 			attr->val.n = (int)uint;
 		} else {
 			/* duplicate name as str NULL terminated */
-			attr->val.s = (str*)pkg_malloc( sizeof(str) + tmp.len + 1 );
-			if (attr->val.s==0)
+			attr->val.s.s = (char*)pkg_malloc( tmp.len + 1 );
+			if (attr->val.s.s==0)
 			{
 				LOG(L_ERR,"ERROR:avpops:parse_avp_attr: no more pkg mem\n");
 				goto error;
 			}
-			attr->val.s->s = ((char*)attr->val.s) + sizeof(str);
-			attr->val.s->len = tmp.len;
-			memcpy( attr->val.s->s, tmp.s, tmp.len);
-			attr->val.s->s[attr->val.s->len] = 0;
+			attr->val.s.len = tmp.len;
+			memcpy( attr->val.s.s, tmp.s, tmp.len);
+			attr->val.s.s[attr->val.s.len] = 0;
 		}
 	}
 
@@ -179,7 +178,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 	{
 		if (dbp->a.flags&AVPOPS_VAL_STR)
 		{
-			dbp->sa = *dbp->a.val.s;
+			dbp->sa = dbp->a.val.s;
 		} else {
 			ul = (unsigned long)dbp->a.val.n;
 			tmp.s = int2str( ul, &(tmp.len) );
@@ -312,16 +311,15 @@ struct fis_param* parse_intstr_value(char *p, int len)
 		vp->val.n = (int)uint;
 	} else {
 		/* duplicate the value as string */
-		vp->val.s = (str*)pkg_malloc( sizeof(str) + val_str.len +1 );
-		if (vp->val.s==0)
+		vp->val.s.s = (char*)pkg_malloc( val_str.len +1 );
+		if (vp->val.s.s==0)
 		{
 			LOG(L_ERR,"ERROR:avpops:parse_intstr_value: no more pkg mem\n");
 			goto error;
 		}
-		vp->val.s->s = ((char*)vp->val.s) + sizeof(str);
-		vp->val.s->len = val_str.len;
-		memcpy( vp->val.s->s, val_str.s, val_str.len);
-		vp->val.s->s[vp->val.s->len] = 0;
+		vp->val.s.len = val_str.len;
+		memcpy( vp->val.s.s, val_str.s, val_str.len);
+		vp->val.s.s[vp->val.s.len] = 0;
 	}
 
 	return vp;

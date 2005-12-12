@@ -159,7 +159,7 @@ static int dbrow2avp(struct db_row *row, int flags, int_str attr,
 		if (db_flags&AVP_NAME_STR)
 		{
 			/* name is string */
-			avp_attr.s = &atmp;
+			avp_attr.s = atmp;
 		} else {
 			/* name is ID */
 			if (str2int( &atmp, &uint)==-1)
@@ -183,7 +183,7 @@ static int dbrow2avp(struct db_row *row, int flags, int_str attr,
 	if (db_flags&AVP_VAL_STR)
 	{
 		/* value is string */
-		avp_val.s = &vtmp;
+		avp_val.s = vtmp;
 	} else {
 		/* name is ID */
 		if (str2int(&vtmp, &uint)==-1)
@@ -273,7 +273,7 @@ static inline void int_str2db_val( int_str is_val, str *val, int is_s)
 	if (is_s)
 	{
 		/* val is string */
-		*val = *is_val.s;
+		*val = is_val.s;
 	} else {
 		/* val is integer */
 		val->s =
@@ -332,7 +332,7 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 	} else  if (sp->flags&AVPOPS_VAL_STR) {
 		/* use the STR val as uuid */
 		/* do DB query */
-		res = db_load_avp( sp->val.s, 0, 0, dbp->sa.s, dbp->table, dbp->scheme);
+		res = db_load_avp( &sp->val.s, 0, 0, dbp->sa.s, dbp->table, dbp->scheme);
 	} else {
 		LOG(L_CRIT,"BUG:avpops:load_avps: invalid flag combination (%d)\n",
 			sp->flags);
@@ -375,7 +375,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 	struct usr_avp   *avp;
 	unsigned short   name_type;
 	int_str          i_s;
-	str              uuid;
+	str              uuid, *s;
 	int              keys_off;
 	int              keys_nr;
 	int              n;
@@ -416,7 +416,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 		/* set values for keys  */
 		keys_off = 0;
 		keys_nr = 4;
-		store_vals[0].val.str_val = *sp->val.s;
+		store_vals[0].val.str_val = sp->val.s;
 	} else {
 		LOG(L_CRIT,"BUG:avpops:store_avps: invalid flag combination (%d)\n",
 			sp->flags);
@@ -469,8 +469,10 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 				continue;
 
 			/* set attribute name and type */
-			if ( (i_s.s=get_avp_name(avp))==0 )
+			if ( (s=get_avp_name(avp))==0 )
 				i_s.n = avp->id;
+			else
+				i_s.s = *s;
 			int_str2db_val( i_s, &store_vals[1].val.str_val,
 				avp->flags&AVP_NAME_STR);
 			store_vals[3].val.int_val =
@@ -530,7 +532,7 @@ int ops_dbdelete_avps (struct sip_msg* msg, struct fis_param *sp,
 	} else if (sp->flags&AVPOPS_VAL_STR) {
 		/* use the STR value as uuid */
 		/* do DB delete */
-		res = db_delete_avp( sp->val.s, 0, 0, dbp->sa.s, dbp->table );
+		res = db_delete_avp( &sp->val.s, 0, 0, dbp->sa.s, dbp->table );
 	} else {
 		LOG(L_CRIT,"BUG:avpops:dbdelete_avps: invalid flag combination (%d)\n",
 			sp->flags);
@@ -567,8 +569,8 @@ static inline str *search_hdr(struct sip_msg* msg, struct fis_param *hdr_def)
 				goto found;
 	} else {
 		for(hdr=msg->headers;hdr;hdr=hdr->next)
-			if (hdr_def->val.s->len==hdr->name.len &&
-			strncasecmp( hdr_def->val.s->s, hdr->name.s, hdr->name.len)==0)
+			if (hdr_def->val.s.len==hdr->name.len &&
+			strncasecmp( hdr_def->val.s.s, hdr->name.s, hdr->name.len)==0)
 				goto found;
 	}
 	return 0;
@@ -585,7 +587,7 @@ int ops_write_avp(struct sip_msg* msg, struct fis_param *src,
 	struct sip_uri uri;
 	int_str avp_val;
 	unsigned short flags;
-	str s_ip;
+	str s_ip, *s;
 
 	if (src->flags&AVPOPS_VAL_NONE)
 	{
@@ -598,7 +600,7 @@ int ops_write_avp(struct sip_msg* msg, struct fis_param *src,
 				goto error;
 			}
 			s_ip.len = strlen(s_ip.s);
-			avp_val.s = &s_ip;
+			avp_val.s = s_ip;
 		} else if (src->flags&AVPOPS_USE_DST_IP) {
 			/* get data from dst ip */
 			if ( (s_ip.s=ip_addr2a( &msg->rcv.dst_ip ))==0)
@@ -607,13 +609,14 @@ int ops_write_avp(struct sip_msg* msg, struct fis_param *src,
 				goto error;
 			}
 			s_ip.len = strlen(s_ip.s);
-			avp_val.s = &s_ip;
+			avp_val.s = s_ip;
 		} else if (src->flags&(AVPOPS_USE_HDRREQ|AVPOPS_USE_HDRRPL)) {
 			/* get data from hdr */
-			if ( (avp_val.s=search_hdr(msg,src))==0 ) {
+			if ( (s=search_hdr(msg,src))==0 ) {
 				DBG("DEBUG:avpops:write_avp: hdr not found\n");
 				goto error;
 			}
+			avp_val.s=*s;
 		} else {
 			/* get data from uri (from,to,ruri) */
 			if (src->flags&(AVPOPS_FLAG_USER|AVPOPS_FLAG_DOMAIN))
@@ -624,16 +627,17 @@ int ops_write_avp(struct sip_msg* msg, struct fis_param *src,
 					goto error;
 				}
 				if (src->flags&AVPOPS_FLAG_DOMAIN)
-					avp_val.s = &uri.host;
+					avp_val.s = uri.host;
 				else
-					avp_val.s = &uri.user;
+					avp_val.s = uri.user;
 			} else {
 				/* get whole uri */
-				if ( (avp_val.s=get_source_uri(msg,src->flags))==0 )
+				if ( (s=get_source_uri(msg,src->flags))==0 )
 				{
 					LOG(L_ERR,"ERROR:avpops:write_avp: cannot get uri\n");
 					goto error;
 				}
+				avp_val.s=*s;
 			}
 		}
 		flags = AVP_VAL_STR;
@@ -789,7 +793,7 @@ int ops_pushto_avp ( struct sip_msg* msg, struct fis_param* dst,
 	{
 		/* the avp val will be used all the time as str */
 		if (avp->flags&AVP_VAL_STR) {
-			val = *(avp_val.s);
+			val = avp_val.s;
 		} else {
 			val.s = int2str((unsigned long)avp_val.n, &val.len);
 		}
@@ -809,7 +813,7 @@ int ops_pushto_avp ( struct sip_msg* msg, struct fis_param* dst,
 				goto error;
 			}
 		} else if (dst->flags&(AVPOPS_USE_HDRREQ|AVPOPS_USE_HDRRPL)) {
-			if ( compose_hdr( dst->val.s, &val, &val,
+			if ( compose_hdr( &dst->val.s, &val, &val,
 				dst->flags&AVPOPS_USE_HDRREQ)<0 )
 			{
 				LOG(L_ERR,"ERROR:avpops:pushto_avp: failed to build hdr\n");
@@ -895,7 +899,7 @@ int ops_check_avp( struct sip_msg* msg, struct fis_param* ap,
 	regmatch_t        pmatch;
 	int_str           avp_val;
 	int_str           ck_val;
-	str               s_ip;
+	str               s_ip, *s;
 	int               ck_flg;
 	int               n;
 
@@ -951,7 +955,7 @@ cycle2:
 					goto error;
 				}
 				s_ip.len = strlen(s_ip.s);
-				ck_val.s = &s_ip;
+				ck_val.s = s_ip;
 			} else if (val->flags&AVPOPS_USE_DST_IP) {
 				/* get value from dst ip */
 				if ( (s_ip.s=ip_addr2a( &msg->rcv.dst_ip ))==0)
@@ -960,47 +964,48 @@ cycle2:
 					goto error;
 				}
 				s_ip.len = strlen(s_ip.s);
-				ck_val.s = &s_ip;
+				ck_val.s = s_ip;
 			} else {
 				/* get value from uri */
-				if ( (ck_val.s=get_source_uri(msg,val->flags))==0 )
+				if ( (s=get_source_uri(msg,val->flags))==0 )
 				{
 					LOG(L_ERR,"ERROR:avpops:check_avp: cannot get uri\n");
 					goto next;
 				}
+				ck_val.s=*s;
 			}
 		}
 		DBG("DEBUG:avpops:check_avp: check <%.*s> against <%.*s> as str\n",
-			avp_val.s->len,avp_val.s->s,
-			(val->flags&AVPOPS_OP_RE)?6:ck_val.s->len,
-			(val->flags&AVPOPS_OP_RE)?"REGEXP":ck_val.s->s);
+			avp_val.s.len,avp_val.s.s,
+			(val->flags&AVPOPS_OP_RE)?6:ck_val.s.len,
+			(val->flags&AVPOPS_OP_RE)?"REGEXP":ck_val.s.s);
 		/* do check */
 		if (val->flags&AVPOPS_OP_EQ)
 		{
-			if (avp_val.s->len==ck_val.s->len)
+			if (avp_val.s.len==ck_val.s.len)
 			{
 				if (val->flags&AVPOPS_FLAG_CI)
 				{
-					if (strncasecmp(avp_val.s->s,ck_val.s->s,ck_val.s->len)==0)
+					if (strncasecmp(avp_val.s.s,ck_val.s.s,ck_val.s.len)==0)
 						return 1;
 				} else {
-					if (strncmp(avp_val.s->s,ck_val.s->s,ck_val.s->len)==0 )
+					if (strncmp(avp_val.s.s,ck_val.s.s,ck_val.s.len)==0 )
 						return 1;
 				}
 			}
 		} else if (val->flags&AVPOPS_OP_LT) {
-			n = (avp_val.s->len>=ck_val.s->len)?avp_val.s->len:ck_val.s->len;
-			if (strncasecmp(avp_val.s->s,ck_val.s->s,n)==-1)
+			n = (avp_val.s.len>=ck_val.s.len)?avp_val.s.len:ck_val.s.len;
+			if (strncasecmp(avp_val.s.s,ck_val.s.s,n)==-1)
 				return 1;
 		} else if (val->flags&AVPOPS_OP_GT) {
-			n = (avp_val.s->len>=ck_val.s->len)?avp_val.s->len:ck_val.s->len;
-			if (strncasecmp(avp_val.s->s,ck_val.s->s,n)==1)
+			n = (avp_val.s.len>=ck_val.s.len)?avp_val.s.len:ck_val.s.len;
+			if (strncasecmp(avp_val.s.s,ck_val.s.s,n)==1)
 				return 1;
 		} else if (val->flags&AVPOPS_OP_RE) {
-			if (regexec((regex_t*)ck_val.s, avp_val.s->s, 1, &pmatch, 0)==0)
+			if (regexec(ck_val.re, avp_val.s.s, 1, &pmatch, 0)==0)
 				return 1;
 		} else if (val->flags&AVPOPS_OP_FM){
-			if (fnmatch( ck_val.s->s, avp_val.s->s, 0)==0)
+			if (fnmatch( ck_val.s.s, avp_val.s.s, 0)==0)
 				return 1;
 		} else {
 			LOG(L_CRIT,"BUG:avpops:check_avp: unknown operation "
@@ -1124,7 +1129,7 @@ int ops_print_avp()
 		get_avp_val( avp, &val);
 		if (avp->flags&AVP_VAL_STR)
 		{
-			DBG("DEBUG:\t\t\tval_str=<%.*s>\n",val.s->len,val.s->s);
+			DBG("DEBUG:\t\t\tval_str=<%.*s>\n",val.s.len,val.s.s);
 		} else {
 			DBG("DEBUG:\t\t\tval_int=<%d>\n",val.n);
 		}
