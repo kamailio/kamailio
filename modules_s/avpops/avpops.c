@@ -274,13 +274,14 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 		{
 			/* is a constant string -> use it as uuid*/
 			sp->flags = AVPOPS_VAL_STR;
-			sp->val.s.s = (char*)pkg_malloc(strlen(s)+1);
-			if (sp->val.s.s==0) {
+			sp->val.s = (str*)pkg_malloc(strlen(s)+1+sizeof(str));
+			if (sp->val.s==0) {
 				LOG(L_ERR,"ERROR:avpops:fixup_db_avp: no more pkg mem\n");
 				return E_OUT_OF_MEM;
 			}
-			sp->val.s.len = strlen(s);
-			strcpy(sp->val.s.s,s);
+			sp->val.s->s = ((char*)sp->val.s) + sizeof(str);
+			sp->val.s->len = strlen(s);
+			strcpy(sp->val.s->s,s);
 		} else {
 			/* is a variable $xxxxx */
 			s++;
@@ -425,18 +426,19 @@ static int fixup_write_avp(void** param, int param_no)
 					if (hdr.type==HDR_OTHER_T) {
 						/* duplicate hdr name */
 						len -= 5; /*hdr[]*/
-						ap->val.s.s = (char*)pkg_malloc(len+1);
-						if (ap->val.s.s==0)
+						ap->val.s = (str*)pkg_malloc(sizeof(str)+len+1);
+						if (ap->val.s==0)
 						{
 							LOG(L_ERR,"ERROR:avpops:fixup_write_avp: no more "
 								"pkg mem\n");
 							return E_OUT_OF_MEM;
 						}
-						ap->val.s.len = len;
-						memcpy( ap->val.s.s, s+4, len);
-						ap->val.s.s[len] = 0;
+						ap->val.s->s = ((char*)(ap->val.s)) + sizeof(str);
+						ap->val.s->len = len;
+						memcpy( ap->val.s->s, s+4, len);
+						ap->val.s->s[len] = 0;
 						DBG("DEBUF:avpops:fixup_write_avp: hdr=<%s>\n",
-							ap->val.s.s);
+							ap->val.s->s);
 					} else {
 						ap->val.n = hdr.type;
 						flags |= AVPOPS_VAL_INT;
@@ -578,14 +580,15 @@ static int fixup_pushto_avp(void** param, int param_no)
 				}
 			}
 			/* copy header name */
-			ap->val.s.s = (char*)pkg_malloc(strlen(s) + 1 );
-			if (ap->val.s.s==0)
+			ap->val.s = (str*)pkg_malloc( sizeof(str) + strlen(s) + 1 );
+			if (ap->val.s==0)
 			{
 				LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: no more pkg mem\n");
 				return E_OUT_OF_MEM;
 			}
-			ap->val.s.len = strlen(s);
-			strcpy( ap->val.s.s, s);
+			ap->val.s->s = ((char*)ap->val.s) + sizeof(str);
+			ap->val.s->len = strlen(s);
+			strcpy( ap->val.s->s, s);
 		}
 	} else if (param_no==2) {
 		/* attribute name / alias */
@@ -674,17 +677,17 @@ static int fixup_check_avp(void** param, int param_no)
 				return E_OUT_OF_MEM;
 			}
 			DBG("DEBUG:avpops:fixup_check_avp: compiling regexp <%s>\n",
-				ap->val.s.s);
-			if (regcomp(re, ap->val.s.s, REG_EXTENDED|REG_ICASE|REG_NEWLINE))
+				ap->val.s->s);
+			if (regcomp(re, ap->val.s->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE))
 			{
 				pkg_free(re);
 				LOG(L_ERR,"ERROR:avpops:fixip_check_avp: bad re <%s>\n",
-					ap->val.s.s);
+					ap->val.s->s);
 				return E_BAD_RE;
 			}
 			/* free the string and link the regexp */
-			pkg_free(ap->val.s.s);
-			ap->val.re = re;
+			pkg_free(ap->val.s);
+			ap->val.s = (str*)re;
 		} else if (ap->flags&AVPOPS_OP_FM) {
 			if ( !( ap->flags&AVPOPS_VAL_AVP ||
 			(!(ap->flags&AVPOPS_VAL_AVP) && ap->flags&AVPOPS_VAL_STR) ) )
