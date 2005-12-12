@@ -55,6 +55,17 @@ static void doc_add_tuple(dstring_t *buf, presentity_info_t *p, presence_tuple_i
 	dstr_append_zt(buf, "\t</tuple>\r\n");
 }
 
+static void doc_add_empty_tuple(dstring_t *buf)
+{
+	/* "empty" tuple is needed in PIDF by Microsoft Windows Messenger v. 5.1) */
+	DEBUG_LOG("doc_add_tuple()\n");
+	
+	dstr_append_zt(buf, "\t<tuple id=\"none\">\r\n");
+	dstr_append_zt(buf, "\t\t<status><basic>closed</basic></status>\r\n");
+
+	dstr_append_zt(buf, "\t</tuple>\r\n");
+}
+
 static void doc_add_note(dstring_t *buf, presentity_info_t *p, presence_note_t *n)
 {
 	DEBUG_LOG("doc_add_tuple()\n");
@@ -104,10 +115,12 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p, int use_cpi
 		dstr_append_zt(buf, "<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"");
 	/* !!! there SHOULD be pres URI of presentity !!! */
 	dstr_put_pres_uri(buf, &p->presentity);
+	/* dstr_append_str(buf, &p->presentity); */ /* only for test !!! */
 	dstr_append_zt(buf, "\">\r\n");
 	
 	DEBUG_LOG("doc_add_presentity(): adding tuples\n");
 	t = p->first_tuple;
+	/* if (!t) doc_add_empty_tuple(buf); */ /* This only for MS? */
 	while (t) {
 		doc_add_tuple(buf, p, t);
 		t = t->next;
@@ -120,7 +133,7 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p, int use_cpi
 		n = n->next;
 	}
 
-	dstr_append_zt(buf, "</presence>");
+	dstr_append_zt(buf, "</presence>\r\n");
 }
 
 int create_pidf_document_ex(presentity_info_t *p, str_t *dst, str_t *dst_content_type, int use_cpim_pidf_ns)
@@ -137,7 +150,7 @@ int create_pidf_document_ex(presentity_info_t *p, str_t *dst, str_t *dst_content
 	if (dst_content_type) 
 		str_dup_zt(dst_content_type, "application/pidf+xml;charset=\"UTF-8\"");
 
-	if (!p->first_tuple) return 0;	/* no tuples => nothing to say */ 
+/*	if (!p->first_tuple) return 0;*/	/* no tuples => nothing to say */ 
 	
 	dstr_init(&buf, 2048);
 	

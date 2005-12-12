@@ -14,46 +14,64 @@ check_via=no	# (cmd. line: -v)
 dns=no           # (cmd. line: -r)
 rev_dns=no      # (cmd. line: -R)
 fifo="/tmp/ser_fifo"
+alias="test-domain.com"
 
 # ------------------ module loading ----------------------------------
 
-loadmodule "/home/kubartv/sercvs/lib/ser/modules/sl.so"
-loadmodule "/home/kubartv/sercvs/lib/ser/modules/tm.so"
-loadmodule "/home/kubartv/sercvs/lib/ser/modules/rr.so"
-loadmodule "/home/kubartv/sercvs/lib/ser/modules/maxfwd.so"
-loadmodule "/home/kubartv/sercvs/lib/ser/modules/usrloc.so"
-loadmodule "/home/kubartv/sercvs/lib/ser/modules/registrar.so"
-loadmodule "/home/kubartv/sercvs/lib/ser/modules/textops.so"
-loadmodule "/home/kubartv/sercvs/lib/ser/modules/mysql.so"
-loadmodule "/home/kubartv/sercvs/lib/ser/modules/dialog.so"
-loadmodule "/home/kubartv/sercvs/lib/ser/modules/pa.so"
-loadmodule "/home/kubartv/sercvs/lib/ser/modules/rls.so"
-
-loadmodule "/home/kubartv/sercvs/lib/ser/modules/auth.so"
-loadmodule "/home/kubartv/sercvs/lib/ser/modules/auth_db.so"
+# Uncomment this if you want to use SQL database
+loadmodule "/home/kubartv/current/lib/ser/modules/sl.so"
+loadmodule "/home/kubartv/current/lib/ser/modules/tm.so"
+loadmodule "/home/kubartv/current/lib/ser/modules/rr.so"
+loadmodule "/home/kubartv/current/lib/ser/modules/maxfwd.so"
+loadmodule "/home/kubartv/current/lib/ser/modules/usrloc.so"
+loadmodule "/home/kubartv/current/lib/ser/modules/registrar.so"
+loadmodule "/home/kubartv/current/lib/ser/modules/textops.so"
+loadmodule "/home/kubartv/current/lib/ser/modules/mysql.so"
+loadmodule "/home/kubartv/current/lib/ser/modules/dialog.so"
+loadmodule "/home/kubartv/current/lib/ser/modules/pa.so"
+loadmodule "/home/kubartv/current/lib/ser/modules/rls.so"
+loadmodule "/home/kubartv/current/lib/ser/modules/auth.so"
+loadmodule "/home/kubartv/current/lib/ser/modules/auth_db.so"
 
 # ----------------- setting module-specific parameters ---------------
 
-modparam("usrloc|registrar", "use_domain",   1)
+# -- usrloc params --
+
+#?cvs: modparam("usrloc|registrar", "use_domain",   1)
+
 modparam("auth_db", "calculate_ha1", yes)
 modparam("auth_db", "password_column", "password")
 
+# -- rr params --
+# add value to ;lr param to make some broken UAs happy
 modparam("rr", "enable_full_lr", 1)
 
 modparam("rls", "min_expiration", 60)
 modparam("rls", "max_expiration", 3600)
 modparam("rls", "default_expiration", 600)
+modparam("rls", "auth", "none")
+modparam("rls", "xcap_root", "http://localhost/xcap")
+modparam("rls", "mode", "simple")
+# simplified XCAP queries if reduce_xcap_needs set
+modparam("rls", "reduce_xcap_needs", 1)
 
-modparam("usrloc", "db_mode", 1)
+modparam("usrloc|rls", "db_mode", 1)
 modparam("pa", "use_db", 1)
-modparam("domain|uri|acc|auth_db|usrloc|pa", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
+modparam("domain|uri|acc|auth_db|usrloc|pa|rls", "db_url", "mysql://ser:heslo@127.0.0.1:3306/ser")
 
+# mode of PA authorization: none, implicit or xcap
 modparam("pa", "auth", "xcap")
-modparam("pa", "auth_xcap_root", "http://localhost/xcap-root")
+modparam("pa", "auth_xcap_root", "http://localhost/xcap")
+modparam("pa", "winfo_auth", "none")
 
 # -------------------------  request routing logic -------------------
 
-route {
+# main routing logic
+
+route{
+
+	# initial sanity checks -- messages with
+	# max_forwards==0, or excessively long requests
 	if (!mf_process_maxfwd_header("10")) {
 		sl_send_reply("483","Too Many Hops");
 		break;
@@ -63,7 +81,14 @@ route {
 		break;
 	};
 	
+	# we record-route all messages -- to make sure that
+	# subsequent messages will go through our proxy; that's
+	# particularly good if upstream and downstream entities
+	# use different transport protocol
 	if (!method=="REGISTER") record_route();	
+
+	# subsequent messages withing a dialog should take the
+	# path determined by record-routing
 	if (loose_route()) {
 		# mark routing logic in request
 		append_hf("P-hint: rr-enforced\r\n"); 
@@ -78,9 +103,19 @@ route {
 		break;
 	};
 
+	# if the request is for other domain use UsrLoc
+	# (in case, it does not work, use the following command
+	# with proper names and addresses in it)
 	if (uri==myself) {
 
 		if (method=="REGISTER") {
+
+# Uncomment this if you want to use digest authentication
+#			if (!www_authorize("iptel.org", "subscriber")) {
+#				www_challenge("iptel.org", "0");
+#				break;
+#			};
+
 			save("location");
 			break;
 		};
@@ -90,9 +125,9 @@ route {
 				sl_reply_error();
 			};
 			
-			if (!handle_rls_subscription("http://localhost/xcap-root", "0")) {
+			if (!handle_rls_subscription("0")) {
 				# message is not for RLS but for PA ?			
-				log(1, "SUBSCRIBE not handled by RLS");
+				# log(1, "SUBSCRIBE not handled by RLS");
 				handle_subscription("registrar");
 			}
 			break;
@@ -104,13 +139,6 @@ route {
 			   sl_reply_error();
 			};
 			handle_publish("registrar");
-			break;
-		};
-
-		lookup("aliases");
-		if (!uri==myself) {
-			append_hf("P-hint: outbound alias\r\n"); 
-			route(1);
 			break;
 		};
 
@@ -126,10 +154,13 @@ route {
 
 route[1] 
 {
+	# send it out now; use stateful forwarding as it works reliably
+	# even for UDP2TCP
 	if (!t_relay()) {
 		sl_reply_error();
 	};
 }
+
 ]]>
 </programlisting>
 </example>
@@ -149,9 +180,9 @@ user authentication of SUBSCRIBE requests. </para>
 				sl_reply_error();
 			};
 			
-			if (!handle_rls_subscription("http://localhost/xcap-root", "0")) {
+			if (!handle_subscription("0")) {
 				# message is not for RLS but for PA ?			
-				log(1, "SUBSCRIBE not handled by RLS");
+				# log(1, "SUBSCRIBE not handled by RLS");
 				handle_subscription("registrar");
 			}
 			break;
