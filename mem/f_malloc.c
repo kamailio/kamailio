@@ -34,6 +34,8 @@
  *              GET_HASH s/</<=/ (avoids waste of 1 hash cell)   (andrei)
  *  2004-11-10  support for > 4Gb mem., switched to long (andrei)
  *  2005-03-02  added fm_info() (andrei)
+ *  2005-12-12  fixed realloc shrink real_used accounting (andrei)
+ *              fixed initial size (andrei)
  */
 
 
@@ -213,12 +215,12 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size)
 	end=start+size;
 	qm=(struct fm_block*)start;
 	memset(qm, 0, sizeof(struct fm_block));
-	size-=init_overhead;
 	qm->size=size;
 #if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
 	qm->real_used=init_overhead;
 	qm->max_real_used=qm->real_used;
 #endif
+	size-=init_overhead;
 	
 	qm->first_frag=(struct fm_frag*)(start+ROUNDUP(sizeof(struct fm_block)));
 	qm->last_frag=(struct fm_frag*)(end-sizeof(struct fm_frag));
@@ -402,7 +404,7 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 		fm_split_frag(qm, f, size);
 #endif
 #if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
-		qm->real_used-=(orig_size-f->size);
+		qm->real_used-=(orig_size-f->size-FRAG_OVERHEAD);
 		qm->used-=(orig_size-f->size);
 #endif
 	}else if (f->size<size){

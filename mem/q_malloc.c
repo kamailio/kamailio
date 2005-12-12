@@ -35,6 +35,8 @@
  *              GET_HASH s/</<=/ (avoids waste of 1 hash cell) (andrei)
  *  2004-11-10  support for > 4Gb mem., switched to long (andrei)
  *  2005-03-02  added qm_info() (andrei)
+ *  2005-12-12  fixed realloc shrink real_used & used accounting;
+ *              fixed initial size (andrei)
  */
 
 
@@ -216,10 +218,10 @@ struct qm_block* qm_malloc_init(char* address, unsigned long size)
 	end=start+size;
 	qm=(struct qm_block*)start;
 	memset(qm, 0, sizeof(struct qm_block));
-	size-=init_overhead;
 	qm->size=size;
 	qm->real_used=init_overhead;
 	qm->max_real_used=qm->real_used;
+	size-=init_overhead;
 	
 	qm->first_frag=(struct qm_frag*)(start+ROUNDUP(sizeof(struct qm_block)));
 	qm->last_frag_end=(struct qm_frag_end*)(end-sizeof(struct qm_frag_end));
@@ -548,6 +550,7 @@ void* qm_realloc(struct qm_block* qm, void* p, unsigned long size)
 	/* find first acceptable size */
 	size=ROUNDUP(size);
 	if (f->size > size){
+		orig_size=f->size;
 		/* shrink */
 #ifdef DBG_QM_MALLOC
 		DBG("qm_realloc: shrinking from %lu to %lu\n", f->size, size);
@@ -556,9 +559,9 @@ void* qm_realloc(struct qm_block* qm, void* p, unsigned long size)
 #else
 		if(split_frag(qm, f, size)!=0){
 #endif
-			/* update used sizes */
-			qm->real_used-=(f->size-size);
-			qm->used-=(f->size-size);
+			/* update used sizes: freed the spitted frag */
+			qm->real_used-=(orig_size-f->size-FRAG_OVERHEAD);
+			qm->used-=(orig_size-f->size);
 		}
 		
 	}else if (f->size < size){
