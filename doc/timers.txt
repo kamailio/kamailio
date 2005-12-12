@@ -114,7 +114,8 @@ WARNING: do not initialize/re-initialize a running timer!
 
 To remove a timer from the active timer list call timer_del(struct timer_ln*).
 timer_del is the slowest of all the timer functions. If you are trying to delete a timer whose timer is executing. timer_del will wait until it finishes.
-WARNING: if you have an one shot timer that frees its memory before exiting, make sure you don't call timer_del afterwards (e.g. use some reference counters and free the memory only if the counter is 0).
+WARNING: - avoid deleting your own timer from its timer handle (if you try it, you'll get a BUG message in the log). If you _must_ have this, you have a broken design. If you still want it, look at  timer_allow_del().
+         - if you have an one shot timer that frees its memory before exiting, make sure you don't call timer_del afterwards (e.g. use some reference counters and free the memory only if the counter is 0).
 
 Race example (using the struct foo defined above):
 
@@ -139,14 +140,22 @@ timer_del(&f->timer); /* if the timer is already expired => f is already
 
 The above timer_del/free_in_one_shot_timer race example is very simple, but consider that you can have much more complex scenarios, when timer_del can be called from different processes on some asynchronous events. If this looks like you're intended usage, make sure you use some  reference counters or some other protection mechanism to avoid the above race.
 
+4.5 timer_allow_del
+-------------------
 
-4.5 Getting the ticks value
+Marks a timer as "to be deleted when the handler ends", usefull when the timer handler knows it won't prolong the timer anymore (it will return 0) and will do some time consuming work. Calling this function will cause simultaneous timer_dels to return immediately (they won't  wait anymore for the timer handle to finish). It will also allow  self-deleting from the timer handle without logging a bug.
+ WARNING: - if you rely on timer_del to know when the timer handle execution finishes (e.g. to free resources used in the timer handle), don't use this function.
+          - call this function only if this is your last timer handle run (the timer handle will return 0)
+          - this function can be called only from a timer handle (in timer context), all other calls will have no effect and will log a bug message
+
+
+4.6 Getting the ticks value
 ----------------------------
 
 If you need the current ticks value you can get with get_ticks_raw().
 WARNING: don't use get_ticks(). get_ticks() returns the number of ticks converted to seconds and it was kept only for compatibility reasons with the existing code.
 
-4.6 Conversion
+4.7 Conversion
 ---------------
 
 To convert between ticks & time and viceversa, include timer_ticks.h and use
@@ -161,11 +170,19 @@ TICKS_TO_MS(t)  /* converts from ticks to milliseconds, can overflow for
 TICKS_TO_S(t)  /* converts from ticks to s, rounded down */
 
 
-4.7 Backward compatibility
+4.8 Backward compatibility
 --------------------------
 
 The old  register_timer and get_ticks() are still supported for backward compatibility. This means that you don't have to change your existing working code.
 
+
+5.0 Debugging
+-------------
+
+The timers have built-in debugging information. To activate it you only need to define TIMER_DEBUG (recompile ser with make CC_EXTRA_OPTS=-DTIMER_DEBUG all).
+The timer debug log level is by default L_WARN. [ FIXME: add it as script option]
+TIMER_DEBUG enables extra sanity checks and it will log a lot of information
+ (like the caller of timer_* functions, where a timer was added a.s.o).
 
 
 [Todo]:

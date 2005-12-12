@@ -29,6 +29,8 @@
  *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-03-29  cleaning pkg_mallocs introduced (jiri)
  *  2005-07-27  complete re-design/re-implementation (andrei)
+ *  2005-12-12  workarround & bug reporting for timer_del(self) called from
+ *              a timer handle; added timer_allow_del()  (andrei)
  */
 
 
@@ -80,6 +82,9 @@ static int timer_id=0;
 
 static gen_lock_t* timer_lock=0;
 static struct timer_ln* volatile* running_timer=0;/* running timer handler */
+static int in_timer=0;
+
+#define IS_IN_TIMER() (in_timer)
 
 #define LOCK_TIMER_LIST()		lock_get(timer_lock)
 #define UNLOCK_TIMER_LIST()		lock_release(timer_lock)
@@ -111,6 +116,9 @@ static struct timer_ln* volatile* running_timer2=0; /* timer handler running
 													     in the "slow" timer */
 static sigset_t slow_timer_sset;
 pid_t slow_timer_pid;
+static int in_slow_timer=0;
+
+#define IS_IN_TIMER_SLOW() (in_slow_timer)
 #define SET_RUNNING_SLOW(t)		(*running_timer2=(t))
 #define IS_RUNNING_SLOW(t)		(*running_timer2==(t))
 #define UNSET_RUNNING_SLOW()	(*running_timer2=0)
@@ -564,6 +572,23 @@ again:
 			}
 			if (IS_RUNNING_SLOW(tl)){
 				UNLOCK_SLOW_TIMER_LIST();
+				if (IS_IN_TIMER_SLOW()){
+					/* if somebody tries to shoot himself in the foot,
+					 * warn him and ignore the delete */
+					LOG(L_CRIT, "BUG: timer handle %p (s) tried to delete"
+							" itself\n", tl);
+#ifdef TIMER_DEBUG
+					LOG(timerlog, "WARN: -timer_del-: called from %s(%s):%d\n",
+									func, file, line);
+					LOG(timerlog, "WARN: -timer_del-: added %d times"
+						", last from: %s(%s):%d, deleted %d times"
+						", last from: %s(%s):%d, init %d times, expired %d \n",
+						tl->add_calls, tl->add_func, tl->add_file,
+						tl->add_line, tl->del_calls, tl->del_func, 
+						tl->del_file, tl->del_line, tl->init, tl->expires_no);
+#endif
+					return; /* do nothing */
+				}
 				sched_yield(); /* wait for it to complete */
 				goto again;
 			}
@@ -613,6 +638,23 @@ again:
 #endif
 			if (IS_RUNNING(tl)){
 				UNLOCK_TIMER_LIST();
+				if (IS_IN_TIMER()){
+					/* if somebody tries to shoot himself in the foot,
+					 * warn him and ignore the delete */
+					LOG(L_CRIT, "BUG: timer handle %p tried to delete"
+							" itself\n", tl);
+#ifdef TIMER_DEBUG
+					LOG(timerlog, "WARN: -timer_del-: called from %s(%s):%d\n",
+									func, file, line);
+					LOG(timerlog, "WARN: -timer_del-: added %d times"
+						", last from: %s(%s):%d, deleted %d times"
+						", last from: %s(%s):%d, init %d times, expired %d \n",
+						tl->add_calls, tl->add_func, tl->add_file,
+						tl->add_line, tl->del_calls, tl->del_func, 
+						tl->del_file, tl->del_line, tl->init, tl->expires_no);
+#endif
+					return; /* do nothing */
+				}
 				sched_yield(); /* wait for it to complete */
 				goto again;
 			}
@@ -634,7 +676,7 @@ again:
 					"{ %p, %p, %d, %d, %p, %p, %04x, -}\n", get_ticks_raw(), 
 					tl,  tl->next, tl->prev, tl->expire, tl->initial_timeout,
 					tl->data, tl->f, tl->flags);
-				LOG(timerlog, "WANT: -timer_del-; called from %s(%s):%d\n",
+				LOG(timerlog, "WARN: -timer_del-; called from %s(%s):%d\n",
 						func, file, line);
 				LOG(timerlog, "WARN: -timer_del-: added %d times"
 						", last from: %s(%s):%d, deleted %d times"
@@ -656,6 +698,33 @@ again:
 #endif
 }
 
+
+
+/* marks a timer as "to be deleted when the handler ends", usefull when
+ * the timer handler knows it won't prolong the timer anymore (it will 
+ * return 0) and will do some time consuming work. Calling this function
+ * will cause simultaneous timer_dels to return immediately (they won't 
+ * wait anymore for the timer handle to finish). It will also allow 
+ * self-deleting from the timer handle without bug reports.
+ * WARNING: - if you rely on timer_del to know when the timer handle execution
+ *            finishes (e.g. to free resources used in the timer handle), don't
+ *            use this function.
+ *          - this function can be called only from a timer handle (in timer
+ *            context), all other calls will have no effect and will log a
+ *            bug message
+ */
+void timer_allow_del()
+{
+	if (IS_IN_TIMER() ){
+			UNSET_RUNNING();
+	}else
+#ifdef USE_SLOW_TIMER
+	if (IS_IN_TIMER_SLOW()){
+			UNSET_RUNNING_SLOW();
+	}else 
+#endif
+		LOG(L_CRIT, "BUG: timer_allow_del called outside a timer handle\n");
+}
 
 
 /* called from timer_handle, must be called with the timer lock held */
@@ -813,6 +882,7 @@ static void timer_handler()
 /* main timer function, never exists */
 void timer_main()
 {
+	in_timer=1; /* mark this process as the fast timer */
 	while(1){
 		if (run_timer){
 			timer_handler();
@@ -915,6 +985,7 @@ void slow_timer_main()
 	struct timer_ln* tl;
 	unsigned short i;
 	
+	in_slow_timer=1; /* mark this process as the slow timer */
 	while(1){
 		n=sigwaitinfo(&slow_timer_sset, 0);
 		if (n==-1){
