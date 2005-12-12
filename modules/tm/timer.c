@@ -419,11 +419,11 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln* tl, void *p)
 	/* overflow safe check (should work ok for fr_intervals < max ticks_t/2) */
 	if ((s_ticks_t)(rbuf->fr_expire-ticks)<=0){
 		/* final response */
-		final_response_handler(rbuf, t);
 		rbuf->t_active=0; /* mark the timer as removed 
 							 (both timers disabled)
 							  a little race risk, but
 							  nothing bad would happen */
+		final_response_handler(rbuf, t);
 		return 0;
 	}else{
 		/*  4 possible states running (t1), t2, paused, disabled */
