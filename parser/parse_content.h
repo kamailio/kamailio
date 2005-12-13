@@ -66,6 +66,9 @@ struct mime_type {
 #define SUBTYPE_UNKNOWN      0xff
 
 
+/* taken from PA module - will be useful here */
+#define MIMETYPE(x_,y_) ((TYPE_##x_ << 16) | (SUBTYPE_##y_))
+
 /*
  * Maximum number of mimes allowed in Accept header 
  */
