@@ -40,6 +40,7 @@
 #include "dprint.h"
 #include "error.h"
 #include "mem/mem.h"
+#include "core_cmd.h"
 #include "ut.h"
 
 #include <regex.h>
@@ -271,6 +272,34 @@ cmd_function find_export(char* name, int param_no, int flags)
 	return 0;
 }
 
+
+rpc_export_t* find_rpc_export(char* name, int flags)
+{
+	struct sr_module* t;
+	rpc_export_t* rpc;
+
+	     /* Scan the list of core methods first, they are always
+	      * present
+	      */
+	for(rpc = core_rpc_methods; rpc && rpc->name; rpc++) {
+		if ((strcmp(name, rpc->name) == 0) &&
+		    ((rpc->flags & flags) == flags)
+		    ) {
+			return rpc;
+		}
+	}
+	     /* Continue with modules if not found */
+	for(t = modules; t; t = t->next) {
+		for(rpc = t->exports->rpc_methods; rpc && rpc->name; rpc++) {
+			if ((strcmp(name, rpc->name) == 0) &&
+			    ((rpc->flags & flags) == flags)
+			   ) {
+				return rpc;
+			}
+		}
+	}
+	return 0;
+}
 
 
 /*

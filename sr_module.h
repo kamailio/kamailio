@@ -46,6 +46,7 @@
 
 #include "parser/msg_parser.h" /* for sip_msg */
 #include "version.h"
+#include "rpc.h"
 
 typedef  struct module_exports* (*module_register)();
 typedef  int (*cmd_function)(struct sip_msg*, char*, char*);
@@ -77,7 +78,7 @@ typedef int (*param_func_t)( modparam_t type, void* val);
 #define PROC_TIMER    -1  /* Timer attendant process */
 #define PROC_FIFO     -2  /* FIFO attendant process */
 #define PROC_TCP_MAIN -4  /* TCP main process */
-#define PROC_UNIXSOCK -5  /* Unix domain socket server processes */
+#define PROC_UNIXSOCK -5  /* Unix socket server */
 
 #define MODULE_VERSION \
 	char *module_version=SER_FULL_VERSION; \
@@ -108,6 +109,7 @@ struct module_exports{
 	
 	cmd_export_t* cmds;             /* null terminated array of the exported
 									   commands */
+	rpc_export_t* rpc_methods;      /* null terminated array of exported rpc methods */
 	param_export_t* params;         /* null terminated array of the exported
 									   module parameters */
 
@@ -141,6 +143,7 @@ int register_module(struct module_exports*, char*,  void*);
 int load_module(char* path);
 cmd_function find_export(char* name, int param_no, int flags);
 cmd_function find_mod_export(char* mod, char* name, int param_no, int flags);
+rpc_export_t* find_rpc_export(char* name, int flags);
 struct sr_module* find_module(void *f, cmd_export_t** cmd);
 void destroy_modules();
 int init_child(int rank);
