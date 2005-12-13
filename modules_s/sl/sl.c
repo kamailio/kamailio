@@ -96,7 +96,7 @@ struct module_exports exports= {
 	"sl_module",
 	cmds,
 	0, /* param exports */
-	
+	0,
 	mod_init,   /* module initialization function */
 	(response_function) 0,
 	mod_destroy,
