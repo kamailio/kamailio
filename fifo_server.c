@@ -864,7 +864,7 @@ static int ps_fifo_cmd(FILE *stream, char *response_file )
 	}
 
 	fputs( "200 ok\n", reply_pipe);
-	for (p=0; p<process_count();p++) 
+	for (p=0; p<process_count;p++) 
 		fprintf( reply_pipe, "%d\t%d\t%s\n",
 			p, pt[p].pid, pt[p].desc );
 

@@ -335,6 +335,15 @@ struct host_alias* aliases=0; /* name aliases list */
 
 /* ipc related globals */
 int process_no = 0;
+
+/* Last filled entry in process table before calling
+ * child_init of loaded modules
+ */
+int last_process = 0;
+
+/* Total number of SER processes with given configuration */
+int process_count = 0;
+
 /* process_bm_t process_bit = 0; */
 #ifdef ROUTE_SRV
 #endif
@@ -421,7 +430,7 @@ static void kill_all_children(int signum)
 
 	if (own_pgid) kill(0, signum);
 	else if (pt)
-		for (r=1; r<process_count(); r++)
+		for (r=1; r<process_count; r++)
 			if (pt[r].pid) kill(pt[r].pid, signum);
 }
 
@@ -1010,7 +1019,7 @@ int main_loop()
 					 * parent gets a chance to set it*/
 					pt[process_no].pid=getpid();
 					bind_address=si; /* shortcut */
-					if (init_child(i + 1) < 0) {
+					if (init_child(process_no) < 0) {
 						LOG(L_ERR, "init_child failed\n");
 						goto error;
 					}
@@ -1174,18 +1183,11 @@ int main_loop()
 	}
 #endif
 	/*DEBUG- remove it*/
-#ifdef EXTRA_DEBUG
-	fprintf(stderr, "\n% 3d processes (%3d), % 3d children * "
-			"listening addresses + tcp listeners + tls listeners"
-			"+ main + fifo + timer"
-# ifdef USE_SLOW_TIMER
-			" + slow_timer"
-# endif
-			"\n", process_no+1, process_count(), children_no);
-	for (r=0; r<=process_no; r++){
-		fprintf(stderr, "% 3d   % 5d - %s\n", r, pt[r].pid, pt[r].desc);
-	}
-#endif
+
+	/* Modules need to know the last value of process_no to fill in
+	 * process table properly
+	 */
+	last_process = process_no;
 	process_no=0; 
 	/* process_bit = 0; */
 	is_main=1;
@@ -1194,6 +1196,14 @@ int main_loop()
 		LOG(L_ERR, "main: error in init_child\n");
 		goto error;
 	}
+
+	/*DEBUG- remove it*/
+#ifdef EXTRA_DEBUG
+	for (r=0; r<process_count; r++){
+		fprintf(stderr, "% 3d   % 5d - %s\n", r, pt[r].pid, pt[r].desc);
+	}
+#endif
+
 	for(;;){
 			pause();
 			handle_sigs();
@@ -1210,6 +1220,34 @@ int main_loop()
 }
 
 
+/*
+ * Calculate number of processes, this does not
+ * include processes created by modules
+ */
+static int calc_proc_no(void)
+{
+	int udp_listeners;
+	struct socket_info* si;
+	
+	for (si=udp_listen, udp_listeners=0; si; si=si->next, udp_listeners++);
+	return
+		     /* receivers and attendant */
+		(dont_fork ? 1 : children_no * udp_listeners + 1)
+		     /* timer process */
+		+ 1 /* always, we need it in most cases, and we can't tell here
+		       & now if we don't need it */
+#ifdef USE_SLOW_TIMER
+		+ 1 /* slow timer process */
+#endif
+		/* fifo server */
+		+((fifo==NULL || strlen(fifo)==0) ? 0 : 1 )
+		/* unixsock server*/
+		+(unixsock_name?unixsock_children:0)
+#ifdef USE_TCP
+		+((!tcp_disable)?( 1/* tcp main */ + tcp_children_no ):0) 
+#endif
+		;
+}
 
 
 int main(int argc, char** argv)
@@ -1575,19 +1613,6 @@ try_again:
 		fprintf(stderr, "ERROR: could not install the signal handlers\n");
 		goto error;
 	}
-	
-	
-	/*alloc pids*/
-#ifdef SHM_MEM
-	pt=shm_malloc(sizeof(struct process_table)*process_count());
-#else
-	pt=pkg_malloc(sizeof(struct process_table)*process_count());
-#endif
-	if (pt==0){
-		fprintf(stderr, "ERROR: out  of memory\n");
-		goto error;
-	}
-	memset(pt, 0, sizeof(struct process_table)*process_count());
 
 	if (disable_core_dump) set_core_dump(0, 0);
 	else set_core_dump(1, shm_mem_size+PKG_MEM_POOL_SIZE+4*1024*1024);
@@ -1597,11 +1622,34 @@ try_again:
 			goto error;
 		}
 	}
-	
+
+
+	     /* Calculate initial process count, mod_init functions called 
+	      * below can add to it
+	      */
+	process_count = calc_proc_no(); 
 	if (init_modules() != 0) {
 		fprintf(stderr, "ERROR: error while initializing modules\n");
 		goto error;
 	}
+	     /* The total number of processes is know now, note that no 
+	      * function being called before this point may rely on the 
+	      * number of processes !
+	      */
+	DBG("Expect %d SER processes in your process list\n", process_count);
+
+	/*alloc pids*/
+#ifdef SHM_MEM
+	pt=shm_malloc(sizeof(struct process_table)*process_count);
+#else
+	pt=pkg_malloc(sizeof(struct process_table)*process_count);
+#endif
+	if (pt==0){
+		fprintf(stderr, "ERROR: out  of memory\n");
+		goto error;
+	}
+	memset(pt, 0, sizeof(struct process_table)*process_count);
+
 	/* fix routing lists */
 	if ( (r=fix_rls())!=0){
 		fprintf(stderr, "ERROR: error %d while trying to fix configuration\n",

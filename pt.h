@@ -58,34 +58,8 @@ struct process_table {
 
 extern struct process_table *pt;
 extern int process_no;
-
-/* get number of process started by main with
-   given configuration
-*/
-inline static int process_count()
-{
-	int udp_listeners;
-	struct socket_info* si;
-	
-	for (si=udp_listen, udp_listeners=0; si; si=si->next, udp_listeners++);
-    return 
-		/* receivers and attendant */
-		(dont_fork ? 1 : children_no*udp_listeners + 1)
-		/* timer process */
-		+ 1 /* always, we need it in most cases, and we can't tell here
-			   & now if we don't need it */
-#ifdef USE_SLOW_TIMER
-		+ 1 /* slow timer process */
-#endif
-		/* fifo server */
-		+((fifo==NULL || strlen(fifo)==0) ? 0 : 1 )
-		/* unixsock server*/
-		+(unixsock_name?unixsock_children:0)
-#ifdef USE_TCP
-		+((!tcp_disable)?( 1/* tcp main */ + tcp_children_no ):0) 
-#endif
-		;
-}
+extern int process_count;
+extern int last_process;
 
 
 /* return processes pid */

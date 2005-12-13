@@ -1694,7 +1694,7 @@ int tcp_init_children()
 		for (si=tls_listen; si; si=si->next, r++);
 #endif
 	
-	tcp_max_fd_no=process_count()*2 +r-1 /* timer */ +3; /* stdin/out/err*/
+	tcp_max_fd_no=process_count*2 +r-1 /* timer */ +3; /* stdin/out/err*/
 	tcp_max_fd_no+=tcp_max_connections;
 	
 	/* create the tcp sock_info structures */
@@ -1741,7 +1741,7 @@ int tcp_init_children()
 			/* record pid twice to avoid the child using it, before
 			 * parent gets a chance to set it*/
 			pt[process_no].pid=getpid();
-			if (init_child(r+children_no+1) < 0) {
+			if (init_child(process_no) < 0) {
 				LOG(L_ERR, "init_children failed\n");
 				goto error;
 			}

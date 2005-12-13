@@ -57,7 +57,7 @@ int print_stats(  FILE *f )
 	int i;
 	int pno;
 
-	pno=process_count();
+	pno=process_count;
 	for(i=0, total=0, waiting=0, total_local=0; i<pno;i++) {
 		total+=tm_stats->s_transactions[i];
 		waiting+=tm_stats->s_waiting[i];
@@ -119,7 +119,7 @@ int static unixsock_stats(str* cmd)
 
 	unixsock_reply_asciiz( "200 OK\n");
 
-	pno = process_count();
+	pno = process_count;
 	for(i = 0, total = 0, waiting = 0, total_local = 0; i < pno; i++) {
 		total += tm_stats->s_transactions[i];
 		waiting += tm_stats->s_waiting[i];
@@ -167,7 +167,7 @@ int init_tm_stats(void)
 	}
 	memset(tm_stats, 0, sizeof(struct t_stats) );
 
-	size=sizeof(stat_counter)*process_count();
+	size=sizeof(stat_counter)*process_count;
 	tm_stats->s_waiting=shm_malloc(size);
 	if (tm_stats->s_waiting==0) {
 		LOG(L_ERR, "ERROR: init_tm_stats: no mem for stats\n");

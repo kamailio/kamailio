@@ -193,7 +193,7 @@ static int ps_cmd(str* msg)
 
 	ret = 0;
 	unixsock_reply_asciiz("200 OK\n");
-	for (p = 0; p < process_count(); p++) {
+	for (p = 0; p < process_count; p++) {
 		if (unixsock_reply_printf("%d\t%d\t%s\n", p, pt[p].pid, pt[p].desc) < 0) {
 			unixsock_reply_reset();
 			unixsock_reply_asciiz("500 Error while printing reply\n");
