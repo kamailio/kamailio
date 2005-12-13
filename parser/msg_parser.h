@@ -86,6 +86,10 @@ if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
                 tmp=buffer+methodname##_LEN;                              \
 }
 
+#define IS_HTTP(req)                                                \
+    ((req)->first_line.u.request.version.len >= HTTP_VERSION_LEN && \
+    !strncasecmp((req)->first_line.u.request.version.s,             \
+		HTTP_VERSION, HTTP_VERSION_LEN))
 
 /*
  * Return a URI to which the message should be really sent (not what should
