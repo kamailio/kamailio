@@ -43,6 +43,9 @@
 #define SIP_VERSION "SIP/2.0"
 #define SIP_VERSION_LEN 7
 
+#define HTTP_VERSION "HTTP/1."
+#define HTTP_VERSION_LEN (sizeof(HTTP_VERSION - 1))
+
 #define CANCEL "CANCEL"
 #define ACK    "ACK"
 #define INVITE "INVITE"
