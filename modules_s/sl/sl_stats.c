@@ -60,7 +60,7 @@ static int print_sl_stats(FILE *reply_file)
 	memset(&total, 0, sizeof(struct sl_stats));
 	if (dont_fork) {
 		add_sl_stats(&total, &sl_stats[0]);
-	} else for (p=0; p<process_count(); p++)
+	} else for (p=0; p<process_count; p++)
 			add_sl_stats(&total, &sl_stats[p]);
 
 	fprintf(reply_file, "200: %ld 202: %ld 2xx: %ld" CLEANUP_EOL,
@@ -118,7 +118,7 @@ int static sl_stats_cmd_unixsock( str* msg )
 	memset(&total, 0, sizeof(struct sl_stats));
 	if (dont_fork) {
 		add_sl_stats(&total, &sl_stats[0]);
-	} else for (p=0; p<process_count(); p++)
+	} else for (p=0; p<process_count; p++)
 			add_sl_stats(&total, &sl_stats[p]);
 
 	if (unixsock_reply_printf("200: %ld 202: %ld 2xx: %ld" CLEANUP_EOL,
@@ -175,7 +175,7 @@ int init_sl_stats( void )
 	   iterates through using process_count()
 	*/
 
-	len=sizeof(struct sl_stats)*(process_count()+1);
+	len=sizeof(struct sl_stats)*(process_count+1);
 	sl_stats=shm_malloc(len);
 	if (sl_stats==0) {
 		LOG(L_ERR, "ERROR: init_sl_stats: no shmem\n");
