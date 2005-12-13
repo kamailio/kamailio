@@ -10,6 +10,11 @@
 <table xmlns:my="http://iptel.org/dbschema/mysql">
     <name>aliases</name>
     <version>6</version>
+    <description>
+	This table is used to implement group aliases. Group aliases are SIP
+	URIs that resolve to multiple destination SIP URIs. The proxy server
+	then can determine whether it should use serial or paralell forking.
+    </description>
 
     <column id="username">
 	<name>username</name>

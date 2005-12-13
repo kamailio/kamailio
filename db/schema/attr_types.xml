@@ -10,21 +10,37 @@
 <table xmlns:my="http://iptel.org/dbschema/mysql" role="serweb">
     <name>attr_types</name>
     <version>1</version>
+    <description>
+	Each attribute, identified by name, has associated set of
+	properties and constraints. This table contains types and
+	constraints for all attributes known to SER and SERWeb.
+    </description>
     <column id="at.name">
 	<name>name</name>
 	<type>string</type>
 	<size>32</size>
+	<description>
+	    Name of attribute.
+	</description>
     </column>
     <column role="serweb">
 	<name>rich_type</name>
 	<type>string</type>
 	<default>string</default>
 	<size>32</size>
+	<description>
+	    Type specification used by SERWeb. Rich type is more expressive
+	    than raw type.
+	</description>
     </column>
     <column id="at.type">
 	<name>raw_type</name>
 	<type>int</type>
 	<default>2</default>
+	<description>
+	    The type of attribute. It can be either integer value (type is 0), or
+	    string value (type is 2).
+	</description>
     </column>
     <column role="serweb">
 	<name>type_spec</name>
@@ -32,6 +48,9 @@
 	<size>255</size>
 	<default><null/></default>
 	<null/>
+	<description>
+	    Exact type specification, this is used by SERWeb only.
+	</description>
     </column>
     <index>
 	<name>upt_idx1</name>
