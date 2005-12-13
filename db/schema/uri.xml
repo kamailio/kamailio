@@ -40,16 +40,12 @@
 
     <index>
 	<name>uri_idx1</name>
-	<unique/>
 	<colref linkend="uri.username"/>
 	<colref linkend="uri.did"/>
-	<colref linkend="uri.flags"/>
     </index>
 
     <index>
 	<name>uri_uid</name>
-	<unique/>
 	<colref linkend="uri.uid"/>
-	<colref linkend="uri.flags"/>
     </index>
 </table>
