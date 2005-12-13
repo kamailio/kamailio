@@ -81,23 +81,20 @@ static void attr_name_value(VALUE_PAIR* vp, str* name, str* value)
  */
 static int generate_avps(VALUE_PAIR* received)
 {
-	str name_str, val_str;
 	int_str name, val;
 	VALUE_PAIR *vp;
 
 	vp = received;
-	name.s = name_str;
-	val.s = val_str;
 
 	while ((vp = rc_avpair_get(vp, attrs[A_SER_ATTRS].v, 0))) {
-		attr_name_value(vp, &name_str, &val_str);
+		attr_name_value(vp, &name.s, &val.s);
 		
 		if (add_avp(AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) {
 			LOG(L_ERR, "generate_avps: Unable to create a new AVP\n");
 		} else {
 			DBG("generate_avps: AVP '%.*s'='%.*s' has been added\n",
-			    name_str.len, ZSW(name_str.s), 
-			    val_str.len, ZSW(val_str.s));
+			    name.s.len, ZSW(name.s.s), 
+			    val.s.len, ZSW(val.s.s));
 		}
 		vp = vp->next;
 	}
