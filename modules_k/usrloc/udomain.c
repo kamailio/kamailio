@@ -354,7 +354,8 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		if (VAL_NULL(ROW_VALUES(row)+9) || p==0 || p[0]==0){
 			ci.sock = 0;
 		} else {
-			if (parse_phostport( p, &host.s, &host.len, &port, &proto)!=0) {
+			if (parse_phostport( p, strlen(p), &host.s, &host.len, 
+			&port, &proto)!=0) {
 				LOG(L_ERR,"ERROR:usrloc:preload_udomain: bad socket <%s> in "
 						"table %s for user %.*s\n", p, _d->name->s,
 						user.len, user.s);

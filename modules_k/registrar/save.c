@@ -159,7 +159,8 @@ static struct socket_info *get_sock_hdr(struct sip_msg *msg)
 	if (socks.len==0)
 		return 0;
 
-	if (parse_phostport( socks.s, &hosts.s, &hosts.len, &port, &proto)!=0) {
+	if (parse_phostport( socks.s, socks.len, &hosts.s, &hosts.len, 
+	&port, &proto)!=0) {
 		LOG(L_ERR,"ERROR:registrar:get_sock_hdr: bad socket <%.*s> in \n",
 			socks.len, socks.s);
 		return 0;
