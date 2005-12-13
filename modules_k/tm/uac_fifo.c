@@ -130,7 +130,8 @@ static inline int fifo_get_nexthop(FILE* stream, char* response_file,
 		/* extract socket */
 		trim_leading(&ssock);
 		if (ssock.len!=0 && !(ssock.len==1 && ssock.s[0]=='.')) {
-			if (parse_phostport(ssock.s,&host.s,&host.len,&port,&proto)!=0) {
+			if (parse_phostport( ssock.s, ssock.len, &host.s, &host.len,
+			&port,&proto)!=0) {
 				LOG(L_ERR,"ERROR:tm:fifo_get_nexthop: bad socket <%.*s> \n",
 					ssock.len,ssock.s);
 				fifo_uac_error(response_file, 400, "socket invalid\n");
