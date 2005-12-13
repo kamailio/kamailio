@@ -69,6 +69,7 @@ static param_export_t params[] = {
 struct module_exports exports = {	
 	"postgres",
 	cmds,
+	0,         /* RPC methods */
 	params,    /*  module parameters */
         0,         /* module initialization function */
 	0,         /* response function*/
