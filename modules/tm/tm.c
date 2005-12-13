@@ -298,6 +298,7 @@ struct module_exports exports= {
 	"tm",
 	/* -------- exported functions ----------- */
 	cmds,
+	0,    /* RPC methods */
 	/* ------------ exported variables ---------- */
 	params,
 	
