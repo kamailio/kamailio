@@ -159,7 +159,7 @@ static void core_ps(rpc_t* rpc, void* c)
 {
 	int p;
 
-	for (p=0; p<process_count;p++) {
+	for (p=0; p<process_count();p++) {
 		rpc->printf(c, "pid: %d", pt[p].pid);
 		rpc->printf(c, "desc: %s", pt[p].desc);
 	}
