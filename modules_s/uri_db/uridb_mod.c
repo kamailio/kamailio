@@ -120,6 +120,7 @@ static param_export_t params[] = {
 struct module_exports exports = {
 	"uri_db", 
 	cmds,      /* Exported functions */
+	0,         /* RPC methods */
 	params,    /* Exported parameters */
 	mod_init,  /* module initialization function */
 	0,         /* response function */
@@ -262,6 +263,7 @@ static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 			return -1;
 		}
 		vals[0].val.str_val = puri.user;			
+		flag = DB_IS_TO;
 	} else {
 		get_to_did(&did, msg);
 		flag = DB_IS_TO;
