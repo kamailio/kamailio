@@ -72,8 +72,8 @@ CREATE TABLE missed_calls (
     sip_to VARCHAR(255),
     sip_status VARCHAR(128),
     sip_method VARCHAR(16),
-    inbound_ruri VARCHAR(255),
-    outbound_ruri VARCHAR(255),
+    in_ruri VARCHAR(255),
+    out_ruri VARCHAR(255),
     from_uri VARCHAR(255),
     to_uri VARCHAR(255),
     sip_callid VARCHAR(255),
@@ -82,6 +82,8 @@ CREATE TABLE missed_calls (
     digest_realm VARCHAR(255),
     from_tag VARCHAR(128),
     to_tag VARCHAR(128),
+    src_ip INT UNSIGNED,
+    src_port SMALLINT UNSIGNED,
     request_timestamp DATETIME NOT NULL,
     response_timestamp DATETIME NOT NULL,
     flags INT UNSIGNED NOT NULL DEFAULT '0',
@@ -151,7 +153,7 @@ CREATE TABLE domain (
     domain VARCHAR(128) NOT NULL,
     last_modified timestamp NOT NULL,
     flags INT UNSIGNED NOT NULL DEFAULT '0',
-    UNIQUE KEY domain_idx (did, domain)
+    UNIQUE KEY domain_idx (domain)
 );
 
 CREATE TABLE location (
@@ -264,8 +266,8 @@ CREATE TABLE uri (
     did VARCHAR(64) NOT NULL,
     username VARCHAR(64) NOT NULL,
     flags INT UNSIGNED NOT NULL DEFAULT '0',
-    UNIQUE KEY uri_idx1 (username, did, flags),
-    UNIQUE KEY uri_uid (uid, flags)
+    KEY uri_idx1 (username, did),
+    KEY uri_uid (uid)
 );
 
 CREATE TABLE speed_dial (
