@@ -199,7 +199,7 @@ static cmd_export_t cmds[]={
 	{"t_on_failure",         w_t_on_negative,         1, fixup_str2int,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_on_reply",           w_t_on_reply,            1, fixup_str2int,
-			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"t_on_branch",          w_t_on_branch,           1, fixup_str2int,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_check_status",       t_check_status,          1, fixup_str2regexp,
