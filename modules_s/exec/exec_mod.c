@@ -83,6 +83,7 @@ struct module_exports exports= {
 #endif
 	"exec",
 	cmds,           /* Exported functions */
+	0,              /* RPC methods */
 	params,         /* Exported parameters */
 	mod_init, 	/* initialization module */
 	0,		/* response function */

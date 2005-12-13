@@ -205,6 +205,7 @@ static param_export_t parameters[] = {
 struct module_exports exports = {
     "mediaproxy", // module name
     commands,     // module exported functions
+    0,            // RPC methods
     parameters,   // module exported parameters
     mod_init,     // module init (before any kid is created. kids will inherit)
     NULL,         // reply processing

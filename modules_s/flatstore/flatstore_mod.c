@@ -97,6 +97,7 @@ static param_export_t params[] = {
 struct module_exports exports = {	
 	"flatstore",
 	cmds,
+	0,           /* RPC methods */
 	params,      /*  module parameters */
 	mod_init,    /* module initialization function */
 	0,           /* response function*/

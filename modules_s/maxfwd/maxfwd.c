@@ -79,6 +79,7 @@ struct module_exports exports= {
 #endif
 	"maxfwd",
 	cmds,
+	0,       /* RPC methods */
 	params,
 	mod_init,
 	(response_function) 0,

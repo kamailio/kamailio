@@ -218,6 +218,7 @@ static param_export_t params[] = {
 struct module_exports exports= {
 	"acc_db",
 	cmds,        /* exported functions */
+	0,           /* RPC methods */
 	params,      /* exported params */
 	mod_init,    /* initialization module */
 	0,	     /* response function */

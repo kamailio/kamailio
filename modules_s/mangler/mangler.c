@@ -114,6 +114,7 @@ static cmd_export_t cmds[] =
 struct module_exports exports = {
 	"mangler",
 	cmds,			/* Exported functions */
+	0,                      /* RPC methods */
 	params,			/* Exported parameters */
 	mod_init,		/* module initialization function */
 	0,			/* response function */

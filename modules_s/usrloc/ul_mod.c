@@ -155,6 +155,7 @@ static param_export_t params[] = {
 struct module_exports exports = {
 	"usrloc",
 	cmds,       /* Exported functions */
+	0,          /* RPC methods */
 	params,     /* Export parameters */
 	mod_init,   /* Module initialization function */
 	0,          /* Response function */

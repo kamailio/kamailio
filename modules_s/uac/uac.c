@@ -91,6 +91,7 @@ static param_export_t params[] = {
 struct module_exports exports= {
 	"uac",
 	cmds,       /* exported functions */
+	0,          /* RPC methods */
 	params,     /* param exports */
 	mod_init,   /* module initialization function */
 	(response_function) 0,

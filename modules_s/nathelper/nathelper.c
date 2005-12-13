@@ -313,6 +313,7 @@ static param_export_t params[] = {
 struct module_exports exports = {
 	"nathelper",
 	cmds,
+	0,       /* RPC methods */
 	params,
 	mod_init,
 	0, /* reply processing */

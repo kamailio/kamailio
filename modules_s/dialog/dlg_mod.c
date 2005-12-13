@@ -70,6 +70,7 @@ static param_export_t params[]={
 struct module_exports exports = {
 	"dialog", 
 	cmds,        /* Exported functions */
+	0,           /* RPC methods */
 	params,      /* Exported parameters */
 	dlg_mod_init, /* module initialization function */
 	0,           /* response function*/

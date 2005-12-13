@@ -80,6 +80,7 @@ static param_export_t params[]={
 struct module_exports exports= {
 	"xlog",
 	cmds,
+	0,        /* RPC methods */
 	params,
 	
 	mod_init,   /* module initialization function */

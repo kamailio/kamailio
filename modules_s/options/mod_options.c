@@ -76,6 +76,7 @@ static param_export_t params[] = {
 struct module_exports exports = {
 	"options",       /* Module name */
 	cmds,            /* Exported functions */
+	0,               /* RPC methods */
 	params,          /* Exported parameters */
 	mod_init,        /* Initialization function */
 	0,               /* Response function */

@@ -146,6 +146,7 @@ static param_export_t params[]={ {0,0,0} }; /* no params */
 struct module_exports exports= {
 	"textops",
 	cmds,
+	0,        /* RPC methods */
 	params,
 	mod_init, /* module initialization function */
 	0, /* response function */

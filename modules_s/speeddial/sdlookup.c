@@ -38,8 +38,8 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../db/db.h"
-#include "../../dset.h" /* rewrite_uri */
-#include "../../id.h"   /* get_from_uid, get_to_did */
+#include "../../id.h"
+#include "../../dset.h"
 
 #include "speeddial.h"
 #include "sdlookup.h"
