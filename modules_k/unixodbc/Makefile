@@ -7,10 +7,10 @@ auto_gen=
 NAME=unixodbc.so
 
 # sql.h locations (freebsd,openbsd  solaris)
-DEFS += -I/usr/local/include
+DEFS += -I$(LOCALBASE)/include
 
 # libodbc locations on RH/Suse, Solaris /OpenBSD, FreeBSD
 # (Debian does the right thing and puts it in /usr/lib)
-LIBS= -lodbc -lz
+LIBS= -L$(LOCALBASE)/lib -lodbc -lz
 
 include ../../Makefile.modules
