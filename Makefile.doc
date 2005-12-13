@@ -2,6 +2,7 @@
 # $Id$
 #
 
+#
 # The name of the index file (the one which will be built by default
 # without specifying a target
 #
@@ -21,10 +22,14 @@ ROOT_DIR ?= ../../..
 #
 OUTPUT_DIR ?= .
 
+#
 # Stylesheet used to generate dependencies from XML files
+#
 DEP_XSL ?= $(ROOT_DIR)/doc/stylesheets/dep.xsl
 
+#
 # Default stylesheet used to generate XHTML
+#
 XHTML_XSL ?= $(ROOT_DIR)/doc/stylesheets/xhtml.xsl
 
 #
@@ -32,6 +37,12 @@ XHTML_XSL ?= $(ROOT_DIR)/doc/stylesheets/xhtml.xsl
 # this is usually the one used for xhtml
 #
 TXT_XSL ?= $(ROOT_DIR)/doc/stylesheets/txt.xsl
+
+#
+# Stylesheet used to generate FO (Formatted Objects)
+# This is used by PDF generators
+#
+FO_XSL ?= $(ROOT_DIR)/doc/stylesheets/fo.xsl
 
 #
 # Disable document validation by default
@@ -44,11 +55,13 @@ LYNX     ?= lynx
 DIA      ?= dia
 XSLTPROC ?= xsltproc
 XMLLINT ?= /usr/bin/xmllint
+XEP     ?= /usr/bin/xep
 
 LYNX_FLAGS     ?= -nolist
 DIA_ARGS       ?=
 XSLTPROC_FLAGS ?=
 XMLLINT_FLAGS ?= --xinclude --postvalid --noout
+XEP_FLAGS ?= 
 
 ifeq ($(VALIDATE), 0)
 	override XSLTPROC_FLAGS := $(XSLTPROC_FLAGS) --novalid
@@ -62,9 +75,11 @@ xml_files = $(addsuffix .xml, $(DOCUMENTS))
 dep_files = $(addsuffix .d, $(DOCUMENTS))
 xhtml_files = $(addsuffix .xhtml, $(DOCUMENTS))
 txt_files = $(addsuffix .txt, $(DOCUMENTS))
+pdf_files = $(addsuffix .pdf, $(DOCUMENTS))
 
 xhtml: $(xhtml_files)
 txt: $(txt_files)
+pdf: $(pdf_files)
 
 %.xhtml: %.xml %.d $(alldep) $(XHTML_XSL)
 	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
@@ -73,6 +88,14 @@ txt: $(txt_files)
         --stringparam root.filename "$(basename $<)" \
         --stringparam html.ext ".xhtml" \
         $(XHTML_XSL) $<
+
+%.fo: %.xml $(alldep) $(FO_XSL)
+	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
+        --xinclude \
+        -o $@ $(FO_XSL) $<
+
+%.pdf: %.fo $.d $(alldep)
+	$(XEP) $(XEP_FLAGS) -fo $< -pdf $@
 
 %.txt: %.xml %.d $(alldep)
 	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
@@ -97,6 +120,7 @@ check: $(xml_files)
 clean:
 	rm -f $(txt_files)
 	rm -f $(xhtml_files)
+	rm -f $(pdf_files)
 
 .PHONY: proper realclean distclean
 proper realclean distclean: clean
@@ -109,3 +133,4 @@ endif
 ifneq (,$(filter-out clean proper realclean distclean check, $(MAKECMDGOALS)))
 include $(dep_files)
 endif
+
