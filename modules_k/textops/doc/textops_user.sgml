@@ -645,7 +645,7 @@ append_time();
 		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
-		FAILURE_ROUTE.
+		FAILURE_ROUTE, and BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>is_method</function> usage</title>
