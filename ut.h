@@ -419,4 +419,12 @@ static inline int str2int(str* _s, unsigned int* _r)
 	return 0;
 }
 
+/* converts a username into uid:gid,
+ * returns -1 on error & 0 on success */
+int user2uid(int* uid, int* gid, char* user);
+
+/* converts a group name into a gid
+ * returns -1 on error, 0 on success */
+int group2gid(int* gid, char* group);
+
 #endif
