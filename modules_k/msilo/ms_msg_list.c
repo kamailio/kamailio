@@ -219,8 +219,12 @@ int msg_list_set_flag(msg_list ml, int mid, int fl)
 {
 	msg_list_el p0;	
 	
-	if(!ml || mid==0)
+	if(ml==0 || mid==0)
+	{
+		LOG(L_ERR, "MSILO: msg_list_set_flag: bad param %p / %d\n",
+			ml, fl);
 		goto errorx;
+	}
 	
 	lock_get(&ml->sem_sent);
 

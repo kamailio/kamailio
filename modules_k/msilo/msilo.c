@@ -900,27 +900,32 @@ void destroy(void)
  */
 void m_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 {
-	DBG("MSILO:m_tm_callback: completed with status %d\n", ps->code);
-	if(!ps->param)
+	if(ps->param==NULL || *ps->param==0)
 	{
 		DBG("MSILO m_tm_callback: message id not received\n");
 		goto done;
 	}
+	
+	LOG(L_DBG, "MSILO:m_tm_callback: completed with status %d [mid: %ld/%d]\n",
+		ps->code, (long)ps->param, *((int*)ps->param));
 	if(!db_con)
 	{
-		DBG("MSILO:m_tm_callback: db_con is NULL\n");
+		LOG(L_ERR, "MSILO:m_tm_callback: db_con is NULL\n");
 		goto done;
 	}
-	if(ps->code < 200 || ps->code >= 300)
+	if(ps->code >= 300)
 	{
-		DBG("MSILO:m_tm_callback: message <%ld> was not sent successfully\n",
-				(long)ps->param);
-		msg_list_set_flag(ml, (int)(long)ps->param, MS_MSG_ERRO);
+		LOG(L_DBG,
+			"MSILO:m_tm_callback: message <%d> was not sent successfully\n",
+			*((int*)ps->param));
+		msg_list_set_flag(ml, *((int*)ps->param), MS_MSG_ERRO);
 		goto done;
 	}
 
-	msg_list_set_flag(ml, (int)(long)ps->param, MS_MSG_DONE);
-	
+	LOG(L_DBG, "MSILO:m_tm_callback: message <%d> was sent successfully\n",
+		*((int*)ps->param));
+	msg_list_set_flag(ml, *((int*)ps->param), MS_MSG_DONE);
+
 done:
 	return;
 }
