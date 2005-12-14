@@ -518,7 +518,7 @@ void fm_status(struct fm_block* qm)
 				size+=f->size,f=f->u.nxt_free,i++,j++){
 			if (!FRAG_WAS_USED(f)){
 				unused++;
-#ifdef DBG_FM_MALLOC
+#ifdef DBG_F_MALLOC
 				LOG(memlog, "unused fragm.: hash = %3d, fragment %x,"
 							" address %x size %lu, created from %s: %s(%d)\n",
 						    h, f, (char*)f+sizeof(struct fm_frag), f->size,
