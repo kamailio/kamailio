@@ -33,6 +33,8 @@
  *               memory blocks (64 bits machine & size >=2^32) 
  *              GET_HASH s/</<=/ (avoids waste of 1 hash cell)   (andrei)
  *  2004-11-10  support for > 4Gb mem., switched to long (andrei)
+ *  2005-12-12  fixed realloc shrink real_used accounting (andrei)
+ *              fixed initial size (andrei)
  */
 
 
@@ -188,6 +190,12 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size)
 	
 	/* make address and size multiple of 8*/
 	start=(char*)ROUNDUP((unsigned long) address);
+	DBG("fm_malloc_init: F_OPTIMIZE=%lu, /ROUNDTO=%lu\n",
+			F_MALLOC_OPTIMIZE, F_MALLOC_OPTIMIZE/ROUNDTO);
+	DBG("fm_malloc_init: F_HASH_SIZE=%lu, fm_block size=%lu\n",
+			F_HASH_SIZE, (long)sizeof(struct fm_block));
+	DBG("fm_malloc_init(%p, %lu), start=%p\n", address, size, start);
+
 	if (size<start-address) return 0;
 	size-=(start-address);
 	if (size <(MIN_FRAG_SIZE+FRAG_OVERHEAD)) return 0;
@@ -204,12 +212,12 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size)
 	end=start+size;
 	qm=(struct fm_block*)start;
 	memset(qm, 0, sizeof(struct fm_block));
-	size-=init_overhead;
 	qm->size=size;
 #ifdef DBG_F_MALLOC
 	qm->real_used=init_overhead;
 	qm->max_real_used=qm->real_used;
 #endif
+	size-=init_overhead;
 	
 	qm->first_frag=(struct fm_frag*)(start+ROUNDUP(sizeof(struct fm_block)));
 	qm->last_frag=(struct fm_frag*)(end-sizeof(struct fm_frag));
@@ -387,7 +395,7 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 #ifdef DBG_F_MALLOC
 		DBG("fm_realloc: shrinking from %lu to %lu\n", f->size, size);
 		fm_split_frag(qm, f, size, file, "frag. from fm_realloc", line);
-		qm->real_used-=(orig_size-f->size);
+		qm->real_used-=(orig_size-f->size-FRAG_OVERHEAD);
 		qm->used-=(orig_size-f->size);
 #else
 		fm_split_frag(qm, f, size);
@@ -503,9 +511,9 @@ void fm_status(struct fm_block* qm)
 				size+=f->size,f=f->u.nxt_free,i++,j++){
 			if (!FRAG_WAS_USED(f)){
 				unused++;
-#ifdef DBG_FM_MALLOC
-				LOG(memlog, "unused fragm.: hash = %3d, fragment %x,"
-							" address %x size %lu, created from %s: %s(%d)\n",
+#ifdef DBG_F_MALLOC
+				LOG(memlog, "unused fragm.: hash = %3d, fragment %p,"
+							" address %p size %lu, created from %s: %s(%ld)\n",
 						    h, f, (char*)f+sizeof(struct fm_frag), f->size,
 							f->file, f->func, f->line);
 #endif
