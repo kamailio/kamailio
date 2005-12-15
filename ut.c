@@ -32,6 +32,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <stdlib.h>
+#include <time.h>
 #include "ut.h"
 
 /* converts a username into uid:gid,
@@ -81,4 +82,39 @@ int group2gid(int* gid, char* group)
 	}
 error:
 	return -1;
+}
+
+
+/*
+ * Replacement of timegm (does not exists on all platforms
+ * Taken from 
+ * http://lists.samba.org/archive/samba-technical/2002-November/025737.html
+ */
+time_t _timegm(struct tm* t)
+{
+	time_t tl, tb;
+	struct tm* tg;
+	
+	tl = mktime(t);
+	if (tl == -1) {
+		t->tm_hour--;
+		tl = mktime (t);
+		if (tl == -1) {
+			return -1; /* can't deal with output from strptime */
+		}
+		tl += 3600;
+	}
+	
+	tg = gmtime(&tl);
+	tg->tm_isdst = 0;
+	tb = mktime(tg);
+	if (tb == -1) {
+		tg->tm_hour--;
+		tb = mktime (tg);
+		if (tb == -1) {
+			return -1; /* can't deal with output from gmtime */
+		}
+		tb += 3600;
+	}
+	return (tl - (tb - tl));
 }
