@@ -289,6 +289,7 @@ int db_remove_presentity(presentity_t* presentity)
 	if (!use_db) return 0;
 
 	res = db_remove_tuples(presentity);
+	res = db_remove_all_tuple_notes(presentity) | res;
 	res = db_remove_watchers(presentity) | res;
 	res = db_remove_pres_notes(presentity) | res;
 	 
@@ -415,6 +416,8 @@ static int db_remove_presence_tuple(presentity_t *_p, presence_tuple_t *t)
 	if (!use_db) return 0;
 	if (!t->is_published) return 0; /* store only published tuples */
 
+	db_remove_tuple_notes(_p, t);
+	
 	if (pa_dbf.use_table(pa_db, presentity_contact_table) < 0) {
 		LOG(L_ERR, "db_remove_presence_tuple: Error in use_table\n");
 		return -1;
@@ -565,7 +568,7 @@ static int set_tuple_db_data(presentity_t *_p, presence_tuple_t *tuple,
 	return 0;
 }
 
-int db_update_presence_tuple(presentity_t *_p, presence_tuple_t *t)
+int db_update_presence_tuple(presentity_t *_p, presence_tuple_t *t, int update_notes)
 {
 	db_key_t keys[] = { "presid", "tupleid" };
 	db_op_t ops[] = { OP_EQ, OP_EQ };
@@ -594,6 +597,8 @@ int db_update_presence_tuple(presentity_t *_p, presence_tuple_t *t)
 		LOG(L_ERR, "db_update_presence_tuple: Can't update record\n");
 		return -1;
 	}
+
+	if (update_notes) db_update_tuple_notes(_p, t);
 	
 	return 0;
 }
@@ -621,8 +626,8 @@ static int db_add_presence_tuple(presentity_t *_p, presence_tuple_t *t)
 		LOG(L_ERR, "db_add_presence_tuple: Can't insert record\n");
 		return -1;
 	}
-	
-	return 0;
+		
+	return db_add_tuple_notes(_p, t);
 }
 
 void set_tuple_published(presentity_t *p, presence_tuple_t *t)
@@ -719,6 +724,8 @@ static int db_read_tuples(presentity_t *_p, db_con_t* db)
 			str_dup(&tuple->etag, &etag);
 			str_dup(&tuple->published_id, &published_id);
 
+			db_read_tuple_notes(_p, tuple, db);
+			
 			add_presence_tuple_no_wb(_p, tuple);
 		}
 	}
@@ -736,7 +743,7 @@ int db_update_presentity(presentity_t* _p)
 	if (use_db) {
 		presence_tuple_t *tuple;
 		for (tuple = _p->tuples; tuple; tuple = tuple->next) {
-			db_update_presence_tuple(_p, tuple);
+			db_update_presence_tuple(_p, tuple, 0);
 		}
 	}
 	return 0;
@@ -860,7 +867,6 @@ void add_presence_tuple(presentity_t *_p, presence_tuple_t *_t)
 {
 	add_presence_tuple_no_wb(_p, _t);
 	if (use_db) db_add_presence_tuple(_p, _t); 
-	/* FIXME: should be in new_tuple? */
 }
 
 void remove_presence_tuple(presentity_t *_p, presence_tuple_t *_t)

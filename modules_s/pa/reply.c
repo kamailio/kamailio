@@ -176,8 +176,7 @@ int send_reply(struct sip_msg* _m)
 								   break;
 		case PA_OK_WAITING_FOR_AUTH:
 						msg = "Accepted"; 
-						/* FIXME: code = 202;  */ /* eyeBeam beta dies on 202 ! */
-						code = 200;
+						code = 202;
 						break;
 						/* OK but waiting for auth -> should return 202 */
 	}	

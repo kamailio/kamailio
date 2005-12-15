@@ -63,8 +63,6 @@
 #include <presence/pidf.h>
 #include <cds/logger.h>
 
-extern str str_strdup(str string);
-
 /*
  * Parse all header fields that will be needed
  * to handle a PUBLISH request
@@ -191,6 +189,10 @@ int location_package_location_del_user(pdomain_t *pdomain, str *site, str *floor
 	return -1;
 }
 #endif /* HAVE_LOCATION_PACKAGE */
+
+#if 0
+
+/* FIXME: remove as soon as will be rewritten */
 
 static int basic_status2status(str *s)
 {
@@ -394,11 +396,15 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct presentity* presen
 	}
 	if (!tuple->is_published)
 		set_tuple_published(presentity, tuple);
-	if (use_db) db_update_presence_tuple(presentity, tuple);
+	if (use_db) db_update_presence_tuple(presentity, tuple, 1);
 	
 	if (modified_tuple) *modified_tuple = tuple;
 	return 0;
 }
+
+/* FIXME: remove as soon as will be rewritten */
+
+#endif
 
 /*
  * If this xcap change is on a watcher list, then reread authorizations
@@ -494,7 +500,7 @@ presence_tuple_t *presence_tuple_info2pa(presence_tuple_info_t *i, str *etag, ti
 	presence_tuple_t *t = NULL;
 	presence_note_t *n, *nn;
 	int res;
-	
+			
 	res = new_presence_tuple(&i->contact, expires, &t, 1);
 	if (res != 0) return NULL;
 	/* ID for the tuple is newly generated ! */
@@ -510,17 +516,13 @@ presence_tuple_t *presence_tuple_info2pa(presence_tuple_info_t *i, str *etag, ti
 	n = i->first_note;
 	while (n) {
 		nn = create_presence_note(&n->value, &n->lang);
-		if (nn) {
-			nn->next = t->notes;
-			t->notes = nn;
-		}
-		
+		if (nn) add_tuple_note_no_wb(t, nn);
 		n = n->next;
 	}
 	return t;
 }
 
-void update_tuple(presence_tuple_t *t, presence_tuple_info_t *i, time_t expires)
+static void update_tuple(presentity_t *p, presence_tuple_t *t, presence_tuple_info_t *i, time_t expires)
 {
 	presence_note_t *n, *nn;
 	
@@ -533,26 +535,18 @@ void update_tuple(presence_tuple_t *t, presence_tuple_info_t *i, time_t expires)
 	/* FIXME: enable other changes like contact ??? */
 
 	/* remove all old notes for this tuple */
-	n = t->notes;
-	while (n) {
-		nn = n->next;
-		free_presence_note(n);
-		n = nn;
-	}
-	t->notes = NULL;
+	free_tuple_notes(t);
 		
 	/* add new notes for tuple */
 	n = i->first_note;
 	while (n) {
 		nn = create_presence_note(&n->value, &n->lang);
-		if (nn) {
-			nn->next = t->notes;
-			t->notes = nn;
-		}
+		if (nn) add_tuple_note_no_wb(t, nn);
 		
 		n = n->next;
 	}
-	
+
+	if (use_db) db_update_presence_tuple(p, t, 1);
 }
 
 static void add_published_tuples(presentity_t *presentity, presentity_info_t *p, str *etag, time_t expires)
@@ -609,7 +603,7 @@ static int update_published_tuples(presentity_t *presentity, presentity_info_t *
 		if (t) {
 			/* the tuple was published this way */
 			found++;
-			update_tuple(t, i, expires);
+			update_tuple(presentity, t, i, expires);
 		}
 		else {
 			/* this tuple was not published => add it */

@@ -87,6 +87,7 @@ str pa_domain;
 char *presentity_table = "presentity";
 char *presentity_contact_table = "presentity_contact";
 char *presentity_notes_table = "presentity_notes";
+char *tuple_notes_table = "tuple_notes";
 char *watcherinfo_table = "watcherinfo";
 char *place_table = "place";
 

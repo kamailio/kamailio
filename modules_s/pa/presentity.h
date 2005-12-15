@@ -201,7 +201,7 @@ int find_presence_tuple_id(str* id, presentity_t *_p, presence_tuple_t ** _t);
 void add_presence_tuple(presentity_t *_p, presence_tuple_t *_t);
 void remove_presence_tuple(presentity_t *_p, presence_tuple_t *_t);
 
-int db_update_presence_tuple(presentity_t *_p, presence_tuple_t *t);
+int db_update_presence_tuple(presentity_t *_p, presence_tuple_t *t, int update_notes);
 
 void set_tuple_published(presentity_t *p, presence_tuple_t *t);
 
@@ -278,6 +278,18 @@ int remove_pres_notes(presentity_t *p, str *etag);
 pa_presence_note_t *create_pres_note(str *etag, str *note, str *lang, time_t expires, str *dbid);
 int db_read_notes(presentity_t *p, db_con_t* db);
 int db_remove_pres_notes(presentity_t *p); /* remove all notes for presentity */
+
+/* tuple note functions */
+int db_read_tuple_notes(presentity_t *p, presence_tuple_t *t, db_con_t* db);
+int db_remove_tuple_notes(presentity_t *p, presence_tuple_t *t); /* remove all notes for tuple */
+/* removes all notes for all tuples */
+int db_remove_all_tuple_notes(presentity_t *p);
+int db_add_tuple_notes(presentity_t *p, presence_tuple_t *t); /* add all notes for tuple into DB */
+int db_update_tuple_notes(presentity_t *p, presence_tuple_t *t);
+/* adds note to tuple in memory, not in DB (use update)! */
+void add_tuple_note_no_wb(presence_tuple_t *t, presence_note_t *n);
+/* frees all notes for given tuple (in memory only, not DB) */
+void free_tuple_notes(presence_tuple_t *t);
 
 /*
  * Create a new presentity but no watcher list

@@ -385,7 +385,7 @@ static int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 		return -3;
 	}
 	if (!tuple) {
-		 LOG(L_ERR, "send_xpidf_notify() NO TUPLE\n");
+		 /* LOG(L_ERR, "send_xpidf_notify() NO TUPLE\n"); */
 		 st = XPIDF_ST_CLOSED;
 		 if (xpidf_add_address(&body, BUF_LEN - body.len, &_p->uri, &none, st) < 0) {
              LOG(L_ERR, "send_xpidf_notify(): xpidf_add_address failed\n");

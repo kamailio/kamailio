@@ -64,8 +64,6 @@ by user's client software.
 	<listitem><para>remote subscriptions (SIP events client)</para></listitem>
 	<listitem><para>BUG: long run (kphone) => stops process resubscriptions so
 	they start to be processed by PA</para></listitem>
-	<listitem><para>pending subscriptions should return 202 on SUBSCRIBE instead of
-	200 (but 202 kills eyeBeam!)</para></listitem>	
 </itemizedlist>
 </para>
 </section>

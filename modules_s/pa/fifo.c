@@ -14,6 +14,23 @@
 
 extern dlist_t* root; /* FIXME ugly !!!!! */
 
+static void trace_tuple(presence_tuple_t *t, char *response_file) {
+	presence_note_t *n;
+	
+	fifo_reply(response_file, "    %.*s contact=\'%.*s\' exp=%u status=%d published=%d (id=%.*s)\n", 
+				FMT_STR(t->id), FMT_STR(t->contact), t->expires - time(NULL),
+				(int)t->state, t->is_published, FMT_STR(t->published_id));
+	
+	fifo_reply(response_file, "      notes:");
+	n = t->notes;
+	while (n) {
+		fifo_reply(response_file, " \'%.*s\'", 
+				FMT_STR(n->value));
+		n = n->next;
+	}
+	fifo_reply(response_file, "\n");
+}
+
 static void trace_presentity(presentity_t *p, char *response_file)
 {
 	watcher_t *w;
@@ -26,9 +43,7 @@ static void trace_presentity(presentity_t *p, char *response_file)
 	fifo_reply(response_file, " - tuples:\n");
 	t = p->tuples;
 	while (t) {		
-		fifo_reply(response_file, "    %.*s contact=\'%.*s\' exp=%u status=%d published=%d (id=%.*s)\n", 
-				FMT_STR(t->id), FMT_STR(t->contact), t->expires - time(NULL),
-				(int)t->state, t->is_published, FMT_STR(t->published_id));
+		trace_tuple(t, response_file);
 		t = t->next;
 	}
 	
