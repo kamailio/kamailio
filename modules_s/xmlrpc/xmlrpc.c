@@ -502,7 +502,6 @@ static int print_value(struct xmlrpc_reply* res, struct xmlrpc_reply* err_reply,
 	char buf[256];
 	time_t dt;
 	struct tm* t;
-	void* void_ptr;
 
 	switch(fmt) {
 	case 'd':
@@ -577,7 +576,6 @@ static int rpc_add(rpc_ctx_t* ctx, char* fmt, ...)
 {
 	void* void_ptr;
 	va_list ap;
-	str prefix, body, suffix;
 	struct xmlrpc_reply* reply;
 	struct rpc_struct* p;
 
