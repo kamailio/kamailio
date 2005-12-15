@@ -141,7 +141,6 @@ static const char* core_uptime_doc[] = {
 static void core_uptime(rpc_t* rpc, void* c)
 {
 	void* s;
-	int handle;
 	time_t now;
 
 	time(&now);
@@ -222,13 +221,7 @@ static const char* core_kill_doc[] = {
 
 static void core_kill(rpc_t* rpc, void* c)
 {
-	void* s2;
-	void* s;
 	int sig_no;
-	str a;
-	int b;
-	int d;
-	double f;
 	if (rpc->scan(c, "d", &sig_no) < 0) return;
 	rpc->send(c);
 	kill(0, sig_no);
