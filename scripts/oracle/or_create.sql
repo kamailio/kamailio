@@ -330,6 +330,13 @@ CREATE TABLE watcherinfo (
 
 );
 
+CREATE TABLE tuple_notes (
+    presid int(10) NOT NULL,
+    tupleid string(64) NOT NULL,
+    note string(128) NOT NULL,
+    lang string(64) NOT NULL
+);
+
 CREATE TABLE rls_subscription (
     id string(48) NOT NULL,
     doc_version int NOT NULL,

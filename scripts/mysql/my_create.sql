@@ -347,6 +347,13 @@ CREATE TABLE watcherinfo (
     KEY wi_wuri_idx (w_uri)
 );
 
+CREATE TABLE tuple_notes (
+    presid INT(10) UNSIGNED NOT NULL,
+    tupleid VARCHAR(64) NOT NULL,
+    note VARCHAR(128) NOT NULL,
+    lang VARCHAR(64) NOT NULL
+);
+
 CREATE TABLE rls_subscription (
     id VARCHAR(48) NOT NULL,
     doc_version INT NOT NULL,

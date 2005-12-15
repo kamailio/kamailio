@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//iptel.org//DTD DBSchema V1.0//EN"
+  "http://iptel.org/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table role="presence"
+    xmlns:db="http://docbook.org/ns/docbook"
+    xmlns:my="http://iptel.org/dbschema/mysql"
+    xmlns:pg="http://iptel.org/dbschema/postgres"
+    xmlns:dt="http://iptel.org/dbschema/dbtext">
+    <name>tuple_notes</name>
+    <version>1</version>
+    
+	<!-- foreign key (presid, tupleid -> presentity_contant) -->
+	
+    <column>
+		<name>presid</name>
+		<type>unsigned int</type>
+		<size>10</size>
+    </column>
+    
+	<column>
+		<name>tupleid</name>
+		<type>string</type>
+		<size>64</size>
+    </column>
+    
+	<column>
+		<name>note</name>
+		<type>string</type>
+		<size>128</size>
+    </column>
+	
+	<column>
+		<name>lang</name>
+		<type>string</type>
+		<size>64</size>
+    </column>
+    
+</table>

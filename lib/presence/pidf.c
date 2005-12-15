@@ -33,9 +33,27 @@
 
 /* ------------------------------ PIDF document creation ------------------------------ */
 
+static void doc_add_tuple_note(dstring_t *buf, presence_note_t *n)
+{
+	DEBUG_LOG("doc_add_tuple_note()\n");
+	
+	dstr_append_zt(buf, "\t\t<note");
+	if (n->lang.len > 0) {
+		dstr_append_zt(buf, " lang=\"");
+		dstr_append_str(buf, &n->lang);
+		dstr_append_zt(buf, "\"");
+	}
+	dstr_append_zt(buf, ">");
+	dstr_append_str(buf, &n->value);	
+	dstr_append_zt(buf, "</note>\r\n");
+}
+
+
 static void doc_add_tuple(dstring_t *buf, presentity_info_t *p, presence_tuple_info_t *t)
 {
+	presence_note_t *n;
 	char tmp[32];
+	
 	DEBUG_LOG("doc_add_tuple()\n");
 	
 	dstr_append_zt(buf, "\t<tuple id=\"");
@@ -52,13 +70,19 @@ static void doc_add_tuple(dstring_t *buf, presentity_info_t *p, presence_tuple_i
 	dstr_append_str(buf, &t->contact);
 	dstr_append_zt(buf, "</contact>\r\n");
 
+	n = t->first_note;
+	while (n) {
+		doc_add_tuple_note(buf, n);
+		n = n->next;
+	}
+	
 	dstr_append_zt(buf, "\t</tuple>\r\n");
 }
 
 static void doc_add_empty_tuple(dstring_t *buf)
 {
 	/* "empty" tuple is needed in PIDF by Microsoft Windows Messenger v. 5.1) */
-	DEBUG_LOG("doc_add_tuple()\n");
+	DEBUG_LOG("doc_add_empty_tuple()\n");
 	
 	dstr_append_zt(buf, "\t<tuple id=\"none\">\r\n");
 	dstr_append_zt(buf, "\t\t<status><basic>closed</basic></status>\r\n");
@@ -68,7 +92,7 @@ static void doc_add_empty_tuple(dstring_t *buf)
 
 static void doc_add_note(dstring_t *buf, presentity_info_t *p, presence_note_t *n)
 {
-	DEBUG_LOG("doc_add_tuple()\n");
+	DEBUG_LOG("doc_add_note()\n");
 	
 	dstr_append_zt(buf, "\t<note");
 	if (n->lang.len > 0) {
@@ -282,7 +306,7 @@ static int read_presentity(xmlNode *root, presentity_info_t **dst, int ignore_ns
 	int res = 0;
 	char *ns = ignore_ns ? NULL: pidf_ns;
 	
-	DEBUG_LOG("read_presentity()\n");
+	DEBUG_LOG("read_presentity(ns=%s)\n", ns ? ns : "");
 	if (cmp_node(root, "presence", ns) < 0) {
 		ERROR_LOG("document is not presence \n");
 		return -1;

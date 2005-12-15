@@ -361,6 +361,13 @@ CREATE TABLE watcherinfo (
 CREATE INDEX wi_ruri_idx ON watcherinfo (r_uri);
 CREATE INDEX wi_wuri_idx ON watcherinfo (w_uri);
 
+CREATE TABLE tuple_notes (
+    presid INTEGER NOT NULL,
+    tupleid VARCHAR(64) NOT NULL,
+    note VARCHAR(128) NOT NULL,
+    lang VARCHAR(64) NOT NULL
+);
+
 CREATE TABLE rls_subscription (
     id VARCHAR(48) NOT NULL,
     doc_version INTEGER NOT NULL,
