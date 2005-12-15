@@ -40,13 +40,13 @@ enum rpc_flags {
 	
 
 /* Send the result to the caller */
-typedef int (*rpc_send_f)(void* ctx);                              /* Send the reply to the client */
-typedef void (*rpc_fault_f)(void* ctx, int code, char* reason);          /* Signal a failure to the client */
-typedef int (*rpc_add_f)(void* ctx, char* fmt, ...);                     /* Add a new piece of data to the result */
-typedef int (*rpc_scan_f)(void* ctx, char* fmt, ...);                    /* Retrieve request parameters */
-typedef int (*rpc_printf_f)(void* ctx, char* fmt, ...);                  /* Add printf-like formated data to the result set */
-typedef int (*rpc_struct_add_f)(int handle, char* fmt, ...);  /* Create a new structure */
-typedef int (*rpc_struct_scan_f)(int handle, char* fmt, ...); /* Scan attributes of a structure */
+typedef int (*rpc_send_f)(void* ctx);                           /* Send the reply to the client */
+typedef void (*rpc_fault_f)(void* ctx, int code, char* reason); /* Signal a failure to the client */
+typedef int (*rpc_add_f)(void* ctx, char* fmt, ...);            /* Add a new piece of data to the result */
+typedef int (*rpc_scan_f)(void* ctx, char* fmt, ...);           /* Retrieve request parameters */
+typedef int (*rpc_printf_f)(void* ctx, char* fmt, ...);         /* Add printf-like formated data to the result set */
+typedef int (*rpc_struct_add_f)(void* ctx, char* fmt, ...);     /* Create a new structure */
+typedef int (*rpc_struct_scan_f)(void* ctx, char* fmt, ...);    /* Scan attributes of a structure */
 
 /*
  * RPC context, this is what RPC functions get as a parameter and use
