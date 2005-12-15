@@ -140,12 +140,16 @@ static const char* core_uptime_doc[] = {
 
 static void core_uptime(rpc_t* rpc, void* c)
 {
+	void* s;
+	int handle;
 	time_t now;
 
 	time(&now);
-	rpc->printf(c, "now: %s", ctime(&now));
-	rpc->printf(c, "up_since: %s", up_since_ctime);
-	rpc->printf(c, "uptime: %f", difftime(now, up_since));
+	
+	if (rpc->add(c, "{", &s) < 0) return;
+	rpc->struct_add(s, "s", "now", ctime(&now));
+	rpc->struct_add(s, "s", "up_since", up_since_ctime);
+	rpc->struct_add(s, "f", "uptime", difftime(now, up_since));
 }
 
 
@@ -160,8 +164,8 @@ static void core_ps(rpc_t* rpc, void* c)
 	int p;
 
 	for (p=0; p<process_count;p++) {
-		rpc->printf(c, "pid: %d", pt[p].pid);
-		rpc->printf(c, "desc: %s", pt[p].desc);
+		rpc->add(c, "d", pt[p].pid);
+		rpc->add(c, "s", pt[p].desc);
 	}
 }
 
@@ -218,7 +222,13 @@ static const char* core_kill_doc[] = {
 
 static void core_kill(rpc_t* rpc, void* c)
 {
+	void* s2;
+	void* s;
 	int sig_no;
+	str a;
+	int b;
+	int d;
+	double f;
 	if (rpc->scan(c, "d", &sig_no) < 0) return;
 	rpc->send(c);
 	kill(0, sig_no);
@@ -234,7 +244,7 @@ rpc_export_t core_rpc_methods[] = {
 	{"system.methodHelp",      system_methodHelp,      system_methodHelp_doc,      RET_VALUE},
 	{"core.prints",            core_prints,            core_prints_doc,            RET_VALUE},
 	{"core.version",           core_version,           core_version_doc,           RET_VALUE},
-	{"core.uptime",            core_uptime,            core_uptime_doc,            RET_ARRAY},
+	{"core.uptime",            core_uptime,            core_uptime_doc,            RET_VALUE},
 	{"core.ps",                core_ps,                core_ps_doc,                RET_ARRAY},
 	{"core.pwd",               core_pwd,               core_pwd_doc,               RET_VALUE},
 	{"core.arg",               core_arg,               core_arg_doc,               RET_ARRAY},
