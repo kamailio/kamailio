@@ -1644,7 +1644,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	}
 
 	/* first line */
-	len += SIP_VERSION_LEN + 1/*space*/ + 3/*code*/ + 1/*space*/ +
+	len += msg->first_line.u.request.version.len + 1/*space*/ + 3/*code*/ + 1/*space*/ +
 		text_len + CRLF_LEN/*new line*/;
 	/*headers that will be copied (TO, FROM, CSEQ,CALLID,VIA)*/
 	for ( hdr=msg->headers ; hdr ; hdr=hdr->next ) {
@@ -1716,8 +1716,9 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	/* filling the buffer*/
 	p=buf;
 	/* first line */
-	memcpy( p , SIP_VERSION , SIP_VERSION_LEN );
-	p += SIP_VERSION_LEN;
+	memcpy( p , msg->first_line.u.request.version.s , 
+		msg->first_line.u.request.version.len);
+	p += msg->first_line.u.request.version.len;
 	*(p++) = ' ' ;
 	/*code*/
 	for ( i=2 , foo = code  ;  i>=0  ;  i-- , foo=foo/10 )
