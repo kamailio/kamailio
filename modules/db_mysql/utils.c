@@ -40,44 +40,8 @@
 #include <strings.h>
 #include <string.h>
 #include <time.h>  /*strptime, XOPEN issue must be >=4 */
+#include "../../ut.h"
 #include "utils.h"
-
-time_t _timegm(struct tm *t);
-
-/*
- * Replacement of timegm (does not exists on all platforms
- * Taken from 
- * http://lists.samba.org/archive/samba-technical/2002-November/025737.html
- */
-time_t _timegm(struct tm* t)
-{
-	time_t tl, tb;
-	struct tm* tg;
-	
-	tl = mktime(t);
-	if (tl == -1) {
-		t->tm_hour--;
-		tl = mktime (t);
-		if (tl == -1) {
-			return -1; /* can't deal with output from strptime */
-		}
-		tl += 3600;
-	}
-	
-	tg = gmtime(&tl);
-	tg->tm_isdst = 0;
-	tb = mktime(tg);
-	if (tb == -1) {
-		tg->tm_hour--;
-		tb = mktime (tg);
-		if (tb == -1) {
-			return -1; /* can't deal with output from gmtime */
-		}
-		tb += 3600;
-	}
-	return (tl - (tb - tl));
-}
-
 
 /*
  * Convert time_t structure to format accepted by MySQL database
