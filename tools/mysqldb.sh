@@ -760,8 +760,8 @@ EOF
 
 
 export PW
-if [ "$#" -ne 0 ]; then
-  prompt_pw
+if [ "$#" -ne 0 ] && [ "$PW" = "" ]; then
+	prompt_pw
 fi
 
 case $1 in
