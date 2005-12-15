@@ -56,7 +56,7 @@ avp_spec = '' | 's:' | 'i:' | avp_name | avp_alias
 ...
 avp_db_load("$from","i:678");
 avp_db_load("$ruri/domain","i:/domain_preferences");
-avp_db_load("$uuid","s:404fwd/fwd_table");
+avp_db_load("$uid","s:404fwd/fwd_table");
 avp_db_load("$ruri","i:123/$some_scheme");
 ...
 	    </programlisting>
@@ -106,7 +106,7 @@ avp_db_store("$ruri/username","$email");
 ...
 avp_db_delete("$to","i:678");
 avp_db_delete("$ruri/username","$email");
-avp_db_delete("$uuid","s:404fwd/fwd_table");
+avp_db_delete("$uid","s:404fwd/fwd_table");
 ...
 	    </programlisting>
 	</example>

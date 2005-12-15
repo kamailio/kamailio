@@ -44,7 +44,7 @@
 struct db_scheme
 {
 	char *name;
-	char *uuid_col;
+	char *uid_col;
 	char *username_col;
 	char *domain_col;
 	char *value_col;

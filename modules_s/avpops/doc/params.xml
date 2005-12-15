@@ -62,7 +62,7 @@ modparam("avpops","avp_table","avptable")
 	    <title>Set <varname>avp_aliases</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("avpops","avp_aliases","uuid=I:660;email=s:email_addr;fwd=i:753")
+modparam("avpops","avp_aliases","uid=I:660;email=s:email_addr;fwd=i:753")
 ...
 	    </programlisting>
 	</example>
@@ -88,19 +88,19 @@ modparam("avpops","use_domain","1")
 	</example>
     </section>
 
-    <section id="avpops.uuid_column">
-	<title><varname>uuid_column</varname> (string)</title>
+    <section id="avpops.uid_column">
+	<title><varname>uid_column</varname> (string)</title>
 	<para>
-	    Name of column containing the uuid (unique user id).
+	    Name of column containing the uid (unique user id).
 	</para>
 	<para>
-	    Default value is "uuid".
+	    Default value is "uid".
 	</para>
 	<example>
-	    <title>Set <varname>uuid_column</varname> parameter</title>
+	    <title>Set <varname>uid_column</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("avpops","uuid_column","uuid")
+modparam("avpops","uid_column","uid")
 ...
 	    </programlisting>
 	</example>
@@ -213,7 +213,7 @@ modparam("avpops","type_column","type")
 	    </title>
 	    <programlisting>
 ...
-modparam("avpops","db_scheme", "scheme1:table=subscriber;uuid_column=uuid;value_column=first_name")
+modparam("avpops","db_scheme", "scheme1:table=subscriber;uid_column=uid;value_column=first_name")
 ...
 	    </programlisting>
 	</example>

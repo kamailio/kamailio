@@ -133,11 +133,11 @@ int avp_add_db_scheme( modparam_t type, void* val)
 
 	/* print scheme */
 	DBG("DEBUG:avpops:avp_add_db_scheme: new scheme <%s> added\n"
-		"\t\tuuid_col=<%s>\n\t\tusername_col=<%s>\n"
+		"\t\tuid_col=<%s>\n\t\tusername_col=<%s>\n"
 		"\t\tdomain_col=<%s>\n\t\tvalue_col=<%s>\n"
 		"\t\tdb_flags=%d\n\t\ttable=<%s>\n",
 		scheme->name,
-		scheme->uuid_col, scheme->username_col,
+		scheme->uid_col, scheme->username_col,
 		scheme->domain_col, scheme->value_col,
 		scheme->db_flags, scheme->table	);
 
@@ -188,20 +188,20 @@ static inline int set_table( char *table, char *func)
 
 
 
-static inline int prepare_selection( str *uuid, str *username, str *domain,
+static inline int prepare_selection( str *uid, str *username, str *domain,
 										char *attr, struct db_scheme *scheme)
 {
 	unsigned int nr_keys_cmp;
 
 	nr_keys_cmp = 0;
-	if (uuid)
+	if (uid)
 	{
 		/* uuid column */
 		keys_cmp[ nr_keys_cmp ] =
-			(scheme&&scheme->uuid_col)?scheme->uuid_col:db_columns[0];
+			(scheme&&scheme->uid_col)?scheme->uid_col:db_columns[0];
 		vals_cmp[ nr_keys_cmp ].type = DB_STR;
 		vals_cmp[ nr_keys_cmp ].nul  = 0;
-		vals_cmp[ nr_keys_cmp ].val.str_val = *uuid;
+		vals_cmp[ nr_keys_cmp ].val.str_val = *uid;
 		nr_keys_cmp++;
 	} else {
 		/* username column */
@@ -235,7 +235,7 @@ static inline int prepare_selection( str *uuid, str *username, str *domain,
 }
 
 
-db_res_t *db_load_avp( str *uuid, str *username, str *domain,
+db_res_t *db_load_avp( str *uid, str *username, str *domain,
 							char *attr, char *table, struct db_scheme *scheme)
 {
 	static db_key_t   keys_ret[3];
@@ -244,7 +244,7 @@ db_res_t *db_load_avp( str *uuid, str *username, str *domain,
 	db_res_t          *res;
 
 	/* prepare DB query */
-	nr_keys_cmp = prepare_selection( uuid, username, domain, attr, scheme);
+	nr_keys_cmp = prepare_selection( uid, username, domain, attr, scheme);
 
 	/* set table */
 	if (set_table( scheme?scheme->table:table ,"load")!=0)
@@ -296,13 +296,13 @@ int db_store_avp( db_key_t *keys, db_val_t *vals, int n, char *table)
 
 
 
-int db_delete_avp( str *uuid, str *username, str *domain, char *attr,
+int db_delete_avp( str *uid, str *username, str *domain, char *attr,
 																char *table)
 {
 	unsigned int  nr_keys_cmp;
 
 	/* prepare DB query */
-	nr_keys_cmp = prepare_selection( uuid, username, domain, attr, 0);
+	nr_keys_cmp = prepare_selection( uid, username, domain, attr, 0);
 
 	/* set table */
 	if (set_table( table ,"delete")!=0)
