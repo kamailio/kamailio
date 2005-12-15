@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -42,20 +42,32 @@
 struct sip_msg;
 struct cell;
 
+#define TMCB_REQUEST_IN_N       0
+#define TMCB_RESPONSE_IN_N      1
+#define TMCB_E2EACK_IN_N        2
+#define TMCB_REQUEST_FWDED_N    3
+#define TMCB_RESPONSE_FWDED_N   4
+#define TMCB_ON_FAILURE_RO_N    5
+#define TMCB_ON_FAILURE_N       6
+#define TMCB_RESPONSE_OUT_N     7
+#define TMCB_LOCAL_COMPLETED_N  8
+#define TMCB_LOCAL_RESPONSE_OUT_N 9
+#define TMCB_MAX_N              9
 
-#define TMCB_REQUEST_IN         (1<<0)
-#define TMCB_RESPONSE_IN        (1<<1)
-#define TMCB_E2EACK_IN          (1<<2)
-#define TMCB_REQUEST_FWDED      (1<<3)
-#define TMCB_RESPONSE_FWDED     (1<<4)
-#define TMCB_ON_FAILURE_RO      (1<<5)
-#define TMCB_ON_FAILURE         (1<<6)
-#define TMCB_RESPONSE_OUT       (1<<7)
-#define TMCB_LOCAL_COMPLETED    (1<<8)
-#define TMCB_LOCAL_RESPONSE_OUT (1<<9)
-#define TMCB_MAX                ((1<<10)-1)
+#define TMCB_REQUEST_IN       (1<<TMCB_REQUEST_IN_N)
+#define TMCB_RESPONSE_IN      (1<<TMCB_RESPONSE_IN_N)
+#define TMCB_E2EACK_IN        (1<<TMCB_E2EACK_IN_N)
+#define TMCB_REQUEST_FWDED    (1<<TMCB_REQUEST_FWDED_N)
+#define TMCB_RESPONSE_FWDED   (1<<TMCB_RESPONSE_FWDED_N)
+#define TMCB_ON_FAILURE_RO    (1<<TMCB_ON_FAILURE_RO_N)
+#define TMCB_ON_FAILURE       (1<<TMCB_ON_FAILURE_N)
+#define TMCB_RESPONSE_OUT     (1<<TMCB_RESPONSE_OUT_N)
+#define TMCB_LOCAL_COMPLETED  (1<<TMCB_LOCAL_COMPLETED_N)
+#define TMCB_LOCAL_RESPONSE_OUT (1<<TMCB_LOCAL_RESPONSE_OUT_N)
+#define TMCB_MAX              ((1<<(TMCB_MAX_N+1))-1)
 
-/* 
+
+/*
  *  Caution: most of the callbacks work with shmem-ized messages
  *  which you can no more change (e.g., lumps are fixed). Most
  *  reply-processing callbacks are also called from a mutex,
@@ -87,7 +99,7 @@ struct cell;
  * TMCB_RESPONSE_IN -- a brand-new reply was received which matches
  * an existing transaction. It may or may not be a retransmission.
  *
- *  TMCB_RESPONSE_OUT -- a final reply was sent out (either local 
+ *  TMCB_RESPONSE_OUT -- a final reply was sent out (either local
  *  or proxied) -- there is nothing more you can change from
  *  the callback, it is good for accounting-like uses.
  *
@@ -105,19 +117,19 @@ struct cell;
  *    transaction to complete statelessly.
  *
  *  TMCB_ON_FAILURE_RO -- called on receipt of a reply or timer;
- *  it means all branches completed with a failure; the callback 
+ *  it means all branches completed with a failure; the callback
  *  function MUST not change anything in the transaction (READONLY)
  *  that's a chance for doing ACC or stuff like this
  *
  *  TMCB_ON_FAILURE -- called on receipt of a reply or timer;
- *  it means all branches completed with a failure; that's 
+ *  it means all branches completed with a failure; that's
  *  a chance for example to add new transaction branches
  *
  *  TMCB_RESPONSE_FWDED -- called when a reply is about to be
  *  forwarded; it is called after a message is received but before
- *  a message is sent out: it is called when the decision is 
- *  made to forward a reply; it is parametrized by pkg message 
- *  which caused the transaction to complete (which is not 
+ *  a message is sent out: it is called when the decision is
+ *  made to forward a reply; it is parametrized by pkg message
+ *  which caused the transaction to complete (which is not
  *  necessarily the same which will be forwarded). As forwarding
  *  has not been executed and may fail, there is no guarantee
  *  a reply will be successfully sent out at this point of time.
@@ -143,9 +155,9 @@ struct cell;
  *  ACK and the callback will be never triggered.
  *
  *
- *  TMCB_REQUEST_FWDED -- request is being forwarded out. It is 
+ *  TMCB_REQUEST_FWDED -- request is being forwarded out. It is
  *  called before a message is forwarded and it is your last
- *  chance to change its shape. 
+ *  chance to change its shape.
  *
  *  TMCB_LOCAL COMPLETED -- final reply for localy initiated
  *  transaction arrived. Message may be FAKED_REPLY.
