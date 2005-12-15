@@ -155,6 +155,10 @@ int get_to_uid(str* uid, struct sip_msg* msg)
 		*uid = val.s;
 		return 1;
 	} else {
+		if (parse_headers(msg, HDR_TO_F, 0) < 0) {
+			LOG(L_ERR, "get_to_uid: Error while parsing To URI (parse_headers)\n");
+			return -1;
+		}
 		to = get_to(msg);
 		if (parse_uri(to->uri.s, to->uri.len, &puri) == -1) {
 			LOG(L_ERR, "get_to_uid: Error while parsing To URI\n");
