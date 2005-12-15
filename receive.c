@@ -123,6 +123,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	if (msg->first_line.type==SIP_REQUEST){
 		/* sanity checks */
 		if ((msg->via1==0) || (msg->via1->error!=PARSE_OK)){
+			if (IS_HTTP(msg)) goto skip; /* Skip Via tests for HTTP requests */
 			/* no via, send back error ? */
 			LOG(L_ERR, "ERROR: receive_msg: no via found in request\n");
 			goto error02;
@@ -144,7 +145,8 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 			}
 		}
 #endif
-
+			
+		skip:
 		DBG("preparing to run routing scripts...\n");
 #ifdef  STATS
 		gettimeofday( & tvb, &tz );
