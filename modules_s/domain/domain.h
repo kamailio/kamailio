@@ -73,10 +73,4 @@ int load_domains(domain_t** dest);
 void free_domain_list(domain_t* list);
 
 
-/*
- * Print domain list
- */
-void dump_domain_list(FILE* f, domain_t* list);
-
-
 #endif /* _DOMAIN_H */

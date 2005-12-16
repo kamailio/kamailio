@@ -1,7 +1,5 @@
 /*
- * $Id$
- *
- * Header file for domain fifo functions
+ * Domain module
  *
  * Copyright (C) 2002-2003 Juha Heinanen
  *
@@ -27,16 +25,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef _DOMAIN_RPC_H
+#define _DOMAIN_RPC_H
 
-#ifndef _FIFO_H
-#define _FIFO_H
+#include "../../rpc.h"
 
+extern rpc_export_t domain_rpc[];
 
-#define DOMAIN_RELOAD "domain_reload"
-#define DOMAIN_DUMP "domain_dump"
-
-
-int init_domain_fifo(void);
-int reload_domain_table(void);
-
-#endif
+#endif /* _DOMAIN_RPC_H */

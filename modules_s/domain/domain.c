@@ -78,6 +78,7 @@ static int domain_add(domain_t* d, str* domain, unsigned int flags)
 	
 	d->domain = p1;
 	d->domain[d->n] = dom;
+	d->flags = p2;
 	d->flags[d->n] = flags;
 	d->n++;
 	return 0;
@@ -347,47 +348,4 @@ int load_domains(domain_t** dest)
  error:
 	free_domain_list(list);
 	return 1;
-}
-
-
-static void dump_domain(FILE* f, domain_t* d)
-{
-	int i;
-	avp_t* a;
-	str* name;
-	int_str val;
-
-	fprintf(f, "did: %.*s\n", d->did.len, d->did.s);
-	fprintf(f, "  domains: ");
-	for(i = 0; i < d->n; i++) {
-		fprintf(f, "%.*s (%u)", d->domain[i].len, d->domain[i].s, d->flags[i]);
-		if (i < d->n-1) fprintf(f, ", ");
-	}
-	fprintf(f, "\n");
-	fprintf(f, "  attrs: ");
-	a = d->attrs;
-	while(a) {
-		name = get_avp_name(a);
-		get_avp_val(a, &val);
-		fprintf(f, "%.*s", name->len, name->s);
-		if (a->flags & AVP_VAL_STR) {
-			if (val.s.len && val.s.s) {
-				fprintf(f, "=\"%.*s\"", val.s.len, val.s.s);
-			}
-		} else {
-			fprintf(f, "=%d", val.n);
-		}
-		if (a->next) fprintf(f, ", ");
-		a = a->next;
-	}
-}
-
-
-void dump_domain_list(FILE* f, domain_t* list)
-{
-	while(list) {
-		dump_domain(f, list);
-		fprintf(f, "\n");
-		list = list->next;
-	}
 }

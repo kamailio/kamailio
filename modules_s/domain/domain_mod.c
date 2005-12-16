@@ -45,10 +45,10 @@
 #include "../../ut.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
-#include "domain.h"
+#include "domain_rpc.h"
 #include "hash.h"
-#include "fifo.h"
-#include "unixsock.h"
+#include "domain.h"
+
 
 /*
  * Module management function prototypes
@@ -157,14 +157,14 @@ static param_export_t params[] = {
  */
 struct module_exports exports = {
 	"domain", 
-	cmds,      /* Exported functions */
-	0,         /* RPC methods */
-	params,    /* Exported parameters */
-	mod_init,  /* module initialization function */
-	0,         /* response function*/
-	destroy,   /* destroy function */
-	0,         /* cancel function */
-	child_init /* per-child init function */
+	cmds,       /* Exported functions */
+	domain_rpc, /* RPC methods */
+	params,     /* Exported parameters */
+	mod_init,   /* module initialization function */
+	0,          /* response function*/
+	destroy,    /* destroy function */
+	0,          /* cancel function */
+	child_init  /* per-child init function */
 };
 
 
@@ -293,9 +293,6 @@ static int mod_init(void)
 		if (reload_domain_list() < 0) goto error;
 		disconnect_db();
 	}
-
-	if (init_domain_fifo() < 0) return -1;
-	if (init_domain_unixsock() < 0) return -1;
 	return 0;
 
  error:
@@ -307,8 +304,7 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	/* Check if database is needed by child */
-	if (((db_mode == 0) && (rank > 0)) || 
-	    ((db_mode != 0) && (rank == PROC_FIFO))) {
+	if (rank > 0 || rank == PROC_FIFO || rank == PROC_UNIXSOCK) {
 		if (connect_db() < 0) return -1;
 	}
 	return 0;
