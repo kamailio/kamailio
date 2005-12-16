@@ -50,6 +50,8 @@
  *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  *  2004-02-13  t->is_invite, t->local, t->noisy_ctimer replaced (bogdan)
  *  2004-08-23  avp support in t_uac (bogdan)
+ *  2005-12-16  t_uac will set the new_cell timers to the default values,
+ *               fixes 0 fr_timer bug (andrei)
  */
 
 #include <string.h>
@@ -200,6 +202,13 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 		LOG(L_ERR, "t_uac: short of cell shmem\n");
 		goto error2;
 	}
+	/* init timers hack, new_cell->fr_timer and new_cell->fr_inv_timer
+	 * must be set, or else the fr will happen immediately
+	 * we can't call init_new_t() because we don't have a sip msg
+	 * => we'll ignore t_set_fr() or avp timer value and will use directly the
+	 * module params fr_inv_timer and fr_timer -- andrei */
+	new_cell->fr_timeout=fr_timeout;
+	new_cell->fr_inv_timeout=fr_inv_timeout;
 
 	/* better reset avp list now - anyhow, it's useless from
 	 * this point (bogdan) */
