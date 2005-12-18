@@ -4,6 +4,7 @@
  * dispatcher module
  *
  * Copyright (C) 2004-2006 FhG Fokus
+ * Copyright (C) 2005 Voice-System.ro
  *
  * This file is part of openser, a free SIP server.
  *
@@ -25,6 +26,7 @@
  * -------
  * 2004-07-31  first version, by daniel
  * 2005-04-22  added ruri  & to_uri hashing (andrei)
+ * 2005-12-10  added failover support via avp (daniel)
  * 
  */
 
@@ -35,9 +37,12 @@
 #include "../../trim.h"
 #include "../../dprint.h"
 #include "../../action.h"
-#include "../../mem/mem.h"
+#include "../../route.h"
+#include "../../dset.h"
+#include "../../mem/shm_mem.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
+#include "../../usr_avp.h"
 
 #include "dispatch.h"
 
@@ -52,6 +57,7 @@ typedef struct _ds_setidx
 typedef struct _ds_dest
 {
 	str uri;
+	int flags;
 	struct _ds_dest *next;
 } ds_dest_t, *ds_dest_p;
 
@@ -65,10 +71,11 @@ typedef struct _ds_set
 	struct _ds_set *next;
 } ds_set_t, *ds_set_p;
 
-extern int force_dst;
+extern int ds_force_dst;
 
 ds_setidx_p _ds_index = NULL;
 ds_set_p _ds_list = NULL;
+int _ds_list_nr = 0;
 
 /**
  *
@@ -151,7 +158,7 @@ int ds_load_list(char *lfile)
 
 		if(si==NULL)
 		{
-			si = (ds_setidx_p)pkg_malloc(sizeof(ds_setidx_t));
+			si = (ds_setidx_p)shm_malloc(sizeof(ds_setidx_t));
 			if(si==NULL)
 			{
 				LOG(L_ERR, "DISPATCHER:ds_load_list: no more memory\n");
@@ -177,7 +184,7 @@ int ds_load_list(char *lfile)
 
 		if(sp==NULL)
 		{
-			sp = (ds_set_p)pkg_malloc(sizeof(ds_set_t));
+			sp = (ds_set_p)shm_malloc(sizeof(ds_set_t));
 			if(sp==NULL)
 			{
 				LOG(L_ERR, "DISPATCHER:ds_load_list: no more memory.\n");
@@ -193,7 +200,7 @@ int ds_load_list(char *lfile)
 		sp->index = si->index;
 
 		/* store uri */
-		dp = (ds_dest_p)pkg_malloc(sizeof(ds_dest_t));
+		dp = (ds_dest_p)shm_malloc(sizeof(ds_dest_t));
 		if(dp==NULL)
 		{
 			LOG(L_ERR, "DISPATCHER:ds_load_list: no more memory!\n");
@@ -201,11 +208,11 @@ int ds_load_list(char *lfile)
 		}
 		memset(dp, 0, sizeof(ds_dest_t));
 
-		dp->uri.s = (char*)pkg_malloc(uri.len+1);
+		dp->uri.s = (char*)shm_malloc(uri.len+1);
 		if(dp->uri.s==NULL)
 		{
 			LOG(L_ERR, "DISPATCHER:ds_load_list: no more memory!!\n");
-			pkg_free(dp);
+			shm_free(dp);
 			goto error;
 		}
 		strncpy(dp->uri.s, uri.s, uri.len);
@@ -227,7 +234,7 @@ next_line:
 	DBG("DISPATCHER:ds_load_list: found [%d] dest sets\n", setn);
 	
 	/* re-index destination sets for fast access */
-	sp0 = (ds_set_p)pkg_malloc(setn*sizeof(ds_set_t));
+	sp0 = (ds_set_p)shm_malloc(setn*sizeof(ds_set_t));
 	if(sp0==NULL)
 	{
 		LOG(L_ERR, "DISPATCHER:ds_load_list: no more memory!!\n");
@@ -242,7 +249,7 @@ next_line:
 			sp0[i].next = NULL;
 		else
 			sp0[i].next = &sp0[i+1];
-		dp0 = (ds_dest_p)pkg_malloc(sp0[i].nr*sizeof(ds_dest_t));
+		dp0 = (ds_dest_p)shm_malloc(sp0[i].nr*sizeof(ds_dest_t));
 		if(dp0==NULL)
 		{
 			LOG(L_ERR, "DISPATCHER:ds_load_list: no more memory!\n");
@@ -273,12 +280,14 @@ next_line:
 		{
 			dp0 = dp;
 			dp = dp->next;
-			pkg_free(dp0);
+			shm_free(dp0);
 		}
 		sp0 = sp;
 		sp = sp->next;
-		pkg_free(sp0);
+		shm_free(sp0);
 	}
+
+	_ds_list_nr = setn;
 	
 	return 0;
 
@@ -291,7 +300,7 @@ error:
 	{
 		si0 = si;
 		si = si->next;
-		pkg_free(si0);
+		shm_free(si0);
 	}
 	_ds_index = NULL;
 
@@ -302,15 +311,15 @@ error:
 		while(dp)
 		{
 			if(dp->uri.s!=NULL)
-				pkg_free(dp->uri.s);
+				shm_free(dp->uri.s);
 			dp->uri.s=NULL;
 			dp0 = dp;
 			dp = dp->next;
-			pkg_free(dp0);
+			shm_free(dp0);
 		}
 		sp0 = sp;
 		sp = sp->next;
-		pkg_free(sp0);
+		shm_free(sp0);
 	}
 	return -1;
 }
@@ -331,21 +340,21 @@ int ds_destroy_list()
 		{
 			if(sp->dlist[i].uri.s!=NULL)
 			{
-				pkg_free(sp->dlist[i].uri.s);
+				shm_free(sp->dlist[i].uri.s);
 				sp->dlist[i].uri.s = NULL;
 			}
 		}
-		pkg_free(sp->dlist);
+		shm_free(sp->dlist);
 		sp = sp->next;
 	}
-	if (_ds_list) pkg_free(_ds_list);
+	if (_ds_list) shm_free(_ds_list);
 	
 	si = _ds_index;
 	while(si)
 	{
 		si0 = si;
 		si = si->next;
-		pkg_free(si0);
+		shm_free(si0);
 	}
 	_ds_index = NULL;
 
@@ -599,16 +608,96 @@ int ds_hash_ruri(struct sip_msg *msg, unsigned int *hash)
 }
 
 
+static inline int ds_get_index(int group, int *index)
+{
+	ds_setidx_p si = NULL;
+	
+	if(index==NULL || group<0 || _ds_index==NULL)
+		return -1;
+	
+	/* get the index of the set */
+	si = _ds_index;
+	while(si)
+	{
+		if(si->id == group)
+		{
+			*index = si->index;
+			break;
+		}
+		si = si->next;
+	}
+
+	if(si==NULL)
+	{
+		LOG(L_ERR,
+			"DISPATCHER:ds_get_index: destination set [%d] not found\n",group);
+		return -1;
+	}
+
+	return 0;
+}
+
+static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
+{
+	struct action act;
+	switch(mode)
+	{
+		case 1:
+			act.type = SET_HOSTPORT_T;
+			act.p1_type = STRING_ST;
+			if(uri->len>4 
+					&& strncasecmp(uri->s,"sip:",4)==0)
+				act.p1.string = uri->s+4;
+			else
+				act.p1.string = uri->s;
+			act.next = 0;
+	
+			if (do_action(&act, msg) < 0) {
+				LOG(L_ERR,
+					"DISPATCHER:dst_update_dst: Error while setting host\n");
+				return -1;
+			}
+			if(route_type==FAILURE_ROUTE)
+			{
+				if (append_branch(msg, 0, 0, Q_UNSPECIFIED, 0, 0)!=1 )
+				{
+					LOG(L_ERR,
+						"DISPATCHER:dst_update_dst: append_branch action"
+						" failed\n");
+					return -1;
+				}
+			}
+		break;
+		default:
+			if(route_type==FAILURE_ROUTE)
+			{
+				if (append_branch(msg, 0, uri, Q_UNSPECIFIED, 0, 0)!=1 )
+				{
+					LOG(L_ERR,
+						"DISPATCHER:dst_update_dst: append_branch action"
+						" failed\n");
+					return -1;
+				}
+			} else {
+				if (set_dst_uri(msg, uri) < 0) {
+					LOG(L_ERR,
+					"DISPATCHER:dst_update_dst: Error while setting dst_uri\n");
+					return -1;
+				}	
+			}
+		break;
+	}
+	return 0;
+}
 
 /**
  *
  */
-int ds_select_dst(struct sip_msg *msg, char *set, char *alg, int mode)
+int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 {
-	int a, s, idx;
-	ds_setidx_p si = NULL;
+	int idx, i, cnt;
 	unsigned int hash;
-	struct action act;
+	int_str avp_name, avp_val;
 
 	if(msg==NULL)
 	{
@@ -622,7 +711,7 @@ int ds_select_dst(struct sip_msg *msg, char *set, char *alg, int mode)
 		return -1;
 	}
 
-	if((mode==0) && (force_dst==0)
+	if((mode==0) && (ds_force_dst==0)
 			&& (msg->dst_uri.s!=NULL || msg->dst_uri.len>0))
 	{
 		LOG(L_ERR,
@@ -631,32 +720,19 @@ int ds_select_dst(struct sip_msg *msg, char *set, char *alg, int mode)
 		return -1;
 	}
 	
-	s = (int)(long)set;
-	a = (int)(long)alg;
 
 	/* get the index of the set */
-	si = _ds_index;
-	while(si)
-	{
-		if(si->id == s)
-		{
-			idx = si->index;
-			break;
-		}
-		si = si->next;
-	}
-
-	if(si==NULL)
+	if(ds_get_index(set, &idx)!=0)
 	{
 		LOG(L_ERR,
-			"DISPATCHER:ds_select_dst: destination set [%d] not found\n",s);
+			"DISPATCHER:ds_select_dst: destination set [%d] not found\n",set);
 		return -1;
 	}
-
-	DBG("DISPATCHER:ds_select_dst: set index [%d]\n", idx);
+	
+	DBG("DISPATCHER:ds_select_dst: set index [%d->%d]\n", set, idx);
 
 	hash = 0;
-	switch(a)
+	switch(alg)
 	{
 		case 0:
 			if(ds_hash_callid(msg, &hash)!=0)
@@ -697,43 +773,240 @@ int ds_select_dst(struct sip_msg *msg, char *set, char *alg, int mode)
 		default:
 			LOG(L_WARN,
 					"WARNING: ds_select_dst: algo %d not implemented"
-					" - using first entry...\n", a);
+					" - using first entry...\n", alg);
 			hash = 0;
 	}
 
 	DBG("DISPATCHER:ds_select_dst: alg hash [%u]\n", hash);
-
-	hash = hash%_ds_list[idx].nr;
-	switch(mode)
+	cnt = 0;
+	if(ds_use_default!=0)
+		hash = hash%(_ds_list[idx].nr-1);
+	else
+		hash = hash%_ds_list[idx].nr;
+	i=hash;
+	while(_ds_list[idx].dlist[i].flags & DS_INACTIVE_DST)
 	{
-		case 1:
-			act.type = SET_HOSTPORT_T;
-			act.p1_type = STRING_ST;
-			if(_ds_list[idx].dlist[hash].uri.len>4 
-					&& strncasecmp(_ds_list[idx].dlist[hash].uri.s,"sip:",4)==0)
-				act.p1.string = _ds_list[idx].dlist[hash].uri.s+4;
-			else
-				act.p1.string = _ds_list[idx].dlist[hash].uri.s;
-			act.next = 0;
-	
-			if (do_action(&act, msg) < 0) {
-				LOG(L_ERR,
-					"DISPATCHER:dst_select_dst: Error while setting host\n");
+		if(ds_use_default!=0)
+			i = (i+1)%(_ds_list[idx].nr-1);
+		else
+			i = (i+1)%_ds_list[idx].nr;
+		if(i==hash)
+		{
+			if(ds_use_default!=0)
+			{
+				i = _ds_list[idx].nr-1;
+			} else {
 				return -1;
 			}
-		break;
-		default:
-			if (set_dst_uri(msg, &_ds_list[idx].dlist[hash].uri) < 0) {
-				LOG(L_ERR,
-					"DISPATCHER:dst_select_dst: Error while setting dst_uri\n");
-				return -1;
-			}
-			DBG("DISPATCHER:ds_select_dst: selected [%d-%d/%d/%d] <%.*s>\n",
-				a, s, idx, hash, msg->dst_uri.len, msg->dst_uri.s);
-	
-		break;
+		}
 	}
 
+	hash = i;
+
+	if(ds_update_dst(msg, &_ds_list[idx].dlist[hash].uri, mode)!=0)
+	{
+		LOG(L_ERR, "DISPATCHER:ds_select_dst: cannot set dst addr\n");
+		return -1;
+	}
+	
+	DBG("DISPATCHER:ds_select_dst: selected [%d-%d/%d/%d] <%.*s>\n",
+		alg, set, idx, hash, _ds_list[idx].dlist[hash].uri.len,
+		_ds_list[idx].dlist[hash].uri.s);
+
+	if(!(ds_flags&DS_FAILOVER_ON))
+		return 1;
+
+	if(ds_use_default!=0 && hash!=_ds_list[idx].nr-1)
+	{
+		avp_val.s = &_ds_list[idx].dlist[_ds_list[idx].nr-1].uri;
+		avp_name.n = dst_avp_id;
+		if(add_avp(AVP_VAL_STR, avp_name, avp_val)!=0)
+			return -1;
+		cnt++;
+	}
+	
+	/* add to avp */
+
+	for(i=hash-1; i>=0; i--)
+	{	
+		if((_ds_list[idx].dlist[i].flags & DS_INACTIVE_DST)
+				|| (ds_use_default!=0 && i==(_ds_list[idx].nr-1)))
+			continue;
+		DBG("DISPATCHER:ds_select_dst: using entry [%d/%d]\n",
+				set, i);
+		avp_val.s = &_ds_list[idx].dlist[i].uri;
+		avp_name.n = dst_avp_id;
+		if(add_avp(AVP_VAL_STR, avp_name, avp_val)!=0)
+			return -1;
+		cnt++;
+	}
+
+	for(i=_ds_list[idx].nr-1; i>hash; i--)
+	{	
+		if((_ds_list[idx].dlist[i].flags & DS_INACTIVE_DST)
+				|| (ds_use_default!=0 && i==(_ds_list[idx].nr-1)))
+			continue;
+		DBG("DISPATCHER:ds_select_dst: using entry [%d/%d]\n",
+				set, i);
+		avp_val.s = &_ds_list[idx].dlist[i].uri;
+		avp_name.n = dst_avp_id;
+		if(add_avp(AVP_VAL_STR, avp_name, avp_val)!=0)
+			return -1;
+		cnt++;
+	}
+
+	/* add to avp the first used dst */
+	avp_val.s = &_ds_list[idx].dlist[hash].uri;
+	avp_name.n = dst_avp_id;
+	if(add_avp(AVP_VAL_STR, avp_name, avp_val)!=0)
+		return -1;
+	cnt++;
+	
+	/* add to avp the group id */
+	avp_val.n = set;
+	avp_name.n = grp_avp_id;
+	if(add_avp(0, avp_name, avp_val)!=0)
+		return -1;
+	
+	/* add to avp the number of dst */
+	avp_val.n = cnt;
+	avp_name.n = cnt_avp_id;
+	if(add_avp(0, avp_name, avp_val)!=0)
+		return -1;
+	
 	return 1;
+}
+
+int ds_next_dst(struct sip_msg *msg, int mode)
+{
+	struct usr_avp *avp;
+	struct usr_avp *prev_avp;
+	int_str avp_name;
+	int_str avp_value;
+	
+	if(!(ds_flags&DS_FAILOVER_ON))
+	{
+		LOG(L_WARN, "DISPATCHER:ds_next_dst: failover support disabled\n");
+		return -1;
+	}
+
+	avp_name.n = dst_avp_id;
+
+	prev_avp = search_first_avp(0, avp_name, &avp_value);
+	if(prev_avp==NULL)
+		return -1; /* used avp deleted -- strange */
+
+	avp = search_next_avp(prev_avp, &avp_value);
+	destroy_avp(prev_avp);
+	if(avp==NULL || !(avp->flags&AVP_VAL_STR))
+		return -1; /* no more avps or value is int */
+	
+	if(ds_update_dst(msg, avp_value.s, mode)!=0)
+	{
+		LOG(L_ERR, "DISPATCHER:ds_next_dst: cannot set dst addr\n");
+		return -1;
+	}
+	DBG("DISPATCHER:ds_next_dst: using [%.*s]\n",
+			avp_value.s->len, avp_value.s->s);
+	
+	return 1;
+}
+
+int ds_mark_dst(struct sip_msg *msg, int mode)
+{
+	int group, ret;
+	struct usr_avp *prev_avp;
+	int_str avp_name;
+	int_str avp_value;
+	
+	if(!(ds_flags&DS_FAILOVER_ON))
+	{
+		LOG(L_WARN, "DISPATCHER:ds_mark_dst: failover support disabled\n");
+		return -1;
+	}
+
+	avp_name.n = grp_avp_id;
+	prev_avp = search_first_avp(0, avp_name, &avp_value);
+	
+	if(prev_avp==NULL || prev_avp->flags&AVP_VAL_STR)
+		return -1; /* grp avp deleted -- strange */
+	group = avp_value.n;
+	
+	avp_name.n = dst_avp_id;
+	prev_avp = search_first_avp(0, avp_name, &avp_value);
+	
+	if(prev_avp==NULL || !(prev_avp->flags&AVP_VAL_STR))
+		return -1; /* dst avp deleted -- strange */
+	
+	if(mode==1)
+		ret = ds_set_state(group, avp_value.s, DS_INACTIVE_DST, 0);
+	else
+		ret = ds_set_state(group, avp_value.s, DS_INACTIVE_DST, 1);
+
+	DBG("DISPATCHER:ds_mark_dst: mode [%d] grp [%d] dst [%.*s]\n",
+			mode, group, avp_value.s->len, avp_value.s->s);
+	
+	return (ret==0)?1:-1;
+}
+
+int ds_set_state(int group, str *address, int state, int type)
+{
+	int i=0, idx=0;
+
+	if(_ds_list==NULL)
+	{
+		LOG(L_ERR, "DISPATCHER:ds_set_state: the list is null\n");
+		return -1;
+	}
+	
+	/* get the index of the set */
+	if(ds_get_index(group, &idx)!=0)
+	{
+		LOG(L_ERR,
+			"DISPATCHER:ds_set_state: destination set [%d] not found\n",group);
+		return -1;
+	}
+
+	while(i<_ds_list[idx].nr)
+	{
+		if(_ds_list[idx].dlist[i].uri.len==address->len 
+				&& strncasecmp(_ds_list[idx].dlist[i].uri.s, address->s,
+					address->len)==0)
+		{
+			if(type)
+				_ds_list[idx].dlist[i].flags |= state;
+			else
+				_ds_list[idx].dlist[i].flags &= ~state;
+				
+			return 0;
+		}
+		i++;
+	}
+
+	return -1;
+}
+
+int ds_print_list(FILE *fout)
+{
+	int i, j;
+	
+	if(_ds_list==NULL || _ds_list_nr<=0)
+	{
+		LOG(L_ERR, "DISPATCHER:ds_print_list: the list is null\n");
+		return -1;
+	}
+	
+	fprintf(fout, "\nnumber of destination sets: %d\n", _ds_list_nr);
+	for(i=0; i<_ds_list_nr; i++)
+	{
+		fprintf(fout, "\n set #%d\n", _ds_list[i].id);
+		for(j=0; j<_ds_list[i].nr; j++)
+		{
+			fprintf(fout, "    %c   %.*s\n",
+				(_ds_list[i].dlist[j].flags&DS_INACTIVE_DST)?'I':'A',
+				_ds_list[i].dlist[j].uri.len, _ds_list[i].dlist[j].uri.s);
+		}
+	}
+	return 0;
 }
 

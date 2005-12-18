@@ -29,15 +29,37 @@
 #ifndef _DISPATCH_H_
 #define _DISPATCH_H_
 
+#include <stdio.h>
+#include "../../items.h"
 #include "../../parser/msg_parser.h"
 
 
-#define DS_HASH_USER_ONLY 1  /* use only the uri user part for hashing */
+#define DS_HASH_USER_ONLY	1  /* use only the uri user part for hashing */
+#define DS_FAILOVER_ON		2  /* store the other dest in avps */
+#define DS_INACTIVE_DST		1  /* inactive destination */
+
+typedef struct _ds_param
+{
+	int type;
+	union {
+		int id;
+		xl_spec_t sp;
+	} v;
+} ds_param_t, *ds_param_p;
+
 extern int ds_flags; 
+extern int ds_use_default; 
+extern int dst_avp_id;
+extern int grp_avp_id;
+extern int cnt_avp_id;
 
 int ds_load_list(char *lfile);
 int ds_destroy_list();
-int ds_select_dst(struct sip_msg *msg, char *set, char *alg, int mode);
+int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
+int ds_next_dst(struct sip_msg *msg, int mode);
+int ds_set_state(int group, str *address, int state, int type);
+int ds_mark_dst(struct sip_msg *msg, int mode);
+int ds_print_list(FILE *fout);
 
 #endif
 

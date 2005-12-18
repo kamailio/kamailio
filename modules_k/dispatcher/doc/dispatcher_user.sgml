@@ -100,12 +100,19 @@ modparam("dispatcher", "force_dst", 1)
  	<section>
  		<title><varname>flags</varname> (int)</title>
  		<para>
- 		Various flags that affect the hashing behaviour.
- 		For now only the flag 1 is defined. If flag 1 is set only the username
+ 		Various flags that affect dispatcher's behaviour. The flags are defined
+		as a bitmask on an integer value.
+ 		If flag 1 is set only the username
  		part of the uri will be used when computing an uri based hash.
  		If no flags are set the username, hostname and port will be used
  		The port is used only if different from 5060 (normal sip uri) or 5061
  		(in the sips case).
+ 		</para>
+ 		<para>
+		If flag 2 is set, then the failover support is enabled. The functions
+		exported by the module will store the rest of addresses from the
+		destination set in AVP, and use these AVPs to contact next address when
+		the current-tried fails.
  		</para>
  		<para>
  		<emphasis>
@@ -116,7 +123,93 @@ modparam("dispatcher", "force_dst", 1)
  		<title>Set the <quote>flags</quote> parameter</title>
  <programlisting format="linespecific">
  ...
- modparam("dispatcher", "flags", 1)
+ modparam("dispatcher", "flags", 3)
+ ...
+ </programlisting>
+ 		</example>
+ 	</section>
+ 	<section>
+ 		<title><varname>use_default</varname> (int)</title>
+ 		<para>
+ 		If the parameter is set to 1, the last address in destination set
+		is used as last option to send the message. For example, it is good
+		when wanting to send the call to an anouncement server saying:
+		"the gateways are full, try later".
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>0</quote>.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>use_default</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "use_default", 1)
+ ...
+ </programlisting>
+ 		</example>
+	</section>
+ 	<section>
+ 		<title><varname>dst_avp_id</varname> (int)</title>
+ 		<para>
+ 		The id of the avp which will hold the list with addresses, in the order
+		they have been selected by the chosen algorithm. If use_default is 1,
+		the value of last dst_avp_id is the last address in destination set. The
+		first dst_avp_id is the selected destinations. All the other addresses
+		from the destination set will be added in the avp list to be able to
+		implement serial forking.
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>271</quote>.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>dst_avp_id</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "dst_avp_id", 100)
+ ...
+ </programlisting>
+ 		</example>
+ 	</section>
+ 	<section>
+ 		<title><varname>grp_avp_id</varname> (int)</title>
+ 		<para>
+ 		The id of the avp storing the group id of the destination set. Good
+		to have it for later usage or checks.
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>272</quote>.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>grp_avp_id</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "grp_avp_id", 101)
+ ...
+ </programlisting>
+ 		</example>
+ 	</section>
+ 	<section>
+ 		<title><varname>cnt_avp_id</varname> (int)</title>
+ 		<para>
+ 		The id of the avp storing the number of destination addresses kept in
+		dst_avp_id avps.
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>273</quote>.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>cnt_avp_id</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "cnt_avp_id", 103)
  ...
  </programlisting>
  		</example>
@@ -181,6 +274,12 @@ modparam("dispatcher", "force_dst", 1)
 		</listitem>
 		</itemizedlist>
 		<para>
+		If the bit 2 in 'flags' is set, the rest of the addresses from the
+		destination set is stored in AVP list. You can use 'ds_next_dst()' to
+		use next address to achieve serial forking to all possible
+		destinations.
+		</para>
+		<para>
 		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>
@@ -202,7 +301,51 @@ ds_select_dst("1", "0");
  		ds_select_dst().
  		<para>
 		<para>
+		If the bit 2 in 'flags' is set, the rest of the addresses from the
+		destination set is stored in AVP list. You can use 'ds_next_domain()'
+		to use next address to achieve serial forking to all possible
+		destinations.
+		</para>
+		<para>
 		This function can be used from REQUEST_ROUTE.
+		</para>
+ 	</section>
+  	<section>
+ 		<title>
+ 		<function moreinfo="none">ds_next_dst()</function>
+ 		</title>
+ 		<para>
+ 		Takes the next destination address from the AVPs with id 'dst_avp_id'
+		and sets the dst_uri (outbound proxy address).
+ 		</para>
+		<para>
+		This function can be used from FAILURE_ROUTE.
+		</para>
+ 	</section>
+  	<section>
+ 		<title>
+ 		<function moreinfo="none">ds_next_domain()</function>
+ 		</title>
+ 		<para>
+ 		Takes the next destination address from the AVPs with id 'dst_avp_id'
+		and sets the domain part of the request uri.
+ 		</para>
+		<para>
+		This function can be used from FAILURE_ROUTE.
+		</para>
+ 	</section>
+  	<section>
+ 		<title>
+ 		<function moreinfo="none">ds_mark_dst()</function>
+ 		</title>
+ 		<para>
+ 		Mark the last used address from destination set as inactive, in order
+		to be ingnored in the future. In this way it can be implemented an
+		automatic detection of failed gateways. When an address is marked as
+		inactive, it will be ignored by 'ds_select_dst' and 'ds_select_domain'.
+ 		</para>
+		<para>
+		This function can be used from FAILURE_ROUTE.
 		</para>
  	</section>
 	</section>
