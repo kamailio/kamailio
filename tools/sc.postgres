@@ -33,7 +33,6 @@ fi
 if [ -z "$WATCH_PERIOD" ] ; then
 	WATCH_PERIOD=2
 fi
-PW="test"
 
 # SQL config
 if [ -z "$SQL_DB" ] ; then
@@ -52,9 +51,6 @@ fi
 # the read-only user for whom password may be stored here
 if [ -z "$RO_USER" ] ; then
 	RO_USER=serro
-fi
-if [ -z "$RO_PW" ] ; then
-	RO_PW=47serro11
 fi
 
 # binaries
@@ -150,8 +146,7 @@ usage:
  $CMD restart ............................ restart ser
 
 
-   Commands labeled with (*) will prompt for a MySQL password.
-   If the variable PW is set, the password will not be prompted.
+        Commands labeled with (*) needs  a POSTGRES password.
 
      $EXTRA_TEXT
 
@@ -165,19 +160,6 @@ check_uri() {
 	echo "$1" | grep -E "^sip:([a-zA-Z0-9_]+@)?.*\..*" 
 }
 
-
-#params: none
-# output: PW
-prompt_pw() {
-	if [ -z "$PW" ] ; then
-		savetty=`stty -g`
-		printf "Postgres password: "
-		stty -echo
-    	read PW
-		stty $savetty
-    	echo
-	fi
-}
 
 # process output from FIFO server; if everything is ok
 # skip the first "ok" line and proceed to returned 
@@ -294,15 +276,6 @@ wait
 
 # input: sql query, optional mysql command-line params
 sql_query() {
-	# if password not yet queried, query it now
-	if [ -z "$PW" ] ; then
-		savetty=`stty -g`
-		printf "MySql password: "
-		stty -echo
-    	read PW >&2
-		stty $savetty
-    	echo >&2
-	fi
 	$PGSQL $2\
 		-A -q -t \
 		-P fieldsep="	" \
@@ -535,8 +508,6 @@ if [ -z "$SIP_DOMAIN" ] ; then
 	exit 1
 fi
 
-# if the script calls itself ...
-export PW
 
 case $1 in
 
