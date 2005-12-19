@@ -33,6 +33,11 @@ DEP_XSL ?= $(ROOT_DIR)/doc/stylesheets/dep.xsl
 XHTML_XSL ?= $(ROOT_DIR)/doc/stylesheets/xhtml.xsl
 
 #
+# Default stylesheet used to generate HTML
+#
+HTML_XSL ?= $(ROOT_DIR)/doc/stylesheets/html.chunked.xsl
+
+#
 # Stylesheet used to generate plain text documents,
 # this is usually the one used for xhtml
 #
@@ -74,10 +79,12 @@ all: xhtml
 xml_files = $(addsuffix .xml, $(DOCUMENTS))
 dep_files = $(addsuffix .d, $(DOCUMENTS))
 xhtml_files = $(addsuffix .xhtml, $(DOCUMENTS))
+html_files = $(addsuffix .html, $(DOCUMENTS))
 txt_files = $(addsuffix .txt, $(DOCUMENTS))
 pdf_files = $(addsuffix .pdf, $(DOCUMENTS))
 
 xhtml: $(xhtml_files)
+html: $(html_files)
 txt: $(txt_files)
 pdf: $(pdf_files)
 
@@ -88,6 +95,14 @@ pdf: $(pdf_files)
         --stringparam root.filename "$(basename $<)" \
         --stringparam html.ext ".xhtml" \
         $(XHTML_XSL) $<
+
+%.html: %.xml %.d $(alldep) $(HTML_XSL)
+	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
+        --xinclude \
+        --stringparam base.dir "$(OUTPUT_DIR)/" \
+        --stringparam root.filename "$(basename $<)" \
+        --stringparam html.ext ".html" \
+        $(HTML_XSL) $<
 
 %.fo: %.xml $(alldep) $(FO_XSL)
 	XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
