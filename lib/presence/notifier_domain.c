@@ -404,7 +404,6 @@ void notify_subscriber(subscription_t *s, mq_message_t *msg)
 			push_message(s->dst, msg);
 			sent = 1;
 		}
-		else free_message(msg);
 		unlock_subscription_data(s);
 	}
 	
