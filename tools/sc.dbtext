@@ -681,9 +681,9 @@ case $1 in
 		#Subscriber file
 		echo "phplib_id(str) username(str) domain(str) password(str) first_name(str,null) last_name(str,null) phone(str,null) email_address(str) datetime_created(int) datetime_modified(int) confirmation(str,null) flag(str,null) sendnotification(str,null) greeting(str,null) ha1(str) ha1b(str) allow_find(str) timezone(str,null) rpid(str,null) domn(int,null) uuid(str,null)" > $SUB_FILE
 		#Location file
-		echo "username(str) domain(str,null) contact(str,null) received(str,null) expires(int,null) q(double,null) callid(str,null) cseq(int,null) last_modified(int,null) replicate(int,null) state(int,null) flags(int) user_agent(str) socket(str)" > $UL_FILE
+		echo "username(str) domain(str,null) contact(str,null) received(str,null) expires(int,null) q(double,null) callid(str,null) cseq(int,null) last_modified(int,null) replicate(int,null) state(int,null) flags(int) user_agent(str) socket(str) methods(int,null)" > $UL_FILE
 		#Aliases file
-		echo "username(str) domain(str,null) contact(str,null) received(str,null) expires(int,null) q(double,null) callid(str,null) cseq(int,null) last_modified(int,null) replicate(int,null) state(int,null) flags(int) user_agent(str) socket(str)" > $ALS_FILE
+		echo "username(str) domain(str,null) contact(str,null) received(str,null) expires(int,null) q(double,null) callid(str,null) cseq(int,null) last_modified(int,null) replicate(int,null) state(int,null) flags(int) user_agent(str) socket(str) methods(int,null)" > $ALS_FILE
 		#Uri file
 		echo "username(str) domain(str) uri_user(str) last_modified(int)" > $URI_FILE
 		#Group/ACL file
@@ -695,8 +695,8 @@ case $1 in
 		echo "phonebook:1" >> $VER_FILE
 		echo "pending:4" >> $VER_FILE
 		echo "missed_calls:2" >> $VER_FILE
-		echo "location:1001" >> $VER_FILE
-		echo "aliases:1001" >> $VER_FILE
+		echo "location:1002" >> $VER_FILE
+		echo "aliases:1002" >> $VER_FILE
 		echo "grp:2" >> $VER_FILE
 		echo "event:1" >> $VER_FILE
 		echo "active_sessions:1" >> $VER_FILE
