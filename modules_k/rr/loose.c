@@ -559,9 +559,6 @@ static inline int after_strict(struct sip_msg* _m)
 	/* set the hooks for the params -bogdan */
 	routed_msg_id = _m->id;
 	routed_params = puri.params;
-	/* include also the first ';' */
-	routed_params.s--;
-	routed_params.len++;
 	/* run RR callbacks -bogdan */
 	run_rr_callbacks( _m, &routed_params );
 
@@ -690,9 +687,6 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		/* set the hooks for the params -bogdan */
 		routed_msg_id = _m->id;
 		routed_params = puri.params;
-		/* include also the first ';' */
-		routed_params.s--;
-		routed_params.len++;
 		/* run RR callbacks -bogdan */
 		run_rr_callbacks( _m, &routed_params );
 
@@ -839,6 +833,7 @@ int check_route_param(struct sip_msg * msg, regex_t* re)
 {
 	regmatch_t pmatch;
 	char bk;
+	str params;
 
 	/* check if the hooked params belong to the same message */
 	if (routed_msg_id != msg->id)
@@ -848,15 +843,18 @@ int check_route_param(struct sip_msg * msg, regex_t* re)
 	if ( !routed_params.s || !routed_params.len )
 		return -1;
 
+	/* include also the first ';' */
+	for( params=routed_params ; params.s[0]!=';' ; params.s--,params.len++ );
+
 	/* do the well-known trick to convert to null terminted */
-	bk = routed_params.s[routed_params.len];
-	routed_params.s[routed_params.len] = 0;
-	DBG("DEBUG:rr:check_route_param: params are <%s>\n", routed_params.s);
-	if (regexec( re, routed_params.s, 1, &pmatch, 0)!=0) {
-		routed_params.s[routed_params.len] = bk;
+	bk = params.s[params.len];
+	params.s[params.len] = 0;
+	DBG("DEBUG:rr:check_route_param: params are <%s>\n", params.s);
+	if (regexec( re, params.s, 1, &pmatch, 0)!=0) {
+		params.s[params.len] = bk;
 		return -1;
 	} else {
-		routed_params.s[routed_params.len] = bk;
+		params.s[params.len] = bk;
 		return 0;
 	}
 }
