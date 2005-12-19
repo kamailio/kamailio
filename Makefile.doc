@@ -94,7 +94,7 @@ pdf: $(pdf_files)
         --xinclude \
         -o $@ $(FO_XSL) $<
 
-%.pdf: %.fo $.d $(alldep)
+%.pdf: %.fo %.d $(alldep)
 	$(XEP) $(XEP_FLAGS) -fo $< -pdf $@
 
 %.txt: %.xml %.d $(alldep)
