@@ -559,6 +559,9 @@ static inline int after_strict(struct sip_msg* _m)
 	/* set the hooks for the params -bogdan */
 	routed_msg_id = _m->id;
 	routed_params = puri.params;
+	/* include also the first ';' */
+	routed_params.s--;
+	routed_params.len++;
 	/* run RR callbacks -bogdan */
 	run_rr_callbacks( _m, &routed_params );
 
@@ -687,6 +690,9 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		/* set the hooks for the params -bogdan */
 		routed_msg_id = _m->id;
 		routed_params = puri.params;
+		/* include also the first ';' */
+		routed_params.s--;
+		routed_params.len++;
 		/* run RR callbacks -bogdan */
 		run_rr_callbacks( _m, &routed_params );
 
