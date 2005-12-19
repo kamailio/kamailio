@@ -67,6 +67,8 @@ ACL_GROUPS="local ld int voicemail free-pstn"
 FOREVER='2020-05-28 21:32:15'
 FOREVER_REL=1073741823
 
+ALL_METHODS=4294967295
+
 VERSION='$Revision$'
 #### SQL names
 
@@ -346,7 +348,7 @@ usrloc() {
 				exit 1
 			fi
 
-			fifo_cmd ul_add "$TABLE" "$1" "$2" "$FOREVER_REL" "1.00" "0"
+			fifo_cmd ul_add "$TABLE" "$1" "$2" "$FOREVER_REL" "1.00" "0" "128" "$ALL_METHODS"
 			exit $?
 			;;
 		rm)

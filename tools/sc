@@ -225,6 +225,12 @@ AVP_VALUE_COLUMN=value
 AVP_TYPE_COLUMN=type
 AVP_MODIFIED_COLUMN=modified
 
+
+##### ----------------------------------------------- #####
+#### Defined values
+ALL_METHODS=4294967295
+
+
 #===================================================================
 
 usage_alias_db() {
@@ -710,7 +716,7 @@ usrloc() {
 			check_alias "$SERUSER@$SERDOMAIN"
 
 			# 128 means FL_PERSISTENT is on
-			fifo_cmd ul_add "$USRLOC_TABLE" "$SERUSER@$SERDOMAIN" "$2" "0" "1.00" "0" "128"
+			fifo_cmd ul_add "$USRLOC_TABLE" "$SERUSER@$SERDOMAIN" "$2" "0" "1.00" "0" "128" "$ALL_METHODS"
 			exit $?
 			;;
 		rm)

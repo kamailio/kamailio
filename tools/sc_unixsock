@@ -117,6 +117,13 @@ MODIFIED_COLUMN=last_modified
 UNIXSOCK_DBG=0
 
 EGREP="egrep"
+
+
+##### ----------------------------------------------- #####
+#### Defined values
+ALL_METHODS=4294967295
+
+
 #===================================================================
 
 
@@ -374,7 +381,7 @@ usrloc() {
 			check_alias "$SERUSER@$SERDOMAIN"
 
 			# 128 means FL_PERSISTENT is on
-			unixsock_cmd ul_add "$USRLOC_TABLE" "$SERUSER@$SERDOMAIN" "$2" "0" "1.00" "0" "128"
+			unixsock_cmd ul_add "$USRLOC_TABLE" "$SERUSER@$SERDOMAIN" "$2" "0" "1.00" "0" "128" "$ALL_METHODS"
 			exit $?
 			;;
 		rm)
