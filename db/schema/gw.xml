@@ -9,7 +9,7 @@
 
 <table>
     <name>gw</name>
-    <version>2</version>
+    <version>3</version>
 
     <column id="gw.gw_name">
 	<name>gw_name</name>
