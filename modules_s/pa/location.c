@@ -30,7 +30,6 @@
  */
 
 #include <string.h>
-#include "../../fifo_server.h"
 #include "../../str.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"

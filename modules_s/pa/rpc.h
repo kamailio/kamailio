@@ -1,10 +1,7 @@
 /*
- * Presence Agent, UNIX Domain Socket interface
- *
  * $Id$
  *
- * Copyright (C) 2001-2004 Hewlett-Packard Company
- * Copyright (C) 2004 FhG FOKUS
+ * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -28,9 +25,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _UNIXSOCK_H
-#define _UNIXSOCK_H 1
+#ifndef _PA_RPC_H
+#define _PA_RPC_H
 
-int init_unixsock_iface(void);
+#include "rpc.h"
 
-#endif /* _UNIXSOCK_H */
+extern rpc_export_t pa_rpc_methods[];
+
+#endif /* _PA_RPC_H */

@@ -35,19 +35,17 @@
 
 #include <signal.h>
 
-#include "../../fifo_server.h"
 #include "../../db/db.h"
 #include "../../sr_module.h"
 #include "../../error.h"
 #include "subscribe.h"
 #include "publish.h"
 #include "dlist.h"
-#include "unixsock.h"
 #include "location.h"
 #include "pa_mod.h"
 #include "pidf.h"
 #include "watcher.h"
-#include "fifo.h"
+#include "rpc.h"
 #include "qsa_interface.h"
 
 #include <cds/logger.h>
@@ -157,14 +155,14 @@ static param_export_t params[]={
 
 struct module_exports exports = {
 	"pa", 
-	cmds,        /* Exported functions */
-	0,           /* RPC methods */
-	params,      /* Exported parameters */
-	pa_mod_init, /* module initialization function */
-	0,           /* response function*/
-	pa_destroy,  /* destroy function */
-	0,           /* oncancel function */
-	pa_child_init/* per-child init function */
+	cmds,           /* Exported functions */
+	pa_rpc_methods, /* RPC methods */
+	params,         /* Exported parameters */
+	pa_mod_init,    /* module initialization function */
+	0,              /* response function*/
+	pa_destroy,     /* destroy function */
+	0,              /* oncancel function */
+	pa_child_init   /* per-child init function */
 };
 
 
@@ -294,41 +292,6 @@ static int pa_mod_init(void)
 		return -1;
 	}
 	
-	if (register_fifo_cmd(fifo_pa_publish, "pa_publish", 0) < 0) {
-		LOG(L_CRIT, "cannot register fifo pa_publish\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_pa_presence, "pa_presence", 0) < 0) {
-		LOG(L_CRIT, "cannot register fifo pa_presence\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_pa_location, "pa_location", 0) < 0) {
-		LOG(L_CRIT, "cannot register fifo pa_location\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_pa_location_contact, "pa_location_contact", 0) < 0) {
-		LOG(L_CRIT, "cannot register fifo pa_location_contact\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_pa_watcherinfo, "pa_watcherinfo", 0) < 0) {
-		LOG(L_CRIT, "cannot register fifo pa_watcherinfo\n");
-		return -1;
-	}
-
-	if (pa_fifo_register() != 0) {
-		LOG(L_CRIT, "cannot register fifo commands for pa\n");
-		return -1;
-	}
-	
-	if (init_unixsock_iface() < 0) {
-		LOG(L_ERR, "pa_mod_init: Error while initializing unix socket interface\n");
-		return -1;
-	}
-
 	/* Register cache timer */
 	register_timer(timer, 0, timer_interval);
 
