@@ -27,11 +27,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
 #include "../../mem/shm_mem.h"
 #include "../../globals.h"
-#include "../../fifo_server.h"
-#include "../../unixsock_server.h"
 #include "../../config.h"
 #include "../../pt.h"
 #include "sl_stats.h"
@@ -52,8 +49,14 @@ static void add_sl_stats( struct sl_stats *t, struct sl_stats *i)
 }
 
 
-static int print_sl_stats(FILE *reply_file)
+static const char* rpc_stats_doc[2] = {
+	"Print reply statistics.",
+	0
+};
+
+static void rpc_stats(rpc_t* rpc, void* c)
 {
+	void* st;
 	struct sl_stats total;
 	int p;
 
@@ -63,101 +66,37 @@ static int print_sl_stats(FILE *reply_file)
 	} else for (p=0; p<process_count; p++)
 			add_sl_stats(&total, &sl_stats[p]);
 
-	fprintf(reply_file, "200: %ld 202: %ld 2xx: %ld" CLEANUP_EOL,
-		total.err[RT_200], total.err[RT_202], total.err[RT_2xx]);
-
-	fprintf(reply_file, "300: %ld 301: %ld 302: %ld"
-		" 3xx: %ld" CLEANUP_EOL,
-		total.err[RT_300], total.err[RT_301], total.err[RT_302], 
-		total.err[RT_3xx] );
-
-	fprintf(reply_file, "400: %ld 401: %ld 403: %ld"
-		" 404: %ld 407: %ld 408: %ld"
-		" 483: %ld 4xx: %ld" CLEANUP_EOL,
-		total.err[RT_400], total.err[RT_401], total.err[RT_403], 
-		total.err[RT_404], total.err[RT_407], total.err[RT_408],
-		total.err[RT_483], total.err[RT_4xx]);
-
-	fprintf(reply_file, "500: %ld 5xx: %ld" CLEANUP_EOL,
-		total.err[RT_500], total.err[RT_5xx] );
-
-	fprintf(reply_file, "6xx: %ld" CLEANUP_EOL,
-		total.err[RT_6xx] );
-
-	fprintf(reply_file, "xxx: %ld" CLEANUP_EOL,
-		total.err[RT_xxx] );
-
-	fprintf(reply_file, "failures: %ld" CLEANUP_EOL,
-		total.failures );
-
-	return 1;
-}
-
-int static sl_stats_cmd( FILE *pipe, char *response_file )
-{
-	FILE *reply_file;
-
-	reply_file=open_reply_pipe(response_file);
-	if (reply_file==0) {
-		LOG(L_ERR, "ERROR: sl_stats: file not opened\n");
-		return -1;
-	}
-	fputs( "200 ok\n", reply_file);
-	print_sl_stats( reply_file );
-	fclose(reply_file);
-	return 1;
-}
-
-int static sl_stats_cmd_unixsock( str* msg )
-{
-	struct sl_stats total;
-	int p;
-
-	unixsock_reply_asciiz( "200 OK\n");
-
-	memset(&total, 0, sizeof(struct sl_stats));
-	if (dont_fork) {
-		add_sl_stats(&total, &sl_stats[0]);
-	} else for (p=0; p<process_count; p++)
-			add_sl_stats(&total, &sl_stats[p]);
-
-	if (unixsock_reply_printf("200: %ld 202: %ld 2xx: %ld" CLEANUP_EOL,
-				  total.err[RT_200], total.err[RT_202], 
-				  total.err[RT_2xx]) < 0) goto err;
-
-	if (unixsock_reply_printf("300: %ld 301: %ld 302: %ld"
-				  " 3xx: %ld" CLEANUP_EOL,
-				  total.err[RT_300], total.err[RT_301], 
-				  total.err[RT_302], total.err[RT_3xx]) < 0) goto err;
-
-	if (unixsock_reply_printf("400: %ld 401: %ld 403: %ld"
-				  " 404: %ld 407: %ld 408: %ld"
-				  " 483: %ld 4xx: %ld" CLEANUP_EOL,
-				  total.err[RT_400], total.err[RT_401], total.err[RT_403], 
-				  total.err[RT_404], total.err[RT_407], total.err[RT_408],
-				  total.err[RT_483], total.err[RT_4xx]) < 0) goto err;
+	if (rpc->add(c, "{", &st) < 0) return;
 	
-	if (unixsock_reply_printf("500: %ld 5xx: %ld" CLEANUP_EOL,
-				  total.err[RT_500], total.err[RT_5xx]) < 0) goto err;
+	rpc->struct_add(st, "ddd", 
+			"200", total.err[RT_200],
+			"202", total.err[RT_202],
+			"2xx", total.err[RT_2xx]);
 
-	if (unixsock_reply_printf("6xx: %ld" CLEANUP_EOL,
-				  total.err[RT_6xx]) < 0) goto err;
+	rpc->struct_add(st, "ddd",
+			"300", total.err[RT_300],
+			"301", total.err[RT_301],
+			"302", total.err[RT_302],
+			"3xx", total.err[RT_3xx]);
 
-	if (unixsock_reply_printf("xxx: %ld" CLEANUP_EOL,
-				  total.err[RT_xxx]) < 0) goto err;
-	
-	if (unixsock_reply_printf("failures: %ld" CLEANUP_EOL,
-				  total.failures) < 0) goto err;
+	rpc->struct_add(st, "dddddddd",
+			"400", total.err[RT_400],
+			"401", total.err[RT_401],
+			"403", total.err[RT_403],
+			"404", total.err[RT_404],
+			"407", total.err[RT_407],
+			"408", total.err[RT_408],
+			"483", total.err[RT_483],
+			"4xx", total.err[RT_4xx]);
 
-	unixsock_reply_send();
-	return 0;
+	rpc->struct_add(st, "dd",
+			"500", total.err[RT_500],
+			"5xx", total.err[RT_5xx]);
 
- err:
-	unixsock_reply_reset();
-	unixsock_reply_asciiz("500 Buffer too small\n");
-	unixsock_reply_send();
-	return -1;
+	rpc->struct_add(st, "d", "6xx", total.err[RT_6xx]);
+	rpc->struct_add(st, "d", "xxx", total.err[RT_xxx]);
 }
+
 
 void sl_stats_destroy()
 {
@@ -182,15 +121,6 @@ int init_sl_stats( void )
 		return -1;
 	}
 	memset(sl_stats, 0, len);
-	if (register_fifo_cmd(sl_stats_cmd, "sl_stats", 0)<0) {
-		LOG(L_CRIT, "cannot register sl_stats\n");
-		return -1;
-	}
-	
-	if (unixsock_register_cmd("sl_stats", sl_stats_cmd_unixsock) < 0) {
-		LOG(L_CRIT, "cannot register unixsock sl_stats\n");
-		return -1;
-	}
 	return 1;
 }
 
@@ -259,3 +189,8 @@ void update_sl_stats( int code )
 	}
 		
 }
+
+rpc_export_t sl_rpc[] = {
+	{"sl.stats", rpc_stats, rpc_stats_doc, 0},
+	{0, 0, 0, 0}
+};

@@ -1,7 +1,9 @@
 /*
  * $Id$
  *
- * Copyright (C) 2004 FhG FOKUS
+ * Usrloc module interface
+ *
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -23,12 +25,13 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
-#ifndef _UL_UNIXSOCK_H
-#define _UL_UNIXSOCK_H
+#ifndef _UL_RPC_H
+#define _UL_RPC_H
 
-int init_ul_unixsock(void);
+#include "../../rpc.h"
 
-#endif /* _UL_UNIXSOCK_H */
+extern rpc_export_t ul_rpc[];
+
+#endif /* _UL_RPC_H */

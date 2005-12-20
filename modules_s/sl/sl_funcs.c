@@ -193,11 +193,11 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	*(sl_timeout) = get_ticks() + SL_RPL_WAIT_TIME;
 	pkg_free(buf);
 
-	update_sl_stats(code);
+//	update_sl_stats(code);
 	return 1;
 
 error:
-	update_sl_failures();
+//	update_sl_failures();
 	return -1;
 }
 

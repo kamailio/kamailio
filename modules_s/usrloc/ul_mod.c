@@ -50,10 +50,9 @@
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
 #include "urecord.h"         /* {insert,delete,get}_ucontact */
 #include "ucontact.h"        /* update_ucontact */
-#include "ul_fifo.h"
-#include "ul_unixsock.h"
 #include "ul_callback.h"
 #include "notify.h"
+#include "ul_rpc.h"
 #include "usrloc.h"
 
 MODULE_VERSION
@@ -100,7 +99,7 @@ int db_mode         = 0;              /* Database sync scheme: 0-no db, 1-write 
 int desc_time_order = 0;              /* By default do not enable timestamp ordering */                  
 
 
-db_con_t* ul_dbh; /* Database connection handle */
+db_con_t* ul_dbh = 0; /* Database connection handle */
 db_func_t ul_dbf;
 
 
@@ -155,7 +154,7 @@ static param_export_t params[] = {
 struct module_exports exports = {
 	"usrloc",
 	cmds,       /* Exported functions */
-	0,          /* RPC methods */
+	ul_rpc,     /* RPC methods */
 	params,     /* Export parameters */
 	mod_init,   /* Module initialization function */
 	0,          /* Response function */
@@ -188,17 +187,6 @@ static int mod_init(void)
 
 	     /* Register cache timer */
 	register_timer(timer, 0, timer_interval);
-
-	     /* Initialize fifo interface */
-	if (init_ul_fifo() < 0) {
-		LOG(L_ERR, "ERROR: usrloc/fifo initialization failed\n");
-		return -1;
-	}
-
-	if (init_ul_unixsock() < 0) {
-		LOG(L_ERR, "ERROR: usrloc/unixsock initialization failed\n");
-		return -1;
-	}
 
 	/* init the callbacks list */
 	if ( init_ulcb_list() < 0) {
@@ -247,7 +235,7 @@ static void destroy(void)
 {
 	/* Parent only, synchronize the world
 	* and then nuke it */
-	if (is_main) {
+	if (is_main && ul_dbh) {
 		if (synchronize_all_udomains() != 0) {
 			LOG(L_ERR, "timer(): Error while flushing cache\n");
 		}
