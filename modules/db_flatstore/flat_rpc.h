@@ -1,9 +1,9 @@
 /* 
  * $Id$ 
  *
- * Flatstore module FIFO interface
+ * Flatstore module interface
  *
- * Copyright (C) 2004 FhG Fokus
+ * Copyright (C) 2004-2005 FhG FOKUS
  *
  * This file is part of ser, a free SIP server.
  *
@@ -27,45 +27,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "../../dprint.h"
-#include "../../fifo_server.h"
-#include "flatstore_mod.h"
-#include "flat_fifo.h"
+#ifndef _FLAT_RPC_H
+#define _FLAT_RPC_H
 
+#include "../../rpc.h"
 
-#define FLAT_ROTATE "flat_rotate"
-#define FLAT_ROTATE_LEN (sizeof(FLAT_ROTATE) - 1)
+extern rpc_export_t flat_rpc[];
 
-
-static int flat_rotate_cmd(FILE* pipe, char* response_file);
-
-
-/*
- * Initialize the FIFO interface
- */
-int init_flat_fifo(void)
-{
-	if (register_fifo_cmd(flat_rotate_cmd, FLAT_ROTATE, 0) < 0) {
-		LOG(L_CRIT, "flatstore: Cannot register flat_rotate\n");
-		return -1;
-	}
-	
-	return 0;
-}
-
-
-static int flat_rotate_cmd(FILE* pipe, char* response_file)
-{
-	FILE* reply_file;
-	
-	reply_file = open_reply_pipe(response_file);
-	if (reply_file == 0) {
-		LOG(L_ERR, "flat_rotate_cmd: File not open\n");
-		return -1;
-	}
-
-	*flat_rotate = time(0);
-	fputs( "200 OK\n", reply_file);
-	fclose(reply_file);
-	return 1;
-}
+#endif /* _FLAT_RPC_H */

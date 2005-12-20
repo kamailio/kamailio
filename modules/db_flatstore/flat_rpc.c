@@ -1,7 +1,7 @@
 /* 
  * $Id$ 
  *
- * Flatstore module FIFO interface
+ * Flatstore module interface
  *
  * Copyright (C) 2004 FhG Fokus
  *
@@ -27,14 +27,23 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _FLAT_FIFO_H
-#define _FLAT_FIFO_H
-
-/*
- * Initialize the FIFO interface
- */
-int init_flat_fifo(void);
+#include "flatstore_mod.h"
+#include "flat_rpc.h"
 
 
-#endif /* _FLAT_FIFO_H */
+static void rotate(rpc_t* rpc, void* c)
+{
+	*flat_rotate = time(0);
+}
 
+
+static const char* flat_rotate_doc[2] = {
+	"Close and reopen flatrotate files during log rotation.",
+	0
+};
+
+
+rpc_export_t flat_rpc[] = {
+	{"flatstore.rotate", rotate, flat_rotate_doc, 0},
+	{0, 0, 0, 0},
+};
