@@ -50,11 +50,10 @@
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
-#include "../../fifo_server.h"
-#include "../../unixsock_server.h"
 #include "../../parser/parse_uri.h"
 #include "../../timer.h"
 #include "../../ut.h"
+#include "../../rpc.h"
 #include "../../action.h"
 
 #include "domains.h"
@@ -79,8 +78,8 @@ static db_func_t pdt_dbf;
 
 
 /** parameters */
-static char *db_url = "mysql://root@127.0.0.1/pdt";
-char *db_table = "domains";
+static char *db_url = DEFAULT_DB_URL;
+char *db_table = "pdt";
 char *prefix_column = "prefix";
 char *domain_column = "domain";
 
@@ -96,15 +95,13 @@ static void mod_destroy(void);
 static int  child_init(int r);
 
 static int prefix2domain(struct sip_msg*, int mode);
-static int get_domainprefix_unixsock(str* msg);
-static int pdt_fifo_add(FILE *stream, char *response_file);
-static int pdt_fifo_delete(FILE *stream, char *response_file);
-static int pdt_fifo_list(FILE *stream, char *response_file);
 
 int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode);
 int pdt_load_db();
 int pdt_sync_cache();
 void pdt_clean_cache(unsigned int ticks, void *param);
+
+static rpc_export_t pdt_rpc[];
 
 static cmd_export_t cmds[]={
 	{"prefix2domain", w_prefix2domain,   0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
@@ -127,7 +124,7 @@ static param_export_t params[]={
 struct module_exports exports = {
 	"pdt",
 	cmds,
-	0,         /* RPC methods */
+	pdt_rpc,         /* RPC methods */
 	params,
 	
 	mod_init,		/* module initialization function */
@@ -155,34 +152,6 @@ static int mod_init(void)
 
 	prefix.len = strlen(prefix.s);
 	
-	if(register_fifo_cmd(pdt_fifo_add, "pdt_add", 0)<0)
-	{
-		LOG(L_ERR,
-			"PDT:mod_init: cannot register fifo command 'pdt_add'\n");
-		return -1;
-	}	
-	if(register_fifo_cmd(pdt_fifo_delete, "pdt_delete", 0)<0)
-	{
-		LOG(L_ERR,
-			"PDT:mod_init: cannot register fifo command 'pdt_delete'\n");
-		return -1;
-	}	
-
-	if(register_fifo_cmd(pdt_fifo_list, "pdt_list", 0)<0)
-	{
-		LOG(L_ERR,
-			"PDT:mod_init: cannot register fifo command 'pdt_list'\n");
-		return -1;
-	}	
-
-
-	if(unixsock_register_cmd("get_domainprefix", get_domainprefix_unixsock)<0)
-	{
-		LOG(L_ERR,
-		"PDT:mod_init: cannot register unixsock command 'get_domainprefix'\n");
-		return -1;
-	}
-
 	/* binding to mysql module */
 	if(bind_dbmod(db_url, &pdt_dbf))
 	{
@@ -234,6 +203,7 @@ static int mod_init(void)
 	}
 		
 	pdt_dbf.close(db_con);
+	db_con = 0;
 
 	pdt_print_tree(_ptree);
 	DBG("PDT:mod_init: -------------------\n");
@@ -620,168 +590,130 @@ void pdt_clean_cache(unsigned int ticks, void *param)
 	return;
 }
 
-/**
- *	Fifo command example:
- * 
- *	---
- *	 :pdt_add:[response_file]\n
- *	 prefix\n
- *	 domain\n
- *	 \n
- * 	--
- */
-int pdt_fifo_add(FILE *stream, char *response_file)
+
+
+static const char* rpc_add_doc[2] = {
+	"Add new prefix/domain translation rule.",
+	0
+};
+
+static void rpc_add(rpc_t* rpc, void* c)
 {
 	db_key_t db_keys[NR_KEYS] = {prefix_column, domain_column};
 	db_val_t db_vals[NR_KEYS];
 	db_op_t  db_ops[NR_KEYS] = {OP_EQ, OP_EQ};
-
-	pd_t* cell; 
+	
+	pd_t* cell;
 	pd_op_t *ito, *tmp;
-	
-	char dbuf[256], pbuf[256];
 	str sd, sp;
-		
-	if(_dhash==NULL)
-	{
+	char* t;
+	
+	if(_dhash==NULL) {
 		LOG(L_ERR, "PDT:pdt_fifo_add: strange situation\n");
-		fifo_reply(response_file, "500 pdt_fifo_add - server error\n");
-		return -1;
+		rpc->fault(c, 500, "Server Error");
+		return;
 	}
 	
-	sp.s = pbuf;
-	if(!read_line(sp.s, 255, stream, &sp.len) || sp.len==0)	
-	{
-		LOG(L_ERR, "PDT:pdt_fifo_add: could not read prefix\n");
-		fifo_reply(response_file, "400 pdt_fifo_add - prefix not found\n");
-		return 1;
+	     /* Use 's' to make sure strings are zero terminated */
+	if (rpc->scan(c, "ss", &sp.s, &sd.s) < 2) {
+		rpc->fault(c, 400, "Invalid Parameter Value");
+		return;
 	}
-	pbuf[sp.len] = '\0';
-
-	while(sp.s!=NULL && *sp.s!='\0')
-	{
-		if(*sp.s < '0' || *sp.s > '9')
-		{
-			LOG(L_ERR, "PDT:pdt_fifo_add: bad prefix [%s]\n", pbuf);
-			fifo_reply(response_file, "400 pdt_fifo_add - bad prefix\n");
-			return 1;
+	sp.len = strlen(sp.s);
+	sd.len = strlen(sd.s);
+	
+	t = sp.s;
+	while(t!=NULL && *t!='\0') {
+		if(*t < '0' || *t > '9') {
+			LOG(L_ERR, "PDT:pdt_fifo_add: bad prefix [%s]\n", sp.s);
+			rpc->fault(c, 400, "Bad Prefix");
+			return;
 		}
-		sp.s++;
+		t++;
 	}
-	sp.s = pbuf;
-
-	sd.s = dbuf;
-	if(!read_line(sd.s, 255, stream, &sd.len) || sd.len==0)	
-	{
-		LOG(L_ERR, "PDT:pdt_fifo_add: could not read domain\n");
-		fifo_reply(response_file, "400 pdt_fifo_add - domain not found\n");
-		return 1;
-	}
-	dbuf[sd.len] = '\0';
-
-
-	if(pdt_check_pd(_dhash, &sp, &sd)!=0)
-	{
+	
+	if(pdt_check_pd(_dhash, &sp, &sd)!=0) {
 		LOG(L_ERR, "PDT:pdt_fifo_add: prefix or domain exists\n");
-		fifo_reply(response_file,
-			"400 pdt_fifo_add - prefix or domain exists\n");
-		return 1;
+		rpc->fault(c, 400, "Prefix Or Domain Exists");
+		return;
 	}
-
+	
 	db_vals[0].type = DB_STR;
 	db_vals[0].nul = 0;
-	db_vals[0].val.str_val.s = sp.s;
-	db_vals[0].val.str_val.len = sp.len;
-
+	db_vals[0].val.str_val = sp;
+	
 	db_vals[1].type = DB_STR;
 	db_vals[1].nul = 0;
-	db_vals[1].val.str_val.s = sd.s;
-	db_vals[1].val.str_val.len = sd.len;
+	db_vals[1].val.str_val= sd;
 	
 	DBG("PDT:pdt_fifo_add: [%.*s] <%.*s>\n", sp.len, sp.s, sd.len, sd.s);
-			
-	/* insert a new domain into database */
-	if(pdt_dbf.insert(db_con, db_keys, db_vals, NR_KEYS)<0)
-	{
+	
+	     /* insert a new domain into database */
+	if(pdt_dbf.insert(db_con, db_keys, db_vals, NR_KEYS)<0) {
 		LOG(L_ERR, "PDT:pdt_fifo_add: error storing new prefix/domain\n");
-		fifo_reply(response_file, "430 Cannot store prefix/domain\n");
-		return -1;
+		rpc->fault(c, 430, "Cannot Store Prefix/domain");
+		return;
 	}
 	
-	/* insert the new domain into hashtables, too */
+	     /* insert the new domain into hashtables, too */
 	cell = new_cell(&sp, &sd);
-	if(cell==NULL)
-	{
+	if(cell==NULL) {
 		LOG(L_ERR, "PDT:pdt_fifo_add: no more shm\n");
-		fifo_reply(response_file, "431 no more shm\n");
+		rpc->fault(c, 431, "Out Of Shared Memory");
 		goto error1;
 	}
 	tmp = new_pd_op(cell, 0, PDT_ADD);
-	if(tmp==NULL)
-	{
+	if(tmp==NULL) {
 		LOG(L_ERR, "PDT:pdt_fifo_add: no more shm!\n");
-		fifo_reply(response_file, "431 no more shm!\n");
+		rpc->fault(c, 431, "Out Of Shared Memory");
 		goto error2;
 	}
 	
 	lock_get(&_dhash->diff_lock);
 	
-	if(pdt_add_to_hash(_dhash, &sp, &sd)!=0)
-	{
+	if(pdt_add_to_hash(_dhash, &sp, &sd)!=0) {
 		LOG(L_ERR, "PDT:pdt_fifo_add: could not add to cache\n");
-		fifo_reply(response_file, "431 could not add to cache\n");
+		rpc->fault(c, 431, "Could Not Add To Cache");
 		goto error3;
-		
 	}
-
+	
 	_dhash->max_id++;
 	tmp->id = _dhash->max_id;
-	if(_dhash->diff==NULL)
-	{
+	if(_dhash->diff==NULL) {
 		_dhash->diff = tmp;
 		goto done;
 	}
 	ito = _dhash->diff;
 	while(ito->n!=NULL)
 		ito = ito->n;
-
+	
 	ito->n = tmp;
 	tmp->p = ito;
-
-done:
+	
+ done:
 	DBG("PDT:pdt_fifo_add: op[%d]=%d...\n", tmp->id, tmp->op);
 	lock_release(&_dhash->diff_lock);
-
-	fifo_reply(response_file, "230 Added [%.*s] <%.*s>\n",
-		sp.len, sp.s, sd.len, sd.s);
-
-	return 0;
-
+	return;
 	
-error3:
+ error3:
 	lock_release(&_dhash->diff_lock);
 	free_pd_op(tmp);
-error2:
+ error2:
 	free_cell(cell);
-error1:
+ error1:
 	if(pdt_dbf.delete(db_con, db_keys, db_ops, db_vals, NR_KEYS)<0)
 		LOG(L_ERR,"PDT:pdt_fifo_add: database/cache are inconsistent\n");
-	
-	return -1;
 }
 
-/**
- *	Fifo command example:
- * 
- *	---
- *	 :pdt_delete:[response_file]\n
- *	 domain\n
- *	 \n
- * 	--
- */
-static int pdt_fifo_delete(FILE *stream, char *response_file)
+
+
+static const char* rpc_delete_doc[2] = {
+	"Delete prefix/domain translation rule.",
+	0
+};
+
+static void rpc_delete(rpc_t* rpc, void* c)
 {
-	char dbuf[256];
 	str sd;
 	unsigned int dhash;
 	int hash_entry;
@@ -791,46 +723,41 @@ static int pdt_fifo_delete(FILE *stream, char *response_file)
 	db_val_t db_vals[1];
 	db_op_t  db_ops[1] = {OP_EQ};
 	
-	if(_dhash==NULL)
-	{
+	if(_dhash==NULL) {
 		LOG(L_ERR, "PDT:pdt_fifo_delete: strange situation\n");
-		fifo_reply(response_file, "500 pdt_fifo_delete - server error\n");
-		return -1;
+		rpc->fault(c, 500, "Server Error");
+		return;
 	}
 	
-	sd.s = dbuf;
-	if(!read_line(sd.s, 255, stream, &sd.len) || sd.len==0)	
-	{
-		LOG(L_ERR, "PDT:pdt_fifo_delete: could not read domain\n");
-		fifo_reply(response_file, "400 pdt_fifo_delete - domain not found\n");
-		return 1;
+	     /* Use s to make sure the string is zero terminated */
+	if (rpc->scan(c, "s", &sd.s) < 1) {
+		rpc->fault(c, 400, "Parameter Missing");
+		return;
 	}
-	dbuf[sd.len] = '\0';
-	if(*sd.s=='\0' || *sd.s=='.')
-	{
+	sd.len = strlen(sd.s);
+
+	if(*sd.s=='\0') {
 		LOG(L_INFO, "PDT:pdt_fifo_delete: empty domain\n");
-		fifo_reply(response_file, "400 pdt_fifo_delete - empty pram\n");
-		return 1;
+		rpc->fault(c, 400, "Empty Parameter");
+		return;
 	}
 	
 	dhash = pdt_compute_hash(sd.s);
 	hash_entry = get_hash_entry(dhash, _dhash->hash_size);
-
+	
 	lock_get(&_dhash->diff_lock);
-
+	
 	lock_get(&_dhash->dhash[hash_entry].lock);
 	
 	it = _dhash->dhash[hash_entry].e;
-	while(it!=NULL && it->dhash<=dhash)
-	{
+	while(it!=NULL && it->dhash<=dhash) {
 		if(it->dhash==dhash && it->domain.len==sd.len
-				&& strncasecmp(it->domain.s, sd.s, sd.len)==0)
+		   && strncasecmp(it->domain.s, sd.s, sd.len)==0)
 			break;
 		it = it->n;
 	}
-
-	if(it!=NULL)
-	{
+	
+	if(it!=NULL) {
 		if(it->p!=NULL)
 			(it->p)->n = it->n;
 		else
@@ -839,21 +766,19 @@ static int pdt_fifo_delete(FILE *stream, char *response_file)
 			(it->n)->p = it->p;
 	}
 	lock_release(&_dhash->dhash[hash_entry].lock);
-
-	if(it!=NULL)
-	{
-		tmp = new_pd_op(it, 0, PDT_DELETE);
-		if(tmp==NULL)
-		{
-			LOG(L_ERR, "PDT:pdt_fifo_delete: no more shm!\n");
-			fifo_reply(response_file, "431 no more shm!\n");
-			goto error1;
-		}
 	
+	if(it!=NULL) {
+		tmp = new_pd_op(it, 0, PDT_DELETE);
+		if(tmp==NULL) {
+			LOG(L_ERR, "PDT:pdt_fifo_delete: no more shm!\n");
+			rpc->fault(c, 431, "No Shared Memory Left");
+			lock_release(&_dhash->diff_lock);
+			return;
+		}
+		
 		_dhash->max_id++;
 		tmp->id = _dhash->max_id;
-		if(_dhash->diff==NULL)
-		{
+		if(_dhash->diff==NULL) {
 			_dhash->diff = tmp;
 			DBG("PDT:pdt_fifo_delete: op[%d]=%d...\n", tmp->id, tmp->op);
 			goto done;
@@ -861,7 +786,7 @@ static int pdt_fifo_delete(FILE *stream, char *response_file)
 		ito = _dhash->diff;
 		while(ito->n!=NULL)
 			ito = ito->n;
-
+		
 		ito->n = tmp;
 		tmp->p = ito;
 		DBG("PDT:pdt_fifo_delete: op[%d]=%d...\n", tmp->id, tmp->op);
@@ -869,261 +794,129 @@ static int pdt_fifo_delete(FILE *stream, char *response_file)
 	} else {
 		dhash = 0;
 	}
-
-done:
+	
+ done:
 	lock_release(&_dhash->diff_lock);
-	if(dhash==0)
-	{
+	if(dhash==0) {
 		DBG("PDT:pdt_fifo_delete: prefix for domain [%s] not found\n", sd.s);
-		fifo_reply(response_file, "404 domain not found!\n");
+		rpc->fault(c, 404, "Domain Not Found");
 	} else {
 		db_vals[0].type = DB_STR;
 		db_vals[0].nul = 0;
 		db_vals[0].val.str_val.s = sd.s;
 		db_vals[0].val.str_val.len = sd.len;
 		if(pdt_dbf.delete(db_con, db_keys, db_ops, db_vals, 1)<0)
-		{
-			LOG(L_ERR,"PDT:pdt_fifo_delete: database/cache are inconsistent\n");
-			fifo_reply(response_file, "602 database/cache are inconsistent!\n");
-		} else {
-			fifo_reply(response_file, "200 domain removed!\n");
-		}
+			{
+				LOG(L_ERR,"PDT:pdt_fifo_delete: database/cache are inconsistent\n");
+				rpc->fault(c, 502, "Database And Cache Are Inconsistent");
+			}
 	}
-	
-	return 0;
-
-error1:
-	lock_release(&_dhash->diff_lock);
-	return -1;	
 }
 
+
+
+static const char* rpc_list_doc[2] = {
+	"List existin prefix/domain translation rules",
+	0
+};
+
 /**
- *	Fifo command example:
- * 
- *	---
- *	 :pdt_list:[response_file]\n
- *	 prefix\n
- *	 domain\n
- *	 \n
- * 	--
+ *      Fifo command example:
  *
- * 	- '.' (dot) means NULL value for [prefix] and [domain]
- * 	- if both [prefix] and [domain] are NULL, all prefix-domain pairs are listed
- * 	- the comparison operation is 'START WITH' -- if domain is 'a' then
- * 	  all domains starting with 'a' are listed
+ *      ---
+ *       :pdt_list:[response_file]\n
+ *       prefix\n
+ *       domain\n
+ *       \n
+ *      --
+ *
+ *      - '.' (dot) means NULL value for [prefix] and [domain]
+ *      - if both [prefix] and [domain] are NULL, all prefix-domain pairs are listed
+ *      - the comparison operation is 'START WITH' -- if domain is 'a' then
+ *        all domains starting with 'a' are listed
  */
-static int pdt_fifo_list(FILE *stream, char *response_file)
+static void rpc_list(rpc_t* rpc, void* c)
 {
-	char dbuf[256], pbuf[256];
 	str sd, sp;
 	pd_t *it;
 	int i;
-	FILE *freply=NULL;
-
-	if(_dhash==NULL)
-	{
+	char* buf1, *buf2, *t;
+	
+	if(_dhash==NULL) {
 		LOG(L_ERR, "PDT:pdt_fifo_list: strange situation\n");
-		fifo_reply(response_file, "500 pdt_fifo_list - server error\n");
-		return -1;
+		rpc->fault(c, 500, "Server Error");
+		return;
 	}
 	
-	sp.s = pbuf;
-	if(!read_line(sp.s, 255, stream, &sp.len) || sp.len==0)	
-	{
-		LOG(L_ERR, "PDT:pdt_fifo_add: could not read prefix\n");
-		fifo_reply(response_file, "400 pdt_fifo_add - prefix not found\n");
-		return 1;
+	if (rpc->scan(c, "ss", &sp.s, &sd.s) < 2) {
+		rpc->fault(c, 400, "Invalid parameter value");
+		return;
 	}
-	pbuf[sp.len] = '\0';
-
-	if(*sp.s!='\0' && *sp.s!='.')
-	{
-		while(sp.s!=NULL && *sp.s!='\0')
-		{
-			if(*sp.s < '0' || *sp.s > '9')
-			{
-				LOG(L_ERR, "PDT:pdt_fifo_add: bad prefix [%s]\n", pbuf);
-				fifo_reply(response_file, "400 pdt_fifo_add - bad prefix\n");
-				return 1;
+	sp.len = strlen(sp.s);
+	sd.len = strlen(sd.s);
+	
+	t = sp.s;
+	if(*t!='\0' && *t!='.') {
+		while(t!=NULL && *t!='\0') {
+			if(*t < '0' || *t > '9') {
+				LOG(L_ERR, "PDT:pdt_fifo_add: bad prefix [%s]\n", sp.s);
+				rpc->fault(c, 400, "Bad Prefix");
+				return;
 			}
-			sp.s++;
+			t++;
 		}
-		sp.s = pbuf;
 	} else {
 		sp.s   = NULL;
 		sp.len = 0;
 	}
-
-	sd.s = dbuf;
-	if(!read_line(sd.s, 255, stream, &sd.len) || sd.len==0)	
-	{
-		LOG(L_ERR, "PDT:pdt_fifo_add: could not read domain\n");
-		fifo_reply(response_file, "400 pdt_fifo_add - domain not found\n");
-		return 1;
-	}
-	dbuf[sd.len] = '\0';
-	if(*sd.s=='\0' || *sd.s=='.')
-	{
+	
+	if(*sd.s=='\0' || *sd.s=='.') {
 		sd.s   = NULL;
 		sd.len = 0;
-	}
-
-	freply = open_reply_pipe(response_file);
-	if(freply==NULL)
-	{
-		LOG(L_ERR, "PDT:pdt_fifo_list: can't open reply fifo '%s'\n",
-				response_file);
-		return -1;
 	}
 	
 	lock_get(&_dhash->diff_lock);
 	
-	for(i=0; i<_dhash->hash_size; i++)
-	{
+	for(i=0; i<_dhash->hash_size; i++) {
 		lock_get(&_dhash->dhash[i].lock);
-
+		
 		it = _dhash->dhash[i].e;
-		while(it!=NULL)
-		{
+		for (it = _dhash->dhash[i].e; it; it = it->n) {
 			if((sp.s==NULL && sd.s==NULL)
-					|| (sp.s!=NULL && it->prefix.len>=sp.len &&
-						strncmp(it->prefix.s, sp.s, sp.len)==0)
-					|| (sd.s!=NULL && it->domain.len>=sd.len &&
-						strncasecmp(it->domain.s, sd.s, sd.len)==0))
-				fprintf(freply, "%.*s %.*s\n",
-					it->prefix.len, it->prefix.s,
-					it->domain.len, it->domain.s);
-			it = it->n;
+			   || (sp.s!=NULL && it->prefix.len>=sp.len &&
+			       strncmp(it->prefix.s, sp.s, sp.len)==0)
+			   || (sd.s!=NULL && it->domain.len>=sd.len &&
+			       strncasecmp(it->domain.s, sd.s, sd.len)==0)) {
+				
+				buf1 = pkg_malloc(it->prefix.len + 1);
+				if (!buf1) continue;
+				memcpy(buf1, it->prefix.s, it->prefix.len);
+				buf1[it->prefix.len] = '\0';
+				
+				buf2 = pkg_malloc(it->domain.len + 1);
+				if (!buf2) {
+					pkg_free(buf1);
+					continue;
+				}
+				memcpy(buf2, it->domain.s, it->domain.len);
+				buf2[it->domain.len] = '\0';
+				
+				rpc->add(c, "ss", buf1, buf2);
+				pkg_free(buf1);
+				pkg_free(buf2);
+			}
 		}
-
+		
 		lock_release(&_dhash->dhash[i].lock);
 	}
-
+	
 	lock_release(&_dhash->diff_lock);
-	
-	fprintf(freply, "\n*200 OK\n");
-	if(freply!=NULL)
-		fclose(freply);
-
-	return 0;
 }
 
-static int get_domainprefix_unixsock(str* msg)
-{
-	return 0;
-#if 0
-	db_key_t db_keys[NR_KEYS];
-	db_val_t db_vals[NR_KEYS];
-	db_op_t  db_ops[NR_KEYS] = {OP_EQ, OP_EQ};
-	code_t code;
-	dc_t* cell; 
-	str sdomain, sauth;
-	int authorized=0;
-		
-	/* read a line -the domain name parameter- from the fifo */
-	if(unixsock_read_line(&sdomain, msg) != 0)	
-	{
-		unixsock_reply_asciiz("400 Domain expected\n");
-		goto send_err;
-	}
 
-	/* read a line -the authorization to register new domains- from the fifo */
-	if(unixsock_read_line(&sauth, msg) != 0)
-	{	
-		unixsock_reply_asciiz("400 Authorization expected\n");
-		goto send_err;
-	}
-
-	sdomain.s[sdomain.len] = '\0';
-
-	/* see what kind of user we have */
-	authorized = sauth.s[0]-'0';
-
-	lock_get(&l);
-
-	/* search the domain in the hashtable */
-	cell = get_code_from_hash(hash->dhash, hash->hash_size, sdomain.s);
-	
-	/* the domain is registered */
-	if(cell)
-	{
-
-		lock_release(&l);
-			
-		/* domain already in the database */
-		unixsock_reply_printf("201 Domain name=%.*s Domain code=%d%d\n",
-				      sdomain.len, ZSW(sdomain.s), cell->code, code_terminator);
-		unixsock_reply_send();
-		return 0;
-		
-	}
-	
-	/* domain not registered yet */
-	/* user not authorized to register new domains */	
-	if(!authorized)
-	{
-		lock_release(&l);
-		unixsock_reply_asciiz("203 Domain name not registered yet\n");
-		unixsock_reply_send();
-		return 0;
-	}
-
-	code = *next_code;
-	*next_code = apply_correction(code+1);
-		
-
-	/* prepare for insertion into database */
-	db_keys[0] = DB_KEY_CODE;
-	db_keys[1] = DB_KEY_NAME;
-
-	db_vals[0].type = DB_INT;
-	db_vals[0].nul = 0;
-	db_vals[0].val.int_val = code;
-
-	db_vals[1].type = DB_STR;
-	db_vals[1].nul = 0;
-	db_vals[1].val.str_val.s = sdomain.s;
-	db_vals[1].val.str_val.len = sdomain.len;
-	DBG("%d %.*s\n", code, sdomain.len, sdomain.s);
-			
-	/* insert a new domain into database */
-	if(pdt_dbf.insert(db_con, db_keys, db_vals, NR_KEYS)<0)
-	{
-		/* next available code is still code */
-		*next_code = code;
-		lock_release(&l);
-		LOG(L_ERR, "PDT: get_domaincode: error storing a"
-				" new domain\n");
-		unixsock_reply_asciiz("204 Cannot register the new domain in a consistent way\n");
-		unixsock_reply_send();
-		return -1;
-	}
-	
-	/* insert the new domain into hashtables, too */
-	cell = new_cell(sdomain.s, code);
-	if(add_to_double_hash(hash, cell)<0)
-		goto error;		
-
-	lock_release(&l);
-
-	/* user authorized to register new domains */
-	unixsock_reply_printf("202 Domain name=%.*s New domain code=%d%d\n",
-			      sdomain.len, ZSW(sdomain.s), code, code_terminator);
-
-	unixsock_reply_send();
-	return 0;
-
- error:
-	/* next available code is still code */
-	*next_code = code;
-	/* delete from database */
-	if(pdt_dbf.delete(db_con, db_keys, db_ops, db_vals, NR_KEYS)<0)
-		LOG(L_ERR,"PDT: get_domaincode: database/share-memory are inconsistent\n");
-	lock_release(&l);
-	unixsock_reply_asciiz("500 Database/shared-memory are inconsistent\n");
-send_err:
-	unixsock_reply_send();
-	return -1;
-#endif
-}
-
+static rpc_export_t pdt_rpc[] = {
+	{"pdt.add",    rpc_add,    rpc_add_doc,    0},
+	{"pdt.delete", rpc_delete, rpc_delete_doc, 0},
+	{"pdt.list",   rpc_list,   rpc_list_doc,   RET_ARRAY},
+	{0, 0, 0, 0}
+};
