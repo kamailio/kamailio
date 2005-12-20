@@ -183,7 +183,7 @@ struct rpc_struct {
 static rpc_ctx_t ctx;
 
 static void close_doc(rpc_ctx_t* ctx);
-static void set_fault(struct xmlrpc_reply* reply, int code, char* reason);
+static void set_fault(struct xmlrpc_reply* reply, int code, char* fmt, ...);
 
 static rpc_t func_param;
 
@@ -449,15 +449,31 @@ static int rpc_send(rpc_ctx_t* ctx)
 	return 0;
 }
 
-static void set_fault(struct xmlrpc_reply* reply, int code, char* reason)
+
+#define REASON_BUF_LEN 1024
+
+static void set_fault(struct xmlrpc_reply* reply, int code, char* fmt, ...)
 {
+	static char buf[REASON_BUF_LEN];
+	va_list ap;
+
 	reply->code = code;
-	reply->reason = (reason ? reason : "");
+	va_start(ap, fmt);
+	vsnprintf(buf, REASON_BUF_LEN, fmt, ap);
+	va_end(ap);
+	reply->reason = buf;
 }
 
-static void rpc_fault(rpc_ctx_t* ctx, int code, char* reason)
+static void rpc_fault(rpc_ctx_t* ctx, int code, char* fmt, ...)
 {
-	set_fault(&ctx->reply, code, reason);
+	static char buf[REASON_BUF_LEN];
+	va_list ap;
+
+	ctx->reply.code = code;
+	va_start(ap, fmt);
+	vsnprintf(buf, REASON_BUF_LEN, fmt, ap);
+	va_end(ap);
+	ctx->reply.reason = buf;
 }
 
 
@@ -633,7 +649,7 @@ static int get_int(int* val, struct xmlrpc_reply* reply, xmlDocPtr doc, xmlNodeP
 	char* val_str;
 
 	if (!value || xmlStrcmp(value->name, BAD_CAST "value")) {
-		set_fault(reply, 400, "Invalid Parameter Value");
+		set_fault(reply, 400, "Invalid parameter value");
 		return -1;
 	}
 
@@ -722,6 +738,7 @@ static int get_string(char** val, struct xmlrpc_reply* reply, xmlDocPtr doc, xml
 
 static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 {
+	int read;
 	int fmt_len;
 	int* int_ptr;
 	char** char_ptr;
@@ -737,12 +754,9 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 	reply = &ctx->reply;
 	fmt_len = strlen(fmt);
 	va_start(ap, fmt);
-	
+	read = 0;
 	while(*fmt) {
-		if (!ctx->act_param) {
-			set_fault(reply, 400, "More Parameters Expected");
-			goto error;
-		}
+		if (!ctx->act_param) goto error;
 		value = ctx->act_param->xmlChildrenNode;
 
 		switch(*fmt) {
@@ -771,10 +785,7 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 
 		case '{':
 			void_ptr = va_arg(ap, void**);
-			if (!value->xmlChildrenNode) {
-				set_fault(reply, 400, "Struct Parameter Value Not Found");
-				goto error;
-			}
+			if (!value->xmlChildrenNode) goto error;
 			p = new_rpcstruct(ctx->doc, value->xmlChildrenNode, reply);
 			if (!p) goto error;
 			*void_ptr = p;
@@ -786,14 +797,15 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 			goto error;
 		}
 		ctx->act_param = ctx->act_param->next;
+		read++;
 		fmt++;
 	}
 	va_end(ap);
-	return 0;
+	return read;
 
  error:
 	va_end(ap);
-	return -1;
+	return -read;
 }
 
 #define RPC_BUF_SIZE 1024
@@ -824,12 +836,12 @@ static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
 		if (n > -1 && n < buf_size) {
 			s.s = buf;
 			s.len = n;
-			if (ctx->flags & RET_ARRAY && add_xmlrpc_reply(reply, &value_prefix) < 0) return -1;
-			if (add_xmlrpc_reply(reply, &string_prefix) < 0) return -1;
-			if (add_xmlrpc_reply(reply, &s) < 0) return -1;
-			if (add_xmlrpc_reply(reply, &string_suffix) < 0) return -1;
-			if (ctx->flags & RET_ARRAY && add_xmlrpc_reply(reply, &value_suffix) < 0) return -1;
-			if (add_xmlrpc_reply(reply, &lf) < 0) return -1;
+			if (ctx->flags & RET_ARRAY && add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
+			if (add_xmlrpc_reply(reply, &string_prefix) < 0) goto err;
+			if (add_xmlrpc_reply(reply, &s) < 0) goto err;
+			if (add_xmlrpc_reply(reply, &string_suffix) < 0) goto err;
+			if (ctx->flags & RET_ARRAY && add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
+			if (add_xmlrpc_reply(reply, &lf) < 0) goto err;
 			return 0;
 		}
 		     /* Else try again with more space. */
@@ -841,10 +853,13 @@ static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
 		if ((buf = pkg_realloc(buf, buf_size)) == 0) {
 			set_fault(reply, 500, "Internal Server Error (No memory left)");
 			ERR("No memory left\n");
-			return -1;
+			goto err;
 		}
 	}
 	return 0;
+ err:
+	if (buf) pkg_free(buf);
+	return -1;
 }
 
 /* Structure manipulation functions */
@@ -904,14 +919,12 @@ static int find_member(xmlNodePtr* value, xmlDocPtr doc, xmlNodePtr structure, s
 }
 
 
-static int rpc_struct_add(void* st, char* fmt, ...)
+static int rpc_struct_add(struct rpc_struct* s, char* fmt, ...)
 {
 	va_list ap;
 	str member_name;
-	struct rpc_struct* s;
 	struct xmlrpc_reply* reply;
 	
-	s = (struct rpc_struct*)st;
 	reply = &s->struct_out;
 
 	va_start(ap, fmt);
@@ -938,8 +951,76 @@ static int rpc_struct_add(void* st, char* fmt, ...)
 }
 
 
-static int rpc_struct_scan(void* st, char* fmt, ...)
+static int rpc_struct_printf(struct rpc_struct* s, char* member_name, char* fmt, ...)
 {
+	int n, buf_size;
+	char* buf;
+	va_list ap;
+	str st, name;
+	struct xmlrpc_reply* reply;
+	struct xmlrpc_reply* out;
+
+	out = &s->struct_out;
+	buf = (char*)pkg_malloc(RPC_BUF_SIZE);
+	reply = s->reply;
+	if (!buf) {
+		set_fault(reply, 500, "Internal Server Error (No memory left)");
+		ERR("No memory left\n");
+		return -1;
+	}
+	
+	buf_size = RPC_BUF_SIZE;
+	while (1) {
+		     /* Try to print in the allocated space. */
+		va_start(ap, fmt);
+		n = vsnprintf(buf, buf_size, fmt, ap);
+		va_end(ap);
+		     /* If that worked, return the string. */
+		if (n > -1 && n < buf_size) {
+			st.s = buf;
+			st.len = n;
+
+			name.s = member_name;
+			name.len = strlen(member_name);
+			
+			if (add_xmlrpc_reply(out, &member_prefix) < 0) goto err;
+			if (add_xmlrpc_reply(out, &name_prefix) < 0) goto err;
+			if (add_xmlrpc_reply(out, &name) < 0) goto err;
+			if (add_xmlrpc_reply(out, &name_suffix) < 0) goto err;
+			if (add_xmlrpc_reply(out, &value_prefix) < 0) goto err;
+
+			if (add_xmlrpc_reply(out, &string_prefix) < 0) goto err;
+			if (add_xmlrpc_reply(out, &st) < 0) goto err;
+			if (add_xmlrpc_reply(out, &string_suffix) < 0) goto err;
+
+			if (add_xmlrpc_reply(out, &value_suffix) < 0) goto err;
+			if (add_xmlrpc_reply(out, &member_suffix) < 0) goto err;
+
+			return 0;
+		}
+		     /* Else try again with more space. */
+		if (n > -1) {   /* glibc 2.1 */
+			buf_size = n + 1; /* precisely what is needed */
+		} else {          /* glibc 2.0 */
+			buf_size *= 2;  /* twice the old size */
+		}
+		if ((buf = pkg_realloc(buf, buf_size)) == 0) {
+			set_fault(reply, 500, "Internal Server Error (No memory left)");
+			ERR("No memory left\n");
+			goto err;
+		}
+	}
+	return 0;
+ err:
+	if (buf) pkg_free(buf);
+	return -1;
+
+}
+
+
+static int rpc_struct_scan(struct rpc_struct* s, char* fmt, ...)
+{
+	int read;
 	va_list ap;
 	int* int_ptr;
 	double* double_ptr;
@@ -947,21 +1028,16 @@ static int rpc_struct_scan(void* st, char* fmt, ...)
 	str* str_ptr;
 	xmlNodePtr value;
 	char* member_name;
-	struct rpc_struct* s;
 	struct xmlrpc_reply* reply;
-	s = (struct rpc_struct*)st;
 	int ret;
 
+	read = 0;
 	va_start(ap, fmt);
 	while(*fmt) {
 		member_name = va_arg(ap, char*);
 		reply = s->reply;
 		ret = find_member(&value, s->doc, s->struct_in, reply, member_name);
-		if (ret < 0) return -1;
-		if (ret > 0) {
-			set_fault(reply, 400, "Structure Member Missing");
-			return -1;
-		}
+		if (ret != 0) goto error;
 
 		switch(*fmt) {
 		case 'b': /* Bool */
@@ -991,12 +1067,13 @@ static int rpc_struct_scan(void* st, char* fmt, ...)
 			return -1;
 		}
 		fmt++;
+		read++;
 	}
 	va_end(ap);
-	return 0;
+	return read;
  error:
 	va_end(ap);
-	return -1;
+	return -read;
 }
 
 
@@ -1163,5 +1240,6 @@ static int mod_init(void)
 	func_param.printf = (rpc_printf_f)rpc_printf;
 	func_param.struct_add = (rpc_struct_add_f)rpc_struct_add;
 	func_param.struct_scan = (rpc_struct_scan_f)rpc_struct_scan;
+	func_param.struct_printf = (rpc_struct_printf_f)rpc_struct_printf;
 	return 0;
 }
