@@ -66,6 +66,7 @@
  * 2005-11-16  fixed if (cond) cmd; (andrei)
  * 2005-12-11  added onsend_route support, fcmd (filtered cmd),
  *             snd_{ip,port,proto,af}, to_{ip,proto} (andrei)
+ * 2005-12-19  select framework (mma)
  *
  */
 

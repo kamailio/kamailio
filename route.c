@@ -41,6 +41,7 @@
  *  2003-10-10  added more operators support to comp_* (<,>,<=,>=,!=) (andrei)
  *  2004-10-19  added from_uri & to_uri (andrei)
  *  2005-12-12  added retcode support (anrei)
+ *  2005-12-19  select framework (mma)
  */
 
  

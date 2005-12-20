@@ -34,6 +34,7 @@
  *  2003-10-28  FORCE_TCP_ALIAS added (andrei)
  *  2004-02-24  added LOAD_AVP_T and AVP_TO_URI_T (bogdan)
  *  2005-12-11  added SND{IP,PORT,PROTO,AF}_O & TO{IP,PORT}_O (andrei)
+ *  2005-12-19  select framework added SELECT_O and SELECT_ST (mma)
  */
 
 

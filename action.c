@@ -38,6 +38,7 @@
  *  2003-10-29  added FORCE_TCP_ALIAS_T (andrei)
  *  2004-11-30  added FORCE_SEND_SOCKET_T (andrei)
  *  2005-12-12  return & drop/exit differentiation (andrei)
+ *  2005-12-19  select framework (mma)
  */
 
 
