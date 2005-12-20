@@ -70,6 +70,7 @@
 	#include <stdlib.h>
 	#include "ip_addr.h"
 	#include "usr_avp.h"
+	#include "select.h"
 	#include "cfg.tab.h"
 
 	/* states */
@@ -78,6 +79,7 @@
 	#define COMMENT_LN_S	        2
 	#define STRING_S		3
 	#define ATTR_S                  4
+        #define SELECT_S                5
 
 	#define STR_BUF_ALLOC_UNIT	128
 	struct str_buf{
@@ -102,7 +104,7 @@
 %}
 
 /* start conditions */
-%x STRING1 STRING2 COMMENT COMMENT_LN ATTR
+%x STRING1 STRING2 COMMENT COMMENT_LN ATTR SELECT
 
 /* action keywords */
 FORWARD	forward
@@ -194,7 +196,8 @@ PLUS	"+"
 MINUS	"-"
 
 /* Attribute specification */
-ATTR_MARK   "$"|"%"|"@"
+ATTR_MARK   "$"|"%"
+SELECT_MARK  "@"
 ATTR_FROM   "from"|"f"
 ATTR_TO     "to"|"t"
 ATTR_USER   "user"|"u"
@@ -500,6 +503,22 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{BIN_OR}	{ count(); return BIN_OR;  }
 <INITIAL>{PLUS}		{ count(); return PLUS; }
 <INITIAL>{MINUS}	{ count(); return MINUS; }
+
+<INITIAL>{SELECT_MARK}  { count(); state = SELECT_S; BEGIN(SELECT); return SELECT_MARK; }
+<SELECT>{ID}		{ count(); addstr(&s_buf, yytext, yyleng); 
+                          yylval.strval=s_buf.s;
+                          memset(&s_buf, 0, sizeof(s_buf));
+                          return ID; 
+                        }
+<SELECT>{DOT}           { count(); return DOT; }
+<SELECT>{LBRACK}        { count(); return LBRACK; }
+<SELECT>{RBRACK}        { count(); return RBRACK; }
+<SELECT>{DECNUMBER}	{ count(); yylval.intval=atoi(yytext);return NUMBER; }
+<SELECT>{HEXNUMBER}	{ count(); yylval.intval=(int)strtol(yytext, 0, 16); return NUMBER; }
+<SELECT>{OCTNUMBER}	{ count(); yylval.intval=(int)strtol(yytext, 0, 8); return NUMBER; }
+<SELECT>{BINNUMBER}     { count(); yylval.intval=(int)strtol(yytext, 0, 2); return NUMBER; }
+<SELECT>.               { unput(yytext[0]); state = INITIAL_S; BEGIN(INITIAL); } /* Rescan the token in INITIAL state */
+
 
 <INITIAL>{ATTR_MARK}    { count(); state = ATTR_S; BEGIN(ATTR); return ATTR_MARK; }
 <ATTR>{ATTR_FROM}       { count(); return ATTR_FROM; }

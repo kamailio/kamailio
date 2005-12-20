@@ -41,6 +41,7 @@
 #define route_struct_h
 
 #include <regex.h>
+#include "select.h"
 #include "usr_avp.h"
 
 #define EXPR_DROP -127  /* used only by the expression and if evaluator */
@@ -62,7 +63,7 @@ enum { EQUAL_OP=10, MATCH_OP, GT_OP, LT_OP, GTE_OP, LTE_OP, DIFF_OP, NO_OP };
 enum { METHOD_O=1, URI_O, FROM_URI_O, TO_URI_O, SRCIP_O, SRCPORT_O,
 	   DSTIP_O, DSTPORT_O, PROTO_O, AF_O, MSGLEN_O, DEFAULT_O, ACTION_O,
 	   NUMBER_O, AVP_O, SNDIP_O, SNDPORT_O, TOIP_O, TOPORT_O, SNDPROTO_O, 
-	   SNDAF_O, RETCODE_O};
+	   SNDAF_O, RETCODE_O, SELECT_O};
 
 enum { FORWARD_T=1, SEND_T, DROP_T, LOG_T, ERROR_T, ROUTE_T, EXEC_T,
 		SET_HOST_T, SET_HOSTPORT_T, SET_USER_T, SET_USERPASS_T, 
@@ -88,13 +89,12 @@ enum { FORWARD_T=1, SEND_T, DROP_T, LOG_T, ERROR_T, ROUTE_T, EXEC_T,
 };
 enum { NOSUBTYPE=0, STRING_ST, NET_ST, NUMBER_ST, IP_ST, RE_ST, PROXY_ST,
 		EXPR_ST, ACTIONS_ST, CMDF_ST, MODFIXUP_ST, URIHOST_ST, URIPORT_ST,
-		MYSELF_ST, STR_ST, SOCKID_ST, SOCKETINFO_ST, ACTION_ST, AVP_ST,
+		MYSELF_ST, STR_ST, SOCKID_ST, SOCKETINFO_ST, ACTION_ST, AVP_ST, SELECT_ST,
 		RETCODE_ST};
 
 /* run flags */
 #define EXIT_R_F   1
 #define RETURN_R_F 2
-
 
 /* Expression operand */
 union exp_op {
@@ -104,6 +104,7 @@ union exp_op {
 	void* param;
 	int intval;
 	avp_spec_t* attr;
+	select_t* select;
 	regex_t* re;
 	struct net* net;
 };
@@ -122,6 +123,7 @@ typedef union {
 	str str;
 	void* data;
 	avp_spec_t* attr;
+	select_t* select;
 } action_u_t;
 
 struct action{

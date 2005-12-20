@@ -67,8 +67,8 @@
 #include "parser/parse_from.h"
 #include "parser/parse_to.h"
 #include "mem/mem.h"
+#include "select.h"
 #include "onsend.h"
-
 
 /* main routing script table  */
 struct action* rlist[RT_NO];
@@ -132,7 +132,7 @@ static int fix_expr(struct expr* exp)
 					pkg_free(exp->r.param);
 					exp->r.re=re;
 					exp->r_type=RE_ST;
-				}else if (exp->r_type!=RE_ST && exp->r_type != AVP_ST){
+				}else if (exp->r_type!=RE_ST && exp->r_type != AVP_ST && exp->r_type != SELECT_ST){
 					LOG(L_CRIT, "BUG: fix_expr : invalid type for match\n");
 					return E_BUG;
 				}
@@ -158,6 +158,20 @@ static int fix_expr(struct expr* exp)
 				else len = 0;
 				exp->r.str.s = exp->r.string;
 				exp->r.str.len = len;
+			}
+			if (exp->l_type==SELECT_O) {
+				if ((ret=resolve_select(exp->l.select)) < 0) {
+					BUG("Unable to resolve select\n");
+					print_select(exp->l.select);
+					return ret;
+				}
+			}
+			if ((exp->r_type==SELECT_O)||(exp->r_type==SELECT_ST)) {
+				if ((ret=resolve_select(exp->r.select)) < 0) {
+					BUG("Unable to resolve select\n");
+					print_select(exp->l.select);
+					return ret;
+				}
 			}
 			ret=0;
 	}
@@ -280,6 +294,12 @@ static int fix_actions(struct action* a)
 					len = strlen(t->p2.data);
 					t->p2.str.s = t->p2.data;
 					t->p2.str.len = len;
+				} else if (t->p2_type == SELECT_ST) {
+					if ((ret=resolve_select(t->p2.select)) < 0) {
+						BUG("Unable to resolve select\n");
+						print_select(t->p2.select);
+						return ret;
+					}
 				}
 				break;
 
@@ -372,10 +392,11 @@ inline static int comp_num(int op, long left, int rtype, union exp_op* r)
 /*
  * Compare given string "left" with right side of expression
  */
-inline static int comp_str(int op, str* left, int rtype, union exp_op* r)
+inline static int comp_str(int op, str* left, int rtype, union exp_op* r, struct sip_msg* msg)
 {
 	str* right;
 	int_str val;
+	str v;
 	avp_t* avp;
 	int ret;
 	char backup;
@@ -387,6 +408,11 @@ inline static int comp_str(int op, str* left, int rtype, union exp_op* r)
 		avp = search_first_avp(r->attr->type, r->attr->name, &val, 0);
 		if (avp && (avp->flags & AVP_VAL_STR)) right = &val.s;
 		else return 0;
+	} else if (rtype == SELECT_ST) {
+		ret = run_select(&v, r->select, msg);
+		if (ret > 0) return 0;       /* Not found */
+		else if (ret < 0) goto error; /* Error */
+		right = &v;
 	} else if ((op == MATCH_OP && rtype == RE_ST)) {
 	} else if (op != MATCH_OP && rtype == STRING_ST) {
 		right = &r->str;
@@ -424,7 +450,7 @@ inline static int comp_str(int op, str* left, int rtype, union exp_op* r)
 			      */
 			backup=left->s[left->len];
 			left->s[left->len]='\0';
-			if (rtype == AVP_ST) {
+			if (rtype == AVP_ST || rtype == SELECT_ST) {
 				     /* For AVPs we need to compile the RE on the fly */
 				re=(regex_t*)pkg_malloc(sizeof(regex_t));
 				if (re==0){
@@ -499,7 +525,7 @@ error:
 }
 
 
-inline static int comp_avp(int op, avp_spec_t* spec, int rtype, union exp_op* r)
+inline static int comp_avp(int op, avp_spec_t* spec, int rtype, union exp_op* r, struct sip_msg* msg)
 {
 	avp_t* avp;
 	int_str val;
@@ -526,14 +552,33 @@ inline static int comp_avp(int op, avp_spec_t* spec, int rtype, union exp_op* r)
 	}
 
 	if (avp->flags & AVP_VAL_STR) {
-		return comp_str(op, &val.s, rtype, r);
+		return comp_str(op, &val.s, rtype, r, msg);
 	} else {
 		return comp_num(op, val.n, rtype, r);
 	}
 }
 
+/*
+ * Left side of expression was select
+ */
+inline static int comp_select(int op, select_t* sel, int rtype, union exp_op* r, struct sip_msg* msg)
+{
+	int ret;
+	str val;
 
+	ret = run_select(&val, sel, msg);
+	if (ret < 0) return -1;
+	if (ret > 0) return 0;
 
+	switch(op) {
+	case NO_OP: return 1;
+	case BINOR_OP:
+	case BINAND_OP:  
+		ERR("Binary operators cannot be used with string selects\n");
+		return -1;
+	}
+	return comp_str(op, &val, rtype, r, msg);
+}
 
 /* check_self wrapper -- it checks also for the op */
 inline static int check_self_op(int op, str* s, unsigned short p)
@@ -657,7 +702,7 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 	switch(e->l_type){
 	case METHOD_O:
 		ret=comp_str(e->op, &msg->first_line.u.request.method, 
-			     e->r_type, &e->r);
+			     e->r_type, &e->r, msg);
 		break;
 	case URI_O:
 		if(msg->new_uri.s) {
@@ -668,7 +713,7 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 						       msg->parsed_uri.port_no:SIP_PORT);
 			}else{
 				ret=comp_str(e->op, &msg->new_uri, 
-					     e->r_type, &e->r);
+					     e->r_type, &e->r, msg);
 			}
 		}else{
 			if (e->r_type==MYSELF_ST){
@@ -678,7 +723,7 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 						       msg->parsed_uri.port_no:SIP_PORT);
 			}else{
 				ret=comp_str(e->op, &msg->first_line.u.request.uri,
-					     e->r_type, &e->r);
+					     e->r_type, &e->r, msg);
 			}
 		}
 		break;
@@ -699,7 +744,7 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 					  uri.port_no?uri.port_no:SIP_PORT);
 		}else{
 			ret=comp_str(e->op, &get_from(msg)->uri,
-				     e->r_type, &e->r);
+				     e->r_type, &e->r, msg);
 		}
 		break;
 
@@ -721,7 +766,7 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 					  uri.port_no?uri.port_no:SIP_PORT);
 		}else{
 			ret=comp_str(e->op, &get_to(msg)->uri,
-				     e->r_type, &e->r);
+				     e->r_type, &e->r, msg);
 		}
 		break;
 		
@@ -837,9 +882,13 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 		break;
 
 	case AVP_O:
-		ret = comp_avp(e->op, e->l.attr, e->r_type, &e->r);
+		ret = comp_avp(e->op, e->l.attr, e->r_type, &e->r, msg);
 		break;
 		
+	case SELECT_O:
+		ret = comp_select(e->op, e->l.select, e->r_type, &e->r, msg);
+		break;
+
 	default:
 		LOG(L_CRIT, "BUG: eval_elem: invalid operand %d\n",
 		    e->l_type);
