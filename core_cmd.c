@@ -88,7 +88,10 @@ static void system_methodHelp(rpc_t* rpc, void* c)
 	rpc_export_t* ptr;
 	char* name;
 
-	if (rpc->scan(c, "s", &name) < 0) return;
+	if (rpc->scan(c, "s", &name) < 0) {
+		rpc->fault(c, 400, "Method Name Expected");
+		return;
+	}
 
 	for(t = modules; t; t = t->next) {
 		for(ptr = t->exports->rpc_methods; ptr && ptr->name; ptr++) {
@@ -102,7 +105,6 @@ static void system_methodHelp(rpc_t* rpc, void* c)
 			}
 		}
 	}
-	rpc->fault(c, 500, "Method Not Implemented");
 }
 
 
@@ -111,11 +113,11 @@ static const char* core_prints_doc[] = {
 	0                                           /* Method signature(s) */
 };
 
+
 static void core_prints(rpc_t* rpc, void* c)
 {
-	char* string;
-
-	if (rpc->scan(c, "s", &string) < 0) return;
+	char* string = 0;
+	rpc->scan(c, "s", &string);
 	rpc->add(c, "s", string);
 }
 
@@ -221,11 +223,16 @@ static const char* core_kill_doc[] = {
 
 static void core_kill(rpc_t* rpc, void* c)
 {
-	int sig_no;
-	if (rpc->scan(c, "d", &sig_no) < 0) return;
+	int sig_no = 15;
+	rpc->scan(c, "d", &sig_no);
 	rpc->send(c);
 	kill(0, sig_no);
 }
+
+static const char* core_test_doc[] = {
+	"Sends the given signal to SER.",  /* Documentation string */
+	0                                  /* Method signature(s) */
+};
 
 
 /* 
@@ -233,15 +240,15 @@ static void core_kill(rpc_t* rpc, void* c)
  */
 rpc_export_t core_rpc_methods[] = {
 	{"system.listMethods",     system_listMethods,     system_listMethods_doc,     RET_ARRAY},
-	{"system.methodSignature", system_methodSignature, system_methodSignature_doc, RET_VALUE},
-	{"system.methodHelp",      system_methodHelp,      system_methodHelp_doc,      RET_VALUE},
-	{"core.prints",            core_prints,            core_prints_doc,            RET_VALUE},
-	{"core.version",           core_version,           core_version_doc,           RET_VALUE},
-	{"core.uptime",            core_uptime,            core_uptime_doc,            RET_VALUE},
+	{"system.methodSignature", system_methodSignature, system_methodSignature_doc, 0        },
+	{"system.methodHelp",      system_methodHelp,      system_methodHelp_doc,      0        },
+	{"core.prints",            core_prints,            core_prints_doc,            0        },
+	{"core.version",           core_version,           core_version_doc,           0        },
+	{"core.uptime",            core_uptime,            core_uptime_doc,            0        },
 	{"core.ps",                core_ps,                core_ps_doc,                RET_ARRAY},
-	{"core.pwd",               core_pwd,               core_pwd_doc,               RET_VALUE},
+	{"core.pwd",               core_pwd,               core_pwd_doc,               RET_ARRAY},
 	{"core.arg",               core_arg,               core_arg_doc,               RET_ARRAY},
-	{"core.kill",              core_kill,              core_kill_doc,              RET_VALUE},
+	{"core.kill",              core_kill,              core_kill_doc,              0        },
 	{0, 0, 0, 0}
 };
 
