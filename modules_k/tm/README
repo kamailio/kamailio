@@ -818,6 +818,9 @@ if (t_was_cancelled()) {
    permissions. Any other commands may result in unpredictable
    behavior and possible server failure.
 
+   Only one failure_route can be armed for a request. If you use
+   many times t_on_failure(), only the last one has effect.
+
    Note that whenever failure_route is entered, RURI is set to
    value of the winning branch.
 
@@ -853,6 +856,9 @@ failure_route[1] {
    permissions. Any other commands may result in unpredictable
    behavior and possible server failure.
 
+   Only one onreply_route can be armed for a request. If you use
+   many times t_on_reply(), only the last one has effect.
+
    If the processed reply is provisionla reply (1xx code), by
    calling the drop() function (exported by core), the execution
    of the route will end and the reply will not be forwarded
@@ -861,6 +867,9 @@ failure_route[1] {
    Meaning of the parameters is as follows:
 
      * reply_route - Reply route block to be called.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, and BRANCH_ROUTE.
 
    Example 1-34. t_on_reply usage
 ...
@@ -890,6 +899,9 @@ onreply_route[1] {
    please check the documentation for each function to see the
    permissions. Any other commands may result in unpredictable
    behavior and possible server failure.
+
+   Only one branch_route can be armed for a request. If you use
+   many time t_on_branch(), only the last one has effect.
 
    The per-branch flags which are modified in the branch route
    will be visible only in the replies related to that branch.
