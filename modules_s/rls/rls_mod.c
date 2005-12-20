@@ -1,5 +1,4 @@
 #include "rls_mod.h"
-#include "fifo.h"
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
@@ -242,8 +241,6 @@ int rls_mod_init(void)
 		}
 		use_db = 1;
 	}
-
-	if (rls_fifo_register() != 0) return -1;
 
 	if (rls_qsa_interface_init() != 0) return -1;
 	
