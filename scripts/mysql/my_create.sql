@@ -23,14 +23,14 @@ INSERT INTO version (table_name, table_version) VALUES ('trusted', '1');
 INSERT INTO version (table_name, table_version) VALUES ('server_monitoring_agg', '1');
 INSERT INTO version (table_name, table_version) VALUES ('speed_dial', '2');
 INSERT INTO version (table_name, table_version) VALUES ('sd_attrs', '1');
-INSERT INTO version (table_name, table_version) VALUES ('gw', '2');
+INSERT INTO version (table_name, table_version) VALUES ('gw', '3');
 INSERT INTO version (table_name, table_version) VALUES ('gw_grp', '2');
 INSERT INTO version (table_name, table_version) VALUES ('lcr', '1');
 INSERT INTO version (table_name, table_version) VALUES ('presentity', '1');
 INSERT INTO version (table_name, table_version) VALUES ('presentity_contact', '1');
 INSERT INTO version (table_name, table_version) VALUES ('watcherinfo', '1');
 INSERT INTO version (table_name, table_version) VALUES ('i18n', '1');
-INSERT INTO version (table_name, table_version) VALUES ('gw', '2');
+INSERT INTO version (table_name, table_version) VALUES ('pdt', '1');
 
 CREATE TABLE acc (
     id INT AUTO_INCREMENT NOT NULL,
@@ -490,6 +490,12 @@ INSERT INTO i18n (code, lang, new_reason) VALUES ('600', 'cs_CZ.ascii', 'Uzivate
 INSERT INTO i18n (code, lang, new_reason) VALUES ('603', 'cs_CZ.ascii', 'Odmitnuto');
 INSERT INTO i18n (code, lang, new_reason) VALUES ('604', 'cs_CZ.ascii', 'Neexistujici uzivatel nebo sluzba');
 INSERT INTO i18n (code, lang, new_reason) VALUES ('606', 'cs_CZ.ascii', 'Nelze akceptovat');
+
+CREATE TABLE pdt (
+    prefix VARCHAR(32) NOT NULL,
+    domain VARCHAR(255) NOT NULL,
+    UNIQUE KEY pdt_idx (prefix)
+);
 
 GRANT ALL ON ser.* TO 'ser'@'%' IDENTIFIED BY 'heslo';
 GRANT ALL ON ser.* TO 'ser'@'localhost' IDENTIFIED BY 'heslo';

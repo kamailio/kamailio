@@ -78,6 +78,8 @@
 
     <xi:include href="i18n.xml"/>
 
+    <xi:include href="pdt.xml"/>
+
     <!-- Include extra definitions if found, it is not
          an error if they are not present, although it
          would produce a warning
