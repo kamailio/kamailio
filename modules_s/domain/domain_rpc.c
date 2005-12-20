@@ -38,35 +38,34 @@
 
 static void dump_domain(rpc_t* rpc, void* ctx, domain_t* d)
 {
-	char* buf, *p;
+	avp_t* a;
 	void* st;
 	int i;
-	int len;
-	
+	str* name;
+	int_str val;
+
 	if (rpc->add(ctx, "{", &st) < 0) return;
 	if (rpc->struct_add(st, "S", "did", &d->did) < 0) return;
 	if (rpc->struct_add(st, "d", "flags", d->flags[0]) < 0) return;
 
-	len = 0;
 	for(i = 0; i < d->n; i++) {
-		len += d->domain[i].len + 1;
+		if (rpc->struct_add(st, "S", "domain", &d->domain[i]) < 0) return;
+		if (rpc->struct_add(st, "d", "flags", d->flags[i]) < 0) return;
 	}
 
-	buf = (char*)pkg_malloc(len);
-	if (!buf) {
-		rpc->fault(ctx, 500, "Internal Server Error (No memory left)");
-		return;
+	a = d->attrs;
+	while(a) {
+		name = get_avp_name(a);
+		get_avp_val(a, &val);
+		if (a->flags & AVP_VAL_STR) {
+			if (rpc->struct_printf(st, "attr", "%.*s=%.*s", name->len, ZSW(name->s),
+					       val.s.len, ZSW(val.s.s)) < 0) return;
+		} else {
+			if (rpc->struct_printf(st, "attr", "%.*s=%d", name->len, ZSW(name->s),
+					       val.n) < 0) return;
+		}
+		a = a->next;
 	}
-	p = buf;
-
-	for(i = 0; i < d->n; i++) {
-		memcpy(p, d->domain[i].s, d->domain[i].len);
-		p += d->domain[i].len;
-		if (i == d->n-1) *p++ = '\0'; 
-		else*p++ = ' ';
-	}
-	rpc->struct_add(st, "s", "domains", buf);
-	pkg_free(buf);
 }
 
 

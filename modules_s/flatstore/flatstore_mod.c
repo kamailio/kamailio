@@ -36,7 +36,7 @@
 #include "../../sr_module.h"
 #include "../../mem/shm_mem.h"
 #include "flatstore.h"
-#include "flat_fifo.h"
+#include "flat_rpc.h"
 #include "flatstore_mod.h"
 
 MODULE_VERSION
@@ -97,7 +97,7 @@ static param_export_t params[] = {
 struct module_exports exports = {	
 	"flatstore",
 	cmds,
-	0,           /* RPC methods */
+	flat_rpc,    /* RPC methods */
 	params,      /*  module parameters */
 	mod_init,    /* module initialization function */
 	0,           /* response function*/
@@ -111,12 +111,6 @@ static int mod_init(void)
 {
 	if (strlen(flat_delimiter) != 1) {
 		LOG(L_ERR, "flatstore:mod_init: Delimiter has to be exactly one character\n");
-		return -1;
-	}
-
-	     /* Initialize fifo interface */
-	if (init_flat_fifo() < 0) {
-		LOG(L_ERR, "flatstore: FIFO initialization failed\n");
 		return -1;
 	}
 
@@ -144,7 +138,7 @@ static int child_init(int rank)
 	if (rank <= 0) {
 		flat_pid = - rank;
 	} else {
-		flat_pid = rank - PROC_UNIXSOCK;
+		flat_pid = rank - PROC_MIN;
 	}
 	return 0;
 }

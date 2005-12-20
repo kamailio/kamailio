@@ -44,15 +44,6 @@
  */
 
 
-/* flag buffer size for FIFO protocool */
-#define MAX_FLAG_LEN 12
-/* FIFO action protocol names */
-#define FIFO_SET_GFLAG "set_gflag"
-#define FIFO_IS_GFLAG "is_gflag"
-#define FIFO_RESET_GFLAG "reset_gflag"
-#define FIFO_FLUSH_GFLAGS "flush_gflags"
-#define FIFO_DUMP_GFLAGS "dump_gflags"
-
 #include <stdio.h>
 #include "../../sr_module.h"
 #include "../../error.h"
@@ -60,8 +51,8 @@
 #include "../../db/db.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
-#include "../../fifo_server.h"
 #include "../../usr_avp.h"
+#include "../../rpc.h"
 #include "../../config.h"
 
 
@@ -71,18 +62,16 @@ static int set_gflag(struct sip_msg*, char *, char *);
 static int reset_gflag(struct sip_msg*, char *, char *);
 static int is_gflag(struct sip_msg*, char *, char *);
 static int flush_gflags(struct sip_msg*, char*, char*);
-static int fifo_flush_gflags( FILE* pipe, char* response_file);
-static int fifo_dump_gflags(FILE* pipe, char* response_file);
 
 static int mod_init(void);
 static void mod_destroy(void);
 static int child_init(int rank);
 
-static int initial=0;
+static int initial = 0;
 static unsigned int *gflags; 
 
 static char* db_url = DEFAULT_DB_URL;
-static int load_global_attrs = 0;
+static int   load_global_attrs = 0;
 static char* attr_table = "global_attrs";
 static char* attr_name = "name";
 static char* attr_type = "type";
@@ -93,6 +82,7 @@ static db_con_t* con = 0;
 static db_func_t db;
 
 static avp_list_t global_avps;
+static rpc_export_t rpc_methods[];
 
 static cmd_export_t cmds[]={
 	{"set_gflag",   set_gflag,   1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
@@ -117,7 +107,7 @@ static param_export_t params[]={
 struct module_exports exports = {
 	"gflags", 
 	cmds,
-	0,           /* RPC methods */
+	rpc_methods, /* RPC methods */
 	params,
 	mod_init,    /* module initialization function */
 	0,           /* response function*/
@@ -126,79 +116,6 @@ struct module_exports exports = {
 	child_init   /* per-child init function */
 };
 
-
-static unsigned int read_flag(FILE *pipe, char *response_file)
-{
-	char flag_str[MAX_FLAG_LEN];
-	int flag_len;
-	unsigned int flag_nr;
-	str fs;
-
-	if (!read_line(flag_str, MAX_FLAG_LEN, pipe, &flag_len) 
-			|| flag_len == 0) {
-		fifo_reply(response_file, "400: gflags: invalid flag number\n");
-		LOG(L_ERR, "ERROR: read_flag: invalid flag number\n");
-		return 0;
-	}
-
-	fs.s=flag_str;fs.len=flag_len;
-	if (str2int(&fs, &flag_nr) < 0) {
-		fifo_reply(response_file, "400: gflags: invalid flag format\n");
-		LOG(L_ERR, "ERROR: read_flag: invalid flag format\n");
-		return 0;
-	}
-
-	return flag_nr;
-}
-	
-
-static int fifo_set_gflag( FILE* pipe, char* response_file )
-{
-
-	unsigned int flag;
-
-	flag=read_flag(pipe, response_file);
-	if 	(!flag) {
-		LOG(L_ERR, "ERROR: fifo_set_gflag: failed in read_flag\n");
-		return 1;
-	}
-
-	(*gflags) |= 1 << flag;
-	fifo_reply (response_file, "200 OK\n");
-	return 1;
-}
-
-static int fifo_reset_gflag( FILE* pipe, char* response_file )
-{
-
-	unsigned int flag;
-
-	flag=read_flag(pipe, response_file);
-	if 	(!flag) {
-		LOG(L_ERR, "ERROR: fifo_reset_gflag: failed in read_flag\n");
-		return 1;
-	}
-
-	(*gflags) &= ~ (1 << flag);
-	fifo_reply (response_file, "200 OK\n");
-	return 1;
-}
-
-static int fifo_is_gflag( FILE* pipe, char* response_file )
-{
-
-	unsigned int flag;
-
-	flag=read_flag(pipe, response_file);
-	if 	(!flag) {
-		LOG(L_ERR, "ERROR: fifo_reset_gflag: failed in read_flag\n");
-		return 1;
-	}
-
-	fifo_reply (response_file, "200 OK\n%s\n", 
-			((*gflags) & (1<<flag)) ? "TRUE" : "FALSE" );
-	return 1;
-}
 
 static int set_gflag(struct sip_msg *bar, char *flag_par, char *foo) 
 {
@@ -324,41 +241,18 @@ static int mod_init(void)
 		return -1;
 	}
 	*gflags=initial;
-	if (register_fifo_cmd(fifo_set_gflag, FIFO_SET_GFLAG, 0) < 0) {
-		LOG(L_CRIT, "Cannot register FIFO_SET_GFLAG\n");
-		return -1;
-	}
-	if (register_fifo_cmd(fifo_reset_gflag, FIFO_RESET_GFLAG, 0) < 0) {
-		LOG(L_CRIT, "Cannot register FIFO_RESET_GFLAG\n");
-		return -1;
-	}
-	if (register_fifo_cmd(fifo_is_gflag, FIFO_IS_GFLAG, 0) < 0) {
-		LOG(L_CRIT, "Cannot register FIFO_SET_GFLAG\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_flush_gflags, FIFO_FLUSH_GFLAGS, 0) < 0) {
-		LOG(L_CRIT, "Cannot register FIFO_FLUSH_GFLAGS\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_dump_gflags, FIFO_DUMP_GFLAGS, 0) < 0) {
-		LOG(L_CRIT, "Cannot register FIFO_DUMP_GFLAGS\n");
-		return -1;
-	}
 
 	global_avps = 0;
+	if (bind_dbmod(db_url, &db) < 0) { /* Find database module */
+		LOG(L_ERR, "gflags:mod_init: Can't bind database module\n");
+		return -1;
+	}
+	if (!DB_CAPABILITY(db, DB_CAP_ALL)) {
+		LOG(L_ERR, "gflags:mod_init: Database module does not implement"
+		    " all functions needed by the module\n");
+		return -1;
+	}
 	if (load_global_attrs) {
-		if (bind_dbmod(db_url, &db) < 0) { /* Find database module */
-			LOG(L_ERR, "gflags:mod_init: Can't bind database module\n");
-			return -1;
-		}
-		if (!DB_CAPABILITY(db, DB_CAP_ALL)) {
-			LOG(L_ERR, "gflags:mod_init: Database module does not implement"
-			    " all functions needed by the module\n");
-			return -1;
-		}
-
 		con = db.init(db_url); /* Get a new database connection */
 		if (!con) {
 			LOG(L_ERR, "gflags:mod_init: Error while connecting database\n");
@@ -459,35 +353,101 @@ static int flush_gflags(struct sip_msg* msg, char* s1, char* s2)
 }
 
 
-static int fifo_flush_gflags( FILE* pipe, char* response_file )
+static const char* rpc_set_doc[] = {
+	"Load a CPL script to the server.", /* Documentation string */
+	0                                   /* Method signature(s) */
+};
+
+static void rpc_set(rpc_t* rpc, void* c)
 {
-	if (save_gflags(*gflags) < 0) {
-		fifo_reply (response_file, "400 Error while flushing global flags\n");
-		return -1;
-	} else {
-		fifo_reply (response_file, "200 OK\n");
-		return 1;
+        int flag;
+	
+	if (rpc->scan(c, "d", &flag) < 1) {
+		rpc->fault(c, 400, "Flag number expected");
+		return;
+	}
+	if (flag < 0 || flag > 31) {
+		rpc->fault(c, 400, "Flag number %d out of range", &flag);
+	}
+	(*gflags) |= 1 << flag;
+}
+
+
+static const char* rpc_is_set_doc[] = {
+	"Load a CPL script to the server.", /* Documentation string */
+	0                                   /* Method signature(s) */
+};
+
+static void rpc_is_set(rpc_t* rpc, void* c)
+{
+        int flag;
+	
+	if (rpc->scan(c, "d", &flag) < 1) {
+		rpc->fault(c, 400, "Flag number expected");
+		return;
+	}
+	if (flag < 0 || flag > 31) {
+		rpc->fault(c, 400, "Flag number %d out of range", &flag);
+	}
+	rpc->add(c, "b", (*gflags) & (1 << flag));
+}
+
+
+static const char* rpc_reset_doc[] = {
+	"Load a CPL script to the server.", /* Documentation string */
+	0                                   /* Method signature(s) */
+};
+
+static void rpc_reset(rpc_t* rpc, void* c)
+{
+        int flag;
+	
+	if (rpc->scan(c, "d", &flag) < 1) {
+		rpc->fault(c, 400, "Flag number expected");
+		return;
+	}
+	if (flag < 0 || flag > 31) {
+		rpc->fault(c, 400, "Flag number %d out of range", &flag);
+	}
+	(*gflags) &= ~ (1 << flag);
+}
+
+
+static const char* rpc_flush_doc[] = {
+	"Load a CPL script to the server.", /* Documentation string */
+	0                                   /* Method signature(s) */
+};
+
+static void rpc_flush(rpc_t* rpc, void* c)
+{
+	if (flush_gflags(0, 0, 0) < 0) {
+		rpc->fault(c, 400, "Error while saving flags to database");
 	}
 }
 
-static int fifo_dump_gflags( FILE* pipe, char* response_file )
+
+static const char* rpc_dump_doc[] = {
+	"Load a CPL script to the server.", /* Documentation string */
+	0                                   /* Method signature(s) */
+};
+
+static void rpc_dump(rpc_t* rpc, void* c)
 {
-	FILE* reply_file;
-	int i;
-	unsigned int flags;
-
-	reply_file = open_reply_pipe(response_file);
-	if (reply_file == 0) {
-		LOG(L_ERR, "domain:fifo_dump_gflags: Opening of response file failed\n");
-		return -1;
-	}
-
-	fprintf(reply_file, "200 OK\n");
-	flags = *gflags;
+        int i;
 	for(i = 0; i < 32; i++) {
-		fprintf(reply_file, "%02d: %d\n", i, (flags & (1 << i)) ? 1 : 0);
+		rpc->add(c, "b", (*gflags >> i) & 1);
 	}
-
-	fclose(reply_file);
-	return 1;
 }
+
+
+/* 
+ * RPC Methods exported by this module 
+ */
+static rpc_export_t rpc_methods[] = {
+	{"gflags.set",    rpc_set,    rpc_set_doc,    0},
+	{"gflags.is_set", rpc_is_set, rpc_is_set_doc, 0},
+	{"gflags.reset",  rpc_reset,  rpc_reset_doc,  0},
+	{"gflags.flush",  rpc_flush,  rpc_flush_doc,  0},
+	{"gflags.dump",   rpc_dump,   rpc_dump_doc,   0},
+	{0, 0, 0, 0}
+};

@@ -54,7 +54,6 @@
 #include "../../ut.h"
 #include "../../dprint.h"
 #include "../../data_lump_rpl.h"
-#include "../../fifo_server.h"
 #include "../../usr_avp.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
@@ -67,6 +66,7 @@
 #include "cpl_loader.h"
 #include "cpl_parser.h"
 #include "cpl_nonsig.h"
+#include "cpl_rpc.h"
 #include "loc_set.h"
 
 
@@ -147,10 +147,10 @@ static param_export_t params[] = {
 
 struct module_exports exports = {
 	"cpl-c",
-	cmds,     /* Exported functions */
-	0,        /* RPC methods */
-	params,   /* Exported parameters */
-	cpl_init, /* Module initialization function */
+	cmds,             /* Exported functions */
+	cpl_rpc_methods,  /* RPC methods */
+	params,           /* Exported parameters */
+	cpl_init,         /* Module initialization function */
 	(response_function) 0,
 	(destroy_function) cpl_exit,
 	0,
@@ -333,21 +333,6 @@ static int cpl_init(void)
 	} else {
 		LOG(L_NOTICE,"NOTICE:cpl_init: no lookup_domain given -> disable "
 			" lookup node\n");
-	}
-
-
-	/* register the fifo commands */
-	if (register_fifo_cmd( cpl_load, "LOAD_CPL", 0)!=1) {
-		LOG(L_CRIT,"ERROR:cpl_init: cannot register LOAD_CPL fifo cmd!\n");
-		goto error;
-	}
-	if (register_fifo_cmd( cpl_remove, "REMOVE_CPL", 0)!=1) {
-		LOG(L_CRIT,"ERROR:cpl_init: cannot register REMOVE_CPL fifo cmd!\n");
-		goto error;
-	}
-	if (register_fifo_cmd( cpl_get, "GET_CPL", 0)!=1) {
-		LOG(L_CRIT,"ERROR:cpl_init: cannot register GET_CPL fifo cmd!\n");
-		goto error;
 	}
 
 	/* build a pipe for sending commands to aux process */

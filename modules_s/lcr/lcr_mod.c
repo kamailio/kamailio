@@ -55,7 +55,8 @@
 #include "../../qvalue.h"
 #include "../../dset.h"
 #include "../../ip_addr.h"
-#include "fifo.h"
+#include "lcr_rpc.h"
+#include "lcr_mod.h"
 
 MODULE_VERSION
 
@@ -99,7 +100,6 @@ int reload_gws ( void );
 #define PRIORITY_COL "priority"
 
 #define MAX_QUERY_SIZE 512
-#define MAX_NO_OF_GWS 32
 #define MAX_PREFIX_LEN 16
 
 /* Default avp names */
@@ -109,21 +109,6 @@ int reload_gws ( void );
 #define DEF_FR_INV_TIMER 90
 #define DEF_FR_INV_TIMER_NEXT 30
 #define DEF_RPID_AVP "rpid"
-
-/*
- * Type definitions
- */
-
-typedef enum sip_protos uri_transport;
-
-struct gw_info {
-    unsigned int ip_addr;
-    unsigned int port;
-    uri_type scheme;
-    uri_transport transport;
-    unsigned int prefix_len;
-    char prefix[16];
-};
 
 /*
  * Database variables
@@ -232,7 +217,7 @@ static param_export_t params[] = {
 struct module_exports exports = {
 	"lcr", 
 	cmds,      /* Exported functions */
-	0,         /* RPC methods */
+	lcr_rpc,   /* RPC methods */
 	params,    /* Exported parameters */
 	mod_init,  /* module initialization function */
 	0,         /* response function */
@@ -395,9 +380,6 @@ static int mod_init(void)
 		goto err;
 	}		
 	
-	/* Initialize fifo interface */
-	(void)init_lcr_fifo();
-
 	/* Initializing gw tables and gw table pointer variable */
 	gws_1 = (struct gw_info *)shm_malloc(sizeof(struct gw_info) * (MAX_NO_OF_GWS + 1));
 	if (gws_1 == 0) {
@@ -600,57 +582,6 @@ int reload_gws ( void )
     
     return 1;
 }
-
-
-/* Print gateways stored in current gw table */
-void print_gws (FILE *reply_file)
-{
-	unsigned int i, prefix_len;
-	uri_transport transport;
-
-	for (i = 0; i < MAX_NO_OF_GWS; i++) {
-		if ((*gws)[i].ip_addr == 0) {
-			return;
-		}
-		if ((*gws)[i].scheme == SIP_URI_T) {
-		    fprintf(reply_file, "sip:");
-		} else {
-		    fprintf(reply_file, "sips:");
-		}
-		if ((*gws)[i].port == 0) {
-			fprintf(reply_file, "%d.%d.%d.%d",
-				((*gws)[i].ip_addr << 24) >> 24,
-				(((*gws)[i].ip_addr >> 8) << 24) >> 24,
-				(((*gws)[i].ip_addr >> 16) << 24) >> 24,
-				(*gws)[i].ip_addr >> 24);
-		} else {
-			fprintf(reply_file, "%d.%d.%d.%d:%d",
-				((*gws)[i].ip_addr << 24) >> 24,
-				(((*gws)[i].ip_addr >> 8) << 24) >> 24,
-				(((*gws)[i].ip_addr >> 16) << 24) >> 24,
-				(*gws)[i].ip_addr >> 24,
-				(*gws)[i].port);
-		}
-		transport = (*gws)[i].transport;
-		if (transport == PROTO_UDP) {
-		    fprintf(reply_file, ":udp");
-		} else  if (transport == PROTO_TCP) {
-		    fprintf(reply_file, ":tcp");
-		} else  if (transport == PROTO_TLS) {
-		    fprintf(reply_file, ":tls");
-		} else {
-		    fprintf(reply_file, ":");
-		}
-		prefix_len = (*gws)[i].prefix_len;
-		if (prefix_len) {
-		    fprintf(reply_file, "%.*s\n",
-			    prefix_len, (*gws)[i].prefix);
-		} else {
-		    fprintf(reply_file, "\n");
-		}
-	}
-}
-
 
 /*
  * Load GW info from database to lcr_gw_addr_port AVPs

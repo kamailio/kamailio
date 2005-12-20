@@ -1,7 +1,9 @@
-/*
- * Various lcr related functions
+/* 
+ * $Id$ 
  *
- * Copyright (C) 2005 Juha Heinanen
+ * Flatstore module interface
+ *
+ * Copyright (C) 2004 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -23,39 +25,25 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * History:
- * --------
- * 2005-02-06: created by jh
  */
 
+#include "flatstore_mod.h"
+#include "flat_rpc.h"
 
-#ifndef LCR_MOD_H
-#define LCR_MOD_H
 
-#include <stdio.h>
-#include "../../parser/msg_parser.h"
+static void rotate(rpc_t* rpc, void* c)
+{
+	*flat_rotate = time(0);
+}
 
-#define MAX_NO_OF_GWS 32
 
-/*
- * Type definitions
- */
-
-typedef enum sip_protos uri_transport;
-
-struct gw_info {
-    unsigned int ip_addr;
-    unsigned int port;
-    uri_type scheme;
-    uri_transport transport;
-    unsigned int prefix_len;
-    char prefix[16];
+static const char* flat_rotate_doc[2] = {
+	"Close and reopen flatrotate files during log rotation.",
+	0
 };
 
-extern struct gw_info **gws;	/* Pointer to current gw table pointer */
 
-void print_gws (FILE *reply_file);
-int reload_gws (void);
-
-#endif /* LCR_MOD_H */
+rpc_export_t flat_rpc[] = {
+	{"flatstore.rotate", rotate, flat_rotate_doc, 0},
+	{0, 0, 0, 0},
+};

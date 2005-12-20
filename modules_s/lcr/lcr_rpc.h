@@ -1,9 +1,7 @@
-/* 
- * $Id$ 
+/*
+ * Various lcr related functions
  *
- * Flatstore module FIFO interface
- *
- * Copyright (C) 2004 FhG Fokus
+ * Copyright (C) 2005 Juha Heinanen
  *
  * This file is part of ser, a free SIP server.
  *
@@ -27,14 +25,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _FLAT_FIFO_H
-#define _FLAT_FIFO_H
+#ifndef _LCR_RPC_H
+#define _LCR_RPC_H
 
-/*
- * Initialize the FIFO interface
- */
-int init_flat_fifo(void);
+#include "../../rpc.h"
 
+extern rpc_export_t lcr_rpc[];
 
-#endif /* _FLAT_FIFO_H */
-
+#endif /* _LCR_RPC_H */

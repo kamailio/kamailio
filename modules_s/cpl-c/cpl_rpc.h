@@ -1,7 +1,7 @@
 /*
- * Header file for lcr fifo functions
+ * $Id$
  *
- * Copyright (C) 2002-2003 Juha Heinanen
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -20,19 +20,17 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 
+#ifndef _CPL_RPC_H
+#define _CPL_RPC_H
 
-#ifndef _FIFO_H
-#define _FIFO_H
+#include "../../rpc.h"
 
+extern rpc_export_t cpl_rpc_methods[];
 
-#define LCR_RELOAD "lcr_reload"
-#define LCR_DUMP "lcr_dump"
-
-int init_lcr_fifo( void );
-
-#endif
+#endif /* _CPL_RPC_H */
