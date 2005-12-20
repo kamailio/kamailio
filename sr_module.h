@@ -80,6 +80,8 @@ typedef int (*param_func_t)( modparam_t type, void* val);
 #define PROC_TCP_MAIN -4  /* TCP main process */
 #define PROC_UNIXSOCK -5  /* Unix socket server */
 
+#define PROC_MIN PROC_UNIXSOCK /* Minimum process rank */
+
 #define MODULE_VERSION \
 	char *module_version=SER_FULL_VERSION; \
 	char *module_flags=SER_COMPILE_FLAGS;
