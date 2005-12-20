@@ -188,23 +188,21 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg)
 /* 
  * Print domains stored in hash table 
  */
-void hash_table_print(struct trusted_list** hash_table, FILE* reply_file)
+void hash_table_print(struct trusted_list** hash_table, rpc_t* rpc, void* c)
 {
+	void* st;
 	int i;
 	struct trusted_list *np;
 
 	for (i = 0; i < HASH_SIZE; i++) {
 		np = hash_table[i];
 		while (np) {
-			fprintf(reply_file, "%4d <%.*s, %d, %s>\n", i,
-				np->src_ip.len, ZSW(np->src_ip.s),
-				np->proto,
-				np->pattern);
+			if (rpc->add(c, "{", &st) < 0) return;
+			rpc->struct_add(st, "Sds", "src_ip", &np->src_ip, "proto", np->proto, "pattern", np->pattern);
 			np = np->next;
 		}
 	}
 }
-
 
 /* 
  * Free contents of hash table, it doesn't destroy the

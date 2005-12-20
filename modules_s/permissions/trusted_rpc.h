@@ -1,5 +1,5 @@
-/*
- * Header file for allow_trusted fifo functions
+/* 
+ * allow_trusted related functions
  *
  * Copyright (C) 2003 Juha Heinanen
  *
@@ -25,22 +25,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef _TRUSTED_RPC_H
+#define _TRSUTED_RPC_H
 
-#ifndef FIFO_H
-#define FIFO_H
+#include "../../rpc.h"
 
-
-/*
- * Register domain fifo functions
- */
-int init_trusted_fifo(void);
+extern rpc_export_t trusted_rpc[];
 
 
-/*
- * Reload trusted table to new hash table and when done, make new hash table
- * current one.
- */
-int reload_trusted_table(void);
-
-
-#endif /* FIFO_H */
+#endif /* _TRUSTED_RPC_H */

@@ -36,8 +36,6 @@
 
 #include "permissions.h"
 #include "hash.h"
-#include "fifo.h"
-#include "unixsock.h"
 #include "../../config.h"
 #include "../../db/db.h"
 #include "../../ip_addr.h"
@@ -106,15 +104,6 @@ int init_trusted(void)
 			return -1;
 		}		
 		
-		/* Initialize fifo interface */
-		(void)init_trusted_fifo();
-		
-		if (init_trusted_unixsock() < 0) {
-			LOG(L_ERR, "permissions:init_trusted(): Error while initializing unixsock interface\n");
-			perm_dbf.close(db_handle);
-			return -1;
-		}
-
 		hash_table_1 = new_hash_table();
 		if (!hash_table_1) return -1;
 		
@@ -155,10 +144,7 @@ int init_child_trusted(int rank)
 		return 0;
 	}
 	
-	/* Check if database is needed by child */
-	if (((db_mode == DISABLE_CACHE) && (rank > 0)) || 
-	    ((db_mode == ENABLE_CACHE) && (rank == PROC_FIFO))
-	   ) {
+	if (rank > 0 || rank == PROC_FIFO || rank == PROC_UNIXSOCK) {
 		db_handle = perm_dbf.init(db_url);
 		if (!db_handle) {
 			LOG(L_ERR, "ERROR: permissions: init_child_trusted():"
@@ -365,6 +351,8 @@ int reload_trusted_table(void)
 	cols[0] = source_col;
 	cols[1] = proto_col;
 	cols[2] = from_col;
+
+	if (!db_handle) return 1;
 
 	if (perm_dbf.use_table(db_handle, trusted_table) < 0) {
 		LOG(L_ERR, "ERROR: permissions: reload_trusted_table():"

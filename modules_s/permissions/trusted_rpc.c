@@ -1,10 +1,7 @@
-/*
- * $Id$
- *
- * UNIX Domain Socket Interface
+/* 
+ * allow_trusted related functions
  *
  * Copyright (C) 2003 Juha Heinanen
- * Copyright (C) 2004 FhG FOKUS
  *
  * This file is part of ser, a free SIP server.
  *
@@ -28,14 +25,51 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "../../dprint.h"
+#include "../../db/db.h"
+#include "../../ut.h"
+#include "../../mem/mem.h"
+#include "hash.h"
+#include "trusted.h"
+#include "trusted_rpc.h"
 
-#ifndef _UNIXSOCK_H
-#define _UNIXSOCK_H 1
+
+static const char* trusted_reload_doc[2] = {
+	"Reload trusted table from database.",
+	0
+};
+
 
 /*
- * Register domain fifo functions
+ * Fifo function to reload trusted table
  */
-int init_trusted_unixsock(void);
+static void trusted_reload(rpc_t* rpc, void* ctx)
+{
+	if (reload_trusted_table() < 0) {
+		rpc->fault(ctx, 400, "Trusted Table Reload Failed");
+	}
+}
 
 
-#endif /* _UNIXSOCK_H */
+
+static const char* trusted_dump_doc[2] = {
+	"Return the contents of trusted table",
+	0
+};
+
+/*
+ * Fifo function to print entries from current hash table
+ */
+static void trusted_dump(rpc_t* rpc, void* ctx)
+{
+	if (hash_table) {
+		hash_table_print(*hash_table, rpc, ctx);
+	}
+}
+
+
+rpc_export_t trusted_rpc[] = {
+	{"trusted.reload", trusted_reload, trusted_reload_doc, 0},
+	{"trusted.dump",   trusted_dump,   trusted_dump_doc,   RET_ARRAY},
+	{0, 0, 0, 0}
+};

@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include "../../parser/msg_parser.h"
+#include "../../rpc.h"
 #include "../../str.h"
 
 #define HASH_SIZE 128
@@ -80,7 +81,7 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg);
 /* 
  * Print domains stored in hash table 
  */
-void hash_table_print(struct trusted_list** hash_table, FILE* reply_file);
+void hash_table_print(struct trusted_list** hash_table, rpc_t* rpc, void* ctx);
 
 
 /* 

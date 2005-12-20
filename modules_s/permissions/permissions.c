@@ -34,6 +34,7 @@
 #include "permissions.h"
 #include "parse_config.h"
 #include "trusted.h"
+#include "trusted_rpc.h"
 #include "../../mem/mem.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
@@ -130,7 +131,7 @@ static param_export_t params[] = {
 struct module_exports exports = {
         "permissions",
         cmds,      /* Exported functions */
-	0,         /* RPC methods */
+	trusted_rpc, /* RPC methods */
         params,    /* Exported parameters */
         mod_init,  /* module initialization function */
         0,         /* response function */
