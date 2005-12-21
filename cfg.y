@@ -234,15 +234,6 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token SYN_BRANCH
 %token MEMLOG
 %token SIP_WARNING
-%token FIFO
-%token FIFO_DIR
-%token SOCK_MODE
-%token SOCK_USER
-%token SOCK_GROUP
-%token FIFO_DB_URL
-%token UNIX_SOCK
-%token UNIX_SOCK_CHILDREN
-%token UNIX_TX_TIMEOUT
 %token SERVER_SIGNATURE
 %token REPLY_TO_VIA
 %token LOADMODULE
@@ -476,26 +467,6 @@ assign_stm:	DEBUG_V EQUAL NUMBER { debug=$3; }
 		| MEMLOG EQUAL error { yyerror("int value expected"); }
 		| SIP_WARNING EQUAL NUMBER { sip_warning=$3; }
 		| SIP_WARNING EQUAL error { yyerror("boolean value expected"); }
-		| FIFO EQUAL STRING { fifo=$3; }
-		| FIFO EQUAL error { yyerror("string value expected"); }
-		| FIFO_DIR EQUAL STRING { fifo_dir=$3; }
-		| FIFO_DIR EQUAL error { yyerror("string value expected"); }
-		| SOCK_MODE EQUAL NUMBER { sock_mode=$3; }
-		| SOCK_MODE EQUAL error { yyerror("int value expected"); }
-		| SOCK_USER EQUAL STRING { sock_user=$3; }
-		| SOCK_USER EQUAL ID     { sock_user=$3; }
-		| SOCK_USER EQUAL error { yyerror("string value expected"); }
-		| SOCK_GROUP EQUAL STRING { sock_group=$3; }
-		| SOCK_GROUP EQUAL ID     { sock_group=$3; }
-		| SOCK_GROUP EQUAL error { yyerror("string value expected"); }
-		| FIFO_DB_URL EQUAL STRING { fifo_db_url=$3; }
-		| FIFO_DB_URL EQUAL error  { yyerror("string value expected"); }
-		| UNIX_SOCK EQUAL STRING { unixsock_name=$3; }
-		| UNIX_SOCK EQUAL error { yyerror("string value expected"); }
-		| UNIX_SOCK_CHILDREN EQUAL NUMBER { unixsock_children=$3; }
-		| UNIX_SOCK_CHILDREN EQUAL error { yyerror("int value expected\n"); }
-		| UNIX_TX_TIMEOUT EQUAL NUMBER { unixsock_tx_timeout=$3; }
-		| UNIX_TX_TIMEOUT EQUAL error { yyerror("int value expected\n"); }
 		| USER EQUAL STRING     { user=$3; }
 		| USER EQUAL ID         { user=$3; }
 		| USER EQUAL error      { yyerror("string value expected"); }
@@ -1354,7 +1325,6 @@ select_params : select_params DOT select_param
 ;
 
 select_id : SELECT_MARK { sel.n = 0; sel.f = 0; } select_params {
-//	if (resolve_select(&sel) < 0) yyerror("Unable to resolve select");
 	sel_ptr = (select_t*)pkg_malloc(sizeof(select_t));
 	if (!sel_ptr) {
 		yyerror("No memory left to allocate select structure\n");
@@ -1363,6 +1333,7 @@ select_id : SELECT_MARK { sel.n = 0; sel.f = 0; } select_params {
 	$$ = sel_ptr;
 }
 ;
+
 
 attr_id : ATTR_MARK ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
                          if (!s_attr) { yyerror("No memory left"); }

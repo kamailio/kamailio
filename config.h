@@ -150,13 +150,6 @@
 /* maximum number of branches per transaction */
 #define MAX_BRANCHES    12
 
-/* maximum length of a FIFO server command */
-#define MAX_FIFO_COMMAND 512
-
-/* buffer dimensions for FIFO server */
-#define MAX_CONSUME_BUFFER 1024
-/* where reply pipes may be opened */
-#define DEFAULT_FIFO_DIR "/tmp/"
 /* max length of the text of fifo 'print' command */
 #define MAX_PRINT_TEXT 256
 
@@ -168,12 +161,6 @@
    previous line if longer than current one
 */
 #define CLEANUP_EOL "      \n"
-
-/* how patient is ser with FIFO clients not awaiting a reply? 
-	4 x 80ms = 0.32 sec
-*/
-#define FIFO_REPLY_RETRIES	4
-#define FIFO_REPLY_WAIT		80000
 
 /* magic cookie for transaction matching as defined in RFC3261 */
 #define MCOOKIE "z9hG4bK"

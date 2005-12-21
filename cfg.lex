@@ -227,15 +227,6 @@ CHECK_VIA	check_via
 SYN_BRANCH syn_branch
 MEMLOG		"memlog"|"mem_log"
 SIP_WARNING sip_warning
-FIFO fifo
-FIFO_DIR  fifo_dir
-SOCK_MODE "fifo_mode"|"sock_mode"|"file_mode"
-SOCK_USER "fifo_user"|"sock_user"
-SOCK_GROUP "fifo_group"|"sock_group"
-FIFO_DB_URL fifo_db_url
-UNIX_SOCK unix_sock
-UNIX_SOCK_CHILDREN unix_sock_children
-UNIX_TX_TIMEOUT unix_tx_timeout
 SERVER_SIGNATURE server_signature
 REPLY_TO_VIA reply_to_via
 USER		"user"|"uid"
@@ -460,15 +451,6 @@ EAT_ABLE	[\ \t\b\r]
 										return TLS_HANDSHAKE_TIMEOUT; }
 <INITIAL>{TLS_SEND_TIMEOUT}	{ count(); yylval.strval=yytext;
 										return TLS_SEND_TIMEOUT; }
-<INITIAL>{FIFO}	{ count(); yylval.strval=yytext; return FIFO; }
-<INITIAL>{FIFO_DIR}	{ count(); yylval.strval=yytext; return FIFO_DIR; }
-<INITIAL>{FIFO_DB_URL}	{ count(); yylval.strval=yytext; return FIFO_DB_URL; }
-<INITIAL>{SOCK_MODE}	{ count(); yylval.strval=yytext; return SOCK_MODE; }
-<INITIAL>{SOCK_USER}	{ count(); yylval.strval=yytext; return SOCK_USER; }
-<INITIAL>{SOCK_GROUP}	{ count(); yylval.strval=yytext; return SOCK_GROUP; }
-<INITIAL>{UNIX_SOCK} { count(); yylval.strval=yytext; return UNIX_SOCK; }
-<INITIAL>{UNIX_SOCK_CHILDREN} { count(); yylval.strval=yytext; return UNIX_SOCK_CHILDREN; }
-<INITIAL>{UNIX_TX_TIMEOUT} { count(); yylval.strval=yytext; return UNIX_TX_TIMEOUT; }
 <INITIAL>{SERVER_SIGNATURE}	{ count(); yylval.strval=yytext; return SERVER_SIGNATURE; }
 <INITIAL>{REPLY_TO_VIA}	{ count(); yylval.strval=yytext; return REPLY_TO_VIA; }
 <INITIAL>{ADVERTISED_ADDRESS}	{	count(); yylval.strval=yytext;

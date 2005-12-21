@@ -112,8 +112,6 @@
 #include "resolve.h"
 #include "parser/parse_hname2.h"
 #include "parser/digest/digest_parser.h"
-#include "fifo_server.h"
-#include "unixsock_server.h"
 #include "name_alias.h"
 #include "hash_func.h"
 #include "pt.h"
@@ -128,7 +126,7 @@
 #endif
 #endif
 #include "usr_avp.h"
-
+#include "core_cmd.h"
 
 #include "stats.h"
 
@@ -179,9 +177,7 @@ Options:\n\
     -u uid       Change uid \n\
     -g gid       Change gid \n\
     -P file      Create a pid file\n\
-    -G file      Create a pgid file\n\
-    -i fifo_path Create a fifo (useful for monitoring " NAME ") \n\
-    -x socket    Create a unix domain socket \n"
+    -G file      Create a pgid file\n"
 #ifdef STATS
 "    -s file     File to which statistics is dumped (disabled otherwise)\n"
 #endif
@@ -388,8 +384,6 @@ void cleanup(show_status)
 	destroy_tls();
 #endif
 	destroy_timer();
-	close_unixsock_server();
-	destroy_fifo();
 	destroy_script_cb();
 #ifdef PKG_MALLOC
 	if (show_status){
@@ -804,18 +798,6 @@ int main_loop()
 			LOG(L_WARN, "WARNING: using only the first listen address"
 						" (no fork)\n");
 		}
-		/* initialize fifo server -- we need to open the fifo before
-		 * do_suid() and start the fifo server after all the socket 
-		 * are initialized, to inherit them*/
-		if (init_fifo_server()<0) {
-			LOG(L_ERR, "initializing fifo server failed\n");
-			goto error;
-		}
-		 /* Initialize Unix domain socket server */
-		if (init_unixsock_socket()<0) {
-			LOG(L_ERR, "Error while creating unix domain sockets\n");
-			goto error;
-		}
 		if (do_suid()==-1) goto error; /* try to drop privileges */
 		/* process_no now initialized to zero -- increase from now on
 		   as new processes are forked (while skipping 0 reserved for main 
@@ -871,19 +853,6 @@ int main_loop()
 						pt[process_no].pid=pid; /*should be shared mem anyway*/
 						strncpy(pt[process_no].desc, "timer", MAX_PT_DESC );
 				}
-
-		/* if configured, start a server for accepting FIFO commands,
-		 * we need to do it after all the sockets are initialized, to 
-		 * inherit them*/
-		if (start_fifo_server()<0) {
-			LOG(L_ERR, "starting fifo server failed\n");
-			goto error;
-		}
-
-		if (init_unixsock_children()<0) {
-			LOG(L_ERR, "Error while initializing Unix domain socket server\n");
-			goto error;
-		}
 
 		/* main process, receive loop */
 		process_no=0; /*main process number*/
@@ -958,38 +927,9 @@ int main_loop()
 #endif /* USE_TLS */
 #endif /* USE_TCP */
 
-		/* initialize fifo server -- we need to open the fifo before
-		 * do_suid() and start the fifo server after all the socket 
-		 * are initialized, to inherit them*/
-		if (init_fifo_server()<0) {
-			LOG(L_ERR, "initializing fifo server failed\n");
-			goto error;
-		}
-		 /* Initialize Unix domain socket server */
-		     /* Create the unix domain sockets */
-		if (init_unixsock_socket()<0) {
-			LOG(L_ERR, "ERROR: Could not create unix domain sockets\n");
-			goto error;
-		}
-
 			/* all processes should have access to all the sockets (for sending)
 			 * so we open all first*/
 		if (do_suid()==-1) goto error; /* try to drop privileges */
-
-		/* if configured, start a server for accepting FIFO commands,
-		 * we need to do it after all the sockets are initialized, to 
-		 * inherit them*/
-		if (start_fifo_server()<0) {
-			LOG(L_ERR, "starting fifo server failed\n");
-			goto error;
-		}
-		     /* Spawn children listening on unix domain socket if and only if
-		      * the unix domain socket server has not been disabled (i == 0)
-		      */
-		if (init_unixsock_children()<0) {
-			LOG(L_ERR, "ERROR: Could not initialize unix domain socket server\n");
-			goto error;
-		}
 
 		/* udp processes */
 		for(si=udp_listen; si; si=si->next){
@@ -1219,7 +1159,6 @@ int main_loop()
 
 }
 
-
 /*
  * Calculate number of processes, this does not
  * include processes created by modules
@@ -1239,16 +1178,11 @@ static int calc_proc_no(void)
 #ifdef USE_SLOW_TIMER
 		+ 1 /* slow timer process */
 #endif
-		/* fifo server */
-		+((fifo==NULL || strlen(fifo)==0) ? 0 : 1 )
-		/* unixsock server*/
-		+(unixsock_name?unixsock_children:0)
 #ifdef USE_TCP
 		+((!tcp_disable)?( 1/* tcp main */ + tcp_children_no ):0) 
 #endif
 		;
 }
-
 
 int main(int argc, char** argv)
 {
@@ -1285,7 +1219,7 @@ int main(int argc, char** argv)
 #ifdef STATS
 	"s:"
 #endif
-	"f:cm:b:l:n:N:rRvdDETVhw:t:u:g:P:G:i:x:W:";
+	"f:cm:b:l:n:N:rRvdDETVhw:t:u:g:P:G:W:";
 	
 	while((c=getopt(argc,argv,options))!=-1){
 		switch(c){
@@ -1423,12 +1357,6 @@ int main(int argc, char** argv)
 		        case 'G':
 				        pgid_file=optarg;
 				        break;
-			case 'i':
-					fifo=optarg;
-					break;
-			case 'x':
-					unixsock_name=optarg;
-					break;
 			case '?':
 					if (isprint(optopt))
 						fprintf(stderr, "Unknown option `-%c´.\n", optopt);
@@ -1478,14 +1406,6 @@ try_again:
 	srand(seed);
 	DBG("test random number %u\n", rand());
 	
-	
-	
-	/* register a diagnostic FIFO command  - moved to fifo server - bogdan
-	if (register_core_fifo()<0) {
-		LOG(L_CRIT, "unable to register core FIFO commands\n");
-		goto error;
-	}*/
-
 	/*register builtin  modules*/
 	register_builtin_modules();
 
@@ -1494,9 +1414,7 @@ try_again:
 		fprintf(stderr, "ERROR: bad config file (%d errors)\n", cfg_errors);
 		goto error;
 	}
-	
-	
-	
+		
 	print_rl();
 	
 	/* init the resolver, before fixing the config */
@@ -1527,19 +1445,6 @@ try_again:
 	if (group){
 		if (group2gid(&gid, group)<0){
 				fprintf(stderr, "bad group name/gid number: -u %s\n", group);
-			goto error;
-		}
-	}
-	/* fix sock/fifo uid/gid */
-	if (sock_user){
-		if (user2uid(&sock_uid, 0, sock_user)<0){
-			fprintf(stderr, "bad socket user name/uid number %s\n", user);
-			goto error;
-		}
-	}
-	if (sock_group){
-		if (group2gid(&sock_gid, sock_group)<0){
-			fprintf(stderr, "bad group name/gid number: -u %s\n", group);
 			goto error;
 		}
 	}
@@ -1586,6 +1491,7 @@ try_again:
 	}
 	
 	if (init_avps()<0) goto error;
+	if (rpc_init_time() < 0) goto error;
 
 #ifdef USE_TCP
 	if (!tcp_disable){
@@ -1622,8 +1528,6 @@ try_again:
 			goto error;
 		}
 	}
-
-
 	     /* Calculate initial process count, mod_init functions called 
 	      * below can add to it
 	      */
@@ -1632,6 +1536,7 @@ try_again:
 		fprintf(stderr, "ERROR: error while initializing modules\n");
 		goto error;
 	}
+
 	     /* The total number of processes is know now, note that no 
 	      * function being called before this point may rely on the 
 	      * number of processes !
@@ -1676,4 +1581,3 @@ error:
 	return -1;
 
 }
-
