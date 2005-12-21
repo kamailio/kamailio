@@ -31,6 +31,7 @@
 #define _T_REPLY_H
 
 #include "defs.h"
+#include "../../rpc.h"
 #include "../../tags.h"
 
 #include "h_table.h"
@@ -139,8 +140,7 @@ void tm_init_tags();
 /* selects the branch for fwd-ing the reply */
 int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code);
 
-int fifo_t_reply( FILE *stream, char *response_file );
-
-int unixsock_t_reply(str* msg);
+extern const char* rpc_reply_doc[2];
+void rpc_reply(rpc_t* rpc, void* c);
 
 #endif

@@ -33,7 +33,7 @@
 
 #include "defs.h"
 
-
+#include "../../rpc.h"
 #include "../../pt.h"
 
 
@@ -90,5 +90,8 @@ inline static void update_reply_stats( int code ) {
 
 int init_tm_stats(void);
 void free_tm_stats();
+
+extern const char* tm_rpc_stats_doc[2];
+void tm_rpc_stats(rpc_t* rpc, void* c);
 
 #endif

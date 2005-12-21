@@ -45,8 +45,6 @@
 #include "t_cancel.h"
 #include "t_msgbuilder.h"
 #include "t_lookup.h" /* for t_lookup_callid in fifo_uac_cancel */
-#include "../../fifo_server.h" /* for read_line() and fifo_reply() */
-#include "../../unixsock_server.h"
 
 
 /* determine which branches should be canceled; do it
@@ -126,16 +124,20 @@ void cancel_branch( struct cell *t, int branch )
 }
 
 
+const char* rpc_cancel_doc[2] = {
+	"Cancel a pending transaction",
+	0
+};
+
+
 /* fifo command to cancel a pending call (Uli)
-  Syntax:
-
-  ":uac_cancel:[response file]\n
-  callid\n
- cseq\n
-  \n"
+ * Syntax:
+ *
+ * ":uac_cancel:[response file]\n
+ * callid\n
+ * cseq\n
  */
-
-int fifo_uac_cancel( FILE* stream, char *response_file )
+void rpc_cancel(rpc_t* rpc, void* c)
 {
 	struct cell *trans;
 	static char cseq[128], callid[128];
@@ -146,77 +148,20 @@ int fifo_uac_cancel( FILE* stream, char *response_file )
 	cseq_s.s=cseq;
 	callid_s.s=callid;
 
-	DBG("DEBUG: fifo_uac_cancel: ############### begin ##############\n");
-
-	/* first param callid read */
-	if (!read_line(callid_s.s, 128, stream, &callid_s.len)||callid_s.len==0) {
-		LOG(L_ERR, "ERROR: fifo_uac_cancel: callid expected\n");
-		fifo_reply(response_file, "400 fifo_uac_cancel: callid expected");
-		return -1;
+	if (rpc->scan(rpc, "SS", &callid_s, &cseq_s) < 2) {
+		rpc->fault(c, 400, "Callid and CSeq expected as parameters");
+		return;
 	}
-	callid_s.s[callid_s.len]='\0';
-	DBG("DEBUG: fifo_uac_cancel: callid=\"%.*s\"\n",callid_s.len, callid_s.s);
-
-	/* second param cseq read */
-	if (!read_line(cseq_s.s, 128, stream, &cseq_s.len)||cseq_s.len==0) {
-		LOG(L_ERR, "ERROR: fifo_uac_cancel: cseq expected\n");
-		fifo_reply(response_file, "400 fifo_uac_cancel: cseq expected");
-		return -1;
-	}
-	cseq_s.s[cseq_s.len]='\0';
-	DBG("DEBUG: fifo_uac_cancel: cseq=\"%.*s\"\n",cseq_s.len, cseq_s.s);
 
 	if( t_lookup_callid(&trans, callid_s, cseq_s) < 0 ) {
-		LOG(L_ERR,"ERROR: fifo_uac_cancel: lookup failed\n");
-		fifo_reply(response_file, "481 fifo_uac_cancel: no such transaction");
-		return -1;
+		DBG("Lookup failed\n");
+		rpc->fault(c, 400, "Transaction not found");
+		return;
 	}
-	/* tell tm to cancel the call */
-	DBG("DEBUG: fifo_uac_cancel: now calling cancel_uacs\n");
-	(*cancel_uacs)(trans,~0);
-
-	/* t_lookup_callid REF`d the transaction for us, we must UNREF here! */
-	UNREF(trans);
-
-	fifo_reply(response_file, "200 fifo_uac_cancel succeeded\n");
-	DBG("DEBUG: fifo_uac_cancel: ################ end ##############\n");
-	return 1;
-}
-
-
-int unixsock_uac_cancel(str* msg)
-{
-	struct cell *trans;
-	str cseq, callid;
-
-	     /* first param callid read */
-	if (unixsock_read_line(&callid, msg) != 0) {
-		unixsock_reply_asciiz("400 Call-ID Expected\n");
-		unixsock_reply_send();
-		return -1;
-	}
-
-	     /* second param cseq read */
-	if (unixsock_read_line(&cseq, msg) != 0) {
-		unixsock_reply_asciiz("400 CSeq Expected\n");
-		unixsock_reply_send();
-		return -1;
-	}
-
-	if (t_lookup_callid(&trans, callid, cseq) < 0) {
-		LOG(L_ERR, "unixsock_uac_cancel: Lookup failed\n");
-		unixsock_reply_asciiz("481 uac_cancel: No such transaction\n");
-		unixsock_reply_send();
-		return 1;
-	}
-
 	     /* tell tm to cancel the call */
+	DBG("Now calling cancel_uacs\n");
 	(*cancel_uacs)(trans, ~0);
-
+	
 	     /* t_lookup_callid REF`d the transaction for us, we must UNREF here! */
 	UNREF(trans);
-
-	unixsock_reply_asciiz("200 uac_cancel succeeded\n");
-	unixsock_reply_send();
-	return 0;
 }

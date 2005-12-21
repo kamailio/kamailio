@@ -35,6 +35,7 @@
 #define _CANCEL_H
 
 #include <stdio.h> /* just for FILE* for fifo_uac_cancel */
+#include "../../rpc.h"
 #include "defs.h"
 
 
@@ -54,10 +55,6 @@ void which_cancel( struct cell *t, branch_bm_t *cancel_bm );
 void cancel_uacs( struct cell *t, branch_bm_t cancel_bm );
 void cancel_branch( struct cell *t, int branch );
 
-int fifo_uac_cancel( FILE* stream, char *response_file );
-
-int unixsock_uac_cancel(str* msg);
-
 inline short static should_cancel_branch( struct cell *t, int b )
 {
 	int last_received;
@@ -74,5 +71,7 @@ inline short static should_cancel_branch( struct cell *t, int b )
 	return should;
 }
 
+const char* rpc_cancel_doc[2];
+void rpc_cancel(rpc_t* rpc, void* c);
 
 #endif

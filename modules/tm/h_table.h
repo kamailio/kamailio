@@ -330,11 +330,6 @@ void   insert_into_hash_table_unsafe( struct cell * p_cell, unsigned int _hash )
 
 unsigned int transaction_count( void );
 
-int fifo_hash( FILE *stream, char *response_file );
-
-/* Unix socket variant */
-int unixsock_hash(str* msg);
-		    
 #endif
 
 

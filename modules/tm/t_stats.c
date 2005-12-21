@@ -41,119 +41,9 @@
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
 #include "../../config.h"
-#include "../../fifo_server.h"
-#include "../../unixsock_server.h"
 #include "../../pt.h"
 
 struct t_stats *tm_stats=0;
-
-
-/* we don't worry about locking data during reads (unlike
-   setting values which always happens from some locks) */
-  
-int print_stats(  FILE *f )
-{
-	unsigned long total, current, waiting, total_local;
-	int i;
-	int pno;
-
-	pno=process_count;
-	for(i=0, total=0, waiting=0, total_local=0; i<pno;i++) {
-		total+=tm_stats->s_transactions[i];
-		waiting+=tm_stats->s_waiting[i];
-		total_local+=tm_stats->s_client_transactions[i];
-	}
-	current=total-tm_stats->deleted;
-	waiting-=tm_stats->deleted;
-
-	
-
-	fprintf(f, "Current: %lu (%lu waiting) "
-		"Total: %lu (%lu local) " CLEANUP_EOL,
-		current, waiting, total, total_local);
-
-	fprintf(f, "Replied localy: %lu" CLEANUP_EOL ,
-		tm_stats->replied_localy );
-	fprintf(f, "Completion status 6xx: %lu,",
-		tm_stats->completed_6xx );
-	fprintf(f, " 5xx: %lu,",
-		tm_stats->completed_5xx );
-	fprintf(f, " 4xx: %lu,",
-		tm_stats->completed_4xx );
-	fprintf(f, " 3xx: %lu,",
-		tm_stats->completed_3xx );
-	fprintf(f, "2xx: %lu" CLEANUP_EOL ,
-		tm_stats->completed_2xx );
-	
-	return 1;
-}
-
-int static fifo_stats( FILE *pipe, char *response_file )
-{
-	FILE *file;
-
-	if (response_file==0 || *response_file==0 ) {
-		LOG(L_ERR, "ERROR: fifo_stats: null file\n");
-		return -1;
-	}
-
-	file=open_reply_pipe(response_file );
-	if (file==NULL) {
-		LOG(L_ERR, "ERROR: fifo_stats: file %s bad: %s\n",
-			response_file, strerror(errno) );
-		return -1;
-	}
-	fputs( "200 ok\n", file);
-	print_stats( file );
-	fclose(file);
-	
-	return 1;
-
-}
-
-int static unixsock_stats(str* cmd)
-{
-	unsigned long total, current, waiting, total_local;
-	int i;
-	int pno;
-
-	unixsock_reply_asciiz( "200 OK\n");
-
-	pno = process_count;
-	for(i = 0, total = 0, waiting = 0, total_local = 0; i < pno; i++) {
-		total += tm_stats->s_transactions[i];
-		waiting += tm_stats->s_waiting[i];
-		total_local += tm_stats->s_client_transactions[i];
-	}
-	current = total - tm_stats->deleted;
-	waiting -= tm_stats->deleted;
-
-	if (unixsock_reply_printf("Current: %lu (%lu waiting) "
-				  "Total: %lu (%lu local) " CLEANUP_EOL,
-				  current, waiting, total, total_local) < 0) goto err;
-
-	if (unixsock_reply_printf("Replied localy: %lu" CLEANUP_EOL ,
-				  tm_stats->replied_localy ) < 0) goto err;
-	if (unixsock_reply_printf("Completion status 6xx: %lu,",
-				  tm_stats->completed_6xx ) < 0) goto err;
-	if (unixsock_reply_printf(" 5xx: %lu,",
-				  tm_stats->completed_5xx ) < 0) goto err;
-	if (unixsock_reply_printf(" 4xx: %lu,",
-				  tm_stats->completed_4xx ) < 0) goto err;
-	if (unixsock_reply_printf(" 3xx: %lu,",
-				  tm_stats->completed_3xx ) < 0) goto err;
-	if (unixsock_reply_printf("2xx: %lu" CLEANUP_EOL ,
-				  tm_stats->completed_2xx ) < 0) goto err;
-	
-	unixsock_reply_send();
-	return 0;
-
- err:
-	unixsock_reply_reset();
-	unixsock_reply_asciiz("500 Buffer too small\n");
-	unixsock_reply_send();
-	return -1;
-}
 
 
 int init_tm_stats(void)
@@ -189,21 +79,8 @@ int init_tm_stats(void)
 	}
 	memset(tm_stats->s_client_transactions, 0, size );
 		 
-	if (register_fifo_cmd(fifo_stats, "t_stats", 0)<0) {
-		LOG(L_CRIT, "cannot register fifo stats\n");
-		goto error4;
-	}
-
-	if (unixsock_register_cmd("t_stats", unixsock_stats) < 0) {
-		LOG(L_CRIT, "cannot register fifo stats\n");
-		goto error4;
-	}
-
 	return 1;
 
-error4:
-	shm_free(tm_stats->s_client_transactions);
-	tm_stats->s_client_transactions=0;
 error3:
 	shm_free(tm_stats->s_transactions);
 	tm_stats->s_transactions=0;
@@ -227,4 +104,43 @@ void free_tm_stats()
 			shm_free(tm_stats->s_waiting);
 		shm_free(tm_stats);
 	}
+}
+
+
+const char* tm_rpc_stats_doc[2] = {
+	"Print transaction statistics.",
+	0
+};
+
+/* we don't worry about locking data during reads (unlike
+ * setting values which always happens from some locks) 
+ */
+void tm_rpc_stats(rpc_t* rpc, void* c)
+{
+	void* st;
+	unsigned long total, current, waiting, total_local;
+	int i, pno;
+
+	pno = process_count;
+	for(i = 0, total = 0, waiting = 0, total_local = 0; i < pno; i++) {
+		total += tm_stats->s_transactions[i];
+		waiting += tm_stats->s_waiting[i];
+		total_local += tm_stats->s_client_transactions[i];
+	}
+	current = total - tm_stats->deleted;
+	waiting -= tm_stats->deleted;
+
+	if (rpc->add(c, "{", &st) < 0) return;
+
+	rpc->struct_add(st, "dd", "current", current, "waiting", waiting);
+	rpc->struct_add(st, "dd", "waiting", waiting, "total", total);
+	rpc->struct_add(st, "d", "total_local", total_local);
+	rpc->struct_add(st, "d", "replied_localy", tm_stats->replied_localy);
+	rpc->struct_add(st, "ddddd", 
+			"6xx", tm_stats->completed_6xx,
+			"5xx", tm_stats->completed_5xx,
+			"4xx", tm_stats->completed_4xx,
+			"3xx", tm_stats->completed_3xx,
+			"2xx", tm_stats->completed_2xx);
+	rpc->fault(c, 100, "Trying");
 }

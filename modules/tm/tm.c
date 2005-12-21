@@ -91,10 +91,8 @@
 #include "../../error.h"
 #include "../../ut.h"
 #include "../../script_cb.h"
-#include "../../fifo_server.h"
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
-#include "../../unixsock_server.h"
 #include "../../route_struct.h"
 
 #include "sip_msg.h"
@@ -104,8 +102,6 @@
 #include "ut.h"
 #include "t_reply.h"
 #include "uac.h"
-#include "uac_fifo.h"
-#include "uac_unixsock.h"
 #include "t_fwd.h"
 #include "t_lookup.h"
 #include "t_stats.h"
@@ -179,6 +175,7 @@ static int t_set_fr_all(struct sip_msg* msg, char* fr_inv, char* fr);
 static char *fr_timer_param = FR_TIMER_AVP;
 static char *fr_inv_timer_param = FR_INV_TIMER_AVP;
 
+static rpc_export_t tm_rpc[];
 
 static cmd_export_t cmds[]={
 	{"t_newtran",          w_t_newtran,             0, 0,
@@ -298,7 +295,7 @@ struct module_exports exports= {
 	"tm",
 	/* -------- exported functions ----------- */
 	cmds,
-	0,    /* RPC methods */
+	tm_rpc,    /* RPC methods */
 	/* ------------ exported variables ---------- */
 	params,
 	
@@ -391,46 +388,6 @@ static int mod_init(void)
 
 	if (init_callid() < 0) {
 		LOG(L_CRIT, "Error while initializing Call-ID generator\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_uac, "t_uac_dlg", 0) < 0) {
-		LOG(L_CRIT, "cannot register fifo t_uac\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_uac_cancel, "t_uac_cancel", 0) < 0) {
-		LOG(L_CRIT, "cannot register fifo t_uac_cancel\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_hash, "t_hash", 0)<0) {
-		LOG(L_CRIT, "cannot register hash\n");
-		return -1;
-	}
-
-	if (register_fifo_cmd(fifo_t_reply, "t_reply", 0)<0) {
-		LOG(L_CRIT, "cannot register t_reply\n");
-		return -1;
-	}
-
-	if (unixsock_register_cmd("t_uac_dlg", unixsock_uac) < 0) {
-		LOG(L_CRIT, "cannot register t_uac with the unix server\n");
-		return -1;
-	}
-
-	if (unixsock_register_cmd("t_uac_cancel", unixsock_uac_cancel) < 0) {
-		LOG(L_CRIT, "cannot register t_uac_cancel with the unix server\n");
-		return -1;
-	}
-
-	if (unixsock_register_cmd("t_hash", unixsock_hash) < 0) {
-		LOG(L_CRIT, "cannot register t_hash with the unix server\n");
-		return -1;
-	}
-
-	if (unixsock_register_cmd("t_reply", unixsock_t_reply) < 0) {
-		LOG(L_CRIT, "cannot register t_reply with the unix server\n");
 		return -1;
 	}
 
@@ -852,3 +809,10 @@ static int t_set_fr_inv(struct sip_msg* msg, char* fr_inv, char* foo)
 	return t_set_fr_all(msg, fr_inv, (char*)0);
 }
 
+
+static rpc_export_t tm_rpc[] = {
+	{"tm.cancel", rpc_cancel,   rpc_cancel_doc,   0},
+	{"tm.reply",  rpc_reply,    rpc_reply_doc,    0},
+	{"tm.stats",  tm_rpc_stats, tm_rpc_stats_doc, 0},
+	{0, 0, 0, 0}
+};

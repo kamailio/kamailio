@@ -85,8 +85,6 @@
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 #include "../../usr_avp.h"
-#include "../../fifo_server.h"
-#include "../../unixsock_server.h"
 
 #include "defs.h"
 #include "h_table.h"
@@ -1495,163 +1493,6 @@ error:
 	return -1;
 }
 
-
-
-/*
-  Syntax:
-
-  ":vm_reply:[response file]\n
-  code\n
-  reason\n
-  trans_id\n
-  to_tag\n
-  [new headers]\n
-  \n
-  [Body]\n
-  .\n
-  \n"
- */
-int fifo_t_reply( FILE *stream, char *response_file )
-{
-	int ret;
-	struct cell *trans;
-	char code[16];
-	char reason[128];
-	char trans_id[128];
-	char new_headers[MAX_HEADER];
-	char body[MAX_BODY];
-	char to_tag[128];
-	str sc;       /*  code */
-	str sr;       /*  reason */
-	str sti;      /*  trans_id */
-	str snh;      /*  new_headers */
-	str sb;       /*  body */
-	str sttag;    /*  to-tag */
-	unsigned int hash_index,label,icode;
-
-	sc.s=code;
-	sr.s=reason;
-	sti.s=trans_id;
-	snh.s=new_headers; sb.s=body;
-	sttag.s=to_tag; sttag.len=0;
-
-
-	/*  get the infos from FIFO server */
-
-	DBG("DEBUG: fifo_t_reply: ############### begin ##############\n");
-
-	if (!read_line(sc.s, 16, stream, &sc.len)||sc.len==0) {
-		LOG(L_ERR, "ERROR: fifo_t_reply: code expected\n");
-		fifo_reply(response_file, "400 fifo_t_reply: code expected");
-		return -1;
-	}
-
-	icode = str2s(sc.s,sc.len,&ret);
-	if(ret){
-		LOG(L_ERR, "ERROR: fifo_t_reply: code(int) has wrong format\n");
-		fifo_reply(response_file, "400 fifo_t_reply: code(int) has"
-			" wrong format");
-		return -1;
-	}
-
-	if(!read_line(sr.s, 128, stream, &sr.len)||sr.len==0){
-		LOG(L_ERR, "ERROR: fifo_t_reply: reason expected\n");
-		fifo_reply(response_file, "400 fifo_t_reply: reason expected");
-		return -1;
-	}
-	sr.s[sr.len]='\0';
-
-	if (!read_line(sti.s, 128, stream, &sti.len)||sti.len==0) {
-		LOG(L_ERR, "ERROR: fifo_t_reply: trans_id expected\n");
-		fifo_reply(response_file, "400 fifo_t_reply: trans_id expected");
-		return -1;
-	}
-	sti.s[sti.len]='\0';
-	DBG("DEBUG: fifo_t_reply: trans_id=%.*s\n",sti.len,sti.s);
-
-	if(sscanf(sti.s,"%u:%u", &hash_index, &label) != 2){
-		LOG(L_ERR, "ERROR: fifo_t_reply: invalid trans_id (%s)\n",sti.s);
-		fifo_reply(response_file, "400 fifo_t_reply: invalid trans_id");
-		return -1;
-	}
-	DBG("DEBUG: fifo_t_reply: hash_index=%u label=%u\n",hash_index,label);
-
-	if( !read_line(sttag.s,64,stream,&sttag.len) || sttag.len==0 ){
-		LOG(L_ERR, "ERROR: fifo_t_reply: to-tag expected\n");
-		fifo_reply(response_file, "400 fifo_t_reply: to-ta expected");
-		return -1;
-	}
-	sttag.s[sttag.len]='\0';
-	DBG("DEBUG: fifo_t_reply: to-tag: %.*s\n",sttag.len,sttag.s);
-
-	/* read the new headers */
-	if (!read_line_set(snh.s, MAX_HEADER, stream, &snh.len)) {
-		LOG(L_ERR, "ERROR: fifo_t_reply: while reading new headers\n");
-		fifo_reply(response_file, "400 fifo_t_reply: while reading "
-			"new headers");
-		return -1;
-	}
-	snh.s[snh.len]='\0';
-	DBG("DEBUG: fifo_t_reply: new headers: %.*s\n", snh.len, snh.s);
-
-	/*  body can be empty ... */
-	read_body(sb.s, MAX_BODY, stream, &sb.len);
-	sb.s[sb.len]='\0';
-	DBG("DEBUG: fifo_t_reply: body: <%.*s>\n", sb.len, sb.s);
-
-	if( t_lookup_ident(&trans,hash_index,label)<0 ) {
-		LOG(L_ERR,"ERROR: fifo_t_reply: lookup failed\n");
-		fifo_reply(response_file, "481 fifo_t_reply: no such transaction");
-		return -1;
-	}
-
-	/* it's refcounted now, t_reply_with body unrefs for me -- I can
-	 * continue but may not use T anymore  */
-	ret = t_reply_with_body(trans,icode,reason,body,new_headers,to_tag);
-
-	if (ret<0) {
-		LOG(L_ERR, "ERROR: fifo_t_reply: reply failed\n");
-		fifo_reply(response_file, "500 fifo_t_reply: reply failed");
-		return -1;
-	}
-
-	fifo_reply(response_file, "200 fifo_t_reply succeeded\n");
-	DBG("DEBUG: fifo_t_reply: ################ end ##############\n");
-	return 1;
-}
-
-
-static int parse_transid(str* s, unsigned int* index, unsigned int* label)
-{
-	char* buf;
-
-	if (!s || !index || !label) {
-		LOG(L_ERR, "parse_transid: Invalid parameter value\n");
-		return -1;
-	}
-
-	buf = (char*)pkg_malloc(s->len + 1);
-	if (!buf) {
-		LOG(L_ERR, "parse_transid: No memory left\n");
-		return -1;
-	}
-
-	memcpy(buf, s->s, s->len + 1);
-	buf[s->len] = '\0';
-
-	if (sscanf(buf, "%u:%u", index, label) != 2) {
-		LOG(L_ERR, "parse_transid: Invalid trans_id (%s)\n", buf);
-		pkg_free(buf);
-		return -1;
-	}
-
-	DBG("parse_transid: hash_index=%u label=%u\n", *index, *label);
-	pkg_free(buf);
-	return 0;
-}
-
-
-
 static int send_reply(struct cell *trans, unsigned int code, str* text, str* body, str* headers, str* to_tag)
 {
 	struct lump_rpl *hdr_lump, *body_lump;
@@ -1724,86 +1565,77 @@ static int send_reply(struct cell *trans, unsigned int code, str* text, str* bod
 }
 
 
+const char* rpc_reply_doc[2] = {
+	"Reply transaction",
+	0
+};
 
-int unixsock_t_reply(str* msg)
+/*
+  Syntax:
+
+  ":tm.reply:[response file]\n
+  code\n
+  reason\n
+  trans_id\n
+  to_tag\n
+  [new headers]\n
+  \n
+  [Body]\n
+  .\n
+  \n"
+ */
+void rpc_reply(rpc_t* rpc, void* c)
 {
 	int ret;
 	struct cell *trans;
-	static char new_headers[MAX_HEADER];
-	str code, reason, transid, headers, body, to_tag;
-	unsigned int hash_index, label, icode;
+	unsigned int hash_index, label, code;
+	str ti;
+	char* reason, *body, *headers, *tag;
 
-	headers.s = new_headers;
-	headers.len = MAX_HEADER;
-
-	if (unixsock_read_line(&code, msg) != 0) {
-		unixsock_reply_asciiz("400 Reason code expected\n");
-		goto err;
+	if (rpc->scan(c, "d", &code) < 1) {
+		rpc->fault(c, 400, "Reply code expected");
+		return;
 	}
 
-	icode = str2s(code.s, code.len, &ret);
-	if (ret) {
-		unixsock_reply_printf("400 Reason code has wrong format\n");
-		goto err;
+	if (rpc->scan(c, "s", &reason) < 1) {
+		rpc->fault(c, 400, "Reason phrase expected");
+		return;
 	}
 
-	if (unixsock_read_line(&reason, msg) != 0) {
-		unixsock_reply_asciiz("400 Reason phrase expected\n");
-		goto err;
+	if (rpc->scan(c, "s", &ti.s) < 1) {
+		rpc->fault(c, 400, "Transaction ID expected");
+		return;
+	}
+	ti.len = strlen(ti.s);
+
+	if (rpc->scan(c, "s", &tag) < 1) {
+		rpc->fault(c, 400, "To tag expected");
+		return;
 	}
 
-	if (unixsock_read_line(&transid, msg) != 0) {
-		unixsock_reply_asciiz("400 Transaction ID expected\n");
-		goto err;
+	if (rpc->scan(c, "s", &headers) < 0) return;
+	if (rpc->scan(c, "s", &body) < 0) return;
+
+	if(sscanf(ti.s,"%u:%u", &hash_index, &label) != 2) {
+		ERR("Invalid trans_id (%s)\n", ti.s);
+		rpc->fault(c, 400, "Invalid transaction ID");
+		return;
+	}
+	DBG("hash_index=%u label=%u\n", hash_index, label);
+
+	if( t_lookup_ident(&trans, hash_index, label) < 0 ) {
+		ERR("Lookup failed\n");
+		rpc->fault(c, 481, "No such transaction");
+		return;
 	}
 
-	if (parse_transid(&transid, &hash_index, &label) < 0) {
-		unixsock_reply_asciiz("400 Error while parsing transaction ID\n");
-		goto err;
-	}
+	/* it's refcounted now, t_reply_with body unrefs for me -- I can
+	 * continue but may not use T anymore  */
+	ret = t_reply_with_body(trans, code, reason, body, headers, tag);
 
-	if (unixsock_read_line(&to_tag, msg) != 0) {
-		unixsock_reply_asciiz("400 To tag expected\n");
-		goto err;
-	}
-
-	     /* read the new headers */
-	if (unixsock_read_lineset(&headers, msg) < 0) {
-		unixsock_reply_asciiz("400 Error while reading new headers\n");
-		goto err;
-	}
-
-	DBG("lineset: %.*s\n", headers.len, headers.s);
-
-	/*  body can be empty ... */
-	if (unixsock_read_body(&body, msg) < 0) {
-		unixsock_reply_asciiz("400 Error while reading body\n");
-		goto err;
-	}
-
-	DBG("body: %.*s\n", body.len, body.s);
-
-	if (t_lookup_ident(&trans, hash_index, label) < 0) {
-		LOG(L_ERR,"unixsock_t_reply: lookup failed\n");
-		unixsock_reply_asciiz("481 No such transaction\n");
-		goto err;
-	}
-
-	     /* it's refcounted now, t_reply_with body unrefs for me -- I can
-	      * continue but may not use T anymore
-	      */
-	ret = send_reply(trans, icode, &reason, &body, &headers, &to_tag);
 	if (ret < 0) {
-		LOG(L_ERR, "unixsock_t_reply: reply failed\n");
-		unixsock_reply_asciiz("500 Reply failed\n");
-		goto err;
+		ERR("Reply failed\n");
+		rpc->fault(c, 500, "Reply failed");
+		return;
 	}
-
-	unixsock_reply_asciiz("200 Succeeded\n");
-	unixsock_reply_send();
-	return 1;
-
- err:
-	unixsock_reply_send();
-	return -1;
 }
