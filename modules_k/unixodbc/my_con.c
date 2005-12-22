@@ -133,7 +133,7 @@ SQLSMALLINT type)
 		ret = SQLGetDiagRec(type, handle, ++i, state, &native, text,
 			sizeof(text), &len );
 		if (SQL_SUCCEEDED(ret))
-			printf("%s:%ld:%ld:%s\n", state, i, native, text);
+			printf("%s:%ld:%ld:%s\n", state, (long)i, (long)native, text);
 	}
 	while( ret == SQL_SUCCESS );
 }

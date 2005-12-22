@@ -160,7 +160,7 @@ static inline int parse_aaa_avps(char *definition,
 	return 0;
 parse_error:
 	LOG(L_ERR,"ERROR:auth:aaa_avps: parse error in \"%s\" at pos %d(%s)\n",
-		definition, p-definition,p);
+		definition, (int)(long)(p-definition),p);
 error:
 	free_aaa_avp( avp );
 	free_aaa_avp_list( *avp_def );

@@ -59,7 +59,8 @@ static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
 	p = vp->strvalue;
 	end = vp->strvalue + vp->lvalue;
 
-	DBG("DEBUG:auth_radius:extract_avp: string is <%.*s>\n", end-p, p);
+	DBG("DEBUG:auth_radius:extract_avp: string is <%.*s>\n",
+		(int)(long)(end-p), p);
 
 	/* get name */
 	if (*p!='#') {

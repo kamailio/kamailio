@@ -57,7 +57,8 @@ static int submit_query(db_con_t* _h, const char* _s)
 		ret = SQLFreeStmt(&CON_RESULT(_h), SQL_CLOSE);
 		if (!SQL_SUCCEEDED(ret))
 		{
-			LOG(L_ERR, "Statement allocation error %d\n",(int)CON_CONNECTION(_h));
+			LOG(L_ERR, "Statement allocation error %d\n",
+				(int)(long)CON_CONNECTION(_h));
 			extract_error("SQLAllocStmt", CON_CONNECTION(_h), SQL_HANDLE_DBC);
 			return ret;
 		}
@@ -65,7 +66,8 @@ static int submit_query(db_con_t* _h, const char* _s)
 	ret = SQLAllocStmt(CON_CONNECTION(_h), &CON_RESULT(_h));
 	if (!SQL_SUCCEEDED(ret))
 	{
-		LOG(L_ERR, "Statement allocation error %d\n",(int)CON_CONNECTION(_h));
+		LOG(L_ERR, "Statement allocation error %d\n",
+			(int)(long)CON_CONNECTION(_h));
 		extract_error("SQLAllocStmt", CON_CONNECTION(_h), SQL_HANDLE_DBC);
 		return ret;
 	}
