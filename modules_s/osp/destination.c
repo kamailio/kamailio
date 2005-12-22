@@ -41,8 +41,8 @@
 
 
 /* A list of destination URIs */
-str ORIG_OSPDESTS_LABEL = {"orig_osp_dests",14};
-str TERM_OSPDESTS_LABEL = {"term_osp_dests",14};
+str ORIG_OSPDESTS_LABEL = {"_orig_osp_dests_",16};
+str TERM_OSPDESTS_LABEL = {"_term_osp_dests_",16};
 
 
 static int saveDestination(osp_dest* dest, str* label);
