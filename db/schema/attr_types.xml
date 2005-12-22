@@ -9,7 +9,7 @@
 
 <table xmlns:my="http://iptel.org/dbschema/mysql" role="serweb">
     <name>attr_types</name>
-    <version>1</version>
+    <version>2</version>
     <description>
 	Each attribute, identified by name, has associated set of
 	properties and constraints. This table contains types and
@@ -23,7 +23,7 @@
 	    Name of attribute.
 	</description>
     </column>
-    <column role="serweb">
+    <column role="serweb" id="at.rich_t">
 	<name>rich_type</name>
 	<type>string</type>
 	<default>string</default>
@@ -52,17 +52,235 @@
 	    Exact type specification, this is used by SERWeb only.
 	</description>
     </column>
+
+	<column role="serweb" id="at.desc">
+	<name>description</name>
+	<type>string</type>
+	<size>255</size>
+	<default><null/></default>
+	<null/>
+	<description>
+	    Description of attribute, this is used by SERWeb only.
+	</description>
+    </column>
+
+	<column role="serweb" id="at.d_flags">
+	<name>default_flags</name>
+	<type>int</type>
+	<default>0</default>
+	<description>
+	    Default flags of attribute, this is used by SERWeb only.
+	</description>
+    </column>
+	
+	<column role="serweb" id="at.flags">
+	<name>flags</name>
+	<type>int</type>
+	<default>0</default>
+	<description>
+	    Various flags. Meaning of bits in flags field is this:
+	      0 - multivalue  (if is set, attribute may contain multiple values)
+	      1 - fill_on_reg (attribute should be set when user is registrating)
+	</description>
+    </column>
+
+	<column role="serweb" id="at.prior">
+	<name>priority</name>
+	<type>int</type>
+	<default>0</default>
+	<description>
+	    Field of flags describeing where the attribute may be used (user, domain, global,...)
+	    Meaning of bits is this:
+	     8 - user
+	    16 - domain
+	    30 - global
+	</description>
+    </column>
+
+	<column role="serweb" id="at.order">
+	<name>ordering</name>
+	<type>int</type>
+	<default>0</default>
+	<description>
+		When attributes are displayed in serweb, they are sorted by this field. 
+		This is used by SERWeb only.
+	</description>
+    </column>
+	
+
     <index>
 	<name>upt_idx1</name>
 	<colref linkend="at.name"/>
     </index>
 
-    <row><value col="at.name">uid</value>         <value col="at.type">2</value></row>
-    <row><value col="at.name">did</value>         <value col="at.type">2</value></row>
-    <row><value col="at.name">digest_realm</value><value col="at.type">2</value></row>
-    <row><value col="at.name">rpid</value>        <value col="at.type">2</value></row>
-    <row><value col="at.name">fr_timer</value>    <value col="at.type">0</value></row>
-    <row><value col="at.name">fr_inv_timer</value><value col="at.type">2</value></row>
-    <row><value col="at.name">flags</value>       <value col="at.type">0</value></row>
-    <row><value col="at.name">gflags</value>      <value col="at.type">0</value></row>
+    <row><value col="at.name">uid</value>         <value col="at.type">2</value><value col="at.d_flags">1</value></row>
+    <row><value col="at.name">did</value>         <value col="at.type">2</value><value col="at.d_flags">1</value></row>
+    <row><value col="at.name">digest_realm</value><value col="at.type">2</value><value col="at.d_flags">33</value></row>
+    <row><value col="at.name">rpid</value>        <value col="at.type">2</value><value col="at.d_flags">1</value></row>
+    <row><value col="at.name">fr_timer</value>    <value col="at.type">0</value><value col="at.d_flags">1</value></row>
+    <row><value col="at.name">fr_inv_timer</value><value col="at.type">2</value><value col="at.d_flags">1</value></row>
+    <row><value col="at.name">flags</value>       <value col="at.type">0</value><value col="at.d_flags">1</value></row>
+    <row><value col="at.name">gflags</value>      <value col="at.type">0</value><value col="at.d_flags">1</value></row>
+
+    <row><value col="at.name">sw_fname</value>      
+         <value col="at.type">2</value>
+         <value col="at.rich_t">string</value>
+         <value col="at.desc">first name</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">2</value>
+         <value col="at.prior">256</value>
+         <value col="at.order">10</value>
+         </row>
+    <row><value col="at.name">sw_lname</value>      
+         <value col="at.type">2</value>
+         <value col="at.rich_t">string</value>
+         <value col="at.desc">last name</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">2</value>
+         <value col="at.prior">256</value>
+         <value col="at.order">20</value>
+         </row>
+    <row><value col="at.name">sw_email</value>      
+         <value col="at.type">2</value>
+         <value col="at.rich_t">email_adr</value>
+         <value col="at.desc">email</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">2</value>
+         <value col="at.prior">256</value>
+         <value col="at.order">30</value>
+         </row>
+    <row><value col="at.name">sw_timezone</value>   
+         <value col="at.type">2</value>
+         <value col="at.rich_t">timezone</value>
+         <value col="at.desc">timezone</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">2</value>
+         <value col="at.prior">1073807616</value>
+         <value col="at.order">60</value>
+         </row>
+    <row><value col="at.name">sw_allow_find</value>      
+         <value col="at.type">0</value>
+         <value col="at.rich_t">boolean</value>
+         <value col="at.desc">allow find me by other users</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">0</value>
+         <value col="at.prior">256</value>
+         <value col="at.order">110</value>
+         </row>
+    <row><value col="at.name">lang</value>      
+         <value col="at.type">2</value>
+         <value col="at.rich_t">string</value>
+         <value col="at.desc">language</value>
+         <value col="at.d_flags">33</value>
+         <value col="at.flags">0</value>
+         <value col="at.prior">1073807360</value>
+         <value col="at.order">50</value>
+         </row>
+    <row><value col="at.name">sw_show_status</value>      
+         <value col="at.type">0</value>
+         <value col="at.rich_t">boolean</value>
+         <value col="at.desc">show whether I am online to other users</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">0</value>
+         <value col="at.prior">1073742080</value>
+         <value col="at.order">100</value>
+         </row>
+    <row><value col="at.name">sw_admin</value>      
+         <value col="at.type">2</value>
+         <value col="at.rich_t">string</value>
+         <value col="at.desc">admin of domain</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">1</value>
+         <value col="at.prior">0</value>
+         </row>
+    <row><value col="at.name">sw_owner</value>      
+         <value col="at.type">2</value>
+         <value col="at.rich_t">string</value>
+         <value col="at.desc">owner of domain</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">0</value>
+         <value col="at.prior">0</value>
+         </row>
+    <row><value col="at.name">sw_domain_default_flags</value>      
+         <value col="at.type">0</value>
+         <value col="at.rich_t">int</value>
+         <value col="at.desc">default flags for domain</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">0</value>
+         <value col="at.prior">1073741824</value>
+         </row>
+    <row><value col="at.name">sw_deleted_ts</value>      
+         <value col="at.type">0</value>
+         <value col="at.rich_t">int</value>
+         <value col="at.desc">deleted timestamp</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">0</value>
+         <value col="at.prior">0</value>
+         </row>
+    <row><value col="at.name">sw_phone</value>      
+         <value col="at.type">2</value>
+         <value col="at.rich_t">string</value>
+         <value col="at.desc">phone</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">2</value>
+         <value col="at.prior">256</value>
+         <value col="at.order">40</value>
+         </row>
+    <row><value col="at.name">sw_acl_control</value>      
+         <value col="at.type">2</value>
+         <value col="at.rich_t">string</value>
+         <value col="at.desc">acl control</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">1</value>
+         <value col="at.prior">0</value>
+         </row>
+    <row><value col="at.name">sw_credential_default_flags</value>
+         <value col="at.type">0</value>
+         <value col="at.rich_t">int</value>
+         <value col="at.desc">default flags for credentials</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">0</value>
+         <value col="at.prior">1073741824</value>
+         </row>
+    <row><value col="at.name">sw_uri_default_flags</value>      
+         <value col="at.type">0</value>
+         <value col="at.rich_t">int</value>
+         <value col="at.desc">default flags for uri</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">0</value>
+         <value col="at.prior">1073741824</value>
+         </row>
+    <row><value col="at.name">sw_is_admin</value>      
+         <value col="at.type">0</value>
+         <value col="at.rich_t">boolean</value>
+         <value col="at.desc">admin privilege</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">0</value>
+         <value col="at.prior">0</value>
+         </row>
+    <row><value col="at.name">sw_is_hostmaster</value>      
+         <value col="at.type">0</value>
+         <value col="at.rich_t">boolean</value>
+         <value col="at.desc">hostmaster privilege</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">0</value>
+         <value col="at.prior">0</value>
+         </row>
+    <row><value col="at.name">sw_confirmation</value>      
+         <value col="at.type">2</value>
+         <value col="at.rich_t">string</value>
+         <value col="at.desc">registration confirmation</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">0</value>
+         <value col="at.prior">0</value>
+         </row>
+    <row><value col="at.name">sw_pending_ts</value>      
+         <value col="at.type">2</value>
+         <value col="at.rich_t">string</value>
+         <value col="at.desc">registration timestamp</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">0</value>
+         <value col="at.prior">0</value>
+         </row>
+
 </table>
