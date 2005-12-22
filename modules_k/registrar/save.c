@@ -218,6 +218,8 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 	static ucontact_info_t ci;
 	static str no_ua = str_init("n/a");
 	static str callid;
+	static str *received;
+	static int received_found;
 	static unsigned int allowed, allow_parsed;
 	int_str rcv_avp;
 	int_str val;
@@ -239,15 +241,6 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 			goto error;
 		}
 
-		/* set received URI */
-		if (_c->received) {
-			ci.received = &_c->received->body;
-		} else if (search_first_avp(0, rcv_avp, &val)) {
-			ci.received = val.s;
-		} else {
-			ci.received = 0;
-		}
-
 		/* set received socket */
 		if (sock_flag!=-1 && (_m->flags&sock_flag)!=0) {
 			ci.sock = get_sock_hdr(_m);
@@ -266,6 +259,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		}
 
 		allow_parsed = 0; /* not parsed yet */
+		received_found = 0; /* not found yet */
 	}
 
 	if(_c!=0) {
@@ -294,15 +288,31 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		} else {
 			/* check on Allow hdr */
 			if (allow_parsed == 0) {
-			    if (parse_allow( _m ) != -1) {
-				allowed = get_allow_methods(_m);
-			    } else {
-				allowed = ALL_METHODS;
-			    }
-			    allow_parsed = 1;
+				if (parse_allow( _m ) != -1) {
+					allowed = get_allow_methods(_m);
+				} else {
+					allowed = ALL_METHODS;
+				}
+				allow_parsed = 1;
 			}
 			ci.methods = allowed;
 		}
+
+		/* get received */
+		if (_c->received) {
+			ci.received = &_c->received->body;
+		} else {
+			if (received_found==0) {
+				if (search_first_avp(0, rcv_avp, &val)) {
+					received = val.s;
+				} else {
+					received = 0;
+				}
+				received_found = 1;
+			}
+			ci.received = received;
+		}
+
 	}
 
 	return &ci;
@@ -394,11 +404,13 @@ error:
 }
 
 
-static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
+static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
+														ucontact_info_t *ci)
 {
 	int num;
 	int e;
 	ucontact_t* ptr, *cont;
+	int ret;
 	
 	num = 0;
 	ptr = _r->contacts;
@@ -414,7 +426,13 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 		/* calculate expires */
 		calc_contact_expires(_m, _c->expires, &e);
 		
-		if (ul.get_ucontact(_r, &_c->uri, &cont) > 0) {
+		ret = ul.get_ucontact( _r, &_c->uri, ci->callid, ci->cseq, &cont);
+		if (ret==-1) {
+			LOG(L_ERR,"ERROR:usrloc:update_contacts: invalid cseq\n");
+			rerrno = R_INV_CSEQ;
+			return -1;
+		}
+		if (ret > 0) {
 			/* Contact not found */
 			if (e != 0) num++;
 		} else {
@@ -425,8 +443,12 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 	}
 	
 	DBG("DEBUG:usrloc:test_max_contacts: %d contacts after commit\n", num);
-	if (num > max_contacts)
+	if (num > max_contacts) {
+		LOG(L_INFO,"INFO:usrloc:test_max_contacts: too many contacts "
+				"for AOR <%.*s>\n", _r->aor.len, _r->aor.s);
+		rerrno = R_TOO_MANY;
 		return -1;
+	}
 
 	return 0;
 }
@@ -452,6 +474,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 	int set, reset;
 	unsigned int flags;
 	int_str rcv_avp;
+	int ret;
 
 	rcv_avp.n=rcv_avp_no;
 	/* is nated flag */
@@ -463,29 +486,35 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 	if (sip_natping_flag!=-1 && _m->flags&sip_natping_flag)
 		flags |= FL_NAT_SIPPING;
 
-	if (max_contacts) {
-		if (test_max_contacts(_m, _r, _c) != 0 ) {
-			rerrno = R_TOO_MANY;
-			LOG(L_INFO,"INFO:usrloc:update_contacts: too many contacts "
-				"for AOR <%.*s>\n", _r->aor.len, _r->aor.s);
-			goto error;
-		}
+	/* pack the contact_info */
+	if ( (ci=pack_ci( _m, 0, 0, 0, 0))==0 ) {
+		LOG(L_ERR, "ERROR:usrloc:update_contacts: failed to "
+			"initial pack contact info\n");
+		goto error;
 	}
 
-	_c = get_first_contact(_m);
-	ci = 0;
+	if (max_contacts && test_max_contacts(_m, _r, _c, ci) != 0 )
+		goto error;
 
-	while(_c) {
+	for( ; _c ; _c = get_next_contact(_c) ) {
 		/* calculate expires */
 		calc_contact_expires(_m, _c->expires, &e);
 
-		if (ul.get_ucontact(_r, &_c->uri, &c) > 0) {
+		/* search for the contact*/
+		ret = ul.get_ucontact( _r, &_c->uri, ci->callid, ci->cseq, &c);
+		if (ret==-1) {
+			LOG(L_ERR,"ERROR:usrloc:update_contacts: invalid cseq\n");
+			rerrno = R_INV_CSEQ;
+			goto error;
+		}
+
+		if ( ret > 0 ) {
 			/* Contact not found -> expired? */
 			if (e==0)
 				continue;
 
 			/* pack the contact_info */
-			if ( (ci=pack_ci( (ci==0)?_m:0, _c, e, flags, 0))==0 ) {
+			if ( (ci=pack_ci( 0, _c, e, flags, 0))==0 ) {
 				LOG(L_ERR, "ERROR:usrloc:update_contacts: failed to extract "
 					"contact info\n");
 				goto error;
@@ -517,10 +546,10 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 				set = flags | mem_only;
 				reset = ~(flags | mem_only) & (FL_NAT|FL_MEM|FL_NAT_SIPPING);
 
-				/* pack the contact_info */
-				if ( (ci=pack_ci( (ci==0)?_m:0, _c, e, set, reset))==0 ) {
+				/* pack the contact specific info info */
+				if ( (ci=pack_ci( 0, _c, e, set, reset))==0 ) {
 					LOG(L_ERR, "ERROR:usrloc:update_contacts: failed to "
-						"extract contact info\n");
+						"pack contact specific info\n");
 					goto error;
 				}
 
@@ -535,7 +564,6 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 				}
 			}
 		}
-		_c = get_next_contact(_c);
 	}
 
 	return 0;

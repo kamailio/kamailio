@@ -47,10 +47,11 @@
  * Dedicated to Douglas Adams, don't panic !
  */
 #define FIFO_CALLID "The-Answer-To-The-Ultimate-Question-Of-Life-Universe-And-Everything"
-#define FIFO_CALLID_LEN (sizeof(FIFO_CALLID)-1)
 #define FIFO_CSEQ 42
 #define FIFO_UA "OpenSER Server FIFO"
-#define FIFO_UA_LEN (sizeof(FIFO_UA)-1)
+
+static str fifo_cid = str_init(FIFO_CALLID);
+static str fifo_ua  = str_init(FIFO_UA);
 
 
 
@@ -140,8 +141,6 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c,
 	urecord_t* r;
 	ucontact_t* c = 0;
 	int res;
-	str cid;
-	str ua;
 	
 	if (_ci->expires == 0 && !(_ci->flags1 & FL_PERMANENT)) {
 		LOG(L_ERR, "fifo_add_contact(): expires == 0 and not "
@@ -164,23 +163,17 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c,
 			goto error0;
 		}
 	} else {
-		if (get_ucontact(r, _c, &c) < 0) {
+		if (get_ucontact(r, _c, &fifo_cid, FIFO_CSEQ+1, &c) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while obtaining ucontact\n");
 			goto error0;
 		}
 	}
-		
-	cid.s = FIFO_CALLID;
-	cid.len = FIFO_CALLID_LEN;
-	_ci->callid = &cid;
-
-	ua.s = FIFO_UA;
-	ua.len = FIFO_UA_LEN;
-	_ci->user_agent = &ua;
-
+	
+	_ci->callid = &fifo_cid;
+	_ci->user_agent = &fifo_ua;
 	_ci->cseq = FIFO_CSEQ;
 	_ci->expires += act_time;
-
+	
 	if (c) {
 		if (update_ucontact(c, _ci) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while updating contact\n");
@@ -490,7 +483,7 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 			return 1;
 		}
 
-		res = get_ucontact(r, &c, &con);
+		res = get_ucontact(r, &c, &fifo_cid, FIFO_CSEQ+1, &con);
 		if (res < 0) {
 			fifo_reply(response_file, "500 Error while looking for contact %s\n", contact);
 			LOG(L_ERR, "ERROR: ul_rm_contact: Error while looking for contact %s\n", contact);

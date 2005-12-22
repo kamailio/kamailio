@@ -41,6 +41,9 @@
 #include "ul_callback.h"
 
 
+int matching_mode = CONTACT_ONLY;
+
+
 /*
  * Create and initialize new record structure
  */
@@ -475,22 +478,76 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 }
 
 
-/*
- * Get pointer to ucontact with given contact
- */
-int get_ucontact(urecord_t* _r, str* _c, struct ucontact** _co)
+static inline struct ucontact* contact_match( ucontact_t* ptr, str* _c)
 {
-	ucontact_t* ptr;
-	
-	ptr = _r->contacts;
 	while(ptr) {
-		if ((_c->len == ptr->c.len) &&
-		    !memcmp(_c->s, ptr->c.s, _c->len)) {
-			*_co = ptr;
-			return 0;
+		if ((_c->len == ptr->c.len) && !memcmp(_c->s, ptr->c.s, _c->len)) {
+			return ptr;
 		}
 		
 		ptr = ptr->next;
 	}
+	return 0;
+}
+
+
+static inline struct ucontact* contact_callid_match( ucontact_t* ptr,
+														str* _c, str *_callid)
+{
+	while(ptr) {
+		if ( (_c->len==ptr->c.len) && (_callid->len==ptr->callid.len)
+		&& !memcmp(_c->s, ptr->c.s, _c->len)
+		&& !memcmp(_callid->s, ptr->callid.s, _callid->len)
+		) {
+			return ptr;
+		}
+		
+		ptr = ptr->next;
+	}
+	return 0;
+}
+
+
+/*
+ * Get pointer to ucontact with given contact
+ */
+int get_ucontact(urecord_t* _r, str* _c, str* _callid, int _cseq,
+														struct ucontact** _co)
+{
+	ucontact_t* ptr;
+	int no_callid;
+
+	ptr = 0;
+	no_callid = 0;
+
+	switch (matching_mode) {
+		case CONTACT_ONLY:
+			ptr = contact_match( _r->contacts, _c);
+			break;
+		case CONTACT_CALLID:
+			ptr = contact_callid_match( _r->contacts, _c, _callid);
+			no_callid = 1;
+			break;
+		default:
+			LOG(L_CRIT,"BUG:usrloc:get_ucontact: unknown matching_mode %d\n",
+				matching_mode);
+			return -1;
+	}
+
+	if (ptr) {
+		/* found -> check callid and cseq */
+		if (no_callid) {
+			if (_cseq<=ptr->cseq)
+				return -1;
+		} else {
+			if (ptr->callid.len==_callid->len && _cseq<=ptr->cseq
+			&& !memcmp(_callid->s, ptr->callid.s, _callid->len) )
+				return -1;
+		}
+		
+		*_co = ptr;
+		return 0;
+	}
+
 	return 1;
 }

@@ -102,7 +102,7 @@ str received_col    = str_init(RECEIVED_COL);
 /* Name of column containing the received socket */
 str sock_col        = str_init(SOCK_COL);
 /* Name of column containing the supported methods */
-str methods_col        = str_init(METHODS_COL);
+str methods_col     = str_init(METHODS_COL);
 
 /* Database URL */
 str db_url          = str_init(DEFAULT_DB_URL);
@@ -166,6 +166,7 @@ static param_export_t params[] = {
 	{"received_column",   STR_PARAM, &received_col.s   },
 	{"socket_column",     STR_PARAM, &sock_col.s       },
 	{"methods_column",    STR_PARAM, &methods_col.s    },
+	{"matching_mode",     INT_PARAM, &matching_mode  },
 	{0, 0, 0}
 };
 
@@ -204,6 +205,16 @@ static int mod_init(void)
 	sock_col.len = strlen(sock_col.s);
 	methods_col.len = strlen(methods_col.s);
 	db_url.len = strlen(db_url.s);
+
+	/* check matching mode */
+	switch (matching_mode) {
+		case CONTACT_ONLY:
+		case CONTACT_CALLID:
+			break;
+		default:
+			LOG(L_ERR,"ERROR:usrloc:mod_init: invalid matching mode %d\n",
+				matching_mode);
+	}
 
 	/* Register cache timer */
 	register_timer(timer, 0, timer_interval);

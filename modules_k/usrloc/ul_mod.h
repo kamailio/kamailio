@@ -69,4 +69,13 @@ extern db_con_t* ul_dbh;   /* Database connection handle */
 extern db_func_t ul_dbf;
 
 
+/*
+ * Matching algorithms
+ */
+#define CONTACT_ONLY            (0)
+#define CONTACT_CALLID          (1)
+
+extern int matching_mode;
+
+
 #endif /* UL_MOD_H */

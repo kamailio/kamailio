@@ -20,6 +20,9 @@ Bogdan-Andrei Iancu
    1. User's Guide
 
         1.1. Overview
+
+              1.1.1. Contact matching
+
         1.2. Dependencies
 
               1.2.1. OpenSER Modules
@@ -44,6 +47,7 @@ Bogdan-Andrei Iancu
               1.3.15. timer_interval (integer)
               1.3.16. db_url (string)
               1.3.17. db_mode (integer)
+              1.3.18. matching_mode (integer)
 
         1.4. Exported Functions
 
@@ -90,6 +94,7 @@ Bogdan-Andrei Iancu
    1-15. Set timer_interval parameter
    1-16. Set db_url parameter
    1-17. Set db_mode parameter
+   1-18. Set matching_mode parameter
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -99,6 +104,36 @@ Chapter 1. User's Guide
    User location module. The module keeps a user location table
    and provides access to the table to other modules. The module
    exports no functions that could be used directly from scripts.
+     _________________________________________________________
+
+1.1.1. Contact matching
+
+   How the contacts are matched (dor same AOR - Address of
+   Record) is an important aspect of the usrloc modules,
+   especialy in the context of NAT traversal - this raise mre
+   problems since contacts from different phones of same users
+   may overlap (if behind NATs with same configuration) or the
+   re-register contact of same phone may be seen as a new one
+   (due different binding via NAT).
+
+   The SIP RFC 3261 publishes a matching algorithm based only on
+   the contact string with callid and cseq number extra checking
+   (if callid is the same, it must have a higher cseq number,
+   otherwise invalid). But as argumented above, this is not
+   enough in NAT traversal context, so the OpenSER implementation
+   of contact machting offers more algorithms:
+
+     * contact based only - it strict RFC 3261 compiancy - the
+       contact is matched as string and extra checked via callid
+       and cseg (if callid is the same, it must have a higher
+       cseq number, otherwise invalid).
+     * contact nad callid based - it an extension of the first
+       case - the contact and callid must matched as string; the
+       cseg must be higher than the previous one - so be careful
+       how you deal with REGISTER retransmissions in this case.
+
+   How to control/select the contact maching algorithm, please
+   see the module parameter matching_mode at Section 1.3.18.
      _________________________________________________________
 
 1.2. Dependencies
@@ -360,6 +395,24 @@ er")
    Example 1-17. Set db_mode parameter
 ...
 modparam("usrloc", "db_mode", 2)
+...
+     _________________________________________________________
+
+1.3.18. matching_mode (integer)
+
+   What contact matching algorithm to be used. Refer to section
+   Section 1.1.1 for the description of the algorithms.
+
+   The parameter may take the following values:
+
+     * 0 - CONTACT ONLY based matching algorithm.
+     * 1 - CONTACT and CALLID based matching algorithm.
+
+   Default value is 0 (CONTACT_ONLY). 
+
+   Example 1-18. Set matching_mode parameter
+...
+modparam("usrloc", "matching_mode", 1)
 ...
      _________________________________________________________
 

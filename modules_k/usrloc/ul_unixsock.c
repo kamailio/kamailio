@@ -35,10 +35,12 @@
  * Dedicated to Douglas Adams, don't panic !
  */
 #define UNIXSOCK_CALLID "The-Answer-To-The-Ultimate-Question-Of-Life-Universe-And-Everything"
-#define UNIXSOCK_CALLID_LEN (sizeof(UNIXSOCK_CALLID)-1)
 #define UNIXSOCK_CSEQ 42
 #define UNIXSOCK_UA "OpenSER Server UNIXSOCK"
-#define UNIXSOCK_UA_LEN (sizeof(UNIXSOCK_UA)-1)
+
+static str unix_cid = str_init(UNIXSOCK_CALLID);
+static str unix_ua  = str_init(UNIXSOCK_UA);
+
 
 static inline int add_contact(udomain_t* _d, str* _u, str* _c,
 														ucontact_info_t *_ci)
@@ -46,8 +48,7 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c,
 	urecord_t* r;
 	ucontact_t* c = 0;
 	int res;
-	str cid, ua;
-	
+
 	if (_ci->expires == 0 && !(_ci->flags1 & FL_PERMANENT)) {
 		LOG(L_ERR, "fifo_add_contact(): expires == 0 and not persistent "
 			"contact, giving up\n");
@@ -69,23 +70,17 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c,
 			goto error0;
 		}
 	} else {
-		if (get_ucontact(r, _c, &c) < 0) {
+		if (get_ucontact(r, _c, &unix_cid, UNIXSOCK_CSEQ+1, &c) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while obtaining ucontact\n");
 			goto error0;
 		}
 	}
-		
-	cid.s = UNIXSOCK_CALLID;
-	cid.len = UNIXSOCK_CALLID_LEN;
-	_ci->callid = &cid;
-
-	ua.s = UNIXSOCK_UA;
-	ua.len = UNIXSOCK_UA_LEN;
-	_ci->user_agent = &ua;
-
+	
+	_ci->callid = &unix_cid;
+	_ci->user_agent = &unix_ua;
 	_ci->cseq = UNIXSOCK_CSEQ;
 	_ci->expires += act_time;
-
+	
 	if (c) {
 		if (update_ucontact(c, _ci) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while updating contact\n");
@@ -276,7 +271,7 @@ static int ul_rm_contact(str* msg)
 			goto err_unlock;
 		}
 
-		res = get_ucontact(r, &contact, &con);
+		res = get_ucontact(r, &contact, &unix_cid, UNIXSOCK_CSEQ+1, &con);
 		if (res < 0) {
 			unixsock_reply_printf("500 Error while looking for contact %.*s\n", contact.len, ZSW(contact.s));
 			goto err_unlock;

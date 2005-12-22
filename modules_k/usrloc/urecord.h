@@ -41,7 +41,6 @@
 
 struct hslot;
 
-
 /*
  * Basic hash table element
  */
@@ -141,8 +140,10 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c);
 /*
  * Get pointer to ucontact with given contact
  */
-typedef int (*get_ucontact_t)(urecord_t* _r, str* _c, struct ucontact** _co);
-int get_ucontact(urecord_t* _r, str* _c, struct ucontact** _co);
+typedef int (*get_ucontact_t)(urecord_t* _r, str* _c, str* _callid, int _cseq,
+		struct ucontact** _co);
+int get_ucontact(urecord_t* _r, str* _c, str* _callid, int _cseq,
+		struct ucontact** _co);
 
 
 #endif /* URECORD_H */

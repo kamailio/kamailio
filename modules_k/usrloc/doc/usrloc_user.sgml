@@ -18,7 +18,49 @@
 		provides access to the table to other modules. The module exports no 
 		functions that could be used directly from scripts.
 	</para>
+		<section id="contact-matching-algs">
+		<title>Contact matching</title>
+		<para>
+		How the contacts are matched (dor same AOR - Address of Record) is an 
+		important aspect of the usrloc modules, especialy in the context of NAT
+		traversal - this raise mre problems since contacts from different 
+		phones of same users may overlap (if behind NATs with same
+		configuration) or the re-register contact of same phone may be
+		seen as a new one (due different binding via NAT).
+		</para>
+		<para>
+		The SIP RFC 3261 publishes a matching algorithm based only on the 
+		contact string with callid and cseq number extra checking (if callid
+		is the same, it must have a higher cseq number, otherwise invalid).
+		But as argumented above, this is not enough in NAT traversal context, 
+		so the &ser; implementation of contact machting offers more algorithms:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>contact based only</emphasis> - it strict RFC 3261
+				compiancy - the contact is matched as string and extra checked
+				via callid and cseg (if callid is the same, it must have a 
+				higher cseq number, otherwise invalid).
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>contact nad callid based</emphasis> - it an extension
+				of the first case - the contact and callid must matched as 
+				string; the cseg must be higher than the previous one - so be
+				careful how you deal with REGISTER retransmissions in this 
+				case.
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		How to control/select the contact maching algorithm, please see the
+		module parameter matching_mode at <xref linkend="matching-mode">.
+		</para>
+		</section>
 	</section>
+
 	<section>
 	<title>Dependencies</title>
 	<section>
@@ -365,7 +407,8 @@ modparam("usrloc", "timer_interval", 120)
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>mysql://openser:openserrw@localhost/openser</quote>.
+			Default value is 
+			<quote>mysql://openser:openserrw@localhost/openser</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -381,44 +424,49 @@ modparam("usrloc", "db_url", "mysql://username:password@localhost/openser")
 	<section>
 		<title><varname>db_mode</varname> (integer)</title>
 		<para>
-		The usrloc module can utilize database for persistent contact storage. If you use
-		database, your contacts will survive machine restarts or SW crashes. The
-		disadvantage is that accessing database can be very time consuming. Therefore,
-		usrloc module implements three database accessing modes:
+		The usrloc module can utilize database for persistent contact storage.
+		If you use database, your contacts will survive machine restarts or 
+		SW crashes. The disadvantage is that accessing database can be very 
+		time consuming. Therefore, usrloc module implements three database 
+		accessing modes:
 		</para>
 		<itemizedlist>
 		<listitem>
 			<para>
-			0 - This disables database completely. Only memory will be used. Contacts
-			will not survive restart. Use this value if you need a really fast usrloc
-			and contact persistence is not necessary or is provided by other means.
+			0 - This disables database completely. Only memory will be used. 
+			Contacts will not survive restart. Use this value if you need a 
+			really fast usrloc and contact persistence is not necessary or 
+			is provided by other means.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			1 - Write-Through scheme. All changes to usrloc are immediately reflected in
-			database too. This is very slow, but very reliable. Use this scheme if speed
-			is not your priority but need to make sure that no registered contacts will
-			be lost during crash or reboot.
+			1 - Write-Through scheme. All changes to usrloc are immediately 
+			reflected in database too. This is very slow, but very reliable. 
+			Use this scheme if speed is not your priority but need to make 
+			sure that no registered contacts will be lost during crash or 
+			reboot.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			2 - Write-Back scheme. This is a combination of previous two schemes. All
-			changes are made to memory and database synchronization is done in the
-			timer. The timer deletes all expired contacts and flushes all modified or
-			new contacts to database.  Use this scheme if you encounter high-load peaks
-			and want them to process as fast as possible. The mode will not help at all
-			if the load is high all the time.  Also, latency of this mode is much lower
-			than latency of mode 1, but slightly higher than latency of mode 0.
+			2 - Write-Back scheme. This is a combination of previous two 
+			schemes. All changes are made to memory and database 
+			synchronization is done in the timer. The timer deletes all 
+			expired contacts and flushes all modified or new contacts to 
+			database.  Use this scheme if you encounter high-load peaks 
+			and want them to process as fast as possible. The mode will 
+			not help at all if the load is high all the time.  Also, latency 
+			of this mode is much lower than latency of mode 1, but slightly 
+			higher than latency of mode 0.
 			</para>
 		</listitem>
 		</itemizedlist>
 		<warning>
 		<para>
-			In case of crash or restart contacts that are in memory only and haven't been
-			flushed yet will get lost. If you want minimize the risk, use shorter timer
-			interval.
+			In case of crash or restart contacts that are in memory only and 
+			haven't been flushed yet will get lost. If you want minimize the 
+			risk, use shorter timer interval.
 		</para>
 		</warning>
 		<para>
@@ -436,7 +484,45 @@ modparam("usrloc", "db_mode", 2)
 		</example>
 	</section>
 
+	<section id="matching-mode">
+		<title><varname>matching_mode</varname> (integer)</title>
+		<para>
+		What contact matching algorithm to be used. Refer to section 
+		<xref linkend="contact-matching-algs"> for the description of the 
+		algorithms.
+		</para>
+		<para>
+		The parameter may take the following values:
+		</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>0</emphasis> - CONTACT ONLY based matching
+				algorithm.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>1</emphasis> - CONTACT and CALLID based 
+				matching algorithm.
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is <emphasis>0 (CONTACT_ONLY)</emphasis>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>matching_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "matching_mode", 1)
+...
+</programlisting>
+		</example>
 	</section>
+
+	</section>
+
 	<section>
 	<title>Exported Functions</title>
 	<para>
