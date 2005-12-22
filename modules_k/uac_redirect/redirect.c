@@ -154,7 +154,7 @@ static int get_redirect_fixup(void** param, int param_no)
 			return E_UNSPEC;
 
 		pkg_free(*param);
-		*param=(void*)( (((unsigned short)maxt)<<8) | maxb);
+		*param=(void*)(long)( (((unsigned short)maxt)<<8) | maxb);
 
 	} else if (param_no==2) {
 		/* acc function loaded? */

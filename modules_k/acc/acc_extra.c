@@ -163,7 +163,7 @@ struct acc_extra *parse_acc_extra(char *extra_str)
 	return head;
 parse_error:
 	LOG(L_ERR,"ERROR:acc:parse_acc_extra: parse failed in <%s> "
-		"around position %d\n",extra_str, s-extra_str);
+		"around position %d\n",extra_str, (int)(long)(s-extra_str));
 error:
 	LOG(L_ERR,"acc:parse_acc_extra: error\n");
 	destroy_extras(head);
