@@ -250,7 +250,7 @@ int parse_tw_append( modparam_t type, void* val)
 		if (elem==0) {
 			if (lspec.type!=XL_MSG_BODY) {
 			LOG(L_ERR,"ERROR:tm:parse_tw_append: short spec '%.*s' unknown"
-					"(aceepted only body)\n",foo.s-s, s);
+					"(aceepted only body)\n",(int)(long)foo.s-s, s);
 				goto error;
 			}
 			app->add_body = 1;
