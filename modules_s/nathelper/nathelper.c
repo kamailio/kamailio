@@ -144,6 +144,18 @@
  * 2005-04-27	Support for doing natpinging using real SIP requests added.
  *		Requires tm module for doing its work. Old method (sending UDP
  *		with 4 zero bytes can be selected by specifying natping_method="null".
+ *
+ * 2005-12-23	Support for selecting particular RTP proxy node has been added.
+ *		In force_rtp_proxy() it can be done via new N modifier, followed
+ *		by the index (starting at 0) of the node in the rtpproxy_sock
+ *		parameter. For example, in the example above force_rtp_proxy("N1") will
+ *		will select node udp:1.2.3.4:3456. In unforce_rtp_proxy(), the same
+ *		can be done by specifying index as an argument directly, i.e.
+ *		unforce_rtp_proxy(1). 
+ *
+ *		Since nathelper is not transaction or call stateful, care should be
+ *		taken to ensure that force_rtp_proxy() in request path matches
+ *		force_rtp_proxy() in reply path, that is the same node is selected.
  */
 
 #include "nhelpr_funcs.h"
@@ -220,7 +232,8 @@ static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
 static char *gencookie();
 static int rtpp_test(struct rtpp_node*, int, int);
 static char *send_rtpp_command(struct rtpp_node*, struct iovec *, int);
-static int unforce_rtp_proxy_f(struct sip_msg *, char *, char *);
+static int unforce_rtp_proxy0_f(struct sip_msg *, char *, char *);
+static int unforce_rtp_proxy1_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy0_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy1_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy2_f(struct sip_msg *, char *, char *);
@@ -286,7 +299,8 @@ static int rtpp_node_count = 0;
 static cmd_export_t cmds[] = {
 	{"fix_nated_contact",  fix_nated_contact_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"fix_nated_sdp",      fix_nated_sdp_f,        1, fixup_str_1, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
-	{"unforce_rtp_proxy",  unforce_rtp_proxy_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
+	{"unforce_rtp_proxy",  unforce_rtp_proxy0_f,   0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
+	{"unforce_rtp_proxy",  unforce_rtp_proxy1_f,   1, fixup_str_1,   REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 	{"force_rtp_proxy",    force_rtp_proxy0_f,     0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"force_rtp_proxy",    force_rtp_proxy1_f,     1, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"force_rtp_proxy",    force_rtp_proxy2_f,     2, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
@@ -1419,7 +1433,7 @@ badproxy:
  * too expensive here.
  */
 static struct rtpp_node *
-select_rtpp_node(str callid, int do_test)
+select_rtpp_node(str callid, int do_test, int node_idx)
 {
 	unsigned sum, sumcut, weight_sum;
 	struct rtpp_node* node;
@@ -1427,8 +1441,32 @@ select_rtpp_node(str callid, int do_test)
 
 	/* Most popular case: 1 proxy, nothing to calculate */
 	if (rtpp_node_count == 1) {
+		if (node_idx > 0) {
+			LOG(L_ERR, "ERROR: select_rtpp_node: node index out or range\n");
+			return NULL;
+		}
 		node = rtpp_list.rn_first;
+		if (node->rn_disabled && node->rn_recheck_ticks <= get_ticks()) {
+			/* Try to enable if it's time to try. */
+			node->rn_disabled = rtpp_test(node, 1, 0);
+		}
 		return node->rn_disabled ? NULL : node;
+	}
+
+	if (node_idx != -1) {
+		for (node = rtpp_list.rn_first; node != NULL; node = node->rn_next) {
+			if (node_idx > 0) {
+				node_idx--;
+				continue;
+			}
+			if (node->rn_disabled && node->rn_recheck_ticks <= get_ticks()) {
+				/* Try to enable if it's time to try. */
+				node->rn_disabled = rtpp_test(node, 1, 0);
+			}
+			return node->rn_disabled ? NULL : node;
+		}
+		LOG(L_ERR, "ERROR: select_rtpp_node: node index out or range\n");
+		return NULL;
 	}
 
 	/* XXX Use quick-and-dirty hashing algo */
@@ -1440,10 +1478,9 @@ select_rtpp_node(str callid, int do_test)
 retry:
 	weight_sum = 0;
 	for (node = rtpp_list.rn_first; node != NULL; node = node->rn_next) {
-		if (node->rn_disabled) {
+		if (node->rn_disabled && node->rn_recheck_ticks <= get_ticks()) {
 			/* Try to enable if it's time to try. */
-			if (node->rn_recheck_ticks <= get_ticks())
-				node->rn_disabled = rtpp_test(node, 1, 0);
+			node->rn_disabled = rtpp_test(node, 1, 0);
 		}
 		if (!node->rn_disabled)
 			weight_sum += node->rn_weight;
@@ -1482,7 +1519,7 @@ found:
 }
 
 static int
-unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
+unforce_rtp_proxy_f(struct sip_msg* msg, int node_idx)
 {
 	str callid, from_tag, to_tag;
 	struct rtpp_node *node;
@@ -1504,7 +1541,7 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 	STR2IOVEC(callid, v[3]);
 	STR2IOVEC(from_tag, v[5]);
 	STR2IOVEC(to_tag, v[7]);
-	node = select_rtpp_node(callid, 1);
+	node = select_rtpp_node(callid, 1, node_idx);
 	if (!node) {
 		LOG(L_ERR, "ERROR: unforce_rtp_proxy: no available proxies\n");
 		return -1;
@@ -1512,6 +1549,22 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 	send_rtpp_command(node, v, (to_tag.len > 0) ? 8 : 6);
 
 	return 1;
+}
+
+static int
+unforce_rtp_proxy0_f(struct sip_msg* msg, char* str1, char* str2)
+{
+
+	return unforce_rtp_proxy_f(msg, -1);
+}
+
+static int
+unforce_rtp_proxy1_f(struct sip_msg* msg, char* str1, char* str2)
+{
+	int node_idx;
+
+	node_idx = (int)(long)str1;
+	return unforce_rtp_proxy_f(msg, node_idx);
 }
 
 /*
@@ -1570,7 +1623,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	str body, body1, oldport, oldip, newport, newip;
 	str callid, from_tag, to_tag, tmp;
 	int create, port, len, asymmetric, flookup, argc, proxied, real;
-	int oidx, pf, pf1, force;
+	int oidx, pf, pf1, force, node_idx;
 	char opts[16];
 	char *cp, *cp1;
 	char  *cpend, *next;
@@ -1602,8 +1655,13 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	v[1].iov_base=opts;
 	asymmetric = flookup = force = real = 0;
 	oidx = 1;
+	node_idx = -1;
 	for (cp = str1; *cp != '\0'; cp++) {
 		switch (*cp) {
+		case ' ':
+		case '\t':
+			break;
+
 		case 'a':
 		case 'A':
 			opts[oidx++] = 'A';
@@ -1634,6 +1692,20 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		case 'r':
 		case 'R':
 			real = 1;
+			break;
+
+		case 'n':
+		case 'N':
+			cp++;
+			for (len = 0; isdigit(cp[len]); len++)
+				continue;
+			if (len == 0) {
+				LOG(L_ERR, "ERROR: force_rtp_proxy2: non-negative integer"
+				    "should follow N option\n");
+				return -1;
+			}
+			node_idx = strtoul(cp, NULL, 10);
+			cp += len - 1;
 			break;
 
 		default:
@@ -1791,7 +1863,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			}
 			STR2IOVEC(to_tag, v[13]);
 			do {
-				node = select_rtpp_node(callid, 1);
+				node = select_rtpp_node(callid, 1, node_idx);
 				if (!node) {
 					LOG(L_ERR, "ERROR: force_rtp_proxy2: no available proxies\n");
 					return -1;
