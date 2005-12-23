@@ -221,6 +221,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 	static str *received;
 	static int received_found;
 	static unsigned int allowed, allow_parsed;
+	static struct sip_msg *m = 0;
 	int_str rcv_avp;
 	int_str val;
 
@@ -260,6 +261,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 
 		allow_parsed = 0; /* not parsed yet */
 		received_found = 0; /* not found yet */
+		m = _m; /* remember the message */
 	}
 
 	if(_c!=0) {
@@ -288,8 +290,8 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		} else {
 			/* check on Allow hdr */
 			if (allow_parsed == 0) {
-				if (parse_allow( _m ) != -1) {
-					allowed = get_allow_methods(_m);
+				if (m && parse_allow( m ) != -1) {
+					allowed = get_allow_methods(m);
 				} else {
 					allowed = ALL_METHODS;
 				}
