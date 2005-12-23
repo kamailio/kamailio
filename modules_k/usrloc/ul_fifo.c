@@ -151,11 +151,6 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c,
 	get_act_time();
 
 	res = get_urecord(_d, _u, &r);
-	if (res < 0) {
-		LOG(L_ERR, "fifo_add_contact(): Error while getting record\n");
-		goto error0;
-	}
-
 	if (res >  0) { /* Record not found */
 		if (insert_urecord(_d, _u, &r) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while creating "
@@ -180,7 +175,7 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c,
 			goto error1;
 		}
 	} else {
-		if ( new_ucontact( r->domain, &r->aor, _c, _ci)==0 ) {
+		if ( insert_ucontact( r, _c, _ci, &c) < 0 ) {
 			LOG(L_ERR, "fifo_add_contact(): Error while inserting contact\n");
 			goto error1;
 		}
