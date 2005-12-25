@@ -164,6 +164,14 @@ static inline void parse_uri_class(param_hooks_t* _h, param_t* _p)
 			_h->uri.dstport = _p;
 		}
 		break;
+	case 'f':
+	case 'F':
+		if ((_p->name.len == 4) &&
+		    (!strncasecmp(_p->name.s + 1, "tag", 3))) {
+			_p->type = P_FTAG;
+			_h->uri.ftag = _p;
+		}
+		break;
 	}
 
 }
@@ -499,6 +507,7 @@ static inline void print_param(FILE* _o, param_t* _p)
 	case P_DSTIP:     type = "P_DSTIP";     break;
 	case P_DSTPORT:   type = "P_DSTPORT";   break;
 	case P_INSTANCE:  type = "P_INSTANCE";  break;
+	case P_FTAG:      type = "P_FTAG";      break;
 	default:          type = "UNKNOWN";     break;
 	}
 	

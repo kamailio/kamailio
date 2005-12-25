@@ -56,6 +56,7 @@ typedef enum ptype {
 	P_DSTIP,     /* URI: dstip parameter */
 	P_DSTPORT,   /* URi: dstport parameter */
 	P_INSTANCE,  /* Contact: sip.instance parameter */
+	P_FTAG       /* URI: ftag parameter */
 } ptype_t;
 
 
@@ -104,6 +105,7 @@ struct uri_hooks {
 	struct param* ttl;       /* ttl parameter */
 	struct param* dstip;     /* Destination IP */
 	struct param* dstport;   /* Destination port */
+	struct param* ftag;      /* From tag in the original request */
 };
 
 
