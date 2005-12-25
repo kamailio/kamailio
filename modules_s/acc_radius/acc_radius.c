@@ -49,6 +49,9 @@
 
 #include "../tm/tm_load.h"
 
+#include "../../parser/parse_rr.h"
+#include "../../trim.h"
+
 /*
  * FIXME:
  * - Quote attribute values properly
@@ -111,6 +114,7 @@ static char* avps = "$^"; /* non-sense which never matches; */
 
 static char *radius_config = "/usr/local/etc/radiusclient-ng/radiusclient.conf";
 static int service_type = -1;
+static int swap_dir = 0;
 
 static void *rh;
 static struct attr attrs[A_MAX];
@@ -137,6 +141,7 @@ static param_export_t params[] = {
 	{"log_flag",		INT_PARAM, &log_flag	        },
 	{"log_missed_flag",	INT_PARAM, &log_missed_flag     },
 	{"service_type", 	INT_PARAM, &service_type        },
+	{"swap_direction",      INT_PARAM, &swap_dir            },
 	{0, 0, 0}
 };
 
@@ -157,6 +162,93 @@ struct module_exports exports= {
 static inline int skip_cancel(struct sip_msg *msg)
 {
         return (msg->REQ_METHOD == METHOD_CANCEL) && report_cancels == 0;
+}
+
+static int check_ftag(struct sip_msg* msg, str* uri)
+{
+	param_hooks_t hooks;
+	param_t* params;
+	char* semi;
+	struct to_body* from;
+	str t;
+
+	t = *uri;
+	params = 0;
+	semi = q_memchr(t.s, ';', t.len);
+	if (!semi) {
+		DBG("No ftag parameter found\n");
+		return -1;
+	}
+	
+	t.len -= semi - uri->s + 1;
+	t.s = semi + 1;
+	trim_leading(&t);
+	
+	if (parse_params(&t, CLASS_URI, &hooks, &params) < 0) {
+		ERR("Error while parsing parameters\n");
+		return -1;
+	}
+
+	if (!hooks.uri.ftag) {
+		DBG("No ftag parameter found\n");
+		goto err;
+	}
+
+	from = get_from(msg);
+
+	if (!from || !from->tag_value.len || !from->tag_value.s) {
+		DBG("No from tag parameter found\n");
+		goto err;
+	}
+
+	if (from->tag_value.len == hooks.uri.ftag->body.len &&
+	    !strncmp(from->tag_value.s, hooks.uri.ftag->body.s, hooks.uri.ftag->body.len)) {
+		DBG("Route ftag and From tag are same\n");
+		free_params(params);
+		return 0;
+	} else {
+		DBG("Route ftag and From tag are NOT same\n");
+		free_params(params);
+		return 1;
+	}
+
+ err:
+	if (params) free_params(params);
+	return -1;
+}
+
+static int get_direction(struct sip_msg* msg)
+{
+	int ret;
+	if (parse_orig_ruri(msg) < 0) {
+		return -1;
+	}
+
+	if (!msg->parsed_orig_ruri_ok) {
+		ERR("Error while parsing original Request-URI\n");
+		return -1;
+	}
+
+	ret = check_self(&msg->parsed_orig_ruri.host, 
+			 msg->parsed_orig_ruri.port_no ? msg->parsed_orig_ruri.port_no : SIP_PORT, 0);/* match all protos*/
+	if (ret < 0) return -1;
+	if (ret > 0) {
+		     /* Route is in ruri */
+		return check_ftag(msg, &msg->first_line.u.request.uri);
+	} else {
+		if (msg->route) {
+			if (parse_rr(msg->route) < 0) {
+				ERR("Error while parsing Route HF\n");
+				return -1;
+			}
+		        ret = check_ftag(msg, &((rr_t*)msg->route->parsed)->nameaddr.uri);
+			if (msg->route->parsed) free_rr((rr_t**)&msg->route->parsed);
+			return ret;
+		} else {
+			DBG("No Route headers found\n");
+			return -1;
+		}
+	}
 }
 
 
@@ -216,7 +308,7 @@ static inline void preparse_req(struct sip_msg *rq)
 	      * here even if we account them, because the authentication function
 	      * will do it before us and if not then we will account n/a.
 	      */
-	parse_headers(rq, HDR_CALLID_F | HDR_FROM_F | HDR_TO_F | HDR_CSEQ_F, 0 );
+	parse_headers(rq, HDR_CALLID_F | HDR_FROM_F | HDR_TO_F | HDR_CSEQ_F | HDR_ROUTE_F, 0 );
 	parse_from_header(rq);
 }
 
@@ -313,8 +405,10 @@ static int fmt2rad(char *fmt,
 	str val, *cr;
 	struct cseq_body *cseq;
 	struct attr* attr;
+	int dir;
 
 	cnt = 0;
+	dir = -2;
 
 	     /* we don't care about parsing here; either the function
 	      * was called from script, in which case the wrapping function
@@ -427,9 +521,17 @@ static int fmt2rad(char *fmt,
 			break;
 
 		case 'F': /* from_uri */
-			if (rq->from && (from = get_from(rq)) && from->uri.len) {
-				attr = &attrs[A_CALLING_STATION_ID];
-				val = from->uri;
+			if (swap_dir && dir == -2) dir = get_direction(rq);
+			if (dir <= 0) {
+				if (rq->from && (from = get_from(rq)) && from->uri.len) {
+					attr = &attrs[A_CALLING_STATION_ID];
+					val = from->uri;
+				}
+			} else {
+				if (rq->to && (pto = get_to(rq)) && pto->uri.len) {
+					attr = &attrs[A_CALLING_STATION_ID];
+					val = pto->uri;
+				}
 			}
 			break;
 
@@ -464,9 +566,17 @@ static int fmt2rad(char *fmt,
 			break;
 
 		case 'T': /* to_uri */
-			if (rq->to && (pto = get_to(rq)) && pto->uri.len) {
-				attr = &attrs[A_CALLED_STATION_ID];
-				val = pto->uri;
+			if (swap_dir && dir == -2) dir = get_direction(rq);
+			if (dir <= 0) {
+				if (rq->to && (pto = get_to(rq)) && pto->uri.len) {
+					attr = &attrs[A_CALLED_STATION_ID];
+					val = pto->uri;
+				}
+			} else {
+				if (rq->from && (from = get_from(rq)) && from->uri.len) {
+					attr = &attrs[A_CALLED_STATION_ID];
+					val = from->uri;
+				}
 			}
 			break;
 
