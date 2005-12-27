@@ -28,6 +28,7 @@ INSERT INTO version (table_name, table_version) VALUES ('presentity_contact', '1
 INSERT INTO version (table_name, table_version) VALUES ('watcherinfo', '1');
 INSERT INTO version (table_name, table_version) VALUES ('i18n', '1');
 INSERT INTO version (table_name, table_version) VALUES ('pdt', '1');
+INSERT INTO version (table_name, table_version) VALUES ('customers', '1');
 
 CREATE TABLE acc (
     id SERIAL NOT NULL,
@@ -534,5 +535,14 @@ CREATE TABLE pdt (
     prefix VARCHAR(32) NOT NULL,
     domain VARCHAR(255) NOT NULL,
     CONSTRAINT pdt_idx UNIQUE (prefix)
+);
+
+CREATE TABLE customers (
+    cid SERIAL NOT NULL,
+    name VARCHAR(128) NOT NULL,
+    address VARCHAR(255),
+    phone VARCHAR(64),
+    email VARCHAR(255),
+    CONSTRAINT cu_idx UNIQUE (cid)
 );
 

@@ -80,6 +80,11 @@
 
     <xi:include href="pdt.xml"/>
 
+
+    <!-- Customers -->
+    <xi:include href="customers.xml"/>
+
+
     <!-- Include extra definitions if found, it is not
          an error if they are not present, although it
          would produce a warning

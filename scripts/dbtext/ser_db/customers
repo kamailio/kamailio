@@ -1,0 +1,1 @@
+cid(int,auto) name(str) address(str,null) phone(str,null) email(str,null) 

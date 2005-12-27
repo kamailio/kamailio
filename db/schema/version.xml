@@ -123,4 +123,10 @@
 	<value col="tn"><xi:include href="pdt.xml" xpointer="xpointer(table/name/text())"/></value>
 	<value col="tv"><xi:include href="pdt.xml" xpointer="xpointer(table/version/text())"/></value>
     </row>
+
+    <row>
+        <value col="tn"><xi:include href="customers.xml" xpointer="xpointer(table/name/text())"/></value>
+        <value col="tv"><xi:include href="customers.xml" xpointer="xpointer(table/version/text())"/></value>
+    </row>
+			
 </table>
