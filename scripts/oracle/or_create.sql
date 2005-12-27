@@ -8,7 +8,7 @@ INSERT INTO version (table_name, table_version) VALUES ('missed_calls', '3');
 INSERT INTO version (table_name, table_version) VALUES ('location', '8');
 INSERT INTO version (table_name, table_version) VALUES ('credentials', '6');
 INSERT INTO version (table_name, table_version) VALUES ('domain', '2');
-INSERT INTO version (table_name, table_version) VALUES ('attr_types', '1');
+INSERT INTO version (table_name, table_version) VALUES ('attr_types', '2');
 INSERT INTO version (table_name, table_version) VALUES ('global_attrs', '1');
 INSERT INTO version (table_name, table_version) VALUES ('domain_attrs', '1');
 INSERT INTO version (table_name, table_version) VALUES ('user_attrs', '3');
@@ -103,17 +103,41 @@ CREATE TABLE attr_types (
     name string(32) NOT NULL,
     rich_type string(32) NOT NULL DEFAULT 'string',
     raw_type int NOT NULL DEFAULT '2',
-    type_spec string(255) DEFAULT NULL
+    type_spec string(255) DEFAULT NULL,
+    description string(255) DEFAULT NULL,
+    default_flags int NOT NULL DEFAULT '0',
+    flags int NOT NULL DEFAULT '0',
+    priority int NOT NULL DEFAULT '0',
+    ordering int NOT NULL DEFAULT '0'
 );
 
-INSERT INTO attr_types (name, raw_type) VALUES ('uid', '2');
-INSERT INTO attr_types (name, raw_type) VALUES ('did', '2');
-INSERT INTO attr_types (name, raw_type) VALUES ('digest_realm', '2');
-INSERT INTO attr_types (name, raw_type) VALUES ('rpid', '2');
-INSERT INTO attr_types (name, raw_type) VALUES ('fr_timer', '0');
-INSERT INTO attr_types (name, raw_type) VALUES ('fr_inv_timer', '2');
-INSERT INTO attr_types (name, raw_type) VALUES ('flags', '0');
-INSERT INTO attr_types (name, raw_type) VALUES ('gflags', '0');
+INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('uid', '2', '1');
+INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('did', '2', '1');
+INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('digest_realm', '2', '33');
+INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('rpid', '2', '1');
+INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('fr_timer', '0', '1');
+INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('fr_inv_timer', '2', '1');
+INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('flags', '0', '1');
+INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('gflags', '0', '1');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_fname', '2', 'string', 'first name', '32', '2', '256', '10');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_lname', '2', 'string', 'last name', '32', '2', '256', '20');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_email', '2', 'email_adr', 'email', '32', '2', '256', '30');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_timezone', '2', 'timezone', 'timezone', '32', '2', '1073807616', '60');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_allow_find', '0', 'boolean', 'allow find me by other users', '32', '0', '256', '110');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('lang', '2', 'string', 'language', '33', '0', '1073807360', '50');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_show_status', '0', 'boolean', 'show whether I am online to other users', '32', '0', '1073742080', '100');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_admin', '2', 'string', 'admin of domain', '32', '1', '0');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_owner', '2', 'string', 'owner of domain', '32', '0', '0');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_domain_default_flags', '0', 'int', 'default flags for domain', '32', '0', '1073741824');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_deleted_ts', '0', 'int', 'deleted timestamp', '32', '0', '0');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority, ordering) VALUES ('sw_phone', '2', 'string', 'phone', '32', '2', '256', '40');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_acl_control', '2', 'string', 'acl control', '32', '1', '0');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_credential_default_flags', '0', 'int', 'default flags for credentials', '32', '0', '1073741824');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_uri_default_flags', '0', 'int', 'default flags for uri', '32', '0', '1073741824');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_is_admin', '0', 'boolean', 'admin privilege', '32', '0', '0');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_is_hostmaster', '0', 'boolean', 'hostmaster privilege', '32', '0', '0');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_confirmation', '2', 'string', 'registration confirmation', '32', '0', '0');
+INSERT INTO attr_types (name, raw_type, rich_type, description, default_flags, flags, priority) VALUES ('sw_pending_ts', '2', 'string', 'registration timestamp', '32', '0', '0');
 
 CREATE TABLE global_attrs (
     name string(32) NOT NULL,
