@@ -134,6 +134,58 @@ if(is_gflag("4"))
 	</section>
 
 	</section>
+
+        <section>
+        <title><acronym>FIFO</acronym> Commands</title>
+        <section>
+                <title><function moreinfo="none">set_gflag</function></title>
+                <para>
+		Set the value of a flag to 1. The function accepts one 
+		parameter which is the number of the flag to be set.
+                </para>
+		<example>
+		<title><function moreinfo="none">set_gflag</function> usage</title>
+		<programlisting format="linespecific">
+...
+$ openserctl fifo set_gflag 1
+...
+</programlisting>
+		</example>
+
+        </section>
+        <section>
+                <title><function moreinfo="none">reset_gflag</function></title>
+                <para>
+		Reset the value of a flag to 0. The function accepts 
+		one parameter which is the number of the flag to be reset.
+                </para>
+		<example>
+		<title><function moreinfo="none">reset_gflag</function> usage</title>
+		<programlisting format="linespecific">
+...
+$ openserctl fifo reset_gflag 1
+...
+</programlisting>
+		</example>
+        </section>
+        <section>
+                <title><function moreinfo="none">is_gflag</function></title>
+                <para>
+		Return the status of a flag. The FIFO function would return TRUE 
+		if the flag is set and FALSE if it is not set. The only 
+		parameter of this function is the number of the flag.
+                </para>
+		<example>
+		<title><function moreinfo="none">set_gflag</function> usage</title>
+		<programlisting format="linespecific">
+...
+$ openserctl fifo is_gflag 1
+...
+</programlisting>
+		</example>
+        </section>
+        </section>
+ 
 </chapter>
 
 <!-- Keep this element at the end of the file
