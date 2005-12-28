@@ -111,6 +111,7 @@
     <index>
 	<name>upt_idx1</name>
 	<colref linkend="at.name"/>
+	<unique/>
     </index>
 
     <row><value col="at.name">uid</value>         <value col="at.type">2</value><value col="at.d_flags">1</value></row>
@@ -121,11 +122,18 @@
     <row><value col="at.name">fr_inv_timer</value><value col="at.type">2</value><value col="at.d_flags">1</value></row>
     <row><value col="at.name">flags</value>       <value col="at.type">0</value><value col="at.d_flags">1</value></row>
     <row><value col="at.name">gflags</value>      <value col="at.type">0</value><value col="at.d_flags">1</value></row>
-
+    
+    <row><value col="at.name">digest_realm</value>
+         <value col="at.type">2</value>
+	 <value col="at.desc">digest realm</value>
+	 <value col="at.d_flags">33</value>
+	 <value col="at.prior">65536</value>
+    </row>
+    
     <row><value col="at.name">sw_fname</value>      
          <value col="at.type">2</value>
          <value col="at.rich_t">string</value>
-         <value col="at.desc">first name</value>
+         <value col="at.desc">@ff_first_name</value>
          <value col="at.d_flags">32</value>
          <value col="at.flags">2</value>
          <value col="at.prior">256</value>
@@ -134,7 +142,7 @@
     <row><value col="at.name">sw_lname</value>      
          <value col="at.type">2</value>
          <value col="at.rich_t">string</value>
-         <value col="at.desc">last name</value>
+         <value col="at.desc">@ff_last_name</value>
          <value col="at.d_flags">32</value>
          <value col="at.flags">2</value>
          <value col="at.prior">256</value>
@@ -143,7 +151,7 @@
     <row><value col="at.name">sw_email</value>      
          <value col="at.type">2</value>
          <value col="at.rich_t">email_adr</value>
-         <value col="at.desc">email</value>
+         <value col="at.desc">@ff_email</value>
          <value col="at.d_flags">32</value>
          <value col="at.flags">2</value>
          <value col="at.prior">256</value>
@@ -152,7 +160,7 @@
     <row><value col="at.name">sw_timezone</value>   
          <value col="at.type">2</value>
          <value col="at.rich_t">timezone</value>
-         <value col="at.desc">timezone</value>
+         <value col="at.desc">@ff_timezone</value>
          <value col="at.d_flags">32</value>
          <value col="at.flags">2</value>
          <value col="at.prior">1073807616</value>
@@ -161,7 +169,7 @@
     <row><value col="at.name">sw_allow_find</value>      
          <value col="at.type">0</value>
          <value col="at.rich_t">boolean</value>
-         <value col="at.desc">allow find me by other users</value>
+         <value col="at.desc">@ff_allow_lookup_for_me</value>
          <value col="at.d_flags">32</value>
          <value col="at.flags">0</value>
          <value col="at.prior">256</value>
@@ -170,7 +178,7 @@
     <row><value col="at.name">lang</value>      
          <value col="at.type">2</value>
          <value col="at.rich_t">string</value>
-         <value col="at.desc">language</value>
+         <value col="at.desc">@ff_language</value>
          <value col="at.d_flags">33</value>
          <value col="at.flags">0</value>
          <value col="at.prior">1073807360</value>
@@ -179,7 +187,7 @@
     <row><value col="at.name">sw_show_status</value>      
          <value col="at.type">0</value>
          <value col="at.rich_t">boolean</value>
-         <value col="at.desc">show whether I am online to other users</value>
+         <value col="at.desc">@ff_status_visibility</value>
          <value col="at.d_flags">32</value>
          <value col="at.flags">0</value>
          <value col="at.prior">1073742080</value>
@@ -204,7 +212,7 @@
     <row><value col="at.name">sw_domain_default_flags</value>      
          <value col="at.type">0</value>
          <value col="at.rich_t">int</value>
-         <value col="at.desc">default flags for domain</value>
+         <value col="at.desc">@ff_domain_def_f</value>
          <value col="at.d_flags">32</value>
          <value col="at.flags">0</value>
          <value col="at.prior">1073741824</value>
@@ -220,7 +228,7 @@
     <row><value col="at.name">sw_phone</value>      
          <value col="at.type">2</value>
          <value col="at.rich_t">string</value>
-         <value col="at.desc">phone</value>
+         <value col="at.desc">@ff_phone</value>
          <value col="at.d_flags">32</value>
          <value col="at.flags">2</value>
          <value col="at.prior">256</value>
@@ -237,7 +245,7 @@
     <row><value col="at.name">sw_credential_default_flags</value>
          <value col="at.type">0</value>
          <value col="at.rich_t">int</value>
-         <value col="at.desc">default flags for credentials</value>
+         <value col="at.desc">@ff_credential_def_f</value>
          <value col="at.d_flags">32</value>
          <value col="at.flags">0</value>
          <value col="at.prior">1073741824</value>
@@ -245,7 +253,7 @@
     <row><value col="at.name">sw_uri_default_flags</value>      
          <value col="at.type">0</value>
          <value col="at.rich_t">int</value>
-         <value col="at.desc">default flags for uri</value>
+         <value col="at.desc">@ff_uri_def_f</value>
          <value col="at.d_flags">32</value>
          <value col="at.flags">0</value>
          <value col="at.prior">1073741824</value>
