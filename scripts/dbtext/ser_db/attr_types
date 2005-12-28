@@ -1,7 +1,6 @@
 name(str) rich_type(str) raw_type(int) type_spec(str,null) description(str,null) default_flags(int) flags(int) priority(int) ordering(int) 
 uid:string:2:::1:0:0:0
 did:string:2:::1:0:0:0
-digest_realm:string:2:::33:0:0:0
 rpid:string:2:::1:0:0:0
 fr_timer:string:0:::1:0:0:0
 fr_inv_timer:string:2:::1:0:0:0

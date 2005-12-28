@@ -116,7 +116,6 @@
 
     <row><value col="at.name">uid</value>         <value col="at.type">2</value><value col="at.d_flags">1</value></row>
     <row><value col="at.name">did</value>         <value col="at.type">2</value><value col="at.d_flags">1</value></row>
-    <row><value col="at.name">digest_realm</value><value col="at.type">2</value><value col="at.d_flags">33</value></row>
     <row><value col="at.name">rpid</value>        <value col="at.type">2</value><value col="at.d_flags">1</value></row>
     <row><value col="at.name">fr_timer</value>    <value col="at.type">0</value><value col="at.d_flags">1</value></row>
     <row><value col="at.name">fr_inv_timer</value><value col="at.type">2</value><value col="at.d_flags">1</value></row>

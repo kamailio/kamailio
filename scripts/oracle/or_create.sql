@@ -115,7 +115,6 @@ CREATE TABLE attr_types (
 
 INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('uid', '2', '1');
 INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('did', '2', '1');
-INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('digest_realm', '2', '33');
 INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('rpid', '2', '1');
 INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('fr_timer', '0', '1');
 INSERT INTO attr_types (name, raw_type, default_flags) VALUES ('fr_inv_timer', '2', '1');
