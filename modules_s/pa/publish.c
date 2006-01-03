@@ -51,7 +51,6 @@
 #include "reply.h"
 #include "subscribe.h"
 #include "publish.h"
-#include "pidf.h"
 #include "common.h"
 #include "../../data_lump_rpl.h"
 #include "../../parser/parse_sipifmatch.h"

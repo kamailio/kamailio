@@ -7,11 +7,28 @@
 #include "qsa_interface.h"
 #include "../../rpc.h"
 #include "pa_mod.h"
+#include <cds/logger.h>
 
 extern dlist_t* root; /* FIXME ugly !!!!! */
 
-static void trace_tuple(presence_tuple_t *t, void* st) {
+#define rpc_lf(rpc, c)	rpc->add(c, "s","")
+
+static void trace_tuple(presence_tuple_t *t, rpc_t* rpc, void* c) {
 	presence_note_t *n;
+	
+	rpc->printf(c, "    %.*s contact=\'%.*s\' exp=%u status=%d published=%d (id=%.*s)", 
+				FMT_STR(t->id), FMT_STR(t->contact), t->expires - time(NULL),
+				(int)t->state, t->is_published, FMT_STR(t->published_id));
+	rpc_lf(rpc, c);
+	
+	rpc->printf(c, "      notes:");
+	n = t->notes;
+	while (n) {
+		rpc->printf(c, " \'%.*s\'", FMT_STR(n->value));
+		n = n->next;
+	}
+	rpc->printf(c, "");
+	rpc_lf(rpc, c);
 }
 
 static void trace_presentity(presentity_t *p, rpc_t* rpc, void* c)
@@ -20,32 +37,57 @@ static void trace_presentity(presentity_t *p, rpc_t* rpc, void* c)
 	presence_tuple_t *t;
 	internal_pa_subscription_t *iw;
 	pa_presence_note_t *n;
-
+	
+	rpc->printf(c, "* %.*s", FMT_STR(p->uri));
+	rpc_lf(rpc, c);
+	
+	rpc->printf(c, " - tuples:");
+	rpc_lf(rpc, c);
 	t = p->tuples;
 	while (t) {		
-		trace_tuple(t, 0);
+		trace_tuple(t, rpc, c);
 		t = t->next;
 	}
 	
+	rpc->printf(c, " - watchers:");
+	rpc_lf(rpc, c);
 	w = p->watchers;
 	while (w) {
+		rpc->printf(c, "    %.*s status=%d exp=%u", 
+				FMT_STR(w->uri), (int)w->status, w->expires - time(NULL));
+		rpc_lf(rpc, c);
 		w = w->next;
 	}
 	
+	rpc->printf(c, " - winfo watchers:");
+	rpc_lf(rpc, c);
 	w = p->winfo_watchers;
 	while (w) {
+		rpc->printf(c, "    %.*s status=%d exp=%u", 
+				FMT_STR(w->uri), (int)w->status, w->expires - time(NULL));
+		rpc_lf(rpc, c);
 		w = w->next;
 	}
 	
+	rpc->printf(c, " - internal watchers:");
+	rpc_lf(rpc, c);
 	iw = p->first_qsa_subscription;
 	while (iw) {
+		rpc->printf(c, "     %.*s %d", 
+				FMT_STR(iw->subscription->subscriber_id), (int)iw->status);
+		rpc_lf(rpc, c);
 		iw = iw->next;
 	}
 	
+	rpc->printf(c, " - notes:");
+	rpc_lf(rpc, c);
 	n = p->notes;
 	while (n) {
+		rpc->printf(c, "     %.*s (%.*s) exp=%s", 
+				FMT_STR(n->note), FMT_STR(n->lang), ctime(&n->expires));
 		n = n->next;
 	}
+	rpc_lf(rpc, c);
 }
 
 static void trace_dlist(dlist_t *dl, rpc_t* rpc, void* c)
@@ -56,13 +98,14 @@ static void trace_dlist(dlist_t *dl, rpc_t* rpc, void* c)
 	if (!dl->d) return;
 
 	lock_pdomain(dl->d);
-
-	rpc->add(c, "S", dl->d->name->len, dl->d->name->s);
+	
+	rpc->add(c, "S", dl->d->name);
 	p = dl->d->first;
 	while (p) {
 		trace_presentity(p, rpc, c);
 		p = p->next;
 	}
+	
 	unlock_pdomain(dl->d);
 }
 
@@ -75,12 +118,15 @@ static const char* rpc_trace_doc[] = {
 static void rpc_trace(rpc_t* rpc, void* c)
 {
 	dlist_t *dl;
+
+	rpc->send(c);
 	
 	dl = root;
 	while (dl) {
 		trace_dlist(dl, rpc, c);
 		dl = dl->next;
 	}
+	
 }
 
 static int grant_watcher(presentity_t *p, watcher_t *w)

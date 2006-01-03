@@ -78,12 +78,6 @@ void free_pdomain(pdomain_t* _d);
 
 
 /*
- * Just for debugging
- */
-void print_pdomain(FILE* _f, pdomain_t* _d);
-
-
-/*
  * Timer handler for given domain
  */
 int timer_pdomain(pdomain_t* _d);

@@ -69,9 +69,8 @@ typedef struct {
 static event_mimetypes_t event_package_mimetypes[] = {
 	{ EVENT_PRESENCE, {
 			MIMETYPE(APPLICATION,PIDFXML), 
-#ifdef SUBTYPE_XML_MSRTC_PIDF
-		    MIMETYPE(APPLICATION,XML_MSRTC_PIDF),
-#endif
+/*		    MIMETYPE(APPLICATION,XML_MSRTC_PIDF), */
+/*		    MIMETYPE(TEXT,XML_MSRTC_PIDF), */
 			MIMETYPE(APPLICATION,CPIM_PIDFXML), 
 		    MIMETYPE(APPLICATION,XPIDFXML), 
 			MIMETYPE(APPLICATION,LPIDFXML), 
@@ -79,11 +78,9 @@ static event_mimetypes_t event_package_mimetypes[] = {
 	{ EVENT_PRESENCE_WINFO, { 
 			MIMETYPE(APPLICATION,WATCHERINFOXML), 
 			0 } },
-#ifdef EVENT_SIP_PROFILE
-	{ EVENT_SIP_PROFILE, { 
+/*	{ EVENT_SIP_PROFILE, { 
 			MIMETYPE(MESSAGE,EXTERNAL_BODY), 
-			0 } },
-#endif
+			0 } }, */
 /*	{ EVENT_XCAP_CHANGE, { MIMETYPE(APPLICATION,WINFO+XML), 0 } }, */
 	{ -1, { 0 }},
 };
@@ -643,7 +640,7 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
  */
 #define MAX_AOR_LEN 256
 
-int pa_extract_aor(str* _uri, str* _a)
+static int pa_extract_aor(str* _uri, str* _a)
 {
 	static char aor_buf[MAX_AOR_LEN];
 	struct sip_uri puri;
@@ -864,6 +861,8 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	return -1;
 }
 
+/* FIXME: remove */
+#if 0
 
 /*
  * Returns 1 if subscription exists and -1 if not
@@ -926,16 +925,4 @@ int existing_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	return 0;
 }
 
-
-/*
- * Returns 1 if possibly a user agent can handle SUBSCRIBE
- * itself, 0 if it cannot for sure
- */
-int pua_exists(struct sip_msg* _m, char* _domain, char* _s2)
-{
-
-	return 0;
-}
-
-
-
+#endif

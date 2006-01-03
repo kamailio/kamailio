@@ -68,12 +68,6 @@ void free_all_pdomains(void);
 
 
 /*
- * Just for debugging
- */
-void print_all_pdomains(FILE* _f);
-
-
-/*
  * Called from timer
  */
 int timer_all_pdomains(void);

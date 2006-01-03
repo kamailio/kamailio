@@ -57,6 +57,7 @@ typedef enum watcher_status {
 } watcher_status_t;
 
 extern str watcher_status_names[];
+extern str watcher_event_names[];
 
 typedef enum watcher_event {
 	WE_SUBSCRIBE = 0,
@@ -91,7 +92,6 @@ typedef struct watcher {
 	watcher_status_t status; /* status of subscription */
 	struct watcher* next;   /* Next watcher in the list */
 } watcher_t;
- 
 
 /*
  * Convert watcher status name to enum
@@ -125,13 +125,6 @@ int db_remove_watcher(struct presentity *_p, watcher_t *w);
  */
 void free_watcher(watcher_t* _w);
 
-
-/*
- * Print contact, for debugging purposes only
- */
-void print_watcher(FILE* _f, watcher_t* _w);
-
-
 /*
  * Update expires value of a watcher
  */
@@ -142,37 +135,6 @@ int update_watcher(struct presentity *p, watcher_t* _w, time_t _e);
  */
 struct presentity;
 int db_read_watcherinfo(struct presentity *_p, db_con_t* db);
-
-
-
-/*
- * Add a watcher information to a winfo document
- */
-int winfo_add_watcher(str* _b, int _l, watcher_t *watcher);
-
-struct _internal_pa_subscription_t;
-typedef struct _internal_pa_subscription_t internal_pa_subscription_t;
-
-int winfo_add_internal_watcher(str* _b, int _l, internal_pa_subscription_t *iwatcher);
-	
-/*
- * Create start of winfo document
- */
-int start_winfo_doc(str* _b, int _l, struct watcher *w);
-
-/*
- * Start a resource in a winfo document
- */
-int winfo_start_resource(str* _b, int _l, str* _uri, watcher_t *watcher);
-/*
- * End a resource in a winfo document
- */
-int winfo_end_resource(str *_b, int _l);
-
-/*
- * End a winfo document
- */
-int end_winfo_doc(str* _b, int _l);
 
 /** Returns 1 if givn watcher is in one of terminated statuses 
  * and should be deleted */
@@ -185,5 +147,6 @@ int is_watcher_authorized(watcher_t *w);
 void set_watcher_terminated_status(watcher_t *w);
 
 int verify_event_package(int et);
+const char *event_package2str(int et);
 
 #endif /* WATCHER_H */

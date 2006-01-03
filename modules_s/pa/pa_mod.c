@@ -43,7 +43,6 @@
 #include "dlist.h"
 #include "location.h"
 #include "pa_mod.h"
-#include "pidf.h"
 #include "watcher.h"
 #include "rpc.h"
 #include "qsa_interface.h"
@@ -109,13 +108,18 @@ int pa_pidf_priority = 1;
  * Exported functions
  */
 static cmd_export_t cmds[]={
-	{"pa_handle_registration", pa_handle_registration,   1, subscribe_fixup, REQUEST_ROUTE },
 	{"handle_subscription",   handle_subscription,   1, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"handle_publish",        handle_publish,        1, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"existing_subscription", existing_subscription, 1, subscribe_fixup, REQUEST_ROUTE                },
+	
+	/* FIXME: are these functions used to something by somebody */
+/*	
+ *
 	{"pua_exists",            pua_exists,            1, subscribe_fixup, REQUEST_ROUTE                },
-	{"mangle_pidf",           mangle_pidf,           0, NULL, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"mangle_message_cpim",   mangle_message_cpim,   0, NULL,            REQUEST_ROUTE | FAILURE_ROUTE},
+	{"pa_handle_registration", pa_handle_registration,   1, subscribe_fixup, REQUEST_ROUTE },
+	{"existing_subscription", existing_subscription, 1, subscribe_fixup, REQUEST_ROUTE                },
+ 	{"mangle_pidf",           mangle_pidf,           0, NULL, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"mangle_message_cpim",   mangle_message_cpim,   0, NULL,            REQUEST_ROUTE | FAILURE_ROUTE},*/
+	
 	{0, 0, 0, 0, 0}
 };
 
@@ -192,9 +196,7 @@ static void test_mimetype_parser(void)
 		{ "application/watcherinfo+xml", MIMETYPE(APPLICATION,WATCHERINFOXML) },
 		{ "application/external-body", MIMETYPE(APPLICATION,EXTERNAL_BODY) },
 		{ "application/*", MIMETYPE(APPLICATION,ALL) },
-#ifdef SUBTYPE_XML_MSRTC_PIDF
 		{ "text/xml+msrtc.pidf", MIMETYPE(TEXT,XML_MSRTC_PIDF) },
-#endif
 		{ "application/cpim-pidf+xml", MIMETYPE(APPLICATION,CPIM_PIDFXML) },
 		{ NULL, 0 }
 	};

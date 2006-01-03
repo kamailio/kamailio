@@ -219,25 +219,6 @@ void free_all_pdomains(void)
 	}
 }
 
-
-/*
- * Just for debugging
- */
-void print_all_pdomains(FILE* _f)
-{
-	dlist_t* ptr;
-	
-	ptr = root;
-
-	fprintf(_f, "===Domain list===\n");
-	while(ptr) {
-		print_pdomain(_f, ptr->d);
-		ptr = ptr->next;
-	}
-	fprintf(_f, "===/Domain list===\n");
-}
-
-
 /*
  * Run timer handler of all domains
  */

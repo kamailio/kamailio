@@ -36,18 +36,18 @@
 #include "../../trim.h"
 #include "../../parser/parse_event.h"
 #include "pa_mod.h"
-#include "lpidf.h"
-#include "xpidf.h"
 #include "presentity.h"
-#include "pidf.h"
 #include "common.h"
 #include "paerrno.h"
 #include "notify.h"
 #include "watcher.h"
 #include "location.h"
+#include "qsa_interface.h"
 
 #include <presence/pidf.h>
-#include "qsa_interface.h"
+#include <presence/xpidf.h>
+#include <presence/lpidf.h>
+#include "winfo_doc.h"
 
 #define CONTACT "Contact: "
 #define CONTACT_L  (sizeof(CONTACT) - 1)
@@ -136,127 +136,66 @@ static str reason[] = {
 
 static str method = STR_STATIC_INIT(METHOD_NOTIFY);
 
-#define BUF_LEN 16384
-
-static char headers_buf[BUF_LEN];
-static char buffer[BUF_LEN];
-
-static str headers = {headers_buf, 0};
-static str body = {buffer, 0};
-
-
-static inline int add_event_hf(str* _h, int _l, int event_package)
+static inline int add_event_hf(dstring_t *buf, int event_package)
 {
-	int event_l;
-	char *event;
-
-	switch (event_package) {
-		case EVENT_PRESENCE_WINFO:
-			event = WINFO_TEXT;
-			event_l = WINFO_TEXT_L;
-			break;
-#ifdef DOC_XCAP_CHANGE
-		case EVENT_XCAP_CHANGE:
-			event = XCAP_CHANGE_TEXT;
-			event_l = XCAP_CHANGE_TEXT_L;
-			break;
-#endif
-		default:
-			event = PRESENCE_TEXT;
-			event_l = PRESENCE_TEXT_L;
-	}
-
-	if (_l < EVENT_L + event_l + CRLF_L) {
-		paerrno = PA_SMALL_BUFFER;
-		LOG(L_ERR, "add_event_hf(): Buffer too small\n");
-		return -1;
-	}
-
-	str_append(_h, EVENT, EVENT_L);
-	str_append(_h, event, event_l);
-	str_append(_h, CRLF, CRLF_L);
+	dstr_append_zt(buf, "Event: ");
+	dstr_append_zt(buf, event_package2str(event_package));
+	dstr_append_zt(buf, "\r\n");
+	
 	return 0;
 }
 
 
-static inline int add_cont_type_hf(str* _h, int _l, int doc_type)
+static inline int add_cont_type_hf(dstring_t *buf, str *content_type)
 {
-	switch(doc_type) {
-	case DOC_XPIDF:
-		if (_l < CONTENT_TYPE_L + CONT_TYPE_XPIDF_L + CRLF_L) {
-			paerrno = PA_SMALL_BUFFER;
-			LOG(L_ERR, "add_cont_type_hf(): Buffer too small\n");
-			return -1;
-		}
-		
-		str_append(_h, CONTENT_TYPE CONT_TYPE_XPIDF CRLF,
-			   CONTENT_TYPE_L + CONT_TYPE_XPIDF_L + CRLF_L);
-		return 0;
-		
-	case DOC_LPIDF:
-		if (_l < CONTENT_TYPE_L + CONT_TYPE_LPIDF_L + CRLF_L) {
-			paerrno = PA_SMALL_BUFFER;
-			LOG(L_ERR, "add_cont_type_hf(): Buffer too small\n");
-			return -2;
-		}
-		str_append(_h, CONTENT_TYPE CONT_TYPE_LPIDF CRLF,
-			   CONTENT_TYPE_L + CONT_TYPE_LPIDF_L + CRLF_L);
-		return 0;
+	/* content types can have dynamical parameters (multipart/related)
+	 * => don't generate them "staticaly"; use values created in the
+	 * time of document creation */
+	
+	if (is_str_empty(content_type)) return 0; /* documents without body doesn't need it */
+	
+	dstr_append_zt(buf, "Content-Type: ");
+	
+	/* FIXME: remove */
+/*	switch(doc_type) {
+		case DOC_XPIDF:
+			dstr_append_zt(buf, "application/xpidf+xml");
+			break;
+		case DOC_LPIDF:
+			dstr_append_zt(buf, "text/lpidf");
+			break;
 
-#ifdef SUBTYPE_XML_MSRTC_PIDF
-	case DOC_MSRTC_PIDF:
-#endif
-	case DOC_PIDF:
-		if (_l < CONTENT_TYPE_L + CONT_TYPE_PIDF_L + CRLF_L) {
-			paerrno = PA_SMALL_BUFFER;
-			LOG(L_ERR, "add_cont_type_hf(): Buffer too small\n");
-			return -2;
-		}
-		str_append(_h, CONTENT_TYPE CONT_TYPE_PIDF CRLF,
-			   CONTENT_TYPE_L + CONT_TYPE_PIDF_L + CRLF_L);
-		return 0;
-		
-	case DOC_CPIM_PIDF:
-			if (_l < CONTENT_TYPE_L + CONT_TYPE_CPIM_PIDF_L + CRLF_L) {
-				paerrno = PA_SMALL_BUFFER;
-				LOG(L_ERR, "add_cont_type_hf(): Buffer too small\n");
-				return -2;
-			}
-			str_append(_h, CONTENT_TYPE CONT_TYPE_CPIM_PIDF CRLF,
-					CONTENT_TYPE_L + CONT_TYPE_CPIM_PIDF_L + CRLF_L);
-			return 0;
+/ *		case DOC_MSRTC_PIDF: * /
+		case DOC_PIDF:
+			dstr_append_zt(buf, "application/pidf+xml");
+			break;
+			
+		case DOC_CPIM_PIDF:
+			dstr_append_zt(buf, "application/cpim-pidf+xml");
+			break;
+			
+		case DOC_WINFO:
+			dstr_append_zt(buf, "application/watcherinfo+xml");
+			break;
 
-	case DOC_WINFO:
-		if (_l < CONTENT_TYPE_L + CONT_TYPE_WINFO_L + CRLF_L) {
-			paerrno = PA_SMALL_BUFFER;
-			LOG(L_ERR, "add_cont_type_hf(): Buffer too small\n");
-			return -2;
-		}
-		str_append(_h, CONTENT_TYPE CONT_TYPE_WINFO CRLF,
-			   CONTENT_TYPE_L + CONT_TYPE_WINFO_L + CRLF_L);
-		return 0;
+		/ * case DOC_XCAP_CHANGE:
+			dstr_append_zt(buf, "application/xcap-change+xml");
+			break; * /
 
-#ifdef DOC_XCAP_CHANGE
-	case DOC_XCAP_CHANGE:
-		if (_l < CONTENT_TYPE_L + CONT_TYPE_XCAP_CHANGE_L + CRLF_L) {
-			paerrno = PA_SMALL_BUFFER;
-			LOG(L_ERR, "add_cont_type_hf(): Buffer too small\n");
-			return -2;
-		}
-		str_append(_h, CONTENT_TYPE CONT_TYPE_XCAP_CHANGE CRLF,
-			   CONTENT_TYPE_L + CONT_TYPE_XCAP_CHANGE_L + CRLF_L);
-		return 0;
-#endif
-
-	default:
-		paerrno = PA_UNSUPP_DOC;
-		LOG(L_ERR, "add_cont_type_hf(): Unsupported document type\n");
-		return -3;
-	}
+		default:
+			paerrno = PA_UNSUPP_DOC;
+			LOG(L_ERR, "add_cont_type_hf(): Unsupported document type\n");
+			return -3;
+	}*/
+	
+	dstr_append_str(buf, content_type);
+	dstr_append_zt(buf, "\r\n");
+	
+	return 0;
 }
 
 
-static inline int add_subs_state_hf(str* _h, int _l, watcher_status_t _s, time_t _e)
+static inline int add_subs_state_hf(dstring_t *buf, watcher_status_t _s, time_t _e)
 {
 	char* num;
 	int len;
@@ -280,307 +219,184 @@ static inline int add_subs_state_hf(str* _h, int _l, watcher_status_t _s, time_t
 			break;
 	}
 	
-	if (_l < SUBSCRIPTION_STATE_L + s.len + SS_EXPIRES_L + 
-	    SS_REASON_L + reason[_r].len + CRLF_L) {
-		paerrno = PA_SMALL_BUFFER;
-		LOG(L_ERR, "add_subs_state_hf(): Buffer too small\n");
-		return -1;
-	}
-
-	str_append(_h, SUBSCRIPTION_STATE, SUBSCRIPTION_STATE_L);
-	str_append(_h, s.s, s.len);
+	dstr_append_zt(buf, "Subscription-State: ");
+	dstr_append_str(buf, &s);
 	
 	switch(_s) {
 		case WS_PENDING:;
 		case WS_ACTIVE:
-			str_append(_h, SS_EXPIRES, SS_EXPIRES_L);
+			dstr_append_zt(buf, ";expires=");
 			num = int2str((unsigned int)_e, &len);
-			str_append(_h, num, len);
+			dstr_append(buf, num, len);
 			break;
 
 		case WS_REJECTED:
 		case WS_PENDING_TERMINATED:
 		case WS_TERMINATED:
-			str_append(_h, SS_REASON, SS_REASON_L);
-			str_append(_h, reason[_r].s, reason[_r].len);
+			dstr_append_zt(buf, ";reason=");
+			dstr_append_str(buf, &reason[_r]);
 			break;
 
 	}
 
-	str_append(_h, CRLF, CRLF_L);
+	dstr_append_zt(buf, "\r\n");
 	return 0;
 }
 
-static int add_contact_hf(str* _h, int _l, str *_c)
+static int add_contact_hf(dstring_t *buf, str *_c)
 {
 	if ((_c->len < 1) || (!_c->s)) {
 		LOG(L_WARN, "add_contact_hf(): Can't add empty contact to NOTIFY.\n");
 		return 0;
 	}
-	if (_l < CONTACT_L + _c->len + CRLF_L) {
-		paerrno = PA_SMALL_BUFFER;
-		LOG(L_ERR, "add_contact_hf(): Buffer too small\n");
-		return -1;
-	}
 
-	str_append(_h, CONTACT, CONTACT_L);
-	str_append(_h, _c->s, _c->len);
-	str_append(_h, CRLF, CRLF_L);
+	dstr_append_zt(buf, "Contact: ");
+	dstr_append_str(buf, _c);
+	dstr_append_zt(buf, "\r\n");
 	return 0;
 }
 
-static inline int create_headers(struct watcher* _w)
+static inline int create_headers(struct watcher* _w, str *dst, str *content_type)
 {
+	dstring_t buf;
 	time_t t;
 	
-	headers.len = 0;
+	dstr_init(&buf, 256);
+	str_clear(dst);
 	
-	if (add_event_hf(&headers, BUF_LEN, _w->event_package) < 0) {
+	if (add_event_hf(&buf, _w->event_package) < 0) {
 		LOG(L_ERR, "create_headers(): Error while adding Event header field\n");
+		dstr_destroy(&buf);
 		return -1;
 	}
 
-	if (add_cont_type_hf(&headers, BUF_LEN - headers.len, _w->preferred_mimetype)  < 0) {
+	if (add_cont_type_hf(&buf, /*_w->preferred_mimetype*/ content_type)  < 0) {
 		LOG(L_ERR, "create_headers(): Error while adding Content-Type header field\n");
+		dstr_destroy(&buf);
 		return -2;
 	}
 
-	/* if (add_contact_hf(&headers, BUF_LEN - headers.len, &_w->uri) < 0) { */
-	if (add_contact_hf(&headers, BUF_LEN - headers.len, &_w->server_contact) < 0) {
+	if (add_contact_hf(&buf, &_w->server_contact) < 0) {
 		LOG(L_ERR, "create_headers(): Error while adding Contact header field\n");
+		dstr_destroy(&buf);
 		return -3;
 	}
 
-	if (_w && _w->expires) t = _w->expires - time(0);
+	if (_w->expires) t = _w->expires - time(0);
 	else t = 0;
 
-	if (add_subs_state_hf(&headers, BUF_LEN - headers.len, _w->status, t) < 0) {
+	if (add_subs_state_hf(&buf, _w->status, t) < 0) {
 		LOG(L_ERR, "create_headers(): Error while adding Subscription-State\n");
+		dstr_destroy(&buf);
 		return -3;
 	}
 
+	dstr_get_str(&buf, dst);
+	dstr_destroy(&buf);
+
 	return 0;
 }
 
-
-static int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
-{
-	xpidf_status_t st;
-	presence_tuple_t *tuple = _p->tuples;
-	str none = STR_STATIC_INIT("none");
-
-	/* Send a notify, saved Contact will be put in
-	 * Request-URI, To will be put in from and new tag
-	 * will be generated, callid will be callid,
-	 * from will be put in to including tag
-	 */
-
-	if (start_xpidf_doc(&body, BUF_LEN) < 0) {
-		LOG(L_ERR, "send_xpidf_notify(): start_xpidf_doc failed\n");
-		return -1;
-	}
-
-	if (xpidf_add_presentity(&body, BUF_LEN - body.len, &_p->uri) < 0) {
-		LOG(L_ERR, "send_xpidf_notify(): xpidf_add_presentity failed\n");
-		return -3;
-	}
-	if (!tuple) {
-		 /* LOG(L_ERR, "send_xpidf_notify() NO TUPLE\n"); */
-		 st = XPIDF_ST_CLOSED;
-		 if (xpidf_add_address(&body, BUF_LEN - body.len, &_p->uri, &none, st) < 0) {
-             LOG(L_ERR, "send_xpidf_notify(): xpidf_add_address failed\n");
-             return -3;
-         }
-	}
-	while (tuple) {
-
-		switch(tuple->state) {
-		case PS_ONLINE: st = XPIDF_ST_OPEN; break;
-		default: st = XPIDF_ST_CLOSED; break;
-		}
-
-		LOG(L_DBG, "send_xpidf_notify(): %.*s\n", tuple->id.len, tuple->id.s);
-		if (xpidf_add_address(&body, BUF_LEN - body.len, &_p->uri, &tuple->id, st) < 0) {
-			LOG(L_ERR, "send_xpidf_notify(): xpidf_add_address failed\n");
-			return -3;
-		}
-
-		tuple = tuple->next;
-	}
-	if (end_xpidf_doc(&body, BUF_LEN - body.len) < 0) {
-		LOG(L_ERR, "send_xpidf_notify(): end_xpidf_doc failed\n");
-		return -5;
-	}
-
-	if (create_headers(_w) < 0) {
-		LOG(L_ERR, "send_xpidf_notify(): Error while adding headers\n");
-		return -6;
-	}
-
-	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
-	return 0;
-
-}
-
-
-static int send_lpidf_notify(struct presentity* _p, struct watcher* _w)
-{
-	lpidf_status_t st;
-	presence_tuple_t *tuple = _p->tuples;
-
-	if (lpidf_add_presentity(&body, BUF_LEN - body.len, &_p->uri) < 0) {
-		LOG(L_ERR, "send_lpidf_notify(): Error in lpidf_add_presentity\n");
-		return -2;
-	}
-
-	while (tuple) {
-		switch(tuple->state) {
-		case PS_OFFLINE: st = LPIDF_ST_CLOSED; break;
-		default: st = LPIDF_ST_OPEN; break;
-		}
-
-		if (lpidf_add_address(&body, BUF_LEN - body.len, &_p->uri, st) < 0) {
-			LOG(L_ERR, "send_lpidf_notify(): lpidf_add_address failed\n");
-			return -3;
-		}
-
-		tuple = tuple->next;
-	}
-
-	if (create_headers(_w) < 0) {
-		LOG(L_ERR, "send_lpidf_notify(): Error while adding headers\n");
-		return -4;
-	}
-
-	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
-	return 0;
-}
-
-static int send_pidf_notify(struct presentity* _p, struct watcher* _w)
+static int send_presence_notify(struct presentity* _p, struct watcher* _w)
 {
 	/* Send a notify, saved Contact will be put in
 	 * Request-URI, To will be put in from and new tag
 	 * will be generated, callid will be callid,
 	 * from will be put in to including tag
 	 */
-	str doc;
-	str content_type;
+	str doc = STR_NULL;
+	str content_type = STR_NULL;
+	str headers = STR_NULL;
 	presentity_info_t *pinfo = NULL;
+	int res = 0;
 	
-	LOG(L_DBG, "  send_pidf_notify\n");
-
-	if (create_headers(_w) < 0) {
-		LOG(L_ERR, "send_pidf_notify(): Error while adding headers\n");
-		return -7;
-	}
-
 	pinfo = presentity2presentity_info(_p);
 	if (!pinfo) {
-		LOG(L_ERR, "can't create PIDF document (0)\n");
+		LOG(L_ERR, "can't create presence document (0)\n");
 		return -1;
 	}
-	if (create_pidf_document(pinfo, &doc, &content_type) != 0) {
-		LOG(L_ERR, "can't create PIDF document\n");
-		free_presentity_info(pinfo);
+
+	switch(_w->preferred_mimetype) {
+		case DOC_XPIDF:
+			res = create_xpidf_document(pinfo, &doc, &content_type);
+			break;
+
+		case DOC_LPIDF:
+			res = create_lpidf_document(pinfo, &doc, &content_type);
+			break;
+		
+		case DOC_CPIM_PIDF:
+			res = create_cpim_pidf_document(pinfo, &doc, &content_type);
+			break;
+
+		case DOC_MSRTC_PIDF:
+		case DOC_PIDF:
+		default:
+			res = create_pidf_document(pinfo, &doc, &content_type);
+	}
+	free_presentity_info(pinfo);
+	
+	if (res != 0) {
+		LOG(L_ERR, "can't create presence document (%d)\n", _w->preferred_mimetype);
 		return -2;
+	}
+	
+	if (create_headers(_w, &headers, &content_type) < 0) {
+		LOG(L_ERR, "send_presence_notify(): Error while adding headers\n");
+		str_free_content(&doc);
+		str_free_content(&content_type);
+		
+		return -7;
 	}
 
 	tmb.t_request_within(&method, &headers, &doc, _w->dialog, 0, 0);
 	str_free_content(&doc);
+	str_free_content(&headers);
 	str_free_content(&content_type);
-	free_presentity_info(pinfo);
-	return 0;
-}
-
-static int send_cpim_pidf_notify(struct presentity* _p, struct watcher* _w)
-{
-	/* Send a notify, saved Contact will be put in
-	 * Request-URI, To will be put in from and new tag
-	 * will be generated, callid will be callid,
-	 * from will be put in to including tag
-	 */
-	str doc;
-	str content_type;
-	presentity_info_t *pinfo = NULL;
+		
+	if (use_db) db_update_watcher(_p, _w); /* dialog has changed */
 	
-	LOG(L_DBG, "  send_cpim_pidf_notify\n");
-
-	if (create_headers(_w) < 0) {
-		LOG(L_ERR, "send_pidf_notify(): Error while adding headers\n");
-		return -7;
-	}
-
-	pinfo = presentity2presentity_info(_p);
-	if (!pinfo) {
-		LOG(L_ERR, "can't create PIDF document (0)\n");
-		return -1;
-	}
-	if (create_cpim_pidf_document(pinfo, &doc, &content_type) != 0) {
-		LOG(L_ERR, "can't create PIDF document\n");
-		free_presentity_info(pinfo);
-		return -2;
-	}
-
-	tmb.t_request_within(&method, &headers, &doc, _w->dialog, 0, 0);
-	str_free_content(&doc);
-	str_free_content(&content_type);
-	free_presentity_info(pinfo);
 	return 0;
 }
 
 static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
 {
-	watcher_t *watcher = _p->watchers;
-	internal_pa_subscription_t *subscription = _p->first_qsa_subscription;
+	str doc = STR_NULL;
+	str content_type = STR_NULL;
+	str headers = STR_NULL;
 
-	LOG(L_DBG, "send_winfo_notify: watcher=%p winfo_watcher=%p\n", watcher, _w);
-	if (start_winfo_doc(&body, BUF_LEN, _w) < 0) {
-		LOG(L_ERR, "send_winfo_notify(): start_winfo_doc failed\n");
-		return -1;
-	}
-	
-	if (winfo_start_resource(&body, BUF_LEN - body.len, &_p->uri, _w) < 0) {
-		LOG(L_ERR, "send_winfo_notify(): winfo_add_resource failed\n");
-		return -3;
-	}
-
-	while (watcher) {
-		if (winfo_add_watcher(&body, BUF_LEN - body.len, watcher) < 0) {
-			LOG(L_ERR, "send_winfo_notify(): winfo_add_watcher failed\n");
-			return -3;
-		}
-
-		watcher = watcher->next;
+	switch (_w->preferred_mimetype) {
+		case DOC_WINFO:
+			create_winfo_document(_p, _w, &doc, &content_type);
+			break;
+		/* other formats ? */
+		default:
+			LOG(L_ERR, "send_winfo_notify: unknow doctype\n");
+			return -1;
 	}
 
-	while (subscription) {
-		if (winfo_add_internal_watcher(&body, BUF_LEN - body.len, subscription) < 0) {
-			LOG(L_ERR, "send_winfo_notify(): winfo_add_internal_watcher failed\n");
-			return -3;
-		}
-
-		subscription = subscription->next;
-	}
-	
-	if (winfo_end_resource(&body, BUF_LEN - body.len) < 0) {
-		LOG(L_ERR, "send_winfo_notify(): winfo_add_resource failed\n");
-		return -5;
-	}
-
-	if (end_winfo_doc(&body, BUF_LEN - body.len) < 0) {
-		LOG(L_ERR, "send_winfo_notify(): end_xwinfo_doc failed\n");
-		return -6;
-	}
-
-	if (create_headers(_w) < 0) {
+	if (create_headers(_w, &headers, &content_type) < 0) {
 		LOG(L_ERR, "send_winfo_notify(): Error while adding headers\n");
+		str_free_content(&doc);
+		str_free_content(&content_type);
 		return -7;
 	}
 
-	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
+	tmb.t_request_within(&method, &headers, &doc, _w->dialog, 0, 0);
+
+	str_free_content(&doc);
+	str_free_content(&headers);
+	str_free_content(&content_type);
+
+	_w->document_index++; /* increment index for next document */
+	
+	if (use_db) db_update_watcher(_p, _w);
+
 	return 0;
 }
 
+/* FIXME: will be removed */
+#if 0 
 #ifdef HAVE_XCAP_CHANGE_NOTIFY
 static int send_xcap_change_notify(struct presentity* _p, struct watcher* _w)
 {
@@ -661,24 +477,31 @@ int send_location_notify(struct presentity* _p, struct watcher* _w)
 	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
 	return 0;
 }
+#endif
 		
 int notify_unauthorized_watcher(struct presentity* _p, struct watcher* _w)
 {
+	str headers = STR_NULL;
+
 	/* send notifications to unauthorized (pending) watchers */
-	if (create_headers(_w) < 0) {
+	if (create_headers(_w, &headers, NULL) < 0) {
 		LOG(L_ERR, "notify_unauthorized_watcher(): Error while adding headers\n");
 		return -7;
 	}
 
 	/* tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0); */
 	tmb.t_request_within(&method, &headers, 0, _w->dialog, 0, 0);
+
+	str_free_content(&headers);
+		
+	if (use_db) db_update_watcher(_p, _w); /* dialog has changed */
+	
 	return 0;
 }
 
 int send_notify(struct presentity* _p, struct watcher* _w)
 {
 	int rc = 0;
-	body.len = 0;
 
 	if (_w->uri.s == NULL) {
 		LOG(L_ERR, "watcher uri.s is NULL\n");
@@ -696,46 +519,23 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 			(_w->status == WS_PENDING_TERMINATED) ||
 			(_w->status == WS_REJECTED)) {
 		notify_unauthorized_watcher(_p, _w);
-		if (use_db) db_update_watcher(_p, _w);
 		return 0;
 	}
-	
-	if ((_w->event_package == EVENT_PRESENCE)) {
-		switch(_w->preferred_mimetype) {
-		case DOC_XPIDF:
-			rc = send_xpidf_notify(_p, _w);
-			if (rc) LOG(L_ERR, "send_xpidf_notify returned %d\n", rc);
-			break;
 
-		case DOC_LPIDF:
-			rc = send_lpidf_notify(_p, _w);
-			if (rc) LOG(L_ERR, "send_lpidf_notify returned %d\n", rc);
+	switch (_w->event_package) {
+		case EVENT_PRESENCE:
+			rc = send_presence_notify(_p, _w);
+			if (rc) LOG(L_ERR, "send_presence_notify returned %d\n", rc);
 			break;
-		
-		case DOC_CPIM_PIDF:
-			rc = send_cpim_pidf_notify(_p, _w);
-			if (rc) LOG(L_ERR, "send_pidf_notify returned %d\n", rc);
-			break;
-
-#ifdef SUBTYPE_XML_MSRTC_PIDF
-		case DOC_MSRTC_PIDF:
-#endif
-		case DOC_PIDF:
-		default:
-			rc = send_pidf_notify(_p, _w);
-			if (rc) LOG(L_ERR, "send_pidf_notify returned %d\n", rc);
-		}
-	}
-	if ((_w->event_package == EVENT_PRESENCE_WINFO) && (watcherinfo_notify)) {
-		switch(_w->preferred_mimetype) {
-		case DOC_WINFO:
+		case EVENT_PRESENCE_WINFO:
 			rc = send_winfo_notify(_p, _w);
 			if (rc) LOG(L_ERR, "send_winfo_notify returned %d\n", rc);
 			break;
-		default:
-			LOG(L_ERR, "winfo notify for unknow doctype\n");
-		}
+		default: LOG(L_ERR, "sending notify for unknow package\n");
 	}
+
+/* FIXME: will be removed */
+#if 0 
 #ifdef HAVE_XCAP_CHANGE_NOTIFY
 	if ((_p->flags & PFLAG_XCAP_CHANGED) 
 	    && (_w->event_package == EVENT_XCAP_CHANGE)) {
@@ -763,7 +563,7 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 		}
 	}
 #endif /* PFLAG_LOCATION_CHANGED */
-
-	if (use_db) db_update_watcher(_p, _w);
+#endif
+	
 	return rc;
 }

@@ -40,35 +40,6 @@
 #include "presentity.h"
 #include "auth.h"
 
-char *doctype_name[] = {
-	[DOC_XPIDF] = "DOC_XPIDF",
-	[DOC_LPIDF] = "DOC_LPIDF",
-	[DOC_PIDF] = "DOC_PIDF",
-#ifdef SUBTYPE_XML_MSRTC_PIDF
-	[DOC_MSRTC_PIDF] = "DOC_MSRTC_PIDF",
-#endif
-	[DOC_WINFO] = "DOC_WINFO",
-#ifdef DOC_XCAP_CHANGE
-	[DOC_XCAP_CHANGE] = "DOC_XCAP_CHANGE",
-#endif
-#ifdef DOC_LOCATION
-	[DOC_LOCATION] = "DOC_LOCATION"
-#endif
-};
-/*
-char *event_package_name[] = {
-	[EVENT_OTHER] = "unknown",
-	[EVENT_PRESENCE] = "presence",
-	[EVENT_PRESENCE_WINFO] = "presence.winfo",
-#ifdef DOC_XCAP_CHANGE
-	[EVENT_XCAP_CHANGE] = "xcap-change",
-#endif
-#ifdef DOC_LOCATION
-	[EVENT_LOCATION] = "location",
-#endif
-	NULL
-};*/
-
 str watcher_status_names[] = {
      [WS_PENDING] = STR_STATIC_INIT("pending"),
      [WS_ACTIVE] = STR_STATIC_INIT("active"),
@@ -78,7 +49,7 @@ str watcher_status_names[] = {
      STR_NULL
 };
 
-static str watcher_event_names[] = {
+str watcher_event_names[] = {
      [WE_SUBSCRIBE]   = STR_STATIC_INIT("subscribe"),
      [WE_APPROVED]    = STR_STATIC_INIT("approved"),
      [WE_DEACTIVATED] = STR_STATIC_INIT("deactivated"),
@@ -90,12 +61,13 @@ static str watcher_event_names[] = {
      STR_NULL
 };
 
-static const char *event_package2str(int et) /* FIXME: change working with this to enum ?*/
+const char *event_package2str(int et) /* FIXME: change working with this to enum ?*/
 {
 	/* added due to incorrect package handling */
 	switch (et) {
 		case EVENT_PRESENCE: return "presence";
 		case EVENT_PRESENCE_WINFO: return "presence.winfo";
+		/*case EVENT_XCAP_CHANGE: return ...; */
 		default: return "unknown";
 	}
 }
@@ -112,8 +84,10 @@ int str2event_package(const char *epname)
 int verify_event_package(int et)
 {
 	switch (et) {
-		case EVENT_PRESENCE:
-		case EVENT_PRESENCE_WINFO: return 0;
+		case EVENT_PRESENCE: return 0;
+		case EVENT_PRESENCE_WINFO: 
+			if (watcherinfo_notify) return 0;
+			else return -1;
 		default: return -1;
 	}
 }
@@ -180,27 +154,8 @@ unsigned int compute_hash(unsigned int _h, char* s, int len)
 	return h;
 }
 
-/* static char hbuf[2048]; */
-
 static int watcher_assign_statement_id(presentity_t *presentity, watcher_t *watcher)
 {
-	/*unsigned int h = 0;
-	char *dn = doctype_name[watcher->preferred_mimetype];
-	if (1) {
-		int len = 0;
-		strncpy(hbuf+len, presentity->uri.s, presentity->uri.len);
-		len += presentity->uri.len;
-		strncpy(hbuf+len, dn, strlen(dn));
-		len += strlen(dn);
-		strncpy(hbuf+len, watcher->uri.s, watcher->uri.len);
-		len += watcher->uri.len;
-		h = compute_hash(0, hbuf, len);
-	} else {
-		h = compute_hash(0, presentity->uri.s, presentity->uri.len);
-		h = compute_hash(h, dn, strlen(dn));
-		h = compute_hash(h, watcher->uri.s, watcher->uri.len);
-	}
-	watcher->s_id.len = sprintf(watcher->s_id.s, "SID%08x", h);*/
 	watcher->s_id.len = sprintf(watcher->s_id.s, "SID%dx%px%dx%d", 
 			presentity->presid, watcher, (int)time(NULL), rand());
 	return 0;
@@ -449,7 +404,7 @@ int db_remove_watcher(struct presentity *_p, watcher_t *w)
 	if (!use_db) return 0;
 	
 	if (pa_dbf.use_table(pa_db, watcherinfo_table) < 0) {
-		LOG(L_ERR, "db_update_watcher: Error in use_table\n");
+		LOG(L_ERR, "db_remove_watcher: Error in use_table\n");
 		return -1;
 	}
 
@@ -647,22 +602,6 @@ void free_watcher(watcher_t* _w)
 	shm_free(_w);	
 }
 
-
-/*
- * Print contact, for debugging purposes only
- */
-void print_watcher(FILE* _f, watcher_t* _w)
-{
-	fprintf(_f, "---Watcher---\n");
-	fprintf(_f, "uri    : '%.*s'\n", _w->uri.len, ZSW(_w->uri.s));
-	fprintf(_f, "expires: %d\n", (int)(_w->expires - time(0)));
-	fprintf(_f, "accept : %s\n", doctype_name[_w->preferred_mimetype]);
-	fprintf(_f, "next   : %p\n", _w->next);
-	tmb.print_dlg(_f, _w->dialog);
-	fprintf(_f, "---/Watcher---\n");
-}
-
-
 /*
  * Update a watcher structure
  */
@@ -679,257 +618,6 @@ int update_watcher(struct presentity *p, watcher_t* _w, time_t _e)
 	}
 	if (use_db) return db_update_watcher(p, _w);
 	else return 0;
-}
-
-#define CRLF "\r\n"
-#define CRLF_L (sizeof(CRLF) - 1)
-
-#define PUBLIC_ID "//IETF//DTD RFCxxxx PIDF 1.0//EN"
-#define PUBLIC_ID_L (sizeof(PUBLIC_ID) - 1)
-
-#define XML_VERSION "<?xml version=\"1.0\"?>"
-#define XML_VERSION_L (sizeof(XML_VERSION) - 1)
-
-#define WATCHERINFO_STAG_A "<watcherinfo xmlns=\"urn:ietf:params:xml:ns:watcherinfo\" version=\""
-#define WATCHERINFO_STAG_A_L (sizeof(WATCHERINFO_STAG_A) - 1)
-#define WATCHERINFO_STAG_B "\" state=\"full\">"
-#define WATCHERINFO_STAG_B_L (sizeof(WATCHERINFO_STAG_B) - 1)
-#define WATCHERINFO_ETAG "</watcherinfo>"
-#define WATCHERINFO_ETAG_L (sizeof(WATCHERINFO_ETAG) - 1)
-
-#define WATCHERLIST_START "  <watcher-list resource=\""
-#define WATCHERLIST_START_L (sizeof(WATCHERLIST_START) - 1)
-#define WATCHERLIST_ETAG "  </watcher-list>"
-#define WATCHERLIST_ETAG_L (sizeof(WATCHERLIST_ETAG) - 1)
-
-#define WATCHER_START "    <watcher"
-#define WATCHER_START_L (sizeof(WATCHER_START) - 1)
-#define STATUS_START " status=\""
-#define STATUS_START_L (sizeof(STATUS_START) - 1)
-#define EVENT_START "\" event=\""
-#define EVENT_START_L (sizeof(EVENT_START) - 1)
-#define SID_START "\" id=\""
-#define SID_START_L (sizeof(SID_START) - 1)
-#define DISPLAY_NAME_START "\" display_name=\""
-#define DISPLAY_NAME_START_L (sizeof(DISPLAY_NAME_START) - 1)
-#define URI_START "\">"
-#define URI_START_L (sizeof(URI_START) - 1)
-#define WATCHER_ETAG "</watcher>"
-#define WATCHER_ETAG_L (sizeof(WATCHER_ETAG) - 1)
-
-#define PACKAGE_START "\" package=\""
-#define PACKAGE_START_L (sizeof(PACKAGE_START) - 1)
-#define PACKAGE_END "\">"
-#define PACKAGE_END_L (sizeof(PACKAGE_END) - 1)
-
-void escape_str(str *unescaped)
-{
-     int i;
-     char *s = unescaped->s;
-     for (i = 0; i < unescaped->len; i++) {
-	  if (s[i] == '<' || s[i] == '>') {
-	       s[i] = ' ';
-	  }
-     }
-}
-
-/*
- * Add a watcher information
- */
-int winfo_add_watcher(str* _b, int _l, watcher_t *watcher)
-{
-	str strs[20];
-	int n_strs = 0;
-	int i;
-	int len = 0;
-	int status = watcher->status;
-	char id[64];
-
-#define add_string(_s, _l) ((strs[n_strs].s = (_s)), (strs[n_strs].len = (_l)), (len += _l), n_strs++)
-#define add_str(_s) (strs[n_strs].s = (_s.s), strs[n_strs].len = (_s.len), len += _s.len, n_strs++)
-#define add_pstr(_s) (strs[n_strs].s = (_s->s), strs[n_strs].len = (_s->len), len += _s->len, n_strs++)
-
-	add_string(WATCHER_START, WATCHER_START_L);
-	add_string(STATUS_START, STATUS_START_L);
-	add_str(watcher_status_names[status]);
-	add_string(EVENT_START, EVENT_START_L);
-	add_str(watcher_event_names[watcher->event]);
-	add_string(SID_START, SID_START_L);
-	if (watcher->s_id.len < 1) {
-		sprintf(id, "%p", watcher);
-		add_string(id, strlen(id));
-	}
-	else add_str(watcher->s_id);
-	if (0)
-	if (watcher->display_name.len > 0) {
-	  add_string(DISPLAY_NAME_START, DISPLAY_NAME_START_L);
-	  escape_str(&watcher->display_name);
-	  add_str(watcher->display_name);
-	}
-	add_string(URI_START, URI_START_L);
-	add_str(watcher->uri);
-	add_string(WATCHER_ETAG, WATCHER_ETAG_L);
-	add_string(CRLF, CRLF_L);
-
-	if (_l < len) {
-		paerrno = PA_SMALL_BUFFER;
-		LOG(L_ERR, "winfo_add_watcher(): Buffer too small\n");
-		return -1;
-	}
-
-	for (i = 0; i < n_strs; i++)
-		str_append(_b, strs[i].s, strs[i].len);
-
-	return 0;
-}
-
-/*
- * Add an internal watcher information
- */
-int winfo_add_internal_watcher(str* _b, int _l, internal_pa_subscription_t *iwatcher)
-{
-	str strs[20];
-	int n_strs = 0;
-	int i;
-	int len = 0;
-	char id[64];
-
-	sprintf(id, "%p", iwatcher);
-	add_string(WATCHER_START, WATCHER_START_L);
-	add_string(STATUS_START, STATUS_START_L);
-	add_str(watcher_status_names[iwatcher->status]);
-	add_string(EVENT_START, EVENT_START_L);
-	add_str(watcher_event_names[0]); /* TODO: auth */
-	add_string(SID_START, SID_START_L);
-	add_string(id, strlen(id));
-	add_string(URI_START, URI_START_L);
-	add_string(iwatcher->subscription->subscriber_id.s, 
-			iwatcher->subscription->subscriber_id.len);
-	add_string(WATCHER_ETAG, WATCHER_ETAG_L);
-	add_string(CRLF, CRLF_L);
-
-	if (_l < len) {
-		paerrno = PA_SMALL_BUFFER;
-		LOG(L_ERR, "winfo_add_watcher(): Buffer too small\n");
-		return -1;
-	}
-
-	for (i = 0; i < n_strs; i++)
-		str_append(_b, strs[i].s, strs[i].len);
-
-	return 0;
-}
-
-
-/*
- * Create start of winfo document
- */
-int start_winfo_doc(str* _b, int _l, struct watcher *w)
-{
-	str strs[10];
-	char version[32];
-	int n_strs = 0;
-	int i;
-	int len = 0;
-
-	if ((XML_VERSION_L + 
-	     CRLF_L
-	    ) > _l) {
-		paerrno = PA_SMALL_BUFFER;
-		LOG(L_ERR, "start_pidf_doc(): Buffer too small\n");
-		return -1;
-	}
-	if (w) sprintf(version, "%d", w->document_index++);
-	else strcpy(version, "0");
-	add_string(XML_VERSION, XML_VERSION_L);
-	add_string(CRLF, CRLF_L);
-	add_string(WATCHERINFO_STAG_A, WATCHERINFO_STAG_A_L);
-	add_string(version, strlen(version));
-	add_string(WATCHERINFO_STAG_B, WATCHERINFO_STAG_B_L);
-	add_string(CRLF, CRLF_L);
-
-	if (_l < len) {
-		paerrno = PA_SMALL_BUFFER;
-		LOG(L_ERR, "winfo_add_resource(): Buffer too small\n");
-		return -1;
-	}
-
-	for (i = 0; i < n_strs; i++)
-		str_append(_b, strs[i].s, strs[i].len);
-
-	return 0;
-}
-
-/*
- * Start a resource in a winfo document
- */
-int winfo_start_resource(str* _b, int _l, str* _uri, watcher_t *watcher)
-{
-	str strs[10];
-	int n_strs = 0;
-	int i;
-	int len = 0;
-	char *package;
-
-	package = (char*)event_package2str(EVENT_PRESENCE);
-	add_string(WATCHERLIST_START, WATCHERLIST_START_L);
-	add_pstr(_uri);
-	add_string(PACKAGE_START, PACKAGE_START_L);
-/*	add_string(event_package_name[watcher->event_package], strlen(event_package_name[watcher->event_package]));*/
-	add_string(package, strlen(package));
-	add_string(PACKAGE_END, PACKAGE_END_L);
-	add_string(CRLF, CRLF_L);
-
-	if (_l < len) {
-		paerrno = PA_SMALL_BUFFER;
-		LOG(L_ERR, "winfo_add_resource(): Buffer too small\n");
-		return -1;
-	}
-
-	for (i = 0; i < n_strs; i++)
-		str_append(_b, strs[i].s, strs[i].len);
-
-	return 0;
-}
-
-/*
- * End a resource in a winfo document
- */
-int winfo_end_resource(str *_b, int _l)
-{
-	str strs[10];
-	int n_strs = 0;
-	int i;
-	int len = 0;
-
-	add_string(WATCHERLIST_ETAG, WATCHERLIST_ETAG_L);
-	add_string(CRLF, CRLF_L);
-
-	if (_l < len) {
-		paerrno = PA_SMALL_BUFFER;
-		LOG(L_ERR, "winfo_add_resource(): Buffer too small\n");
-		return -1;
-	}
-
-	for (i = 0; i < n_strs; i++)
-		str_append(_b, strs[i].s, strs[i].len);
-
-	return 0;
-}
-
-/*
- * End a winfo document
- */
-int end_winfo_doc(str* _b, int _l)
-{
-	if (_l < (WATCHERINFO_ETAG_L + CRLF_L)) {
-		paerrno = PA_SMALL_BUFFER;
-		LOG(L_ERR, "end_pidf_doc(): Buffer too small\n");
-		return -1;
-	}
-
-	str_append(_b, WATCHERINFO_ETAG CRLF, WATCHERINFO_ETAG_L + CRLF_L);
-	return 0;
 }
 
 int is_watcher_terminated(watcher_t *w)

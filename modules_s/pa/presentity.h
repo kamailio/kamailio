@@ -130,14 +130,15 @@ typedef enum pflag {
 	PFLAG_LOCATION_CHANGED=16
 } pflag_t;
 
-struct _internal_pa_subscription_t {
+typedef struct _internal_pa_subscription_t {
 	struct _internal_pa_subscription_t *prev, *next;
 	watcher_status_t status;
 	subscription_t *subscription;
 	/* msg_queue_t *dst;
 	 * str_t package; 
 	 * str_t watcher_uri; */
-};
+} internal_pa_subscription_t;
+
 
 typedef struct presentity {
 	str uri;                 /* URI of presentity */
@@ -255,12 +256,6 @@ int remove_winfo_watcher(presentity_t* _p, watcher_t* _w);
  * Notify all winfo watchers in the list
  */
 int notify_winfo_watchers(presentity_t* _p);
-
-/*
- * Print a presentity, just for debugging
- */
-void print_presentity(FILE* _f, presentity_t* _p);
-
 
 resource_list_t *resource_list_append_unique(resource_list_t *list, str *uri);
 resource_list_t *resource_list_remove(resource_list_t *list, str *uri);
