@@ -94,6 +94,9 @@ int xcap_query(xcap_query_t *query, char **buf, int *bsize)
 			curl_easy_setopt(handle, CURLOPT_SSL_VERIFYHOST, 0);
 		}
 		
+		/* follow redirects (needed for apache mod_speling - case insesitive names) */
+		curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1);
+		
 		/* Accept headers */
 		
 		res = curl_easy_perform(handle);

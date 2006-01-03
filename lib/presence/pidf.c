@@ -81,7 +81,7 @@ static void doc_add_tuple(dstring_t *buf, presentity_info_t *p, presence_tuple_i
 
 static void doc_add_empty_tuple(dstring_t *buf)
 {
-	/* "empty" tuple is needed in PIDF by Microsoft Windows Messenger v. 5.1) */
+	/* "empty" tuple is needed in PIDF by Microsoft Windows Messenger v. 5.1 and linphone 1.2) */
 	DEBUG_LOG("doc_add_empty_tuple()\n");
 	
 	dstr_append_zt(buf, "\t<tuple id=\"none\">\r\n");
@@ -144,7 +144,7 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p, int use_cpi
 	
 	DEBUG_LOG("doc_add_presentity(): adding tuples\n");
 	t = p->first_tuple;
-	/* if (!t) doc_add_empty_tuple(buf); */ /* This only for MS? */
+	if (!t) doc_add_empty_tuple(buf); /* correction for some strange clients :-) */
 	while (t) {
 		doc_add_tuple(buf, p, t);
 		t = t->next;
@@ -171,9 +171,13 @@ int create_pidf_document_ex(presentity_info_t *p, str_t *dst, str_t *dst_content
 
 	if (!p) return -1;
 	
-	if (dst_content_type) 
-		str_dup_zt(dst_content_type, "application/pidf+xml;charset=\"UTF-8\"");
-
+	if (dst_content_type) {
+		if (use_cpim_pidf_ns)
+			str_dup_zt(dst_content_type, "application/cpim-pidf+xml");
+		else
+			str_dup_zt(dst_content_type, "application/pidf+xml;charset=\"UTF-8\"");
+	}
+	
 /*	if (!p->first_tuple) return 0;*/	/* no tuples => nothing to say */ 
 	
 	dstr_init(&buf, 2048);
@@ -232,18 +236,21 @@ static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst, int ignore_ns
 	n = find_node(tuple, "contact", ns);
 	if (!n) {
 		ERROR_LOG("contact not found\n");
-		return -1;
+		str_clear(&contact);
+		/* return -1; */
 	}
-	s = get_attr_value(find_attr(n->properties, "priority"));
-	if (s) priority = atof(s);
-	s = get_node_value(n);
-	contact.s = (char *)s;
-	if (s) contact.len = strlen(s);
-	else contact.len = 0;
-	if (contact.len < 1) {
-		ERROR_LOG("empty contact\n");
-		return -1;
-	}	
+	else {
+		s = get_attr_value(find_attr(n->properties, "priority"));
+		if (s) priority = atof(s);
+		s = get_node_value(n);
+		contact.s = (char *)s;
+		if (s) contact.len = strlen(s);
+		else contact.len = 0;
+		if (contact.len < 1) {
+			ERROR_LOG("empty contact using default\n");
+			/* return -1; */
+		}	
+	}
 	
 	/* process status (only one node) */
 	n = find_node(tuple, "status", ns);

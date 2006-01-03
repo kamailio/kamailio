@@ -23,30 +23,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __LOGGER_H
-#define __LOGGER_H
+#ifndef __PRESENCE_XPIDF_H
+#define __PRESENCE_XPIDF_H
 
-#ifndef SER
+#include <cds/sstr.h>
+#include <presence/pres_doc.h>
 
-#include <stdio.h>
-
-#define ERROR_LOG(a,args...)		do{printf(a,##args);}while(0)
-#define DEBUG_LOG(a,args...)		do{printf(a,##args);}while(0)
-#define TRACE_LOG(a,args...)		do{printf(a,##args);}while(0)
-#define WARN_LOG(a,args...)			do{printf(a,##args);}while(0)
-#define FLUSH_LOG()					do{fflush(stdout);}while(0)
-
-#else
-/* TODO: logging for SER */
-
-#include "dprint.h"
-
-#define ERROR_LOG(a,args...)		LOG(L_ERR,a,##args)
-#define DEBUG_LOG(a,args...)		LOG(L_INFO,a,##args)
-#define TRACE_LOG(a,args...)		LOG(L_INFO,a,##args)
-#define WARN_LOG(a,args...)			LOG(L_WARN,a,##args)
-#define FLUSH_LOG()					do{}while(0)
-
-#endif
+int create_lpidf_document(presentity_info_t *p, str_t *dst, str_t *dst_content_type);
 
 #endif
