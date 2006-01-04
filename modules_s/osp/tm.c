@@ -48,12 +48,12 @@ int mod_init_tm()
 {
         load_tm_f load_tm;
 
-        LOG(L_INFO, "osp/tm - initializing\n");
+        INFO("osp/tm - initializing\n");
 
         /* import the TM auto-loading function */
         if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
-                LOG(L_ERR,"ERROR:osp:mod_init_tm: can't import load_tm\n");
-                LOG(L_ERR,"ERROR:osp:mod_init_tm: tm is required for reporting call set up usage info\n");
+                ERR("osp:mod_init_tm: can't import load_tm\n");
+                ERR("osp:mod_init_tm: tm is required for reporting call set up usage info\n");
                 return -1;
         }
         /* let the auto-loading function load all TM stuff */
@@ -62,8 +62,8 @@ int mod_init_tm()
         /* register callbacks*/
         /* listen for all incoming requests  */
         if ( _tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, onreq, 0 ) <=0 ) {
-                LOG(L_ERR,"ERROR:osp:mod_init_tm: cannot register TMCB_REQUEST_IN callback\n");
-                LOG(L_ERR,"ERROR:osp:mod_init_tm: tm callbacks are required for reporting call set up usage info\n");
+                ERR("osp:mod_init_tm: cannot register TMCB_REQUEST_IN callback\n");
+                ERR("osp:mod_init_tm: tm callbacks are required for reporting call set up usage info\n");
                 return -1;
         }
 
@@ -78,29 +78,29 @@ static void onreq( struct cell* t, int type, struct tmcb_params *ps )
 
         /* install addaitional handlers */
         tmcb_types =
-                //TMCB_REQUEST_FWDED | 
-		//TMCB_RESPONSE_FWDED | 
+		     /* TMCB_REQUEST_FWDED | */
+		     /* TMCB_RESPONSE_FWDED | */
 			TMCB_ON_FAILURE | 
-		//TMCB_LOCAL_COMPLETED  |
+		     /* TMCB_LOCAL_COMPLETED  | */
 			/* report on completed transactions */
 			TMCB_RESPONSE_OUT |
 			/* account e2e acks if configured to do so */
 			TMCB_E2EACK_IN |
 			/* report on missed calls */
 			TMCB_ON_FAILURE_RO //|
-                ///* get incoming replies ready for processing */
-                //TMCB_RESPONSE_IN
+                /* get incoming replies ready for processing */
+                /*TMCB_RESPONSE_IN */
 		;
 
 	if (_tmb.register_tmcb( 0, t, tmcb_types, tmcb_func, 0 )<=0) {
-		LOG(L_ERR,"ERROR:osp:onreq: cannot register for tm callbacks\n");
-                LOG(L_ERR,"ERROR:osp:onreq: tm callbacks are required for reporting call set up usage info\n");
+		ERR("osp:onreq: cannot register for tm callbacks\n");
+                ERR("osp:onreq: tm callbacks are required for reporting call set up usage info\n");
 		return;
 	}
 
         /* also, if that is INVITE, disallow silent t-drop */
         if (ps->req->REQ_METHOD==METHOD_INVITE) {
-                DBG("DEBUG: noisy_timer set for accounting\n");
+                DBG("noisy_timer set for accounting\n");
                 t->flags |= T_NOISY_CTIMER_FLAG;
         }
 }
