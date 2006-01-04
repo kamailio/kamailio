@@ -66,17 +66,17 @@ int setup_provider() {
 	cacerts[0] = &cacert;
 
 	if ( (result = OSPPInit(_crypto_hw_support)) != 0 ) {
-		LOG(L_ERR, "ERROR: osp: setup_provider: could not initalize libosp. (%i)\n", result);
-	} else if ( OSPPUtilLoadPEMPrivateKey (_private_key, &privatekey) != 0 ) {
-		LOG(L_ERR, "ERROR: osp: setup_provider: could not load private key from %s\n", _private_key);
-	} else if ( OSPPUtilLoadPEMCert (_local_certificate, &localcert) != 0 ) {
-		LOG(L_ERR, "ERROR: osp: setup_provider: could not load local certificate from %s\n",_local_certificate);
-	} else	if ( OSPPUtilLoadPEMCert (_ca_certificate, &cacert) != 0 ) {
-		LOG(L_ERR, "ERROR: osp: setup_provider: could not load CA certificate from %s\n", _ca_certificate);
+		ERR("osp: setup_provider: could not initalize libosp. (%i)\n", result);
+	} else if ( OSPPUtilLoadPEMPrivateKey ((unsigned char*)_private_key, &privatekey) != 0 ) {
+		ERR("osp: setup_provider: could not load private key from %s\n", _private_key);
+	} else if ( OSPPUtilLoadPEMCert ((unsigned char*)_local_certificate, &localcert) != 0 ) {
+		ERR("osp: setup_provider: could not load local certificate from %s\n",_local_certificate);
+	} else	if ( OSPPUtilLoadPEMCert ((unsigned char*)_ca_certificate, &cacert) != 0 ) {
+		ERR("osp: setup_provider: could not load CA certificate from %s\n", _ca_certificate);
 	} else if ( 0 != (result = OSPPProviderNew(
 				2,
 				(const char **)_spURIs,
-				(long *)_spWeights,
+				(unsigned long *)_spWeights,
 				"http://localhost:1234",
 				&privatekey,
 				&localcert,
@@ -92,9 +92,9 @@ int setup_provider() {
 				"",
 				"",
 				&_provider))) {
-		LOG(L_ERR, "ERROR: osp: setup_provider: could not create provider. (%i)\n", result);
+		ERR("osp: setup_provider: could not create provider. (%i)\n", result);
 	} else {
-		LOG(L_INFO,"osp: Successfully created a new (per process) provider object, handle (%d)\n",_provider);
+		DBG("osp: Successfully created a new (per process) provider object, handle (%d)\n",_provider);
 		result = 0;
 	}
 
@@ -118,10 +118,10 @@ int setup_provider() {
 int delete_provider() {
 	int result;
 
-	LOG(L_INFO, "osp: Deleting provider object\n");
+	DBG("osp: Deleting provider object\n");
 
 	if (0 != (result = OSPPProviderDelete(_provider,0))) {
-		LOG(L_ERR, "ERROR: osp: problems deleting provider object, handle (%d), error (%d)\n",_provider,result);
+		ERR("osp: problems deleting provider object, handle (%d), error (%d)\n",_provider,result);
 	}
 	
 	return result;

@@ -82,7 +82,7 @@ void report_usage(
 	OSPTTHREADID thread_id;
 	OSPTTHRATTR thread_attr;
 
-	LOG(L_INFO, "osp: Scheduling usage reporting for transaction-id '%lld'\n",get_transaction_id(ospvTransaction));
+	DBG("Scheduling usage reporting for transaction-id '%lld'\n",get_transaction_id(ospvTransaction));
 
 	usage = (usage_info *)malloc(sizeof(usage_info));
 
@@ -134,14 +134,14 @@ static OSPTTHREADRETURN report_usage_wk(void* usage_arg)
 			usage->ospvIsPDDInfoPresent,
 			usage->ospvPostDialDelay,
 			usage->ospvReleaseSource,
-			"", 0, 0, 0, 0, NULL,NULL);
+			(unsigned char*)"", 0, 0, 0, 0, NULL,NULL);
 
 		if (errorcode == 0) {
-			LOG(L_INFO, "osp: Reported usage for transaction-id '%lld'\n",get_transaction_id(usage->ospvTransaction));
+			DBG("osp: Reported usage for transaction-id '%lld'\n",get_transaction_id(usage->ospvTransaction));
 			break;
 		} else {
-			LOG(L_ERR, "osp: Failed to report usage for transaction-id '%lld', code '%d', attempt '%d' of '%d'\n",
-				get_transaction_id(usage->ospvTransaction),errorcode,i,MAX_RETRIES);
+			ERR("osp: Failed to report usage for transaction-id '%lld', code '%d', attempt '%d' of '%d'\n",
+			    get_transaction_id(usage->ospvTransaction),errorcode,i,MAX_RETRIES);
 		}
 	}
 
@@ -173,7 +173,7 @@ unsigned long long get_transaction_id(OSPTTRANHANDLE transaction)
 	if (0==errorcode) {
 		id = (unsigned long long)context->TransactionID;
 	} else {
-		LOG(L_ERR, "osp:get_transaction_id: failed to extract OSP transaction id from transaction handle %d, error %d\n",transaction,errorcode);
+		ERR("osp: Failed to extract OSP transaction id from transaction handle %d, error %d\n",transaction,errorcode);
 	}
 
 	return id;
