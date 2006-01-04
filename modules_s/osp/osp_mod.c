@@ -81,13 +81,20 @@ static void dump_parameter();
 
 
 static cmd_export_t cmds[]={
-	{"checkospheader",       checkospheader,       0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-	{"validateospheader",    validateospheader,    0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-	{"requestosprouting",    requestosprouting,    0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-	{"preparefirstosproute", preparefirstosproute, 0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-	{"preparenextosproute",  preparenextosproute,  0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-	{"prepareallosproutes",  prepareallosproutes,  0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
-	{"reportospusage",       reportospusage,       0, 0, REQUEST_ROUTE}, 
+	{"checkospheader",         checkospheader,       0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+	{"check_osp_header",       checkospheader,       0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"validateospheader",      validateospheader,    0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"validate_osp_header",    validateospheader,    0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"requestosprouting",      requestosprouting,    0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"request_osp_routing",    requestosprouting,    0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"preparefirstosproute",   preparefirstosproute, 0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"prepare_1st_osp_route",  preparefirstosproute, 0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"preparenextosproute",    preparenextosproute,  0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+	{"prepare_next_osp_route", preparenextosproute,  0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"prepareallosproutes",    prepareallosproutes,  0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+	{"prepare_all_osp_routes", prepareallosproutes,  0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"reportospusage",         reportospusage,       0, 0, REQUEST_ROUTE}, 
+	{"report_osp_usage",       reportospusage,       0, 0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -120,8 +127,8 @@ static param_export_t params[]={
 struct module_exports exports = {
 	"osp", 
 	cmds,
+	0,          /* RPC methods */
 	params,
-	
 	mod_init,   /* module initialization function */
 	0,          /* response function*/
 	mod_destroy,/* destroy function */
@@ -134,19 +141,14 @@ static int mod_init(void)
 {
 	DBG("---------------------Initializing OSP module\n");
 
-	if (verify_parameter() != 0) 
-		return 1;   /* at least one parameter incorrect -> error */
-
-	append_hf = find_export("append_hf", 1, 0);
-        if (append_hf == NULL) {
-                LOG(L_ERR, "ERROR: osp: mod_init: could not find append_hf, make shure textops is loaded\n");
-                return 1;
-        }   
+	if (verify_parameter() != 0) {
+		return -1;   /* at least one parameter incorrect -> error */
+	}
 
 	add_rr_param = find_export("add_rr_param", 1, 0);
         if (add_rr_param == NULL) {
-                LOG(L_WARN, "WARNING: osp: mod_init: could not find add_rr_param, make shure rr is loaded\n");
-                LOG(L_WARN, "WARNING: osp: mod_init: add_rr_param is required for reporting duration for OSP transactions\n");
+                WARN("osp: mod_init: could not find add_rr_param, make sure rr is loaded\n");
+                WARN("osp: mod_init: add_rr_param is required for reporting duration for OSP transactions\n");
         }   
 
 	mod_init_tm();
@@ -183,8 +185,6 @@ int verify_parameter() {
 	/* Assume success. If any validation fails the values will be set to -1 */
 	int errorcode = 0;
 
-	LOG(L_INFO,"osp: Initialzing OSP module\n");
-
 	/* Default location for the cert files is in the compile time variable CFG_DIR */
 	if (_private_key == NULL) {
 		sprintf(_PRIVATE_KEY,"%spkey.pem",CFG_DIR);
@@ -211,12 +211,12 @@ int verify_parameter() {
 
 	if (_max_destinations > MAX_DESTS || _max_destinations < 1) {
 		_max_destinations = 5;	
-		LOG(L_WARN,"WARN: osp: Maximum destinations 'max_destinations' is out of range, re-setting to 5\n");
+		WARN("osp: Maximum destinations 'max_destinations' is out of range, re-setting to 5\n");
 	}
 
 	if (_token_format < 0 || _token_format > 2) {
 		_token_format = 0;
-		LOG(L_WARN,"WARN: osp: Token format 'token_format' is out of range, re-setting to 0\n");
+		WARN("osp: Token format 'token_format' is out of range, re-setting to 0\n");
 	}
 
 	if (_spURIs[1] == NULL) {
@@ -224,7 +224,7 @@ int verify_parameter() {
 	}
 
 	if (_spURIs[0] == NULL) {
-		LOG(L_ERR,"ERROR: osp: Service Point 1 'sp1_uri' must be configured\n");
+		ERR("osp: Service Point 1 'sp1_uri' must be configured\n");
 		errorcode = -1;
 	}
 
@@ -235,7 +235,7 @@ int verify_parameter() {
 
 
 void dump_parameter() {
-	LOG(L_INFO, "osp: module parameter settings\n"
+	INFO("osp: module parameter settings\n"
 	" sp1_uri: '%s'"
 	" sp1_weight: '%d'"
 	" sp2_uri: '%s'"
