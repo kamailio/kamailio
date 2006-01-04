@@ -77,7 +77,7 @@ int requestosprouting(struct sip_msg* msg, char* ignore1, char* ignore2) {
 	unsigned int log_size = 0;
 	char* detail_log = NULL;
 	const char** preferred = NULL;
-	int dest_count;
+	unsigned int dest_count;
 	OSPTTRANHANDLE transaction = -1;
 	time_t time_auth;
 
@@ -88,34 +88,34 @@ int requestosprouting(struct sip_msg* msg, char* ignore1, char* ignore2) {
 	dest_count = _max_destinations;
 
 	if (0!= (res=OSPPTransactionNew(_provider, &transaction))) {
-		LOG(L_ERR, "ERROR: osp: Failed to create a new OSP transaction id %d\n",res);
+		ERR("osp: Failed to create a new OSP transaction id %d\n",res);
 	} else if (0 != getFromUserpart(msg, e164_source,sizeof(e164_source))) {
-		LOG(L_ERR, "ERROR: osp: Failed to extract calling number\n");
+		ERR("osp: Failed to extract calling number\n");
 	} else if (0 != getToUserpart(msg, e164_dest,sizeof(e164_dest))) {
-		LOG(L_ERR, "ERROR: osp: Failed to extract called number\n");
+		ERR("osp: Failed to extract called number\n");
 	} else if (0 != getCallId(msg, &(call_ids[0]))) {
-		LOG(L_ERR, "ERROR: osp: Failed to extract call id\n");
+		ERR("osp: Failed to extract call id\n");
 	} else if (0 != getSourceAddress(msg,osp_source_dev,sizeof(osp_source_dev))) {
-		LOG(L_ERR, "ERROR: osp: Failed to extract source address\n");
+		ERR("osp: Failed to extract source address\n");
 	} else {
-		LOG(L_INFO,"osp: Requesting OSP authorization and routing for: "
-			"transaction-handle '%i' \n"
-			"osp_source '%s' "
-			"osp_source_port '%s' "
-			"osp_source_dev '%s' "
-			"e164_source '%s' "
-			"e164_dest '%s' "
-			"call-id '%.*s' "
-			"dest_count '%i'",
-			transaction,
-			_device_ip,
-			_device_port,
-			osp_source_dev,
-			e164_source,
-			e164_dest,
-			call_ids[0]->ospmCallIdLen,
-			call_ids[0]->ospmCallIdVal,
-			dest_count
+		DBG("osp: Requesting OSP authorization and routing for: "
+		    "transaction-handle '%i' \n"
+		    "osp_source '%s' "
+		    "osp_source_port '%s' "
+		    "osp_source_dev '%s' "
+		    "e164_source '%s' "
+		    "e164_dest '%s' "
+		    "call-id '%.*s' "
+		    "dest_count '%i'",
+		    transaction,
+		    _device_ip,
+		    _device_port,
+		    osp_source_dev,
+		    e164_source,
+		    e164_dest,
+		    call_ids[0]->ospmCallIdLen,
+		    call_ids[0]->ospmCallIdVal,
+		    dest_count
 		);	
 
 
@@ -141,15 +141,15 @@ int requestosprouting(struct sip_msg* msg, char* ignore1, char* ignore2) {
 		detail_log);       /* memory location for detaillog to be stored */
 
 		if (res == 0 && dest_count > 0) {
-			LOG(L_INFO, "osp: there is %d osp routes, call-id '%.*s', transaction-id '%lld'\n",
-				dest_count,call_ids[0]->ospmCallIdLen, call_ids[0]->ospmCallIdVal,get_transaction_id(transaction));
+			DBG("osp: there is %d osp routes, call-id '%.*s', transaction-id '%lld'\n",
+			    dest_count,call_ids[0]->ospmCallIdLen, call_ids[0]->ospmCallIdVal,get_transaction_id(transaction));
 			record_orig_transaction(msg,transaction,osp_source_dev,e164_source,e164_dest,time_auth);
 			valid = loadosproutes(msg,transaction,dest_count,_device_ip,osp_source_dev,time_auth);
 		} else if (res == 0 && dest_count == 0) {
-			LOG(L_INFO, "osp: there is 0 osp routes, the route is blocked, call-id '%.*s', transaction-id '%lld'\n",
-				call_ids[0]->ospmCallIdLen,call_ids[0]->ospmCallIdVal,get_transaction_id(transaction));
+			DBG("osp: there is 0 osp routes, the route is blocked, call-id '%.*s', transaction-id '%lld'\n",
+			    call_ids[0]->ospmCallIdLen,call_ids[0]->ospmCallIdVal,get_transaction_id(transaction));
 		} else {
-			LOG(L_ERR, "ERROR: osp: OSPPTransactionRequestAuthorisation returned %i, call-id '%.*s', transaction-id '%lld'\n",
+			ERR("osp: OSPPTransactionRequestAuthorisation returned %i, call-id '%.*s', transaction-id '%lld'\n",
 				res,call_ids[0]->ospmCallIdLen,call_ids[0]->ospmCallIdVal,get_transaction_id(transaction));
 		}
 	}
@@ -227,7 +227,7 @@ static int loadosproutes(struct sip_msg* msg, OSPTTRANHANDLE transaction, int ex
 
 		
 		if (res != 0) {
-			LOG(L_ERR,"ERROR: osp: getDestination %d failed, expected number %d, current count %d\n",res,expectedDestCount,count);
+			ERR("osp: getDestination %d failed, expected number %d, current count %d\n",res,expectedDestCount,count);
 			result = MODULE_RETURNCODE_FALSE;
 			break;
 		}
@@ -239,18 +239,18 @@ static int loadosproutes(struct sip_msg* msg, OSPTTRANHANDLE transaction, int ex
 		dest->tid = get_transaction_id(transaction);
 		dest->time_auth = time_auth;
 
-		LOG(L_INFO,"osp: getDestination %d returned the following information: "
-		"valid after '%s' "
-		"valid until '%s' "
-		"time limit '%i' seconds "
-		"call-id '%.*s' "
-		"calling number '%s' "
-		"called number '%s' "
-		"destination '%s' "
-		"network id '%s' "
-		"bn token size '%i' ",
-		count, dest->validafter, dest->validuntil, dest->timelimit, dest->sizeofcallid, dest->callid, dest->callingnumber, dest->callednumber, 
-		dest->destination, dest->network_id, dest->sizeoftoken);
+		DBG("osp: getDestination %d returned the following information: "
+		    "valid after '%s' "
+		    "valid until '%s' "
+		    "time limit '%i' seconds "
+		    "call-id '%.*s' "
+		    "calling number '%s' "
+		    "called number '%s' "
+		    "destination '%s' "
+		    "network id '%s' "
+		    "bn token size '%i' ",
+		    count, dest->validafter, dest->validuntil, dest->timelimit, dest->sizeofcallid, dest->callid, dest->callingnumber, dest->callednumber, 
+		    dest->destination, dest->network_id, dest->sizeoftoken);
 	}
 
 	/* save destination in reverse order,
@@ -321,7 +321,7 @@ int prepareDestination(struct sip_msg* msg, int isFirst) {
 
 		rebuildDestionationUri(&newuri, dest->destination, dest->network_id, dest->callednumber);
 
-		LOG(L_INFO, "osp: Preparing route to uri '%.*s' for call-id '%.*s' transaction-id '%lld'\n",newuri.len,newuri.s,dest->sizeofcallid,dest->callid,dest->tid);
+		DBG("osp: Preparing route to uri '%.*s' for call-id '%.*s' transaction-id '%lld'\n",newuri.len,newuri.s,dest->sizeofcallid,dest->callid,dest->tid);
 
 		if (isFirst == FIRST_ROUTE) {
 			rewrite_uri(msg, &newuri);
