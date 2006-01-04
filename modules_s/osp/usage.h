@@ -47,7 +47,7 @@
  * It includes OSP transaction id, response codes, start time, alert time,
  * connect time, etc.
  *
- * Duration usage is reported based on the OSP cooky recorded into the route set
+ * Duration usage is reported based on the OSP cookie recorded into the route set
  * (using add_rr_param) after requesting routing/authorization on the originating
  * side, and validating authorization on the terminating side.  It include 
  * OSP transaction id, duration, stop time, etc.
