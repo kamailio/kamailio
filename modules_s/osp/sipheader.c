@@ -46,6 +46,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_rr.h"
+#include "../../data_lump.h"
 
 
 
@@ -59,23 +60,19 @@ int getFromUserpart(struct sip_msg* msg, char *fromuser, int buffer_size)
 
 	strcpy(fromuser, "");
 
-	if (msg->from != NULL) {
-		if (parse_from_header(msg) == 0) {
-			from = ((struct to_body *)msg->from->parsed);
-			if (parse_uri(from->uri.s, from->uri.len, &uri) == 0) {
-				copy_from_str_to_buffer(&uri.user, fromuser, buffer_size);
-				skipPlus(fromuser);
-				retVal = 0;
-			} else {
-				LOG(L_ERR, "ERROR: osp: getFromUserpart: could not parse from uri\n");
-			}
+	if (parse_from_header(msg) == 0) {
+		from = get_from(msg);
+		if (parse_uri(from->uri.s, from->uri.len, &uri) == 0) {
+			copy_from_str_to_buffer(&uri.user, fromuser, buffer_size);
+			skipPlus(fromuser);
+			retVal = 0;
 		} else {
-			LOG(L_ERR, "ERROR: osp: getFromUserpart: could not parse from header\n");
+			ERR("osp: getFromUserpart: could not parse from uri\n");
 		}
 	} else {
-		LOG(L_ERR, "ERROR: osp: getFromUserpart: could not find from header\n");
+		ERR("osp: getFromUserpart: could not parse from header\n");
 	}
-
+	
 	return retVal;
 }
 
@@ -87,18 +84,23 @@ int getToUserpart(struct sip_msg* msg, char *touser, int buffer_size)
 
 	strcpy(touser, "");
 
-	if (msg->to != NULL) {
-		to = ((struct to_body *)msg->to->parsed);
+	if (!msg->to && parse_headers(msg, HDR_TO_F,0) == -1) {
+		ERR("To parsing failed\n");
+		return retVal;
+	}
 
-		if (parse_uri(to->uri.s, to->uri.len, &uri) == 0) {
-			copy_from_str_to_buffer(&uri.user, touser,buffer_size);
-			skipPlus(touser);
-			retVal = 0;
-		} else {
-			LOG(L_ERR, "ERROR: osp: getToUserpart: could not parse to uri\n");
-		}
+	if (!msg->to) {
+		ERR("No To\n");
+		return retVal;
+	}
+
+	to = get_to(msg);
+	if (parse_uri(to->uri.s, to->uri.len, &uri) == 0) {
+		copy_from_str_to_buffer(&uri.user, touser,buffer_size);
+		skipPlus(touser);
+		retVal = 0;
 	} else {
-		LOG(L_ERR, "ERROR: osp: getToUserpart: could not find to header\n");
+		ERR("osp: getToUserpart: could not parse to uri\n");
 	}
 
 	return retVal;
@@ -113,17 +115,51 @@ void skipPlus(char* e164) {
 }
 
 
+static int append_hf(struct sip_msg* msg, str* str1)
+{
+	struct lump* anchor;
+	char *s;
+	int len;
+
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		ERR("Error while parsing message\n");
+		return -1;
+	}
+
+	anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
+	if (anchor == 0) {
+		ERR("Can't get anchor\n");
+		return -1;
+	}
+
+	len=str1->len;
+
+	s = (char*)pkg_malloc(len);
+	if (!s) {
+		ERR("No memory left\n");
+		return -1;
+	}
+
+	memcpy(s, str1->s, str1->len);
+
+	if (insert_new_lump_before(anchor, s, len, 0) == 0) {
+		ERR("Can't insert lump\n");
+		pkg_free(s);
+		return -1;
+	}
+	return 1;
+}
 
 
 int addOspHeader(struct sip_msg* msg, char* token, int sizeoftoken) {
 
 	char headerBuffer[3500];
-	char encodedToken[3000];
-	int  sizeofencodedToken = sizeof(encodedToken);
+	unsigned char encodedToken[3000];
+	unsigned int  sizeofencodedToken = sizeof(encodedToken);
 	str  headerVal;
 	int  retVal = 1;
 
-	if (OSPPBase64Encode(token, sizeoftoken, encodedToken, &sizeofencodedToken) == 0) {
+	if (OSPPBase64Encode((unsigned char*)token, sizeoftoken, encodedToken, &sizeofencodedToken) == 0) {
 		snprintf(headerBuffer,
 			 sizeof(headerBuffer),
 			 "%s%.*s\r\n", 
@@ -136,13 +172,13 @@ int addOspHeader(struct sip_msg* msg, char* token, int sizeoftoken) {
 
 		DBG("osp: Setting osp token header field - (%s)\n", headerBuffer);
 
-		if (append_hf(msg,(char *)&headerVal,NULL) > 0) {
+		if (append_hf(msg, &headerVal) > 0) {
 			retVal = 0;
 		} else {
-			LOG(L_ERR, "ERROR: osp: addOspHeader: failed to append osp header to the message\n");
+			ERR("osp: addOspHeader: failed to append osp header to the message\n");
 		}
 	} else {
-		LOG(L_ERR, "ERROR: osp: addOspHeader: base64 encoding failed\n");
+		ERR("osp: addOspHeader: base64 encoding failed\n");
 	}
 
 	return retVal;
@@ -157,17 +193,20 @@ int getOspHeader(struct sip_msg* msg, char* token, int* sizeoftoken) {
 	int code;
 	int retVal = 1;
 
-	parse_headers(msg, HDR_EOH_T, 0);
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		ERR("osp: Error while parsing headers\n");
+		return retVal;
+	}
 
 	for (hf=msg->headers; hf; hf=hf->next) {
 		if ( (hf->type == HDR_OTHER_T) && (hf->name.len == OSP_HEADER_LEN-2)) {
 			// possible hit
 			if (strncasecmp(hf->name.s, OSP_HEADER, OSP_HEADER_LEN) == 0) {
-				if ( (code=OSPPBase64Decode(hf->body.s, hf->body.len, token, sizeoftoken)) == 0) {
+				if ( (code=OSPPBase64Decode(hf->body.s, hf->body.len, (unsigned char*)token, (unsigned int*)sizeoftoken)) == 0) {
 					retVal = 0;
 				} else {
-					LOG(L_ERR, "ERROR: osp: getOspHeader: failed to base64 decode OSP token, reason - %d\n",code);
-					LOG(L_ERR, "ERROR: osp: header '%.*s' length %d\n",hf->body.len,hf->body.s,hf->body.len);
+					ERR("osp: getOspHeader: failed to base64 decode OSP token, reason - %d\n",code);
+					ERR("osp: header '%.*s' length %d\n",hf->body.len,hf->body.s,hf->body.len);
 				}
 				break;
 			}		
@@ -185,17 +224,23 @@ int getCallId(struct sip_msg* msg, OSPTCALLID** callid) {
 	struct hdr_field *cid;
 	int retVal = 1;
 
+
+	if (!msg->callid && parse_headers(msg, HDR_CALLID_F, 0) == -1) {
+		ERR("Call-ID parsing failed\n");
+		return retVal;
+	}
+
 	cid = (struct hdr_field*) msg->callid;
 
 	if (cid != NULL) {
-		*callid = OSPPCallIdNew(cid->body.len,cid->body.s);
+		*callid = OSPPCallIdNew(cid->body.len,(unsigned char*)cid->body.s);
 		if (*callid) {
 			retVal = 0;
 		} else {
-			LOG(L_ERR, "ERROR: osp: getCallId: failed to allocate call-id object for '%.*s'\n",cid->body.len,cid->body.s);
+			ERR("osp: getCallId: failed to allocate call-id object for '%.*s'\n",cid->body.len,cid->body.s);
 		}
 	} else {
-		LOG(L_ERR, "ERROR: osp: getCallId: could not find Call-Id-Header\n");
+		ERR("osp: getCallId: could not find Call-Id-Header\n");
 	}	
 
 	return retVal;
@@ -248,9 +293,9 @@ int getRouteParams(struct sip_msg* msg, char* route_params, int buffer_size)
         if (!(hdr=msg->route)) {
                 DBG("osp: getRouteParams: there is no route headers\n");
         } else if (!(rt=(rr_t*)hdr->parsed)) {
-                LOG(L_ERR, "ERROR: osp: getRouteParams: the route headers are not parsed\n");
+                ERR("osp: getRouteParams: the route headers are not parsed\n");
         } else if (parse_uri(rt->nameaddr.uri.s,rt->nameaddr.uri.len,&puri) != 0) {
-                LOG(L_ERR, "ERROR: osp: getRouteParams: failed to parse the route URI '%.*s'\n",rt->nameaddr.uri.len,rt->nameaddr.uri.s);
+                ERR("osp: getRouteParams: failed to parse the route URI '%.*s'\n",rt->nameaddr.uri.len,rt->nameaddr.uri.s);
         } else if (check_self(&puri.host, puri.port_no ? puri.port_no : SIP_PORT, PROTO_NONE) != 1) {
                 DBG("osp: getRouteParams: the route uri is NOT mine\n");
                 DBG("osp: getRouteParams: host '%.*s' port '%d'\n",puri.host.len,puri.host.s,puri.port_no);
@@ -300,7 +345,7 @@ void getNextHop(struct sip_msg* msg, char* next_hope, int buffer_size)
 					DBG("osp: getNextHop: it IS me, keep looking\n");
 				}
 			} else {
-				LOG(L_ERR,"ERROR: osp: getNextHop: failed to parsed 'Route' uri '%.*s'\n",route->nameaddr.uri.len,route->nameaddr.uri.s);
+				ERR("osp: getNextHop: failed to parsed 'Route' uri '%.*s'\n",route->nameaddr.uri.len,route->nameaddr.uri.s);
 			}
 
 		}
@@ -340,7 +385,7 @@ int rebuildDestionationUri(str *newuri, char *destination, char *port, char *cal
 	/* "sip:+" + callednumber + "@" + destination + : + port + " SIP/2.0" */
 	newuri->s = (char*) pkg_malloc(sizeofdestination + sizeofcallednumber + sizeofport + 1 + 16 + TRANS_LEN);
 	if (newuri == NULL) {
-		LOG(L_ERR, "ERROR: osp: rebuilddestionationstr: no memory\n");
+		ERR("osp: rebuilddestionationstr: no memory\n");
 		return 1;
 	}	
 	buf = newuri->s;
@@ -405,8 +450,8 @@ void copy_from_str_to_buffer(str* from, char* buffer, int buffer_size)
 	int copy_bytes;
 
 	if (from->len > buffer_size) {
-		LOG(L_ERR,"Buffer for copying '%.*s' is too small, will copy the first %d of %d bytes\n",
-			from->len,from->s,buffer_size,from->len);
+		ERR("Buffer for copying '%.*s' is too small, will copy the first %d of %d bytes\n",
+		    from->len,from->s,buffer_size,from->len);
 		copy_bytes = buffer_size;
 	} else {
 		copy_bytes = from->len;
@@ -415,15 +460,3 @@ void copy_from_str_to_buffer(str* from, char* buffer, int buffer_size)
 	strncpy(buffer,from->s,copy_bytes);
 	buffer[copy_bytes] = '\0';
 }
-
-
-
-
-
-
-
-
-
-
-
-
