@@ -42,7 +42,7 @@ static void doc_add_tuple_note(dstring_t *buf, presence_note_t *n)
 	dstr_append_zt(buf, "</note>\r\n");
 }
 
-static void doc_add_note(dstring_t *buf, presentity_info_t *p, presence_note_t *n)
+/*static void doc_add_note(dstring_t *buf, presentity_info_t *p, presence_note_t *n)
 {
 	DEBUG_LOG("doc_add_note()\n");
 	
@@ -55,7 +55,7 @@ static void doc_add_note(dstring_t *buf, presentity_info_t *p, presence_note_t *
 	dstr_append_zt(buf, ">");
 	dstr_append_str(buf, &n->value);	
 	dstr_append_zt(buf, "</note>\r\n");
-}
+}*/
 
 static void doc_add_tuple(dstring_t *buf, presentity_info_t *p, presence_tuple_info_t *t)
 {

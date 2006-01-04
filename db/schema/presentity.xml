@@ -29,6 +29,12 @@
 	<type>string</type>
 	<size>&uri_len;</size>
     </column>
+    
+	<column id="presentity.uid">
+	<name>uid</name>
+	<type>string</type>
+	<size>&id_len;</size>
+    </column>
 
     <column>
 	<name>pdomain</name>

@@ -305,6 +305,7 @@ CREATE TABLE sd_attrs (
 CREATE TABLE presentity (
     presid int(10) NOT NULL,
     uri string(255) NOT NULL,
+    uid string(64) NOT NULL,
     pdomain string(128) NOT NULL,
     presentity_key UNIQUE (presid, ),
 
