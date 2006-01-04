@@ -176,11 +176,11 @@
          </row>
     <row><value col="at.name">lang</value>      
          <value col="at.type">2</value>
-         <value col="at.rich_t">string</value>
+         <value col="at.rich_t">lang</value>
          <value col="at.desc">@ff_language</value>
          <value col="at.d_flags">33</value>
          <value col="at.flags">0</value>
-         <value col="at.prior">1073807360</value>
+         <value col="at.prior">1073807616</value>
          <value col="at.order">50</value>
          </row>
     <row><value col="at.name">sw_show_status</value>      

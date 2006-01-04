@@ -12,7 +12,7 @@ sw_lname:string:2::@ff_last_name:32:2:256:20
 sw_email:email_adr:2::@ff_email:32:2:256:30
 sw_timezone:timezone:2::@ff_timezone:32:2:1073807616:60
 sw_allow_find:boolean:0::@ff_allow_lookup_for_me:32:0:256:110
-lang:string:2::@ff_language:33:0:1073807360:50
+lang:lang:2::@ff_language:33:0:1073807616:50
 sw_show_status:boolean:0::@ff_status_visibility:32:0:1073742080:100
 sw_admin:string:2::admin of domain:32:1:0:0
 sw_owner:string:2::owner of domain:32:0:0:0
