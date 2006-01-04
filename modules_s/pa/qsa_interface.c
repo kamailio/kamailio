@@ -58,9 +58,9 @@ void pa_qsa_interface_destroy()
 }
 
 /* notifier functions */
-static int create_presentity_ex(pdomain_t *_d, str_t *_puri, presentity_t **_p)
+static int create_presentity_ex(pdomain_t *_d, str_t *_puri, str_t *uid, presentity_t **_p)
 {
-	if (new_presentity(_d, _puri, _p) < 0) {
+	if (new_presentity(_d, _puri, uid, _p) < 0) {
 		LOG(L_ERR, "create_presentity_only(): Error while creating presentity\n");
 		return -2;
 	}
@@ -102,11 +102,18 @@ static int pa_subscribe(notifier_t *n, subscription_t *subscription)
 	dlist_t *dl;
 	presentity_t *p = NULL;
 	internal_pa_subscription_t *ss;
+	str uid = STR_NULL;
 	
 	DEBUG_LOG("SUBSCRIBE to PA for %.*s [%.*s]\n", 
 			FMT_STR(subscription->record_id),
 			FMT_STR(subscription->package->name));
 
+	if (pres_uri2uid(&uid, &subscription->record_id) != 0) {
+		/* can't convert uri to uid */
+		TRACE_LOG("can't convert URI to UID for internal PA subscription\n");
+		return -1;
+	}
+	
 	dl = root;	/* FIXME: ugly and possibly unsafe (locking needed?) */
 	while (dl) {
 		/* create new server subscription */
@@ -117,10 +124,10 @@ static int pa_subscribe(notifier_t *n, subscription_t *subscription)
 		}
 		
 		lock_pdomain(dl->d);	
-		if (find_presentity(dl->d, &subscription->record_id, &p) != 0) p = NULL;
+		if (find_presentity_uid(dl->d, &uid, &p) != 0) p = NULL;
 		if (!p) {
 			DEBUG_LOG("creating presentity\n");
-			if (create_presentity_ex(dl->d, &subscription->record_id, &p) < 0) {
+			if (create_presentity_ex(dl->d, &subscription->record_id, &uid, &p) < 0) {
 				ERROR_LOG("can't create presentity\n");
 			}
 		}
@@ -138,6 +145,9 @@ static int pa_subscribe(notifier_t *n, subscription_t *subscription)
 		unlock_pdomain(dl->d);
 		dl = dl->next;
 	}
+
+	str_free_content(&uid);
+	
 	return 0;
 }
 
@@ -159,6 +169,13 @@ static void pa_unsubscribe(notifier_t *n, subscription_t *subscription)
 {
 	dlist_t *dl;
 	presentity_t *p = NULL;
+	str uid = STR_NULL;
+	
+	if (pres_uri2uid(&uid, &subscription->record_id) != 0) {
+		/* can't convert uri to uid */
+		TRACE_LOG("can't convert URI to UID for internal PA unsubscription\n");
+		return;
+	}
 	
 	/* DEBUG_LOG("UNBSCRIBE from PA for %.*s [%.*s]\n", 
 			FMT_STR(subscription->record_id),
@@ -167,7 +184,7 @@ static void pa_unsubscribe(notifier_t *n, subscription_t *subscription)
 	dl = root;	/* FIXME: ugly and possibly unsafe (locking needed?) */
 	while (dl) {
 		lock_pdomain(dl->d);	
-		if (find_presentity(dl->d, &subscription->record_id, &p) != 0) p = NULL;
+		if (find_presentity_uid(dl->d, &uid, &p) != 0) p = NULL;
 		if (!p) continue;
 			
 		remove_internal_subscription(p, subscription);
@@ -176,6 +193,7 @@ static void pa_unsubscribe(notifier_t *n, subscription_t *subscription)
 		unlock_pdomain(dl->d);
 		dl = dl->next;
 	}
+	str_free_content(&uid);
 }
 
 void copy_tuple_notes(presence_tuple_info_t *dst_info, const presence_tuple_t *src)

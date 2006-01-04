@@ -549,7 +549,7 @@ static time_t get_expires(struct sip_msg *_m)
  * Create a new presentity and corresponding watcher list
  */
 int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri, 
-			     struct presentity** _p, struct watcher** _w)
+			     str *uid, struct presentity** _p, struct watcher** _w)
 {
 	time_t e;
 	int et = 0;
@@ -567,7 +567,7 @@ int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 	/* Convert to absolute time if nonzero (zero = polling) */
 	if (e > 0) e += act_time;
 
-	if (new_presentity(_d, _puri, _p) < 0) {
+	if (new_presentity(_d, _puri, uid, _p) < 0) {
 		LOG(L_ERR, "create_presentity(): Error while creating presentity\n");
 		return -2;
 	}
@@ -631,6 +631,9 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 	return res;
 }
 
+
+/* FIXME: remove */
+#if 0
 
 /*
  * Handle a registration request -- make sure aor exists in presentity table
@@ -766,6 +769,7 @@ int pa_handle_registration(struct sip_msg* _m, char* _domain, char* _s2)
      LOG(L_DBG, "pa_handle_registration about to return -2\n");
      return -1;
 }
+#endif
 
 /*
  * Handle a subscribe Request
@@ -775,7 +779,8 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	struct pdomain* d;
 	struct presentity *p;
 	struct watcher* w;
-	str p_uri;
+	str p_uri = STR_NULL;
+	str uid = STR_NULL;
 	char tmp[64];
 	int i;
 
@@ -800,12 +805,17 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 		goto error;
 	}
 
+	if (get_presentity_uid(&uid, _m) != 0) {
+		LOG(L_ERR, "handle_subscription(): Error while extracting presentity UID\n");
+		goto error;
+	}
+
 	lock_pdomain(d);
 
 	LOG(L_DBG, "handle_subscription: locked domain\n");
 	
-	if (find_presentity(d, &p_uri, &p) > 0) {
-		if (create_presentity(_m, d, &p_uri, &p, &w) < 0) {
+	if (find_presentity_uid(d, &uid, &p) > 0) {
+		if (create_presentity(_m, d, &p_uri, &uid, &p, &w) < 0) {
 			LOG(L_ERR, "handle_subscription(): Error while creating new presentity\n");
 			goto error2;
 		}
@@ -815,6 +825,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 			goto error2;
 		}
 	}
+	str_free_content(&uid);
 
 	LOG(L_DBG, "handle_subscription: generating response\n");
 	
@@ -851,6 +862,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	return 1;
 	
  error2:
+	str_free_content(&uid);
 	LOG(L_ERR, "handle_subscription about to return -1\n");
 	unlock_pdomain(d);
 	send_reply(_m);

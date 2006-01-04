@@ -38,7 +38,7 @@ static void trace_presentity(presentity_t *p, rpc_t* rpc, void* c)
 	internal_pa_subscription_t *iw;
 	pa_presence_note_t *n;
 	
-	rpc->printf(c, "* %.*s", FMT_STR(p->uri));
+	rpc->printf(c, "* %.*s (uid=%.*s)", FMT_STR(p->uri), FMT_STR(p->uuid));
 	rpc_lf(rpc, c);
 	
 	rpc->printf(c, " - tuples:");
@@ -213,7 +213,7 @@ static void rpc_authorize(rpc_t* rpc, void* c)
 	pdomain_t *d;
 	presentity_t *p;
 	
-	str pstr, wstr;
+	str pstr, wstr, uid;
 	char* domain;
 
 	if (rpc->scan(c, "sSS", &domain, &pstr, &wstr) < 3) {
@@ -226,14 +226,21 @@ static void rpc_authorize(rpc_t* rpc, void* c)
 		return;
 	}
 
+	if (pres_uri2uid(&pstr, &uid) != 0) {
+		rpc->fault(c, 400, "Unable to convert '%.*s' to UID\n", pstr.len, pstr.s);
+		return;
+	}
+	
 	lock_pdomain(d);
-	if (find_presentity(d, &pstr, &p) != 0) {
+	if (find_presentity_uid(d, &pstr, &p) != 0) {
 		rpc->fault(c, 400, "Presentity '%.*s' not found\n", pstr.len, pstr.s);
 		unlock_pdomain(d);
+		str_free_content(&uid);
 		return;
 	}
 	grant_watchers(p, &wstr);
 	unlock_pdomain(d);
+	str_free_content(&uid);
 }
 
 /* 

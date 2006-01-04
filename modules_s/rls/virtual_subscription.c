@@ -169,6 +169,7 @@ static void vs_timer_cb(unsigned int ticks, void *param)
 {
 	virtual_subscription_t *vs;
 	int changed = 0;
+	int cntr = 0;
 
 	rls_lock();
 
@@ -181,6 +182,7 @@ static void vs_timer_cb(unsigned int ticks, void *param)
 			changed = 1;
 		}
 		vs = vs->next;
+		cntr++; /* debugging purposes */
 	}
 	
 	if (changed) {

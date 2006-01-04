@@ -770,6 +770,7 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 	struct pdomain* d;
 	struct presentity *p;
 	str p_uri = STR_NULL;
+	str uid = STR_NULL;
 
 	get_act_time();
 	paerrno = PA_OK;
@@ -795,14 +796,20 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 		goto error;
 	}
 
+	if (get_presentity_uid(&uid, _m) != 0) {
+		LOG(L_ERR, "handle_subscription(): Error while extracting presentity UID\n");
+		goto error;
+	}
+
 	lock_pdomain(d);
 
-	if (find_presentity(d, &p_uri, &p) > 0) {
-		if (create_presentity_only(_m, d, &p_uri, &p) < 0) {
+	if (find_presentity_uid(d, &uid, &p) > 0) {
+		if (create_presentity_only(_m, d, &p_uri, &uid, &p) < 0) {
 			LOG(L_ERR, "handle_publish can't create presentity\n");
 			goto error2;
 		}
 	}
+	str_free_content(&uid);
 
 	LOG(L_DBG, "handle_publish - publishing status\n");
 	
@@ -818,6 +825,7 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 
 error2:
 	unlock_pdomain(d);
+	str_free_content(&uid);
 error:
 	send_reply(_m);
 	return 0;

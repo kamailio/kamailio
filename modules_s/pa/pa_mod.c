@@ -331,8 +331,6 @@ static int pa_mod_init(void)
 		return -1;
 	}
 
-	WARN_LOG("TESTING VERSION of get_presentity_uuid()!\n");
-	
 	LOG(L_DBG, "pa_mod_init done\n");
 	return 0;
 }

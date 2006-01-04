@@ -185,23 +185,22 @@ void unlock_pdomain(pdomain_t* _d)
 }
 
 /*
- * Find a presentity in domain
+ * Find a presentity in domain according to uid
  */
-int find_presentity(pdomain_t* _d, str* _uri, struct presentity** _p)
+int find_presentity_uid(pdomain_t* _d, str* uid, struct presentity** _p)
 {
 	int sl, i;
 	struct presentity* p;
-	str uuid;
 	int res = 1;
 
-	if (get_presentity_uuid(&uuid, _uri) != 0) return -1;
-	
-	sl = hash_func(_d, uuid.s, uuid.len);
+	if (!uid) return -1;
+
+	sl = hash_func(_d, uid->s, uid->len);
 	
 	p = _d->table[sl].first;
 	
 	for(i = 0; i < _d->table[sl].n; i++) {
-		if ((p->uuid.len == uuid.len) && !memcmp(p->uuid.s, uuid.s, uuid.len)) {
+		if ((p->uuid.len == uid->len) && !memcmp(p->uuid.s, uid->s, uid->len)) {
 			*_p = p;
 			res = 0;
 			break;
@@ -209,8 +208,6 @@ int find_presentity(pdomain_t* _d, str* _uri, struct presentity** _p)
 		p = p->next;
 	}
 	
-	str_free_content(&uuid);
-
 	return res;   /* Nothing found */
 }
 

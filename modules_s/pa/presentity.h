@@ -165,7 +165,7 @@ typedef struct presentity {
 /*
  * Create a new presentity
  */
-int new_presentity(struct pdomain *pdomain, str* _uri, presentity_t** _p);
+int new_presentity(struct pdomain *pdomain, str* _uri, str *uid, presentity_t** _p);
 
 
 /*
@@ -262,8 +262,19 @@ resource_list_t *resource_list_remove(resource_list_t *list, str *uri);
 
 int db_remove_presentity(presentity_t* presentity);
 
-/* helper function - will be removed - FIXME */
-int get_presentity_uuid(str *uuid, const str *uri);
+/* helper functions */
+
+/* 
+ * gets UID from message (using get_to_uid) 
+ * and duplicates it into shared memory 
+ */
+int get_presentity_uid(str *uid_dst, struct sip_msg *m);
+
+/* 
+ * converts uri to uid (uid is allocated in shm)
+ * used by internal subscriptions and fifo commands 
+ */
+int pres_uri2uid(str_t *uid_dst, const str_t *uri);
 
 /* presence note functions */
 void add_pres_note(presentity_t *_p, pa_presence_note_t *n);
@@ -290,7 +301,7 @@ void free_tuple_notes(presence_tuple_t *t);
  * Create a new presentity but no watcher list
  */
 int create_presentity_only(struct sip_msg* _m, struct pdomain* _d, str* _puri, 
-			   struct presentity** _p);
+		str *uid, struct presentity** _p);
 
 struct pdomain;
 int pdomain_load_presentities(struct pdomain *pdomain);

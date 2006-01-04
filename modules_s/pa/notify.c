@@ -390,7 +390,7 @@ static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
 
 	_w->document_index++; /* increment index for next document */
 	
-	if (use_db) db_update_watcher(_p, _w);
+	if (use_db) db_update_watcher(_p, _w); /* dialog and index have changed */
 
 	return 0;
 }

@@ -34,6 +34,7 @@
 #include <string.h>
 #include "../../db/db.h"
 #include "../../dprint.h"
+#include "../../id.h"
 #include "../../mem/shm_mem.h"
 #include "../../ut.h"
 #include "../../parser/parse_event.h"
@@ -82,40 +83,38 @@ str str_strdup(str string)
 	return new_string;
 }
 	
-int get_presentity_uuid(str *uuid, const str *uri)
+int get_presentity_uid(str *uid_dst, struct sip_msg *m)
 {
-	struct sip_uri puri;
+	str s = STR_NULL;
 	
-	str_clear(uuid);
+	if (!uid_dst) return -1;
+	
+	str_clear(uid_dst);
 		
-	if (parse_uri(uri->s, uri->len, &puri) == -1) {
-		LOG(L_ERR, "get_from_uid: Error while parsing From URI\n");
+	if (get_to_uid(&s, m) < 0) {
+		LOG(L_ERR, "get_presentity_uid: Error while getting UID\n");
 		return -1;
 	}
 	
-	str_dup(uuid, &puri.user);
-	strlower(uuid);
+	str_dup(uid_dst, &s);
 	return 0;
 }
 
 /*
  * Create a new presentity but do not update database
  */
-int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, presentity_t** _p)
+int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, str *uid, presentity_t** _p)
 {
 	presentity_t* presentity;
-	str uuid;
 	int size = 0;
 
-	if (!_uri || !_p) {
+	if ((!_uri) || (!_p) || (!uid)) {
 		paerrno = PA_INTERNAL_ERROR;
 		LOG(L_ERR, "new_presentity_no_wb(): Invalid parameter value\n");
 		return -1;
 	}
 
-	get_presentity_uuid(&uuid, _uri);
-	
-	size = sizeof(presentity_t) + _uri->len + 1 + uuid.len + 1;
+	size = sizeof(presentity_t) + _uri->len + 1 + uid->len + 1;
 	presentity = (presentity_t*)shm_malloc(size);
 	if (!presentity) {
 		paerrno = PA_NO_MEMORY;
@@ -136,12 +135,11 @@ int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, presentity_t** _p)
 	presentity->presid = 0;
 	presentity->authorization_info = NULL;
 	presentity->uuid.s = presentity->uri.s + presentity->uri.len + 1;
-	strncpy(presentity->uuid.s, uuid.s, uuid.len);
-	presentity->uuid.s[uuid.len] = 0;
-	presentity->uuid.len = uuid.len;
+	strncpy(presentity->uuid.s, uid->s, uid->len);
+	presentity->uuid.s[uid->len] = 0;
+	presentity->uuid.len = uid->len;
 
 	*_p = presentity;
-	str_free_content(&uuid);
 
 	DEBUG_LOG("new_presentity_no_wb=%p for uri=%.*s uuid=%.*s\n", 
 			presentity, presentity->uri.len, ZSW(presentity->uri.s),
@@ -180,6 +178,13 @@ static int db_add_presentity(presentity_t* presentity)
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = *presentity->pdomain->name;
+	n_query_cols++;
+	
+	query_cols[n_query_cols] = "uid";
+	query_ops[n_query_cols] = OP_EQ;
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = presentity->uuid;
 	n_query_cols++;
 
 	result_cols[presid_col = n_result_cols++] = "presid";
@@ -322,11 +327,11 @@ int db_remove_presentity(presentity_t* presentity)
 /*
  * Create a new presentity
  */
-int new_presentity(struct pdomain *pdomain, str* _uri, presentity_t** _p)
+int new_presentity(struct pdomain *pdomain, str* _uri, str *uid, presentity_t** _p)
 {
 	int res = 0;
 
-	res = new_presentity_no_wb(pdomain, _uri, _p);
+	res = new_presentity_no_wb(pdomain, _uri, uid, _p);
 	if (res != 0) {
 		return res;
 	}
@@ -1366,6 +1371,7 @@ int find_watcher_dlg(struct presentity* _p, dlg_id_t *dlg_id, int _et, watcher_t
 	return 1;
 }
 
+/* FIXME: will be removed */
 resource_list_t *resource_list_append_unique(resource_list_t *list, str *uri)
 {
 	resource_list_t *head = list;
@@ -1393,6 +1399,7 @@ resource_list_t *resource_list_append_unique(resource_list_t *list, str *uri)
 	}
 }
 
+/* FIXME: will be removed */
 resource_list_t *resource_list_remove(resource_list_t *list, str *uri)
 {
 	resource_list_t *head = list;
@@ -1424,7 +1431,7 @@ resource_list_t *resource_list_remove(resource_list_t *list, str *uri)
  * Create a new presentity but no watcher list
  */
 int create_presentity_only(struct sip_msg* _m, struct pdomain* _d, str* _puri, 
-			   struct presentity** _p)
+		str *uid, struct presentity** _p)
 {
 	event_t *parsed_event;
 	int et = EVENT_PRESENCE;
@@ -1434,7 +1441,7 @@ int create_presentity_only(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 		et = parsed_event->parsed;
 	}
 
-	if (new_presentity(_d, _puri, _p) < 0) {
+	if (new_presentity(_d, _puri, uid, _p) < 0) {
 		LOG(L_ERR, "create_presentity_only(): Error while creating presentity\n");
 		return -2;
 	}
@@ -1451,12 +1458,13 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 	db_op_t  query_ops[1];
 	db_val_t query_vals[1];
 
-	db_key_t result_cols[4];
+	db_key_t result_cols[8];
 	db_res_t *res;
 	int n_query_cols = 0;
 	int n_result_cols = 0;
 	int uri_col;
 	int presid_col;
+	int uid_col;
 	int i;
 	presentity_t *presentity = NULL;
 	db_con_t* db = create_pa_db_connection(); /* must create its own connection (called before child init)! */
@@ -1475,6 +1483,7 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 
 	result_cols[uri_col = n_result_cols++] = "uri";
 	result_cols[presid_col = n_result_cols++] = "presid";
+	result_cols[uid_col = n_result_cols++] = "uid";
 
 	if (pa_dbf.use_table(db, presentity_table) < 0) {
 		LOG(L_ERR, "pdomain_load_presentities: Error in use_table\n");
@@ -1494,16 +1503,22 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 			db_row_t *row = &res->rows[i];
 			db_val_t *row_vals = ROW_VALUES(row);
 			int presid = row_vals[presid_col].val.int_val;
-			str uri;
+			str uri = STR_NULL;
+			str uid = STR_NULL;
+			
 			if (!row_vals[uri_col].nul) {
 				uri.s = (char *)row_vals[uri_col].val.string_val;
 				uri.len = strlen(uri.s);
+			}
+			if (!row_vals[uid_col].nul) {
+				uid.s = (char *)row_vals[uid_col].val.string_val;
+				uid.len = strlen(uid.s);
 			}
 
 			LOG(L_INFO, "pdomain_load_presentities: pdomain=%.*s presentity uri=%.*s presid=%d\n",
 					pdomain->name->len, pdomain->name->s, uri.len, uri.s, presid);
 
-			new_presentity_no_wb(pdomain, &uri, &presentity);
+			new_presentity_no_wb(pdomain, &uri, &uid, &presentity);
 			if (presentity) {
 				presentity->presid = presid;
 			}
@@ -1520,3 +1535,12 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 	close_pa_db_connection(db);
 	return 0;
 }
+
+int pres_uri2uid(str_t *uid_dst, const str_t *uri)
+{
+	/* FIXME: convert uri to uid - used by internal subscriptions and fifo commands */
+	str_clear(uid_dst);
+
+	return -1;
+}
+

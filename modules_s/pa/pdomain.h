@@ -96,9 +96,9 @@ void unlock_pdomain(pdomain_t* _d);
 
 
 /*
- * Find a presentity in domain
+ * Find a presentity in domain acording to UID (!)
  */
-int find_presentity(pdomain_t* _d, str* _uri, struct presentity** _p);
+int find_presentity_uid(pdomain_t* _d, str* uid, struct presentity** _p);
 
 /*
  * Add a presentity to domain
