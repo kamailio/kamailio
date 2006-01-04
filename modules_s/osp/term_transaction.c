@@ -79,10 +79,10 @@ int validateospheader (struct sip_msg* msg, char* ignore1, char* ignore2) {
 	osp_dest  dest;
 
 	char token[3000];
-	unsigned int sizeoftoken = sizeof(token);
+	int sizeoftoken = sizeof(token);
 
 	unsigned callIdLen = 0;
-	unsigned char* callIdVal = "";
+	unsigned char* callIdVal = (unsigned char*)"";
 
 	
 
@@ -91,19 +91,19 @@ int validateospheader (struct sip_msg* msg, char* ignore1, char* ignore2) {
 	initDestination(&dest);
 
 	if (0!= (res=OSPPTransactionNew(_provider, &transaction))) {
-		LOG(L_ERR, "ERROR: osp: Failed to create a new OSP transaction id %d\n",res);
+		ERR("osp: Failed to create a new OSP transaction id %d\n",res);
 	} else if (0 != getFromUserpart(msg, dest.callingnumber, sizeof(dest.callingnumber))) {
-		LOG(L_ERR, "ERROR: osp: Failed to extract calling number\n");
+		ERR("osp: Failed to extract calling number\n");
 	} else if (0 != getToUserpart(msg, dest.callednumber, sizeof(dest.callednumber))) {
-		LOG(L_ERR, "ERROR: osp: Failed to extract called number\n");
+		ERR("osp: Failed to extract called number\n");
 	} else if (0 != getCallId(msg, &call_id)) {
-		LOG(L_ERR, "ERROR: osp: Failed to extract call id\n");
+		ERR("osp: Failed to extract call id\n");
 	} else if (0 != getSourceAddress(msg,dest.source,sizeof(dest.source))) {
-		LOG(L_ERR, "ERROR: osp: Failed to extract source address\n");
+		ERR("osp: Failed to extract source address\n");
 	} else if (0 != getOspHeader(msg, token, &sizeoftoken)) {
-		LOG(L_ERR, "ERROR: osp: Failed to extract OSP authorization token\n");
+		ERR("osp: Failed to extract OSP authorization token\n");
 	} else {
-		LOG(L_INFO, "About to validate OSP token for:\n"
+		DBG("About to validate OSP token for:\n"
 			"transaction-handle = >%i< \n"
 			"e164_source = >%s< \n"
 			"e164_dest = >%s< \n"
@@ -151,12 +151,12 @@ int validateospheader (struct sip_msg* msg, char* ignore1, char* ignore2) {
 		saveTermDestination(&dest);
 
 		if (res == 0 && authorized == 1) {
-			LOG(L_INFO, "osp: Call is authorized for %d seconds, call-id '%.*s', transaction-id '%lld'",
+			DBG("osp: Call is authorized for %d seconds, call-id '%.*s', transaction-id '%lld'",
 				time_limit,dest.sizeofcallid,dest.callid,dest.tid);
 			record_term_transaction(msg,transaction,dest.source,dest.callingnumber,dest.callednumber,dest.time_auth);
 			valid = MODULE_RETURNCODE_TRUE;
 		} else {
-			LOG(L_ERR,"ERROR: osp: Token is not valid, code %i\n", res);
+			ERR("osp: Token is not valid, code %i\n", res);
 
 			/* Update terminating status code to 401 and report terminating set-up usage.
 			 * We may need to make 401 configurable, just in case a user decides to reply with
