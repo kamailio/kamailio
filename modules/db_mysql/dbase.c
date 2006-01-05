@@ -175,7 +175,11 @@ static int print_where(MYSQL* _c, char* _b, int _l, db_key_t* _k, db_op_t* _o, d
 	}
 
 	for(i = 0; i < _n; i++) {
-		if (_o) {
+		if (_v[i].nul) {
+			ret = snprintf(_b + len, _l - len, "%s is ", _k[i]);
+			if (ret < 0 || ret >= (_l - len)) goto error;
+			len += ret;
+		} else if (_o) {
 			ret = snprintf(_b + len, _l - len, "%s%s", _k[i], _o[i]);
 			if (ret < 0 || ret >= (_l - len)) goto error;
 			len += ret;
