@@ -369,6 +369,7 @@ int check_message(struct sip_msg* _m)
 		}
 		acc = acc->next;
 	}
+	paerrno = PA_WRONG_ACCEPTS;
 	LOG(L_ERR, "no satisfactory document type found\n");
 	return -1;
 }

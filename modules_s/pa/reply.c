@@ -155,7 +155,10 @@ int send_reply(struct sip_msg* _m)
 					msg = "Unsupported event package"; 
 					code = 489;
 					break;
-		case PA_WRONG_ACCEPTS: msg = MSG_400; code = 400; break; /* ? */
+		case PA_WRONG_ACCEPTS: 
+					msg = "Unsupported document format for given package"; 
+					code = 415; 
+					break;
 		case PA_NO_MEMORY: msg = MSG_500; code = 500; break;
 		case PA_TIMER_ERROR: msg = MSG_500; code = 500; break;
 		case PA_EXTRACT_USER: msg = MSG_400; code = 400; break;
