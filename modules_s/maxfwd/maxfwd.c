@@ -55,12 +55,15 @@ static int max_limit = 16;
 
 static int fixup_maxfwd_header(void** param, int param_no);
 static int w_process_maxfwd_header(struct sip_msg* msg,char* str,char* str2);
+static int w_process_maxfwd_lowlimit(struct sip_msg* msg,char* str,char* str2);
 static int mod_init(void);
 
 static cmd_export_t cmds[]={
 	{"mf_process_maxfwd_header", w_process_maxfwd_header, 1, 
 		fixup_maxfwd_header, REQUEST_ROUTE},
 	{"process_maxfwd", w_process_maxfwd_header, 1, 
+		fixup_maxfwd_header, REQUEST_ROUTE},
+	{"mf_lowlimit", w_process_maxfwd_lowlimit, 1,
 		fixup_maxfwd_header, REQUEST_ROUTE},
 	{0,0,0,0,0}
 };
@@ -164,6 +167,19 @@ static int w_process_maxfwd_header(struct sip_msg* msg, char* str1,char* str2)
 	return 1;
 }
 
+/* check if the current Max Forwards value is below a certain threshold */
+static int w_process_maxfwd_lowlimit(struct sip_msg* msg, char* str1,char* str2)
+{
+	int val, lowlimit;
+	str mf_value;
 
+	val=is_maxfwd_present(msg, &mf_value);
+	lowlimit = (unsigned int) (unsigned long) str1;
 
+	DBG("maxfwd: lowlimit=%d current=%d\n", lowlimit, val);
 
+	if ((val >= 0) && (val < lowlimit))
+		return -1;	/* limit reached */
+	else
+		return 1;
+}
