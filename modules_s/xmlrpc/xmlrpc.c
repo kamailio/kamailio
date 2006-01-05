@@ -1099,8 +1099,7 @@ static int open_doc(rpc_ctx_t* ctx, struct sip_msg* msg)
 	ctx->doc = xmlReadMemory(doc.s, doc.len, 0, 0, 
 				 XML_PARSE_NOBLANKS |
 				 XML_PARSE_NONET |
-				 XML_PARSE_NOCDATA |
-				 XML_PARSE_COMPACT);
+				 XML_PARSE_NOCDATA);
 	
 	if (!ctx->doc) {
 		set_fault(reply, 400, "Invalid XML-RPC Document");
