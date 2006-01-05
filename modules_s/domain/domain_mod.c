@@ -446,6 +446,10 @@ static int get_to_host(str* res, struct sip_msg* msg)
 	struct sip_uri puri;
 	str uri;
 
+	if (parse_headers(msg, HDR_TO_F, 0) < 0) {
+		LOG(L_ERR, "domain: get_to_host: Error while parsing To header\n");
+		return -1;
+	}
 	if (!msg->to) {
 		LOG(L_ERR, "domain:get_to_host: No To header field found in message\n");
 		return -1;
