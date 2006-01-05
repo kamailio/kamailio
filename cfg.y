@@ -277,10 +277,10 @@ static struct socket_id* mk_listen_id(char*, int, int);
 
 %token ATTR_MARK
 %token SELECT_MARK
-%token ATTR_FROM
-%token ATTR_TO
-%token ATTR_USER
-%token ATTR_DOMAIN
+%token ATTR_FROMUSER
+%token ATTR_TOUSER
+%token ATTR_FROMDOMAIN
+%token ATTR_TODOMAIN
 %token ATTR_GLOBAL
 %token ADDEQ
 
@@ -336,7 +336,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %type <strval> host_sep
 %type <intval> uri_type
 %type <attr> attr_id
-%type <intval> class_id
+//%type <intval> class_id
 %type <intval> assign_op
 %type <select> select_id
 /*%type <route_el> rules;
@@ -1292,10 +1292,10 @@ if_cmd:		IF exp stm				{ $$=mk_action3( IF_T,
 									}
 	;
 
-class_id : LBRACK ATTR_USER RBRACK { $$ = AVP_CLASS_USER; }
-         | LBRACK ATTR_DOMAIN RBRACK { $$ = AVP_CLASS_DOMAIN; }
-         | LBRACK ATTR_GLOBAL RBRACK { $$ = AVP_CLASS_GLOBAL; }
-;
+//class_id : LBRACK ATTR_USER RBRACK { $$ = AVP_CLASS_USER; }
+//         | LBRACK ATTR_DOMAIN RBRACK { $$ = AVP_CLASS_DOMAIN; }
+//         | LBRACK ATTR_GLOBAL RBRACK { $$ = AVP_CLASS_GLOBAL; }
+//;
 
 select_param : ID { 
 		    if (sel.n >= MAX_SELECT_PARAMS-1) {
@@ -1341,37 +1341,48 @@ attr_id : ATTR_MARK ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp
                          s_attr->name.s.s = $2; s_attr->name.s.len = strlen($2); 
                          $$ = s_attr; 
                        }
-        | ATTR_MARK class_id DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
-                                      if (!s_attr) { yyerror("No memory left"); }
-                                      s_attr->type = AVP_NAME_STR | $2;
-                                      s_attr->name.s.s = $4; s_attr->name.s.len = strlen($4); 
-                                      $$ = s_attr; 
-                                    }
-        | ATTR_MARK ATTR_FROM DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
+//        | ATTR_MARK class_id DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
+//                                      if (!s_attr) { yyerror("No memory left"); }
+//                                      s_attr->type = AVP_NAME_STR | $2;
+//                                      s_attr->name.s.s = $4; s_attr->name.s.len = strlen($4); 
+//                                      $$ = s_attr; 
+//                                    }
+        | ATTR_MARK ATTR_FROMUSER DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
                                        if (!s_attr) { yyerror("No memory left"); }
-                                       s_attr->type = AVP_NAME_STR | AVP_TRACK_FROM;
+                                       s_attr->type = AVP_NAME_STR | AVP_TRACK_FROM | AVP_CLASS_USER;
                                        s_attr->name.s.s = $4; s_attr->name.s.len = strlen($4);
                                        $$ = s_attr;
                                      }
-        | ATTR_MARK ATTR_TO DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
-                                     if (!s_attr) { yyerror("No memory left"); }
-                                     s_attr->type = AVP_NAME_STR | AVP_TRACK_TO; 
-                                     s_attr->name.s.s = $4; s_attr->name.s.len = strlen($4); 
-                                     $$ = s_attr;
-                                   }
-        | ATTR_MARK ATTR_FROM class_id DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
-                                               if (!s_attr) { yyerror("No memory left"); }
-                                               s_attr->type = AVP_NAME_STR | AVP_TRACK_FROM | $3; 
-                                               s_attr->name.s.s = $5; 
-                                               s_attr->name.s.len = strlen($5);
-                                               $$ = s_attr;
-                                              }
-        | ATTR_MARK ATTR_TO class_id DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
-                                              if (!s_attr) { yyerror("No memory left"); }
-                                              s_attr->type = AVP_NAME_STR | AVP_TRACK_TO | $3;
-                                              s_attr->name.s.s = $5; s_attr->name.s.len = strlen($5);
-                                             $$ = s_attr;
-                                            }
+        | ATTR_MARK ATTR_TOUSER DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
+                                       if (!s_attr) { yyerror("No memory left"); }
+                                       s_attr->type = AVP_NAME_STR | AVP_TRACK_TO | AVP_CLASS_USER;
+                                       s_attr->name.s.s = $4; s_attr->name.s.len = strlen($4);
+                                       $$ = s_attr;
+                                     }
+        | ATTR_MARK ATTR_FROMDOMAIN DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
+                                       if (!s_attr) { yyerror("No memory left"); }
+                                       s_attr->type = AVP_NAME_STR | AVP_TRACK_FROM | AVP_CLASS_DOMAIN;
+                                       s_attr->name.s.s = $4; s_attr->name.s.len = strlen($4);
+                                       $$ = s_attr;
+                                     }
+        | ATTR_MARK ATTR_TODOMAIN DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
+                                       if (!s_attr) { yyerror("No memory left"); }
+                                       s_attr->type = AVP_NAME_STR | AVP_TRACK_TO | AVP_CLASS_DOMAIN;
+                                       s_attr->name.s.s = $4; s_attr->name.s.len = strlen($4);
+                                       $$ = s_attr;
+                                     }
+        | ATTR_MARK ATTR_GLOBAL DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
+                                       if (!s_attr) { yyerror("No memory left"); }
+                                       s_attr->type = AVP_NAME_STR | AVP_CLASS_GLOBAL;
+                                       s_attr->name.s.s = $4; s_attr->name.s.len = strlen($4);
+                                       $$ = s_attr;
+                                     }
+//        | ATTR_MARK ATTR_TO class_id DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
+//                                              if (!s_attr) { yyerror("No memory left"); }
+//                                              s_attr->type = AVP_NAME_STR | AVP_TRACK_TO | $3;
+//                                              s_attr->name.s.s = $5; s_attr->name.s.len = strlen($5);
+//                                             $$ = s_attr;
+//                                            }
 ;
 
 assign_op : ADDEQ { $$ = ADD_T; }

@@ -199,11 +199,11 @@ MINUS	"-"
 /* Attribute specification */
 ATTR_MARK   "$"|"%"
 SELECT_MARK  "@"
-ATTR_FROM   "from"|"f"
-ATTR_TO     "to"|"t"
-ATTR_USER   "user"|"u"
-ATTR_DOMAIN "domain"|"d"
-ATTR_GLOBAL "global"|"g"
+ATTR_FROMUSER     "f"
+ATTR_TOUSER       "t"
+ATTR_FROMDOMAIN   "fd"
+ATTR_TODOMAIN     "td"
+ATTR_GLOBAL       "g"
 
 /* config vars. */
 DEBUG	debug
@@ -504,12 +504,10 @@ EAT_ABLE	[\ \t\b\r]
 
 
 <INITIAL>{ATTR_MARK}    { count(); state = ATTR_S; BEGIN(ATTR); return ATTR_MARK; }
-<ATTR>{ATTR_FROM}       { count(); return ATTR_FROM; }
-<ATTR>{ATTR_TO}         { count(); return ATTR_TO; }
-<ATTR>{LBRACK}          { count(); return LBRACK; }
-<ATTR>{RBRACK}          { count(); return RBRACK; }
-<ATTR>{ATTR_USER}       { count(); return ATTR_USER; }
-<ATTR>{ATTR_DOMAIN}     { count(); return ATTR_DOMAIN; }
+<ATTR>{ATTR_FROMUSER}   { count(); return ATTR_FROMUSER; }
+<ATTR>{ATTR_TOUSER}     { count(); return ATTR_TOUSER; }
+<ATTR>{ATTR_FROMDOMAIN} { count(); return ATTR_FROMDOMAIN; }
+<ATTR>{ATTR_TODOMAIN}   { count(); return ATTR_TODOMAIN; }
 <ATTR>{ATTR_GLOBAL}     { count(); return ATTR_GLOBAL; }
 <ATTR>{DOT}             { count(); return DOT; }
 <ATTR>{ID}		{ count(); addstr(&s_buf, yytext, yyleng); 
