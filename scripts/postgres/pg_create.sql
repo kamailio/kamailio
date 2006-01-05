@@ -407,7 +407,7 @@ CREATE TABLE rls_subscription (
 );
 
 CREATE TABLE rls_vs (
-    id VARCHAR(48),
+    id VARCHAR(48) NOT NULL,
     rls_id VARCHAR(48) NOT NULL,
     uri VARCHAR(255) NOT NULL,
     CONSTRAINT rls_vs_key UNIQUE (id)

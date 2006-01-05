@@ -378,7 +378,7 @@ CREATE TABLE rls_subscription (
 );
 
 CREATE TABLE rls_vs (
-    id string(48),
+    id string(48) NOT NULL,
     rls_id string(48) NOT NULL,
     uri string(255) NOT NULL,
     rls_vs_key UNIQUE (id, )
