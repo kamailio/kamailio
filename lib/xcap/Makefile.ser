@@ -1,8 +1,8 @@
 LIBNAME  = xcap
-OUT_NAME = libxcap.so
+OUT_NAME = lib_ser_xcap.so
 OUT_TYPE = lib
 INCLUDES += -I/usr/include/libxml2
-LIBS     += -lxml2 -lcurl -lcds
+LIBS     += -lxml2 -lcurl -l_ser_cds
 
 include ../Makefile.ser.defs
 
