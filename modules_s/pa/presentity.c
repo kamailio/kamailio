@@ -1539,8 +1539,18 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 int pres_uri2uid(str_t *uid_dst, const str_t *uri)
 {
 	/* FIXME: convert uri to uid - used by internal subscriptions and fifo commands */
-	str_clear(uid_dst);
 
-	return -1;
+	struct sip_uri puri;
+	
+	str_clear(uid_dst);
+		
+	if (parse_uri(uri->s, uri->len, &puri) == -1) {
+		LOG(L_ERR, "get_from_uid: Error while parsing From URI\n");
+		return -1;
+	}
+	
+	str_dup(uid_dst, &puri.user);
+	strlower(uid_dst);
+	return 0;
 }
 

@@ -639,7 +639,7 @@ static int update_all_published_tuples(presentity_t *p, str *etag, time_t expire
 	return found;
 }
 
-static int process_presentity_info(presentity_t *presentity, presentity_info_t *p, str *etag, time_t expires)
+int process_published_presentity_info(presentity_t *presentity, presentity_info_t *p, str *etag, time_t expires)
 {
 	if (etag->len < 1) {
 		
@@ -717,7 +717,7 @@ static int publish_presence(struct sip_msg* _m, struct presentity* presentity)
 		}
 	}
 	
-	if (process_presentity_info(presentity, p, &etag, expires) == 0) {
+	if (process_published_presentity_info(presentity, p, &etag, expires) == 0) {
 		/* add header fields into response */
 		add_expires_to_rpl(_m, msg_expires);
 		add_etag_to_rpl(_m, &etag);

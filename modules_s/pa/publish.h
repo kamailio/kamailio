@@ -32,10 +32,16 @@
 #define PUBLISH_H
 
 #include "../../parser/msg_parser.h"
+#include "qsa_interface.h"
 
 /*
  * Handle a publish Request
  */
 int handle_publish(struct sip_msg* _m, char* _domain, char* _s2);
 
+/*
+ * Publish given parsed "presence document"
+ */
+int process_published_presentity_info(presentity_t *presentity, presentity_info_t *p, str *etag, time_t expires);
+	
 #endif /* PUBLISH_H */
