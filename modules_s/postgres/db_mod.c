@@ -43,15 +43,15 @@ int reconnect_attempts = 2; /* How many times should the module try to reconnect
  * Postgres database module interface
  */
 static cmd_export_t cmds[]={
-	{"db_use_table",   (cmd_function)use_table,      2, 0, 0},
-	{"db_init",        (cmd_function)db_init,        1, 0, 0},
-	{"db_close",       (cmd_function)db_close,       2, 0, 0},
-	{"db_query",       (cmd_function)db_query,       2, 0, 0},
-	{"db_raw_query",   (cmd_function)db_raw_query,   2, 0, 0},
-	{"db_free_result", (cmd_function)db_free_result, 2, 0, 0},
-	{"db_insert",      (cmd_function)db_insert,      2, 0, 0},
-	{"db_delete",      (cmd_function)db_delete,      2, 0, 0},
-	{"db_update",      (cmd_function)db_update,      2, 0, 0},
+	{"db_use_table",   (cmd_function)pg_use_table,      2, 0, 0},
+	{"db_init",        (cmd_function)pg_init,           1, 0, 0},
+	{"db_close",       (cmd_function)pg_close,          2, 0, 0},
+	{"db_query",       (cmd_function)pg_query,          2, 0, 0},
+	{"db_raw_query",   (cmd_function)pg_raw_query,      2, 0, 0},
+	{"db_free_result", (cmd_function)pg_db_free_result, 2, 0, 0},
+	{"db_insert",      (cmd_function)pg_insert,         2, 0, 0},
+	{"db_delete",      (cmd_function)pg_delete,         2, 0, 0},
+	{"db_update",      (cmd_function)pg_update,         2, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 
@@ -66,6 +66,105 @@ static param_export_t params[] = {
 };
 
 
+/*
+ * create table test (
+ *	bool_col BOOL NULL,
+ *	int2_col INT2 NULL,
+ *	int4_col INT4 NULL,
+ *	int8_col INT8 NULL,
+ *	float4_col FLOAT4 NULL,
+ *	float8_col FLOAT8 NULL,
+ *	timestamp_col TIMESTAMP NULL,
+ *	char_col CHAR NULL,
+ *	text_col TEXT NULL,
+ *	bpchar_col BPCHAR NULL,
+ *	varchar_col VARCHAR(255) NULL,
+ *	bytea_col BYTEA NULL,
+ *	bit_col BIT(32) NULL,
+ *	varbit_col VARBIT NULL
+ * );
+ *
+ * insert into test (bool_col, int2_col, int4_col, int8_col, float4_col, float8_col, 
+ *                   timestamp_col, char_col, text_col, bpchar_col, varchar_col, 
+ *                   bytea_col, bit_col, varbit_col) 
+ *                   values 
+ *                   (true, 22, 23, 24, 25.21, 25.22, '1999-10-18 21:35:00', 'a', 
+ *                   'ab', 'a', 'abcde', 'abcdddd', B'00110011001100110011001100110011', 
+ *                    b'10101010101010101010101010101010');
+ */
+static int pg_test(void)
+{
+	int row, col;
+	db_res_t* res;
+	db_con_t* con;
+	struct tm* tt;
+
+	con = pg_init("postgres://ser:heslo@localhost/ser");
+	if (!con) {
+		ERR("Unable to connect database\n");
+		return -1;
+	}
+	INFO("Successfuly connected\n");
+	pg_use_table(con, "test");
+
+	pg_query(con, 0, 0, 0, 0, 0, 0, 0, &res);
+	if (!res) {
+		ERR("No result received\n");
+		return -1;
+	}
+	if (!res->n) {
+		ERR("Result contains no rows\n");
+		return -1;
+	} else {
+		INFO("Result contains %d rows\n", res->n);
+	}
+
+	INFO("Result contains %d columns\n", res->col.n);
+	
+	for(row = 0; row < res->n; row++) {
+		for(col = 0; col < res->col.n; col++) {
+			switch(res->col.types[col]) {
+			case DB_INT:
+				INFO("INT(%d)", res->rows[row].values[col].val.int_val);
+				break;
+
+			case DB_DOUBLE:
+				INFO("DOUBLE(%f)", res->rows[row].values[col].val.double_val);
+				break;
+
+			case DB_STRING:
+				INFO("STRING(%s)", res->rows[row].values[col].val.string_val);
+				break;
+
+			case DB_STR:
+				INFO("STR(%.*s)", res->rows[row].values[col].val.str_val.len, res->rows[row].values[col].val.str_val.s);
+				break;
+
+			case DB_DATETIME:
+				tt = gmtime(&res->rows[row].values[col].val.time_val);
+				INFO("DATETIME(%s)", asctime(tt));
+				break;
+
+			case DB_BLOB:
+				INFO("BLOB(%.*s)", res->rows[row].values[col].val.str_val.len, res->rows[row].values[col].val.str_val.s);
+				break;
+
+			case DB_BITMAP:
+				INFO("INT(%x)", res->rows[row].values[col].val.bitmap_val);
+				break;
+
+			default:
+				ERR("Unsupported column type\n");
+				return -1;
+			}
+		}
+	}
+
+	pg_close(con);
+	return -1;
+}
+
+
 struct module_exports exports = {	
 	"postgres",
 	cmds,
@@ -77,4 +176,3 @@ struct module_exports exports = {
 	0,         /* oncancel function */
 	0          /* per-child init function */
 };
-

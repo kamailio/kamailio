@@ -52,7 +52,7 @@ static void notice_processor(void* arg, const char* message)
  * The function returns 1 if the server stores timestamps as int8 and 0
  * if it is stored as double
  */
-int timestamp_format(PGconn* con)
+static int timestamp_format(PGconn* con)
 {
 	unsigned long long offset;
 	PGresult* res = 0;
@@ -61,17 +61,17 @@ int timestamp_format(PGconn* con)
 	res = PQexecParams(con, "select timestamp '2000-01-01 00:00:00' + time '00:00:01'", 0, 0, 0, 0, 0, 1);	
 
 	if (PQfformat(res, 0) != 1) {
-		LOG(L_ERR, "postgres:timestamp_format: Binary format expected but server sent text\n");
+		ERR("Binary format expected but server sent text\n");
 		goto err;
 	}
 
 	if (PQntuples(res) != 1) {
-		LOG(L_ERR, "postgres:timestamp_format: 1 column expected, %d received\n", PQntuples(res));
+		ERR("1 column expected, %d received\n", PQntuples(res));
 		goto err;
 	}
 
 	if (PQnfields(res) != 1) {
-		LOG(L_ERR, "postgres:timestamp_format: 1 Row expected, %d received\n", PQnfields(res));
+		ERR("1 Row expected, %d received\n", PQnfields(res));
 		goto err;
 	}
 
@@ -89,10 +89,10 @@ int timestamp_format(PGconn* con)
 	      * occupied by the variable is read as unsigned long long.
 	      */
 	if (offset == 1000000) {
-	        DBG("postgres:int_timestamp_format: Server uses int8 format for timestamps.\n");
+	        DBG("Server uses int8 format for timestamps.\n");
 		return 1;
 	} else {
-		DBG("postgres:int_timestamp_format: Server uses double format for timestamps.\n");
+		DBG("Server uses double format for timestamps.\n");
 		return 0;
 	}
 	
@@ -106,20 +106,20 @@ int timestamp_format(PGconn* con)
  * Create a new connection structure,
  * open the Postgres connection and set reference count to 1
  */
-struct pg_con* new_connection(struct db_id* id)
+struct pg_con* pg_new_connection(struct db_id* id)
 {
 	struct pg_con* ptr;
 	char* port_str;
 	int ret;
 	
 	if (!id) {
-		LOG(L_ERR, "postgres:new_connection: Invalid parameter value\n");
+		ERR("Invalid parameter value\n");
 		return 0;
 	}
 	
 	ptr = (struct pg_con*)pkg_malloc(sizeof(struct pg_con));
 	if (!ptr) {
-		LOG(L_ERR, "postgres:new_connection: No memory left\n");
+		ERR("No memory left\n");
 		return 0;
 	}
 	memset(ptr, 0, sizeof(struct pg_con));
@@ -132,7 +132,7 @@ struct pg_con* new_connection(struct db_id* id)
 	}
 
 	if (id->port) {
-		DBG("postgres: Opening connection to: %s://%s:%s@%s:%d/%s\n",
+		DBG("Opening connection to: %s://%s:%s@%s:%d/%s\n",
 		    ZSW(id->scheme),
 		    ZSW(id->username),
 		    ZSW(id->password),
@@ -141,7 +141,7 @@ struct pg_con* new_connection(struct db_id* id)
 		    ZSW(id->database)
 		    );
 	} else {
-		DBG("postgres: Opening connection to: %s://%s:%s@%s/%s\n",
+		DBG("Opening connection to: %s://%s:%s@%s/%s\n",
 		    ZSW(id->scheme),
 		    ZSW(id->username),
 		    ZSW(id->password),
@@ -155,12 +155,12 @@ struct pg_con* new_connection(struct db_id* id)
 				id->username, id->password);
 	
 	if (ptr->con == 0) {
-		LOG(L_ERR, "postgres:new_connection: PQsetdbLogin ran out of memory\n");
+		ERR("PQsetdbLogin ran out of memory\n");
 		goto err;
 	}
 	
 	if (PQstatus(ptr->con) != CONNECTION_OK) {
-		LOG(L_ERR, "postgres:new_connection: %s\n",
+		ERR("postgres:new_connection: %s\n",
 		    PQerrorMessage(ptr->con));
 		goto err;
 	}
@@ -168,9 +168,14 @@ struct pg_con* new_connection(struct db_id* id)
 	     /* Override default notice processor */
 	PQsetNoticeProcessor(ptr->con, notice_processor, 0);
 
-	DBG("postgres:new_connection: Connected. Protocol version=%d, Server version=%d\n", 
+	DBG("Connected. Protocol version=%d, Server version=%d\n", 
 	    PQprotocolVersion(ptr->con),
-	    PQserverVersion(ptr->con));
+#ifdef HAVE_PGSERVERVERSION
+	    PQserverVersion(ptr->con)
+#else
+	    0
+#endif
+	    );
 
 	ptr->timestamp = time(0);
 	ptr->id = id;
@@ -193,7 +198,7 @@ struct pg_con* new_connection(struct db_id* id)
 /*
  * Close the connection and release memory
  */
-void free_connection(struct pg_con* con)
+void pg_free_connection(struct pg_con* con)
 {
 	if (!con) return;
 	if (con->id) free_db_id(con->id);

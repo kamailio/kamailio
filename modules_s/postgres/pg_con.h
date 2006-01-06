@@ -63,12 +63,12 @@ struct pg_con {
  * Create a new connection structure,
  * open the MySQL connection and set reference count to 1
  */
-struct pg_con* new_connection(struct db_id* id);
+struct pg_con* pg_new_connection(struct db_id* id);
 
 
 /*
  * Close the connection and release memory
  */
-void free_connection(struct pg_con* con);
+void pg_free_connection(struct pg_con* con);
 
 #endif /* _PG_CON_H */
