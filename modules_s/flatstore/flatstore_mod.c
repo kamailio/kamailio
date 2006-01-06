@@ -1,5 +1,5 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
  * Flatstore module interface
  *
@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /*
@@ -58,18 +58,26 @@ int flat_pid;
  */
 int flat_flush = 1;
 
+/*
+ * Delimiter delimiting rows
+ */
+char *flat_record_delimiter = "\n";
 
 /*
  * Delimiter delimiting columns
  */
-char* flat_delimiter = "|";
+char *flat_delimiter = "|";
 
+/*
+ * Escape char escaping delimiters
+ */
+char *flat_escape = "\\";
 
 /*
  * Timestamp of the last log rotation request from
  * the FIFO interface
  */
-time_t* flat_rotate;	
+time_t* flat_rotate;
 
 time_t local_timestamp;
 
@@ -90,11 +98,14 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"flush", INT_PARAM, &flat_flush},
+	{"field_delimiter", STR_PARAM, &flat_delimiter},
+	{"record_delimiter", STR_PARAM, &flat_record_delimiter},
+	{"escape_char", STR_PARAM, &flat_escape},
 	{0, 0, 0}
 };
 
 
-struct module_exports exports = {	
+struct module_exports exports = {
 	"flatstore",
 	cmds,
 	flat_rpc,    /* RPC methods */
@@ -109,8 +120,18 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	if (strlen(flat_delimiter) != 1) {
-		LOG(L_ERR, "flatstore:mod_init: Delimiter has to be exactly one character\n");
+	if (strlen(flat_delimiter) > 1) {
+		LOG(L_ERR, "flatstore:mod_init: Column delimiter has to be max. one character\n");
+		return -1;
+	}
+
+	if (strlen(flat_record_delimiter) > 1) {
+		LOG(L_ERR, "flatstore:mod_init: Record delimiter has to be max. one character\n");
+		return -1;
+	}
+
+	if (strlen(flat_escape) > 0) {
+		LOG(L_ERR, "flatstore:mod_init: Escape char has to be max. one character\n");
 		return -1;
 	}
 
