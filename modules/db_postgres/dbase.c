@@ -1,7 +1,7 @@
 /* 
  * $Id$ 
  *
- * MySQL module core functions
+ * Postgres module core functions
  *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2003 August.Net Services, LLC
@@ -58,6 +58,7 @@
 #define UPDATE    "update "
 #define SET       "set "
 
+#define MAX_OPERATOR_LEN (sizeof(" is NULL") - 1)
 
 struct pg_params {
 	int n;
@@ -101,7 +102,7 @@ static struct pg_params* new_pg_params(int n)
 	return ptr;
 
  error:
-	LOG(L_ERR, "postgres:new_pg_params: No memory left\n");
+	ERR("No memory left\n");
 	free_pg_params(ptr);
 	return 0;
 }
@@ -113,86 +114,73 @@ static inline int params_add(struct pg_params* p, db_con_t* con, db_val_t* vals,
 	db_val_t* val;
 
 	if (!p) {
-		LOG(L_ERR, "postgres:params_add: Invalid parameter value\n");
+		ERR("Invalid parameter value\n");
 		return -1;
 	}
 
 	if (p->cur + n > p->n) {
-		LOG(L_ERR, "postgres:params_add: Arrays too short (bug in postgres module)\n");
+		ERR("Arrays too short (bug in postgres module)\n");
 		return -1;
 	}
 
 	for(i = 0; i < n; i++) {
 		val = &vals[i];
 		p->formats[p->cur] = 1;
+		if (val->nul) continue;
 		switch(val->type) {
 		case DB_INT:      
-			if (!val->nul) {
-				val->val.int_val = ntohl(val->val.int_val);
-				p->data[p->cur] = (const char*)&val->val.int_val;
-				p->len[p->cur] = 4;
-			}
+			val->val.int_val = ntohl(val->val.int_val);
+			p->data[p->cur] = (const char*)&val->val.int_val;
+			p->len[p->cur] = 4;
 			break;
 			
 		case DB_DOUBLE:
-			if (!val->nul) {
-				     /* Change the byte order of 8-byte value to network
-				      * byte order if necessary
-				      */
-				i1 = htonl(val->val.int8_val >> 32);
-				i2 = htonl(val->val.int8_val & 0xffffffff);
-				val->val.int_val = i1;
-				(&val->val.int_val)[1] = i2;
-				p->data[p->cur] = (const char*)&val->val.int_val;
-				p->len[p->cur] = 8;
-			}
+			     /* Change the byte order of 8-byte value to network
+			      * byte order if necessary
+			      */
+			i1 = htonl(val->val.int8_val >> 32);
+			i2 = htonl(val->val.int8_val & 0xffffffff);
+			val->val.int_val = i1;
+			(&val->val.int_val)[1] = i2;
+			p->data[p->cur] = (const char*)&val->val.int_val;
+			p->len[p->cur] = 8;
 			break;
 			
 		case DB_STRING:
 			p->formats[p->cur] = 0;
-			if (!val->nul) {
-				p->data[p->cur] = val->val.string_val;
-			}
+			p->data[p->cur] = val->val.string_val;
 			break;
 			
 		case DB_STR:
-			if (!val->nul) {
-				p->data[p->cur] = val->val.str_val.s;
-				p->len[p->cur] = val->val.str_val.len;
-			}
+			p->data[p->cur] = val->val.str_val.s;
+			p->len[p->cur] = val->val.str_val.len;
 			break;
 			
 		case DB_DATETIME:
-			if (!val->nul) {
-				if (CON_FLAGS(con) & PG_INT8_TIMESTAMP) {
-					val->val.int8_val = ((long long)val->val.time_val - PG_EPOCH_TIME) * 1000000;
-				} else {
-					val->val.double_val = (double)val->val.time_val - (double)PG_EPOCH_TIME;
-					
-				}
-				i1 = htonl(val->val.int8_val >> 32);
-				i2 = htonl(val->val.int8_val & 0xffffffff);
-				val->val.int_val = i1;
-				(&val->val.int_val)[1] = i2;
-				p->data[p->cur] = (const char*)&val->val.int_val;
-				p->len[p->cur] = 8;
+			if (CON_FLAGS(con) & PG_INT8_TIMESTAMP) {
+				val->val.int8_val = ((long long)val->val.time_val - PG_EPOCH_TIME) * 1000000;
+			} else {
+				val->val.double_val = (double)val->val.time_val - (double)PG_EPOCH_TIME;
+				
 			}
+			i1 = htonl(val->val.int8_val >> 32);
+			i2 = htonl(val->val.int8_val & 0xffffffff);
+			val->val.int_val = i1;
+			(&val->val.int_val)[1] = i2;
+			p->data[p->cur] = (const char*)&val->val.int_val;
+			p->len[p->cur] = 8;
 			break;
 			
 		case DB_BLOB:
-			if (!val->nul) {
-				p->data[p->cur] = val->val.blob_val.s;
-				p->len[p->cur] = val->val.blob_val.len;
-			}
+			p->data[p->cur] = val->val.blob_val.s;
+			p->len[p->cur] = val->val.blob_val.len;
 			break;
 			
 		case DB_BITMAP: 
-			if (!val->nul) {
-				(&val->val.int_val)[1] = htonl(val->val.int_val);
-				val->val.int_val = htonl(32);
-				p->data[p->cur] = (const char*)&val->val.int_val;
-				p->len[p->cur] = 8;
-			}
+			(&val->val.int_val)[1] = htonl(val->val.int_val);
+			val->val.int_val = htonl(32);
+			p->data[p->cur] = (const char*)&val->val.int_val;
+			p->len[p->cur] = 8;
 			break;
 		}
 		
@@ -214,7 +202,7 @@ static inline void free_params(struct pg_params* p)
  * Initialize database module
  * No function should be called before this
  */
-db_con_t* db_init(const char* url)
+db_con_t* pg_init(const char* url)
 {
 	struct db_id* id;
 	struct pg_con* con;
@@ -224,35 +212,35 @@ db_con_t* db_init(const char* url)
 	res = 0;
 
 	if (!url) {
-		LOG(L_ERR, "postgres:db_init: Invalid parameter value\n");
+		ERR("Invalid parameter value\n");
 		return 0;
 	}
 
 	res = pkg_malloc(sizeof(db_con_t) + sizeof(struct pg_con*));
 	if (!res) {
-		LOG(L_ERR, "postgres:db_init: No memory left\n");
+		ERR("No memory left\n");
 		return 0;
 	}
 	memset(res, 0, sizeof(db_con_t) + sizeof(struct pg_con*));
 
 	id = new_db_id(url);
 	if (!id) {
-		LOG(L_ERR, "postgres:db_init: Cannot parse URL '%s'\n", url);
+		ERR("Cannot parse URL '%s'\n", url);
 		goto err;
 	}
 
 	     /* Find the connection in the pool */
 	con = (struct pg_con*)pool_get(id);
 	if (!con) {
-		DBG("postgres:db_init: Connection '%s' not found in pool\n", url);
+		DBG("Connection '%s' not found in pool\n", url);
 		     /* Not in the pool yet */
-		con = new_connection(id);
+		con = pg_new_connection(id);
 		if (!con) {
 			goto err;
 		}
 		pool_insert((struct pool_con*)con);
 	} else {
-		DBG("postgres:db_init: Connection '%s' found in pool\n", url);
+		DBG("Connection '%s' found in pool\n", url);
 	}
 
 	res->tail = (unsigned long)con;
@@ -269,18 +257,18 @@ db_con_t* db_init(const char* url)
  * Shut down database module
  * No function should be called after this
  */
-void db_close(db_con_t* handle)
+void pg_close(db_con_t* handle)
 {
 	struct pool_con* con;
 
 	if (!handle) {
-		LOG(L_ERR, "postgres:db_close: Invalid parameter value\n");
+		ERR("Invalid parameter value\n");
 		return;
 	}
 
 	con = (struct pool_con*)handle->tail;
 	if (pool_remove(con) != 0) {
-		free_connection((struct pg_con*)con);
+		pg_free_connection((struct pg_con*)con);
 	}
 
 	pkg_free(handle);
@@ -387,7 +375,7 @@ static unsigned int calc_delete_len(db_con_t* con, db_key_t* keys, int n)
 	if (n) {
 		len += 1; /* _ */
 		len += sizeof(WHERE) - 1;
-		len += n * 2; /* <= */
+		len += n * MAX_OPERATOR_LEN;
 		len += (sizeof(AND) - 1) * (n - 1);
 		for(i = 0; i < n; i++) {
 			len += strlen(keys[i]);
@@ -417,7 +405,7 @@ static unsigned int calc_select_len(db_con_t* con, db_key_t* cols, db_key_t* key
 	len += 1; /* _ */
 	if (n) {
 		len += sizeof(WHERE) - 1;
-		len += n * 2; /* <= */
+		len += n * MAX_OPERATOR_LEN;
 		len += (sizeof(AND) - 1) * (n - 1);
 		for(i = 0; i < n; i++) {
 			len += strlen(keys[i]);
@@ -452,7 +440,7 @@ static unsigned int calc_update_len(db_con_t* con, db_key_t* ukeys, db_key_t* ke
 	
 	if (n) {
 		len += sizeof(WHERE) - 1;
-		len += n * 2; /* <= */
+		len += n * MAX_OPERATOR_LEN;
 		len += (sizeof(AND) - 1) * (n - 1);
 		for(i = 0; i < n; i++) {
 			len += strlen(keys[i]);
@@ -463,7 +451,7 @@ static unsigned int calc_update_len(db_con_t* con, db_key_t* ukeys, db_key_t* ke
 }
 
 
-char* print_insert(db_con_t* con, db_key_t* keys, int n)
+static char* print_insert(db_con_t* con, db_key_t* keys, int n)
 {
 	unsigned int len;
 	int i;
@@ -471,7 +459,7 @@ char* print_insert(db_con_t* con, db_key_t* keys, int n)
 	str p;
 
 	if (!n || !keys) {
-		LOG(L_ERR, "postgres:print_insert: Nothing to insert\n");
+		ERR("Nothing to insert\n");
 		return 0;
 	}
 
@@ -479,7 +467,7 @@ char* print_insert(db_con_t* con, db_key_t* keys, int n)
 	
 	s = (char*)pkg_malloc(len + 1);
 	if (!s) {
-		LOG(L_ERR, "postgres:print_insert: Unable to allocate %d of memory\n", len);
+		ERR("Unable to allocate %d of memory\n", len);
 		return 0;
 	}
 	p.s = s;
@@ -506,14 +494,15 @@ char* print_insert(db_con_t* con, db_key_t* keys, int n)
 	return s;
 
  shortbuf:
-	LOG(L_ERR, "postgres:print_insert: Buffer too short (bug in postgres module)\n");
+	ERR("Buffer too short (bug in postgres module)\n");
 	pkg_free(s);
 	return 0;
 }
 
 
 
-char* print_select(db_con_t* con, db_key_t* cols, db_key_t* keys, int n, int ncol, db_op_t* ops, db_key_t order)
+static char* print_select(db_con_t* con, db_key_t* cols, db_key_t* keys, db_val_t* vals, 
+			  int n, int ncol, db_op_t* ops, db_key_t order)
 {
 	unsigned int len;
 	int i;
@@ -524,7 +513,7 @@ char* print_select(db_con_t* con, db_key_t* cols, db_key_t* keys, int n, int nco
 
 	s = (char*)pkg_malloc(len + 1);
 	if (!s) {
-		LOG(L_ERR, "postrgres:print_select: Unable to allocate %d of memory\n", len);
+		ERR("Unable to allocate %d of memory\n", len);
 		return 0;
 	}
 	p.s = s;
@@ -547,23 +536,31 @@ char* print_select(db_con_t* con, db_key_t* cols, db_key_t* keys, int n, int nco
 	if (n) {
 		append(p, WHERE);
 		append_str(p, keys[0]);
-		if (ops) {
-			append_str(p, *ops);
-			ops++;
+		if (vals[0].nul) {
+			append(p, " is NULL");
 		} else {
-			append(p, "=");
-		}
-		append_param(p, 1);
-		for(i = 1; i < n; i++) {
-			append(p, AND);
-			append_str(p, keys[i]);
 			if (ops) {
 				append_str(p, *ops);
 				ops++;
 			} else {
 				append(p, "=");
 			}
-			append_param(p, i + 1);
+			append_param(p, 1);
+		}
+		for(i = 1; i < n; i++) {
+			append(p, AND);
+			append_str(p, keys[i]);
+			if (vals[i].nul) {
+				append(p, " is NULL");
+			} else {
+				if (ops) {
+					append_str(p, *ops);
+					ops++;
+				} else {
+					append(p, "=");
+				}
+				append_param(p, i + 1);
+			}
 		}
 		append(p, " ");
 	}
@@ -576,13 +573,13 @@ char* print_select(db_con_t* con, db_key_t* cols, db_key_t* keys, int n, int nco
 	return s;
 
  shortbuf:
-	LOG(L_ERR, "postgres:print_select: Buffer too short (bug in postgres module)\n");
+	ERR("Buffer too short (bug in postgres module)\n");
 	pkg_free(s);
 	return 0;
 }
 
 
-char* print_delete(db_con_t* con, db_key_t* keys, db_op_t* ops, int n)
+static char* print_delete(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals, int n)
 {
 	unsigned int len;
 	int i;
@@ -593,7 +590,7 @@ char* print_delete(db_con_t* con, db_key_t* keys, db_op_t* ops, int n)
 
 	s = (char*)pkg_malloc(len + 1);
 	if (!s) {
-		LOG(L_ERR, "postrgres:print_delete: Unable to allocate %d of memory\n", len);
+		ERR("Unable to allocate %d of memory\n", len);
 		return 0;
 	}
 	p.s = s;
@@ -605,23 +602,31 @@ char* print_delete(db_con_t* con, db_key_t* keys, db_op_t* ops, int n)
 	if (n) {
 		append(p, WHERE);
 		append_str(p, keys[0]);
-		if (ops) {
-			append_str(p, *ops);
-			ops++;
+		if (vals[0].nul) {
+			append(p, " is NULL");
 		} else {
-			append(p, "=");
-		}
-		append_param(p, 1);
-		for(i = 1; i < n; i++) {
-			append(p, AND);
-			append_str(p, keys[i]);
 			if (ops) {
 				append_str(p, *ops);
 				ops++;
 			} else {
 				append(p, "=");
 			}
-			append_param(p, i + 1);
+			append_param(p, 1);
+		}
+		for(i = 1; i < n; i++) {
+			append(p, AND);
+			append_str(p, keys[i]);
+			if (vals[i].nul) {
+				append(p, " is NULL");
+			} else {
+				if (ops) {
+					append_str(p, *ops);
+					ops++;
+				} else {
+					append(p, "=");
+				}
+				append_param(p, i + 1);
+			}
 		}
 	}
 
@@ -629,13 +634,14 @@ char* print_delete(db_con_t* con, db_key_t* keys, db_op_t* ops, int n)
 	return s;
 
  shortbuf:
-	LOG(L_ERR, "postgres:print_delete: Buffer too short (bug in postgres module)\n");
+	ERR("Buffer too short (bug in postgres module)\n");
 	pkg_free(s);
 	return 0;
 }
 
 
-char* print_update(db_con_t* con, db_key_t* ukeys, db_key_t* keys, db_op_t* ops, int un, int n)
+static char* print_update(db_con_t* con, db_key_t* ukeys, db_key_t* keys, db_op_t* ops, 
+			  db_val_t* vals, int un, int n)
 {
 	unsigned int len, param_no;
 	char* s;
@@ -643,7 +649,7 @@ char* print_update(db_con_t* con, db_key_t* ukeys, db_key_t* keys, db_op_t* ops,
 	str p;
 
 	if (!un) {
-		LOG(L_ERR, "postgres:print_update: Nothing to update\n");
+		ERR("Nothing to update\n");
 		return 0;
 	}
 
@@ -652,7 +658,7 @@ char* print_update(db_con_t* con, db_key_t* ukeys, db_key_t* keys, db_op_t* ops,
 
 	s = (char*)pkg_malloc(len + 1);
 	if (!s) {
-		LOG(L_ERR, "postrgres:print_update: Unable to allocate %d of memory\n", len);
+		ERR("Unable to allocate %d of memory\n", len);
 		return 0;
 	}
 	p.s = s;
@@ -677,17 +683,9 @@ char* print_update(db_con_t* con, db_key_t* ukeys, db_key_t* keys, db_op_t* ops,
 	if (n) {
 		append(p, WHERE);
 		append_str(p, keys[0]);
-		if (ops) {
-			append_str(p, *ops);
-			ops++;
+		if (vals[0].nul) {
+			append(p, " is NULL");
 		} else {
-			append(p, "=");
-		}
-		append_param(p, param_no++);
-		
-		for(i = 1; i < n; i++) {
-			append(p, AND);
-			append_str(p, keys[i]);
 			if (ops) {
 				append_str(p, *ops);
 				ops++;
@@ -696,13 +694,29 @@ char* print_update(db_con_t* con, db_key_t* ukeys, db_key_t* keys, db_op_t* ops,
 			}
 			append_param(p, param_no++);
 		}
+		
+		for(i = 1; i < n; i++) {
+			append(p, AND);
+			append_str(p, keys[i]);
+			if (vals[i].nul) {
+				append(p, " is NULL");
+			} else {
+				if (ops) {
+					append_str(p, *ops);
+					ops++;
+				} else {
+					append(p, "=");
+				}
+				append_param(p, param_no++);
+			}
+		}
 	}	
 
 	*p.s = '\0';
 	return s;
 
  shortbuf:
-	LOG(L_ERR, "postgres:print_update: Buffer too short (bug in postgres module)\n");
+	ERR("Buffer too short (bug in postgres module)\n");
 	pkg_free(s);
 	return 0; 
 }
@@ -716,10 +730,10 @@ static int submit_query(db_res_t** res, db_con_t* con, const char* query, struct
 {
 	PGresult* pgres;
 
-	DBG("postgres: Executing '%s'\n", query);
-	if (params) {
+	DBG("Executing '%s'\n", query);
+	if (params && params->cur) {
 	        pgres = PQexecParams(CON_CONNECTION(con), query,
-				     params->n, 0,
+				     params->cur, 0,
 				     params->data, params->len,
 				     params->formats, 1);
 	} else {
@@ -727,7 +741,7 @@ static int submit_query(db_res_t** res, db_con_t* con, const char* query, struct
 	}
 	switch(PQresultStatus(pgres)) {
 	case PGRES_EMPTY_QUERY:
-		LOG(L_ERR, "postgres:submit_query:BUG: db_raw_query received an empty query\n");
+		ERR("BUG: db_raw_query received an empty query\n");
 		goto error;
 		
 	case PGRES_COMMAND_OK:
@@ -738,23 +752,22 @@ static int submit_query(db_res_t** res, db_con_t* con, const char* query, struct
 		
 	case PGRES_COPY_OUT:
 	case PGRES_COPY_IN:
-		LOG(L_ERR, "postgres:submit_query: Unsupported transfer mode\n");
+		ERR("Unsupported transfer mode\n");
 		goto error;
 
 	case PGRES_BAD_RESPONSE:
 	case PGRES_FATAL_ERROR:
-		LOG(L_ERR, "postgres: Error: %s", PQresultErrorMessage(pgres));
+		ERR("Error: %s", PQresultErrorMessage(pgres));
 		if (PQstatus(CON_CONNECTION(con)) != CONNECTION_BAD) {
-				LOG(L_ERR, "postgres: Unknown error occurred, giving up\n");
 				goto error;
 		}
-		LOG(L_ERR, "postgres:submit_query: Bad connection\n");
+		ERR("Bad connection\n");
 		PQclear(pgres);
 		return 1;
 	}
 
 	if (res) {
-		*res = new_result(pgres);
+		*res = pg_new_result(pgres);
 		if (!(*res)) goto error;
 	} else {
 		PQclear(pgres);
@@ -771,16 +784,16 @@ static int reconnect(db_con_t* con)
 {
 	int attempts_left = reconnect_attempts;
 	while(attempts_left) {
-		LOG(L_ERR, "postgres: Trying to recover the connection\n");
+		ERR("Trying to recover the connection\n");
 		PQreset(CON_CONNECTION(con));
 		if (PQstatus(CON_CONNECTION(con)) == CONNECTION_OK) {
-			LOG(L_ERR, "postgres: Successfuly reconnected\n");
+			ERR("Successfuly reconnected\n");
 			return 0;
 		}
-		LOG(L_ERR, "postgres: Reconnect attempt failed\n");
+		ERR("Reconnect attempt failed\n");
 		attempts_left--;
 	}
-	LOG(L_ERR, "postgres: No more reconnect attempts left, giving up\n");
+        ERR("No more reconnect attempts left, giving up\n");
 	return -1;
 }
 
@@ -797,7 +810,7 @@ static int reconnect(db_con_t* con)
  * order: order by the specified column
  * res:   query result
  */
-int db_query(db_con_t* con, db_key_t* keys, db_op_t* ops,
+int pg_query(db_con_t* con, db_key_t* keys, db_op_t* ops,
 	     db_val_t* vals, db_key_t* cols, int n, int ncols,
 	     db_key_t order, db_res_t** res)
 {
@@ -807,13 +820,14 @@ int db_query(db_con_t* con, db_key_t* keys, db_op_t* ops,
 	
 	params = 0;
 	select = 0;
+	if (res) *res = 0;
 
 	if (!con) {
-		LOG(L_ERR, "postgres:db_query: Invalid parameter value\n");
+		ERR("Invalid parameter value\n");
 		return -1;
 	}
 
-	select = print_select(con, cols, keys, n, ncols, ops, order);
+	select = print_select(con, cols, keys, vals, n, ncols, ops, order);
 	if (!select) goto err;
 
 	params = new_pg_params(n);
@@ -829,8 +843,8 @@ int db_query(db_con_t* con, db_key_t* keys, db_op_t* ops,
 		}
 	} while(ret != 0);
 	
-	if (res && convert_result(*res, con) < 0) {
-		free_result(*res);
+	if (res && pg_convert_result(*res, con) < 0) {
+		pg_free_result(*res);
 		goto err;
 	}
 
@@ -848,12 +862,12 @@ int db_query(db_con_t* con, db_key_t* keys, db_op_t* ops,
 /*
  * Execute a raw SQL query
  */
-int db_raw_query(db_con_t* con, char* query, db_res_t** res)
+int pg_raw_query(db_con_t* con, char* query, db_res_t** res)
 {
 	int ret;
 
 	if (!con || !query) {
-		LOG(L_ERR, "postgres:db_raw_query: Invalid parameter value\n");
+		ERR("Invalid parameter value\n");
 		return -1;
 	}
 
@@ -866,8 +880,8 @@ int db_raw_query(db_con_t* con, char* query, db_res_t** res)
 		}
 	} while(ret != 0);
 	
-	if (res && (convert_result(*res, con) < 0)) {
-		free_result(*res);
+	if (res && (pg_convert_result(*res, con) < 0)) {
+		pg_free_result(*res);
 		return -1;
 	}
 	return 0;
@@ -881,14 +895,14 @@ int db_raw_query(db_con_t* con, char* query, db_res_t** res)
  * vals: values of the keys
  * n:    number of key=value pairs
  */
-int db_insert(db_con_t* con, db_key_t* keys, db_val_t* vals, int n)
+int pg_insert(db_con_t* con, db_key_t* keys, db_val_t* vals, int n)
 {
 	int ret;
 	char* insert;
 	struct pg_params* params;
 
 	if (!con || !keys || !vals || !n) {
-		LOG(L_ERR, "postgres:db_insert: Invalid parameter value\n");
+		ERR("Invalid parameter value\n");
 		return -1;
 	}
 
@@ -930,21 +944,21 @@ int db_insert(db_con_t* con, db_key_t* keys, db_val_t* vals, int n)
  * vals: values of the keys that must match
  * n   : number of key=value pairs
  */
-int db_delete(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals, int n)
+int pg_delete(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals, int n)
 {
 	int ret;
 	char* delete;
 	struct pg_params* params;
 
 	if (!con) {
-		LOG(L_ERR, "postgres:db_insert: Invalid parameter value\n");
+		ERR("Invalid parameter value\n");
 		return -1;
 	}
 
 	params = 0;
 	delete = 0;
 
-        delete = print_delete(con, keys, ops, n);
+        delete = print_delete(con, keys, ops, vals, n);
 	if (!delete) goto err;
 
 	params = new_pg_params(n);
@@ -982,7 +996,7 @@ int db_delete(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals, int n
  * n    : number of key=value pairs
  * un   : number of columns to update
  */
-int db_update(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals,
+int pg_update(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals,
 	      db_key_t* ucols, db_val_t* uvals, int n, int un)
 {
 	int ret;
@@ -990,14 +1004,14 @@ int db_update(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals,
 	struct pg_params* params;
 
 	if (!con || !ucols || !uvals || !un) {
-		LOG(L_ERR, "db_update: Invalid parameter value\n");
+		ERR("Invalid parameter value\n");
 		return -1;
 	}
 
 	params = 0;
 	update = 0;
 
-	update = print_update(con, ucols, keys, ops, un, n);
+	update = print_update(con, ucols, keys, ops, vals, un, n);
 	if (!update) goto err;
 
 	params = new_pg_params(n + un);
@@ -1028,8 +1042,8 @@ int db_update(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals,
 /*
  * Release a result set from memory
  */
-int db_free_result(db_con_t* con, db_res_t* res)
+int pg_db_free_result(db_con_t* con, db_res_t* res)
 {
-	free_result(res);
+	pg_free_result(res);
 	return 0;
 }

@@ -48,19 +48,19 @@ static inline int get_columns(db_res_t* res)
 	int n, i, type;
 
 	if (!res) {
-		LOG(L_ERR, "postgres:get_columns: Invalid parameter\n");
+	        ERR("Invalid parameter\n");
 		goto err;
 	}
 
 	pgres = (PGresult*)res->data;
 	if (!pgres) {
-		LOG(L_ERR, "postgres:get_columns: No postgres result found\n");
+		ERR("No postgres result found\n");
 		goto err;
 	}
 
 	n = PQnfields(pgres);
 	if (!n) {
-		LOG(L_ERR, "postgres:get_columns: No columns\n");
+		ERR("No columns\n");
 		goto err;
 	}
 
@@ -68,13 +68,13 @@ static inline int get_columns(db_res_t* res)
 
         res->col.names = (db_key_t*)pkg_malloc(sizeof(db_key_t) * n);
 	if (!res->col.names) {
-		LOG(L_ERR, "postgres:get_columns: No memory left\n");
+		ERR("No memory left\n");
 		goto err;
 	}
 
 	res->col.types = (db_type_t*)pkg_malloc(sizeof(db_type_t) * n);
 	if (!res->col.types) {
-		LOG(L_ERR, "postgres:get_columns: No memory left\n");
+		ERR("No memory left\n");
 		goto err;
 	}
 
@@ -82,7 +82,7 @@ static inline int get_columns(db_res_t* res)
 
 	for(i = 0; i < n; i++) {
 		if (PQfformat(pgres, i) == 0) {
-			LOG(L_ERR, "postgres:get_column: Text format of columns not supported\n");
+			ERR("Text format of columns not supported\n");
 			goto err;
 		}
 
@@ -123,7 +123,7 @@ static inline int get_columns(db_res_t* res)
 			break;
 
 		default:
-			LOG(L_ERR, "postgres:get_columns: Unsupported column type with oid %d\n", type);
+			ERR("Unsupported column type with oid %d\n", type);
 			goto err;
 		}
 	}
@@ -144,7 +144,7 @@ static inline int get_columns(db_res_t* res)
 static inline int free_columns(db_res_t* res)
 {
 	if (!res) {
-		LOG(L_ERR, "postgres:free_columns: Invalid parameter\n");
+		ERR("Invalid parameter\n");
 		return -1;
 	}
 
@@ -277,14 +277,14 @@ static inline int convert_cell(db_con_t* con, db_res_t* res, int row, int col)
 	case BITOID:    /* fixed-length bit string */
 	case VARBITOID: /* variable-length bit string */
 		if (ntohl(*(unsigned int*)pgval) != 32) {
-			LOG(L_ERR, "postgres:convert_cell: Only 32-bit long bitfieds supported\n");
+			ERR("Only 32-bit long bitfieds supported\n");
 			return -1;
 		}
 		val->val.bitmap_val = ntohl(*(unsigned int*)(pgval + 4));
 		break;
 		
 	default:
-		LOG(L_ERR, "postgres:convert_cell: Unsupported column type with oid %d\n", type);
+		ERR("Unsupported column type with oid %d\n", type);
 		return -1;
 		
 	}
@@ -302,7 +302,7 @@ static inline int convert_rows(db_con_t* con, db_res_t* res)
 	int r, c;
 
 	if (!res) {
-		LOG(L_ERR, "postgres:convert_rows: Invalid parameter\n");
+		ERR("Invalid parameter\n");
 		return -1;
 	}
 
@@ -316,7 +316,7 @@ static inline int convert_rows(db_con_t* con, db_res_t* res)
 
 	res->rows = (struct db_row*)pkg_malloc(sizeof(db_row_t) * res->n);
 	if (!res->rows) {
-		LOG(L_ERR, "postgres:convert_rows: No memory left\n");
+		ERR("No memory left\n");
 		goto err;
 	}
 
@@ -324,7 +324,7 @@ static inline int convert_rows(db_con_t* con, db_res_t* res)
 		row = &res->rows[r];
 		row->values = (db_val_t*)pkg_malloc(sizeof(db_val_t) * res->col.n);
 		if (!row->values) {
-			LOG(L_ERR, "postgres:convert_rows: No memory left to allocate row\n");
+			ERR("No memory left to allocate row\n");
 			res->n = r; /* This is to make sure that the cleanup function release only rows
 				     * that has been really allocated
 				     */
@@ -344,7 +344,7 @@ static inline int convert_rows(db_con_t* con, db_res_t* res)
 	return 0;
 
  err:
-	free_rows(res);
+	     /*	free_rows(res); Do not free here, pg_free_result will take care of it */
 	return -1;
 }
 
@@ -352,12 +352,12 @@ static inline int convert_rows(db_con_t* con, db_res_t* res)
 /*
  * Create a new result structure and initialize it
  */
-db_res_t* new_result(PGresult* pgres)
+db_res_t* pg_new_result(PGresult* pgres)
 {
 	db_res_t* r;
 	r = (db_res_t*)pkg_malloc(sizeof(db_res_t));
 	if (!r) {
-		LOG(L_ERR, "postgres:new_result: No memory left\n");
+		ERR("No memory left\n");
 		return 0;
 	}
 
@@ -370,21 +370,21 @@ db_res_t* new_result(PGresult* pgres)
 /*
  * Fill the structure with data from database
  */
-int convert_result(db_res_t* res, db_con_t* con)
+int pg_convert_result(db_res_t* res, db_con_t* con)
 {
 	if (!res) {
-		LOG(L_ERR, "postgres:convert_result: Invalid parameter\n");
+		ERR("Invalid parameter\n");
 		return -1;
 	}
 
 	if (get_columns(res) < 0) {
-		LOG(L_ERR, "postgres:convert_result: Error while getting column names\n");
+		ERR("Error while getting column names\n");
 		return -2;
 	}
 
 	if (convert_rows(con, res) < 0) {
-		LOG(L_ERR, "postgres:convert_result: Error while converting rows\n");
-		free_columns(res);
+		ERR("Error while converting rows\n");
+		     /* Do not free columns here, pg_free_result will do it */
 		return -3;
 	}
 	return 0;
@@ -394,10 +394,10 @@ int convert_result(db_res_t* res, db_con_t* con)
 /*
  * Release memory used by a result structure
  */
-int free_result(db_res_t* res)
+int pg_free_result(db_res_t* res)
 {
 	if (!res) {
-		LOG(L_ERR, "postgres:free_result: Invalid parameter\n");
+		ERR("Invalid parameter\n");
 		return -1;
 	}
 

@@ -44,50 +44,50 @@
 /*
  * Initialize database connection
  */
-db_con_t* db_init(const char* uri);
+db_con_t* pg_init(const char* uri);
 
 
 /*
  * Close a database connection
  */
-void db_close(db_con_t* con);
+void pg_close(db_con_t* con);
 
 
 /*
  * Free all memory allocated by get_result
  */
-int db_free_result(db_con_t* con, db_res_t* res);
+int pg_db_free_result(db_con_t* con, db_res_t* res);
 
 
 /*
  * Do a query
  */
-int db_query(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals, db_key_t* cols, int n, int nc,
+int pg_query(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals, db_key_t* cols, int n, int nc,
 	     db_key_t order, db_res_t** res);
 
 
 /*
  * Raw SQL query
  */
-int db_raw_query(db_con_t* con, char* query, db_res_t** res);
+int pg_raw_query(db_con_t* con, char* query, db_res_t** res);
 
 
 /*
  * Insert a row into table
  */
-int db_insert(db_con_t* con, db_key_t* keys, db_val_t* vals, int n);
+int pg_insert(db_con_t* con, db_key_t* keys, db_val_t* vals, int n);
 
 
 /*
  * Delete a row from table
  */
-int db_delete(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals, int n);
+int pg_delete(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals, int n);
 
 
 /*
  * Update a row in table
  */
-int db_update(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals,
+int pg_update(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals,
 	      db_key_t* ucols, db_val_t* uvals, int n, int un);
 
 
@@ -96,7 +96,7 @@ int db_update(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals,
  * Store name of table that will be used by
  * subsequent database functions
  */
-int use_table(db_con_t* con, const char* table);
+int pg_use_table(db_con_t* con, const char* table);
 
 
 #endif /* _DBASE_H */
