@@ -308,8 +308,9 @@ int www_authenticate(struct sip_msg* msg, char* realm, char* table)
  */
 int proxy_authenticate1(struct sip_msg* msg, char* table)
 {
+	static str realm = STR_STATIC_INIT("");
 	     /* realm parameter is converted to str* in str_fixup */
-	return authenticate(msg, 0, table, HDR_PROXYAUTH_T);
+	return authenticate(msg, &realm, table, HDR_PROXYAUTH_T);
 }
 
 
@@ -318,5 +319,6 @@ int proxy_authenticate1(struct sip_msg* msg, char* table)
  */
 int www_authenticate1(struct sip_msg* msg, char* table)
 {
-	return authenticate(msg, 0, table, HDR_AUTHORIZATION_T);
+	static str realm = STR_STATIC_INIT("");
+	return authenticate(msg, &realm, table, HDR_AUTHORIZATION_T);
 }
