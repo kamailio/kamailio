@@ -1,5 +1,5 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
  * Flatstore module interface
  *
@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /*
@@ -52,7 +52,7 @@ static int parse_flat_url(const char* url, const char** path)
 	}
 
 	len = strlen(url);
-	
+
 	*path = strchr(url, ':') + 1;
 	return 0;
 }
@@ -121,7 +121,7 @@ int flat_use_table(db_con_t* h, const char* t)
 			return -1;
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -155,6 +155,8 @@ int flat_db_insert(db_con_t* h, db_key_t* k, db_val_t* v, int n)
 {
 	FILE* f;
 	int i;
+	char delims[4], *s;
+	size_t len;
 
 	f = CON_FILE(h);
 	if (!f) {
@@ -168,42 +170,72 @@ int flat_db_insert(db_con_t* h, db_key_t* k, db_val_t* v, int n)
 	}
 
 	for(i = 0; i < n; i++) {
-		switch(VAL_TYPE(v + i)) {
-		case DB_INT:
-			fprintf(f, "%d", VAL_INT(v + i));
-			break;
 
-		case DB_DOUBLE:
-			fprintf(f, "%f", VAL_DOUBLE(v + i));
-			break;
+		if (!VAL_NULL(v + i)) {   // TODO: how to distinguish NULL from empty
+			switch(VAL_TYPE(v + i)) {
+				case DB_INT:
+					fprintf(f, "%d", VAL_INT(v + i));
+					break;
 
-		case DB_STRING:
-			fprintf(f, "%s", VAL_STRING(v + i));
-			break;
+				case DB_DOUBLE:
+					fprintf(f, "%f", VAL_DOUBLE(v + i));
+					break;
 
-		case DB_STR:
-			fprintf(f, "%.*s", VAL_STR(v + i).len, VAL_STR(v + i).s);
-			break;
+				case DB_STRING: {
+					s = (char*) VAL_STRING(v + i);
+					delims[0] = flat_delimiter[0];
+					delims[1] = flat_record_delimiter[0];
+					delims[2] = flat_escape[0];
+					delims[3] = '\0';
+					while (*s) {
+						len = strcspn(s, delims);
+						fprintf(f, "%.*s", len, s);
+						s+= len;
+						if (*s) {
+							fprintf(f, "%c%c", flat_escape[0], *s);
+							s++;
+						}
+					}
+					break;
+				}
+				case DB_STR:
+				case DB_BLOB:
+					if (VAL_TYPE(v + i) == DB_STR) {
+						s = VAL_STR(v + i).s;
+						len = VAL_STR(v + i).len;
+					}
+					else {
+						s = VAL_BLOB(v + i).s;
+						len = VAL_BLOB(v + i).len;
+					}
+					while (len > 0) {
+						char *c;
+						for (c = s; len > 0 && *c != flat_delimiter[0] && *c != flat_record_delimiter[0] && *c != flat_escape[0]; c++, len--);
+						fprintf(f, "%.*s", c-s, s);
+						s = c;
+						if (len > 0) {
+							fprintf(f, "%c%c", flat_escape[0], *s);
+							s++;
+							len--;
+						}
+					}
+					break;
 
-		case DB_DATETIME:
-			fprintf(f, "%u", (unsigned int)VAL_TIME(v + i));
-			break;
+				case DB_DATETIME:
+					fprintf(f, "%u", (unsigned int)VAL_TIME(v + i));
+					break;
 
-		case DB_BLOB:
-			LOG(L_ERR, "flastore: Blobs not supported\n");
-			break;
-
-		case DB_BITMAP:
-			fprintf(f, "%u", VAL_BITMAP(v + i));
-			break;
+				case DB_BITMAP:
+					fprintf(f, "%u", VAL_BITMAP(v + i));
+					break;
+			}
 		}
-
 		if (i < (n - 1)) {
-			fprintf(f, "%c", *flat_delimiter);
+			fprintf(f, "%c", flat_delimiter[0]);
 		}
 	}
 
-	fprintf(f, "\n");
+	fprintf(f, "%c", flat_record_delimiter[0]);
 
 	if (flat_flush) {
 		fflush(f);
