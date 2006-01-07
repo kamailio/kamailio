@@ -52,7 +52,8 @@
  *     7        core              avp is in global list
  *     8        core              avp is in the from avp list
  *     9        core              avp is in the to avp list
- *
+ *    10	core		  avp name with positive index
+ *    11	core		  avp name with negative index
  */
 
 #include "str.h"
@@ -65,6 +66,7 @@
 #define AVP_FR_INV_TIMER "fr_inv_timer"  /* Value of final response invite timer */
 #define AVP_RPID         "rpid"          /* Remote-Party-ID */
 #define AVP_GFLAGS       "gflags"        /* global flags */
+#define AVP_FLAGS	 "flags"	 /* message flags */
 
 struct str_int_data {
 	str name;
@@ -109,6 +111,7 @@ struct search_state {
 typedef struct avp_spec {
 	int type;
 	int_str name;
+	int index;
 } avp_spec_t;
 
 /* AVP types */
@@ -128,6 +131,11 @@ typedef struct avp_spec {
 
 #define AVP_CLASS_ALL (AVP_CLASS_USER|AVP_CLASS_DOMAIN|AVP_CLASS_GLOBAL)
 
+/* AVP name index */
+#define AVP_INDEX_FORWARD	(1<<10)
+#define AVP_INDEX_BACKWARD	(1<<11)
+#define AVP_INDEX_ALL		(AVP_INDEX_FORWARD | AVP_INDEX_BACKWARD)
+
 #define GALIAS_CHAR_MARKER  '$'
 
 /* Initialize memory structures */
@@ -135,6 +143,7 @@ int init_avps(void);
 
 /* add avp to the list of avps */
 int add_avp(unsigned short flags, int_str name, int_str val);
+int add_avp_before(avp_t *avp, unsigned short flags, int_str name, int_str val);
 int add_avp_list(avp_list_t* list, unsigned short flags, int_str name, int_str val);
 
 /* Delete avps with given type and name */
@@ -145,6 +154,8 @@ avp_t *search_first_avp( unsigned short flags, int_str name,
 			 int_str *val, struct search_state* state);
 avp_t *search_next_avp(struct search_state* state, int_str *val);
 
+avp_t *search_avp_by_index( unsigned short flags, int_str name,
+                            int_str *val, unsigned short index);
 /* free functions */
 void reset_avps(void);
 
@@ -164,7 +175,8 @@ avp_list_t* set_avp_list(unsigned short flags, avp_list_t* list);
 int add_avp_galias_str(char *alias_definition);
 int lookup_avp_galias(str *alias, int *type, int_str *avp_name);
 int add_avp_galias(str *alias, int type, int_str avp_name);
-int parse_avp_name( str *name, int *type, int_str *avp_name);
-int parse_avp_spec( str *name, int *type, int_str *avp_name);
+int parse_avp_name( str *name, int *type, int_str *avp_name, int *index);
+int parse_avp_spec( str *name, int *type, int_str *avp_name, int *index);
+void free_avp_name( int *type, int_str *avp_name);
 
 #endif

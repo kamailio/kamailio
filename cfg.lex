@@ -510,6 +510,10 @@ EAT_ABLE	[\ \t\b\r]
 <ATTR>{ATTR_TODOMAIN}   { count(); return ATTR_TODOMAIN; }
 <ATTR>{ATTR_GLOBAL}     { count(); return ATTR_GLOBAL; }
 <ATTR>{DOT}             { count(); return DOT; }
+<ATTR>{LBRACK}          { count(); return LBRACK; }
+<ATTR>{RBRACK}          { count(); return RBRACK; }
+<ATTR>{STAR}		{ count(); return STAR; }
+<ATTR>{DECNUMBER}	{ count(); yylval.intval=atoi(yytext);return NUMBER; }
 <ATTR>{ID}		{ count(); addstr(&s_buf, yytext, yyleng); 
                            yylval.strval=s_buf.s;
 			   memset(&s_buf, 0, sizeof(s_buf));

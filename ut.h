@@ -178,27 +178,53 @@ static inline int btostr( char *p,  unsigned char val)
 
 #define INT2STR_MAX_LEN  (19+1+1) /* 2^64~= 16*10^18 => 19+1 digits + \0 */
 
-/* returns a pointer to a static buffer containing l in asciiz & sets len */
-static inline char* int2str(unsigned long l, int* len)
+/* 
+ * returns a pointer to a static buffer containing l in asciiz (with base "base") & sets len 
+ * left padded with 0 to "size"
+ */
+static inline char* int2str_base_0pad(unsigned int l, int* len, int base, int size)
 {
-	static char r[INT2STR_MAX_LEN];
-	int i;
-	
-	i=INT2STR_MAX_LEN-2;
-	r[INT2STR_MAX_LEN-1]=0; /* null terminate */
-	do{
-		r[i]=l%10+'0';
-		i--;
-		l/=10;
-	}while(l && (i>=0));
-	if (l && (i<0)){
-		LOG(L_CRIT, "BUG: int2str: overflow\n");
-	}
-	if (len) *len=(INT2STR_MAX_LEN-2)-i;
-	return &r[i+1];
+        static char r[INT2STR_MAX_LEN];
+        int i, j;
+
+        if (base < 2) {
+                BUG("base underflow\n");
+		return NULL;
+        }
+        if (base > 36) {
+                BUG("base overflow\n");
+		return NULL;
+        }
+        i=INT2STR_MAX_LEN-2;
+        j=i-size;
+        r[INT2STR_MAX_LEN-1]=0; /* null terminate */
+        do{
+                r[i]=l%base;
+                if (r[i]<10)
+                        r[i]+='0';
+                else
+                        r[i]+='a'-10;
+                i--;
+                l/=base;
+        }while((l || i>j) && (i>=0));
+        if (l && (i<0)){
+                BUG("result buffer overflow\n");
+        }
+        if (len) *len=(INT2STR_MAX_LEN-2)-i;
+        return &r[i+1];
 }
 
+/* returns a pointer to a static buffer containing l in asciiz (with base "base") & sets len */
+static inline char* int2str_base(unsigned int l, int* len, int base)
+{
+        return int2str_base_0pad(l, len, base, 0);
+}
 
+/* returns a pointer to a static buffer containing l in asciiz & sets len */
+static inline char* int2str(unsigned int l, int* len)
+{
+     return int2str_base(l, len, 10);
+}
 
 /* faster memchr version */
 static inline char* q_memchr(char* p, int c, unsigned int size)

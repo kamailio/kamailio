@@ -67,9 +67,11 @@
 static int     fr_timer_avp_type = 0;
 static int_str fr_timer_avp = {0};
 static str     fr_timer_str;
+static int     fr_timer_index = 0;
 static int     fr_inv_timer_avp_type = 0;
 static int_str fr_inv_timer_avp = {0};
 static str     fr_inv_timer_str;
+static int     fr_inv_timer_index = 0;
 
 
 /* ----------------------------------------------------- */
@@ -298,7 +300,7 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
 		fr_timer_str.s = fr_timer_param;
 		fr_timer_str.len = strlen(fr_timer_str.s);
 		if (parse_avp_spec( &fr_timer_str, &fr_timer_avp_type,
-		&fr_timer_avp)<0) {
+		&fr_timer_avp, &fr_timer_index)<0) {
 			LOG(L_CRIT,"ERROR:tm:init_avp_params: invalid fr_timer "
 				"AVP specs \"%s\"\n", fr_timer_param);
 			return -1;
@@ -309,7 +311,7 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
 		fr_inv_timer_str.s = fr_inv_timer_param;
 		fr_inv_timer_str.len = strlen(fr_inv_timer_str.s);
 		if (parse_avp_spec( &fr_inv_timer_str, &fr_inv_timer_avp_type, 
-		&fr_inv_timer_avp)<0) {
+		&fr_inv_timer_avp, &fr_inv_timer_index)<0) {
 			LOG(L_CRIT,"ERROR:tm:init_avp_params: invalid fr_inv_timer "
 				"AVP specs \"%s\"\n", fr_inv_timer_param);
 			return -1;

@@ -67,6 +67,7 @@
  * 2005-12-11  added onsend_route support, fcmd (filtered cmd),
  *             snd_{ip,port,proto,af}, to_{ip,proto} (andrei)
  * 2005-12-19  select framework (mma)
+ * 2006-01-06  AVP index support (mma)
  *
  */
 
@@ -336,6 +337,11 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %type <strval> host_sep
 %type <intval> uri_type
 %type <attr> attr_id
+%type <attr> attr_id_num_idx
+%type <attr> attr_id_no_idx
+%type <attr> attr_id_ass
+%type <attr> attr_id_val
+%type <attr> attr_id_any
 //%type <intval> class_id
 %type <intval> assign_op
 %type <select> select_id
@@ -957,7 +963,7 @@ uri_type:	URI			{$$=URI_O;}
 		;
 
 exp_elem:	METHOD strop STRING	{$$= mk_elem($2, METHOD_O, 0, STRING_ST, $3);}
-                | METHOD strop attr_id  {$$ = mk_elem($2, METHOD_O, 0, AVP_ST, $3); }
+                | METHOD strop attr_id_val  {$$ = mk_elem($2, METHOD_O, 0, AVP_ST, $3); }
                 | METHOD strop select_id {$$ = mk_elem($2, METHOD_O, 0, SELECT_ST, $3); }
 		| METHOD strop  ID	{$$ = mk_elem($2, METHOD_O, 0, STRING_ST,$3); }
 		| METHOD strop error { $$=0; yyerror("string expected"); }
@@ -966,7 +972,7 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem($2, METHOD_O, 0, STRING_ST, $3);}
 						}
 		| uri_type strop STRING	{$$ = mk_elem($2, $1, 0, STRING_ST, $3); }
                 | uri_type strop host 	{$$ = mk_elem($2, $1, 0, STRING_ST, $3); }
-                | uri_type strop attr_id {$$ = mk_elem($2, $1, 0, AVP_ST, $3); }
+                | uri_type strop attr_id_val {$$ = mk_elem($2, $1, 0, AVP_ST, $3); }
                 | uri_type strop select_id {$$ = mk_elem($2, $1, 0, SELECT_ST, $3); }
                 | uri_type equalop MYSELF {$$=mk_elem($2, $1, 0, MYSELF_ST, 0); }
 		| uri_type strop error { $$=0; yyerror("string or MYSELF expected"); }
@@ -974,19 +980,19 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem($2, METHOD_O, 0, STRING_ST, $3);}
 									" == , != or =~ expected");
 					}
 		| SRCPORT intop NUMBER	{ $$=mk_elem($2, SRCPORT_O, 0, NUMBER_ST, (void*)$3 ); }
-		| SRCPORT intop attr_id { $$=mk_elem($2, SRCPORT_O, 0, AVP_ST, (void*)$3 ); }
+		| SRCPORT intop attr_id_val { $$=mk_elem($2, SRCPORT_O, 0, AVP_ST, (void*)$3 ); }
 		| SRCPORT intop error { $$=0; yyerror("number expected"); }
 		| SRCPORT error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
 
 		| DSTPORT intop NUMBER	{ $$=mk_elem($2, DSTPORT_O, 0, NUMBER_ST, (void*)$3 ); }
-		| DSTPORT intop attr_id	{ $$=mk_elem($2, DSTPORT_O, 0, AVP_ST, (void*)$3 ); }
+		| DSTPORT intop attr_id_val	{ $$=mk_elem($2, DSTPORT_O, 0, AVP_ST, (void*)$3 ); }
 		| DSTPORT intop error { $$=0; yyerror("number expected"); }
 		| DSTPORT error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
 
 		| SNDPORT intop NUMBER	{	onsend_check("snd_port");
 									$$=mk_elem($2, SNDPORT_O, 0, NUMBER_ST,
 												(void*)$3 ); }
-		| SNDPORT intop attr_id {	onsend_check("snd_port");
+		| SNDPORT intop attr_id_val {	onsend_check("snd_port");
 									$$=mk_elem($2, SNDPORT_O, 0, AVP_ST,
 												(void*)$3 ); }
 		| SNDPORT intop error { $$=0; yyerror("number expected"); }
@@ -995,14 +1001,14 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem($2, METHOD_O, 0, STRING_ST, $3);}
 		| TOPORT intop NUMBER	{	onsend_check("to_port");
 									$$=mk_elem($2, TOPORT_O, 0, NUMBER_ST,
 												(void*)$3 ); }
-		| TOPORT intop attr_id {	onsend_check("to_port");
+		| TOPORT intop attr_id_val {	onsend_check("to_port");
 									$$=mk_elem($2, TOPORT_O, 0, AVP_ST,
 												(void*)$3 ); }
 		| TOPORT intop error { $$=0; yyerror("number expected"); }
 		| TOPORT error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
 
 		| PROTO intop proto	{ $$=mk_elem($2, PROTO_O, 0, NUMBER_ST, (void*)$3 ); }
-		| PROTO intop attr_id	{ $$=mk_elem($2, PROTO_O, 0, AVP_ST, (void*)$3 ); }
+		| PROTO intop attr_id_val	{ $$=mk_elem($2, PROTO_O, 0, AVP_ST, (void*)$3 ); }
 		| PROTO intop error { $$=0;
 								yyerror("protocol expected (udp, tcp or tls)");
 							}
@@ -1011,7 +1017,7 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem($2, METHOD_O, 0, STRING_ST, $3);}
 		| SNDPROTO intop proto	{	onsend_check("snd_proto");
 									$$=mk_elem($2, SNDPROTO_O, 0, NUMBER_ST,
 										(void*)$3 ); }
-		| SNDPROTO intop attr_id {	onsend_check("snd_proto");
+		| SNDPROTO intop attr_id_val {	onsend_check("snd_proto");
 									$$=mk_elem($2, SNDPROTO_O, 0, AVP_ST,
 										(void*)$3 ); }
 		| SNDPROTO intop error { $$=0;
@@ -1020,28 +1026,28 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem($2, METHOD_O, 0, STRING_ST, $3);}
 		| SNDPROTO error { $$=0; yyerror("equal/!= operator expected"); }
 
 		| AF intop NUMBER	{ $$=mk_elem($2, AF_O, 0, NUMBER_ST,(void *) $3 ); }
-		| AF intop attr_id	{ $$=mk_elem($2, AF_O, 0, AVP_ST,(void *) $3 ); }
+		| AF intop attr_id_val	{ $$=mk_elem($2, AF_O, 0, AVP_ST,(void *) $3 ); }
 		| AF intop error { $$=0; yyerror("number expected"); }
 		| AF error { $$=0; yyerror("equal/!= operator expected"); }
 
 		| SNDAF intop NUMBER	{	onsend_check("snd_af");
 									$$=mk_elem($2, SNDAF_O, 0, NUMBER_ST,
 										(void *) $3 ); }
-		| SNDAF intop attr_id	{	onsend_check("snd_af");
+		| SNDAF intop attr_id_val	{	onsend_check("snd_af");
 									$$=mk_elem($2, SNDAF_O, 0, AVP_ST,
 										(void *) $3 ); }
 		| SNDAF intop error { $$=0; yyerror("number expected"); }
 		| SNDAF error { $$=0; yyerror("equal/!= operator expected"); }
 
 		| MSGLEN intop NUMBER	{ $$=mk_elem($2, MSGLEN_O, 0, NUMBER_ST, (void *) $3 ); }
-		| MSGLEN intop attr_id	{ $$=mk_elem($2, MSGLEN_O, 0, AVP_ST, (void *) $3 ); }
+		| MSGLEN intop attr_id_val	{ $$=mk_elem($2, MSGLEN_O, 0, AVP_ST, (void *) $3 ); }
 		| MSGLEN intop MAX_LEN	{ $$=mk_elem($2, MSGLEN_O, 0, NUMBER_ST, (void *) BUF_SIZE); }
 		| MSGLEN intop error { $$=0; yyerror("number expected"); }
 		| MSGLEN error { $$=0; yyerror("equal/!= operator expected"); }
 
 		| RETCODE intop NUMBER	{ $$=mk_elem($2, RETCODE_O, 0,
 												NUMBER_ST, (void *) $3 ); }
-		| RETCODE intop attr_id	{ $$=mk_elem($2, RETCODE_O, 0,
+		| RETCODE intop attr_id_val	{ $$=mk_elem($2, RETCODE_O, 0,
 												AVP_ST, (void *) $3 ); }
 		| RETCODE intop error { $$=0; yyerror("number expected"); }
 		| RETCODE error { $$=0; yyerror("equal/!= operator expected"); }
@@ -1172,16 +1178,16 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem($2, METHOD_O, 0, STRING_ST, $3);}
 		| exp_stm			{ $$=mk_elem( NO_OP, ACTION_O, 0, ACTIONS_ST, $1);  }
 		| NUMBER		{$$=mk_elem( NO_OP, NUMBER_O, 0, NUMBER_ST, (void*)$1 ); }
 
-		| attr_id		{$$=mk_elem( NO_OP, AVP_O, (void*)$1, 0, 0); }
-		| attr_id strop STRING	{$$=mk_elem( $2, AVP_O, (void*)$1, STRING_ST, $3); }
-		| attr_id strop select_id {$$=mk_elem( $2, AVP_O, (void*)$1, SELECT_ST, $3); }
-		| attr_id intop NUMBER	{$$=mk_elem( $2, AVP_O, (void*)$1, NUMBER_ST, (void*)$3); }
-		| attr_id binop NUMBER	{$$=mk_elem( $2, AVP_O, (void*)$1, NUMBER_ST, (void*)$3); }
-                | attr_id strop attr_id {$$=mk_elem( $2, AVP_O, (void*)$1, AVP_ST, (void*)$3); }
+		| attr_id_val		{$$=mk_elem( NO_OP, AVP_O, (void*)$1, 0, 0); }
+		| attr_id_val strop STRING	{$$=mk_elem( $2, AVP_O, (void*)$1, STRING_ST, $3); }
+		| attr_id_val strop select_id {$$=mk_elem( $2, AVP_O, (void*)$1, SELECT_ST, $3); }
+		| attr_id_val intop NUMBER	{$$=mk_elem( $2, AVP_O, (void*)$1, NUMBER_ST, (void*)$3); }
+		| attr_id_val binop NUMBER	{$$=mk_elem( $2, AVP_O, (void*)$1, NUMBER_ST, (void*)$3); }
+                | attr_id_val strop attr_id_val {$$=mk_elem( $2, AVP_O, (void*)$1, AVP_ST, (void*)$3); }
 
                 | select_id                 { $$=mk_elem( NO_OP, SELECT_O, $1, 0, 0); }
 		| select_id strop STRING    { $$=mk_elem( $2, SELECT_O, $1, STRING_ST, $3); }
-		| select_id strop attr_id   { $$=mk_elem( $2, SELECT_O, $1, AVP_ST, (void*)$3); }
+		| select_id strop attr_id_val   { $$=mk_elem( $2, SELECT_O, $1, AVP_ST, (void*)$3); }
 		| select_id strop select_id { $$=mk_elem( $2, SELECT_O, $1, SELECT_ST, $3); }
 ;
 
@@ -1334,67 +1340,62 @@ select_id : SELECT_MARK { sel.n = 0; sel.f = 0; } select_params {
 }
 ;
 
+attr_class_spec: ATTR_FROMUSER { s_attr->type |= AVP_TRACK_FROM | AVP_CLASS_USER; } 
+		|ATTR_TOUSER { s_attr->type |= AVP_TRACK_TO | AVP_CLASS_USER; } 
+		|ATTR_FROMDOMAIN { s_attr->type |= AVP_TRACK_FROM | AVP_CLASS_DOMAIN; } 
+		|ATTR_TODOMAIN { s_attr->type |= AVP_TRACK_TO | AVP_CLASS_DOMAIN; } 
+		|ATTR_GLOBAL { s_attr->type |= AVP_TRACK_ALL | AVP_CLASS_GLOBAL; } 
 
-attr_id : ATTR_MARK ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
-                         if (!s_attr) { yyerror("No memory left"); }
-                         s_attr->type = AVP_NAME_STR;                   
-                         s_attr->name.s.s = $2; s_attr->name.s.len = strlen($2); 
-                         $$ = s_attr; 
-                       }
-//        | ATTR_MARK class_id DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
-//                                      if (!s_attr) { yyerror("No memory left"); }
-//                                      s_attr->type = AVP_NAME_STR | $2;
-//                                      s_attr->name.s.s = $4; s_attr->name.s.len = strlen($4); 
-//                                      $$ = s_attr; 
-//                                    }
-        | ATTR_MARK ATTR_FROMUSER DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
-                                       if (!s_attr) { yyerror("No memory left"); }
-                                       s_attr->type = AVP_NAME_STR | AVP_TRACK_FROM | AVP_CLASS_USER;
-                                       s_attr->name.s.s = $4; s_attr->name.s.len = strlen($4);
-                                       $$ = s_attr;
-                                     }
-        | ATTR_MARK ATTR_TOUSER DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
-                                       if (!s_attr) { yyerror("No memory left"); }
-                                       s_attr->type = AVP_NAME_STR | AVP_TRACK_TO | AVP_CLASS_USER;
-                                       s_attr->name.s.s = $4; s_attr->name.s.len = strlen($4);
-                                       $$ = s_attr;
-                                     }
-        | ATTR_MARK ATTR_FROMDOMAIN DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
-                                       if (!s_attr) { yyerror("No memory left"); }
-                                       s_attr->type = AVP_NAME_STR | AVP_TRACK_FROM | AVP_CLASS_DOMAIN;
-                                       s_attr->name.s.s = $4; s_attr->name.s.len = strlen($4);
-                                       $$ = s_attr;
-                                     }
-        | ATTR_MARK ATTR_TODOMAIN DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
-                                       if (!s_attr) { yyerror("No memory left"); }
-                                       s_attr->type = AVP_NAME_STR | AVP_TRACK_TO | AVP_CLASS_DOMAIN;
-                                       s_attr->name.s.s = $4; s_attr->name.s.len = strlen($4);
-                                       $$ = s_attr;
-                                     }
-        | ATTR_MARK ATTR_GLOBAL DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
-                                       if (!s_attr) { yyerror("No memory left"); }
-                                       s_attr->type = AVP_NAME_STR | AVP_CLASS_GLOBAL;
-                                       s_attr->name.s.s = $4; s_attr->name.s.len = strlen($4);
-                                       $$ = s_attr;
-                                     }
-//        | ATTR_MARK ATTR_TO class_id DOT ID { s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
-//                                              if (!s_attr) { yyerror("No memory left"); }
-//                                              s_attr->type = AVP_NAME_STR | AVP_TRACK_TO | $3;
-//                                              s_attr->name.s.s = $5; s_attr->name.s.len = strlen($5);
-//                                             $$ = s_attr;
-//                                            }
+attr_name_spec : ID { s_attr->type |= AVP_NAME_STR; s_attr->name.s.s = $1; s_attr->name.s.len = strlen ($1); }
+;
+	       
+attr_spec : attr_name_spec |
+	    attr_class_spec DOT attr_name_spec
 ;
 
-assign_op : ADDEQ { $$ = ADD_T; }
-          | EQUAL { $$ = ASSIGN_T; }
+attr_mark : ATTR_MARK 
+	{	s_attr = (struct avp_spec*)pkg_malloc(sizeof(struct avp_spec));
+                if (!s_attr) { yyerror("No memory left"); }
+                s_attr->type = 0;  
+	}
 ;
 
-assign_action:   attr_id assign_op STRING  { $$=mk_action($2, AVP_ST, STRING_ST, $1, $3); }
-               | attr_id assign_op NUMBER  { $$=mk_action($2, AVP_ST, NUMBER_ST, $1, (void*)$3); }
-               | attr_id assign_op fcmd    { $$=mk_action($2, AVP_ST, ACTION_ST, $1, $3); }
-               | attr_id assign_op attr_id { $$=mk_action($2, AVP_ST, AVP_ST, $1, $3); }
-               | attr_id assign_op select_id { $$=mk_action($2, AVP_ST, SELECT_ST, (void*)$1, (void*)$3); }
-               | attr_id assign_op LPAREN exp RPAREN { $$ = mk_action($2, AVP_ST, EXPR_ST, $1, $4); }
+attr_id : attr_mark attr_spec { $$ = s_attr; }	  
+;
+
+attr_id_num_idx : attr_mark attr_spec LBRACK NUMBER RBRACK
+	       	{	s_attr->type|= (AVP_NAME_STR | ($4<0?AVP_INDEX_BACKWARD:AVP_INDEX_FORWARD)); 
+			s_attr->index = ($4<0?-$4:$4);
+	       		$$ = s_attr; 
+	       	}	  
+;
+
+attr_id_no_idx : attr_mark attr_spec LBRACK RBRACK
+	       	{	s_attr->type|= AVP_INDEX_ALL; 
+	       		$$ = s_attr;
+		}	  
+;
+
+attr_id_ass : attr_id | attr_id_no_idx
+;
+
+attr_id_val : attr_id | attr_id_num_idx
+;
+
+attr_id_any : attr_id | attr_id_no_idx | attr_id_num_idx
+;
+
+//assign_op : ADDEQ { $$ = ADD_T; }
+//          | EQUAL { $$ = ASSIGN_T; }
+assign_op : EQUAL { $$ = ASSIGN_T; }
+;
+
+assign_action:   attr_id_ass assign_op STRING  { $$=mk_action($2, AVP_ST, STRING_ST, $1, $3); }
+               | attr_id_ass assign_op NUMBER  { $$=mk_action($2, AVP_ST, NUMBER_ST, $1, (void*)$3); }
+               | attr_id_ass assign_op fcmd    { $$=mk_action($2, AVP_ST, ACTION_ST, $1, $3); }
+               | attr_id_ass assign_op attr_id_any { $$=mk_action($2, AVP_ST, AVP_ST, $1, $3); }
+               | attr_id_ass assign_op select_id { $$=mk_action($2, AVP_ST, SELECT_ST, (void*)$1, (void*)$3); }
+               | attr_id_ass assign_op LPAREN exp RPAREN { $$ = mk_action($2, AVP_ST, EXPR_ST, $1, $4); }
 ;
 
 cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,

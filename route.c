@@ -367,7 +367,7 @@ inline static int comp_num(int op, long left, int rtype, union exp_op* r)
 	long right;
 	
 	if (rtype == AVP_ST) {
-		avp = search_first_avp(r->attr->type, r->attr->name, &val, 0);
+		avp = search_avp_by_index(r->attr->type, r->attr->name, &val, r->attr->index);
 		if (avp && !(avp->flags & AVP_VAL_STR)) right = val.n;
 		else return 0; /* Always fail */
 	} else if (rtype == NUMBER_ST) {
@@ -406,7 +406,7 @@ inline static int comp_str(int op, str* left, int rtype, union exp_op* r, struct
 	right=0; /* warning fix */
 	
 	if (rtype == AVP_ST) {
-		avp = search_first_avp(r->attr->type, r->attr->name, &val, 0);
+		avp = search_avp_by_index(r->attr->type, r->attr->name, &val, r->attr->index);
 		if (avp && (avp->flags & AVP_VAL_STR)) right = &val.s;
 		else return 0;
 	} else if (rtype == SELECT_ST) {
@@ -531,7 +531,7 @@ inline static int comp_avp(int op, avp_spec_t* spec, int rtype, union exp_op* r,
 	avp_t* avp;
 	int_str val;
 
-	avp = search_first_avp(spec->type, spec->name, &val, 0);
+	avp = search_avp_by_index(spec->type, spec->name, &val, spec->index);
 	if (!avp) return 0;
 
 	switch(op) {

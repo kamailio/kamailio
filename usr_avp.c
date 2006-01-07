@@ -30,6 +30,7 @@
  *  2004-10-09  interface more flexible - more function available (bogdan)
  *  2004-11-07  AVP string values are kept 0 terminated (bogdan)
  *  2004-11-14  global aliases support added
+ *  2005-01-05  parse avp name according new syntax
  */
 
 
@@ -131,7 +132,7 @@ inline static unsigned short compute_ID( str *name )
 }
 
 
-int add_avp_list(avp_list_t* list, unsigned short flags, int_str name, int_str val)
+avp_t *create_avp (unsigned short flags, int_str name, int_str val)
 {
 	avp_t *avp;
 	str *s;
@@ -139,13 +140,11 @@ int add_avp_list(avp_list_t* list, unsigned short flags, int_str name, int_str v
 	struct str_str_data *ssd;
 	int len;
 
-	assert(list != 0);
-
 	if (name.s.s == 0 && name.s.len == 0) {
 		LOG(L_ERR,"ERROR:avp:add_avp: 0 ID or NULL NAME AVP!");
 		goto error;
 	}
-
+	
 	/* compute the required mem size */
 	len = sizeof(struct usr_avp);
 	if (flags&AVP_NAME_STR) {
@@ -168,14 +167,12 @@ int add_avp_list(avp_list_t* list, unsigned short flags, int_str name, int_str v
 	avp = (struct usr_avp*)shm_malloc( len );
 	if (avp==0) {
 		LOG(L_ERR,"ERROR:avp:add_avp: no more shm mem\n");
-		goto error;
+		return 0;
 	}
 
 	avp->flags = flags;
 	avp->id = (flags&AVP_NAME_STR)? compute_ID(&name.s) : name.n ;
-
-	avp->next = *list;
-	*list = avp;
+	avp->next = NULL;
 
 	switch ( flags&(AVP_NAME_STR|AVP_VAL_STR) )
 	{
@@ -213,9 +210,23 @@ int add_avp_list(avp_list_t* list, unsigned short flags, int_str name, int_str v
 			ssd->val.s[ssd->val.len] = 0;
 			break;
 	}
-
-	return 0;
+	return avp;
 error:
+	return 0;
+}
+
+int add_avp_list(avp_list_t* list, unsigned short flags, int_str name, int_str val)
+{
+	avp_t *avp;
+
+	assert(list != 0);
+
+	if ((avp = create_avp(flags, name, val))) {
+		avp->next = *list;
+		*list = avp;
+		return 0;
+	}
+	
 	return -1;
 }
 
@@ -242,6 +253,28 @@ int add_avp(unsigned short flags, int_str name, int_str val)
 	return add_avp_list(list, flags & (~(AVP_CLASS_ALL) | avp_class), name, val);
 }
 
+int add_avp_before(avp_t *avp, unsigned short flags, int_str name, int_str val)
+{
+	avp_t *new_avp;
+	
+	if (!avp) {
+		return add_avp(flags, name, val);
+	}
+
+	if ((flags & AVP_CLASS_ALL) == 0) flags |= (avp->flags & AVP_CLASS_ALL);
+	if ((flags & AVP_TRACK_ALL) == 0) flags |= (avp->flags & AVP_TRACK_ALL);
+	
+	if ((avp->flags & (AVP_CLASS_ALL|AVP_TRACK_ALL)) != (flags & (AVP_CLASS_ALL|AVP_TRACK_ALL))) {
+		ERR("add_avp_before:Source and target AVPs have different CLASS/TRACK\n");
+		return -1;
+	}
+	if ((new_avp=create_avp(flags, name, val))) {
+		new_avp->next=avp->next;
+		avp->next=new_avp;
+		return 0;
+	}
+	return -1;
+}
 
 /* get value functions */
 inline str* get_avp_name(avp_t *avp)
@@ -358,6 +391,13 @@ avp_t *search_first_avp(unsigned short flags, int_str name, int_str *val, struct
 		LOG(L_ERR,"ERROR:avp:search_first_avp: 0 ID or NULL NAME AVP!");
 		return 0;
 	}
+	
+	switch (flags & AVP_INDEX_ALL) {
+		case AVP_INDEX_BACKWARD:
+		case AVP_INDEX_FORWARD:
+			WARN("AVP specified with index, but not used for search\n");
+			break;
+	}
 
 	if (!s) s = &st;
 
@@ -366,6 +406,17 @@ avp_t *search_first_avp(unsigned short flags, int_str name, int_str *val, struct
 		      * all of them by default
 		      */
 		flags |= AVP_CLASS_ALL;
+		
+		if ((flags & AVP_TRACK_ALL) == 0) {
+		    /* The caller did not specify even the track to search in, so try
+		     * track_from first, and if not found try track_to
+		     */
+		     	ret = search_first_avp(flags | AVP_TRACK_FROM, name, val, s);
+		     	if (ret) {
+		     		return ret;
+		     	}
+		     	flags |= AVP_TRACK_TO;
+		}
 	}
 
 	list = select_list(flags);
@@ -397,6 +448,13 @@ avp_t *search_next_avp(struct search_state* s, int_str *val )
 	if (s == 0) {
 		LOG(L_ERR, "search_next:avp: Invalid parameter value\n");
 		return 0;
+	}
+
+	switch (s->flags & AVP_INDEX_ALL) {
+		case AVP_INDEX_BACKWARD:
+		case AVP_INDEX_FORWARD:
+			WARN("AVP specified with index, but not used for search\n");
+			break;
 	}
 
 	while(1) {
@@ -431,6 +489,54 @@ avp_t *search_next_avp(struct search_state* s, int_str *val )
 	return 0;
 }
 
+int search_reverse( avp_t *cur, struct search_state* st,
+                     unsigned short index, avp_list_t *ret)
+{
+	unsigned short lvl;
+	
+	if (!cur)
+		return 0;
+	lvl = search_reverse(search_next_avp(st, NULL), st, index, ret)+1;
+	if (index==lvl)
+		*ret=cur;
+	return lvl;
+}
+                            
+avp_t *search_avp_by_index( unsigned short flags, int_str name,
+                            int_str *val, unsigned short index) 	
+{
+	avp_t *ret, *cur;
+	struct search_state st;
+	
+	if (flags & AVP_NAME_RE) {
+		BUG("search_by_index not supported for AVP_NAME_RE\n");
+		return 0;
+	}
+	switch (flags & AVP_INDEX_ALL) {
+		case 0:
+			ret = search_first_avp(flags, name, val, &st);
+			if (!ret || search_next_avp(&st, NULL))
+				return 0;
+			else
+				return ret;
+		case AVP_INDEX_ALL:
+			BUG("search_by_index not supported for anonymous index []\n");
+			return 0;
+		case AVP_INDEX_FORWARD:
+			ret = NULL;
+			cur = search_first_avp(flags & ~AVP_INDEX_ALL, name, NULL, &st);
+			search_reverse(cur, &st, index, &ret);
+			if (ret && val)
+				get_avp_val(ret, val);
+			return ret;
+		case AVP_INDEX_BACKWARD:
+			ret = search_first_avp(flags & ~AVP_INDEX_ALL, name, val, &st);
+			for (index--; (ret && index); ret=search_next_avp(&st, val), index--);
+			return ret;
+	}
+		
+	return 0;
+}                            
 
 /* FIXME */
 /********* free functions ********/
@@ -647,16 +753,28 @@ int lookup_avp_galias(str *alias, int *type, int_str *avp_name)
 
 
 /* parsing functions */
+#define ERR_IF_CONTAINS(name,chr) \
+	if (memchr(name->s,chr,name->len)) { \
+		ERR("Unexpected control character '%c' in AVP name\n", chr); \
+		goto error; \
+	}
 
-int parse_avp_name( str *name, int *type, int_str *avp_name)
+int parse_avp_name( str *name, int *type, int_str *avp_name, int *index)
 {
 	unsigned int id;
 	char c;
+	char *p;
+	str s;
 
-	if (name==0 || name->s==0 || name->len==0)
+	if (name==0 || name->s==0 || name->len==0) {
+		ERR("NULL name or name->s or name->len\n");
 		goto error;
+	}
 
-	if (name->len>=2 && name->s[1]==':') {
+	if (index) *index = 0;
+	ERR("Parsing '%.*s'\n", name->len, name->s);
+	if (name->len>=2 && name->s[1]==':') { // old fashion i: or s:
+		WARN("i: and s: avp name syntax is deprecated!\n");
 		c = name->s[0];
 		name->s += 2;
 		name->len -= 2;
@@ -670,17 +788,108 @@ int parse_avp_name( str *name, int *type, int_str *avp_name)
 			case 'i': case 'I':
 				*type = 0;
 				if (str2int( name, &id)!=0) {
-					LOG(L_ERR, "ERROR:parse_avp_name: invalid ID "
+					ERR("invalid ID "
 						"<%.*s> - not a number\n", name->len, name->s);
 					goto error;
 				}
 				avp_name->n = (int)id;
 				break;
 			default:
-				LOG(L_ERR, "ERROR:parse_avp_name: unsupported type "
+				ERR("unsupported type "
 					"[%c]\n", c);
 				goto error;
 		}
+	} else if ((p=memchr(name->s, '.', name->len))) {
+		if (p-name->s==1) {
+			id=name->s[0];
+			name->s +=2;
+			name->len -=2;
+		} else if (p-name->s==2) {
+			id=name->s[0]<<8 | name->s[1];
+			name->s +=3;
+			name->len -=3;
+		} else {
+			ERR("AVP unknown class prefix '%.*s'\n", p-name->s,name->s);
+			goto error;
+		}
+		if (name->len==0) {
+			ERR("AVP name not specified after the prefix separator\n");
+			goto error;
+		}
+		switch (id) {
+			case 'f':
+				*type = AVP_TRACK_FROM | AVP_CLASS_USER;
+				break;
+			case 't':
+				*type = AVP_TRACK_TO | AVP_CLASS_USER;
+				break;
+			case 0x6664: //'fd'
+				*type = AVP_TRACK_FROM | AVP_CLASS_DOMAIN;
+				break;
+			case 0x7464: // 'td'
+				*type = AVP_TRACK_TO | AVP_CLASS_DOMAIN;
+				break;
+			case 'g':
+				*type = AVP_TRACK_ALL | AVP_CLASS_GLOBAL;
+				break;
+			default:
+				if (id < 1<<8)
+					ERR("AVP unknown class prefix '%c'\n", id);
+				else
+					ERR("AVP unknown class prefix '%c%c'\n", id>>8,id);
+				goto error;
+		}
+		if (name->s[name->len-1]==']') {
+			p=memchr(name->s, '[', name->len);
+			if (!p) {
+				ERR("missing '[' for AVP index\n");
+				goto error; 
+			}
+			s.s=p+1;
+			s.len=name->len-(p-name->s)-2; // [ and ]
+			if (s.len == 0) {
+				*type |= AVP_INDEX_ALL;
+			} else {
+				if (s.s[0]=='-') {
+					*type |= AVP_INDEX_BACKWARD;
+					s.s++;s.len--;
+				} else {
+					*type |= AVP_INDEX_FORWARD;
+				}	
+				if ((str2int(&s, &id) != 0)||(id==0)) {
+					ERR("Invalid AVP index '%.*s'\n", s.len, s.s);
+					goto error;
+				}
+				if (index){
+					*index = id;
+				} else {
+					WARN("AVP index correcly specified, but called without placeholed\n");
+				}
+			}
+			name->len=p-name->s;
+		}
+		ERR_IF_CONTAINS(name,'.');
+		ERR_IF_CONTAINS(name,'[');
+		ERR_IF_CONTAINS(name,']');
+		if ((name->len > 2) && (name->s[0]=='/') && (name->s[name->len-1]=='/')) {
+			avp_name->re=pkg_malloc(sizeof(regex_t));
+			if (!avp_name->re) {
+				BUG("No free memory to allocate AVP_NAME_RE regex\n");
+				goto error;
+			}
+			c=name->s[name->len];
+			name->s[name->len]=0;
+			if (regcomp(avp_name->re, name->s, REG_EXTENDED|REG_NOSUB|REG_ICASE)) {
+				pkg_free(avp_name->re);
+				name->s[name->len] = c;
+				goto error;
+			}
+			*type |= AVP_NAME_RE;
+		} else {
+			ERR_IF_CONTAINS(name,'/');
+			*type |= AVP_NAME_STR;
+		}
+		avp_name->s = *name;
 	} else {
 		/*default is string name*/
 		*type = AVP_NAME_STR;
@@ -693,7 +902,7 @@ error:
 }
 
 
-int parse_avp_spec( str *name, int *type, int_str *avp_name)
+int parse_avp_spec( str *name, int *type, int_str *avp_name, int *index)
 {
 	str alias;
 
@@ -710,10 +919,15 @@ int parse_avp_spec( str *name, int *type, int_str *avp_name)
 		alias.len = name->len-1;
 		return lookup_avp_galias( &alias, type, avp_name);
 	} else {
-		return parse_avp_name( name, type, avp_name);
+		return parse_avp_name( name, type, avp_name, index);
 	}
 }
 
+void free_avp_name( int *type, int_str *avp_name)
+{
+	if ((*type & AVP_NAME_RE) && (avp_name->re))
+		pkg_free(avp_name->re);
+}
 
 int add_avp_galias_str(char *alias_definition)
 {
@@ -722,7 +936,8 @@ int add_avp_galias_str(char *alias_definition)
 	str  name;
 	str  alias;
 	int  type;
-
+	int  index;
+	
 	s = alias_definition;
 	while(*s && isspace((int)*s))
 		s++;
@@ -761,7 +976,7 @@ int add_avp_galias_str(char *alias_definition)
 				goto parse_error;
 		}
 
-		if (parse_avp_name( &name, &type, &avp_name)!=0) {
+		if (parse_avp_name( &name, &type, &avp_name, &index)!=0) {
 			LOG(L_ERR, "ERROR:add_avp_galias_str: <%.*s> not a valid AVP "
 				"name\n", name.len, name.s);
 			goto error;

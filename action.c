@@ -1,3 +1,4 @@
+
 /*
  * $Id$
  *
@@ -714,6 +715,12 @@ int do_action(struct action* a, struct sip_msg* msg)
 
 	        case ADD_T:
 	        case ASSIGN_T:
+		
+			/* If the left attr was specified withou indexing brackets delete
+			 * existing AVPs before adding new ones
+			 */
+			if ((a->p1.attr->type & AVP_INDEX_ALL) != AVP_INDEX_ALL) delete_avp(a->p1.attr->type, a->p1.attr->name);
+			
 			if (a->p2_type == STRING_ST) {
 				value.s = a->p2.str;
 				flags = a->p1.attr->type | AVP_VAL_STR;
@@ -750,27 +757,45 @@ int do_action(struct action* a, struct sip_msg* msg)
 			} else if (a->p2_type == AVP_ST) {
 				struct search_state st;
 				avp_t* avp; 
+				avp_t* avp_mark;
 				
-				     /* If the action is assign then remove the old avp value before adding
-				      * new ones
-				      */
-				if ((unsigned char)a->type == ASSIGN_T) delete_avp(a->p1.attr->type, a->p1.attr->name);
-
-				avp = search_first_avp(a->p2.attr->type, a->p2.attr->name, &value, &st);
-				while(avp) {
-					     /* We take only the type of value and name from the source avp
-					      * and reset class and track flags
-					      */
-					flags = a->p1.attr->type | (avp->flags & ~(AVP_CLASS_ALL|AVP_TRACK_ALL));
-					if (add_avp(flags, name, value) < 0) {
-						LOG(L_CRIT, "ERROR: Failed to assign value to attribute\n");
-					 	ret=E_UNSPEC;
+				avp_mark = NULL;
+				if ((a->p2.attr->type & AVP_INDEX_ALL) == AVP_INDEX_ALL) {
+					avp = search_first_avp(a->p2.attr->type, a->p2.attr->name, &value, &st);
+					while(avp) {
+						     /* We take only the type of value and name from the source avp
+						      * and reset class and track flags
+						      */
+						flags = (a->p1.attr->type & ~AVP_INDEX_ALL) | (avp->flags & ~(AVP_CLASS_ALL|AVP_TRACK_ALL));
+						
+						if (add_avp_before(avp_mark, flags, a->p1.attr->name, value) < 0) {
+							LOG(L_CRIT, "ERROR: Failed to assign value to attribute\n");
+							ret=E_UNSPEC;
+							break;
+						}
+						
+						/* move the mark, so the next found AVP will come before the one currently added
+						 * so they will have the same order as in the source list
+						 */
+						if (avp_mark) {
+							avp_mark=avp_mark->next;
+						} else {
+							avp_mark=search_first_avp(flags, a->p1.attr->name, NULL, NULL);
+						}
+							
+						avp = search_next_avp(&st, &value);
+					}
+					ret = 1;
+					break;
+				} else {
+					avp = search_avp_by_index(a->p2.attr->type, a->p2.attr->name, &value, a->p2.attr->index);
+					if (avp) {
+						flags = a->p1.attr->type | (avp->flags & ~(AVP_CLASS_ALL|AVP_TRACK_ALL));
+					} else {
+						ret = E_UNSPEC;
 						break;
 					}
-					avp = search_next_avp(&st, &value);
 				}
-				ret = 1;
-				break;
 			} else if (a->p2_type == SELECT_ST) {
 				int r;
 				r = run_select(&value.s, a->p2.select, msg);
@@ -793,8 +818,8 @@ int do_action(struct action* a, struct sip_msg* msg)
 
 			/* If the action is assign then remove the old avp value
 			 * before adding new ones */
-			if ((unsigned char)a->type == ASSIGN_T) delete_avp(flags, name);
-			if (add_avp(flags, name, value) < 0) {
+//			if ((unsigned char)a->type == ASSIGN_T) delete_avp(flags, name);
+			if (add_avp(flags & ~AVP_INDEX_ALL, name, value) < 0) {
 				LOG(L_CRIT, "ERROR: Failed to assign value to attribute\n");
 				ret=E_UNSPEC;
 				break;
