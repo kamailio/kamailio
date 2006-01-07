@@ -60,10 +60,10 @@ int resolve_select(select_t* s)
 				if (t->table[table_idx].curr_f == f) {
 					if (t->table[table_idx].type == s->params[param_idx].type) {
 						switch (t->table[table_idx].type) {
-						case PARAM_INT:
+						case SEL_PARAM_INT:
 							accept = 1;
 							break;
-							case PARAM_STR:
+							case SEL_PARAM_STR:
 							accept = (((t->table[table_idx].name.len == s->params[param_idx].v.s.len) || !t->table[table_idx].name.len)
 								   && (!t->table[table_idx].name.s || !strncasecmp(t->table[table_idx].name.s, s->params[param_idx].v.s.s, s->params[param_idx].v.s.len)));
 							break;
@@ -83,14 +83,14 @@ int resolve_select(select_t* s)
 
 		accepted:
 		if (t->table[table_idx].flags & CONSUME_NEXT_STR) {
-			if ((param_idx<s->n-1) && (s->params[param_idx+1].type == PARAM_STR)) {
+			if ((param_idx<s->n-1) && (s->params[param_idx+1].type == SEL_PARAM_STR)) {
 				param_idx++;
 			} else if (!(t->table[table_idx].flags & OPTIONAL)) {
 				goto not_found;
 			}
 		}
 		if (t->table[table_idx].flags & CONSUME_NEXT_INT) {
-			if ((param_idx<s->n-1) && (s->params[param_idx+1].type == PARAM_INT)) {
+			if ((param_idx<s->n-1) && (s->params[param_idx+1].type == SEL_PARAM_INT)) {
 				param_idx++;
 			} else if (!(t->table[table_idx].flags & OPTIONAL)) {
 				goto not_found;
@@ -104,7 +104,7 @@ int resolve_select(select_t* s)
 		f = t->table[table_idx].new_f;
 	}
 
-	if (t->table[table_idx].flags & PARAM_EXPECTED) goto not_found;
+	if (t->table[table_idx].flags & SEL_PARAM_EXPECTED) goto not_found;
 	s->f = f;
 	s->parent_f = pf;
 	return 0;
@@ -136,7 +136,7 @@ void print_select(select_t* s)
 	int i;
 	DBG("select(");
 	for(i = 0; i < s->n; i++) {
-		if (s->params[i].type == PARAM_INT) {
+		if (s->params[i].type == SEL_PARAM_INT) {
 			DBG("%d,", s->params[i].v.i);
 		} else {
 			DBG("%.*s,", s->params[i].v.s.len, s->params[i].v.s.s);

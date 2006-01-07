@@ -41,10 +41,10 @@
 // Flags for parser table FLAG bitfiels
 #define DIVERSION_MASK   0x00FF
 // if DIVERSION is set and the function is accepted and has STR param
-// the param is changed into PARAM_DIV and the value is set to (flags & DIVERSION_MASK)
+// the param is changed into SEL_PARAM_DIV and the value is set to (flags & DIVERSION_MASK)
 #define DIVERSION        1<<8
 // if any parameter is expected at this stage
-#define PARAM_EXPECTED   1<<9
+#define SEL_PARAM_EXPECTED   1<<9
 // accept if following parameter is STR (any)
 #define CONSUME_NEXT_STR 1<<10
 // accept if following parameter is INT
@@ -54,16 +54,16 @@
 // if conversion to common alias is needed
 // up-to now parsed function would be stored in parent_f
 // NOTE: the parameter is not consumed for ALIAS, 
-// so you can leave it as ..,PARAM_INT, STR_NULL,..
+// so you can leave it as ..,SEL_PARAM_INT, STR_NULL,..
 #define IS_ALIAS         1<<13
 
 /*
  * Selector call parameter
  */
 typedef enum {
-	PARAM_INT,  /* Integer parameter */
-	PARAM_STR,  /* String parameter */
-	PARAM_DIV,  /* Integer value got from parsing table */
+	SEL_PARAM_INT,  /* Integer parameter */
+	SEL_PARAM_STR,  /* String parameter */
+	SEL_PARAM_DIV,  /* Integer value got from parsing table */
 } select_param_type_t;
 	
 typedef union {

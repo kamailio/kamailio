@@ -1301,7 +1301,7 @@ select_param : ID {
 		    if (sel.n >= MAX_SELECT_PARAMS-1) {
 			    yyerror("Select identifier too long\n");
 		    }
-		    sel.params[sel.n].type = PARAM_STR; 
+		    sel.params[sel.n].type = SEL_PARAM_STR; 
 		    sel.params[sel.n].v.s.s = $1;
 		    sel.params[sel.n].v.s.len = strlen($1);
 		    sel.n++;
@@ -1310,11 +1310,11 @@ select_param : ID {
 		     if (sel.n >= MAX_SELECT_PARAMS-2) {
 			    yyerror("Select identifier too long\n");
 		     }
-		     sel.params[sel.n].type = PARAM_STR;
+		     sel.params[sel.n].type = SEL_PARAM_STR;
 		     sel.params[sel.n].v.s.s = $1;
 		     sel.params[sel.n].v.s.len = strlen($1);
 		     sel.n++;
-		     sel.params[sel.n].type = PARAM_INT;
+		     sel.params[sel.n].type = SEL_PARAM_INT;
 		     sel.params[sel.n].v.i = $3;
 		     sel.n++;
 	     }
