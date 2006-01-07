@@ -172,8 +172,8 @@ struct module_exports{
 	<listitem>
 	    <para>
 		<structfield>param_types</structfield> - Array of types of
-		parameters, each field of the array can be either STR_PARAM or
-		INT_PARAM (currently only two parameter types are defined).
+		parameters, each field of the array can be either PARAM_STR/PARAM_STRING or
+		PARAM_INT (currently only three parameter types are defined).
 	    </para>
 	</listitem>
 	<listitem>

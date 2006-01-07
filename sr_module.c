@@ -19,8 +19,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /*
@@ -87,12 +87,12 @@ int register_builtin_modules()
 
 	ret=0;
 #ifdef STATIC_TM
-	ret=register_module(tm_exports,"built-in", 0); 
+	ret=register_module(tm_exports,"built-in", 0);
 	if (ret<0) return ret;
 #endif
 
 #ifdef STATIC_EXEC
-	ret=register_module(exec_exports,"built-in", 0); 
+	ret=register_module(exec_exports,"built-in", 0);
 	if (ret<0) return ret;
 #endif
 
@@ -102,15 +102,15 @@ int register_builtin_modules()
 #endif
 
 #ifdef STATIC_AUTH
-	ret=register_module(auth_exports, "built-in", 0); 
+	ret=register_module(auth_exports, "built-in", 0);
 	if (ret<0) return ret;
 #endif
-	
+
 #ifdef STATIC_RR
 	ret=register_module(rr_exports, "built-in", 0);
 	if (ret<0) return ret;
 #endif
-	
+
 #ifdef STATIC_USRLOC
 	ret=register_module(usrloc_exports, "built-in", 0);
 	if (ret<0) return ret;
@@ -120,7 +120,7 @@ int register_builtin_modules()
 	ret=register_module(sl_exports, "built-in", 0);
 	if (ret<0) return ret;
 #endif
-	
+
 	return ret;
 }
 
@@ -132,7 +132,7 @@ int register_module(struct module_exports* e, char* path, void* handle)
 {
 	int ret;
 	struct sr_module* mod;
-	
+
 	ret=-1;
 
 	/* add module to the list */
@@ -183,7 +183,7 @@ static inline int version_control(void *handle, char *path)
 		LOG(L_ERR, "ERROR: no compile flags in module <%s>\n", path );
 		return 0;
 	}
-	
+
 	if (strcmp(SER_FULL_VERSION, *m_ver)==0){
 		if (strcmp(SER_COMPILE_FLAGS, *m_flags)==0)
 			return 1;
@@ -206,7 +206,7 @@ int load_module(char* path)
 	char* error;
 	struct module_exports* exp;
 	struct sr_module* t;
-	
+
 #ifndef RTLD_NOW
 /* for openbsd */
 #define RTLD_NOW DL_LAZY
@@ -217,7 +217,7 @@ int load_module(char* path)
 					path, dlerror() );
 		goto error;
 	}
-	
+
 	for(t=modules;t; t=t->next){
 		if (t->handle==handle){
 			LOG(L_WARN, "WARNING: load_module: attempting to load the same"
@@ -248,7 +248,7 @@ skip:
 
 
 /* searches the module list and returns pointer to the "name" function or
- * 0 if not found 
+ * 0 if not found
  * flags parameter is OR value of all flags that must match
  */
 cmd_function find_export(char* name, int param_no, int flags)
@@ -327,32 +327,41 @@ cmd_function find_mod_export(char* mod, char* name, int param_no, int flags)
 		}
 	}
 
-	DBG("find_mod_export: <%s> in module %s not found\n", name, mod);
+	DBG("find_mod_export: <%s> in module <%s> not found\n", name, mod);
 	return 0;
 }
 
 
-
-
-void* find_param_export(char* mod, char* name, modparam_t type)
-{
+struct sr_module* find_module_by_name(char* mod) {
 	struct sr_module* t;
-	param_export_t* param;
 
 	for(t = modules; t; t = t->next) {
 		if (strcmp(mod, t->exports->name) == 0) {
-			for(param=t->exports->params;param && param->name ; param++) {
-				if ((strcmp(name, param->name) == 0) &&
-				    (param->type == type)) {
-					DBG("find_param_export: found <%s> in module %s [%s]\n",
-					    name, t->exports->name, t->path);
-					return param->param_pointer;
-				}
-			}
+			return t;
 		}
 	}
-	DBG("find_param_export: parameter <%s> or module <%s> not found\n",
-			name, mod);
+	DBG("find_module_by_name: module <%s> not found\n", mod);
+	return 0;
+}
+
+
+void* find_param_export(struct sr_module* mod, char* name, modparam_t type_mask, modparam_t *param_type)
+{
+	param_export_t* param;
+
+	if (!mod)
+		return 0;
+	for(param=mod->exports->params;param && param->name ; param++) {
+		if ((strcmp(name, param->name) == 0) &&
+			((param->type & PARAM_TYPE_MASK(type_mask)) != 0)) {
+			DBG("find_param_export: found <%s> in module %s [%s]\n",
+				name, mod->exports->name, mod->path);
+			*param_type = param->type;
+			return param->param_pointer;
+		}
+	}
+	DBG("find_param_export: parameter <%s> not found in module <%s>\n",
+			name, mod->exports->name);
 	return 0;
 }
 
@@ -364,9 +373,9 @@ struct sr_module* find_module(void* f, cmd_export_t  **c)
 {
 	struct sr_module* t;
 	cmd_export_t* cmd;
-	
+
 	for (t=modules;t;t=t->next){
-		for(cmd=t->exports->cmds; cmd && cmd->name; cmd++) 
+		for(cmd=t->exports->cmds; cmd && cmd->name; cmd++)
 			if (f==(void*)cmd->function) {
 				if (c) *c=cmd;
 				return t;
@@ -400,7 +409,7 @@ void destroy_modules()
 int init_modules(void)
 {
 	struct sr_module* t;
-	
+
 	for(t = modules; t; t = t->next) {
 		if ((t->exports) && (t->exports->init_f))
 			if (t->exports->init_f() != 0) {
@@ -428,7 +437,7 @@ int init_child(int rank)
 	default:            type = "CHILD";         break;
 	}
 	DBG("init_child: initializing %s with rank %d\n", type, rank);
-	
+
 
 	for(t = modules; t; t = t->next) {
 		if (t->exports->init_child_f) {
@@ -458,7 +467,7 @@ static int init_mod_child( struct sr_module* m, int rank )
 		 */
 		if (init_mod_child(m->next, rank)!=0) return -1;
 		if (m->exports && m->exports->init_child_f) {
-			DBG("DEBUG: init_mod_child (%d): %s\n", 
+			DBG("DEBUG: init_mod_child (%d): %s\n",
 					rank, m->exports->name);
 			if (m->exports->init_child_f(rank)<0) {
 				LOG(L_ERR, "init_mod_child(): Error while initializing"
@@ -538,13 +547,13 @@ int init_modules(void)
 int fixup_str_12(void** param, int param_no)
 {
 	str* s;
-	
+
 	s = (str*)pkg_malloc(sizeof(str));
 	if (!s) {
 		LOG(L_ERR, "fixup_str_12: No memory left\n");
 		return E_UNSPEC;
 	}
-	
+
 	s->s = (char*)*param;
 	s->len = strlen(s->s);
 	*param = (void*)s;
@@ -578,7 +587,7 @@ int fixup_int_12(void** param, int param_no)
 	int err;
 
 	num = str2s(*param, strlen(*param), &err);
-	
+
 	if (err == 0) {
 		pkg_free(*param);
 		*param=(void*)num;
@@ -607,7 +616,7 @@ int fixup_int_2(void** param, int param_no)
 	if (param_no == 2) {
 		return fixup_int_12(param, param_no);
 	}
-	
+
 	return 0;
 }
 

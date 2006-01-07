@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /*
@@ -58,10 +58,16 @@ typedef int (*init_function)(void);
 typedef int (*child_init_function)(int rank);
 
 
-#define STR_PARAM        (1U<<0)  /* String parameter type */
-#define INT_PARAM        (1U<<1)  /* Integer parameter type */
-#define USE_FUNC_PARAM   (1U<<(8*sizeof(int)-1))
-#define PARAM_TYPE_MASK(_x)   ((_x)&(~USE_FUNC_PARAM))
+#define PARAM_STRING     (1U<<0)  /* String (char *) parameter type */
+#define PARAM_INT        (1U<<1)  /* Integer parameter type */
+#define PARAM_STR        (1U<<2)  /* struct str parameter type */
+#define PARAM_USE_FUNC   (1U<<(8*sizeof(int)-1))
+#define PARAM_TYPE_MASK(_x)   ((_x)&(~PARAM_USE_FUNC))
+
+/* temporary, for backward compatibility only until all modules adjust it */
+#define STR_PARAM PARAM_STRING
+#define INT_PARAM PARAM_INT
+#define USE_FUNC_PARAM PARAM_USE_FUNC
 
 typedef unsigned int modparam_t;
 
@@ -108,7 +114,7 @@ typedef struct param_export_ param_export_t;
 
 struct module_exports{
 	char* name;                     /* null terminated module name */
-	
+
 	cmd_export_t* cmds;             /* null terminated array of the exported
 									   commands */
 	rpc_export_t* rpc_methods;      /* null terminated array of exported rpc methods */
@@ -150,13 +156,14 @@ struct sr_module* find_module(void *f, cmd_export_t** cmd);
 void destroy_modules();
 int init_child(int rank);
 int init_modules(void);
+struct sr_module* find_module_by_name(char* mod);
 
 /*
  * Find a parameter with given type and return it's
  * address in memory
  * If there is no such parameter, NULL is returned
  */
-void* find_param_export(char* mod, char* name, modparam_t type);
+void* find_param_export(struct sr_module* mod, char* name, modparam_t type_mask, modparam_t *param_type);
 
 /* modules function prototypes:
  * struct module_exports* mod_register(); (type module_register)

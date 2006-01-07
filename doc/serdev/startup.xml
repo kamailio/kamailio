@@ -444,14 +444,14 @@ module_stm = "loadmodule" STRING
 | "loadmodule" error	 { yyerror("string expected");  }
 | "modparam" "(" STRING "," STRING "," STRING ")" 
 {
-    if (set_mod_param($3, $5, STR_PARAM, $7) != 0) {
+    if (set_mod_param($3, $5, PARAM_STR|PARAM_STRING, $7) != 0) {
         yyerror("Can't set module parameter");
     }
 }
 
 | "modparam" "(" STRING "," STRING "," NUMBER ")" 
 {
-    if (set_mod_param($3, $5, INT_PARAM, (void*)$7) != 0) {
+    if (set_mod_param($3, $5, PARAM_INT, (void*)$7) != 0) {
         yyerror("Can't set module parameter");
     }
 }
