@@ -30,20 +30,30 @@
 
 #include "../../parser/msg_parser.h"
 
-typedef int (*item_func_t) (struct sip_msg*, str*, str*, int);
+typedef int (*item_func_t) (struct sip_msg*, str*, str*, int, int);
 
 typedef struct _xl_elog
 {
 	str text;
 	str hparam;
 	int hindex;
+	int hflags;
 	item_func_t itf;
 	struct _xl_elog *next;
 } xl_elog_t, *xl_elog_p;
 
 int xl_elog_free_all(xl_elog_p log);
-int xl_parse_format(char *s, xl_elog_p *el);
-int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len);
+typedef int (xl_parse_format_f)(char *s, xl_elog_p *el);
+//int xl_parse_format(char *s, xl_elog_p *el);
+typedef int (xl_print_log_f)(struct sip_msg*, xl_elog_t*, char*, int*);
+//int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len);
+typedef str* (xl_get_nulstr_f)(void);
 
+xl_parse_format_f xl_parse_format;
+xl_print_log_f xl_print_log;
+xl_get_nulstr_f xl_get_nulstr;
+
+int xl_mod_init();
+int xl_child_init(int);
 #endif
 

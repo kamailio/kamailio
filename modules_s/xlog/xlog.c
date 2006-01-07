@@ -41,6 +41,7 @@
 
 #include "xl_lib.h"
 
+#define NO_SCRIPT -1
 
 MODULE_VERSION
 
@@ -66,6 +67,9 @@ static cmd_export_t cmds[]={
 		 ONREPLY_ROUTE | BRANCH_ROUTE},
 	{"xdbg",  xdbg,  1, xdbg_fixup, REQUEST_ROUTE | FAILURE_ROUTE | 
 		ONREPLY_ROUTE | BRANCH_ROUTE},
+	{"xprint", (cmd_function)xl_print_log, NO_SCRIPT, 0, 0},
+	{"xparse", (cmd_function)xl_parse_format, NO_SCRIPT, 0, 0},
+	{"xnulstr", (cmd_function)xl_get_nulstr, NO_SCRIPT, 0, 0},
 	{0,0,0,0,0}
 };
 
@@ -103,7 +107,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	return 0;
+	return xl_mod_init();
 }
 
 /**
@@ -112,7 +116,7 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	DBG("XLOG: init_child [%d]  pid [%d]\n", rank, getpid());
-	return 0;
+	return xl_child_init(rank);
 }
 
 /**
