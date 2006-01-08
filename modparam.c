@@ -41,53 +41,10 @@
 #include <regex.h>
 #include <string.h>
 
-
 int set_mod_param(char* _mod, char* _name, modparam_t _type, void* _val)
 {
-	void* ptr;
-	modparam_t param_type;
-
-	if (!_mod) {
-		LOG(L_ERR, "set_mod_param(): Invalid _mod parameter value\n");
-		return -1;
-	}
-
-	if (!_name) {
-		LOG(L_ERR, "set_mod_param(): Invalid _name parameter value\n");
-		return -2;
-	}
-
-
-	ptr = find_param_export(find_module_by_name(_mod), _name, _type, &param_type);
-	if (!ptr) {
-		LOG(L_ERR, "set_mod_param(): Parameter not found\n");
-		return -3;
-	}
-
-	if (param_type & PARAM_USE_FUNC) {
-		if ( ((param_func_t)(ptr))(param_type, _val) < 0) {
-			return -4;
-		}
-	}
-	else {
-		switch(PARAM_TYPE_MASK(param_type)) {
-			case PARAM_STRING:
-				*((char**)ptr) = strdup((char*)_val);
-				break;
-
-			case PARAM_STR:
-				((str*)ptr)->s = strdup((char*)_val);
-				((str*)ptr)->len = strlen(((str*)ptr)->s);
-				break;
-
-			case PARAM_INT:
-				*((int*)ptr) = (int)(long)_val;
-				break;
-		}
-	}
-	return 0;
+	return set_mod_param_regex(_mod, _name, _type, _val);
 }
-
 
 int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 {
@@ -95,8 +52,18 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 	regex_t preg;
 	int mod_found, len;
 	char* reg;
-	void *ptr;
+	void *ptr, *val2;
 	modparam_t param_type;
+	str s;
+
+	if (!regex) {
+		LOG(L_ERR, "set_mod_param_regex(): Invalid mod parameter value\n");
+		return -5;
+	}
+	if (!name) {
+		LOG(L_ERR, "set_mod_param_regex(): Invalid name parameter value\n");
+		return -6;
+	}
 
 	len = strlen(regex);
 	reg = pkg_malloc(len + 2 + 1);
@@ -120,11 +87,23 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 		if (regexec(&preg, t->exports->name, 0, 0, 0) == 0) {
 			DBG("set_mod_param_regex: '%s' matches module '%s'\n", regex, t->exports->name);
 			mod_found = 1;
-			ptr = find_param_export(t, name, type, &param_type);
+			ptr = find_param_export(t, name, type | (type & (PARAM_STR|PARAM_STRING))?PARAM_STR|PARAM_STRING:0, &param_type);
 			if (ptr) {
+				// type casting
+				if (type == PARAM_STRING && PARAM_TYPE_MASK(param_type) == PARAM_STR) {
+					s.s = (char*)val;
+					s.len = s.s?strlen(s.s):0;
+					val2 = &s;
+				} else if (type == PARAM_STR && PARAM_TYPE_MASK(param_type) == PARAM_STRING) {
+					val2 = s.s;	// zero terminator expected
+				}
+				else
+					val2 = val;
+
+
 				DBG("set_mod_param_regex: found <%s> in module %s [%s]\n", name, t->exports->name, t->path);
 				if (param_type & PARAM_USE_FUNC) {
-					if ( ((param_func_t)(ptr))(param_type, val) < 0) {
+					if ( ((param_func_t)(ptr))(param_type, val2) < 0) {
 						regfree(&preg);
 						pkg_free(reg);
 						return -4;
@@ -133,16 +112,16 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 				else {
 					switch(PARAM_TYPE_MASK(param_type)) {
 						case PARAM_STRING:
-							*((char**)ptr) = strdup((char*)val);
+							*((char**)ptr) = strdup((char*)val2);
 							break;
 
 						case PARAM_STR:
-							((str*)ptr)->s = strdup((char*)val);
-							((str*)ptr)->len = strlen(((str*)ptr)->s);
+							((str*)ptr)->s = strdup(((str*)val2)->s);
+							((str*)ptr)->len = ((str*)ptr)->s?strlen(((str*)ptr)->s):0;
 							break;
 
 						case PARAM_INT:
-							*((int*)ptr) = (int)(long)val;
+							*((int*)ptr) = (int)(long)val2;
 							break;
 					}
 				}

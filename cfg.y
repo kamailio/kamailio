@@ -773,7 +773,7 @@ module_stm:	LOADMODULE STRING	{ DBG("loading module %s\n", $2);
 								}
 		 | LOADMODULE error	{ yyerror("string expected");  }
                  | MODPARAM LPAREN STRING COMMA STRING COMMA STRING RPAREN {
-			 if (set_mod_param_regex($3, $5, PARAM_STR|PARAM_STRING, $7) != 0) {
+			 if (set_mod_param_regex($3, $5, PARAM_STRING, $7) != 0) {
 				 yyerror("Can't set module parameter");
 			 }
 		   }
