@@ -6,7 +6,7 @@
 #
 
 #
-# Uses: NAME, ALLDEP, CC, CFLAGS, DEFS, LIBS, MKDEP, auto_gen, auto_gen_others,
+# Uses: NAME, ALLDEP, CC, CFLAGS, DEFS, INCLUDES, LIBS, MKDEP, auto_gen, auto_gen_others,
 # depends, objs, extra_objs, static_modules, static_modules_path
 # (all this must  be defined previously!,  see Makefile.defs & Makefile)
 #
@@ -15,10 +15,10 @@
 
 #implicit rules
 %.o:%.c  $(ALLDEP)
-	$(CC) $(CFLAGS) $(DEFS) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) $(DEFS) -c $< -o $@
 
 %.d: %.c $(ALLDEP)
-	@set -e; $(MKDEP) $(DEFS) $< \
+	@set -e; $(MKDEP) $(INCLUDES) $(DEFS) $< \
 	|  sed 's#\(\($*D)\)\?$(*F)\)\.o[ :]*#$*.o $@ : #g' > $@; \
 	[ -s $@ ] || rm -f $@
 

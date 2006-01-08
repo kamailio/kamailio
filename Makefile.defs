@@ -482,6 +482,7 @@ endif
 
 CFLAGS=
 LDFLAGS=
+INCLUDES=
 # setting CFLAGS
 ifeq ($(mode), release)
 	#if i386
