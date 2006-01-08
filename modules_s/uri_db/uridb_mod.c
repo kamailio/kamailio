@@ -1,5 +1,5 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
  * Various URI related functions
  *
@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -82,7 +82,7 @@ static int lookup_user_fixup(void** param, int param_no);
  */
 str db_url       = STR_STATIC_INIT(DEFAULT_RODB_URL);
 str uri_table    = STR_STATIC_INIT(URI_TABLE);
-str uid_col      = STR_STATIC_INIT(UID_COL);      
+str uid_col      = STR_STATIC_INIT(UID_COL);
 str did_col      = STR_STATIC_INIT(DID_COL);
 str username_col = STR_STATIC_INIT(USERNAME_COL);
 str flags_col    = STR_STATIC_INIT(FLAGS_COL);
@@ -104,12 +104,12 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",          STR_PARAM, &db_url.s       },
-	{"uri_table",       STR_PARAM, &uri_table.s    },
-	{"uid_column",      STR_PARAM, &uid_col.s      },
-	{"did_column",      STR_PARAM, &did_col.s      },
-	{"username_column", STR_PARAM, &username_col.s },
-	{"flags_column",    STR_PARAM, &flags_col.s    },
+	{"db_url",          PARAM_STR, &db_url       },
+	{"uri_table",       PARAM_STR, &uri_table    },
+	{"uid_column",      PARAM_STR, &uid_col      },
+	{"did_column",      PARAM_STR, &did_col      },
+	{"username_column", PARAM_STR, &username_col },
+	{"flags_column",    PARAM_STR, &flags_col    },
 	{0, 0, 0}
 };
 
@@ -118,7 +118,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"uri_db", 
+	"uri_db",
 	cmds,      /* Exported functions */
 	0,         /* RPC methods */
 	params,    /* Exported parameters */
@@ -153,13 +153,6 @@ static int mod_init(void)
 {
 	int ver;
 
-	db_url.len = strlen(db_url.s);
-        uri_table.len = strlen(uri_table.s);
-	uid_col.len = strlen(uid_col.s);
-        did_col.len = strlen(did_col.s);
-        username_col.len = strlen(username_col.s);
-        flags_col.len = strlen(flags_col.s);
-
 	if (bind_dbmod(db_url.s, &db) < 0) {
 		LOG(L_ERR, "uri_db:mod_init: Unable to bind to the database module\n");
 		return -1;
@@ -192,7 +185,7 @@ static int mod_init(void)
 		LOG(L_ERR, "uri_db:mod_init: Invalid table version"
 		    " of uri table (use ser_mysql.sh reinstall)\n");
 		goto err;
-	}		
+	}
 	return 0;
 
  err:
@@ -236,7 +229,7 @@ static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 	if (id == LOAD_FROM) {
 		get_from_did(&did, msg);
 		flag = DB_IS_FROM;
-		
+
 		if (parse_from_header(msg) < 0) {
 			LOG(L_ERR, "uri_db:lookup_user: Error while parsing From header\n");
 			return -1;
@@ -262,7 +255,7 @@ static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 			LOG(L_ERR, "uri_db:lookup_user: Error while parsing To URI\n");
 			return -1;
 		}
-		vals[0].val.str_val = puri.user;			
+		vals[0].val.str_val = puri.user;
 		flag = DB_IS_TO;
 	} else {
 		get_to_did(&did, msg);

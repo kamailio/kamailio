@@ -1,5 +1,5 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
  * Postgres module interface
  *
@@ -24,8 +24,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
@@ -60,8 +60,8 @@ static cmd_export_t cmds[]={
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"connect_timeout",    INT_PARAM, &connect_timeout   },
-	{"reconnect_attempts", INT_PARAM, &reconnect_attempts},
+	{"connect_timeout",    PARAM_INT, &connect_timeout   },
+	{"reconnect_attempts", PARAM_INT, &reconnect_attempts},
 	{0, 0, 0}
 };
 
@@ -84,12 +84,12 @@ static param_export_t params[] = {
  *	varbit_col VARBIT NULL
  * );
  *
- * insert into test (bool_col, int2_col, int4_col, int8_col, float4_col, float8_col, 
- *                   timestamp_col, char_col, text_col, bpchar_col, varchar_col, 
- *                   bytea_col, bit_col, varbit_col) 
- *                   values 
- *                   (true, 22, 23, 24, 25.21, 25.22, '1999-10-18 21:35:00', 'a', 
- *                   'ab', 'a', 'abcde', 'abcdddd', B'00110011001100110011001100110011', 
+ * insert into test (bool_col, int2_col, int4_col, int8_col, float4_col, float8_col,
+ *                   timestamp_col, char_col, text_col, bpchar_col, varchar_col,
+ *                   bytea_col, bit_col, varbit_col)
+ *                   values
+ *                   (true, 22, 23, 24, 25.21, 25.22, '1999-10-18 21:35:00', 'a',
+ *                   'ab', 'a', 'abcde', 'abcdddd', B'00110011001100110011001100110011',
  *                    b'10101010101010101010101010101010');
  */
 static int pg_test(void)
@@ -120,7 +120,7 @@ static int pg_test(void)
 	}
 
 	INFO("Result contains %d columns\n", res->col.n);
-	
+
 	for(row = 0; row < res->n; row++) {
 		for(col = 0; col < res->col.n; col++) {
 			switch(res->col.types[col]) {
@@ -165,7 +165,7 @@ static int pg_test(void)
 }
 
 
-struct module_exports exports = {	
+struct module_exports exports = {
 	"postgres",
 	cmds,
 	0,         /* RPC methods */

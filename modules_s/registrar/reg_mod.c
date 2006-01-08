@@ -1,4 +1,4 @@
-/* 
+/*
  * $Id$
  *
  * Registrar module interface
@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /*
@@ -97,16 +97,16 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"default_expires", INT_PARAM, &default_expires},
-	{"default_q",       INT_PARAM, &default_q      },
-	{"append_branches", INT_PARAM, &append_branches},
-	{"nat_flag",        INT_PARAM, &nat_flag       },
-	{"min_expires",     INT_PARAM, &min_expires    },
-	{"max_expires",     INT_PARAM, &max_expires    },
-        {"received_param",  STR_PARAM, &rcv_param      },
-	{"received_avp",    INT_PARAM, &rcv_avp_no     },
-	{"max_contacts",    INT_PARAM, &max_contacts   },
-	{"retry_after",     INT_PARAM, &retry_after    },
+	{"default_expires", PARAM_INT, &default_expires},
+	{"default_q",       PARAM_INT, &default_q      },
+	{"append_branches", PARAM_INT, &append_branches},
+	{"nat_flag",        PARAM_INT, &nat_flag       },
+	{"min_expires",     PARAM_INT, &min_expires    },
+	{"max_expires",     PARAM_INT, &max_expires    },
+        {"received_param",  PARAM_STR, &rcv_param      },
+	{"received_avp",    PARAM_INT, &rcv_avp_no     },
+	{"max_contacts",    PARAM_INT, &max_contacts   },
+	{"retry_after",     PARAM_INT, &retry_after    },
 	{0, 0, 0}
 };
 
@@ -115,7 +115,7 @@ static param_export_t params[] = {
  * Module exports structure
  */
 struct module_exports exports = {
-	"registrar", 
+	"registrar",
 	cmds,        /* Exported functions */
 	0,           /* RPC methods */
 	params,      /* Exported parameters */
@@ -146,8 +146,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	rcv_param.len = strlen(rcv_param.s);
-
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 	if (!bind_usrloc) {
 		LOG(L_ERR, "registrar: Can't bind usrloc\n");
@@ -164,7 +162,7 @@ static int mod_init(void)
 			default_q = MIN_Q;
 		}
 	}
-	
+
 
 	if (bind_usrloc(&ul) < 0) {
 		return -1;

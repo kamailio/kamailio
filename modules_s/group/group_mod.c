@@ -1,5 +1,5 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
  * Group membership - module interface
  *
@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -102,10 +102,10 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",        STR_PARAM, &db_url.s       },
-	{"table",         STR_PARAM, &table.s        },
-	{"uid_column",    STR_PARAM, &uid_column.s  },
-	{"group_column",  STR_PARAM, &group_column.s },
+	{"db_url",        PARAM_STR, &db_url       },
+	{"table",         PARAM_STR, &table        },
+	{"uid_column",    PARAM_STR, &uid_column   },
+	{"group_column",  PARAM_STR, &group_column },
 	{0, 0, 0}
 };
 
@@ -114,7 +114,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"group", 
+	"group",
 	cmds,       /* Exported functions */
 	0,          /* RPC methods */
 	params,     /* Exported parameters */
@@ -138,12 +138,6 @@ static int mod_init(void)
 
 	DBG("group module - initializing\n");
 
-	     /* Calculate lengths */
-	db_url.len = strlen(db_url.s);
-	table.len = strlen(table.s);
-	uid_column.len = strlen(uid_column.s);
-	group_column.len = strlen(group_column.s);
-
 	     /* Find a database module */
 	if (group_db_bind(db_url.s)) {
 		return -1;
@@ -157,7 +151,7 @@ static int mod_init(void)
 				"(use ser_mysql.sh reinstall)\n");
 		return -1;
 	}
-	
+
 	return 0;
 }
 
@@ -171,7 +165,7 @@ static void destroy(void)
 /*
  * Convert HF description string to hdr_field pointer
  *
- * Supported strings: 
+ * Supported strings:
  * "$t.uid", "$f.uid"
  */
 static int hf_fixup(void** param, int param_no)
@@ -180,7 +174,7 @@ static int hf_fixup(void** param, int param_no)
 
 	if (param_no == 1) {
 		ptr = *param;
-		
+
 		if (!strcasecmp((char*)*param, "$t.uid")) {
 			*param = (void*)1;
 		} else if (!strcasecmp((char*)*param, "$f.uid")) {

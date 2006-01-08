@@ -1,7 +1,7 @@
 /*$Id$
  *
  * gflags module: global flags; it keeps a bitmap of flags
- * in shared memory and may be used to change behaviour 
+ * in shared memory and may be used to change behaviour
  * of server based on value of the flags. E.g.,
  *    if (is_gflag("1")) { t_relay_to_udp("10.0.0.1","5060"); }
  *    else { t_relay_to_udp("10.0.0.2","5060"); }
@@ -29,8 +29,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /*
@@ -68,7 +68,7 @@ static void mod_destroy(void);
 static int child_init(int rank);
 
 static int initial = 0;
-static unsigned int *gflags; 
+static unsigned int *gflags;
 
 static char* db_url = DEFAULT_DB_URL;
 static int   load_global_attrs = 0;
@@ -85,27 +85,27 @@ static avp_list_t global_avps;
 static rpc_export_t rpc_methods[];
 
 static cmd_export_t cmds[]={
-	{"set_gflag",   set_gflag,   1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
-	{"reset_gflag", reset_gflag, 1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
-	{"is_gflag",    is_gflag,    1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE}, 
+	{"set_gflag",   set_gflag,   1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
+	{"reset_gflag", reset_gflag, 1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
+	{"is_gflag",    is_gflag,    1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
 	{"flush_gflags", flush_gflags, 0, 0,         REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
-static param_export_t params[]={ 
-	{"initial",            INT_PARAM, &initial          },
-	{"db_url",             STR_PARAM, &db_url           },
-	{"load_global_attrs",  INT_PARAM, &load_global_attrs},
-	{"global_attrs_table", STR_PARAM, &attr_table       },
-	{"global_attrs_name",  STR_PARAM, &attr_name        },
-	{"global_attrs_type",  STR_PARAM, &attr_type        },
-	{"global_attrs_value", STR_PARAM, &attr_value       },
-	{"global_attrs_flags", STR_PARAM, &attr_flags       },
-	{0, 0, 0} 
+static param_export_t params[]={
+	{"initial",            PARAM_INT,    &initial          },
+	{"db_url",             PARAM_STRING, &db_url           },
+	{"load_global_attrs",  PARAM_INT,    &load_global_attrs},
+	{"global_attrs_table", PARAM_STRING, &attr_table       },
+	{"global_attrs_name",  PARAM_STRING, &attr_name        },
+	{"global_attrs_type",  PARAM_STRING, &attr_type        },
+	{"global_attrs_value", PARAM_STRING, &attr_value       },
+	{"global_attrs_flags", PARAM_STRING, &attr_flags       },
+	{0, 0, 0}
 };
 
 struct module_exports exports = {
-	"gflags", 
+	"gflags",
 	cmds,
 	rpc_methods, /* RPC methods */
 	params,
@@ -117,7 +117,7 @@ struct module_exports exports = {
 };
 
 
-static int set_gflag(struct sip_msg *bar, char *flag_par, char *foo) 
+static int set_gflag(struct sip_msg *bar, char *flag_par, char *foo)
 {
 	unsigned long int flag;
 
@@ -125,7 +125,7 @@ static int set_gflag(struct sip_msg *bar, char *flag_par, char *foo)
 	(*gflags) |= 1 << flag;
 	return 1;
 }
-	
+
 static int reset_gflag(struct sip_msg *bar, char *flag_par, char *foo)
 {
 	unsigned long int flag;
@@ -142,7 +142,7 @@ static int is_gflag(struct sip_msg *bar, char *flag_par, char *foo)
 	flag=*((unsigned long int*)flag_par);
 	return ( (*gflags) & (1<<flag)) ? 1 : -1;
 }
-	
+
 
 /*
  * Load attributes from domain_attrs table
@@ -162,7 +162,7 @@ static int load_attrs(void)
 		LOG(L_ERR, "gflags:load_attrs: Invalid database handle\n");
 		return -1;
 	}
-	
+
 	cols[0] = attr_name;
 	cols[1] = attr_type;
 	cols[2] = attr_value;
@@ -265,7 +265,7 @@ static int mod_init(void)
 		}
 
 		set_avp_list(AVP_CLASS_GLOBAL, &global_avps);
-		
+
 		db.close(con);
 	}
 
@@ -299,7 +299,7 @@ int save_gflags(unsigned int flags)
 		LOG(L_ERR, "gflags:save_gflags: You must enable load_global_attrs to make flush_gflag work\n");
 		return -1;
 	}
-	
+
 	if (db.use_table(con,attr_table) < 0) {
 		LOG(L_ERR, "gflags:save_gflags: Error in use_table\n");
 		return -1;
@@ -361,7 +361,7 @@ static const char* rpc_set_doc[] = {
 static void rpc_set(rpc_t* rpc, void* c)
 {
         int flag;
-	
+
 	if (rpc->scan(c, "d", &flag) < 1) {
 		rpc->fault(c, 400, "Flag number expected");
 		return;
@@ -381,7 +381,7 @@ static const char* rpc_is_set_doc[] = {
 static void rpc_is_set(rpc_t* rpc, void* c)
 {
         int flag;
-	
+
 	if (rpc->scan(c, "d", &flag) < 1) {
 		rpc->fault(c, 400, "Flag number expected");
 		return;
@@ -401,7 +401,7 @@ static const char* rpc_reset_doc[] = {
 static void rpc_reset(rpc_t* rpc, void* c)
 {
         int flag;
-	
+
 	if (rpc->scan(c, "d", &flag) < 1) {
 		rpc->fault(c, 400, "Flag number expected");
 		return;
@@ -440,8 +440,8 @@ static void rpc_dump(rpc_t* rpc, void* c)
 }
 
 
-/* 
- * RPC Methods exported by this module 
+/*
+ * RPC Methods exported by this module
  */
 static rpc_export_t rpc_methods[] = {
 	{"gflags.set",    rpc_set,    rpc_set_doc,    0},

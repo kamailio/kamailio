@@ -160,15 +160,15 @@ static cmd_export_t cmds[] = {
 
 
 static param_export_t params[] = {
-	{"early_media",		INT_PARAM, &early_media         },
-	{"failed_transactions",	INT_PARAM, &failed_transactions },
-	{"report_ack",		INT_PARAM, &report_ack          },
-	{"report_cancels",	INT_PARAM, &report_cancels 	},
-	{"log_flag",		INT_PARAM, &log_flag         	},
-	{"log_missed_flag",	INT_PARAM, &log_missed_flag	},
-	{"log_level",		INT_PARAM, &log_level           },
-	{"log_fmt",		STR_PARAM, &log_fmt             },
-        {"attrs",               STR_PARAM, &attrs               },
+	{"early_media",		PARAM_INT, &early_media         },
+	{"failed_transactions",	PARAM_INT, &failed_transactions },
+	{"report_ack",		PARAM_INT, &report_ack          },
+	{"report_cancels",	PARAM_INT, &report_cancels 	},
+	{"log_flag",		PARAM_INT, &log_flag         	},
+	{"log_missed_flag",	PARAM_INT, &log_missed_flag	},
+	{"log_level",		PARAM_INT, &log_level           },
+	{"log_fmt",		PARAM_STRING, &log_fmt          },
+        {"attrs",               PARAM_STRING, &attrs            },
 	{0, 0, 0}
 };
 
@@ -262,7 +262,7 @@ int verify_fmt(char *fmt) {
  * transaction is marked for accounting
  */
 static inline int is_acc_on(struct sip_msg *rq)
-{   
+{
 	return log_flag && isflagset(rq, log_flag) == 1;
 }
 
@@ -378,7 +378,7 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 		     str *atr_arr,
 		     time_t req_time)       /* Timestamp of the request */
 {
-	static char flags_buf[INT2STR_MAX_LEN], tm_buf[TM_BUF_LEN], 
+	static char flags_buf[INT2STR_MAX_LEN], tm_buf[TM_BUF_LEN],
 		rqtm_buf[TM_BUF_LEN], srcip_buf[IP_ADDR_MAX_STR_SIZE],
 		srcport_buf[INT2STR_MAX_LEN];
 	int cnt, tl, al;
@@ -412,7 +412,7 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 			val_arr[cnt] = (rq->callid && rq->callid->body.len) ? &rq->callid->body : &na;
 			ATR(CALLID);
 			break;
-				  
+
 		case 'd': /* to_tag */
 			val_arr[cnt] = (to && (pto = (struct to_body*)(to->parsed)) && pto->tag_value.len) ? & pto->tag_value : &na;
 			ATR(TOTAG);
@@ -464,7 +464,7 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 			val_arr[cnt] = &src_ip;
 			ATR(SRCIP);
 			break;
-			
+
 		case 'r': /* from_tag */
 			if (rq->from && (from = get_from(rq)) && from->tag_value.len) {
 				val_arr[cnt] = &from->tag_value;
@@ -587,7 +587,7 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 /* skip leading text and begin with first item's
  * separator ", " which will be overwritten by the
  * leading text later
- * 
+ *
  */
 static int log_request(struct sip_msg* rq, struct hdr_field* to, str* txt, str* phrase, time_t req_time)
 {
@@ -625,7 +625,7 @@ static int log_request(struct sip_msg* rq, struct hdr_field* to, str* txt, str* 
 		append(buf, A_EQ);
 		append_str(buf, *(val_arr[i]))
 	}
-	
+
 	     /* terminating text */
 	append(buf, A_EOL);
 
@@ -647,7 +647,7 @@ static void log_reply(struct cell* t , struct sip_msg* reply, unsigned int code,
 	static str lead = STR_STATIC_INIT(ACC_ANSWERED);
 	static char code_buf[INT2STR_MAX_LEN];
 	char* p;
-	
+
 	p = int2str(code, &code_str.len);
 	memcpy(code_buf, p, code_str.len);
 	code_str.s = code_buf;
@@ -665,7 +665,7 @@ static void log_ack(struct cell* t , struct sip_msg *ack, time_t req_time)
 	char* p;
 
 	rq = t->uas.request;
-	if (ack->to) to = ack->to; 
+	if (ack->to) to = ack->to;
 	else to = rq->to;
 	p = int2str(t->uas.status, &code_str.len);
 	memcpy(code_buf, p, code_str.len);
@@ -740,7 +740,7 @@ static void replyout_handler(struct cell* t, int type, struct tmcb_params* ps)
 		DBG("DBG:acc:replyout_handler: No uas.request, local transaction, skipping\n");
 		return;
 	}
-	
+
 	     /* acc_onreply is bound to TMCB_REPLY which may be called
 	      * from _reply, like when FR hits; we should not miss this
 	      * event for missed calls either
@@ -759,10 +759,10 @@ static void replyin_handler(struct cell *t, int type, struct tmcb_params* ps)
 		LOG(L_ERR, "ERROR:acc:replyin_handler:replyin_handler: 0 request\n");
 		return;
 	}
-	
+
 	     /* don't parse replies in which we are not interested */
 	     /* missed calls enabled ? */
-	if (((is_invite(t) && ps->code >= 300 && is_mc_on(t->uas.request)) 
+	if (((is_invite(t) && ps->code >= 300 && is_mc_on(t->uas.request))
 	     || should_acc_reply(t, ps->code))
 	    && (ps->rpl && ps->rpl != FAKED_REPLY)) {
 		parse_headers(ps->rpl, HDR_TO_F, 0);
@@ -799,7 +799,7 @@ void on_req(struct cell* t, int type, struct tmcb_params *ps)
 			LOG(L_ERR, "ERROR:acc:on_req: Error while registering TMCB_RESPONSE_IN callback\n");
 			return;
 		}
-		
+
 		     /* do some parsing in advance */
 		preparse_req(ps->req);
 		     /* also, if that is INVITE, disallow silent t-drop */
@@ -823,7 +823,7 @@ static int mod_init(void)
 	     /* let the auto-loading function load all TM stuff */
 	if (load_tm( &tmb )==-1) return -1;
 	if (verify_fmt(log_fmt)==-1) return -1;
-	
+
 	     /* register callbacks*/
 	     /* listen for all incoming requests  */
 	if (tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, on_req, 0 ) <= 0) {
@@ -831,7 +831,7 @@ static int mod_init(void)
 		    "callback\n");
 		return -1;
 	}
-	
+
 	if (regcomp(&attrs_re, attrs, REG_EXTENDED | REG_ICASE)) {
 		LOG(L_ERR, "ERROR: acc: Cannot compile AVP regular expression\n");
 		return -1;

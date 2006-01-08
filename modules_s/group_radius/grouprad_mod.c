@@ -1,5 +1,5 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
  * Group membership - module interface
  *
@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -79,8 +79,8 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"radius_config", STR_PARAM, &radius_config},
-	{"use_domain",    INT_PARAM, &use_domain   },
+	{"radius_config", PARAM_STRING, &radius_config},
+	{"use_domain",    PARAM_INT,    &use_domain   },
 	{0, 0, 0}
 };
 
@@ -89,7 +89,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"group_radius", 
+	"group_radius",
 	cmds,       /* Exported functions */
 	0,          /* RPC methods */
 	params,     /* Exported parameters */
@@ -116,7 +116,7 @@ static int mod_init(void)
 		LOG(L_ERR, "group_radius: Error opening configuration file \n");
 		return -1;
 	}
-    
+
 	if (rc_read_dictionary(rh, rc_conf_str(rh, "dictionary")) != 0) {
 		LOG(L_ERR, "group_radius: Error opening dictionary file \n");
 		return -2;
@@ -131,7 +131,7 @@ static int mod_init(void)
 /*
  * Convert HF description string to hdr_field pointer
  *
- * Supported strings: 
+ * Supported strings:
  * "Request-URI", "To", "From", "Credentials"
  */
 static int hf_fixup(void** param, int param_no)
@@ -140,7 +140,7 @@ static int hf_fixup(void** param, int param_no)
 
 	if (param_no == 1) {
 		ptr = *param;
-		
+
 		if (!strcasecmp((char*)*param, "Request-URI")) {
 			*param = (void*)1;
 		} else if (!strcasecmp((char*)*param, "To")) {

@@ -151,7 +151,7 @@
  *		parameter. For example, in the example above force_rtp_proxy("N1") will
  *		will select node udp:1.2.3.4:3456. In unforce_rtp_proxy(), the same
  *		can be done by specifying index as an argument directly, i.e.
- *		unforce_rtp_proxy(1). 
+ *		unforce_rtp_proxy(1).
  *
  *		Since nathelper is not transaction or call stateful, care should be
  *		taken to ensure that force_rtp_proxy() in request path matches
@@ -311,16 +311,16 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"natping_interval",      INT_PARAM, &natping_interval      },
-	{"natping_method",        STR_PARAM, &natping_method        },
-	{"ping_nated_only",       INT_PARAM, &ping_nated_only       },
-	{"rtpproxy_sock",         STR_PARAM, &rtpproxy_sock         },
-	{"rtpproxy_disable",      INT_PARAM, &rtpproxy_disable      },
-	{"rtpproxy_disable_tout", INT_PARAM, &rtpproxy_disable_tout },
-	{"rtpproxy_retr",         INT_PARAM, &rtpproxy_retr         },
-	{"rtpproxy_tout",         INT_PARAM, &rtpproxy_tout         },
-	{"received_avp",          INT_PARAM, &rcv_avp_no            },
-	{"force_socket",          STR_PARAM, &force_socket_str		},
+	{"natping_interval",      PARAM_INT,    &natping_interval      },
+	{"natping_method",        PARAM_STRING, &natping_method        },
+	{"ping_nated_only",       PARAM_INT,    &ping_nated_only       },
+	{"rtpproxy_sock",         PARAM_STRING, &rtpproxy_sock         },
+	{"rtpproxy_disable",      PARAM_INT,    &rtpproxy_disable      },
+	{"rtpproxy_disable_tout", PARAM_INT,    &rtpproxy_disable_tout },
+	{"rtpproxy_retr",         PARAM_INT,    &rtpproxy_retr         },
+	{"rtpproxy_tout",         PARAM_INT,    &rtpproxy_tout         },
+	{"received_avp",          PARAM_INT,    &rcv_avp_no            },
+	{"force_socket",          PARAM_STRING, &force_socket_str      },
 	{0, 0, 0}
 };
 
@@ -2049,12 +2049,12 @@ create_rcv_uri(str* uri, struct sip_msg* m)
 	p = buf;
 	memcpy(p, "sip:", 4);
 	p += 4;
-	
+
 	memcpy(p, src_ip.s, src_ip.len);
 	p += src_ip.len;
 
 	*p++ = ':';
-	
+
 	memcpy(p, src_port.s, src_port.len);
 	p += src_port.len;
 
@@ -2118,7 +2118,7 @@ add_rcv_param_f(struct sip_msg* msg, char* str1, char* str2)
 		if (anchor == NULL) {
 			LOG(L_ERR, "add_rcv_param: anchor_lump failed\n");
 			return -1;
-		}		
+		}
 
 		if (insert_new_lump_after(anchor, param, RECEIVED_LEN + 1 + uri.len + 1, 0) == 0) {
 			LOG(L_ERR, "add_rcv_param: insert_new_lump_after failed\n");

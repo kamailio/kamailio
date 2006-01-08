@@ -195,10 +195,10 @@ static cmd_export_t commands[] = {
 };
 
 static param_export_t parameters[] = {
-    {"mediaproxy_socket", STR_PARAM, &mediaproxySocket},
-    {"sip_asymmetrics",   STR_PARAM, &(sipAsymmetrics.file)},
-    {"rtp_asymmetrics",   STR_PARAM, &(rtpAsymmetrics.file)},
-    {"natping_interval",  INT_PARAM, &natpingInterval},
+    {"mediaproxy_socket", PARAM_STRING, &mediaproxySocket},
+    {"sip_asymmetrics",   PARAM_STRING, &(sipAsymmetrics.file)},
+    {"rtp_asymmetrics",   PARAM_STRING, &(rtpAsymmetrics.file)},
+    {"natping_interval",  PARAM_INT,    &natpingInterval},
     {0, 0, 0}
 };
 

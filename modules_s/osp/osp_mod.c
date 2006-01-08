@@ -1,14 +1,14 @@
 /*
- * ser osp module. 
+ * ser osp module.
  *
- * This module enables ser to communicate with an Open Settlement 
- * Protocol (OSP) server.  The Open Settlement Protocol is an ETSI 
+ * This module enables ser to communicate with an Open Settlement
+ * Protocol (OSP) server.  The Open Settlement Protocol is an ETSI
  * defined standard for Inter-Domain VoIP pricing, authorization
- * and usage exchange.  The technical specifications for OSP 
+ * and usage exchange.  The technical specifications for OSP
  * (ETSI TS 101 321 V4.1.1) are available at www.etsi.org.
  *
  * Uli Abend was the original contributor to this module.
- * 
+ *
  * Copyright (C) 2001-2005 Fhg Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -81,7 +81,7 @@ static void dump_parameter();
 
 
 static cmd_export_t cmds[]={
-	{"checkospheader",         checkospheader,       0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+	{"checkospheader",         checkospheader,       0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"check_osp_header",       checkospheader,       0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"validateospheader",      validateospheader,    0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"validate_osp_header",    validateospheader,    0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
@@ -89,43 +89,43 @@ static cmd_export_t cmds[]={
 	{"request_osp_routing",    requestosprouting,    0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"preparefirstosproute",   preparefirstosproute, 0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"prepare_1st_osp_route",  preparefirstosproute, 0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
-	{"preparenextosproute",    preparenextosproute,  0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+	{"preparenextosproute",    preparenextosproute,  0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"prepare_next_osp_route", preparenextosproute,  0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
-	{"prepareallosproutes",    prepareallosproutes,  0, 0, REQUEST_ROUTE|FAILURE_ROUTE}, 
+	{"prepareallosproutes",    prepareallosproutes,  0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"prepare_all_osp_routes", prepareallosproutes,  0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
-	{"reportospusage",         reportospusage,       0, 0, REQUEST_ROUTE}, 
+	{"reportospusage",         reportospusage,       0, 0, REQUEST_ROUTE},
 	{"report_osp_usage",       reportospusage,       0, 0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
-static param_export_t params[]={ 
-	{"sp1_uri",           STR_PARAM, &_spURIs[0]},
-	{"sp1_weight",        INT_PARAM, &(_spWeights[0])},
-	{"sp2_uri",           STR_PARAM, &_spURIs[1]},
-	{"sp2_weight",        INT_PARAM, &(_spWeights[1])},
+static param_export_t params[]={
+	{"sp1_uri",           PARAM_STRING, &_spURIs[0]},
+	{"sp1_weight",        PARAM_INT,    &(_spWeights[0])},
+	{"sp2_uri",           PARAM_STRING, &_spURIs[1]},
+	{"sp2_weight",        PARAM_INT,    &(_spWeights[1])},
 
-	{"device_ip",         STR_PARAM, &_device_ip},
-	{"device_port",       STR_PARAM, &_device_port},
+	{"device_ip",         PARAM_STRING, &_device_ip},
+	{"device_port",       PARAM_STRING, &_device_port},
 
-	{"private_key",       STR_PARAM, &_private_key},
-	{"local_certificate", STR_PARAM, &_local_certificate},
-	{"ca_certificates",   STR_PARAM, &_ca_certificate},
-	{"enable_crypto_hardware_support", 
-                              INT_PARAM, &_crypto_hw_support},
-	{"validate_call_id",  INT_PARAM, &(_validate_call_id)},
+	{"private_key",       PARAM_STRING, &_private_key},
+	{"local_certificate", PARAM_STRING, &_local_certificate},
+	{"ca_certificates",   PARAM_STRING, &_ca_certificate},
+	{"enable_crypto_hardware_support",
+                              PARAM_INT,    &_crypto_hw_support},
+	{"validate_call_id",  PARAM_INT,    &(_validate_call_id)},
 
-	{"token_format",      INT_PARAM, &_token_format},
-	{"ssl_lifetime",      INT_PARAM, &_ssl_lifetime},
-	{"persistence",       INT_PARAM, &_persistence},
-	{"retry_delay",       INT_PARAM, &_retry_delay},
-	{"retry_limit",       INT_PARAM, &_retry_limit},
-	{"timeout",           INT_PARAM, &_timeout},
-	{"max_destinations",  INT_PARAM, &_max_destinations},
-	{0,0,0} 
+	{"token_format",      PARAM_INT,    &_token_format},
+	{"ssl_lifetime",      PARAM_INT,    &_ssl_lifetime},
+	{"persistence",       PARAM_INT,    &_persistence},
+	{"retry_delay",       PARAM_INT,    &_retry_delay},
+	{"retry_limit",       PARAM_INT,    &_retry_limit},
+	{"timeout",           PARAM_INT,    &_timeout},
+	{"max_destinations",  PARAM_INT,    &_max_destinations},
+	{0,0,0}
 };
 
 struct module_exports exports = {
-	"osp", 
+	"osp",
 	cmds,
 	0,          /* RPC methods */
 	params,
@@ -149,12 +149,12 @@ static int mod_init(void)
         if (add_rr_param == NULL) {
                 WARN("osp: mod_init: could not find add_rr_param, make sure rr is loaded\n");
                 WARN("osp: mod_init: add_rr_param is required for reporting duration for OSP transactions\n");
-        }   
+        }
 
 	mod_init_tm();
 
 	/* everything is fine, initialization done */
-	return 0;	
+	return 0;
 }
 
 
@@ -178,7 +178,7 @@ static int child_init(int rank) {
 
 static void mod_destroy() {
 	DBG("---------------------Destroying OSP module for the child process\n");
-}	
+}
 
 
 int verify_parameter() {
@@ -189,7 +189,7 @@ int verify_parameter() {
 	if (_private_key == NULL) {
 		sprintf(_PRIVATE_KEY,"%spkey.pem",CFG_DIR);
 		_private_key = _PRIVATE_KEY;
-	} 
+	}
 
 	if (_local_certificate == NULL) {
 		sprintf(_LOCAL_CERTIFICATE,"%slocalcert.pem",CFG_DIR);
@@ -210,7 +210,7 @@ int verify_parameter() {
 	}
 
 	if (_max_destinations > MAX_DESTS || _max_destinations < 1) {
-		_max_destinations = 5;	
+		_max_destinations = 5;
 		WARN("osp: Maximum destinations 'max_destinations' is out of range, re-setting to 5\n");
 	}
 

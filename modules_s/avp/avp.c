@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
@@ -30,7 +30,7 @@
  *  2005-12-22  merge changes from private branch (mma)
  *  2006-01-03  avp_body merged (mma)
  */
- 
+
 #include <string.h>
 #include <stdlib.h>
 #include "../../sr_module.h"
@@ -52,7 +52,7 @@
 #include "../../parser/parse_hname2.h"
 #include "../xlog/xl_lib.h"
 #define NO_SCRIPT -1
- 
+
 MODULE_VERSION
 
 /* name of attributed used to store flags with command flags2attr */
@@ -150,13 +150,13 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"xlbuf_size", INT_PARAM, &xlbuf_size},
+	{"xlbuf_size", PARAM_INT, &xlbuf_size},
 	{0, 0, 0}
 };
 
 
 struct module_exports exports = {
-	"avp", 
+	"avp",
 	cmds,           /* Exported commands */
 	0,		/* RPC */
 	params,         /* Exported parameters */
@@ -170,12 +170,12 @@ struct module_exports exports = {
 static int xl_printstr(struct sip_msg* msg, xl_elog_t* format, char** res, int* res_len)
 {
 	int len;
-	
+
 	if (!format || !res) {
 		LOG(L_ERR, "xl_printstr: Called with null format or res\n");
 		return -1;
 	}
-		
+
 	if (!xlbuf) {
 		xlbuf=pkg_malloc((xlbuf_size+1)*sizeof(char));
 		if (!xlbuf) {
@@ -189,7 +189,7 @@ static int xl_printstr(struct sip_msg* msg, xl_elog_t* format, char** res, int* 
 		LOG(L_ERR, "xl_printstr: Error while formating result\n");
 		return -1;
 	}
-	
+
 	if ((xl_nul) && (xl_nul->len==len) && !strncmp(xl_nul->s, xlbuf, len))
 		return 0;
 
@@ -199,7 +199,7 @@ static int xl_printstr(struct sip_msg* msg, xl_elog_t* format, char** res, int* 
 }
 
 
-static int set_sattr(struct sip_msg* msg, char* attr, char* val) 
+static int set_sattr(struct sip_msg* msg, char* attr, char* val)
 {
 	int_str name, value;
 
@@ -218,7 +218,7 @@ static int set_sattr(struct sip_msg* msg, char* attr, char* val)
 }
 
 
-static int set_iattr(struct sip_msg* msg, char* attr, char* nr) 
+static int set_iattr(struct sip_msg* msg, char* attr, char* nr)
 {
 	int_str name, value;
 
@@ -234,7 +234,7 @@ static int set_iattr(struct sip_msg* msg, char* attr, char* nr)
 
 	LOG(L_DBG, "set_iattr ok\n");
 	return 1;
-}	
+}
 
 
 static int flags2attr(struct sip_msg* msg, char* foo, char* bar)
@@ -315,7 +315,7 @@ static int attr2uri(struct sip_msg* msg, char* attr, char* foo)
 
 	name.s=*(str*)attr;
 
-	avp_entry = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, 
+	avp_entry = search_first_avp(AVP_NAME_STR | AVP_VAL_STR,
 				     name, &value, NULL);
 	if (avp_entry == 0) {
 		LOG(L_ERR, "attr2uri: AVP '%.*s' not found\n", name.s.len, ZSW(name.s.s));
@@ -333,11 +333,11 @@ static int attr2uri(struct sip_msg* msg, char* attr, char* foo)
 
 
 /*
- *  returns 1 if msg contains an AVP with the given name and value, 
+ *  returns 1 if msg contains an AVP with the given name and value,
  *  returns -1 otherwise
  */
 static int avp_equals(struct sip_msg* msg, char* key, char* value)
-{	
+{
 	int_str avp_key, avp_value;
 	struct usr_avp *avp_entry;
 	struct search_state st;
@@ -349,15 +349,15 @@ static int avp_equals(struct sip_msg* msg, char* key, char* value)
 	
 	avp_key.s = *key_str;
 	avp_entry = search_first_avp(AVP_NAME_STR, avp_key, &avp_value, &st);
-	
+
 	if (avp_entry == 0) {
 		DBG("avp_equals: AVP '%.*s' not found\n", key_str->len, ZSW(key_str->s));
 		return -1;
 	}
-	
+
 	if (!value) {
 		DBG("avp_equals: at least one AVP '%.*s' found\n", key_str->len, ZSW(key_str->s));
-		return 1;         
+		return 1;
 	}
 
 	val_str = (str*)value;
@@ -365,15 +365,15 @@ static int avp_equals(struct sip_msg* msg, char* key, char* value)
 		if (avp_entry->flags & AVP_VAL_STR) {
 			if ((avp_value.s.len == val_str->len) &&
 			    !memcmp(avp_value.s.s, val_str->s, avp_value.s.len)) {
-				DBG("avp_equals str ('%.*s', '%.*s'): TRUE\n", 
+				DBG("avp_equals str ('%.*s', '%.*s'): TRUE\n",
 				    key_str->len, ZSW(key_str->s),
 				    val_str->len, ZSW(val_str->s));
 				return 1;
 			}
 		} else {
 			if (avp_value.n == str2s(val_str->s, val_str->len, 0)){
-				DBG("avp_equals (%.*s, %.*s): TRUE\n", 
-				    key_str->len, ZSW(key_str->s), 
+				DBG("avp_equals (%.*s, %.*s): TRUE\n",
+				    key_str->len, ZSW(key_str->s),
 				    val_str->len, ZSW(val_str->s));
 				return 1;
 			}
@@ -381,8 +381,8 @@ static int avp_equals(struct sip_msg* msg, char* key, char* value)
 		avp_entry = search_next_avp (&st, &avp_value);
 	}
 
-	DBG("avp_equals ('%.*s', '%.*s'): FALSE\n", 
-	    key_str->len, ZSW(key_str->s), 
+	DBG("avp_equals ('%.*s', '%.*s'): FALSE\n",
+	    key_str->len, ZSW(key_str->s),
 	    val_str->len, ZSW(val_str->s));
 	return -1;
 }
@@ -430,7 +430,7 @@ static void dump_avp_reverse(avp_t* avp)
 	if (avp) {
 		/* AVPs are added to front of the list, reverse by recursion */
 		dump_avp_reverse(avp->next);
-		
+
 		name=get_avp_name(avp);
 		get_avp_val(avp, &val);
 		switch ( avp->flags&(AVP_NAME_STR|AVP_VAL_STR) )
@@ -460,7 +460,7 @@ static void dump_avp_reverse(avp_t* avp)
 static int dump_avp(struct sip_msg* m, char* x, char* y)
 {
 	avp_list_t avp_list;
-	
+
 	avp_list=get_avp_list(AVP_CLASS_USER | AVP_TRACK_FROM);
 	INFO("track=FROM class=USER\n");
 	if (!avp_list) {
@@ -514,7 +514,7 @@ static int request_hf_helper(struct sip_msg* msg, str* hf, avp_ident_t* ident, s
 
                 pos = msg->headers;
                 while (pos && (pos->type!=HDR_EOH_T)) {
-                        if ((hf->len==pos->name.len) 
+                        if ((hf->len==pos->name.len)
                         && (!strncasecmp(hf->s, pos->name.s, pos->name.len))) {
                                 found=pos;
                                 if (front)
@@ -575,14 +575,14 @@ static int request_hf_helper(struct sip_msg* msg, str* hf, avp_ident_t* ident, s
 		memcpy(s+hf->len+2, fin_val.s, fin_val.len );
 		memcpy(s+hf->len+2+fin_val.len, "\r\n", 2);
 
-		
+
 		if (reply) {
 			if (add_lump_rpl( msg, s, len, LUMP_RPL_HDR | LUMP_RPL_NODUP) == 0) {
 				LOG(L_ERR,"ERROR: request_hf_helper: Can't insert RPL lump\n");
 				pkg_free(s);
 				return -1;
 			}
-		} else {		
+		} else {
 			if ((front && (insert_new_lump_before(new_anchor, s, len, 0) == 0))
 			|| (!front && (insert_new_lump_after(new_anchor, s, len, 0) == 0))) {
 				LOG(L_ERR, "ERROR: request_hf_helper: Can't insert lump\n");
@@ -634,7 +634,7 @@ static int append_req(struct sip_msg* m, char* hf, char* name)
 static int replace_req(struct sip_msg* m, char* hf, char* name)
 {
 	struct hdr_field* pos;
-	
+
 	if (parse_headers(m, HDR_EOH_F, 0) == -1) {
 		LOG(L_ERR, "ERROR: replace_req: Error while parsing message\n");
 		return -1;
@@ -642,7 +642,7 @@ static int replace_req(struct sip_msg* m, char* hf, char* name)
 
 	pos = m->headers;
 	while (pos && (pos->type!=HDR_EOH_T)) {
-		if ((((str*)hf)->len==pos->name.len) 
+		if ((((str*)hf)->len==pos->name.len)
 		&& (!strncasecmp(((str*)hf)->s, pos->name.s, pos->name.len))) {
 			if (del_lump(m, pos->name.s - m->buf, pos->len, 0)==0) {
 				LOG(L_ERR,"ERROR: Can't insert del lump\n");
@@ -678,7 +678,7 @@ static int w_set_destination(struct sip_msg* m, str* dest)
 	} else {
 		/* it is just URI, pass it through */
 		return set_dst_uri(m, dest);
-	}			
+	}
 }
 
 static int xlset_destination(struct sip_msg* m, char* format, char* x)
@@ -693,7 +693,7 @@ static int xlset_destination(struct sip_msg* m, char* format, char* x)
 			return -1;
 	} else
 		return -1;
-	
+
 }
 
 static int avp_destination(struct sip_msg* m, char* avp_name, char* x)
@@ -1041,22 +1041,22 @@ static int iattr_fixup(void** param, int param_no)
 {
 	unsigned long num;
 	int err;
-	
+
 	str* s;
-	
+
 	if (param_no == 1) {
 		s = (str*)pkg_malloc(sizeof(str));
 		if (!s) {
 			LOG(L_ERR, "iattr_fixup: No memory left\n");
 			return E_UNSPEC;
 		}
-		
+
 		s->s = (char*)*param;
 		s->len = strlen(s->s);
 		*param = (void*)s;
 	} else if (param_no == 2) {
 		num = str2s(*param, strlen(*param), &err);
-		
+
 		if (err == 0) {
 			pkg_free(*param);
 			*param=(void*)num;
@@ -1071,45 +1071,45 @@ static int iattr_fixup(void** param, int param_no)
 }
 
 
-/*  
- * Convert xl format string to xl format description   
+/*
+ * Convert xl format string to xl format description
  */
 static int fixup_xl_1(void** param, int param_no)
 {
  	xl_elog_t* model;
-	
+
 	if (!xl_print) {
 		xl_print=(xl_print_log_f*)find_export("xprint", NO_SCRIPT, 0);
-		
+
 		if (!xl_print) {
 			LOG(L_CRIT,"ERROR: cannot find \"xprint\", is module xlog loaded?\n");
 			return -1;
 		}
 	}
-	
+
 	if (!xl_parse) {
 		xl_parse=(xl_parse_format_f*)find_export("xparse", NO_SCRIPT, 0);
-		
+
 		if (!xl_parse) {
 			LOG(L_CRIT,"ERROR: cannot find \"xparse\", is module xlog loaded?\n");
 			return -1;
 		}
 	}
-	
+
 	if (!xl_nul) {
 		xl_getnul=(xl_get_nulstr_f*)find_export("xnulstr", NO_SCRIPT, 0);
 		if (xl_getnul)
 			xl_nul=xl_getnul();
-		
+
 		if (!xl_nul){
                         LOG(L_CRIT,"ERROR: cannot find \"xnulstr\", is module xlog loaded?\n");
                         return -1;
                 }
                 else
                  LOG(L_INFO,"INFO: xlog null is \"%.*s\"\n", xl_nul->len, xl_nul->s);
-		                                                                
+
 	}
-	
+
 	if (param_no == 1 ) {
                 if(*param) {
                         if(xl_parse((char*)(*param), &model)<0) {
@@ -1170,10 +1170,10 @@ static int fixup_str_1_attr_2(void** param, int param_no)
 	if (param_no == 1) {
 		return fixup_str_12(param, 1);
 	}
-	
+
 	if (param_no == 2) {
 		return fixup_attr_1(param, 1);
 	}
-	
+
 	return 0;
 }

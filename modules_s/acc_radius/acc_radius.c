@@ -129,19 +129,19 @@ static cmd_export_t cmds[] = {
 
 
 static param_export_t params[] = {
-	{"early_media",		INT_PARAM, &early_media         },
-	{"failed_transactions",	INT_PARAM, &failed_transactions },
-	{"report_ack",		INT_PARAM, &report_ack          },
-	{"report_cancels",	INT_PARAM, &report_cancels 	},
-	{"log_flag",		INT_PARAM, &log_flag         	},
-	{"log_missed_flag",	INT_PARAM, &log_missed_flag	},
-	{"log_fmt",		STR_PARAM, &log_fmt             },
-        {"attrs",               STR_PARAM, &avps                },
-	{"radius_config",	STR_PARAM, &radius_config	},
-	{"log_flag",		INT_PARAM, &log_flag	        },
-	{"log_missed_flag",	INT_PARAM, &log_missed_flag     },
-	{"service_type", 	INT_PARAM, &service_type        },
-	{"swap_direction",      INT_PARAM, &swap_dir            },
+	{"early_media",		PARAM_INT, &early_media         },
+	{"failed_transactions",	PARAM_INT, &failed_transactions },
+	{"report_ack",		PARAM_INT, &report_ack          },
+	{"report_cancels",	PARAM_INT, &report_cancels 	},
+	{"log_flag",		PARAM_INT, &log_flag         	},
+	{"log_missed_flag",	PARAM_INT, &log_missed_flag	},
+	{"log_fmt",		PARAM_STRING, &log_fmt          },
+        {"attrs",               PARAM_STRING, &avps             },
+	{"radius_config",	PARAM_STRING, &radius_config	},
+	{"log_flag",		PARAM_INT, &log_flag	        },
+	{"log_missed_flag",	PARAM_INT, &log_missed_flag     },
+	{"service_type", 	PARAM_INT, &service_type        },
+	{"swap_direction",      PARAM_INT, &swap_dir            },
 	{0, 0, 0}
 };
 
@@ -179,11 +179,11 @@ static int check_ftag(struct sip_msg* msg, str* uri)
 		DBG("No ftag parameter found\n");
 		return -1;
 	}
-	
+
 	t.len -= semi - uri->s + 1;
 	t.s = semi + 1;
 	trim_leading(&t);
-	
+
 	if (parse_params(&t, CLASS_URI, &hooks, &params) < 0) {
 		ERR("Error while parsing parameters\n");
 		return -1;
@@ -229,7 +229,7 @@ static int get_direction(struct sip_msg* msg)
 		return -1;
 	}
 
-	ret = check_self(&msg->parsed_orig_ruri.host, 
+	ret = check_self(&msg->parsed_orig_ruri.host,
 			 msg->parsed_orig_ruri.port_no ? msg->parsed_orig_ruri.port_no : SIP_PORT, 0);/* match all protos*/
 	if (ret < 0) return -1;
 	if (ret > 0) {
@@ -285,7 +285,7 @@ int verify_fmt(char *fmt) {
  * transaction is marked for accounting
  */
 static inline int is_acc_on(struct sip_msg *rq)
-{   
+{
 	return log_flag && isflagset(rq, log_flag) == 1;
 }
 
@@ -391,10 +391,10 @@ static inline struct hdr_field* valid_to(struct cell* t, struct sip_msg* reply)
  * sql, whatsoever
  * tm sip_msg_clones does not clone (shmmem-zed) parsed fields, other then Via1,2. Such fields clone now or use from rq_rp
  */
-static int fmt2rad(char *fmt, 
-		   struct sip_msg *rq, 
-		   struct hdr_field *to, 
-		   unsigned int code, 
+static int fmt2rad(char *fmt,
+		   struct sip_msg *rq,
+		   struct hdr_field *to,
+		   unsigned int code,
 		   VALUE_PAIR** send,
 		   time_t req_time)       /* Timestamp of the request */
 {
@@ -427,12 +427,12 @@ static int fmt2rad(char *fmt,
 			break;
 
 		case 'c': /* sip_callid */
-			if (rq->callid && rq->callid->body.len) { 
+			if (rq->callid && rq->callid->body.len) {
 				attr = &attrs[A_ACCT_SESSION_ID];
 				val = rq->callid->body;
 			}
 			break;
-				  
+
 		case 'd': /* to_tag */
 			if (to && (pto = (struct to_body*)(to->parsed)) && pto->tag_value.len) {
 				attr = &attrs[A_SIP_TO_TAG];
@@ -463,7 +463,7 @@ static int fmt2rad(char *fmt,
 			val = rq->first_line.u.request.method;
 			break;
 
-		case 'n': /* sip_cseq */			
+		case 'n': /* sip_cseq */
 			if (rq->cseq && (cseq = get_cseq(rq)) && cseq->number.len) {
 				attr = &attrs[A_SIP_CSEQ];
 				str2int(&cseq->number, &cseq_num);
@@ -487,7 +487,7 @@ static int fmt2rad(char *fmt,
 			val.s = (char*)&src_ip;
 			val.len = sizeof(src_ip);
 			break;
-			
+
 		case 'r': /* from_tag */
 			if (rq->from && (from = get_from(rq)) && from->tag_value.len) {
 				attr = &attrs[A_SIP_FROM_TAG];
@@ -600,7 +600,7 @@ static int fmt2rad(char *fmt,
 
 		if (attr) {
 			if (!rc_avpair_add(rh, send, attr->v, val.s, val.len, 0)) {
-				LOG(L_ERR, "ERROR:acc:fmt2rad: Failed to add attribute %s\n", 
+				LOG(L_ERR, "ERROR:acc:fmt2rad: Failed to add attribute %s\n",
 				    attr->n);
 				return -1;
 			}
@@ -624,13 +624,13 @@ static inline UINT4 rad_status(struct sip_msg *rq, unsigned int code)
 	if (code == 0) {
 		return vals[V_FAILED].v;
 	}
-	
+
 	     /* Successful call start */
 	if ((rq->REQ_METHOD == METHOD_INVITE || rq->REQ_METHOD == METHOD_ACK)
 	    && code >= 200 && code < 300) {
 		return vals[V_START].v;
 	}
-	
+
 	     /* Successful call termination */
 	if ((rq->REQ_METHOD == METHOD_BYE || rq->REQ_METHOD == METHOD_CANCEL)) {
 		return vals[V_STOP].v;
@@ -665,10 +665,10 @@ static inline int add_user_name(struct sip_msg* rq, void* rh, VALUE_PAIR** send)
 				LOG(L_ERR, "ERROR:acc:add_user_name: Bad From URI\n");
 				return -1;
 			}
-			
+
 			user = &puri.user;
 			realm = &puri.host;
-			
+
 			user_name.len = user->len + 1 + realm->len;
 			user_name.s = pkg_malloc(user_name.len);
 			if (!user_name.s) {
@@ -697,7 +697,7 @@ static inline int add_user_name(struct sip_msg* rq, void* rh, VALUE_PAIR** send)
 /* skip leading text and begin with first item's
  * separator ", " which will be overwritten by the
  * leading text later
- * 
+ *
  */
 static int log_request(struct sip_msg* rq, struct hdr_field* to, unsigned int code, time_t req_time)
 {
@@ -715,7 +715,7 @@ static int log_request(struct sip_msg* rq, struct hdr_field* to, unsigned int co
 		LOG(L_ERR, "ERROR:acc:log_request: Add Status-Type\n");
 		goto error;
 	}
-	
+
 	     /* Add Service-Type attribute */
 	av_type = (service_type != -1) ? service_type : vals[V_SIP_SESSION].v;
 	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &av_type, -1, 0)) {
@@ -753,7 +753,7 @@ static void log_ack(struct cell* t , struct sip_msg *ack, time_t req_time)
 	struct hdr_field *to;
 
 	rq = t->uas.request;
-	if (ack->to) to = ack->to; 
+	if (ack->to) to = ack->to;
 	else to = rq->to;
 	log_request(ack, to, t->uas.status, req_time);
 }
@@ -810,7 +810,7 @@ static void replyout_handler(struct cell* t, int type, struct tmcb_params* ps)
 		DBG("DBG:acc:replyout_handler: No uas.request, local transaction, skipping\n");
 		return;
 	}
-	
+
 	     /* acc_onreply is bound to TMCB_REPLY which may be called
 	      * from _reply, like when FR hits; we should not miss this
 	      * event for missed calls either
@@ -829,10 +829,10 @@ static void replyin_handler(struct cell *t, int type, struct tmcb_params* ps)
 		LOG(L_ERR, "ERROR:acc:replyin_handler:replyin_handler: 0 request\n");
 		return;
 	}
-	
+
 	     /* don't parse replies in which we are not interested */
 	     /* missed calls enabled ? */
-	if (((is_invite(t) && ps->code >= 300 && is_mc_on(t->uas.request)) 
+	if (((is_invite(t) && ps->code >= 300 && is_mc_on(t->uas.request))
 	     || should_acc_reply(t, ps->code))
 	    && (ps->rpl && ps->rpl != FAKED_REPLY)) {
 		parse_headers(ps->rpl, HDR_TO_F, 0);
@@ -869,7 +869,7 @@ void on_req(struct cell* t, int type, struct tmcb_params *ps)
 			LOG(L_ERR, "ERROR:acc:on_req: Error while registering TMCB_RESPONSE_IN callback\n");
 			return;
 		}
-		
+
 		     /* do some parsing in advance */
 		preparse_req(ps->req);
 		     /* also, if that is INVITE, disallow silent t-drop */
@@ -893,7 +893,7 @@ static int mod_init(void)
 	     /* let the auto-loading function load all TM stuff */
 	if (load_tm( &tmb )==-1) return -1;
 	if (verify_fmt(log_fmt)==-1) return -1;
-	
+
 	     /* register callbacks*/
 	     /* listen for all incoming requests  */
 	if (tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, on_req, 0 ) <= 0) {
@@ -901,7 +901,7 @@ static int mod_init(void)
 		    "callback\n");
 		return -1;
 	}
-	
+
 	if (regcomp(&avps_re, avps, REG_EXTENDED | REG_ICASE)) {
 		LOG(L_ERR, "ERROR: acc: Cannot compile AVP regular expression\n");
 		return -1;
@@ -959,12 +959,12 @@ static int mod_init(void)
 		LOG(L_ERR, "ERROR:acc:mod_init: Error reading radius dictionary\n");
 		return -1;
 	}
-	
+
 	INIT_AV(rh, attrs, vals, "acc", -1, -1);
-	
+
 	if (service_type != -1) {
 		vals[V_SIP_SESSION].v = service_type;
 	}
-	
+
 	return 0;
 }

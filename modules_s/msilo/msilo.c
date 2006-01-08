@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
@@ -78,7 +78,7 @@
 #include "ms_msg_list.h"
 #include "msfuncs.h"
 
-#define MAX_DEL_KEYS	1	
+#define MAX_DEL_KEYS	1
 #define NR_KEYS		9
 
 char *sc_mid      = "mid";       /* 0 */
@@ -164,22 +164,22 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{"db_url",       STR_PARAM, &ms_db_url},
-	{"db_table",     STR_PARAM, &ms_db_table},
-	{"registrar",    STR_PARAM, &ms_registrar},
-	{"expire_time",  INT_PARAM, &ms_expire_time},
-	{"check_time",   INT_PARAM, &ms_check_time},
-	{"clean_period", INT_PARAM, &ms_clean_period},
-	{"use_contact",  INT_PARAM, &ms_use_contact},
-	{"sc_mid",       STR_PARAM, &sc_mid},
-	{"sc_from",      STR_PARAM, &sc_from},
-	{"sc_to",        STR_PARAM, &sc_to},
-	{"sc_ruri",      STR_PARAM, &sc_ruri},
-	{"sc_uid",       STR_PARAM, &sc_uid},
-	{"sc_body",      STR_PARAM, &sc_body},
-	{"sc_ctype",     STR_PARAM, &sc_ctype},
-	{"sc_exp_time",  STR_PARAM, &sc_exp_time},
-	{"sc_inc_time",  STR_PARAM, &sc_inc_time},
+	{"db_url",       PARAM_STRING, &ms_db_url},
+	{"db_table",     PARAM_STRING, &ms_db_table},
+	{"registrar",    PARAM_STRING, &ms_registrar},
+	{"expire_time",  PARAM_INT,    &ms_expire_time},
+	{"check_time",   PARAM_INT,    &ms_check_time},
+	{"clean_period", PARAM_INT,    &ms_clean_period},
+	{"use_contact",  PARAM_INT,    &ms_use_contact},
+	{"sc_mid",       PARAM_STRING, &sc_mid},
+	{"sc_from",      PARAM_STRING, &sc_from},
+	{"sc_to",        PARAM_STRING, &sc_to},
+	{"sc_ruri",      PARAM_STRING, &sc_ruri},
+	{"sc_uid",       PARAM_STRING, &sc_uid},
+	{"sc_body",      PARAM_STRING, &sc_body},
+	{"sc_ctype",     PARAM_STRING, &sc_ctype},
+	{"sc_exp_time",  PARAM_STRING, &sc_exp_time},
+	{"sc_inc_time",  PARAM_STRING, &sc_inc_time},
 	{0,0,0}
 };
 
@@ -190,7 +190,7 @@ struct module_exports exports= {
 	cmds,       /* module's exported functions */
 	0,          /* RPC methods */
 	params,     /* module's exported parameters */
-	
+
 	mod_init,   /* module initialization function */
 	(response_function) 0,       /* response handler */
 	(destroy_function) destroy,  /* module destroy function */
@@ -287,7 +287,7 @@ static int child_init(int rank)
 			LOG(L_ERR, "MSILO: child %d: Error in use_table\n", rank);
 			return -1;
 		}
-		
+
 		DBG("MSILO: child %d: Database connection opened successfully\n", rank);
 	}
 	return 0;
@@ -306,7 +306,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	struct to_body* to, *from;
 	db_key_t db_keys[NR_KEYS-1];
 	db_val_t db_vals[NR_KEYS-1];
-	
+
 	int nr_keys = 0, val, lexpire;
 	t_content_type ctype;
 	static char buf[512];
@@ -332,7 +332,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 		LOG(L_ERR,"MSILO:m_store: ERROR cannot extract body from msg\n");
 		goto error;
 	}
-	
+
 	/* content-length (if present) must be already parsed */
 	if (!msg->content_length) {
 		LOG(L_ERR,"MSILO:m_store: ERROR no Content-Length header found!\n");
@@ -345,7 +345,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 		DBG("MSILO:m_store: body of the message is empty!\n");
 		goto error;
 	}
-	
+
 	to = get_to(msg);
 	if (!to) {
 		LOG(L_ERR, "MSILO:m_store: Cannot get To header\n");
@@ -404,16 +404,16 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	nr_keys++;
 
 	/* add the message's body in SQL query */
-	
+
 	db_keys[nr_keys] = sc_body;
 	db_vals[nr_keys].type = DB_BLOB;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.blob_val = body;
 	nr_keys++;
-	
+
 	lexpire = ms_expire_time;
 	/* add 'content-type' -- parse the content-type header */
-	if ((mime=parse_content_type_hdr(msg))<1 ) 
+	if ((mime=parse_content_type_hdr(msg))<1 )
 	{
 		LOG(L_ERR,"MSILO:m_store: ERROR cannot parse Content-Type header\n");
 		goto error;
@@ -424,12 +424,12 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	db_vals[nr_keys].nul  = 0;
 	db_vals[nr_keys].val.str_val.s   = "text/plain";
 	db_vals[nr_keys].val.str_val.len = 10;
-	
+
 	/** check the content-type value */
 	if( mime!=(TYPE_TEXT<<16)+SUBTYPE_PLAIN
 		&& mime!=(TYPE_MESSAGE<<16)+SUBTYPE_CPIM )
 	{
-		if(m_extract_content_type(msg->content_type->body.s, 
+		if(m_extract_content_type(msg->content_type->body.s,
 				msg->content_type->body.len, &ctype, CT_TYPE) != -1)
 		{
 			DBG("MSILO:m_store: 'content-type' found\n");
@@ -449,7 +449,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 
 	/* current time */
 	val = (int)time(NULL);
-	
+
 	/* add expiration time */
 	db_keys[nr_keys] = sc_exp_time;
 	db_vals[nr_keys].type = DB_INT;
@@ -506,18 +506,18 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 				&& msg->contact->body.len > 0)
 		{
 			DBG("MSILO:m_store: contact header found\n");
-			if((msg->contact->parsed!=NULL 
+			if((msg->contact->parsed!=NULL
 				&& ((contact_body_t*)(msg->contact->parsed))->contacts!=NULL)
 				|| (parse_contact(msg->contact)==0
 				&& msg->contact->parsed!=NULL
 				&& ((contact_body_t*)(msg->contact->parsed))->contacts!=NULL))
 			{
 				DBG("MSILO:m_store: using contact header for info msg\n");
-				ctaddr.s = 
+				ctaddr.s =
 				((contact_body_t*)(msg->contact->parsed))->contacts->uri.s;
 				ctaddr.len =
 				((contact_body_t*)(msg->contact->parsed))->contacts->uri.len;
-			
+
 				if(!ctaddr.s || ctaddr.len < 6 || strncmp(ctaddr.s, "sip:", 4)
 					|| ctaddr.s[4]==' ')
 					ctaddr.s = NULL;
@@ -526,7 +526,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 							ctaddr.len,ctaddr.s);
 			}
 		}
-		
+
 		tmb.t_request(&msg_type,  /* Type of the message */
 				(ctaddr.s)?&ctaddr:&from->uri,    /* Request-URI */
 				&from->uri,       /* To */
@@ -557,7 +557,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 
 	str str_vals[5], hdr_str , body_str, uid;
 	time_t rtime;
-	
+
 	/* init */
 	db_keys[0]=sc_uid;
 	db_cols[0]=sc_mid;
@@ -569,7 +569,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 	db_cols[5]=sc_inc_time;
 	db_cols[6]=sc_ruri;
 
-	
+
 	DBG("MSILO:m_dump: ------------ start ------------\n");
 
 	if (get_to_uid(&uid, msg) < 0) {
@@ -581,7 +581,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 	hdr_str.len=1024;
 	body_str.s=body_buf;
 	body_str.len=1024;
-	
+
 	/**
 	 * check if has expires=0 (REGISTER)
 	 */
@@ -625,20 +625,20 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 					ZSW(uid.s));
 		goto done;
 	}
-		
-	DBG("MSILO:m_dump: dumping [%d] messages for <%.*s>!!!\n", 
+
+	DBG("MSILO:m_dump: dumping [%d] messages for <%.*s>!!!\n",
 			RES_ROW_N(db_res), uid.len, ZSW(uid.s));
 
-	for(i = 0; i < RES_ROW_N(db_res); i++) 
+	for(i = 0; i < RES_ROW_N(db_res); i++)
 	{
 		mid =  RES_ROWS(db_res)[i].values[0].val.int_val;
 		if(msg_list_check_msg(ml, mid))
 		{
-			DBG("MSILO:m_dump: message[%d] mid=%d already sent.\n", 
+			DBG("MSILO:m_dump: message[%d] mid=%d already sent.\n",
 				i, mid);
 			continue;
 		}
-		
+
 		memset(str_vals, 0, 4*sizeof(str));
 		SET_STR_VAL(str_vals[0], db_res, i, 1); /* from */
 		SET_STR_VAL(str_vals[1], db_res, i, 2); /* to */
@@ -657,20 +657,20 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			msg_list_set_flag(ml, mid, MS_MSG_ERRO);
 			goto error;
 		}
-			
+
 		DBG("MSILO:m_dump: msg [%d-%d] for: %.*s\n", i+1, mid,
 				uid.len, ZSW(uid.s));
-			
+
 		/** sending using TM function: t_uac */
 		body_str.len = 1024;
-		rtime = 
+		rtime =
 			(time_t)RES_ROWS(db_res)[i].values[5/*inc time*/].val.int_val;
 		n = m_build_body(&body_str, rtime, str_vals[2/*body*/]);
 		if(n<0)
 			DBG("MSILO:m_dump: sending simple body\n");
 		else
 			DBG("MSILO:m_dump: sending composed body\n");
-		
+
 			tmb.t_request(&msg_type,  /* Type of the message */
 					&str_vals[4],     /* Request-URI */
 					&str_vals[1],     /* To */
@@ -706,9 +706,9 @@ void m_clean_silo(unsigned int ticks, void *param)
 	db_val_t db_vals[MAX_DEL_KEYS];
 	db_op_t  db_ops[1] = { OP_LEQ };
 	int n;
-	
+
 	DBG("MSILO:clean_silo: cleaning stored messages - %d\n", ticks);
-	
+
 	msg_list_check(ml);
 	mle = p = msg_list_reset(ml);
 	n = 0;
@@ -724,7 +724,7 @@ void m_clean_silo(unsigned int ticks, void *param)
 			n++;
 			if(n==MAX_DEL_KEYS)
 			{
-				if (msilo_dbf.delete(db_con, db_keys, NULL, db_vals, n) < 0) 
+				if (msilo_dbf.delete(db_con, db_keys, NULL, db_vals, n) < 0)
 					DBG("MSILO:clean_silo: error cleaning %d messages.\n",n);
 				n = 0;
 			}
@@ -733,13 +733,13 @@ void m_clean_silo(unsigned int ticks, void *param)
 	}
 	if(n>0)
 	{
-		if (msilo_dbf.delete(db_con, db_keys, NULL, db_vals, n) < 0) 
+		if (msilo_dbf.delete(db_con, db_keys, NULL, db_vals, n) < 0)
 			DBG("MSILO:clean_silo: error cleaning %d messages\n", n);
 		n = 0;
 	}
 
 	msg_list_el_free_all(mle);
-	
+
 	/* cleaning expired messages */
 	if(ticks%(ms_check_time*ms_clean_period)<ms_check_time)
 	{
@@ -748,7 +748,7 @@ void m_clean_silo(unsigned int ticks, void *param)
 		db_vals[0].type = DB_INT;
 		db_vals[0].nul = 0;
 		db_vals[0].val.int_val = (int)time(NULL);
-		if (msilo_dbf.delete(db_con, db_keys, db_ops, db_vals, 1) < 0) 
+		if (msilo_dbf.delete(db_con, db_keys, db_ops, db_vals, 1) < 0)
 			DBG("MSILO:clean_silo: ERROR cleaning expired messages\n");
 	}
 }
@@ -766,7 +766,7 @@ void destroy(void)
 		msilo_dbf.close(db_con);
 }
 
-/** 
+/**
  * TM callback function - delete message from database if was sent OK
  */
 void m_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
@@ -791,7 +791,7 @@ void m_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 	}
 
 	msg_list_set_flag(ml, (int)(long)ps->param, MS_MSG_DONE);
-	
+
 done:
 	return;
 }

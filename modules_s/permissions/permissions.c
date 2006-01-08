@@ -24,12 +24,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
- 
+
 #include <stdio.h>
 #include "permissions.h"
 #include "parse_config.h"
@@ -73,7 +73,7 @@ char* from_col = "from_pattern";   /* Name of from pattern column */
 static int check_all_branches = 1;
 
 
-/*  
+/*
  * Convert the name of the files into table index
  */
 static int load_fixup(void** param, int param_no);
@@ -113,17 +113,17 @@ static cmd_export_t cmds[] = {
 
 /* Exported parameters */
 static param_export_t params[] = {
-        {"default_allow_file", STR_PARAM, &default_allow_file},
-        {"default_deny_file",  STR_PARAM, &default_deny_file },
-	{"check_all_branches", INT_PARAM, &check_all_branches},
-	{"allow_suffix",       STR_PARAM, &allow_suffix      },
-	{"deny_suffix",        STR_PARAM, &deny_suffix       },
-	{"db_url",             STR_PARAM, &db_url            },
-	{"db_mode",            INT_PARAM, &db_mode           },
-	{"trusted_table",      STR_PARAM, &trusted_table     },
-	{"source_col",         STR_PARAM, &source_col        },
-	{"proto_col",          STR_PARAM, &proto_col         },
-	{"from_col",           STR_PARAM, &from_col          },
+        {"default_allow_file", PARAM_STRING, &default_allow_file},
+        {"default_deny_file",  PARAM_STRING, &default_deny_file },
+	{"check_all_branches", PARAM_INT,    &check_all_branches},
+	{"allow_suffix",       PARAM_STRING, &allow_suffix      },
+	{"deny_suffix",        PARAM_STRING, &deny_suffix       },
+	{"db_url",             PARAM_STRING, &db_url            },
+	{"db_mode",            PARAM_INT,    &db_mode           },
+	{"trusted_table",      PARAM_STRING, &trusted_table     },
+	{"source_col",         PARAM_STRING, &source_col        },
+	{"proto_col",          PARAM_STRING, &proto_col         },
+	{"from_col",           PARAM_STRING, &from_col          },
         {0, 0, 0}
 };
 
@@ -150,7 +150,7 @@ static int get_path(char* pathname)
 {
 	char* c;
 	if (!pathname) return 0;
-	
+
 	c = strrchr(pathname, '/');
 	if (!c) return 0;
 
@@ -167,7 +167,7 @@ static char* get_pathname(char* name)
 	int path_len, name_len;
 
 	if (!name) return 0;
-	
+
 	name_len = strlen(name);
 	if (strchr(name, '/')) {
 		buffer = (char*)pkg_malloc(name_len + 1);
@@ -225,7 +225,7 @@ static char* get_plain_uri(const str* uri)
 		LOG(L_ERR, "get_plain_uri(): Error while parsing URI\n");
 		return 0;
 	}
-	
+
 	if (puri.user.len) {
 		len = puri.user.len + puri.host.len + 5;
 	} else {
@@ -236,7 +236,7 @@ static char* get_plain_uri(const str* uri)
 		LOG(L_ERR, "allow_register(): (module permissions) Request-URI is too long: %d chars\n", len);
 		return 0;
 	}
-	
+
 	strcpy(buffer, "sip:");
 	if (puri.user.len) {
 		memcpy(buffer + 4, puri.user.s, puri.user.len);
@@ -257,7 +257,7 @@ static char* get_plain_uri(const str* uri)
  * -1:	deny
  * 1:	allow
  */
-static int check_routing(struct sip_msg* msg, int idx) 
+static int check_routing(struct sip_msg* msg, int idx)
 {
 	struct hdr_field *from;
 	int len, q;
@@ -265,30 +265,30 @@ static int check_routing(struct sip_msg* msg, int idx)
 	static char ruri_str[EXPRESSION_LENGTH+1];
 	char* uri_str;
 	str branch;
-	
+
 	/* turn off control, allow any routing */
 	if ((!allow[idx].rules) && (!deny[idx].rules)) {
 		DBG("check_routing(): No rules => allow any routing\n");
 		return 1;
 	}
-	
+
 	/* looking for FROM HF */
         if ((!msg->from) && (parse_headers(msg, HDR_FROM_F, 0) == -1)) {
                 LOG(L_ERR, "check_routing(): Error while parsing message\n");
                 return -1;
         }
-	
+
 	if (!msg->from) {
 		LOG(L_ERR, "check_routing(): FROM header field not found\n");
 		return -1;
 	}
-	
+
 	/* we must call parse_from_header explicitly */
         if ((!(msg->from)->parsed) && (parse_from_header(msg) < 0)) {
                 LOG(L_ERR, "check_routing(): Error while parsing From body\n");
                 return -1;
         }
-	
+
 	from = msg->from;
 	len = ((struct to_body*)from->parsed)->uri.len;
 	if (len > EXPRESSION_LENGTH) {
@@ -297,25 +297,25 @@ static int check_routing(struct sip_msg* msg, int idx)
 	}
 	strncpy(from_str, ((struct to_body*)from->parsed)->uri.s, len);
 	from_str[len] = '\0';
-	
+
 	/* looking for request URI */
 	if (parse_sip_msg_uri(msg) < 0) {
 	        LOG(L_ERR, "check_routing(): uri parsing failed\n");
 	        return -1;
 	}
-	
+
 	len = msg->parsed_uri.user.len + msg->parsed_uri.host.len + 5;
 	if (len > EXPRESSION_LENGTH) {
                 LOG(L_ERR, "check_routing(): Request URI is too long: %d chars\n", len);
                 return -1;
 	}
-	
+
 	strcpy(ruri_str, "sip:");
 	memcpy(ruri_str + 4, msg->parsed_uri.user.s, msg->parsed_uri.user.len);
 	ruri_str[msg->parsed_uri.user.len + 4] = '@';
 	memcpy(ruri_str + msg->parsed_uri.user.len + 5, msg->parsed_uri.host.s, msg->parsed_uri.host.len);
 	ruri_str[len] = '\0';
-	
+
         DBG("check_routing(): looking for From: %s Request-URI: %s\n", from_str, ruri_str);
 	     /* rule exists in allow file */
 	if (search_rule(allow[idx].rules, from_str, ruri_str)) {
@@ -323,7 +323,7 @@ static int check_routing(struct sip_msg* msg, int idx)
     		DBG("check_routing(): allow rule found => routing is allowed\n");
 		return 1;
 	}
-	
+
 	/* rule exists in deny file */
 	if (search_rule(deny[idx].rules, from_str, ruri_str)) {
 		DBG("check_routing(): deny rule found => routing is denied\n");
@@ -344,23 +344,23 @@ static int check_routing(struct sip_msg* msg, int idx)
 			return -1;
 		}
 		DBG("check_routing: Looking for From: %s Branch: %s\n", from_str, uri_str);
-		
+
 		if (search_rule(allow[idx].rules, from_str, uri_str)) {
 			continue;
 		}
-		
+
 		if (search_rule(deny[idx].rules, from_str, uri_str)) {
 			LOG(LOG_INFO, "check_routing(): Deny rule found for one of branches => routing is denied\n");
 			return -1;
 		}
 	}
-	
+
 	LOG(LOG_INFO, "check_routing(): Check of branches passed => routing is allowed\n");
 	return 1;
 }
 
 
-/*  
+/*
  * Convert the name of the files into table index
  */
 static int load_fixup(void** param, int param_no)
@@ -426,7 +426,7 @@ static int single_fixup(void** param, int param_no)
 
 	strcpy(buffer, (char*)*param);
 	strcat(buffer, allow_suffix);
-	tmp = buffer; 
+	tmp = buffer;
 	ret = load_fixup(&tmp, 1);
 
 	strcpy(buffer + param_len, deny_suffix);
@@ -440,8 +440,8 @@ static int single_fixup(void** param, int param_no)
 }
 
 
-/* 
- * module initialization function 
+/*
+ * module initialization function
  */
 static int mod_init(void)
 {
@@ -454,7 +454,7 @@ static int mod_init(void)
 	} else {
 		LOG(L_WARN, "Default allow file (%s) not found => empty rule set\n", allow[0].filename);
 	}
-	
+
 	deny[0].filename = get_pathname(DEFAULT_DENY_FILE);
 	deny[0].rules = parse_config_file(deny[0].filename);
 	if (deny[0].rules) {
@@ -466,7 +466,7 @@ static int mod_init(void)
 	if (init_trusted() != 0) {
 		LOG(L_ERR, "Error while initializing allow_trusted function\n");
 	}
-	
+
 	rules_num = 1;
 	return 0;
 }
@@ -478,10 +478,10 @@ static int child_init(int rank)
 }
 
 
-/* 
- * destroy function 
+/*
+ * destroy function
  */
-static void mod_exit(void) 
+static void mod_exit(void)
 {
 	int i;
 
@@ -525,7 +525,7 @@ int allow_routing_2(struct sip_msg* msg, char* allow_file, char* deny_file)
 /*
  * Test of REGISTER messages. Creates To-Contact pairs and compares them
  * against rules in allow and deny files passed as parameters. The function
- * iterates over all Contacts and creates a pair with To for each contact 
+ * iterates over all Contacts and creates a pair with To for each contact
  * found. That allows to restrict what IPs may be used in registrations, for
  * example
  */
@@ -557,7 +557,7 @@ static int check_register(struct sip_msg* msg, int idx)
 		LOG(L_ERR, "check_register(): To or Contact not found\n");
 		return -1;
 	}
-	
+
 	if (!msg->contact) {
 		     /* REGISTER messages that contain no Contact header field
 		      * are allowed. Such messages do not modify the contents of
@@ -605,7 +605,7 @@ static int check_register(struct sip_msg* msg, int idx)
 		if (search_rule(allow[idx].rules, to_str, contact_str)) {
 			if (check_all_branches) goto skip_deny;
 		}
-	
+
 		     /* rule exists in deny file */
 		if (search_rule(deny[idx].rules, to_str, contact_str)) {
 			DBG("check_register(): Deny rule found => Register denied\n");
@@ -641,36 +641,36 @@ int allow_register_2(struct sip_msg* msg, char* allow_file, char* deny_file)
  * -1:	deny
  * 1:	allow
  */
-static int check_refer_to(struct sip_msg* msg, int idx) 
+static int check_refer_to(struct sip_msg* msg, int idx)
 {
 	struct hdr_field *from, *refer_to;
 	int len;
 	static char from_str[EXPRESSION_LENGTH+1];
 	static char refer_to_str[EXPRESSION_LENGTH+1];
-	
+
 	/* turn off control, allow any refer */
 	if ((!allow[idx].rules) && (!deny[idx].rules)) {
 		DBG("check_refer_to(): No rules => allow any refer\n");
 		return 1;
 	}
-	
+
 	/* looking for FROM HF */
         if ((!msg->from) && (parse_headers(msg, HDR_FROM_F, 0) == -1)) {
                 LOG(L_ERR, "check_refer_to(): Error while parsing message\n");
                 return -1;
         }
-	
+
 	if (!msg->from) {
 		LOG(L_ERR, "check_refer_to(): FROM header field not found\n");
 		return -1;
 	}
-	
+
 	/* we must call parse_from_header explicitly */
         if ((!(msg->from)->parsed) && (parse_from_header(msg) < 0)) {
                 LOG(L_ERR, "check_refer_to(): Error while parsing From body\n");
                 return -1;
         }
-	
+
 	from = msg->from;
 	len = ((struct to_body*)from->parsed)->uri.len;
 	if (len > EXPRESSION_LENGTH) {
@@ -679,24 +679,24 @@ static int check_refer_to(struct sip_msg* msg, int idx)
 	}
 	strncpy(from_str, ((struct to_body*)from->parsed)->uri.s, len);
 	from_str[len] = '\0';
-	
+
 	/* looking for REFER-TO HF */
         if ((!msg->refer_to) && (parse_headers(msg, HDR_REFER_TO_F, 0) == -1)){
                 LOG(L_ERR, "check_refer_to(): Error while parsing message\n");
                 return -1;
         }
-	
+
 	if (!msg->refer_to) {
 		LOG(L_ERR, "check_refer_to(): Refer-To header field not found\n");
 		return -1;
 	}
-	
+
 	/* we must call parse_refer_to_header explicitly */
         if ((!(msg->refer_to)->parsed) && (parse_refer_to_header(msg) < 0)) {
                 LOG(L_ERR, "check_refer_to(): Error while parsing Refer-To body\n");
                 return -1;
         }
-	
+
 	refer_to = msg->refer_to;
 	len = ((struct to_body*)refer_to->parsed)->uri.len;
 	if (len > EXPRESSION_LENGTH) {
@@ -705,14 +705,14 @@ static int check_refer_to(struct sip_msg* msg, int idx)
 	}
 	strncpy(refer_to_str, ((struct to_body*)refer_to->parsed)->uri.s, len);
 	refer_to_str[len] = '\0';
-	
+
         DBG("check_refer_to(): looking for From: %s Refer-To: %s\n", from_str, refer_to_str);
 	     /* rule exists in allow file */
 	if (search_rule(allow[idx].rules, from_str, refer_to_str)) {
     		DBG("check_refer_to(): allow rule found => refer is allowed\n");
 		return 1;
 	}
-	
+
 	/* rule exists in deny file */
 	if (search_rule(deny[idx].rules, from_str, refer_to_str)) {
 		DBG("check_refer_to(): deny rule found => refer is denied\n");

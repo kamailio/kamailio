@@ -61,4 +61,6 @@ void clean_trusted(void);
 int allow_trusted(struct sip_msg* _msg, char* _s1, char* _s2);
 
 
+int reload_trusted_table(void);
+
 #endif /* TRUSTED_H */

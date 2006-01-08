@@ -1,5 +1,5 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
  * Digest Authentication Module
  *
@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -32,7 +32,7 @@
  * 2003-03-10 New module interface (janakj)
  * 2003-03-16 flags export parameter added (janakj)
  * 2003-03-19 all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
- * 2003-04-28 rpid contributed by Juha Heinanen added (janakj) 
+ * 2003-04-28 rpid contributed by Juha Heinanen added (janakj)
  */
 
 
@@ -85,7 +85,7 @@ char* sec_rand = 0;
 
 
 /*
- * Exported functions 
+ * Exported functions
  */
 static cmd_export_t cmds[] = {
 	{"www_challenge",       www_challenge,           2, challenge_fixup, REQUEST_ROUTE},
@@ -100,9 +100,9 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"secret",           STR_PARAM, &sec_param       },
-	{"nonce_expire",     INT_PARAM, &nonce_expire    },
-	{"protect_contacts", INT_PARAM, &protect_contacts},
+	{"secret",           PARAM_STRING, &sec_param       },
+	{"nonce_expire",     PARAM_INT,    &nonce_expire    },
+	{"protect_contacts", PARAM_INT,    &protect_contacts},
 	{0, 0, 0}
 };
 
@@ -111,7 +111,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"auth", 
+	"auth",
 	cmds,
 	0,          /* RPC methods */
 	params,
@@ -155,7 +155,7 @@ static inline int generate_random_secret(void)
 static int mod_init(void)
 {
 	DBG("auth module - initializing\n");
-	
+
 	sl_reply = find_export("sl_send_reply", 2, 0);
 
 	if (!sl_reply) {
@@ -175,7 +175,7 @@ static int mod_init(void)
 		secret.s = sec_param;
 		secret.len = strlen(secret.s);
 	}
-	
+
 	return 0;
 }
 

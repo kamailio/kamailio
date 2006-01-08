@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -61,14 +61,14 @@ static cmd_export_t cmds[]={
  * Exported parameters
  */
 static param_export_t params[]={
-	{"db_mode", INT_PARAM, &db_mode },
-	{"db_url", STR_PARAM, &db_url.s },
+	{"db_mode", PARAM_INT, &db_mode },
+	{"db_url",  PARAM_STR, &db_url },
 	{0, 0, 0}
 };
 
 
 struct module_exports exports = {
-	"dialog", 
+	"dialog",
 	cmds,        /* Exported functions */
 	0,           /* RPC methods */
 	params,      /* Exported parameters */
@@ -92,9 +92,8 @@ static int dlg_mod_init(void)
 		LOG(L_ERR, "dlg_mod_init(): Can't import tm functions\n");
 		return -1;
 	}
-	
+
 	db_initialized = 0;
-	db_url.len = db_url.s ? strlen(db_url.s) : 0;
 	if (db_mode > 0) {
 		if (!db_url.len) {
 			LOG(L_ERR, "dlg_mod_init(): no db_url specified but use_db=1\n");
@@ -113,7 +112,7 @@ static int dlg_mod_init(void)
 		}
 		db_initialized = 1;
 	}
-	
+
 	return 0;
 }
 
@@ -121,7 +120,7 @@ db_con_t* create_dlg_db_connection()
 {
 	if (db_mode <= 0) return NULL;
 	if (!dlg_dbf.init) return NULL;
-	
+
 	return dlg_dbf.init(db_url.s);
 }
 

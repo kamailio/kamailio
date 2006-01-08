@@ -80,9 +80,9 @@ static cmd_export_t cmds[]={
 
 /* Exported parameters */
 static param_export_t params[] = {
-	{"from_store_param",  STR_PARAM,                &from_param_chr      },
-	{"from_restore_mode", INT_PARAM,                &from_restore_mode   },
-	{"credential",        STR_PARAM|USE_FUNC_PARAM, &add_credential      },
+	{"from_store_param",  PARAM_STRING,                &from_param_chr      },
+	{"from_restore_mode", PARAM_INT,                   &from_restore_mode   },
+	{"credential",        PARAM_STRING|PARAM_USE_FUNC, &add_credential      },
 	{0, 0, 0}
 };
 

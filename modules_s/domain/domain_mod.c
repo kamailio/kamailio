@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -135,19 +135,19 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",	      STR_PARAM, &db_url.s	   },
-	{"db_mode",           INT_PARAM, &db_mode          },
-	{"domain_table",      STR_PARAM, &domain_table.s   },
-	{"domain_col",        STR_PARAM, &domain_col.s     },
-	{"did_col",           STR_PARAM, &did_col.s        },
-	{"flags_col",         STR_PARAM, &flags_col.s      },
-	{"domattr_table",     STR_PARAM, &domattr_table.s  },
-	{"domattr_did",       STR_PARAM, &domattr_did.s    },
-	{"domattr_name",      STR_PARAM, &domattr_name.s   },
-	{"domattr_type",      STR_PARAM, &domattr_type.s   },
-	{"domattr_value",     STR_PARAM, &domattr_value.s  },
-	{"domattr_flags",     STR_PARAM, &domattr_flags.s  },
-	{"load_domain_attrs", INT_PARAM, &load_domain_attrs},
+	{"db_url",	      PARAM_STR, &db_url           },
+	{"db_mode",           PARAM_INT, &db_mode          },
+	{"domain_table",      PARAM_STR, &domain_table     },
+	{"domain_col",        PARAM_STR, &domain_col       },
+	{"did_col",           PARAM_STR, &did_col          },
+	{"flags_col",         PARAM_STR, &flags_col        },
+	{"domattr_table",     PARAM_STR, &domattr_table    },
+	{"domattr_did",       PARAM_STR, &domattr_did      },
+	{"domattr_name",      PARAM_STR, &domattr_name     },
+	{"domattr_type",      PARAM_STR, &domattr_type     },
+	{"domattr_value",     PARAM_STR, &domattr_value    },
+	{"domattr_flags",     PARAM_STR, &domattr_flags    },
+	{"load_domain_attrs", PARAM_INT, &load_domain_attrs},
 	{0, 0, 0}
 };
 
@@ -156,7 +156,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"domain", 
+	"domain",
 	cmds,       /* Exported functions */
 	domain_rpc, /* RPC methods */
 	params,     /* Exported parameters */
@@ -209,7 +209,7 @@ static int check_version(void)
 		LOG(L_ERR, "ERROR:domain:check_version: Invalid table version, update your database schema\n");
 		return -1;
 	}
-	
+
 	ver = table_version(&db, con, &domattr_table);
 	if (ver < 0) {
 		LOG(L_ERR, "ERROR:domain:check_version: Error while querying table version\n");
@@ -227,7 +227,7 @@ static int allocate_tables(void)
 	active_hash = (struct hash_entry***)shm_malloc(sizeof(struct hash_entry**));
 	hash_1 = (struct hash_entry**)shm_malloc(sizeof(struct hash_entry*) * HASH_SIZE);
 	hash_2 = (struct hash_entry**)shm_malloc(sizeof(struct hash_entry*) * HASH_SIZE);
-	domains_1 = (domain_t**)shm_malloc(sizeof(domain_t*));	
+	domains_1 = (domain_t**)shm_malloc(sizeof(domain_t*));
 	domains_2 = (domain_t**)shm_malloc(sizeof(domain_t*));
 
 	if (!hash_1 || !hash_2 || !active_hash || !domains_1 || !domains_2) {
@@ -261,19 +261,6 @@ static void destroy_tables(void)
 
 static int mod_init(void)
 {
-	db_url.len = strlen(db_url.s);
-	domain_table.len = strlen(domain_table.s);
-	domain_col.len = strlen(domain_col.s);
-	did_col.len = strlen(did_col.s);
-	flags_col.len = strlen(flags_col.s);
-
-	domattr_table.len = strlen(domattr_table.s);
-	domattr_did.len = strlen(domattr_did.s);
-	domattr_name.len = strlen(domattr_name.s);
-	domattr_type.len = strlen(domattr_type.s);
-	domattr_value.len = strlen(domattr_value.s);
-	domattr_flags.len = strlen(domattr_flags.s);
-
 	if (load_domain_attrs && !db_mode) {
 		LOG(L_ERR, "ERROR:domain:mod_init: Domain attributes only work when domain cache is enabled (set db_mode to 1)\n");
 		return -1;
@@ -284,7 +271,7 @@ static int mod_init(void)
 		    "Did you forget to load a database module ?\n");
 		return -1;
 	}
-	
+
 	     /* Check if cache needs to be loaded from domain table */
 	if (db_mode != 0) {
 		if (connect_db() < 0) goto error;
@@ -334,11 +321,11 @@ static int db_get_did(str* did, str* domain)
 	db_val_t vals[1], *val;
 	db_res_t* res;
 	str t;
-	
+
 	keys[0]=domain_col.s;
 	cols[0]=did_col.s;
 	cols[1]=flags_col.s;
-	
+
 	if (!domain) {
 		LOG(L_ERR, "BUG:domain:db_get_did: Invalid parameter value\n");
 		return -1;
@@ -348,16 +335,16 @@ static int db_get_did(str* did, str* domain)
 		LOG(L_ERR, "ERROR:domain:db_get_did: Error while trying to use domain table\n");
 		return -1;
 	}
-	
+
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;
 	vals[0].val.str_val = *domain;
-	
+
 	if (db.query(con, keys, 0, vals, cols, 1, 2, 0, &res) < 0) {
 		LOG(L_ERR, "ERROR:domain:db_get_did: Error while querying database\n");
 			return -1;
 	}
-	
+
 	if (res->n > 0) {
 		val = res->rows[0].values;
 
@@ -539,7 +526,7 @@ static int lookup_domain(struct sip_msg* msg, char* s1, char* s2)
 	if (db_mode == 0) {
 		LOG(L_ERR, "domain:lookup_domain only works in cache mode\n");
 		return -1;
-	} 
+	}
 
 	switch(id) {
 	case LOAD_FROM:

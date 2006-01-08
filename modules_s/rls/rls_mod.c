@@ -42,23 +42,23 @@ int reduce_xcap_needs = 0;
 /** Exported functions */
 static cmd_export_t cmds[]={
 	/* {"handle_r_subscription", handle_r_subscription, 0, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE}, */
-	{"handle_rls_subscription", (cmd_function)handle_rls_subscription, 1, 
+	{"handle_rls_subscription", (cmd_function)handle_rls_subscription, 1,
 		rls_subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
 /** Exported parameters */
 static param_export_t params[]={
-	{"min_expiration", INT_PARAM, &rls_min_expiration }, 
-	{"max_expiration", INT_PARAM, &rls_max_expiration }, 
-	{"default_expiration", INT_PARAM, &rls_default_expiration }, 
-	{"auth", STR_PARAM, &auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
-	{"auth_xcap_root", STR_PARAM, &auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
-	{"db_mode", INT_PARAM, &db_mode },
-	{"db_url", STR_PARAM, &db_url },
-	{"mode", STR_PARAM, &rls_mode_str },
-	{"reduce_xcap_needs", INT_PARAM, &reduce_xcap_needs },
-	{"xcap_root", STR_PARAM, &rls_xcap_root }, /* xcap root settings - only one XCAP root allowed !!! */
+	{"min_expiration", PARAM_INT, &rls_min_expiration },
+	{"max_expiration", PARAM_INT, &rls_max_expiration },
+	{"default_expiration", PARAM_INT, &rls_default_expiration },
+	{"auth", PARAM_STRING, &auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
+	{"auth_xcap_root", PARAM_STRING, &auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
+	{"db_mode", PARAM_INT, &db_mode },
+	{"db_url", PARAM_STRING, &db_url },
+	{"mode", PARAM_STRING, &rls_mode_str },
+	{"reduce_xcap_needs", PARAM_INT, &reduce_xcap_needs },
+	{"xcap_root", PARAM_STRING, &rls_xcap_root }, /* xcap root settings - only one XCAP root allowed !!! */
 	{0, 0, 0}
 };
 
@@ -121,7 +121,7 @@ static int set_auth_params(rls_auth_params_t *dst, const char *auth_type_str, ch
 		dst->type = rls_auth_implicit;
 		return 0;
 	}
-	
+
 	LOG(L_ERR, "Can't resolve subscription authorization type: \'%s\'."
 			" Use one of: none, implicit, xcap.\n", auth_type_str);
 	return -1;
@@ -144,7 +144,7 @@ static int set_rls_mode(rls_mode_t *dst, const char *mode)
 		LOG(L_INFO, "Using \'simple\' rls operation mode.\n");
 		return 0;
 	}
-	
+
 	LOG(L_ERR, "Can't resolve operation mode for rls \'%s\'. Use full or simple\n", mode);
 	return -1;
 }
@@ -153,27 +153,27 @@ int rls_mod_init(void)
 {
     load_tm_f load_tm;
 	bind_dlg_mod_f bind_dlg;
-	
+
 	DEBUG_LOG("RLS module initialization\n");
-	
+
 	/* ??? if other module uses this libraries it might be a problem ??? */
 	xmlInitParser();
 	curl_global_init(CURL_GLOBAL_ALL);
-	
+
 	DEBUG_LOG(" ... common libraries\n");
 	cds_initialize();
-	qsa_initialize();	
+	qsa_initialize();
 
 	if (time_event_management_init() != 0) {
 		LOG(L_ERR, "rls_mod_init(): Can't initialize time event management!\n");
 		return -1;
 	}
-	
+
 	if (subscription_management_init() != 0) {
 		LOG(L_ERR, "rls_mod_init(): Can't initialize time event management!\n");
 		return -1;
 	}
-	
+
 	/* import the TM auto-loading function */
 	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
 		LOG(L_ERR, "rls_mod_init(): Can't import tm!\n");
@@ -184,7 +184,7 @@ int rls_mod_init(void)
 		LOG(L_ERR, "rls_mod_init(): load_tm() failed\n");
 		return -1;
 	}
-	
+
 	bind_dlg = (bind_dlg_mod_f)find_export("bind_dlg_mod", -1, 0);
 	if (!bind_dlg) {
 		LOG(L_ERR, "Can't import dlg\n");
@@ -193,7 +193,7 @@ int rls_mod_init(void)
 	if (bind_dlg(&dlg_func) != 0) {
 		return -1;
 	}
-	
+
 	if (rls_init() != 0) {
 		return -1;
 	}
@@ -243,7 +243,7 @@ int rls_mod_init(void)
 	}
 
 	if (rls_qsa_interface_init() != 0) return -1;
-	
+
 	return 0;
 }
 
@@ -276,7 +276,7 @@ void rls_mod_destroy(void)
 
 	DEBUG_LOG(" ... qsa interface\n");
 	rls_qsa_interface_destroy();
-	
+
 	/* destroy used XCAP servers */
 /*	DEBUG_LOG(" ... xcap servers\n");
 	if (xcap_servers) {
@@ -293,7 +293,7 @@ void rls_mod_destroy(void)
 		shm_free(xcap_servers);
 		xcap_servers = NULL;
 	} */
-	
+
 	DEBUG_LOG(" ... rls\n");
 	rls_destroy();
 	DEBUG_LOG(" ... vs\n");
@@ -307,11 +307,11 @@ void rls_mod_destroy(void)
 		if (rls_db && rls_dbf.close) rls_dbf.close(rls_db);
 		rls_db = NULL;
 	}
-	
+
 	DEBUG_LOG(" ... common libs\n");
 	qsa_cleanup();
 	cds_cleanup();
-	
+
 	/* ??? if other module uses this libraries it might be a problem ??? */
 /*	xmlCleanupParser();
 	curl_global_cleanup();*/
@@ -322,7 +322,7 @@ static int rls_subscribe_fixup(void** param, int param_no)
 {
 	/* char *xcap_server = NULL; */
 	int send_errors = 0;
-	
+
 /*	if (param_no == 1) {
 		if (!param) {
 			LOG(L_ERR, "rls_subscribe_fixup(): XCAP server address not set!\n");
@@ -333,10 +333,10 @@ static int rls_subscribe_fixup(void** param, int param_no)
 			LOG(L_ERR, "rls_subscribe_fixup(): Can't set XCAP server address!\n");
 			return E_UNSPEC;
 		}
-		
+
 		/ * store not only the root string? (create a structure rather?) * /
 		ptr_vector_add(xcap_servers, xcap_server);
-		
+
 		DEBUG_LOG("rls_subscribe_fixup(): XCAP server is %s (%p)\n", xcap_server, xcap_server);
 		*param = (void*)xcap_server;
 	} */

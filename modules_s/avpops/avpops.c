@@ -117,17 +117,17 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"avp_url",           STR_PARAM, &DB_URL         },
-	{"avp_table",         STR_PARAM, &DB_TABLE       },
-	{"avp_aliases",       STR_PARAM|USE_FUNC_PARAM, (void*)register_galiases },
-	{"use_domain",        INT_PARAM, &use_domain     },
-	{"uid_column",        STR_PARAM, &db_columns[0]  },
-	{"name_column",       STR_PARAM, &db_columns[1]  },
-	{"value_column",      STR_PARAM, &db_columns[2]  },
-	{"type_column",       STR_PARAM, &db_columns[3]  },
-	{"username_column",   STR_PARAM, &db_columns[4]  },
-	{"domain_column",     STR_PARAM, &db_columns[5]  },
-	{"db_scheme",         STR_PARAM|USE_FUNC_PARAM, (void*)avp_add_db_scheme },
+	{"avp_url",           PARAM_STRING, &DB_URL         },
+	{"avp_table",         PARAM_STRING, &DB_TABLE       },
+	{"avp_aliases",       PARAM_STRING|PARAM_USE_FUNC, (void*)register_galiases },
+	{"use_domain",        PARAM_INT, &use_domain     },
+	{"uid_column",        PARAM_STRING, &db_columns[0]  },
+	{"name_column",       PARAM_STRING, &db_columns[1]  },
+	{"value_column",      PARAM_STRING, &db_columns[2]  },
+	{"type_column",       PARAM_STRING, &db_columns[3]  },
+	{"username_column",   PARAM_STRING, &db_columns[4]  },
+	{"domain_column",     PARAM_STRING, &db_columns[5]  },
+	{"db_scheme",         PARAM_STRING|PARAM_USE_FUNC, (void*)avp_add_db_scheme },
 	{0, 0, 0}
 };
 
@@ -148,7 +148,7 @@ struct module_exports exports = {
 
 static int register_galiases( modparam_t type, void* val)
 {
-	
+
 	if (val!=0 && ((char*)val)[0]!=0)
 	{
 		if ( add_avp_galias_str((char*)val)!=0 )
@@ -287,8 +287,8 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 			s++;
 			if ( (p=strchr(s,'/'))!=0)
 				*(p++) = 0;
-			if ( (!strcasecmp( "from", s) && (flags|=AVPOPS_USE_FROM)) 
-			|| (!strcasecmp( "to", s) && (flags|=AVPOPS_USE_TO)) 
+			if ( (!strcasecmp( "from", s) && (flags|=AVPOPS_USE_FROM))
+			|| (!strcasecmp( "to", s) && (flags|=AVPOPS_USE_TO))
 			|| (!strcasecmp( "ruri", s) && (flags|=AVPOPS_USE_RURI)) )
 			{
 				/* check for extra flags/params */
@@ -368,7 +368,7 @@ static int fixup_write_avp(void** param, int param_no)
 	flags=0;
 	s = (char*)*param;
 	ap = 0 ;
-	
+
 	if (param_no==1)
 	{
 		if ( *s=='$' )
@@ -786,7 +786,7 @@ static int w_dbdelete_avps(struct sip_msg* msg, char* source, char* param)
 
 static int w_write_avps(struct sip_msg* msg, char* source, char* param)
 {
-	return ops_write_avp ( msg, (struct fis_param*)source, 
+	return ops_write_avp ( msg, (struct fis_param*)source,
 								(struct fis_param*)param);
 }
 

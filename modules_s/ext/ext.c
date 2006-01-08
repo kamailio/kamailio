@@ -21,8 +21,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -83,8 +83,8 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"check_new_uri", INT_PARAM, &check_new_uri},
-	{"max_branches",  INT_PARAM, &max_branches},
+	{"check_new_uri", PARAM_INT, &check_new_uri},
+	{"max_branches",  PARAM_INT, &max_branches},
 	{0, 0, 0}
 };
 

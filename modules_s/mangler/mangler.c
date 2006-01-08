@@ -22,13 +22,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /* History:
  * --------
- *  2003-04-07 first version.  
+ *  2003-04-07 first version.
  */
 
 
@@ -55,8 +55,8 @@
 #include "../tm/t_hooks.h"
 #include "../tm/tm_load.h"
 #include "../tm/h_table.h"
-struct tm_binds tmb; 
-	
+struct tm_binds tmb;
+
 #endif
 
 
@@ -87,9 +87,9 @@ char *contact_flds_separator = DEFAULT_SEPARATOR;
 
 
 
-static param_export_t params[] = { 
-								{"contact_flds_separator",STR_PARAM,&contact_flds_separator},
-								{0, 0, 0} 
+static param_export_t params[] = {
+								{"contact_flds_separator",PARAM_STRING,&contact_flds_separator},
+								{0, 0, 0}
 								};	/*no params exported,perhaps I should add pre-compiled expressions */
 
 
@@ -97,7 +97,7 @@ static param_export_t params[] = {
 /*
  * Exported functions
  */
-static cmd_export_t cmds[] = 
+static cmd_export_t cmds[] =
 {
 	{"sdp_mangle_ip", sdp_mangle_ip, 2,0, REQUEST_ROUTE|ONREPLY_ROUTE}, // fixup_char2str?
 	{"sdp_mangle_port",sdp_mangle_port, 1,0, REQUEST_ROUTE|ONREPLY_ROUTE},// fixup_char2int if I use an int as offset
@@ -138,7 +138,7 @@ static void func_invite(struct cell *t,struct sip_msg *msg,int code,void *param)
 		}
 	i = encode_contact(msg,"enc_prefix","193.175.135.38");
 	fprintf(stdout,"decode/encode = returned %d\n",i);fflush(stdout);
-	
+
 	if (t->is_invite)
 		{
 			if (msg->buf != NULL)
@@ -148,16 +148,16 @@ static void func_invite(struct cell *t,struct sip_msg *msg,int code,void *param)
 			fprintf(stdout,"sdp_mangle_port returned %d\n",i);fflush(stdout);
 			i = sdp_mangle_ip(msg,"10.0.0.0/16","123.124.125.126");
 			fprintf(stdout,"sdp_mangle_ip returned %d\n",i);fflush(stdout);
-			
+
 			}
 			else fprintf(stdout,"INVITE:received NULL\n");fflush(stdout);
 		}
 	else
 		{
 			fprintf(stdout,"NOT INVITE(REGISTER?) received \n%s\n",msg->buf);fflush(stdout);
-			//i = decode_contact(msg,NULL,NULL);		
+			//i = decode_contact(msg,NULL,NULL);
 			//fprintf(stdout,"decode/encode = returned %d\n",i);fflush(stdout);
-		}	
+		}
 	fflush(stdout);
 }
 
@@ -170,23 +170,23 @@ prepare ()
 
 	/* using pre-compiled expressions to speed things up*/
 	compile_expresions(PORT_REGEX,IP_REGEX);
-	
+
 #ifdef DEMO
 	load_tm_f load_tm;
-	
-	
+
+
 	fprintf(stdout,"===============NEW RUN================\n");
-	//register callbacks 
+	//register callbacks
 
 	if (!(load_tm=(load_tm_f)find_export("load_tm",NO_SCRIPT,0)))
-	{	
+	{
 		printf("Error:FCP:prepare:cannot import load_tm\n");
 		return -1;
 	}
 	if (load_tm(&tmb)==-1) return -1;
-	
+
 	if (tmb.register_tmcb(TMCB_REQUEST_OUT,func_invite,0) <= 0) return -1;
-#endif	
+#endif
 	return 0;
 }
 
@@ -210,7 +210,7 @@ static void
 destroy (void)
 {
 	/*free some compiled regex expressions */
-	free_compiled_expresions();	
+	free_compiled_expresions();
 #ifdef DEMO
 	fprintf(stdout,"Freeing pre-compiled expressions\n");
 #endif
@@ -230,10 +230,10 @@ static int fixup_char2int (void **param, int param_no)
 			LOG (L_ERR,"fixup_char2int:Invalid value %s\n",(char *)(*param));
 			return -1;
 			}
-		free(*param);	
+		free(*param);
 		*param = (void *)offset;/* value of offset */
 	}
-		
+
 	return 0;
 }
 
@@ -249,10 +249,10 @@ static int fixup_char2uint (void **param, int param_no)
 			LOG (L_ERR,"fixup_char2uint:Invalid value %s\n",(char *)*param);
 			return -1;
 			}
-		free(*param);	
+		free(*param);
 		*param = (void *)newContentLength;
 	}
-		
+
 	return 0;
 }
 
@@ -261,34 +261,34 @@ static int fixup_char2uint (void **param, int param_no)
 static int fixup_char2str(void** param, int param_no)
 {
 	str* s;
-	
-	if (param_no == 1) 
+
+	if (param_no == 1)
 	{
 		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) 
+		if (!s)
 		{
 			LOG(L_ERR, "fixup_char2str: No memory left\n");
 			return E_UNSPEC;
 		}
-		
+
 		s->s = (char*)*param;
 		s->len = strlen(s->s);
 		*param = (void*)s;
 	}
-	else if (param_no == 2) 
+	else if (param_no == 2)
 	{
 		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) 
+		if (!s)
 		{
 			LOG(L_ERR, "fixup_char2str: No memory left\n");
 			return E_UNSPEC;
 		}
-		
+
 		s->s = (char*)*param;
 		s->len = strlen(s->s);
 		*param = (void*)s;
 	}
-	
+
 	return 0;
 }
 #endif

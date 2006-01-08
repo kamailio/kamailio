@@ -1,4 +1,4 @@
-/* 
+/*
  * $Id$
  *
  * Digest Authentication Module
@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -125,14 +125,14 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",            STR_PARAM, &db_url             },
-	{"username_column",   STR_PARAM, &username_column.s  },
-	{"realm_column",      STR_PARAM, &realm_column.s     },
-	{"password_column",   STR_PARAM, &pass_column.s      },
-	{"password_column_2", STR_PARAM, &pass_column_2.s    },
-	{"flags_column",      STR_PARAM, &flags_column.s     },
-	{"calculate_ha1",     INT_PARAM, &calc_ha1           },
-	{"load_credentials",  STR_PARAM, &credentials_list.s },
+	{"db_url",            PARAM_STRING, &db_url          },
+	{"username_column",   PARAM_STR,    &username_column },
+	{"realm_column",      PARAM_STR,    &realm_column    },
+	{"password_column",   PARAM_STR,    &pass_column     },
+	{"password_column_2", PARAM_STR,    &pass_column_2   },
+	{"flags_column",      PARAM_STR,    &flags_column    },
+	{"calculate_ha1",     PARAM_INT,    &calc_ha1        },
+	{"load_credentials",  PARAM_STR,    &credentials_list},
 	{0, 0, 0}
 };
 
@@ -141,7 +141,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"auth_db", 
+	"auth_db",
 	cmds,       /* Exported functions */
 	0,          /* RPC methods */
 	params,     /* Exported parameters */
@@ -171,15 +171,7 @@ static int mod_init(void)
 
 	DBG("auth_db module - initializing\n");
 
-	username_column.len = strlen(username_column.s);
-	realm_column.len = strlen(realm_column.s);
-	pass_column.len = strlen(pass_column.s);
-	pass_column_2.len = strlen(pass_column.s);
-	flags_column.len = strlen(flags_column.s);
-
-	credentials_list.len = strlen(credentials_list.s);
-
-	     /* Find a database module */
+     /* Find a database module */
 
 	if (bind_dbmod(db_url, &auth_dbf) < 0){
 		LOG(L_ERR, "auth_db:child_init: Unable to bind a database driver\n");

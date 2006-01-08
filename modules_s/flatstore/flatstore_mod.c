@@ -97,10 +97,10 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"flush", INT_PARAM, &flat_flush},
-	{"field_delimiter", STR_PARAM, &flat_delimiter},
-	{"record_delimiter", STR_PARAM, &flat_record_delimiter},
-	{"escape_char", STR_PARAM, &flat_escape},
+	{"flush", PARAM_INT, &flat_flush},
+	{"field_delimiter", PARAM_STRING, &flat_delimiter},
+	{"record_delimiter", PARAM_STRING, &flat_record_delimiter},
+	{"escape_char", PARAM_STRING, &flat_escape},
 	{0, 0, 0}
 };
 

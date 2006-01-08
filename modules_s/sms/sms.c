@@ -21,8 +21,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /*
@@ -87,23 +87,23 @@ struct tm_binds tmb;
 
 
 static cmd_export_t cmds[]={
-	{"sms_send_msg_to_net", w_sms_send_msg_to_net, 1, 
+	{"sms_send_msg_to_net", w_sms_send_msg_to_net, 1,
 	     fixup_sms_send_msg_to_net, REQUEST_ROUTE},
-	{"sms_send_msg",        w_sms_send_msg,        0,  
+	{"sms_send_msg",        w_sms_send_msg,        0,
 	     0,                         REQUEST_ROUTE},
 	{0,0,0,0,0}
 };
 
 
 static param_export_t params[]={
-	{"networks",        STR_PARAM, &networks_config },
-	{"modems",          STR_PARAM, &modems_config   },
-	{"links",           STR_PARAM, &links_config    },
-	{"default_net",     STR_PARAM, &default_net_str },
-	{"max_sms_parts",   INT_PARAM, &max_sms_parts   },
-	{"domain",          STR_PARAM, &domain_str      },
-	{"use_contact",     INT_PARAM, &use_contact     },
-	{"sms_report_type", INT_PARAM, &sms_report_type },
+	{"networks",        PARAM_STRING, &networks_config },
+	{"modems",          PARAM_STRING, &modems_config   },
+	{"links",           PARAM_STRING, &links_config    },
+	{"default_net",     PARAM_STRING, &default_net_str },
+	{"max_sms_parts",   PARAM_INT, &max_sms_parts      },
+	{"domain",          PARAM_STRING, &domain_str      },
+	{"use_contact",     PARAM_INT, &use_contact        },
+	{"sms_report_type", PARAM_INT, &sms_report_type    },
 	{0,0,0}
 };
 
@@ -113,7 +113,7 @@ struct module_exports exports= {
 	cmds,
 	0,        /* RPC methods */
 	params,
-	
+
 	sms_init,   /* module initialization function */
 	(response_function) 0,
 	(destroy_function) sms_exit,   /* module exit function */
@@ -533,7 +533,7 @@ int global_init()
 		goto error;
 	}
 	/* let the auto-loading function load all TM stuff */
-	if (load_tm( &tmb )==-1) 
+	if (load_tm( &tmb )==-1)
 		goto error;
 
 	/*fix domain length*/

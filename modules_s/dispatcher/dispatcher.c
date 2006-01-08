@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
@@ -31,7 +31,7 @@
  * History
  * -------
  * 2004-07-31  first version, by dcm
- * 
+ *
  */
 
 #include <stdio.h>
@@ -53,7 +53,7 @@ MODULE_VERSION
 /** parameters */
 char *dslistfile = CFG_DIR"dispatcher.list";
 int  force_dst = 0;
-int ds_flags   = 0; 
+int ds_flags   = 0;
 
 /** module functions */
 static int mod_init(void);
@@ -70,9 +70,9 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{"list_file",      STR_PARAM, &dslistfile},
-	{"force_dst",      INT_PARAM, &force_dst},
-	{"flags",          INT_PARAM, &ds_flags},
+	{"list_file",      PARAM_STRING, &dslistfile},
+	{"force_dst",      PARAM_INT,    &force_dst},
+	{"flags",          PARAM_INT,    &ds_flags},
 	{0,0,0}
 };
 
@@ -83,7 +83,7 @@ struct module_exports exports= {
 	cmds,
 	0,          /* RPC methods */
 	params,
-	
+
 	mod_init,   /* module initialization function */
 	(response_function) 0,
 	(destroy_function) destroy,
@@ -103,7 +103,7 @@ static int mod_init(void)
 		LOG(L_ERR, "DISPATCHER:mod_init:ERROR -- couldn't load list file\n");
 		return -1;
 	}
-	
+
 	return 0;
 }
 

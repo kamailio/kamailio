@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /*
@@ -31,12 +31,14 @@
  * --------
  *  2003-03-10  module export interface updated to the new format (andrei)
  *  2003-03-11  flags export parameter added (janakj)
+ *  2006-01-07  str export parameter added (tma)
  */
 
 
 
 
 #include "../../sr_module.h"
+#include "../../str.h"
 #include <stdio.h>
 
 MODULE_VERSION
@@ -45,27 +47,28 @@ static int print_f(struct sip_msg*, char*,char*);
 static int mod_init(void);
 
 /* the parameters are not used, they are only meant as an example*/
-char* str_param;
-int int_param;
-
+char* string_param = 0;
+int int_param = 0;
+str str_param = STR_STATIC_INIT("");
 
 static cmd_export_t cmds[]={
-	{"print", print_f, 1, 0, REQUEST_ROUTE}, 
+	{"print", print_f, 1, 0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
-static param_export_t params[]={ 
-	{"str_param", STR_PARAM, &str_param},
-	{"int_param", INT_PARAM, &int_param},
-	{0,0,0} 
+static param_export_t params[]={
+	{"string_param", PARAM_STRING, &string_param},
+	{"str_param",    PARAM_STR, &str_param},
+	{"int_param",    PARAM_INT, &int_param},
+	{0,0,0}
 };
 
 struct module_exports exports = {
-	"print_stdout", 
+	"print_stdout",
 	cmds,
 	0,        /* RPC methods */
 	params,
-	
+
 	mod_init, /* module initialization function */
 	0,        /* response function*/
 	0,        /* destroy function */

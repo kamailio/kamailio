@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
@@ -57,15 +57,15 @@ static int child_init(int);
 static int xlog(struct sip_msg*, char*, char*);
 static int xdbg(struct sip_msg*, char*, char*);
 
-static int xlog_fixup(void** param, int param_no); 
-static int xdbg_fixup(void** param, int param_no); 
+static int xlog_fixup(void** param, int param_no);
+static int xdbg_fixup(void** param, int param_no);
 
 void destroy(void);
 
 static cmd_export_t cmds[]={
 	{"xlog",  xlog,  2, xlog_fixup, REQUEST_ROUTE | FAILURE_ROUTE |
 		 ONREPLY_ROUTE | BRANCH_ROUTE},
-	{"xdbg",  xdbg,  1, xdbg_fixup, REQUEST_ROUTE | FAILURE_ROUTE | 
+	{"xdbg",  xdbg,  1, xdbg_fixup, REQUEST_ROUTE | FAILURE_ROUTE |
 		ONREPLY_ROUTE | BRANCH_ROUTE},
 	{"xprint", (cmd_function)xl_print_log, NO_SCRIPT, 0, 0},
 	{"xparse", (cmd_function)xl_parse_format, NO_SCRIPT, 0, 0},
@@ -75,7 +75,7 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{"buf_size",  INT_PARAM, &buf_size},
+	{"buf_size",  PARAM_INT, &buf_size},
 	{0,0,0}
 };
 
@@ -86,7 +86,7 @@ struct module_exports exports= {
 	cmds,
 	0,        /* RPC methods */
 	params,
-	
+
 	mod_init,   /* module initialization function */
 	(response_function) 0,
 	(destroy_function) destroy,
@@ -166,7 +166,7 @@ void destroy(void)
 static int xlog_fixup(void** param, int param_no)
 {
 	long level;
-	
+
 	if(param_no==1)
 	{
 		if(*param==NULL || strlen((char*)(*param))<3)
@@ -194,8 +194,8 @@ static int xlog_fixup(void** param, int param_no)
 
 	if(param_no==2)
 		return xdbg_fixup(param, 1);
-	
-	return 0;			
+
+	return 0;
 }
 
 static int xdbg_fixup(void** param, int param_no)
@@ -212,7 +212,7 @@ static int xdbg_fixup(void** param, int param_no)
 					(char*)(*param));
 				return E_UNSPEC;
 			}
-			
+
 			*param = (void*)model;
 			return 0;
 		}

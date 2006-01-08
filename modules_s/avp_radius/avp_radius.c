@@ -21,8 +21,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
@@ -89,15 +89,15 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"radius_config",       STR_PARAM, &radius_config      },
-	{"caller_service_type", INT_PARAM, &caller_service_type},
-	{"callee_service_type", INT_PARAM, &callee_service_type},
+	{"radius_config",       PARAM_STRING, &radius_config      },
+	{"caller_service_type", PARAM_INT,    &caller_service_type},
+	{"callee_service_type", PARAM_INT,    &callee_service_type},
 	{0, 0, 0}
-};	
+};
 
 
 struct module_exports exports = {
-	"avp_radius", 
+	"avp_radius",
 	cmds,      /* Exported commands */
 	0,         /* RPC methods */
 	params,    /* Exported parameters */
@@ -125,20 +125,20 @@ static int mod_init(void)
 
 	     /* open log */
 	rc_openlog("ser");
-	
+
 	     /* read config */
 	if ((rh = rc_read_config(radius_config)) == NULL) {
 		LOG(L_ERR, "avp_radius: Error opening radius config file: %s\n",
 		    radius_config);
 		return -1;
 	}
-	
+
 	     /* read dictionary */
 	if (rc_read_dictionary(rh, rc_conf_str(rh, "dictionary")) != 0) {
 		LOG(L_ERR, "avp_radius: Error reading radius dictionary\n");
 		return -1;
 	}
-	
+
 	INIT_AV(rh, attrs, vals, "avp", -1, -1);
 
 	if (caller_service_type != -1) {
@@ -156,7 +156,7 @@ static int mod_init(void)
 static inline void attr_name_value(VALUE_PAIR* vp, str* name, str* value)
 {
 	int i;
-	
+
 
 	for (i = 0; i < vp->lvalue; i++) {
 		if (vp->strvalue[i] == ':') {
@@ -187,11 +187,11 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 	struct hdr_field* h;
 	dig_cred_t* cred = 0;
 	int_str name, val;
-	
+
 	VALUE_PAIR* send, *received, *vp;
 	UINT4 service;
 	struct sip_uri puri;
-	
+
 	send = received = 0;
 	user_domain.s = 0;
 
@@ -221,12 +221,12 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 			return -1;
 		}
 
-		if (msg->parsed_uri.user.len == 0) {	
+		if (msg->parsed_uri.user.len == 0) {
 			LOG(L_ERR, "load_avp_user: Request-URI user is missing\n");
 			return -1;
 		}
-		
-		user = &msg->parsed_uri.user; 
+
+		user = &msg->parsed_uri.user;
 		domain = &msg->parsed_uri.host;
 		service = vals[V_SER_CALLEE_AVPS].v;
 		break;
@@ -248,7 +248,7 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 	default:
 		LOG(L_ERR, "load_avp_user: Unknown type\n");
 		return -1;
-		
+
 	}
 
 	user_domain.len = user->len + 1 + domain->len;
@@ -297,13 +297,13 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 
 			add_avp(AVP_TRACK_FROM | AVP_CLASS_USER | AVP_NAME_STR | AVP_VAL_STR, name, val);
 			DBG("avp_load_user: AVP '%.*s'='%.*s' has been added\n",
-			    name_str.len, ZSW(name_str.s), 
+			    name_str.len, ZSW(name_str.s),
 			    val.s.len, ZSW(val.s.s));
-			
+
 			pkg_free(name.s.s);
 			vp = vp->next;
 		}
-		
+
 		rc_avpair_free(received);
 		return 1;
 	} else {
@@ -328,7 +328,7 @@ static int load_avp_radius(struct sip_msg* msg, char* attr, char* _dummy)
 	case LOAD_CALLEE:
 		return load_avp_user(msg, &callee_prefix, LOAD_CALLEE);
 		break;
-		
+
 	case LOAD_DIGEST:
 		return load_avp_user(msg, &caller_prefix, LOAD_DIGEST);
 

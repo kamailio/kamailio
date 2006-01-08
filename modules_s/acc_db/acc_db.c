@@ -176,41 +176,41 @@ static cmd_export_t cmds[] = {
 
 
 static param_export_t params[] = {
-	{"early_media",		INT_PARAM, &early_media },
-	{"failed_transactions",	INT_PARAM, &failed_transactions },
-	{"report_ack",		INT_PARAM, &report_ack },
-	{"report_cancels",	INT_PARAM, &report_cancels },
-	{"log_flag",		INT_PARAM, &log_flag },
-	{"log_missed_flag",	INT_PARAM, &log_missed_flag },
-	{"log_fmt",		STR_PARAM, &log_fmt },
-        {"attrs",               STR_PARAM, &attrs },
-	{"db_url",              STR_PARAM, &db_url.s },
-	{"acc_table",           STR_PARAM, &acc_table.s },
-	{"mc_table",            STR_PARAM, &mc_table.s },
-	{"attrs_column",        STR_PARAM, &attrs_col.s },
-	{"callid_column",       STR_PARAM, &callid_col.s },
-	{"totag_column",        STR_PARAM, &totag_col.s },
-	{"from_column",         STR_PARAM, &from_col.s },
-	{"flags_column",        STR_PARAM, &flags_col.s },
-	{"iuri_column",         STR_PARAM, &iuri_col.s },
-	{"method_column",       STR_PARAM, &method_col.s },
-	{"cseq_column",         STR_PARAM, &cseq_col.s },
-	{"ouri_column",         STR_PARAM, &ouri_col.s },
-	{"fromtag_column",      STR_PARAM, &fromtag_col.s },
-	{"to_column",           STR_PARAM, &to_col.s },
-	{"diguser_column",      STR_PARAM, &diguser_col.s },
-	{"reqtimestamp_column", STR_PARAM, &reqtimestamp_col.s },
-	{"todid_column",        STR_PARAM, &todid_col.s },
-	{"fromuri_column",      STR_PARAM, &fromuri_col.s },
-	{"fromuid_column",      STR_PARAM, &fromuid_col.s },
-	{"fromdid_column",      STR_PARAM, &fromdid_col.s },
-	{"digrealm_column",     STR_PARAM, &digrealm_col.s },
-	{"status_column",       STR_PARAM, &status_col.s },
-	{"touri_column",        STR_PARAM, &touri_col.s },
-	{"touid_column",        STR_PARAM, &touid_col.s },
-	{"restimestamp_column", STR_PARAM, &restimestamp_col.s },
-	{"src_ip_column",       STR_PARAM, &src_ip_col.s },
-	{"src_port_column",     STR_PARAM, &src_port_col.s },
+	{"early_media",		PARAM_INT, &early_media },
+	{"failed_transactions",	PARAM_INT, &failed_transactions },
+	{"report_ack",		PARAM_INT, &report_ack },
+	{"report_cancels",	PARAM_INT, &report_cancels },
+	{"log_flag",		PARAM_INT, &log_flag },
+	{"log_missed_flag",	PARAM_INT, &log_missed_flag },
+	{"log_fmt",		PARAM_STRING, &log_fmt },
+        {"attrs",               PARAM_STRING, &attrs },
+	{"db_url",              PARAM_STR, &db_url },
+	{"acc_table",           PARAM_STR, &acc_table },
+	{"mc_table",            PARAM_STR, &mc_table },
+	{"attrs_column",        PARAM_STR, &attrs_col },
+	{"callid_column",       PARAM_STR, &callid_col },
+	{"totag_column",        PARAM_STR, &totag_col },
+	{"from_column",         PARAM_STR, &from_col },
+	{"flags_column",        PARAM_STR, &flags_col },
+	{"iuri_column",         PARAM_STR, &iuri_col },
+	{"method_column",       PARAM_STR, &method_col },
+	{"cseq_column",         PARAM_STR, &cseq_col },
+	{"ouri_column",         PARAM_STR, &ouri_col },
+	{"fromtag_column",      PARAM_STR, &fromtag_col },
+	{"to_column",           PARAM_STR, &to_col },
+	{"diguser_column",      PARAM_STR, &diguser_col },
+	{"reqtimestamp_column", PARAM_STR, &reqtimestamp_col },
+	{"todid_column",        PARAM_STR, &todid_col },
+	{"fromuri_column",      PARAM_STR, &fromuri_col },
+	{"fromuid_column",      PARAM_STR, &fromuid_col },
+	{"fromdid_column",      PARAM_STR, &fromdid_col },
+	{"digrealm_column",     PARAM_STR, &digrealm_col },
+	{"status_column",       PARAM_STR, &status_col },
+	{"touri_column",        PARAM_STR, &touri_col },
+	{"touid_column",        PARAM_STR, &touid_col },
+	{"restimestamp_column", PARAM_STR, &restimestamp_col },
+	{"src_ip_column",       PARAM_STR, &src_ip_col },
+	{"src_port_column",     PARAM_STR, &src_port_col },
 	{0, 0, 0}
 };
 
@@ -266,7 +266,7 @@ static int verify_fmt(char *fmt) {
  * transaction is marked for accounting
  */
 static inline int is_acc_on(struct sip_msg *rq)
-{   
+{
 	return log_flag && isflagset(rq, log_flag) == 1;
 }
 
@@ -376,7 +376,7 @@ static int init_data(char* fmt)
 			vals[db_n].type = DB_STR;
 			vals[db_n].nul = 0;
 			break;
-			
+
 		case 'c': /* callid */
 			keys[db_n] = callid_col.s;
 			vals[db_n].type = DB_STR;
@@ -394,13 +394,13 @@ static int init_data(char* fmt)
 			vals[db_n].type = DB_STR;
 			vals[db_n].nul = 0;
 			break;
-			
+
 		case 'g': /* flags */
 			keys[db_n] = flags_col.s;
 			vals[db_n].type = DB_INT;
 			vals[db_n].nul = 0;
 			break;
-			
+
 		case 'i': /* Inbound ruri */
 			keys[db_n] = iuri_col.s;
 			vals[db_n].type = DB_STR;
@@ -454,7 +454,7 @@ static int init_data(char* fmt)
 			vals[db_n].type = DB_DATETIME;
 			vals[db_n].nul = 0;
 			break;
-			
+
 		case 'D': /* to_did */
 			keys[db_n] = todid_col.s;
 			vals[db_n].type = DB_STR;
@@ -567,7 +567,7 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 				vals[cnt].nul = 1;
 			}
 			break;
-				  
+
 		case 'd': /* to_tag */
 			if (to && (pto = (struct to_body*)(to->parsed)) && pto->tag_value.len) {
 				vals[cnt].val.str_val = pto->tag_value;
@@ -575,7 +575,7 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 				vals[cnt].nul = 1;
 			}
 			break;
-			
+
 		case 'f': /* sip_from */
 			if (rq->from && rq->from->body.len) {
 				vals[cnt].val.str_val = rq->from->body;
@@ -613,7 +613,7 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 			vals[cnt].val.int_val = rq->rcv.src_ip.u.addr32[0];
 			break;
 			break;
-			
+
 		case 'r': /* from_tag */
 			if (rq->from && (from = get_from(rq)) && from->tag_value.len) {
 				vals[cnt].val.str_val = from->tag_value;
@@ -720,12 +720,12 @@ int log_request(struct sip_msg *rq, struct hdr_field *to, char *table, unsigned 
 		LOG(L_ERR, "ERROR:acc:log_request:Error in use_table\n");
 		return -1;
 	}
-	
+
 	if (acc_dbf.insert(db_handle, keys, vals, cnt) < 0) {
 		LOG(L_ERR, "ERROR:acc:log_request:acc_request: Error while inserting to database\n");
 		return -1;
 	}
-	
+
 	return 1;
 }
 
@@ -742,7 +742,7 @@ static void log_ack(struct cell* t , struct sip_msg *ack, time_t req_time)
 	struct hdr_field *to;
 
 	rq = t->uas.request;
-	if (ack->to) to = ack->to; 
+	if (ack->to) to = ack->to;
 	else to = rq->to;
 	log_request(ack, to, acc_table.s, t->uas.status, req_time);
 }
@@ -799,7 +799,7 @@ static void replyout_handler(struct cell* t, int type, struct tmcb_params* ps)
 		DBG("DBG:acc:replyout_handler: No uas.request, local transaction, skipping\n");
 		return;
 	}
-	
+
 	     /* acc_onreply is bound to TMCB_REPLY which may be called
 	      * from _reply, like when FR hits; we should not miss this
 	      * event for missed calls either
@@ -818,10 +818,10 @@ static void replyin_handler(struct cell *t, int type, struct tmcb_params* ps)
 		LOG(L_ERR, "ERROR:acc:replyin_handler:replyin_handler: 0 request\n");
 		return;
 	}
-	
+
 	     /* don't parse replies in which we are not interested */
 	     /* missed calls enabled ? */
-	if (((is_invite(t) && ps->code >= 300 && is_mc_on(t->uas.request)) 
+	if (((is_invite(t) && ps->code >= 300 && is_mc_on(t->uas.request))
 	     || should_acc_reply(t, ps->code))
 	    && (ps->rpl && ps->rpl != FAKED_REPLY)) {
 		parse_headers(ps->rpl, HDR_TO_F, 0);
@@ -858,7 +858,7 @@ static void on_req(struct cell* t, int type, struct tmcb_params *ps)
 			LOG(L_ERR, "ERROR:acc:on_req: Error while registering TMCB_RESPONSE_IN callback\n");
 			return;
 		}
-		
+
 		     /* do some parsing in advance */
 		preparse_req(ps->req);
 		     /* also, if that is INVITE, disallow silent t-drop */
@@ -904,7 +904,7 @@ static int mod_init(void)
 	     /* let the auto-loading function load all TM stuff */
 	if (load_tm( &tmb )==-1) return -1;
 	if (verify_fmt(log_fmt)==-1) return -1;
-	
+
 	     /* register callbacks*/
 	     /* listen for all incoming requests  */
 	if (tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, on_req, 0 ) <= 0) {
@@ -912,7 +912,7 @@ static int mod_init(void)
 		    "callback\n");
 		return -1;
 	}
-	
+
 	if (regcomp(&attrs_re, attrs, REG_EXTENDED | REG_ICASE)) {
 		LOG(L_ERR, "ERROR: acc: Cannot compile AVP regular expression\n");
 		return -1;
@@ -922,7 +922,7 @@ static int mod_init(void)
 		LOG(L_ERR, "ERROR:acc:mod_init: bind_db failed\n");
 		return -1;
 	}
-	
+
 	     /* Check database capabilities */
 	if (!DB_CAPABILITY(acc_dbf, DB_CAP_INSERT)) {
 		LOG(L_ERR, "ERROR:acc:mod_init: Database module does not implement insert function\n");
@@ -930,34 +930,6 @@ static int mod_init(void)
 	}
 
 	init_data(log_fmt);
-
-	db_url.len = strlen(db_url.s);
-	acc_table.len = strlen(acc_table.s);
-	mc_table.len = strlen(mc_table.s);
-	attrs_col.len = strlen(attrs_col.s);
-	callid_col.len = strlen(callid_col.s);
-	totag_col.len = strlen(totag_col.s);
-	from_col.len = strlen(from_col.s);
-	flags_col.len = strlen(flags_col.s);
-	iuri_col.len = strlen(iuri_col.s);
-	method_col.len = strlen(method_col.s);
-	cseq_col.len = strlen(cseq_col.s);
-	ouri_col.len = strlen(ouri_col.s);
-	fromtag_col.len = strlen(fromtag_col.s);
-	to_col.len = strlen(to_col.s);
-	diguser_col.len = strlen(diguser_col.s);
-	reqtimestamp_col.len = strlen(reqtimestamp_col.s);
-	todid_col.len = strlen(todid_col.s);
-	fromuri_col.len = strlen(fromuri_col.s);
-	fromuid_col.len = strlen(fromuid_col.s);
-	fromdid_col.len = strlen(fromdid_col.s);
-	digrealm_col.len = strlen(digrealm_col.s);
-	status_col.len = strlen(status_col.s);
-	touri_col.len = strlen(touri_col.s);
-	touid_col.len = strlen(touid_col.s);
-	restimestamp_col.len = strlen(restimestamp_col.s);
-	src_ip_col.len = strlen(src_ip_col.s);
-	src_port_col.len = strlen(src_port_col.s);
 
 	return 0;
 }

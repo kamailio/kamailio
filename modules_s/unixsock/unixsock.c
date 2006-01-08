@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
@@ -51,18 +51,18 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"socket",       STR_PARAM, &unixsock_name      },
-	{"children",     INT_PARAM, &unixsock_children  },
-	{"send_timeout", INT_PARAM, &unixsock_tx_timeout},
-	{"socket_user",  INT_PARAM, &unixsock_user      },
-	{"socket_mode",  INT_PARAM, &unixsock_mode      },
-	{"socket_group", INT_PARAM, &unixsock_group     },
+	{"socket",       PARAM_STRING, &unixsock_name      },
+	{"children",     PARAM_INT,    &unixsock_children  },
+	{"send_timeout", PARAM_INT,    &unixsock_tx_timeout},
+	{"socket_user",  PARAM_STRING, &unixsock_user      },
+	{"socket_mode",  PARAM_STRING, &unixsock_mode      },
+	{"socket_group", PARAM_STRING, &unixsock_group     },
 	{0, 0, 0}
 };
 
 
 struct module_exports exports = {
-	"unixsock", 
+	"unixsock",
 	cmds,           /* Exported commands */
 	0,              /* Exported RPC methods */
 	params,         /* Exported parameters */

@@ -1,4 +1,4 @@
-/* 
+/*
  * Least Cost Routing module (also implements sequential forking)
  *
  * Copyright (C) 2005 Juha Heinanen
@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -189,24 +189,24 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",                   STR_PARAM, &db_url.s       },
-	{"gw_table",                 STR_PARAM, &gw_table.s     },
-	{"gw_name_column",           STR_PARAM, &gw_name_col.s  },
-	{"ip_addr_column",           STR_PARAM, &ip_addr_col.s  },
-	{"port_column",              STR_PARAM, &port_col.s     },
-	{"uri_scheme_column",        STR_PARAM, &uri_scheme_col.s },
-	{"transport_column",         STR_PARAM, &transport_col.s },
-	{"grp_id_column",            STR_PARAM, &grp_id_col.s   },
-	{"lcr_table",                STR_PARAM, &lcr_table.s    },
-	{"prefix_column",            STR_PARAM, &prefix_col.s   },
-	{"from_uri_column",          STR_PARAM, &from_uri_col.s },
-	{"priority_column",          STR_PARAM, &priority_col.s },
-	{"gw_uri_avp",               STR_PARAM, &gw_uri_avp.s },
-	{"contact_avp",              STR_PARAM, &contact_avp.s  },
-        {"fr_inv_timer_avp",         STR_PARAM, &inv_timer_avp.s  },
-        {"fr_inv_timer",             INT_PARAM, &inv_timer      },
-        {"fr_inv_timer_next",        INT_PARAM, &inv_timer_next },
-	{"rpid_avp",                 STR_PARAM, &rpid_avp.s     },
+	{"db_url",                   PARAM_STR, &db_url       },
+	{"gw_table",                 PARAM_STR, &gw_table     },
+	{"gw_name_column",           PARAM_STR, &gw_name_col  },
+	{"ip_addr_column",           PARAM_STR, &ip_addr_col  },
+	{"port_column",              PARAM_STR, &port_col     },
+	{"uri_scheme_column",        PARAM_STR, &uri_scheme_col },
+	{"transport_column",         PARAM_STR, &transport_col },
+	{"grp_id_column",            PARAM_STR, &grp_id_col   },
+	{"lcr_table",                PARAM_STR, &lcr_table    },
+	{"prefix_column",            PARAM_STR, &prefix_col   },
+	{"from_uri_column",          PARAM_STR, &from_uri_col },
+	{"priority_column",          PARAM_STR, &priority_col },
+	{"gw_uri_avp",               PARAM_STR, &gw_uri_avp },
+	{"contact_avp",              PARAM_STR, &contact_avp  },
+        {"fr_inv_timer_avp",         PARAM_STR, &inv_timer_avp  },
+        {"fr_inv_timer",             PARAM_INT, &inv_timer      },
+        {"fr_inv_timer_next",        PARAM_INT, &inv_timer_next },
+	{"rpid_avp",                 PARAM_STR, &rpid_avp     },
 	{0, 0, 0}
 };
 
@@ -215,7 +215,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"lcr", 
+	"lcr",
 	cmds,      /* Exported functions */
 	lcr_rpc,   /* RPC methods */
 	params,    /* Exported parameters */
@@ -308,7 +308,7 @@ static int child_init(int rank)
 		    " Unable to connect to the database\n");
 		return -1;
 	}
-      
+
 	return 0;
 }
 
@@ -338,24 +338,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/* Update length of module variables */
-	db_url.len = strlen(db_url.s);
-        gw_table.len = strlen(gw_table.s);
-	gw_name_col.len = strlen(gw_name_col.s);
-	ip_addr_col.len = strlen(ip_addr_col.s);
-	port_col.len = strlen(port_col.s);
-	uri_scheme_col.len = strlen(uri_scheme_col.s);
-	transport_col.len = strlen(transport_col.s);
-        grp_id_col.len = strlen(grp_id_col.s);
-        lcr_table.len = strlen(lcr_table.s);
-	prefix_col.len = strlen(prefix_col.s);
-	from_uri_col.len = strlen(from_uri_col.s);
-        priority_col.len = strlen(priority_col.s);
-	gw_uri_avp.len = strlen(gw_uri_avp.s);
-	contact_avp.len = strlen(contact_avp.s);
-	inv_timer_avp.len = strlen(inv_timer_avp.s);
-	rpid_avp.len = strlen(rpid_avp.s);
-
 	/* Check table version */
 	ver = lcr_db_ver(db_url.s, &gw_table);
 	if (ver < 0) {
@@ -366,7 +348,7 @@ static int mod_init(void)
 		LOG(L_ERR, "ERROR: lcr:mod_init(): Invalid table version"
 				" of gw table\n");
 		goto err;
-	}		
+	}
 
 	/* Check table version */
 	ver = lcr_db_ver(db_url.s, &lcr_table);
@@ -378,8 +360,8 @@ static int mod_init(void)
 		LOG(L_ERR, "ERROR: lcr:mod_init(): Invalid table version of"
 				" lcr table (use ser_mysql.sh reinstall)\n");
 		goto err;
-	}		
-	
+	}
+
 	/* Initializing gw tables and gw table pointer variable */
 	gws_1 = (struct gw_info *)shm_malloc(sizeof(struct gw_info) * (MAX_NO_OF_GWS + 1));
 	if (gws_1 == 0) {
@@ -493,7 +475,7 @@ int reload_gws ( void )
 	    lcr_dbf.close(dbh);
 	    return -1;
     }
-    
+
     for (i = 0; i < RES_ROW_N(res); i++) {
 	row = RES_ROWS(res) + i;
 	if (VAL_NULL(ROW_VALUES(row)) == 1) {
@@ -556,7 +538,7 @@ int reload_gws ( void )
 		gws_2[i].scheme = scheme;
 		gws_2[i].transport = transport;
 		gws_2[i].prefix_len = prefix_len;
-		if (prefix_len) 
+		if (prefix_len)
 		    memcpy(&(gws_2[i].prefix[0]), prefix, prefix_len);
 	} else {
 		gws_1[i].ip_addr = ip_addr;
@@ -564,11 +546,11 @@ int reload_gws ( void )
 		gws_1[i].scheme = scheme;
 		gws_1[i].transport = transport;
 		gws_1[i].prefix_len = prefix_len;
-		if (prefix_len) 
+		if (prefix_len)
 		    memcpy(&(gws_1[i].prefix[0]), prefix, prefix_len);
 	}
     }
-    
+
     lcr_dbf.free_result(dbh, res);
     lcr_dbf.close(dbh);
 
@@ -579,7 +561,7 @@ int reload_gws ( void )
 	    gws_1[i].ip_addr = 0;
 	    *gws = gws_1;
     }
-    
+
     return 1;
 }
 
@@ -631,7 +613,7 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 	}
 	from_uri = get_from(_m)->uri;
     }
-    
+
     q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s FROM %.*s, %.*s WHERE '%.*s' LIKE %.*s.%.*s AND '%.*s' LIKE CONCAT(%.*s.%.*s, '%%') AND %.*s.%.*s = %.*s.%.*s ORDER BY CHAR_LENGTH(%.*s.%.*s), %.*s.%.*s DESC, RAND()",
 		     gw_table.len, gw_table.s, ip_addr_col.len, ip_addr_col.s,
 		     gw_table.len, gw_table.s, port_col.len, port_col.s,
@@ -746,14 +728,14 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
     }
 
     lcr_dbf.free_result(db_handle, res);
-	    
+
     return 1;
 }
 
 
 /*
  * If called from route block, rewrites host:port part of R-URI with the
- * first lcr_gw_addr:lcr_gw_port AVP values, which are then destroyed. 
+ * first lcr_gw_addr:lcr_gw_port AVP values, which are then destroyed.
  * If called from failure route block, appends a new branch to request,
  * where host:port part of its R-URI is replaced by the first
  * lcr_gw_addr:lcr_gw_port AVP value, which is then destroyed.
@@ -770,7 +752,7 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     if (!avp) return -1;
 
     if (*(tmb.route_mode) == MODE_REQUEST) {
-	
+
 	act.type = SET_URI_T;
 	act.p1_type = STRING_ST;
 	act.p1.string = val.s.s;
@@ -798,7 +780,7 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	}
 
 	return 1;
-    }	    
+    }
 }
 
 
@@ -844,7 +826,7 @@ int to_gw(struct sip_msg* _m, char* _s1, char* _s2)
     }
     memcpy(host, _m->parsed_uri.host.s, _m->parsed_uri.host.len);
     host[_m->parsed_uri.host.len] = 0;
-    
+
     if (!inet_aton(host, &addr)) {
 	return -1;
     }
@@ -862,7 +844,7 @@ int to_gw(struct sip_msg* _m, char* _s1, char* _s2)
 }
 
 
-/* 
+/*
  * Frees contact list used by load_contacts function
  */
 static inline void free_contact_list(struct contact *curr) {
@@ -875,14 +857,14 @@ static inline void free_contact_list(struct contact *curr) {
 }
 
 
-/* 
+/*
  * Loads contacts in destination set into "lcr_contact" AVP in reverse
  * priority order and associated each contact with Q_FLAG telling if
  * contact is the last one in its priority class.  Finally, removes
  * all branches from destination set.
  */
 int load_contacts(struct sip_msg* msg, char* key, char* value)
-{	
+{
     	str branch, *ruri;
 	qvalue_t q, ruri_q;
 	struct contact *contacts, *next, *prev, *curr;
@@ -949,7 +931,7 @@ rest:
 		} else {
 		    contacts = next;
 		}
-	    }		    
+	    }
 	}
 
 	/* Assign values for q_flags */
@@ -971,7 +953,7 @@ rest:
 	    add_avp(contact_avp_name_str|AVP_VAL_STR|(curr->q_flag),
 		    contact_name, val);
 	    DBG("load_contacts(): DEBUG: Loaded <%s>, q_flag <%d>\n",
-		val.s.s, curr->q_flag);	    
+		val.s.s, curr->q_flag);
 	    curr = curr->next;
 	}
 
@@ -999,9 +981,9 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
     int_str val;
     struct action act;
     int rval;
-	
+
     if (*(tmb.route_mode) == MODE_REQUEST) {
-	
+
 	/* Find first lcr_contact_avp value */
 	avp = search_first_avp(contact_avp_name_str, contact_name, &val, &st);
 	if (!avp) {
@@ -1029,7 +1011,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 	    }
 	    return 1;
 	}
-	    
+
 	/* Append branches until out of branches or Q_FLAG is set */
 	prev = avp;
 	while ((avp = search_next_avp(&st, &val))) {
@@ -1059,7 +1041,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 	}
 
     } else { /* MODE_ONFAILURE */
-	
+
 	avp = search_first_avp(contact_avp_name_str, contact_name, &val, &st);
 	if (!avp) return -1;
 

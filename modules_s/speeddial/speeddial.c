@@ -22,11 +22,11 @@
  * For any questions about this software and its license, please contact
  * Voice Sistem at following e-mail address:
  *         office@voice-sistem.ro
- *  
+ *
  *
  * History:
  * ---------
- * 
+ *
  */
 
 
@@ -80,18 +80,18 @@ static cmd_export_t cmds[] = {
 
 /* Exported parameters */
 static param_export_t params[] = {
-	{"db_url",               STR_PARAM, &db_url               },
-	{"uid_column",           STR_PARAM, &uid_column           },
-	{"dial_username_column", STR_PARAM, &dial_username_column },
-	{"dial_did_column",      STR_PARAM, &dial_did_column      },
-	{"new_uri_column",       STR_PARAM, &new_uri_column       },
+	{"db_url",               PARAM_STRING, &db_url               },
+	{"uid_column",           PARAM_STRING, &uid_column           },
+	{"dial_username_column", PARAM_STRING, &dial_username_column },
+	{"dial_did_column",      PARAM_STRING, &dial_did_column      },
+	{"new_uri_column",       PARAM_STRING, &new_uri_column       },
 	{0, 0, 0}
 };
 
 
 /* Module interface */
 struct module_exports exports = {
-	"speeddial", 
+	"speeddial",
 	cmds,       /* Exported functions */
 	0,          /* RPC params */
 	params,     /* Exported parameters */
@@ -138,12 +138,12 @@ static int mod_init(void)
 			"provide all functions needed by SPEEDDIAL module\n");
 		return -1;
 	}
-	
+
 	/**
 	 * We will need sl_send_reply from stateless
 	 * module for sending replies
 	 */
-	
+
 	sl_reply = find_export("sl_send_reply", 2, 0);
 	if (!sl_reply)
 	{

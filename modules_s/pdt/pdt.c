@@ -26,7 +26,7 @@
  *
  * History:
  * -------
- * 2003-04-07: a structure for both hashes introduced (ramona) 
+ * 2003-04-07: a structure for both hashes introduced (ramona)
  * 2003-04-06: db connection closed in mod_init (janakj)
  * 2004-06-07: updated to the new DB api (andrei)
  * 2005-01-26: removed terminating code (ramona)
@@ -110,14 +110,14 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"db_url",        STR_PARAM, &db_url},
-	{"db_table",      STR_PARAM, &db_table},
-	{"prefix_column", STR_PARAM, &prefix_column},
-	{"domain_column", STR_PARAM, &domain_column},
-	{"prefix",        STR_PARAM, &prefix.s},
-	{"hsize_2pow",    INT_PARAM, &hs_two_pow},
-	{"sync_time",     INT_PARAM, &sync_time},
-	{"clean_time",    INT_PARAM, &clean_time},
+	{"db_url",        PARAM_STRING, &db_url},
+	{"db_table",      PARAM_STRING, &db_table},
+	{"prefix_column", PARAM_STRING, &prefix_column},
+	{"domain_column", PARAM_STRING, &domain_column},
+	{"prefix",        PARAM_STR,    &prefix},
+	{"hsize_2pow",    PARAM_INT,    &hs_two_pow},
+	{"sync_time",     PARAM_INT,    &sync_time},
+	{"clean_time",    PARAM_INT,    &clean_time},
 	{0, 0, 0}
 };
 
@@ -126,13 +126,13 @@ struct module_exports exports = {
 	cmds,
 	pdt_rpc,         /* RPC methods */
 	params,
-	
+
 	mod_init,		/* module initialization function */
 	0,				/* response function */
 	mod_destroy,	/* destroy function */
 	0,				/* oncancel function */
 	child_init		/* per child init function */
-};	
+};
 
 
 
@@ -151,7 +151,7 @@ static int mod_init(void)
 	}
 
 	prefix.len = strlen(prefix.s);
-	
+
 	/* binding to mysql module */
 	if(bind_dbmod(db_url, &pdt_dbf))
 	{
@@ -171,37 +171,37 @@ static int mod_init(void)
 	if(db_con==NULL)
 	{
 		LOG(L_ERR,
-			"PDT: mod_init: Error while connecting to database\n");        
+			"PDT: mod_init: Error while connecting to database\n");
 		return -1;
 	}
-	
+
 	if (pdt_dbf.use_table(db_con, db_table) < 0)
 	{
 		LOG(L_ERR, "PDT: mod_init: Error in use_table\n");
 		goto error1;
 	}
 	DBG("PDT: mod_init: Database connection opened successfully\n");
-	
+
 	/* init the hash and tree in share memory */
 	if( (_dhash = pdt_init_hash(hs_two_pow)) == NULL)
 	{
-		LOG(L_ERR, "PDT:mod_init: domain hash could not be allocated\n");	
+		LOG(L_ERR, "PDT:mod_init: domain hash could not be allocated\n");
 		goto error1;
 	}
-	
+
 	if( (_ptree = pdt_init_tree()) == NULL)
 	{
-		LOG(L_ERR, "PDT:mod_init: prefix tree could not be allocated\n");	
+		LOG(L_ERR, "PDT:mod_init: prefix tree could not be allocated\n");
 		goto error2;
 	}
-	
+
 	/* loading all information from database */
 	if(pdt_load_db()!=0)
 	{
-		LOG(L_ERR, "PDT:mod_init: cannot load info from database\n");	
+		LOG(L_ERR, "PDT:mod_init: cannot load info from database\n");
 		goto error3;
 	}
-		
+
 	pdt_dbf.close(db_con);
 	db_con = 0;
 
@@ -235,7 +235,7 @@ error1:
 		db_con = 0;
 	}
 	return -1;
-}	
+}
 
 /* each child get a new connection to the database */
 static int child_init(int r)
@@ -249,7 +249,7 @@ static int child_init(int r)
 			LOG(L_ERR,"PDT:child_init #%d: ERROR no domain hash\n", r);
 			return -1;
 		}
-	
+
 		lock_get(&_dhash->diff_lock);
 		_dhash->workers++;
 		lock_release(&_dhash->diff_lock);
@@ -260,14 +260,14 @@ static int child_init(int r)
 			_ptree = 0;
 		}
 	}
-	
+
 	db_con = pdt_dbf.init(db_url);
 	if(db_con==NULL)
 	{
 	  LOG(L_ERR,"PDT:child_init #%d: Error while connecting database\n",r);
 	  return -1;
 	}
-	
+
 	if (pdt_dbf.use_table(db_con, db_table) < 0)
 	{
 		LOG(L_ERR, "PDT:child_init #%d: Error in use_table\n", r);
@@ -278,7 +278,7 @@ static int child_init(int r)
 	sync_time += r%60;
 
 	DBG("PDT:child_init #%d: Database connection opened successfully\n",r);
-	
+
 	return 0;
 }
 
@@ -315,13 +315,13 @@ static int prefix2domain(struct sip_msg* msg, int mode)
 	str *d;
 	time_t crt_time;
 	int plen;
-	
+
 	if(msg==NULL)
 	{
 		LOG(L_ERR,"PDT:prefix2domain: weird error\n");
 		return -1;
 	}
-	
+
 	/* parse the uri, if not yet */
 	if(msg->parsed_uri_ok==0)
 		if(parse_sip_msg_uri(msg)<0)
@@ -336,13 +336,13 @@ static int prefix2domain(struct sip_msg* msg, int mode)
 		DBG("PDT:prefix2domain: user part of the message is empty\n");
 		return 1;
 	}
-	
+
 	if(prefix.len>0 && prefix.len < msg->parsed_uri.user.len
 			&& strncasecmp(prefix.s, msg->parsed_uri.user.s, prefix.len)!=0)
 	{
 		DBG("PDT:prefix2domain: PSTN prefix did not matched\n");
 		return 1;
-			
+
 	}
 
 	p.s   = msg->parsed_uri.user.s + prefix.len;
@@ -368,7 +368,7 @@ static int prefix2domain(struct sip_msg* msg, int mode)
 				p.len, p.s);
 		return -1;
 	}
-	
+
 	/* update the new uri */
 	if(update_new_uri(msg, plen, d, mode)<0)
 	{
@@ -387,7 +387,7 @@ int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 		LOG(L_ERR, "PDT:update_new_uri: bad parameters\n");
 		return -1;
 	}
-	
+
 	if(mode==0 || (mode==1 && prefix.len>0))
 	{
 		act.type = STRIP_T;
@@ -404,7 +404,7 @@ int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 			return -1;
 		}
 	}
-	
+
 	act.type = SET_HOSTPORT_T;
 	act.p1_type = STRING_ST;
 	act.p1.string = d->s;
@@ -416,9 +416,9 @@ int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 		return -1;
 	}
 
-	DBG("PDT: update_new_uri: len=%d uri=%.*s\n", msg->new_uri.len, 
+	DBG("PDT: update_new_uri: len=%d uri=%.*s\n", msg->new_uri.len,
 			msg->new_uri.len, msg->new_uri.s);
-	
+
 	return 0;
 }
 
@@ -428,20 +428,20 @@ int pdt_load_db()
 	str p, d;
 	db_res_t* db_res = NULL;
 	int i;
-	
-	
+
+
 	if(db_con==NULL)
 	{
 		LOG(L_ERR, "PDT:pdt_load_db: no db connection\n");
 		return -1;
 	}
-		
+
 	if (pdt_dbf.use_table(db_con, db_table) < 0)
 	{
 		LOG(L_ERR, "PDT:pdt_load_db: Error in use_table\n");
 		return -1;
 	}
-	
+
 	if(pdt_dbf.query(db_con, NULL, NULL, NULL, db_cols,
 				0, 2, prefix_column, &db_res)==0)
 	{
@@ -450,16 +450,16 @@ int pdt_load_db()
 			/* check for NULL values ?!?! */
 			p.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
 			p.len = strlen(p.s);
-			
+
 			d.s = (char*)(RES_ROWS(db_res)[i].values[1].val.string_val);
 			d.len = strlen(d.s);
-			
+
 			if(p.s==NULL || d.s==NULL || p.len<=0 || d.len<=0)
 			{
 				LOG(L_ERR, "PDT:pdt_load_db: Error - bad values in db\n");
 				goto error;
 			}
-		
+
 			if(pdt_check_pd(_dhash, &p, &d)!=0)
 			{
 				LOG(L_ERR,
@@ -473,7 +473,7 @@ int pdt_load_db()
 				LOG(L_ERR, "PDT:pdt_load_db: Error adding info in tree\n");
 				goto error;
 			}
-			
+
 			if(pdt_add_to_hash(_dhash, &p, &d)!=0)
 			{
 				LOG(L_ERR, "PDT:pdt_load_db: Error adding info in hash\n");
@@ -481,7 +481,7 @@ int pdt_load_db()
 			}
  		}
 	}
-	
+
 	pdt_dbf.free_result(db_con, db_res);
 	return 0;
 
@@ -493,7 +493,7 @@ error:
 int pdt_sync_cache()
 {
 	pd_op_t *ito;
-	
+
 	DBG("PDT:pdt_sync_cache: ...\n");
 
 	if(_dhash==NULL || _ptree==NULL)
@@ -501,17 +501,17 @@ int pdt_sync_cache()
 		LOG(L_ERR, "PDT:pdt_sync_cache: strange situation\n");
 		return -1;
 	}
-	
+
 	lock_get(&_dhash->diff_lock);
 
 	if(_ptree->idsync >= _dhash->max_id)
 		goto done;
-	
+
 	ito = _dhash->diff;
-	
+
 	while(ito!=NULL && _ptree->idsync >= ito->id)
 		ito = ito->n;
-	
+
 	while(ito!=NULL)
 	{
 		DBG("PDT:pdt_sync_cache: sync op[%d]=%d...\n",
@@ -555,17 +555,17 @@ void pdt_clean_cache(unsigned int ticks, void *param)
 	pd_op_t *ito, *tmp;
 
 	/* DBG("PDT:pdt_clean_cache: ...\n"); */
-	
+
 	if(_dhash==NULL)
 	{
 		LOG(L_ERR, "PDT:pdt_clean_cache: strange situation\n");
 		return;
 	}
-	
+
 	lock_get(&_dhash->diff_lock);
 
 	ito = _dhash->diff;
-	
+
 	while(ito!=NULL)
 	{
 		if(ito->count >= _dhash->workers)
@@ -585,7 +585,7 @@ void pdt_clean_cache(unsigned int ticks, void *param)
 		} else
 			ito = ito->n;
 	}
-	
+
 	lock_release(&_dhash->diff_lock);
 	return;
 }
@@ -602,18 +602,18 @@ static void rpc_add(rpc_t* rpc, void* c)
 	db_key_t db_keys[NR_KEYS] = {prefix_column, domain_column};
 	db_val_t db_vals[NR_KEYS];
 	db_op_t  db_ops[NR_KEYS] = {OP_EQ, OP_EQ};
-	
+
 	pd_t* cell;
 	pd_op_t *ito, *tmp;
 	str sd, sp;
 	char* t;
-	
+
 	if(_dhash==NULL) {
 		LOG(L_ERR, "PDT:pdt_fifo_add: strange situation\n");
 		rpc->fault(c, 500, "Server Error");
 		return;
 	}
-	
+
 	     /* Use 's' to make sure strings are zero terminated */
 	if (rpc->scan(c, "ss", &sp.s, &sd.s) < 2) {
 		rpc->fault(c, 400, "Invalid Parameter Value");
@@ -621,7 +621,7 @@ static void rpc_add(rpc_t* rpc, void* c)
 	}
 	sp.len = strlen(sp.s);
 	sd.len = strlen(sd.s);
-	
+
 	t = sp.s;
 	while(t!=NULL && *t!='\0') {
 		if(*t < '0' || *t > '9') {
@@ -631,30 +631,30 @@ static void rpc_add(rpc_t* rpc, void* c)
 		}
 		t++;
 	}
-	
+
 	if(pdt_check_pd(_dhash, &sp, &sd)!=0) {
 		LOG(L_ERR, "PDT:pdt_fifo_add: prefix or domain exists\n");
 		rpc->fault(c, 400, "Prefix Or Domain Exists");
 		return;
 	}
-	
+
 	db_vals[0].type = DB_STR;
 	db_vals[0].nul = 0;
 	db_vals[0].val.str_val = sp;
-	
+
 	db_vals[1].type = DB_STR;
 	db_vals[1].nul = 0;
 	db_vals[1].val.str_val= sd;
-	
+
 	DBG("PDT:pdt_fifo_add: [%.*s] <%.*s>\n", sp.len, sp.s, sd.len, sd.s);
-	
+
 	     /* insert a new domain into database */
 	if(pdt_dbf.insert(db_con, db_keys, db_vals, NR_KEYS)<0) {
 		LOG(L_ERR, "PDT:pdt_fifo_add: error storing new prefix/domain\n");
 		rpc->fault(c, 430, "Cannot Store Prefix/domain");
 		return;
 	}
-	
+
 	     /* insert the new domain into hashtables, too */
 	cell = new_cell(&sp, &sd);
 	if(cell==NULL) {
@@ -668,15 +668,15 @@ static void rpc_add(rpc_t* rpc, void* c)
 		rpc->fault(c, 431, "Out Of Shared Memory");
 		goto error2;
 	}
-	
+
 	lock_get(&_dhash->diff_lock);
-	
+
 	if(pdt_add_to_hash(_dhash, &sp, &sd)!=0) {
 		LOG(L_ERR, "PDT:pdt_fifo_add: could not add to cache\n");
 		rpc->fault(c, 431, "Could Not Add To Cache");
 		goto error3;
 	}
-	
+
 	_dhash->max_id++;
 	tmp->id = _dhash->max_id;
 	if(_dhash->diff==NULL) {
@@ -686,15 +686,15 @@ static void rpc_add(rpc_t* rpc, void* c)
 	ito = _dhash->diff;
 	while(ito->n!=NULL)
 		ito = ito->n;
-	
+
 	ito->n = tmp;
 	tmp->p = ito;
-	
+
  done:
 	DBG("PDT:pdt_fifo_add: op[%d]=%d...\n", tmp->id, tmp->op);
 	lock_release(&_dhash->diff_lock);
 	return;
-	
+
  error3:
 	lock_release(&_dhash->diff_lock);
 	free_pd_op(tmp);
@@ -722,13 +722,13 @@ static void rpc_delete(rpc_t* rpc, void* c)
 	db_key_t db_keys[1] = {domain_column};
 	db_val_t db_vals[1];
 	db_op_t  db_ops[1] = {OP_EQ};
-	
+
 	if(_dhash==NULL) {
 		LOG(L_ERR, "PDT:pdt_fifo_delete: strange situation\n");
 		rpc->fault(c, 500, "Server Error");
 		return;
 	}
-	
+
 	     /* Use s to make sure the string is zero terminated */
 	if (rpc->scan(c, "s", &sd.s) < 1) {
 		rpc->fault(c, 400, "Parameter Missing");
@@ -741,14 +741,14 @@ static void rpc_delete(rpc_t* rpc, void* c)
 		rpc->fault(c, 400, "Empty Parameter");
 		return;
 	}
-	
+
 	dhash = pdt_compute_hash(sd.s);
 	hash_entry = get_hash_entry(dhash, _dhash->hash_size);
-	
+
 	lock_get(&_dhash->diff_lock);
-	
+
 	lock_get(&_dhash->dhash[hash_entry].lock);
-	
+
 	it = _dhash->dhash[hash_entry].e;
 	while(it!=NULL && it->dhash<=dhash) {
 		if(it->dhash==dhash && it->domain.len==sd.len
@@ -756,7 +756,7 @@ static void rpc_delete(rpc_t* rpc, void* c)
 			break;
 		it = it->n;
 	}
-	
+
 	if(it!=NULL) {
 		if(it->p!=NULL)
 			(it->p)->n = it->n;
@@ -766,7 +766,7 @@ static void rpc_delete(rpc_t* rpc, void* c)
 			(it->n)->p = it->p;
 	}
 	lock_release(&_dhash->dhash[hash_entry].lock);
-	
+
 	if(it!=NULL) {
 		tmp = new_pd_op(it, 0, PDT_DELETE);
 		if(tmp==NULL) {
@@ -775,7 +775,7 @@ static void rpc_delete(rpc_t* rpc, void* c)
 			lock_release(&_dhash->diff_lock);
 			return;
 		}
-		
+
 		_dhash->max_id++;
 		tmp->id = _dhash->max_id;
 		if(_dhash->diff==NULL) {
@@ -786,7 +786,7 @@ static void rpc_delete(rpc_t* rpc, void* c)
 		ito = _dhash->diff;
 		while(ito->n!=NULL)
 			ito = ito->n;
-		
+
 		ito->n = tmp;
 		tmp->p = ito;
 		DBG("PDT:pdt_fifo_delete: op[%d]=%d...\n", tmp->id, tmp->op);
@@ -794,7 +794,7 @@ static void rpc_delete(rpc_t* rpc, void* c)
 	} else {
 		dhash = 0;
 	}
-	
+
  done:
 	lock_release(&_dhash->diff_lock);
 	if(dhash==0) {
@@ -841,20 +841,20 @@ static void rpc_list(rpc_t* rpc, void* c)
 	pd_t *it;
 	int i;
 	char* buf1, *buf2, *t;
-	
+
 	if(_dhash==NULL) {
 		LOG(L_ERR, "PDT:pdt_fifo_list: strange situation\n");
 		rpc->fault(c, 500, "Server Error");
 		return;
 	}
-	
+
 	if (rpc->scan(c, "ss", &sp.s, &sd.s) < 2) {
 		rpc->fault(c, 400, "Invalid parameter value");
 		return;
 	}
 	sp.len = strlen(sp.s);
 	sd.len = strlen(sd.s);
-	
+
 	t = sp.s;
 	if(*t!='\0' && *t!='.') {
 		while(t!=NULL && *t!='\0') {
@@ -869,17 +869,17 @@ static void rpc_list(rpc_t* rpc, void* c)
 		sp.s   = NULL;
 		sp.len = 0;
 	}
-	
+
 	if(*sd.s=='\0' || *sd.s=='.') {
 		sd.s   = NULL;
 		sd.len = 0;
 	}
-	
+
 	lock_get(&_dhash->diff_lock);
-	
+
 	for(i=0; i<_dhash->hash_size; i++) {
 		lock_get(&_dhash->dhash[i].lock);
-		
+
 		it = _dhash->dhash[i].e;
 		for (it = _dhash->dhash[i].e; it; it = it->n) {
 			if((sp.s==NULL && sd.s==NULL)
@@ -887,12 +887,12 @@ static void rpc_list(rpc_t* rpc, void* c)
 			       strncmp(it->prefix.s, sp.s, sp.len)==0)
 			   || (sd.s!=NULL && it->domain.len>=sd.len &&
 			       strncasecmp(it->domain.s, sd.s, sd.len)==0)) {
-				
+
 				buf1 = pkg_malloc(it->prefix.len + 1);
 				if (!buf1) continue;
 				memcpy(buf1, it->prefix.s, it->prefix.len);
 				buf1[it->prefix.len] = '\0';
-				
+
 				buf2 = pkg_malloc(it->domain.len + 1);
 				if (!buf2) {
 					pkg_free(buf1);
@@ -900,16 +900,16 @@ static void rpc_list(rpc_t* rpc, void* c)
 				}
 				memcpy(buf2, it->domain.s, it->domain.len);
 				buf2[it->domain.len] = '\0';
-				
+
 				rpc->add(c, "ss", buf1, buf2);
 				pkg_free(buf1);
 				pkg_free(buf2);
 			}
 		}
-		
+
 		lock_release(&_dhash->dhash[i].lock);
 	}
-	
+
 	lock_release(&_dhash->diff_lock);
 }
 

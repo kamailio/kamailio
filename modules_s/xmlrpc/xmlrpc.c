@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
@@ -30,7 +30,7 @@
 #define _SVID_SOURCE 1            /* timegm */
 
 #include <strings.h>
-#include <time.h> 
+#include <time.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -79,7 +79,7 @@ static int mod_init(void);
 "<struct>" LF                \
 "<member>" LF                \
 "<name>faultCode</name>" LF  \
-"<value><int>"              
+"<value><int>"
 
 #define FAULT_BODY            \
 "</int></value>" LF           \
@@ -211,13 +211,13 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"enable_instrospection", INT_PARAM, &enable_introspection},
+	{"enable_instrospection", PARAM_INT, &enable_introspection},
 	{0, 0, 0}
 };
 
 
 struct module_exports exports = {
-	"xmlrpc", 
+	"xmlrpc",
 	cmds,           /* Exported commands */
 	0,              /* Exported RPC methods */
 	params,         /* Exported parameters */
@@ -425,7 +425,7 @@ static int print_structures(struct xmlrpc_reply* reply, struct rpc_struct* st)
 		if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
 		if (add_xmlrpc_reply_offset(reply, st->offset, &st->struct_out.body) < 0) return -1;
 		st = st->next;
-	} 
+	}
 	return 0;
 }
 
@@ -435,7 +435,7 @@ static int rpc_send(rpc_ctx_t* ctx)
 	struct xmlrpc_reply* reply;
 
 	if (ctx->reply_sent) return 1;
-	
+
 	reply = &ctx->reply;
 	if (reply->code >= 300) {
 		if (build_fault_reply(reply) < 0) return -1;
@@ -503,7 +503,7 @@ static struct rpc_struct* new_rpcstruct(xmlDocPtr doc, xmlNodePtr structure, str
 	}
 	if (add_garbage(JUNK_RPCSTRUCT, p, reply) < 0) goto err;
 	return p;
-	
+
  err:
 	if (p->struct_out.buf.s) pkg_free(p->struct_out.buf.s);
 	pkg_free(p);
@@ -525,7 +525,7 @@ static int print_value(struct xmlrpc_reply* res, struct xmlrpc_reply* err_reply,
 		suffix = int_suffix;
 		body.s = int2str(va_arg(*ap, int), &body.len);
 		break;
-		
+
 	case 'f':
 		prefix = double_prefix;
 		suffix = double_suffix;
@@ -537,14 +537,14 @@ static int print_value(struct xmlrpc_reply* res, struct xmlrpc_reply* err_reply,
 			goto err;
 		}
 		break;
-		
+
 	case 'b':
 		prefix = bool_prefix;
 		suffix = bool_suffix;
 		body.len = 1;
 		body.s = ((va_arg(*ap, int) == 0) ? "0" : "1");
 		break;
-		
+
 	case 't':
 		prefix = date_prefix;
 		suffix = date_suffix;
@@ -558,21 +558,21 @@ static int print_value(struct xmlrpc_reply* res, struct xmlrpc_reply* err_reply,
 			goto err;
 		}
 		break;
-		
+
 	case 's':
 		prefix = string_prefix;
 		suffix = string_suffix;
 		body.s = va_arg(*ap, char*);
 		body.len = strlen(body.s);
 		break;
-		
+
 	case 'S':
 		prefix = string_prefix;
 		suffix = string_suffix;
 		sp = va_arg(*ap, str*);
 		body = *sp;
 		break;
-		
+
 	default:
 		set_fault(err_reply, 500, "Bug In SER (Invalid formatting character)");
 		ERR("Invalid formatting character\n");
@@ -630,10 +630,10 @@ static int rpc_add(rpc_ctx_t* ctx, char* fmt, ...)
 static time_t xmlrpc2time(const char* str)
 {
 	struct tm time;
-	
+
 	memset(&time, '\0', sizeof(struct tm));
 	strptime(str, "%Y%m%dT%H:%M:%S", &time);
-	time.tm_isdst = -1;   
+	time.tm_isdst = -1;
 #ifdef HAVE_TIMEGM
 	return timegm(&time);
 #else
@@ -771,7 +771,7 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 			double_ptr = va_arg(ap, double*);
 			if (get_double(double_ptr, reply, ctx->doc, value) < 0) goto error;
 			break;
-			
+
 		case 's': /* zero terminated string */
 			char_ptr = va_arg(ap, char**);
 			if (get_string(char_ptr, reply, ctx->doc, value) < 0) goto error;
@@ -825,7 +825,7 @@ static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
 		ERR("No memory left\n");
 		return -1;
 	}
-	
+
 	buf_size = RPC_BUF_SIZE;
 	while (1) {
 		     /* Try to print in the allocated space. */
@@ -924,7 +924,7 @@ static int rpc_struct_add(struct rpc_struct* s, char* fmt, ...)
 	va_list ap;
 	str member_name;
 	struct xmlrpc_reply* reply;
-	
+
 	reply = &s->struct_out;
 
 	va_start(ap, fmt);
@@ -942,7 +942,7 @@ static int rpc_struct_add(struct rpc_struct* s, char* fmt, ...)
 		if (add_xmlrpc_reply(reply, &member_suffix) < 0) goto err;
 		fmt++;
 	}
-	
+
 	va_end(ap);
 	return 0;
  err:
@@ -968,7 +968,7 @@ static int rpc_struct_printf(struct rpc_struct* s, char* member_name, char* fmt,
 		ERR("No memory left\n");
 		return -1;
 	}
-	
+
 	buf_size = RPC_BUF_SIZE;
 	while (1) {
 		     /* Try to print in the allocated space. */
@@ -982,7 +982,7 @@ static int rpc_struct_printf(struct rpc_struct* s, char* member_name, char* fmt,
 
 			name.s = member_name;
 			name.len = strlen(member_name);
-			
+
 			if (add_xmlrpc_reply(out, &member_prefix) < 0) goto err;
 			if (add_xmlrpc_reply(out, &name_prefix) < 0) goto err;
 			if (add_xmlrpc_reply(out, &name) < 0) goto err;
@@ -1051,7 +1051,7 @@ static int rpc_struct_scan(struct rpc_struct* s, char* fmt, ...)
 			double_ptr = va_arg(ap, double*);
 			if (get_double(double_ptr, reply, s->doc, value) < 0) goto error;
 			break;
-			
+
 		case 's': /* zero terminated string */
 			char_ptr = va_arg(ap, char**);
 			if (get_string(char_ptr, reply, s->doc, value) < 0) goto error;
@@ -1094,13 +1094,13 @@ static int open_doc(rpc_ctx_t* ctx, struct sip_msg* msg)
 		set_fault(reply, 400, "Malformed Message Body");
 		ERR("Error extracting message body\n");
 		return -1;
-	}	
-	
-	ctx->doc = xmlReadMemory(doc.s, doc.len, 0, 0, 
+	}
+
+	ctx->doc = xmlReadMemory(doc.s, doc.len, 0, 0,
 				 XML_PARSE_NOBLANKS |
 				 XML_PARSE_NONET |
 				 XML_PARSE_NOCDATA);
-	
+
 	if (!ctx->doc) {
 		set_fault(reply, 400, "Invalid XML-RPC Document");
 		ERR("Invalid XML-RPC document\n");
@@ -1119,7 +1119,7 @@ static int open_doc(rpc_ctx_t* ctx, struct sip_msg* msg)
 		ERR("Root element is not methodCall\n");
 		goto err;
 	}
-	
+
 	cur = root->xmlChildrenNode;
 	while(cur) {
 		if (!xmlStrcmp(cur->name, (const xmlChar*)"methodName")) {
@@ -1148,7 +1148,7 @@ static int open_doc(rpc_ctx_t* ctx, struct sip_msg* msg)
 	}
 	if (!cur) ctx->act_param = 0;
 	return 0;
-	
+
  err:
 	close_doc(ctx);
 	return -1;

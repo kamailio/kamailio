@@ -63,10 +63,10 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"accept",     STR_PARAM, &acpt_c},
-	{"accept_encoding", STR_PARAM, &acpt_enc_c},
-	{"accept_language", STR_PARAM, &acpt_lan_c},
-	{"support",     STR_PARAM, &supt_c},
+	{"accept",          PARAM_STRING, &acpt_c},
+	{"accept_encoding", PARAM_STRING, &acpt_enc_c},
+	{"accept_language", PARAM_STRING, &acpt_lan_c},
+	{"support",         PARAM_STRING, &supt_c},
 	{0, 0, 0}
 };
 
@@ -153,8 +153,8 @@ static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 	}
 
 	/* calculate the length and allocated the mem */
-	rpl_hf.len = ACPT_STR_LEN + ACPT_ENC_STR_LEN + ACPT_LAN_STR_LEN + 
-			SUPT_STR_LEN + 4*HF_SEP_STR_LEN + acpt_s.len + acpt_enc_s.len + 
+	rpl_hf.len = ACPT_STR_LEN + ACPT_ENC_STR_LEN + ACPT_LAN_STR_LEN +
+			SUPT_STR_LEN + 4*HF_SEP_STR_LEN + acpt_s.len + acpt_enc_s.len +
 			acpt_lan_s.len + supt_s.len;
 	rpl_hf.s = (char*)pkg_malloc(rpl_hf.len);
 	if (!rpl_hf.s) {
@@ -190,7 +190,7 @@ static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 #ifdef EXTRA_DEBUG
 	offset += HF_SEP_STR_LEN;
 	if (offset != rpl_hf.len) {
-		LOG(L_CRIT, "options_reply(): headerlength (%i) != offset (%i)\n", 
+		LOG(L_CRIT, "options_reply(): headerlength (%i) != offset (%i)\n",
 			rpl_hf.len, offset);
 		abort();
 	}

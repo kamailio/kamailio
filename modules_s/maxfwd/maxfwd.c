@@ -23,8 +23,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /*
@@ -59,9 +59,9 @@ static int w_process_maxfwd_lowlimit(struct sip_msg* msg,char* str,char* str2);
 static int mod_init(void);
 
 static cmd_export_t cmds[]={
-	{"mf_process_maxfwd_header", w_process_maxfwd_header, 1, 
+	{"mf_process_maxfwd_header", w_process_maxfwd_header, 1,
 		fixup_maxfwd_header, REQUEST_ROUTE},
-	{"process_maxfwd", w_process_maxfwd_header, 1, 
+	{"process_maxfwd", w_process_maxfwd_header, 1,
 		fixup_maxfwd_header, REQUEST_ROUTE},
 	{"mf_lowlimit", w_process_maxfwd_lowlimit, 1,
 		fixup_maxfwd_header, REQUEST_ROUTE},
@@ -69,7 +69,7 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"max_limit",    INT_PARAM,  &max_limit},
+	{"max_limit",    PARAM_INT,  &max_limit},
 	{0,0,0}
 };
 

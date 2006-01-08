@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /*
@@ -76,10 +76,10 @@ db_con_t* pa_db = NULL; /* Database connection handle */
 db_func_t pa_dbf;
 
 int use_db = 1;
-str db_url;
+str db_url = STR_NULL;
 int use_place_table = 0;
 #ifdef HAVE_LOCATION_PACKAGE
-str pa_domain;
+str pa_domain = STR_NULL;
 #endif /* HAVE_LOCATION_PACKAGE */
 char *presentity_table = "presentity";
 char *presentity_contact_table = "presentity_contact";
@@ -110,16 +110,16 @@ int pa_pidf_priority = 1;
 static cmd_export_t cmds[]={
 	{"handle_subscription",   handle_subscription,   1, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"handle_publish",        handle_publish,        1, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	
+
 	/* FIXME: are these functions used to something by somebody */
-/*	
+/*
  *
 	{"pua_exists",            pua_exists,            1, subscribe_fixup, REQUEST_ROUTE                },
 	{"pa_handle_registration", pa_handle_registration,   1, subscribe_fixup, REQUEST_ROUTE },
 	{"existing_subscription", existing_subscription, 1, subscribe_fixup, REQUEST_ROUTE                },
  	{"mangle_pidf",           mangle_pidf,           0, NULL, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"mangle_message_cpim",   mangle_message_cpim,   0, NULL,            REQUEST_ROUTE | FAILURE_ROUTE},*/
-	
+
 	{0, 0, 0, 0, 0}
 };
 
@@ -128,37 +128,37 @@ static cmd_export_t cmds[]={
  * Exported parameters
  */
 static param_export_t params[]={
-	{"default_expires",      INT_PARAM, &default_expires      },
-	{"default_priority_percentage",     INT_PARAM, &default_priority_percentage  },
-	{"timer_interval",       INT_PARAM, &timer_interval       },
-	{"use_db",               INT_PARAM, &use_db               },
-	{"use_place_table",      INT_PARAM, &use_place_table      },
-	{"use_bsearch",          INT_PARAM, &use_bsearch          },
-	{"use_location_package", INT_PARAM, &use_location_package },
-	{"db_url",               STR_PARAM, &db_url.s             },
+	{"default_expires",      PARAM_INT,    &default_expires      },
+	{"default_priority_percentage", PARAM_INT,    &default_priority_percentage  },
+	{"timer_interval",       PARAM_INT,    &timer_interval       },
+	{"use_db",               PARAM_INT,    &use_db               },
+	{"use_place_table",      PARAM_INT,    &use_place_table      },
+	{"use_bsearch",          PARAM_INT,    &use_bsearch          },
+	{"use_location_package", PARAM_INT,    &use_location_package },
+	{"db_url",               PARAM_STR,    &db_url               },
 #ifdef HAVE_LOCATION_PACKAGE
-	{"pa_domain",            STR_PARAM, &pa_domain.s          },
+	{"pa_domain",            PARAM_STR,    &pa_domain            },
 #endif /* HAVE_LOCATION_PACKAGE */
-	{"presentity_table",     STR_PARAM, &presentity_table     },
-	{"presentity_contact_table", STR_PARAM, &presentity_contact_table     },
-	{"watcherinfo_table",    STR_PARAM, &watcherinfo_table    },
-	{"place_table",          STR_PARAM, &place_table          },
-	{"authorize_watchers",   INT_PARAM, &authorize_watchers  },
-	{"callback_update_db",   INT_PARAM, &callback_update_db   },
-	{"callback_lock_pdomain", INT_PARAM, &callback_lock_pdomain },
-	{"new_tuple_on_publish", INT_PARAM, &new_tuple_on_publish  },
-	{"pidf_priority",        INT_PARAM, &pa_pidf_priority  },
-	{"watcherinfo_notify",   INT_PARAM, &watcherinfo_notify   },
-	{"auth", STR_PARAM, &auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
-	{"auth_xcap_root", STR_PARAM, &auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
-	{"winfo_auth", STR_PARAM, &winfo_auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
-	{"winfo_auth_xcap_root", STR_PARAM, &winfo_auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
+	{"presentity_table",     PARAM_STRING, &presentity_table     },
+	{"presentity_contact_table", PARAM_STRING, &presentity_contact_table     },
+	{"watcherinfo_table",    PARAM_STRING, &watcherinfo_table    },
+	{"place_table",          PARAM_STRING, &place_table          },
+	{"authorize_watchers",   PARAM_INT, &authorize_watchers  },
+	{"callback_update_db",   PARAM_INT, &callback_update_db   },
+	{"callback_lock_pdomain",PARAM_INT, &callback_lock_pdomain },
+	{"new_tuple_on_publish", PARAM_INT, &new_tuple_on_publish  },
+	{"pidf_priority",        PARAM_INT, &pa_pidf_priority  },
+	{"watcherinfo_notify",   PARAM_INT, &watcherinfo_notify   },
+	{"auth",                 PARAM_STRING, &auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
+	{"auth_xcap_root",       PARAM_STRING, &auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
+	{"winfo_auth",           PARAM_STRING, &winfo_auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
+	{"winfo_auth_xcap_root", PARAM_STRING, &winfo_auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
 	{0, 0, 0}
 };
 
 
 struct module_exports exports = {
-	"pa", 
+	"pa",
 	cmds,           /* Exported functions */
 	pa_rpc_methods, /* RPC methods */
 	params,         /* Exported parameters */
@@ -170,7 +170,7 @@ struct module_exports exports = {
 };
 
 
-void pa_sig_handler(int s) 
+void pa_sig_handler(int s)
 {
 	DBG("PA:pa_worker:%d: SIGNAL received=%d\n **************", getpid(), s);
 }
@@ -210,12 +210,12 @@ static void test_mimetype_parser(void)
 			LOG(L_ERR, "Parsed mimetype %s got %x expected %x\n",
 			    mt->string, pmt, mt->parsed);
 		}
-		
+
 		mt++;
 	}
 }
 
-static int set_auth_params(auth_params_t *dst, const char *auth_type_str, 
+static int set_auth_params(auth_params_t *dst, const char *auth_type_str,
 		char *xcap_root, const char *log_str)
 {
 	dst->xcap_root = NULL;
@@ -246,7 +246,7 @@ static int set_auth_params(auth_params_t *dst, const char *auth_type_str,
 		dst->type = auth_implicit;
 		return 0;
 	}
-	
+
 	LOG(L_ERR, "Can't resolve subscription authorization for %s type: \'%s\'."
 			" Use one of: none, implicit, xcap.\n", log_str, auth_type_str);
 	return -1;
@@ -259,22 +259,22 @@ static int pa_mod_init(void)
 
 	test_mimetype_parser();
 	DEBUG_LOG("Presence Agent - initializing\n");
-	
+
 	DEBUG_LOG(" ... common libraries\n");
 	cds_initialize();
-	qsa_initialize();	
+	qsa_initialize();
 
 	/* set authorization type according to requested "auth type name"
 	 * and other (type specific) parameters */
-	if (set_auth_params(&pa_auth_params, auth_type_str, 
+	if (set_auth_params(&pa_auth_params, auth_type_str,
 				auth_xcap_root, "presence") != 0) return -1;
-	
-	/* set authorization type for watcherinfo 
+
+	/* set authorization type for watcherinfo
 	 * according to requested "auth type name"
 	 * and other (type specific) parameters */
-	if (set_auth_params(&winfo_auth_params, winfo_auth_type_str, 
+	if (set_auth_params(&winfo_auth_params, winfo_auth_type_str,
 				winfo_auth_xcap_root, "watcher info") != 0) return -1;
-	
+
 	     /* import the TM auto-loading function */
 	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
 		LOG(L_ERR, "Can't import tm\n");
@@ -284,7 +284,7 @@ static int pa_mod_init(void)
 	if (load_tm( &tmb )==-1) {
 		return -1;
 	}
-	     
+
 	bind_dlg = (bind_dlg_mod_f)find_export("bind_dlg_mod", -1, 0);
 	if (!bind_dlg) {
 		LOG(L_ERR, "Can't import dlg\n");
@@ -293,11 +293,10 @@ static int pa_mod_init(void)
 	if (bind_dlg(&dlg_func) != 0) {
 		return -1;
 	}
-	
+
 	/* Register cache timer */
 	register_timer(timer, 0, timer_interval);
 
-	db_url.len = db_url.s ? strlen(db_url.s) : 0;
 #ifdef HAVE_LOCATION_PACKAGE
 	if (pa_domain.len == 0) {
 		LOG(L_ERR, "pa_mod_init(): pa_domain must be specified\n");
@@ -306,7 +305,7 @@ static int pa_mod_init(void)
 	LOG(L_DBG, "pa_mod: pa_mod=%s\n", ZSW(pa_domain.s));
 #endif /* HAVE_LOCATION_PACKAGE */
 
-	LOG(L_DBG, "pa_mod: use_db=%d db_url.s=%s\n", 
+	LOG(L_DBG, "pa_mod: use_db=%d db_url.s=%s\n",
 	    use_db, ZSW(db_url.s));
 	if (use_db) {
 		if (!db_url.len) {
@@ -340,7 +339,7 @@ db_con_t* create_pa_db_connection()
 {
 	if (!use_db) return NULL;
 	if (!pa_dbf.init) return NULL;
-	
+
 	return pa_dbf.init(db_url.s);
 }
 
@@ -380,7 +379,7 @@ static void pa_destroy(void)
 		close_pa_db_connection(pa_db);
 	}
 	pa_db = NULL;
-	
+
 	DEBUG_LOG(" ... cleaning common libs\n");
 	qsa_cleanup();
 	cds_cleanup();

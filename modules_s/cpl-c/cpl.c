@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -33,7 +33,7 @@
  * 2004-06-14: all global variables merged into cpl_env and cpl_fct;
  *             case_sensitive and realm_prefix added for building AORs - see
  *             build_userhost (bogdan)
- * 2004-10-09: added process_register_norpl to allow register processing 
+ * 2004-10-09: added process_register_norpl to allow register processing
  *             without sending the reply(bogdan) - based on a patch sent by
  *             Christopher Crawford
  */
@@ -129,18 +129,18 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"cpl_db",         STR_PARAM, &DB_URL      },
-	{"cpl_table",      STR_PARAM, &DB_TABLE    },
-	{"cpl_dtd_file",   STR_PARAM, &dtd_file    },
-	{"proxy_recurse",  INT_PARAM, &cpl_env.proxy_recurse  },
-	{"proxy_route",    INT_PARAM, &cpl_env.proxy_route    },
-	{"nat_flag",       INT_PARAM, &cpl_env.nat_flag       },
-	{"log_dir",        STR_PARAM, &cpl_env.log_dir        },
-	{"case_sensitive", INT_PARAM, &cpl_env.case_sensitive },
-	{"realm_prefix",   STR_PARAM, &cpl_env.realm_prefix.s },
-	{"lookup_domain",  STR_PARAM, &lookup_domain          },
-	{"lookup_append_branches", INT_PARAM, &cpl_env.lu_append_branches},
-	{"timer_avp",      STR_PARAM, &timer_avp   },
+	{"cpl_db",         PARAM_STRING, &DB_URL      },
+	{"cpl_table",      PARAM_STRING, &DB_TABLE    },
+	{"cpl_dtd_file",   PARAM_STRING, &dtd_file    },
+	{"proxy_recurse",  PARAM_INT,    &cpl_env.proxy_recurse  },
+	{"proxy_route",    PARAM_INT,    &cpl_env.proxy_route    },
+	{"nat_flag",       PARAM_INT,    &cpl_env.nat_flag       },
+	{"log_dir",        PARAM_STRING, &cpl_env.log_dir        },
+	{"case_sensitive", PARAM_INT,    &cpl_env.case_sensitive },
+	{"realm_prefix",   PARAM_STR,    &cpl_env.realm_prefix   },
+	{"lookup_domain",  PARAM_STRING, &lookup_domain          },
+	{"lookup_append_branches", PARAM_INT, &cpl_env.lu_append_branches},
+	{"timer_avp",      PARAM_STRING, &timer_avp   },
 	{0, 0, 0}
 };
 
@@ -372,7 +372,6 @@ static int cpl_init(void)
 
 	/* convert realm_prefix from string null terminated to str */
 	if (cpl_env.realm_prefix.s) {
-		cpl_env.realm_prefix.len = strlen(cpl_env.realm_prefix.s);
 		/* convert the realm_prefix to lower cases */
 		strlower( &cpl_env.realm_prefix );
 	}
@@ -551,7 +550,7 @@ static inline int get_orig_user(struct sip_msg *msg, str *uh, int flg)
 {
 	struct to_body *from;
 	struct sip_uri uri;
-	
+
 	/* if it's outgoing -> get the user_name from From */
 	/* parsing from header */
 	DBG("DEBUG:cpl-c:get_orig_user: trying to get user from From\n");
@@ -572,9 +571,9 @@ static inline int get_orig_user(struct sip_msg *msg, str *uh, int flg)
 
 
 
-/* Params: 
- *   str1 - as unsigned int - can be CPL_RUN_INCOMING or CPL_RUN_OUTGOING 
- *   str2 - as unsigned int - flags regarding state(less)|(ful) 
+/* Params:
+ *   str1 - as unsigned int - can be CPL_RUN_INCOMING or CPL_RUN_OUTGOING
+ *   str2 - as unsigned int - flags regarding state(less)|(ful)
  */
 static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 {
@@ -692,7 +691,7 @@ static inline int do_script_action(struct sip_msg *msg, int action)
 	str  log  = STR_NULL;
 
 	/* content-length (if present) */
-	if ( !msg->content_length && 
+	if ( !msg->content_length &&
 			((parse_headers(msg, HDR_CONTENTLENGTH_F, 0)==-1)
 			 || !msg->content_length) )
 	{

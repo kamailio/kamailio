@@ -23,8 +23,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * ---
@@ -85,9 +85,9 @@ struct tm_binds tmb;
 /** iHTTP bind */
 struct ih_binds ihb;
 /** iHTTP callback functions */
-int xjab_mod_info(ih_req_p _irp, void *_p, char *_bb, int *_bl, 
+int xjab_mod_info(ih_req_p _irp, void *_p, char *_bb, int *_bl,
 		char *_hb, int *_hl);
-int xjab_connections(ih_req_p _irp, void *_p, char *_bb, int *_bl, 
+int xjab_connections(ih_req_p _irp, void *_p, char *_bb, int *_bl,
 		char *_hb, int *_hl);
 #endif
 
@@ -152,22 +152,22 @@ static cmd_export_t cmds[] = {
 
 
 /*
- * Exported parameters 
+ * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",     STR_PARAM, &db_url    },
-	{"jaddress",   STR_PARAM, &jaddress  },
-	{"aliases",    STR_PARAM, &jaliases  },
-	{"proxy",      STR_PARAM, &proxy     },
-	{"jdomain",    STR_PARAM, &jdomain   },
-	{"registrar",  STR_PARAM, &registrar },
-	{"jport",      INT_PARAM, &jport     },
-	{"workers",    INT_PARAM, &nrw       },
-	{"max_jobs",   INT_PARAM, &max_jobs  },
-	{"cache_time", INT_PARAM, &cache_time},
-	{"delay_time", INT_PARAM, &delay_time},
-	{"sleep_time", INT_PARAM, &sleep_time},
-	{"check_time", INT_PARAM, &check_time},
+	{"db_url",     PARAM_STRING, &db_url    },
+	{"jaddress",   PARAM_STRING, &jaddress  },
+	{"aliases",    PARAM_STRING, &jaliases  },
+	{"proxy",      PARAM_STRING, &proxy     },
+	{"jdomain",    PARAM_STRING, &jdomain   },
+	{"registrar",  PARAM_STRING, &registrar },
+	{"jport",      PARAM_INT,    &jport     },
+	{"workers",    PARAM_INT,    &nrw       },
+	{"max_jobs",   PARAM_INT,    &max_jobs  },
+	{"cache_time", PARAM_INT,    &cache_time},
+	{"delay_time", PARAM_INT,    &delay_time},
+	{"sleep_time", PARAM_INT,    &sleep_time},
+	{"check_time", PARAM_INT,    &check_time},
 	{0, 0, 0}
 };
 
@@ -240,14 +240,14 @@ static int mod_init(void)
 	if (load_ih( &ihb )==-1)
 		return -1;
 #endif
-	
+
 	pipes = (int**)pkg_malloc(nrw*sizeof(int*));
 	if (pipes == NULL)
 	{
 		LOG(L_ERR, "XJAB:mod_init:Error while allocating pipes\n");
 		return -1;
 	}
-	
+
 	for(i=0; i<nrw; i++)
 	{
 		pipes[i] = (int*)pkg_malloc(2*sizeof(int));
@@ -257,7 +257,7 @@ static int mod_init(void)
 			return -1;
 		}
 	}
-	
+
 	for(i=0; i<nrw; i++)
 	{
 		db_con[i] = jabber_dbf.init(db_url);
@@ -276,9 +276,9 @@ static int mod_init(void)
 		}
 	}
 
-	
+
 	/** creating the pipes */
-	
+
 	for(i=0;i<nrw;i++)
 	{
 		/* create the pipe*/
@@ -289,21 +289,21 @@ static int mod_init(void)
 		DBG("XJAB:mod_init: pipe[%d] = <%d>-<%d>\n", i, pipes[i][0],
 			pipes[i][1]);
 	}
-	
+
 	if((jwl = xj_wlist_init(pipes,nrw,max_jobs,cache_time,sleep_time,
 				delay_time)) == NULL)
 	{
 		LOG(L_ERR, "XJAB:mod_init: error initializing workers list\n");
 		return -1;
 	}
-	
+
 	if(xj_wlist_set_aliases(jwl, jaliases, jdomain, proxy) < 0)
 	{
 		LOG(L_ERR, "XJAB:mod_init: error setting aliases and outbound proxy\n");
 		return -1;
 	}
 
-	DBG("XJAB:mod_init: initialized ...\n");	
+	DBG("XJAB:mod_init: initialized ...\n");
 	return 0;
 }
 
@@ -313,7 +313,7 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	int i, j, mpid, cpid;
-	
+
 	DBG("XJAB:child_init: initializing child <%d>\n", rank);
 	     /* Rank 0 is main process now - 1 is the first child (janakj) */
 	if(rank == 1)
@@ -366,7 +366,7 @@ static int child_init(int rank)
 			}
 		}
 	}
-	
+
 	//if(pipes)
 	//{
 	//	for(i=0;i<nrw;i++)
@@ -430,7 +430,7 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 	int pipe, fl;
 	t_xj_jkey jkey, *p;
 	int mime;
-	
+
 	body.s=0;  /* fixes gcc 4.0 warning */
 	body.len=0;
 	// extract message body - after that whole SIP MESSAGE is parsed
@@ -438,13 +438,13 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 	{
 		/* get the message's body */
 		body.s = get_body( msg );
-		if(body.s==0) 
+		if(body.s==0)
 		{
 			LOG(L_ERR,"XJAB:xjab_manage_sipmsg: ERROR cannot extract body from"
 				" msg\n");
 			goto error;
 		}
-		
+
 		/* content-length (if present) must be already parsed */
 		if(!msg->content_length)
 		{
@@ -471,17 +471,17 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 			goto error;
 		}
 	}
-	
-	// check for TO and FROM headers - if is not SIP MESSAGE 
-	if(parse_headers( msg, HDR_TO_F|HDR_FROM_F, 0)==-1 || !msg->to 
+
+	// check for TO and FROM headers - if is not SIP MESSAGE
+	if(parse_headers( msg, HDR_TO_F|HDR_FROM_F, 0)==-1 || !msg->to
 			|| !msg->from)
 	{
 		LOG(L_ERR,"XJAB:xjab_manage_sipmsg: cannot find TO or FROM HEADERS!\n");
 		goto error;
 	}
-	
+
 	/* parsing from header */
-	if ( parse_from_header( msg )==-1 || msg->from->parsed==NULL) 
+	if ( parse_from_header( msg )==-1 || msg->from->parsed==NULL)
 	{
 		DBG("ERROR:xjab_manage_sipmsg: cannot get FROM header\n");
 		goto error;
@@ -525,7 +525,7 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 	// if is for going ONLINE/OFFLINE we do not need the destination
 	if(type==XJ_GO_ONLINE || type==XJ_GO_OFFLINE)
 		goto prepare_job;
-	
+
 	// determination of destination
 	// - try to get it from new_uri, r-uri or to hdr, but check it against
 	// jdomain and aliases
@@ -541,7 +541,7 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 			DBG("XJAB:xjab_manage_sipmsg: using NEW URI for destination\n");
 #endif
 	}
-	
+
 	if (dst.len == 0 &&  msg->first_line.u.request.uri.s != NULL
 			&& msg->first_line.u.request.uri.len > 0 )
 	{
@@ -566,13 +566,13 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 			DBG("XJAB:xjab_manage_sipmsg: using TO-URI for destination\n");
 #endif
 	}
-	
+
 	if(dst.len == 0)
 	{
 		DBG("XJAB:xjab_manage_sipmsg: destination not found in SIP message\n");
 		goto error;
 	}
-	
+
 	/** skip 'sip:' and parameters in destination address */
 	if(xj_extract_aor(&dst, 1))
 	{
@@ -583,14 +583,14 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 	DBG("XJAB:xjab_manage_sipmsg: DESTINATION after correction [%.*s].\n",
 				dst.len, dst.s);
 #endif
-	
+
 prepare_job:
 	//putting the SIP message parts in share memory to be accessible by workers
     jsmsg = (xj_sipmsg)shm_malloc(sizeof(t_xj_sipmsg));
 	memset(jsmsg, 0, sizeof(t_xj_sipmsg));
     if(jsmsg == NULL)
     	return -1;
-	
+
 	switch(type)
 	{
 		case XJ_SEND_MESSAGE:
@@ -651,7 +651,7 @@ prepare_job:
 		shm_free(jsmsg);
 		goto error;
 	}
-	
+
 	return 1;
 error:
 	return -1;
@@ -686,7 +686,7 @@ void destroy(void)
 			jabber_dbf.close(db_con[i]);
 		shm_free(db_con);
 	}
-			
+
 	xj_wlist_free(jwl);
 	DBG("XJAB: Unloaded ...\n");
 }
@@ -724,16 +724,16 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 		DBG("XJAB:xj_register_watcher: cannot find pipe of the worker!\n");
 		goto error;
 	}
-	
+
 	//putting the SIP message parts in share memory to be accessible by workers
 	jsmsg = (xj_sipmsg)shm_malloc(sizeof(t_xj_sipmsg));
 	memset(jsmsg, 0, sizeof(t_xj_sipmsg));
 	if(jsmsg == NULL)
 		goto error;
-	
+
 	jsmsg->msg.len = 0;
 	jsmsg->msg.s = NULL;
-	
+
 	to_uri.s = to->s;
 	to_uri.len = to->len;
 	/** skip 'sip:' and parameters in destination address */
@@ -761,7 +761,7 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 	jsmsg->jkey = jp;
 	jsmsg->type = XJ_REG_WATCHER;
 	//jsmsg->jkey->hash = jkey.hash;
-	
+
 	jsmsg->cbf = (pa_callback_f)cbf;
 	jsmsg->p = pp;
 
@@ -780,7 +780,7 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 		shm_free(jsmsg);
 		goto error;
 	}
-	
+
  error:
 	return;
 }
@@ -812,14 +812,14 @@ void xjab_check_workers(int mpid)
 			n = waitpid(jwl->workers[i].pid, &stat, WNOHANG);
 			if(n == 0 || n!=jwl->workers[i].pid)
 				continue;
-		
+
 			LOG(L_ERR,"XJAB:xjab_check_workers: worker[%d][pid=%d] has exited"
-				" - status=%d err=%d errno=%d\n", i, jwl->workers[i].pid, 
+				" - status=%d err=%d errno=%d\n", i, jwl->workers[i].pid,
 				stat, n, errno);
 			xj_wlist_clean_jobs(jwl, i, 1);
 			xj_wlist_set_pid(jwl, -1, i);
 		}
-		
+
 #ifdef XJ_EXTRA_DEBUG
 		DBG("XJAB:%d:xjab_check_workers: create a new worker[%d]\n", mpid, i);
 #endif
@@ -844,22 +844,22 @@ void xjab_check_workers(int mpid)
 			xj_worker_process(jwl,jaddress,jport,i,db_con[i], &jabber_dbf);
 			exit(0);
 		}
-	}			
+	}
 }
 
 #ifdef HAVE_IHTTP
 /**
  * Module's information retrieval - function to use with iHttp module
  *
- */ 
-int xjab_mod_info(ih_req_p _irp, void *_p, char *_bb, int *_bl, 
+ */
+int xjab_mod_info(ih_req_p _irp, void *_p, char *_bb, int *_bl,
 		char *_hb, int *_hl)
 {
 	if(!_irp || !_bb || !_bl || *_bl <= 0 || !_hb || !_hl || *_hl <= 0)
 		return -1;
 	*_hl = 0;
 	*_hb = 0;
-	
+
 	strcpy(_bb, "<h4>SER2Jabber Gateway</h4>");
 	strcat(_bb, "<br>Module parameters:<br>");
 	strcat(_bb, "<br> -- db table = ");
@@ -889,7 +889,7 @@ int xjab_mod_info(ih_req_p _irp, void *_p, char *_bb, int *_bl,
 	strcat(_bb, int2str(cache_time, NULL));
 	strcat(_bb, "<br> -- check time = ");
 	strcat(_bb, int2str(check_time, NULL));
-	
+
 	*_bl = strlen(_bb);
 
 	return 0;
@@ -897,10 +897,10 @@ int xjab_mod_info(ih_req_p _irp, void *_p, char *_bb, int *_bl,
 
 /**
  * SER2Jab connection management - function to use with iHttp module
- * - be aware of who is able to use the ihttp because he can close any 
+ * - be aware of who is able to use the ihttp because he can close any
  *   open connection between SER and Jabber server
- */ 
-int xjab_connections(ih_req_p _irp, void *_p, char *_bb, int *_bl, 
+ */
+int xjab_connections(ih_req_p _irp, void *_p, char *_bb, int *_bl,
 		char *_hb, int *_hl)
 {
 	t_xj_jkey jkey, *p;
@@ -911,12 +911,12 @@ int xjab_connections(ih_req_p _irp, void *_p, char *_bb, int *_bl,
 
 	if(!_irp || !_bb || !_bl || *_bl <= 0 || !_hb || !_hl || *_hl <= 0)
 		return -1;
-	
+
 	*_hl = 0;
 	*_hb = 0;
 	idx = -1;
 	strcpy(_bb, "<h4>Active XMPP connections</h4>");
-	
+
 	if(_irp->params)
 	{
 		strcat(_bb, "<br><b>Close action is alpha release!</b><br>");
@@ -952,7 +952,7 @@ int xjab_connections(ih_req_p _irp, void *_p, char *_bb, int *_bl,
 					}
 					i++;
 				break;
-				
+
 			}
 			_ipp = _ipp->next;
 		}
@@ -974,7 +974,7 @@ int xjab_connections(ih_req_p _irp, void *_p, char *_bb, int *_bl,
 
 		return 0;
 	}
-	
+
 	if(jwl!=NULL && jwl->len > 0 && jwl->workers!=NULL)
 	{
 		for(idx=0; idx<jwl->len; idx++)
@@ -989,7 +989,7 @@ int xjab_connections(ih_req_p _irp, void *_p, char *_bb, int *_bl,
 				continue;
 			lock_set_get(jwl->sems, idx);
 			maxcount = count234(jwl->workers[idx].sip_ids);
-			for (i = 0; i < maxcount; i++) 
+			for (i = 0; i < maxcount; i++)
 			{
 				p = (xj_jkey)index234(jwl->workers[idx].sip_ids, i);
 				if(p == NULL)
@@ -1012,7 +1012,7 @@ int xjab_connections(ih_req_p _irp, void *_p, char *_bb, int *_bl,
 			lock_set_release(jwl->sems, idx);
 		}
 	}
-	
+
 	*_bl = strlen(_bb);
 
 	return 0;

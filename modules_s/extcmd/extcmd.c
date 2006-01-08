@@ -21,8 +21,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -91,8 +91,8 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"listen_address", STR_PARAM, &my_address},
-	{"listen_port",    INT_PARAM, &my_port   },
+	{"listen_address", PARAM_STRING, &my_address},
+	{"listen_port",    PARAM_INT,    &my_port   },
 	{0, 0, 0}
 };
 
@@ -125,7 +125,7 @@ static int extcmd_init(void)
 		goto error;
 	}
 	/* let the auto-loading function load all TM stuff */
-	if (load_tm( &tmb )==-1) 
+	if (load_tm( &tmb )==-1)
 		goto error;
 
 	/* check the parameter */

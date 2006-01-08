@@ -1,5 +1,5 @@
 /*
- * $Id$ 
+ * $Id$
  * Digest Authentication - Diameter support
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -10,7 +10,7 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
- * 
+ *
  * For a license to use the ser software under conditions
  * other than those described here, or to purchase support for this
  * software, please contact iptel.org by e-mail at the following addresses:
@@ -21,14 +21,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
  * -------
- *  
- *  
+ *
+ *
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,7 +36,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netdb.h> 
+#include <netdb.h>
 
 #include "../../sr_module.h"
 #include "../../error.h"
@@ -56,7 +56,7 @@ int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
 
 static int mod_init(void);                        /* Module initialization function*/
 static int mod_child_init(int r);                 /* Child initialization function*/
-static int group_fixup(void** param, int param_no); 
+static int group_fixup(void** param, int param_no);
 
 int diameter_www_authorize(struct sip_msg* _msg, char* _realm, char* _s2);
 int diameter_proxy_authorize(struct sip_msg* _msg, char* _realm, char* _s2);
@@ -80,7 +80,7 @@ static cmd_export_t cmds[] = {
 	{"diameter_proxy_authorize", diameter_proxy_authorize, 1, fixup_str_1,
 			REQUEST_ROUTE},
 	{"diameter_is_user_in", diameter_is_user_in, 2, group_fixup,
-			REQUEST_ROUTE},		
+			REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -90,9 +90,9 @@ static int mod_init(void);                /* Module initialization function*/
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"diameter_client_host", STR_PARAM, &diameter_client_host},
-	{"diameter_client_port", INT_PARAM, &diameter_client_port},
-	{"use_domain", INT_PARAM, &use_domain},
+	{"diameter_client_host", PARAM_STRING, &diameter_client_host},
+	{"diameter_client_port", PARAM_INT, &diameter_client_port},
+	{"use_domain", PARAM_INT, &use_domain},
 	{0, 0, 0}
 };
 
@@ -101,7 +101,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"auth_diameter", 
+	"auth_diameter",
 	cmds,       	/* Exported functions */
 	0,              /* RPC methods */
 	params,     	/* Exported parameters */
@@ -126,17 +126,17 @@ static int mod_init(void)
 					" sl module\n");
 		return -1;
 	}
-	
+
 	return 0;
 }
 
 static int mod_child_init(int r)
-{	
+{
 	/* open TCP connection */
 	DBG("auth_diameter.c: mod_child_init(): Initializing TCP connection\n");
 
 	sockfd = init_mytcp(diameter_client_host, diameter_client_port);
-	if(sockfd==-1) 
+	if(sockfd==-1)
 	{
 		DBG("auth_diameter.c: mod_child_init(): TCP connection not"
 				" established\n");
@@ -145,7 +145,7 @@ static int mod_child_init(int r)
 
 	DBG("auth_diameter.c: mod_child_init(): TCP connection established"
 				" on socket=%d\n", sockfd);
-	
+
 	rb = (rd_buf_t*)pkg_malloc(sizeof(rd_buf_t));
 	if(!rb)
 	{
@@ -190,44 +190,44 @@ static int group_fixup(void** param, int param_no)
 	void* ptr;
 	str* s;
 
-	if (param_no == 1) 
+	if (param_no == 1)
 	{
 		ptr = *param;
-		
-		if (!strcasecmp((char*)*param, "Request-URI")) 
+
+		if (!strcasecmp((char*)*param, "Request-URI"))
 		{
 			*param = (void*)1;
 			goto end;
-		} 
+		}
 
-		if(!strcasecmp((char*)*param, "To")) 
+		if(!strcasecmp((char*)*param, "To"))
 		{
 			*param = (void*)2;
 			goto end;
-		} 
+		}
 
-		if (!strcasecmp((char*)*param, "From")) 
+		if (!strcasecmp((char*)*param, "From"))
 		{
 			*param = (void*)3;
 			goto end;
-		} 
+		}
 
-		if (!strcasecmp((char*)*param, "Credentials")) 
+		if (!strcasecmp((char*)*param, "Credentials"))
 		{
 			*param = (void*)4;
 			goto end;
 		}
-				
+
 		LOG(L_ERR, "group_fixup(): Unsupported Header Field identifier\n");
 		return E_UNSPEC;
-		
+
 		//pkg_free(ptr);
-	} 
-	
-	if (param_no == 2) 
+	}
+
+	if (param_no == 2)
 	{
 		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) 
+		if (!s)
 		{
 			LOG(L_ERR, "group_fixup(): No memory left\n");
 			return E_UNSPEC;

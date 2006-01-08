@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
@@ -30,7 +30,7 @@
  * --------
  * 2004-06-14 added ability to read default values from DB table usr_preferences_types (kozlik)
  */
-   
+
 #include <string.h>
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
@@ -85,12 +85,12 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",       STR_PARAM, &db_url      },
-	{"uid_column",   STR_PARAM, &uid_column  },
-	{"name_column",  STR_PARAM, &name_column },
-	{"type_column",  STR_PARAM, &name_column },
-	{"value_column", STR_PARAM, &val_column  },
-	{"flags_column", STR_PARAM, &flags_column  },
+	{"db_url",       PARAM_STRING, &db_url      },
+	{"uid_column",   PARAM_STRING, &uid_column  },
+	{"name_column",  PARAM_STRING, &name_column },
+	{"type_column",  PARAM_STRING, &name_column },
+	{"value_column", PARAM_STRING, &val_column  },
+	{"flags_column", PARAM_STRING, &flags_column  },
 	{0, 0, 0}
 };
 
@@ -155,7 +155,7 @@ static int load_attrs(str* uid, int track)
 		LOG(L_ERR, "avp_db:load_attrs: Invalid database handle\n");
 		return -1;
 	}
-	
+
 	keys[0] = uid_column;
 	kv[0].type = DB_STR;
 	kv[0].nul = 0;

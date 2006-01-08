@@ -157,6 +157,7 @@ void base64encode(char* src_buf, int src_len, char* tgt_buf, int* tgt_len) {
 
 #define MAX_AVP_DIALOG_LISTS 2
 static unsigned short avp_dialog_lists[MAX_AVP_DIALOG_LISTS] = {AVP_CLASS_USER|AVP_TRACK_FROM, AVP_CLASS_USER|AVP_TRACK_TO};
+typedef char rr_avp_flags_t;
 
 str *rr_get_avp_cookies(void) {
 	unsigned short crc, ll;
@@ -166,7 +167,7 @@ str *rr_get_avp_cookies(void) {
 	int_str avp_val;
 	str *avp_name;
 	str *result = 0;
-	avp_flags_t avp_flags;
+	rr_avp_flags_t avp_flags;
 
 	len = sizeof(crc);
 	for (avp_list_no=0; avp_list_no<MAX_AVP_DIALOG_LISTS; avp_list_no++) {
@@ -183,7 +184,7 @@ str *rr_get_avp_cookies(void) {
 			else
 				avp_name = 0;  // dummy
 
-			l = sizeof(avp_flags_t);
+			l = sizeof(rr_avp_flags_t);
 			if (avp->flags & AVP_NAME_STR )
 				l += avp_name->len+sizeof(unsigned short);
 			else
@@ -197,8 +198,8 @@ str *rr_get_avp_cookies(void) {
 				goto brk;
 			}
 			avp_flags = (avp->flags & 0x0F)|(avp_list_no << 4);
-			memcpy(buf+len, &avp_flags, sizeof(avp_flags_t));
-			len += sizeof(avp_flags_t);
+			memcpy(buf+len, &avp_flags, sizeof(rr_avp_flags_t));
+			len += sizeof(rr_avp_flags_t);
 			if (avp->flags & AVP_NAME_STR) {
 				if (avp_name->len > 0xFFFF)
 					ll = 0xFFFF;
@@ -253,7 +254,7 @@ void rr_set_avp_cookies(str *enc_cookies) {
 	struct usr_avp avp;
 	int_str avp_name, avp_val;
 	regmatch_t pmatch;
-	avp_flags_t avp_flags;
+	rr_avp_flags_t avp_flags;
 
 	DBG("rr_set_avp_cookies: enc_cookie(%d)='%.*s'\n", enc_cookies->len, enc_cookies->len, enc_cookies->s);
 	buf = (char*) pkg_malloc((enc_cookies->len*3)/4 + 3);
@@ -279,7 +280,7 @@ void rr_set_avp_cookies(str *enc_cookies) {
 		}
 
 		avp.flags = (avp_flags & 0x0F) | avp_dialog_lists[avp_flags >> 4];
-		pos+= sizeof(avp_flags_t);
+		pos+= sizeof(rr_avp_flags_t);
 		if (avp.flags & AVP_NAME_STR) {
 			avp_name.s.len = 0;
 			memcpy(&avp_name.s.len, buf+pos, sizeof(unsigned short));

@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
@@ -96,7 +96,7 @@ str db_url          = STR_STATIC_INIT(DEFAULT_DB_URL); /* Database URL */
 
 int timer_interval  = 60;             /* Timer interval in seconds */
 int db_mode         = 0;              /* Database sync scheme: 0-no db, 1-write through, 2-write back */
-int desc_time_order = 0;              /* By default do not enable timestamp ordering */                  
+int desc_time_order = 0;              /* By default do not enable timestamp ordering */
 
 
 db_con_t* ul_dbh = 0; /* Database connection handle */
@@ -128,25 +128,25 @@ static cmd_export_t cmds[] = {
 };
 
 
-/* 
- * Exported parameters 
+/*
+ * Exported parameters
  */
 static param_export_t params[] = {
-	{"uid_column",        STR_PARAM, &uid_col.s      },
-	{"contact_column",    STR_PARAM, &contact_col.s  },
-	{"expires_column",    STR_PARAM, &expires_col.s  },
-	{"q_column",          STR_PARAM, &q_col.s        },
-	{"callid_column",     STR_PARAM, &callid_col.s   },
-	{"cseq_column",       STR_PARAM, &cseq_col.s     },
-	{"method_column",     STR_PARAM, &method_col.s   },
-	{"flags_column",      STR_PARAM, &flags_col.s    },
-	{"db_url",            STR_PARAM, &db_url.s       },
-	{"timer_interval",    INT_PARAM, &timer_interval },
-	{"db_mode",           INT_PARAM, &db_mode        },
-	{"desc_time_order",   INT_PARAM, &desc_time_order},
-	{"user_agent_column", STR_PARAM, &user_agent_col },
-	{"received_column",   STR_PARAM, &received_col   },
-	{"instance_column",   STR_PARAM, &instance_col   },
+	{"uid_column",        PARAM_STR, &uid_col        },
+	{"contact_column",    PARAM_STR, &contact_col    },
+	{"expires_column",    PARAM_STR, &expires_col    },
+	{"q_column",          PARAM_STR, &q_col          },
+	{"callid_column",     PARAM_STR, &callid_col     },
+	{"cseq_column",       PARAM_STR, &cseq_col       },
+	{"method_column",     PARAM_STR, &method_col     },
+	{"flags_column",      PARAM_STR, &flags_col      },
+	{"db_url",            PARAM_STR, &db_url         },
+	{"timer_interval",    PARAM_INT, &timer_interval },
+	{"db_mode",           PARAM_INT, &db_mode        },
+	{"desc_time_order",   PARAM_INT, &desc_time_order},
+	{"user_agent_column", PARAM_STR, &user_agent_col },
+	{"received_column",   PARAM_STR, &received_col   },
+	{"instance_column",   PARAM_STR, &instance_col   },
 	{0, 0, 0}
 };
 
@@ -170,20 +170,6 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	DBG("usrloc - initializing\n");
-
-	     /* Compute the lengths of string parameters */
-	uid_col.len = strlen(uid_col.s);
-	contact_col.len = strlen(contact_col.s);
-	expires_col.len = strlen(expires_col.s);
-	q_col.len = strlen(q_col.s);
-	callid_col.len = strlen(callid_col.s);
-	cseq_col.len = strlen(cseq_col.s);
-	method_col.len = strlen(method_col.s);
-	flags_col.len = strlen(flags_col.s);
-	user_agent_col.len = strlen(user_agent_col.s);
-	received_col.len = strlen(received_col.s);
-	instance_col.len = strlen(instance_col.s);
-	db_url.len = strlen(db_url.s);
 
 	     /* Register cache timer */
 	register_timer(timer, 0, timer_interval);
@@ -241,7 +227,7 @@ static void destroy(void)
 		}
 		free_all_udomains();
 	}
-	
+
 	/* All processes close database connection */
 	if (ul_dbh) ul_dbf.close(ul_dbh);
 
