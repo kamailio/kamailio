@@ -17,7 +17,8 @@ override modules=
 override static_modules=
 override static_modules_path=
 
-INCLUDES += -I$(COREPATH)
+# should be set in Makefile of apart module
+# INCLUDES += -I$(COREPATH)
 
 ifeq ($(MAKELEVEL), 0)
 # make called directly in the module dir!

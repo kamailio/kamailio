@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -35,7 +35,7 @@
  *  2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
  *  2003-04-12  added force_rport, chdir and wdir (andrei)
  *  2003-04-22  strip_tail added (jiri)
- *  2003-07-03  tls* (disable, certificate, private_key, ca_list, verify, 
+ *  2003-07-03  tls* (disable, certificate, private_key, ca_list, verify,
  *               require_certificate added (andrei)
  *  2003-07-06  more tls config. vars added: tls_method, tls_port_no (andrei)
  *  2003-10-02  added {,set_}advertised_{address,port} (andrei)
@@ -89,7 +89,7 @@
 		int left;
 	};
 
-	
+
 	static int comment_nest=0;
 	static int state=0;
 	static struct str_buf s_buf;
@@ -351,7 +351,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{PREFIX}	{ count(); yylval.strval=yytext; return PREFIX; }
 <INITIAL>{STRIP}	{ count(); yylval.strval=yytext; return STRIP; }
 <INITIAL>{STRIP_TAIL}	{ count(); yylval.strval=yytext; return STRIP_TAIL; }
-<INITIAL>{APPEND_BRANCH}	{ count(); yylval.strval=yytext; 
+<INITIAL>{APPEND_BRANCH}	{ count(); yylval.strval=yytext;
 								return APPEND_BRANCH; }
 <INITIAL>{FORCE_RPORT}	{ count(); yylval.strval=yytext; return FORCE_RPORT; }
 <INITIAL>{FORCE_TCP_ALIAS}	{ count(); yylval.strval=yytext;
@@ -441,11 +441,11 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{TLS_VERIFY}	{ count(); yylval.strval=yytext; return TLS_VERIFY; }
 <INITIAL>{TLS_REQUIRE_CERTIFICATE}	{ count(); yylval.strval=yytext;
 										return TLS_REQUIRE_CERTIFICATE; }
-<INITIAL>{TLS_CERTIFICATE}	{ count(); yylval.strval=yytext; 
+<INITIAL>{TLS_CERTIFICATE}	{ count(); yylval.strval=yytext;
 										return TLS_CERTIFICATE; }
-<INITIAL>{TLS_PRIVATE_KEY}	{ count(); yylval.strval=yytext; 
+<INITIAL>{TLS_PRIVATE_KEY}	{ count(); yylval.strval=yytext;
 										return TLS_PRIVATE_KEY; }
-<INITIAL>{TLS_CA_LIST}	{ count(); yylval.strval=yytext; 
+<INITIAL>{TLS_CA_LIST}	{ count(); yylval.strval=yytext;
 										return TLS_CA_LIST; }
 <INITIAL>{TLS_HANDSHAKE_TIMEOUT}	{ count(); yylval.strval=yytext;
 										return TLS_HANDSHAKE_TIMEOUT; }
@@ -488,10 +488,10 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{MINUS}	{ count(); return MINUS; }
 
 <INITIAL>{SELECT_MARK}  { count(); state = SELECT_S; BEGIN(SELECT); return SELECT_MARK; }
-<SELECT>{ID}		{ count(); addstr(&s_buf, yytext, yyleng); 
+<SELECT>{ID}		{ count(); addstr(&s_buf, yytext, yyleng);
                           yylval.strval=s_buf.s;
                           memset(&s_buf, 0, sizeof(s_buf));
-                          return ID; 
+                          return ID;
                         }
 <SELECT>{DOT}           { count(); return DOT; }
 <SELECT>{LBRACK}        { count(); return LBRACK; }
@@ -514,12 +514,12 @@ EAT_ABLE	[\ \t\b\r]
 <ATTR>{RBRACK}          { count(); return RBRACK; }
 <ATTR>{STAR}		{ count(); return STAR; }
 <ATTR>{DECNUMBER}	{ count(); yylval.intval=atoi(yytext);return NUMBER; }
-<ATTR>{ID}		{ count(); addstr(&s_buf, yytext, yyleng); 
+<ATTR>{ID}		{ count(); addstr(&s_buf, yytext, yyleng);
                            yylval.strval=s_buf.s;
 			   memset(&s_buf, 0, sizeof(s_buf));
                            state = INITIAL_S;
                            BEGIN(INITIAL);
-			   return ID; 
+			   return ID;
                         }
 
 <INITIAL>{IPV6ADDR}		{ count(); yylval.strval=yytext; return IPV6ADDR; }
@@ -567,14 +567,14 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{TICK} { count(); state=STRING_S; BEGIN(STRING2); }
 
 
-<STRING1>{QUOTES} { count(); state=INITIAL_S; BEGIN(INITIAL); 
+<STRING1>{QUOTES} { count(); state=INITIAL_S; BEGIN(INITIAL);
 						yytext[yyleng-1]=0; yyleng--;
 						addstr(&s_buf, yytext, yyleng);
 						yylval.strval=s_buf.s;
 						memset(&s_buf, 0, sizeof(s_buf));
 						return STRING;
 					}
-<STRING2>{TICK}  { count(); state=INITIAL_S; BEGIN(INITIAL); 
+<STRING2>{TICK}  { count(); state=INITIAL_S; BEGIN(INITIAL);
 						yytext[yyleng-1]=0; yyleng--;
 						addstr(&s_buf, yytext, yyleng);
 						yylval.strval=s_buf.s;
@@ -588,12 +588,12 @@ EAT_ABLE	[\ \t\b\r]
 <STRING1>\\a		{ count(); addchar(&s_buf, '\a'); }
 <STRING1>\\t		{ count(); addchar(&s_buf, '\t'); }
 <STRING1>\\{QUOTES}	{ count(); addchar(&s_buf, '"');  }
-<STRING1>\\\\		{ count(); addchar(&s_buf, '\\'); } 
-<STRING1>\\x{HEX}{1,2}	{ count(); addchar(&s_buf, 
+<STRING1>\\\\		{ count(); addchar(&s_buf, '\\'); }
+<STRING1>\\x{HEX}{1,2}	{ count(); addchar(&s_buf,
 											(char)strtol(yytext+2, 0, 16)); }
  /* don't allow \[0-7]{1}, it will eat the backreferences from
     subst_uri if allowed (although everybody should use '' in subt_uri) */
-<STRING1>\\[0-7]{2,3}	{ count(); addchar(&s_buf, 
+<STRING1>\\[0-7]{2,3}	{ count(); addchar(&s_buf,
 											(char)strtol(yytext+1, 0, 8));  }
 <STRING1>\\{CR}		{ count(); } /* eat escaped CRs */
 <STRING1>.|{EAT_ABLE}|{CR}	{ addchar(&s_buf, *yytext); }
@@ -609,9 +609,9 @@ EAT_ABLE	[\ \t\b\r]
 								}
 <COMMENT>.|{EAT_ABLE}|{CR}				{ count(); };
 
-<INITIAL>{COM_LINE}.*{CR}	{ count(); } 
+<INITIAL>{COM_LINE}.*{CR}	{ count(); }
 
-<INITIAL>{ID}			{ count(); addstr(&s_buf, yytext, yyleng); 
+<INITIAL>{ID}			{ count(); addstr(&s_buf, yytext, yyleng);
 									yylval.strval=s_buf.s;
 									memset(&s_buf, 0, sizeof(s_buf));
 									return ID; }
@@ -619,7 +619,7 @@ EAT_ABLE	[\ \t\b\r]
 
 <<EOF>>							{
 									switch(state){
-										case STRING_S: 
+										case STRING_S:
 											LOG(L_CRIT, "ERROR: cfg. parser: unexpected EOF in"
 														" unclosed string\n");
 											if (s_buf.s){
@@ -639,7 +639,7 @@ EAT_ABLE	[\ \t\b\r]
 									}
 									return 0;
 								}
-			
+
 %%
 
 
@@ -655,7 +655,7 @@ static char* addstr(struct str_buf* dst_b, char* src, int len)
 	char *tmp;
 	unsigned size;
 	unsigned used;
-	
+
 	if (dst_b->left<(len+1)){
 		used=(unsigned)(dst_b->crt-dst_b->s);
 		size=used+len+1;
@@ -664,7 +664,7 @@ static char* addstr(struct str_buf* dst_b, char* src, int len)
 		tmp=pkg_malloc(size);
 		if (tmp==0) goto error;
 		if (dst_b->s){
-			memcpy(tmp, dst_b->s, used); 
+			memcpy(tmp, dst_b->s, used);
 			pkg_free(dst_b->s);
 		}
 		dst_b->s=tmp;
@@ -675,7 +675,7 @@ static char* addstr(struct str_buf* dst_b, char* src, int len)
 	dst_b->crt+=len;
 	*(dst_b->crt)=0;
 	dst_b->left-=len;
-	
+
 	return dst_b->s;
 error:
 	LOG(L_CRIT, "ERROR:lex:addstr: memory allocation error\n");
@@ -687,7 +687,7 @@ error:
 static void count()
 {
 	int i;
-	
+
 	startcolumn=column;
 	for (i=0; i<yyleng;i++){
 		if (yytext[i]=='\n'){

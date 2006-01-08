@@ -47,8 +47,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /*
@@ -129,7 +129,7 @@ inline static int w_t_retransmit_reply(struct sip_msg* p_msg, char* foo,
 				char* bar );
 inline static int w_t_newtran(struct sip_msg* p_msg, char* foo, char* bar );
 inline static int w_t_relay( struct sip_msg  *p_msg , char *_foo, char *_bar);
-inline static int w_t_relay_to_udp( struct sip_msg  *p_msg , char *proxy, 
+inline static int w_t_relay_to_udp( struct sip_msg  *p_msg , char *proxy,
 				 char *);
 #ifdef USE_TCP
 inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg , char *proxy,
@@ -139,19 +139,19 @@ inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg , char *proxy,
 inline static int w_t_relay_to_tls( struct sip_msg  *p_msg , char *proxy,
 				char *);
 #endif
-inline static int w_t_replicate( struct sip_msg  *p_msg , 
+inline static int w_t_replicate( struct sip_msg  *p_msg ,
 				char *proxy, /* struct proxy_l *proxy expected */
 				char *_foo       /* nothing expected */ );
-inline static int w_t_replicate_udp( struct sip_msg  *p_msg , 
+inline static int w_t_replicate_udp( struct sip_msg  *p_msg ,
 				char *proxy, /* struct proxy_l *proxy expected */
 				char *_foo       /* nothing expected */ );
 #ifdef USE_TCP
-inline static int w_t_replicate_tcp( struct sip_msg  *p_msg , 
+inline static int w_t_replicate_tcp( struct sip_msg  *p_msg ,
 				char *proxy, /* struct proxy_l *proxy expected */
 				char *_foo       /* nothing expected */ );
 #endif
 #ifdef USE_TLS
-inline static int w_t_replicate_tls( struct sip_msg  *p_msg , 
+inline static int w_t_replicate_tls( struct sip_msg  *p_msg ,
 				char *proxy, /* struct proxy_l *proxy expected */
 				char *_foo       /* nothing expected */ );
 #endif
@@ -267,22 +267,22 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{"ruri_matching",       INT_PARAM, &ruri_matching                        },
-	{"via1_matching",       INT_PARAM, &via1_matching                        },
-	{"fr_timer",            INT_PARAM, &fr_timeout                           },
-	{"fr_inv_timer",        INT_PARAM, &fr_inv_timeout                       },
-	{"wt_timer",            INT_PARAM, &wait_timeout                         },
-	{"delete_timer",        INT_PARAM, &delete_timeout                       },
-	{"retr_timer1",         INT_PARAM, &rt_t1_timeout                        },
-	{"retr_timer2"  ,       INT_PARAM, &rt_t2_timeout                        },
-	{"noisy_ctimer",        INT_PARAM, &noisy_ctimer                         },
-	{"uac_from",            STR_PARAM, &uac_from                             },
-	{"unix_tx_timeout",     INT_PARAM, &tm_unix_tx_timeout                   },
-	{"restart_fr_on_each_reply", INT_PARAM, &restart_fr_on_each_reply        },
-	{"fr_timer_avp",        STR_PARAM, &fr_timer_param                       },
-	{"fr_inv_timer_avp",    STR_PARAM, &fr_inv_timer_param                   },
-	{"tw_append",           STR_PARAM|USE_FUNC_PARAM, (void*)parse_tw_append },
-        {"pass_provisional_replies", INT_PARAM, &pass_provisional_replies        },
+	{"ruri_matching",       PARAM_INT, &ruri_matching                        },
+	{"via1_matching",       PARAM_INT, &via1_matching                        },
+	{"fr_timer",            PARAM_INT, &fr_timeout                           },
+	{"fr_inv_timer",        PARAM_INT, &fr_inv_timeout                       },
+	{"wt_timer",            PARAM_INT, &wait_timeout                         },
+	{"delete_timer",        PARAM_INT, &delete_timeout                       },
+	{"retr_timer1",         PARAM_INT, &rt_t1_timeout                        },
+	{"retr_timer2"  ,       PARAM_INT, &rt_t2_timeout                        },
+	{"noisy_ctimer",        PARAM_INT, &noisy_ctimer                         },
+	{"uac_from",            PARAM_STRING, &uac_from                          },
+	{"unix_tx_timeout",     PARAM_INT, &tm_unix_tx_timeout                   },
+	{"restart_fr_on_each_reply", PARAM_INT, &restart_fr_on_each_reply        },
+	{"fr_timer_avp",        PARAM_STRING, &fr_timer_param                    },
+	{"fr_inv_timer_avp",    PARAM_STRING, &fr_inv_timer_param                },
+	{"tw_append",           PARAM_STRING|PARAM_USE_FUNC, (void*)parse_tw_append },
+        {"pass_provisional_replies", PARAM_INT, &pass_provisional_replies        },
 	{0,0,0}
 };
 
@@ -298,7 +298,7 @@ struct module_exports exports= {
 	tm_rpc,    /* RPC methods */
 	/* ------------ exported variables ---------- */
 	params,
-	
+
 	mod_init, /* module initialization function */
 	(response_function) reply_received,
 	(destroy_function) tm_shutdown,
@@ -315,7 +315,7 @@ static int fixup_hostport2proxy(void** param, int param_no)
 	int err;
 	struct proxy_l *proxy;
 	str s;
-	
+
 	DBG("TM module: fixup_hostport2proxy(%s, %d)\n", (char*)*param, param_no);
 	if (param_no==1){
 		return 0;
@@ -354,7 +354,7 @@ static int w_t_unref( struct sip_msg *foo, void *bar)
 
 
 static int script_init( struct sip_msg *foo, void *bar)
-{   
+{
 	/* we primarily reset all private memory here to make sure
 	 * private values left over from previous message will
 	 * not be used again */
@@ -376,7 +376,7 @@ static int script_init( struct sip_msg *foo, void *bar)
 
 static int mod_init(void)
 {
-	DBG( "TM - (sizeof cell=%ld, sip_msg=%ld) initializing...\n", 
+	DBG( "TM - (sizeof cell=%ld, sip_msg=%ld) initializing...\n",
 			(long)sizeof(struct cell), (long)sizeof(struct sip_msg));
 	/* checking if we have sufficient bitmap capacity for given
 	   maximum number of  branches */
@@ -410,7 +410,7 @@ static int mod_init(void)
 	 * will be started; however we started already our
 	 * timers, so we know and process_count should not
 	 * change any more
-	 */	
+	 */
 	if (init_tm_stats()<0) {
 		LOG(L_CRIT, "ERROR: mod_init: failed to init stats\n");
 		return -1;
@@ -608,7 +608,7 @@ inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2)
 	 * is called; we are already in a mutex and another mutex in
 	 * the safe version would lead to a deadlock
 	 */
-	if (rmode==MODE_ONFAILURE) { 
+	if (rmode==MODE_ONFAILURE) {
 		DBG("DEBUG: t_reply_unsafe called from w_t_reply\n");
 		return t_reply_unsafe(t, msg, (unsigned int)(long) str, str2);
 	} else if (rmode==MODE_REQUEST) {
@@ -625,7 +625,7 @@ inline static int w_t_release(struct sip_msg* msg, char* str, char* str2)
 	struct cell *t;
 	if (t_check( msg  , 0  )==-1) return -1;
 	t=get_t();
-	if ( t && t!=T_UNDEFINED ) 
+	if ( t && t!=T_UNDEFINED )
 		return t_release_transaction( t );
 	return 1;
 }
@@ -636,7 +636,7 @@ inline static int w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* 
 	struct cell *t;
 
 
-	if (t_check( p_msg  , 0 )==-1) 
+	if (t_check( p_msg  , 0 )==-1)
 		return 1;
 	t=get_t();
 	if (t) {
@@ -645,12 +645,12 @@ inline static int w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* 
 			return -1;
 		}
 		return t_retransmit_reply( t );
-	} else 
+	} else
 		return -1;
 }
 
 
-inline static int w_t_newtran( struct sip_msg* p_msg, char* foo, char* bar ) 
+inline static int w_t_newtran( struct sip_msg* p_msg, char* foo, char* bar )
 {
 	/* t_newtran returns 0 on error (negative value means
 	   'transaction exists' */
@@ -679,12 +679,12 @@ inline static int w_t_on_reply( struct sip_msg* msg, char *go_to, char *foo )
 
 
 
-inline static int _w_t_relay_to( struct sip_msg  *p_msg , 
+inline static int _w_t_relay_to( struct sip_msg  *p_msg ,
 	struct proxy_l *proxy )
 {
 	struct cell *t;
 
-	if (rmode==MODE_ONFAILURE) { 
+	if (rmode==MODE_ONFAILURE) {
 		t=get_t();
 		if (!t || t==T_UNDEFINED) {
 			LOG(L_CRIT, "BUG: w_t_relay_to: undefined T\n");
@@ -696,7 +696,7 @@ inline static int _w_t_relay_to( struct sip_msg  *p_msg ,
 		}
 		return 1;
 	}
-	if (rmode==MODE_REQUEST) 
+	if (rmode==MODE_REQUEST)
 		return t_relay_to( p_msg, proxy, PROTO_NONE,
 			0 /* no replication */ );
 	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported mode: %d\n", rmode);
@@ -704,7 +704,7 @@ inline static int _w_t_relay_to( struct sip_msg  *p_msg ,
 }
 
 
-inline static int w_t_relay_to_udp( struct sip_msg  *p_msg , 
+inline static int w_t_relay_to_udp( struct sip_msg  *p_msg ,
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
@@ -714,7 +714,7 @@ inline static int w_t_relay_to_udp( struct sip_msg  *p_msg ,
 
 
 #ifdef USE_TCP
-inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg , 
+inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg ,
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
@@ -725,7 +725,7 @@ inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg ,
 
 
 #ifdef USE_TLS
-inline static int w_t_relay_to_tls( struct sip_msg  *p_msg , 
+inline static int w_t_relay_to_tls( struct sip_msg  *p_msg ,
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
@@ -735,7 +735,7 @@ inline static int w_t_relay_to_tls( struct sip_msg  *p_msg ,
 #endif
 
 
-inline static int w_t_replicate( struct sip_msg  *p_msg , 
+inline static int w_t_replicate( struct sip_msg  *p_msg ,
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
@@ -743,7 +743,7 @@ inline static int w_t_replicate( struct sip_msg  *p_msg ,
 }
 
 
-inline static int w_t_replicate_udp( struct sip_msg  *p_msg , 
+inline static int w_t_replicate_udp( struct sip_msg  *p_msg ,
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
@@ -752,7 +752,7 @@ inline static int w_t_replicate_udp( struct sip_msg  *p_msg ,
 
 
 #ifdef USE_TCP
-inline static int w_t_replicate_tcp( struct sip_msg  *p_msg , 
+inline static int w_t_replicate_tcp( struct sip_msg  *p_msg ,
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
@@ -762,7 +762,7 @@ inline static int w_t_replicate_tcp( struct sip_msg  *p_msg ,
 
 
 #ifdef USE_TLS
-inline static int w_t_replicate_tls( struct sip_msg  *p_msg , 
+inline static int w_t_replicate_tls( struct sip_msg  *p_msg ,
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
@@ -771,25 +771,25 @@ inline static int w_t_replicate_tls( struct sip_msg  *p_msg ,
 #endif
 
 
-inline static int w_t_relay( struct sip_msg  *p_msg , 
+inline static int w_t_relay( struct sip_msg  *p_msg ,
 						char *_foo, char *_bar)
 {
 	struct cell *t;
 
-	if (rmode==MODE_ONFAILURE) { 
+	if (rmode==MODE_ONFAILURE) {
 		t=get_t();
 		if (!t || t==T_UNDEFINED) {
 			LOG(L_CRIT, "BUG: w_t_relay: undefined T\n");
 			return -1;
-		} 
+		}
 		if (t_forward_nonack(t, p_msg, ( struct proxy_l *) 0, PROTO_NONE)<=0) {
 			LOG(L_ERR, "ERROR: w_t_relay (failure mode): forwarding failed\n");
 			return -1;
 		}
 		return 1;
 	}
-	if (rmode==MODE_REQUEST) 
-		return t_relay_to( p_msg, 
+	if (rmode==MODE_REQUEST)
+		return t_relay_to( p_msg,
 		(struct proxy_l *) 0 /* no proxy */, PROTO_NONE,
 		0 /* no replication */ );
 	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported mode: %d\n", rmode);
@@ -800,7 +800,7 @@ inline static int w_t_relay( struct sip_msg  *p_msg ,
 /* set fr_inv_timeout & or fr_timeout; 0 means: use the default value */
 static int t_set_fr_all(struct sip_msg* msg, char* fr_inv, char* fr)
 {
-	
+
 	return t_set_fr(msg, (unsigned int)(long)fr_inv, (unsigned int)(long)fr);
 }
 

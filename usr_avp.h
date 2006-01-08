@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -146,6 +146,8 @@ typedef struct avp_spec {
 #define AVP_INDEX_FORWARD	(1<<10)
 #define AVP_INDEX_BACKWARD	(1<<11)
 #define AVP_INDEX_ALL		(AVP_INDEX_FORWARD | AVP_INDEX_BACKWARD)
+
+#define AVP_FLAG_DIALOG         (1<<12)
 
 #define GALIAS_CHAR_MARKER  '$'
 
