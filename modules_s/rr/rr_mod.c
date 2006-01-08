@@ -52,8 +52,7 @@
 #ifdef ENABLE_USER_CHECK
 #include <string.h>
 #include "../../str.h"
-str i_user;
-char *ignore_user = NULL;
+str i_user = STR_NULL;
 #endif
 
 int append_fromtag = 1;
@@ -96,7 +95,7 @@ static param_export_t params[] ={
 	{"enable_double_rr", PARAM_INT,    &enable_double_rr},
 	{"enable_full_lr",   PARAM_INT,    &enable_full_lr  },
 #ifdef ENABLE_USER_CHECK
-	{"ignore_user",      PARAM_STRING, &ignore_user     },
+	{"ignore_user",      PARAM_STR,    &i_user     },
 #endif
 	{"add_username",     PARAM_INT,    &add_username    },
 	{"cookie_filter",    PARAM_STRING, &cookie_filter   },
@@ -120,18 +119,6 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	DBG("rr - initializing\n");
-#ifdef ENABLE_USER_CHECK
-	if(ignore_user)
-	{
-		i_user.s = ignore_user;
-		i_user.len = strlen(ignore_user);
-	}
-	else
-	{
-		i_user.s = 0;
-		i_user.len = 0;
-	}
-#endif
 	register_script_cb(rr_before_script_cb, REQ_TYPE_CB | PRE_SCRIPT_CB, 0);
 	if (cookie_filter && strlen(cookie_filter)) {
 		if (regcomp(cookie_filter_re, cookie_filter, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ) {
