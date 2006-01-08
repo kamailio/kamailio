@@ -44,10 +44,12 @@ typedef struct avp_save_item_t {
 	} u;
 } avp_save_item_t;
 
+extern regex_t *cookie_filter_re;
+
 int rr_before_script_cb(struct sip_msg *msg, void *param);
 int rr_add_avp_cookie(struct sip_msg *msg, char *param1, char *param2);
 str *rr_get_avp_cookies(void);
-void rr_set_avp_cookies(str *enc_cookies, regex_t *re);
+void rr_set_avp_cookies(str *enc_cookies);
 
 
 #endif  // AVP_COOKIE_H

@@ -60,6 +60,7 @@ int append_fromtag = 1;
 int enable_double_rr = 1; /* Enable using of 2 RR by default */
 int enable_full_lr = 0;   /* Disabled by default */
 int add_username = 0;     /* Do not add username by default */
+char *cookie_filter = 0;  /* filter cookies restored in loose_route, potential security problem */
 
 MODULE_VERSION
 
@@ -98,6 +99,7 @@ static param_export_t params[] ={
 	{"ignore_user",      STR_PARAM, &ignore_user     },
 #endif
 	{"add_username",     INT_PARAM, &add_username    },
+	{"cookie_filter",    STR_PARAM, &cookie_filter   },
 	{0, 0, 0 }
 };
 
@@ -131,6 +133,12 @@ static int mod_init(void)
 	}
 #endif
 	register_script_cb(rr_before_script_cb, REQ_TYPE_CB | PRE_SCRIPT_CB, 0);
+	if (cookie_filter && strlen(cookie_filter)) {
+		if (regcomp(cookie_filter_re, cookie_filter, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ) {
+			LOG(L_ERR, "ERROR: %s : bad cookie_filter regex '%s'\n", exports.name, cookie_filter);
+			return E_BAD_RE;
+		}
+	}
 	return 0;
 }
 
@@ -150,7 +158,7 @@ static int fixup_avp_regex(void** param, int param_no)
 		re->type = 0;
 		re->u.n = atol(*param +2);
 		if (re->u.n == 0) {
-			LOG(L_ERR, "ERROR: %s : bad AVP number %s\n", exports.name, (char*)*param);
+			LOG(L_ERR, "ERROR: %s : bad AVP number '%s'\n", exports.name, (char*)*param);
 			return E_CFG;
 		}
 	}
@@ -158,7 +166,7 @@ static int fixup_avp_regex(void** param, int param_no)
 		re->type = AVP_NAME_RE;
 		if (regcomp(&re->u.re, *param, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ){
 			pkg_free(re);
-			LOG(L_ERR, "ERROR: %s : bad re %s\n", exports.name, (char*)*param);
+			LOG(L_ERR, "ERROR: %s : bad regex '%s'\n", exports.name, (char*)*param);
 			return E_BAD_RE;
 		}
 	}

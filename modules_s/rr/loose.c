@@ -622,7 +622,7 @@ static inline int after_strict(struct sip_msg* _m)
 
 	get_avp_cookie_from_uri(&_m->parsed_uri.params, &avp_cookie);
 	if (avp_cookie.len > 0)
-		rr_set_avp_cookies(&avp_cookie, 0);
+		rr_set_avp_cookies(&avp_cookie);
 
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
@@ -793,7 +793,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		DBG("after_loose: Topmost route URI: '%.*s' is me\n", uri->len, ZSW(uri->s));
 		get_avp_cookie_from_uri(&puri.params, &avp_cookie);
 		if (avp_cookie.len > 0)
-			rr_set_avp_cookies(&avp_cookie, 0);
+			rr_set_avp_cookies(&avp_cookie);
 		if (!rt->next) {
 			     /* No next route in the same header, remove the whole header
 			      * field immediately

@@ -33,15 +33,17 @@
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
 
-static avp_list_t dialog_avp_list = 0;
+//static avp_list_t dialog_avp_list = 0;
 
 #define AVP_COOKIE_NAME "avp="
 #define AVP_COOKIE_BUFFER 1024
 #define CRC_LEN 4
 
+regex_t *cookie_filter_re = 0;
+
 int rr_before_script_cb(struct sip_msg *msg, void *param) {
 	DBG("rr_before_script_cb: inquired\n");
-	destroy_avp_list(&dialog_avp_list);
+	//destroy_avp_list(&dialog_avp_list);
 	return 1;
 }
 
@@ -84,9 +86,10 @@ int rr_add_avp_cookie(struct sip_msg *msg, char *param1, char *param2) {
 
 		// set avp from cookie
 		DBG("rr:rr_add_avp_cookie: coping AVP\n");
-		if ( add_avp_list(&dialog_avp_list, avp->flags, avp_id2, avp_val)!=0 ) {
-			LOG(L_ERR, "ERROR: rr:rr_add_avp_cookie: add_avp failed\n");
-		}
+		/* TODO: avp->flags |= AVP_DIALOG */
+		//if ( add_avp_list(&dialog_avp_list, avp->flags, avp_id2, avp_val)!=0 ) {
+		//	LOG(L_ERR, "ERROR: rr:rr_add_avp_cookie: add_avp failed\n");
+		//}
 	}
 
 	return 1;
@@ -152,71 +155,79 @@ void base64encode(char* src_buf, int src_len, char* tgt_buf, int* tgt_len) {
 	}
 }
 
+#define MAX_AVP_DIALOG_LISTS 2
+static unsigned short avp_dialog_lists[MAX_AVP_DIALOG_LISTS] = {AVP_CLASS_USER|AVP_TRACK_FROM, AVP_CLASS_USER|AVP_TRACK_TO};
+typedef char avp_flags_t;
+
 str *rr_get_avp_cookies(void) {
 	unsigned short crc, ll;
 	static char buf[AVP_COOKIE_BUFFER];
-	int len, l;
+	int len, l, avp_list_no;
 	struct usr_avp *avp;
 	int_str avp_val;
 	str *avp_name;
 	str *result = 0;
+	avp_flags_t avp_flags;
 
 	len = sizeof(crc);
-	for ( avp=dialog_avp_list; avp; avp = avp->next ) {
+	for (avp_list_no=0; avp_list_no<MAX_AVP_DIALOG_LISTS; avp_list_no++) {
+		for ( avp=get_avp_list(avp_dialog_lists[avp_list_no]); avp; avp = avp->next ) {
 
-		if ((avp->flags&(AVP_NAME_STR|AVP_VAL_STR)) == AVP_NAME_STR) {
-			/* avp type str, int value */
-			avp_name = & ((struct str_int_data*)&(avp->data))->name;
-		}
-		else if ((avp->flags&(AVP_NAME_STR|AVP_VAL_STR)) == (AVP_NAME_STR|AVP_VAL_STR)) {
-			/* avp type str, str value */
-			avp_name = & ((struct str_str_data*)&(avp->data))->name;
-		}
-		else
-			avp_name = 0;  // dummy
+			if ((avp->flags&(AVP_NAME_STR|AVP_VAL_STR)) == AVP_NAME_STR) {
+				/* avp type str, int value */
+				avp_name = & ((struct str_int_data*)&(avp->data))->name;
+			}
+			else if ((avp->flags&(AVP_NAME_STR|AVP_VAL_STR)) == (AVP_NAME_STR|AVP_VAL_STR)) {
+				/* avp type str, str value */
+				avp_name = & ((struct str_str_data*)&(avp->data))->name;
+			}
+			else
+				avp_name = 0;  // dummy
 
-		l = sizeof(char);
-		if (avp->flags & AVP_NAME_STR )
-			l += avp_name->len+sizeof(unsigned short);
-		else
-			l += sizeof(avp->id);
-		if (avp->flags & AVP_VAL_STR )
-			l += avp_val.s.len+sizeof(unsigned short);
-		else
-			l += sizeof(avp_val.n);
-		if (len+l > AVP_COOKIE_BUFFER) {
-			LOG(L_ERR, "rr:get_avp_cookies: not enough memory to prepare all cookies\n");
-			goto brk;
-		}
-		memcpy(buf+len, &avp->flags, sizeof(char));
-		len += sizeof(char);
-		if (avp->flags & AVP_NAME_STR) {
-			if (avp_name->len > 0xFFFF)
-				ll = 0xFFFF;
+			l = sizeof(avp_flags_t);
+			if (avp->flags & AVP_NAME_STR )
+				l += avp_name->len+sizeof(unsigned short);
 			else
-				ll = avp_name->len;
-			memcpy(buf+len, &ll, sizeof(ll));
-			len+= sizeof(ll);
-			memcpy(buf+len, avp_name->s, ll);
-			len+= ll;
-		}
-		else {
-			memcpy(buf+len, &avp->id, sizeof(avp->id));
-			len+= sizeof(avp->id);
-		}
-		if (avp->flags & AVP_VAL_STR) {
-			if (avp_val.s.len > 0xFFFF)
-				ll = 0xFFFF;
+				l += sizeof(avp->id);
+			if (avp->flags & AVP_VAL_STR )
+				l += avp_val.s.len+sizeof(unsigned short);
 			else
-				ll = avp_val.s.len;
-			memcpy(buf+len, &ll, sizeof(ll));
-			len+= sizeof(ll);
-			memcpy(buf+len, avp_val.s.s, ll);
-			len+= ll;
-		}
-		else {
-			memcpy(buf+len, &avp_val.n, sizeof(avp_val.n));
-			len+= sizeof(avp_val.n);
+				l += sizeof(avp_val.n);
+			if (len+l > AVP_COOKIE_BUFFER) {
+				LOG(L_ERR, "rr:get_avp_cookies: not enough memory to prepare all cookies\n");
+				goto brk;
+			}
+			avp_flags = (avp->flags & 0x0F)|(avp_list_no << 4);
+			memcpy(buf+len, &avp_flags, sizeof(avp_flags_t));
+			len += sizeof(avp_flags_t);
+			if (avp->flags & AVP_NAME_STR) {
+				if (avp_name->len > 0xFFFF)
+					ll = 0xFFFF;
+				else
+					ll = avp_name->len;
+				memcpy(buf+len, &ll, sizeof(ll));
+				len+= sizeof(ll);
+				memcpy(buf+len, avp_name->s, ll);
+				len+= ll;
+			}
+			else {
+				memcpy(buf+len, &avp->id, sizeof(avp->id));
+				len+= sizeof(avp->id);
+			}
+			if (avp->flags & AVP_VAL_STR) {
+				if (avp_val.s.len > 0xFFFF)
+					ll = 0xFFFF;
+				else
+					ll = avp_val.s.len;
+				memcpy(buf+len, &ll, sizeof(ll));
+				len+= sizeof(ll);
+				memcpy(buf+len, avp_val.s.s, ll);
+				len+= ll;
+			}
+			else {
+				memcpy(buf+len, &avp_val.n, sizeof(avp_val.n));
+				len+= sizeof(avp_val.n);
+			}
 		}
 	}
 brk:
@@ -236,13 +247,14 @@ brk:
 	return result;
 }
 
-void rr_set_avp_cookies(str *enc_cookies, regex_t *re) {
+void rr_set_avp_cookies(str *enc_cookies) {
 	char *buf;
 	int len, pos;
 	unsigned short crc;
 	struct usr_avp avp;
 	int_str avp_name, avp_val;
 	regmatch_t pmatch;
+	avp_flags_t avp_flags;
 
 	DBG("rr_set_avp_cookies: enc_cookie(%d)='%.*s'\n", enc_cookies->len, enc_cookies->len, enc_cookies->s);
 	buf = (char*) pkg_malloc((enc_cookies->len*3)/4 + 3);
@@ -261,8 +273,14 @@ void rr_set_avp_cookies(str *enc_cookies, regex_t *re) {
 	}
 	pos = sizeof(crc);
 	while (pos < len) {
-		avp.flags = buf[pos];
-		pos+= sizeof(char);
+		memcpy(&avp_flags, buf+pos, sizeof(avp_flags));
+		if ((avp_flags >> 4) >= MAX_AVP_DIALOG_LISTS) {
+			LOG(L_ERR, "rr:set_avp_cookies: AVP cookies corrupted\n");
+			break;
+		}
+
+		avp.flags = (avp_flags & 0x0F) | avp_dialog_lists[avp_flags >> 4];
+		pos+= sizeof(avp_flags_t);
 		if (avp.flags & AVP_NAME_STR) {
 			avp_name.s.len = 0;
 			memcpy(&avp_name.s.len, buf+pos, sizeof(unsigned short));
@@ -295,12 +313,12 @@ void rr_set_avp_cookies(str *enc_cookies, regex_t *re) {
 			break;
 		}
 		// filtr cookie
-		if (re) {
+		if (cookie_filter_re) {
 			if (avp.flags & AVP_NAME_STR) {
 				char savec;
 				savec = avp_name.s.s[avp_name.s.len];
 				avp_name.s.s[avp_name.s.len] = 0;
-				if (regexec(re, avp_name.s.s, 1, &pmatch, 0) != 0) {
+				if (regexec(cookie_filter_re, avp_name.s.s, 1, &pmatch, 0) != 0) {
 					DBG("rr:set_avp_cookies: regex doesn't match (str)\n");
 					avp_name.s.s[avp_name.s.len] = savec;
 					continue;
@@ -311,7 +329,7 @@ void rr_set_avp_cookies(str *enc_cookies, regex_t *re) {
 				char buf[25];
 				snprintf(buf, sizeof(buf)-1, "i:%d", avp_name.n);
 				buf[sizeof(buf)-1]=0;
-				if (regexec(re, buf, 1, &pmatch, 0) != 0) {
+				if (regexec(cookie_filter_re, buf, 1, &pmatch, 0) != 0) {
 					DBG("rr:set_avp_cookies: regex doesn't match (int)\n");
 					continue;
 				}
@@ -320,7 +338,7 @@ void rr_set_avp_cookies(str *enc_cookies, regex_t *re) {
 		// set avp from cookie
 		DBG("rr:set_avp_cookies: adding AVP\n");
 
-		if ( add_avp_list(&dialog_avp_list, avp.flags, avp_name, avp_val)!=0 ) {
+		if ( add_avp(avp.flags/*TODO: |AVP_DIALOG*/, avp_name, avp_val)!=0 ) {
 			LOG(L_ERR, "ERROR: rr:set_avp_cookies: add_avp failed\n");
 		}
 	}
