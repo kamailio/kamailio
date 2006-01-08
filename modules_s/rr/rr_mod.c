@@ -48,6 +48,7 @@
 #include <sys/types.h> /* for regex */
 #include <regex.h>
 #include "../../script_cb.h"
+#include "../../usr_avp.h"
 
 #ifdef ENABLE_USER_CHECK
 #include <string.h>
@@ -60,6 +61,8 @@ int enable_double_rr = 1; /* Enable using of 2 RR by default */
 int enable_full_lr = 0;   /* Disabled by default */
 int add_username = 0;     /* Do not add username by default */
 char *cookie_filter = 0;  /* filter cookies restored in loose_route, potential security problem */
+str user_part_avp = STR_NULL;  /* AVP identification where user part of Route URI is stored after loose/strict routing */
+avp_ident_t user_part_avp_ident;
 
 MODULE_VERSION
 
@@ -99,6 +102,7 @@ static param_export_t params[] ={
 #endif
 	{"add_username",     PARAM_INT,    &add_username    },
 	{"cookie_filter",    PARAM_STRING, &cookie_filter   },
+	{"user_part_avp",    PARAM_STR,    &user_part_avp   },	
 	{0, 0, 0 }
 };
 
@@ -124,6 +128,14 @@ static int mod_init(void)
 		if (regcomp(cookie_filter_re, cookie_filter, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ) {
 			LOG(L_ERR, "ERROR: %s : bad cookie_filter regex '%s'\n", exports.name, cookie_filter);
 			return E_BAD_RE;
+		}
+	}
+	
+	memset (&user_part_avp_ident, 0, sizeof(avp_ident_t));
+	if (user_part_avp.s && user_part_avp.len) {
+		if (parse_avp_ident(&user_part_avp, &user_part_avp_ident)!=0) {
+			ERR("modparam \"user_part_avp\" : error while parsing\n");
+			return E_CFG; 
 		}
 	}
 	return 0;

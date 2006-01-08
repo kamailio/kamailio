@@ -41,6 +41,9 @@
 extern str i_user;
 #endif
 
+#include "../../usr_avp.h"
+extern avp_ident_t user_part_avp_ident;
+
 extern int append_fromtag;
 extern int enable_double_rr;
 extern int enable_full_lr;

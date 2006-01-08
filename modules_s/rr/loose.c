@@ -30,6 +30,7 @@
  * ---------
  * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
+ * 2006-01-09 store user part of Route URI in AVP (if required) (mma)
  */
 
 
@@ -221,6 +222,16 @@ static inline int is_myself(str* _host, unsigned short _port)
 	return ret;
 }
 
+static inline void store_user_in_avps(str* user)
+{
+	avp_value_t val;
+
+	if (user_part_avp_ident.name.s.s && user_part_avp_ident.name.s.len && user && user->s && user->len) {
+		val.s = *user;
+		add_avp(user_part_avp_ident.flags | AVP_NAME_STR | AVP_VAL_STR, user_part_avp_ident.name, val);
+	}	
+	
+}
 
 /*
  * Find and parse next Route header field
@@ -639,6 +650,8 @@ static inline int after_strict(struct sip_msg* _m)
 	if (is_myself(&puri.host, puri.port_no))
 #endif
 	{
+		store_user_in_avps(&puri.user);
+
 		     /*	if (enable_double_rr && is_2rr(&_ruri->params)) { */
 	      /* DBG("ras(): Removing 2nd URI of mine: '%.*s'\n", rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s)); */
  		if (!rt->next) {
@@ -790,6 +803,8 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	if (is_myself(&puri.host, puri.port_no))
 #endif
 	{
+		store_user_in_avps(&puri.user);
+
 		DBG("after_loose: Topmost route URI: '%.*s' is me\n", uri->len, ZSW(uri->s));
 		get_avp_cookie_from_uri(&puri.params, &avp_cookie);
 		if (avp_cookie.len > 0)

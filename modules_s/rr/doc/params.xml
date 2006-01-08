@@ -78,4 +78,35 @@ modparam("rr", "enable_double_rr", 0)
 	</example>
     </section>
 
+    <section id="user_part_avp">
+	<title><varname>user_part_avp</varname> (string)</title>
+	<para>
+	    If this parameter is set, the loose_route call stores the user
+	    part of the route URI in the AVP, which is identified by the
+	    parameter value. It can be utilized later in the routing script.	    
+	</para>
+	<para>
+	    Default value is NULL (do not insert user part into avps).
+	</para>
+	<example>
+	    <title>Set <varname>user_part_avp</varname> parameter, later use</title>
+	    <programlisting>
+...
+modparam("rr", "user_part_avp", "route_user")
+...
+route{
+...
+	if (loose_route()) {
+		t_relay();
+	}
+	
+	if ($route_user == "my_user") {
+		...
+	}
+...
+}
+	    </programlisting>
+	</example>
+    </section>
+
 </section>
