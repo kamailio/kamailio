@@ -101,7 +101,7 @@ int init_avps(void)
 /*
  * Select active AVP list based on the value of flags
  */
-static avp_list_t* select_list(unsigned short flags)
+static avp_list_t* select_list(avp_flags_t flags)
 {
 	if (flags & AVP_CLASS_USER) {
 		if (flags & AVP_TRACK_TO) {
@@ -120,10 +120,10 @@ static avp_list_t* select_list(unsigned short flags)
 	return *crt_glist;
 }
 
-inline static unsigned short compute_ID( str *name )
+inline static avp_id_t compute_ID( str *name )
 {
 	char *p;
-	unsigned short id;
+	avp_id_t id;
 
 	id=0;
 	for( p=name->s+name->len-1 ; p>=name->s ; p-- )
@@ -132,7 +132,7 @@ inline static unsigned short compute_ID( str *name )
 }
 
 
-avp_t *create_avp (unsigned short flags, int_str name, int_str val)
+avp_t *create_avp (avp_flags_t flags, avp_name_t name, avp_value_t val)
 {
 	avp_t *avp;
 	str *s;
@@ -215,7 +215,7 @@ error:
 	return 0;
 }
 
-int add_avp_list(avp_list_t* list, unsigned short flags, int_str name, int_str val)
+int add_avp_list(avp_list_t* list, avp_flags_t flags, avp_name_t name, avp_value_t val)
 {
 	avp_t *avp;
 
@@ -231,9 +231,9 @@ int add_avp_list(avp_list_t* list, unsigned short flags, int_str name, int_str v
 }
 
 
-int add_avp(unsigned short flags, int_str name, int_str val)
+int add_avp(avp_flags_t flags, avp_name_t name, avp_value_t val)
 {
-	unsigned short avp_class;
+	avp_flags_t avp_class;
 	avp_list_t* list;
 
 	     /* Add avp to user class if no class has been
@@ -253,7 +253,7 @@ int add_avp(unsigned short flags, int_str name, int_str val)
 	return add_avp_list(list, flags & (~(AVP_CLASS_ALL) | avp_class), name, val);
 }
 
-int add_avp_before(avp_t *avp, unsigned short flags, int_str name, int_str val)
+int add_avp_before(avp_t *avp, avp_flags_t flags, avp_name_t name, avp_value_t val)
 {
 	avp_t *new_avp;
 	
@@ -300,7 +300,7 @@ inline str* get_avp_name(avp_t *avp)
 }
 
 
-inline void get_avp_val(avp_t *avp, int_str *val)
+inline void get_avp_val(avp_t *avp, avp_value_t *val)
 {
 	if (avp==0 || val==0)
 		return;
@@ -327,7 +327,7 @@ inline void get_avp_val(avp_t *avp, int_str *val)
 
 
 /* Return the current list of user attributes */
-avp_list_t get_avp_list(unsigned short flags)
+avp_list_t get_avp_list(avp_flags_t flags)
 {
 	return *select_list(flags);
 }
@@ -336,7 +336,7 @@ avp_list_t get_avp_list(unsigned short flags)
 /*
  * Compare given id with id in avp, return true if they match
  */
-static inline int match_by_id(avp_t* avp, unsigned short id)
+static inline int match_by_id(avp_t* avp, avp_id_t id)
 {
 	if (avp->id == id && (avp->flags&AVP_NAME_STR)==0) {
 		return 1;
@@ -348,7 +348,7 @@ static inline int match_by_id(avp_t* avp, unsigned short id)
 /*
  * Compare given name with name in avp, return true if they are same
  */
-static inline int match_by_name(avp_t* avp, unsigned short id, str* name)
+static inline int match_by_name(avp_t* avp, avp_id_t id, str* name)
 {
 	str* avp_name;
 	if (id==avp->id && avp->flags&AVP_NAME_STR &&
@@ -381,66 +381,71 @@ static inline int match_by_re(avp_t* avp, regex_t* re)
 }
 
 
-avp_t *search_first_avp(unsigned short flags, int_str name, int_str *val, struct search_state* s)
+avp_t *search_first_avp(avp_flags_t flags, avp_name_t name, avp_value_t *val, struct search_state* s)
+{
+	avp_ident_t id;
+	id.flags = flags;
+	id.name = name;
+	id.index = 0;
+	return search_avp (id, val, s);
+}
+
+avp_t *search_avp (avp_ident_t ident, avp_value_t* val, struct search_state* state)
 {
 	avp_t* ret;
 	static struct search_state st;
 	avp_list_t* list;
 
-	if (name.s.s==0 && name.s.len == 0) {
+	if (ident.name.s.s==0 && ident.name.s.len == 0) {
 		LOG(L_ERR,"ERROR:avp:search_first_avp: 0 ID or NULL NAME AVP!");
 		return 0;
 	}
 	
-	switch (flags & AVP_INDEX_ALL) {
+	switch (ident.flags & AVP_INDEX_ALL) {
 		case AVP_INDEX_BACKWARD:
 		case AVP_INDEX_FORWARD:
 			WARN("AVP specified with index, but not used for search\n");
 			break;
 	}
 
-	if (!s) s = &st;
+	if (!state) state = &st;
 
-	if ((flags & AVP_CLASS_ALL) == 0) {
+	if ((ident.flags & AVP_CLASS_ALL) == 0) {
 		     /* The caller did not specify any class to search in, so enable
 		      * all of them by default
 		      */
-		flags |= AVP_CLASS_ALL;
+		ident.flags |= AVP_CLASS_ALL;
 		
-		if ((flags & AVP_TRACK_ALL) == 0) {
+		if ((ident.flags & AVP_TRACK_ALL) == 0) {
 		    /* The caller did not specify even the track to search in, so try
 		     * track_from first, and if not found try track_to
 		     */
-		     	ret = search_first_avp(flags | AVP_TRACK_FROM, name, val, s);
-		     	if (ret) {
-		     		return ret;
-		     	}
-		     	flags |= AVP_TRACK_TO;
+		     	ident.flags |= AVP_TRACK_FROM;
+		     	if ((ret = search_avp(ident, val, state))) return ret;
+		     	ident.flags = (ident.flags & ~AVP_TRACK_ALL) | AVP_TRACK_TO;
 		}
 	}
 
-	list = select_list(flags);
+	list = select_list(ident.flags);
 
-	s->flags = flags;
-	s->avp = *list;
-	s->name = name;
+	state->flags = ident.flags;
+	state->avp = *list;
+	state->name = ident.name;
 
-	if (flags & AVP_NAME_STR) {
-		s->id = compute_ID(&name.s);
+	if (ident.flags & AVP_NAME_STR) {
+		state->id = compute_ID(&ident.name.s);
 	}
 
-        ret = search_next_avp(s, val);
+        ret = search_next_avp(state, val);
 
 	     /* Make sure that search next avp stays in the same class as the first
 	      * avp found
 	      */
-	if (s && ret) s->flags = (flags & ~AVP_CLASS_ALL) | (ret->flags & AVP_CLASS_ALL);
+	if (state && ret) state->flags = (ident.flags & ~AVP_CLASS_ALL) | (ret->flags & AVP_CLASS_ALL);
 	return ret;
 }
 
-
-
-avp_t *search_next_avp(struct search_state* s, int_str *val )
+avp_t *search_next_avp(struct search_state* s, avp_value_t *val )
 {
 	int matched;
 	avp_t* avp;
@@ -490,9 +495,9 @@ avp_t *search_next_avp(struct search_state* s, int_str *val )
 }
 
 int search_reverse( avp_t *cur, struct search_state* st,
-                     unsigned short index, avp_list_t *ret)
+                     avp_index_t index, avp_list_t *ret)
 {
-	unsigned short lvl;
+	avp_index_t lvl;
 	
 	if (!cur)
 		return 0;
@@ -502,8 +507,8 @@ int search_reverse( avp_t *cur, struct search_state* st,
 	return lvl;
 }
                             
-avp_t *search_avp_by_index( unsigned short flags, int_str name,
-                            int_str *val, unsigned short index) 	
+avp_t *search_avp_by_index( avp_flags_t flags, avp_name_t name,
+                            avp_value_t *val, avp_index_t index) 	
 {
 	avp_t *ret, *cur;
 	struct search_state st;
@@ -615,7 +620,7 @@ void reset_avps(void)
 }
 
 
-avp_list_t* set_avp_list( unsigned short flags, avp_list_t* list )
+avp_list_t* set_avp_list( avp_flags_t flags, avp_list_t* list )
 {
 	avp_list_t* prev;
 
@@ -761,6 +766,20 @@ int lookup_avp_galias(str *alias, int *type, int_str *avp_name)
 
 int parse_avp_name( str *name, int *type, int_str *avp_name, int *index)
 {
+	int ret;
+	avp_ident_t attr;
+	
+	ret=parse_avp_ident(name, &attr);
+	if (!ret) {
+		if (type) *type = attr.flags;
+		if (avp_name) *avp_name = attr.name;
+		if (index) *index = attr.index;
+	}
+	return ret;
+}
+
+int parse_avp_ident( str *name, avp_ident_t* attr)
+{
 	unsigned int id;
 	char c;
 	char *p;
@@ -771,7 +790,7 @@ int parse_avp_name( str *name, int *type, int_str *avp_name, int *index)
 		goto error;
 	}
 
-	if (index) *index = 0;
+	attr->index = 0;
 	DBG("Parsing '%.*s'\n", name->len, name->s);
 	if (name->len>=2 && name->s[1]==':') { // old fashion i: or s:
 		WARN("i: and s: avp name syntax is deprecated!\n");
@@ -782,17 +801,17 @@ int parse_avp_name( str *name, int *type, int_str *avp_name, int *index)
 			goto error;
 		switch (c) {
 			case 's': case 'S':
-				*type = AVP_NAME_STR;
-				avp_name->s = *name;
+				attr->flags = AVP_NAME_STR;
+				attr->name.s = *name;
 				break;
 			case 'i': case 'I':
-				*type = 0;
+				attr->flags = 0;
 				if (str2int( name, &id)!=0) {
 					ERR("invalid ID "
 						"<%.*s> - not a number\n", name->len, name->s);
 					goto error;
 				}
-				avp_name->n = (int)id;
+				attr->name.n = (int)id;
 				break;
 			default:
 				ERR("unsupported type "
@@ -818,19 +837,19 @@ int parse_avp_name( str *name, int *type, int_str *avp_name, int *index)
 		}
 		switch (id) {
 			case 'f':
-				*type = AVP_TRACK_FROM | AVP_CLASS_USER;
+				attr->flags = AVP_TRACK_FROM | AVP_CLASS_USER;
 				break;
 			case 't':
-				*type = AVP_TRACK_TO | AVP_CLASS_USER;
+				attr->flags = AVP_TRACK_TO | AVP_CLASS_USER;
 				break;
 			case 0x6664: //'fd'
-				*type = AVP_TRACK_FROM | AVP_CLASS_DOMAIN;
+				attr->flags = AVP_TRACK_FROM | AVP_CLASS_DOMAIN;
 				break;
 			case 0x7464: // 'td'
-				*type = AVP_TRACK_TO | AVP_CLASS_DOMAIN;
+				attr->flags = AVP_TRACK_TO | AVP_CLASS_DOMAIN;
 				break;
 			case 'g':
-				*type = AVP_TRACK_ALL | AVP_CLASS_GLOBAL;
+				attr->flags = AVP_TRACK_ALL | AVP_CLASS_GLOBAL;
 				break;
 			default:
 				if (id < 1<<8)
@@ -848,23 +867,19 @@ int parse_avp_name( str *name, int *type, int_str *avp_name, int *index)
 			s.s=p+1;
 			s.len=name->len-(p-name->s)-2; // [ and ]
 			if (s.len == 0) {
-				*type |= AVP_INDEX_ALL;
+				attr->flags |= AVP_INDEX_ALL;
 			} else {
 				if (s.s[0]=='-') {
-					*type |= AVP_INDEX_BACKWARD;
+					attr->flags |= AVP_INDEX_BACKWARD;
 					s.s++;s.len--;
 				} else {
-					*type |= AVP_INDEX_FORWARD;
+					attr->flags |= AVP_INDEX_FORWARD;
 				}	
 				if ((str2int(&s, &id) != 0)||(id==0)) {
 					ERR("Invalid AVP index '%.*s'\n", s.len, s.s);
 					goto error;
 				}
-				if (index){
-					*index = id;
-				} else {
-					WARN("AVP index correcly specified, but called without placeholed\n");
-				}
+				attr->index = id;
 			}
 			name->len=p-name->s;
 		}
@@ -872,28 +887,28 @@ int parse_avp_name( str *name, int *type, int_str *avp_name, int *index)
 		ERR_IF_CONTAINS(name,'[');
 		ERR_IF_CONTAINS(name,']');
 		if ((name->len > 2) && (name->s[0]=='/') && (name->s[name->len-1]=='/')) {
-			avp_name->re=pkg_malloc(sizeof(regex_t));
-			if (!avp_name->re) {
+			attr->name.re=pkg_malloc(sizeof(regex_t));
+			if (!attr->name.re) {
 				BUG("No free memory to allocate AVP_NAME_RE regex\n");
 				goto error;
 			}
-			c=name->s[name->len];
-			name->s[name->len]=0;
-			if (regcomp(avp_name->re, name->s, REG_EXTENDED|REG_NOSUB|REG_ICASE)) {
-				pkg_free(avp_name->re);
-				name->s[name->len] = c;
+			name->s[name->len-1]=0;
+			if (regcomp(attr->name.re, name->s+1, REG_EXTENDED|REG_NOSUB|REG_ICASE)) {
+				pkg_free(attr->name.re);
+				name->s[name->len-1] = '/';
 				goto error;
 			}
-			*type |= AVP_NAME_RE;
+			name->s[name->len-1] = '/';
+			attr->flags |= AVP_NAME_RE;
 		} else {
 			ERR_IF_CONTAINS(name,'/');
-			*type |= AVP_NAME_STR;
+			attr->flags |= AVP_NAME_STR;
+			attr->name.s = *name;
 		}
-		avp_name->s = *name;
 	} else {
 		/*default is string name*/
-		*type = AVP_NAME_STR;
-		avp_name->s = *name;
+		attr->flags = AVP_NAME_STR;
+		attr->name.s = *name;
 	}
 
 	return 0;
@@ -997,7 +1012,7 @@ error:
 }
 
 
-void delete_avp(unsigned short flags, int_str name)
+void delete_avp(avp_flags_t flags, avp_name_t name)
 {
 	struct search_state st;
 	avp_t* avp;

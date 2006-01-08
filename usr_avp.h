@@ -84,34 +84,45 @@ typedef union {
 	regex_t* re;
 } int_str;
 
+#define avp_id_t	unsigned short
+#define avp_flags_t	unsigned short
+#define avp_name_t	int_str
+#define avp_value_t	int_str
+#define avp_index_t	unsigned short
 
 typedef struct usr_avp {
-	unsigned short id;
+	avp_id_t id;
 	     /* Flags that are kept for the AVP lifetime */
-	unsigned short flags;
+	avp_flags_t flags;
 	struct usr_avp *next;
 	void *data;
 } avp_t;
 
 typedef avp_t* avp_list_t;
 
+/* AVP identification */
+typedef struct avp_ident {
+	avp_flags_t flags;
+	avp_name_t name;
+	avp_index_t index;
+} avp_ident_t;
 
 /*
  * AVP search state
  */
 struct search_state {
-	unsigned short flags;  /* Type of search and additional flags */
-	unsigned short id;
-	int_str name;
+	avp_flags_t flags;  /* Type of search and additional flags */
+	avp_id_t id;
+	avp_name_t name;
 	avp_t* avp;            /* Current AVP */
-	regex_t* search_re;    /* Compiled regular expression */
+//	regex_t* search_re;    /* Compiled regular expression */
 };
 
 /* avp aliases structs*/
 typedef struct avp_spec {
-	int type;
-	int_str name;
-	int index;
+	avp_flags_t type;
+	avp_name_t name;
+	avp_index_t index;
 } avp_spec_t;
 
 /* AVP types */
@@ -142,20 +153,23 @@ typedef struct avp_spec {
 int init_avps(void);
 
 /* add avp to the list of avps */
-int add_avp(unsigned short flags, int_str name, int_str val);
-int add_avp_before(avp_t *avp, unsigned short flags, int_str name, int_str val);
-int add_avp_list(avp_list_t* list, unsigned short flags, int_str name, int_str val);
+int add_avp(avp_flags_t flags, avp_name_t name, avp_value_t val);
+int add_avp_before(avp_t *avp, avp_flags_t flags, avp_name_t name, avp_value_t val);
+int add_avp_list(avp_list_t* list, avp_flags_t flags, avp_name_t name, avp_value_t val);
 
 /* Delete avps with given type and name */
-void delete_avp(unsigned short flags, int_str name);
+void delete_avp(avp_flags_t flags, avp_name_t name);
 
 /* search functions */
-avp_t *search_first_avp( unsigned short flags, int_str name,
-			 int_str *val, struct search_state* state);
-avp_t *search_next_avp(struct search_state* state, int_str *val);
+avp_t *search_first_avp( avp_flags_t flags, avp_name_t name,
+			 avp_value_t *val, struct search_state* state);
+avp_t *search_avp_by_index( avp_flags_t flags, avp_name_t name,
+                            avp_value_t *val, avp_index_t index);
 
-avp_t *search_avp_by_index( unsigned short flags, int_str name,
-                            int_str *val, unsigned short index);
+avp_t *search_avp (avp_ident_t ident, avp_value_t* val, struct search_state* state);
+avp_t *search_next_avp(struct search_state* state, avp_value_t *val);
+
+
 /* free functions */
 void reset_avps(void);
 
@@ -164,17 +178,18 @@ void destroy_avp_list(avp_list_t *list );
 void destroy_avp_list_unsafe(avp_list_t *list );
 
 /* get func */
-void get_avp_val(avp_t *avp, int_str *val );
+void get_avp_val(avp_t *avp, avp_value_t *val );
 str* get_avp_name(avp_t *avp);
 
-avp_list_t get_avp_list(unsigned short flags);
-avp_list_t* set_avp_list(unsigned short flags, avp_list_t* list);
+avp_list_t get_avp_list(avp_flags_t flags);
+avp_list_t* set_avp_list(avp_flags_t flags, avp_list_t* list);
 
 
 /* global alias functions (manipulation and parsing)*/
 int add_avp_galias_str(char *alias_definition);
 int lookup_avp_galias(str *alias, int *type, int_str *avp_name);
 int add_avp_galias(str *alias, int type, int_str avp_name);
+int parse_avp_ident( str *name, avp_ident_t* attr);
 int parse_avp_name( str *name, int *type, int_str *avp_name, int *index);
 int parse_avp_spec( str *name, int *type, int_str *avp_name, int *index);
 void free_avp_name( int *type, int_str *avp_name);
