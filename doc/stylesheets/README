@@ -21,6 +21,17 @@ Description of files in this directory:
      Stylesheet used to build parts of the documentation tree. This would
      generate single large xhtml file in the same directory.
 
+* xhtml.chunked.xsl:
+     Stylesheet used to generate chunked xhtml version, i.e. multiple 
+     files. Normally used with a Makefile setting output_dir=some_sub_dir
+     to generate all output files in one directory.
+
+* html.chunked.xsl:
+     Stylesheet used to generate chunked html version, i.e. multiple
+     files. Used to generate html that browsers without xhtml support
+     can view.  Normally used with a Makefile setting 
+     output_dir=some_sub_dir to generate all output files in one directory.
+
 * dep.xsl:
      XSL stylesheet that traverses XML documents and generates list of
      dependencies that will be included by makefiles.
