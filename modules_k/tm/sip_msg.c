@@ -322,7 +322,6 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 				len+=ROUND4(sizeof(struct cseq_body));
 				break;
 
-
 			case HDR_AUTHORIZATION_T:
 			case HDR_PROXYAUTH_T:
 				if (hdr->parsed) {
@@ -351,6 +350,9 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 			case HDR_USERAGENT_T:
 			case HDR_ACCEPTDISPOSITION_T:
 			case HDR_CONTENTDISPOSITION_T:
+			case HDR_DIVERSION_T:
+			case HDR_RPID_T:
+			case HDR_REFER_TO_T:
 				/* we ignore them for now even if they have something parsed*/
 				break;
 
@@ -700,6 +702,21 @@ do { \
 			case HDR_CONTENTDISPOSITION_T:
 				if (!HOOK_SET(content_disposition)) {
 					new_msg->content_disposition = new_hdr;
+				}
+				break;
+			case HDR_DIVERSION_T:
+				if (!HOOK_SET(diversion)) {
+					new_msg->diversion = new_hdr;
+				}
+				break;
+			case HDR_RPID_T:
+				if (!HOOK_SET(rpid)) {
+					new_msg->rpid = new_hdr;
+				}
+				break;
+			case HDR_REFER_TO_T:
+				if (!HOOK_SET(refer_to)) {
+					new_msg->refer_to = new_hdr;
 				}
 				break;
 			default:
