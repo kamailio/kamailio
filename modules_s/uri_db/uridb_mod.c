@@ -48,7 +48,9 @@
 #include "../../id.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
+#include "../../db/db.h"
 #include "uridb_mod.h"
+#include "../../usr_avp.h"
 
 MODULE_VERSION
 
@@ -76,6 +78,8 @@ static int lookup_user_fixup(void** param, int param_no);
 #define USERNAME_COL "username"
 #define FLAGS_COL    "flags"
 
+#define CANONICAL_AVP "ruri_canonical"
+#define CANONICAL_AVP_VAL "1"
 
 /*
  * Module parameter variables
@@ -86,6 +90,8 @@ str uid_col      = STR_STATIC_INIT(UID_COL);
 str did_col      = STR_STATIC_INIT(DID_COL);
 str username_col = STR_STATIC_INIT(USERNAME_COL);
 str flags_col    = STR_STATIC_INIT(FLAGS_COL);
+str canonical_avp = STR_STATIC_INIT(CANONICAL_AVP);
+str canonical_avp_val = STR_STATIC_INIT(CANONICAL_AVP_VAL);
 
 db_con_t* con = 0;
 db_func_t db;
@@ -213,6 +219,8 @@ static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 	db_res_t* res;
 	int flag, i, ret;
 
+	int_str avp_name, avp_val;
+
 	flag=0; /*warning fix*/
 	id = (long)s1;
 
@@ -304,6 +312,14 @@ static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 		set_from_uid(&uid);
 	} else {
 		set_to_uid(&uid);
+		if (id == LOAD_RURI) {
+			/* store as str|int avp if alias is canonical or not (1,0) */
+			if ((val[1].val.int_val & DB_CANON) != 0) {
+				avp_name.s = canonical_avp;
+				avp_val.s = canonical_avp_val;
+				add_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR | AVP_VAL_STR, avp_name, avp_val);
+			}
+		}
 	}
 	ret = 1;
  freeres:
