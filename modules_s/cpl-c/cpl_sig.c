@@ -58,9 +58,10 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 		DBG("DEBUG:cpl_c:cpl_proxy_to_loc_set: rewriting Request-URI with "
 			"<%s>\n",(*locs)->addr.uri.s);
 		/* build a new action for setting the URI */
+		memset(&act, 0, sizeof(act));
 		act.type = SET_URI_T;
-		act.p1_type = STRING_ST;
-		act.p1.string = (*locs)->addr.uri.s;
+		act.val[0].type = STRING_ST;
+		act.val[0].u.string = (*locs)->addr.uri.s;
 		act.next = 0;
 		/* push the action */
 		if (do_action(&act, msg) < 0) {

@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History
@@ -41,7 +41,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/types.h>
-/* 
+/*
 #include <sys/resource.h>
 */
 #include <sys/wait.h>
@@ -101,7 +101,7 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 
 	struct action act;
 	int cmd_len;
-	FILE *pipe;	
+	FILE *pipe;
 	char *cmd_line;
 	int ret;
 	int l1;
@@ -112,7 +112,7 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 
 	/* pessimist: assume error by default */
 	ret=-1;
-	
+
 	l1=strlen(cmd);cmd_len=l1+param_len+2;
 	cmd_line=pkg_malloc(cmd_len);
 	if (cmd_line==0) {
@@ -124,7 +124,7 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 	/* 'command parameter \0' */
 	memcpy(cmd_line, cmd, l1); cmd_line[l1]=' ';
 	memcpy(cmd_line+l1+1, param, param_len);cmd_line[l1+param_len+1]=0;
-	
+
 	pipe=popen( cmd_line, "r" );
 	if (pipe==NULL) {
 		LOG(L_ERR, "ERROR: exec_str: cannot open pipe: %s\n",
@@ -138,8 +138,8 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 	while( fgets(uri_line, MAX_URI_SIZE, pipe)!=NULL){
 		uri_len=strlen(uri_line);
 		/* trim from right */
-		while(uri_len && (uri_line[uri_len-1]=='\r' 
-				|| uri_line[uri_len-1]=='\n' 
+		while(uri_len && (uri_line[uri_len-1]=='\r'
+				|| uri_line[uri_len-1]=='\n'
 				|| uri_line[uri_len-1]=='\t'
 				|| uri_line[uri_len-1]==' ' )) {
 			DBG("exec_str: rtrim\n");
@@ -152,8 +152,8 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 		if (uri_cnt==0) {
 			memset(&act, 0, sizeof(act));
 			act.type = SET_URI_T;
-			act.p1_type = STRING_ST;
-			act.p1.string = uri_line;
+			act.val[0].type = STRING_ST;
+			act.val[0].u.string = uri_line;
 			if (do_action(&act, msg)<0) {
 				LOG(L_ERR,"ERROR:exec_str : SET_URI_T action failed\n");
 				ser_error=E_OUT_OF_MEM;

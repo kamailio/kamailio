@@ -123,7 +123,7 @@ static int dbrow2avp(struct db_row *row, int flags, int_str attr,
 		uint = (unsigned int)row->values[2].val.int_val;
 		db_flags = ((uint&AVPOPS_DB_NAME_INT)?0:AVP_NAME_STR) |
 			((uint&AVPOPS_DB_VAL_INT)?0:AVP_VAL_STR);
-	
+
 		DBG("db_flags=%d, flags=%d\n",db_flags,flags);
 		/* does the avp type match ? */
 		if(!((flags&(AVPOPS_VAL_INT|AVPOPS_VAL_STR))==0 ||
@@ -132,7 +132,7 @@ static int dbrow2avp(struct db_row *row, int flags, int_str attr,
 			return -2;
 	} else {
 		/* check the validity of value column */
-		if (row->values[0].nul || 
+		if (row->values[0].nul ||
 		(row->values[0].type!=DB_STRING && row->values[0].type!=DB_STR) )
 		{
 			LOG(L_ERR,"ERROR:avpops:dbrow2avp: empty or wrong type for"
@@ -379,7 +379,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 	int              keys_off;
 	int              keys_nr;
 	int              n;
-	
+
 
 	if (sp->flags&AVPOPS_VAL_NONE)
 	{
@@ -829,7 +829,7 @@ int ops_pushto_avp ( struct sip_msg* msg, struct fis_param* dst,
 				dst->flags);
 			goto error;
 		}
-	
+
 		if ( act_type )
 		{
 			/* rewrite part of ruri */
@@ -845,8 +845,8 @@ int ops_pushto_avp ( struct sip_msg* msg, struct fis_param* dst,
 				}
 			}
 			memset(&act, 0, sizeof(act));
-			act.p1_type = STRING_ST;
-			act.p1.string = val.s;
+			act.val[0].type = STRING_ST;
+			act.val[0].u.string = val.s;
 			act.type = act_type;
 			if (do_action(&act, msg)<0)
 			{
@@ -1141,7 +1141,7 @@ int ops_print_avp()
 		}
 	}
 
-	
+
 	return 1;
 }
 

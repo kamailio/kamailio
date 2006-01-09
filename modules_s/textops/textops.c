@@ -7,7 +7,7 @@
  * append_to_reply("txt") - appends txt to the reply?
  * append_hf("P-foo: bar\r\n");
  *
- * 
+ *
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -28,8 +28,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
@@ -112,28 +112,28 @@ static int mod_init(void);
 
 
 static cmd_export_t cmds[]={
-	{"search",           search_f,          1, fixup_regex_1, 
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE}, 
-	{"search_append",    search_append_f,   2, fixup_regex_1, 
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
-	{"replace",          replace_f,         2, fixup_regex_1, 
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
-	{"replace_all",      replace_all_f,     2, fixup_regex_1, 
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
-	{"append_to_reply",  append_to_reply_f, 1, 0, 
+	{"search",           search_f,          1, fixup_regex_1,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
+	{"search_append",    search_append_f,   2, fixup_regex_1,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
+	{"replace",          replace_f,         2, fixup_regex_1,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
+	{"replace_all",      replace_all_f,     2, fixup_regex_1,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
+	{"append_to_reply",  append_to_reply_f, 1, 0,
 			REQUEST_ROUTE},
 	{"append_hf",        append_hf,         1, fixup_str_1,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE | BRANCH_ROUTE}, 
-	{"append_urihf",     append_urihf,      2, fixup_str_12,   
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE | BRANCH_ROUTE},
+	{"append_urihf",     append_urihf,      2, fixup_str_12,
 			REQUEST_ROUTE|FAILURE_ROUTE},
 	{"remove_hf",        remove_hf_f,         1, fixup_str_1,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
 	{"is_present_hf",        is_present_hf_f,         1, fixup_str_1,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
 	{"subst",            subst_f,             1, fixup_substre,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
 	{"subst_uri",            subst_uri_f,     1, fixup_substre,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
 	{"subst_user",           subst_user_f,    1, fixup_substre,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
 	{"append_time",		append_time_f,		0, 0,
@@ -175,12 +175,12 @@ static int search_f(struct sip_msg* msg, char* key, char* str2)
 	regmatch_t pmatch;
 	char* buf;
 	struct onsend_info* snd_inf;
-	
+
 	if ((snd_inf=get_onsend_info())!=0)
 		buf=snd_inf->buf;
 	else
 		buf=msg->buf;
-	
+
 	if (regexec((regex_t*) key, buf, 1, &pmatch, 0)!=0) return -1;
 	return 1;
 }
@@ -209,7 +209,7 @@ static int search_append_f(struct sip_msg* msg, char* key, char* str)
 			LOG(L_ERR, "ERROR: search_append_f: mem. allocation failure\n");
 			return -1;
 		}
-		memcpy(s, str, len); 
+		memcpy(s, str, len);
 		if (insert_new_lump_after(l, s, len, 0)==0){
 			LOG(L_ERR, "ERROR: could not insert new lump\n");
 			pkg_free(s);
@@ -239,7 +239,7 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str)
 	len=strlen(str);
 	eflags=0; /* match ^ at the beginning of the string*/
 
-	while (begin<msg->buf+msg->len 
+	while (begin<msg->buf+msg->len
 				&& regexec((regex_t*) key, begin, 1, &pmatch, eflags)==0) {
 		off=begin-msg->buf;
 		/* change eflags, not to match any more at string start */
@@ -258,7 +258,7 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str)
 			LOG(L_ERR, "ERROR: replace_f: mem. allocation failure\n");
 			return -1;
 		}
-		memcpy(s, str, len); 
+		memcpy(s, str, len);
 		if (insert_new_lump_after(l, s, len, 0)==0){
 			LOG(L_ERR, "ERROR: could not insert new lump\n");
 			pkg_free(s);
@@ -295,13 +295,13 @@ static int replace_f(struct sip_msg* msg, char* key, char* str)
 			LOG(L_ERR, "ERROR: replace_f: mem. allocation failure\n");
 			return -1;
 		}
-		memcpy(s, str, len); 
+		memcpy(s, str, len);
 		if (insert_new_lump_after(l, s, len, 0)==0){
 			LOG(L_ERR, "ERROR: could not insert new lump\n");
 			pkg_free(s);
 			return -1;
 		}
-		
+
 		return 1;
 	}
 	return -1;
@@ -320,7 +320,7 @@ static int subst_f(struct sip_msg* msg, char*  subst, char* ignored)
 	int off;
 	int ret;
 	int nmatches;
-	
+
 	se=(struct subst_expr*)subst;
 	begin=get_header(msg);  /* start after first line to avoid replacing
 							   the uri */
@@ -335,7 +335,7 @@ static int subst_f(struct sip_msg* msg, char*  subst, char* ignored)
 				rpl->rpl.len, rpl->rpl.s);
 		if ((l=del_lump(msg, rpl->offset+off, rpl->size, 0))==0)
 			goto error;
-		/* hack to avoid re-copying rpl, possible because both 
+		/* hack to avoid re-copying rpl, possible because both
 		 * replace_lst & lumps use pkg_malloc */
 		if (insert_new_lump_after(l, rpl->rpl.s, rpl->rpl.len, 0)==0){
 			LOG(L_ERR, "ERROR: %s: subst_f: could not insert new lump\n",
@@ -367,7 +367,7 @@ static int subst_uri_f(struct sip_msg* msg, char*  subst, char* ignored)
 	char c;
 	struct subst_expr* se;
 	str* result;
-	
+
 	se=(struct subst_expr*)subst;
 	if (msg->new_uri.s){
 		len=msg->new_uri.len;
@@ -396,7 +396,7 @@ static int subst_uri_f(struct sip_msg* msg, char*  subst, char* ignored)
 	}
 	return -1; /* false, no subst. made */
 }
-	
+
 
 
 /* sed-perl style re: s/regular expression/replacement/flags, like
@@ -435,8 +435,8 @@ static int subst_user_f(struct sip_msg* msg, char*  subst, char* ignored)
 	/* result->s[result->len] = '\0';  --subst_str returns 0-term strings */
 	memset(&act, 0, sizeof(act)); /* be on the safe side */
 	act.type = SET_USER_T;
-	act.p1_type = STRING_ST;
-	act.p1.string = result->s;
+	act.val[0].type = STRING_ST;
+	act.val[0].u.string = result->s;
 	rval = do_action(&act, msg);
 	pkg_free(result);
 	return rval;
@@ -497,7 +497,7 @@ static int fixup_substre(void** param, int param_no)
 	subst.len=strlen(*param);
 	se=subst_parser(&subst);
 	if (se==0){
-		LOG(L_ERR, "ERROR: %s: bad subst. re %s\n", exports.name, 
+		LOG(L_ERR, "ERROR: %s: bad subst. re %s\n", exports.name,
 				(char*)*param);
 		return E_BAD_RE;
 	}

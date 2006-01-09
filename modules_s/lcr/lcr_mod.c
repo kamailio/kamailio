@@ -751,11 +751,12 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     avp = search_first_avp(gw_uri_avp_name_str, gw_uri_name, &val, 0);
     if (!avp) return -1;
 
+    memset(&act, 0, sizeof(act));
     if (*(tmb.route_mode) == MODE_REQUEST) {
 
 	act.type = SET_URI_T;
-	act.p1_type = STRING_ST;
-	act.p1.string = val.s.s;
+	act.val[0].type = STRING_ST;
+	act.val[0].u.string = val.s.s;
 	rval = do_action(&act, _m);
 	destroy_avp(avp);
 	if (rval != 1) {
@@ -768,10 +769,10 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     } else { /* MODE_ONFAILURE */
 
 	act.type = APPEND_BRANCH_T;
-	act.p1_type = STRING_ST;
-	act.p1.string = val.s.s;
-	act.p2_type = NUMBER_ST;
-	act.p2.number = 0;
+	act.val[0].type = STRING_ST;
+	act.val[0].u.string = val.s.s;
+	act.val[1].type = NUMBER_ST;
+	act.val[1].u.number = 0;
 	rval = do_action(&act, _m);
 	destroy_avp(avp);
 	if (rval != 1) {
@@ -992,9 +993,10 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 	}
 
 	/* Set Request-URI */
+	memset(&act, 0, sizeof(act));
 	act.type = SET_URI_T;
-	act.p1_type = STRING_ST;
-	act.p1.string = val.s.s;
+	act.val[0].type = STRING_ST;
+	act.val[0].u.string = val.s.s;
 	rval = do_action(&act, msg);
 	if (rval != 1) {
 	    destroy_avp(avp);
@@ -1016,11 +1018,12 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 	prev = avp;
 	while ((avp = search_next_avp(&st, &val))) {
 	    destroy_avp(prev);
+	    memset(&act, 0, sizeof(act));
 	    act.type = APPEND_BRANCH_T;
-	    act.p1_type = STRING_ST;
-	    act.p1.string = val.s.s;
-	    act.p2_type = NUMBER_ST;
-	    act.p2.number = 0;
+	    act.val[0].type = STRING_ST;
+	    act.val[0].u.string = val.s.s;
+	    act.val[1].type = NUMBER_ST;
+	    act.val[1].u.number = 0;
 	    rval = do_action(&act, msg);
 	    if (rval != 1) {
 		destroy_avp(avp);
@@ -1047,11 +1050,12 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 
 	prev = avp;
 	do {
+	    memset(&act, 0, sizeof(act));
 	    act.type = APPEND_BRANCH_T;
-	    act.p1_type = STRING_ST;
-	    act.p1.string = val.s.s;
-	    act.p2_type = NUMBER_ST;
-	    act.p2.number = 0;
+	    act.val[0].type = STRING_ST;
+	    act.val[0].u.string = val.s.s;
+	    act.val[1].type = NUMBER_ST;
+	    act.val[1].u.number = 0;
 	    rval = do_action(&act, msg);
 	    if (rval != 1) {
 		destroy_avp(avp);

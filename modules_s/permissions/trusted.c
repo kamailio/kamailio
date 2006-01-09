@@ -1,4 +1,4 @@
-/* 
+/*
  * allow_trusted related functions
  *
  * Copyright (C) 2003 Juha Heinanen
@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /*
@@ -34,6 +34,7 @@
 #include <regex.h>
 #include <string.h>
 
+#include "trusted.h"
 #include "permissions.h"
 #include "hash.h"
 #include "../../config.h"
@@ -102,14 +103,14 @@ int init_trusted(void)
 			LOG(L_ERR, "permissions:init_trusted(): Invalid table version (use ser_mysql.sh reinstall)\n");
 			perm_dbf.close(db_handle);
 			return -1;
-		}		
-		
+		}
+
 		hash_table_1 = new_hash_table();
 		if (!hash_table_1) return -1;
-		
+
 		hash_table_2  = new_hash_table();
 		if (!hash_table_2) goto error;
-		
+
 		hash_table = (struct trusted_list ***)shm_malloc(sizeof(struct trusted_list **));
 		if (!hash_table) goto error;
 
@@ -119,7 +120,7 @@ int init_trusted(void)
 			LOG(L_CRIT, "init_trusted(): Reload of trusted table failed\n");
 			goto error;
 		}
-			
+
 		perm_dbf.close(db_handle);
 	}
 	return 0;
@@ -143,7 +144,7 @@ int init_child_trusted(int rank)
 	if (!db_url) {
 		return 0;
 	}
-	
+
 	if (rank > 0 || rank == PROC_FIFO || rank == PROC_UNIXSOCK) {
 		db_handle = perm_dbf.init(db_url);
 		if (!db_handle) {
@@ -166,7 +167,7 @@ int init_child_trusted(int rank)
 					" Invalid table version (use ser_mysql.sh reinstall)\n");
 			perm_dbf.close(db_handle);
 			return -1;
-		}		
+		}
 
 	}
 
@@ -192,7 +193,7 @@ void clean_trusted(void)
 static inline int match_proto(char *proto_string, int proto_int)
 {
 	if (strcasecmp(proto_string, "any") == 0) return 1;
-	
+
 	if (proto_int == PROTO_UDP) {
 		if (strcasecmp(proto_string, "udp") == 0) {
 			return 1;
@@ -200,7 +201,7 @@ static inline int match_proto(char *proto_string, int proto_int)
 			return 0;
 		}
 	}
-	
+
 	if (proto_int == PROTO_TCP) {
 		if (strcasecmp(proto_string, "tcp") == 0) {
 			return 1;
@@ -208,7 +209,7 @@ static inline int match_proto(char *proto_string, int proto_int)
 			return 0;
 		}
 	}
-	
+
 	if (proto_int == PROTO_TLS) {
 		if (strcasecmp(proto_string, "tls") == 0) {
 			return 1;
@@ -216,7 +217,7 @@ static inline int match_proto(char *proto_string, int proto_int)
 			return 0;
 		}
 	}
-	
+
 	if (proto_int == PROTO_SCTP) {
 		if (strcasecmp(proto_string, "sctp") == 0) {
 			return 1;
@@ -253,7 +254,7 @@ static int match_res(struct sip_msg* msg, db_res_t* _r)
 	uri_string[uri.len] = (char)0;
 
 	row = RES_ROWS(_r);
-		
+
 	for(i = 0; i < RES_ROW_N(_r); i++) {
 		val = ROW_VALUES(row + i);
 		if ((ROW_N(row + i) == 2) &&
@@ -283,11 +284,11 @@ static int match_res(struct sip_msg* msg, db_res_t* _r)
  * values are "any" (that matches any protocol), "tcp", "udp", "tls",
  * and "sctp".
  */
-int allow_trusted(struct sip_msg* _msg, char* str1, char* str2) 
+int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 {
 	int result;
 	db_res_t* res;
-	
+
 	db_key_t keys[1];
 	db_val_t vals[1];
 	db_key_t cols[2];
@@ -306,7 +307,7 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 			LOG(L_ERR, "allow_trusted(): Error while trying to use trusted table\n");
 			return -1;
 		}
-		
+
 		VAL_TYPE(vals) = DB_STRING;
 		VAL_NULL(vals) = 0;
 		VAL_STRING(vals) = ip_addr2a(&(_msg->rcv.src_ip));
@@ -320,7 +321,7 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 			perm_dbf.free_result(db_handle, res);
 			return -1;
 		}
-		
+
 		result = match_res(_msg, res);
 		perm_dbf.free_result(db_handle, res);
 		return result;
@@ -378,7 +379,7 @@ int reload_trusted_table(void)
 	row = RES_ROWS(res);
 
 	DBG("Number of rows in trusted table: %d\n", RES_ROW_N(res));
-		
+
 	for (i = 0; i < RES_ROW_N(res); i++) {
 		val = ROW_VALUES(row + i);
 		if ((ROW_N(row + i) == 3) &&
@@ -411,6 +412,6 @@ int reload_trusted_table(void)
 	*hash_table = new_hash_table;
 
 	DBG("Trusted table reloaded successfully.\n");
-	
+
 	return 1;
 }
