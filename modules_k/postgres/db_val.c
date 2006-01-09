@@ -297,6 +297,15 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 		}
 		break;
 
+	case DB_BITMAP:
+		if (int2str(VAL_BITMAP(_v), _s, _len) < 0) {
+			LOG(L_ERR, "val2str: Error while converting string to int\n");
+			return -3;
+		} else {
+			return 0;
+		}
+		break;
+
 	case DB_DOUBLE:
 		if (double2str(VAL_DOUBLE(_v), _s, _len) < 0) {
 			LOG(L_ERR, "val2str(): Error while converting string to double\n");
