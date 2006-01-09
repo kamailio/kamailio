@@ -87,6 +87,7 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 		if (regexec(&preg, t->exports->name, 0, 0, 0) == 0) {
 			DBG("set_mod_param_regex: '%s' matches module '%s'\n", regex, t->exports->name);
 			mod_found = 1;
+			/* PARAM_STR (PARAM_STRING) may be assigned also to PARAM_STRING(PARAM_STR) so let get both module param */
 			ptr = find_param_export(t, name, type | ((type & (PARAM_STR|PARAM_STRING))?PARAM_STR|PARAM_STRING:0), &param_type);
 			if (ptr) {
 				     /* type casting */

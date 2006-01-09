@@ -260,7 +260,7 @@ static cmd_export_t cmds[]={
 	{"dlg_request_uas",    (cmd_function)dlg_request_uas,   NO_SCRIPT,   0, 0},
 	{"free_dlg",           (cmd_function)free_dlg,          NO_SCRIPT,   0, 0},
 	{"print_dlg",          (cmd_function)print_dlg,         NO_SCRIPT,   0, 0},
-	{T_GETT,               (cmd_function)get_t,             NO_SCRIPT,   0,0},
+	{T_GETT,               (cmd_function)get_t,             NO_SCRIPT,   0, 0},
 	{"calculate_hooks",    (cmd_function)w_calculate_hooks, NO_SCRIPT,   0, 0},
 	{0,0,0,0,0}
 };
@@ -314,13 +314,15 @@ static int fixup_hostport2proxy(void** param, int param_no)
 	char *host;
 	int err;
 	struct proxy_l *proxy;
+	action_u_t *a;
 	str s;
 
 	DBG("TM module: fixup_hostport2proxy(%s, %d)\n", (char*)*param, param_no);
 	if (param_no==1){
 		return 0;
 	} else if (param_no==2) {
-		host=((action_u_t*)(param)-1)->string;
+		a = fixup_get_param(param, param_no, 1);
+		host= a->u.string;
 		port=str2s(*param, strlen(*param), &err);
 		if (err!=0) {
 			LOG(L_ERR, "TM module:fixup_hostport2proxy: bad port number <%s>\n",
@@ -337,7 +339,7 @@ static int fixup_hostport2proxy(void** param, int param_no)
 		}
 		/* success -- fix the first parameter to proxy now ! */
 
-		((action_u_t*)(param)-1)->data=proxy;
+		a->u.data=proxy;
 		return 0;
 	} else {
 		LOG(L_ERR,"ERROR: fixup_hostport2proxy called with parameter #<>{1,2}\n");

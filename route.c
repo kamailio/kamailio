@@ -23,8 +23,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -44,7 +44,7 @@
  *  2005-12-19  select framework (mma)
  */
 
- 
+
 #include <stdlib.h>
 #include <sys/types.h>
 #include <regex.h>
@@ -82,13 +82,13 @@ struct action* onsend_rlist[ONSEND_RT_NO];
 static int fix_actions(struct action* a); /*fwd declaration*/
 
 
-/* traverses an expr tree and compiles the REs where necessary) 
+/* traverses an expr tree and compiles the REs where necessary)
  * returns: 0 for ok, <0 if errors */
 static int fix_expr(struct expr* exp)
 {
 	regex_t* re;
 	int ret;
-	
+
 	ret=E_BUG;
 	if (exp==0){
 		LOG(L_CRIT, "BUG: fix_expr: null pointer\n");
@@ -190,12 +190,11 @@ static int fix_actions(struct action* a)
 	char *tmp;
 	int ret;
 	cmd_export_t* cmd;
-	struct sr_module* mod;
 	str s;
 	struct hostent* he;
 	struct ip_addr ip;
 	struct socket_info* si;
-	
+
 	if (a==0){
 		LOG(L_CRIT,"BUG: fix_actions: null pointer\n");
 		return E_BUG;
@@ -208,25 +207,25 @@ static int fix_actions(struct action* a)
 			case FORWARD_UDP_T:
 			case SEND_T:
 			case SEND_TCP_T:
-					switch(t->p1_type){
-						case IP_ST: 
+					switch(t->val[0].type){
+						case IP_ST:
 							tmp=strdup(ip_addr2a(
-										(struct ip_addr*)t->p1.data));
+										(struct ip_addr*)t->val[0].u.data));
 							if (tmp==0){
 								LOG(L_CRIT, "ERROR: fix_actions:"
 										"memory allocation failure\n");
 								return E_OUT_OF_MEM;
 							}
-							t->p1_type=STRING_ST;
-							t->p1.string=tmp;
+							t->val[0].type=STRING_ST;
+							t->val[0].u.string=tmp;
 							/* no break */
 						case STRING_ST:
-							s.s = t->p1.string;
+							s.s = t->val[0].u.string;
 							s.len = strlen(s.s);
-							p=add_proxy(&s, t->p2.number, 0); /* FIXME proto*/
+							p=add_proxy(&s, t->val[1].u.number, 0); /* FIXME proto*/
 							if (p==0) return E_BAD_ADDRESS;
-							t->p1.data=p;
-							t->p1_type=PROXY_ST;
+							t->val[0].u.data=p;
+							t->val[0].type=PROXY_ST;
 							break;
 						case URIHOST_ST:
 							break;
@@ -238,115 +237,129 @@ static int fix_actions(struct action* a)
 					}
 					break;
 			case IF_T:
-				if (t->p1_type!=EXPR_ST){
+				if (t->val[0].type!=EXPR_ST){
 					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
 								"%d for if (should be expr)\n",
-								t->p1_type);
+								t->val[0].type);
 					return E_BUG;
-				}else if( (t->p2_type!=ACTIONS_ST)&&(t->p2_type!=NOSUBTYPE) ){
+				}else if( (t->val[1].type!=ACTIONS_ST)&&(t->val[1].type!=NOSUBTYPE) ){
 					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
 								"%d for if() {...} (should be action)\n",
-								t->p2_type);
+								t->val[1].type);
 					return E_BUG;
-				}else if( (t->p3_type!=ACTIONS_ST)&&(t->p3_type!=NOSUBTYPE) ){
+				}else if( (t->val[2].type!=ACTIONS_ST)&&(t->val[2].type!=NOSUBTYPE) ){
 					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
 								"%d for if() {} else{...}(should be action)\n",
-								t->p3_type);
+								t->val[2].type);
 					return E_BUG;
 				}
-				if (t->p1.data){
-					if ((ret=fix_expr((struct expr*)t->p1.data))<0)
+				if (t->val[0].u.data){
+					if ((ret=fix_expr((struct expr*)t->val[0].u.data))<0)
 						return ret;
 				}
-				if ( (t->p2_type==ACTIONS_ST)&&(t->p2.data) ){
-					if ((ret=fix_actions((struct action*)t->p2.data))<0)
+				if ( (t->val[1].type==ACTIONS_ST)&&(t->val[1].u.data) ){
+					if ((ret=fix_actions((struct action*)t->val[1].u.data))<0)
 						return ret;
 				}
-				if ( (t->p3_type==ACTIONS_ST)&&(t->p3.data) ){
-						if ((ret=fix_actions((struct action*)t->p3.data))<0)
+				if ( (t->val[2].type==ACTIONS_ST)&&(t->val[2].u.data) ){
+						if ((ret=fix_actions((struct action*)t->val[2].u.data))<0)
 						return ret;
 				}
 				break;
 
 		        case ASSIGN_T:
 		        case ADD_T:
-				if (t->p1_type != AVP_ST) {
+				if (t->val[0].type != AVP_ST) {
 					LOG(L_CRIT, "BUG: fix_actions: Invalid left side of assignment\n");
 					return E_BUG;
 				}
-				if (t->p1.attr->type & AVP_CLASS_DOMAIN) {
+				if (t->val[0].u.attr->type & AVP_CLASS_DOMAIN) {
 					LOG(L_ERR, "ERROR: You cannot change domain attributes from the script, they are read-only\n");
 					return E_BUG;
-				} else if (t->p1.attr->type & AVP_CLASS_GLOBAL) {
+				} else if (t->val[0].u.attr->type & AVP_CLASS_GLOBAL) {
 					LOG(L_ERR, "ERROR: You cannot change global attributes from the script, they are read-only\n");
 					return E_BUG;
 				}
 
-				if (t->p2_type == ACTION_ST && t->p2.data) {
-					if ((ret = fix_actions((struct action*)t->p2.data)) < 0) {
+				if (t->val[1].type == ACTION_ST && t->val[1].u.data) {
+					if ((ret = fix_actions((struct action*)t->val[1].u.data)) < 0) {
 						return ret;
 					}
-				} else if (t->p2_type == EXPR_ST && t->p2.data) {
-					if ((ret = fix_expr((struct expr*)t->p2.data)) < 0) {
+				} else if (t->val[1].type == EXPR_ST && t->val[1].u.data) {
+					if ((ret = fix_expr((struct expr*)t->val[1].u.data)) < 0) {
 						return ret;
 					}
-				} else if (t->p2_type == STRING_ST) {
+				} else if (t->val[1].type == STRING_ST) {
 					int len;
-					len = strlen(t->p2.data);
-					t->p2.str.s = t->p2.data;
-					t->p2.str.len = len;
-				} else if (t->p2_type == SELECT_ST) {
-					if ((ret=resolve_select(t->p2.select)) < 0) {
+					len = strlen(t->val[1].u.data);
+					t->val[1].u.str.s = t->val[1].u.data;
+					t->val[1].u.str.len = len;
+				} else if (t->val[1].type == SELECT_ST) {
+					if ((ret=resolve_select(t->val[1].u.select)) < 0) {
 						BUG("Unable to resolve select\n");
-						print_select(t->p2.select);
+						print_select(t->val[1].u.select);
 						return ret;
 					}
 				}
 				break;
 
 			case MODULE_T:
-				if ((mod=find_module(t->p1.data, &cmd))!=0){
-					DBG("fixing %s %s\n", mod->path, cmd->name);
-					if (cmd->fixup){
-						if (cmd->param_no>0){
-							ret=cmd->fixup(&t->p2.data, 1);
-							t->p2_type=MODFIXUP_ST;
-							if (ret<0) return ret;
+				cmd = t->val[0].u.data;
+				if (cmd && cmd->fixup) {
+					int i;
+					DBG("fixing %s()\n", cmd->name);
+					/* type cast NUMBER to STRING, old modules may expect all STRING params during fixup */
+					for (i=0; i<t->val[1].u.number; i++) {
+						if (t->val[i+2].type == NUMBER_ST) {
+							char buf[30];
+							snprintf(buf, sizeof(buf)-1, "%ld", t->val[i+2].u.number);
+							/* fixup currently requires string pkg_malloc-aed */
+							t->val[i+2].u.string = pkg_malloc(strlen(buf)+1);
+							if (!t->val[i+2].u.string) {
+								LOG(L_CRIT, "ERROR: cannot translate NUMBER to STRING\n");
+								return E_OUT_OF_MEM;
+							}
+							strcpy(t->val[i+2].u.string, buf);
+							t->val[i+2].type = STRING_ST;
 						}
-						if (cmd->param_no>1){
-							ret=cmd->fixup(&t->p3.data, 2);
-							t->p3_type=MODFIXUP_ST;
-							if (ret<0) return ret;
-						}
+					}
+					for (i=0; i<t->val[1].u.number; i++) {
+						void *p;
+						p = t->val[i+2].u.data;
+						ret = cmd->fixup(&t->val[i+2].u.data, i+1);
+						if (t->val[i+2].u.data != p)
+							t->val[i+2].type = MODFIXUP_ST;
+						if (ret < 0)
+							return ret;
 					}
 				}
 				break;
 			case FORCE_SEND_SOCKET_T:
-				if (t->p1_type!=SOCKID_ST){
+				if (t->val[0].type!=SOCKID_ST){
 					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
 								"%d for force_send_socket\n",
-								t->p1_type);
+								t->val[0].type);
 					return E_BUG;
 				}
-				he=resolvehost(((struct socket_id*)t->p1.data)->name);
+				he=resolvehost(((struct socket_id*)t->val[0].u.data)->name);
 				if (he==0){
 					LOG(L_ERR, "ERROR: fix_actions: force_send_socket:"
 								" could not resolve %s\n",
-							((struct socket_id*)t->p1.data)->name);
+							((struct socket_id*)t->val[0].u.data)->name);
 					return E_BAD_ADDRESS;
 				}
 				hostent2ip_addr(&ip, he, 0);
-				si=find_si(&ip, ((struct socket_id*)t->p1.data)->port,
-								((struct socket_id*)t->p1.data)->proto);
+				si=find_si(&ip, ((struct socket_id*)t->val[0].u.data)->port,
+								((struct socket_id*)t->val[0].u.data)->proto);
 				if (si==0){
 					LOG(L_ERR, "ERROR: fix_actions: bad force_send_socket"
 							" argument: %s:%d (ser doesn't listen on it)\n",
-							((struct socket_id*)t->p1.data)->name,
-							((struct socket_id*)t->p1.data)->port);
+							((struct socket_id*)t->val[0].u.data)->name,
+							((struct socket_id*)t->val[0].u.data)->port);
 					return E_BAD_ADDRESS;
 				}
-				t->p1.data=si;
-				t->p1_type=SOCKETINFO_ST;
+				t->val[0].u.data=si;
+				t->val[0].type=SOCKETINFO_ST;
 				break;
 		}
 	}
@@ -365,7 +378,7 @@ inline static int comp_num(int op, long left, int rtype, union exp_op* r)
 	int_str val;
 	avp_t* avp;
 	long right;
-	
+
 	if (rtype == AVP_ST) {
 		avp = search_avp_by_index(r->attr->type, r->attr->name, &val, r->attr->index);
 		if (avp && !(avp->flags & AVP_VAL_STR)) right = val.n;
@@ -402,9 +415,9 @@ inline static int comp_str(int op, str* left, int rtype, union exp_op* r, struct
 	int ret;
 	char backup;
 	regex_t* re;
-	
+
 	right=0; /* warning fix */
-	
+
 	if (rtype == AVP_ST) {
 		avp = search_avp_by_index(r->attr->type, r->attr->name, &val, r->attr->index);
 		if (avp && (avp->flags & AVP_VAL_STR)) right = &val.s;
@@ -464,7 +477,7 @@ inline static int comp_str(int op, str* left, int rtype, union exp_op* r, struct
 					pkg_free(re);
 					left->s[left->len] = backup;
 					goto error;
-				}				
+				}
 				ret=(regexec(re, left->s, 0, 0, 0)==0);
 				regfree(re);
 				pkg_free(re);
@@ -478,7 +491,7 @@ inline static int comp_str(int op, str* left, int rtype, union exp_op* r, struct
 			goto error;
 	}
 	return ret;
-	
+
 error:
 	return -1;
 }
@@ -488,7 +501,7 @@ error:
 inline static int comp_string(int op, char* left, int rtype, union exp_op* r)
 {
 	int ret;
-	
+
 	ret=-1;
 	switch(op){
 		case EQUAL_OP:
@@ -520,7 +533,7 @@ inline static int comp_string(int op, char* left, int rtype, union exp_op* r)
 			goto error;
 	}
 	return ret;
-	
+
 error:
 	return -1;
 }
@@ -574,7 +587,7 @@ inline static int comp_select(int op, select_t* sel, int rtype, union exp_op* r,
 	switch(op) {
 	case NO_OP: return 1;
 	case BINOR_OP:
-	case BINAND_OP:  
+	case BINAND_OP:
 		ERR("Binary operators cannot be used with string selects\n");
 		return -1;
 	}
@@ -585,7 +598,7 @@ inline static int comp_select(int op, select_t* sel, int rtype, union exp_op* r,
 inline static int check_self_op(int op, str* s, unsigned short p)
 {
 	int ret;
-	
+
 	ret=check_self(s, p, 0);
 	switch(op){
 		case EQUAL_OP:
@@ -683,7 +696,7 @@ inline static int comp_ip(int op, struct ip_addr* ip, int rtype, union exp_op* r
 error_op:
 	LOG(L_CRIT, "BUG: comp_ip: invalid operator %d\n", op);
 	return -1;
-	
+
 }
 
 
@@ -695,14 +708,14 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 	struct onsend_info* snd_inf;
 	struct ip_addr ip;
 	ret=E_BUG;
-	
+
 	if (e->type!=ELEM_T){
 		LOG(L_CRIT," BUG: eval_elem: invalid type\n");
 		goto error;
 	}
 	switch(e->l_type){
 	case METHOD_O:
-		ret=comp_str(e->op, &msg->first_line.u.request.method, 
+		ret=comp_str(e->op, &msg->first_line.u.request.method,
 			     e->r_type, &e->r, msg);
 		break;
 	case URI_O:
@@ -713,7 +726,7 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 						       msg->parsed_uri.port_no?
 						       msg->parsed_uri.port_no:SIP_PORT);
 			}else{
-				ret=comp_str(e->op, &msg->new_uri, 
+				ret=comp_str(e->op, &msg->new_uri,
 					     e->r_type, &e->r, msg);
 			}
 		}else{
@@ -728,7 +741,7 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 			}
 		}
 		break;
-		
+
 	case FROM_URI_O:
 		if (parse_from_header(msg)!=0){
 			LOG(L_ERR, "ERROR: eval_elem: bad or missing"
@@ -770,15 +783,15 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 				     e->r_type, &e->r, msg);
 		}
 		break;
-		
+
 	case SRCIP_O:
 		ret=comp_ip(e->op, &msg->rcv.src_ip, e->r_type, &e->r);
 		break;
-		
+
 	case DSTIP_O:
 		ret=comp_ip(e->op, &msg->rcv.dst_ip, e->r_type, &e->r);
 		break;
-	
+
 	case SNDIP_O:
 		snd_inf=get_onsend_info();
 		if (snd_inf && snd_inf->send_sock){
@@ -787,7 +800,7 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 			BUG("eval_elem: snd_ip unknown (not in a onsend_route?)\n");
 		}
 		break;
-	
+
 	case TOIP_O:
 		snd_inf=get_onsend_info();
 		if (snd_inf && snd_inf->to){
@@ -807,57 +820,57 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 		if (ret<=0) ret=0;
 		else ret=1;
 		break;
-		
+
 	case SRCPORT_O:
-		ret=comp_num(e->op, (int)msg->rcv.src_port, 
+		ret=comp_num(e->op, (int)msg->rcv.src_port,
 			     e->r_type, &e->r);
 		break;
-		
+
 	case DSTPORT_O:
-		ret=comp_num(e->op, (int)msg->rcv.dst_port, 
+		ret=comp_num(e->op, (int)msg->rcv.dst_port,
 			     e->r_type, &e->r);
 		break;
-		
+
 	case SNDPORT_O:
 		snd_inf=get_onsend_info();
 		if (snd_inf && snd_inf->send_sock){
-			ret=comp_num(e->op, (int)snd_inf->send_sock->port_no, 
+			ret=comp_num(e->op, (int)snd_inf->send_sock->port_no,
 				     e->r_type, &e->r);
 		}else{
 			BUG("eval_elem: snd_port unknown (not in a onsend_route?)\n");
 		}
 		break;
-		
+
 	case TOPORT_O:
 		snd_inf=get_onsend_info();
 		if (snd_inf && snd_inf->to){
-			ret=comp_num(e->op, (int)su_getport(snd_inf->to), 
+			ret=comp_num(e->op, (int)su_getport(snd_inf->to),
 				     e->r_type, &e->r);
 		}else{
 			BUG("eval_elem: to_port unknown (not in a onsend_route?)\n");
 		}
 		break;
-		
+
 	case PROTO_O:
-		ret=comp_num(e->op, msg->rcv.proto, 
+		ret=comp_num(e->op, msg->rcv.proto,
 			     e->r_type, &e->r);
 		break;
-		
+
 	case SNDPROTO_O:
 		snd_inf=get_onsend_info();
 		if (snd_inf && snd_inf->send_sock){
-			ret=comp_num(e->op, snd_inf->send_sock->proto, 
+			ret=comp_num(e->op, snd_inf->send_sock->proto,
 				     e->r_type, &e->r);
 		}else{
 			BUG("eval_elem: snd_proto unknown (not in a onsend_route?)\n");
 		}
 		break;
-		
+
 	case AF_O:
-		ret=comp_num(e->op, (int)msg->rcv.src_ip.af, 
+		ret=comp_num(e->op, (int)msg->rcv.src_ip.af,
 			     e->r_type, &e->r);
 		break;
-		
+
 	case SNDAF_O:
 		snd_inf=get_onsend_info();
 		if (snd_inf && snd_inf->send_sock){
@@ -870,10 +883,10 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 
 	case MSGLEN_O:
 		if ((snd_inf=get_onsend_info())!=0){
-			ret=comp_num(e->op, (int)snd_inf->len, 
+			ret=comp_num(e->op, (int)snd_inf->len,
 					e->r_type, &e->r);
 		}else{
-			ret=comp_num(e->op, (int)msg->len, 
+			ret=comp_num(e->op, (int)msg->len,
 					e->r_type, &e->r);
 		}
 		break;
@@ -885,7 +898,7 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 	case AVP_O:
 		ret = comp_avp(e->op, e->l.attr, e->r_type, &e->r, msg);
 		break;
-		
+
 	case SELECT_O:
 		ret = comp_select(e->op, e->l.select, e->r_type, &e->r, msg);
 		break;
@@ -906,7 +919,7 @@ int eval_expr(struct expr* e, struct sip_msg* msg)
 {
 	static int rec_lev=0;
 	int ret;
-	
+
 	rec_lev++;
 	if (rec_lev>MAX_REC_LEV){
 		LOG(L_CRIT, "ERROR: eval_expr: too many expressions (%d)\n",
@@ -914,7 +927,7 @@ int eval_expr(struct expr* e, struct sip_msg* msg)
 		ret=-1;
 		goto skip;
 	}
-	
+
 	if (e->type==ELEM_T){
 		ret=eval_elem(e, msg);
 	}else if (e->type==EXP_T){
@@ -974,7 +987,7 @@ int add_actions(struct action* a, struct action** head)
 	if ((ret=fix_actions(a))!=0) goto error;
 	push(a,head);
 	return 0;
-	
+
 error:
 	return ret;
 }

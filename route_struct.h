@@ -21,8 +21,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /* History:
@@ -50,11 +50,11 @@
  * Other important values (no macros for them yet):
  * expr true = 1
  * expr false = 0 (used only inside the expression and if evaluator)
- * 
+ *
  * action continue  or if used in condition true = 1
  * action drop/quit/stop script processing = 0
  * action error or if used in condition false = -1 (<0 and !=EXPR_DROP)
- * 
+ *
  */
 
 
@@ -63,11 +63,11 @@ enum { LOGAND_OP=1, LOGOR_OP, NOT_OP, BINAND_OP, BINOR_OP };
 enum { EQUAL_OP=10, MATCH_OP, GT_OP, LT_OP, GTE_OP, LTE_OP, DIFF_OP, NO_OP };
 enum { METHOD_O=1, URI_O, FROM_URI_O, TO_URI_O, SRCIP_O, SRCPORT_O,
 	   DSTIP_O, DSTPORT_O, PROTO_O, AF_O, MSGLEN_O, DEFAULT_O, ACTION_O,
-	   NUMBER_O, AVP_O, SNDIP_O, SNDPORT_O, TOIP_O, TOPORT_O, SNDPROTO_O, 
+	   NUMBER_O, AVP_O, SNDIP_O, SNDPORT_O, TOIP_O, TOPORT_O, SNDPROTO_O,
 	   SNDAF_O, RETCODE_O, SELECT_O};
 
 enum { FORWARD_T=1, SEND_T, DROP_T, LOG_T, ERROR_T, ROUTE_T, EXEC_T,
-		SET_HOST_T, SET_HOSTPORT_T, SET_USER_T, SET_USERPASS_T, 
+		SET_HOST_T, SET_HOSTPORT_T, SET_USER_T, SET_USERPASS_T,
 		SET_PORT_T, SET_URI_T, IF_T, MODULE_T,
 		SETFLAG_T, RESETFLAG_T, ISFLAGSET_T ,
 		LEN_GT_T, PREFIX_T, STRIP_T,STRIP_TAIL_T,
@@ -86,10 +86,10 @@ enum { FORWARD_T=1, SEND_T, DROP_T, LOG_T, ERROR_T, ROUTE_T, EXEC_T,
                 FORCE_SEND_SOCKET_T,
                 ASSIGN_T,
                 ADD_T
-       
+
 };
 enum { NOSUBTYPE=0, STRING_ST, NET_ST, NUMBER_ST, IP_ST, RE_ST, PROXY_ST,
-		EXPR_ST, ACTIONS_ST, CMDF_ST, MODFIXUP_ST, URIHOST_ST, URIPORT_ST,
+		EXPR_ST, ACTIONS_ST, MODEXP_ST, MODFIXUP_ST, URIHOST_ST, URIPORT_ST,
 		MYSELF_ST, STR_ST, SOCKID_ST, SOCKETINFO_ST, ACTION_ST, AVP_ST, SELECT_ST,
 		RETCODE_ST};
 
@@ -109,7 +109,7 @@ union exp_op {
 	regex_t* re;
 	struct net* net;
 };
-	
+
 struct expr{
 	int type; /* exp, exp_elem */
 	int op; /* and, or, not | ==,  =~ */
@@ -118,41 +118,36 @@ struct expr{
 	union exp_op r;
 };
 
-typedef union {
-	long number;
-	char* string;
-	str str;
-	void* data;
-	avp_spec_t* attr;
-	select_t* select;
+typedef struct {
+	int type;
+	union {
+		long number;
+		char* string;
+		str str;
+		void* data;
+		avp_spec_t* attr;
+		select_t* select;
+	} u;
 } action_u_t;
+
+#define MAX_ACTIONS 4
 
 struct action{
 	int type;  /* forward, drop, log, send ...*/
-	int p1_type;
-	int p2_type;
-	int p3_type;
-	action_u_t p1, p2, p3; /* tm module expects these parameters to be adjacent */
+	int count;
+	action_u_t val[MAX_ACTIONS];
 	struct action* next;
 };
 
 struct expr* mk_exp(int op, struct expr* left, struct expr* right);
 struct expr* mk_elem(int op, int ltype, void* lparam, int rtype, void* rparam);
 
-struct action* mk_action(int type, int p1_type, int p2_type,
-							void* p1, void* p2);
-struct action* mk_action3(int type, int p1_type, int p2_type, int p3_type, 
-							void* p1, void* p2, void* p3);
+struct action* mk_action(int type, int count/* of couples {type,val} */, .../* int type1, void *val1 [, int type2, void *val2, ...] */);
 struct action* append_action(struct action* a, struct action* b);
-
 
 void print_action(struct action* a);
 void print_actions(struct action* a);
 void print_expr(struct expr* exp);
-
-
-
-
 
 #endif
 

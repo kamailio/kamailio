@@ -47,6 +47,7 @@
 #include "parser/msg_parser.h" /* for sip_msg */
 #include "version.h"
 #include "rpc.h"
+#include "route_struct.h"
 
 typedef  struct module_exports* (*module_register)();
 typedef  int (*cmd_function)(struct sip_msg*, char*, char*);
@@ -133,9 +134,6 @@ struct module_exports{
 };
 
 
-
-
-
 struct sr_module{
 	char* path;
 	void* handle;
@@ -149,10 +147,10 @@ struct sr_module* modules; /* global module list*/
 int register_builtin_modules();
 int register_module(struct module_exports*, char*,  void*);
 int load_module(char* path);
+cmd_export_t* find_export_record(char* name, int param_no, int flags);
 cmd_function find_export(char* name, int param_no, int flags);
 cmd_function find_mod_export(char* mod, char* name, int param_no, int flags);
 rpc_export_t* find_rpc_export(char* name, int flags);
-struct sr_module* find_module(void *f, cmd_export_t** cmd);
 void destroy_modules();
 int init_child(int rank);
 int init_modules(void);
@@ -204,5 +202,9 @@ int fixup_regex_1(void** param, int param_no);
 
 /* Compile regular expression in second parameter */
 int fixup_regex_2(void** param, int param_no);
+
+/* API function to get other parameters from fixup */
+action_u_t *fixup_get_param(void **cur_param, int cur_param_no, int required_param_no);
+int fixup_get_param_count(void **cur_param, int cur_param_no);
 
 #endif /* sr_module_h */
