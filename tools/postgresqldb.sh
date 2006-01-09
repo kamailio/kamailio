@@ -422,7 +422,7 @@ CREATE TABLE aliases (
   flags int NOT NULL default '0',
   user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
-  methods int(11) default NULL,
+  methods int default NULL,
   PRIMARY KEY($USERCOL, domain, contact)
 ) $TABLE_TYPE;
 
@@ -476,7 +476,7 @@ CREATE TABLE grp (
 
 CREATE TABLE re_grp (
   reg_exp varchar(128) NOT NULL default '',
-  group_id int(11) NOT NULL default '0',
+  group_id int NOT NULL default '0',
   UNIQUE (reg_exp)
 ) $TABLE_TYPE;
 
@@ -551,7 +551,7 @@ CREATE TABLE location (
   flags int NOT NULL default '0',
   user_agent varchar(255) NOT NULL default '',
   socket varchar(128) default NULL,
-  methods int(11) default NULL,
+  methods int default NULL,
   PRIMARY KEY($USERCOL, domain, contact)
 ) $TABLE_TYPE;
 
