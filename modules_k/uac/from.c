@@ -167,7 +167,6 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 	str replace;
 	char *p;
 	str param;
-	int offset;
 	str buf;
 	int i;
 
@@ -213,31 +212,14 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 		/* some new display to set? */
 		if (from_dsp->len)
 		{
-			/* add anchor just before uri's "<" */
-			offset = from->uri.s - msg->buf;
-			while( msg->buf[offset]!='<')
-			{
-				offset--;
-				if (from->body.s>msg->buf+offset)
-				{
-					LOG(L_ERR,"ERROR:uac:replace_from: no <> and there"
-							" is dispaly name\n");
-					goto error;
-				}
-			}
-			if ( (l=anchor_lump( msg, offset, 0, 0))==0)
-			{
-				LOG(L_ERR,"ERROR:uac:replace_from: display anchor lump "
-					"failed\n");
-				goto error;
-			}
-			p = pkg_malloc( from_dsp->len);
+			/* add the new display exactly over the deleted one */
+			p = pkg_malloc( from_dsp->len );
 			if (p==0)
 			{
 				LOG(L_ERR,"ERROR:uac:replace_from: no more pkg mem\n");
 				goto error;
 			}
-			memcpy( p, from_dsp->s, from_dsp->len); 
+			memcpy( p, from_dsp->s, from_dsp->len);
 			if (insert_new_lump_after( l, p, from_dsp->len, 0)==0)
 			{
 				LOG(L_ERR,"ERROR:uac:replace_from: insert new "
