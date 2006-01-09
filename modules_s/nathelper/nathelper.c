@@ -298,13 +298,13 @@ static int rtpp_node_count = 0;
 
 static cmd_export_t cmds[] = {
 	{"fix_nated_contact",  fix_nated_contact_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"fix_nated_sdp",      fix_nated_sdp_f,        1, fixup_str_1, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
+	{"fix_nated_sdp",      fix_nated_sdp_f,        1, fixup_int_1, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 	{"unforce_rtp_proxy",  unforce_rtp_proxy0_f,   0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
-	{"unforce_rtp_proxy",  unforce_rtp_proxy1_f,   1, fixup_str_1,   REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
+	{"unforce_rtp_proxy",  unforce_rtp_proxy1_f,   1, fixup_int_1,   REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 	{"force_rtp_proxy",    force_rtp_proxy0_f,     0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"force_rtp_proxy",    force_rtp_proxy1_f,     1, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"force_rtp_proxy",    force_rtp_proxy2_f,     2, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"nat_uac_test",       nat_uac_test_f,         1, fixup_str_1, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
+	{"nat_uac_test",       nat_uac_test_f,         1, fixup_int_1, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 	{"fix_nated_register", fix_nated_register_f,   0, 0,             REQUEST_ROUTE },
 	{"add_rcv_param",      add_rcv_param_f,        0, 0,             REQUEST_ROUTE },
 	{0, 0, 0, 0, 0}
