@@ -37,7 +37,18 @@ fi
 VERSION='1.1 - $Revision$'
 
 ##### ------------------------------------------------ #####
-### configuration for starting/stopping ser
+### aliases configuration
+# set it to non zero if you use USRLOC based aliases
+if [ -z "$ENABLE_UL_ALIASES" ] ; then
+	ENABLE_DB_ALIASES=0
+fi
+# set it to zero if you do not use DB based aliases
+if [ -z "$ENABLE_DB_ALIASES" ] ; then
+	ENABLE_DB_ALIASES=1
+fi
+
+##### ------------------------------------------------ #####
+### configuration for starting/stopping openser
 if [ -z "$PID_FILE" ] ; then
 	PID_FILE=/var/run/openser.pid
 fi
@@ -155,7 +166,6 @@ ACL_USER_COLUMN=username
 ACL_DOMAIN_COLUMN=domain
 ACL_GROUP_COLUMN=grp
 ACL_MODIFIED_COLUMN=last_modified
-ACL_DOMAIN_COLUMN=domain
 
 # aliases table
 if [ -z "$ALS_TABLE" ] ; then
@@ -374,17 +384,28 @@ cat <<EOF
    * Examples:  lcr addgw_grp usa 1                                  *
    *            lcr addgw level3 1.2.3.4 5080 sip tcp 1              *
    *            lcr addroute +1 % 1 1                                *
- lcr show ...................................... show routes, gateways and groups
- lcr reload .................................... reload lcr gateways
- lcr addgw_grp <grp_name> ...................... add gateway group, autocreate grp_id
- lcr addgw_grp <grp_name> <grp_id> ............. add gateway group with grp_id
- lcr rmgw_grp  <grp_id> ........................ delete the gw_grp
- lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> .................. add a gateway
- lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <prefix> ......... add a gateway with prefix
- lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <prefix> <strip>.. add a gateway with prefix and strip
- lcr rmgw  <gw_name> ............................................................ delete a gateway
- lcr addroute <prefix> <from> <grp_id> <prio> .. add a route
- lcr rmroute  <prefix> <from> <grp_id> <prio> .. delete a route
+ lcr show ....................................................................
+           ............. show routes, gateways and groups
+ lcr reload ..................................................................
+           ............. reload lcr gateways
+ lcr addgw_grp <grp_name> ....................................................
+           .............. add gateway group, autocreate grp_id
+ lcr addgw_grp <grp_name> <grp_id> ...........................................
+           ............... add gateway group with grp_id
+ lcr rmgw_grp  <grp_id> ......................................................
+           ............... delete the gw_grp
+ lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> ...............
+           ............... add a gateway
+ lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <prefix> ......
+           ............... add a gateway with prefix
+ lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <prefix> <strip>
+           ............... add a gateway with prefix and strip
+ lcr rmgw  <gw_name> .........................................................
+           ............... delete a gateway
+ lcr addroute <prefix> <from> <grp_id> <prio> ................................
+           .............. add a route
+ lcr rmroute  <prefix> <from> <grp_id> <prio> ................................
+           .............. delete a route
 
            * control and diagnostics *
  moni ... show internal status      start .... start ser
@@ -470,8 +491,11 @@ check_uri() {
 }
 
 # check for alias duplicates
+#   params: user domain
+#   output: false if exists, true otherwise
 check_alias() {
-		RES=`fifo_cmd ul_show_contact "$ALS_TABLE" "$1"`
+	if [ "$ENABLE_UL_ALIASES" -ne 0] ; then
+		RES=`fifo_cmd ul_show_contact "$ALS_TABLE" "$1@$2"`
 		RET="$?"
 		if [ $RET -ne 0 ] ; then
 			echo "error: OpenSER/FIFO not accessible: $RET" \
@@ -479,25 +503,37 @@ check_alias() {
 			exit 1
 		fi
 		echo "$RES" | grep "^404" > /dev/null
-		if [ $? -eq 0 ] ; then
-			# alias does not exist yet, go ahead!
-			return 0
-		fi
-		echo "$RES" | grep "^400" > /dev/null
-		if [ $? -eq 0 ] ; then
-			echo "error: 400; check if you use aliases in OpenSER" \
-				> /dev/stderr
+		if [ $? -ne 0 ] ; then
+			false
+			echo "$RES" | grep "^400" > /dev/null
+			if [ $? -eq 0 ] ; then
+				echo "error: 400; check if you use aliases in OpenSER" \
+					> /dev/stderr
+				exit 1
+			fi
+			echo "$RES" | grep "^200" > /dev/null
+			if [ $? -eq 0 ] ; then
+				true
+			fi
+			# other errors
+			echo "error: $RES" > /dev/stderr
 			exit 1
 		fi
-		echo "$RES" | grep "^200" > /dev/null
-		if [ $? -eq 0 ] ; then
-			echo "error: overlap with an existing alias" \
-				> /dev/stderr
-			exit 1
+		# alias does not exist yet, go ahead!
+	fi
+	if [ "$ENABLE_DB_ALIASES" -ne 0 ] ; then
+		QUERY="select count(*) from $DA_TABLE \
+			where $DA_ALIAS_USER_COLUMN='$1' and \
+			$DA_ALIAS_DOMAIN_COLUMN='$2';"
+		CNT=`sql_ro_query "$QUERY" | grep -v ERROR | $LAST_LINE`
+		if [ "0$CNT" -eq 0 ] ; then
+			false
+		else
+			true
 		fi
-		# other errors
-		echo "error: $RES" > /dev/stderr
-		exit 1
+	fi
+
+	false
 }
 
 
@@ -721,7 +757,15 @@ usrloc() {
 				fi
 			fi
 
-			check_alias "$SERUSER@$SERDOMAIN"
+			check_alias
+			if [ $? -eq 0 ] ; then
+				if [ "$CHECK_SUB" -ne 0 ] ; then
+					echo alias already defined
+				else
+					echo AOR is an alias
+				fi
+				exit 1
+			fi
 
 			fifo_cmd ul_add "$USRLOC_TABLE" "$SERUSER@$SERDOMAIN" "$2" "$UL_EXPIRES" "1.00" "0" "$UL_FLAGS" "$ALL_METHODS"
 			exit $?
@@ -1959,13 +2003,12 @@ case $1 in
 		if [ $? -eq 0 ] ; then
 			echo user already exists
 			exit 1
-		fi  
-		# check_alias "$SERUSER@$SERDOMAIN"
-	    is_alias_db $1
-        if [ $? -eq 0 ] ; then
+		fi
+		check_alias
+		if [ $? -eq 0 ] ; then
 			echo username already exists as alias
 			exit 1
-       	fi  
+		fi
 
 		set_user $1
 
