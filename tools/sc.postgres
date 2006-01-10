@@ -337,7 +337,14 @@ usrloc() {
 			exit $?
 			;;
 		add)
-			if [ $# -ne 3 ] ; then
+			if [ $# -eq 3 ] ; then
+				UL_EXPIRES=0
+				# 128 means FL_PERSISTENT is on
+				UL_FLAGS=128
+			elif [ $# -eq 4 ] ; then
+				UL_EXPIRES=$4
+				UL_FLAGS=0
+			else
 				usage
 				exit 1
 			fi
@@ -348,14 +355,14 @@ usrloc() {
 				exit 1
 			fi
 
-			fifo_cmd ul_add "$TABLE" "$1" "$2" "$FOREVER_REL" "1.00" "0" "128" "$ALL_METHODS"
+			fifo_cmd ul_add "$TABLE" "$1" "$2" "$UL_EXPIRES" "1.00" "0" "$UL_FLAGS" "$ALL_METHODS"
 			exit $?
 			;;
 		rm)
-            if [ $# -ne 2 ] ; then
-                usage
-                exit 1
-            fi
+			if [ $# -ne 2 ] ; then
+				usage
+				exit 1
+			fi
 			shift
 			fifo_cmd ul_rm $TABLE $1
 

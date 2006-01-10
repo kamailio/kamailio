@@ -354,6 +354,7 @@ cat <<EOF
  ul show [<username>]................ show in-RAM online users
  ul rm <username> [<contact URI>].... delete user's UsrLoc entries
  ul add <username> <uri> ............ introduce a permanent UrLoc entry
+ ul add <username> <uri> <expires> .. introduce a temporary UrLoc entry
  showdb [<username>] ................ show online users flushed in DB
 
            * pa *
@@ -692,7 +693,14 @@ usrloc() {
 			exit $?
 			;;
 		add)
-			if [ $# -ne 3 ] ; then
+			if [ $# -eq 3 ] ; then
+				UL_EXPIRES=0
+				# 128 means FL_PERSISTENT is on
+				UL_FLAGS=128
+			elif [ $# -eq 4 ] ; then
+				UL_EXPIRES=$4
+				UL_FLAGS=0
+			else
 				usage
 				exit 1
 			fi
@@ -715,8 +723,7 @@ usrloc() {
 
 			check_alias "$SERUSER@$SERDOMAIN"
 
-			# 128 means FL_PERSISTENT is on
-			fifo_cmd ul_add "$USRLOC_TABLE" "$SERUSER@$SERDOMAIN" "$2" "0" "1.00" "0" "128" "$ALL_METHODS"
+			fifo_cmd ul_add "$USRLOC_TABLE" "$SERUSER@$SERDOMAIN" "$2" "$UL_EXPIRES" "1.00" "0" "$UL_FLAGS" "$ALL_METHODS"
 			exit $?
 			;;
 		rm)
