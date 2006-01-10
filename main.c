@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -32,10 +32,10 @@
  *  2003-03-29  pkg cleaners for fifo and script callbacks introduced (jiri)
  *  2003-03-31  removed snmp part (obsolete & no place in core) (andrei)
  *  2003-04-06  child_init called in all processes (janakj)
- *  2003-04-08  init_mallocs split into init_{pkg,shm}_mallocs and 
+ *  2003-04-08  init_mallocs split into init_{pkg,shm}_mallocs and
  *               init_shm_mallocs called after cmd. line parsing (andrei)
  *  2003-04-15  added tcp_disable support (andrei)
- *  2003-05-09  closelog() before openlog to force opening a new fd 
+ *  2003-05-09  closelog() before openlog to force opening a new fd
  *               (needed on solaris) (andrei)
  *  2003-06-11  moved all signal handlers init. in install_sigs and moved it
  *               after daemonize (so that we won't catch anymore our own
@@ -196,7 +196,7 @@ void print_ct_constants()
 */
 	printf("MAX_RECV_BUFFER_SIZE %d, MAX_LISTEN %d,"
 			" MAX_URI_SIZE %d, BUF_SIZE %d\n",
-		MAX_RECV_BUFFER_SIZE, MAX_LISTEN, MAX_URI_SIZE, 
+		MAX_RECV_BUFFER_SIZE, MAX_LISTEN, MAX_URI_SIZE,
 		BUF_SIZE );
 #ifdef USE_TCP
 	printf("poll method support: %s.\n", poll_support);
@@ -227,7 +227,7 @@ int own_pgid = 0; /* whether or not we have our own pgid (and it's ok
 char* cfg_file = 0;
 unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do
 												  not want to exceed during the
-												  auto-probing procedure; may 
+												  auto-probing procedure; may
 												  be re-configured */
 int children_no = 0;			/* number of children processing requests */
 #ifdef USE_TCP
@@ -247,7 +247,7 @@ int log_stderr = 0;
 int log_facility = LOG_DAEMON;
 int config_check = 0;
 /* check if reply first via host==us */
-int check_via =  0;        
+int check_via =  0;
 /* shall use stateful synonym branches? faster but not reboot-safe */
 int syn_branch = 1;
 /* debugging level for memory stats */
@@ -266,9 +266,9 @@ int server_signature=1;
  * host? by default not -- too expensive
  */
 int mhomed=0;
-/* use dns and/or rdns or to see if we need to add 
+/* use dns and/or rdns or to see if we need to add
    a ;received=x.x.x.x to via: */
-int received_dns = 0;      
+int received_dns = 0;
 char* working_dir = 0;
 char* chroot_dir = 0;
 char* user=0;
@@ -314,8 +314,8 @@ struct socket_info* bind_address=0; /* pointer to the crt. proc.
 struct socket_info* sendipv4; /* ipv4 socket to use when msg. comes from ipv6*/
 struct socket_info* sendipv6; /* same as above for ipv6 */
 #ifdef USE_TCP
-struct socket_info* sendipv4_tcp; 
-struct socket_info* sendipv6_tcp; 
+struct socket_info* sendipv4_tcp;
+struct socket_info* sendipv6_tcp;
 #endif
 #ifdef USE_TLS
 struct socket_info* sendipv4_tls;
@@ -372,9 +372,9 @@ char* pgid_file = 0;
 void cleanup(show_status)
 {
 	/*clean-up*/
-	if (mem_lock) 
+	if (mem_lock)
 		shm_unlock(); /* hack: force-unlock the shared memory lock in case
-					 some process crashed and let it locked; this will 
+					 some process crashed and let it locked; this will
 					 allow an almost gracious shutdown */
 	destroy_modules();
 #ifdef USE_TCP
@@ -409,12 +409,12 @@ void cleanup(show_status)
 /* tries to send a signal to all our processes
  * if daemonized  is ok to send the signal to all the process group,
  * however if not daemonized we might end up sending the signal also
- * to the shell which launched us => most signals will kill it if 
- * it's not in interactive mode and we don't want this. The non-daemonized 
- * case can occur when an error is encountered before daemonize is called 
+ * to the shell which launched us => most signals will kill it if
+ * it's not in interactive mode and we don't want this. The non-daemonized
+ * case can occur when an error is encountered before daemonize is called
  * (e.g. when parsing the config file) or when ser is started in "dont-fork"
  *  mode. Sending the signal to all the processes in pt[] will not work
- *  for processes forked from modules (which have no correspondent entry in 
+ *  for processes forked from modules (which have no correspondent entry in
  *  pt), but this can happen only in dont_fork mode (which is only for
  *  debugging). So in the worst case + "dont-fork" we might leave some
  *  zombies. -- andrei */
@@ -473,18 +473,18 @@ void handle_sigs()
 				DBG("INT received, program terminates\n");
 			else
 				DBG("SIGTERM received, program terminates\n");
-				
+
 			/* first of all, kill the children also */
 			kill_all_children(SIGTERM);
 
 			     /* Wait for all the children to die */
 			while(wait(0) > 0);
-			
+
 			cleanup(1); /* cleanup & show status*/
 			dprint("Thank you for flying " NAME "\n");
 			exit(0);
 			break;
-			
+
 		case SIGUSR1:
 #ifdef STATS
 			dump_all_statistic();
@@ -498,12 +498,12 @@ void handle_sigs()
 			shm_status();
 #endif
 			break;
-			
+
 		case SIGCHLD:
 			while ((chld=waitpid( -1, &chld_status, WNOHANG ))>0) {
-				if (WIFEXITED(chld_status)) 
+				if (WIFEXITED(chld_status))
 					LOG(L_INFO, "child process %d exited normally,"
-							" status=%d\n", chld, 
+							" status=%d\n", chld,
 							WEXITSTATUS(chld_status));
 				else if (WIFSIGNALED(chld_status)) {
 					LOG(L_INFO, "child process %d exited by a signal"
@@ -512,7 +512,7 @@ void handle_sigs()
 					LOG(L_INFO, "core was %sgenerated\n",
 							 WCOREDUMP(chld_status) ?  "" : "not " );
 #endif
-				}else if (WIFSTOPPED(chld_status)) 
+				}else if (WIFSTOPPED(chld_status))
 					LOG(L_INFO, "child process %d stopped by a"
 								" signal %d\n", chld,
 								 WSTOPSIG(chld_status));
@@ -521,7 +521,7 @@ void handle_sigs()
 			if (dont_fork) {
 				LOG(L_INFO, "INFO: dont_fork turned on, living on\n");
 				break;
-			} 
+			}
 			LOG(L_INFO, "INFO: terminating due to SIGCHLD\n");
 #endif
 			/* exit */
@@ -540,7 +540,7 @@ void handle_sigs()
 			DBG("terminating due to SIGCHLD\n");
 			exit(0);
 			break;
-		
+
 		case SIGHUP: /* ignoring it*/
 					DBG("SIGHUP received, ignoring it\n");
 					break;
@@ -555,7 +555,7 @@ void handle_sigs()
 /* added by jku; allows for regular exit on a specific signal;
    good for profiling which only works if exited regularly and
    not by default signal handlers
-    - modified by andrei: moved most of the stuff to handle_sigs, 
+    - modified by andrei: moved most of the stuff to handle_sigs,
        made it safer for the "fork" case
 */
 static void sig_usr(int signo)
@@ -566,7 +566,7 @@ static void sig_usr(int signo)
 		if (sig_flag==0) sig_flag=signo;
 		else /*  previous sig. not processed yet, ignoring? */
 			return; ;
-		if (dont_fork) 
+		if (dont_fork)
 				/* only one proc, doing everything from the sig handler,
 				unsafe, but this is only for debugging mode*/
 			handle_sigs();
@@ -689,10 +689,10 @@ static int parse_phostport(char* s, char** host, int* hlen, int* port,
 	char* p;
 	int bracket;
 	char* tmp;
-	
+
 	first=second=0;
 	bracket=0;
-	
+
 	/* find the first 2 ':', ignoring possible ipv6 addresses
 	 * (substrings between [])
 	 */
@@ -717,7 +717,7 @@ static int parse_phostport(char* s, char** host, int* hlen, int* port,
 	}
 	if (p==s) return -1;
 	if (*(p-1)==':') goto error_colons;
-	
+
 	if (first==0){ /* no ':' => only host */
 		*host=s;
 		*hlen=(int)(p-s);
@@ -800,7 +800,7 @@ int main_loop()
 		}
 		if (do_suid()==-1) goto error; /* try to drop privileges */
 		/* process_no now initialized to zero -- increase from now on
-		   as new processes are forked (while skipping 0 reserved for main 
+		   as new processes are forked (while skipping 0 reserved for main
 		*/
 
 #ifdef USE_SLOW_TIMER
@@ -819,14 +819,14 @@ int main_loop()
 						LOG(L_ERR, "slow timer: init_child failed\n");
 						goto error;
 					}
-					
+
 					if (arm_slow_timer()<0) goto error;
 					slow_timer_main();
 				}else{
 					pt[process_no].pid=pid; /*should be shared mem anyway*/
 					strncpy(pt[process_no].desc, "slow timer", MAX_PT_DESC );
 					slow_timer_pid=pid;
-					
+
 				}
 #endif
 				/* we need another process to act as the "main" timer*/
@@ -846,7 +846,7 @@ int main_loop()
 						LOG(L_ERR, "timer: init_child failed\n");
 						goto error;
 					}
-					
+
 					if (arm_timer()<0) goto error;
 					timer_main();
 				}else{
@@ -857,11 +857,11 @@ int main_loop()
 		/* main process, receive loop */
 		process_no=0; /*main process number*/
 		pt[process_no].pid=getpid();
-		snprintf(pt[process_no].desc, MAX_PT_DESC, 
-			"stand-alone receiver @ %s:%s", 
+		snprintf(pt[process_no].desc, MAX_PT_DESC,
+			"stand-alone receiver @ %s:%s",
 			 bind_address->name.s, bind_address->port_no_str.s );
-		
-		
+
+
 		     /* We will call child_init even if we
 		      * do not fork - and it will be called with rank 1 because
 		      * in fact we behave like a child, not like main process
@@ -874,7 +874,7 @@ int main_loop()
 
 		is_main=1; /* hack 42: call init_child with is_main=0 in case
 					 some modules wants to fork a child */
-		
+
 		return udp_rcv_loop();
 	}else{
 		/* process_no now initialized to zero -- increase from now on
@@ -970,7 +970,7 @@ int main_loop()
 				}else{
 						pt[process_no].pid=pid; /*should be in shared mem.*/
 						snprintf(pt[process_no].desc, MAX_PT_DESC,
-							"receiver child=%d sock= %s:%s", i, 	
+							"receiver child=%d sock= %s:%s", i,
 							si->name.s, si->port_no_str.s );
 #ifdef USE_TCP
 						if (!tcp_disable){
@@ -989,7 +989,7 @@ int main_loop()
 
 	/*this is the main process*/
 	bind_address=0;				/* main proc -> it shouldn't send anything, */
-	
+
 
 	{
 #ifdef USE_SLOW_TIMER
@@ -1038,7 +1038,7 @@ int main_loop()
 #endif
 		}
 #endif /* USE_SLOW_TIMER */
-	
+
 		/* fork again for the "main" timer process*/
 #ifdef USE_TCP
 		if (!tcp_disable){
@@ -1128,10 +1128,10 @@ int main_loop()
 	 * process table properly
 	 */
 	last_process = process_no;
-	process_no=0; 
+	process_no=0;
 	/* process_bit = 0; */
 	is_main=1;
-	
+
 	if (init_child(PROC_MAIN) < 0) {
 		LOG(L_ERR, "main: error in init_child\n");
 		goto error;
@@ -1148,8 +1148,8 @@ int main_loop()
 			pause();
 			handle_sigs();
 	}
-	
-	
+
+
 	/*return 0; */
  error:
 	is_main=1;  /* if we are here, we are the "main process",
@@ -1167,7 +1167,7 @@ static int calc_proc_no(void)
 {
 	int udp_listeners;
 	struct socket_info* si;
-	
+
 	for (si=udp_listen, udp_listeners=0; si; si=si->next, udp_listeners++);
 	return
 		     /* receivers and attendant */
@@ -1179,7 +1179,7 @@ static int calc_proc_no(void)
 		+ 1 /* slow timer process */
 #endif
 #ifdef USE_TCP
-		+((!tcp_disable)?( 1/* tcp main */ + tcp_children_no ):0) 
+		+((!tcp_disable)?( 1/* tcp main */ + tcp_children_no ):0)
 #endif
 		;
 }
@@ -1197,11 +1197,12 @@ int main(int argc, char** argv)
 	int ret;
 	unsigned int seed;
 	int rfd;
+	int debug_save, debug_flag = 0;
 
 	/*init*/
 	ret=-1;
 	my_argc=argc; my_argv=argv;
-	
+
 	/*init pkg mallocs (before parsing cfg or cmd line !)*/
 	if (init_pkg_mallocs()==-1)
 		goto error;
@@ -1211,29 +1212,32 @@ int main(int argc, char** argv)
 		"DBG_MSG_QA enabled, ser may exit abruptly\n");
 #endif
 
-
-
-	/* process command line (get port no, cfg. file path etc) */
-	opterr=0;
-	options=
+	options=  "f:cm:dVhEb:l:n:vrRDTN:W:w:t:u:g:P:G:"
 #ifdef STATS
-	"s:"
+		"s:"
 #endif
-	"f:cm:b:l:n:N:rRvdDETVhw:t:u:g:P:G:W:";
-	
-	while((c=getopt(argc,argv,options))!=-1){
-		switch(c){
+	;
+	/* look if there is a -h, e.g. -f -h construction won't catch it later */
+	opterr = 0;
+	while((c=getopt(argc,argv,options))!=-1) {
+		if (c == 'h' || (optarg && strcmp(optarg, "-h") == 0)) {
+			printf("version: %s\n", version);
+			printf("%s",help_msg);
+			exit(0);
+			break;
+		}
+	}
+	/* process command line (get port no, cfg. file path etc) */
+	optind = 1;  /* reset getopt */
+	/* switches required before script processing */
+	while((c=getopt(argc,argv,options))!=-1) {
+		switch(c) {
 			case 'f':
 					cfg_file=optarg;
 					break;
 			case 'c':
 					config_check=1;
 					log_stderr=1; /* force stderr logging */
-					break;
-			case 's':
-				#ifdef STATS
-					stat_file=optarg;
-				#endif
 					break;
 			case 'm':
 					shm_mem_size=strtol(optarg, &tmp, 10) * 1024 * 1024;
@@ -1245,7 +1249,116 @@ int main(int argc, char** argv)
 					LOG(L_INFO, "ser: shared memory: %ld bytes\n",
 									shm_mem_size );
 					break;
+			case 'd':
+					debug_flag = 1;
+					debug++;
+					break;
+			case 'V':
+					printf("version: %s\n", version);
+					printf("flags: %s\n", flags );
+					print_ct_constants();
+					printf("%s\n",id);
+					printf("%s compiled on %s with %s\n", __FILE__,
+							compiled, COMPILER );
 
+					exit(0);
+					break;
+			case 'E':
+					log_stderr=1;
+					break;
+			case 'b':
+			case 'l':
+			case 'n':
+			case 'v':
+			case 'r':
+			case 'R':
+			case 'D':
+			case 'T':
+			case 'N':
+			case 'W':
+			case 'w':
+			case 't':
+			case 'u':
+			case 'g':
+			case 'P':
+		        case 'G':
+			case 's':
+					break;
+			case '?':
+					if (isprint(optopt))
+						fprintf(stderr, "Unknown option `-%c´. Use -h for help.\n", optopt);
+					else
+						fprintf(stderr,
+								"Unknown option character `\\x%x´. Use -h for help.\n",
+								optopt);
+					goto error;
+			case ':':
+					fprintf(stderr,
+								"Option `-%c´ requires an argument. Use -h for help.\n",
+								optopt);
+					goto error;
+			default:
+					abort();
+		}
+	}
+
+	/* fill missing arguments with the default values*/
+	if (cfg_file==0) cfg_file=CFG_FILE;
+
+	/* load config file or die */
+	cfg_stream=fopen (cfg_file, "r");
+	if (cfg_stream==0){
+		fprintf(stderr, "ERROR: loading config file(%s): %s\n", cfg_file,
+				strerror(errno));
+		goto error;
+	}
+
+	/* seed the prng */
+	/* try to use /dev/urandom if possible */
+	seed=0;
+	if ((rfd=open("/dev/urandom", O_RDONLY))!=-1){
+try_again:
+		if (read(rfd, (void*)&seed, sizeof(seed))==-1){
+			if (errno==EINTR) goto try_again; /* interrupted by signal */
+			LOG(L_WARN, "WARNING: could not read from /dev/urandom (%d)\n",
+						errno);
+		}
+		DBG("read %u from /dev/urandom\n", seed);
+			close(rfd);
+	}else{
+		LOG(L_WARN, "WARNING: could not open /dev/urandom (%d)\n", errno);
+	}
+	seed+=getpid()+time(0);
+	DBG("seeding PRNG with %u\n", seed);
+	srand(seed);
+	DBG("test random number %u\n", rand());
+
+	/*register builtin  modules*/
+	register_builtin_modules();
+
+	yyin=cfg_stream;
+	debug_save = debug;
+	if ((yyparse()!=0)||(cfg_errors)){
+		fprintf(stderr, "ERROR: bad config file (%d errors)\n", cfg_errors);
+		goto error;
+	}
+	if (debug_flag) debug = debug_save;
+	print_rl();
+
+	/* options with higher priority than cfg file */
+	optind = 1;  /* reset getopt */
+	while((c=getopt(argc,argv,options))!=-1) {
+		switch(c) {
+			case 'f':
+			case 'c':
+			case 'm':
+			case 'd':
+			case 'V':
+			case 'h':
+					break;
+			case 'E':
+					log_stderr=1;	// use in both getopt switches
+					break;
 			case 'b':
 					maxbuffer=strtol(optarg, &tmp, 10);
 					if (tmp &&(*tmp)){
@@ -1284,60 +1397,40 @@ int main(int argc, char** argv)
 					break;
 			case 'R':
 					received_dns|=DO_REV_DNS;
-			case 'd':
-					debug++;
 					break;
 			case 'D':
 					dont_fork=1;
 					break;
-			case 'E':
-					log_stderr=1;
-					break;
 			case 'T':
-#ifdef USE_TCP
+				#ifdef USE_TCP
 					tcp_disable=1;
-#else
+				#else
 					fprintf(stderr,"WARNING: tcp support not compiled in\n");
-#endif
+				#endif
 					break;
 			case 'N':
-#ifdef USE_TCP
+				#ifdef USE_TCP
 					tcp_children_no=strtol(optarg, &tmp, 10);
 					if ((tmp==0) ||(*tmp)){
 						fprintf(stderr, "bad process number: -N %s\n",
 									optarg);
 						goto error;
 					}
-#else
+				#else
 					fprintf(stderr,"WARNING: tcp support not compiled in\n");
-#endif
+				#endif
 					break;
 			case 'W':
-#ifdef USE_TCP
+				#ifdef USE_TCP
 					tcp_poll_method=get_poll_type(optarg);
 					if (tcp_poll_method==POLL_NONE){
 						fprintf(stderr, "bad poll method name: -W %s\ntry "
 										"one of %s.\n", optarg, poll_support);
 						goto error;
 					}
-#else
+				#else
 					fprintf(stderr,"WARNING: tcp support not compiled in\n");
-#endif
-					break;
-			case 'V':
-					printf("version: %s\n", version);
-					printf("flags: %s\n", flags );
-					print_ct_constants();
-					printf("%s\n",id);
-					printf("%s compiled on %s with %s\n", __FILE__,
-							compiled, COMPILER );
-					
-					exit(0);
-					break;
-			case 'h':
-					printf("version: %s\n", version);
-					printf("%s",help_msg);
-					exit(0);
+				#endif
 					break;
 			case 'w':
 					working_dir=optarg;
@@ -1357,66 +1450,16 @@ int main(int argc, char** argv)
 		        case 'G':
 				        pgid_file=optarg;
 				        break;
-			case '?':
-					if (isprint(optopt))
-						fprintf(stderr, "Unknown option `-%c´.\n", optopt);
-					else
-						fprintf(stderr, 
-								"Unknown option character `\\x%x´.\n",
-								optopt);
-					goto error;
-			case ':':
-					fprintf(stderr, 
-								"Option `-%c´ requires an argument.\n",
-								optopt);
-					goto error;
+			case 's':
+				#ifdef STATS
+					stat_file=optarg;
+				#endif
+					break;
 			default:
-					abort();
+					break;
 		}
 	}
-	
-	/* fill missing arguments with the default values*/
-	if (cfg_file==0) cfg_file=CFG_FILE;
 
-	/* load config file or die */
-	cfg_stream=fopen (cfg_file, "r");
-	if (cfg_stream==0){
-		fprintf(stderr, "ERROR: loading config file(%s): %s\n", cfg_file,
-				strerror(errno));
-		goto error;
-	}
-
-	/* seed the prng */
-	/* try to use /dev/urandom if possible */
-	seed=0;
-	if ((rfd=open("/dev/urandom", O_RDONLY))!=-1){
-try_again:
-		if (read(rfd, (void*)&seed, sizeof(seed))==-1){
-			if (errno==EINTR) goto try_again; /* interrupted by signal */
-			LOG(L_WARN, "WARNING: could not read from /dev/urandom (%d)\n",
-						errno);
-		}
-		DBG("read %u from /dev/urandom\n", seed);
-			close(rfd);
-	}else{
-		LOG(L_WARN, "WARNING: could not open /dev/urandom (%d)\n", errno);
-	}
-	seed+=getpid()+time(0);
-	DBG("seeding PRNG with %u\n", seed);
-	srand(seed);
-	DBG("test random number %u\n", rand());
-	
-	/*register builtin  modules*/
-	register_builtin_modules();
-
-	yyin=cfg_stream;
-	if ((yyparse()!=0)||(cfg_errors)){
-		fprintf(stderr, "ERROR: bad config file (%d errors)\n", cfg_errors);
-		goto error;
-	}
-		
-	print_rl();
-	
 	/* init the resolver, before fixing the config */
 	resolv_init();
 	/* fix parameters */
@@ -1424,17 +1467,17 @@ try_again:
 #ifdef USE_TLS
 	if (tls_port_no<=0) tls_port_no=SIPS_PORT;
 #endif
-	
-	
+
+
 	if (children_no<=0) children_no=CHILD_NO;
 #ifdef USE_TCP
 	if (!tcp_disable){
 		if (tcp_children_no<=0) tcp_children_no=children_no;
 	}
 #endif
-	
+
 	if (working_dir==0) working_dir="/";
-	
+
 	/* get uid/gid */
 	if (user){
 		if (user2uid(&uid, &gid, user)<0){
@@ -1459,11 +1502,11 @@ try_again:
 	/*print_aliases();*/
 	print_aliases();
 	printf("\n");
-	
+
 	if (dont_fork){
-		fprintf(stderr, "WARNING: no fork mode %s\n", 
+		fprintf(stderr, "WARNING: no fork mode %s\n",
 				(udp_listen)?(
-				(udp_listen->next)?" and more than one listen address found"
+				(udp_listen->next)?"and more than one listen address found "
 				"(will use only the the first one)":""
 				):"and no udp listen address found" );
 	}
@@ -1474,7 +1517,7 @@ try_again:
 
 
 	/*init shm mallocs
-	 *  this must be here 
+	 *  this must be here
 	 *     -to allow setting shm mem size from the command line
 	 *       => if shm_mem should be settable from the cfg file move
 	 *       everything after
@@ -1489,7 +1532,7 @@ try_again:
 		LOG(L_CRIT, "could not initialize timer, exiting...\n");
 		goto error;
 	}
-	
+
 	if (init_avps()<0) goto error;
 	if (rpc_init_time() < 0) goto error;
 
@@ -1523,22 +1566,22 @@ try_again:
 	if (disable_core_dump) set_core_dump(0, 0);
 	else set_core_dump(1, shm_mem_size+PKG_MEM_POOL_SIZE+4*1024*1024);
 	if (open_files_limit>0){
-		if(increase_open_fds(open_files_limit)<0){ 
+		if(increase_open_fds(open_files_limit)<0){
 			fprintf(stderr, "ERROR: error could not increase file limits\n");
 			goto error;
 		}
 	}
-	     /* Calculate initial process count, mod_init functions called 
+	     /* Calculate initial process count, mod_init functions called
 	      * below can add to it
 	      */
-	process_count = calc_proc_no(); 
+	process_count = calc_proc_no();
 	if (init_modules() != 0) {
 		fprintf(stderr, "ERROR: error while initializing modules\n");
 		goto error;
 	}
 
-	     /* The total number of processes is know now, note that no 
-	      * function being called before this point may rely on the 
+	     /* The total number of processes is know now, note that no
+	      * function being called before this point may rely on the
 	      * number of processes !
 	      */
 	DBG("Expect %d SER processes in your process list\n", process_count);
@@ -1565,7 +1608,7 @@ try_again:
 #ifdef STATS
 	if (init_stats(  dont_fork ? 1 : children_no  )==-1) goto error;
 #endif
-	
+
 	ret=main_loop();
 	/*kill everything*/
 	kill_all_children(SIGTERM);
