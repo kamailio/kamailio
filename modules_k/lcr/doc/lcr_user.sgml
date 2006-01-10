@@ -61,7 +61,9 @@
 	Table lcr contains prefix of user part of Request-URI, From URI,
 	gateway group id, and priority.  From URI can contain special
 	characters % and _ matching any number of any characters and any one
-	character, respectively.  
+	character, respectively, if direct_db parameter is set to 1.
+	If direct_db parameter is set to 0, then From URI is a regular 
+	expression.
 	</para>
 	<para>
 	In addition to gw and lcr tables there is third table gw_grp that is
@@ -525,6 +527,39 @@ modparam("lcr","fr_inv_timer_next",30)
 		<programlisting format="linespecific">
 ...
 modparam("lcr","rpid_avp","rpid")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>direct_db</varname> (integer)</title>
+		<para>
+		Sets the database mode of operating:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>0</emphasis> : regexp are used for 
+				from_uri; no db lookup is performed during load_gws(), the
+				DB content is cached into memory;
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>1</emphasis> : a db lookup is performed 
+				during each load_gws()
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para><emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis></para>
+		<example>
+		<title>Setting <varname>direct_db</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","direct_db",1)
 ...
 </programlisting>
 		</example>

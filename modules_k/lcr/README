@@ -41,6 +41,7 @@ Juha Heinanen
               1.3.18. fr_inv_timer (integer)
               1.3.19. fr_inv_timer_next (integer)
               1.3.20. rpid_avp (string)
+              1.3.21. direct_db (integer)
 
         1.4. Exported Functions
 
@@ -83,14 +84,15 @@ Juha Heinanen
    1-18. Setting fr_inv_timer module parameter
    1-19. Setting fr_inv_timer_next module parameter
    1-20. Setting rpid_avp module parameter
-   1-21. load_gws usage
-   1-22. next_gw usage from a route block
-   1-23. next_gw usage from a failure route block
-   1-24. from_gw usage
-   1-25. to_gw usage
-   1-26. load_contacts usage
-   1-27. next_contacts usage from route block
-   1-28. next_contacts usage from failure route block
+   1-21. Setting direct_db module parameter
+   1-22. load_gws usage
+   1-23. next_gw usage from a route block
+   1-24. next_gw usage from a failure route block
+   1-25. from_gw usage
+   1-26. to_gw usage
+   1-27. load_contacts usage
+   1-28. next_contacts usage from route block
+   1-29. next_contacts usage from failure route block
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -134,7 +136,9 @@ Chapter 1. User's Guide
    Table lcr contains prefix of user part of Request-URI, From
    URI, gateway group id, and priority. From URI can contain
    special characters % and _ matching any number of any
-   characters and any one character, respectively.
+   characters and any one character, respectively, if direct_db
+   parameter is set to 1. If direct_db parameter is set to 0,
+   then From URI is a regular expression.
 
    In addition to gw and lcr tables there is third table gw_grp
    that is used for administrative purposes only to associate
@@ -421,6 +425,23 @@ modparam("lcr","rpid_avp","rpid")
 ...
      _________________________________________________________
 
+1.3.21. direct_db (integer)
+
+   Sets the database mode of operating:
+
+     * 0 : regexp are used for from_uri; no db lookup is
+       performed during load_gws(), the DB content is cached into
+       memory;
+     * 1 : a db lookup is performed during each load_gws()
+
+   Default value is "0". 
+
+   Example 1-21. Setting direct_db module parameter
+...
+modparam("lcr","direct_db",1)
+...
+     _________________________________________________________
+
 1.4. Exported Functions
 
 1.4.1. load_gws()
@@ -432,7 +453,7 @@ modparam("lcr","rpid_avp","rpid")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-21. load_gws usage
+   Example 1-22. load_gws usage
 ...
 if (!load_gws()) {
         sl_send_reply("500", "Server Internal Error - Cannot load gatew
@@ -463,7 +484,7 @@ ays");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-22. next_gw usage from a route block
+   Example 1-23. next_gw usage from a route block
 ...
 if (!next_gw()) {
         sl_send_reply("503", "Service not available - No gateways");
@@ -471,7 +492,7 @@ if (!next_gw()) {
 };
 ...
 
-   Example 1-23. next_gw usage from a failure route block 
+   Example 1-24. next_gw usage from a failure route block 
 ...
 if (!next_gw()) {
         t_reply("503", "Service not available - No more gateways");
@@ -487,7 +508,7 @@ if (!next_gw()) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE.
 
-   Example 1-24. from_gw usage
+   Example 1-25. from_gw usage
 ...
 if (from_gw()) {
         ...
@@ -502,7 +523,7 @@ if (from_gw()) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-25. to_gw usage
+   Example 1-26. to_gw usage
 ...
 if (to_gw()) {
         ...
@@ -523,7 +544,7 @@ if (to_gw()) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-26. load_contacts usage
+   Example 1-27. load_contacts usage
 ...
 if (!load_contacts()) {
         sl_send_reply("500", "Server Internal Error - Cannot load conta
@@ -553,7 +574,7 @@ cts");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-27. next_contacts usage from route block 
+   Example 1-28. next_contacts usage from route block 
 ...
 if (!next_contacts()) {
         sl_send_reply("500", "Server Internal Error");
@@ -563,7 +584,7 @@ if (!next_contacts()) {
 };
 ...
 
-   Example 1-28. next_contacts usage from failure route block 
+   Example 1-29. next_contacts usage from failure route block 
 if (next_contacts()) {
         t_relay();
 };
@@ -635,4 +656,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.
