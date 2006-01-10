@@ -38,6 +38,7 @@
  */
 typedef enum {
 	DB_INT,        /* 32-bit integer */
+	DB_FLOAT,      /* 32-bit integer */
         DB_DOUBLE,     /* double data type */
 	DB_STRING,     /* Zero-terminated string */
 	DB_STR,        /* str structure */
@@ -57,6 +58,7 @@ typedef struct {
 					*/
 	union {
 		int           int_val;    /* integer value */
+		float         float_val;  /* float value */
 		double        double_val; /* double value */
 		time_t        time_val;   /* unix time value */
 		const char*   string_val; /* NULL terminated string */
@@ -74,6 +76,7 @@ typedef struct {
 #define VAL_TYPE(dv)   ((dv)->type)
 #define VAL_NULL(dv)   ((dv)->nul)
 #define VAL_INT(dv)    ((dv)->val.int_val)
+#define VAL_FLOAT(dv)  ((dv)->val.float_val)
 #define VAL_DOUBLE(dv) ((dv)->val.double_val)
 #define VAL_TIME(dv)   ((dv)->val.time_val)
 #define VAL_STRING(dv) ((dv)->val.string_val)
