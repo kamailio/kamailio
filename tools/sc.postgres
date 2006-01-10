@@ -15,28 +15,55 @@
 # - front-end to updating administrative mysql password would
 #   be a convenient thing to have
 #
-# I copy this over the top of the existing serctl program.
-#
 
+#===================================================================
 
+### include resource files, if any
+if [ -f /etc/openser/.openserctlrc ]; then
+	. /etc/openser/.openserctlrc
+fi
+if [ -f /usr/local/etc/openser/.openserctlrc ]; then
+	. /usr/local/etc/openser/.openserctlrc
+fi
+if [ -f ~/.openserctlrc ]; then
+	. ~/.openserctlrc
+fi
 
-# configuration for starting/stopping ser
-PID_FILE=/var/run/ser.pid
-SYSLOG=1 # 0=output to console, 1=output to syslog
-STARTOPTIONS= # for example -dddd
+### version fo this script
+VERSION='1.1 - $Revision$'
 
-# ser's FIFO server
+##### ------------------------------------------------ #####
+### configuration for starting/stopping openser
+if [ -z "$PID_FILE" ] ; then
+	PID_FILE=/var/run/openser.pid
+fi
+if [ -z "$SYSLOG" ] ; then
+	SYSLOG=1 # 0=output to console, 1=output to syslog
+fi
+if [ -z "$STARTOPTIONS" ] ; then
+	STARTOPTIONS= # for example -dddd
+fi
+if [ -z "$DIR" ] ; then
+	DIR=`dirname $0`
+fi
+if [ -z "$SERBIN" ] ; then
+	SERBIN=$DIR/openser
+fi
+
+##### ----------------------------------------------- #####
+### openser's FIFO server
 if [ -z "$SER_FIFO" ]; then
-	SER_FIFO=/tmp/ser_fifo
+	SER_FIFO=/tmp/openser_fifo
 fi
 # period in which stats are reprinted
 if [ -z "$WATCH_PERIOD" ] ; then
 	WATCH_PERIOD=2
 fi
 
-# SQL config
+##### ----------------------------------------------- #####
+### SQL config
 if [ -z "$SQL_DB" ] ; then
-	SQL_DB=ser
+	SQL_DB=openser
 fi
 if [ -z "$SQL_HOST" ] ; then
 	SQL_HOST=localhost
@@ -45,44 +72,67 @@ if [ -z "$SQL_PORT" ] ; then
 	SQL_PORT=5432
 fi
 if [ -z "$SQL_USER" ] ; then
-	SQL_USER=ser
+	SQL_USER=openser
 fi
 
 # the read-only user for whom password may be stored here
 if [ -z "$RO_USER" ] ; then
 	RO_USER=serro
 fi
+if [ -z "$RO_PW" ] ; then
+	RO_PW=openserro
+fi
+
+##### ----------------------------------------------- #####
+### binaries
 
 # binaries
-GENHA1='openser_gen_ha1'
-PGSQL='psql'
-SER='sr'
-LAST_LINE='tail -1'
+if [ -z "$GENHA1" ] ; then
+	GENHA1='openser_gen_ha1'
+fi
+if [ -z "$PGSQL" ] ; then
+	PGSQL='psql'
+fi
+if [ -z "$SER" ] ; then
+	SER='openser'
+fi
+if [ -z "$LAST_LINE" ] ; then
+	LAST_LINE='tail -1'
+fi
 
+##### ----------------------------------------------- #####
 # ACL name verification
-VERIFY_ACL=1
-ACL_GROUPS="local ld int voicemail free-pstn"
+if [ -z "$VERIFY_ACL" ] ; then
+	VERIFY_ACL=1
+fi
+if [ -z "$ACL_GROUPS" ] ; then
+	ACL_GROUPS="local ld int voicemail free-pstn prepaid"
+fi
 
-# expiration time for alias table
-FOREVER='2020-05-28 21:32:15'
-FOREVER_REL=1073741823
+# fifo dbg
+if [ -z "$FIFO_DBG" ] ; then
+	FIFO_DBG=0
+fi
 
-ALL_METHODS=4294967295
-
-VERSION='$Revision$'
+##### ----------------------------------------------- #####
 #### SQL names
 
-# Usr Loc Table
-USRLOC=location
+# UsrLoc Table
+if [ -z "$UL_TABLE" ] ; then
+	UL_TABLE=location
+fi
 USER_COLUMN=username
 CALLID_COLUMN=callid
 
 # subscriber table
-TABLE=subscriber
+if [ -z "$SUB_TABLE" ] ; then
+	SUB_TABLE=subscriber
+fi
 REALM_COLUMN=domain
 HA1_COLUMN=HA1
 HA1B_COLUMN=HA1B
 PASSWORD_COLUMN=password
+RPID_COLUMN=rpid
 SUBSCRIBER_COLUMN='username'
 EMAIL_COLUMN=email_address
 SUB_CREATED_COLUMN=datetime_created
@@ -90,14 +140,19 @@ SUB_MODIFIED_COLUMN=datetime_modified
 PHP_LIB_COLUMN=phplib_id
 
 # acl table
-ACL_TABLE=grp
-ACL_USER_COLUMN=user
+if [ -z "$ACL_TABLE" ] ; then
+	ACL_TABLE=grp
+fi
+ACL_USER_COLUMN=username
+ACL_DOMAIN_COLUMN=domain
 ACL_GROUP_COLUMN=grp
 ACL_MODIFIED_COLUMN=last_modified
 
 # aliases table
-A_TABLE=aliases
-A_USER_COLUMN=user
+if [ -z "$ALS_TABLE" ] ; then
+	ALS_TABLE=aliases
+fi
+A_USER_COLUMN=username
 A_CONTACT_COLUMN=contact
 A_EXPIRES_COLUMN=expires
 A_Q_COLUMN=q
@@ -105,7 +160,10 @@ A_CALLID_COLUMN=callid
 A_CSEQ_COLUMN=cseq
 A_LAST_MODIFIED_COLUMN=last_modified
 
-FIFO_DBG=0
+##### ----------------------------------------------- #####
+#### Defined values
+ALL_METHODS=4294967295
+
 #===================================================================
 
 
