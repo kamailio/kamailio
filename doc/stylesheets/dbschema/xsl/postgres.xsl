@@ -7,6 +7,24 @@
 
     <xsl:import href="sql.xsl"/>
 
+    <xsl:template match="database">
+	<xsl:variable name="database.name">
+	    <xsl:call-template name="get-name"/>
+	</xsl:variable>
+	<!-- Create all tables -->
+	<xsl:apply-templates select="user"/>
+	<xsl:apply-templates select="table"/>
+	<xsl:text>&#x0A;</xsl:text>
+	<xsl:apply-templates select="user" mode="grant"/>
+    </xsl:template>
+
+    <xsl:template match="database" mode="drop">
+	<xsl:variable name="database.name">
+	    <xsl:call-template name="get-name"/>
+	</xsl:variable>
+	<xsl:apply-templates mode="drop"/>
+    </xsl:template>
+
     <xsl:template name="column.type">
 	<xsl:variable name="type">
 	    <xsl:call-template name="get-type"/>
@@ -140,6 +158,87 @@
 	<xsl:if test="position()=last()">
 	    <xsl:text>&#x0A;</xsl:text>
 	</xsl:if>
+    </xsl:template>
+
+    <xsl:template name="get-userid">
+	<xsl:param name="select" select="."/>
+	<xsl:choose>
+	    <!-- override test -->
+	    <xsl:when test="count($select/db:username)='1'">
+		<xsl:value-of select="normalize-space($select/db:username)"/>
+	    </xsl:when>
+	    <!-- No override, use the standard name -->
+	    <xsl:otherwise>
+		<xsl:value-of select="normalize-space($select/username)"/>
+	    </xsl:otherwise>
+	</xsl:choose>
+    </xsl:template>
+
+    <xsl:template name="get-privileges">
+	<xsl:param name="select" select="."/>
+	<xsl:choose>
+	    <!-- override test -->
+	    <xsl:when test="count($select/db:privileges)='1'">
+		<xsl:value-of select="normalize-space($select/db:privileges)"/>
+	    </xsl:when>
+	    <!-- No override, use the standard name -->
+	    <xsl:otherwise>
+		<xsl:value-of select="normalize-space($select/privileges)"/>
+	    </xsl:otherwise>
+	</xsl:choose>
+    </xsl:template>
+
+    <!-- User management -->
+
+    <xsl:template match="user">
+	<xsl:variable name="database.name">
+	    <xsl:call-template name="get-name">
+		<xsl:with-param name="select" select="parent::database"/>
+	    </xsl:call-template>
+	</xsl:variable>
+	
+	<xsl:text>CREATE USER </xsl:text>
+	<xsl:call-template name="get-userid"/>
+	<xsl:choose>
+	    <xsl:when test="count(db:password)='1'">
+		<xsl:text> PASSWORD '</xsl:text>
+		<xsl:value-of select="normalize-space(db:password)"/>
+		<xsl:text>'</xsl:text>
+	    </xsl:when>
+	    <xsl:when test="count(password)='1'">
+		<xsl:text> PASSWORD '</xsl:text>
+		<xsl:value-of select="normalize-space(password)"/>
+		<xsl:text>'</xsl:text>
+	    </xsl:when>
+	</xsl:choose>
+	<xsl:text>;&#x0A;</xsl:text>
+    </xsl:template>
+
+    <xsl:template match="user" mode="drop">
+	<xsl:variable name="database.name">
+	    <xsl:call-template name="get-name">
+		<xsl:with-param name="select" select="parent::database"/>
+	    </xsl:call-template>
+	</xsl:variable>
+	
+	<xsl:text>DROP USER </xsl:text>
+	<xsl:call-template name="get-userid"/>
+	<xsl:text>;&#x0A;</xsl:text>
+    </xsl:template>
+
+    <xsl:template match="user" mode="grant">
+	<xsl:text>GRANT </xsl:text>
+	<xsl:call-template name="get-privileges"/>
+	<xsl:text> ON </xsl:text>
+	<xsl:for-each select="parent::database/table">
+	    <xsl:call-template name="get-name"/>
+	    <xsl:if test="not(position()=last())">
+		<xsl:text>,</xsl:text>
+	    </xsl:if>
+	</xsl:for-each>
+	<xsl:text> TO </xsl:text>
+	<xsl:call-template name="get-userid"/>
+	<xsl:text>;&#x0A;</xsl:text>
     </xsl:template>
 
 </xsl:stylesheet>
