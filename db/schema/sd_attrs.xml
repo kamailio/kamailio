@@ -44,7 +44,7 @@
 
     <index>
 	<unique/>
-	<name>userattrs_idx</name>
+	<name>sd_idx</name>
 	<colref linkend="sdattrs.id"/>
 	<colref linkend="sdattrs.name"/>
 	<colref linkend="sdattrs.value"/>

@@ -59,8 +59,8 @@ CREATE TABLE acc (
     response_timestamp DATETIME NOT NULL,
     flags INT UNSIGNED NOT NULL DEFAULT '0',
     attrs VARCHAR(255),
-    UNIQUE KEY id_key (id),
-    KEY cid_key (sip_callid)
+    UNIQUE KEY acc_id_key (id),
+    KEY acc_cid_key (sip_callid)
 );
 
 CREATE TABLE missed_calls (
@@ -89,8 +89,8 @@ CREATE TABLE missed_calls (
     response_timestamp DATETIME NOT NULL,
     flags INT UNSIGNED NOT NULL DEFAULT '0',
     attrs VARCHAR(255),
-    UNIQUE KEY id_key (id),
-    KEY cid_key (sip_callid)
+    UNIQUE KEY mc_id_key (id),
+    KEY mc_cid_key (sip_callid)
 );
 
 CREATE TABLE credentials (
@@ -101,7 +101,7 @@ CREATE TABLE credentials (
     ha1 VARCHAR(32) NOT NULL,
     ha1b VARCHAR(32) NOT NULL DEFAULT '',
     uid VARCHAR(64) NOT NULL,
-    KEY (auth_username, realm),
+    KEY cred_idx (auth_username, realm),
     KEY uid (uid)
 );
 
@@ -312,7 +312,7 @@ CREATE TABLE sd_attrs (
     value VARCHAR(255),
     type INT NOT NULL DEFAULT '0',
     flags INT UNSIGNED NOT NULL DEFAULT '0',
-    UNIQUE KEY userattrs_idx (id, name, value)
+    UNIQUE KEY sd_idx (id, name, value)
 );
 
 CREATE TABLE presentity (

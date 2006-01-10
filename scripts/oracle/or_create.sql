@@ -56,7 +56,7 @@ CREATE TABLE acc (
     response_timestamp datetime NOT NULL,
     flags int NOT NULL DEFAULT '0',
     attrs string(255),
-    id_key UNIQUE (id, ),
+    acc_id_key UNIQUE (id, ),
 
 );
 
@@ -86,7 +86,7 @@ CREATE TABLE missed_calls (
     response_timestamp datetime NOT NULL,
     flags int NOT NULL DEFAULT '0',
     attrs string(255),
-    id_key UNIQUE (id, ),
+    mc_id_key UNIQUE (id, ),
 
 );
 
@@ -299,7 +299,7 @@ CREATE TABLE sd_attrs (
     value string(255),
     type int NOT NULL DEFAULT '0',
     flags int NOT NULL DEFAULT '0',
-    userattrs_idx UNIQUE (id, name, value, )
+    sd_idx UNIQUE (id, name, value, )
 );
 
 CREATE TABLE presentity (

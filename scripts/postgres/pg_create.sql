@@ -1,3 +1,5 @@
+CREATE USER ser PASSWORD 'heslo';
+CREATE USER serro PASSWORD '47serro11';
 CREATE TABLE version (
     table_name VARCHAR(32) NOT NULL,
     table_version INTEGER NOT NULL DEFAULT '0'
@@ -56,10 +58,10 @@ CREATE TABLE acc (
     response_timestamp TIMESTAMP NOT NULL,
     flags INTEGER NOT NULL DEFAULT '0',
     attrs VARCHAR(255),
-    CONSTRAINT id_key UNIQUE (id)
+    CONSTRAINT acc_id_key UNIQUE (id)
 );
 
-CREATE INDEX cid_key ON acc (sip_callid);
+CREATE INDEX acc_cid_key ON acc (sip_callid);
 
 CREATE TABLE missed_calls (
     id SERIAL NOT NULL,
@@ -87,10 +89,10 @@ CREATE TABLE missed_calls (
     response_timestamp TIMESTAMP NOT NULL,
     flags INTEGER NOT NULL DEFAULT '0',
     attrs VARCHAR(255),
-    CONSTRAINT id_key UNIQUE (id)
+    CONSTRAINT mc_id_key UNIQUE (id)
 );
 
-CREATE INDEX cid_key ON missed_calls (sip_callid);
+CREATE INDEX mc_cid_key ON missed_calls (sip_callid);
 
 CREATE TABLE credentials (
     auth_username VARCHAR(64) NOT NULL,
@@ -102,7 +104,7 @@ CREATE TABLE credentials (
     uid VARCHAR(64) NOT NULL
 );
 
-CREATE INDEX  ON credentials (auth_username, realm);
+CREATE INDEX cred_idx ON credentials (auth_username, realm);
 CREATE INDEX uid ON credentials (uid);
 
 CREATE TABLE attr_types (
@@ -322,7 +324,7 @@ CREATE TABLE sd_attrs (
     value VARCHAR(255),
     type INTEGER NOT NULL DEFAULT '0',
     flags INTEGER NOT NULL DEFAULT '0',
-    CONSTRAINT userattrs_idx UNIQUE (id, name, value)
+    CONSTRAINT sd_idx UNIQUE (id, name, value)
 );
 
 CREATE TABLE presentity (
@@ -546,3 +548,6 @@ CREATE TABLE customers (
     CONSTRAINT cu_idx UNIQUE (cid)
 );
 
+
+GRANT ALL ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,server_monitoring,server_monitoring_agg,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_contact,watcherinfo,tuple_notes,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,customers TO ser;
+GRANT SELECT ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,server_monitoring,server_monitoring_agg,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_contact,watcherinfo,tuple_notes,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,customers TO serro;

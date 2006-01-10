@@ -442,13 +442,13 @@
     </column>
 
     <index>
-	<name>id_key</name>
+	<name>mc_id_key</name>
 	<unique/>
 	<colref linkend="mc.id"/>
     </index>
 
     <index role="serweb">
-	<name>cid_key</name>
+	<name>mc_cid_key</name>
 	<colref linkend="mc.sip_callid"/>
     </index>
 </table>

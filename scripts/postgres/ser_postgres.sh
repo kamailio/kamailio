@@ -2,7 +2,7 @@
 #
 # $Id$
 #
-# Script for adding and dropping ser MySQL tables
+# Script for adding and dropping SER Postgres tables
 #
 
 #################################################################
