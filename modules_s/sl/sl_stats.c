@@ -36,7 +36,7 @@
 #include <stdio.h>
 
 
-static struct sl_stats *sl_stats;
+static struct sl_stats** sl_stats;
 
 
 static void add_sl_stats( struct sl_stats *t, struct sl_stats *i)
@@ -62,9 +62,9 @@ static void rpc_stats(rpc_t* rpc, void* c)
 
 	memset(&total, 0, sizeof(struct sl_stats));
 	if (dont_fork) {
-		add_sl_stats(&total, &sl_stats[0]);
-	} else for (p=0; p<process_count; p++)
-			add_sl_stats(&total, &sl_stats[p]);
+		add_sl_stats(&total, &(*sl_stats)[0]);
+	} else for (p=0; p < process_count; p++)
+			add_sl_stats(&total, &(*sl_stats)[p]);
 
 	if (rpc->add(c, "{", &st) < 0) return;
 	
@@ -98,35 +98,44 @@ static void rpc_stats(rpc_t* rpc, void* c)
 }
 
 
-void sl_stats_destroy()
+void sl_stats_destroy(void)
 {
-	if (sl_stats) shm_free(sl_stats);
+	if (!sl_stats) return;
+	if (*sl_stats) shm_free(*sl_stats);
+	shm_free(sl_stats);
 }
 
-int init_sl_stats( void ) 
+int init_sl_stats(void) 
+{
+	sl_stats = (struct sl_stats**)shm_malloc(sizeof(struct sl_stats*));
+	if (!sl_stats) {
+		ERR("Unable to allocated shared memory for sl statistics\n");
+		return -1;
+	}
+	*sl_stats = 0;
+	return 0;
+}
+
+
+int init_sl_stats_child(void)
 {
 	int len;
 
-	/* hack: we better allocate memory like if we had one
-	   more process to be safe in case some other module
-	   will crank the timer process later; otherwise we
-	   would allocate less than the stats collector
-	   iterates through using process_count()
-	*/
-
-	len=sizeof(struct sl_stats)*(process_count+1);
-	sl_stats=shm_malloc(len);
-	if (sl_stats==0) {
-		LOG(L_ERR, "ERROR: init_sl_stats: no shmem\n");
+	len = sizeof(struct sl_stats) * process_count;
+	*sl_stats = shm_malloc(len);
+	if (*sl_stats == 0) {
+		ERR("No shmem\n");
+		shm_free(sl_stats);
 		return -1;
 	}
-	memset(sl_stats, 0, len);
-	return 1;
+	memset(*sl_stats, 0, len);
+	return 0;
 }
+
 
 void update_sl_failures( void )
 {
-	sl_stats[ process_no ].failures++;
+	(*sl_stats)[process_no].failures++;
 }
 
 void update_sl_stats( int code ) 
@@ -134,7 +143,7 @@ void update_sl_stats( int code )
 
 	struct sl_stats *my_stats;
 
-	my_stats=&sl_stats[ process_no ];
+	my_stats=&(*sl_stats)[process_no];
 
 	if (code >=700 || code <200 ) {
 		my_stats->err[RT_xxx]++;
