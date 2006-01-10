@@ -41,7 +41,7 @@ Juha Heinanen
               1.3.18. fr_inv_timer (integer)
               1.3.19. fr_inv_timer_next (integer)
               1.3.20. rpid_avp (string)
-              1.3.21. direct_db (integer)
+              1.3.21. db_mod (integer)
 
         1.4. Exported Functions
 
@@ -84,7 +84,7 @@ Juha Heinanen
    1-18. Setting fr_inv_timer module parameter
    1-19. Setting fr_inv_timer_next module parameter
    1-20. Setting rpid_avp module parameter
-   1-21. Setting direct_db module parameter
+   1-21. Setting db_mod module parameter
    1-22. load_gws usage
    1-23. next_gw usage from a route block
    1-24. next_gw usage from a failure route block
@@ -136,9 +136,9 @@ Chapter 1. User's Guide
    Table lcr contains prefix of user part of Request-URI, From
    URI, gateway group id, and priority. From URI can contain
    special characters % and _ matching any number of any
-   characters and any one character, respectively, if direct_db
-   parameter is set to 1. If direct_db parameter is set to 0,
-   then From URI is a regular expression.
+   characters and any one character, respectively, if db_mod
+   parameter is set to 0. If db_mod parameter is set to 1, then
+   From URI is a regular expression.
 
    In addition to gw and lcr tables there is third table gw_grp
    that is used for administrative purposes only to associate
@@ -425,20 +425,21 @@ modparam("lcr","rpid_avp","rpid")
 ...
      _________________________________________________________
 
-1.3.21. direct_db (integer)
+1.3.21. db_mod (integer)
 
    Sets the database mode of operating:
 
-     * 0 : regexp are used for from_uri; no db lookup is
+     * 0 : no-caching - a db lookup is performed during each
+       load_gws()
+     * 1 : regexp are used for from_uri; no db lookup is
        performed during load_gws(), the DB content is cached into
        memory;
-     * 1 : a db lookup is performed during each load_gws()
 
-   Default value is "0". 
+   Default value is "1". 
 
-   Example 1-21. Setting direct_db module parameter
+   Example 1-21. Setting db_mod module parameter
 ...
-modparam("lcr","direct_db",1)
+modparam("lcr","db_mod",0)
 ...
      _________________________________________________________
 

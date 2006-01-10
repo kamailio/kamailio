@@ -115,7 +115,7 @@ int reload_gws ( void );
 #define DEF_FR_INV_TIMER 90
 #define DEF_FR_INV_TIMER_NEXT 30
 #define DEF_RPID_AVP "rpid"
-#define DEF_DIRECT_DB 0
+#define DEF_DB_MODE 1
 
 /*
  * Type definitions
@@ -186,7 +186,7 @@ str inv_timer_avp    = str_init(DEF_FR_INV_TIMER_AVP);
 int inv_timer        = DEF_FR_INV_TIMER;
 int inv_timer_next   = DEF_FR_INV_TIMER_NEXT;
 str rpid_avp         = str_init(DEF_RPID_AVP);
-int direct_db        = DEF_DIRECT_DB;
+int db_mode          = DEF_DB_MODE;
 
 /*
  * Other module types and variables
@@ -266,7 +266,7 @@ static param_export_t params[] = {
 	{"fr_inv_timer",             INT_PARAM, &inv_timer      },
 	{"fr_inv_timer_next",        INT_PARAM, &inv_timer_next },
 	{"rpid_avp",                 STR_PARAM, &rpid_avp.s     },
-	{"direct_db",                INT_PARAM, &direct_db      },
+	{"db_mode",                  INT_PARAM, &db_mode        },
 	{0, 0, 0}
 };
 
@@ -1034,7 +1034,7 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 	}
     }
 
-	if (direct_db != 0) {
+	if (db_mode == 0) {
 		q_len = snprintf(query, MAX_QUERY_SIZE, "SELECT %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s, %.*s.%.*s FROM %.*s, %.*s WHERE '%.*s' LIKE %.*s.%.*s AND '%.*s' LIKE CONCAT(%.*s.%.*s, '%%') AND %.*s.%.*s = %.*s.%.*s ORDER BY CHAR_LENGTH(%.*s.%.*s), %.*s.%.*s DESC, RAND()",
 			gw_table.len, gw_table.s, ip_addr_col.len, ip_addr_col.s,
 			gw_table.len, gw_table.s, port_col.len, port_col.s,
