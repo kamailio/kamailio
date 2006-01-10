@@ -75,6 +75,21 @@ static inline int str2double(const char* _s, double* _v)
 }
 
 
+/*
+ * Convert a string to double
+ */
+static inline int str2float(const char* _s, float* _v)
+{
+	if ((!_s) || (!_v)) {
+		LOG(L_ERR, "str2float: Invalid parameter value\n");
+		return -1;
+	}
+
+	*_v = (float)atof(_s);
+	return 0;
+}
+
+
 /* 
  * Convert a string to time_t
  */
@@ -213,6 +228,16 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 		}
 		break;
 
+	case DB_FLOAT:
+		if (str2float(_s, &VAL_FLOAT(_v)) < 0) {
+			LOG(L_ERR, "str2val: Error while converting float value from string\n");
+			return -4;
+		} else {
+			VAL_TYPE(_v) = DB_FLOAT;
+			return 0;
+		}
+		break;
+
 	case DB_STRING:
 		VAL_STRING(_v) = _s;
 		VAL_TYPE(_v) = DB_STRING;
@@ -287,6 +312,15 @@ int val2str(MYSQL* _c, db_val_t* _v, char* _s, int* _len)
 
 	case DB_DOUBLE:
 		if (double2str(VAL_DOUBLE(_v), _s, _len) < 0) {
+			LOG(L_ERR, "val2str: Error while converting string to double\n");
+			return -4;
+		} else {
+			return 0;
+		}
+		break;
+
+	case DB_FLOAT:
+		if (double2str(VAL_FLOAT(_v), _s, _len) < 0) {
 			LOG(L_ERR, "val2str: Error while converting string to double\n");
 			return -4;
 		} else {

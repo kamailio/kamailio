@@ -108,7 +108,7 @@ static struct pg_params* new_pg_params(int n)
 }
 
 
-static inline int params_add(struct pg_params* p, db_con_t* con, db_val_t* vals, int n)
+static inline int params_add(struct pg_params* p, db_con_t* con, db_val_t* vals, int n, int skip_null)
 {
 	int i, i1, i2;
 	db_val_t* val;
@@ -126,10 +126,26 @@ static inline int params_add(struct pg_params* p, db_con_t* con, db_val_t* vals,
 	for(i = 0; i < n; i++) {
 		val = &vals[i];
 		p->formats[p->cur] = 1;
-		if (val->nul) continue;
+		if (val->nul) {
+			     /* When assembling parameters for where clause we skip parameters
+			      * that have null values because they are expressed as is null.
+			      * At other places we include them.
+			      */
+			if (!skip_null) p->cur++;
+			continue;
+		}
 		switch(val->type) {
 		case DB_INT:      
 			val->val.int_val = ntohl(val->val.int_val);
+			p->data[p->cur] = (const char*)&val->val.int_val;
+			p->len[p->cur] = 4;
+			break;
+
+		case DB_FLOAT:
+			     /* Change the byte order of 4-byte value to network
+			      * byte order if necessary
+			      */
+			val->val.int_val = htonl(val->val.int_val);
 			p->data[p->cur] = (const char*)&val->val.int_val;
 			p->len[p->cur] = 4;
 			break;
@@ -832,7 +848,7 @@ int pg_query(db_con_t* con, db_key_t* keys, db_op_t* ops,
 
 	params = new_pg_params(n);
 	if (!params) goto err;
-	if (params_add(params, con, vals, n) < 0) goto err;
+	if (params_add(params, con, vals, n, 1) < 0) goto err;
 
 	do {
 		ret = submit_query(res, con, select, params);
@@ -914,7 +930,7 @@ int pg_insert(db_con_t* con, db_key_t* keys, db_val_t* vals, int n)
 
 	params = new_pg_params(n);
 	if (!params) goto err;
-	if (params_add(params, con, vals, n) < 0) goto err;
+	if (params_add(params, con, vals, n, 0) < 0) goto err;
 
 	do {
 		ret = submit_query(0, con, insert, params);
@@ -963,7 +979,7 @@ int pg_delete(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals, int n
 
 	params = new_pg_params(n);
 	if (!params) goto err;
-	if (params_add(params, con, vals, n) < 0) goto err;
+	if (params_add(params, con, vals, n, 1) < 0) goto err;
 
 	do {
 		ret = submit_query(0, con, delete, params);
@@ -1016,8 +1032,8 @@ int pg_update(db_con_t* con, db_key_t* keys, db_op_t* ops, db_val_t* vals,
 
 	params = new_pg_params(n + un);
 	if (!params) goto err;
-	if (params_add(params, con, uvals, un) < 0) goto err;
-	if (params_add(params, con, vals, n) < 0) goto err;
+	if (params_add(params, con, uvals, un, 0) < 0) goto err;
+	if (params_add(params, con, vals, n, 1) < 0) goto err;
 
 	do {
 		ret = submit_query(0, con, update, params);

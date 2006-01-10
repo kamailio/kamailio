@@ -97,6 +97,9 @@ static inline int get_columns(db_res_t* res)
 			break;
 
 		case FLOAT4OID:  /* single-precision floating point number, 4-byte storage */
+			res->col.types[i] = DB_FLOAT;
+			break;
+
 		case FLOAT8OID:  /* double-precision floating point number, 8-byte storage */
 			res->col.types[i] = DB_DOUBLE;
 			break;
@@ -195,6 +198,7 @@ static inline int convert_cell(db_con_t* con, db_res_t* res, int row, int col)
 		val->nul = 1;
 		switch(res->col.types[col]) {
 		case DB_INT:      val->val.int_val = 0;              break;
+		case DB_FLOAT:    val->val.float_val = 0;            break;
 		case DB_DOUBLE:   val->val.double_val = 0;           break;
 		case DB_STRING:   val->val.string_val = dummy_str.s; break;
 		case DB_STR:      val->val.str_val = dummy_str;      break;

@@ -159,6 +159,11 @@ dbt_table_p dbt_load_file(str *tbn, str *dbn)
 						colp->type = DB_INT;
 						DBG("DBT: column[%d] is INT!\n", ccol+1);
 					break;
+				        case 'f':
+				        case 'F':
+						colp->type = DB_FLOAT;
+						DBG("DBT: column[%d] is FLOAT!\n", ccol+1);
+					break;
 					case 'd':
 					case 'D':
 						colp->type = DB_DOUBLE;
@@ -295,6 +300,53 @@ dbt_table_p dbt_load_file(str *tbn, str *dbn)
 									dtval.val.int_val:max_auto;
 					break;
 					
+					case DB_FLOAT:
+						//DBG("DBT:dbt_load_file: FLOAT value!\n");
+						dtval.val.float_val = 0.0;
+						dtval.type = DB_FLOAT;
+
+						if(c==DBT_DELIM || 
+								(ccol==dtp->nrcols-1
+								 && (c==DBT_DELIM_R || c==EOF)))
+							dtval.nul = 1;
+						else
+						{
+							dtval.nul = 0;
+							sign = 1;
+							if(c=='-')
+							{
+								sign = -1;
+								c = fgetc(fin);
+							}
+							if(c<'0' || c>'9')
+								goto clean;
+							while(c>='0' && c<='9')
+							{
+								dtval.val.float_val = dtval.val.float_val*10
+										+ c - '0';
+								c = fgetc(fin);
+							}
+							if(c=='.')
+							{
+								c = fgetc(fin);
+								bp = 1;
+								while(c>='0' && c<='9')
+								{
+									bp *= 10;
+									dtval.val.float_val+=((float)(c-'0'))/bp;
+									c = fgetc(fin);
+								}
+							}
+							dtval.val.float_val *= sign;
+							//DBG("DBT:dbt_load_file: data[%d,%d]=%10.2f\n",
+							//	crow, ccol, dtval.val.float_val);
+						}
+						if(c!=DBT_DELIM && c!=DBT_DELIM_R && c!=EOF)
+							goto clean;
+						if(dbt_row_set_val(rowp,&dtval,DB_FLOAT,ccol))
+							goto clean;
+					break;
+
 					case DB_DOUBLE:
 						//DBG("DBT:dbt_load_file: DOUBLE value!\n");
 						dtval.val.double_val = 0.0;
@@ -466,6 +518,9 @@ int dbt_print_table(dbt_table_p _dtp, str *_dbn)
 			case DB_INT:
 				fprintf(fout, "%.*s(int", colp->name.len, colp->name.s);
 			break;
+			case DB_FLOAT:
+				fprintf(fout, "%.*s(float", colp->name.len, colp->name.s);
+			break;
 			case DB_DOUBLE:
 				fprintf(fout, "%.*s(double", colp->name.len, colp->name.s);
 			break;
@@ -500,6 +555,11 @@ int dbt_print_table(dbt_table_p _dtp, str *_dbn)
 					if(!rowp->fields[ccol].nul)
 						fprintf(fout,"%d",
 								rowp->fields[ccol].val.int_val);
+				break;
+				case DB_FLOAT:
+					if(!rowp->fields[ccol].nul)
+						fprintf(fout, "%.2f",
+								rowp->fields[ccol].val.float_val);
 				break;
 				case DB_DOUBLE:
 					if(!rowp->fields[ccol].nul)

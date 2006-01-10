@@ -267,6 +267,10 @@ int dbt_result_extract_fields(dbt_table_p _dtp, dbt_row_p _drp,
 				_rp->fields[i].type = DB_INT;
 				_rp->fields[i].val.int_val = _drp->fields[n].val.int_val;
 			break;
+			case DB_FLOAT:
+				_rp->fields[i].type = DB_FLOAT;
+				_rp->fields[i].val.float_val=_drp->fields[n].val.float_val;
+			break;
 			case DB_DOUBLE:
 				_rp->fields[i].type = DB_DOUBLE;
 				_rp->fields[i].val.double_val=_drp->fields[n].val.double_val;
@@ -340,6 +344,13 @@ int dbt_result_print(dbt_result_p _dres)
 					fprintf(fout, ",null");
 				fprintf(fout, ") ");
 			break;
+			case DB_FLOAT:
+				fprintf(fout, "%.*s(float", _dres->colv[i].name.len,
+							_dres->colv[i].name.s);
+				if(_dres->colv[i].flag & DBT_FLAG_NULL)
+					fprintf(fout, ",null");
+				fprintf(fout, ") ");
+			break;
 			case DB_DOUBLE:
 				fprintf(fout, "%.*s(double", _dres->colv[i].name.len,
 							_dres->colv[i].name.s);
@@ -372,6 +383,13 @@ int dbt_result_print(dbt_result_p _dres)
 					else
 						fprintf(fout, "%d ",
 								rowp->fields[i].val.int_val);
+				break;
+				case DB_FLOAT:
+					if(rowp->fields[i].nul)
+						fprintf(fout, "N ");
+					else
+						fprintf(fout, "%.2f ",
+								rowp->fields[i].val.float_val);
 				break;
 				case DB_DOUBLE:
 					if(rowp->fields[i].nul)
@@ -449,6 +467,9 @@ int dbt_cmp_val(dbt_val_p _vp, db_val_t* _v)
 		case DB_INT:
 			return (_vp->val.int_val<_v->val.int_val)?-1:
 					(_vp->val.int_val>_v->val.int_val)?1:0;
+		case DB_FLOAT:
+			return (_vp->val.float_val<_v->val.float_val)?-1:
+					(_vp->val.float_val>_v->val.float_val)?1:0;
 		case DB_DOUBLE:
 			return (_vp->val.double_val<_v->val.double_val)?-1:
 					(_vp->val.double_val>_v->val.double_val)?1:0;
@@ -533,6 +554,8 @@ int dbt_is_neq_type(db_type_t _t0, db_type_t _t1)
 				return 0;
 			if(_t0==DB_BITMAP)
 				return 0;
+		case DB_FLOAT:
+			break;
 		case DB_DOUBLE:
 			break;
 		case DB_STRING:

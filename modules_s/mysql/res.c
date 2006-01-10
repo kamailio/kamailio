@@ -83,6 +83,9 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 			break;
 
 		case FIELD_TYPE_FLOAT:
+			RES_TYPES(_r)[i] = DB_FLOAT;
+			break;
+
 		case FIELD_TYPE_DOUBLE:
 			RES_TYPES(_r)[i] = DB_DOUBLE;
 			break;

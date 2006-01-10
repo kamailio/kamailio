@@ -98,6 +98,8 @@ static int pg_test(void)
 	db_res_t* res;
 	db_con_t* con;
 	struct tm* tt;
+	db_key_t keys[1];
+	db_val_t vals[1];
 
 	con = pg_init("postgres://ser:heslo@localhost/ser");
 	if (!con) {
@@ -107,7 +109,12 @@ static int pg_test(void)
 	INFO("Successfuly connected\n");
 	pg_use_table(con, "test");
 
-	pg_query(con, 0, 0, 0, 0, 0, 0, 0, &res);
+	keys[0] = "int4_col";
+	vals[0].type = DB_INT;
+	vals[0].nul = 1;
+	vals[0].val.int_val = 1;
+
+	pg_query(con, keys, 0, vals, 0, 1, 0, 0, &res);
 	if (!res) {
 		ERR("No result received\n");
 		return -1;
@@ -126,6 +133,10 @@ static int pg_test(void)
 			switch(res->col.types[col]) {
 			case DB_INT:
 				INFO("INT(%d)", res->rows[row].values[col].val.int_val);
+				break;
+
+			case DB_FLOAT:
+				INFO("FLOAT(%f)", res->rows[row].values[col].val.float_val);
 				break;
 
 			case DB_DOUBLE:
@@ -170,7 +181,7 @@ struct module_exports exports = {
 	cmds,
 	0,         /* RPC methods */
 	params,    /*  module parameters */
-        0,         /* module initialization function */
+        pg_test,   /* module initialization function */
 	0,         /* response function*/
 	0,         /* destroy function */
 	0,         /* oncancel function */

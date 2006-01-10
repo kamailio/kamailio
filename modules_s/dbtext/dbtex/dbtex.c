@@ -93,6 +93,9 @@ static int print_res(db_res_t* _r)
 			case DB_INT:
 				printf("%d ", RES_ROWS(_r)[i].values[j].val.int_val);
 				break;
+			case DB_FLOAT:
+				printf("%f ", RES_ROWS(_r)[i].values[j].val.float_val);
+				break;
 			case DB_DOUBLE:
 				printf("%f ", RES_ROWS(_r)[i].values[j].val.double_val);
 				break;

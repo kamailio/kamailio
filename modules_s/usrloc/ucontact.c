@@ -498,9 +498,9 @@ int db_insert_ucontact(ucontact_t* _c)
 	vals[2].nul = 0;
 	vals[2].val.time_val = _c->expires;
 
-	vals[3].type = DB_DOUBLE;
+	vals[3].type = DB_FLOAT;
 	vals[3].nul = 0;
-	vals[3].val.double_val = q2double(_c->q);
+	vals[3].val.float_val = (float)q2double(_c->q);
 
 	vals[4].type = DB_STR;
 	vals[4].nul = 0;
@@ -604,9 +604,9 @@ int db_update_ucontact(ucontact_t* _c)
 	vals2[0].nul = 0;
 	vals2[0].val.time_val = _c->expires;
 
-	vals2[1].type = DB_DOUBLE;
+	vals2[1].type = DB_FLOAT;
 	vals2[1].nul = 0;
-	vals2[1].val.double_val = q2double(_c->q);
+	vals2[1].val.float_val = (float)q2double(_c->q);
 
 	vals2[2].type = DB_STR;
 	vals2[2].nul = 0;
