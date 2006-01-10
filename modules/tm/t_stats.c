@@ -45,65 +45,80 @@
 
 struct t_stats *tm_stats=0;
 
-
 int init_tm_stats(void)
 {
 	int size;
 
-	tm_stats=shm_malloc(sizeof(struct t_stats));
+	tm_stats = shm_malloc(sizeof(struct t_stats));
 	if (tm_stats==0) {
-		LOG(L_ERR, "ERROR: init_tm_stats: no mem for stats\n");
-		goto error0;
+		ERR("No mem for stats\n");
+		return -1;
 	}
 	memset(tm_stats, 0, sizeof(struct t_stats) );
 
-	size=sizeof(stat_counter)*process_count;
-	tm_stats->s_waiting=shm_malloc(size);
-	if (tm_stats->s_waiting==0) {
-		LOG(L_ERR, "ERROR: init_tm_stats: no mem for stats\n");
+	     /* Delay initialization of tm_stats structures to
+	      * init_tm_stats_child which gets called from child_init,
+	      * in mod_init function other modules can increase the value of
+	      * process_count and thus we do not know about processes created
+	      * from modules which get loaded after tm and thus their mod_init
+	      * functions will be called after tm mod_init function finishes
+	      */
+	return 0;
+}
+
+
+int init_tm_stats_child(void)
+{
+	int size;
+
+	     /* We are called from child_init, process_count has definitive
+	      * value now and thus we can safely allocate the variables
+	      */
+	size = sizeof(stat_counter) * process_count;
+	tm_stats->s_waiting = shm_malloc(size);
+	if (tm_stats->s_waiting == 0) {
+		ERR("No mem for stats\n");
 		goto error1;
 	}
-	memset(tm_stats->s_waiting, 0, size );
+	memset(tm_stats->s_waiting, 0, size);
 
-	tm_stats->s_transactions=shm_malloc(size);
-	if (tm_stats->s_transactions==0) {
-		LOG(L_ERR, "ERROR: init_tm_stats: no mem for stats\n");
+	tm_stats->s_transactions = shm_malloc(size);
+	if (tm_stats->s_transactions == 0) {
+		ERR("No mem for stats\n");
 		goto error2;
 	}
-	memset(tm_stats->s_transactions, 0, size );
+	memset(tm_stats->s_transactions, 0, size);
 
-	tm_stats->s_client_transactions=shm_malloc(size);
-	if (tm_stats->s_client_transactions==0) {
-		LOG(L_ERR, "ERROR: init_tm_stats: no mem for stats\n");
+	tm_stats->s_client_transactions = shm_malloc(size);
+	if (tm_stats->s_client_transactions == 0) {
+		ERR("No mem for stats\n");
 		goto error3;
 	}
-	memset(tm_stats->s_client_transactions, 0, size );
-		 
-	return 1;
+	memset(tm_stats->s_client_transactions, 0, size);
+	return 0;
 
-error3:
+ error3:
 	shm_free(tm_stats->s_transactions);
-	tm_stats->s_transactions=0;
-error2:
+	tm_stats->s_transactions = 0;
+ error2:
 	shm_free(tm_stats->s_waiting);
-	tm_stats->s_waiting=0;
-error1:
+	tm_stats->s_waiting = 0;
+ error1:
 	shm_free(tm_stats);
-error0:
 	return -1;
 }
 
+
 void free_tm_stats()
 {
-	if (tm_stats!=0){
-		if (tm_stats->s_client_transactions) 
-			shm_free(tm_stats->s_client_transactions);
-		if (tm_stats->s_transactions)
-			shm_free(tm_stats->s_transactions);
-		if (tm_stats->s_waiting)
-			shm_free(tm_stats->s_waiting);
-		shm_free(tm_stats);
-	}
+	if (tm_stats == 0) return;
+	if (tm_stats->s_client_transactions) 
+		shm_free(tm_stats->s_client_transactions);
+	if (tm_stats->s_transactions)
+		shm_free(tm_stats->s_transactions);
+	if (tm_stats->s_waiting)
+		shm_free(tm_stats->s_waiting);
+	shm_free(tm_stats);
 }
 
 

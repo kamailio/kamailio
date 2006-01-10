@@ -89,6 +89,7 @@ inline static void update_reply_stats( int code ) {
 
 
 int init_tm_stats(void);
+int init_tm_stats_child(void);
 void free_tm_stats();
 
 extern const char* tm_rpc_stats_doc[2];

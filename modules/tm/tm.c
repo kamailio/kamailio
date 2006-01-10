@@ -406,14 +406,13 @@ static int mod_init(void)
 		LOG(L_ERR, "ERROR: mod_init: timer init failed\n");
 		return -1;
 	}
-	/* init_tm_stats calls process_count, which should
-	 * NOT be called from mod_init, because one does not
-	 * now, if a timer is used and thus how many processes
-	 * will be started; however we started already our
-	 * timers, so we know and process_count should not
-	 * change any more
-	 */
-	if (init_tm_stats()<0) {
+
+	     /* First tm_stat initialization function only allocates the top level stat
+	      * structure in shared memory, the initialization will complete in child
+	      * init with init_tm_stats_child when the final value of process_count is
+	      * known
+	      */
+	if (init_tm_stats() < 0) {
 		LOG(L_CRIT, "ERROR: mod_init: failed to init stats\n");
 		return -1;
 	}
@@ -460,6 +459,13 @@ static int child_init(int rank) {
 	if (child_init_callid(rank) < 0) {
 		LOG(L_ERR, "ERROR: child_init: Error while initializing Call-ID generator\n");
 		return -2;
+	}
+
+	if (rank == PROC_MAIN) {
+		if (init_tm_stats_child() < 0) {
+			ERR("Error while initializing tm statistics structures\n");
+			return -1;
+		}
 	}
 
 	return 0;
