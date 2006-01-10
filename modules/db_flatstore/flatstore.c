@@ -177,6 +177,10 @@ int flat_db_insert(db_con_t* h, db_key_t* k, db_val_t* v, int n)
 					fprintf(f, "%d", VAL_INT(v + i));
 					break;
 
+				case DB_FLOAT:
+					fprintf(f, "%f", VAL_FLOAT(v + i));
+					break;
+
 				case DB_DOUBLE:
 					fprintf(f, "%f", VAL_DOUBLE(v + i));
 					break;
