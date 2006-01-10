@@ -222,7 +222,7 @@ modparam("usrloc", "timer_interval", 120)
 	    storage. If you use database, your contacts will survive machine
 	    restarts or SW crashes. The disadvantage is that accessing database
 	    can be very time consuming. Therefore, usrloc module implements
-	    three database accessing modes:
+	    four database accessing modes:
 	</para>
 	<itemizedlist>
 	    <listitem>
@@ -253,6 +253,18 @@ modparam("usrloc", "timer_interval", 120)
 		    mode will not help at all if the load is high all the time.
 		    Also, latency of this mode is much lower than latency of
 		    mode 1, but slightly higher than latency of mode 0.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    3 - Read-Only scheme. Disables commits to database. Upon start
+		    contacts are read from the database but changes are not written.
+		    Contacts will thus not survive a restart unless taken care of
+		    otherwise.  Use this if you need the benefits of mode 0 with a
+		    databases backed preloading feature.  Attention: There is a
+		    slight window where updated contacts might not make it into
+		    memory while reading and parsing contacts from the database
+		    before going into full production mode.
 		</para>
 	    </listitem>
 	</itemizedlist>

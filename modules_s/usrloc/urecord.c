@@ -203,7 +203,7 @@ void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c)
 
 /*
  * This timer routine is used when
- * db_mode is set to NO_DB
+ * db_mode is set to NO_DB or READONLY
  */
 static inline int nodb_timer(urecord_t* _r)
 {
@@ -376,6 +376,7 @@ int timer_urecord(urecord_t* _r)
 	case NO_DB:         return nodb_timer(_r);
 	case WRITE_THROUGH: return wt_timer(_r);
 	case WRITE_BACK:    return wb_timer(_r);
+	case READONLY:      return nodb_timer(_r);
 	}
 
 	return 0; /* Makes gcc happy */

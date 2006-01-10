@@ -378,7 +378,7 @@ int st_delete_ucontact(ucontact_t* _c)
 			_c->expires = 0;
 			return 0;
 		} else {
-			     /* WRITE_THROUGH or NO_DB -- we can
+			     /* WRITE_THROUGH, READONLY or NO_DB -- we can
 			      * remove it from memory immediately and
 			      * the calling function would also remove
 			      * it from the database if needed
