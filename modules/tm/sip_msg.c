@@ -304,75 +304,74 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 	{
 		/*size of header struct*/
 		len += ROUND4(sizeof( struct hdr_field));
-		switch (hdr->type)
-		{
-			case HDR_VIA_T:
-				for (via=(struct via_body*)hdr->parsed;via;via=via->next)
-				{
-					len+=ROUND4(sizeof(struct via_body));
-					/*via param*/
-					for(prm=via->param_lst;prm;prm=prm->next)
-						len+=ROUND4(sizeof(struct via_param ));
-				}
-				break;
+		switch (hdr->type) {
+			     /* Safely ignore auxiliary header types */
+		case HDR_ERROR_T:
+		case HDR_OTHER_T:
+		case HDR_VIA2_T:
+		case HDR_EOH_T:
+			break;
+			
+		case HDR_VIA_T:
+			for (via=(struct via_body*)hdr->parsed;via;via=via->next) {
+				len+=ROUND4(sizeof(struct via_body));
+				     /*via param*/
+				for(prm=via->param_lst;prm;prm=prm->next)
+					len+=ROUND4(sizeof(struct via_param ));
+			}
+			break;
+			
+		case HDR_TO_T:
+		case HDR_FROM_T:
+			     /* From header might be unparsed */
+			if (hdr->parsed) {
+				len+=ROUND4(sizeof(struct to_body));
+				     /*to param*/
+				to_prm = ((struct to_body*)(hdr->parsed))->param_lst;
+				for(;to_prm;to_prm=to_prm->next)
+					len+=ROUND4(sizeof(struct to_param ));
+			}
+			break;
 
-			case HDR_TO_T:
-			case HDR_FROM_T:
-				/* From header might be unparsed */
-				if (hdr->parsed) {
-					len+=ROUND4(sizeof(struct to_body));
-					     /*to param*/
-					to_prm = ((struct to_body*)(hdr->parsed))->param_lst;
-					for(;to_prm;to_prm=to_prm->next)
-						len+=ROUND4(sizeof(struct to_param ));
-				}
-				break;
+		case HDR_CSEQ_T:
+			len+=ROUND4(sizeof(struct cseq_body));
+			break;
+			
 
-			case HDR_CSEQ_T:
-				len+=ROUND4(sizeof(struct cseq_body));
-				break;
+		case HDR_AUTHORIZATION_T:
+		case HDR_PROXYAUTH_T:
+			if (hdr->parsed) {
+				len += ROUND4(AUTH_BODY_SIZE);
+			}
+			break;
 
-
-			case HDR_AUTHORIZATION_T:
-			case HDR_PROXYAUTH_T:
-				if (hdr->parsed) {
-					len += ROUND4(AUTH_BODY_SIZE);
-				}
-				break;
-
-			case HDR_CALLID_T:
-			case HDR_CONTACT_T:
-			case HDR_MAXFORWARDS_T:
-			case HDR_ROUTE_T:
-			case HDR_RECORDROUTE_T:
-			case HDR_CONTENTTYPE_T:
-			case HDR_CONTENTLENGTH_T:
-			case HDR_EXPIRES_T:
-			case HDR_SUPPORTED_T:
-			case HDR_PROXYREQUIRE_T:
-			case HDR_UNSUPPORTED_T:
-			case HDR_ALLOW_T:
-			case HDR_EVENT_T:
-			case HDR_ACCEPT_T:
-			case HDR_ACCEPTLANGUAGE_T:
-			case HDR_ORGANIZATION_T:
-			case HDR_PRIORITY_T:
-			case HDR_SUBJECT_T:
-			case HDR_USERAGENT_T:
-			case HDR_ACCEPTDISPOSITION_T:
-			case HDR_CONTENTDISPOSITION_T:
-			case HDR_DIVERSION_T:
-			case HDR_RPID_T:
-			case HDR_REFER_TO_T:
-				/* we ignore them for now even if they have something parsed*/
-				break;
-
-			default:
-				if (hdr->parsed) {
-					LOG(L_WARN, "WARNING: sip_msg_cloner: "
-						"header body ignored: %d\n", hdr->type );
-				}
-				break;
+		case HDR_CALLID_T:
+		case HDR_CONTACT_T:
+		case HDR_MAXFORWARDS_T:
+		case HDR_ROUTE_T:
+		case HDR_RECORDROUTE_T:
+		case HDR_CONTENTTYPE_T:
+		case HDR_CONTENTLENGTH_T:
+		case HDR_EXPIRES_T:
+		case HDR_SUPPORTED_T:
+		case HDR_PROXYREQUIRE_T:
+		case HDR_UNSUPPORTED_T:
+		case HDR_ALLOW_T:
+		case HDR_EVENT_T:
+		case HDR_ACCEPT_T:
+		case HDR_ACCEPTLANGUAGE_T:
+		case HDR_ORGANIZATION_T:
+		case HDR_PRIORITY_T:
+		case HDR_SUBJECT_T:
+		case HDR_USERAGENT_T:
+		case HDR_ACCEPTDISPOSITION_T:
+		case HDR_CONTENTDISPOSITION_T:
+		case HDR_DIVERSION_T:
+		case HDR_RPID_T:
+		case HDR_REFER_TO_T:
+		case HDR_SIPIFMATCH_T:
+			     /* we ignore them for now even if they have something parsed*/
+			break;
 		}/*switch*/
 	}/*for all headers*/
 
@@ -498,230 +497,242 @@ do { \
 
 		switch (hdr->type)
 		{
-			case HDR_VIA_T:
-				/*fprintf(stderr,"prepare to clone via |%.*s|\n",
-					via_len((struct via_body*)hdr->parsed),
-					via_s((struct via_body*)hdr->parsed,org_msg));*/
-				if ( !new_msg->via1 )
-				{
-					new_msg->h_via1 = new_hdr;
-					new_msg->via1 = via_body_cloner(new_msg->buf,
-						org_msg->buf, (struct via_body*)hdr->parsed, &p);
-					new_hdr->parsed  = (void*)new_msg->via1;
-					/*fprintf(stderr,"setting via1 |%.*s|\n",
-						via_len(new_msg->via1),
-						via_s(new_msg->via1,new_msg));*/
-					if ( new_msg->via1->next )
-						new_msg->via2 = new_msg->via1->next;
+			     /* Ignore auxiliary header types */
+		case HDR_ERROR_T:
+		case HDR_OTHER_T:
+		case HDR_VIA2_T:
+		case HDR_EOH_T:
+			break;
+
+		case HDR_VIA_T:
+			if ( !new_msg->via1 ) {
+				new_msg->h_via1 = new_hdr;
+				new_msg->via1 = via_body_cloner(new_msg->buf,
+								org_msg->buf, (struct via_body*)hdr->parsed, &p);
+				new_hdr->parsed  = (void*)new_msg->via1;
+				if ( new_msg->via1->next ) {
+					new_msg->via2 = new_msg->via1->next;
 				}
-				else if ( !new_msg->via2 && new_msg->via1 )
-				{
-					new_msg->h_via2 = new_hdr;
-					if ( new_msg->via1->next )
-						new_hdr->parsed = (void*)new_msg->via1->next;
-					else{
-						new_msg->via2 = via_body_cloner( new_msg->buf,
-							org_msg->buf, (struct via_body*)hdr->parsed, &p);
-						new_hdr->parsed  = (void*)new_msg->via2;
-					}
-				}
-				else if ( new_msg->via2 && new_msg->via1 )
-				{
-					new_hdr->parsed =
-						via_body_cloner( new_msg->buf , org_msg->buf ,
-						(struct via_body*)hdr->parsed , &p);
-				}
-				break;
-			case HDR_CSEQ_T:
-				new_hdr->parsed = p;
-				p +=ROUND4(sizeof(struct cseq_body));
-				memcpy(new_hdr->parsed, hdr->parsed, sizeof(struct cseq_body));
-				((struct cseq_body*)new_hdr->parsed)->number.s =
-					translate_pointer(new_msg->buf ,org_msg->buf,
-					((struct cseq_body*)hdr->parsed)->number.s );
-				((struct cseq_body*)new_hdr->parsed)->method.s =
-					translate_pointer(new_msg->buf ,org_msg->buf,
-					((struct cseq_body*)hdr->parsed)->method.s );
-				if (!HOOK_SET(cseq)) new_msg->cseq = new_hdr;
-				break;
-			case HDR_TO_T:
-			case HDR_FROM_T:
-				if (hdr->type == HDR_TO_T) {
-					if (!HOOK_SET(to)) new_msg->to = new_hdr;
+			} else if ( !new_msg->via2 && new_msg->via1 ) {
+				new_msg->h_via2 = new_hdr;
+				if ( new_msg->via1->next ) {
+					new_hdr->parsed = (void*)new_msg->via1->next;
 				} else {
-					if (!HOOK_SET(from)) new_msg->from = new_hdr;
+					new_msg->via2 = via_body_cloner( new_msg->buf,
+									 org_msg->buf, (struct via_body*)hdr->parsed, &p);
+					new_hdr->parsed  = (void*)new_msg->via2;
 				}
-				/* From header might be unparsed */
-				if (!hdr->parsed) break;
-				new_hdr->parsed = p;
-				p +=ROUND4(sizeof(struct to_body));
-				memcpy(new_hdr->parsed, hdr->parsed, sizeof(struct to_body));
-				((struct to_body*)new_hdr->parsed)->body.s =
+			} else if ( new_msg->via2 && new_msg->via1 ) {
+				new_hdr->parsed = via_body_cloner( new_msg->buf , org_msg->buf ,
+								   (struct via_body*)hdr->parsed , &p);
+			}
+			break;
+		case HDR_CSEQ_T:
+			new_hdr->parsed = p;
+			p +=ROUND4(sizeof(struct cseq_body));
+			memcpy(new_hdr->parsed, hdr->parsed, sizeof(struct cseq_body));
+			((struct cseq_body*)new_hdr->parsed)->number.s =
+				translate_pointer(new_msg->buf ,org_msg->buf,
+						  ((struct cseq_body*)hdr->parsed)->number.s );
+			((struct cseq_body*)new_hdr->parsed)->method.s =
+				translate_pointer(new_msg->buf ,org_msg->buf,
+						  ((struct cseq_body*)hdr->parsed)->method.s );
+			if (!HOOK_SET(cseq)) new_msg->cseq = new_hdr;
+			break;
+		case HDR_TO_T:
+		case HDR_FROM_T:
+			if (hdr->type == HDR_TO_T) {
+				if (!HOOK_SET(to)) new_msg->to = new_hdr;
+			} else {
+				if (!HOOK_SET(from)) new_msg->from = new_hdr;
+			}
+			     /* From header might be unparsed */
+			if (!hdr->parsed) break;
+			new_hdr->parsed = p;
+			p +=ROUND4(sizeof(struct to_body));
+			memcpy(new_hdr->parsed, hdr->parsed, sizeof(struct to_body));
+			((struct to_body*)new_hdr->parsed)->body.s =
+				translate_pointer( new_msg->buf , org_msg->buf ,
+						   ((struct to_body*)hdr->parsed)->body.s );
+			((struct to_body*)new_hdr->parsed)->display.s = 
+				translate_pointer( new_msg->buf, org_msg->buf,
+						   ((struct to_body*)hdr->parsed)->display.s);
+			((struct to_body*)new_hdr->parsed)->uri.s =
+				translate_pointer( new_msg->buf , org_msg->buf ,
+						   ((struct to_body*)hdr->parsed)->uri.s );
+			if ( ((struct to_body*)hdr->parsed)->tag_value.s )
+				((struct to_body*)new_hdr->parsed)->tag_value.s =
 					translate_pointer( new_msg->buf , org_msg->buf ,
-					((struct to_body*)hdr->parsed)->body.s );
-				((struct to_body*)new_hdr->parsed)->display.s = 
-					translate_pointer( new_msg->buf, org_msg->buf,
-					((struct to_body*)hdr->parsed)->display.s);
-				((struct to_body*)new_hdr->parsed)->uri.s =
-					translate_pointer( new_msg->buf , org_msg->buf ,
-					((struct to_body*)hdr->parsed)->uri.s );
-				if ( ((struct to_body*)hdr->parsed)->tag_value.s )
-					((struct to_body*)new_hdr->parsed)->tag_value.s =
-						translate_pointer( new_msg->buf , org_msg->buf ,
-						((struct to_body*)hdr->parsed)->tag_value.s );
-				/*to params*/
-				to_prm = ((struct to_body*)(hdr->parsed))->param_lst;
-				for(;to_prm;to_prm=to_prm->next)
-				{
-					/*alloc*/
-					new_to_prm = (struct to_param*)p;
-					p +=ROUND4(sizeof(struct to_param ));
-					/*coping*/
-					memcpy( new_to_prm, to_prm, sizeof(struct to_param ));
-					((struct to_body*)new_hdr->parsed)->param_lst = 0;
-					new_to_prm->name.s = translate_pointer( new_msg->buf,
-						org_msg->buf , to_prm->name.s );
-					new_to_prm->value.s = translate_pointer( new_msg->buf,
-						org_msg->buf , to_prm->value.s );
-					/*linking*/
-					if ( !((struct to_body*)new_hdr->parsed)->param_lst )
-						((struct to_body*)new_hdr->parsed)->param_lst
-							= new_to_prm;
-					else
-						((struct to_body*)new_hdr->parsed)->last_param->next
-							= new_to_prm;
-					((struct to_body*)new_hdr->parsed)->last_param
+							   ((struct to_body*)hdr->parsed)->tag_value.s );
+			     /*to params*/
+			to_prm = ((struct to_body*)(hdr->parsed))->param_lst;
+			for(;to_prm;to_prm=to_prm->next) {
+				     /*alloc*/
+				new_to_prm = (struct to_param*)p;
+				p +=ROUND4(sizeof(struct to_param ));
+				     /*coping*/
+				memcpy( new_to_prm, to_prm, sizeof(struct to_param ));
+				((struct to_body*)new_hdr->parsed)->param_lst = 0;
+				new_to_prm->name.s = translate_pointer( new_msg->buf,
+									org_msg->buf , to_prm->name.s );
+				new_to_prm->value.s = translate_pointer( new_msg->buf,
+									 org_msg->buf , to_prm->value.s );
+				     /*linking*/
+				if ( !((struct to_body*)new_hdr->parsed)->param_lst )
+					((struct to_body*)new_hdr->parsed)->param_lst
 						= new_to_prm;
-				}
-				break;
-			case HDR_CALLID_T:
-				if (!HOOK_SET(callid)) {
-					new_msg->callid = new_hdr;
-				}
-				break;
-			case HDR_CONTACT_T:
-				if (!HOOK_SET(contact)) {
-					new_msg->contact = new_hdr;
-				}
-				break;
-			case HDR_MAXFORWARDS_T:
-				if (!HOOK_SET(maxforwards)) {
-					new_msg->maxforwards = new_hdr;
-				}
-				break;
-			case HDR_ROUTE_T:
-				if (!HOOK_SET(route)) {
-					new_msg->route = new_hdr;
-				}
-				break;
-			case HDR_RECORDROUTE_T:
-				if (!HOOK_SET(record_route)) {
-					new_msg->record_route = new_hdr;
-				}
-				break;
-			case HDR_CONTENTTYPE_T:
-				if (!HOOK_SET(content_type)) {
-					new_msg->content_type = new_hdr;
-					new_msg->content_type->parsed = hdr->parsed;
-				}
-				break;
-			case HDR_CONTENTLENGTH_T:
-				if (!HOOK_SET(content_length)) {
-					new_msg->content_length = new_hdr;
-					new_msg->content_length->parsed = hdr->parsed;
-				}
-				break;
-			case HDR_AUTHORIZATION_T:
-				if (!HOOK_SET(authorization)) {
-					new_msg->authorization = new_hdr;
-				}
-				if (hdr->parsed) {
-					new_hdr->parsed = auth_body_cloner(new_msg->buf ,
-						org_msg->buf , (struct auth_body*)hdr->parsed , &p);
-				}
-				break;
-			case HDR_EXPIRES_T:
-				if (!HOOK_SET(expires)) {
-					new_msg->expires = new_hdr;
-				}
-				break;
-			case HDR_PROXYAUTH_T:
-				if (!HOOK_SET(proxy_auth)) {
-					new_msg->proxy_auth = new_hdr;
-				}
-				if (hdr->parsed) {
-					new_hdr->parsed = auth_body_cloner(new_msg->buf ,
-						org_msg->buf , (struct auth_body*)hdr->parsed , &p);
-				}
-				break;
-			case HDR_SUPPORTED_T:
-				if (!HOOK_SET(supported)) {
-					new_msg->supported = new_hdr;
-				}
-				break;
-			case HDR_PROXYREQUIRE_T:
-				if (!HOOK_SET(proxy_require)) {
-					new_msg->proxy_require = new_hdr;
-				}
-				break;
-			case HDR_UNSUPPORTED_T:
-				if (!HOOK_SET(unsupported)) {
-					new_msg->unsupported = new_hdr;
-				}
-				break;
-			case HDR_ALLOW_T:
-				if (!HOOK_SET(allow)) {
-					new_msg->allow = new_hdr;
-				}
-				break;
-			case HDR_EVENT_T:
-				if (!HOOK_SET(event)) {
-					new_msg->event = new_hdr;
-				}
-				break;
-			case HDR_ACCEPT_T:
-				if (!HOOK_SET(accept)) {
-					new_msg->accept = new_hdr;
-				}
-				break;
-			case HDR_ACCEPTLANGUAGE_T:
-				if (!HOOK_SET(accept_language)) {
-					new_msg->accept_language = new_hdr;
-				}
-				break;
-			case HDR_ORGANIZATION_T:
-				if (!HOOK_SET(organization)) {
-					new_msg->organization = new_hdr;
-				}
-				break;
-			case HDR_PRIORITY_T:
-				if (!HOOK_SET(priority)) {
-					new_msg->priority = new_hdr;
-				}
-				break;
-			case HDR_SUBJECT_T:
-				if (!HOOK_SET(subject)) {
-					new_msg->subject = new_hdr;
-				}
-				break;
-			case HDR_USERAGENT_T:
-				if (!HOOK_SET(user_agent)) {
-					new_msg->user_agent = new_hdr;
-				}
-				break;
-			case HDR_ACCEPTDISPOSITION_T:
-				if (!HOOK_SET(accept_disposition)) {
-					new_msg->accept_disposition = new_hdr;
-				}
-				break;
-			case HDR_CONTENTDISPOSITION_T:
-				if (!HOOK_SET(content_disposition)) {
-					new_msg->content_disposition = new_hdr;
-				}
-				break;
-			default:
-				/* ignore the rest*/
-				;
+				else
+					((struct to_body*)new_hdr->parsed)->last_param->next
+						= new_to_prm;
+				((struct to_body*)new_hdr->parsed)->last_param
+					= new_to_prm;
+			}
+			break;
+		case HDR_CALLID_T:
+			if (!HOOK_SET(callid)) {
+				new_msg->callid = new_hdr;
+			}
+			break;
+		case HDR_CONTACT_T:
+			if (!HOOK_SET(contact)) {
+				new_msg->contact = new_hdr;
+			}
+			break;
+		case HDR_MAXFORWARDS_T:
+			if (!HOOK_SET(maxforwards)) {
+				new_msg->maxforwards = new_hdr;
+			}
+			break;
+		case HDR_ROUTE_T:
+			if (!HOOK_SET(route)) {
+				new_msg->route = new_hdr;
+			}
+			break;
+		case HDR_RECORDROUTE_T:
+			if (!HOOK_SET(record_route)) {
+				new_msg->record_route = new_hdr;
+			}
+			break;
+		case HDR_CONTENTTYPE_T:
+			if (!HOOK_SET(content_type)) {
+				new_msg->content_type = new_hdr;
+				new_msg->content_type->parsed = hdr->parsed;
+			}
+			break;
+		case HDR_CONTENTLENGTH_T:
+			if (!HOOK_SET(content_length)) {
+				new_msg->content_length = new_hdr;
+				new_msg->content_length->parsed = hdr->parsed;
+			}
+			break;
+		case HDR_AUTHORIZATION_T:
+			if (!HOOK_SET(authorization)) {
+				new_msg->authorization = new_hdr;
+			}
+			if (hdr->parsed) {
+				new_hdr->parsed = auth_body_cloner(new_msg->buf ,
+								   org_msg->buf , (struct auth_body*)hdr->parsed , &p);
+			}
+			break;
+		case HDR_EXPIRES_T:
+			if (!HOOK_SET(expires)) {
+				new_msg->expires = new_hdr;
+			}
+			break;
+		case HDR_PROXYAUTH_T:
+			if (!HOOK_SET(proxy_auth)) {
+				new_msg->proxy_auth = new_hdr;
+			}
+			if (hdr->parsed) {
+				new_hdr->parsed = auth_body_cloner(new_msg->buf ,
+								   org_msg->buf , (struct auth_body*)hdr->parsed , &p);
+			}
+			break;
+		case HDR_SUPPORTED_T:
+			if (!HOOK_SET(supported)) {
+				new_msg->supported = new_hdr;
+			}
+			break;
+		case HDR_PROXYREQUIRE_T:
+			if (!HOOK_SET(proxy_require)) {
+				new_msg->proxy_require = new_hdr;
+			}
+			break;
+		case HDR_UNSUPPORTED_T:
+			if (!HOOK_SET(unsupported)) {
+				new_msg->unsupported = new_hdr;
+			}
+			break;
+		case HDR_ALLOW_T:
+			if (!HOOK_SET(allow)) {
+				new_msg->allow = new_hdr;
+			}
+			break;
+		case HDR_EVENT_T:
+			if (!HOOK_SET(event)) {
+				new_msg->event = new_hdr;
+			}
+			break;
+		case HDR_ACCEPT_T:
+			if (!HOOK_SET(accept)) {
+				new_msg->accept = new_hdr;
+			}
+			break;
+		case HDR_ACCEPTLANGUAGE_T:
+			if (!HOOK_SET(accept_language)) {
+				new_msg->accept_language = new_hdr;
+			}
+			break;
+		case HDR_ORGANIZATION_T:
+			if (!HOOK_SET(organization)) {
+				new_msg->organization = new_hdr;
+			}
+			break;
+		case HDR_PRIORITY_T:
+			if (!HOOK_SET(priority)) {
+				new_msg->priority = new_hdr;
+			}
+			break;
+		case HDR_SUBJECT_T:
+			if (!HOOK_SET(subject)) {
+				new_msg->subject = new_hdr;
+			}
+			break;
+		case HDR_USERAGENT_T:
+			if (!HOOK_SET(user_agent)) {
+				new_msg->user_agent = new_hdr;
+			}
+			break;
+		case HDR_ACCEPTDISPOSITION_T:
+			if (!HOOK_SET(accept_disposition)) {
+				new_msg->accept_disposition = new_hdr;
+			}
+			break;
+		case HDR_CONTENTDISPOSITION_T:
+			if (!HOOK_SET(content_disposition)) {
+				new_msg->content_disposition = new_hdr;
+			}
+			break;
+		case HDR_DIVERSION_T:
+			if (!HOOK_SET(diversion)) {
+				new_msg->diversion = new_hdr;
+			}
+			break;
+		case HDR_RPID_T:
+			if (!HOOK_SET(rpid)) {
+				new_msg->rpid = new_hdr;
+			}
+			break;
+		case HDR_REFER_TO_T:
+			if (!HOOK_SET(refer_to)) {
+				new_msg->refer_to = new_hdr;
+			}
+			break;
+		case HDR_SIPIFMATCH_T:
+			if (!HOOK_SET(sipifmatch)) {
+				new_msg->sipifmatch = new_hdr;
+			}
+			break;
 		}/*switch*/
 
 		if ( last_hdr )
