@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include <signal.h>
 #include "mem/mem.h"
+#include "mem/shm_mem.h"
 #include "sr_module.h"
 #include "dprint.h"
 #include "core_cmd.h"
@@ -54,7 +55,7 @@ static void system_listMethods(rpc_t* rpc, void* c)
 {
 	struct sr_module* t;
 	rpc_export_t* ptr;
-	
+
 	for(ptr = core_rpc_methods; ptr && ptr->name; ptr++) {
 		if (rpc->add(c, "s", ptr->name) < 0) return;
 	}
@@ -83,7 +84,7 @@ static const char* system_methodHelp_doc[] = {
 };
 
 static void system_methodHelp(rpc_t* rpc, void* c)
-{	
+{
 	struct sr_module* t;
 	rpc_export_t* ptr;
 	char* name;
@@ -146,7 +147,7 @@ static void core_uptime(rpc_t* rpc, void* c)
 	time_t now;
 
 	time(&now);
-	
+
 	if (rpc->add(c, "{", &s) < 0) return;
 	rpc->struct_add(s, "s", "now", ctime(&now));
 	rpc->struct_add(s, "s", "up_since", up_since_ctime);
@@ -229,14 +230,30 @@ static void core_kill(rpc_t* rpc, void* c)
 	kill(0, sig_no);
 }
 
-static const char* core_test_doc[] = {
-	"Sends the given signal to SER.",  /* Documentation string */
-	0                                  /* Method signature(s) */
+static void core_shmmem(rpc_t* rpc, void* c)
+{
+	struct mem_info mi;
+	void *handle;
+
+	shm_info(&mi);
+	rpc->add(c, "{", &handle);
+	rpc->struct_add(handle, "ddddd",
+		"total", mi.total_size,
+		"free", mi.free,
+		"used", mi.real_used,
+		"max_used", mi.max_used,
+		"fragments", mi.total_frags
+	);
+}
+
+static const char* core_shmmem_doc[] = {
+	"Returns shared memory info.",  /* Documentation string */
+	0                               /* Method signature(s) */
 };
 
 
-/* 
- * RPC Methods exported by this module 
+/*
+ * RPC Methods exported by this module
  */
 rpc_export_t core_rpc_methods[] = {
 	{"system.listMethods",     system_listMethods,     system_listMethods_doc,     RET_ARRAY},
@@ -249,6 +266,7 @@ rpc_export_t core_rpc_methods[] = {
 	{"core.pwd",               core_pwd,               core_pwd_doc,               RET_ARRAY},
 	{"core.arg",               core_arg,               core_arg_doc,               RET_ARRAY},
 	{"core.kill",              core_kill,              core_kill_doc,              0        },
+	{"core.shmmem",            core_shmmem,            core_shmmem_doc,            0	},
 	{0, 0, 0, 0}
 };
 
