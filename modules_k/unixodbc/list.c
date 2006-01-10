@@ -27,28 +27,38 @@
  *  2005-12-01  initial commit (chgen)
  */
 
-
+#include "../../dprint.h"
+#include "../../mem/mem.h"
 #include "list.h"
 
 int insert(list l, int n, strn* value)
 {
 	int i;
+	list ln;
+
 	if(!l->next)
 	{
-		list ln;
-		ln=(list)malloc(sizeof(element));
+		ln=(list)pkg_malloc(sizeof(element));
 		if(!ln)
 		{
-			printf("list.c: No enought memory\n");
+			LOG(L_ERR,"ERROR:unixodbc:insert: No enought pkg memory (1)\n");
 			return -1;
 		}
+		ln->data=pkg_malloc(sizeof(strn)*n);
+		if(!ln->data)
+		{
+			LOG(L_ERR,"ERROR:unixodbc:insert: No enought pkg memory (2)\n");
+			pkg_free(ln);
+			return -1;
+		}
+		for(i=0; i<n; i++)
+			strcpy(ln->data[i].s, value[i].s);
+		/* link it */
 		ln->next=NULL;
 		ln->end=ln;
 		l->next=ln;
 		l->end=ln;
-		ln->data=malloc(sizeof(strn)*n);
-		for(i=0; i<n; i++)
-			strcpy(ln->data[i].s, value[i].s);
+		
 		return 0;
 	}
 	else
@@ -59,7 +69,8 @@ void destroy(list l)
 {
 	if(l->next)
 		destroy(l->next);
-	free(l);
+	pkg_free(l->data);
+	pkg_free(l);
 }
 
 strn* view(list l)
@@ -67,19 +78,33 @@ strn* view(list l)
    return l->data;
 }
 
-void create(list *l, int n, strn* value)
+int create(list *l, int n, strn* value)
 {
 	int i;
 	if(*l)
 	{
-		printf("list.c: List already created\n");
-		return;
+		LOG(L_WARN,"WARNING:unixodbc:create: List already created\n");
+		return 0;
 	}
-	*l=(list)malloc(sizeof(element));
+	*l=(list)pkg_malloc(sizeof(element));
+	if(!*l)
+	{
+		LOG(L_ERR,"ERROR:unixodbc:create: No enought pkg memory (1)\n");
+		return -1;
+	}
 	(*l)->next=NULL;
 	(*l)->end=*l;
-	(*l)->data=malloc(sizeof(strn)*n);
+	(*l)->data=pkg_malloc(sizeof(strn)*n);
+	if(!(*l)->data)
+	{
+		LOG(L_ERR,"ERROR:unixodbc:create: No enought pkg memory (2)\n");
+		pkg_free(*l);
+		*l = 0;
+		return -1;
+	}
 	for(i=0; i<n; i++)
 		strcpy((*l)->data[i].s, value[i].s);
+
+	return 0;
 }
 

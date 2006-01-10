@@ -24,7 +24,10 @@
  *
  * History:
  * --------
- *  2005-12-01  initial commit (chgen) */
+ *  2005-12-01  initial commit (chgen)
+ *  2006-01-10  UID (username) and PWD (password) attributes added to 
+ *              connection string (bogdan)
+ */
 
 #include "my_con.h"
 #include "../../mem/mem.h"
@@ -32,6 +35,64 @@
 #include "../../ut.h"
 #include "utils.h"
 #include <time.h>
+
+#define DSN_ATTR  "DSN="
+#define DSN_ATTR_LEN  (sizeof(DSN_ATTR)-1)
+#define UID_ATTR  "UID="
+#define UID_ATTR_LEN  (sizeof(UID_ATTR)-1)
+#define PWD_ATTR  "PWD="
+#define PWD_ATTR_LEN  (sizeof(PWD_ATTR)-1)
+
+#define MAX_CONN_STR_LEN 2048
+
+static char *build_conn_str(struct db_id* id) 
+{
+	static char buf[MAX_CONN_STR_LEN];
+	int len, ld, lu, lp;
+	char *p;
+
+	ld = id->database?strlen(id->database):0;
+	lu = id->username?strlen(id->username):0;
+	lp = id->password?strlen(id->password):0;
+
+	len = (ld?(DSN_ATTR_LEN + ld + 1):0)
+		+ (lu?(UID_ATTR_LEN + lu + 1):0)
+		+ PWD_ATTR_LEN + lp + 1;
+
+	if ( len>=MAX_CONN_STR_LEN ){
+		LOG(L_ERR,"ERROR:unixodbc:build_conn_str: connection string too long!"
+			"Increase MAX_CONN_STR_LEN and recompile\n");
+		return 0;
+	}
+
+	p = buf;
+	if (ld) {
+		memcpy( p , DSN_ATTR, DSN_ATTR_LEN);
+		p += DSN_ATTR_LEN;
+		memcpy( p, id->database, ld);
+		p += ld;
+		*(p++) = ';';
+	}
+	if (lu) {
+		memcpy( p , UID_ATTR, UID_ATTR_LEN);
+		p += UID_ATTR_LEN;
+		memcpy( p, id->username, lu);
+		p += lu;
+		*(p++) = ';';
+	}
+	memcpy( p , PWD_ATTR, PWD_ATTR_LEN);
+	p += PWD_ATTR_LEN;
+	if (lp) {
+		memcpy( p, id->password, lp);
+		p += lp;
+	}
+	*(p++) = ';';
+	*p = 0 ; /* make it null terminated */
+
+	DBG("DEBUG:unixodbc:build_conn_str: connection string is <%s>",buf);
+	return buf;
+}
+
 
 /*
  * Create a new connection structure,
@@ -43,17 +104,18 @@ struct my_con* new_connection(struct db_id* id)
 	SQLSMALLINT outstrlen;
 	int ret;
 	struct my_con* ptr;
+	char *conn_str;
 
 	if (!id)
 	{
-		LOG(L_ERR, "new_connection: Invalid parameter value\n");
+		LOG(L_ERR,"ERROR:unixodbc:new_connection: Invalid parameter value\n");
 		return 0;
 	}
 
 	ptr = (struct my_con*)pkg_malloc(sizeof(struct my_con));
 	if (!ptr)
 	{
-		LOG(L_ERR, "new_connection: No memory left\n");
+		LOG(L_ERR,"ERROR:unixodbc:new_connection: No memory left\n");
 		return 0;
 	}
 
@@ -64,25 +126,31 @@ struct my_con* new_connection(struct db_id* id)
 	SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &(ptr->env));
 	SQLSetEnvAttr(ptr->env, SQL_ATTR_ODBC_VERSION, (void *) SQL_OV_ODBC3, 0);
 	SQLAllocHandle(SQL_HANDLE_DBC, ptr->env, &(ptr->dbc));
-	char stringDNS[200];
-	sprintf( stringDNS, "%s%s%s", "DSN=", id->database, ";");
-	ret = SQLDriverConnect(ptr->dbc, (void *)1, (SQLCHAR*)stringDNS, SQL_NTS,
+
+	conn_str = build_conn_str(id);
+	if (conn_str==0) {
+		LOG(L_ERR, "ERROR:unixodbc:new_connection: failed to build "
+			"connection string\n");
+		return 0;
+	}
+	ret = SQLDriverConnect(ptr->dbc, (void *)1, (SQLCHAR*)conn_str, SQL_NTS,
 		outstr, sizeof(outstr), &outstrlen,
 		SQL_DRIVER_COMPLETE);
 	if (SQL_SUCCEEDED(ret))
 	{
-		printf("Connected\n");
-		printf("Returned connection string was:\n\t%s\n", outstr);
+		DBG("DEBUG:unixodbc:new_connection: connection succeeded with reply"
+			" <%s>\n", outstr);
 		if (ret == SQL_SUCCESS_WITH_INFO)
 		{
-			printf("Driver reported the following diagnostics\n");
+			DBG("DEBUG:unixodbc:new_connection: driver reported the "
+				"following diagnostics\n");
 			extract_error("SQLDriverConnect", ptr->dbc, SQL_HANDLE_DBC);
 			goto err;
 		}
 	}
 	else
 	{
-		fprintf(stderr, "Failed to connect\n");
+		LOG(L_ERR, "ERROR:unixodbc:new_connection: failed to connect\n");
 		extract_error("SQLDriverConnect", ptr->dbc, SQL_HANDLE_DBC);
 		goto err;
 	}
@@ -122,18 +190,15 @@ SQLSMALLINT type)
 	SQLSMALLINT  len;
 	SQLRETURN	ret;
 
-	fprintf(stderr,
-		"\n"
-		"The driver reported the following diagnostics whilst running "
-		"%s\n\n",
-		fn);
+	LOG(L_ERR,"ERROR:unixodbc: the driver reported the following diagnostics "
+		"whilst running %s\n",fn);
 
 	do
 	{
 		ret = SQLGetDiagRec(type, handle, ++i, state, &native, text,
 			sizeof(text), &len );
 		if (SQL_SUCCEEDED(ret))
-			printf("%s:%ld:%ld:%s\n", state, (long)i, (long)native, text);
+			LOG(L_ERR,"\t%s:%ld:%ld:%s\n", state, (long)i, (long)native, text);
 	}
 	while( ret == SQL_SUCCESS );
 }

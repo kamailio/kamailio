@@ -51,6 +51,6 @@ void destroy(list l);
 
 strn* view(list l);
 
-void create(list *l, int n, strn* value);
+int create(list *l, int n, strn* value);
 
 #endif

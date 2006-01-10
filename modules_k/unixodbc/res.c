@@ -144,7 +144,7 @@ static inline int free_rows(db_res_t* _r)
 }
 
 /*
- * Convert rows from mysql to db API representation
+ * Convert rows from UNIXODBC to db API representation
  */
 static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 {
@@ -152,20 +152,22 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 	SQLSMALLINT columns;
 	list rows = NULL;
 	list l;
-	row = 0;
-	SQLNumResultCols(CON_RESULT(_h), (SQLSMALLINT *)&columns);
-	CON_ROW(_h) = (strn*)malloc((int)columns);
-	if(!CON_ROW(_h))
-	{
-		LOG(L_ERR, "convert_rows: No memory left\n");
-		return -1;
-	}
 
 	if((!_h) || (!_r))
 	{
 		LOG(L_ERR, "convert_rows: Invalid parameter\n");
 		return -1;
 	}
+
+	row = 0;
+	SQLNumResultCols(CON_RESULT(_h), (SQLSMALLINT *)&columns);
+	CON_ROW(_h) = (strn*)pkg_malloc((int)columns);
+	if(!CON_ROW(_h))
+	{
+		LOG(L_ERR, "convert_rows: No memory left\n");
+		return -1;
+	}
+
 	while(SQL_SUCCEEDED(ret = SQLFetch(CON_RESULT(_h))))
 	{
 		for(i=1; i <= columns; i++)
