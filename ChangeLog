@@ -1,8 +1,18 @@
+================================= Release 0.9.6 ==============================
+
+2006-01-11  Jan Janak <jan@iptel.org>
+
+	* debian: Fixed config file checking in debian start script
+	
+	* tm: Added missing diversion header to SIP message cloner,
+	   this caused crash in diversion module, reported by Adrian
+	   Georgescu and Dan Pascu
+
 ================================= Release 0.9.5 ==============================
 
 2005-12-14  Andrei Pelinescu-Onciul <andrei@iptel.org>
 
-        * core: malloc real_used/initial size accounting fixes (*realloc 
+        * core: malloc real_used/initial size accounting fixes (*realloc
 	    shrink accounting fix; initial size does not contain the 
 	    overhead anymore)
 	  DBG_F_MALLOC typo and warning fixes
