@@ -1,5 +1,6 @@
 CREATE USER ser PASSWORD 'heslo';
 CREATE USER serro PASSWORD '47serro11';
+
 CREATE TABLE version (
     table_name VARCHAR(32) NOT NULL,
     table_version INTEGER NOT NULL DEFAULT '0'

@@ -13,6 +13,7 @@
 	</xsl:variable>
 	<!-- Create all tables -->
 	<xsl:apply-templates select="user"/>
+	<xsl:text>&#x0A;</xsl:text>
 	<xsl:apply-templates select="table"/>
 	<xsl:text>&#x0A;</xsl:text>
 	<xsl:apply-templates select="user" mode="grant"/>
