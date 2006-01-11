@@ -289,5 +289,15 @@
          <value col="at.flags">0</value>
          <value col="at.prior">0</value>
          </row>
+    <row><value col="at.name">sw_require_conf</value>
+         <value col="at.type">0</value>
+         <value col="at.rich_t">boolean</value>
+         <value col="at.desc">@ff_reg_confirmation</value>
+         <value col="at.d_flags">32</value>
+         <value col="at.flags">0</value>
+         <value col="at.prior">1073807360</value>
+	 <value col="at.order">120</value>
+    </row>
+
 
 </table>

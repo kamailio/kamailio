@@ -26,3 +26,4 @@ sw_is_admin:boolean:0::admin privilege:32:0:0:0
 sw_is_hostmaster:boolean:0::hostmaster privilege:32:0:0:0
 sw_confirmation:string:2::registration confirmation:32:0:0:0
 sw_pending_ts:string:2::registration timestamp:32:0:0:0
+sw_require_conf:boolean:0::@ff_reg_confirmation:32:0:1073807360:120
