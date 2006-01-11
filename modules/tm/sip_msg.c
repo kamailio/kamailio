@@ -360,6 +360,8 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 			case HDR_USERAGENT:
 			case HDR_ACCEPTDISPOSITION:
 			case HDR_CONTENTDISPOSITION:
+		        case HDR_DIVERSION:
+		        case HDR_RPID:
 				/* we ignore them for now even if they have something parsed*/
 				break;
 
@@ -707,6 +709,14 @@ do { \
 			case HDR_CONTENTDISPOSITION:
 				if (!HOOK_SET(content_disposition)) {
 					new_msg->content_disposition = new_hdr;
+				}
+			case HDR_DIVERSION:
+				if (!HOOK_SET(diversion)) {
+					new_msg->diversion = new_hdr;
+				}
+			case HDR_RPID:
+				if (!HOOK_SET(rpid)) {
+					new_msg->rpid = new_hdr;
 				}
 				break;
 		}/*switch*/
