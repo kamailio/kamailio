@@ -461,7 +461,7 @@ static int child_init(int rank) {
 		return -2;
 	}
 
-	if (rank == PROC_MAIN) {
+	if (rank == 1) {
 		if (init_tm_stats_child() < 0) {
 			ERR("Error while initializing tm statistics structures\n");
 			return -1;
