@@ -87,7 +87,7 @@ enum _hdr_types_t {
 	HDR_RPID_T					       /* Remote-Party-ID header field */,
 	HDR_REFER_TO_T				       /* Refer-To header fiels */,
 	HDR_SIPIFMATCH_T                   /* SIP-If-Match header field */,
-	HDR_EOH_T				       /* Some other header field */
+	HDR_EOH_T				       /* End of message header */
 };
 
 
