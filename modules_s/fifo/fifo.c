@@ -99,7 +99,7 @@ static int child_init(int rank)
 	      * ensures that the function gets called at the end of the init
 	      * process, when all the sockets are properly initialized.
 	      */
-	if (rank == PROC_MAIN) {
+	if (rank == 1) {
 		if (start_fifo_server() < 0) return -1;
 	}
 	return 0;
