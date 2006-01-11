@@ -89,6 +89,11 @@ static const char* domain_reload_doc[2] = {
  */
 static void domain_reload(rpc_t* rpc, void* ctx)
 {
+	if (db_mode == 0) {
+		rpc->fault(ctx, 400, "Server Domain Cache Disabled");
+		return;
+	}
+
 	if (reload_domain_list() < 0) {
 		rpc->fault(ctx, 400, "Domain Table Reload Failed");
 	}
@@ -108,6 +113,12 @@ static const char* domain_dump_doc[2] = {
 static void domain_dump(rpc_t* rpc, void* ctx)
 {
 	domain_t* list;
+
+	if (db_mode == 0) {
+		rpc->fault(ctx, 400, "Server Domain Cache Disabled");
+		return;
+	}
+
 	if (*active_hash == hash_1) list = *domains_1;
 	else list = *domains_2;
 	dump_domain_list(rpc, ctx, list);
