@@ -533,7 +533,7 @@ modparam("lcr","rpid_avp","rpid")
 	</section>
 
 	<section>
-		<title><varname>db_mod</varname> (integer)</title>
+		<title><varname>db_mode</varname> (integer)</title>
 		<para>
 		Sets the database mode of operating:
 		</para>
@@ -556,10 +556,10 @@ modparam("lcr","rpid_avp","rpid")
 			Default value is <quote>1</quote>.
 		</emphasis></para>
 		<example>
-		<title>Setting <varname>db_mod</varname> module parameter</title>
+		<title>Setting <varname>db_mode</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","db_mod",0)
+modparam("lcr","db_mode",0)
 ...
 </programlisting>
 		</example>
