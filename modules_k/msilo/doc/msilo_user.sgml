@@ -220,10 +220,37 @@ modparam("msilo", "clean_period", "3")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set the <quote>param_name</quote> parameter</title>
+		<title>Set the <quote>use_contact</quote> parameter</title>
 <programlisting format="linespecific">
 ...
 modparam("msilo", "use_contact", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>userid_avp</varname> (int)</title>
+		<para>
+		The integer ID of an AVP which may contain the SIP URI of the user
+		to whom the message was sent. It is better to store it in an AVP in
+		the case of speed dial or aliases usage, so you do not need second
+		processing of R-URI in failure route. The AVP is used ony by m_store().
+		</para>
+		<para>
+		If the parameter is not set to a value different than 0, the module
+		does not look for this AVP. If the value is set to a number different
+		than 0, then the module expects in the AVP with that ID a SIP URI.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>userid_avp</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("msilo", "userid_avp", 34)
 ...
 </programlisting>
 		</example>

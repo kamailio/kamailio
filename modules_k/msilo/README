@@ -30,6 +30,7 @@ Daniel-Constantin Mierla
               1.3.5. check_time (int)
               1.3.6. clean_period (int)
               1.3.7. use_contact (int)
+              1.3.8. userid_avp (int)
 
         1.4. Exported Functions
 
@@ -51,9 +52,10 @@ Daniel-Constantin Mierla
    1-4. Set the "expire_time" parameter
    1-5. Set the "check_time" parameter
    1-6. Set the "clean_period" parameter
-   1-7. Set the "param_name" parameter
-   1-8. msilo sql script
-   1-9. OpenSER config script - sample msilo usage
+   1-7. Set the "use_contact" parameter
+   1-8. Set the "userid_avp" parameter
+   1-9. msilo sql script
+   1-10. OpenSER config script - sample msilo usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -199,9 +201,30 @@ modparam("msilo", "clean_period", "3")
 
    Default value is "1 (0 = off, 1 = on)". 
 
-   Example 1-7. Set the "param_name" parameter
+   Example 1-7. Set the "use_contact" parameter
 ...
 modparam("msilo", "use_contact", 0)
+...
+     _________________________________________________________
+
+1.3.8. userid_avp (int)
+
+   The integer ID of an AVP which may contain the SIP URI of the
+   user to whom the message was sent. It is better to store it in
+   an AVP in the case of speed dial or aliases usage, so you do
+   not need second processing of R-URI in failure route. The AVP
+   is used ony by m_store().
+
+   If the parameter is not set to a value different than 0, the
+   module does not look for this AVP. If the value is set to a
+   number different than 0, then the module expects in the AVP
+   with that ID a SIP URI.
+
+   Default value is "0". 
+
+   Example 1-8. Set the "userid_avp" parameter
+...
+modparam("msilo", "userid_avp", 34)
 ...
      _________________________________________________________
 
@@ -254,7 +277,7 @@ modparam("msilo", "use_contact", 0)
    they can be changed, but the name of the columns must be as
    they are in the next SQL script.
 
-   Example 1-8. msilo sql script
+   Example 1-9. msilo sql script
 ...
 
 -- SQL script for MSILO module
@@ -298,7 +321,7 @@ CREATE TABLE silo(
 
    Next picture displays a sample usage of msilo.
 
-   Example 1-9. OpenSER config script - sample msilo usage
+   Example 1-10. OpenSER config script - sample msilo usage
 ...
 # $Id$
 #

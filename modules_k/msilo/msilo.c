@@ -57,6 +57,7 @@
 #include "../../parser/parse_content.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../resolve.h"
+#include "../../usr_avp.h"
 
 #include "../tm/tm_load.h"
 
@@ -129,6 +130,7 @@ int  ms_expire_time=259200;
 int  ms_check_time=30;
 int  ms_clean_period=5;
 int  ms_use_contact=1;
+int  ms_userid_avp=0;
 
 str msg_type = { "MESSAGE", 7 };
 
@@ -156,23 +158,24 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{"db_url",       STR_PARAM, &ms_db_url},
-	{"db_table",     STR_PARAM, &ms_db_table},
-	{"registrar",    STR_PARAM, &ms_registrar},
-	{"expire_time",  INT_PARAM, &ms_expire_time},
-	{"check_time",   INT_PARAM, &ms_check_time},
-	{"clean_period", INT_PARAM, &ms_clean_period},
-	{"use_contact",  INT_PARAM, &ms_use_contact},
-	{"sc_mid",       STR_PARAM, &sc_mid},
-	{"sc_from",      STR_PARAM, &sc_from},
-	{"sc_to",        STR_PARAM, &sc_to},
-	{"sc_uri_user",  STR_PARAM, &sc_uri_user},
-	{"sc_uri_host",  STR_PARAM, &sc_uri_host},
-	{"sc_body",      STR_PARAM, &sc_body},
-	{"sc_ctype",     STR_PARAM, &sc_ctype},
-	{"sc_exp_time",  STR_PARAM, &sc_exp_time},
-	{"sc_inc_time",  STR_PARAM, &sc_inc_time},
-	{0,0,0}
+	{ "db_url",       STR_PARAM, &ms_db_url       },
+	{ "db_table",     STR_PARAM, &ms_db_table     },
+	{ "registrar",    STR_PARAM, &ms_registrar    },
+	{ "expire_time",  INT_PARAM, &ms_expire_time  },
+	{ "check_time",   INT_PARAM, &ms_check_time   },
+	{ "clean_period", INT_PARAM, &ms_clean_period },
+	{ "use_contact",  INT_PARAM, &ms_use_contact  },
+	{ "sc_mid",       STR_PARAM, &sc_mid          },
+	{ "sc_from",      STR_PARAM, &sc_from         },
+	{ "sc_to",        STR_PARAM, &sc_to           },
+	{ "sc_uri_user",  STR_PARAM, &sc_uri_user     },
+	{ "sc_uri_host",  STR_PARAM, &sc_uri_host     },
+	{ "sc_body",      STR_PARAM, &sc_body         },
+	{ "sc_ctype",     STR_PARAM, &sc_ctype        },
+	{ "sc_exp_time",  STR_PARAM, &sc_exp_time     },
+	{ "sc_inc_time",  STR_PARAM, &sc_inc_time     },
+	{ "userid_avp",   INT_PARAM, &ms_userid_avp   },
+	{ 0,0,0 }
 };
 
 
@@ -301,6 +304,10 @@ static int m_store(struct sip_msg* msg, char* mode, char* str2)
 	static char buf1[1024];
 	int mime;
 
+	int_str        avp_name;
+	int_str        avp_value;
+	struct usr_avp *avp;
+
 	DBG("MSILO: m_store: ------------ start ------------\n");
 
 	/* get message body - after that whole SIP MESSAGE is parsed */
@@ -411,8 +418,25 @@ static int m_store(struct sip_msg* msg, char* mode, char* str2)
 	nr_keys++;
 
 	/* get the R-URI */
-	puri.user.len = 0;
-	if(mode && mode[0]=='0' && msg->new_uri.len > 0)
+	memset(&puri, 0, sizeof(struct sip_uri));
+	if(ms_userid_avp!=0)
+	{
+		avp = NULL;
+		avp_name.n = ms_userid_avp;
+		avp=search_first_avp(0, avp_name, &avp_value);
+		if(avp!=NULL)
+		{
+			if(parse_uri(avp_value.s->s, avp_value.s->len, &puri)!=0)
+			{
+				LOG(L_ERR, "MSILO:m_store: bad new URI in userid avp!\n");
+				goto error;
+			} else {
+				DBG("MSILO:m_store: using user id from avp\n");
+			}
+		}
+	}
+
+	if(mode && mode[0]=='0' && puri.user.len == 0 && msg->new_uri.len > 0)
 	{
 		DBG("MSILO:m_store: NEW R-URI found - check if is AoR!\n");
 		if(parse_uri(msg->new_uri.s, msg->new_uri.len, &puri)!=0)
