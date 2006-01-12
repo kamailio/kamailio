@@ -21,6 +21,15 @@ Description: Sip Express Router, very fast and configurable SIP proxy
  Authentication, Record Routing, SMS Gateway, Jabber Gateway, Transaction 
  Module, Registrar and User Location.
 
+Package: ser-ctl
+Architecture: any
+Depends: python2.3
+Suggests: python2.3-mysqldb, python2.3-psycopg
+Description: SER command line administration tools
+ This package contains the SER command line administration tools written
+ in python. The tools can be used to administer SIP accounts, SIP domains,
+ and various settings of a SER based SIP server.
+
 Package: ser-mysql-module
 Architecture: any
 Depends: ${shlibs:Depends}, ser (= ${Source-Version})
@@ -44,12 +53,12 @@ Description: contains the cpl-c module (CPL support)
  This has been split out of the main ser package, so that ser will not
  depend upon libxml2.
 
-Package: ser-pa-module
+Package: ser-presence-module
 Architecture: any
 Depends: ${shlibs:Depends}, ser (= ${Source-Version})
-Description: contains the pa module (Presence server support)
- This has been split out of the main ser package, so that ser will not
- depend upon libxml2.
+Description: contains the SIMPLE based presence support (Presence server)
+ This module contains modules and libraries needed to implement SIMPLE
+ based presence support in SER
 
 Package: ser-radius-modules
 Architecture: any
@@ -67,16 +76,11 @@ Description: contains the PostgreSQL database connectivity module
  depend upon libpq. This module will enable you to use the digest
  authentication module or persistent user location entries.
 
-Package: ser-acc-db-module
+Package: ser-xmlrpc-module
 Architecture: any
 Depends: ${shlibs:Depends}, ser (= ${Source-Version})
-Suggests: ser-mysql-module
-Description: contains the ser acc module, with db support 
- This modules will enable you to do accounting in a database. 
- You need also a database interface module like MySQL or PostgreSQL.
-
-Package: ser-acc-radius-module
-Architecture: any
-Depends: ${shlibs:Depends}, ser (= ${Source-Version})
-Description: contains the ser acc module, with RADIUS support 
- This modules will enable you to do accounting over radius. 
+Description: contains the XML-RPC based interface to SER
+ This module provides XML-RPC administrative interface to SER. The
+ interface can be used to change various configuration options of
+ SER at runtime. Other applications, such as serctl command line
+ tools and SERWeb use XML-RPC interface to communicate with SER
