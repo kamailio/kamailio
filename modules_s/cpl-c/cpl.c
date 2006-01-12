@@ -231,7 +231,7 @@ static int cpl_init(void)
 	if (timer_avp) {
 		foo.s = timer_avp;
 		foo.len = strlen(foo.s);
-		if (parse_avp_spec(&foo,&cpl_env.timer_avp_type,&cpl_env.timer_avp)<0){
+		if (parse_avp_spec(&foo,&cpl_env.timer_avp_type,&cpl_env.timer_avp,0)<0){
 			LOG(L_CRIT,"ERROR:cpl_init: invalid timer AVP specs \"%s\"\n",
 				timer_avp);
 			goto error;
