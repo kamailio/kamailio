@@ -19,9 +19,11 @@ NAME=ser
 DESC=ser
 PIDFILE=/var/run/$NAME/$NAME.pid
 PARAMS="-P $PIDFILE -u ser -g ser"
+LD_LIBRARY_PATH=/usr/lib/ser
 
 test -f $DAEMON || exit 0
 
+export LD_LIBRARY_PATH
 set -e
 
 case "$1" in
@@ -56,8 +58,9 @@ case "$1" in
 	#	just the same as "restart".
 	#
 	# Check if ser configuration is valid before restarting the server
-	out=`($DAEMON -c >/dev/null || true) 2>&1`
-	if [ "$out" != 'config file ok, exiting...' ]; then
+        (($DAEMON -c 2>&1) | grep "config file ok, exiting") > /dev/null
+	if [ $? -ne 0 ]; then
+            ($DAEMON -c 2>&1)
 	    echo -e "\nThere are errors in the configuration file. Please fix them first"
 	    echo -e "\n$out\n"
 	    exit 0
