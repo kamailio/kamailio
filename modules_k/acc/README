@@ -89,6 +89,7 @@ Bogdan-Andrei Iancu
               1.5.43. acc_src_leg_column (string)
               1.5.44. acc_dst_leg_column (string)
               1.5.45. db_extra (string)
+              1.5.46. detect_direction (integer)
 
         1.6. Exported Functions
 
@@ -146,10 +147,11 @@ Bogdan-Andrei Iancu
    1-43. acc_src_leg_column example
    1-44. acc_dst_leg_column example
    1-45. db_extra example
-   1-46. acc_log_request usage
-   1-47. acc_db_request usage
-   1-48. acc_rad_request usage
-   1-49. acc_diam_request usage
+   1-46. detect_direction example
+   1-47. acc_log_request usage
+   1-48. acc_db_request usage
+   1-49. acc_rad_request usage
+   1-50. acc_diam_request usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -173,25 +175,26 @@ Chapter 1. User's Guide
    a string with characters specifying which parts of request
    should be printed:
 
-     * c = Call-Id
-     * d = To tag (Dst)
-     * f = From header
-     * i = Inbound Request-URI
-     * m = Method
-     * o = Outbound Request-URI
-     * r = From TAG
-     * s = Status
-     * t = To header
-     * u = digest Username
-     * p = username Part of inbound Request-URI
-     * 0 = From URI user part
-     * 1 = To URI user part
-     * F = From URI
-     * T = To URI
-     * U = User name (digest, From URI otherwise)
-     * S = 3-digit Status code from reply
      * n = Cseq number
-     * D = domain
+     * c = Call-Id
+     * m = Method
+     * i = Inbound Request-URI
+     * o = Outbound Request-URI
+     * p = Username part of inbound Request-URI
+     * D = Domain part of inbound Request-URI
+     * f = From header
+     * r = From TAG
+     * F = From URI
+     * 0 = From URI user part
+     * X = From URI domain part
+     * t = To header
+     * d = To TAG
+     * T = To URI
+     * 1 = To URI user part
+     * S = 3-digit Status code from reply
+     * s = Status
+     * U = User name (digest, From URI otherwise)
+     * u = digest Username
 
    If a value is not present in request, "n/a" is accounted
    instead.
@@ -395,7 +398,9 @@ if (uri=~"sip:+40") /* calls to Romania */ {
    words the listed modules must be loaded before this module):
 
      * tm -- Transaction Manager
-     * a database module -- If compiled with database support.
+     * a database module -- If database support is used.
+     * rr -- Record Route, if "detect_direction" module parameter
+       is enabled.
      _________________________________________________________
 
 1.4.2. External Libraries or Applications
@@ -900,6 +905,23 @@ modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)
 ")
      _________________________________________________________
 
+1.5.46. detect_direction (integer)
+
+   Controlles the direction detection for sequential requests. If
+   enabled (non zero value), for sequential requests with
+   upstream direction (from callee to caller), the FROM and TO
+   will be swapped (the direction will be preserved as in the
+   original request).
+
+   It affects all values related to TO and FROM headers (body,
+   URI, username, domain, TAG).
+
+   Default value is 0 (disabled).
+
+   Example 1-46. detect_direction example
+modparam("acc", "detect_direction", 1)
+     _________________________________________________________
+
 1.6. Exported Functions
 
 1.6.1. acc_log_request(comment)
@@ -916,7 +938,7 @@ modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-46. acc_log_request usage
+   Example 1-47. acc_log_request usage
 ...
 acc_log_request("Some comment");
 ...
@@ -935,7 +957,7 @@ acc_log_request("Some comment");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-47. acc_db_request usage
+   Example 1-48. acc_db_request usage
 ...
 acc_log_request("Some comment", "Some table");
 ...
@@ -952,7 +974,7 @@ acc_log_request("Some comment", "Some table");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-48. acc_rad_request usage
+   Example 1-49. acc_rad_request usage
 ...
 acc_rad_request("Some comment");
 ...
@@ -969,7 +991,7 @@ acc_rad_request("Some comment");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-49. acc_diam_request usage
+   Example 1-50. acc_diam_request usage
 ...
 acc_diam_request("Some comment");
 ...
@@ -1011,4 +1033,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.

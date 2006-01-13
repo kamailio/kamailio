@@ -38,6 +38,7 @@
  *             (andrei)
  * 2005-05-30  acc_extra patch commited (ramona)
  * 2005-06-28  multi leg call support added (bogdan)
+ * 2006-01-13  detect_direction (for sequential requests) added (bogdan)
  */
 
 #include <stdio.h>
@@ -56,6 +57,7 @@
 #include "acc.h"
 #include "acc_extra.h"
 #include "../tm/tm_load.h"
+#include "../rr/api.h"
 
 #ifdef RAD_ACC
 #include <radiusclient-ng.h>
@@ -73,6 +75,7 @@
 MODULE_VERSION
 
 struct tm_binds tmb;
+struct rr_binds rrb;
 
 static int mod_init( void );
 static void destroy(void);
@@ -111,6 +114,8 @@ struct acc_extra *log_extra = 0;
 int multileg_enabled = 0;
 int src_avp_id = 0;
 int dst_avp_id = 0;
+/* detect and correct direction in the sequential requests */
+int detect_direction = 0;
 
 
 #ifdef RAD_ACC
@@ -220,6 +225,7 @@ static param_export_t params[] = {
 	{"multi_leg_enabled",       INT_PARAM, &multileg_enabled        },
 	{"src_leg_avp_id",          INT_PARAM, &src_avp_id              },
 	{"dst_leg_avp_id",          INT_PARAM, &dst_avp_id              },
+	{"detect_direction",        INT_PARAM, &detect_direction        },
 	/* syslog specific */
 	{"log_flag",             INT_PARAM, &log_flag             },
 	{"log_missed_flag",      INT_PARAM, &log_missed_flag      },
@@ -350,6 +356,13 @@ static int mod_init( void )
 		LOG(L_ERR, "ERROR:acc:mod_init: can't load TM API\n");
 		return -1;
 	}
+
+	/* if detect_direction is enabled, load rr also */
+	if (detect_direction && load_rr_api(&rrb)!=0) {
+		LOG(L_ERR, "ERROR:acc:mod_init: can't load RR API\n");
+		return -1;
+	}
+
 
 	if (verify_fmt(log_fmt)==-1) return -1;
 

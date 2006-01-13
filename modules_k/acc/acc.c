@@ -27,6 +27,7 @@
  *              added (andrei)
  * 2005-05-30  acc_extra patch commited (ramona)
  * 2005-06-28  multi leg call support added (bogdan)
+ * 2006-01-13  detect_direction (for sequential requests) added (bogdan)
  */
 
 
@@ -43,6 +44,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/digest/digest.h"
 #include "../tm/t_funcs.h"
+#include "../rr/api.h"
 #include "acc_mod.h"
 #include "acc.h"
 #include "acc_extra.h"
@@ -71,6 +73,7 @@
 static str na={NA, NA_LEN};
 
 extern struct acc_extra *log_extra;
+extern struct rr_binds rrb;
 
 #ifdef RAD_ACC
 /* caution: keep these aligned to RAD_ACC_FMT !! */
@@ -137,27 +140,49 @@ static inline str *cred_realm(struct sip_msg *rq)
 	return realm;
 }
 
+
 /* create an array of str's for accounting using a formatting string;
  * this is the heart of the accounting module -- it prints whatever
  * requested in a way, that can be used for syslog, radius, 
  * sql, whatsoever */
 static int fmt2strar( char *fmt, /* what would you like to account ? */
 		struct sip_msg *rq, /* accounted message */
-		struct hdr_field *to, 
-		str *phrase, 
+		struct hdr_field *to_hdr,
+		str *phrase,
 		int *total_len, /* total length of accounted values */
 		int *attr_len,  /* total length of accounted attribute names */
 		str **val_arr, /* that's the output -- must have MAX_ACC_COLUMNS */
 		str *atr_arr)
 {
+#define get_from_to( _msg, _from, _to) \
+	do{ \
+		if (!from_to_set) {\
+			if(detect_direction && !rrb.is_direction(_msg,RR_FLOW_UPSTREAM)){\
+				/* swap from and to */ \
+				_from = to_hdr; \
+				_to = _msg->from; \
+			} else { \
+				_from = _msg->from; \
+				_to = to_hdr; \
+			} \
+			from_to_set = 1; \
+		} \
+	}while(0)
+
+#define get_ft_body( _ft_hdr) ((struct to_body*)_ft_hdr->parsed)
+
 	int cnt, tl, al;
-	struct to_body* from, *pto;
-	static struct sip_uri from_uri, to_uri;
+	struct to_body *ft_body;
+	static struct sip_uri puri;
 	static str mycode;
 	str *cr;
 	struct cseq_body *cseq;
+	int from_to_set;
+	struct hdr_field *from , *to;
 
 	cnt=tl=al=0;
+	from_to_set = 0;
+	from = to = 0;
 
 	/* we don't care about parsing here; either the function
 	 * was called from script, in which case the wrapping function
@@ -165,7 +190,6 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 	 * TM should have preparsed from REQUEST_IN callback; what's not
 	 * here is replaced with NA
 	 */
-
 
 	while(*fmt) {
 		if (cnt==ALL_LOG_FMT_LEN) {
@@ -192,20 +216,22 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 				val_arr[cnt]=&rq->first_line.u.request.method;
 				ATR(METHOD);
 				break;
-			case 'o':
+			case 'o': /* outgoing uri */
 				if (rq->new_uri.len) val_arr[cnt]=&rq->new_uri;
 				else val_arr[cnt]=&rq->first_line.u.request.uri;
 				ATR(OURI);
 				break;
-			case 'f':
-				val_arr[cnt]=(rq->from && rq->from->body.len) 
-					? &rq->from->body : &na;
+			case 'f': /* from-body */
+				get_from_to( rq, from, to);
+				val_arr[cnt]=(from && from->body.len) 
+					? &from->body : &na;
 				ATR(FROM);
 				break;
 			case 'r': /* from-tag */
-				if (rq->from && (from=get_from(rq))
-							&& from->tag_value.len) {
-						val_arr[cnt]=&from->tag_value;
+				get_from_to( rq, from, to);
+				if (from && (ft_body=get_ft_body(from))
+							&& ft_body->tag_value.len) {
+						val_arr[cnt]=&ft_body->tag_value;
 				} else val_arr[cnt]=&na;
 				ATR(FROMTAG);
 				break;
@@ -218,56 +244,62 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 				}
 				/* fallback to from-uri if digest unavailable ... */
 			case 'F': /* from-uri */
-				if (rq->from && (from=get_from(rq))
-							&& from->uri.len) {
-						val_arr[cnt]=&from->uri;
+				get_from_to( rq, from, to);
+				if (from && (ft_body=get_ft_body(from))
+							&& ft_body->uri.len) {
+						val_arr[cnt]=&ft_body->uri;
 				} else val_arr[cnt]=&na;
 				ATR(FROMURI);
 				break;
-			case '0': /* from user */
+			case '0': /* from-user */
+				get_from_to( rq, from, to);
 				val_arr[cnt]=&na;
-				if (rq->from && (from=get_from(rq))
-						&& from->uri.len) {
-					parse_uri(from->uri.s, from->uri.len, &from_uri);
-					if (from_uri.user.len) 
-							val_arr[cnt]=&from_uri.user;
+				if (from && (ft_body=get_ft_body(from))
+						&& ft_body->uri.len) {
+					parse_uri(ft_body->uri.s, ft_body->uri.len, &puri);
+					if (puri.user.len) 
+							val_arr[cnt]=&puri.user;
 				} 
 				ATR(FROMUSER);
 				break;
-			case 'X': /* from user */
+			case 'X': /* from-domain */
+				get_from_to( rq, from, to);
 				val_arr[cnt]=&na;
-				if (rq->from && (from=get_from(rq))
-						&& from->uri.len) {
-					parse_uri(from->uri.s, from->uri.len, &from_uri);
-					if (from_uri.host.len) 
-							val_arr[cnt]=&from_uri.host;
+				if (from && (ft_body=get_ft_body(from))
+						&& ft_body->uri.len) {
+					parse_uri(ft_body->uri.s, ft_body->uri.len, &puri);
+					if (puri.host.len) 
+							val_arr[cnt]=&puri.host;
 				} 
 				ATR(FROMDOMAIN);
 				break;
-			case 't':
+			case 't': /* to-body */
+				get_from_to( rq, from, to);
 				val_arr[cnt]=(to && to->body.len) ? &to->body : &na;
 				ATR(TO);
 				break;
-			case 'd':	
-				val_arr[cnt]=(to && (pto=(struct to_body*)(to->parsed))
-					&& pto->tag_value.len) ? 
-					& pto->tag_value : &na;
+			case 'd': /* to-tag */
+				get_from_to( rq, from, to);
+				val_arr[cnt]=(to && (ft_body=get_ft_body(to))
+					&& ft_body->tag_value.len) ? &ft_body->tag_value : &na;
 				ATR(TOTAG);
 				break;
 			case 'T': /* to-uri */
-				if (rq->to && (pto=get_to(rq))
-							&& pto->uri.len) {
-						val_arr[cnt]=&pto->uri;
+				get_from_to( rq, from, to);
+				if (to && (ft_body=get_ft_body(to))
+							&& ft_body->uri.len) {
+						val_arr[cnt]=&ft_body->uri;
 				} else val_arr[cnt]=&na;
 				ATR(TOURI);
 				break;
 			case '1': /* to user */ 
+				get_from_to( rq, from, to);
 				val_arr[cnt]=&na;
-				if (rq->to && (pto=get_to(rq))
-							&& pto->uri.len) {
-					parse_uri(pto->uri.s, pto->uri.len, &to_uri);
-					if (to_uri.user.len)
-						val_arr[cnt]=&to_uri.user;
+				if (to && (ft_body=get_ft_body(to))
+							&& ft_body->uri.len) {
+					parse_uri(ft_body->uri.s, ft_body->uri.len, &puri);
+					if (puri.user.len)
+						val_arr[cnt]=&puri.user;
 				} 
 				ATR(TOUSER);
 				break;
