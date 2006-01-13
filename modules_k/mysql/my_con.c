@@ -81,6 +81,8 @@ struct my_con* new_connection(struct db_id* id)
 		mysql_close(ptr->con);
 		goto err;
 	}
+	/* force reconnection */
+	ptr->con->reconnect = 1;
 
 	DBG("new_connection: Connection type is %s\n", mysql_get_host_info(ptr->con));
 	DBG("new_connection: Protocol version is %d\n", mysql_get_proto_info(ptr->con));
