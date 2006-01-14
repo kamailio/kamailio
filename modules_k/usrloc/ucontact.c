@@ -370,7 +370,6 @@ int db_insert_ucontact(ucontact_t* _c)
 	char* dom;
 	db_key_t keys[12];
 	db_val_t vals[12];
-	int len;
 	
 	if (_c->flags & FL_MEM) {
 		return 0;
@@ -437,9 +436,8 @@ int db_insert_ucontact(ucontact_t* _c)
 
 	vals[9].type = DB_STR;
 	if (_c->sock) {
-		vals[9].val.str_val.s = socket2str(_c->sock, 0, &len);
-		vals[9].val.str_val.len = len;
-		vals[9].nul = vals[9].val.str_val.s?0:1;
+		vals[9].val.str_val = _c->sock->sock_str;
+		vals[9].nul = 0;
 	} else {
 		vals[9].nul = 1;
 	}
@@ -482,7 +480,6 @@ int db_insert_ucontact(ucontact_t* _c)
 int db_update_ucontact(ucontact_t* _c)
 {
 	char* dom;
-	int len;
 	db_key_t keys1[3];
 	db_val_t vals1[3];
 
@@ -548,9 +545,8 @@ int db_update_ucontact(ucontact_t* _c)
 
 	vals2[7].type = DB_STR;
 	if (_c->sock) {
-		vals2[7].val.str_val.s = socket2str(_c->sock, 0, &len);
-		vals2[7].val.str_val.len = len;
-		vals2[7].nul = vals2[7].val.str_val.s?0:1;
+		vals2[7].val.str_val = _c->sock->sock_str;
+		vals2[7].nul = 0;
 	} else {
 		vals2[7].nul = 1;
 	}

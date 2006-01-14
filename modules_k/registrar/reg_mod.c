@@ -307,13 +307,14 @@ static void mod_destroy(void)
 
 static int add_sock_hdr(struct sip_msg* msg, char *name, char *foo)
 {
+	struct socket_info* si;
 	struct lump* anchor;
 	str *hdr_name;
 	str hdr;
-	int len;
 	char *p;
 
 	hdr_name = (str*)name;
+	si = msg->rcv.bind_address;
 
 	if (parse_headers( msg, HDR_EOH_F, 0) == -1) {
 		LOG(L_ERR,"ERROR:registrar:add_sock_hdr: failed to parse message\n");
@@ -326,8 +327,7 @@ static int add_sock_hdr(struct sip_msg* msg, char *name, char *foo)
 		goto error;
 	}
 
-	hdr.len = hdr_name->len + 2 + sock_str_len(msg->rcv.bind_address)
-		+ CRLF_LEN;
+	hdr.len = hdr_name->len + 2 + si->sock_str.len + CRLF_LEN;
 	if ( (hdr.s=(char*)pkg_malloc(hdr.len))==0 ) {
 		LOG(L_ERR,"ERROR:registrar:add_sock_hdr: no more pkg mem\n");
 		goto error;
@@ -339,13 +339,8 @@ static int add_sock_hdr(struct sip_msg* msg, char *name, char *foo)
 	*(p++) = ':';
 	*(p++) = ' ';
 
-	len = hdr.len - (p - hdr.s);
-	p = socket2str(msg->rcv.bind_address, p, &len);
-	if (p==0) {
-		LOG(L_CRIT,"BUG:registrar:add_sock_hdr: socket2str failed\n");
-		goto error1;
-	}
-	p += len;
+	memcpy( p, si->sock_str.s, si->sock_str.len);
+	p += si->sock_str.len;
 
 	memcpy( p, CRLF, CRLF_LEN);
 	p += CRLF_LEN;
