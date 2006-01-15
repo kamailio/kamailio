@@ -78,6 +78,7 @@ MODULE_VERSION
 static int fixup_t_send_reply(void** param, int param_no);
 static int fixup_str2int( void** param, int param_no);
 static int fixup_hostport2proxy(void** param, int param_no);
+static int fixup_phostport2proxy(void** param, int param_no);
 static int fixup_str2regexp(void** param, int param_no);
 static int fixup_local_replied(void** param, int param_no);
 
@@ -158,41 +159,60 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE},
 	{"t_release",            w_t_release,             0, 0,
 			REQUEST_ROUTE},
+/* MARK - to become obsolete */
 	{"t_relay_to_udp",       w_t_relay_to_udp,        2, fixup_hostport2proxy,
 			REQUEST_ROUTE|FAILURE_ROUTE},
 #ifdef USE_TCP
+/* MARK - to become obsolete */
 	{"t_relay_to_tcp",       w_t_relay_to_tcp,        2, fixup_hostport2proxy,
 			REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
 #ifdef USE_TLS
+/* MARK - to become obsolete */
 	{"t_relay_to_tls",       w_t_relay_to_tls,        2, fixup_hostport2proxy,
 			REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
+	{"t_replicate",          w_t_replicate,           1,fixup_phostport2proxy,
+			REQUEST_ROUTE},
 	{"t_replicate",          w_t_replicate,           2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
+/* MARK - to become obsolete */
 	{"t_replicate_udp",      w_t_replicate_udp,       2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 #ifdef USE_TCP
+/* MARK - to become obsolete */
 	{"t_replicate_tcp",      w_t_replicate_tcp,       2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 #endif
 #ifdef USE_TLS
+/* MARK - to become obsolete */
 	{"t_replicate_tls",      w_t_replicate_tls,       2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 #endif
 	{"t_relay",              w_t_relay,               0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
+	{"t_relay",              w_t_relay,               1,fixup_phostport2proxy,
+			REQUEST_ROUTE | FAILURE_ROUTE },
+	{"t_forward_nonack",     w_t_forward_nonack,      0, 0,
+			REQUEST_ROUTE},
+	{"t_forward_nonack",     w_t_forward_nonack,      1,fixup_phostport2proxy,
+			REQUEST_ROUTE},
+/* MARK - to become obsolete */
 	{"t_forward_nonack",     w_t_forward_nonack,      2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
+/* MARK - to become obsolete */
 	{"t_forward_nonack_uri", w_t_forward_nonack_uri,  0, 0,
 			REQUEST_ROUTE},
+/* MARK - to become obsolete */
 	{"t_forward_nonack_udp", w_t_forward_nonack_udp,  2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 #ifdef USE_TCP
+/* MARK - to become obsolete */
 	{"t_forward_nonack_tcp", w_t_forward_nonack_tcp,  2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 #endif
 #ifdef USE_TLS
+/* MARK - to become obsolete */
 	{"t_forward_nonack_tls", w_t_forward_nonack_tls,  2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 #endif
@@ -299,6 +319,43 @@ static int fixup_str2int( void** param, int param_no)
 			return E_CFG;
 		}
 	}
+	return 0;
+}
+
+
+static int fixup_phostport2proxy(void** param, int param_no)
+{
+	struct proxy_l *proxy;
+	char *s;
+	int port;
+	int proto;
+	str host;
+
+	if (param_no!=1) {
+		LOG(L_CRIT,"BUG:tm:fixup_phostport2proxy: called with more than "
+			" one parameter\n");
+		return E_BUG;
+	}
+
+	s = (char *) (*param);
+	if (s==0 || *s==0) {
+		LOG(L_CRIT,"ERROR:tm:fixup_phostport2proxy: empty parameter\n");
+		return E_UNSPEC;
+	}
+
+	if (parse_phostport( s, strlen(s), &host.s, &host.len, &port, &proto)!=0){
+		LOG(L_CRIT,"ERROR:tm:fixup_phostport2proxy: invalid parameter "
+			"<%s>\n",s);
+		return E_UNSPEC;
+	}
+
+	proxy = mk_proxy( &host, port, proto);
+	if (proxy==0) {
+		LOG(L_ERR, "ERROR:tm:fixup_phostport2proxy: failed to resolve "
+			"<%.*s>\n", host.len, host.s );
+		return ser_error;
+	}
+	*(param)=proxy;
 	return 0;
 }
 
@@ -490,6 +547,7 @@ static int script_init( struct sip_msg *foo, void *bar)
 	t_on_negative( 0 );
 	t_on_reply(0);
 	t_on_branch(0);
+	set_t(T_UNDEFINED);
 	/* reset the kr status */
 	set_kr(0);
 	return 1;
@@ -866,34 +924,52 @@ inline static int w_t_forward_nonack( struct sip_msg* msg, char* proxy,
 }
 
 
+/* MARK - to become obsolete */
 inline static int w_t_forward_nonack_uri(struct sip_msg* msg, char *foo,
 																	char *bar)
 {
+	LOG(L_CRIT,"CRITICAL:tm:t_forward_nonack_uri: this function is obsolete "
+		"and sooner it will be removed; please use t_forward_nonack()\n");
 	return _w_t_forward_nonack(msg, 0, PROTO_NONE);
 }
 
 
+/* MARK - to become obsolete */
 inline static int w_t_forward_nonack_udp( struct sip_msg* msg, char* proxy,
 										char* foo)
 {
-	return _w_t_forward_nonack(msg, proxy, PROTO_UDP);
+	LOG(L_CRIT,"CRITICAL:tm:t_forward_nonack_udp: this function is obsolete "
+		"and sooner it will be removed; please use "
+		"t_forward_nonack(proto:host:port)\n");
+	((struct proxy_l *)proxy)->proto = PROTO_UDP;
+	return _w_t_forward_nonack(msg, proxy, PROTO_NONE);
 }
 
 
 #ifdef USE_TCP
+/* MARK - to become obsolete */
 inline static int w_t_forward_nonack_tcp( struct sip_msg* msg, char* proxy,
 										char* foo)
 {
-	return _w_t_forward_nonack(msg, proxy, PROTO_TCP);
+	LOG(L_CRIT,"CRITICAL:tm:t_forward_nonack_tcp: this function is obsolete "
+		"and sooner it will be removed; please use "
+		"t_forward_nonack(proto:host:port)\n");
+	((struct proxy_l *)proxy)->proto = PROTO_TCP;
+	return _w_t_forward_nonack(msg, proxy, PROTO_NONE);
 }
 #endif
 
 
 #ifdef USE_TLS
+/* MARK - to become obsolete */
 inline static int w_t_forward_nonack_tls( struct sip_msg* msg, char* proxy,
 										char* foo)
 {
-	return _w_t_forward_nonack(msg, proxy, PROTO_TLS);
+	LOG(L_CRIT,"CRITICAL:tm:t_forward_nonack_tls: this function is obsolete "
+		"and sooner it will be removed; please use "
+		"t_forward_nonack(proto:host:port)\n");
+	((struct proxy_l *)proxy)->proto = PROTO_TLS;
+	return _w_t_forward_nonack(msg, proxy, PROTO_NONE);
 }
 #endif
 
@@ -1018,20 +1094,28 @@ inline static int _w_t_relay_to( struct sip_msg  *p_msg, struct proxy_l *proxy)
 }
 
 
+/* MARK - to become obsolete */
 inline static int w_t_relay_to_udp( struct sip_msg  *p_msg , 
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
+	LOG(L_CRIT,"CRITICAL:tm:t_relay_to_udp: this function is obsolete and "
+		"sooner it will be removed; please use "
+		"t_relay(proto:host:port)\n");
 	((struct proxy_l *)proxy)->proto=PROTO_UDP;
 	return _w_t_relay_to( p_msg, ( struct proxy_l *) proxy);
 }
 
 
 #ifdef USE_TCP
+/* MARK - to become obsolete */
 inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg , 
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
+	LOG(L_CRIT,"CRITICAL:tm:t_relay_to_tcp: this function is obsolete and "
+		"sooner it will be removed; please use "
+		"t_relay(proto:host:port)\n");
 	((struct proxy_l *)proxy)->proto=PROTO_TCP;
 	return _w_t_relay_to( p_msg, ( struct proxy_l *) proxy);
 }
@@ -1039,10 +1123,14 @@ inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg ,
 
 
 #ifdef USE_TLS
+/* MARK - to become obsolete */
 inline static int w_t_relay_to_tls( struct sip_msg  *p_msg , 
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
+	LOG(L_CRIT,"CRITICAL:tm:t_relay_to_tls: this function is obsolete and "
+		"sooner it will be removed; please use "
+		"t_relay(proto:host:port)\n");
 	((struct proxy_l *)proxy)->proto=PROTO_TLS;
 	return _w_t_relay_to( p_msg, ( struct proxy_l *) proxy);
 }
@@ -1053,40 +1141,56 @@ inline static int w_t_replicate( struct sip_msg  *p_msg ,
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
-	return t_replicate(p_msg, ( struct proxy_l *) proxy, p_msg->rcv.proto );
+	/* preserv proto if not explicitly changed */
+	if (((struct proxy_l *)proxy)->proto==PROTO_NONE)
+		((struct proxy_l *)proxy)->proto = p_msg->rcv.proto;
+	return t_replicate(p_msg, ( struct proxy_l *) proxy, PROTO_NONE );
 }
 
-
+/* MARK - to become obsolete */
 inline static int w_t_replicate_udp( struct sip_msg  *p_msg , 
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
-	return t_replicate(p_msg, ( struct proxy_l *) proxy, PROTO_UDP );
+	LOG(L_CRIT,"CRITICAL:tm:t_replicate_udp: this function is obsolete and "
+		"sooner it will be removed; please use "
+		"t_replicate(proto:host:port)\n");
+	((struct proxy_l *)proxy)->proto = PROTO_UDP;
+	return t_replicate(p_msg, ( struct proxy_l *) proxy, PROTO_NONE );
 }
 
 
 #ifdef USE_TCP
+/* MARK - to become obsolete */
 inline static int w_t_replicate_tcp( struct sip_msg  *p_msg , 
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
-	return t_replicate(p_msg, ( struct proxy_l *) proxy, PROTO_TCP );
+	LOG(L_CRIT,"CRITICAL:tm:t_replicate_tcp: this function is obsolete and "
+		"sooner it will be removed; please use "
+		"t_replicate(proto:host:port)\n");
+	((struct proxy_l *)proxy)->proto = PROTO_TCP;
+	return t_replicate(p_msg, ( struct proxy_l *) proxy, PROTO_NONE );
 }
 #endif
 
 
 #ifdef USE_TLS
+/* MARK - to become obsolete */
 inline static int w_t_replicate_tls( struct sip_msg  *p_msg , 
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
-	return t_replicate(p_msg, ( struct proxy_l *) proxy, PROTO_TLS );
+	LOG(L_CRIT,"CRITICAL:tm:t_replicate_tls: this function is obsolete and "
+		"sooner it will be removed; please use "
+		"t_replicate(proto:host:port)\n");
+	((struct proxy_l *)proxy)->proto = PROTO_TLS;
+	return t_replicate(p_msg, ( struct proxy_l *) proxy, PROTO_NONE );
 }
 #endif
 
 
-inline static int w_t_relay( struct sip_msg  *p_msg , 
-						char *_foo, char *_bar)
+inline static int w_t_relay( struct sip_msg  *p_msg , char *proxy, char *foo)
 {
-	return _w_t_relay_to( p_msg, 0);
+	return _w_t_relay_to( p_msg, (struct proxy_l *)proxy );
 }
