@@ -230,15 +230,10 @@ typedef unsigned int augUInt32;
 #define TCFLSH	TIOCFLUSH
 #define termio termios
 
-#if defined(__i386)
-
-#if defined(__GNUC__)
-#define AUG_CONFIGURATION	"FreeBSD x86 with GCC"
-#endif
+#define AUG_CONFIGURATION      "FreeBSD"
 
 typedef unsigned int augUInt32;
 
-#endif /* i386 */
 #endif /* freebsd */
 
 /*
