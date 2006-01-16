@@ -173,8 +173,7 @@ void put_on_wait(  struct cell  *Trans  );
 void cleanup_localcancel_timers( struct cell *t );
 
 
-int t_relay_to( struct sip_msg  *p_msg ,
-	struct proxy_l *proxy, int proto, int replicate ) ;
+int t_relay_to( struct sip_msg  *p_msg, struct proxy_l *proxy, int replicate);
 
 
 #endif

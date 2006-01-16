@@ -40,7 +40,9 @@
  *  2004-02-18  t_reply exported via FIFO - imported from VM (bogdan)
  *  2004-10-01  added a new param.: restart_fr_on_each_reply (andrei)
  *  2005-05-30  light version of tm_load - find_export dropped -> module 
- *              interface dosen't need to export interncal functions (bogdan)
+ *              interface dosen't need to export internal functions (bogdan)
+ *  2006-01-15  merged functions which diff only via proto (like t_relay,
+ *              t_replicate and t_forward_nonack) (bogdan)
  */
 
 
@@ -894,8 +896,7 @@ inline static int w_t_check(struct sip_msg* msg, char* str, char* str2)
 }
 
 
-inline static int _w_t_forward_nonack(struct sip_msg* msg, char* proxy,
-																	int proto)
+inline static int _w_t_forward_nonack(struct sip_msg* msg, char* proxy)
 {
 	struct cell *t;
 	if (t_check( msg , 0 )==-1) {
@@ -909,7 +910,7 @@ inline static int _w_t_forward_nonack(struct sip_msg* msg, char* proxy,
 			LOG(L_WARN,"WARNING: you don't really want to fwd hbh ACK\n");
 			return -1;
 		}
-		return t_forward_nonack(t, msg, ( struct proxy_l *) proxy, proto );
+		return t_forward_nonack( t, msg, ( struct proxy_l *)proxy);
 	} else {
 		DBG("DEBUG: forward_nonack: no transaction found\n");
 		return -1;
@@ -920,7 +921,7 @@ inline static int _w_t_forward_nonack(struct sip_msg* msg, char* proxy,
 inline static int w_t_forward_nonack( struct sip_msg* msg, char* proxy,
 										char* foo)
 {
-	return _w_t_forward_nonack(msg, proxy, PROTO_NONE);
+	return _w_t_forward_nonack( msg, proxy);
 }
 
 
@@ -930,7 +931,7 @@ inline static int w_t_forward_nonack_uri(struct sip_msg* msg, char *foo,
 {
 	LOG(L_CRIT,"CRITICAL:tm:t_forward_nonack_uri: this function is obsolete "
 		"and sooner it will be removed; please use t_forward_nonack()\n");
-	return _w_t_forward_nonack(msg, 0, PROTO_NONE);
+	return _w_t_forward_nonack( msg, 0);
 }
 
 
@@ -942,7 +943,7 @@ inline static int w_t_forward_nonack_udp( struct sip_msg* msg, char* proxy,
 		"and sooner it will be removed; please use "
 		"t_forward_nonack(proto:host:port)\n");
 	((struct proxy_l *)proxy)->proto = PROTO_UDP;
-	return _w_t_forward_nonack(msg, proxy, PROTO_NONE);
+	return _w_t_forward_nonack( msg, proxy);
 }
 
 
@@ -955,7 +956,7 @@ inline static int w_t_forward_nonack_tcp( struct sip_msg* msg, char* proxy,
 		"and sooner it will be removed; please use "
 		"t_forward_nonack(proto:host:port)\n");
 	((struct proxy_l *)proxy)->proto = PROTO_TCP;
-	return _w_t_forward_nonack(msg, proxy, PROTO_NONE);
+	return _w_t_forward_nonack( msg, proxy);
 }
 #endif
 
@@ -969,7 +970,7 @@ inline static int w_t_forward_nonack_tls( struct sip_msg* msg, char* proxy,
 		"and sooner it will be removed; please use "
 		"t_forward_nonack(proto:host:port)\n");
 	((struct proxy_l *)proxy)->proto = PROTO_TLS;
-	return _w_t_forward_nonack(msg, proxy, PROTO_NONE);
+	return _w_t_forward_nonack( msg, proxy);
 }
 #endif
 
@@ -1076,7 +1077,7 @@ inline static int _w_t_relay_to( struct sip_msg  *p_msg, struct proxy_l *proxy)
 			LOG(L_CRIT, "BUG: w_t_relay_to: undefined T\n");
 			return -1;
 		}
-		if (t_forward_nonack(t, p_msg, proxy, PROTO_NONE)<=0 ) {
+		if (t_forward_nonack( t, p_msg, proxy)<=0 ) {
 			LOG(L_ERR, "ERROR: w_t_relay_to: t_relay_to failed\n");
 			return -1;
 		}
@@ -1084,8 +1085,7 @@ inline static int _w_t_relay_to( struct sip_msg  *p_msg, struct proxy_l *proxy)
 	}
 
 	if (route_type==REQUEST_ROUTE) {
-		return t_relay_to( p_msg, proxy, PROTO_NONE,
-			0 /* no replication */ );
+		return t_relay_to( p_msg, proxy, 0 /* no replication */ );
 	}
 
 	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported route type: %d\n",
@@ -1141,10 +1141,10 @@ inline static int w_t_replicate( struct sip_msg  *p_msg ,
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
-	/* preserv proto if not explicitly changed */
+	/* preserve proto if not explicitly changed */
 	if (((struct proxy_l *)proxy)->proto==PROTO_NONE)
 		((struct proxy_l *)proxy)->proto = p_msg->rcv.proto;
-	return t_replicate(p_msg, ( struct proxy_l *) proxy, PROTO_NONE );
+	return t_replicate( p_msg, ( struct proxy_l *) proxy );
 }
 
 /* MARK - to become obsolete */
@@ -1156,7 +1156,7 @@ inline static int w_t_replicate_udp( struct sip_msg  *p_msg ,
 		"sooner it will be removed; please use "
 		"t_replicate(proto:host:port)\n");
 	((struct proxy_l *)proxy)->proto = PROTO_UDP;
-	return t_replicate(p_msg, ( struct proxy_l *) proxy, PROTO_NONE );
+	return t_replicate( p_msg, ( struct proxy_l *) proxy);
 }
 
 
@@ -1170,7 +1170,7 @@ inline static int w_t_replicate_tcp( struct sip_msg  *p_msg ,
 		"sooner it will be removed; please use "
 		"t_replicate(proto:host:port)\n");
 	((struct proxy_l *)proxy)->proto = PROTO_TCP;
-	return t_replicate(p_msg, ( struct proxy_l *) proxy, PROTO_NONE );
+	return t_replicate( p_msg, ( struct proxy_l *) proxy);
 }
 #endif
 
@@ -1185,7 +1185,7 @@ inline static int w_t_replicate_tls( struct sip_msg  *p_msg ,
 		"sooner it will be removed; please use "
 		"t_replicate(proto:host:port)\n");
 	((struct proxy_l *)proxy)->proto = PROTO_TLS;
-	return t_replicate(p_msg, ( struct proxy_l *) proxy, PROTO_NONE );
+	return t_replicate( p_msg, ( struct proxy_l *) proxy);
 }
 #endif
 

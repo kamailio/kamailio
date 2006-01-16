@@ -186,10 +186,10 @@ static int kill_transaction( struct cell *trans )
 
 
 
-int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
-				int replicate)
+int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int replicate)
 {
 	int ret;
+	int proto;
 	int new_tran;
 	str *uri;
 	int reply_ret;
@@ -221,18 +221,17 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 		DBG("DEBUG:tm:t_relay: forwarding ACK  statelessly \n");
 		if (proxy==0) {
 			uri = GET_RURI(p_msg);
-			proxy=uri2proxy(GET_NEXT_HOP(p_msg), proto);
+			proxy=uri2proxy(GET_NEXT_HOP(p_msg), PROTO_NONE);
 			if (proxy==0) {
 					ret=E_BAD_ADDRESS;
 					goto done;
 			}
 			proto=proxy->proto; /* uri2proxy set it correctly */
 			ret=forward_request( p_msg , proxy, proto) ;
-			free_proxy( proxy );	
+			free_proxy( proxy );
 			pkg_free( proxy );
 		} else {
-			proto=get_proto(proto, proxy->proto);
-			ret=forward_request( p_msg , proxy, proto ) ;
+			ret=forward_request( p_msg , proxy, proxy->proto ) ;
 		}
 		goto done;
 	}
@@ -253,7 +252,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	} 
 
 	/* now go ahead and forward ... */
-	ret=t_forward_nonack(t, p_msg, proxy, proto);
+	ret=t_forward_nonack( t, p_msg, proxy);
 	if (ret<=0) {
 		DBG( "ERROR:tm:t_relay_to:  t_forward_nonack returned error \n");
 		/* we don't want to pass upstream any reply regarding replicating

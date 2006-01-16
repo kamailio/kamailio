@@ -253,7 +253,7 @@ int add_blind_uac( /*struct cell *t*/ )
    might interfere with the processes of adding multiple branches
 */
 int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
-	struct proxy_l *proxy, int proto )
+	struct proxy_l *proxy)
 {
 	int ret;
 	short temp_proxy;
@@ -290,15 +290,13 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	/* check DNS resolution */
 	if (proxy){
 		temp_proxy=0;
-		proto=get_proto(proto, proxy->proto);
 	}else {
 		proxy=uri2proxy( request->dst_uri.len ?
-			&request->dst_uri:&request->new_uri, proto );
+			&request->dst_uri:&request->new_uri, PROTO_NONE );
 		if (proxy==0)  {
 			ret=E_BAD_ADDRESS;
 			goto error01;
 		}
-		proto=proxy->proto; /* uri2proxy will fix it for us */
 		temp_proxy=1;
 	}
 
@@ -312,17 +310,17 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	hostent2su( &to, &proxy->host, proxy->addr_idx, 
 		proxy->port ? proxy->port:SIP_PORT);
 
-	send_sock=get_send_socket( request, &to , proto);
+	send_sock=get_send_socket( request, &to , proxy->proto);
 	if (send_sock==0) {
 		LOG(L_ERR, "ERROR:tm:add_uac: can't fwd to af %d, proto %d "
 			" (no corresponding listening socket)\n",
-			to.s.sa_family, proto );
+			to.s.sa_family, proxy->proto );
 		ret=ser_error=E_NO_SOCKET;
 		goto error02;
 	}
 
 	/* now message printing starts ... */
-	shbuf=print_uac_request( request, &len, send_sock, proto );
+	shbuf=print_uac_request( request, &len, send_sock, proxy->proto );
 	if (!shbuf) {
 		ret=ser_error=E_OUT_OF_MEM;
 		goto error02;
@@ -331,7 +329,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	/* things went well, move ahead and install new buffer! */
 	t->uac[branch].request.dst.to=to;
 	t->uac[branch].request.dst.send_sock=send_sock;
-	t->uac[branch].request.dst.proto=proto;
+	t->uac[branch].request.dst.proto=proxy->proto;
 	t->uac[branch].request.dst.proto_reserved1=0;
 	t->uac[branch].request.buffer=shbuf;
 	t->uac[branch].request.buffer_len=len;
@@ -553,7 +551,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
  *      -1 - error during forward
  */
 int t_forward_nonack( struct cell *t, struct sip_msg* p_msg , 
-	struct proxy_l * proxy, int proto)
+	struct proxy_l * proxy)
 {
 	str backup_uri;
 	str backup_dst;
@@ -611,8 +609,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	if (t->first_branch==0) {
 		try_new=1;
 		current_uri = *GET_RURI(p_msg);
-		branch_ret = add_uac( t, p_msg, &current_uri, &backup_dst,
-			proxy, proto );
+		branch_ret = add_uac( t, p_msg, &current_uri, &backup_dst, proxy);
 		if (branch_ret>=0)
 			added_branches |= 1<<branch_ret;
 		else
@@ -623,7 +620,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	&dst_uri, &br_flags, &p_msg->force_send_socket))!=0 ; idx++ ) {
 		try_new++;
 		p_msg->flags = (p_msg->flags&gflags_mask) | br_flags;
-		branch_ret=add_uac( t, p_msg, &current_uri, &dst_uri, proxy, proto);
+		branch_ret=add_uac( t, p_msg, &current_uri, &dst_uri, proxy);
 		/* pick some of the errors in case things go wrong;
 		   note that picking lowest error is just as good as
 		   any other algorithm which picks any other negative
@@ -682,7 +679,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 }
 
 
-int t_replicate(struct sip_msg *p_msg,  struct proxy_l *proxy, int proto )
+int t_replicate(struct sip_msg *p_msg,  struct proxy_l *proxy)
 {
 	/* this is a quite horrible hack -- we just take the message
 	   as is, including Route-s, Record-route-s, and Vias ,
@@ -695,5 +692,5 @@ int t_replicate(struct sip_msg *p_msg,  struct proxy_l *proxy, int proto )
 		if we want later to make it thoroughly, we need to
 		introduce delete lumps for all the header fields above
 	*/
-	return t_relay_to(p_msg, proxy, proto, 1 /* replicate */);
+	return t_relay_to(p_msg, proxy, 1 /* replicate */);
 }
