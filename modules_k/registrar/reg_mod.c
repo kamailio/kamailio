@@ -96,7 +96,7 @@ str sock_hdr_name = {0,0};
 #define RCV_NAME_LEN (sizeof(RCV_NAME) - 1)
 
 str rcv_param = {RCV_NAME, RCV_NAME_LEN};
-int rcv_avp_no=42;
+int rcv_avp_no = 42;
 
 
 /*
@@ -190,6 +190,7 @@ static int mod_init(void)
 	realm_prefix.len = strlen(realm_pref);
 	
 	rcv_param.len = strlen(rcv_param.s);
+	rcv_avp.n = rcv_avp_no;
 
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 	if (!bind_usrloc) {

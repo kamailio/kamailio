@@ -49,6 +49,7 @@
 #include "save.h"
 
 static int mem_only = 0;
+int_str rcv_avp;
 
 void remove_cont(urecord_t* _r, ucontact_t* _c)
 {
@@ -222,12 +223,10 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 	static int received_found;
 	static unsigned int allowed, allow_parsed;
 	static struct sip_msg *m = 0;
-	int_str rcv_avp;
 	int_str val;
 
 	if (_m!=0) {
 		memset( &ci, 0, sizeof(ucontact_info_t));
-		rcv_avp.n=rcv_avp_no;
 
 		/* Get callid of the message */
 		callid = _m->callid->body;
@@ -475,10 +474,8 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 	int e;
 	int set, reset;
 	unsigned int flags;
-	int_str rcv_avp;
 	int ret;
 
-	rcv_avp.n=rcv_avp_no;
 	/* is nated flag */
 	if (nat_flag!=-1 && _m->flags&nat_flag)
 		flags = FL_NAT;

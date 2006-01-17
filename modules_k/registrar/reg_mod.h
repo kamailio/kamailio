@@ -52,7 +52,7 @@ extern str realm_prefix;
 extern float def_q;
 
 extern str rcv_param;
-extern int rcv_avp_no;
+extern int_str rcv_avp;
 extern int max_contacts;
 extern int retry_after;
 extern int use_branch_flags;
