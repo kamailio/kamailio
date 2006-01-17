@@ -227,11 +227,13 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int replicate)
 					goto done;
 			}
 			proto=proxy->proto; /* uri2proxy set it correctly */
-			ret=forward_request( p_msg , proxy, proto) ;
+			ret=forward_request( p_msg , proxy, proto);
+			if (ret>=0) ret=1;
 			free_proxy( proxy );
 			pkg_free( proxy );
 		} else {
-			ret=forward_request( p_msg , proxy, proxy->proto ) ;
+			ret=forward_request( p_msg , proxy, proxy->proto );
+			if (ret>=0) ret=1;
 		}
 		goto done;
 	}
