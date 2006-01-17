@@ -1796,7 +1796,10 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 					bmark->to_tag_val.s=p+(totags-hdr->name.s);
 					bmark->to_tag_val.len=
 							((struct to_body*)(hdr->parsed))->tag_value.len;
-				};
+				}else{
+					bmark->to_tag_val.s=0;
+					bmark->to_tag_val.len=0;
+				}
 			case HDR_FROM:
 			case HDR_CALLID:
 			case HDR_CSEQ:
