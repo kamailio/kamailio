@@ -66,7 +66,7 @@ int snprintf(char *str, size_t size, const char *format, ...);
 int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 
 static int dispatch_rpc(struct sip_msg* msg, char* s1, char* s2);
-static int rpc_method(struct sip_msg* msg, char* method, char* s2);
+static int xmlrpc_reply(struct sip_msg* msg, char* code, char* reason);
 static int mod_init(void);
 
 #define LF "\n"
@@ -200,9 +200,9 @@ int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"create_via",   create_via,   0, 0, REQUEST_ROUTE},
-	{"dispatch_rpc", dispatch_rpc, 0, 0, REQUEST_ROUTE},
-	{"rpc_method",   rpc_method,   1, 0, REQUEST_ROUTE},
+	{"create_via",   create_via,   0, 0,           REQUEST_ROUTE},
+	{"dispatch_rpc", dispatch_rpc, 0, 0,           REQUEST_ROUTE},
+	{"xmlrpc_reply", xmlrpc_reply, 2, fixup_int_1, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -1214,9 +1214,30 @@ static int dispatch_rpc(struct sip_msg* msg, char* s1, char* s2)
 }
 
 
-static int rpc_method(struct sip_msg* msg, char* method, char* s2)
+static int xmlrpc_reply(struct sip_msg* msg, char* code, char* reason)
 {
+	static str succ = STR_STATIC_INIT("1");
+	struct xmlrpc_reply reply;
+
+	memset(&reply, 0, sizeof(struct xmlrpc_reply));
+	if (init_xmlrpc_reply(&reply) < 0) return -1;
+	reply.code = (int)code;
+	reply.reason = reason;
+	if (reply.code >= 300) { 
+		if (build_fault_reply(&reply) < 0) goto error;
+	} else {
+		if (add_xmlrpc_reply(&reply, &success_prefix) < 0) goto error;
+		if (add_xmlrpc_reply(&reply, &int_prefix) < 0) goto error;
+		if (add_xmlrpc_reply(&reply, &succ) < 0) goto error;
+		if (add_xmlrpc_reply(&reply, &int_suffix) < 0) goto error;
+		if (add_xmlrpc_reply(&reply, &success_suffix) < 0) return -1;
+	}
+	if (send_reply(msg, &reply.body) < 0) goto error;
+	clean_xmlrpc_reply(&reply);
 	return 1;
+ error:
+	clean_xmlrpc_reply(&reply);
+	return -1;
 }
 
 
