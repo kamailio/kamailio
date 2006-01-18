@@ -97,7 +97,8 @@ inline static int w_t_release(struct sip_msg* msg, char* str, char* str2);
 inline static int w_t_retransmit_reply(struct sip_msg* p_msg, char* foo,
 				char* bar );
 inline static int w_t_newtran(struct sip_msg* p_msg, char* foo, char* bar );
-inline static int w_t_relay( struct sip_msg  *p_msg , char *_foo, char *_bar);
+inline static int w_t_relay0(struct sip_msg  *p_msg , char *_foo, char *_bar);
+inline static int w_t_relay1(struct sip_msg  *p_msg , char *_foo, char *_bar);
 inline static int w_t_relay_to_udp( struct sip_msg  *p_msg , char *proxy, 
 				 char *);
 #ifdef USE_TCP
@@ -108,7 +109,9 @@ inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg , char *proxy,
 inline static int w_t_relay_to_tls( struct sip_msg  *p_msg , char *proxy,
 				char *);
 #endif
-inline static int w_t_replicate( struct sip_msg  *p_msg , 
+inline static int w_t_replicate1( struct sip_msg  *p_msg , char *proxy, 
+				char *_foo);
+inline static int w_t_replicate_old( struct sip_msg  *p_msg , 
 				char *proxy, /* struct proxy_l *proxy expected */
 				char *_foo       /* nothing expected */ );
 inline static int w_t_replicate_udp( struct sip_msg  *p_msg , 
@@ -124,7 +127,9 @@ inline static int w_t_replicate_tls( struct sip_msg  *p_msg ,
 				char *proxy, /* struct proxy_l *proxy expected */
 				char *_foo       /* nothing expected */ );
 #endif
-inline static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* );
+inline static int w_t_forward_nonack0(struct sip_msg* msg, char* str, char* );
+inline static int w_t_forward_nonack1(struct sip_msg* msg, char* str, char* );
+inline static int w_t_forward_nonack2(struct sip_msg* msg, char* str, char* );
 inline static int w_t_forward_nonack_uri(struct sip_msg* msg, char* str,char*);
 inline static int w_t_forward_nonack_udp(struct sip_msg* msg, char* str,char*);
 #ifdef USE_TCP
@@ -174,9 +179,10 @@ static cmd_export_t cmds[]={
 	{"t_relay_to_tls",       w_t_relay_to_tls,        2, fixup_hostport2proxy,
 			REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
-	{"t_replicate",          w_t_replicate,           1,fixup_phostport2proxy,
+	{"t_replicate",          w_t_replicate1,          1,fixup_phostport2proxy,
 			REQUEST_ROUTE},
-	{"t_replicate",          w_t_replicate,           2, fixup_hostport2proxy,
+/* MARK - to become obsolete */
+	{"t_replicate",          w_t_replicate_old,       2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 /* MARK - to become obsolete */
 	{"t_replicate_udp",      w_t_replicate_udp,       2, fixup_hostport2proxy,
@@ -191,16 +197,16 @@ static cmd_export_t cmds[]={
 	{"t_replicate_tls",      w_t_replicate_tls,       2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 #endif
-	{"t_relay",              w_t_relay,               0, 0,
+	{"t_relay",              w_t_relay0,              0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_relay",              w_t_relay,               1,fixup_phostport2proxy,
+	{"t_relay",              w_t_relay1,              1,fixup_phostport2proxy,
 			REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_forward_nonack",     w_t_forward_nonack,      0, 0,
+	{"t_forward_nonack",     w_t_forward_nonack0,     0, 0,
 			REQUEST_ROUTE},
-	{"t_forward_nonack",     w_t_forward_nonack,      1,fixup_phostport2proxy,
+	{"t_forward_nonack",     w_t_forward_nonack1,     1,fixup_phostport2proxy,
 			REQUEST_ROUTE},
 /* MARK - to become obsolete */
-	{"t_forward_nonack",     w_t_forward_nonack,      2, fixup_hostport2proxy,
+	{"t_forward_nonack",     w_t_forward_nonack2,     2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 /* MARK - to become obsolete */
 	{"t_forward_nonack_uri", w_t_forward_nonack_uri,  0, 0,
@@ -324,7 +330,7 @@ static int fixup_str2int( void** param, int param_no)
 	return 0;
 }
 
-
+#include <assert.h>
 static int fixup_phostport2proxy(void** param, int param_no)
 {
 	struct proxy_l *proxy;
@@ -333,6 +339,7 @@ static int fixup_phostport2proxy(void** param, int param_no)
 	int proto;
 	str host;
 
+	LOG(L_ERR,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n");
 	if (param_no!=1) {
 		LOG(L_CRIT,"BUG:tm:fixup_phostport2proxy: called with more than "
 			" one parameter\n");
@@ -487,7 +494,7 @@ int load_tm( struct tm_binds *tmb)
 	tmb->register_tmcb = register_tmcb;
 
 	/* replicate function */
-	tmb->t_replicate = w_t_replicate;
+	tmb->t_replicate = w_t_replicate_old;
 	tmb->t_replicate_udp = w_t_replicate_udp;
 #ifdef USE_TCP
 	tmb->t_replicate_tcp = w_t_replicate_tcp;
@@ -503,8 +510,8 @@ int load_tm( struct tm_binds *tmb)
 	tmb->t_relay_to_tls = w_t_relay_to_tls;
 #endif
 	tmb->t_relay_to_udp = w_t_relay_to_udp;
-	tmb->t_relay = w_t_relay;
-	tmb->t_forward_nonack = (tfwd_f)w_t_forward_nonack;
+	tmb->t_relay = w_t_relay0;
+	tmb->t_forward_nonack = (tfwd_f)w_t_forward_nonack2;
 	tmb->t_reply = (treply_f)w_t_reply;
 	tmb->t_reply_with_body = t_reply_with_body;
 
@@ -918,7 +925,21 @@ inline static int _w_t_forward_nonack(struct sip_msg* msg, char* proxy)
 }
 
 
-inline static int w_t_forward_nonack( struct sip_msg* msg, char* proxy,
+inline static int w_t_forward_nonack0( struct sip_msg* msg, char* bar,
+										char* foo)
+{
+	return _w_t_forward_nonack( msg, 0);
+}
+
+
+inline static int w_t_forward_nonack1( struct sip_msg* msg, char* proxy,
+										char* foo)
+{
+	return _w_t_forward_nonack( msg, proxy);
+}
+
+
+inline static int w_t_forward_nonack2( struct sip_msg* msg, char* proxy,
 										char* foo)
 {
 	return _w_t_forward_nonack( msg, proxy);
@@ -1137,7 +1158,7 @@ inline static int w_t_relay_to_tls( struct sip_msg  *p_msg ,
 #endif
 
 
-inline static int w_t_replicate( struct sip_msg  *p_msg , 
+inline static int w_t_replicate1( struct sip_msg  *p_msg , 
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
@@ -1146,6 +1167,18 @@ inline static int w_t_replicate( struct sip_msg  *p_msg ,
 		((struct proxy_l *)proxy)->proto = p_msg->rcv.proto;
 	return t_replicate( p_msg, ( struct proxy_l *) proxy );
 }
+
+
+inline static int w_t_replicate_old( struct sip_msg  *p_msg , 
+	char *proxy, /* struct proxy_l *proxy expected */
+	char *_foo       /* nothing expected */ )
+{
+	/* preserve proto if not explicitly changed */
+	if (((struct proxy_l *)proxy)->proto==PROTO_NONE)
+		((struct proxy_l *)proxy)->proto = p_msg->rcv.proto;
+	return t_replicate( p_msg, ( struct proxy_l *) proxy );
+}
+
 
 /* MARK - to become obsolete */
 inline static int w_t_replicate_udp( struct sip_msg  *p_msg , 
@@ -1190,7 +1223,17 @@ inline static int w_t_replicate_tls( struct sip_msg  *p_msg ,
 #endif
 
 
-inline static int w_t_relay( struct sip_msg  *p_msg , char *proxy, char *foo)
+inline static int w_t_relay1( struct sip_msg  *p_msg , char *proxy, char *foo)
 {
 	return _w_t_relay_to( p_msg, (struct proxy_l *)proxy );
 }
+
+
+inline static int w_t_relay0( struct sip_msg  *p_msg , char *bar, char *foo)
+{
+	return _w_t_relay_to( p_msg, 0 );
+}
+
+
+
+
