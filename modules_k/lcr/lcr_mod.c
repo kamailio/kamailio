@@ -809,18 +809,18 @@ int reload_gws ( void )
     for (i = 0; i < RES_ROW_N(res); i++) {
 	row = RES_ROWS(res) + i;
 	if (VAL_NULL(ROW_VALUES(row)) == 1) {
-		LOG(L_ERR, "reload_gws(): route prefix is NULL\n");
-		lcr_dbf.free_result(dbh, res);
-		lcr_dbf.close(dbh);
-		return -1;
+	    prefix_len = 0;
+	    prefix = 0;
 	}
-	prefix = (char *)VAL_STRING(ROW_VALUES(row));
-	prefix_len = strlen(prefix);
-	if (prefix_len > MAX_PREFIX_LEN) {
-	    LOG(L_ERR, "reload_gws(): too long lcr prefix\n");
-	    lcr_dbf.free_result(dbh, res);
-	    lcr_dbf.close(dbh);
-	    return -1;
+	else {
+	    prefix = (char *)VAL_STRING(ROW_VALUES(row));
+	    prefix_len = strlen(prefix);
+	    if (prefix_len > MAX_PREFIX_LEN) {
+	      LOG(L_ERR, "reload_gws(): too long lcr prefix\n");
+	      lcr_dbf.free_result(dbh, res);
+	      lcr_dbf.close(dbh);
+	      return -1;
+	    }
 	}
 	if (VAL_NULL(ROW_VALUES(row) + 1) == 1) {
 	    from_uri_len = 0;
