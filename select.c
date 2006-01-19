@@ -27,6 +27,8 @@
  * History:
  * --------
  *  2005-12-19  select framework (mma)
+ *  2006-01-19  multiple nested calls, IS_ALIAS -> NESTED flag renamed (mma)
+ *              DIVERSION flag checked
  */
 
 
@@ -44,13 +46,16 @@ static select_table_t *select_list = &select_core_table;
 
 int resolve_select(select_t* s)
 {
-	select_f f, pf;
+	select_f f;
+	int nested;
 	int param_idx = 0;
 	int table_idx = 0;
 	select_table_t* t = NULL;;
 	int accept = 0;
 	
-	f = pf = NULL;
+	f = NULL;
+	nested = 0;
+	s->f[0] = NULL;
 	while (param_idx<s->n) {
 		accept = 0;
 		for (t=select_list; t; t=t->next) {
@@ -58,12 +63,14 @@ int resolve_select(select_t* s)
 			if (!t->table) continue;
 			while (t->table[table_idx].curr_f || t->table[table_idx].new_f) {
 				if (t->table[table_idx].curr_f == f) {
-					if (t->table[table_idx].type == s->params[param_idx].type) {
+					if (t->table[table_idx].flags & NESTED) {
+						accept = 1;
+					} else if (t->table[table_idx].type == s->params[param_idx].type) {
 						switch (t->table[table_idx].type) {
 						case SEL_PARAM_INT:
 							accept = 1;
 							break;
-							case SEL_PARAM_STR:
+						case SEL_PARAM_STR:
 							accept = (((t->table[table_idx].name.len == s->params[param_idx].v.s.len) || !t->table[table_idx].name.len)
 								   && (!t->table[table_idx].name.s || !strncasecmp(t->table[table_idx].name.s, s->params[param_idx].v.s.s, s->params[param_idx].v.s.len)));
 							break;
@@ -71,21 +78,26 @@ int resolve_select(select_t* s)
 							break;
 						}
 					};
-					if ((t->table[table_idx].flags & IS_ALIAS)&&(!pf)) {
-						accept = 1;
-					}
 				}
 				if (accept) goto accepted;
 				table_idx++;
 			}
 		}
+		BUG ("Unable to resolve select at level %d\n", param_idx);
 		goto not_found;
 
 		accepted:
+		if (t->table[table_idx].flags & DIVERSION) {
+			if (s->params[param_idx].type == SEL_PARAM_STR) pkg_free(s->params[param_idx].v.s.s);
+			s->params[param_idx].type = SEL_PARAM_DIV;
+			s->params[param_idx].v.i = t->table[table_idx].flags & DIVERSION_MASK;
+			
+		}
 		if (t->table[table_idx].flags & CONSUME_NEXT_STR) {
 			if ((param_idx<s->n-1) && (s->params[param_idx+1].type == SEL_PARAM_STR)) {
 				param_idx++;
 			} else if (!(t->table[table_idx].flags & OPTIONAL)) {
+				BUG ("Mandatory STR parameter not found\n");
 				goto not_found;
 			}
 		}
@@ -93,20 +105,37 @@ int resolve_select(select_t* s)
 			if ((param_idx<s->n-1) && (s->params[param_idx+1].type == SEL_PARAM_INT)) {
 				param_idx++;
 			} else if (!(t->table[table_idx].flags & OPTIONAL)) {
+				BUG ("Mandatory INT parameter not found\n");
 				goto not_found;
 			}
 		}
-		if (t->table[table_idx].flags & IS_ALIAS) {
-			pf = f;
+		if (t->table[table_idx].flags & NESTED) {
+			if (nested < MAX_NESTED_CALLS-1) { /* need space for final function */
+				s->f[nested++] = f;
+				s->f[nested] = NULL;
+			} else {
+				BUG("MAX_NESTED_CALLS too small to resolve select\n");
+				goto not_found;
+			}
 		} else {
 			param_idx++;
 		}
 		f = t->table[table_idx].new_f;
 	}
 
-	if (t->table[table_idx].flags & SEL_PARAM_EXPECTED) goto not_found;
-	s->f = f;
-	s->parent_f = pf;
+	if (t->table[table_idx].flags & SEL_PARAM_EXPECTED) {
+		BUG ("final node has SEL_PARAM_EXPECTED set (no more parameters available)\n");
+		goto not_found;
+	}
+	if (nested >= MAX_NESTED_CALLS) {
+		BUG("MAX_NESTED_CALLS too small, no space for finally resolved function\n");
+		goto not_found;
+	}
+	if ((nested>0) && (s->f[nested-1] == f)) {
+		BUG("Topmost nested function equals to final function, won't call it twice\n");
+	} else {
+		s->f[nested] = f;
+	}
 	return 0;
 	
 not_found:
@@ -115,6 +144,8 @@ not_found:
 
 int run_select(str* res, select_t* s, struct sip_msg* msg)
 {
+	int ret, i;
+	
 	if (res == NULL) {
 		BUG("Select unprepared result space\n");
 		return -1;
@@ -123,12 +154,17 @@ int run_select(str* res, select_t* s, struct sip_msg* msg)
 		BUG("Select structure is NULL\n");
 		return -1;
 	}
-	if (s->f == 0) {
+	if (s->f[0] == 0) {
 		BUG("Select structure has not been resolved\n");
 		return -1;
 	}
-DBG("Calling SELECT %p \n", s->f);
-	return s->f(res, s, msg);
+	DBG("Calling SELECT %p \n", s->f);
+
+	ret = 0;
+	for (i=0; (ret == 0) && (s->f[i] !=0 ) && (i<MAX_NESTED_CALLS); i++)	{
+		ret = s->f[i](res, s, msg);
+	}
+	return ret;
 }
 
 void print_select(select_t* s)

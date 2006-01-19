@@ -1263,7 +1263,7 @@ select_params:
 	| select_param
 	;
 select_id:
-	SELECT_MARK { sel.n = 0; sel.f = 0; } select_params {
+	SELECT_MARK { sel.n = 0; sel.f[0] = 0; } select_params {
 		sel_ptr = (select_t*)pkg_malloc(sizeof(select_t));
 		if (!sel_ptr) {
 			yyerror("No memory left to allocate select structure\n");

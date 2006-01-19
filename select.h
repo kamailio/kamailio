@@ -27,6 +27,7 @@
  * History:
  * --------
  *  2005-12-19  select framework (mma)
+ *  2006-01-19  multiple nested calls, IS_ALIAS -> NESTED flag renamed (mma)
  */
 
  
@@ -37,25 +38,52 @@
 #include "parser/msg_parser.h"
 
 #define MAX_SELECT_PARAMS 32
+#define MAX_NESTED_CALLS  4
 
-// Flags for parser table FLAG bitfiels
+/* Flags for parser table FLAG bitfiels 
+ */
 #define DIVERSION_MASK   0x00FF
-// if DIVERSION is set and the function is accepted and has STR param
-// the param is changed into SEL_PARAM_DIV and the value is set to (flags & DIVERSION_MASK)
+
+/* if DIVERSION is set and the function is accepted
+ * the param is changed into SEL_PARAM_DIV and the value is set to (flags & DIVERSION_MASK)
+ *  - it is valuable for STR params (saves parsing time)
+ *  - does not release the memory occupied by the parameter
+ */
 #define DIVERSION        1<<8
-// if any parameter is expected at this stage
+
+/* set if any parameter is expected at this stage
+ * (the function must be resolved further)
+ */
 #define SEL_PARAM_EXPECTED   1<<9
-// accept if following parameter is STR (any)
+
+/* accept if following parameter is STR (any)
+ * consume that extra parameter in one step
+ */
 #define CONSUME_NEXT_STR 1<<10
-// accept if following parameter is INT
+
+/* accept if following parameter is INT
+ * consume that extra parameter in one ste
+ */
 #define CONSUME_NEXT_INT 1<<11
-// next parameter is optional (use with CONSUME_NEXT_STR or CONSUME_NEXT_INT
+
+/* next parameter is optional (use with CONSUME_NEXT_STR or CONSUME_NEXT_INT
+ * resolution is accepted even if there is no other parameter
+ * or the parameter is of wrong type
+ */
 #define OPTIONAL         1<<12
-// if conversion to common alias is needed
-// up-to now parsed function would be stored in parent_f
-// NOTE: the parameter is not consumed for ALIAS, 
-// so you can leave it as ..,SEL_PARAM_INT, STR_NULL,..
-#define IS_ALIAS         1<<13
+
+/* left function is noted to be called
+ * rigth function continues in resolution
+ * NOTE: the parameter is not consumed for PARENT, 
+ * so you can leave it as ..,SEL_PARAM_INT, 0,..
+ *
+ * run_select then calls all functions with PARENT flag
+ * in the order of resolution until the final call or 
+ * the result is != 0 (<0 error, 1 null str) 
+ * the only one parameter passed between nested calls
+ * is the result str*
+ */
+#define NESTED		1<<13
 
 /*
  * Selector call parameter
@@ -81,8 +109,7 @@ struct select;
 typedef int (*select_f)(str* res, struct select* s, struct sip_msg* msg);
 
 typedef struct select {
-	select_f f;
-	select_f parent_f;
+	select_f f[MAX_NESTED_CALLS];
 	select_param_t params[MAX_SELECT_PARAMS];
 	int n;
 } select_t;

@@ -27,6 +27,7 @@
  * History:
  * --------
  *  2005-12-19  select framework, basic core functions (mma)
+ *  2006-01-19  multiple nested calls, IS_ALIAS -> NESTED flag renamed (mma)
  */
 
  
@@ -117,9 +118,9 @@ static select_row_t select_core[] = {
 	{ select_via, SEL_PARAM_STR, STR_STATIC_INIT("alias"), select_via_params_spec, DIVERSION | SEL_PARAM_ALIAS},
 	{ select_via, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_via_params, CONSUME_NEXT_STR},
 	
-	{ select_from_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, IS_ALIAS},
-	{ select_to_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, IS_ALIAS},
-	{ select_contact_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, IS_ALIAS},
+	{ select_from_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
+	{ select_to_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
+	{ select_contact_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("type"), select_uri_type, 0},
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("user"), select_uri_user, 0},
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("pwd"), select_uri_pwd, 0},

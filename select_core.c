@@ -27,6 +27,7 @@
  * History:
  * --------
  *  2005-12-19  select framework, basic core functions (mma)
+ *  2006-01-19  multiple nested calls, IS_ALIAS -> NESTED flag renamed (mma)
  */
 
  
@@ -499,17 +500,8 @@ ABSTRACT_F(select_any_uri)
 
 int select_uri_type(str* res, select_t* s, struct sip_msg* msg)
 {
-	if (!s->parent_f) {
-		ERR("BUG: no parent fuction defined\n");
-		return -1;
-	}
-
-	int ret;
-	ret = s->parent_f(res, s, msg);
-	if (ret != 0)
-		return ret;
-
 	struct sip_uri uri;
+	
 	trim(res);
 	if (parse_uri(res->s, res->len, &uri)<0)
 		return -1;
@@ -531,17 +523,8 @@ int select_uri_type(str* res, select_t* s, struct sip_msg* msg)
 
 int select_uri_user(str* res, select_t* s, struct sip_msg* msg)
 {
-	if (!s->parent_f) {
-		ERR("BUG: no parent fuction defined\n");
-		return -1;
-	}
-
-	int ret;
-	ret = s->parent_f(res, s, msg);
-	if (ret != 0)
-		return ret;
-
 	struct sip_uri uri;
+
 	if (parse_uri(res->s, res->len, &uri)<0)
 		return -1;
 
@@ -550,17 +533,8 @@ int select_uri_user(str* res, select_t* s, struct sip_msg* msg)
 
 int select_uri_pwd(str* res, select_t* s, struct sip_msg* msg)
 {
-	if (!s->parent_f) {
-		ERR("BUG: no parent fuction defined\n");
-		return -1;
-	}
-
-	int ret;
-	ret = s->parent_f(res, s, msg);
-	if (ret != 0)
-		return ret;
-
 	struct sip_uri uri;
+
 	if (parse_uri(res->s, res->len, &uri)<0)
 		return -1;
 
@@ -569,17 +543,8 @@ int select_uri_pwd(str* res, select_t* s, struct sip_msg* msg)
 
 int select_uri_host(str* res, select_t* s, struct sip_msg* msg)
 {
-	if (!s->parent_f) {
-		ERR("BUG: no parent fuction defined\n");
-		return -1;
-	}
-
-	int ret;
-	ret = s->parent_f(res, s, msg);
-	if (ret != 0)
-		return ret;
-
 	struct sip_uri uri;
+
 	if (parse_uri(res->s, res->len, &uri)<0)
 		return -1;
 
@@ -588,17 +553,8 @@ int select_uri_host(str* res, select_t* s, struct sip_msg* msg)
 
 int select_uri_port(str* res, select_t* s, struct sip_msg* msg)
 {
-	if (!s->parent_f) {
-		ERR("BUG: no parent fuction defined\n");
-		return -1;
-	}
-
-	int ret;
-	ret = s->parent_f(res, s, msg);
-	if (ret != 0)
-		return ret;
-
 	struct sip_uri uri;
+	
 	if (parse_uri(res->s, res->len, &uri)<0)
 		return -1;
 
@@ -607,17 +563,8 @@ int select_uri_port(str* res, select_t* s, struct sip_msg* msg)
 
 int select_uri_params(str* res, select_t* s, struct sip_msg* msg)
 {
-	if (!s->parent_f) {
-		ERR("BUG: no parent fuction defined\n");
-		return -1;
-	}
-
-	int ret;
-	ret = s->parent_f(res, s, msg);
-	if (ret != 0)
-		return ret;
-
 	struct sip_uri uri;
+
 	if (parse_uri(res->s, res->len, &uri)<0)
 		return -1;
 		
