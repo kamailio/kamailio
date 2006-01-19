@@ -28,7 +28,7 @@ case "$1" in
   start)
 	echo -n "Starting $DESC: $NAME"
 	start-stop-daemon --start --quiet --pidfile $PIDFILE \
-		--exec $DAEMON -- $PARAMS
+		--exec $DAEMON -- $PARAMS || echo -n " already running"
 	echo "."
 	;;
   stop)
