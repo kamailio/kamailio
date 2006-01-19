@@ -260,10 +260,11 @@ static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst, int ignore_ns
 	}
 	n = find_node(n, "basic", ns);
 	if (!n) {
-		ERROR_LOG("basic status not found\n");
-		return -1;
+		ERROR_LOG("basic status not found - using \'closed\'\n");
+		/* return -1; */
+		s = "closed";
 	}
-	s = get_node_value(n);
+	else s = get_node_value(n);
 	if (!s) {
 		ERROR_LOG("basic status without value\n");
 		return -1;
