@@ -55,7 +55,9 @@
 #define ACK_LEN 3
 #define BYE_LEN 3
 #define INFO_LEN 4
-
+#define REGISTER_LEN 8
+#define SUBSCRIBE_LEN 9
+#define NOTIFY_LEN 6
 
 struct msg_start {
 	int type;                         /* Type of the Message - Request/Response */
