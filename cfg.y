@@ -96,9 +96,6 @@
 #include "select.h"
 
 #include "config.h"
-#ifdef USE_TLS
-#include "tls/tls_config.h"
-#endif
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -127,7 +124,6 @@ static select_t sel;
 static select_t* sel_ptr;
 static struct action *mod_func_action;
 
-static void warn(char* s);
 static struct socket_id* mk_listen_id(char*, int, int);
 
 %}
@@ -253,20 +249,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token TCP_POLL_METHOD
 %token TCP_MAX_CONNECTIONS
 %token DISABLE_TLS
-%token TLSLOG
 %token TLS_PORT_NO
-%token TLS_METHOD
-%token TLS_HANDSHAKE_TIMEOUT
-%token TLS_SEND_TIMEOUT
-%token SSLv23
-%token SSLv2
-%token SSLv3
-%token TLSv1
-%token TLS_VERIFY
-%token TLS_REQUIRE_CERTIFICATE
-%token TLS_CERTIFICATE
-%token TLS_PRIVATE_KEY
-%token TLS_CA_LIST
 %token ADVERTISED_ADDRESS
 %token ADVERTISED_PORT
 %token DISABLE_CORE
@@ -341,7 +324,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %type <attr> attr_id_ass
 %type <attr> attr_id_val
 %type <attr> attr_id_any
-//%type <intval> class_id
+/* %type <intval> class_id */
 %type <intval> assign_op
 %type <select> select_id
 /*%type <route_el> rules;
@@ -573,121 +556,6 @@ assign_stm:
 		#endif
 	}
 	| TCP_MAX_CONNECTIONS EQUAL error { yyerror("number expected"); }
-	| DISABLE_TLS EQUAL NUMBER {
-		#ifdef USE_TLS
-			tls_disable=$3;
-		#else
-			warn("tls support not compiled in");
-		#endif
-	}
-	| DISABLE_TLS EQUAL error { yyerror("boolean value expected"); }
-	| TLSLOG EQUAL NUMBER {
-		#ifdef USE_TLS
-			tls_log=$3;
-		#else
-			warn("tls support not compiled in");
-		#endif
-	}
-	| TLSLOG EQUAL error { yyerror("int value expected"); }
-	| TLS_PORT_NO EQUAL NUMBER {
-		#ifdef USE_TLS
-			tls_port_no=$3;
-		#else
-			warn("tls support not compiled in");
-		#endif
-	}
-	| TLS_PORT_NO EQUAL error { yyerror("number expected"); }
-	| TLS_METHOD EQUAL SSLv23 {
-		#ifdef USE_TLS
-			tls_method=TLS_USE_SSLv23;
-		#else
-			warn("tls support not compiled in");
-		#endif
-	}
-	| TLS_METHOD EQUAL SSLv2 {
-		#ifdef USE_TLS
-			tls_method=TLS_USE_SSLv2;
-		#else
-			warn("tls support not compiled in");
-		#endif
-	}
-	| TLS_METHOD EQUAL SSLv3 {
-		#ifdef USE_TLS
-			tls_method=TLS_USE_SSLv3;
-		#else
-			warn("tls support not compiled in");
-		#endif
-	}
-	| TLS_METHOD EQUAL TLSv1 {
-		#ifdef USE_TLS
-			tls_method=TLS_USE_TLSv1;
-		#else
-			warn("tls support not compiled in");
-		#endif
-	}
-	| TLS_METHOD EQUAL error {
-		#ifdef USE_TLS
-			yyerror("SSLv23, SSLv2, SSLv3 or TLSv1 expected");
-		#else
-			warn("tls support not compiled in");
-		#endif
-	}
-	| TLS_VERIFY EQUAL NUMBER {
-		#ifdef USE_TLS
-			tls_verify_cert=$3;
-		#else
-			warn("tls support not compiled in");
-		#endif
-	}
-	| TLS_VERIFY EQUAL error { yyerror("boolean value expected"); }
-	| TLS_REQUIRE_CERTIFICATE EQUAL NUMBER {
-		#ifdef USE_TLS
-			tls_require_cert=$3;
-		#else
-			warn( "tls support not compiled in");
-		#endif
-	}
-	| TLS_REQUIRE_CERTIFICATE EQUAL error { yyerror("boolean value expected"); }
-	| TLS_CERTIFICATE EQUAL STRING {
-		#ifdef USE_TLS
-			tls_cert_file=$3;
-		#else
-			warn("tls support not compiled in");
-		#endif
-	}
-	| TLS_CERTIFICATE EQUAL error { yyerror("string value expected"); }
-	| TLS_PRIVATE_KEY EQUAL STRING {
-		#ifdef USE_TLS
-			tls_pkey_file=$3;
-		#else
-			warn("tls support not compiled in");
-		#endif
-	}
-	| TLS_PRIVATE_KEY EQUAL error { yyerror("string value expected"); }
-	| TLS_CA_LIST EQUAL STRING {
-		#ifdef USE_TLS
-			tls_ca_file=$3;
-		#else
-			warn("tls support not compiled in");
-		#endif
-	}
-	| TLS_CA_LIST EQUAL error { yyerror("string value expected"); }
-	| TLS_HANDSHAKE_TIMEOUT EQUAL NUMBER {
-		#ifdef USE_TLS
-			tls_handshake_timeout=$3;
-		#else
-			warn("tls support not compiled in");
-		#endif
-	}
-	| TLS_HANDSHAKE_TIMEOUT EQUAL error { yyerror("number expected"); }
-	| TLS_SEND_TIMEOUT EQUAL NUMBER {
-		#ifdef USE_TLS
-			tls_send_timeout=$3;
-		#else
-			warn("tls support not compiled in");
-		#endif
-	}
-	| TLS_SEND_TIMEOUT EQUAL error { yyerror("number expected"); }
 	| SERVER_SIGNATURE EQUAL NUMBER { server_signature=$3; }
 	| SERVER_SIGNATURE EQUAL error { yyerror("boolean value expected"); }
 	| REPLY_TO_VIA EQUAL NUMBER { reply_to_via=$3; }
@@ -1258,6 +1126,7 @@ select_param:
 		sel.n++;
 	}
 	;
+
 select_params:
 	select_params DOT select_param
 	| select_param
@@ -1584,7 +1453,7 @@ cmd:
 	| FORCE_SEND_SOCKET LPAREN phostport RPAREN { $$=mk_action(FORCE_SEND_SOCKET_T, 1, SOCKID_ST, $3); }
 	| FORCE_SEND_SOCKET LPAREN error RPAREN { $$=0; yyerror("bad argument, [proto:]host[:port] expected"); }
 	| FORCE_SEND_SOCKET error {$$=0; yyerror("missing '(' or ')' ?"); }
-	| ID {mod_func_action = mk_action(MODULE_T, 2, MODEXP_ST, NULL, NUMBER_ST, 0) } LPAREN func_params RPAREN	{
+	| ID {mod_func_action = mk_action(MODULE_T, 2, MODEXP_ST, NULL, NUMBER_ST, 0); } LPAREN func_params RPAREN	{
 		mod_func_action->val[0].u.data = find_export_record($1, mod_func_action->val[1].u.number, rt);
 		if (mod_func_action->val[0].u.data == 0) {
 			if (find_export_record($1, mod_func_action->val[1].u.number, 0) ) {
@@ -1629,12 +1498,6 @@ func_param:
 extern int line;
 extern int column;
 extern int startcolumn;
-static void warn(char* s)
-{
-	LOG(L_WARN, "cfg. warning: (%d,%d-%d): %s\n", line, startcolumn,
-			column, s);
-	cfg_errors++;
-}
 
 static void yyerror(char* s)
 {
