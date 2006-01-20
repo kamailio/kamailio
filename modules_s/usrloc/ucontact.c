@@ -46,6 +46,7 @@
 #include "ul_mod.h"
 #include "ul_callback.h"
 
+#define	MIN(x, y)	((x) < (y) ? (x) : (y))
 
 /*
  * Create a new contact structure
@@ -492,7 +493,7 @@ int db_insert_ucontact(ucontact_t* _c)
 	vals[1].type = DB_STR;
 	vals[1].nul = 0;
 	vals[1].val.str_val.s = _c->c.s; 
-	vals[1].val.str_val.len = _c->c.len;
+	vals[1].val.str_val.len = MIN(_c->c.len, 255);
 
 	vals[2].type = DB_DATETIME;
 	vals[2].nul = 0;
@@ -505,7 +506,7 @@ int db_insert_ucontact(ucontact_t* _c)
 	vals[4].type = DB_STR;
 	vals[4].nul = 0;
 	vals[4].val.str_val.s = _c->callid.s;
-	vals[4].val.str_val.len = _c->callid.len;
+	vals[4].val.str_val.len = MIN(_c->callid.len, 255);
 
 	vals[5].type = DB_INT;
 	vals[5].nul = 0;
@@ -518,7 +519,7 @@ int db_insert_ucontact(ucontact_t* _c)
 	vals[7].type = DB_STR;
 	vals[7].nul = 0;
 	vals[7].val.str_val.s = _c->user_agent.s;
-	vals[7].val.str_val.len = _c->user_agent.len;
+	vals[7].val.str_val.len = MIN(_c->user_agent.len, 64);
 
 	vals[8].type = DB_STR;
 
@@ -595,9 +596,11 @@ int db_update_ucontact(ucontact_t* _c)
 	vals1[1].type = DB_STR;
 	vals1[1].nul = 0;
 	if (_c->instance.s == 0) {
-		vals1[1].val.str_val = _c->c;
+		vals1[1].val.str_val.s = _c->c.s;
+		vals1[1].val.str_val.len = MIN(_c->c.len, 255);
 	} else {
-		vals1[1].val.str_val = _c->instance;
+		vals1[1].val.str_val.s = _c->instance.s;
+		vals1[1].val.str_val.len = MIN(_c->instance.len, 255);
 	}
 
 	vals2[0].type = DB_DATETIME;
@@ -610,7 +613,8 @@ int db_update_ucontact(ucontact_t* _c)
 
 	vals2[2].type = DB_STR;
 	vals2[2].nul = 0;
-	vals2[2].val.str_val = _c->callid;
+	vals2[2].val.str_val.s = _c->callid.s;
+	vals2[2].val.str_val.len = MIN(_c->callid.len, 255);
 
 	vals2[3].type = DB_INT;
 	vals2[3].nul = 0;
@@ -622,7 +626,8 @@ int db_update_ucontact(ucontact_t* _c)
 
 	vals2[5].type = DB_STR;
 	vals2[5].nul = 0;
-	vals2[5].val.str_val = _c->user_agent;
+	vals2[5].val.str_val.s = _c->user_agent.s;
+	vals2[5].val.str_val.len = MIN(_c->user_agent.len, 64);
 
 	vals2[6].type = DB_STR;
 	if (_c->received.s == 0) {
