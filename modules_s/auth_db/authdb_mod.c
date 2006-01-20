@@ -115,8 +115,12 @@ int credentials_n;         /* Number of credentials in the list */
 static cmd_export_t cmds[] = {
 	{"www_authenticate",   www_authenticate,    2, authdb_fixup, REQUEST_ROUTE},
 	{"www_authenticate",   www_authenticate1,   1, authdb_fixup, REQUEST_ROUTE},
+	{"www_authorize",      www_authenticate,    2, authdb_fixup, REQUEST_ROUTE},
+	{"www_authorize",      www_authenticate1,   1, authdb_fixup, REQUEST_ROUTE},
 	{"proxy_authenticate", proxy_authenticate,  2, authdb_fixup, REQUEST_ROUTE},
 	{"proxy_authenticate", proxy_authenticate1, 1, authdb_fixup, REQUEST_ROUTE},
+	{"proxy_authorize",    proxy_authenticate,  2, authdb_fixup, REQUEST_ROUTE},
+	{"proxy_authorize",    proxy_authenticate1, 1, authdb_fixup, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
