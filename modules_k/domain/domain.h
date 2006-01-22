@@ -40,6 +40,17 @@ int is_from_local(struct sip_msg* _msg, char* _s1, char* _s2);
  */
 int is_uri_host_local(struct sip_msg* _msg, char* _s1, char* _s2);
 
+/*
+ * Check if domain given by parameter is local
+ *
+ * parameter can be one of:
+ * - $ruri             - check domain from request uri
+ * - $from             - check domain from From header
+ * - avp name or alias - check the domain given by the value
+ *                       pointed by the avp name/alias
+ */
+int w_is_domain_local(struct sip_msg* _msg, char* _s1, char* _s2);
+
 int domain_db_bind(char* db_url);
 int domain_db_init(char* db_url);
 void domain_db_close();

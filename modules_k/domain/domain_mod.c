@@ -27,14 +27,17 @@
  * 2003-03-16: flags export parameter added (janakj)
  * 2003-04-05: default_uri #define used (jiri)
  * 2003-04-06: db connection closed in mod_init (janakj)
- * 2004-06-06  updated to the new DB api, cleanup: static dbf & handler,
- *              calls to domain_db_{bind,init,close,ver} (andrei)
+ * 2004-06-06: updated to the new DB api, cleanup: static dbf & handler,
+ *             calls to domain_db_{bind,init,close,ver} (andrei)
+ * 2006-01-22: added is_domain_local(variable) function (dan)
+ *
  */
 
 
 #include "domain_mod.h"
 #include <stdio.h>
 #include "../../mem/shm_mem.h"
+#include "../../mem/mem.h"
 #include "../../sr_module.h"
 #include "domain.h"
 #include "fifo.h"
@@ -46,6 +49,7 @@
 static int mod_init(void);
 static void destroy(void);
 static int child_init(int rank);
+static int fixup_avp(void** param, int param_no);
 
 MODULE_VERSION
 
@@ -84,6 +88,7 @@ struct domain_list **hash_table_2;	/* Pointer to hash table 2 */
 static cmd_export_t cmds[] = {
 	{"is_from_local",     is_from_local,     0, 0, REQUEST_ROUTE},
 	{"is_uri_host_local", is_uri_host_local, 0, 0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+	{"is_domain_local",   w_is_domain_local, 1, fixup_avp, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -208,3 +213,61 @@ static void destroy(void)
 	 * it is closed in mod_init already
 	 */
 }
+
+
+static int fixup_avp(void** param, int param_no)
+{
+    struct param_source *ps = NULL;
+    int_str avp_name;
+    char *src;
+    str avp;
+
+    if (param_no==1) {
+        src = (char*) *param;
+
+        ps = (struct param_source*) pkg_malloc(sizeof(struct param_source));
+        if (ps == NULL) {
+            LOG(L_ERR, "ERROR: domain/fixup_avp(): out of pkg mem\n");
+            return E_OUT_OF_MEM;
+        }
+        memset(ps, 0, sizeof(struct param_source));
+
+        if (strcasecmp(src, "$ruri") == 0) {
+            ps->source = PARAM_SOURCE_RURI;
+        } else if (strcasecmp(src, "$from") == 0) {
+            ps->source = PARAM_SOURCE_FROM;
+        } else {
+            ps->source = PARAM_SOURCE_AVP;
+            avp.s = src;
+            avp.len = strlen(src);
+            if (parse_avp_spec(&avp, &ps->avp_type, &avp_name)!=0) {
+                LOG(L_ERR, "ERROR: domain/fixup_avp(): invalid avp specification: %s\n", src);
+                pkg_free(ps);
+                return E_UNSPEC;
+            }
+            /* copy the avp name into the ps structure */
+            if (ps->avp_type & AVP_NAME_STR) {
+                ps->avp_name.s = (str*) pkg_malloc(sizeof(str) + avp_name.s->len + 1);
+                if (ps->avp_name.s == NULL) {
+                    LOG(L_ERR, "ERROR: domain/fixup_avp(): out of pkg mem\n");
+                    pkg_free(ps);
+                    return E_OUT_OF_MEM;
+                }
+                ps->avp_name.s->len = avp_name.s->len;
+                ps->avp_name.s->s = ((char*)ps->avp_name.s) + sizeof(str);
+                memcpy(ps->avp_name.s->s, avp_name.s->s, avp_name.s->len);
+                ps->avp_name.s->s[ps->avp_name.s->len] = 0;
+            } else {
+                ps->avp_name.n = avp_name.n;
+            }
+        }
+
+        pkg_free(*param);
+        *param = (void*)ps;
+
+    }
+
+    return 0;
+}
+
+

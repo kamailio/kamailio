@@ -29,12 +29,20 @@
 
 #include "../../db/db.h"
 #include "../../str.h"
+#include "../../usr_avp.h"
 
 
 /*
  * Constants
  */
 #define HASH_SIZE 128
+
+/* flags for param source for is_domain_local() */
+#define PARAM_SOURCE_NONE  (0)
+#define PARAM_SOURCE_AVP   (1<<0)
+#define PARAM_SOURCE_RURI  (1<<1)
+#define PARAM_SOURCE_FROM  (1<<2)
+
 
 /*
  * Type definitions
@@ -43,6 +51,13 @@ struct domain_list {
 	str domain;
 	struct domain_list *next;
 };
+
+typedef struct param_source {
+	int source;       /* One of PARAM_SOURCE_XXX from above */
+
+	int avp_type;     /* If source is an avp, the avp type else 0 */
+	int_str avp_name; /* If source is an avp, the avp name else NULL */
+} param_source;
 
 /*
  * Module parameters variables

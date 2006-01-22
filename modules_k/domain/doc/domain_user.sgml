@@ -148,7 +148,7 @@ if (is_from_local()) {
 		If called from branch route, the test is made on host
 		part of URI of first branch, which thus must have been
 		appended to the transaction before is_uri_host_local()
- 		is called.
+		is called.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
@@ -159,6 +159,68 @@ if (is_from_local()) {
 		<programlisting format="linespecific">
 ...
 if (is_uri_host_local()) {
+	...
+};
+...
+		</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><function moreinfo="none">is_domain_local(variable)</function></title>
+		<para>
+		This function checks if the domain contained in the
+		variable is local. The variable can be an avp_name, an
+		avp_alias or a special keyword pointing to certain SIP
+		headers from where the domain should be taken.
+		</para>
+		<para>The input variable can be one of the following:</para>
+		<itemizedlist>
+		<listitem><para>
+			<emphasis>$ruri</emphasis> - take the domain part of the request URI
+		</para></listitem>
+		<listitem><para>
+			<emphasis>$from</emphasis> - take the domain part of the From header
+		</para></listitem>
+		<listitem><para>
+			<emphasis>avp</emphasis> - the domain is given by the value of the avp
+			which is either an avp_name or an avp_alias
+		</para></listitem>
+		</itemizedlist>
+		<para>
+		This function is a generalized form of the is_from_local()
+		and is_uri_host_local() functions, being able to completely
+		replace them and also extends them by allowing the domain to
+		be taken from an avp. The following equivalences exist:
+		</para>
+		<itemizedlist>
+		<listitem><para>
+			is_domain_local("$ruri") is same as is_uri_host_local()
+		</para></listitem>
+		<listitem><para>
+			is_domain_local("$from") is same as is_from_local()
+		</para></listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		BRANCH_ROUTE.
+		</para>
+		<example>
+		<title>is_domain_local usage</title>
+		<programlisting format="linespecific">
+...
+if (is_domain_local("$ruri")) {
+	...
+};
+if (is_domain_local("$from")) {
+	...
+};
+if (is_domain_local("$some_avp_alias")) {
+	...
+};
+if (is_domain_local("i:850")) {
+	...
+};
+if (is_domain_local("s:some_avp")) {
 	...
 };
 ...

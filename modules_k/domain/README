@@ -26,6 +26,7 @@ Juha Heinanen
 
               1.4.1. is_from_local()
               1.4.2. is_uri_host_local()
+              1.4.3. is_domain_local(variable)
 
         1.5. FIFO Commands
 
@@ -44,6 +45,7 @@ Juha Heinanen
    1-4. Setting domain_col parameter
    1-5. is_from_local usage
    1-6. is_uri_host_local usage
+   1-7. is_domain_local usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -154,6 +156,51 @@ if (is_from_local()) {
    Example 1-6. is_uri_host_local usage
 ...
 if (is_uri_host_local()) {
+        ...
+};
+...
+     _________________________________________________________
+
+1.4.3. is_domain_local(variable)
+
+   This function checks if the domain contained in the variable
+   is local. The variable can be an avp_name, an avp_alias or a
+   special keyword pointing to certain SIP headers from where the
+   domain should be taken.
+
+   The input variable can be one of the following:
+
+     * $ruri - take the domain part of the request URI
+     * $from - take the domain part of the From header
+     * avp - the domain is given by the value of the avp which is
+       either an avp_name or an avp_alias
+
+   This function is a generalized form of the is_from_local() and
+   is_uri_host_local() functions, being able to completely
+   replace them and also extends them by allowing the domain to
+   be taken from an avp. The following equivalences exist:
+
+     * is_domain_local("$ruri") is same as is_uri_host_local()
+     * is_domain_local("$from") is same as is_from_local()
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
+
+   Example 1-7. is_domain_local usage
+...
+if (is_domain_local("$ruri")) {
+        ...
+};
+if (is_domain_local("$from")) {
+        ...
+};
+if (is_domain_local("$some_avp_alias")) {
+        ...
+};
+if (is_domain_local("i:850")) {
+        ...
+};
+if (is_domain_local("s:some_avp")) {
         ...
 };
 ...
