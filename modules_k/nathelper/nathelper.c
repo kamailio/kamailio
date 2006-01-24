@@ -333,7 +333,6 @@ struct module_exports exports = {
 	mod_init,
 	0, /* reply processing */
 	0, /* destroy function */
-	0, /* on_break */
 	child_init
 };
 

@@ -163,7 +163,6 @@ struct module_exports exports = {
 	mod_init,    /* module initialization function */
 	0,
 	mod_destroy, /* destroy function */
-	0,           /* oncancel function */
 	0            /* Per-child init function */
 };
 

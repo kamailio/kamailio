@@ -78,7 +78,6 @@ struct module_exports exports = {
 	mod_init,        /* Initialization function */
 	0,               /* Response function */
 	0,               /* Destroy function */
-	0,               /* OnCancel function */
 	0                /* Child init function */
 };
 

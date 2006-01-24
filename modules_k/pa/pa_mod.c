@@ -133,7 +133,6 @@ struct module_exports exports = {
 	pa_mod_init, /* module initialization function */
 	0,           /* response function*/
 	pa_destroy,  /* destroy function */
-	0,           /* oncancel function */
 	pa_child_init/* per-child init function */
 };
 

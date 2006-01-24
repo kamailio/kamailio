@@ -210,7 +210,6 @@ struct module_exports exports = {
     mod_init,     // module init (before any kid is created. kids will inherit)
     NULL,         // reply processing
     NULL,         // destroy function
-    NULL,         // on_break
     NULL          // child_init
 };
 

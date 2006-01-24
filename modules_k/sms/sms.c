@@ -109,7 +109,6 @@ struct module_exports exports= {
 	sms_init,   /* module initialization function */
 	(response_function) 0,
 	(destroy_function) sms_exit,   /* module exit function */
-	0,
 	(child_init_function) sms_child_init  /* per-child init function */
 };
 

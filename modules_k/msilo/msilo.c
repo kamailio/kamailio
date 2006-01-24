@@ -188,7 +188,6 @@ struct module_exports exports= {
 	mod_init,   /* module initialization function */
 	(response_function) 0,       /* response handler */
 	(destroy_function) destroy,  /* module destroy function */
-	0,
 	child_init  /* per-child init function */
 };
 

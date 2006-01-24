@@ -100,7 +100,6 @@ struct module_exports exports= {
 	mod_init,   /* module initialization function */
 	(response_function) 0,
 	mod_destroy,
-	0,
 	0  /* per-child init function */
 };
 
