@@ -82,6 +82,7 @@ struct module_exports exports= {
 	"exec",
 	cmds,           /* Exported functions */
 	params,         /* Exported parameters */
+	0,              /* exported statistics */
 	mod_init, 	/* initialization module */
 	0,		/* response function */
 	exec_shutdown,	/* destroy function */

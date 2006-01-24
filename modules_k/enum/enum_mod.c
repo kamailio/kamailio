@@ -82,8 +82,8 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-        {"domain_suffix", STR_PARAM, &domain_suffix},
-        {"tel_uri_params", STR_PARAM, &tel_uri_params},
+	{"domain_suffix", STR_PARAM, &domain_suffix},
+	{"tel_uri_params", STR_PARAM, &tel_uri_params},
 	{0, 0, 0}
 };
 
@@ -95,6 +95,7 @@ struct module_exports exports = {
 	"enum", 
 	cmds,     /* Exported functions */
 	params,   /* Exported parameters */
+	0,        /* exported statistics */
 	mod_init, /* module initialization function */
 	0,        /* response function*/
 	0,        /* destroy function */

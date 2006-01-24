@@ -103,6 +103,7 @@ struct module_exports exports = {
 	"alias_db", 
 	cmds,       /* Exported functions */
 	params,     /* Exported parameters */
+	0,          /* exported statistics */
 	mod_init,   /* module initialization function */
 	0,          /* response function */
 	destroy,    /* destroy function */

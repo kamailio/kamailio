@@ -206,6 +206,7 @@ struct module_exports exports = {
     "mediaproxy", // module name
     commands,     // module exported functions
     parameters,   // module exported parameters
+	0,            /* exported statistics */
     mod_init,     // module init (before any kid is created. kids will inherit)
     NULL,         // reply processing
     NULL,         // destroy function

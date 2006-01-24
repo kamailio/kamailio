@@ -184,7 +184,7 @@ struct module_exports exports= {
 	"msilo",    /* module id */
 	cmds,       /* module's exported functions */
 	params,     /* module's exported parameters */
-	
+	0,          /* exported statistics */
 	mod_init,   /* module initialization function */
 	(response_function) 0,       /* response handler */
 	(destroy_function) destroy,  /* module destroy function */

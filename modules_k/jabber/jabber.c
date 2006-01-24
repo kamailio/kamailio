@@ -170,6 +170,7 @@ struct module_exports exports= {
 	"jabber",
 	cmds,       /* Exported functions */
 	params,     /* Exported parameters */
+	0,          /* exported statistics */
 	mod_init,   /* module initialization function */
 	(response_function) 0,
 	(destroy_function) destroy,

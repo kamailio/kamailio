@@ -329,6 +329,7 @@ struct module_exports exports = {
 	"nathelper",
 	cmds,
 	params,
+	0, /* exported statistics */
 	mod_init,
 	0, /* reply processing */
 	0, /* destroy function */

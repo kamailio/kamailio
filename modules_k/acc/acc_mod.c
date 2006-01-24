@@ -281,6 +281,7 @@ struct module_exports exports= {
 	"acc",
 	cmds,       /* exported functions */
 	params,     /* exported params */
+	0,          /* exported statistics */
 	mod_init,   /* initialization module */
 	0,          /* response function */
 	destroy,    /* destroy function */

@@ -123,7 +123,7 @@ struct module_exports exports = {
 	"pdt",
 	cmds,
 	params,
-	
+	0,				/* exported statistics */
 	mod_init,		/* module initialization function */
 	0,				/* response function */
 	mod_destroy,	/* destroy function */

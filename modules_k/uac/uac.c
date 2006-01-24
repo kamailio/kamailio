@@ -96,6 +96,7 @@ struct module_exports exports= {
 	"uac",
 	cmds,       /* exported functions */
 	params,     /* param exports */
+	0,          /* exported statistics */
 	mod_init,   /* module initialization function */
 	(response_function) 0,
 	mod_destroy,

@@ -123,14 +123,15 @@ static param_export_t params[] = {
 
 /* Module interface */
 struct module_exports exports = {
-        "permissions",
-        cmds,      /* Exported functions */
-        params,    /* Exported parameters */
-        mod_init,  /* module initialization function */
-        0,         /* response function */
-        mod_exit,  /* destroy function */
-        0,         /* oncancel function */
-        child_init /* child initialization function */
+	"permissions",
+	cmds,      /* Exported functions */
+	params,    /* Exported parameters */
+	0,         /* exported statistics */
+	mod_init,  /* module initialization function */
+	0,         /* response function */
+	mod_exit,  /* destroy function */
+	0,         /* oncancel function */
+	child_init /* child initialization function */
 };
 
 

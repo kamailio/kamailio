@@ -68,11 +68,12 @@ static param_export_t params[] = {
 struct module_exports exports = {	
 	"unixodbc",
 	cmds,
-	params,          /*  module parameters */
-	0,               /* module initialization function */
-	0,               /* response function*/
-	0,               /* destroy function */
-	0,               /* oncancel function */
-	0                /* per-child init function */
+	params,     /*  module parameters */
+	0,          /* exported statistics */
+	0,          /* module initialization function */
+	0,          /* response function*/
+	0,          /* destroy function */
+	0,          /* oncancel function */
+	0           /* per-child init function */
 };
 

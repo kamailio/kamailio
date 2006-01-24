@@ -97,6 +97,7 @@ struct module_exports exports = {
 	"avp_radius", 
 	cmds,      /* Exported commands */
 	params,    /* Exported parameters */
+	0,         /* exported statistics */
 	mod_init,  /* module initialization function */
 	0,         /* response function*/
 	0,         /* destroy function */

@@ -175,6 +175,7 @@ struct module_exports exports = {
 	"usrloc",
 	cmds,       /* Exported functions */
 	params,     /* Export parameters */
+	0,          /* exported statistics */
 	mod_init,   /* Module initialization function */
 	0,          /* Response function */
 	destroy,    /* Destroy function */

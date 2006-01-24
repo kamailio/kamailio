@@ -80,9 +80,10 @@ struct module_exports exports = {
 	"uri", 
 	cmds,      /* Exported functions */
 	params,    /* Exported parameters */
+	0,         /* exported statistics */
 	0,         /* module initialization function */
 	0,         /* response function */
-        0,         /* destroy function */
+	0,         /* destroy function */
 	0,         /* oncancel function */
 	0          /* child initialization function */
 };

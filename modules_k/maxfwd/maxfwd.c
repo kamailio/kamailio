@@ -80,6 +80,7 @@ struct module_exports exports= {
 	"maxfwd",
 	cmds,
 	params,
+	0,          /* exported statistics */
 	mod_init,
 	(response_function) 0,
 	(destroy_function) 0,

@@ -77,6 +77,7 @@ struct module_exports exports = {
 	"uri_radius", 
 	cmds,       /* Exported functions */
 	params,     /* Exported parameters */
+	0,          /* exported statistics */
 	mod_init,   /* module initialization function */
 	0,          /* response function */
 	0,          /* destroy function */

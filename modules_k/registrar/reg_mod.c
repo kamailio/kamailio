@@ -159,6 +159,7 @@ struct module_exports exports = {
 	"registrar", 
 	cmds,        /* Exported functions */
 	params,      /* Exported parameters */
+	0,           /* exported statistics */
 	mod_init,    /* module initialization function */
 	0,
 	mod_destroy, /* destroy function */

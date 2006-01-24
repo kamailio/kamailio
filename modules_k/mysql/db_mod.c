@@ -74,6 +74,7 @@ struct module_exports exports = {
 	"mysql",
 	cmds,
 	params,          /*  module parameters */
+	0,               /* exported statistics */
 	mysql_mod_init,  /* module initialization function */
 	0,               /* response function*/
 	0,               /* destroy function */

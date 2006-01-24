@@ -129,6 +129,7 @@ struct module_exports exports = {
 	"pa", 
 	cmds,        /* Exported functions */
 	params,      /* Exported parameters */
+	0,           /* exported statistics */
 	pa_mod_init, /* module initialization function */
 	0,           /* response function*/
 	pa_destroy,  /* destroy function */

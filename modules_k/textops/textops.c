@@ -156,6 +156,7 @@ struct module_exports exports= {
 	"textops",
 	cmds,
 	params,
+	0,        /* exported statistics */
 	mod_init, /* module initialization function */
 	0, /* response function */
 	0,  /* destroy function */

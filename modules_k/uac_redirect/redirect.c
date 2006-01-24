@@ -93,6 +93,7 @@ struct module_exports exports = {
 	"uac_redirect",
 	cmds,     /* Exported functions */
 	params,   /* Exported parameters */
+	0,        /* exported statistics */
 	redirect_init, /* Module initialization function */
 	(response_function) 0,
 	(destroy_function) 0,

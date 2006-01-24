@@ -74,6 +74,7 @@ struct module_exports exports = {
 	"options",       /* Module name */
 	cmds,            /* Exported functions */
 	params,          /* Exported parameters */
+	0,               /* exported statistics */
 	mod_init,        /* Initialization function */
 	0,               /* Response function */
 	0,               /* Destroy function */

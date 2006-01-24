@@ -144,6 +144,7 @@ struct module_exports exports = {
 	"cpl-c",
 	cmds,     /* Exported functions */
 	params,   /* Exported parameters */
+	0,        /* exported statistics */
 	cpl_init, /* Module initialization function */
 	(response_function) 0,
 	(destroy_function) cpl_exit,

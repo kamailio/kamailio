@@ -61,7 +61,7 @@ struct module_exports exports = {
 	"postgres",
 	cmds,
 	0,   /*  module parameters */
-
+	0,   /* exported statistics */
 	mod_init, /* module initialization function */
 	0,        /* response function*/
 	0,        /* destroy function */
