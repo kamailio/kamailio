@@ -338,7 +338,6 @@ static int fixup_phostport2proxy(void** param, int param_no)
 	int proto;
 	str host;
 
-	LOG(L_ERR,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n");
 	if (param_no!=1) {
 		LOG(L_CRIT,"BUG:tm:fixup_phostport2proxy: called with more than "
 			" one parameter\n");
