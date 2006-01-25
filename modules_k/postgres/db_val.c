@@ -178,7 +178,6 @@ static inline int time2str(time_t _v, char* _s, int* _l)
  */
 int str2valp(db_type_t _t, db_val_t* _v, char* _s, int _l, void *_p)
 {
-	char dbuf[256];
 #ifdef PARANOID
 	if (!_v) {
 		LOG(L_ERR, "str2valp(): Invalid parameter value\n");
@@ -196,36 +195,31 @@ int str2valp(db_type_t _t, db_val_t* _v, char* _s, int _l, void *_p)
 	switch(_t) {
 	case DB_INT:
 	case DB_BITMAP:
-		sprintf(dbuf, "got int %s", _s);
-		DLOG("str2valp", dbuf);
+		DBG("DEBUG:postgres:str2valp: got int %s \n", _s);
 		if (str2int(_s, &VAL_INT(_v)) < 0) {
-			LOG(L_ERR, "str2valp(): Error while converting integer value from string\n");
+			LOG(L_ERR, "str2valp(): Error while converting integer value "
+				"from string\n");
 			return -2;
 		} else {
 			VAL_TYPE(_v) = DB_INT;
 			return 0;
 		}
-		break;
 	
 	case DB_DOUBLE:
-		sprintf(dbuf, "got double %s", _s);
-		DLOG("str2valp", dbuf);
+		DBG("DEBUG:postgres:str2valp: got double %s \n", _s);
 		if (str2double(_s, &VAL_DOUBLE(_v)) < 0) {
-			LOG(L_ERR, "str2valp(): Error while converting double value from string\n");
+			LOG(L_ERR, "str2valp(): Error while converting double value "
+				"from string\n");
 			return -3;
 		} else {
 			VAL_TYPE(_v) = DB_DOUBLE;
 			return 0;
 		}
-		break;
 
 	case DB_STRING:
-		sprintf(dbuf, "got string %s", _s);
-		DLOG("str2valp", dbuf);
-
+		DBG("DEBUG:postgres:str2valp: got string %s \n", _s);
 		VAL_STRING(_v) = aug_strdup(_s, _p);
 		VAL_TYPE(_v) = DB_STRING;
-
 		return 0;
 
 	case DB_STR:
@@ -234,35 +228,23 @@ int str2valp(db_type_t _t, db_val_t* _v, char* _s, int _l, void *_p)
 		VAL_STR(_v).s[_l] = (char) 0;
 		VAL_STR(_v).len = _l;
 		VAL_TYPE(_v) = DB_STR;
-
-		sprintf(dbuf, "got len string %d %s", _l, _s);
-		DLOG("str2valp", dbuf);
-
+		DBG("DEBUG:postgres:str2valp: got len string %d %s\n", _l, _s);
 		return 0;
 
 	case DB_DATETIME:
-		sprintf(dbuf, "got time %s", _s);
-		DLOG("str2valp", dbuf);
+		DBG("DEBUG:postgres:str2valp: got time %s \n", _s);
 		if (str2time(_s, &VAL_TIME(_v)) < 0) {
-			PLOG("str2valp", "error converting datetime");
+			LOG(L_ERR,"str2valp(): Error converting datetime\n");
 			return -4;
 		} else {
 			VAL_TYPE(_v) = DB_DATETIME;
 			return 0;
 		}
-		break;
 
 	case DB_BLOB:
-
-		VAL_STR(_v).s = aug_alloc(_l + 1, _p);
-		memcpy(_s, VAL_STR(_v).s, _l);
-		VAL_STR(_v).s[_l] = (char) 0;
-		VAL_STR(_v).len = _l;
+		VAL_BLOB(_v).s = PQunescapeBytea(_s, &(VAL_BLOB(_v).len) );
 		VAL_TYPE(_v) = DB_BLOB;
-
-		sprintf(dbuf, "got blob %d", _l);
-		DLOG("str2valp", dbuf);
-
+		DBG("DEBUG:postgres:str2valp: got blob len %d\n", _l);
 		return 0;
 	}
 	return -5;
@@ -275,6 +257,8 @@ int str2valp(db_type_t _t, db_val_t* _v, char* _s, int _l, void *_p)
 int val2str(db_val_t* _v, char* _s, int* _len)
 {
 	int l;
+	char *tmp_s;
+	int tmp_len;
 
 #ifdef PARANOID
 	if ((!_v) || (!_s) || (!_len) || (!*_len)) {
@@ -319,7 +303,7 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 		l = strlen(VAL_STRING(_v));
 		LOG(L_ERR, "val2str(): converting %s, %d\n", VAL_STRING(_v), l);
 		if (*_len < (l + 3)) {
-			LOG(L_ERR, "val2str(): Destination buffer too short\n");
+			LOG(L_ERR, "val2str(): Destination buffer too short for string\n");
 			return -4;
 		} else {
 			*_s++ = '\'';
@@ -334,7 +318,7 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 	case DB_STR:
 		l = VAL_STR(_v).len;
 		if (*_len < (l + 3)) {
-			LOG(L_ERR, "val2str(): Destination buffer too short %d\n", *_len);
+			LOG(L_ERR, "val2str(): Destination buffer too short for str\n");
 			return -5;
 		} else {
 			*_s++ = '\'';
@@ -358,12 +342,19 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 	case DB_BLOB:
 		l = VAL_BLOB(_v).len;
 		if (*_len < (l * 2 + 3)) {
-			LOG(L_ERR, "val2str(): Destination buffer too short\n");
+			LOG(L_ERR, "val2str(): Destination buffer too short for blob\n");
 			return -7;
 		} else {
-			     /* WRITE ME */
+			*_s++ = '\'';
+			tmp_s = PQescapeBytea(VAL_STRING(_v), l, &tmp_len);
+			memcpy(_s, tmp_s, tmp_len);
+			PQfreemem(tmp_s);
+			tmp_len = strlen(_s);
+			*(_s + tmp_len) = '\'';
+			*(_s + tmp_len + 1) = '\0';
+			*_len = tmp_len + 2;
 			return 0;
-		}			
+		}
 		break;
 
 	default:
