@@ -235,7 +235,7 @@ install: all mk-install-dirs install-cfg install-bin install-modules \
 .PHONY: dbinstall
 dbinstall:
 	-@echo "Initializing ser database"
-	scripts/ser_mysql.sh create
+	scripts/mysql/ser_mysql.sh create
 	-@echo "Done"
 
 mk-install-dirs: $(cfg-prefix)/$(cfg-dir) $(bin-prefix)/$(bin-dir) \
@@ -284,7 +284,7 @@ install-bin: $(bin-prefix)/$(bin-dir) utils/gen_ha1/gen_ha1 utils/serunix/seruni
 		$(INSTALL-BIN) scripts/sc $(bin-prefix)/$(bin-dir)
 		mv -f $(bin-prefix)/$(bin-dir)/sc $(bin-prefix)/$(bin-dir)/serctl
 		$(INSTALL-TOUCH)   $(bin-prefix)/$(bin-dir)/ser_mysql.sh  
-		$(INSTALL-BIN) scripts/ser_mysql.sh  $(bin-prefix)/$(bin-dir)
+		$(INSTALL-BIN) scripts/mysql/ser_mysql.sh  $(bin-prefix)/$(bin-dir)
 		$(INSTALL-TOUCH)   $(bin-prefix)/$(bin-dir)/gen_ha1
 		$(INSTALL-BIN) utils/gen_ha1/gen_ha1 $(bin-prefix)/$(bin-dir)
 		$(INSTALL-TOUCH)   $(bin-prefix)/$(bin-dir)/serunix
