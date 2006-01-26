@@ -57,6 +57,7 @@
 #include "t_lookup.h"
 #include "t_fwd.h"
 #include "fix_lumps.h"
+#include "path.h"
 #include "config.h"
 
 /* route to execute for the branches */
@@ -101,6 +102,12 @@ static inline int pre_print_uac_request( struct cell *t, int branch,
 	/* from now on, flag all new lumps with LUMPFLAG_BRANCH flag in order to
 	 * be able to remove them later --bogdan */
 	set_init_lump_flags(LUMPFLAG_BRANCH);
+
+	/* add path vector as Route HF */
+	if (request->path_vec.s && request->path_vec.len) {
+		if (insert_path_as_route(request, &request->path_vec) < 0)
+			goto error;
+	}
 
 	/********** run route & callback ************/
 
@@ -252,7 +259,7 @@ int add_blind_uac( /*struct cell *t*/ )
    or error (<0); it doesn't send a message yet -- a reply to it
    might interfere with the processes of adding multiple branches
 */
-int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
+int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop, str* path,
 	struct proxy_l *proxy)
 {
 	int ret;
@@ -281,6 +288,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	request->new_uri=*uri;
 	request->parsed_uri_ok=0;
 	request->dst_uri=*next_hop;
+	request->path_vec=*path;
 
 	if ( pre_print_uac_request( t, branch, request)!= 0 ) {
 		ret = -1;
@@ -567,6 +575,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	int rurib_flags;
 	int br_flags;
 	int idx;
+	str path;
 
 	/* make -Wall happy */
 	current_uri.s=0;
@@ -609,7 +618,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	if (t->first_branch==0) {
 		try_new=1;
 		current_uri = *GET_RURI(p_msg);
-		branch_ret = add_uac( t, p_msg, &current_uri, &backup_dst, proxy);
+		branch_ret = add_uac( t, p_msg, &current_uri, &backup_dst, &p_msg->path_vec, proxy);
 		if (branch_ret>=0)
 			added_branches |= 1<<branch_ret;
 		else
@@ -617,10 +626,10 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	} else try_new=0;
 
 	for( idx=0; (current_uri.s=get_branch( idx, &current_uri.len, &q,
-	&dst_uri, &br_flags, &p_msg->force_send_socket))!=0 ; idx++ ) {
+	&dst_uri, &path, &br_flags, &p_msg->force_send_socket))!=0 ; idx++ ) {
 		try_new++;
 		p_msg->flags = (p_msg->flags&gflags_mask) | br_flags;
-		branch_ret=add_uac( t, p_msg, &current_uri, &dst_uri, proxy);
+		branch_ret=add_uac( t, p_msg, &current_uri, &dst_uri, &path, proxy);
 		/* pick some of the errors in case things go wrong;
 		   note that picking lowest error is just as good as
 		   any other algorithm which picks any other negative

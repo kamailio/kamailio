@@ -43,7 +43,7 @@
 #define WRITE_THROUGH 1
 #define WRITE_BACK    2
 
-#define UL_TABLE_VERSION 1002
+#define UL_TABLE_VERSION 1003
 
 extern str user_col;
 extern str domain_col;
@@ -56,6 +56,7 @@ extern str method_col;
 extern str flags_col;
 extern str user_agent_col;
 extern str received_col;
+extern str path_col;
 extern str sock_col;
 extern str methods_col;
 

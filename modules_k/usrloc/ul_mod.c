@@ -63,6 +63,7 @@ MODULE_VERSION
 #define FLAGS_COL      "flags"
 #define USER_AGENT_COL "user_agent"
 #define RECEIVED_COL   "received"
+#define PATH_COL       "path"
 #define SOCK_COL       "socket"
 #define METHODS_COL    "methods"
 
@@ -99,6 +100,8 @@ str flags_col       = str_init(FLAGS_COL);
 str user_agent_col  = str_init(USER_AGENT_COL);
 /* Name of column containing transport info of REGISTER */
 str received_col    = str_init(RECEIVED_COL);
+/* Name of column containing the Path header */
+str path_col        = str_init(PATH_COL);
 /* Name of column containing the received socket */
 str sock_col        = str_init(SOCK_COL);
 /* Name of column containing the supported methods */
@@ -164,6 +167,7 @@ static param_export_t params[] = {
 	{"desc_time_order",   INT_PARAM, &desc_time_order},
 	{"user_agent_column", STR_PARAM, &user_agent_col.s },
 	{"received_column",   STR_PARAM, &received_col.s   },
+	{"path_column",       STR_PARAM, &path_col.s   },
 	{"socket_column",     STR_PARAM, &sock_col.s       },
 	{"methods_column",    STR_PARAM, &methods_col.s    },
 	{"matching_mode",     INT_PARAM, &matching_mode  },
@@ -202,6 +206,7 @@ static int mod_init(void)
 	flags_col.len = strlen(flags_col.s);
 	user_agent_col.len = strlen(user_agent_col.s);
 	received_col.len = strlen(received_col.s);
+	path_col.len = strlen(path_col.s);
 	sock_col.len = strlen(sock_col.s);
 	methods_col.len = strlen(methods_col.s);
 	db_url.len = strlen(db_url.s);

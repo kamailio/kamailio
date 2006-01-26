@@ -71,6 +71,7 @@ typedef struct ucontact {
 	str* aor;               /* Pointer to the AOR string in record structure*/
 	str c;                  /* Contact address */
 	str received;           /* IP+port+protocol we recved the REGISTER from */
+	str path;               /* Path header */
 	time_t expires;         /* expires parameter */
 	qvalue_t q;             /* q parameter */
 	str callid;             /* Call-ID header field */
@@ -86,6 +87,7 @@ typedef struct ucontact {
 
 typedef struct ucontact_info {
 	str* received;
+	str* path;
 	time_t expires;
 	qvalue_t q;
 	str* callid;

@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include "../../ut.h"
 #include "../../parser/msg_parser.h"
+#include "../../parser/parse_supported.h"
 #include "../../data_lump_rpl.h"
 #include "../usrloc/usrloc.h"
 #include "rerrno.h"
@@ -189,6 +190,7 @@ int build_contact(ucontact_t* c)
 
 #define MSG_200 "OK"
 #define MSG_400 "Bad Request"
+#define MSG_420 "Bad Extension"
 #define MSG_500 "Server Internal Error"
 #define MSG_503 "Service Unavailable"
 
@@ -218,8 +220,10 @@ int build_contact(ucontact_t* c)
 #define	EI_R_RETRANS	"Retransmission"                            /* R_RETRANS */
 #define EI_R_UNESCAPE   "Error while unescaping username"           /* R_UNESCAPE */
 #define EI_R_TOO_MANY   "Too many registered contacts"              /* R_TOO_MANY */
-#define EI_R_CONTACT_LEN  "Contact/received too long"              /* R_CONTACT_LEN */
-#define EI_R_CALLID_LEN  "Callid too long"                         /* R_CALLID_LEN */
+#define EI_R_CONTACT_LEN  "Contact/received too long"               /* R_CONTACT_LEN */
+#define EI_R_CALLID_LEN  "Callid too long"                          /* R_CALLID_LEN */
+#define EI_R_PARSE_PATH  "Path parse error"                         /* R_PARSE_PATH */
+#define EI_R_PATH_UNSUP  "No support for found Path indicated"      /* R_PATH_UNSUP */
 
 str error_info[] = {
 	{EI_R_FINE,       sizeof(EI_R_FINE) - 1},
@@ -249,7 +253,10 @@ str error_info[] = {
 	{EI_R_UNESCAPE,   sizeof(EI_R_UNESCAPE) - 1},
 	{EI_R_TOO_MANY,   sizeof(EI_R_TOO_MANY) - 1},
 	{EI_R_CONTACT_LEN,sizeof(EI_R_CONTACT_LEN) - 1},
-	{EI_R_CALLID_LEN, sizeof(EI_R_CALLID_LEN) - 1}
+	{EI_R_CALLID_LEN, sizeof(EI_R_CALLID_LEN) - 1},
+	{EI_R_PARSE_PATH, sizeof(EI_R_PARSE_PATH) - 1},
+	{EI_R_PATH_UNSUP, sizeof(EI_R_PATH_UNSUP) - 1}
+
 };
 
 int codes[] = {
@@ -280,7 +287,10 @@ int codes[] = {
 	400, /* R_UNESCAPE */
 	503, /* R_TOO_MANY */
 	400, /* R_CONTACT_LEN */
-	400  /* R_CALLID_LEN */
+	400, /* R_CALLID_LEN */
+	400, /* R_PARSE_PATH */
+	420  /* R_PATH_UNSUP */
+
 };
 
 
@@ -306,7 +316,46 @@ static int add_retry_after(struct sip_msg* _m)
  	return 0;
 }
 
+#define PATH "Path: "
+#define PATH_LEN (sizeof(PATH) - 1)
 
+static int add_path(struct sip_msg* _m, str* _p)
+{
+	char* buf;
+
+ 	buf = (char*)pkg_malloc(PATH_LEN + _p->len + CRLF_LEN);
+ 	if (!buf) {
+ 		LOG(L_ERR, "add_path: No memory left\n");
+ 		return -1;
+ 	}
+ 	memcpy(buf, PATH, PATH_LEN);
+ 	memcpy(buf + PATH_LEN, _p->s, _p->len);
+ 	memcpy(buf + PATH_LEN + _p->len, CRLF, CRLF_LEN);
+ 	add_lump_rpl(_m, buf, PATH_LEN + _p->len + CRLF_LEN,
+ 		     LUMP_RPL_HDR | LUMP_RPL_NODUP);
+ 	return 0;
+}
+
+#define UNSUPPORTED "Unsupported: "
+#define UNSUPPORTED_LEN (sizeof(UNSUPPORTED) - 1)
+
+static int add_unsupported(struct sip_msg* _m, str* _p)
+{
+	char* buf;
+
+ 	buf = (char*)pkg_malloc(UNSUPPORTED_LEN + _p->len + CRLF_LEN);
+ 	if (!buf) {
+ 		LOG(L_ERR, "add_unsupported: No memory left\n");
+ 		return -1;
+ 	}
+ 	memcpy(buf, UNSUPPORTED, UNSUPPORTED_LEN);
+ 	memcpy(buf + UNSUPPORTED_LEN, _p->s, _p->len);
+ 	memcpy(buf + UNSUPPORTED_LEN + _p->len, CRLF, CRLF_LEN);
+ 	add_lump_rpl(_m, buf, UNSUPPORTED_LEN + _p->len + CRLF_LEN,
+ 		     LUMP_RPL_HDR | LUMP_RPL_NODUP);
+ 	return 0;
+}
+ 
 /*
  * Send a reply
  */
@@ -320,15 +369,36 @@ int send_reply(struct sip_msg* _m)
 		add_lump_rpl( _m, contact.buf, contact.data_len, LUMP_RPL_HDR|LUMP_RPL_NODUP|LUMP_RPL_NOFREE);
 		contact.data_len = 0;
 	}
+	
+	if (rerrno == R_FINE && path_enabled && _m->path_vec.s) {
+		if (path_mode != PATH_MODE_OFF) {
+			unsigned int supported = 0;
+			if (_m->supported)
+				if (parse_supported(_m->supported, &supported) < 0)
+					return -1;
+			if (supported & F_SUPPORTED_PATH) {
+				if (add_path(_m, &_m->path_vec) < 0)
+					return -1;
+			} else if (path_mode == PATH_MODE_STRICT) {
+				str unsup = {SUPPORTED_PATH_STR, SUPPORTED_PATH_LEN};
+				rerrno = R_PATH_UNSUP;
+				if (add_unsupported(_m, &unsup) < 0)
+					return -1;
+				if (add_path(_m, &_m->path_vec) < 0)
+					return -1;
+			}
+		}
+	}
 
 	code = codes[rerrno];
 	switch(code) {
 	case 200: msg = MSG_200; break;
 	case 400: msg = MSG_400; break;
+	case 420: msg = MSG_420; break;
 	case 500: msg = MSG_500; break;
 	case 503: msg = MSG_503; break;
 	}
-	
+
 	if (code != 200) {
 		buf = (char*)pkg_malloc(E_INFO_LEN + error_info[rerrno].len + CRLF_LEN + 1);
 		if (!buf) {
@@ -345,7 +415,7 @@ int send_reply(struct sip_msg* _m)
 			if (add_retry_after(_m) < 0) {
 				return -1;
 			}
-		}
+		} 
 	}
 
 	if (sl_reply(_m, (char*)code, msg) == -1) {

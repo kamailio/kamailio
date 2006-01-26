@@ -424,6 +424,9 @@ do { \
 	/* dst_uri to zero */
 	new_msg->dst_uri.s = 0;
 	new_msg->dst_uri.len = 0;
+	/* path_vec to zero */
+	new_msg->path_vec.s = 0;
+	new_msg->path_vec.len = 0;
 	/* message buffers(org and scratch pad) */
 	memcpy( p , org_msg->buf, org_msg->len);
 	/* ZT to be safer */

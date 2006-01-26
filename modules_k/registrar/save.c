@@ -35,6 +35,7 @@
 #include "../../str.h"
 #include "../../parser/parse_allow.h"
 #include "../../parser/parse_methods.h"
+#include "../../parser/msg_parser.h"
 #include "../../dprint.h"
 #include "../../trim.h"
 #include "../../ut.h"
@@ -46,6 +47,7 @@
 #include "reply.h"
 #include "reg_mod.h"
 #include "regtime.h"
+#include "path.h"
 #include "save.h"
 
 static int mem_only = 0;
@@ -219,6 +221,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 	static ucontact_info_t ci;
 	static str no_ua = str_init("n/a");
 	static str callid;
+	static str *path;
 	static str *received;
 	static int received_found;
 	static unsigned int allowed, allow_parsed;
@@ -261,6 +264,22 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 			ci.user_agent = &_m->user_agent->body;
 		} else {
 			ci.user_agent = &no_ua;
+		}
+
+		/* extract Path headers */
+		if (path_enabled) {
+			if(build_path_vector(_m, &path) < 0) {
+				rerrno = R_PARSE_PATH;
+				goto error;
+			}
+			if(path) {
+				ci.path = path;
+				/* save in msg too for reply */
+				if(set_path_vector(_m, path) < 0) {
+					rerrno = R_PARSE_PATH;
+					goto error;
+				}
+			}
 		}
 
 		allow_parsed = 0; /* not parsed yet */
@@ -407,10 +426,19 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 		}
 	}
 
+	if(ci && ci->path) {
+		if(ci->path->s) pkg_free(ci->path->s);
+		pkg_free(ci->path);
+	}
+	
 	return 0;
 error:
 	if (r)
 		ul.delete_urecord(_d, _a, r);
+	if(ci && ci->path) {
+		if(ci->path->s) pkg_free(ci->path->s);
+		pkg_free(ci->path);
+	}
 	return -1;
 }
 

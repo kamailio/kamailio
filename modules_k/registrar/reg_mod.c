@@ -83,6 +83,13 @@ int retry_after = 0;
 int use_branch_flags = 0;
 /* if the looked up contacts should be filtered based on supported methods */
 int method_filtering = 0;
+/* if the Path HF should be handled */
+int path_enabled = 0;
+/* if the Path HF should be inserted in the reply.
+ *   - STRICT (2): always insert, error if no support indicated in request
+ *   - LAZY   (1): insert only if support indicated in request
+ *   - OFF    (0): never insert */
+int path_mode = PATH_MODE_STRICT;
 
 
 int use_domain = 0;
@@ -148,6 +155,8 @@ static param_export_t params[] = {
 	{"sock_hdr_name",     STR_PARAM, &sock_hdr_name.s   },
 	{"use_branch_flags",  INT_PARAM, &use_branch_flags  },
 	{"method_filtering",  INT_PARAM, &method_filtering  },
+	{"use_path",          INT_PARAM, &path_enabled      },
+	{"path_mode",         INT_PARAM, &path_mode         },
 	{0, 0, 0}
 };
 

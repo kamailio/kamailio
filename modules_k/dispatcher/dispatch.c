@@ -659,7 +659,7 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
 			}
 			if(route_type==FAILURE_ROUTE)
 			{
-				if (append_branch(msg, 0, 0, Q_UNSPECIFIED, 0, 0)!=1 )
+				if (append_branch(msg, 0, 0, 0, Q_UNSPECIFIED, 0, 0)!=1 )
 				{
 					LOG(L_ERR,
 						"DISPATCHER:dst_update_dst: append_branch action"
@@ -671,7 +671,7 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
 		default:
 			if(route_type==FAILURE_ROUTE)
 			{
-				if (append_branch(msg, 0, uri, Q_UNSPECIFIED, 0, 0)!=1 )
+				if (append_branch(msg, 0, uri, 0, Q_UNSPECIFIED, 0, 0)!=1 )
 				{
 					LOG(L_ERR,
 						"DISPATCHER:dst_update_dst: append_branch action"

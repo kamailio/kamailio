@@ -41,8 +41,8 @@ void e2e_cancel( struct sip_msg *cancel_msg, struct cell *t_cancel,
 int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 		struct cell *t_invite, int branch );
 
-int add_uac( struct cell *t, struct sip_msg *request, str *uri,
-		str* next_hop, struct proxy_l *proxy);
+int add_uac( struct cell *t, struct sip_msg *request, str *uri, 
+		str* next_hop, str* path, struct proxy_l *proxy);
 
 int add_blind_uac( );
 

@@ -480,8 +480,71 @@ modparam("registrar", "method_filtering", 1)
 		</programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title><varname>use_path</varname> (integer)</title>
+		<para>
+		If set to 1, the Path header is handled according to the parameter "path_mode".
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>use_path</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "use_path", 1)
+...
+		</programlisting>
+		</example>
 	</section>
 
+	<section>
+		<title><varname>path_mode</varname> (integer)</title>
+		<para>
+		The registrar module implements three different modes regarding the response
+		to a registration which includes one or more Path headers:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			0 - The Path header is saved into usrloc, but is not included in the reply.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			1 - The Path header is saved into usrloc, but is only included in the reply
+			if path support is indicated in the registration request by the <quote>path</quote>
+			option of the <quote>Supported</quote>	header.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			2 - The path header is only saved into usrloc, if path support is indicated in the
+			registration request by the <quote>path</quote> option of the <quote>Supported</quote> 
+			header. If no path support is indicated, the request is rejected with 
+			<quote>420 - Bad Extension</quote> and the header <quote>Unsupported: path</quote> is
+			included in the reply along with the received <quote>Path</quote> header.
+			This mode is the one recommended by RFC-3327.
+			</para>
+		</listitem>
+		<para>
+		<emphasis>
+			Default value is 2.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>path_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "path_mode", 0)
+...
+		</programlisting>
+		</example>
+	</section>
+	</section>
 
 	<section>
 	<title>Exported Functions</title>

@@ -327,7 +327,7 @@ int prepareDestination(struct sip_msg* msg, int isFirst) {
 			rewrite_uri(msg, &newuri);
 			addOspHeader(msg,dest->osptoken,dest->sizeoftoken);
 		} else {
-			append_branch(msg, &newuri, NULL, 0, 0, NULL);
+			append_branch(msg, &newuri, NULL, NULL, 0, 0, NULL);
 		}
 
 	} else {

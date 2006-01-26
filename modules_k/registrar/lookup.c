@@ -37,6 +37,7 @@
 #include "common.h"
 #include "regtime.h"
 #include "reg_mod.h"
+#include "path.h"
 #include "lookup.h"
 
 
@@ -58,6 +59,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	int res;
 	int bflags;
 	int ret;
+	str *path_dst = 0;
 
 	if (_m->new_uri.s) uri = _m->new_uri;
 	else uri = _m->first_line.u.request.uri;
@@ -102,7 +104,28 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 			return -3;
 		}
 
-		if (ptr->received.s && ptr->received.len) {
+		/* If a Path is present, use first path-uri in favour of
+		 * received-uri because in that case the last hop towards the uac
+		 * has to handle NAT. - agranig */
+		if (ptr->path.s && ptr->path.len) {
+			if (get_path_dst_uri(&ptr->path, &path_dst) < 0) {
+				LOG(L_ERR, "lookup(): Failed to get dst_uri for Path\n");
+				ul.unlock_udomain((udomain_t*)_t);
+				return -3;
+			}
+			if (set_path_vector(_m, &ptr->path) < 0) {
+				LOG(L_ERR, "lookup(): Failed to set path vector\n");
+				ul.unlock_udomain((udomain_t*)_t);
+				return -3;
+			}
+			if (set_dst_uri(_m, path_dst) < 0) {
+				LOG(L_ERR, "lookup(): Failed to set dst_uri of Path\n");
+				pkg_free(path_dst->s); pkg_free(path_dst);
+				ul.unlock_udomain((udomain_t*)_t);
+				return -3;
+			}
+			pkg_free(path_dst->s); pkg_free(path_dst);
+		} else if (ptr->received.s && ptr->received.len) {
 			if (set_dst_uri(_m, &ptr->received) < 0) {
 				ul.unlock_udomain((udomain_t*)_t);
 				return -3;
@@ -128,14 +151,28 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 		if (VALID_CONTACT(ptr, act_time) && supported_method(_m, ptr)) {
 			/* for additional branches, the nat flag goes into dset */
 			bflags = (use_branch_flags && (ptr->flags & FL_NAT))?nat_flag:0;
-			if (append_branch(_m, &ptr->c, &ptr->received, ptr->q,
-			bflags, ptr->sock) == -1) {
+
+			path_dst = 0;
+			if(get_path_dst_uri(&ptr->path, &path_dst) < 0) {
+				LOG(L_ERR, "lookup(): Failed to get dst_uri for Path\n");
+				continue;
+			}
+		
+			 /* The same as for the first contact applies for branches regarding
+			  * path vs. received. */
+			if (append_branch(_m, &ptr->c, path_dst ? path_dst : &ptr->received, 
+			&ptr->path, ptr->q, bflags, ptr->sock) == -1) {
 				LOG(L_ERR, "lookup(): Error while appending a branch\n");
-				/* Return 1 here so the function succeeds even if
-				 * appending of a branch failed */
+				if(path_dst) {
+					pkg_free(path_dst->s); pkg_free(path_dst);
+				}
 				/* Also give a chance to the next branches*/
 				continue;
 			}
+			if (path_dst) {
+				pkg_free(path_dst->s); pkg_free(path_dst);
+			}
+			
 			if (!use_branch_flags && (ptr->flags & FL_NAT))
 				_m->flags |= nat_flag;
 		}

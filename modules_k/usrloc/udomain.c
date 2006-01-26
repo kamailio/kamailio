@@ -205,14 +205,14 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 {
 	ucontact_info_t ci;
 	char uri[MAX_URI_SIZE];
-	db_key_t columns[12];
+	db_key_t columns[13];
 	db_res_t* res;
 	db_row_t* row;
 	int i;
 	int port, proto;
 	char *p;
 
-	str user, contact, callid, ua, received, host;
+	str user, contact, callid, ua, received, host, path;
 	char* domain;
 	int ver;
 
@@ -238,16 +238,17 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	columns[6] = flags_col.s;
 	columns[7] = user_agent_col.s;
 	columns[8] = received_col.s;
-	columns[9] = sock_col.s;
-	columns[10] = methods_col.s;
-	columns[11] = domain_col.s;
+	columns[9] = path_col.s;
+	columns[10] = sock_col.s;
+	columns[11] = methods_col.s;
+	columns[12] = domain_col.s;
 
 	if (ul_dbf.use_table(_c, _d->name->s) < 0) {
 		LOG(L_ERR, "preload_udomain(): Error in use_table\n");
 		return -1;
 	}
 
-	if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? (12) : (11), 0,
+	if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? (13) : (12), 0,
 				&res) < 0) {
 		LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
 		return -1;
@@ -348,10 +349,19 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			received.len = strlen(received.s);
 		}
 		ci.received = &received;
+		
+		path.s  = (char*)VAL_STRING(ROW_VALUES(row) + 9);
+		if (VAL_NULL(ROW_VALUES(row)+9) || !path.s || !path.s[0]) {
+			path.len = 0;
+			path.s = 0;
+		} else {
+			path.len = strlen(path.s);
+		}
+		ci.path= &path;
 
 		/* socket name */
-		p  = (char*)VAL_STRING(ROW_VALUES(row) + 9);
-		if (VAL_NULL(ROW_VALUES(row)+9) || p==0 || p[0]==0){
+		p  = (char*)VAL_STRING(ROW_VALUES(row) + 10);
+		if (VAL_NULL(ROW_VALUES(row)+10) || p==0 || p[0]==0){
 			ci.sock = 0;
 		} else {
 			if (parse_phostport( p, strlen(p), &host.s, &host.len, 
@@ -371,15 +381,15 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		}
 
 		/* supported methods */
-		if (VAL_NULL(ROW_VALUES(row)+10)) {
+		if (VAL_NULL(ROW_VALUES(row)+11)) {
 			ci.methods = ALL_METHODS;
 		} else {
-			ci.methods = VAL_BITMAP(ROW_VALUES(row) + 10);
+			ci.methods = VAL_BITMAP(ROW_VALUES(row) + 11);
 		}
 
 		if (use_domain) {
-			domain = (char*)VAL_STRING(ROW_VALUES(row) + 11);
-			if (VAL_NULL(ROW_VALUES(row)+11) || domain==0 || domain[0]==0) {
+			domain = (char*)VAL_STRING(ROW_VALUES(row) + 12);
+			if (VAL_NULL(ROW_VALUES(row)+12) || domain==0 || domain[0]==0) {
 				LOG(L_CRIT, "preload_udomain: ERROR: empty domain "
 					"record in table %s for user %.*s\n", _d->name->s,
 					user.len, user.s);

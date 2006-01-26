@@ -185,7 +185,7 @@ int is_uri_host_local(struct sip_msg* _msg, char* _s1, char* _s2)
 	}
 	return is_domain_local(&(_msg->parsed_uri.host));
     } else if (route_type == FAILURE_ROUTE) {
-	branch.s = get_branch(0, &branch.len, &q, 0, 0, 0);
+	branch.s = get_branch(0, &branch.len, &q, 0, 0, 0, 0);
 	if (branch.s) {
 	    if (parse_uri(branch.s, branch.len, &puri) < 0) {
 		LOG(L_ERR, "is_uri_host_local():"

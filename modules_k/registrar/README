@@ -43,6 +43,8 @@ Bogdan-Andre Iancu
               1.3.16. sock_hdr_name (string)
               1.3.17. use_branch_flags (integer)
               1.3.18. method_filtering (integer)
+              1.3.19. use_path (integer)
+              1.3.20. path_mode (integer)
 
         1.4. Exported Functions
 
@@ -74,11 +76,13 @@ Bogdan-Andre Iancu
    1-16. Set sock_hdr_namer parameter
    1-17. Set use_branch_flags parameter
    1-18. Set method_filtering parameter
-   1-19. save usage
-   1-20. save_noreply usage
-   1-21. lookup usage
-   1-22. registered usage
-   1-23. add_sock_hdr usage
+   1-19. Set use_path parameter
+   1-20. Set path_mode parameter
+   1-21. save usage
+   1-22. save_noreply usage
+   1-23. lookup usage
+   1-24. registered usage
+   1-25. add_sock_hdr usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -394,6 +398,47 @@ modparam("registrar", "method_filtering", 1)
 ...
      _________________________________________________________
 
+1.3.19. use_path (integer)
+
+   If set to 1, the Path header is handled according to the
+   parameter "path_mode".
+
+   Default value is 0 (disabled). 
+
+   Example 1-19. Set use_path parameter
+...
+modparam("registrar", "use_path", 1)
+...
+     _________________________________________________________
+
+1.3.20. path_mode (integer)
+
+   The registrar module implements three different modes
+   regarding the response to a registration which includes one or
+   more Path headers:
+
+     * 0 - The Path header is saved into usrloc, but is not
+       included in the reply.
+     * 1 - The Path header is saved into usrloc, but is only
+       included in the reply if path support is indicated in the
+       registration request by the "path" option of the
+       "Supported" header.
+     * 2 - The path header is only saved into usrloc, if path
+       support is indicated in the registration request by the
+       "path" option of the "Supported" header. If no path
+       support is indicated, the request is rejected with "420 -
+       Bad Extension" and the header "Unsupported: path" is
+       included in the reply along with the received "Path"
+       header. This mode is the one recommended by RFC-3327.
+
+   Default value is 2. 
+
+   Example 1-20. Set path_mode parameter
+...
+modparam("registrar", "path_mode", 0)
+...
+     _________________________________________________________
+
 1.4. Exported Functions
 
 1.4.1. save(domain)
@@ -413,7 +458,7 @@ modparam("registrar", "method_filtering", 1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-19. save usage
+   Example 1-21. save usage
 ...
 save("location");
 ...
@@ -431,7 +476,7 @@ save("location");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-20. save_noreply usage
+   Example 1-22. save_noreply usage
 ...
 save_noreply("location");
 ...
@@ -464,7 +509,7 @@ save_noreply("location");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-21. lookup usage
+   Example 1-23. lookup usage
 ...
 lookup("location");
 switch ($?) {
@@ -492,7 +537,7 @@ switch ($?) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-22. registered usage
+   Example 1-24. registered usage
 ...
 if (registered("location")) {
         sl_send_reply("100", "Trying");
@@ -515,7 +560,7 @@ if (registered("location")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-23. add_sock_hdr usage
+   Example 1-25. add_sock_hdr usage
 ...
 add_sock_hdr("Sock-Info");
 ...

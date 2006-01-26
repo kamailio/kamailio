@@ -56,6 +56,9 @@ typedef enum rerr {
 	R_TOO_MANY,   /* Too many contacts */
 	R_CONTACT_LEN,/* Contact URI or RECEIVED too long */
 	R_CALLID_LEN, /* Callid too long */
+	R_PARSE_PATH, /* Error while parsing Path */
+	R_PATH_UNSUP  /* Path not supported by UAC */
+
 } rerr_t;
 
 

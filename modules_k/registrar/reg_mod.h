@@ -46,6 +46,10 @@
 #define CALLID_MAX_SIZE        255
 #define UA_MAX_SIZE            255
 
+#define PATH_MODE_STRICT	2
+#define PATH_MODE_LAZY		1
+#define PATH_MODE_OFF		0
+
 extern int default_expires;
 extern qvalue_t default_q;
 extern int append_branches;
@@ -66,6 +70,8 @@ extern int max_contacts;
 extern int retry_after;
 extern int use_branch_flags;
 extern int method_filtering;
+extern int path_enabled;
+extern int path_mode;
 
 extern str sock_hdr_name;
 extern int sock_flag;
