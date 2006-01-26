@@ -14,7 +14,62 @@
 	<section>
 	<title>Overview</title>
 	<para>The module contains REGISTER processing logic.</para>
+		<section>
+		<title>PATH support</title>
+		<para>
+		Register module includes Path support (according to RFC 3327) 
+		for usage in registrars and home-proxies.
+		</para>
+		<para>
+		A call to save(...) stores, if path-support is enabled
+		in the registrar-module, the values of the Path
+		Header(s) along with the contact into usrloc. There are
+		three modes regarding the reply to a REGISTER including
+		one or more Path HFs:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>off</emphasis> - stores the value of the 
+				Path headers into usrloc without passing it back to 
+				the UAC in the reply.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>lazy</emphasis> - stores the Path header and 
+				passes it back to the UAC if Path-support is indicated 
+				by the <quote>path</quote> param in the Supported HF.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>strict</emphasis> - rejects the registration 
+				with <quote>420 Bad Extension</quote> if there's a Path 
+				header but no support for it is indicated by the UAC. 
+				Otherwise it's stored and passed back to the UAC.
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		A call to lookup(...) always uses the path header if
+		found, and inserts it as Route HF either in front of
+		the first Route HF, or after the last Via HF if no
+		Route is present. It also sets the destination uri to
+		the first Path uri, thus overwriting the received-uri,
+		because NAT has to be handled at the outbound-proxy of
+		the UAC (the first hop after client's NAT).
+		</para>
+		<para>
+		The whole process is transparent to the user, so no
+		config changes are required beside setting the
+		registrar-parameters <quote>use_path</quote> and 
+		<quote>path_mode</quote>.
+		</para>
+		</section>
 	</section>
+
+
 	<section>
 	<title>Dependencies</title>
 	<section>

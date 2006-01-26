@@ -18,6 +18,9 @@ Bogdan-Andre Iancu
    1. User's Guide
 
         1.1. Overview
+
+              1.1.1. PATH support
+
         1.2. Dependencies
 
               1.2.1. OpenSER Modules
@@ -90,6 +93,39 @@ Chapter 1. User's Guide
 1.1. Overview
 
    The module contains REGISTER processing logic.
+     _________________________________________________________
+
+1.1.1. PATH support
+
+   Register module includes Path support (according to RFC 3327)
+   for usage in registrars and home-proxies.
+
+   A call to save(...) stores, if path-support is enabled in the
+   registrar-module, the values of the Path Header(s) along with
+   the contact into usrloc. There are three modes regarding the
+   reply to a REGISTER including one or more Path HFs:
+
+     * off - stores the value of the Path headers into usrloc
+       without passing it back to the UAC in the reply.
+     * lazy - stores the Path header and passes it back to the
+       UAC if Path-support is indicated by the "path" param in
+       the Supported HF.
+     * strict - rejects the registration with "420 Bad Extension"
+       if there's a Path header but no support for it is
+       indicated by the UAC. Otherwise it's stored and passed
+       back to the UAC.
+
+   A call to lookup(...) always uses the path header if found,
+   and inserts it as Route HF either in front of the first Route
+   HF, or after the last Via HF if no Route is present. It also
+   sets the destination uri to the first Path uri, thus
+   overwriting the received-uri, because NAT has to be handled at
+   the outbound-proxy of the UAC (the first hop after client's
+   NAT).
+
+   The whole process is transparent to the user, so no config
+   changes are required beside setting the registrar-parameters
+   "use_path" and "path_mode".
      _________________________________________________________
 
 1.2. Dependencies
