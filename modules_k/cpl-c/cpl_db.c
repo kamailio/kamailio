@@ -33,6 +33,9 @@
 static db_con_t* db_hdl=0;
 static db_func_t cpl_dbf;
 
+char *cpl_user_col = "user_id";
+char *cpl_xml_col  = "cpl_xml";
+char *cpl_bin_col  = "cpl_bin";
 
 
 int cpl_db_bind(char* db_url)
@@ -101,7 +104,7 @@ int get_user_script(str *user, str *script, const char* key)
 	db_val_t   vals[1];
 	db_res_t   *res = 0 ;
 
-	keys_cmp[0] = "user";
+	keys_cmp[0] = cpl_user_col;
 	keys_ret[0] = key;
 
 	DBG("DEBUG:get_user_script: fetching script for user <%s>\n",user->s);
@@ -158,11 +161,12 @@ error:
  */
 int write_to_db(char *usr, str *xml, str *bin)
 {
-	db_key_t   keys[] = {"user","cpl_xml","cpl_bin"};
+	db_key_t   keys[3];
 	db_val_t   vals[3];
 	db_res_t   *res;
 
 	/* lets see if the user is already in database */
+	keys[0] = cpl_user_col;
 	vals[0].type = DB_STRING;
 	vals[0].nul  = 0;
 	vals[0].val.string_val = usr;
@@ -177,15 +181,18 @@ int write_to_db(char *usr, str *xml, str *bin)
 	}
 
 	/* username */
+	keys[0] = cpl_user_col;
 	vals[0].type = DB_STRING;
 	vals[0].nul  = 0;
 	vals[0].val.string_val = usr;
 	/* cpl text */
+	keys[1] = cpl_xml_col;
 	vals[1].type = DB_BLOB;
 	vals[1].nul  = 0;
 	vals[1].val.blob_val.s = xml->s;
 	vals[1].val.blob_val.len = xml->len;
 	/* cpl bin */
+	keys[2] = cpl_bin_col;
 	vals[2].type = DB_BLOB;
 	vals[2].nul  = 0;
 	vals[2].val.blob_val.s = bin->s;
@@ -221,8 +228,10 @@ error:
  */
 int rmv_from_db(char *usr)
 {
-	db_key_t   keys[] = {"user"};
+	db_key_t   keys[1];
 	db_val_t   vals[1];
+
+	keys[0] = cpl_user_col;
 
 	/* username */
 	vals[0].type = DB_STRING;

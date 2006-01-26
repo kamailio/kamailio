@@ -120,6 +120,65 @@ modparam("cpl_c","cpl_table","cpltable")
 			</example>
 		</section>
 		<section>
+			<title><varname>user_column</varname> (string)</title>
+			<para>
+				Indicates the name of the column used for storing the user ID.
+			</para>
+			<para>
+				<emphasis>
+					Default value is <quote>user_id</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>user_column</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl_c","user_column","user_id")
+...
+</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>cpl_xml_column</varname> (string)</title>
+			<para>
+				Indicates the name of the column used for storing the 
+				the XML version of the cpl script.
+			</para>
+			<para>
+				<emphasis>
+					Default value is <quote>cpl_xml</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>cpl_xml_column</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl_c","cpl_xml_column","cpl_xml")
+...
+</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>cpl_bin_column</varname> (string)</title>
+			<para>
+				Indicates the name of the column used for storing the 
+				the binary version of the cpl script (compiled version).
+			</para>
+			<para>
+				<emphasis>
+					Default value is <quote>cpl_bin</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>cpl_bin_column</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl_c","cpl_bin_column","cpl_bin")
+...
+</programlisting>
+			</example>
+		</section>
+		<section>
 			<title><varname>cpl_dtd_file</varname> (string)</title>
 			<para>
 				Points to the DTD file describing the CPL grammar. The file 

@@ -124,18 +124,21 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"cpl_db",         STR_PARAM, &DB_URL      },
-	{"cpl_table",      STR_PARAM, &DB_TABLE    },
-	{"cpl_dtd_file",   STR_PARAM, &dtd_file    },
-	{"proxy_recurse",  INT_PARAM, &cpl_env.proxy_recurse  },
-	{"proxy_route",    INT_PARAM, &cpl_env.proxy_route    },
-	{"nat_flag",       INT_PARAM, &cpl_env.nat_flag       },
-	{"log_dir",        STR_PARAM, &cpl_env.log_dir        },
-	{"case_sensitive", INT_PARAM, &cpl_env.case_sensitive },
-	{"realm_prefix",   STR_PARAM, &cpl_env.realm_prefix.s },
-	{"lookup_domain",  STR_PARAM, &lookup_domain          },
+	{"cpl_db",         STR_PARAM, &DB_URL                            },
+	{"cpl_table",      STR_PARAM, &DB_TABLE                          },
+	{"cpl_dtd_file",   STR_PARAM, &dtd_file                          },
+	{"proxy_recurse",  INT_PARAM, &cpl_env.proxy_recurse             },
+	{"proxy_route",    INT_PARAM, &cpl_env.proxy_route               },
+	{"nat_flag",       INT_PARAM, &cpl_env.nat_flag                  },
+	{"log_dir",        STR_PARAM, &cpl_env.log_dir                   },
+	{"case_sensitive", INT_PARAM, &cpl_env.case_sensitive            },
+	{"realm_prefix",   STR_PARAM, &cpl_env.realm_prefix.s            },
+	{"lookup_domain",  STR_PARAM, &lookup_domain                     },
 	{"lookup_append_branches", INT_PARAM, &cpl_env.lu_append_branches},
-	{"timer_avp",      STR_PARAM, &timer_avp   },
+	{"timer_avp",      STR_PARAM, &timer_avp                         },
+	{"user_column",    STR_PARAM, &cpl_user_col                      },
+	{"cpl_xml_column", STR_PARAM, &cpl_xml_col                       },
+	{"cpl_bin_column", STR_PARAM, &cpl_bin_col                       },
 	{0, 0, 0}
 };
 
@@ -603,7 +606,7 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	/* get the script for this user */
-	if (get_user_script(&user, &script, "cpl_bin")==-1)
+	if (get_user_script(&user, &script, cpl_bin_col)==-1)
 		goto error1;
 
 	/* has the user a non-empty script? if not, return normally, allowing ser to
@@ -768,7 +771,7 @@ static inline int do_script_download(struct sip_msg *msg)
 		goto error;
 
 	/* get the user's xml script from the database */
-	if (get_user_script(&user, &script, "cpl_xml")==-1)
+	if (get_user_script(&user, &script, cpl_xml_col)==-1)
 		goto error;
 
 	/* add a lump with content-type hdr */

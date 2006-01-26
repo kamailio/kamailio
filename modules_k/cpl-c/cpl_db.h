@@ -30,6 +30,9 @@ int cpl_db_bind(char* db_url);
 int cpl_db_init(char* db_url, char* db_table);
 void cpl_db_close();
 
+extern char *cpl_user_col;
+extern char *cpl_xml_col;
+extern char *cpl_bin_col;
 
 /* inserts into database a cpl script in XML format(xml) along with its binary
  * format (bin)
