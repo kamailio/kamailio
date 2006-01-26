@@ -59,7 +59,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	int res;
 	int bflags;
 	int ret;
-	str *path_dst = 0;
+	str *path_dst;
 
 	if (_m->new_uri.s) uri = _m->new_uri;
 	else uri = _m->first_line.u.request.uri;
@@ -120,11 +120,9 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 			}
 			if (set_dst_uri(_m, path_dst) < 0) {
 				LOG(L_ERR, "lookup(): Failed to set dst_uri of Path\n");
-				pkg_free(path_dst->s); pkg_free(path_dst);
 				ul.unlock_udomain((udomain_t*)_t);
 				return -3;
 			}
-			pkg_free(path_dst->s); pkg_free(path_dst);
 		} else if (ptr->received.s && ptr->received.len) {
 			if (set_dst_uri(_m, &ptr->received) < 0) {
 				ul.unlock_udomain((udomain_t*)_t);
@@ -153,24 +151,19 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 			bflags = (use_branch_flags && (ptr->flags & FL_NAT))?nat_flag:0;
 
 			path_dst = 0;
-			if(get_path_dst_uri(&ptr->path, &path_dst) < 0) {
+			if(ptr->path.s && ptr->path.len 
+			&& get_path_dst_uri(&ptr->path, &path_dst) < 0) {
 				LOG(L_ERR, "lookup(): Failed to get dst_uri for Path\n");
 				continue;
 			}
 		
-			 /* The same as for the first contact applies for branches regarding
-			  * path vs. received. */
-			if (append_branch(_m, &ptr->c, path_dst ? path_dst : &ptr->received, 
+			/* The same as for the first contact applies for branches 
+			 * regarding path vs. received. */
+			if (append_branch(_m, &ptr->c, path_dst? path_dst : &ptr->received,
 			&ptr->path, ptr->q, bflags, ptr->sock) == -1) {
 				LOG(L_ERR, "lookup(): Error while appending a branch\n");
-				if(path_dst) {
-					pkg_free(path_dst->s); pkg_free(path_dst);
-				}
 				/* Also give a chance to the next branches*/
 				continue;
-			}
-			if (path_dst) {
-				pkg_free(path_dst->s); pkg_free(path_dst);
 			}
 			
 			if (!use_branch_flags && (ptr->flags & FL_NAT))

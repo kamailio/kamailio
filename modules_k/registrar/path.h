@@ -32,7 +32,7 @@
  * Extracts all Path header bodies into one string and
  * checks if first hop is a loose router.
  */
-int build_path_vector(struct sip_msg *_m, str **path);
+int build_path_vector(struct sip_msg *_m, str *path);
 
 /*
  * If Path is available, sets _dst to uri of first element .

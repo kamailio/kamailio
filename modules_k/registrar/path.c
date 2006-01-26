@@ -33,123 +33,95 @@
 /*
  * Combines all Path HF bodies into one string.
  */
-int build_path_vector(struct sip_msg *_m, str **path)
+int build_path_vector(struct sip_msg *_m, str *path)
 {
-	int size = 0, first = 1;
 	char *tmp;
 	struct hdr_field *hdr;
 	rr_t *route = 0;
-	
-	*path = 0;
 
 	if(parse_headers(_m, HDR_EOH_F, 1) < 0) {
-		LOG(L_ERR, "ERROR: build_path_vector(): Error while parsing message\n");
-		return -1;
+		LOG(L_ERR,"ERROR: build_path_vector(): Error while parsing message\n");
+		goto error;
 	}
 
-	*path = pkg_malloc(sizeof(**path));
-	if(!*path) {
-		LOG(L_ERR, "ERROR: build_path_vector(): Out of memory\n");
-		return -1;
-	}
-	(*path)->s = 0;
-	(*path)->len = 0;
+	path->len = 0;
+	path->s = 0;
 
-	hdr = _m->path;
-	while(hdr) {
-		if(hdr->type == HDR_PATH_T) {
-			size += hdr->body.len + 1;
-			if((*path)->s)
-				tmp = pkg_realloc((*path)->s, size);
-			else
-				tmp = pkg_malloc(size);
-			if(!tmp) {
-				LOG(L_ERR, "ERROR: build_path_vector(): Out of memory\n");
-				if((*path)->s) pkg_free((*path)->s);
-				pkg_free(*path); *path = 0;
-				return -1;
-			}
-			if(!first) {
-				tmp = strncat(tmp, ",", 1);
-				(*path)->s = strncat(tmp, hdr->body.s, hdr->body.len);
-				(*path)->len += hdr->body.len + 1;
-			}
-			else {
-				memset(tmp, '\0', size);
-				strncpy(tmp, hdr->body.s, hdr->body.len);
-				(*path)->s = tmp;
-				(*path)->len += hdr->body.len;
-				first = 0;
-			}
+	for( hdr=_m->path ; hdr ; hdr=hdr->next) {
+		if(hdr->type != HDR_PATH_T)
+			continue;
+		
+		tmp = pkg_realloc( path->s, path->len + hdr->body.len + 1);
+		if(!tmp) {
+			LOG(L_ERR, "ERROR: build_path_vector(): Out of memory\n");
+			goto error1;
 		}
-		hdr = hdr->next;
+		if(path->s) {
+			tmp[path->len++] = ',';
+			memcpy( tmp+path->len, hdr->body.s, hdr->body.len);
+		} else {
+			memcpy( tmp, hdr->body.s, hdr->body.len);
+		}
+		path->len +=  hdr->body.len;
+		path->s = tmp;
 	}
 
-	if((*path)->len) {
+	if(path->len) {
 		/* check if next hop is a loose router */
-		if(parse_rr_body((*path)->s, (*path)->len, &route) < 0) {
-			LOG(L_ERR, "ERROR: build_path_vector(): Failed to parse Path body, no head found\n");
-			pkg_free((*path)->s); pkg_free(*path); *path = 0;
-			return -1;
+		if(parse_rr_body(path->s, path->len, &route) < 0) {
+			LOG(L_ERR, "ERROR: build_path_vector(): Failed to parse Path "
+				"body, no head found\n");
+			goto error1;
 		}
 		if(!route->params || route->params->type != P_LR) {
-			LOG(L_ERR, "ERROR: build_path_vector(): First Path URI is not a loose-router, not supported\n");
+			LOG(L_ERR, "ERROR: build_path_vector(): First Path URI is not a "
+				"loose-router, not supported\n");
 			free_rr(&route);
-			pkg_free((*path)->s); pkg_free(*path); *path = 0;
-			return -1;
+			goto error1;
 		}
 		free_rr(&route);
 
 		/* check for max. Path length */
-		if((*path)->len > MAX_PATH_SIZE) {
-			LOG(L_ERR, "ERROR: build_path_vector(): Overall Path body exceeds max. length of 255\n");
-			pkg_free((*path)->s); pkg_free(*path); *path = 0;
-			return -1;
+		if(path->len > MAX_PATH_SIZE) {
+			LOG(L_ERR, "ERROR: build_path_vector(): Overall Path body "
+				"exceeds max. length of %d\n",MAX_PATH_SIZE);
+			goto error1;
 		}
-	} else {
-		/* no path available, that's ok */
-		pkg_free(*path); *path = 0;
 	}
-	
+
 	return 0;
+error1:
+	if(path->s) pkg_free(path->s);
+	path->s = 0;
+	path->len = 0;
+error:
+	return -1;
 }
 
 /*
- * If Path is available, allocate _dst and copy uri of first element to it.
+ * Path must be available. Function returns the first uri 
+ * from Path without any dupication.
  */
 int get_path_dst_uri(str *_p, str **_dst)
 {
 	rr_t *route = 0;
-	*_dst = 0;
 
-	if(_p && _p->len) {
-		DBG("DEBUG: get_path_dst_uri(): Path for branch: '%.*s'\n", _p->len, _p->s);
+	DBG("DEBUG: get_path_dst_uri(): Path for branch: '%.*s'\n",
+		_p->len, _p->s);
 
-		if(parse_rr_body(_p->s, _p->len, &route) < 0) {
-			LOG(L_ERR, "ERROR: get_path_dst_uri(): Failed to parse Path body\n");
-			return -1;
-		}
-		if(!route) {
-			LOG(L_ERR, "ERROR: get_path_dst_uri(): Failed to parse Path body, no head found\n");
-			return -1;
-		}
-
-		*_dst = pkg_malloc(sizeof(**_dst));
-		if(!*_dst) {
-			LOG(L_ERR, "ERROR: get_path_dst_uri(): Out of memory\n");
-			return -1;
-		}
-		(*_dst)->s = pkg_malloc(route->nameaddr.uri.len);
-		if(!(*_dst)->s) {
-			LOG(L_ERR, "ERROR: get_path_dst_uri(): Out of memory\n");
-			pkg_free(*_dst); *_dst = 0;
-			return -1;
-		}
-		memcpy((*_dst)->s, route->nameaddr.uri.s, route->nameaddr.uri.len);
-		(*_dst)->len = route->nameaddr.uri.len;
-		
-		free_rr(&route);
+	if(parse_rr_body(_p->s, _p->len, &route) < 0) {
+		LOG(L_ERR, "ERROR: get_path_dst_uri(): Failed to parse "
+			"Path body\n");
+		return -1;
 	}
+	if(!route) {
+		LOG(L_ERR, "ERROR: get_path_dst_uri(): Failed to parse Path body,"
+			" no head found\n");
+		return -1;
+	}
+
+	*_dst = &route->nameaddr.uri;
+	free_rr(&route);
 
 	return 0;
 }
