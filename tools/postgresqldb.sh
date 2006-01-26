@@ -316,7 +316,7 @@ CREATE TABLE version (
 INSERT INTO version VALUES ( 'acc', '2');
 INSERT INTO version VALUES ( 'active_sessions', '1');
 INSERT INTO version VALUES ( 'admin_privileges', '1');
-INSERT INTO version VALUES ( 'aliases', '1002');
+INSERT INTO version VALUES ( 'aliases', '1003');
 INSERT INTO version VALUES ( 'calls_forwarding', '1');
 INSERT INTO version VALUES ( 'config', '1');
 INSERT INTO version VALUES ( 'dbaliases', '1');
@@ -327,7 +327,7 @@ INSERT INTO version VALUES ( 're_grp', '1');
 INSERT INTO version VALUES ( 'gw', '3');
 INSERT INTO version VALUES ( 'gw_grp', '1');
 INSERT INTO version VALUES ( 'lcr', '1');
-INSERT INTO version VALUES ( 'location', '1002');
+INSERT INTO version VALUES ( 'location', '1003');
 INSERT INTO version VALUES ( 'missed_calls', '2');
 INSERT INTO version VALUES ( 'pending', '4');
 INSERT INTO version VALUES ( 'phonebook', '1');
@@ -414,6 +414,7 @@ CREATE TABLE aliases (
   domain varchar(128) NOT NULL default '',
   contact varchar(255) NOT NULL default '',
   received varchar(255) default NULL,
+  path varchar(255) default NULL,
   expires $DATETIMEALIAS,
   q $FLOAT NOT NULL default '$DEFAULT_Q',
   callid varchar(255) NOT NULL default '$DEFAULT_CALLID',
@@ -543,6 +544,7 @@ CREATE TABLE location (
   domain varchar(128) NOT NULL default '',
   contact varchar(255) NOT NULL default '',
   received varchar(255) default NULL,
+  path varchar(255) default NULL,
   expires $DATETIMELOCATION,
   q $FLOAT NOT NULL default '$DEFAULT_Q',
   callid varchar(255) NOT NULL default '$DEFAULT_CALLID',
