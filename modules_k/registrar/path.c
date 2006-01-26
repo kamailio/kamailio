@@ -26,8 +26,6 @@
 
 #include "../../data_lump.h"
 #include "../../parser/parse_rr.h"
-#include "../../usr_avp.h"
-#include "../../mem/mem.h"
 #include "path.h"
 
 /*
@@ -35,65 +33,54 @@
  */
 int build_path_vector(struct sip_msg *_m, str *path)
 {
-	char *tmp;
+	static char buf[MAX_PATH_SIZE];
+	char *p;
 	struct hdr_field *hdr;
 	rr_t *route = 0;
+
+	path->len = 0;
+	path->s = 0;
 
 	if(parse_headers(_m, HDR_EOH_F, 1) < 0) {
 		LOG(L_ERR,"ERROR: build_path_vector(): Error while parsing message\n");
 		goto error;
 	}
 
-	path->len = 0;
-	path->s = 0;
-
-	for( hdr=_m->path ; hdr ; hdr=hdr->next) {
+	for( hdr=_m->path,p=buf ; hdr ; hdr=hdr->next) {
 		if(hdr->type != HDR_PATH_T)
 			continue;
 		
-		tmp = pkg_realloc( path->s, path->len + hdr->body.len + 1);
-		if(!tmp) {
-			LOG(L_ERR, "ERROR: build_path_vector(): Out of memory\n");
-			goto error1;
+		/* check for max. Path length */
+		if( p-buf+hdr->body.len+1 >= MAX_PATH_SIZE) {
+			LOG(L_ERR, "ERROR: build_path_vector(): Overall Path body "
+				"exceeds max. length of %d\n",MAX_PATH_SIZE);
+			goto error;
 		}
-		if(path->s) {
-			tmp[path->len++] = ',';
-			memcpy( tmp+path->len, hdr->body.s, hdr->body.len);
-		} else {
-			memcpy( tmp, hdr->body.s, hdr->body.len);
-		}
-		path->len +=  hdr->body.len;
-		path->s = tmp;
+		if(p!=buf)
+			*(p++) = ',';
+		memcpy( p, hdr->body.s, hdr->body.len);
+		p +=  hdr->body.len;
 	}
 
-	if(path->len) {
+	if(p!=buf) {
 		/* check if next hop is a loose router */
-		if(parse_rr_body(path->s, path->len, &route) < 0) {
+		if(parse_rr_body( buf, p-buf, &route) < 0) {
 			LOG(L_ERR, "ERROR: build_path_vector(): Failed to parse Path "
 				"body, no head found\n");
-			goto error1;
+			goto error;
 		}
 		if(!route->params || route->params->type != P_LR) {
 			LOG(L_ERR, "ERROR: build_path_vector(): First Path URI is not a "
 				"loose-router, not supported\n");
 			free_rr(&route);
-			goto error1;
+			goto error;
 		}
 		free_rr(&route);
-
-		/* check for max. Path length */
-		if(path->len > MAX_PATH_SIZE) {
-			LOG(L_ERR, "ERROR: build_path_vector(): Overall Path body "
-				"exceeds max. length of %d\n",MAX_PATH_SIZE);
-			goto error1;
-		}
 	}
 
+	path->s = buf;
+	path->len = p-buf;
 	return 0;
-error1:
-	if(path->s) pkg_free(path->s);
-	path->s = 0;
-	path->len = 0;
 error:
 	return -1;
 }

@@ -220,8 +220,8 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 {
 	static ucontact_info_t ci;
 	static str no_ua = str_init("n/a");
-	static str callid = {0,0};
-	static str path = {0,0};
+	static str callid;
+	static str path;
 	static str *received;
 	static int received_found;
 	static unsigned int allowed, allow_parsed;
@@ -268,10 +268,6 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 
 		/* extract Path headers */
 		if (path_enabled) {
-			if (path.s) {
-				pkg_free(path.s);
-				path.s = 0; path.len = 0;
-			}
 			if (build_path_vector(_m, &path) < 0) {
 				rerrno = R_PARSE_PATH;
 				goto error;
