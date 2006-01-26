@@ -33,7 +33,7 @@ Bogdan-Andrei Iancu
               1.3.8. realm_prefix (string)
               1.3.9. timer_avp (string)
               1.3.10. nat_flag (int)
-              1.3.11. lookup_domain (int)
+              1.3.11. lookup_domain (string)
               1.3.12. lookup_append_branches (int)
 
         1.4. Exported Functions
@@ -251,17 +251,20 @@ modparam("cpl_c","nat_flag",4)
 ...
      _________________________________________________________
 
-1.3.11. lookup_domain (int)
+1.3.11. lookup_domain (string)
 
-   Tells if the lookup tag should use or not the domain part when
-   doing user_location search. Set it to a non zero value to
-   force also domain matching.
+   Used by lookup tag to indicate where to perform user location.
+   Basically this is the name of the usrloc domain (table) where
+   the user registrations are kept.
 
-   Default value of this parameter is 0. 
+   If set to empty string, the lookup node will be disabled - no
+   user location will be performed.
+
+   Default value of this parameter is NULL. 
 
    Example 1-11. Set lookup_domain parameter
 ...
-modparam("cpl_c","lookup_domain",1)
+modparam("cpl_c","lookup_domain","location")
 ...
      _________________________________________________________
 
@@ -438,4 +441,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.

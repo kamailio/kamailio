@@ -296,22 +296,26 @@ modparam("cpl_c","nat_flag",4)
 			</example>
 		</section>
 		<section>
-			<title><varname>lookup_domain</varname> (int)</title>
+			<title><varname>lookup_domain</varname> (string)</title>
 			<para>
-				Tells if the lookup tag should use or not the domain part when
-				doing user_location search. Set it to a non zero value to force
-				also domain matching.
+				Used by lookup tag to indicate where to perform user location.
+				Basically this is the name of the usrloc domain (table) where
+				the user registrations are kept.
+			</para>
+			<para>
+				If set to empty string, the lookup node will be disabled - no
+				user location will be performed.
 			</para>
 			<para>
 				<emphasis>
-					Default value of this parameter is 0.
+					Default value of this parameter is NULL.
 				</emphasis>
 			</para>
 			<example>
 				<title>Set <varname>lookup_domain</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","lookup_domain",1)
+modparam("cpl_c","lookup_domain","location")
 ...
 </programlisting>
 			</example>
