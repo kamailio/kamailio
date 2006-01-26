@@ -37,6 +37,15 @@
 #include "../../usr_avp.h"
 #include "../usrloc/usrloc.h"
 
+/* if DB support is used, this values must not exceed the 
+ * storage capacity of the DB columns! See scripts/mysqldb.sh */
+#define CONTACT_MAX_SIZE       255
+#define RECEIVED_MAX_SIZE      255
+#define USERNAME_MAX_SIZE      64
+#define DOMAIN_MAX_SIZE        128
+#define CALLID_MAX_SIZE        255
+#define UA_MAX_SIZE            255
+
 extern int default_expires;
 extern qvalue_t default_q;
 extern int append_branches;

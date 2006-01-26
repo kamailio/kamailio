@@ -231,6 +231,11 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		/* Get callid of the message */
 		callid = _m->callid->body;
 		trim_trailing(&callid);
+		if (callid.len > CALLID_MAX_SIZE) {
+			rerrno = R_CALLID_LEN;
+			LOG(L_ERR, "ERROR:usrloc:pack_ci: callid too long\n");
+			goto error;
+		}
 		ci.callid = &callid;
 
 		/* Get CSeq number of the message */
@@ -252,7 +257,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 
 		/* additional info from message */
 		if (parse_headers(_m, HDR_USERAGENT_F, 0) != -1 && _m->user_agent &&
-		_m->user_agent->body.len > 0) {
+		_m->user_agent->body.len>0 && _m->user_agent->body.len<UA_MAX_SIZE) {
 			ci.user_agent = &_m->user_agent->body;
 		} else {
 			ci.user_agent = &no_ua;
@@ -304,7 +309,12 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 			ci.received = &_c->received->body;
 		} else {
 			if (received_found==0) {
-				if (search_first_avp(0, rcv_avp, &val)) {
+				if (search_first_avp(0, rcv_avp, &val) && val.s) {
+					if (val.s->len>RECEIVED_MAX_SIZE) {
+						rerrno = R_CONTACT_LEN;
+						LOG(L_ERR,"ERROR:usrloc:pack_ci: received too long\n");
+						goto error;
+					}
 					received = val.s;
 				} else {
 					received = 0;

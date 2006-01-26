@@ -218,6 +218,8 @@ int build_contact(ucontact_t* c)
 #define	EI_R_RETRANS	"Retransmission"                            /* R_RETRANS */
 #define EI_R_UNESCAPE   "Error while unescaping username"           /* R_UNESCAPE */
 #define EI_R_TOO_MANY   "Too many registered contacts"              /* R_TOO_MANY */
+#define EI_R_CONTACT_LEN  "Contact/received too long"              /* R_CONTACT_LEN */
+#define EI_R_CALLID_LEN  "Callid too long"                         /* R_CALLID_LEN */
 
 str error_info[] = {
 	{EI_R_FINE,       sizeof(EI_R_FINE) - 1},
@@ -245,12 +247,14 @@ str error_info[] = {
 	{EI_R_OOO,        sizeof(EI_R_OOO) - 1},
 	{EI_R_RETRANS,    sizeof(EI_R_RETRANS) - 1},
 	{EI_R_UNESCAPE,   sizeof(EI_R_UNESCAPE) - 1},
-	{EI_R_TOO_MANY,   sizeof(EI_R_TOO_MANY) - 1}
+	{EI_R_TOO_MANY,   sizeof(EI_R_TOO_MANY) - 1},
+	{EI_R_CONTACT_LEN,sizeof(EI_R_CONTACT_LEN) - 1},
+	{EI_R_CALLID_LEN, sizeof(EI_R_CALLID_LEN) - 1}
 };
 
 int codes[] = {
 	200, /* R_FINE */
-     	500, /* R_UL_DEL_R */
+	500, /* R_UL_DEL_R */
 	500, /* R_UL_GET */
 	500, /* R_UL_NEW_R */
 	400, /* R_INV_CSEQ */
@@ -274,7 +278,9 @@ int codes[] = {
 	200, /* R_OOO */
 	200, /* R_RETRANS */
 	400, /* R_UNESCAPE */
-	503  /* R_TOO_MANY */
+	503, /* R_TOO_MANY */
+	400, /* R_CONTACT_LEN */
+	400  /* R_CALLID_LEN */
 };
 
 

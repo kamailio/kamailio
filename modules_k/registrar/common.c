@@ -55,7 +55,9 @@ int extract_aor(str* _uri, str* _a)
 		return -1;
 	}
 	
-	if ((puri.user.len + puri.host.len + 1) > MAX_AOR_LEN) {
+	if ( (puri.user.len + puri.host.len + 1) > MAX_AOR_LEN
+	|| puri.user.len > USERNAME_MAX_SIZE
+	||  puri.host.len > DOMAIN_MAX_SIZE ) {
 		rerrno = R_AOR_LEN;
 		LOG(L_ERR, "extract_aor(): Address Of Record too long\n");
 		return -2;

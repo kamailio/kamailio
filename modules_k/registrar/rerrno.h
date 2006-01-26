@@ -53,7 +53,9 @@ typedef enum rerr {
 	R_OOO,        /* Out-Of-Order request */
 	R_RETRANS,    /* Request is retransmission */
 	R_UNESCAPE,   /* Error while unescaping username */
-	R_TOO_MANY    /* Too many contacts */
+	R_TOO_MANY,   /* Too many contacts */
+	R_CONTACT_LEN,/* Contact URI or RECEIVED too long */
+	R_CALLID_LEN, /* Callid too long */
 } rerr_t;
 
 
