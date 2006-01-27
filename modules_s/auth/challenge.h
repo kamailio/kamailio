@@ -46,6 +46,18 @@ int www_challenge(struct sip_msg* msg, char* realm, char* str2);
 int proxy_challenge(struct sip_msg* msg, char* realm, char* str2);
 
 
+/* 
+ * Challenge a user agent using WWW-Authenticate header field
+ */
+int www_challenge1(struct sip_msg* msg, char* qop, char* s2);
+
+
+/*
+ * Challenge a user agent using Proxy-Authenticate header field
+ */
+int proxy_challenge1(struct sip_msg* msg, char* qop, char* s2);
+
+
 /*
  * Remove used credentials from a SIP message header
  */

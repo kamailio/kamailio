@@ -198,6 +198,27 @@ int proxy_challenge(struct sip_msg* msg, char* realm, char* qop)
 			 PROXY_AUTH_CHALLENGE);
 }
 
+/*
+ * Challenge a user to send credentials using WWW-Authorize header field
+ */
+int www_challenge1(struct sip_msg* msg, char* qop, char* s2)
+{
+	static str realm = STR_STATIC_INIT("");
+	return challenge(msg, &realm, (int)(long)qop, 401, MESSAGE_401,
+			 WWW_AUTH_CHALLENGE);
+}
+
+
+/*
+ * Challenge a user to send credentials using Proxy-Authorize header field
+ */
+int proxy_challenge1(struct sip_msg* msg, char* qop, char* s2)
+{
+	static str realm = STR_STATIC_INIT("");
+	return challenge(msg, &realm, (int)(long)qop, 407, MESSAGE_407, 
+			 PROXY_AUTH_CHALLENGE);
+}
+
 
 /*
  * Remove used credentials from a SIP message header
