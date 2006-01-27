@@ -79,7 +79,10 @@
  * 2004-10-10: use of mhomed disabled for replies (jiri)
  * 2005-02-01: use the incoming request interface for sending the replies
  *             - changes in init_rb() (bogdan)
- *  2005-12-09  added t_set_fr()  (andrei)
+ * 2005-12-09  added t_set_fr()  (andrei)
+ * 2006-01-27  transaction lookup function will set up a cancel flag
+ *             if the searched transaction was pre-canceled (andrei)
+ * 
  */
 
 #include "defs.h"
@@ -285,10 +288,11 @@ static inline int via_matching( struct via_body *inv_via,
 	 2 if e2e ACK for a proxied transaction found
      1  if found (covers ACK for local UAS)
 	 0  if not found (trans undefined)
+	It also sets *cancel if a cancel was found for the searched transaction
 */
 
 static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
-			enum request_method skip_method)
+			enum request_method skip_method, int* cancel)
 {
 	struct cell *p_cell;
 	struct sip_msg  *t_msg;
@@ -298,6 +302,7 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 	int ret = 0;
 	struct cell *e2e_ack_trans;
 
+	*cancel=0;
 	e2e_ack_trans=0;
 	via1=p_msg->via1;
 	is_ack=p_msg->REQ_METHOD==METHOD_ACK;
@@ -311,7 +316,12 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 	{
 		t_msg=p_cell->uas.request;
 		if (!t_msg) continue;  /* don't try matching UAC transactions */
-		if (skip_method & t_msg->REQ_METHOD) continue;
+		/* we want to set *cancel for transaction for which there is
+		 * already a canceled transaction (e.g. re-ordered INV-CANCEL, or
+		 *  INV blocked in dns lookup); we don't care about ACKs */
+		if ((is_ack || (t_msg->REQ_METHOD!=METHOD_CANCEL)) && 
+				(skip_method & t_msg->REQ_METHOD)) 
+			continue;
 
 		/* here we do an exercise which will be removed from future code
 		   versions: we try to match end-2-end ACKs if they appear at our
@@ -351,6 +361,13 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 	 	 * other requests */
 		if (!via_matching(t_msg->via1 /* inv via */, via1 /* ack */ ))
 			continue;
+		if (t_msg->REQ_METHOD==METHOD_CANCEL){
+			if ((p_msg->REQ_METHOD!=METHOD_CANCEL) && !is_ack){
+			/* found an existing cancel for the searched transaction */
+				*cancel=1;
+			}
+			if (skip_method & t_msg->REQ_METHOD) continue;
+		}
 		/* all matched -- we found the transaction ! */
 		DBG("DEBUG: RFC3261 transaction matched, tid=%.*s\n",
 			via1->tid.len, via1->tid.s);
@@ -374,9 +391,11 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
  *      negative - transaction wasn't found
  *			(-2 = possibly e2e ACK matched )
  *      positive - transaction found
+ * It also sets *cancel if a there is already a cancel transaction
  */
 
-int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
+int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
+						int* cancel)
 {
 	struct cell         *p_cell;
 	unsigned int       isACK;
@@ -422,9 +441,10 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 		/* huhuhu! the cookie is there -- let's proceed fast */
 		LOCK_HASH(p_msg->hash_index);
 		match_status=matching_3261(p_msg,&p_cell, 
-				/* skip transactions with different method; otherwise CANCEL would 
-	 	 		 * match the previous INVITE trans.  */
-				isACK ? ~METHOD_INVITE: ~p_msg->REQ_METHOD);
+				/* skip transactions with different method; otherwise CANCEL 
+				 * would  match the previous INVITE trans.  */
+				isACK ? ~METHOD_INVITE: ~p_msg->REQ_METHOD, 
+				cancel);
 		switch(match_status) {
 				case 0:	goto notfound;	/* no match */
 				case 1:	goto found; 	/* match */
@@ -436,7 +456,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 	 * a bit simplified to be fast -- we don't do all the comparisons
 	 * of parsed uri, which was simply too bloated */
 	DBG("DEBUG: proceeding to pre-RFC3261 transaction matching\n");
-
+	*cancel=0;
 	/* lock the whole entry*/
 	LOCK_HASH(p_msg->hash_index);
 
@@ -449,9 +469,17 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 		if (!t_msg) continue; /* skip UAC transactions */
 
 		if (!isACK) {	
+			/* for non-ACKs we want same method matching, we 
+			 * make an exception for pre-exisiting CANCELs because we
+			 * want to set *cancel */
+			if ((t_msg->REQ_METHOD!=p_msg->REQ_METHOD) &&
+					(t_msg->REQ_METHOD!=METHOD_CANCEL))
+					continue;
 			/* compare lengths first */ 
 			if (!EQ_LEN(callid)) continue;
-			if (!EQ_LEN(cseq)) continue;
+			/* CSeq only the number without method ! */
+			if (get_cseq(t_msg)->number.len!=get_cseq(p_msg)->number.len)
+				continue;
 			if (!EQ_LEN(from)) continue;
 			if (!EQ_LEN(to)) continue;
 			if (ruri_matching && !EQ_REQ_URI_LEN) continue;
@@ -459,12 +487,20 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 
 			/* length ok -- move on */
 			if (!EQ_STR(callid)) continue;
-			if (!EQ_STR(cseq)) continue;
+			if (memcmp(get_cseq(t_msg)->number.s, get_cseq(p_msg)->number.s,
+				get_cseq(p_msg)->number.len)!=0) continue;
 			if (!EQ_STR(from)) continue;
 			if (!EQ_STR(to)) continue;
 			if (ruri_matching && !EQ_REQ_URI_STR) continue;
 			if (via1_matching && !EQ_VIA_STR(via1)) continue;
-
+			
+			if ((t_msg->REQ_METHOD==METHOD_CANCEL) &&
+				(p_msg->REQ_METHOD!=METHOD_CANCEL)){
+				/* we've matched an existing CANCEL */
+				*cancel=1;
+				continue;
+			}
+			
 			/* request matched ! */
 			DBG("DEBUG: non-ACK matched\n");
 			goto found;
@@ -564,6 +600,7 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 	unsigned int     hash_index;
 	struct sip_msg  *t_msg;
 	struct via_param *branch;
+	int foo;
 	int ret;
 
 
@@ -590,7 +627,7 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 				/* we are seeking the original transaction --
 				 * skip CANCEL transactions during search
 				 */
-				METHOD_CANCEL);
+				METHOD_CANCEL, &foo);
 		if (ret==1) goto found; else goto notfound;
 	}
 
@@ -869,6 +906,7 @@ nomatch2:
 int t_check( struct sip_msg* p_msg , int *param_branch )
 {
 	int local_branch;
+	int canceled;
 
 	/* is T still up-to-date ? */
 	DBG("DEBUG: t_check: msg id=%d global id=%d T start=%p\n", 
@@ -894,7 +932,8 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 				LOG(L_ERR, "ERROR: t_check: from parsing failed\n");
 				return -1;
 			}
-			t_lookup_request( p_msg , 0 /* unlock before returning */ );
+			t_lookup_request( p_msg , 0 /* unlock before returning */,
+								&canceled);
 		} else {
 			/* we need Via for branch and Cseq method to distinguish
 			   replies with the same branch/cseqNr (CANCEL)
@@ -1076,6 +1115,7 @@ static inline int new_t(struct sip_msg *p_msg)
 int t_newtran( struct sip_msg* p_msg )
 {
 	int lret, my_err;
+	int canceled;
 
 
 	/* is T still up-to-date ? */
@@ -1109,7 +1149,8 @@ int t_newtran( struct sip_msg* p_msg )
 	   it also calls check_transaction_quadruple -> it is
 	   safe to assume we have from/callid/cseq/to
 	*/ 
-	lret = t_lookup_request( p_msg, 1 /* leave locked if not found */ );
+	lret = t_lookup_request( p_msg, 1 /* leave locked if not found */,
+								&canceled );
 
 	/* on error, pass the error in the stack ... nothing is locked yet
 	   if 0 is returned */
@@ -1162,6 +1203,7 @@ int t_newtran( struct sip_msg* p_msg )
 		LOG(L_ERR, "ERROR: t_newtran: new_t failed\n");
 		goto new_err;
 	}
+	if (canceled) T->flags|=T_CANCELED; /* mark it for future ref. */
 
 
 	UNLOCK_HASH(p_msg->hash_index);

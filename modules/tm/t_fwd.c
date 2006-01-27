@@ -45,6 +45,8 @@
  *  2005-08-04  msg->parsed_uri and parsed_uri_ok are no saved & restored
  *               before & after handling the branches (andrei)
  *  2005-12-11  onsend_route support added for forwarding (andrei)
+ *  2006-01-27  t_forward_no_ack will return error if a forward on an 
+ *              already canceled transaction is attempted (andrei)
  */
 
 #include "defs.h"
@@ -373,6 +375,16 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	cancel_bm=0;
 	lowest_error=0;
 
+	/* first check if there are any branches */
+	if (t_invite->nr_of_outgoings==0){
+		t_invite->flags|=T_CANCELED;
+		/* no branches yet => force a reply to the invite */
+		t_reply( t_invite, t_invite->uas.request, 487, CANCELED );
+		DBG("DEBUG: e2e_cancel: e2e cancel -- no more pending branches\n");
+		t_reply( t_cancel, cancel_msg, 200, CANCEL_DONE );
+		return;
+	}
+	
 	backup_uri=cancel_msg->new_uri;
 	backup_parsed_uri_ok=cancel_msg->parsed_uri_ok;
 	backup_parsed_uri=cancel_msg->parsed_uri;
@@ -475,6 +487,11 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 			UNREF(t_invite);
 			return 1;
 		}
+	}
+	if (t->flags & T_CANCELED){
+		DBG("t_forward_non_ack: no forwarding on canceled branch\n");
+		ser_error=E_CANCELED;
+		return -1;
 	}
 
 	/* backup current uri ... add_uac changes it */
