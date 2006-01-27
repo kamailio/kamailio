@@ -26,6 +26,7 @@
 
 #include "../../data_lump.h"
 #include "../../parser/parse_rr.h"
+#include "../../parser/parse_uri.h"
 #include "path.h"
 
 /*
@@ -36,6 +37,8 @@ int build_path_vector(struct sip_msg *_m, str *path)
 	static char buf[MAX_PATH_SIZE];
 	char *p;
 	struct hdr_field *hdr;
+	struct sip_uri puri;
+
 	rr_t *route = 0;
 
 	path->len = 0;
@@ -69,7 +72,11 @@ int build_path_vector(struct sip_msg *_m, str *path)
 				"body, no head found\n");
 			goto error;
 		}
-		if(!route->params || route->params->type != P_LR) {
+		if (parse_uri(route->nameaddr.uri.s, route->nameaddr.uri.len, &puri) == -1) {
+			LOG(L_ERR, "ERROR: build_path_vector(): Error while parsing first Path URI\n");
+			return -1;
+		}
+		if(!puri.lr.s) {
 			LOG(L_ERR, "ERROR: build_path_vector(): First Path URI is not a "
 				"loose-router, not supported\n");
 			free_rr(&route);
