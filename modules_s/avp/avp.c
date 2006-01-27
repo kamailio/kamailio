@@ -48,6 +48,7 @@
 #include "../../trim.h"
 #include "../../str.h"
 #include "../../dprint.h"
+#include "../../re.h"
 
 #include "../../parser/parse_hname2.h"
 #include "../xlog/xl_lib.h"
@@ -99,6 +100,7 @@ static int replace_req(struct sip_msg*, char*, char*);
 static int append_reply(struct sip_msg*, char*, char*);
 static int avp_destination(struct sip_msg*, char*, char*);
 static int xlset_destination(struct sip_msg*, char*, char*);
+static int avp_subst(struct sip_msg*, char*, char*);
 static int iattr_fixup(void** param, int param_no);
 static int avp_hdr_body2attrs(struct sip_msg*, char*, char*);
 static int avp_hdr_body2attrs_fixup(void**, int);
@@ -109,6 +111,7 @@ static int fixup_xl_1(void** param, int param_no); /* (xl_format*) */
 //static int fixup_attr_1_str_2(void** param, int param_no); /* (attr_ident_t*, str*) */
 static int fixup_str_1_attr_2(void** param, int param_no); /* (str*, attr_ident_t*) */
 static int fixup_attr_1_xl_2(void** param, int param_no); /* (attr_ident_t*, xl_format*) */
+static int fixup_attr_1_subst_2(void** param, int param_no); /* (attr_ident_t*, struct subst_expr*) */
 
 static int avp_hdr_body2attrs2(struct sip_msg* m, char* header_, char* prefix_) {
 	return avp_hdr_body2attrs(m, header_, prefix_);   // unless defined in cmds then fixup is not called, bug in module registration???
@@ -139,8 +142,9 @@ static cmd_export_t cmds[] = {
 	{"avp_to_reply",    append_reply, 2, fixup_str_1_attr_2,   REQUEST_ROUTE | FAILURE_ROUTE},
 	{"avp_to_reply",    append_reply,     1, fixup_str_1_attr_2,   REQUEST_ROUTE | FAILURE_ROUTE},
 	{"avp_destination", avp_destination,  1, fixup_attr_1,   REQUEST_ROUTE}, 
-	{"xlset_destination",  xlset_destination,   1, fixup_xl_1,   REQUEST_ROUTE}, 
-	{"hdr_body2attrs", avp_hdr_body2attrs, 2, avp_hdr_body2attrs_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"xlset_destination",  xlset_destination,   1, fixup_xl_1,   REQUEST_ROUTE},
+	{"avp_subst",       avp_subst,    2, fixup_attr_1_subst_2,    REQUEST_ROUTE | FAILURE_ROUTE},
+	{"hdr_body2attrs",  avp_hdr_body2attrs, 2, avp_hdr_body2attrs_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
 	{"hdr_body2attrs2", avp_hdr_body2attrs2, 2, avp_hdr_body2attrs2_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
@@ -702,8 +706,7 @@ static int avp_destination(struct sip_msg* m, char* avp_name, char* x)
 	avp_value_t val;
 	
 	
-	if ((avp=search_avp(*(avp_ident_t*)avp_name, NULL, NULL))) {
-		get_avp_val(avp, &val);
+	if ((avp=search_avp(*(avp_ident_t*)avp_name, &val, NULL))) {
 		if (avp->flags & AVP_VAL_STR) {
 			if (w_set_destination(m, &val.s)){
 				LOG(L_ERR, "ERROR: avp_destination: Can't set dst uri\n");
@@ -718,6 +721,42 @@ static int avp_destination(struct sip_msg* m, char* avp_name, char* x)
 	return -1;
 }
 
+static int avp_subst(struct sip_msg* m, char* avp_name, char* subst)
+{
+	avp_t* avp;
+	avp_value_t val;
+	str *res = NULL;
+	int count;
+
+    if ((avp=search_avp(*(avp_ident_t*)avp_name, &val, NULL))) {
+		if (avp->flags & AVP_VAL_STR) {
+			res=subst_str(val.s.s, m, (struct subst_expr*)subst, &count);
+			if (res == NULL) {
+				ERR("avp_subst: error while running subst\n");
+				goto error;
+			}
+			DBG("avp_subst: %d, result %.*s\n", count, res->len, ZSW(res->s));
+			val.s = *res;
+			if (add_avp_before(avp, ((avp_ident_t*)avp_name)->flags | AVP_VAL_STR, ((avp_ident_t*)avp_name)->name, val)) {
+				ERR("avp_subst: error while adding new AVP\n");
+				goto error;
+			};
+			destroy_avp(avp);
+			return 1;
+		} else {
+			ERR("avp_subst: AVP has numeric value\n");
+			goto error;
+		}
+	} else {
+		ERR("avp_subst: AVP[%.*s] index %d, flags %x not found\n", ((avp_ident_t*)avp_name)->name.s.len, ((avp_ident_t*)avp_name)->name.s.s,
+				((avp_ident_t*)avp_name)->index, ((avp_ident_t*)avp_name)->flags);
+		goto error;
+	}
+error:
+	if (res) pkg_free(res);
+	return -1;
+}
+			
 static int avp_hdr_body2attrs(struct sip_msg* m, char* header_, char* prefix_)
 {
 	char name_buf[50];
@@ -1159,8 +1198,15 @@ static int fixup_attr_1(void** param, int param_no)
 		ERR("Error while parsing AVP identification\n");
 		return -1;
 	}
+
+	DBG("fix_attr: @%p AVP[%.*s] index %d, flags %x\n", attr,
+			attr->name.s.len, attr->name.s.s,
+			attr->index, attr->flags);
 	
-	pkg_free(*param);
+	/* If NAME_STR then don't free *param
+	 * as attr->name points to it
+	 */
+	if ((attr->flags & AVP_NAME_STR) == 0) pkg_free(*param);
 	*param=(void*) attr;
 	return 0;
 }
@@ -1177,3 +1223,28 @@ static int fixup_str_1_attr_2(void** param, int param_no)
 
 	return 0;
 }
+
+static int fixup_attr_1_subst_2(void** param, int param_no)
+{
+	struct subst_expr* subst;
+	str s;
+	
+	if (param_no == 1) {
+		return fixup_attr_1(param, 1);
+	}
+
+	if (param_no == 2) {
+		s.s = *param;
+		s.len = strlen(s.s);
+		subst = subst_parser(&s);
+		if (!subst) {
+			ERR("fixup_attr_1_subst_2: error while parsing subst\n");
+			return -1;
+		}
+		pkg_free(*param);
+		*param=(void*) subst;
+	}
+
+	return 0;
+}
+
