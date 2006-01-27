@@ -332,6 +332,9 @@ struct host_alias* aliases=0; /* name aliases list */
 /* ipc related globals */
 int process_no = 0;
 
+/* Parameter to child_init */
+int child_rank = 0;
+
 /* Last filled entry in process table before calling
  * child_init of loaded modules
  */
@@ -935,6 +938,7 @@ int main_loop()
 		for(si=udp_listen; si; si=si->next){
 			for(i=0;i<children_no;i++){
 				process_no++;
+				child_rank++;
 #ifdef USE_TCP
 				if(!tcp_disable){
 		 			if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
@@ -959,7 +963,7 @@ int main_loop()
 					 * parent gets a chance to set it*/
 					pt[process_no].pid=getpid();
 					bind_address=si; /* shortcut */
-					if (init_child(process_no) < 0) {
+					if (init_child(child_rank) < 0) {
 						LOG(L_ERR, "init_child failed\n");
 						goto error;
 					}

@@ -94,6 +94,7 @@ extern int check_via;
 extern int received_dns;
 extern int syn_branch;
 /* extern int process_no; */
+extern int child_rank;
 extern int sip_warning;
 extern int server_signature;
 extern char* user;

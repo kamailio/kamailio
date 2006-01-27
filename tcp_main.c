@@ -1714,6 +1714,7 @@ int tcp_init_children()
 		}
 		
 		process_no++;
+		child_rank++;
 		pid=fork();
 		if (pid<0){
 			LOG(L_ERR, "ERROR: tcp_main: fork failed: %s\n",
@@ -1741,7 +1742,7 @@ int tcp_init_children()
 			/* record pid twice to avoid the child using it, before
 			 * parent gets a chance to set it*/
 			pt[process_no].pid=getpid();
-			if (init_child(process_no) < 0) {
+			if (init_child(child_rank) < 0) {
 				LOG(L_ERR, "init_children failed\n");
 				goto error;
 			}
