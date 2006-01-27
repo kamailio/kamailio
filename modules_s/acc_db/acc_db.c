@@ -44,8 +44,11 @@
 #include "../../parser/digest/digest.h"
 #include "../../usr_avp.h"
 #include "../tm/tm_load.h"
+#include "../../usr_avp.h"
 #include "../../db/db.h"
+#include "../../trim.h"
 #include "../../id.h"
+#include "../acc_syslog/attrs.h"
 
 /*
  * TODO:
@@ -160,8 +163,9 @@ static db_func_t acc_dbf;
 static db_con_t* db_handle = 0;
 
 /* Attribute-value pairs */
-static regex_t attrs_re;
-static char* attrs = "$^"; /* non-sense which never matches; */
+static char* attrs = "";
+avp_ident_t* avps;
+int avps_n;
 
 static db_key_t keys[sizeof(ALL_LOG_FMT) - 1];
 static db_val_t vals[sizeof(ALL_LOG_FMT) - 1];
@@ -538,7 +542,7 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 {
 	int cnt;
 	struct to_body* from, *pto;
-	str *cr;
+	str *cr, *at;
 	struct cseq_body *cseq;
 
 	cnt = 0;
@@ -557,7 +561,12 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 
 		switch(*fmt) {
 		case 'a': /* attr */
-			vals[cnt].nul = 1;
+			at = print_attrs(avps, avps_n, 0);
+			if (!at) {
+				vals[cnt].nul = 1;
+			} else {
+				vals[cnt].val.str_val = *at;
+			}
 			break;
 
 		case 'c': /* sip_callid */
@@ -913,11 +922,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (regcomp(&attrs_re, attrs, REG_EXTENDED | REG_ICASE)) {
-		LOG(L_ERR, "ERROR: acc: Cannot compile AVP regular expression\n");
-		return -1;
-	}
-
 	if (bind_dbmod(db_url.s, &acc_dbf) < 0) {
 		LOG(L_ERR, "ERROR:acc:mod_init: bind_db failed\n");
 		return -1;
@@ -930,6 +934,11 @@ static int mod_init(void)
 	}
 
 	init_data(log_fmt);
+
+	if (parse_attrs(&avps, &avps_n, attrs) < 0) {
+		ERR("Error while parsing 'attrs' module parameter\n");
+		return -1;
+	}
 
 	return 0;
 }

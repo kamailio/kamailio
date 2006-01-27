@@ -46,11 +46,11 @@
 #include "../../parser/digest/digest.h"
 #include "../../usr_avp.h"
 #include "../../id.h"
-
 #include "../tm/tm_load.h"
 
 #include "../../parser/parse_rr.h"
 #include "../../trim.h"
+#include "../acc_syslog/attrs.h"
 
 /*
  * FIXME:
@@ -109,8 +109,9 @@ static int log_missed_flag = 0;     /* Transaction having this flag set will be 
 static char* log_fmt = ALL_LOG_FMT; /* Formating string that controls what information will be collected and accounted */
 
 /* Attribute-value pairs */
-static regex_t avps_re;
-static char* avps = "$^"; /* non-sense which never matches; */
+static char* attrs_param = "";
+avp_ident_t* avps;
+int avps_n;
 
 static char *radius_config = "/usr/local/etc/radiusclient-ng/radiusclient.conf";
 static int service_type = -1;
@@ -136,7 +137,7 @@ static param_export_t params[] = {
 	{"log_flag",		PARAM_INT, &log_flag         	},
 	{"log_missed_flag",	PARAM_INT, &log_missed_flag	},
 	{"log_fmt",		PARAM_STRING, &log_fmt          },
-        {"attrs",               PARAM_STRING, &avps             },
+        {"attrs",               PARAM_STRING, &attrs_param      },
 	{"radius_config",	PARAM_STRING, &radius_config	},
 	{"log_flag",		PARAM_INT, &log_flag	        },
 	{"log_missed_flag",	PARAM_INT, &log_missed_flag     },
@@ -402,7 +403,7 @@ static int fmt2rad(char *fmt,
 	static time_t rq_time, rs_time;
 	int cnt;
 	struct to_body* from, *pto;
-	str val, *cr;
+	str val, *cr, *at;
 	struct cseq_body *cseq;
 	struct attr* attr;
 	int dir;
@@ -424,6 +425,11 @@ static int fmt2rad(char *fmt,
 		attr = 0;
 		switch(*fmt) {
 		case 'a': /* attr */
+			at = print_attrs(avps, avps_n, 0);
+			if (at) {
+				attr = &attrs[A_SER_ATTRS];
+				val = *at;
+			}
 			break;
 
 		case 'c': /* sip_callid */
@@ -434,9 +440,17 @@ static int fmt2rad(char *fmt,
 			break;
 
 		case 'd': /* to_tag */
-			if (to && (pto = (struct to_body*)(to->parsed)) && pto->tag_value.len) {
-				attr = &attrs[A_SIP_TO_TAG];
-				val = pto->tag_value;
+			if (swap_dir && dir == -2) dir = get_direction(rq);
+			if (dir <= 0) {
+				if (to && (pto = (struct to_body*)(to->parsed)) && pto->tag_value.len) {
+					attr = &attrs[A_SIP_TO_TAG];
+					val = pto->tag_value;
+				}
+			} else {
+				if (rq->from && (from = get_from(rq)) && from->tag_value.len) {
+					attr = &attrs[A_SIP_TO_TAG];
+					val = from->tag_value;
+				}
 			}
 			break;
 
@@ -489,9 +503,17 @@ static int fmt2rad(char *fmt,
 			break;
 
 		case 'r': /* from_tag */
-			if (rq->from && (from = get_from(rq)) && from->tag_value.len) {
-				attr = &attrs[A_SIP_FROM_TAG];
-				val = from->tag_value;
+			if (swap_dir && dir == -2) dir = get_direction(rq);
+			if (dir <= 0) {
+				if (rq->from && (from = get_from(rq)) && from->tag_value.len) {
+					attr = &attrs[A_SIP_FROM_TAG];
+					val = from->tag_value;
+				}
+			} else {
+				if (to && (pto = (struct to_body*)(to->parsed)) && pto->tag_value.len) {
+					attr = &attrs[A_SIP_FROM_TAG];
+					val = pto->tag_value;
+				}
 			}
 			break;
 
@@ -902,11 +924,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (regcomp(&avps_re, avps, REG_EXTENDED | REG_ICASE)) {
-		LOG(L_ERR, "ERROR: acc: Cannot compile AVP regular expression\n");
-		return -1;
-	}
-
 	memset(attrs, 0, sizeof(attrs));
 	memset(vals, 0, sizeof(vals));
 
@@ -964,6 +981,11 @@ static int mod_init(void)
 
 	if (service_type != -1) {
 		vals[V_SIP_SESSION].v = service_type;
+	}
+
+	if (parse_attrs(&avps, &avps_n, attrs_param) < 0) {
+		ERR("Error while parsing 'attrs' module parameter\n");
+		return -1;
 	}
 
 	return 0;

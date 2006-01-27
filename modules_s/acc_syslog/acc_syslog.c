@@ -44,7 +44,7 @@
 #include "../../parser/digest/digest.h"
 #include "../../usr_avp.h"
 #include "../../id.h"
-
+#include "attrs.h"
 #include "../tm/tm_load.h"
 
 /*
@@ -145,8 +145,9 @@ static int log_missed_flag = 0;     /* Transaction having this flag set will be 
 static char* log_fmt = ALL_LOG_FMT; /* Formating string that controls what information will be collected and accounted */
 
 /* Attribute-value pairs */
-static regex_t attrs_re;
-static char* attrs = "$^"; /* non-sense which never matches; */
+static char* attrs = "";
+avp_ident_t* avps;
+int avps_n;
 
 static int acc_log_request(struct sip_msg *rq, char *comment, char *foo);
 
@@ -383,8 +384,8 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 		srcport_buf[INT2STR_MAX_LEN];
 	int cnt, tl, al;
 	struct to_body* from, *pto;
-	static str mycode, flags, tm_s, rqtm_s, src_ip, src_port;
-	str *cr, to_uid, from_uid;
+	static str mycode, flags, tm_s, rqtm_s, src_ip, src_port, from_uid, to_uid;
+	str *cr, *at;
 	struct cseq_body *cseq;
 	char* p;
 
@@ -404,7 +405,12 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 
 		switch(*fmt) {
 		case 'a': /* attr */
-			val_arr[cnt] = &na;
+			at = print_attrs(avps, avps_n, 1);
+			if (!at) {
+				val_arr[cnt] = &na;
+			} else {
+				val_arr[cnt] = at;
+			}
 			ATR(ATTRS);
 			break;
 
@@ -832,9 +838,10 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (regcomp(&attrs_re, attrs, REG_EXTENDED | REG_ICASE)) {
-		LOG(L_ERR, "ERROR: acc: Cannot compile AVP regular expression\n");
+	if (parse_attrs(&avps, &avps_n, attrs) < 0) {
+		ERR("Error while parsing 'attrs' module parameter\n");
 		return -1;
 	}
+
 	return 0;
 }
