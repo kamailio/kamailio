@@ -53,6 +53,7 @@
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 #include "../../msg_translator.h"
+#include "../../select.h"
 #include "http.h"
 
 /*
@@ -1241,6 +1242,54 @@ static int xmlrpc_reply(struct sip_msg* msg, char* code, char* reason)
 }
 
 
+static int select_method(str* res, struct select* s, struct sip_msg* msg)
+{
+	static char buf[1024];
+	str doc;
+	xmlDocPtr xmldoc;
+	xmlNodePtr cur;
+	char* method;
+
+	xmldoc = 0;
+	method = 0;
+
+	if (get_rpc_document(&doc, msg) < 0) goto err;
+	xmldoc = xmlReadMemory(doc.s, doc.len, 0, 0, XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOCDATA);
+	
+	if (!xmldoc) goto err;
+	cur = xmlDocGetRootElement(xmldoc);
+	if (!cur) goto err;
+	if (xmlStrcmp(cur->name, (const xmlChar*)"methodCall")) goto err;
+	cur = cur->xmlChildrenNode;
+	while(cur) {
+		if (!xmlStrcmp(cur->name, (const xmlChar*)"methodName")) {
+			method = (char*)xmlNodeListGetString(xmldoc, cur->xmlChildrenNode, 1);
+			if (!method) goto err;
+			break;
+		}
+		cur = cur->next;
+	}
+	if (!cur) goto err;
+	res->len = strlen(method);
+	if (res->len >= 1024) goto err;
+	memcpy(buf, method, res->len);
+	res->s = buf;
+	return 0;
+ err:
+	if (method) xmlFree(method);
+	if (xmldoc) xmlFreeDoc(xmldoc);
+	return -1;
+}
+
+ABSTRACT_F(select_xmlrpc);
+
+select_row_t tls_sel[] = {
+        { NULL,          SEL_PARAM_STR, STR_STATIC_INIT("xmlrpc"), select_xmlrpc, 0},
+        { select_xmlrpc, SEL_PARAM_STR, STR_STATIC_INIT("method"), select_method, 0},
+        { NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
+};
+
+
 static int mod_init(void)
 {
              /*
@@ -1261,5 +1310,6 @@ static int mod_init(void)
 	func_param.struct_add = (rpc_struct_add_f)rpc_struct_add;
 	func_param.struct_scan = (rpc_struct_scan_f)rpc_struct_scan;
 	func_param.struct_printf = (rpc_struct_printf_f)rpc_struct_printf;
+	register_select_table(tls_sel);
 	return 0;
 }
