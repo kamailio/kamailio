@@ -41,7 +41,7 @@ int insert_path_as_route(struct sip_msg* msg, str* path)
 {
 	struct lump *anchor;
 	char *route;
-	struct hdr_field *hf, *last_via;
+	struct hdr_field *hf, *last_via=0;
 
 	for (hf = msg->headers; hf; hf = hf->next) {
 		if (hf->type == HDR_ROUTE_T) {
