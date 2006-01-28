@@ -403,7 +403,7 @@ static void rpc_timer(rpc_t *rpc, void *c) {
 	rpc->fault(c, 400, "Not yet implemented");
 }
 
-rpc_export_t rpc_methods[] = {
+static rpc_export_t rpc_methods[] = {
 	{"rl.stats",			rpc_stats,		rpc_stats_doc,		0},
 	{"rl.invite_limit",		rpc_invite,		rpc_invite_doc,		0},
 	{"rl.register_limit",	rpc_register,	rpc_register_doc,	0},
