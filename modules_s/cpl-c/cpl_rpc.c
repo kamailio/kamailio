@@ -43,6 +43,7 @@
 #include "../../mem/shm_mem.h"
 #include "cpl_db.h"
 #include "cpl_parser.h"
+#include "cpl_loader.h"
 #include "cpl_rpc.h"
 
 

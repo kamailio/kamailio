@@ -33,6 +33,10 @@
 #ifndef _CPL_LOADER_H
 #define _CPL_LOADER_H
 
+#include "../../str.h"
+
+int load_file( char *filename, str *xml);
+
 #endif
 
 
