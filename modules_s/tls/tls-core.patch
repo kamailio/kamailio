@@ -1,0 +1,413 @@
+Index: cfg.y
+===================================================================
+RCS file: /cvsroot/ser/sip_router/cfg.y,v
+retrieving revision 1.112
+diff -u -r1.112 cfg.y
+--- cfg.y	20 Jan 2006 15:24:28 -0000	1.112
++++ cfg.y	27 Jan 2006 11:01:37 -0000
+@@ -97,7 +97,7 @@
+ 
+ #include "config.h"
+ #ifdef USE_TLS
+-#include "tls/tls_config.h"
++/*#include "tls/tls_config.h"*/
+ #endif
+ 
+ #ifdef DEBUG_DMALLOC
+@@ -583,7 +583,7 @@
+ 	| DISABLE_TLS EQUAL error { yyerror("boolean value expected"); }
+ 	| TLSLOG EQUAL NUMBER {
+ 		#ifdef USE_TLS
+-			tls_log=$3;
++		     /*tls_log=$3;*/
+ 		#else
+ 			warn("tls support not compiled in");
+ 		#endif
+@@ -599,28 +599,28 @@
+ 	| TLS_PORT_NO EQUAL error { yyerror("number expected"); }
+ 	| TLS_METHOD EQUAL SSLv23 {
+ 		#ifdef USE_TLS
+-			tls_method=TLS_USE_SSLv23;
++		     /*tls_method=TLS_USE_SSLv23;*/
+ 		#else
+ 			warn("tls support not compiled in");
+ 		#endif
+ 	}
+ 	| TLS_METHOD EQUAL SSLv2 {
+ 		#ifdef USE_TLS
+-			tls_method=TLS_USE_SSLv2;
++		     /*tls_method=TLS_USE_SSLv2;*/
+ 		#else
+ 			warn("tls support not compiled in");
+ 		#endif
+ 	}
+ 	| TLS_METHOD EQUAL SSLv3 {
+ 		#ifdef USE_TLS
+-			tls_method=TLS_USE_SSLv3;
++		     /*tls_method=TLS_USE_SSLv3;*/
+ 		#else
+ 			warn("tls support not compiled in");
+ 		#endif
+ 	}
+ 	| TLS_METHOD EQUAL TLSv1 {
+ 		#ifdef USE_TLS
+-			tls_method=TLS_USE_TLSv1;
++		     /*tls_method=TLS_USE_TLSv1;*/
+ 		#else
+ 			warn("tls support not compiled in");
+ 		#endif
+@@ -634,7 +634,7 @@
+ 	}
+ 	| TLS_VERIFY EQUAL NUMBER {
+ 		#ifdef USE_TLS
+-			tls_verify_cert=$3;
++		     /*tls_verify_cert=$3;*/
+ 		#else
+ 			warn("tls support not compiled in");
+ 		#endif
+@@ -642,7 +642,7 @@
+ 	| TLS_VERIFY EQUAL error { yyerror("boolean value expected"); }
+ 	| TLS_REQUIRE_CERTIFICATE EQUAL NUMBER {
+ 		#ifdef USE_TLS
+-			tls_require_cert=$3;
++		     /*tls_require_cert=$3;*/
+ 		#else
+ 			warn( "tls support not compiled in");
+ 		#endif
+@@ -650,7 +650,7 @@
+ 	| TLS_REQUIRE_CERTIFICATE EQUAL error { yyerror("boolean value expected"); }
+ 	| TLS_CERTIFICATE EQUAL STRING {
+ 		#ifdef USE_TLS
+-			tls_cert_file=$3;
++		     /*tls_cert_file=$3;*/
+ 		#else
+ 			warn("tls support not compiled in");
+ 		#endif
+@@ -658,7 +658,7 @@
+ 	| TLS_CERTIFICATE EQUAL error { yyerror("string value expected"); }
+ 	| TLS_PRIVATE_KEY EQUAL STRING {
+ 		#ifdef USE_TLS
+-			tls_pkey_file=$3;
++		     /*tls_pkey_file=$3;*/
+ 		#else
+ 			warn("tls support not compiled in");
+ 		#endif
+@@ -666,7 +666,7 @@
+ 	| TLS_PRIVATE_KEY EQUAL error { yyerror("string value expected"); }
+ 	| TLS_CA_LIST EQUAL STRING {
+ 		#ifdef USE_TLS
+-			tls_ca_file=$3;
++		     /*tls_ca_file=$3;*/
+ 		#else
+ 			warn("tls support not compiled in");
+ 		#endif
+@@ -674,7 +674,7 @@
+ 	| TLS_CA_LIST EQUAL error { yyerror("string value expected"); }
+ 	| TLS_HANDSHAKE_TIMEOUT EQUAL NUMBER {
+ 		#ifdef USE_TLS
+-			tls_handshake_timeout=$3;
++		     /*tls_handshake_timeout=$3;*/
+ 		#else
+ 			warn("tls support not compiled in");
+ 		#endif
+@@ -682,7 +682,7 @@
+ 	| TLS_HANDSHAKE_TIMEOUT EQUAL error { yyerror("number expected"); }
+ 	| TLS_SEND_TIMEOUT EQUAL NUMBER {
+ 		#ifdef USE_TLS
+-			tls_send_timeout=$3;
++		     /*tls_send_timeout=$3;*/
+ 		#else
+ 			warn("tls support not compiled in");
+ 		#endif
+Index: globals.h
+===================================================================
+RCS file: /cvsroot/ser/sip_router/globals.h,v
+retrieving revision 1.60
+diff -u -r1.60 globals.h
+--- globals.h	27 Jan 2006 09:52:58 -0000	1.60
++++ globals.h	27 Jan 2006 11:01:56 -0000
+@@ -37,6 +37,7 @@
+ #include "ip_addr.h"
+ #include "str.h"
+ #include "poll_types.h"
++#include "transport.h"
+ 
+ #define NO_DNS     0
+ #define DO_DNS     1
+@@ -164,5 +165,7 @@
+ extern int dns_retr_no;
+ extern int dns_servers_no;
+ extern int dns_search_list;
++
++extern transport_t* tls;
+ 
+ #endif
+Index: main.c
+===================================================================
+RCS file: /cvsroot/ser/sip_router/main.c,v
+retrieving revision 1.210
+diff -u -r1.210 main.c
+--- main.c	27 Jan 2006 09:52:58 -0000	1.210
++++ main.c	27 Jan 2006 11:02:08 -0000
+@@ -122,12 +122,12 @@
+ #include "poll_types.h"
+ #include "tcp_init.h"
+ #ifdef USE_TLS
+-#include "tls/tls_init.h"
++/*#include "tls/tls_init.h"*/
+ #endif
+ #endif
+ #include "usr_avp.h"
+ #include "core_cmd.h"
+-
++#include "transport.h"
+ #include "stats.h"
+ 
+ #ifdef DEBUG_DMALLOC
+@@ -350,6 +350,8 @@
+ /* cfg parsing */
+ int cfg_errors=0;
+ 
++transport_t* tls = 0;
++
+ /* shared memory (in MB) */
+ unsigned long shm_mem_size=SHM_MEM_SIZE * 1024 * 1024;
+ 
+@@ -384,7 +386,7 @@
+ 	destroy_tcp();
+ #endif
+ #ifdef USE_TLS
+-	destroy_tls();
++	     /*destroy_tls();*/
+ #endif
+ 	destroy_timer();
+ 	destroy_script_cb();
+@@ -916,14 +918,20 @@
+ 		if (!tls_disable){
+ 			for(si=tls_listen; si; si=si->next){
+ 				/* same as for tcp*/
++				/*
+ 				if (tls_init(si)==-1)  goto error;
++				*/
+ 				/* get first ipv4/ipv6 socket*/
++				/*
+ 				if ((si->address.af==AF_INET)&&
+ 						((sendipv4_tls==0)||(sendipv4_tls->flags&SI_IS_LO)))
+ 					sendipv4_tls=si;
++				*/
+ 		#ifdef USE_IPV6
++				/*
+ 				if((sendipv6_tls==0)&&(si->address.af==AF_INET6))
+ 					sendipv6_tls=si;
++				*/
+ 		#endif
+ 			}
+ 		}
+@@ -1551,10 +1559,12 @@
+ #ifdef USE_TLS
+ 	if (!tls_disable){
+ 		/* init tls*/
++		/*
+ 		if (init_tls()<0){
+ 			LOG(L_CRIT, "could not initialize tls, exiting...\n");
+ 			goto error;
+ 		}
++		*/
+ 	}
+ #endif /* USE_TLS */
+ #endif /* USE_TCP */
+Index: tcp_main.c
+===================================================================
+RCS file: /cvsroot/ser/sip_router/tcp_main.c,v
+retrieving revision 1.75
+diff -u -r1.75 tcp_main.c
+--- tcp_main.c	27 Jan 2006 09:52:58 -0000	1.75
++++ tcp_main.c	27 Jan 2006 11:02:25 -0000
+@@ -107,7 +107,7 @@
+ #include "tcp_init.h"
+ #include "tsend.h"
+ #ifdef USE_TLS
+-#include "tls/tls_server.h"
++/*#include "tls/tls_server.h"*/
+ #endif 
+ 
+ #define local_malloc pkg_malloc
+@@ -416,7 +416,7 @@
+ 	c->extra_data=0;
+ #ifdef USE_TLS
+ 	if (type==PROTO_TLS){
+-		if (tls_tcpconn_init(c, sock)==-1) goto error;
++		if (tls && (tls->u.tcp.init(c, sock) == -1)) goto error;
+ 	}else
+ #endif /* USE_TLS*/
+ 	{
+@@ -536,7 +536,8 @@
+ 						&c->con_aliases[r], next, prev);
+ 	lock_destroy(&c->write_lock);
+ #ifdef USE_TLS
+-	if (c->type==PROTO_TLS) tls_tcpconn_clean(c);
++	if (c->type==PROTO_TLS) 
++		if (tls) tls->u.tcp.clean(c);
+ #endif
+ 	shm_free(c);
+ }
+@@ -555,7 +556,8 @@
+ 	TCPCONN_UNLOCK;
+ 	lock_destroy(&c->write_lock);
+ #ifdef USE_TLS
+-	if ((c->type==PROTO_TLS)&&(c->extra_data)) tls_tcpconn_clean(c);
++	if ((c->type==PROTO_TLS)&&(c->extra_data)) 
++		if (tls) tls->u.tcp.clean(c);
+ #endif
+ 	shm_free(c);
+ }
+@@ -801,7 +803,11 @@
+ 	lock_get(&c->write_lock);
+ #ifdef USE_TLS
+ 	if (c->type==PROTO_TLS)
+-		n=tls_blocking_write(c, fd, buf, len);
++		if (tls) {
++			n = tls->u.tcp.blocking_write(c, fd, buf, len);
++		} else {
++			n = -1;
++		}
+ 	else
+ #endif
+ 		/* n=tcp_blocking_write(c, fd, buf, len); */
+@@ -1051,7 +1057,7 @@
+ #ifdef USE_TLS
+ 		/*FIXME: lock ->writelock ? */
+ 		if (tcpconn->type==PROTO_TLS)
+-			tls_close(tcpconn, fd);
++			if (tls) tls->u.tcp.close(tcpconn, fd);
+ #endif
+ 		_tcpconn_rm(tcpconn);
+ 		close(fd);
+@@ -1425,7 +1431,7 @@
+ 				fd=c->s;
+ #ifdef USE_TLS
+ 				if (c->type==PROTO_TLS)
+-					tls_close(c, fd);
++					if (tls) tls->u.tcp.close(c, fd);
+ #endif
+ 				_tcpconn_rm(c);
+ 				if ((fd>0)&&(c->refcnt==0)) {
+Index: tcp_read.c
+===================================================================
+RCS file: /cvsroot/ser/sip_router/tcp_read.c,v
+retrieving revision 1.31
+diff -u -r1.31 tcp_read.c
+--- tcp_read.c	28 Oct 2005 20:59:37 -0000	1.31
++++ tcp_read.c	27 Jan 2006 11:02:36 -0000
+@@ -60,7 +60,7 @@
+ #include "timer.h"
+ #include "ut.h"
+ #ifdef USE_TLS
+-#include "tls/tls_server.h"
++/*#include "tls/tls_server.h"*/
+ #endif
+ 
+ #define HANDLE_IO_INLINE
+@@ -184,7 +184,8 @@
+ 	}else{
+ #ifdef USE_TLS
+ 		if (c->type==PROTO_TLS)
+-			bytes=tls_read(c);
++			if (tls) bytes = tls->u.tcp.read(c);
++			else bytes = -1;
+ 		else
+ #endif
+ 			bytes=tcp_read(c);
+@@ -414,10 +415,11 @@
+ 		req=&con->req;
+ #ifdef USE_TLS
+ 		if (con->type==PROTO_TLS){
+-			if (tls_fix_read_conn(con)!=0){
++			if (!tls || (tls->u.tcp.fix_read_con(con)!=0)){
+ 				resp=CONN_ERROR;
+ 				goto end_req;
+ 			}
++
+ 			if(con->state!=S_CONN_OK) goto end_req; /* not enough data */
+ 		}
+ #endif
+--- transport.h.orig	2006-01-27 12:11:43.000000000 +0100
++++ transport.h	2006-01-27 11:10:37.000000000 +0100
+@@ -0,0 +1,77 @@
++/*
++ * $Id$
++ *
++ * Copyright (C) 2001-2003 FhG Fokus
++ *
++ * This file is part of ser, a free SIP server.
++ *
++ * ser is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version
++ *
++ * For a license to use the ser software under conditions
++ * other than those described here, or to purchase support for this
++ * software, please contact iptel.org by e-mail at the following addresses:
++ *    info@iptel.org
++ *
++ * ser is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++ */
++
++#ifndef _TRANSPORT_H
++#define _TRANSPORT_H
++
++#include "tcp_conn.h"
++
++
++typedef int (*tcp_init_f)(struct tcp_connection *c, int sock);
++typedef void (*tcp_clean_f)(struct tcp_connection *c);
++typedef void (*tcp_close_f)(struct tcp_connection *c, int fd);
++typedef size_t (*tcp_blocking_write_f)(struct tcp_connection *c, int fd, const char *buf, size_t len);
++typedef size_t (*tcp_read_f)(struct tcp_connection *c);
++typedef int (*tcp_fix_read_con_f)(struct tcp_connection *c);
++
++
++enum trans_flags {
++	TRANSPORT_SECURE = (1 << 0),  /* Transport is secure */
++	TRANSPORT_STREAM = (1 << 1),  /* Transport uses stream (reliable) sockets */
++	TRANSPORT_DGRAM = (1 << 2)    /* Transport uses datagram (unrealiable) sockets */
++};
++
++/* TCP related functions */
++struct tcp_func {
++	tcp_init_f           init;
++	tcp_clean_f          clean;
++	tcp_close_f          close;
++	tcp_blocking_write_f blocking_write; 
++	tcp_read_f           read;
++	tcp_fix_read_con_f   fix_read_con;
++};
++
++/* UDP related functions */
++struct udp_func {
++};
++
++
++/* Structure representing transports on top of TCP or UDP */
++typedef struct transport {
++	int proto;  /* Protocol ID */
++	str name;   /* Protocol name */
++	int flags;  /* Various flags */
++
++	union {
++		struct tcp_func tcp;
++		struct udp_func udp;
++	} u;
++	struct transport* next;
++} transport_t;
++
++
++#endif /* _TLS_H */
