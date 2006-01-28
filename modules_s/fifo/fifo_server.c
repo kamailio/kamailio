@@ -414,7 +414,7 @@ static struct rpc_struct* new_struct(rpc_ctx_t* ctx, str* line)
 {
 	char* comma, *colon;
 	struct rpc_struct* s;
-	str left, right, name, value;
+	str left, right = STR_NULL, name, value;
 	struct text_chunk* n, *v;
 
 	if (!line->len) {
@@ -1050,7 +1050,6 @@ static int rpc_send(rpc_ctx_t* ctx)
 {
 	struct text_chunk* p;
 	FILE *f;
-	int r;
 
 	     /* Send the reply only once */
 	if (ctx->reply_sent) return 1;
@@ -1114,7 +1113,6 @@ static int print_value(rpc_ctx_t* ctx, char fmt, va_list* ap)
 	str str_val;
 	str* sp;
 	char buf[256];
-	struct tm* t;
 
 	switch(fmt) {
 	case 'd':
@@ -1439,7 +1437,6 @@ static int rpc_struct_add(struct text_chunk* s, char* fmt, ...)
 	static char buf[MAX_LINE_BUFFER];
 	str st, *sp;
 	va_list ap;
-	char* p;
 	struct text_chunk* m, *c;
 
 	va_start(ap, fmt);
