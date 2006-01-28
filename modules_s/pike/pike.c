@@ -136,8 +136,6 @@ static int pike_init(void)
 	register_timer( swap_routine , 0, time_unit );
 
 	return 0;
-error4:
-	shm_free( timer );
 error3:
 	destroy_ip_tree();
 error2:
