@@ -145,7 +145,6 @@ static void rpc_delete_uid(rpc_t* rpc, void* c)
 {
         udomain_t* d;
         str uid, t;
-        char* at;
 
 	if (rpc->scan(c, "SS", &t, &uid) < 0) return;
 
@@ -178,7 +177,6 @@ static void rpc_delete_contact(rpc_t* rpc, void* ctx)
         ucontact_t* con;
         str uid, t, c;
         int res;
-        char* at;
 
 	if (rpc->scan(ctx, "SSS", &t, &uid, &c) < 0) return;
 
@@ -262,7 +260,6 @@ static void rpc_add_contact(rpc_t* rpc, void* c)
 {
         udomain_t* d;
         int expires, flags;
-        char* at;
 	double q;
         qvalue_t qval;
 
@@ -300,7 +297,7 @@ static inline int print_contacts(rpc_t* rpc, void* ctx, ucontact_t* _c)
         while(_c) {
                 if (VALID_CONTACT(_c, act_time)) {
                         cnt++;
-			if (rpc->add(ctx, "{", &handle) < 0) return;
+			if (rpc->add(ctx, "{", &handle) < 0) return -1;
 			rpc->struct_add(handle, "Sfd",
 					"contact", &_c->c,
 					"q", q2double(_c->q),
@@ -325,7 +322,6 @@ static void rpc_show_contacts(rpc_t* rpc, void* c)
         urecord_t* r;
         int res;
         str t, uid;
-        char* at;
 
 	if (rpc->scan(c, "SS", &t, &uid) < 0) return;
 
