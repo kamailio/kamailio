@@ -36,6 +36,7 @@
 #define MS_MSG_SENT	1
 #define MS_MSG_DONE	4
 #define MS_MSG_ERRO	8
+#define MS_MSG_TSND	16
 
 #define MS_SEM_SENT	0
 #define MS_SEM_DONE 1

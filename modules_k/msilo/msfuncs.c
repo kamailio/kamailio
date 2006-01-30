@@ -195,7 +195,7 @@ error:
  *         - body->s MUST be allocated
  * #return: 0 OK ; -1 error
  * */
-int m_build_body(str *body, time_t date, str msg)
+int m_build_body(str *body, time_t date, str msg, time_t sdate)
 {
 	char *p;
 	
@@ -205,22 +205,24 @@ int m_build_body(str *body, time_t date, str msg)
 	
 	p = body->s;
 
-	strncpy(p, "[Offline message - ", 19);
-	p += 19;
-	
-	strncpy(p, ctime(&date), 24);
-	p += 24;
-
-	/**
-	if(from.len > 0)
+	if(sdate!=0)
 	{
-		*p++ = ' ';
-		strncpy(p, from.s, from.len);
-		p += from.len;
-	}
-	**/
+		strncpy(p, "[Reminder message - ", 20);
+		p += 20;
 	
-	*p++ = ']';
+		strncpy(p, ctime(&sdate), 24);
+		p += 24;
+
+		*p++ = ']';
+	} else {
+		strncpy(p, "[Offline message - ", 19);
+		p += 19;
+	
+		strncpy(p, ctime(&date), 24);
+		p += 24;
+
+		*p++ = ']';
+	}
 	
 	if(msg.len > 0)
 	{
@@ -236,3 +238,145 @@ error:
 	return -1;
 }
 
+/* return time stamp of YYYYMMDDHHMMSS */
+int ms_extract_time(str *time_str, int *time_val)
+{
+	struct tm stm;
+	int i;
+
+	if(time_str==NULL || time_str->s==NULL  
+			|| time_str->len<=0 || time_val==NULL)
+	{
+		LOG(L_ERR, "MSILO:m_extract_time: error - bad parameters\n");
+		return -1;
+	}
+	
+	memset(&stm, 0, sizeof(struct tm));
+	for(i=0; i<time_str->len; i++)
+	{
+		if(time_str->s[i]<'0' || time_str->s[i]>'9')
+		{
+			LOG(L_ERR, "MSILO:m_extract_time: error - bad time [%.*s]\n",
+					time_str->len, time_str->s);
+			return -1;
+		}
+		switch(i)
+		{
+			case 0:
+				if(time_str->s[i]<'2')
+				{
+					LOG(L_ERR,
+						"MSILO:m_extract_time:error: bad year in time [%.*s]\n",
+							time_str->len, time_str->s);
+					return -1;
+				}
+				stm.tm_year += 1000*(time_str->s[i]-'0') - 1900;
+			break;
+			case 1:
+				stm.tm_year += 100*(time_str->s[i]-'0');
+			break;
+			case 2:
+				stm.tm_year += 10*(time_str->s[i]-'0');
+			break;
+			case 3:
+				stm.tm_year += (time_str->s[i]-'0');
+			break;
+			case 4:
+				if(time_str->s[i]>'1')
+				{
+					LOG(L_ERR,
+						"MSILO:m_extract_time:error: bad month in time[%.*s]\n",
+							time_str->len, time_str->s);
+					return -1;
+				}
+				stm.tm_mon += 10*(time_str->s[i]-'0') - 1;
+			break;
+			case 5:
+				if((time_str->s[i-1]=='0' && time_str->s[i]=='0')
+						|| (time_str->s[i-1]=='1' && time_str->s[i]>'2'))
+				{
+					LOG(L_ERR,
+						"MSILO:m_extract_time:error: bad month in time[%.*s]\n",
+							time_str->len, time_str->s);
+					return -1;
+				}
+				stm.tm_mon += (time_str->s[i]-'0');
+			break;
+			case 6:
+				if(time_str->s[i]>'3')
+				{
+					LOG(L_ERR,
+						"MSILO:m_extract_time:error: bad day in time [%.*s]\n",
+							time_str->len, time_str->s);
+					return -1;
+				}
+				stm.tm_mday += 10*(time_str->s[i]-'0');
+			break;
+			case 7:
+				if((time_str->s[i-1]=='0' && time_str->s[i]=='0')
+						|| (time_str->s[i-1]=='3' && time_str->s[i]>'1'))
+				{
+					LOG(L_ERR,
+						"MSILO:m_extract_time:error: bad day in time [%.*s]\n",
+							time_str->len, time_str->s);
+					return -1;
+				}
+				stm.tm_mday += (time_str->s[i]-'0');
+			break;
+			case 8:
+				if(time_str->s[i]>'2')
+				{
+					LOG(L_ERR,
+						"MSILO:m_extract_time:error: bad hour in time [%.*s]\n",
+							time_str->len, time_str->s);
+					return -1;
+				}
+				stm.tm_hour += 10*(time_str->s[i]-'0');
+			break;
+			case 9:
+				if(time_str->s[i-1]=='2' && time_str->s[i]>'3')
+				{
+					LOG(L_ERR,
+						"MSILO:m_extract_time:error: bad hour in time [%.*s]\n",
+							time_str->len, time_str->s);
+					return -1;
+				}
+				stm.tm_hour += (time_str->s[i]-'0');
+			break;
+			case 10:
+				if(time_str->s[i]>'5')
+				{
+					LOG(L_ERR,
+						"MSILO:m_extract_time:error: bad min in time [%.*s]\n",
+							time_str->len, time_str->s);
+					return -1;
+				}
+				stm.tm_min += 10*(time_str->s[i]-'0');
+			break;
+			case 11:
+				stm.tm_min += (time_str->s[i]-'0');
+			break;
+			case 12:
+				if(time_str->s[i]>'5')
+				{
+					LOG(L_ERR,
+						"MSILO:m_extract_time:error: bad sec in time [%.*s]\n",
+							time_str->len, time_str->s);
+					return -1;
+				}
+				stm.tm_sec += 10*(time_str->s[i]-'0');
+			break;
+			case 13:
+				stm.tm_sec += (time_str->s[i]-'0');
+			break;
+			default:
+				LOG(L_ERR,
+					"MSILO:m_extract_time:error: time spec too long [%.*s]\n",
+						time_str->len, time_str->s);
+				return -1;
+		}
+	}
+	*time_val = (int)mktime(&stm);
+
+	return 0;
+}

@@ -52,7 +52,9 @@ int m_extract_content_type(char*, int, content_type_t*, int);
 int m_build_headers(str *buf, str ctype, str contact);
 
 /** build MESSAGE body */
-int m_build_body(str *body, time_t date, str msg);
+int m_build_body(str *body, time_t date, str msg, time_t sdate);
+
+int ms_extract_time(str *time_str, int *time_val);
 
 #endif
 

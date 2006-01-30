@@ -148,6 +148,26 @@ modparam("msilo", "registrar", "sip:registrar@example.org")
 		</example>
 	</section>
 	<section>
+		<title><varname>reminder</varname> (string)</title>
+		<para>
+		The &sip; address used to send reminder messages. If this value
+		is not set, the reminder feature is disabled.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>reminder</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("msilo", "reminder", "sip:registrar@example.org")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><varname>expire_time</varname> (int)</title>
 		<para>
 		Expire time of stored messages - seconds. When this time passed, the message is
@@ -184,6 +204,30 @@ modparam("msilo", "expire_time", 36000)
 		<programlisting format="linespecific">
 ...
 modparam("msilo", "check_time", 10)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>send_time</varname> (int)</title>
+		<para>
+		Timer interval in seconds to check if there are reminder messages.
+		The module takes all reminder messages that must be sent at that moment 
+		or before that moment.
+		</para>
+		<para>
+		If the value is 0, the reminder feature is disabled.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>send_time</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("msilo", "send_time", 60)
 ...
 </programlisting>
 		</example>
@@ -251,6 +295,32 @@ modparam("msilo", "use_contact", 0)
 <programlisting format="linespecific">
 ...
 modparam("msilo", "userid_avp", 34)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>snd_time_avp</varname> (int)</title>
+		<para>
+		The integer ID of an AVP which may contain the time when to sent
+		the received message as reminder.The AVP is used ony by m_store().
+		</para>
+		<para>
+		If the parameter is not set to a value different than 0, the module
+		does not look for this AVP. If the value is set to a number different
+		than 0, then the module expects in the AVP with that ID to be a time
+		in format YYYYMMDDHHMMSS (e.g., 20060101201500).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>snd_time_avp</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("msilo", "snd_time_avp", 35)
 ...
 </programlisting>
 		</example>

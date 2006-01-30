@@ -26,6 +26,8 @@ CREATE TABLE silo(
     inc_time INTEGER NOT NULL DEFAULT 0,
       -- expiration time
     exp_time INTEGER NOT NULL DEFAULT 0,
+      -- reminder send time
+    snd_time INTEGER NOT NULL DEFAULT 0,
       -- content type
     ctype VARCHAR(32) NOT NULL DEFAULT "text/plain",
       -- body of the message
