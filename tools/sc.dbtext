@@ -702,7 +702,7 @@ case $1 in
 		echo "active_sessions:1" >> $VER_FILE
 		echo "acc:2" >> $VER_FILE
 		echo "config:1" >> $VER_FILE
-		echo "silo:3" >> $VER_FILE
+		echo "silo:4" >> $VER_FILE
 		echo "realm:1" >> $VER_FILE
 		echo "domain:1" >> $VER_FILE
 		echo "uri:1" >> $VER_FILE

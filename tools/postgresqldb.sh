@@ -335,7 +335,7 @@ INSERT INTO version VALUES ( 'realm', '1');
 INSERT INTO version VALUES ( 'reserved', '1');
 INSERT INTO version VALUES ( 'server_monitoring', '1');
 INSERT INTO version VALUES ( 'server_monitoring_agg', '1');
-INSERT INTO version VALUES ( 'silo', '3');
+INSERT INTO version VALUES ( 'silo', '4');
 INSERT INTO version VALUES ( 'speed_dial', '2');
 INSERT INTO version VALUES ( 'subscriber', '5');
 INSERT INTO version VALUES ( 'trusted', '1');
@@ -692,6 +692,7 @@ CREATE TABLE silo(
     domain VARCHAR(128) NOT NULL DEFAULT '',
     inc_time INTEGER NOT NULL DEFAULT 0,
     exp_time INTEGER NOT NULL DEFAULT 0,
+    snd_time INTEGER NOT NULL DEFAULT 0,
     ctype VARCHAR(32) NOT NULL DEFAULT 'text/plain',
     body TEXT NOT NULL DEFAULT ''
 ) $TABLE_TYPE;
