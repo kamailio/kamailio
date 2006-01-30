@@ -231,7 +231,7 @@ static int mod_init(void)
 	_s.s = ms_db_table;
 	_s.len = strlen(ms_db_table);
 	ver =  table_version(&msilo_dbf, db_con, &_s);
-	if(ver!=3)
+	if(ver!=S_TABLE_VERSION)
 	{
 		LOG(L_ERR,"MSILO:mod_init: Wrong version v%d for table <%s>,"
 				" need v%d\n", ver, ms_db_table, S_TABLE_VERSION);
