@@ -107,6 +107,11 @@ int err2reason_phrase(
 			*sip_error=-E_BAD_REQ;
 			break;
 
+		case E_CANCELED:
+			error_txt="transaction canceled";
+			*sip_error=-ser_error;
+			break;
+
 		case E_OUT_OF_MEM:
 		/* dont disclose lack of mem in release mode */
 #ifdef EXTRA_DEBUG
