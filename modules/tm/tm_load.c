@@ -152,6 +152,10 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "' calculate_hooks ' not found\n");
 		return -1;
 	}
+	if (!(tmb->t_uac=(t_uac_t)find_export("t_uac", NO_SCRIPT, 0)) ) {
+		LOG( L_ERR, LOAD_ERROR "'t_uac' not found\n");
+		return -1;
+	}
 
 	tmb->route_mode = &rmode;
 	return 1;

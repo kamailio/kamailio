@@ -48,7 +48,8 @@ extern int pass_provisional_replies; /* Pass provisional replies to fifo applica
  */
 typedef int (*reqwith_t)(str* m, str* h, str* b, dlg_t* d, transaction_cb c, void* cp);
 typedef int (*reqout_t)(str* m, str* t, str* f, str* h, str* b, dlg_t** d, transaction_cb c, void* cp);
-typedef int (*req_t)(str* m, str* ruri, str* t, str* f, str* h, str* b, transaction_cb c, void* cp);
+typedef int (*req_t)(str* m, str* ruri, str* t, str* f, str* h, str* b, str *next_hop, transaction_cb c, void* cp);
+typedef int (*t_uac_t)(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb, void* cbp);
 
 
 /*
@@ -80,11 +81,10 @@ int req_within(str* m, str* h, str* b, dlg_t* d, transaction_cb c, void* cp);
  */
 int req_outside(str* m, str* t, str* f, str* h, str* b, dlg_t** d, transaction_cb c, void* cp);
 
-
 /*
  * Send a transactional request, no dialogs involved
  */
-int request(str* m, str* ruri, str* to, str* from, str* h, str* b, transaction_cb c, void* cp);
+int request(str* m, str* ruri, str* to, str* from, str* h, str* b, str *next_hop, transaction_cb c, void* cp);
 
 
 #endif

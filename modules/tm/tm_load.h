@@ -99,6 +99,7 @@ struct tm_binds {
 	print_dlg_f        print_dlg;
 	tgett_f            t_gett;
 	calculate_hooks_f  calculate_hooks;
+	t_uac_t            t_uac;
 	enum route_mode*   route_mode;
 };
 

@@ -45,6 +45,9 @@
 #include "t_reply.h"
 #include "../../parser/parser_f.h"
 
+/* next added to allow automatical tag generation */
+#include "callid.h"
+#include "uac.h"
 
 #define NORMAL_ORDER 0  /* Create route set in normal order - UAS */
 #define REVERSE_ORDER 1 /* Create route set in reverse order - UAC */
@@ -130,7 +133,10 @@ static inline int calculate_hooks(dlg_t* _d)
 			_d->hooks.request_uri = &_d->route_set->nameaddr.uri;
 			_d->hooks.next_hop = _d->hooks.request_uri;
 			_d->hooks.first_route = _d->route_set->next;
-			_d->hooks.last_route = &_d->rem_target;
+			if (_d->rem_target.len > 0) 
+				_d->hooks.last_route = &_d->rem_target;
+			else 
+				_d->hooks.last_route = NULL; /* ? */
 		}
 	} else {
 		if (_d->rem_target.s) _d->hooks.request_uri = &_d->rem_target;
@@ -169,6 +175,18 @@ int w_calculate_hooks(dlg_t* _d)
 int new_dlg_uac(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _ruri, dlg_t** _d)
 {
 	dlg_t* res;
+	str generated_cid;
+	str generated_ltag;
+
+	if (!_cid) { /* if not given, compute new one */
+		generate_callid(&generated_cid);
+		_cid = &generated_cid;
+	}
+	if (_cid && (!_ltag)) { /* if not given, compute new one */
+		generate_fromtag(&generated_ltag, _cid);
+		_ltag = &generated_ltag;
+	}
+	if (_lseq == 0) _lseq = DEFAULT_CSEQ;
 
 	if (!_cid || !_ltag || !_luri || !_ruri || !_d) {
 		LOG(L_ERR, "new_dlg_uac(): Invalid parameter value\n");
