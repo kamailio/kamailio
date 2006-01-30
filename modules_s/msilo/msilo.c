@@ -452,16 +452,16 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 
 	/* add expiration time */
 	db_keys[nr_keys] = sc_exp_time;
-	db_vals[nr_keys].type = DB_INT;
+	db_vals[nr_keys].type = DB_DATETIME;
 	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.int_val = val+lexpire;
+	db_vals[nr_keys].val.time_val = val+lexpire;
 	nr_keys++;
 
 	/* add incoming time */
 	db_keys[nr_keys] = sc_inc_time;
-	db_vals[nr_keys].type = DB_INT;
+	db_vals[nr_keys].type = DB_DATETIME;
 	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.int_val = val;
+	db_vals[nr_keys].val.time_val = val;
 	nr_keys++;
 
 	if (msilo_dbf.use_table(db_con, ms_db_table) < 0)
@@ -664,7 +664,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 		/** sending using TM function: t_uac */
 		body_str.len = 1024;
 		rtime =
-			(time_t)RES_ROWS(db_res)[i].values[5/*inc time*/].val.int_val;
+			(time_t)RES_ROWS(db_res)[i].values[5/*inc time*/].val.time_val;
 		n = m_build_body(&body_str, rtime, str_vals[2/*body*/]);
 		if(n<0)
 			DBG("MSILO:m_dump: sending simple body\n");
@@ -745,9 +745,9 @@ void m_clean_silo(unsigned int ticks, void *param)
 	{
 		DBG("MSILO:clean_silo: cleaning expired messages\n");
 		db_keys[0] = sc_exp_time;
-		db_vals[0].type = DB_INT;
+		db_vals[0].type = DB_DATETIME;
 		db_vals[0].nul = 0;
-		db_vals[0].val.int_val = (int)time(NULL);
+		db_vals[0].val.time_val = (int)time(NULL);
 		if (msilo_dbf.delete(db_con, db_keys, db_ops, db_vals, 1) < 0)
 			DBG("MSILO:clean_silo: ERROR cleaning expired messages\n");
 	}
