@@ -184,7 +184,7 @@ str *rr_get_avp_cookies(void) {
 			else
 				avp_name = 0;  // dummy
 
-			get_avp_val(avp, &avp_value);
+			get_avp_val(avp, &avp_val);
 			
 			l = sizeof(rr_avp_flags_t);
 			if (avp->flags & AVP_NAME_STR )
