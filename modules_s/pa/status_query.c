@@ -52,17 +52,16 @@ int target_online(struct sip_msg* _m, char* _domain, char* _s2)
 	d = (struct pdomain*)_domain;
 
 	if (get_presentity_uid(&uid, _m) != 0) {
-		ERR("handle_subscription(): Error while extracting presentity UID\n");
+		ERR("Error while extracting presentity UID\n");
 		return 0; /* ??? impossible to return -1 or 1 */
 	}
 
-	TRACE_LOG("is \'%.*s\' online ?\n", FMT_STR(uid));
+	/* TRACE_LOG("is \'%.*s\' online ?\n", FMT_STR(uid)); */
 
 	lock_pdomain(d);
 
 	if (find_presentity_uid(d, &uid, &p) == 0) {
 		/* presentity found */
-		/* TODO: search for status */
 		t = find_online_tuple(p, NULL);
 		if (t) res = 1; /* online tuple found */
 	}
