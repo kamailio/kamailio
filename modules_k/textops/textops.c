@@ -108,6 +108,7 @@ static int str_fixup(void** param, int param_no);
 static int hname_fixup(void** param, int param_no);
 static int fixup_method(void** param, int param_no);
 static int add_header_fixup(void** param, int param_no);
+static int it_list_fixup(void** param, int param_no);
 
 static int mod_init(void);
 
@@ -121,7 +122,7 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
 	{"replace_all",      replace_all_f,     2, fixup_regex, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
-	{"append_to_reply",  append_to_reply_f, 1, 0,
+	{"append_to_reply",  append_to_reply_f, 1, it_list_fixup,
 			REQUEST_ROUTE|BRANCH_ROUTE},
 	{"append_hf",        append_hf_1,       1, add_header_fixup,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
@@ -579,9 +580,38 @@ static int append_time_f(struct sip_msg* msg, char* p1, char *p2)
 	return 1;
 }
 
-static int append_to_reply_f(struct sip_msg* msg, char* key, char* str)
+#define ADD_HF_PRINTBUF_SIZE   1024
+static char printbuf[ADD_HF_PRINTBUF_SIZE];
+
+static int append_to_reply_f(struct sip_msg* msg, char* key, char* str0)
 {
-	if ( add_lump_rpl( msg, key, strlen(key), LUMP_RPL_HDR)==0 )
+	int printbuf_len;
+	xl_elem_t *model;
+	str s0;
+
+	if(key==NULL)
+	{
+		LOG(L_ERR,"ERROR:append_to_reply: error - bad parameters\n");
+		return -1;
+	}
+
+	model = (xl_elem_t*)key;
+	if(model->next==0 && model->spec.itf==0)
+	{
+		s0 = model->text;
+	} else {
+		printbuf_len = ADD_HF_PRINTBUF_SIZE-1;
+		if(xl_printf(msg, model, printbuf, &printbuf_len)<0)
+		{
+			LOG(L_ERR,
+			"textops:add_hf_helper: error - cannot print the format\n");
+			return -1;
+		}
+		s0.s   = printbuf;
+		s0.len = printbuf_len;
+	}
+	 
+	if ( add_lump_rpl( msg, s0.s, s0.len, LUMP_RPL_HDR)==0 )
 	{
 		LOG(L_ERR,"ERROR:append_to_reply : unable to add lump_rl\n");
 		return -1;
@@ -600,8 +630,6 @@ static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 	struct hdr_field *hf;
 	char *s;
 	int len;
-#define ADD_HF_PRINTBUF_SIZE   1024
-	static char printbuf[ADD_HF_PRINTBUF_SIZE];
 	int printbuf_len;
 	str s0;
 

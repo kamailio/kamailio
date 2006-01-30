@@ -331,12 +331,13 @@ if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 		<function moreinfo="none">append_to_reply(txt)</function>
 		</title>
 		<para>
-		Append txt to the reply.
+		Append txt as header to the reply.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>txt</emphasis> - String.
+			<para><emphasis>txt</emphasis> - String which may contains
+			pseudo-variables.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -348,6 +349,7 @@ if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 		<programlisting format="linespecific">
 ...
 append_to_reply("Foo: bar\r\n");
+append_to_reply("Foo: $rm at $Ts\r\n");
 ...
 </programlisting>
 		</example>

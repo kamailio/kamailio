@@ -275,17 +275,18 @@ if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 
 1.3.8. append_to_reply(txt)
 
-   Append txt to the reply.
+   Append txt as header to the reply.
 
    Meaning of the parameters is as follows:
 
-     * txt - String.
+     * txt - String which may contains pseudo-variables.
 
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE.
 
    Example 1-8. append_to_reply usage
 ...
 append_to_reply("Foo: bar\r\n");
+append_to_reply("Foo: $rm at $Ts\r\n");
 ...
      _________________________________________________________
 
@@ -454,7 +455,7 @@ append_time();
      * name - SIP method name
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
-   FAILURE_ROUTE.
+   FAILURE_ROUTE, and BRANCH_ROUTE.
 
    Example 1-16. is_method usage
 ...
@@ -534,4 +535,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.
