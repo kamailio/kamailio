@@ -29,6 +29,7 @@
 #define OP_EQ  "="
 #define OP_LEQ "<="
 #define OP_GEQ ">="
+#define OP_NEQ "!="
 
 
 /*
