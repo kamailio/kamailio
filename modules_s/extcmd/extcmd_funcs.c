@@ -430,6 +430,7 @@ int send_sip_req(str* msg_type, str *msg, int client_fd)
 			&from,                    /* From */
 			&hdrs,                    /* Additional headers including CRLF */
 			&body,                    /* Message body */
+			0,                        /* next hop */
 			tuac_callback,           /* Callback function */
 			(void*)pcbp               /* Callback parameter */
 		);

@@ -149,7 +149,7 @@ natping(unsigned int ticks, void *param)
 			p_from.s = "sip:registrar"; /* XXX */
 			p_from.len = strlen(p_from.s);
 			if (tmb.t_request(&p_method, &c, &c, &p_from,
-			    NULL, NULL, NULL, NULL) == -1) {
+			    NULL, NULL, NULL, NULL, NULL) == -1) {
 				LOG(L_ERR, "ERROR: nathelper::natping(): t_request() failed\n");
 			}
 		} else {

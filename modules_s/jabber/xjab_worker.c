@@ -1200,11 +1200,11 @@ int xj_send_sip_msg(str *proxy, str *to, str *from, str *msg, int *cbp)
 		DBG("XJAB:xj_send_sip_msg: uac callback parameter [%p==%d]\n", 
 				cbp, *cbp);
 #endif
-		return tmb.t_request(&msg_type, 0, to, &tfrom, &str_hdr, msg, 
+		return tmb.t_request(&msg_type, 0, to, &tfrom, &str_hdr, msg, 0, 
 					     xj_tuac_callback, (void*)cbp);
 	}
 	else
-		return tmb.t_request(&msg_type, 0, to, &tfrom, &str_hdr, msg, 0, 0);
+		return tmb.t_request(&msg_type, 0, to, &tfrom, &str_hdr, msg, 0, 0, 0);
 }
 
 /**
