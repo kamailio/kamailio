@@ -56,6 +56,7 @@
 #define E_Q_DEC_MISSING -18 /* Decimal part missing */
 
 
+
 #define E_SEND		  -477
 /* unresolvable next-hop address */
 #define E_BAD_ADDRESS -478
@@ -65,6 +66,8 @@
 #define E_BAD_PROTO	  -480
 /* malformed request */
 #define E_BAD_REQ	  -400
+
+#define E_CANCELED      -487 /* transaction already canceled */
 
 /* error in server */
 #define E_BAD_SERVER	  -500
