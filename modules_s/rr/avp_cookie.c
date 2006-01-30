@@ -39,7 +39,7 @@
 #define AVP_COOKIE_BUFFER 1024
 #define CRC_LEN 4
 
-regex_t *cookie_filter_re = 0;
+regex_t* cookie_filter_re = 0;
 
 int rr_before_script_cb(struct sip_msg *msg, void *param) {
 	DBG("rr_before_script_cb: inquired\n");
