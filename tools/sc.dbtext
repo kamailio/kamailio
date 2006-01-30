@@ -151,6 +151,21 @@ AVP_VALUE_COLUMN=value
 AVP_TYPE_COLUMN=type
 AVP_MODIFIED_COLUMN=modified
 
+# lcr table
+if [ -z "$LCR_TABLE" ] ; then
+	LCR_TABLE=lcr
+fi
+
+# gw table
+if [ -z "$GW_TABLE" ] ; then
+	GW_TABLE=gw
+fi
+
+# gw_grp table
+if [ -z "$GW_GRP_TABLE" ] ; then
+	GW_GRP_TABLE=gw_grp
+fi
+
 #===================================================================
 
 #Set variables to dbtext's files ...
@@ -171,6 +186,15 @@ if [ -z "$URI_FILE" ] ; then
 fi
 if [ -z "$ACL_FILE" ] ; then
 	ACL_FILE=$DBTEXT_PATH/$ACL_TABLE
+fi
+if [ -z "$LCR_FILE" ] ; then
+        LCR_FILE=$DBTEXT_PATH/$LCR_TABLE
+fi
+if [ -z "$GW_FILE" ] ; then
+        GW_FILE=$DBTEXT_PATH/$GW_TABLE
+fi
+if [ -z "$GW_GRP_FILE" ] ; then
+        GW_GRP_FILE=$DBTEXT_PATH/$GW_GRP_TABLE
 fi
 
 #===================================================================
@@ -205,6 +229,23 @@ parameter usage:
  domain show ........................ show list of served domains
  domain add <domainname> ............ add a new served domain
  domain rm <domainname> ............. remove a served domain
+
+           * lcr *
+   * IP addresses must be entered in dotted quad format e.g. 1.2.3.4        *
+   * <uri_scheme> and <transport> must be entered in integer or text,       *
+   * e.g. transport '2' is identical to transport 'tcp'.                    *
+   *   scheme: 1=sip, 2=sips;   transport: 1=udp, 2=tcp, 3=tls              *
+   * Examples:  openser_dbtext_ctl lcr addgw_grp usa 1                      *
+   *            openser_dbtext_ctl lcr addgw level3 1.2.3.4 5080 sip tcp 1  *
+   *            openser_dbtext_ctl lcr addroute +1 % 1 1                    *
+ lcr show ...................................... show routes, gateways and groups
+ lcr addgw_grp <grp_name> <grp_id> ............. add gateway group with grp_id
+ lcr rmgw_grp  <grp_id> ........................ delete the gw_grp
+ lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> ........... add a gateway
+ lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <prefix> .. add a gateway with prefix
+ lcr rmgw  <gw_name> ..................................................... delete a gateway
+ lcr addroute <prefix> <from> <grp_id> <prio> .. add a route
+ lcr rmroute  <prefix> <from> <grp_id> <prio> .. delete a route
 
            * control and diagnostics *
  dbtext [dbtext_path] ... create the needed dbtext files (default 
@@ -374,6 +415,180 @@ domain() {
 			echo -e "\nDomain $1 removed from DBTEXT ... now trying to force SER to remove it from memory\n"
 			#FIXME: domain_reload command not supported yet
 			#fifo_cmd domain_reload
+			;;
+		*)
+			usage
+			exit 1
+	esac
+}
+
+lcr() {
+	case $1 in
+		show)
+			echo lcr routes
+			lines=`wc -l $LCR_FILE | cut -d " " -f 1`
+			let "lines = $lines - 1"
+			tail -n $lines $LCR_FILE
+
+			echo lcr gateway groups
+			lines=`wc -l $GW_GRP_FILE | cut -d " " -f 1`
+			let "lines = $lines - 1"
+			tail -n $lines $GW_GRP_FILE
+
+			echo lcr gateways
+			lines=`wc -l $GW_FILE | cut -d " " -f 1`
+			let "lines = $lines - 1"
+			#tail -n $lines $GW_FILE
+
+			IFS=":"
+			tail -n $lines $GW_FILE | ( while read -a chunks; do
+				element_count=${#chunks[@]}
+				let "element_count_max_limit = $element_count - 1"
+				index="0"
+				let "ip_4 = ${chunks[2]} / 16777216"
+
+				let "ip_3 = $ip_4 * 16777216"
+				let "ip_3_tmp = ${chunks[2]} - $ip_3"
+				let "ip_3 = $ip_3_tmp / 65536"
+
+				let "ip_2_tmp = $ip_3_tmp - $ip_3 * 65536"
+				let "ip_2 = $ip_2_tmp / 256"
+
+				let "ip_1 = $ip_2_tmp - $ip_2 * 256"
+
+				#echo ip = $ip_1.$ip_2.$ip_3.$ip_4
+				while [ $index -lt $element_count ]; do
+					field=${chunks[$index]}
+					if [ "$index" -eq "2" ]; then
+						echo -n $ip_1.$ip_2.$ip_3.$ip_4":"
+					elif [ "$index" -eq "$element_count_max_limit" ]; then
+						echo -n $field
+					else
+						echo -n $field":"
+					fi
+					let "index = $index + 1"
+				done
+				echo 
+			done
+			)
+			;;
+
+		addgw_grp)
+			shift
+			if [ $# -lt 2 ] ; then
+				echo too few paramters
+				usage
+				exit 1
+			fi
+			GRP_ID=$2
+			cat $GW_GRP_FILE | $EGREP ^$GRP_ID: > /dev/null
+			if [ $? -eq 0 ] ; then
+				echo -e "\nerror: group already present\n" >  /dev/stderr
+				exit 1
+			fi
+			echo $2:$1 >> $GW_GRP_FILE
+			chown openser:openser $GW_GRP_FILE
+			#FIXME: lcr_reload command not supported yet
+			#fifo_cmd lcr_reload
+			;;
+
+		rmgw_grp)
+			shift
+			if [ $# -ne 1 ] ; then
+				echo missing grp_id to be removed
+				exit 1
+			fi
+			cat $GW_GRP_FILE | $EGREP -v "^$1:" > $GW_GRP_FILE.tmp
+			mv -f $GW_GRP_FILE.tmp $GW_GRP_FILE
+			chown openser:openser $GW_GRP_FILE
+			#FIXME: lcr_reload command not supported yet
+			#fifo_cmd lcr_reload
+			;;
+
+		addgw)
+			shift
+			if [ $# -lt 6 ] ; then
+				echo too few paramters
+				usage
+				exit 1
+			fi
+			if [ $# -gt 6 ] ; then
+				GW_PREFIX=$7
+				if [ $# -gt 7 ] ; then
+					STRIP=$8
+				else
+					STRIP=0
+				fi
+			else
+				GW_PREFIX=""
+				STRIP=0
+			fi
+			GW_NAME=$1
+			GW_PORT=$3
+			GW_URI_SCHEME=$4
+			if   [ $GW_URI_SCHEME = 'sip' ]; then
+				GW_URI_SCHEME=1
+			elif [ $GW_URI_SCHEME = 'sips' ]; then
+				GW_URI_SCHEME=2
+			fi
+			GW_TRANSPORT=$5
+			if   [ $GW_TRANSPORT = 'udp' ]; then
+				GW_TRANSPORT=1
+			elif [ $GW_TRANSPORT = 'tcp' ]; then
+				GW_TRANSPORT=2
+			elif [ $GW_TRANSPORT = 'tls' ]; then
+				GW_TRANSPORT=3
+			fi
+			GW_GRP_ID=$6
+			oldIFS=$IFS
+			IFS=.
+			set -- $2
+			GW_IP=$(($1+$2*256+$3*65536+$4*16777216))
+			IFS=$oldIFS
+			echo $GW_NAME:$GW_GRP_ID:$GW_IP:$GW_PORT:$GW_URI_SCHEME:$GW_TRANSPORT:$STRIP:$GW_PREFIX >> $GW_FILE
+			chown openser:openser $GW_FILE
+			#FIXME: lcr_reload command not supported yet
+			#fifo_cmd lcr_reload
+			;;
+
+		rmgw)
+			shift
+			if [ $# -ne 1 ] ; then
+				echo missing gateway to be removed
+				exit 1
+			fi
+			cat $GW_FILE | $EGREP -v "^$1:" > $GW_FILE.tmp
+			mv -f $GW_FILE.tmp $GW_FILE
+			chown openser:openser $GW_FILE
+			#FIXME: lcr_reload command not supported yet
+			#fifo_cmd lcr_reload
+			;;
+
+		addroute)
+			shift
+			if [ $# -ne 4 ] ; then
+				echo too few paramters
+				usage
+				exit 1
+			fi
+			echo $1:$2:$3:$4 >> $LCR_FILE
+			chown openser:openser $LCR_FILE
+			#FIXME: lcr_reload command not supported yet
+			#fifo_cmd lcr_reload
+			;;
+
+		rmroute)
+			shift
+			if [ $# -ne 4 ] ; then
+				echo too few paramters
+				usage
+				exit 1
+			fi
+			cat $LCR_FILE | $EGREP -v "^$1:$2:$3:$4\$" > $LCR_FILE.tmp
+			mv -f $LCR_FILE.tmp $LCR_FILE
+			chown openser:openser $LCR_FILE
+			#FIXME: lcr_reload command not supported yet
+			#fifo_cmd lcr_reload
 			;;
 		*)
 			usage
@@ -657,6 +872,11 @@ case $1 in
 		domain "$@"
 		;;
 
+	lcr)
+		shift
+		lcr "$@"
+		;;
+
 	dbtext)
 		
 		if [ $# -eq 1 ] ; then
@@ -674,6 +894,9 @@ case $1 in
 		SUB_FILE=$DBTEXT_PATH/$SUB_TABLE
 		URI_FILE=$DBTEXT_PATH/$URI_TABLE
 		ACL_FILE=$DBTEXT_PATH/$ACL_TABLE
+		LCR_FILE=$DBTEXT_PATH/$LCR_TABLE
+		GW_FILE=$DBTEXT_PATH/$GW_TABLE
+		GW_GRP_FILE=$DBTEXT_PATH/$GW_GRP_TABLE
 		VER_FILE=$DBTEXT_PATH/version
 		
 		mkdir -p $DBTEXT_PATH
@@ -688,6 +911,12 @@ case $1 in
 		echo "username(str) domain(str) uri_user(str) last_modified(int)" > $URI_FILE
 		#Group/ACL file
 		echo "username(str) domain(str) grp(str) last_modified(int)" > $ACL_FILE
+		#gw file
+		echo "gw_name(str) grp_id(int) ip_addr(int) port(int,null) uri_scheme(int,null) transport(int,null) strip(int) prefix(str,null)" > $GW_FILE
+		#lcr file
+		echo "prefix(str,null) from_uri(str,null) grp_id(int) priority(int,null)" > $LCR_FILE
+		#gw_grp file
+		echo "grp_id(int) grp_name(str)" > $GW_GRP_FILE
 		#Version file
 		echo "table_name(str) table_version(int)" > $VER_FILE
 		echo "subscriber:5" >> $VER_FILE
