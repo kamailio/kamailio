@@ -69,6 +69,7 @@ extern int callback_update_db;
 extern int callback_lock_pdomain;
 extern int new_tuple_on_publish;
 extern int pa_pidf_priority;
+extern int use_callbacks;
 
 /*
  * compare two str's

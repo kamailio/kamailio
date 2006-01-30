@@ -1,0 +1,6 @@
+2006-01-30
+	* added function target_online
+	* added parameter use_callbacks (int) - [if set to 0, no callback are
+	used]
+	* corrected handle_publish - returns 4xx for unsupported events instead of
+	OK

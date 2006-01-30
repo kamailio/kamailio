@@ -28,7 +28,7 @@
 #ifndef _PA_RPC_H
 #define _PA_RPC_H
 
-#include "rpc.h"
+#include "../../rpc.h"
 
 extern rpc_export_t pa_rpc_methods[];
 

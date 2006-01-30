@@ -51,6 +51,8 @@
 #include <cds/cds.h>
 #include <presence/qsa.h>
 
+#include "status_query.h"
+
 MODULE_VERSION
 
 static int pa_mod_init(void);  /* Module initialization function */
@@ -104,12 +106,17 @@ int callback_lock_pdomain = 1;
 int new_tuple_on_publish = 1;
 int pa_pidf_priority = 1;
 
+/* use callbacks to usrloc/??? - if 0 only pusblished information is used */
+int use_callbacks = 1;
 /*
  * Exported functions
  */
 static cmd_export_t cmds[]={
 	{"handle_subscription",   handle_subscription,   1, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"handle_publish",        handle_publish,        1, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+
+	/* still undocumented (TODO) */
+	{"target_online",         target_online,         1, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 
 	/* FIXME: are these functions used to something by somebody */
 /*
@@ -143,16 +150,22 @@ static param_export_t params[]={
 	{"presentity_contact_table", PARAM_STRING, &presentity_contact_table     },
 	{"watcherinfo_table",    PARAM_STRING, &watcherinfo_table    },
 	{"place_table",          PARAM_STRING, &place_table          },
-	{"authorize_watchers",   PARAM_INT, &authorize_watchers  },
-	{"callback_update_db",   PARAM_INT, &callback_update_db   },
-	{"callback_lock_pdomain",PARAM_INT, &callback_lock_pdomain },
-	{"new_tuple_on_publish", PARAM_INT, &new_tuple_on_publish  },
-	{"pidf_priority",        PARAM_INT, &pa_pidf_priority  },
-	{"watcherinfo_notify",   PARAM_INT, &watcherinfo_notify   },
 	{"auth",                 PARAM_STRING, &auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
 	{"auth_xcap_root",       PARAM_STRING, &auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
 	{"winfo_auth",           PARAM_STRING, &winfo_auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
 	{"winfo_auth_xcap_root", PARAM_STRING, &winfo_auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
+
+	/* undocumented still (TODO) */
+	{"use_callbacks", PARAM_INT, &use_callbacks  },
+	{"watcherinfo_notify",   PARAM_INT, &watcherinfo_notify   },
+
+	/* not used -> remove (TODO) */
+	{"authorize_watchers",   PARAM_INT, &authorize_watchers  },
+	{"callback_update_db",   PARAM_INT, &callback_update_db   },
+	{"callback_lock_pdomain",PARAM_INT, &callback_lock_pdomain },
+	{"pidf_priority",        PARAM_INT, &pa_pidf_priority  },
+	{"new_tuple_on_publish", PARAM_INT, &new_tuple_on_publish  },
+	
 	{0, 0, 0}
 };
 

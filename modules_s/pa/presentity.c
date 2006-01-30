@@ -1536,6 +1536,8 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 	return 0;
 }
 
+/* static int db_lookup_user(str *uri, str *dst_uid); */
+
 int pres_uri2uid(str_t *uid_dst, const str_t *uri)
 {
 	/* FIXME: convert uri to uid - used by internal subscriptions and fifo commands */
@@ -1543,7 +1545,10 @@ int pres_uri2uid(str_t *uid_dst, const str_t *uri)
 	struct sip_uri puri;
 	
 	str_clear(uid_dst);
-		
+	
+/*	if (db_lookup_user(uri, uid_dst) == 0) return 0; */
+	
+	/* else try the "hack" */
 	if (parse_uri(uri->s, uri->len, &puri) == -1) {
 		LOG(L_ERR, "get_from_uid: Error while parsing From URI\n");
 		return -1;
@@ -1554,3 +1559,80 @@ int pres_uri2uid(str_t *uid_dst, const str_t *uri)
 	return 0;
 }
 
+#if 0
+
+#define URI_TABLE    "uri"
+#define UID_COL      "uid"
+#define DID_COL      "did"
+#define USERNAME_COL "username"
+#define FLAGS_COL    "flags"
+
+static str uri_table    = STR_STATIC_INIT(URI_TABLE);
+static str uid_col      = STR_STATIC_INIT(UID_COL);      
+static str did_col      = STR_STATIC_INIT(DID_COL);
+static str username_col = STR_STATIC_INIT(USERNAME_COL);
+static str flags_col    = STR_STATIC_INIT(FLAGS_COL);
+
+static int db_lookup_user(str *uri, str *dst_uid)
+{
+	struct sip_uri puri;
+	str uid;
+	db_key_t keys[2], cols[2];
+	db_val_t vals[2], *val;
+	db_res_t* res;
+	int flag, i;
+
+	flag=0; /*warning fix*/
+
+	keys[0] = username_col.s;
+	keys[1] = did_col.s;
+	cols[0] = uid_col.s;
+	cols[1] = flags_col.s;
+
+	vals[0].type = DB_STR;
+	vals[0].nul = 0;
+
+	if (parse_uri(uri->s, uri->len, &puri) < 0) {
+		ERR("lookup_user: Error while parsing URI\n");
+		return -1;
+	}
+	vals[0].val.str_val = puri.user;
+
+	vals[1].type = DB_STR;
+	if (did->s && did->len) {
+		vals[1].nul = 0;
+		vals[1].val.str_val = *did;
+	} else {
+		vals[1].nul = 1;
+	}
+
+	if (pa_dbf.use_table(pa_db, uri_table.s) < 0) {
+		LOG(L_ERR, "uri_db:lookup_user: Error in use_table\n");
+		return -1;
+	}
+
+	if (pa_dbf.query(pa_db, keys, 0, vals, cols, 2, 2, 0, &res) < 0) {
+		LOG(L_ERR, "uri_db:lookup_user: Error in db_query\n");
+		return -1;
+	}
+
+	for(i = 0; i < res->n; i++) {
+		val = res->rows[i].values;
+
+		if (val[0].nul || val[1].nul) {
+			LOG(L_ERR, "uri_db:lookup_user: Bogus line in %s table\n", uri_table.s);
+			continue;
+		}
+
+		if ((val[1].val.int_val & DB_LOAD_SER) == 0) continue; /* Not for SER */
+		if ((val[1].val.int_val & flag) == 0) continue;        /* Not allowed in the header we are interested in */
+		goto found;
+	}
+	return -1; /* Not found -> not allowed */
+ found:
+	uid.s = (char*)val[0].val.string_val;
+	uid.len = strlen(uid.s);
+	return 1;
+}
+
+#endif

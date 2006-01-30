@@ -5,7 +5,6 @@
 #include <cds/sstr.h>
 #include <time.h>
 #include "qsa_interface.h"
-#include "../../rpc.h"
 #include "pa_mod.h"
 #include <cds/logger.h>
 

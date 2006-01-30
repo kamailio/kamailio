@@ -755,6 +755,7 @@ static int publish_presentity(struct sip_msg* _m, struct pdomain* _d, struct pre
 			if (_m->callid)	callid = _m->callid->body;
 			LOG(L_WARN, "publish_presentity: no handler for event_package=%d"
 					" callid=%.*s\n", event_package, callid.len, ZSW(callid.s));
+			paerrno = PA_EVENT_UNSUPP;
 			res = -1;
 	}
 
