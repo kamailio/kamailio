@@ -27,12 +27,13 @@ Elena-Ramona Modroiu
 
               1.3.1. db_url (string)
               1.3.2. db_table (string)
-              1.3.3. prefix_column (string)
-              1.3.4. domain_column (string)
-              1.3.5. prefix (string)
-              1.3.6. hsize_2pow (integer)
-              1.3.7. sync_time (integer)
-              1.3.8. clean_time (integer)
+              1.3.3. sdomain_column (string)
+              1.3.4. prefix_column (string)
+              1.3.5. domain_column (string)
+              1.3.6. prefix (string)
+              1.3.7. hsize_2pow (integer)
+              1.3.8. sync_time (integer)
+              1.3.9. clean_time (integer)
 
         1.4. Exported Functions
 
@@ -49,13 +50,14 @@ Elena-Ramona Modroiu
    1-1. prefix-domain translation
    1-2. Set db_url parameter
    1-3. Set db_table parameter
-   1-4. Set prefix_column parameter
-   1-5. Set domain_column parameter
-   1-6. Set prefix parameter
-   1-7. Set hsize_2pow parameter
-   1-8. Set sync_time parameter
-   1-9. Set clean_time parameter
-   1-10. prefix2domain usage
+   1-4. Set sdomain_column parameter
+   1-5. Set prefix_column parameter
+   1-6. Set domain_column parameter
+   1-7. Set prefix parameter
+   1-8. Set hsize_2pow parameter
+   1-9. Set sync_time parameter
+   1-10. Set clean_time parameter
+   1-11. prefix2domain usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -70,7 +72,7 @@ Chapter 1. User's Guide
    URI. Updating the uri consists of: remove the prefix from the
    user part of the uri and keep the rest as the user part of the
    new uri. The host and port are changed with the domain matched
-   for the leading prefix.
+   for the leading prefix and the domain in From URI.
 
    <prefix><userid><:password>@<mydomain.com> ...
 
@@ -79,9 +81,15 @@ Chapter 1. User's Guide
    <userid><:password>@<domain[:port]>...
 
    Example 1-1. prefix-domain translation
-prefix=123
-domain[123]=alpha.org
+prefix=123, domain(FROM)=siphub.org
 
+entry in database:
+ sdomain=siphub.org
+    domain[123]=alpha.org
+    domain[124]=beta.org
+    domain[125]=gamma.org
+
+The RURI will be updated in the following way"
 sip:12391001@mydomain.com  => sip:91001@alpha.org
 
    The prefix could be prefixed by other digits. These digits
@@ -140,31 +148,43 @@ modparam("pdt", "db_table", "pdt")
 ...
      _________________________________________________________
 
-1.3.3. prefix_column (string)
+1.3.3. sdomain_column (string)
+
+   Name of 'sdomain' column.
+
+   Default value is "sdomain". 
+
+   Example 1-4. Set sdomain_column parameter
+...
+modparam("pdt", "domain_column", "source_domain")
+...
+     _________________________________________________________
+
+1.3.4. prefix_column (string)
 
    Name of 'prefix' column.
 
    Default value is "prefix". 
 
-   Example 1-4. Set prefix_column parameter
+   Example 1-5. Set prefix_column parameter
 ...
-modparam("pdt", "prefix_column", "code")
+modparam("pdt", "prefix_column", "prefix")
 ...
      _________________________________________________________
 
-1.3.4. domain_column (string)
+1.3.5. domain_column (string)
 
    Name of 'domain' column.
 
    Default value is "domain". 
 
-   Example 1-5. Set domain_column parameter
+   Example 1-6. Set domain_column parameter
 ...
 modparam("pdt", "domain_column", "hostname")
 ...
      _________________________________________________________
 
-1.3.5. prefix (string)
+1.3.6. prefix (string)
 
    Default leading prefix who denotes what URI needs to be
    translated - if it is NULL the module will not check the R-URI
@@ -174,25 +194,25 @@ modparam("pdt", "domain_column", "hostname")
 
    Default value is NULL. 
 
-   Example 1-6. Set prefix parameter
+   Example 1-7. Set prefix parameter
 ...
 modparam("pdt", "prefix", "00")
 ...
      _________________________________________________________
 
-1.3.6. hsize_2pow (integer)
+1.3.7. hsize_2pow (integer)
 
    Number of the hash entries = 2^hash_size.
 
    Default value is 4. 
 
-   Example 1-7. Set hsize_2pow parameter
+   Example 1-8. Set hsize_2pow parameter
 ...
 modparam("pdt", "hsize_2pow", 4)
 ...
      _________________________________________________________
 
-1.3.7. sync_time (integer)
+1.3.8. sync_time (integer)
 
    Time in seconds to synchronize the cache of each process with
    the changes made through FIFO. Any prefix-domain change made
@@ -201,13 +221,13 @@ modparam("pdt", "hsize_2pow", 4)
 
    Default value is 600. 
 
-   Example 1-8. Set sync_time parameter
+   Example 1-9. Set sync_time parameter
 ...
 modparam("pdt", "sync_time", 300)
 ...
      _________________________________________________________
 
-1.3.8. clean_time (integer)
+1.3.9. clean_time (integer)
 
    Time in seconds to clean the changes inserted via FIFO. The
    changes will be removed from FIFO diff list only when all
@@ -215,7 +235,7 @@ modparam("pdt", "sync_time", 300)
 
    Default value is 900. 
 
-   Example 1-9. Set clean_time parameter
+   Example 1-10. Set clean_time parameter
 ...
 modparam("pdt", "clean_time", 600)
 ...
@@ -231,6 +251,12 @@ modparam("pdt", "clean_time", 600)
    parameter or there is no domain associated with a possible
    prefix from user part). Returns -1 in error cases.
 
+   The translation is done based on lookup up for a entry in the
+   database where the sdomain equals the domain in FROM uri, and
+   the prefix matches the beginning of the user part of the RURI.
+   If such an entry is found, then the domain in RURI is updated
+   with the domain of this entry (sdomain, prefix, domain).
+
    The "mode" parameter specifies whether to strip or not the
    prefix from user part. If the parameter is missing or it has
    the value "0", then the prefix is removed along with the
@@ -240,7 +266,7 @@ modparam("pdt", "clean_time", 600)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-10. prefix2domain usage
+   Example 1-11. prefix2domain usage
 ...
 prefix2domain();
 ...
@@ -263,9 +289,9 @@ prefix2domain("2");
 
    There are three FIFO commands to use with PDT.
 
-     * pdt_add - add a new prefix-domain pair
-     * pdt_delete - remove a prefix-domain pair
-     * pdt_list - list the prefixes and the domains
+     * pdt_add - add a new sdomain-prefix-domain entry
+     * pdt_delete - remove a sdomain-prefix-domain entry
+     * pdt_list - list the prefixes and the domains/sdomains
 
    Example shell scripts for these commands are placed in
    './doc/' (pdt_fifo_add.sh, pdt_fifo_delete.sh,
@@ -309,4 +335,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.

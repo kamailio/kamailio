@@ -1,7 +1,8 @@
-cat /tmp/ser_reply &
-cat > /tmp/ser_fifo << EOF
-:pdt_list:ser_reply
-1
+cat /tmp/openser_reply &
+cat > /tmp/openser_fifo << EOF
+:pdt_list:openser_reply
+local
+.
 .
 
 EOF

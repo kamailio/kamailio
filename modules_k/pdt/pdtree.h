@@ -42,16 +42,28 @@ typedef struct _pdt_node
 
 typedef struct _pdt_tree
 {
+	str sdomain;
 	pdt_node_t *head;
 	int idsync;
+
+	struct _pdt_tree *next;
 } pdt_tree_t;
 
 
-int pdt_add_to_tree(pdt_tree_t *pt, str *code, str *domain);
-int pdt_remove_from_tree(pdt_tree_t *pt, str *code);
-str* pdt_get_domain(pdt_tree_t *pt, str *code, int *plen);
+/* prefix tree operations */
+int add_to_tree(pdt_tree_t *pt, str *code, str *domain);
+int pdt_add_to_tree(pdt_tree_t **dpt, str* sdomain, str *code, str *domain);
 
-pdt_tree_t* pdt_init_tree();
+int remove_from_tree(pdt_tree_t *pt, str *code);
+/* TODO: remove the emptry trees */
+int pdt_remove_prefix_from_tree(pdt_tree_t *pl, str *sdomain, str* code);
+
+pdt_tree_t* pdt_get_tree(pdt_tree_t *pl, str *sdomain);
+
+str* get_domain(pdt_tree_t *pt, str *code, int *plen);
+str* pdt_get_domain(pdt_tree_t *pt, str* sdomain, str *code, int *plen);
+
+pdt_tree_t* pdt_init_tree(str* sdomain);
 void pdt_free_tree(pdt_tree_t *pt);
 int pdt_print_tree(pdt_tree_t *pt);
 

@@ -44,15 +44,9 @@ typedef struct _pd
     struct _pd *n;
 } pd_t;
 
-typedef struct _pd_entry
-{
-    gen_lock_t lock;
-    pd_t *e;
-} pd_entry_t;
-
 typedef struct _pd_op
 {
-    pd_t *cell;
+	pd_t *cell;
 	int op;
 	int id;
     int count;
@@ -60,16 +54,25 @@ typedef struct _pd_op
     struct _pd_op *n;
 } pd_op_t;
 
-typedef struct _pdt_hash
+typedef struct _hash
 {
-	pd_entry_t* dhash;
+	str sdomain;
 	unsigned int hash_size;
+	pd_t** dhash;
+	struct _hash *next;
 
 	pd_op_t *diff;
-    gen_lock_t diff_lock;
 	int max_id;
+} hash_t;
+
+typedef struct _hash_list
+{
+    hash_t	*hash;
+	gen_lock_t hl_lock;	
+
+	unsigned int hash_size;
 	int workers;
-} pdt_hash_t;
+} hash_list_t;
 
 pd_t* new_cell(str* p, str *d);
 void free_cell(pd_t *cell);
@@ -77,16 +80,30 @@ void free_cell(pd_t *cell);
 pd_op_t* new_pd_op(pd_t *cell, int id, int op);
 void free_pd_op(pd_op_t *pdo);
 
-int pdt_add_to_hash(pdt_hash_t *ph, str *sp, str *sd);
-int pdt_remove_from_hash(pdt_hash_t *ph, str *sd);
+pd_t** init_hash_entries(unsigned int hash_size);
+void free_hash_entries(pd_t** hash, unsigned int hash_size);
 
-str* pdt_get_prefix(pdt_hash_t *ph, str* sd);
-int pdt_check_pd(pdt_hash_t *ph, str *sp, str *sd);
+hash_t* init_hash(int hash_size, str *sdomain);
+void free_hash(hash_t* hash);
 
-void pdt_print_hash(pdt_hash_t *ph);
+hash_list_t* init_hash_list(int hash_size);
+void free_hash_list(hash_list_t* hl);
 
-pdt_hash_t* pdt_init_hash(int hash_size);
-void pdt_free_hash(pdt_hash_t* ph);
+int add_to_hash(hash_t *ph, str *sp, str *sd);
+int pdt_add_to_hash(hash_list_t *hash, str* sdomain, str *sp, str *sd);
+
+hash_t* pdt_search_hash(hash_list_t*, str *d);
+
+int remove_from_hash(hash_t *ph, str *sd);
+int pdt_remove_from_hash_list(hash_list_t *hl, str* sdomain, str *sd);
+//int pdt_remove_hash_from_hash_list(hash_list_t *hl, str* sdomain);
+
+str* pdt_get_prefix(hash_list_t *ph, str *sdomain, str* sd);
+
+int check_pd(hash_t *ph, str *sp, str *sd);
+int pdt_check_pd(hash_list_t *hash, str* sdomain, str *sp, str *sd);
+
+void pdt_print_hash_list(hash_list_t *hl);
 
 unsigned int pdt_compute_hash(char *s);
 

@@ -1,7 +1,8 @@
-cat /tmp/ser_reply &
-cat > /tmp/ser_fifo << EOF
-:pdt_add:ser_reply
-55
-123.com
+cat /tmp/openser_reply &
+cat > /tmp/openser_fifo << EOF
+:pdt_add:openser_reply
+localhost
+57
+127.com
 
 EOF

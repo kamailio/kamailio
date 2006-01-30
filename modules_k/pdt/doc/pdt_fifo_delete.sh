@@ -1,6 +1,7 @@
-cat /tmp/ser_reply &
-cat > /tmp/ser_fifo << EOF
-:pdt_delete:ser_reply
-123.com
+cat /tmp/openser_reply &
+cat > /tmp/openser_fifo << EOF
+:pdt_delete:openser_reply
+localhost
+127.com
 
 EOF

@@ -23,6 +23,7 @@
  * History:
  * -------
  * 2005-01-25  first tree version (ramona)
+ * 2006-01-30 multi domain support added (ramona)
  */
 
 #include <stdio.h>
@@ -34,8 +35,9 @@
 #include "../../mem/mem.h"
 
 #include "pdtree.h"
+#include "utils.h"
 
-pdt_tree_t* pdt_init_tree()
+pdt_tree_t* pdt_init_tree(str* sdomain)
 {
 	pdt_tree_t *pt = NULL;
 
@@ -46,10 +48,23 @@ pdt_tree_t* pdt_init_tree()
 		return NULL;
 	}
 	memset(pt, 0, sizeof(pdt_tree_t));
+
+	pt->sdomain.s = (char*)pkg_malloc((1+sdomain->len)*sizeof(char));
+	if(pt->sdomain.s==NULL)
+	{
+		pkg_free(pt);
+		LOG(L_ERR, "pdt_init_tree:ERROR: no more pkg mem\n");
+		return NULL;
+	}
+	memset(pt->sdomain.s, 0,1+sdomain->len );
+	memcpy(pt->sdomain.s, sdomain->s, sdomain->len);
+	pt->sdomain.len = sdomain->len;
+//	printf("sdomain:%.*s\n", pt->sdomain.len, pt->sdomain.s);
 	
 	pt->head = (pdt_node_t*)pkg_malloc(PDT_NODE_SIZE*sizeof(pdt_node_t));
 	if(pt->head == NULL)
 	{
+		pkg_free(pt->sdomain.s);
 		pkg_free(pt);
 		LOG(L_ERR, "pdt_init_tree:ERROR: no more pkg mem\n");
 		return NULL;
@@ -59,7 +74,7 @@ pdt_tree_t* pdt_init_tree()
 	return pt;
 }
 
-int pdt_add_to_tree(pdt_tree_t *pt, str *sp, str *sd)
+int add_to_tree(pdt_tree_t *pt, str *sp, str *sd)
 {
 	int l;
 	pdt_node_t *itn, *itn0;
@@ -128,14 +143,97 @@ int pdt_add_to_tree(pdt_tree_t *pt, str *sp, str *sd)
 	return 0;
 }
 
-int pdt_remove_from_tree(pdt_tree_t *pt, str *sp)
+pdt_tree_t* pdt_get_tree(pdt_tree_t *pl, str *sdomain)
+{
+	pdt_tree_t *it;
+			   
+	if(pl==NULL)
+		return NULL;
+
+	if( sdomain==NULL || sdomain->s==NULL)
+	{
+		LOG(L_ERR, "pdt_get_tree:ERROR: bad parameters\n");
+		return NULL;
+	}
+
+	it = pl;
+	/* search the tree for the asked sdomain */
+	while(it!=NULL && scmp(&it->sdomain, sdomain)<0)
+		it = it->next;
+
+	if(it==NULL || scmp(&it->sdomain, sdomain)>0)
+		return NULL;
+	
+	return it;
+}
+
+int pdt_add_to_tree(pdt_tree_t **dpt, str *sdomain, str *code, str *domain)
+{
+	pdt_tree_t *ndl, *it, *prev;
+
+	if( sdomain==NULL || sdomain->s==NULL
+			|| code==NULL || code->s==NULL
+			|| domain==NULL || domain->s==NULL)
+	{
+		LOG(L_ERR, "pdt_add_to_dlist:ERROR: bad parameters\n");
+		return -1;
+	}
+	
+	ndl = NULL;
+	
+	it = *dpt;
+	prev = NULL;
+	/* search the it position before which to insert new domain */
+	while(it!=NULL && scmp(&it->sdomain, sdomain)<0)
+	{	
+		prev = it;
+		it = it->next;
+	}
+//	printf("sdomain:%.*s\n", sdomain->len, sdomain->s);
+
+	/* add new sdomain*/
+	if(it==NULL || scmp(&it->sdomain, sdomain)>0)
+	{
+		ndl = pdt_init_tree(sdomain);
+		if(ndl==NULL)
+		{
+			LOG(L_ERR, "pdt_add_to_tree:ERROR: no more pkg memory\n");
+			return -1; 
+		}
+
+		if(add_to_tree(ndl, code, domain)<0)
+		{
+			LOG(L_ERR, "pdt_add_to_dlist:ERROR: pdt_add_to_tree internal error!\n");
+			return -1;
+		}
+		ndl->next = it;
+		
+		/* new domain must be added as first element */
+		if(prev==NULL)
+			*dpt = ndl;
+		else
+			prev->next=ndl;
+
+	}
+	else 
+		/* add (prefix, code) to already present sdomain */
+		if(add_to_tree(it, code, domain)<0)
+		{
+			LOG(L_ERR, "pdt_add_to_dlist:ERROR: pdt_add_to_tree internal error!\n");
+			return -1;
+		}
+
+	return 0;
+}
+
+int remove_from_tree(pdt_tree_t *pt, str *sp)
 {
 	int l;
 	pdt_node_t *itn;
 
-	if(pt==NULL || sp==NULL || sp->s==NULL || sp->s<=0)
+	if(pt==NULL || sp==NULL || sp->s==NULL || sp->len<=0)
 	{
-		LOG(L_ERR, "pdt_remove_from_tree:ERROR: bad parameters\n");
+		LOG(L_ERR, "remove_from_tree:ERROR: bad parameters\n");
 		return -1;
 	}
 	
@@ -151,7 +249,7 @@ int pdt_remove_from_tree(pdt_tree_t *pt, str *sp)
 	if(itn!=NULL && l==sp->len
 			&& itn[(sp->s[l-1]-'0')%PDT_NODE_SIZE].domain.s!=NULL)
 	{
-		DBG("pdt_remove_from_tree: deleting <%.*s>\n",
+		DBG("remove_from_tree: deleting <%.*s>\n",
 				itn[(sp->s[l-1]-'0')%PDT_NODE_SIZE].domain.len,
 				itn[(sp->s[l-1]-'0')%PDT_NODE_SIZE].domain.s);
 		pkg_free(itn[(sp->s[l-1]-'0')%PDT_NODE_SIZE].domain.s);
@@ -164,7 +262,35 @@ int pdt_remove_from_tree(pdt_tree_t *pt, str *sp)
 	return 0;
 }
 
-str* pdt_get_domain(pdt_tree_t *pt, str *sp, int *plen)
+
+int pdt_remove_prefix_from_tree(pdt_tree_t *pl, str *sdomain, str* code)
+{
+	pdt_tree_t *it;
+	
+	if(pl==NULL || sdomain==NULL || sdomain->s==NULL || code==NULL || code->s==NULL)
+	{
+		LOG(L_ERR, "pdt_remove_prefix_from_tree:ERROR: bad parameters\n");
+		return -1;
+	}
+
+	it = pl;
+	while(it!=NULL && scmp(&it->sdomain, sdomain)<0)
+		it = it->next;
+	
+	/* find the sdomain where to delete the (prefix, domain) */
+	if(it!=NULL && scmp(&it->sdomain, sdomain)==0)
+	{
+		if(remove_from_tree(it, code)<0)
+		{
+			LOG(L_ERR, "pdt_remove_prefix_from_tree:ERROR: remove_from_tree internal error\n");
+			return -1;
+		}
+	}
+		
+	return 0;
+}
+
+str* get_domain(pdt_tree_t *pt, str *sp, int *plen)
 {
 	int l, len;
 	pdt_node_t *itn;
@@ -198,6 +324,30 @@ str* pdt_get_domain(pdt_tree_t *pt, str *sp, int *plen)
 	return domain;
 	
 }
+str* pdt_get_domain(pdt_tree_t *pl, str* sdomain, str *code, int *plen)
+{
+	pdt_tree_t *it;
+	int len;
+	str *domain=NULL;
+
+	if(pl==NULL || sdomain==NULL || sdomain->s==NULL || code == NULL || code->s == NULL)
+	{
+		LOG(L_ERR, "pdt_get_domain:ERROR: bad parameters\n");
+		return NULL;
+	}
+
+	it = pl;
+	while(it!=NULL && scmp(&it->sdomain, sdomain)<0)
+		it = it->next;
+	
+	if(it==NULL || scmp(&it->sdomain, sdomain)>0)
+		return NULL;
+	
+	domain = get_domain(it, code, &len);
+	if(plen!=NULL)
+			*plen = len;
+	return domain;
+}
 
 void pdt_free_node(pdt_node_t *pn)
 {
@@ -213,26 +363,30 @@ void pdt_free_node(pdt_node_t *pn)
 			pn[i].domain.s   = NULL;
 			pn[i].domain.len = 0;
 		}
-		pdt_free_node(pn[i].child);
-
-		pn[i].child = NULL;
+		if(pn[i].child!=NULL)
+		{
+			pdt_free_node(pn[i].child);
+			pn[i].child = NULL;
+		}
 	}
-
 	pkg_free(pn);
 	pn = NULL;
-
+	
 	return;
 }
 
 void pdt_free_tree(pdt_tree_t *pt)
 {
 	if(pt == NULL)
-	{
-		LOG(L_INFO, "pdt_free_tree: bad parameters\n");
 		return;
-	}
 
-	pdt_free_node(pt->head);
+	if(pt->head!=NULL) 
+		pdt_free_node(pt->head);
+	if(pt->next!=NULL)
+		pdt_free_tree(pt->next);
+	if(pt->sdomain.s!=NULL)
+		pkg_free(pt->sdomain.s);
+	
 	pkg_free(pt);
 	pt = NULL;
 	return;
@@ -263,13 +417,12 @@ int pdt_print_tree(pdt_tree_t *pt)
 	int len;
 
 	if(pt == NULL)
-	{
-		LOG(L_ERR, "pdt_remove_from_tree:ERROR: bad parameters\n");
-		return -1;
-	}
+		return 0;
 
+	DBG("pdt_print_tree: [%.*s]\n", pt->sdomain.len, pt->sdomain.s);
 	len = 0;
-	return pdt_print_node(pt->head, code_buf, len);
+	pdt_print_node(pt->head, code_buf, len);
+	return pdt_print_tree(pt->next);
 }
 
 
