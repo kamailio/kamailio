@@ -157,8 +157,8 @@ void m_clean_silo(unsigned int ticks, void *);
 static void m_tm_callback( struct cell *t, int type, struct tmcb_params *ps);
 
 static cmd_export_t cmds[]={
-	{"m_store",  m_store, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"m_dump",   m_dump,  0, 0, REQUEST_ROUTE},
+	{"m_store",  m_store, 2, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"m_dump",   m_dump,  1, 0, REQUEST_ROUTE},
 	{0,0,0,0,0}
 };
 
@@ -299,6 +299,7 @@ static int child_init(int rank)
  * mode = "0" -- look for outgoing URI starting with new_uri
  * 		= "1" -- look for outgoing URI starting with r-uri
  * 		= "2" -- look for outgoing URI only at to header
+ * next_hop = parameter specifying next hop for outgoing messages (like outbound proxy)
  */
 static int m_store(struct sip_msg* msg, char* str1, char* str2)
 {
@@ -312,6 +313,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	static char buf[512];
 	static char buf1[1024];
 	int mime, mode;
+	str next_hop = STR_NULL;
 
 	DBG("MSILO: m_store: ------------ start ------------\n");
 
@@ -320,6 +322,10 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 		goto error;
 	}
 	mode = str1[0] - '0';
+	if (str2) {
+		next_hop.s = str2;
+		next_hop.len = strlen(str2);
+	}
 
 	if (get_to_uid(&uid, msg) < 0) {
 		LOG(L_ERR, "MSILO:m_store: Unable to find out identity of user\n");
@@ -533,6 +539,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 				&reg_addr,        /* From */
 				&str_hdr,         /* Optional headers including CRLF */
 				&body,            /* Message body */
+				&next_hop,        /* next hop */
 				NULL,             /* Callback function */
 				NULL              /* Callback parameter */
 			);
@@ -557,6 +564,12 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 
 	str str_vals[5], hdr_str , body_str, uid;
 	time_t rtime;
+	str next_hop = STR_NULL;
+	
+	if (str1) {
+		next_hop.s = str1;
+		next_hop.len = strlen(str1);
+	}
 
 	/* init */
 	db_keys[0]=sc_uid;
@@ -677,6 +690,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 					&str_vals[0],     /* From */
 					&hdr_str,         /* Optional headers including CRLF */
 					(n<0)?&str_vals[2]:&body_str, /* Message body */
+					&next_hop, /* next hop */
 					m_tm_callback,    /* Callback function */
 					(void*)(long)mid        /* Callback parameter */
 				);
