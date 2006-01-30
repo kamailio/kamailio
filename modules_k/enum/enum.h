@@ -38,6 +38,21 @@
  */
 int is_from_user_e164(struct sip_msg* _msg, char* _s1, char* _s2);
 
+/*
+ * Check if from user is an e164 number and has a naptr record
+ */
+int is_from_user_enum_0(struct sip_msg* _msg, char* _str1, char* _str2);
+int is_from_user_enum_1(struct sip_msg* _msg, char* _suffix, char* _str2);
+int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service);
+
+/*
+ * do source number destination routing.
+ * that is, make the ruri based on the from number
+ * this is like source ip policy routing
+ */
+int enum_fquery_0(struct sip_msg* _msg, char* _str1, char* _str2);
+int enum_fquery_1(struct sip_msg* _msg, char* _suffix, char* _str2);
+int enum_fquery_2(struct sip_msg* _msg, char* _suffix, char* _service);
 
 /*
  * Make enum query and if query succeeds, replace current uri with the

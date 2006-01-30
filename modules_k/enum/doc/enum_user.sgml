@@ -66,12 +66,27 @@
 		by a '+' sign.
 	</para>
 	<para>
+		Most of the time you want to route based on the RURI.  On rare occasions
+		you may wish to route based on the user part of the <quote>From:</quote> tag,
+		analogous to source based policy routing in the ip world. The function
+		<function moreinfo="none">enum_fquery</function> mimics the behaviour
+		of the <function moreinfo="none">enum_query</function> function except the
+		user part of the <quote>From:</quote> is used for the enum lookup instead of the user
+		part of the RURI.  Obviously the user part of the RURI is still used in the
+		naptr regexp.
+	</para>
+	<para>
 		Enum query returns 1 if the current Request URI was replaced 
 		and -1 if not.
 	</para>
 	<para>
 		Enum module also implements is_from_user_e164 function that checks if 
 		the user part of from URI is an E164 number.
+	</para>
+	<para>
+		Enum module also implements is_from_user_enum function.
+		This function does an enum lookup on the from user and
+		returns true if found, false otherwise.
 	</para>
 	</section>
 
@@ -187,6 +202,59 @@ enum_query("e164.arpa.","+sip+voice:sip");
 	</section>
 
 	<section>
+		<title>
+		<function moreinfo="none">enum_fquery(),enum_fquery("suffix"), enum_fquery("suffix", "service")</function>
+		</title>
+		<para>
+		The function performs an enum query
+		on the user part of the From: tag and rewrites the Request-URI with 
+		the result of the query. See <xref linkend="sec-overview"/> for more 
+		information.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>suffix</emphasis> - Suffix to be appended to the 
+			domain name.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>service</emphasis> - Service string to be used in 
+			the service field.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">enum_fquery</function> usage</title>
+		<programlisting format="linespecific">
+...
+# search for "e2u+sip" in freenum.org 
+enum_fquery("freenum.org.");
+...
+# search for "e2u+sip" in default tree (configured as parameter)
+enum_fquery();
+...
+# search for "e2u+voice:sip" in e164.arpa
+enum_fquery("e164.arpa.","voice");
+...
+# search for service type "sip" or "voice:sip" or "video:sip"
+# note the '+' sign in front of the second parameter
+enum_fquery("e164.arpa.","+sip+voice:sip+video:sip");
+...
+# quering for service sip and voice:sip
+enum_fquery("e164.arpa.");
+enum_fquery("e164.arpa.","voice");
+# or use instead
+enum_fquery("e164.arpa.","+sip+voice:sip");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><function moreinfo="none">is_from_user_e164()</function></title>
 		<para>
 		Checks if the user part of from <abbrev>URI</abbrev> an 
@@ -201,6 +269,28 @@ enum_query("e164.arpa.","+sip+voice:sip");
 		<programlisting format="linespecific">
 ...
 if (is_from_user_e164()) {
+	....
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><function moreinfo="none">is_from_user_enum()</function></title>
+		<para>
+		Checks if the user part of from <abbrev>URI</abbrev>
+		is found in an enum lookup.
+		Returns 1 if yes and -1 if not.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">is_from_user_enum</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_from_user_enum()) {
 	....
 };
 ...

@@ -70,10 +70,16 @@ str service;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"enum_query",        enum_query_0,      0, 0,          REQUEST_ROUTE},
-	{"enum_query",        enum_query_1,      1, str_fixup,  REQUEST_ROUTE},
-	{"enum_query",        enum_query_2,      2, enum_fixup, REQUEST_ROUTE},
-	{"is_from_user_e164", is_from_user_e164, 0, 0,          REQUEST_ROUTE},
+	{"enum_query",        enum_query_0,     0, 0,            REQUEST_ROUTE},
+	{"enum_query",        enum_query_1,     1, str_fixup,    REQUEST_ROUTE},
+	{"enum_query",        enum_query_2,     2, enum_fixup,   REQUEST_ROUTE},
+	{"enum_fquery",       enum_fquery_0,    0, 0,            REQUEST_ROUTE},
+	{"enum_fquery",       enum_fquery_1,    1, str_fixup,    REQUEST_ROUTE},
+	{"enum_fquery",       enum_fquery_2,    2, enum_fixup,   REQUEST_ROUTE},
+	{"is_from_user_enum", is_from_user_enum_0, 0, 0,         REQUEST_ROUTE},
+	{"is_from_user_enum", is_from_user_enum_1, 1, str_fixup, REQUEST_ROUTE},
+	{"is_from_user_enum", is_from_user_enum_2, 2, enum_fixup,REQUEST_ROUTE},
+	{"is_from_user_e164",is_from_user_e164, 0, 0,            REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 

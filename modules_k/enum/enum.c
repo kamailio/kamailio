@@ -51,6 +51,49 @@ static inline int findchr(char* p, int c, unsigned int size)
 }
 
 
+/* Parse NAPTR regexp field of the form !pattern!replacement! and return its
+ * components in pattern and replacement parameters.  Regexp field starts at
+ * address first and is len characters long.
+ */
+static inline int parse_naptr_regexp(char* first, int len, str* pattern,
+										str* replacement)
+{
+	char *second, *third;
+
+	if (len > 0) {
+		if (*first == '!') {
+			second = (char *)memchr((void *)(first + 1), '!', len - 1);
+			if (second) {
+				len = len - (second - first + 1);
+				if (len > 0) {
+					third = memchr(second + 1, '!', len);
+					if (third) {
+						pattern->len = second - first - 1;
+						pattern->s = first + 1;
+						replacement->len = third - second - 1;
+						replacement->s = second + 1;
+						return 1;
+					} else {
+						LOG(LOG_ERR, "parse_regexp(): third ! missing from regexp\n");
+						return -1;
+					}
+				} else {
+					LOG(LOG_ERR, "parse_regexp(): third ! missing from regexp\n");
+					return -2;
+				}
+			} else {
+				LOG(LOG_ERR, "parse_regexp(): second ! missing from regexp\n");
+				return -3;
+			}
+		} else {
+			LOG(LOG_ERR, "parse_regexp(): first ! missing from regexp\n");
+			return -4;
+		}
+	} else {
+		LOG(LOG_ERR, "parse_regexp(): regexp missing\n");
+		return -5;
+	}
+}
 /* Checks if NAPTR record has flag u and its services field
  * e2u+[service:]sip or
  * e2u+service[+service[+service[+...]]]
@@ -167,50 +210,170 @@ int is_from_user_e164(struct sip_msg* _msg, char* _s1, char* _s2)
 	return result;
 }
 
-
-/* Parse NAPTR regexp field of the form !pattern!replacement! and return its
- * components in pattern and replacement parameters.  Regexp field starts at
- * address first and is len characters long.
+/*
+ * Call is_from_user_enum_2 with module parameter suffix and default service.
  */
-static inline int parse_naptr_regexp(char* first, int len, str* pattern,
-										str* replacement)
+int is_from_user_enum_0(struct sip_msg* _msg, char* _str1, char* _str2)
 {
-	char *second, *third;
+	return is_from_user_enum_2(_msg, (char *)(&suffix), (char *)(&service));
+}
 
-	if (len > 0) {
-		if (*first == '!') {
-			second = (char *)memchr((void *)(first + 1), '!', len - 1);
-			if (second) {
-				len = len - (second - first + 1);
-				if (len > 0) {
-					third = memchr(second + 1, '!', len);
-					if (third) {
-						pattern->len = second - first - 1;
-						pattern->s = first + 1;
-						replacement->len = third - second - 1;
-						replacement->s = second + 1;
-						return 1;
-					} else {
-						LOG(LOG_ERR, "parse_regexp(): third ! missing from regexp\n");
-						return -1;
-					}
-				} else {
-					LOG(LOG_ERR, "parse_regexp(): third ! missing from regexp\n");
-					return -2;
-				}
-			} else {
-				LOG(LOG_ERR, "parse_regexp(): second ! missing from regexp\n");
-				return -3;
-			}
-		} else {
-			LOG(LOG_ERR, "parse_regexp(): first ! missing from regexp\n");
+/*
+ * Call is_from_user_enum_2 with given suffix and default service.
+ */
+int is_from_user_enum_1(struct sip_msg* _msg, char* _suffix, char* _str2)
+{
+	return is_from_user_enum_2(_msg, _suffix, (char *)(&service));
+}
+
+/*
+ * Check if from user is a valid enum based user, and check to make sure
+ * that the src_ip == an srv record that maps to the enum from user.
+ */
+int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service)
+{
+	struct ip_addr addr;
+	struct hostent* he;
+	unsigned short zp;
+	char *user_s;
+	int user_len, i, j;
+	char name[MAX_DOMAIN_SIZE];
+	char uri[MAX_URI_SIZE];
+	struct to_body* body;
+	struct sip_uri muri;
+	struct sip_uri luri;
+	struct rdata* head;
+
+	str* suffix;
+	str* service;
+
+	struct rdata* l;
+	struct naptr_rdata* naptr;
+
+	str pattern, replacement, result;
+	char string[17];
+
+	body = get_parsed_from_body(_msg);
+	if (!body) return -1;
+
+	if (parse_uri(body->uri.s, body->uri.len, &muri) < 0) {
+		LOG(L_ERR, "is_from_user_e164(): Error while parsing From uri\n");
+		return -1;
+	}
+
+	suffix = (str*)_suffix;
+	service = (str*)_service;
+
+	if (is_e164(&(muri.user)) == -1) {
+		LOG(L_ERR, "is_from_user_valid(): from user is not an E164 number\n");
+		return -2;
+	}
+
+	/* assert: the from user is a valid formatted e164 string */
+
+	user_s = muri.user.s;
+	user_len = muri.user.len;
+
+	j = 0;
+	for (i = user_len - 1; i > 0; i--) {
+		name[j] = user_s[i];
+		name[j + 1] = '.';
+		j = j + 2;
+	}
+
+	memcpy(name + j, suffix->s, suffix->len + 1);
+
+	head = get_record(name, T_NAPTR);
+
+	if (head == 0) {
+		DBG("enum_query(): No NAPTR record found for %s.\n", name);
+		return -3;
+	}
+
+	/* we have the naptr records, loop and find an srv record with */
+	/* same ip address as source ip address, if we do then true is returned */
+
+	for (l = head; l; l = l->next) {
+
+		if (l->type != T_NAPTR) continue; /*should never happen*/
+		naptr = (struct naptr_rdata*)l->rdata;
+		if (naptr == 0) {
+			LOG(L_CRIT, "is_from_user_enum: BUG: null rdata\n");
+			free_rdata_list(head);
 			return -4;
 		}
-	} else {
-		LOG(LOG_ERR, "parse_regexp(): regexp missing\n");
-		return -5;
+
+		DBG("is_from_user_enum(): order %u, pref %u, flen %u, flags '%.*s', slen %u, "
+		    "services '%.*s', rlen %u, regexp '%.*s'\n", naptr->order, naptr->pref,
+		    naptr->flags_len, (int)(naptr->flags_len), ZSW(naptr->flags), naptr->services_len,
+		    (int)(naptr->services_len), ZSW(naptr->services), naptr->regexp_len,
+		    (int)(naptr->regexp_len), ZSW(naptr->regexp));
+
+		if (sip_match(naptr, service) != 0) {
+			if (parse_naptr_regexp(&(naptr->regexp[0]), naptr->regexp_len,
+					 &pattern, &replacement) < 0) {
+				free_rdata_list(head); /*clean up*/
+				LOG(L_ERR, "is_from_user_enum(): parsing of NAPTR regexp failed\n");
+				return -5;
+			}
+#ifdef LATER
+			if ((pattern.len == 4) && (strncmp(pattern.s, "^.*$", 4) == 0)) {
+				DBG("is_from_user_enum(): resulted in replacement: '%.*s'\n",
+				    replacement.len, ZSW(replacement.s));				
+				retval = set_uri(_msg, replacement.s, replacement.len);
+				free_rdata_list(head); /*clean up*/
+				return retval;
+			}
+#endif
+			result.s = &(uri[0]);
+			result.len = MAX_URI_SIZE;
+			/* Avoid making copies of pattern and replacement */
+			pattern.s[pattern.len] = (char)0;
+			replacement.s[replacement.len] = (char)0;
+			/* We have already checked the size of
+			   _msg->parsed_uri.user.s */ 
+			memcpy(&(string[0]), user_s, user_len);
+			string[user_len] = (char)0;
+			if (reg_replace(pattern.s, replacement.s, &(string[0]),
+					&result) < 0) {
+				pattern.s[pattern.len] = '!';
+				replacement.s[replacement.len] = '!';
+				LOG(L_ERR, "is_from_user_enum(): regexp replace failed\n");
+				free_rdata_list(head); /*clean up*/
+				return -6;
+			}
+			DBG("is_from_user_enum(): resulted in replacement: '%.*s'\n",
+			    result.len, ZSW(result.s));
+
+			if(parse_uri(result.s, result.len, &luri) < 0)
+			{
+				LOG(L_ERR, "is_from_user_enum(): parse uri failed\n");
+				free_rdata_list(head); /*clean up*/
+				return -7;
+			}
+
+			pattern.s[pattern.len] = '!';
+			replacement.s[replacement.len] = '!';
+
+			zp = 0;
+			he = sip_resolvehost(&luri.host, &zp, PROTO_UDP);
+
+			hostent2ip_addr(&addr, he, 0);
+
+			if(ip_addr_cmp(&addr, &_msg->rcv.src_ip))
+			{
+				free_rdata_list(head);
+				return(1);
+			}
+		}
 	}
+	free_rdata_list(head); /*clean up*/
+	LOG(L_INFO, "is_from_user_enum(): FAIL\n");
+
+    /* must not have found the record */
+    return(-8);
 }
+
 
 
 /* 
@@ -469,6 +632,195 @@ int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 			new_result.len = MAX_URI_SIZE;
 			if (add_uri_param(&result, &param, &new_result) == 0) {
 				LOG(L_ERR, "ERROR: enum_query(): Parsing of URI failed\n");
+				continue;
+			}
+			if (new_result.len > 0) {
+				result = new_result;
+			}
+		}
+
+		if (first) {
+			if (rewrite_uri(_msg, &result) == -1) {
+				goto done;
+			}
+			set_ruri_q(q);
+			first = 0;
+			curr_prio = ((naptr->order) << 16) + naptr->pref;
+		} else {
+			priority = ((naptr->order) << 16) + naptr->pref;
+			if (priority > curr_prio) {
+				q = q - 10;
+				curr_prio = priority;
+			}
+			if (append_branch(_msg, &result, 0, 0, q, 0, 0) == -1) {
+				goto done;
+			}
+		}
+	}
+
+done:
+	free_rdata_list(head);
+	return first ? -1 : 1;
+}
+
+/*
+ * Call enum_fquery_2 with module parameter suffix and default service.
+ */
+int enum_fquery_0(struct sip_msg* _msg, char* _str1, char* _str2)
+{
+	return enum_fquery_2(_msg, (char *)(&suffix), (char *)(&service));
+}
+
+/*
+ * Call enum_fquery_2 with given suffix and default service.
+ */
+int enum_fquery_1(struct sip_msg* _msg, char* _suffix, char* _str2)
+{
+	return enum_fquery_2(_msg, _suffix, (char *)(&service));
+}
+
+/*
+ * See documentation in README file.
+ */
+
+int enum_fquery_2(struct sip_msg* _msg, char* _suffix, char* _service)
+{
+	char *user_s;
+	int user_len, i, j, first;
+	char name[MAX_DOMAIN_SIZE];
+	char uri[MAX_URI_SIZE];
+	char new_uri[MAX_URI_SIZE];
+	unsigned int priority, curr_prio;
+	struct to_body* body;
+	struct sip_uri muri;
+	qvalue_t q;
+	char tostring[17];
+	struct rdata* head;
+	struct rdata* l;
+	struct naptr_rdata* naptr;
+
+	str pattern, replacement, result, new_result;
+
+	char string[17];
+
+	/*
+	** all of this to pick up the 'to' string
+	*/
+	if (parse_sip_msg_uri(_msg) < 0) {
+		LOG(L_ERR, "enum_query(): uri parsing failed\n");
+		return -1;
+	}
+
+	if (is_e164(&(_msg->parsed_uri.user)) == -1) {
+		LOG(L_ERR, "enum_query(): uri user is not an E164 number\n");
+		return -1;
+	}
+
+	user_s = _msg->parsed_uri.user.s;
+	user_len = _msg->parsed_uri.user.len;
+
+	memcpy(&(tostring[0]), user_s, user_len);
+	tostring[user_len] = (char)0;
+	/*
+	** to here
+	*/
+
+
+	body = get_parsed_from_body(_msg);
+	if (!body) return -1;
+
+	if (parse_uri(body->uri.s, body->uri.len, &muri) < 0) {
+		LOG(L_ERR, "is_from_user_e164(): Error while parsing From uri\n");
+		return -1;
+	}
+
+	str *suffix, *service;
+
+	suffix = (str*)_suffix;
+	service = (str*)_service;
+
+	if (is_e164(&(muri.user)) == -1) {
+		LOG(L_ERR, "enum_fquery(): uri user is not an E164 number\n");
+		return -1;
+	}
+
+	user_s = muri.user.s;
+	user_len = muri.user.len;
+
+	memcpy(&(string[0]), user_s, user_len);
+	string[user_len] = (char)0;
+
+	j = 0;
+	for (i = user_len - 1; i > 0; i--) {
+		name[j] = user_s[i];
+		name[j + 1] = '.';
+		j = j + 2;
+	}
+
+	memcpy(name + j, suffix->s, suffix->len + 1);
+
+	head = get_record(name, T_NAPTR);
+
+	if (head == 0) {
+		DBG("enum_fquery(): No NAPTR record found for %s.\n", name);
+		return -1;
+	}
+
+	naptr_sort(&head);
+
+	q = MAX_Q - 10;
+	curr_prio = 0;
+	first = 1;
+
+	for (l = head; l; l = l->next) {
+
+		if (l->type != T_NAPTR) continue; /*should never happen*/
+		naptr = (struct naptr_rdata*)l->rdata;
+		if (naptr == 0) {
+			LOG(L_CRIT, "enum_fquery: BUG: null rdata\n");
+			continue;
+		}
+
+		DBG("enum_fquery(): order %u, pref %u, flen %u, flags '%.*s', slen %u, "
+		    "services '%.*s', rlen %u, regexp '%.*s'\n", naptr->order, naptr->pref,
+		    naptr->flags_len, (int)(naptr->flags_len), ZSW(naptr->flags),
+		    naptr->services_len,
+		    (int)(naptr->services_len), ZSW(naptr->services), naptr->regexp_len,
+		    (int)(naptr->regexp_len), ZSW(naptr->regexp));
+
+		if (sip_match(naptr, service) == 0) continue;
+
+		if (parse_naptr_regexp(&(naptr->regexp[0]), naptr->regexp_len,
+				       &pattern, &replacement) < 0) {
+			LOG(L_ERR, "enum_fquery(): parsing of NAPTR regexp failed\n");
+			continue;
+		}
+		result.s = &(uri[0]);
+		result.len = MAX_URI_SIZE;
+		/* Avoid making copies of pattern and replacement */
+		pattern.s[pattern.len] = (char)0;
+		replacement.s[replacement.len] = (char)0;
+		if (reg_replace(pattern.s, replacement.s, &(tostring[0]),
+				&result) < 0) {
+			pattern.s[pattern.len] = '!';
+			replacement.s[replacement.len] = '!';
+			LOG(L_ERR, "enum_fquery(): regexp replace failed\n");
+			continue;
+		}
+		DBG("enum_fquery(): resulted in replacement: '%.*s'\n",
+		    result.len, ZSW(result.s));
+		pattern.s[pattern.len] = '!';
+		replacement.s[replacement.len] = '!';
+		
+		if (param.len > 0) {
+			if (result.len + param.len > MAX_URI_SIZE - 1) {
+				LOG(L_ERR, "ERROR: enum_fquery(): URI is too long\n");
+				continue;
+			}
+			new_result.s = &(new_uri[0]);
+			new_result.len = MAX_URI_SIZE;
+			if (add_uri_param(&result, &param, &new_result) == 0) {
+				LOG(L_ERR, "ERROR: enum_fquery(): Parsing of URI failed\n");
 				continue;
 			}
 			if (new_result.len > 0) {
