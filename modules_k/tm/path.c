@@ -56,7 +56,7 @@ int insert_path_as_route(struct sip_msg* msg, str* path)
 	} else if(last_via) {
 		if (last_via->next) {
 			/* Via HF in between, insert after it */
-			anchor = anchor_lump(msg, hf->name.s + hf->len - msg->buf, 0, 0);
+			anchor = anchor_lump(msg, last_via->next->name.s - msg->buf, 0, 0);
 		} else {
 			/* Via HF is last, so append */
 			anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
