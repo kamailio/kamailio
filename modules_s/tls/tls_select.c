@@ -147,7 +147,8 @@ static int sel_cipher(str* res, select_t* s, struct sip_msg* msg)
 
 static int sel_bits(str* res, select_t* s, struct sip_msg* msg) 
 {
-	str cipher;
+	str bits;
+	int b;
 	static char buf[1024];
 
 	struct tcp_connection* c;
@@ -161,15 +162,15 @@ static int sel_bits(str* res, select_t* s, struct sip_msg* msg)
 	ssl = get_ssl(c);
 	if (!ssl) goto err;
 
-	cipher.s = (char*)SSL_CIPHER_get_name(SSL_get_current_cipher(ssl));
-	cipher.len = cipher.s ? strlen(cipher.s) : 0;
-	if (cipher.len >= 1024) {
+	b = SSL_CIPHER_get_bits(SSL_get_current_cipher(ssl), 0);
+	bits.s = int2str(b, &bits.len);
+	if (bits.len >= 1024) {
 		ERR("Bits string too long\n");
 		goto err;
 	}
-	memcpy(buf, cipher.s, cipher.len);
+	memcpy(buf, bits.s, bits.len);
 	res->s = buf;
-	res->len = cipher.len;
+	res->len = bits.len;
 	tcpconn_put(c);
         return 0;
 
@@ -522,7 +523,7 @@ static int sel_alt(str* res, select_t* s, struct sip_msg* msg)
 
 	names = X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL);
 	if (!names) {
-		ERR("Cannot get certificate alternative subject\n");
+		DBG("Cannot get certificate alternative subject\n");
 		goto err;
 
 	}
