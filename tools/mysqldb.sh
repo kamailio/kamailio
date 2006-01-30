@@ -288,7 +288,7 @@ INSERT INTO version VALUES ( 'event', '1');
 INSERT INTO version VALUES ( 'active_sessions', '1');
 INSERT INTO version VALUES ( 'acc', '2');
 INSERT INTO version VALUES ( 'config', '1');
-INSERT INTO version VALUES ( 'silo', '3');
+INSERT INTO version VALUES ( 'silo', '4');
 INSERT INTO version VALUES ( 'realm', '1');
 INSERT INTO version VALUES ( 'domain', '1');
 INSERT INTO version VALUES ( 'uri', '1');
@@ -571,6 +571,7 @@ CREATE TABLE silo(
     domain VARCHAR(128) NOT NULL DEFAULT "",
     inc_time INTEGER NOT NULL DEFAULT 0,
     exp_time INTEGER NOT NULL DEFAULT 0,
+    snd_time INTEGER NOT NULL DEFAULT 0,
     ctype VARCHAR(32) NOT NULL DEFAULT "text/plain",
     body BLOB NOT NULL DEFAULT ""
 ) $TABLE_TYPE;
