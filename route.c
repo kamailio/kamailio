@@ -42,6 +42,7 @@
  *  2004-10-19  added from_uri & to_uri (andrei)
  *  2005-12-12  added retcode support (anrei)
  *  2005-12-19  select framework (mma)
+ *  2006-01-30 removed rec. protection from eval_expr (andrei)
  */
 
 
@@ -701,7 +702,7 @@ error_op:
 
 
 /* returns: 0/1 (false/true) or -1 on error */
-static int eval_elem(struct expr* e, struct sip_msg* msg)
+inline static int eval_elem(struct expr* e, struct sip_msg* msg)
 {
 	struct sip_uri uri;
 	int ret;
@@ -917,16 +918,7 @@ error:
 /* ret= 0/1 (true/false) ,  -1 on error */
 int eval_expr(struct expr* e, struct sip_msg* msg)
 {
-	static int rec_lev=0;
 	int ret;
-
-	rec_lev++;
-	if (rec_lev>MAX_REC_LEV){
-		LOG(L_CRIT, "ERROR: eval_expr: too many expressions (%d)\n",
-				rec_lev);
-		ret=-1;
-		goto skip;
-	}
 
 	if (e->type==ELEM_T){
 		ret=eval_elem(e, msg);
@@ -957,9 +949,6 @@ int eval_expr(struct expr* e, struct sip_msg* msg)
 		LOG(L_CRIT, "BUG: eval_expr: unknown type %d\n", e->type);
 		ret=-1;
 	}
-
-skip:
-	rec_lev--;
 	return ret;
 }
 
