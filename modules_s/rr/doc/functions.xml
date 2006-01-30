@@ -57,7 +57,7 @@ strict_route();
 		<function moreinfo="none">rr_add_avp_cookie(string)</function>
 	</title>
 	<para>
-		The function copies Avp for a new Record-Route header field. The header field will be inserted
+		The function marks Avp for a new Record-Route header field. The header field will be inserted
 		in the message before any other Record-Route header fields.
 	</para>
 	<para>Meaning of the parameters is as follows:</para>

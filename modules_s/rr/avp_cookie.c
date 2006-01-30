@@ -33,7 +33,7 @@
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
 
-//static avp_list_t dialog_avp_list = 0;
+/*static avp_list_t dialog_avp_list = 0; */
 
 #define AVP_COOKIE_NAME "avp="
 #define AVP_COOKIE_BUFFER 1024
@@ -43,13 +43,13 @@ regex_t* cookie_filter_re = 0;
 
 int rr_before_script_cb(struct sip_msg *msg, void *param) {
 	DBG("rr_before_script_cb: inquired\n");
-	//destroy_avp_list(&dialog_avp_list);
+	/*destroy_avp_list(&dialog_avp_list);*/
 	return 1;
 }
 
 int rr_add_avp_cookie(struct sip_msg *msg, char *param1, char *param2) {
 	avp_save_item_t *re;
-	int_str avp_id, avp_id2, avp_val;
+	int_str avp_id, avp_val;
 	struct usr_avp *avp;
 	struct search_state st;
 
@@ -67,11 +67,14 @@ int rr_add_avp_cookie(struct sip_msg *msg, char *param1, char *param2) {
 			break;
 	}
 
-	// copy AVPs to private AVP list
+	/* copy AVPs to private AVP list */
 	for ( avp=search_first_avp(re->type, avp_id, &avp_val, &st);
 			avp;
 			avp = search_next_avp(&st, &avp_val) ) {
 
+		avp->flags |= AVP_FLAG_DIALOG;
+		#if 0
+		former implementation, when supposed separate avp list
 		if ((avp->flags&(AVP_NAME_STR|AVP_VAL_STR)) == AVP_NAME_STR) {
 			/* avp type str, int value */
 			avp_id2.s = ((struct str_int_data*)&(avp->data))->name;
@@ -84,12 +87,13 @@ int rr_add_avp_cookie(struct sip_msg *msg, char *param1, char *param2) {
 			avp_id2.n = avp->id;
 		}
 
-		// set avp from cookie
+		/* set avp from cookie */
 		DBG("rr:rr_add_avp_cookie: coping AVP\n");
-		/* TODO: avp->flags |= AVP_DIALOG */
+		/* TODO: avp->flags |= AVP_FLAG_DIALOG */
 		//if ( add_avp_list(&dialog_avp_list, avp->flags, avp_id2, avp_val)!=0 ) {
 		//	LOG(L_ERR, "ERROR: rr:rr_add_avp_cookie: add_avp failed\n");
 		//}
+		#endif
 	}
 
 	return 1;
@@ -100,16 +104,16 @@ void base64decode(char* src_buf, int src_len, char* tgt_buf, int* tgt_len) {
 	unsigned char c[4];
 	for (pos=0, i=0, *tgt_len=0; pos < src_len; pos++) {
 		if (src_buf[pos] >= 'A' && src_buf[pos] <= 'Z')
-			c[i] = src_buf[pos] - 65;   // <65..90>  --> <0..25>
+			c[i] = src_buf[pos] - 65;   /* <65..90>  --> <0..25> */
 		else if (src_buf[pos] >= 'a' && src_buf[pos] <= 'z')
-			c[i] = src_buf[pos] - 71;   // <97..122>  --> <26..51>
+			c[i] = src_buf[pos] - 71;   /* <97..122>  --> <26..51> */
 		else if (src_buf[pos] >= '0' && src_buf[pos] <= '9')
-			c[i] = src_buf[pos] + 4;   // <48..56>  --> <52..61>
+			c[i] = src_buf[pos] + 4;    /* <48..56>  --> <52..61> */
 		else if (src_buf[pos] == '+')
 			c[i] = 62;
 		else if (src_buf[pos] == '/')
 			c[i] = 63;
-		else  // '='
+		else  /* '=' */
 			c[i] = 64;
 		i++;
 		if (i==4) {
@@ -124,10 +128,10 @@ void base64decode(char* src_buf, int src_len, char* tgt_buf, int* tgt_len) {
 			switch (n) {
 				case 3:
 					tgt_buf[*tgt_len+2] = (char) (((c[2] & 0x03) << 6) | c[3]);
-					// no break
+					/* no break */
 				case 2:
 					tgt_buf[*tgt_len+1] = (char) (((c[1] & 0x0F) << 4) | (c[2] >> 2));
-					// no break
+					/* no break */
 				case 1:
 					tgt_buf[*tgt_len+0] = (char) ((c[0] << 2) | (c[1] >> 4));
 					break;
@@ -172,6 +176,8 @@ str *rr_get_avp_cookies(void) {
 	len = sizeof(crc);
 	for (avp_list_no=0; avp_list_no<MAX_AVP_DIALOG_LISTS; avp_list_no++) {
 		for ( avp=get_avp_list(avp_dialog_lists[avp_list_no]); avp; avp = avp->next ) {
+			if ( (avp->flags & AVP_FLAG_DIALOG) == 0)
+				continue;
 
 			if ((avp->flags&(AVP_NAME_STR|AVP_VAL_STR)) == AVP_NAME_STR) {
 				/* avp type str, int value */
@@ -182,7 +188,7 @@ str *rr_get_avp_cookies(void) {
 				avp_name = & ((struct str_str_data*)&(avp->data))->name;
 			}
 			else
-				avp_name = 0;  // dummy
+				avp_name = 0;  /* dummy */
 
 			get_avp_val(avp, &avp_val);
 			
@@ -314,7 +320,7 @@ void rr_set_avp_cookies(str *enc_cookies) {
 			LOG(L_ERR, "rr:set_avp_cookies: AVP cookies corrupted\n");
 			break;
 		}
-		// filtr cookie
+		/* filter cookie */
 		if (cookie_filter_re) {
 			if (avp.flags & AVP_NAME_STR) {
 				char savec;
@@ -337,10 +343,10 @@ void rr_set_avp_cookies(str *enc_cookies) {
 				}
 			}
 		}
-		// set avp from cookie
+		/* set avp from cookie */
 		DBG("rr:set_avp_cookies: adding AVP\n");
 
-		if ( add_avp(avp.flags/*TODO: |AVP_DIALOG*/, avp_name, avp_val)!=0 ) {
+		if ( add_avp(avp.flags|AVP_FLAG_DIALOG, avp_name, avp_val)!=0 ) {
 			LOG(L_ERR, "ERROR: rr:set_avp_cookies: add_avp failed\n");
 		}
 	}
