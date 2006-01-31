@@ -9,8 +9,8 @@ Standards-Version: 3.5.2
 Package: openser
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
-Suggests: openser-tls, openser-mysql-module, openser-postgres-modules, openser-jabber-module, opense-cpl-module, openser-radius-modules
-Conflicts: openser-mysql-module (<< ${Source-Version}), openser-postgres-module (<< ${Source-Version}), openser-jabber-module (<< ${Source-Version}), openser-cpl-modules (<< ${Source-Version}), openser-radius-modules (<< ${Source-Version}), openser-tls, openser-tls-mysql-module, openser-tls-postgres-module, openser-tls-jabber-module, openser-tls-cpl-modules, openser-tls-radius-modules
+Suggests: openser-tls, openser-mysql-module, openser-postgres-module, openser-jabber-module, openser-cpl-module, openser-radius-modules
+Conflicts: openser-mysql-module (<< ${Source-Version}), openser-postgres-module (<< ${Source-Version}), openser-jabber-module (<< ${Source-Version}), openser-cpl-module (<< ${Source-Version}), openser-radius-modules (<< ${Source-Version}), openser-tls, openser-tls-mysql-module, openser-tls-postgres-module, openser-tls-jabber-module, openser-tls-cpl-module, openser-tls-radius-modules
 Description: Open SIP Express Router, very fast and configurable SIP proxy
  openser or Open SIP Express Router is a very fast and flexible SIP (RFC3621)
  proxy server. Written entirely in C, openser can handle thousands calls
@@ -26,8 +26,8 @@ Description: Open SIP Express Router, very fast and configurable SIP proxy
 Package: openser-tls
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
-Suggests: openser-tls-mysql-module, openser-tls-postgres-modules, openser-tls-jabber-module, opense-cpl-tls-module, openser-tls-radius-modules
-Conflicts: openser-tls-mysql-module (<< ${Source-Version}), openser-tls-postgres-module (<< ${Source-Version}), openser-tls-jabber-module (<< ${Source-Version}), openser-tls-cpl-modules (<< ${Source-Version}), openser-tls-radius-modules (<< ${Source-Version}), openser, openser-mysql-module, openser-postgres-module, openser-jabber-module, openser-cpl-modules, openser-radius-modules
+Suggests: openser-tls-mysql-module, openser-tls-postgres-module, openser-tls-jabber-module, openser-tls-cpl-module, openser-tls-radius-modules
+Conflicts: openser-tls-mysql-module (<< ${Source-Version}), openser-tls-postgres-module (<< ${Source-Version}), openser-tls-jabber-module (<< ${Source-Version}), openser-tls-cpl-module (<< ${Source-Version}), openser-tls-radius-modules (<< ${Source-Version}), openser, openser-mysql-module, openser-postgres-module, openser-jabber-module, openser-cpl-module, openser-radius-modules
 Description: Open SIP Express Router, very fast and configurable SIP proxy with 
  TLS support
  openser or Open SIP Express Router is a very fast and flexible SIP (RFC3621)
