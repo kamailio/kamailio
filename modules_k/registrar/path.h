@@ -37,6 +37,6 @@ int build_path_vector(struct sip_msg *_m, str *path);
 /*
  * If Path is available, sets _dst to uri of first element .
  */
-int get_path_dst_uri(str *_p, str **_dst);
+int get_path_dst_uri(str *_p, str *_dst);
 
 #endif /* REG_PATH_H */

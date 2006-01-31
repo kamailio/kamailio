@@ -96,7 +96,7 @@ error:
  * Path must be available. Function returns the first uri 
  * from Path without any dupication.
  */
-int get_path_dst_uri(str *_p, str **_dst)
+int get_path_dst_uri(str *_p, str *_dst)
 {
 	rr_t *route = 0;
 
@@ -114,7 +114,7 @@ int get_path_dst_uri(str *_p, str **_dst)
 		return -1;
 	}
 
-	*_dst = &route->nameaddr.uri;
+	*_dst = route->nameaddr.uri;
 	free_rr(&route);
 
 	return 0;

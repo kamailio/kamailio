@@ -421,7 +421,7 @@ int send_reply(struct sip_msg* _m)
 	if (sl_reply(_m, (char*)code, msg) == -1) {
 		LOG(L_ERR, "send_reply(): Error while sending %ld %s\n", code, msg);
 		return -1;
-	} else return 0;	
+	} else return 0;
 }
 
 
