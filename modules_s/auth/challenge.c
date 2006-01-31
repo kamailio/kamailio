@@ -136,6 +136,7 @@ static inline int challenge(struct sip_msg* msg, str* realm, int qop,
 	auth_body_t* cred = 0;
 	char *auth_hf;
 	int ret;
+	str r;
 	hdr_types_t hftype = 0; /* Makes gcc happy */
 
 	switch(code) {
@@ -151,8 +152,8 @@ static inline int challenge(struct sip_msg* msg, str* realm, int qop,
 
 	if (h) cred = (auth_body_t*)(h->parsed);
 
-	if (realm->len == 0) {
-		if (get_realm(msg, hftype, realm) < 0) {
+	if (!realm || realm->len == 0) {
+		if (get_realm(msg, hftype, &r) < 0) {
 			LOG(L_ERR, "auth:challenge: Error while extracting URI\n");
 			if (send_resp(msg, 400, MESSAGE_400, 0, 0) == -1) {
 				LOG(L_ERR, "auth:challenge: Error while sending response\n");
@@ -160,6 +161,7 @@ static inline int challenge(struct sip_msg* msg, str* realm, int qop,
 			}
 			return 0;
 		}
+		realm = &r;
 	}
 
 	auth_hf = build_auth_hf(msg, 0, (cred ? cred->stale : 0), realm, &auth_hf_len, qop, challenge_msg);
@@ -203,8 +205,7 @@ int proxy_challenge(struct sip_msg* msg, char* realm, char* qop)
  */
 int www_challenge1(struct sip_msg* msg, char* qop, char* s2)
 {
-	static str realm = STR_STATIC_INIT("");
-	return challenge(msg, &realm, (int)(long)qop, 401, MESSAGE_401,
+	return challenge(msg, 0, (int)(long)qop, 401, MESSAGE_401,
 			 WWW_AUTH_CHALLENGE);
 }
 
@@ -214,8 +215,7 @@ int www_challenge1(struct sip_msg* msg, char* qop, char* s2)
  */
 int proxy_challenge1(struct sip_msg* msg, char* qop, char* s2)
 {
-	static str realm = STR_STATIC_INIT("");
-	return challenge(msg, &realm, (int)(long)qop, 407, MESSAGE_407, 
+	return challenge(msg, 0, (int)(long)qop, 407, MESSAGE_407, 
 			 PROXY_AUTH_CHALLENGE);
 }
 
