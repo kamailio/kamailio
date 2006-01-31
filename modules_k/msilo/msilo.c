@@ -192,13 +192,35 @@ static param_export_t params[]={
 	{ 0,0,0 }
 };
 
+#ifdef STATISTICS
+#include "../../statistics.h"
 
+stat_var* ms_stored_msgs;
+stat_var* ms_dumped_msgs;
+stat_var* ms_failed_msgs;
+stat_var* ms_dumped_rmds;
+stat_var* ms_failed_rmds;
+
+stat_export_t msilo_stats[] = {
+	{"stored_messages" ,  0,  &ms_stored_msgs  },
+	{"dumped_messages" ,  0,  &ms_dumped_msgs  },
+	{"failed_messages" ,  0,  &ms_failed_msgs  },
+	{"dumped_reminders" , 0,  &ms_dumped_rmds  },
+	{"failed_reminders" , 0,  &ms_failed_rmds  },
+	{0,0,0}
+};
+
+#endif
 /** module exports */
 struct module_exports exports= {
 	"msilo",    /* module id */
 	cmds,       /* module's exported functions */
 	params,     /* module's exported parameters */
+#ifdef STATISTICS
+	msilo_stats,
+#else
 	0,          /* exported statistics */
+#endif
 	mod_init,   /* module initialization function */
 	(response_function) 0,       /* response handler */
 	(destroy_function) destroy,  /* module destroy function */
@@ -642,6 +664,10 @@ static int m_store(struct sip_msg* msg, char* mode, char* flags)
 	DBG("MSILO:m_store: message stored. T:<%.*s> F:<%.*s>\n",
 		pto->uri.len, pto->uri.s, pfrom->uri.len, pfrom->uri.s);
 	
+#ifdef STATISTICS
+	update_stat(ms_stored_msgs, 1);
+#endif
+
 	if(reg_addr.len <= 0
 			|| reg_addr.len+CONTACT_PREFIX_LEN+CONTACT_SUFFIX_LEN+1>=1024)
 		goto done;
@@ -933,6 +959,13 @@ void m_clean_silo(unsigned int ticks, void *param)
 	{
 		if(p->flag & MS_MSG_DONE)
 		{
+#ifdef STATISTICS
+			if(p->flag & MS_MSG_TSND)
+				update_stat(ms_dumped_msgs, 1);
+			else
+				update_stat(ms_dumped_rmds, 1);
+#endif
+
 			db_keys[n] = sc_mid;
 			db_vals[n].type = DB_INT;
 			db_vals[n].nul = 0;
@@ -949,7 +982,15 @@ void m_clean_silo(unsigned int ticks, void *param)
 		if((p->flag & MS_MSG_ERRO) && (p->flag & MS_MSG_TSND))
 		{ /* set snd time to 0 */
 			ms_reset_stime(p->msgid);
+#ifdef STATISTICS
+			update_stat(ms_failed_rmds, 1);
+#endif
+
 		}
+#ifdef STATISTICS
+		if((p->flag & MS_MSG_ERRO) && !(p->flag & MS_MSG_TSND))
+			update_stat(ms_failed_msgs, 1);
+#endif
 		p = p->next;
 	}
 	if(n>0)
