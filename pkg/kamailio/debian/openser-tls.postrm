@@ -36,9 +36,9 @@ esac
 #DEBHELPER#
 
 if [ "$1" = "purge" ] ; then
-# remove user/group on purge
-	deluser --quiet --remove-home openser &>/dev/null || true
-# remove /etc/openser if empty
+	# remove user/group on purge
+	userdel -r openser &>/dev/null || true
+	# remove /etc/openser if empty
 	rmdir /etc/openser || true
 fi
 

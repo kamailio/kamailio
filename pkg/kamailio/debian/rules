@@ -195,8 +195,7 @@ binary-common:
 #	dh_installemacsen
 #	dh_installpam
 #	dh_installmime
-	dh_installinit  -- defaults 23
-	dh_installinit -popenser-tls --name=openser  -- defaults 23
+	dh_installinit -popenser -popenser-tls --name=openser -- defaults 23
 	dh_installcron
 	dh_installman
 	dh_installinfo
