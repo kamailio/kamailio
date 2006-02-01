@@ -711,6 +711,7 @@ static int get_double(double* val, struct xmlrpc_reply* reply, xmlDocPtr doc, xm
 
 static int get_string(char** val, struct xmlrpc_reply* reply, xmlDocPtr doc, xmlNodePtr value)
 {
+	static char* null_str = "";
 	xmlNodePtr dbl;
 	char* val_str;
 
@@ -727,8 +728,8 @@ static int get_string(char** val, struct xmlrpc_reply* reply, xmlDocPtr doc, xml
 
 	val_str = (char*)xmlNodeListGetString(doc, dbl->xmlChildrenNode, 1);
 	if (!val_str) {
-		set_fault(reply, 400, "Empty String Parameter");
-		return -1;
+		*val = null_str;
+		return 0;
 	}
 
 	if (add_garbage(JUNK_XMLCHAR, val_str, reply) < 0) return -1;
