@@ -180,7 +180,8 @@ static int generate_avps(db_res_t* result)
 	for ( cred=credentials,i=1 ; cred ; cred=cred->next,i++ ) {
 		value.s = (char*)VAL_STRING(&(result->rows[0].values[i]));
 
-		if ( VAL_NULL(&(result->rows[0].values[i])) || value.s == NULL ) {
+		if ( VAL_NULL(&(result->rows[0].values[i]))
+		|| value.s == NULL || value.len == 0) {
 			continue;
 		}
 
