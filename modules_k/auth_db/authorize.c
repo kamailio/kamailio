@@ -180,12 +180,13 @@ static int generate_avps(db_res_t* result)
 	for ( cred=credentials,i=1 ; cred ; cred=cred->next,i++ ) {
 		value.s = (char*)VAL_STRING(&(result->rows[0].values[i]));
 
-		if ( VAL_NULL(&(result->rows[0].values[i]))
-		|| value.s == NULL || value.len == 0) {
+		if (VAL_NULL(&(result->rows[0].values[i])) || value.s == NULL)
 			continue;
-		}
 
 		value.len = strlen(value.s);
+		if (value.len == 0)
+			continue;
+
 		ivalue.s = &value;
 
 		if (add_avp( cred->avp_type|AVP_VAL_STR, cred->avp_name, ivalue)!=0) {
