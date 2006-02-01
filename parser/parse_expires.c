@@ -49,7 +49,7 @@ static inline int expires_parser(char* _s, int _l, exp_body_t* _e)
 	tmp.s = _s;
 	tmp.len = _l;
 
-	trim_leading(&tmp);
+	trim(&tmp);
 
 	if (tmp.len == 0) {
 		LOG(L_ERR, "expires_parser(): Empty body\n");
@@ -58,6 +58,13 @@ static inline int expires_parser(char* _s, int _l, exp_body_t* _e)
 	}
 
 	_e->text.s = tmp.s;
+	_e->text.len = tmp.len;
+
+	/* more then 32bit/maxuint cant be valid */
+	if (tmp.len > 10) {
+		_e->valid = 0;
+		return 0;
+	}
 
 	for(i = 0; i < tmp.len; i++) {
 		if ((tmp.s[i] >= '0') && (tmp.s[i] <= '9')) {
@@ -87,7 +94,6 @@ static inline int expires_parser(char* _s, int _l, exp_body_t* _e)
 		}
 	}
 
-	_e->text.len = _l;
 	_e->valid = 1;
 	return 0;
 }

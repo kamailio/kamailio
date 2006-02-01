@@ -38,7 +38,7 @@
 typedef struct exp_body {
 	str text;            /* Original text representation */
 	unsigned char valid; /* Was parsing successful ? */
-	int val;             /* Parsed value */
+	unsigned int val;    /* Parsed value */
 } exp_body_t;
 
 
