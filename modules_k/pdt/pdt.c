@@ -681,6 +681,12 @@ int pdt_fifo_add(FILE *stream, char *response_file)
 		return 1;
 	}
 	sdbuf[sdomain.len] = '\0';
+	if(*sdomain.s=='\0' || *sdomain.s=='.')
+	{
+		LOG(L_INFO, "PDT:pdt_fifo_add: empty sdomain\n");
+		fifo_reply(response_file, "400 pdt_fifo_add - empty param\n");
+		return 1;
+	}
 	
 	/* read prefix */
 	sp.s = pbuf;
@@ -691,6 +697,12 @@ int pdt_fifo_add(FILE *stream, char *response_file)
 		return 1;
 	}
 	pbuf[sp.len] = '\0';
+	if(*sp.s=='\0' || *sp.s=='.')
+	{
+		LOG(L_INFO, "PDT:pdt_fifo_add: empty prefix\n");
+		fifo_reply(response_file, "400 pdt_fifo_add - empty param\n");
+		return 1;
+	}
 
 	while(sp.s!=NULL && *sp.s!='\0')
 	{
@@ -713,6 +725,12 @@ int pdt_fifo_add(FILE *stream, char *response_file)
 		return 1;
 	}
 	dbuf[sd.len] = '\0';
+	if(*sd.s=='\0' || *sd.s=='.')
+	{
+		LOG(L_INFO, "PDT:pdt_fifo_add: empty domain\n");
+		fifo_reply(response_file, "400 pdt_fifo_add - empty param\n");
+		return 1;
+	}
 
 	if(pdt_check_pd(_dhash, &sdomain, &sp, &sd)==1)
 	{
@@ -802,7 +820,7 @@ static int pdt_fifo_delete(FILE *stream, char *response_file)
 	if(*sdomain.s=='\0' || *sdomain.s=='.')
 	{
 		LOG(L_INFO, "PDT:pdt_fifo_delete: empty sdomain\n");
-		fifo_reply(response_file, "400 pdt_fifo_delete - empty pram\n");
+		fifo_reply(response_file, "400 pdt_fifo_delete - empty param\n");
 		return 1;
 	}
 	
@@ -818,7 +836,7 @@ static int pdt_fifo_delete(FILE *stream, char *response_file)
 	if(*sd.s=='\0' || *sd.s=='.')
 	{
 		LOG(L_INFO, "PDT:pdt_fifo_delete: empty domain\n");
-		fifo_reply(response_file, "400 pdt_fifo_delete - empty pram\n");
+		fifo_reply(response_file, "400 pdt_fifo_delete - empty param\n");
 		return 1;
 	}
 
