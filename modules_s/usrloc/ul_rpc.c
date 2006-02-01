@@ -360,7 +360,7 @@ static void rpc_show_contacts(rpc_t* rpc, void* c)
 
 
 rpc_export_t ul_rpc[] = {
-	{"usrloc.statistics",      rpc_stats,           rpc_stats_doc,          0},
+	{"usrloc.stats",           rpc_stats,           rpc_stats_doc,          RET_ARRAY},
 	{"usrloc.delete_uid",      rpc_delete_uid,      rpc_delete_uid_doc,     0},
 	{"usrloc.delete_contact",  rpc_delete_contact,  rpc_delete_contact_doc, 0},
 	{"usrloc.dump",            rpc_dump,            rpc_dump_doc,           0},
