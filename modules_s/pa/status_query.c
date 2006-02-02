@@ -71,3 +71,17 @@ int target_online(struct sip_msg* _m, char* _domain, char* _s2)
 
 	return res;
 }
+
+/* check watcher status for given value */
+int test_watcher_status(struct sip_msg* _m, char* _domain, char* _status)
+{
+	/* returns watcher's authorization status (only existing watchers - should
+	 * be called after processing SUBSCRIBE request) */
+
+	/* find presentity, not found => -1*/
+	/* find watcher, not found => -1 */
+	/* test if auth == watcher status => -1/1 */
+
+	return -1;
+}
+

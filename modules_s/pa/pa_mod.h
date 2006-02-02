@@ -70,6 +70,8 @@ extern int callback_lock_pdomain;
 extern int new_tuple_on_publish;
 extern int pa_pidf_priority;
 extern int use_callbacks;
+extern int use_offline_winfo;
+extern char *offline_winfo_table;
 
 /*
  * compare two str's

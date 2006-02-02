@@ -1,3 +1,7 @@
+2006-02-01
+	* added functions for storing offline auth. info (store_winfo and
+	dump_stored_winfo) into database [they don't work in memory],
+	documentation will be added soon
 2006-01-30
 	* added function target_online
 	* added parameter use_callbacks (int) - [if set to 0, no callback are

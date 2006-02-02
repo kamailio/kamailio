@@ -52,6 +52,7 @@
 #include <presence/qsa.h>
 
 #include "status_query.h"
+#include "offline_winfo.h"
 
 MODULE_VERSION
 
@@ -89,6 +90,7 @@ char *presentity_notes_table = "presentity_notes";
 char *tuple_notes_table = "tuple_notes";
 char *watcherinfo_table = "watcherinfo";
 char *place_table = "place";
+char *offline_winfo_table = "offline_winfo";
 
 /* authorization parameters */
 char *auth_type_str = NULL; /* type of authorization */
@@ -108,6 +110,9 @@ int pa_pidf_priority = 1;
 
 /* use callbacks to usrloc/??? - if 0 only pusblished information is used */
 int use_callbacks = 1;
+int use_offline_winfo = 0;
+int offline_winfo_timer_interval = 300;
+
 /*
  * Exported functions
  */
@@ -117,6 +122,8 @@ static cmd_export_t cmds[]={
 
 	/* still undocumented (TODO) */
 	{"target_online",         target_online,         1, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"store_winfo",           store_offline_winfo,   2, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"dump_stored_winfo",     dump_offline_winfo,    2, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 
 	/* FIXME: are these functions used to something by somebody */
 /*
@@ -156,8 +163,12 @@ static param_export_t params[]={
 	{"winfo_auth_xcap_root", PARAM_STRING, &winfo_auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
 
 	/* undocumented still (TODO) */
-	{"use_callbacks", PARAM_INT, &use_callbacks  },
-	{"watcherinfo_notify",   PARAM_INT, &watcherinfo_notify   },
+	{"use_callbacks", PARAM_INT, &use_callbacks  }, /* use callbacks to usrloc/jabber ? */
+	{"watcherinfo_notify",   PARAM_INT, &watcherinfo_notify   }, /* accept winfo subscriptions ? */
+	{"offline_winfo_table", PARAM_STRING, &offline_winfo_table }, /* table with offline winfo */
+	{"use_offline_winfo", PARAM_INT, &use_offline_winfo  }, /* use DB for offline winfo */
+	{"offline_winfo_expiration", PARAM_INT, &offline_winfo_expiration }, /* how long hold information in DB */
+	{"offline_winfo_timer", PARAM_INT, &offline_winfo_timer_interval }, /* basic ticks of "offline winfo" timer */
 
 	/* not used -> remove (TODO) */
 	{"authorize_watchers",   PARAM_INT, &authorize_watchers  },
@@ -309,6 +320,10 @@ static int pa_mod_init(void)
 
 	/* Register cache timer */
 	register_timer(timer, 0, timer_interval);
+	
+	/* register offline winfo timer */
+	if (use_offline_winfo)
+		register_timer(offline_winfo_timer, 0, offline_winfo_timer_interval);
 
 #ifdef HAVE_LOCATION_PACKAGE
 	if (pa_domain.len == 0) {
@@ -318,11 +333,13 @@ static int pa_mod_init(void)
 	LOG(L_DBG, "pa_mod: pa_mod=%s\n", ZSW(pa_domain.s));
 #endif /* HAVE_LOCATION_PACKAGE */
 
-	LOG(L_DBG, "pa_mod: use_db=%d db_url.s=%s\n",
-	    use_db, ZSW(db_url.s));
-	if (use_db) {
+	LOG(L_DBG, "pa_mod: use_db=%d us_offline_winfo=%d db_url.s=%s\n",
+	    use_db, use_offline_winfo, ZSW(db_url.s));
+
+	if (use_db || use_offline_winfo) {
 		if (!db_url.len) {
-			LOG(L_ERR, "pa_mod_init(): no db_url specified but use_db=1\n");
+			LOG(L_ERR, "pa_mod_init(): no db_url specified but DB has to be used "
+					"(use_db=%d us_offline_winfo=%d)\n", use_db, use_offline_winfo);
 			return -1;
 		}
 		if (bind_dbmod(db_url.s, &pa_dbf) < 0) { /* Find database module */
@@ -350,7 +367,7 @@ static int pa_mod_init(void)
 /* can be called after pa_mod_init and creates new PA DB connection */
 db_con_t* create_pa_db_connection()
 {
-	if (!use_db) return NULL;
+	if (!(use_db || use_offline_winfo)) return NULL;
 	if (!pa_dbf.init) return NULL;
 
 	return pa_dbf.init(db_url.s);
@@ -363,8 +380,8 @@ void close_pa_db_connection(db_con_t* db)
 
 static int pa_child_init(int _rank)
 {
- 	     /* Shall we use database ? */
-	if (use_db) { /* Yes */
+	/* Shall we use database ? */
+	if (use_db || use_offline_winfo) { /* Yes */
 		pa_db = create_pa_db_connection();
 		if (!pa_db) {
 			LOG(L_ERR, "ERROR: pa_child_init(%d): "
@@ -387,7 +404,7 @@ static void pa_destroy(void)
 
 	DEBUG_LOG(" ... pdomains\n");
 	free_all_pdomains();
-	if (use_db && pa_db) {
+	if ((use_db || use_offline_winfo) && pa_db) {
 		DEBUG_LOG(" ... closing db connection\n");
 		close_pa_db_connection(pa_db);
 	}

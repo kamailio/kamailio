@@ -395,6 +395,45 @@ static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
 	return 0;
 }
 
+int send_winfo_notify_offline(struct presentity* _p, 
+		struct watcher* _w, 
+		offline_winfo_t *info, 
+		transaction_cb completion_cb, void* cbp)
+{
+	str doc = STR_NULL;
+	str content_type = STR_NULL;
+	str headers = STR_NULL;
+
+	switch (_w->preferred_mimetype) {
+		case DOC_WINFO:
+			create_winfo_document_offline(_p, _w, info, &doc, &content_type);
+			break;
+		/* other formats ? */
+		default:
+			ERR("send_winfo_notify: unknow doctype\n");
+			return -1;
+	}
+
+	if (create_headers(_w, &headers, &content_type) < 0) {
+		ERR("send_winfo_notify(): Error while adding headers\n");
+		str_free_content(&doc);
+		str_free_content(&content_type);
+		return -7;
+	}
+
+	tmb.t_request_within(&method, &headers, &doc, _w->dialog, completion_cb, cbp);
+
+	str_free_content(&doc);
+	str_free_content(&headers);
+	str_free_content(&content_type);
+
+	_w->document_index++; /* increment index for next document */
+	
+	if (use_db) db_update_watcher(_p, _w); /* dialog and index have changed */
+
+	return 0;
+}
+
 /* FIXME: will be removed */
 #if 0 
 #ifdef HAVE_XCAP_CHANGE_NOTIFY
