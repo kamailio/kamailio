@@ -49,7 +49,7 @@
  */
 #define clist_insert_sublist(head, s, e, next, prev) \
 	do{ \
-		(s)->prev=(head); \
+		(s)->prev=(void*)(head); \
 		(e)->next=(head)->next; \
 		(e)->next->prev=(e); \
 		(head)->next=s;   \

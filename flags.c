@@ -28,6 +28,7 @@
  * History:
  * --------
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2006-02-02  named flags support (andrei)
  */
 
 
@@ -38,6 +39,7 @@
 #include "flags.h"
 #include "error.h"
 #include "stdlib.h"
+#include "hashes.h"
 
 int setflag( struct sip_msg* msg, flag_t flag ) {
 	msg->flags |= 1 << flag;
@@ -59,13 +61,164 @@ int flag_in_range( flag_t flag ) {
 			flag, MAX_FLAG );
 		return 0;
 	}
-	if (flag<=0) {
+	if (flag<0) {
 		LOG(L_ERR, "ERROR: message flag (%d) must be in range %d..%d\n",
-			flag, 1, MAX_FLAG );
+			flag, 0, MAX_FLAG );
 		return 0;
 	}
 	return 1;
 }
+
+
+/* use 2^k */
+#define FLAGS_NAME_HASH_ENTRIES		32
+
+struct flag_entry{
+	str name;
+	int no;
+	struct flag_entry* next;
+	struct flag_entry* prev;
+};
+
+
+struct flag_hash_head{
+	struct flag_entry* next;
+	struct flag_entry* prev;
+};
+
+static struct flag_hash_head  name2flags[FLAGS_NAME_HASH_ENTRIES];
+static unsigned char registered_flags[MAX_FLAG];
+
+
+void init_named_flags()
+{
+	int r;
+	
+	for (r=0; r<FLAGS_NAME_HASH_ENTRIES; r++)
+		clist_init(&name2flags[r], next, prev);
+}
+
+
+
+/* returns 0 on success, -1 on error */
+int check_flag(int n)
+{
+	if (!flag_in_range(n))
+		return -1;
+	if (registered_flags[n]){
+		LOG(L_WARN, "WARNING: check_flag: flag %d is already used by "
+					" a named flag\n", n);
+	}
+	return 0;
+}
+
+
+inline static struct flag_entry* flag_search(struct flag_hash_head* lst,
+												char* name, int len)
+{
+	struct flag_entry* fe;
+	
+	clist_foreach(lst, fe, next){
+		if ((fe->name.len==len) && (memcmp(fe->name.s, name, len)==0)){
+			/* found */
+			return fe;
+		}
+	}
+	return 0;
+}
+
+
+
+/* returns flag entry or 0 on not found */
+inline static struct flag_entry* get_flag_entry(char* name, int len)
+{
+	int h;
+	/* get hash */
+	h=get_hash1_raw(name, len) & (FLAGS_NAME_HASH_ENTRIES-1);
+	return flag_search(&name2flags[h], name, len);
+}
+
+
+
+/* returns flag number, or -1 on error */
+int get_flag_no(char* name, int len)
+{
+	struct flag_entry* fe;
+	
+	fe=get_flag_entry(name, len);
+	return (fe)?fe->no:-1;
+}
+
+
+
+/* resgiter a new flag name and associates it with pos
+ * pos== -1 => any position will do 
+ * returns flag pos on success (>=0)
+ *         -1  flag is an alias for an already existing flag
+ *         -2  flag already registered
+ *         -3  mem. alloc. failure
+ *         -4  invalid pos
+ *         -5 no free flags */
+int register_flag(char* name, int pos)
+{
+	struct flag_entry* e;
+	int len;
+	unsigned int r;
+	static unsigned int crt_flag=0;
+	unsigned int last_flag;
+	unsigned int h;
+	
+	len=strlen(name);
+	h=get_hash1_raw(name, len) & (FLAGS_NAME_HASH_ENTRIES-1);
+	/* check if the name already exists */
+	e=flag_search(&name2flags[h], name, len);
+	if (e){
+		LOG(L_WARN, "WARNING: register_flag: flag %.*s already registered\n",
+					len, name);
+		return -2;
+	}
+	/* check if there is already another flag registered at pos */
+	if (pos!=-1){
+		if ((pos<0) || (pos>MAX_FLAG)){
+			LOG(L_ERR, "ERROR: register_flag: invalid flag %.*s "
+					"position(%d)\n", len, name, pos);
+			return -4;
+		}
+		if (registered_flags[pos]!=0){
+			LOG(L_WARN, "WARNING: register_flag:  %.*s:  flag %d already in "
+					"use under another name\n", len, name, pos);
+			/* continue */
+		}
+	}else{
+		/* alloc an empty flag */
+		last_flag=crt_flag+MAX_FLAG;
+		for (; crt_flag!=last_flag; crt_flag++){
+			r=crt_flag%MAX_FLAG;
+			if (registered_flags[r]==0){
+				pos=r;
+				break;
+			}
+		}
+		if (pos==-1){
+			LOG(L_ERR, "ERROR: register_flag: could not register %.*s"
+					" - too many flags\n", len, name);
+			return -5;
+		}
+	}
+	registered_flags[pos]++;
+	
+	e=pkg_malloc(sizeof(struct flag_entry));
+	if (e==0){
+		LOG(L_ERR, "ERROR: register_flag: memory allocation failure\n");
+		return -3;
+	}
+	e->name.s=name;
+	e->name.len=len;
+	e->no=pos;
+	clist_insert(&name2flags[h], e, next, prev);
+	return pos;
+}
+
 
 
 #ifdef _GET_AWAY

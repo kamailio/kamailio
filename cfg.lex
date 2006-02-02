@@ -130,6 +130,7 @@ FORCE_TCP_ALIAS		"force_tcp_alias"|"add_tcp_alias"
 SETFLAG		setflag
 RESETFLAG	resetflag
 ISFLAGSET	isflagset
+FLAGS_DECL	"flags"|"bool"
 SET_HOST		"rewritehost"|"sethost"|"seth"
 SET_HOSTPORT	"rewritehostport"|"sethostport"|"sethp"
 SET_USER		"rewriteuser"|"setuser"|"setu"
@@ -331,6 +332,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{SETFLAG}	{ count(); yylval.strval=yytext; return SETFLAG; }
 <INITIAL>{RESETFLAG}	{ count(); yylval.strval=yytext; return RESETFLAG; }
 <INITIAL>{ISFLAGSET}	{ count(); yylval.strval=yytext; return ISFLAGSET; }
+<INITIAL>{FLAGS_DECL}	{ count(); yylval.strval=yytext; return FLAGS_DECL; }
 <INITIAL>{MSGLEN}	{ count(); yylval.strval=yytext; return MSGLEN; }
 <INITIAL>{RETCODE}	{ count(); yylval.strval=yytext; return RETCODE; }
 <INITIAL>{ROUTE}	{ count(); yylval.strval=yytext; return ROUTE; }

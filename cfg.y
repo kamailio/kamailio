@@ -69,6 +69,7 @@
  * 2005-12-19  select framework (mma)
  * 2006-01-06  AVP index support (mma)
  * 2005-01-07  optional semicolon in statement, PARAM_STR&PARAM_STRING
+ * 2006-02-02  named flags support (andrei)
  */
 
 %{
@@ -94,6 +95,7 @@
 #include "ut.h"
 #include "dset.h"
 #include "select.h"
+#include "flags.h"
 
 #include "config.h"
 #ifdef USE_TLS
@@ -275,6 +277,8 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token MCAST_TTL
 %token TOS
 
+%token FLAGS_DECL
+
 %token ATTR_MARK
 %token SELECT_MARK
 %token ATTR_FROMUSER
@@ -344,6 +348,8 @@ static struct socket_id* mk_listen_id(char*, int, int);
 //%type <intval> class_id
 %type <intval> assign_op
 %type <select> select_id
+%type <strval>	flag_name;
+
 /*%type <route_el> rules;
   %type <route_el> rule;
 */
@@ -361,6 +367,7 @@ statements:
 	;
 statement:
 	assign_stm
+	| flags_decl
 	| module_stm
 	| {rt=REQUEST_ROUTE;} route_stm
 	| {rt=FAILURE_ROUTE;} failure_route_stm
@@ -427,6 +434,27 @@ id_lst:
 	phostport		{  $$=$1 ; }
 	| phostport id_lst	{ $$=$1; $$->next=$2; }
 	;
+
+flags_decl:		FLAGS_DECL	flag_list
+			|	FLAGS_DECL error { yyerror("flag list expected\n") };
+;
+flag_list:		flag_spec
+			|	flag_spec COMMA flag_list
+;
+
+flag_spec:		flag_name	{ if (register_flag($1,-1)<0)
+								yyerror("register flag failed");
+						}
+			|	flag_name COLON NUMBER {
+						if (register_flag($1, $3)<0)
+								yyerror("register flag failed");
+										}
+;
+
+flag_name:		STRING	{ $$=$1; }
+			|	ID		{ $$=$1; }
+;
+
 assign_stm:
 	DEBUG_V EQUAL NUMBER { debug=$3; }
 	| DEBUG_V EQUAL error  { yyerror("number  expected"); }
@@ -1476,11 +1504,42 @@ cmd:
 	| LOG_TOK LPAREN NUMBER COMMA STRING RPAREN	{$$=mk_action(LOG_T, 2, NUMBER_ST, (void*)$3, STRING_ST, $5); }
 	| LOG_TOK error 		{ $$=0; yyerror("missing '(' or ')' ?"); }
 	| LOG_TOK LPAREN error RPAREN	{ $$=0; yyerror("bad log argument"); }
-	| SETFLAG LPAREN NUMBER RPAREN	{$$=mk_action(SETFLAG_T, 1, NUMBER_ST, (void*)$3); }
+	| SETFLAG LPAREN NUMBER RPAREN	{
+							if (check_flag($3)==-1)
+								yyerror("bad flag value");
+							$$=mk_action(SETFLAG_T, 1, NUMBER_ST,
+													(void*)$3);
+									}
+	| SETFLAG LPAREN flag_name RPAREN	{
+							i_tmp=get_flag_no($3, strlen($3));
+							if (i_tmp<0) yyerror("flag not declared");
+							$$=mk_action(SETFLAG_T, 1, NUMBER_ST,
+										(void*)i_tmp); 
+									}
 	| SETFLAG error			{ $$=0; yyerror("missing '(' or ')'?"); }
-	| RESETFLAG LPAREN NUMBER RPAREN {$$=mk_action(RESETFLAG_T, 1, NUMBER_ST, (void*)$3); }
+	| RESETFLAG LPAREN NUMBER RPAREN {
+							if (check_flag($3)==-1)
+								yyerror("bad flag value");
+							$$=mk_action(RESETFLAG_T, 1, NUMBER_ST, (void*)$3);
+									}
+	| RESETFLAG LPAREN flag_name RPAREN	{
+							i_tmp=get_flag_no($3, strlen($3));
+							if (i_tmp<0) yyerror("flag not declared");
+							$$=mk_action(RESETFLAG_T, 1, NUMBER_ST,
+										(void*)i_tmp); 
+									}
 	| RESETFLAG error		{ $$=0; yyerror("missing '(' or ')'?"); }
-	| ISFLAGSET LPAREN NUMBER RPAREN {$$=mk_action(ISFLAGSET_T, 1, NUMBER_ST, (void*)$3); }
+	| ISFLAGSET LPAREN NUMBER RPAREN {
+							if (check_flag($3)==-1)
+								yyerror("bad flag value");
+							$$=mk_action(ISFLAGSET_T, 1, NUMBER_ST, (void*)$3);
+									}
+	| ISFLAGSET LPAREN flag_name RPAREN	{
+							i_tmp=get_flag_no($3, strlen($3));
+							if (i_tmp<0) yyerror("flag not declared");
+							$$=mk_action(ISFLAGSET_T, 1, NUMBER_ST,
+										(void*)i_tmp); 
+									}
 	| ISFLAGSET error { $$=0; yyerror("missing '(' or ')'?"); }
 	| ERROR LPAREN STRING COMMA STRING RPAREN {$$=mk_action(ERROR_T, 2, STRING_ST, $3, STRING_ST, $5); }
 	| ERROR error { $$=0; yyerror("missing '(' or ')' ?"); }

@@ -127,6 +127,7 @@
 #endif
 #include "usr_avp.h"
 #include "core_cmd.h"
+#include "flags.h"
 
 #include "stats.h"
 
@@ -1339,6 +1340,9 @@ try_again:
 
 	/*register builtin  modules*/
 	register_builtin_modules();
+
+	/* init named flags */
+	init_named_flags();
 
 	yyin=cfg_stream;
 	debug_save = debug;
