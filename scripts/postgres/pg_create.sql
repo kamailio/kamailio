@@ -349,6 +349,16 @@ CREATE TABLE presentity_notes (
     CONSTRAINT pnotes_idx1 UNIQUE (dbid)
 );
 
+CREATE TABLE presentity_persons (
+    dbid VARCHAR(64) NOT NULL,
+    presid INTEGER NOT NULL,
+    etag VARCHAR(64) NOT NULL,
+    person_element BYTEA NOT NULL,
+    id VARCHAR(128) NOT NULL,
+    expires TIMESTAMP NOT NULL DEFAULT '2005-12-07 08:13:15',
+    CONSTRAINT prespersons_idx1 UNIQUE (dbid)
+);
+
 CREATE TABLE presentity_contact (
     contactid SERIAL NOT NULL,
     presid INTEGER NOT NULL,
@@ -563,5 +573,5 @@ CREATE TABLE customers (
 );
 
 
-GRANT ALL ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,server_monitoring,server_monitoring_agg,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_contact,watcherinfo,tuple_notes,offline_winfo,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,customers TO ser;
-GRANT SELECT ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,server_monitoring,server_monitoring_agg,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_contact,watcherinfo,tuple_notes,offline_winfo,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,customers TO serro;
+GRANT ALL ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,server_monitoring,server_monitoring_agg,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_persons,presentity_contact,watcherinfo,tuple_notes,offline_winfo,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,customers TO ser;
+GRANT SELECT ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,server_monitoring,server_monitoring_agg,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_persons,presentity_contact,watcherinfo,tuple_notes,offline_winfo,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,customers TO serro;

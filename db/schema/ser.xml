@@ -67,6 +67,7 @@
     <!-- Presence related tables -->
     <xi:include href="presentity.xml"/>
     <xi:include href="presentity_notes.xml"/>
+    <xi:include href="presentity_persons.xml"/>
     <xi:include href="presentity_contact.xml"/>
     <xi:include href="watcherinfo.xml"/>
     <xi:include href="tuple_notes.xml"/>

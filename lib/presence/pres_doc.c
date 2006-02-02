@@ -52,6 +52,9 @@ presentity_info_t *create_presentity_info(const str_t *presentity)
 	p->first_note = NULL;
 	p->last_note = NULL;
 	p->auth = presence_auth_unresolved;
+
+	/* RPID extensions */
+	p->first_person = NULL;
 	
 	return p;
 }
@@ -111,10 +114,22 @@ void free_tuple_info(presence_tuple_info_t *t)
 	cds_free(t);
 }
 
+void free_person(person_t *p)
+{
+	if (p) {
+		str_free_content(&p->person_element);
+		str_free_content(&p->id);
+		/* str_free_content(&p->mood);
+		str_free_content(&p->activities); */
+	}
+	cds_free(p);
+}
+
 void free_presentity_info(presentity_info_t *p)
 {
 	presence_tuple_info_t *t, *tt;
 	presence_note_t *n, *nn;
+	person_t *np, *ps;
 	
 	if (!p) return;
 	t = p->first_tuple;
@@ -129,6 +144,13 @@ void free_presentity_info(presentity_info_t *p)
 		nn = n->next;
 		free_presence_note(n);
 		n = nn;
+	}
+	
+	ps = p->first_person;
+	while (ps) {
+		np = ps->next;
+		free_person(ps);
+		ps = np;
 	}
 	
 	cds_free(p);
@@ -196,4 +218,19 @@ presence_note_t *create_presence_note_zt(const char *note, const char *lang)
 	lang_s = zt2str((char*)lang);
 	
 	return create_presence_note(&note_s, &lang_s);
+}
+
+person_t *create_person(const str_t *element, const str_t *id)
+{
+	person_t *t;
+	t = (person_t*)cds_malloc(sizeof(*t));
+	if (!t) {
+		ERROR_LOG("can't allocate memory for person\n");
+		return t;
+	}
+	/* str_clear(&t->contact.s); */
+	str_dup(&t->person_element, element);
+	str_dup(&t->id, id);
+	t->next = NULL;
+	return t;
 }

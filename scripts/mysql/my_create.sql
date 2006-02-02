@@ -335,6 +335,16 @@ CREATE TABLE presentity_notes (
     UNIQUE KEY pnotes_idx1 (dbid)
 );
 
+CREATE TABLE presentity_persons (
+    dbid VARCHAR(64) NOT NULL,
+    presid INT(10) UNSIGNED NOT NULL,
+    etag VARCHAR(64) NOT NULL,
+    person_element BLOB NOT NULL,
+    id VARCHAR(128) NOT NULL,
+    expires DATETIME NOT NULL DEFAULT '2005-12-07 08:13:15',
+    UNIQUE KEY prespersons_idx1 (dbid)
+);
+
 CREATE TABLE presentity_contact (
     contactid INT(10) UNSIGNED AUTO_INCREMENT NOT NULL,
     presid INT(10) UNSIGNED NOT NULL,

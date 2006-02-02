@@ -322,6 +322,16 @@ CREATE TABLE presentity_notes (
     pnotes_idx1 UNIQUE (dbid, )
 );
 
+CREATE TABLE presentity_persons (
+    dbid string(64) NOT NULL,
+    presid int(10) NOT NULL,
+    etag string(64) NOT NULL,
+    person_element binary NOT NULL,
+    id string(128) NOT NULL,
+    expires datetime NOT NULL DEFAULT '2005-12-07 08:13:15',
+    prespersons_idx1 UNIQUE (dbid, )
+);
+
 CREATE TABLE presentity_contact (
     contactid int(10) NOT NULL,
     presid int(10) NOT NULL,

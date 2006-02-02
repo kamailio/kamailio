@@ -59,11 +59,27 @@ typedef struct _presence_tuple_info_t {
 	presence_note_t *first_note, *last_note;/* published notes */
 } presence_tuple_info_t;
 
+/* additional data taken from RPID specification */
+typedef struct _person_t {
+	str_t id;
+
+	/* mood has absolutely no value for our processing - 
+	 * we hold there the content of <mood> element */
+/*	str_t mood;*/
+	
+	/* other such element */
+/*	str_t activities;*/
+	str_t person_element;
+
+	struct _person_t *next; /* there can be more person elements in PIDF */
+} person_t;
+
 typedef struct {
 	str_t presentity; /* do not modify this !*/
 	presence_tuple_info_t *first_tuple, *last_tuple;
 	presence_authorization_status_t auth;
 	presence_note_t *first_note, *last_note;/* published notes */
+	person_t *first_person;
 		
 	char presentity_data[1];
 } presentity_info_t;
@@ -94,5 +110,7 @@ void free_list_presence_info(list_presence_info_t *p);
 presence_note_t *create_presence_note(const str_t *note, const str_t *lang);
 presence_note_t *create_presence_note_zt(const char *note, const char *lang);
 void free_presence_note(presence_note_t *n);
+
+person_t *create_person(const str_t *element, const str_t *id);
 
 #endif

@@ -105,6 +105,12 @@ static void doc_add_note(dstring_t *buf, presentity_info_t *p, presence_note_t *
 	dstr_append_zt(buf, "</note>\r\n");
 }
 
+static void doc_add_person(dstring_t *buf, presentity_info_t *p, person_t *ps)
+{
+	dstr_append_str(buf, &ps->person_element);
+	dstr_append_zt(buf, "\r\n");
+}
+
 static void dstr_put_pres_uri(dstring_t *buf, str_t *uri)
 {
 	char *c;
@@ -131,6 +137,7 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p, int use_cpi
 {
 	presence_tuple_info_t *t;
 	presence_note_t *n;
+	person_t *ps;
 
 	DEBUG_LOG("doc_add_presentity()\n");
 	if (use_cpim_pidf_ns)
@@ -142,7 +149,7 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p, int use_cpi
 	/* dstr_append_str(buf, &p->presentity); */ /* only for test !!! */
 	dstr_append_zt(buf, "\">\r\n");
 	
-	DEBUG_LOG("doc_add_presentity(): adding tuples\n");
+	DEBUG_LOG("adding tuples\n");
 	t = p->first_tuple;
 	if (!t) doc_add_empty_tuple(buf); /* correction for some strange clients :-) */
 	while (t) {
@@ -150,11 +157,18 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p, int use_cpi
 		t = t->next;
 	}
 	
-	DEBUG_LOG("doc_add_presentity(): adding notes\n");
+	DEBUG_LOG("adding notes\n");
 	n = p->first_note;
 	while (n) {
 		doc_add_note(buf, p, n);
 		n = n->next;
+	}
+	
+	DEBUG_LOG("adding persons\n");
+	ps = p->first_person;
+	while (ps) {
+		doc_add_person(buf, p, ps);
+		ps = ps->next;
 	}
 
 	dstr_append_zt(buf, "</presence>\r\n");
@@ -202,6 +216,8 @@ int create_pidf_document(presentity_info_t *p, str_t *dst, str_t *dst_content_ty
 /* ------------------------------ PIDF document parsing ------------------------------ */
 
 static char *pidf_ns = "urn:ietf:params:xml:ns:pidf";
+/* static char *rpid_ns = "urn:ietf:params:xml:ns:pidf:rpid"; */
+static char *data_model_ns = "urn:ietf:params:xml:ns:pidf:data-model";
 
 static int read_note(xmlNode *node, presence_note_t **dst)
 {
@@ -305,7 +321,68 @@ static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst, int ignore_ns
 	return res;
 }
 
-static int read_presentity(xmlNode *root, presentity_info_t **dst, int ignore_ns)
+static int get_whole_node_content(xmlNode *n, str_t *dst, xmlDocPtr doc)
+{
+	if (n) {
+		n = xmlCopyNode(n, 1); /* this inserts namespaces into element correctly */
+		if (!n) {
+			ERROR_LOG("can't duplicate XML node\n");
+			return -1;
+		}
+	}
+	if (n) {
+		xmlBufferPtr buf;
+		buf = xmlBufferCreate();
+		if (buf == NULL) {
+			ERROR_LOG("Error creating the xml buffer\n");
+			return -1;
+		}
+		xmlNodeDump(buf, doc, n, 0, 0);
+		if (buf->use > 0) {
+			str_t s;
+			s.s = (char *)buf->content;
+			s.len = buf->use;
+			str_dup(dst, &s);
+		}
+		xmlBufferFree(buf);
+		xmlFreeNode(n); /* was duplicated due to namespaces! */
+	}
+	return 0;
+}
+
+static int read_person(xmlNode *person, person_t **dst, xmlDocPtr doc)
+{
+	person_t *p;
+	/* xmlNode *n; */
+
+	if (!dst) return -1;
+	*dst = NULL;
+	
+	p = (person_t*)cds_malloc(sizeof(person_t));
+	if (!p) return -1;
+	
+	memset(p, 0, sizeof(*p));
+	*dst = p;
+
+	TRACE_LOG("reading person ()\n");
+	
+	str_dup_zt(&p->id, get_attr_value(find_attr(person->properties, "id")));
+	
+	/* try to find mood */
+/*	n = find_node(person, "mood", rpid_ns);
+	if (n) get_whole_node_content(n, &p->mood, doc);
+*/	
+	/* try to find activities */
+/*	n = find_node(person, "activities", rpid_ns);
+	if (n) get_whole_node_content(n, &p->activities, doc);
+*/
+	/* do not care about internals of person - take whole element ! */
+	get_whole_node_content(person, &p->person_element, doc);
+	
+	return 0;
+}
+
+static int read_presentity(xmlNode *root, presentity_info_t **dst, int ignore_ns, xmlDocPtr doc)
 {
 	xmlNode *n;
 	str_t entity;
@@ -313,6 +390,7 @@ static int read_presentity(xmlNode *root, presentity_info_t **dst, int ignore_ns
 	presence_note_t *note;
 	int res = 0;
 	char *ns = ignore_ns ? NULL: pidf_ns;
+	person_t *p, *lastp;
 	
 	DEBUG_LOG("read_presentity(ns=%s)\n", ns ? ns : "");
 	if (cmp_node(root, "presence", ns) < 0) {
@@ -324,6 +402,7 @@ static int read_presentity(xmlNode *root, presentity_info_t **dst, int ignore_ns
 	*dst = create_presentity_info(&entity);
 	if (!(*dst)) return -1; /* memory */
 
+	lastp = NULL;
 	n = root->children;
 	while (n) {
 		if (n->type == XML_ELEMENT_NODE) {
@@ -340,6 +419,16 @@ static int read_presentity(xmlNode *root, presentity_info_t **dst, int ignore_ns
 				}
 				else break;
 			}
+			
+			/* RPID extensions */
+			if (cmp_node(n, "person", data_model_ns) >= 0) {
+				p = NULL;
+				res = read_person(n, &p, doc);
+				if ((res == 0) && p) 
+					LINKED_LIST_ADD((*dst)->first_person, lastp, p);
+				/*if (res != 0) break; ignore errors there */
+			}
+			
 		}
 		n = n->next;
 	}
@@ -363,7 +452,7 @@ int parse_pidf_document_ex(presentity_info_t **dst, const char *data, int data_l
 		return -1;
 	}
 	
-	res = read_presentity(xmlDocGetRootElement(doc), dst, ignore_ns);
+	res = read_presentity(xmlDocGetRootElement(doc), dst, ignore_ns, doc);
 	if (res != 0) {
 		/* may be set => must be freed */
 		if (*dst) free_presentity_info(*dst);
