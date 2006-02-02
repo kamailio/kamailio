@@ -397,6 +397,18 @@ CREATE TABLE tuple_notes (
     lang VARCHAR(64) NOT NULL
 );
 
+CREATE TABLE offline_winfo (
+    uid VARCHAR(64) NOT NULL,
+    watcher VARCHAR(255) NOT NULL,
+    events VARCHAR(64) NOT NULL,
+    domain VARCHAR(64),
+    created_on TIMESTAMP NOT NULL DEFAULT '2006-01-31 13:13:13',
+    expires_on TIMESTAMP NOT NULL DEFAULT '2006-01-31 13:13:13',
+    dbid SERIAL NOT NULL
+);
+
+CREATE INDEX offline_winfo_key ON offline_winfo (dbid);
+
 CREATE TABLE rls_subscription (
     id VARCHAR(48) NOT NULL,
     doc_version INTEGER NOT NULL,
@@ -551,5 +563,5 @@ CREATE TABLE customers (
 );
 
 
-GRANT ALL ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,server_monitoring,server_monitoring_agg,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_contact,watcherinfo,tuple_notes,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,customers TO ser;
-GRANT SELECT ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,server_monitoring,server_monitoring_agg,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_contact,watcherinfo,tuple_notes,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,customers TO serro;
+GRANT ALL ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,server_monitoring,server_monitoring_agg,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_contact,watcherinfo,tuple_notes,offline_winfo,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,customers TO ser;
+GRANT SELECT ON version,acc,missed_calls,credentials,attr_types,global_attrs,domain_attrs,user_attrs,domain,location,trusted,server_monitoring,server_monitoring_agg,phonebook,gw,gw_grp,lcr,grp,silo,uri,speed_dial,sd_attrs,presentity,presentity_notes,presentity_contact,watcherinfo,tuple_notes,offline_winfo,rls_subscription,rls_vs,rls_vs_names,i18n,pdt,customers TO serro;

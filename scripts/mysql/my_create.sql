@@ -381,6 +381,17 @@ CREATE TABLE tuple_notes (
     lang VARCHAR(64) NOT NULL
 );
 
+CREATE TABLE offline_winfo (
+    uid VARCHAR(64) NOT NULL,
+    watcher VARCHAR(255) NOT NULL,
+    events VARCHAR(64) NOT NULL,
+    domain VARCHAR(64),
+    created_on DATETIME NOT NULL DEFAULT '2006-01-31 13:13:13',
+    expires_on DATETIME NOT NULL DEFAULT '2006-01-31 13:13:13',
+    dbid INT(10) UNSIGNED AUTO_INCREMENT NOT NULL,
+    KEY offline_winfo_key (dbid)
+);
+
 CREATE TABLE rls_subscription (
     id VARCHAR(48) NOT NULL,
     doc_version INT NOT NULL,

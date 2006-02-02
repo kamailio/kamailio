@@ -70,6 +70,7 @@
     <xi:include href="presentity_contact.xml"/>
     <xi:include href="watcherinfo.xml"/>
     <xi:include href="tuple_notes.xml"/>
+    <xi:include href="offline_winfo.xml"/>
     
 	<!-- Resource-lists related tables -->
     <xi:include href="rls_subscription.xml"/>
