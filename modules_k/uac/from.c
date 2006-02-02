@@ -170,15 +170,18 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 	str buf;
 	int i;
 
-	/* consistency check! do NOT allow from changing in sequential request*/
-	if ( msg->to==0 && (parse_headers(msg,HDR_TO_F,0)!=0 || msg->to==0) ) {
-		LOG(L_ERR,"ERROR:uac:replace_from: failed to parse TO hdr\n");
-		goto error;
-	}
-	if (get_to(msg)->tag_value.len!=0) {
-		LOG(L_ERR,"ERROR:uac:replace_from: decline FROM replacing in "
-			"sequential request (has TO tag)\n");
-		goto error;
+	/* consistency check! in AUTO mode, do NOT allow FROM changing
+	 * in sequential request */
+	if (from_restore_mode==FROM_AUTO_RESTORE) {
+		if ( msg->to==0 && (parse_headers(msg,HDR_TO_F,0)!=0 || msg->to==0) ) {
+			LOG(L_ERR,"ERROR:uac:replace_from: failed to parse TO hdr\n");
+			goto error;
+		}
+		if (get_to(msg)->tag_value.len!=0) {
+			LOG(L_ERR,"ERROR:uac:replace_from: decline FROM replacing in "
+				"sequential request in auto mode (has TO tag)\n");
+			goto error;
+		}
 	}
 
 	/* parse original from hdr */
