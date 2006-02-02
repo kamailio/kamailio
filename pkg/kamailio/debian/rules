@@ -187,27 +187,20 @@ install: build
 binary-common: 
 	dh_testdir
 	dh_testroot
-#	dh_installdebconf	
+	dh_installdebconf
 	dh_installdocs
 	dh_installexamples
-	dh_installmenu
 #	dh_installlogrotate
-#	dh_installemacsen
-#	dh_installpam
-#	dh_installmime
 	dh_installinit -popenser -popenser-tls --name=openser -- defaults 23
 	dh_installcron
 	dh_installman
 	dh_installinfo
-#	dh_undocumented
-	dh_installchangelogs 
+	dh_installchangelogs
 	dh_link
 	dh_strip
 	dh_compress 
 	dh_fixperms
-#	dh_makeshlibs
 	dh_installdeb
-#	dh_perl
 	dh_shlibdeps
 	dh_gencontrol
 	dh_md5sums

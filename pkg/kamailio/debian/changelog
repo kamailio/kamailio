@@ -1,3 +1,26 @@
+openser (1.0.0-1) unstable; urgency=low
+
+  * Added support for debconf. A number of things can now be configured
+    when installing the package: if to start on boot, the ammount of
+    memory the openser server will use and if to dump core files when
+    the server crashes.
+  * Added support for storing startup options in /etc/default/openser.
+    This file is used by /etc/init.d/openser to setup various startup
+    options which no longer need to be modified in the startup script
+    itself.
+  * Fixed issue with not adding dependency on libradius-ng
+  * Fixed issue with the debian postinst scripts which resulted in the
+    openser system user not being created for the openser-tls package
+  * Fixed issue with some debhelper entries being added twice in the
+    openser postrm and prerm scripts
+  * Fixed issue with the openser system user not having his home
+    directory removed on purge
+  * Fixed a number of typos in the Suggests and Conflicts directives
+    in the debian control file
+  * Up to date with recent bugfixes from upstream
+
+ -- Dan Pascu <dan@ag-projects.com>  Thu, 02 Feb 2006 12:47:41 +0200
+
 openser (1.0.0-0) unstable; urgency=low
 
   * First Public Release.

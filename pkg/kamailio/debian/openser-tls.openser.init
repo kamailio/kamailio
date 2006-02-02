@@ -9,7 +9,7 @@
 #
 # Version:	@(#)skeleton  1.8  03-Mar-1998  miquels@cistron.nl
 #
-#  adapted for openser by Daniel-Constantin Mierla <daniel@voice-system.ro>
+# adapted for openser by Daniel-Constantin Mierla <daniel@voice-system.ro>
 # $Id$
 
 
@@ -17,18 +17,51 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/sbin/openser
 NAME=openser
 DESC=openser
-PIDFILE=/var/run/$NAME/$NAME.pid
-PARAMS="-P $PIDFILE -u openser -g openser"
+HOMEDIR=/var/run/openser
+PIDFILE=$HOMEDIR/$NAME.pid
+DEFAULTS=/etc/default/openser
 
 test -f $DAEMON || exit 0
 
+# Load startup options if available
+if [ -f $DEFAULTS ]; then
+   . $DEFAULTS || true
+fi
+
 set -e
+
+MEMORY=$((`echo $MEMORY | sed -e 's/[^0-9]//g'`))
+[ -z "$USER" ]  && USER=openser
+[ -z "$GROUP" ] && GROUP=openser
+[ $MEMORY -le 0 ] && MEMORY=32
+
+if test "$DUMP_CORE" = "yes" ; then
+    # Ignore USER and GROUP in this case and use root,
+    # else it won't write the core file.
+    OPTIONS="-P $PIDFILE -m $MEMORY -u root -g root -w $HOMEDIR"
+    ulimit -c unlimited
+else
+    OPTIONS="-P $PIDFILE -m $MEMORY -u $USER -g $GROUP"
+fi
 
 case "$1" in
   start)
+	# Check if openser configuration is valid before starting the server
+	set +e
+	out=`($DAEMON -c >/dev/null) 2>&1`
+	retcode=$?
+	set -e
+	if [ "$retcode" != '0' ]; then
+	    echo -e "\nThere are errors in the configuration file. Please fix them first."
+	    echo -e "Also make sure you have installed the debian packages that provide"
+	    echo -e "the additional modules that your configuration requires. cpl, jabber,"
+	    echo -e "mysql, postgres and radius are in separate packages."
+	    echo -e "\n$out\n"
+	    exit 0
+	fi
 	echo -n "Starting $DESC: $NAME"
 	start-stop-daemon --start --quiet --pidfile $PIDFILE \
-		--exec $DAEMON -- $PARAMS || echo -n " already running"
+		--exec $DAEMON -- $OPTIONS || echo -n " already running"
 	echo "."
 	;;
   stop)
@@ -61,7 +94,10 @@ case "$1" in
 	retcode=$?
 	set -e
 	if [ "$retcode" != '0' ]; then
-	    echo -e "\nThere are errors in the configuration file. Please fix them first"
+	    echo -e "\nThere are errors in the configuration file. Please fix them first."
+	    echo -e "Also make sure you have installed the debian packages that provide"
+	    echo -e "the additional modules that your configuration requires. cpl, jabber,"
+	    echo -e "mysql, postgres and radius are in separate packages."
 	    echo -e "\n$out\n"
 	    exit 0
 	fi
@@ -70,7 +106,7 @@ case "$1" in
 		$PIDFILE --exec $DAEMON
 	sleep 1
 	start-stop-daemon --start --quiet --pidfile \
-		$PIDFILE --exec $DAEMON  -- $PARAMS
+		$PIDFILE --exec $DAEMON  -- $OPTIONS
 	echo "."
 	;;
   *)
