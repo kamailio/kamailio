@@ -197,3 +197,33 @@ char *str_strchr(const str_t *s, char c)
 	return NULL;
 }
 
+/* creates new string as concatenation of a and b */
+int str_concat(str_t *dst, str_t *a, str_t *b)
+{
+	int al;
+	int bl;
+	
+	if (!dst) return -1;
+	
+	al = str_len(a);
+	bl = str_len(b);
+	
+	dst->len = al + bl;
+	if (dst->len > 0) {
+		dst->s = (char *)cds_malloc(dst->len);
+		if (!dst->s) {
+			dst->len = 0;
+			return -1;
+		}
+	}
+	else {
+		dst->s = NULL;
+		dst->len = 0;
+		return 0;
+	}
+	
+	if (al) memcpy(dst->s, a->s, al);
+	if (bl) memcpy(dst->s + al, b->s, bl);
+	
+	return 0;
+}

@@ -49,6 +49,8 @@ typedef struct {
 
 #define FMT_STR(str)	(str).len,((str).s ? (str).s : "")	
 
+#define str_len(ptr)	((ptr)?(ptr)->len:0)
+
 /** transalate zero-terminated string to str_t (both uses the input buffer!)*/
 str_t zt2str(char *str);
 
@@ -99,6 +101,9 @@ void str_clear(str_t *s);
 
 /** locate character in string */
 char *str_strchr(const str_t *s, char c);
+
+/* creates new string as concatenation of a and b */
+int str_concat(str_t *dst, str_t *a, str_t *b);
 
 #ifdef __cplusplus
 }

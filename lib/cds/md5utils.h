@@ -1,5 +1,8 @@
 /* 
- * Copyright (C) 2005 iptelorg GmbH
+ * $Id$
+ *
+ *
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -18,35 +21,19 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __LOGGER_H
-#define __LOGGER_H
 
-#ifndef SER
+#ifndef _MD5UTILS_H
+#define _MD5UTILS_H
 
-#include <stdio.h>
+#include <cds/sstr.h>
 
-#define ERROR_LOG(a,args...)		do{printf(a,##args);}while(0)
-#define DEBUG_LOG(a,args...)		do{printf(a,##args);}while(0)
-#define TRACE_LOG(a,args...)		do{printf(a,##args);}while(0)
-#define WARN_LOG(a,args...)			do{printf(a,##args);}while(0)
-#define FLUSH_LOG()					do{fflush(stdout);}while(0)
+#define MD5_LEN	32
 
-#else
-/* TODO: logging for SER */
+void MDStringArray (char *dst, str_t src[], int size);
 
-#include "dprint.h"
-
-#define ERROR_LOG(a,args...)		LOG(L_ERR,a,##args)
-#define DEBUG_LOG(a,args...)		LOG(L_DBG,a,##args)
-#define TRACE_LOG(a,args...)		LOG(L_DBG,a,##args)
-#define WARN_LOG(a,args...)			LOG(L_WARN,a,##args)
-#define FLUSH_LOG()					do{}while(0)
-
-#endif
-
-#endif
+#endif /* _MD5UTILS_H */

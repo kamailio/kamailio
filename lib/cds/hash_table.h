@@ -39,7 +39,7 @@ typedef struct ht_statistic {
 typedef const void* ht_key_t;
 typedef void* ht_data_t;
 
-typedef int (*hash_func_t)(ht_key_t k);
+typedef unsigned int (*hash_func_t)(ht_key_t k);
 typedef int (*key_cmp_func_t)(ht_key_t a, ht_key_t b);
 
 typedef struct ht_element {
