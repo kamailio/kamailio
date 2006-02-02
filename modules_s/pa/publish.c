@@ -493,6 +493,26 @@ static void add_presentity_notes(presentity_t *presentity, presentity_info_t *p,
 	}
 }
 
+static pa_person_element_t *person_element2pa(person_t *n, str *etag, time_t expires)
+{
+	return create_person_element(etag, &n->person_element, &n->id, expires, NULL);
+}
+
+static void add_person_elements(presentity_t *presentity, presentity_info_t *p, str *etag, time_t expires)
+{
+	person_t *n;
+	pa_person_element_t *pan;
+
+	if (!p) return;
+	
+	n = p->first_person;
+	while (n) {
+		pan = person_element2pa(n, etag, expires);
+		if (pan) add_person_element(presentity, pan);
+		n = n->next;
+	}
+}
+
 presence_tuple_t *presence_tuple_info2pa(presence_tuple_info_t *i, str *etag, time_t expires)
 {
 	presence_tuple_t *t = NULL;
@@ -653,15 +673,22 @@ int process_published_presentity_info(presentity_t *presentity, presentity_info_
 		
 		/* add all tuples */
 		add_published_tuples(presentity, p, etag, expires);
+
+		/* add all person elements (RPID) */
+		add_person_elements(presentity, p, etag, expires);
 	}
 	else {
 		/* remove all notes for this etag */
 		remove_pres_notes(presentity, etag);
 		
+		/* remove all person elements (RPID) */
+		remove_person_elements(presentity, etag);
+		
 		if (p) {
 			/* add all notes for presentity */
 			add_presentity_notes(presentity, p, etag, expires);
 			update_published_tuples(presentity, p, etag, expires);
+			add_person_elements(presentity, p, etag, expires);
 		}
 		else update_all_published_tuples(presentity, etag, expires);
 	}

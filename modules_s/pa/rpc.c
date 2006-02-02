@@ -39,6 +39,7 @@ static void trace_presentity(presentity_t *p, rpc_t* rpc, void* c)
 	presence_tuple_t *t;
 	internal_pa_subscription_t *iw;
 	pa_presence_note_t *n;
+	pa_person_element_t *ps;
 	
 	rpc->printf(c, "* %.*s (uid=%.*s)", FMT_STR(p->uri), FMT_STR(p->uuid));
 	rpc_lf(rpc, c);
@@ -88,6 +89,19 @@ static void trace_presentity(presentity_t *p, rpc_t* rpc, void* c)
 		rpc->printf(c, "     %.*s (%.*s) exp=%s", 
 				FMT_STR(n->note), FMT_STR(n->lang), ctime(&n->expires));
 		n = n->next;
+	}
+	rpc_lf(rpc, c);
+	
+	rpc->printf(c, " - person elements:");
+	rpc_lf(rpc, c);
+	ps = p->person_elements;
+	while (ps) {
+		rpc->printf(c, "     %.*s exp=%s %.*s", 
+				FMT_STR(ps->id), ctime(&ps->expires));
+		rpc_lf(rpc, c);
+		rpc->printf(c, "     %.*s", FMT_STR(ps->person));
+		rpc_lf(rpc, c);
+		ps = ps->next;
 	}
 	rpc_lf(rpc, c);
 }

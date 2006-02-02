@@ -297,6 +297,7 @@ int db_remove_presentity(presentity_t* presentity)
 	res = db_remove_all_tuple_notes(presentity) | res;
 	res = db_remove_watchers(presentity) | res;
 	res = db_remove_pres_notes(presentity) | res;
+	res = db_remove_person_elements(presentity) | res;
 	 
 	query_cols[0] = "uri";
 	query_ops[0] = OP_EQ;
@@ -1052,6 +1053,22 @@ static void remove_expired_notes(presentity_t *_p)
 	}
 }
 
+static void remove_expired_person_elements(presentity_t *_p)
+{
+	pa_person_element_t *n, *nn;
+
+	n = _p->person_elements;
+	while (n) {
+		nn = n->next;
+		if (n->expires < act_time) {
+			LOG(L_DBG, "Expiring person element %.*s\n", FMT_STR(n->id));
+			remove_person_element(_p, n);
+			_p->flags |= PFLAG_PRESENCE_CHANGED;
+		}
+		n = nn;
+	}
+}
+
 static void process_presentity_messages(presentity_t *p)
 {
 	mq_message_t *msg;
@@ -1106,6 +1123,7 @@ int timer_presentity(presentity_t* _p)
 	remove_expired_tuples(_p, NULL);
 	
 	remove_expired_notes(_p);
+	remove_expired_person_elements(_p);
 	
 	/* notify watchers and remove expired */
 	process_watchers(_p, NULL);	
@@ -1530,6 +1548,7 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 		db_read_watcherinfo(presentity, db);
 		db_read_tuples(presentity, db);
 		db_read_notes(presentity, db);
+		db_read_person_elements(presentity, db);
 	}
 	
 	close_pa_db_connection(db);

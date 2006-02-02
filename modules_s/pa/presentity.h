@@ -114,6 +114,15 @@ typedef struct pa_presence_note {
 	struct pa_presence_note *prev, *next; /* linking members */
 } pa_presence_note_t;
 
+typedef struct _pa_person_element_t {
+	str etag; /* published via this etag */
+	str person; /* person element */
+	str id; /* id */
+	time_t expires; /* expires on ... */
+	str dbid; /* id for database ops - needed for removing expired */
+	struct _pa_person_element_t *prev, *next; /* linking members */
+} pa_person_element_t;
+
 typedef struct {
 	str user;
 	str contact;
@@ -158,6 +167,8 @@ typedef struct presentity {
 	msg_queue_t mq;	/* message queue supplying direct usrloc callback processing */
 	
 	pa_presence_note_t *notes;
+
+	pa_person_element_t *person_elements;
 	
 	str uuid; /* use after usrloc uuid-zation - callbacks are registered to this */
 } presentity_t;
@@ -284,6 +295,15 @@ int remove_pres_notes(presentity_t *p, str *etag);
 pa_presence_note_t *create_pres_note(str *etag, str *note, str *lang, time_t expires, str *dbid);
 int db_read_notes(presentity_t *p, db_con_t* db);
 int db_remove_pres_notes(presentity_t *p); /* remove all notes for presentity */
+
+/* person element functions */
+void add_person_element(presentity_t *_p, pa_person_element_t *n);
+void free_person_element(pa_person_element_t *n);
+void remove_person_element(presentity_t *_p, pa_person_element_t *n);
+int remove_person_elements(presentity_t *p, str *etag);
+pa_person_element_t *create_person_element(str *etag, str *element, str *id, time_t expires, str *dbid);
+int db_read_person_elements(presentity_t *p, db_con_t* db);
+int db_remove_person_elements(presentity_t *p); /* remove all notes for presentity */
 
 /* tuple note functions */
 int db_read_tuple_notes(presentity_t *p, presence_tuple_t *t, db_con_t* db);

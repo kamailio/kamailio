@@ -216,6 +216,8 @@ presentity_info_t *presentity2presentity_info(presentity_t *p)
 	presence_tuple_t *t;
 	pa_presence_note_t *pan;
 	presence_note_t *n;
+	pa_person_element_t *paps;
+	person_t *ps, *last_ps;
 
 	/* DEBUG_LOG("p2p_info()\n"); */
 	if (!p) return NULL;
@@ -250,6 +252,16 @@ presentity_info_t *presentity2presentity_info(presentity_t *p)
 		if (n) DOUBLE_LINKED_LIST_ADD(pinfo->first_note, pinfo->last_note, n);
 		pan = pan->next;
 	}
+
+	/* person elements */
+	last_ps = NULL;
+	paps = p->person_elements;
+	while (paps) {
+		ps = create_person(&paps->person, &paps->id);
+		if (ps) LINKED_LIST_ADD(pinfo->first_person, last_ps, ps);
+		paps = paps->next;
+	}
+	
 	/* DEBUG_LOG("p2p_info() finished\n"); */
 	return pinfo;
 }

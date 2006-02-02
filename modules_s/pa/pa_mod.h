@@ -57,6 +57,7 @@ extern str pa_domain;
 extern char *presentity_table;
 extern char *presentity_contact_table;
 extern char *presentity_notes_table;
+extern char *person_elements_table;
 extern char *watcherinfo_table;
 extern char *place_table;
 extern char *tuple_notes_table;

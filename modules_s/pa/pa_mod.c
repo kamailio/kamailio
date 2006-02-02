@@ -87,6 +87,7 @@ str pa_domain = STR_NULL;
 char *presentity_table = "presentity";
 char *presentity_contact_table = "presentity_contact";
 char *presentity_notes_table = "presentity_notes";
+char *person_elements_table = "presentity_persons";
 char *tuple_notes_table = "tuple_notes";
 char *watcherinfo_table = "watcherinfo";
 char *place_table = "place";
@@ -122,7 +123,7 @@ static cmd_export_t cmds[]={
 
 	/* still undocumented (TODO) */
 	{"target_online",         target_online,         1, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"store_winfo",           store_offline_winfo,   2, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"store_winfo",           store_offline_winfo,   1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"dump_stored_winfo",     dump_offline_winfo,    2, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 
 	/* FIXME: are these functions used to something by somebody */
