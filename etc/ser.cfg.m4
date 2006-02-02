@@ -1,10 +1,17 @@
 ### m4 macros to make the configuration easier
 
+include(`rules.m4')
+
 define(`SER_IP', `192.168.0.1')
 define(`SER_HOSTNAME', `foo.bar')
 
 define(`GW_IP_1', `192.168.0.2')
 define(`GW_IP_2', `192.168.0.3')
+
+declare(flags, ACC_FLAG, MISSED_FLAG, VM_FLAG, NAT_FLAG)
+declare(route, PSTN_ROUTE, NAT_ROUTE, VOICEMAIL_ROUTE, PSTN2_ROUTE)
+declare(onreply, NAT_REPLY)
+declare(failure, PSTN_FAILURE, _1_FAILURE)
 
 ### End of m4 macro section
 
@@ -234,12 +241,12 @@ route {
                 # check if someone has not introduced a pre-loaded INVITE -- if so,
                 # verify caller's privileges before accepting rr-ing
                 if ((method=="INVITE" || method=="ACK" || method=="CANCEL") && uri =~ "TO_GW") {
-                        route(PSTN); # Forward to PSTN gateway
+                        route(PSTN_ROUTE); # Forward to PSTN gateway
                 } else {
                         append_hf("P-hint: rr-enforced\r\n");
                         # account all BYEs 
                         if (method=="BYE") setflag(ACC_FLAG);
-                        route(NAT);  # Generic forward
+                        route(NAT_ROUTE);  # Generic forward
                 };
                 break;
         };
@@ -250,7 +257,7 @@ route {
                 # its address may show up in subsequent requests after
                 # rewriteFromRoute
                 append_hf("P-hint: OUTBOUND\r\n");
-                route(NAT);
+                route(NAT_ROUTE);
                 break;
         };
 
@@ -306,7 +313,7 @@ route {
         # check again, if it is still for our domain after aliases
         if (!(uri == myself || uri =~ "TO_GW")) {
                 append_hf("P-hint: ALIASED-OUTBOUND\r\n");
-                route(NAT);
+                route(NAT_ROUTE);
                 break;
         };
 
@@ -319,7 +326,7 @@ route {
 	if (!does_uri_exist()) {
 		# Try numeric destinations through the gateway
 		if (uri =~ "^[a-zA-Z]+:[0-9]+@") {
-			route(PSTN);
+			route(PSTN_ROUTE);
 		} else {
 			sl_send_reply("604", "Does Not Exist Anywhere");
 		};
@@ -336,7 +343,7 @@ route {
         # native SIP destinations are handled using our USRLOC DB
         if (!lookup("location")) {
                 # handle user which was not found
-                route(VOICEMAIL);
+                route(VOICEMAIL_ROUTE);
                 break;
         };
 
@@ -344,14 +351,14 @@ route {
         # contacts to UsrLoc to bypass our authorization logic
         if (uri =~ "TO_GW") {
                 log(1, "LOG: Weird! Gateway address in UsrLoc!\n");
-                route(PSTN);
+                route(PSTN_ROUTE);
                 break;
         };
 
         # if user is on-line and is in voicemail group, enable redirection
         /* no voicemail currently activated
         if (method == "INVITE" && isflagset(VM_FLAG)) {
-                t_on_failure("1");
+                t_on_failure(_1_FAILURE);    # failure_route() not defined
         };
         */
 
@@ -361,13 +368,13 @@ route {
 
         # we now know we may, we know where, let it go out now!
         append_hf("P-hint: USRLOC\r\n");
-        route(NAT);
+        route(NAT_ROUTE);
 }
 
 #
 # Forcing media relay if necesarry
 #
-route[NAT] {
+route[NAT_ROUTE] {
     if (uri=~"[@:](192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)" && !search("^Route:")) {
             sl_send_reply("479", "We don't forward to private IP addresses");
             break;
@@ -384,7 +391,7 @@ route[NAT] {
     # re-INVITEs from public to private UA are hard to identify as
     # natted at the moment of request processing); look at replies
 
-    t_on_reply("1");
+    t_on_reply(NAT_REPLY);
 
     if (!t_relay()) {
             sl_reply_error();
@@ -393,7 +400,7 @@ route[NAT] {
 }
 
 
-onreply_route[1] {
+onreply_route[NAT_REPLY] {
         # natted transaction ?
         if (isflagset(NAT_FLAG) && status =~ "(183)|2[0-9][0-9]") {
                 fix_nated_contact();
@@ -404,8 +411,8 @@ onreply_route[1] {
                 fix_nated_contact();
         };
 
-        # keep Cisco gatweay sending keep-alives
-        if (isflagset(7) && status=~"2[0-9][0-9]") {
+        # keep Cisco gateway sending keep-alives
+        if (isflagset(7) && status=~"2[0-9][0-9]") {   # flag(7) is mentioned NAT_FLAG ??
                 remove_hf("Session-Expires");
                 append_hf("Session-Expires: 60;refresher=UAC\r\n");
                 fix_nated_sdp("1");
@@ -416,7 +423,7 @@ onreply_route[1] {
 #
 # logic for calls to the PSTN
 #
-route[PSTN] {
+route[PSTN_ROUTE] {
 
         # discard non-PSTN methods
         if (!(method == "INVITE" || method == "ACK" || method == "CANCEL" || method == "OPTIONS" || method == "BYE")) {
@@ -451,7 +458,7 @@ route[PSTN] {
                 	};
 		} else {
 			# Allow free-pstn destinations without any checks
-			route(5);
+			route(PSTN2_ROUTE);
 			break;
 		};
 
@@ -460,7 +467,7 @@ route[PSTN] {
 			    sl_send_reply("403", "International numbers not allowed");
 			    break;
 			};
-			route(5);
+			route(PSTN2_ROUTE);
 		} else {
 			sl_send_reply("403", "Invalid Number");
 			break;
@@ -469,13 +476,13 @@ route[PSTN] {
 	break;
 }
 
-route[5] {
+route[PSTN2_ROUTE] {
 	rewritehostport("GW_IP_1:5060");
 	consume_credentials();
 	append_hf("P-Hint: GATEWAY\r\n");
 
 	# Try alternative gateway on failure
-	t_on_failure("7");
+	t_on_failure(PSTN_FAILURE);
         # Our PSTN gateway is symmetric and can handle direction=active flag
         # properly, therefore we don't have to use RTP proxy
 	t_relay();
@@ -483,7 +490,7 @@ route[5] {
 
 
 
-failure_route[7] {
+failure_route[PSTN_FAILURE] {
 	rewritehostport("GW_IP_2:5060");
 	append_branch();
 	t_relay();	
@@ -491,7 +498,7 @@ failure_route[7] {
 
 
 # ------------- handling of unavailable user ------------------
-route[VOICEMAIL] {
+route[VOICEMAIL_ROUTE] {
         # message store
         if (method == "MESSAGE") {
                 if (!t_newtran()) {

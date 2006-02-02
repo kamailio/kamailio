@@ -6,6 +6,12 @@
 # Rules to process ser.cfg templates
 #
 
+#id generator, usage: gen_id(`name'))
+define(`gen_id', `ifdef(`$1',,`define(`$1', 0)')define(`$1',eval($1 + 1))')
+
+#declare enum constants, usage: declare(route, R_MAIN, R_NAT, ...)  declare(route, R_REGISTER)
+define(`declare', `ifelse($#, 1, , `gen_id(`$1'_cnt) define(`$2', indir(`$1'_cnt)) ifelse($#, 2, ,`declare(`$1', shift(shift($@)))')')')
+
 define(`FROM_GW', `(_FROM_GW(1))')
 define(`_FROM_GW', `ifdef(`GW_IP_$1', `_FROM_GW(incr($1))(src_ip == GW_IP_$1)ifelse($1, 1, , ` || ')')')
 
@@ -18,12 +24,3 @@ define(`SER_HOSTNAME_REGEX', `patsubst(SER_HOSTNAME, `\.', `\\.')')
 define(`SER_HOST_REGEX', `((SER_IP_REGEX)|(SER_HOSTNAME_REGEX))')
 
 define(`FROM_MYSELF', `(src_ip == SER_IP)')
-
-define(`ACC_FLAG', 1)
-define(`MISSED_FLAG', 3)
-define(`VM_FLAG', 4)
-define(`NAT_FLAG', 6)
-
-define(`PSTN', 3)
-define(`NAT', 1)
-define(`VOICEMAIL', 4)
