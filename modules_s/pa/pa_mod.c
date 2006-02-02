@@ -112,7 +112,7 @@ int pa_pidf_priority = 1;
 /* use callbacks to usrloc/??? - if 0 only pusblished information is used */
 int use_callbacks = 1;
 int use_offline_winfo = 0;
-int offline_winfo_timer_interval = 300;
+int offline_winfo_timer_interval = 3600;
 
 /*
  * Exported functions
@@ -144,6 +144,21 @@ static cmd_export_t cmds[]={
  */
 static param_export_t params[]={
 	{"default_expires",      PARAM_INT,    &default_expires      },
+	{"auth",                 PARAM_STRING, &auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
+	{"auth_xcap_root",       PARAM_STRING, &auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
+	{"winfo_auth",           PARAM_STRING, &winfo_auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
+	{"winfo_auth_xcap_root", PARAM_STRING, &winfo_auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
+	{"use_callbacks", PARAM_INT, &use_callbacks  }, /* use callbacks to usrloc/jabber ? */
+	{"watcherinfo_notify",   PARAM_INT, &watcherinfo_notify   }, /* accept winfo subscriptions ? */
+	{"use_offline_winfo", PARAM_INT, &use_offline_winfo  }, /* use DB for offline winfo */
+	{"offline_winfo_expiration", PARAM_INT, &offline_winfo_expiration }, /* how long hold information in DB */
+	{"offline_winfo_timer", PARAM_INT, &offline_winfo_timer_interval }, /* basic ticks of "offline winfo" timer */
+
+	/* undocumented still (TODO) */
+	{"presentity_table",     PARAM_STRING, &presentity_table     },
+	{"presentity_contact_table", PARAM_STRING, &presentity_contact_table     },
+	{"watcherinfo_table",    PARAM_STRING, &watcherinfo_table    },
+	{"place_table",          PARAM_STRING, &place_table          },
 	{"default_priority_percentage", PARAM_INT,    &default_priority_percentage  },
 	{"timer_interval",       PARAM_INT,    &timer_interval       },
 	{"use_db",               PARAM_INT,    &use_db               },
@@ -154,22 +169,7 @@ static param_export_t params[]={
 #ifdef HAVE_LOCATION_PACKAGE
 	{"pa_domain",            PARAM_STR,    &pa_domain            },
 #endif /* HAVE_LOCATION_PACKAGE */
-	{"presentity_table",     PARAM_STRING, &presentity_table     },
-	{"presentity_contact_table", PARAM_STRING, &presentity_contact_table     },
-	{"watcherinfo_table",    PARAM_STRING, &watcherinfo_table    },
-	{"place_table",          PARAM_STRING, &place_table          },
-	{"auth",                 PARAM_STRING, &auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
-	{"auth_xcap_root",       PARAM_STRING, &auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
-	{"winfo_auth",           PARAM_STRING, &winfo_auth_type_str }, /* type of authorization: none, implicit, xcap, ... */
-	{"winfo_auth_xcap_root", PARAM_STRING, &winfo_auth_xcap_root }, /* xcap root settings - must be set for xcap auth */
-
-	/* undocumented still (TODO) */
-	{"use_callbacks", PARAM_INT, &use_callbacks  }, /* use callbacks to usrloc/jabber ? */
-	{"watcherinfo_notify",   PARAM_INT, &watcherinfo_notify   }, /* accept winfo subscriptions ? */
 	{"offline_winfo_table", PARAM_STRING, &offline_winfo_table }, /* table with offline winfo */
-	{"use_offline_winfo", PARAM_INT, &use_offline_winfo  }, /* use DB for offline winfo */
-	{"offline_winfo_expiration", PARAM_INT, &offline_winfo_expiration }, /* how long hold information in DB */
-	{"offline_winfo_timer", PARAM_INT, &offline_winfo_timer_interval }, /* basic ticks of "offline winfo" timer */
 
 	/* not used -> remove (TODO) */
 	{"authorize_watchers",   PARAM_INT, &authorize_watchers  },

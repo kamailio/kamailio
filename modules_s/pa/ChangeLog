@@ -1,7 +1,15 @@
+2006-02-02
+	* added handling of <person> element from RPID (whole <person> elements
+	are stored and put into NOTIFY messages; they are not processed in any
+	way due to its complexity - see the rpid draft) => this will be changed 
+	to process ALL unknown elements from PIDF documents
+	* improved documentation (offline winfo, parameters, ...)
+
 2006-02-01
 	* added functions for storing offline auth. info (store_winfo and
 	dump_stored_winfo) into database [they don't work in memory],
 	documentation will be added soon
+
 2006-01-30
 	* added function target_online
 	* added parameter use_callbacks (int) - [if set to 0, no callback are

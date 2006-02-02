@@ -2,103 +2,142 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="pa.parameters">
-    <sectioninfo>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
-    </sectioninfo>
+<section id="pa.parameters"><title>Parameters</title>
 
-    <title>Parameters</title>
-
-    <section id="default_expires">
-	<title><varname>default_expires</varname> (integer)</title>
-	<para>
-	    Default expires value to be used when the client doesn't supply one
-	    (in seconds).
-	</para>
-	<para>
-	    Default value is 3600.
-	</para>
-	<example>
-	    <title>Set <varname>default_expires</varname> parameter</title>
-	    <programlisting>
-...
-modparam("pa", "default_expires", 3600)
-...
-	    </programlisting>
-	</example>
-    </section>
-
-<section><title><varname>auth</varname> (string)</title>
-<para>This variable specifies authorization type for presence watchers (event
-package is <quote>presence</quote>). Value can be one of:
 <variablelist>
+
 <varlistentry>
-	<term>none</term>
-	<listitem><para>All watchers are <emphasis>always authorized</emphasis>. This is not recommended
-	because it ignores user's wish.</para></listitem>
+	<term><varname>default_expires</varname> (integer)</term>
+	<listitem>
+		<para>Default expires value to be used when the client doesn't supply one
+	    (in seconds).</para>
+		<para>Default value is 3600.</para>
+	</listitem>
 </varlistentry>
+
 <varlistentry>
-	<term>implicit</term>
-	<listitem><para>All watchers are <emphasis>always pending</emphasis>. This is not recommended
-	because it means, that no presence data is sent to all watchers.</para></listitem>
+	<term><varname>use_callbacks</varname> (integer)</term>
+	<listitem>
+		<para>If set to 1 callbacks to usrloc/jabber will be used, if set to 0
+		callbacks will not be used, thus it will work only with published
+		information.</para>
+		<para>Default value is 1.</para>
+	</listitem>
 </varlistentry>
+
 <varlistentry>
-	<term>xcap</term>
-	<listitem><para>This type of authorization means, that authorization rules
-	are read from XCAP server and processed <xref linkend="pres_draft_auth"/>.
-	In this case the <varname>auth_xcap_root</varname> must be set.</para></listitem>
+	<term id="pa.param.watcherinfo_notify"><varname>watcherinfo_notify</varname> (integer)</term>
+	<listitem>
+		<para>Set this to 1 if you want to enable subscriptions to
+		"presence.winfo" events. If set to 0, watcherinfo subscriptions are
+		denied.</para>
+		<para>Default value is 1.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>use_offline_winfo</varname> (integer)</term>
+	<listitem>
+		<para>Set this to 1 if you want to use offline watcher info
+		notifications. In such case can be watcher information stored in database
+		and later dumped to presentity in watcher info notification. See functions
+		for example.</para>
+		<para>Default value is 0.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>use_offline_winfo_expiration</varname> (integer)</term>
+	<listitem>
+		<para>Time for expiration of stored watcher information in seconds.</para>
+		<para>Default value is 259200.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>offline_winfo_timer</varname> (integer)</term>
+	<listitem>
+		<para>Number of seconds after which is triggered automatic cleanup of
+		stored watcherinfo.</para>
+		<para>Default value is 3600.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
+	<term><varname>auth</varname> (string)</term>
+	<listitem>
+		<para>This variable specifies authorization type for presence watchers (event
+		package is <quote>presence</quote>). Value can be one of:
+		<variablelist>
+		<varlistentry>
+			<term>none</term>
+			<listitem><para>All watchers are <emphasis>always authorized</emphasis>. This is not recommended
+			because it ignores user's wish.</para></listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>implicit</term>
+			<listitem><para>All watchers are <emphasis>always pending</emphasis>. This is not recommended
+			because it means, that no presence data is sent to all watchers.</para></listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>xcap</term>
+			<listitem><para>This type of authorization means, that authorization rules
+			are read from XCAP server and processed <xref linkend="pres_draft_auth"/>.
+			In this case the <varname>auth_xcap_root</varname> must be set.</para></listitem>
+		</varlistentry>
+		</variablelist>
+		</para>
+		<para>Default value is empty. In this case <quote>implict</quote> authorization
+		is used with an error message.</para>
+	</listitem>
 </varlistentry>
 </variablelist>
-</para>
-<para>Default value is empty. In this case <quote>implict</quote> authorization
-is used with an error message.</para>
-</section>
 
-<section><title><varname>auth_xcap_root</varname> (string)</title>
-<para>This parameter holds value of XCAP root URI used for reading authorization
-rules. Value must be set to nonempty value if <quote>xcap</quote> authorization
-is used.</para>
-<para>Authorization document is loaded using HTTP GET method from URI composed
-from <varname>auth_xcap_root</varname> and user's name as follows:
-<varname>auth_xcap_root</varname>/pres-rules/users/<varname>username</varname>/presence-rules.xml.</para>
-<example><title>XCAP authorization settings</title>
-<programlisting>
+<varlistentry>
+	<term><varname>auth_xcap_root</varname> (string)</term>
+	<listitem>
+		<para>This parameter holds value of XCAP root URI used for reading authorization
+		rules. Value must be set to nonempty value if <quote>xcap</quote> authorization
+		is used.</para>
+		<para>Authorization document is loaded using HTTP GET method from URI composed
+		from <varname>auth_xcap_root</varname> and user's name as follows:
+		<varname>auth_xcap_root</varname>/pres-rules/users/<varname>username</varname>/presence-rules.xml.</para>
+		<example><title>XCAP authorization settings</title>
+		<programlisting>
 ...
 modparam("pa", "auth", "xcap")
 modparam("pa", "auth_xcap_root", "http://localhost/xcap-root")
 ...
-</programlisting>
-<para>Settings above will result for presentity <quote>smith@iptel.org</quote> in authorization
-queries to http://localhost/xcap-root/pres-rules/users/smith/presence-rules.xml.</para>
-</example>
-
-</section>
-
-<section><title><varname>winfo_auth</varname> (string)</title>
-<para>This variable specifies authorization type for watcher info watchers (event
-package is <quote>presence.winfo</quote>). Value can be one of:
-<variablelist>
-<varlistentry>
-	<term>none</term>
-	<listitem><para>All watcher info watchers are <emphasis>always authorized</emphasis>. 
-	This is not recommended.</para></listitem>
+		</programlisting>
+		<para>Settings above will result for presentity <quote>smith@iptel.org</quote> in authorization
+		queries to http://localhost/xcap-root/pres-rules/users/smith/presence-rules.xml.</para>
+		</example>
+	</listitem>
 </varlistentry>
+
 <varlistentry>
-	<term>implicit</term>
-	<listitem><para>This value means, that presentity can subscribe to its
-	own watcher info data and nobody else. This is done via comparing watcher's
-	and presentity's uri. If these values equals, the subscription is allowed.
-	In other cases is the subscription rejected.
-	</para></listitem>
+	<term><varname>winfo_auth</varname> (string)</term>
+	<listitem>
+		<para>This variable specifies authorization type for watcher info watchers (event
+		package is <quote>presence.winfo</quote>). Value can be one of:
+		<variablelist>
+		<varlistentry>
+			<term>none</term>
+			<listitem><para>All watcher info watchers are <emphasis>always authorized</emphasis>. 
+			This is not recommended.</para></listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>implicit</term>
+			<listitem><para>This value means, that presentity can subscribe to its
+			own watcher info data and nobody else. This is done via comparing watcher's
+			and presentity's uri. If these values equals, the subscription is allowed.
+			In other cases is the subscription rejected.
+			</para></listitem>
+		</varlistentry>
+		</variablelist>
+		</para>
+		<para>Default value is <quote>implict</quote></para>
+	</listitem>
 </varlistentry>
-</variablelist>
-</para>
-<para>Default value is <quote>implict</quote></para>
-</section>
 	
 </section>
