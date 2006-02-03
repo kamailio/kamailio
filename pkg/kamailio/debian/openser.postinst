@@ -4,6 +4,7 @@
 
 PKG=openser
 DEFAULTS=/etc/default/openser
+HOMEDIR=/var/run/openser
 
 set -e
 
@@ -32,7 +33,7 @@ case "$1" in
     configure)
         adduser --quiet --system --group --disabled-password \
                 --shell /bin/false --gecos "Open SIP Express Router" \
-                --home /var/run/openser openser || true
+                --home $HOMEDIR openser || true
 
         ;;
 
@@ -129,6 +130,26 @@ MEMORY=$MEMORY
 DUMP_CORE=$DUMP_CORE
 
 EOF
+
+
+# Create a radius sequence file to be used by the radius client if
+# radius accounting is enabled. This is needed to avoid any issue
+# with the file not being writable if openser first starts as user
+# root because DUMP_CORE is enabled and creates this file as user
+# root and then later it switches back to user openser and cannot
+# write to the file. If the file exists before openser starts, it
+# won't change it's ownership and will be writable for both root
+# and openser, no matter what options are chosen at install time
+RADIUS_SEQ_FILE=/var/run/openser/openser_radius.seq
+if [ -d /var/run/openser ]; then
+   chown ${USER}.${GROUP} $HOMEDIR
+   if [ ! -f $RADIUS_SEQ_FILE ]; then
+      touch $RADIUS_SEQ_FILE
+   fi
+   chown ${USER}.${GROUP} $RADIUS_SEQ_FILE
+   chmod 660 $RADIUS_SEQ_FILE
+fi
+
 
 if [ $START_ON_BOOT = "yes" ]; then
     if [ -x "/etc/init.d/openser" ]; then

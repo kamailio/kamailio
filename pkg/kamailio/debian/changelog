@@ -1,3 +1,14 @@
+openser (1.0.0-2) unstable; urgency=low
+
+  * Create a sequence file for use if the radius accounting is enabled,
+    which is guaranteed to be writable by openser no matter what user
+    and group is running as. If radius accounting is used, this can be
+    added in your clients.conf that is used by openser as:
+    seqfile /var/run/openser/openser_radius.seq
+  * Fixed wording in the master_node template description
+
+ -- Dan Pascu <dan@ag-projects.com>  Fri, 03 Feb 2006 20:20:24 +0200
+
 openser (1.0.0-1) unstable; urgency=low
 
   * Added support for debconf. A number of things can now be configured
