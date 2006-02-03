@@ -61,7 +61,7 @@ void *debug_malloc(int size, const char *file, int line)
 	m = malloc(size);
 #endif
 	write_debug("ALLOC %p size %u from %s(%d)\n", m, size, file, line);
-	/* LOG(L_INFO, "debug_malloc(): %p\n", m); */
+	/* LOG(L_INFO, "%p\n", m); */
 	return m;
 }
 

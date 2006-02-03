@@ -35,8 +35,6 @@
 
 static void doc_add_tuple_note(dstring_t *buf, presence_note_t *n)
 {
-	DEBUG_LOG("doc_add_tuple_note()\n");
-	
 	dstr_append_zt(buf, "\t\t\t<note>");
 	dstr_append_str(buf, &n->value);	
 	dstr_append_zt(buf, "</note>\r\n");
@@ -61,8 +59,6 @@ static void doc_add_tuple(dstring_t *buf, presentity_info_t *p, presence_tuple_i
 {
 	presence_note_t *n;
 	char tmp[32];
-	
-	DEBUG_LOG("doc_add_tuple()\n");
 	
 	dstr_append_zt(buf, "\t<atom id=\"");
 	dstr_append_str(buf, &t->id);
@@ -92,8 +88,6 @@ static void doc_add_tuple(dstring_t *buf, presentity_info_t *p, presence_tuple_i
 
 static void doc_add_empty_tuple(dstring_t *buf, presentity_info_t *p)
 {
-	DEBUG_LOG("doc_add_empty_tuple()\n");
-	
 	dstr_append_zt(buf, "\t<atom id=\"none\">\r\n");
 	
 	dstr_append_zt(buf, "\t\t<address uri=\"");
@@ -111,7 +105,6 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p)
 	presence_tuple_info_t *t;
 	/* presence_note_t *n; */
 
-	DEBUG_LOG("doc_add_presentity()\n");
 	dstr_append_zt(buf, "<presence>\r\n");
 	/* !!! there SHOULD be pres URI of presentity !!! */
 	dstr_append_zt(buf, "<presentity uri=\"");
@@ -119,7 +112,6 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p)
 	dstr_append_str(buf, &p->presentity);
 	dstr_append_zt(buf, ";method=SUBSCRIBE\"/>\r\n");
 	
-	DEBUG_LOG("doc_add_presentity(): adding tuples\n");
 	t = p->first_tuple;
 	if (!t) doc_add_empty_tuple(buf, p);
 	while (t) {
@@ -127,7 +119,7 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p)
 		t = t->next;
 	}
 	
-/*	DEBUG_LOG("doc_add_presentity(): adding notes\n");
+/*	
 	n = p->first_note;
 	while (n) {
 		doc_add_note(buf, p, n);

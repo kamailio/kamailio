@@ -54,7 +54,7 @@ int qsa_initialize()
 		return 0;
 	}
 	else {
-		DEBUG_LOG("qsa_initialize(): init the content\n");
+		DEBUG_LOG("init the content\n");
 
 		/* !!! put the real initialization here !!! */
 		init->dm = create_domain_maintainer();
@@ -72,7 +72,7 @@ void qsa_cleanup()
 {
 	if (init) {
 		if (--init->init_cnt == 0) {
-			DEBUG_LOG("qsa_cleanup(): cleaning the content\n");
+			DEBUG_LOG("cleaning the content\n");
 			
 			/* !!! put the real destruction here !!! */
 			if (init->dm) destroy_domain_maintainer(init->dm);

@@ -554,7 +554,7 @@ int get_rls(const char *xcap_root, const str_t *uri, xcap_query_t *xcap_params, 
 	/* DEBUG_LOG("XCAP uri \'%s\'\n", xcap.uri ? xcap.uri: "???"); */
 	res = xcap_query(&xcap, &data, &dsize);
 	if (res != 0) {
-		ERROR_LOG("get_rls(): XCAP problems for uri \'%s\'\n", xcap.uri ? xcap.uri: "???");
+		ERROR_LOG("XCAP problems for uri \'%s\'\n", xcap.uri ? xcap.uri: "???");
 		if (data) {
 			cds_free(data);
 		}
@@ -623,7 +623,7 @@ int get_rls_from_full_doc(const char *xcap_root, const str_t *uri, xcap_query_t 
 	DEBUG_LOG("XCAP uri \'%s\'\n", xcap.uri ? xcap.uri: "???");
 	res = xcap_query(&xcap, &data, &dsize);
 	if (res != 0) {
-		ERROR_LOG("get_rls(): XCAP problems for uri \'%s\'\n", xcap.uri ? xcap.uri: "???");
+		ERROR_LOG("XCAP problems for uri \'%s\'\n", xcap.uri ? xcap.uri: "???");
 		if (data) {
 			cds_free(data);
 		}
@@ -722,10 +722,10 @@ int get_resource_list_as_rls(const char *xcap_root, const str_t *user, xcap_quer
 
 	/* get basic document */
 	xcap.uri = xcap_uri_for_resource_list(xcap_root, user);
-	DEBUG_LOG("get_resource_list_as_rls(): XCAP uri \'%s\'\n", xcap.uri ? xcap.uri: "???");
+	DEBUG_LOG("XCAP uri \'%s\'\n", xcap.uri ? xcap.uri: "???");
 	res = xcap_query(&xcap, &data, &dsize);
 	if (res != 0) {
-		ERROR_LOG("get_rls(): XCAP problems for uri \'%s\'\n", xcap.uri ? xcap.uri: "???");
+		ERROR_LOG("XCAP problems for uri \'%s\'\n", xcap.uri ? xcap.uri: "???");
 		if (data) {
 			cds_free(data);
 		}

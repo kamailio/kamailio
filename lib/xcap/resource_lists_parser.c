@@ -157,7 +157,6 @@ int read_list(xmlNode *list_node, list_t **dst, int read_content_only)
 	xmlNode *n;
 	list_content_t *l, *last_l;
 	
-	DEBUG_LOG("read_list(): called\n");
 	/* allocate memory and prepare empty node */
 	if (!dst) return -1;
 	*dst = (list_t*)cds_malloc(sizeof(list_t));
