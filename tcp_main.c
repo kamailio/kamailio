@@ -63,6 +63,7 @@
  *              poll loop  (#ifdef) (andrei)
  *              process all children requests, before attempting to send
  *              them new stuff (fixes some deadlocks) (andrei)
+ *  2006-02-03  timers are run only once per s (andrei)
  */
 
 
@@ -121,7 +122,7 @@
 #include <fcntl.h> /* must be included after io_wait.h if SIGIO_RT is used */
 
 #define MAX_TCP_CHILDREN 100
-
+#define TCP_LISTEN_BACKLOG 1024
 /* #define SEND_FD_QUEUE */ /* queue send fd request, instead of sending 
 							   them immediately */
 #ifdef SEND_FD_QUEUE
@@ -921,7 +922,7 @@ int tcp_init(struct socket_info* sock_info)
 				strerror(errno));
 		goto error;
 	}
-	if (listen(sock_info->socket, 1024)==-1){
+	if (listen(sock_info->socket, TCP_LISTEN_BACKLOG)==-1){
 		LOG(L_ERR, "ERROR: tcp_init: listen(%x, %p, %d) on %s: %s\n",
 				sock_info->socket, &addr->s, 
 				(unsigned)sockaddru_len(*addr),
@@ -1566,19 +1567,22 @@ error:
  * the same except for io_watch_del..*/
 static inline void tcpconn_timeout(int force)
 {
+	static int prev_ticks=0;
 	struct tcp_connection *c, *next;
-	int ticks;
+	unsigned int ticks;
 	unsigned h;
 	int fd;
 	
 	
 	ticks=get_ticks();
+	if ((ticks==prev_ticks) && !force) return;
+	prev_ticks=ticks;
 	TCPCONN_LOCK; /* fixme: we can lock only on delete IMO */
 	for(h=0; h<TCP_ID_HASH_SIZE; h++){
 		c=tcpconn_id_hash[h];
 		while(c){
 			next=c->id_next;
-			if (force ||((c->refcnt==0) && (ticks>c->timeout))) {
+			if (force ||((c->refcnt==0) && ((int)(ticks-c->timeout)>=0))){
 				if (!force)
 					DBG("tcpconn_timeout: timeout for hash=%d - %p"
 							" (%d > %d)\n", h, c, ticks, c->timeout);
