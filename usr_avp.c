@@ -828,7 +828,7 @@ int parse_avp_ident( str *name, avp_ident_t* attr)
 			name->s +=3;
 			name->len -=3;
 		} else {
-			ERR("AVP unknown class prefix '%.*s'\n", p-name->s,name->s);
+			ERR("AVP unknown class prefix '%.*s'\n", name->len, name->s);
 			goto error;
 		}
 		if (name->len==0) {
