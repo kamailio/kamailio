@@ -31,6 +31,7 @@
  * --------
  *  2004-02-26  created by andrei
  *  2003-03-03  switched to heavy macro use, added tsend_dgram_ev (andrei) 
+ *  2006-02-03  tsend* will wait forever if timeout==-1 (andrei)
  */
 
 #include <string.h>
@@ -58,12 +59,16 @@
 #define TSEND_POLL(f_name) \
 poll_loop: \
 	while(1){ \
-		diff=expire-get_ticks_raw(); \
-		if (diff<=0){ \
-			LOG(L_ERR, "ERROR: " f_name ": send timeout (%d)\n", timeout); \
-			goto error; \
+		if (timeout==-1) \
+			n=poll(&pf, 1, -1); \
+		else{ \
+			diff=expire-get_ticks_raw(); \
+			if (diff<=0){ \
+				LOG(L_ERR, "ERROR: " f_name ": send timeout (%d)\n", timeout);\
+				goto error; \
+			} \
+			n=poll(&pf, 1, TICKS_TO_MS((ticks_t)diff)); \
 		} \
-		n=poll(&pf, 1, TICKS_TO_MS((ticks_t)diff)); \
 		if (n<0){ \
 			if (errno==EINTR) continue; /* signal, ignore */ \
 			LOG(L_ERR, "ERROR: " f_name ": poll failed: %s [%d]\n", \
@@ -100,8 +105,10 @@ poll_loop: \
 	
 
 
-/* sends on fd (which must be O_NONBLOCK); if it cannot send any data
+/* sends on fd (which must be O_NONBLOCK if you want a finite timeout); if it
+ * cannot send any data
  * in timeout milliseconds it will return ERROR
+ * if timeout==-1, it waits forever
  * returns: -1 on error, or number of bytes written
  *  (if less than len => couldn't send all)
  *  bugs: signals will reset the timer

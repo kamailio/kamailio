@@ -34,6 +34,7 @@
  *              parameter & they set c->state to S_CONN_EOF on eof (andrei)
  * 2003-07-04  fixed tcp EOF handling (possible infinite loop) (andrei)
  * 2005-07-05  migrated to the new io_wait code (andrei)
+ * 2006-02-03  use tsend_stream instead of send_all (andrei)
  */
 
 #ifdef USE_TCP
@@ -66,6 +67,7 @@
 #define HANDLE_IO_INLINE
 #include "io_wait.h"
 #include <fcntl.h> /* must be included after io_wait.h if SIGIO_RT is used */
+#include "tsend.h"
 
 /* types used in io_wait* */
 enum fd_types { F_NONE, F_TCPMAIN, F_TCPCONN };
@@ -554,8 +556,9 @@ void release_tcpconn(struct tcp_connection* c, long state, int unix_sock)
 		/* errno==EINTR, EWOULDBLOCK a.s.o todo */
 		response[0]=(long)c;
 		response[1]=state;
-		if (send_all(unix_sock, response, sizeof(response))<=0)
-			LOG(L_ERR, "ERROR: release_tcpconn: send_all failed\n");
+		
+		if (tsend_stream(unix_sock, (char*)response, sizeof(response), -1)<=0)
+			LOG(L_ERR, "ERROR: release_tcpconn: tsend_stream failed\n");
 }
 
 
