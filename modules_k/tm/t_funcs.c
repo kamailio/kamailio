@@ -189,7 +189,6 @@ static int kill_transaction( struct cell *trans )
 int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int replicate)
 {
 	int ret;
-	int proto;
 	int new_tran;
 	str *uri;
 	int reply_ret;
@@ -226,13 +225,12 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int replicate)
 					ret=E_BAD_ADDRESS;
 					goto done;
 			}
-			proto=proxy->proto; /* uri2proxy set it correctly */
-			ret=forward_request( p_msg , proxy, proto);
+			ret=forward_request( p_msg , proxy);
 			if (ret>=0) ret=1;
 			free_proxy( proxy );
 			pkg_free( proxy );
 		} else {
-			ret=forward_request( p_msg , proxy, proxy->proto );
+			ret=forward_request( p_msg , proxy);
 			if (ret>=0) ret=1;
 		}
 		goto done;

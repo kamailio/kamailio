@@ -34,6 +34,7 @@ pingClients(unsigned int ticks, void *param)
     void *buf, *ptr;
     str contact;
     int needed;
+    int proto;
 
     buf = pkg_malloc(length);
     if (buf == NULL) {
@@ -80,7 +81,8 @@ pingClients(unsigned int ticks, void *param)
             continue;
         if (uri.port_no == 0)
             uri.port_no = SIP_PORT;
-        hostent = sip_resolvehost(&uri.host, &uri.port_no, PROTO_UDP);
+		proto = uri.proto;
+        hostent = sip_resolvehost(&uri.host, &uri.port_no, &proto, 0);
         if (hostent == NULL){
             LOG(L_ERR, "error: mediaproxy/pingClients(): can't resolve host\n");
             continue;

@@ -2003,6 +2003,7 @@ nh_timer(unsigned int ticks, void *param)
 	struct hostent* he;
 	struct socket_info* send_sock;
 	unsigned int flags;
+	int proto;
 	str opt;
 
 	buf = NULL;
@@ -2052,9 +2053,10 @@ nh_timer(unsigned int ticks, void *param)
 			continue;
 		if (curi.port_no == 0)
 			curi.port_no = SIP_PORT;
+		proto = curi.proto;
 		/* we sholud get rid of this resolve (to ofen and to slow); for the
 		 * moment we are lucky since the curi is an IP -bogdan */
-		he = sip_resolvehost(&curi.host, &curi.port_no, PROTO_UDP);
+		he = sip_resolvehost(&curi.host, &curi.port_no, &proto, 0);
 		if (he == NULL){
 			LOG(L_ERR, "ERROR:nathelper:nh_timer: can't resolve_host\n");
 			continue;

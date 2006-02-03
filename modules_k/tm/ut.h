@@ -55,8 +55,8 @@ inline static enum sip_protos get_proto(enum sip_protos force_proto,
 	switch(force_proto) {
 		case PROTO_NONE: /* no protocol has been forced -- look at proto */
 			switch(proto) {
-				case PROTO_NONE: /* uri default to UDP */
-						return PROTO_UDP;
+				case PROTO_NONE:
+					return PROTO_NONE;
 				case PROTO_UDP:/* transport specified explicitly */
 #ifdef USE_TCP
 				case PROTO_TCP:
@@ -64,11 +64,11 @@ inline static enum sip_protos get_proto(enum sip_protos force_proto,
 #ifdef USE_TLS
 				case PROTO_TLS:
 #endif
-						return proto;
+					return proto;
 				default:
-						LOG(L_ERR, "ERROR: get_proto: unsupported transport:"
-								" %d\n", proto );
-						return PROTO_NONE;
+					LOG(L_ERR, "ERROR: get_proto: unsupported transport:"
+						" %d\n", proto );
+					return PROTO_NONE;
 			}
 		case PROTO_UDP: /* some protocol has been forced -- take it */
 #ifdef USE_TCP
@@ -80,7 +80,7 @@ inline static enum sip_protos get_proto(enum sip_protos force_proto,
 			return force_proto;
 		default:
 			LOG(L_ERR, "ERROR: get_proto: unsupported forced protocol: "
-					"%d\n", force_proto);
+				"%d\n", force_proto);
 			return PROTO_NONE;
 	}
 }
@@ -90,11 +90,11 @@ inline static enum sip_protos get_proto(enum sip_protos force_proto,
 /*
  * Convert a URI into a proxy structure
  */
-inline static struct proxy_l *uri2proxy( str *uri, int proto )
+inline static struct proxy_l *uri2proxy( str *uri, int forced_proto )
 {
 	struct sip_uri parsed_uri;
 	struct proxy_l *p;
-	enum sip_protos uri_proto;
+	enum sip_protos proto;
 
 	if (parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
 		LOG(L_ERR, "ERROR: uri2proxy: bad_uri: %.*s\n",
@@ -102,21 +102,21 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
 		return 0;
 	}
 	
-	if (parsed_uri.type==SIPS_URI_T){
-		if ((parsed_uri.proto!=PROTO_TCP) && (parsed_uri.proto!=PROTO_NONE)){
-			LOG(L_ERR, "ERROR: uri2proxy: bad transport  for sips uri: %d\n",
-					parsed_uri.proto);
-			return 0;
-		}else
-			uri_proto=PROTO_TLS;
-	}else
-		uri_proto=parsed_uri.proto;
-	p = mk_proxy(&parsed_uri.host, 
-		      parsed_uri.port_no, 
-		      get_proto(proto, uri_proto));
+	if (parsed_uri.type==SIPS_URI_T &&
+	((parsed_uri.proto!=PROTO_TCP) && (parsed_uri.proto!=PROTO_NONE)) ) {
+		LOG(L_ERR, "ERROR: uri2proxy: bad transport  for sips uri: %d\n",
+			parsed_uri.proto);
+		return 0;
+	}
+	proto=parsed_uri.proto;
+
+	proto = get_proto(forced_proto, proto);
+
+	p = mk_proxy( &parsed_uri.host, parsed_uri.port_no, proto,
+		(parsed_uri.type==SIPS_URI_T)?1:0 );
 	if (p == 0) {
 		LOG(L_ERR, "ERROR: uri2proxy: bad host name in URI <%.*s>\n",
-		    uri->len, ZSW(uri->s));
+			uri->len, ZSW(uri->s));
 		return 0;
 	}
 	

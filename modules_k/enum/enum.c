@@ -236,7 +236,7 @@ int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service)
 	struct hostent* he;
 	unsigned short zp;
 	char *user_s;
-	int user_len, i, j;
+	int user_len, i, j, proto;
 	char name[MAX_DOMAIN_SIZE];
 	char uri[MAX_URI_SIZE];
 	struct to_body* body;
@@ -356,7 +356,9 @@ int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service)
 			replacement.s[replacement.len] = '!';
 
 			zp = 0;
-			he = sip_resolvehost(&luri.host, &zp, PROTO_UDP);
+			proto = PROTO_NONE;
+			he = sip_resolvehost(&luri.host, &zp, &proto,
+				(luri.type==SIPS_URI_T)?1:0 );
 
 			hostent2ip_addr(&addr, he, 0);
 

@@ -356,7 +356,7 @@ static int fixup_phostport2proxy(void** param, int param_no)
 		return E_UNSPEC;
 	}
 
-	proxy = mk_proxy( &host, port, proto);
+	proxy = mk_proxy( &host, port, proto, 0);
 	if (proxy==0) {
 		LOG(L_ERR, "ERROR:tm:fixup_phostport2proxy: failed to resolve "
 			"<%.*s>\n", host.len, host.s );
@@ -391,16 +391,13 @@ static int fixup_hostport2proxy(void** param, int param_no)
 		}
 		s.s = host;
 		s.len = strlen(host);
-		proxy=mk_proxy(&s, port, 0); /* FIXME: udp or tcp? */
+		proxy=mk_proxy(&s, port, 0, 0); /* FIXME: udp or tcp? */
 		if (proxy==0) {
 			LOG(L_ERR, "ERROR: fixup_hostport2proxy: bad host name in URI <%s>\n",
 				host );
 			return E_BAD_ADDRESS;
 		}
 		/* success -- fix the first parameter to proxy now ! */
-
-		/* FIXME: janakj, mk_proxy doesn't make copy of host !! */
-		/*pkg_free( *(param-1)); you're right --andrei*/
 		*(param-1)=proxy;
 		return 0;
 	} else {
