@@ -35,6 +35,7 @@
  *  2004-11-10  support for > 4Gb mem., switched to long (andrei)
  *  2005-12-12  fixed realloc shrink real_used accounting (andrei)
  *              fixed initial size (andrei)
+ *  2006-02-03  fixed realloc out of mem. free bug (andrei)
  */
 
 
@@ -449,7 +450,7 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 	#else
 			ptr=fm_malloc(qm, size);
 	#endif
-			if (ptr)
+			if (ptr){
 				/* copy, need by libssl */
 				memcpy(ptr, p, orig_size);
 	#ifdef DBG_F_MALLOC
@@ -457,8 +458,9 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 	#else
 				fm_free(qm, p);
 	#endif
-				p=ptr;
 			}
+			p=ptr;
+		}
 	}else{
 		/* do nothing */
 #ifdef DBG_F_MALLOC
