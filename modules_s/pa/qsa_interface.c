@@ -28,18 +28,18 @@ int pa_qsa_interface_init()
 {
 	domain = qsa_get_default_domain();
 	if (!domain) {
-		LOG(L_ERR, "pa_qsa_interface_init(): can't register notifier domain\n");
+		ERR("can't register notifier domain\n");
 		return -1;	
 	}
-	/* DEBUG_LOG("QSA (pa) domain: %p\n", domain); */
+	/* DBG("QSA (pa) domain: %p\n", domain); */
 
 	notifier = register_notifier(domain, &presence_package, 
 			pa_subscribe, pa_unsubscribe, NULL);
 	if (!notifier) {
-		LOG(L_ERR, "pa_qsa_interface_init(): can't register notifier\n");
+		ERR("can't register notifier\n");
 		return -1;	
 	}
-	/* DEBUG_LOG("pa_qsa_interface_init(): created notifier %.*s\n", FMT_STR(notifier_name)); */
+	/* DBG("pa_qsa_interface_init(): created notifier %.*s\n", FMT_STR(notifier_name)); */
 	return 0;
 }
 
@@ -104,7 +104,7 @@ static int pa_subscribe(notifier_t *n, subscription_t *subscription)
 	internal_pa_subscription_t *ss;
 	str uid = STR_NULL;
 	
-	DEBUG_LOG("SUBSCRIBE to PA for %.*s [%.*s]\n", 
+	DBG("SUBSCRIBE to PA for %.*s [%.*s]\n", 
 			FMT_STR(subscription->record_id),
 			FMT_STR(subscription->package->name));
 
@@ -113,6 +113,8 @@ static int pa_subscribe(notifier_t *n, subscription_t *subscription)
 		TRACE_LOG("can't convert URI to UID for internal PA subscription\n");
 		return -1;
 	}
+
+	/* DBG("SUBSCRIBE to uid: %.*s\n", FMT_STR(uid)); */
 	
 	dl = root;	/* FIXME: ugly and possibly unsafe (locking needed?) */
 	while (dl) {
@@ -126,9 +128,8 @@ static int pa_subscribe(notifier_t *n, subscription_t *subscription)
 		lock_pdomain(dl->d);	
 		if (find_presentity_uid(dl->d, &uid, &p) != 0) p = NULL;
 		if (!p) {
-			DEBUG_LOG("creating presentity\n");
 			if (create_presentity_ex(dl->d, &subscription->record_id, &uid, &p) < 0) {
-				ERROR_LOG("can't create presentity\n");
+				ERR("can't create presentity\n");
 			}
 		}
 		if (p) {
@@ -147,6 +148,9 @@ static int pa_subscribe(notifier_t *n, subscription_t *subscription)
 	}
 
 	str_free_content(&uid);
+	DBG("finished SUBSCRIBE to PA for %.*s [%.*s]\n", 
+			FMT_STR(subscription->record_id),
+			FMT_STR(subscription->package->name));
 	
 	return 0;
 }
@@ -173,11 +177,11 @@ static void pa_unsubscribe(notifier_t *n, subscription_t *subscription)
 	
 	if (pres_uri2uid(&uid, &subscription->record_id) != 0) {
 		/* can't convert uri to uid */
-		TRACE_LOG("can't convert URI to UID for internal PA unsubscription\n");
+		ERR("can't convert URI to UID for internal PA unsubscription\n");
 		return;
 	}
 	
-	/* DEBUG_LOG("UNBSCRIBE from PA for %.*s [%.*s]\n", 
+	/* DBG("UNBSCRIBE from PA for %.*s [%.*s]\n", 
 			FMT_STR(subscription->record_id),
 			FMT_STR(subscription->package->name)); */
 
@@ -219,7 +223,7 @@ presentity_info_t *presentity2presentity_info(presentity_t *p)
 	pa_person_element_t *paps;
 	person_t *ps, *last_ps;
 
-	/* DEBUG_LOG("p2p_info()\n"); */
+	/* DBG("p2p_info()\n"); */
 	if (!p) return NULL;
 /*	pinfo = (presentity_info_t*)cds_malloc(sizeof(*pinfo)); */
 	pinfo = create_presentity_info(&p->uri);
@@ -227,7 +231,7 @@ presentity_info_t *presentity2presentity_info(presentity_t *p)
 		ERROR_LOG("can't allocate memory\n");
 		return NULL;
 	}
-	/* DEBUG_LOG("p2p_info(): created presentity info\n"); */
+	/* DBG("p2p_info(): created presentity info\n"); */
 
 	t = p->tuples;
 	while (t) {
@@ -262,7 +266,7 @@ presentity_info_t *presentity2presentity_info(presentity_t *p)
 		paps = paps->next;
 	}
 	
-	/* DEBUG_LOG("p2p_info() finished\n"); */
+	/* DBG("p2p_info() finished\n"); */
 	return pinfo;
 }
 
@@ -309,7 +313,7 @@ int notify_qsa_watchers(presentity_t *p)
 	internal_pa_subscription_t *ss;
 	int res = 0;
 	
-	/* DEBUG_LOG("notify_qsa_watchers for %.*s\n", FMT_STR(p->uri)); */
+	/* DBG("notify_qsa_watchers for %.*s\n", FMT_STR(p->uri)); */
 	ss = p->first_qsa_subscription;
 	while (ss) {
 		if (notify_internal_watcher(p, ss) < 0) res = -1;

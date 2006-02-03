@@ -104,7 +104,7 @@ void callback(str* _user, str *_contact, int state, void* data)
 		ERROR_LOG("callback(): error!\n");
 	}
 		
-	DEBUG_LOG("callback(): user=%.*s, contact=%.*s, %p, state=%d!\n",
+	DBG("callback(): user=%.*s, contact=%.*s, %p, state=%d!\n",
 			FMT_STR(*_user), FMT_STR(*_contact), data, state);
 	
 	/* asynchronous processing */
@@ -262,7 +262,7 @@ static int parse_hfs(struct sip_msg* _m, int accept_header_required)
 	
 	while (acc) { /* parse all accept headers */
 		if (acc->type == HDR_ACCEPT_T) {
-			DEBUG_LOG("parsing accept header: %.*s\n", FMT_STR(acc->body));
+			DBG("parsing accept header: %.*s\n", FMT_STR(acc->body));
 			if (parse_accept_body(acc) < 0) {
 				paerrno = PA_ACCEPT_PARSE;
 				LOG(L_ERR, "parse_hfs(): Error while parsing Accept header field\n");
@@ -785,50 +785,47 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	char tmp[64];
 	int i;
 
-	LOG(L_DBG, "handle_subscription() entered\n");
 	get_act_time();
 	paerrno = PA_OK;
 
 	if (parse_hfs(_m, 0) < 0) {
-		LOG(L_ERR, "handle_subscription(): Error while parsing message header\n");
+		ERR("Error while parsing message header\n");
 		goto error;
 	}
 
 	if (check_message(_m) < 0) {
-		LOG(L_ERR, "handle_subscription(): Error while checking message\n");
+		ERR("Error while checking message\n");
 		goto error;
 	}
 
 	d = (struct pdomain*)_domain;
 
 	if (get_pres_uri(_m, &p_uri) < 0) {
-		LOG(L_ERR, "handle_subscription(): Error while extracting presentity URI\n");
+		ERR("Error while extracting presentity URI\n");
 		goto error;
 	}
 
 	if (get_presentity_uid(&uid, _m) != 0) {
-		LOG(L_ERR, "handle_subscription(): Error while extracting presentity UID\n");
+		ERR("Error while extracting presentity UID\n");
 		goto error;
 	}
 
 	lock_pdomain(d);
 
-	LOG(L_DBG, "handle_subscription: locked domain\n");
-	
 	if (find_presentity_uid(d, &uid, &p) > 0) {
 		if (create_presentity(_m, d, &p_uri, &uid, &p, &w) < 0) {
-			LOG(L_ERR, "handle_subscription(): Error while creating new presentity\n");
+			ERR("Error while creating new presentity\n");
 			goto error2;
 		}
 	} else {
 		if (update_presentity(_m, d, p, &w) < 0) {
-			LOG(L_ERR, "handle_subscription(): Error while updating presentity\n");
+			ERR("Error while updating presentity\n");
 			goto error2;
 		}
 	}
 	str_free_content(&uid);
 
-	LOG(L_DBG, "handle_subscription: generating response\n");
+	DBG("generating response\n");
 	
 	/* add expires header field into response */
 	if (w) i = w->expires - act_time;
@@ -836,7 +833,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	if (i < 0) i = 0;
 	sprintf(tmp, "Expires: %d\r\n", i);
 	if (!add_lump_rpl(_m, tmp, strlen(tmp), LUMP_RPL_HDR)) {
-		LOG(L_ERR, "handle_subscription(): Can't add Expires header to the response\n");
+		ERR("Can't add Expires header to the response\n");
 		/* return -1; */
 	}
 	
@@ -853,7 +850,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 		w->flags |= WFLAG_SUBSCRIPTION_CHANGED;
 	}
 
-	DEBUG_LOG("handle_subscription about to return 1: w->event_package=%d w->accept=%d p->flags=%x w->flags=%x w=%p\n",
+	DBG("handle_subscription about to return 1: w->event_package=%d w->accept=%d p->flags=%x w->flags=%x w=%p\n",
 	    (w ? w->event_package : -1), (w ? w->preferred_mimetype : -1), (p ? p->flags : -1), (w ? w->flags : -1), w);
 
 	/* process and change this presentity and notify watchers */
@@ -864,12 +861,12 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	
  error2:
 	str_free_content(&uid);
-	LOG(L_ERR, "handle_subscription about to return -1\n");
+	ERR("handle_subscription about to return -1\n");
 	unlock_pdomain(d);
 	send_reply(_m);
 	return -1;
  error:
-	LOG(L_ERR, "handle_subscription about to send_reply and return -2\n");
+	ERR("handle_subscription about to send_reply and return -2\n");
 	send_reply(_m);
 	return -1;
 }

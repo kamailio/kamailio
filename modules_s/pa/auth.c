@@ -65,13 +65,13 @@ static watcher_status_t xcap_authorize(presentity_t *p,
 	if (!p->authorization_info) {
 		res = xcap_get_pres_rules(&p->uri, &p->authorization_info, params);
 		if (res != 0) {
-			LOG(L_ERR, "can't get authorization rules for %.*s\n", 
+			DBG("can't get authorization rules for %.*s\n", 
 					p->uri.len, ZSW(p->uri.s));
 			return WS_PENDING;
 		}
 		if (!p->authorization_info) {
-			LOG(L_WARN, "got empty set of authorization rules for %.*s\n", 
-					p->uri.len, ZSW(p->uri.s));
+			/* DBG("got empty set of authorization rules for %.*s\n", 
+					p->uri.len, ZSW(p->uri.s)); */
 			return WS_PENDING;
 		}
 	}
@@ -83,16 +83,16 @@ static watcher_status_t xcap_authorize(presentity_t *p,
 
 	switch (sh) {
 		case sub_handling_block: 
-			DEBUG_LOG("XCAP AUTH: block\n");
+			DBG("XCAP AUTH: block\n");
 			return WS_REJECTED;
 		case sub_handling_confirm: 
-			DEBUG_LOG("XCAP AUTH: confirm\n");
+			DBG("XCAP AUTH: confirm\n");
 			return WS_PENDING;
 		case sub_handling_polite_block: 
-			DEBUG_LOG("XCAP AUTH: polite block\n");
+			DBG("XCAP AUTH: polite block\n");
 			return WS_REJECTED;
 		case sub_handling_allow: 
-			DEBUG_LOG("XCAP AUTH: allow\n");
+			DBG("XCAP AUTH: allow\n");
 			return WS_ACTIVE;
 	}
 
@@ -108,12 +108,12 @@ static watcher_status_t winfo_implicit_auth(presentity_t *p, watcher_t *w)
 	if (get_user_from_uri(&w->uri, w_user) != 0) return WS_REJECTED;*/
 
 	if (str_case_equals(&p->uri, &w->uri) == 0) {
-		DEBUG_LOG("winfo_implicit_auth(%.*s): enabled for %.*s\n", 
+		DBG("winfo_implicit_auth(%.*s): enabled for %.*s\n", 
 				FMT_STR(p->uri), FMT_STR(w->uri));
 		return WS_ACTIVE;
 	}
 	else {
-		DEBUG_LOG("winfo_implicit_auth(%.*s): disabled for %.*s\n", 
+		DBG("winfo_implicit_auth(%.*s): disabled for %.*s\n", 
 				FMT_STR(p->uri), FMT_STR(w->uri));
 		return WS_REJECTED;
 	}

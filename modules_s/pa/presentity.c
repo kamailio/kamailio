@@ -141,7 +141,7 @@ int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, str *uid, presentit
 
 	*_p = presentity;
 
-	DEBUG_LOG("new_presentity_no_wb=%p for uri=%.*s uuid=%.*s\n", 
+	DBG("new_presentity_no_wb=%p for uri=%.*s uuid=%.*s\n", 
 			presentity, presentity->uri.len, ZSW(presentity->uri.s),
 			presentity->uuid.len, ZSW(presentity->uuid.s));
 
@@ -189,10 +189,12 @@ static int db_add_presentity(presentity_t* presentity)
 
 	result_cols[presid_col = n_result_cols++] = "presid";
 
+	ERR("calling use_table: %s\n", presentity_table);
 	if (pa_dbf.use_table(pa_db, presentity_table) < 0) {
 		LOG(L_ERR, "new_presentity: Error in use_table\n");
 		return -1;
 	}
+	ERR("after calling use_table: %s\n", presentity_table);
 
 	while (!presid) {
 		if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
@@ -1136,7 +1138,7 @@ int timer_presentity(presentity_t* _p)
 			|PFLAG_XCAP_CHANGED
 			|PFLAG_LOCATION_CHANGED);
 	if (presentity_changed) {
-		/* DEBUG_LOG("presentity %.*s changed\n", _p->uri.len, _p->uri.s); */
+		/* DBG("presentity %.*s changed\n", _p->uri.len, _p->uri.s); */
 		notify_qsa_watchers(_p);
 	}
 
@@ -1488,7 +1490,7 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 	db_con_t* db = create_pa_db_connection(); /* must create its own connection (called before child init)! */
 
 	if (!db) {
-		LOG(L_ERR, "Can't load presentities - no DB connection\n");
+		ERR("Can't load presentities - no DB connection\n");
 		return -1;
 	}
 
@@ -1533,7 +1535,7 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 				uid.len = strlen(uid.s);
 			}
 
-			LOG(L_INFO, "pdomain_load_presentities: pdomain=%.*s presentity uri=%.*s presid=%d\n",
+			DBG("pdomain_load_presentities: pdomain=%.*s presentity uri=%.*s presid=%d\n",
 					pdomain->name->len, pdomain->name->s, uri.len, uri.s, presid);
 
 			new_presentity_no_wb(pdomain, &uri, &uid, &presentity);

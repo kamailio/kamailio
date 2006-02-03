@@ -283,9 +283,9 @@ static int pa_mod_init(void)
 	bind_dlg_mod_f bind_dlg;
 
 	test_mimetype_parser();
-	DEBUG_LOG("Presence Agent - initializing\n");
+	DBG("Presence Agent - initializing\n");
 
-	DEBUG_LOG(" ... common libraries\n");
+	DBG(" ... common libraries\n");
 	cds_initialize();
 	qsa_initialize();
 
@@ -398,20 +398,20 @@ static int pa_child_init(int _rank)
 
 static void pa_destroy(void)
 {
-	DEBUG_LOG("PA module cleanup\n");
-	DEBUG_LOG("destroying PA module\n");
-	DEBUG_LOG(" ... qsa interface\n");
+	DBG("PA module cleanup\n");
+	DBG("destroying PA module\n");
+	DBG(" ... qsa interface\n");
 	pa_qsa_interface_destroy();
 
-	DEBUG_LOG(" ... pdomains\n");
+	DBG(" ... pdomains\n");
 	free_all_pdomains();
 	if ((use_db || use_offline_winfo) && pa_db) {
-		DEBUG_LOG(" ... closing db connection\n");
+		DBG(" ... closing db connection\n");
 		close_pa_db_connection(pa_db);
 	}
 	pa_db = NULL;
 
-	DEBUG_LOG(" ... cleaning common libs\n");
+	DBG(" ... cleaning common libs\n");
 	qsa_cleanup();
 	cds_cleanup();
 }
