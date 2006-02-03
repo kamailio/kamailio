@@ -18,8 +18,8 @@ Description: Is this the master node of a cluster?
  You have selected that OpenSER should not be started on boot which may mean
  that it is running on a cluster system under the supervision of software like
  heartbeat. If this is the case and this node is the master node, then please
- select 'Yes' here. If OpenSER is running on a cluster system which is the
- slave node, then select 'No' here.
+ select 'Yes' here. If OpenSER is running on a cluster system and is the slave
+ node, then select 'No' here.
  If OpenSER is not running on a cluster system, but you have chosen not to
  start at boot for other reasons and do not understand what these cluster
  system references are about, then answer 'No' here.
