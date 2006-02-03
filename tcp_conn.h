@@ -43,7 +43,7 @@
 
 #define TCP_CON_MAX_ALIASES 4 /* maximum number of port aliases */
 
-#define TCP_BUF_SIZE 65535
+#define TCP_BUF_SIZE	4096 
 #define DEFAULT_TCP_CONNECTION_LIFETIME 120 /* in  seconds */
 #define DEFAULT_TCP_SEND_TIMEOUT 10 /* if a send can't write for more then 10s,
 									   timeout */

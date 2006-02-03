@@ -64,6 +64,8 @@
  *              process all children requests, before attempting to send
  *              them new stuff (fixes some deadlocks) (andrei)
  *  2006-02-03  timers are run only once per s (andrei)
+ *              tcp children fds can be non-blocking; send fds are queues on
+ *              EAGAIN (andrei)
  */
 
 
@@ -123,10 +125,14 @@
 
 #define MAX_TCP_CHILDREN 100
 #define TCP_LISTEN_BACKLOG 1024
-/* #define SEND_FD_QUEUE */ /* queue send fd request, instead of sending 
-							   them immediately */
+#define SEND_FD_QUEUE /* queue send fd requests on EAGAIN, instead of sending 
+							them immediately */
+#define TCP_CHILD_NON_BLOCKING 
 #ifdef SEND_FD_QUEUE
-#define MAX_SEND_FD_QUEUE_SIZE	tcp_max_fd_no
+#ifndef TCP_CHILD_NON_BLOCKING
+#define TCP_CHILD_NON_BLOCKING
+#endif
+#define MAX_SEND_FD_QUEUE_SIZE	1024  /* alternative: tcp_max_fd_no */
 #define SEND_FD_QUEUE_SIZE		128  /* initial size */
 #define MAX_SEND_FD_RETRIES		3	 /* FIXME: increase */
 #endif
@@ -985,8 +991,6 @@ static void send_fd_queue_destroy(struct tcp_send_fd_q *q)
 
 static int init_send_fd_queues()
 {
-	if (send_fd_queue_init(&get_fd_q, SEND_FD_QUEUE_SIZE)!=0)
-		goto error;
 	if (send_fd_queue_init(&send2child_q, SEND_FD_QUEUE_SIZE)!=0)
 		goto error;
 	return 0;
@@ -999,7 +1003,6 @@ error:
 
 static void destroy_send_fd_queues()
 {
-	send_fd_queue_destroy(&get_fd_q);
 	send_fd_queue_destroy(&send2child_q);
 }
 
@@ -1053,13 +1056,14 @@ inline static void send_fd_queue_run(struct tcp_send_fd_q* q)
 	for (p=t=&q->data[0]; p<q->crt; p++){
 		if (send_fd(p->unix_sock, &(p->tcp_conn),
 					sizeof(struct tcp_connection*), p->tcp_conn->s)<=0){
-			if (/*FIXME: E_WOULD_BLOCK && */(p->retries<MAX_SEND_FD_RETRIES)){
+			if ( ((errno==EAGAIN)||(errno==EWOULDBLOCK)) && 
+							(p->retries<MAX_SEND_FD_RETRIES)){
 				/* leave in queue for a future try */
 				*t=*p;
 				t->retries++;
 				t++;
 			}else{
-				LOG(L_ERR, "ERROR: rund_send_fd_queue: send_fd failed"
+				LOG(L_ERR, "ERROR: run_send_fd_queue: send_fd failed"
 						   "on %d socket, %ld queue entry, retries %d \n",
 						   p->unix_sock, p-&q->data[0], p->retries);
 			}
@@ -1378,10 +1382,21 @@ inline static int send2child(struct tcp_connection* tcpconn)
 	while(handle_tcp_child(&tcp_children[idx], -1)>0);
 		
 #ifdef SEND_FD_QUEUE
-	if (send_fd_queue_add(&send2child_q, tcp_children[idx].unix_sock, 
+	/* if queue full, try to queue the io */
+	if (send_fd(tcp_children[idx].unix_sock, &tcpconn, sizeof(tcpconn),
+			tcpconn->s)<=0){
+		if ((errno==EAGAIN)||(errno==EWOULDBLOCK)){
+			/* FIXME: remove after debugging */
+			LOG(L_WARN, "WARNING: tcp child %d, socket %d: queue full\n",
+					idx, tcp_children[idx].unix_sock);
+			if (send_fd_queue_add(&send2child_q, tcp_children[idx].unix_sock, 
 						tcpconn)!=0){
-		LOG(L_ERR, "ERROR: send2child: queue send op. failed\n");
-		return -1;
+				LOG(L_ERR, "ERROR: send2child: queue send op. failed\n");
+				return -1;
+			}
+		}else{
+			LOG(L_ERR, "ERROR: send2child: send_fd failed\n");
+		}
 	}
 #else
 	if (send_fd(tcp_children[idx].unix_sock, &tcpconn, sizeof(tcpconn),
@@ -1856,6 +1871,29 @@ error:
 
 
 
+/* returns -1 on error */
+static int set_non_blocking(int s)
+{
+	int flags;
+	/* non-blocking */
+	flags=fcntl(s, F_GETFL);
+	if (flags==-1){
+		LOG(L_ERR, "ERROR: set_non_blocking: fnctl failed: (%d) %s\n",
+				errno, strerror(errno));
+		goto error;
+	}
+	if (fcntl(s, F_SETFL, flags|O_NONBLOCK)==-1){
+		LOG(L_ERR, "ERROR: set_non_blocking: fcntl: set non-blocking failed:"
+				" (%d) %s\n", errno, strerror(errno));
+		goto error;
+	}
+	return 0;
+error:
+	return -1;
+}
+
+
+
 /* starts the tcp processes */
 int tcp_init_children()
 {
@@ -1893,6 +1931,15 @@ int tcp_init_children()
 					strerror(errno));
 			goto error;
 		}
+#ifdef TCP_CHILD_NON_BLOCKING
+		if ((set_non_blocking(reader_fd[0])<0) || 
+			(set_non_blocking(reader_fd[1])<0)){
+			LOG(L_ERR, "ERROR: tcp_main: failed to set non blocking"
+						"on child sockets\n");
+			/* continue, it's not critical (it will go slower under
+			 * very high connection rates) */
+		}
+#endif
 		
 		process_no++;
 		child_rank++;
