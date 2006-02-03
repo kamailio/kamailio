@@ -370,6 +370,21 @@ servers available today, thus the simulation may be interesting for - at least -
 demonstration or testing purposes.
 </para>
 
+<para>There are some disadvantages when the XCAP server is only simulated:
+<itemizedlist>
+	<listitem><para>no XML document validation</para></listitem>
+	<listitem><para>unable to work with XPointer terms (mainly unable to work 
+	with parts of documents)</para></listitem>
+	<listitem><para>possible synchronization problems (!)</para>
+		<para>More clients used by one user working with the same document
+		 (authorization document, buddy list) may rewrite it to each other.
+		 When using regular XCAP server this will be done in one atomic query.
+		 In the case of simulation it is needed to download whole document,
+		 modify it and put it back.</para>
+	 </listitem>
+</itemizedlist>
+</para>
+
 <para>Depending on your needs you can
 <itemizedlist>
 	<listitem><para>create hierarchical directory structure of XML documents according to
