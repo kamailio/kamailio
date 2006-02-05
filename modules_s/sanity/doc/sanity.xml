@@ -49,61 +49,61 @@
 		<itemizedlist>
 		<listitem>
 			<para>
-			ruri sip version - checks if the SIP version in the request
+			ruri sip version - (1) - checks if the SIP version in the request
 			URI is supported, currently only 2.0.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			ruri scheme - not working because parser fails already on
+			ruri scheme - (2) - not working because parser fails already on
 			unknown URI schemes.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			required headers - checks if the minimum set of required headers
+			required headers - (4) -checks if the minimum set of required headers
 			to, from, cseq, callid and via is present in the request.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			via sip version - not working because parser fails already 
+			via sip version - (8) - not working because parser fails already 
 			when another version then 2.0 is present.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			via protocol - not working because parser fails already if an
+			via protocol - (16) - not working because parser fails already if an
 			unsupported transport is present.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			cseq method - checks if the method from the cseq header is equal
+			cseq method - (32) - checks if the method from the cseq header is equal
 			to the request method.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			cseq value - checks if the number in the cseq header is a valid
+			cseq value - (64) - checks if the number in the cseq header is a valid
 			unsigend integer.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			content length - checks if the size of the body matches with the
+			content length - (128) - checks if the size of the body matches with the
 			value from the content length header.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			expires value - checks if the value of the expires header is a
+			expires value - (256) - checks if the value of the expires header is a
 			valid unsigned integer.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			proxy require - checks if all items of the proxy require header
+			proxy require - (512) - checks if all items of the proxy require header
 			are present in the list of the extensions from the module 
 			parameter proxy_require.
 			</para>

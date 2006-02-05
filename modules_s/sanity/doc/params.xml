@@ -20,8 +20,8 @@
 		This parameter determines which of the checks from the sanity
 		module are executed if no parameter was given to the sanity_check
 		function call. By default all implemented checks are included
-		in the execution of the sanity_check function. This can be changed
-		with this value.
+		in the execution of the sanity_check function. The integer value
+		is the sum of the check numbers which should be executed by default.
 	</para>
 	<para>
 	    Default value is 997. This resolves to the following list of

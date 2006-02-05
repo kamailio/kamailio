@@ -37,5 +37,25 @@ if (sanity_check()) {
 ]]>
 	    </programlisting>
 	</example>
+	<para>
+		Optionally the function takes an integer argument which overwrites
+		the global module parameter default_checks. This allows to make
+		certain test from script regions. The integer value is again the sum
+		of the checks (like for the module parameter) which should be executed
+		at this function call.
+	</para>
+	<example>
+	    <title><function>sanity_check</function> usage with parameter</title>
+	    <programlisting>
+<![CDATA[
+...
+if (method=="REGISTER" && sanity_check("256")) {
+	/* the register contains an invalid expires value and is replied with a 400 */
+	break;
+}
+...
+]]>
+	    </programlisting>
+	</example>
     </section>
 </section>
