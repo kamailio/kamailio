@@ -66,6 +66,8 @@
  *  2006-02-03  timers are run only once per s (andrei)
  *              tcp children fds can be non-blocking; send fds are queued on
  *              EAGAIN; lots of bug fixes (andrei)
+ *  2006-02-06  better tcp_max_connections checks, tcp_connections_no moved to
+ *              shm (andrei)
  */
 
 
@@ -116,6 +118,7 @@
 #ifdef USE_TLS
 #include "tls/tls_server.h"
 #endif 
+#include "tcp_info.h"
 
 #define local_malloc pkg_malloc
 #define local_free   pkg_free
@@ -163,7 +166,7 @@ enum poll_types tcp_poll_method=0; /* by default choose the best method */
 int tcp_max_connections=DEFAULT_TCP_MAX_CONNECTIONS;
 int tcp_max_fd_no=0;
 
-static int tcp_connections_no=0; /* current open connections */
+static int* tcp_connections_no=0; /* current open connections */
 
 /* connection hash table (after ip&port) , includes also aliases */
 struct tcp_conn_alias** tcpconn_aliases_hash=0;
@@ -447,7 +450,6 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	}
 	c->flags|=F_CONN_REMOVED;
 	
-	tcp_connections_no++;
 	return c;
 	
 error:
@@ -466,6 +468,14 @@ struct tcp_connection* tcpconn_connect(union sockaddr_union* server, int type)
 	struct tcp_connection* con;
 	struct ip_addr ip;
 
+	s=-1;
+	
+	if (*tcp_connections_no >= tcp_max_connections){
+		LOG(L_ERR, "ERROR: tcpconn_connect: maximum number of connections"
+					" exceeded (%d/%d)\n",
+					*tcp_connections_no, tcp_max_connections);
+		goto error;
+	}
 	s=socket(AF2PF(server->s.sa_family), SOCK_STREAM, 0);
 	if (s==-1){
 		LOG(L_ERR, "ERROR: tcpconn_connect: socket: (%d) %s\n",
@@ -970,7 +980,7 @@ static void tcpconn_destroy(struct tcp_connection* tcpconn)
 #endif
 		_tcpconn_rm(tcpconn);
 		close(fd);
-		tcp_connections_no--;
+		(*tcp_connections_no)--;
 	}else{
 		/* force timeout */
 		tcpconn->timeout=0;
@@ -1060,11 +1070,11 @@ inline static int send_fd_queue_add(	struct tcp_send_fd_q* q,
 		}else new_size=MAX_SEND_FD_QUEUE_SIZE;
 		if (q->crt>=&q->data[new_size]){
 			LOG(L_ERR, "ERROR: send_fd_queue_add: queue full: %ld/%ld\n",
-					q->crt-&q->data[0]-1, new_size);
+					(long)(q->crt-&q->data[0]-1), new_size);
 			goto error;
 		}
 		LOG(L_CRIT, "INFO: send_fd_queue: queue full: %ld, extending to %ld\n",
-				q->end-&q->data[0], new_size);
+				(long)(q->end-&q->data[0]), new_size);
 		tmp=pkg_realloc(q->data, new_size*sizeof(struct send_fd_info));
 		if (tmp==0){
 			LOG(L_ERR, "ERROR: send_fd_queue_add: out of memory\n");
@@ -1104,7 +1114,7 @@ inline static void send_fd_queue_run(struct tcp_send_fd_q* q)
 				LOG(L_ERR, "ERROR: run_send_fd_queue: send_fd failed"
 						   " on socket %d , queue entry %ld, retries %d,"
 						   " connection %p, tcp socket %d, errno=%d (%s) \n",
-						   p->unix_sock, p-&q->data[0], p->retries,
+						   p->unix_sock, (long)(p-&q->data[0]), p->retries,
 						   p->tcp_conn, p->tcp_conn->s, errno,
 						   strerror(errno));
 				tcpconn_destroy(p->tcp_conn);
@@ -1333,6 +1343,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 							" no fd received\n");
 				break;
 			}
+			(*tcp_connections_no)++;
 			tcpconn->s=fd;
 			/* add tcpconn to the list*/
 			tcpconn_add(tcpconn);
@@ -1453,12 +1464,13 @@ static inline int handle_new_connect(struct socket_info* si)
 				" connection(%d): %s\n", errno, strerror(errno));
 		return -1;
 	}
-	if (tcp_connections_no>=tcp_max_connections){
+	if (*tcp_connections_no>=tcp_max_connections){
 		LOG(L_ERR, "ERROR: maximum number of connections exceeded: %d/%d\n",
-					tcp_connections_no, tcp_max_connections);
+					*tcp_connections_no, tcp_max_connections);
 		close(new_sock);
 		return 1; /* success, because the accept was succesfull */
 	}
+	(*tcp_connections_no)++;
 	if (init_sock_opt(new_sock)<0){
 		LOG(L_ERR, "ERROR: handle_new_connect: init_sock_opt failed\n");
 		close(new_sock);
@@ -1633,7 +1645,7 @@ static inline void tcpconn_timeout(int force)
 					}
 					close(fd);
 				}
-				tcp_connections_no--;
+				(*tcp_connections_no)--;
 			}
 			c=next;
 		}
@@ -1803,6 +1815,10 @@ void destroy_tcp()
 			shm_free(tcpconn_id_hash);
 			tcpconn_id_hash=0;
 		}
+		if (tcp_connections_no){
+			shm_free(tcp_connections_no);
+			tcp_connections_no=0;
+		}
 		if (connection_id){
 			shm_free(connection_id);
 			connection_id=0;
@@ -1841,7 +1857,13 @@ int init_tcp()
 		goto error;
 	}
 	/* init globals */
-	connection_id=(int*)shm_malloc(sizeof(int));
+	tcp_connections_no=shm_malloc(sizeof(int));
+	if (tcp_connections_no==0){
+		LOG(L_CRIT, "ERROR: init_tcp: could not alloc globals\n");
+		goto error;
+	}
+	*tcp_connections_no=0;
+	connection_id=shm_malloc(sizeof(int));
 	if (connection_id==0){
 		LOG(L_CRIT, "ERROR: init_tcp: could not alloc globals\n");
 		goto error;
@@ -1938,7 +1960,10 @@ int tcp_init_children()
 #endif
 	
 	tcp_max_fd_no=process_count*2 +r-1 /* timer */ +3; /* stdin/out/err*/
-	tcp_max_fd_no+=tcp_max_connections;
+	/* max connections can be temporarily exceeded with process_count
+	 * - tcp_main (tcpconn_connect called simultaneously in all all the 
+	 *  processes) */
+	tcp_max_fd_no+=tcp_max_connections+process_count-1 /* tcp main */;
 	
 	/* alloc the children array */
 	tcp_children=pkg_malloc(sizeof(struct tcp_child)*tcp_children_no);
@@ -2010,6 +2035,29 @@ int tcp_init_children()
 	return 0;
 error:
 	return -1;
+}
+
+
+
+void tcp_get_info(struct tcp_gen_info *ti)
+{
+	int r;
+	int active_connections;
+	unsigned int total_reqs;
+	
+	
+	ti->tcp_readers=tcp_children_no;
+	ti->tcp_max_connections=tcp_max_connections;
+	ti->tcp_connections_no=*tcp_connections_no;
+	
+	active_connections=0;
+	total_reqs=0;
+	for (r=0; r<tcp_children_no; r++){
+		active_connections*=tcp_children[r].busy;
+		total_reqs+=tcp_children[r].n_reqs;
+	}
+	ti->tcp_inactive_connections=*tcp_connections_no-active_connections;
+	ti->tcp_total_requests=total_reqs;
 }
 
 #endif

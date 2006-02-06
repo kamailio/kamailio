@@ -36,6 +36,7 @@
 #include "globals.h"
 #include "pt.h"
 #include "ut.h"
+#include "tcp_info.h"
 #include "core_cmd.h"
 
 
@@ -252,6 +253,35 @@ static const char* core_shmmem_doc[] = {
 };
 
 
+static const char* core_tcpinfo_doc[] = {
+	"Returns tcp related info.",    /* Documentation string */
+	0                               /* Method signature(s) */
+};
+
+static void core_tcpinfo(rpc_t* rpc, void* c)
+{
+	void *handle;
+#ifdef USE_TCP
+	struct tcp_gen_info ti;
+	
+	if (!tcp_disable){
+		tcp_get_info(&ti);
+		rpc->add(c, "{", &handle);
+		rpc->struct_add(handle, "ddddd",
+			"readers", ti.tcp_readers,
+			"max_connections", ti.tcp_max_connections,
+			"opened_connections", ti.tcp_connections_no,
+			"inactive_connections", ti.tcp_inactive_connections,
+			"total_requests", ti.tcp_total_requests
+		);
+	}else{
+		rpc->fault(c, 500, "tcp support disabled");
+	}
+#else
+	rpc->fault(c, 500, "tcp support not compiled");
+#endif
+}
+
 /*
  * RPC Methods exported by this module
  */
@@ -267,6 +297,7 @@ rpc_export_t core_rpc_methods[] = {
 	{"core.arg",               core_arg,               core_arg_doc,               RET_ARRAY},
 	{"core.kill",              core_kill,              core_kill_doc,              0        },
 	{"core.shmmem",            core_shmmem,            core_shmmem_doc,            0	},
+	{"core.tcp_info",          core_tcpinfo,           core_tcpinfo_doc,          0	},
 	{0, 0, 0, 0}
 };
 
