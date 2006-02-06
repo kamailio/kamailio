@@ -50,9 +50,7 @@ static char enc_table64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 static int dec_table64[256];
 
-
-#define text3B64_len(_l)   ( ( ((_l)+1)/3 ) << 2 )
-
+#define text3B64_len(_l)   (( ((_l) / 3) + ((_l) % 3 ? 1 : 0) ) << 2)
 
 void init_from_replacer()
 {
