@@ -450,7 +450,10 @@ modparam("permissions", "source_col", "source_ip_address")
 		protocol that is matched against transport protocol of
 		received request.  Possible values that can be stored in
 		proto_col are <quote>any</quote>, <quote>udp</quote>,
-		<quote>tcp</quote>, <quote>tls</quote>, and <quote>sctp</quote>.
+		<quote>tcp</quote>, <quote>tls</quote>,
+		<quote>sctp</quote>, and <quote>none</quote>.  Value
+		<quote>any</quote> matches always and value
+		<quote>none</quote> never.
 		</para>
 		<para>
 		<emphasis>

@@ -98,16 +98,6 @@ int hash_table_insert(struct trusted_list** hash_table, char* src_ip, char* prot
 		return -1;
 	}
 
-	np->src_ip.len = strlen(src_ip);
-	np->src_ip.s = (char *) shm_malloc(np->src_ip.len);
-
-	if (np->src_ip.s == NULL) {
-		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory for src_ip string\n");
-		return -1;
-	}
-
-	(void) strncpy(np->src_ip.s, src_ip, np->src_ip.len);
-
 	if (strcmp(proto, "any") == 0) {
 		np->proto = PROTO_NONE;
 	} else if (strcmp(proto, "udp") == 0) {
@@ -118,14 +108,31 @@ int hash_table_insert(struct trusted_list** hash_table, char* src_ip, char* prot
 		np->proto = PROTO_TLS;
 	} else if (strcmp(proto, "sctp") == 0) {
 		np->proto = PROTO_SCTP;
+	} else if (strcmp(proto, "none") == 0) {
+	        shm_free(np);
+		return 1;
 	} else {
 		LOG(L_CRIT, "hash_table_insert(): Unknown protocol\n");
+	        shm_free(np);
 		return -1;
 	}
+
+	np->src_ip.len = strlen(src_ip);
+	np->src_ip.s = (char *) shm_malloc(np->src_ip.len);
+
+	if (np->src_ip.s == NULL) {
+		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory for src_ip string\n");
+		shm_free(np);
+		return -1;
+	}
+
+	(void) strncpy(np->src_ip.s, src_ip, np->src_ip.len);
 		
 	np->pattern = (char *) shm_malloc(strlen(pattern)+1);
 	if (np->pattern == NULL) {
 		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory for pattern string\n");
+		shm_free(np->src_ip.s);
+		shm_free(np);
 		return -1;
 	}
 	(void) strcpy(np->pattern, pattern);
