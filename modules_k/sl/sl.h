@@ -1,7 +1,9 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 FhG Fokus
+ * sl module
+ *
+ * Copyright (C) 2006 Voice Sistem
  *
  * This file is part of openser, a free SIP server.
  *
@@ -18,30 +20,30 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ *  2006-02-06  original version (bogdan)
  */
 
+#ifndef _SL_H_
+#define _SL_H_
 
-#ifndef _SL_STATS_H
-#define _SL_STATS_H
+#include "../../statistics.h"
 
-enum reply_type { RT_200, RT_202, RT_2xx,
-	RT_300, RT_301, RT_302, RT_3xx,
-	RT_400, RT_401, RT_403, RT_404, RT_407, 
-		RT_408, RT_483, RT_4xx,
-	RT_500, RT_5xx, 
-	RT_6xx,
-	RT_xxx,
-	RT_END };
+/* module parameter */
+extern int sl_enable_stats;
 
+/* statistic variables */
+extern stat_var *tx_1xx_rpls;
+extern stat_var *tx_2xx_rpls;
+extern stat_var *tx_3xx_rpls;
+extern stat_var *tx_4xx_rpls;
+extern stat_var *tx_5xx_rpls;
+extern stat_var *tx_6xx_rpls;
+extern stat_var *sent_rpls;
+extern stat_var *sent_err_rpls;
+extern stat_var *rcv_acks;
 
-struct sl_stats {
-	unsigned long err[RT_END];
-	unsigned long failures;
-};
-
-int init_sl_stats(void);
-void update_sl_stats( int code );
-void update_sl_failures( void );
-void sl_stats_destroy();
 
 #endif

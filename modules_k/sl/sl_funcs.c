@@ -51,7 +51,7 @@
 #include "../../action.h"
 #include "../../config.h"
 #include "../../tags.h"
-#include "sl_stats.h"
+#include "sl.h"
 #include "sl_funcs.h"
 
 
@@ -94,23 +94,8 @@ int sl_shutdown()
 	return 1;
 }
 
-#ifdef _MOVED_TO_CORE
-static void calc_crc_suffix( struct sip_msg *msg )
-{
-	int ss_nr;
-	str suffix_source[3];
 
-	ss_nr=2;
-	suffix_source[0]=msg->via1->host;
-	suffix_source[1]=msg->via1->port_str;
-	if (msg->via1->branch) 
-		suffix_source[ss_nr++]=msg->via1->branch->value;
-	crcitt_string_array( tag_suffix, suffix_source, ss_nr );
-}
-#endif
-
-
-int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
+int sl_send_reply(struct sip_msg *msg ,int code ,char *text)
 {
 	char               *buf;
 	unsigned int       len;
@@ -127,10 +112,6 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 		LOG(L_WARN, "Warning: sl_send_reply: I won't send a reply for ACK!!\n");
 		goto error;
 	}
-
-	/* family will be updated in update_sock to whatever appropriate;
-	   -jiri
-	to.sin_family = AF_INET; */
 
 	if (reply_to_via) {
 		if (update_sock_struct_from_via(  &(to), msg, msg->via1 )==-1)
@@ -151,10 +132,7 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	}
 
 	/* add a to-tag if there is a To header field without it */
-	if ( 	/* since RFC3261, we append to-tags anywhere we can, except
-		 * 100 replies */
-		/* msg->first_line.u.request.method_value==METHOD_INVITE && */
-		code>=180 &&
+	if ( code>=180 &&
 		(msg->to || (parse_headers(msg,HDR_TO_F, 0)!=-1 && msg->to))
 		&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) ) 
 	{
@@ -183,15 +161,29 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	mhomed=backup_mhomed;
 	if (ret<0) 
 		goto error;
-	
+
 	*(sl_timeout) = get_ticks() + SL_RPL_WAIT_TIME;
 	pkg_free(buf);
 
-	update_sl_stats(code);
+	if (sl_enable_stats) {
+		if (code < 200 ) {
+			update_stat( tx_1xx_rpls , 1);
+		} else if (code<300) {
+			update_stat( tx_2xx_rpls , 1);
+		} else if (code<400) {
+			update_stat( tx_3xx_rpls , 1);
+		} else if (code<500) {
+			update_stat( tx_4xx_rpls , 1);
+		} else if (code<600) {
+			update_stat( tx_5xx_rpls , 1);
+		} else {
+			update_stat( tx_6xx_rpls , 1);
+		}
+		update_stat( sent_rpls , 1);
+	}
 	return 1;
 
 error:
-	update_sl_failures();
 	return -1;
 }
 
@@ -202,17 +194,19 @@ int sl_reply_error(struct sip_msg *msg )
 	int sip_error;
 	int ret;
 
-	ret=err2reason_phrase( prev_ser_error, &sip_error, 
+	ret = err2reason_phrase( prev_ser_error, &sip_error, 
 		err_buf, sizeof(err_buf), "SL");
-	if (ret>0) {
-		sl_send_reply( msg, sip_error, err_buf );
-		LOG(L_ERR, "ERROR: sl_reply_error used: %s\n", 
-			err_buf );
-		return 1;
-	} else {
+	if (ret<=0) {
 		LOG(L_ERR, "ERROR: sl_reply_error: err2reason failed\n");
 		return -1;
 	}
+	DBG("DEBUG:sl:sl_reply_error: error text is %s\n", err_buf );
+
+	ret = sl_send_reply( msg, sip_error, err_buf);
+	if (ret==-1)
+		return -1;
+	if_update_stat( sl_enable_stats, sent_err_rpls , 1);
+	return ret;
 }
 
 
@@ -251,7 +245,8 @@ int sl_filter_ACK(struct sip_msg *msg, void *bar )
 			calc_crc_suffix(msg, tag_suffix);
 			/* test whether to-tag equal now */
 			if (memcmp(tag_str->s,sl_tag.s,sl_tag.len)==0) {
-				DBG("DEBUG: sl_filter_ACK : local ACK found -> dropping it! \n" );
+				DBG("DEBUG: sl_filter_ACK : local ACK found -> dropping it!\n");
+				if_update_stat( sl_enable_stats, rcv_acks, 1);
 				return 0;
 			}
 		}

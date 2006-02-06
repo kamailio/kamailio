@@ -21,17 +21,22 @@ Bogdan Iancu
               1.2.1. OpenSER Modules
               1.2.2. External Libraries or Applications
 
-        1.3. Exported Functions
+        1.3. Exported Parameters
 
-              1.3.1. sl_send_reply(code, reason)
-              1.3.2. sl_reply_error()
+              1.3.1. enable_stats (integer)
+
+        1.4. Exported Functions
+
+              1.4.1. sl_send_reply(code, reason)
+              1.4.2. sl_reply_error()
 
    2. Developer's Guide
    3. Frequently Asked Questions
 
    List of Examples
-   1-1. sl_send_reply usage
-   1-2. sl_reply_error usage
+   1-1. enable_stats example
+   1-2. sl_send_reply usage
+   1-3. sl_reply_error usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -84,9 +89,26 @@ Chapter 1. User's Guide
      * None.
      _________________________________________________________
 
-1.3. Exported Functions
+1.3. Exported Parameters
 
-1.3.1. sl_send_reply(code, reason)
+1.3.1. enable_stats (integer)
+
+   If the module should generate and export statistics to the
+   core manager. A zero value means disabled.
+
+   SL module provides statistics about how many replies were sent
+   ( splitted per code classes) and how many local ACKs were
+   filtered out.
+
+   Default value is 1 (enabled).
+
+   Example 1-1. enable_stats example
+modparam("sl", "enable_stats", 0)
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. sl_send_reply(code, reason)
 
    For the current request, a reply is sent back having the given
    code and text reason. The reply is sent stateless, totally
@@ -100,13 +122,13 @@ Chapter 1. User's Guide
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-1. sl_send_reply usage
+   Example 1-2. sl_send_reply usage
 ...
 sl_send_reply("404", "Not found");
 ...
      _________________________________________________________
 
-1.3.2. sl_reply_error()
+1.4.2. sl_reply_error()
 
    Sends back an error reply describing the nature of the last
    internal error. Usually this function should be used after a
@@ -114,7 +136,7 @@ sl_send_reply("404", "Not found");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-2. sl_reply_error usage
+   Example 1-3. sl_reply_error usage
 ...
 sl_reply_error();
 ...
@@ -156,4 +178,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.

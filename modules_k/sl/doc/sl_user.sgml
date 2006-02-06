@@ -74,6 +74,31 @@
 		</para>
 	</section>
 	</section>
+
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>enable_stats</varname> (integer)</title>
+		<para>
+		If the module should generate and export statistics to the core
+		manager. A zero value means disabled.
+		</para>
+		<para>
+		SL module provides statistics about how many replies were sent (
+		splitted per code classes) and how many local ACKs were filtered out.
+		</para>
+		<para>
+		Default value is 1 (enabled).
+		</para>
+		<example>
+		<title>enable_stats example</title>
+		<programlisting format="linespecific">
+modparam("sl", "enable_stats", 0)
+</programlisting>
+		</example>
+	</section>
+	</section>
+
 	<section>
 	<title>Exported Functions</title>
 	<section>
