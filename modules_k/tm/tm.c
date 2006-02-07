@@ -156,17 +156,17 @@ static char *bf_mask_param = NULL;
 int tm_enable_stats = 1;
 
 /* statistic variables */
-stat_var *rcv_rpls;
-stat_var *rld_rpls;
-stat_var *loc_rpls;
-stat_var *uas_trans;
-stat_var *uac_trans;
-stat_var *trans_2xx;
-stat_var *trans_3xx;
-stat_var *trans_4xx;
-stat_var *trans_5xx;
-stat_var *trans_6xx;
-stat_var *trans_inuse;
+stat_var *tm_rcv_rpls;
+stat_var *tm_rld_rpls;
+stat_var *tm_loc_rpls;
+stat_var *tm_uas_trans;
+stat_var *tm_uac_trans;
+stat_var *tm_trans_2xx;
+stat_var *tm_trans_3xx;
+stat_var *tm_trans_4xx;
+stat_var *tm_trans_5xx;
+stat_var *tm_trans_6xx;
+stat_var *tm_trans_inuse;
 
 
 static cmd_export_t cmds[]={
@@ -307,17 +307,17 @@ static param_export_t params[]={
 
 
 stat_export_t mod_stats[] = {
-	{"received_replies" ,    0,              &rcv_rpls    },
-	{"relayed_replies" ,     0,              &rld_rpls    },
-	{"local_replies" ,       0,              &loc_rpls    },
-	{"UAS_transactions" ,    0,              &uas_trans   },
-	{"UAC_transactions" ,    0,              &uac_trans   },
-	{"2xx_transactions" ,    0,              &trans_2xx   },
-	{"3xx_transactions" ,    0,              &trans_3xx   },
-	{"4xx_transactions" ,    0,              &trans_4xx   },
-	{"5xx_transactions" ,    0,              &trans_5xx   },
-	{"6xx_transactions" ,    0,              &trans_6xx   },
-	{"inuse_transactions" ,  STAT_NO_RESET,  &trans_inuse },
+	{"received_replies" ,    0,              &tm_rcv_rpls    },
+	{"relayed_replies" ,     0,              &tm_rld_rpls    },
+	{"local_replies" ,       0,              &tm_loc_rpls    },
+	{"UAS_transactions" ,    0,              &tm_uas_trans   },
+	{"UAC_transactions" ,    0,              &tm_uac_trans   },
+	{"2xx_transactions" ,    0,              &tm_trans_2xx   },
+	{"3xx_transactions" ,    0,              &tm_trans_3xx   },
+	{"4xx_transactions" ,    0,              &tm_trans_4xx   },
+	{"5xx_transactions" ,    0,              &tm_trans_5xx   },
+	{"6xx_transactions" ,    0,              &tm_trans_6xx   },
+	{"inuse_transactions" ,  STAT_NO_RESET,  &tm_trans_inuse },
 	{0,0,0}
 };
 

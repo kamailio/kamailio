@@ -413,7 +413,7 @@ void remove_from_hash_table_unsafe( struct cell * p_cell)
 # endif
 	/* update stats */
 	p_entry->cur_entries--;
-	if_update_stat(tm_enable_stats, trans_inuse , -1 );
+	if_update_stat(tm_enable_stats, tm_trans_inuse , -1 );
 }
 
 

@@ -1193,7 +1193,7 @@ int reply_received( struct sip_msg  *p_msg )
 		t->uas.status, branch, uac->last_received, 
 		is_local(t), is_invite(t));
 	last_uac_status=uac->last_received;
-	if_update_stat( tm_enable_stats, rcv_rpls , 1);
+	if_update_stat( tm_enable_stats, tm_rcv_rpls , 1);
 
 	/* it's a cancel which is not e2e ? */
 	if ( get_cseq(p_msg)->method_id==METHOD_CANCEL && is_invite(t) ) {
