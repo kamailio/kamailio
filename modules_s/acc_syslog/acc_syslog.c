@@ -133,6 +133,8 @@ MODULE_VERSION
 struct tm_binds tmb;
 
 static int mod_init( void );
+static int fix_log_flag( modparam_t type, void* val);
+static int fix_log_missed_flag( modparam_t type, void* val);
 
 static int log_level = L_NOTICE; /* noisiness level logging facilities are used */
 
@@ -166,7 +168,9 @@ static param_export_t params[] = {
 	{"report_ack",		PARAM_INT, &report_ack          },
 	{"report_cancels",	PARAM_INT, &report_cancels 	},
 	{"log_flag",		PARAM_INT, &log_flag         	},
+	{"log_flag",		PARAM_STRING|PARAM_USE_FUNC, fix_log_flag},
 	{"log_missed_flag",	PARAM_INT, &log_missed_flag	},
+	{"log_missed_flag",	PARAM_STRING|PARAM_USE_FUNC, fix_log_missed_flag},
 	{"log_level",		PARAM_INT, &log_level           },
 	{"log_fmt",		PARAM_STRING, &log_fmt          },
         {"attrs",               PARAM_STRING, &attrs            },
@@ -185,6 +189,22 @@ struct module_exports exports= {
 	0,	  /* oncancel function */
 	0         /* per-child init function */
 };
+
+
+
+/* fixes log_flag param (resolves possible named flags) */
+static int fix_log_flag( modparam_t type, void* val)
+{
+	return fix_flag(type, val, "acc_syslog", "log_flag", &log_flag);
+}
+
+
+
+/* fixes log_missed_flag param (resolves possible named flags) */
+static int fix_log_missed_flag( modparam_t type, void* val)
+{
+	return fix_flag(type, val, "acc_syslog", "log_missed_flag", &log_flag);
+}
 
 
 #define TM_BUF_LEN sizeof("10000-12-31 23:59:59")

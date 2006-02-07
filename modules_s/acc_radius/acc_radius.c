@@ -99,6 +99,8 @@ MODULE_VERSION
 struct tm_binds tmb;
 
 static int mod_init( void );
+static int fix_log_flag( modparam_t type, void* val);
+static int fix_log_missed_flag( modparam_t type, void* val);
 
 static int early_media = 0;         /* Enable/disable early media (183) accounting */
 static int failed_transactions = 0; /* Enable/disable accounting of failed (>= 300) transactions */
@@ -135,12 +137,12 @@ static param_export_t params[] = {
 	{"report_ack",		PARAM_INT, &report_ack          },
 	{"report_cancels",	PARAM_INT, &report_cancels 	},
 	{"log_flag",		PARAM_INT, &log_flag         	},
+	{"log_flag",		PARAM_STRING|PARAM_USE_FUNC, fix_log_flag},
 	{"log_missed_flag",	PARAM_INT, &log_missed_flag	},
+	{"log_missed_flag",	PARAM_STRING|PARAM_USE_FUNC, fix_log_missed_flag},
 	{"log_fmt",		PARAM_STRING, &log_fmt          },
-        {"attrs",               PARAM_STRING, &attrs_param      },
+	{"attrs",               PARAM_STRING, &attrs_param      },
 	{"radius_config",	PARAM_STRING, &radius_config	},
-	{"log_flag",		PARAM_INT, &log_flag	        },
-	{"log_missed_flag",	PARAM_INT, &log_missed_flag     },
 	{"service_type", 	PARAM_INT, &service_type        },
 	{"swap_direction",      PARAM_INT, &swap_dir            },
 	{0, 0, 0}
@@ -158,6 +160,23 @@ struct module_exports exports= {
 	0,	  /* oncancel function */
 	0         /* per-child init function */
 };
+
+
+
+/* fixes log_flag param (resolves possible named flags) */
+static int fix_log_flag( modparam_t type, void* val)
+{
+	return fix_flag(type, val, "acc_radius", "log_flag", &log_flag);
+}
+
+
+
+/* fixes log_missed_flag param (resolves possible named flags) */
+static int fix_log_missed_flag( modparam_t type, void* val)
+{
+	return fix_flag(type, val, "acc_radius", "log_missed_flag", &log_flag);
+}
+
 
 
 static inline int skip_cancel(struct sip_msg *msg)

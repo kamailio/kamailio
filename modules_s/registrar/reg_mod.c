@@ -32,6 +32,7 @@
  *  2003-03-11  updated to the new module exports interface (andrei)
  *  2003-03-16  flags export parameter added (janakj)
  *  2003-03-21  save_noreply added, provided by Maxim Sobolev <sobomax@portaone.com> (janakj)
+ *  2006-02-07  named flag support (andrei)
  */
 
 #include <stdio.h>
@@ -49,6 +50,7 @@ MODULE_VERSION
 
 
 static int mod_init(void);                           /* Module init function */
+static int fix_nat_flag( modparam_t type, void* val);
 static int domain_fixup(void** param, int param_no); /* Fixup that converts domain name */
 static void mod_destroy(void);
 
@@ -101,6 +103,7 @@ static param_export_t params[] = {
 	{"default_q",       PARAM_INT, &default_q      },
 	{"append_branches", PARAM_INT, &append_branches},
 	{"nat_flag",        PARAM_INT, &nat_flag       },
+	{"nat_flag",        PARAM_STRING|PARAM_USE_FUNC, fix_nat_flag},
 	{"min_expires",     PARAM_INT, &min_expires    },
 	{"max_expires",     PARAM_INT, &max_expires    },
         {"received_param",  PARAM_STR, &rcv_param      },
@@ -170,6 +173,15 @@ static int mod_init(void)
 
 	return 0;
 }
+
+
+
+/* fixes nat_flag param (resolves possible named flags) */
+static int fix_nat_flag( modparam_t type, void* val)
+{
+	return fix_flag(type, val, "registrar", "nat_flag", &nat_flag);
+}
+
 
 
 /*
