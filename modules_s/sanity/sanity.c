@@ -389,7 +389,7 @@ int check_cseq_method(struct sip_msg* _msg) {
 
 /* check the number within the CSeq header */
 int check_cseq_value(struct sip_msg* _msg) {
-	int cseq;
+	unsigned int cseq;
 
 	DBG("check_cseq_value entered\n");
 
@@ -464,7 +464,7 @@ int check_cl(struct sip_msg* _msg) {
 
 /* check the number within the Expires header */
 int check_expires_value(struct sip_msg* _msg) {
-	int expires;
+	unsigned int expires;
 
 	DBG("check_expires_value entered\n");
 
