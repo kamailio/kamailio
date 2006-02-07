@@ -173,7 +173,7 @@ int register_flag(char* name, int pos)
 	/* check if the name already exists */
 	e=flag_search(&name2flags[h], name, len);
 	if (e){
-		LOG(L_WARN, "WARNING: register_flag: flag %.*s already registered\n",
+		LOG(L_ERR, "ERROR: register_flag: flag %.*s already registered\n",
 					len, name);
 		return -2;
 	}

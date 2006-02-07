@@ -207,4 +207,7 @@ int fixup_regex_2(void** param, int param_no);
 action_u_t *fixup_get_param(void **cur_param, int cur_param_no, int required_param_no);
 int fixup_get_param_count(void **cur_param, int cur_param_no);
 
+int fix_flag( modparam_t type, void* val,
+					char* mod_name, char* param_name, int* flag);
+
 #endif /* sr_module_h */

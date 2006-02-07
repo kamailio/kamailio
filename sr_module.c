@@ -33,7 +33,9 @@
  *  2003-03-29  cleaning pkg_mallocs introduced (jiri)
  *  2003-04-24  module version checking introduced (jiri)
  *  2004-09-19  compile flags are checked too (andrei)
- *  2005-01-07  removed find_module-overloading problems, added find_export_record
+ *  2005-01-07  removed find_module-overloading problems, added 
+ *               find_export_record
+ *  2006-02-07  added fix_flag (andrei)
  */
 
 
@@ -44,6 +46,7 @@
 #include "core_cmd.h"
 #include "ut.h"
 #include "route_struct.h"
+#include "flags.h"
 
 #include <regex.h>
 #include <dlfcn.h>
@@ -663,4 +666,59 @@ int fixup_get_param_count(void **cur_param, int cur_param_no) {
 		return a->u.number;
 	else
 		return -1;
+}
+
+
+/* fixes flag params (resolves possible named flags)
+ * use PARAM_USE_FUNC|PARAM_STRING as a param. type and create
+ * a wrapper function that does just:
+ * return fix_flag(type, val, "my_module", "my_param", &flag_var)
+ * see also param_func_t.
+ */
+int fix_flag( modparam_t type, void* val,
+					char* mod_name, char* param_name, int* flag)
+{
+	int num;
+	int err;
+	int f, len;
+	char* s;
+	char *p;
+	
+	if ((type & PARAM_STRING)==0){
+		LOG(L_CRIT, "BUG: %s: fix_flag(%s): bad parameter type\n",
+					mod_name, param_name);
+		return -1;
+	}
+	s=(char*)val;
+	len=strlen(s);
+	f=-1;
+	/* try to see if it's a number */
+	num = str2s(s, len, &err);
+	if (err != 0) {
+		/* see if it's in the name:<no> format */
+		p=strchr(s, ':');
+		if (p){
+			f= str2s(p+1, strlen(p+1), &err);
+			if (err!=0){
+				LOG(L_ERR, "ERROR: %s: invalid %s format:"
+						" \"%s\"", mod_name, param_name, s);
+				return -1;
+			}
+			*p=0;
+		}
+		if ((num=get_flag_no(s, len))<0){
+			/* not declared yet, declare it */
+			num=register_flag(s, f);
+		}
+		if (num<0){
+			LOG(L_ERR, "ERROR: %s: bad %s %s\n", mod_name, param_name, s);
+			return -1;
+		} else if ((f>0) && (num!=f)){
+			LOG(L_ERR, "WARNING: %s: flag %s already defined"
+					" as %d (and not %d), using %s:%d\n",
+					mod_name, s, num, f, s, num);
+		}
+	}
+	*flag=num;
+	return 0;
 }
