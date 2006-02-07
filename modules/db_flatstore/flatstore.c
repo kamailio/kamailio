@@ -193,7 +193,7 @@ int flat_db_insert(db_con_t* h, db_key_t* k, db_val_t* v, int n)
 					delims[3] = '\0';
 					while (*s) {
 						len = strcspn(s, delims);
-						fprintf(f, "%.*s", len, s);
+						fprintf(f, "%.*s", (int)len, s);
 						s+= len;
 						if (*s) {
 							fprintf(f, "%c%c", flat_escape[0], *s);
@@ -215,7 +215,7 @@ int flat_db_insert(db_con_t* h, db_key_t* k, db_val_t* v, int n)
 					while (len > 0) {
 						char *c;
 						for (c = s; len > 0 && *c != flat_delimiter[0] && *c != flat_record_delimiter[0] && *c != flat_escape[0]; c++, len--);
-						fprintf(f, "%.*s", c-s, s);
+						fprintf(f, "%.*s", (int)(c-s), s);
 						s = c;
 						if (len > 0) {
 							fprintf(f, "%c%c", flat_escape[0], *s);
