@@ -76,6 +76,7 @@
  *  2005-12-09  fixup_hostport2proxy uses route_struct to access param #1
  *              when fixing param #2
  *  2005-12-09  added t_set_fr() (andrei)
+ *  2006-02-07  named routes support (andrei)
  */
 
 
@@ -94,6 +95,7 @@
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
 #include "../../route_struct.h"
+#include "../../route.h"
 
 #include "sip_msg.h"
 #include "h_table.h"
@@ -114,6 +116,9 @@ MODULE_VERSION
 
 /* fixup functions */
 static int fixup_hostport2proxy(void** param, int param_no);
+static int fixup_on_failure(void** param, int param_no);
+static int fixup_on_reply(void** param, int param_no);
+static int fixup_on_branch(void** param, int param_no);
 
 
 /* init functions */
@@ -226,11 +231,11 @@ static cmd_export_t cmds[]={
 	{T_FORWARD_NONACK_TLS, w_t_forward_nonack_tls,  2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 #endif
-	{"t_on_failure",       w_t_on_negative,         1, fixup_int_1,
+	{"t_on_failure",       w_t_on_negative,         1, fixup_on_failure,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
-	{"t_on_reply",         w_t_on_reply,            1, fixup_int_1,
+	{"t_on_reply",         w_t_on_reply,            1, fixup_on_reply,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
-	{"t_on_branch",       w_t_on_branch,         1, fixup_int_1,
+	{"t_on_branch",       w_t_on_branch,         1, fixup_on_branch,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"t_check_status",     t_check_status,          1, fixup_regex_1,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
@@ -306,6 +311,57 @@ struct module_exports exports= {
 	0, /* w_onbreak, */
 	child_init /* per-child init function */
 };
+
+
+
+/* helper for fixup_on_* */
+static int fixup_routes(char* r_type, struct route_list* rt, void** param)
+{
+	int i;
+	
+	i=route_get(rt, (char*)*param);
+	if (i==-1){
+		LOG(L_ERR, "ERROR: tm: fixup_routes: route_get failed\n");
+		return E_UNSPEC;
+	}
+	if (rt->rlist[i]==0){
+		LOG(L_WARN, "WARNING: %s(\"%s\"): empty/non existing route\n",
+				r_type, (char*)*param);
+	}
+	*param=(void*)(long)i;
+	return 0;
+}
+
+
+
+static int fixup_on_failure(void** param, int param_no)
+{
+	if (param_no==1){
+		return fixup_routes("t_on_failure", &failure_rt, param);
+	}
+	return 0;
+}
+
+
+
+static int fixup_on_reply(void** param, int param_no)
+{
+	if (param_no==1){
+		return fixup_routes("t_on_reply", &onreply_rt, param);
+	}
+	return 0;
+}
+
+
+
+static int fixup_on_branch(void** param, int param_no)
+{
+	if (param_no==1){
+		return fixup_routes("t_on_branch", &branch_rt, param);
+	}
+	return 0;
+}
+
 
 
 /* (char *hostname, char *port_nr) ==> (struct proxy_l *, -)  */

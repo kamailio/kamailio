@@ -389,6 +389,7 @@ void cleanup(show_status)
 #endif
 	destroy_timer();
 	destroy_script_cb();
+	destroy_routes();
 #ifdef PKG_MALLOC
 	if (show_status){
 		LOG(memlog, "Memory status (pkg):\n");
@@ -1306,7 +1307,8 @@ int main(int argc, char** argv)
 					abort();
 		}
 	}
-
+	
+	if (init_routes()<0) goto error;
 	/* fill missing arguments with the default values*/
 	if (cfg_file==0) cfg_file=CFG_FILE;
 
@@ -1351,7 +1353,7 @@ try_again:
 		goto error;
 	}
 	if (debug_flag) debug = debug_save;
-	print_rl();
+	print_rls();
 
 	/* options with higher priority than cfg file */
 	optind = 1;  /* reset getopt */

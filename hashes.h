@@ -165,7 +165,7 @@ inline static struct str_hash_entry* str_hash_get(struct str_hash_table* ht,
 	int h;
 	struct str_hash_entry* e;
 	
-	h=get_hash1_raw(e->key.s, e->key.len) % ht->size;
+	h=get_hash1_raw(key, len) % ht->size;
 	clist_foreach(&ht->table[h], e, next){
 		if ((e->key.len==len) && (memcmp(e->key.s, key, len)==0))
 			return e;

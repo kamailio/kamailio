@@ -42,7 +42,8 @@
  *  2004-10-19  added from_uri & to_uri (andrei)
  *  2005-12-12  added retcode support (anrei)
  *  2005-12-19  select framework (mma)
- *  2006-01-30 removed rec. protection from eval_expr (andrei)
+ *  2006-01-30  removed rec. protection from eval_expr (andrei)
+ *  2006-02-06  added named route tables (andrei)
  */
 
 
@@ -71,14 +72,181 @@
 #include "mem/mem.h"
 #include "select.h"
 #include "onsend.h"
+#include "hashes.h"
+
+
+#define RT_HASH_SIZE	8 /* route names hash */
 
 /* main routing script table  */
-struct action* rlist[RT_NO];
-/* reply routing table */
-struct action* onreply_rlist[ONREPLY_RT_NO];
-struct action* failure_rlist[FAILURE_RT_NO];
-struct action* branch_rlist[BRANCH_RT_NO];
-struct action* onsend_rlist[ONSEND_RT_NO];
+struct route_list main_rt;
+struct route_list onreply_rt;
+struct route_list failure_rt;
+struct route_list branch_rt;
+struct route_list onsend_rt;
+
+
+
+inline static void destroy_rlist(struct route_list* rt)
+{
+	struct str_hash_entry* e;
+	struct str_hash_entry* tmp;
+
+	if (rt->rlist){
+		pkg_free(rt->rlist);
+		rt->rlist=0;
+		rt->entries=0;
+	}
+	if (rt->names.table){
+		clist_foreach_safe(rt->names.table, e, tmp, next){
+			pkg_free(e);
+		}
+		pkg_free(rt->names.table);
+		rt->names.table=0;
+		rt->names.size=0;
+	}
+}
+
+
+
+void destroy_routes()
+{
+	destroy_rlist(&main_rt);
+	destroy_rlist(&onreply_rt);
+	destroy_rlist(&failure_rt);
+	destroy_rlist(&branch_rt);
+}
+
+
+
+/* adds route name -> i mapping
+ * WARNING: it doesn't check for pre-existing routes 
+ * return -1 on error, route index on success
+ */
+static int route_add(struct route_list* rt, char* name, int i)
+{
+	struct str_hash_entry* e;
+	
+	e=pkg_malloc(sizeof(struct str_hash_entry));
+	if (e==0){
+		LOG(L_CRIT, "ERROR: route_add: out of memory\n");
+		goto error;
+	}
+	e->key.s=name;
+	e->key.len=strlen(name);
+	e->flags=0;
+	e->u.n=i;
+	str_hash_add(&rt->names, e);
+	return 0;
+error:
+	return -1;
+}
+
+
+
+/* returns -1 on error, 0 on success */
+inline  static int init_rlist(char* r_name, struct route_list* rt,
+								int n_entries, int hash_size)
+{
+		rt->rlist=pkg_malloc(sizeof(struct action*)*n_entries);
+		if (rt->rlist==0){ 
+			LOG(L_CRIT, "ERROR: failed to allocate \"%s\" route tables: " 
+					"out of memory\n", r_name); 
+			goto error; 
+		}
+		memset(rt->rlist, 0 , sizeof(struct action*)*n_entries);
+		rt->idx=1; /* idx=0 == default == reserved */
+		rt->entries=n_entries;
+		if (str_hash_alloc(&rt->names, hash_size)<0){
+			LOG(L_CRIT, "ERROR: \"%s\" route table: failed to alloc hash\n",
+					r_name);
+			goto error;
+		}
+		str_hash_init(&rt->names);
+		route_add(rt, "0", 0);  /* default route */
+		
+		return 0;
+error:
+		return -1;
+}
+
+
+
+/* init route tables */
+int init_routes()
+{
+	if (init_rlist("main", &main_rt, RT_NO, RT_HASH_SIZE)<0)
+		goto error;
+	if (init_rlist("on_reply", &onreply_rt, ONREPLY_RT_NO, RT_HASH_SIZE)<0)
+		goto error;
+	if (init_rlist("failure", &failure_rt, FAILURE_RT_NO, RT_HASH_SIZE)<0)
+		goto error;
+	if (init_rlist("branch", &branch_rt, BRANCH_RT_NO, RT_HASH_SIZE)<0)
+		goto error;
+	if (init_rlist("on_send", &onsend_rt, ONSEND_RT_NO, RT_HASH_SIZE)<0)
+		goto error;
+	return 0;
+error:
+	destroy_routes();
+	return -1;
+}
+
+
+
+static inline int route_new_list(struct route_list* rt)
+{
+	int ret;
+	struct action** tmp;
+	
+	ret=-1;
+	if (rt->idx >= rt->entries){
+		tmp=pkg_realloc(rt->rlist, 2*rt->entries*sizeof(struct action*));
+		if (tmp==0){
+			LOG(L_CRIT, "ERROR: route_new_list: out of memory\n");
+			goto end;
+		}
+		rt->rlist=tmp;
+		rt->entries*=2;
+	}
+	if (rt->idx<rt->entries){
+		ret=rt->idx;
+		rt->idx++;
+	}
+end:
+	return ret;
+}
+
+
+
+
+/* 
+ * if the "name" route already exists, return its index, else
+ * create a new empty route
+ * return route index in rt->rlist or -1 on error
+ */
+int route_get(struct route_list* rt, char* name)
+{
+	int len;
+	struct str_hash_entry* e;
+	int i;
+	
+	len=strlen(name);
+	/* check if exists an non empty*/
+	e=str_hash_get(&rt->names, name, len);
+	if (e){
+		i=e->u.n;
+	}else{
+		i=route_new_list(rt);
+		if (i==-1) goto error;
+		if (route_add(rt, name, i)<0){
+			goto error;
+		}
+	}
+	return i;
+error:
+	return -1;
+}
+
+
 
 static int fix_actions(struct action* a); /*fwd declaration*/
 
@@ -983,42 +1151,14 @@ error:
 
 
 
-/* fixes all action tables */
-/* returns 0 if ok , <0 on error */
-int fix_rls()
+static int fix_rl(struct route_list* rt)
 {
-	int i,ret;
-	for(i=0;i<RT_NO;i++){
-		if(rlist[i]){
-			if ((ret=fix_actions(rlist[i]))!=0){
-				return ret;
-			}
-		}
-	}
-	for(i=0;i<ONREPLY_RT_NO;i++){
-		if(onreply_rlist[i]){
-			if ((ret=fix_actions(onreply_rlist[i]))!=0){
-				return ret;
-			}
-		}
-	}
-	for(i=0;i<FAILURE_RT_NO;i++){
-		if(failure_rlist[i]){
-			if ((ret=fix_actions(failure_rlist[i]))!=0){
-				return ret;
-			}
-		}
-	}
-	for(i=0;i<BRANCH_RT_NO;i++){
-		if(branch_rlist[i]){
-			if ((ret=fix_actions(branch_rlist[i]))!=0){
-				return ret;
-			}
-		}
-	}
-	for(i=0;i<ONSEND_RT_NO;i++){
-		if(onsend_rlist[i]){
-			if ((ret=fix_actions(onsend_rlist[i]))!=0){
+	int i;
+	int ret;
+	
+	for(i=0;i<rt->idx; i++){
+		if(rt->rlist[i]){
+			if ((ret=fix_actions(rt->rlist[i]))!=0){
 				return ret;
 			}
 		}
@@ -1027,42 +1167,52 @@ int fix_rls()
 }
 
 
-/* debug function, prints main routing table */
-void print_rl()
+
+/* fixes all action tables */
+/* returns 0 if ok , <0 on error */
+int fix_rls()
+{
+	int ret;
+	
+	if ((ret=fix_rl(&main_rt))!=0)
+		return ret;
+	if ((ret=fix_rl(&onreply_rt))!=0)
+		return ret;
+	if ((ret=fix_rl(&failure_rt))!=0)
+		return ret;
+	if ((ret=fix_rl(&branch_rt))!=0)
+		return ret;
+	if ((ret=fix_rl(&onsend_rt))!=0)
+		return ret;
+
+	return 0;
+}
+
+
+
+static void print_rl(struct route_list* rt, char* name)
 {
 	int j;
+	
+	for(j=0; j<rt->entries; j++){
+		if (rt->rlist[j]==0){
+			if ((j==0) && (rt==&main_rt))
+				DBG("WARNING: the main routing table is empty\n");
+			continue;
+		}
+		DBG("%s routing table %d:\n", name, j);
+		print_actions(rt->rlist[j]);
+		DBG("\n");
+	}
+}
 
-	for(j=0; j<RT_NO; j++){
-		if (rlist[j]==0){
-			if (j==0) DBG("WARNING: the main routing table is empty\n");
-			continue;
-		}
-		DBG("routing table %d:\n",j);
-		print_actions(rlist[j]);
-		DBG("\n");
-	}
-	for(j=0; j<ONREPLY_RT_NO; j++){
-		if (onreply_rlist[j]==0){
-			continue;
-		}
-		DBG("onreply routing table %d:\n",j);
-		print_actions(onreply_rlist[j]);
-		DBG("\n");
-	}
-	for(j=0; j<FAILURE_RT_NO; j++){
-		if (failure_rlist[j]==0){
-			continue;
-		}
-		DBG("failure routing table %d:\n",j);
-		print_actions(failure_rlist[j]);
-		DBG("\n");
-	}
-	for(j=0; j<BRANCH_RT_NO; j++){
-		if (branch_rlist[j]==0){
-			continue;
-		}
-		DBG("branch routing table %d:\n",j);
-		print_actions(branch_rlist[j]);
-		DBG("\n");
-	}
+
+/* debug function, prints routing tables */
+void print_rls()
+{
+	print_rl(&main_rt, "");
+	print_rl(&onreply_rt, "onreply");
+	print_rl(&failure_rt, "failure");
+	print_rl(&branch_rt, "branch");
+	print_rl(&onsend_rt, "onsend");
 }

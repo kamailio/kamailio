@@ -47,6 +47,7 @@
  *  2005-12-11  onsend_route support added for forwarding (andrei)
  *  2006-01-27  t_forward_no_ack will return error if a forward on an 
  *              already canceled transaction is attempted (andrei)
+ *  2006-02-07  named routes support (andrei)
  */
 
 #include "defs.h"
@@ -128,7 +129,7 @@ char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 
 	if (branch_route) {
 		     /* run branch_route actions if provided */
-		if (run_actions(branch_rlist[branch_route], i_req) < 0) {
+		if (run_actions(branch_rt.rlist[branch_route], i_req) < 0) {
 			LOG(L_ERR, "ERROR: print_uac_request: Error in run_actions\n");
                }
 	}

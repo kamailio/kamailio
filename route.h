@@ -37,22 +37,35 @@
 #include "error.h"
 #include "route_struct.h"
 #include "parser/msg_parser.h"
+#include "hashes.h"
 
 /*#include "cfg_parser.h" */
 
 
-/* main "script table" */
-extern struct action* rlist[RT_NO];
-/* main reply route table */
-extern struct action* onreply_rlist[ONREPLY_RT_NO];
-extern struct action* failure_rlist[FAILURE_RT_NO];
-extern struct action* branch_rlist[BRANCH_RT_NO];
-extern struct action* onsend_rlist[ONSEND_RT_NO];
+struct route_list{
+	struct action** rlist;
+	int idx; /* first empty entry */ 
+	int entries; /* total number if entries */
+	struct str_hash_table names; /* name to route index mappings */
+};
 
+
+/* main "script table" */
+extern struct route_list main_rt;
+/* main reply route table */
+extern struct route_list onreply_rt;
+extern struct route_list failure_rt;
+extern struct route_list branch_rt;
+extern struct route_list onsend_rt;
+
+
+int init_routes();
+void destroy_routes();
+int route_get(struct route_list* rt, char* name);
 
 void push(struct action* a, struct action** head);
 int add_actions(struct action* a, struct action** head);
-void print_rl();
+void print_rls();
 int fix_rls();
 
 int eval_expr(struct expr* e, struct sip_msg* msg);

@@ -62,13 +62,13 @@ static inline int run_onsend(struct sip_msg* orig_msg,
 	int ret;
 	
 	ret=1;
-	if (onsend_rlist[DEFAULT_RT]){
+	if (onsend_rt.rlist[DEFAULT_RT]){
 		onsnd_info.to=to;
 		onsnd_info.send_sock=send_sock;
 		onsnd_info.buf=buf;
 		onsnd_info.len=len;
 		p_onsend=&onsnd_info;
-		ret=run_actions(onsend_rlist[DEFAULT_RT], orig_msg);
+		ret=run_actions(onsend_rt.rlist[DEFAULT_RT], orig_msg);
 		p_onsend=0; /* reset it */
 	}
 	return ret;

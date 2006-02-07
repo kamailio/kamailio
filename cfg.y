@@ -70,6 +70,7 @@
  * 2006-01-06  AVP index support (mma)
  * 2005-01-07  optional semicolon in statement, PARAM_STR&PARAM_STRING
  * 2006-02-02  named flags support (andrei)
+ * 2006-02-06  named routes support (andrei)
  */
 
 %{
@@ -349,6 +350,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %type <intval> assign_op
 %type <select> select_id
 %type <strval>	flag_name;
+%type <strval>	route_name;
 
 /*%type <route_el> rules;
   %type <route_el> rule;
@@ -851,61 +853,106 @@ ipv6:
 	ipv6addr { $$=$1; }
 	| LBRACK ipv6addr RBRACK {$$=$2; }
 ;
+
+
+route_name:		NUMBER	{
+					tmp=int2str($1, &i_tmp);
+					if (($$=pkg_malloc(i_tmp+1))==0) {
+						yyerror("out of  memory");
+						YYABORT;
+					} else {
+						memcpy($$, tmp, i_tmp);
+						$$[i_tmp]=0;
+					}
+						}
+			|	ID		{ $$=$1; }
+			|	STRING	{ $$=$1; }
+;
+
 route_stm:
-	ROUTE LBRACE actions RBRACE { push($3, &rlist[DEFAULT_RT]); }
-	| ROUTE LBRACK NUMBER RBRACK LBRACE actions RBRACE {
-		if (($3<RT_NO) && ($3>=0)) {
-			push($6, &rlist[$3]);
-		} else {
-			yyerror("invalid routing table number");
+	ROUTE LBRACE actions RBRACE { push($3, &main_rt.rlist[DEFAULT_RT]); }
+	| ROUTE LBRACK route_name RBRACK LBRACE actions RBRACE {
+		i_tmp=route_get(&main_rt, $3);
+		if (i_tmp==-1){
+			yyerror("internal error");
 			YYABORT;
 		}
+		if (main_rt.rlist[i_tmp]){
+			yyerror("duplicate route");
+			YYABORT;
+		}
+		push($6, &main_rt.rlist[i_tmp]);
 	}
 	| ROUTE error { yyerror("invalid  route  statement"); }
 	;
 failure_route_stm:
-	ROUTE_FAILURE LBRACK NUMBER RBRACK LBRACE actions RBRACE {
-		if (($3<FAILURE_RT_NO)&&($3>=1)) {
-			push($6, &failure_rlist[$3]);
-		} else {
-			yyerror("invalid reply routing table number");
+	ROUTE_FAILURE LBRACE actions RBRACE { 
+									push($3, &failure_rt.rlist[DEFAULT_RT]);
+										}
+	| ROUTE_FAILURE LBRACK route_name RBRACK LBRACE actions RBRACE {
+		i_tmp=route_get(&failure_rt, $3);
+		if (i_tmp==-1){
+			yyerror("internal error");
 			YYABORT;
 		}
+		if (failure_rt.rlist[i_tmp]){
+			yyerror("duplicate route");
+			YYABORT;
+		}
+		push($6, &failure_rt.rlist[i_tmp]);
 	}
 	| ROUTE_FAILURE error { yyerror("invalid failure_route statement"); }
 	;
 onreply_route_stm:
-	ROUTE_ONREPLY LBRACE actions RBRACE { push($3, &onreply_rlist[DEFAULT_RT]); }
-	| ROUTE_ONREPLY LBRACK NUMBER RBRACK LBRACE actions RBRACE {
-		if (($3<ONREPLY_RT_NO)&&($3>=1)) {
-			push($6, &onreply_rlist[$3]);
-		} else {
-			yyerror("invalid reply routing table number");
+	ROUTE_ONREPLY LBRACE actions RBRACE {
+									push($3, &onreply_rt.rlist[DEFAULT_RT]);
+										}
+	| ROUTE_ONREPLY LBRACK route_name RBRACK LBRACE actions RBRACE {
+		i_tmp=route_get(&onreply_rt, $3);
+		if (i_tmp==-1){
+			yyerror("internal error");
 			YYABORT;
 		}
+		if (onreply_rt.rlist[i_tmp]){
+			yyerror("duplicate route");
+			YYABORT;
+		}
+		push($6, &onreply_rt.rlist[i_tmp]);
 	}
 	| ROUTE_ONREPLY error { yyerror("invalid onreply_route statement"); }
 	;
 branch_route_stm:
-	ROUTE_BRANCH LBRACE actions RBRACE { push($3, &branch_rlist[DEFAULT_RT]); }
-	| ROUTE_BRANCH LBRACK NUMBER RBRACK LBRACE actions RBRACE {
-		if (($3<BRANCH_RT_NO)&&($3>=1)) {
-			push($6, &branch_rlist[$3]);
-		} else {
-			yyerror("invalid branch routing table number");
+	ROUTE_BRANCH LBRACE actions RBRACE { 
+									push($3, &branch_rt.rlist[DEFAULT_RT]);
+										}
+	| ROUTE_BRANCH LBRACK route_name RBRACK LBRACE actions RBRACE {
+		i_tmp=route_get(&branch_rt, $3);
+		if (i_tmp==-1){
+			yyerror("internal error");
 			YYABORT;
 		}
+		if (branch_rt.rlist[i_tmp]){
+			yyerror("duplicate route");
+			YYABORT;
+		}
+		push($6, &branch_rt.rlist[i_tmp]);
 	}
 	| ROUTE_BRANCH error { yyerror("invalid branch_route statement"); }
 	;
-send_route_stm: ROUTE_SEND LBRACE actions RBRACE {push($3, &onsend_rlist[DEFAULT_RT]); }
-	| ROUTE_SEND LBRACK NUMBER RBRACK LBRACE actions RBRACE {
-		if (($3<ONSEND_RT_NO)&&($3>=1)) {
-			push($6, &onsend_rlist[$3]);
-		} else {
-			yyerror("invalid onsend routing table number");
+send_route_stm: ROUTE_SEND LBRACE actions RBRACE {
+									push($3, &onsend_rt.rlist[DEFAULT_RT]);
+												}
+	| ROUTE_SEND LBRACK route_name RBRACK LBRACE actions RBRACE {
+		i_tmp=route_get(&onsend_rt, $3);
+		if (i_tmp==-1){
+			yyerror("internal error");
 			YYABORT;
 		}
+		if (onsend_rt.rlist[i_tmp]){
+			yyerror("duplicate route");
+			YYABORT;
+		}
+		push($6, &onsend_rt.rlist[i_tmp]);
 	}
 	| ROUTE_SEND error { yyerror("invalid onsend_route statement"); }
 	;
@@ -1544,7 +1591,14 @@ cmd:
 	| ERROR LPAREN STRING COMMA STRING RPAREN {$$=mk_action(ERROR_T, 2, STRING_ST, $3, STRING_ST, $5); }
 	| ERROR error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| ERROR LPAREN error RPAREN { $$=0; yyerror("bad error argument"); }
-	| ROUTE LPAREN NUMBER RPAREN	{ $$=mk_action(ROUTE_T, 1, NUMBER_ST, (void*)$3); }
+	| ROUTE LPAREN route_name RPAREN	{ 
+						i_tmp=route_get(&main_rt, $3);
+						if (i_tmp==-1){
+							yyerror("internal error");
+							YYABORT;
+						}
+						$$=mk_action(ROUTE_T, 1, NUMBER_ST, (void*)i_tmp); 
+										}
 	| ROUTE error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| ROUTE LPAREN error RPAREN { $$=0; yyerror("bad route argument"); }
 	| EXEC LPAREN STRING RPAREN	{ $$=mk_action(EXEC_T, 1, STRING_ST, $3); }

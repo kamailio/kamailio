@@ -394,14 +394,14 @@ int do_action(struct action* a, struct sip_msg* msg)
 				ret=E_BUG;
 				break;
 			}
-			if ((a->val[0].u.number>RT_NO)||(a->val[0].u.number<0)){
+			if ((a->val[0].u.number>=main_rt.idx)||(a->val[0].u.number<0)){
 				LOG(L_ERR, "ERROR: invalid routing table number in"
 							"route(%lu)\n", a->val[0].u.number);
 				ret=E_CFG;
 				break;
 			}
 			/*ret=((ret=run_actions(rlist[a->val[0].u.number], msg))<0)?ret:1;*/
-			ret=run_actions(rlist[a->val[0].u.number], msg);
+			ret=run_actions(main_rt.rlist[a->val[0].u.number], msg);
 			last_retcode=ret;
 			run_flags&=~RETURN_R_F; /* absorb returns */
 			break;

@@ -67,6 +67,7 @@
  *  2005-09-01  reverted to the old way of checking response.dst.send_sock
  *               in t_retransmit_reply & reply_light (andrei)
  *  2005-11-09  updated to the new timers interface (andrei)
+ *  2006-02-07  named routes support (andrei)
  */
 
 
@@ -653,7 +654,7 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		on_failure = t->on_negative;
 		t->on_negative=0;
 		/* run a reply_route action if some was marked */
-		if (run_actions(failure_rlist[on_failure], &faked_req)<0)
+		if (run_actions(failure_rt.rlist[on_failure], &faked_req)<0)
 			LOG(L_ERR, "ERROR: run_failure_handlers: Error in do_action\n");
 	}
 
@@ -1342,7 +1343,7 @@ int reply_received( struct sip_msg  *p_msg )
 		if (t->uas.request) p_msg->flags=t->uas.request->flags;
 		/* set the as avp_list the one from transaction */
 		backup_list = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps );
-		if (run_actions(onreply_rlist[t->on_reply], p_msg)<0)
+		if (run_actions(onreply_rt.rlist[t->on_reply], p_msg)<0)
 			LOG(L_ERR, "ERROR: on_reply processing failed\n");
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
