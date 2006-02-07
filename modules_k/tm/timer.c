@@ -100,7 +100,6 @@
 #include "timer.h"
 #include "../../dprint.h"
 #include "lock.h"
-#include "t_stats.h"
 
 #include "../../hash_func.h"
 #include "../../dprint.h"
@@ -815,7 +814,6 @@ void set_1timer( struct timer_link *new_tl, enum lists list_id, unsigned int* ex
 		*/
 	}
 	unlock(list->mutex);
-	t_stats_wait();
 }
 
 

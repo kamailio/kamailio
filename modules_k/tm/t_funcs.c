@@ -52,7 +52,6 @@
 #include "t_fwd.h"
 #include "t_lookup.h"
 #include "config.h"
-#include "t_stats.h"
 
 /* fr_timer AVP specs */
 static int     fr_timer_avp_type = 0;
@@ -103,7 +102,6 @@ void tm_shutdown()
 	lock_cleanup();
 	DBG("DEBUG: tm_shutdown : destroying tmcb lists\n");
 	destroy_tmcb_lists();
-	free_tm_stats();
 	DBG("DEBUG: tm_shutdown : done\n");
 }
 

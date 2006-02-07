@@ -329,8 +329,6 @@ void free_hash_table(  )
 }
 
 
-
-
 /*
  */
 struct s_table* init_hash_table()
@@ -366,8 +364,6 @@ error0:
 }
 
 
-
-
 /*  Takes an already created cell and links it into hash table on the
  *  appropriate entry. */
 void insert_into_hash_table_unsafe( struct cell * p_cell, unsigned int _hash )
@@ -391,30 +387,14 @@ void insert_into_hash_table_unsafe( struct cell * p_cell, unsigned int _hash )
 	/* update stats */
 	p_entry->cur_entries++;
 	p_entry->acc_entries++;
-	t_stats_new( is_local(p_cell) );
+	stats_trans_new( is_local(p_cell) );
 }
-
-
-
-#ifdef _OBSOLETED
-void insert_into_hash_table( struct cell * p_cell)
-{
-	LOCK_HASH(p_cell->hash_index);
-	insert_into_hash_table_unsafe(  p_cell );
-	UNLOCK_HASH(p_cell->hash_index);
-}
-#endif
-
-
 
 
 /*  Un-link a  cell from hash_table, but the cell itself is not released */
 void remove_from_hash_table_unsafe( struct cell * p_cell)
 {
 	struct entry*  p_entry  = &(tm_table->entrys[p_cell->hash_index]);
-
-	/* unlink the cell from entry list */
-	/* lock( &(p_entry->mutex) ); */
 
 	if ( p_cell->prev_cell )
 		p_cell->prev_cell->next_cell = p_cell->next_cell;
@@ -425,18 +405,18 @@ void remove_from_hash_table_unsafe( struct cell * p_cell)
 		p_cell->next_cell->prev_cell = p_cell->prev_cell;
 	else
 		p_entry->last_cell = p_cell->prev_cell;
-	/* update stats */
-#	ifdef EXTRA_DEBUG
+# ifdef EXTRA_DEBUG
 	if (p_entry->cur_entries==0) {
 		LOG(L_CRIT, "BUG: bad things happened: cur_entries=0\n");
 		abort();
 	}
-#	endif
+# endif
+	/* update stats */
 	p_entry->cur_entries--;
-	t_stats_deleted( is_local(p_cell) );
-
-	/* unlock( &(p_entry->mutex) ); */
+	if_update_stat(tm_enable_stats, trans_inuse , -1 );
 }
+
+
 
 /* print accumulated distribution of the hash table */
 int fifo_hash( FILE *stream, char *response_file )

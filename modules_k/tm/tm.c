@@ -68,7 +68,6 @@
 #include "uac_unixsock.h"
 #include "t_fwd.h"
 #include "t_lookup.h"
-#include "t_stats.h"
 #include "callid.h"
 #include "t_cancel.h"
 #include "t_fifo.h"
@@ -152,7 +151,22 @@ inline static int t_was_cancelled(struct sip_msg* msg, char *foo, char *bar);
 static char *fr_timer_param = FR_TIMER_AVP;
 static char *fr_inv_timer_param = FR_INV_TIMER_AVP;
 
+/* module parameteres */
 static char *bf_mask_param = NULL;
+int tm_enable_stats = 1;
+
+/* statistic variables */
+stat_var *rcv_rpls;
+stat_var *rld_rpls;
+stat_var *loc_rpls;
+stat_var *uas_trans;
+stat_var *uac_trans;
+stat_var *trans_2xx;
+stat_var *trans_3xx;
+stat_var *trans_4xx;
+stat_var *trans_5xx;
+stat_var *trans_6xx;
+stat_var *trans_inuse;
 
 
 static cmd_export_t cmds[]={
@@ -285,6 +299,25 @@ static param_export_t params[]={
 		(void*)parse_tw_append },
 	{"branch_flag_mask",          STR_PARAM,
 		&bf_mask_param },
+	{ "enable_stats",             INT_PARAM,
+		&tm_enable_stats },
+
+	{0,0,0}
+};
+
+
+stat_export_t mod_stats[] = {
+	{"received_replies" ,    0,              &rcv_rpls    },
+	{"relayed_replies" ,     0,              &rld_rpls    },
+	{"local_replies" ,       0,              &loc_rpls    },
+	{"UAS_transactions" ,    0,              &uas_trans   },
+	{"UAC_transactions" ,    0,              &uac_trans   },
+	{"2xx_transactions" ,    0,              &trans_2xx   },
+	{"3xx_transactions" ,    0,              &trans_3xx   },
+	{"4xx_transactions" ,    0,              &trans_4xx   },
+	{"5xx_transactions" ,    0,              &trans_5xx   },
+	{"6xx_transactions" ,    0,              &trans_6xx   },
+	{"inuse_transactions" ,  STAT_NO_RESET,  &trans_inuse },
 	{0,0,0}
 };
 
@@ -294,13 +327,11 @@ struct module_exports tm_exports = {
 #else
 struct module_exports exports= {
 #endif
-	"tm",
-	/* -------- exported functions ----------- */
-	cmds,
-	/* ------------ exported variables ---------- */
-	params,
-	0,        /* exported statistics */
-	mod_init, /* module initialization function */
+	"tm",      /* module name*/
+	cmds,      /* exported functions */
+	params,    /* exported variables */
+	mod_stats, /* exported statistics */
+	mod_init,  /* module initialization function */
 	(response_function) reply_received,
 	(destroy_function) tm_shutdown,
 	child_init /* per-child init function */
@@ -592,8 +623,8 @@ ok:
 
 static int mod_init(void)
 {
-	DBG( "TM - (size of cell=%ld, sip_msg=%ld) initializing...\n", 
-			(long)sizeof(struct cell), (long)sizeof(struct sip_msg));
+	LOG(L_INFO,"TM - initializing...\n");
+
 	/* checking if we have sufficient bitmap capacity for given
 	   maximum number of  branches */
 	if (MAX_BRANCHES+1>31) {
@@ -601,6 +632,14 @@ static int mod_init(void)
 			MAX_BRANCHES );
 		return -1;
 	}
+
+	/* if statistics are disabled, prevent their registration to core */
+	if (tm_enable_stats==0)
+#ifdef STATIC_TM
+		tm_exports.stats = 0;
+#else
+		exports.stats = 0;
+#endif
 
 	if (init_callid() < 0) {
 		LOG(L_CRIT, "Error while initializing Call-ID generator\n");
@@ -662,18 +701,6 @@ static int mod_init(void)
 	}
 	/* register the timer function */
 	register_timer( timer_routine , 0 /* empty attr */, 1 );
-
-	/* init_tm_stats calls process_count, which should
-	 * NOT be called from mod_init, because one does not
-	 * now, if a timer is used and thus how many processes
-	 * will be started; however we started already our
-	 * timers, so we know and process_count should not
-	 * change any more
-	 */
-	if (init_tm_stats()<0) {
-		LOG(L_CRIT, "ERROR: mod_init: failed to init stats\n");
-		return -1;
-	}
 
 	if (uac_init()==-1) {
 		LOG(L_ERR, "ERROR: mod_init: uac_init failed\n");

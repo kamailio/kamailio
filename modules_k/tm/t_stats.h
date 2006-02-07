@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2006 Voice Sistem
  *
  * This file is part of openser, a free SIP server.
  *
@@ -18,67 +18,71 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ *  2006-02-07  initial version (bogdan)
+
  */
 
 
 #ifndef _T_STATS_H
 #define _T_STATS_H
 
-#include "../../pt.h"
+#include "../../statistics.h"
+
+extern int tm_enable_stats;
 
 
-extern struct t_stats *tm_stats;
-typedef unsigned long stat_counter;
+/* statistic variables */
+extern stat_var *rcv_rpls;
+extern stat_var *rld_rpls;
+extern stat_var *loc_rpls;
+extern stat_var *uas_trans;
+extern stat_var *uac_trans;
+extern stat_var *trans_2xx;
+extern stat_var *trans_3xx;
+extern stat_var *trans_4xx;
+extern stat_var *trans_5xx;
+extern stat_var *trans_6xx;
+extern stat_var *trans_inuse;
 
-struct t_stats {
-	/* number of transactions in wait state */
-	stat_counter *s_waiting;
-	/* number of server transactions */
-	stat_counter *s_transactions;
-	/* number of UAC transactions (part of transactions) */
-	stat_counter *s_client_transactions;
-	/* number of transactions which completed with this status */
-	stat_counter completed_3xx, completed_4xx, completed_5xx, 
-		completed_6xx, completed_2xx;
-	stat_counter replied_localy;
-	stat_counter deleted;
-};
 
-inline void static t_stats_new(int local)
-{
-	/* keep it in process's piece of shmem */
-	tm_stats->s_transactions[process_no]++;
-	if(local) tm_stats->s_client_transactions[process_no]++;
-}
-
-inline void static t_stats_wait()
-{
-	/* keep it in process's piece of shmem */
-	tm_stats->s_waiting[process_no]++;
-}
-
-inline void static t_stats_deleted( int local )
-{
-	/* no locking needed here -- only timer process deletes */
-	tm_stats->deleted++;
-}
-
-inline static void update_reply_stats( int code ) {
-	if (code>=600) {
-		tm_stats->completed_6xx++;
-	} else if (code>=500) {
-		tm_stats->completed_5xx++;
-	} else if (code>=400) {
-		tm_stats->completed_4xx++;
-	} else if (code>=300) {
-		tm_stats->completed_3xx++;
-	} else if (code>=200) {
-		tm_stats->completed_2xx++;
+#ifdef STATISTICS
+inline static void stats_trans_rpl( int code, int local ) {
+	if (tm_enable_stats) {
+		if (code>=700) {
+			return;
+		} else if (code>=600) {
+			update_stat( trans_6xx, 1);
+		} else if (code>=500) {
+			update_stat( trans_5xx, 1);
+		} else if (code>=400) {
+			update_stat( trans_4xx, 1);
+		} else if (code>=300) {
+			update_stat( trans_3xx, 1);
+		} else if (code>=200) {
+			update_stat( trans_2xx, 1);
+		}
+		if (local)
+			update_stat( loc_rpls, 1);
+		else
+			update_stat( rld_rpls, 1);
 	}
 }
 
-
-int init_tm_stats(void);
-void free_tm_stats();
+inline static void stats_trans_new( int local ) {
+	if (tm_enable_stats) {
+		update_stat( trans_inuse, 1 );
+		if (local)
+			update_stat( uac_trans, 1 );
+		else
+			update_stat( uas_trans, 1 );
+	}
+}
+#else
+	#define stats_trans_rpl( _code  )  
+	#define stats_trans_new( _local )  
+#endif
 
 #endif

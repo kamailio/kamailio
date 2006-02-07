@@ -342,9 +342,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	/* needs to be protected too because what timers are set depends
 	   on current transactions status */
 	/* t_update_timers_after_sending_reply( rb ); */
-	update_reply_stats( code );
 	trans->relaied_reply_branch=-2;
-	tm_stats->replied_localy++;
 	if (lock) UNLOCK_REPLIES( trans );
 	
 	/* do UAC cleanup procedures in case we generated
@@ -375,6 +373,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	DBG("DEBUG:tm:_reply_light: reply sent out. buf=%p: %.9s..., "
 		"shmem=%p: %.9s\n", buf, buf, rb->buffer, rb->buffer );
 	pkg_free( buf ) ;
+	stats_trans_rpl( code, 1 /*local*/ );
 	DBG("DEBUG:tm:_reply_light: finished\n");
 	return 1;
 
@@ -981,7 +980,6 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		 * or a stored message */
 		relayed_msg = branch==relay ? p_msg :  t->uac[relay].reply;
 		if (relayed_msg==FAKED_REPLY) {
-			tm_stats->replied_localy++;
 			relayed_code = branch==relay
 				? msg_status : t->uac[relay].last_received;
 
@@ -1011,7 +1009,6 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				free_via_clen_lump(&relayed_msg->add_rm);
 			}
 		}
-		update_reply_stats( relayed_code );
 		if (!buf) {
 			LOG(L_ERR, "ERROR:tm:relay_reply: "
 				"no mem for outbound reply buffer\n");
@@ -1035,7 +1032,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		if (relayed_msg==FAKED_REPLY) { /* to-tags for local replies */
 			update_local_tags(t, &bm, uas_rb->buffer, buf);
 		}
-		tm_stats->replied_localy++;
+		stats_trans_rpl( relayed_code, (relayed_msg==FAKED_REPLY)?1:0 );
 
 		/* update the status ... */
 		t->uas.status = relayed_code;
@@ -1125,14 +1122,13 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		winning_msg= branch==local_winner 
 			? p_msg :  t->uac[local_winner].reply;
 		if (winning_msg==FAKED_REPLY) {
-			tm_stats->replied_localy++;
 			winning_code = branch==local_winner
 				? msg_status : t->uac[local_winner].last_received;
 		} else {
 			winning_code=winning_msg->REPLY_STATUS;
 		}
 		t->uas.status = winning_code;
-		update_reply_stats( winning_code );
+		stats_trans_rpl( winning_code, (winning_msg==FAKED_REPLY)?1:0 );
 		if (is_invite(t) && winning_msg!=FAKED_REPLY
 		&& winning_code>=200 && winning_code <300
 		&& has_tran_tmcbs(t,TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) )  {
@@ -1197,6 +1193,7 @@ int reply_received( struct sip_msg  *p_msg )
 		t->uas.status, branch, uac->last_received, 
 		is_local(t), is_invite(t));
 	last_uac_status=uac->last_received;
+	if_update_stat( tm_enable_stats, rcv_rpls , 1);
 
 	/* it's a cancel which is not e2e ? */
 	if ( get_cseq(p_msg)->method_id==METHOD_CANCEL && is_invite(t) ) {
