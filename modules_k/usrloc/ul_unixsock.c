@@ -123,32 +123,6 @@ static inline void unixsock_find_domain(str* _name, udomain_t** _d)
 }
 
 
-static int ul_stats_cmd(str* msg)
-{
-	dlist_t* ptr;
-
-	unixsock_reply_asciiz("200 OK\n");
-	unixsock_reply_asciiz("Domain Registered Expired\n");
-	
-	ptr = root;
-	while(ptr) {
-		if (unixsock_reply_printf("'%.*s' %d %d\n",
-					  ptr->d->name->len, ZSW(ptr->d->name->s),
-					  ptr->d->users,
-					  ptr->d->expired
-					  ) < 0) {
-			unixsock_reply_reset();
-			unixsock_reply_asciiz("500 Buffer Too Small\n");
-			unixsock_reply_send();
-			return -1;
-		}
-		ptr = ptr->next;
-	}
-	
-	unixsock_reply_send();
-	return 0;
-}
-
 
 static int ul_rm(str* msg)
 {
@@ -556,11 +530,6 @@ static inline int ul_show_contact(str* msg)
 
 int init_ul_unixsock(void) 
 {
-	if (unixsock_register_cmd(UL_STATS, ul_stats_cmd) < 0) {
-		LOG(L_CRIT, "init_ul_unixsock: cannot register ul_stats\n");
-		return -1;
-	}
-
 	if (unixsock_register_cmd(UL_RM, ul_rm) < 0) {
 		LOG(L_CRIT, "init_ul_unixsock: cannot register ul_rm\n");
 		return -1;

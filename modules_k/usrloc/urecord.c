@@ -134,6 +134,7 @@ ucontact_t* mem_insert_ucontact(urecord_t* _r, str* _c, ucontact_info_t* _ci)
 			"create new contact\n");
 		return 0;
 	}
+	update_stat( _r->slot->d->contacts, 1);
 
 	ptr = _r->contacts;
 
@@ -193,6 +194,7 @@ void mem_remove_ucontact(urecord_t* _r, ucontact_t* _c)
 void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c)
 {
 	mem_remove_ucontact(_r, _c);
+	update_stat( _r->slot->d->contacts, -1);
 	free_ucontact(_c);
 }
 
@@ -228,7 +230,7 @@ static inline int nodb_timer(urecord_t* _r)
 			if (!ptr && t->state == CS_NEW) not=1;
 			
 			mem_delete_ucontact(_r, t);
-			_r->slot->d->expired++;
+			update_stat( _r->slot->d->expires, 1);
 		} else {
 			ptr = ptr->next;
 		}
@@ -275,7 +277,7 @@ static inline int wt_timer(urecord_t* _r)
 				    "database\n");
 			}
 			mem_delete_ucontact(_r, t);
-			_r->slot->d->expired++;
+			update_stat( _r->slot->d->expires, 1);
 		} else {
 			     /* the contact was unregistered and is not marked 
 			      * for replication so remove it, but the notify was
@@ -313,7 +315,7 @@ static inline int wb_timer(urecord_t* _r)
 			    ptr->aor->len, ZSW(ptr->aor->s),
 			    ptr->c.len, ZSW(ptr->c.s));
 			if (ptr->next == 0) not=1;
-			_r->slot->d->expired++;
+			update_stat( _r->slot->d->expires, 1);
 
 			t = ptr;
 			ptr = ptr->next;

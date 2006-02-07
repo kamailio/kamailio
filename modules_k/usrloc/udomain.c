@@ -97,6 +97,28 @@ static inline void udomain_remove(udomain_t* _d, urecord_t* _r)
 }
 
 
+static char *build_stat_name( str* domain, char *var_name)
+{
+	int n;
+	char *s;
+	char *p;
+
+	n = domain->len + 1 + strlen(var_name) + 1;
+	s = (char*)shm_malloc( n );
+	if (s==0) {
+		LOG(L_ERR,"ERROR:usrloc:build_stat_name: no more shm mem\n");
+		return 0;
+	}
+	memcpy( s, domain->s, domain->len);
+	p = s + domain->len;
+	*(p++) = '-';
+	memcpy( p , var_name, strlen(var_name));
+	p += strlen(var_name);
+	*(p++) = 0;
+	return s;
+}
+
+
 /*
  * Create a new domain structure
  * _n is pointer to str representing
@@ -108,23 +130,23 @@ static inline void udomain_remove(udomain_t* _d, urecord_t* _r)
 int new_udomain(str* _n, int _s, udomain_t** _d)
 {
 	int i;
+	char *name;
 	
-	     /* Must be always in shared memory, since
-	      * the cache is accessed from timer which
-	      * lives in a separate process
-	      */
+	/* Must be always in shared memory, since
+	 * the cache is accessed from timer which
+	 * lives in a separate process
+	 */
 	*_d = (udomain_t*)shm_malloc(sizeof(udomain_t));
 	if (!(*_d)) {
 		LOG(L_ERR, "new_udomain(): No memory left\n");
-		return -1;
+		goto error0;
 	}
 	memset(*_d, 0, sizeof(udomain_t));
 	
 	(*_d)->table = (hslot_t*)shm_malloc(sizeof(hslot_t) * _s);
 	if (!(*_d)->table) {
 		LOG(L_ERR, "new_udomain(): No memory left 2\n");
-		shm_free(*_d);
-		return -2;
+		goto error1;
 	}
 
 	(*_d)->name = _n;
@@ -132,18 +154,37 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 	for(i = 0; i < _s; i++) {
 		if (init_slot(*_d, &((*_d)->table[i])) < 0) {
 			LOG(L_ERR, "new_udomain(): Error while initializing hash table\n");
-			shm_free((*_d)->table);
-			shm_free(*_d);
-			return -3;
+			goto error2;
 		}
 	}
 
 	(*_d)->size = _s;
 	lock_init(&(*_d)->lock);
-	(*_d)->users = 0;
-	(*_d)->expired = 0;
-	
+
+	/* register the statistics */
+	if ( (name=build_stat_name(_n,"users"))==0 || register_stat("usrloc",
+	name, &(*_d)->users, STAT_NO_RESET|STAT_NO_SYNC|STAT_SHM_NAME)!=0 ) {
+		LOG(L_ERR,"ERROR:usrloc:new_udomain: failed to add stat variable\n");
+		goto error2;
+	}
+	if ( (name=build_stat_name(_n,"contacts"))==0 || register_stat("usrloc",
+	name, &(*_d)->contacts, STAT_NO_RESET|STAT_NO_SYNC|STAT_SHM_NAME)!=0 ) {
+		LOG(L_ERR,"ERROR:usrloc:new_udomain: failed to add stat variable\n");
+		goto error2;
+	}
+	if ( (name=build_stat_name(_n,"expires"))==0 || register_stat("usrloc",
+	name, &(*_d)->expires, STAT_NO_SYNC|STAT_SHM_NAME)!=0 ) {
+		LOG(L_ERR,"ERROR:usrloc:new_udomain: failed to add stat variable\n");
+		goto error2;
+	}
+
 	return 0;
+error2:
+	shm_free((*_d)->table);
+error1:
+	shm_free(*_d);
+error0:
+	return -1;
 }
 
 
@@ -453,7 +494,7 @@ int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 	sl = hash_func(_d, (unsigned char*)_aor->s, _aor->len);
 	slot_add(&_d->table[sl], *_r);
 	udomain_add(_d, *_r);
-	_d->users++;
+	update_stat( _d->users, 1);
 	return 0;
 }
 
@@ -467,7 +508,7 @@ void mem_delete_urecord(udomain_t* _d, struct urecord* _r)
 		udomain_remove(_d, _r);
 		slot_rem(_r->slot, _r);
 		free_urecord(_r);
-		_d->users--; /* FIXME */
+		update_stat( _d->users, -1);
 	}
 }
 
@@ -500,8 +541,6 @@ int timer_udomain(udomain_t* _d)
 	}
 	
 	unlock_udomain(_d);
-/*	process_del_list(_d->name); */
-/*	process_ins_list(_d->name); */
 	return 0;
 }
 

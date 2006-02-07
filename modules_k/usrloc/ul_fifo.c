@@ -55,42 +55,6 @@ static str fifo_ua  = str_init(FIFO_UA);
 
 
 
-static int print_ul_stats(FILE *reply_file)
-{
-	dlist_t* ptr;
-	
-	fprintf(reply_file, "Domain Registered Expired\n");
-	
-	ptr = root;
-	while(ptr) {
-
-		fprintf(reply_file, "'%.*s' %d %d\n",
-			ptr->d->name->len, ZSW(ptr->d->name->s),
-			ptr->d->users,
-			ptr->d->expired
-			);
-		ptr = ptr->next;
-	}
-
-	return 1;
-}
-
-int static ul_stats_cmd( FILE *pipe, char *response_file )
-{
-	FILE *reply_file;
-	
-	reply_file=open_reply_pipe(response_file);
-	if (reply_file==0) {
-		LOG(L_ERR, "ERROR: ul_stats: file not opened\n");
-		return -1;
-	}
-	fputs( "200 ok\n", reply_file );
-	print_ul_stats( reply_file );
-	fclose(reply_file);
-	return 1;
-}
-
-
 int static ul_dump(FILE* pipe, char* response_file)
 {
 	FILE* reply_file;
@@ -629,11 +593,6 @@ static inline int ul_show_contact(FILE* pipe, char* response_file)
 
 int init_ul_fifo( void ) 
 {
-	if (register_fifo_cmd(ul_stats_cmd, UL_STATS, 0) < 0) {
-		LOG(L_CRIT, "cannot register ul_stats\n");
-		return -1;
-	}
-
 	if (register_fifo_cmd(ul_rm, UL_RM, 0) < 0) {
 		LOG(L_CRIT, "cannot register ul_rm\n");
 		return -1;

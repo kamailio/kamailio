@@ -33,6 +33,7 @@
 
 
 #include <stdio.h>
+#include "../../statistics.h"
 #include "../../locking.h"
 #include "../../str.h"
 #include "../../db/db.h"
@@ -48,17 +49,19 @@ struct urecord; /* Usrloc record */
  * The structure represents a usrloc domain
  */
 typedef struct udomain {
-	str* name;                     /* Domain name (NULL terminated) */
-	int size;                      /* Hash table size */
-	int users;                     /* Number of registered users */
-	int expired;                   /* Number of expired contacts */
-	struct hslot* table;           /* Hash table - array of collision slots */
-	struct {                       /* Linked list of all elements in the domain */
+	str* name;                 /* Domain name (NULL terminated) */
+	int size;                  /* Hash table size */
+	struct hslot* table;       /* Hash table - array of collision slots */
+	struct {                   /* Linked list of all elements in the domain */
 		int n;                 /* Number of element in the linked list */
 		struct urecord* first; /* First element in the list */
 		struct urecord* last;  /* Last element in the list */
 	} d_ll;
 	gen_lock_t lock;                /* lock variable */
+	/* statistics */
+	stat_var *users;           /* no of registered users */
+	stat_var *contacts;        /* no of registered contacts */
+	stat_var *expires;         /* no of expires */
 } udomain_t;
 
 
