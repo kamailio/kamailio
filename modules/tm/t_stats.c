@@ -47,7 +47,6 @@ struct t_stats *tm_stats=0;
 
 int init_tm_stats(void)
 {
-	int size;
 
 	tm_stats = shm_malloc(sizeof(struct t_stats));
 	if (tm_stats==0) {

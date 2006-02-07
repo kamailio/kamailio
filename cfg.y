@@ -1561,7 +1561,7 @@ cmd:
 							i_tmp=get_flag_no($3, strlen($3));
 							if (i_tmp<0) yyerror("flag not declared");
 							$$=mk_action(SETFLAG_T, 1, NUMBER_ST,
-										(void*)i_tmp); 
+										(void*)(long)i_tmp); 
 									}
 	| SETFLAG error			{ $$=0; yyerror("missing '(' or ')'?"); }
 	| RESETFLAG LPAREN NUMBER RPAREN {
@@ -1573,7 +1573,7 @@ cmd:
 							i_tmp=get_flag_no($3, strlen($3));
 							if (i_tmp<0) yyerror("flag not declared");
 							$$=mk_action(RESETFLAG_T, 1, NUMBER_ST,
-										(void*)i_tmp); 
+										(void*)(long)i_tmp); 
 									}
 	| RESETFLAG error		{ $$=0; yyerror("missing '(' or ')'?"); }
 	| ISFLAGSET LPAREN NUMBER RPAREN {
@@ -1585,7 +1585,7 @@ cmd:
 							i_tmp=get_flag_no($3, strlen($3));
 							if (i_tmp<0) yyerror("flag not declared");
 							$$=mk_action(ISFLAGSET_T, 1, NUMBER_ST,
-										(void*)i_tmp); 
+										(void*)(long)i_tmp); 
 									}
 	| ISFLAGSET error { $$=0; yyerror("missing '(' or ')'?"); }
 	| ERROR LPAREN STRING COMMA STRING RPAREN {$$=mk_action(ERROR_T, 2, STRING_ST, $3, STRING_ST, $5); }
@@ -1597,7 +1597,7 @@ cmd:
 							yyerror("internal error");
 							YYABORT;
 						}
-						$$=mk_action(ROUTE_T, 1, NUMBER_ST, (void*)i_tmp); 
+						$$=mk_action(ROUTE_T, 1, NUMBER_ST,(void*)(long)i_tmp);
 										}
 	| ROUTE error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| ROUTE LPAREN error RPAREN { $$=0; yyerror("bad route argument"); }
