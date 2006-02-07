@@ -105,6 +105,8 @@ static int iattr_fixup(void** param, int param_no);
 static int avp_hdr_body2attrs(struct sip_msg*, char*, char*);
 static int avp_hdr_body2attrs_fixup(void**, int);
 static int avp_hdr_body2attrs2_fixup(void**, int);
+static int avp_delete(struct sip_msg*, char*, char*);
+
 
 static int fixup_attr_1(void** param, int param_no); /* (attr_ident_t*) */
 static int fixup_xl_1(void** param, int param_no); /* (xl_format*) */
@@ -146,6 +148,7 @@ static cmd_export_t cmds[] = {
 	{"avp_subst",       avp_subst,    2, fixup_attr_1_subst_2,    REQUEST_ROUTE | FAILURE_ROUTE},
 	{"hdr_body2attrs",  avp_hdr_body2attrs, 2, avp_hdr_body2attrs_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
 	{"hdr_body2attrs2", avp_hdr_body2attrs2, 2, avp_hdr_body2attrs2_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"avp_delete",      avp_delete,   1, fixup_attr_1,   REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE}, 
 	{0, 0, 0, 0, 0}
 };
 
@@ -755,6 +758,19 @@ static int avp_subst(struct sip_msg* m, char* avp_name, char* subst)
 error:
 	if (res) pkg_free(res);
 	return -1;
+}
+
+static int avp_delete(struct sip_msg* m, char* avp_name, char* x)
+{
+	avp_t* avp;
+	struct search_state st;	
+	
+	avp=search_avp(*(avp_ident_t*)avp_name, 0, &st);
+	while (avp) {
+		destroy_avp(avp);
+		avp = search_next_avp(&st, 0);
+	}
+	return 1;
 }
 			
 static int avp_hdr_body2attrs(struct sip_msg* m, char* header_, char* prefix_)
