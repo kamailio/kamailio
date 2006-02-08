@@ -27,29 +27,13 @@
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
 #include "../../ut.h"
+#include "../../hash_func.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
 
-
-/* String hash function */
-unsigned int hash (str *domain)
-{
-  char *p;
-  unsigned int h=0;
-  unsigned int len;
-  unsigned int i;
-
-  p = domain->s;
-  len = domain->len;
-
-  for (i = 0; i < len; i++) {
-	  h = ( h << 5 ) - h + tolower(*(p + i));
-  }
-
-  return h % HASH_SIZE;
-}
+#define dom_hash(_s)  new_hash1( _s, DOM_HASH_SIZE)
 
 
 /* Add domain to hash table */
@@ -72,7 +56,7 @@ int hash_table_install (struct domain_list **hash_table, char *domain)
 	}
 	(void) strncpy(np->domain.s, domain, np->domain.len);
 
-	hash_val = hash(&(np->domain));
+	hash_val = dom_hash(np->domain);
 	np->next = hash_table[hash_val];
 	hash_table[hash_val] = np;
 
@@ -85,7 +69,7 @@ int hash_table_lookup (str *domain)
 {
 	struct domain_list *np;
 
-	for (np = (*hash_table)[hash(domain)]; np != NULL; np = np->next) {
+	for (np = (*hash_table)[dom_hash(*domain)]; np != NULL; np = np->next) {
 		if ((np->domain.len == domain->len) && 
 		    (strncasecmp(np->domain.s, domain->s, domain->len) == 0)) {
 			return 1;
@@ -102,7 +86,7 @@ void hash_table_print (struct domain_list **hash_table, FILE *reply_file)
 	int i;
 	struct domain_list *np;
 
-	for (i = 0; i < HASH_SIZE; i++) {
+	for (i = 0; i < DOM_HASH_SIZE; i++) {
 		np = hash_table[i];
 		while (np) {
 			fprintf(reply_file, "%4d %.*s\n", i, np->domain.len, ZSW(np->domain.s));
@@ -118,7 +102,7 @@ void hash_table_free (struct domain_list **hash_table)
 	int i;
 	struct domain_list *np, *next;
 
-	for (i = 0; i < HASH_SIZE; i++) {
+	for (i = 0; i < DOM_HASH_SIZE; i++) {
 		np = hash_table[i];
 		while (np) {
 			shm_free(np->domain.s);

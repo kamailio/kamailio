@@ -27,8 +27,11 @@
 #include "../../mem/shm_mem.h"
 #include "../../parser/parse_from.h"
 #include "../../ut.h"
+#include "../../hash_func.h"
 #include "hash.h"
 
+
+#define perm_hash(_s)  new_hash1( _s, PERM_HASH_SIZE)
 
 /*
  * Create and initialize a hash table
@@ -37,14 +40,15 @@ struct trusted_list** new_hash_table(void)
 {
 	struct trusted_list** ptr;
 
-	     /* Initializing hash tables and hash table variable */
-	ptr = (struct trusted_list **)shm_malloc(sizeof(struct trusted_list*) * HASH_SIZE);
+	/* Initializing hash tables and hash table variable */
+	ptr = (struct trusted_list **)shm_malloc
+		(sizeof(struct trusted_list*) * PERM_HASH_SIZE);
 	if (!ptr) {
 		LOG(L_ERR, "new_hash_table(): No memory for hash table\n");
 		return 0;
 	}
 
-	memset(ptr, 0, sizeof(struct trusted_list*) * HASH_SIZE);
+	memset(ptr, 0, sizeof(struct trusted_list*) * PERM_HASH_SIZE);
 	return ptr;
 }
 
@@ -63,38 +67,19 @@ void free_hash_table(struct trusted_list** table)
 
 
 /* 
- * String hash function 
- */
-static unsigned int hash(str* src_ip)
-{
-	char *p;
-	unsigned int h = 0;
-	unsigned int len;
-	unsigned int i;
-	
-	p = src_ip->s;
-	len = src_ip->len;
-	
-	for (i = 0; i < len; i++) {
-		h = ( h << 5 ) - h + *(p + i);
-	}
-
-	return h % HASH_SIZE;
-}
-
-
-/* 
  * Add <src_ip, proto, pattern> into hash table, where proto is integer
  * representation of string argument proto.
  */
-int hash_table_insert(struct trusted_list** hash_table, char* src_ip, char* proto, char* pattern)
+int hash_table_insert(struct trusted_list** hash_table, char* src_ip, 
+													char* proto, char* pattern)
 {
 	struct trusted_list *np;
 	unsigned int hash_val;
 
 	np = (struct trusted_list *) shm_malloc(sizeof(*np));
 	if (np == NULL) {
-		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory for table entry\n");
+		LOG(L_CRIT, "hash_table_insert(): Cannot allocate shm memory "
+			"for table entry\n");
 		return -1;
 	}
 
@@ -121,7 +106,8 @@ int hash_table_insert(struct trusted_list** hash_table, char* src_ip, char* prot
 	np->src_ip.s = (char *) shm_malloc(np->src_ip.len);
 
 	if (np->src_ip.s == NULL) {
-		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory for src_ip string\n");
+		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory for src_ip "
+			"string\n");
 		shm_free(np);
 		return -1;
 	}
@@ -130,14 +116,15 @@ int hash_table_insert(struct trusted_list** hash_table, char* src_ip, char* prot
 		
 	np->pattern = (char *) shm_malloc(strlen(pattern)+1);
 	if (np->pattern == NULL) {
-		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory for pattern string\n");
+		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory for pattern "
+			"string\n");
 		shm_free(np->src_ip.s);
 		shm_free(np);
 		return -1;
 	}
 	(void) strcpy(np->pattern, pattern);
 
-	hash_val = hash(&(np->src_ip));
+	hash_val = perm_hash(np->src_ip);
 	np->next = hash_table[hash_val];
 	hash_table[hash_val] = np;
 
@@ -169,7 +156,7 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg)
 	memcpy(uri_string, uri.s, uri.len);
 	uri_string[uri.len] = (char)0;
 
-	for (np = table[hash(&src_ip)]; np != NULL; np = np->next) {
+	for (np = table[perm_hash(src_ip)]; np != NULL; np = np->next) {
 		if ((np->src_ip.len == src_ip.len) && 
 		    (strncasecmp(np->src_ip.s, src_ip.s, src_ip.len) == 0) &&
 		    ((np->proto == PROTO_NONE) || (np->proto == msg->rcv.proto))) {
@@ -197,7 +184,7 @@ void hash_table_print(struct trusted_list** hash_table, FILE* reply_file)
 	int i;
 	struct trusted_list *np;
 
-	for (i = 0; i < HASH_SIZE; i++) {
+	for (i = 0; i < PERM_HASH_SIZE; i++) {
 		np = hash_table[i];
 		while (np) {
 			fprintf(reply_file, "%4d <%.*s, %d, %s>\n", i,
@@ -219,7 +206,7 @@ void empty_hash_table(struct trusted_list **hash_table)
 	int i;
 	struct trusted_list *np, *next;
 
-	for (i = 0; i < HASH_SIZE; i++) {
+	for (i = 0; i < PERM_HASH_SIZE; i++) {
 		np = hash_table[i];
 		while (np) {
 			shm_free(np->src_ip.s);

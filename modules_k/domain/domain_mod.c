@@ -161,22 +161,25 @@ static int mod_init(void)
 		}
 
 		/* Initializing hash tables and hash table variable */
-		hash_table_1 = (struct domain_list **)shm_malloc(sizeof(struct domain_list *) * HASH_SIZE);
+		hash_table_1 = (struct domain_list **)shm_malloc
+			(sizeof(struct domain_list *) * DOM_HASH_SIZE);
 		if (hash_table_1 == 0) {
 			LOG(L_ERR, "ERROR: domain: mod_init(): "
 					"No memory for hash table\n");
 		}
 
-		hash_table_2 = (struct domain_list **)shm_malloc(sizeof(struct domain_list *) * HASH_SIZE);
+		hash_table_2 = (struct domain_list **)shm_malloc
+			(sizeof(struct domain_list *) * DOM_HASH_SIZE);
 		if (hash_table_2 == 0) {
 			LOG(L_ERR, "ERROR: domain: mod_init():"
 					" No memory for hash table\n");
 		}
-		for (i = 0; i < HASH_SIZE; i++) {
+		for (i = 0; i < DOM_HASH_SIZE; i++) {
 			hash_table_1[i] = hash_table_2[i] = (struct domain_list *)0;
 		}
 
-		hash_table = (struct domain_list ***)shm_malloc(sizeof(struct domain_list *));
+		hash_table = (struct domain_list ***)shm_malloc
+			(sizeof(struct domain_list *));
 		*hash_table = hash_table_1;
 
 		if (reload_domain_table() == -1) {

@@ -35,7 +35,7 @@
 /*
  * Constants
  */
-#define HASH_SIZE 128
+#define DOM_HASH_SIZE 128
 
 /* flags for param source for is_domain_local() */
 #define PARAM_SOURCE_NONE  (0)

@@ -29,7 +29,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../str.h"
 
-#define HASH_SIZE 128
+#define PERM_HASH_SIZE 128
 
 /*
  * Structure stored in the hash table

@@ -54,7 +54,7 @@ static int hash_table_print_unixsock(struct domain_list **hash_table)
 	int i;
 	struct domain_list *np;
 
-	for (i = 0; i < HASH_SIZE; i++) {
+	for (i = 0; i < DOM_HASH_SIZE; i++) {
 		np = hash_table[i];
 		while (np) {
 			if (unixsock_reply_printf("%4d %.*s\n", i, np->domain.len, ZSW(np->domain.s)) < 0) {

@@ -57,7 +57,7 @@ static int hash_table_print_unixsock(struct trusted_list** hash_table)
 	int i;
 	struct trusted_list *np;
 
-	for (i = 0; i < HASH_SIZE; i++) {
+	for (i = 0; i < PERM_HASH_SIZE; i++) {
 		np = hash_table[i];
 		while (np) {
 			if (unixsock_reply_printf("%4d <%.*s, %d, %s>\n", i,
