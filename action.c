@@ -792,6 +792,8 @@ int do_action(struct action* a, struct sip_msg* msg)
 					avp = search_avp_by_index(a->val[1].u.attr->type, a->val[1].u.attr->name, &value, a->val[1].u.attr->index);
 					if (avp) {
 						flags = a->val[0].u.attr->type | (avp->flags & ~(AVP_CLASS_ALL|AVP_TRACK_ALL));
+						name = a->val[0].u.attr->name;
+						ret = 1;
 					} else {
 						ret = E_UNSPEC;
 						break;
