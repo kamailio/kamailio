@@ -100,7 +100,6 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 				} else {
 					val2 = val;
 				}
-
 				DBG("set_mod_param_regex: found <%s> in module %s [%s]\n", name, t->exports->name, t->path);
 				if (param_type & PARAM_USE_FUNC) {
 					if ( ((param_func_t)(ptr))(param_type, val2) < 0) {
@@ -112,12 +111,23 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 				else {
 					switch(PARAM_TYPE_MASK(param_type)) {
 						case PARAM_STRING:
-							*((char**)ptr) = strdup((char*)val2);
+							*((char**)ptr) = pkg_malloc(strlen((char*)val2)+1);
+							if (!*((char**)ptr)) {
+								LOG(L_ERR, "set_mod_param_regex(): No memory left\n");
+								return -1;
+							}
+							strcpy(*((char**)ptr), (char*)val2);
 							break;
 
 						case PARAM_STR:
-							((str*)ptr)->s = strdup(((str*)val2)->s);
-							((str*)ptr)->len = ((str*)ptr)->s?strlen(((str*)ptr)->s):0;
+							((str*)ptr)->s = pkg_malloc(((str*)val2)->len+1);
+							if (!((str*)ptr)->s) {
+								LOG(L_ERR, "set_mod_param_regex(): No memory left\n");
+								return -1;
+							}
+							memcpy(((str*)ptr)->s, ((str*)val2)->s, ((str*)val2)->len);
+							((str*)ptr)->len = ((str*)val2)->len;
+							((str*)ptr)->s[((str*)ptr)->len] = 0;
 							break;
 
 						case PARAM_INT:
