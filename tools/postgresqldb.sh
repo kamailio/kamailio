@@ -786,7 +786,9 @@ CREATE TABLE usr_preferences (
   value varchar(128) NOT NULL default '',
   type int NOT NULL default '0',
   modified $TIMESTAMP,
-  PRIMARY KEY  (attribute,$USERCOL,domain)
+  PRIMARY KEY (uuid,$USERCOL,domain,attribute,type,value),
+  INDEX ua_idx  (uuid,attribute),
+  INDEX uda_idx ($USERCOL,domain,attribute)
 ) $TABLE_TYPE;
 
 

@@ -626,7 +626,9 @@ CREATE TABLE usr_preferences (
   type int(11) NOT NULL default '0',
   value varchar(128) NOT NULL default '',
   modified timestamp(14) NOT NULL,
-  PRIMARY KEY  (attribute,$USERCOL,domain)
+  PRIMARY KEY (uuid,$USERCOL,domain,attribute,type,value),
+  INDEX ua_idx  (uuid,attribute),
+  INDEX uda_idx ($USERCOL,domain,attribute)
 ) $TABLE_TYPE;
 
 
