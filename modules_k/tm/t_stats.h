@@ -81,7 +81,7 @@ inline static void stats_trans_new( int local ) {
 	}
 }
 #else
-	#define stats_trans_rpl( _code  )  
+	#define stats_trans_rpl( _code , _local )  
 	#define stats_trans_new( _local )  
 #endif
 
