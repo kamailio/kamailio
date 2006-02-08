@@ -28,6 +28,8 @@
  *
  * History:
  * ---------
+ * 2005-08-01 fix: "received=" is used also for the branches (andrei)
+ * 2005-04-22 added received_to_uri option support (andrei)
  * 2003-03-12 added support for zombie state (nils)
  * 2005-02-25 lookup() forces the socket stored in USRLOC (bogdan)
  */
@@ -40,6 +42,7 @@
 #include "../../config.h"
 #include "../../action.h"
 #include "../usrloc/usrloc.h"
+#include "../../error.h"
 #include "../../id.h"
 #include "common.h"
 #include "regtime.h"
@@ -47,6 +50,32 @@
 #include "lookup.h"
 
 
+
+
+/* new_uri= uri "; received=" received
+ * returns 0 on success, < 0 on error (out of memory)
+ * new_uri.s is pkg_malloc'ed (so you must pkg_free it when you are done
+ *  with it)
+ */
+static inline int add_received(str* new_uri, str* uri, str* received)
+{
+	/* copy received into an uri param */
+	new_uri->len=uri->len+RECEIVED_LEN+1+received->len+1;
+	new_uri->s=pkg_malloc(new_uri->len+1);
+	if (new_uri->s==0){
+		LOG(L_ERR, "ERROR: add_received(): out of memory\n");
+		return -1;
+	}
+	memcpy(new_uri->s, uri->s, uri->len);
+	memcpy(new_uri->s+uri->len, RECEIVED, RECEIVED_LEN);
+	new_uri->s[uri->len+RECEIVED_LEN]='"';
+	memcpy(new_uri->s+uri->len+RECEIVED_LEN+1, received->s, received->len);
+	new_uri->s[new_uri->len-1]='"';
+	new_uri->s[new_uri->len]=0; /* for debugging */
+	return 0;
+}
+
+	
 
 /*
  * Lookup contact in the database and rewrite Request-URI
@@ -58,6 +87,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	ucontact_t* ptr;
 	int res;
 	unsigned int nat;
+	str new_uri; 	
 
 	nat = 0;
 	
@@ -84,22 +114,34 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 		ptr = ptr->next;
 	
 	if (ptr) {
+		if (ptr->received.s && ptr->received.len) {
+			if (received_to_uri){
+				if (add_received(&new_uri, &ptr->c, &ptr->received)<0){
+					LOG(L_ERR, "ERROR: lookup(): out of memory\n");
+					return -4;
+				}
+			/* replace the msg uri */
+			if (_m->new_uri.s)      pkg_free(_m->new_uri.s);
+			_m->new_uri=new_uri;
+			_m->parsed_uri_ok=0;
+			goto skip_rewrite_uri;
+			}else if (set_dst_uri(_m, &ptr->received) < 0) {
+				ul.unlock_udomain((udomain_t*)_t);
+				return -4;
+			}
+		}
+																																																											
 		if (rewrite_uri(_m, &ptr->c) < 0) {
 			LOG(L_ERR, "lookup(): Unable to rewrite Request-URI\n");
 			ul.unlock_udomain((udomain_t*)_t);
 			return -4;
 		}
 
-		if (ptr->received.s && ptr->received.len) {
-			if (set_dst_uri(_m, &ptr->received) < 0) {
-				ul.unlock_udomain((udomain_t*)_t);
-				return -4;
-			}
-		}
-
 		if (ptr->sock) {
 			_m->force_send_socket = ptr->sock;
 		}
+
+skip_rewrite_uri:
 
 		set_ruri_q(ptr->q);
 
@@ -116,16 +158,30 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 
 	while(ptr) {
 		if (VALID_CONTACT(ptr, act_time)) {
-			if (append_branch(_m, ptr->c.s, ptr->c.len, ptr->received.s, ptr->received.len, ptr->q, ptr->sock) == -1) {
-				LOG(L_ERR, "lookup(): Error while appending a branch\n");
-				     /* Return 1 here so the function succeeds even if appending of
-				      * a branch failed
-				      */
-				goto skip; 
-			} 
+			if (received_to_uri && ptr->received.s && ptr->received.len){
+				if (add_received(&new_uri, &ptr->c, &ptr->received)<0){
+					LOG(L_ERR, "ERROR: lookup(): branch: out of memory\n");
+					goto cont; /* try to continue */
+				}
+				if (append_branch(_m, new_uri.s, new_uri.len, 0, 0, ptr->q, 0) == -1) {
+					LOG(L_ERR, "lookup(): Error while appending a branch\n");
+					pkg_free(new_uri.s);
+					if (ser_error==E_TOO_MANY_BRANCHES) goto skip;
+					else goto cont; /* try to continue, maybe we have an
+							                   oversized contact */
+				}
+				pkg_free(new_uri.s); /* append_branch doesn't free it */
+			}else{
+				if (append_branch(_m, ptr->c.s, ptr->c.len, ptr->received.s,
+							ptr->received.len, ptr->q, ptr->sock) == -1) {
+					LOG(L_ERR, "lookup(): Error while appending a branch\n");
+					goto skip; /* Return OK here so the function succeeds */
+				}
+			}
 			
 			nat |= ptr->flags & FL_NAT; 
 		} 
+cont:
 		ptr = ptr->next; 
 	}
 	
