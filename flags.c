@@ -74,10 +74,10 @@ int flag_in_range( flag_t flag ) {
 #define FLAGS_NAME_HASH_ENTRIES		32
 
 struct flag_entry{
-	str name;
-	int no;
 	struct flag_entry* next;
 	struct flag_entry* prev;
+	str name;
+	int no;
 };
 
 
@@ -87,7 +87,7 @@ struct flag_hash_head{
 };
 
 static struct flag_hash_head  name2flags[FLAGS_NAME_HASH_ENTRIES];
-static unsigned char registered_flags[MAX_FLAG];
+static unsigned char registered_flags[MAX_FLAG+1];
 
 
 void init_named_flags()
@@ -191,9 +191,9 @@ int register_flag(char* name, int pos)
 		}
 	}else{
 		/* alloc an empty flag */
-		last_flag=crt_flag+MAX_FLAG;
+		last_flag=crt_flag+(MAX_FLAG+1);
 		for (; crt_flag!=last_flag; crt_flag++){
-			r=crt_flag%MAX_FLAG;
+			r=crt_flag%(MAX_FLAG+1);
 			if (registered_flags[r]==0){
 				pos=r;
 				break;
