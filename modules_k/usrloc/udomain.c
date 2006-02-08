@@ -97,6 +97,7 @@ static inline void udomain_remove(udomain_t* _d, urecord_t* _r)
 }
 
 
+#ifdef STATISTICS
 static char *build_stat_name( str* domain, char *var_name)
 {
 	int n;
@@ -117,6 +118,7 @@ static char *build_stat_name( str* domain, char *var_name)
 	*(p++) = 0;
 	return s;
 }
+#endif
 
 
 /*
@@ -130,7 +132,9 @@ static char *build_stat_name( str* domain, char *var_name)
 int new_udomain(str* _n, int _s, udomain_t** _d)
 {
 	int i;
+#ifdef STATISTICS
 	char *name;
+#endif
 	
 	/* Must be always in shared memory, since
 	 * the cache is accessed from timer which
@@ -161,6 +165,7 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 	(*_d)->size = _s;
 	lock_init(&(*_d)->lock);
 
+#ifdef STATISTICS
 	/* register the statistics */
 	if ( (name=build_stat_name(_n,"users"))==0 || register_stat("usrloc",
 	name, &(*_d)->users, STAT_NO_RESET|STAT_NO_SYNC|STAT_SHM_NAME)!=0 ) {
@@ -177,6 +182,7 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 		LOG(L_ERR,"ERROR:usrloc:new_udomain: failed to add stat variable\n");
 		goto error2;
 	}
+#endif
 
 	return 0;
 error2:
