@@ -76,7 +76,7 @@
 	<section>
 		<title>Exported Parameters</title>
 		<section>
-			<title><varname>cpl_db</varname> (string)</title>
+			<title><varname>db_url</varname> (string)</title>
 			<para>
 				A SQL URL have to be given to the module for knowing where the 
 				database containing the table with CPL scripts is locates. If 
@@ -89,10 +89,10 @@
 				</emphasis>
 			</para>
 			<example>
-				<title>Set <varname>cpl_db</varname> parameter</title>
+				<title>Set <varname>db_url</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","cpl_db","mysql://user:passwd@host/database")
+modparam("cpl_c","db_url","mysql://user:passwd@host/database")
 ...
 </programlisting>
 			</example>
@@ -120,20 +120,39 @@ modparam("cpl_c","cpl_table","cpltable")
 			</example>
 		</section>
 		<section>
-			<title><varname>user_column</varname> (string)</title>
+			<title><varname>username_column</varname> (string)</title>
 			<para>
-				Indicates the name of the column used for storing the user ID.
+				Indicates the name of the column used for storing the username.
 			</para>
 			<para>
 				<emphasis>
-					Default value is <quote>user_id</quote>.
+					Default value is <quote>username</quote>.
 				</emphasis>
 			</para>
 			<example>
-				<title>Set <varname>user_column</varname> parameter</title>
+				<title>Set <varname>username_column</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","user_column","user_id")
+modparam("cpl_c","username_column","username")
+...
+</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>domain_column</varname> (string)</title>
+			<para>
+				Indicates the name of the column used for storing the domain.
+			</para>
+			<para>
+				<emphasis>
+					Default value is <quote>domain</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>domain_column</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl_c","domain_column","domain")
 ...
 </programlisting>
 			</example>
@@ -184,7 +203,7 @@ modparam("cpl_c","cpl_bin_column","cpl_bin")
 				Points to the DTD file describing the CPL grammar. The file 
 				name may include also the path to the file. This path can be 
 				absolute or relative (be careful the the path will be relative 
-				to the starting directory of SER).
+				to the starting directory of &ser;).
 			</para>
 			<para>
 				<emphasis>
@@ -195,7 +214,7 @@ modparam("cpl_c","cpl_bin_column","cpl_bin")
 				<title>Set <varname>cpl_dtd_file</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","cpl_dtd_file","/etc/ser/cpl-06.dtd")
+modparam("cpl_c","cpl_dtd_file","/etc/openser/cpl-06.dtd")
 ...
 </programlisting>
 			</example>
@@ -217,7 +236,7 @@ modparam("cpl_c","cpl_dtd_file","/etc/ser/cpl-06.dtd")
 				<title>Set <varname>log_dir</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","log_dir","/var/log/ser/cpl")
+modparam("cpl_c","log_dir","/var/log/openser/cpl")
 ...
 </programlisting>
 			</example>
@@ -402,6 +421,28 @@ modparam("cpl_c","lookup_append_branches",1)
 </programlisting>
 			</example>
 		</section>
+		<section>
+			<title><varname>use_domain</varname> (integer)</title>
+			<para>
+				Indicates if the domain part of the URI should be used in 
+				user identification (otherwise only username part will be
+				used).
+			</para>
+			<para>
+				<emphasis>
+					Default value is <quote>0 (disabled)</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>use_domain</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl_c","use_domain",1)
+...
+</programlisting>
+			</example>
+		</section>
+
 	</section>
 
 

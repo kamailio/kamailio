@@ -43,7 +43,9 @@
 #include "../../fifo_server.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
+#include "../../parser/parse_uri.h"
 #include "cpl_db.h"
+#include "cpl_env.h"
 #include "cpl_parser.h"
 #include "cpl_loader.h"
 
@@ -51,7 +53,7 @@
 #define MAX_STATIC_BUF 256
 
 extern db_con_t* db_hdl;
-
+extern struct cpl_enviroment cpl_env;
 
 
 #if 0
@@ -194,40 +196,6 @@ again:
 
 
 
-static inline int check_userhost( char *p, char *end)
-{
-	char *p1;
-	int  dot;
-
-	/* parse user name */
-	p1 = p;
-	while (p<end && (isalnum((int)*p) || *p=='-' || *p=='_' || *p=='.' ))
-		p++;
-	if (p==p1 || p==end || *p!='@')
-		return -1;
-	p++;
-	/* parse the host part */
-	dot = 1;
-	p1 = p;
-	while (p<end) {
-		if (*p=='.') {
-			if (dot) return -1; /* dot after dot */
-			dot = 1;
-		} else if (isalnum((int)*p) || *p=='-' || *p=='_' ) {
-			dot = 0;
-		} else {
-			return -1;
-		}
-		p++;
-	}
-	if (p1==p || dot)
-		return -1;
-
-	return 0;
-}
-
-
-
 /* Triggered by fifo server -> implements LOAD_CPL command
  * Command format:
  * -----------------------
@@ -246,6 +214,7 @@ int cpl_load( FILE *fifo_stream, char *response_file )
 {
 	static char user[MAX_STATIC_BUF];
 	static char cpl_file[MAX_STATIC_BUF];
+	struct sip_uri uri;
 	int user_len;
 	int cpl_file_len;
 	str xml = {0,0};
@@ -262,15 +231,13 @@ int cpl_load( FILE *fifo_stream, char *response_file )
 		goto error;
 	}
 
-	/* first line must be the username */
+	/* first line must be the user */
 	if (read_line( user, MAX_STATIC_BUF-1 , fifo_stream, &user_len )!=1 ||
 	user_len<=0) {
 		LOG(L_ERR,"ERROR:cpl-c:cpl_load: unable to read username from "
 			"FIFO command\n");
 		goto error;
 	}
-	user[user_len] = 0;
-	DBG("DEBUG:cpl_load: user@host=%.*s\n",user_len,user);
 
 	/* second line must be the cpl file */
 	if (read_line( cpl_file, MAX_STATIC_BUF-1,fifo_stream,&cpl_file_len)!=1 ||
@@ -280,16 +247,17 @@ int cpl_load( FILE *fifo_stream, char *response_file )
 		goto error;
 	}
 	cpl_file[cpl_file_len] = 0;
-	DBG("DEBUG:cpl-c:cpl_load: cpl file=%.*s\n",cpl_file_len,cpl_file);
 
 	/* check user+host */
-	if (check_userhost( user, user+user_len)!=0) {
-		LOG(L_ERR,"ERROR:cpl-c:cpl_load: invalid user@host [%.*s]\n",
+	if (parse_uri( user, user_len, &uri)!=0) {
+		LOG(L_ERR,"ERROR:cpl-c:cpl_load: invalid sip URI [%.*s]\n",
 			user_len,user);
 		logs[1].s = USRHOST_ERR;
 		logs[1].len = strlen( USRHOST_ERR );
 		goto error1;
 	}
+	DBG("DEBUG:cpl_load: user@host=%.*s@%.*s\n",
+		uri.user.len,uri.user.s,uri.host.len,uri.host.s);
 
 	/* load the xml file - this function will allocated a buff for the loading
 	 * the cpl file and attach it to xml.s -> don't forget to free it! */
@@ -298,6 +266,7 @@ int cpl_load( FILE *fifo_stream, char *response_file )
 		logs[1].len = strlen( FILE_LOAD_ERR );
 		goto error1;
 	}
+	DBG("DEBUG:cpl-c:cpl_load: cpl file=%.*s loaded\n",cpl_file_len,cpl_file);
 
 	/* get the binary coding for the XML file */
 	if (encodeCPL( &xml, &bin, &enc_log)!=1) {
@@ -307,7 +276,7 @@ int cpl_load( FILE *fifo_stream, char *response_file )
 	logs[1] = enc_log;
 
 	/* write both the XML and binary formats into database */
-	if (write_to_db(user, &xml, &bin)!=1) {
+	if (write_to_db( &uri.user, cpl_env.use_domain?&uri.host:0, &xml, &bin)!=1){
 		logs[1].s = DB_SAVE_ERR;
 		logs[1].len = strlen( DB_SAVE_ERR );
 		goto error1;
@@ -348,6 +317,7 @@ error:
 int cpl_remove( FILE *fifo_stream, char *response_file )
 {
 	static char user[MAX_STATIC_BUF];
+	struct sip_uri uri;
 	int user_len;
 	str logs[2];
 
@@ -367,19 +337,19 @@ int cpl_remove( FILE *fifo_stream, char *response_file )
 			"FIFO command\n");
 		goto error;
 	}
-	user[user_len] = 0;
-	DBG("DEBUG:cpl-c:cpl_remove: user=%.*s\n",user_len,user);
 
 	/* check user+host */
-	if (check_userhost( user, user+user_len)!=0) {
-		LOG(L_ERR,"ERROR:cpl-c:cpl_remove: invalid user@host [%.*s]\n",
+	if (parse_uri( user, user_len, &uri)!=0) {
+		LOG(L_ERR,"ERROR:cpl-c:cpl_remove: invalid SIP uri [%.*s]\n",
 			user_len,user);
 		logs[1].s = USRHOST_ERR;
 		logs[1].len = strlen( USRHOST_ERR );
 		goto error1;
 	}
+	DBG("DEBUG:cpl_remove: user@host=%.*s@%.*s\n",
+		uri.user.len,uri.user.s,uri.host.len,uri.host.s);
 
-	if (rmv_from_db(user)!=1) {
+	if (rmv_from_db( &uri.user, cpl_env.use_domain?&uri.host:0)!=1) {
 		logs[1].s = DB_RMV_ERR;
 		logs[1].len = sizeof(DB_RMV_ERR);
 		goto error1;
@@ -411,8 +381,9 @@ error:
 #define DB_GET_ERR   "Error: Database query failed.\n"
 int cpl_get( FILE *fifo_stream, char *response_file )
 {
-	static char user_s[MAX_STATIC_BUF];
-	str user = {user_s,0};
+	static char user[MAX_STATIC_BUF];
+	struct sip_uri uri;
+	int user_len;
 	str script = {0,0};
 	str logs[2];
 
@@ -424,25 +395,27 @@ int cpl_get( FILE *fifo_stream, char *response_file )
 	}
 
 	/* first line must be the username */
-	if (read_line( user.s, MAX_STATIC_BUF-1 , fifo_stream, &user.len )!=1 ||
-	user.len<=0) {
+	if (read_line( user, MAX_STATIC_BUF-1 , fifo_stream, &user_len )!=1 ||
+	user_len<=0) {
 		LOG(L_ERR,"ERROR:cpl-c:cpl_get: unable to read username from "
 			"FIFO command\n");
 		goto error;
 	}
-	DBG("DEBUG:cpl-c:cpl_get: user=%.*s\n",user.len,user.s);
 
 	/* check user+host */
-	if (check_userhost( user.s, user.s+user.len)!=0) {
+	if (parse_uri( user, user_len, &uri)!=0) {
 		LOG(L_ERR,"ERROR:cpl-c:cpl_load: invalid user@host [%.*s]\n",
-			user.len,user.s);
+			user_len,user);
 		logs[1].s = USRHOST_ERR;
 		logs[1].len = strlen( USRHOST_ERR );
 		goto error1;
 	}
+	DBG("DEBUG:cpl_get: user@host=%.*s@%.*s\n",
+		uri.user.len,uri.user.s,uri.host.len,uri.host.s);
 
 	/* get the script for this user */
-	if (get_user_script(&user, &script, "cpl_xml")==-1) {
+	if (get_user_script( &uri.user, cpl_env.use_domain?&uri.host:0,
+	&script, "cpl_xml")==-1) {
 		logs[1].s = DB_GET_ERR;
 		logs[1].len = strlen( DB_GET_ERR );
 		goto error1;

@@ -87,10 +87,11 @@ struct cpl_enviroment    cpl_env = {
 		{0,0},   /* no domain prefix to be ignored */
 		{-1,-1}, /* communication pipe to aux_process */
 		{0,0},   /* original TZ \0 terminated "TZ=value" format */
-		0, /* udomain */
-		0, /* no branches on lookup */
-		0, /* timer avp type */
-		{0}  /* timer avp name/ID */
+		0,   /* udomain */
+		0,   /* no branches on lookup */
+		0,   /* timer avp type */
+		{0}, /* timer avp name/ID */
+		0    /* use_domain */
 };
 
 struct cpl_functions  cpl_fct;
@@ -113,9 +114,12 @@ static int cpl_exit(void);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"cpl_run_script",cpl_invoke_script,2,fixup_cpl_run_script,REQUEST_ROUTE},
-	{"cpl_process_register",w_process_register,0,0,REQUEST_ROUTE},
-	{"cpl_process_register_norpl",w_process_register_norpl,0,0,REQUEST_ROUTE},
+	{"cpl_run_script",            cpl_invoke_script,   2,  fixup_cpl_run_script,
+			REQUEST_ROUTE},
+	{"cpl_process_register",      w_process_register,  0,  0,
+			REQUEST_ROUTE},
+	{"cpl_process_register_norpl",w_process_register_norpl,0,0,
+			REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -124,7 +128,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"cpl_db",         STR_PARAM, &DB_URL                            },
+	{"db_url",         STR_PARAM, &DB_URL                            },
 	{"cpl_table",      STR_PARAM, &DB_TABLE                          },
 	{"cpl_dtd_file",   STR_PARAM, &dtd_file                          },
 	{"proxy_recurse",  INT_PARAM, &cpl_env.proxy_recurse             },
@@ -136,9 +140,11 @@ static param_export_t params[] = {
 	{"lookup_domain",  STR_PARAM, &lookup_domain                     },
 	{"lookup_append_branches", INT_PARAM, &cpl_env.lu_append_branches},
 	{"timer_avp",      STR_PARAM, &timer_avp                         },
-	{"user_column",    STR_PARAM, &cpl_user_col                      },
+	{"username_column",STR_PARAM, &cpl_username_col                  },
+	{"domain_column",  STR_PARAM, &cpl_domain_col                    },
 	{"cpl_xml_column", STR_PARAM, &cpl_xml_col                       },
 	{"cpl_bin_column", STR_PARAM, &cpl_bin_col                       },
+	{"use_domain",     INT_PARAM, &cpl_env.use_domain                },
 	{0, 0, 0}
 };
 
@@ -460,62 +466,54 @@ static int cpl_exit(void)
 
 
 
-#define BUILD_UH_SHM      (1<<0)
-#define BUILD_UH_ADDSIP   (1<<1)
-
-static inline int build_userhost(struct sip_uri *uri, str *uh, int flg)
+static inline int build_user_AOR(str *username, str *domain, str *uh, int sip)
 {
-	static char buf[MAX_USERHOST_LEN];
 	unsigned char do_strip;
 	char *p;
 	int i;
 
-	/* do we need to strip realm prefix? */
+	/* calculate the len (without terminating \0) */
+	uh->len = 4*(sip!=0) + username->len;
 	do_strip = 0;
-	if (cpl_env.realm_prefix.len && cpl_env.realm_prefix.len<uri->host.len) {
-		for( i=cpl_env.realm_prefix.len-1 ; i>=0 ; i-- )
-			if ( cpl_env.realm_prefix.s[i]!=((uri->host.s[i])|(0x20)) )
-				break;
-		if (i==-1)
-			do_strip = 1;
+
+	if (sip || cpl_env.use_domain) {
+		/* do we need to strip realm prefix? */
+		if (cpl_env.realm_prefix.len && cpl_env.realm_prefix.len<domain->len){
+			for( i=cpl_env.realm_prefix.len-1 ; i>=0 ; i-- )
+				if ( cpl_env.realm_prefix.s[i]!=((domain->s[i])|(0x20)) )
+					break;
+			if (i==-1)
+				do_strip = 1;
+		}
+		uh->len += 1 + domain->len - do_strip*cpl_env.realm_prefix.len;
 	}
 
-	/* calculate the len (without terminating \0) */
-	uh->len = 4*((flg&BUILD_UH_ADDSIP)!=0) + uri->user.len + 1 +
-		uri->host.len - do_strip*cpl_env.realm_prefix.len;
-	if (flg&BUILD_UH_SHM) {
-		uh->s = (char*)shm_malloc( uh->len + 1 );
-		if (!uh->s) {
-			LOG(L_ERR,"ERROR:cpl-c:build_userhost: no more shm memory.\n");
-			return -1;
-		}
-	} else {
-		uh->s = buf;
-		if ( uh->len > MAX_USERHOST_LEN ) {
-			LOG(L_ERR,"ERROR:cpl-c:build_userhost: user+host longer than %d\n",
-				MAX_USERHOST_LEN);
-			return -1;
-		}
+	uh->s = (char*)shm_malloc( uh->len + 1 );
+	if (!uh->s) {
+		LOG(L_ERR,"ERROR:cpl-c:build_userhost: no more shm memory.\n");
+		return -1;
 	}
 
 	/* build user@host */
 	p = uh->s;
-	if (flg&BUILD_UH_ADDSIP) {
+	if (sip) {
 		memcpy( uh->s, "sip:", 4);
 		p += 4;
 	}
 	/* user part */
 	if (cpl_env.case_sensitive) {
-		memcpy( p, uri->user.s, uri->user.len);
-		p += uri->user.len;
+		memcpy( p, username->s, username->len);
+		p += username->len;
 	} else {
-		for(i=0;i<uri->user.len;i++)
-			*(p++) = (0x20)|(uri->user.s[i]);
+		for(i=0;i<username->len;i++)
+			*(p++) = (0x20)|(username->s[i]);
 	}
-	*(p++) = '@';
-	/* host part in lower cases */
-	for( i=do_strip*cpl_env.realm_prefix.len ; i< uri->host.len ; i++ )
-		*(p++) = (0x20)|(uri->host.s[i]);
+	if (sip || cpl_env.use_domain) {
+		*(p++) = '@';
+		/* host part in lower cases */
+		for( i=do_strip*cpl_env.realm_prefix.len ; i< domain->len ; i++ )
+			*(p++) = (0x20)|(domain->s[i]);
+	}
 	*(p++) = 0;
 
 	/* sanity check */
@@ -529,7 +527,7 @@ static inline int build_userhost(struct sip_uri *uri, str *uh, int flg)
 
 
 
-static inline int get_dest_user(struct sip_msg *msg, str *uh, int flg)
+static inline int get_dest_user(struct sip_msg *msg, str *username, str *domain)
 {
 	struct sip_uri uri;
 
@@ -553,12 +551,14 @@ static inline int get_dest_user(struct sip_msg *msg, str *uh, int flg)
 			}
 		}
 	}
-	return build_userhost( &uri, uh, flg);
+	*username = uri.user;
+	*domain = uri.host;
+	return 0;
 }
 
 
 
-static inline int get_orig_user(struct sip_msg *msg, str *uh, int flg)
+static inline int get_orig_user(struct sip_msg *msg, str *username, str *domain)
 {
 	struct to_body *from;
 	struct sip_uri uri;
@@ -578,7 +578,9 @@ static inline int get_orig_user(struct sip_msg *msg, str *uh, int flg)
 			"from URI (From header)\n");
 		return -1;
 	}
-	return build_userhost( &uri, uh, flg);
+	*username = uri.user;
+	*domain = uri.host;
+	return 0;
 }
 
 
@@ -590,46 +592,48 @@ static inline int get_orig_user(struct sip_msg *msg, str *uh, int flg)
 static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 {
 	struct cpl_interpreter  *cpl_intr;
-	str  user;
+	str  username = {0,0};
+	str  domain = {0,0};
 	str  loc;
 	str  script;
 
 	/* get the user_name */
 	if ( ((unsigned long)str1)&CPL_RUN_INCOMING ) {
 		/* if it's incoming -> get the destination user name */
-		if (get_dest_user( msg, &user, BUILD_UH_SHM)==-1)
+		if (get_dest_user( msg, &username, &domain)==-1)
 			goto error0;
 	} else {
 		/* if it's outgoing -> get the origin user name */
-		if (get_orig_user( msg, &user, BUILD_UH_SHM)==-1)
+		if (get_orig_user( msg, &username, &domain)==-1)
 			goto error0;
 	}
 
 	/* get the script for this user */
-	if (get_user_script(&user, &script, cpl_bin_col)==-1)
-		goto error1;
+	if (get_user_script(&username, cpl_env.use_domain?&domain:0,
+	&script, cpl_bin_col)==-1)
+		goto error0;
 
-	/* has the user a non-empty script? if not, return normally, allowing ser to
-	 * continue its script */
-	if ( !script.s || !script.len ) {
-		shm_free(user.s);
+	/* has the user a non-empty script? if not, return normally, allowing the
+	 * script execution to continue */
+	if ( !script.s || !script.len )
 		return 1;
-	}
 
 	/* build a new script interpreter */
 	if ( (cpl_intr=new_cpl_interpreter(msg,&script))==0 )
-		goto error2;
+		goto error1;
 	/* set the flags */
 	cpl_intr->flags =(unsigned int)((unsigned long)str1)|((unsigned long)str2);
-	/* attache the user */
-	cpl_intr->user = user;
+	/* build user AOR */
+	if (build_user_AOR( &username, &domain, &(cpl_intr->user), 0)!=0 )
+		goto error2;
 	/* for OUTGOING we need also the destination user for init. with him
 	 * the location set */
 	if ( ((unsigned long)str1)&CPL_RUN_OUTGOING ) {
-		if (get_dest_user( msg, &loc,BUILD_UH_ADDSIP)==-1)
-			goto error3;
-		if (add_location( &(cpl_intr->loc_set), &loc,10,CPL_LOC_DUPL)==-1)
-			goto error3;
+		/* build user initial location */
+		if (build_user_AOR( &username, &domain, &loc, 1)!=0 )
+			goto error2;
+		if (add_location( &(cpl_intr->loc_set), &loc,10, 0/*no dup*/)==-1)
+			goto error2;
 	}
 
 	/* run the script */
@@ -643,17 +647,15 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 			return 0; /* break the SER script */
 		case SCRIPT_RUN_ERROR:
 		case SCRIPT_FORMAT_ERROR:
-			goto error3;
+			goto error2;
 	}
 
 	return 1;
-error3:
+error2:
 	free_cpl_interpreter( cpl_intr );
 	return -1;
-error2:
-	shm_free(script.s);
 error1:
-	shm_free(user.s);
+	shm_free(script.s);
 error0:
 	return -1;
 }
@@ -690,9 +692,10 @@ static struct cpl_error *cpl_err = &bad_req;
 static inline int do_script_action(struct sip_msg *msg, int action)
 {
 	str  body = {0,0};
-	str  user = {0,0};
 	str  bin  = {0,0};
 	str  log  = {0,0};
+	str  username = {0,0};
+	str  domain   = {0,0};
 
 	/* content-length (if present) */
 	if ( !msg->content_length &&
@@ -704,7 +707,7 @@ static inline int do_script_action(struct sip_msg *msg, int action)
 	body.len = get_content_length( msg );
 
 	/* get the user name */
-	if (get_dest_user( msg, &user, 0)==-1)
+	if (get_dest_user( msg, &username, &domain)==-1)
 		goto error;
 
 	/* we have the script and the user */
@@ -731,7 +734,8 @@ static inline int do_script_action(struct sip_msg *msg, int action)
 			}
 
 			/* write both the XML and binary formats into database */
-			if (write_to_db(user.s, &body, &bin)!=1) {
+			if (write_to_db( &username, cpl_env.use_domain?&domain:0,
+			&body,&bin)!=1) {
 				cpl_err = &intern_err;
 				goto error_1;
 			}
@@ -744,7 +748,7 @@ static inline int do_script_action(struct sip_msg *msg, int action)
 				goto error_1;
 			}
 			/* remove the script for the user */
-			if (rmv_from_db(user.s)!=1) {
+			if (rmv_from_db( &username, cpl_env.use_domain?&domain:0)!=1) {
 				cpl_err = &intern_err;
 				goto error_1;
 			}
@@ -763,15 +767,17 @@ error:
 
 static inline int do_script_download(struct sip_msg *msg)
 {
-	str  user  = {0,0};
+	str username  = {0,0};
+	str domain = {0,0};
 	str script = {0,0};
 
 	/* get the destination user name */
-	if (get_dest_user( msg, &user, 0)==-1)
+	if (get_dest_user( msg, &username, &domain)!=0)
 		goto error;
 
 	/* get the user's xml script from the database */
-	if (get_user_script(&user, &script, cpl_xml_col)==-1)
+	if (get_user_script( &username, cpl_env.use_domain?&domain:0,
+	&script, cpl_xml_col)==-1)
 		goto error;
 
 	/* add a lump with content-type hdr */
@@ -783,8 +789,6 @@ static inline int do_script_download(struct sip_msg *msg)
 	}
 
 	if (script.s!=0) {
-		/*DBG("script len=%d\n--------\n%.*s\n--------\n",
-			script.len, script.len, script.s);*/
 		/* user has a script -> add a body lump */
 		if ( add_lump_rpl( msg, script.s, script.len, LUMP_RPL_BODY)==0) {
 			LOG(L_ERR,"ERROR:cpl-c:do_script_download: cannot build "

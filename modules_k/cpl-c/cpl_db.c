@@ -33,7 +33,8 @@
 static db_con_t* db_hdl=0;
 static db_func_t cpl_dbf;
 
-char *cpl_user_col = "user_id";
+char *cpl_username_col = "username";
+char *cpl_domain_col = "domain";
 char *cpl_xml_col  = "cpl_xml";
 char *cpl_bin_col  = "cpl_bin";
 
@@ -97,21 +98,32 @@ void cpl_db_close()
  * Returns:  1 - success
  *          -1 - error
  */
-int get_user_script(str *user, str *script, const char* key)
+int get_user_script(str *username, str *domain, str *script, const char* key)
 {
-	db_key_t   keys_cmp[1];
+	db_key_t   keys_cmp[2];
 	db_key_t   keys_ret[1];
-	db_val_t   vals[1];
+	db_val_t   vals[2];
 	db_res_t   *res = 0 ;
+	int n;
 
-	keys_cmp[0] = cpl_user_col;
+	keys_cmp[0] = cpl_username_col;
+	keys_cmp[1] = cpl_domain_col;
 	keys_ret[0] = key;
 
-	DBG("DEBUG:get_user_script: fetching script for user <%s>\n",user->s);
-	vals[0].type = DB_STRING;
+	DBG("DEBUG:get_user_script: fetching script for user <%.*s>\n",
+		username->len,username->s);
+	vals[0].type = DB_STR;
 	vals[0].nul  = 0;
-	vals[0].val.string_val = user->s;
-	if (cpl_dbf.query(db_hdl, keys_cmp, 0, vals, keys_ret, 1, 1, NULL, &res)
+	vals[0].val.str_val = *username;
+	n = 1;
+	if (domain) {
+		vals[1].type = DB_STR;
+		vals[1].nul  = 0;
+		vals[1].val.str_val = *domain;
+		n++;
+	}
+
+	if (cpl_dbf.query(db_hdl, keys_cmp, 0, vals, keys_ret, n, 1, NULL, &res)
 			< 0){
 		LOG(L_ERR,"ERROR:cpl-c:get_user_script: db_query failed\n");
 		goto error;
@@ -119,13 +131,13 @@ int get_user_script(str *user, str *script, const char* key)
 
 	if (res->n==0) {
 		DBG("DEBUG:get_user_script: user <%.*s> not found in db -> probably "
-			"he has no script\n",user->len, user->s);
+			"he has no script\n",username->len, username->s);
 		script->s = 0;
 		script->len = 0;
 	} else {
 		if (res->rows[0].values[0].nul) {
 			DBG("DEBUG:get_user_script: user <%.*s> has a NULL script\n",
-				user->len, user->s);
+				username->len, username->s);
 			script->s = 0;
 			script->len = 0;
 		} else {
@@ -159,55 +171,62 @@ error:
  * Returns:  1 - success
  *          -1 - error
  */
-int write_to_db(char *usr, str *xml, str *bin)
+int write_to_db(str *username, str *domain, str *xml, str *bin)
 {
-	db_key_t   keys[3];
-	db_val_t   vals[3];
+	db_key_t   keys[4];
+	db_val_t   vals[4];
 	db_res_t   *res;
+	int n;
 
 	/* lets see if the user is already in database */
-	keys[0] = cpl_user_col;
-	vals[0].type = DB_STRING;
-	vals[0].nul  = 0;
-	vals[0].val.string_val = usr;
-	if (cpl_dbf.query(db_hdl, keys, 0, vals, keys, 1, 1, NULL, &res) < 0) {
+	keys[2] = cpl_username_col;
+	vals[2].type = DB_STR;
+	vals[2].nul  = 0;
+	vals[2].val.str_val = *username;
+	n = 1;
+	if (domain) {
+		keys[3] = cpl_domain_col;
+		vals[3].type = DB_STR;
+		vals[3].nul  = 0;
+		vals[3].val.str_val = *domain;
+		n++;
+	}
+	if (cpl_dbf.query(db_hdl, keys+2, 0, vals+2, keys+2, n, 1, NULL, &res)<0) {
 		LOG(L_ERR,"ERROR:cpl:write_to_db: db_query failed\n");
 		goto error;
 	}
 	if (res->n>1) {
 		LOG(L_ERR,"ERROR:cpl:write_to_db: Inconsistent CPL database:"
-			" %d records for user %s\n",res->n,usr);
+			" %d records for user %.*s\n",res->n,username->len,username->s);
 		goto error;
 	}
 
-	/* username */
-	keys[0] = cpl_user_col;
-	vals[0].type = DB_STRING;
-	vals[0].nul  = 0;
-	vals[0].val.string_val = usr;
 	/* cpl text */
-	keys[1] = cpl_xml_col;
+	keys[0] = cpl_xml_col;
+	vals[0].type = DB_BLOB;
+	vals[0].nul  = 0;
+	vals[0].val.blob_val.s = xml->s;
+	vals[0].val.blob_val.len = xml->len;
+	n++;
+	/* cpl bin */
+	keys[1] = cpl_bin_col;
 	vals[1].type = DB_BLOB;
 	vals[1].nul  = 0;
-	vals[1].val.blob_val.s = xml->s;
-	vals[1].val.blob_val.len = xml->len;
-	/* cpl bin */
-	keys[2] = cpl_bin_col;
-	vals[2].type = DB_BLOB;
-	vals[2].nul  = 0;
-	vals[2].val.blob_val.s = bin->s;
-	vals[2].val.blob_val.len = bin->len;
+	vals[1].val.blob_val.s = bin->s;
+	vals[1].val.blob_val.len = bin->len;
+	n++;
 	/* insert or update ? */
 	if (res->n==0) {
-		DBG("DEBUG:cpl:write_to_db:No user %s in CPL database->insert\n",usr);
-		if (cpl_dbf.insert(db_hdl, keys, vals, 3) < 0) {
+		DBG("DEBUG:cpl:write_to_db:No user %.*s in CPL database->insert\n",
+			username->len,username->s);
+		if (cpl_dbf.insert(db_hdl, keys, vals, n) < 0) {
 			LOG(L_ERR,"ERROR:cpl:write_to_db: insert failed !\n");
 			goto error;
 		}
 	} else {
-		DBG("DEBUG:cpl:write_to_db:User %s already in CPL database ->"
-			" update\n",usr);
-		if (cpl_dbf.update(db_hdl, keys, 0, vals, keys+1, vals+1, 1, 2) < 0) {
+		DBG("DEBUG:cpl:write_to_db:User %.*s already in CPL database ->"
+			" update\n",username->len,username->s);
+		if (cpl_dbf.update(db_hdl, keys+2, 0, vals+2, keys, vals, n-2, 2) < 0) {
 			LOG(L_ERR,"ERROR:cpl:write_to_db: update failed !\n");
 			goto error;
 		}
@@ -226,21 +245,29 @@ error:
  * Returns:  1 - success
  *          -1 - error
  */
-int rmv_from_db(char *usr)
+int rmv_from_db(str *username, str *domain)
 {
-	db_key_t   keys[1];
-	db_val_t   vals[1];
-
-	keys[0] = cpl_user_col;
+	db_key_t   keys[2];
+	db_val_t   vals[2];
+	int n;
 
 	/* username */
-	vals[0].type = DB_STRING;
+	keys[0] = cpl_username_col;
+	vals[0].type = DB_STR;
 	vals[0].nul  = 0;
-	vals[0].val.string_val = usr;
+	vals[0].val.str_val = *username;
+	n = 1;
+	if (domain) {
+		keys[1] = cpl_domain_col;
+		vals[1].type = DB_STR;
+		vals[1].nul  = 0;
+		vals[1].val.str_val = *domain;
+		n++;
+	}
 
-	if (cpl_dbf.delete(db_hdl, keys, NULL, vals, 1) < 0) {
+	if (cpl_dbf.delete(db_hdl, keys, NULL, vals, n) < 0) {
 		LOG(L_ERR,"ERROR:cpl-c:rmv_from_db: error when deleting script for "
-			"user \"%s\"\n",usr);
+			"user \"%.*s\"\n",username->len,username->s);
 		return -1;
 	}
 

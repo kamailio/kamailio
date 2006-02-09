@@ -1,3 +1,9 @@
 USE ser;
-CREATE TABLE IF NOT EXISTS cpl ( user_id VARCHAR(50) NOT NULL PRIMARY KEY,
- cpl_xml BLOB, cpl_bin BLOB, UNIQUE (user));
+
+CREATE TABLE `cpl` (
+  `username` varchar(64) NOT NULL,
+  `domain` varchar(64) NOT NULL default '',
+  `cpl_xml` blob,
+  `cpl_bin` blob,
+  PRIMARY KEY  (`username`,`domain`)
+) ENGINE=MyISAM

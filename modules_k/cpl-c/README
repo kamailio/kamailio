@@ -23,21 +23,23 @@ Bogdan-Andrei Iancu
 
         1.3. Exported Parameters
 
-              1.3.1. cpl_db (string)
+              1.3.1. db_url (string)
               1.3.2. cpl_table (string)
-              1.3.3. user_column (string)
-              1.3.4. cpl_xml_column (string)
-              1.3.5. cpl_bin_column (string)
-              1.3.6. cpl_dtd_file (string)
-              1.3.7. log_dir (string)
-              1.3.8. proxy_recurse (int)
-              1.3.9. proxy_route (int)
-              1.3.10. case_sensitive (int)
-              1.3.11. realm_prefix (string)
-              1.3.12. timer_avp (string)
-              1.3.13. nat_flag (int)
-              1.3.14. lookup_domain (string)
-              1.3.15. lookup_append_branches (int)
+              1.3.3. username_column (string)
+              1.3.4. domain_column (string)
+              1.3.5. cpl_xml_column (string)
+              1.3.6. cpl_bin_column (string)
+              1.3.7. cpl_dtd_file (string)
+              1.3.8. log_dir (string)
+              1.3.9. proxy_recurse (int)
+              1.3.10. proxy_route (int)
+              1.3.11. case_sensitive (int)
+              1.3.12. realm_prefix (string)
+              1.3.13. timer_avp (string)
+              1.3.14. nat_flag (int)
+              1.3.15. lookup_domain (string)
+              1.3.16. lookup_append_branches (int)
+              1.3.17. use_domain (integer)
 
         1.4. Exported Functions
 
@@ -51,24 +53,26 @@ Bogdan-Andrei Iancu
    3. Frequently Asked Questions
 
    List of Examples
-   1-1. Set cpl_db parameter
+   1-1. Set db_url parameter
    1-2. Set cpl_table parameter
-   1-3. Set user_column parameter
-   1-4. Set cpl_xml_column parameter
-   1-5. Set cpl_bin_column parameter
-   1-6. Set cpl_dtd_file parameter
-   1-7. Set log_dir parameter
-   1-8. Set proxy_recurse parameter
-   1-9. Set proxy_route parameter
-   1-10. Set case_sensitive parameter
-   1-11. Set realm_prefix parameter
-   1-12. Set timer_avp parameter
-   1-13. Set nat_flag parameter
-   1-14. Set lookup_domain parameter
-   1-15. Set lookup_append_branches parameter
-   1-16. cpl_run_script usage
-   1-17. cpl_process_register usage
-   1-18. cpl_process_register_norpl usage
+   1-3. Set username_column parameter
+   1-4. Set domain_column parameter
+   1-5. Set cpl_xml_column parameter
+   1-6. Set cpl_bin_column parameter
+   1-7. Set cpl_dtd_file parameter
+   1-8. Set log_dir parameter
+   1-9. Set proxy_recurse parameter
+   1-10. Set proxy_route parameter
+   1-11. Set case_sensitive parameter
+   1-12. Set realm_prefix parameter
+   1-13. Set timer_avp parameter
+   1-14. Set nat_flag parameter
+   1-15. Set lookup_domain parameter
+   1-16. Set lookup_append_branches parameter
+   1-17. Set use_domain parameter
+   1-18. cpl_run_script usage
+   1-19. cpl_process_register usage
+   1-20. cpl_process_register_norpl usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -108,7 +112,7 @@ Chapter 1. User's Guide
 
 1.3. Exported Parameters
 
-1.3.1. cpl_db (string)
+1.3.1. db_url (string)
 
    A SQL URL have to be given to the module for knowing where the
    database containing the table with CPL scripts is locates. If
@@ -117,9 +121,9 @@ Chapter 1. User's Guide
 
    This parameter is MANDATORY! 
 
-   Example 1-1. Set cpl_db parameter
+   Example 1-1. Set db_url parameter
 ...
-modparam("cpl_c","cpl_db","mysql://user:passwd@host/database")
+modparam("cpl_c","db_url","mysql://user:passwd@host/database")
 ...
      _________________________________________________________
 
@@ -138,60 +142,73 @@ modparam("cpl_c","cpl_table","cpltable")
 ...
      _________________________________________________________
 
-1.3.3. user_column (string)
+1.3.3. username_column (string)
 
-   Indicates the name of the column used for storing the user ID.
+   Indicates the name of the column used for storing the
+   username.
 
-   Default value is "user_id". 
+   Default value is "username". 
 
-   Example 1-3. Set user_column parameter
+   Example 1-3. Set username_column parameter
 ...
-modparam("cpl_c","user_column","user_id")
+modparam("cpl_c","username_column","username")
 ...
      _________________________________________________________
 
-1.3.4. cpl_xml_column (string)
+1.3.4. domain_column (string)
+
+   Indicates the name of the column used for storing the domain.
+
+   Default value is "domain". 
+
+   Example 1-4. Set domain_column parameter
+...
+modparam("cpl_c","domain_column","domain")
+...
+     _________________________________________________________
+
+1.3.5. cpl_xml_column (string)
 
    Indicates the name of the column used for storing the the XML
    version of the cpl script.
 
    Default value is "cpl_xml". 
 
-   Example 1-4. Set cpl_xml_column parameter
+   Example 1-5. Set cpl_xml_column parameter
 ...
 modparam("cpl_c","cpl_xml_column","cpl_xml")
 ...
      _________________________________________________________
 
-1.3.5. cpl_bin_column (string)
+1.3.6. cpl_bin_column (string)
 
    Indicates the name of the column used for storing the the
    binary version of the cpl script (compiled version).
 
    Default value is "cpl_bin". 
 
-   Example 1-5. Set cpl_bin_column parameter
+   Example 1-6. Set cpl_bin_column parameter
 ...
 modparam("cpl_c","cpl_bin_column","cpl_bin")
 ...
      _________________________________________________________
 
-1.3.6. cpl_dtd_file (string)
+1.3.7. cpl_dtd_file (string)
 
    Points to the DTD file describing the CPL grammar. The file
    name may include also the path to the file. This path can be
    absolute or relative (be careful the the path will be relative
-   to the starting directory of SER).
+   to the starting directory of OpenSER).
 
    This parameter is MANDATORY! 
 
-   Example 1-6. Set cpl_dtd_file parameter
+   Example 1-7. Set cpl_dtd_file parameter
 ...
-modparam("cpl_c","cpl_dtd_file","/etc/ser/cpl-06.dtd")
+modparam("cpl_c","cpl_dtd_file","/etc/openser/cpl-06.dtd")
 ...
      _________________________________________________________
 
-1.3.7. log_dir (string)
+1.3.8. log_dir (string)
 
    Points to a directory where should be created all the log file
    generated by the LOG CPL node. A log file per user will be
@@ -200,13 +217,13 @@ modparam("cpl_c","cpl_dtd_file","/etc/ser/cpl-06.dtd")
    If this parameter is absent, the logging will be disabled
    without generating error on execution. 
 
-   Example 1-7. Set log_dir parameter
+   Example 1-8. Set log_dir parameter
 ...
-modparam("cpl_c","log_dir","/var/log/ser/cpl")
+modparam("cpl_c","log_dir","/var/log/openser/cpl")
 ...
      _________________________________________________________
 
-1.3.8. proxy_recurse (int)
+1.3.9. proxy_recurse (int)
 
    Tells for how many time is allow to have recurse for PROXY CPL
    node If it has value 2, when doing proxy, only twice the proxy
@@ -217,13 +234,13 @@ modparam("cpl_c","log_dir","/var/log/ser/cpl")
 
    Default value of this parameter is 0. 
 
-   Example 1-8. Set proxy_recurse parameter
+   Example 1-9. Set proxy_recurse parameter
 ...
 modparam("cpl_c","proxy_recurse",2)
 ...
      _________________________________________________________
 
-1.3.9. proxy_route (int)
+1.3.10. proxy_route (int)
 
    Before doing proxy (forward), a script route can be executed.
    All modifications made by that route will be reflected only
@@ -231,13 +248,13 @@ modparam("cpl_c","proxy_recurse",2)
 
    Default value of this parameter is 0 (none). 
 
-   Example 1-9. Set proxy_route parameter
+   Example 1-10. Set proxy_route parameter
 ...
 modparam("cpl_c","proxy_route",1)
 ...
      _________________________________________________________
 
-1.3.10. case_sensitive (int)
+1.3.11. case_sensitive (int)
 
    Tells if the username matching should be perform case
    sensitive or not. Set it to a non zero value to force a case
@@ -245,26 +262,26 @@ modparam("cpl_c","proxy_route",1)
 
    Default value of this parameter is 0. 
 
-   Example 1-10. Set case_sensitive parameter
+   Example 1-11. Set case_sensitive parameter
 ...
 modparam("cpl_c","case_sensitive",1)
 ...
      _________________________________________________________
 
-1.3.11. realm_prefix (string)
+1.3.12. realm_prefix (string)
 
    Defines a prefix for the domain part which should be ignored
    in handling users and scripts.
 
    Default value of this parameter is empty string. 
 
-   Example 1-11. Set realm_prefix parameter
+   Example 1-12. Set realm_prefix parameter
 ...
 modparam("cpl_c","realm_prefix","sip.")
 ...
      _________________________________________________________
 
-1.3.12. timer_avp (string)
+1.3.13. timer_avp (string)
 
    Full specification (ID, NAME, ALIAS) of the AVP to be used to
    set the value of the Final Response INVITE timeout - it's used
@@ -275,13 +292,13 @@ modparam("cpl_c","realm_prefix","sip.")
 
    Default value of this parameter is NULL. 
 
-   Example 1-12. Set timer_avp parameter
+   Example 1-13. Set timer_avp parameter
 ...
 modparam("cpl_c","timer_avp","i:14")
 ...
      _________________________________________________________
 
-1.3.13. nat_flag (int)
+1.3.14. nat_flag (int)
 
    Sets the flag used for marking calls via NAT. Used by lookup
    tag when retrieving a contact behind a NAT (this flag will be
@@ -289,13 +306,13 @@ modparam("cpl_c","timer_avp","i:14")
 
    Default value of this parameter is 6. 
 
-   Example 1-13. Set nat_flag parameter
+   Example 1-14. Set nat_flag parameter
 ...
 modparam("cpl_c","nat_flag",4)
 ...
      _________________________________________________________
 
-1.3.14. lookup_domain (string)
+1.3.15. lookup_domain (string)
 
    Used by lookup tag to indicate where to perform user location.
    Basically this is the name of the usrloc domain (table) where
@@ -306,13 +323,13 @@ modparam("cpl_c","nat_flag",4)
 
    Default value of this parameter is NULL. 
 
-   Example 1-14. Set lookup_domain parameter
+   Example 1-15. Set lookup_domain parameter
 ...
 modparam("cpl_c","lookup_domain","location")
 ...
      _________________________________________________________
 
-1.3.15. lookup_append_branches (int)
+1.3.16. lookup_append_branches (int)
 
    Tells if the lookup tag should append branches (to do parallel
    forking) if user_location lookup returns more than one
@@ -321,9 +338,22 @@ modparam("cpl_c","lookup_domain","location")
 
    Default value of this parameter is 0. 
 
-   Example 1-15. Set lookup_append_branches parameter
+   Example 1-16. Set lookup_append_branches parameter
 ...
 modparam("cpl_c","lookup_append_branches",1)
+...
+     _________________________________________________________
+
+1.3.17. use_domain (integer)
+
+   Indicates if the domain part of the URI should be used in user
+   identification (otherwise only username part will be used).
+
+   Default value is "0 (disabled)". 
+
+   Example 1-17. Set use_domain parameter
+...
+modparam("cpl_c","use_domain",1)
 ...
      _________________________________________________________
 
@@ -385,7 +415,7 @@ modparam("cpl_c","lookup_append_branches",1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-16. cpl_run_script usage
+   Example 1-18. cpl_run_script usage
 ...
 cpl_run_script("incoming","force_stateful");
 ...
@@ -415,7 +445,7 @@ cpl_run_script("incoming","force_stateful");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-17. cpl_process_register usage
+   Example 1-19. cpl_process_register usage
 ...
 if (method=="REGISTER") {
         cpl_process_register();
@@ -434,7 +464,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-18. cpl_process_register_norpl usage 
+   Example 1-20. cpl_process_register_norpl usage 
 ...
 if (method=="REGISTER") {
         cpl_process_register();

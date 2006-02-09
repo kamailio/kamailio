@@ -30,7 +30,8 @@ int cpl_db_bind(char* db_url);
 int cpl_db_init(char* db_url, char* db_table);
 void cpl_db_close();
 
-extern char *cpl_user_col;
+extern char *cpl_username_col;
+extern char *cpl_domain_col;
 extern char *cpl_xml_col;
 extern char *cpl_bin_col;
 
@@ -39,14 +40,14 @@ extern char *cpl_bin_col;
  * Returns:  1 - success
  *          -1 - error
  */
-int write_to_db( char *usr, str *xml, str *bin);
+int write_to_db(str *username, str*domain, str *xml, str *bin);
 
 
 /* fetch from database the binary format of the cpl script for a given user
  * Returns:  1 - success
  *          -1 - error
  */
-int get_user_script(str *user, str *script, const char *key);
+int get_user_script(str *username, str*domain, str *script, const char *key);
 
 
 /* delete from database the entire record for a given user - if a user has no
@@ -55,7 +56,7 @@ int get_user_script(str *user, str *script, const char *key);
  * Returns:  1 - success
  *          -1 - error
  */
-int rmv_from_db(char *usr);
+int rmv_from_db(str *username, str *domain);
 
 
 #endif

@@ -1,8 +1,5 @@
 # $Id$
 #
-# example module makefile
-#
-# 
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 include ../../Makefile.defs
@@ -12,6 +9,6 @@ NAME=cpl-c.so
 DEFS +=-I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
 		-I$(LOCALBASE)/include  # iconv.h
 
-LIBS= -L$(LOCALBASE)/lib -lxml2 \
+LIBS= -L$(LOCALBASE)/lib -lxml2
 
 include ../../Makefile.modules

@@ -47,6 +47,7 @@ struct cpl_enviroment {
 	int lu_append_branches; /* how many branches lookup should add */
 	int timer_avp_type;     /* specs - type and name - of the timer AVP */
 	int_str timer_avp;
+	int use_domain;
 };
 
 
