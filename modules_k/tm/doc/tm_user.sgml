@@ -656,51 +656,6 @@ t_relay("udp:mydomain.com");
 
 	<section>
 		<title>
-		<function moreinfo="none">t_relay_to_udp(ip, port)</function>,
-		<function moreinfo="none">t_relay_to_tcp(ip, port)</function>,
-		<function moreinfo="none">t_relay_to_tls(ip, port)</function>
-		(OBSOLETE)
-		</title>
-		<warning><para>
-		This function is obolete and sooner it will be removed. It's 
-		functionality is included into t_relay(proto:host:port). See
-		<xref linkend="trelay-1">.
-		</para></warning>
-		<para>
-		Relay a message statefully to a fixed destination. This along with 
-		<function moreinfo="none">t_relay</function> is the function most 
-		users want to use--all other are mostly for programming. Programmers 
-		interested in writing <acronym>TM</acronym> logic should review how 
-		t_relay is implemented in tm.c and how <acronym>TM</acronym> 
-		callbacks work.
-		</para>
-		<para>Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-		<listitem>
-			<para><emphasis>ip</emphasis> - IP address where the message 
-			should be sent.
-			</para>
-		</listitem>
-		<listitem>
-			<para><emphasis>port</emphasis> - Port number.
-			</para>
-		</listitem>
-		</itemizedlist>
-		<para>
-		This functions can be used from REQUEST_ROUTE, FAILURE_ROUTE.
-		</para>
-		<example>
-		<title><function>t_relay_to_udp</function> usage</title>
-		<programlisting format="linespecific">
-...
-t_relay_to_udp("1.2.3.4", "5060");
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title>
 		<function moreinfo="none">t_relay()</function>
 		</title>
 		<para>
@@ -755,59 +710,6 @@ t_forward_nonack();         # use RURI for destination
 
 	<section>
 		<title>
-		<function moreinfo="none">t_forward_nonack(ip, port)</function>
-		<function moreinfo="none">t_forward_nonack_udp(ip, port)</function>
-		<function moreinfo="none">t_forward_nonack_tcp(ip, port)</function>
-		<function moreinfo="none">t_forward_nonack_tls(ip, port)</function>
-		<function moreinfo="none">t_forward_nonack_uri()</function>
-		(OBSOLETE)
-		</title>
-		<warning><para>
-		This function is obolete and sooner it will be removed. It's 
-		functionality is included into forward_nonack() and 
-		t_forward_nonack(proto:host:port). See
-		<xref linkend="tforwardnonack">.
-		</para></warning>
-		<para>
-		Similar to t_relay() but it expects the transaction to be already
-		created - this why it cannot handle ACK (which are statelessly
-		forwarded). It should be used along with t_newtran().
-		</para>
-		<para>Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-		<listitem>
-			<para><emphasis>ip</emphasis> - IP address where the message 
-			should be sent.
-			</para>
-		</listitem>
-		<listitem>
-			<para><emphasis>port</emphasis> - Port number.
-			</para>
-		</listitem>
-		</itemizedlist>
-		<para>
-		t_forward_nonack_uri() will determin the detination address 
-		(proto:IP:port) based on the RURI.
-		</para>
-		<para>
-		This functions can be used from REQUEST_ROUTE.
-		</para>
-		<example>
-		<title><function>t_forward_nonack_xxx</function> usage</title>
-		<programlisting format="linespecific">
-...
-t_forward_nonack("1.2.3.4", "5060");
-t_forward_nonack_udp("1.2.3.4", "5060"); # force UDP proto
-t_forward_nonack_tcp("1.2.3.4", "5060"); # force TCP proto
-t_forward_nonack_tls("1.2.3.4", "5060"); # force TLS proto
-t_forward_nonack_uri();
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title>
 		<function moreinfo="none">t_reply(code, reason_phrase)</function>
 		</title>
 		<para>
@@ -846,7 +748,8 @@ t_reply("404", "Not found");
 		Retransmits a reply sent previously by &uas; transaction.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE and
+		BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>t_retransmit_reply</function> usage</title>
@@ -880,49 +783,6 @@ t_retransmit_reply();
 t_replicate("1.2.3.4:5060");
 t_replicate("tcp:1.2.3.4:5060");
 t_replicate("udp:1.2.3.4");
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title>
-		<function moreinfo="none">t_replicate(ip, port)</function>
-		<function moreinfo="none">t_replicate_udp(ip, port)</function>
-		<function moreinfo="none">t_replicate_tcp(ip, port)</function>
-		(OBSOLETE)</title>
-		<warning><para>
-		This function is obolete and sooner it will be removed. It's 
-		functionality is included into t_replicate(proto:host:port). See
-		<xref linkend="treplicate">.
-		</para></warning>
-		<para>
-		Replicates a request to another address. No information due the
-		replicated request (like reply code) will be forwarded to the 
-		original SIP UAC.
-		</para>
-		<para>Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-		<listitem>
-			<para><emphasis>ip</emphasis> - IP address where the message 
-			should be sent.
-			</para>
-		</listitem>
-		<listitem>
-			<para><emphasis>port</emphasis> - Port number.
-			</para>
-		</listitem>
-		</itemizedlist>
-		<para>
-		This functions can be used from REQUEST_ROUTE.
-		</para>
-		<example>
-		<title><function>t_replicate_xxx</function> usage</title>
-		<programlisting format="linespecific">
-...
-t_replicate("1.2.3.4", "5060");
-t_replicate_udp("1.2.3.4", "5060"); # force UDP proto
-t_replicate_tcp("1.2.3.4", "5060"); # force TCP proto
 ...
 </programlisting>
 		</example>
@@ -975,7 +835,8 @@ t_release();
 		</itemizedlist>
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE.
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE and BRANCH_ROUTE .
 		</para>
 		<example>
 		<title><function>t_check_status</function> usage</title>
@@ -999,7 +860,7 @@ if (t_check_status("(487)|(408)")) {
 		created via t_newtran() and the flags have been altered since.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from REQUEST_ROUTE and BRANCH_ROUTE .
 		</para>
 		<example>
 		<title><function>t_flush_flags</function> usage</title>
@@ -1023,7 +884,8 @@ t_flush_flags();
 		Parameter may be <quote>all</quote> or <quote>last</quote>.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE.
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+		FAILURE_ROUTE and ONREPLY_ROUTE.
 		</para>
 		<example>
 		<title><function>t_local_replied</function> usage</title>
@@ -1048,7 +910,8 @@ if (t_local_replied("all")) {
 		<quote>tw_append</quote> parameter.
 		</para>
 		<para>
-		This functions can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		This functions can be used from REQUEST_ROUTE, FAILURE_ROUTE and 
+		BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>t_write_fifo/unix</function> usage</title>
@@ -1093,7 +956,7 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from REQUEST_ROUTE and BRANCH_ROUTE.
 		</para>
 		<example>
 		<title><function>t_check_trans</function> usage</title>
@@ -1167,6 +1030,10 @@ if (t_was_cancelled()) {
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, 
+		ONREPLY_ROUTE and FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function>t_on_failure</function> usage</title>
 		<programlisting format="linespecific">
@@ -1220,8 +1087,8 @@ failure_route[1] {
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE,
-                FAILURE_ROUTE, ONREPLY_ROUTE, and BRANCH_ROUTE.
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, 
+		ONREPLY_ROUTE and FAILURE_ROUTE.
 		</para>
 		<example>
 		<title><function>t_on_reply</function> usage</title>
@@ -1281,6 +1148,10 @@ onreply_route[1] {
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, 
+		ONREPLY_ROUTE and FAILURE_ROUTE.
+		</para>
 		<example>
 		<title><function>t_on_branch</function> usage</title>
 		<programlisting format="linespecific">
