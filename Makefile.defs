@@ -61,7 +61,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 10
 SUBLEVEL =   99
-EXTRAVERSION = -dev32
+EXTRAVERSION = -dev33
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
@@ -1094,7 +1094,8 @@ endif
 ifeq ($(OS), openbsd)
 	DEFS+=-DHAVE_SOCKADDR_SA_LEN  -DHAVE_GETHOSTBYNAME2 \
 		-DHAVE_UNION_SEMUN -DHAVE_MSGHDR_MSG_CONTROL \
-		-DHAVE_CONNECT_ECONNRESET_BUG -DHAVE_TIMEGM
+		-DHAVE_CONNECT_ECONNRESET_BUG -DHAVE_TIMEGM \
+		-DHAVE_NETINET_IN_SYSTM -DUSE_SIGWAIT
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
@@ -1111,7 +1112,8 @@ ifeq ($(OS), openbsd)
 	# (symbols on openbsd are prefixed by "_")
 	YACC=yacc
 	# no sched_yield on openbsd unless linking with c_r (not recommended)
-	LIBS= -lfl 
+	# unfortunately pthread is needed for sigwait
+	LIBS= -lfl -lpthread
 	OPENBSD_IS_AOUT= $(shell echo "$(OSREL)" | \
 				sed -e 's/^3\.[0-3][^0-9]*$$/yes/' |sed -e 's/^[0-2]\..*/yes/')
 # exception: on sparc openbsd 3.2 is elf and not aout

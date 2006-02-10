@@ -987,7 +987,11 @@ void slow_timer_main()
 	
 	in_slow_timer=1; /* mark this process as the slow timer */
 	while(1){
+#ifdef USE_SIGWAIT
+		n=sigwait(&slow_timer_sset, 0);
+#else
 		n=sigwaitinfo(&slow_timer_sset, 0);
+#endif
 		if (n==-1){
 			if (errno==EINTR) continue; /* some other signal, ignore it */
 			LOG(L_ERR, "ERROR: slow_timer_main: sigwaitinfo failed: %s [%d]\n",
