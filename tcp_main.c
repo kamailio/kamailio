@@ -2041,23 +2041,9 @@ error:
 
 void tcp_get_info(struct tcp_gen_info *ti)
 {
-	int r;
-	int active_connections;
-	unsigned int total_reqs;
-	
-	
 	ti->tcp_readers=tcp_children_no;
 	ti->tcp_max_connections=tcp_max_connections;
 	ti->tcp_connections_no=*tcp_connections_no;
-	
-	active_connections=0;
-	total_reqs=0;
-	for (r=0; r<tcp_children_no; r++){
-		active_connections*=tcp_children[r].busy;
-		total_reqs+=tcp_children[r].n_reqs;
-	}
-	ti->tcp_inactive_connections=*tcp_connections_no-active_connections;
-	ti->tcp_total_requests=total_reqs;
 }
 
 #endif

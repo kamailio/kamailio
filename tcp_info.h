@@ -35,8 +35,6 @@ struct tcp_gen_info{
 	int tcp_readers;
 	int tcp_max_connections;
 	int tcp_connections_no; /* crt. number */
-	int tcp_inactive_connections;
-	unsigned int tcp_total_requests;
 };
 
 
