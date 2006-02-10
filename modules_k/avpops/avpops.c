@@ -364,7 +364,7 @@ static int fixup_write_avp(void** param, int param_no)
 			if (ap==0)
 			{
 				LOG(L_ERR,"ERROR:avpops:fixup_write_avp: unable to get"
-						" pseudo-variable\n");
+						" pseudo-variable [%s]\n", s);
 				return E_OUT_OF_MEM;
 			}
 			if (ap->sval.type==XL_NULL)
@@ -396,13 +396,13 @@ static int fixup_write_avp(void** param, int param_no)
 		if (ap==0)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_write_avp: unable to get"
-					" pseudo-variable in param 2\n");
+					" pseudo-variable in param 2 [%s]\n", s);
 			return E_OUT_OF_MEM;
 		}
 		if (ap->sval.type!=XL_AVP)
 		{
-			LOG(L_ERR,"ERROR:avops:fixup_write_avp: bad param 2; "
-				"expected : $avp(name)\n");
+			LOG(L_ERR,"ERROR:avops:fixup_write_avp: bad param 2 [%s]; "
+				"expected : $avp(name)\n", s);
 			return E_UNSPEC;
 		}
 	}
@@ -829,8 +829,8 @@ static int fixup_subst(void** param, int param_no)
 			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
 		if (ap==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_write_avp: unable to get"
-					" pseudo-variable in param 2\n");
+			LOG(L_ERR,"ERROR:avpops:fixup_subst: unable to get"
+					" pseudo-variable in param 2 [%s]\n", s);
 			return E_OUT_OF_MEM;
 		}
 		if (ap->sval.type!=XL_AVP)
@@ -864,8 +864,8 @@ static int fixup_subst(void** param, int param_no)
 				XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
 			if (ap==0)
 			{
-				LOG(L_ERR,"ERROR:avpops:fixup_write_avp: unable to get"
-						" pseudo-variable in param 2\n");
+				LOG(L_ERR,"ERROR:avpops:fixup_subst: unable to get"
+						" pseudo-variable in param 2 [%s]\n",s);
 				return E_OUT_OF_MEM;
 			}
 			

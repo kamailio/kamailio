@@ -587,6 +587,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 	str *sn;
 
 	s0 = s1 = s2 = NULL;
+	name_type = 0;
 	if (!((sp->opd&AVPOPS_VAL_PVAR)||(sp->opd&AVPOPS_VAL_STR))) {
 		LOG(L_CRIT,
 			"BUG:avpops:dbstore_avps: invalid flag combination (%d/%d)\n",
