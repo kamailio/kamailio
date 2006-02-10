@@ -438,7 +438,7 @@ id_lst:
 	;
 
 flags_decl:		FLAGS_DECL	flag_list
-			|	FLAGS_DECL error { yyerror("flag list expected\n") };
+			|	FLAGS_DECL error { yyerror("flag list expected\n"); };
 ;
 flag_list:		flag_spec
 			|	flag_spec COMMA flag_list
