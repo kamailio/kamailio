@@ -674,9 +674,9 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 				if (proxy) { proxy->errors++; proxy->ok=0; }
 			} else {
 				success_branch++;
-				set_kr(REQ_FWDED);
 			}
 			start_retr( &t->uac[i].request );
+			set_kr(REQ_FWDED);
 		}
 	}
 	if (success_branch<=0) {
