@@ -505,31 +505,31 @@ static int mod_init(void)
 	    gw_uri_name.n = par;
 	    gw_uri_avp_name_str = 0;
 	} else {
-	    gw_uri_name.s = &gw_uri_avp;
+	    gw_uri_name.s = gw_uri_avp;
 	    gw_uri_avp_name_str = AVP_NAME_STR;
 	}
 	if (str2int(&ruri_user_avp, &par) == 0) {
 	    ruri_user_name.n = par;
 	    ruri_user_avp_name_str = 0;
 	} else {
-	    ruri_user_name.s = &ruri_user_avp;
+	    ruri_user_name.s = ruri_user_avp;
 	    ruri_user_avp_name_str = AVP_NAME_STR;
 	}
 	if (str2int(&contact_avp, &par) == 0) {
 	    contact_name.n = par;
 	    contact_avp_name_str = 0;
 	} else {
-	    contact_name.s = &contact_avp;
+	    contact_name.s = contact_avp;
 	    contact_avp_name_str = AVP_NAME_STR;
 	}
 	if (str2int(&rpid_avp, &par) == 0) {
 	    rpid_name.n = par;
 	    rpid_avp_name_str = 0;
 	} else {
-	    rpid_name.s = &rpid_avp;
+	    rpid_name.s = rpid_avp;
 	    rpid_avp_name_str = AVP_NAME_STR;
 	}
-	inv_timer_name.s = &inv_timer_avp;
+	inv_timer_name.s = inv_timer_avp;
 
 	return 0;
 
@@ -996,10 +996,10 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 
    /* Look for Caller RPID or From URI */
     if (search_first_avp(rpid_avp_name_str, rpid_name, &val) &&
-	val.s->s && val.s->len) {
+	val.s.s && val.s.len) {
 	/* Get URI user from RPID */
-	from_uri.len = val.s->len;
-	from_uri.s = val.s->s;
+	from_uri.len = val.s.len;
+	from_uri.s = val.s.s;
     } else {
 	/* Get URI from From URI */
 	if ((!_m->from) && (parse_headers(_m, HDR_FROM_F, 0) == -1)) {
@@ -1162,7 +1162,7 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 			}
 			value.s = (char *)&(ruri[0]);
 			value.len = at - value.s;
-			val.s = &value;
+			val.s = value;
 			add_avp(gw_uri_avp_name_str|AVP_VAL_STR, gw_uri_name, val);
 			DBG("load_gws(): DEBUG: Added gw_uri_avp <%.*s>\n",
 				value.len, value.s);
@@ -1380,7 +1380,7 @@ skip1:
 	}
 	value.s = (char *)&(ruri[0]);
 	value.len = at - value.s;
-	val.s = &value;
+	val.s = value;
 	add_avp(gw_uri_avp_name_str|AVP_VAL_STR, gw_uri_name, val);
 	DBG("load_gws(): DEBUG: Added gw_uri_avp <%.*s>\n",
 	    value.len, value.s);
@@ -1426,14 +1426,14 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	    LOG(L_ERR, "next_gw(): Parsing of R-URI failed.\n");
 	    return -1;
 	}
-	new_ruri.len = gw_uri_val.s->len + _m->parsed_uri.user.len + 1;
+	new_ruri.len = gw_uri_val.s.len + _m->parsed_uri.user.len + 1;
 	new_ruri.s = pkg_malloc(new_ruri.len);
 	if (!new_ruri.s) {
 	    LOG(L_ERR, "next_gw(): No memory for new R-URI.\n");
 	    return -1;
 	}
-	strip_char = memchr(gw_uri_val.s->s, '|', gw_uri_val.s->len);
-	at_char = memchr(gw_uri_val.s->s, '@', gw_uri_val.s->len);
+	strip_char = memchr(gw_uri_val.s.s, '|', gw_uri_val.s.len);
+	at_char = memchr(gw_uri_val.s.s, '@', gw_uri_val.s.len);
 	if (!strip_char || strip_char > at_char)
 		strip = 0;
 	if (!at_char) {
@@ -1442,19 +1442,19 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	    return -1;
 	}
 	at = new_ruri.s;
-	memcpy(at, gw_uri_val.s->s, strip_char - gw_uri_val.s->s);
+	memcpy(at, gw_uri_val.s.s, strip_char - gw_uri_val.s.s);
 	sscanf(strip_char+1,"%d",&strip);
-	at = at + (strip_char - gw_uri_val.s->s);
+	at = at + (strip_char - gw_uri_val.s.s);
 	memcpy(at, _m->parsed_uri.user.s+strip, _m->parsed_uri.user.len-strip);
 	at = at + _m->parsed_uri.user.len-strip;
-	memcpy(at, at_char, gw_uri_val.s->len - (at_char - gw_uri_val.s->s));
-	at = at + gw_uri_val.s->len - (at_char - gw_uri_val.s->s);
+	memcpy(at, at_char, gw_uri_val.s.len - (at_char - gw_uri_val.s.s));
+	at = at + gw_uri_val.s.len - (at_char - gw_uri_val.s.s);
 	*at = '\0';
 	/* Save Request-URI user for use in FAILURE_ROUTE */
-	val.s = &(_m->parsed_uri.user);
+	val.s = _m->parsed_uri.user;
 	add_avp(ruri_user_avp_name_str|AVP_VAL_STR, ruri_user_name, val);
 	DBG("load_gws(): DEBUG: Added ruri_user_avp <%.*s>\n",
-	    val.s->len, val.s->s);
+	    val.s.len, val.s.s);
 	/* Rewrite Request URI */
 	act.type = SET_URI_T;
 	act.p1_type = STRING_ST;
@@ -1477,25 +1477,25 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	    LOG(L_ERR, "next_gw(): No ruri_user AVP\n");
 	    return -1;
 	}
-	new_ruri.len = gw_uri_val.s->len + ruri_user_val.s->len + 1;
+	new_ruri.len = gw_uri_val.s.len + ruri_user_val.s.len + 1;
 	new_ruri.s = pkg_malloc(new_ruri.len);
 	if (!new_ruri.s) {
 	    LOG(L_ERR, "next_gw(): No memory for new R-URI.\n");
 	    return -1;
 	}
-	at_char = memchr(gw_uri_val.s->s, '@', gw_uri_val.s->len);
+	at_char = memchr(gw_uri_val.s.s, '@', gw_uri_val.s.len);
 	if (!at_char) {
 	    pkg_free(new_ruri.s);
 	    LOG(L_ERR, "next_gw(): No @ in gateway URI.\n");
 	    return -1;
 	}
 	at = new_ruri.s;
-	memcpy(at, gw_uri_val.s->s, at_char - gw_uri_val.s->s);
-	at = at + (at_char - gw_uri_val.s->s);
-	memcpy(at, ruri_user_val.s->s, ruri_user_val.s->len);
-	at = at + ruri_user_val.s->len;
-	memcpy(at, at_char, gw_uri_val.s->len - (at_char - gw_uri_val.s->s));
-	at = at + gw_uri_val.s->len - (at_char - gw_uri_val.s->s);
+	memcpy(at, gw_uri_val.s.s, at_char - gw_uri_val.s.s);
+	at = at + (at_char - gw_uri_val.s.s);
+	memcpy(at, ruri_user_val.s.s, ruri_user_val.s.len);
+	at = at + ruri_user_val.s.len;
+	memcpy(at, at_char, gw_uri_val.s.len - (at_char - gw_uri_val.s.s));
+	at = at + gw_uri_val.s.len - (at_char - gw_uri_val.s.s);
 	*at = '\0';
 	act.type = APPEND_BRANCH_T;
 	act.p1_type = STRING_ST;
@@ -1681,11 +1681,11 @@ rest:
 	/* Add contacts to "contacts" AVP */
 	curr = contacts;
 	while (curr) {
-	    val.s = &(curr->uri);
+	    val.s = curr->uri;
 	    add_avp(contact_avp_name_str|AVP_VAL_STR|(curr->q_flag),
 		    contact_name, val);
 	    DBG("load_contacts(): DEBUG: Loaded <%s>, q_flag <%d>\n",
-		val.s->s, curr->q_flag);	    
+		val.s.s, curr->q_flag);	    
 	    curr = curr->next;
 	}
 
@@ -1724,13 +1724,13 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 		/* Set Request-URI */
 		act.type = SET_URI_T;
 		act.p1_type = STRING_ST;
-		act.p1.string = val.s->s;
+		act.p1.string = val.s.s;
 		rval = do_action(&act, msg);
 		if (rval != 1) {
 			destroy_avp(avp);
 			return rval;
 		}
-		DBG("next_contacts(): DEBUG: R-URI is <%s>\n", val.s->s);
+		DBG("next_contacts(): DEBUG: R-URI is <%s>\n", val.s.s);
 		if (avp->flags & Q_FLAG) {
 			destroy_avp(avp);
 			/* Set fr_inv_timer */
@@ -1748,7 +1748,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 			destroy_avp(prev);
 			act.type = APPEND_BRANCH_T;
 			act.p1_type = STRING_ST;
-			act.p1.string = val.s->s;
+			act.p1.string = val.s.s;
 			act.p2_type = NUMBER_ST;
 			act.p2.number = 0;
 			rval = do_action(&act, msg);
@@ -1758,7 +1758,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 					"with return value <%d>\n", rval);
 				return -1;
 			}
-			DBG("next_contacts(): DEBUG: Branch is <%s>\n", val.s->s);
+			DBG("next_contacts(): DEBUG: Branch is <%s>\n", val.s.s);
 			if (avp->flags & Q_FLAG) {
 				destroy_avp(avp);
 				val.n = inv_timer_next;
@@ -1780,7 +1780,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 		do {
 			act.type = APPEND_BRANCH_T;
 			act.p1_type = STRING_ST;
-			act.p1.string = val.s->s;
+			act.p1.string = val.s.s;
 			act.p2_type = NUMBER_ST;
 			act.p2.number = 0;
 			rval = do_action(&act, msg);
@@ -1788,7 +1788,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 				destroy_avp(avp);
 				return rval;
 			}
-			DBG("next_contacts(): DEBUG: New branch is <%s>\n", val.s->s);
+			DBG("next_contacts(): DEBUG: New branch is <%s>\n", val.s.s);
 			if (avp->flags & Q_FLAG) {
 				destroy_avp(avp);
 				return 1;

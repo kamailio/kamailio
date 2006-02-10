@@ -255,7 +255,7 @@ int extra2strar( struct acc_extra *extra, /* extra list to account */
 	while (extra) 
 	{
 		/* get the value */
-		if (xl_get_spec_value( rq, &extra->spec, &value)!=0)
+		if (xl_get_spec_value( rq, &extra->spec, &value, 0)!=0)
 		{
 			LOG(L_ERR,"ERROR:acc:extra2strar: failed to get '%.*s'\n",
 				extra->name.len,extra->name.s);

@@ -76,12 +76,12 @@ static int generate_avps(VALUE_PAIR* received)
 	VALUE_PAIR *vp;
 
 	vp = received;
-	name.s = &name_str;
-	val.s = &val_str;
 
 	while ((vp = rc_avpair_get(vp, attrs[A_SIP_AVP].v, 0))) {
 		attr_name_value(vp, &name_str, &val_str);
 		
+		name.s = name_str;
+		val.s = val_str;
 		if (add_avp(AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) {
 			LOG(L_ERR, "generate_avps: Unable to create a new AVP\n");
 		} else {

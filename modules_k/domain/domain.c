@@ -229,11 +229,13 @@ int w_is_domain_local(struct sip_msg* _msg, char* _s1, char* _s2)
         return is_from_local(_msg, _s1, _s2);
     case PARAM_SOURCE_AVP:
         avp = search_first_avp(ps->avp_type, ps->avp_name, &avp_value);
-        if (!avp || !(avp->flags & AVP_VAL_STR) || !avp_value.s || !avp_value.s->s || !avp_value.s->len) {
-            DBG("domain/w_is_domain_local(): Undefined, empty or non-string avp, nothing to check\n");
+        if (!avp || !(avp->flags & AVP_VAL_STR) || !avp_value.s.s 
+				|| !avp_value.s.len) {
+            DBG("domain/w_is_domain_local(): Undefined, empty or non-string"
+					" avp, nothing to check\n");
             return -1;
         }
-        return is_domain_local(avp_value.s);
+        return is_domain_local(&avp_value.s);
     default:
         LOG(L_ERR, "domain/w_is_domain_local(): invalid input parameter\n");
         return 0;

@@ -481,7 +481,7 @@ static int m_store(struct sip_msg* msg, char* mode, char* flags)
 		avp=search_first_avp(0, avp_name, &avp_value);
 		if(avp!=NULL && is_avp_str_val(avp))
 		{
-			if(parse_uri(avp_value.s->s, avp_value.s->len, &puri)!=0)
+			if(parse_uri(avp_value.s.s, avp_value.s.len, &puri)!=0)
 			{
 				LOG(L_ERR, "MSILO:m_store: bad new URI in userid avp!\n");
 				goto error;
@@ -644,7 +644,7 @@ static int m_store(struct sip_msg* msg, char* mode, char* flags)
 		avp=search_first_avp(0, avp_name, &avp_value);
 		if(avp!=NULL && is_avp_str_val(avp))
 		{
-			if(ms_extract_time(avp_value.s, &db_vals[nr_keys].val.int_val)!=0)
+			if(ms_extract_time(&avp_value.s, &db_vals[nr_keys].val.int_val)!=0)
 				db_vals[nr_keys].val.int_val = 0;
 		}
 	}

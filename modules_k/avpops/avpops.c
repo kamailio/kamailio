@@ -71,56 +71,55 @@ static int fixup_db_delete_avp(void** param, int param_no);
 static int fixup_db_store_avp(void** param, int param_no);
 static int fixup_write_avp(void** param, int param_no);
 static int fixup_delete_avp(void** param, int param_no);
-static int fixup_pushto_avp(void** param, int param_no);
-static int fixup_check_avp(void** param, int param_no);
 static int fixup_copy_avp(void** param, int param_no);
 static int fixup_printf(void** param, int param_no);
-static int fixup_subst(void** param, int param_no);
+static int fixup_pushto_avp(void** param, int param_no);
+static int fixup_check_avp(void** param, int param_no);
 static int fixup_op_avp(void** param, int param_no);
+static int fixup_subst(void** param, int param_no);
 static int fixup_is_avp_set(void** param, int param_no);
 
+static int w_print_avps(struct sip_msg* msg, char* foo, char *bar);
 static int w_dbload_avps(struct sip_msg* msg, char* source, char* param);
-static int w_dbstore_avps(struct sip_msg* msg, char* source, char* param);
 static int w_dbdelete_avps(struct sip_msg* msg, char* source, char* param);
+static int w_dbstore_avps(struct sip_msg* msg, char* source, char* param);
 static int w_write_avps(struct sip_msg* msg, char* source, char* param);
 static int w_delete_avps(struct sip_msg* msg, char* param, char *foo);
+static int w_copy_avps(struct sip_msg* msg, char* param, char *check);
+static int w_printf(struct sip_msg* msg, char* dest, char *format);
 static int w_pushto_avps(struct sip_msg* msg, char* destination, char *param);
 static int w_check_avps(struct sip_msg* msg, char* param, char *check);
-static int w_copy_avps(struct sip_msg* msg, char* param, char *check);
-static int w_print_avps(struct sip_msg* msg, char* foo, char *bar);
-static int w_printf(struct sip_msg* msg, char* dest, char *format);
-static int w_subst(struct sip_msg* msg, char* src, char *subst);
 static int w_op_avps(struct sip_msg* msg, char* param, char *op);
+static int w_subst(struct sip_msg* msg, char* src, char *subst);
 static int w_is_avp_set(struct sip_msg* msg, char* param, char *foo);
-
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
+	{"avp_print",  w_print_avps, 0, 0,
+							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"avp_db_load",   w_dbload_avps,  2, fixup_db_load_avp,
 							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"avp_db_store",  w_dbstore_avps,  2, fixup_db_store_avp,
-							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"avp_db_delete", w_dbdelete_avps, 2, fixup_db_delete_avp,
+							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"avp_db_store",  w_dbstore_avps,  2, fixup_db_store_avp,
 							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"avp_write",  w_write_avps,  2, fixup_write_avp,
 							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"avp_delete", w_delete_avps, 1, fixup_delete_avp,
 							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"avp_copy",   w_copy_avps,  2,  fixup_copy_avp,
+							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"avp_printf", w_printf,  2, fixup_printf,
+							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"avp_pushto", w_pushto_avps, 2, fixup_pushto_avp,
 							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"avp_check",  w_check_avps, 2, fixup_check_avp,
 							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"avp_copy",   w_copy_avps,  2,  fixup_copy_avp,
-							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"avp_print",  w_print_avps, 0, 0,
-							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"avp_printf", w_printf,  2, fixup_printf,
+	{"avp_op",     w_op_avps, 2, fixup_op_avp,
 							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"avp_subst",  w_subst,   2, fixup_subst,
-							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"avp_op",     w_op_avps, 2, fixup_op_avp,
 							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"is_avp_set", w_is_avp_set, 1, fixup_is_avp_set,
 							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
@@ -213,57 +212,12 @@ static int avpops_child_init(int rank)
 }
 
 
-
-static struct fis_param *get_attr_or_alias(char *s)
-{
-	struct fis_param *ap;
-	char *p;
-	int type;
-	str alias;
-
-	/* compose the param structure */
-	ap = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
-	if (ap==0)
-	{
-		LOG(L_ERR,"ERROR:avpops:get_attr_or_alias: no more pkg mem\n");
-		goto error;
-	}
-	memset( ap, 0, sizeof(struct fis_param));
-
-	if (*s=='$')
-	{
-		/* alias */
-		alias .s = s+1;
-		alias.len = strlen(alias.s);
-		if (lookup_avp_galias( &alias, &type, &ap->val)==-1)
-		{
-			LOG(L_ERR,"ERROR:avpops:get_attr_or_alias: unknow alias"
-				"\"%s\"\n", s+1);
-			goto error;
-		}
-		ap->opd |= (type&AVP_NAME_STR)?AVPOPS_VAL_STR:AVPOPS_VAL_INT;
-	} else {
-		if ( (p=parse_avp_attr( s, ap, 0))==0 || *p!=0)
-		{
-			LOG(L_ERR,"ERROR:avpops:get_attr_or_alias: failed to parse "
-				"attribute name <%s>\n", s);
-			goto error;
-		}
-	}
-	ap->opd |= AVPOPS_VAL_AVP;
-	return ap;
-error:
-	return 0;
-}
-
-
 static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 {
 	struct fis_param *sp;
 	struct db_param  *dbp;
 	int flags;
 	int flags0;
-	str alias;
 	char *s;
 	char *p;
 
@@ -282,7 +236,7 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 		/* prepare the fis_param structure */
 		sp = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
 		if (sp==0) {
-			LOG(L_ERR,"ERROR:avpops:fixup_db_avp: no more pkg mem\n");
+			LOG(L_ERR,"ERROR:avpops:fixup_db_avp: no more pkg mem!\n");
 			return E_OUT_OF_MEM;
 		}
 		memset( sp, 0, sizeof(struct fis_param));
@@ -309,48 +263,39 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 		{
 			/* is a constant string -> use it as uuid*/
 			sp->opd = ((flags==0)?AVPOPS_FLAG_UUID0:flags)|AVPOPS_VAL_STR;
-			sp->val.s = (str*)pkg_malloc(strlen(s)+1+sizeof(str));
-			if (sp->val.s==0) {
-				LOG(L_ERR,"ERROR:avpops:fixup_db_avp: no more pkg mem\n");
+			sp->sval.p.val.s = (char*)pkg_malloc(strlen(s)+1);
+			if (sp->sval.p.val.s==0) {
+				LOG(L_ERR,"ERROR:avpops:fixup_db_avp: no more pkg mem!!\n");
 				return E_OUT_OF_MEM;
 			}
-			sp->val.s->s = ((char*)sp->val.s) + sizeof(str);
-			sp->val.s->len = strlen(s);
-			strcpy(sp->val.s->s,s);
+			sp->sval.p.val.len = strlen(s);
+			strcpy(sp->sval.p.val.s,s);
 		} else {
 			/* is a variable $xxxxx */
-			s++;
-			if(flags==0)
-				flags0=AVPOPS_FLAG_URI0;
-			if ( (!strcasecmp( "from", s) && (flags|=AVPOPS_USE_FROM)) 
-					|| (!strcasecmp( "to", s) && (flags|=AVPOPS_USE_TO)) 
-					|| (!strcasecmp( "ruri", s) && (flags|=AVPOPS_USE_RURI)) )
+			p = xl_parse_spec(s, &sp->sval,
+					XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+			if (p==0 || sp->sval.type==XL_NULL || sp->sval.type==XL_EMPTY)
 			{
-				memset(sp, 0, sizeof(struct fis_param));
-				sp->opd = flags0|flags|AVPOPS_VAL_NONE;
+				LOG(L_ERR,"ERROR:avops:fixup_db_avp: bad param 1; "
+					"expected : $pseudo-variable or int/str value\n");
+				return E_UNSPEC;
+			}
+			
+			if(sp->sval.type==XL_RURI || sp->sval.type==XL_FROM
+					|| sp->sval.type==XL_TO || sp->sval.type==XL_OURI)
+			{
+				sp->opd = ((flags==0)?AVPOPS_FLAG_URI0:flags)|AVPOPS_VAL_PVAR;
 			} else {
-				/* can be only an AVP alias */
-				alias .s = s;
-				alias.len = strlen(alias.s);
-				flags0=0;
-				if (lookup_avp_galias( &alias, &flags0, &sp->val)==-1 )
-				{
-					LOG(L_ERR,"ERROR:avpops:fixup_db_avp: source/flags \"%s\""
-						" unknown!\n",s);
-					return E_UNSPEC;
-				}
-				sp->opd = ((flags==0)?AVPOPS_FLAG_UUID0:flags)|AVPOPS_VAL_AVP |
-					((flags0&AVP_NAME_STR)?AVPOPS_VAL_STR:AVPOPS_VAL_INT);
+				sp->opd = ((flags==0)?AVPOPS_FLAG_UUID0:flags)|AVPOPS_VAL_PVAR;
 			}
 		}
-		pkg_free(*param);
 		*param=(void*)sp;
 	} else if (param_no==2) {
 		/* compose the db_param structure */
 		dbp = (struct db_param*)pkg_malloc(sizeof(struct db_param));
 		if (dbp==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_db_avp: no more pkg mem\n");
+			LOG(L_ERR,"ERROR:avpops:fixup_db_avp: no more pkg mem!!!\n");
 			return E_OUT_OF_MEM;
 		}
 		memset( dbp, 0, sizeof(struct db_param));
@@ -359,7 +304,6 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 			LOG(L_ERR,"ERROR:avpops:fixup_db_avp: parse failed\n");
 			return E_UNSPEC;
 		}
-		pkg_free(*param);
 		*param=(void*)dbp;
 	}
 
@@ -371,7 +315,6 @@ static int fixup_db_load_avp(void** param, int param_no)
 {
 	return fixup_db_avp( param, param_no, 1/*allow scheme*/);
 }
-
 
 static int fixup_db_delete_avp(void** param, int param_no)
 {
@@ -387,10 +330,8 @@ static int fixup_db_store_avp(void** param, int param_no)
 
 static int fixup_write_avp(void** param, int param_no)
 {
-	struct hdr_field hdr;
 	struct fis_param *ap;
 	int  flags;
-	int  len;
 	char *s;
 	char *p;
 
@@ -398,88 +339,38 @@ static int fixup_write_avp(void** param, int param_no)
 	s = (char*)*param;
 	ap = 0 ;
 	
-	if (param_no==1)
+	if (param_no==1) /* source */
 	{
+		/* flags */
+		if ( (p=strchr(s,'/'))!=0)
+		{
+			*(p++) = '\0';
+			if (!strcasecmp("username",p))
+			{
+				flags|=AVPOPS_FLAG_USER0;
+			} else if(!strcasecmp("domain", p)) {
+				flags|=AVPOPS_FLAG_DOMAIN0;
+			} else {
+				LOG(L_ERR,"ERROR:avpops:fixup_write_avp: flag \"%s\""
+					" unknown!\n", p);
+				return E_UNSPEC;
+			}
+		}
+		
 		if ( *s=='$' )
 		{
 			/* is variable */
-			if ((++s)==0)
+			ap = avpops_parse_pvar(s, XL_THROW_ERROR|XL_DISABLE_COLORS);
+			if (ap==0)
+			{
+				LOG(L_ERR,"ERROR:avpops:fixup_write_avp: unable to get"
+						" pseudo-variable\n");
+				return E_OUT_OF_MEM;
+			}
+			if (ap->sval.type==XL_NULL)
 			{
 				LOG(L_ERR,"ERROR:avops:fixup_write_avp: bad param 1; "
-					"expected : $[from|to|ruri|hdr] or int/str value\n");
-				return E_UNSPEC;
-			}
-			if ( (p=strchr(s,'/'))!=0)
-				*(p++) = 0;
-			if ( (!strcasecmp( "from", s) && (flags|=AVPOPS_USE_FROM))
-				|| (!strcasecmp( "to", s) && (flags|=AVPOPS_USE_TO))
-				|| (!strcasecmp( "ruri", s) && (flags|=AVPOPS_USE_RURI))
-				|| (!strcasecmp( "duri", s) && (flags|=AVPOPS_USE_DURI))
-				|| (!strcasecmp( "dst_ip", s) && (flags|=AVPOPS_USE_DST_IP))
-				|| (!strcasecmp( "src_ip", s) && (flags|=AVPOPS_USE_SRC_IP))
-				|| (!strncasecmp( "hdr", s, 3) && (flags|=AVPOPS_USE_HDRREQ)) )
-			{
-				ap = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
-				if (ap==0)
-				{
-					LOG(L_ERR,"ERROR:avpops:fixup_write_avp: no more "
-						"pkg mem\n");
-					return E_OUT_OF_MEM;
-				}
-				memset( ap, 0, sizeof(struct fis_param));
-				/* any falgs ? */
-				if ( p && !(!(flags&(AVPOPS_USE_SRC_IP|AVPOPS_USE_HDRREQ
-				|AVPOPS_USE_DST_IP)) && (
-				(!strcasecmp("username",p) && (flags|=AVPOPS_FLAG_USER0)) ||
-				(!strcasecmp("domain", p) && (flags|=AVPOPS_FLAG_DOMAIN0)))) )
-				{
-					LOG(L_ERR,"ERROR:avpops:fixup_write_avp: flag \"%s\""
-						" unknown!\n", p);
-					return E_UNSPEC;
-				}
-				if (flags&AVPOPS_USE_HDRREQ)
-				{
-					len = strlen(s);
-					if (len<6 || 
-						((s[3]!='[' || s[len-1]!=']')
-							&& (s[3]!='(' || s[len-1]!=')')))
-					{
-						LOG(L_ERR,"ERROR:avpops:fixup_write_avp: invalid hdr "
-							"specification \"%s\"\n",s);
-						return E_UNSPEC;
-					}
-					s[len-1] = ':';
-					/* parse header name */
-					if (parse_hname2( s+4, s+len, &hdr)==0) {
-						LOG(L_ERR,"BUG:avpops:fixup_write_avp: parse header "
-							"failed\n");
-						return E_UNSPEC;
-					}
-					if (hdr.type==HDR_OTHER_T) {
-						/* duplicate hdr name */
-						len -= 5; /*hdr[]*/
-						ap->val.s = (str*)pkg_malloc(sizeof(str)+len+1);
-						if (ap->val.s==0)
-						{
-							LOG(L_ERR,"ERROR:avpops:fixup_write_avp: no more "
-								"pkg mem\n");
-							return E_OUT_OF_MEM;
-						}
-						ap->val.s->s = ((char*)(ap->val.s)) + sizeof(str);
-						ap->val.s->len = len;
-						memcpy( ap->val.s->s, s+4, len);
-						ap->val.s->s[len] = 0;
-						DBG("DEBUF:avpops:fixup_write_avp: hdr=<%s>\n",
-							ap->val.s->s);
-					} else {
-						ap->val.n = hdr.type;
-						flags |= AVPOPS_VAL_INT;
-					}
-				}
-				ap->opd = flags|AVPOPS_VAL_NONE;
-			} else {
-				LOG(L_ERR,"ERROR:avpops:fixup_write_avp: source \"%s\""
-					" unknown!\n", s);
+					"expected : $pseudo-variable or int/str value\n");
 				return E_UNSPEC;
 			}
 		} else {
@@ -492,22 +383,30 @@ static int fixup_write_avp(void** param, int param_no)
 			}
 		}
 	} else if (param_no==2) {
-		if ( (ap=get_attr_or_alias(s))==0 )
+		if(s==0 || *s!='$')
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_write_avp: bad attribute name"
-				"/alias <%s>\n", s);
+				" in param 2 <%s>\n", s);
 			return E_UNSPEC;
 		}
-		/* attr name is mandatory */
-		if (ap->opd&AVPOPS_VAL_NONE)
+		
+		/* is variable */
+		ap = avpops_parse_pvar(s, 
+			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		if (ap==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_write_avp: you must specify "
-				"a name for the AVP\n");
+			LOG(L_ERR,"ERROR:avpops:fixup_write_avp: unable to get"
+					" pseudo-variable in param 2\n");
+			return E_OUT_OF_MEM;
+		}
+		if (ap->sval.type!=XL_AVP)
+		{
+			LOG(L_ERR,"ERROR:avops:fixup_write_avp: bad param 2; "
+				"expected : $avp(name)\n");
 			return E_UNSPEC;
 		}
 	}
 
-	pkg_free(*param);
 	*param=(void*)ap;
 	return 0;
 }
@@ -515,19 +414,50 @@ static int fixup_write_avp(void** param, int param_no)
 
 static int fixup_delete_avp(void** param, int param_no)
 {
-	struct fis_param *ap;
+	struct fis_param *ap=NULL;
 	char *p;
+	char *s;
 
+	s = (char*)(*param);
 	if (param_no==1) {
 		/* attribute name / alias */
-		if ( (p=strchr((char*)*param,'/'))!=0 )
+		if ( (p=strchr(s,'/'))!=0 )
 			*(p++)=0;
-		if ( (ap=get_attr_or_alias((char*)*param))==0 )
+		
+		if(*s=='$')
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_delete_avp: bad attribute name"
-				"/alias <%s>\n", (char*)*param);
+			/* is variable */
+			ap = avpops_parse_pvar(s, 
+				XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+			if (ap==0)
+			{
+				LOG(L_ERR,"ERROR:avpops:fixup_delete_avp: unable to get"
+					" pseudo-variable in param \n");
+				return E_UNSPEC;
+			}
+			if (ap->sval.type!=XL_AVP)
+			{
+				LOG(L_ERR,"ERROR:avops:fixup_delete_avp: bad param; "
+					"expected : $avp(name)\n");
+				return E_UNSPEC;
+			}
+			ap->opd|=AVPOPS_VAL_PVAR;
+		} else if(*s=='\0') {
+			ap = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
+			if (ap==0)
+			{
+				LOG(L_ERR,"ERROR:avpops:fixup_delete_avp: no more "
+					"pkg mem\n");
+				return E_OUT_OF_MEM;
+			}
+			memset(ap, 0, sizeof(struct fis_param));
+			ap->opd|=AVPOPS_VAL_NONE;
+		} else {
+			LOG(L_ERR,"ERROR:avops:fixup_delete_avp: bad param 1; "
+				"expected : $avp(name) or empty\n");
 			return E_UNSPEC;
 		}
+
 		/* flags */
 		for( ; p&&*p ; p++ )
 		{
@@ -540,6 +470,8 @@ static int fixup_delete_avp(void** param, int param_no)
 				default:
 					LOG(L_ERR,"ERROR:avpops:fixup_delete_avp: bad flag "
 						"<%c>\n",*p);
+					if(ap!=NULL)
+						pkg_free(ap);
 					return E_UNSPEC;
 			}
 		}
@@ -547,204 +479,11 @@ static int fixup_delete_avp(void** param, int param_no)
 		if (ap->opd&AVPOPS_VAL_NONE)
 			ap->ops |= AVPOPS_FLAG_ALL;
 
-		pkg_free(*param);
 		*param=(void*)ap;
 	}
 
 	return 0;
 }
-
-
-static int fixup_pushto_avp(void** param, int param_no)
-{
-	struct fis_param *ap;
-	char *s;
-	char *p;
-
-	s = (char*)*param;
-	ap = 0;
-
-	if (param_no==1)
-	{
-		if ( *s!='$' || (++s)==0)
-		{
-			LOG(L_ERR,"ERROR:avops:fixup_pushto_avp: bad param 1; expected : "
-				"$[ruri|hdr_name|..]\n");
-			return E_UNSPEC;
-		}
-		/* compose the param structure */
-		ap = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
-		if (ap==0)
-		{
-			LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: no more pkg mem\n");
-			return E_OUT_OF_MEM;
-		}
-		memset( ap, 0, sizeof(struct fis_param));
-
-		if ( (p=strchr((char*)*param,'/'))!=0 )
-			*(p++)=0;
-		if (!strcasecmp( "ruri", s))
-		{
-			ap->opd = AVPOPS_VAL_NONE|AVPOPS_USE_RURI;
-			if ( p && !(
-				(!strcasecmp("username",p) && (ap->opd|=AVPOPS_FLAG_USER0)) ||
-				(!strcasecmp("domain",p) && (ap->opd|=AVPOPS_FLAG_DOMAIN0)) ))
-			{
-				LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: unknown "
-					" ruri flag \"%s\"!\n",p);
-				return E_UNSPEC;
-			}
-		} else if (!strcasecmp( "duri", s)) {
-			if ( p!=0 )
-			{
-				LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: unknown "
-					" duri flag \"%s\"!\n",p);
-				return E_UNSPEC;
-			}
-			ap->opd = AVPOPS_VAL_NONE|AVPOPS_USE_DURI;
-		} else {
-			/* what's the hdr destination ? request or reply? */
-			if ( p==0 )
-			{
-				ap->opd = AVPOPS_USE_HDRREQ;
-			} else {
-				if (!strcasecmp( "request", p))
-					ap->opd = AVPOPS_USE_HDRREQ;
-				else if (!strcasecmp( "reply", p))
-					ap->opd = AVPOPS_USE_HDRRPL;
-				else
-				{
-					LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: header "
-						"destination \"%s\" unknown!\n",p);
-					return E_UNSPEC;
-				}
-			}
-			/* copy header name */
-			ap->val.s = (str*)pkg_malloc( sizeof(str) + strlen(s) + 1 );
-			if (ap->val.s==0)
-			{
-				LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: no more pkg mem\n");
-				return E_OUT_OF_MEM;
-			}
-			ap->val.s->s = ((char*)ap->val.s) + sizeof(str);
-			ap->val.s->len = strlen(s);
-			strcpy( ap->val.s->s, s);
-		}
-	} else if (param_no==2) {
-		/* attribute name / alias */
-		if ( (p=strchr(s,'/'))!=0 )
-			*(p++)=0;
-		if ( (ap=get_attr_or_alias(s))==0 )
-		{
-			LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: bad attribute name"
-				"/alias <%s>\n", (char*)*param);
-			return E_UNSPEC;
-		}
-		/* attr name is mandatory */
-		if (ap->opd&AVPOPS_VAL_NONE)
-		{
-			LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: you must specify "
-				"a name for the AVP\n");
-			return E_UNSPEC;
-		}
-		/* flags */
-		for( ; p&&*p ; p++ )
-		{
-			switch (*p) {
-				case 'g':
-				case 'G':
-					ap->ops|=AVPOPS_FLAG_ALL;
-					break;
-				default:
-					LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: bad flag "
-						"<%c>\n",*p);
-					return E_UNSPEC;
-			}
-		}
-	}
-
-	pkg_free(*param);
-	*param=(void*)ap;
-	return 0;
-}
-
-
-
-static int fixup_check_avp(void** param, int param_no)
-{
-	struct fis_param *ap;
-	regex_t* re;
-	char *s;
-
-	s = (char*)*param;
-	ap = 0;
-
-	if (param_no==1)
-	{
-		if ( (ap=get_attr_or_alias(s))==0 )
-		{
-			LOG(L_ERR,"ERROR:avpops:fixup_check_avp: bad attribute name"
-				"/alias <%s>\n", (char*)*param);
-			return E_UNSPEC;
-		}
-		/* attr name is mandatory */
-		if (ap->opd&AVPOPS_VAL_NONE)
-		{
-			LOG(L_ERR,"ERROR:avpops:fixup_check_avp: you must specify "
-				"a name for the AVP\n");
-			return E_UNSPEC;
-		}
-	} else if (param_no==2) {
-		if ( (ap=parse_check_value(s))==0 )
-		{
-			LOG(L_ERR,"ERROR:avpops:fixup_check_avp: failed to parse "
-				"checked value \n");
-			return E_UNSPEC;
-		}
-		/* if REGEXP op -> compile the expresion */
-		if (ap->ops&AVPOPS_OP_RE)
-		{
-			if ( (ap->opd&AVPOPS_VAL_STR)==0 )
-			{
-				LOG(L_ERR,"ERROR:avpops:fixup_check_avp: regexp operation "
-					"requires string value\n");
-				return E_UNSPEC;
-			}
-			re = pkg_malloc(sizeof(regex_t));
-			if (re==0)
-			{
-				LOG(L_ERR,"ERROR:avpops:fixup_check_avp: no more pkg mem\n");
-				return E_OUT_OF_MEM;
-			}
-			DBG("DEBUG:avpops:fixup_check_avp: compiling regexp <%s>\n",
-				ap->val.s->s);
-			if (regcomp(re, ap->val.s->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE))
-			{
-				pkg_free(re);
-				LOG(L_ERR,"ERROR:avpops:fixip_check_avp: bad re <%s>\n",
-					ap->val.s->s);
-				return E_BAD_RE;
-			}
-			/* free the string and link the regexp */
-			pkg_free(ap->val.s);
-			ap->val.s = (str*)re;
-		} else if (ap->ops&AVPOPS_OP_FM) {
-			if ( !( ap->opd&AVPOPS_VAL_AVP ||
-			(!(ap->opd&AVPOPS_VAL_AVP) && ap->opd&AVPOPS_VAL_STR) ) )
-			{
-				LOG(L_ERR,"ERROR:avpops:fixup_check_avp: fast_match operation "
-					"requires string value or avp name/alias (%d/%d)\n",
-					ap->opd, ap->ops);
-				return E_UNSPEC;
-			}
-		}
-	}
-
-	pkg_free(*param);
-	*param=(void*)ap;
-	return 0;
-}
-
 
 static int fixup_copy_avp(void** param, int param_no)
 {
@@ -763,17 +502,20 @@ static int fixup_copy_avp(void** param, int param_no)
 			*(p++)=0;
 	}
 
-	if ( (ap=get_attr_or_alias(s))==0 )
+	ap = avpops_parse_pvar(s, 
+			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+	if (ap==0)
 	{
-		LOG(L_ERR,"ERROR:avpops:fixup_copy_avp: bad attribute name"
-			"/alias <%s>\n", (char*)*param);
-		return E_UNSPEC;
+		LOG(L_ERR,"ERROR:avpops:fixup_copy_avp: unable to get"
+				" pseudo-variable in P%d\n", param_no);
+		return E_OUT_OF_MEM;
 	}
+
 	/* attr name is mandatory */
-	if (ap->opd&AVPOPS_VAL_NONE)
+	if (ap->sval.type!=XL_AVP)
 	{
 		LOG(L_ERR,"ERROR:avpops:fixup_copy_avp: you must specify "
-			"a name for the AVP\n");
+			"only AVP as parameter\n");
 		return E_UNSPEC;
 	}
 
@@ -807,7 +549,206 @@ static int fixup_copy_avp(void** param, int param_no)
 		}
 	}
 
-	pkg_free(*param);
+	*param=(void*)ap;
+	return 0;
+}
+
+static int fixup_pushto_avp(void** param, int param_no)
+{
+	struct fis_param *ap;
+	char *s;
+	char *p;
+
+	s = (char*)*param;
+	ap = 0;
+
+	if (param_no==1)
+	{
+		if ( *s!='$')
+		{
+			LOG(L_ERR,"ERROR:avops:fixup_pushto_avp: bad param 1; expected : "
+				"$hdr(name) $ru $du ...\n");
+			return E_UNSPEC;
+		}
+		/* compose the param structure */
+
+		if ( (p=strchr(s,'/'))!=0 )
+			*(p++)=0;
+		ap = avpops_parse_pvar(s, 
+			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		if (ap==0)
+		{
+			LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: unable to get"
+					" pseudo-variable in param 1\n");
+			return E_OUT_OF_MEM;
+		}
+		if (ap->sval.type!=XL_HDR && ap->sval.type!=XL_RURI
+				&& ap->sval.type!=XL_DSTURI)
+		{
+			LOG(L_ERR,"ERROR:avops:fixup_pushto_avp: bad param 1; "
+				"expected : $hdr(name) $ru $du ...\n");
+			pkg_free(ap);
+			return E_UNSPEC;
+		}
+
+		switch(ap->sval.type) {
+			case XL_RURI:
+				ap->opd = AVPOPS_VAL_NONE|AVPOPS_USE_RURI;
+				if ( p && !(
+					(!strcasecmp("username",p)
+							&& (ap->opd|=AVPOPS_FLAG_USER0)) ||
+					(!strcasecmp("domain",p)
+							&& (ap->opd|=AVPOPS_FLAG_DOMAIN0)) ))
+				{
+					LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: unknown "
+						" ruri flag \"%s\"!\n",p);
+					return E_UNSPEC;
+				}
+			break;
+			case XL_DSTURI:
+				if ( p!=0 )
+				{
+					LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: unknown "
+						" duri flag \"%s\"!\n",p);
+					return E_UNSPEC;
+				}
+				ap->opd = AVPOPS_VAL_NONE|AVPOPS_USE_DURI;
+			break;
+			case XL_HDR:
+				/* what's the hdr destination ? request or reply? */
+				LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: push to header "
+						" is obsoleted - use append_hf() or append_to_reply()"
+						" from textops module!\n");
+				return E_UNSPEC;
+			break;
+			default:
+				LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: unknown "
+					" destination \"%s\"!\n",s);
+				return E_UNSPEC;
+		}
+	} else if (param_no==2) {
+		/* attribute name*/
+		if ( *s!='$')
+		{
+			LOG(L_ERR,"ERROR:avops:fixup_pushto_avp: bad param 1; expected : "
+				"$pseudo-variable ...\n");
+			return E_UNSPEC;
+		}
+		/* compose the param structure */
+
+		if ( (p=strchr(s,'/'))!=0 )
+			*(p++)=0;
+		ap = avpops_parse_pvar(s, 
+			XL_THROW_ERROR|XL_DISABLE_COLORS);
+		if (ap==0)
+		{
+			LOG(L_ERR,"ERROR:avpops:fixup_pudhto_avp: unable to get"
+					" pseudo-variable in param 2\n");
+			return E_OUT_OF_MEM;
+		}
+		if (ap->sval.type==XL_NULL)
+		{
+			LOG(L_ERR,"ERROR:avops:fixup_pushto_avp: bad param 2; "
+				"expected : $pseudo-variable ...\n");
+			pkg_free(ap);
+			return E_UNSPEC;
+		}
+		ap->opd |= AVPOPS_VAL_PVAR;
+
+		/* flags */
+		for( ; p&&*p ; p++ )
+		{
+			switch (*p) {
+				case 'g':
+				case 'G':
+					ap->ops|=AVPOPS_FLAG_ALL;
+					break;
+				default:
+					LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: bad flag "
+						"<%c>\n",*p);
+					pkg_free(ap);
+					return E_UNSPEC;
+			}
+		}
+	}
+
+	*param=(void*)ap;
+	return 0;
+}
+
+static int fixup_check_avp(void** param, int param_no)
+{
+	struct fis_param *ap;
+	regex_t* re;
+	char *s;
+
+	s = (char*)*param;
+	ap = 0;
+
+	if (param_no==1)
+	{
+		ap = avpops_parse_pvar(s, 
+			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		if (ap==0)
+		{
+			LOG(L_ERR,"ERROR:avpops:fixup_check_avp: unable to get"
+					" pseudo-variable in P1\n");
+			return E_OUT_OF_MEM;
+		}
+		/* attr name is mandatory */
+		if (ap->sval.type==XL_NULL)
+		{
+			LOG(L_ERR,
+				"ERROR:avpops:fixup_check_avp: NULL pseudo-variable in P1\n");
+			return E_UNSPEC;
+		}
+	} else if (param_no==2) {
+		if ( (ap=parse_check_value(s))==0 )
+		{
+			LOG(L_ERR,"ERROR:avpops:fixup_check_avp: failed to parse "
+				"checked value \n");
+			return E_UNSPEC;
+		}
+		/* if REGEXP op -> compile the expresion */
+		if (ap->ops&AVPOPS_OP_RE)
+		{
+			if ( (ap->opd&AVPOPS_VAL_STR)==0 )
+			{
+				LOG(L_ERR,"ERROR:avpops:fixup_check_avp: regexp operation "
+					"requires string value\n");
+				return E_UNSPEC;
+			}
+			re = pkg_malloc(sizeof(regex_t));
+			if (re==0)
+			{
+				LOG(L_ERR,"ERROR:avpops:fixup_check_avp: no more pkg mem\n");
+				return E_OUT_OF_MEM;
+			}
+			DBG("DEBUG:avpops:fixup_check_avp: compiling regexp <%.*s>\n",
+				ap->sval.p.val.len, ap->sval.p.val.s);
+			if (regcomp(re, ap->sval.p.val.s,
+						REG_EXTENDED|REG_ICASE|REG_NEWLINE))
+			{
+				pkg_free(re);
+				LOG(L_ERR,"ERROR:avpops:fixip_check_avp: bad re <%.*s>\n",
+					ap->sval.p.val.len, ap->sval.p.val.s);
+				return E_BAD_RE;
+			}
+			/* free the string and link the regexp */
+			// pkg_free(ap->sval.p.s);
+			ap->sval.p.val.s = (char*)re;
+		} else if (ap->ops&AVPOPS_OP_FM) {
+			if ( !( ap->opd&AVPOPS_VAL_PVAR ||
+			(!(ap->opd&AVPOPS_VAL_PVAR) && ap->opd&AVPOPS_VAL_STR) ) )
+			{
+				LOG(L_ERR,"ERROR:avpops:fixup_check_avp: fast_match operation "
+					"requires string value or avp name/alias (%d/%d)\n",
+					ap->opd, ap->ops);
+				return E_UNSPEC;
+			}
+		}
+	}
+
 	*param=(void*)ap;
 	return 0;
 }
@@ -816,16 +757,26 @@ static int fixup_printf(void** param, int param_no)
 {
 	struct fis_param *ap;
 	xl_elem_t *model;
+	char *s;
 
+	s = (char*)(*param);
 	if (param_no==1) {
 		/* attribute name / alias */
-		if ( (ap=get_attr_or_alias((char*)*param))==0 )
+		ap = avpops_parse_pvar(s, 
+			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		if (ap==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_printf: bad attribute name"
-				"/alias <%s>\n", (char*)*param);
+			LOG(L_ERR,"ERROR:avpops:fixup_printf_avp: unable to get"
+					" pseudo-variable in param\n");
+			return E_OUT_OF_MEM;
+		}
+
+		if (ap->sval.type!=XL_AVP)
+		{
+			LOG(L_ERR,"ERROR:avpops:fixup_printf: bad avp name"
+				" <%s>\n", (char*)*param);
 			return E_UNSPEC;
 		}
-		pkg_free(*param);
 		*param=(void*)ap;
 	} else if (param_no==2) {
 		if(*param)
@@ -874,10 +825,18 @@ static int fixup_subst(void** param, int param_no)
 		/* avp src / avp dst /flags */
 		if ( (p=strchr(s,'/'))!=0 )
 			*(p++)=0;
-		if ( (ap=get_attr_or_alias(s))==0 )
+		ap = avpops_parse_pvar(s, 
+			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		if (ap==0)
+		{
+			LOG(L_ERR,"ERROR:avpops:fixup_write_avp: unable to get"
+					" pseudo-variable in param 2\n");
+			return E_OUT_OF_MEM;
+		}
+		if (ap->sval.type!=XL_AVP)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_subst: bad attribute name"
-				"/alias <%s>\n", (char*)*param);
+				" <%s>\n", (char*)*param);
 			pkg_free(av);
 			return E_UNSPEC;
 		}
@@ -891,7 +850,6 @@ static int fixup_subst(void** param, int param_no)
 		av[0] = ap;
 		if(p==0 || *p=='\0')
 		{
-			pkg_free(*param);
 			*param=(void*)av;
 			return 0;
 		}
@@ -902,10 +860,19 @@ static int fixup_subst(void** param, int param_no)
 			*(p++)=0;
 		if(p==0 || (p!=0 && p-s>1))
 		{
-			if ( (ap=get_attr_or_alias(s))==0 )
+			ap = avpops_parse_pvar(s, 
+				XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+			if (ap==0)
+			{
+				LOG(L_ERR,"ERROR:avpops:fixup_write_avp: unable to get"
+						" pseudo-variable in param 2\n");
+				return E_OUT_OF_MEM;
+			}
+			
+			if (ap->sval.type!=XL_AVP)
 			{
 				LOG(L_ERR,"ERROR:avpops:fixup_subst: bad attribute name"
-					"/alias <%s>!\n", s);
+					" <%s>!\n", s);
 				pkg_free(av);
 				return E_UNSPEC;
 			}
@@ -920,7 +887,6 @@ static int fixup_subst(void** param, int param_no)
 		}
 		if(p==0 || *p=='\0')
 		{
-			pkg_free(*param);
 			*param=(void*)av;
 			return 0;
 		}
@@ -943,7 +909,6 @@ static int fixup_subst(void** param, int param_no)
 					return E_UNSPEC;
 			}
 		}
-		pkg_free(*param);
 		*param=(void*)av;
 	} else if (param_no==2) {
 		DBG("%s:fixup_subst: fixing %s\n", exports.name, (char*)(*param));
@@ -987,44 +952,44 @@ static int fixup_op_avp(void** param, int param_no)
 		if ( (p=strchr(s,'/'))!=0 )
 			*(p++)=0;
 
-		if ( (av[0]=get_attr_or_alias(s))==0 )
+		av[0] = avpops_parse_pvar(s, 
+			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		if (av[0]==0)
+		{
+			LOG(L_ERR,"ERROR:avpops:fixup_op_avp: unable to get"
+					" pseudo-variable in param 1\n");
+			return E_OUT_OF_MEM;
+		}
+		if (av[0]->sval.type!=XL_AVP)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_op_avp: bad attribute name"
-				"/alias <%s>\n", (char*)*param);
+				" <%s>\n", (char*)*param);
 			pkg_free(av);
-			return E_UNSPEC;
-		}
-		/* attr name is mandatory */
-		if (av[0]->opd&AVPOPS_VAL_NONE)
-		{
-			LOG(L_ERR,"ERROR:avpops:fixup_op_avp: you must specify "
-				"a name for the AVP\n");
 			return E_UNSPEC;
 		}
 		if(p==0 || *p=='\0')
 		{
-			pkg_free(*param);
 			*param=(void*)av;
 			return 0;
 		}
 		
 		s = p;
-		if ( (ap=get_attr_or_alias(s))==0 )
+		ap = avpops_parse_pvar(s, 
+			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		if (ap==0)
+		{
+			LOG(L_ERR,"ERROR:avpops:fixup_op_avp: unable to get"
+					" pseudo-variable in param 1 (2)\n");
+			return E_OUT_OF_MEM;
+		}
+		if (ap->sval.type!=XL_AVP)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_op_avp: bad attribute name"
 				"/alias <%s>!\n", s);
 			pkg_free(av);
 			return E_UNSPEC;
 		}
-		/* attr name is mandatory */
-		if (ap->opd&AVPOPS_VAL_NONE)
-		{
-			LOG(L_ERR,"ERROR:avpops:fixup_op_avp: you must specify "
-				"a name for the AVP!\n");
-			return E_UNSPEC;
-		}
 		av[1] = ap;
-		pkg_free(*param);
 		*param=(void*)av;
 		return 0;
 	} else if (param_no==2) {
@@ -1035,35 +1000,43 @@ static int fixup_op_avp(void** param, int param_no)
 			return E_UNSPEC;
 		}
 		/* only integer values or avps */
-		if ( (ap->opd&AVPOPS_VAL_STR)!=0 && (ap->opd&AVPOPS_VAL_AVP)==0)
+		if ( (ap->opd&AVPOPS_VAL_STR)!=0 && (ap->opd&AVPOPS_VAL_PVAR)==0)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_op_avp: operations "
 				"requires integer values\n");
 			return E_UNSPEC;
 		}
-		pkg_free(*param);
 		*param=(void*)ap;
 		return 0;
 	}
 	return -1;
 }
 
-
 static int fixup_is_avp_set(void** param, int param_no)
 {
 	struct fis_param *ap;
 	char *p;
-
+	char *s;
+	
+	s = (char*)(*param);
 	if (param_no==1) {
 		/* attribute name | alias / flags */
-		if ( (p=strchr((char*)*param,'/'))!=0 )
+		if ( (p=strchr(s,'/'))!=0 )
 			*(p++)=0;
 		
-		if ( ((ap=get_attr_or_alias((char*)*param))==0)
-				|| (ap->opd&AVPOPS_VAL_NONE))
+		ap = avpops_parse_pvar(s, 
+			XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		if (ap==0)
+		{
+			LOG(L_ERR,"ERROR:avpops:fixup_is_avp_set: unable to get"
+					" pseudo-variable in param\n");
+			return E_OUT_OF_MEM;
+		}
+		
+		if (ap->sval.type!=XL_AVP)
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_is_avp_set: bad attribute name"
-				"/alias <%s>\n", (char*)*param);
+					" <%s>\n", (char*)*param);
 			return E_UNSPEC;
 		}
 		if(p==0 || *p=='\0')
@@ -1073,6 +1046,10 @@ static int fixup_is_avp_set(void** param, int param_no)
 		for( ; p&&*p ; p++ )
 		{
 			switch (*p) {
+				case 'e':
+				case 'E':
+					ap->ops|=AVPOPS_FLAG_EMPTY;
+					break;
 				case 'n':
 				case 'N':
 					ap->ops|=AVPOPS_FLAG_CASTN;
@@ -1088,13 +1065,11 @@ static int fixup_is_avp_set(void** param, int param_no)
 			}
 		}
 		
-		pkg_free(*param);
 		*param=(void*)ap;
 	}
 
 	return 0;
 }
-
 
 static int w_dbload_avps(struct sip_msg* msg, char* source, char* param)
 {
@@ -1102,6 +1077,11 @@ static int w_dbload_avps(struct sip_msg* msg, char* source, char* param)
 								(struct db_param*)param, use_domain);
 }
 
+static int w_dbdelete_avps(struct sip_msg* msg, char* source, char* param)
+{
+	return ops_dbdelete_avps ( msg, (struct fis_param*)source,
+								(struct db_param*)param, use_domain);
+}
 
 static int w_dbstore_avps(struct sip_msg* msg, char* source, char* param)
 {
@@ -1109,38 +1089,15 @@ static int w_dbstore_avps(struct sip_msg* msg, char* source, char* param)
 								(struct db_param*)param, use_domain);
 }
 
-
-static int w_dbdelete_avps(struct sip_msg* msg, char* source, char* param)
-{
-	return ops_dbdelete_avps ( msg, (struct fis_param*)source,
-								(struct db_param*)param, use_domain);
-}
-
-
 static int w_write_avps(struct sip_msg* msg, char* source, char* param)
 {
 	return ops_write_avp ( msg, (struct fis_param*)source, 
 								(struct fis_param*)param);
 }
 
-
 static int w_delete_avps(struct sip_msg* msg, char* param, char* foo)
 {
 	return ops_delete_avp ( msg, (struct fis_param*)param);
-}
-
-
-static int w_pushto_avps(struct sip_msg* msg, char* destination, char *param)
-{
-	return ops_pushto_avp ( msg, (struct fis_param*)destination,
-								(struct fis_param*)param);
-}
-
-
-static int w_check_avps(struct sip_msg* msg, char* param, char *check)
-{
-	return ops_check_avp ( msg, (struct fis_param*)param,
-								(struct fis_param*)check);
 }
 
 static int w_copy_avps(struct sip_msg* msg, char* name1, char *name2)
@@ -1149,19 +1106,21 @@ static int w_copy_avps(struct sip_msg* msg, char* name1, char *name2)
 								(struct fis_param*)name2);
 }
 
-static int w_print_avps(struct sip_msg* msg, char* foo, char *bar)
-{
-	return ops_print_avp();
-}
-
 static int w_printf(struct sip_msg* msg, char* dest, char *format)
 {
 	return ops_printf(msg, (struct fis_param*)dest, (xl_elem_t*)format);
 }
 
-static int w_subst(struct sip_msg* msg, char* src, char *subst)
+static int w_pushto_avps(struct sip_msg* msg, char* destination, char *param)
 {
-	return ops_subst(msg, (struct fis_param**)src, (struct subst_expr*)subst);
+	return ops_pushto_avp ( msg, (struct fis_param*)destination,
+								(struct fis_param*)param);
+}
+
+static int w_check_avps(struct sip_msg* msg, char* param, char *check)
+{
+	return ops_check_avp ( msg, (struct fis_param*)param,
+								(struct fis_param*)check);
 }
 
 static int w_op_avps(struct sip_msg* msg, char* param, char *op)
@@ -1170,9 +1129,18 @@ static int w_op_avps(struct sip_msg* msg, char* param, char *op)
 								(struct fis_param*)op);
 }
 
+static int w_subst(struct sip_msg* msg, char* src, char *subst)
+{
+	return ops_subst(msg, (struct fis_param**)src, (struct subst_expr*)subst);
+}
+
 static int w_is_avp_set(struct sip_msg* msg, char* param, char *op)
 {
 	return ops_is_avp_set(msg, (struct fis_param*)param);
 }
 
+static int w_print_avps(struct sip_msg* msg, char* foo, char *bar)
+{
+	return ops_print_avp();
+}
 

@@ -291,7 +291,7 @@ void reportOrigCallSetUpUsage()
 		get_avp_val(dest_avp, &dest_val);
 
 		/* osp dest is wrapped in a string */
-		dest = (osp_dest *)dest_val.s->s;
+		dest = (osp_dest *)dest_val.s.s;
 
 		if (dest->used == 1) {
 			if (dest->reported == 1) {

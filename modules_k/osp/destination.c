@@ -128,7 +128,7 @@ osp_dest* getNextOrigDestination() {
 		get_avp_val(dest_avp, &dest_val);
 
 		/* osp dest is wrapped in a string */
-		dest = (osp_dest *)dest_val.s->s;
+		dest = (osp_dest *)dest_val.s.s;
 
 		if (dest->used == 0) {
 			DBG("osp: Found\n");
@@ -171,7 +171,7 @@ osp_dest* getLastOrigDestination() {
 		get_avp_val(dest_avp, &dest_val);
 
 		/* osp dest is wrapped in a string */
-		dest = (osp_dest *)dest_val.s->s;
+		dest = (osp_dest *)dest_val.s.s;
 
 		if (dest->used == 1) {
 			last_dest = dest;
@@ -203,7 +203,7 @@ osp_dest* getTermDestination() {
 		get_avp_val(dest_avp, &dest_val);
 
 		/* osp dest is wrapped in a string */
-		term_dest = (osp_dest *)dest_val.s->s;
+		term_dest = (osp_dest *)dest_val.s.s;
 	}
 
 	return term_dest;
@@ -309,7 +309,7 @@ void dumpDebugInfo() {
 		get_avp_val(dest_avp, &dest_val);
 
 		/* osp dest is wrapped in a string */
-		dest = (osp_dest *)dest_val.s->s;
+		dest = (osp_dest *)dest_val.s.s;
 
 		DBG("osp: dumpDebugInfo: .....orig index...'%d'\n", i);
 
@@ -327,7 +327,7 @@ void dumpDebugInfo() {
 		get_avp_val(dest_avp, &dest_val);
 
 		/* osp dest is wrapped in a string */
-		dest = (osp_dest *)dest_val.s->s;
+		dest = (osp_dest *)dest_val.s.s;
 
 		DBG("osp: dumpDebugInfo: .....destination......\n");
 

@@ -328,13 +328,13 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 			ci.received = &_c->received->body;
 		} else {
 			if (received_found==0) {
-				if (search_first_avp(0, rcv_avp, &val) && val.s) {
-					if (val.s->len>RECEIVED_MAX_SIZE) {
+				if (search_first_avp(0, rcv_avp, &val) && val.s.s) {
+					if (val.s.len>RECEIVED_MAX_SIZE) {
 						rerrno = R_CONTACT_LEN;
 						LOG(L_ERR,"ERROR:usrloc:pack_ci: received too long\n");
 						goto error;
 					}
-					received = val.s;
+					received = &val.s;
 				} else {
 					received = 0;
 				}

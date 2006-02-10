@@ -54,6 +54,15 @@
 #include "avpops_db.h"
 
 
+#define avpops_str2int_str(a, b) \
+	do { \
+		if(a.s==0) \
+			b.n = a.len; \
+		else \
+			b.s = a; \
+	} while(0)
+
+
 static db_key_t  store_keys[6];
 static db_val_t  store_vals[6];
 static str      empty={"",0};
@@ -160,7 +169,7 @@ static int dbrow2avp(struct db_row *row, int flags, int_str attr,
 		if (db_flags&AVP_NAME_STR)
 		{
 			/* name is string */
-			avp_attr.s = &atmp;
+			avp_attr.s = atmp;
 		} else {
 			/* name is ID */
 			if (str2int( &atmp, &uint)==-1)
@@ -180,6 +189,9 @@ static int dbrow2avp(struct db_row *row, int flags, int_str attr,
 		vtmp.len = strlen(vtmp.s);
 	} else if (row->values[0].type==DB_STR){
 		vtmp = row->values[0].val.str_val;
+	} else {
+		vtmp.s = 0;
+		vtmp.len = 0;
 	}
 	if (db_flags&AVP_VAL_STR) {
 		/* value must be saved as string */
@@ -187,7 +199,7 @@ static int dbrow2avp(struct db_row *row, int flags, int_str attr,
 			vtmp.s = int2str( (unsigned long)row->values[0].val.int_val,
 				&vtmp.len);
 		}
-		avp_val.s = &vtmp;
+		avp_val.s = vtmp;
 	} else {
 		/* value must be saved as integer */
 		if (row->values[0].type!=DB_INT) {
@@ -242,45 +254,12 @@ error:
 	return 0;
 }
 
-
-static int parse_source_uri(struct sip_msg* msg,int source,struct sip_uri *uri)
-{
-	str *uri_s;
-
-	/* get uri */
-	if ( (uri_s=get_source_uri(msg,source))==0 )
-	{
-		LOG(L_ERR,"ERROR:avpops:parse_source_uri: cannot get uri\n");
-		goto error;
-	}
-
-	/* parse uri */
-	if (parse_uri(uri_s->s, uri_s->len , uri)<0)
-	{
-		LOG(L_ERR,"ERROR:avpops:parse_source_uri: failed to parse uri\n");
-		goto error;
-	}
-
-	/* check uri */
-	if (!uri->user.s || !uri->user.len || !uri->host.len || !uri->host.s )
-	{
-		LOG(L_ERR,"ERROR:avpops:parse_source_uri: incomplet uri <%.*s>\n",
-			uri_s->len,uri_s->s);
-		goto error;
-	}
-
-	return 0;
-error:
-	return -1;
-}
-
-
 static inline void int_str2db_val( int_str is_val, str *val, int is_s)
 {
 	if (is_s)
 	{
 		/* val is string */
-		*val = *is_val.s;
+		*val = is_val.s;
 	} else {
 		/* val is integer */
 		val->s =
@@ -288,24 +267,49 @@ static inline void int_str2db_val( int_str is_val, str *val, int is_s)
 	}
 }
 
+#define AVPOPS_ATTR_LEN	64
+static char avpops_attr_buf[AVPOPS_ATTR_LEN];
 
-static int get_avp_as_str(struct fis_param *ap ,str *val)
+static int avpops_get_aname(struct sip_msg* msg, struct fis_param *ap,
+		int_str *avp_name, unsigned short *name_type)
 {
-	struct usr_avp  *avp;
-	unsigned short  name_type;
-	int_str         avp_val;
+	xl_value_t xv;
 
-	name_type = ((ap->opd&AVPOPS_VAL_INT)?0:AVP_NAME_STR);
-	avp = search_first_avp( name_type, ap->val, &avp_val);
-	if (avp==0)
+	if(ap==NULL || avp_name==NULL || name_type==NULL)
 	{
-		DBG("DEBUG:avpops:get_val_as_str: no avp found\n");
+		LOG(L_ERR, "avpops:avpops_get_aname: bad parameters\n");
 		return -1;
 	}
-	int_str2db_val( avp_val, val, avp->flags&AVP_VAL_STR);
+	memset(avp_name, 0, sizeof(int_str));
+	*name_type = 0;
+	if((ap->sval.flags & XL_DPARAM)&&(ap->sval.dp.itf!=0))
+	{
+		memset(&xv, 0, sizeof(xl_value_t));
+		if((*ap->sval.dp.itf)(msg, &xv, &(ap->sval.p), 0)!=0)
+		{
+			LOG(L_ERR, "avpops:avpops_get_aname: unable to get dname\n");
+			return -1;
+		}
+		if(xv.flags&XL_NULL || xv.flags&XL_EMPTY)
+		{
+			LOG(L_ERR, "avpops:avpops_get_aname: null dname\n");
+			return -1;
+		}
+		if((xv.flags&XL_TYPE_INT) && (xv.flags&XL_VAL_INT))
+		{
+			avp_name->n = xv.ri;
+		} else {
+			avp_name->s = xv.rs;
+			*name_type = AVP_NAME_STR;
+		}
+	} else {
+		if(ap->sval.p.val.s!=NULL)
+			*name_type = AVP_NAME_STR;
+		avpops_str2int_str(ap->sval.p.val, (*avp_name));
+	}
+		
 	return 0;
 }
-
 
 int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 									struct db_param *dbp, int use_domain)
@@ -315,80 +319,101 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 	str              uuid;
 	int  i, n, sh_flg;
 	str *s0, *s1, *s2;
+	int_str avp_name;
+	xl_value_t xvalue;
 
 	s0 = s1 = s2 = NULL;
-	if (sp->opd&AVPOPS_VAL_NONE)
-	{
-		/* get and parse uri */
-		if(sp->opd&AVPOPS_FLAG_UUID0)
-		{
-			if((s0 = get_source_uri(msg,sp->opd))==NULL)
-			{
-				LOG(L_ERR,"ERROR:avpops:load_avps: failed to get uri!\n");
-				goto error;
-			}
-		} else {
-			if (parse_source_uri(msg, sp->opd, &uri)<0 )
-			{
-				LOG(L_ERR,"ERROR:avpops:load_avps: failed to get uri\n");
-				goto error;
-			}
-			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
-				s1 = &uri.user;
-			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_DOMAIN0))
-				s2 = &uri.host;
-		}
-		/* do DB query */
-		res = db_load_avp( s0, s1,
-				((use_domain)||(sp->opd&AVPOPS_FLAG_DOMAIN0))?s2:0,
-				dbp->sa.s, dbp->table , dbp->scheme);
-	} else if ((sp->opd&AVPOPS_VAL_AVP)||(sp->opd&AVPOPS_VAL_STR)) {
-		/* get uuid from avp */
-		if (sp->opd&AVPOPS_VAL_AVP)
-		{
-			if (get_avp_as_str(sp, &uuid)<0)
-			{
-				LOG(L_ERR,"ERROR:avpops:load_avps: failed to get uuid\n");
-				goto error;
-			}
-		} else {
-			uuid.s   = sp->val.s->s;
-			uuid.len = sp->val.s->len;
-		}
-		
-		if(sp->opd&AVPOPS_FLAG_UUID0)
-		{
-			s0 = &uuid;
-		} else {
-			/* parse uri */
-			if (parse_uri(uuid.s, uuid.len, &uri)<0)
-			{
-				LOG(L_ERR,"ERROR:avpops:load_avps: failed to parse uri\n");
-				goto error;
-			}
-
-			/* check uri */
-			if(!uri.user.s|| !uri.user.len|| !uri.host.len|| !uri.host.s)
-			{
-				LOG(L_ERR,"ERROR:avpops:load_avps: incomplet uri <%.*s>\n",
-					uuid.len, uuid.s);
-				goto error;
-			}
-
-			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
-				s1 = &uri.user;
-			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_DOMAIN0))
-				s2 = &uri.host;
-		}
-		/* do DB query */
-		res = db_load_avp( s0, s1,
-				((use_domain)||(sp->opd&AVPOPS_FLAG_DOMAIN0))?s2:0,
-				dbp->sa.s, dbp->table, dbp->scheme);
-	} else {
+	if (!((sp->opd&AVPOPS_VAL_PVAR)||(sp->opd&AVPOPS_VAL_STR))) {
 		LOG(L_CRIT,"BUG:avpops:load_avps: invalid flag combination (%d/%d)\n",
 			sp->opd, sp->ops);
 		goto error;
 	}
+
+	/* get uuid from avp */
+	if (sp->opd&AVPOPS_VAL_PVAR)
+	{
+		if(xl_get_spec_value(msg, &(sp->sval), &xvalue, 0)!=0)
+		{
+			LOG(L_CRIT,
+				"BUG:avpops:load_avps: error getting PVAR value (%d/%d)\n",
+				sp->opd, sp->ops);
+			goto error;
+		}
+		if(xvalue.flags&(XL_VAL_NULL|XL_VAL_EMPTY))
+		{
+			LOG(L_ERR,
+				"ERROR:avpops:load_avps: no value for first param\n");
+			goto error;
+		}
+		uuid = xvalue.rs;
+	} else {
+		uuid.s   = sp->sval.p.val.s;
+		uuid.len = sp->sval.p.val.len;
+	}
+	
+	if(sp->opd&AVPOPS_FLAG_UUID0)
+	{
+		s0 = &uuid;
+	} else {
+		/* parse uri */
+		if (parse_uri(uuid.s, uuid.len, &uri)<0)
+		{
+			LOG(L_ERR,"ERROR:avpops:load_avps: failed to parse uri\n");
+			goto error;
+		}
+
+		/* check uri */
+		if(!uri.user.s|| !uri.user.len|| !uri.host.len|| !uri.host.s)
+		{
+			LOG(L_ERR,"ERROR:avpops:load_avps: incomplet uri <%.*s>\n",
+				uuid.len, uuid.s);
+			goto error;
+		}
+		if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
+			s1 = &uri.user;
+		if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_DOMAIN0))
+			s2 = &uri.host;
+	}
+
+	/* is dynamic avp name ? */
+	if(dbp->a.sval.flags&XL_DPARAM)
+	{
+		if(xl_get_spec_name(msg, &(dbp->a.sval), &xvalue, 0)!=0)
+		{
+			LOG(L_CRIT,
+				"BUG:avpops:load_avps: error getting value for P2\n");
+			goto error;
+		}
+		if(xvalue.flags&(XL_VAL_NULL|XL_VAL_EMPTY))
+		{
+			LOG(L_INFO, 
+					"INFO:avpops:load_avps: no value for p2\n");
+			goto error;
+		}
+		if(xvalue.flags&XL_VAL_STR)
+		{
+			if(xvalue.rs.len>=AVPOPS_ATTR_LEN)
+			{
+				LOG(L_ERR, 
+					"ERROR:avpops:load_avps: name too long [%d/%.*s...]\n",
+					xvalue.rs.len, 16, xvalue.rs.s);
+				goto error;
+			}
+			dbp->sa.s = avpops_attr_buf;
+			memcpy(dbp->sa.s, xvalue.rs.s, xvalue.rs.len);
+			dbp->sa.len = xvalue.rs.len;
+			dbp->sa.s[dbp->sa.len] = '\0';
+		} else {
+			LOG(L_INFO, 
+					"INFO:avpops:load_avps: no string value for p2\n");
+			goto error;
+		}
+	}
+
+	/* do DB query */
+	res = db_load_avp( s0, s1,
+			((use_domain)||(sp->opd&AVPOPS_FLAG_DOMAIN0))?s2:0,
+			dbp->sa.s, dbp->table, dbp->scheme);
 
 	/* res query ?  */
 	if (res==0)
@@ -402,7 +427,19 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 	for( n=0,i=0 ; i<res->n ; i++)
 	{
 		/* validate row */
-		if ( dbrow2avp( &res->rows[i], dbp->a.opd, dbp->a.val, sh_flg) < 0 )
+		memset(&avp_name, 0, sizeof(int_str));
+		if(dbp->a.sval.flags&XL_DPARAM)
+		{
+			if(xvalue.flags&XL_TYPE_INT)
+			{
+				avp_name.n = xvalue.ri;
+			} else {
+				avpops_str2int_str(xvalue.rs, avp_name);
+			}
+		} else {
+			avpops_str2int_str(dbp->a.sval.p.val, avp_name);
+		}
+		if ( dbrow2avp( &res->rows[i], dbp->a.opd, avp_name, sh_flg) < 0 )
 			continue;
 		n++;
 	}
@@ -417,6 +454,122 @@ error:
 }
 
 
+int ops_dbdelete_avps (struct sip_msg* msg, struct fis_param *sp,
+									struct db_param *dbp, int use_domain)
+{
+	struct sip_uri  uri;
+	int             res;
+	str             uuid;
+	xl_value_t xvalue;
+	str *s0, *s1, *s2;
+
+	s0 = s1 = s2 = NULL;
+	if (!((sp->opd&AVPOPS_VAL_PVAR)||(sp->opd&AVPOPS_VAL_STR))) {
+		LOG(L_CRIT,
+			"BUG:avpops:dbdelete_avps: invalid flag combination (%d/%d)\n",
+			sp->opd, sp->ops);
+		goto error;
+	}
+
+	/* get uuid from avp */
+	if (sp->opd&AVPOPS_VAL_PVAR)
+	{
+		if(xl_get_spec_value(msg, &(sp->sval), &xvalue, 0)!=0)
+		{
+			LOG(L_CRIT,
+				"BUG:avpops:dbdelete_avps: error getting PVAR value (%d/%d)\n",
+				sp->opd, sp->ops);
+			goto error;
+		}
+		if(xvalue.flags&(XL_VAL_NULL|XL_VAL_EMPTY))
+		{
+			LOG(L_ERR,
+				"ERROR:avpops:dbdelete_avps: no value for first param\n");
+			goto error;
+		}
+		uuid = xvalue.rs;
+	} else {
+		uuid.s   = sp->sval.p.val.s;
+		uuid.len = sp->sval.p.val.len;
+	}
+	
+	if(sp->opd&AVPOPS_FLAG_UUID0)
+	{
+		s0 = &uuid;
+	} else {
+		/* parse uri */
+		if (parse_uri(uuid.s, uuid.len, &uri)<0)
+		{
+			LOG(L_ERR,"ERROR:avpops:dbdelete_avps: failed to parse uri\n");
+			goto error;
+		}
+
+		/* check uri */
+		if(!uri.user.s|| !uri.user.len|| !uri.host.len|| !uri.host.s)
+		{
+			LOG(L_ERR,"ERROR:avpops:dbdelete_avps: incomplet uri <%.*s>\n",
+				uuid.len, uuid.s);
+			goto error;
+		}
+		if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
+			s1 = &uri.user;
+		if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_DOMAIN0))
+			s2 = &uri.host;
+	}
+
+	/* is dynamic avp name ? */
+	if(dbp->a.sval.flags&XL_DPARAM)
+	{
+		if(xl_get_spec_name(msg, &(dbp->a.sval), &xvalue, 0)!=0)
+		{
+			LOG(L_CRIT,
+				"BUG:avpops:dbdelete_avps: error getting value for P2\n");
+			goto error;
+		}
+		if(xvalue.flags&(XL_VAL_NULL|XL_VAL_EMPTY))
+		{
+			LOG(L_INFO, 
+					"INFO:avpops:dbdelete_avps: no value for p2\n");
+			goto error;
+		}
+		if(xvalue.flags&XL_VAL_STR)
+		{
+			if(xvalue.rs.len>=AVPOPS_ATTR_LEN)
+			{
+				LOG(L_ERR, 
+					"ERROR:avpops:dbdelete_avps: name too long [%d/%.*s...]\n",
+					xvalue.rs.len, 16, xvalue.rs.s);
+				goto error;
+			}
+			dbp->sa.s = avpops_attr_buf;
+			memcpy(dbp->sa.s, xvalue.rs.s, xvalue.rs.len);
+			dbp->sa.len = xvalue.rs.len;
+			dbp->sa.s[dbp->sa.len] = '\0';
+		} else {
+			LOG(L_INFO, 
+					"INFO:avpops:dbdelete_avps: no string value for p2\n");
+			goto error;
+		}
+	}
+
+	/* do DB delete */
+	res = db_delete_avp(s0, s1,
+			(use_domain||(sp->opd&AVPOPS_FLAG_DOMAIN0))?s2:0,
+			dbp->sa.s, dbp->table);
+
+	/* res ?  */
+	if (res<0)
+	{
+		LOG(L_ERR,"ERROR:avpops:dbdelete_avps: db_delete failed\n");
+		goto error;
+	}
+
+	return 1;
+error:
+	return -1;
+}
+
+
 int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 									struct db_param *dbp, int use_domain)
 {
@@ -424,100 +577,138 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 	struct usr_avp   **avp_list;
 	struct usr_avp   *avp;
 	unsigned short   name_type;
+	int_str          avp_name;
 	int_str          i_s;
 	str              uuid;
 	int              keys_nr;
 	int              n;
+	xl_value_t xvalue;
 	str *s0, *s1, *s2;
+	str *sn;
 
 	s0 = s1 = s2 = NULL;
-	
-
-	keys_nr = 6; /* uuid, avp name, avp val, avp type, user, domain */
-	if (sp->opd&AVPOPS_VAL_NONE)
-	{
-		/* get and parse uri */
-		if(sp->opd&AVPOPS_FLAG_UUID0)
-		{
-			if((s0 = get_source_uri(msg,sp->opd))==NULL)
-			{
-				LOG(L_ERR,"ERROR:avpops:load_avps: failed to get uri!\n");
-				goto error;
-			}
-		} else {
-			if (parse_source_uri(msg, sp->opd, &uri)<0 )
-			{
-				LOG(L_ERR,"ERROR:avpops:store_avps: failed to get uri\n");
-				goto error;
-			}
-			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
-				s1 = &uri.user;
-			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_DOMAIN0))
-				s2 = &uri.host;
-		}
-		/* set values for keys  */
-		store_vals[0].val.str_val = (s0)?*s0:empty;
-		store_vals[4].val.str_val = (s1)?*s1:empty;
-		if (use_domain || sp->opd&AVPOPS_FLAG_DOMAIN0)
-			store_vals[5].val.str_val = (s2)?*s2:empty;
-	} else if ((sp->opd&AVPOPS_VAL_AVP)||(sp->opd&AVPOPS_VAL_STR)) {
-		/* get uuid from avp */
-		if (sp->opd&AVPOPS_VAL_AVP)
-		{
-			if (get_avp_as_str(sp, &uuid)<0)
-			{
-				LOG(L_ERR,"ERROR:avpops:load_avps: failed to get uuid\n");
-				goto error;
-			}
-		} else {
-			uuid.s   = sp->val.s->s;
-			uuid.len = sp->val.s->len;
-		}
-		
-		if(sp->opd&AVPOPS_FLAG_UUID0)
-		{
-			s0 = &uuid;
-		} else {
-			/* parse uri */
-			if (parse_uri(uuid.s, uuid.len, &uri)<0)
-			{
-				LOG(L_ERR,"ERROR:avpops:load_avps: failed to parse uri\n");
-				goto error;
-			}
-
-			/* check uri */
-			if(!uri.user.s|| !uri.user.len|| !uri.host.len|| !uri.host.s)
-			{
-				LOG(L_ERR,"ERROR:avpops:load_avps: incomplet uri <%.*s>\n",
-					uuid.len, uuid.s);
-				goto error;
-			}
-
-			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
-				s1 = &uri.user;
-			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_DOMAIN0))
-				s2 = &uri.host;
-		}
-		/* set values for keys  */
-		store_vals[0].val.str_val = (s0)?*s0:empty;
-		store_vals[4].val.str_val = (s1)?*s1:empty;
-		if (use_domain || sp->opd&AVPOPS_FLAG_DOMAIN0)
-			store_vals[5].val.str_val = (s2)?*s2:empty;
-	} else {
-		LOG(L_CRIT,"BUG:avpops:store_avps: invalid flag combination (%d/%d)\n",
+	if (!((sp->opd&AVPOPS_VAL_PVAR)||(sp->opd&AVPOPS_VAL_STR))) {
+		LOG(L_CRIT,
+			"BUG:avpops:dbstore_avps: invalid flag combination (%d/%d)\n",
 			sp->opd, sp->ops);
 		goto error;
 	}
 
+	keys_nr = 6; /* uuid, avp name, avp val, avp type, user, domain */
+	
+	/* get uuid from avp */
+	if (sp->opd&AVPOPS_VAL_PVAR)
+	{
+		if(xl_get_spec_value(msg, &(sp->sval), &xvalue, 0)!=0)
+		{
+			LOG(L_CRIT,
+				"BUG:avpops:dbstore_avps: error getting PVAR value (%d/%d)\n",
+				sp->opd, sp->ops);
+			goto error;
+		}
+		if(xvalue.flags&(XL_VAL_NULL|XL_VAL_EMPTY))
+		{
+			LOG(L_ERR,
+				"ERROR:avpops:dbstore_avps: no value for first param\n");
+			goto error;
+		}
+		uuid = xvalue.rs;
+	} else {
+		uuid.s   = sp->sval.p.val.s;
+		uuid.len = sp->sval.p.val.len;
+	}
+	
+	if(sp->opd&AVPOPS_FLAG_UUID0)
+	{
+		s0 = &uuid;
+	} else {
+		/* parse uri */
+		if (parse_uri(uuid.s, uuid.len, &uri)<0)
+		{
+			LOG(L_ERR,"ERROR:avpops:dbstore_avps: failed to parse uri\n");
+			goto error;
+		}
+
+		/* check uri */
+		if(!uri.user.s|| !uri.user.len|| !uri.host.len|| !uri.host.s)
+		{
+			LOG(L_ERR,"ERROR:avpops:dbstore_avps: incomplet uri <%.*s>\n",
+				uuid.len, uuid.s);
+			goto error;
+		}
+		if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
+			s1 = &uri.user;
+		if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_DOMAIN0))
+			s2 = &uri.host;
+	}
+
+	/* set values for keys  */
+	store_vals[0].val.str_val = (s0)?*s0:empty;
+	store_vals[4].val.str_val = (s1)?*s1:empty;
+	if (use_domain || sp->opd&AVPOPS_FLAG_DOMAIN0)
+		store_vals[5].val.str_val = (s2)?*s2:empty;
+
+	/* is dynamic avp name ? */
+	if(dbp->a.sval.flags&XL_DPARAM)
+	{
+		if(xl_get_spec_name(msg, &(dbp->a.sval), &xvalue, 0)!=0)
+		{
+			LOG(L_CRIT,
+				"BUG:avpops:dbstore_avps: error getting value for P2\n");
+			goto error;
+		}
+		if(xvalue.flags&(XL_VAL_NULL|XL_VAL_EMPTY))
+		{
+			LOG(L_INFO, 
+					"INFO:dbstore:load_avps: no value for P2\n");
+			goto error;
+		}
+		if(xvalue.flags&XL_TYPE_INT)
+		{
+			name_type = 0;
+			avp_name.n = xvalue.ri;
+		} else {
+			name_type = AVP_NAME_STR;
+		}
+		if(xvalue.flags&XL_VAL_STR)
+		{
+			if(xvalue.rs.len>=AVPOPS_ATTR_LEN)
+			{
+				LOG(L_ERR, 
+					"ERROR:avpops:load_avps: name too long [%d/%.*s...]\n",
+					xvalue.rs.len, 16, xvalue.rs.s);
+				goto error;
+			}
+			dbp->sa.s = avpops_attr_buf;
+			memcpy(dbp->sa.s, xvalue.rs.s, xvalue.rs.len);
+			dbp->sa.len = xvalue.rs.len;
+			dbp->sa.s[dbp->sa.len] = '\0';
+			avp_name.s = dbp->sa;
+		} else {
+			LOG(L_INFO, 
+					"INFO:avpops:load_avps: no string value for p2\n");
+			goto error;
+		}
+	} else if((dbp->a.opd&AVPOPS_VAL_NONE)==0) {
+		name_type = (((dbp->a.opd&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
+		if(dbp->a.opd&AVPOPS_VAL_INT)
+		{
+			avp_name.n = dbp->a.sval.p.val.len;
+		} else {
+			avp_name.s = dbp->a.sval.p.val;
+		}
+	}
+
+
 	/* set uuid/(username and domain) fields */
+
 	n =0 ;
 
 	if ((dbp->a.opd&AVPOPS_VAL_NONE)==0)
 	{
 		/* avp name is known ->set it and its type */
-		name_type = (((dbp->a.opd&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
 		store_vals[1].val.str_val = dbp->sa; /*attr name*/
-		avp = search_first_avp( name_type, dbp->a.val, &i_s);
+		avp = search_first_avp( name_type, avp_name, &i_s);
 		for( ; avp; avp=search_next_avp(avp,&i_s))
 		{
 			/* don't insert avps which were loaded */
@@ -555,8 +746,10 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 				continue;
 
 			/* set attribute name and type */
-			if ( (i_s.s=get_avp_name(avp))==0 )
+			if ( (sn=get_avp_name(avp))==0 )
 				i_s.n = avp->id;
+			else
+				i_s.s = *sn;
 			int_str2db_val( i_s, &store_vals[1].val.str_val,
 				avp->flags&AVP_NAME_STR);
 			store_vals[3].val.int_val =
@@ -576,7 +769,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 		}
 	}
 
-	DBG("DEBUG:avpops:store_avps: %d avps were stored\n",n);
+	DBG("DEBUG:avpops:dbstore_avps: %d avps were stored\n",n);
 
 	return n==0?-1:1;
 error:
@@ -584,212 +777,70 @@ error:
 }
 
 
-
-int ops_dbdelete_avps (struct sip_msg* msg, struct fis_param *sp,
-									struct db_param *dbp, int use_domain)
-{
-	struct sip_uri  uri;
-	int             res;
-	str             uuid;
-	str *s0, *s1, *s2;
-
-	s0 = s1 = s2 = NULL;
-
-	if (sp->opd&AVPOPS_VAL_NONE)
-	{
-		/* get and parse uri */
-		if(sp->opd&AVPOPS_FLAG_UUID0)
-		{
-			if((s0 = get_source_uri(msg,sp->opd))==NULL)
-			{
-				LOG(L_ERR,"ERROR:avpops:load_avps: failed to get uri!\n");
-				goto error;
-			}
-		} else {
-			if (parse_source_uri( msg, sp->opd, &uri)<0 )
-			{
-				LOG(L_ERR,"ERROR:avpops:dbdelete_avps: failed to get uri\n");
-				goto error;
-			}
-			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
-				s1 = &uri.user;
-			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_DOMAIN0))
-				s2 = &uri.host;
-		}
-		/* do DB delete */
-		res = db_delete_avp(s0, s1,
-				(use_domain||(sp->opd&AVPOPS_FLAG_DOMAIN0))?s2:0,
-				dbp->sa.s, dbp->table);
-	} else if ((sp->opd&AVPOPS_VAL_AVP)||(sp->opd&AVPOPS_VAL_STR)) {
-		/* get uuid from avp */
-		if (sp->opd&AVPOPS_VAL_AVP)
-		{
-			if (get_avp_as_str(sp, &uuid)<0)
-			{
-				LOG(L_ERR,"ERROR:avpops:load_avps: failed to get uuid\n");
-				goto error;
-			}
-		} else {
-			uuid.s   = sp->val.s->s;
-			uuid.len = sp->val.s->len;
-		}
-		
-		if(sp->opd&AVPOPS_FLAG_UUID0)
-		{
-			s0 = &uuid;
-		} else {
-			/* parse uri */
-			if (parse_uri(uuid.s, uuid.len, &uri)<0)
-			{
-				LOG(L_ERR,"ERROR:avpops:load_avps: failed to parse uri\n");
-				goto error;
-			}
-
-			/* check uri */
-			if(!uri.user.s|| !uri.user.len|| !uri.host.len|| !uri.host.s)
-			{
-				LOG(L_ERR,"ERROR:avpops:load_avps: incomplet uri <%.*s>\n",
-					uuid.len, uuid.s);
-				goto error;
-			}
-
-			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
-				s1 = &uri.user;
-			if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_DOMAIN0))
-				s2 = &uri.host;
-		}
-		/* do DB delete */
-		res = db_delete_avp(s0, s1,
-				(use_domain||(sp->opd&AVPOPS_FLAG_DOMAIN0))?s2:0,
-				dbp->sa.s, dbp->table);
-	} else {
-		LOG(L_CRIT,
-			"BUG:avpops:dbdelete_avps: invalid flag combination (%d/%d)\n",
-			sp->opd, sp->ops);
-		goto error;
-	}
-
-	/* res ?  */
-	if (res<0)
-	{
-		LOG(L_ERR,"ERROR:avpops:dbdelete_avps: db_delete failed\n");
-		goto error;
-	}
-
-	return 1;
-error:
-	return -1;
-}
-
-
-static inline str *search_hdr(struct sip_msg* msg, struct fis_param *hdr_def)
-{
-	static str body;
-	struct hdr_field *hdr;
-
-	/* parse all HDRs */
-	if (parse_headers( msg, HDR_EOH_F, 0)!=0) {
-		LOG(L_ERR,"ERROR:tm:append2buf: parsing hdrs failed\n");
-		return 0;
-	}
-	/* search the HDR */
-	if (hdr_def->opd&AVPOPS_VAL_INT) {
-		for(hdr=msg->headers;hdr;hdr=hdr->next)
-			if (hdr_def->val.n==hdr->type)
-				goto found;
-	} else {
-		for(hdr=msg->headers;hdr;hdr=hdr->next)
-			if (hdr_def->val.s->len==hdr->name.len &&
-			strncasecmp( hdr_def->val.s->s, hdr->name.s, hdr->name.len)==0)
-				goto found;
-	}
-	return 0;
-found:
-	/* trim the body */
-	trim_len( body.len, body.s, hdr->body );
-	return &body;
-}
-
-
 int ops_write_avp(struct sip_msg* msg, struct fis_param *src,
-													struct fis_param *ap)
+													struct fis_param *dst)
 {
 	struct sip_uri uri;
 	int_str avp_val;
+	int_str avp_name;
 	unsigned short flags;
-	str s_ip;
-
-	if (src->opd&AVPOPS_VAL_NONE)
+	xl_value_t xvalue;
+	unsigned short name_type;
+	
+	flags = 0;
+	if (src->opd&AVPOPS_VAL_PVAR)
 	{
-		if (src->opd&AVPOPS_USE_SRC_IP)
+		if(xl_get_spec_value(msg, &(src->sval), &xvalue, 0)!=0)
 		{
-			/* get data from src_ip */
-			if ( (s_ip.s=ip_addr2a( &msg->rcv.src_ip ))==0)
-			{
-				LOG(L_ERR,"ERROR:avpops:write_avp: cannot get src_ip\n");
-				goto error;
-			}
-			s_ip.len = strlen(s_ip.s);
-			avp_val.s = &s_ip;
-		} else if (src->opd&AVPOPS_USE_DST_IP) {
-			/* get data from dst ip */
-			if ( (s_ip.s=ip_addr2a( &msg->rcv.dst_ip ))==0)
-			{
-				LOG(L_ERR,"ERROR:avpops:write_avp: cannot get dst_ip\n");
-				goto error;
-			}
-			s_ip.len = strlen(s_ip.s);
-			avp_val.s = &s_ip;
-		} else if (src->opd&(AVPOPS_USE_HDRREQ|AVPOPS_USE_HDRRPL)) {
-			/* get data from hdr */
-			if ( (avp_val.s=search_hdr(msg,src))==0 ) {
-				DBG("DEBUG:avpops:write_avp: hdr not found\n");
-				goto error;
-			}
-		} else if (src->opd&AVPOPS_USE_DURI) {
-			if(msg->dst_uri.s==NULL)
-				goto error;
-			avp_val.s = &msg->dst_uri;
-		} else {
-			/* get data from uri (from,to,ruri) */
-			if (src->opd&(AVPOPS_FLAG_USER0|AVPOPS_FLAG_DOMAIN0))
-			{
-				if (parse_source_uri( msg, src->opd, &uri)!=0 )
-				{
-					LOG(L_ERR,"ERROR:avpops:write_avp: cannot parse uri\n");
-					goto error;
-				}
-				if (src->opd&AVPOPS_FLAG_DOMAIN0)
-					avp_val.s = &uri.host;
-				else
-					avp_val.s = &uri.user;
-			} else {
-				/* get whole uri */
-				if ( (avp_val.s=get_source_uri(msg,src->opd))==0 )
-				{
-					LOG(L_ERR,"ERROR:avpops:write_avp: cannot get uri\n");
-					goto error;
-				}
-			}
+			LOG(L_ERR,"ERROR:avpops:write_avp: cannot get value\n");
+			goto error;
 		}
-		flags = AVP_VAL_STR;
+		if(xvalue.flags&XL_TYPE_INT)
+		{
+			avp_val.n = xvalue.ri;
+		} else {
+			flags = AVP_VAL_STR;
+			avp_val.s = xvalue.rs;
+		}
 	} else {
-		avp_val = src->val;
-		flags = (src->opd&AVPOPS_VAL_INT)?0:AVP_VAL_STR;
+		avpops_str2int_str(src->sval.p.val, avp_val);
+		if(src->sval.p.val.s!=NULL)
+			flags = AVP_VAL_STR;
+	}
+	/* check flags */
+	if ((flags&AVP_VAL_STR)
+			&&(src->opd&(AVPOPS_FLAG_USER0|AVPOPS_FLAG_DOMAIN0)))
+	{
+		if (parse_uri(avp_val.s.s, avp_val.s.len, &uri)!=0 )
+		{
+				LOG(L_ERR,"ERROR:avpops:write_avp: cannot parse uri\n");
+				goto error;
+		}
+		if (src->opd&AVPOPS_FLAG_DOMAIN0)
+			avp_val.s = uri.host;
+		else
+			avp_val.s = uri.user;
 	}
 
-	/* set the proper flag */
-	flags |=  (ap->opd&AVPOPS_VAL_INT)?0:AVP_NAME_STR;
+	/* get dst avp name */
+	if(avpops_get_aname(msg, dst, &avp_name, &name_type)!=0)
+	{
+		LOG(L_ERR,
+			"avpops:write_avp: error getting dst AVP name\n");
+		goto error;
+	}
+
+	if(name_type == AVP_NAME_STR)
+		flags |=  AVP_NAME_STR;
 
 	/* added the avp */
-	if (add_avp( flags, ap->val, avp_val)<0)
+	if (add_avp(flags, avp_name, avp_val)<0)
 		goto error;
 
 	return 1;
 error:
 	return -1;
 }
-
 
 
 int ops_delete_avp(struct sip_msg* msg, struct fis_param *ap)
@@ -798,6 +849,7 @@ int ops_delete_avp(struct sip_msg* msg, struct fis_param *ap)
 	struct usr_avp *avp;
 	struct usr_avp *avp_next;
 	unsigned short name_type;
+	int_str avp_name;
 	int n;
 
 	n = 0;
@@ -805,8 +857,14 @@ int ops_delete_avp(struct sip_msg* msg, struct fis_param *ap)
 	if ( (ap->opd&AVPOPS_VAL_NONE)==0)
 	{
 		/* avp name is known ->search by name */
-		name_type = (((ap->opd&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
-		n = destroy_avps( name_type, ap->val, ap->ops&AVPOPS_FLAG_ALL );
+		/* get avp name */
+		if(avpops_get_aname(msg, ap, &avp_name, &name_type)!=0)
+		{
+			LOG(L_ERR,
+				"avpops:write_avp: error getting dst AVP name\n");
+			return -1;
+		}
+		n = destroy_avps( name_type, avp_name, ap->ops&AVPOPS_FLAG_ALL );
 	} else {
 		/* avp name is not given - we have just flags */
 		/* -> go through all list */
@@ -829,55 +887,94 @@ int ops_delete_avp(struct sip_msg* msg, struct fis_param *ap)
 		}
 	}
 
-	DBG("DEBUG:avpops:remove_avps: %d avps were removed\n",n);
+	DBG("DEBUG:avpops:delete_avps: %d avps were removed\n",n);
 
 	return n?1:-1;
 }
 
+int ops_copy_avp( struct sip_msg* msg, struct fis_param* src,
+													struct fis_param* dst)
+{
+	struct usr_avp *avp;
+	struct usr_avp *prev_avp;
+	int_str         avp_val;
+	int_str         avp_val2;
+	unsigned short name_type1;
+	unsigned short name_type2;
+	int_str avp_name1;
+	int_str avp_name2;
+	int n;
+
+	n = 0;
+	prev_avp = 0;
+
+	/* get avp src name */
+	if(avpops_get_aname(msg, src, &avp_name1, &name_type1)!=0)
+	{
+		LOG(L_ERR,
+			"avpops:copy_avp: error getting src AVP name\n");
+		goto error;
+	}
+	/* get avp dst name */
+	if(avpops_get_aname(msg, dst, &avp_name2, &name_type2)!=0)
+	{
+		LOG(L_ERR,
+			"avpops:copy_avp: error getting dst AVP name\n");
+		goto error;
+	}
+
+	avp = search_first_avp( name_type1, avp_name1, &avp_val);
+	while ( avp )
+	{
+		/* build a new avp with new name, but old value */
+		/* do we need cast conversion ?!?! */
+		if((avp->flags&AVP_VAL_STR) && (dst->ops&AVPOPS_FLAG_CASTN)) {
+			if(str2int(&avp_val.s, (unsigned int*)&avp_val2.n)!=0)
+			{
+				LOG(L_ERR,"ERROR:avpops:copy_avp: cannot convert str to int\n");
+				goto error;
+			}
+			if ( add_avp( name_type2, avp_name2, avp_val2)==-1 ) {
+				LOG(L_ERR,"ERROR:avpops:copy_avp: failed to create new avp!\n");
+				goto error;
+			}
+		} else if(!(avp->flags&AVP_VAL_STR)&&(dst->ops&AVPOPS_FLAG_CASTS)) {
+			avp_val2.s.s = int2str(avp_val.n, &avp_val2.s.len);
+			if ( add_avp( name_type2|AVP_VAL_STR, avp_name2, avp_val2)==-1 ) {
+				LOG(L_ERR,"ERROR:avpops:copy_avp: failed to create new avp.\n");
+				goto error;
+			}
+		} else {
+			if ( add_avp( name_type2|(avp->flags&AVP_VAL_STR), avp_name2,
+					avp_val)==-1 ) {
+				LOG(L_ERR,"ERROR:avpops:copy_avp: failed to create new avp\n");
+				goto error;
+			}
+		}
+		n++;
+		/* copy all avps? */
+		if ( !(dst->ops&AVPOPS_FLAG_ALL) ) {
+			/* delete the old one? */
+			if (dst->ops&AVPOPS_FLAG_DELETE)
+				destroy_avp( avp );
+			break;
+		} else {
+			prev_avp = avp;
+			avp = search_next_avp( prev_avp, &avp_val);
+			/* delete the old one? */
+			if (dst->ops&AVPOPS_FLAG_DELETE)
+				destroy_avp( prev_avp );
+		}
+	}
+
+	return n?1:-1;
+error:
+	return -1;
+}
 
 
 #define STR_BUF_SIZE  1024
 static char str_buf[STR_BUF_SIZE];
-
-inline static int compose_hdr(str *name, str *val, str *hdr, int new)
-{
-	char *p;
-	char *s;
-	int len;
-
-	len = name->len+2+val->len+CRLF_LEN;
-	if (new)
-	{
-		if ( (s=(char*)pkg_malloc(len))==0 )
-		{
-			LOG(L_ERR,"ERROR:avpops:compose_hdr: no more pkg mem\n");
-			return -1;
-		}
-	} else {
-		if ( len>STR_BUF_SIZE )
-			return -1;
-		s = str_buf;
-	}
-	p = s;
-	memcpy(p, name->s, name->len);
-	p += name->len;
-	*(p++) = ':';
-	*(p++) = ' ';
-	memcpy(p, val->s, val->len);
-	p += val->len;
-	memcpy(p, CRLF, CRLF_LEN);
-	p += CRLF_LEN;
-	if (len!=p-s)
-	{
-		LOG(L_CRIT,"BUG:avpops:compose_hdr: buffer overflow\n");
-		return -1;
-	}
-	hdr->len = len;
-	hdr->s = s;
-	return 0;
-}
-
-
 
 inline static int append_0(str *in, str *out)
 {
@@ -891,34 +988,59 @@ inline static int append_0(str *in, str *out)
 }
 
 
-
-int ops_pushto_avp ( struct sip_msg* msg, struct fis_param* dst,
-													struct fis_param* ap)
+int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
+													struct fis_param* src)
 {
-	struct lump    *anchor;
 	struct action  act;
 	struct usr_avp *avp;
 	unsigned short name_type;
 	int_str        avp_val;
+	int_str        avp_name;
 	str            val;
 	int            act_type;
 	int            n;
+	int            flags;
+	xl_value_t     xvalue;
 
-	/* search for the avp */
-	name_type = (((ap->opd&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
-	avp = search_first_avp( name_type, ap->val, &avp_val);
-	if (avp==0)
+	avp = NULL;
+	flags = 0;
+	if(src->sval.type==XL_AVP)
 	{
-		DBG("DEBUG:avpops:pushto_avp: no avp found\n");
-		return -1;
+		/* search for the avp */
+		if(avpops_get_aname(msg, src, &avp_name, &name_type)!=0)
+		{
+			LOG(L_ERR,
+				"avpops:pushto_avp: error getting src AVP name\n");
+			goto error;
+		}
+		avp = search_first_avp( name_type, avp_name, &avp_val);
+		if (avp==0)
+		{
+			DBG("DEBUG:avpops:pushto_avp: no src avp found\n");
+			goto error;
+		}
+		flags = avp->flags;
+	} else {
+		if(xl_get_spec_value(msg, &(src->sval), &xvalue, 0)!=0)
+		{
+			LOG(L_ERR,"ERROR:avpops:pushto_avp: cannot get src value\n");
+			goto error;
+		}
+		if(xvalue.flags&XL_TYPE_INT)
+		{
+			avp_val.n = xvalue.ri;
+		} else {
+			flags = AVP_VAL_STR;
+			avp_val.s = xvalue.rs;
+		}
 	}
 
 	n = 0;
 	while (avp)
 	{
 		/* the avp val will be used all the time as str */
-		if (avp->flags&AVP_VAL_STR) {
-			val = *(avp_val.s);
+		if (flags&AVP_VAL_STR) {
+			val = avp_val.s;
 		} else {
 			val.s = int2str((unsigned long)avp_val.n, &val.len);
 		}
@@ -933,19 +1055,12 @@ int ops_pushto_avp ( struct sip_msg* msg, struct fis_param* dst,
 				act_type = SET_HOST_T;
 			else
 				act_type = SET_URI_T;
-			if ( avp->flags&AVP_VAL_STR && append_0( &val, &val)!=0 ) {
+			if ( flags&AVP_VAL_STR && append_0( &val, &val)!=0 ) {
 				LOG(L_ERR,"ERROR:avpops:pushto_avp: failed to make 0 term.\n");
 				goto error;
 			}
-		} else if (dst->opd&(AVPOPS_USE_HDRREQ|AVPOPS_USE_HDRRPL)) {
-			if ( compose_hdr( dst->val.s, &val, &val,
-				dst->opd&AVPOPS_USE_HDRREQ)<0 )
-			{
-				LOG(L_ERR,"ERROR:avpops:pushto_avp: failed to build hdr\n");
-				goto error;
-			}
 		} else if (dst->opd&AVPOPS_USE_DURI) {
-			if (!(avp->flags&AVP_VAL_STR)) {
+			if (!(flags&AVP_VAL_STR)) {
 				goto error;
 			}
 		} else {
@@ -984,38 +1099,19 @@ int ops_pushto_avp ( struct sip_msg* msg, struct fis_param* dst,
 				LOG(L_ERR,"ERROR:avpops:pushto_avp: changing dst uri failed\n");
 				goto error;
 			}
-		} else if (dst->opd&AVPOPS_USE_HDRRPL) {
-			/* set a header for reply */
-			if (add_lump_rpl( msg , val.s, val.len, LUMP_RPL_HDR )==0)
-			{
-				LOG(L_ERR,"ERROR:avpops:pushto_avp: add_lump_rpl failed\n");
-				goto error;
-			}
 		} else {
-			/* set a header for request */
-			if (parse_headers(msg, HDR_EOH_F, 0)==-1)
-			{
-				LOG(L_ERR, "ERROR:avpops:pushto_avp: message parse failed\n");
-				goto error;
-			}
-			anchor = anchor_lump( msg, msg->unparsed-msg->buf, 0, 0);
-			if (anchor==0)
-			{
-				LOG(L_ERR, "ERROR:avpops:pushto_avp: can't get anchor\n");
-				goto error;
-			}
-			if (insert_new_lump_before(anchor, val.s, val.len, 0)==0)
-			{
-				LOG(L_ERR, "ERROR:avpops:pushto_avp: can't insert lump\n");
-				goto error;
-			}
+			LOG(L_ERR, "ERROR:avpops:pushto_avp: unknown destination\n");
+			goto error;
 		}
 
 		n++;
-		if ( !(ap->ops&AVPOPS_FLAG_ALL) )
+		if ( !(src->ops&AVPOPS_FLAG_ALL) )
+			break;
+		if(avp==NULL)
 			break;
 		avp = search_next_avp( avp, &avp_val);
-	} /* end while */
+		flags = avp->flags;
+	} while (avp);/* end while */
 
 	DBG("DEBUG:avpops:pushto_avps: %d avps were processed\n",n);
 	return 1;
@@ -1023,142 +1119,174 @@ error:
 	return -1;
 }
 
-
-int ops_check_avp( struct sip_msg* msg, struct fis_param* ap,
+int ops_check_avp( struct sip_msg* msg, struct fis_param* src,
 													struct fis_param* val)
 {
 	unsigned short    name_type;
 	struct usr_avp    *avp1;
 	struct usr_avp    *avp2;
 	regmatch_t        pmatch;
+	int_str           avp_name;
 	int_str           avp_val;
-	int_str           ck_val;
-	str               s_ip;
-	int               ck_flg;
+	int_str           check_val;
+	int               check_flags;
 	int               n;
+	int            flags;
+	xl_value_t     xvalue;
 
 	/* look if the required avp(s) is/are present */
-	name_type = (((ap->opd&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
-	avp1 = search_first_avp( name_type, ap->val, &avp_val);
-	if (avp1==0)
+	if(src->sval.type==XL_AVP)
 	{
-		DBG("DEBUG:avpops:check_avp: no avp found to check\n");
-		goto error;
+		/* search for the avp */
+		if(avpops_get_aname(msg, src, &avp_name, &name_type)!=0)
+		{
+			LOG(L_ERR,
+				"avpops:ops_check_avp: error getting src AVP name\n");
+			goto error;
+		}
+		avp1 = search_first_avp( name_type, avp_name, &avp_val);
+		if (avp1==0)
+		{
+			DBG("DEBUG:avpops:ops_check_avp: no src avp found\n");
+			goto error;
+		}
+		flags = avp1->flags;
+	} else {
+		avp1 = 0;
+		flags = 0;
+		if(xl_get_spec_value(msg, &(src->sval), &xvalue, 0)!=0)
+		{
+			LOG(L_ERR,"ERROR:avpops:ops_check_avp: cannot get src value\n");
+			goto error;
+		}
+		if(xvalue.flags&XL_TYPE_INT)
+		{
+			avp_val.n = xvalue.ri;
+		} else {
+			flags = AVP_VAL_STR;
+			avp_val.s = xvalue.rs;
+		}
 	}
 
 cycle1:
-	if (val->opd&AVPOPS_VAL_AVP)
+	/* copy string since pseudo-variables uses static buffer */
+	if(flags&AVP_VAL_STR)
 	{
-		/* the 2nd operator is an avp name -> get avp val */
-		name_type = (((val->opd&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
-		avp2 = search_first_avp( name_type, val->val, &ck_val);
-		if (avp2==0)
+		if(avp_val.s.len>=STR_BUF_SIZE)
 		{
-			DBG("DEBUG:avpops:check_avp: no avp2 found to check\n");
+			LOG(L_ERR,
+				"avpops:ops_check_avp: error src value too long\n");
 			goto error;
 		}
-		ck_flg = avp2->flags&AVP_VAL_STR?AVPOPS_VAL_STR:AVPOPS_VAL_INT;
+		strcpy(str_buf, avp_val.s.s);
+		avp_val.s.s = str_buf;
+	}
+
+	if (val->opd&AVPOPS_VAL_PVAR)
+	{
+		/* the 2nd operator is variable -> get avp value */
+		check_flags = 0;
+		if(val->sval.type==XL_AVP)
+		{
+			/* search for the avp */
+			if(avpops_get_aname(msg, val, &avp_name, &name_type)!=0)
+			{
+				LOG(L_ERR,
+					"avpops:ops_check_avp: error getting dst AVP name\n");
+				goto error;
+			}
+			avp2 = search_first_avp( name_type, avp_name, &check_val);
+			if (avp2==0)
+			{
+				DBG("DEBUG:avpops:ops_check_avp: no dst avp found\n");
+				goto error;
+			}
+			check_flags = avp2->flags;
+		} else {
+			avp2 = 0;
+			if(xl_get_spec_value(msg, &(val->sval), &xvalue, 0)!=0)
+			{
+				LOG(L_ERR,"ERROR:avpops:ops_check_avp: cannot get dst value\n");
+				goto error;
+			}
+			if(xvalue.flags&XL_TYPE_INT)
+			{
+				check_val.n = xvalue.ri;
+			} else {
+				check_flags = AVP_VAL_STR;
+				check_val.s = xvalue.rs;
+			}
+		}
 	} else {
-		ck_val = val->val;
-		ck_flg = val->opd;
+		check_flags = 0;
+		avpops_str2int_str(val->sval.p.val, check_val);
+		if(val->sval.p.val.s)
+			check_flags = AVP_VAL_STR;
 		avp2 = 0;
 	}
 
 cycle2:
 	/* are both values of the same type? */
-	if ( !( (avp1->flags&AVP_VAL_STR && ck_flg&AVPOPS_VAL_STR) ||
-		((avp1->flags&AVP_VAL_STR)==0 && ck_flg&AVPOPS_VAL_INT) ||
-		(avp1->flags&AVP_VAL_STR && ck_flg&AVPOPS_VAL_NONE)))
+	if ((flags&AVP_VAL_STR)^(check_flags&AVP_VAL_STR))
 	{
 		LOG(L_ERR,"ERROR:avpops:check_avp: value types don't match\n");
 		goto next;
 	}
 
-	if (avp1->flags&AVP_VAL_STR)
+	if (flags&AVP_VAL_STR)
 	{
 		/* string values to check */
-		if (val->opd&AVPOPS_VAL_NONE)
-		{
-			/* value is variable */
-			if (val->opd&AVPOPS_USE_SRC_IP)
-			{
-				/* get value from src_ip */
-				if ( (s_ip.s=ip_addr2a( &msg->rcv.src_ip ))==0)
-				{
-					LOG(L_ERR,"ERROR:avpops:check_avp: cannot get src_ip\n");
-					goto error;
-				}
-				s_ip.len = strlen(s_ip.s);
-				ck_val.s = &s_ip;
-			} else if (val->opd&AVPOPS_USE_DST_IP) {
-				/* get value from dst ip */
-				if ( (s_ip.s=ip_addr2a( &msg->rcv.dst_ip ))==0)
-				{
-					LOG(L_ERR,"ERROR:avpops:check_avp: cannot get dst_ip\n");
-					goto error;
-				}
-				s_ip.len = strlen(s_ip.s);
-				ck_val.s = &s_ip;
-			} else {
-				/* get value from uri */
-				if ( (ck_val.s=get_source_uri(msg, val->opd))==0 )
-				{
-					LOG(L_ERR,"ERROR:avpops:check_avp: cannot get uri\n");
-					goto next;
-				}
-			}
-		}
 		DBG("DEBUG:avpops:check_avp: check <%.*s> against <%.*s> as str\n",
-			avp_val.s->len,avp_val.s->s,
-			(val->ops&AVPOPS_OP_RE)?6:ck_val.s->len,
-			(val->ops&AVPOPS_OP_RE)?"REGEXP":ck_val.s->s);
+			avp_val.s.len,avp_val.s.s,
+			(val->ops&AVPOPS_OP_RE)?6:check_val.s.len,
+			(val->ops&AVPOPS_OP_RE)?"REGEXP":check_val.s.s);
 		/* do check */
 		if (val->ops&AVPOPS_OP_EQ)
 		{
-			if (avp_val.s->len==ck_val.s->len)
+			if (avp_val.s.len==check_val.s.len)
 			{
 				if (val->ops&AVPOPS_FLAG_CI)
 				{
-					if (strncasecmp(avp_val.s->s,ck_val.s->s,ck_val.s->len)==0)
+					if (strncasecmp(avp_val.s.s,check_val.s.s,
+								check_val.s.len)==0)
 						return 1;
 				} else {
-					if (strncmp(avp_val.s->s,ck_val.s->s,ck_val.s->len)==0 )
+					if (strncmp(avp_val.s.s,check_val.s.s,check_val.s.len)==0 )
 						return 1;
 				}
 			}
 		} else if (val->ops&AVPOPS_OP_NE) {
-			if (avp_val.s->len==ck_val.s->len)
+			if (avp_val.s.len!=check_val.s.len)
+				return 1;
+			if (val->ops&AVPOPS_FLAG_CI)
 			{
-				if (val->ops&AVPOPS_FLAG_CI)
-				{
-					if (strncasecmp(avp_val.s->s,ck_val.s->s,ck_val.s->len)!=0)
-						return 1;
-				} else {
-					if (strncmp(avp_val.s->s,ck_val.s->s,ck_val.s->len)!=0 )
-						return 1;
-				}
+				if (strncasecmp(avp_val.s.s,check_val.s.s,check_val.s.len)!=0)
+					return 1;
+			} else {
+				if (strncmp(avp_val.s.s,check_val.s.s,check_val.s.len)!=0 )
+					return 1;
 			}
 		} else if (val->ops&AVPOPS_OP_LT) {
-			n = (avp_val.s->len>=ck_val.s->len)?avp_val.s->len:ck_val.s->len;
-			if (strncasecmp(avp_val.s->s,ck_val.s->s,n)==-1)
+			n = (avp_val.s.len>=check_val.s.len)?avp_val.s.len:check_val.s.len;
+			if (strncasecmp(avp_val.s.s,check_val.s.s,n)==-1)
 				return 1;
 		} else if (val->ops&AVPOPS_OP_LE) {
-			n = (avp_val.s->len>=ck_val.s->len)?avp_val.s->len:ck_val.s->len;
-			if (strncasecmp(avp_val.s->s,ck_val.s->s,n)<=0)
+			n = (avp_val.s.len>=check_val.s.len)?avp_val.s.len:check_val.s.len;
+			if (strncasecmp(avp_val.s.s,check_val.s.s,n)<=0)
 				return 1;
 		} else if (val->ops&AVPOPS_OP_GT) {
-			n = (avp_val.s->len>=ck_val.s->len)?avp_val.s->len:ck_val.s->len;
-			if (strncasecmp(avp_val.s->s,ck_val.s->s,n)==1)
+			n = (avp_val.s.len>=check_val.s.len)?avp_val.s.len:check_val.s.len;
+			if (strncasecmp(avp_val.s.s,check_val.s.s,n)==1)
 				return 1;
 		} else if (val->ops&AVPOPS_OP_GE) {
-			n = (avp_val.s->len>=ck_val.s->len)?avp_val.s->len:ck_val.s->len;
-			if (strncasecmp(avp_val.s->s,ck_val.s->s,n)>=0)
+			n = (avp_val.s.len>=check_val.s.len)?avp_val.s.len:check_val.s.len;
+			if (strncasecmp(avp_val.s.s,check_val.s.s,n)>=0)
 				return 1;
 		} else if (val->ops&AVPOPS_OP_RE) {
-			if (regexec((regex_t*)ck_val.s, avp_val.s->s, 1, &pmatch, 0)==0)
+			if (regexec((regex_t*)check_val.s.s, avp_val.s.s, 1, &pmatch, 0)==0)
 				return 1;
 		} else if (val->ops&AVPOPS_OP_FM){
-			if (fnmatch( ck_val.s->s, avp_val.s->s, 0)==0)
+			if (fnmatch( check_val.s.s, avp_val.s.s, 0)==0)
 				return 1;
 		} else {
 			LOG(L_CRIT,"BUG:avpops:check_avp: unknown operation "
@@ -1167,34 +1295,34 @@ cycle2:
 	} else {
 		/* int values to check -> do check */
 		DBG("DEBUG:avpops:check_avp: check <%d> against <%d> as int\n",
-				avp_val.n, ck_val.n);
+				avp_val.n, check_val.n);
 		if (val->ops&AVPOPS_OP_EQ)
 		{
-			if ( avp_val.n==ck_val.n)
+			if ( avp_val.n==check_val.n)
 				return 1;
 		} else 	if (val->ops&AVPOPS_OP_NE) {
-			if ( avp_val.n!=ck_val.n)
+			if ( avp_val.n!=check_val.n)
 				return 1;
 		} else  if (val->ops&AVPOPS_OP_LT) {
-			if ( avp_val.n<ck_val.n)
+			if ( avp_val.n<check_val.n)
 				return 1;
 		} else if (val->ops&AVPOPS_OP_LE) {
-			if ( avp_val.n<=ck_val.n)
+			if ( avp_val.n<=check_val.n)
 				return 1;
 		} else if (val->ops&AVPOPS_OP_GT) {
-			if ( avp_val.n>ck_val.n)
+			if ( avp_val.n>check_val.n)
 				return 1;
 		} else if (val->ops&AVPOPS_OP_GE) {
-			if ( avp_val.n>=ck_val.n)
+			if ( avp_val.n>=check_val.n)
 				return 1;
 		} else if (val->ops&AVPOPS_OP_BAND) {
-			if ( avp_val.n&ck_val.n)
+			if ( avp_val.n&check_val.n)
 				return 1;
 		} else if (val->ops&AVPOPS_OP_BOR) {
-			if ( avp_val.n|ck_val.n)
+			if ( avp_val.n|check_val.n)
 				return 1;
 		} else if (val->ops&AVPOPS_OP_BXOR) {
-			if ( avp_val.n^ck_val.n)
+			if ( avp_val.n^check_val.n)
 				return 1;
 		} else {
 			LOG(L_CRIT,"BUG:avpops:check_avp: unknown operation "
@@ -1204,15 +1332,18 @@ cycle2:
 
 next:
 	/* cycle for the second value (only if avp can have multiple vals) */
-	if ((val->opd&AVPOPS_VAL_AVP)&&(avp2=search_next_avp(avp2,&ck_val))!=0)
+	if ((avp2!=NULL) && (avp2=search_next_avp(avp2,&check_val))!=NULL)
 	{
-		ck_flg = avp2->flags&AVP_VAL_STR?AVPOPS_VAL_STR:AVPOPS_VAL_INT;
+		check_flags = avp2->flags;
 		goto cycle2;
 	/* cycle for the first value -> next avp */
 	} else {
-		avp1=(val->ops&AVPOPS_FLAG_ALL)?search_next_avp(avp1,&avp_val):0;
-		if (avp1)
-			goto cycle1;
+		if(avp1 && val->ops&AVPOPS_FLAG_ALL)
+		{
+			avp1=search_next_avp(avp1,&avp_val);
+			if (avp1)
+				goto cycle1;
+		}
 	}
 
 	DBG("DEBUG:avpops:check_avp: no match\n");
@@ -1220,78 +1351,6 @@ next:
 error:
 	return -1;
 }
-
-
-
-int ops_copy_avp( struct sip_msg* msg, struct fis_param* name1,
-													struct fis_param* name2)
-{
-	struct usr_avp *avp;
-	struct usr_avp *prev_avp;
-	int_str         avp_val;
-	int_str         avp_val2;
-	unsigned short name_type1;
-	unsigned short name_type2;
-	int n;
-	str s;
-
-	n = 0;
-	prev_avp = 0;
-
-	/* avp name is known ->search by name */
-	name_type1 = (((name1->opd&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
-	name_type2 = (((name2->opd&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
-
-	avp = search_first_avp( name_type1, name1->val, &avp_val);
-	while ( avp )
-	{
-		/* build a new avp with new name, but old value */
-		/* do we need cast conversion ?!?! */
-		if((avp->flags&AVP_VAL_STR) && (name2->ops&AVPOPS_FLAG_CASTN)) {
-			if(str2int(avp_val.s, (unsigned int*)&avp_val2.n)!=0)
-			{
-				LOG(L_ERR,"ERROR:avpops:copy_avp: cannot convert str to int\n");
-				goto error;
-			}
-			if ( add_avp( name_type2, name2->val, avp_val2)==-1 ) {
-				LOG(L_ERR,"ERROR:avpops:copy_avp: failed to create new avp!\n");
-				goto error;
-			}
-		} else if(!(avp->flags&AVP_VAL_STR)&&(name2->ops&AVPOPS_FLAG_CASTS)) {
-			s.s = int2str(avp_val.n, &s.len);
-			avp_val2.s = &s;
-			if ( add_avp( name_type2|AVP_VAL_STR, name2->val, avp_val2)==-1 ) {
-				LOG(L_ERR,"ERROR:avpops:copy_avp: failed to create new avp.\n");
-				goto error;
-			}
-		} else {
-			if ( add_avp( name_type2|(avp->flags&AVP_VAL_STR), name2->val,
-					avp_val)==-1 ) {
-				LOG(L_ERR,"ERROR:avpops:copy_avp: failed to create new avp\n");
-				goto error;
-			}
-		}
-		n++;
-		/* copy all avps? */
-		if ( !(name2->ops&AVPOPS_FLAG_ALL) ) {
-			/* delete the old one? */
-			if (name2->ops&AVPOPS_FLAG_DELETE)
-				destroy_avp( avp );
-			break;
-		} else {
-			prev_avp = avp;
-			avp = search_next_avp( prev_avp, &avp_val);
-			/* delete the old one? */
-			if (name2->ops&AVPOPS_FLAG_DELETE)
-				destroy_avp( prev_avp );
-		}
-	}
-
-	return n?1:-1;
-error:
-	return -1;
-}
-
 
 
 int ops_print_avp()
@@ -1318,7 +1377,7 @@ int ops_print_avp()
 		get_avp_val( avp, &val);
 		if (avp->flags&AVP_VAL_STR)
 		{
-			LOG(L_INFO,"INFO:\t\t\tval_str=<%.*s>\n",val.s->len,val.s->s);
+			LOG(L_INFO,"INFO:\t\t\tval_str=<%.*s>\n",val.s.len,val.s.s);
 		} else {
 			LOG(L_INFO,"INFO:\t\t\tval_int=<%d>\n",val.n);
 		}
@@ -1334,8 +1393,9 @@ int ops_printf(struct sip_msg* msg, struct fis_param* dest, xl_elem_t *format)
 	static char printbuf[AVP_PRINTBUF_SIZE];
 	int printbuf_len;
 	int_str avp_val;
+	int_str avp_name;
 	unsigned short flags;
-	str s;
+	unsigned short name_type;
 
 	if(msg==NULL || dest==NULL || format==NULL)
 	{
@@ -1349,15 +1409,24 @@ int ops_printf(struct sip_msg* msg, struct fis_param* dest, xl_elem_t *format)
 		LOG(L_ERR, "avpops:ops_printf: error - cannot print the format\n");
 		return -1;
 	}
-	s.s   = printbuf;
-	s.len = printbuf_len;
-	avp_val.s = &s;
+	avp_val.s.s   = printbuf;
+	avp_val.s.len = printbuf_len;
 		
 	/* set the proper flag */
 	flags = AVP_VAL_STR;
-	flags |=  (dest->opd&AVPOPS_VAL_INT)?0:AVP_NAME_STR;
+	
+	/* is dynamic avp name ? */
+	if(avpops_get_aname(msg, dest, &avp_name, &name_type)!=0)
+	{
+		LOG(L_ERR,
+			"BUG:avpops:ops_printf: error getting dst AVP name\n");
+		return -1;
+	}
 
-	if (add_avp(flags, dest->val, avp_val)<0)
+	if(name_type == AVP_NAME_STR)
+		flags |=  AVP_NAME_STR;
+
+	if (add_avp(flags, avp_name, avp_val)<0)
 	{
 		LOG(L_ERR, "avpops:ops_printf: error - cannot add AVP\n");
 		return -1;
@@ -1369,12 +1438,12 @@ int ops_printf(struct sip_msg* msg, struct fis_param* dest, xl_elem_t *format)
 int ops_subst(struct sip_msg* msg, struct fis_param** src,
 		struct subst_expr* se)
 {
-	struct fis_param* newp;
 	struct usr_avp *avp;
 	struct usr_avp *prev_avp;
 	int_str         avp_val;
 	unsigned short name_type1;
 	unsigned short name_type2;
+	int_str         avp_name;
 	int n;
 	int nmatches;
 	str* result;
@@ -1383,12 +1452,44 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 	prev_avp = 0;
 
 	/* avp name is known ->search by name */
-	name_type1 = (((src[0]->opd&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
-	
-	newp = (src[1]!=0)?src[1]:src[0];
-	name_type2 = (((newp->opd&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
+	/* get src avp name */
+	if(avpops_get_aname(msg, src[0], &avp_name, &name_type1)!=0)
+	{
+		LOG(L_ERR,
+			"BUG:avpops:ops_subst: error getting src AVP name\n");
+		return -1;
+	}
 
-	avp = search_first_avp(name_type1, src[0]->val, &avp_val);
+	avp = search_first_avp(name_type1, avp_name, &avp_val);
+
+	if(avp==NULL)
+		return -1;
+	
+	if(src[1]!=0)
+	{
+		/* get dst avp name */
+		if(avpops_get_aname(msg, src[1], &avp_name, &name_type2)!=0)
+		{
+			LOG(L_ERR,
+				"BUG:avpops:ops_subst: error getting dst AVP name\n");
+			return -1;
+		}
+	} else {
+		name_type2 = name_type1;
+	}
+	
+	if(name_type2&AVP_NAME_STR)
+	{
+		if(avp_name.s.len>=STR_BUF_SIZE)
+		{
+			LOG(L_ERR,
+				"avpops:ops_subst: error dst name too long\n");
+			goto error;
+		}
+		strcpy(str_buf, avp_name.s.s);
+		avp_name.s.s = str_buf;
+	}
+
 	while(avp)
 	{
 		if(!is_avp_str_val(avp))
@@ -1398,12 +1499,12 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 			continue;
 		}
 		
-		result=subst_str(avp_val.s->s, msg, se, &nmatches);
+		result=subst_str(avp_val.s.s, msg, se, &nmatches);
 		if(result!=NULL)
 		{
 			/* build a new avp with new name */
-			avp_val.s = result;
-			if(add_avp(name_type2|AVP_VAL_STR, newp->val, avp_val)==-1 ) {
+			avp_val.s = *result;
+			if(add_avp(name_type2|AVP_VAL_STR, avp_name, avp_val)==-1 ) {
 				LOG(L_ERR,"ERROR:avpops:ops_subst: failed to create new avp\n");
 				if(result->s!=0)
 					pkg_free(result->s);
@@ -1444,21 +1545,34 @@ int ops_op_avp( struct sip_msg* msg, struct fis_param** av,
 {
 	unsigned short    name_type;
 	unsigned short    name_type2;
-	struct fis_param* ap;
-	struct fis_param* newp;
+	struct fis_param* src;
 	struct usr_avp    *avp1;
 	struct usr_avp    *avp2;
 	struct usr_avp    *prev_avp;
+	int_str           avp_name;
+	int_str           avp_name2;
 	int_str           avp_val;
-	int_str           ck_val;
-	int               ck_flg;
+	int_str           op_val;
+	int               op_flags;
 	int               result;
+	xl_value_t        xvalue;
 
-	ap = av[0];
+	src = av[0];
 	/* look if the required avp(s) is/are present */
-	name_type = (((ap->opd&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
-	memset(&avp_val, 0, sizeof(int_str));
-	avp1 = search_first_avp(name_type, ap->val, &avp_val);
+			/* search for the avp */
+	if(avpops_get_aname(msg, src, &avp_name, &name_type)!=0)
+	{
+		LOG(L_ERR,
+			"avpops:ops_op_avp: error getting src AVP name\n");
+		goto error;
+	}
+	avp1 = search_first_avp(name_type, avp_name, &avp_val);
+	if (avp1==0)
+	{
+		DBG("DEBUG:avpops:ops_op_avp: no src avp found\n");
+		goto error;
+	}
+
 	while(avp1!=0)
 	{
 		if(!(avp1->flags&AVP_VAL_STR))
@@ -1469,71 +1583,112 @@ int ops_op_avp( struct sip_msg* msg, struct fis_param** av,
 		DBG("DEBUG:avpops:op_avp: no proper avp found\n");
 		goto error;
 	}
-	
-	newp = (av[1]!=0)?av[1]:av[0];
-	name_type2 = (((newp->opd&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
+	name_type2 = name_type;
+	if(av[1]!=0)
+	{
+		if(avpops_get_aname(msg, av[1], &avp_name, &name_type2)!=0)
+		{
+			LOG(L_ERR,
+				"avpops:ops_op_avp: error getting dst AVP name\n");
+			goto error;
+		}
+	}
+	if(name_type2&AVP_NAME_STR)
+	{
+		if(avp_name.s.len>=STR_BUF_SIZE)
+		{
+			LOG(L_ERR,
+				"avpops:ops_op_avp: error dst name too long\n");
+			goto error;
+		}
+		strcpy(str_buf, avp_name.s.s);
+		avp_name.s.s = str_buf;
+	}
 	prev_avp = 0;
 	result = 0;
 
 cycle1:
-	if (val->opd&AVPOPS_VAL_AVP)
+	if (val->opd&AVPOPS_VAL_PVAR)
 	{
-		/* the 2nd operator is an avp name -> get avp val */
-		name_type = (((val->opd&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
-		avp2 = search_first_avp(name_type, val->val, &ck_val);
-		while(avp2!=0)
+		/* the 2nd operator is variable -> get value */
+		op_flags = 0;
+		if(val->sval.type==XL_AVP)
 		{
-			if(!(avp2->flags&AVP_VAL_STR))
-				break;
-			avp2 = search_next_avp(avp2, &ck_val);
+			/* search for the avp */
+			if(avpops_get_aname(msg, val, &avp_name2, &name_type)!=0)
+			{
+				LOG(L_ERR,
+					"avpops:ops_op_avp: error getting dst AVP name\n");
+				goto error;
+			}
+			avp2 = search_first_avp( name_type, avp_name2, &op_val);
+			while(avp2!=0)
+			{
+				if(!(avp2->flags&AVP_VAL_STR))
+					break;
+				avp2 = search_next_avp(avp2, &op_val);
+			}
+			if (avp2==0)
+			{
+				DBG("DEBUG:avpops:op_avp: no dst avp found\n");
+				goto error;
+			}
+		} else {
+			avp2 = 0;
+			if(xl_get_spec_value(msg, &(val->sval), &xvalue, 0)!=0)
+			{
+				LOG(L_ERR,"ERROR:avpops:ops_op_avp: cannot get dst value\n");
+				goto error;
+			}
+			if(xvalue.flags&XL_TYPE_INT)
+			{
+				op_val.n = xvalue.ri;
+			} else {
+				LOG(L_ERR,
+					"ERROR:avpops:ops_op_avp: error - dst value is str\n");
+				goto error;
+			}
 		}
-		if (avp2==0)
-		{
-			DBG("DEBUG:avpops:op_avp: no avp2 found\n");
-			goto error;
-		}
-		ck_flg = AVPOPS_VAL_INT;
 	} else {
-		ck_val = val->val;
-		ck_flg = val->opd;
+		avpops_str2int_str(val->sval.p.val, op_val);
 		avp2 = 0;
 	}
 
 cycle2:
 	/* do operation */
 	DBG("DEBUG:avpops:op_avp: use <%d> and <%d>\n",
-			avp_val.n, ck_val.n);
+			avp_val.n, op_val.n);
 	if (val->ops&AVPOPS_OP_ADD)
 	{
-		result = avp_val.n+ck_val.n;
+		result = avp_val.n+op_val.n;
 	} else 	if (val->ops&AVPOPS_OP_SUB) {
-		result = avp_val.n-ck_val.n;
+		result = avp_val.n-op_val.n;
 	} else  if (val->ops&AVPOPS_OP_MUL) {
-		result = avp_val.n*ck_val.n;
+		result = avp_val.n*op_val.n;
 	} else if (val->ops&AVPOPS_OP_DIV) {
-		if(ck_val.n!=0)
-			result = (int)(avp_val.n/ck_val.n);
+		if(op_val.n!=0)
+			result = (int)(avp_val.n/op_val.n);
 		else
 		{
 			LOG(L_ERR, "avpops:op_avp: error - division by 0\n");
 			result = 0;
 		}
 	} else if (val->ops&AVPOPS_OP_MOD) {
-		if(ck_val.n!=0)
-			result = avp_val.n%ck_val.n;
+		if(op_val.n!=0)
+			result = avp_val.n%op_val.n;
 		else
 		{
 			LOG(L_ERR, "avpops:op_avp: error - modulo by 0\n");
 			result = 0;
 		}
 	} else if (val->ops&AVPOPS_OP_BAND) {
-		result = avp_val.n&ck_val.n;
+		result = avp_val.n&op_val.n;
 	} else if (val->ops&AVPOPS_OP_BOR) {
-		result = avp_val.n|ck_val.n;
+		result = avp_val.n|op_val.n;
 	} else if (val->ops&AVPOPS_OP_BXOR) {
-		result = avp_val.n^ck_val.n;
+		result = avp_val.n^op_val.n;
 	} else if (val->ops&AVPOPS_OP_BNOT) {
-		result = ~ck_val.n;
+		result = ~op_val.n;
 	} else {
 		LOG(L_CRIT,"BUG:avpops:op_avp: unknown operation "
 			"(flg=%d)\n",val->ops);
@@ -1542,23 +1697,20 @@ cycle2:
 
 	/* add the new avp */
 	avp_val.n = result;
-	if(add_avp(name_type2, newp->val, avp_val)==-1 ) {
+	if(add_avp(name_type2, avp_name, avp_val)==-1 ) {
 		LOG(L_ERR,"ERROR:avpops:op_avp: failed to create new avp\n");
 		goto error;
 	}
 
 	/* cycle for the second value (only if avp can have multiple vals) */
-	while((val->opd&AVPOPS_VAL_AVP)&&(avp2=search_next_avp(avp2,&ck_val))!=0)
+	while((avp2!=NULL)&&(avp2=search_next_avp(avp2,&op_val))!=0)
 	{
 		if(!(avp2->flags&AVP_VAL_STR))
-		{
-			ck_flg = AVPOPS_VAL_INT;
 			goto cycle2;
-		}
 	}
 	prev_avp = avp1;
 	/* cycle for the first value -> next avp */
-	while((val->ops&AVPOPS_FLAG_ALL)&&(avp1=search_next_avp(avp1,&avp_val))!=0)
+	while((avp1!=NULL)&&(avp1=search_next_avp(avp1,&avp_val))!=0)
 	{
 		if (!(avp1->flags&AVP_VAL_STR))
 		{
@@ -1585,9 +1737,19 @@ error:
 int ops_is_avp_set(struct sip_msg* msg, struct fis_param *ap)
 {
 	struct usr_avp *avp;
+	unsigned short    name_type;
+	int_str avp_name;
+	int_str avp_value;
 	
-	avp=search_first_avp((((ap->opd&AVPOPS_VAL_INT))?0:AVP_NAME_STR),
-				ap->val, 0);
+	/* get avp name */
+	if(avpops_get_aname(msg, ap, &avp_name, &name_type)!=0)
+	{
+		LOG(L_ERR,
+			"avpops:write_avp: error getting dst AVP name\n");
+		return -1;
+	}
+	
+	avp=search_first_avp(name_type, avp_name, &avp_value);
 	if(avp==0)
 		return -1;
 	if(ap->ops&AVPOPS_FLAG_ALL)
@@ -1597,9 +1759,16 @@ int ops_is_avp_set(struct sip_msg* msg, struct fis_param *ap)
 		if((ap->ops&AVPOPS_FLAG_CASTS && avp->flags&AVP_VAL_STR)
 				|| (ap->ops&AVPOPS_FLAG_CASTN && !(avp->flags&AVP_VAL_STR)))
 			return 1;
-	} while ((avp=search_next_avp(avp, 0))!=0);
+		if(ap->ops&AVPOPS_FLAG_EMPTY)
+		{
+			if((avp->flags&AVP_VAL_STR)
+					&& (avp_value.s.s==0 || avp_value.s.len==0))
+				return 1;
+			else if(avp_value.n==0)
+				return 1;
+		}
+	} while ((avp=search_next_avp(avp, &avp_value))!=0);
 	
 	return -1;
 }
-
 

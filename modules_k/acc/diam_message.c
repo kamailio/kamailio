@@ -60,7 +60,7 @@
  */
 AAAReturnCode AAABuildMsgBuffer( AAAMessage *msg )
 {
-	unsigned char *p;
+	char *p;
 	AAA_AVP       *avp;
 
 	/* first let's compute the length of the buffer */
@@ -71,7 +71,7 @@ AAAReturnCode AAABuildMsgBuffer( AAAMessage *msg )
 	}
 
 	/* allocate some memory */
-	msg->buf.s = (unsigned char*)ad_malloc( msg->buf.len );
+	msg->buf.s = (char*)ad_malloc( msg->buf.len );
 	if (!msg->buf.s) {
 		LOG(L_ERR,"ERROR:AAABuildMsgBuffer: no more free memory!\n");
 		goto error;
@@ -295,7 +295,7 @@ AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 		}
 
 		/* create the AVP */
-		avp = AAACreateAVP( avp_code, avp_flags, avp_vendorID, ptr,
+		avp = AAACreateAVP( avp_code, avp_flags, avp_vendorID, (char*)ptr,
 			avp_data_len, AVP_DONT_FREE_DATA);
 		if (!avp)
 			goto error;
@@ -308,7 +308,7 @@ AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 
 	/* link the buffer to the message */
 	if (attach_buf) {
-		msg->buf.s = source;
+		msg->buf.s = (char*)source;
 		msg->buf.len = msg_len;
 	}
 

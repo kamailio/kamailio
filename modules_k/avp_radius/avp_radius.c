@@ -199,7 +199,7 @@ static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
 		}
 		name->n = (int)r;
 	} else {
-		name->s = &names;
+		name->s = names;
 	}
 
 	if ( !((*flags)&AVP_VAL_STR) ) {
@@ -211,7 +211,7 @@ static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
 		}
 		value->n = (int)r;
 	} else {
-		value->s = &values;
+		value->s = values;
 	}
 
 	return 0;
@@ -335,7 +335,7 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 
 			/* append prefix only if AVP has name */
 			if (flags&AVP_NAME_STR) {
-				buffer.len = prefix->len + name.s->len;
+				buffer.len = prefix->len + name.s.len;
 				buffer.s = (char*)pkg_malloc(buffer.len);
 				if (!buffer.s) {
 					LOG(L_ERR, "ERROR:avp_radius:avp_load_user: "
@@ -343,8 +343,8 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 					return -1;
 				}
 				memcpy(buffer.s, prefix->s, prefix->len);
-				memcpy(buffer.s + prefix->len, name.s->s, name.s->len);
-				name.s = &buffer;
+				memcpy(buffer.s + prefix->len, name.s.s, name.s.len);
+				name.s = buffer;
 			} else {
 				buffer.s = 0;
 			}
@@ -355,11 +355,11 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 			} else {
 				DBG("DEBUG:avp_radius:generate_avps: "
 					"AVP '%.*s'/%d='%.*s'/%d has been added\n",
-					(flags&AVP_NAME_STR)?name.s->len:4,
-					(flags&AVP_NAME_STR)?name.s->s:"null",
+					(flags&AVP_NAME_STR)?name.s.len:4,
+					(flags&AVP_NAME_STR)?name.s.s:"null",
 					(flags&AVP_NAME_STR)?0:name.n,
-					(flags&AVP_VAL_STR)?val.s->len:4,
-					(flags&AVP_VAL_STR)?val.s->s:"null",
+					(flags&AVP_VAL_STR)?val.s.len:4,
+					(flags&AVP_VAL_STR)?val.s.s:"null",
 					(flags&AVP_VAL_STR)?0:val.n );
 			}
 

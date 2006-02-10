@@ -56,15 +56,14 @@
 #define AVPOPS_VAL_NONE      (1<<0)
 #define AVPOPS_VAL_INT       (1<<1)
 #define AVPOPS_VAL_STR       (1<<2)
-#define AVPOPS_VAL_AVP       (1<<3)
+#define AVPOPS_VAL_PVAR      (1<<3)
 
 #define AVPOPS_USE_FROM      (1<<5)
 #define AVPOPS_USE_TO        (1<<6)
 #define AVPOPS_USE_RURI      (1<<7)
 #define AVPOPS_USE_USERNAME  (1<<8)
 #define AVPOPS_USE_DOMAIN    (1<<9)
-#define AVPOPS_USE_HDRREQ    (1<<10)
-#define AVPOPS_USE_HDRRPL    (1<<11)
+
 #define AVPOPS_USE_SRC_IP    (1<<12)
 #define AVPOPS_USE_DST_IP    (1<<13)
 #define AVPOPS_USE_DURI      (1<<14)
@@ -100,13 +99,14 @@
 #define AVPOPS_FLAG_DELETE  (1<<26)
 #define AVPOPS_FLAG_CASTN   (1<<27)
 #define AVPOPS_FLAG_CASTS   (1<<28)
+#define AVPOPS_FLAG_EMPTY   (1<<29)
 
-/* container structer for Flag+Int_Str_value parameter */
+/* container structer for Flag+Int_Spec_value parameter */
 struct fis_param
 {
-	int     ops;    /* operation flags */
-	int     opd;    /* operand flags */
-	int_str val;    /* values int or str */
+	int     ops;       /* operation flags */
+	int     opd;       /* operand flags */
+	xl_spec_t sval;    /* values int or str */
 };
 
 struct db_param
@@ -114,7 +114,7 @@ struct db_param
 	struct fis_param a;        /* attribute */
 	str              sa;       /* attribute as str (for db queries) */
 	char             *table;   /* DB table/scheme name */
-	struct db_scheme *scheme;  /* DB scheme name */
+	struct db_scheme *scheme;  /* DB scheme */
 };
 
 
@@ -123,10 +123,10 @@ void init_store_avps(char **db_columns);
 int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 								struct db_param *dbp, int use_domain);
 
-int ops_dbstore_avps(struct sip_msg* msg, struct fis_param *sp,
+int ops_dbdelete_avps(struct sip_msg* msg, struct fis_param *sp,
 								struct db_param *dbp, int use_domain);
 
-int ops_dbdelete_avps(struct sip_msg* msg, struct fis_param *sp,
+int ops_dbstore_avps(struct sip_msg* msg, struct fis_param *sp,
 								struct db_param *dbp, int use_domain);
 
 int ops_write_avp(struct sip_msg* msg, struct fis_param *src,
@@ -135,26 +135,26 @@ int ops_write_avp(struct sip_msg* msg, struct fis_param *src,
 int ops_delete_avp(struct sip_msg* msg,
 								struct fis_param *ap);
 
+int ops_copy_avp(struct sip_msg* msg, struct fis_param* name1,
+								struct fis_param* name2);
+
+int ops_printf(struct sip_msg* msg, struct fis_param* dest, xl_elem_t *format);
+
 int ops_pushto_avp(struct sip_msg* msg, struct fis_param* dst,
 								struct fis_param* ap);
 
 int ops_check_avp(struct sip_msg* msg, struct fis_param* param,
 								struct fis_param* check);
 
-int ops_copy_avp(struct sip_msg* msg, struct fis_param* name1,
-								struct fis_param* name2);
-
-int ops_print_avp();
-
-int ops_printf(struct sip_msg* msg, struct fis_param* dest, xl_elem_t *format);
+int ops_op_avp(struct sip_msg* msg, struct fis_param** param,
+								struct fis_param* op);
 
 int ops_subst(struct sip_msg* msg, struct fis_param** src,
 		struct subst_expr* subst);
 
-int ops_op_avp(struct sip_msg* msg, struct fis_param** param,
-								struct fis_param* op);
-
 int ops_is_avp_set(struct sip_msg* msg, struct fis_param *ap);
+
+int ops_print_avp();
 
 #endif
 

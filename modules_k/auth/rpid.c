@@ -137,7 +137,7 @@ int append_rpid_hf(struct sip_msg* _m, char* _s1, char* _s2)
 	char *at;
 	int_str val;
 
-	if (rpid_avp.s==0) {
+	if (rpid_avp.s.s==0) {
 		LOG(L_ERR,"BUG_SCRIPT:auth:append_rpid_hf: rpid avp not defined\n");
 		return -1;
 	}
@@ -147,14 +147,15 @@ int append_rpid_hf(struct sip_msg* _m, char* _s1, char* _s2)
 		return -1;
 	}
 
-	if ( !(avp->flags&AVP_VAL_STR) ||  !val.s->s || !val.s->len) {
+	if ( !(avp->flags&AVP_VAL_STR) ||  !val.s.s || !val.s.len) {
 		DBG("append_rpid_hf: Empty or non-string rpid, nothing to append\n");
 		return -1;
 	}
 
-	rpid = *val.s;
+	rpid = val.s;
 
-	rpid_hf.len = RPID_HF_NAME_LEN + rpid_prefix.len + rpid.len + rpid_suffix.len + CRLF_LEN;
+	rpid_hf.len = RPID_HF_NAME_LEN + rpid_prefix.len + rpid.len
+					+ rpid_suffix.len + CRLF_LEN;
 	rpid_hf.s = pkg_malloc(rpid_hf.len);
 	if (!rpid_hf.s) {
 		LOG(L_ERR, "append_rpid_hf(): No memory left\n");
@@ -196,7 +197,7 @@ int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix)
 	str* p, *s;
 	int_str val;
 
-	if (rpid_avp.s==0) {
+	if (rpid_avp.s.s==0) {
 		LOG(L_ERR,"BUG_SCRIPT:auth:append_rpid_hf: rpid avp not defined\n");
 		return -1;
 	}
@@ -206,12 +207,12 @@ int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix)
 		return -1;
 	}
 
-	if ( !(avp->flags&AVP_VAL_STR) ||  !val.s->s || !val.s->len) {
+	if ( !(avp->flags&AVP_VAL_STR) ||  !val.s.s || !val.s.len) {
 		DBG("append_rpid_hf: Empty or non-string rpid, nothing to append\n");
 		return -1;
 	}
 
-	rpid = *val.s;
+	rpid = val.s;
 
 	p = (str*)_prefix;
 	s = (str*)_suffix;
@@ -258,7 +259,7 @@ int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
 	struct sip_uri uri;
 	int_str val;
 
-	if (rpid_avp.s==0) {
+	if (rpid_avp.s.s==0) {
 		LOG(L_ERR,"BUG_SCRIPT:auth:append_rpid_hf: rpid avp not defined\n");
 		return -1;
 	}
@@ -268,12 +269,12 @@ int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
 		goto err;
 	}
 
-	if ( !(avp->flags&AVP_VAL_STR) ||  !val.s->s || !val.s->len) {
+	if ( !(avp->flags&AVP_VAL_STR) ||  !val.s.s || !val.s.len) {
 		DBG("append_rpid_hf: Empty or non-string rpid, nothing to append\n");
 		return -1;
 	}
 
-	rpid = *val.s;
+	rpid = val.s;
 
 	if (find_not_quoted(&rpid, '<')) {
 		if (parse_nameaddr(&rpid, &parsed) < 0) {

@@ -105,7 +105,7 @@ static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
 		}
 		name->n = (int)r;
 	} else {
-		name->s = &names;
+		name->s = names;
 	}
 
 	if ( !((*flags)&AVP_VAL_STR) ) {
@@ -117,7 +117,7 @@ static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
 		}
 		value->n = (int)r;
 	} else {
-		value->s = &values;
+		value->s = values;
 	}
 
 	return 0;
@@ -150,11 +150,11 @@ static int generate_avps(VALUE_PAIR* received)
 		} else {
 			DBG("DEBUG:auth_radius:generate_avps: "
 				"AVP '%.*s'/%d='%.*s'/%d has been added\n",
-				(flags&AVP_NAME_STR)?name.s->len:4,
-				(flags&AVP_NAME_STR)?name.s->s:"null",
+				(flags&AVP_NAME_STR)?name.s.len:4,
+				(flags&AVP_NAME_STR)?name.s.s:"null",
 				(flags&AVP_NAME_STR)?0:name.n,
-				(flags&AVP_VAL_STR)?val.s->len:4,
-				(flags&AVP_VAL_STR)?val.s->s:"null",
+				(flags&AVP_VAL_STR)?val.s.len:4,
+				(flags&AVP_VAL_STR)?val.s.s:"null",
 				(flags&AVP_VAL_STR)?0:val.n );
 		}
 	}

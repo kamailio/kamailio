@@ -145,7 +145,7 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
 			break;
 
 		case 5: /* AVP spec */
-			if(xl_get_spec_value( msg, &gcp->sp, &value)!=0 
+			if(xl_get_spec_value( msg, &gcp->sp, &value, 0)!=0 
 				|| value.flags&XL_VAL_NULL || value.rs.len<=0)
 			{
 				LOG(L_ERR,"ERROR:group:get_username_domain: no AVP found"

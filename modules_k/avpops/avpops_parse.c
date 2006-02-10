@@ -104,19 +104,19 @@ char *parse_avp_attr(char *s, struct fis_param *attr, char end)
 					"int as type says <%s>\n", tmp.s);
 				goto error;
 			}
-			attr->val.n = (int)uint;
+			attr->sval.p.val.s = 0;
+			attr->sval.p.val.len = (int)uint;
 		} else {
 			/* duplicate name as str NULL terminated */
-			attr->val.s = (str*)pkg_malloc( sizeof(str) + tmp.len + 1 );
-			if (attr->val.s==0)
+			attr->sval.p.val.s = (char*)pkg_malloc(tmp.len + 1);
+			if (attr->sval.p.val.s==0)
 			{
 				LOG(L_ERR,"ERROR:avpops:parse_avp_attr: no more pkg mem\n");
 				goto error;
 			}
-			attr->val.s->s = ((char*)attr->val.s) + sizeof(str);
-			attr->val.s->len = tmp.len;
-			memcpy( attr->val.s->s, tmp.s, tmp.len);
-			attr->val.s->s[attr->val.s->len] = 0;
+			attr->sval.p.val.len = tmp.len;
+			memcpy(attr->sval.p.val.s, tmp.s, tmp.len);
+			attr->sval.p.val.s[attr->sval.p.val.len] = 0;
 		}
 	}
 
@@ -125,63 +125,87 @@ error:
 	return 0;
 }
 
+struct fis_param *avpops_parse_pvar(char *s, int flags)
+{
+	struct fis_param *ap;
+	char *p;
+
+	/* compose the param structure */
+	ap = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
+	if (ap==0)
+	{
+		LOG(L_ERR,"ERROR:avpops:avpops_parse_pvar: no more pkg mem\n");
+		return NULL;
+	}
+	memset( ap, 0, sizeof(struct fis_param));
+	p = xl_parse_spec(s, &ap->sval, flags);
+	if(p==0)
+	{
+		pkg_free(ap);
+		return NULL;
+	}
+
+	ap->opd |= AVPOPS_VAL_PVAR;
+	return ap;
+}
 
 
 int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 {
 	unsigned long ul;
 	str   tmp;
-	char  c;
 	char  have_scheme;
-	int   type;
+	char *p;
+	char *p0;
 
+	tmp.s = s;
 	/* parse the attribute name - check first if it's not an alias */
-	if ( *s=='$')
+	p0=strchr(tmp.s, '/');
+	if(p0!=NULL)
+		*p0=0;
+	if ( *s!='$')
 	{
-		tmp.s = ++s;
-		/* is an avp alias -> see where it ends */
-		if ( (s=strchr(tmp.s, '/'))!=0 )
+		if(*s=='\0')
 		{
-			c = *s;
-			tmp.len = s - tmp.s;
+			dbp->a.opd = AVPOPS_VAL_NONE;
+		}
+		else if (strlen(s)==2 && s[1]==':' && (s[0]=='s' ||s[0]=='S'))
+		{
+			dbp->a.opd = AVPOPS_VAL_NONE|AVPOPS_VAL_STR;
+		} else if ((strlen(s)==2 && s[1]==':' && (s[0]=='i' || s[0]=='I'))) {
+			dbp->a.opd = AVPOPS_VAL_NONE|AVPOPS_VAL_INT;
 		} else {
-			c = 0;
-			tmp.len = strlen(tmp.s);
+			LOG(L_ERR,"ERROR:avops:parse_avp_db: bad param - "
+				"expected : $avp(name), s: or i: value\n");
+			return E_UNSPEC;
 		}
-		if (tmp.len==0)
-		{
-			LOG(L_ERR,"ERROR:avpops:parse_avp_db: empty alias in <%s>\n", s);
-			goto error;
-		}
-		/* search the alias */
-		if ( lookup_avp_galias( &tmp, &type, &dbp->a.val)!=0 )
-		{
-			LOG(L_ERR,"ERROR:avpops:parse_avp_db: unknow alias"
-				"\"%s\"\n", tmp.s);
-			goto error;
-		}
-		dbp->a.opd = (type&AVP_NAME_STR)?AVPOPS_VAL_STR:AVPOPS_VAL_INT;
 	} else {
-		if ( (s=parse_avp_attr( s, &(dbp->a), '/'))==0 )
-			goto error;
-		if (*s!=0 && *s!='/')
+		p = xl_parse_spec(s, &dbp->a.sval,
+				XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		if (p==0 || *p!='\0' || dbp->a.sval.type!=XL_AVP)
 		{
-			LOG(L_ERR,"ERROR:avpops:parse_avp_db: parse error arround "
-				"<%s>\n",s);
-			goto error;
+			LOG(L_ERR,"ERROR:avops:parse_avp_db: bad param - "
+				"expected : $avp(name) or int/str value\n");
+			return E_UNSPEC;
+		}
+		if(dbp->a.sval.flags&XL_DPARAM)
+		{
+			dbp->a.opd = AVPOPS_VAL_PVAR;
+		} else {
+			dbp->a.opd = (dbp->a.sval.p.val.s)?AVPOPS_VAL_STR:AVPOPS_VAL_INT;
 		}
 	}
-	dbp->a.opd |= AVPOPS_VAL_AVP;
 
 	/* optimize asn keep the attribute name as str also to
 	 * speed up db querie builds */
-	if (!(dbp->a.opd&AVPOPS_VAL_NONE))
+	if (!(dbp->a.opd&AVPOPS_VAL_PVAR))
 	{
 		if (dbp->a.opd&AVPOPS_VAL_STR)
 		{
-			dbp->sa = *dbp->a.val.s;
+			dbp->sa = dbp->a.sval.p.val;
+			dbp->sa.s[dbp->sa.len] = '\0';
 		} else {
-			ul = (unsigned long)dbp->a.val.n;
+			ul = (unsigned long)dbp->a.sval.p.val.len;
 			tmp.s = int2str( ul, &(tmp.len) );
 			dbp->sa.s = (char*)pkg_malloc( tmp.len + 1 );
 			if (dbp->sa.s==0)
@@ -195,7 +219,11 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 		}
 	}
 
+	/* restore '/' */
+	if(p0)
+		*p0 = '/';
 	/* is there a table name ? */
+	s = p0;
 	if (s && *s)
 	{
 		s++;
@@ -267,7 +295,7 @@ struct fis_param* parse_intstr_value(char *p, int len)
 	if (p==0 || len==0)
 			goto error;
 
-	if (*(p+1)==':')
+	if (len>1 && *(p+1)==':')
 	{
 		if (*p=='i' || *p=='I')
 			flags = AVPOPS_VAL_INT;
@@ -285,7 +313,7 @@ struct fis_param* parse_intstr_value(char *p, int len)
 		{
 			LOG(L_ERR,"ERROR:avpops:parse_intstr_value: parse error arround "
 				"<%.*s>\n",len,p);
-			goto error;
+				goto error;
 		}
 	} else {
 		flags = AVPOPS_VAL_STR;
@@ -319,158 +347,22 @@ struct fis_param* parse_intstr_value(char *p, int len)
 				goto error;
 			}
 		}
-		vp->val.n = uint;
+		vp->sval.p.val.len = uint;
 	} else {
 		/* duplicate the value as string */
-		vp->val.s = (str*)pkg_malloc( sizeof(str) + val_str.len +1 );
-		if (vp->val.s==0)
+		vp->sval.p.val.s = (char*)pkg_malloc((val_str.len+1)*sizeof(char));
+		if (vp->sval.p.val.s==0)
 		{
 			LOG(L_ERR,"ERROR:avpops:parse_intstr_value: no more pkg mem\n");
 			goto error;
 		}
-		vp->val.s->s = ((char*)vp->val.s) + sizeof(str);
-		vp->val.s->len = val_str.len;
-		memcpy( vp->val.s->s, val_str.s, val_str.len);
-		vp->val.s->s[vp->val.s->len] = 0;
+		vp->sval.p.val.len = val_str.len;
+		memcpy(vp->sval.p.val.s, val_str.s, val_str.len);
+		vp->sval.p.val.s[vp->sval.p.val.len] = 0;
 	}
 
 	return vp;
 error:
-	return 0;
-}
-
-
-struct fis_param* parse_check_value(char *s)
-{
-	struct fis_param *vp;
-	int  ops;
-	int  opd;
-	char *p;
-	char *t;
-	int len;
-	int type;
-	str alias;
-
-	ops = 0;
-	opd = 0;
-	vp = 0;
-
-	if ( (p=strchr(s,'/'))==0 || (p-s!=2&&p-s!=3) )
-		goto parse_error;
-	/* get the operation */
-	if (strncasecmp(s,"eq",2)==0) {
-		ops |= AVPOPS_OP_EQ;
-	} else if (strncasecmp(s,"ne",2)==0) {
-		ops |= AVPOPS_OP_NE;
-	} else if (strncasecmp(s,"lt",2)==0) {
-		ops |= AVPOPS_OP_LT;
-	} else if (strncasecmp(s,"le",2)==0) {
-		ops |= AVPOPS_OP_LE;
-	} else if (strncasecmp(s,"gt",2)==0) {
-		ops |= AVPOPS_OP_GT;
-	} else if (strncasecmp(s,"ge",2)==0) {
-		ops |= AVPOPS_OP_GE;
-	} else if (strncasecmp(s,"re",2)==0) {
-		ops |= AVPOPS_OP_RE;
-	} else if (strncasecmp(s,"fm",2)==0) {
-		ops |= AVPOPS_OP_FM;
-	} else if (strncasecmp(s,"and",3)==0) {
-		ops |= AVPOPS_OP_BAND;
-	} else if (strncasecmp(s,"or",2)==0) {
-		ops |= AVPOPS_OP_BOR;
-	} else if (strncasecmp(s,"xor",3)==0) {
-		ops |= AVPOPS_OP_BXOR;
-	} else {
-		LOG(L_ERR,"ERROR:avpops:parse_check_value: unknown operation "
-			"<%.*s>\n",2,s);
-		goto error;
-	}
-	/* get the value */
-	if (*(++p)==0)
-		goto parse_error;
-	if ( (t=strchr(p,'/'))==0)
-		len = strlen(p);
-	else
-		len = t-p;
-
-	if (*p=='$')
-	{
-		if (*(++p)==0 || (--len)==0)
-			goto parse_error;
-		/* struct for value */
-		vp = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
-		if (vp==0) {
-			LOG(L_ERR,"ERROR:avpops:parse_check_value: no more pkg mem\n");
-			goto error;
-		}
-		memset( vp, 0, sizeof(struct fis_param));
-		/* variable -> which one? */
-		if ( (strncasecmp(p,"ruri"  ,len)==0 && (opd|=AVPOPS_USE_RURI))
-		  || (strncasecmp(p,"from"  ,len)==0 && (opd|=AVPOPS_USE_FROM))
-		  || (strncasecmp(p,"to"    ,len)==0 && (opd|=AVPOPS_USE_TO))
-		  || (strncasecmp(p,"src_ip",len)==0 && (opd|=AVPOPS_USE_SRC_IP))
-		  || (strncasecmp(p,"dst_ip",len)==0 && (opd|=AVPOPS_USE_DST_IP)))
-		{
-			opd |= AVPOPS_VAL_NONE;
-		} else {
-			alias.s = p;
-			alias.len = len;
-			if ( lookup_avp_galias( &alias, &type, &vp->val)!=0 )
-			{
-				LOG(L_ERR,"ERROR:avpops:parse_check_value: unknown "
-					"variable/alias <%.*s>\n",len,p);
-				goto error;
-			}
-			opd |= AVPOPS_VAL_AVP |
-				((type&AVP_NAME_STR)?AVPOPS_VAL_STR:AVPOPS_VAL_INT);
-			DBG("flag==%d/%d\n", opd, ops);
-		}
-		p += len;
-	} else {
-		/* value is explicitly given */
-		if ( (vp=parse_intstr_value(p,len))==0) {
-			LOG(L_ERR,"ERROR:avpops:parse_check_value: unable to "
-				"parse value\n");
-			goto error;
-		}
-		/* go over */
-		p += len;
-	}
-
-	/* any flags */
-	if (*p!=0 )
-	{
-		if (*p!='/' || *(++p)==0)
-			goto parse_error;
-		while (*p)
-		{
-			switch (*p)
-			{
-				case 'g':
-				case 'G':
-					ops|=AVPOPS_FLAG_ALL;
-					break;
-				case 'i':
-				case 'I':
-					ops|=AVPOPS_FLAG_CI;
-					break;
-				default:
-					LOG(L_ERR,"ERROR:avpops:parse_check_value: unknown flag "
-						"<%c>\n",*p);
-					goto error;
-			}
-			p++;
-		}
-	}
-
-	vp->ops |= ops;
-	vp->opd |= opd;
-	return vp;
-parse_error:
-	LOG(L_ERR,"ERROR:avpops:parse_check_value: parse error in <%s> pos %ld\n",
-		s,(long)(p-s));
-error:
-	if (vp) pkg_free(vp);
 	return 0;
 }
 
@@ -612,6 +504,121 @@ error:
 	return -1;
 }
 
+struct fis_param* parse_check_value(char *s)
+{
+	struct fis_param *vp;
+	int  ops;
+	int  opd;
+	char *p;
+	char *t;
+	int len;
+
+	ops = 0;
+	opd = 0;
+	vp = 0;
+
+	if ( (p=strchr(s,'/'))==0 || (p-s!=2&&p-s!=3) )
+		goto parse_error;
+	/* get the operation */
+	if (strncasecmp(s,"eq",2)==0) {
+		ops |= AVPOPS_OP_EQ;
+	} else if (strncasecmp(s,"ne",2)==0) {
+		ops |= AVPOPS_OP_NE;
+	} else if (strncasecmp(s,"lt",2)==0) {
+		ops |= AVPOPS_OP_LT;
+	} else if (strncasecmp(s,"le",2)==0) {
+		ops |= AVPOPS_OP_LE;
+	} else if (strncasecmp(s,"gt",2)==0) {
+		ops |= AVPOPS_OP_GT;
+	} else if (strncasecmp(s,"ge",2)==0) {
+		ops |= AVPOPS_OP_GE;
+	} else if (strncasecmp(s,"re",2)==0) {
+		ops |= AVPOPS_OP_RE;
+	} else if (strncasecmp(s,"fm",2)==0) {
+		ops |= AVPOPS_OP_FM;
+	} else if (strncasecmp(s,"and",3)==0) {
+		ops |= AVPOPS_OP_BAND;
+	} else if (strncasecmp(s,"or",2)==0) {
+		ops |= AVPOPS_OP_BOR;
+	} else if (strncasecmp(s,"xor",3)==0) {
+		ops |= AVPOPS_OP_BXOR;
+	} else {
+		LOG(L_ERR,"ERROR:avpops:parse_check_value: unknown operation "
+			"<%.*s>\n",2,s);
+		goto error;
+	}
+	/* get the value */
+	if (*(++p)==0)
+		goto parse_error;
+	if ( (t=strchr(p,'/'))==0)
+		len = strlen(p);
+	else
+		len = t-p;
+
+	if (*p=='$')
+	{
+		/* is variable */
+		vp = avpops_parse_pvar(p, XL_THROW_ERROR|XL_DISABLE_COLORS);
+		if (vp==0)
+		{
+			LOG(L_ERR,"ERROR:avpops:parse_check_value: unable to get"
+					" pseudo-variable\n");
+			goto error;
+		}
+		if (vp->sval.type==XL_NULL)
+		{
+			LOG(L_ERR,"ERROR:avops:parse_check_value: bad param; "
+				"expected : $pseudo-variable or int/str value\n");
+			goto error;
+		}
+		opd |= AVPOPS_VAL_PVAR;
+		DBG("flag==%d/%d\n", opd, ops);
+	} else {
+		/* value is explicitly given */
+		if ( (vp=parse_intstr_value(p,len))==0) {
+			LOG(L_ERR,"ERROR:avpops:parse_check_value: unable to "
+				"parse value\n");
+			goto error;
+		}
+	}
+
+	p = t;
+	/* any flags */
+	if (p!=NULL && *p!=0)
+	{
+		if (*p!='/' || *(++p)==0)
+			goto parse_error;
+		while (*p)
+		{
+			switch (*p)
+			{
+				case 'g':
+				case 'G':
+					ops|=AVPOPS_FLAG_ALL;
+					break;
+				case 'i':
+				case 'I':
+					ops|=AVPOPS_FLAG_CI;
+					break;
+				default:
+					LOG(L_ERR,"ERROR:avpops:parse_check_value: unknown flag "
+						"<%c>\n",*p);
+					goto error;
+			}
+			p++;
+		}
+	}
+
+	vp->ops |= ops;
+	vp->opd |= opd;
+	return vp;
+parse_error:
+	LOG(L_ERR,"ERROR:avpops:parse_check_value: parse error in <%s> pos %ld\n",
+		s,(long)(p-s));
+error:
+	if (vp) pkg_free(vp);
+	return 0;
+}
 
 struct fis_param* parse_op_value(char *s)
 {
@@ -621,8 +628,6 @@ struct fis_param* parse_op_value(char *s)
 	char *p;
 	char *t;
 	int len;
-	int type;
-	str alias;
 
 	ops = 0;
 	opd = 0;
@@ -663,27 +668,22 @@ struct fis_param* parse_op_value(char *s)
 
 	if (*p=='$')
 	{
-		if (*(++p)==0 || (--len)==0)
-			goto parse_error;
-		/* struct for value */
-		vp = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
-		if (vp==0) {
-			LOG(L_ERR,"ERROR:avpops:parse_op_value: no more pkg mem\n");
-			goto error;
-		}
-		memset( vp, 0, sizeof(struct fis_param));
-		alias.s = p;
-		alias.len = len;
-		if ( lookup_avp_galias( &alias, &type, &vp->val)!=0 )
+		/* is variable */
+		vp = avpops_parse_pvar(p, XL_THROW_ERROR|XL_DISABLE_COLORS);
+		if (vp==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:parse_op_value: unknown "
-				"variable/alias <%.*s>\n",len,p);
+			LOG(L_ERR,"ERROR:avpops:parse_op_value: unable to get"
+					" pseudo-variable\n");
 			goto error;
 		}
-		opd |= AVPOPS_VAL_AVP |
-			((type&AVP_NAME_STR)?AVPOPS_VAL_STR:AVPOPS_VAL_INT);
-		DBG("flag==%d/%d\n", opd, ops);
-		p += len;
+		if (vp->sval.type==XL_NULL)
+		{
+			LOG(L_ERR,"ERROR:avops:parse_op_value: bad param; "
+				"expected : $pseudo-variable or int/str value\n");
+			goto error;
+		}
+		opd |= AVPOPS_VAL_PVAR;
+		DBG("avops:parse_op_value: flag==%d/%d\n", opd, ops);
 	} else {
 		/* value is explicitly given */
 		if ( (vp=parse_intstr_value(p,len))==0) {
@@ -694,12 +694,11 @@ struct fis_param* parse_op_value(char *s)
 			LOG(L_ERR,"ERROR:avpops:parse_op_value: value must be int\n");
 			goto error;
 		}
-		/* go over */
-		p += len;
 	}
 
 	/* any flags */
-	if (*p!=0 )
+	p = t;
+	if (p!=0 && *p!=0 )
 	{
 		if (*p!='/' || *(++p)==0)
 			goto parse_error;

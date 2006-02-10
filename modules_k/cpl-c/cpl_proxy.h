@@ -320,7 +320,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 		get_basic_attr( p, attr_name, n, intr, script_error);
 		switch (attr_name) {
 			case TIMEOUT_ATTR:
-				if (cpl_env.timer_avp.n || cpl_env.timer_avp.s) {
+				if (cpl_env.timer_avp.n || cpl_env.timer_avp.s.s) {
 					if ( add_avp( cpl_env.timer_avp_type,
 					cpl_env.timer_avp, (int_str)(int)n)<0) {
 						LOG(L_ERR,"ERROR:run_proxy: unable to set "

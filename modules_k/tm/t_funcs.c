@@ -327,7 +327,7 @@ static inline int avp2timer(unsigned int* timer, int type, int_str name)
 	}
 	
 	if (avp->flags & AVP_VAL_STR) {
-		*timer = str2s(val_istr.s->s, val_istr.s->len, &err);
+		*timer = str2s(val_istr.s.s, val_istr.s.len, &err);
 		if (err) {
 			LOG(L_ERR, "avp2timer: Error while converting string to integer\n");
 			return -1;

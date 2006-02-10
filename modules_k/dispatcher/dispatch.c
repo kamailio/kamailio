@@ -818,7 +818,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 
 	if(ds_use_default!=0 && hash!=_ds_list[idx].nr-1)
 	{
-		avp_val.s = &_ds_list[idx].dlist[_ds_list[idx].nr-1].uri;
+		avp_val.s = _ds_list[idx].dlist[_ds_list[idx].nr-1].uri;
 		avp_name.n = dst_avp_id;
 		if(add_avp(AVP_VAL_STR, avp_name, avp_val)!=0)
 			return -1;
@@ -834,7 +834,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 			continue;
 		DBG("DISPATCHER:ds_select_dst: using entry [%d/%d]\n",
 				set, i);
-		avp_val.s = &_ds_list[idx].dlist[i].uri;
+		avp_val.s = _ds_list[idx].dlist[i].uri;
 		avp_name.n = dst_avp_id;
 		if(add_avp(AVP_VAL_STR, avp_name, avp_val)!=0)
 			return -1;
@@ -848,7 +848,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 			continue;
 		DBG("DISPATCHER:ds_select_dst: using entry [%d/%d]\n",
 				set, i);
-		avp_val.s = &_ds_list[idx].dlist[i].uri;
+		avp_val.s = _ds_list[idx].dlist[i].uri;
 		avp_name.n = dst_avp_id;
 		if(add_avp(AVP_VAL_STR, avp_name, avp_val)!=0)
 			return -1;
@@ -856,7 +856,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 	}
 
 	/* add to avp the first used dst */
-	avp_val.s = &_ds_list[idx].dlist[hash].uri;
+	avp_val.s = _ds_list[idx].dlist[hash].uri;
 	avp_name.n = dst_avp_id;
 	if(add_avp(AVP_VAL_STR, avp_name, avp_val)!=0)
 		return -1;
@@ -901,13 +901,13 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 	if(avp==NULL || !(avp->flags&AVP_VAL_STR))
 		return -1; /* no more avps or value is int */
 	
-	if(ds_update_dst(msg, avp_value.s, mode)!=0)
+	if(ds_update_dst(msg, &avp_value.s, mode)!=0)
 	{
 		LOG(L_ERR, "DISPATCHER:ds_next_dst: cannot set dst addr\n");
 		return -1;
 	}
 	DBG("DISPATCHER:ds_next_dst: using [%.*s]\n",
-			avp_value.s->len, avp_value.s->s);
+			avp_value.s.len, avp_value.s.s);
 	
 	return 1;
 }
@@ -939,12 +939,12 @@ int ds_mark_dst(struct sip_msg *msg, int mode)
 		return -1; /* dst avp deleted -- strange */
 	
 	if(mode==1)
-		ret = ds_set_state(group, avp_value.s, DS_INACTIVE_DST, 0);
+		ret = ds_set_state(group, &avp_value.s, DS_INACTIVE_DST, 0);
 	else
-		ret = ds_set_state(group, avp_value.s, DS_INACTIVE_DST, 1);
+		ret = ds_set_state(group, &avp_value.s, DS_INACTIVE_DST, 1);
 
 	DBG("DISPATCHER:ds_mark_dst: mode [%d] grp [%d] dst [%.*s]\n",
-			mode, group, avp_value.s->len, avp_value.s->s);
+			mode, group, avp_value.s.len, avp_value.s.s);
 	
 	return (ret==0)?1:-1;
 }

@@ -155,8 +155,8 @@ static inline int ds_get_ivalue(struct sip_msg* msg, ds_param_p dp, int *val)
 	}
 	
 	DBG("DISPATCHER:ds_get_ivalue: searching %d %d %d\n", dp->v.sp.type,
-			dp->v.sp.p.hindex, dp->v.sp.p.hparam.len);
-	if(xl_get_spec_value(msg, &dp->v.sp, &value)!=0 
+			dp->v.sp.p.ind, dp->v.sp.p.val.len);
+	if(xl_get_spec_value(msg, &dp->v.sp, &value, 0)!=0 
 			|| value.flags&XL_VAL_NULL || !(value.flags&XL_VAL_INT))
 	{
 		LOG(L_ERR,

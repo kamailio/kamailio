@@ -428,7 +428,7 @@ int acc_log_request( struct sip_msg *rq, struct hdr_field *to,
 	if ( multileg_enabled ) {
 		BEGIN_loop_all_legs;
 		if (p+A_SEPARATOR_LEN+7+A_EQ_LEN+A_SEPARATOR_LEN+7+A_EQ_LEN
-		+(src?src_val.s->len:NA_LEN)+(dst?dst_val.s->len:NA_LEN) >
+		+(src?src_val.s.len:NA_LEN)+(dst?dst_val.s.len:NA_LEN) >
 		log_msg+MAX_LOG_SIZE ) {
 			LOG(L_ERR, "ERROR:acc:acc_log_request: buffer to small\n");
 			return -1;
@@ -436,8 +436,8 @@ int acc_log_request( struct sip_msg *rq, struct hdr_field *to,
 		if (src) {
 			memcpy(p, A_SEPARATOR"src_leg"A_EQ, A_SEPARATOR_LEN+7+A_EQ_LEN );
 			p+=A_SEPARATOR_LEN+7+A_EQ_LEN;
-			memcpy(p, src_val.s->s, src_val.s->len);
-			p+=src_val.s->len;
+			memcpy(p, src_val.s.s, src_val.s.len);
+			p+=src_val.s.len;
 		} else {
 			memcpy(p, A_SEPARATOR"src_leg"A_EQ NA,
 				A_SEPARATOR_LEN+7+A_EQ_LEN+NA_LEN);
@@ -446,8 +446,8 @@ int acc_log_request( struct sip_msg *rq, struct hdr_field *to,
 		if (dst) {
 			memcpy(p, A_SEPARATOR"dst_leg"A_EQ, A_SEPARATOR_LEN+7+A_EQ_LEN );
 			p+=A_SEPARATOR_LEN+7+A_EQ_LEN;
-			memcpy(p, dst_val.s->s, dst_val.s->len);
-			p+=dst_val.s->len;
+			memcpy(p, dst_val.s.s, dst_val.s.len);
+			p+=dst_val.s.len;
 		} else {
 			memcpy(p, A_SEPARATOR"dst_leg"A_EQ NA,
 				A_SEPARATOR_LEN+7+A_EQ_LEN+NA_LEN);
@@ -677,8 +677,8 @@ int acc_db_request( struct sip_msg *rq, struct hdr_field *to,
 		}
 	} else {
 		BEGIN_loop_all_legs;
-		VAL_STR(db_vals+attr_cnt+0) = src?(*(src_val.s)):na;
-		VAL_STR(db_vals+attr_cnt+1) = dst?(*(dst_val.s)):na;
+		VAL_STR(db_vals+attr_cnt+0) = src?(src_val.s):na;
+		VAL_STR(db_vals+attr_cnt+1) = dst?(dst_val.s):na;
 		if (acc_dbf.insert(db_handle, db_keys, db_vals, attr_cnt+2) < 0) {
 			LOG(L_ERR, "ERROR:acc:acc_db_request: "
 				"Error while inserting to database\n");
@@ -907,13 +907,13 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 	if (multileg_enabled) {
 		BEGIN_loop_all_legs;
 		if (!rc_avpair_add(rh, &send, attrs[A_SRC_LEG].v,
-				src?src_val.s->s:NA,src?src_val.s->len:NA_LEN, 0)) {
+				src?src_val.s.s:NA,src?src_val.s.len:NA_LEN, 0)) {
 			LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
 				"failed for %d\n", attrs[A_SRC_LEG].v );
 			goto error;
 		}
 		if (!rc_avpair_add(rh, &send, attrs[A_DST_LEG].v,
-				dst?dst_val.s->s:NA,dst?dst_val.s->len:NA_LEN, 0)) {
+				dst?dst_val.s.s:NA,dst?dst_val.s.len:NA_LEN, 0)) {
 			LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
 				"failed for %d\n", attrs[A_DST_LEG].v );
 			goto error;

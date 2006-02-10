@@ -47,8 +47,8 @@ struct aaa_avp {
 static inline void free_aaa_avp(struct aaa_avp *avp)
 {
 	if (avp) {
-		if (avp->avp_type&AVP_NAME_STR && avp->avp_name.s!=&avp->attr_name)
-			pkg_free(avp->avp_name.s);
+		if (avp->avp_type&AVP_NAME_STR && avp->avp_name.s.s!=avp->attr_name.s)
+			pkg_free(avp->avp_name.s.s);
 		if (avp->attr_name.s)
 			pkg_free(avp->attr_name.s);
 		pkg_free(avp);
@@ -107,16 +107,15 @@ static inline int parse_aaa_avps(char *definition,
 				goto parse_error;
 			/* copy the avp name into the avp structure */
 			if (avp->avp_type&AVP_NAME_STR) {
-				avp->avp_name.s =
-					(str*)pkg_malloc(sizeof(str)+avp_name.s->len+1);
-				if (avp->avp_name.s==0) {
+				avp->avp_name.s.s =
+					(char*)pkg_malloc(avp_name.s.len+1);
+				if (avp->avp_name.s.s==0) {
 					LOG(L_ERR,"ERROR:auth_aaa_avps: no more pkg mem\n");
 					goto error;
 				}
-				avp->avp_name.s->len = avp_name.s->len;
-				avp->avp_name.s->s = ((char*)avp->avp_name.s) + sizeof(str);
-				memcpy( avp->avp_name.s->s, avp_name.s->s, avp_name.s->len);
-				avp->avp_name.s->s[avp->avp_name.s->len] = 0;
+				avp->avp_name.s.len = avp_name.s.len;
+				memcpy(avp->avp_name.s.s, avp_name.s.s, avp_name.s.len);
+				avp->avp_name.s.s[avp->avp_name.s.len] = 0;
 			} else {
 				avp->avp_name.n = avp_name.n;
 			}
@@ -139,10 +138,10 @@ static inline int parse_aaa_avps(char *definition,
 		memcpy( avp->attr_name.s, foo.s, foo.len );
 		avp->attr_name.s[foo.len] = 0;
 		/* was an avp name specified? */
-		if (avp->avp_name.s==0) {
+		if (avp->avp_name.s.s==0) {
 			/* use as avp_name the attr name */
 			avp->avp_type = AVP_NAME_STR;
-			avp->avp_name.s = &avp->attr_name;
+			avp->avp_name.s = avp->attr_name;
 		}
 		/* link the element */
 		avp->next = *avp_def;

@@ -250,16 +250,15 @@ static int fixup_avp(void** param, int param_no)
             }
             /* copy the avp name into the ps structure */
             if (ps->avp_type & AVP_NAME_STR) {
-                ps->avp_name.s = (str*) pkg_malloc(sizeof(str) + avp_name.s->len + 1);
-                if (ps->avp_name.s == NULL) {
+                ps->avp_name.s.s = (char*) pkg_malloc(avp_name.s.len + 1);
+                if (ps->avp_name.s.s == NULL) {
                     LOG(L_ERR, "ERROR: domain/fixup_avp(): out of pkg mem\n");
                     pkg_free(ps);
                     return E_OUT_OF_MEM;
                 }
-                ps->avp_name.s->len = avp_name.s->len;
-                ps->avp_name.s->s = ((char*)ps->avp_name.s) + sizeof(str);
-                memcpy(ps->avp_name.s->s, avp_name.s->s, avp_name.s->len);
-                ps->avp_name.s->s[ps->avp_name.s->len] = 0;
+                ps->avp_name.s.len = avp_name.s.len;
+                memcpy(ps->avp_name.s.s, avp_name.s.s, avp_name.s.len);
+                ps->avp_name.s.s[ps->avp_name.s.len] = 0;
             } else {
                 ps->avp_name.n = avp_name.n;
             }

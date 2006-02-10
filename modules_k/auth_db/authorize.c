@@ -184,10 +184,11 @@ static int generate_avps(db_res_t* result)
 			continue;
 
 		value.len = strlen(value.s);
+		
 		if (value.len == 0)
 			continue;
 
-		ivalue.s = &value;
+		ivalue.s = value;
 
 		if (add_avp( cred->avp_type|AVP_VAL_STR, cred->avp_name, ivalue)!=0) {
 			LOG(L_ERR,"ERROR:auth_db:generate_avps: failed to add AVP\n");
@@ -195,7 +196,7 @@ static int generate_avps(db_res_t* result)
 		}
 
 		DBG("generate_avps: set string AVP \"%s\"/%d = \"%.*s\"\n",
-			(cred->avp_type&AVP_NAME_STR)?cred->avp_name.s->s:"",
+			(cred->avp_type&AVP_NAME_STR)?cred->avp_name.s.s:"",
 			(cred->avp_type&AVP_NAME_STR)?0:cred->avp_name.n,
 			value.len, ZSW(value.s));
 	}
