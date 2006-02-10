@@ -259,7 +259,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int replicate)
 			reply_ret=kill_transaction( t );
 			if (reply_ret>0) {
 				/* we have taken care of all -- do nothing in
-			  	script */
+				script */
 				DBG("ERROR: generation of a stateful reply "
 					"on error succeeded\n");
 				ret=0;

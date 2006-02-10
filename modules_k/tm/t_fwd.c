@@ -580,8 +580,6 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	/* make -Wall happy */
 	current_uri.s=0;
 
-	set_kr(REQ_FWDED);
-
 	if (p_msg->REQ_METHOD==METHOD_CANCEL) {
 		t_invite=t_lookupOriginalT(  p_msg );
 		if (t_invite!=T_NULL_CELL) {
@@ -676,6 +674,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 				if (proxy) { proxy->errors++; proxy->ok=0; }
 			} else {
 				success_branch++;
+				set_kr(REQ_FWDED);
 			}
 			start_retr( &t->uac[i].request );
 		}
