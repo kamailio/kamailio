@@ -71,8 +71,11 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact,
 	str_dup( &c->c, _contact);
 	str_dup( &c->callid, _ci->callid);
 	str_dup( &c->user_agent, _ci->user_agent);
-	if (_ci->received && _ci->received->len) {
-		str_dup( &c->received, _ci->received);
+
+	if (_ci->received.s && _ci->received.len) {
+		DBG("============= usrloc:new_ucontact: %s\n",
+				_ci->received.s);
+		str_dup( &c->received, &_ci->received);
 	}
 	if (_ci->path && _ci->path->len) {
 		str_dup( &c->path, _ci->path);
@@ -201,8 +204,8 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 
 	update_str( &_c->user_agent, _ci->user_agent);
 
-	if (_ci->received) {
-		update_str( &_c->received, _ci->received);
+	if (_ci->received.s && _ci->received.len) {
+		update_str( &_c->received, &_ci->received);
 	} else {
 		if (_c->received.s) shm_free(_c->received.s);
 		_c->received.s = 0;

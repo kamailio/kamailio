@@ -1378,7 +1378,8 @@ int ops_print_avp()
 		get_avp_val( avp, &val);
 		if (avp->flags&AVP_VAL_STR)
 		{
-			LOG(L_INFO,"INFO:\t\t\tval_str=<%.*s>\n",val.s.len,val.s.s);
+			LOG(L_INFO,"INFO:\t\t\tval_str=<%.*s / %d>\n",val.s.len,val.s.s,
+					val.s.len);
 		} else {
 			LOG(L_INFO,"INFO:\t\t\tval_int=<%d>\n",val.n);
 		}

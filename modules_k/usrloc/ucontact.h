@@ -86,7 +86,7 @@ typedef struct ucontact {
 } ucontact_t;
 
 typedef struct ucontact_info {
-	str* received;
+	str received;
 	str* path;
 	time_t expires;
 	qvalue_t q;

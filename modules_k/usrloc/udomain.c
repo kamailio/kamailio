@@ -395,7 +395,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		} else {
 			received.len = strlen(received.s);
 		}
-		ci.received = &received;
+		ci.received = received;
 		
 		path.s  = (char*)VAL_STRING(ROW_VALUES(row) + 9);
 		if (VAL_NULL(ROW_VALUES(row)+9) || !path.s || !path.s[0]) {

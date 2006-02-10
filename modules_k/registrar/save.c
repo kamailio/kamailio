@@ -222,12 +222,14 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 	static str no_ua = str_init("n/a");
 	static str callid;
 	static str path;
-	static str *received;
+	static str received;
 	static int received_found;
 	static unsigned int allowed, allow_parsed;
 	static struct sip_msg *m = 0;
 	int_str val;
 
+	received.s = 0;
+	received.len = 0;
 	if (_m!=0) {
 		memset( &ci, 0, sizeof(ucontact_info_t));
 
@@ -325,7 +327,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 
 		/* get received */
 		if (_c->received) {
-			ci.received = &_c->received->body;
+			ci.received = _c->received->body;
 		} else {
 			if (received_found==0) {
 				if (search_first_avp(0, rcv_avp, &val) && val.s.s) {
@@ -334,9 +336,10 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 						LOG(L_ERR,"ERROR:usrloc:pack_ci: received too long\n");
 						goto error;
 					}
-					received = &val.s;
+					received = val.s;
 				} else {
-					received = 0;
+					received.s = 0;
+					received.len = 0;
 				}
 				received_found = 1;
 			}
