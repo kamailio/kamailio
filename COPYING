@@ -14,7 +14,8 @@ IMPORTANT NOTES
 
 2) ser software allows programmers to plug-in external modules to the
    core part. Note that GPL mandates all plug-ins developed for the
-   ser software released under GPL license to be GPL-ed as well.
+   ser software released under GPL license to be GPL-ed or use a GPL
+   compatible free software license.
 
    (see http://www.gnu.org/copyleft/gpl-faq.html#GPLAndPlugins
     for a detailed explanation)
