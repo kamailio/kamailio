@@ -128,7 +128,9 @@ int shm_getmem()
 {
 
 #ifdef SHM_MMAP
+#ifndef USE_ANON_MMAP
 	int fd;
+#endif
 #else
 	struct shmid_ds shm_info;
 #endif
