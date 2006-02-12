@@ -182,22 +182,15 @@ int check_ruri_sip_version(struct sip_msg* _msg) {
 /* check if the r-uri scheme */
 int check_ruri_scheme(struct sip_msg* _msg) {
 
-	DBG("sanit_check(): check_ruri_scheme(): this is useless check for now; check the source code comments\n");
-	return 0;
-
-	/* FIXME unsupported uri scheme end up allready with
-	 * an error in the uri parser, thus this check does not
-	 * make too much sence yet 
 	DBG("check_ruri_scheme entered\n");
 
 	if (_msg->parsed_uri_ok == 0 &&
 			parse_sip_msg_uri(_msg) != 1) {
-		// FIXME unsupported schemes end up here already
-		LOG(L_ERR, "sanity_check(): check_ruri_scheme(): failed to parse request uri\n");
-		return -1;
+		/* unsupported schemes end up here already */
+		LOG(L_WARN, "sanity_check(): check_ruri_scheme(): failed to parse request uri\n");
 	}
 	if (_msg->parsed_uri.type == ERROR_URI_T) {
-		if (sl_reply(_msg, (char*)416, "Unsupported URI Scheme (R-URI)") == -1) {
+		if (sl_reply(_msg, (char*)416, "Unsupported URI Scheme in Request URI") == -1) {
 			LOG(L_ERR, "sanity_check(): check_ruri_scheme(): failed to send 416 via send_reply\n");
 			return -1;
 		}
@@ -209,7 +202,6 @@ int check_ruri_scheme(struct sip_msg* _msg) {
 #endif
 
 	return 0;
-	*/
 }
 
 /* check for the presence of the minimal required headers */

@@ -55,8 +55,8 @@
 		</listitem>
 		<listitem>
 			<para>
-			ruri scheme - (2) - not working because parser fails already on
-			unknown URI schemes.
+			ruri scheme - (2) - checks if the URI scheme of the request URI is
+			supported (sip[s]|tel[s]) by SER.
 			</para>
 		</listitem>
 		<listitem>

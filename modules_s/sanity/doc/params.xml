@@ -24,15 +24,15 @@
 		is the sum of the check numbers which should be executed by default.
 	</para>
 	<para>
-	    Default value is 997. This resolves to the following list of
-		checks: ruri_sip_version, required_headers, cseq_method,
+	    Default value is 999. This resolves to the following list of
+		checks: ruri_sip_version, ruri_scheme, required_headers, cseq_method,
 		cseq_value, cotent_length, expires_value, proxy_require.
 	</para>
 	<example>
 	    <title>Set <varname>default_checks</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("sanity", "default_expires", "1")
+modparam("sanity", "default_checks", "1")
 ...
 	    </programlisting>
 	</example>
