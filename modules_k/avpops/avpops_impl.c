@@ -1037,8 +1037,7 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 	}
 
 	n = 0;
-	while (avp)
-	{
+	do {
 		/* the avp val will be used all the time as str */
 		if (flags&AVP_VAL_STR) {
 			val = avp_val.s;
