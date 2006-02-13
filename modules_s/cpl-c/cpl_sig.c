@@ -28,6 +28,7 @@
 
 #include "../../action.h"
 #include "../../dset.h"
+#include "../../route.h"
 #include "../tm/tm_load.h"
 #include "loc_set.h"
 #include "cpl_sig.h"
@@ -95,7 +96,7 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 
 	/* run what proxy route is set */
 	if (cpl_env.proxy_route) {
-		if (run_actions( rlist[cpl_env.proxy_route], msg)<0) {
+		if (run_actions( main_rt.cvsrlist[cpl_env.proxy_route], msg)<0) {
 			LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: "
 				"Error in do_action for proxy_route\n");
 		}
