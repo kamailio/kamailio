@@ -23,8 +23,8 @@
  */
 
 
-#ifndef _HASH_H
-#define _HASH_H
+#ifndef _DOM_HASH_H_
+#define _DOM_HASH_H_
 
 #include <stdio.h>
 #include "domain_mod.h"

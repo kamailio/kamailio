@@ -22,8 +22,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef HASH_H
-#define HASH_H
+#ifndef _PERM_HASH_H_
+#define _PERM_HASH_H_
 
 #include <stdio.h>
 #include "../../parser/msg_parser.h"
@@ -86,4 +86,4 @@ void hash_table_print(struct trusted_list** hash_table, FILE* reply_file);
 void empty_hash_table(struct trusted_list** hash_table);
 
 
-#endif /* HASH_H */
+#endif /* _PERM_HASH_H_ */
