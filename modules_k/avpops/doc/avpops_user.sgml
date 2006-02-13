@@ -17,11 +17,11 @@
 		<para>
 		AVPops (AVP-operations) modules implements a set of script
 		functions which allow access and manipulation of user AVPs
-		(preferences). AVPs are a powerful tool for implementing
-		services/preferences per user/domain. Now they are usable
-		directly from configuration script. Functions for interfacing DB 
-		resources (loading/storing/removing), functions for swapping 
-		information between AVPs and SIP messages, function for 
+		(preferences) and pseudo-variables. AVPs are a powerful tool
+		for implementing services/preferences per user/domain. Now they
+		are usable directly from configuration script. Functions for
+		interfacing DB resources (loading/storing/removing), functions
+		for swapping information between AVPs and SIP messages, function for 
 		testing/checking the value of an AVP.
 		</para>
 		<para>
@@ -33,7 +33,7 @@
 	<section>
 		<title>Dependencies</title>
 		<section>
-			<title>&ser; Modules</title>
+			<title>&openser; Modules</title>
 			<para>
 			The following modules must be loaded before this module:
 			<itemizedlist>
@@ -49,7 +49,7 @@
 			<title>External Libraries or Applications</title>
 			<para>
 				The following libraries or applications must be installed 
-				before running &ser; with this module loaded:
+				before running &openser; with this module loaded:
 				<itemizedlist>
 				<listitem>
 				<para>
@@ -81,6 +81,13 @@ modparam("avpops","avp_url","mysql://user:passwd@host/database")
 ...
 				</programlisting>
 			</example>
+		</section>
+		<section>
+			<title><varname>db_url</varname> (string)</title>
+			<para>
+			This parameter has the same meaning as <quote>avp_url</quote>
+			parameter.
+			</para>
 		</section>
 		<section>
 			<title><varname>avp_table</varname> (string)</title>
@@ -292,11 +299,14 @@ modparam("avpops","db_scheme",
 				identifying the AVPs. Parameter syntax:
 				<itemizedlist>
 					<listitem><para><emphasis>
-					source = (sip_uri|avp_alias|str_value)
+					source = (pvar|str_value)
 					['/'('username'|'domain'|'uri'|'uuid')])
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					sip_uri = '$from' | '$to' | '$ruri'
+					pvar = any pseudo variable defined in &openser;. If
+					the pvar is $ru (request uri), $fu (from uri), $tu (to uri)
+					or $ou (original uri), then the implicit flag is 'uri'.
+					Otherwise, the implicit flag is 'uuid'.
 					</emphasis></para></listitem>
 				</itemizedlist>
 				</para>
@@ -309,7 +319,7 @@ modparam("avpops","db_scheme",
 					name = avp_spec['/'(table_name|'$'db_scheme)]
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					avp_spec = ''|'s:'|'i:'|avp_name|avp_alias
+					avp_spec = ''|'s:'|'i:'|$avp(avp_name)|$avp(avp_alias)
 					</emphasis></para></listitem>
 				</itemizedlist>
 				</para>
@@ -323,10 +333,10 @@ modparam("avpops","db_scheme",
 				<title><function>avp_db_load</function> usage</title>
 				<programlisting format="linespecific">
 ...
-avp_db_load("$from","i:678");
-avp_db_load("$ruri/domain","i:/domain_preferences");
-avp_db_load("$uuid","s:404fwd/fwd_table");
-avp_db_load("$ruri","i:123/$some_scheme");
+avp_db_load("$fu","$(i:678)");
+avp_db_load("$ru/domain","i:/domain_preferences");
+avp_db_load("$uuid","$avp(s:404fwd)/fwd_table");
+avp_db_load("$ru","$avp(i:123)/$some_scheme");
 ...
 				</programlisting>
 			</example>
@@ -351,8 +361,8 @@ avp_db_load("$ruri","i:123/$some_scheme");
 				<title><function>avp_db_store</function> usage</title>
 				<programlisting format="linespecific">
 ...
-avp_db_store("$to","i:678");
-avp_db_store("$ruri/username","$email");
+avp_db_store("$tu","$avp(i:678)");
+avp_db_store("$ru/username","$avp($email)");
 ...
 				</programlisting>
 			</example>
@@ -375,9 +385,9 @@ avp_db_store("$ruri/username","$email");
 				<title><function>avp_db_delete</function> usage</title>
 				<programlisting format="linespecific">
 ...
-avp_db_delete("$to","i:678");
-avp_db_delete("$ruri/username","$email");
-avp_db_delete("$uuid","s:404fwd/fwd_table");
+avp_db_delete("$tu","$avp(i:678)");
+avp_db_delete("$ru/username","$avp($email)");
+avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 ...
 				</programlisting>
 			</example>
@@ -400,10 +410,10 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
 					value = (variable) | (fix_value)
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					variable = '$src_ip' | '$dst_ip' | '$hdr(name)' | '$duri' | (sip_uri)['/'('username'|'domain')])
+					variable = pvar ['/'('username'|'domain')])
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					sip_uri = '$from' | '$to' | '$ruri'
+					pvar = any pseudo-variable defined in &openser;
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
 					fix_value = 'i:'integer | 's:'string | string
@@ -435,12 +445,12 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
 				<title><function>avp_write</function> usage</title>
 				<programlisting format="linespecific">
 ...
-avp_write("$to","i:678");
-avp_write("$ruri/username","$email");
-avp_write("$src_ip","s:ip");
-avp_write("$duri","s:next_hop");
-avp_write("$hdr[call-id]","i:11");
-avp_write("i:333","i:6");
+avp_write("$tu","$avp(i:678)");
+avp_write("$ru/username","$avp($email)");
+avp_write("$si","$avp(s:ip)");
+avp_write("$du","$avp(s:next_hop)");
+avp_write("$hdr(call-id)","$avp(i:11)");
+avp_write("i:333","$avp(i:6)");
 ...
 				</programlisting>
 			</example>
@@ -478,8 +488,8 @@ avp_write("i:333","i:6");
 				<title><function>avp_delete</function> usage</title>
 				<programlisting format="linespecific">
 ...
-avp_delete("i:678/g");
-avp_delete("$email");
+avp_delete("$avp(i:678)/g");
+avp_delete("$avp($email)");
 avp_delete("i:");
 avp_delete("");
 ...
@@ -502,13 +512,14 @@ avp_delete("");
 				Parameter syntax:
 				<itemizedlist>
 					<listitem><para><emphasis>
-					destination = ruri_dst | hdr_dst | '$duri'
+					destination = '$ru' ['/'('username'|'domain')] | '$du'
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					ruri_dst = '$ruri'['/'('username'|'domain')]
+					$ru '['/'('username'|'domain')] - write the AVP in the
+					request URI or in username/domain part of it
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					hdr_dst = '$hdr_name'['/'('request'|'reply')]
+					$du - write the AVP in 'dst_uri' field
 					</emphasis></para></listitem>
 				</itemizedlist>
 				</para>
@@ -535,11 +546,9 @@ avp_delete("");
 				<title><function>avp_pushto</function> usage</title>
 				<programlisting format="linespecific">
 ...
-avp_pushto("$ruri","i:678");
-avp_pushto("$ruri/domain","s:backup_domains/g");
-avp_pushto("$duri","i:679");
-avp_pushto("$Email/reply","s:email");
-avp_pushto("$Foo","$bar/g");
+avp_pushto("$ru","$avp(i:678)");
+avp_pushto("$ru/domain","$avp(s:backup_domains)/g");
+avp_pushto("$du","$avp(i:679)");
 ...
 				</programlisting>
 			</example>
@@ -560,7 +569,7 @@ avp_pushto("$Foo","$bar/g");
 				Parameter syntax is:
 				<itemizedlist>
 					<listitem><para><emphasis>
-					name = ( avp_name | avp_alias )
+					name = ( pseudo-variable )
 					</emphasis></para></listitem>
 				</itemizedlist>
 				</para>
@@ -578,10 +587,8 @@ avp_pushto("$Foo","$bar/g");
 					| 're' | 'fm' | 'and' | 'or' | 'xor'
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					value = variable | fix_value
+					value = pseudo-variable | fix_value
 					</emphasis></para></listitem>
-					<listitem><para><emphasis>
-					variable = '$from'|'$ruri'|'$from'|'$src_ip'|'$dst_ip'|avp_alias
 					<listitem><para><emphasis>
 					fix_value = 'i:'integer | 's:'string | string
 					</emphasis></para></listitem>
@@ -604,11 +611,11 @@ avp_pushto("$Foo","$bar/g");
 				<title><function>avp_check</function> usage</title>
 				<programlisting format="linespecific">
 ...
-avp_check("i:678", "lt/i:345/g");
-avp_check("s:person","eq/$from/I");
-avp_check("s:foo","gt/$bar/g");
-avp_check("s:foo","re/sip:.*@bar.net/g");
-avp_check("s:foo","fm/$fm_avp/g");
+avp_check("$avp(i:678)", "lt/i:345/g");
+avp_check("$fd","eq/$td/I");
+avp_check("$avp(s:foo)","gt/$avp($bar)/g");
+avp_check("$avp(s:foo)","re/sip:.*@bar.net/g");
+avp_check("$avp(s:foo)","fm/$fm_avp/g");
 ...
 				</programlisting>
 			</example>
@@ -656,8 +663,8 @@ avp_check("s:foo","fm/$fm_avp/g");
 				<title><function>avp_copy</function> usage</title>
 				<programlisting format="linespecific">
 ...
-avp_copy("i:678", "s:345/g");
-avp_copy("$old","$new/gd");
+avp_copy("$avp(i:678)", "$avp(s:345)/g");
+avp_copy("$avp($old)","$avp($new)/gd");
 ...
 				</programlisting>
 			</example>
@@ -702,7 +709,7 @@ avp_copy("$old","$new/gd");
 				<title><function>avp_printf</function> usage</title>
 				<programlisting format="linespecific">
 ...
-avp_printf("i:20", "This is a $rm request with the call-id $hdr(call-id)");
+avp_printf("$avp(i:20)", "This is a $rm request with call-id $hdr(call-id)");
 ...
 				</programlisting>
 			</example>
@@ -770,12 +777,12 @@ avp_printf("i:20", "This is a $rm request with the call-id $hdr(call-id)");
 ...
 # if avp i:678 has a string value in e-mail format, replace the
 # domain part with the value of domain part from R-URI
-avp_subst("i:678", "/(.*)@(.*)/\1@$rd/");
+avp_subst("$avp(i:678)", "/(.*)@(.*)/\1@$rd/");
 
 # if any avp i:678 has a string value in e-mail format, replace the
 # domain part with the value of domain part from R-URI
 # and place the result in avp i:679
-avp_subst("i:678/i:679/g", "/(.*)@(.*)/\1@$rd/");
+avp_subst("$avp(i:678)/$avp(i:679)/g", "/(.*)@(.*)/\1@$rd/");
 ...
 				</programlisting>
 			</example>
@@ -835,10 +842,8 @@ avp_subst("i:678/i:679/g", "/(.*)@(.*)/\1@$rd/");
 					| 'and' | 'or' | 'xor' | 'not'
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					value = variable | fix_value
+					value = pseudo-variable | fix_value
 					</emphasis></para></listitem>
-					<listitem><para><emphasis>
-					variable = avp_alias
 					<listitem><para><emphasis>
 					fix_value = 'i:'integer
 					</emphasis></para></listitem>
@@ -861,8 +866,8 @@ avp_subst("i:678/i:679/g", "/(.*)@(.*)/\1@$rd/");
 				<title><function>avp_op</function> usage</title>
 				<programlisting format="linespecific">
 ...
-avp_op("i:678", "add/i:345/g");
-avp_op("$number","sub/$number2/d");
+avp_op("$avp(i:678)", "add/i:345/g");
+avp_op("$avp($number)","sub/$avp($number2)/d");
 ...
 				</programlisting>
 			</example>
@@ -885,7 +890,8 @@ avp_op("$number","sub/$number2/d");
 					name = ('s:'|'i:'|avp_name|avp_alias [ '/' flags ])
 					</emphasis></para>
 					<para><emphasis>
-					flags = ('s'|'n') - s = value string; n = value number (int)
+					flags = ('e'|'s'|'n') - e = empty value; s = value string;
+					n = value number (int)
 					</emphasis></para></listitem>
 				</itemizedlist>
 				</para>
@@ -899,7 +905,7 @@ avp_op("$number","sub/$number2/d");
 				<title><function>is_avp_set</function> usage</title>
 				<programlisting format="linespecific">
 ...
-if(is_avp_set("i:678"))
+if(is_avp_set("$avp(i:678)"))
     log("AVP with integer id 678 exists\n");
 ...
 				</programlisting>

@@ -131,6 +131,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
+	{"db_url",            STR_PARAM, &DB_URL         },
 	{"avp_url",           STR_PARAM, &DB_URL         },
 	{"avp_table",         STR_PARAM, &DB_TABLE       },
 	{"avp_aliases",       STR_PARAM|USE_FUNC_PARAM, (void*)register_galiases },
@@ -567,7 +568,7 @@ static int fixup_pushto_avp(void** param, int param_no)
 		if ( *s!='$')
 		{
 			LOG(L_ERR,"ERROR:avops:fixup_pushto_avp: bad param 1; expected : "
-				"$hdr(name) $ru $du ...\n");
+				"$ru $du ...\n");
 			return E_UNSPEC;
 		}
 		/* compose the param structure */
@@ -586,7 +587,7 @@ static int fixup_pushto_avp(void** param, int param_no)
 				&& ap->sval.type!=XL_DSTURI)
 		{
 			LOG(L_ERR,"ERROR:avops:fixup_pushto_avp: bad param 1; "
-				"expected : $hdr(name) $ru $du ...\n");
+				"expected : $ru $du ...\n");
 			pkg_free(ap);
 			return E_UNSPEC;
 		}

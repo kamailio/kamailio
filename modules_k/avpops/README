@@ -24,16 +24,17 @@ Ramona-Elena Modroiu
         1.3. Exported Parameters
 
               1.3.1. avp_url (string)
-              1.3.2. avp_table (string)
-              1.3.3. avp_aliases (string)
-              1.3.4. use_domain (integer)
-              1.3.5. uuid_column (string)
-              1.3.6. username_column (string)
-              1.3.7. domain_column (string)
-              1.3.8. attribute_column (string)
-              1.3.9. value_column (string)
-              1.3.10. type_column (string)
-              1.3.11. db_scheme (string)
+              1.3.2. db_url (string)
+              1.3.3. avp_table (string)
+              1.3.4. avp_aliases (string)
+              1.3.5. use_domain (integer)
+              1.3.6. uuid_column (string)
+              1.3.7. username_column (string)
+              1.3.8. domain_column (string)
+              1.3.9. attribute_column (string)
+              1.3.10. value_column (string)
+              1.3.11. type_column (string)
+              1.3.12. db_scheme (string)
 
         1.4. Exported Functions
 
@@ -87,12 +88,12 @@ Chapter 1. User's Guide
 
    AVPops (AVP-operations) modules implements a set of script
    functions which allow access and manipulation of user AVPs
-   (preferences). AVPs are a powerful tool for implementing
-   services/preferences per user/domain. Now they are usable
-   directly from configuration script. Functions for interfacing
-   DB resources (loading/storing/removing), functions for
-   swapping information between AVPs and SIP messages, function
-   for testing/checking the value of an AVP.
+   (preferences) and pseudo-variables. AVPs are a powerful tool
+   for implementing services/preferences per user/domain. Now
+   they are usable directly from configuration script. Functions
+   for interfacing DB resources (loading/storing/removing),
+   functions for swapping information between AVPs and SIP
+   messages, function for testing/checking the value of an AVP.
 
    An up-to-date tutorial providing more information (detailed
    explanations and commented examples) can be found on Voice
@@ -131,7 +132,12 @@ modparam("avpops","avp_url","mysql://user:passwd@host/database")
 ...
      _________________________________________________________
 
-1.3.2. avp_table (string)
+1.3.2. db_url (string)
+
+   This parameter has the same meaning as "avp_url" parameter.
+     _________________________________________________________
+
+1.3.3. avp_table (string)
 
    DB table to be used.
 
@@ -143,7 +149,7 @@ modparam("avpops","avp_table","avptable")
 ...
      _________________________________________________________
 
-1.3.3. avp_aliases (string)
+1.3.4. avp_aliases (string)
 
    Contains a multiple definition of aliases for AVP names.
 
@@ -156,7 +162,7 @@ modparam("avpops","avp_aliases","uuid=I:660;email=s:email_addr;fwd=i:75
 ...
      _________________________________________________________
 
-1.3.4. use_domain (integer)
+1.3.5. use_domain (integer)
 
    If the domain part of the an URI should be used for
    identifying an AVP in DB operations.
@@ -169,7 +175,7 @@ modparam("avpops","use_domain",1)
 ...
      _________________________________________________________
 
-1.3.5. uuid_column (string)
+1.3.6. uuid_column (string)
 
    Name of column containing the uuid (unique user id).
 
@@ -181,7 +187,7 @@ modparam("avpops","uuid_column","uuid")
 ...
      _________________________________________________________
 
-1.3.6. username_column (string)
+1.3.7. username_column (string)
 
    Name of column containing the username.
 
@@ -193,7 +199,7 @@ modparam("avpops","username_column","username")
 ...
      _________________________________________________________
 
-1.3.7. domain_column (string)
+1.3.8. domain_column (string)
 
    Name of column containing the domain name.
 
@@ -205,7 +211,7 @@ modparam("avpops","domain_column","domain")
 ...
      _________________________________________________________
 
-1.3.8. attribute_column (string)
+1.3.9. attribute_column (string)
 
    Name of column containing the attribute name (AVP name).
 
@@ -217,7 +223,7 @@ modparam("avpops","attribute_column","attribute")
 ...
      _________________________________________________________
 
-1.3.9. value_column (string)
+1.3.10. value_column (string)
 
    Name of column containing the AVP value.
 
@@ -229,7 +235,7 @@ modparam("avpops","value_column","value")
 ...
      _________________________________________________________
 
-1.3.10. type_column (string)
+1.3.11. type_column (string)
 
    Name of column containing the AVP type.
 
@@ -241,7 +247,7 @@ modparam("avpops","type_column","type")
 ...
      _________________________________________________________
 
-1.3.11. db_scheme (string)
+1.3.12. db_scheme (string)
 
    Definition of a DB schemeto be used for non-standard access to
    Database information.
@@ -266,23 +272,27 @@ modparam("avpops","db_scheme",
 
      * source - what info is used for identifying the AVPs.
        Parameter syntax:
-          + source = (sip_uri|avp_alias|str_value)
+          + source = (pvar|str_value)
             ['/'('username'|'domain'|'uri'|'uuid')]) 
-          + sip_uri = '$from' | '$to' | '$ruri' 
+          + pvar = any pseudo variable defined in OpenSER. If the
+            pvar is $ru (request uri), $fu (from uri), $tu (to
+            uri) or $ou (original uri), then the implicit flag is
+            'uri'. Otherwise, the implicit flag is 'uuid'. 
      * name - which AVPs will be loaded from DB into memory.
        Parameter syntax is:
           + name = avp_spec['/'(table_name|'$'db_scheme)] 
-          + avp_spec = ''|'s:'|'i:'|avp_name|avp_alias 
+          + avp_spec =
+            ''|'s:'|'i:'|$avp(avp_name)|$avp(avp_alias) 
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
    Example 1-12. avp_db_load usage
 ...
-avp_db_load("$from","i:678");
-avp_db_load("$ruri/domain","i:/domain_preferences");
-avp_db_load("$uuid","s:404fwd/fwd_table");
-avp_db_load("$ruri","i:123/$some_scheme");
+avp_db_load("$fu","$(i:678)");
+avp_db_load("$ru/domain","i:/domain_preferences");
+avp_db_load("$uuid","$avp(s:404fwd)/fwd_table");
+avp_db_load("$ru","$avp(i:123)/$some_scheme");
 ...
      _________________________________________________________
 
@@ -299,8 +309,8 @@ avp_db_load("$ruri","i:123/$some_scheme");
 
    Example 1-13. avp_db_store usage
 ...
-avp_db_store("$to","i:678");
-avp_db_store("$ruri/username","$email");
+avp_db_store("$tu","$avp(i:678)");
+avp_db_store("$ru/username","$avp($email)");
 ...
      _________________________________________________________
 
@@ -317,9 +327,9 @@ avp_db_store("$ruri/username","$email");
 
    Example 1-14. avp_db_delete usage
 ...
-avp_db_delete("$to","i:678");
-avp_db_delete("$ruri/username","$email");
-avp_db_delete("$uuid","s:404fwd/fwd_table");
+avp_db_delete("$tu","$avp(i:678)");
+avp_db_delete("$ru/username","$avp($email)");
+avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 ...
      _________________________________________________________
 
@@ -333,9 +343,8 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
      * value - the value to be written into the AVP. Parameter
        syntax:
           + value = (variable) | (fix_value) 
-          + variable = '$src_ip' | '$dst_ip' | '$hdr(name)' |
-            '$duri' | (sip_uri)['/'('username'|'domain')]) 
-          + sip_uri = '$from' | '$to' | '$ruri' 
+          + variable = pvar ['/'('username'|'domain')]) 
+          + pvar = any pseudo-variable defined in OpenSER 
           + fix_value = 'i:'integer | 's:'string | string 
        Integer values can be given in hexadecimal using notation
        'i:0xhex_number' (e.g.,: 'i:0xabcd');
@@ -348,12 +357,12 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
 
    Example 1-15. avp_write usage
 ...
-avp_write("$to","i:678");
-avp_write("$ruri/username","$email");
-avp_write("$src_ip","s:ip");
-avp_write("$duri","s:next_hop");
-avp_write("$hdr[call-id]","i:11");
-avp_write("i:333","i:6");
+avp_write("$tu","$avp(i:678)");
+avp_write("$ru/username","$avp($email)");
+avp_write("$si","$avp(s:ip)");
+avp_write("$du","$avp(s:next_hop)");
+avp_write("$hdr(call-id)","$avp(i:11)");
+avp_write("i:333","$avp(i:6)");
 ...
      _________________________________________________________
 
@@ -373,8 +382,8 @@ avp_write("i:333","i:6");
 
    Example 1-16. avp_delete usage
 ...
-avp_delete("i:678/g");
-avp_delete("$email");
+avp_delete("$avp(i:678)/g");
+avp_delete("$avp($email)");
 avp_delete("i:");
 avp_delete("");
 ...
@@ -388,9 +397,11 @@ avp_delete("");
 
      * destination - as what will be the AVP value pushed into
        SIP message. Parameter syntax:
-          + destination = ruri_dst | hdr_dst | '$duri' 
-          + ruri_dst = '$ruri'['/'('username'|'domain')] 
-          + hdr_dst = '$hdr_name'['/'('request'|'reply')] 
+          + destination = '$ru' ['/'('username'|'domain')] |
+            '$du' 
+          + $ru '['/'('username'|'domain')] - write the AVP in
+            the request URI or in username/domain part of it 
+          + $du - write the AVP in 'dst_uri' field 
      * name - which AVP(s) should be pushed into the SIP message.
        Parameter syntax is:
           + name = ( avp_name | avp_alias )['/'flags] 
@@ -401,11 +412,9 @@ avp_delete("");
 
    Example 1-17. avp_pushto usage
 ...
-avp_pushto("$ruri","i:678");
-avp_pushto("$ruri/domain","s:backup_domains/g");
-avp_pushto("$duri","i:679");
-avp_pushto("$Email/reply","s:email");
-avp_pushto("$Foo","$bar/g");
+avp_pushto("$ru","$avp(i:678)");
+avp_pushto("$ru/domain","$avp(s:backup_domains)/g");
+avp_pushto("$du","$avp(i:679)");
 ...
      _________________________________________________________
 
@@ -417,15 +426,13 @@ avp_pushto("$Foo","$bar/g");
 
      * name - which AVP(s) should be checked. Parameter syntax
        is:
-          + name = ( avp_name | avp_alias ) 
+          + name = ( pseudo-variable ) 
      * op_value - define the operator, the value and flags for
        checking. Parameter syntax is:
           + op_value = operator '/' value ['/'flags] 
           + operator = 'eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge' |
             're' | 'fm' | 'and' | 'or' | 'xor' 
-          + value = variable | fix_value 
-          + variable =
-            '$from'|'$ruri'|'$from'|'$src_ip'|'$dst_ip'|avp_alias
+          + value = pseudo-variable | fix_value 
           + fix_value = 'i:'integer | 's:'string | string 
           + flags = 'g' | 'G' | 'i' | 'I' 
        Integer values can be given in hexadecimal using notation:
@@ -436,11 +443,11 @@ avp_pushto("$Foo","$bar/g");
 
    Example 1-18. avp_check usage
 ...
-avp_check("i:678", "lt/i:345/g");
-avp_check("s:person","eq/$from/I");
-avp_check("s:foo","gt/$bar/g");
-avp_check("s:foo","re/sip:.*@bar.net/g");
-avp_check("s:foo","fm/$fm_avp/g");
+avp_check("$avp(i:678)", "lt/i:345/g");
+avp_check("$fd","eq/$td/I");
+avp_check("$avp(s:foo)","gt/$avp($bar)/g");
+avp_check("$avp(s:foo)","re/sip:.*@bar.net/g");
+avp_check("$avp(s:foo)","fm/$fm_avp/g");
 ...
      _________________________________________________________
 
@@ -463,8 +470,8 @@ avp_check("s:foo","fm/$fm_avp/g");
 
    Example 1-19. avp_copy usage
 ...
-avp_copy("i:678", "s:345/g");
-avp_copy("$old","$new/gd");
+avp_copy("$avp(i:678)", "$avp(s:345)/g");
+avp_copy("$avp($old)","$avp($new)/gd");
 ...
      _________________________________________________________
 
@@ -487,8 +494,8 @@ avp_copy("$old","$new/gd");
 
    Example 1-20. avp_printf usage
 ...
-avp_printf("i:20", "This is a $rm request with the call-id $hdr(call-id
-)");
+avp_printf("$avp(i:20)", "This is a $rm request with call-id $hdr(call-
+id)");
 ...
      _________________________________________________________
 
@@ -523,12 +530,12 @@ avp_printf("i:20", "This is a $rm request with the call-id $hdr(call-id
 ...
 # if avp i:678 has a string value in e-mail format, replace the
 # domain part with the value of domain part from R-URI
-avp_subst("i:678", "/(.*)@(.*)/\1@$rd/");
+avp_subst("$avp(i:678)", "/(.*)@(.*)/\1@$rd/");
 
 # if any avp i:678 has a string value in e-mail format, replace the
 # domain part with the value of domain part from R-URI
 # and place the result in avp i:679
-avp_subst("i:678/i:679/g", "/(.*)@(.*)/\1@$rd/");
+avp_subst("$avp(i:678)/$avp(i:679)/g", "/(.*)@(.*)/\1@$rd/");
 ...
 
    IMPORTANT NOTE: if the replacement string includes src_avp or
@@ -557,8 +564,7 @@ avp_subst("i:678/i:679/g", "/(.*)@(.*)/\1@$rd/");
           + op_value = operator '/' value ['/'flags] 
           + operator = 'add' | 'sub' | 'mul' | 'div' | 'mod' |
             'and' | 'or' | 'xor' | 'not' 
-          + value = variable | fix_value 
-          + variable = avp_alias 
+          + value = pseudo-variable | fix_value 
           + fix_value = 'i:'integer 
           + flags = 'g' | 'G' | 'd' | 'D' 
        Integer values can be given in hexadecimal using notation
@@ -569,8 +575,8 @@ avp_subst("i:678/i:679/g", "/(.*)@(.*)/\1@$rd/");
 
    Example 1-22. avp_op usage
 ...
-avp_op("i:678", "add/i:345/g");
-avp_op("$number","sub/$number2/d");
+avp_op("$avp(i:678)", "add/i:345/g");
+avp_op("$avp($number)","sub/$avp($number2)/d");
 ...
      _________________________________________________________
 
@@ -582,15 +588,15 @@ avp_op("$number","sub/$number2/d");
 
      * name - name of AVP to look for. Parameter syntax is:
           + name = ('s:'|'i:'|avp_name|avp_alias [ '/' flags ]) 
-            flags = ('s'|'n') - s = value string; n = value
-            number (int) 
+            flags = ('e'|'s'|'n') - e = empty value; s = value
+            string; n = value number (int) 
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
    Example 1-23. is_avp_set usage
 ...
-if(is_avp_set("i:678"))
+if(is_avp_set("$avp(i:678)"))
     log("AVP with integer id 678 exists\n");
 ...
      _________________________________________________________
