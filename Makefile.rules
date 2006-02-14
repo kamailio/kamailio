@@ -61,6 +61,10 @@ proper realclean distclean: clean
 			 $(MAKE) -C $$r proper ; \
 		fi ; \
 	done 
+	@if [ -n "$(modules)" -a -d utils/gen_ha1 ]; then \
+		cd utils/gen_ha1; $(MAKE) proper; \
+		cd ../serunix; $(MAKE) proper; \
+	fi
 
 .PHONY: mantainer-cleaan
 mantainer-clean: distclean
