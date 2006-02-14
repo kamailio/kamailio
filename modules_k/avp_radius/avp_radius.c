@@ -247,7 +247,7 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 		}
 
 		uri = &get_from(msg)->uri;
-		if (parse_uri(uri->s, uri->len, &puri) == -1) {
+		if (parse_uri(uri->s, uri->len, &puri) < 0) {
 			LOG(L_ERR, "ERROR:avp_radius:load_avp_user: Error while "
 				"parsing From URI\n");
 			return -1;

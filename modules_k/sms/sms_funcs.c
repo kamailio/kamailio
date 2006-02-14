@@ -202,7 +202,7 @@ int push_on_network(struct sip_msg *msg, int net)
 		{
 			DBG("DEBUG:sms_push_on_net: string to get user from To\n");
 			if ((!msg->to&&((parse_headers(msg,HDR_TO_F,0)==-1)||!msg->to)) ||
-			parse_uri( get_to(msg)->uri.s, get_to(msg)->uri.len, &uri)==-1
+			parse_uri( get_to(msg)->uri.s, get_to(msg)->uri.len, &uri)<0
 			|| !uri.user.len)
 			{
 				LOG(L_ERR,"ERROR:sms_push_on_net: unable to extract user"

@@ -355,7 +355,7 @@ static inline int process_routeset(struct sip_msg* msg, str* contact, struct rte
 	}
 	
 	if (head) {
-		if (parse_uri(head->ptr->nameaddr.uri.s, head->ptr->nameaddr.uri.len, &puri) == -1) {
+		if (parse_uri(head->ptr->nameaddr.uri.s, head->ptr->nameaddr.uri.len, &puri) < 0) {
 			LOG(L_ERR, "process_routeset: Error while parsing URI\n");
 			free_rte_list(head);
 			return -1;

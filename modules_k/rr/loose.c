@@ -551,7 +551,7 @@ static inline int after_strict(struct sip_msg* _m)
 	}
 
 	uri = &rt->nameaddr.uri;
-	if (parse_uri(uri->s, uri->len, &puri) == -1) {
+	if (parse_uri(uri->s, uri->len, &puri) < 0) {
 		LOG(L_ERR, "after_strict: Error while parsing URI\n");
 		return RR_ERROR;
 	}

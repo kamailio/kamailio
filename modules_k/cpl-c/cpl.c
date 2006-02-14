@@ -526,7 +526,7 @@ static inline int get_dest_user(struct sip_msg *msg, str *username, str *domain)
 
 	/*  get the user_name from new_uri/RURI/To */
 	DBG("DEBUG:cpl-c:get_dest_user: trying to get user from new_uri\n");
-	if ( !msg->new_uri.s || parse_uri( msg->new_uri.s,msg->new_uri.len,&uri)==-1
+	if ( !msg->new_uri.s || parse_uri( msg->new_uri.s,msg->new_uri.len,&uri)<0
 	|| !uri.user.len )
 	{
 		DBG("DEBUG:cpl-c:get_dest_user: trying to get user from R_uri\n");
@@ -535,7 +535,7 @@ static inline int get_dest_user(struct sip_msg *msg, str *username, str *domain)
 		{
 			DBG("DEBUG:cpl-c:get_dest_user: trying to get user from To\n");
 			if ( (!msg->to&&((parse_headers(msg,HDR_TO_F,0)==-1)||!msg->to))||
-			parse_uri( get_to(msg)->uri.s, get_to(msg)->uri.len, &uri)==-1
+			parse_uri( get_to(msg)->uri.s, get_to(msg)->uri.len, &uri)<0
 			|| !uri.user.len)
 			{
 				LOG(L_ERR,"ERROR:cpl-c:get_dest_user: unable to extract user"

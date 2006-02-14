@@ -72,7 +72,7 @@ int build_path_vector(struct sip_msg *_m, str *path)
 				"body, no head found\n");
 			goto error;
 		}
-		if (parse_uri(route->nameaddr.uri.s, route->nameaddr.uri.len, &puri) == -1) {
+		if (parse_uri(route->nameaddr.uri.s, route->nameaddr.uri.len, &puri) < 0) {
 			LOG(L_ERR, "ERROR: build_path_vector(): Error while parsing first Path URI\n");
 			return -1;
 		}
