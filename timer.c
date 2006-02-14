@@ -899,8 +899,10 @@ static ticks_t compat_old_handler(ticks_t ti, struct timer_ln* tl,
 {
 	struct sr_timer* t;
 	
+#ifdef TIMER_DEBUG
 	DBG("timer: compat_old_handler: calling, ticks=%u/%u, tl=%p, t=%p\n",
 			prev_ticks, (unsigned)*ticks, tl, data);
+#endif
 	t=(struct sr_timer*)data;
 	t->timer_f(TICKS_TO_S(*ticks), t->t_param);
 	return (ticks_t)-1; /* periodic */
