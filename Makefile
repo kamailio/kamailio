@@ -29,6 +29,7 @@
 #              added skip_cfg_install (andrei)
 #  2004-09-02  install-man will automatically "fix" the path of the files
 #               referred in the man pages
+#  2006-02-14  added utils & install-utils (andrei)
 #
 
 auto_gen=lex.yy.c cfg.tab.c #lexx, yacc etc
@@ -86,6 +87,13 @@ modules_basenames=$(shell echo $(modules)| \
 				sed -e 's/modules\/\([^/ ]*\)\/*/\1/g' )
 #modules_names=$(patsubst modules/%, %.so, $(modules))
 modules_full_path=$(join  $(modules), $(addprefix /, $(modules_names)))
+
+
+# which utils need compilation (directory path) and which to install
+# (full path including file name)
+utils_compile=	utils/gen_ha1 utils/serunix
+utils_install=	utils/gen_ha1/gen_ha1 utils/serunix/serunix \
+				scripts/sc scripts/mysql/ser_mysql.sh
 
 
 ALLDEP=Makefile Makefile.sources Makefile.defs Makefile.rules
@@ -160,6 +168,15 @@ $(extra_objs):
 		fi ; \
 	done 
 
+.PHONY: utils
+utils:
+	-@for r in $(utils_compile) "" ; do \
+		if [ -n "$$r" ]; then \
+			echo  "" ; \
+			echo  "" ; \
+			$(MAKE) -C $$r ; \
+		fi ; \
+	done 
 
 	
 dbg: ser
@@ -231,7 +248,8 @@ sunpkg:
 
 .PHONY: install
 install: all mk-install-dirs install-cfg install-bin install-modules \
-	install-doc install-man
+	install-doc install-man install-utils
+		mv -f $(bin-prefix)/$(bin-dir)/sc $(bin-prefix)/$(bin-dir)/serctl #fix
 
 .PHONY: dbinstall
 dbinstall:
@@ -278,24 +296,9 @@ install-cfg: $(cfg-prefix)/$(cfg-dir)
 		$(INSTALL-CFG) etc/dictionary.ser $(cfg-prefix)/$(cfg-dir)
 #		$(INSTALL-CFG) etc/ser.cfg $(cfg-prefix)/$(cfg-dir)
 
-install-bin: $(bin-prefix)/$(bin-dir) utils/gen_ha1/gen_ha1 utils/serunix/serunix
+install-bin: $(bin-prefix)/$(bin-dir) 
 		$(INSTALL-TOUCH) $(bin-prefix)/$(bin-dir)/ser 
 		$(INSTALL-BIN) ser $(bin-prefix)/$(bin-dir)
-		$(INSTALL-TOUCH)   $(bin-prefix)/$(bin-dir)/sc
-		$(INSTALL-BIN) scripts/sc $(bin-prefix)/$(bin-dir)
-		mv -f $(bin-prefix)/$(bin-dir)/sc $(bin-prefix)/$(bin-dir)/serctl
-		$(INSTALL-TOUCH)   $(bin-prefix)/$(bin-dir)/ser_mysql.sh  
-		$(INSTALL-BIN) scripts/mysql/ser_mysql.sh  $(bin-prefix)/$(bin-dir)
-		$(INSTALL-TOUCH)   $(bin-prefix)/$(bin-dir)/gen_ha1
-		$(INSTALL-BIN) utils/gen_ha1/gen_ha1 $(bin-prefix)/$(bin-dir)
-		$(INSTALL-TOUCH)   $(bin-prefix)/$(bin-dir)/serunix
-		$(INSTALL-BIN) utils/serunix/serunix $(bin-prefix)/$(bin-dir)
-
-utils/gen_ha1/gen_ha1:
-		cd utils/gen_ha1; $(MAKE) all
-
-utils/serunix/serunix:
-		cd utils/serunix; $(MAKE) all
 
 install-modules: modules $(modules-prefix)/$(modules-dir)
 	-@for r in $(modules_full_path) "" ; do \
@@ -309,6 +312,20 @@ install-modules: modules $(modules-prefix)/$(modules-dir)
 			fi ;\
 		fi ; \
 	done 
+
+install-utils: utils $(bin-prefix)/$(bin-dir)
+	-@for r in $(utils_install) "" ; do \
+		if [ -n "$$r" ]; then \
+			if [ -f "$$r" ]; then \
+				$(INSTALL-TOUCH) \
+					$(bin-prefix)/$(bin-dir)/`basename "$$r"` ; \
+				$(INSTALL-BIN)  "$$r"  $(bin-prefix)/$(bin-dir) ; \
+			else \
+				echo "ERROR: $$r not compiled" ; \
+			fi ;\
+		fi ; \
+	done 
+
 
 
 install-modules-all: install-modules install-modules-doc

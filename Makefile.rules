@@ -45,10 +45,13 @@ clean:
 			echo "module $$r" ; \
 			$(MAKE) -C $$r clean ; \
 		fi ; \
-	done
-	@if [ -n "$(modules)" -a -d utils/gen_ha1 ]; then \
-		cd utils/gen_ha1; $(MAKE) clean; \
-		cd ../serunix; $(MAKE) clean; \
+	done 
+	@if [ -n "$(modules)" ]; then \
+		for r in $(utils_compile) "" ; do \
+			if [ -d "$$r" ]; then \
+				 $(MAKE) -C $$r clean ; \
+			fi ; \
+		done \
 	fi
 
 .PHONY: proper
@@ -61,6 +64,13 @@ proper realclean distclean: clean
 			 $(MAKE) -C $$r proper ; \
 		fi ; \
 	done 
+	@if [ -n "$(modules)" ]; then \
+		for r in $(utils_compile) "" ; do \
+			if [ -d "$$r" ]; then \
+				 $(MAKE) -C $$r proper ; \
+			fi ; \
+		done \
+	fi
 
 .PHONY: mantainer-cleaan
 mantainer-clean: distclean
