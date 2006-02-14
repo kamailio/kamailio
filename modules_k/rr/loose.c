@@ -559,8 +559,6 @@ static inline int after_strict(struct sip_msg* _m)
 	/* set the hooks for the params -bogdan */
 	routed_msg_id = _m->id;
 	routed_params = puri.params;
-	/* run RR callbacks -bogdan */
-	run_rr_callbacks( _m, &routed_params );
 
 	if (is_strict(&puri.params)) {
 		DBG("after_strict: Next hop: '%.*s' is strict router\n",
@@ -649,6 +647,9 @@ static inline int after_strict(struct sip_msg* _m)
 		}
 	}
 	
+	/* run RR callbacks -bogdan */
+	run_rr_callbacks( _m, &routed_params );
+
 	return RR_DRIVEN;
 }
 
@@ -658,7 +659,8 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	struct hdr_field* hdr;
 	struct sip_uri puri;
 	rr_t* rt;
-	int res;	
+	int res;
+	int status;
 #ifdef ENABLE_USER_CHECK
 	int ret;
 #endif
@@ -687,8 +689,6 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		/* set the hooks for the params -bogdan */
 		routed_msg_id = _m->id;
 		routed_params = puri.params;
-		/* run RR callbacks -bogdan */
-		run_rr_callbacks( _m, &routed_params );
 
 		if (!rt->next) {
 			/* No next route in the same header, remove the whole header
@@ -705,7 +705,8 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			}
 			if (res > 0) { /* No next route found */
 				DBG("after_loose: No next URI found\n");
-				return (preloaded ? NOT_RR_DRIVEN : RR_DRIVEN);
+				status = (preloaded ? NOT_RR_DRIVEN : RR_DRIVEN);
+				goto done;
 			}
 			rt = (rr_t*)hdr->parsed;
 		} else rt = rt->next;
@@ -740,7 +741,8 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 				}
 				if (res > 0) { /* No next route found */
 					DBG("after_loose: No next URI found\n");
-					return (preloaded ? NOT_RR_DRIVEN : RR_DRIVEN);
+					status = (preloaded ? NOT_RR_DRIVEN : RR_DRIVEN);
+					goto done;
 				}
 				rt = (rr_t*)hdr->parsed;
 			} else rt = rt->next;
@@ -783,11 +785,15 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			rt->nameaddr.name.s - hdr->body.s, 0)) {
 				LOG(L_ERR, "after_loose: Can't remove Route HF\n");
 				return RR_ERROR;
-			}			
+			}
 		}
 	}
+	status = RR_DRIVEN;
 
-	return RR_DRIVEN;
+done:
+	/* run RR callbacks -bogdan */
+	run_rr_callbacks( _m, &routed_params );
+	return status;
 }
 
 
