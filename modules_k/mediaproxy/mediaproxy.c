@@ -642,8 +642,8 @@ getUserAgent(struct sip_msg* msg)
     str block, server;
     char *ptr;
 
-    if ((parse_headers(msg, HDR_USERAGENT_F, 0)!=-1) && msg->user_agent &&
-        msg->user_agent->body.len>0) {
+    if (parse_headers(msg, HDR_USERAGENT_F, 0)==0 && msg->user_agent &&
+        msg->user_agent->body.s && msg->user_agent->body.len>0) {
         return msg->user_agent->body;
     }
 
