@@ -111,21 +111,11 @@ static inline int _timer_dist_tl(struct timer_ln* tl, ticks_t delta)
 			LOG(L_WARN, "WARNING: timer: add_timeout: 0 expire timer added\n");
 			_timer_add_list(&timer_lst->expired, tl);
 		}else{
-			DBG("_timer_dist_tl: adding timer %p, delta %u,"
-					" expire %u @h0[%u]\n",
-				tl, (unsigned) delta, (unsigned) tl->expire,
-				(unsigned)(tl->expire & H0_MASK));
 			_timer_add_list( &timer_lst->h0[tl->expire & H0_MASK], tl);
 		}
 	}else if (delta<(H0_ENTRIES*H1_ENTRIES)){
-		DBG("_timer_dist_tl: adding timer %p, delta %u, expire %u @h1[%u]\n",
-				tl, (unsigned) delta, (unsigned) tl->expire,
-				(unsigned)((tl->expire & H1_H0_MASK)>>H0_BITS));
 		_timer_add_list(&timer_lst->h1[(tl->expire & H1_H0_MASK)>>H0_BITS],tl);
 	}else{
-		DBG("_timer_dist_tl: adding timer %p, delta %u, expire %u @h2[%u]\n",
-				tl, (unsigned) delta, (unsigned) tl->expire,
-				(unsigned)(tl->expire>>(H1_BITS+H0_BITS)));
 		_timer_add_list(&timer_lst->h2[tl->expire>>(H1_BITS+H0_BITS)], tl);
 	}
 	return 0;
@@ -150,8 +140,6 @@ static inline void timer_redist(ticks_t t, struct timer_head *h)
 	struct timer_ln* tl;
 	struct timer_ln* tmp;
 	
-	DBG("timer_redist: list %p, ticks %lu\n", h, (unsigned long) t);
-	
 	timer_foreach_safe(tl, tmp, h){
 		_timer_dist_tl(tl, tl->expire-t);
 	}
@@ -164,12 +152,8 @@ static inline void timer_run(ticks_t t)
 	/* trust the compiler for optimizing */
 	if ((t & H0_MASK)==0){              /*r1*/
 		if ((t & H1_H0_MASK)==0){        /*r2*/
-			DBG("timer_run: ticks %u, redist h2[%u]\n",
-							(unsigned ) t, (unsigned)( t>>(H0_BITS+H1_BITS)));
 			timer_redist(t, &timer_lst->h2[t>>(H0_BITS+H1_BITS)]);
 		}
-		DBG("timer_run: ticks %u, redist h1[%u]\n",
-						(unsigned ) t, (unsigned)((t & H1_H0_MASK)>>H0_BITS));
 		
 		timer_redist(t, &timer_lst->h1[(t & H1_H0_MASK)>>H0_BITS]);/*r2 >> H0*/
 	}
