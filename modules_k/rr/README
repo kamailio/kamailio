@@ -40,12 +40,11 @@ Bogdan-Andrei Iancu
         1.5. Exported Functions
 
               1.5.1. loose_route()
-              1.5.2. strict_route() -- deprecated
-              1.5.3. record_route()
-              1.5.4. record_route_preset(string)
-              1.5.5. add_rr_param(param)
-              1.5.6. check_route_param(re)
-              1.5.7. is_direction(dir)
+              1.5.2. record_route() and record_route(string)
+              1.5.3. record_route_preset(string)
+              1.5.4. add_rr_param(param)
+              1.5.5. check_route_param(re)
+              1.5.6. is_direction(dir)
 
    2. Developer's Guide
 
@@ -67,12 +66,11 @@ Bogdan-Andrei Iancu
    1-4. Set enable_double_rr parameter
    1-5. Set add_username parameter
    1-6. loose_route usage
-   1-7. strict_route usage
-   1-8. record_route usage
-   1-9. record_route_preset usage
-   1-10. add_rr_param usage
+   1-7. record_route usage
+   1-8. record_route_preset usage
+   1-9. add_rr_param usage
+   1-10. check_route_param usage
    1-11. check_route_param usage
-   1-12. check_route_param usage
    2-1. Loading RR module's API from another module
      _________________________________________________________
 
@@ -115,8 +113,8 @@ Chapter 1. User's Guide
 
    For this purpose, the modules offers the following functions:
 
-     * add_rr_param() - see Section 1.5.5
-     * check_route_param() - see Section 1.5.6
+     * add_rr_param() - see Section 1.5.4
+     * check_route_param() - see Section 1.5.5
 
    Example 1-1. Dialog support in RR module
 
@@ -229,69 +227,67 @@ loose_route();
 ...
      _________________________________________________________
 
-1.5.2. strict_route() -- deprecated
-
-   If there are any Route header in the message, the function
-   takes the first one, rewrites Request-URI with it's value and
-   removes the first URI from Route header.
-
-   Example 1-7. strict_route usage
-...
-strict_route();
-...
-     _________________________________________________________
-
-1.5.3. record_route()
+1.5.2. record_route() and record_route(string)
 
    The function adds a new Record-Route header field. The header
    field will be inserted in the message before any other
    Record-Route header fields.
 
-   This function can be used from REQUEST_ROUTE.
+   If any string is passed as parameter, it will be appended as
+   URI paramter to the Record-Route header. The string must
+   follow the ";name=value" scheme and it may contain
+   pseudo-variables.
 
-   Example 1-8. record_route usage
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
+   FAILURE_ROUTE.
+
+   Example 1-7. record_route usage
 ...
 record_route();
 ...
      _________________________________________________________
 
-1.5.4. record_route_preset(string)
+1.5.3. record_route_preset(string)
 
    This function will put the string into Record-Route, don't use
    unless you know what you are doing.
 
    Meaning of the parameters is as follows:
 
-     * string - String to be inserted into the header field.
+     * string - String to be inserted into the header field; it
+       may contain pseudo-variables.
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
+   FAILURE_ROUTE.
 
-   Example 1-9. record_route_preset usage
+   Example 1-8. record_route_preset usage
 ...
 record_route_preset("1.2.3.4:5090");
 ...
      _________________________________________________________
 
-1.5.5. add_rr_param(param)
+1.5.4. add_rr_param(param)
 
    Adds a parameter to the Record-Route URI (param must be in
    ";name=value" format. The function may be called also before
-   or after the record_route() call (see Section 1.5.3).
+   or after the record_route() call (see Section 1.5.2).
 
    Meaning of the parameters is as follows:
 
      * param - String containing the URI parameter to be added.
-       It must follow the ";name=value" scheme.
+       It must follow the ";name=value" scheme; it may contain
+       pseudo-variables.
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
+   FAILURE_ROUTE.
 
-   Example 1-10. add_rr_param usage
+   Example 1-9. add_rr_param usage
 ...
 add_rr_param(";nat=yes");
 ...
      _________________________________________________________
 
-1.5.6. check_route_param(re)
+1.5.5. check_route_param(re)
 
    The function checks if the URI parameters of the local Route
    header (coresponding to the local server) matches the given
@@ -305,7 +301,7 @@ add_rr_param(";nat=yes");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-11. check_route_param usage
+   Example 1-10. check_route_param usage
 ...
 if (check_route_param("nat=yes")) {
     setflag(6);
@@ -313,7 +309,7 @@ if (check_route_param("nat=yes")) {
 ...
      _________________________________________________________
 
-1.5.7. is_direction(dir)
+1.5.6. is_direction(dir)
 
    The function checks the flow direction of the request. As for
    cheking it's used the "ftag" Route header parameter, the
@@ -335,7 +331,7 @@ if (check_route_param("nat=yes")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-12. check_route_param usage
+   Example 1-11. check_route_param usage
 ...
 if (is_direction("upstream")) {
     xdbg("upstream request ($rm)\n");
@@ -499,4 +495,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.

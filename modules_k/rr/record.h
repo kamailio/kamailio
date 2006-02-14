@@ -31,25 +31,20 @@
 #define RECORD_H
 
 #include "../../parser/msg_parser.h"
+#include "../../str.h"
 
 
 /*
  * Insert a new Record-Route header field with lr parameter
  */
-int record_route(struct sip_msg* _m, char* _s1, char* _s2);
+int record_route(struct sip_msg* _m, str* _param);
 
 
 /*
  * Insert manually created Record-Route header, no checks, no restrictions,
  * always adds lr parameter, only fromtag is added automatically when requested
  */
-int record_route_preset(struct sip_msg* _m, char* _ip, char* _s2);
-
-
-/*
- * Insert a new Record-Route header field without lr parameter
- */
-int record_route_strict(struct sip_msg* _m, char* _s1, char* _s2);
+int record_route_preset(struct sip_msg* _m, str* _data);
 
 
 /*

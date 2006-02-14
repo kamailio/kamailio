@@ -236,28 +236,10 @@ loose_route();
 		</example>
 	</section>
 
-	<section>
-		<title>
-		<function moreinfo="none">strict_route()</function> -- deprecated
-		</title>
-		<para>
-		If there are any Route header in the message, the function takes the
-		first one, rewrites Request-URI with it's value and removes the 
-		first &uri; from Route header.
-		</para>
-		<example>
-		<title><function>strict_route</function> usage</title>
-		<programlisting format="linespecific">
-...
-strict_route();
-...
-</programlisting>
-		</example>
-	</section>
-
 	<section id="record-route-id">
 		<title>
-		<function moreinfo="none">record_route()</function>
+		<function moreinfo="none">record_route()</function> and 
+		<function moreinfo="none">record_route(string)</function>
 		</title>
 		<para>
 		The function adds a new Record-Route header field. The header field 
@@ -265,7 +247,13 @@ strict_route();
 		fields.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		If any string is passed as parameter, it will be appended as URI
+		paramter to the Record-Route header. The string must follow the 
+		<quote>;name=value</quote> scheme and it may contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and 
+		FAILURE_ROUTE.
 		</para>
 		<example>
 		<title><function>record_route</function> usage</title>
@@ -290,12 +278,13 @@ record_route();
 		<listitem>
 			<para>
 			<emphasis>string</emphasis> - String to be inserted into the 
-				header field.
+				header field; it may contain pseudo-variables.
 			</para>
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and 
+		FAILURE_ROUTE.
 		</para>
 		<example>
 		<title><function>record_route_preset</function> usage</title>
@@ -322,12 +311,14 @@ record_route_preset("1.2.3.4:5090");
 		<listitem>
 			<para>
 			<emphasis>param</emphasis> - String containing the URI parameter to
-			be added. It must follow the <quote>;name=value</quote> scheme.
+			be added. It must follow the <quote>;name=value</quote> scheme; it 
+			may contain pseudo-variables.
 			</para>
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and 
+		FAILURE_ROUTE.
 		</para>
 		<example>
 		<title><function>add_rr_param</function> usage</title>

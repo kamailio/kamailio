@@ -29,6 +29,10 @@
  *  2003-04-01  Added record_route with ip address parameter (janakj)
  *  2003-04-14  enable_full_lr parameter introduced (janakj)
  *  2005-04-10  add_rr_param() and check_route_param() added (bogdan)
+ *  2006-02-14  record_route may take as param a string to be used as RR param;
+ *              record_route and record_route_preset accept pseudo-variables in
+ *              parameters; add_rr_param may be called from BRANCH and FAILURE
+ *              routes (bogdan)
  */
 
 
@@ -40,6 +44,7 @@
 #include "../../sr_module.h"
 #include "../../ut.h"
 #include "../../error.h"
+#include "../../items.h"
 #include "../../mem/mem.h"
 #include "loose.h"
 #include "record.h"
@@ -58,15 +63,20 @@ int enable_double_rr = 1; /* Enable using of 2 RR by default */
 int enable_full_lr = 0;   /* Disabled by default */
 int add_username = 0;     /* Do not add username by default */
 
+static unsigned int last_rr_msg;
+
 MODULE_VERSION
 
 static int  mod_init(void);
 static void mod_destroy(void);
 /* fixup functions */
-static int str_fixup(void** param, int param_no);
 static int regexp_fixup(void** param, int param_no);
 static int direction_fixup(void** param, int param_no);
+static int it_list_fixup(void** param, int param_no);
 /* wrapper functions */
+static int w_record_route0(struct sip_msg *,char *, char *);
+static int w_record_route1(struct sip_msg *,char *, char *);
+static int w_record_route_preset(struct sip_msg *,char *, char *);
 static int w_add_rr_param(struct sip_msg *,char *, char *);
 static int w_check_route_param(struct sip_msg *,char *, char *);
 static int w_is_direction(struct sip_msg *,char *, char *);
@@ -74,24 +84,17 @@ static int w_is_direction(struct sip_msg *,char *, char *);
 /*
  * Exported functions
  */
-/*
- * I do not want people to use strict routing so it is disabled by default,
- * you should always use loose routing, if you really need strict routing then
- * you can replace the last zeroes with REQUEST_ROUTE to enable strict_route and
- * record_route_strict. Don't do that unless you know what you are really doing !
- * Oh, BTW, have I mentioned already that you shouldn't use strict routing ?
- */
 static cmd_export_t cmds[] = {
 	{"loose_route",          loose_route,           0,     0,
 			REQUEST_ROUTE},
-	{"record_route",         record_route,          0,     0,
-			REQUEST_ROUTE},
-	{"record_route_preset",  record_route_preset,   1,     str_fixup,
-			REQUEST_ROUTE},
-	{"record_route_strict" , record_route_strict,   0,     0,
-			0},
-	{"add_rr_param",         w_add_rr_param,        1,     str_fixup,
-			REQUEST_ROUTE},
+	{"record_route",         w_record_route0,       0,     0,
+			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+	{"record_route",         w_record_route1,       1,     it_list_fixup,
+			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+	{"record_route_preset",  w_record_route_preset, 1,     it_list_fixup,
+			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+	{"add_rr_param",         w_add_rr_param,        1,     it_list_fixup,
+			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"check_route_param",    w_check_route_param,   1,     regexp_fixup,
 			REQUEST_ROUTE},
 	{"is_direction",         w_is_direction,        1,     direction_fixup,
@@ -154,29 +157,6 @@ static void mod_destroy()
 }
 
 
-/*  
- * Convert char* parameter to str* parameter   
- */
-static int str_fixup(void** param, int param_no)
-{
-	str* s;
-	
-	if (param_no == 1) {
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) {
-			LOG(L_ERR, "str_fixup(): No memory left\n");
-			return E_UNSPEC;
-		}
-		
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
-	}
-	
-	return 0;
-}
-
-
 static int regexp_fixup(void** param, int param_no)
 {
 	regex_t* re;
@@ -199,6 +179,22 @@ static int regexp_fixup(void** param, int param_no)
 	return 0;
 }
 
+
+static int it_list_fixup(void** param, int param_no)
+{
+	xl_elem_t *model;
+	if(*param)
+	{
+		if(xl_parse_format((char*)(*param), &model, XL_DISABLE_COLORS)<0)
+		{
+			LOG(L_ERR, "ERROR:textops:item_list_fixup: wrong format[%s]\n",
+				(char*)(*param));
+			return E_UNSPEC;
+		}
+		*param = (void*)model;
+	}
+	return 0;
+}
 
 
 static int direction_fixup(void** param, int param_no)
@@ -232,9 +228,92 @@ static int direction_fixup(void** param, int param_no)
 
 
 
-static int w_add_rr_param(struct sip_msg *msg,char *param, char *foo)
+static inline str* print_items(struct sip_msg *msg, xl_elem_t *model)
 {
-	return ((add_rr_param(msg,(str*)param)==0)?1:-1);
+#define IT_BUF_SIZE   1024
+	static char it_buf[IT_BUF_SIZE];
+	static str s0;
+	int it_buf_len;
+
+	if(model->next==0 && model->spec.itf==0) {
+		s0 = model->text;
+	} else {
+		it_buf_len = IT_BUF_SIZE-1;
+		if(xl_printf(msg, model, it_buf, &it_buf_len)<0){
+			LOG(L_ERR,"ERROR:rr:print_items: failed to print the format\n");
+			return 0;
+		}
+		s0.s = it_buf;
+		s0.len = it_buf_len;
+	}
+	return &s0;
+}
+
+
+static int w_record_route0(struct sip_msg *msg,char *foo, char *bar)
+{
+	if (msg->id == last_rr_msg) {
+		LOG(L_ERR, "ERROR:rr:record_route: Double attempt to record-route\n");
+		return -1;
+	}
+
+	if ( record_route( msg, 0)<0 )
+		return -1;
+
+	last_rr_msg = msg->id;
+	return 1;
+}
+
+
+static int w_record_route1(struct sip_msg *msg,char *key, char *bar)
+{
+	str *s;
+
+	if (msg->id == last_rr_msg) {
+		LOG(L_ERR, "ERROR:rr:record_route: Double attempt to record-route\n");
+		return -1;
+	}
+
+	s = print_items( msg, (xl_elem_t*)key);
+	if (s==0)
+		return -1;
+	if ( record_route( msg, s)<0 )
+		return -1;
+
+	last_rr_msg = msg->id;
+	return 1;
+}
+
+
+static int w_record_route_preset(struct sip_msg *msg, char *key, char *bar)
+{
+	str *s;
+
+	if (msg->id == last_rr_msg) {
+		LOG(L_ERR, "ERROR:rr:record_route_preset: Double attempt to "
+			"record-route\n");
+		return -1;
+	}
+
+	s = print_items( msg, (xl_elem_t*)key);
+	if (s==0)
+		return -1;
+	if ( record_route_preset( msg, s)<0 )
+		return -1;
+
+	last_rr_msg = msg->id;
+	return 1;
+}
+
+
+static int w_add_rr_param(struct sip_msg *msg, char *key, char *foo)
+{
+	str *s;
+
+	s = print_items( msg, (xl_elem_t*)key);
+	if (s==0)
+		return -1;
+	return ((add_rr_param( msg, s)==0)?1:-1);
 }
 
 
