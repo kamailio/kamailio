@@ -528,7 +528,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	str_uri.s = 0;
 	str_uri.len = 0;
 	if(msg->contact) {
-		if (msg->contact->parsed==0 && parse_contact(msg->contact)==-1) {
+		if (msg->contact->parsed==0 && parse_contact(msg->contact)<0) {
 			LOG(L_ERR,"ERROR:tm:assemble_msg: error while parsing "
 			    "<Contact:> header\n");
 			goto error;
