@@ -27,6 +27,7 @@
 #  -  msilo: blob replaced by text, is this fine?
 #  -  datetime types not sure
 
+PATH=$PATH:/usr/local/sbin
 
 # include resource files, if any
 if [ -f /etc/openser/.openserpostgresqlrc ]; then

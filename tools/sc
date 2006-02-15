@@ -21,6 +21,8 @@
 #   be a convenient thing to have
 
 #===================================================================
+PATH=$PATH:/usr/local/sbin
+
 
 ### include resource files, if any
 if [ -f /etc/openser/.openserctlrc ]; then

@@ -21,6 +21,7 @@
 # 2003-04-14  reinstall introduced (jiri)
 # 2004-07-05  new definition of table silo (dcm)
 
+PATH=$PATH:/usr/local/sbin
 
 # include resource files, if any
 if [ -f /etc/openser/.opensermysqlrc ]; then
