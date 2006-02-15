@@ -41,16 +41,17 @@ Ramona-Elena Modroiu
               1.4.1. avp_db_load(source,name) 
               1.4.2. avp_db_store(source,name)
               1.4.3. avp_db_delete(source,name)
-              1.4.4. avp_write(value,name)
-              1.4.5. avp_delete(name) 
-              1.4.6. avp_pushto(destination,name) 
-              1.4.7. avp_check(name,op_value) 
-              1.4.8. avp_copy(old_name,new_name) 
-              1.4.9. avp_printf(dest, format) 
-              1.4.10. avp_subst(avps, subst)
-              1.4.11. avp_op(name,op_value) 
-              1.4.12. is_avp_set(name) 
-              1.4.13. avp_print() 
+              1.4.4. avp_db_query(query[,dest])
+              1.4.5. avp_write(value,name)
+              1.4.6. avp_delete(name) 
+              1.4.7. avp_pushto(destination,name) 
+              1.4.8. avp_check(name,op_value) 
+              1.4.9. avp_copy(old_name,new_name) 
+              1.4.10. avp_printf(dest, format) 
+              1.4.11. avp_subst(avps, subst)
+              1.4.12. avp_op(name,op_value) 
+              1.4.13. is_avp_set(name) 
+              1.4.14. avp_print() 
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -70,16 +71,17 @@ Ramona-Elena Modroiu
    1-12. avp_db_load usage
    1-13. avp_db_store usage
    1-14. avp_db_delete usage
-   1-15. avp_write usage
-   1-16. avp_delete usage
-   1-17. avp_pushto usage
-   1-18. avp_check usage
-   1-19. avp_copy usage
-   1-20. avp_printf usage
-   1-21. avp_subst usage
-   1-22. avp_op usage
-   1-23. is_avp_set usage
-   1-24. avp_print usage
+   1-15. avp_db_query usage
+   1-16. avp_write usage
+   1-17. avp_delete usage
+   1-18. avp_pushto usage
+   1-19. avp_check usage
+   1-20. avp_copy usage
+   1-21. avp_printf usage
+   1-22. avp_subst usage
+   1-23. avp_op usage
+   1-24. is_avp_set usage
+   1-25. avp_print usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -333,7 +335,33 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 ...
      _________________________________________________________
 
-1.4.4. avp_write(value,name)
+1.4.4. avp_db_query(query[,dest])
+
+   Make a database query and store the result in AVPs.
+
+   The meaning and usage of the parameters:
+
+     * query - must be a valid SQL query. The parameter can
+       contain pseudo-variables.
+     * dest - a list with AVP names where to store the result.
+       The format is "$avp(name1);$avp(name2);...". If this
+       parameter is ommited, the result is stored in
+       "$avp(i:1);$avp(i:2);...". If the result gives many rows,
+       then multiple AVPs with corresponding name will be added.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
+
+   Example 1-15. avp_db_query usage
+...
+avp_db_query("select password, ha1 from subscriber where username='$tu'
+",
+        "$avp(i:678);$avp(i:679)");
+avp_db_query("delete from subscriber");
+...
+     _________________________________________________________
+
+1.4.5. avp_write(value,name)
 
    The function writes some value (given) or some information
    from the SIP message into a new AVP.
@@ -355,7 +383,7 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-15. avp_write usage
+   Example 1-16. avp_write usage
 ...
 avp_write("$tu","$avp(i:678)");
 avp_write("$ru/username","$avp($email)");
@@ -366,7 +394,7 @@ avp_write("i:333","$avp(i:6)");
 ...
      _________________________________________________________
 
-1.4.5. avp_delete(name)
+1.4.6. avp_delete(name)
 
    Deletes from memory the AVPs with name or, if empty, all AVPs.
 
@@ -380,7 +408,7 @@ avp_write("i:333","$avp(i:6)");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-16. avp_delete usage
+   Example 1-17. avp_delete usage
 ...
 avp_delete("$avp(i:678)/g");
 avp_delete("$avp($email)");
@@ -389,7 +417,7 @@ avp_delete("");
 ...
      _________________________________________________________
 
-1.4.6. avp_pushto(destination,name)
+1.4.7. avp_pushto(destination,name)
 
    Pushes the value of AVP(s) into the SIP message.
 
@@ -410,7 +438,7 @@ avp_delete("");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-17. avp_pushto usage
+   Example 1-18. avp_pushto usage
 ...
 avp_pushto("$ru","$avp(i:678)");
 avp_pushto("$ru/domain","$avp(s:backup_domains)/g");
@@ -418,7 +446,7 @@ avp_pushto("$du","$avp(i:679)");
 ...
      _________________________________________________________
 
-1.4.7. avp_check(name,op_value)
+1.4.8. avp_check(name,op_value)
 
    Checks the value of the AVP(s) against an operator and value.
 
@@ -441,7 +469,7 @@ avp_pushto("$du","$avp(i:679)");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-18. avp_check usage
+   Example 1-19. avp_check usage
 ...
 avp_check("$avp(i:678)", "lt/i:345/g");
 avp_check("$fd","eq/$td/I");
@@ -451,7 +479,7 @@ avp_check("$avp(s:foo)","fm/$fm_avp/g");
 ...
      _________________________________________________________
 
-1.4.8. avp_copy(old_name,new_name)
+1.4.9. avp_copy(old_name,new_name)
 
    Copy / move an avp under a new name.
 
@@ -468,14 +496,14 @@ avp_check("$avp(s:foo)","fm/$fm_avp/g");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-19. avp_copy usage
+   Example 1-20. avp_copy usage
 ...
 avp_copy("$avp(i:678)", "$avp(s:345)/g");
 avp_copy("$avp($old)","$avp($new)/gd");
 ...
      _________________________________________________________
 
-1.4.9. avp_printf(dest, format)
+1.4.10. avp_printf(dest, format)
 
    Prints the formatted string 'format' in the AVP 'dest'. The
    'format' parameter can include any pseudo-variable defined in
@@ -492,14 +520,14 @@ avp_copy("$avp($old)","$avp($new)/gd");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-20. avp_printf usage
+   Example 1-21. avp_printf usage
 ...
 avp_printf("$avp(i:20)", "This is a $rm request with call-id $hdr(call-
 id)");
 ...
      _________________________________________________________
 
-1.4.10. avp_subst(avps, subst)
+1.4.11. avp_subst(avps, subst)
 
    Perl/sed-like subst applied to AVPs having string value.
 
@@ -526,7 +554,7 @@ id)");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-21. avp_subst usage
+   Example 1-22. avp_subst usage
 ...
 # if avp i:678 has a string value in e-mail format, replace the
 # domain part with the value of domain part from R-URI
@@ -545,7 +573,7 @@ avp_subst("$avp(i:678)/$avp(i:679)/g", "/(.*)@(.*)/\1@$rd/");
    it will be added in avp list and next processing will use it.
      _________________________________________________________
 
-1.4.11. avp_op(name,op_value)
+1.4.12. avp_op(name,op_value)
 
    Different integer operations with avps.
 
@@ -573,14 +601,14 @@ avp_subst("$avp(i:678)/$avp(i:679)/g", "/(.*)@(.*)/\1@$rd/");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-22. avp_op usage
+   Example 1-23. avp_op usage
 ...
 avp_op("$avp(i:678)", "add/i:345/g");
 avp_op("$avp($number)","sub/$avp($number2)/d");
 ...
      _________________________________________________________
 
-1.4.12. is_avp_set(name)
+1.4.13. is_avp_set(name)
 
    Check if any AVP with name is set.
 
@@ -594,14 +622,14 @@ avp_op("$avp($number)","sub/$avp($number2)/d");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-23. is_avp_set usage
+   Example 1-24. is_avp_set usage
 ...
 if(is_avp_set("$avp(i:678)"))
     log("AVP with integer id 678 exists\n");
 ...
      _________________________________________________________
 
-1.4.13. avp_print()
+1.4.14. avp_print()
 
    Prints the list with all the AVPs from memory. This is only a
    helper/debug function.
@@ -609,7 +637,7 @@ if(is_avp_set("$avp(i:678)"))
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-24. avp_print usage
+   Example 1-25. avp_print usage
 ...
 avp_print();
 ...

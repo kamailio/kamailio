@@ -68,6 +68,9 @@ static db_val_t  store_vals[6];
 static str      empty={"",0};
 
 
+#define AVP_PRINTBUF_SIZE 1024
+static char printbuf[AVP_PRINTBUF_SIZE];
+
 void init_store_avps( char **db_columns)
 {
 	/* unique user id */
@@ -267,49 +270,20 @@ static inline void int_str2db_val( int_str is_val, str *val, int is_s)
 	}
 }
 
-#define AVPOPS_ATTR_LEN	64
-static char avpops_attr_buf[AVPOPS_ATTR_LEN];
-
 static int avpops_get_aname(struct sip_msg* msg, struct fis_param *ap,
 		int_str *avp_name, unsigned short *name_type)
 {
-	xl_value_t xv;
-
 	if(ap==NULL || avp_name==NULL || name_type==NULL)
 	{
 		LOG(L_ERR, "avpops:avpops_get_aname: bad parameters\n");
 		return -1;
 	}
-	memset(avp_name, 0, sizeof(int_str));
-	*name_type = 0;
-	if((ap->sval.flags & XL_DPARAM)&&(ap->sval.dp.itf!=0))
-	{
-		memset(&xv, 0, sizeof(xl_value_t));
-		if((*ap->sval.dp.itf)(msg, &xv, &(ap->sval.p), 0)!=0)
-		{
-			LOG(L_ERR, "avpops:avpops_get_aname: unable to get dname\n");
-			return -1;
-		}
-		if(xv.flags&XL_NULL || xv.flags&XL_EMPTY)
-		{
-			LOG(L_ERR, "avpops:avpops_get_aname: null dname\n");
-			return -1;
-		}
-		if((xv.flags&XL_TYPE_INT) && (xv.flags&XL_VAL_INT))
-		{
-			avp_name->n = xv.ri;
-		} else {
-			avp_name->s = xv.rs;
-			*name_type = AVP_NAME_STR;
-		}
-	} else {
-		if(ap->sval.p.val.s!=NULL)
-			*name_type = AVP_NAME_STR;
-		avpops_str2int_str(ap->sval.p.val, (*avp_name));
-	}
-		
-	return 0;
+
+	return xl_get_avp_name(msg, &ap->sval, avp_name, name_type);
 }
+
+#define AVPOPS_ATTR_LEN	64
+static char avpops_attr_buf[AVPOPS_ATTR_LEN];
 
 int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 									struct db_param *dbp, int use_domain)
@@ -777,6 +751,30 @@ error:
 	return -1;
 }
 
+int ops_dbquery_avps(struct sip_msg* msg, xl_elem_t* query,
+		avpname_list_t* dest)
+{
+	int printbuf_len;
+
+	if(msg==NULL || query==NULL)
+	{
+		LOG(L_ERR,"ERROR:avpops:ops_dbquery_avps: bad parameters\n");
+		return -1;
+	}
+	
+	printbuf_len = AVP_PRINTBUF_SIZE-1;
+	if(xl_printf(msg, query, printbuf, &printbuf_len)<0 || printbuf_len<=0)
+	{
+		LOG(L_ERR,"avpops:ops_dbquery_avps: error - cannot print the query\n");
+		return -1;
+	}
+
+	DBG("avpops:ops_dbquery_avps: query [%s]\n", printbuf);
+	
+	if(db_query_avp(msg, printbuf, dest)!=0)
+		return -1;
+	return 1;
+}
 
 int ops_write_avp(struct sip_msg* msg, struct fis_param *src,
 													struct fis_param *dst)
@@ -1388,10 +1386,8 @@ int ops_print_avp()
 	return 1;
 }
 
-#define AVP_PRINTBUF_SIZE 1024
 int ops_printf(struct sip_msg* msg, struct fis_param* dest, xl_elem_t *format)
 {
-	static char printbuf[AVP_PRINTBUF_SIZE];
 	int printbuf_len;
 	int_str avp_val;
 	int_str avp_name;

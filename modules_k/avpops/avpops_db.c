@@ -318,5 +318,110 @@ int db_delete_avp( str *uuid, str *username, str *domain, char *attr,
 	return 0;
 }
 
+int db_query_avp(struct sip_msg *msg, char *query, avpname_list_t* dest)
+{
+	int_str avp_val;
+	int_str avp_name;
+	unsigned short avp_type;
+	db_res_t* db_res = NULL;
+	int i, j;
+	avpname_list_t* crt;
+	
+	if(query==NULL)
+	{
+		LOG(L_ERR,"avpops:db_query_avp: error - bad parameter\n");
+		return -1;
+	}
+	
+	if(avpops_dbf.raw_query(db_hdl, query, &db_res)!=0)
+	{
+		LOG(L_ERR,"avpops:db_query_avp: error - cannot do the query\n");
+		return -1;
+	}
 
+	if(db_res==NULL || RES_ROW_N(db_res)<=0 || RES_COL_N(db_res)<=0)
+	{
+		DBG("avpops:db_query_avp: no result after query\n");
+		return 1;
+	}
 
+	for(i = RES_ROW_N(db_res)-1; i >= 0; i--) 
+	{
+		crt = dest;
+		for(j = RES_COL_N(db_res)-1; j >= 0; j--) 
+		{
+			if(RES_ROWS(db_res)[i].values[j].nul)
+				goto next_avp;
+			avp_type = 0;
+			if(crt==NULL)
+			{
+				avp_name.n = j+1;
+			} else {
+				if(xl_get_avp_name(msg, &crt->sname, &avp_name, &avp_type)!=0)
+				{
+					LOG(L_ERR,
+					"avpops:db_query_avp:error - cant get avp name [%d/%d]\n",
+					i, j);
+					goto next_avp;
+				}
+			}
+			switch(RES_ROWS(db_res)[i].values[j].type)
+			{
+				case DB_STRING:
+					avp_type |= AVP_VAL_STR;
+					avp_val.s.s=
+						(char*)RES_ROWS(db_res)[i].values[j].val.string_val;
+					avp_val.s.len=strlen(avp_val.s.s);
+					if(avp_val.s.len<=0)
+						goto next_avp;
+				break;
+				case DB_STR:
+					avp_type |= AVP_VAL_STR;
+					avp_val.s.len=
+						RES_ROWS(db_res)[i].values[j].val.str_val.len;
+					avp_val.s.s=
+						(char*)RES_ROWS(db_res)[i].values[j].val.str_val.s;
+					if(avp_val.s.len<=0)
+						goto next_avp;
+				break;
+				case DB_BLOB:
+					avp_type |= AVP_VAL_STR;
+					avp_val.s.len=
+						RES_ROWS(db_res)[i].values[j].val.blob_val.len;
+					avp_val.s.s=
+						(char*)RES_ROWS(db_res)[i].values[j].val.blob_val.s;
+					if(avp_val.s.len<=0)
+						goto next_avp;
+				break;
+				case DB_INT:
+					avp_val.n
+						= (int)RES_ROWS(db_res)[i].values[j].val.int_val;
+				break;
+				case DB_DATETIME:
+					avp_val.n
+						= (int)RES_ROWS(db_res)[i].values[j].val.time_val;
+				break;
+				case DB_BITMAP:
+					avp_val.n
+						= (int)RES_ROWS(db_res)[i].values[j].val.bitmap_val;
+				break;
+				default:
+					goto next_avp;
+			}
+			if(add_avp(avp_type, avp_name, avp_val)!=0)
+			{
+				LOG(L_ERR,"avpops:db_query_avp: error - unable to add avp\n");
+				return -1;
+			}
+next_avp:
+			if(crt)
+			{
+				crt = crt->next;
+				if(crt==NULL)
+					break;
+			}
+		}
+	}
+
+	return 0;
+}

@@ -69,6 +69,7 @@ static int register_galiases( modparam_t type, void* val);
 static int fixup_db_load_avp(void** param, int param_no);
 static int fixup_db_delete_avp(void** param, int param_no);
 static int fixup_db_store_avp(void** param, int param_no);
+static int fixup_db_query_avp(void** param, int param_no);
 static int fixup_write_avp(void** param, int param_no);
 static int fixup_delete_avp(void** param, int param_no);
 static int fixup_copy_avp(void** param, int param_no);
@@ -83,6 +84,8 @@ static int w_print_avps(struct sip_msg* msg, char* foo, char *bar);
 static int w_dbload_avps(struct sip_msg* msg, char* source, char* param);
 static int w_dbdelete_avps(struct sip_msg* msg, char* source, char* param);
 static int w_dbstore_avps(struct sip_msg* msg, char* source, char* param);
+static int w_dbquery1_avps(struct sip_msg* msg, char* query, char* param);
+static int w_dbquery2_avps(struct sip_msg* msg, char* query, char* dest);
 static int w_write_avps(struct sip_msg* msg, char* source, char* param);
 static int w_delete_avps(struct sip_msg* msg, char* param, char *foo);
 static int w_copy_avps(struct sip_msg* msg, char* param, char *check);
@@ -104,6 +107,10 @@ static cmd_export_t cmds[] = {
 	{"avp_db_delete", w_dbdelete_avps, 2, fixup_db_delete_avp,
 							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"avp_db_store",  w_dbstore_avps,  2, fixup_db_store_avp,
+							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"avp_db_query",  w_dbquery1_avps, 1, fixup_db_query_avp,
+							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"avp_db_query",  w_dbquery2_avps, 2, fixup_db_query_avp,
 							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"avp_write",  w_write_avps,  2, fixup_write_avp,
 							REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
@@ -326,6 +333,53 @@ static int fixup_db_delete_avp(void** param, int param_no)
 static int fixup_db_store_avp(void** param, int param_no)
 {
 	return fixup_db_avp( param, param_no, 0/*no scheme*/);
+}
+
+static int fixup_db_query_avp(void** param, int param_no)
+{
+	xl_elem_t *model = NULL;
+	avpname_list_t *anlist = NULL;
+	char *s;
+
+	s = (char*)(*param);
+	if (param_no==1)
+	{
+		if(s==NULL)
+		{
+			LOG(L_ERR, "ERROR:avpops:fixup_db_query_avp: null format in P%d\n",
+					param_no);
+			return E_UNSPEC;
+		}
+		if(xl_parse_format(s, &model, XL_DISABLE_COLORS|XL_THROW_ERROR)<0)
+		{
+			LOG(L_ERR,
+				"ERROR:avpops:fixup_db_query_avp: wrong format[%s]\n",
+				s);
+			return E_UNSPEC;
+		}
+			
+		*param = (void*)model;
+		return 0;
+	} else if(param_no==2) {
+		if(s==NULL)
+		{
+			LOG(L_ERR, "ERROR:avpops:fixup_db_query_avp: null format in P%d\n",
+					param_no);
+			return E_UNSPEC;
+		}
+		anlist = parse_avpname_list(s);
+		if(anlist==NULL)
+		{
+			LOG(L_ERR,
+				"ERROR:avpops:fixup_db_query_avp: bad format in P%d [%s]\n",
+				param_no, s);
+			return E_UNSPEC;
+		}
+		*param = (void*)anlist;
+		return 0;
+	}
+
+	return 0;
 }
 
 
@@ -1088,6 +1142,16 @@ static int w_dbstore_avps(struct sip_msg* msg, char* source, char* param)
 {
 	return ops_dbstore_avps ( msg, (struct fis_param*)source,
 								(struct db_param*)param, use_domain);
+}
+
+static int w_dbquery1_avps(struct sip_msg* msg, char* query, char* param)
+{
+	return ops_dbquery_avps ( msg, (xl_elem_t*)query, 0);
+}
+
+static int w_dbquery2_avps(struct sip_msg* msg, char* query, char* dest)
+{
+	return ops_dbquery_avps ( msg, (xl_elem_t*)query, (avpname_list_t*)dest);
 }
 
 static int w_write_avps(struct sip_msg* msg, char* source, char* param)

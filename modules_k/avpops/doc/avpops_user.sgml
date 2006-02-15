@@ -394,6 +394,46 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 		</section>
 		<section>
 			<title>
+				<function moreinfo="none">avp_db_query(query[,dest])</function>
+			</title>
+			<para>
+			Make a database query and store the result in AVPs.
+			</para>
+			<para>
+			The meaning and usage of the parameters:
+			</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>query</emphasis> - must be a valid SQL
+				query. The parameter can contain pseudo-variables.</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>dest</emphasis> - a list with AVP names where
+				to store the result. The format is
+				<quote>$avp(name1);$avp(name2);...</quote>. If this parameter
+				is ommited, the result is stored in 
+				<quote>$avp(i:1);$avp(i:2);...</quote>. If the result gives
+				many rows, then multiple AVPs with corresponding name will
+				be added.
+				</para>
+			</listitem>
+			</itemizedlist>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>
+			<example>
+				<title><function>avp_db_query</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_db_query("select password, ha1 from subscriber where username='$tu'",
+	"$avp(i:678);$avp(i:679)");
+avp_db_query("delete from subscriber");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
 				<function moreinfo="none">avp_write(value,name)</function>
 			</title>
 			<para>

@@ -734,3 +734,67 @@ error:
 	return 0;
 }
 
+avpname_list_t* parse_avpname_list(char *s)
+{
+	avpname_list_t* head = NULL;
+	avpname_list_t* al = NULL;
+	char *p;
+	xl_spec_t spec;
+
+	if(s==NULL)
+	{
+		LOG(L_ERR, "avpops:parse_avpname_list: error - bad parameters\n");
+		return NULL;
+	}
+
+	p = s;
+	while(*p)
+	{
+		while(*p && (*p==' '||*p=='\t'||*p==','||*p==';'))
+			p++;
+		if(*p=='\0')
+		{
+			if(head==NULL)
+				LOG(L_ERR,
+				"avpops:parse_avpname_list: error - wrong avp name list [%s]\n",
+					s);
+			return head;
+		}
+		p = xl_parse_spec(p, &spec,
+				XL_THROW_ERROR|XL_DISABLE_MULTI|XL_DISABLE_COLORS);
+		if(p==NULL || spec.type!=XL_AVP)
+		{
+			LOG(L_ERR,
+			"avpops:parse_avpname_list: error - wrong avp name list [%s]!\n",
+				s);
+			goto error;
+		}
+		al = (avpname_list_t*)pkg_malloc(sizeof(avpname_list_t));
+		if(al==NULL)
+		{
+			LOG(L_ERR, "avpops:parse_avpname_list: error - no more memory!\n");
+			goto error;
+		}
+		memset(al, 0, sizeof(avpname_list_t));
+		memcpy(&al->sname, &spec, sizeof(xl_spec_t));
+
+		if(head==NULL)
+			head = al;
+		else {
+			al->next = head;
+			head = al;
+		}
+	}
+
+	return head;
+
+error:
+	while(head)
+	{
+		al = head;
+		head=head->next;
+		pkg_free(al);
+	}
+	return NULL;
+}
+
