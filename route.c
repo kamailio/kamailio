@@ -713,6 +713,10 @@ inline static int comp_avp(int op, avp_spec_t* spec, int rtype, union exp_op* r,
 	avp_t* avp;
 	int_str val;
 
+	if (spec->type & AVP_INDEX_ALL) {
+		avp = search_first_avp(spec->type & ~AVP_INDEX_ALL, spec->name, NULL, NULL);
+		return (avp!=0);
+	}
 	avp = search_avp_by_index(spec->type, spec->name, &val, spec->index);
 	if (!avp) return 0;
 

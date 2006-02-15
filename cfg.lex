@@ -200,8 +200,10 @@ MINUS	"-"
 /* Attribute specification */
 ATTR_MARK   "$"|"%"
 SELECT_MARK  "@"
-ATTR_FROMUSER     "f"
-ATTR_TOUSER       "t"
+ATTR_FROM         "f"
+ATTR_TO           "t"
+ATTR_FROMUSER     "fu"
+ATTR_TOUSER       "tu"
 ATTR_FROMDOMAIN   "fd"
 ATTR_TODOMAIN     "td"
 ATTR_GLOBAL       "g"
@@ -506,6 +508,8 @@ EAT_ABLE	[\ \t\b\r]
 
 
 <INITIAL>{ATTR_MARK}    { count(); state = ATTR_S; BEGIN(ATTR); return ATTR_MARK; }
+<ATTR>{ATTR_FROM}       { count(); return ATTR_FROM; }
+<ATTR>{ATTR_TO}         { count(); return ATTR_TO; }
 <ATTR>{ATTR_FROMUSER}   { count(); return ATTR_FROMUSER; }
 <ATTR>{ATTR_TOUSER}     { count(); return ATTR_TOUSER; }
 <ATTR>{ATTR_FROMDOMAIN} { count(); return ATTR_FROMDOMAIN; }

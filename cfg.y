@@ -282,6 +282,8 @@ static struct socket_id* mk_listen_id(char*, int, int);
 
 %token ATTR_MARK
 %token SELECT_MARK
+%token ATTR_FROM
+%token ATTR_TO
 %token ATTR_FROMUSER
 %token ATTR_TOUSER
 %token ATTR_FROMDOMAIN
@@ -1202,7 +1204,7 @@ exp_elem:
 	| exp_stm	{ $$=mk_elem( NO_OP, ACTION_O, 0, ACTIONS_ST, $1);  }
 	| NUMBER	{ $$=mk_elem( NO_OP, NUMBER_O, 0, NUMBER_ST, (void*)$1 ); }
 
-	| attr_id_val			{$$=mk_elem( NO_OP, AVP_O, (void*)$1, 0, 0); }
+	| attr_id_any				{$$=mk_elem( NO_OP, AVP_O, (void*)$1, 0, 0); }
 	| attr_id_val strop STRING	{$$=mk_elem( $2, AVP_O, (void*)$1, STRING_ST, $3); }
 	| attr_id_val strop select_id	{$$=mk_elem( $2, AVP_O, (void*)$1, SELECT_ST, $3); }
 	| attr_id_val intop NUMBER	{$$=mk_elem( $2, AVP_O, (void*)$1, NUMBER_ST, (void*)$3); }
@@ -1348,7 +1350,9 @@ select_id:
 	}
 	;
 attr_class_spec:
-	ATTR_FROMUSER { s_attr->type |= AVP_TRACK_FROM | AVP_CLASS_USER; }
+	ATTR_FROM { s_attr->type |= AVP_TRACK_FROM; }
+	| ATTR_TO { s_attr->type |= AVP_TRACK_TO; }
+	| ATTR_FROMUSER { s_attr->type |= AVP_TRACK_FROM | AVP_CLASS_USER; }
 	| ATTR_TOUSER { s_attr->type |= AVP_TRACK_TO | AVP_CLASS_USER; }
 	| ATTR_FROMDOMAIN { s_attr->type |= AVP_TRACK_FROM | AVP_CLASS_DOMAIN; }
 	| ATTR_TODOMAIN { s_attr->type |= AVP_TRACK_TO | AVP_CLASS_DOMAIN; }

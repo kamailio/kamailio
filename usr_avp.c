@@ -417,12 +417,10 @@ avp_t *search_avp (avp_ident_t ident, avp_value_t* val, struct search_state* sta
 		ident.flags |= AVP_CLASS_ALL;
 		
 		if ((ident.flags & AVP_TRACK_ALL) == 0) {
-		    /* The caller did not specify even the track to search in, so try
-		     * track_from first, and if not found try track_to
+		    /* The caller did not specify even the track to search in, so search
+		     * in the track_from
 		     */
-		     	ident.flags |= AVP_TRACK_FROM;
-		     	if ((ret = search_avp(ident, val, state))) return ret;
-		     	ident.flags = (ident.flags & ~AVP_TRACK_ALL) | AVP_TRACK_TO;
+			ident.flags |= AVP_TRACK_FROM;
 		}
 	}
 
@@ -837,15 +835,21 @@ int parse_avp_ident( str *name, avp_ident_t* attr)
 		}
 		switch (id) {
 			case 'f':
-				attr->flags = AVP_TRACK_FROM | AVP_CLASS_USER;
+				attr->flags = AVP_TRACK_FROM;
 				break;
 			case 't':
+				attr->flags = AVP_TRACK_TO;
+				break;
+			case 0x6675: /* 'fu' */
+				attr->flags = AVP_TRACK_FROM | AVP_CLASS_USER;
+				break;
+			case 0x7475: /* 'tu' */
 				attr->flags = AVP_TRACK_TO | AVP_CLASS_USER;
 				break;
-			case 0x6664: //'fd'
+			case 0x6664: /* 'fd' */
 				attr->flags = AVP_TRACK_FROM | AVP_CLASS_DOMAIN;
 				break;
-			case 0x7464: // 'td'
+			case 0x7464: /* 'td' */
 				attr->flags = AVP_TRACK_TO | AVP_CLASS_DOMAIN;
 				break;
 			case 'g':
