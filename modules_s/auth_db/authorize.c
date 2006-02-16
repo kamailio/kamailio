@@ -112,6 +112,7 @@ static inline int get_ha1(struct username* username, str* realm,
 			return 1;
 		}
 
+		if (val[1].val.int_val & DB_DISABLED) continue;
 		if (val[1].val.int_val & DB_LOAD_SER) {
 			*row = i;
 			break;
@@ -306,7 +307,7 @@ int www_authenticate(struct sip_msg* msg, char* realm, char* table)
 /*
  * Authorize using Proxy-Authorize header field
  */
-int proxy_authenticate1(struct sip_msg* msg, char* table)
+int proxy_authenticate1(struct sip_msg* msg, char* table, char* s2)
 {
 	static str realm = STR_STATIC_INIT("");
 	     /* realm parameter is converted to str* in str_fixup */
@@ -317,7 +318,7 @@ int proxy_authenticate1(struct sip_msg* msg, char* table)
 /*
  * Authorize using WWW-Authorize header field
  */
-int www_authenticate1(struct sip_msg* msg, char* table)
+int www_authenticate1(struct sip_msg* msg, char* table, char* s2)
 {
 	static str realm = STR_STATIC_INIT("");
 	return authenticate(msg, &realm, table, HDR_AUTHORIZATION_T);
