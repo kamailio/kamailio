@@ -174,9 +174,11 @@ static db_val_t vals[sizeof(ALL_LOG_FMT) - 1];
 static int db_n;
 
 static int acc_db_request(struct sip_msg *rq, char *comment, char *foo);
+static int acc_db_missed(struct sip_msg *rq, char *comment, char *foo);
 
 static cmd_export_t cmds[] = {
-	{"acc_db_request", acc_db_request, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"acc_db_log",    acc_db_request, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"acc_db_missed", acc_db_missed, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -248,7 +250,7 @@ static int fix_log_flag( modparam_t type, void* val)
 /* fixes log_missed_flag param (resolves possible named flags) */
 static int fix_log_missed_flag( modparam_t type, void* val)
 {
-	return fix_flag(type, val, "acc_db", "log_missed_flag", &log_flag);
+	return fix_flag(type, val, "acc_db", "log_missed_flag", &log_missed_flag);
 }
 
 
@@ -792,6 +794,17 @@ static int acc_db_request(struct sip_msg *rq, char* comment, char* s2)
 {
 	preparse_req(rq);
 	return log_request(rq, rq->to, acc_table.s, 0, time(0));
+}
+
+
+/* these wrappers parse all what may be needed; they don't care about
+ * the result -- accounting functions just display "unavailable" if there
+ * is nothing meaningful
+ */
+static int acc_db_missed(struct sip_msg *rq, char* comment, char* s2)
+{
+	preparse_req(rq);
+	return log_request(rq, rq->to, mc_table.s, 0, time(0));
 }
 
 
