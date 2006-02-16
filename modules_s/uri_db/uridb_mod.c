@@ -299,6 +299,7 @@ static int lookup_user(struct sip_msg* msg, char* s1, char* s2)
 			continue;
 		}
 
+		if ((val[1].val.int_val & DB_DISABLED)) continue; /* Skip disabled entries */
 		if ((val[1].val.int_val & DB_LOAD_SER) == 0) continue; /* Not for SER */
 		if ((val[1].val.int_val & flag) == 0) continue;        /* Not allowed in the header we are interested in */
 		goto found;
