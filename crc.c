@@ -205,17 +205,18 @@ unsigned short int crc_16_tab[] = { /* CRC polynomial 0xA001 */
 0x8201, 0x42C0, 0x4380, 0x8341, 0x4100, 0x81C1, 0x8081, 0x4040,
 };
 
-unsigned short crcitt_string( char *s, int len )
-{
-	register unsigned short ccitt;
-	
-	ccitt = 0xFFFF;
-
+unsigned short crcitt_string_ex( char *s, int len, register unsigned short ccitt) {
+	ccitt = ~ccitt;
 	while( len ) {
 		ccitt = UPDCIT(*s, ccitt);
 		s++; len--;
 	}
 	return ~ccitt;
+}
+
+unsigned short crcitt_string( char *s, int len )
+{
+	return crcitt_string_ex(s, len, 0);
 }
 
 void crcitt_string_array( char *dst, str src[], int size )
