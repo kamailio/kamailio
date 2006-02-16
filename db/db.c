@@ -79,6 +79,11 @@ int bind_dbmod(char* mod, db_func_t* mydbf)
 
 	dbf.cap = 0;
 
+	if (find_module_by_name(tmp) == 0) {
+		ERR("Database driver '%s' not found\n", tmp);
+		goto err;
+	}
+
 	     /* All modules must export db_use_table */
 	dbf.use_table = (db_use_table_f)find_mod_export(tmp, "db_use_table", 2, 0);
 	if (dbf.use_table == 0) {
