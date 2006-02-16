@@ -101,11 +101,22 @@ static void system_methodHelp(rpc_t* rpc, void* c)
 				if (ptr->doc_str && ptr->doc_str[0]) {
 					rpc->add(c, "s", ptr->doc_str[0]);
 				} else {
-					rpc->add(c, "s", "");
+					rpc->add(c, "s", "undocumented");
 				}
 				return;
 			}
 		}
+	}
+	/* try the core methods too */
+	for (ptr=core_rpc_methods;ptr && ptr->name; ptr++){
+			if (strcmp(name, ptr->name) == 0) {
+				if (ptr->doc_str && ptr->doc_str[0]) {
+					rpc->add(c, "s", ptr->doc_str[0]);
+				} else {
+					rpc->add(c, "s", "undocumented");
+				}
+				return;
+			}
 	}
 }
 
@@ -119,8 +130,8 @@ static const char* core_prints_doc[] = {
 static void core_prints(rpc_t* rpc, void* c)
 {
 	char* string = 0;
-	rpc->scan(c, "s", &string);
-	rpc->add(c, "s", string);
+	if (rpc->scan(c, "s", &string)>0)
+		rpc->add(c, "s", string);
 }
 
 
