@@ -181,7 +181,7 @@ struct module_exports exports = {
 	cmds,
 	0,         /* RPC methods */
 	params,    /*  module parameters */
-        pg_test,   /* module initialization function */
+        0,         /* module initialization function */
 	0,         /* response function*/
 	0,         /* destroy function */
 	0,         /* oncancel function */
