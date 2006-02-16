@@ -261,9 +261,9 @@ static int load_avps_fixup(void** param, int param_no)
 	long id = 0;
 
 	if (param_no == 1) {
-		if (!strcasecmp(*param, "from.uid")) {
+		if (!strcasecmp(*param, "f.uid")) {
 			id = LOAD_FROM_UID;
-		} else if (!strcasecmp(*param, "to.uid")) {
+		} else if (!strcasecmp(*param, "t.uid")) {
 			id = LOAD_TO_UID;
 		} else {
 			LOG(L_ERR, "avp_db:load_avps_fixup: Unknown parameter\n");
