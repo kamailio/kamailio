@@ -59,7 +59,8 @@ strict_route();
 	</title>
 	<para>
 		The function marks Avp for a new Record-Route header field. The header field will be inserted
-		in the message before any other Record-Route header fields.
+		in the message before any other Record-Route header fields. Note that only user class AVPs may
+		be passed as cookies, i.e. domain and global are ignored.
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>

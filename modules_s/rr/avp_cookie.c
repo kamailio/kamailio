@@ -37,6 +37,7 @@
 #define AVP_COOKIE_BUFFER 1024
 #define CRC_LEN 4
 
+unsigned short crc_secret = 0;
 regex_t* cookie_filter_re = 0;
 
 
@@ -44,9 +45,7 @@ int rr_add_avp_cookie(struct sip_msg *msg, char *param1, char *param2) {
 	avp_ident_t *ident;
 	struct usr_avp *avp;
 	struct search_state st;
-
 	ident = (void*) param1;
-	
 	DBG("rr_add_avp_cookie: inquired\n");
 	while (ident->flags != (avp_flags_t) -1) {	
 		for (avp=search_avp(*ident, NULL, &st); avp; avp = search_next_avp(&st, NULL)) {
@@ -134,6 +133,7 @@ str *rr_get_avp_cookies(void) {
 	len = sizeof(crc);
 	for (avp_list_no=0; avp_list_no<MAX_AVP_DIALOG_LISTS; avp_list_no++) {
 		for ( avp=get_avp_list(avp_dialog_lists[avp_list_no]); avp; avp = avp->next ) {
+
 			if ( (avp->flags & AVP_FLAG_DIALOG) == 0)
 				continue;
 
@@ -204,7 +204,7 @@ brk:
 			return 0;
 		}
 		result->s = (char*)result + sizeof(*result);
-		crc = crcitt_string(buf+sizeof(crc), len-sizeof(crc));
+		crc = crcitt_string_ex(buf+sizeof(crc), len-sizeof(crc), crc_secret);
 		memcpy(&buf, &crc, sizeof(crc));
 
 		base64encode(buf, len, result->s, &result->len);
@@ -229,10 +229,10 @@ void rr_set_avp_cookies(str *enc_cookies, int reverse_direction) {
 		return;
 	}
 	base64decode(enc_cookies->s, enc_cookies->len, buf, &len);
-
+	
 	if (len <= sizeof(crc))
 		return;
-	crc = crcitt_string(buf+sizeof(crc), len-sizeof(crc));
+	crc = crcitt_string_ex(buf+sizeof(crc), len-sizeof(crc), crc_secret);
 	if (crc != *(unsigned short*) buf) {
 		LOG(L_ERR, "rr:set_avp_cookies: bad CRC when decoding AVP cookie\n");
 		return;

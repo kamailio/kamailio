@@ -49,6 +49,7 @@
 #include <regex.h>
 #include "../../script_cb.h"
 #include "../../usr_avp.h"
+#include "../../crc.h"
 
 #ifdef ENABLE_USER_CHECK
 #include <string.h>
@@ -62,12 +63,13 @@ int enable_full_lr = 0;   /* Disabled by default */
 int add_username = 0;     /* Do not add username by default */
 char *cookie_filter = 0;  /* filter cookies restored in loose_route, potential security problem */
 str user_part_avp = STR_NULL;  /* AVP identification where user part of Route URI is stored after loose/strict routing */
+static str crc_secret_str = STR_NULL;
 avp_ident_t user_part_avp_ident;
 
 MODULE_VERSION
 
 static int mod_init(void);
-static int fixup_avp_regex(void** param, int param_no);
+static int fixup_avp_list(void** param, int param_no);
 
 
 /*
@@ -85,7 +87,7 @@ static cmd_export_t cmds[] = {
 	{"record_route",         record_route,        0, 0,           REQUEST_ROUTE},
 	{"record_route_preset",  record_route_preset, 1, fixup_str_1, REQUEST_ROUTE},
 	{"record_route_strict" , record_route_strict, 0, 0,           0            },
-	{"rr_add_avp_cookie",    rr_add_avp_cookie,   1, fixup_avp_regex, REQUEST_ROUTE},
+	{"rr_add_avp_cookie",    rr_add_avp_cookie,   1, fixup_avp_list, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -102,6 +104,7 @@ static param_export_t params[] ={
 #endif
 	{"add_username",     PARAM_INT,    &add_username    },
 	{"cookie_filter",    PARAM_STRING, &cookie_filter   },
+	{"cookie_secret",    PARAM_STR,    &crc_secret_str  },
 	{"user_part_avp",    PARAM_STR,    &user_part_avp   },	
 	{0, 0, 0 }
 };
@@ -123,6 +126,7 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	DBG("rr - initializing\n");
+	crc_secret = crcitt_string(crc_secret_str.s, crc_secret_str.len);
 	if (cookie_filter && strlen(cookie_filter)) {
 		cookie_filter_re = (regex_t*)pkg_malloc(sizeof(regex_t));
 		memset(cookie_filter_re, 0, sizeof(regex_t));
@@ -142,14 +146,14 @@ static int mod_init(void)
 	return 0;
 }
 
-static int fixup_avp_regex(void** param, int param_no)
+static int fixup_avp_list(void** param, int param_no)
 {
 	int n;
 	char *c;
 	avp_ident_t *ident;
 	str s;
 	
-	DBG("rr:fixup_avp_regex: #%d, '%s'\n", param_no, (char*)(*param));
+	DBG("rr:fixup_avp_list: #%d, '%s'\n", param_no, (char*)(*param));
 	if (param_no!=1) return 0;
 	
 	s.s = (char*) *param;
@@ -180,7 +184,7 @@ static int fixup_avp_regex(void** param, int param_no)
 		s.s += s.len;
 	}
 	ident[n].flags = (avp_flags_t) -1;  /* bumper */
-	pkg_free(*param);
+	/* pkg_free(*param); do not free it because it's used in idents!*/
 	*param = ident;
 	return 0;
 }

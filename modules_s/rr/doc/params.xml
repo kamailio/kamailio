@@ -109,4 +109,22 @@ route{
 	</example>
     </section>
 
+    <section id="cookie_secret">
+	<title><varname>cookie_secret</varname> (string)</title>
+	<para>
+	    Secret to distinguish cookies from different servers.
+	</para>
+	<para>
+	    Default value is empty string.
+	</para>
+	<example>
+	    <title>Set <varname>cookie_secret</varname> parameter, later use</title>
+	    <programlisting>
+...
+modparam("rr", "cookie_secret", "bflmpsvz")
+...
+	    </programlisting>
+	</example>
+    </section>
+
 </section>
