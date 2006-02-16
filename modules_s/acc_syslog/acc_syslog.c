@@ -152,12 +152,14 @@ avp_ident_t* avps;
 int avps_n;
 
 static int acc_log_request(struct sip_msg *rq, char *comment, char *foo);
+static int acc_log_missed(struct sip_msg *rq, char *comment, char *foo);
 
 static str na = STR_STATIC_INIT(NA);
 
 
 static cmd_export_t cmds[] = {
-	{"acc_log_request", acc_log_request, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"acc_syslog_log",    acc_log_request, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"acc_syslog_missed", acc_log_missed, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -203,7 +205,7 @@ static int fix_log_flag( modparam_t type, void* val)
 /* fixes log_missed_flag param (resolves possible named flags) */
 static int fix_log_missed_flag( modparam_t type, void* val)
 {
-	return fix_flag(type, val, "acc_syslog", "log_missed_flag", &log_flag);
+	return fix_flag(type, val, "acc_syslog", "log_missed_flag", &log_missed_flag);
 }
 
 
@@ -724,6 +726,22 @@ static int acc_log_request(struct sip_msg *rq, char* comment, char* s2)
 {
 	str phrase;
 	str txt = STR_STATIC_INIT(ACC_REQUEST);
+
+	phrase.s = comment;
+	phrase.len = strlen(comment);	/* fix_param would be faster! */
+	preparse_req(rq);
+	return log_request(rq, rq->to, &txt, &phrase, time(0));
+}
+
+
+/* these wrappers parse all what may be needed; they don't care about
+ * the result -- accounting functions just display "unavailable" if there
+ * is nothing meaningful
+ */
+static int acc_log_missed(struct sip_msg *rq, char* comment, char* s2)
+{
+	str phrase;
+	str txt = STR_STATIC_INIT(ACC_MISSED);
 
 	phrase.s = comment;
 	phrase.len = strlen(comment);	/* fix_param would be faster! */
