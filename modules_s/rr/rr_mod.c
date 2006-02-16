@@ -171,7 +171,7 @@ static int fixup_avp_regex(void** param, int param_no)
 		while (s.s[s.len] && s.s[s.len] != ',') s.len++;
 		while (s.len > 0 && s.s[s.len-1] == ' ') s.len--;
 		if (s.len > 0) {
-		        if (parse_avp_ident(&s, &ident[n]) < 0) {
+			if (parse_avp_ident(&s, &ident[n]) < 0) {
 				LOG(L_ERR, "ERROR: rr: parsing error near '%s'\n", s.s);
 				return E_CFG;
 			}
@@ -179,7 +179,7 @@ static int fixup_avp_regex(void** param, int param_no)
 		}
 		s.s += s.len;
 	}
-	ident->flags = (avp_flags_t) -1;  /* bumper */
+	ident[n].flags = (avp_flags_t) -1;  /* bumper */
 	pkg_free(*param);
 	*param = ident;
 	return 0;
