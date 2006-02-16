@@ -123,8 +123,6 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	DBG("rr - initializing\n");
-	register_script_cb(rr_before_script_cb, REQ_TYPE_CB | PRE_SCRIPT_CB, 0);
-
 	if (cookie_filter && strlen(cookie_filter)) {
 		cookie_filter_re = (regex_t*)pkg_malloc(sizeof(regex_t));
 		memset(cookie_filter_re, 0, sizeof(regex_t));
@@ -146,36 +144,44 @@ static int mod_init(void)
 
 static int fixup_avp_regex(void** param, int param_no)
 {
-	avp_save_item_t* re;
-
+	int n;
+	char *c;
+	avp_ident_t *ident;
+	str s;
+	
 	DBG("rr:fixup_avp_regex: #%d, '%s'\n", param_no, (char*)(*param));
 	if (param_no!=1) return 0;
-	if ((re=pkg_malloc(sizeof(avp_save_item_t)))==0) return E_OUT_OF_MEM;
-	if (strncmp(*param, "s:", 2) == 0) {
-		re->type = AVP_NAME_STR;
-		re->u.s.s = *param +2;
-		re->u.s.len = strlen(re->u.s.s);
+	
+	s.s = (char*) *param;
+        s.len = strlen(s.s);
+	for (c=(char*)*param, n=2; *c; c++) {
+		if (*c == ',') n++;
 	}
-	else if (strncmp(*param, "i:", 2) == 0) {
-		re->type = 0;
-		re->u.n = atol(*param +2);
-		if (re->u.n == 0) {
-			LOG(L_ERR, "ERROR: %s : bad AVP number '%s'\n", exports.name, (char*)*param);
-			return E_CFG;
+	ident = pkg_malloc(sizeof(*ident)*n);
+	if (!ident) {
+		LOG(L_ERR, "ERROR: rr: out of memory\n");
+		return E_CFG;
+	}
+		
+	s.s = (char*) *param;
+	n = 0;
+	while (*s.s) {
+		while (*s.s == ' ' || *s.s == ',') s.s++;
+		s.len = 0;
+		while (s.s[s.len] && s.s[s.len] != ',') s.len++;
+		while (s.len > 0 && s.s[s.len-1] == ' ') s.len--;
+		if (s.len > 0) {
+		        if (parse_avp_ident(&s, &ident[n]) < 0) {
+				LOG(L_ERR, "ERROR: rr: parsing error near '%s'\n", s.s);
+				return E_CFG;
+			}
+			n++;
 		}
+		s.s += s.len;
 	}
-	else {
-		re->type = AVP_NAME_RE;
-		if (regcomp(&re->u.re, *param, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ){
-			pkg_free(re);
-			LOG(L_ERR, "ERROR: %s : bad regex '%s'\n", exports.name, (char*)*param);
-			return E_BAD_RE;
-		}
-	}
-	/* free string */
+	ident->flags = (avp_flags_t) -1;  /* bumper */
 	pkg_free(*param);
-	/* replace it with the compiled re */
-	*param=re;
+	*param = ident;
 	return 0;
 }
 

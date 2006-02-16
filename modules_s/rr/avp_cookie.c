@@ -33,71 +33,29 @@
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
 
-/*static avp_list_t dialog_avp_list = 0; */
-
 #define AVP_COOKIE_NAME "avp="
 #define AVP_COOKIE_BUFFER 1024
 #define CRC_LEN 4
 
 regex_t* cookie_filter_re = 0;
 
-int rr_before_script_cb(struct sip_msg *msg, void *param) {
-	DBG("rr_before_script_cb: inquired\n");
-	/*destroy_avp_list(&dialog_avp_list);*/
-	return 1;
-}
 
 int rr_add_avp_cookie(struct sip_msg *msg, char *param1, char *param2) {
-	avp_save_item_t *re;
-	int_str avp_id, avp_val;
+	avp_ident_t *ident;
 	struct usr_avp *avp;
 	struct search_state st;
 
+	ident = (void*) param1;
+	
 	DBG("rr_add_avp_cookie: inquired\n");
-	re = (avp_save_item_t*) param1;
-	switch (re->type) {
-		case 0:
-			avp_id.n = re->u.n;
-			break;
-		case AVP_NAME_RE:
-			avp_id.re = &re->u.re;
-			break;
-		case AVP_NAME_STR:
-			avp_id.s = re->u.s;
-			break;
+	while (ident->flags != (avp_flags_t) -1) {	
+		for (avp=search_avp(*ident, NULL, &st); avp; avp = search_next_avp(&st, NULL)) {
+			avp->flags |= AVP_FLAG_DIALOG;
+		}
+		ident++;
 	}
-
-	/* copy AVPs to private AVP list */
-	for ( avp=search_first_avp(re->type, avp_id, &avp_val, &st);
-			avp;
-			avp = search_next_avp(&st, &avp_val) ) {
-
-		avp->flags |= AVP_FLAG_DIALOG;
-		#if 0
-		former implementation, when supposed separate avp list
-		if ((avp->flags&(AVP_NAME_STR|AVP_VAL_STR)) == AVP_NAME_STR) {
-			/* avp type str, int value */
-			avp_id2.s = ((struct str_int_data*)&(avp->data))->name;
-		}
-		else if ((avp->flags&(AVP_NAME_STR|AVP_VAL_STR)) == (AVP_NAME_STR|AVP_VAL_STR)) {
-			/* avp type str, str value */
-			avp_id2.s = ((struct str_str_data*)&(avp->data))->name;
-		}
-		else {
-			avp_id2.n = avp->id;
-		}
-
-		/* set avp from cookie */
-		DBG("rr:rr_add_avp_cookie: coping AVP\n");
-		/* TODO: avp->flags |= AVP_FLAG_DIALOG */
-		//if ( add_avp_list(&dialog_avp_list, avp->flags, avp_id2, avp_val)!=0 ) {
-		//	LOG(L_ERR, "ERROR: rr:rr_add_avp_cookie: add_avp failed\n");
-		//}
-		#endif
-	}
-
 	return 1;
-}
+}	
 
 void base64decode(char* src_buf, int src_len, char* tgt_buf, int* tgt_len) {
 	int pos, i, n;
@@ -255,7 +213,7 @@ brk:
 	return result;
 }
 
-void rr_set_avp_cookies(str *enc_cookies) {
+void rr_set_avp_cookies(str *enc_cookies, int reverse_direction) {
 	char *buf;
 	int len, pos;
 	unsigned short crc;
@@ -288,6 +246,9 @@ void rr_set_avp_cookies(str *enc_cookies) {
 		}
 
 		avp.flags = (avp_flags & 0x0F) | avp_dialog_lists[avp_flags >> 4];
+		if (reverse_direction && (avp.flags & (AVP_CLASS_DOMAIN|AVP_CLASS_USER)) ) {
+			avp.flags ^= AVP_TRACK_ALL;  /* flip from/to flags */
+		}
 		pos+= sizeof(rr_avp_flags_t);
 		if (avp.flags & AVP_NAME_STR) {
 			avp_name.s.len = 0;

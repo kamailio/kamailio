@@ -42,6 +42,7 @@
 #include "../../data_lump.h"
 #include "../../parser/parse_rr.h"
 #include "../../parser/parse_uri.h"
+#include "../../parser/parse_from.h"
 #include "../../mem/mem.h"
 #include "../../dset.h"
 #include "loose.h"
@@ -357,7 +358,144 @@ static inline int is_strict(str* _params)
 	else return 1;
 }
 
-void get_avp_cookie_from_uri(str* _params, str *_avp_cookie) {
+/* check direction using ftag */
+static int get_direction(struct sip_msg* _m, str* _params) {
+	str s, ftag;
+	int i, state = 0;
+	
+	if (_params->len == 0) return 0;
+
+	ftag.len = 0;
+	ftag.s = 0;
+	s.s = _params->s;
+	s.len = _params->len;
+
+	for(i = 0; i < s.len; i++) {
+		switch(state) {
+			case 0:
+				switch(s.s[i]) {
+					case ' ':
+					case '\r':
+					case '\n':
+					case '\t':           break;
+					case 'f':
+					case 'F': state = 1; break;
+					default:  state = 8; break;
+				}
+				break;
+
+			case 1:
+				switch(s.s[i]) {
+					case 't':
+					case 'T': state = 2; break;
+					default:  state = 8; break;
+				}
+				break;
+
+			case 2:
+				switch(s.s[i]) {
+					case 'a':
+					case 'A': state = 3; break;
+					default:  state = 8; break;
+				}
+				break;
+
+			case 3:
+				switch(s.s[i]) {
+					case 'g':
+					case 'G': state = 4; break;
+					default:  state = 8; break;
+				}
+				break;
+			case 4:
+				switch(s.s[i]) {
+					case ';':  return 0;
+					case '=':  state = 6; break;
+					case ' ':
+					case '\r':
+					case '\n':
+					case '\t': state = 5; break;
+					default:   state = 8; break;
+				}
+				break;
+			case 5:
+				switch(s.s[i]) {
+					case ';':  return 0;
+					case '=':  state = 6; break;
+					case ' ':
+					case '\r':
+					case '\n':
+					case '\t': break;
+					default:   state = 8; break;
+				}
+				break;
+
+			case 6:
+				switch(s.s[i]) {
+					case '\"': state=101; break;
+					case ';':  return 0;
+					case ' ':
+					case '\r':
+					case '\n':
+					case '\t': break;
+					default:   state = 100; ftag.s = s.s+i; break;
+				}
+				break;
+
+			case 8:
+				switch(s.s[i]) {
+					case '\"': state = 9; break;
+					case ';':  state = 0; break;
+					default:              break;
+				}
+				break;
+
+			case 9:
+				switch(s.s[i]) {
+					case '\\': state = 10; break;
+					case '\"': state = 8; break;
+					default:              break;
+				}
+				break;
+
+			case 10: state = 9;
+				break;
+
+			case 100:
+				switch(s.s[i]) {
+					case '\"':  return 0;
+					case ';':
+					case ' ':
+					case '\r':
+					case '\n':
+					case '\t': ftag.len = s.s+i - ftag.s; break;
+				}
+				break;
+
+			case 101:	/* no escape chars supported in base64 algorithm */
+				switch(s.s[i]) {
+					case '\"': ftag.len = s.s+i - ftag.s; break;
+					case '\\': state = 102; break;
+					default:                break;
+				}
+				break;
+
+			case 102:
+				state = 101;
+				break;
+		}
+	}
+
+	if (state == 100)
+		ftag.len = s.s+i - ftag.s;
+		
+	if (ftag.len) {		/* compare if from.tag == ftag */
+		if (ftag.len!=get_from(_m)->tag_value.len || strncmp(ftag.s, get_from(_m)->tag_value.s, ftag.len)) return 1;
+	}
+	return 0;
+}
+
+static void get_avp_cookie_from_uri(str* _params, str *_avp_cookie) {
 	str s;
 	int i, state = 0;
 
@@ -633,7 +771,7 @@ static inline int after_strict(struct sip_msg* _m)
 
 	get_avp_cookie_from_uri(&_m->parsed_uri.params, &avp_cookie);
 	if (avp_cookie.len > 0)
-		rr_set_avp_cookies(&avp_cookie);
+		rr_set_avp_cookies(&avp_cookie, get_direction(_m, &_m->parsed_uri.params));
 
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
@@ -808,7 +946,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		DBG("after_loose: Topmost route URI: '%.*s' is me\n", uri->len, ZSW(uri->s));
 		get_avp_cookie_from_uri(&puri.params, &avp_cookie);
 		if (avp_cookie.len > 0)
-			rr_set_avp_cookies(&avp_cookie);
+			rr_set_avp_cookies(&avp_cookie, get_direction(_m, &puri.params));
 		if (!rt->next) {
 			     /* No next route in the same header, remove the whole header
 			      * field immediately

@@ -22,6 +22,7 @@
 	    The function performs loose routing as defined in <ulink
 		url="http://www.ietf.org/rfc/rfc3261.txt">RFC3261</ulink> and
 		will set Avp value passed in Route header that were created by <function>record_route</function>.
+		If <emphasis>ftag!=tag.from</emphasis> then from/to are flipped.
 	</para>
 	<example>
 	    <title><function>loose_route</function> usage</title>
@@ -64,7 +65,7 @@ strict_route();
 	<itemizedlist>
 		<listitem>
 		    <para>
-			<emphasis>string</emphasis> - Avp to be inserted into the Record-route in <function>record_route</function>.
+			<emphasis>string</emphasis> - Avp(s) to be inserted into the Record-route in <function>record_route</function>.
 		    </para>
 		</listitem>
 	</itemizedlist>
@@ -72,8 +73,8 @@ strict_route();
 		<title><function>rr_add_avp_cookie</function> usage</title>
 		<programlisting format="linespecific">
 ...
-rr_add_avp_cookie("s:avp_identified_by_name");
-rr_add_avp_cookie("i:10");  # identified by number
+rr_add_avp_cookie("foo");
+rr_add_avp_cookie("f.foo,bar");  # identified by number
 rr_add_avp_cookie("avp_*"); # identified by regex
 ...
 </programlisting>
