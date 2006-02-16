@@ -124,9 +124,11 @@ static struct attr attrs[A_MAX];
 static struct val vals[V_MAX];
 
 static int acc_rad_request(struct sip_msg *rq, char *comment, char *foo);
+static int acc_rad_missed(struct sip_msg *rq, char *comment, char *foo);
 
 static cmd_export_t cmds[] = {
-	{"acc_rad_request", acc_rad_request, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"acc_rad_log",    acc_rad_request, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"acc_rad_missed", acc_rad_missed, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -174,7 +176,7 @@ static int fix_log_flag( modparam_t type, void* val)
 /* fixes log_missed_flag param (resolves possible named flags) */
 static int fix_log_missed_flag( modparam_t type, void* val)
 {
-	return fix_flag(type, val, "acc_radius", "log_missed_flag", &log_flag);
+	return fix_flag(type, val, "acc_radius", "log_missed_flag", &log_missed_flag);
 }
 
 
@@ -753,14 +755,14 @@ static int log_request(struct sip_msg* rq, struct hdr_field* to, unsigned int co
 	     /* Add Acct-Status-Type attribute */
 	av_type = rad_status(rq, code);
 	if (!rc_avpair_add(rh, &send, attrs[A_ACCT_STATUS_TYPE].v, &av_type, -1, 0)) {
-		LOG(L_ERR, "ERROR:acc:log_request: Add Status-Type\n");
+		ERR("Add Status-Type\n");
 		goto error;
 	}
 
 	     /* Add Service-Type attribute */
 	av_type = (service_type != -1) ? service_type : vals[V_SIP_SESSION].v;
 	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &av_type, -1, 0)) {
-		LOG(L_ERR, "ERROR: acc_rad_request: add STATUS_TYPE\n");
+		ERR("add STATUS_TYPE\n");
 		goto error;
 	}
 
@@ -769,7 +771,7 @@ static int log_request(struct sip_msg* rq, struct hdr_field* to, unsigned int co
 
 	     /* Send the request out */
 	if (rc_acct(rh, SIP_PORT, send) != OK_RC) {
-		LOG(L_ERR, "ERROR:acc:log_request: RADIUS accounting request failed\n");
+		ERR("RADIUS accounting request failed\n");
 		goto error;
 	}
 
@@ -811,6 +813,17 @@ static void log_missed(struct cell* t, struct sip_msg* reply, unsigned int code,
  * is nothing meaningful
  */
 static int acc_rad_request(struct sip_msg *rq, char* comment, char* s2)
+{
+	preparse_req(rq);
+	return log_request(rq, rq->to, 0, time(0));
+}
+
+
+/* these wrappers parse all what may be needed; they don't care about
+ * the result -- accounting functions just display "unavailable" if there
+ * is nothing meaningful
+ */
+static int acc_rad_missed(struct sip_msg *rq, char* comment, char* s2)
 {
 	preparse_req(rq);
 	return log_request(rq, rq->to, 0, time(0));
