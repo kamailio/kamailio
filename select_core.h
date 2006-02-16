@@ -80,6 +80,17 @@ SELECT_F(select_uri_host)
 SELECT_F(select_uri_port)
 SELECT_F(select_uri_params)
 
+SELECT_F(select_event)
+
+SELECT_F(select_rr)
+SELECT_F(select_rr_uri)
+SELECT_F(select_rr_name)
+SELECT_F(select_rr_params)
+
+SELECT_F(select_cseq)
+SELECT_F(select_cseq_method)
+SELECT_F(select_cseq_num)
+
 static select_row_t select_core[] = {
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("from"), select_from, 0},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("f"), select_from, 0},
@@ -121,6 +132,7 @@ static select_row_t select_core[] = {
 	{ select_from_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
 	{ select_to_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
 	{ select_contact_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
+	{ select_rr_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("type"), select_uri_type, 0},
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("user"), select_uri_user, 0},
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("pwd"), select_uri_pwd, 0},
@@ -129,6 +141,18 @@ static select_row_t select_core[] = {
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_uri_params, 0},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("msg"), select_msgheader, SEL_PARAM_EXPECTED},
 	{ select_msgheader, SEL_PARAM_STR, STR_NULL, select_anyheader, OPTIONAL | CONSUME_NEXT_INT},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("event"), select_event, 0},
+
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("record_route"), select_rr, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("rr"), select_rr, 0},
+	{ select_rr, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_rr_uri, 0},
+	{ select_rr, SEL_PARAM_STR, STR_STATIC_INIT("name"), select_rr_name, 0}, 
+	{ select_rr, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_rr_params, CONSUME_NEXT_STR},
+
+        { NULL, SEL_PARAM_STR, STR_STATIC_INIT("cseq"), select_cseq, 0},
+        { select_cseq, SEL_PARAM_STR, STR_STATIC_INIT("num"), select_cseq_num, 0},
+        { select_cseq, SEL_PARAM_STR, STR_STATIC_INIT("method"), select_cseq_method, 0},
+
 	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
 

@@ -42,6 +42,8 @@
 #include "parser/contact/contact.h"
 #include "parser/parse_via.h"
 #include "parser/parse_uri.h"
+#include "parser/parse_event.h"
+#include "parser/parse_rr.h"
 
 #define RETURN0_res(x) {*res=x;return 0;}
 #define TRIM_RET0_res(x) {*res=x;trim(res);return 0;} 
@@ -571,3 +573,143 @@ int select_uri_params(str* res, select_t* s, struct sip_msg* msg)
 	RETURN0_res(uri.params);
 }
 
+int select_event(str* res, select_t* s, struct sip_msg* msg)
+{
+	if (!msg->event && parse_headers(msg, HDR_EVENT_F, 0) == -1) {
+		ERR("Error while searching Event header field\n");
+		return -1;
+	}
+
+	if (!msg->event) {
+		DBG("Event header field not found\n");
+		return -1;
+	}
+
+	if (parse_event(msg->event) < 0) {
+		ERR("Error while parsing Event header field\n");
+		return -1;
+	}
+
+	*res = ((event_t*)msg->event->parsed)->text;
+	return 0;
+}
+
+
+
+static int parse_rr_header(struct sip_msg *msg)
+{
+        if ( !msg->record_route && ( parse_headers(msg,HDR_RECORDROUTE_F,0) == -1)) {
+                ERR("bad msg or missing Record-Route header\n");
+                return -1;
+        }
+
+	if (!msg->record_route) {
+		DBG("No Record-Route header field found\n");
+		return -1;
+	}
+
+	return parse_rr(msg->record_route);
+}
+
+#define get_rr(msg) ((rr_t*)(msg->record_route->parsed))
+
+
+int select_rr(str* res, select_t* s, struct sip_msg* msg)
+{
+	if (parse_rr_header(msg)<0)
+		return -1;
+	RETURN0_res(msg->record_route->body);
+}
+
+int select_rr_uri(str* res, select_t* s, struct sip_msg* msg)
+{
+	rr_t* r;
+	if (parse_rr_header(msg)<0)
+		return -1;
+	
+	r = get_rr(msg);
+	if (!r)
+		return 1;
+	RETURN0_res(r->nameaddr.uri);
+}
+
+int select_rr_name(str* res, select_t* s, struct sip_msg* msg)
+{
+	rr_t* r;
+	if (parse_rr_header(msg)<0)
+		return -1;
+	
+	r = get_rr(msg);
+	if (!r)
+		return 1;
+	RETURN0_res(r->nameaddr.name);
+}
+
+int select_rr_params(str* res, select_t* s, struct sip_msg* msg)
+{
+	rr_t* r;
+	param_t* p;
+	if (parse_rr_header(msg)<0)
+		return -1;
+	
+	r = get_rr(msg);
+	if (!r)
+		return 1;
+	p = r->params;
+	while (p) {
+		if ((p->name.len==s->params[s->n-1].v.s.len)
+		    && !strncasecmp(p->name.s, s->params[s->n-1].v.s.s,p->name.len)) {
+			RETURN0_res(p->body)
+		}
+		p = p->next;
+	}
+	return 0;
+}
+
+
+static inline struct cseq_body* sel_parse_cseq(struct sip_msg* msg)
+{
+        if (!msg->cseq && (parse_headers(msg, HDR_CSEQ_F, 0) == -1)) {
+                ERR("Unable to parse CSeq header\n");
+                return 0;
+        }
+
+	if (!msg->cseq) {
+		DBG("No CSeqheader field found\n");
+		return 0;
+	}
+
+	return get_cseq(msg);
+}
+
+
+
+int select_cseq(str* res, select_t* s, struct sip_msg* msg)
+{
+	struct cseq_body* cs;
+
+	cs = sel_parse_cseq(msg);
+	if (!cs) return -1;
+	*res = msg->cseq->body;
+	return 0;
+}
+
+int select_cseq_num(str* res, select_t* s, struct sip_msg* msg)
+{
+	struct cseq_body* cs;
+
+	cs = sel_parse_cseq(msg);
+	if (!cs) return -1;
+	*res = cs->number;
+	return 0;
+}
+
+int select_cseq_method(str* res, select_t* s, struct sip_msg* msg)
+{
+	struct cseq_body* cs;
+
+	cs = sel_parse_cseq(msg);
+	if (!cs) return -1;
+	*res = cs->method;
+	return 0;
+}
