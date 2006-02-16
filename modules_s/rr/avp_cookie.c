@@ -73,6 +73,12 @@ void base64decode(char* src_buf, int src_len, char* tgt_buf, int* tgt_len) {
 		else  /* '=' */
 			c[i] = 64;
 		i++;
+		if (pos == src_len-1) {
+			while (i < 4) {
+				c[i] = 64;
+				i++;
+			}
+		}
 		if (i==4) {
 			if (c[0] == 64)
 				n = 0;
@@ -102,17 +108,19 @@ void base64decode(char* src_buf, int src_len, char* tgt_buf, int* tgt_len) {
 void base64encode(char* src_buf, int src_len, char* tgt_buf, int* tgt_len) {
 	static char code64[64+1] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	int pos;
-	for (pos=0, *tgt_len=0; pos < src_len; pos+=3, *tgt_len+=4) {
+	for (pos=0, *tgt_len=0; pos < src_len; pos+=3,*tgt_len+=4) {
 		tgt_buf[*tgt_len+0] = code64[(unsigned char)src_buf[pos+0] >> 2];
 		tgt_buf[*tgt_len+1] = code64[(((unsigned char)src_buf[pos+0] & 0x03) << 4) | ((pos+1 < src_len)?((unsigned char)src_buf[pos+1] >> 4):0)];
-		if (pos+1 < src_len)
+		if (pos+1 < src_len) 
 			tgt_buf[*tgt_len+2] = code64[(((unsigned char)src_buf[pos+1] & 0x0F) << 2) | ((pos+2 < src_len)?((unsigned char)src_buf[pos+2] >> 6):0)];
-		else
-			tgt_buf[*tgt_len+2] = '=';
-		if (pos+2 < src_len)
+		else   
+			*tgt_len--;		
+			/* tgt_buf[*tgt_len+2] = '='; do not add trailing equals - not header compliant without quotes */
+		if (pos+2 < src_len) 
 			tgt_buf[*tgt_len+3] = code64[(unsigned char)src_buf[pos+2] & 0x3F];
 		else
-			tgt_buf[*tgt_len+3] = '=';
+			*tgt_len--;
+			/* tgt_buf[*tgt_len+3] = '='; */
 	}
 }
 
