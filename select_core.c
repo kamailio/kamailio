@@ -485,7 +485,11 @@ int select_anyheader(str* res, select_t* s, struct sip_msg* msg)
 			s->params[1].v.s.s[s->params[1].v.s.len]=c;
 			
 			if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T) {
-				pkg_free(s->params[1].v.s.s);
+				/* pkg_free(s->params[1].v.s.s); */
+				/* don't free it (the mem can leak only once at startup)
+				 * the parsed string can live inside larger string block
+				 * e.g. when xlog's select is parsed
+				 */
 				s->params[1].type = SEL_PARAM_DIV;
 				s->params[1].v.i = hdr.type;
 			}
