@@ -1,0 +1,14 @@
+2006-02-17
+	- corrected BUG (resubscribe without contact)
+	- added parameters: wait_for_term_notify, resubscribe_delta,
+	min_resubscribe_time
+	- added documentation
+
+2006-02-16
+	- corrected BUG (bad and missing state machine transitions)
+	- added parameters: default_expiration, on_error_retry_time
+	
+2006-02-14
+	* created module 
+	* QSA notifier for "presence" - does SIP subscription as result of QSA
+	subscription, SUBSCRIBE can use preset route (parameter presence_route)

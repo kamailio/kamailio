@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="presence_b2b.parameters"><title>Parameters</title>
+
+<variablelist>
+<varlistentry>
+	<term><varname>default_expiration</varname> (integer)</term>
+	<listitem>
+		<para>Default subscription expiration timeout in seconds.</para>
+		<para>Default value is 3600.</para>
+	</listitem>
+</varlistentry>
+<varlistentry>
+	<term><varname>on_error_retry_time</varname> (integer)</term>
+	<listitem>
+		<para>Time in seconds to next attempt at subscription creation after
+		receiving an error from peer (for example 404 response on SUBSCRIBE
+		request).</para>
+		<para>Default value is 120.</para>
+	</listitem>
+</varlistentry>
+<varlistentry>
+	<term><varname>presence_route</varname> (string)</term>
+	<listitem><para>Route header put into first generated SUBSCRIBE
+	request.</para>
+	<para>Default value: empty.
+	</para></listitem>
+</varlistentry>
+<varlistentry>
+	<term><varname>wait_for_term_notify</varname> (integer)</term>
+	<listitem>
+		<para>Default timeout for receiving terminating NOTIFY after
+		unsubscribe (SUBSCRIBE with Expires: 0). If no NOTIFY is received during
+		this time, the subscription is destroyed without processing last notify. 
+		</para>
+		<para>Default value is 30.</para>
+	</listitem>
+</varlistentry>
+<varlistentry>
+	<term><varname>resubscribe_delta</varname> (integer)</term>
+	<listitem>
+		<para>Number of seconds before subscription expiration when should be
+		sent resubscription request. For example if this value is 60 and the
+		subscription is for 3600 seconds (Expires in 2xx response), next
+		SUBSCRIBE request will be sent after 3540 seconds.</para>
+		<para>Default value is 30.</para>
+	</listitem>
+</varlistentry>
+<varlistentry>
+	<term><varname>min_resubscribe_time</varname> (integer)</term>
+	<listitem>
+		<para>Minimum number of seconds between consequent SUBSCRIBE requests.
+		(Renewal SUBSCRIBE is sent at least after this number of seconds.)</para>
+		<para>Default value is 30.</para>
+	</listitem>
+</varlistentry>
+
+</variablelist>
+</section>
+
