@@ -163,7 +163,11 @@ static void core_uptime(rpc_t* rpc, void* c)
 	if (rpc->add(c, "{", &s) < 0) return;
 	rpc->struct_add(s, "s", "now", ctime(&now));
 	rpc->struct_add(s, "s", "up_since", up_since_ctime);
-	rpc->struct_add(s, "f", "uptime", difftime(now, up_since));
+	/* no need for a float here (unless you're concerned that your uptime)
+	rpc->struct_add(s, "f", "uptime",  difftime(now, up_since));
+	*/
+	/* on posix system we can substract time_t directly */
+	rpc->struct_add(s, "d", "uptime",  (int)(now-up_since));
 }
 
 
