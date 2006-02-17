@@ -85,6 +85,13 @@
  */
 #define NESTED		1<<13
 
+/* "fixup call" would be done, when the structure is resolved to this node
+ * which means call with res and msg NULL
+ *
+ * if the fixup call return value <0, the select resolution will fail
+ */
+#define FIXUP_CALL	1<<14
+
 /*
  * Selector call parameter
  */

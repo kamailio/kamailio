@@ -28,6 +28,7 @@
  * --------
  *  2005-12-19  select framework, basic core functions (mma)
  *  2006-01-19  multiple nested calls, IS_ALIAS -> NESTED flag renamed (mma)
+ *  2006-02-17  fixup call for select_anyhdr (mma)
  */
 
  
@@ -44,6 +45,8 @@
 #include "parser/parse_uri.h"
 #include "parser/parse_event.h"
 #include "parser/parse_rr.h"
+#include "mem/mem.h"
+#include "parser/parse_hname2.h"
 
 #define RETURN0_res(x) {*res=x;return 0;}
 #define TRIM_RET0_res(x) {*res=x;trim(res);return 0;} 
@@ -457,9 +460,38 @@ int select_anyheader(str* res, select_t* s, struct sip_msg* msg)
 {
 	struct hdr_field *hf, *hf0;
 	int hi;
+	char c;
+	struct hdr_field hdr;
 	
-	if(msg==NULL)
-		return -1;
+	if(msg==NULL) {
+		if (res!=NULL) return -1;
+
+		/* "fixup" call, res & msg are NULL */
+		if (s->n <2) return -1;
+
+		if (s->params[1].type==SEL_PARAM_STR) {
+				/* replace _ with - (for P-xxx headers) */
+			for (hi=s->params[1].v.s.len-1; hi>0; hi--)
+				if (s->params[1].v.s.s[hi]=='_')
+					s->params[1].v.s.s[hi]='-';
+				/* if header name is parseable, parse it and set SEL_PARAM_DIV */
+			c=s->params[1].v.s.s[s->params[1].v.s.len];
+			s->params[1].v.s.s[s->params[1].v.s.len]=':';
+			if (parse_hname2(s->params[1].v.s.s,s->params[1].v.s.s+(s->params[1].v.s.len<3?4:s->params[1].v.s.len+1),
+						&hdr)==0) {
+				ERR("select_anyhdr:fixup_call:parse error\n");
+				return -1;
+			}
+			s->params[1].v.s.s[s->params[1].v.s.len]=c;
+			
+			if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T) {
+				pkg_free(s->params[1].v.s.s);
+				s->params[1].type = SEL_PARAM_DIV;
+				s->params[1].v.i = hdr.type;
+			}
+		}
+		return 1;
+	}
 
 	hf0 = NULL;
 

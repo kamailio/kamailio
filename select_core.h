@@ -139,8 +139,6 @@ static select_row_t select_core[] = {
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("host"), select_uri_host, 0},
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("port"), select_uri_port, 0},
 	{ select_any_uri, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_uri_params, 0},
-	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("msg"), select_msgheader, SEL_PARAM_EXPECTED},
-	{ select_msgheader, SEL_PARAM_STR, STR_NULL, select_anyheader, OPTIONAL | CONSUME_NEXT_INT},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("event"), select_event, 0},
 
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("record_route"), select_rr, 0},
@@ -149,10 +147,12 @@ static select_row_t select_core[] = {
 	{ select_rr, SEL_PARAM_STR, STR_STATIC_INIT("name"), select_rr_name, 0}, 
 	{ select_rr, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_rr_params, CONSUME_NEXT_STR},
 
-        { NULL, SEL_PARAM_STR, STR_STATIC_INIT("cseq"), select_cseq, 0},
-        { select_cseq, SEL_PARAM_STR, STR_STATIC_INIT("num"), select_cseq_num, 0},
-        { select_cseq, SEL_PARAM_STR, STR_STATIC_INIT("method"), select_cseq_method, 0},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("cseq"), select_cseq, 0},
+	{ select_cseq, SEL_PARAM_STR, STR_STATIC_INIT("num"), select_cseq_num, 0},
+	{ select_cseq, SEL_PARAM_STR, STR_STATIC_INIT("method"), select_cseq_method, 0},
 
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("msg"), select_msgheader, SEL_PARAM_EXPECTED},
+	{ select_msgheader, SEL_PARAM_STR, STR_NULL, select_anyheader, OPTIONAL | CONSUME_NEXT_INT | FIXUP_CALL},
 	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
 

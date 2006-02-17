@@ -58,6 +58,14 @@ int resolve_select(select_t* s)
 	s->f[0] = NULL;
 	while (param_idx<s->n) {
 		accept = 0;
+		switch (s->params[param_idx].type) {
+		case SEL_PARAM_STR:
+			DBG("resolve_select: '%.*s'\n", s->params[param_idx].v.s.len, s->params[param_idx].v.s.s);
+			break;
+		case SEL_PARAM_INT:
+			DBG("resolve_select: [%d]\n", s->params[param_idx].v.i);
+			break;
+		}
 		for (t=select_list; t; t=t->next) {
 			table_idx = 0;	
 			if (!t->table) continue;
@@ -109,6 +117,10 @@ int resolve_select(select_t* s)
 				goto not_found;
 			}
 		}
+		if (t->table[table_idx].flags & FIXUP_CALL) {
+			if (t->table[table_idx].new_f(NULL, s, NULL)<0) goto not_found;
+		}
+		
 		if (t->table[table_idx].flags & NESTED) {
 			if (nested < MAX_NESTED_CALLS-1) { /* need space for final function */
 				s->f[nested++] = f;
@@ -136,6 +148,7 @@ int resolve_select(select_t* s)
 	} else {
 		s->f[nested] = f;
 	}
+		
 	return 0;
 	
 not_found:
