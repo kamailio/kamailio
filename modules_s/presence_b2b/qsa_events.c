@@ -151,6 +151,7 @@ static events_subscription_t *create_presence_subscription(subscription_t *subsc
 
 static void add_presence_subscription(events_subscription_t *es)
 {
+	DBG("adding events_subscription into HT\n");
 	ht_add(&internals->presence_ht, es->internal_subscription, es);
 	DOUBLE_LINKED_LIST_ADD(internals->presence_subscriptions_first,
 			internals->presence_subscriptions_last, es);

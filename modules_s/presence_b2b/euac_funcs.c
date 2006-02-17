@@ -260,6 +260,7 @@ void new_subscription(events_uac_t *uac, str *contact_to_send)
 	add_reference(&uac->ref_cntr); /* add reference for callback function */
 	
 	/* add to hash table (hash acording to dialog id) */
+	DBG("adding into unconfirmed EUACs\n");
 	ht_add(&euac_internals->ht_unconfirmed, &uac->dialog->id, uac);
 
 	/* ERR("DIALOG ID = %.*s:%.*s:%.*s\n",

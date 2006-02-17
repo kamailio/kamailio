@@ -38,6 +38,7 @@ static void confirm_dialog(events_uac_t *uac, struct sip_msg *m)
 	euac_internals->tmb.dlg_response_uac(uac->dialog, m);
 
 	/* add to confirmed dialogs */
+	DBG("adding into confirmed EUACs\n");
 	ht_add(&euac_internals->ht_confirmed, &uac->dialog->id, uac);
 
 	/* TRACE("confirmed dialog: %.*s * %.*s * %.*s\n",
@@ -320,6 +321,7 @@ void do_step_waiting_for_term_notify(euac_action_t action, struct sip_msg *m, ev
 		case act_notify:
 				discard_notification(uac, m, 200,  "OK");
 				if (is_terminating_notify(m)) {
+					destroy_confirmed_dialog(uac);
 					euac_clear_timer(uac);
 					uac->status = euac_destroyed;
 					/* DBG("destroying dialog (NOTIFY)\n"); */
@@ -331,6 +333,7 @@ void do_step_waiting_for_term_notify(euac_action_t action, struct sip_msg *m, ev
 		case act_tick:
 				/* wait no more */
 				uac->status = euac_destroyed;
+				destroy_confirmed_dialog(uac);
 				/* DBG("destroying dialog (timer)\n"); */
 				break;
 		case act_1xx:
