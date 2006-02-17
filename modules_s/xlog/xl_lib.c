@@ -59,6 +59,8 @@
 #include "xl_lib.h"
 #include <arpa/inet.h>  // inet_ntop
 
+#include "../../select.h"
+
 static str str_null  = STR_STATIC_INIT("<null>");
 static str str_empty = STR_STATIC_INIT("");
 static str str_per   = STR_STATIC_INIT("%");
@@ -918,6 +920,15 @@ static int xl_get_host(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	}
 }
 
+static int xl_get_select(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
+{
+	int i;
+	if ((i=run_select(res, (select_t*)hp->s, msg))==1)
+		return xl_get_null(msg, res, hp, hi, hf);
+	
+	return i;
+}
+
 static int xl_get_avp(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
 	int_str name, val;
@@ -965,7 +976,8 @@ int xl_parse_format(char *s, xl_elog_p *el)
 	str name;
 	int avp_flags, avp_index;
 	int_str avp_name;
-
+	select_t *sel;
+	
 	if(s==NULL || el==NULL)
 		return -1;
 
@@ -1442,6 +1454,59 @@ int xl_parse_format(char *s, xl_elog_p *el)
 				e->hindex=avp_index;
 				DBG("flags %x  name %.*s  index %d\n", avp_flags, avp_name.s.len, avp_name.s.s, avp_index);
 				break;
+			case '@':
+					/* fill select structure and call resolve_select */
+				DBG("xlog: xl_parse_format: @\n");
+				sel=(select_t*)pkg_malloc(sizeof(select_t));
+				if (!sel) {
+					ERR("xlog: xl_parse_format: no free memory\n");
+					goto error;
+				}
+				p++;
+				sel->n=0;
+				while (isalpha(*p)) {
+					if (sel->n > MAX_SELECT_PARAMS -2) {
+						ERR("xlog: xl_parse_format: select depth exceeds max\n");
+						goto sel_error;
+					}
+					name.s=p;
+					while (isalpha(*p))	p++;
+					name.len=p-name.s;
+					sel->params[sel->n].type=SEL_PARAM_STR;
+					sel->params[sel->n].v.s=name;
+					DBG("xlog: xl_parse_format: @part %d: %.*s\n", sel->n, sel->params[sel->n].v.s.len, sel->params[sel->n].v.s.s);
+					sel->n++;
+					if (*p=='[') {
+						p++;c=*p;
+						if (*p=='-') p++;
+						name.s=p;
+						while (isdigit(*p)) p++;
+						name.len=p-name.s;
+						if (*p!=']') {
+							ERR("xlog: xl_parse_format: invalid index, no closing ]\n");
+							goto sel_error;
+						};
+						p++;
+						sel->params[sel->n].type=SEL_PARAM_INT;
+						sel->params[sel->n].v.i=atoi(name.s);
+						DBG("xlog: xl_parse_format: @part %d: [%d]\n", sel->n, sel->params[sel->n].v.i);
+						sel->n++;
+					}
+					if (*p!='.') break;
+					p++;
+				};
+				if (sel->n==0) {
+					ERR("xlog: xl_parse_format: invalid select\n");
+					goto sel_error;
+				};
+				DBG("xlog: xl_parse_format: @end, total elements: %d, calling resolve_select\n", sel->n);
+				if (resolve_select(sel)<0) {
+					ERR("xlog: xl_parse_format: error while resolve_select\n");
+					goto sel_error;
+				}
+				e->itf = xl_get_select;
+				e->hparam.s = (char*)sel;
+				break;
 			case '%':
 				e->itf = xl_get_percent;
 				break;
@@ -1461,6 +1526,8 @@ int xl_parse_format(char *s, xl_elog_p *el)
 
 	return 0;
 
+sel_error:
+	pkg_free(s);
 error:
 	xl_elog_free_all(*el);
 	*el = NULL;
