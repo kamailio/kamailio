@@ -197,6 +197,32 @@ char *str_strchr(const str_t *s, char c)
 	return NULL;
 }
 
+char *str_str(const str_t *s, const str_t *search_for)
+{
+	int i, j;
+	/* FIXME: reimplement using better algorithm */
+
+	if (is_str_empty(search_for)) return s->s;
+	if (is_str_empty(s)) return NULL;
+	
+	if (search_for->len > s->len) return NULL;
+
+	j = 0;
+	i = 0;
+	while (i < s->len) {
+		if (s->s[i] == search_for->s[j]) {
+			j++;
+			i++;
+			if (i == search_for->len) return s->s + i - j;
+		}
+		else {
+			i = i - j + 1;
+			j = 0;
+		}
+	}
+	return NULL;
+}
+
 /* creates new string as concatenation of a and b */
 int str_concat(str_t *dst, str_t *a, str_t *b)
 {

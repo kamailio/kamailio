@@ -102,6 +102,9 @@ void str_clear(str_t *s);
 /** locate character in string */
 char *str_strchr(const str_t *s, char c);
 
+/** locate string in string */
+char *str_str(const str_t *s, const str_t *search_for);
+
 /* creates new string as concatenation of a and b */
 int str_concat(str_t *dst, str_t *a, str_t *b);
 

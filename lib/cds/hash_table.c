@@ -172,3 +172,22 @@ void ht_clear_statistic(hash_table_t *ht)
 	ht->nocmp_cnt = 0;
 	ht->missed_cnt = 0;
 }
+
+/* --------- HASH functions -------- */
+
+unsigned int rshash(const char* str, unsigned int len)
+{
+	unsigned int b = 378551;
+	unsigned int a = 63689;
+	unsigned int hash = 0;
+	unsigned int i = 0;
+
+	for(i = 0; i < len; str++, i++) {
+		hash = hash * a + (*str);
+		a = a * b;
+	}
+
+	return (hash & 0x7FFFFFFF);
+}
+
+

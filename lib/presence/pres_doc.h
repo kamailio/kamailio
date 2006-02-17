@@ -99,6 +99,14 @@ typedef struct {
 	char uri_data[1];
 } list_presence_info_t;
 
+typedef struct {
+	str_t list_uri; /* do not modify this !*/
+
+	str_t pres_doc;
+	str_t content_type;
+	char uri_data[1];
+} presence_info_t;
+
 presentity_info_t *create_presentity_info(const str_t *presentity);
 presence_tuple_info_t *create_tuple_info(const str_t *contact, const str_t *id, presence_tuple_status_t status);
 void add_tuple_info(presentity_info_t *p, presence_tuple_info_t *t);

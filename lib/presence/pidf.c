@@ -251,7 +251,7 @@ static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst, int ignore_ns
 	/* process contact (only one node) */
 	n = find_node(tuple, "contact", ns);
 	if (!n) {
-		ERROR_LOG("contact not found\n");
+		/* ERROR_LOG("contact not found\n"); */
 		str_clear(&contact);
 		/* return -1; */
 	}

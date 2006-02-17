@@ -30,6 +30,7 @@
 extern "C" {
 #endif
 
+#include <cds/sstr.h>
 #include <presence/notifier_domain.h>
 	
 int qsa_initialize();

@@ -74,4 +74,7 @@ ht_data_t ht_find(hash_table_t *ht, ht_key_t key);
 void ht_get_statistic(hash_table_t *ht, ht_statistic_t *s);
 void ht_clear_statistic(hash_table_t *ht);
 
+/* hash functions */
+unsigned int rshash(const char* str, unsigned int len);
+
 #endif
