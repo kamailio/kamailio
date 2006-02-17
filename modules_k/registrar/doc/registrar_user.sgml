@@ -244,6 +244,32 @@ modparam("registrar", "sip_natping_flag", 7)
 
 
 	<section>
+		<title><varname>realm_prefix</varname> (string)</title>
+		<para>
+		 Prefix to be automatically strip from realm. As an alternative to 
+		 SRV records (not all SIP clients support SRV lookup), a subdomain of 
+		 the master domain can be defined for SIP purposes (like 
+		 sip.mydomain.net pointing to same IP address as the SRV record for 
+		 mydomain.net). By ignoring the realm_prefix "sip.", at registration,
+		 sip.mydomain.net will be equivalent to mydomain.net .
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL (none).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>realm_prefix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "realm_prefix", "sip.")
+...
+</programlisting>
+		</example>
+	</section>
+
+
+	<section>
 		<title><varname>append_branches</varname> (integer)</title>
 		<para>
 		The parameter controls how lookup function processes multiple 
@@ -466,7 +492,7 @@ modparam("registrar", "sock_flag", 18)
 	<section>
 		<title><varname>sock_hdr_name</varname> (string)</title>
 		<para>
-		Header which contains a socket description (IP:port) to overide
+		Header which contains a socket description (proto:IP:port) to overide
 		the the received socket info. The heaer will be read only if the
 		flag sock_flag is set.
 		</para>
@@ -539,7 +565,8 @@ modparam("registrar", "method_filtering", 1)
 	<section>
 		<title><varname>use_path</varname> (integer)</title>
 		<para>
-		If set to 1, the Path header is handled according to the parameter "path_mode".
+		If set to 1, the Path header is handled according to the parameter 
+		<quote>path_mode</quote>.
 		</para>
 		<para>
 		<emphasis>
@@ -559,30 +586,34 @@ modparam("registrar", "use_path", 1)
 	<section>
 		<title><varname>path_mode</varname> (integer)</title>
 		<para>
-		The registrar module implements three different modes regarding the response
-		to a registration which includes one or more Path headers:
+		The registrar module implements three different modes regarding the 
+		response to a registration which includes one or more Path headers:
 		</para>
 		<itemizedlist>
 		<listitem>
 			<para>
-			0 - The Path header is saved into usrloc, but is not included in the reply.
+			0 - The Path header is saved into usrloc, but is not included in 
+			the reply.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			1 - The Path header is saved into usrloc, but is only included in the reply
-			if path support is indicated in the registration request by the <quote>path</quote>
-			option of the <quote>Supported</quote>	header.
+			1 - The Path header is saved into usrloc, but is only included in 
+			the reply if path support is indicated in the registration request 
+			by the <quote>path</quote> option of the 
+			<quote>Supported</quote> header.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			2 - The path header is only saved into usrloc, if path support is indicated in the
-			registration request by the <quote>path</quote> option of the <quote>Supported</quote> 
-			header. If no path support is indicated, the request is rejected with 
-			<quote>420 - Bad Extension</quote> and the header <quote>Unsupported: path</quote> is
-			included in the reply along with the received <quote>Path</quote> header.
-			This mode is the one recommended by RFC-3327.
+			2 - The path header is only saved into usrloc, if path support is 
+			indicated in the registration request by the <quote>path</quote> 
+			option of the <quote>Supported</quote> header. If no path support 
+			is indicated, the request is rejected with 
+			<quote>420 - Bad Extension</quote> and the header 
+			<quote>Unsupported: path</quote> is included in the reply along 
+			with the received <quote>Path</quote> header. This mode is the 
+			one recommended by RFC-3327.
 			</para>
 		</listitem>
 		<para>
@@ -649,7 +680,7 @@ save("location");
 		<listitem>
 			<para>
 			<emphasis>domain</emphasis> - Logical domain within registrar. 
-			If database is used then this must be na e of the table which 
+			If database is used then this must be name of the table which 
 			stores the contacts.
 			</para>
 		</listitem>
@@ -662,6 +693,36 @@ save("location");
 		<programlisting format="linespecific">
 ...
 save_noreply("location");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">save_memory(domain)</function>
+		</title>
+		<para>
+		Same as <function>save()</function> but it updates only the memory 
+		cache, even if DB support (any type) is enabled.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>domain</emphasis> - Logical domain within registrar 
+			(Ex: <quote>location</quote>).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>save_memory</function> usage</title>
+		<programlisting format="linespecific">
+...
+save_memory("location");
 ...
 </programlisting>
 		</example>
