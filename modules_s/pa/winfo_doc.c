@@ -117,7 +117,7 @@ int create_winfo_document(struct presentity* p, struct watcher* w, str *dst, str
 static int doc_add_watcher_offline(dstring_t *buf, offline_winfo_t *w)
 {
 	char tmp[64];
-	char *status = "unknown";
+	char *status = "waiting";
 	char *wevent = "subscribe";
 	
 	dstr_append_zt(buf, "\t\t<watcher status=\"");

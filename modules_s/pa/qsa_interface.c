@@ -22,6 +22,7 @@ static void pa_unsubscribe(notifier_t *n, subscription_t *subscription);
 
 extern dlist_t* root; /* ugly !!!!! */
 
+int accept_internal_subscriptions = 0;
 
 /* QSA interface initialization */
 int pa_qsa_interface_init()
@@ -104,6 +105,8 @@ static int pa_subscribe(notifier_t *n, subscription_t *subscription)
 	internal_pa_subscription_t *ss;
 	str uid = STR_NULL;
 	
+	if (!accept_internal_subscriptions) return 0; /* do not accept subscriptions */
+	
 	DBG("SUBSCRIBE to PA for %.*s [%.*s]\n", 
 			FMT_STR(subscription->record_id),
 			FMT_STR(subscription->package->name));
@@ -174,6 +177,8 @@ static void pa_unsubscribe(notifier_t *n, subscription_t *subscription)
 	dlist_t *dl;
 	presentity_t *p = NULL;
 	str uid = STR_NULL;
+	
+	if (!accept_internal_subscriptions) return; /* do not accept subscriptions */
 	
 	if (pres_uri2uid(&uid, &subscription->record_id) != 0) {
 		/* can't convert uri to uid */

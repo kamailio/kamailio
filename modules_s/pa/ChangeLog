@@ -1,3 +1,11 @@
+2006-02-15
+	* RPC function pa.publish uses UID instead of uri!
+	* XCAP uris for authorization documents contain UID instead of username!
+	* added configurable max_subscription_expiration (undocumented)
+	
+2006-02-14
+	* added parameter for disabling processing internal subscriptions
+	
 2006-02-02
 	* added handling of <person> element from RPID (whole <person> elements
 	are stored and put into NOTIFY messages; they are not processed in any

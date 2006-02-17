@@ -63,6 +63,7 @@ static int subscribe_fixup(void** param, int param_no); /* domain name -> domain
 static void timer(unsigned int ticks, void* param); /* Delete timer for all domains */
 
 int default_expires = 3600;  /* Default expires value if not present in the message (for SUBSCRIBE and PUBLISH) */
+int max_subscription_expiration = 3600;  /* max expires value for subscribe */
 int timer_interval = 10;     /* Expiration timer interval in seconds */
 double default_priority = 0.0; /* Default priority of presence tuple */
 static int default_priority_percentage = 0; /* expressed as percentage because config file grammar does not support floats */
@@ -155,6 +156,8 @@ static param_export_t params[]={
 	{"offline_winfo_timer", PARAM_INT, &offline_winfo_timer_interval }, /* basic ticks of "offline winfo" timer */
 
 	/* undocumented still (TODO) */
+	{"max_subscription_expiration", PARAM_INT, &max_subscription_expiration },
+	{"accept_internal_subscriptions", PARAM_INT, &accept_internal_subscriptions },
 	{"presentity_table",     PARAM_STRING, &presentity_table     },
 	{"presentity_contact_table", PARAM_STRING, &presentity_contact_table     },
 	{"watcherinfo_table",    PARAM_STRING, &watcherinfo_table    },

@@ -417,7 +417,7 @@ int get_preferred_event_mimetype(struct sip_msg *_m, int et)
 	if (idx != -1) return em->mimes[idx]; /* found value with highest priority */
 
 	acc = em->mimes[0];
-	LOG(L_WARN, "%s: defaulting to mimetype %x for event_type=%d\n", __FUNCTION__, acc, et);
+	DBG("defaulting to mimetype %x for event_type=%d\n", acc, et);
 	return acc;
 }
 
@@ -543,6 +543,8 @@ static time_t get_expires(struct sip_msg *_m)
 	} else {
 		e = default_expires;
 	}
+	if (e > max_subscription_expiration) 
+		e = max_subscription_expiration;
 	return e;
 }
 

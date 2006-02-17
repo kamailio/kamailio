@@ -26,6 +26,17 @@
 </varlistentry>
 
 <varlistentry>
+	<term><varname>accept_internal_subscriptions</varname> (integer)</term>
+	<listitem>
+		<para>If set to 1 PA module will accept internal subscriptions via
+		Querry Status API otherwise not. Set this to 1 if you want RLS module
+		to be using internal subscriptions to PA. You can't use presence B2B UA
+		in this case!</para>
+		<para>Default value is 0.</para>
+	</listitem>
+</varlistentry>
+
+<varlistentry>
 	<term id="pa.param.watcherinfo_notify"><varname>watcherinfo_notify</varname> (integer)</term>
 	<listitem>
 		<para>Set this to 1 if you want to enable subscriptions to

@@ -285,11 +285,13 @@ static void rpc_pa_publish(rpc_t* rpc, void* c)
 		rpc->fault(c, 400, "Unknown domain '%s'\n", domain);
 		return;
 	}
-
+/*
 	if (pres_uri2uid(&uid, &pstr) != 0) {
 		rpc->fault(c, 400, "Unable to convert '%.*s' to UID\n", pstr.len, pstr.s);
 		return;
-	}
+	} */
+	
+	str_dup(&uid, &pstr); /* RPC publication using UID !!! */
 	
 	lock_pdomain(d);
 	res = find_presentity_uid(d, &uid, &p);

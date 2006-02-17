@@ -12,4 +12,6 @@ void free_internal_subscription(internal_pa_subscription_t *is);
 
 presentity_info_t *presentity2presentity_info(presentity_t *p);
 
+extern int accept_internal_subscriptions;
+
 #endif

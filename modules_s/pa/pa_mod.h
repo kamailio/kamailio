@@ -37,6 +37,7 @@
 #include "auth.h"
 
 extern int default_expires;
+extern int max_subscription_expiration;  /* max expires value for subscribe */
 extern double default_priority;
 extern int timer_interval;
 

@@ -27,24 +27,24 @@ int get_user_from_uri(str *uri, str *user)
 }
 
 /* Authorization */
-static int xcap_get_pres_rules(str *uri, 
+static int xcap_get_pres_rules(str *uid, 
 		cp_ruleset_t **dst, auth_params_t *params)
 {
 	xcap_query_t xcap;
 	int res;
-	str u;
+	/* str u; */
 	
 	/* get only presentity name, not whole uri
 	 * can't use parse_uri because of absence 
 	 * of protocol specification ! */
-	if (get_user_from_uri(uri, &u) != 0) u = *uri;
+	/* if (get_user_from_uri(uri, &u) != 0) u = *uri; */
 	
 	memset(&xcap, 0, sizeof(xcap));
 	/* TODO: 
 	xcap.auth_user = "???";
 	xcap.auth_pass = "???"; */
 	xcap.enable_unverified_ssl_peer = 1;
-	res = get_pres_rules(params->xcap_root, &u, &xcap, dst);
+	res = get_pres_rules(params->xcap_root, uid, &xcap, dst);
 	return res;
 }
 		
@@ -63,7 +63,7 @@ static watcher_status_t xcap_authorize(presentity_t *p,
 	}
 	
 	if (!p->authorization_info) {
-		res = xcap_get_pres_rules(&p->uri, &p->authorization_info, params);
+		res = xcap_get_pres_rules(&p->uuid, &p->authorization_info, params);
 		if (res != 0) {
 			DBG("can't get authorization rules for %.*s\n", 
 					p->uri.len, ZSW(p->uri.s));
