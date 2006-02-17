@@ -146,9 +146,9 @@ static int check_message(struct sip_msg *_m, int send_err)
 	};
 	
 	if (verify_event_package(_m) != 0) { 
-		LOG(L_INFO, "handle_rls_subscription(): unsupported events.\n");
 		/* allow only selected packages independently on rls document */
 		if (send_err) {
+			ERR("unsupported events\n");
 			add_response_header(_m, "Allow-Events: presence\r\n");
 			send_reply(_m, 489, "Bad Event");
 		}
@@ -171,7 +171,7 @@ static int check_message(struct sip_msg *_m, int send_err)
 	for (i = 0; accepts[i].mime_txt; i++) 
 		if ((!accepts[i].found) && (accepts[i].needed)) {
 			if (send_err) 
-				LOG(L_ERR, "required type %s not in Accept headers\n", 
+				ERR("required type %s not in Accept headers\n", 
 					accepts[i].mime_txt);
 			return -1;
 		}
@@ -365,6 +365,7 @@ int handle_rls_subscription(struct sip_msg* _m, /*const char *xcap_server,*/ cha
 		return -1;
 	}
 	if (check_message(_m, send_err) != 0) {
+		DBG("check message failed\n");
 		return -1;
 	}
 	if (has_to_tag(_m)) {

@@ -123,10 +123,10 @@ static int rls_subscribe(notifier_t *n, subscription_t *subscription)
 	
 	if ((!subscription) || (!rls_internal_data)) return -1;
 	
-/*	DEBUG_LOG("internal subscribe to RLS for %.*s [%.*s]\n", 
+/*	ERR("internal subscribe to RLS for %.*s [%.*s]\n", 
 			FMT_STR(subscription->record_id),
-			FMT_STR(subscription->package->name));
-	*/
+			FMT_STR(subscription->package->name));*/
+	
 	/* subscriptions MUST be processed asynchronously due to
 	 * locking the same mutex in subscriber and NOTIFIER 
 	 * (RLS subscribes to itself) !!! */
@@ -178,7 +178,7 @@ static void process_subscription(subscription_t *subscription)
 	/* try to make subscription and release it if internal subscription 
 	 * not created */
 	
-	/* DEBUG_LOG("*** processing INTERNAL RLS subscription ***\n"); */
+/*	ERR("*** processing INTERNAL RLS subscription ***\n"); */
 	
 	/* FIXME: test if no such subscription exists yet (possibility of cyclus) */
 
@@ -186,7 +186,7 @@ static void process_subscription(subscription_t *subscription)
 
 	rls = rls_alloc_subscription(rls_internal_subscription);
 	if (!rls) {
-		DEBUG_LOG("processing INTERNAL RLS subscription - memory allocation error\n");
+		ERR("processing INTERNAL RLS subscription - memory allocation error\n");
 		release_subscription(subscription);
 		rls_unlock();
 		return;
@@ -202,8 +202,11 @@ static void process_subscription(subscription_t *subscription)
 		rls_unlock();
 		return;
 	}
-	
-	DEBUG_LOG("*** added INTERNAL RLS subscription to %.*s (%p)***\n", 
+
+	/* generate first notification for accepted subscription */
+	rls_generate_notify(rls, 1);
+
+	DBG("added INTERNAL RLS subscription to %.*s (%p)\n", 
 			FMT_STR(subscription->record_id), subscription);
 	
 	rls_unlock();
@@ -216,7 +219,7 @@ static void process_unsubscription(subscription_t *subscription)
 	
 	/* verify if subscription is processed and release it if yes */
 	rls_lock();
-	DEBUG_LOG("*** processing INTERNAL RLS unsubscription (%p) ***\n", 
+	DBG("processing INTERNAL RLS unsubscription (%p)\n", 
 			subscription);
 
 	/* find the subscription - FIXME: use hashing? */

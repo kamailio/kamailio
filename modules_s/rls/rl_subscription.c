@@ -9,6 +9,7 @@
 #include <presence/pres_doc.h>
 
 #include "../../str.h"
+#include "../../id.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
@@ -174,7 +175,7 @@ int rls_destroy()
 
 /************* Helper functions for RL subscription manipulation ************/
 
-static int get_user_from_list_uri(str_t *uri, str_t *user)
+/* static int get_user_from_list_uri(str_t *uri, str_t *user)
 {
 	str_t list, list_rest;
 	str_t appendix = { s: "-list", len: 5 };
@@ -184,20 +185,38 @@ static int get_user_from_list_uri(str_t *uri, str_t *user)
 
 	if (user) *user = list;
 	
-	/* remove suffix -list */
+	/ * remove suffix -list * /
 	if (list.len <= appendix.len) 
-		return 1; /* it is not something like xxx-list@... */
+		return 1; / * it is not something like xxx-list@... * /
 
 	list_rest.len = appendix.len;
 	list_rest.s = list.s + list.len - appendix.len;
 	if (str_case_equals(&list_rest, &appendix) != 0) 
-		return 1; /* it is not something like xxx-list@... */
+		return 1; / * it is not something like xxx-list@... * /
 
 	if (user) {
 		user->s = list.s;
 		user->len = list.len - appendix.len;
 	}
 	return 0;
+} */
+
+static int is_users_list_uri(str_t *uri, str_t *uid)
+{
+	str_t user;
+	str_t should_be;
+	str_t appendix = { s: "-list", len: 5 };
+	int res = 0;
+
+	if (!uri) return -1;
+	if (get_user_from_uri(uri, &user) != 0) return -1;
+	
+	str_concat(&should_be, uid, &appendix);
+	if (str_case_equals(&user, &should_be) != 0) res = 1;
+	else res = 0;
+	str_free_content(&should_be);
+
+	return res;
 }
 
 str_t * rls_get_uri(rl_subscription_t *s)
@@ -250,7 +269,7 @@ int create_virtual_subscriptions(rl_subscription_t *ss, const char *xcap_root)
 	virtual_subscription_t *vs;
 	int res = 0;
 	str s;
-	str_t user;
+	/* str_t user; */
 	str_t *ss_uri = NULL;
 	str_t *ss_package = NULL;
 	
@@ -274,11 +293,16 @@ int create_virtual_subscriptions(rl_subscription_t *ss, const char *xcap_root)
 			}
 			break;
 		case rls_mode_simple:
-			if (get_user_from_list_uri(ss_uri, &user) == 0) {
+			/* if (get_user_from_list_uri(ss_uri, &user) == 0) { */
+			if (is_users_list_uri(ss_uri, &ss->from_uid) == 0) {
+				DBG("subscribing to \'simple user\'s list\'\n");
 				/* it is uri in the form user-list@domain */
-				res = get_resource_list_as_rls(xcap_root, &user, &xcap, &flat);
+				/* res = get_resource_list_as_rls(xcap_root, &user, &xcap, &flat); */
+				res = get_resource_list_as_rls(xcap_root, &ss->from_uid, &xcap, &flat);
 			}
 			else {
+				/* ERR("NOT subscribing to \'simple user\'s list\'\n"); */
+				
 				/* DEBUG_LOG("xcap_root: %s, ss_uri: %.*s, package: %.*s\n", xcap_root, 
 						FMT_STR(*ss_uri), FMT_STR(*ss_package)); */
 				/* it is NOT uri in the form xxx-list@domain -> try to use
@@ -340,6 +364,7 @@ rl_subscription_t *rls_alloc_subscription(rls_subscription_type_t type)
 
 	/* s->first_vs = NULL;
 	s->last_vs = NULL; */
+	str_clear(&s->from_uid);
 	ptr_vector_init(&s->vs, 4);
 	
 	return s;
@@ -348,6 +373,7 @@ rl_subscription_t *rls_alloc_subscription(rls_subscription_type_t type)
 int rls_create_subscription(struct sip_msg *m, rl_subscription_t **dst, const char *xcap_root)
 {
 	rl_subscription_t *s;
+	str from_uid = STR_NULL;
 	int res;
 
 	if (!dst) return RES_INTERNAL_ERR;
@@ -356,7 +382,7 @@ int rls_create_subscription(struct sip_msg *m, rl_subscription_t **dst, const ch
 	/* FIXME: test if there is a "Require: eventlist" header - if not,
 	 * it is probbably not a message for RLS! */
 	/* FIXME: test if Accept = multipart/related, application/rlmi+xml! */
-	
+				
 	s = rls_alloc_subscription(rls_external_subscription);
 	if (!s) {
 		LOG(L_ERR, "rls_create_new(): can't allocate memory\n");
@@ -371,7 +397,9 @@ int rls_create_subscription(struct sip_msg *m, rl_subscription_t **dst, const ch
 	}
 
 	/* store pointer to this RL subscription as user data of (low level) subscription */
-	s->external.usr_data = s; 
+	s->external.usr_data = s;
+	if (get_from_uid(&from_uid, m) < 0) str_clear(&s->from_uid);
+	else str_dup(&s->from_uid, &from_uid);
 			
 /*	res = set_rls_info(m, s, xcap_root);
 	if (res != 0) {
@@ -473,6 +501,7 @@ void rls_free(rl_subscription_t *s)
 		vs_free(vs);
 	}
 	ptr_vector_destroy(&s->vs);
+	str_free_content(&s->from_uid);
 	shm_free(s);
 }
 

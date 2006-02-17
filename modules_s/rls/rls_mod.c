@@ -1,5 +1,6 @@
 #include "rls_mod.h"
 #include "../../sr_module.h"
+#include "../../timer_ticks.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 
@@ -14,6 +15,7 @@
 #include "rl_subscription.h"
 #include "rls_handler.h"
 #include "qsa_rls.h"
+#include "rpc.h"
 
 #include "time_event_manager.h"
 #include <time.h>
@@ -39,6 +41,20 @@ rls_mode_t rls_mode = rls_mode_full;
 
 int reduce_xcap_needs = 0;
 
+/* internal data members */
+
+/* static ptr_vector_t *xcap_servers = NULL; */
+db_con_t* rls_db = NULL; /* database connection handle */
+db_func_t rls_dbf;	/* database functions */
+
+/* one shot timer for reloading data from DB -
+they can not be reloaded in init or
+child_init due to internal subscriptions
+to other modules (may be not itialised
+yet) */
+static int init_timer_delay = 10; 
+static struct timer_ln i_timer;
+
 /** Exported functions */
 static cmd_export_t cmds[]={
 	/* {"handle_r_subscription", handle_r_subscription, 0, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE}, */
@@ -59,13 +75,17 @@ static param_export_t params[]={
 	{"mode", PARAM_STRING, &rls_mode_str },
 	{"reduce_xcap_needs", PARAM_INT, &reduce_xcap_needs },
 	{"xcap_root", PARAM_STRING, &rls_xcap_root }, /* xcap root settings - only one XCAP root allowed !!! */
+	
+	/* TODO: have to be documented */
+	{ "init_timer_delay", PARAM_INT, &init_timer_delay }, /* timer for delayed DB reload (due to internal subscriptions can't be reloaded from init or child init) */
+	
 	{0, 0, 0}
 };
 
 struct module_exports exports = {
 	"rls",
 	cmds,        /* Exported functions */
-	0,           /* RPC methods */
+	rls_rpc_methods,           /* RPC methods */
 	params,      /* Exported parameters */
 	rls_mod_init, /* module initialization function */
 	0,           /* response function*/
@@ -85,11 +105,6 @@ rls_auth_params_t rls_auth_params;	/* structure filled according to parameters (
 char *xcap_server = NULL; /* XCAP server URI */
 
 /* TODO: settings of other xcap parameters (auth, ssl, ...) */
-
-/* internal data members */
-/* static ptr_vector_t *xcap_servers = NULL; */
-db_con_t* rls_db = NULL; /* database connection handle */
-db_func_t rls_dbf;	/* database functions */
 
 static int set_auth_params(rls_auth_params_t *dst, const char *auth_type_str, char *xcap_root)
 {
@@ -147,6 +162,21 @@ static int set_rls_mode(rls_mode_t *dst, const char *mode)
 
 	LOG(L_ERR, "Can't resolve operation mode for rls \'%s\'. Use full or simple\n", mode);
 	return -1;
+}
+
+static ticks_t init_timer_cb(ticks_t ticks, struct timer_ln* tl, void* data)
+{
+	/* initialization (like read data from database) which can trigger
+	 * database operations in other modules/... */
+
+	if (use_db && (rls_db)) {
+		INFO("reading RLS data from database\n");
+		rls_lock();
+		db_load_rls();
+		rls_unlock();
+	}
+	
+	return 0; /* one shot timer */
 }
 
 int rls_mod_init(void)
@@ -244,6 +274,13 @@ int rls_mod_init(void)
 
 	if (rls_qsa_interface_init() != 0) return -1;
 
+	/* once-shot timer for reloading data from DB -
+	 * needed because it can trigger database operations
+	 * in other modules and they mostly intialize their 
+	 * database connection in child_init functions */
+	timer_init(&i_timer, init_timer_cb, NULL, 0);
+	timer_add(&i_timer, S_TO_TICKS(init_timer_delay));
+	
 	return 0;
 }
 
@@ -257,11 +294,11 @@ int rls_child_init(int _rank)
 					"Error while connecting database\n", _rank);
 			return -1;
 		}
-		if (_rank == 0) {
+		/* if (_rank == 0) {
 			rls_lock();
 			db_load_rls();
 			rls_unlock();
-		}
+		} */
 	}
 
 	return 0;

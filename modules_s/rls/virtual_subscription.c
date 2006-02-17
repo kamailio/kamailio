@@ -67,10 +67,14 @@ static void process_notify_info(virtual_subscription_t *vs, client_notify_info_t
 	presentity_info_t *pinfo;
 	list_presence_info_t *linfo;
 
+	DBG("Processing internal notification\n");
+
 	if ((!vs) || (!info)) return;
+	
+	DBG("Processing internal notification (2)\n");
 
 	if (is_presence_list_package(&info->package)) {
-		DEBUG_LOG("Processing internal list notification\n");
+		DBG("Processing internal list notification\n");
 		
 		linfo = (list_presence_info_t*)info->data;	/* TODO: test for "presence" package? */
 		if (!linfo) return;
@@ -223,49 +227,13 @@ static int remove_from_vs_list(virtual_subscription_t *vs)
 	return RES_OK;
 }
 
-static int is_local_uri(str *uri)
-{
-	/* TODO */
-	return 0;	/* 0 means it is local uri ! */
-}
-
-static int get_local_uri(const str_t *src_uri, str_t* dst_uri)
-{
-	/* str uri;
-	struct sip_uri parsed;
-	int res = -1;*/
-
-	if (dst_uri && src_uri) {
-		*dst_uri = *src_uri;
-		return 0;
-	}
-	else return -1;
-/*	
-	uri.s = src_uri->s;
-	uri.len = src_uri->len;
-	
-	if (parse_uri(src_uri->s, src_uri->len, &parsed) == 0) {
-		if (parsed.user.s) {
-			uri.s = parsed.user.s;
-			uri.len = src_uri->len - (parsed.user.s - src_uri->s);
-			res = 0;
-		} 
-	}
-	
-	if (dst_uri) *dst_uri = uri;
-	return res;*/
-}
-
-static int create_local_subscription(virtual_subscription_t *vs)
+static int create_internal_subscriptions(virtual_subscription_t *vs)
 {
 	/* create concrete local subscription */
-	str uri;
 	str *package = NULL;
 	str list_package;
 	str *subscriber = NULL;
 	
-	/* remove sip:, ... so pa/usrloc will be satisfied */
-	get_local_uri(&vs->uri, &uri); 	
 	package = rls_get_package(vs->subscription);
 	subscriber = rls_get_subscriber(vs->subscription);
 
@@ -290,7 +258,7 @@ static int create_local_subscription(virtual_subscription_t *vs)
 	
 	vs->local_subscription_pres = subscribe(vsd->domain, 
 			package, 
-			&uri, subscriber, &vs->mq, vs);
+			&vs->uri, subscriber, &vs->mq, vs);
 	if (!vs->local_subscription_pres) {
 		LOG(L_ERR, "can't create local subscription (pres)!\n");
 		return -1;
@@ -298,20 +266,13 @@ static int create_local_subscription(virtual_subscription_t *vs)
 	if (list_package.len > 0) {
 		vs->local_subscription_list = subscribe(vsd->domain, 
 				&list_package, 
-				&uri, subscriber, &vs->mq, vs);
+				&vs->uri, subscriber, &vs->mq, vs);
 		if (!vs->local_subscription_list) {
 			LOG(L_ERR, "can't create local subscription (list)!\n");
 			return -1;
 		}
 		shm_free(list_package.s);
 	}
-	return 0;
-}
-
-static int create_remote_subscription(virtual_subscription_t *vs)
-{
-	/* TODO: create concrete Back-End subscription */
-	LOG(L_ERR, "remote subscription handling not implemented\n");
 	return 0;
 }
 
@@ -360,12 +321,7 @@ int vs_create(str *uri, str *package, virtual_subscription_t **dst, display_name
 
 	/*LOG(L_TRACE, "created Virtual Subscription to %.*s\n", uri->len, uri->s);*/
 	
-	if (is_local_uri(uri) == 0) {	/* it IS local uri */
-		res = create_local_subscription(*dst);
-	}
-	else {	/* nonlocal uri - points to other servers */
-		res = create_remote_subscription(*dst);
-	}
+	res = create_internal_subscriptions(*dst);
 	if (res != 0) {
 		vs_free(*dst);
 		return res;

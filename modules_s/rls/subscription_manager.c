@@ -56,7 +56,7 @@ int sm_init(subscription_manager_t *sm,
 	sm->min_expiration = min_exp;
 	sm->max_expiration = max_exp;
 	return tem_init(&sm->timer, 
-			30, /* atomic time = 30 s */
+			1, /* atomic time = 1 s */
 			4093, /* time slot count */
 			1, /* enable delay <= terminate AFTER the timeout */
 			mutex);

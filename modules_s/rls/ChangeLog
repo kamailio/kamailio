@@ -1,0 +1,10 @@
+2006-02-16
+	* removed parts of code prepared for doing "remote" subscriptions - all is
+	solved using internal (QSA) subscriptions now (to PA or PRESENCE_B2B or
+	RLS itself)
+	* UID used instead of username when mode=simple (i.e. "simple" list URIs
+	have to be in the form sip:<uid>-list@domain.com)
+	* reduced trace messages
+
+2006-02-14
+	* separated B2B UA for presence into standalone module presence_b2b

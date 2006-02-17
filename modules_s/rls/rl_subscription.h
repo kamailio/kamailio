@@ -95,6 +95,9 @@ struct _rl_subscription_t {
 	/* virtual subscriptions for this rls */
 	ptr_vector_t vs;
 
+	/* uid of the watcher */
+	str from_uid;
+
 	/* generated id for database */
 	db_id_t dbid;
 };
