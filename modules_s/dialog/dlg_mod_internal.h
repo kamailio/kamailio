@@ -31,4 +31,12 @@
 
 extern struct tm_binds tmb;
 
+/* data members for pregenerated tags - taken from TM */
+extern char *dialog_tags;
+extern char *dialog_tag_suffix;
+
+extern gen_lock_t *dlg_mutex;
+#define lock_dialog_mod()	lock_get(dlg_mutex)
+#define unlock_dialog_mod()	lock_release(dlg_mutex)
+
 #endif

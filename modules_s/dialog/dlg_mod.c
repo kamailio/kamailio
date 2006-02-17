@@ -29,22 +29,27 @@
 #include "../../sr_module.h"
 #include "../tm/tm_load.h"
 #include <cds/sstr.h>
+#include "dlg_utils.h"
+#include "dlg_request.h"
+#include "dlg_handler.h"
+#include "dlg_storage.h"
+#include "../../locking.h"
 
 MODULE_VERSION
 
 /* "public" data members */
 
-int db_mode = 0;
-str db_url = STR_NULL;
+static int db_mode = 0;
+static str db_url = STR_NULL;
 
 /* internal data members */
 
-db_con_t* dlg_db = NULL; /* database connection handle */
-db_func_t dlg_dbf;	/* database functions */
-int db_initialized = 0;
+/* data members for pregenerated tags - taken from TM */
+char dialog_tags[TOTAG_VALUE_LEN];
+char *dialog_tag_suffix = NULL;
+
 struct tm_binds tmb;
 
-static int bind_dlg_mod(dlg_func_t *dst);
 static int dlg_mod_init(void);
 static void dlg_mod_destroy(void);
 static int dlg_mod_child_init(int _rank);
@@ -54,6 +59,12 @@ static int dlg_mod_child_init(int _rank);
  */
 static cmd_export_t cmds[]={
 	{"bind_dlg_mod", (cmd_function)bind_dlg_mod, -1, 0, 0},
+	{"save_dialog", (cmd_function)handle_save_dialog, 0, 0, 
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"load_dialog", (cmd_function)handle_load_dialog, 0, 0, 
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"remove_dialog", (cmd_function)handle_remove_dialog, 0, 0, 
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -79,9 +90,42 @@ struct module_exports exports = {
 	dlg_mod_child_init/* per-child init function */
 };
 
+static void init_dialog_tags()
+{
+	/* taken from tm, might be useful */
+	init_tags(dialog_tags, &dialog_tag_suffix, "SER-DIALOG/tags", '-');
+}
+
+#include <cds/dstring.h>
+
+gen_lock_t *dlg_mutex = NULL; 
+
+static int init_dialog_mutex()
+{
+	dlg_mutex = (gen_lock_t*)shm_malloc(sizeof(*dlg_mutex));
+	if (!dlg_mutex) return -1;
+	lock_init(dlg_mutex);
+	return 0;
+}
+
+static void destroy_dialog_mutex()
+{
+	if (dlg_mutex) {
+		lock_destroy(dlg_mutex);
+		shm_free((void*)dlg_mutex);
+	}
+}
+
 static int dlg_mod_init(void)
 {
 	load_tm_f load_tm;
+	
+	if (init_dialog_mutex() < 0) {
+		ERR("can't initialize mutex\n");
+		return -1;
+	}
+	
+	init_dialog_tags();
 
 	load_tm = (load_tm_f)find_export("load_tm", NO_SCRIPT, 0);
 	if (!load_tm) {
@@ -93,71 +137,26 @@ static int dlg_mod_init(void)
 		return -1;
 	}
 
-	db_initialized = 0;
-	if (db_mode > 0) {
-		if (!db_url.len) {
-			LOG(L_ERR, "dlg_mod_init(): no db_url specified but use_db=1\n");
-			db_mode = 0;
-		}
-	}
-	if (db_mode > 0) {
-		if (bind_dbmod(db_url.s, &dlg_dbf) < 0) {
-			LOG(L_ERR, "dlg_mod_init(): Can't bind database module via url %s\n", db_url.s);
-			return -1;
-		}
-
-		if (!DB_CAPABILITY(dlg_dbf, DB_CAP_ALL)) { /* ? */
-			LOG(L_ERR, "dlg_mod_init(): Database module does not implement all functions needed by the module\n");
-			return -1;
-		}
-		db_initialized = 1;
+	if (init_dlg_storage(db_mode, &db_url) < 0) {
+		ERR("Can't initialize dialog storage\n");
+		return -1;
 	}
 
 	return 0;
 }
 
-db_con_t* create_dlg_db_connection()
-{
-	if (db_mode <= 0) return NULL;
-	if (!dlg_dbf.init) return NULL;
-
-	return dlg_dbf.init(db_url.s);
-}
-
-void close_dlg_db_connection(db_con_t* db)
-{
-	if (db && dlg_dbf.close) dlg_dbf.close(db);
-}
-
 static int dlg_mod_child_init(int _rank)
 {
-	if (db_mode > 0) {
-		dlg_db = create_dlg_db_connection();
-		if (!dlg_db) {
-			LOG(L_ERR, "ERROR: dlg_child_init(%d): "
-					"Error while connecting database\n", _rank);
-			return -1;
-		}
+	if (init_dlg_storage_child(db_mode, &db_url) < 0) {
+		ERR("Can't initialize dialog storage\n");
+		return -1;
 	}
-
 	return 0;
 }
 
 static void dlg_mod_destroy(void)
 {
-	/* FIXME: ??? is this the right place? not st like child_destroy ??? */
-	if (db_mode) close_dlg_db_connection(dlg_db);
-	dlg_db = NULL;
-}
-
-static int bind_dlg_mod(dlg_func_t *dst)
-{
-	if (!dst) return -1;
-/*	dst->db_store = db_store_dlg;
-	dst->db_load = db_load_dlg;*/
-	dst->serialize = serialize_dlg;
-	dst->dlg2str = dlg2str;
-	dst->str2dlg = str2dlg;
-	return 0;
+	destroy_dlg_storage();
+	destroy_dialog_mutex();
 }
 
