@@ -295,7 +295,7 @@ INSERT INTO version VALUES ( 'domain', '1');
 INSERT INTO version VALUES ( 'uri', '1');
 INSERT INTO version VALUES ( 'server_monitoring', '1');
 INSERT INTO version VALUES ( 'server_monitoring_agg', '1');
-INSERT INTO version VALUES ( 'trusted', '1');
+INSERT INTO version VALUES ( 'trusted', '2');
 INSERT INTO version VALUES ( 'usr_preferences', '2');
 INSERT INTO version VALUES ( 'usr_preferences_types', '1');
 INSERT INTO version VALUES ( 'admin_privileges', '1');
@@ -653,8 +653,8 @@ CREATE TABLE usr_preferences_types (
 CREATE TABLE trusted (
   src_ip varchar(39) NOT NULL,
   proto varchar(4) NOT NULL,
-  from_pattern varchar(64) NOT NULL,
-  PRIMARY KEY (src_ip, proto, from_pattern)
+  from_pattern varchar(64) DEFAULT NULL,
+  KEY Key1 (src_ip)
 ) $TABLE_TYPE;
 
 
