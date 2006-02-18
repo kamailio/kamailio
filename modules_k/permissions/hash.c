@@ -113,16 +113,20 @@ int hash_table_insert(struct trusted_list** hash_table, char* src_ip,
 	}
 
 	(void) strncpy(np->src_ip.s, src_ip, np->src_ip.len);
-		
-	np->pattern = (char *) shm_malloc(strlen(pattern)+1);
-	if (np->pattern == NULL) {
+
+	if (pattern) {
+	    np->pattern = (char *) shm_malloc(strlen(pattern)+1);
+	    if (np->pattern == NULL) {
 		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory for pattern "
-			"string\n");
+		    "string\n");
 		shm_free(np->src_ip.s);
 		shm_free(np);
 		return -1;
+	    }
+	    (void) strcpy(np->pattern, pattern);
+	} else {
+	    np->pattern = 0;
 	}
-	(void) strcpy(np->pattern, pattern);
 
 	hash_val = perm_hash(np->src_ip);
 	np->next = hash_table[hash_val];
@@ -157,20 +161,21 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg)
 	uri_string[uri.len] = (char)0;
 
 	for (np = table[perm_hash(src_ip)]; np != NULL; np = np->next) {
-		if ((np->src_ip.len == src_ip.len) && 
-		    (strncasecmp(np->src_ip.s, src_ip.s, src_ip.len) == 0) &&
-		    ((np->proto == PROTO_NONE) || (np->proto == msg->rcv.proto))) {
-			if (regcomp(&preg, np->pattern, REG_NOSUB)) {
-				LOG(L_ERR, "match_hash_table(): Error in regular expression\n");
-				return -1;
-			}
-			if (regexec(&preg, uri_string, 0, (regmatch_t *)0, 0)) {
-				regfree(&preg);
-			} else {
-				regfree(&preg);
-				return 1;
-			}
+	    if ((np->src_ip.len == src_ip.len) && 
+		(strncasecmp(np->src_ip.s, src_ip.s, src_ip.len) == 0) &&
+		((np->proto == PROTO_NONE) || (np->proto == msg->rcv.proto))) {
+		if (!(np->pattern)) return 1;
+		if (regcomp(&preg, np->pattern, REG_NOSUB)) {
+		    LOG(L_ERR, "match_hash_table(): Error in regular expression\n");
+		    return -1;
 		}
+		if (regexec(&preg, uri_string, 0, (regmatch_t *)0, 0)) {
+		    regfree(&preg);
+		} else {
+		    regfree(&preg);
+		    return 1;
+		}
+	    }
 	}
 	return -1;
 }
@@ -187,11 +192,17 @@ void hash_table_print(struct trusted_list** hash_table, FILE* reply_file)
 	for (i = 0; i < PERM_HASH_SIZE; i++) {
 		np = hash_table[i];
 		while (np) {
+		    if (np->pattern) {
 			fprintf(reply_file, "%4d <%.*s, %d, %s>\n", i,
 				np->src_ip.len, ZSW(np->src_ip.s),
 				np->proto,
 				np->pattern);
-			np = np->next;
+		    } else {
+			fprintf(reply_file, "%4d <%.*s, %d, NULL>\n", i,
+				np->src_ip.len, ZSW(np->src_ip.s),
+				np->proto);
+		    }			
+		    np = np->next;
 		}
 	}
 }
@@ -210,7 +221,7 @@ void empty_hash_table(struct trusted_list **hash_table)
 		np = hash_table[i];
 		while (np) {
 			shm_free(np->src_ip.s);
-			shm_free(np->pattern);
+			if (np->pattern) shm_free(np->pattern);
 			next = np->next;
 			shm_free(np);
 			np = next;

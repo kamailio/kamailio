@@ -190,7 +190,8 @@
 		</listitem>
 		<listitem>
 			<para>
-			regular expression matches From URI of request.
+			regular expression is either empty (NULL in
+			database) or matches From URI of request.
 			</para>
 		</listitem>
 		</itemizedlist>
