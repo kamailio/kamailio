@@ -65,7 +65,7 @@ int resolve_select(select_t* s)
 		case SEL_PARAM_INT:
 			DBG("resolve_select: [%d]\n", s->params[param_idx].v.i);
 			break;
-		case SEL_PARAM_DIV:
+		default:
 			/* just to avoid the warning */
 			break;
 		}
