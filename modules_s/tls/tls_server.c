@@ -221,7 +221,7 @@ static int tls_connect(struct tcp_connection *c, int* error)
 		DBG("TLS connect successuful\n");
 		c->state = S_CONN_OK;
 		LOG(tls_log, "tls_connect: new connection to %s:%d using %s %s %d\n", 
-		    ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port,
+		    ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
 		    SSL_get_cipher_version(ssl), SSL_get_cipher_name(ssl),
 		    SSL_get_cipher_bits(ssl, 0)
 		    );
