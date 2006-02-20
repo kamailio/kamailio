@@ -1131,6 +1131,7 @@ int ops_check_avp( struct sip_msg* msg, struct fis_param* src,
 	int               n;
 	int            flags;
 	xl_value_t     xvalue;
+	char           backup;
 
 	/* look if the required avp(s) is/are present */
 	if(src->sval.type==XL_AVP)
@@ -1281,11 +1282,23 @@ cycle2:
 			if (strncasecmp(avp_val.s.s,check_val.s.s,n)>=0)
 				return 1;
 		} else if (val->ops&AVPOPS_OP_RE) {
+			backup  = avp_val.s.s[avp_val.s.len];
+			avp_val.s.s[avp_val.s.len] = '\0';
 			if (regexec((regex_t*)check_val.s.s, avp_val.s.s, 1, &pmatch, 0)==0)
+			{
+				avp_val.s.s[avp_val.s.len] = backup;
 				return 1;
+			}
+			avp_val.s.s[avp_val.s.len] = backup;
 		} else if (val->ops&AVPOPS_OP_FM){
+			backup  = avp_val.s.s[avp_val.s.len];
+			avp_val.s.s[avp_val.s.len] = '\0';
 			if (fnmatch( check_val.s.s, avp_val.s.s, 0)==0)
+			{
+				avp_val.s.s[avp_val.s.len] = backup;
 				return 1;
+			}
+			avp_val.s.s[avp_val.s.len] = backup;
 		} else {
 			LOG(L_CRIT,"BUG:avpops:check_avp: unknown operation "
 				"(flg=%d/%d)\n",val->opd, val->ops);
