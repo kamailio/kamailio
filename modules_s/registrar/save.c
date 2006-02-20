@@ -142,6 +142,118 @@ static inline int no_contacts(udomain_t* _d, str* _u)
 }
 
 
+#define DSTIP_PARAM ";dstip="
+#define DSTIP_PARAM_LEN (sizeof(DSTIP_PARAM) - 1)
+
+#define DSTPORT_PARAM ";dstport="
+#define DSTPORT_PARAM_LEN (sizeof(DSTPORT_PARAM) - 1)
+
+
+/*
+ * Create received SIP uri that will be either
+ * passed to registrar in an AVP or apended
+ * to Contact header field as a parameter
+ */
+static int create_rcv_uri(str** uri, struct sip_msg* m)
+{
+	static str res;
+	static char buf[MAX_URI_SIZE];
+	char* p;
+	str src_ip, src_port, dst_ip, dst_port;
+	int len;
+	str proto;
+
+	if (!uri || !m) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+
+	src_ip.s = ip_addr2a(&m->rcv.src_ip);
+	src_ip.len = strlen(src_ip.s);
+	src_port.s = int2str(m->rcv.src_port, &src_port.len);
+
+	dst_ip = m->rcv.bind_address->address_str;
+	dst_port = m->rcv.bind_address->port_no_str;
+
+	switch(m->rcv.proto) {
+	case PROTO_NONE:
+	case PROTO_UDP:
+		proto.s = 0; /* Do not add transport parameter, UDP is default */
+		proto.len = 0;
+		break;
+
+	case PROTO_TCP:
+		proto.s = "TCP";
+		proto.len = 3;
+		break;
+
+	case PROTO_TLS:
+		proto.s = "TLS";
+		proto.len = 3;
+		break;
+
+	case PROTO_SCTP:
+		proto.s = "SCTP";
+		proto.len = 4;
+		break;
+
+	default:
+		ERR("BUG: Unknown transport protocol\n");
+		return -1;
+	}
+
+	len = 4 + src_ip.len + 1 + src_port.len;
+	if (proto.s) {
+		len += TRANSPORT_PARAM_LEN;
+		len += proto.len;
+	}
+
+	len += DSTIP_PARAM_LEN + dst_ip.len;
+	len += DSTPORT_PARAM_LEN + dst_port.len;
+
+	if (len > MAX_URI_SIZE) {
+		ERR("Buffer too small\n");
+		return -1;
+	}
+
+	p = buf;
+	memcpy(p, "sip:", 4);
+	p += 4;
+
+	memcpy(p, src_ip.s, src_ip.len);
+	p += src_ip.len;
+
+	*p++ = ':';
+
+	memcpy(p, src_port.s, src_port.len);
+	p += src_port.len;
+
+	if (proto.s) {
+		memcpy(p, TRANSPORT_PARAM, TRANSPORT_PARAM_LEN);
+		p += TRANSPORT_PARAM_LEN;
+
+		memcpy(p, proto.s, proto.len);
+		p += proto.len;
+	}
+
+	memcpy(p, DSTIP_PARAM, DSTIP_PARAM_LEN);
+	p += DSTIP_PARAM_LEN;
+	memcpy(p, dst_ip.s, dst_ip.len);
+	p += dst_ip.len;
+
+	memcpy(p, DSTPORT_PARAM, DSTPORT_PARAM_LEN);
+	p += DSTPORT_PARAM_LEN;
+	memcpy(p, dst_port.s, dst_port.len);
+	p += dst_port.len;
+
+	res.s = buf;
+	res.len = len;
+	*uri = &res;
+
+	return 0;
+}
+
+
 /*
  * Message contained some contacts, but record with same address
  * of record was not found so we have to create a new record
@@ -156,13 +268,11 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 	qvalue_t q;
 	str callid;
 	unsigned int flags;
-	str* recv, *inst;
-	int_str rcv_avp;
-	int_str val;
+	str *recv, *inst;
+	str rcvuri;
 	int num;
 
-	rcv_avp.n=rcv_avp_no;
-	if (isflagset(_m, nat_flag) == 1) flags = FL_NAT;
+	if (isflagset(_m, save_nat_flag) == 1) flags = FL_NAT;
 	else flags = FL_NONE;
 
 	flags |= mem_only;
@@ -212,8 +322,12 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 
 		if (_c->received) {
 			recv = &_c->received->body;
-		} else if (search_first_avp(0, rcv_avp, &val, 0)) {
-			recv = &val.s;
+		} else if (flags & FL_NAT) {
+			if (create_rcv_uri(&recv, _m) < 0) {
+				ERR("Error while creating rcv URI\n");
+				ul.delete_urecord(_d, _u);
+				return -4;
+			}
 		} else {
 			recv = 0;
 		}
@@ -310,11 +424,8 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 	qvalue_t q;
 	unsigned int nated;
 	str* recv, *inst;
-	int_str rcv_avp;
-	int_str val;
 	
-	rcv_avp.n=rcv_avp_no;
-	if (isflagset(_m, nat_flag) == 1) {
+	if (isflagset(_m, save_nat_flag) == 1) {
 		nated = FL_NAT;
 	} else {
 		nated = FL_NONE;
@@ -366,8 +477,12 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 				
 				if (_c->received) {
 					recv = &_c->received->body;
-				} else if (search_first_avp(0, rcv_avp, &val, 0)) {
-					recv = &val.s;
+				} else if (nated & FL_NAT) {
+					if (create_rcv_uri(&recv, _m) < 0) {
+						ERR("Error while creating rcv URI\n");
+						rerrno = R_UL_INS_C;
+						return -4;
+					}
 				} else {
 					recv = 0;
 				}
@@ -416,8 +531,12 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 				
 				if (_c->received) {
 					recv = &_c->received->body;
-				} else if (search_first_avp(0, rcv_avp, &val, 0)) {
-					recv = &val.s;
+				} else if (nated & FL_NAT) {
+					if (create_rcv_uri(&recv, _m) < 0) {
+						ERR("Error while creating rcv URI\n");
+					        rerrno = R_UL_UPD_C;
+						return -4;
+					}
 				} else {
 					recv = 0;
 				}

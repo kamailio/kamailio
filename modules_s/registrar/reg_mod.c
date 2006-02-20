@@ -50,7 +50,8 @@ MODULE_VERSION
 
 
 static int mod_init(void);                           /* Module init function */
-static int fix_nat_flag( modparam_t type, void* val);
+static int fix_save_nat_flag( modparam_t type, void* val);
+static int fix_load_nat_flag( modparam_t type, void* val);
 static int domain_fixup(void** param, int param_no); /* Fixup that converts domain name */
 static void mod_destroy(void);
 
@@ -60,7 +61,8 @@ int default_expires = 3600;           /* Default expires value in seconds */
 qvalue_t default_q  = Q_UNSPECIFIED;  /* Default q value multiplied by 1000 */
 int append_branches = 1;              /* If set to 1, lookup will put all contacts found in msg structure */
 int case_sensitive  = 0;              /* If set to 1, username in aor will be case sensitive */
-int nat_flag        = 4;              /* SER flag marking contacts behind NAT */
+int save_nat_flag   = 4;              /* The contact will be marked as behind NAT if this flag is set before calling save */
+int load_nat_flag   = 4;              /* This flag will be set by lookup if a contact is behind NAT*/
 int min_expires     = 60;             /* Minimum expires the phones are allowed to use in seconds,
 			               * use 0 to switch expires checking off */
 int max_expires     = 0;              /* Minimum expires the phones are allowed to use in seconds,
@@ -68,12 +70,9 @@ int max_expires     = 0;              /* Minimum expires the phones are allowed 
 int max_contacts = 0;                 /* Maximum number of contacts per AOR */
 int retry_after = 0;                  /* The value of Retry-After HF in 5xx replies */
 
+str rcv_param = STR_STATIC_INIT("received");
+
 int received_to_uri = 0;  /* copy received to uri, don't add it to dst_uri */
-
-#define RCV_NAME "received"
-
-str rcv_param = STR_STATIC_INIT(RCV_NAME);
-int rcv_avp_no=42;
 
 
 /*
@@ -104,12 +103,15 @@ static param_export_t params[] = {
 	{"default_expires", PARAM_INT, &default_expires},
 	{"default_q",       PARAM_INT, &default_q      },
 	{"append_branches", PARAM_INT, &append_branches},
-	{"nat_flag",        PARAM_INT, &nat_flag       },
-	{"nat_flag",        PARAM_STRING|PARAM_USE_FUNC, fix_nat_flag},
+	{"save_nat_flag",   PARAM_INT, &save_nat_flag  },
+	{"save_nat_flag",   PARAM_STRING|PARAM_USE_FUNC, fix_save_nat_flag},
+
+	{"load_nat_flag",   PARAM_INT, &load_nat_flag  },
+	{"load_nat_flag",   PARAM_STRING|PARAM_USE_FUNC, fix_load_nat_flag},
+
 	{"min_expires",     PARAM_INT, &min_expires    },
 	{"max_expires",     PARAM_INT, &max_expires    },
         {"received_param",  PARAM_STR, &rcv_param      },
-	{"received_avp",    PARAM_INT, &rcv_avp_no     },
 	{"max_contacts",    PARAM_INT, &max_contacts   },
 	{"retry_after",     PARAM_INT, &retry_after    },
 	{"received_to_uri", PARAM_INT, &received_to_uri},
@@ -180,9 +182,16 @@ static int mod_init(void)
 
 
 /* fixes nat_flag param (resolves possible named flags) */
-static int fix_nat_flag( modparam_t type, void* val)
+static int fix_save_nat_flag( modparam_t type, void* val)
 {
-	return fix_flag(type, val, "registrar", "nat_flag", &nat_flag);
+	return fix_flag(type, val, "registrar", "save_nat_flag", &save_nat_flag);
+}
+
+
+/* fixes nat_flag param (resolves possible named flags) */
+static int fix_load_nat_flag( modparam_t type, void* val)
+{
+	return fix_flag(type, val, "registrar", "load_nat_flag", &load_nat_flag);
 }
 
 

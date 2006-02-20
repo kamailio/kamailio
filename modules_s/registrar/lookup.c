@@ -187,7 +187,7 @@ cont:
 	
  skip:
 	ul.unlock_udomain((udomain_t*)_t);
-	if (nat) setflag(_m, nat_flag);
+	if (nat) setflag(_m, load_nat_flag);
 	return 1;
 }
 

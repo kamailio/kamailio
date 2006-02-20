@@ -39,15 +39,14 @@
 extern int default_expires;
 extern qvalue_t default_q;
 extern int append_branches;
-extern int nat_flag;
+extern int load_nat_flag;
+extern int save_nat_flag;
 extern int min_expires;
 extern int max_expires;
 extern int received_avp;
 extern float def_q;
 extern int received_to_uri; /*copy received to uri, don't add it to dst_uri*/
-
 extern str rcv_param;
-extern int rcv_avp_no;
 extern int max_contacts;
 extern int retry_after;
 
