@@ -88,6 +88,7 @@ static cmd_export_t cmds[] = {
 	{"record_route_preset",  record_route_preset, 1, fixup_str_1, REQUEST_ROUTE},
 	{"record_route_strict" , record_route_strict, 0, 0,           0            },
 	{"rr_add_avp_cookie",    rr_add_avp_cookie,   1, fixup_avp_list, REQUEST_ROUTE},
+        {"rr_store",             rr_add_avp_cookie,   1, fixup_avp_list, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -112,14 +113,14 @@ static param_export_t params[] ={
 
 struct module_exports exports = {
 	"rr",
-	cmds,      /* Exported functions */
-	0,         /* RPC methods */
-	params,    /* Exported parameters */
-	mod_init,  /* initialize module */
-	0,         /* response function*/
-	0,         /* destroy function */
-	0,         /* oncancel function */
-	0          /* per-child init function */
+	cmds,        /* Exported functions */
+	0,           /* RPC methods */
+	params,      /* Exported parameters */
+	mod_init,    /* initialize module */
+	0,           /* response function*/
+	0,           /* destroy function */
+	0,           /* oncancel function */
+	0            /* per-child init function */
 };
 
 
