@@ -95,6 +95,34 @@ if ( search("[Ss][Ii][Pp]" ) { /*....*/ };
 
 	<section>
 		<title>
+		<function moreinfo="none">search_body(re)</function>
+		</title>
+		<para>
+		Searches for the re in the body of the message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>re</emphasis> - Regular expression.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>search_body</function> usage</title>
+		<programlisting format="linespecific">
+...
+if ( search_body("[Ss][Ii][Pp]" ) { /*....*/ };
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
 		<function moreinfo="none">search_append(re, txt)</function>
 		</title>
 		<para>
@@ -120,6 +148,39 @@ if ( search("[Ss][Ii][Pp]" ) { /*....*/ };
 		<programlisting format="linespecific">
 ...
 search_append("[Oo]pen[Ss]er", " SIP Proxy");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">search_append_body(re, txt)</function>
+		</title>
+		<para>
+		Searches for the first match of re in the body of the message
+		and appends txt after it.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>re</emphasis> - Regular expression.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>txt</emphasis> - String to be appended.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>search_append_body</function> usage</title>
+		<programlisting format="linespecific">
+...
+search_append_body("[Oo]pen[Ss]er", " SIP Proxy");
 ...
 </programlisting>
 		</example>
@@ -159,6 +220,39 @@ replace("openser", "OpenSER SIP Proxy");
 
 	<section>
 		<title>
+		<function moreinfo="none">replace_body(re, txt)</function>
+		</title>
+		<para>
+		Replaces the first occurrence of re in the body of the message
+		with txt.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>re</emphasis> - Regular expression.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>txt</emphasis> - String.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>replace_body</function> usage</title>
+		<programlisting format="linespecific">
+...
+replace_body("openser", "OpenSER SIP Proxy");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
 		<function moreinfo="none">replace_all(re, txt)</function>
 		</title>
 		<para>
@@ -184,6 +278,39 @@ replace("openser", "OpenSER SIP Proxy");
 		<programlisting format="linespecific">
 ...
 replace_all("openser", "OpenSER SIP Proxy");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">replace_body_all(re, txt)</function>
+		</title>
+		<para>
+		Replaces all occurrence of re in the body of the message
+		with txt.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>re</emphasis> - Regular expression.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>txt</emphasis> - String.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>replace_body_all</function> usage</title>
+		<programlisting format="linespecific">
+...
+replace_body_all("openser", "OpenSER SIP Proxy");
 ...
 </programlisting>
 		</example>
@@ -320,6 +447,46 @@ if (subst_user('/3642$/36423463/')){$
 ...
 # adds avp 'user_prefix' as prefix to username in r-uri ending with 3642
 if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
+
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">subst_body('/re/repl/flags')</function>
+		</title>
+		<para>
+		Replaces re with repl (sed or perl like) in the body of the message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>'/re/repl/flags'</emphasis> - sed like regular 
+				expression. flags can be a combination of i (case insensitive),
+				g (global) or s (match newline don't treat it as end of line).
+			</para>
+			<para>
+			're' - is regular expresion
+			</para>
+			<para>
+			'repl' - is replacement string - may contain pseudo-varibales
+			</para>
+			<para>
+			'flags' - substitution flags (i - ignore case, g - global)
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>subst_body</function> usage</title>
+		<programlisting format="linespecific">
+...
+if ( subst_body('/^o=(.*) /o=$fU ') ) {};
 
 ...
 </programlisting>
