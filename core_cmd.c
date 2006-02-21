@@ -118,6 +118,7 @@ static void system_methodHelp(rpc_t* rpc, void* c)
 				return;
 			}
 	}
+	rpc->fault(c, 400, "command not found");
 }
 
 
