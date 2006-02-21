@@ -219,13 +219,17 @@ static int parse_hfs(struct sip_msg* _m, int accept_header_required)
 	
 	/* EOH instead HDR_FROM_F | HDR_EVENT_F | HDR_EXPIRES_F | HDR_ACCEPT_F  
 	 * because we need all Accept headers */
-	if ( ((rc = parse_headers(_m, HDR_EOH_F, 0)) == -1) 
-	     || (_m->from==0) || (_m->event==0) ) {
+	if ( (rc = parse_headers(_m, HDR_EOH_F, 0)) == -1) {
 		paerrno = PA_PARSE_ERR;
 		LOG(L_ERR, "parse_hfs(): Error while parsing headers: rc=%d\n", rc);
 		return -1;
 	}
 
+	if (!_m->from) {
+		ERR("From header missing\n");
+		return -1;
+	}
+	
 	if (parse_from_header(_m) < 0) {
 		paerrno = PA_FROM_ERR;
 		LOG(L_ERR, "parse_hfs(): From malformed or missing\n");
@@ -589,7 +593,7 @@ int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
  * Update existing presentity and watcher list
  */
 static int update_presentity(struct sip_msg* _m, struct pdomain* _d, 
-			     struct presentity* _p, struct watcher** _w)
+			     struct presentity* _p, struct watcher** _w, int is_renewal)
 {
 	time_t e;
 	str watch_uri;
@@ -626,6 +630,11 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 			return -3;
 		}
 	} else {
+		if (is_renewal) {
+			ERR("resubscription for nonexisting watcher\n");
+			paerrno = PA_SUBSCRIPTION_NOT_EXISTS;
+			return -1;
+		}
 		/* LOG(L_ERR, "update_presentity: watcher not found\n"); */
 		if (e) e += act_time;
 		res = create_watcher(_m, _p, _w, et, e);
@@ -774,6 +783,18 @@ int pa_handle_registration(struct sip_msg* _m, char* _domain, char* _s2)
 }
 #endif
 
+/**
+ * Verifies presence of the To-tag in message. Returns 1 if
+ * the tag is present, 0 if not, -1 on error.
+ */
+static int has_to_tag(struct sip_msg *_m)
+{
+	struct to_body *to = (struct to_body*)_m->to->parsed;
+	if (!to) return 0;
+	if (to->tag_value.len > 0) return 1;
+	return 0;
+}
+
 /*
  * Handle a subscribe Request
  */
@@ -786,6 +807,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	str uid = STR_NULL;
 	char tmp[64];
 	int i;
+	int is_renewal = 0;
 
 	get_act_time();
 	paerrno = PA_OK;
@@ -799,6 +821,8 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 		ERR("Error while checking message\n");
 		goto error;
 	}
+
+	is_renewal = has_to_tag(_m);
 
 	d = (struct pdomain*)_domain;
 
@@ -815,12 +839,17 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	lock_pdomain(d);
 
 	if (find_presentity_uid(d, &uid, &p) > 0) {
+		if (is_renewal) {
+			ERR("Resubscription to nonexisting presentity\n");
+			paerrno = PA_SUBSCRIPTION_NOT_EXISTS;
+			goto error2;
+		}
 		if (create_presentity(_m, d, &p_uri, &uid, &p, &w) < 0) {
 			ERR("Error while creating new presentity\n");
 			goto error2;
 		}
 	} else {
-		if (update_presentity(_m, d, p, &w) < 0) {
+		if (update_presentity(_m, d, p, &w, is_renewal) < 0) {
 			ERR("Error while updating presentity\n");
 			goto error2;
 		}

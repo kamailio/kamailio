@@ -182,6 +182,11 @@ int send_reply(struct sip_msg* _m)
 						code = 202;
 						break;
 						/* OK but waiting for auth -> should return 202 */
+		case PA_SUBSCRIPTION_NOT_EXISTS:
+						msg = "Subscription does not exist"; 
+						code = 481;
+						break;
+						/* OK but waiting for auth -> should return 202 */
 	}	
 	
 	if (code != 200) {
