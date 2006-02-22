@@ -36,7 +36,7 @@
 	<column>
 		<name>domain</name>
 		<type>string</type>
-		<size>64</size>
+		<size>&domain_len;</size>
 		<null/>
     </column>
 	

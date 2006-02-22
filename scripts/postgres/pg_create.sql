@@ -411,7 +411,7 @@ CREATE TABLE offline_winfo (
     uid VARCHAR(64) NOT NULL,
     watcher VARCHAR(255) NOT NULL,
     events VARCHAR(64) NOT NULL,
-    domain VARCHAR(64),
+    domain VARCHAR(128),
     created_on TIMESTAMP NOT NULL DEFAULT '2006-01-31 13:13:13',
     expires_on TIMESTAMP NOT NULL DEFAULT '2006-01-31 13:13:13',
     dbid SERIAL NOT NULL
