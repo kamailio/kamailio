@@ -97,7 +97,7 @@ tls_domain_t* tls_new_domain(int type, struct ip_addr *ip, unsigned short port)
 			d->verify_cert = 0;
 			d->verify_depth = 3;
 			d->ca_file = TLS_CA_FILE;
-			d->require_cert = 1;
+			d->require_cert = 0;
 			d->method = TLS_USE_TLSv1;
 			tls_def_cli = d;
 		}		
