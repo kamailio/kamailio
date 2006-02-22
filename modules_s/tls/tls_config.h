@@ -1,11 +1,11 @@
 /*
  * $Id$
  *
- * TLS module interface
+ * TLS configuration file parser
  *
  * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2004,2005 Free Software Foundation, Inc.
- * Copyright (C) 2005 iptelorg GmbH
+ * Copyright (C) 2005,2006 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -24,23 +24,17 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 
-
-#ifndef _TLS_MOD_H
-#define _TLS_MOD_H
+#ifndef _TLS_CONFIG_H
+#define _TLS_CONFIG_H
 
 #include "../../str.h"
 
-extern int tls_handshake_timeout;
-extern int tls_send_timeout;
-extern int tls_conn_timeout;
-extern int tls_log;
-extern int tls_session_cache;
-extern str tls_session_id;
-extern char* tls_config;
+int load_tls_config(char* filename);
 
-#endif /* _TLS_MOD_H */
+#endif /* _TLS_CONFIG_H */
