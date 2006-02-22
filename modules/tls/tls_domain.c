@@ -88,7 +88,7 @@ tls_domain_t* tls_new_domain(int type, struct ip_addr *ip, unsigned short port)
 			d->verify_depth = 3;
 			d->ca_file = TLS_CA_FILE;
 			d->require_cert = 0;
-			d->method = TLS_USE_SSLv23;
+			d->method = TLS_USE_TLSv1;
 			tls_def_srv = d;
 		} else {
 			     /* Default client domain */
@@ -96,9 +96,9 @@ tls_domain_t* tls_new_domain(int type, struct ip_addr *ip, unsigned short port)
 			d->pkey_file = 0;
 			d->verify_cert = 1;
 			d->verify_depth = 3;
-			d->ca_file = 0;
+			d->ca_file = TLS_CA_FILE;
 			d->require_cert = 1;
-			d->method = TLS_USE_SSLv23;
+			d->method = TLS_USE_TLSv1;
 			tls_def_cli = d;
 		}		
 	} else {
@@ -198,6 +198,9 @@ static int fix_domain(tls_domain_t* d, tls_domain_t* def)
 		INFO("%s: Method not configured, using default value %d\n",
 		     tls_domain_str(d), def->method);
 		d->method = def->method;
+	} else {
+		INFO("%s: using TLS method %d\n",
+		     tls_domain_str(d), d->method);
 	}
 	
 	if (d->method < 1 || d->method >= TLS_METHOD_MAX) {
@@ -209,42 +212,63 @@ static int fix_domain(tls_domain_t* d, tls_domain_t* def)
 		INFO("%s: No certificate configured, using default '%s'\n",
 		     tls_domain_str(d), def->cert_file);
 		d->cert_file = def->cert_file;
+	} else {
+		INFO("%s: using certificate '%s'\n",
+		     tls_domain_str(d), d->cert_file);
 	}
 	
 	if (!d->ca_file) {
 		INFO("%s: No CA list configured, using default '%s'\n",
 		     tls_domain_str(d), def->ca_file);
 		d->ca_file = def->ca_file;
+	} else {
+		INFO("%s: using CA list '%s'\n",
+		     tls_domain_str(d), d->ca_file);
 	}
 	
 	if (d->require_cert == -1) {
 		INFO("%s: require_certificate not configured, using default value %d\n",
 		     tls_domain_str(d), def->require_cert);
 		d->require_cert = def->require_cert;
+	} else {
+		INFO("%s: require_certificate = %d\n",
+		     tls_domain_str(d), d->require_cert);
 	}
 	
 	if (!d->cipher_list) {
 		INFO("%s: Cipher list not configured, using default value %s\n",
 		     tls_domain_str(d), def->cipher_list);
 		d->cipher_list = def->cipher_list;
+	} else {
+		INFO("%s: using cipher list %s\n",
+		     tls_domain_str(d), d->cipher_list);
 	}
 	
 	if (!d->pkey_file) {
 		INFO("%s: No private key configured, using default '%s'\n",
 		     tls_domain_str(d), def->pkey_file);
 		d->pkey_file = def->pkey_file;
+	} else {
+		INFO("%s: using private key '%s'\n",
+		     tls_domain_str(d), d->pkey_file);
 	}
 	
 	if (d->verify_cert == -1) {
 		INFO("%s: verify_certificate not configured, using default value %d\n",
 		     tls_domain_str(d), def->verify_cert);
 		d->verify_cert = def->verify_cert;
+	} else {
+		INFO("%s: using verify_certificate = %d\n",
+		     tls_domain_str(d), d->verify_cert);
 	}
 	
 	if (d->verify_depth == -1) {
 		INFO("%s: verify_depth not configured, using default value %d\n",
 		     tls_domain_str(d), def->verify_depth);
 		d->verify_depth = def->verify_depth;
+	} else {
+		INFO("%s: using verify_depth = %d\n",
+		     tls_domain_str(d), d->verify_depth);
 	}
 	return 0;
 }
