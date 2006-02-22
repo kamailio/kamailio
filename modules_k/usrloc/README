@@ -383,7 +383,7 @@ er")
        high all the time. Also, latency of this mode is much
        lower than latency of mode 1, but slightly higher than
        latency of mode 0.
-     * 2 - DB-Only scheme. No memory cache is kept, all
+     * 3 - DB-Only scheme. No memory cache is kept, all
        operations being directly performed with the database. The
        timer deletes all expired contacts from database - cleans
        after clients that didn't un-register or re-register. The

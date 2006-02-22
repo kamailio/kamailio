@@ -463,7 +463,7 @@ modparam("usrloc", "db_url", "mysql://username:password@localhost/openser")
 		</listitem>
 		<listitem>
 			<para>
-			2 - DB-Only scheme. No memory cache is kept, all operations being
+			3 - DB-Only scheme. No memory cache is kept, all operations being
 			directly performed with the database. The timer deletes all 
 			expired contacts from database - cleans after clients that didn't
 			un-register or re-register. The mode is useful if you configure
