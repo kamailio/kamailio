@@ -729,7 +729,9 @@ void tcpconn_put(struct tcp_connection* c)
 
 
 
-/* finds a tcpconn & sends on it */
+/* finds a tcpconn & sends on it
+ * returns: number of bytes written (>=0) on success
+ *          <0 on error */
 int tcp_send(int type, char* buf, unsigned len, union sockaddr_union* to,
 				int id)
 {
@@ -848,13 +850,14 @@ send_it:
 		/* tell "main" it should drop this (optional it will t/o anyway?)*/
 		response[0]=(long)c;
 		response[1]=CONN_ERROR;
-		n=send_all(unix_tcp_sock, response, sizeof(response));
-		/* CONN_ERROR will auto-dec refcnt => we must not call tcpconn_put !!*/
-		if (n<=0){
+		if (send_all(unix_tcp_sock, response, sizeof(response))<=0){
 			LOG(L_ERR, "BUG: tcp_send: error return failed (write):%s (%d)\n",
 					strerror(errno), errno);
+			tcpconn_put(c); /* deref. it manually */
 			n=-1;
 		}
+		/* CONN_ERROR will auto-dec refcnt => we must not call tcpconn_put 
+		 * if it succeeds */
 		close(fd);
 		return n; /* error return, no tcpconn_put */
 	}
