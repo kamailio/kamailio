@@ -501,10 +501,11 @@ static int xlset_attr(struct sip_msg* m, char* name, char* format)
 	return -1;
 }
 
-static int request_hf_helper(struct sip_msg* msg, str* hf, avp_ident_t* ident, struct lump* anchor, struct usr_avp* avp, int front, int reverse, int reply)
+static int request_hf_helper(struct sip_msg* msg, str* hf, avp_ident_t* ident, struct lump* anchor, struct search_state* st, int front, int reverse, int reply)
 {
         struct lump* new_anchor;
-        struct search_state st;
+        static struct search_state state;
+		struct usr_avp* avp;
         char* s;
         str fin_val;
         int len, ret;
@@ -550,16 +551,17 @@ static int request_hf_helper(struct sip_msg* msg, str* hf, avp_ident_t* ident, s
         	new_anchor=anchor;
         }
 
-	if (!avp) {
-		avp=search_avp(*ident, NULL, &st);
+	if (!st) {
+		st=&state;
+		avp=search_avp(*ident, NULL, st);
 		ret=-1;
 	} else {
-		avp=search_next_avp(&st, NULL);
+		avp=search_next_avp(st, NULL);
 		ret=1;
 	}
 	
 	if (avp) {	
-		if (reverse && (request_hf_helper(msg, hf, ident, new_anchor, avp, front, reverse, reply)==-1)) {
+		if (reverse && (request_hf_helper(msg, hf, ident, new_anchor, st, front, reverse, reply)==-1)) {
 			return -1;
 		}
 
@@ -597,13 +599,13 @@ static int request_hf_helper(struct sip_msg* msg, str* hf, avp_ident_t* ident, s
 				return -1;
 			}
 		}
-		if (!reverse && (request_hf_helper(msg, hf, ident, new_anchor, avp, front, reverse, reply)==-1)) {
+		if (!reverse && (request_hf_helper(msg, hf, ident, new_anchor, st, front, reverse, reply)==-1)) {
 			return -1;
 		}
 		return 1;
 	};
 
-	/* in case of topmost call (anchor==NULL) return error */
+	/* in case of topmost call (st==NULL) return error */
 	/* otherwise it's OK, no more AVPs found */
 	return ret; 
 }
