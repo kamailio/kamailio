@@ -94,7 +94,7 @@ tls_domain_t* tls_new_domain(int type, struct ip_addr *ip, unsigned short port)
 			     /* Default client domain */
 			d->cert_file = 0;
 			d->pkey_file = 0;
-			d->verify_cert = 1;
+			d->verify_cert = 0;
 			d->verify_depth = 3;
 			d->ca_file = TLS_CA_FILE;
 			d->require_cert = 1;
