@@ -50,7 +50,9 @@
 #include "tls_server.h"
 #include "tls_domain.h"
 #include "tls_select.h"
+#include "tls_config.h"
 #include "tls_mod.h"
+
 
 /*
  * FIXME:
@@ -85,6 +87,8 @@ int tls_conn_timeout = 600;
 int tls_log = 3;
 int tls_session_cache = 0;
 str tls_session_id = STR_STATIC_INIT("ser-tls-0.9.0");
+char* tls_config = 0;
+
 
 /*
  * Exported functions
@@ -112,6 +116,7 @@ static param_export_t params[] = {
 	{"tls_log",             PARAM_INT,                     &tls_log               },
 	{"session_cache",       PARAM_INT,                     &tls_session_cache     },
 	{"session_id",          PARAM_STR,                     &tls_session_id        },
+	{"config",              PARAM_STRING,                  &tls_config            },
 	{0, 0, 0}
 };
 
@@ -153,6 +158,10 @@ transport_t tls_transport = {
 
 static int mod_init(void)
 {
+	if (tls_config) {
+		if (tls_load_config(tls_config) < 0) return -1;
+	}
+
 	if (init_tls() < 0) return -1;
 	
 	tls = &tls_transport;
