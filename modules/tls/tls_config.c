@@ -102,8 +102,10 @@ enum st {
 };
 
 
-/* If the lexer finds a token then all characters
- * untill EOL is scanned would belong to the token
+/* Extended tokens can contain also delimiters,
+ * in addition to alpha-numeric characters,
+ * this is used on the righ side of assignments
+ * where no quotes are used
  */
 #define EXTENDED_ALPHA_TOKEN (1 << 0)
 
