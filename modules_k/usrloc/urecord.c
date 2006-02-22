@@ -91,8 +91,11 @@ void free_urecord(urecord_t* _r)
 		free_ucontact(ptr);
 	}
 	
-	if (_r->aor.s) shm_free(_r->aor.s);
-	shm_free(_r);
+	/* if mem is not used, the urecord struct is static*/
+	if (db_mode!=DB_ONLY) {
+		if (_r->aor.s) shm_free(_r->aor.s);
+		shm_free(_r);
+	}
 }
 
 
@@ -134,7 +137,7 @@ ucontact_t* mem_insert_ucontact(urecord_t* _r, str* _c, ucontact_info_t* _ci)
 			"create new contact\n");
 		return 0;
 	}
-	update_stat( _r->slot->d->contacts, 1);
+	if_update_stat( _r->slot, _r->slot->d->contacts, 1);
 
 	ptr = _r->contacts;
 
@@ -194,7 +197,7 @@ void mem_remove_ucontact(urecord_t* _r, ucontact_t* _c)
 void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c)
 {
 	mem_remove_ucontact(_r, _c);
-	update_stat( _r->slot->d->contacts, -1);
+	if_update_stat( _r->slot, _r->slot->d->contacts, -1);
 	free_ucontact(_c);
 }
 
@@ -417,7 +420,9 @@ int db_delete_urecord(urecord_t* _r)
  */
 void release_urecord(urecord_t* _r)
 {
-	if (_r->contacts == 0) {
+	if (db_mode==DB_ONLY) {
+		free_urecord(_r);
+	} else if (_r->contacts == 0) {
 		mem_delete_urecord(_r->slot->d, _r);
 	}
 }
@@ -442,7 +447,7 @@ int insert_ucontact(urecord_t* _r, str* _contact, ucontact_info_t* _ci,
 		run_ul_callbacks( UL_CONTACT_INSERT, *_c);
 	}
 
-	if (db_mode == WRITE_THROUGH) {
+	if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
 		if (db_insert_ucontact(*_c) < 0) {
 			LOG(L_ERR, "ERROR:usrloc:insert_ucontact: failed to insert "
 				"in database\n");
@@ -466,10 +471,10 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 	notify_watchers(_r, _c, PRES_OFFLINE);
 
 	if (st_delete_ucontact(_c) > 0) {
-		if (db_mode == WRITE_THROUGH) {
+		if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
 			if (db_delete_ucontact(_c) < 0) {
 				LOG(L_ERR, "delete_ucontact(): Can't remove contact from "
-							"database\n");
+					"database\n");
 			}
 		}
 

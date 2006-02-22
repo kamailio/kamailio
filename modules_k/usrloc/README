@@ -362,7 +362,7 @@ er")
    storage. If you use database, your contacts will survive
    machine restarts or SW crashes. The disadvantage is that
    accessing database can be very time consuming. Therefore,
-   usrloc module implements three database accessing modes:
+   usrloc module implements four database accessing modes:
 
      * 0 - This disables database completely. Only memory will be
        used. Contacts will not survive restart. Use this value if
@@ -383,6 +383,18 @@ er")
        high all the time. Also, latency of this mode is much
        lower than latency of mode 1, but slightly higher than
        latency of mode 0.
+     * 2 - DB-Only scheme. No memory cache is kept, all
+       operations being directly performed with the database. The
+       timer deletes all expired contacts from database - cleans
+       after clients that didn't un-register or re-register. The
+       mode is useful if you configure more servers sharing the
+       same DB without any replication at SIP level. The mode may
+       be slower due the high number of DB operation. For example
+       NAT pinging is a killer since during each ping cycle all
+       nated contact are loaded from the DB; The lack of memory
+       caching also disable the location watcher registration (in
+       will not work with PA module) and disable the statistics
+       exports.
 
    Warning
 

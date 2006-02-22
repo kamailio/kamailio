@@ -422,11 +422,9 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 	}
 
 	if (r) {
-		if (!r->contacts) {
-			ul.delete_urecord( 0, 0, r);
-		} else {
+		if (r->contacts)
 			build_contact(r->contacts);
-		}
+		ul.release_urecord(r);
 	}
 
 	if(ci && ci->path) {

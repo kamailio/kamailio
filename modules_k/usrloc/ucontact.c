@@ -686,7 +686,7 @@ int update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 		return -1;
 	}
 	st_update_ucontact(_c);
-	if (db_mode == WRITE_THROUGH) {
+	if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
 		if (db_update_ucontact(_c) < 0) {
 			LOG(L_ERR, "ERROR:usrloc:update_ucontact: failed to update "
 				"database\n");

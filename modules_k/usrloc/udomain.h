@@ -96,9 +96,21 @@ int preload_udomain(db_con_t* _c, udomain_t* _d);
 
 
 /*
+ * Check the DB validity of a domain
+ */
+int testdb_udomain(db_con_t* con, udomain_t* d);
+
+
+/*
+ * Timer handler for given domain (db_only)
+ */
+int db_timer_udomain(udomain_t* _d);
+
+
+/*
  * Timer handler for given domain
  */
-int timer_udomain(udomain_t* _d);
+int mem_timer_udomain(udomain_t* _d);
 
 
 /*
