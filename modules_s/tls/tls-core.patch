@@ -149,7 +149,7 @@ retrieving revision 1.210
 diff -u -r1.210 main.c
 --- main.c	27 Jan 2006 09:52:58 -0000	1.210
 +++ main.c	27 Jan 2006 11:02:08 -0000
-@@ -122,12 +122,12 @@
+@@ -122,13 +122,13 @@
  #include "poll_types.h"
  #include "tcp_init.h"
  #ifdef USE_TLS
@@ -159,6 +159,7 @@ diff -u -r1.210 main.c
  #endif
  #include "usr_avp.h"
  #include "core_cmd.h"
+ #include "flags.h"
 -
 +#include "transport.h"
  #include "stats.h"

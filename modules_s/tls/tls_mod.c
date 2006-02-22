@@ -206,7 +206,7 @@ static int parse_domain(int* type, struct ip_addr* ip, unsigned short* port, cha
 
 	if (!strchr(s.s, '=')) {
 		DBG("No TLS domain specifier found\n");
-		*text = val;
+		*text = s.s;
 		*type |= TLS_DOMAIN_DEF;
 		return 0;
 	}
