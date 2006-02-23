@@ -520,7 +520,7 @@ int process_rpc_req(unsigned char* buf, int size, int* bytes_needed,
 	rpc_e=find_rpc_export(val.u.strval.s, 0);
 	if ((rpc_e==0) || (rpc_e->function==0)){
 		rpc_fault(&f_ctx, 500, "command %s not found", val.u.strval.s);
-		goto error;
+		goto end;
 	}
 	f_ctx.method=val.u.strval.s;
 	rpc_e->function(&binrpc_callbacks, &f_ctx);
@@ -533,8 +533,8 @@ int process_rpc_req(unsigned char* buf, int size, int* bytes_needed,
 			rpc_send(&f_ctx);
 		}
 	}
+end:
 	*bytes_needed=0; /* full read */
-	
 	destroy_binrpc_ctx(&f_ctx);
 	return (int)(f_ctx.in.s-buf);
 error:
