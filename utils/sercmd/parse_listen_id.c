@@ -34,6 +34,7 @@
 #include <stdlib.h> /* malloc */
 #include <string.h>
 #include <netdb.h> /* getservbyname*/
+#include <arpa/inet.h> /* ntohs */
 
 #include "parse_listen_id.h"
 
