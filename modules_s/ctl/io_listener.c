@@ -30,6 +30,7 @@
  */
 
 #include "../../globals.h"
+#include "../../pt.h"  /* process_count */
 #include "../../timer.h"
 #include "../../timer_ticks.h"
 #include "../../tsend.h"
