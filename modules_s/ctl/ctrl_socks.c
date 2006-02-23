@@ -90,10 +90,10 @@ struct id_list* parse_listen_id(char* l, int len, enum socket_protos def)
 			}else if (strcasecmp("udp", s)==0){
 				proto=UDP_SOCK;
 				goto find_host;
-			}else if ((strcasecmp("unix", s)==0)||(strcasecmp("unixd", s)==0)){
-				proto=UNIXS_SOCK;
+			}else if (strcasecmp("unixd", s)==0){
+				proto=UNIXD_SOCK;
 				goto find_host;
-			}else if (strcasecmp("unixs", s)==0){
+			}else if ((strcasecmp("unix", s)==0)||(strcasecmp("unixs", s)==0)){
 				proto=UNIXS_SOCK;
 				goto find_host;
 #ifdef USE_FIFO
@@ -152,7 +152,7 @@ end:
 					proto=def;
 					break;
 				default:
-					proto=TCP_SOCK;
+					proto=UDP_SOCK;
 					DBG("guess:%s is a tcp socket\n", name);
 			}
 		}else if (name && strchr(name, '/')){
@@ -160,7 +160,7 @@ end:
 				case TCP_SOCK:
 				case UDP_SOCK:
 					DBG("guess:%s is a unix socket\n", name);
-					proto=UNIXD_SOCK;
+					proto=UNIXS_SOCK;
 					break;
 				default:
 					/* def is filename based => use default */
