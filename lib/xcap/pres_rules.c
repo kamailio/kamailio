@@ -77,6 +77,7 @@ int get_pres_rules(const char *xcap_root, const str_t *uri, xcap_query_t *xcap_p
 	if (res != RES_OK) {
 		DEBUG_LOG("XCAP problems for uri \'%s\'\n", xcap.uri ? xcap.uri: "???");
 		if (data) cds_free(data);
+		if (xcap.uri) cds_free(xcap.uri);
 		return RES_XCAP_QUERY_ERR;
 	}
 	if (xcap.uri) cds_free(xcap.uri);
