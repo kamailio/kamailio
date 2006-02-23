@@ -10,6 +10,14 @@ new archs:
 
 
 modules:
+ - ctl        - new  fifo/unixsocket/xmlrpc like module, using a space 
+                efficient binary encoding for the requests.
+                It supports multiple clients on tcp, udp, unix stream or
+                unix datagram modes. By default (no modparams) it opens
+                one unix stream control socket in /tmp/ser_ctl.
+                It also includes extended fifo support: multiple fifos,
+                fifo over tcp, udp and unix sockets (see ctl/ctl.cfg).
+                Use utils/sercmd/sercmd to send commands to it.
  - dispatcher - added hashing after request uri and to uri
               - added a new flag parameter which can be used (for now) to
                 select only the username or the username, host and port when
@@ -41,6 +49,24 @@ modules:
               Vias a.s.o) and not on the original message
  
 core:
+ - added named routes: names can be used instead of numbers in all the
+   route commads or route declarations. route(number) is equivalent to
+   route("number").
+   Example:
+     route("test");
+      route["test"]{
+           ...
+     }
+ - added named flags, declared at the beginning of the config file with:
+     flags  flag1_name[:position],  flag2_name ...
+   Example:
+       flags test, a:1, b:2 ;
+       route{
+              setflag(test);
+              if (isflagset(a)){ # equiv. to isflagset(1)
+                ....
+              }
+              resetflag(b);  # equiv. to resetflag(2) 
  - added return [val] which returns from a route. if no value is specified, or
    a route reaches its end without executing a return statement, it returns 1.
    If return is used in the top level route is equivalent with exit [val].
@@ -122,6 +148,14 @@ new config variables:
       method used (by default the best one for the current OS is selected)
    tcp_max_connections = no. - maximum number of tcp connections (if the number
       is exceeded no new tcp connections will be accepted). Default: 2048.
+
+tools:
+  utils/sercmd - command line serctl like tool for interrogating ser ctl
+                 module (uses the binrpc encoding). Supports various
+                 connection methods (udp, tcp, unix stream & datagram sockets),
+                 reply formating (see -f, e.g. sercmd -f "pid:%v %v\n" core.ps)
+                 , interactive mode, command line completion (if compiled with 
+                 libreadline) a.s.o.
 
 
 0.9.4 fixes/improvements (0.9.4 is a bug fix release for 0.9.3)

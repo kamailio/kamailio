@@ -1,0 +1,59 @@
+# $id$
+
+sercmd usage examples
+
+
+help:
+	sercmd  unixd:/tmp/unix_dgram -h
+
+use an udp ser control socket:
+ ser config:
+  loadmodule "modules/ctl/ctl.so"
+  modparam("ctl", "binrpc", "udp:localhost:2046")
+  modparam("ctl", "binrpc", "tcp:localhost:2046")
+  modparam("ctl", "binrpc", "unixs:/tmp/unix_stream")
+  modparam("ctl", "binrpc", "unixd:/tmp/unix_dgram")
+
+ sercmd:
+	sercmd -s udp:localhost:2046 core.version
+
+use a tcp socket:
+	sercmd -s tcp:localhost:2046 core.version
+
+use a stream unix socket:
+	sercmd -s unixs:/tmp/unix_stream core.version
+
+use a datagram unix socket:
+	sercmd -s unixd:/tmp/unix_dgram core.version
+
+
+
+list available commands on ser side:
+	sercmd -s unixd:/tmp/unix_drgam ls
+
+list all available commands (including sercmd builtins or aliases):
+	sercmd -s unixd:/tmp/unix_dgram ?
+or
+	sercmd -s unixd:/tmp/unix_dgram help
+
+get help on one command:
+	sercmd -s unixd:/tmp/unix_dgram help core.ps
+
+list ser processes:
+	sercmd -s unixd:/tmp/unix_dgram ps
+
+send an rpc command to ser:
+	sercmd -s unixd:/tmp/unix_dgram core.shmmem
+
+format the output:
+	sercmd -s unixd:/tmp/unix_dgram -f 'pid:%v desc:"%v"\n' core.ps
+	(note: you could use just ps instead of core.ps)
+	
+format the output as csv:
+	sercmd -s unixd:/tmp/unix_dgram -f '%v,' core.ps
+
+enter interactive mode:
+	sercmd -s unixd:/tmp/unix_dgram
+	(note: type help,or ? to see the command list, tab expansion should also
+	 work)
+
