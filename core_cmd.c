@@ -90,7 +90,7 @@ static void system_methodHelp(rpc_t* rpc, void* c)
 	rpc_export_t* ptr;
 	char* name;
 
-	if (rpc->scan(c, "s", &name) < 0) {
+	if (rpc->scan(c, "s", &name) < 1) {
 		rpc->fault(c, 400, "Method Name Expected");
 		return;
 	}
