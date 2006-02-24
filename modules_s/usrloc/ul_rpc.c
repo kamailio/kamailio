@@ -146,7 +146,7 @@ static void rpc_delete_uid(rpc_t* rpc, void* c)
         udomain_t* d;
         str uid, t;
 
-	if (rpc->scan(c, "SS", &t, &uid) < 0) return;
+	if (rpc->scan(c, "SS", &t, &uid) < 2) return;
 
         rpc_find_domain(&t, &d);
         if (d) {
@@ -178,7 +178,7 @@ static void rpc_delete_contact(rpc_t* rpc, void* ctx)
         str uid, t, c;
         int res;
 
-	if (rpc->scan(ctx, "SSS", &t, &uid, &c) < 0) return;
+	if (rpc->scan(ctx, "SSS", &t, &uid, &c) < 3) return;
 
         rpc_find_domain(&t, &d);
 
@@ -265,7 +265,7 @@ static void rpc_add_contact(rpc_t* rpc, void* c)
 
         str table, uid, contact;
 
-	if (rpc->scan(c, "SSSdfd", &table, &uid, &contact, &expires, &q, &flags) < 0) return;
+	if (rpc->scan(c, "SSSdfd", &table, &uid, &contact, &expires, &q, &flags) < 6) return;
 	qval = double2q(q);
 		      
         rpc_find_domain(&table, &d);
@@ -323,7 +323,7 @@ static void rpc_show_contacts(rpc_t* rpc, void* c)
         int res;
         str t, uid;
 
-	if (rpc->scan(c, "SS", &t, &uid) < 0) return;
+	if (rpc->scan(c, "SS", &t, &uid) < 2) return;
 
         rpc_find_domain(&t, &d);
         if (d) {
