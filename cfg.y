@@ -348,7 +348,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %type <attr> attr_id_ass
 %type <attr> attr_id_val
 %type <attr> attr_id_any
-//%type <intval> class_id
+/* %type <intval> class_id */
 %type <intval> assign_op
 %type <select> select_id
 %type <strval>	flag_name;

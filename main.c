@@ -1096,7 +1096,8 @@ int main_loop()
 				/* start tcp+tls master proc */
 			process_no++;
 			if ((pid=fork())<0){
-				LOG(L_CRIT, "main_loop: cannot fork tcp main process\n");
+				LOG(L_CRIT, "main_loop: cannot fork tcp main process: %s\n",
+							strerror(errno));
 				goto error;
 			}else if (pid==0){
 				/* child */
