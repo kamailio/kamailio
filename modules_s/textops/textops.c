@@ -71,7 +71,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_hname2.h"
 #include "../../onsend.h"
-#include "../../ut.h"
+ #include "../../ut.h"
 #include "../../select.h"
 #include "../xlog/xl_lib.h"
 #include <stdio.h>
@@ -1555,7 +1555,7 @@ static int sel_hf_value_exists_param(str* res, select_t* s, struct sip_msg* msg)
 	return 0;
 }
 
-static select_row_t sel_declaration[] = {
+select_row_t sel_declaration[] = {
         { NULL, SEL_PARAM_STR, STR_STATIC_INIT("hf_value"), sel_hf_value, SEL_PARAM_EXPECTED},
 
 	{ sel_hf_value, SEL_PARAM_STR, STR_NULL, sel_hf_value_name, CONSUME_NEXT_INT | OPTIONAL | FIXUP_CALL},
