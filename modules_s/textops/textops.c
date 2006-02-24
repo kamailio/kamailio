@@ -55,9 +55,8 @@
  *  2004-05-09: append_time introduced (jiri)
  *  2004-07-06  subst_user added (like subst_uri but only for user) (sobomax)
  *  2004-11-12  subst_user changes (old serdev mails) (andrei)
+ *  2006-02-23  xl_lib formating, multi-value support (tma)
  */
-
-
 
 
 #include "../../comp_defs.h"
@@ -70,7 +69,11 @@
 #include "../../mem/mem.h"
 #include "../../re.h"
 #include "../../parser/parse_uri.h"
+#include "../../parser/parse_hname2.h"
 #include "../../onsend.h"
+#include "../../ut.h"
+#include "../../select.h"
+#include "../xlog/xl_lib.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -106,7 +109,22 @@ static int append_hf(struct sip_msg* msg, char* str1, char* str2);
 static int append_urihf(struct sip_msg* msg, char* str1, char* str2);
 static int append_time_f(struct sip_msg* msg, char* , char *);
 
+static int incexc_hf_value_f(struct sip_msg* msg, char* , char *);
+static int include_hf_value_fixup(void**, int);
+static int exclude_hf_value_fixup(void**, int);
+static int hf_value_exists_fixup(void**, int);
+
+static int insupddel_hf_value_f(struct sip_msg* msg, char* _hname, char* _val);
+static int append_hf_value_fixup(void** param, int param_no);
+static int insert_hf_value_fixup(void** param, int param_no);
+static int remove_hf_value_fixup(void** param, int param_no);
+static int assign_hf_value_fixup(void** param, int param_no);
+static int fixup_xlstr(void** param, int param_no);
+static int fixup_regex_xlstr(void** param, int param_no);
+
 static int fixup_substre(void**, int);
+
+extern select_row_t sel_declaration[];
 
 static int mod_init(void);
 
@@ -114,20 +132,22 @@ static int mod_init(void);
 static cmd_export_t cmds[]={
 	{"search",           search_f,          1, fixup_regex_1,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
-	{"search_append",    search_append_f,   2, fixup_regex_1,
+	{"search_append",    search_append_f,   2, fixup_regex_xlstr,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
-	{"replace",          replace_f,         2, fixup_regex_1,
+	{"replace",          replace_f,         2, fixup_regex_xlstr,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
-	{"replace_all",      replace_all_f,     2, fixup_regex_1,
+	{"replace_all",      replace_all_f,     2, fixup_regex_xlstr,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
-	{"append_to_reply",  append_to_reply_f, 1, 0,
+	{"append_to_reply",  append_to_reply_f, 1, fixup_xlstr,
 			REQUEST_ROUTE},
-	{"append_hf",        append_hf,         1, fixup_str_1,
+	{"append_hf",        append_hf,         1, fixup_xlstr,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE | BRANCH_ROUTE},
-	{"append_urihf",     append_urihf,      2, fixup_str_12,
+	{"append_urihf",     append_urihf,      2, fixup_xlstr,
 			REQUEST_ROUTE|FAILURE_ROUTE},
+	/* obsolete: use remove_hf_value(), does not support compact headers */
 	{"remove_hf",        remove_hf_f,         1, fixup_str_1,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
+	/* obsolete: use @msg.HFNAME, , does not support compact headers */
 	{"is_present_hf",        is_present_hf_f,         1, fixup_str_1,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
 	{"subst",            subst_f,             1, fixup_substre,
@@ -137,7 +157,24 @@ static cmd_export_t cmds[]={
 	{"subst_user",           subst_user_f,    1, fixup_substre,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
 	{"append_time",		append_time_f,		0, 0,
-		REQUEST_ROUTE },
+			REQUEST_ROUTE },
+
+
+	{"append_hf_value",        insupddel_hf_value_f,         2, append_hf_value_fixup,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"insert_hf_value",        insupddel_hf_value_f,         2, insert_hf_value_fixup,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"remove_hf_value",        insupddel_hf_value_f,         1, remove_hf_value_fixup,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"assign_hf_value",        insupddel_hf_value_f,         2, assign_hf_value_fixup,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"include_hf_value", incexc_hf_value_f,      2, include_hf_value_fixup,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"exclude_hf_value", incexc_hf_value_f,      2, exclude_hf_value_fixup,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"hf_value_exists",  incexc_hf_value_f,      2, hf_value_exists_fixup,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+
 	{0,0,0,0,0}
 };
 
@@ -159,15 +196,86 @@ struct module_exports exports= {
 static int mod_init(void)
 {
 	fprintf(stderr, "%s - initializing\n", exports.name);
+	register_select_table(sel_declaration);
 	return 0;
+}
+
+struct xlstr {
+	str s;
+	xl_elog_t* xlfmt;
+};
+
+static xl_print_log_f* xl_print = NULL;
+static xl_parse_format_f* xl_parse = NULL;
+
+#define NO_SCRIPT -1
+
+static int fixup_xlstr(void** param, int param_no) {
+	struct xlstr* s;
+	s = pkg_malloc(sizeof(*s));
+	if (!s) return E_OUT_OF_MEM;
+	s->s.s = *param;
+	s->s.len = strlen(s->s.s);
+	s->xlfmt = 0;
+	if (strchr(s->s.s, '%')) {
+		if (!xl_print) {
+			xl_print=(xl_print_log_f*)find_export("xprint", NO_SCRIPT, 0);
+			if (!xl_print) {
+				LOG(L_CRIT,"ERROR: textops: cannot find \"xprint\", is module xlog loaded?\n");
+				return E_UNSPEC;
+			}
+		}
+
+		if (!xl_parse) {
+			xl_parse=(xl_parse_format_f*)find_export("xparse", NO_SCRIPT, 0);
+			if (!xl_parse) {
+				LOG(L_CRIT,"ERROR: textops: cannot find \"xparse\", is module xlog loaded?\n");
+				return E_UNSPEC;
+			}
+		}
+		if(xl_parse(s->s.s, &s->xlfmt) < 0) {
+			LOG(L_ERR, "ERROR: textops: wrong format '%s'\n", s->s.s);
+			return E_UNSPEC;
+		}
+	}
+	*param = s;
+	return 0;
+}
+
+static int eval_xlstr(struct sip_msg* msg, struct xlstr* val, str* s) {
+	static char xlbuf[1024];
+	if (val) {
+		if (val->xlfmt) {
+			s->len = sizeof(xlbuf)-1;
+			if (xl_print(msg, val->xlfmt, xlbuf, &s->len) < 0) {
+				LOG(L_ERR, "ERROR: textops: eval_xlstr: Error while formating result '%.*s'\n", val->s.len, val->s.s);
+				s->len = 0;
+				return E_UNSPEC;
+			}
+			s->s = xlbuf;
+		}
+		else {
+			*s = val->s;
+		}
+	}
+	else
+		s->len = 0;
+	return 1;
+}
+
+static int fixup_regex_xlstr(void** param, int param_no) {
+	if (param_no == 1)
+		return fixup_regex_1(param, param_no);
+	else if (param_no == 2)
+		return fixup_xlstr(param, param_no);
+	else
+		return 0;
 }
 
 static char *get_header(struct sip_msg *msg)
 {
 	return msg->buf+msg->first_line.len;
 }
-
-
 
 static int search_f(struct sip_msg* msg, char* key, char* str2)
 {
@@ -185,14 +293,12 @@ static int search_f(struct sip_msg* msg, char* key, char* str2)
 	return 1;
 }
 
-
-
-static int search_append_f(struct sip_msg* msg, char* key, char* str)
+static int search_append_f(struct sip_msg* msg, char* key, char* _str)
 {
 	struct lump* l;
 	regmatch_t pmatch;
+	str str;
 	char* s;
-	int len;
 	char *begin;
 	int off;
 
@@ -201,16 +307,17 @@ static int search_append_f(struct sip_msg* msg, char* key, char* str)
 
 	if (regexec((regex_t*) key, begin, 1, &pmatch, 0)!=0) return -1;
 	if (pmatch.rm_so!=-1){
+		if (eval_xlstr(msg, (void*) _str, &str) < 0) return -1;
+
 		if ((l=anchor_lump(msg, off+pmatch.rm_eo, 0, 0))==0)
 			return -1;
-		len=strlen(str);
-		s=pkg_malloc(len);
+		s=pkg_malloc(str.len);
 		if (s==0){
 			LOG(L_ERR, "ERROR: search_append_f: mem. allocation failure\n");
 			return -1;
 		}
-		memcpy(s, str, len);
-		if (insert_new_lump_after(l, s, len, 0)==0){
+		memcpy(s, str.s, str.len);
+		if (insert_new_lump_after(l, s, str.len, 0)==0){
 			LOG(L_ERR, "ERROR: could not insert new lump\n");
 			pkg_free(s);
 			return -1;
@@ -221,14 +328,12 @@ static int search_append_f(struct sip_msg* msg, char* key, char* str)
 }
 
 
-static int replace_all_f(struct sip_msg* msg, char* key, char* str)
+static int replace_all_f(struct sip_msg* msg, char* key, char* _str)
 {
-
-
 	struct lump* l;
 	regmatch_t pmatch;
 	char* s;
-	int len;
+	str str;
 	char* begin;
 	int off;
 	int ret;
@@ -236,9 +341,9 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str)
 
 	begin=get_header(msg); /* msg->orig previously .. uri problems */
 	ret=-1; /* pessimist: we will not find any */
-	len=strlen(str);
 	eflags=0; /* match ^ at the beginning of the string*/
 
+	if (eval_xlstr(msg, (void*) _str, &str) < 0) return -1;
 	while (begin<msg->buf+msg->len
 				&& regexec((regex_t*) key, begin, 1, &pmatch, eflags)==0) {
 		off=begin-msg->buf;
@@ -253,13 +358,13 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str)
 			LOG(L_ERR, "ERROR: replace_all_f: del_lump failed\n");
 			return -1;
 		}
-		s=pkg_malloc(len);
+		s=pkg_malloc(str.len);
 		if (s==0){
-			LOG(L_ERR, "ERROR: replace_f: mem. allocation failure\n");
+			LOG(L_ERR, "ERROR: replace_all_f: mem. allocation failure\n");
 			return -1;
 		}
-		memcpy(s, str, len);
-		if (insert_new_lump_after(l, s, len, 0)==0){
+		memcpy(s, str.s, str.len);
+		if (insert_new_lump_after(l, s, str.len, 0)==0){
 			LOG(L_ERR, "ERROR: could not insert new lump\n");
 			pkg_free(s);
 			return -1;
@@ -271,12 +376,12 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str)
 	return ret;
 }
 
-static int replace_f(struct sip_msg* msg, char* key, char* str)
+static int replace_f(struct sip_msg* msg, char* key, char* _str)
 {
 	struct lump* l;
 	regmatch_t pmatch;
 	char* s;
-	int len;
+	str str;
 	char* begin;
 	int off;
 
@@ -286,17 +391,18 @@ static int replace_f(struct sip_msg* msg, char* key, char* str)
 	off=begin-msg->buf;
 
 	if (pmatch.rm_so!=-1){
+		if (eval_xlstr(msg, (void*) _str, &str) < 0) return -1;
+
 		if ((l=del_lump(msg, pmatch.rm_so+off,
 						pmatch.rm_eo-pmatch.rm_so, 0))==0)
 			return -1;
-		len=strlen(str);
-		s=pkg_malloc(len);
+		s=pkg_malloc(str.len);
 		if (s==0){
 			LOG(L_ERR, "ERROR: replace_f: mem. allocation failure\n");
 			return -1;
 		}
-		memcpy(s, str, len);
-		if (insert_new_lump_after(l, s, len, 0)==0){
+		memcpy(s, str.s, str.len);
+		if (insert_new_lump_after(l, s, str.len, 0)==0){
 			LOG(L_ERR, "ERROR: could not insert new lump\n");
 			pkg_free(s);
 			return -1;
@@ -484,8 +590,6 @@ static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 	return -1;
 }
 
-
-
 static int fixup_substre(void** param, int param_no)
 {
 	struct subst_expr* se;
@@ -545,9 +649,12 @@ static int append_time_f(struct sip_msg* msg, char* p1, char *p2)
 	return 1;
 }
 
-static int append_to_reply_f(struct sip_msg* msg, char* key, char* str)
+static int append_to_reply_f(struct sip_msg* msg, char* _str, char* dummy)
 {
-	if ( add_lump_rpl( msg, key, strlen(key), LUMP_RPL_HDR)==0 )
+	str str;
+	if (eval_xlstr(msg, (void*) _str, &str) < 0) return -1;
+
+	if ( add_lump_rpl( msg, str.s, str.len, LUMP_RPL_HDR)==0 )
 	{
 		LOG(L_ERR,"ERROR:append_to_reply : unable to add lump_rl\n");
 		return -1;
@@ -559,11 +666,17 @@ static int append_to_reply_f(struct sip_msg* msg, char* key, char* str)
 
 /* add str1 to end of header or str1.r-uri.str2 */
 
-static int append_hf_helper(struct sip_msg* msg, str *str1, str *str2)
+static int append_hf_helper(struct sip_msg* msg, struct xlstr *_str1, struct xlstr *_str2)
 {
 	struct lump* anchor;
 	char *s;
+	str str1, str2;
 	int len;
+
+	if (eval_xlstr(msg, _str1, &str1) < 0) return -1;
+	if (_str2) {
+		if (eval_xlstr(msg, _str2, &str2) < 0) return -1;
+	}
 
 	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LOG(L_ERR, "append_hf(): Error while parsing message\n");
@@ -576,8 +689,8 @@ static int append_hf_helper(struct sip_msg* msg, str *str1, str *str2)
 		return -1;
 	}
 
-	len=str1->len;
-	if (str2) len+= str2->len + REQ_LINE(msg).uri.len;
+	len=str1.len;
+	if (_str2) len+= str2.len + REQ_LINE(msg).uri.len;
 
 	s = (char*)pkg_malloc(len);
 	if (!s) {
@@ -585,10 +698,10 @@ static int append_hf_helper(struct sip_msg* msg, str *str1, str *str2)
 		return -1;
 	}
 
-	memcpy(s, str1->s, str1->len);
-	if (str2) {
-		memcpy(s+str1->len, REQ_LINE(msg).uri.s, REQ_LINE(msg).uri.len);
-		memcpy(s+str1->len+REQ_LINE(msg).uri.len, str2->s, str2->len );
+	memcpy(s, str1.s, str1.len);
+	if (_str2) {
+		memcpy(s+str1.len, REQ_LINE(msg).uri.s, REQ_LINE(msg).uri.len);
+		memcpy(s+str1.len+REQ_LINE(msg).uri.len, str2.s, str2.len );
 	}
 
 	if (insert_new_lump_before(anchor, s, len, 0) == 0) {
@@ -601,10 +714,855 @@ static int append_hf_helper(struct sip_msg* msg, str *str1, str *str2)
 
 static int append_hf(struct sip_msg *msg, char *str1, char *str2 )
 {
-	return append_hf_helper(msg, (str *) str1, (str *) 0);
+	return append_hf_helper(msg, (struct xlstr *) str1, (struct xlstr *) 0);
 }
 
 static int append_urihf(struct sip_msg *msg, char *str1, char *str2 )
 {
-	return append_hf_helper(msg, (str *) str1, (str *) str2);
+	return append_hf_helper(msg, (struct xlstr *) str1, (struct xlstr *) str2);
 }
+
+#define HNF_ALL 0x01
+#define HNF_IDX 0x02
+
+#define MAX_HF_VALUE_STACK 10
+
+enum {hnoInsert, hnoAppend, hnoAssign, hnoRemove, hnoInclude, hnoExclude, hnoIsIncluded};
+
+struct hname_data {
+	int oper;
+	int htype;
+	str hname;
+	int flags;
+	int idx;
+	str param;
+};
+
+#define eat_spaces(_p) \
+	while( *(_p)==' ' || *(_p)=='\t' ){\
+	(_p)++;}
+
+#define eat_while_alphanum(_p) \
+	while ( (*(_p) >= 'a' && *(_p) <= 'z') || (*(_p) >= 'A' && *(_p) <= 'Z') || (*(_p) >= '0' && *(_p) <= '9') || *(_p) == '_' || *(_p) == '-') {\
+		(_p)++; }
+
+/* parse:  hname [ ([] | [*] | [number]) ] [ "." param ] */
+static int fixup_hname_param(char *hname, struct hname_data** h) {
+	struct hdr_field hdr;
+	char *savep, savec;
+
+	*h = pkg_malloc(sizeof(**h));
+	if (!*h) return E_OUT_OF_MEM;
+	memset(*h, 0, sizeof(**h));
+
+	memset(&hdr, 0, sizeof(hdr));
+	eat_spaces(hname);
+	(*h)->hname.s = hname;
+	savep = hname;
+	eat_while_alphanum(hname);
+	(*h)->hname.len = hname - (*h)->hname.s;
+	savec = *hname;
+	*hname = ':';
+	parse_hname2((*h)->hname.s, (*h)->hname.s+(*h)->hname.len+3, &hdr);
+	*hname = savec;
+
+	if (hdr.type == HDR_ERROR_T) goto err;
+	(*h)->htype = hdr.type;
+
+	eat_spaces(hname);
+	savep = hname;
+	if (*hname == '[') {
+		hname++;
+		eat_spaces(hname);
+		savep = hname;
+		(*h)->flags |= HNF_IDX;
+		if (*hname == '*') {
+			(*h)->flags |= HNF_ALL;
+			hname++;
+		}
+		else if (*hname != ']') {
+			char* c;
+			(*h)->idx = strtol(hname, &c, 10);
+			if (hname == c) goto err;
+			hname = c;
+		}
+		eat_spaces(hname);
+		savep = hname;
+		if (*hname != ']') goto err;
+		hname++;
+	}
+	eat_spaces(hname);
+	savep = hname;
+	if (*hname == '.') {
+		hname++;
+		eat_spaces(hname);
+		savep = hname;
+		(*h)->param.s = hname;
+		eat_while_alphanum(hname);
+		(*h)->param.len = hname-(*h)->param.s;
+		if ((*h)->param.len == 0) goto err;
+	}
+	else {
+		(*h)->param.s = hname;
+	}
+	savep = hname;
+	if (*hname != '\0') goto err;
+	(*h)->hname.s[(*h)->hname.len] = '\0';
+	(*h)->param.s[(*h)->param.len] = '\0';
+	return 0;
+err:
+	pkg_free(*h);
+	LOG(L_ERR, "ERROR: textops: cannot parse header near '%s'\n", savep);
+	return E_CFG;
+}
+
+static int fixup_hname_str(void** param, int param_no) {
+	if (param_no == 1) {
+		struct hname_data* h;
+		int res = fixup_hname_param(*param, &h);
+		if (res < 0) return res;
+		*param = h;
+	}
+	else if (param_no == 2) {
+		return fixup_xlstr(param, param_no);
+	}
+	return 0;
+}
+
+static int find_next_hf(struct sip_msg* msg, struct hname_data* hname, struct hdr_field** hf) {
+	if (!*hf) {
+		if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+			LOG(L_ERR, "ERROR: textops: find_next_hf: Error while parsing message\n");
+			return -1;
+		}
+		*hf = msg->headers;
+	}
+	else {
+		*hf = (*hf)->next;
+	}
+	for (; *hf; *hf = (*hf)->next) {
+		if (hname->htype == HDR_OTHER_T) {
+			if ((*hf)->name.len==hname->hname.len && strncasecmp((*hf)->name.s, hname->hname.s, (*hf)->name.len)==0)
+				return 1;
+		}
+		else if (hname->htype == (*hf)->type) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static int find_next_value(char** start, char* end, str* val, str* lump_val) {
+	int quoted = 0;
+	lump_val->s = *start;
+	while (*start < end && **start <= ' ') (*start)++;
+	val->s = *start;
+	while ( *start < end && (**start != ',' || quoted) ) {
+		if (**start == '\"' && (!quoted || (*start)[-1]!='\\') )
+			quoted = ~quoted;
+		(*start)++;
+	}
+	val->len = *start - val->s;
+	while (val->len > 0 && val->s[val->len-1] <= ' ') val->len--;
+	if (val->len >= 2 && val->s[0] == '\"' && val->s[val->len-1] == '\"') {
+		val->s++;
+		val->len -= 2;
+	}
+	while (*start < end && **start != ',') (*start)++;
+	if (*start < end) {
+		(*start)++;
+	}
+	lump_val->len = *start - lump_val->s;
+	return (*start < end);
+}
+
+static void adjust_lump_val_for_delete(struct hdr_field* hf, str* lump_val) {
+	if ( lump_val->s+lump_val->len == hf->body.s+hf->body.len ) {
+		if (lump_val->s > hf->body.s) {
+		/* in case if is it last value in header save position of last delimiter to remove it with rightmost value */
+			lump_val->s--;
+			lump_val->len++;
+		}
+	}
+}
+
+static int find_hf_value_idx(struct sip_msg* msg, struct hname_data* hname, struct hdr_field** hf, str* val, str* lump_val) {
+	int res;
+	char *p;
+
+	if ( hname->flags & HNF_ALL || hname->idx == 0) return -1;
+	*hf = 0;
+	if (hname->idx > 0) {
+		int idx;
+		idx = hname->idx;
+		do {
+			res = find_next_hf(msg, hname, hf);
+			if (res < 0) return -1;
+			if (*hf) {
+				lump_val->len = 0;
+				p = (*hf)->body.s;
+				do {
+					res = find_next_value(&p, (*hf)->body.s+(*hf)->body.len, val, lump_val);
+					idx--;
+				} while (res && idx);
+			}
+		} while (*hf && idx);
+	}
+	else if (hname->idx < 0) {  /* search from the bottom */
+		struct hf_value_stack {
+			str val, lump_val;
+			struct hdr_field* hf;
+		} stack[MAX_HF_VALUE_STACK];
+		int stack_pos, stack_num;
+
+		if ( -hname->idx > MAX_HF_VALUE_STACK ) return -1;
+		stack_pos = stack_num = 0;
+		do {
+			res = find_next_hf(msg, hname, hf);
+			if (res < 0) return -1;
+			if (*hf) {
+				stack[stack_pos].lump_val.len = 0;
+				p = (*hf)->body.s;
+				do {
+					stack[stack_pos].hf = *hf;
+					res = find_next_value(&p, (*hf)->body.s+(*hf)->body.len, &stack[stack_pos].val, &stack[stack_pos].lump_val);
+					stack_pos++;
+					if (stack_pos >= MAX_HF_VALUE_STACK)
+						stack_pos = 0;
+					if (stack_num < MAX_HF_VALUE_STACK)
+						stack_num++;
+
+				} while (res);
+			}
+		} while (*hf);
+
+		if (-hname->idx <= stack_num) {
+			stack_pos += hname->idx;
+			if (stack_pos < 0)
+				stack_pos += MAX_HF_VALUE_STACK;
+			*hf = stack[stack_pos].hf;
+			*val = stack[stack_pos].val;
+			*lump_val = stack[stack_pos].lump_val;
+		}
+		else {
+			*hf = 0;
+		}
+	}
+	else
+		return -1;
+	return 1;
+}
+
+static int find_hf_value_param(struct hname_data* hname, str* param_area, str* value, str* lump_upd, str* lump_del) {
+	int i, j, found;
+
+	i = 0;
+	while (1) {
+		lump_del->s = param_area->s + i;
+		for (; i < param_area->len && param_area->s[i] <= ' '; i++);
+		if (i < param_area->len && param_area->s[i] == ';') {	/* found a param ? */
+			i++;
+			for (; i < param_area->len && param_area->s[i]<=' '; i++);
+			j = i;
+			for (; i < param_area->len && param_area->s[i]>' ' && param_area->s[i]!='=' && param_area->s[i]!=';'; i++);
+
+			found = hname->param.len == i-j && !strncasecmp(hname->param.s, param_area->s+j, i-j);
+			lump_upd->s = param_area->s+i;
+			value->s = param_area->s+i;
+			value->len = 0;
+			for (; i < param_area->len && param_area->s[i]<=' '; i++);
+			if (i < param_area->len && param_area->s[i]=='=') {
+				i++;
+				for (; i < param_area->len && param_area->s[i]<=' '; i++);
+				value->s = param_area->s+i;
+				if (i < param_area->len) {
+					if (param_area->s[i]=='\"') {
+						i++;
+						value->s++;
+						for (; i<param_area->len; i++) {
+							if (param_area->s[i]=='\"') {
+								i++;
+								break;
+							}
+							value->len++;
+						}
+					}
+					else {
+						for (; i<param_area->len && param_area->s[i]>' ' && param_area->s[i]!=';'; i++, value->len++);
+					}
+				}
+			}
+			if (found) {
+				lump_del->len = param_area->s+i - lump_del->s;
+				lump_upd->len = param_area->s+i - lump_upd->s;
+				return 1;
+			}
+		}
+		else { /* not found, return last correct position, should be end of param area */
+			lump_del->len = 0;
+			return 0;
+		}
+	}
+}
+
+static int insert_header_lump(struct sip_msg* msg, char* msg_position, int lump_before, str* hname, str *val) {
+	struct lump* anchor;
+	char *s;
+	int len;
+
+	anchor = anchor_lump(msg, msg_position - msg->buf, 0, 0);
+	if (anchor == 0) {
+		LOG(L_ERR, "ERROR: textops: insert_header_lump(): Can't get anchor\n");
+		return -1;
+	}
+
+	len=hname->len+2+val->len+1;
+
+	s = (char*)pkg_malloc(len);
+	if (!s) {
+		LOG(L_ERR, "ERROR: textops: insert_header_lump(): not enough memory\n");
+		return -1;
+	}
+
+	memcpy(s, hname->s, hname->len);
+	s[hname->len] = ':';
+	s[hname->len+1] = ' ';
+	memcpy(s+hname->len+2, val->s, val->len);
+	s[hname->len+2+val->len] = '\n';
+
+	if ( (lump_before?insert_new_lump_before(anchor, s, len, 0):insert_new_lump_after(anchor, s, len, 0)) == 0) {
+		LOG(L_ERR, "ERROR: textops: insert_header_lump(): Can't insert lump\n");
+		pkg_free(s);
+		return -1;
+	}
+	return 1;
+}
+
+static int insert_value_lump(struct sip_msg* msg, struct hdr_field* hf, char* msg_position, int lump_before, str *val) {
+	struct lump* anchor;
+	char *s;
+	int len;
+
+	anchor = anchor_lump(msg, msg_position - msg->buf, 0, 0);
+	if (anchor == 0) {
+		LOG(L_ERR, "ERROR: textops: insert_value_lump(): Can't get anchor\n");
+		return -1;
+	}
+
+	len=val->len+1;
+
+	s = (char*)pkg_malloc(len);
+	if (!s) {
+		LOG(L_ERR, "ERROR: textops: insert_value_lump(): not enough memory\n");
+		return -1;
+	}
+
+	if (!hf) {
+		memcpy(s, val->s, val->len);
+		len--;
+	}
+	else if (msg_position == hf->body.s+hf->body.len) {
+		s[0] = ',';
+		memcpy(s+1, val->s, val->len);
+	}
+	else {
+		memcpy(s, val->s, val->len);
+		s[val->len] = ',';
+	}
+	if ( (lump_before?insert_new_lump_before(anchor, s, len, 0):insert_new_lump_after(anchor, s, len, 0)) == 0) {
+		LOG(L_ERR, "ERROR: textops: insert_value_lump(): Can't insert lump\n");
+		pkg_free(s);
+		return -1;
+	}
+	return 1;
+}
+
+static int delete_value_lump(struct sip_msg* msg, struct hdr_field* hf, str *val) {
+	struct lump* l;
+	/* TODO: check already existing lumps */
+
+	if (hf && val->s == hf->body.s && val->len == hf->body.len) 	/* check if remove whole haeder? */
+		l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
+	else
+		l=del_lump(msg, val->s-msg->buf, val->len, 0);
+	if (l==0) {
+		LOG(L_ERR, "ERROR: textops: delete_value_lump: not enough memory\n");
+		return -1;
+	}
+	return 1;
+}
+
+static int incexc_hf_value_f(struct sip_msg* msg, char* _hname, char* _val) {
+	struct hname_data* hname = (void*) _hname;
+	struct hdr_field* hf, *lump_hf;
+	str val, hval1, hval2;
+	char *p;
+	int res = eval_xlstr(msg, (void*) _val, &val);
+	if (res < 0) return res;
+	if (!val.len) return -1;
+	hf = 0;
+	lump_hf = 0;
+	while (1) {
+		if (find_next_hf(msg, hname, &hf) < 0) return -1;
+		if (!hf) break;
+		hval2.len = 0;
+		p = hf->body.s;
+		do {
+			res = find_next_value(&p, hf->body.s+hf->body.len, &hval1, &hval2);
+			if (hval1.len && val.len == hval1.len && strncasecmp(val.s, hval1.s, val.len) == 0) {
+				switch (hname->oper) {
+					case hnoIsIncluded:
+					case hnoInclude:
+						return 1;
+					case hnoExclude:
+						adjust_lump_val_for_delete(hf, &hval2);
+						delete_value_lump(msg, hf, &hval2);
+					default:
+						break;
+				}
+			}
+		} while (res);
+		switch (hname->oper) {
+			case hnoInclude:
+				if (!lump_hf) {
+					lump_hf = hf;
+				}
+				break;
+			default:
+				break;
+		}
+	}
+	switch (hname->oper) {
+		case hnoIsIncluded:
+			return -1;
+		case hnoInclude:
+			if (lump_hf)
+				return insert_value_lump(msg, lump_hf, lump_hf->body.s+lump_hf->body.len, 1, &val);
+			else
+				return insert_header_lump(msg, msg->unparsed, 1, &hname->hname, &val);
+		default:
+			return 1;
+	}
+}
+
+#define INCEXC_HF_VALUE_FIXUP(_func,_oper) \
+static int _func (void** param, int param_no) {\
+	char* p = *param; \
+	int res=fixup_hname_str(param, param_no); \
+	if (res < 0) return res; \
+	if (param_no == 1) {\
+		if ( ((struct hname_data*)*param)->flags & HNF_IDX || ((struct hname_data*)*param)->param.len ) { \
+			LOG(L_ERR, "ERROR: textops: neither index nor param may be specified in '%s'\n", p);\
+			return E_CFG;\
+		}\
+		((struct hname_data*)*param)->oper = _oper;\
+	}\
+	return 0;\
+}
+
+INCEXC_HF_VALUE_FIXUP(include_hf_value_fixup, hnoInclude)
+INCEXC_HF_VALUE_FIXUP(exclude_hf_value_fixup, hnoExclude)
+INCEXC_HF_VALUE_FIXUP(hf_value_exists_fixup, hnoIsIncluded)
+
+static void skip_until_params(str *param_area) {
+	int i, quoted;
+	for (i=0; i<param_area->len && param_area->s[i]!=';'; ) {
+		/* skip name */
+		for (quoted=0; i<param_area->len; i++) {
+			if (!quoted) {
+				if (param_area->s[i] == '\"') quoted = 1;
+				else if (param_area->s[i] == '<' || param_area->s[i] == ';') break;
+			}
+			else if (param_area->s[i] == '\"' && param_area->s[i-1] != '\\') quoted = 0;
+		}
+		/* skip uri */
+		if (i<param_area->len && param_area->s[i]=='<') {
+			for (quoted=0; i<param_area->len; i++) {
+				if (!quoted) {
+					if (param_area->s[i] == '\"') quoted = 1;
+					else if (param_area->s[i] == '>') break;
+				}
+				else if (param_area->s[i] == '\"' && param_area->s[i-1] != '\\') quoted = 0;
+			}
+		}
+	}
+        param_area->s+= i;
+	param_area->len-= i;
+}
+
+static int assign_hf_process_params(struct sip_msg* msg, struct hdr_field* hf, struct hname_data* hname, str* value, str* value_area) {
+	int len;
+	str param_area, lump_upd, lump_del, dummy_val;
+	char *s;
+	struct lump* anchor;
+
+	param_area = *value_area;
+	skip_until_params(&param_area);
+
+	if (find_hf_value_param(hname, &param_area, &dummy_val, &lump_upd, &lump_del)) {
+		len = value?lump_upd.len:lump_del.len;
+		if (len > 0) {
+			if (!del_lump(msg, (value?lump_upd.s:lump_del.s)-msg->buf, len, 0)) {
+				LOG(L_ERR, "ERROR: textops: assign_hf_process_params: not enough memory\n");
+				return -1;
+			}
+		}
+		if (value && value->len) {
+			anchor = anchor_lump(msg, lump_upd.s - msg->buf, 0, 0);
+			if (anchor == 0) {
+				LOG(L_ERR, "ERROR: textops: assign_hf_process_params: Can't get anchor\n");
+				return -1;
+			}
+
+			len = 1+value->len;
+			s = pkg_malloc(len);
+			if (!s) {
+				LOG(L_ERR, "ERROR: textops: assign_hf_process_params: not enough memory\n");
+				return -1;
+			}
+			s[0]='=';
+			memcpy(s+1, value->s, value->len);
+			if ( (insert_new_lump_before(anchor, s, len, 0)) == 0) {
+				LOG(L_ERR, "ERROR: textops: assign_hf_process_params: Can't insert lump\n");
+				pkg_free(s);
+				return -1;
+			}
+		}
+	}
+	else {
+		if (!value) return -1;
+
+		anchor = anchor_lump(msg, lump_del.s - msg->buf, 0, 0);
+		if (anchor == 0) {
+			LOG(L_ERR, "ERROR: textops: assign_hf_process_params: Can't get anchor\n");
+			return -1;
+		}
+
+		len = 1+hname->param.len+(value->len?value->len+1:0);
+		s = pkg_malloc(len);
+		if (!s) {
+			LOG(L_ERR, "ERROR: textops: assign_hf_process_params: not enough memory\n");
+			return -1;
+		}
+		s[0] = ';';
+		memcpy(s+1, hname->param.s, hname->param.len);
+		if (value->len) {
+			s[hname->param.len+1]='=';
+			memcpy(s+1+hname->param.len+1, value->s, value->len);
+		}
+
+		if ( (insert_new_lump_before(anchor, s, len, 0)) == 0) {
+			LOG(L_ERR, "ERROR: textops: assign_hf_process_params: Can't insert lump\n");
+			pkg_free(s);
+			return -1;
+		}
+	}
+	return 1;
+}
+
+
+static int insupddel_hf_value_f(struct sip_msg* msg, char* _hname, char* _val) {
+	struct hname_data* hname = (void*) _hname;
+	struct hdr_field* hf;
+	str val, hval1, hval2;
+	int res;
+
+	if (_val) {
+		res = eval_xlstr(msg, (void*) _val, &val);
+		if (res < 0) return res;
+	}
+	switch (hname->oper) {
+		case hnoAppend:
+			if ((hname->flags & HNF_IDX) == 0) {
+				if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+					LOG(L_ERR, "ERROR: textops: Error while parsing message\n");
+					return -1;
+				}
+				return insert_header_lump(msg, msg->unparsed, 1, &hname->hname, &val);
+			}
+			else {
+				res = find_hf_value_idx(msg, hname, &hf, &hval1, &hval2);
+				if (res < 0) return res;
+				if (hf) {
+					return insert_value_lump(msg, hf, hval2.s+hval2.len, res /* insert after, except it is last value in header */, &val);
+				}
+				else {
+					return insert_header_lump(msg, msg->unparsed, 1, &hname->hname, &val);
+				}
+			}
+		case hnoInsert:
+			/* if !HNF_IDX is possible parse only until first hname header but not trivial for HDR_OTHER_T header, not implemented */
+			res = find_hf_value_idx(msg, hname, &hf, &hval1, &hval2);
+			if (res < 0) return res;
+
+			if (hf && (hname->flags & HNF_IDX) == 0) {
+				return insert_header_lump(msg, hf->name.s, 1, &hname->hname, &val);
+			}
+			else if (!hf && hname->idx == 1) {
+				return insert_header_lump(msg, msg->unparsed, 1, &hname->hname, &val);
+			}
+			else if (hf) {
+				return insert_value_lump(msg, hf, hval2.s, 1, &val);
+			}
+			else
+				return -1;
+
+		case hnoRemove:
+		case hnoAssign:
+			if (hname->flags & HNF_ALL) {
+				struct hdr_field* hf = 0;
+				int fl = -1;
+				do {
+					res = find_next_hf(msg, hname, &hf);
+					if (res < 0) return res;
+					if (hf) {
+						if (!hname->param.len) {
+							fl = 1;
+							delete_value_lump(msg, hf, &hf->body);
+						}
+						else {
+							char *p;
+							hval2.len = 0;
+							p = hf->body.s;
+							do {
+								res = find_next_value(&p, hf->body.s+hf->body.len, &hval1, &hval2);
+								if (assign_hf_process_params(msg, hf, hname, _val?&val:0, &hval1) > 0)
+									fl = 1;
+							} while (res);
+						}
+					}
+				} while (hf);
+				return fl;
+			}
+			else {
+				res = find_hf_value_idx(msg, hname, &hf, &hval1, &hval2);
+				if (res < 0) return res;
+				if (hf) {
+					if (!hname->param.len) {
+						if (hname->oper == hnoRemove) {
+							adjust_lump_val_for_delete(hf, &hval2);
+							return delete_value_lump(msg, hf, &hval2);
+						}
+						else {
+							res = delete_value_lump(msg, 0 /* delete only value part */, &hval1);
+							if (res < 0) return res;
+							if (val.len) {
+								return insert_value_lump(msg, 0 /* do not add delims */, hval1.s, 1, &val);
+							}
+							return 1;
+						}
+					}
+					else {
+						return assign_hf_process_params(msg, hf, hname, _val?&val:0, &hval1);
+					}
+				}
+			}
+			break;
+	}
+	return -1;
+}
+
+static int append_hf_value_fixup(void** param, int param_no) {
+	int res=fixup_hname_str(param, param_no);
+	if (res < 0) return res;
+	if (param_no == 1) {
+		if ( ((struct hname_data*)*param)->flags & HNF_ALL ) {
+			LOG(L_ERR, "ERROR: textops: asterisk not supported\n");
+			return E_CFG;
+		} else if ( (((struct hname_data*)*param)->flags & HNF_IDX) == 0 || !((struct hname_data*)*param)->idx ) {
+			((struct hname_data*)*param)->idx = -1;
+		}
+		if (((struct hname_data*)*param)->idx < -MAX_HF_VALUE_STACK) {
+			LOG(L_ERR, "ERROR: textops: index cannot be lower than %d\n", -MAX_HF_VALUE_STACK);
+			return E_CFG;
+		}
+		if ( ((struct hname_data*)*param)->param.len ) {
+			LOG(L_ERR, "ERROR: textops: param not supported\n");
+			return E_CFG;
+		}
+		((struct hname_data*)*param)->oper = hnoAppend;
+	}
+	return 0;
+}
+
+static int insert_hf_value_fixup(void** param, int param_no) {
+	int res=fixup_hname_str(param, param_no);
+	if (res < 0) return res;
+	if (param_no == 1) {
+		if ( ((struct hname_data*)*param)->flags & HNF_ALL ) {
+			LOG(L_ERR, "ERROR: textops: asterisk not supported\n");
+			return E_CFG;
+		} else if ( (((struct hname_data*)*param)->flags & HNF_IDX) == 0 || !((struct hname_data*)*param)->idx ) {
+			((struct hname_data*)*param)->idx = 1;
+		}
+		if (((struct hname_data*)*param)->idx < -MAX_HF_VALUE_STACK) {
+			LOG(L_ERR, "ERROR: textops: index cannot be lower than %d\n", -MAX_HF_VALUE_STACK);
+			return E_CFG;
+		}
+		if ( ((struct hname_data*)*param)->param.len ) {
+			LOG(L_ERR, "ERROR: textops: param not supported\n");
+			return E_CFG;
+		}
+		((struct hname_data*)*param)->oper = hnoInsert;
+	}
+	return 0;
+}
+
+static int remove_hf_value_fixup(void** param, int param_no) {
+	int res=fixup_hname_str(param, param_no);
+	if (res < 0) return res;
+	if (param_no == 1) {
+		if ( (((struct hname_data*)*param)->flags & HNF_IDX) == 0 || !((struct hname_data*)*param)->idx ) {
+			((struct hname_data*)*param)->idx = 1;
+			((struct hname_data*)*param)->flags |= HNF_IDX;
+		}
+		if (((struct hname_data*)*param)->idx < -MAX_HF_VALUE_STACK) {
+			LOG(L_ERR, "ERROR: textops: index cannot be lower than %d\n", -MAX_HF_VALUE_STACK);
+			return E_CFG;
+		}
+		((struct hname_data*)*param)->oper = hnoRemove;
+	}
+	return 0;
+}
+
+static int assign_hf_value_fixup(void** param, int param_no) {
+	int res=fixup_hname_str(param, param_no);
+	if (res < 0) return res;
+	if (param_no == 1) {
+		if ( (((struct hname_data*)*param)->flags & HNF_ALL) && !((struct hname_data*)*param)->param.len) {
+			LOG(L_ERR, "ERROR: textops: asterisk not supported without param\n");
+			return E_CFG;
+		} else if ( (((struct hname_data*)*param)->flags & HNF_IDX) == 0 || !((struct hname_data*)*param)->idx ) {
+			((struct hname_data*)*param)->idx = 1;
+			((struct hname_data*)*param)->flags |= HNF_IDX;
+		}
+		if (((struct hname_data*)*param)->idx < -MAX_HF_VALUE_STACK) {
+			LOG(L_ERR, "ERROR: textops: index cannot be lower than %d\n", -MAX_HF_VALUE_STACK);
+			return E_CFG;
+		}
+		((struct hname_data*)*param)->oper = hnoAssign;
+	}
+	return 0;
+}
+
+static int sel_hf_value(str* res, select_t* s, struct sip_msg* msg) {  /* dummy */
+	return 0;
+}
+
+static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
+	struct hname_data* hname;
+	struct hdr_field* hf;
+	str val, hval1, hval2;
+	int r;
+	if (!msg) {
+		struct hdr_field hdr;
+		char buf[50];
+		int i;
+
+		if (s->params[1].type == SEL_PARAM_STR) {
+			hname = pkg_malloc(sizeof(*hname));
+			if (!hname) return E_OUT_OF_MEM;
+			memset(hname, 0, sizeof(*hname));
+
+			for (i=s->params[1].v.s.len-1; i>0; i--) {
+				if (s->params[1].v.s.s[i]=='_')
+					s->params[1].v.s.s[i]='-';
+			}
+			i = snprintf(buf, sizeof(buf)-1, "%.*s: X\n", s->params[1].v.s.len, s->params[1].v.s.s);
+			buf[i] = 0;
+
+			hname->hname = s->params[1].v.s;
+			parse_hname2(buf, buf+i, &hdr);
+
+			if (hdr.type == HDR_ERROR_T) return E_CFG;
+			hname->htype = hdr.type;
+
+			s->params[1].v.p = hname;
+			s->params[1].type = SEL_PARAM_PTR;
+		}
+		else {
+			hname = s->params[1].v.p;
+		}
+
+		if (s->n >= 2 && s->params[2].type == SEL_PARAM_INT) {
+			hname->idx = s->params[2].v.i;
+			hname->flags |= HNF_IDX;
+			if (hname->idx < -MAX_HF_VALUE_STACK) {
+				LOG(L_ERR, "ERROR: textops: index cannot be lower than %d\n", -MAX_HF_VALUE_STACK);
+				return E_CFG;
+			}
+			if (hname->idx == 0)
+				hname->idx = 1;
+			i = 3;
+		}
+		else {
+			i = 2;
+			hname->idx = 1;
+		}
+		if (s->n > i && s->params[i].type == SEL_PARAM_STR) {
+			hname->param = s->params[i].v.s;
+		}
+		s->params[1].v.p = hname;
+		s->params[1].type = SEL_PARAM_PTR;
+
+		return 0;
+	}
+
+	res->len = 0;
+	hname = s->params[1].v.p;
+
+	r = find_hf_value_idx(msg, hname, &hf, &hval1, &hval2);
+	if (r >= 0) {
+		if (hname->param.len) {
+			str d1, d2;
+			skip_until_params(&hval1);
+			if (find_hf_value_param(hname, &hval1, &val, &d1, &d2)) {
+				*res = val;
+			}
+                }
+		else {
+			*res = hval1;
+		}
+	}
+	return 0;
+}
+
+static int sel_hf_value_name_param(str* res, select_t* s, struct sip_msg* msg) {
+	return sel_hf_value_name(res, s, msg);
+}
+
+static int sel_hf_value_exists(str* res, select_t* s, struct sip_msg* msg) {  /* dummy */
+	return 0;
+}
+
+static int sel_hf_value_exists_param(str* res, select_t* s, struct sip_msg* msg) {
+	static char ret_val[] = "01";
+	struct xlstr xlstr;
+        int r;
+
+	if (!msg) {
+		r = sel_hf_value_name(res, s, msg);
+		if (r == 0)
+			((struct hname_data*) s->params[1].v.p)->oper = hnoIsIncluded;
+		return r;
+	}
+	xlstr.s = s->params[2].v.s;
+	xlstr.xlfmt = 0;
+	r = incexc_hf_value_f(msg, s->params[1].v.p, (void*) &xlstr);
+	res->s = &ret_val[r > 0];
+	res->len = 1;
+
+	return 0;
+}
+
+static select_row_t sel_declaration[] = {
+        { NULL, SEL_PARAM_STR, STR_STATIC_INIT("hf_value"), sel_hf_value, SEL_PARAM_EXPECTED},
+
+	{ sel_hf_value, SEL_PARAM_STR, STR_NULL, sel_hf_value_name, CONSUME_NEXT_INT | OPTIONAL | FIXUP_CALL},
+	{ sel_hf_value_name, SEL_PARAM_STR, STR_NULL, sel_hf_value_name_param, FIXUP_CALL},
+
+        { NULL, SEL_PARAM_STR, STR_STATIC_INIT("hf_value_exists"), sel_hf_value_exists, CONSUME_NEXT_STR | SEL_PARAM_EXPECTED},
+        { sel_hf_value_exists, SEL_PARAM_STR, STR_NULL, sel_hf_value_exists_param, FIXUP_CALL},
+
+        { NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
+};

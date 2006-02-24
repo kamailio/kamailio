@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="textops" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -32,7 +32,8 @@
 	<title>Overview</title>
 	<para>
 	    This is mostly an example module. It implements text based
-	    operation (search, replace, append a.s.o).
+	    operation (search, replace, append a.s.o). Many functions support
+	    xl_lib formating using xlog module.
 	</para>
 	<section id="textops.known_limitations">
 	    <title>Known Limitations</title>
@@ -42,13 +43,13 @@
 		following From header field:
 	    </para>
 	    <programlisting>
-From: medabeda 
+From: medabeda
  &lt;sip:medameda@foo.bar&gt;;tag=1234
 	    </programlisting>
 	</section>
     </section>
 
     <xi:include href="functions.xml"/>
-    
+
 </section>
 
