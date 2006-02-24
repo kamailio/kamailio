@@ -413,11 +413,21 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 			goto error;
 		}
 
-		if (ul.insert_ucontact( r, &_c->uri, ci, &c) < 0) {
-			rerrno = R_UL_INS_C;
-			LOG(L_ERR, "ERROR:usrloc:insert_contacts: failed to insert "
-				"contact\n");
-			goto error;
+		if ( r->contacts==0 ||
+		ul.get_ucontact(r, &_c->uri, ci->callid, ci->cseq+1, &c)!=0 ) {
+			if (ul.insert_ucontact( r, &_c->uri, ci, &c) < 0) {
+				rerrno = R_UL_INS_C;
+				LOG(L_ERR, "ERROR:usrloc:insert_contacts: failed to insert "
+					"contact\n");
+				goto error;
+			}
+		} else {
+			if (ul.update_ucontact( c, ci) < 0) {
+				rerrno = R_UL_UPD_C;
+				LOG(L_ERR, "ERROR:usrloc:insert_contacts: failed to update "
+					"contact\n");
+				goto error;
+			}
 		}
 	}
 
