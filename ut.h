@@ -143,7 +143,7 @@ static inline unsigned short str2s(const char* s, unsigned int len,
 				i++;
 				if (i>5) goto error_digits;
 		}else{
-				//error unknown char
+				/* error unknown char */
 				goto error_char;
 		}
 	}

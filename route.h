@@ -45,7 +45,7 @@
 struct route_list{
 	struct action** rlist;
 	int idx; /* first empty entry */ 
-	int entries; /* total number if entries */
+	int entries; /* total number of entries */
 	struct str_hash_table names; /* name to route index mappings */
 };
 

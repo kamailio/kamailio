@@ -1473,12 +1473,12 @@ static inline int handle_new_connect(struct socket_info* si)
 		close(new_sock);
 		return 1; /* success, because the accept was succesfull */
 	}
-	(*tcp_connections_no)++;
 	if (init_sock_opt(new_sock)<0){
 		LOG(L_ERR, "ERROR: handle_new_connect: init_sock_opt failed\n");
 		close(new_sock);
 		return 1; /* success, because the accept was succesfull */
 	}
+	(*tcp_connections_no)++;
 	
 	/* add socket to list */
 	tcpconn=tcpconn_new(new_sock, &su, si, si->proto, S_CONN_ACCEPT);
@@ -1504,7 +1504,7 @@ static inline int handle_new_connect(struct socket_info* si)
 		LOG(L_ERR, "ERROR: handle_new_connect: tcpconn_new failed, "
 				"closing socket\n");
 		close(new_sock);
-		
+		(*tcp_connections_no)--;
 	}
 	return 1; /* accept() was succesfull */
 }
