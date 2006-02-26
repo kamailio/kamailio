@@ -29,6 +29,9 @@
  *  2005-12-19  select framework (mma)
  *  2006-01-19  multiple nested calls, IS_ALIAS -> NESTED flag renamed (mma)
  *              DIVERSION flag checked
+ *  2006-02-26  don't free str when changing type STR -> DIVERSION (mma)
+ *				it can't be freeable sometimes (e.g. xlog's select)
+ *
  */
 
 
@@ -99,7 +102,11 @@ int resolve_select(select_t* s)
 
 		accepted:
 		if (t->table[table_idx].flags & DIVERSION) {
-			if (s->params[param_idx].type == SEL_PARAM_STR) pkg_free(s->params[param_idx].v.s.s);
+			/* if (s->params[param_idx].type == SEL_PARAM_STR) pkg_free(s->params[param_idx].v.s.s); */
+			/* don't free it (the mem can leak only once at startup)
+			 * the parsed string can live inside larger string block
+			 * e.g. when xlog's select is parsed
+			 */
 			s->params[param_idx].type = SEL_PARAM_DIV;
 			s->params[param_idx].v.i = t->table[table_idx].flags & DIVERSION_MASK;
 			
