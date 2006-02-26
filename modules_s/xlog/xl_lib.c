@@ -1470,7 +1470,7 @@ int xl_parse_format(char *s, xl_elog_p *el)
 						goto sel_error;
 					}
 					name.s=p;
-					while (isalpha(*p))	p++;
+					while (isalpha(*p) || (*p=='_')) p++;
 					name.len=p-name.s;
 					sel->params[sel->n].type=SEL_PARAM_STR;
 					sel->params[sel->n].v.s=name;
@@ -1506,6 +1506,7 @@ int xl_parse_format(char *s, xl_elog_p *el)
 				}
 				e->itf = xl_get_select;
 				e->hparam.s = (char*)sel;
+				p--;
 				break;
 			case '%':
 				e->itf = xl_get_percent;
