@@ -124,7 +124,11 @@ int dstr_get_str(dstring_t *dstr, str_t *dst)
 			dst->s = NULL;
 		}
 		else res = dstr_get_data(dstr, dst->s);
-	} else dst->s = NULL;
+	} 
+	else {
+		dst->s = NULL;
+		dst->len = 0;
+	}
 
 	return res;
 }

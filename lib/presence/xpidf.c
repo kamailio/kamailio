@@ -151,10 +151,7 @@ int create_xpidf_document(presentity_info_t *p, str_t *dst, str_t *dst_content_t
 	dstr_append_zt(&buf, "<!DOCTYPE presence PUBLIC \"-//IETF//DTD RFCxxxx XPIDF 1.0//EN\" \"xpidf.dtd\">\r\n");
 	doc_add_presentity(&buf, p);
 	
-	dst->len = dstr_get_data_length(&buf);
-	dst->s = cds_malloc(dst->len);
-	if (!dst->s) dst->len = 0;
-	else dstr_get_data(&buf, dst->s);
+	dstr_get_str(&buf, dst);
 	dstr_destroy(&buf);
 	
 	return 0;

@@ -199,10 +199,7 @@ int create_pidf_document_ex(presentity_info_t *p, str_t *dst, str_t *dst_content
 	dstr_append_zt(&buf, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n");
 	doc_add_presentity(&buf, p, use_cpim_pidf_ns);
 	
-	dst->len = dstr_get_data_length(&buf);
-	dst->s = cds_malloc(dst->len);
-	if (!dst->s) dst->len = 0;
-	else dstr_get_data(&buf, dst->s);
+	dstr_get_str(&buf, dst);
 	dstr_destroy(&buf);
 	
 	return 0;
