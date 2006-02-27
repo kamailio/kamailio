@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -55,7 +55,7 @@ int resolve_select(select_t* s)
 	int table_idx = 0;
 	select_table_t* t = NULL;;
 	int accept = 0;
-	
+
 	f = NULL;
 	nested = 0;
 	s->f[0] = NULL;
@@ -73,7 +73,7 @@ int resolve_select(select_t* s)
 			break;
 		}
 		for (t=select_list; t; t=t->next) {
-			table_idx = 0;	
+			table_idx = 0;
 			if (!t->table) continue;
 			while (t->table[table_idx].curr_f || t->table[table_idx].new_f) {
 				if (t->table[table_idx].curr_f == f) {
@@ -97,7 +97,18 @@ int resolve_select(select_t* s)
 				table_idx++;
 			}
 		}
-		BUG ("Unable to resolve select at level %d\n", param_idx);
+		switch (s->params[param_idx].type) {
+			case SEL_PARAM_STR:
+				LOG(L_ERR, "Unable to resolve select '%.*s' at level %d\n", s->params[param_idx].v.s.len, s->params[param_idx].v.s.s, param_idx);
+				break;
+			case SEL_PARAM_INT:
+				LOG(L_ERR, "Unable to resolve select [%d] at level %d\n", s->params[param_idx].v.i, param_idx);
+				break;
+			default:
+				BUG ("Unable to resolve select at level %d\n", param_idx);
+				break;
+			break;
+		}
 		goto not_found;
 
 		accepted:
@@ -109,7 +120,7 @@ int resolve_select(select_t* s)
 			 */
 			s->params[param_idx].type = SEL_PARAM_DIV;
 			s->params[param_idx].v.i = t->table[table_idx].flags & DIVERSION_MASK;
-			
+
 		}
 		if (t->table[table_idx].flags & CONSUME_NEXT_STR) {
 			if ((param_idx<s->n-1) && (s->params[param_idx+1].type == SEL_PARAM_STR)) {
@@ -130,7 +141,7 @@ int resolve_select(select_t* s)
 		if (t->table[table_idx].flags & FIXUP_CALL) {
 			if (t->table[table_idx].new_f(NULL, s, NULL)<0) goto not_found;
 		}
-		
+
 		if (t->table[table_idx].flags & NESTED) {
 			if (nested < MAX_NESTED_CALLS-1) { /* need space for final function */
 				s->f[nested++] = f;
@@ -158,9 +169,9 @@ int resolve_select(select_t* s)
 	} else {
 		s->f[nested] = f;
 	}
-		
+
 	return 0;
-	
+
 not_found:
 	return -1;
 }
@@ -168,7 +179,7 @@ not_found:
 int run_select(str* res, select_t* s, struct sip_msg* msg)
 {
 	int ret, i;
-	
+
 	if (res == NULL) {
 		BUG("Select unprepared result space\n");
 		return -1;
@@ -212,7 +223,7 @@ int register_select_table(select_row_t* mod_tab)
 		ERR("No memory for new select_table structure\n");
 		return -1;
 	}
-	
+
 	t->table=mod_tab;
 	t->next=select_list;
 	select_list=t;
