@@ -540,6 +540,11 @@ if (@hf_value_exists.supported.path == "1") {
 		@hf_value.HFNAME[IDX]    # idx value, negative value counts from bottom
 		@hf_value.HFNAME.PARAM_NAME
 		@hf_value.HFNAME[IDX].PARAM_NAME
+		@hf_value.HFNAME.p.PARAM_NAME  # or .param., useful if requred called "uri", "p", "param"
+		@hf_value.HFNAME[IDX].p.PARAM_NAME # dtto
+		@hf_value.HFNAME[IDX].uri
+		@hf_value.HFNAME[*].uri # return comma delimited list of uris
+		@hf_value.HFNAME.uri    # the same as above [*] but may be parsed by cfg.y
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>
@@ -563,6 +568,9 @@ if (@hf_value_exists.supported.path == "1") {
 $a = @hf_value.my_header[1].my_param;
 xlog("L_ERR", "%@hf_value.via[-1], %@hf_value.from.tag\n");
 $b = @hf_value.p_associated_uri;
+
+xlog("L_ERR", "Route uris: '%@hf_value.route[*].uri'\n");
+$rr = @hf_value.route.uri;
 ...
 	    </programlisting>
 	</example>
