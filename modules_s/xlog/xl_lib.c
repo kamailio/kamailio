@@ -1478,8 +1478,8 @@ int xl_parse_format(char *s, xl_elog_p *el)
 					sel->n++;
 					if (*p=='[') {
 						p++;c=*p;
-						if (*p=='-') p++;
 						name.s=p;
+						if (*p=='-') p++;
 						while (isdigit(*p)) p++;
 						name.len=p-name.s;
 						if (*p!=']') {
