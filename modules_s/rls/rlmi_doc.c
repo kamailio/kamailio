@@ -190,16 +190,10 @@ int create_rlmi_document(str *dst, str *content_type_dst, rl_subscription_t *s, 
 	
 	/* --- store output strings --- */
 	
-	dst->len = dstr_get_data_length(&doc);
-	dst->s = cds_malloc(dst->len);
-	if (!dst->s) dst->len = 0;
-	else dstr_get_data(&doc, dst->s);
+	dstr_get_str(&doc, dst);
 	dstr_destroy(&doc);
 	
-	content_type_dst->len = dstr_get_data_length(&cont);
-	content_type_dst->s = cds_malloc(content_type_dst->len);
-	if (!content_type_dst->s) content_type_dst->len = 0;
-	else dstr_get_data(&cont, content_type_dst->s);
+	dstr_get_str(&cont, content_type_dst);
 	dstr_destroy(&cont);
 	
 	/* increment version for next NOTIFY document */

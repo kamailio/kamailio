@@ -65,6 +65,19 @@ static int doc_add_watcher_list(dstring_t *buf, struct presentity* p)
 		subscription = subscription->next;
 	}
 
+	/* FIXME: for testing - create too big document to be sent
+	 * and trace memory where occurs the leak !!!*/
+/*	if (1) {
+		int i;
+		for (i = 0; i < 1000; i++) {
+			dstr_append_zt(buf, "<!--This is a very very very very long text,"
+					"which will be appended to watcher information to disable"
+					" sending it and trace memory leaks which I had"
+					" seen before -->\r\n");
+		}
+	}
+*/	
+
 	dstr_append_zt(buf, "\t</watcher-list>\r\n");
 	return 0;
 }
@@ -87,7 +100,7 @@ static int doc_add_winfo(dstring_t *buf, struct presentity* p, struct watcher* w
 int create_winfo_document(struct presentity* p, struct watcher* w, str *dst, str *dst_content_type)
 {
 	dstring_t buf;
-	
+
 	if (!dst) return -1;
 	
 	str_clear(dst);
@@ -105,10 +118,7 @@ int create_winfo_document(struct presentity* p, struct watcher* w, str *dst, str
 	dstr_append_zt(&buf, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n");
 	doc_add_winfo(&buf, p, w);
 	
-	dst->len = dstr_get_data_length(&buf);
-	dst->s = cds_malloc(dst->len);
-	if (!dst->s) dst->len = 0;
-	else dstr_get_data(&buf, dst->s);
+	dstr_get_str(&buf, dst);
 	dstr_destroy(&buf);
 	
 	return 0;
@@ -190,10 +200,7 @@ int create_winfo_document_offline(struct presentity* p, struct watcher* w,
 	dstr_append_zt(&buf, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n");
 	doc_add_winfo_offline(&buf, p, w, infos);
 	
-	dst->len = dstr_get_data_length(&buf);
-	dst->s = cds_malloc(dst->len);
-	if (!dst->s) dst->len = 0;
-	else dstr_get_data(&buf, dst->s);
+	dstr_get_str(&buf, dst);
 	dstr_destroy(&buf);
 	
 	return 0;

@@ -585,10 +585,7 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 	dstr_append_str(&dstr, &content_type);
 	dstr_append_zt(&dstr, "\r\n");
 
-	headers.len = dstr_get_data_length(&dstr);
-	headers.s = cds_malloc(headers.len);
-	if (!headers.s) headers.len = 0;
-	else dstr_get_data(&dstr, headers.s);
+	dstr_get_str(&dstr, &headers);
 	dstr_destroy(&dstr);
 
 	/* DEBUG_LOG("sending NOTIFY message to %.*s (subscription %p)\n",  

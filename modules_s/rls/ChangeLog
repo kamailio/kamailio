@@ -1,3 +1,9 @@
+2006-02-27
+	* corrected BUGs - mostly used dstr_get_str instead of dstr_get_data
+	because there were some cases when was allocated memory buffers of zero
+	length (this consumes memory using shm_malloc), but this memory was NOT
+	freed then
+
 2006-02-16
 	* removed parts of code prepared for doing "remote" subscriptions - all is
 	solved using internal (QSA) subscriptions now (to PA or PRESENCE_B2B or
