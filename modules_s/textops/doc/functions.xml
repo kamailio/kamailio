@@ -404,6 +404,36 @@ remove_hf_value("foo[*].bar") # for each foo delete bar parameters
 	</example>
     </section>
 
+    <section id="remove_hf_value2">
+	<title>
+	    <function>remove_hf_value2(hf_par)</function>
+	</title>
+	<para>
+		Remove specified header or parameter. It is expected header in Authorization format (comma delimiters are not treated as multi-value delimiters).
+
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>hf_par</emphasis> - Header/param to be removed. Format: HFNAME [ [IDX] ] [. PARAM ]
+		If asterisk is specified as index then all values are affected.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>remove_hf_value2</function> usage</title>
+	    <programlisting>
+...
+remove_hf_value2("foo")  # remove foo[1]
+remove_hf_value2("foo[*]")  # remove all foo's headers, the same as remove_hf_header("foo[*]");
+remove_hf_value2("foo[-1]") # last foo
+remove_hf_value2("foo.bar")  # delete parameter
+remove_hf_value2("foo[*].bar") # for each foo delete bar parameters
+...
+	    </programlisting>
+	</example>
+    </section>
+
     <section id="assign_hf_value">
 	<title>
 	    <function>assign_hf_value(hf, xl_value)</function>
@@ -434,6 +464,37 @@ assign_hf_value("foo.bar", "")
 assign_hf_value("foo[3].bar", "")
 assign_hf_value("foo[*]", "")  # remove all foo's, empty value remains
 assign_hf_value("foo[*].bar", "")  # set empty value (ex. lr)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="assign_hf_value2">
+	<title>
+	    <function>assign_hf_value2(hf, xl_value)</function>
+	</title>
+	<para>
+		Assign value to specified header. It is expected header in Authorization format (comma delimiters are not treated as multi-value delimiters).
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>hf_para</emphasis> - Header field value / param to be appended. Format: HFNAME [ [IDX] ] [. PARAM]
+		If asterisk is specified as index then all values are affected.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>xl_value</emphasis> - Value to be assigned, xl_lib formatting supported. If value is empty then no equal sign apears in param.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>assign_hf_value2</function> usage</title>
+	    <programlisting>
+...
+assign_hf_value2("Authorization.integrity-protected", "\"yes\"")
+assign_hf_value2("foo[-1]", "gogo")  # foo[last_foo]
+assign_hf_value2("foo[*].bar", "")  # set empty value (ex. lr)
 ...
 	    </programlisting>
 	</example>
@@ -535,7 +596,8 @@ if (@hf_value_exists.supported.path == "1") {
 	    <function>@hf_value selects</function>
 	</title>
 	<para>
-		Get value of required header-value or param. Formats:
+		Get value of required header-value or param. Note that functions called 'value2'
+		works with Authorization-like headers where comma is not treated as value delimiter. Formats:
 		@hf_value.HFNAME         # returns value of first value
 		@hf_value.HFNAME[IDX]    # idx value, negative value counts from bottom
 		@hf_value.HFNAME.PARAM_NAME
@@ -545,6 +607,11 @@ if (@hf_value_exists.supported.path == "1") {
 		@hf_value.HFNAME[IDX].uri
 		@hf_value.HFNAME[*].uri # return comma delimited list of uris
 		@hf_value.HFNAME.uri    # the same as above [*] but may be parsed by cfg.y
+
+		@hf_value2.HFNAME        # returns value of first header
+		@hf_value2.HFNAME[IDX]   # returns value of idx's header
+		@hf_value2.HFNAME.PARAM_NAME
+		@hf_value2.HFNAME[IDX].PARAM_NAME
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>
@@ -571,6 +638,8 @@ $b = @hf_value.p_associated_uri;
 
 xlog("L_ERR", "Route uris: '%@hf_value.route[*].uri'\n");
 $rr = @hf_value.route.uri;
+
+$prt = @hf_value2.authorization.integrity_protected;
 ...
 	    </programlisting>
 	</example>

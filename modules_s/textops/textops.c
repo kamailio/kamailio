@@ -125,6 +125,8 @@ static int append_hf_value_fixup(void** param, int param_no);
 static int insert_hf_value_fixup(void** param, int param_no);
 static int remove_hf_value_fixup(void** param, int param_no);
 static int assign_hf_value_fixup(void** param, int param_no);
+static int remove_hf_value2_fixup(void** param, int param_no);
+static int assign_hf_value2_fixup(void** param, int param_no);
 static int fixup_xlstr(void** param, int param_no);
 static int fixup_regex_xlstr(void** param, int param_no);
 
@@ -174,6 +176,10 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"assign_hf_value",        insupddel_hf_value_f,         2, assign_hf_value_fixup,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"remove_hf_value2",       insupddel_hf_value_f,         1, remove_hf_value2_fixup,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"assign_hf_value2",       insupddel_hf_value_f,         2, assign_hf_value2_fixup,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"include_hf_value", incexc_hf_value_f,      2, include_hf_value_fixup,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"exclude_hf_value", incexc_hf_value_f,      2, exclude_hf_value_fixup,
@@ -209,7 +215,7 @@ static int pre_script_cb(struct sip_msg *msg, void *param) {
 
 static int mod_init(void)
 {
-	fprintf(stderr, "%s - initializing\n", exports.name);
+	DBG("%s - initializing\n", exports.name);
 	register_select_table(sel_declaration);
 	register_script_cb(pre_script_cb, REQ_TYPE_CB | RPL_TYPE_CB| PRE_SCRIPT_CB, 0);
 
@@ -748,7 +754,7 @@ static int append_urihf(struct sip_msg *msg, char *str1, char *str2 )
 
 #define MAX_HF_VALUE_STACK 10
 
-enum {hnoInsert, hnoAppend, hnoAssign, hnoRemove, hnoInclude, hnoExclude, hnoIsIncluded, hnoGetValue, hnoGetValueUri};
+enum {hnoInsert, hnoAppend, hnoAssign, hnoRemove, hnoInclude, hnoExclude, hnoIsIncluded, hnoGetValue, hnoGetValueUri, hnoRemove2, hnoAssign2, hnoGetValue2};
 
 struct hname_data {
 	int oper;
@@ -759,12 +765,16 @@ struct hname_data {
 	str param;
 };
 
+#define is_space(_p) ((_p) == '\t' || (_p) == '\n' || (_p) == '\r' || (_p) == ' ')
+
 #define eat_spaces(_p) \
-	while( *(_p)==' ' || *(_p)=='\t' ){\
+	while( is_space(*(_p)) ){\
 	(_p)++;}
 
+#define is_alphanum(_p) (((_p) >= 'a' && (_p) <= 'z') || ((_p) >= 'A' && (_p) <= 'Z') || ((_p) >= '0' && (_p) <= '9') || (_p) == '_' || (_p) == '-')
+
 #define eat_while_alphanum(_p) \
-	while ( (*(_p) >= 'a' && *(_p) <= 'z') || (*(_p) >= 'A' && *(_p) <= 'Z') || (*(_p) >= '0' && *(_p) <= '9') || *(_p) == '_' || *(_p) == '-') {\
+	while ( is_alphanum(*(_p)) ) {\
 		(_p)++; }
 
 /* parse:  hname [ ([] | [*] | [number]) ] [ "." param ] */
@@ -876,7 +886,7 @@ static int find_next_hf(struct sip_msg* msg, struct hname_data* hname, struct hd
 static int find_next_value(char** start, char* end, str* val, str* lump_val) {
 	int quoted = 0;
 	lump_val->s = *start;
-	while (*start < end && **start <= ' ') (*start)++;
+	while (*start < end && is_space(**start) ) (*start)++;
 	val->s = *start;
 	while ( *start < end && (**start != ',' || quoted) ) {
 		if (**start == '\"' && (!quoted || (*start)[-1]!='\\') )
@@ -884,7 +894,7 @@ static int find_next_value(char** start, char* end, str* val, str* lump_val) {
 		(*start)++;
 	}
 	val->len = *start - val->s;
-	while (val->len > 0 && val->s[val->len-1] <= ' ') val->len--;
+	while (val->len > 0 && is_space(val->s[val->len-1])) val->len--;
 	if (val->len >= 2 && val->s[0] == '\"' && val->s[val->len-1] == '\"') {
 		val->s++;
 		val->len -= 2;
@@ -919,12 +929,17 @@ static int find_hf_value_idx(struct sip_msg* msg, struct hname_data* hname, stru
 			res = find_next_hf(msg, hname, hf);
 			if (res < 0) return -1;
 			if (*hf) {
-				lump_val->len = 0;
-				p = (*hf)->body.s;
-				do {
-					res = find_next_value(&p, (*hf)->body.s+(*hf)->body.len, val, lump_val);
+				if (val) {
+					lump_val->len = 0;
+					p = (*hf)->body.s;
+					do {
+						res = find_next_value(&p, (*hf)->body.s+(*hf)->body.len, val, lump_val);
+						idx--;
+					} while (res && idx);
+				}
+				else {
 					idx--;
-				} while (res && idx);
+				}
 			}
 		} while (*hf && idx);
 	}
@@ -945,7 +960,10 @@ static int find_hf_value_idx(struct sip_msg* msg, struct hname_data* hname, stru
 				p = (*hf)->body.s;
 				do {
 					stack[stack_pos].hf = *hf;
-					res = find_next_value(&p, (*hf)->body.s+(*hf)->body.len, &stack[stack_pos].val, &stack[stack_pos].lump_val);
+					if (val)
+						res = find_next_value(&p, (*hf)->body.s+(*hf)->body.len, &stack[stack_pos].val, &stack[stack_pos].lump_val);
+					else
+						res = 0;
 					stack_pos++;
 					if (stack_pos >= MAX_HF_VALUE_STACK)
 						stack_pos = 0;
@@ -961,8 +979,10 @@ static int find_hf_value_idx(struct sip_msg* msg, struct hname_data* hname, stru
 			if (stack_pos < 0)
 				stack_pos += MAX_HF_VALUE_STACK;
 			*hf = stack[stack_pos].hf;
-			*val = stack[stack_pos].val;
-			*lump_val = stack[stack_pos].lump_val;
+			if (val) {
+				*val = stack[stack_pos].val;
+				*lump_val = stack[stack_pos].lump_val;
+			}
 		}
 		else {
 			*hf = 0;
@@ -979,21 +999,21 @@ static int find_hf_value_param(struct hname_data* hname, str* param_area, str* v
 	i = 0;
 	while (1) {
 		lump_del->s = param_area->s + i;
-		for (; i < param_area->len && param_area->s[i] <= ' '; i++);
+		for (; i < param_area->len && is_space(param_area->s[i]); i++);
 		if (i < param_area->len && param_area->s[i] == ';') {	/* found a param ? */
 			i++;
-			for (; i < param_area->len && param_area->s[i]<=' '; i++);
+			for (; i < param_area->len && is_space(param_area->s[i]); i++);
 			j = i;
-			for (; i < param_area->len && param_area->s[i]>' ' && param_area->s[i]!='=' && param_area->s[i]!=';'; i++);
+			for (; i < param_area->len && !is_space(param_area->s[i]) && param_area->s[i]!='=' && param_area->s[i]!=';'; i++);
 
 			found = hname->param.len == i-j && !strncasecmp(hname->param.s, param_area->s+j, i-j);
 			lump_upd->s = param_area->s+i;
 			value->s = param_area->s+i;
 			value->len = 0;
-			for (; i < param_area->len && param_area->s[i]<=' '; i++);
+			for (; i < param_area->len && is_space(param_area->s[i]); i++);
 			if (i < param_area->len && param_area->s[i]=='=') {
 				i++;
-				for (; i < param_area->len && param_area->s[i]<=' '; i++);
+				for (; i < param_area->len && is_space(param_area->s[i]); i++);
 				value->s = param_area->s+i;
 				if (i < param_area->len) {
 					if (param_area->s[i]=='\"') {
@@ -1008,7 +1028,7 @@ static int find_hf_value_param(struct hname_data* hname, str* param_area, str* v
 						}
 					}
 					else {
-						for (; i<param_area->len && param_area->s[i]>' ' && param_area->s[i]!=';'; i++, value->len++);
+						for (; i<param_area->len && !is_space(param_area->s[i]) && param_area->s[i]!=';'; i++, value->len++);
 					}
 				}
 			}
@@ -1023,6 +1043,78 @@ static int find_hf_value_param(struct hname_data* hname, str* param_area, str* v
 			return 0;
 		}
 	}
+}
+
+/* parse:  something param_name=param_value something [ "," something param_name="param_value" ....]
+ * 'something' is required by Authenticate
+ */
+static int find_hf_value2_param(struct hname_data* hname, str* param_area, str* value, str* lump_upd, str* lump_del, char* delim) {
+	int i, j, k, found, comma_flag;
+
+	i = 0;
+	*delim = 0;
+	lump_del->len = 0;
+	while (i < param_area->len) {
+
+		lump_del->s = param_area->s + i;
+		while (i<param_area->len && is_space(param_area->s[i])) i++;
+		comma_flag = i < param_area->len && param_area->s[i] == ',';
+		if (comma_flag) i++;
+		while (i<param_area->len && is_space(param_area->s[i])) i++;
+
+		if (i < param_area->len && is_alphanum(param_area->s[i])) {	/* found a param name ? */
+			j = i;
+			if (!*delim) *delim = ' ';
+			while (i<param_area->len && is_alphanum(param_area->s[i])) i++;
+
+			k = i;
+			while (i<param_area->len && is_space(param_area->s[i])) i++;
+			lump_upd->s = param_area->s + i;
+			if (i < param_area->len && param_area->s[i] == '=') {	/* if equal then it's the param */
+				*delim = ',';
+				i++;
+				found = hname->param.len == k-j && !strncasecmp(hname->param.s, param_area->s+j, k-j);
+				while (i<param_area->len && is_space(param_area->s[i])) i++;
+
+				value->s = param_area->s+i;
+				value->len = 0;
+				if (i < param_area->len) {
+					if (param_area->s[i]=='\"') {
+						i++;
+						value->s++;
+						for (; i<param_area->len; i++) {
+							if (param_area->s[i]=='\"') {
+								i++;
+								break;
+							}
+							value->len++;
+						}
+					}
+					else {
+						for (; i<param_area->len && !is_space(param_area->s[i]) && param_area->s[i]!=','; i++, value->len++);
+					}
+				}
+				if (found) {
+					lump_upd->len = param_area->s+i - lump_upd->s;
+					lump_del->len = param_area->s+i - lump_del->s;
+
+					while (i<param_area->len && is_space(param_area->s[i])) i++;
+
+					if (!comma_flag && i < param_area->len && param_area->s[i]==',') {
+						i++;
+						lump_del->len = param_area->s+i - lump_del->s;
+					}
+					return 1;
+				}
+			}
+			while (i<param_area->len && is_space(param_area->s[i])) i++;
+		}
+		else {
+			while (i<param_area->len && !is_space(param_area->s[i]) && !param_area->s[i]!=',') i++;
+		}
+	}
+	lump_del->s = param_area->s + i;
+	return 0;
 }
 
 static int insert_header_lump(struct sip_msg* msg, char* msg_position, int lump_before, str* hname, str *val) {
@@ -1100,7 +1192,6 @@ static int insert_value_lump(struct sip_msg* msg, struct hdr_field* hf, char* ms
 static int delete_value_lump(struct sip_msg* msg, struct hdr_field* hf, str *val) {
 	struct lump* l;
 	/* TODO: check already existing lumps */
-
 	if (hf && val->s == hf->body.s && val->len == hf->body.len) 	/* check if remove whole haeder? */
 		l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
 	else
@@ -1215,40 +1306,36 @@ static void get_uri_and_skip_until_params(str *param_area, str *uri) {
 	param_area->len-= i;
 }
 
-static int assign_hf_process_params(struct sip_msg* msg, struct hdr_field* hf, struct hname_data* hname, str* value, str* value_area) {
-	int len;
-	str param_area, lump_upd, lump_del, dummy_val, dummy_uri;
+static int assign_hf_do_lumping(struct sip_msg* msg,struct hdr_field* hf, struct hname_data* hname, str* value, int upd_del_fl, str* lump_upd, str* lump_del, char delim) {
+	int len, i;
 	char *s;
 	struct lump* anchor;
 
-	param_area = *value_area;
-	get_uri_and_skip_until_params(&param_area, &dummy_uri);
-
-	if (find_hf_value_param(hname, &param_area, &dummy_val, &lump_upd, &lump_del)) {
-		len = value?lump_upd.len:lump_del.len;
+	if (upd_del_fl) {
+		len = value?lump_upd->len:lump_del->len;
 		if (len > 0) {
-			if (!del_lump(msg, (value?lump_upd.s:lump_del.s)-msg->buf, len, 0)) {
-				LOG(L_ERR, "ERROR: textops: assign_hf_process_params: not enough memory\n");
+			if (!del_lump(msg, (value?lump_upd->s:lump_del->s)-msg->buf, len, 0)) {
+				LOG(L_ERR, "ERROR: textops: assign_hf_do_lumping: not enough memory\n");
 				return -1;
 			}
 		}
 		if (value && value->len) {
-			anchor = anchor_lump(msg, lump_upd.s - msg->buf, 0, 0);
+			anchor = anchor_lump(msg, lump_upd->s - msg->buf, 0, 0);
 			if (anchor == 0) {
-				LOG(L_ERR, "ERROR: textops: assign_hf_process_params: Can't get anchor\n");
+				LOG(L_ERR, "ERROR: textops: assign_hf_do_lumping: Can't get anchor\n");
 				return -1;
 			}
 
 			len = 1+value->len;
 			s = pkg_malloc(len);
 			if (!s) {
-				LOG(L_ERR, "ERROR: textops: assign_hf_process_params: not enough memory\n");
+				LOG(L_ERR, "ERROR: textops: assign_hf_do_lumping: not enough memory\n");
 				return -1;
 			}
 			s[0]='=';
 			memcpy(s+1, value->s, value->len);
 			if ( (insert_new_lump_before(anchor, s, len, 0)) == 0) {
-				LOG(L_ERR, "ERROR: textops: assign_hf_process_params: Can't insert lump\n");
+				LOG(L_ERR, "ERROR: textops: assign_hf_do_lumping: Can't insert lump\n");
 				pkg_free(s);
 				return -1;
 			}
@@ -1257,27 +1344,34 @@ static int assign_hf_process_params(struct sip_msg* msg, struct hdr_field* hf, s
 	else {
 		if (!value) return -1;
 
-		anchor = anchor_lump(msg, lump_del.s - msg->buf, 0, 0);
+		anchor = anchor_lump(msg, lump_del->s - msg->buf, 0, 0);
 		if (anchor == 0) {
-			LOG(L_ERR, "ERROR: textops: assign_hf_process_params: Can't get anchor\n");
+			LOG(L_ERR, "ERROR: textops: assign_hf_do_lumping: Can't get anchor\n");
 			return -1;
 		}
 
 		len = 1+hname->param.len+(value->len?value->len+1:0);
 		s = pkg_malloc(len);
 		if (!s) {
-			LOG(L_ERR, "ERROR: textops: assign_hf_process_params: not enough memory\n");
+			LOG(L_ERR, "ERROR: textops: assign_hf_do_lumping: not enough memory\n");
 			return -1;
 		}
-		s[0] = ';';
-		memcpy(s+1, hname->param.s, hname->param.len);
+		if (delim) {
+			s[0] = delim;
+			i = 1;
+		}
+		else {
+			i = 0;
+			len--;
+		}
+		memcpy(s+i, hname->param.s, hname->param.len);
 		if (value->len) {
-			s[hname->param.len+1]='=';
-			memcpy(s+1+hname->param.len+1, value->s, value->len);
+			s[hname->param.len+i]='=';
+			memcpy(s+i+hname->param.len+1, value->s, value->len);
 		}
 
 		if ( (insert_new_lump_before(anchor, s, len, 0)) == 0) {
-			LOG(L_ERR, "ERROR: textops: assign_hf_process_params: Can't insert lump\n");
+			LOG(L_ERR, "ERROR: textops: assign_hf_do_lumping: Can't insert lump\n");
 			pkg_free(s);
 			return -1;
 		}
@@ -1285,6 +1379,45 @@ static int assign_hf_process_params(struct sip_msg* msg, struct hdr_field* hf, s
 	return 1;
 }
 
+
+static int assign_hf_process_params(struct sip_msg* msg, struct hdr_field* hf, struct hname_data* hname, str* value, str* value_area) {
+	int r, r2, res=0;
+	str param_area, lump_upd, lump_del, dummy_val, dummy_uri;
+	param_area = *value_area;
+	get_uri_and_skip_until_params(&param_area, &dummy_uri);
+	do {
+		r = find_hf_value_param(hname, &param_area, &dummy_val, &lump_upd, &lump_del);
+		r2 = assign_hf_do_lumping(msg, hf, hname, value, r, &lump_upd, &lump_del, ';');
+		if (res == 0)
+			res = r2;
+		if (r && !value) {   /* remove all parameters */
+			param_area.len -= lump_del.s+lump_del.len-param_area.s;
+			param_area.s = lump_del.s+lump_del.len;
+		}
+	} while (!value && r);
+	return res;
+}
+
+static int assign_hf_process2_params(struct sip_msg* msg, struct hdr_field* hf, struct hname_data* hname, str* value) {
+	int r, r2, res = 0;
+	str param_area, lump_upd, lump_del, dummy_val;
+	char delim;
+
+	param_area = hf->body;
+
+	do {
+		r = find_hf_value2_param(hname, &param_area, &dummy_val, &lump_upd, &lump_del, &delim);
+		r2 = assign_hf_do_lumping(msg, hf, hname, value, r, &lump_upd, &lump_del, delim);
+		if (res == 0)
+			res = r2;
+		if (r && !value) {   /* remove all parameters */
+			param_area.len -= lump_del.s+lump_del.len-param_area.s;
+			param_area.s = lump_del.s+lump_del.len;
+		}
+	} while (!value && r);
+	return res;
+
+}
 
 static int insupddel_hf_value_f(struct sip_msg* msg, char* _hname, char* _val) {
 	struct hname_data* hname = (void*) _hname;
@@ -1383,6 +1516,51 @@ static int insupddel_hf_value_f(struct sip_msg* msg, char* _hname, char* _val) {
 				}
 			}
 			break;
+		case hnoRemove2:
+		case hnoAssign2:
+			if (hname->flags & HNF_ALL) {
+				struct hdr_field* hf = 0;
+				int fl = -1;
+				do {
+					res = find_next_hf(msg, hname, &hf);
+					if (res < 0) return res;
+					if (hf) {
+						if (!hname->param.len) {  /* the same as hnoRemove/hnoAssign */
+							fl = 1;
+							delete_value_lump(msg, hf, &hf->body);
+						}
+						else {
+
+							if (assign_hf_process2_params(msg, hf, hname, _val?&val:0) > 0)
+								fl = 1;
+						}
+					}
+				} while (hf);
+				return fl;
+			}
+			else {
+				res = find_hf_value_idx(msg, hname, &hf, 0, 0);
+				if (res < 0) return res;
+				if (hf) {
+					if (!hname->param.len) {
+						if (hname->oper == hnoRemove2) {
+							return delete_value_lump(msg, hf, &hf->body);
+						}
+						else {
+							res = delete_value_lump(msg, 0 /* delete only value part */, &hf->body);
+							if (res < 0) return res;
+							if (val.len) {
+								return insert_value_lump(msg, 0 /* do not add delims */, hf->body.s, 1, &val);
+							}
+							return 1;
+						}
+					}
+					else {
+						return assign_hf_process2_params(msg, hf, hname, _val?&val:0);
+					}
+				}
+			}
+			break;
 	}
 	return -1;
 }
@@ -1470,6 +1648,24 @@ static int assign_hf_value_fixup(void** param, int param_no) {
 	return 0;
 }
 
+static int remove_hf_value2_fixup(void** param, int param_no) {
+	int res=remove_hf_value_fixup(param, param_no);
+	if (res < 0) return res;
+	if (param_no == 1) {
+		((struct hname_data*)*param)->oper = hnoRemove2;
+	}
+	return 0;
+}
+
+static int assign_hf_value2_fixup(void** param, int param_no) {
+	int res=assign_hf_value_fixup(param, param_no);
+	if (res < 0) return res;
+	if (param_no == 1) {
+		((struct hname_data*)*param)->oper = hnoAssign2;
+	}
+	return 0;
+}
+
 static int sel_hf_value(str* res, select_t* s, struct sip_msg* msg) {  /* dummy */
 	return 0;
 }
@@ -1526,6 +1722,11 @@ static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
 		}
 		if (s->n > i && s->params[i].type == SEL_PARAM_STR) {
 			hname->param = s->params[i].v.s;
+			for (i=hname->param.len-1; i>0; i--) {
+				if (hname->param.s[i]=='_')
+					hname->param.s[i]='-';
+			}
+
 		}
 		s->params[1].v.p = hname;
 		s->params[1].type = SEL_PARAM_PTR;
@@ -1537,58 +1738,77 @@ static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
 	res->len = 0;
 	hname = s->params[1].v.p;
 
-	if (hname->oper == hnoGetValueUri) {
-		if (hname->flags & HNF_ALL || (hname->flags & HNF_IDX) == 0) {
-			res->s = retbuf_tail;
-			hf = 0;
-			do {
-				r = find_next_hf(msg, hname, &hf);
-				if (r < 0) break;
-				if (hf) {
-					char *p;
-					str huri;
-					hval2.len = 0;
-					p = hf->body.s;
-					do {
-						r = find_next_value(&p, hf->body.s+hf->body.len, &hval1, &hval2);
-						get_uri_and_skip_until_params(&hval1, &huri);
-						if (retbuf_tail+huri.len+1 > retbuf+retbuf_size) goto brk;
-						if (retbuf_tail != res->s) {
-							*retbuf_tail = ',';
-							retbuf_tail++;
-						}
-						if (huri.len) {
-						/* TODO: normalize uri, lowercase except quoted params */
-							memcpy(retbuf_tail, huri.s, huri.len);
-							retbuf_tail+= huri.len;
-						}
-					} while (r);
-				}
-			} while (hf);
-		brk:
-			res->len = retbuf_tail-res->s;
-		}
-		else {
-			r = find_hf_value_idx(msg, hname, &hf, &hval1, &hval2);
-			if (r >= 0) {
-				get_uri_and_skip_until_params(&hval1, res);
-			}
-		}
-	}
-	else {
-		r = find_hf_value_idx(msg, hname, &hf, &hval1, &hval2);
-		if (r >= 0) {
-			if (hname->param.len) {
-				str d1, d2;
-				get_uri_and_skip_until_params(&hval1, &huri);
-				if (find_hf_value_param(hname, &hval1, &val, &d1, &d2)) {
-					*res = val;
-				}
+	switch (hname->oper) {
+		case hnoGetValueUri:
+			if (hname->flags & HNF_ALL || (hname->flags & HNF_IDX) == 0) {
+				res->s = retbuf_tail;
+				hf = 0;
+				do {
+					r = find_next_hf(msg, hname, &hf);
+					if (r < 0) break;
+					if (hf) {
+						char *p;
+						str huri;
+						hval2.len = 0;
+						p = hf->body.s;
+						do {
+							r = find_next_value(&p, hf->body.s+hf->body.len, &hval1, &hval2);
+							get_uri_and_skip_until_params(&hval1, &huri);
+							if (retbuf_tail+huri.len+1 > retbuf+retbuf_size) goto brk;
+							if (retbuf_tail != res->s) {
+								*retbuf_tail = ',';
+								retbuf_tail++;
+							}
+							if (huri.len) {
+							/* TODO: normalize uri, lowercase except quoted params */
+								memcpy(retbuf_tail, huri.s, huri.len);
+								retbuf_tail+= huri.len;
+							}
+						} while (r);
+					}
+				} while (hf);
+			brk:
+				res->len = retbuf_tail-res->s;
 			}
 			else {
-				*res = hval1;
+				r = find_hf_value_idx(msg, hname, &hf, &hval1, &hval2);
+				if (r >= 0) {
+					get_uri_and_skip_until_params(&hval1, res);
+				}
 			}
-		}
+			break;
+		case hnoGetValue:
+			r = find_hf_value_idx(msg, hname, &hf, &hval1, &hval2);
+			if (r >= 0) {
+				if (hname->param.len) {
+					str d1, d2;
+					get_uri_and_skip_until_params(&hval1, &huri);
+					if (find_hf_value_param(hname, &hval1, &val, &d1, &d2)) {
+						*res = val;
+					}
+				}
+				else {
+					*res = hval1;
+				}
+			}
+			break;
+		case hnoGetValue2:
+			r = find_hf_value_idx(msg, hname, &hf, 0, 0);
+			if (r >= 0) {
+				if (hname->param.len) {
+					str d1, d2;
+					char c;
+					if (find_hf_value2_param(hname, &hf->body, &val, &d1, &d2, &c)) {
+						*res = val;
+					}
+				}
+				else {
+					*res = hf->body;
+				}
+			}
+			break;
+		default:
+			break;
 	}
 	return 0;
 }
@@ -1603,7 +1823,6 @@ static int sel_hf_value_name_param_name2(str* res, select_t* s, struct sip_msg* 
 	}
 	return sel_hf_value_name(res, s, msg);
 }
-
 
 static int sel_hf_value_name_uri(str* res, select_t* s, struct sip_msg* msg) {
 	int r;
@@ -1638,6 +1857,24 @@ static int sel_hf_value_exists_param(str* res, select_t* s, struct sip_msg* msg)
 	return 0;
 }
 
+static int sel_hf_value2(str* res, select_t* s, struct sip_msg* msg) {  /* dummy */
+	return 0;
+}
+
+static int sel_hf_value2_name(str* res, select_t* s, struct sip_msg* msg) {
+	int r;
+	r = sel_hf_value_name(res, s, msg);
+	if (!msg && r==0) {
+		((struct hname_data*) s->params[1].v.p)->oper = hnoGetValue2;
+	}
+	return r;
+}
+
+static int sel_hf_value2_name_param_name(str* res, select_t* s, struct sip_msg* msg) {
+	return sel_hf_value2_name(res, s, msg);
+}
+
+
 select_row_t sel_declaration[] = {
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("hf_value"), sel_hf_value, SEL_PARAM_EXPECTED},
 
@@ -1649,6 +1886,10 @@ select_row_t sel_declaration[] = {
 
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("hf_value_exists"), sel_hf_value_exists, CONSUME_NEXT_STR | SEL_PARAM_EXPECTED},
 	{ sel_hf_value_exists, SEL_PARAM_STR, STR_NULL, sel_hf_value_exists_param, FIXUP_CALL},
+
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("hf_value2"), sel_hf_value2, SEL_PARAM_EXPECTED},
+	{ sel_hf_value2, SEL_PARAM_STR, STR_NULL, sel_hf_value2_name, CONSUME_NEXT_INT | OPTIONAL | FIXUP_CALL},
+	{ sel_hf_value2_name, SEL_PARAM_STR, STR_NULL, sel_hf_value2_name_param_name, FIXUP_CALL},
 
 	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
