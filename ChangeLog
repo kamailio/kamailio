@@ -1,3 +1,7 @@
+2006-02-28  Jan Janak <jan@iptel.org>
+
+        * digest_parser: Fixed typo ('n' -> '\n'), found by Tomas Mandys
+
 ================================= Release 0.9.6 ==============================
 
 2006-01-11  Jan Janak <jan@iptel.org>
