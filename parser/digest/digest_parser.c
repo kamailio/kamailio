@@ -360,7 +360,7 @@ int parse_digest_cred(str* _s, dig_cred_t* _c)
 	if (!strncasecmp(tmp.s, DIGEST_SCHEME, DIG_LEN) &&
 	    ((tmp.s[DIG_LEN] == ' ') ||     /* Test for one of LWS chars */
 	     (tmp.s[DIG_LEN] == '\r') || 
-	     (tmp.s[DIG_LEN] == 'n') || 
+	     (tmp.s[DIG_LEN] == '\n') || 
 	     (tmp.s[DIG_LEN] == '\t') ||
 	     (tmp.s[DIG_LEN] == ','))) {
 		     /* Scheme is Digest */
