@@ -1470,7 +1470,7 @@ int xl_parse_format(char *s, xl_elog_p *el)
 						goto sel_error;
 					}
 					name.s=p;
-					while (isalpha(*p) || (*p=='_')) p++;
+					while (isalpha(*p) || isdigit(*p) || (*p=='_')) p++;
 					name.len=p-name.s;
 					sel->params[sel->n].type=SEL_PARAM_STR;
 					sel->params[sel->n].v.s=name;
