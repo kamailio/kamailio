@@ -42,6 +42,7 @@
 #include "../../error.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
+#include "../sl/sl.h"
 
 #include "diameter_msg.h"
 #include "auth_diameter.h"
@@ -50,9 +51,7 @@
 
 MODULE_VERSION
 
-
- // Pointer to reply function in stateless module
-int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
+sl_api_t sl;
 
 static int mod_init(void);                        /* Module initialization function*/
 static int mod_child_init(int r);                 /* Child initialization function*/
@@ -118,14 +117,20 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	bind_sl_t bind_sl;
+
 	DBG("auth_diameter - Initializing\n");
 
-	sl_reply = find_export("sl_send_reply", 2, 0);
-	if (!sl_reply) {
-		LOG(L_ERR, "auth_diameter.c:mod_init(): This module requires"
-					" sl module\n");
+             /*
+              * We will need sl_send_reply from stateless
+	      * module for sending replies
+	      */
+        bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
+	if (!bind_sl) {
+		ERR("This module requires sl module\n");
 		return -1;
 	}
+	if (bind_sl(&sl) < 0) return -1;
 
 	return 0;
 }
