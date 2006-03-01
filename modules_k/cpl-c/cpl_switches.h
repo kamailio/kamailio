@@ -127,7 +127,7 @@ static inline char *run_address_switch( struct cpl_interpreter *intr )
 						case ORIGIN_VAL: /* FROM */
 							if (!intr->from) {
 								/* get the header */
-								if (parse_from_header( intr->msg )==-1)
+								if (parse_from_header( intr->msg )<0)
 									goto runtime_error;
 								intr->from = &(get_from(intr->msg)->uri);
 							}

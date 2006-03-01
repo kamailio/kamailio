@@ -303,7 +303,7 @@ int get_uri(struct sip_msg* m, str** uri)
 	} 
 	else 
 	{
-		if (parse_from_header(m) == -1) 
+		if (parse_from_header(m)<0)
 		{
 			LOG(L_ERR, M_NAME": Error while parsing headers\n");
 			return -2;

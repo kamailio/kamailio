@@ -423,7 +423,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 		intr->flags |= CPL_TO_DUPLICATED;
 		/* FROM header - mandatory in SIP msg (cannot be STR_NOT_FOUND) */
 		if (!intr->from) {
-			if (parse_from_header( intr->msg )==-1)
+			if (parse_from_header( intr->msg )<0)
 				goto runtime_error;
 			s = &(get_from(intr->msg)->uri);
 		} else {

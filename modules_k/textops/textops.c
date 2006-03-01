@@ -161,7 +161,7 @@ static cmd_export_t cmds[]={
 	{"subst_body",       subst_body_f,      1, fixup_substre,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"append_time",      append_time_f,     0, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+			REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"is_method",        is_method_f,       1, fixup_method,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{0,0,0,0,0}

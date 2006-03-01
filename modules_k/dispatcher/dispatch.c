@@ -495,7 +495,7 @@ int ds_hash_fromuri(struct sip_msg *msg, unsigned int *hash)
 		return -1;
 	}
 	
-	if(parse_from_header(msg)==-1)
+	if(parse_from_header(msg)<0)
 	{
 		LOG(L_ERR, "DISPATCHER:ds_hash_fromuri:ERROR cannot parse From hdr\n");
 		return -1;

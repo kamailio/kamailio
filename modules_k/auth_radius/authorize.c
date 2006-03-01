@@ -56,7 +56,7 @@ static inline int get_uri(struct sip_msg* _m, str** _uri)
 		}
 		*_uri = &(get_to(_m)->uri);
 	} else {
-		if (parse_from_header(_m) == -1) {
+		if (parse_from_header(_m)<0) {
 			LOG(L_ERR, "get_uri(): Error while parsing headers\n");
 			return -2;
 		}

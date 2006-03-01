@@ -185,7 +185,7 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 	}
 
 	/* parse original from hdr */
-	if (parse_from_header(msg)!=0 )
+	if (parse_from_header(msg)<0 )
 	{
 		LOG(L_ERR,"ERROR:uac:replace_from: failed to find/parse FROM hdr\n");
 		goto error;
@@ -382,7 +382,7 @@ int restore_from( struct sip_msg *msg, int *is_from )
 		if (is_from) *is_from = 0;
 	} else {
 		/* replace the FROM URI */
-		if ( parse_from_header(msg)!=0 ) {
+		if ( parse_from_header(msg)<0 ) {
 			LOG(L_ERR,"ERROR:uac:restore_from: failed to find/parse "
 				"FROM hdr\n");
 			goto failed;
@@ -480,7 +480,7 @@ void restore_from_reply(struct cell* t, int type, struct tmcb_params *p)
 	rpl = p->rpl;
 
 	/* parse FROM in reply */
-	if (parse_from_header( p->rpl )!=0 ) {
+	if (parse_from_header( p->rpl )<0 ) {
 		LOG(L_ERR,"ERROR:uac:restore_from_reply: failed to find/parse "
 			"FROM hdr\n");
 		return;

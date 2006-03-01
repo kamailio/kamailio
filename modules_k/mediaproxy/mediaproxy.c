@@ -534,7 +534,7 @@ getFromAddress(struct sip_msg *msg)
     str uri;
     char *ptr;
 
-    if (parse_from_header(msg) == -1) {
+    if (parse_from_header(msg)<0) {
         LOG(L_ERR, "error: mediaproxy/getFromAddress(): error parsing From: field\n");
         return notfound;
     }
@@ -597,7 +597,7 @@ getFromTag(struct sip_msg *msg)
     static str notfound = {buf, 0}; // use the constant string directly!
     str tag;
 
-    if (parse_from_header(msg) == -1) {
+    if (parse_from_header(msg)<0) {
         LOG(L_ERR, "error: mediaproxy/getFromTag(): error parsing From: field\n");
         return notfound;
     }

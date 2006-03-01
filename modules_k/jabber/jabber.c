@@ -470,7 +470,7 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 	}
 	
 	/* parsing from header */
-	if ( parse_from_header( msg )==-1 || msg->from->parsed==NULL) 
+	if ( parse_from_header( msg )<0 || msg->from->parsed==NULL) 
 	{
 		DBG("ERROR:xjab_manage_sipmsg: cannot get FROM header\n");
 		goto error;

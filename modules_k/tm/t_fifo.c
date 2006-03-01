@@ -512,7 +512,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	}
 
 	 /* parse from header */
-	if (msg->from->parsed==0 && parse_from_header(msg)==-1 ) {
+	if (msg->from->parsed==0 && parse_from_header(msg)<0 ) {
 		LOG(L_ERR,"ERROR:tm:assemble_msg: while parsing <From:> header\n");
 		goto error;
 	}

@@ -446,7 +446,7 @@ static int m_store(struct sip_msg* msg, char* mode, char* flags)
 	{
 		DBG("MSILO:m_store: 'From' header not parsed\n");
 		/* parsing from header */
-		if ( parse_from_header( msg )==-1 ) 
+		if ( parse_from_header( msg )<0 ) 
 		{
 			DBG("MSILO:m_store: ERROR cannot parse From header\n");
 			goto error;

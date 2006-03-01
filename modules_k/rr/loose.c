@@ -809,7 +809,7 @@ int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
 		return -1;
 	}
 		
-	if (parse_sip_msg_uri(_m) == -1) {
+	if (parse_sip_msg_uri(_m)<0) {
 		LOG(L_ERR, "loose_route: Error while parsing Request URI\n");
 		return -1;
 	}

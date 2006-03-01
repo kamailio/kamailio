@@ -85,7 +85,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 	db_cols[0]=new_uri_column;
 	
 	/* take username@domain from From header */
-	if ( parse_from_header( _msg )==-1 )
+	if ( parse_from_header( _msg )<0 )
 	{
 		LOG(L_ERR, "sd_lookup: ERROR cannot parse FROM header\n");
 		goto err_badreq;

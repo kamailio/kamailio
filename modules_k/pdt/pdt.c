@@ -378,7 +378,7 @@ static int prefix2domain(struct sip_msg* msg, int mode)
 	}
 
 	/* take the domain from  FROM uri as sdomain */
-	if(parse_from_header(msg)==-1 ||  msg->from == NULL || get_from(msg)==NULL)
+	if(parse_from_header(msg)<0 ||  msg->from == NULL || get_from(msg)==NULL)
 	{
 		LOG(L_ERR,
 			"prefix_to_domain: ERROR cannot parse FROM header\n");

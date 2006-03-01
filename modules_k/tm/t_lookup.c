@@ -165,7 +165,7 @@ static inline int parse_dlg( struct sip_msg *msg )
 		return 0;
 	}
 
-	if (parse_from_header(msg)==-1) {
+	if (parse_from_header(msg)<0) {
 		LOG(L_ERR, "ERROR: parse_dlg: From broken\n");
 		return 0;
 	}
@@ -867,7 +867,7 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 			 * in case people want to have proxied e2e ACKs accounted
 			 */
 			if (p_msg->REQ_METHOD==METHOD_INVITE 
-							&& parse_from_header(p_msg)==-1) {
+							&& parse_from_header(p_msg)<0) {
 				LOG(L_ERR, "ERROR: t_check: from parsing failed\n");
 				return -1;
 			}

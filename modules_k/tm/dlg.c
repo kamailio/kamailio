@@ -262,7 +262,7 @@ static inline int get_to_tag(struct sip_msg* _m, str* _tag)
  */
 static inline int get_from_tag(struct sip_msg* _m, str* _tag)
 {
-	if (parse_from_header(_m) == -1) {
+	if (parse_from_header(_m)<0) {
 		LOG(L_ERR, "get_from_tag(): Error while parsing From header\n");
 		return -1;
 	}

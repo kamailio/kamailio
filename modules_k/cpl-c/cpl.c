@@ -897,7 +897,7 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 	}
 
 	/* is there an ACCEPT hdr ? */
-	if ( (ret=parse_accept_hdr(msg))==-1)
+	if ( (ret=parse_accept_hdr(msg))<0)
 		goto error;
 	if (ret==0 || (mimes=get_accept(msg))==0 )
 		/* accept header not present or no mimes found */

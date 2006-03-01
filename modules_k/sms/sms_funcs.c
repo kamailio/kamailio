@@ -220,7 +220,7 @@ int push_on_network(struct sip_msg *msg, int net)
 	}
 
 	/* parsing from header */
-	if ( parse_from_header( msg )==-1 ) {
+	if ( parse_from_header( msg )<0 ) {
 		LOG(L_ERR,"ERROR:sms_push_on_net: cannot get FROM header\n");
 		goto error;
 	}
