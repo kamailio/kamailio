@@ -110,6 +110,31 @@ struct param_export_ {
 };
 
 
+enum {
+	FPARAM_UNSPEC = 0,
+	FPARAM_ASCIIZ = (1 << 0),
+	FPARAM_STR    = (1 << 1),
+	FPARAM_INT    = (1 << 2),
+	FPARAM_REGEX  = (1 << 3),
+	FPARAM_AVP    = (1 << 5),
+};
+
+/*
+ * Function parameter
+ */
+typedef struct fparam {
+        char* orig;                /* The original value */
+        int type;                  /* Type of parameter */
+        union {
+		char* asciiz;      /* Zero terminated ASCII string */
+		str str;           /* pointer/len string */
+		int i;             /* Integer value */
+		regex_t* regex;    /* Compiled regular expression */
+		avp_ident_t avp;   /* AVP identifier */
+	} v;
+} fparam_t;
+
+
 typedef struct cmd_export_ cmd_export_t;
 typedef struct param_export_ param_export_t;
 
@@ -202,6 +227,13 @@ int fixup_regex_1(void** param, int param_no);
 
 /* Compile regular expression in second parameter */
 int fixup_regex_2(void** param, int param_no);
+
+/*
+ * Generic parameter fixup function which creates
+ * fparam_t structure. type parameter contains allowed
+ * parameter types
+ */
+int fix_param(int type, void** param);
 
 /* API function to get other parameters from fixup */
 action_u_t *fixup_get_param(void **cur_param, int cur_param_no, int required_param_no);

@@ -47,6 +47,7 @@
 #include "ut.h"
 #include "route_struct.h"
 #include "flags.h"
+#include "trim.h"
 
 #include <regex.h>
 #include <dlfcn.h>
@@ -721,4 +722,90 @@ int fix_flag( modparam_t type, void* val,
 	}
 	*flag=num;
 	return 0;
+}
+
+
+/*
+ * Generic parameter fixup function which creates
+ * fparam_t structure. type parameter contains allowed
+ * parameter types
+ */
+int fix_param(int type, void** param)
+{	
+	fparam_t* p;
+	str name;
+	unsigned long num;
+	int err;
+
+	p = (fparam_t*)pkg_malloc(sizeof(fparam_t));
+	if (!p) {
+		ERR("fix_param: No memory left\n");
+		return E_OUT_OF_MEM;
+	}
+	memset(p, 0, sizeof(fparam_t));
+	p->orig = *param;
+
+	switch(type) {
+	case FPARAM_UNSPEC:
+		ERR("fix_param: Invalid type value\n");
+		goto error;
+
+	case FPARAM_ASCIIZ:
+		p->v.asciiz = *param;
+		break;
+
+	case FPARAM_STR:
+		p->v.str.s = (char*)*param;
+		p->v.str.len = strlen(p->v.str.s);
+		break;
+
+	case FPARAM_INT:
+		num = str2s(*param, strlen(*param), &err);
+		if (err == 0) {
+			p->v.i = num;
+		} else {
+			ERR("Bad number <%s>\n",
+			    (char*)(*param));
+			goto error;
+		}
+		break;
+
+	case FPARAM_REGEX:
+		if ((p->v.regex = pkg_malloc(sizeof(regex_t))) == 0) {
+			ERR("No memory left\n");
+			goto error;
+		}
+		if (regcomp(p->v.regex, *param, REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
+			pkg_free(p->v.regex);
+			ERR("Bad regular expression '%s'\n", (char*)*param);
+		        goto error;
+		}
+		break;
+
+	case FPARAM_AVP:
+		name.s = (char*)*param;
+		name.len = strlen(name.s);
+		trim(&name);
+		if (!name.len || name.s[0] != '$') {
+			     /* Not an AVP identifier */
+			pkg_free(p);
+			return 1;
+		}
+		name.s++;
+		name.len--;
+		
+		if (parse_avp_ident(&name, &p->v.avp) < 0) {
+			ERR("Error while parsing attribute name\n");
+			goto error;
+		}
+		break;
+	}
+
+	p->type = type;
+	*param = (void*)p;
+	return 0;
+
+ error:
+	pkg_free(p);
+	return E_UNSPEC;
 }
