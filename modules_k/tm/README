@@ -77,6 +77,8 @@ Bogdan-Andrei Iancu
               1.4.17. t_on_reply(reply_route)
               1.4.18. t_on_branch(branch_route)
 
+        1.5. Pseudo-Variables
+
    2. Developer's Guide
 
         2.1. Functions
@@ -915,6 +917,16 @@ branch_route[1] {
         }
 }
 ...
+     _________________________________________________________
+
+1.5. Pseudo-Variables
+
+   This module exports the follong pseudo-variables:
+
+     * $T_branch_index - the index (starting with 1 for the first
+       branch) of the branch for which is executed the
+       branch_route[]. If used outside of branch_route[] block,
+       the value is '0'.
      _________________________________________________________
 
 Chapter 2. Developer's Guide

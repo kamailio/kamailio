@@ -59,6 +59,7 @@
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
 #include "../../unixsock_server.h"
+#include "../../items.h"
 
 #include "sip_msg.h"
 #include "h_table.h"
@@ -74,6 +75,10 @@
 #include "tm_load.h"
 
 MODULE_VERSION
+
+/* item functions */
+static int it_get_tm_branch_idx(struct sip_msg *msg, xl_value_t *res,
+		xl_param_t *param, int flags);
 
 /* fixup functions */
 static int fixup_t_send_reply(void** param, int param_no);
@@ -485,6 +490,9 @@ ok:
 
 static int mod_init(void)
 {
+	xl_spec_t tmspec;
+	str pvname;
+
 	LOG(L_INFO,"TM - initializing...\n");
 
 	/* checking if we have sufficient bitmap capacity for given
@@ -601,6 +609,18 @@ static int mod_init(void)
 	if ( init_gf_mask( bf_mask_param )<0 ) {
 		LOG(L_ERR,"ERROR:tm:mod_init: failed to process "
 			"\"branch_flag_mask\" param\n");
+		return -1;
+	}
+
+	memset(&tmspec, 0, sizeof(xl_spec_t));
+	tmspec.type = 100;
+	tmspec.itf = it_get_tm_branch_idx;
+	pvname.s   = "T_branch_idx";
+	pvname.len = sizeof("T_branch_idx")-1;
+	if(xl_add_extra_spec(&pvname, &tmspec)!=0)
+	{
+		LOG(L_ERR,"ERROR:tm:mod_init: failed to register pvar [%.*s]\n",
+				pvname.len, pvname.s);
 		return -1;
 	}
 	return 0;
@@ -965,5 +985,26 @@ inline static int w_t_relay0( struct sip_msg  *p_msg , char *bar, char *foo)
 }
 
 
+/* item functions */
+static int it_get_tm_branch_idx(struct sip_msg *msg, xl_value_t *res,
+		xl_param_t *param, int flags)
+{
+	extern int _tm_branch_index;
+	int l = 0;
+	char *ch = NULL;
+
+	if(msg==NULL || res==NULL)
+		return -1;
+	
+	ch = int2str(_tm_branch_index, &l);
+
+	res->rs.s = ch;
+	res->rs.len = l;
+
+	res->ri = _tm_branch_index;
+	res->flags = XL_VAL_STR|XL_VAL_INT|XL_TYPE_INT;
+
+	return 0;
+}
 
 

@@ -63,6 +63,7 @@
 /* route to execute for the branches */
 static int goto_on_branch;
 unsigned int gflags_mask = 0xffffffff;
+int _tm_branch_index = 0;
 
 void t_on_branch( unsigned int go_to )
 {
@@ -136,12 +137,17 @@ static inline int pre_print_uac_request( struct cell *t, int branch,
 		backup_list = set_avp_list( &t->user_avps );
 		/* run branch route */
 		swap_route_type( backup_route_type, BRANCH_ROUTE);
+
+		_tm_branch_index = branch+1;
 		if (run_actions(branch_rlist[t->on_branch], request)==0 &&
 		(action_flags&ACT_FL_DROP) ) {
 			DBG("DEBUG:tm:pre_print_uac_request: dropping branch <%.*s>\n",
 				request->dst_uri.len, request->dst_uri.s);
+			_tm_branch_index = 0;
 			goto error;
 		}
+		_tm_branch_index = 0;
+
 		set_route_type( backup_route_type );
 		/* restore original avp list */
 		set_avp_list( backup_list );
