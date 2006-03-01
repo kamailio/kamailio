@@ -646,28 +646,31 @@ EOF
 wait
 echo
 
-echo Transaction Statistics
+echo -n "Transaction Statistics: "
 cat < $2 | filter_fl &
 cat > $SER_FIFO <<EOF
-:t_stats:$1
+:get_statistics:$1
+tm:
 
 EOF
 wait
 echo
 
-echo Stateless Server Statistics
+echo -n "Stateless Server Statistics: "
 cat < $2 | filter_fl &
 cat > $SER_FIFO <<EOF
-:sl_stats:$1
+:get_statistics:$1
+sl:
 
 EOF
 wait
 echo
 
-echo UsrLoc Stats
+echo -n "UsrLoc Stats: "
 cat < $2 | filter_fl &
 cat > $SER_FIFO <<EOF
-:ul_stats:$1
+:get_statistics:$1
+usrloc:
 
 EOF
 wait
