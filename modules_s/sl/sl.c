@@ -70,21 +70,25 @@
 #include "../../mem/mem.h"
 #include "sl_stats.h"
 #include "sl_funcs.h"
+#include "sl.h"
 
 MODULE_VERSION
 
 
 static int w_sl_send_reply(struct sip_msg* msg, char* str, char* str2);
 static int w_sl_reply_error(struct sip_msg* msg, char* str, char* str2);
+static int bind_sl(sl_api_t* api);
 static int mod_init(void);
 static int child_init(int rank);
 static void mod_destroy();
 static int fixup_sl_reply(void** param, int param_no);
 
 static cmd_export_t cmds[]={
-	{"sl_send_reply",  w_sl_send_reply,  2, fixup_sl_reply, REQUEST_ROUTE},
-	{"sl_reply",       w_sl_send_reply,  2, fixup_sl_reply, REQUEST_ROUTE},
-	{"sl_reply_error", w_sl_reply_error, 0, 0,              REQUEST_ROUTE},
+	{"sl_send_reply",  w_sl_send_reply,       2, fixup_sl_reply, REQUEST_ROUTE},
+	{"sl_reply",       w_sl_send_reply,       2, fixup_sl_reply, REQUEST_ROUTE},
+	{"sl_reply_error", w_sl_reply_error,      0, 0,              REQUEST_ROUTE},
+	{"bind_sl",        (cmd_function)bind_sl, 0, 0,              0},
+	{"api_sl_reply",   sl_send_reply,         2, 0,              0},
 	{0,0,0,0,0}
 };
 
@@ -94,7 +98,7 @@ struct module_exports sl_exports = {
 #else
 struct module_exports exports= {
 #endif
-	"sl_module",
+	"sl",
 	cmds,
 	sl_rpc,     /* RPC methods */
 	0,          /* param exports */
@@ -106,20 +110,16 @@ struct module_exports exports= {
 };
 
 
-
-
 static int mod_init(void)
 {
-	fprintf(stderr, "stateless - initializing\n");
-
-	if (init_sl_stats()<0) {
-		LOG(L_ERR, "ERROR: init_sl_stats failed\n");
+	if (init_sl_stats() < 0) {
+		ERR("init_sl_stats failed\n");
 		return -1;
 	}
 
-	/* if SL loaded, filter ACKs on beginning */
+	     /* if SL loaded, filter ACKs on beginning */
 	if (register_script_cb( sl_filter_ACK, PRE_SCRIPT_CB|REQ_TYPE_CB, 0 )<0) {
-		LOG(L_ERR,"ERROR:sl:mod_init: failed to install SCRIPT callback\n");
+		ERR("Failed to install SCRIPT callback\n");
 		return -1;
 	}
 	sl_startup();
@@ -229,5 +229,22 @@ static int fixup_sl_reply(void** param, int param_no)
 		if (ret <= 0) return ret;
 		return fix_param(FPARAM_ASCIIZ, param);
 	}
+	return 0;
+}
+
+
+static int bind_sl(sl_api_t* api)
+{
+	if (!api) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+
+	api->reply = (sl_send_reply_f)find_export("api_sl_reply", 2, 0);
+	if (api->reply == 0) {
+		ERR("Can't bind sl_reply functionn");
+		return -1;
+	}
+
 	return 0;
 }

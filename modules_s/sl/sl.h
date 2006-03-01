@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2001-2006 FhG FOKUS
  *
  * This file is part of ser, a free SIP server.
  *
@@ -24,26 +24,15 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+#ifndef _SL_H
+#define _SL_H
 
+#include "sl_funcs.h"
 
-#ifndef _SL_FUNCS_H
-#define _SL_FUNCS_H
+typedef struct sl_api {
+	sl_send_reply_f reply;  /* Send stateless reply */
+} sl_api_t;
 
-#include "../../sr_module.h"
-#include "../../parser/msg_parser.h"
+typedef int (*bind_sl_t)(sl_api_t* api);
 
-#define SL_RPL_WAIT_TIME  2  /* in sec */
-
-#define SL_TOTAG_SEPARATOR '.'
-
-int sl_startup();
-int sl_shutdown();
-
-typedef int (*sl_send_reply_f)(struct sip_msg* msg, int code, char* reason);
-int sl_send_reply(struct sip_msg* msg, int code, char* reason);
-
-int sl_filter_ACK(struct sip_msg*, void *bar );
-int sl_reply_error(struct sip_msg *msg );
-
-
-#endif
+#endif /* _SL_H */

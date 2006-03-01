@@ -100,21 +100,6 @@ int sl_shutdown()
 	return 1;
 }
 
-#ifdef _MOVED_TO_CORE
-static void calc_crc_suffix( struct sip_msg *msg )
-{
-	int ss_nr;
-	str suffix_source[3];
-
-	ss_nr=2;
-	suffix_source[0]=msg->via1->host;
-	suffix_source[1]=msg->via1->port_str;
-	if (msg->via1->branch) 
-		suffix_source[ss_nr++]=msg->via1->branch->value;
-	crcitt_string_array( tag_suffix, suffix_source, ss_nr );
-}
-#endif
-
 int sl_send_reply(struct sip_msg *msg , int code, char* reason)
 {
 	char *buf, *dset;
