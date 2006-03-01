@@ -52,8 +52,7 @@ they can not be reloaded in init or
 child_init due to internal subscriptions
 to other modules (may be not itialised
 yet) */
-static int init_timer_delay = 10; 
-static struct timer_ln i_timer;
+static int init_timer_delay = 3; 
 
 /** Exported functions */
 static cmd_export_t cmds[]={
@@ -175,6 +174,11 @@ static ticks_t init_timer_cb(ticks_t ticks, struct timer_ln* tl, void* data)
 		db_load_rls();
 		rls_unlock();
 	}
+
+	if (data) {
+		shm_free(data);
+		/* ERR("freeing myself!\n"); */
+	}
 	
 	return 0; /* one shot timer */
 }
@@ -183,6 +187,7 @@ int rls_mod_init(void)
 {
     load_tm_f load_tm;
 	bind_dlg_mod_f bind_dlg;
+	struct timer_ln *i_timer = NULL;
 
 	DEBUG_LOG("RLS module initialization\n");
 
@@ -278,8 +283,16 @@ int rls_mod_init(void)
 	 * needed because it can trigger database operations
 	 * in other modules and they mostly intialize their 
 	 * database connection in child_init functions */
-	timer_init(&i_timer, init_timer_cb, NULL, 0);
-	timer_add(&i_timer, S_TO_TICKS(init_timer_delay));
+	
+	i_timer = timer_alloc();
+	if (!i_timer) {
+		ERR("can't allocate memory for DB init timer\n");
+		return -1;
+	}
+	else {
+		timer_init(i_timer, init_timer_cb, i_timer, 0);
+		timer_add(i_timer, S_TO_TICKS(init_timer_delay));
+	}
 	
 	return 0;
 }

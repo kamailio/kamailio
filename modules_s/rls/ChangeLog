@@ -1,3 +1,7 @@
+2006-02-28
+	* corrected BUG - one shot timer used for DB initialization was not in
+	shared memory
+
 2006-02-27
 	* corrected BUGs - mostly used dstr_get_str instead of dstr_get_data
 	because there were some cases when was allocated memory buffers of zero
