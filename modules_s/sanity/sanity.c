@@ -164,7 +164,7 @@ int check_ruri_sip_version(struct sip_msg* _msg) {
 		ret=memcmp(sep+1, SIP_VERSION_TWO_POINT_ZERO, 
 					SIP_VERSION_TWO_POINT_ZERO_LENGTH );
 		if (ret != 0) {
-			if (sl_reply(_msg, (char*)505, "Version Not Supported (R-URI)") == -1) {
+			if (sl.reply(_msg, 505, "Version Not Supported (R-URI)") == -1) {
 				LOG(L_ERR, "sanity_check(): check_ruri_sip_version(): failed to send 505 via send_reply\n");
 				return -1;
 			}
@@ -190,7 +190,7 @@ int check_ruri_scheme(struct sip_msg* _msg) {
 		LOG(L_WARN, "sanity_check(): check_ruri_scheme(): failed to parse request uri\n");
 	}
 	if (_msg->parsed_uri.type == ERROR_URI_T) {
-		if (sl_reply(_msg, (char*)416, "Unsupported URI Scheme in Request URI") == -1) {
+		if (sl.reply(_msg, 416, "Unsupported URI Scheme in Request URI") == -1) {
 			LOG(L_ERR, "sanity_check(): check_ruri_scheme(): failed to send 416 via send_reply\n");
 			return -1;
 		}
@@ -210,7 +210,7 @@ int check_required_headers(struct sip_msg* _msg) {
 	DBG("check_required_headers entered\n");
 
 	if (!check_transaction_quadruple(_msg)) {
-		if (sl_reply(_msg, (char*)400, "Missing Required Header in Request") == -1) {
+		if (sl.reply(_msg, 400, "Missing Required Header in Request") == -1) {
 			LOG(L_ERR, "sanity_check(): check_required_headers(): failed to send 400 via send_reply\n");
 			return -1;
 		}
@@ -244,7 +244,7 @@ int check_via_sip_version(struct sip_msg* _msg) {
 	if (_msg->via1->version.len != 3 ||
 			memcmp(_msg->via1->version.s, SIP_VERSION_TWO_POINT_ZERO, 
 					SIP_VERSION_TWO_POINT_ZERO_LENGTH ) != 0) {
-		if (sl_reply(_msg, (char*)505, "Version Not Supported (Via)") == -1) {
+		if (sl.reply(_msg, 505, "Version Not Supported (Via)") == -1) {
 			LOG(L_ERR, "sanity_check(): check_via_sip_version(): failed to send 505 via send_reply\n");
 			return -1;
 		}
@@ -276,7 +276,7 @@ int check_via_protocol(struct sip_msg* _msg) {
 	}
 	if (_msg->via1->transport.len != 3 &&
 			_msg->via1->transport.len != 4) {
-		if (sl_reply(_msg, (char*)400, "Unsupported Transport in Topmost Via") == -1) {
+		if (sl.reply(_msg, 400, "Unsupported Transport in Topmost Via") == -1) {
 			LOG(L_ERR, "sanity_check(): check_via_protocol(): failed to send 400 via send_reply\n");
 			return -1;
 		}
@@ -286,7 +286,7 @@ int check_via_protocol(struct sip_msg* _msg) {
 	switch (_msg->rcv.proto) {
 		case PROTO_UDP:
 			if (memcmp(_msg->via1->transport.s, "UDP", 3) != 0) {
-				if (sl_reply(_msg, (char*)400, "Transport Missmatch in Topmost Via") == -1) {
+				if (sl.reply(_msg, 400, "Transport Missmatch in Topmost Via") == -1) {
 					LOG(L_ERR, "sanity_check(): check_via_protocol(): failed to send 505 via send_reply\n");
 					return -1;
 				}
@@ -296,7 +296,7 @@ int check_via_protocol(struct sip_msg* _msg) {
 			break;
 		case PROTO_TCP:
 			if (memcmp(_msg->via1->transport.s, "TCP", 3) != 0) {
-				if (sl_reply(_msg, (char*)400, "Transport Missmatch in Topmost Via") == -1) {
+				if (sl.reply(_msg, 400, "Transport Missmatch in Topmost Via") == -1) {
 					LOG(L_ERR, "sanity_check(): check_via_protocol(): failed to send 505 via send_reply\n");
 					return -1;
 				}
@@ -306,7 +306,7 @@ int check_via_protocol(struct sip_msg* _msg) {
 			break;
 		case PROTO_TLS:
 			if (memcmp(_msg->via1->transport.s, "TLS", 3) != 0) {
-				if (sl_reply(_msg, (char*)400, "Transport Missmatch in Topmost Via") == -1) {
+				if (sl.reply(_msg, 400, "Transport Missmatch in Topmost Via") == -1) {
 					LOG(L_ERR, "sanity_check(): check_via_protocol(): failed to send 505 via send_reply\n");
 					return -1;
 				}
@@ -316,7 +316,7 @@ int check_via_protocol(struct sip_msg* _msg) {
 			break;
 		case PROTO_SCTP:
 			if (memcmp(_msg->via1->transport.s, "SCTP", 4) != 0) {
-				if (sl_reply(_msg, (char*)400, "Transport Missmatch in Topmost Via") == -1) {
+				if (sl.reply(_msg, 400, "Transport Missmatch in Topmost Via") == -1) {
 					LOG(L_ERR, "sanity_check(): check_via_protocol(): failed to send 505 via send_reply\n");
 					return -1;
 				}
@@ -347,7 +347,7 @@ int check_cseq_method(struct sip_msg* _msg) {
 	}
 	if (_msg->cseq != NULL && _msg->cseq->parsed != NULL) {
 		if (((struct cseq_body*)_msg->cseq->parsed)->method.len == 0) {
-			if (sl_reply(_msg, (char*)400, "Missing method in CSeq header") == -1) {
+			if (sl.reply(_msg, 400, "Missing method in CSeq header") == -1) {
 				LOG(L_ERR, "sanity_check(): check_cseq_method(): failed to send 400 via send_reply\n");
 				return -1;
 			}
@@ -360,7 +360,7 @@ int check_cseq_method(struct sip_msg* _msg) {
 			memcmp(((struct cseq_body*)_msg->cseq->parsed)->method.s, 
 				_msg->first_line.u.request.method.s,
 				((struct cseq_body*)_msg->cseq->parsed)->method.len) != 0) {
-			if (sl_reply(_msg, (char*)400, "CSeq method does not match request method") == -1) {
+			if (sl.reply(_msg, 400, "CSeq method does not match request method") == -1) {
 				LOG(L_ERR, "sanity_check(): check_cseq_method(): failed to send 400 via send_reply 2\n");
 				return -1;
 			}
@@ -391,14 +391,14 @@ int check_cseq_value(struct sip_msg* _msg) {
 	}
 	if (_msg->cseq != NULL && _msg->cseq->parsed != NULL) {
 		if (((struct cseq_body*)_msg->cseq->parsed)->number.len == 0) {
-			if (sl_reply(_msg, (char*)400, "Missing number in CSeq header") == -1) {
+			if (sl.reply(_msg, 400, "Missing number in CSeq header") == -1) {
 				LOG(L_ERR, "sanity_check(): check_cseq_value(): failed to send 400 via send_reply\n");
 				return -1;
 			}
 			return 1;
 		}
 		if (str2valid_uint(&((struct cseq_body*)_msg->cseq->parsed)->number, &cseq) != 0) {
-			if (sl_reply(_msg, (char*)400, "CSeq number is illegal") == -1) {
+			if (sl.reply(_msg, 400, "CSeq number is illegal") == -1) {
 				LOG(L_ERR, "sanity_check(): check_cseq_value(): failed to send 400 via send_reply 2\n");
 				return -1;
 			}
@@ -436,7 +436,7 @@ int check_cl(struct sip_msg* _msg) {
 			return -1;
 		}
 		if ((_msg->len - (body - _msg->buf)) != get_content_length(_msg)) {
-			if (sl_reply(_msg, (char*)400, "Content-Length mis-match") == -1) {
+			if (sl.reply(_msg, 400, "Content-Length mis-match") == -1) {
 				LOG(L_ERR, "sanity_check(): check_cl(): failed to send 400 via send_reply\n");
 				return -1;
 			}
@@ -472,7 +472,7 @@ int check_expires_value(struct sip_msg* _msg) {
 			return -1;
 		}
 		if (((struct exp_body*)_msg->expires->parsed)->text.len == 0) {
-			if (sl_reply(_msg, (char*)400, "Missing number in Expires header") == -1) {
+			if (sl.reply(_msg, 400, "Missing number in Expires header") == -1) {
 				LOG(L_ERR, "sanity_check(): check_expires_value(): failed to send 400 via send_reply\n");
 				return -1;
 			}
@@ -480,7 +480,7 @@ int check_expires_value(struct sip_msg* _msg) {
 			return 1;
 		}
 		if (str2valid_uint(&((struct exp_body*)_msg->expires->parsed)->text, &expires) != 0) {
-			if (sl_reply(_msg, (char*)400, "Expires value is illegal") == -1) {
+			if (sl.reply(_msg, 400, "Expires value is illegal") == -1) {
 				LOG(L_ERR, "sanity_check(): check_expires_value(): failed to send 400 via send_reply 2\n");
 				return -1;
 			}
@@ -544,7 +544,7 @@ int check_proxy_require(struct sip_msg* _msg) {
 					memcpy(u + UNSUPPORTED_HEADER_LEN + r_pr->string.len, "\r\n", 2);
 					add_lump_rpl(_msg, u, u_len, LUMP_RPL_HDR);
 				}
-				if (sl_reply(_msg, (char*)420, "Bad Extension") == -1) {
+				if (sl.reply(_msg, 420, "Bad Extension") == -1) {
 					LOG(L_ERR, "sanity_check(): check_proxy_require(): failed to send 420 via send_reply\n");
 					return -1;
 				}

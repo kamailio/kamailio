@@ -37,7 +37,7 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
-
+#include "../sl/sl.h"
 #include "sdlookup.h"
 
 MODULE_VERSION
@@ -65,10 +65,7 @@ char* new_uri_column        = "new_uri";
 db_func_t db_funcs;      /* Database functions */
 db_con_t* db_handle=0;   /* Database connection handle */
 
-/*
- * sl_send_reply function pointer
- */
-int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
+sl_api_t sl;
 
 
 /* Exported functions */
@@ -124,6 +121,8 @@ static int child_init(int rank)
  */
 static int mod_init(void)
 {
+	bind_sl_t bind_sl;
+
 	DBG("speeddial module - initializing\n");
 
     /* Find a database module */
@@ -144,13 +143,12 @@ static int mod_init(void)
 	 * module for sending replies
 	 */
 
-	sl_reply = find_export("sl_send_reply", 2, 0);
-	if (!sl_reply)
-	{
-		LOG(L_ERR, "sd: This module requires sl module\n");
+        bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
+	if (!bind_sl) {
+		ERR("This module requires sl module\n");
 		return -1;
 	}
-
+	if (bind_sl(&sl) < 0) return -1;
 	return 0;
 }
 

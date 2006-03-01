@@ -84,15 +84,21 @@ struct module_exports exports = {
  * initialize module
  */
 static int mod_init(void) {
+	bind_sl_t bind_sl;
 	strl* ptr;
 
 	DBG("sanity initializing\n");
 
-	sl_reply = find_export("sl_send_reply", 2, 0);
-	if (!sl_reply) {
-		LOG(L_ERR, "sanity: this module requires sl module\n");
+             /*
+              * We will need sl_send_reply from stateless
+	      * module for sending replies
+	      */
+        bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
+	if (!bind_sl) {
+		ERR("This module requires sl module\n");
 		return -1;
 	}
+	if (bind_sl(&sl) < 0) return -1;
 
 	DBG("parsing proxy requires string:\n");
 	ptr = parse_str_list(&pr_str);

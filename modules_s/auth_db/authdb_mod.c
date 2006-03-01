@@ -46,6 +46,7 @@
 #include "authorize.h"
 #include "../auth/aaa_avps.h"
 #include "../auth/api.h"
+#include "authdb_mod.h"
 
 MODULE_VERSION
 
@@ -75,8 +76,7 @@ static int authdb_fixup(void** param, int param_no);
 /*
  * Pointer to reply function in stateless module
  */
-int (*sl_reply)(struct sip_msg* msg, char* str1, char* str2);
-
+sl_api_t sl;
 
 
 #define USERNAME_COL "auth_username"
@@ -172,31 +172,25 @@ static int child_init(int rank)
 static int mod_init(void)
 {
 	bind_auth_t bind_auth;
+	bind_sl_t bind_sl;
 
 	DBG("auth_db module - initializing\n");
 
-     /* Find a database module */
-
-	if (bind_dbmod(db_url, &auth_dbf) < 0){
-		LOG(L_ERR, "auth_db:child_init: Unable to bind a database driver\n");
-		return -2;
+        bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
+	if (!bind_sl) {
+		ERR("This module requires sl module\n");
+		return -1;
 	}
+	if (bind_sl(&sl) < 0) return -1;
 
         bind_auth = (bind_auth_t)find_export("bind_auth", 0, 0);
         if (!bind_auth) {
 		LOG(L_ERR, "auth_db:mod_init: Unable to find bind_auth function\n");
 	        return -1;
 	}
-
 	if (bind_auth(&auth_api) < 0) {
 		LOG(L_ERR, "auth_db:child_init: Unable to bind auth module\n");
 		return -3;
-	}
-
-	sl_reply = find_export("sl_send_reply", 2, 0);
-	if (!sl_reply) {
-		LOG(L_ERR, "auth_db:mod_init: This module requires sl module\n");
-		return -4;
 	}
 
 	if (aaa_avps_init(&credentials_list, &credentials, &credentials_n)) {

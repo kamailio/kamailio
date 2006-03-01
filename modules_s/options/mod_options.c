@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include "mod_options.h"
 #include "../../sr_module.h"
+#include "../sl/sl.h"
 #include "../../mem/mem.h"
 #include "../../data_lump_rpl.h"
 #include "../../parser/msg_parser.h"
@@ -46,7 +47,7 @@ str acpt_s, acpt_enc_s, acpt_lan_s, supt_s;
 /*
  * sl_send_reply function pointer
  */
-int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
+sl_api_t sl;
 
 static int mod_init(void);
 static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar);
@@ -89,14 +90,16 @@ struct module_exports exports = {
  * initialize module
  */
 static int mod_init(void) {
+	bind_sl_t bind_sl;
 
 	DBG("options initializing\n");
 
-	sl_reply = find_export("sl_send_reply", 2, 0);
-	if (!sl_reply) {
-		LOG(L_ERR, "options: this module requires sl module\n");
+        bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
+	if (!bind_sl) {
+		ERR("This module requires sl module\n");
 		return -1;
 	}
+	if (bind_sl(&sl) < 0) return -1;
 
 	if (acpt_c) {
 		acpt_s.len = strlen(acpt_c);
@@ -199,7 +202,7 @@ static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 
 	if (add_lump_rpl( _msg, rpl_hf.s, rpl_hf.len,
 	LUMP_RPL_HDR|LUMP_RPL_NODUP)!=0) {
-		if (sl_reply(_msg, (char*)200, "OK") == -1) {
+		if (sl.reply(_msg, 200, "OK") == -1) {
 			LOG(L_ERR, "options_reply(): failed to send 200 via send_reply\n");
 			return -1;
 		}
@@ -211,7 +214,7 @@ static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 	}
 
 error:
-	if (sl_reply(_msg, (char*)500, "Server internal error") == -1) {
+	if (sl.reply(_msg, 500, "Server internal error") == -1) {
 		LOG(L_ERR, "options_reply(): failed to send 500 via send_reply\n");
 		return -1;
 	}

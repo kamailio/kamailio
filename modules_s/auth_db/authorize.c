@@ -247,7 +247,7 @@ static inline int authenticate(struct sip_msg* msg, str* realm, char* table,
 	res = get_ha1(&cred->digest.username, &r, table, ha1, &result, &row);
         if (res < 0) {
 		     /* Error while accessing the database */
-		if (sl_reply(msg, (char*)500, MESSAGE_500) == -1) {
+		if (sl.reply(msg, 500, MESSAGE_500) == -1) {
 			LOG(L_ERR, "auth_db:authenticate: Error while sending 500 reply\n");
 		}
 		return 0;

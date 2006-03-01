@@ -199,6 +199,7 @@ static int fixup_cpl_run_script(void** param, int param_no)
 static int cpl_init(void)
 {
 	bind_usrloc_t bind_usrloc;
+	bind_sl_t     bind_sl;
 	load_tm_f     load_tm;
 	struct stat   stat_t;
 	char *ptr;
@@ -304,12 +305,12 @@ static int cpl_init(void)
 	if (load_tm( &(cpl_fct.tmb) )==-1)
 		goto error;
 
-	/* load the send_reply function from sl module */
-	if ((cpl_fct.sl_reply=find_export("sl_send_reply", 2, 0))==0) {
-		LOG(L_ERR, "ERROR:cpl_c:cpl_init: cannot import sl_send_reply; maybe "
-			"you forgot to load the sl module\n");
-		goto error;
+        bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
+	if (!bind_sl) {
+		ERR("This module requires sl module\n");
+		return -1;
 	}
+	if (bind_sl(&cpl_fct.sl) < 0) return -1;
 
 	/* bind to usrloc module if requested */
 	if (lookup_domain) {
@@ -891,7 +892,7 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 			goto resume_script;
 
 		/* send a 200 OK reply back */
-		cpl_fct.sl_reply( msg, (char*)200, "OK");
+		cpl_fct.sl.reply( msg, 200, "OK");
 		/* I send the reply and I don't want to return to script execution, so
 		 * I return 0 to do break */
 		goto stop_script;
@@ -927,7 +928,7 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 		goto resume_script;
 
 	/* send a 200 OK reply back */
-	cpl_fct.sl_reply( msg, (char*)200, "OK");
+	cpl_fct.sl.reply( msg, 200, "OK");
 
 stop_script:
 	return 0;
@@ -935,7 +936,7 @@ resume_script:
 	return 1;
 error:
 	/* send a error reply back */
-	cpl_fct.sl_reply( msg, (char*)(long)cpl_err->err_code, cpl_err->err_msg);
+	cpl_fct.sl.reply( msg, cpl_err->err_code, cpl_err->err_msg);
 	/* I don't want to return to script execution, so I return 0 to do break */
 	return 0;
 }

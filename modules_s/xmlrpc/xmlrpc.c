@@ -54,6 +54,7 @@
 #include "../../data_lump_rpl.h"
 #include "../../msg_translator.h"
 #include "../../select.h"
+#include "../sl/sl.h"
 #include "http.h"
 
 /*
@@ -189,12 +190,7 @@ static void set_fault(struct xmlrpc_reply* reply, int code, char* fmt, ...);
 static rpc_t func_param;
 
 int enable_introspection = 1;
-
-
-/*
- * sl_send_reply function pointer
- */
-int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
+sl_api_t sl;
 
 
 /*
@@ -410,7 +406,7 @@ static int send_reply(struct sip_msg* msg, str* body)
 		return -1;
 	}
 
-	if (sl_reply(msg, (char*)200, "OK") == -1) {
+	if (sl.reply(msg, 200, "OK") == -1) {
 		ERR("Error while sending reply\n");
 		return -1;
 	}
@@ -1293,15 +1289,18 @@ select_row_t tls_sel[] = {
 
 static int mod_init(void)
 {
+	bind_sl_t bind_sl;
+
              /*
               * We will need sl_send_reply from stateless
 	      * module for sending replies
 	      */
-        sl_reply = find_export("sl_send_reply", 2, 0);
-	if (!sl_reply) {
-		ERR("xmlrpc module requires sl module\n");
+        bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
+	if (!bind_sl) {
+		ERR("This module requires sl module\n");
 		return -1;
 	}
+	if (bind_sl(&sl) < 0) return -1;
 
 	func_param.send = (rpc_send_f)rpc_send;
 	func_param.fault = (rpc_fault_f)rpc_fault;

@@ -177,13 +177,13 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 	return 1;
 
 err_server:
-	if (sl_reply(_msg, (char*)500, "Server Internal Error") == -1)
+	if (sl.reply(_msg, 500, "Server Internal Error") == -1)
 	{
 		LOG(L_ERR, "sd_lookup: Error while sending reply\n");
 	}
 	return 0;
 err_badreq:
-	if (sl_reply(_msg, (char*)400, "Bad Request") == -1)
+	if (sl.reply(_msg, 400, "Bad Request") == -1)
 	{
 		LOG(L_ERR, "sd_lookup: Error while sending reply\n");
 	}

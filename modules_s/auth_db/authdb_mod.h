@@ -34,6 +34,7 @@
 #include "../../str.h"
 #include "../../db/db.h"
 #include "../auth/api.h"
+#include "../sl/sl.h"
 #include "../../parser/msg_parser.h"
 
 
@@ -62,6 +63,6 @@ extern int credentials_n;
 /*
  * Pointer to reply function in stateless module
  */
-extern int (*sl_reply)(struct sip_msg* msg, char* str1, char* str2);
+extern sl_api_t sl;
 
 #endif /* AUTHDB_MOD_H */

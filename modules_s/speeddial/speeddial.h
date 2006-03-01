@@ -34,6 +34,7 @@
 #define _SPEEDDIAL_H_
 
 #include "../../db/db.h"
+#include "../sl/sl.h"
 #include "../../parser/msg_parser.h"
 
 
@@ -47,6 +48,6 @@ extern char* new_uri_column;
 extern db_func_t db_funcs;    /* Database functions */
 extern db_con_t* db_handle;   /* Database connection handle */
 
-extern int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
+extern sl_api_t sl;
 
 #endif /* _SPEEDDIAL_H_ */
