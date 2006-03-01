@@ -56,7 +56,7 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 	for(i = 0; i < RES_COL_N(_res); i++)
 	{
 		if (str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]),
-			((CON_ROW(_h))[i]).s, 1024) < 0)
+			((CON_ROW(_h))[i]).s, STRN_LEN) < 0)
 		{
 			LOG(L_ERR, "convert_row: Error while converting value\n");
 			free_row(_r);

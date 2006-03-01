@@ -52,17 +52,16 @@ static char sql_buf[SQL_BUF_LEN];
 static int submit_query(db_con_t* _h, const char* _s)
 {
 	int ret;
+
+	/* first do some cleanup if required */
 	if(CON_RESULT(_h))
 	{
-		ret = SQLFreeStmt(&CON_RESULT(_h), SQL_CLOSE);
-		if (!SQL_SUCCEEDED(ret))
-		{
-			LOG(L_ERR, "Statement allocation error %d\n",
-				(int)(long)CON_CONNECTION(_h));
-			extract_error("SQLAllocStmt", CON_CONNECTION(_h), SQL_HANDLE_DBC);
-			return ret;
-		}
+		SQLFreeStmt(&CON_RESULT(_h), SQL_RESET_PARAMS);
+		SQLFreeStmt(&CON_RESULT(_h), SQL_UNBIND);
+		SQLFreeStmt(&CON_RESULT(_h), SQL_CLOSE);
+		SQLFreeStmt(&CON_RESULT(_h), SQL_DROP);
 	}
+
 	ret = SQLAllocStmt(CON_CONNECTION(_h), &CON_RESULT(_h));
 	if (!SQL_SUCCEEDED(ret))
 	{

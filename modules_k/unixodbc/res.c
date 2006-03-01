@@ -161,7 +161,7 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 
 	row = 0;
 	SQLNumResultCols(CON_RESULT(_h), (SQLSMALLINT *)&columns);
-	CON_ROW(_h) = (strn*)pkg_malloc((int)columns);
+	CON_ROW(_h) = (strn*)pkg_malloc( columns*sizeof(strn) );
 	if(!CON_ROW(_h))
 	{
 		LOG(L_ERR, "convert_rows: No memory left\n");
@@ -174,7 +174,7 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 		{
 			SQLINTEGER indicator;
 			ret = SQLGetData(CON_RESULT(_h), i, SQL_C_CHAR,
-				(CON_ROW(_h)[i-1]).s, 1024, &indicator);
+				(CON_ROW(_h)[i-1]).s, STRN_LEN, &indicator);
 			if (SQL_SUCCEEDED(ret))
 			{
 				if (indicator == SQL_NULL_DATA) strcpy((CON_ROW(_h)[i-1]).s, "NULL");

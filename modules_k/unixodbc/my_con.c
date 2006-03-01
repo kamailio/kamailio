@@ -122,7 +122,6 @@ struct my_con* new_connection(struct db_id* id)
 	memset(ptr, 0, sizeof(struct my_con));
 	ptr->ref = 1;
 
-/*NEW CODE*/
 	SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &(ptr->env));
 	SQLSetEnvAttr(ptr->env, SQL_ATTR_ODBC_VERSION, (void *) SQL_OV_ODBC3, 0);
 	SQLAllocHandle(SQL_HANDLE_DBC, ptr->env, &(ptr->dbc));
@@ -154,7 +153,7 @@ struct my_con* new_connection(struct db_id* id)
 		extract_error("SQLDriverConnect", ptr->dbc, SQL_HANDLE_DBC);
 		goto err;
 	}
-/*END NEW CODE*/
+
 	ptr->stmt_handle = NULL;
 
 	ptr->timestamp = time(0);

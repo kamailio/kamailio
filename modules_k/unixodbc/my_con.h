@@ -40,9 +40,11 @@
 #include <sql.h>
 #include <sqlext.h>
 
+#define STRN_LEN
+
 typedef struct strn
 {
-	char s[1024];
+	char s[STRN_LEN];
 } strn;
 
 struct my_con
