@@ -160,8 +160,10 @@ void free_cell( struct cell* dead_cell )
 	}
 
 	/* free the avp list */
-	if (dead_cell->user_avps)
-		destroy_avp_list_unsafe( &dead_cell->user_avps );
+	if (dead_cell->user_avps_from)
+		destroy_avp_list_unsafe( &dead_cell->user_avps_from );
+	if (dead_cell->user_avps_to)
+		destroy_avp_list_unsafe( &dead_cell->user_avps_to );
 
 	/* the cell's body */
 	shm_free_unsafe( dead_cell );
@@ -240,10 +242,19 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	/* timers */
 	init_cell_timers(new_cell);
 
-	/* move the current avp list to transaction -bogdan */
-	old = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER,  &new_cell->user_avps );
-	new_cell->user_avps = *old;
+	old = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER,  &new_cell->user_avps_from );
+	new_cell->user_avps_from = *old;
 	*old = 0;
+
+	old = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER,  &new_cell->user_avps_to );
+	new_cell->user_avps_to = *old;
+	*old = 0;
+
+	     /* We can just store pointer to domain avps in the transaction context,
+	      * because they are read-only
+	      */
+	new_cell->domain_avps_from = get_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN);
+	new_cell->domain_avps_to = get_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN);
 
 	/* enter callback, which may potentially want to parse some stuff,
 	 * before the request is shmem-ized */
@@ -271,7 +282,8 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	return new_cell;
 
 error:
-	destroy_avp_list(&new_cell->user_avps);
+	destroy_avp_list(&new_cell->user_avps_from);
+	destroy_avp_list(&new_cell->user_avps_to);
 	shm_free(new_cell);
 	/* unlink transaction AVP list and link back the global AVP list (bogdan)*/
 	reset_avps();

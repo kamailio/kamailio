@@ -172,7 +172,7 @@ void run_trans_callbacks( int type , struct cell *trans,
 {
 	static struct tmcb_params params = {0,0,0,0};
 	struct tm_callback    *cbp;
-	avp_list_t* backup;
+	avp_list_t* backup_from, *backup_to, *backup_dom_from, *backup_dom_to;
 
 	params.req = req;
 	params.rpl = rpl;
@@ -181,7 +181,10 @@ void run_trans_callbacks( int type , struct cell *trans,
 	if (trans->tmcb_hl.first==0 || ((trans->tmcb_hl.reg_types)&type)==0 )
 		return;
 
-	backup = set_avp_list(AVP_CLASS_USER | AVP_TRACK_FROM, &trans->user_avps );
+	backup_from = set_avp_list(AVP_CLASS_USER | AVP_TRACK_FROM, &trans->user_avps_from );
+	backup_to = set_avp_list(AVP_CLASS_USER | AVP_TRACK_TO, &trans->user_avps_to );
+	backup_dom_from = set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_FROM, &trans->domain_avps_from);
+	backup_dom_to = set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO, &trans->domain_avps_to);
 	for (cbp=trans->tmcb_hl.first; cbp; cbp=cbp->next)  {
 		if ( (cbp->types)&type ) {
 			DBG("DBG: trans=%p, callback type %d, id %d entered\n",
@@ -190,7 +193,10 @@ void run_trans_callbacks( int type , struct cell *trans,
 			cbp->callback( trans, type, &params );
 		}
 	}
-	set_avp_list(AVP_CLASS_USER | AVP_TRACK_FROM, backup );
+	set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO, backup_dom_to );
+	set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_FROM, backup_dom_from );
+	set_avp_list(AVP_CLASS_USER | AVP_TRACK_TO, backup_to );
+	set_avp_list(AVP_CLASS_USER | AVP_TRACK_FROM, backup_from );
 }
 
 
@@ -199,7 +205,7 @@ void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code )
 {
 	static struct tmcb_params params = {0,0,0,0};
 	struct tm_callback    *cbp;
-        avp_list_t* backup;
+	avp_list_t* backup_from, *backup_to, *backup_dom_from, *backup_dom_to;
 
 	params.req = req;
 	params.code = code;
@@ -207,12 +213,18 @@ void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code )
 	if (req_in_tmcb_hl->first==0)
 		return;
 
-	backup = set_avp_list(AVP_CLASS_USER | AVP_TRACK_FROM, &trans->user_avps );
+	backup_from = set_avp_list(AVP_CLASS_USER | AVP_TRACK_FROM, &trans->user_avps_from );
+	backup_to = set_avp_list(AVP_CLASS_USER | AVP_TRACK_TO, &trans->user_avps_to );
+	backup_dom_from = set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_FROM, &trans->domain_avps_from);
+	backup_dom_to = set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO, &trans->domain_avps_to);
 	for (cbp=req_in_tmcb_hl->first; cbp; cbp=cbp->next)  {
 		DBG("DBG: trans=%p, callback type %d, id %d entered\n",
 			trans, cbp->types, cbp->id );
 		params.param = &(cbp->param);
 		cbp->callback( trans, cbp->types, &params );
 	}
-	set_avp_list(AVP_CLASS_USER | AVP_TRACK_FROM, backup );
+	set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO, backup_dom_to );
+	set_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_FROM, backup_dom_from );
+	set_avp_list(AVP_CLASS_USER | AVP_TRACK_TO, backup_to );
+	set_avp_list(AVP_CLASS_USER | AVP_TRACK_FROM, backup_from );
 }

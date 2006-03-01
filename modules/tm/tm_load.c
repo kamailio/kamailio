@@ -44,7 +44,7 @@ int load_tm( struct tm_binds *tmb)
 {
 	if (!tm_init) {
 		LOG(L_ERR, "tm:load_tm: Module not initialized yet, make sure that all modules that need"
-		    " tm module are loaded before tm in the configuration file\n");
+		    " tm module are loaded after tm in the configuration file\n");
 		return -1;
 	}
 

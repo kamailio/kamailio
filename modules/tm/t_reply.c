@@ -491,7 +491,8 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 	static enum route_mode backup_mode;
 	static struct cell *backup_t;
 	static unsigned int backup_msgid;
-	static avp_list_t* backup_list;
+	static avp_list_t* backup_user_from, *backup_user_to;
+	static avp_list_t* backup_domain_from, *backup_domain_to;
 	static struct socket_info* backup_si;
 
 	if (msg) {
@@ -514,7 +515,11 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 		global_msg_id=msg->id;
 		set_t(t);
 		/* make available the avp list from transaction */
-		backup_list = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps );
+
+		backup_user_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from );
+		backup_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to );
+		backup_domain_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from );
+		backup_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to );
 		/* set default send address to the saved value */
 		backup_si=bind_address;
 		bind_address=t->uac[0].request.dst.send_sock;
@@ -524,7 +529,10 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 		global_msg_id=backup_msgid;
 		rmode=backup_mode;
 		/* restore original avp list */
-		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, backup_list );
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, backup_user_from );
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, backup_user_to );
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, backup_domain_from );
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, backup_domain_to );
 		bind_address=backup_si;
 	}
 }
@@ -1270,7 +1278,8 @@ int reply_received( struct sip_msg  *p_msg )
 	struct ua_client *uac;
 	struct cell *t;
 	str next_hop;
-	avp_list_t* backup_list;
+	avp_list_t* backup_user_from, *backup_user_to;
+	avp_list_t* backup_domain_from, *backup_domain_to;
 
 	/* make sure we know the associated transaction ... */
 	if (t_check( p_msg  , &branch )==-1)
@@ -1342,13 +1351,20 @@ int reply_received( struct sip_msg  *p_msg )
 		/* transfer transaction flag to message context */
 		if (t->uas.request) p_msg->flags=t->uas.request->flags;
 		/* set the as avp_list the one from transaction */
-		backup_list = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps );
+
+		backup_user_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from );
+		backup_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to );
+		backup_domain_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from );
+		backup_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to );
 		if (run_actions(onreply_rt.rlist[t->on_reply], p_msg)<0)
 			LOG(L_ERR, "ERROR: on_reply processing failed\n");
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
 		/* restore original avp list */
-		set_avp_list( AVP_TRACK_FROM | AVP_CLASS_USER, backup_list );
+		set_avp_list( AVP_TRACK_FROM | AVP_CLASS_USER, backup_user_from );
+		set_avp_list( AVP_TRACK_TO | AVP_CLASS_USER, backup_user_to );
+		set_avp_list( AVP_TRACK_FROM | AVP_CLASS_DOMAIN, backup_domain_from );
+		set_avp_list( AVP_TRACK_TO | AVP_CLASS_DOMAIN, backup_domain_to );
 	}
 	LOCK_REPLIES( t );
 	if ( is_local(t) ) {
@@ -1390,11 +1406,18 @@ int reply_received( struct sip_msg  *p_msg )
 					((msg_status>=180) || (last_uac_status==0)) )
 			) ) { /* provisional now */
 		if (is_invite(t)) {
-			backup_list = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, 
-										&t->user_avps );
+			backup_user_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from );
+			backup_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to );
+			backup_domain_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from );
+			backup_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to );
+
 			restart_rb_fr(& uac->request, t->fr_inv_timeout);
 			uac->request.flags|=F_RB_FR_INV; /* mark fr_inv */
-			set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER,  backup_list );
+
+			set_avp_list( AVP_TRACK_FROM | AVP_CLASS_USER, backup_user_from );
+			set_avp_list( AVP_TRACK_TO | AVP_CLASS_USER, backup_user_to );
+			set_avp_list( AVP_TRACK_FROM | AVP_CLASS_DOMAIN, backup_domain_from );
+			set_avp_list( AVP_TRACK_TO | AVP_CLASS_DOMAIN, backup_domain_to );
 		}
 	} /* provisional replies */
 
