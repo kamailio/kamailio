@@ -266,18 +266,11 @@ static int w_restore_from(struct sip_msg *msg,  char* foo, char* bar)
 }
 
 
-#define UAC_URI_SIZE	512
-static char uac_uri_buf[UAC_URI_SIZE];
-static char uac_dsp_buf[UAC_URI_SIZE];
-
 static int w_replace_from1(struct sip_msg* msg, char* uri, char* str2)
 {
 	str uri_s;
 
-	uri_s.len = UAC_URI_SIZE;
-	uri_s.s = uac_uri_buf;
-
-	if(xl_printf(msg, (xl_elem_p)uri, uri_s.s, &uri_s.len)!=0)
+	if(xl_printf_s( msg, (xl_elem_p)uri, &uri_s)!=0)
 		return -1;
 	return (replace_from(msg, 0, &uri_s)==0)?1:-1;
 }
@@ -290,10 +283,8 @@ static int w_replace_from2(struct sip_msg* msg, char* dsp, char* uri)
 
 	if (dsp!=NULL)
 	{
-		dsp_s.s   = uac_dsp_buf;
-		dsp_s.len = UAC_URI_SIZE;
 		if(dsp!=NULL)
-			if(xl_printf(msg, (xl_elem_p)dsp, dsp_s.s, &dsp_s.len)!=0)
+			if(xl_printf_s( msg, (xl_elem_p)dsp, &dsp_s)!=0)
 				return -1;
 	} else {
 		dsp_s.s = 0;
@@ -302,9 +293,7 @@ static int w_replace_from2(struct sip_msg* msg, char* dsp, char* uri)
 
 	if(uri!=NULL)
 	{
-		uri_s.s   = uac_uri_buf;
-		uri_s.len = UAC_URI_SIZE;
-		if(xl_printf(msg, (xl_elem_p)uri, uri_s.s, &uri_s.len)!=0)
+		if(xl_printf_s( msg, (xl_elem_p)uri, &uri_s)!=0)
 			return -1;
 	}
 

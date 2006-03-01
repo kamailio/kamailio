@@ -107,11 +107,8 @@ inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo)
 	str *uri;
 	environment_t *backup;
 	int ret;
-#define EXEC_DSET_PRINTBUF_SIZE   1024
-	static char exec_dset_printbuf[EXEC_DSET_PRINTBUF_SIZE];
-	int printbuf_len;
+	str command;
 	xl_elem_t *model;
-	char *cp;
 	
 	if(msg==0 || cmd==0)
 		return -1;
@@ -131,22 +128,16 @@ inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo)
 		uri=&msg->first_line.u.request.uri;
 	
 	model = (xl_elem_t*)cmd;
-	if(model->next==0 && model->spec.itf==0) {
-		cp = model->text.s;
-	} else {
-		printbuf_len = EXEC_DSET_PRINTBUF_SIZE-1;
-		if(xl_printf(msg, model, exec_dset_printbuf, &printbuf_len)<0)
-		{
-			LOG(L_ERR,
-				"exec:w_exec_dset: error - cannot print the format\n");
-			return -1;
-		}
-		cp = exec_dset_printbuf;
+	if(xl_printf_s(msg, model, &command)<0)
+	{
+		LOG(L_ERR,
+			"exec:w_exec_dset: error - cannot print the format\n");
+		return -1;
 	}
 	
-	DBG("exec:w_exec_dset: executing [%s]\n", cp);
+	DBG("exec:w_exec_dset: executing [%s]\n", command.s);
 
-	ret=exec_str(msg, cp, uri->s, uri->len);
+	ret=exec_str(msg, command.s, uri->s, uri->len);
 	if (setvars) {
 		unset_env(backup);
 	}

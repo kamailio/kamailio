@@ -228,28 +228,6 @@ static int direction_fixup(void** param, int param_no)
 
 
 
-static inline str* print_items(struct sip_msg *msg, xl_elem_t *model)
-{
-#define IT_BUF_SIZE   1024
-	static char it_buf[IT_BUF_SIZE];
-	static str s0;
-	int it_buf_len;
-
-	if(model->next==0 && model->spec.itf==0) {
-		s0 = model->text;
-	} else {
-		it_buf_len = IT_BUF_SIZE-1;
-		if(xl_printf(msg, model, it_buf, &it_buf_len)<0){
-			LOG(L_ERR,"ERROR:rr:print_items: failed to print the format\n");
-			return 0;
-		}
-		s0.s = it_buf;
-		s0.len = it_buf_len;
-	}
-	return &s0;
-}
-
-
 static int w_record_route0(struct sip_msg *msg,char *foo, char *bar)
 {
 	if (msg->id == last_rr_msg) {
@@ -267,17 +245,19 @@ static int w_record_route0(struct sip_msg *msg,char *foo, char *bar)
 
 static int w_record_route1(struct sip_msg *msg,char *key, char *bar)
 {
-	str *s;
+	str s;
 
 	if (msg->id == last_rr_msg) {
 		LOG(L_ERR, "ERROR:rr:record_route: Double attempt to record-route\n");
 		return -1;
 	}
 
-	s = print_items( msg, (xl_elem_t*)key);
-	if (s==0)
+	if (xl_printf_s(msg, (xl_elem_t*)key, &s)<0) {
+		LOG(L_ERR,"ERROR:rr:w_record_route1: failed to print "
+			"the format\n");
 		return -1;
-	if ( record_route( msg, s)<0 )
+	}
+	if ( record_route( msg, &s)<0 )
 		return -1;
 
 	last_rr_msg = msg->id;
@@ -287,7 +267,7 @@ static int w_record_route1(struct sip_msg *msg,char *key, char *bar)
 
 static int w_record_route_preset(struct sip_msg *msg, char *key, char *bar)
 {
-	str *s;
+	str s;
 
 	if (msg->id == last_rr_msg) {
 		LOG(L_ERR, "ERROR:rr:record_route_preset: Double attempt to "
@@ -295,10 +275,12 @@ static int w_record_route_preset(struct sip_msg *msg, char *key, char *bar)
 		return -1;
 	}
 
-	s = print_items( msg, (xl_elem_t*)key);
-	if (s==0)
+	if (xl_printf_s(msg, (xl_elem_t*)key, &s)<0) {
+		LOG(L_ERR,"ERROR:rr:w_record_route_preset: failed to print "
+			"the format\n");
 		return -1;
-	if ( record_route_preset( msg, s)<0 )
+	}
+	if ( record_route_preset( msg, &s)<0 )
 		return -1;
 
 	last_rr_msg = msg->id;
@@ -308,12 +290,13 @@ static int w_record_route_preset(struct sip_msg *msg, char *key, char *bar)
 
 static int w_add_rr_param(struct sip_msg *msg, char *key, char *foo)
 {
-	str *s;
+	str s;
 
-	s = print_items( msg, (xl_elem_t*)key);
-	if (s==0)
+	if (xl_printf_s(msg, (xl_elem_t*)key, &s)<0) {
+		LOG(L_ERR,"ERROR:rr:w_add_rr_param: failed to print the format\n");
 		return -1;
-	return ((add_rr_param( msg, s)==0)?1:-1);
+	}
+	return ((add_rr_param( msg, &s)==0)?1:-1);
 }
 
 

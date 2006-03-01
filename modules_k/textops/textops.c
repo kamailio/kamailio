@@ -829,12 +829,9 @@ static int append_time_f(struct sip_msg* msg, char* p1, char *p2)
 	return 1;
 }
 
-#define ADD_HF_PRINTBUF_SIZE   1024
-static char printbuf[ADD_HF_PRINTBUF_SIZE];
 
 static int append_to_reply_f(struct sip_msg* msg, char* key, char* str0)
 {
-	int printbuf_len;
 	xl_elem_t *model;
 	str s0;
 
@@ -845,21 +842,12 @@ static int append_to_reply_f(struct sip_msg* msg, char* key, char* str0)
 	}
 
 	model = (xl_elem_t*)key;
-	if(model->next==0 && model->spec.itf==0)
+	if (xl_printf_s(msg, model, &s0)<0)
 	{
-		s0 = model->text;
-	} else {
-		printbuf_len = ADD_HF_PRINTBUF_SIZE-1;
-		if(xl_printf(msg, model, printbuf, &printbuf_len)<0)
-		{
-			LOG(L_ERR,
-			"textops:add_hf_helper: error - cannot print the format\n");
-			return -1;
-		}
-		s0.s   = printbuf;
-		s0.len = printbuf_len;
+		LOG(L_ERR,"textops:add_hf_helper: error - cannot print the format\n");
+		return -1;
 	}
-	 
+ 
 	if ( add_lump_rpl( msg, s0.s, s0.len, LUMP_RPL_HDR)==0 )
 	{
 		LOG(L_ERR,"ERROR:append_to_reply : unable to add lump_rl\n");
@@ -879,7 +867,6 @@ static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 	struct hdr_field *hf;
 	char *s;
 	int len;
-	int printbuf_len;
 	str s0;
 
 	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
@@ -927,18 +914,11 @@ static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 		s0 = *str1;
 	} else {
 		if(model) {
-			if(model->next==0 && model->spec.itf==0) {
-				s0 = model->text;
-			} else {
-				printbuf_len = ADD_HF_PRINTBUF_SIZE-1;
-				if(xl_printf(msg, model, printbuf, &printbuf_len)<0)
-				{
-					LOG(L_ERR,
-					"textops:add_hf_helper: error - cannot print the format\n");
-					return -1;
-				}
-				s0.s   = printbuf;
-				s0.len = printbuf_len;
+			if (xl_printf_s(msg, model, &s0)<0)
+			{
+				LOG(L_ERR,
+				"textops:add_hf_helper: error - cannot print the format\n");
+				return -1;
 			}
 		} else {
 			s0.len = 0;
