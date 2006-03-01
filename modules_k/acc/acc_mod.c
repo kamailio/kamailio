@@ -427,6 +427,7 @@ static int mod_init( void )
 	attrs[A_SIP_RESPONSE_CODE].n	= "Sip-Response-Code";
 	attrs[A_SIP_METHOD].n			= "Sip-Method";
 	attrs[A_USER_NAME].n			= "User-Name";
+	attrs[A_TIME_STAMP].n			= "Event-Timestamp";
 	if (multileg_enabled) {
 		attrs[A_SRC_LEG].n			= "Sip-Leg-Source";
 		attrs[A_DST_LEG].n			= "Sip-Leg-Destination";

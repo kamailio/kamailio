@@ -921,6 +921,12 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 		END_loop_all_legs;
 	}
 
+	av_type=(UINT4)time(0); /* unix time */
+	if (!rc_avpair_add(rh, &send, attrs[A_TIME_STAMP].v, &av_type, -1, 0)) {
+		LOG(L_ERR, "ERROR: acc_rad_request: add TIME_STAMP\n");
+		goto error;
+	}
+
 	if (rc_acct(rh, SIP_PORT, send)!=OK_RC) {
 		LOG(L_ERR, "ERROR: acc_rad_request: radius-ing failed\n");
 		goto error;

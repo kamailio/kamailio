@@ -68,7 +68,8 @@ struct val {
 #define	A_SIP_AVP						27
 #define	A_SRC_LEG						28
 #define	A_DST_LEG						29
-#define	A_MAX							30
+#define	A_TIME_STAMP					30
+#define	A_MAX							31
 
 #define	V_STATUS_START			0
 #define	V_STATUS_STOP			1
