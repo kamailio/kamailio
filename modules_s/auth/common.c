@@ -109,5 +109,5 @@ int send_resp(struct sip_msg* msg, int code, char* reason,
 		}
 	}
 
-	return sl_reply(msg, (char*)(long)code, reason);
+	return sl.reply(msg, code, reason);
 }

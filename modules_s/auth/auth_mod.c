@@ -44,6 +44,7 @@
 #include "../../mem/mem.h"
 #include "../../error.h"
 #include "../../ut.h"
+#include "../sl/sl.h"
 #include "auth_mod.h"
 #include "challenge.h"
 #include "api.h"
@@ -68,9 +69,9 @@ static int challenge_fixup(void** param, int param_no);
 
 
 /*
- * Pointer to reply function in stateless module
+ * sl module interface
  */
-int (*sl_reply)(struct sip_msg* msg, char* str1, char* str2);
+sl_api_t sl;
 
 
 /*
@@ -156,14 +157,20 @@ static inline int generate_random_secret(void)
 
 static int mod_init(void)
 {
+	bind_sl_t bind_sl;
+
 	DBG("auth module - initializing\n");
 
-	sl_reply = find_export("sl_send_reply", 2, 0);
-
-	if (!sl_reply) {
-		LOG(L_ERR, "auth:mod_init: This module requires sl module\n");
-		return -2;
+             /*
+              * We will need sl_send_reply from stateless
+	      * module for sending replies
+	      */
+	bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
+	if (!bind_sl) {
+		ERR("This module requires sl module\n");
+		return -1;
 	}
+	if (bind_sl(&sl) < 0) return -1;
 
 	     /* If the parameter was not used */
 	if (sec_param == 0) {

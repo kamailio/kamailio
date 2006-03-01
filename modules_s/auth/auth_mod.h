@@ -35,6 +35,7 @@
 #define AUTH_MOD_H
 
 #include "../../str.h"
+#include "../sl/sl.h"
 #include "../../parser/msg_parser.h"    /* struct sip_msg */
 
 
@@ -44,9 +45,6 @@
 extern str secret;            /* secret phrase used to generate nonce */
 extern int nonce_expire;      /* nonce expire interval */
 extern int protect_contacts;  /* Enable/disable contact hashing in nonce */
-
-
-/* Stateless reply function pointer */
-extern int (*sl_reply)(struct sip_msg* msg, char* str1, char* str2);
+extern sl_api_t sl;
 
 #endif /* AUTH_MOD_H */
