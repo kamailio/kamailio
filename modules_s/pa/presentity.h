@@ -263,6 +263,9 @@ int add_winfo_watcher(presentity_t* _p, struct watcher* _w);
  */
 int remove_winfo_watcher(presentity_t* _p, watcher_t* _w);
 
+/* removes winfo/normal watcher if expired */
+void remove_watcher_if_expired(presentity_t* _p, watcher_t *w);
+
 /*
  * Notify all winfo watchers in the list
  */

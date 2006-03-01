@@ -1,17 +1,22 @@
+2006-02-28
+	* call to timer_presentity in handle_subscription replaced by call to
+	send_notify and remove_watcher_if_expired (i.e. sending notification to
+	all watchers immediately -> sending notification to new/updated watcher)
+
 2006-02-27
 	* corrected BUGs - mostly used dstr_get_str instead of dstr_get_data
 	because there were some cases when was allocated memory buffers of zero
 	length (this consumes memory using shm_malloc), but this memory was NOT
 	freed then
-	
+
 2006-02-15
 	* RPC function pa.publish uses UID instead of uri!
 	* XCAP uris for authorization documents contain UID instead of username!
 	* added configurable max_subscription_expiration (undocumented)
-	
+
 2006-02-14
 	* added parameter for disabling processing internal subscriptions
-	
+
 2006-02-02
 	* added handling of <person> element from RPID (whole <person> elements
 	are stored and put into NOTIFY messages; they are not processed in any

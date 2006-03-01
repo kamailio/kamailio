@@ -519,7 +519,14 @@ static int create_watcher(struct sip_msg* _m, struct presentity* _p, struct watc
 		paerrno = PA_INTERNAL_ERROR;
 		return -7;
 	}
-		
+	
+	/* actualize watcher's status according to time */
+	if ((*_w)->expires <= act_time) {
+		LOG(L_DBG, "Created expired watcher %.*s\n", (*_w)->uri.len, (*_w)->uri.s);
+		(*_w)->expires = 0;
+		set_watcher_terminated_status(*_w);
+	}
+	
 	return 0;
 }
 
@@ -867,7 +874,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 		ERR("Can't add Expires header to the response\n");
 		/* return -1; */
 	}
-	
+
 	if (send_reply(_m) < 0) {
 	  LOG(L_ERR, "handle_subscription(): Error while sending reply\n");
 	  unlock_pdomain(d);
@@ -885,7 +892,14 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	    (w ? w->event_package : -1), (w ? w->preferred_mimetype : -1), (p ? p->flags : -1), (w ? w->flags : -1), w);
 
 	/* process and change this presentity and notify watchers */
-	timer_presentity(p);
+/*	timer_presentity(p); */
+	if (p && w) {
+		/* immediately send NOTIFY */
+		send_notify(p, w);
+		/* remove terminated watcher otherwise he will 
+		 * receive another NOTIFY generated from timer_pdomain */
+		remove_watcher_if_expired(p, w);
+	}
 	
 	unlock_pdomain(d);
 	return 1;
