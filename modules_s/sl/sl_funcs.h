@@ -29,15 +29,16 @@
 #ifndef _SL_FUNCS_H
 #define _SL_FUNCS_H
 
+#include "../../sr_module.h"
 #include "../../parser/msg_parser.h"
 
-#define SL_RPL_WAIT_TIME  2  // in sec
+#define SL_RPL_WAIT_TIME  2  /* in sec */
 
 #define SL_TOTAG_SEPARATOR '.'
 
 int sl_startup();
 int sl_shutdown();
-int sl_send_reply(struct sip_msg*,int,char*);
+int sl_send_reply(struct sip_msg*, int code, char* reason);
 int sl_filter_ACK(struct sip_msg*, void *bar );
 int sl_reply_error(struct sip_msg *msg );
 

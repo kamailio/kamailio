@@ -115,17 +115,13 @@ static void calc_crc_suffix( struct sip_msg *msg )
 }
 #endif
 
-
-int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
+int sl_send_reply(struct sip_msg *msg , int code, char* reason)
 {
-	char               *buf;
-	unsigned int       len;
+	char *buf, *dset;
+	unsigned int len;
 	union sockaddr_union to;
-	char *dset;
-	int dset_len;
 	struct bookmark dummy_bm;
-	int backup_mhomed;
-	int ret;
+	int backup_mhomed, ret, dset_len;
 
 
 	if ( msg->first_line.u.request.method_value==METHOD_ACK)
@@ -133,10 +129,6 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 		LOG(L_WARN, "Warning: sl_send_reply: I won't send a reply for ACK!!\n");
 		goto error;
 	}
-
-	/* family will be updated in update_sock to whatever appropriate;
-	   -jiri
-	to.sin_family = AF_INET; */
 
 	if (reply_to_via) {
 		if (update_sock_struct_from_via(  &(to), msg, msg->via1 )==-1)
@@ -165,9 +157,9 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 		&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) ) 
 	{
 		calc_crc_suffix( msg, tag_suffix );
-		buf = build_res_buf_from_sip_req(code,text,&sl_tag,msg,&len,&dummy_bm);
+		buf = build_res_buf_from_sip_req(code,reason,&sl_tag,msg,&len,&dummy_bm);
 	} else {
-		buf = build_res_buf_from_sip_req(code,text,0,msg,&len,&dummy_bm);
+		buf = build_res_buf_from_sip_req(code,reason,0,msg,&len,&dummy_bm);
 	}
 	if (!buf)
 	{
@@ -193,11 +185,11 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	*(sl_timeout) = get_ticks() + SL_RPL_WAIT_TIME;
 	pkg_free(buf);
 
-//	update_sl_stats(code);
+	update_sl_stats(code);
 	return 1;
 
 error:
-//	update_sl_failures();
+	update_sl_failures();
 	return -1;
 }
 

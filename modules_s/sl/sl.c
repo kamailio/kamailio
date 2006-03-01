@@ -79,12 +79,12 @@ static int w_sl_reply_error(struct sip_msg* msg, char* str, char* str2);
 static int mod_init(void);
 static int child_init(int rank);
 static void mod_destroy();
-
+static int fixup_sl_reply(void** param, int param_no);
 
 static cmd_export_t cmds[]={
-	{"sl_send_reply",  w_sl_send_reply,  2, fixup_int_1, REQUEST_ROUTE},
-	{"sl_reply",  w_sl_send_reply,  2, fixup_int_1, REQUEST_ROUTE},
-	{"sl_reply_error", w_sl_reply_error, 0, 0,           REQUEST_ROUTE},
+	{"sl_send_reply",  w_sl_send_reply,  2, fixup_sl_reply, REQUEST_ROUTE},
+	{"sl_reply",       w_sl_send_reply,  2, fixup_sl_reply, REQUEST_ROUTE},
+	{"sl_reply_error", w_sl_reply_error, 0, 0,              REQUEST_ROUTE},
 	{0,0,0,0,0}
 };
 
@@ -146,9 +146,67 @@ static void mod_destroy()
 }
 
 
-static int w_sl_send_reply(struct sip_msg* msg, char* str, char* str2)
+static int get_param_val(int* code, char** reason, fparam_t* c, fparam_t* r)
 {
-	return sl_send_reply(msg,(unsigned int)(unsigned long)str,str2);
+	avp_t* avp;
+	avp_value_t val;
+
+	switch(c->type) {
+	case FPARAM_AVP:
+		if (!(avp = search_first_avp(c->v.avp.flags, c->v.avp.name, &val, 0))) {
+			goto internal;
+		} else {
+			if (avp->flags & AVP_VAL_STR) goto internal;
+			*code = val.n;
+		}
+		break;
+
+	case FPARAM_INT:
+		*code = c->v.i;
+		break;
+
+	default:
+		ERR("BUG: Invalid parameter value in sl_send_reply\n");
+		return -1;
+	}
+
+
+	switch(r->type) {
+	case FPARAM_AVP:
+		if (!(avp = search_first_avp(r->v.avp.flags, r->v.avp.name, &val, 0))) {
+			goto internal;
+		} else {
+			if ((avp->flags & AVP_VAL_STR) == 0) goto internal;
+			     /* FIXME: AVP values are zero terminated */
+			*reason = val.s.s;
+		}
+		break;
+
+	case FPARAM_ASCIIZ:
+		*reason = r->v.asciiz;
+		break;
+
+	default:
+		ERR("BUG: Invalid parameter value in sl_send_reply\n");
+		return -1;
+	}
+
+	return 0;
+
+ internal:
+	*code = 500;
+	*reason = "Internal Server Error (AVP from sl_reply param not found)";
+	return 0;
+}
+
+
+
+static int w_sl_send_reply(struct sip_msg* msg, char* p1, char* p2)
+{
+	int code;
+	char* reason;
+	if (get_param_val(&code, &reason, (fparam_t*)p1, (fparam_t*)p2) < 0) return -1;
+	return sl_send_reply(msg, code, reason);
 }
 
 
@@ -158,3 +216,18 @@ static int w_sl_reply_error( struct sip_msg* msg, char* str, char* str2)
 }
 
 
+static int fixup_sl_reply(void** param, int param_no)
+{
+	int ret;
+
+	if (param_no == 1) {
+		ret = fix_param(FPARAM_AVP, param);
+		if (ret <= 0) return ret;		
+		return fix_param(FPARAM_INT, param);
+	} else if (param_no == 2) {
+		ret = fix_param(FPARAM_AVP, param);
+		if (ret <= 0) return ret;
+		return fix_param(FPARAM_ASCIIZ, param);
+	}
+	return 0;
+}
