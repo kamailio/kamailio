@@ -41,6 +41,7 @@
 #ifndef route_struct_h
 #define route_struct_h
 
+#include <sys/types.h>
 #include <regex.h>
 #include "select.h"
 #include "usr_avp.h"
