@@ -1276,25 +1276,38 @@ INCEXC_HF_VALUE_FIXUP(exclude_hf_value_fixup, hnoExclude)
 INCEXC_HF_VALUE_FIXUP(hf_value_exists_fixup, hnoIsIncluded)
 
 static void get_uri_and_skip_until_params(str *param_area, str *uri) {
-	int i, quoted;
+	int i, quoted, uri_pos, uri_done;
+
 	uri->len = 0;
-	for (i=0; i<param_area->len && param_area->s[i]!=';'; ) {
+	uri_done = 0;
+	for (i=0; i<param_area->len && param_area->s[i]!=';'; ) {	/* [ *(token LSW)/quoted-string ] "<" addr-spec ">" | addr-spec */
 		/* skip name */
-		for (quoted=0; i<param_area->len; i++) {
+
+		for (quoted=0, uri_pos=i; i<param_area->len; i++) {
 			if (!quoted) {
-				if (param_area->s[i] == '\"') quoted = 1;
-				else if (param_area->s[i] == '<' || param_area->s[i] == ';') break;
+				if (param_area->s[i] == '\"') {
+					quoted = 1;
+					uri_pos = -1;
+				}
+				else if (param_area->s[i] == '<' || param_area->s[i] == ';' || is_space(param_area->s[i])) break;
 			}
 			else if (param_area->s[i] == '\"' && param_area->s[i-1] != '\\') quoted = 0;
 		}
+		if (uri_pos >= 0 && !uri_done) {
+			uri->s = param_area->s+uri_pos;
+			uri->len = param_area->s+i-uri->s;
+		}
 		/* skip uri */
+		while (i<param_area->len && is_space(param_area->s[i])) i++;
 		if (i<param_area->len && param_area->s[i]=='<') {
 			uri->s = param_area->s+i;
+			uri->len = 0;
 			for (quoted=0; i<param_area->len; i++) {
 				if (!quoted) {
 					if (param_area->s[i] == '\"') quoted = 1;
 					else if (param_area->s[i] == '>') {
 						uri->len = param_area->s+i-uri->s+1;
+						uri_done = 1;
 						break;
 					}
 				}
@@ -1774,6 +1787,10 @@ static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
 				r = find_hf_value_idx(msg, hname, &hf, &hval1, &hval2);
 				if (r >= 0) {
 					get_uri_and_skip_until_params(&hval1, res);
+					if (res->len && *res->s == '<') {
+						res->s++;   	/* strip < & > */
+						res->len-=2;
+					}
 				}
 			}
 			break;
