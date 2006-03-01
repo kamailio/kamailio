@@ -283,29 +283,6 @@ int codes[] = {
 };
 
 
-#define RETRY_AFTER "Retry-After: "
-#define RETRY_AFTER_LEN (sizeof(RETRY_AFTER) - 1)
-
-static int add_retry_after(struct sip_msg* _m)
-{
-	char* buf, *ra_s;
- 	int ra_len;
- 	
- 	ra_s = int2str(retry_after, &ra_len);
- 	buf = (char*)pkg_malloc(RETRY_AFTER_LEN + ra_len + CRLF_LEN);
- 	if (!buf) {
- 		LOG(L_ERR, "add_retry_after: No memory left\n");
- 		return -1;
- 	}
- 	memcpy(buf, RETRY_AFTER, RETRY_AFTER_LEN);
- 	memcpy(buf + RETRY_AFTER_LEN, ra_s, ra_len);
- 	memcpy(buf + RETRY_AFTER_LEN + ra_len, CRLF, CRLF_LEN);
- 	add_lump_rpl(_m, buf, RETRY_AFTER_LEN + ra_len + CRLF_LEN,
- 		     LUMP_RPL_HDR | LUMP_RPL_NODUP);
- 	return 0;
-}
-
-
 /*
  * Send a reply
  */
@@ -340,15 +317,10 @@ int send_reply(struct sip_msg* _m)
 		add_lump_rpl( _m, buf, E_INFO_LEN + error_info[rerrno].len + CRLF_LEN,
 			LUMP_RPL_HDR|LUMP_RPL_NODUP);
 
-		if (code >= 500 && code < 600 && retry_after) {
-			if (add_retry_after(_m) < 0) {
-				return -1;
-			}
-		}
 	}
 
-	if (sl_reply(_m, (char*)code, msg) == -1) {
-		LOG(L_ERR, "send_reply(): Error while sending %ld %s\n", code, msg);
+	if (sl.reply(_m, code, msg) == -1) {
+		ERR("Error while sending %ld %s\n", code, msg);
 		return -1;
 	} else return 0;	
 }
@@ -365,4 +337,47 @@ void free_contact_buf(void)
 		contact.buf_len = 0;
 		contact.data_len = 0;
 	}
+}
+
+
+int setup_attrs(struct sip_msg* msg)
+{
+	int code;
+	str reason, c;
+	avp_value_t val;
+
+	code = codes[rerrno];
+	switch(code) {
+	case 200: reason.s = MSG_200; reason.len = sizeof(MSG_200) - 1; break;
+	case 400: reason.s = MSG_400; reason.len = sizeof(MSG_400) - 1; break;
+	case 500: reason.s = MSG_500; reason.len = sizeof(MSG_500) - 1; break;
+	case 503: reason.s = MSG_503; reason.len = sizeof(MSG_503) - 1; break;
+	}
+
+	val.n = code;
+	if (add_avp(avpid_code.flags, avpid_code.name, val) < 0) {
+		ERR("Error while creating reply code attribute\n");
+		return -1;
+	}
+
+	val.s = reason;
+	if (add_avp(avpid_reason.flags | AVP_VAL_STR, avpid_reason.name, val) < 0) {
+		ERR("Error while creating reply reason attribute\n");
+		return -1;
+	}	
+
+	if (contact.data_len > 0) {
+		c.s = contact.buf;
+		c.len = contact.data_len;
+		val.s = c;
+
+		if (add_avp(avpid_contact.flags | AVP_VAL_STR, avpid_contact.name, val) < 0) {
+			ERR("Error while creating contact attribute\n");
+			return -1;
+		}	
+
+		contact.data_len = 0;
+	}	
+
+	return 0;
 }

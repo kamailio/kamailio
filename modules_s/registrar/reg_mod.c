@@ -40,6 +40,8 @@
 #include "../../timer.h"
 #include "../../dprint.h"
 #include "../../error.h"
+#include "../../usr_avp.h"
+#include "../../trim.h"
 #include "save.h"
 #include "lookup.h"
 #include "reply.h"
@@ -68,30 +70,36 @@ int min_expires     = 60;             /* Minimum expires the phones are allowed 
 int max_expires     = 0;              /* Minimum expires the phones are allowed to use in seconds,
 			               * use 0 to switch expires checking off */
 int max_contacts = 0;                 /* Maximum number of contacts per AOR */
-int retry_after = 0;                  /* The value of Retry-After HF in 5xx replies */
 
 str rcv_param = STR_STATIC_INIT("received");
-
 int received_to_uri = 0;  /* copy received to uri, don't add it to dst_uri */
+
+/* Attribute names */
+str reply_code_attr = STR_STATIC_INIT("$code");
+str reply_reason_attr = STR_STATIC_INIT("$reason");
+str contact_attr = STR_STATIC_INIT("$contact");
+
+avp_ident_t avpid_code, avpid_reason, avpid_contact;
 
 
 /*
- * sl_send_reply function pointer
+ * sl module api
  */
-int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
+sl_api_t sl;
 
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"save_contacts",   save,         1, domain_fixup, REQUEST_ROUTE                },
-	{"save",            save,         1, domain_fixup, REQUEST_ROUTE                },
-	{"save_noreply",    save_noreply, 1, domain_fixup, REQUEST_ROUTE                },
-	{"save_memory",     save_memory,  1, domain_fixup, REQUEST_ROUTE                },
-	{"lookup_contacts", lookup,       1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"lookup",          lookup,       1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"registered",      registered,   1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"save_contacts",         save,         1, domain_fixup, REQUEST_ROUTE                },
+	{"save",                  save,         1, domain_fixup, REQUEST_ROUTE                },
+	{"save_contacts_noreply", save_noreply, 1, domain_fixup, REQUEST_ROUTE                },
+	{"save_noreply",          save_noreply, 1, domain_fixup, REQUEST_ROUTE                },
+	{"save_memory",           save_memory,  1, domain_fixup, REQUEST_ROUTE                },
+	{"lookup_contacts",       lookup,       1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"lookup",                lookup,       1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"registered",            registered,   1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -100,21 +108,23 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"default_expires", PARAM_INT, &default_expires},
-	{"default_q",       PARAM_INT, &default_q      },
-	{"append_branches", PARAM_INT, &append_branches},
-	{"save_nat_flag",   PARAM_INT, &save_nat_flag  },
-	{"save_nat_flag",   PARAM_STRING|PARAM_USE_FUNC, fix_save_nat_flag},
+	{"default_expires",   PARAM_INT, &default_expires},
+	{"default_q",         PARAM_INT, &default_q      },
+	{"append_branches",   PARAM_INT, &append_branches},
+	{"save_nat_flag",     PARAM_INT, &save_nat_flag  },
+	{"save_nat_flag",     PARAM_STRING|PARAM_USE_FUNC, fix_save_nat_flag},
 
-	{"load_nat_flag",   PARAM_INT, &load_nat_flag  },
-	{"load_nat_flag",   PARAM_STRING|PARAM_USE_FUNC, fix_load_nat_flag},
+	{"load_nat_flag",     PARAM_INT, &load_nat_flag  },
+	{"load_nat_flag",     PARAM_STRING|PARAM_USE_FUNC, fix_load_nat_flag},
 
-	{"min_expires",     PARAM_INT, &min_expires    },
-	{"max_expires",     PARAM_INT, &max_expires    },
-        {"received_param",  PARAM_STR, &rcv_param      },
-	{"max_contacts",    PARAM_INT, &max_contacts   },
-	{"retry_after",     PARAM_INT, &retry_after    },
-	{"received_to_uri", PARAM_INT, &received_to_uri},
+	{"min_expires",       PARAM_INT, &min_expires    },
+	{"max_expires",       PARAM_INT, &max_expires    },
+        {"received_param",    PARAM_STR, &rcv_param      },
+	{"max_contacts",      PARAM_INT, &max_contacts   },
+	{"received_to_uri",   PARAM_INT, &received_to_uri},
+	{"reply_code_attr",   PARAM_STR, &reply_code_attr},
+	{"reply_reason_attr", PARAM_STR, &reply_reason_attr},
+	{"contact_attr",      PARAM_STR, &contact_attr},
 	{0, 0, 0}
 };
 
@@ -135,11 +145,56 @@ struct module_exports exports = {
 };
 
 
+static int parse_attr_params(void)
+{
+	str tmp;
+
+	tmp = reply_code_attr;
+	trim(&tmp);
+	if (!tmp.len || tmp.s[0] != '$') {
+		ERR("Invalid attribute name '%.*s'\n", tmp.len, tmp.s);
+		return -1;
+	}
+	tmp.s++; tmp.len--;
+	if (parse_avp_ident(&tmp, &avpid_code) < 0) {
+		ERR("Error while parsing attribute name '%.*s'\n", tmp.len, tmp.s);
+		return -1;
+	}
+
+	tmp = reply_reason_attr;
+	trim(&tmp);
+	if (!tmp.len || tmp.s[0] != '$') {
+		ERR("Invalid attribute name '%.*s'\n", tmp.len, tmp.s);
+		return -1;
+	}
+	tmp.s++; tmp.len--;
+	if (parse_avp_ident(&tmp, &avpid_reason) < 0) {
+		ERR("Error while parsing attribute name '%.*s'\n", tmp.len, tmp.s);
+		return -1;
+	}
+
+	tmp = contact_attr;
+	trim(&tmp);
+	if (!tmp.len || tmp.s[0] != '$') {
+		ERR("Invalid attribute name '%.*s'\n", tmp.len, tmp.s);
+		return -1;
+	}
+	tmp.s++; tmp.len--;
+	if (parse_avp_ident(&tmp, &avpid_contact) < 0) {
+		ERR("Error while parsing attribute name '%.*s'\n", tmp.len, tmp.s);
+		return -1;
+	}
+
+	return 0;
+}
+
+
 /*
  * Initialize parent
  */
 static int mod_init(void)
 {
+	bind_sl_t bind_sl;
 	bind_usrloc_t bind_usrloc;
 
 	DBG("registrar - initializing\n");
@@ -148,15 +203,16 @@ static int mod_init(void)
               * We will need sl_send_reply from stateless
 	      * module for sending replies
 	      */
-        sl_reply = find_export("sl_send_reply", 2, 0);
-	if (!sl_reply) {
-		LOG(L_ERR, "registrar: This module requires sl module\n");
+        bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
+	if (!bind_sl) {
+		ERR("This module requires sl module\n");
 		return -1;
 	}
+	if (bind_sl(&sl) < 0) return -1;
 
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 	if (!bind_usrloc) {
-		LOG(L_ERR, "registrar: Can't bind usrloc\n");
+		ERR("Can't bind usrloc\n");
 		return -1;
 	}
 
@@ -171,6 +227,7 @@ static int mod_init(void)
 		}
 	}
 
+	if (parse_attr_params() < 0) return -1;
 
 	if (bind_usrloc(&ul) < 0) {
 		return -1;
