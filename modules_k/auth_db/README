@@ -257,6 +257,7 @@ modparam("auth_db", "load_credentials", "i:13=rpid;email_address")
        To header field domain will be used (because this header
        field represents a user being registered), for all other
        messages From header field domain will be used.
+       The string may contain pseudo variables.
      * table - Table to be used to lookup usernames and passwords
        (usually subscribers table).
 
@@ -289,6 +290,7 @@ if (www_authorize("siphub.net", "subscriber")) {
        If an empty string "" is used then the server will
        generate it from the request. From header field domain
        will be used as realm.
+       The string may contain pseudo variables.
      * table - Table to be used to lookup usernames and passwords
        (usually subscribers table).
 
@@ -338,4 +340,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.

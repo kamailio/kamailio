@@ -24,6 +24,7 @@
  * History:
  * -------
  * 2003-03-09: Based on authorize.c from radius_auth (janakj)
+ * 2006-03-01: pseudo variables support for domain name (bogdan)
  */
 
 
@@ -38,6 +39,7 @@
 #include "../../parser/parse_to.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../items.h"
 #include "../auth/api.h"
 #include "authorize.h"
 #include "sterman.h"
@@ -69,7 +71,8 @@ static inline int get_uri(struct sip_msg* _m, str** _uri)
 /*
  * Authorize digest credentials
  */
-static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
+static inline int authorize(struct sip_msg* _msg, xl_elem_t* _realm,
+																int _hftype)
 {
 	int res;
 	auth_result_t ret;
@@ -79,7 +82,16 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 	struct sip_uri puri;
 	str user, domain;
 
-	domain = *_realm;
+	if (_realm) {
+		if (xl_printf_s(_msg, _realm, &domain)!=0) {
+			LOG(L_ERR,"ERROR:auth_radius:authorize: xl_printf_s failed\n");
+			return -1;
+		}
+	} else {
+		domain.len = 0;
+		domain.s = 0;
+	}
+
 	ret = auth_api.pre_auth(_msg, &domain, _hftype, &h);
 	
 	switch(ret) {
@@ -132,7 +144,7 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 int radius_proxy_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
 {
 	/* realm parameter is converted to str* in str_fixup */
-	return authorize(_msg, (str*)_realm, HDR_PROXYAUTH_T);
+	return authorize(_msg, (xl_elem_t*)_realm, HDR_PROXYAUTH_T);
 }
 
 
@@ -141,6 +153,6 @@ int radius_proxy_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
  */
 int radius_www_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
 {
-	return authorize(_msg, (str*)_realm, HDR_AUTHORIZATION_T);
+	return authorize(_msg, (xl_elem_t*)_realm, HDR_AUTHORIZATION_T);
 }
 

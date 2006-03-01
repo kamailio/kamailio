@@ -162,7 +162,8 @@ modparam("auth_diameter", "use_domain", 1)
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>realm</emphasis> - the realm to be use for
-			authentication and authorization.
+			authentication and authorization. The string may contain 
+			pseudo variables.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -195,7 +196,8 @@ if(!diameter_www_authorize("siphub.net"))
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>realm</emphasis> - the realm to be use for
-			authentication and authorization.
+			authentication and authorization. The string may contain 
+			pseudo variables.
 			</para>
 		</listitem>
 		</itemizedlist>

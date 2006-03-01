@@ -26,11 +26,13 @@
  * 2003-01-20 snprintf in build_auth_hf replaced with memcpy to avoid
  *            possible issues with too small buffer
  * 2003-01-26 consume_credentials no longer complains about ACK/CANCEL(jiri)
+ * 2006-03-01 pseudo variables support for domain name (bogdan)
  */
 
 #include "../../data_lump.h"
 #include "../../mem/mem.h"
 #include "../../parser/digest/digest.h"
+#include "../../items.h"
 #include "auth_mod.h"
 #include "common.h"
 #include "challenge.h"
@@ -123,8 +125,8 @@ static inline char *build_auth_hf(int _retries, int _stale, str* _realm,
 /*
  * Create and send a challenge
  */
-static inline int challenge(struct sip_msg* _msg, str* _realm, int _qop, 
-			    int _code, char* _message, char* _challenge_msg)
+static inline int challenge(struct sip_msg* _msg, xl_elem_t* _realm, int _qop,
+						int _code, char* _message, char* _challenge_msg)
 {
 	int auth_hf_len;
 	struct hdr_field* h;
@@ -133,13 +135,14 @@ static inline int challenge(struct sip_msg* _msg, str* _realm, int _qop,
 	int ret;
 	hdr_types_t hftype = 0; /* Makes gcc happy */
 	struct sip_uri uri;
+	str realm;
 
 	switch(_code) {
-	case 401: 
+	case 401:
 		get_authorized_cred(_msg->authorization, &h); 
 		hftype = HDR_AUTHORIZATION_T;
 		break;
-	case 407: 
+	case 407:
 		get_authorized_cred(_msg->proxy_auth, &h);
 		hftype = HDR_PROXYAUTH_T;
 		break;
@@ -147,7 +150,7 @@ static inline int challenge(struct sip_msg* _msg, str* _realm, int _qop,
 
 	if (h) cred = (auth_body_t*)(h->parsed);
 
-	if (_realm->len == 0) {
+	if (_realm == 0) {
 		if (get_realm(_msg, hftype, &uri) < 0) {
 			LOG(L_ERR, "challenge(): Error while extracting URI\n");
 			if (send_resp(_msg, 400, MESSAGE_400, 0, 0) == -1) {
@@ -157,11 +160,20 @@ static inline int challenge(struct sip_msg* _msg, str* _realm, int _qop,
 			return 0;
 		}
 
-		_realm = &uri.host;
-		strip_realm(_realm);
+		realm = uri.host;
+		strip_realm(&realm);
+	} else {
+		if(xl_printf_s(_msg, _realm, &realm)!=0) {
+			LOG(L_ERR, "ERROR:auth:challenge: xl_printf_s failed\n");
+			if (send_resp(_msg, 500, MESSAGE_500, 0, 0)==-1)
+				return -1;
+			else
+				return 0;
+		}
 	}
 
-	auth_hf = build_auth_hf(0, (cred ? cred->stale : 0), _realm, &auth_hf_len, _qop, _challenge_msg);
+	auth_hf = build_auth_hf(0, (cred ? cred->stale : 0), &realm, 
+			&auth_hf_len, _qop, _challenge_msg);
 	if (!auth_hf) {
 		LOG(L_ERR, "ERROR: challenge: no mem w/cred\n");
 		return -1;
@@ -183,8 +195,8 @@ static inline int challenge(struct sip_msg* _msg, str* _realm, int _qop,
  */
 int www_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
 {
-	return challenge(_msg, (str*)_realm, (int)(long)_qop, 401, MESSAGE_401,
-						WWW_AUTH_CHALLENGE);
+	return challenge(_msg, (xl_elem_t*)_realm, (int)(long)_qop, 401,
+			MESSAGE_401, WWW_AUTH_CHALLENGE);
 }
 
 
@@ -193,8 +205,8 @@ int www_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
  */
 int proxy_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
 {
-	return challenge(_msg, (str*)_realm, (int)(long)_qop, 407, MESSAGE_407, 
-						PROXY_AUTH_CHALLENGE);
+	return challenge(_msg, (xl_elem_t*)_realm, (int)(long)_qop, 407,
+			MESSAGE_407, PROXY_AUTH_CHALLENGE);
 }
 
 

@@ -31,6 +31,7 @@
  * 2004-06-06  cleanup: static & auth_db_{init,bind,close.ver} used (andrei)
  * 2005-05-31  general definition of AVPs in credentials now accepted - ID AVP,
  *             STRING AVP, AVP aliases (bogdan)
+ * 2006-03-01 pseudo variables support for domain name (bogdan)
  */
 
 #include <stdio.h>
@@ -39,10 +40,11 @@
 #include "../../db/db.h"
 #include "../../dprint.h"
 #include "../../error.h"
+#include "../../items.h"
 #include "../../mem/mem.h"
-#include "authorize.h"
 #include "../auth/aaa_avps.h"
 #include "../auth/api.h"
+#include "authorize.h"
 
 MODULE_VERSION
 
@@ -66,7 +68,7 @@ static int child_init(int rank);
 static int mod_init(void);
 
 
-static int str_fixup(void** param, int param_no);
+static int auth_fixup(void** param, int param_no);
 
 
 /*
@@ -114,8 +116,8 @@ int credentials_n           = 0; /* Number of credentials in the list */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"www_authorize",   www_authorize,   2, str_fixup, REQUEST_ROUTE},
-	{"proxy_authorize", proxy_authorize, 2, str_fixup, REQUEST_ROUTE},
+	{"www_authorize",   www_authorize,   2, auth_fixup, REQUEST_ROUTE},
+	{"proxy_authorize", proxy_authorize, 2, auth_fixup, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -225,41 +227,47 @@ static void destroy(void)
 
 
 /*
- * Convert char* parameter to str* parameter
+ * Convert the char* parameters
  */
-static int str_fixup(void** param, int param_no)
+static int auth_fixup(void** param, int param_no)
 {
+	xl_elem_t *model;
 	db_con_t* dbh;
-	str* s;
+	char* s;
 	int ver;
 	str name;
 
 	if (param_no == 1) {
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) {
-			LOG(L_ERR, "str_fixup(): No memory left\n");
-			return E_UNSPEC;
+		s = (char*)*param;
+		if (s==0 || s[0]==0) {
+			model = 0;
+		} else {
+			if (xl_parse_format(s,&model,XL_DISABLE_COLORS)<0) {
+				LOG(L_ERR, "ERROR:auth_db:auth_fixup: xl_parse_format "
+					"failed\n");
+				return E_OUT_OF_MEM;
+			}
 		}
-
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
+		*param = (void*)model;
 	} else if (param_no == 2) {
 		name.s = (char*)*param;
 		name.len = strlen(name.s);
 
 		dbh = auth_dbf.init(db_url);
 		if (!dbh) {
-			LOG(L_ERR, "auth_db:str_fixup: Unable to open database connection\n");
+			LOG(L_ERR, "ERROR:auth_db:auth_fixup: Unable to open "
+				"database connection\n");
 			return -1;
 		}
 		ver = table_version(&auth_dbf, dbh, &name);
 		auth_dbf.close(dbh);
 		if (ver < 0) {
-			LOG(L_ERR, "auth_db:str_fixup: Error while querying table version\n");
+			LOG(L_ERR, "ERROR:auth_db:auth_fixup: failed to query "
+				"table version\n");
 			return -1;
 		} else if (ver < TABLE_VERSION) {
-			LOG(L_ERR, "auth_db:str_fixup: Invalid table version (use openser_mysql.sh reinstall)\n");
+			LOG(L_ERR, "ERROR:auth_db:auth_fixup: Invalid table version "
+				"(use openser_mysql.sh reinstall)\n");
 			return -1;
 		}
 	}

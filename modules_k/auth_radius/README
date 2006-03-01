@@ -180,6 +180,7 @@ modparam("auth_radius", "service_type", 15)
        To header field domain will be used (because this header
        field represents a user being registered), for all other
        messages From header field domain will be used.
+       The string may contain pseudo variables.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -215,6 +216,7 @@ if (!radius_www_authorize("siphub.net")) {
        If an empty string "" is used then the server will
        generate it from the request. From header field domain
        will be used as realm.
+       The string may contain pseudo variables.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -262,4 +264,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.

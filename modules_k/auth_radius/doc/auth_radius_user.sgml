@@ -180,6 +180,9 @@ modparam("auth_radius", "service_type", 15)
 			represents a user being registered), for all other messages From 
 			header field domain will be used.
 			</para>
+			<para>
+			The string may contain pseudo variables.
+			</para>
 		</listitem>
 		</itemizedlist>
 		<para>
@@ -226,6 +229,9 @@ if (!radius_www_authorize("siphub.net")) {
 			If an empty string <quote></quote> is used then the server will 
 			generate it from the request. From header field domain will be 
 			used as realm.
+			</para>
+			<para>
+			The string may contain pseudo variables.
 			</para>
 		</listitem>
 		</itemizedlist>

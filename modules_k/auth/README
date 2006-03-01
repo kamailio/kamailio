@@ -210,6 +210,7 @@ modparam("auth", "rpid_avp", "i:13")
        To header field domain will be used (because this header
        field represents a user being registered), for all other
        messages From header field domain will be used.
+       The string may contain pseudo variables.
      * qop - Value of this parameter can be either "1" or "0".
        When set to 1 then the server will put qop parameter in
        the challenge. When set to 0 then the server will not put
@@ -249,6 +250,7 @@ if (www_authorize("siphub.net", "subscriber")) {
        If an empty string "" is used then the server will
        generate it from the request. From header field domain
        will be used as realm.
+       The string may contain pseudo variables.
      * qop - Value of this parameter can be either "1" or "0".
        When set to 1 then the server will put qop parameter in
        the challenge. When set to 0 then the server will not put
@@ -389,4 +391,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.

@@ -33,6 +33,7 @@
 #include "diameter_msg.h"
 #include "../../parser/digest/digest_parser.h"
 #include "../../parser/hf.h"
+#include "../../items.h"
 #include "defs.h"
 
 int get_uri(struct sip_msg* m, str** uri);
@@ -45,7 +46,7 @@ auth_result_t pre_auth(struct sip_msg* m, str* realm, int hftype,
 int find_credentials(struct sip_msg* m, str* realm, int hftype, 
 						struct hdr_field** h);
 
-int authorize(struct sip_msg* msg, str* realm, int hftype);
+int authorize(struct sip_msg* msg, xl_elem_t* realm, int hftype);
 
 int diameter_authorize(struct hdr_field* cred, str* p_method, 
 					struct sip_uri uri,	struct sip_uri ruri,

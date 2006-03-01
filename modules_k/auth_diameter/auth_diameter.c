@@ -25,7 +25,9 @@
  * -------
  *  
  *  
+ * 2006-03-01 pseudo variables support for domain name (bogdan)
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,6 +39,7 @@
 #include "../../sr_module.h"
 #include "../../error.h"
 #include "../../dprint.h"
+#include "../../items.h"
 #include "../../mem/mem.h"
 
 #include "diameter_msg.h"
@@ -47,13 +50,13 @@
 MODULE_VERSION
 
 
- // Pointer to reply function in stateless module
+/* Pointer to reply function in stateless module */
 int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
 
 static int mod_init(void);                        /* Module initialization function*/
 static int mod_child_init(int r);                 /* Child initialization function*/
-static int str_fixup(void** param, int param_no); /* char* -> str* */
-static int group_fixup(void** param, int param_no); 
+static int auth_fixup(void** param, int param_no);
+static int group_fixup(void** param, int param_no);
 
 int diameter_www_authorize(struct sip_msg* _msg, char* _realm, char* _s2);
 int diameter_proxy_authorize(struct sip_msg* _msg, char* _realm, char* _s2);
@@ -72,18 +75,15 @@ rd_buf_t *rb;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"diameter_www_authorize", diameter_www_authorize, 1, str_fixup,
+	{"diameter_www_authorize",   diameter_www_authorize,   1, auth_fixup,
 			REQUEST_ROUTE},
-	{"diameter_proxy_authorize", diameter_proxy_authorize, 1, str_fixup,
+	{"diameter_proxy_authorize", diameter_proxy_authorize, 1, auth_fixup,
 			REQUEST_ROUTE},
-	{"diameter_is_user_in", diameter_is_user_in, 2, group_fixup,
-			REQUEST_ROUTE},		
+	{"diameter_is_user_in",      diameter_is_user_in,      2, group_fixup,
+			REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
-static int mod_init(void);                /* Module initialization function*/
-
-static int str_fixup(void** param, int param_no); /* char* -> str* */
 
 /*
  * Exported parameters
@@ -165,28 +165,30 @@ static void destroy(void)
 
 
 /*
- * Convert char* parameter to str* parameter
+ * Convert char* parameter to xl_elem_t* parameter
  */
-static int str_fixup(void** param, int param_no)
+static int auth_fixup(void** param, int param_no)
 {
-	str* s;
+	xl_elem_t *model;
+	char* s;
 
-	if (param_no == 1) 
-	{
-		s = (str*)ad_malloc(sizeof(str));
-		if (!s) 
-		{
-			LOG(L_ERR, "auth_diameter.c: str_fixup(): No memory left\n");
-			return E_UNSPEC;
+	if (param_no == 1) {
+		s = (char*)*param;
+		if (s==0 || s[0]==0) {
+			model = 0;
+		} else {
+			if (xl_parse_format(s,&model,XL_DISABLE_COLORS)<0) {
+				LOG(L_ERR, "ERROR:auth_diameter:auth_fixup: xl_parse_format "
+					"failed\n");
+				return E_OUT_OF_MEM;
+			}
 		}
-
-		s->s = (char*)(*param);
-		s->len = strlen(*param);
-		*param = (void*)s;
+		*param = (void*)model;
 	}
 
 	return 0;
 }
+
 
 /*
  * Authorize using Proxy-Authorization header field
@@ -194,8 +196,7 @@ static int str_fixup(void** param, int param_no)
 int diameter_proxy_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
 {
 	/* realm parameter is converted to str* in str_fixup */
-	return authorize(_msg, (str*)_realm, HDR_PROXYAUTH_T);
-
+	return authorize(_msg, (xl_elem_t*)_realm, HDR_PROXYAUTH_T);
 }
 
 
@@ -204,8 +205,9 @@ int diameter_proxy_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
  */
 int diameter_www_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
 {
-	return authorize(_msg, (str*)_realm, HDR_AUTHORIZATION_T);
+	return authorize(_msg, (xl_elem_t*)_realm, HDR_AUTHORIZATION_T);
 }
+
 
 static int group_fixup(void** param, int param_no)
 {

@@ -26,7 +26,8 @@
  *  2003-03-09: Based on auth_mod.c from radius_auth (janakj)
  *  2003-03-11: New module interface (janakj)
  *  2003-03-16: flags export parameter added (janakj)
- *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
+ *  2003-03-19: all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
+ *  2006-03-01: pseudo variables support for domain name (bogdan)
  */
 
 
@@ -39,6 +40,7 @@
 #include "../../error.h"
 #include "../../dprint.h"
 #include "../../config.h"
+#include "../../items.h"
 #include "../../mem/mem.h"
 #include "../acc/dict.h"
 #include "authrad_mod.h"
@@ -52,8 +54,8 @@ void *rh;
 
 auth_api_t auth_api;
 
-static int mod_init(void);                        /* Module initialization function */
-static int str_fixup(void** param, int param_no); /* char* -> str* */
+static int mod_init(void);         /* Module initialization function */
+static int auth_fixup(void** param, int param_no); /* char* -> str* */
 
 
 /*
@@ -66,8 +68,10 @@ static int service_type = -1;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"radius_www_authorize",   radius_www_authorize,   1, str_fixup, REQUEST_ROUTE},
-	{"radius_proxy_authorize", radius_proxy_authorize, 1, str_fixup, REQUEST_ROUTE},
+	{"radius_www_authorize",   radius_www_authorize,   1, auth_fixup,
+			REQUEST_ROUTE},
+	{"radius_proxy_authorize", radius_proxy_authorize, 1, auth_fixup,
+			REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -166,22 +170,25 @@ static int mod_init(void)
 
 
 /*
- * Convert char* parameter to str* parameter
+ * Convert char* parameter to xl_elem_t* parameter
  */
-static int str_fixup(void** param, int param_no)
+static int auth_fixup(void** param, int param_no)
 {
-	str* s;
+	xl_elem_t *model;
+	char* s;
 
 	if (param_no == 1) {
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) {
-			LOG(L_ERR, "auth_radius: str_fixup(): No memory left\n");
-			return E_UNSPEC;
+		s = (char*)*param;
+		if (s==0 || s[0]==0) {
+			model = 0;
+		} else {
+			if (xl_parse_format(s,&model,XL_DISABLE_COLORS)<0) {
+				LOG(L_ERR, "ERROR:auth_radius:auth_fixup: xl_parse_format "
+					"failed\n");
+				return E_OUT_OF_MEM;
+			}
 		}
-
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
+		*param = (void*)model;
 	}
 
 	return 0;

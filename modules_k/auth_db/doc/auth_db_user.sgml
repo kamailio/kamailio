@@ -285,6 +285,9 @@ modparam("auth_db", "load_credentials", "i:13=rpid;email_address")
 			represents a user being registered), for all other messages From 
 			header field domain will be used.
 			</para>
+			<para>
+			The string may contain pseudo variables.
+			</para>
 		</listitem>
 		<listitem>
 			<para><emphasis>table</emphasis> - Table to be used to lookup 
@@ -334,6 +337,9 @@ if (www_authorize("siphub.net", "subscriber")) {
 			If an empty string <quote></quote> is used then the server will 
 			generate it from the request. From header field domain will be 
 			used as realm.
+			</para>
+			<para>
+			The string may contain pseudo variables.
 			</para>
 		</listitem>
 		<listitem>

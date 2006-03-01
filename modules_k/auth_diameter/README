@@ -157,7 +157,7 @@ modparam("auth_diameter", "use_domain", 1)
    Meaning of the parameters is as follows:
 
      * realm - the realm to be use for authentication and
-       authorization.
+       authorization. The string may contain pseudo variables.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -181,7 +181,7 @@ if(!diameter_www_authorize("siphub.net"))
    Meaning of the parameters is as follows:
 
      * realm - the realm to be use for authentication and
-       authorization.
+       authorization. The string may contain pseudo variables.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -258,4 +258,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.

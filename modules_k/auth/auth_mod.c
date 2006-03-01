@@ -29,6 +29,7 @@
  * 2003-03-19 all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
  * 2003-04-28 rpid contributed by Juha Heinanen added (janakj) 
  * 2005-05-31 general avp specification added for rpid (bogdan)
+ * 2006-03-01 pseudo variables support for domain name (bogdan)
  */
 
 
@@ -39,6 +40,7 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../error.h"
+#include "../../items.h"
 #include "../../ut.h"
 #include "auth_mod.h"
 #include "challenge.h"
@@ -233,11 +235,23 @@ static void destroy(void)
 
 static int challenge_fixup(void** param, int param_no)
 {
+	xl_elem_t *model;
 	unsigned long qop;
 	int err;
+	char *s;
 	
 	if (param_no == 1) {
-		return str_fixup(param, param_no);
+		s = (char*)*param;
+		if (s==0 || s[0]==0) {
+			model = 0;
+		} else {
+			if (xl_parse_format(s,&model,XL_DISABLE_COLORS)<0) {
+				LOG(L_ERR, "ERROR:auth:challenge_fixup: xl_parse_format "
+					"failed\n");
+				return E_OUT_OF_MEM;
+			}
+		}
+		*param = (void*)model;
 	} else if (param_no == 2) {
 		qop = str2s(*param, strlen(*param), &err);
 		

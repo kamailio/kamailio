@@ -29,6 +29,7 @@
  *             (andrei)
  * 2005-05-31 general definition of AVPs in credentials now accepted - ID AVP,
  *            STRING AVP, AVP aliases (bogdan)
+ * 2006-03-01 pseudo variables support for domain name (bogdan)
  */
 
 
@@ -41,6 +42,7 @@
 #include "../../parser/hf.h"
 #include "../../parser/parser_f.h"
 #include "../../usr_avp.h"
+#include "../../items.h"
 #include "../../mem/mem.h"
 #include "../auth/aaa_avps.h"
 #include "authdb_mod.h"
@@ -208,8 +210,8 @@ static int generate_avps(db_res_t* result)
 /*
  * Authorize digest credentials
  */
-static inline int authorize(struct sip_msg* _m, str* _realm, char* _table,
-														hdr_types_t _hftype)
+static inline int authorize(struct sip_msg* _m, xl_elem_t* _realm,
+										char* _table, hdr_types_t _hftype)
 {
 	char ha1[256];
 	int res;
@@ -219,7 +221,15 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table,
 	str domain;
 	db_res_t* result;
 
-	domain = *_realm;
+	if (_realm) {
+		if (xl_printf_s(_m, _realm, &domain)!=0) {
+			LOG(L_ERR, "ERROR:auth_db:authorize: xl_printf_s failed\n");
+			return -1;
+		}
+	} else {
+		domain.len = 0;
+		domain.s = 0;
+	}
 
 	ret = auth_api.pre_auth(_m, &domain, _hftype, &h);
 
@@ -279,8 +289,7 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table,
  */
 int proxy_authorize(struct sip_msg* _m, char* _realm, char* _table)
 {
-	     /* realm parameter is converted to str* in str_fixup */
-	return authorize(_m, (str*)_realm, _table, HDR_PROXYAUTH_T);
+	return authorize(_m, (xl_elem_t*)_realm, _table, HDR_PROXYAUTH_T);
 }
 
 
@@ -289,5 +298,5 @@ int proxy_authorize(struct sip_msg* _m, char* _realm, char* _table)
  */
 int www_authorize(struct sip_msg* _m, char* _realm, char* _table)
 {
-	return authorize(_m, (str*)_realm, _table, HDR_AUTHORIZATION_T);
+	return authorize(_m, (xl_elem_t*)_realm, _table, HDR_AUTHORIZATION_T);
 }
