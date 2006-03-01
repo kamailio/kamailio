@@ -625,7 +625,7 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 		/* build user initial location */
 		if (build_user_AOR( &username, &domain, &loc, 1)!=0 )
 			goto error2;
-		if (add_location( &(cpl_intr->loc_set), &loc,10, 0/*no dup*/)==-1)
+		if (add_location( &(cpl_intr->loc_set), &loc, 0, 10, 0/*no dup*/)==-1)
 			goto error2;
 	}
 

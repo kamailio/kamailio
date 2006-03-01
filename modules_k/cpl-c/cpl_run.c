@@ -293,8 +293,8 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 				do {
 					DBG("DBG:cpl-c:run_lookup: adding <%.*s>q=%d\n",
 						contact->c.len,contact->c.s,(int)(10*contact->q));
-					if (add_location( &(intr->loc_set), &contact->c,
-					(int)(10*contact->q),
+					if (add_location( &(intr->loc_set), &contact->c, 
+					&contact->received, (int)(10*contact->q),
 					CPL_LOC_DUPL|((contact->flags & FL_NAT)*CPL_LOC_NATED)
 					)==-1) {
 						LOG(L_ERR,"ERROR:cpl-c:run_lookup: unable to add "
@@ -389,7 +389,7 @@ static inline char *run_location( struct cpl_interpreter *intr )
 
 	if (clear)
 		empty_location_set( &(intr->loc_set) );
-	if (add_location( &(intr->loc_set), &url, prio, 0/*no dup*/ )==-1) {
+	if (add_location( &(intr->loc_set), &url, 0, prio, 0/*no dup*/ )==-1) {
 		LOG(L_ERR,"ERROR:run_location: unable to add location to set :-(\n");
 		goto runtime_error;
 	}

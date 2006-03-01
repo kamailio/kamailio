@@ -41,6 +41,7 @@
 struct location {
 	struct address {
 		str uri;
+		str received;
 		unsigned int priority;
 	}addr;
 	int flags;
@@ -60,13 +61,17 @@ static inline void free_location( struct location *loc)
  * list starts with the smallest prio!
  * For locations having the same prio val, the adding order will be kept */
 static inline int add_location(struct location **loc_set, str *uri,
-											unsigned int prio, int flags)
+								str *received, unsigned int prio, int flags)
 {
 	struct location *loc;
 	struct location *foo, *bar;
 
-	loc = (struct location*)shm_malloc(
-		sizeof(struct location)+((flags&CPL_LOC_DUPL)?uri->len+1:0) );
+	if(received && received->s && received->len)
+		loc = (struct location*)shm_malloc(sizeof(struct location)+
+				((flags&CPL_LOC_DUPL)?uri->len+1+received->len+1:0) );
+	else 
+		loc = (struct location*)shm_malloc(
+			sizeof(struct location)+((flags&CPL_LOC_DUPL)?uri->len+1:0) );
 	if (!loc) {
 		LOG(L_ERR,"ERROR:add_location: no more free shm memory!\n");
 		return -1;
@@ -82,6 +87,23 @@ static inline int add_location(struct location **loc_set, str *uri,
 	loc->addr.uri.len = uri->len;
 	loc->addr.priority = prio;
 	loc->flags = flags;
+
+	if(received && received->s && received->len) {
+		if (flags&CPL_LOC_DUPL) {
+			loc->addr.received.s = ((char*)loc)+sizeof(struct location)+
+				uri->len+1;
+			memcpy(loc->addr.received.s,received->s,received->len);
+			loc->addr.received.s[received->len] = 0;
+		}
+		else {
+			loc->addr.received.s = received->s;
+		}
+		loc->addr.received.len = received->len;
+	}
+	else {
+		loc->addr.received.s = 0;
+		loc->addr.received.len = 0;
+	}
 
 	/* find the proper place for the new location */
 	foo = *loc_set;
@@ -167,7 +189,8 @@ static inline void empty_location_set(struct location **loc_set)
 static inline void print_location_set(struct location *loc_set)
 {
 	while (loc_set) {
-		DBG("DEBUG:cpl_c:print_loc_set: uri=<%s> q=%d\n",loc_set->addr.uri.s,
+		DBG("DEBUG:cpl_c:print_loc_set: uri=<%s> received=<%s> q=%d\n",
+			loc_set->addr.uri.s, loc_set->addr.received.s,
 			loc_set->addr.priority);
 		loc_set=loc_set->next;
 	}

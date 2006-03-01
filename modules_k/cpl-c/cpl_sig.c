@@ -41,6 +41,7 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 {
 	struct location *foo;
 	struct action act;
+	int bflags;
 
 	if (!*locs) {
 		LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: empty loc set!!\n");
@@ -62,8 +63,25 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 			LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: do_action failed\n");
 			goto error;
 		}
+		/* build a new action for setting the DSTURI */
+		if((*locs)->addr.received.s && (*locs)->addr.received.len) {
+			DBG("DEBUG:cpl_c:cpl_proxy_to_loc_set: rewriting Destination URI "
+				"with <%s>\n",(*locs)->addr.received.s);
+			act.type = SET_DSTURI_T;
+			act.p1_type = STRING_ST;
+			act.p1.string = (*locs)->addr.received.s;
+			act.next = 0;
+			/* push the action */
+			if (do_action(&act, msg) < 0) {
+				LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: do_action "
+					"failed\n");
+				goto error;
+			}
+		}
 		/* is the location NATED? */
-		if ((*locs)->flags&CPL_LOC_NATED) setflag(msg,cpl_env.nat_flag);
+		if ((*locs)->flags&CPL_LOC_NATED)
+			/* for RURI branch, the nat flag goes into msg */
+			setflag(msg,cpl_env.nat_flag);
 		/* free the location and point to the next one */
 		foo = (*locs)->next;
 		free_location( *locs );
@@ -72,15 +90,18 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 
 	/* add the rest of the locations as branches */
 	while(*locs) {
+		bflags = ((*locs)->flags&CPL_LOC_NATED) ? cpl_env.nat_flag : 0 ;
 		DBG("DEBUG:cpl_c:cpl_proxy_to_loc_set: appending branch "
-			"<%.*s>\n",(*locs)->addr.uri.len,(*locs)->addr.uri.s);
-		if(append_branch(msg, &(*locs)->addr.uri, 0, 0, Q_UNSPECIFIED, 0, 0)==-1){
+			"<%.*s>, flags %d\n",
+			(*locs)->addr.uri.len, (*locs)->addr.uri.s, bflags);
+		if(append_branch(msg, &(*locs)->addr.uri, &(*locs)->addr.received,0,
+		Q_UNSPECIFIED, bflags, 0)==-1){
 			LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: failed when "
 				"appending branch <%s>\n",(*locs)->addr.uri.s);
 			goto error;
 		}
 		/* is the location NATED? */
-		if ((*locs)->flags&CPL_LOC_NATED) setflag(msg,cpl_env.nat_flag);
+		if (bflags) setflag(msg,bflags);
 		/* free the location and point to the next one */
 		foo = (*locs)->next;
 		free_location( *locs );
