@@ -663,7 +663,7 @@ static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
 /*
  * Process REGISTER request and save it's contacts
  */
-static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* _s, int doreply)
+static inline int save_real(struct sip_msg* _m, udomain_t* _t, int doreply)
 {
 	contact_t* c;
 	int st;
@@ -712,7 +712,7 @@ error:
 int save(struct sip_msg* _m, char* _t, char* _s)
 {
 	mem_only = FL_NONE;
-	return save_real(_m, (udomain_t*)_t, _s, 1);
+	return save_real(_m, (udomain_t*)_t, 1);
 }
 
 
@@ -722,7 +722,7 @@ int save(struct sip_msg* _m, char* _t, char* _s)
 int save_noreply(struct sip_msg* _m, char* _t, char* _s)
 {
 	mem_only = FL_NONE;
-	return save_real(_m, (udomain_t*)_t, _s, 0);
+	return save_real(_m, (udomain_t*)_t, 0);
 }
 
 
@@ -732,5 +732,5 @@ int save_noreply(struct sip_msg* _m, char* _t, char* _s)
 int save_memory(struct sip_msg* _m, char* _t, char* _s)
 {
 	mem_only = FL_MEM;
-	return save_real(_m, (udomain_t*)_t, _s, 1);
+	return save_real(_m, (udomain_t*)_t, 1);
 }
