@@ -25,6 +25,7 @@
  *  2005-01-31  first version (ramona)
  *  2005-08-12  some TM callbacks replaced with RR callback - more efficient;
  *              (bogdan)
+ *  2006-03-02  UAC authentication looks first in AVPs for credential (bogdan)
  */
 
 
@@ -50,12 +51,18 @@ MODULE_VERSION
 
 /* local variable used for init */
 static char* from_restore_mode_str = NULL;
+static char* auth_username_avp = NULL;
+static char* auth_realm_avp = NULL;
+static char* auth_password_avp = NULL;
 
 /* global param variables */
 str rr_param = {"vsf",3};
-int from_restore_mode = FROM_NO_RESTORE;
+int from_restore_mode = FROM_AUTO_RESTORE;
 struct tm_binds uac_tmb;
 struct rr_binds uac_rrb;
+xl_spec_t auth_username_spec;
+xl_spec_t auth_realm_spec;
+xl_spec_t auth_password_spec;
 
 static int w_replace_from1(struct sip_msg* msg, char* str, char* str2);
 static int w_replace_from2(struct sip_msg* msg, char* str, char* str2);
@@ -87,6 +94,9 @@ static param_export_t params[] = {
 	{"rr_store_param",    STR_PARAM,                &rr_param.s            },
 	{"from_restore_mode", STR_PARAM,                &from_restore_mode_str },
 	{"credential",        STR_PARAM|USE_FUNC_PARAM, &add_credential        },
+	{"auth_username_avp", STR_PARAM,                &auth_username_avp     },
+	{"auth_realm_avp",    STR_PARAM,                &auth_realm_avp        },
+	{"auth_password_avp", STR_PARAM,                &auth_password_avp     },
 	{0, 0, 0}
 };
 
@@ -104,6 +114,16 @@ struct module_exports exports= {
 };
 
 
+inline static int parse_auth_avp( char *avp_spec, xl_spec_t *avp, char *txt)
+{
+	if (xl_parse_spec( avp_spec, avp, XL_THROW_ERROR|XL_DISABLE_MULTI|
+	XL_DISABLE_COLORS)==0 || avp->type!=XL_AVP) {
+		LOG(L_ERR, "ERROR:uac:parse_auth_avp: malformed or non AVP %s "
+			"AVP definition\n",txt);
+		return -1;
+	}
+	return 0;
+}
 
 
 static int mod_init(void)
@@ -124,20 +144,30 @@ static int mod_init(void)
 		}
 	}
 
-	if (from_restore_mode!=FROM_NO_RESTORE &&
-			from_restore_mode!=FROM_AUTO_RESTORE &&
-			from_restore_mode!=FROM_MANUAL_RESTORE )
-	{
-		LOG(L_ERR,"ERROR:uac:mod_init: invalid (%d) restore_from mode\n",
-			from_restore_mode);
-	}
-
 	rr_param.len = strlen(rr_param.s);
 	if (rr_param.len==0 && from_restore_mode!=FROM_NO_RESTORE)
 	{
 		LOG(L_ERR,"ERROR:uac:mod_init: rr_store_param cannot be empty "
 			"if FROM is restoreable\n");
 		goto error;
+	}
+
+	/* parse the auth AVP spesc, if any */
+	if ( auth_username_avp || auth_password_avp || auth_realm_avp) {
+		if (!auth_username_avp || !auth_password_avp || !auth_realm_avp) {
+			LOG(L_ERR,"ERROR:uac:mod_init: partial definition of auth AVP!");
+			goto error;
+		}
+		if ( parse_auth_avp(auth_realm_avp, &auth_realm_spec, "realm")<0
+		|| parse_auth_avp(auth_username_avp, &auth_username_spec, "username")<0
+		|| parse_auth_avp(auth_password_avp, &auth_password_spec, "password")<0
+		) {
+			goto error;
+		}
+	} else {
+		memset( &auth_realm_spec, 0, sizeof(xl_spec_t));
+		memset( &auth_password_spec, 0, sizeof(xl_spec_t));
+		memset( &auth_username_spec, 0, sizeof(xl_spec_t));
 	}
 
 	/* load the TM API - FIXME it should be loaded only

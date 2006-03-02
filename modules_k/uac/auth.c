@@ -23,6 +23,7 @@
  * History:
  * ---------
  *  2005-01-31  first version (ramona)
+ *  2006-03-02  UAC authentication looks first in AVPs for credential (bogdan)
  */
 
 
@@ -31,6 +32,7 @@
 
 #include "../../str.h"
 #include "../../dprint.h"
+#include "../../items.h"
 #include "../../data_lump.h"
 #include "../../mem/mem.h"
 #include "../tm/tm_load.h"
@@ -41,6 +43,9 @@
 
 
 extern struct tm_binds uac_tmb;
+extern xl_spec_t auth_username_spec;
+extern xl_spec_t auth_realm_spec;
+extern xl_spec_t auth_password_spec;
 
 
 static struct uac_credential *crd_list = 0;
@@ -251,6 +256,37 @@ static inline struct uac_credential *lookup_realm( str *realm)
 }
 
 
+static inline struct uac_credential *get_avp_credential(struct sip_msg *msg,
+																str *realm)
+{
+	static struct uac_credential crd;
+	xl_value_t xl_val;
+
+	if(xl_get_spec_value( msg, &auth_realm_spec, &xl_val, 0)!=0
+	|| xl_val.flags&XL_VAL_NULL || xl_val.rs.len<=0)
+		return 0;
+	
+	crd.realm = xl_val.rs;
+	/* is it the domain we are looking for? */
+	if (realm->len!=crd.realm.len ||
+	strncmp( realm->s, crd.realm.s, realm->len)!=0 )
+		return 0;
+
+	/* get username and password */
+	if(xl_get_spec_value( msg, &auth_username_spec, &xl_val, 0)!=0
+	|| xl_val.flags&XL_VAL_NULL || xl_val.rs.len<=0)
+		return 0;
+	crd.user = xl_val.rs;
+
+	if(xl_get_spec_value( msg, &auth_password_spec, &xl_val, 0)!=0
+	|| xl_val.flags&XL_VAL_NULL || xl_val.rs.len<=0)
+		return 0;
+	crd.passwd = xl_val.rs;
+
+	return &crd;
+}
+
+
 static inline void do_uac_auth(struct sip_msg *req, str *uri,
 		struct uac_credential *crd, struct authenticate_body *auth,
 		HASHHEX response)
@@ -395,10 +431,17 @@ int uac_auth( struct sip_msg *msg)
 	}
 
 	/* can we authenticate this realm? */
-	crd = lookup_realm( &auth.realm );
+	crd = 0;
+	/* first look into AVP, if set */
+	if ( auth_realm_spec.type==XL_AVP )
+		crd = get_avp_credential( msg, &auth.realm );
+	/* if not found, look into predefined credentials */
+	if (crd==0)
+		crd = lookup_realm( &auth.realm );
+	/* found? */
 	if (crd==0)
 	{
-		LOG(L_ERR,"ERROR:uac:uac_auth: no credential for realm \"%.*s\"\n",
+		DBG("DEBUG:uac:uac_auth: no credential for realm \"%.*s\"\n",
 			auth.realm.len, auth.realm.s);
 		goto error;
 	}
