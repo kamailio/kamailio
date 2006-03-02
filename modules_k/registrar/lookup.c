@@ -41,14 +41,14 @@
 #include "lookup.h"
 
 
-#define supported_method(_msg, _c) \
+#define allowed_method(_msg, _c) \
 	( !method_filtering || ((_msg)->REQ_METHOD)&((_c)->methods) )
 
 
 /*
  * Lookup contact in the database and rewrite Request-URI
  * Returns: -1 : not found
- *          -2 : found but method not supported
+ *          -2 : found but method not allowed
  *          -3 : error
  */
 int lookup(struct sip_msg* _m, char* _t, char* _s)
@@ -89,7 +89,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	ret = -1;
 	/* look first first un-expired and suported contact */
 	while ( (ptr) &&
-	!(VALID_CONTACT(ptr,act_time) && (ret=-2) && supported_method(_m,ptr)))
+	!(VALID_CONTACT(ptr,act_time) && (ret=-2) && allowed_method(_m,ptr)))
 		ptr = ptr->next;
 	if (ptr==0) {
 		/* nothing found */
@@ -146,7 +146,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	if (!append_branches) goto skip;
 
 	for( ; ptr ; ptr = ptr->next ) {
-		if (VALID_CONTACT(ptr, act_time) && supported_method(_m, ptr)) {
+		if (VALID_CONTACT(ptr, act_time) && allowed_method(_m, ptr)) {
 			/* for additional branches, the nat flag goes into dset */
 			bflags = (use_branch_flags && (ptr->flags & FL_NAT))?nat_flag:0;
 

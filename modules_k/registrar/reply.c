@@ -361,6 +361,7 @@ static int add_unsupported(struct sip_msg* _m, str* _p)
  */
 int send_reply(struct sip_msg* _m)
 {
+	str unsup = str_init(SUPPORTED_PATH_STR);
 	long code;
 	char* msg = MSG_200; /* makes gcc shut up */
 	char* buf;
@@ -372,15 +373,12 @@ int send_reply(struct sip_msg* _m)
 	
 	if (rerrno == R_FINE && path_enabled && _m->path_vec.s) {
 		if (path_mode != PATH_MODE_OFF) {
-			unsigned int supported = 0;
-			if (_m->supported)
-				if (parse_supported(_m->supported, &supported) < 0)
-					return -1;
-			if (supported & F_SUPPORTED_PATH) {
+			if (parse_supported( _m)<0)
+				return -1;
+			if ( get_supported(_m)  & F_SUPPORTED_PATH ) {
 				if (add_path(_m, &_m->path_vec) < 0)
 					return -1;
 			} else if (path_mode == PATH_MODE_STRICT) {
-				str unsup = {SUPPORTED_PATH_STR, SUPPORTED_PATH_LEN};
 				rerrno = R_PATH_UNSUP;
 				if (add_unsupported(_m, &unsup) < 0)
 					return -1;
