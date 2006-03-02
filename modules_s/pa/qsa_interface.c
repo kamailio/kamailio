@@ -205,16 +205,21 @@ static void pa_unsubscribe(notifier_t *n, subscription_t *subscription)
 	str_free_content(&uid);
 }
 
-void copy_tuple_notes(presence_tuple_info_t *dst_info, const presence_tuple_t *src)
+int copy_tuple_notes(presence_tuple_info_t *dst_info, const presence_tuple_t *src)
 {
 	presence_note_t *n, *nn;
 
 	n = src->notes;
 	while (n) {
 		nn = create_presence_note(&n->value, &n->lang);
+		if (!nn) {
+			ERR("can't create presence note\n");
+			return -1;
+		}
 		DOUBLE_LINKED_LIST_ADD(dst_info->first_note, dst_info->last_note, nn);
 		n = n->next;
 	}
+	return 0;
 }
 
 presentity_info_t *presentity2presentity_info(presentity_t *p)
@@ -227,6 +232,7 @@ presentity_info_t *presentity2presentity_info(presentity_t *p)
 	presence_note_t *n;
 	pa_person_element_t *paps;
 	person_t *ps, *last_ps;
+	int err = 0;
 
 	/* DBG("p2p_info()\n"); */
 	if (!p) return NULL;
@@ -245,30 +251,54 @@ presentity_info_t *presentity2presentity_info(presentity_t *p)
 		tinfo = create_tuple_info(&t->contact, &t->id, s);
 		if (!tinfo) {
 			ERROR_LOG("can't create tuple info\n");
+			err = 1;
 			break;
 		}
 		tinfo->priority = t->priority;
 		tinfo->expires = t->expires;
 		add_tuple_info(pinfo, tinfo);
-		copy_tuple_notes(tinfo, t);
+		if (copy_tuple_notes(tinfo, t) < 0) {
+			ERROR_LOG("can't copy tuple notes\n");
+			err = 1;
+			break;
+		}
 		t = t->next;
 	}
 
 	/* notes */
-	pan = p->notes;
-	while (pan) {
-		n = create_presence_note(&pan->note, &pan->lang);
-		if (n) DOUBLE_LINKED_LIST_ADD(pinfo->first_note, pinfo->last_note, n);
-		pan = pan->next;
+	if (!err) {
+		pan = p->notes;
+		while (pan) {
+			n = create_presence_note(&pan->note, &pan->lang);
+			if (n) DOUBLE_LINKED_LIST_ADD(pinfo->first_note, pinfo->last_note, n);
+			else {
+				ERROR_LOG("can't copy presence notes\n");
+				err = 1;
+				break;
+			}
+			pan = pan->next;
+		}
 	}
-
+	
 	/* person elements */
-	last_ps = NULL;
-	paps = p->person_elements;
-	while (paps) {
-		ps = create_person(&paps->person, &paps->id);
-		if (ps) LINKED_LIST_ADD(pinfo->first_person, last_ps, ps);
-		paps = paps->next;
+	if (!err) {
+		last_ps = NULL;
+		paps = p->person_elements;
+		while (paps) {
+			ps = create_person(&paps->person, &paps->id);
+			if (ps) LINKED_LIST_ADD(pinfo->first_person, last_ps, ps);
+			else {
+				ERROR_LOG("can't copy person elements\n");
+				err = 1;
+				break;
+			}
+			paps = paps->next;
+		}
+	}
+	
+	if (err) {
+		free_presentity_info(pinfo);
+		return NULL;
 	}
 	
 	/* DBG("p2p_info() finished\n"); */

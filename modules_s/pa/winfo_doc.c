@@ -100,6 +100,7 @@ static int doc_add_winfo(dstring_t *buf, struct presentity* p, struct watcher* w
 int create_winfo_document(struct presentity* p, struct watcher* w, str *dst, str *dst_content_type)
 {
 	dstring_t buf;
+	int err;
 
 	if (!dst) return -1;
 	
@@ -109,7 +110,9 @@ int create_winfo_document(struct presentity* p, struct watcher* w, str *dst, str
 	if ((!p) || (!w))  return -1;
 	
 	if (dst_content_type) 
-		str_dup_zt(dst_content_type, "application/watcherinfo+xml");
+		if (str_dup_zt(dst_content_type, "application/watcherinfo+xml") < 0) {
+			return -1;
+		}
 
 /*	if (!p->first_tuple) return 0;*/	/* no tuples => nothing to say */ 
 	
@@ -118,10 +121,15 @@ int create_winfo_document(struct presentity* p, struct watcher* w, str *dst, str
 	dstr_append_zt(&buf, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n");
 	doc_add_winfo(&buf, p, w);
 	
-	dstr_get_str(&buf, dst);
+	err = dstr_get_str(&buf, dst);
 	dstr_destroy(&buf);
 	
-	return 0;
+	if (err != 0) {
+		str_free_content(dst);
+		if (dst_content_type) str_free_content(dst_content_type);
+	}
+	
+	return err;
 }
 
 static int doc_add_watcher_offline(dstring_t *buf, offline_winfo_t *w)

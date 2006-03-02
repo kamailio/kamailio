@@ -243,45 +243,45 @@ static inline int add_subs_state_hf(dstring_t *buf, watcher_status_t _s, time_t 
 	return 0;
 }
 
-static int add_contact_hf(dstring_t *buf, str *_c)
-{
-	if ((_c->len < 1) || (!_c->s)) {
-		LOG(L_WARN, "add_contact_hf(): Can't add empty contact to NOTIFY.\n");
-		return 0;
-	}
-
-	dstr_append_zt(buf, "Contact: ");
-	dstr_append_str(buf, _c);
-	dstr_append_zt(buf, "\r\n");
-	return 0;
-}
-
 static inline int create_headers(struct watcher* _w, str *dst, str *content_type)
 {
 	dstring_t buf;
 	time_t t;
+	int err = 0;
 	
 	dstr_init(&buf, 256);
 	str_clear(dst);
+
+	/* Event header */
+
+	dstr_append_zt(&buf, "Event: ");
+	dstr_append_zt(&buf, event_package2str(_w->event_package));
+	dstr_append_zt(&buf, "\r\n");
 	
-	if (add_event_hf(&buf, _w->event_package) < 0) {
-		LOG(L_ERR, "create_headers(): Error while adding Event header field\n");
-		dstr_destroy(&buf);
-		return -1;
+	/* Content-Type header */
+	
+	/* content types can have dynamical parameters (multipart/related)
+	 * => don't generate them "staticaly"; use values created in the
+	 * time of document creation */
+	if (!is_str_empty(content_type)) { /* documents without body doesn't need it */
+		dstr_append_zt(&buf, "Content-Type: ");
+		dstr_append_str(&buf, content_type);
+		dstr_append_zt(&buf, "\r\n");
+	}
+	
+	/* Contact header */
+	
+	if (is_str_empty(&_w->server_contact)) {
+		LOG(L_WARN, "add_contact_hf(): Can't add empty contact to NOTIFY.\n");
+	}
+	else {
+		dstr_append_zt(&buf, "Contact: ");
+		dstr_append_str(&buf, &_w->server_contact);
+		dstr_append_zt(&buf, "\r\n");
 	}
 
-	if (add_cont_type_hf(&buf, /*_w->preferred_mimetype*/ content_type)  < 0) {
-		LOG(L_ERR, "create_headers(): Error while adding Content-Type header field\n");
-		dstr_destroy(&buf);
-		return -2;
-	}
-
-	if (add_contact_hf(&buf, &_w->server_contact) < 0) {
-		LOG(L_ERR, "create_headers(): Error while adding Contact header field\n");
-		dstr_destroy(&buf);
-		return -3;
-	}
-
+	/* Subscription-State header */
+	
 	if (_w->expires) t = _w->expires - time(0);
 	else t = 0;
 
@@ -291,10 +291,10 @@ static inline int create_headers(struct watcher* _w, str *dst, str *content_type
 		return -3;
 	}
 
-	dstr_get_str(&buf, dst);
+	err = dstr_get_str(&buf, dst);
 	dstr_destroy(&buf);
-	
-	return 0;
+
+	return err;
 }
 
 static int send_presence_notify(struct presentity* _p, struct watcher* _w)
@@ -541,15 +541,6 @@ int notify_unauthorized_watcher(struct presentity* _p, struct watcher* _w)
 int send_notify(struct presentity* _p, struct watcher* _w)
 {
 	int rc = 0;
-
-	if (_w->uri.s == NULL) {
-		LOG(L_ERR, "watcher uri.s is NULL\n");
-		return -1;
-	}
-	if (strlen(_w->uri.s) == 0) {
-		LOG(L_ERR, "watcher uri.s is zero length\n");
-		return -2;
-	}
 
 	LOG(L_DBG, "notifying %.*s _p->flags=%x _w->event_package=%d _w->preferred_mimetype=%d _w->status=%d\n", 
 	    _w->uri.len, _w->uri.s, _p->flags, _w->event_package, _w->preferred_mimetype, _w->status);

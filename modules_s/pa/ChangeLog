@@ -1,3 +1,14 @@
+2006-03-02
+	* improved robustness of libs (CDS, presence) and PA
+	* cosmetical changes
+
+2006-03-01
+	* corrected BUG - Contact was sent in 200 response, now in all 2xx
+	responses
+	* cleaning WFLAG_SUBSCRIPTION_CHANGED after notification sent (in
+	handle_subscription)
+	* small cosmetical and robustness improving changes
+
 2006-02-28
 	* call to timer_presentity in handle_subscription replaced by call to
 	send_notify and remove_watcher_if_expired (i.e. sending notification to

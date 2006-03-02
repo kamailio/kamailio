@@ -194,7 +194,7 @@ int find_presentity_uid(pdomain_t* _d, str* uid, struct presentity** _p)
 	struct presentity* p;
 	int res = 1;
 
-	if (!uid) return -1;
+	if ((!uid) || (!_p)) return -1;
 
 	sl = hash_func(_d, uid->s, uid->len);
 	

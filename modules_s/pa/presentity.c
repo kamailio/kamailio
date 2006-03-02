@@ -89,15 +89,13 @@ int get_presentity_uid(str *uid_dst, struct sip_msg *m)
 	
 	if (!uid_dst) return -1;
 	
-	str_clear(uid_dst);
-		
 	if (get_to_uid(&s, m) < 0) {
-		LOG(L_ERR, "get_presentity_uid: Error while getting UID\n");
+		str_clear(uid_dst);
+		ERR("get_to_uid failed\n");
 		return -1;
 	}
 	
-	str_dup(uid_dst, &s);
-	return 0;
+	return str_dup(uid_dst, &s);
 }
 
 /*
@@ -189,12 +187,10 @@ static int db_add_presentity(presentity_t* presentity)
 
 	result_cols[presid_col = n_result_cols++] = "presid";
 
-	ERR("calling use_table: %s\n", presentity_table);
 	if (pa_dbf.use_table(pa_db, presentity_table) < 0) {
 		LOG(L_ERR, "new_presentity: Error in use_table\n");
 		return -1;
 	}
-	ERR("after calling use_table: %s\n", presentity_table);
 
 	while (!presid) {
 		if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
