@@ -2073,7 +2073,7 @@ nh_timer(unsigned int ticks, void *param)
 		if ( (sipping_from.s!=0) && (flags&FL_NAT_SIPPING)!=0 &&
 		(opt.s=build_sipping( &c, send_sock, &opt.len))!=0 ) {
 			if (udp_send(send_sock, opt.s, opt.len, &to)<0){
-				LOG(L_ERR, "ERROR:n2h:natping_hanlder: sip udp_send failed\n");
+				LOG(L_ERR, "ERROR:nathelper:nh_timer: sip udp_send failed\n");
 			}
 		} else {
 			if (udp_send(send_sock, (char *)sbuf, sizeof(sbuf), &to)<0 ) {
