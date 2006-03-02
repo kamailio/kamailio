@@ -175,7 +175,10 @@ static int mod_init(void)
 	bind_sl_t bind_sl;
 
 	DBG("auth_db module - initializing\n");
-
+	if (bind_dbmod(db_url, &auth_dbf) < 0){
+		LOG(L_ERR, "auth_db:child_init: Unable to bind a database driver\n");
+		return -2;
+	}
         bind_sl = (bind_sl_t)find_export("bind_sl", 0, 0);
 	if (!bind_sl) {
 		ERR("This module requires sl module\n");
