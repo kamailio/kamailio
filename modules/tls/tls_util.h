@@ -34,6 +34,7 @@
 
 #include <openssl/err.h>
 #include "../../dprint.h"
+#include "../../str.h"
 #include "tls_domain.h"
 
 
@@ -41,8 +42,8 @@
 do {                                                    \
 	long err;                                       \
         (r) = 0;                                        \
-	if (tls_def_srv->ctx &&                         \
-	    (*tls_def_srv->ctx)[0]) {                   \
+	if ((*tls_cfg)->srv_default->ctx &&             \
+	    (*tls_cfg)->srv_default->ctx[0]) {          \
 		while((err = ERR_get_error())) {        \
 			(r) = 1;                        \
 			ERR("%s%s\n", ((s)) ? (s) : "", \
@@ -58,6 +59,37 @@ do {                         \
 	TLS_ERR_RET(ret, s); \
 } while(0)
 
+
+/*
+ * Make a shared memory copy of str string
+ * Return value: -1 on error
+ *                0 on success
+ */
+int shm_str_dup(char** dest, str* val);
+
+
+/*
+ * Make a shared memory copy of ASCII zero terminated string
+ * Return value: -1 on error
+ *                0 on success
+ */
+int shm_asciiz_dup(char** dest, char* val);
+
+
+/*
+ * Delete old TLS configuration that is not needed anymore
+ */
+void collect_garbage(void);
+
+
+/*
+ * Get full path name of file, if the parameter does
+ * not start with / then the value of CFG_DIR will
+ * be used as prefix
+ * The string returned by the function must be
+ * freed using pkg_free
+ */
+char* get_pathname(str* filename);
 
 
 #endif /* _TLS_UTIL_H */

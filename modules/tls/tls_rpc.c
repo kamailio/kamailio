@@ -29,28 +29,56 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
-#ifndef _TLS_MOD_H
-#define _TLS_MOD_H
-
-#include "../../str.h"
-#include "../../locking.h"
+#include "../../rpc.h"
+#include "tls_mod.h"
 #include "tls_domain.h"
+#include "tls_config.h"
+#include "tls_util.h"
+#include "tls_rpc.h"
 
-extern int tls_handshake_timeout;
-extern int tls_send_timeout;
-extern int tls_conn_timeout;
-extern int tls_log;
-extern int tls_session_cache;
-extern str tls_session_id;
+static const char* tls_reload_doc[2] = {
+	"Reload TLS configuration file",
+	0
+};
 
-/* Current TLS configuration */
-extern tls_cfg_t** tls_cfg;
-extern gen_lock_t* tls_cfg_lock;
+static void tls_reload(rpc_t* rpc, void* ctx)
+{
+	tls_cfg_t* cfg;
+	
+	if (!tls_cfg_file.s) {
+		rpc->fault(ctx, 500, "No TLS configuration file configured");
+		return;
+	}
 
-extern tls_domain_t cli_defaults;
-extern tls_domain_t srv_defaults;
+	     /* Try to delete old configurations first */
+	collect_garbage();
 
-extern str tls_cfg_file;
+	cfg = tls_load_config(&tls_cfg_file);
+	if (!cfg) {
+		rpc->fault(ctx, 500, "Error while loading TLS configuration file (consult server log)");
+		return;
+	}
 
-#endif /* _TLS_MOD_H */
+	if (tls_fix_cfg(cfg, &srv_defaults, &cli_defaults) < 0) {
+		rpc->fault(ctx, 500, "Error while fixing TLS configuration (consult server log)");
+		goto error;
+	}
+	if (tls_check_sockets(cfg) < 0) {
+		rpc->fault(ctx, 500, "No server listening socket found for one of TLS domains (consult server log)");
+		goto error;
+	}
+
+	DBG("TLS configuration successfuly loaded");
+	cfg->next = (*tls_cfg);
+	*tls_cfg = cfg;
+	return;
+
+ error:
+	tls_free_cfg(cfg);
+	
+}
+
+rpc_export_t tls_rpc[] = {
+	{"tls.reload", tls_reload, tls_reload_doc, 0},
+	{0, 0, 0, 0}
+};
