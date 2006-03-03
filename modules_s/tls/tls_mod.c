@@ -77,6 +77,27 @@ static void destroy(void);
 
 MODULE_VERSION
 
+
+/*
+ * Default settings when modparams are used 
+ */
+static tls_domain_t mod_params = {
+	TLS_DOMAIN_DEF | TLS_DOMAIN_SRV,   /* Domain Type */
+	{},               /* IP address */
+	0,                /* Port number */
+	0,                /* SSL ctx */
+	TLS_CERT_FILE,    /* Certificate file */
+	TLS_PKEY_FILE,    /* Private key file */
+	0,                /* Verify certificate */
+	9,                /* Verify depth */
+	TLS_CA_FILE,      /* CA file */
+	0,                /* Require certificate */
+	0,                /* Cipher list */
+	TLS_USE_TLSv1,    /* TLS method */
+	0                 /* next */
+};
+
+
 /*
  * Default settings for server domains when using external config file
  */
@@ -151,21 +172,21 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"tls_method",          PARAM_STR,    &tls_method               },
-	{"verify_certificate",  PARAM_INT,    &srv_defaults.verify_cert },
-	{"verify_depth",        PARAM_INT,    &srv_defaults.verify_depth},
-	{"require_certificate", PARAM_INT,    &srv_defaults.require_cert},
-	{"private_key",         PARAM_STRING, &srv_defaults.pkey_file   },
-	{"ca_list",             PARAM_STRING, &srv_defaults.ca_file     },
-	{"certificate",         PARAM_STRING, &srv_defaults.cert_file   },
-	{"cipher_list",         PARAM_STRING, &srv_defaults.cipher_list },
-	{"handshake_timeout",   PARAM_INT,    &tls_handshake_timeout    },
-	{"send_timeout",        PARAM_INT,    &tls_send_timeout         },
-	{"connection_timeout",  PARAM_INT,    &tls_conn_timeout         },
-	{"tls_log",             PARAM_INT,    &tls_log                  },
-	{"session_cache",       PARAM_INT,    &tls_session_cache        },
-	{"session_id",          PARAM_STR,    &tls_session_id           },
-	{"config",              PARAM_STR,    &tls_cfg_file             },
+	{"tls_method",          PARAM_STR,    &tls_method             },
+	{"verify_certificate",  PARAM_INT,    &mod_params.verify_cert },
+	{"verify_depth",        PARAM_INT,    &mod_params.verify_depth},
+	{"require_certificate", PARAM_INT,    &mod_params.require_cert},
+	{"private_key",         PARAM_STRING, &mod_params.pkey_file   },
+	{"ca_list",             PARAM_STRING, &mod_params.ca_file     },
+	{"certificate",         PARAM_STRING, &mod_params.cert_file   },
+	{"cipher_list",         PARAM_STRING, &mod_params.cipher_list },
+	{"handshake_timeout",   PARAM_INT,    &tls_handshake_timeout  },
+	{"send_timeout",        PARAM_INT,    &tls_send_timeout       },
+	{"connection_timeout",  PARAM_INT,    &tls_conn_timeout       },
+	{"tls_log",             PARAM_INT,    &tls_log                },
+	{"session_cache",       PARAM_INT,    &tls_session_cache      },
+	{"session_id",          PARAM_STR,    &tls_session_id         },
+	{"config",              PARAM_STR,    &tls_cfg_file           },
 	{0, 0, 0}
 };
 
@@ -229,7 +250,7 @@ static int mod_init(void)
 		ERR("Invalid tls_method parameter value\n");
 		return -1;
 	}
-	srv_defaults.method = method;
+	mod_params.method = method;
 
 	tls_cfg = (tls_cfg_t**)shm_malloc(sizeof(tls_cfg_t*));
 	if (!tls_cfg) {
@@ -261,7 +282,7 @@ static int mod_init(void)
 	} else {
 		*tls_cfg = tls_new_cfg();
 		if (!(*tls_cfg)) return -1;
-		if (tls_fix_cfg(*tls_cfg, &srv_defaults, &srv_defaults) < 0) return -1;
+		if (tls_fix_cfg(*tls_cfg, &mod_params, &mod_params) < 0) return -1;
 	}
 
 	if (tls_check_sockets(*tls_cfg) < 0) return -1;
