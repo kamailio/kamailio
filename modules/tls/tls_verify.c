@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * TLS module select interface
+ * TLS module - certificate verification function
  *
  * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2004,2005 Free Software Foundation, Inc.

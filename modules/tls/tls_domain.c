@@ -1,6 +1,8 @@
 /*
  * $Id$
  *
+ * TLS module - virtual configuration domain support
+ *
  * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2004,2005 Free Software Foundation, Inc.
  * Copyright (C) 2005,2006 iptelorg GmbH
