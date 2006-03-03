@@ -30,10 +30,13 @@
  */
 
 #include "../../rpc.h"
+#include "../../tcp_conn.h"
+#include "../../timer.h"
 #include "tls_mod.h"
 #include "tls_domain.h"
 #include "tls_config.h"
 #include "tls_util.h"
+#include "tls_server.h"
 #include "tls_rpc.h"
 
 static const char* tls_reload_doc[2] = {
@@ -44,7 +47,7 @@ static const char* tls_reload_doc[2] = {
 static void tls_reload(rpc_t* rpc, void* ctx)
 {
 	tls_cfg_t* cfg;
-	
+
 	if (!tls_cfg_file.s) {
 		rpc->fault(ctx, 500, "No TLS configuration file configured");
 		return;
@@ -78,7 +81,61 @@ static void tls_reload(rpc_t* rpc, void* ctx)
 	
 }
 
+
+static const char* tls_list_doc[2] = {
+	"List currently open TLS connections",
+	0
+};
+
+extern gen_lock_t* tcpconn_lock;
+extern struct tcp_connection** tcpconn_id_hash;
+
+static void tls_list(rpc_t* rpc, void* c)
+{
+	static char buf[128];
+	void* handle;
+	char* tls_info;
+	SSL* ssl;
+	struct tcp_connection* con;
+	int i, len, timeout;
+
+	TCPCONN_LOCK;
+	for(i = 0; i < TCP_ID_HASH_SIZE; i++) {
+		if (tcpconn_id_hash[i] == NULL) continue;
+		con = tcpconn_id_hash[i];
+		while(con) {
+			if (con->rcv.proto != PROTO_TLS) goto skip;
+			if (con->extra_data) ssl = ((struct tls_extra_data*)con->extra_data)->ssl;
+			if (ssl) {
+				tls_info = SSL_CIPHER_description(SSL_get_current_cipher(ssl), buf, 128);
+				len = strlen(buf);
+				if (len && buf[len - 1] == '\n') buf[len - 1] = '\0';
+			} else {
+				tls_info = "Unknown";
+			}
+			timeout = con->timeout - get_ticks();
+			if (timeout < 0) timeout = 0;
+			rpc->add(c, "{", &handle);
+			rpc->struct_add(handle, "ddsdsds",
+					"id", con->id,
+					"timeout", timeout,
+					"src_ip", ip_addr2a(&con->rcv.src_ip),
+					"src_port", con->rcv.src_port,
+					"dst_ip", ip_addr2a(&con->rcv.dst_ip),
+					"dst_port", con->rcv.dst_port,
+					"tls", 	tls_info);
+		skip:
+			con = con->id_next;
+		}
+	}
+
+	TCPCONN_UNLOCK;
+}
+
+
+
 rpc_export_t tls_rpc[] = {
 	{"tls.reload", tls_reload, tls_reload_doc, 0},
+	{"tls.list",   tls_list,   tls_list_doc,   RET_ARRAY},
 	{0, 0, 0, 0}
 };
