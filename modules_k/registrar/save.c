@@ -222,6 +222,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 	static str no_ua = str_init("n/a");
 	static str callid;
 	static str path;
+	static str *path_received = 0;
 	static str received;
 	static int received_found;
 	static unsigned int allowed, allow_parsed;
@@ -270,14 +271,14 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 
 		/* extract Path headers */
 		if (path_enabled) {
-			if (build_path_vector(_m, &path) < 0) {
+			if (build_path_vector(_m, &path, &path_received) < 0) {
 				rerrno = R_PARSE_PATH;
 				goto error;
 			}
 			if (path.len && path.s) {
 				ci.path = &path;
 				/* save in msg too for reply */
-				if(set_path_vector(_m, &path) < 0) {
+				if (set_path_vector(_m, &path) < 0) {
 					rerrno = R_PARSE_PATH;
 					goto error;
 				}
@@ -326,7 +327,12 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		}
 
 		/* get received */
-		if (_c->received) {
+		if (path_received && path_received->s) {
+			ci.flags1 |= FL_NAT;
+			ci.flags2 &= ~FL_NAT;
+			ci.received = *path_received;
+		}
+		else if (_c->received) {
 			ci.received = _c->received->body;
 		} else {
 			if (received_found==0) {
@@ -478,7 +484,8 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 		
 		ret = ul.get_ucontact( _r, &_c->uri, ci->callid, ci->cseq, &cont);
 		if (ret==-1) {
-			LOG(L_ERR,"ERROR:usrloc:update_contacts: invalid cseq\n");
+			LOG(L_ERR,"ERROR:usrloc:update_contacts: invalid cseq for aor "
+				"<%.*s>\n",_r->aor.len,_r->aor.s);
 			rerrno = R_INV_CSEQ;
 			return -1;
 		}
@@ -538,7 +545,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 	if ( (ci=pack_ci( _m, 0, 0, 0, 0))==0 ) {
 		LOG(L_ERR, "ERROR:usrloc:update_contacts: failed to "
 			"initial pack contact info\n");
-		goto error;
+		goto error0;
 	}
 
 	if (max_contacts && test_max_contacts(_m, _r, _c, ci) != 0 )
@@ -551,7 +558,8 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 		/* search for the contact*/
 		ret = ul.get_ucontact( _r, &_c->uri, ci->callid, ci->cseq, &c);
 		if (ret==-1) {
-			LOG(L_ERR,"ERROR:usrloc:update_contacts: invalid cseq\n");
+			LOG(L_ERR,"ERROR:usrloc:update_contacts: invalid cseq for aor "
+				"<%.*s>\n",_r->aor.len,_r->aor.s);
 			rerrno = R_INV_CSEQ;
 			goto error;
 		}
@@ -614,8 +622,18 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 		}
 	}
 
+	if (ci->path) {
+		if (ci->path->s) pkg_free(ci->path->s);
+		pkg_free(ci->path);
+	}
+
 	return 0;
 error:
+	if (ci->path) {
+		if (ci->path->s) pkg_free(ci->path->s);
+		pkg_free(ci->path);
+	}
+error0:
 	return -1;
 }
 

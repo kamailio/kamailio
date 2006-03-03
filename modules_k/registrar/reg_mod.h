@@ -72,6 +72,7 @@ extern int use_branch_flags;
 extern int method_filtering;
 extern int path_enabled;
 extern int path_mode;
+extern int path_use_params;
 
 extern str sock_hdr_name;
 extern int sock_flag;

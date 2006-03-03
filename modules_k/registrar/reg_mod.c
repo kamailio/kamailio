@@ -90,6 +90,9 @@ int path_enabled = 0;
  *   - LAZY   (1): insert only if support indicated in request
  *   - OFF    (0): never insert */
 int path_mode = PATH_MODE_STRICT;
+/* if the received- and nat-parameters of last Path uri should be used
+ * to determine if UAC is nat'ed */
+int path_use_params = 0;
 
 
 int use_domain = 0;
@@ -157,6 +160,7 @@ static param_export_t params[] = {
 	{"method_filtering",  INT_PARAM, &method_filtering  },
 	{"use_path",          INT_PARAM, &path_enabled      },
 	{"path_mode",         INT_PARAM, &path_mode         },
+	{"path_use_received", INT_PARAM, &path_use_params   },
 	{0, 0, 0}
 };
 

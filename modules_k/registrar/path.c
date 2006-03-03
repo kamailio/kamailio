@@ -28,11 +28,12 @@
 #include "../../parser/parse_rr.h"
 #include "../../parser/parse_uri.h"
 #include "path.h"
+#include "reg_mod.h"
 
 /*
  * Combines all Path HF bodies into one string.
  */
-int build_path_vector(struct sip_msg *_m, str *path)
+int build_path_vector(struct sip_msg *_m, str *path, str **received)
 {
 	static char buf[MAX_PATH_SIZE];
 	char *p;
@@ -43,6 +44,7 @@ int build_path_vector(struct sip_msg *_m, str *path)
 
 	path->len = 0;
 	path->s = 0;
+	*received = 0;
 
 	if(parse_headers(_m, HDR_EOH_F, 1) < 0) {
 		LOG(L_ERR,"ERROR: build_path_vector(): Error while parsing message\n");
@@ -65,22 +67,35 @@ int build_path_vector(struct sip_msg *_m, str *path)
 		p +=  hdr->body.len;
 	}
 
-	if(p!=buf) {
+	if (p!=buf) {
 		/* check if next hop is a loose router */
-		if(parse_rr_body( buf, p-buf, &route) < 0) {
+		if (parse_rr_body( buf, p-buf, &route) < 0) {
 			LOG(L_ERR, "ERROR: build_path_vector(): Failed to parse Path "
 				"body, no head found\n");
 			goto error;
 		}
 		if (parse_uri(route->nameaddr.uri.s, route->nameaddr.uri.len, &puri) < 0) {
 			LOG(L_ERR, "ERROR: build_path_vector(): Error while parsing first Path URI\n");
-			return -1;
+			goto error;
 		}
-		if(!puri.lr.s) {
+		if (!puri.lr.s) {
 			LOG(L_ERR, "ERROR: build_path_vector(): First Path URI is not a "
 				"loose-router, not supported\n");
-			free_rr(&route);
 			goto error;
+		}
+		if (path_use_params) {
+			param_hooks_t hooks;
+			param_t *params;
+
+			if (parse_params(&(puri.params), CLASS_CONTACT, &hooks, &params) != 0) {
+				LOG(L_ERR, "ERROR: build_path_vector(): Error parsing parameters "
+						"of first hop\n");
+				goto error;
+			}
+			for (;params; params = params->next) {
+				if (params->type == P_RECEIVED)
+					*received = &hooks.contact.received->body;
+			}
 		}
 		free_rr(&route);
 	}
@@ -89,6 +104,7 @@ int build_path_vector(struct sip_msg *_m, str *path)
 	path->len = p-buf;
 	return 0;
 error:
+	if(route) free_rr(&route);
 	return -1;
 }
 
