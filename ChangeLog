@@ -1,3 +1,8 @@
+2006-03-03  Jan Janak <jan@iptel.org
+
+	* registrar: extern keyword was missing in declaration of
+	             usrloc_api_t ul
+
 2006-02-28  Jan Janak <jan@iptel.org>
 
         * digest_parser: Fixed typo ('n' -> '\n'), found by Tomas Mandys
