@@ -767,6 +767,7 @@ int new_dlg_uas(struct sip_msg* _req, int _code, /*str* _tag,*/ dlg_t** _d)
 
 	if (request2dlg(_req, res) < 0) {
 		LOG(L_ERR, "new_dlg_uas(): Error while converting request to dialog\n");
+		free_dlg(res);
 		return -4;
 	}
 
@@ -783,7 +784,7 @@ int new_dlg_uas(struct sip_msg* _req, int _code, /*str* _tag,*/ dlg_t** _d)
 	(*_d)->state = DLG_CONFIRMED;
 	if (calculate_hooks(*_d) < 0) {
 		LOG(L_ERR, "new_dlg_uas(): Error while calculating hooks\n");
-		shm_free(*_d);
+		free_dlg(res);
 		return -6;
 	}
 
