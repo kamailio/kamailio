@@ -295,15 +295,19 @@ static void destroy(void)
 {
 	tls_cfg_t* ptr;
 
-	lock_destroy(tls_cfg_lock);
-	lock_dealloc(tls_cfg_lock);
-
-	while(*tls_cfg) {
-		ptr = *tls_cfg;
-		*tls_cfg = (*tls_cfg)->next;
-		tls_free_cfg(ptr);
+	if (tls_cfg_lock) {
+		lock_destroy(tls_cfg_lock);
+		lock_dealloc(tls_cfg_lock);
 	}
 
-	shm_free(tls_cfg);
+	if (tls_cfg) {
+		while(*tls_cfg) {
+			ptr = *tls_cfg;
+			*tls_cfg = (*tls_cfg)->next;
+			tls_free_cfg(ptr);
+		}
+		
+		shm_free(tls_cfg);
+	}
 	destroy_tls();
 }
