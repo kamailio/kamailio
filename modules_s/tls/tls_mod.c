@@ -41,6 +41,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include "../../locking.h"
 #include "../../sr_module.h"
 #include "../../ip_addr.h"
 #include "../../trim.h"
@@ -51,6 +52,7 @@
 #include "tls_domain.h"
 #include "tls_select.h"
 #include "tls_config.h"
+#include "tls_rpc.h"
 #include "tls_mod.h"
 
 
@@ -60,6 +62,10 @@
  *   daemonize and thus has no console access
  * - forward_tls and t_relay_to_tls should be here
  * add tls_log
+ * - Currently it is not possible to reset certificate in a domain,
+ *   for example if you specify client certificate in the default client
+ *   domain then there is no way to define another client domain which would
+ *   have no client certificate configured
  */
 
 
@@ -68,18 +74,54 @@
  */
 static int mod_init(void);
 static void destroy(void);
-static int child_init(int rank);
-
-static int set_method      (modparam_t type, char* param);
-static int set_verify_cert (modparam_t type, char* param);
-static int set_verify_depth(modparam_t type, char* param);
-static int set_require_cert(modparam_t type, char* param);
-static int set_pkey_file   (modparam_t type, char* param);
-static int set_ca_list     (modparam_t type, char* param);
-static int set_certificate (modparam_t type, char* param);
-static int set_cipher_list (modparam_t type, char* param);
 
 MODULE_VERSION
+
+/*
+ * Default settings for server domains when using external config file
+ */
+tls_domain_t srv_defaults = {
+	TLS_DOMAIN_DEF | TLS_DOMAIN_SRV,   /* Domain Type */
+	{},               /* IP address */
+	0,                /* Port number */
+	0,                /* SSL ctx */
+	TLS_CERT_FILE,    /* Certificate file */
+	TLS_PKEY_FILE,    /* Private key file */
+	0,                /* Verify certificate */
+	9,                /* Verify depth */
+	TLS_CA_FILE,      /* CA file */
+	0,                /* Require certificate */
+	0,                /* Cipher list */
+	TLS_USE_TLSv1,    /* TLS method */
+	0                 /* next */
+};
+
+
+/*
+ * Default settings for client domains when using external config file
+ */
+tls_domain_t cli_defaults = {
+	TLS_DOMAIN_DEF | TLS_DOMAIN_CLI,   /* Domain Type */
+	{},               /* IP address */
+	0,                /* Port number */
+	0,                /* SSL ctx */
+	0,                /* Certificate file */
+	0,                /* Private key file */
+	0,                /* Verify certificate */
+	9,                /* Verify depth */
+	TLS_CA_FILE,      /* CA file */
+	0,                /* Require certificate */
+	0,                /* Cipher list */
+	TLS_USE_TLSv1,    /* TLS method */
+	0                 /* next */
+};
+
+
+/*
+ * Defaults for client and server domains when using modparams
+ */
+static str tls_method = STR_STATIC_INIT("TLSv1");
+
 
 int tls_handshake_timeout = 120;
 int tls_send_timeout = 120;
@@ -87,7 +129,14 @@ int tls_conn_timeout = 600;
 int tls_log = 3;
 int tls_session_cache = 0;
 str tls_session_id = STR_STATIC_INIT("ser-tls-0.9.0");
-char* tls_config = 0;
+str tls_cfg_file = STR_NULL;
+
+
+/* Current TLS configuration */
+tls_cfg_t** tls_cfg = NULL;
+
+/* List lock, used by garbage collector */
+gen_lock_t* tls_cfg_lock = NULL;
 
 
 /*
@@ -102,21 +151,21 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"method",              PARAM_STRING | PARAM_USE_FUNC, (void*)set_method      },
-	{"verify_certificate",  PARAM_STRING | PARAM_USE_FUNC, (void*)set_verify_cert },
-	{"verify_depth",        PARAM_STRING | PARAM_USE_FUNC, (void*)set_verify_depth},
-	{"require_certificate", PARAM_STRING | PARAM_USE_FUNC, (void*)set_require_cert},
-	{"private_key",         PARAM_STRING | PARAM_USE_FUNC, (void*)set_pkey_file   },
-	{"ca_list",             PARAM_STRING | PARAM_USE_FUNC, (void*)set_ca_list     },
-	{"certificate",         PARAM_STRING | PARAM_USE_FUNC, (void*)set_certificate },
-	{"cipher_list",         PARAM_STRING | PARAM_USE_FUNC, (void*)set_cipher_list },
-	{"handshake_timeout",   PARAM_INT,                     &tls_handshake_timeout },
-	{"send_timeout",        PARAM_INT,                     &tls_send_timeout      },
-	{"connection_timeout",  PARAM_INT,                     &tls_conn_timeout      },
-	{"tls_log",             PARAM_INT,                     &tls_log               },
-	{"session_cache",       PARAM_INT,                     &tls_session_cache     },
-	{"session_id",          PARAM_STR,                     &tls_session_id        },
-	{"config",              PARAM_STRING,                  &tls_config            },
+	{"tls_method",          PARAM_STR,    &tls_method               },
+	{"verify_certificate",  PARAM_INT,    &srv_defaults.verify_cert },
+	{"verify_depth",        PARAM_INT,    &srv_defaults.verify_depth},
+	{"require_certificate", PARAM_INT,    &srv_defaults.require_cert},
+	{"private_key",         PARAM_STRING, &srv_defaults.pkey_file   },
+	{"ca_list",             PARAM_STRING, &srv_defaults.ca_file     },
+	{"certificate",         PARAM_STRING, &srv_defaults.cert_file   },
+	{"cipher_list",         PARAM_STRING, &srv_defaults.cipher_list },
+	{"handshake_timeout",   PARAM_INT,    &tls_handshake_timeout    },
+	{"send_timeout",        PARAM_INT,    &tls_send_timeout         },
+	{"connection_timeout",  PARAM_INT,    &tls_conn_timeout         },
+	{"tls_log",             PARAM_INT,    &tls_log                  },
+	{"session_cache",       PARAM_INT,    &tls_session_cache        },
+	{"session_id",          PARAM_STR,    &tls_session_id           },
+	{"config",              PARAM_STR,    &tls_cfg_file             },
 	{0, 0, 0}
 };
 
@@ -127,13 +176,13 @@ static param_export_t params[] = {
 struct module_exports exports = {
 	"tls",
 	cmds,       /* Exported functions */
-	0,          /* RPC methods */
+	tls_rpc,    /* RPC methods */
 	params,     /* Exported parameters */
 	mod_init,   /* module initialization function */
 	0,          /* response function*/
 	destroy,    /* destroy function */
 	0,          /* cancel function */
-	child_init  /* per-child init function */
+	0           /* per-child init function */
 };
 
 
@@ -141,7 +190,7 @@ struct module_exports exports = {
 transport_t tls_transport = {
 	PROTO_TLS,
 	STR_STATIC_INIT("TLS"),
-	TRANSPORT_SECURE | TRANSPORT_DGRAM,
+	TRANSPORT_SECURE | TRANSPORT_STREAM,
 	{ 
 		.tcp = {
 			tls_tcpconn_init,
@@ -156,280 +205,84 @@ transport_t tls_transport = {
 };
 
 
-static int mod_init(void)
+/*
+ * Create TLS configuration from modparams
+ */
+static tls_cfg_t* tls_use_modparams(void)
 {
-	if (tls_config) {
-		if (tls_load_config(tls_config) < 0) return -1;
-	}
-
-	if (init_tls() < 0) return -1;
+	tls_cfg_t* ret;
 	
-	tls = &tls_transport;
-	register_select_table(tls_sel);
-	return 0;
+	ret = tls_new_cfg();
+	if (!ret) return;
+
+	
 }
 
 
-static int child_init(int rank)
+static int mod_init(void)
 {
-	if (rank == 1 && init_tls_child() < 0) return -1;
+	int method;
+
+	     /* Convert tls_method parameter to integer */
+	method = tls_parse_method(&tls_method);
+	if (method < 0) {
+		ERR("Invalid tls_method parameter value\n");
+		return -1;
+	}
+	srv_defaults.method = method;
+
+	tls_cfg = (tls_cfg_t**)shm_malloc(sizeof(tls_cfg_t*));
+	if (!tls_cfg) {
+		ERR("Not enough shared memory left\n");
+		return -1;
+	}
+	*tls_cfg = NULL;
+
+	tls = &tls_transport;
+	register_select_table(tls_sel);
+
+	if (init_tls() < 0) return -1;
+	
+	tls_cfg_lock = lock_alloc();
+	if (tls_cfg_lock == 0) {
+		ERR("Unable to create TLS configuration lock\n");
+		return -1;
+	}
+	if (lock_init(tls_cfg_lock) == 0) {
+		lock_dealloc(tls_cfg_lock);
+		ERR("Unable to initialize TLS configuration lock\n");
+		return -1;
+	}
+
+	if (tls_cfg_file.s) {
+		*tls_cfg = tls_load_config(&tls_cfg_file);
+		if (!(*tls_cfg)) return -1;
+		if (tls_fix_cfg(*tls_cfg, &srv_defaults, &cli_defaults) < 0) return -1;
+	} else {
+		*tls_cfg = tls_new_cfg();
+		if (!(*tls_cfg)) return -1;
+		if (tls_fix_cfg(*tls_cfg, &srv_defaults, &srv_defaults) < 0) return -1;
+	}
+
+	if (tls_check_sockets(*tls_cfg) < 0) return -1;
+
 	return 0;
 }
 
 
 static void destroy(void)
 {
+	tls_cfg_t* ptr;
+
+	lock_destroy(tls_cfg_lock);
+	lock_dealloc(tls_cfg_lock);
+
+	while(*tls_cfg) {
+		ptr = *tls_cfg;
+		*tls_cfg = (*tls_cfg)->next;
+		tls_free_cfg(ptr);
+	}
+
+	shm_free(tls_cfg);
 	destroy_tls();
-}
-
-
-/*
- * Parse TLS domain specifier, the function will modify the input
- * string
- */
-static int parse_domain(int* type, struct ip_addr* ip, unsigned short* port, char** text, char* val)
-{
-	static char buf[1024];
-	static char ip_buf[IP_ADDR_MAX_STR_SIZE];
-	char* fmt, *comma;
-	char backup = 0;
-	str s;
-	int ret;
-
-	*type = 0;
-	s.s = val;
-	s.len = strlen(val);
-	trim_leading(&s);
-	if (s.len >= 1024) {
-		ERR("Input text is too long\n");
-		return -1;
-	}
-
-	if (*s.s == '@') {
-		*type |= TLS_DOMAIN_CLI;
-		s.s++;
-		s.len--;
-	} else {
-		*type |= TLS_DOMAIN_SRV;
-	}
-
-	if (!strchr(s.s, '=')) {
-		DBG("No TLS domain specifier found\n");
-		*text = s.s;
-		*type |= TLS_DOMAIN_DEF;
-		return 0;
-	}
-
-	memset(ip, 0, sizeof(struct ip_addr));
-	if (*s.s == '[') {
-		comma = strchr(s.s, ']');
-		if (comma) {
-			backup = *comma;
-			*comma = ' ';
-		}
-		ip->af = AF_INET6;
-		ip->len = 16;
-		fmt = "\[%s :%hd = %s";
-	} else {
-		comma = strchr(s.s, ':');
-		if (comma) {
-			backup = *comma;
-			*comma = ' ';
-		}
-		ip->af = AF_INET;
-		ip->len = 4;
-		fmt = "%s %hd = %s";
-	}
-
-	ret = sscanf(s.s, fmt, ip_buf, port, buf);
-       	if (comma) *comma = backup;
-	if (ret < 3) {
-		ERR("Error while parsing TLS domain specification: '%s'\n", s.s);
-		return -1;
-	}
-	
-	if (inet_pton(ip->af, ip_buf, ip->u.addr) <= 0) {
-		ERR("Invalid IP address in TLS domain: '%s'\n", ip_buf);
-		return -1;
-	}
-
-	*text = buf;
-	DBG("Found TLS domain: <%s>:<%d>,<%s>\n", ip_addr2a(ip), *port, *text);
-	return 0;
-}
-
-
-static tls_domain_t* lookup_domain(char** val, char* param)
-{
-	struct ip_addr ip;
-	unsigned short port;
-	tls_domain_t* d;
-	int ret, flags;
-	
-	flags = TLS_DOMAIN_SRV;
-
-        ret = parse_domain(&flags, &ip, &port, val, param);
-	if (ret < 0) {
-		ERR("Error while parsing TLS module parameter '%s'\n", param);
-		return 0;
-	}
-
-	d = tls_find_domain(flags, &ip, port);
-	if (!d && !(d = tls_new_domain(flags, &ip, port))) {
-		ERR("Error while creating new TLS domain for '%s'\n", param);
-		return 0;
-	}
-	return d;
-}
-
-
-static int set_method(modparam_t type, char* param)
-{
-	tls_domain_t* d;
-	char* val;
-	
-	d = lookup_domain(&val, param);
-	if (!d) return -1;
-	
-	if (!strcasecmp(val, "SSLv2")) {
-		d->method = TLS_USE_SSLv2;
-	} else if (!strcasecmp(val, "SSLv3")) {
-		d->method = TLS_USE_SSLv3;
-	} else if (!strcasecmp(val, "SSLv23")) {
-		d->method = TLS_USE_SSLv23;
-	} else if (!strcasecmp(val, "TLSv1")) {
-		d->method = TLS_USE_TLSv1;
-	} else {
-		ERR("Invalid tls::method parameter value: %s\n", val);
-		return -1;
-	}
-	return 0;
-}
-
-static int set_verify_cert(modparam_t type, char* param)
-{
-	tls_domain_t* d;
-	char* val;
-
-	d = lookup_domain(&val, param);
-	if (!d) return -1;
-
-	if (!strcasecmp(val, "yes")     || 
-	    !strcasecmp(val, "true")    ||
-	    !strcasecmp(val, "on")      ||
-	    !strcasecmp(val, "enable")  ||
-	    !strcasecmp(val, "enabled") ||
-	    *val == '1') {
-		d->verify_cert = 1;
-		return 0;
-	}
-	
-	if (!strcasecmp(val, "no")       || 
-	    !strcasecmp(val, "false")    ||
-	    !strcasecmp(val, "off")      ||
-	    !strcasecmp(val, "disable")  ||
-	    !strcasecmp(val, "disabled") ||
-	    *val == '0') {
-		d->verify_cert = 0;
-		return 0;
-	}
-	ERR("Invalid tls::verify_certificate parameter value: '%s'\n", val);
-	return -1;
-}
-
-
-static int set_verify_depth(modparam_t type, char* param)
-{
-	tls_domain_t* d;
-	char* val;
-
-	d = lookup_domain(&val, param);
-	if (!d) return -1;
-
-	d->verify_depth = atoi(val);
-	return 0;
-}
-
-
-static int set_require_cert(modparam_t type, char* param)
-{
-	tls_domain_t* d;
-	char* val;
-
-	d = lookup_domain(&val, param);
-	if (!d) return -1;
-
-	if (!strcasecmp(val, "yes")     || 
-	    !strcasecmp(val, "true")    ||
-	    !strcasecmp(val, "on")      ||
-	    !strcasecmp(val, "enable")  ||
-	    !strcasecmp(val, "enabled") ||
-	    *val == '1') {
-		d->require_cert = 1;
-		return 0;
-	}
-	
-	if (!strcasecmp(val, "no")       || 
-	    !strcasecmp(val, "false")    ||
-	    !strcasecmp(val, "off")      ||
-	    !strcasecmp(val, "disable")  ||
-	    !strcasecmp(val, "disabled") ||
-	    *val == '0') {
-		d->require_cert = 0;
-		return 0;
-	}
-	ERR("Invalid tls::require_certificate parameter value: '%s'\n", val);
-	return -1;
-}
-
-
-static int set_pkey_file(modparam_t type, char* param)
-{
-	tls_domain_t* d;
-	char* val;
-
-	d = lookup_domain(&val, param);
-	if (!d) return -1;
-	
-	d->pkey_file = val;
-	return 0;
-}
-
-
-static int set_ca_list(modparam_t type, char* param)
-{
-	tls_domain_t* d;
-	char* val;
-
-	d = lookup_domain(&val, param);
-	if (!d) return -1;
-	
-	d->ca_file = val;
-	return 0;
-}
-
-
-static int set_certificate(modparam_t type, char* param)
-{
-	tls_domain_t* d;
-	char* val;
-
-	d = lookup_domain(&val, param);
-	if (!d) return -1;
-	
-	d->cert_file = val;
-	return 0;
-}
-
-
-static int set_cipher_list(modparam_t type, char* param)
-{
-	tls_domain_t* d;
-	char* val;
-
-	d = lookup_domain(&val, param);
-	if (!d) return -1;
-
-	d->cipher_list = val;
-	return 0;
 }

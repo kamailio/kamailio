@@ -28,40 +28,19 @@
  */
 
 #include <stdlib.h>
+#include <openssl/ssl.h>
+#include <openssl/opensslv.h>
+#if OPENSSL_VERSION_NUMBER >= 0x00907000L
+# include <openssl/ui.h>
+#endif
 #include "../../ut.h"
 #include "../../mem/shm_mem.h"
 #include "../../pt.h"
 #include "tls_server.h"
+#include "tls_util.h"
+#include "tls_mod.h"
+#include "tls_init.h"
 #include "tls_domain.h"
-
-tls_domain_t* tls_def_srv = 0;
-tls_domain_t* tls_def_cli = 0;
-tls_domain_t* tls_srv_list = 0;
-tls_domain_t* tls_cli_list = 0;
-
-
-/*
- * find domain with given ip and port 
- */
-tls_domain_t* tls_find_domain(int type, struct ip_addr *ip, unsigned short port)
-{
-	tls_domain_t *p;
-
-	if (type & TLS_DOMAIN_DEF) {
-		if (type & TLS_DOMAIN_SRV) return tls_def_srv;
-		else return tls_def_cli;
-	} else {
-		if (type & TLS_DOMAIN_SRV) p = tls_srv_list;
-		else p = tls_cli_list;
-	}
-
-	while (p) {
-		if ((p->port == port) && ip_addr_cmp(&p->ip, ip))
-			return p;
-		p = p->next;
-	}
-	return 0;
-}
 
 
 /*
@@ -71,7 +50,7 @@ tls_domain_t* tls_new_domain(int type, struct ip_addr *ip, unsigned short port)
 {
 	tls_domain_t* d;
 
-	d = pkg_malloc(sizeof(tls_domain_t));
+	d = shm_malloc(sizeof(tls_domain_t));
 	if (d == NULL) {
 		ERR("Memory allocation failure\n");
 		return 0;
@@ -79,82 +58,59 @@ tls_domain_t* tls_new_domain(int type, struct ip_addr *ip, unsigned short port)
 	memset(d, '\0', sizeof(tls_domain_t));
 
 	d->type = type;
-	if (type & TLS_DOMAIN_DEF) {
-		if (type & TLS_DOMAIN_SRV) {
-			     /* Default server domain */
-			d->cert_file = TLS_CERT_FILE;
-			d->pkey_file = TLS_PKEY_FILE;
-			d->verify_cert = 0;
-			d->verify_depth = 3;
-			d->ca_file = TLS_CA_FILE;
-			d->require_cert = 0;
-			d->method = TLS_USE_TLSv1;
-			tls_def_srv = d;
-		} else {
-			     /* Default client domain */
-			d->cert_file = 0;
-			d->pkey_file = 0;
-			d->verify_cert = 0;
-			d->verify_depth = 3;
-			d->ca_file = TLS_CA_FILE;
-			d->require_cert = 0;
-			d->method = TLS_USE_TLSv1;
-			tls_def_cli = d;
-		}		
-	} else {
-		memcpy(&d->ip, ip, sizeof(struct ip_addr));
-		d->port = port;
-		d->verify_cert = -1;
-		d->verify_depth = -1;
-		d->require_cert = -1;
-
-		if (type & TLS_DOMAIN_SRV) {
-			d->next = tls_srv_list;
-			tls_srv_list = d;
-		} else {
-			d->next = tls_cli_list;
-			tls_cli_list = d;
-		}
-	}
+	if (ip) memcpy(&d->ip, ip, sizeof(struct ip_addr));
+	d->port = port;
+	d->verify_cert = -1;
+	d->verify_depth = -1;
+	d->require_cert = -1;
 	return d;
+
+ error:
+	shm_free(d);
+	return 0;
 }
 
 
-static void free_domain(tls_domain_t* d)
+/*
+ * Free all memory used by configuration domain
+ */
+void tls_free_domain(tls_domain_t* d)
 {
 	int i;
 	if (!d) return;
 	if (d->ctx) {
-		if (*d->ctx) {
-			for(i = 0; i < process_count; i++) {
-				if ((*d->ctx)[i]) SSL_CTX_free((*d->ctx)[i]);
-			}
-			shm_free(*d->ctx);
+		for(i = 0; i < process_count; i++) {
+			if (d->ctx[i]) SSL_CTX_free(d->ctx[i]);
 		}
 		shm_free(d->ctx);
 	}
-	pkg_free(d);
+
+	if (d->cipher_list) shm_free(d->cipher_list);
+	if (d->ca_file) shm_free(d->ca_file);
+	if (d->pkey_file) shm_free(d->pkey_file);
+	if (d->cert_file) shm_free(d->cert_file);
+	shm_free(d);
 }
 
 
 /*
  * clean up 
  */
-void tls_free_domains(void)
+void tls_free_cfg(tls_cfg_t* cfg)
 {
 	tls_domain_t* p;
-	while(tls_srv_list) {
-		p = tls_srv_list;
-		tls_srv_list = tls_srv_list->next;
-		free_domain(p);
+	while(cfg->srv_list) {
+		p = cfg->srv_list;
+		cfg->srv_list = cfg->srv_list->next;
+		tls_free_domain(p);
 	}
-	while(tls_cli_list) {
-		p = tls_srv_list;
-		tls_srv_list = tls_srv_list->next;
-		free_domain(p);
+	while(cfg->cli_list) {
+		p = cfg->cli_list;
+		cfg->cli_list = cfg->cli_list->next;
+		tls_free_domain(p);
 	}
-	if (tls_def_srv) free_domain(tls_def_srv);
-	if (tls_def_cli) free_domain(tls_def_cli);
+	if (cfg->srv_default) tls_free_domain(cfg->srv_default);
+	if (cfg->cli_default) tls_free_domain(cfg->cli_default);
 }
 
 
@@ -169,15 +125,211 @@ char* tls_domain_str(tls_domain_t* d)
 	buf[0] = '\0';
 	p = buf;
 	p = strcat(p, d->type & TLS_DOMAIN_SRV ? "TLSs<" : "TLSc<");
-	if (d->ip.len) {
+	if (d->type & TLS_DOMAIN_DEF) {
+		p = strcat(p, "default>");
+	} else {
 		p = strcat(p, ip_addr2a(&d->ip));
 		p = strcat(p, ":");
 		p = strcat(p, int2str(d->port, 0));
 		p = strcat(p, ">");
-	} else {
-		p = strcat(p, "default>");
 	}
 	return buf;
+}
+
+
+/*
+ * Initialize parameters that have not been configured from
+ * parent domain (usualy one of default domains
+ */
+static int fill_missing(tls_domain_t* d, tls_domain_t* parent)
+{
+	if (d->method == TLS_METHOD_UNSPEC) d->method = parent->method;
+	LOG(L_INFO, "%s: tls_method=%d\n", tls_domain_str(d), d->method);
+	
+	if (d->method < 1 || d->method >= TLS_METHOD_MAX) {
+		ERR("%s: Invalid TLS method value\n", tls_domain_str(d));
+		return -1;
+	}
+	
+	if (!d->cert_file && 
+	    shm_asciiz_dup(&d->cert_file, parent->cert_file) < 0) return -1;
+	LOG(L_INFO, "%s: certificate='%s'\n", tls_domain_str(d), d->cert_file);
+	
+	if (!d->ca_file &&
+	    shm_asciiz_dup(&d->ca_file, parent->ca_file) < 0) return -1;
+	LOG(L_INFO, "%s: ca_list='%s'\n", tls_domain_str(d), d->ca_file);
+	
+	if (d->require_cert == -1) d->require_cert = parent->require_cert;
+	LOG(L_INFO, "%s: require_certificate=%d\n", tls_domain_str(d), d->require_cert);
+	
+	if (!d->cipher_list &&
+	    shm_asciiz_dup(&d->cipher_list, parent->cipher_list) < 0) return -1;
+	LOG(L_INFO, "%s: cipher_list='%s'\n", tls_domain_str(d), d->cipher_list);
+	
+	if (!d->pkey_file &&
+	    shm_asciiz_dup(&d->pkey_file, parent->pkey_file) < 0) return -1;
+	LOG(L_INFO, "%s: private_key='%s'\n", tls_domain_str(d), d->pkey_file);
+	
+	if (d->verify_cert == -1) d->verify_cert = parent->verify_cert;
+	LOG(L_INFO, "%s: verify_certificate=%d\n", tls_domain_str(d), d->verify_cert);
+	
+	if (d->verify_depth == -1) d->verify_depth = parent->verify_depth;
+	LOG(L_INFO, "%s: verify_depth=%d\n", tls_domain_str(d), d->verify_depth);
+
+	return 0;
+}
+
+
+/* 
+ * Load certificate from file 
+ */
+static int load_cert(tls_domain_t* d)
+{
+	int i;
+
+	if (!d->cert_file) {
+		DBG("%s: No certificate configured\n", tls_domain_str(d));
+		return 0;
+	}
+
+	for(i = 0; i < process_count; i++) {
+		if (!SSL_CTX_use_certificate_chain_file(d->ctx[i], d->cert_file)) {
+			ERR("%s: Unable to load certificate file '%s'\n",
+			    tls_domain_str(d), d->cert_file);
+			TLS_ERR("load_cert:");
+			return -1;
+		}
+		
+	}
+	return 0;
+}
+
+
+/* 
+ * Load CA list from file 
+ */
+static int load_ca_list(tls_domain_t* d)
+{
+	int i;
+
+	if (!d->ca_file) {
+		DBG("%s: No CA list configured\n", tls_domain_str(d));
+		return 0;
+	}
+
+	for(i = 0; i < process_count; i++) {
+		if (SSL_CTX_load_verify_locations(d->ctx[i], d->ca_file, 0) != 1) {
+			ERR("%s: Unable to load CA list '%s'\n", tls_domain_str(d), d->ca_file);
+			TLS_ERR("load_ca_list:");
+			return -1;
+		}
+		SSL_CTX_set_client_CA_list(d->ctx[i], SSL_load_client_CA_file(d->ca_file));
+		if (SSL_CTX_get_client_CA_list(d->ctx[i]) == 0) {
+			ERR("%s: Error while setting client CA list\n", tls_domain_str(d));
+			TLS_ERR("load_ca_list:");
+			return -1;
+		}
+	}
+	return 0;
+}
+
+
+/* 
+ * Configure cipher list 
+ */
+static int set_cipher_list(tls_domain_t* d)
+{
+	int i;
+
+	if (!d->cipher_list) return 0;
+	for(i = 0; i < process_count; i++) {
+		if (SSL_CTX_set_cipher_list(d->ctx[i], d->cipher_list) == 0 ) {
+			ERR("%s: Failure to set SSL context cipher list\n", tls_domain_str(d));
+			return -1;
+		}
+	}
+	return 0;
+}
+
+
+/* 
+ * Enable/disable certificate verification 
+ */
+static int set_verification(tls_domain_t* d)
+{
+	int verify_mode, i;
+
+	if (d->require_cert) {
+		verify_mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
+		LOG(L_INFO, "%s: %s MUST present valid certificate\n", 
+		     tls_domain_str(d), d->type & TLS_DOMAIN_SRV ? "Client" : "Server");
+	} else {
+		if (d->verify_cert) {
+			verify_mode = SSL_VERIFY_PEER;
+			if (d->type & TLS_DOMAIN_SRV) {
+				LOG(L_INFO, "%s: IF client provides certificate then it MUST be valid\n", 
+				     tls_domain_str(d));
+			} else {
+				LOG(L_INFO, "%s: Server MUST present valid certificate\n", 
+				     tls_domain_str(d));
+			}
+		} else {
+			verify_mode = SSL_VERIFY_NONE;
+			if (d->type & TLS_DOMAIN_SRV) {
+				LOG(L_INFO, "%s: No client certificate required and no checks performed\n", 
+				     tls_domain_str(d));
+			} else {
+				LOG(L_INFO, "%s: Server MAY present invalid certificate\n", 
+				     tls_domain_str(d));
+			}
+		}
+	}
+	
+	for(i = 0; i < process_count; i++) {
+		SSL_CTX_set_verify(d->ctx[i], verify_mode, 0);
+		SSL_CTX_set_verify_depth(d->ctx[i], d->verify_depth);
+		
+	}
+	return 0;
+}
+
+
+/* 
+ * Configure generic SSL parameters 
+ */
+static int set_ssl_options(tls_domain_t* d)
+{
+	int i;
+	for(i = 0; i < process_count; i++) {
+#if OPENSSL_VERSION_NUMBER >= 0x000907000
+		SSL_CTX_set_options(d->ctx[i], 
+				    SSL_OP_ALL | SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION | SSL_OP_CIPHER_SERVER_PREFERENCE);
+#else
+		SSL_CTX_set_options(d->ctx[i], 
+				    SSL_OP_ALL);
+#endif
+	}
+	return 0;
+}
+
+
+/* 
+ * Configure session cache parameters 
+ */
+static int set_session_cache(tls_domain_t* d)
+{
+	int i;
+	for(i = 0; i < process_count; i++) {
+		     /* janakj: I am not sure if session cache makes sense in ser, session 
+		      * cache is stored in SSL_CTX and we have one SSL_CTX per process, thus 
+		      * sessions among processes will not be reused
+		      */
+		SSL_CTX_set_session_cache_mode(d->ctx[i], 
+				   tls_session_cache ? SSL_SESS_CACHE_SERVER : SSL_SESS_CACHE_OFF);
+		SSL_CTX_set_session_id_context(d->ctx[i], 
+					       (unsigned char*)tls_session_id.s, tls_session_id.len);
+	}
+	return 0;
 }
 
 
@@ -187,89 +339,114 @@ char* tls_domain_str(tls_domain_t* d)
  */
 static int fix_domain(tls_domain_t* d, tls_domain_t* def)
 {
-	d->ctx = (SSL_CTX***)shm_malloc(sizeof(SSL_CTX**));
-	if (!d->ctx) {
-		ERR("No shared memory left\n");
-		return -1;
-	}
-	*d->ctx = 0;
+	int i;
 
-	if (d->method == TLS_METHOD_UNSPEC) {
-		INFO("%s: Method not configured, using default value %d\n",
-		     tls_domain_str(d), def->method);
-		d->method = def->method;
-	} else {
-		INFO("%s: using TLS method %d\n",
-		     tls_domain_str(d), d->method);
-	}
-	
-	if (d->method < 1 || d->method >= TLS_METHOD_MAX) {
-		ERR("%s: Invalid TLS method value\n", tls_domain_str(d));
+	if (fill_missing(d, def) < 0) return -1;
+
+	d->ctx = (SSL_CTX**)shm_malloc(sizeof(SSL_CTX*) * process_count);
+	if (!d->ctx) {
+		ERR("%s: Cannot allocate shared memory\n", tls_domain_str(d));
 		return -1;
 	}
-	
-	if (!d->cert_file) {
-		INFO("%s: No certificate configured, using default '%s'\n",
-		     tls_domain_str(d), def->cert_file);
-		d->cert_file = def->cert_file;
-	} else {
-		INFO("%s: using certificate '%s'\n",
-		     tls_domain_str(d), d->cert_file);
+	memset(d->ctx, 0, sizeof(SSL_CTX*) * process_count);
+	for(i = 0; i < process_count; i++) {
+		d->ctx[i] = SSL_CTX_new(ssl_methods[d->method - 1]);
+		if (d->ctx[i] == NULL) {
+			ERR("%s: Cannot create SSL context\n", tls_domain_str(d));
+			return -1;
+		}
 	}
 	
-	if (!d->ca_file) {
-		INFO("%s: No CA list configured, using default '%s'\n",
-		     tls_domain_str(d), def->ca_file);
-		d->ca_file = def->ca_file;
-	} else {
-		INFO("%s: using CA list '%s'\n",
-		     tls_domain_str(d), d->ca_file);
-	}
+	if (load_cert(d) < 0) return -1;
+	if (load_ca_list(d) < 0) return -1;
+	if (set_cipher_list(d) < 0) return -1;
+	if (set_verification(d) < 0) return -1;
+	if (set_ssl_options(d) < 0) return -1;
+	if (set_session_cache(d) < 0) return -1;
+
+	return 0;
+}
+
+
+static int passwd_cb(char *buf, int size, int rwflag, void *filename)
+{
+#if OPENSSL_VERSION_NUMBER >= 0x00907000L	
+	UI             *ui;
+	const char     *prompt;
 	
-	if (d->require_cert == -1) {
-		INFO("%s: require_certificate not configured, using default value %d\n",
-		     tls_domain_str(d), def->require_cert);
-		d->require_cert = def->require_cert;
-	} else {
-		INFO("%s: require_certificate = %d\n",
-		     tls_domain_str(d), d->require_cert);
+	ui = UI_new();
+	if (ui == NULL)
+		goto err;
+
+	prompt = UI_construct_prompt(ui, "passphrase", filename);
+	UI_add_input_string(ui, prompt, 0, buf, 0, size - 1);
+	UI_process(ui);
+	UI_free(ui);
+	return strlen(buf);
+ 
+ err:
+	ERR("passwd_cb: Error in passwd_cb\n");
+	if (ui) {
+		UI_free(ui);
 	}
+	return 0;
 	
-	if (!d->cipher_list) {
-		INFO("%s: Cipher list not configured, using default value %s\n",
-		     tls_domain_str(d), def->cipher_list);
-		d->cipher_list = def->cipher_list;
-	} else {
-		INFO("%s: using cipher list %s\n",
-		     tls_domain_str(d), d->cipher_list);
+#else
+	if (des_read_pw_string(buf, size-1, "Enter Private Key password:", 0)) {
+		ERR("Error in passwd_cb\n");
+		return 0;
 	}
+	return strlen(buf);
+#endif
+}
+
+
+#define NUM_RETRIES 3
+/*
+ * load a private key from a file 
+ */
+static int load_private_key(tls_domain_t* d)
+{
+	int idx, ret_pwd, i;
 	
 	if (!d->pkey_file) {
-		INFO("%s: No private key configured, using default '%s'\n",
-		     tls_domain_str(d), def->pkey_file);
-		d->pkey_file = def->pkey_file;
-	} else {
-		INFO("%s: using private key '%s'\n",
-		     tls_domain_str(d), d->pkey_file);
+		DBG("%s: No private key specified\n", tls_domain_str(d));
+		return 0;
 	}
-	
-	if (d->verify_cert == -1) {
-		INFO("%s: verify_certificate not configured, using default value %d\n",
-		     tls_domain_str(d), def->verify_cert);
-		d->verify_cert = def->verify_cert;
-	} else {
-		INFO("%s: using verify_certificate = %d\n",
-		     tls_domain_str(d), d->verify_cert);
-	}
-	
-	if (d->verify_depth == -1) {
-		INFO("%s: verify_depth not configured, using default value %d\n",
-		     tls_domain_str(d), def->verify_depth);
-		d->verify_depth = def->verify_depth;
-	} else {
-		INFO("%s: using verify_depth = %d\n",
-		     tls_domain_str(d), d->verify_depth);
-	}
+
+	for(i = 0; i < process_count; i++) {
+		SSL_CTX_set_default_passwd_cb(d->ctx[i], passwd_cb);
+		SSL_CTX_set_default_passwd_cb_userdata(d->ctx[i], d->pkey_file);
+		
+		for(idx = 0, ret_pwd = 0; idx < NUM_RETRIES; idx++) {
+			ret_pwd = SSL_CTX_use_PrivateKey_file(d->ctx[i], d->pkey_file, SSL_FILETYPE_PEM);
+			if (ret_pwd) {
+				break;
+			} else {
+				ERR("%s: Unable to load private key '%s'\n",
+				    tls_domain_str(d), d->pkey_file);
+				TLS_ERR("load_private_key:");
+				continue;
+			}
+		}
+		
+		if (!ret_pwd) {
+			ERR("%s: Unable to load private key file '%s'\n", 
+			    tls_domain_str(d), d->pkey_file);
+			TLS_ERR("load_private_key:");
+			return -1;
+		}
+		
+		if (!SSL_CTX_check_private_key(d->ctx[i])) {
+			ERR("%s: Key '%s' does not match the public key of the certificate\n", 
+			    tls_domain_str(d), d->pkey_file);
+			TLS_ERR("load_private_key:");
+			return -1;
+		}
+	}		
+
+	DBG("%s: Key '%s' successfuly loaded\n",
+	    tls_domain_str(d), d->pkey_file);
 	return 0;
 }
 
@@ -278,25 +455,151 @@ static int fix_domain(tls_domain_t* d, tls_domain_t* def)
  * Initialize attributes of all domains from default domains
  * if necessary
  */
-int tls_fix_domains(void)
+int tls_fix_cfg(tls_cfg_t* cfg, tls_domain_t* srv_defaults, tls_domain_t* cli_defaults)
 {
 	tls_domain_t* d;
 
-	if (!tls_def_cli) tls_def_cli = tls_new_domain(TLS_DOMAIN_DEF | TLS_DOMAIN_CLI, 0, 0);
-	if (!tls_def_srv) tls_def_srv = tls_new_domain(TLS_DOMAIN_DEF | TLS_DOMAIN_SRV, 0, 0);
+	if (!cfg->cli_default) {
+		cfg->cli_default = tls_new_domain(TLS_DOMAIN_DEF | TLS_DOMAIN_CLI, 0, 0);
+	}
 
-	d = tls_srv_list;
+	if (!cfg->srv_default) {
+		cfg->srv_default = tls_new_domain(TLS_DOMAIN_DEF | TLS_DOMAIN_SRV, 0, 0);
+	}
+
+	if (fix_domain(cfg->srv_default, srv_defaults) < 0) return -1;
+	if (fix_domain(cfg->cli_default, cli_defaults) < 0) return -1;
+
+	d = cfg->srv_list;
 	while (d) {
-		if (fix_domain(d, tls_def_srv) < 0) return -1;
+		if (fix_domain(d, srv_defaults) < 0) return -1;
 		d = d->next;
 	}
 
-	d = tls_cli_list;
+	d = cfg->cli_list;
 	while (d) {
-		if (fix_domain(d, tls_def_cli) < 0) return -1;
+		if (fix_domain(d, cli_defaults) < 0) return -1;
 		d = d->next;
 	}
-	if (fix_domain(tls_def_srv, tls_def_srv) < 0) return -1;
-	if (fix_domain(tls_def_cli, tls_def_cli) < 0) return -1;
+
+	     /* Ask for passwords as the last step */
+	d = cfg->srv_list;
+	while(d) {
+		if (load_private_key(d) < 0) return -1;
+		d = d->next;
+	}
+
+	d = cfg->cli_list;
+	while(d) {
+		if (load_private_key(d) < 0) return -1;
+		d = d->next;
+	}
+
+	if (load_private_key(cfg->srv_default) < 0) return -1;
+	if (load_private_key(cfg->cli_default) < 0) return -1;
+
+	return 0;
+}
+
+
+/*
+ * Create new configuration structure
+ */
+tls_cfg_t* tls_new_cfg(void)
+{
+	tls_cfg_t* r;
+
+	r = (tls_cfg_t*)shm_malloc(sizeof(tls_cfg_t));
+	if (!r) {
+		ERR("No memory left\n");
+		return 0;
+	}
+	memset(r, 0, sizeof(tls_cfg_t));
+	return r;
+}
+
+
+/*
+ * Lookup TLS configuration based on type, ip, and port
+ */
+tls_domain_t* tls_lookup_cfg(tls_cfg_t* cfg, int type, struct ip_addr* ip, unsigned short port)
+{
+	tls_domain_t *p;
+
+	if (type & TLS_DOMAIN_DEF) {
+		if (type & TLS_DOMAIN_SRV) return cfg->srv_default;
+		else return cfg->cli_default;
+	} else {
+		if (type & TLS_DOMAIN_SRV) p = cfg->srv_list;
+		else p = cfg->cli_list;
+	}
+
+	while (p) {
+		if ((p->port == port) && ip_addr_cmp(&p->ip, ip))
+			return p;
+		p = p->next;
+	}
+
+	     /* No matching domain found, return default */
+	if (type & TLS_DOMAIN_SRV) return cfg->srv_default;
+	else return cfg->cli_default;
+}
+
+
+/*
+ * Check whether configuration domain exists
+ */
+static int domain_exists(tls_cfg_t* cfg, tls_domain_t* d)
+{
+	tls_domain_t *p;
+
+	if (d->type & TLS_DOMAIN_DEF) {
+		if (d->type & TLS_DOMAIN_SRV) return cfg->srv_default != NULL;
+		else return cfg->cli_default != NULL;
+	} else {
+		if (d->type & TLS_DOMAIN_SRV) p = cfg->srv_list;
+		else p = cfg->cli_list;
+	}
+
+	while (p) {
+		if ((p->port == d->port) && ip_addr_cmp(&p->ip, &d->ip))
+			return 1;
+		p = p->next;
+	}
+
+	return 0;
+}
+
+
+/*
+ * Add a domain to the configuration set
+ */
+int tls_add_domain(tls_cfg_t* cfg, tls_domain_t* d)
+{
+	tls_domain_t* p;
+
+	if (!cfg) {
+		ERR("TLS configuration structure missing\n");
+		return -1;
+	}
+
+	     /* Make sure the domain does not exist */
+	if (domain_exists(cfg, d)) return 1;
+
+	if (d->type & TLS_DOMAIN_DEF) {
+		if (d->type & TLS_DOMAIN_CLI) {
+			cfg->cli_default = d;
+		} else {
+			cfg->srv_default = d;
+		}
+	} else {
+		if (d->type & TLS_DOMAIN_SRV) {
+			d->next = cfg->srv_list;
+			cfg->srv_list = d;
+		} else {
+			d->next = cfg->cli_list;
+			cfg->cli_list = d;
+		}
+	}
 	return 0;
 }

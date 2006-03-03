@@ -34,7 +34,14 @@
 #define _TLS_CONFIG_H
 
 #include "../../str.h"
+#include "tls_domain.h"
 
-int load_tls_config(char* filename);
+tls_cfg_t* tls_load_config(str* filename);
+
+/*
+ * Convert TLS method string to integer
+ */
+int tls_parse_method(str* method);
+
 
 #endif /* _TLS_CONFIG_H */

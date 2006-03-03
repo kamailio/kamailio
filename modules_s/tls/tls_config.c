@@ -32,10 +32,12 @@
 
 #include <stdio.h>
 #include <libgen.h>
+#include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../trim.h"
 #include "../../ut.h"
 #include "tls_config.h"
+#include "tls_util.h"
 #include "tls_domain.h"
 
 #define MAX_TOKEN_LEN 256
@@ -49,6 +51,9 @@ static struct {
 	char* file;
 	int line;
 	int col;
+
+	tls_cfg_t* cfg;       /* Current configuration data */
+	tls_domain_t* domain; /* Current domain in the configuration data */
 } pstate;
 
 
@@ -450,7 +455,6 @@ static struct parser_tab* lookup_token(struct parser_tab* table, str* token)
 	}
 }
 
-
 static int parse_string_val(str* res, token_t* token)
 {
 	int ret;
@@ -536,6 +540,7 @@ static int parse_method_opt(token_t* token)
 		return -1;
 	}
 
+	pstate.domain->method = r->u.ival;
 	return 0;
 }
 
@@ -598,7 +603,9 @@ static int parse_bool_val(int* res, token_t* token)
 static int parse_verify_cert_opt(token_t* token)
 {
 	int ret;
-	return parse_bool_val(&ret, token);
+	if (parse_bool_val(&ret, token) < 0) return -1;
+	pstate.domain->verify_cert  = ret;
+	return 0;
 }
 
 
@@ -644,52 +651,84 @@ static int parse_verify_depth_opt(token_t* token)
 
 		return -1;
 	}
+	pstate.domain->verify_depth = val;
 	return 0;
 }
 
 
 static int parse_req_cert_opt(token_t* token)
 {
+	int ret;
+	if (parse_bool_val(&ret, token) < 0) return -1;
+	pstate.domain->require_cert  = ret;
+	return 0;
+}
+
+
+/*
+ * Parse filename value, the function would add CFG_DIR prefix
+ * if the filename does not start with /. The result is allocated
+ * using shm_malloc and must be freed using shm_free
+ */
+static char* parse_file_val(token_t* token)
+{
+	char* file, *res;
 	str val;
-	return parse_string_val(&val, token);
+        if (parse_string_val(&val, token) < 0) return 0;
+	file = get_pathname(&val);
+	if (!file) return 0;
+	if (shm_asciiz_dup(&res, file) < 0) {
+		pkg_free(file);
+		return 0;
+	}
+	pkg_free(file);
+	return res;
 }
 
 
 static int parse_pkey_opt(token_t* token)
 {
-	str val;
-	return parse_string_val(&val, token);
+	char* file;
+	file = parse_file_val(token);
+	if (!file) return -1;
+	pstate.domain->pkey_file = file;
+	return 0;
 }
-
 
 static int parse_ca_list_opt(token_t* token)
 {
-	str val;
-	return parse_string_val(&val, token);
+	char* file;
+	file = parse_file_val(token);
+	if (!file) return -1;
+	pstate.domain->ca_file = file;
+	return 0;
 }
-
 
 static int parse_cert_opt(token_t* token)
 {
-	str val;
-	return parse_string_val(&val, token);
+	char* file;
+	file = parse_file_val(token);
+	if (!file) return -1;
+	pstate.domain->cert_file = file;
+	return 0;
 }
 
 static int parse_cipher_list_opt(token_t* token)
 {
 	str val;
-	return parse_string_val(&val, token);
+	if (parse_string_val(&val, token) < 0) return -1;
+	if (shm_str_dup(&pstate.domain->cipher_list, &val) < 0) return -1;
+	return 0;
 }
 
-static int parse_ipv6(token_t* token)
+static int parse_ipv6(struct ip_addr* ip, token_t* token)
 {
 	char buf[IP_ADDR_MAX_STR_SIZE];
 	int len, ret;
 	token_t t;
-	struct ip_addr ip;
 
-	ip.af = AF_INET6;
-	ip.len = 16;
+	ip->af = AF_INET6;
+	ip->len = 16;
 	len = 0;
 
 	while(1) {
@@ -703,7 +742,7 @@ static int parse_ipv6(token_t* token)
 	}
 	buf[len] = '\0';
 
-	if (inet_pton(ip.af, buf, ip.u.addr) <= 0)  goto err;
+	if (inet_pton(ip->af, buf, ip->u.addr) <= 0)  goto err;
 	return 0;
  err:
 	LOG(L_ERR, "ERROR:%s:%d:%d: Invalid IPv6 address\n", 
@@ -711,20 +750,19 @@ static int parse_ipv6(token_t* token)
 	return -1;
 }
 
-static int parse_ipv4(token_t* token)
+static int parse_ipv4(struct ip_addr* ip, token_t* token)
 {
-	struct ip_addr ip;
 	int ret, i;
 	token_t  t;
 	unsigned int v;
 
-	ip.af = AF_INET;
-	ip.len = 4;
+	ip->af = AF_INET;
+	ip->len = 4;
 
 	if (str2int(&token->val, &v) < 0) goto err;
 	if (v < 0 || v > 255) goto err;
 
-	ip.u.addr[0] = v;
+	ip->u.addr[0] = v;
 
 	for(i = 1; i < 4; i++) {
 		ret = tls_lex(&t, 0);
@@ -736,7 +774,7 @@ static int parse_ipv4(token_t* token)
 		if (ret == 0 || t.type != TOKEN_ALPHA) goto err;
 		if (str2int(&t.val, &v) < 0)  goto err;
 		if (v < 0 || v > 255) goto err;
-		ip.u.addr[i] = v;
+		ip->u.addr[i] = v;
 	}
 
 	return 0;
@@ -746,9 +784,8 @@ static int parse_ipv4(token_t* token)
 	return -1;
 }
 
-static int parse_hostport(token_t* token)
+static int parse_hostport(int* type, struct ip_addr* ip, unsigned int* port, token_t* token)
 {
-	unsigned int port;
 	int ret;
 	token_t t;
 	struct parser_tab* r;
@@ -762,20 +799,22 @@ static int parse_hostport(token_t* token)
 	}
 
 	if (t.type == '[') {
-		if (parse_ipv6(&t) < 0) return -1;
+		if (parse_ipv6(ip, &t) < 0) return -1;
 	} else if (t.type == TOKEN_ALPHA) {
 		r = lookup_token(token_default, &t.val);
 		if (r) {
+			*type = TLS_DOMAIN_DEF;
 			     /* Default domain */
 			return 0;
 		} else {
-			if (parse_ipv4(&t) < 0) return -1;
+			if (parse_ipv4(ip, &t) < 0) return -1;
 		}
 	} else {
 		LOG(L_ERR, "ERROR:%s:%d:%d: Syntax error, IP address expected\n", 
 		    pstate.file, t.start.line, t.start.col);
 		return -1;
 	}
+	*type = 0;
 
 	     /* Parse port */
 	ret = tls_lex(&t, 0);
@@ -800,7 +839,7 @@ static int parse_hostport(token_t* token)
 		return -1;
 	}
 
-	if (t.type != TOKEN_ALPHA || (str2int(&t.val, &port) < 0)) {
+	if (t.type != TOKEN_ALPHA || (str2int(&t.val, port) < 0)) {
 		LOG(L_ERR, "ERROR:%s:%d:%d: Invalid port number '%.*s'\n", 
 		    pstate.file, t.start.line, t.start.col,
 		    t.val.len, ZSW(t.val.s));
@@ -814,6 +853,12 @@ static int parse_domain(token_t* token)
 	token_t t;
 	int ret;
 	struct parser_tab* r;
+
+	int type;
+	struct ip_addr ip;
+	unsigned int port;
+
+	memset(&ip, 0, sizeof(struct ip_addr));
 
 	ret = tls_lex(&t, 0);
 	if (ret < 0) return -1;
@@ -844,7 +889,7 @@ static int parse_domain(token_t* token)
 		return -1;
 	}	
 
-	if (parse_hostport(&t) < 0) return -1;
+	if (parse_hostport(&type, &ip, &port, &t) < 0) return -1;
 
 	ret = tls_lex(&t, 0);
 	if (ret < 0) return -1;
@@ -858,6 +903,26 @@ static int parse_domain(token_t* token)
 		    pstate.file, t.start.line, t.start.col);
 		return -1;
 	}	
+
+	pstate.domain = tls_new_domain(r->u.ival | type, &ip, port);
+	if (!pstate.domain) {
+		LOG(L_ERR, "ERROR:%s:%d: Cannot create TLS domain structure\n", 
+		    pstate.file, token->start.line);
+		return -1;
+	}
+
+	ret = tls_add_domain(pstate.cfg, pstate.domain);
+	if (ret < 0) {
+		LOG(L_ERR, "ERROR:%s:%d: Error while creating TLS domain structure\n", 
+		    pstate.file, token->start.line);
+		tls_free_domain(pstate.domain);
+		return -1;
+	} else if (ret == 1) {
+		LOG(L_ERR, "ERROR:%s:%d: Duplicate TLS domain (appears earlier in the config file)\n", 
+		    pstate.file, token->start.line);
+		tls_free_domain(pstate.domain);
+		return -1;
+	}
 
 	return 0;
 }
@@ -875,6 +940,12 @@ static int parse_config(void)
 
 		switch(token.type) {
 		case TOKEN_ALPHA:
+			if (!pstate.domain) {
+				LOG(L_ERR, "ERROR:%s:%d: You need to specify TLS domain first\n", 
+				    pstate.file, token.start.line);
+				return -1;
+			}
+
 			     /* Lookup the option name */
 			r = lookup_token(option_name, &token.val);
 			if (!r) {
@@ -913,28 +984,61 @@ static int parse_config(void)
 }
 
 
-int tls_load_config(char* filename)
+/*
+ * Create configuration structures from configuration file
+ */
+tls_cfg_t* tls_load_config(str* filename)
 {
 	str val;
+	char* file;
 	struct token token;
 
-	pstate.f = fopen(filename, "r");
+	file = get_pathname(filename);
+	if (!file) return 0;
+
+	pstate.f = fopen(file, "r");
 	if (pstate.f == NULL) {
-		ERR("Unable to open TLS config file '%s'\n", filename);
-		return -1;
+		ERR("Unable to open TLS config file '%s'\n", file);
+		pkg_free(file);
+		return 0;
 	}
-	pstate.file = basename(filename);
+	pstate.file = basename(file);
 	pstate.line = 1;
 	pstate.col = 0;
+	pstate.domain = 0;
 
+	pstate.cfg = tls_new_cfg();
+	if (!pstate.cfg) goto error;
+	
 	if (parse_config() < 0) goto error;
 
 	fclose(pstate.f);
-	return 0;
+	pkg_free(file);
+	return pstate.cfg;
 
  error:
+	pkg_free(file);
+	if (pstate.cfg) tls_free_cfg(pstate.cfg);
 	fclose(pstate.f);
-	return -1;
+	return 0;
+}
+
+/*
+ * Convert TLS method string to integer
+ */
+int tls_parse_method(str* method)
+{
+	struct parser_tab* r;
+
+	if (!method) {
+		ERR("BUG: Invalid parameter value\n");
+		return -1;
+	}
+
+	r = lookup_token(token_method, method);
+	if (!r) return -1;
+
+	return r->u.ival;
 }
 
 

@@ -30,20 +30,17 @@
 #ifndef _TLS_INIT_H
 #define _TLS_INIT_H
 
+#include <openssl/ssl.h>
 #include "../../ip_addr.h"
+#include "tls_domain.h"
+
+extern SSL_METHOD* ssl_methods[];
 
 
 /*
  * just once, initialize the tls subsystem 
  */
 int init_tls(void);
-
-
-/*
- * Called from child_init, once the total number of
- * SER processes is known
- */
-int init_tls_child(void);
 
 
 /*
@@ -57,5 +54,10 @@ void destroy_tls(void);
  */
 int tls_init(struct socket_info *si);
 
+/*
+ * Make sure that all server domains in the configuration have corresponding
+ * listening socket in SER
+ */
+int tls_check_sockets(tls_cfg_t* cfg);
 
 #endif /* _TLS_INIT_H */

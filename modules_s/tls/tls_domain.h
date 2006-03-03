@@ -35,6 +35,9 @@
 #include <openssl/ssl.h>
 
 
+/*
+ * Available TLS methods
+ */
 enum tls_method {
 	TLS_METHOD_UNSPEC = 0,
 	TLS_USE_SSLv2_cli,
@@ -52,20 +55,25 @@ enum tls_method {
 	TLS_METHOD_MAX
 };
 
+
+/*
+ * TLS configuration domain type
+ */
 enum tls_domain_type {
 	TLS_DOMAIN_DEF = (1 << 0), /* Default domain */
 	TLS_DOMAIN_SRV = (1 << 1), /* Server domain */
 	TLS_DOMAIN_CLI = (1 << 2)  /* Client domain */
 };
 
+
 /*
- * separate configuration per ip:port 
+ * separate configuration per ip:port
  */
 typedef struct tls_domain {
 	int type;
 	struct ip_addr ip;
 	unsigned short port;
-	SSL_CTX*** ctx;     /* Pointer to the array is stored in shm mem */
+	SSL_CTX** ctx;
 	char* cert_file;
 	char* pkey_file;
 	int verify_cert;
@@ -77,17 +85,19 @@ typedef struct tls_domain {
 	struct tls_domain* next;
 } tls_domain_t;
 
-extern tls_domain_t* tls_def_srv; /* Default server domain */
-extern tls_domain_t* tls_def_cli; /* Default client domain */
-extern tls_domain_t* tls_srv_list;
-extern tls_domain_t* tls_cli_list;
 
 /*
- * find domain with given ip and port, if ip == NULL then the
- * default domain will be returned
+ * TLS configuration structures
  */
-tls_domain_t *tls_find_domain(int type, struct ip_addr *ip,
-			      unsigned short port);
+typedef struct tls_cfg {
+	tls_domain_t* srv_default; /* Default server domain */
+	tls_domain_t* cli_default; /* Default client domain */
+	tls_domain_t* srv_list;    /* Server domain list */
+	tls_domain_t* cli_list;    /* Client domain list */
+	struct tls_cfg* next;      /* Next element in the garbage list */
+	int ref_count;             /* How many connections use this configuration */
+} tls_cfg_t;
+
 
 /*
  * create a new domain 
@@ -95,10 +105,11 @@ tls_domain_t *tls_find_domain(int type, struct ip_addr *ip,
 tls_domain_t *tls_new_domain(int type, struct ip_addr *ip, 
 			     unsigned short port);
 
+
 /*
- * clean up 
+ * Free all memory used for configuration domain
  */
-void tls_free_domains(void);
+void tls_free_domain(tls_domain_t* d);
 
 
 /*
@@ -106,9 +117,36 @@ void tls_free_domains(void);
  */
 char* tls_domain_str(tls_domain_t* d);
 
+
+
+/*
+ * Create new instance of TLS configuration data
+ */
+tls_cfg_t* tls_new_cfg(void);
+
+
+/*
+ * Add a new configuration domain
+ */
+int tls_add_domain(tls_cfg_t* cfg, tls_domain_t* d);
+
+
 /*
  * Fill in missing parameters
  */
-int tls_fix_domains(void);
+int tls_fix_cfg(tls_cfg_t* cfg, tls_domain_t* srv_defaults, tls_domain_t* cli_defaults);
+
+
+/*
+ * Lookup TLS configuration
+ */
+tls_domain_t* tls_lookup_cfg(tls_cfg_t* cfg, int type, struct ip_addr* ip, unsigned short port);
+
+
+/*
+ * Free TLS configuration data
+ */
+void tls_free_cfg(tls_cfg_t* cfg);
+
 
 #endif /* _TLS_DOMAIN_H */

@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2004,2005 Free Software Foundation, Inc.
  * Copyright (C) 2005,2006 iptelorg GmbH
@@ -49,28 +51,55 @@
 static int tls_complete_init(struct tcp_connection* c)
 {
 	tls_domain_t* dom;
+	struct tls_extra_data* data = 0;
+	tls_cfg_t* cfg;
 	SSL* ssl;
 
+	     /* Get current TLS configuration and increate reference
+	      * count immediately. There is no need to lock the structure
+	      * here, because it does not get deleted immediately. When
+	      * SER reloads TLS configuration it will put the old configuration
+	      * on a garbage queue and delete it later, so we know here that
+	      * the pointer we get from *tls_cfg will be valid for a while, at
+	      * least by the time this function finishes
+	      */
+	cfg = *tls_cfg;
+
+	     /* Increment the reference count in the configuration structure, this
+	      * is to ensure that, while on the garbage queue, the configuration does
+	      * not get deleted if there are still connection referencing its SSL_CTX
+	      */
+	cfg->ref_count++;
+
 	if (c->state == S_CONN_ACCEPT) {
-		dom = tls_find_domain(TLS_DOMAIN_SRV, &c->rcv.dst_ip, c->rcv.dst_port);
-		if (!dom) dom = tls_def_srv;
+		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_SRV, &c->rcv.dst_ip, c->rcv.dst_port);
 	} else if (c->state == S_CONN_CONNECT) {
-		dom = tls_find_domain(TLS_DOMAIN_CLI, &c->rcv.dst_ip, c->rcv.dst_port);
-		if (!dom) dom = tls_def_cli;
+		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI, &c->rcv.dst_ip, c->rcv.dst_port);
 	} else {
 		BUG("Invalid connection state (bug in TCP code)\n");
 		goto error;
 	}
 	DBG("Using TLS domain %s\n", tls_domain_str(dom));
-	ssl = SSL_new((*dom->ctx)[process_no]);
 
-	if (ssl == 0) {
+	data = (struct tls_extra_data*)shm_malloc(sizeof(struct tls_extra_data));
+	if (!data) {
+		ERR("Not enough shared memory left\n");
+		goto error;
+	}
+	memset(data, '\0', sizeof(struct tls_extra_data));
+	data->ssl = SSL_new(dom->ctx[process_no]);
+	data->cfg = cfg;
+
+	if (data->ssl == 0) {
 		TLS_ERR("Failed to create SSL structure:");
 		goto error;
 	}
-	c->extra_data = ssl;
+	c->extra_data = data;
 	return 0;
+
  error:
+	cfg->ref_count--;
+	if (data) shm_free(data);
 	c->state = S_CONN_BAD;
 	return -1;
 }
@@ -87,7 +116,7 @@ static int tls_update_fd(struct tcp_connection *c, int fd)
 		return -1;
 	}
 
-	ssl = (SSL*)c->extra_data;
+	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
 	if (SSL_set_fd(ssl, fd) != 1) {
 		TLS_ERR("tls_update_fd:");
 		return -1;
@@ -230,7 +259,7 @@ static int tls_accept(struct tcp_connection *c, int* error)
 		return 0;
 	}
 
-	ssl = (SSL *)c->extra_data;
+	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
 	ret = SSL_accept(ssl);
 	if (ret == 1) {
 		DBG("TLS accept successful\n");
@@ -322,7 +351,7 @@ static int tls_connect(struct tcp_connection *c, int* error)
 		return 0;
 	}
 
-	ssl = (SSL *)c->extra_data;
+	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
 	ret = SSL_connect(ssl);
 	if (ret == 1) {
 		DBG("TLS connect successuful\n");
@@ -408,7 +437,7 @@ static int tls_shutdown(struct tcp_connection *c)
 	int ret, err, ssl_err;
 	SSL *ssl;
 
-	ssl = (SSL*)c->extra_data;
+	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
 	if (ssl == 0) {
 		ERR("No SSL data to perform tls_shutdown\n");
 		return -1;
@@ -480,7 +509,7 @@ static int tls_write(struct tcp_connection *c, const void *buf, size_t len, int*
 {
 	int ret, err, ssl_err;
 	SSL *ssl;
-	ssl = (SSL*)c->extra_data;
+	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
 
 	err = 0;
 	ret = SSL_write(ssl, buf, len);
@@ -561,6 +590,7 @@ int tls_tcpconn_init(struct tcp_connection *c, int sock)
  */
 void tls_tcpconn_clean(struct tcp_connection *c)
 {
+	struct tls_extra_data* extra;
 	/*
 	* runs within global tcp lock 
 	*/
@@ -569,7 +599,10 @@ void tls_tcpconn_clean(struct tcp_connection *c)
 		abort();
 	}
 	if (c->extra_data) {
-		SSL_free((SSL*)c->extra_data);
+		extra = (struct tls_extra_data*)c->extra_data;
+		SSL_free(extra->ssl);
+		extra->cfg->ref_count--;
+		shm_free(c->extra_data);
 		c->extra_data = 0;
 	}
 }
@@ -706,7 +739,8 @@ size_t tls_read(struct tcp_connection * c)
 {
 	struct tcp_req* r;
 	int bytes_free, bytes_read, err, ssl_err;
-	
+	SSL* ssl;
+
 	r = &c->req;
 	bytes_free = TCP_BUF_SIZE - (int)(r->pos - r->buf);
 	
@@ -726,11 +760,12 @@ size_t tls_read(struct tcp_connection * c)
 		lock_release(&c->write_lock);
 		return -1;
 	}
-	bytes_read = SSL_read((SSL*)c->extra_data, r->pos, bytes_free);
+	ssl = ((struct tls_extra_data*)c->extra_data)->ssl;
+	bytes_read = SSL_read(ssl, r->pos, bytes_free);
 	lock_release(&c->write_lock);
 	
 	if (bytes_read <= 0) {
-		err = SSL_get_error((SSL*)c->extra_data, bytes_read);
+		err = SSL_get_error(ssl, bytes_read);
 		switch(err){
 		case SSL_ERROR_ZERO_RETURN:
 			     /* tls connection has been closed */
@@ -814,4 +849,3 @@ int tls_fix_read_conn(struct tcp_connection *c)
 	}
 	return ret;
 }
-
