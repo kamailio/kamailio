@@ -100,12 +100,10 @@ inline static int w_t_retransmit_reply(struct sip_msg* p_msg, char* foo,
 		char* bar );
 inline static int w_t_newtran(struct sip_msg* p_msg, char* foo, char* bar );
 inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2);
-inline static int w_t_relay0(struct sip_msg  *p_msg , char *_foo, char *_bar);
-inline static int w_t_relay1(struct sip_msg  *p_msg , char *_foo, char *_bar);
+inline static int w_t_relay(struct sip_msg  *p_msg , char *_foo, char *_bar);
 inline static int w_t_replicate1(struct sip_msg  *p_msg , char *proxy,
 		char *_foo);
-inline static int w_t_forward_nonack0(struct sip_msg* msg, char* str, char* );
-inline static int w_t_forward_nonack1(struct sip_msg* msg, char* str, char* );
+inline static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* );
 inline static int w_t_on_negative(struct sip_msg* msg, char *go_to, char *foo);
 inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
 inline static int w_t_on_branch(struct sip_msg* msg, char *go_to, char *foo );
@@ -151,13 +149,13 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE},
 	{"t_replicate",          w_t_replicate1,          1,fixup_phostport2proxy,
 			REQUEST_ROUTE},
-	{"t_relay",              w_t_relay0,              0, 0,
+	{"t_relay",              w_t_relay,               0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_relay",              w_t_relay1,              1,fixup_phostport2proxy,
+	{"t_relay",              w_t_relay,               1,fixup_phostport2proxy,
 			REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_forward_nonack",     w_t_forward_nonack0,     0, 0,
+	{"t_forward_nonack",     w_t_forward_nonack,      0, 0,
 			REQUEST_ROUTE},
-	{"t_forward_nonack",     w_t_forward_nonack1,     1,fixup_phostport2proxy,
+	{"t_forward_nonack",     w_t_forward_nonack,      1,fixup_phostport2proxy,
 			REQUEST_ROUTE},
 	{"t_on_failure",         w_t_on_negative,         1, fixup_str2int,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
@@ -281,6 +279,7 @@ static int fixup_str2int( void** param, int param_no)
 	return 0;
 }
 
+
 static int fixup_phostport2proxy(void** param, int param_no)
 {
 	struct proxy_l *proxy;
@@ -402,8 +401,8 @@ int load_tm( struct tm_binds *tmb)
 	/* replicate function */
 	tmb->t_replicate = w_t_replicate1;
 	/* relay/forward functions */
-	tmb->t_relay = w_t_relay1;
-	tmb->t_forward_nonack = (tfwd_f)w_t_forward_nonack1;
+	tmb->t_relay = w_t_relay;
+	tmb->t_forward_nonack = (tfwd_f)w_t_forward_nonack;
 	/* reply functions */
 	tmb->t_reply = (treply_f)w_t_reply;
 	tmb->t_reply_with_body = t_reply_with_body;
@@ -807,39 +806,23 @@ inline static int w_t_check(struct sip_msg* msg, char* str, char* str2)
 }
 
 
-inline static int _w_t_forward_nonack(struct sip_msg* msg, char* proxy)
+inline static int w_t_forward_nonack( struct sip_msg* msg, char* proxy,
+										char* foo)
 {
 	struct cell *t;
-	if (t_check( msg , 0 )==-1) {
-		LOG(L_ERR, "ERROR: forward_nonack: "
+
+	if (t_check( msg , 0 )!=1) {
+		LOG(L_ERR, "ERROR:tm:w_t_forward_nonack: "
 				"can't forward when no transaction was set up\n");
 		return -1;
 	}
 	t=get_t();
-	if ( t && t!=T_UNDEFINED ) {
-		if (msg->REQ_METHOD==METHOD_ACK) {
-			LOG(L_WARN,"WARNING: you don't really want to fwd hbh ACK\n");
-			return -1;
-		}
-		return t_forward_nonack( t, msg, ( struct proxy_l *)proxy);
-	} else {
-		DBG("DEBUG: forward_nonack: no transaction found\n");
+	if (msg->REQ_METHOD==METHOD_ACK) {
+		LOG(L_WARN,"WARNING:tm:w_t_forward_nonack: you don't really "
+			"want to fwd hbh ACK\n");
 		return -1;
 	}
-}
-
-
-inline static int w_t_forward_nonack0( struct sip_msg* msg, char* bar,
-										char* foo)
-{
-	return _w_t_forward_nonack( msg, 0);
-}
-
-
-inline static int w_t_forward_nonack1( struct sip_msg* msg, char* proxy,
-										char* foo)
-{
-	return _w_t_forward_nonack( msg, proxy);
+	return t_forward_nonack( t, msg, ( struct proxy_l *)proxy);
 }
 
 
@@ -935,33 +918,6 @@ inline static int w_t_on_branch( struct sip_msg* msg, char *go_to, char *foo )
 }
 
 
-inline static int _w_t_relay_to( struct sip_msg  *p_msg, struct proxy_l *proxy)
-{
-	struct cell *t;
-
-	if (route_type==FAILURE_ROUTE) {
-		t=get_t();
-		if (!t || t==T_UNDEFINED) {
-			LOG(L_CRIT, "BUG: w_t_relay_to: undefined T\n");
-			return -1;
-		}
-		if (t_forward_nonack( t, p_msg, proxy)<=0 ) {
-			LOG(L_ERR, "ERROR: w_t_relay_to: t_relay_to failed\n");
-			return -1;
-		}
-		return 1;
-	}
-
-	if (route_type==REQUEST_ROUTE) {
-		return t_relay_to( p_msg, proxy, 0 /* no replication */ );
-	}
-
-	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported route type: %d\n",
-		route_type);
-	return 0;
-}
-
-
 inline static int w_t_replicate1( struct sip_msg  *p_msg , 
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
@@ -973,16 +929,33 @@ inline static int w_t_replicate1( struct sip_msg  *p_msg ,
 }
 
 
-inline static int w_t_relay1( struct sip_msg  *p_msg , char *proxy, char *foo)
+inline static int w_t_relay( struct sip_msg  *p_msg , char *proxy, char *foo)
 {
-	return _w_t_relay_to( p_msg, (struct proxy_l *)proxy );
+	struct cell *t;
+
+	if (route_type==FAILURE_ROUTE) {
+		t=get_t();
+		if (!t || t==T_UNDEFINED) {
+			LOG(L_CRIT, "BUG:tm:w_t_relay: undefined T\n");
+			return -1;
+		}
+		if (t_forward_nonack( t, p_msg, (struct proxy_l *)proxy)<=0 ) {
+			LOG(L_ERR, "ERROR:tm:w_t_relay: t_forward_nonack failed\n");
+			return -1;
+		}
+		return 1;
+	}
+
+	if (route_type==REQUEST_ROUTE) {
+		return t_relay_to( p_msg, (struct proxy_l *)proxy,
+			0 /* no replication */ );
+	}
+
+	LOG(L_CRIT, "ERROR:tm:w_t_relay: unsupported route type: %d\n",
+		route_type);
+	return 0;
 }
 
-
-inline static int w_t_relay0( struct sip_msg  *p_msg , char *bar, char *foo)
-{
-	return _w_t_relay_to( p_msg, 0 );
-}
 
 
 /* item functions */
