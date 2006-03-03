@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * TLS configuration file parser
+ * TLS module - Configuration file parser
  *
  * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2004,2005 Free Software Foundation, Inc.

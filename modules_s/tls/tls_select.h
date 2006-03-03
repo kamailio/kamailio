@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * TLS module select interface
+ * TLS module - select interface
  *
  * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2004,2005 Free Software Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 #ifndef _TLS_SELECT_H
+#define _TLS_SELECT_H
 
 #include "../../select.h"
 

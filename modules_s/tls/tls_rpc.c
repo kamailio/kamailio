@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * TLS module interface
+ * TLS module - management interface
  *
  * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2004,2005 Free Software Foundation, Inc.
