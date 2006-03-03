@@ -50,7 +50,7 @@ extern int received_to_uri; /*copy received to uri, don't add it to dst_uri*/
 extern str rcv_param;
 extern int max_contacts;
 
-usrloc_api_t ul;  /* Structure containing pointers to usrloc functions */
+extern usrloc_api_t ul;  /* Structure containing pointers to usrloc functions */
 
 extern sl_api_t sl;
 
