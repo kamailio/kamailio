@@ -74,8 +74,7 @@ static int regexp_fixup(void** param, int param_no);
 static int direction_fixup(void** param, int param_no);
 static int it_list_fixup(void** param, int param_no);
 /* wrapper functions */
-static int w_record_route0(struct sip_msg *,char *, char *);
-static int w_record_route1(struct sip_msg *,char *, char *);
+static int w_record_route(struct sip_msg *,char *, char *);
 static int w_record_route_preset(struct sip_msg *,char *, char *);
 static int w_add_rr_param(struct sip_msg *,char *, char *);
 static int w_check_route_param(struct sip_msg *,char *, char *);
@@ -87,9 +86,9 @@ static int w_is_direction(struct sip_msg *,char *, char *);
 static cmd_export_t cmds[] = {
 	{"loose_route",          loose_route,           0,     0,
 			REQUEST_ROUTE},
-	{"record_route",         w_record_route0,       0,     0,
+	{"record_route",         w_record_route,        0,     0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"record_route",         w_record_route1,       1,     it_list_fixup,
+	{"record_route",         w_record_route,        1,     it_list_fixup,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"record_route_preset",  w_record_route_preset, 1,     it_list_fixup,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
@@ -227,23 +226,7 @@ static int direction_fixup(void** param, int param_no)
 }
 
 
-
-static int w_record_route0(struct sip_msg *msg,char *foo, char *bar)
-{
-	if (msg->id == last_rr_msg) {
-		LOG(L_ERR, "ERROR:rr:record_route: Double attempt to record-route\n");
-		return -1;
-	}
-
-	if ( record_route( msg, 0)<0 )
-		return -1;
-
-	last_rr_msg = msg->id;
-	return 1;
-}
-
-
-static int w_record_route1(struct sip_msg *msg,char *key, char *bar)
+static int w_record_route(struct sip_msg *msg, char *key, char *bar)
 {
 	str s;
 
@@ -252,12 +235,12 @@ static int w_record_route1(struct sip_msg *msg,char *key, char *bar)
 		return -1;
 	}
 
-	if (xl_printf_s(msg, (xl_elem_t*)key, &s)<0) {
+	if (key && xl_printf_s(msg, (xl_elem_t*)key, &s)<0) {
 		LOG(L_ERR,"ERROR:rr:w_record_route1: failed to print "
 			"the format\n");
 		return -1;
 	}
-	if ( record_route( msg, &s)<0 )
+	if ( record_route( msg, key?&s:0 )<0 )
 		return -1;
 
 	last_rr_msg = msg->id;
