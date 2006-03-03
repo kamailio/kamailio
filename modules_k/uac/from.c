@@ -27,6 +27,10 @@
  *              some TM callbacks replaced with RR callback - more efficient;
  *              XOR used to mix together old and new URI
  *              (bogdan)
+ *  2006-03-03  new display name is added even if there is no previous one
+ *              (bogdan)
+ *  2006-03-03  the RR parameter is encrypted via XOR with a password
+ *              (bogdan)
  */
 
 
@@ -42,6 +46,7 @@
 #include "from.h"
 
 extern str rr_param;
+extern str uac_passwd;
 extern int from_restore_mode;
 extern struct tm_binds uac_tmb;
 extern struct rr_binds uac_rrb;
@@ -156,6 +161,60 @@ static inline int decode_from( str *src , str *dst)
 }
 
 
+static inline struct lump* get_fdisplay_anchor(struct sip_msg *msg,
+												struct to_body *from, str *dsp)
+{
+	struct lump* l;
+	char *p1;
+	char *p2;
+
+	/* is URI quoted or not? */
+	p1 = msg->from->name.s + msg->from->name.len;
+	for( p2=from->uri.s-1 ; p2>=p1 && *p2!='<' ; p2--);
+
+	if (*p2=='<') {
+		/* is quoted */
+		l = anchor_lump( msg, p2 - msg->buf, 0, 0);
+		if (l==0) {
+			LOG(L_ERR,"ERROR:uac:get_fdisplay_anchor: unable to build lump "
+				"anchor\n");
+			return 0;
+		}
+		dsp->s[dsp->len++] = ' ';
+		return l;
+	}
+
+	/* not quoted - more complicated....must place the closing bracket */
+	l = anchor_lump( msg, (from->uri.s+from->uri.len) - msg->buf, 0, 0);
+	if (l==0) {
+		LOG(L_ERR,"ERROR:uac:get_fdisplay_anchor: unable to build lump "
+			"anchor\n");
+		return 0;
+	}
+	p1 = (char*)pkg_malloc(1);
+	if (p1==0) {
+		LOG(L_ERR,"ERROR:uac:get_fdisplay_anchor: no more pkg mem \n");
+		return 0;
+	}
+	*p1 = '>';
+	if (insert_new_lump_after( l, p1, 1, 0)==0) {
+		LOG(L_ERR,"ERROR:uac:get_fdisplay_anchor: insert lump failed\n");
+		pkg_free(p1);
+		return 0;
+	}
+	/* build anchor for display */
+	l = anchor_lump( msg, from->uri.s - msg->buf, 0, 0);
+	if (l==0) {
+		LOG(L_ERR,"ERROR:uac:get_fdisplay_anchor: unable to build lump "
+			"anchor\n");
+		return 0;
+	}
+	dsp->s[dsp->len++] = ' ';
+	dsp->s[dsp->len++] = '<';
+	return l;
+}
+
+
 /*
  * if display name does not exist, then from_dsp is ignored
  */
@@ -199,35 +258,45 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 	}
 
 	/* first deal with display name */
-	if (from_dsp && from->display.len)
+	if (from_dsp)
 	{
 		/* must be replaced/ removed */
+		l = 0;
 		/* first remove the existing display */
-		DBG("DEBUG:uac:replace_from: removing display [%.*s]\n",
-			from->display.len,from->display.s);
-		/* build del lump */
-		l = del_lump( msg, from->display.s-msg->buf, from->display.len, 0);
-		if (l==0)
+		if ( from->display.len)
 		{
-			LOG(L_ERR,"ERROR:uac:replace_from: display del lump failed\n");
-			goto error;
+			DBG("DEBUG:uac:replace_from: removing display [%.*s]\n",
+				from->display.len,from->display.s);
+			/* build del lump */
+			l = del_lump( msg, from->display.s-msg->buf, from->display.len, 0);
+			if (l==0)
+			{
+				LOG(L_ERR,"ERROR:uac:replace_from: display del lump failed\n");
+				goto error;
+			}
 		}
 		/* some new display to set? */
 		if (from_dsp->len)
 		{
 			/* add the new display exactly over the deleted one */
-			p = pkg_malloc( from_dsp->len );
-			if (p==0)
+			buf.s = pkg_malloc( from_dsp->len + 2 );
+			if (buf.s==0)
 			{
 				LOG(L_ERR,"ERROR:uac:replace_from: no more pkg mem\n");
 				goto error;
 			}
-			memcpy( p, from_dsp->s, from_dsp->len);
-			if (insert_new_lump_after( l, p, from_dsp->len, 0)==0)
+			memcpy( buf.s, from_dsp->s, from_dsp->len);
+			buf.len =  from_dsp->len;
+			if (l==0 && (l=get_fdisplay_anchor(msg,from,&buf))==0)
+			{
+				LOG(L_ERR,"ERROR:uac:replace_from: failed to insert anchor\n");
+				goto error;
+			}
+			if (insert_new_lump_after( l, buf.s, buf.len, 0)==0)
 			{
 				LOG(L_ERR,"ERROR:uac:replace_from: insert new "
 					"display lump failed\n");
-				pkg_free(p);
+				pkg_free(buf.s);
 				goto error;
 			}
 		}
@@ -287,6 +356,11 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 			buf.s[i] ^=from->uri.s[i];
 		buf.len = from_uri->len;
 	}
+
+	/* encrypt parameter ;) */
+	if (uac_passwd.len)
+		for( i=0 ; i<buf.len ; i++)
+			buf.s[i] ^= uac_passwd.s[i%uac_passwd.len];
 
 	/* encode the param */
 	if (encode_from( &buf , &replace)<0 )
@@ -366,9 +440,14 @@ int restore_from( struct sip_msg *msg, int *is_from )
 
 	/* decode the parameter val to a URI */
 	if (decode_from( &param_val, &new_uri)<0 ) {
-		LOG(L_ERR,"ERROR:uac:restore_from: failed to dencode uri\n");
+		LOG(L_ERR,"ERROR:uac:restore_from: failed to decode uri\n");
 		goto failed;
 	}
+
+	/* dencrypt parameter ;) */
+	if (uac_passwd.len)
+		for( i=0 ; i<new_uri.len ; i++)
+			new_uri.s[i] ^= uac_passwd.s[i%uac_passwd.len];
 
 	/* check the request direction */
 	if (uac_rrb.is_direction( msg, RR_FLOW_UPSTREAM)==0) {

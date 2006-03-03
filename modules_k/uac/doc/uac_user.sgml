@@ -126,7 +126,7 @@ modparam("uac","rr_store_param","my_param")
 			<para>
 				<emphasis>
 					This parameter is optional, it's default value being 
-					<quote>none</quote>.
+					<quote>auto</quote>.
 				</emphasis>
 			</para>
 			<example>
@@ -135,6 +135,26 @@ modparam("uac","rr_store_param","my_param")
 				<programlisting format="linespecific">
 ...
 modparam("uac","from_restore_mode","auto")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>from_passwd</varname> (string)</title>
+			<para>
+			String password to be used to encrypt the RR storing paramter. If
+			empty, no encryption will be used.
+			</para>
+			<para>
+				<emphasis>
+					Default value of this parameter is empty.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>from_passwd</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac","from_passwd","my_secret_passwd")
 ...
 				</programlisting>
 			</example>

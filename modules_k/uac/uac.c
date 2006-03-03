@@ -26,6 +26,9 @@
  *  2005-08-12  some TM callbacks replaced with RR callback - more efficient;
  *              (bogdan)
  *  2006-03-02  UAC authentication looks first in AVPs for credential (bogdan)
+ *  2006-03-03  the RR parameter is encrypted via XOR with a password
+ *              (bogdan)
+
  */
 
 
@@ -56,7 +59,8 @@ static char* auth_realm_avp = NULL;
 static char* auth_password_avp = NULL;
 
 /* global param variables */
-str rr_param = {"vsf",3};
+str rr_param = str_init("vsf");
+str uac_passwd = str_init("");
 int from_restore_mode = FROM_AUTO_RESTORE;
 struct tm_binds uac_tmb;
 struct rr_binds uac_rrb;
@@ -93,6 +97,7 @@ static cmd_export_t cmds[]={
 static param_export_t params[] = {
 	{"rr_store_param",    STR_PARAM,                &rr_param.s            },
 	{"from_restore_mode", STR_PARAM,                &from_restore_mode_str },
+	{"from_passwd",       STR_PARAM,                &uac_passwd.s          },
 	{"credential",        STR_PARAM|USE_FUNC_PARAM, &add_credential        },
 	{"auth_username_avp", STR_PARAM,                &auth_username_avp     },
 	{"auth_realm_avp",    STR_PARAM,                &auth_realm_avp        },
@@ -151,6 +156,8 @@ static int mod_init(void)
 			"if FROM is restoreable\n");
 		goto error;
 	}
+
+	uac_passwd.len = strlen(uac_passwd.s);
 
 	/* parse the auth AVP spesc, if any */
 	if ( auth_username_avp || auth_password_avp || auth_realm_avp) {
