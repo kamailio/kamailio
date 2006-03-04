@@ -43,7 +43,6 @@
 
 #define MAX_DESTS                   10
 
-int (*append_hf)(struct sip_msg* _m, char* _s1, char* _s2);
 int (*add_rr_param)(struct sip_msg* _m, char* _s1, char* _s2);
 
 #endif

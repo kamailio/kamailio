@@ -136,15 +136,9 @@ static int mod_init(void)
 	if (verify_parameter() != 0) 
 		return 1;   /* at least one parameter incorrect -> error */
 
-	append_hf = find_export("append_hf", 1, 0);
-        if (append_hf == NULL) {
-                LOG(L_ERR, "ERROR: osp: mod_init: could not find append_hf, make shure textops is loaded\n");
-                return 1;
-        }   
-
 	add_rr_param = find_export("add_rr_param", 1, 0);
         if (add_rr_param == NULL) {
-                LOG(L_WARN, "WARNING: osp: mod_init: could not find add_rr_param, make shure rr is loaded\n");
+                LOG(L_WARN, "WARNING: osp: mod_init: could not find add_rr_param, make sure rr is loaded\n");
                 LOG(L_WARN, "WARNING: osp: mod_init: add_rr_param is required for reporting duration for OSP transactions\n");
         }   
 

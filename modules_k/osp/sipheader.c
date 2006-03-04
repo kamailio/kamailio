@@ -49,8 +49,6 @@
 
 
 
-
-
 int getFromUserpart(struct sip_msg* msg, char *fromuser, int buffer_size)
 {
 	struct to_body* from;
@@ -113,7 +111,44 @@ void skipPlus(char* e164) {
 }
 
 
+int append_header_str(struct sip_msg* msg, str *header)
+{
+	struct lump* anchor;
+	char *s;
+	
+	if(msg==0 || header==0 || header->s=0 || header->len<=0) {
+		LOG(L_ERR, "ERROR:osp:append_header_str: bad parameters\n");
+		return -1;
+	}
 
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LOG(L_ERR,
+			"ERROR:osp:append_header_str: Error while parsing message\n");
+		return -1;
+	}
+
+	anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
+	if (anchor == 0) {
+		LOG(L_ERR, "ERROR:osp:append_header_str: Can't get anchor\n");
+		return -1;
+	}
+
+	s = (char*)pkg_malloc(header->len);
+	if (s==0) {
+		LOG(L_ERR, "ERROR:osp:append_header_str: No memory left\n");
+		return -1;
+	}
+
+	memcpy(s, header->s, header->len);
+
+	if (insert_new_lump_before(anchor, s, header->len, 0) == 0) {
+		LOG(L_ERR, "ERROR:osp:append_header_str: Can't insert lump\n");
+		pkg_free(s);
+		return -1;
+	}
+	
+	return 0;
+}
 
 int addOspHeader(struct sip_msg* msg, char* token, int sizeoftoken) {
 
@@ -136,10 +171,11 @@ int addOspHeader(struct sip_msg* msg, char* token, int sizeoftoken) {
 
 		DBG("osp: Setting osp token header field - (%s)\n", headerBuffer);
 
-		if (append_hf(msg,(char *)&headerVal,NULL) > 0) {
+		if (append_header_str(msg, &headerVal) == 0) {
 			retVal = 0;
 		} else {
-			LOG(L_ERR, "ERROR: osp: addOspHeader: failed to append osp header to the message\n");
+			LOG(L_ERR, "ERROR: osp: addOspHeader: failed to append osp"
+					" header to the message\n");
 		}
 	} else {
 		LOG(L_ERR, "ERROR: osp: addOspHeader: base64 encoding failed\n");
