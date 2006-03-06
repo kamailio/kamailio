@@ -1,17 +1,18 @@
---- Makefile.defs.orig	Fri Oct 28 18:32:39 2005
-+++ Makefile.defs	Sun Oct 30 20:09:02 2005
-@@ -147,13 +147,13 @@
+--- Makefile.defs.orig	Sun Mar  5 20:07:55 2006
++++ Makefile.defs	Sun Mar  5 20:14:38 2006
+@@ -167,13 +167,13 @@
  TAR ?= tar
  endif
  
 -INSTALL-TOUCH = touch          # used to create the file first (good to 
-+INSTALL-TOUCH = :              # used to create the file first (good to 
-                                #  make solaris install work)
+-                               #  make solaris install work)
 -INSTALL-CFG = $(INSTALL) -m 644
 -INSTALL-BIN = $(INSTALL) -m 755
 -INSTALL-MODULES = $(INSTALL) -m 755
 -INSTALL-DOC = $(INSTALL) -m 644
 -INSTALL-MAN = $(INSTALL) -m 644
++INSTALL-TOUCH = :		# used to create the file first (good to
++                                #  make solaris install work)
 +INSTALL-CFG = $(BSD_INSTALL_DATA)
 +INSTALL-BIN = $(BSD_INSTALL_PROGRAM)
 +INSTALL-MODULES = $(BSD_INSTALL_PROGRAM)
@@ -20,7 +21,7 @@
  
  #set some vars from the environment (and not make builtins)
  CC   := $(shell echo "$${CC}")
-@@ -449,7 +449,7 @@
+@@ -471,7 +471,7 @@
  	found_lock_method=yes
  endif
  
@@ -29,7 +30,7 @@
  LDFLAGS=
  # setting CFLAGS
  ifeq ($(mode), release)
-@@ -970,7 +970,8 @@
+@@ -1046,7 +1046,8 @@
  	ifneq ($(found_lock_method), yes)
  		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
  		found_lock_method=yes
@@ -39,7 +40,7 @@
  	else
  		LIBS= -lfl  #dlopen is in libc
  	endif
-@@ -1045,10 +1046,15 @@
+@@ -1121,10 +1122,15 @@
  	endif
  endif
  

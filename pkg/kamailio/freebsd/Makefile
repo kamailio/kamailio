@@ -2,12 +2,11 @@
 # Date created:				20 October 2005
 # Whom:					jesusr
 #
-# $FreeBSD$
-# $Id$
+# $FreeBSD: ports/net/openser/Makefile,v 1.2 2005/11/28 01:38:23 jylefort Exp $
 #
 
 PORTNAME=	openser
-PORTVERSION=	1.0.0
+PORTVERSION=	1.0.1
 CATEGORIES=	net
 MASTER_SITES=	http://openser.org/pub/openser/${PORTVERSION}/src/
 DISTNAME=	${PORTNAME}-${PORTVERSION}-tls_src
@@ -27,7 +26,7 @@ MAKE_ENV=	CC="${CC}" \
 		PTHREAD_LIBS="${PTHREAD_LIBS}"
 
 PLIST_FILES=	sbin/openser sbin/openser_gen_ha1 sbin/openser_mysql.sh \
-		sbin/openserctl sbin/openserunix
+		sbin/openserctl sbin/openserunix sbin/openser_postgresql.sh
 PLIST_DIRS=	lib/openser/modules lib/openser
 
 MODULES=	acc alias_db auth auth_db auth_diameter avpops cpl-c dbtext \
@@ -56,10 +55,6 @@ OPTIONS=	MYSQL "MySQL support" on \
 		TLS "TLS support" on
 
 .include <bsd.port.pre.mk>
-
-.if ${ARCH} != "i386"
-BROKEN=		"the postgres module does not build on non-i386"
-.endif
 
 .if defined(WITH_MYSQL)
 USE_MYSQL=	yes
