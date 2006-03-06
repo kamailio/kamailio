@@ -996,7 +996,7 @@ ifeq ($(YACC),)
 endif
 YACC_FLAGS=-d -b cfg
 # on solaris add -lxnet (e.g. LIBS= -lxnet)
-LIBS= -lfl -ldl -lresolv
+LIBS= -ldl -lresolv
 
 
 #os specific stuff
@@ -1058,7 +1058,7 @@ ifeq ($(CC_NAME), suncc)
 endif
 	OLD_SOLARIS= $(shell echo "$(OSREL)" | \
 				sed -e 's/^5\.[0-6][^0-9]*$$/yes/' )
-	LIBS+= -L$(LOCALBASE)/lib -lfl -lxnet -lnsl 
+	LIBS+= -L$(LOCALBASE)/lib -lxnet -lnsl 
 ifeq	($(OLD_SOLARIS), yes)
 		LIBS+=-lposix4
 else
@@ -1075,9 +1075,9 @@ ifeq ($(OS), freebsd)
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
-		LIBS= -pthread -lfl  #dlopen is in libc
+		LIBS= -pthread   #dlopen is in libc
 	else
-		LIBS= -lfl  #dlopen is in libc
+		LIBS=   #dlopen is in libc
 	endif
 	# check for ver >= 4.1
 	ifeq ($(shell [ $(OSREL_N) -gt 4001 ] && echo has_kqueue), has_kqueue)
@@ -1113,7 +1113,7 @@ ifeq ($(OS), openbsd)
 	YACC=yacc
 	# no sched_yield on openbsd unless linking with c_r (not recommended)
 	# unfortunately pthread is needed for sigwait
-	LIBS= -lfl -lpthread
+	LIBS= -lpthread
 	OPENBSD_IS_AOUT= $(shell echo "$(OSREL)" | \
 				sed -e 's/^3\.[0-3][^0-9]*$$/yes/' |sed -e 's/^[0-2]\..*/yes/')
 # exception: on sparc openbsd 3.2 is elf and not aout
@@ -1151,7 +1151,7 @@ ifeq ($(OS), netbsd)
 		DEFS+=-DHAVE_SELECT
 	endif
 	YACC=yacc
-	LIBS= -lfl 
+	LIBS=  
 endif
 
 # OS X support, same as freebsd
@@ -1166,9 +1166,9 @@ ifeq ($(OS), darwin)
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
-		LIBS= -pthread -lfl -lresolv  #dlopen is in libc
+		LIBS= -pthread -lresolv  #dlopen is in libc
 	else
-		LIBS= -lfl -lresolv  #dlopen is in libc
+		LIBS= -lresolv  #dlopen is in libc
 	endif
 	ifeq ($(NO_KQUEUE),)
 		DEFS+=-DHAVE_KQUEUE

@@ -708,3 +708,10 @@ static void count()
 	}
 }
 
+
+
+/* replacement yywrap, removes libfl dependency */
+int yywrap()
+{
+	return 1;
+}
