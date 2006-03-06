@@ -48,6 +48,7 @@ static dstr_buff_t *add_new_buffer(dstring_t *dstr)
 		buff->used = 0;
 		dlink_add(&dstr->buffers, e);
 	}
+	else dstr->error = 1;
 	return buff;
 }
 
@@ -55,7 +56,10 @@ int dstr_append(dstring_t *dstr, const char *s, int len)
 {
 	int size;
 	dstr_buff_t *buff;
-	
+
+	if (!dstr) return -1;
+	if (dstr->error) return -2;
+
 	if (len == 0) return 0; /*append empty string*/
 	
 	buff = get_current_buffer(dstr);
@@ -70,7 +74,10 @@ int dstr_append(dstring_t *dstr, const char *s, int len)
 		dstr->len += size;
 		if (len > 0) buff = add_new_buffer(dstr);
 	}
-	if (!buff) return -1;
+	if (!buff) {
+		dstr->error = 1;
+		return -1;
+	}
 	return 0;
 }
 
@@ -100,6 +107,8 @@ int dstr_get_data(dstring_t *dstr, char *dst)
 	dstr_buff_t* buff;
 	
 	if (!dstr) return -1;
+	if (dstr->error) return -2; /* a previous operation returned error */
+	
 	e = dlink_start_walk(&dstr->buffers);
 	while (e) {
 		buff = (dstr_buff_t*)dlink_element_data(e);
@@ -115,6 +124,11 @@ int dstr_get_str(dstring_t *dstr, str_t *dst)
 	int res = 0;
 	
 	if (!dst) return -1;
+	if (dstr->error) {
+		str_clear(dst);
+		return -2; /* a previous operation returned error */
+	}
+
 	dst->len = dstr_get_data_length(dstr);
 	if (dst->len > 0) {
 		dst->s = (char*)cds_malloc(dst->len);
@@ -139,6 +153,7 @@ int dstr_init(dstring_t *dstr, int buff_size)
 	if (!dstr) return -1;
 	dstr->buff_size = buff_size;
 	dstr->len = 0;
+	dstr->error = 0;
 	dlink_init(&dstr->buffers);
 	return 0;
 }
@@ -157,5 +172,16 @@ int dstr_destroy(dstring_t *dstr)
 		e = n;
 	}
 	return 0;
+}
+
+int dstr_error(dstring_t *dstr)
+{
+	if (dstr) return dstr->error;
+	else return -1;
+}
+
+void dstr_clear_error(dstring_t *dstr)
+{
+	if (dstr) dstr->error = 0;
 }
 

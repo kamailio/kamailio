@@ -132,6 +132,7 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p)
 int create_xpidf_document(presentity_info_t *p, str_t *dst, str_t *dst_content_type)
 {
 	dstring_t buf;
+	int err = 0;
 	
 	if (!dst) return -1;
 	
@@ -141,7 +142,9 @@ int create_xpidf_document(presentity_info_t *p, str_t *dst, str_t *dst_content_t
 	if (!p) return -1;
 	
 	if (dst_content_type) 
-		str_dup_zt(dst_content_type, "application/xpidf+xml;charset=\"UTF-8\"");
+		if (str_dup_zt(dst_content_type, "application/xpidf+xml;charset=\"UTF-8\"") < 0) {
+			return -1;
+		}
 
 /*	if (!p->first_tuple) return 0;*/	/* no tuples => nothing to say */ 
 	
@@ -151,9 +154,14 @@ int create_xpidf_document(presentity_info_t *p, str_t *dst, str_t *dst_content_t
 	dstr_append_zt(&buf, "<!DOCTYPE presence PUBLIC \"-//IETF//DTD RFCxxxx XPIDF 1.0//EN\" \"xpidf.dtd\">\r\n");
 	doc_add_presentity(&buf, p);
 	
-	dstr_get_str(&buf, dst);
+	err = dstr_get_str(&buf, dst);
 	dstr_destroy(&buf);
+
+	if (err != 0) {
+		str_free_content(dst);
+		if (dst_content_type) str_free_content(dst_content_type);
+	}
 	
-	return 0;
+	return err;
 }
 

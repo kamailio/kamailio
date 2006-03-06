@@ -87,7 +87,10 @@ int str_dup(str_t* dst, const str_t* src)
 	if ( (!src->s) || (src->len < 1)) return 0;
 
 	dst->s = cds_malloc(src->len);
-	if (!dst->s) return -1;
+	if (!dst->s) {
+		/* ERROR_LOG("can't allocate memory (%d bytes)\n", src->len); */
+		return -1;
+	}
 	memcpy(dst->s, src->s, src->len);
 	dst->len = src->len;
 	return 0;

@@ -103,7 +103,10 @@ int sstream_get_str(sstream_t *ss, int len, str_t *dst)
 {
 	str_t tmp;
 	int res = sstream_get_str_ex(ss, len, &tmp);
-	if (res >= 0) str_dup(dst, &tmp);
+	if (res >= 0) {
+		res = str_dup(dst, &tmp);
+		if (res != 0) str_clear(dst);
+	}
 	return res;
 }
 

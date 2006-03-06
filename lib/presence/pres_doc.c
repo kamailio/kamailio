@@ -68,8 +68,17 @@ presence_tuple_info_t *create_tuple_info(const str_t *contact, const str_t *id, 
 		return t;
 	}
 	/* str_clear(&t->contact.s); */
-	str_dup(&t->contact, contact);
-	str_dup(&t->id, id);
+	if (str_dup(&t->contact, contact) != 0) {
+		ERROR_LOG("can't allocate memory for contact\n");
+		cds_free(t);
+		return NULL;
+	}
+	if (str_dup(&t->id, id) != 0) {
+		ERROR_LOG("can't allocate memory for id\n");
+		str_free_content(&t->contact);
+		cds_free(t);
+		return NULL;
+	}
 	str_clear(&t->extra_status);
 	t->prev = NULL;
 	t->next = NULL;
@@ -202,8 +211,17 @@ presence_note_t *create_presence_note(const str_t *note, const str_t *lang)
 		return t;
 	}
 	/* str_clear(&t->contact.s); */
-	str_dup(&t->value, note);
-	str_dup(&t->lang, lang);
+	if (str_dup(&t->value, note) < 0) {
+		ERROR_LOG("can't duplicate note value\n");
+		cds_free(t);
+		return NULL;
+	}
+	if (str_dup(&t->lang, lang) < 0) {
+		ERROR_LOG("can't duplicate note lang\n");
+		str_free_content(&t->value);
+		cds_free(t);
+		return NULL;
+	}
 	t->prev = NULL;
 	t->next = NULL;
 	return t;
@@ -229,8 +247,17 @@ person_t *create_person(const str_t *element, const str_t *id)
 		return t;
 	}
 	/* str_clear(&t->contact.s); */
-	str_dup(&t->person_element, element);
-	str_dup(&t->id, id);
+	if (str_dup(&t->person_element, element) < 0) {
+		ERROR_LOG("can't duplicate person element\n");
+		cds_free(t);
+		return NULL;
+	}
+	if (str_dup(&t->id, id) < 0) {
+		ERROR_LOG("can't duplicate person element id\n");
+		str_free_content(&t->person_element);
+		cds_free(t);
+		return NULL;
+	}
 	t->next = NULL;
 	return t;
 }

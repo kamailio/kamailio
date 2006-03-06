@@ -46,6 +46,9 @@ typedef struct _dstring_t {
 	/** the length of whole string */
 	int len;
 	int buff_size;
+
+	/** a operation on this string was unsuccesfull -> all other will produce error */
+	int error;
 } dstring_t;
 
 int dstr_append_zt(dstring_t *dstr, const char *s);
@@ -56,6 +59,10 @@ int dstr_get_data(dstring_t *dstr, char *dst);
 int dstr_get_str(dstring_t *dstr, str_t *dst);
 int dstr_init(dstring_t *dstr, int buff_size);
 int dstr_destroy(dstring_t *dstr);
+
+/* returns nozero if error !!! */
+int dstr_error(dstring_t *dstr);
+void dstr_clear_error(dstring_t *dstr);
 
 #ifdef __cplusplus
 }
