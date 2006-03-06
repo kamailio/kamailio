@@ -124,7 +124,7 @@ static int prepend_path(struct sip_msg* _m, str *user, int recv)
 		l = insert_new_lump_before(l, rcv_addr.s, rcv_addr.len, 0);
 		if (!l) goto lump_err;
 	}
-	l = insert_new_lump_before(l, crlf, CRLF_LEN, 0);
+	l = insert_new_lump_before(l, crlf, CRLF_LEN+1, 0);
 	if (!l) goto lump_err;
 	
 	return 1;
