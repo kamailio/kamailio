@@ -40,7 +40,7 @@
 #include <sql.h>
 #include <sqlext.h>
 
-#define STRN_LEN
+#define STRN_LEN 1024
 
 typedef struct strn
 {
