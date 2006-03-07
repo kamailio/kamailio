@@ -46,7 +46,7 @@ int build_path_vector(struct sip_msg *_m, str *path, str **received)
 	path->s = 0;
 	*received = 0;
 
-	if(parse_headers(_m, HDR_EOH_F, 1) < 0) {
+	if(parse_headers(_m, HDR_EOH_F, 0) < 0) {
 		LOG(L_ERR,"ERROR: build_path_vector(): Error while parsing message\n");
 		goto error;
 	}

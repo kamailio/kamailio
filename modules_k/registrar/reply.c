@@ -370,12 +370,21 @@ int send_reply(struct sip_msg* _m)
 		add_lump_rpl( _m, contact.buf, contact.data_len, LUMP_RPL_HDR|LUMP_RPL_NODUP|LUMP_RPL_NOFREE);
 		contact.data_len = 0;
 	}
+			
+	LOG(L_ERR, "send_reply(): before path stuff\n");
 	
 	if (rerrno == R_FINE && path_enabled && _m->path_vec.s) {
+		LOG(L_ERR, "send_reply(): path1\n");
 		if (path_mode != PATH_MODE_OFF) {
-			if (parse_supported( _m)<0)
-				return -1;
-			if ( get_supported(_m)  & F_SUPPORTED_PATH ) {
+			LOG(L_ERR, "send_reply(): path2\n");
+			if (parse_supported(_m)<0 && path_mode == PATH_MODE_STRICT) {
+				rerrno = R_PATH_UNSUP;
+				if (add_unsupported(_m, &unsup) < 0)
+					return -1;
+				if (add_path(_m, &_m->path_vec) < 0)
+					return -1;
+			}
+			else if (get_supported(_m) & F_SUPPORTED_PATH) {
 				if (add_path(_m, &_m->path_vec) < 0)
 					return -1;
 			} else if (path_mode == PATH_MODE_STRICT) {
@@ -388,6 +397,8 @@ int send_reply(struct sip_msg* _m)
 		}
 	}
 
+	LOG(L_ERR, "send_reply(): after path stuff\n");
+
 	code = codes[rerrno];
 	switch(code) {
 	case 200: msg = MSG_200; break;
@@ -396,6 +407,8 @@ int send_reply(struct sip_msg* _m)
 	case 500: msg = MSG_500; break;
 	case 503: msg = MSG_503; break;
 	}
+	
+	LOG(L_ERR, "send_reply(): after codes\n");
 
 	if (code != 200) {
 		buf = (char*)pkg_malloc(E_INFO_LEN + error_info[rerrno].len + CRLF_LEN + 1);
@@ -415,6 +428,8 @@ int send_reply(struct sip_msg* _m)
 			}
 		} 
 	}
+	
+	LOG(L_ERR, "send_reply(): now reply\n");
 
 	if (sl_reply(_m, (char*)code, msg) == -1) {
 		LOG(L_ERR, "send_reply(): Error while sending %ld %s\n", code, msg);
