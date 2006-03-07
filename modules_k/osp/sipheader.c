@@ -116,7 +116,7 @@ int append_header_str(struct sip_msg* msg, str *header)
 	struct lump* anchor;
 	char *s;
 	
-	if(msg==0 || header==0 || header->s=0 || header->len<=0) {
+	if(msg==0 || header==0 || header->s==0 || header->len<=0) {
 		LOG(L_ERR, "ERROR:osp:append_header_str: bad parameters\n");
 		return -1;
 	}
