@@ -1406,18 +1406,8 @@ int reply_received( struct sip_msg  *p_msg )
 					((msg_status>=180) || (last_uac_status==0)) )
 			) ) { /* provisional now */
 		if (is_invite(t)) {
-			backup_user_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from );
-			backup_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to );
-			backup_domain_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from );
-			backup_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to );
-
 			restart_rb_fr(& uac->request, t->fr_inv_timeout);
 			uac->request.flags|=F_RB_FR_INV; /* mark fr_inv */
-
-			set_avp_list( AVP_TRACK_FROM | AVP_CLASS_USER, backup_user_from );
-			set_avp_list( AVP_TRACK_TO | AVP_CLASS_USER, backup_user_to );
-			set_avp_list( AVP_TRACK_FROM | AVP_CLASS_DOMAIN, backup_domain_from );
-			set_avp_list( AVP_TRACK_TO | AVP_CLASS_DOMAIN, backup_domain_to );
 		}
 	} /* provisional replies */
 
