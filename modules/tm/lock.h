@@ -30,6 +30,8 @@
  *  2003-03-17  converted to locking.h (andrei)
  *  2004-07-28  s/lock_set_t/gen_lock_set_t/ because of a type conflict
  *              on darwin (andrei)
+ *  2007-03-07  timer locks cleanup: timers are now handled outside tm => no
+ *              need for timer locks in tm (andrei)
  */
 
 #include "defs.h"
@@ -55,22 +57,9 @@ typedef struct {
 #endif
 
 
-enum timer_groups {
-	TG_FR,
-	TG_WT,
-	TG_DEL,
-	TG_RT,
-	TG_NR
-};
-
-
-/* extern ser_lock_t timer_group_lock[TG_NR]; */
-
 
 #include "h_table.h"
 
-/* Uni*x permissions for IPC */
-#define IPC_PERMISSIONS 0666
 
 
 int lock_initialize();
@@ -91,7 +80,6 @@ int init_entry_lock( struct s_table* ht, struct entry *entry );
 
 int release_cell_lock( struct cell *cell );
 int release_entry_lock( struct entry *entry );
-int release_timerlist_lock( struct timer *timerlist );
 
 
 

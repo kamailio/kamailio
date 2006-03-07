@@ -30,6 +30,8 @@
  *  2003-03-17  converted to locking.h (andrei)
  *  2004-07-28  s/lock_set_t/gen_lock_set_t/ because of a type conflict
  *              on darwin (andrei)
+ *  2006-03-07  removed timer_semaphore, timer_group_lock and related functions
+ *              since timers are now handled outside tm (andrei)
  */
 
 
@@ -39,7 +41,6 @@
 #include <errno.h>
 
 #include "lock.h"
-#include "timer.h"
 #include "../../dprint.h"
 
 
@@ -57,69 +58,35 @@
 
    we allocate the locks according to the following plans:
 
-   1) transaction timer lists have each a semaphore in
-      a semaphore set
-   2) retransmission timer lists have each a semaphore
-      in a semaphore set
-   3) we allocate a semaphore set for hash_entries and
+   1) we allocate a semaphore set for hash_entries and
       try to use as many semaphores in it as OS allows;
       we partition the the hash_entries by available
       semaphores which are shared  in each partition
-   4) cells get always the same semaphore as its hash
+   2) cells get always the same semaphore as its hash
       entry in which they live
 
 */
 
 /* and the maximum number of semaphores in the entry_semaphore set */
 static int sem_nr;
-gen_lock_set_t* timer_semaphore=0;
 gen_lock_set_t* entry_semaphore=0;
 gen_lock_set_t* reply_semaphore=0;
 #endif
 
-/* timer group locks */
-
-
-static ser_lock_t* timer_group_lock=0; /* pointer to a TG_NR lock array,
-								    it's safer if we alloc this in shared mem 
-									( required for fast lock ) */
 
 /* initialize the locks; return 0 on success, -1 otherwise
 */
 int lock_initialize()
 {
-	int i;
 #ifndef GEN_LOCK_T_PREFERED
+	int i;
 	int probe_run;
 #endif
 
 	/* first try allocating semaphore sets with fixed number of semaphores */
 	DBG("DEBUG: lock_initialize: lock initialization started\n");
 
-	timer_group_lock=shm_malloc(TG_NR*sizeof(ser_lock_t));
-	if (timer_group_lock==0){
-		LOG(L_CRIT, "ERROR: lock_initialize: out of shm mem\n");
-		goto error;
-	}
-#ifdef GEN_LOCK_T_PREFERED
-	for(i=0;i<TG_NR;i++) lock_init(&timer_group_lock[i]);
-#else
-	/* transaction timers */
-	if (((timer_semaphore= lock_set_alloc( TG_NR ) ) == 0)||
-			(lock_set_init(timer_semaphore)==0)){
-		if (timer_semaphore) lock_set_destroy(timer_semaphore);
-		LOG(L_CRIT, "ERROR: lock_initialize:  "
-			"transaction timer semaphore initialization failure: %s\n",
-				strerror(errno));
-		goto error;
-	}
-
-	for (i=0; i<TG_NR; i++) {
-		timer_group_lock[i].semaphore_set = timer_semaphore;
-		timer_group_lock[i].semaphore_index = timer_group[ i ];
-	}
-
-
+#ifndef GEN_LOCK_T_PREFERED
 	i=SEM_MIN;
 	/* probing phase: 0=initial, 1=after the first failure */
 	probe_run=0;
@@ -192,9 +159,11 @@ again:
 	LOG(L_INFO, "INFO: semaphore arrays of size %d allocated\n", sem_nr );
 #endif /* GEN_LOCK_T_PREFERED*/
 	return 0;
+#ifndef GEN_LOCK_T_PREFERED
 error:
 	lock_cleanup();
 	return -1;
+#endif
 }
 
 
@@ -202,7 +171,6 @@ error:
 void lock_cleanup()
 {
 	/* must check if someone uses them, for now just leave them allocated*/
-	if (timer_group_lock) shm_free((void*)timer_group_lock);
 }
 
 #else
@@ -221,16 +189,11 @@ void lock_cleanup()
 		lock_set_destroy(entry_semaphore);
 		lock_set_dealloc(entry_semaphore);
 	};
-	if (timer_semaphore !=0){
-		lock_set_destroy(timer_semaphore);
-		lock_set_dealloc(timer_semaphore);
-	};
 	if (reply_semaphore !=0) {
 		lock_set_destroy(reply_semaphore);
 		lock_set_dealloc(reply_semaphore);
 	};
-	entry_semaphore = timer_semaphore = reply_semaphore = 0;
-	if (timer_group_lock) shm_free(timer_group_lock);
+	entry_semaphore =  reply_semaphore = 0;
 
 }
 #endif /*GEN_LOCK_T_PREFERED*/
@@ -282,14 +245,6 @@ int release_cell_lock( struct cell *cell )
 
 
 int release_entry_lock( struct entry *entry )
-{
-	/* the same as above */
-	return 0;
-}
-
-
-
-int release_timerlist_lock( struct timer *timerlist )
 {
 	/* the same as above */
 	return 0;
