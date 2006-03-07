@@ -119,6 +119,7 @@ static int fixup_hostport2proxy(void** param, int param_no);
 static int fixup_on_failure(void** param, int param_no);
 static int fixup_on_reply(void** param, int param_no);
 static int fixup_on_branch(void** param, int param_no);
+static int fixup_t_reply(void** param, int param_no);
 
 
 /* init functions */
@@ -187,7 +188,7 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE},
 	{"t_lookup_request",   w_t_check,               0, 0,
 			REQUEST_ROUTE},
-	{T_REPLY,              w_t_reply,               2, fixup_int_1,
+	{T_REPLY,              w_t_reply,               2, fixup_t_reply,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"t_retransmit_reply", w_t_retransmit_reply,    0, 0,
 			REQUEST_ROUTE},
@@ -332,7 +333,21 @@ static int fixup_routes(char* r_type, struct route_list* rt, void** param)
 	return 0;
 }
 
+static int fixup_t_reply(void** param, int param_no)
+{
+	int ret;
 
+	if (param_no == 1) {
+		ret = fix_param(FPARAM_AVP, param);
+		if (ret <= 0) return ret;
+		return fix_param(FPARAM_INT, param);
+	} else if (param_no == 2) {
+		ret = fix_param(FPARAM_AVP, param);
+		if (ret <= 0) return ret;
+		return fix_param(FPARAM_ASCIIZ, param);
+	}
+    return 0;
+}
 
 static int fixup_on_failure(void** param, int param_no)
 {
@@ -654,9 +669,64 @@ inline static int w_t_forward_nonack_tls( struct sip_msg* msg, char* proxy,
 #endif
 
 
+static int get_param_val(int* code, char** reason, fparam_t* c, fparam_t* r) {
+
+	avp_t* avp;
+	avp_value_t val;
+
+	switch(c->type) {
+	case FPARAM_AVP:
+		if (!(avp = search_first_avp(c->v.avp.flags, c->v.avp.name, &val, 0))) {
+			goto internal;
+		} else {
+                        if (avp->flags & AVP_VAL_STR) goto internal;
+                        *code = val.n;
+                }
+                break;
+
+        case FPARAM_INT:
+                *code = c->v.i;
+                break;
+
+        default:
+                ERR("BUG: Invalid parameter value in t_reply\n");
+                return -1;
+        }
+
+
+	switch(r->type) {
+	case FPARAM_AVP:
+		if (!(avp = search_first_avp(r->v.avp.flags, r->v.avp.name, &val, 0))) {
+			goto internal;
+		} else {
+			if ((avp->flags & AVP_VAL_STR) == 0) goto internal;
+			     /* FIXME: AVP values are zero terminated */
+			*reason = val.s.s;
+		}
+		break;
+
+	case FPARAM_ASCIIZ:
+		*reason = r->v.asciiz;
+		break;
+
+	default:
+		ERR("BUG: Invalid parameter value in t_reply\n");
+		return -1;
+	}
+
+	return 0;
+
+ internal:
+	*code = 500;
+	*reason = "Internal Server Error (AVP from t_reply param not found)";
+	return 0;
+}
+
 inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2)
 {
 	struct cell *t;
+	int code;
+	char *reason;
 
 	if (msg->REQ_METHOD==METHOD_ACK) {
 		LOG(L_WARN, "WARNING: t_reply: ACKs are not replied\n");
@@ -669,15 +739,19 @@ inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2)
 			"for which no T-state has been established\n");
 		return -1;
 	}
+	
 	/* if called from reply_route, make sure that unsafe version
 	 * is called; we are already in a mutex and another mutex in
 	 * the safe version would lead to a deadlock
 	 */
+	 
 	if (rmode==MODE_ONFAILURE) {
 		DBG("DEBUG: t_reply_unsafe called from w_t_reply\n");
-		return t_reply_unsafe(t, msg, (unsigned int)(long) str, str2);
+		if (get_param_val(&code, &reason, (fparam_t*) str, (fparam_t*) str2) < 0) return -1;
+		return t_reply_unsafe(t, msg, code, reason);
 	} else if (rmode==MODE_REQUEST) {
-		return t_reply( t, msg, (unsigned int)(long) str, str2);
+		if (get_param_val(&code, &reason, (fparam_t*) str, (fparam_t*) str2) < 0) return -1;
+		return t_reply( t, msg, code, reason);
 	} else {
 		LOG(L_CRIT, "BUG: w_t_reply entered in unsupported mode\n");
 		return -1;
@@ -860,7 +934,6 @@ inline static int w_t_relay( struct sip_msg  *p_msg ,
 	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported mode: %d\n", rmode);
 	return 0;
 }
-
 
 /* set fr_inv_timeout & or fr_timeout; 0 means: use the default value */
 static int t_set_fr_all(struct sip_msg* msg, char* fr_inv, char* fr)
