@@ -46,6 +46,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_rr.h"
+#include "../../data_lump.h"
 
 
 
@@ -150,11 +151,11 @@ int append_header_str(struct sip_msg* msg, str *header)
 	return 0;
 }
 
-int addOspHeader(struct sip_msg* msg, char* token, int sizeoftoken) {
+int addOspHeader(struct sip_msg* msg, unsigned char* token, unsigned int sizeoftoken) {
 
 	char headerBuffer[3500];
-	char encodedToken[3000];
-	int  sizeofencodedToken = sizeof(encodedToken);
+	unsigned char encodedToken[3000];
+	unsigned int  sizeofencodedToken = sizeof(encodedToken);
 	str  headerVal;
 	int  retVal = 1;
 
@@ -187,7 +188,7 @@ int addOspHeader(struct sip_msg* msg, char* token, int sizeoftoken) {
 
 
 
-int getOspHeader(struct sip_msg* msg, char* token, int* sizeoftoken) {
+int getOspHeader(struct sip_msg* msg, unsigned char* token, unsigned int* sizeoftoken) {
 	struct hdr_field *hf;
 
 	int code;
@@ -224,7 +225,7 @@ int getCallId(struct sip_msg* msg, OSPTCALLID** callid) {
 	cid = (struct hdr_field*) msg->callid;
 
 	if (cid != NULL) {
-		*callid = OSPPCallIdNew(cid->body.len,cid->body.s);
+		*callid = OSPPCallIdNew(cid->body.len,(unsigned char*)cid->body.s);
 		if (*callid) {
 			retVal = 0;
 		} else {

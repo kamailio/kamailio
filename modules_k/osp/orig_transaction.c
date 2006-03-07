@@ -77,7 +77,7 @@ int requestosprouting(struct sip_msg* msg, char* ignore1, char* ignore2) {
 	unsigned int log_size = 0;
 	char* detail_log = NULL;
 	const char** preferred = NULL;
-	int dest_count;
+	unsigned int dest_count;
 	OSPTTRANHANDLE transaction = -1;
 	time_t time_auth;
 

@@ -51,8 +51,8 @@ extern char* _device_ip;
 
 
 int checkospheader(struct sip_msg* msg, char* ignore1, char* ignore2) {
-	char temp[3000];
-	int  sizeoftemp = sizeof(temp);
+	unsigned char temp[3000];
+	unsigned int  sizeoftemp = sizeof(temp);
 
 
 	if (getOspHeader(msg, temp, &sizeoftemp) != 0) {
@@ -78,11 +78,11 @@ int validateospheader (struct sip_msg* msg, char* ignore1, char* ignore2) {
 	OSPTCALLID* call_id = NULL;
 	osp_dest  dest;
 
-	char token[3000];
+	unsigned char token[3000];
 	unsigned int sizeoftoken = sizeof(token);
 
 	unsigned callIdLen = 0;
-	unsigned char* callIdVal = "";
+	unsigned char* callIdVal = (unsigned char*)"";
 
 	
 

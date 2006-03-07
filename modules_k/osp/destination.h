@@ -48,7 +48,7 @@ struct _osp_dest {
 	char destination[100];
 	char destinationdevice[100];
 	char network_id[100];
-	char osptoken[2000];
+	unsigned char osptoken[2000];
 	unsigned int sizeofcallid;
 	unsigned int timelimit;
 	unsigned int sizeoftoken;

@@ -131,7 +131,7 @@ static OSPTTHREADRETURN report_usage_wk(void* usage_arg)
 			usage->ospvIsPDDInfoPresent,
 			usage->ospvPostDialDelay,
 			usage->ospvReleaseSource,
-			"", 0, 0, 0, 0, NULL,NULL);
+			(unsigned char*)"", 0, 0, 0, 0, NULL,NULL);
 
 		if (errorcode == 0) {
 			LOG(L_INFO, "osp: Reported usage for transaction-id '%lld'\n",get_transaction_id(usage->ospvTransaction));

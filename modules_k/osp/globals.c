@@ -34,11 +34,11 @@
 
 #include "osp/ospprovider.h"
 
-int   _spWeights[2]      = {1000,1000};
 char* _spURIs[2];
-char* _private_key       = NULL;
-char* _local_certificate = NULL;
-char* _ca_certificate    = NULL;
+unsigned long _spWeights[2]       = {1000,1000};
+unsigned char* _private_key       = NULL;
+unsigned char* _local_certificate = NULL;
+unsigned char* _ca_certificate    = NULL;
 char* _device_ip         = NULL;
 char* _device_port       = NULL;
 int   _ssl_lifetime      = 300;

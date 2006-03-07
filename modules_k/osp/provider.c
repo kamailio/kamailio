@@ -40,11 +40,11 @@
 #include "../../mem/mem.h"
 
 extern char* _spURIs[2];
-extern int   _spWeights[2];
+extern unsigned long _spWeights[2];
 
-extern char* _private_key;
-extern char* _local_certificate;
-extern char* _ca_certificate;
+extern unsigned char* _private_key;
+extern unsigned char* _local_certificate;
+extern unsigned char* _ca_certificate;
 
 extern int   _ssl_lifetime;
 extern int   _persistence;
@@ -76,7 +76,7 @@ int setup_provider() {
 	} else if ( 0 != (result = OSPPProviderNew(
 				2,
 				(const char **)_spURIs,
-				(long *)_spWeights,
+				_spWeights,
 				"http://localhost:1234",
 				&privatekey,
 				&localcert,

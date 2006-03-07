@@ -45,6 +45,8 @@ extern OSPTPROVHANDLE _provider;
 extern char* _device_ip;
 extern str ORIG_OSPDESTS_LABEL;
 
+extern cmd_function addRRParam;
+
 int buildUsageFromDestination(OSPTTRANHANDLE transaction, osp_dest* dest, int last_code_for_previous_destination);
 int reportUsageFromDestination(OSPTTRANHANDLE transaction, osp_dest* dest);
 int reportUsageFromCooky(char* cooky, OSPTCALLID* call_id, int isOrig, struct sip_msg* msg);
@@ -63,7 +65,6 @@ void record_transaction_info(struct sip_msg* msg, OSPTTRANHANDLE transaction, ch
 {
 
 	char buf[1000];
-	str  toAdd;
 
 	sprintf(buf,
 		";%s=t%llu_s%s_T%d",
@@ -72,13 +73,10 @@ void record_transaction_info(struct sip_msg* msg, OSPTTRANHANDLE transaction, ch
 		uac,
 		(unsigned int)time_auth);
 
-	toAdd.s = buf;
-	toAdd.len = strlen(buf);
-
 	DBG("osp:record_transaction_info: adding rr param '%s'\n",buf);
 
-	if (add_rr_param) {
-		add_rr_param(msg,(char *)&toAdd,NULL);
+	if (addRRParam) {
+		addRRParam(msg,buf,NULL);
 	} else {
 		LOG(L_WARN,"osp:record_transaction_info: add_rr_param function is not found, can not record information about the OSP transaction\n");
 	}
@@ -284,7 +282,7 @@ void reportOrigCallSetUpUsage()
 
 	errorCode = OSPPTransactionNew(_provider, &transaction);
 
-	for (	dest_avp=search_first_avp(AVP_NAME_STR|AVP_VAL_STR,(int_str)&ORIG_OSPDESTS_LABEL,NULL);
+	for (	dest_avp=search_first_avp(AVP_NAME_STR|AVP_VAL_STR,(int_str)ORIG_OSPDESTS_LABEL,NULL);
 		dest_avp != NULL;
 		dest_avp=search_next_avp(dest_avp,NULL)) {
 

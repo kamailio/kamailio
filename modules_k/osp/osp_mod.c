@@ -128,6 +128,7 @@ struct module_exports exports = {
 	child_init, /* per-child init function */
 };
 
+cmd_function addRRParam;
 
 static int mod_init(void)
 {
@@ -136,8 +137,8 @@ static int mod_init(void)
 	if (verify_parameter() != 0) 
 		return 1;   /* at least one parameter incorrect -> error */
 
-	add_rr_param = find_export("add_rr_param", 1, 0);
-        if (add_rr_param == NULL) {
+	addRRParam = find_export("add_rr_param", 1, 0);
+        if (addRRParam == NULL) {
                 LOG(L_WARN, "WARNING: osp: mod_init: could not find add_rr_param, make sure rr is loaded\n");
                 LOG(L_WARN, "WARNING: osp: mod_init: add_rr_param is required for reporting duration for OSP transactions\n");
         }   
