@@ -371,12 +371,8 @@ int send_reply(struct sip_msg* _m)
 		contact.data_len = 0;
 	}
 			
-	LOG(L_ERR, "send_reply(): before path stuff\n");
-	
 	if (rerrno == R_FINE && path_enabled && _m->path_vec.s) {
-		LOG(L_ERR, "send_reply(): path1\n");
 		if (path_mode != PATH_MODE_OFF) {
-			LOG(L_ERR, "send_reply(): path2\n");
 			if (parse_supported(_m)<0 && path_mode == PATH_MODE_STRICT) {
 				rerrno = R_PATH_UNSUP;
 				if (add_unsupported(_m, &unsup) < 0)
@@ -396,8 +392,6 @@ int send_reply(struct sip_msg* _m)
 			}
 		}
 	}
-
-	LOG(L_ERR, "send_reply(): after path stuff\n");
 
 	code = codes[rerrno];
 	switch(code) {
