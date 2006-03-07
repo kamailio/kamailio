@@ -402,8 +402,6 @@ int send_reply(struct sip_msg* _m)
 	case 503: msg = MSG_503; break;
 	}
 	
-	LOG(L_ERR, "send_reply(): after codes\n");
-
 	if (code != 200) {
 		buf = (char*)pkg_malloc(E_INFO_LEN + error_info[rerrno].len + CRLF_LEN + 1);
 		if (!buf) {
@@ -423,8 +421,6 @@ int send_reply(struct sip_msg* _m)
 		} 
 	}
 	
-	LOG(L_ERR, "send_reply(): now reply\n");
-
 	if (sl_reply(_m, (char*)code, msg) == -1) {
 		LOG(L_ERR, "send_reply(): Error while sending %ld %s\n", code, msg);
 		return -1;
