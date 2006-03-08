@@ -42,6 +42,8 @@
  *  2005-05-25  PPC locking code enabled for PPC64; added a lwsync to
  *               the tsl part and replaced the sync with a lwsync for the
  *               unlock part (andrei)
+ *  2006-03-08  mips2 NOSMP (skip sync), optimized x86 & mips clobbers and
+ *               input/output constraints (andrei)
  *
  */
 
@@ -78,7 +80,7 @@ inline static int tsl(fl_lock_t* lock)
 	asm volatile(
 		" btsl $0, %1 \n\t"
 		" adcl $0, %0 \n\t"
-		: "=q" (val), "=m" (*lock) : "0"(val) : "memory", "cc" /* "cc" */
+		: "=q" (val), "=m" (*lock) : "0"(val) : "memory", "cc"
 	);
 #else
 	val=1;
@@ -121,7 +123,6 @@ inline static int tsl(fl_lock_t* lock)
         );
 #elif defined __CPU_mips2
 	long tmp;
-	tmp=1; /* just to kill a gcc 2.95 warning */
 	
 	asm volatile(
 		".set noreorder\n\t"
@@ -130,10 +131,13 @@ inline static int tsl(fl_lock_t* lock)
 		"    sc %0, %2  \n\t"
 		"    beqz %0, 1b \n\t"
 		"    nop \n\t"
+#ifndef NOSMP
+		"    sync \n\t"
+#endif
 		".set reorder\n\t"
 		: "=&r" (tmp), "=&r" (val), "=m" (*lock) 
-		: "0" (tmp), "2" (*lock) 
-		: "cc"
+		: "m" (*lock) 
+		: "memory"
 	);
 #elif defined __CPU_alpha
 	long tmp;
@@ -184,10 +188,8 @@ inline static void get_lock(fl_lock_t* lock)
 inline static void release_lock(fl_lock_t* lock)
 {
 #if defined(__CPU_i386) || defined(__CPU_x86_64)
-	char val;
-	val=0;
 	asm volatile(
-		" movb $0, (%0)" : /*no output*/ : "r"(lock): "memory"
+		" movb $0, %0" : "=m"(*lock) : : "memory"
 		/*" xchg %b0, %1" : "=q" (val), "=m" (*lock) : "0" (val) : "memory"*/
 	); 
 #elif defined(__CPU_sparc64) || defined(__CPU_sparc)
@@ -219,14 +221,15 @@ inline static void release_lock(fl_lock_t* lock)
 			: "r"(0), "b" (lock)
 			: "memory"
 	);
-	*lock = 0;
 #elif defined __CPU_mips2
 	asm volatile(
 		".set noreorder \n\t"
+#ifndef NOSMP
 		"    sync \n\t"
+#endif
 		"    sw $0, %0 \n\t"
 		".set reorder \n\t"
-		: /*no output*/  : "m" (*lock) : "memory"
+		: "=m" (*lock)  : /* no input */ : "memory"
 	);
 #elif defined __CPU_alpha
 	asm volatile(
