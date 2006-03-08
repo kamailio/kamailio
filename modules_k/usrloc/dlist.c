@@ -219,7 +219,7 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags)
 				 * List only contacts that have all requested
 				 * flags set
 				 */
-				if ((c->flags & flags) == flags)
+				if ((c->flags & flags) != flags)
 					continue;
 				if (c->received.s) {
 					needed = (int)(sizeof(c->received.len) + c->received.len +
