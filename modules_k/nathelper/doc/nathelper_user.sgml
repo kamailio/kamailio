@@ -371,34 +371,45 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">fix_nated_sdp(mode)</function>
+		<function moreinfo="none">fix_nated_sdp(flags), </function>
+		<function moreinfo="none">fix_nated_sdp(flags,IP)</function>
 		</title>
 		<para>
 		Alters the SDP information in orer to facilitate NAT traversal. What
 		changes to be performed may be controled via the 
 		<quote>parameter</quote>.
 		</para>
-		<para>The parameter value may be a bitwise OR of the following
-		flags:
-		</para>
+		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
-		<listitem>
-			<para><emphasis>0x01</emphasis> - adds 
-			<quote>a=direction:active</quote> SDP line;
+			<listitem><para>
+			<emphasis>flags</emphasis> - the value may be a bitwise OR of 
+			the following flags:
 			</para>
-		</listitem>
-		<listitem>
-			<para><emphasis>0x02</emphasis> - rewrite media
-			&ip; address (c=) with source address of the message.
-		</listitem>
-		<listitem>
-			<para><emphasis>0x04</emphasis> - adds 
-			<quote>a=nortpproxy:yes</quote> SDP line;
-		</listitem>
-		<listitem>
-			<para><emphasis>0x08</emphasis> - rewrite IP from
-			origin description (o=) with source address of the message.
-		</listitem>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>0x01</emphasis> - adds 
+					<quote>a=direction:active</quote> SDP line;
+					</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>0x02</emphasis> - rewrite media
+					&ip; address (c=) with source address of the message.
+				</listitem>
+				<listitem>
+					<para><emphasis>0x04</emphasis> - adds 
+					<quote>a=nortpproxy:yes</quote> SDP line;
+				</listitem>
+				<listitem>
+					<para><emphasis>0x08</emphasis> - rewrite IP from
+					origin description (o=) with source address of the message.
+				</listitem>
+			</itemizedlist>
+			</listitem>
+			<listitem><para>
+			<emphasis>IP</emphasis> - IP to be used for rewritting SDP. If not
+			specified, the received signalling IP will be used. The paramter
+			allows pseudo-variables usage.
+			</para>
 		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
@@ -484,6 +495,13 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 				<emphasis>o</emphasis> - flags that IP from the origin 
 				description (o=) should be also changed.
 				</para></listitem>
+				<listitem><para>
+				<emphasis>s</emphasis> - flags to swap creation with 
+				confirmation between requests and replies. By default, a 
+				request creates the RTP session and a reply confirms it. If
+				swapped, a reply will create the RTP session and a request
+				will confirm it.
+				</para></listitem>
 			</itemizedlist>
 		</listitem>
 		</itemizedlist>
@@ -549,16 +567,28 @@ unforce_rtp_proxy();
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">add_rcv_param()</function>
+		<function moreinfo="none">add_rcv_param()</function>,
+		<function moreinfo="none">add_rcv_param(flag)</function>
 		</title>
 		<para>
-		Add received parameter to Contact header fields. The parameter will 
+		Add received parameter to Contact header fields or Contact URI.
+		The parameter will 
 		contain URI created from the source IP, port, and protocol of the 
 		packet containing the SIP message. The parameter can be then 
 		processed by another registrar, this is useful, for example, when 
 		replicating register messages using t_replicate function to
 		another registrar.
 		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>flag</emphasis> - flags to indicate if the parameter
+			should be added to Contact URI or Contact header. If the flag is
+			non-zero, the parameter will be added to the Contact URI. If not
+			used or equal to zero, the parameter will go to the Contact 
+			header.
+			</para></listitem>
+		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE.
 		</para>
@@ -566,7 +596,9 @@ unforce_rtp_proxy();
 		<title><function>add_rcv_paramer</function> usage</title>
 		<programlisting format="linespecific">
 ...
-add_rcv_param();
+add_rcv_param(); # add the parameter to the Contact header
+....
+add_rcv_param("1"); # add the paramter to the Contact URI
 ...
 </programlisting>
 		</example>

@@ -43,12 +43,14 @@ Bogdan-Andrei Iancu
         1.5. Exported Functions
 
               1.5.1. fix_nated_contact()
-              1.5.2. fix_nated_sdp(mode)
+              1.5.2. fix_nated_sdp(flags),
+                      fix_nated_sdp(flags,IP)
+
               1.5.3. force_rtp_proxy()
               1.5.4. force_rtp_proxy(flags)
               1.5.5. force_rtp_proxy(flags, ip_address)
               1.5.6. unforce_rtp_proxy()
-              1.5.7. add_rcv_param()
+              1.5.7. add_rcv_param(), add_rcv_param(flag)
               1.5.8. fix_nated_register()
               1.5.9. nat_uac_test(flags)
 
@@ -313,21 +315,25 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 ...
      _________________________________________________________
 
-1.5.2. fix_nated_sdp(mode)
+1.5.2. fix_nated_sdp(flags), fix_nated_sdp(flags,IP)
 
    Alters the SDP information in orer to facilitate NAT
    traversal. What changes to be performed may be controled via
    the "parameter".
 
-   The parameter value may be a bitwise OR of the following
-   flags:
+   Meaning of the parameters is as follows:
 
-     * 0x01 - adds "a=direction:active" SDP line;
-     * 0x02 - rewrite media IP address (c=) with source address
-       of the message.
-     * 0x04 - adds "a=nortpproxy:yes" SDP line;
-     * 0x08 - rewrite IP from origin description (o=) with source
-       address of the message.
+     * flags - the value may be a bitwise OR of the following
+       flags:
+          + 0x01 - adds "a=direction:active" SDP line;
+          + 0x02 - rewrite media IP address (c=) with source
+            address of the message.
+          + 0x04 - adds "a=nortpproxy:yes" SDP line;
+          + 0x08 - rewrite IP from origin description (o=) with
+            source address of the message.
+     * IP - IP to be used for rewritting SDP. If not specified,
+       the received signalling IP will be used. The paramter
+       allows pseudo-variables usage.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
@@ -381,6 +387,11 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
             media address which is passed to the RTP proxy.
           + o - flags that IP from the origin description (o=)
             should be also changed.
+          + s - flags to swap creation with confirmation between
+            requests and replies. By default, a request creates
+            the RTP session and a reply confirms it. If swapped,
+            a reply will create the RTP session and a request
+            will confirm it.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
@@ -423,20 +434,31 @@ unforce_rtp_proxy();
 ...
      _________________________________________________________
 
-1.5.7. add_rcv_param()
+1.5.7. add_rcv_param(), add_rcv_param(flag)
 
-   Add received parameter to Contact header fields. The parameter
-   will contain URI created from the source IP, port, and
-   protocol of the packet containing the SIP message. The
-   parameter can be then processed by another registrar, this is
-   useful, for example, when replicating register messages using
-   t_replicate function to another registrar.
+   Add received parameter to Contact header fields or Contact
+   URI. The parameter will contain URI created from the source
+   IP, port, and protocol of the packet containing the SIP
+   message. The parameter can be then processed by another
+   registrar, this is useful, for example, when replicating
+   register messages using t_replicate function to another
+   registrar.
+
+   Meaning of the parameters is as follows:
+
+     * flag - flags to indicate if the parameter should be added
+       to Contact URI or Contact header. If the flag is non-zero,
+       the parameter will be added to the Contact URI. If not
+       used or equal to zero, the parameter will go to the
+       Contact header.
 
    This function can be used from REQUEST_ROUTE.
 
    Example 1-18. add_rcv_paramer usage
 ...
-add_rcv_param();
+add_rcv_param(); # add the parameter to the Contact header
+....
+add_rcv_param("1"); # add the paramter to the Contact URI
 ...
      _________________________________________________________
 
@@ -516,4 +538,4 @@ Chapter 3. Frequently Asked Questions
    3.3. How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://openser.org/bugs.
+   http://sourceforge.net/tracker/?group_id=139143.

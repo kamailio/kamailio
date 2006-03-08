@@ -139,6 +139,13 @@
  * 2005-07-11  SIP ping support added (bogdan)
  *
  * 2005-07-14  SDP origin (o=) IP may be also changed (bogdan)
+ *
+ * 2006-03-08  fix_nated_sdp() may take one more param to force a specific IP;
+ *             force_rtp_proxy() accepts a new flag 's' to swap creation/
+ *              confirmation between requests/replies; 
+ *             add_rcv_param() may take as parameter a flag telling if the
+ *              parameter should go to the contact URI or contact header;
+ *             (bogdan)
  */
 
 #include <sys/types.h>
@@ -173,6 +180,7 @@
 #include "../../timer.h"
 #include "../../trim.h"
 #include "../../ut.h"
+#include "../../items.h"
 #include "../../msg_translator.h"
 #include "../../usr_avp.h"
 #include "../../socket_info.h"
@@ -225,6 +233,7 @@ static int force_rtp_proxy0_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy1_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy2_f(struct sip_msg *, char *, char *);
 static int fix_nated_register_f(struct sip_msg *, char *, char *);
+static int fixup_fix_sdp(void** param, int param_no);
 static int add_rcv_param_f(struct sip_msg *, char *, char *);
 static char *find_sdp_line(char *, char *, char);
 static char *find_next_sdp_line(char *, char *, char, char *);
@@ -297,15 +306,28 @@ static struct rtpp_head rtpp_list;
 static int rtpp_node_count = 0;
 
 static cmd_export_t cmds[] = {
-	{"fix_nated_contact",  fix_nated_contact_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
-	{"fix_nated_sdp",      fix_nated_sdp_f,        1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-	{"unforce_rtp_proxy",  unforce_rtp_proxy_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-	{"force_rtp_proxy",    force_rtp_proxy0_f,     0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-	{"force_rtp_proxy",    force_rtp_proxy1_f,     1, 0,             REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-	{"force_rtp_proxy",    force_rtp_proxy2_f,     2, 0,             REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-	{"nat_uac_test",       nat_uac_test_f,         1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-	{"fix_nated_register", fix_nated_register_f,   0, 0,             REQUEST_ROUTE },
-	{"add_rcv_param",      add_rcv_param_f,        0, 0,             REQUEST_ROUTE },
+	{"fix_nated_contact",  fix_nated_contact_f,    0, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
+	{"fix_nated_sdp",      fix_nated_sdp_f,        1, fixup_fix_sdp,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"fix_nated_sdp",      fix_nated_sdp_f,        2, fixup_fix_sdp,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"unforce_rtp_proxy",  unforce_rtp_proxy_f,    0, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"force_rtp_proxy",    force_rtp_proxy0_f,     0, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"force_rtp_proxy",    force_rtp_proxy1_f,     1, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"force_rtp_proxy",    force_rtp_proxy2_f,     2, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"nat_uac_test",       nat_uac_test_f,         1, fixup_str2int,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"fix_nated_register", fix_nated_register_f,   0, 0,
+			REQUEST_ROUTE },
+	{"add_rcv_param",      add_rcv_param_f,        0, 0,
+			REQUEST_ROUTE },
+	{"add_rcv_param",      add_rcv_param_f,        1, fixup_str2int,
+			REQUEST_ROUTE },
 	{0, 0, 0, 0, 0}
 };
 
@@ -335,6 +357,32 @@ struct module_exports exports = {
 	0, /* destroy function */
 	child_init
 };
+
+
+static int
+fixup_fix_sdp(void** param, int param_no)
+{
+	xl_elem_t *model;
+
+	if (param_no==1) {
+		/* flags */
+		return fixup_str2int( param, param_no);
+	}
+	/* new IP */
+	model=NULL;
+	if(xl_parse_format((char*)(*param),&model,XL_DISABLE_COLORS)<0) {
+		LOG(L_ERR, "ERROR:nathelper:fixup_fix_sdp: wrong format[%s]!\n",
+			(char*)(*param));
+		return E_UNSPEC;
+	}
+	if (model==NULL) {
+		LOG(L_ERR, "ERROR:nathelper:fixup_fix_sdp: empty parameter!\n");
+		return E_UNSPEC;
+	}
+	*param = (void*)model;
+	return 0;
+}
+
 
 static int
 mod_init(void)
@@ -891,7 +939,7 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 
 
 static inline int 
-replace_sdp_ip(struct sip_msg* msg, str *org_body, char *line)
+replace_sdp_ip(struct sip_msg* msg, str *org_body, char *line, str *ip)
 {
 	str body1, oldip, newip;
 	str body = *org_body;
@@ -901,8 +949,12 @@ replace_sdp_ip(struct sip_msg* msg, str *org_body, char *line)
 	char *bodylimit = body.s + body.len;
 
 	/* Iterate all lines and replace ips in them. */
-	newip.s = ip_addr2a(&msg->rcv.src_ip);
-	newip.len = strlen(newip.s);
+	if (!ip) {
+		newip.s = ip_addr2a(&msg->rcv.src_ip);
+		newip.len = strlen(newip.s);
+	} else {
+		newip = *ip;
+	}
 	body1 = body;
 	for(;;) {
 		if (extract_mediaip(&body1, &oldip, &pf,line) == -1)
@@ -941,11 +993,14 @@ static int
 fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	str body;
+	str ip;
 	int level;
 	char *buf;
 	struct lump* anchor;
 
 	level = (int)(long)str1;
+	if (str2 && xl_printf_s( msg, (xl_elem_p)str2, &ip)!=0)
+		return -1;
 
 	if (extract_body(msg, &body) == -1) {
 		LOG(L_ERR,"ERROR: fix_nated_sdp: cannot extract body from msg!\n");
@@ -991,13 +1046,13 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 
 	if (level & FIX_MEDIP) {
 		/* Iterate all c= and replace ips in them. */
-		if (replace_sdp_ip(msg, &body, "c=")==-1)
+		if (replace_sdp_ip(msg, &body, "c=", str2?&ip:0)==-1)
 			return -1;
 	}
 
 	if (level & FIX_ORGIP) {
 		/* Iterate all o= and replace ips in them. */
-		if (replace_sdp_ip(msg, &body, "o=")==-1)
+		if (replace_sdp_ip(msg, &body, "o=", str2?&ip:0)==-1)
 			return -1;
 	}
 
@@ -1628,7 +1683,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	str body, body1, oldport, oldip, newport, newip;
 	str callid, from_tag, to_tag, tmp;
 	int create, port, len, asymmetric, flookup, argc, proxied, real, orgip;
-	int oidx, pf, pf1, force;
+	int oidx, pf, pf1, force, swap;
 	char opts[16];
 	char *cp, *cp1;
 	char  *cpend, *next;
@@ -1658,7 +1713,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	int c1p_altered;
 
 	v[1].iov_base=opts;
-	asymmetric = flookup = force = real = orgip = 0;
+	asymmetric = flookup = force = real = orgip = swap = 0;
 	oidx = 1;
 	for (cp = str1; *cp != '\0'; cp++) {
 		switch (*cp) {
@@ -1699,17 +1754,21 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			orgip = 1;
 			break;
 
+		case 's':
+		case 'S':
+			swap = 1;
+			break;
+
 		default:
 			LOG(L_ERR, "ERROR: force_rtp_proxy2: unknown option `%c'\n", *cp);
 			return -1;
 		}
 	}
 
-	if (msg->first_line.type == SIP_REQUEST &&
-	    msg->first_line.u.request.method_value == METHOD_INVITE) {
-		create = 1;
+	if (msg->first_line.type == SIP_REQUEST) {
+		create = swap?0:1;
 	} else if (msg->first_line.type == SIP_REPLY) {
-		create = 0;
+		create = swap?1:0;
 	} else {
 		return -1;
 	}
@@ -2185,6 +2244,9 @@ add_rcv_param_f(struct sip_msg* msg, char* str1, char* str2)
 	struct lump* anchor;
 	char* param;
 	str uri;
+	int hdr_param;
+
+	hdr_param = str1?0:1;
 
 	if (create_rcv_uri(&uri, msg) < 0) {
 		return -1;
@@ -2205,7 +2267,13 @@ add_rcv_param_f(struct sip_msg* msg, char* str1, char* str2)
 		memcpy(param + RECEIVED_LEN + 1, uri.s, uri.len);
 		param[RECEIVED_LEN + 1 + uri.len] = '\"';
 
-		anchor = anchor_lump(msg, c->name.s + c->len - msg->buf, 0, 0);
+		if (hdr_param) {
+			/* add the param as header param */
+			anchor = anchor_lump(msg, c->name.s + c->len - msg->buf, 0, 0);
+		} else {
+			/* add the param as uri param */
+			anchor = anchor_lump(msg, c->uri.s + c->uri.len - msg->buf, 0, 0);
+		}
 		if (anchor == NULL) {
 			LOG(L_ERR, "add_rcv_param: anchor_lump failed\n");
 			return -1;
