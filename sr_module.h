@@ -127,7 +127,7 @@ typedef struct fparam {
         int type;                  /* Type of parameter */
         union {
 		char* asciiz;      /* Zero terminated ASCII string */
-		str str;           /* pointer/len string */
+		struct _str str;   /* pointer/len string */
 		int i;             /* Integer value */
 		regex_t* regex;    /* Compiled regular expression */
 		avp_ident_t avp;   /* AVP identifier */
