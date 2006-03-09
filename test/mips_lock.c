@@ -32,7 +32,7 @@ int tsl(fl_lock_t* lock)
 		"    nop \n\t"
 		".set reorder\n\t"
 		: "=&r" (tmp), "=&r" (val), "=m" (*lock) 
-		: "0" (tmp), "2" (*lock) 
+		: "0" (tmp), "m" (*lock) 
 		: "cc"
 	);
 #elif defined __CPU_i386
