@@ -553,7 +553,6 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		LOG(L_CRIT,"BUG:tm:run_failure_handlers: stack level is 1!!\n");
 		return 0;
 	}
-	level++;
 
 	/* failure_route for a local UAC? */
 	if (!shmem_msg || REQ_LINE(shmem_msg).method_value==METHOD_CANCEL ) {
@@ -571,13 +570,14 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		return 1;
 	}
 
-	if (!fake_req(&faked_req[level], shmem_msg, &t->uas, &t->uac[branch])) {
+	if (!fake_req(&faked_req[level+1], shmem_msg, &t->uas, &t->uac[branch])) {
 		LOG(L_ERR, "ERROR: run_failure_handlers: fake_req failed\n");
 		return 0;
 	}
 	/* fake also the env. conforming to the fake msg */
-	faked_env( t, &faked_req[level], level);
+	faked_env( t, &faked_req[level+1], level);
 	/* DONE with faking ;-) -> run the failure handlers */
+	level++;
 
 	if ( has_tran_tmcbs( t, TMCB_ON_FAILURE) ) {
 		run_trans_callbacks( TMCB_ON_FAILURE, t, &faked_req[level], rpl, code);
