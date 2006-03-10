@@ -574,11 +574,11 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		LOG(L_ERR, "ERROR: run_failure_handlers: fake_req failed\n");
 		return 0;
 	}
-	/* fake also the env. conforming to the fake msg */
-	faked_env( t, &faked_req[level+1], level);
-	/* DONE with faking ;-) -> run the failure handlers */
 	level++;
+	/* fake also the env. conforming to the fake msg */
+	faked_env( t, &faked_req[level], level);
 
+	/* DONE with faking ;-) -> run the failure handlers */
 	if ( has_tran_tmcbs( t, TMCB_ON_FAILURE) ) {
 		run_trans_callbacks( TMCB_ON_FAILURE, t, &faked_req[level], rpl, code);
 	}
