@@ -443,19 +443,10 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 		ul.release_urecord(r);
 	}
 
-	if(ci && ci->path) {
-		if(ci->path->s) pkg_free(ci->path->s);
-		pkg_free(ci->path);
-	}
-	
 	return 0;
 error:
 	if (r)
 		ul.delete_urecord(_d, _a, r);
-	if(ci && ci->path) {
-		if(ci->path->s) pkg_free(ci->path->s);
-		pkg_free(ci->path);
-	}
 	return -1;
 }
 
@@ -545,7 +536,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 	if ( (ci=pack_ci( _m, 0, 0, 0, 0))==0 ) {
 		LOG(L_ERR, "ERROR:usrloc:update_contacts: failed to "
 			"initial pack contact info\n");
-		goto error0;
+		goto error;
 	}
 
 	if (max_contacts && test_max_contacts(_m, _r, _c, ci) != 0 )
@@ -622,18 +613,8 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 		}
 	}
 
-	if (ci->path) {
-		if (ci->path->s) pkg_free(ci->path->s);
-		pkg_free(ci->path);
-	}
-
 	return 0;
 error:
-	if (ci->path) {
-		if (ci->path->s) pkg_free(ci->path->s);
-		pkg_free(ci->path);
-	}
-error0:
 	return -1;
 }
 

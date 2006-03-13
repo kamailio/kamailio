@@ -51,10 +51,7 @@ int build_path_vector(struct sip_msg *_m, str *path, str **received)
 		goto error;
 	}
 
-	for( hdr=_m->path,p=buf ; hdr ; hdr=hdr->next) {
-		if(hdr->type != HDR_PATH_T)
-			continue;
-		
+	for( hdr=_m->path,p=buf ; hdr ; hdr=hdr->sibling) {
 		/* check for max. Path length */
 		if( p-buf+hdr->body.len+1 >= MAX_PATH_SIZE) {
 			LOG(L_ERR, "ERROR: build_path_vector(): Overall Path body "
