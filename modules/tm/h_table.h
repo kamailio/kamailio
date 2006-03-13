@@ -183,7 +183,7 @@ struct totag_elem {
 /* transaction canceled */
 #define T_CANCELED           (1<<3)
 
-#define T_IN_AGONY (1<<3) /* set if waiting to die (delete timer)
+#define T_IN_AGONY (1<<4) /* set if waiting to die (delete timer)
                              TODO: replace it with del on unref */
 
 /* transaction context */
