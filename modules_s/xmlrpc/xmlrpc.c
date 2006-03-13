@@ -840,6 +840,7 @@ static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
 			if (add_xmlrpc_reply(reply, &string_suffix) < 0) goto err;
 			if (ctx->flags & RET_ARRAY && add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &lf) < 0) goto err;
+			pkg_free(buf);
 			return 0;
 		}
 		     /* Else try again with more space. */
