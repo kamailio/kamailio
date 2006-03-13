@@ -32,8 +32,6 @@
 #define PDT_ADD			1
 #define PDT_DELETE		2
 
-#define get_hash_entry(c,s) (c)&((s)-1)
-
 typedef struct _pd
 {
     str prefix;
@@ -96,7 +94,6 @@ hash_t* pdt_search_hash(hash_list_t*, str *d);
 
 int remove_from_hash(hash_t *ph, str *sd);
 int pdt_remove_from_hash_list(hash_list_t *hl, str* sdomain, str *sd);
-//int pdt_remove_hash_from_hash_list(hash_list_t *hl, str* sdomain);
 
 str* pdt_get_prefix(hash_list_t *ph, str *sdomain, str* sd);
 
@@ -104,7 +101,5 @@ int check_pd(hash_t *ph, str *sp, str *sd);
 int pdt_check_pd(hash_list_t *hash, str* sdomain, str *sp, str *sd);
 
 void pdt_print_hash_list(hash_list_t *hl);
-
-unsigned int pdt_compute_hash(char *s);
 
 #endif

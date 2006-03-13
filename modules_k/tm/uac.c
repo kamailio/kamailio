@@ -77,7 +77,7 @@ int uac_init(void)
 	str src[3];
 	struct socket_info *si;
 
-	if (RAND_MAX < TABLE_ENTRIES) {
+	if (RAND_MAX < TM_TABLE_ENTRIES) {
 		LOG(L_WARN, "Warning: uac does not spread "
 		    "across the whole hash table\n");
 	}
@@ -148,7 +148,7 @@ static inline unsigned int dlg2hash( dlg_t* dlg )
 	unsigned int hashid;
 
 	cseq_nr.s=int2str(dlg->loc_seq.value, &cseq_nr.len);
-	hashid=hash(dlg->id.call_id, cseq_nr);
+	hashid = tm_hash(dlg->id.call_id, cseq_nr);
 	DBG("DEBUG: dlg2hash: %d\n", hashid);
 	return hashid;
 }

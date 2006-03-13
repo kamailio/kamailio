@@ -287,7 +287,7 @@ typedef struct entry
 struct s_table
 {
 	/* table of hash entries; each of them is a list of synonyms  */
-	struct entry   entrys[ TABLE_ENTRIES ];
+	struct entry   entrys[ TM_TABLE_ENTRIES ];
 };
 
 

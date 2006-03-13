@@ -31,7 +31,7 @@
 #include "hash.h"
 
 
-#define perm_hash(_s)  new_hash1( _s, PERM_HASH_SIZE)
+#define perm_hash(_s)  core_hash( &(_s), 0, PERM_HASH_SIZE)
 
 /*
  * Create and initialize a hash table

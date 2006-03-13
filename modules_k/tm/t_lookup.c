@@ -386,7 +386,8 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 
 	/* start searching into the table */
 	if (!p_msg->hash_index)
-		p_msg->hash_index=hash( p_msg->callid->body , get_cseq(p_msg)->number ) ;
+		p_msg->hash_index=tm_hash( p_msg->callid->body , 
+			get_cseq(p_msg)->number ) ;
 	isACK = p_msg->REQ_METHOD==METHOD_ACK;
 	DBG("t_lookup_request: start searching: hash=%d, isACK=%d\n",
 		p_msg->hash_index,isACK);
@@ -744,7 +745,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 
 	/* sanity check */
 	if ((hash_index=reverse_hex2int(hashi, hashl))<0
-		||hash_index>=TABLE_ENTRIES
+		||hash_index>=TM_TABLE_ENTRIES
 		|| (branch_id=reverse_hex2int(branchi, branchl))<0
 		||branch_id>=MAX_BRANCHES
 		|| (syn_branch ? (entry_label=reverse_hex2int(syni, synl))<0 
@@ -1034,7 +1035,7 @@ int t_newtran( struct sip_msg* p_msg )
 	   shmem with pkg_mem
 	*/
 	
-	if (parse_headers(p_msg, HDR_EOH_F, 0 )) {
+	if (parse_headers(p_msg, HDR_EOH_F, 0 )<0) {
 		LOG(L_ERR, "ERROR: t_newtran: parse_headers failed\n");
 		return E_BAD_REQ;
 	}
@@ -1176,7 +1177,7 @@ int t_lookup_ident(struct cell ** trans, unsigned int hash_index,
 {
 	struct cell* p_cell;
 
-	if(hash_index >= TABLE_ENTRIES){
+	if(hash_index >= TM_TABLE_ENTRIES){
 		LOG(L_ERR,"ERROR: t_lookup_ident: invalid hash_index=%u\n",hash_index);
 		return -1;
 	}
@@ -1247,9 +1248,9 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 	invite_method.len = INVITE_LEN;
 	
 	/* lookup the hash index where the transaction is stored */
-	hash_index=hash(callid, cseq);
+	hash_index=tm_hash(callid, cseq);
 
-	if(hash_index >= TABLE_ENTRIES){
+	if(hash_index >= TM_TABLE_ENTRIES){
 		LOG(L_ERR,"ERROR:tm:t_lookup_callid: invalid hash_index=%u\n",hash_index);
 		return -1;
 	}

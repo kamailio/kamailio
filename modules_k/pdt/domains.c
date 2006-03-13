@@ -28,6 +28,7 @@
   *             FIFO operations are kept as a diff list (ramona)
   *             domain hash kept in share memory along with FIFO ops (ramona)
   * 2006-01-30: multidomain support added
+  * 2006-03-13: use hash function from core (bogdan)
   */
 
 #include <stdio.h>
@@ -39,9 +40,14 @@
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
+#include "../../hash_func.h"
 
 #include "domains.h"
 #include "utils.h"
+
+
+#define pdt_compute_hash(_s)        core_case_hash(_s,0,0)
+#define get_hash_entry(_h,_size)    (_h)&((_size)-1)
 
 pd_op_t* new_pd_op(pd_t *cell, int id, int op)
 {
@@ -122,7 +128,7 @@ pd_t* new_cell(str* p, str *d)
 	cell->domain.len = d->len;
 	cell->domain.s[d->len] = '\0';
 
-	cell->dhash = pdt_compute_hash(cell->domain.s);
+	cell->dhash = pdt_compute_hash(&cell->domain);
     
 	/* return the newly allocated in share memory cell */
 	return cell;
@@ -310,7 +316,7 @@ int add_to_hash(hash_t *hash, str *sp, str *sd)
 		return -1;
 	}
 
-	dhash = pdt_compute_hash(sd->s);
+	dhash = pdt_compute_hash(sd);
 	
 	hash_entry = get_hash_entry(dhash, hash->hash_size);
 
@@ -479,7 +485,7 @@ int remove_from_hash(hash_t *hash, str *sd)
 	}
 	
 	/* find the list where the cell must be */
-	dhash = pdt_compute_hash(sd->s);
+	dhash = pdt_compute_hash(sd);
 	hash_entry = get_hash_entry(dhash, hash->hash_size);
 
 
@@ -634,7 +640,7 @@ str* get_prefix(hash_t *ph, str* sd)
 		return NULL;
 	}
 
-	dhash = pdt_compute_hash(sd->s);
+	dhash = pdt_compute_hash(sd);
 	hash_entry = get_hash_entry(dhash, ph->hash_size);
 
 	it = ph->dhash[hash_entry];
@@ -685,7 +691,7 @@ int check_pd(hash_t *ph, str *sp, str *sd)
 		LOG(L_ERR, "PDT:check_pd: bad parameters\n");
 		return -1;
 	}
-	dhash = pdt_compute_hash(sd->s);
+	dhash = pdt_compute_hash(sd);
 	
 	for(i=0; i<ph->hash_size; i++)
 	{
@@ -773,38 +779,6 @@ void pdt_print_hash_list(hash_list_t* hl)
 	}
 	
 	lock_release(&hl->hl_lock);
-}
-
-
-/* be sure s!=NULL */
-/* compute a hash value for a string, knowing also the hash dimension */
-unsigned int pdt_compute_hash(char* s)
-{
-	#define h_inc h+=v^(v>>3);
-		
-	char* p;
-	register unsigned v;
-	register unsigned h;
-	int len;
-
-	len = strlen(s);
-	
-	h=0;
-	for(p=s; p<=(s+len-4); p+=4)
-	{
-		v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
-		h_inc;
-	}
-	
-	v=0;
-	for(;p<(s+len); p++)
-	{
-		v<<=8;
-		v+=*p;
-	}
-	h_inc;
-
-	return h;
 }
 
 

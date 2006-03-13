@@ -101,7 +101,7 @@ unsigned int transaction_count( void )
 	unsigned int count;
 
 	count=0;	
-	for (i=0; i<TABLE_ENTRIES; i++) 
+	for (i=0; i<TM_TABLE_ENTRIES; i++) 
 		count+=tm_table->entrys[i].cur_entries;
 	return count;
 }
@@ -313,7 +313,7 @@ void free_hash_table(  )
 	if (tm_table)
 	{
 		/* remove the data contained by each entry */
-		for( i = 0 ; i<TABLE_ENTRIES; i++)
+		for( i = 0 ; i<TM_TABLE_ENTRIES; i++)
 		{
 			release_entry_lock( (tm_table->entrys)+i );
 			/* delete all synonyms at hash-collision-slot i */
@@ -349,7 +349,7 @@ struct s_table* init_hash_table()
 		goto error1;
 
 	/* inits the entrys */
-	for(  i=0 ; i<TABLE_ENTRIES; i++ )
+	for(  i=0 ; i<TM_TABLE_ENTRIES; i++ )
 	{
 		init_entry_lock( tm_table, (tm_table->entrys)+i );
 		tm_table->entrys[i].next_label = rand();
@@ -431,7 +431,7 @@ int fifo_hash( FILE *stream, char *response_file )
 		return -1;
 	}
 	fputs( "200 ok\n\tcurrent\ttotal\n", reply_file);
-	for (i=0; i<TABLE_ENTRIES; i++) {
+	for (i=0; i<TM_TABLE_ENTRIES; i++) {
 		fprintf(reply_file, "%d.\t%lu\t%lu\n", 
 			i, tm_table->entrys[i].cur_entries ,
 			tm_table->entrys[i].acc_entries );
@@ -448,7 +448,7 @@ int unixsock_hash(str* msg)
 	ret = 0;
 	unixsock_reply_asciiz( "200 OK\n\tcurrent\ttotal\n");
 
-	for (i = 0; i < TABLE_ENTRIES; i++) {
+	for (i = 0; i < TM_TABLE_ENTRIES; i++) {
 		if (unixsock_reply_printf("%d.\t%lu\t%lu\n", 
 					  i, tm_table->entrys[i].cur_entries,
 					  tm_table->entrys[i].acc_entries

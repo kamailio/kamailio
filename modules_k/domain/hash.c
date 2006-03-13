@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#define dom_hash(_s)  new_hash1( _s, DOM_HASH_SIZE)
+#define dom_hash(_s)  core_case_hash( _s, 0, DOM_HASH_SIZE)
 
 
 /* Add domain to hash table */
@@ -56,7 +56,7 @@ int hash_table_install (struct domain_list **hash_table, char *domain)
 	}
 	(void) strncpy(np->domain.s, domain, np->domain.len);
 
-	hash_val = dom_hash(np->domain);
+	hash_val = dom_hash(&np->domain);
 	np->next = hash_table[hash_val];
 	hash_table[hash_val] = np;
 
@@ -69,7 +69,7 @@ int hash_table_lookup (str *domain)
 {
 	struct domain_list *np;
 
-	for (np = (*hash_table)[dom_hash(*domain)]; np != NULL; np = np->next) {
+	for (np = (*hash_table)[dom_hash(domain)]; np != NULL; np = np->next) {
 		if ((np->domain.len == domain->len) && 
 		    (strncasecmp(np->domain.s, domain->s, domain->len) == 0)) {
 			return 1;

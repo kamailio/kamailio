@@ -708,7 +708,7 @@ inline static int t_check_trans(struct sip_msg* msg, char *foo, char *bar)
 			return 0; /*drop request!*/
 		}
 		if (!msg->hash_index)
-			msg->hash_index = hash(msg->callid->body,get_cseq(msg)->number);
+			msg->hash_index = tm_hash(msg->callid->body,get_cseq(msg)->number);
 		/* performe lookup */
 		trans = t_lookupOriginalT(  msg );
 		if (trans) {

@@ -24,14 +24,13 @@
 #ifndef _TM_CONFIG_H
 #define _TM_CONFIG_H
 
-/* this is where table size is defined now -- sort of
-   ugly, core should not be bothered by TM table size,
-   but on the other, core's stateless forwarding should 
-   have consistent branch generation with stateful mode
-   and needs to calculate branch/hash, for which table size
-   is needed 
+/* hash table engine and hash function
 */
 #include "../../hash_func.h"
+#include "../../config.h"
+/* always use a power of 2 for hash table size */
+#define tm_hash( s1, s2 )     core_hash( &s1, &s2, TM_TABLE_ENTRIES)
+
 
 /* maximum length of localy generated acknowledgment */
 #define MAX_ACK_LEN   1024
