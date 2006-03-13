@@ -726,27 +726,26 @@ ifeq	($(ARCH), mips)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
 				#common stuff
-				CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) \
+				CFLAGS=-O9 -funroll-loops  $(PROFILE) \
 					-Wall 
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
-					CFLAGS+=-mcpu=r3000 -minline-all-stringops \
+					CFLAGS+=-march=r3000 -minline-all-stringops \
 							-ftree-vectorize
 else
 			#if gcc 3.4+
 ifeq			($(CC_SHORTVER), 3.4)
-					CFLAGS+= -mcpu=r3000
+					CFLAGS+= -march=r3000
 else
 			#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
-					CFLAGS+= -mcpu=r3000
-							#-mcpu=athlon
+					CFLAGS+= -march=r3000
 else
 ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
 $(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc 3.0.x \
 					for better results)
 					
-					CFLAGS+=-mcpu=r3000
+					CFLAGS+=-march=r3000
 else
 				#really old version
 $(warning			You are using an old and unsupported gcc \

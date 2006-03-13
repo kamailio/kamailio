@@ -43,6 +43,8 @@
  * ------------------
  *  type: atomic_t
  *
+ * not including memory barriers:
+ *
  *  void atomic_set(atomic_t* v, long i)      -      v->val=i
  *  long atomic_get(atomic_t* v)              -       return v->val
  *  void atomic_inc(atomic_t* v)
@@ -51,7 +53,18 @@
  *  long atomic_dec_and_test(atomic_t* v)     - returns 1 if the result is 0
  *  void atomic_or (atomic_t* v, long mask)   - v->val|=mask 
  *  void atomic_and(atomic_t* v, long mask)   - v->val&=mask
- *  
+ * 
+ * same ops, but with builtin memory barriers:
+ *
+ *  void mb_atomic_set(atomic_t* v, long i)      -      v->val=i
+ *  long mb_atomic_get(atomic_t* v)              -       return v->val
+ *  void mb_atomic_inc(atomic_t* v)
+ *  void mb_atomic_dec(atomic_t* v)
+ *  long mb_atomic_inc_and_test(atomic_t* v)  - returns 1 if the result is 0
+ *  long mb_atomic_dec_and_test(atomic_t* v)  - returns 1 if the result is 0
+ *  void mb_atomic_or(atomic_t* v, long mask - v->val|=mask 
+ *  void mb_atomic_and(atomic_t* v, long mask)- v->val&=mask
+ * 
  */
 /* 
  * History:
@@ -79,6 +92,8 @@ int atomic_ops_init();
 
 #if defined(__CPU_i386) || defined(__CPU_x86_64)
 
+#define HAVE_ASM_INLINE_ATOMIC_OPS
+
 #ifdef NOSMP
 #define __LOCK_PREF 
 #else
@@ -86,14 +101,13 @@ int atomic_ops_init();
 #endif
 
 
-
 /* memory barriers */
 
 #ifdef NOSMP
 
-#define membar()
-#define membar_read()
-#define membar_write()
+#define membar()	asm volatile ("" : : : "memory")
+#define membar_read()	membar()
+#define membar_write()	membar()
 
 #else
 
@@ -101,7 +115,7 @@ int atomic_ops_init();
  *  oostore ready write barriers */
 #define X86_OOSTORE 
 
-/* membar, mfence, lfence, sfence available only on newer cpus, so for now
+/* membar: lfence, mfence, sfence available only on newer cpus, so for now
  * stick to lock addl */
 #define membar() \
 	asm volatile( \
@@ -115,7 +129,7 @@ int atomic_ops_init();
 /* out of order store version */
 #define membar_write()	membar()
 #else
-/* no oostore, most x86 cpus => do no thing, just a gcc do_not_cache barrier*/
+/* no oostore, most x86 cpus => do nothing, just a gcc do_not_cache barrier*/
 #define membar_write()	asm volatile ("" : : : "memory")
 #endif
 
@@ -177,8 +191,10 @@ inline static long atomic_dec_and_test(atomic_t* var)
 
 #elif defined __CPU_mips2
 
+#define HAVE_ASM_INLINE_ATOMIC_OPS
+
 #ifdef NOSMP
-#define membar()
+#define membar() asm volatile ("" : : : memory) /* gcc do not cache barrier*/
 #define membar_read()  membar()
 #define membar_write() membar()
 #else
@@ -262,33 +278,31 @@ ATOMIC_FUNC_DECL_CT(dec_and_test, "subu %2, %1, %3", 1, long, (ret-1)==0 )
 ATOMIC_FUNC_DECL1(and, "and %2, %1, %3", void, /* no return */ )
 ATOMIC_FUNC_DECL1(or,  "or  %2, %1, %3", void,  /* no return */ )
 
-#else /* no known cpu */
+#endif /* __CPU_xxx  => no known cpu */
+
+
+#ifndef HAVE_ASM_INLINE_ATOMIC_OPS
 
 #include "locking.h"
 
 #define ATOMIC_USE_LOCK
 
-extern gen_lock_t* atomic_lock;
+extern gen_lock_t* _atomic_lock;
 
 
+#define atomic_lock    lock_get(_atomic_lock)
+#define atomic_unlock  lock_release(_atomic_lock)
 
-#ifdef NOSMP
-#define smp_atomic_lock
-#define smp_atomic_unlock
-#else
-#define smp_atomic_lock    lock_get(atomic_lock)
-#define smp_atomic_unlock  lock_release(atomic_lock)
-#endif
 
 /* memory barriers 
  *  not a known cpu -> fall back lock/unlock: safe but costly  (it should 
  *  include a memory barrier effect) */
-
 #define membar() \
 	do{\
-		smp_atomic_lock; \
-		smp_atomic_unlock; \
+		atomic_lock; \
+		atomic_unlock; \
 	} while(0)
+
 
 #define membar_write() membar()
 
@@ -299,32 +313,32 @@ extern gen_lock_t* atomic_lock;
 
 #define atomic_inc(var) \
 	do{ \
-		smp_atomic_lock; \
+		atomic_lock; \
 		(var)->val++;\
-		smp_atomic_unlock;\
+		atomic_unlock;\
 	}while(0)
 
 
 #define atomic_dec(var) \
 	do{ \
-		smp_atomic_lock; \
+		atomic_lock; \
 		(var)->val--; \
-		smp_atomic_unlock; \
+		atomic_unlock; \
 	}while(0)
 
 
 #define atomic_and(var, i) \
 	do{ \
-		smp_atomic_lock; \
+		atomic_lock; \
 		(var)->val&=i; \
-		smp_atomic_unlock; \
+		atomic_unlock; \
 	}while(0)
 
 #define atomic_or(var, i) \
 	do{ \
-		smp_atomic_lock; \
+		atomic_lock; \
 		(var)->val|=i; \
-		smp_atomic_unlock; \
+		atomic_unlock; \
 	}while(0)
 
 
@@ -334,10 +348,10 @@ inline static long atomic_inc_and_test(atomic_t* var)
 {
 	long ret;
 	
-	smp_atomic_lock;
+	atomic_lock;
 	var->val++;
 	ret=var->val;
-	smp_atomic_unlock;
+	atomic_unlock;
 	
 	return (ret==0);
 }
@@ -348,15 +362,39 @@ inline static long atomic_dec_and_test(atomic_t* var)
 {
 	long ret;
 	
-	smp_atomic_lock;
+	atomic_lock;
 	var->val++;
 	ret=var->val;
-	smp_atomic_unlock;
+	atomic_unlock;
 	
 	return (ret==0);
 }
 
 
-#endif /* if __CPU_xx */
+/* memory barrier versions, the same as "normal" versions, except fot
+ * the set/get
+ * (the * atomic_lock/unlock part should act as a barrier)
+ */
+
+#define mb_atomic_set(v, i) \
+	do{ \
+		membar(); \
+		atomic_set(v, i); \
+	}while(0)
+
+#define mb_atomic_get(v) \
+	do{ \
+		membar(); \
+		atomic_get(v); \
+	}while(0)
+
+#define mb_atomic_inc(v)	atomic_inc(v)
+#define mb_atomic_dec(v)	atomic_dec(v)
+#define mb_atomic_or(v, m)	atomic_or(v, m)
+#define mb_atomic_and(v, m)	atomic_and(v, m)
+#define mb_atomic_inc_and_test(v)	atomic_inc_and_test(v)
+#define mb_atomic_dec_and_test(v)	atomic_dec_and_test(v)
+
+#endif /* if HAVE_ASM_INLINE_ATOMIC_OPS */
 
 #endif

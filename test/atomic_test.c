@@ -1,7 +1,7 @@
 /*
  *
  *  simple atomic ops testing program
- *  (no paralles stuff)
+ *  (no paralel stuff, just see if the opcodes are "legal")
  * 
  *  Compile with: gcc -D__CPU_i386 -O3 on x86 machines and
  *                gcc -mips2 -O2 -D__CPU_mips2  on mips machines.

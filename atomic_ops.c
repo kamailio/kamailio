@@ -36,7 +36,7 @@
 #include "atomic_ops.h"
 
 #ifdef ATOMIC_USE_LOCK
-gen_lock_t* atomic_lock;
+gen_lock_t* _atomic_lock;
 #endif
 
 
@@ -47,14 +47,14 @@ int atomic_ops_init()
 	
 	ret=0;
 #ifdef ATOMIC_USE_LOCK
-	if ((atomic_lock=lock_alloc())==0){
+	if ((_atomic_lock=lock_alloc())==0){
 		ret=-1;
 		goto end;
 	}
-	if (lock_init(atomic_lock)==0){
+	if (lock_init(_atomic_lock)==0){
 		ret=-1;
-		lock_destroy(atomic_lock);
-		atomic_lock=0;
+		lock_destroy(_atomic_lock);
+		_atomic_lock=0;
 		goto end;
 	}
 end:
