@@ -73,7 +73,7 @@ void record_transaction_info(struct sip_msg* msg, OSPTTRANHANDLE transaction, ch
 	char buf[RTI_BUF_SIZE];
 	str s;
 
-	if (osp_rr.add_rr_param==0) {
+	if (osp_rrb.add_rr_param==0) {
 		LOG(L_WARN,"WARNING:osp:record_transaction_info: add_rr_param "
 			"function is not found, can not record information about the "
 			"OSP transaction\n");
@@ -89,14 +89,14 @@ void record_transaction_info(struct sip_msg* msg, OSPTTRANHANDLE transaction, ch
 		(unsigned int)time_auth);
 	if (s.len<0) {
 		LOG(L_ERR,"ERROR:osp:record_transaction_info: snprintf() failed\n");
-		return
+		return;
 	}
 	/* truncated? */
 	if (s.len >= RTI_BUF_SIZE)
 		s.len = RTI_BUF_SIZE -1;
 
 	DBG("osp:record_transaction_info: adding rr param '%s'\n",buf);
-	osp_rr.add_rr_param( msg, &s);
+	osp_rrb.add_rr_param( msg, &s);
 }
 
 
