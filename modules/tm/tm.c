@@ -954,3 +954,21 @@ static rpc_export_t tm_rpc[] = {
 	{"tm.stats",  tm_rpc_stats, tm_rpc_stats_doc, 0},
 	{0, 0, 0, 0}
 };
+
+/* wrapper function needed after changes in w_t_reply */
+int w_t_reply_wrp(struct sip_msg *m, unsigned int code, char *txt)
+{
+	fparam_t c;
+	fparam_t r;
+	
+	c.type = FPARAM_INT;
+	c.orig = NULL; /* ? */
+	c.v.i = code;
+	
+	r.type = FPARAM_ASCIIZ;
+	r.orig = NULL; /* ? */
+	r.v.asciiz = txt;
+
+	return w_t_reply(m, (char *)&c, (char*)&r);
+}
+
