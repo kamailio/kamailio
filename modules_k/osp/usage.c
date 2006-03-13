@@ -26,6 +26,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * 
+ * History:
+ * ---------
+ *  2006-03-13  RR functions are loaded via API function (bogdan)
  */
 
 
@@ -38,6 +42,8 @@
 #include "osptoolkit.h"
 #include "../../sr_module.h"
 #include "../../usr_avp.h"
+#include "../../str.h"
+#include "../rr/api.h"
 #include <string.h>
 
 
@@ -45,7 +51,7 @@ extern OSPTPROVHANDLE _provider;
 extern char* _device_ip;
 extern str ORIG_OSPDESTS_LABEL;
 
-extern cmd_function addRRParam;
+extern struct rr_binds osp_rrb;
 
 int buildUsageFromDestination(OSPTTRANHANDLE transaction, osp_dest* dest, int last_code_for_previous_destination);
 int reportUsageFromDestination(OSPTTRANHANDLE transaction, osp_dest* dest);
@@ -63,23 +69,34 @@ int reportUsageFromCooky(char* cooky, OSPTCALLID* call_id, int isOrig, struct si
  */
 void record_transaction_info(struct sip_msg* msg, OSPTTRANHANDLE transaction, char* uac, char* from, char* to, time_t time_auth, int isOrig)
 {
+#define RTI_BUF_SIZE 1000
+	char buf[RTI_BUF_SIZE];
+	str s;
 
-	char buf[1000];
+	if (osp_rr.add_rr_param==0) {
+		LOG(L_WARN,"WARNING:osp:record_transaction_info: add_rr_param "
+			"function is not found, can not record information about the "
+			"OSP transaction\n");
+		return;
+	}
 
-	sprintf(buf,
+	s.s = buf;
+	s.len = snprintf(buf,RTI_BUF_SIZE,
 		";%s=t%llu_s%s_T%d",
 		(isOrig==1?OSP_ORIG_COOKY:OSP_TERM_COOKY),
 		get_transaction_id(transaction),
 		uac,
 		(unsigned int)time_auth);
+	if (s.len<0) {
+		LOG(L_ERR,"ERROR:osp:record_transaction_info: snprintf() failed\n");
+		return
+	}
+	/* truncated? */
+	if (s.len >= RTI_BUF_SIZE)
+		s.len = RTI_BUF_SIZE -1;
 
 	DBG("osp:record_transaction_info: adding rr param '%s'\n",buf);
-
-	if (addRRParam) {
-		addRRParam(msg,buf,NULL);
-	} else {
-		LOG(L_WARN,"osp:record_transaction_info: add_rr_param function is not found, can not record information about the OSP transaction\n");
-	}
+	osp_rr.add_rr_param( msg, &s);
 }
 
 
@@ -99,8 +116,6 @@ void record_term_transaction(struct sip_msg* msg, OSPTTRANHANDLE transaction, ch
 
 	record_transaction_info(msg,transaction,uac,from,to,time_auth,isOrig);
 }
-
-
 
 
 

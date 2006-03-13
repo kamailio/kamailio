@@ -26,6 +26,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ---------
+ *  2006-03-13  RR functions are loaded via API function (bogdan)
  */
 
 
@@ -44,6 +48,7 @@
 #include "../../mem/mem.h"
 #include "../../timer.h"
 #include "../../locking.h"
+#include "../rr/api.h"
 
 #include <stdio.h>
 
@@ -70,6 +75,8 @@ extern OSPTPROVHANDLE _provider;
 extern char _PRIVATE_KEY[255];
 extern char _LOCAL_CERTIFICATE[255];
 extern char _CA_CERTIFICATE[255];
+
+struct rr_binds osp_rrb;
 
 /* exported function prototypes */
 static int mod_init(void);
@@ -128,25 +135,27 @@ struct module_exports exports = {
 	child_init, /* per-child init function */
 };
 
-cmd_function addRRParam;
 
 static int mod_init(void)
 {
 	DBG("---------------------Initializing OSP module\n");
 
 	if (verify_parameter() != 0) 
-		return 1;   /* at least one parameter incorrect -> error */
+		return -1;   /* at least one parameter incorrect -> error */
 
-	addRRParam = find_export("add_rr_param", 1, 0);
-        if (addRRParam == NULL) {
-                LOG(L_WARN, "WARNING: osp: mod_init: could not find add_rr_param, make sure rr is loaded\n");
-                LOG(L_WARN, "WARNING: osp: mod_init: add_rr_param is required for reporting duration for OSP transactions\n");
-        }   
+	/* load the RR API */
+	if (load_rr_api(&osp_rrb)!=0) {
+		LOG(L_WARN, "WARNING:osp:mod_init: can't load RR API\n");
+		LOG(L_WARN, "WARNING:osp:mod_init: add_rr_param is required for "
+			"reporting duration for OSP transactions\n");
+		memset( &osp_rrb, 0, sizeof(osp_rrb));
+	}
 
-	mod_init_tm();
+	if ( mod_init_tm()<0 )
+		return -1;
 
 	/* everything is fine, initialization done */
-	return 0;	
+	return 0;
 }
 
 

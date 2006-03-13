@@ -26,6 +26,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ---------
+ *  2006-03-13  TM functions are loaded via API function (bogdan)
  */
 
 
@@ -37,7 +41,8 @@
 #include "usage.h"
 #include "../tm/tm_load.h"
 
-struct tm_binds _tmb;
+static struct tm_binds osp_tmb;
+
 
 static void onreq( struct cell* t, int type, struct tmcb_params *ps );
 static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps );
@@ -45,63 +50,62 @@ static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps );
 
 int mod_init_tm()
 {
-        load_tm_f load_tm;
+	LOG(L_INFO, "osp/tm - initializing\n");
 
-        LOG(L_INFO, "osp/tm - initializing\n");
+	if (load_tm_api(&osp_tmb)!=0) {
+		LOG(L_ERR, "ERROR:osp:mod_init_tm: can't load TM API\n");
+		LOG(L_ERR,"ERROR:osp:mod_init_tm: tm is required for reporting "
+			"call set up usage info\n");
+		return -1;
+	}
 
-        /* import the TM auto-loading function */
-        if ( !(load_tm=(load_tm_f)find_export("load_tm", 0, 0))) {
-                LOG(L_ERR,"ERROR:osp:mod_init_tm: can't import load_tm\n");
-                LOG(L_ERR,"ERROR:osp:mod_init_tm: tm is required for reporting call set up usage info\n");
-                return -1;
-        }
-        /* let the auto-loading function load all TM stuff */
-        if (load_tm( &_tmb )==-1) return -1;
+	/* register callbacks*/
+	/* listen for all incoming requests  */
+	if ( osp_tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, onreq, 0 ) <=0 ) {
+		LOG(L_ERR,"ERROR:osp:mod_init_tm: cannot register TMCB_REQUEST_IN "
+			"callback\n");
+		LOG(L_ERR,"ERROR:osp:mod_init_tm: tm callbacks are required for "
+			"reporting call set up usage info\n");
+		return -1;
+	}
 
-        /* register callbacks*/
-        /* listen for all incoming requests  */
-        if ( _tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, onreq, 0 ) <=0 ) {
-                LOG(L_ERR,"ERROR:osp:mod_init_tm: cannot register TMCB_REQUEST_IN callback\n");
-                LOG(L_ERR,"ERROR:osp:mod_init_tm: tm callbacks are required for reporting call set up usage info\n");
-                return -1;
-        }
-
-        return 0;
+	return 0;
 }
 
 static void onreq( struct cell* t, int type, struct tmcb_params *ps )
 {
-        int tmcb_types;
+	int tmcb_types;
 
-        DBG("osp: onreq: Registering transaction call backs\n\n");
+	DBG("osp: onreq: Registering transaction call backs\n\n");
 
-        /* install addaitional handlers */
-        tmcb_types =
-                //TMCB_REQUEST_FWDED | 
+	/* install addaitional handlers */
+	tmcb_types =
+		//TMCB_REQUEST_FWDED | 
 		//TMCB_RESPONSE_FWDED | 
-			TMCB_ON_FAILURE | 
+		TMCB_ON_FAILURE | 
 		//TMCB_LOCAL_COMPLETED  |
-			/* report on completed transactions */
-			TMCB_RESPONSE_OUT |
-			/* account e2e acks if configured to do so */
-			TMCB_E2EACK_IN |
-			/* report on missed calls */
-			TMCB_ON_FAILURE_RO //|
-                ///* get incoming replies ready for processing */
-                //TMCB_RESPONSE_IN
+		/* report on completed transactions */
+		TMCB_RESPONSE_OUT |
+		/* account e2e acks if configured to do so */
+		TMCB_E2EACK_IN |
+		/* report on missed calls */
+		TMCB_ON_FAILURE_RO //|
+		/* get incoming replies ready for processing */
+		//TMCB_RESPONSE_IN
 		;
 
-	if (_tmb.register_tmcb( 0, t, tmcb_types, tmcb_func, 0 )<=0) {
+	if (osp_tmb.register_tmcb( 0, t, tmcb_types, tmcb_func, 0 )<=0) {
 		LOG(L_ERR,"ERROR:osp:onreq: cannot register for tm callbacks\n");
-                LOG(L_ERR,"ERROR:osp:onreq: tm callbacks are required for reporting call set up usage info\n");
+		LOG(L_ERR,"ERROR:osp:onreq: tm callbacks are required for reporting "
+			"call set up usage info\n");
 		return;
 	}
 
-        /* also, if that is INVITE, disallow silent t-drop */
-        if (ps->req->REQ_METHOD==METHOD_INVITE) {
-                DBG("DEBUG: noisy_timer set for accounting\n");
-                t->flags |= T_NOISY_CTIMER_FLAG;
-        }
+	/* also, if that is INVITE, disallow silent t-drop */
+	if (ps->req->REQ_METHOD==METHOD_INVITE) {
+		DBG("DEBUG: noisy_timer set for accounting\n");
+		t->flags |= T_NOISY_CTIMER_FLAG;
+	}
 }
 
 
