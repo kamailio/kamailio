@@ -1313,6 +1313,7 @@ static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
 				goto err;
 			}
 			append_chunk(ctx, l);
+			pkg_free(buf);
 			return 0;
 		}
 		     /* Else try again with more space. */
