@@ -429,6 +429,7 @@ err:
 static inline int print_contacts(ucontact_t* _c)
 {
 	int cnt = 0;
+	int n;
 
 	while(_c) {
 		if (VALID_CONTACT(_c, act_time)) {
@@ -436,9 +437,23 @@ static inline int print_contacts(ucontact_t* _c)
 			if (cnt == 1) {
 				unixsock_reply_asciiz("200 OK\n");
 			}
-			if (unixsock_reply_printf("<%.*s>;q=%s;expires=%d\n",
-						  _c->c.len, ZSW(_c->c.s),
-						  q2str(_c->q, 0), (int)(_c->expires - act_time)) < 0) {
+			n = unixsock_reply_printf("<%.*s>;q=%s;expires=%d;flags=0x%X;"
+				"socket=<%.*s>;methods=0x%X"
+				"%s%.*s%s" /*received*/
+				"%s%.*s%s" /*user-agent*/
+				"%s%.*s%s\n", /*path*/
+				_c->c.len, ZSW(_c->c.s),
+				q2str(_c->q, 0), (int)(_c->expires - act_time), _c->flags,
+				_c->sock->sock_str.len, _c->sock->sock_str.s,
+				_c->methods,
+				_c->received.len?";received=<":"",_c->received.len,
+					ZSW(_c->received.s), _c->received.len?">":"",
+				_c->user_agent.len?";user_agent=<":"",_c->user_agent.len,
+					ZSW(_c->user_agent.s), _c->user_agent.len?">":"",
+				_c->path.len?";path=<":"",_c->path.len,
+					ZSW(_c->path.s), _c->path.len?">":""
+				);
+			if (n < 0) {
 				return -1;
 			}
 		}

@@ -488,10 +488,22 @@ static inline int print_contacts(FILE* _o, ucontact_t* _c)
 			if (cnt==1) {
 				fputs( "200 OK\n", _o);
 			}
-			fprintf(_o, "<%.*s>;q=%s;expires=%d;flags=0x%X;received=<%.*s>\n",
+			fprintf(_o, "<%.*s>;q=%s;expires=%d;flags=0x%X;socket=<%.*s>"
+				";methods=0x%X"
+				"%s%.*s%s" /*received*/
+				"%s%.*s%s" /*user-agent*/
+				"%s%.*s%s\n", /*path*/
 				_c->c.len, ZSW(_c->c.s),
-				q2str(_c->q, 0), (int)(_c->expires - act_time),
-				_c->flags,_c->received.len, ZSW(_c->received.s) );
+				q2str(_c->q, 0), (int)(_c->expires - act_time), _c->flags,
+				_c->sock->sock_str.len, _c->sock->sock_str.s,
+				_c->methods,
+				_c->received.len?";received=<":"",_c->received.len,
+					ZSW(_c->received.s), _c->received.len?">":"",
+				_c->user_agent.len?";user_agent=<":"",_c->user_agent.len,
+					ZSW(_c->user_agent.s), _c->user_agent.len?">":"",
+				_c->path.len?";path=<":"",_c->path.len,
+					ZSW(_c->path.s), _c->path.len?">":""
+				);
 		}
 
 		_c = _c->next;
@@ -548,7 +560,7 @@ static inline int ul_show_contact(FILE* pipe, char* response_file)
 	fifo_find_domain(&t, &d);
 
 	if (d) {
-		lock_udomain(d);	
+		lock_udomain(d);
 
 		res = get_urecord(d, &aor, &r);
 		if (res < 0) {
