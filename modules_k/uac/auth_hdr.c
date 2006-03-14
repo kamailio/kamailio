@@ -49,27 +49,29 @@
 #define LOWER4B(_n) \
 	((_n)|0x20202020)
 #define GET4B(_p) \
-	((*(p)<<24) + (*(p+1)<<16) + (*(p+2)<<8) + *(p+3))
+	((*(_p)<<24) + (*(_p+1)<<16) + (*(_p+2)<<8) + *(_p+3))
 #define GET3B(_p) \
-	((*(p)<<24) + (*(p+1)<<16) + (*(p+2)<<8) + 0xff)
+	((*(_p)<<24) + (*(_p+1)<<16) + (*(_p+2)<<8) + 0xff)
 
-#define CASE_5B(_hex4,_c5, _new_state) \
+#define CASE_5B(_hex4,_c5, _new_state, _quoted) \
 	case _hex4: \
 		if (p+5<end && LOWER1B(*(p+4))==_c5 ) \
 		{ \
 			p+=5; \
 			state = _new_state; \
+			quoted_val = _quoted; \
 		} else { \
 			p+=4; \
 		} \
 		break;
 
-#define CASE_6B(_hex4,_c5,_c6, _new_state) \
+#define CASE_6B(_hex4,_c5,_c6, _new_state, _quoted) \
 	case _hex4: \
 		if (p+6<end && LOWER1B(*(p+4))==_c5 && LOWER1B(*(p+5))==_c6) \
 		{ \
 			p+=6; \
 			state = _new_state; \
+			quoted_val = _quoted; \
 		} else { \
 			p+=4; \
 		} \
@@ -94,6 +96,7 @@ int parse_authenticate_body( str *body, struct authenticate_body *auth)
 	int state;
 	str name;
 	str val;
+	int quoted_val;
 
 	if (body->s==0 || *body->s==0 )
 	{
@@ -122,6 +125,7 @@ int parse_authenticate_body( str *body, struct authenticate_body *auth)
 	while (p<end)
 	{
 		state = OTHER_STATE;
+		quoted_val = 0;
 		/* get name */
 		name.s = p;
 		if (p+4<end)
@@ -129,14 +133,14 @@ int parse_authenticate_body( str *body, struct authenticate_body *auth)
 			n = LOWER4B( GET4B(p) );
 			switch(n)
 			{
-				CASE_5B( 0x7265616c, 'm', REALM_STATE); /*realm*/
-				CASE_5B( 0x6e6f6e63, 'e', NONCE_STATE); /*nonce*/
-				CASE_5B( 0x7374616c, 'e', STALE_STATE); /*stale*/
-				CASE_6B( 0x646f6d62, 'i', 'n', DOMAIN_STATE); /*domain*/
-				CASE_6B( 0x6f706171, 'u', 'e', OPAQUE_STATE); /*opaque*/
+				CASE_5B( 0x7265616c, 'm', REALM_STATE, 1); /*realm*/
+				CASE_5B( 0x6e6f6e63, 'e', NONCE_STATE, 1); /*nonce*/
+				CASE_5B( 0x7374616c, 'e', STALE_STATE, 1); /*stale*/
+				CASE_6B( 0x646f6d62, 'i', 'n', DOMAIN_STATE, 1); /*domain*/
+				CASE_6B( 0x6f706171, 'u', 'e', OPAQUE_STATE, 1); /*opaque*/
 				case 0x616c676f: /*algo*/
 					if (p+9<end && LOWER4B(GET4B(p+4))==0x72697468
-						&& LOWER1B(*(p+9))=='m' )
+						&& LOWER1B(*(p+8))=='m' )
 					{
 						p+=9;
 						state = ALGORITHM_STATE;
@@ -172,19 +176,29 @@ int parse_authenticate_body( str *body, struct authenticate_body *auth)
 		if (p==end || *p!='=')
 			goto parse_error;
 		p++;
-		/* get the value */
+		/* get the value (quoted or not) */
 		while (p<end && isspace((int)*p)) p++;
-		if (p+1>=end || *p!='\"')
+		if (p+1>=end || (quoted_val && *p!='\"'))
 			goto parse_error;
-		val.s = ++p;
-		while (p<end && *p!='\"')
-			p++;
-		if (p==end)
-			goto error;
+		if (!quoted_val && *p=='\"')
+			quoted_val = 1;
+		if (quoted_val)
+		{
+			val.s = ++p;
+			while (p<end && *p!='\"')
+				p++;
+			if (p==end)
+				goto error;
+		} else {
+			val.s = p;
+			while (p<end && !isspace((int)*p) && *p!=',')
+				p++;
+		}
 		val.len = p - val.s;
 		if (val.len==0)
 			val.s = 0;
-		p++;
+		/* consume the closing '"' if quoted */
+		p += quoted_val;
 		while (p<end && isspace((int)*p)) p++;
 		if (p<end && *p==',')
 		{
