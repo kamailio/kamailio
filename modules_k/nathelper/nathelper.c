@@ -708,10 +708,10 @@ get_contact_uri(struct sip_msg* _m, struct sip_uri *uri, contact_t** _c)
 		return -1;
 	}
 	*_c = ((contact_body_t*)_m->contact->parsed)->contacts;
-	if (*_c == NULL) {
-		LOG(L_ERR, "get_contact_uri: Error while parsing Contact body\n");
+	if (*_c == NULL)
+		/* no contacts found */
 		return -1;
-	}
+
 	if (parse_uri((*_c)->uri.s, (*_c)->uri.len, uri) < 0 || uri->host.len <= 0) {
 		LOG(L_ERR, "get_contact_uri: Error while parsing Contact URI\n");
 		return -1;
