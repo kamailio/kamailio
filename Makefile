@@ -30,6 +30,7 @@
 #  2004-09-02  install-man will automatically "fix" the path of the files
 #               referred in the man pages
 #  2006-02-14  added utils & install-utils (andrei)
+#  2006-03-15  added nodeb parameter for make tar (andrei)
 #
 
 auto_gen=lex.yy.c cfg.tab.c #lexx, yacc etc
@@ -91,9 +92,9 @@ modules_full_path=$(join  $(modules), $(addprefix /, $(modules_names)))
 
 # which utils need compilation (directory path) and which to install
 # (full path including file name)
-utils_compile=	utils/gen_ha1 utils/serunix
+utils_compile=	utils/gen_ha1 utils/serunix utils/sercmd
 utils_install=	utils/gen_ha1/gen_ha1 utils/serunix/serunix \
-				scripts/sc scripts/mysql/ser_mysql.sh
+				scripts/sc scripts/mysql/ser_mysql.sh utils/sercmd/sercmd
 
 
 ALLDEP=Makefile Makefile.sources Makefile.defs Makefile.rules
@@ -123,12 +124,19 @@ export PREFIX LOCALBASE
 #export INSTALL INSTALL-CFG INSTALL-BIN INSTALL-MODULES INSTALL-DOC INSTALL-MAN 
 #export INSTALL-TOUCH
 
+tar_name=$(NAME)-$(RELEASE)_src
+
 tar_extra_args+=$(addprefix --exclude=$(notdir $(CURDIR))/, \
 					$(auto_gen) $(auto_gen_others))
 ifneq ($(TLS),)
 	tar_extra_args+=
 else
 	tar_extra_args+=--exclude=$(notdir $(CURDIR))/tls* 
+endif
+
+ifneq ($(nodeb),)
+	tar_extra_args+=--exclude=$(notdir $(CURDIR))/debian 
+	tar_name:=$(tar_name)_nodeb
 endif
 # include the common rules
 include Makefile.rules
@@ -214,7 +222,7 @@ tar:
 			    mv tmp/_tar1/$(notdir $(CURDIR)) \
 			       tmp/_tar2/"$(NAME)-$(RELEASE)" && \
 			    (cd tmp/_tar2 && $(TAR) \
-			                    -zcf ../../"$(NAME)-$(RELEASE)_src".tar.gz \
+			                    -zcf ../../"$(tar_name)".tar.gz \
 			                               "$(NAME)-$(RELEASE)" ) ; \
 			    rm -rf tmp/_tar1; rm -rf tmp/_tar2
 
