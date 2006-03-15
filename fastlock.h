@@ -121,11 +121,13 @@ inline static int tsl(fl_lock_t* lock)
 			: "r"(1), "b" (lock) :
 			"memory", "cc"
         );
-#elif defined __CPU_mips2
+#elif defined __CPU_mips2 || ( defined __CPU_mips && defined MIPS_HAS_LLSC )
 	long tmp;
 	
 	asm volatile(
+		".set push \n\t"
 		".set noreorder\n\t"
+		".set mips2 \n\t"
 		"1:  ll %1, %2   \n\t"
 		"    li %0, 1 \n\t"
 		"    sc %0, %2  \n\t"
@@ -134,7 +136,7 @@ inline static int tsl(fl_lock_t* lock)
 #ifndef NOSMP
 		"    sync \n\t"
 #endif
-		".set reorder\n\t"
+		".set pop\n\t"
 		: "=&r" (tmp), "=&r" (val), "=m" (*lock) 
 		: "m" (*lock) 
 		: "memory"
@@ -221,14 +223,16 @@ inline static void release_lock(fl_lock_t* lock)
 			: "r"(0), "b" (lock)
 			: "memory"
 	);
-#elif defined __CPU_mips2
+#elif defined __CPU_mips2 || ( defined __CPU_mips && defined MIPS_HAS_LLSC )
 	asm volatile(
+		".set push \n\t"
 		".set noreorder \n\t"
+		".set mips2 \n\t"
 #ifndef NOSMP
 		"    sync \n\t"
 #endif
 		"    sw $0, %0 \n\t"
-		".set reorder \n\t"
+		".set pop \n\t"
 		: "=m" (*lock)  : /* no input */ : "memory"
 	);
 #elif defined __CPU_alpha

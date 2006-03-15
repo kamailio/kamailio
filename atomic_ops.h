@@ -136,27 +136,28 @@ int atomic_ops_init();
 
 #endif /* NOSMP */
 
+
 #define atomic_inc(var) \
 	asm volatile( \
 			__LOCK_PREF " incl %0 \n\t"  \
-			: "=m"((var)->val) : "m"((var)->val) : "cc" \
+			: "=m"((var)->val) : "m"((var)->val) : "cc", "memory" \
 			) 
 
 #define atomic_dec(var) \
 	asm volatile( \
 			__LOCK_PREF " decl %0 \n\t" \
-			: "=m"((var)->val) : "m"((var)->val) : "cc" \
+			: "=m"((var)->val) : "m"((var)->val) : "cc", "memory" \
 			) 
 
 #define atomic_and(var, i) \
 	asm volatile( \
 			__LOCK_PREF " andl %1, %0 \n\t" \
-			: "=m"((var)->val) : "r"((i)), "m"((var)->val) : "cc" \
+			: "=m"((var)->val) : "ri"((i)), "m"((var)->val) : "cc", "memory" \
 			)
 #define atomic_or(var, i) \
 	asm volatile( \
 			__LOCK_PREF " orl %1, %0 \n\t" \
-			: "=m"((var)->val) : "r"((i)), "m"((var)->val) : "cc" \
+			: "=m"((var)->val) : "ri"((i)), "m"((var)->val) : "cc", "memory" \
 			)
 
 
@@ -168,7 +169,7 @@ inline static long atomic_inc_and_test(atomic_t* var)
 	asm volatile(
 			__LOCK_PREF " incl %0 \n\t"
 			"setz  %1 \n\t"
-			: "=m"(var->val), "=qm"(ret) : "m" (var->val) : "cc"
+			: "=m"(var->val), "=qm"(ret) : "m" (var->val) : "cc", "memory"
 			);
 	return ret;
 }
@@ -182,28 +183,78 @@ inline static long atomic_dec_and_test(atomic_t* var)
 	asm volatile(
 			__LOCK_PREF " decl %0 \n\t"
 			"setz  %1 \n\t"
-			: "=m"(var->val), "=qm"(ret) : "m" (var->val) : "cc"
+			: "=m"(var->val), "=qm"(ret) : "m" (var->val) : "cc", "memory"
 			);
 	return ret;
 }
 
+#ifdef NOSMP
+
+#define mb_atomic_set(v, i) \
+	do{ \
+		membar(); \
+		atomic_set(v, i); \
+	}while(0)
 
 
-#elif defined __CPU_mips2
+inline static long mb_atomic_get(atomic_t* v)
+{
+	membar();
+	return atomic_get(v);
+}
+#else /* NOSMP */
+
+
+inline static void mb_atomic_set(atomic_t* v, long i)
+{
+	asm volatile(
+			"xchgl %1, %0 \n\t"
+			: "+q"(i), "=m"(v->val) : "m"((v)->val) : "memory" 
+			);
+}
+
+
+
+inline static long mb_atomic_get(atomic_t* var)
+{
+	long ret;
+	
+	asm volatile(
+			__LOCK_PREF " cmpxchg %0, %1 \n\t"
+			: "=a"(ret)  : "m"(var->val) : "cc", "memory"
+			);
+	return ret;
+}
+
+#endif /* NOSMP */
+
+
+/* on x86 atomic intructions act also as barriers */
+#define mb_atomic_inc(v)	atomic_inc(v)
+#define mb_atomic_dec(v)	atomic_dec(v)
+#define mb_atomic_or(v, m)	atomic_or(v, m)
+#define mb_atomic_and(v, m)	atomic_and(v, m)
+#define mb_atomic_inc_and_test(v)	atomic_inc_and_test(v)
+#define mb_atomic_dec_and_test(v)	atomic_dec_and_test(v)
+
+
+#elif defined __CPU_mips2 || ( defined __CPU_mips && defined MIPS_HAS_LLSC )
 
 #define HAVE_ASM_INLINE_ATOMIC_OPS
 
 #ifdef NOSMP
-#define membar() asm volatile ("" : : : memory) /* gcc do not cache barrier*/
+#define membar() asm volatile ("" : : : "memory") /* gcc do not cache barrier*/
 #define membar_read()  membar()
 #define membar_write() membar()
 #else
 
 #define membar() \
 	asm volatile( \
+			".set push \n\t" \
 			".set noreorder \n\t" \
+			".set mips2 \n\t" \
 			"    sync\n\t" \
-			".set reorder \n\t" \
+			".set pop \n\t" \
 			: : : "memory" \
 			) 
 
@@ -216,13 +267,15 @@ inline static long atomic_dec_and_test(atomic_t* var)
 
 /* main asm block */
 #define ATOMIC_ASM_OP(op) \
+			".set push \n\t" \
 			".set noreorder \n\t" \
+			".set mips2 \n\t" \
 			"1:   ll %1, %0 \n\t" \
 			"     " op "\n\t" \
 			"     sc %2, %0 \n\t" \
 			"     beqz %2, 1b \n\t" \
 			"     nop \n\t" \
-			".set reorder \n\t" 
+			".set pop \n\t" 
 
 
 #define ATOMIC_FUNC_DECL(NAME, OP, RET_TYPE, RET_EXPR) \
@@ -277,6 +330,62 @@ ATOMIC_FUNC_DECL_CT(dec_and_test, "subu %2, %1, %3", 1, long, (ret-1)==0 )
 
 ATOMIC_FUNC_DECL1(and, "and %2, %1, %3", void, /* no return */ )
 ATOMIC_FUNC_DECL1(or,  "or  %2, %1, %3", void,  /* no return */ )
+
+
+/* with integrated membar */
+
+#define mb_atomic_set(v, i) \
+	do{ \
+		membar(); \
+		atomic_set(v, i); \
+	}while(0)
+
+
+
+inline static long mb_atomic_get(atomic_t* v)
+{
+	membar();
+	return atomic_get(v);
+}
+
+
+#define mb_atomic_inc(v) \
+	do{ \
+		membar(); \
+		atomic_inc(v); \
+	}while(0)
+
+#define mb_atomic_dec(v) \
+	do{ \
+		membar(); \
+		atomic_dec(v); \
+	}while(0)
+
+#define mb_atomic_or(v, m) \
+	do{ \
+		membar(); \
+		atomic_or(v, m); \
+	}while(0)
+
+#define mb_atomic_and(v, m) \
+	do{ \
+		membar(); \
+		atomic_and(v, m); \
+	}while(0)
+
+inline static int mb_atomic_inc_and_test(atomic_t* v)
+{
+	membar();
+	return atomic_inc_and_test(v);
+}
+
+inline static int mb_atomic_dec_and_test(atomic_t* v)
+{
+	membar();
+	return atomic_dec_and_test(v);
+}
+
+
 
 #endif /* __CPU_xxx  => no known cpu */
 
