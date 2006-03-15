@@ -556,9 +556,11 @@ static inline int after_strict(struct sip_msg* _m)
 		return RR_ERROR;
 	}
 
-	/* set the hooks for the params -bogdan */
+	/* set the hooks for the params -bogdan
+	 * important note: RURI is already parsed by the above function, so 
+	 * we just used it without any checking */
 	routed_msg_id = _m->id;
-	routed_params = puri.params;
+	routed_params = _m->parsed_uri.params;
 
 	if (is_strict(&puri.params)) {
 		DBG("after_strict: Next hop: '%.*s' is strict router\n",
@@ -589,7 +591,8 @@ static inline int after_strict(struct sip_msg* _m)
 			return RR_ERROR;
 		}
 	} else {
-		DBG("after_strict: Next hop: '%.*s' is loose router\n", uri->len, ZSW(uri->s));
+		DBG("after_strict: Next hop: '%.*s' is loose router\n",
+			uri->len, ZSW(uri->s));
 
 		if (set_dst_uri(_m, uri) < 0) {
 			LOG(L_ERR, "after_strict: Error while setting dst_uri\n");
