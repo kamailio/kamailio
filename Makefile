@@ -114,6 +114,8 @@ export PREFIX LOCALBASE
 #export INSTALL INSTALL-CFG INSTALL-BIN INSTALL-MODULES INSTALL-DOC INSTALL-MAN 
 #export INSTALL-TOUCH
 
+tar_name=$(NAME)-$(RELEASE)_src
+
 tar_extra_args+=$(addprefix --exclude=$(notdir $(CURDIR))/, \
 					$(auto_gen) $(auto_gen_others))
 ifneq ($(TLS),)
@@ -121,6 +123,12 @@ ifneq ($(TLS),)
 else
 	tar_extra_args+=--exclude=$(notdir $(CURDIR))/tls* 
 endif
+
+ifneq ($(nodeb),)
+	tar_extra_args+=--exclude=$(notdir $(CURDIR))/debian 
+	tar_name:=$(tar_name)_nodeb
+endif
+
 # include the common rules
 include Makefile.rules
 
@@ -195,7 +203,7 @@ tar:
 			    mv tmp/_tar1/$(notdir $(CURDIR)) \
 			       tmp/_tar2/"$(NAME)-$(RELEASE)" && \
 			    (cd tmp/_tar2 && $(TAR) \
-			                    -zcf ../../"$(NAME)-$(RELEASE)_src".tar.gz \
+			                    -zcf ../../"$(tar_name)".tar.gz \
 			                               "$(NAME)-$(RELEASE)" ) ; \
 			    rm -rf tmp/_tar1; rm -rf tmp/_tar2
 

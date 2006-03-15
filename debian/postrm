@@ -37,7 +37,7 @@ esac
 
 if [ "$1" = "purge" ] ; then
 # remove user/group on purge
-	deluser --quiet --remove-home ser &>/dev/null || true
+	deluser --quiet --remove-home ser >/dev/null 2>&1 || true
 # remove /etc/ser if empty
 	rmdir /etc/ser || true
 fi
