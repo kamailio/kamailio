@@ -289,8 +289,6 @@ int rls_db_update(rl_subscription_t *s)
 	/* only external subscriptions are stored */
 	if (s->type != rls_external_subscription) return 0;
 
-/* 	TRACE_LOG("updating rls database\n"); */
-	
 	if (rls_dbf.use_table(rls_db, rls_table) < 0) {
 		LOG(L_ERR, "rls_db_add: Error in use_table\n");
 		return -1;
@@ -346,12 +344,12 @@ int rls_db_update(rl_subscription_t *s)
 
 static dlg_t *dlg2str(str_t *s)
 {
-	dlg_t *dlg = (dlg_t*)shm_malloc(sizeof(*dlg));
+	dlg_t *dlg = (dlg_t*)mem_alloc(sizeof(*dlg));
 	if (!dlg) LOG(L_ERR, "Can't allocate dialog\n");
 	else {
 		if (dlg_func.str2dlg(s, dlg) != 0) {	
 			LOG(L_ERR, "Error while deserializing dialog\n");
-			shm_free(dlg);
+			mem_free(dlg);
 			dlg = NULL;
 		}
 	}

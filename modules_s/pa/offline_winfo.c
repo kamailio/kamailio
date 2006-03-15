@@ -64,7 +64,7 @@ static offline_winfo_t *create_winfo(str *uid,
 	add_str_len(len, domain);
 	len += sizeof(offline_winfo_t);
 	
-	info = (offline_winfo_t*)shm_malloc(len);
+	info = (offline_winfo_t*)mem_alloc(len);
 	if (info) {
 		memset(info, 0, len);
 		len = 0;
@@ -82,7 +82,7 @@ static offline_winfo_t *create_winfo(str *uid,
 
 static inline void free_winfo(offline_winfo_t *info)
 {
-	if (info) shm_free(info);
+	if (info) mem_free(info);
 }
 
 static inline void free_winfos(offline_winfo_t *info)

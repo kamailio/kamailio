@@ -177,7 +177,7 @@ int new_watcher_no_wb(presentity_t *_p, str* _uri, time_t _e, int event_package,
 	}
 
 	/* Allocate memory buffer for watcher_t structure and uri string */
-	watcher = (watcher_t*)shm_malloc(sizeof(watcher_t) + _uri->len + _dn->len + S_ID_LEN + server_contact->len);
+	watcher = (watcher_t*)mem_alloc(sizeof(watcher_t) + _uri->len + _dn->len + S_ID_LEN + server_contact->len);
 	if (!watcher) {
 		paerrno = PA_NO_MEMORY;
 	        LOG(L_ERR, "new_watcher(): No memory left\n");
@@ -545,7 +545,7 @@ int db_read_watcherinfo(presentity_t *_p, db_con_t* db)
 			}
 			if (!row_vals[dialog_col].nul) {
 				dialog = row_vals[dialog_col].val.blob_val;
-				dlg = (dlg_t*)shm_malloc(sizeof(*dlg));
+				dlg = (dlg_t*)mem_alloc(sizeof(*dlg));
 				if (!dlg) {
 					LOG(L_ERR, "db_read_watcher: Can't allocate dialog\n");
 					r = -1;
@@ -600,7 +600,7 @@ int db_read_watcherinfo(presentity_t *_p, db_con_t* db)
 void free_watcher(watcher_t* _w)
 {
 	tmb.free_dlg(_w->dialog);
-	shm_free(_w);	
+	mem_free(_w);	
 }
 
 /*

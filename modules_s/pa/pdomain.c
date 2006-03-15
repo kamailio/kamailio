@@ -41,6 +41,7 @@
 #include "../../mem/shm_mem.h"
 #include <cds/logger.h>
 #include "pa_mod.h"
+#include <time.h>
 
 /*
  * Hash function
@@ -70,7 +71,7 @@ int new_pdomain(str* _n, int _s, pdomain_t** _d, register_watcher_t _r, unregist
 	int i;
 	pdomain_t* ptr;
 	
-	ptr = (pdomain_t*)shm_malloc(sizeof(pdomain_t));
+	ptr = (pdomain_t*)mem_alloc(sizeof(pdomain_t));
 	if (!ptr) {
 		paerrno = PA_NO_MEMORY;
 		LOG(L_ERR, "new_pdomain(): No memory left\n");
@@ -78,11 +79,11 @@ int new_pdomain(str* _n, int _s, pdomain_t** _d, register_watcher_t _r, unregist
 	}
 	memset(ptr, 0, sizeof(pdomain_t));
 	
-	ptr->table = (hslot_t*)shm_malloc(sizeof(hslot_t) * _s);
+	ptr->table = (hslot_t*)mem_alloc(sizeof(hslot_t) * _s);
 	if (!ptr->table) {
 		paerrno = PA_NO_MEMORY;
 		LOG(L_ERR, "new_pdomain(): No memory left 2\n");
-		shm_free(ptr);
+		mem_free(ptr);
 		return -2;
 	}
 
@@ -117,18 +118,20 @@ void free_pdomain(pdomain_t* _d)
 		for(i = 0; i < _d->size; i++) {
 			deinit_slot(_d->table + i);
 		}
-		shm_free(_d->table);
+		mem_free(_d->table);
 	}
 	unlock_pdomain(_d);
 
-        shm_free(_d);
+        mem_free(_d);
 }
 
 int timer_pdomain(pdomain_t* _d)
 {
 	struct presentity* presentity, *t;
+	time_t start, stop;
 
 	lock_pdomain(_d);
+	start = time(NULL);
 
 	presentity = _d->first;
 
@@ -156,6 +159,9 @@ int timer_pdomain(pdomain_t* _d)
 		}
 	}
 	
+	stop = time(NULL);
+	if (stop - start > 1) WARN("timer_pdomain took %d seconds\n", (int) (stop - start));
+			
 	unlock_pdomain(_d);
 	return 0;
 }

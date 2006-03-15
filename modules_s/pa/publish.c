@@ -132,7 +132,7 @@ int location_package_location_add_user(pdomain_t *pdomain, str *site, str *floor
 	int changed = 0;
 	struct sip_msg *msg = NULL;
 	l_uri.len = pa_domain.len + site->len + floor->len + room->len + 4;
-	l_uri.s = shm_malloc(l_uri.len);
+	l_uri.s = mem_malloc(l_uri.len);
 	if (!l_uri.s)
 		return -2;
 	sprintf(l_uri.s, "%s.%s.%s@%s", room->s, floor->s, site->s, pa_domain.s);
@@ -168,7 +168,7 @@ int location_package_location_del_user(pdomain_t *pdomain, str *site, str *floor
 	struct sip_msg *msg = NULL;
 	int changed = 0;
 	l_uri.len = pa_domain.len + site->len + floor->len + room->len + 4;
-	l_uri.s = shm_malloc(l_uri.len);
+	l_uri.s = mem_malloc(l_uri.len);
 	if (!l_uri.s)
 		return -2;
 	sprintf(l_uri.s, "%s.%s.%s@%s", room->s, floor->s, site->s, pa_domain.s);

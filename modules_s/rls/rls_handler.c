@@ -6,6 +6,7 @@
 #include "result_codes.h"
 
 #include "../../str.h"
+#include "../../id.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../parser/parse_uri.h"
@@ -16,6 +17,28 @@
 #include "../../parser/parse_expires.h"
 #include "../../parser/parse_content.h"
 #include "../../data_lump_rpl.h"
+#include "../../usr_avp.h"
+
+#include <xcap/resource_list.h>
+
+/* static variables for sharing data loaded from XCAP */
+typedef struct  {
+	rls_create_params_t params;
+	flat_list_t *flat_list;
+} rls_xcap_query_t;
+
+static rls_xcap_query_t query = { 
+	params: { xcap_root: {s: NULL, len: 0} }, 
+	flat_list: NULL
+};
+
+/* clears last data stored from one of query_... functions */
+static void clear_last_query()
+{
+	str_clear(&query.params.xcap_root);
+	if (query.flat_list) free_flat_list(query.flat_list);
+	query.flat_list = NULL;
+}
 
 
 static int send_reply(struct sip_msg* _m, int code, char *msg) 
@@ -170,9 +193,11 @@ static int check_message(struct sip_msg *_m, int send_err)
 	}
 	for (i = 0; accepts[i].mime_txt; i++) 
 		if ((!accepts[i].found) && (accepts[i].needed)) {
-			if (send_err) 
+			if (send_err) {
 				ERR("required type %s not in Accept headers\n", 
 					accepts[i].mime_txt);
+				send_reply(_m, 400, "Bad Request");
+			}
 			return -1;
 		}
 
@@ -193,16 +218,19 @@ static int has_to_tag(struct sip_msg *_m)
 	return 0;
 }
 
-static int handle_new_subscription(struct sip_msg *m, const char *xcap_server, int send_error_responses)
+static int handle_new_subscription(struct sip_msg *m, rls_xcap_query_t *query, int send_error_responses)
 {
 	rl_subscription_t *s;
 	int res = 0;
+	rls_create_params_t *params = NULL;
+	
+	if (query) params = &query->params;
 	
 	rls_lock();
 
 	DEBUG_LOG("handle_new_subscription(rls)\n");
 	/* create a new subscription structure */
-	res = rls_create_subscription(m, &s, xcap_server);
+	res = rls_create_subscription(m, &s, query->flat_list, params);
 	if (res != RES_OK) {
 		rls_unlock();
 			
@@ -292,7 +320,7 @@ static int handle_renew_subscription(struct sip_msg *m, int send_error_responses
 	
 	res = rls_find_subscription(from_tag, to_tag, call_id, &s);
 	if ((res != RES_OK) || (!s)) {
-		DEBUG_LOG("handle_renew_subscription(): can't refresh unknown subscription\n");
+		WARN("can't refresh unknown subscription\n");
 		rls_unlock();
 		if (send_error_responses)
 			send_reply(m, 481, "Call/Transaction Does Not Exist");
@@ -340,20 +368,12 @@ static int handle_renew_subscription(struct sip_msg *m, int send_error_responses
 	return 0;
 }
 
-int handle_rls_subscription(struct sip_msg* _m, /*const char *xcap_server,*/ char *send_bad_resp)
+int handle_rls_subscription(struct sip_msg* _m, char *send_bad_resp)
 {
 	int res;
 	int send_err = 1;
-	char *xcap_server = rls_xcap_root;
-
-	if (!xcap_server) {
-		LOG(L_ERR, "handle_rls_subscription(): No XCAP server given!\n");
-		return -1;
-	}
 	
 	send_err = (int)send_bad_resp;
-	DEBUG_LOG("handle_rls_subscription(): XCAP server = \'%s\' send errors=%d\n", 
-			xcap_server, send_err);
 	
 	res = parse_rls_headers(_m);
 	if (res == -1) {
@@ -362,10 +382,12 @@ int handle_rls_subscription(struct sip_msg* _m, /*const char *xcap_server,*/ cha
 			add_response_header(_m, "Reason-Phrase: Bad or missing headers\r\n");
 			send_reply(_m, 400, "Bad Request");
 		}
+		clear_last_query();
 		return -1;
 	}
 	if (check_message(_m, send_err) != 0) {
 		DBG("check message failed\n");
+		clear_last_query();
 		return -1;
 	}
 	if (has_to_tag(_m)) {
@@ -374,10 +396,146 @@ int handle_rls_subscription(struct sip_msg* _m, /*const char *xcap_server,*/ cha
 	}
 	else {
 		/* handle SUBSCRIBE for a new subscription */
-		res = handle_new_subscription(_m, xcap_server, send_err);
+		res = handle_new_subscription(_m, &query, send_err);
 	}
+		
+	clear_last_query();
 
 	if (res == 0) return 1;
 	else return -1;
 }
 
+/*****************************************************************/
+
+/* helper functions for XCAP queries */
+
+static int get_xcap_root(str *dst)
+{
+	avp_t *avp;
+	int_str name, val;
+	str avp_xcap_root = STR_STATIC_INIT("xcap_root");
+
+	/* if (!dst) return -1; */
+	
+	name.s = avp_xcap_root;
+	avp = search_first_avp(AVP_NAME_STR, name, &val, 0);
+	if (avp) {
+		/* don't use default - use value from AVP */
+		TRACE("redefined xcap_root = %.*s\n", FMT_STR(val.s));
+		*dst = val.s;
+	} 
+	else {
+		dst->s = rls_xcap_root;
+		dst->len = strlen(rls_xcap_root);
+	}
+	
+	if (is_str_empty(dst)) return -1;
+	return 0;
+}
+
+/* XCAP query functions accessible from the CFG script */
+
+/* Get resource-list URI from SUBSCRIBE request */
+static int get_dst_uri(struct sip_msg* _m, str* dst_uri)
+{
+	/* FIXME: get raw request URI? or from TO? 
+	 * FIXME: skip uri parameters and everything else, leave only
+	 * sip:xxx@yyy ???!!! */
+	str uri;
+
+	if (_m->new_uri.s) {
+		uri.s = _m->new_uri.s;
+		uri.len = _m->new_uri.len;
+	} else {
+		uri.s = _m->first_line.u.request.uri.s;
+		uri.len = _m->first_line.u.request.uri.len;
+	}
+	
+	if (dst_uri) *dst_uri = uri;
+	return RES_OK;
+}
+
+int query_rls_services(struct sip_msg* _m, char *a, char *b)
+{
+	str uri;
+	int res;
+	static str package = STR_STATIC_INIT("presence"); /* TODO: take package from Event header */
+	xcap_query_t xcap;
+	
+	clear_last_query();
+	
+	if (get_xcap_root(&query.params.xcap_root) < 0) {
+		ERR("XCAP root not set (set AVP or default value)\n");
+		return -1;
+	}
+	
+	memset(&xcap, 0, sizeof(xcap));
+
+	if (get_dst_uri(_m, &uri) < 0) {
+		ERR("can't get destination URI\n");
+		clear_last_query();
+		return -1;
+	}
+	
+	if (reduce_xcap_needs) {
+		res = get_rls_from_full_doc(&query.params.xcap_root, 
+				&uri, &xcap, 
+				&package, &query.flat_list);
+	}
+	else {
+		res = get_rls(&query.params.xcap_root, &uri, &xcap, 
+			&package, &query.flat_list);
+	}
+	
+	if (res < 0) {
+		ERR("XCAP query problems\n");
+		clear_last_query();
+		return -1;
+	}
+
+	
+	return 1;
+}
+
+
+int query_resource_list(struct sip_msg* _m, char *list_name, char *b)
+{
+	int res;
+	xcap_query_t xcap;
+	str_t uid;
+	
+	clear_last_query();
+	
+	if (get_xcap_root(&query.params.xcap_root) < 0) {
+		ERR("XCAP root not set (set AVP or default value)\n");
+		return -1;
+	}
+	
+	memset(&xcap, 0, sizeof(xcap));
+
+	if (get_from_uid(&uid, _m) < 0) {
+		ERR("can't get From uid\n");
+		clear_last_query();
+		return -1;
+	}
+	
+	res = get_resource_list_from_full_doc(&query.params.xcap_root,
+			&uid, &xcap, list_name, &query.flat_list);
+	/* TODO: add function for real XCAP server */
+	
+	if (res < 0) {
+		ERR("XCAP query problems\n");
+		clear_last_query();
+		return -1;
+	}
+
+	return 1;
+}
+
+int have_flat_list(struct sip_msg* _m, char *a, char *b)
+{
+	if (query.flat_list) return 1;
+	else return -1;
+}
+
+	

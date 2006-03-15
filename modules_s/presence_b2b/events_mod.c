@@ -37,6 +37,8 @@ static cmd_export_t cmds[]={
 	{0, 0, 0, 0, 0}
 };
 
+static int handle_presence_subscriptions = 1;
+
 /** Exported parameters */
 static param_export_t params[]={
 	/* TODO: missing documentation */
@@ -46,6 +48,7 @@ static param_export_t params[]={
 	{"wait_for_term_notify", PARAM_INT, &waiting_for_notify_time },
 	{"resubscribe_delta", PARAM_INT, &resubscribe_delta },
 	{"min_resubscribe_time", PARAM_INT, &min_resubscribe_time },
+	{"handle_presence_subscriptions", PARAM_INT, &handle_presence_subscriptions },
 	{0, 0, 0}
 };
 
@@ -103,7 +106,11 @@ int events_mod_init(void)
 		return -1;
 	}
 
-	if (events_qsa_interface_init() != 0) return -1;
+	if (!handle_presence_subscriptions) {
+		WARN("NOT handling presence subscriptions\n");
+	}
+
+	if (events_qsa_interface_init(handle_presence_subscriptions) != 0) return -1;
 
 	return 0;
 }

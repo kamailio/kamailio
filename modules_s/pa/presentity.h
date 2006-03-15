@@ -36,6 +36,7 @@
 #include "watcher.h"
 #include "hslot.h"
 #include "pstate.h"
+#include "trace.h"
 
 #include <xcap/pres_rules.h>
 #include <cds/msg_queue.h>

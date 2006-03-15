@@ -8,6 +8,7 @@
 #include "euac_internals.h"
 #include <cds/hash_table.h>
 #include <cds/list.h>
+#include <cds/logger.h>
 #include <presence/pres_doc.h>
 #include <presence/pidf.h>
 
@@ -30,6 +31,8 @@ static str presence_events_package = { s: "presence", len: 8 };
 static str presence_qsa_package = { s: "presence", len: 8 };
 /* b2b UA notifier name*/
 static str notifier_name = STR_STATIC_INIT("presence_b2b");
+
+static int handle_presence_subscriptions = 0;
 
 /* default route for presence UAC */
 str presence_route = {s: "", len: 0 };
@@ -106,6 +109,13 @@ static void presence_notification_cb(struct sip_msg *m, void *param)
 		return; 
 	}
 
+	TRACE("subscription: %p\n", subscription);
+	TRACE("package: %p\n", subscription->package);
+	if (!subscription->package)
+		TRACE("package: not set!!!!\n");
+	TRACE("package name: %p, len %d\n", 
+			subscription->package->name.s, subscription->package->name.len);
+	
 	set_data_destroy_function(msg, (destroy_function_f)free_client_notify_info_content);
 	info = (client_notify_info_t*)msg->data;
 
@@ -124,7 +134,7 @@ static events_subscription_t *create_presence_subscription(subscription_t *subsc
 {
 	events_subscription_t *es;
 	
-	es = (events_subscription_t*) shm_malloc(sizeof(*es));
+	es = (events_subscription_t*) mem_alloc(sizeof(*es));
 	if (!es) {
 		ERR("can't allocate memory\n");
 		return es;
@@ -141,6 +151,11 @@ static events_subscription_t *create_presence_subscription(subscription_t *subsc
 			NULL, /* additional headers */
 			&presence_route);
 	
+	if (!es->uac) {
+		mem_free(es);
+		return NULL;
+	}
+	
 /*	ERR("created new ES (%p, uac = %p) %.*s, %.*s\n", es, 
 			es->uac,
 			FMT_STR(subscription->record_id),
@@ -149,12 +164,16 @@ static events_subscription_t *create_presence_subscription(subscription_t *subsc
 	return es;
 }
 
-static void add_presence_subscription(events_subscription_t *es)
+static int add_presence_subscription(events_subscription_t *es)
 {
 	DBG("adding events_subscription into HT\n");
-	ht_add(&internals->presence_ht, es->internal_subscription, es);
+	if (ht_add(&internals->presence_ht, es->internal_subscription, es) != 0) {
+		ERR("can't add ES %p into hash table\n", es);
+		return -1;
+	}
 	DOUBLE_LINKED_LIST_ADD(internals->presence_subscriptions_first,
 			internals->presence_subscriptions_last, es);
+	return 0;
 }
 
 static void destroy_presence_subscription(events_subscription_t *es)
@@ -162,28 +181,37 @@ static void destroy_presence_subscription(events_subscription_t *es)
 	ht_remove(&internals->presence_ht, es->internal_subscription);
 	DOUBLE_LINKED_LIST_REMOVE(internals->presence_subscriptions_first,
 			internals->presence_subscriptions_last, es);
-	shm_free(es);
+	mem_free(es);
 }
 
 static int presence_subscribe(notifier_t *n, subscription_t *subscription)
 {
 	events_subscription_t *es;
 
-/*	ERR("internal subscribe to presence_b2b for %.*s [%.*s]\n", 
+	if (!handle_presence_subscriptions) return 0;
+	
+	TRACE("internal subscribe to presence_b2b for %.*s [%.*s]\n", 
 			FMT_STR(subscription->record_id),
 			FMT_STR(subscription->package->name));
-*/
+
 	lock_events_qsa();
 	
 	es = create_presence_subscription(subscription);
 	if (!es) {
-		ERR("can't create subscription\n");
+		ERR("can't create subscription to presence_b2b\n");
 		unlock_events_qsa();
 		return -1;
 	}
-	add_presence_subscription(es);
+	if (add_presence_subscription(es) != 0) {
+		if (es->uac) destroy_events_uac(es->uac);
+		mem_free(es); /* not linked nor in hash table -> free only */
+		unlock_events_qsa();
+		return -1;
+	}
 
 	unlock_events_qsa();
+	
+	TRACE("internal subscribe to presence_b2b finished\n");
 	
 	return 0;
 }
@@ -192,10 +220,12 @@ static void presence_unsubscribe(notifier_t *n, subscription_t *subscription)
 {
 	events_subscription_t *es;
 	
-/*	ERR("internal unsubscribe to presence_b2b for %.*s [%.*s]\n", 
+	if (!handle_presence_subscriptions) return;
+	
+	TRACE("internal unsubscribe to presence_b2b for %.*s [%.*s]\n", 
 			FMT_STR(subscription->record_id),
 			FMT_STR(subscription->package->name));
-*/
+
 	lock_events_qsa();
 	
 	/* try to find internal structure with this record, subscriber */
@@ -210,12 +240,14 @@ static void presence_unsubscribe(notifier_t *n, subscription_t *subscription)
 	}
 	
 	/* destroy SIP subscription */
-	destroy_events_uac(es->uac);
+	if (es->uac) destroy_events_uac(es->uac);
 		
 	/* destroy this events subscription */
 	destroy_presence_subscription(es);
 	
 	unlock_events_qsa();
+	
+	TRACE("internal unsubscribe to presence_b2b finished\n");
 }
 
 /************************************************************/
@@ -233,7 +265,7 @@ static int cmp_events_subscription(subscription_t *a, subscription_t *b)
 	else return 1;
 }
 
-int events_qsa_interface_init()
+int events_qsa_interface_init(int _handle_presence_subscriptions)
 {
 	domain = qsa_get_default_domain();
 	if (!domain) {
@@ -241,6 +273,8 @@ int events_qsa_interface_init()
 		return -1;	
 	}
 
+	handle_presence_subscriptions = _handle_presence_subscriptions;
+	
 	presence_notifier = register_notifier(domain, 
 			&presence_qsa_package, 
 			presence_subscribe, presence_unsubscribe, 
@@ -250,7 +284,7 @@ int events_qsa_interface_init()
 		return -1;	
 	}
 
-	internals = (event_qsa_internals_t*)shm_malloc(sizeof(*internals));
+	internals = (event_qsa_internals_t*)mem_alloc(sizeof(*internals));
 	if (!internals) {
 		ERR("can't allocate memory\n");
 		return -1;
@@ -283,7 +317,7 @@ void events_qsa_interface_destroy()
 		/* TODO: destroy all remaining subscriptions */
 		cds_mutex_destroy(&internals->mutex);
 		ht_destroy(&internals->presence_ht);
-		shm_free(internals);
+		mem_free(internals);
 		internals = NULL;
 	}
 }

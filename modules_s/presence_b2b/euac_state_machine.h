@@ -15,5 +15,6 @@ typedef enum {
 
 
 void euac_do_step(euac_action_t action, struct sip_msg *m, events_uac_t *uac);
+void euac_start(events_uac_t *uac);
 
 #endif

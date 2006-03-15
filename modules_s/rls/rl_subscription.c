@@ -129,7 +129,7 @@ void rls_unlock()
 
 int rls_init()
 {
-	rls = (rls_data_t*)shm_malloc(sizeof(rls_data_t));
+	rls = (rls_data_t*)mem_alloc(sizeof(rls_data_t));
 	if (!rls) {
 		LOG(L_ERR, "rls_init(): memory allocation error\n");
 		return -1;
@@ -167,7 +167,7 @@ int rls_destroy()
 		lock_dealloc(rls_mutex);
 	}
 	if (rls) {
-		shm_free(rls);
+		mem_free(rls);
 		rls = NULL;
 	}
 	return 0;
@@ -200,24 +200,6 @@ int rls_destroy()
 	}
 	return 0;
 } */
-
-static int is_users_list_uri(str_t *uri, str_t *uid)
-{
-	str_t user;
-	str_t should_be;
-	str_t appendix = { s: "-list", len: 5 };
-	int res = 0;
-
-	if (!uri) return -1;
-	if (get_user_from_uri(uri, &user) != 0) return -1;
-	
-	str_concat(&should_be, uid, &appendix);
-	if (str_case_equals(&user, &should_be) != 0) res = 1;
-	else res = 0;
-	str_free_content(&should_be);
-
-	return res;
-}
 
 str_t * rls_get_uri(rl_subscription_t *s)
 {
@@ -262,64 +244,16 @@ str_t * rls_get_subscriber(rl_subscription_t *subscription)
 	return NULL;
 }
 
-int create_virtual_subscriptions(rl_subscription_t *ss, const char *xcap_root)
+int add_virtual_subscriptions(rl_subscription_t *ss, flat_list_t *flat, rls_create_params_t *params)
 {
-	flat_list_t *e, *flat = NULL;
-	xcap_query_t xcap;
+	flat_list_t *e;
+	/* xcap_query_t xcap; */
 	virtual_subscription_t *vs;
 	int res = 0;
 	str s;
-	/* str_t user; */
-	str_t *ss_uri = NULL;
-	str_t *ss_package = NULL;
 	
-	/* TODO: create virtual subscriptions using Accept headers ... (for remote subscriptions) */
-
-	ss_uri = rls_get_uri(ss);
-	ss_package = rls_get_package(ss);
-
-	/* XCAP query */
-	memset(&xcap, 0, sizeof(xcap));
-	/* DEBUG_LOG("doing XCAP query\n"); */
-	switch (rls_mode) {
-		case rls_mode_full:
-			if (reduce_xcap_needs) {
-				res = get_rls_from_full_doc(xcap_root, ss_uri, &xcap, 
-					ss_package, &flat);
-			}
-			else {
-				res = get_rls(xcap_root, ss_uri, &xcap, 
-					ss_package, &flat);
-			}
-			break;
-		case rls_mode_simple:
-			/* if (get_user_from_list_uri(ss_uri, &user) == 0) { */
-			if (is_users_list_uri(ss_uri, &ss->from_uid) == 0) {
-				DBG("subscribing to \'simple user\'s list\'\n");
-				/* it is uri in the form user-list@domain */
-				/* res = get_resource_list_as_rls(xcap_root, &user, &xcap, &flat); */
-				res = get_resource_list_as_rls(xcap_root, &ss->from_uid, &xcap, &flat);
-			}
-			else {
-				/* ERR("NOT subscribing to \'simple user\'s list\'\n"); */
-				
-				/* DEBUG_LOG("xcap_root: %s, ss_uri: %.*s, package: %.*s\n", xcap_root, 
-						FMT_STR(*ss_uri), FMT_STR(*ss_package)); */
-				/* it is NOT uri in the form xxx-list@domain -> try to use
-				 * standard RLS subscription processing */
-				if (reduce_xcap_needs) {
-					res = get_rls_from_full_doc(xcap_root, ss_uri, &xcap, 
-						ss_package, &flat);
-				}
-				else {
-					res = get_rls(xcap_root, ss_uri, &xcap, 
-							ss_package, &flat);
-				}
-			}
-			break;
-	}
-			
-	if (res != RES_OK) return res;
+	/* TODO: create virtual subscriptions using Accept headers 
+	 * ... (for remote subscriptions) */
 
 	/* go through flat list and find/create virtual subscriptions */
 	e = flat;
@@ -330,12 +264,48 @@ int create_virtual_subscriptions(rl_subscription_t *ss, const char *xcap_root)
 
 		res = vs_create(&s, rls_get_package(ss), &vs, e->names, ss);
 		
-		if (res != RES_OK) return res;
+		if (res != RES_OK) {
+			/* FIXME: remove already added members? */
+			return res;
+		}
 		ptr_vector_add(&ss->vs, vs);
 
 		e = e->next;
 	}
 
+	return RES_OK;
+}
+
+int create_virtual_subscriptions(rl_subscription_t *ss, rls_create_params_t *params)
+{
+	flat_list_t *flat = NULL;
+	xcap_query_t xcap;
+	int res = 0;
+	str_t *ss_uri = NULL;
+	str_t *ss_package = NULL;
+	str_t *xcap_root = NULL;
+	
+	if (params) xcap_root = &params->xcap_root;
+	
+	ss_uri = rls_get_uri(ss);
+	ss_package = rls_get_package(ss);
+
+	/* XCAP query */
+	memset(&xcap, 0, sizeof(xcap));
+	/* DEBUG_LOG("doing XCAP query\n"); */
+	if (reduce_xcap_needs) {
+		res = get_rls_from_full_doc(xcap_root, ss_uri, &xcap, 
+			ss_package, &flat);
+	}
+	else {
+		res = get_rls(xcap_root, ss_uri, &xcap, 
+			ss_package, &flat);
+	}
+			
+	if (res != RES_OK) return res;
+	
+	/* go through flat list and find/create virtual subscriptions */
+	res = add_virtual_subscriptions(ss, flat, params);
 	DEBUG_LOG("rli_create_content(): freeing flat list\n");
 	free_flat_list(flat);
 	return RES_OK;
@@ -346,7 +316,7 @@ rl_subscription_t *rls_alloc_subscription(rls_subscription_type_t type)
 {
 	rl_subscription_t *s;
 	
-	s = (rl_subscription_t*)shm_malloc(sizeof(rl_subscription_t));
+	s = (rl_subscription_t*)mem_alloc(sizeof(rl_subscription_t));
 	if (!s) {
 		LOG(L_ERR, "rls_alloc_subscription(): can't allocate memory\n");
 		return NULL;
@@ -370,7 +340,7 @@ rl_subscription_t *rls_alloc_subscription(rls_subscription_type_t type)
 	return s;
 }
 
-int rls_create_subscription(struct sip_msg *m, rl_subscription_t **dst, const char *xcap_root)
+int rls_create_subscription(struct sip_msg *m, rl_subscription_t **dst, flat_list_t *flat, rls_create_params_t *params)
 {
 	rl_subscription_t *s;
 	str from_uid = STR_NULL;
@@ -379,10 +349,6 @@ int rls_create_subscription(struct sip_msg *m, rl_subscription_t **dst, const ch
 	if (!dst) return RES_INTERNAL_ERR;
 	*dst = NULL;
 
-	/* FIXME: test if there is a "Require: eventlist" header - if not,
-	 * it is probbably not a message for RLS! */
-	/* FIXME: test if Accept = multipart/related, application/rlmi+xml! */
-				
 	s = rls_alloc_subscription(rls_external_subscription);
 	if (!s) {
 		LOG(L_ERR, "rls_create_new(): can't allocate memory\n");
@@ -396,7 +362,8 @@ int rls_create_subscription(struct sip_msg *m, rl_subscription_t **dst, const ch
 		return res;
 	}
 
-	/* store pointer to this RL subscription as user data of (low level) subscription */
+	/* store pointer to this RL subscription as user data 
+	 * of (low level) subscription */
 	s->external.usr_data = s;
 	if (get_from_uid(&from_uid, m) < 0) str_clear(&s->from_uid);
 	else str_dup(&s->from_uid, &from_uid);
@@ -407,7 +374,7 @@ int rls_create_subscription(struct sip_msg *m, rl_subscription_t **dst, const ch
 		return res;
 	}*/
 	
-	res = create_virtual_subscriptions(s, xcap_root);
+	res = add_virtual_subscriptions(s, flat, params);
 	if (res != 0) {
 		rls_free(s);
 		return res;
@@ -502,7 +469,7 @@ void rls_free(rl_subscription_t *s)
 	}
 	ptr_vector_destroy(&s->vs);
 	str_free_content(&s->from_uid);
-	shm_free(s);
+	mem_free(s);
 }
 
 /* void rls_notify_cb(struct cell* t, struct sip_msg* msg, int code, void *param) */
@@ -643,11 +610,11 @@ static int rls_generate_notify_int(rl_subscription_t *s)
 	mq_message_t *msg;
 	static str_t notifier_name = { s: "rls", len: 3 };
 	
-	TRACE_LOG("generating internal list notify\n");
+	DEBUG_LOG("generating internal list notify\n");
 
 	if (!s->internal.s) return 1;
 
-	TRACE_LOG(" ... creating message\n");
+	DEBUG_LOG(" ... creating message\n");
 	msg = create_message_ex(sizeof(client_notify_info_t));
 	if (!msg) {
 		ERROR_LOG("can't create internal notify message!\n");

@@ -87,7 +87,7 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 	     /* Domains are created before ser forks,
 	      * so we can create them using pkg_malloc
 	      */
-	ptr = (dlist_t*)shm_malloc(sizeof(dlist_t));
+	ptr = (dlist_t*)mem_alloc(sizeof(dlist_t));
 	if (ptr == 0) {
 		paerrno = PA_NO_MEMORY;
 		LOG(L_ERR, "new_dlist(): No memory left\n");
@@ -95,11 +95,11 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 	}
 	memset(ptr, 0, sizeof(dlist_t));
 
-	ptr->name.s = (char*)shm_malloc(_n->len);
+	ptr->name.s = (char*)mem_alloc(_n->len);
 	if (ptr->name.s == 0) {
 		paerrno = PA_NO_MEMORY;
 		LOG(L_ERR, "new_dlist(): No memory left 2\n");
-		shm_free(ptr);
+		mem_free(ptr);
 		return -2;
 	}
 
@@ -135,8 +135,8 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 
 	if (new_pdomain(&(ptr->name), 512, &(ptr->d), (register_watcher_t)reg, (unregister_watcher_t)unreg) < 0) {
 		LOG(L_ERR, "new_dlist(): Error while creating domain structure\n");
-		shm_free(ptr->name.s);
-		shm_free(ptr);
+		mem_free(ptr->name.s);
+		mem_free(ptr);
 		return -8;
 	}
 
@@ -214,8 +214,8 @@ void free_all_pdomains(void)
 		root = root->next;
 
 		free_pdomain(ptr->d);
-		shm_free(ptr->name.s);
-		shm_free(ptr);
+		mem_free(ptr->name.s);
+		mem_free(ptr);
 	}
 }
 

@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "trace.h"
 
 typedef struct {
 	time_event_manager_t *first;
@@ -36,7 +37,7 @@ int time_event_management_init()
 {
 	if (tem_info) return 0; /* already initialized */
 	
-	tem_info = (tem_info_t *)shm_malloc(sizeof(tem_info_t));
+	tem_info = (tem_info_t *)mem_alloc(sizeof(tem_info_t));
 	if (!tem_info) {
 		LOG(L_ERR, "time_event_management_init(): can't allocate shared memory\n");
 		return -1;
@@ -70,7 +71,7 @@ void time_event_management_destroy()
 		e = n;
 	}
 
-	shm_free(ti);
+	mem_free(ti);
 }
 
 int tem_init(time_event_manager_t *tm, unsigned int atomic_time, 
@@ -83,7 +84,7 @@ int tem_init(time_event_manager_t *tm, unsigned int atomic_time,
 	tm->slot_cnt = slot_cnt;
 	tm->enable_delay = enable_delay;
 	tm->mutex = mutex;
-	tm->time_slots = (time_event_slot_t *)shm_malloc(slot_cnt * sizeof(time_event_slot_t));
+	tm->time_slots = (time_event_slot_t *)mem_alloc(slot_cnt * sizeof(time_event_slot_t));
 	if (!tm->time_slots) {
 		LOG(L_ERR, "can't initialize time event manager slots\n");
 		return -1;
@@ -109,14 +110,14 @@ time_event_manager_t *tem_create(unsigned int atomic_time, unsigned int slot_cnt
 {
 	time_event_manager_t *tm;
 	
-	tm = (time_event_manager_t*)shm_malloc(sizeof(time_event_manager_t));
+	tm = (time_event_manager_t*)mem_alloc(sizeof(time_event_manager_t));
 	if (!tm) {
 		LOG(L_ERR, "can't allocate time event manager\n");
 		return tm;
 	}
 
 	if (tem_init(tm, atomic_time, slot_cnt, enable_delay, mutex) != 0) {
-		shm_free(tm);
+		mem_free(tm);
 		return NULL;
 	}
 
@@ -135,8 +136,8 @@ void tem_destroy(time_event_manager_t *tem)
 		
 		lock_release(&tem_info->structure_mutex);
 		
-		if (tem->time_slots) shm_free(tem->time_slots);
-		shm_free(tem);
+		if (tem->time_slots) mem_free(tem->time_slots);
+		mem_free(tem);
 	}
 }
 

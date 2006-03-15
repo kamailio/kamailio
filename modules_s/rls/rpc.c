@@ -1,4 +1,5 @@
 #include "rpc.h"
+#include "rl_subscription.h"
 #include "../../dprint.h"
 
 #include <unistd.h>
@@ -11,17 +12,32 @@
 	rpc_lf(rpc, c);
 */
 
-/* method for UAC testing */
-static void rls_test(rpc_t *rpc, void *c)
+#define rpc_lf(rpc, c)	rpc->add(c, "s","")
+
+static void rls_trace(rpc_t *rpc, void *c)
 {
-	rpc->add(c, "s", "test called");
+	int i = 0;
+	subscription_data_t *s;
+	
+	rpc->add(c, "s", "RLS Trace:");
+
+	if (rls_manager) {
+		s = rls_manager->first;
+		while (s) {
+			s = s->next;
+			i++;
+		}
+	}
+	rpc->printf(c, "subscription count: %d", i);
+	rpc_lf(rpc, c);
+	
 	rpc->send(c);
 }
 
 /* ----- exported data structure with methods ----- */
 
-static const char* rls_test_doc[] = {
-	"Testing events.",  /* Documentation string */
+static const char* rls_trace_doc[] = {
+	"RLS trace.",  /* Documentation string */
 	0                                    /* Method signature(s) */
 };
 
@@ -30,6 +46,6 @@ static const char* rls_test_doc[] = {
  */
 
 rpc_export_t rls_rpc_methods[] = {
-	{"rls.test",   rls_test,     rls_test_doc, 0},
+	{"rls.trace",   rls_trace,     rls_trace_doc, 0},
 	{0, 0, 0, 0}
 };

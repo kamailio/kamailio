@@ -206,7 +206,7 @@ void free_person_element(pa_person_element_t *n)
 		str_free_content(&n->person);
 		str_free_content(&n->id);
 		str_free_content(&n->dbid);
-		shm_free(n);
+		mem_free(n);
 	}
 }
 
@@ -246,7 +246,7 @@ static void generate_dbid(str *id, void *data)
 
 pa_person_element_t *create_person_element(str *etag, str *person_element, str *id, time_t expires, str *dbid)
 {
-	pa_person_element_t *pan = (pa_person_element_t*)shm_malloc(sizeof(pa_person_element_t));
+	pa_person_element_t *pan = (pa_person_element_t*)mem_alloc(sizeof(pa_person_element_t));
 	if (!pan) return pan;
 	pan->next = NULL;
 	pan->prev = NULL;

@@ -440,7 +440,7 @@ int extract_server_contact(struct sip_msg *m, str *dst)
 	}
 	
 	dst->len = 7 + m->rcv.bind_address->name.len + m->rcv.bind_address->port_no_str.len + strlen(tmp);
-	dst->s = (char *)shm_malloc(dst->len + 1);
+	dst->s = (char *)mem_alloc(dst->len + 1);
 	if (!dst->s) {
 		dst->len = 0;
 		return -1;
@@ -483,11 +483,11 @@ static int create_watcher(struct sip_msg* _m, struct presentity* _p, struct watc
 	if (new_watcher_no_wb(_p, &watch_uri, expires, et, acc, dialog, &watch_dn, &server_contact, _w) < 0) {
 		LOG(L_ERR, "create_watcher(): Error while creating watcher\n");
 		tmb.free_dlg(dialog);
-		if (server_contact.s) shm_free(server_contact.s);
+		if (server_contact.s) mem_free(server_contact.s);
 		paerrno = PA_NO_MEMORY;
 		return -5;
 	}
-	if (server_contact.s) shm_free(server_contact.s);
+	if (server_contact.s) mem_free(server_contact.s);
 	
 	(*_w)->status = authorize_watcher(_p, (*_w));
 	if ((*_w)->status == WS_REJECTED) {
@@ -815,7 +815,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	char tmp[64];
 	int i;
 	int is_renewal = 0;
-
+	
 	get_act_time();
 	paerrno = PA_OK;
 

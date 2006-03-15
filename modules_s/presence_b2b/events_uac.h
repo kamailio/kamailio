@@ -10,6 +10,8 @@
 #include <cds/ref_cntr.h>
 #include <presence/qsa.h>
 
+#include "trace.h"
+
 //typedef enum {
 //	subscription_unconfirmed, /* after sent SUBSCRIBE */
 //	subscription_confirmed, /* after confirmation with 200 OK (enable NOTIFY for it too!) */
@@ -19,15 +21,15 @@
 //} events_uac_status_t;
 
 typedef enum {
-	euac_unconfirmed,
-	euac_unconfirmed_destroy,
-	euac_confirmed,
-	euac_waiting,
-	euac_resubscription,
-	euac_resubscription_destroy,
-	euac_waiting_for_termination,
-	euac_predestroyed,
-	euac_destroyed,
+	euac_unconfirmed,           /* 0 */
+	euac_unconfirmed_destroy,   /* 1 */
+	euac_confirmed,             /* 2 */
+	euac_waiting,               /* 3 */
+	euac_resubscription,        /* 4 */
+	euac_resubscription_destroy,  /* 5 */
+	euac_waiting_for_termination, /* 6 */
+	euac_predestroyed,            /* 7 */
+	euac_destroyed,               /* 8 */
 } events_uac_status_t;
 
 typedef void (*notify_callback_func)(struct sip_msg *, void *param);
@@ -61,6 +63,9 @@ typedef struct _events_uac_t {
 
 	struct timer_ln timer;
 	int timer_started;
+
+	/* debugging */
+	char id[64];
 } events_uac_t;
 
 /* creates structure in shm and adds it into internal list */
@@ -69,6 +74,8 @@ events_uac_t *create_events_uac(str *remote_uri, str *local_uri,
 		notify_callback_func cb, /* callback function for processing NOTIFY messages (parsing, ...) */
 		void *cbp, /* parameter for callback function */
 		const str *other_headers, str *route);
+
+void free_events_uac(events_uac_t *uac);
 
 /* removes structure from memory and from internal lists*/
 int destroy_events_uac(events_uac_t *uac);

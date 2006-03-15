@@ -2,6 +2,7 @@
 #include "../../dprint.h"
 
 #include "events_uac.h"
+#include "euac_internals.h"
 #include <unistd.h>
 
 #include "../pa/presentity.h"
@@ -35,22 +36,83 @@ void test1(rpc_t *rpc, void *c)
 
 static void test(rpc_t *rpc, void *c)
 {
-	void *st;
+	/* void *st; */
+	int i;
 	
 	/*rpc->add(c, "s", "test called");
 	rpc->send(c);*/
-
+/*
 	if (rpc->add(c, "{", &st) < 0) return;
 	rpc->struct_add(st, "d", "watcher_t", sizeof(watcher_t));
 	rpc->struct_add(st, "d", "dlg_t", sizeof(dlg_t));
 	rpc->struct_add(st, "d", "presentity_t", sizeof(presentity_t));
 	rpc->send(c);
+*/
+
+	for (i = 0; i < 1000; i++) {
+		rpc->printf(c, "element %d with very long text\n", i);
+		rpc->add(c, "s","");
+	}
+	rpc->send(c);
 }
 
+/* Trace method */
+
+/* #define rpc_lf(rpc, c)	rpc->add(c, "s","")
+#define rpc_printf(rpc, c, buf, args...) sprintf(buf, ##args); rpc->add("s", buf);
+*/
+
+#define rpc_lf(rpc, c)	fputs("\n", f)
+#define rpc_printf(rpc, c, buf, args...) sprintf(buf, ##args); fputs(buf, f);
+
+static char *debug_file = "/tmp/euac.log";
+
+static void trace(rpc_t *rpc, void *c)
+{
+	int i = 0;
+	events_uac_t *uac;
+	char tmp[2048];
+	
+	/* debugging */
+	FILE *f = fopen(debug_file, "w");
+	if (!f) return;
+	
+	rpc_printf(rpc, c, tmp, "%s", "Presence B2BUA Trace:");
+	rpc_lf(rpc, c);
+
+	if (euac_internals) {
+		uac = euac_internals->first_uac;
+		while (uac) {
+			rpc_printf(rpc, c, tmp, "[%s]: %d, refcnt: %d, timer started: %d", 
+					uac->id, uac->status, 
+					uac->ref_cntr.cntr, uac->timer_started); 
+			rpc_lf(rpc, c);
+			uac = uac->next;
+			i++;
+		}
+		rpc_printf(rpc, c, tmp, "EUAC count: %d", i); rpc_lf(rpc, c);
+		rpc_printf(rpc, c, tmp,  "create_cnt: %d", euac_internals->create_cnt); 
+		rpc_lf(rpc, c);
+		rpc_printf(rpc, c, tmp, "destroy_cnt: %d", euac_internals->destroy_cnt); 
+		rpc_lf(rpc, c);
+	}
+	else {
+		rpc->printf(c, "euac_internals not set!");
+	}
+
+	fclose(f); /* debugging */
+	
+	rpc->send(c);
+}
 /* ----- exported data structure with methods ----- */
 
 static const char* test_doc[] = {
 	"Testing events.",  /* Documentation string */
+	0                   /* Method signature(s) */
+};
+
+static const char* trace_doc[] = {
+	"Trace events.",  /* Documentation string */
 	0                   /* Method signature(s) */
 };
 
@@ -60,6 +122,7 @@ static const char* test_doc[] = {
 
 rpc_export_t events_rpc_methods[] = {
 	{"presence_b2b.test", test, test_doc, 0},
+	{"presence_b2b.trace", trace, trace_doc, 0},
 	{0, 0, 0, 0}
 };
 

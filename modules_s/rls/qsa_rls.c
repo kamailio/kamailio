@@ -70,7 +70,7 @@ int rls_qsa_interface_init()
 		return -1;	
 	}
 
-	rls_internal_data = (rls_internal_data_t*)shm_malloc(sizeof(rls_internal_data_t));
+	rls_internal_data = (rls_internal_data_t*)mem_alloc(sizeof(rls_internal_data_t));
 	if (!rls_internal_data) {
 		LOG(L_ERR, "rls_qsa_interface_init(): can't allocate memory for internal rls_internal_data\n");
 		return -1;
@@ -112,7 +112,7 @@ void rls_qsa_interface_destroy()
 	/* FIXME: may be problems with timer? */
 	if (d) {
 		msg_queue_destroy(&d->s_msgs);
-		shm_free(d);
+		mem_free(d);
 	}
 }
 
@@ -123,7 +123,7 @@ static int rls_subscribe(notifier_t *n, subscription_t *subscription)
 	
 	if ((!subscription) || (!rls_internal_data)) return -1;
 	
-/*	ERR("internal subscribe to RLS for %.*s [%.*s]\n", 
+/*	TRACE("internal subscribe to RLS for %.*s [%.*s]\n", 
 			FMT_STR(subscription->record_id),
 			FMT_STR(subscription->package->name));*/
 	
@@ -151,7 +151,7 @@ static void rls_unsubscribe(notifier_t *n, subscription_t *subscription)
 	
 	if ((!subscription) || (!rls_internal_data)) return;
 	
-/*	DEBUG_LOG("internal unsubscribe to RLS for %.*s [%.*s]\n", 
+/*	TRACE("internal unsubscribe to RLS for %.*s [%.*s]\n", 
 			FMT_STR(subscription->record_id),
 			FMT_STR(subscription->package->name));*/
 	
@@ -173,7 +173,11 @@ static void rls_unsubscribe(notifier_t *n, subscription_t *subscription)
 static void process_subscription(subscription_t *subscription)
 {
 	rl_subscription_t *rls;
-	char *xcap_root = rls_xcap_root; /* one global XCAP root !!! */
+	rls_create_params_t params;
+	
+	params.xcap_root.s = rls_xcap_root;
+	if (rls_xcap_root) params.xcap_root.len = strlen(rls_xcap_root);
+	else params.xcap_root.len = 0;
 	
 	/* try to make subscription and release it if internal subscription 
 	 * not created */
@@ -196,7 +200,7 @@ static void process_subscription(subscription_t *subscription)
 	DOUBLE_LINKED_LIST_ADD(rls_internal_data->first, 
 			rls_internal_data->last, &rls->internal);
 
-	if (create_virtual_subscriptions(rls, xcap_root) != 0) {
+	if (create_virtual_subscriptions(rls, &params) != 0) {
 		/* DEBUG_LOG("*** INTERNAL RLS subscription not for list - removing it ***\n"); */
 		rls_free(rls);
 		rls_unlock();
@@ -206,7 +210,7 @@ static void process_subscription(subscription_t *subscription)
 	/* generate first notification for accepted subscription */
 	rls_generate_notify(rls, 1);
 
-	DBG("added INTERNAL RLS subscription to %.*s (%p)\n", 
+	TRACE("added INTERNAL RLS subscription to %.*s (%p)\n", 
 			FMT_STR(subscription->record_id), subscription);
 	
 	rls_unlock();

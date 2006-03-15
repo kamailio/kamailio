@@ -119,7 +119,7 @@ static int extract_contact_rpl(struct sip_msg *m, str *dst)
 	}
 
 	dst->len = 18 + m->rcv.bind_address->name.len + m->rcv.bind_address->port_no_str.len + strlen(tmp);
-	dst->s = (char *)shm_malloc(dst->len + 1);
+	dst->s = (char *)mem_alloc(dst->len + 1);
 	if (!dst->s) {
 		dst->len = 0;
 		return -1;
@@ -196,11 +196,11 @@ int send_reply(struct sip_msg* _m)
 			if (s.len > 0) {
 				if (!add_lump_rpl(_m, s.s, s.len, LUMP_RPL_HDR)) {
 					ERR("Can't add Contact header into the response\n");
-					if (s.s) shm_free(s.s);
+					if (s.s) mem_free(s.s);
 					return -1;
 				}
 			}
-			if (s.s) shm_free(s.s);
+			if (s.s) mem_free(s.s);
 		}
 	}
 

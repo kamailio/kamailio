@@ -80,16 +80,16 @@ events_uac_t *find_euac_nolock(struct sip_msg *m)
 
 	uac = (events_uac_t*)ht_find(&euac_internals->ht_confirmed, &id);
 	if (!uac) {
-		INFO("confirmed dialog not found for arriving NOTIFY: "
+/*		INFO("confirmed dialog not found for arriving NOTIFY: "
 			"%.*s * %.*s * %.*s\n",
 			FMT_STR(id.loc_tag),
 			FMT_STR(id.rem_tag),
-			FMT_STR(id.call_id));
+			FMT_STR(id.call_id));*/
 
 		id.rem_tag.len = 0;
 		
 		uac = (events_uac_t*)ht_find(&euac_internals->ht_unconfirmed, &id);
-		
+/*		
 		if (!uac) {
 			WARN("events UAC not found for arriving NOTIFY: "
 				"%.*s * %.*s * %.*s\n",
@@ -97,29 +97,13 @@ events_uac_t *find_euac_nolock(struct sip_msg *m)
 				FMT_STR(id.rem_tag),
 				FMT_STR(id.call_id));
 		}
-		else INFO("received NOTIFY for unconfirmed dialog!\n");
+		else INFO("received NOTIFY for unconfirmed dialog!\n");*/
 	}
 
 	return uac;
 }
 
 				
-static void free_events_uac(events_uac_t *uac)
-{
-	/* TRACE("freeing EUAC %p\n", uac); */
-
-	str_free_content(&uac->headers);
-	str_free_content(&uac->local_uri);
-	str_free_content(&uac->remote_uri);
-	str_free_content(&uac->route);
-	/* if the dialog is not freed we should free it */
-	if (uac->dialog) {
-		euac_internals->tmb.free_dlg(uac->dialog);
-		/* TRACE("freeing dialog for EUAC %p\n", uac); */
-	}
-	shm_free(uac);
-}
-
 int remove_euac_reference_nolock(events_uac_t *uac)
 {
 	/* must be called from locked section !! */
@@ -147,6 +131,13 @@ static void subscribe_cb(struct cell* t, int type, struct tmcb_params* params)
 
 	if (!params) return;
 
+	/* FIXME: Problems
+	 * 1. sometimes no response arrives (neither generated 408)
+	 * 2. sometimes are more responses going here !!!
+	 *  => try to find uac, if exists then process the response
+	 *  otherwise ignore it
+	 */
+
 	if (params->param) uac = (events_uac_t *)*(params->param);
 	if (!uac) {
 		ERR("something wrong - empty uac parameter given to callback function\n");
@@ -162,7 +153,7 @@ static void subscribe_cb(struct cell* t, int type, struct tmcb_params* params)
 	
 	lock_events_uac();
 	euac_do_step(action, params->rpl, uac);
-	remove_euac_reference_nolock(uac); /* remove reference reserved for cb */
+	/* in euac_do_step MUST be called accept_response or decline_response */
 	unlock_events_uac();
 }
 
@@ -209,21 +200,51 @@ static int get_contact_hdr(char *dst, int max_size, dlg_t *dialog)
 	return len;
 }
 
-void new_subscription(events_uac_t *uac, str *contact_to_send)
+static int prepare_hdrs(events_uac_t *uac, str *hdr, str *contact_to_send)
+{
+	char tmp[256];
+	str tmps;
+	int res, contact_len;
+	str warning = STR_STATIC_INIT("P-Hint: trying new subscription after 3xx\r\n");
+	
+	str_clear(hdr);
+	res = 0;
+
+	tmps.len = sprintf(tmp, "Expires: %d\r\n", subscribe_time);
+	tmps.s = tmp;
+	contact_len = get_contact_hdr(tmps.s + tmps.len, 
+			sizeof(tmp) - tmps.len, uac->dialog);
+	
+	if (contact_len <= 0) {
+		ERR("BUG: can't send SUBSCRIBE without contact\n");
+		res = -1;
+	}
+	
+	if (res == 0) {
+		tmps.len += contact_len;
+		res = str_concat(hdr, &uac->headers, &tmps);
+	}
+
+	if (!is_str_empty(contact_to_send)) {
+		/* FIXME - only testing */
+		str s = *hdr;
+		if (res == 0) res = str_concat(hdr, &s, &warning);
+	}
+	if (res != 0) {
+		str_free_content(hdr);
+	}
+	return res;
+}
+
+int new_subscription(events_uac_t *uac, str *contact_to_send, int failover_time)
 {
 	static str method = STR_STATIC_INIT("SUBSCRIBE");
 	unsigned int cseq = 1;
-	int res, contact_len;
-	char tmp[256];
-	str tmps;
-	str hdr;
+	str hdr = STR_NULL;
 	str *uri;
-	str warning = STR_STATIC_INIT("P-Hint: trying new subscription after 3xx\r\n");
 	
-	if (!is_str_empty(contact_to_send)) 
-		uri = contact_to_send;
-	else
-		uri = &uac->remote_uri;
+	if (!is_str_empty(contact_to_send)) uri = contact_to_send;
+	else uri = &uac->remote_uri;
 		
 	/* create new dialog */
 	if (euac_internals->tmb.new_dlg_uac(NULL /* will be generated */,
@@ -231,53 +252,58 @@ void new_subscription(events_uac_t *uac, str *contact_to_send)
 				cseq, &uac->local_uri, 
 				uri, &uac->dialog) < 0) {
 		ERR("can't create dialog for URI \'%.*s\'\n", FMT_STR(uac->remote_uri));
-		uac->dialog = NULL;
-		return;
+		goto ns_err_nodlg;
 	}
 	
 	/* preset route for created dialog */
 	if (!is_str_empty(&uac->route)) 
-		euac_internals->dlgb.preset_dialog_route(uac->dialog, &uac->route);
+		if (euac_internals->dlgb.preset_dialog_route(uac->dialog, &uac->route) < 0)
+			goto ns_err_dlg;
 
-	tmps.len = sprintf(tmp, "Expires: %d\r\n", subscribe_time);
-	tmps.s = tmp;
-	contact_len = get_contact_hdr(tmps.s + tmps.len, 
-			sizeof(tmp) - tmps.len, uac->dialog);
-	if (contact_len <= 0) {
-		ERR("BUG: can't send SUBSCRIBE without contact\n");
-		euac_do_step(act_4xx, NULL, uac);
-		return;
-	}
-	tmps.len += contact_len;
-	str_concat(&hdr, &uac->headers, &tmps);
+	if (prepare_hdrs(uac, &hdr, contact_to_send) < 0) goto ns_err_dlg;
 
-	if (!is_str_empty(contact_to_send)) {
-		/* FIXME - only testing */
-		str s = hdr;
-		str_concat(&hdr, &s, &warning);
-	}
-	
 	add_reference(&uac->ref_cntr); /* add reference for callback function */
-	
+
 	/* add to hash table (hash acording to dialog id) */
 	DBG("adding into unconfirmed EUACs\n");
-	ht_add(&euac_internals->ht_unconfirmed, &uac->dialog->id, uac);
-
+	if (ht_add(&euac_internals->ht_unconfirmed, &uac->dialog->id, uac) != 0) 
+		goto ns_err_ref;
+	
 	/* ERR("DIALOG ID = %.*s:%.*s:%.*s\n",
 			FMT_STR(uac->dialog->id.call_id), 
 			FMT_STR(uac->dialog->id.rem_tag), 
 			FMT_STR(uac->dialog->id.loc_tag)); */
 
 	/* generate subscribe request */
-	res = euac_internals->dlgb.request_outside(&method, 
+	if (euac_internals->dlgb.request_outside(&method, 
 			&hdr, NULL /* no body */, 
-			uac->dialog, subscribe_cb, uac);
+			uac->dialog, subscribe_cb, uac) < 0)
+		goto ns_err_in_ht;
+
 	str_free_content(&hdr);
 
-	if (res < 0) euac_do_step(act_4xx, NULL, uac);
+	if (failover_time > 0) euac_set_timer(uac, failover_time);
+	
+	return 0;
+	
+ns_err_in_ht:
+	ht_remove(&euac_internals->ht_unconfirmed, &uac->dialog->id);
+	
+ns_err_ref:
+	remove_reference(&uac->ref_cntr);
+
+ns_err_dlg:
+	if (uac->dialog) euac_internals->tmb.free_dlg(uac->dialog);
+	
+ns_err_nodlg:
+	uac->dialog = NULL;
+/*	euac_do_step(act_4xx, NULL, uac); */
+	str_free_content(&hdr);
+	
+	return -1;
 }
 
-void renew_subscription(events_uac_t *uac, int expires)
+int renew_subscription(events_uac_t *uac, int expires, int failover_time)
 {
 	static str method = STR_STATIC_INIT("SUBSCRIBE");
 	int res, contact_len;
@@ -285,22 +311,26 @@ void renew_subscription(events_uac_t *uac, int expires)
 	char tmp[256];
 	str tmps;
 
-	/* generate subscribe request */
-	add_reference(&uac->ref_cntr); /* add reference for callback function */
-
 	tmps.len = sprintf(tmp, "Expires: %d\r\n", expires);
 	tmps.s = tmp;
 	contact_len = get_contact_hdr(tmps.s + tmps.len, 
 			sizeof(tmp) - tmps.len, uac->dialog);
 	if (contact_len <= 0) {
 		ERR("BUG: can't send SUBSCRIBE without contact\n");
-		euac_do_step(act_4xx, NULL, uac);
-		return;
+/*		euac_do_step(act_4xx, NULL, uac); */
+		return -1;
 	}
 	tmps.len += contact_len;
-	str_concat(&hdr, &uac->headers, &tmps);
+	if (str_concat(&hdr, &uac->headers, &tmps) < 0) {
+		ERR("can't build headers\n");
+		/* euac_do_step(act_4xx, NULL, uac); */
+		return -1;
+	}
 
 	/* TRACE("sending resubscribe with hdrs: %.*s\n", FMT_STR(hdr)); */
+
+	/* generate subscribe request */
+	add_reference(&uac->ref_cntr); /* add reference for callback function */
 
 	/* generate subscribe request - don't call the TM version
 	 * (frees callback params on error!!!) */
@@ -310,7 +340,15 @@ void renew_subscription(events_uac_t *uac, int expires)
 
 	str_free_content(&hdr);
 	
-	if (res < 0) euac_do_step(act_4xx, NULL, uac);
+	if (res < 0) {
+/*		euac_do_step(act_4xx, NULL, uac); */
+		remove_reference(&uac->ref_cntr); /* remove reference for cb function */
+		return res;
+	}
+	else {
+		if (failover_time > 0) euac_set_timer(uac, failover_time);
+		return 0;
+	}
 }
 
 void do_notification(events_uac_t *uac, struct sip_msg *m)
@@ -376,9 +414,13 @@ static ticks_t timer_cb(ticks_t ticks, struct timer_ln* tl, void* data)
 void euac_set_timer(events_uac_t *uac, int seconds)
 {
 	/* set timer to generate act_tick action after "seconds" seconds */
+	if (uac->timer_started) euac_clear_timer(uac);
+	
 	add_reference(&uac->ref_cntr); /* add reference for timer callback function */
 	timer_init(&uac->timer, timer_cb, uac, 0);
-	timer_add(&uac->timer, S_TO_TICKS(seconds));
+	if (timer_add(&uac->timer, S_TO_TICKS(seconds)) != 0) {
+		ERR("can't set timer for [%s]!\n", uac->id);
+	}
 	uac->timer_started = 1;
 	/* TRACE("timer added for %d secs\n", seconds); */
 }

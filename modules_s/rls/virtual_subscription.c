@@ -9,6 +9,7 @@
 #include <presence/qsa.h>
 #include <presence/pres_doc.h>
 #include <presence/pidf.h>
+#include <cds/list.h>
 #include "qsa_rls.h"
 
 /* shared structure holding the data */
@@ -27,7 +28,7 @@ static void vs_timer_cb(unsigned int ticks, void *param);
 
 int vs_init()
 {
-	vsd = (vs_data_t*)shm_malloc(sizeof(vs_data_t));
+	vsd = (vs_data_t*)mem_alloc(sizeof(vs_data_t));
 	if (!vsd) {
 		LOG(L_ERR, "vs_init(): memory allocation error\n");
 		return -1;
@@ -55,7 +56,7 @@ int vs_destroy()
 	if (vsd) {
 		qsa_release_domain(vsd->domain);
 		vsd->domain = NULL;
-		shm_free(vsd);
+		mem_free(vsd);
 		vsd = NULL;
 	}
 	return 0;
@@ -174,7 +175,9 @@ static void vs_timer_cb(unsigned int ticks, void *param)
 	virtual_subscription_t *vs;
 	int changed = 0;
 	int cntr = 0;
+	time_t start, stop;
 
+	start = time(NULL);
 	rls_lock();
 
 	/* process all messages for virtual subscriptions */
@@ -188,6 +191,8 @@ static void vs_timer_cb(unsigned int ticks, void *param)
 		vs = vs->next;
 		cntr++; /* debugging purposes */
 	}
+
+	/* TRACE_LOG("processed messages for %d virtual subscription(s)\n", cntr); */
 	
 	if (changed) {
 		/* this could be called from some rli_timer ? */
@@ -195,6 +200,9 @@ static void vs_timer_cb(unsigned int ticks, void *param)
 	}
 	
 	rls_unlock();
+	stop = time(NULL);
+
+	if (stop - start > 1) WARN("vs_timer_cb took %d secs\n", (int) (stop - start));
 }
 
 static int add_to_vs_list(virtual_subscription_t *vs)
@@ -204,9 +212,7 @@ static int add_to_vs_list(virtual_subscription_t *vs)
 		LOG(L_ERR, "vs_add(): vsd not set!\n");
 		return RES_INTERNAL_ERR;
 	}
-	if (vsd->last) vsd->last->next = vs;
-	else vsd->first = vs;
-	vsd->last = vs;
+	DOUBLE_LINKED_LIST_ADD(vsd->first, vsd->last, vs);
 
 	return RES_OK;
 }
@@ -219,10 +225,7 @@ static int remove_from_vs_list(virtual_subscription_t *vs)
 		return RES_INTERNAL_ERR;
 	}
 
-	if (vs->next) vs->next->prev = vs->prev;
-	else vsd->last = vs->prev;
-	if (vs->prev) vs->prev->next = vs->next;
-	else vsd->first = vs->next;
+	DOUBLE_LINKED_LIST_REMOVE(vsd->first, vsd->last, vs);
 	
 	return RES_OK;
 }
@@ -243,11 +246,19 @@ static int create_internal_subscriptions(virtual_subscription_t *vs)
 		return -1;
 	}
 
+	vs->local_subscription_pres = subscribe(vsd->domain, 
+			package, 
+			&vs->uri, subscriber, &vs->mq, vs);
+	if (!vs->local_subscription_pres) {
+		LOG(L_ERR, "can't create local subscription (pres)!\n");
+		return -1;
+	}
+	
 	/* FIXME: list_package should be computed from package */
 	if (package) {
 		str append = STR_STATIC_INIT(".list");
 		list_package.len = package->len + append.len;
-		list_package.s = (char *)shm_malloc(list_package.len);
+		list_package.s = (char *)mem_alloc(list_package.len);
 		if (list_package.s) {
 			if (package->s) memcpy(list_package.s, package->s, package->len);
 			memcpy(list_package.s + package->len, append.s, append.len);
@@ -256,22 +267,15 @@ static int create_internal_subscriptions(virtual_subscription_t *vs)
 	}
 	else str_clear(&list_package);
 	
-	vs->local_subscription_pres = subscribe(vsd->domain, 
-			package, 
-			&vs->uri, subscriber, &vs->mq, vs);
-	if (!vs->local_subscription_pres) {
-		LOG(L_ERR, "can't create local subscription (pres)!\n");
-		return -1;
-	}
 	if (list_package.len > 0) {
 		vs->local_subscription_list = subscribe(vsd->domain, 
 				&list_package, 
 				&vs->uri, subscriber, &vs->mq, vs);
+		mem_free(list_package.s);
 		if (!vs->local_subscription_list) {
 			LOG(L_ERR, "can't create local subscription (list)!\n");
 			return -1;
 		}
-		shm_free(list_package.s);
 	}
 	return 0;
 }
@@ -294,7 +298,7 @@ int vs_create(str *uri, str *package, virtual_subscription_t **dst, display_name
 		return RES_INTERNAL_ERR;
 	}
 	
-	*dst = (virtual_subscription_t*)shm_malloc(sizeof(virtual_subscription_t) + uri->len + 1);
+	*dst = (virtual_subscription_t*)mem_alloc(sizeof(virtual_subscription_t) + uri->len + 1);
 	if (!(*dst)) {
 		LOG(L_ERR, "vs_create(): can't allocate memory\n");
 		return RES_MEMORY_ERR;
@@ -349,7 +353,7 @@ int vs_add_display_name(virtual_subscription_t *vs, const char *name, const char
 	if (name) {
 		dn.name.len = strlen(name);
 		if (dn.name.len > 0) {
-			dn.name.s = (char *)shm_malloc(dn.name.len);
+			dn.name.s = (char *)mem_alloc(dn.name.len);
 			if (!dn.name.s) dn.name.len = 0;
 			else memcpy(dn.name.s, name, dn.name.len);
 		}
@@ -362,7 +366,7 @@ int vs_add_display_name(virtual_subscription_t *vs, const char *name, const char
 	if (lang) {
 		dn.lang.len = strlen(lang);
 		if (dn.lang.len > 0) {
-			dn.lang.s = (char *)shm_malloc(dn.lang.len);
+			dn.lang.s = (char *)mem_alloc(dn.lang.len);
 			if (!dn.lang.s) dn.lang.len = 0;
 			else memcpy(dn.lang.s, lang, dn.lang.len);
 		}
@@ -381,11 +385,10 @@ void vs_free(virtual_subscription_t *vs)
 	vs_display_name_t dn;
 	
 	if (vs) {
-		DEBUG_LOG("freeing Virtual Subscription %p to %.*s\n", vs, FMT_STR(vs->uri));
 		remove_from_vs_list(vs);
 		
 /*		if ( (vs->package.len > 0) && (vs->package.s) ) 
-			shm_free(vs->package.s);*/
+			mem_free(vs->package.s);*/
 		
 		str_free_content(&vs->state_document);
 		str_free_content(&vs->content_type);
@@ -393,8 +396,8 @@ void vs_free(virtual_subscription_t *vs)
 		cnt = vector_size(&vs->display_names);
 		for (i = 0; i < cnt; i++) {
 			if (vector_get(&vs->display_names, i, &dn) != 0) continue;
-			if (dn.name.s && (dn.name.len > 0)) shm_free(dn.name.s);
-			if (dn.lang.s && (dn.lang.len > 0)) shm_free(dn.lang.s);
+			if (dn.name.s && (dn.name.len > 0)) mem_free(dn.name.s);
+			if (dn.lang.s && (dn.lang.len > 0)) mem_free(dn.lang.s);
 		}
 		vector_destroy(&vs->display_names);
 
@@ -402,11 +405,12 @@ void vs_free(virtual_subscription_t *vs)
 			unsubscribe(vsd->domain, vs->local_subscription_pres);
 		if (vs->local_subscription_list) 
 			unsubscribe(vsd->domain, vs->local_subscription_list);
+		
 		if (vs->local_subscription_pres || vs->local_subscription_list) {
 			msg_queue_destroy(&vs->mq);
 		}
 
-		shm_free(vs);
+		mem_free(vs);
 /*		LOG(L_TRACE, "Virtual Subscription freed\n");*/
 	}
 }

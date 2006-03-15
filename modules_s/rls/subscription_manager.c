@@ -72,7 +72,7 @@ subscription_manager_t *sm_create(send_notify_func notify,
 {
 	subscription_manager_t *sm;
 	
-	sm = (subscription_manager_t*)shm_malloc(sizeof(subscription_manager_t));
+	sm = (subscription_manager_t*)mem_alloc(sizeof(subscription_manager_t));
 	if (!sm) {
 		LOG(L_ERR, "can't allocate subscription manager\n");
 		return sm;
@@ -80,7 +80,7 @@ subscription_manager_t *sm_create(send_notify_func notify,
 
 	if (sm_init(sm, notify, terminate, authorize, mutex, min_exp, 
 				max_exp, default_exp) != 0) {
-		shm_free(sm);
+		mem_free(sm);
 		return NULL;
 	}
 
@@ -344,8 +344,10 @@ static int set_subscription_info(struct sip_msg *m, subscription_data_t *s)
 	DEBUG_LOG("set_subscription_info(): contact=\'%.*s\'\n", FMT_STR(s->contact));
 
 	r = str_dup(&s->record_id, &uri);
-	r = r | str_dup(&s->subscriber, &subscriber_uri);
-	r = r | str_dup(&s->package, &package);
+	if (r == 0) r = str_dup(&s->subscriber, &subscriber_uri);
+	else str_clear(&s->subscriber);
+	if (r == 0) r = str_dup(&s->package, &package);
+	else str_clear(&s->package);
 	
 	return r;
 }
@@ -372,7 +374,7 @@ void subscription_expiration_cb(struct _time_event_data_t *ted)
 	
 	mng = ted->cb_param1;
 	s = ted->cb_param;
-	DEBUG_LOG("subscription %p(%p) expired at: %s\n", s, mng, ctime(&t));
+	TRACE_LOG("subscription %p(%p) expired at: %s\n", s, mng, ctime(&t));
 
 	if (mng && s) {
 		if (s->status == subscription_pending)
@@ -482,9 +484,12 @@ int sm_init_subscription_nolock_ex(subscription_manager_t *mng,
 	dst->dialog = dialog;
 	r = str_dup(&dst->contact, contact);
 	dst->status = status;
-	r = r | str_dup(&dst->record_id, record_id);
-	r = r | str_dup(&dst->subscriber, subscriber);
-	r = r | str_dup(&dst->package, package);
+	if (r == 0) r = str_dup(&dst->record_id, record_id);
+	else str_clear(&dst->record_id);
+	if (r == 0) r = str_dup(&dst->subscriber, subscriber);
+	else str_clear(&dst->subscriber);
+	if (r == 0) r = str_dup(&dst->package, package);
+	else str_clear(&dst->package);
 	
 	/* fill time event structure */
 	dst->expiration.cb = subscription_expiration_cb;

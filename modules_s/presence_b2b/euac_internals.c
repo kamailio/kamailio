@@ -44,7 +44,7 @@ int init_events_uac_internals()
 	bind_dlg_mod_f bind_dlg;
 	
 	/* must be called only once */
-	euac_internals = shm_malloc(sizeof(*euac_internals));
+	euac_internals = mem_alloc(sizeof(*euac_internals));
 	if (!euac_internals) {
 		ERR("can't allocate memory for internal UAC structures\n");
 		return -1;
@@ -84,6 +84,8 @@ int init_events_uac_internals()
 			(key_cmp_func_t)cmp_unconfirmed_local_dlg_ids, 
 			2039);
 
+	euac_internals->create_cnt = 0;
+	euac_internals->destroy_cnt = 0;
 	
 	return 0;
 }
@@ -109,7 +111,7 @@ void destroy_events_uac_internals()
 		ht_destroy(&euac_internals->ht_confirmed);
 		ht_destroy(&euac_internals->ht_unconfirmed);
 		cds_mutex_destroy(&euac_internals->mutex);
-		shm_free(euac_internals);
+		mem_free(euac_internals);
 		euac_internals = NULL;
 	}
 	/* TRACE("Events uac destroyed\n"); */

@@ -205,7 +205,7 @@ void free_pres_note(pa_presence_note_t *n)
 		str_free_content(&n->note);
 		str_free_content(&n->lang);
 		str_free_content(&n->dbid);
-		shm_free(n);
+		mem_free(n);
 	}
 }
 
@@ -245,7 +245,7 @@ static void generate_dbid(str *id, void *data)
 
 pa_presence_note_t *create_pres_note(str *etag, str *note, str *lang, time_t expires, str *dbid)
 {
-	pa_presence_note_t *pan = (pa_presence_note_t*)shm_malloc(sizeof(pa_presence_note_t));
+	pa_presence_note_t *pan = (pa_presence_note_t*)mem_alloc(sizeof(pa_presence_note_t));
 	if (!pan) return pan;
 	pan->next = NULL;
 	pan->prev = NULL;

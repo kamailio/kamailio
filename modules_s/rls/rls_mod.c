@@ -14,11 +14,12 @@
 
 #include "rl_subscription.h"
 #include "rls_handler.h"
-#include "qsa_rls.h"
 #include "rpc.h"
+#include "uri_ops.h"
 
 #include "time_event_manager.h"
 #include <time.h>
+#include "qsa_rls.h"
 
 MODULE_VERSION
 
@@ -59,6 +60,12 @@ static cmd_export_t cmds[]={
 	/* {"handle_r_subscription", handle_r_subscription, 0, subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE}, */
 	{"handle_rls_subscription", (cmd_function)handle_rls_subscription, 1,
 		rls_subscribe_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	
+	/* TODO: undocumented */
+	{"is_simple_rls_target", is_simple_rls_target, 1, NULL, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"query_rls_services", query_rls_services, 0, NULL, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"query_resource_list", query_resource_list, 1, NULL, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"have_flat_list", have_flat_list, 0, NULL, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -176,7 +183,7 @@ static ticks_t init_timer_cb(ticks_t ticks, struct timer_ln* tl, void* data)
 	}
 
 	if (data) {
-		shm_free(data);
+		mem_free(data);
 		/* ERR("freeing myself!\n"); */
 	}
 	
@@ -237,7 +244,7 @@ int rls_mod_init(void)
 		return -1;
 	}
 
-/*	xcap_servers = (ptr_vector_t*)shm_malloc(sizeof(ptr_vector_t));
+/*	xcap_servers = (ptr_vector_t*)mem_alloc(sizeof(ptr_vector_t));
 	if (!xcap_servers) {
 		LOG(L_ERR, "rls_mod_init(): can't allocate memory for XCAP servers vector\n");
 		return -1;
@@ -340,7 +347,7 @@ void rls_mod_destroy(void)
 			}
 		}
 		ptr_vector_destroy(xcap_servers);
-		shm_free(xcap_servers);
+		mem_free(xcap_servers);
 		xcap_servers = NULL;
 	} */
 

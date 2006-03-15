@@ -3,7 +3,7 @@
 
 #include "../../str.h"
 
-int events_qsa_interface_init();
+int events_qsa_interface_init(int _handle_presence_subscriptions);
 void events_qsa_interface_destroy();
 
 /* default route for Events: presence */

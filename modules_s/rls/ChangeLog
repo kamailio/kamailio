@@ -1,3 +1,12 @@
+2006-03-15
+	* removed parameter "mode" (now is query done before handle_subscription
+	function and nested subscriptions can not be handled as "simple"
+	subscriptions
+	* added functions query_rls_services, query_resource_list, have_flat_list
+
+2006-03-07
+	* corrected BUG - improper adding virtual subscriptions into list
+
 2006-02-28
 	* corrected BUG - one shot timer used for DB initialization was not in
 	shared memory

@@ -6,6 +6,7 @@
 #include "events_uac.h"
 #include <cds/hash_table.h>
 #include "../tm/tm_load.h"
+#include "trace.h"
 
 typedef struct {
 	events_uac_t *first_uac;
@@ -20,6 +21,11 @@ typedef struct {
 	
 	struct tm_binds tmb;
 	dlg_func_t dlgb;
+
+	/* members for trace */
+	int create_cnt;
+	int destroy_cnt;
+	
 } events_uacs_internals_t;
 
 extern events_uacs_internals_t *euac_internals;
@@ -28,7 +34,5 @@ int init_events_uac_internals();
 void destroy_events_uac_internals();
 void lock_events_uac();
 void unlock_events_uac();
-
-#define TRACE(a,args...)	ERR(a,##args)
 
 #endif

@@ -76,7 +76,7 @@ int basic2status(str basic)
 str str_strdup(str string)
 {
 	str new_string;
-	new_string.s = shm_malloc(string.len + 1);
+	new_string.s = mem_alloc(string.len + 1);
 	new_string.len = string.len;
 	strncpy(new_string.s, string.s, string.len);
 	new_string.s[string.len] = 0;
@@ -113,7 +113,7 @@ int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, str *uid, presentit
 	}
 
 	size = sizeof(presentity_t) + _uri->len + 1 + uid->len + 1;
-	presentity = (presentity_t*)shm_malloc(size);
+	presentity = (presentity_t*)mem_alloc(size);
 	if (!presentity) {
 		paerrno = PA_NO_MEMORY;
 		LOG(L_ERR, "new_presentity_no_wb(): No memory left: size=%d\n", size);
@@ -407,7 +407,7 @@ void free_presentity(presentity_t* _p)
 	}
 
 	msg_queue_destroy(&_p->mq);
-	shm_free(_p);
+	mem_free(_p);
 }
 
 static int db_remove_presence_tuple(presentity_t *_p, presence_tuple_t *t)
@@ -769,7 +769,7 @@ int new_presence_tuple(str* _contact, time_t expires, presence_tuple_t ** _t, in
 	}
 
 	size = sizeof(presence_tuple_t) + _contact->len + 1;
-	tuple = (presence_tuple_t*)shm_malloc(size);
+	tuple = (presence_tuple_t*)mem_alloc(size);
 	if (!tuple) {
 		paerrno = PA_NO_MEMORY;
 		LOG(L_ERR, "new_presence_tuple(): No memory left: size=%d\n", size);
@@ -898,7 +898,7 @@ void free_presence_tuple(presence_tuple_t * _t)
 		str_free_content(&_t->etag);
 		str_free_content(&_t->published_id);
 
-		shm_free(_t);
+		mem_free(_t);
 	}
 }
 
@@ -1416,7 +1416,7 @@ resource_list_t *resource_list_append_unique(resource_list_t *list, str *uri)
 		last = list;
 		list = list->next;
 	}
-	list = (resource_list_t *)shm_malloc(sizeof(resource_list_t) + uri->len + 1);
+	list = (resource_list_t *)mem_alloc(sizeof(resource_list_t) + uri->len + 1);
 	list->uri.len = uri->len;
 	list->uri.s = ((char*)list) + sizeof(resource_list_t);
 	strncpy(list->uri.s, uri->s, uri->len);
@@ -1452,7 +1452,7 @@ resource_list_t *resource_list_remove(resource_list_t *list, str *uri)
 	if (next)
 		next->prev = last;
 
-	shm_free(list);
+	mem_free(list);
 
 	if (head == list)
 		return next;

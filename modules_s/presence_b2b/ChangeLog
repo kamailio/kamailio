@@ -1,12 +1,20 @@
+2006-03-09
+	* improved behavior if low memory
+	* added new error transitions into state machine
+	* corrected memory leaks in predestroyed state
+
+2006-03-07
+	* improved robustness
+
 2006-02-17
-	- corrected BUG (resubscribe without contact)
-	- added parameters: wait_for_term_notify, resubscribe_delta,
+	* corrected BUG (resubscribe without contact)
+	* added parameters: wait_for_term_notify, resubscribe_delta,
 	min_resubscribe_time
-	- added documentation
+	* added documentation
 
 2006-02-16
-	- corrected BUG (bad and missing state machine transitions)
-	- added parameters: default_expiration, on_error_retry_time
+	* corrected BUG (bad and missing state machine transitions)
+	* added parameters: default_expiration, on_error_retry_time
 	
 2006-02-14
 	* created module 

@@ -8,9 +8,12 @@ int get_expiration_value(struct sip_msg *m);
 void extract_contact(struct sip_msg *m, str *dst);
 int is_terminating_notify(struct sip_msg *m);
 
-/* creating/recreating subscriptions */
-void new_subscription(events_uac_t *uac, str *contact_to_send);
-void renew_subscription(events_uac_t *uac, int expires);
+/* creating/recreating subscriptions 
+ * if failover_time > 0 it calls euac_set_timer to this value 
+ * noth these functions returns nonzero on error - this MUST
+ * be handled everywhere */
+int new_subscription(events_uac_t *uac, str *contact_to_send, int failover_time);
+int renew_subscription(events_uac_t *uac, int expires, int failover_time);
 
 /* */
 events_uac_t *find_euac_nolock(struct sip_msg *m);
@@ -42,5 +45,7 @@ extern int resubscribe_delta;
 
 /* minimum time for resubscriptions */
 extern int min_resubscribe_time;
+
+extern int failover_timeout;
 
 #endif

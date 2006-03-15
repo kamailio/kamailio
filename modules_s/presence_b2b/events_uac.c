@@ -1,4 +1,5 @@
 #include "events_uac.h"
+#include "euac_internals.h" /* for debugging purposes */
 #include "../../dprint.h"
 
 #include <cds/sstr.h>
@@ -26,6 +27,22 @@ void insert_uac_to_list(events_uac_t *uac)
 	euac_internals->last_uac = uac;
 }
 
+void free_events_uac(events_uac_t *uac)
+{
+	/* TRACE("freeing EUAC %p\n", uac); */
+
+	str_free_content(&uac->headers);
+	str_free_content(&uac->local_uri);
+	str_free_content(&uac->remote_uri);
+	str_free_content(&uac->route);
+	/* if the dialog is not freed we should free it */
+	if (uac->dialog) {
+		euac_internals->tmb.free_dlg(uac->dialog);
+		/* TRACE("freeing dialog for EUAC %p\n", uac); */
+	}
+	mem_free(uac);
+}
+
 events_uac_t *create_events_uac(str *remote_uri, str *local_uri, const str *events, 
 		notify_callback_func cb, /* callback function for processing NOTIFY messages (parsing, ...) */
 		void *cbp, /* parameter for callback function */
@@ -33,13 +50,14 @@ events_uac_t *create_events_uac(str *remote_uri, str *local_uri, const str *even
 {
 	events_uac_t *uac;
 	dstring_t dstr;
+	int res = 0;
 
 	if ((!remote_uri) || (!local_uri)) {
 		ERR("invalid parameters\n");
 		return NULL;
 	}
 	
-	uac = (events_uac_t*)shm_malloc(sizeof(*uac));
+	uac = (events_uac_t*)mem_alloc(sizeof(*uac));
 	if (!uac) return NULL;
 	
 	/* compose headers */
@@ -49,22 +67,38 @@ events_uac_t *create_events_uac(str *remote_uri, str *local_uri, const str *even
 	dstr_append_zt(&dstr, "\r\n");
 	if (other_headers) dstr_append_str(&dstr, other_headers);
 	/* should get Accpet headers as parameter too? */
-	dstr_get_str(&dstr, &uac->headers);
+	if (dstr_get_str(&dstr, &uac->headers) != 0) {
+		ERR("can't generate headers (no mem)\n");
+		dstr_destroy(&dstr);
+		mem_free(uac);
+		return NULL;
+	}
 	dstr_destroy(&dstr);
 
+	uac->dialog = NULL;
 	init_reference_counter(&uac->ref_cntr); /* main reference - removed in "destroyed" status */
 	add_reference(&uac->ref_cntr); /* add reference for client */
 	uac->status = euac_unconfirmed;
-	str_dup(&uac->local_uri, local_uri);
-	str_dup(&uac->remote_uri, remote_uri);
-	str_dup(&uac->route, route);
+	res = str_dup(&uac->local_uri, local_uri);
+	if (res == 0) res = str_dup(&uac->remote_uri, remote_uri);
+	else str_clear(&uac->remote_uri);
+	if (res == 0) res = str_dup(&uac->route, route);
+	else str_clear(&uac->route);
 	uac->timer_started = 0;
 	uac->cb = cb;
 	uac->cbp = cbp;
 
+	if (res != 0) { 
+		ERR("can't duplicate parameters\n");
+		free_events_uac(uac);
+		return NULL;
+	}
+
 	lock_events_uac();
+	sprintf(uac->id, "%p:%x:%x", uac, (unsigned int)time(NULL), rand());
+	euac_internals->create_cnt++;
 	insert_uac_to_list(uac);
-	new_subscription(uac, NULL);
+	euac_start(uac);
 	unlock_events_uac();
 
 	return uac;
@@ -72,9 +106,17 @@ events_uac_t *create_events_uac(str *remote_uri, str *local_uri, const str *even
 
 int destroy_events_uac(events_uac_t *uac)
 {
-	lock_events_uac();
+	if (!uac) {
+		ERR("BUG: destroying empty uac\n");
+		return -1;
+	}
 
-	/* TRACE("destroying uac: %p\n", uac); */
+	lock_events_uac();
+	euac_internals->destroy_cnt++;
+
+	 TRACE("destroying uac %d from: %d\n", 
+		euac_internals->destroy_cnt,
+		euac_internals->create_cnt);
 	
 	/* do not receive any other status/service messages */
 	uac->cb = NULL;
