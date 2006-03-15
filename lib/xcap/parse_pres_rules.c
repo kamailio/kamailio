@@ -76,7 +76,7 @@ static int read_actions(xmlNode *an, cp_actions_t **dst)
 	if ((!an) || (!dst)) return RES_INTERNAL_ERR;
 	
 	*dst = (cp_actions_t*)cds_malloc(sizeof(cp_actions_t));
-	if (!dst) return RES_MEMORY_ERR;
+	if (!(*dst)) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(cp_actions_t));
 
 	n = find_node(an, "sub-handling", common_policy_ns);
@@ -94,7 +94,8 @@ static int read_actions(xmlNode *an, cp_actions_t **dst)
 static int read_sphere(xmlNode *n, cp_sphere_t **dst)
 {
 	*dst = (cp_sphere_t*)cds_malloc(sizeof(cp_sphere_t));
-	if (!*dst) return RES_MEMORY_ERR;
+	if (!(*dst)) return RES_MEMORY_ERR;
+	memset(*dst, 0, sizeof(**dst));
 	(*dst)->next = NULL;
 	
 	str_dup_zt(&(*dst)->value, get_node_value(n));
@@ -105,7 +106,8 @@ static int read_validity(xmlNode *n, cp_validity_t **dst)
 {
 	const char *from, *to;
 	*dst = (cp_validity_t*)cds_malloc(sizeof(cp_validity_t));
-	if (!*dst) return RES_MEMORY_ERR;
+	if (!(*dst)) return RES_MEMORY_ERR;
+	memset(*dst, 0, sizeof(**dst));
 	
 	from = get_node_value(find_node(n, "from", common_policy_ns));
 	to = get_node_value(find_node(n, "to", common_policy_ns));
@@ -118,7 +120,8 @@ static int read_validity(xmlNode *n, cp_validity_t **dst)
 static int read_id(xmlNode *n, cp_id_t **dst)
 {
 	*dst = (cp_id_t*)cds_malloc(sizeof(cp_id_t));
-	if (!*dst) return RES_MEMORY_ERR;
+	if (!(*dst)) return RES_MEMORY_ERR;
+	memset(*dst, 0, sizeof(**dst));
 	(*dst)->next = NULL;
 	
 	get_str_attr(n, "entity", &(*dst)->entity);
@@ -133,7 +136,8 @@ static int read_id(xmlNode *n, cp_id_t **dst)
 static int read_domain(xmlNode *n, cp_domain_t **dst)
 {
 	*dst = (cp_domain_t*)cds_malloc(sizeof(cp_domain_t));
-	if (!*dst) return RES_MEMORY_ERR;
+	if (!(*dst)) return RES_MEMORY_ERR;
+	memset(*dst, 0, sizeof(**dst));
 	(*dst)->next = NULL;
 	
 	get_str_attr(n, "domain", &(*dst)->domain);
@@ -143,7 +147,8 @@ static int read_domain(xmlNode *n, cp_domain_t **dst)
 static int read_except(xmlNode *n, cp_except_t **dst)
 {
 	*dst = (cp_except_t*)cds_malloc(sizeof(cp_except_t));
-	if (!*dst) return RES_MEMORY_ERR;
+	if (!(*dst)) return RES_MEMORY_ERR;
+	memset(*dst, 0, sizeof(**dst));
 	(*dst)->next = NULL;
 	
 	get_str_attr(n, "entity", &(*dst)->entity);
@@ -154,6 +159,7 @@ static int read_except_domain(xmlNode *n, cp_except_domain_t **dst)
 {
 	*dst = (cp_except_domain_t*)cds_malloc(sizeof(cp_except_domain_t));
 	if (!*dst) return RES_MEMORY_ERR;
+	memset(*dst, 0, sizeof(**dst));
 	(*dst)->next = NULL;
 	
 	get_str_attr(n, "domain", &(*dst)->domain);
@@ -169,6 +175,7 @@ static int read_any_identity(xmlNode *an, cp_any_identity_t **dst)
 	
 	*dst = (cp_any_identity_t*)cds_malloc(sizeof(cp_any_identity_t));
 	if (!*dst) return RES_MEMORY_ERR;
+	memset(*dst, 0, sizeof(**dst));
 	
 	n = an->children;
 	while (n) {
@@ -240,7 +247,7 @@ static int read_conditions(xmlNode *cn, cp_conditions_t **dst)
 	if ((!cn) || (!dst)) return RES_INTERNAL_ERR;
 	
 	*dst = (cp_conditions_t*)cds_malloc(sizeof(cp_conditions_t));
-	if (!dst) return RES_MEMORY_ERR;
+	if (!(*dst)) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(cp_conditions_t));
 	
 	n = cn->children;
@@ -280,7 +287,7 @@ static int read_transformations(xmlNode *tn, cp_transformations_t **dst)
 	if ((!tn) || (!dst)) return RES_INTERNAL_ERR;
 	
 	*dst = (cp_transformations_t*)cds_malloc(sizeof(cp_transformations_t));
-	if (!dst) return RES_MEMORY_ERR;
+	if (!*dst) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(cp_transformations_t));
 
 	DEBUG_LOG("transformations for pres_rules not used\n");
@@ -295,30 +302,27 @@ static int read_rule(xmlNode *rn, cp_rule_t **dst)
 	if ((!rn) || (!dst)) return RES_INTERNAL_ERR;
 	
 	*dst = (cp_rule_t*)cds_malloc(sizeof(cp_rule_t));
-	if (!dst) return RES_MEMORY_ERR;
+	if (!*dst) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(cp_rule_t));
 
 	get_str_attr(rn, "id", &(*dst)->id);
 
 	n = find_node(rn, "actions", common_policy_ns);
-	if (n) {
-		res = read_actions(n, &(*dst)->actions);
-		if (res != 0) return res;
-	}
+	if (n && (res == 0)) res = read_actions(n, &(*dst)->actions);
 	
 	n = find_node(rn, "conditions", common_policy_ns);
-	if (n) {
-		res = read_conditions(n, &(*dst)->conditions);
-		if (res != 0) return res;
-	}
+	if (n && (res == 0)) res = read_conditions(n, &(*dst)->conditions);
 	
 	n = find_node(rn, "transformations", common_policy_ns);
-	if (n) {
-		res = read_transformations(n, &(*dst)->transformations);
-		if (res != 0) return res;
+	if (n && (res == 0)) res = read_transformations(n, &(*dst)->transformations);
+	
+	if (res != 0) {
+		free_rule(*dst);
+		*dst = NULL;
+		return res;
 	}
 
-	return res;
+	return 0;
 }
 
 static int read_pres_rules(xmlNode *root, cp_ruleset_t **dst)

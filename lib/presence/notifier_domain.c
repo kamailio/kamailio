@@ -33,8 +33,19 @@
 #include <cds/list.h>
 #include <cds/cds.h>
 
-#define lock_subscription_data(s) if (s->mutex) cds_mutex_lock(s->mutex);
-#define unlock_subscription_data(s) if (s->mutex) cds_mutex_unlock(s->mutex);
+/*#define lock_subscription_data(s) if (s->mutex) cds_mutex_lock(s->mutex);
+#define unlock_subscription_data(s) if (s->mutex) cds_mutex_unlock(s->mutex);*/
+
+static void lock_subscription_data(subscription_t *s)
+{
+	/* is function due to debugging */
+	if (s->mutex) cds_mutex_lock(s->mutex);
+}
+
+static void unlock_subscription_data(subscription_t *s) {
+	/* is function due to debugging */
+	if (s->mutex) cds_mutex_unlock(s->mutex);
+}
 
 static void free_notifier(notifier_t *info);
 static void free_subscription(subscription_t *s);
@@ -71,7 +82,11 @@ static notifier_package_t *create_package(const str_t *name)
 		p->next = NULL;
 		p->prev = NULL;
 		p->domain = NULL;
-		str_dup(&p->name, name);
+		if (str_dup(&p->name, name) < 0) {
+			cds_free(p);
+			ERROR_LOG("can't allocate memory\n");
+			return NULL;
+		}
 	}
 	return p;
 }
@@ -173,7 +188,11 @@ notifier_domain_t *create_notifier_domain(const str_t *name)
 	if (d) {
 		d->first_package = NULL;
 		d->last_package = NULL;
-		str_dup(&d->name, name);
+		if (str_dup(&d->name, name) < 0) {
+			cds_free(d);
+			ERROR_LOG("can't allocate memory\n");
+			return NULL;
+		}
 		cds_mutex_init(&d->mutex);
 		cds_mutex_init(&d->data_mutex);
 		init_reference_counter(&d->ref);
@@ -301,6 +320,7 @@ subscription_t *subscribe(notifier_domain_t *domain,
 	notifier_t *e;
 	notifier_package_t *p;
 	int cnt = 0;
+	int res;
 
 	lock_notifier_domain(domain);
 	p = get_package(domain, package);
@@ -313,6 +333,7 @@ subscription_t *subscribe(notifier_domain_t *domain,
 	s = cds_malloc(sizeof(subscription_t));
 	if (!s) {
 		ERROR_LOG("can't allocate memory\n");
+		unlock_notifier_domain(domain);
 		return s;
 	}
 
@@ -320,8 +341,17 @@ subscription_t *subscribe(notifier_domain_t *domain,
 	s->dst = dst;
 	s->mutex = &domain->data_mutex;
 	s->subscriber_data = subscriber_data;
-	str_dup(&s->record_id, record_id);
-	str_dup(&s->subscriber_id, subscriber_id);
+	res = str_dup(&s->record_id, record_id);
+	if (res == 0) res = str_dup(&s->subscriber_id, subscriber_id);
+	else str_clear(&s->subscriber_id);
+	if (res != 0) {
+		str_free_content(&s->record_id);
+		str_free_content(&s->subscriber_id);
+		cds_free(s);
+		ERROR_LOG("can't allocate memory\n");
+		unlock_notifier_domain(domain);
+		return NULL;
+	}
 	init_reference_counter(&s->ref);
 
 	DOUBLE_LINKED_LIST_ADD(p->first_subscription, p->last_subscription, s);

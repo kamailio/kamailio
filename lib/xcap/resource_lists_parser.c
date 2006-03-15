@@ -418,6 +418,7 @@ void free_list(list_t *l)
 		}
 		f = e;
 		e = SEQUENCE_NEXT(e);
+		/* TRACE_LOG("freeing %p\n", f); */
 		cds_free(f);
 	}
 	cds_free(l);

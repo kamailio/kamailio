@@ -327,6 +327,9 @@ static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst, int ignore_ns
 
 static int get_whole_node_content(xmlNode *n, str_t *dst, xmlDocPtr doc)
 {
+	int res = 0;
+
+	str_clear(dst);
 	if (n) {
 		n = xmlCopyNode(n, 1); /* this inserts namespaces into element correctly */
 		if (!n) {
@@ -341,17 +344,17 @@ static int get_whole_node_content(xmlNode *n, str_t *dst, xmlDocPtr doc)
 			ERROR_LOG("Error creating the xml buffer\n");
 			return -1;
 		}
-		xmlNodeDump(buf, doc, n, 0, 0);
-		if (buf->use > 0) {
+		if (xmlNodeDump(buf, doc, n, 0, 0) < 0) res = -1;
+		if ((res == 0) && (buf->use > 0)) {
 			str_t s;
 			s.s = (char *)buf->content;
 			s.len = buf->use;
-			str_dup(dst, &s);
+			res = str_dup(dst, &s);
 		}
 		xmlBufferFree(buf);
 		xmlFreeNode(n); /* was duplicated due to namespaces! */
 	}
-	return 0;
+	return res;
 }
 
 static int read_person(xmlNode *person, person_t **dst, xmlDocPtr doc)
@@ -370,7 +373,11 @@ static int read_person(xmlNode *person, person_t **dst, xmlDocPtr doc)
 
 	TRACE_LOG("reading person ()\n");
 	
-	str_dup_zt(&p->id, get_attr_value(find_attr(person->properties, "id")));
+	if (str_dup_zt(&p->id, get_attr_value(find_attr(person->properties, "id"))) < 0) {
+		cds_free(p);
+		*dst = NULL;
+		return -1;
+	}
 	
 	/* try to find mood */
 /*	n = find_node(person, "mood", rpid_ns);
@@ -381,7 +388,12 @@ static int read_person(xmlNode *person, person_t **dst, xmlDocPtr doc)
 	if (n) get_whole_node_content(n, &p->activities, doc);
 */
 	/* do not care about internals of person - take whole element ! */
-	get_whole_node_content(person, &p->person_element, doc);
+	if (get_whole_node_content(person, &p->person_element, doc) != 0) {
+		str_free_content(&p->id);
+		cds_free(p);
+		*dst = NULL;
+		return -1;
+	}
 	
 	return 0;
 }

@@ -240,7 +240,7 @@ static int xcap_test(const char *xcap_root, const char *uri)
 
 #endif
 
-int test_flat(const char *xcap_root, const char *uri)
+int test_flat(const str_t *xcap_root, const char *uri)
 {
 	str_t u = zt2str((char *)uri);
 	xcap_query_t xcap;

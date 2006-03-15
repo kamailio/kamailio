@@ -34,23 +34,32 @@
 
 int xml_parser_flags = XML_PARSE_NOERROR | XML_PARSE_NOWARNING;
 
-static void str2int(const char *s, int *dst)
+static int str2int(const char *s, int *dst)
 {
 	/* if not null sets the given integer to value */
-	if (!s) return;
+	if (!s) {
+		*dst = 0;
+		return -1;
+	}
 	else *dst = atoi(s);
+	return 0;
 }
 
-void get_int_attr(xmlNode *n, const char *attr_name, int *dst)
-{
-	str2int(get_attr_value(find_attr(n->properties, attr_name)), dst);
-}
-
-void get_str_attr(xmlNode *n, const char *attr_name, str_t *dst)
+int get_int_attr(xmlNode *n, const char *attr_name, int *dst)
 {
 	const char *s = get_attr_value(find_attr(n->properties, attr_name));
-	if (!s) str_clear(dst);
-	else str_dup_zt(dst, s);
+	if (!s) return 1;
+	return str2int(s, dst);
+}
+
+int get_str_attr(xmlNode *n, const char *attr_name, str_t *dst)
+{
+	const char *s = get_attr_value(find_attr(n->properties, attr_name));
+	if (!s) {
+		str_clear(dst);
+		return 1;
+	}
+	else return str_dup_zt(dst, s);
 }
 
 int xmlstrcmp(const xmlChar *xmls, const char *name)

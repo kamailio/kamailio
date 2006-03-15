@@ -108,6 +108,8 @@ char *str_str(const str_t *s, const str_t *search_for);
 /* creates new string as concatenation of a and b */
 int str_concat(str_t *dst, str_t *a, str_t *b);
 
+int replace_str(const str_t *src, str_t *dst, const str_t *sample, const str_t *value);
+
 #ifdef __cplusplus
 }
 #endif

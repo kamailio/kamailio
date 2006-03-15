@@ -35,8 +35,8 @@ const char *get_node_value(xmlNode *n);
 xmlNode *find_node(xmlNode *parent, const char *name, const char *nspace);
 const char *get_attr_value(xmlAttr *a);
 int cmp_node(xmlNode *node, const char *name, const char *nspace);
-void get_int_attr(xmlNode *n, const char *attr_name, int *dst);
-void get_str_attr(xmlNode *n, const char *attr_name, str_t *dst);
+int get_int_attr(xmlNode *n, const char *attr_name, int *dst);
+int get_str_attr(xmlNode *n, const char *attr_name, str_t *dst);
 
 time_t xmltime2time(const char *xt);
 

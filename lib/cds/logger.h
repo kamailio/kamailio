@@ -43,7 +43,8 @@
 
 #define ERROR_LOG(a,args...)		ERR(a,##args)
 #define DEBUG_LOG(a,args...)		DBG(a,##args)
-#define TRACE_LOG(a,args...)		DBG(a,##args)
+/* #define TRACE_LOG(a,args...)		ERR(a,##args) */
+#define TRACE_LOG(fmt, args...)     LOG(L_ERR, "TRACE: "  LOC_INFO fmt, ##args)
 #define WARN_LOG(a,args...)			WARN(a,##args)
 #define FLUSH_LOG()					do{}while(0)
 

@@ -25,9 +25,11 @@
 
 #include <cds/sstr.h>
 #include <cds/memory.h>
+#include <cds/dstring.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <cds/logger.h>
 
 /** returns 1 if the string is empty */
 int is_str_empty(const str_t *s)
@@ -216,7 +218,7 @@ char *str_str(const str_t *s, const str_t *search_for)
 		if (s->s[i] == search_for->s[j]) {
 			j++;
 			i++;
-			if (i == search_for->len) return s->s + i - j;
+			if (j == search_for->len) return s->s + i - j;
 		}
 		else {
 			i = i - j + 1;
@@ -255,4 +257,47 @@ int str_concat(str_t *dst, str_t *a, str_t *b)
 	if (bl) memcpy(dst->s + al, b->s, bl);
 	
 	return 0;
+}
+
+int replace_str(const str_t *src, str_t *dst, const str_t *sample, const str_t *value)
+{
+	str_t s;
+	char *c;
+	dstring_t str;
+	int res, len;
+	
+	/* if (!dst) return -1;
+	 if (!src) {
+		str_clear(dst);
+		return -1; 
+	} */
+
+	if (is_str_empty(sample)) {
+		str_clear(dst);
+		return -1;
+	}
+
+	if (is_str_empty(src)) {
+		str_clear(dst);
+		return 0;
+	}
+	
+	s = *src;
+	dstr_init(&str, src->len + 32);
+	do {
+		c = str_str(&s, sample);
+		if (c) {
+			len = c - s.s;
+			dstr_append(&str, s.s, len);
+			dstr_append_str(&str, value);
+			s.len = s.len - len - sample->len;
+			s.s = c + sample->len;
+			if (s.len <= 0) break;
+		}
+		else dstr_append_str(&str, &s);
+	} while (c);
+	
+	res = dstr_get_str(&str, dst);
+	dstr_destroy(&str);
+	return res;
 }

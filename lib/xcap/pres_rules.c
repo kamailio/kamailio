@@ -326,7 +326,7 @@ static void free_transformations(cp_transformations_t *t)
 	cds_free(t);
 }
 
-static void free_rule(cp_rule_t *r)
+void free_rule(cp_rule_t *r)
 {
 	if (!r) return;
 	if (r->conditions) free_conditions(r->conditions);

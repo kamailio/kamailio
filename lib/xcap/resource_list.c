@@ -45,7 +45,7 @@ typedef struct _traversed_list_t {
 } traversed_list_t;
 
 typedef struct {
-	const char *xcap_root;
+	const str_t *xcap_root;
 	xcap_query_t *xcap_params;
 	traversed_list_t *traversed;
 	traversed_list_t *traversed_last;
@@ -78,7 +78,7 @@ void canonicalize_uri(const str_t *uri, str_t *dst)
 	/* DEBUG_LOG("canonicalized uri: \'%.*s\'\n", dst->len, dst->s); */
 }
 
-char *xcap_uri_for_rls_resource(const char *xcap_root, const str_t *uri)
+char *xcap_uri_for_rls_resource(const str_t *xcap_root, const str_t *uri)
 {
 	dstring_t s;
 	int l;
@@ -86,10 +86,9 @@ char *xcap_uri_for_rls_resource(const char *xcap_root, const str_t *uri)
 	char *dst = NULL;
 
 	if (!xcap_root) return NULL;
-	l = strlen(xcap_root);
-	dstr_init(&s, 2 * l + 32);
-	dstr_append(&s, xcap_root, l);
-	if (xcap_root[l - 1] != '/') dstr_append(&s, "/", 1);
+	dstr_init(&s, 2 * xcap_root->len + 32);
+	dstr_append_str(&s, xcap_root);
+	if (xcap_root->s[xcap_root->len - 1] != '/') dstr_append(&s, "/", 1);
 	dstr_append_zt(&s, "rls-services/global/index/~~/rls-services/service[@uri=%22");
 	canonicalize_uri(uri, &c_uri);
 	dstr_append_str(&s, &c_uri);
@@ -108,17 +107,16 @@ char *xcap_uri_for_rls_resource(const char *xcap_root, const str_t *uri)
 	return dst;
 }
 
-char *xcap_uri_for_rls_services(const char *xcap_root)
+char *xcap_uri_for_rls_services(const str_t *xcap_root)
 {
 	dstring_t s;
 	int l;
 	char *dst = NULL;
 
 	if (!xcap_root) return NULL;
-	l = strlen(xcap_root);
-	dstr_init(&s, 2 * l + 32);
-	dstr_append(&s, xcap_root, l);
-	if (xcap_root[l - 1] != '/') dstr_append(&s, "/", 1);
+	dstr_init(&s, 2 * xcap_root->len + 32);
+	dstr_append_str(&s, xcap_root);
+	if (xcap_root->s[xcap_root->len - 1] != '/') dstr_append(&s, "/", 1);
 	dstr_append_zt(&s, "rls-services/global/index");
 	
 	l = dstr_get_data_length(&s);
@@ -160,7 +158,7 @@ void free_traversed_list(traversed_list_t *list)
 
 /* ------- helper functions (doing flat list) ------- */
 
-static char *relative2absolute_uri(const char *xcap_root, const char *relative)
+static char *relative2absolute_uri(const str_t *xcap_root, const char *relative)
 {
 	/* FIXME: do absolute uri from ref (RFC 3986, section 5.2) */
 	int len;
@@ -170,8 +168,8 @@ static char *relative2absolute_uri(const char *xcap_root, const char *relative)
 	char *dst = NULL;
 
 	if (xcap_root) {
-		root_len = strlen(xcap_root);
-		if (xcap_root[root_len - 1] != '/') slash_len = 1;
+		root_len = xcap_root->len;
+		if (xcap_root->s[root_len - 1] != '/') slash_len = 1;
 	}
 	if (relative) rel_len = strlen(relative);
 	len = root_len + slash_len + rel_len + 1;
@@ -179,7 +177,7 @@ static char *relative2absolute_uri(const char *xcap_root, const char *relative)
 	dst = (char *)cds_malloc(len);
 	if (!dst) return NULL;
 
-	if (xcap_root) memcpy(dst, xcap_root, root_len);
+	if (xcap_root) memcpy(dst, xcap_root->s, root_len);
 	if (slash_len) dst[root_len] = '/';
 	if (relative) memcpy(dst + root_len + slash_len, relative, rel_len);
 	dst[len - 1] = 0;
@@ -446,7 +444,7 @@ static int process_resource_list(const char *rl_uri, process_params_t *params)
 	return res;
 }
 
-static int create_flat_list(service_t *srv, xcap_query_t *xcap_params, const char *xcap_root, flat_list_t **dst)
+static int create_flat_list(service_t *srv, xcap_query_t *xcap_params, const str_t *xcap_root, flat_list_t **dst)
 {
 	process_params_t params;
 	int res = -1;
@@ -534,7 +532,7 @@ static service_t *find_service(rls_services_t *rls, const str_t *uri)
 
 /* ------- rls examining ------- */
 
-int get_rls(const char *xcap_root, const str_t *uri, xcap_query_t *xcap_params, const str_t *package, flat_list_t **dst)
+int get_rls(const str_t *xcap_root, const str_t *uri, xcap_query_t *xcap_params, const str_t *package, flat_list_t **dst)
 {
 	char *data = NULL;
 	int dsize = 0;
@@ -601,7 +599,7 @@ int get_rls(const char *xcap_root, const str_t *uri, xcap_query_t *xcap_params, 
 	return RES_OK;
 }
 
-int get_rls_from_full_doc(const char *xcap_root, const str_t *uri, xcap_query_t *xcap_params, const str_t *package, flat_list_t **dst)
+int get_rls_from_full_doc(const str_t *xcap_root, const str_t *uri, xcap_query_t *xcap_params, const str_t *package, flat_list_t **dst)
 {
 	char *data = NULL;
 	int dsize = 0;
@@ -676,17 +674,16 @@ int get_rls_from_full_doc(const char *xcap_root, const str_t *uri, xcap_query_t 
 	return RES_OK;
 }
 
-char *xcap_uri_for_resource_list(const char *xcap_root, const str_t *user)
+char *xcap_uri_for_resource_list(const str_t *xcap_root, const str_t *user)
 {
 	dstring_t s;
 	int l;
 	char *dst = NULL;
 
 	if (!xcap_root) return NULL;
-	l = strlen(xcap_root);
-	dstr_init(&s, 2 * l + 32);
-	dstr_append(&s, xcap_root, l);
-	if (xcap_root[l - 1] != '/') dstr_append(&s, "/", 1);
+	dstr_init(&s, 2 * xcap_root->len + 32);
+	dstr_append_str(&s, xcap_root);
+	if (xcap_root->s[xcap_root->len - 1] != '/') dstr_append(&s, "/", 1);
 	dstr_append_zt(&s, "resource-lists/users/");
 	dstr_append_str(&s, user);
 	dstr_append_zt(&s, "/resource-list.xml");
@@ -703,13 +700,39 @@ char *xcap_uri_for_resource_list(const char *xcap_root, const str_t *user)
 	return dst;
 }
 
+static list_t *find_list(list_t *root, const char *name)
+{
+	list_content_t *c;
+	
+	if (!root) return root;
+	if (!name) return root;
+	if (!*name) return root; /* empty name = whole doc */
+
+	c = root->content;
+	while (c) {
+		if (c->type == lct_list) {
+			if (c->u.list) {
+				if (strcmp(name, c->u.list->name) == 0) 
+					return c->u.list;
+			}
+		}
+		c = SEQUENCE_NEXT(c);
+	}
+
+	ERROR_LOG("list \'%s\' not found\n", name);
+	
+	return NULL;
+}
+
 /* catches and processes user's resource list as rls-services document */
-int get_resource_list_as_rls(const char *xcap_root, const str_t *user, xcap_query_t *xcap_params, flat_list_t **dst)
+int get_resource_list_from_full_doc(const str_t *xcap_root, 
+		const str_t *user, xcap_query_t *xcap_params, 
+		const char *list_name, flat_list_t **dst)
 {
 	char *data = NULL;
 	int dsize = 0;
 	service_t *service = NULL; 
-	list_t *list = NULL;
+	list_t *list = NULL, *right = NULL;
 	xcap_query_t xcap;
 	int res;
 
@@ -754,6 +777,9 @@ int get_resource_list_as_rls(const char *xcap_root, const str_t *user, xcap_quer
 		return RES_INTERNAL_ERR;
 	}
 
+	/* search for right list element */
+	right = find_list(list, list_name);
+		
 	service = (service_t*)cds_malloc(sizeof(*service));
 	if (!service) {
 		ERROR_LOG("Can't allocate memory!\n");
@@ -761,19 +787,21 @@ int get_resource_list_as_rls(const char *xcap_root, const str_t *user, xcap_quer
 	}
 	memset(service, 0, sizeof(*service));
 	service->content_type = stc_list;
-	service->content.list = list;
+	service->content.list = right;
 	/*service->uri = ??? */
-	
+
 	/* create flat document */
 	res = create_flat_list(service, &xcap, xcap_root, dst);
+
+	service->content.list = list; /* free whole document not only "right" list */
+	free_service(service);
+	
 	if (res != RES_OK) {
 		ERROR_LOG("Flat list creation error\n");
-		free_service(service);
 		free_flat_list(*dst);
 		*dst = NULL;
 		return res;
 	}
-	free_service(service);
 	
 	return RES_OK;
 }

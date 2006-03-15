@@ -43,6 +43,7 @@ typedef enum {
 char *xcap_uri_for_pres_rules(const char *xcap_root, const str_t *uri);
 int get_pres_rules(const char *xcap_root, const str_t *uri, xcap_query_t *xcap_params, cp_ruleset_t **dst);
 void free_pres_rules(cp_ruleset_t *r);
+void free_rule(cp_rule_t *r);
 
 /* returns 0 if rule found, 1 if not found and -1 on error */
 int get_pres_rules_action(cp_ruleset_t *r, const str_t *wuri, sub_handling_t *dst_action);
