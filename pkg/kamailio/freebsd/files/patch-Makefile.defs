@@ -1,5 +1,5 @@
---- Makefile.defs.orig	Sun Mar  5 20:07:55 2006
-+++ Makefile.defs	Sun Mar  5 20:14:38 2006
+--- Makefile.defs.orig	Wed Mar 15 12:38:03 2006
++++ Makefile.defs	Wed Mar 15 13:19:16 2006
 @@ -167,13 +167,13 @@
  TAR ?= tar
  endif
@@ -21,34 +21,8 @@
  
  #set some vars from the environment (and not make builtins)
  CC   := $(shell echo "$${CC}")
-@@ -471,7 +471,7 @@
- 	found_lock_method=yes
- endif
+@@ -1123,8 +1123,8 @@
  
--CFLAGS=
-+saved_CFLAGS:=$(CFLAGS)
- LDFLAGS=
- # setting CFLAGS
- ifeq ($(mode), release)
-@@ -1046,7 +1046,8 @@
- 	ifneq ($(found_lock_method), yes)
- 		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
- 		found_lock_method=yes
--		LIBS= -pthread -lfl  #dlopen is in libc
-+		saved_CFLAGS+= $(PTHREAD_CFLAGS)
-+		LIBS= $(PTHREAD_LIBS) -lfl  #dlopen is in libc
- 	else
- 		LIBS= -lfl  #dlopen is in libc
- 	endif
-@@ -1121,10 +1122,15 @@
- 	endif
- endif
- 
-+CFLAGS=		$(saved_CFLAGS) -I$(LOCALBASE)/include
-+MOD_CFLAGS=	-fPIC $(CFLAGS)
-+LDFLAGS=	-L$(LOCALBASE)/lib
-+MOD_LDFLAGS=	-shared $(LDFLAGS)
-+
  #add libssl if needed
  ifneq ($(TLS),)
 -DEFS+= -I$(LOCALBASE)/ssl/include
