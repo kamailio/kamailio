@@ -554,7 +554,8 @@ append_time();
    if the SIP message's method is one from the list. IMPORTANT
    NOTE: in the list must be only methods defined in OpenSER with
    ID (invite, cancel, ack, bye, options, info, update, register,
-   message, subscribe, notify, refer, prack).
+   message, subscribe, notify, refer, prack, publish; for more
+   see: http://www.iana.org/assignments/sip-parameters).
 
    If used for replies, the function tests the value of method
    field from CSeq header.

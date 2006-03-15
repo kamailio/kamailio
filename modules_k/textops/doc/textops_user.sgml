@@ -799,7 +799,9 @@ append_time();
 		SIP message's method is one from the list. IMPORTANT NOTE: in the list
 		must be only methods defined in &ser; with ID (invite, cancel, ack,
 		bye, options, info, update, register, message, subscribe, notify,
-		refer, prack).
+		refer, prack, publish; for more see:
+		<ulink url="http://www.iana.org/assignments/sip-parameters">
+			http://www.iana.org/assignments/sip-parameters</ulink>).
 		</para>
 		<para>
 		If used for replies, the function tests the value of method field from
