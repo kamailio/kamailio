@@ -348,10 +348,10 @@ static int db_get_did(str* did, str* domain)
 	if (res->n > 0) {
 		val = res->rows[0].values;
 
-		     /* Test flags firs, we are only interested in rows
+		     /* Test flags first, we are only interested in rows
 		      * that are not disabled
 		      */
-		if (val[1].nul || !(val[1].val.int_val & DB_DISABLED)){
+		if (val[1].nul || (val[1].val.int_val & DB_DISABLED)) {
 			db.free_result(con, res);
 			return 0;
 		}
