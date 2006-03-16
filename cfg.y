@@ -1258,7 +1258,7 @@ host:
 fcmd:
 	cmd {
 		/* check if allowed */
-		if (rt==ONSEND_ROUTE) {
+		if ($1 && rt==ONSEND_ROUTE) {
 			switch($1->type) {
 				case DROP_T:
 				case SEND_T:
