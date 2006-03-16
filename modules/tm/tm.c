@@ -116,6 +116,7 @@ MODULE_VERSION
 
 /* fixup functions */
 static int fixup_hostport2proxy(void** param, int param_no);
+static int fixup_proto_hostport2proxy(void** param, int param_no);
 static int fixup_on_failure(void** param, int param_no);
 static int fixup_on_reply(void** param, int param_no);
 static int fixup_on_branch(void** param, int param_no);
@@ -145,6 +146,7 @@ inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg , char *proxy,
 inline static int w_t_relay_to_tls( struct sip_msg  *p_msg , char *proxy,
 				char *);
 #endif
+inline static int w_t_relay_to(struct sip_msg* msg, char* str,char*);
 inline static int w_t_replicate( struct sip_msg  *p_msg ,
 				char *proxy, /* struct proxy_l *proxy expected */
 				char *_foo       /* nothing expected */ );
@@ -161,6 +163,7 @@ inline static int w_t_replicate_tls( struct sip_msg  *p_msg ,
 				char *proxy, /* struct proxy_l *proxy expected */
 				char *_foo       /* nothing expected */ );
 #endif
+inline static int w_t_replicate_to(struct sip_msg* msg, char* str,char*);
 inline static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* );
 inline static int w_t_forward_nonack_uri(struct sip_msg* msg, char* str,char*);
 inline static int w_t_forward_nonack_udp(struct sip_msg* msg, char* str,char*);
@@ -170,6 +173,7 @@ inline static int w_t_forward_nonack_tcp(struct sip_msg* msg, char* str,char*);
 #ifdef USE_TLS
 inline static int w_t_forward_nonack_tls(struct sip_msg* msg, char* str,char*);
 #endif
+inline static int w_t_forward_nonack_to(struct sip_msg* msg, char* str,char*);
 inline static int w_t_on_negative(struct sip_msg* msg, char *go_to, char *foo);
 inline static int w_t_on_branch(struct sip_msg* msg, char *go_to, char *foo);
 inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
@@ -216,8 +220,12 @@ static cmd_export_t cmds[]={
 	{"t_replicate_tls",    w_t_replicate_tls,       2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 #endif
+	{"t_replicate_to", w_t_replicate_to,  		2, fixup_proto_hostport2proxy,
+			REQUEST_ROUTE},
 	{T_RELAY,              w_t_relay,               0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
+	{"t_relay_to", w_t_relay_to,  			2, fixup_proto_hostport2proxy,
+			REQUEST_ROUTE},
 	{T_FORWARD_NONACK,     w_t_forward_nonack,      2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 	{T_FORWARD_NONACK_URI, w_t_forward_nonack_uri,  0, 0,
@@ -232,6 +240,8 @@ static cmd_export_t cmds[]={
 	{T_FORWARD_NONACK_TLS, w_t_forward_nonack_tls,  2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 #endif
+	{"t_forward_nonack_to", w_t_forward_nonack_to,  2, fixup_proto_hostport2proxy,
+			REQUEST_ROUTE},
 	{"t_on_failure",       w_t_on_negative,         1, fixup_on_failure,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_on_reply",         w_t_on_reply,            1, fixup_on_reply,
@@ -417,6 +427,19 @@ static int fixup_hostport2proxy(void** param, int param_no)
 		LOG(L_ERR,"ERROR: fixup_hostport2proxy called with parameter #<>{1,2}\n");
 		return E_BUG;
 	}
+}
+
+/* (char *$proto, char *$host:port) ==> (fparam, fparam)  */
+static int fixup_proto_hostport2proxy(void** param, int param_no) {
+	int ret;
+
+	ret = fix_param(FPARAM_AVP, param);
+	if (ret <= 0) return ret;
+/*	if (param_no = 1) {		FIXME: param_str currently does not offer INT/STR overloading
+                ret = fix_param(FPARAM_INT, param);
+		if (ret <= 0) return ret;
+	} */
+	return fix_param(FPARAM_ASCIIZ, param);
 }
 
 
@@ -606,9 +629,103 @@ inline static int w_t_check(struct sip_msg* msg, char* str, char* str2)
 	return t_check( msg , 0  ) ? 1 : -1;
 }
 
+inline static int str2proto(char *s, int len) {
+	if (len == 3 && !strncasecmp(s, "udp", 3))
+		return PROTO_UDP;
+	else if (len == 3 && !strncasecmp(s, "tcp", 3))  /* tcp&tls checks will be passed in getproto() */
+		return PROTO_TCP;
+	else if (len == 3 && !strncasecmp(s, "tls", 3))
+		return PROTO_TLS;	
+	else
+		return PROTO_NONE;
+}
 
-inline static int _w_t_forward_nonack(struct sip_msg* msg, char* proxy,
-																	int proto)
+inline static struct proxy_l* t_protoaddr2proxy(char *proto_par, char *addr_par) {
+	struct proxy_l *proxy = 0;
+	avp_t* avp;
+	avp_value_t val;
+	int proto, port, err;
+	str s;
+	char *c;
+	
+	switch(((fparam_t *)proto_par)->type) {
+	case FPARAM_AVP:
+		if (!(avp = search_first_avp(((fparam_t *)proto_par)->v.avp.flags, ((fparam_t *)proto_par)->v.avp.name, &val, 0))) {
+			proto = PROTO_NONE;
+		} else {
+			if (avp->flags & AVP_VAL_STR) {
+				proto = str2proto(val.s.s, val.s.len);
+			}
+			else {
+	                        proto = val.n;
+			}
+		}
+                break;
+
+	case FPARAM_INT:
+		proto = ((fparam_t *)proto_par)->v.i;
+		break;
+	case FPARAM_ASCIIZ:
+		proto = str2proto( ((fparam_t *)proto_par)->v.asciiz, strlen(((fparam_t *)proto_par)->v.asciiz));
+		break;
+	default:
+		ERR("BUG: Invalid proto parameter value in t_protoaddr2proxy\n");
+		return 0;
+        }
+
+
+	switch(((fparam_t *)addr_par)->type) {
+	case FPARAM_AVP:
+		if (!(avp = search_first_avp(((fparam_t *)addr_par)->v.avp.flags, ((fparam_t *)addr_par)->v.avp.name, &val, 0))) {
+			s.len = 0;
+		} else {
+			if ((avp->flags & AVP_VAL_STR) == 0) {
+				LOG(L_ERR, "tm:t_protoaddr2proxy: avp <%.*s> value is not string\n",
+					((fparam_t *)addr_par)->v.avp.name.s.len, ((fparam_t *)addr_par)->v.avp.name.s.s);
+				return 0;
+			}
+			s = val.s;
+		}
+		break;
+
+	case FPARAM_ASCIIZ:
+		s.s = ((fparam_t *) addr_par)->v.asciiz;
+		s.len = strlen(s.s);
+		break;
+
+	default:
+		ERR("BUG: Invalid addr parameter value in t_protoaddr2proxy\n");
+		return 0;
+	}
+
+	port = 5060;
+	if (s.len) {
+		c = memchr(s.s, ':', s.len);
+		if (c) {
+			port = str2s(c+1, s.len-(c-s.s+1), &err);
+			if (err!=0) {
+				LOG(L_ERR, "tm:t_protoaddr2proxy: bad port number <%.*s>\n",
+					s.len, s.s);
+				 return 0;
+			}
+			s.len = c-s.s;
+		}
+	}
+	if (!s.len) {
+		LOG(L_ERR, "tm: protoaddr2proxy: host name is empty\n");
+		return 0;
+	}
+	proxy=mk_proxy(&s, port, proto);
+	if (proxy==0) {
+		LOG(L_ERR, "tm: protoaddr2proxy: bad host name in URI <%.*s>\n",
+			s.len, s.s );
+		return 0;
+	}
+	return proxy;
+}
+
+inline static int _w_t_forward_nonack(struct sip_msg* msg, struct proxy_l* proxy,
+	int proto)
 {
 	struct cell *t;
 	if (t_check( msg , 0 )==-1) {
@@ -622,7 +739,7 @@ inline static int _w_t_forward_nonack(struct sip_msg* msg, char* proxy,
 			LOG(L_WARN,"WARNING: you don't really want to fwd hbh ACK\n");
 			return -1;
 		}
-		return t_forward_nonack(t, msg, ( struct proxy_l *) proxy, proto );
+		return t_forward_nonack(t, msg, proxy, proto );
 	} else {
 		DBG("DEBUG: forward_nonack: no transaction found\n");
 		return -1;
@@ -633,7 +750,7 @@ inline static int _w_t_forward_nonack(struct sip_msg* msg, char* proxy,
 inline static int w_t_forward_nonack( struct sip_msg* msg, char* proxy,
 										char* foo)
 {
-	return _w_t_forward_nonack(msg, proxy, PROTO_NONE);
+	return _w_t_forward_nonack(msg, ( struct proxy_l *) proxy, PROTO_NONE);
 }
 
 
@@ -647,7 +764,7 @@ inline static int w_t_forward_nonack_uri(struct sip_msg* msg, char *foo,
 inline static int w_t_forward_nonack_udp( struct sip_msg* msg, char* proxy,
 										char* foo)
 {
-	return _w_t_forward_nonack(msg, proxy, PROTO_UDP);
+	return _w_t_forward_nonack(msg, ( struct proxy_l *) proxy, PROTO_UDP);
 }
 
 
@@ -655,7 +772,7 @@ inline static int w_t_forward_nonack_udp( struct sip_msg* msg, char* proxy,
 inline static int w_t_forward_nonack_tcp( struct sip_msg* msg, char* proxy,
 										char* foo)
 {
-	return _w_t_forward_nonack(msg, proxy, PROTO_TCP);
+	return _w_t_forward_nonack(msg, ( struct proxy_l *) proxy, PROTO_TCP);
 }
 #endif
 
@@ -664,10 +781,23 @@ inline static int w_t_forward_nonack_tcp( struct sip_msg* msg, char* proxy,
 inline static int w_t_forward_nonack_tls( struct sip_msg* msg, char* proxy,
 										char* foo)
 {
-	return _w_t_forward_nonack(msg, proxy, PROTO_TLS);
+	return _w_t_forward_nonack(msg, proxy, ( struct proxy_l *) PROTO_TLS);
 }
 #endif
 
+inline static int w_t_forward_nonack_to( struct sip_msg  *p_msg ,
+	char *proto_par, 
+	char *addr_par   )
+{
+	struct proxy_l *proxy;
+	int r = -1;
+	proxy = t_protoaddr2proxy(proto_par, addr_par);
+	if (proxy) {
+		r = _w_t_forward_nonack(p_msg, proxy, proxy->proto);		
+		free_proxy(proxy);
+	}
+	return r;
+}
 
 static int get_param_val(int* code, char** reason, fparam_t* c, fparam_t* r) {
 
@@ -873,6 +1003,20 @@ inline static int w_t_relay_to_tls( struct sip_msg  *p_msg ,
 }
 #endif
 
+inline static int w_t_relay_to( struct sip_msg  *p_msg ,
+	char *proto_par, 
+	char *addr_par   )
+{
+	struct proxy_l *proxy;
+	int r = -1;
+	proxy = t_protoaddr2proxy(proto_par, addr_par);
+	if (proxy) {
+		r = _w_t_relay_to(p_msg, proxy);		
+		free_proxy(proxy);
+	}
+	return r;
+}
+
 
 inline static int w_t_replicate( struct sip_msg  *p_msg ,
 	char *proxy, /* struct proxy_l *proxy expected */
@@ -880,7 +1024,6 @@ inline static int w_t_replicate( struct sip_msg  *p_msg ,
 {
 	return t_replicate(p_msg, ( struct proxy_l *) proxy, p_msg->rcv.proto );
 }
-
 
 inline static int w_t_replicate_udp( struct sip_msg  *p_msg ,
 	char *proxy, /* struct proxy_l *proxy expected */
@@ -909,6 +1052,19 @@ inline static int w_t_replicate_tls( struct sip_msg  *p_msg ,
 }
 #endif
 
+inline static int w_t_replicate_to( struct sip_msg  *p_msg ,
+	char *proto_par, 
+	char *addr_par   )
+{
+	struct proxy_l *proxy;
+	int r = -1;
+	proxy = t_protoaddr2proxy(proto_par, addr_par);
+	if (proxy) {
+		r = t_replicate(p_msg, proxy, proxy->proto);		
+		free_proxy(proxy);
+	}
+	return r;
+}
 
 inline static int w_t_relay( struct sip_msg  *p_msg ,
 						char *_foo, char *_bar)
