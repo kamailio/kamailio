@@ -58,24 +58,14 @@ static void test(rpc_t *rpc, void *c)
 
 /* Trace method */
 
-/* #define rpc_lf(rpc, c)	rpc->add(c, "s","")
+#define rpc_lf(rpc, c)	rpc->add(c, "s","")
 #define rpc_printf(rpc, c, buf, args...) sprintf(buf, ##args); rpc->add("s", buf);
-*/
-
-#define rpc_lf(rpc, c)	fputs("\n", f)
-#define rpc_printf(rpc, c, buf, args...) sprintf(buf, ##args); fputs(buf, f);
-
-static char *debug_file = "/tmp/euac.log";
 
 static void trace(rpc_t *rpc, void *c)
 {
 	int i = 0;
 	events_uac_t *uac;
 	char tmp[2048];
-	
-	/* debugging */
-	FILE *f = fopen(debug_file, "w");
-	if (!f) return;
 	
 	rpc_printf(rpc, c, tmp, "%s", "Presence B2BUA Trace:");
 	rpc_lf(rpc, c);
@@ -100,8 +90,6 @@ static void trace(rpc_t *rpc, void *c)
 		rpc->printf(c, "euac_internals not set!");
 	}
 
-	fclose(f); /* debugging */
-	
 	rpc->send(c);
 }
 /* ----- exported data structure with methods ----- */

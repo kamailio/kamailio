@@ -1,3 +1,6 @@
+2006-03-17
+	* trace function not writing into file (was due to memory leaks in fifo)
+
 2006-03-09
 	* improved behavior if low memory
 	* added new error transitions into state machine
