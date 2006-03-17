@@ -50,6 +50,7 @@ Daniel-Constantin Mierla
               1.3.20. append_time()
               1.3.21. is_method(name)
               1.3.22. remove_hf(hname)
+              1.3.23. has_body(), has_body(mime)
 
         1.4. Known Limitations
 
@@ -79,6 +80,7 @@ Daniel-Constantin Mierla
    1-20. append_time usage
    1-21. is_method usage
    1-22. remove_hf usage
+   1-23. has_body usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -598,6 +600,32 @@ if(is_method("OPTION|UPDATE"))
 if(remove_hf("User-Agent"))
 {
     # User Agent header removed
+}
+...
+     _________________________________________________________
+
+1.3.23. has_body(), has_body(mime)
+
+   The function returns true if the SIP message has a body
+   attached. The checked includes also the "Content-Lenght"
+   header presence and value.
+
+   If a paramter is given, the mime described will be also
+   checked against the "Content-Type" header.
+
+   Meaning of the parameters is as follows:
+
+     * mime - mime to be checked against the "Content-Type"
+       header. If not present or 0, this check will be disabled.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE and BRANCH_ROUTE.
+
+   Example 1-23. has_body usage
+...
+if(has_body("application/sdp"))
+{
+    # do interesting stuff here
 }
 ...
      _________________________________________________________

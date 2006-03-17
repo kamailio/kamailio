@@ -42,13 +42,9 @@
  *  2004-07-06  subst_user added (like subst_uri but only for user) (sobomax)
  *  2004-11-12  subst_user changes (old serdev mails) (andrei)
  *  2005-07-05  is_method("name") to check method using id (ramona)
- *  
- * Example ser module, it implements the following commands:
- * search_append("key", "txt") - insert a "txt" after "key"
- * replace("txt1", "txt2") - replaces txt1 with txt2 (txt1 can be a re)
- * search("txt") - searches for txt (txt can be a regular expression)
- * append_to_reply("txt") - appends txt to the reply?
- * append_hf("P-foo: bar\r\n");
+ *  2006-03-17  applied patch from Marc Haisenko <haisenko@comdasys.com> 
+ *              for adding has_body() function (bogdan)
+ *
  */
 
 
@@ -64,6 +60,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_hname2.h"
 #include "../../parser/parse_methods.h"
+#include "../../parser/parse_content.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -107,6 +104,7 @@ static int insert_hf_2(struct sip_msg* msg, char* str1, char* str2);
 static int append_urihf(struct sip_msg* msg, char* str1, char* str2);
 static int append_time_f(struct sip_msg* msg, char* , char *);
 static int is_method_f(struct sip_msg* msg, char* , char *);
+static int has_body_f(struct sip_msg *msg, char *type, char *str2 );
 
 static int fixup_regex(void**, int);
 static int fixup_substre(void**, int);
@@ -115,6 +113,7 @@ static int hname_fixup(void** param, int param_no);
 static int fixup_method(void** param, int param_no);
 static int add_header_fixup(void** param, int param_no);
 static int it_list_fixup(void** param, int param_no);
+static int fixup_body_type(void** param, int param_no);
 
 static int mod_init(void);
 
@@ -164,26 +163,29 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"is_method",        is_method_f,       1, fixup_method,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"has_body",         has_body_f,        0, 0,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"has_body",         has_body_f,        1, fixup_body_type,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{0,0,0,0,0}
 };
 
-static param_export_t params[]={ {0,0,0} }; /* no params */
 
 struct module_exports exports= {
-	"textops",
-	cmds,
-	params,
-	0,        /* exported statistics */
-	mod_init, /* module initialization function */
-	0, /* response function */
-	0,  /* destroy function */
-	0, /* per-child init function */
+	"textops",  /* module name*/
+	cmds,       /* exported functions */
+	0,          /* module parameters */
+	0,          /* exported statistics */
+	mod_init,   /* module initialization function */
+	0,          /* response function */
+	0,          /* destroy function */
+	0,          /* per-child init function */
 };
 
 
 static int mod_init(void)
 {
-	fprintf(stderr, "%s - initializing\n", exports.name);
+	LOG(L_INFO, "TextOPS - initializing\n");
 	return 0;
 }
 
@@ -1184,4 +1186,80 @@ static int add_header_fixup(void** param, int param_no)
 			"ERROR:textops:add_header_fixup: wrong number of parameters\n");
 		return E_UNSPEC;
 	}
+}
+
+
+static int fixup_body_type(void** param, int param_no)
+{
+	char *p;
+	char *r;
+	int type;
+
+	if(param_no==1) {
+		p = (char*)*param;
+		if (p==0 || p[0]==0) {
+			type = 0;
+		} else {
+			r = decode_mime_type( p, p+strlen(p) , &type);
+			if (r==0) {
+				LOG(L_ERR,"ERROR:textops:fixup_body_type: unsupported "
+					"mime <%s>\n",p);
+				return E_CFG;
+			}
+			if ( r!=p+strlen(p) ) {
+				LOG(L_ERR,"ERROR:textops:fixup_body_type: multiple mimes not "
+					"supported!\n");
+				return E_CFG;
+			}
+		}
+		pkg_free(*param);
+		*param = (void*)(long)type;
+	}
+	return 0;
+
+}
+
+
+static int has_body_f(struct sip_msg *msg, char *type, char *str2 )
+{
+	int mime;
+
+	/* get body pointer */
+	if ( get_body(msg)==0 )
+		return -1;
+
+	/* all headears are already parsed by "get_body" */
+	if (msg->content_length==0) {
+		LOG (L_ERR, "ERROR:textops:has_body: very bogus message with body "
+			"but no content length hdr\n");
+		return -1;
+	}
+
+	if (get_content_length (msg)==0) {
+		DBG("DEBUG:textops:has_body: content length is zero\n");
+		/* Nothing to see here, please move on. */
+		return -1;
+	}
+
+	/* check type also? */
+	if (type==0)
+		return 1;
+
+	mime = parse_content_type_hdr (msg);
+	if (mime<0) {
+		LOG (L_ERR, "ERROR:textops:has_body: failed to extract "
+			"content type hdr\n");
+		return -1;
+	}
+	if (mime==0) {
+		/* content type hdr not found -> according the RFC3261 we
+		 * assume APPLICATION/SDP  --bogdan */
+		mime = ((TYPE_APPLICATION << 16) + SUBTYPE_SDP);
+	}
+	DBG("DBUG:textops:has_body: Content type is %d\n",mime);
+
+	if ( mime!=(int)(unsigned long)type )
+		return -1;
+
+	return 1;
 }

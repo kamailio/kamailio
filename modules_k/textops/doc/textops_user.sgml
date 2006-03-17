@@ -869,6 +869,46 @@ if(remove_hf("User-Agent"))
 		</example>
 	</section>
 
+	<section>
+		<title>
+		<function moreinfo="none">has_body()</function>,
+		<function moreinfo="none">has_body(mime)</function>
+		</title>
+		<para>
+		The function returns <emphasis>true</emphasis> if the SIP message
+		has a body attached. The checked includes also the 
+		<quote>Content-Lenght</quote> header presence and value.
+		</para>
+		<para>
+		If a paramter is given, the mime described will be also checked against
+		the <quote>Content-Type</quote> header.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>mime</emphasis> - mime to be checked against the 
+				<quote>Content-Type</quote> header. If not present or 0, this
+				check will be disabled.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE and BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>has_body</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(has_body("application/sdp"))
+{
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 
 
 
