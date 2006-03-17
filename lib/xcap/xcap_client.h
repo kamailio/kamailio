@@ -27,8 +27,6 @@
 #define __XCAP_CLIENT_H
 
 typedef struct {
-	/** full HTTP/HTTPS uri for the query */
-	char *uri;
 	/** username for authentication */
 	char *auth_user;
 	/** password used for authentication */
@@ -37,11 +35,15 @@ typedef struct {
 	 * stored in certificate and trust a certificate
 	 * without know CA). */
 	int enable_unverified_ssl_peer;
-} xcap_query_t;
+} xcap_query_params_t;
 
 /** Sends a XCAP query to the destination and using parameters from 
  * query variable a returns received data in output variables buf
  * and bsize. */
-int xcap_query(xcap_query_t *query, char **buf, int *bsize);
+/* URI is full HTTP/HTTPS uri for the query */
+int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bsize);
+
+void free_xcap_params_content(xcap_query_params_t *params);
+int dup_xcap_params(xcap_query_params_t *dst, xcap_query_params_t *src);
 
 #endif

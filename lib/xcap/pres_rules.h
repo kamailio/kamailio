@@ -41,7 +41,7 @@ typedef enum {
 } sub_handling_t;
 
 char *xcap_uri_for_pres_rules(const char *xcap_root, const str_t *uri);
-int get_pres_rules(const char *xcap_root, const str_t *uri, xcap_query_t *xcap_params, cp_ruleset_t **dst);
+int get_pres_rules(const char *xcap_root, const str_t *uri, xcap_query_params_t *xcap_params, cp_ruleset_t **dst);
 void free_pres_rules(cp_ruleset_t *r);
 void free_rule(cp_rule_t *r);
 

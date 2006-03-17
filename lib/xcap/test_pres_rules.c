@@ -157,7 +157,7 @@ void test_rules(cp_ruleset_t *pres_rules, const char *uri)
 int pres_rules_test(const char *xcap_root, const char *uri)
 {
 	cp_ruleset_t *pres_rules = NULL;
-	xcap_query_t xcap;
+	xcap_query_params_t xcap;
 	int res;
 	str_t u;
 	

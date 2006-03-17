@@ -60,27 +60,22 @@ char *xcap_uri_for_pres_rules(const char *xcap_root, const str_t *uri)
 	return dst;
 }
 
-int get_pres_rules(const char *xcap_root, const str_t *uri, xcap_query_t *xcap_params, cp_ruleset_t **dst)
+int get_pres_rules(const char *xcap_root, const str_t *uri, xcap_query_params_t *xcap_params, cp_ruleset_t **dst)
 {
 	char *data = NULL;
 	int dsize = 0;
-	xcap_query_t xcap;
+	char *xcap_uri;
 	int res = RES_OK;
 	
-	if (xcap_params) {
-		xcap = *xcap_params;
-	}
-	else memset(&xcap, 0, sizeof(xcap));
-	
-	xcap.uri = xcap_uri_for_pres_rules(xcap_root, uri);
-	res = xcap_query(&xcap, &data, &dsize);
+	xcap_uri = xcap_uri_for_pres_rules(xcap_root, uri);
+	res = xcap_query(xcap_uri, xcap_params, &data, &dsize);
 	if (res != RES_OK) {
-		DEBUG_LOG("XCAP problems for uri \'%s\'\n", xcap.uri ? xcap.uri: "???");
+		DEBUG_LOG("XCAP problems for uri \'%s\'\n", xcap_uri ? xcap_uri: "???");
 		if (data) cds_free(data);
-		if (xcap.uri) cds_free(xcap.uri);
+		if (xcap_uri) cds_free(xcap_uri);
 		return RES_XCAP_QUERY_ERR;
 	}
-	if (xcap.uri) cds_free(xcap.uri);
+	if (xcap_uri) cds_free(xcap_uri);
 	
 	/* parse input data */
 	res = parse_pres_rules(data, dsize, dst);

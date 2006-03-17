@@ -42,9 +42,9 @@ typedef struct _flat_list_t {
 
 char *xcap_uri_for_rls_resource(const str_t *xcap_root, const str_t *uri);
 void canonicalize_uri(const str_t *uri, str_t *dst);
-int get_rls(const str_t *xcap_root, const str_t *uri, xcap_query_t *xcap_params, const str_t *package, flat_list_t **dst);
-int get_rls_from_full_doc(const str_t *xcap_root, const str_t *uri, xcap_query_t *xcap_params, const str_t *package, flat_list_t **dst);
-int get_resource_list_from_full_doc(const str_t *xcap_root, const str_t *user, xcap_query_t *xcap_params, const char *list_name, flat_list_t **dst);
+int get_rls(const str_t *xcap_root, const str_t *uri, xcap_query_params_t *xcap_params, const str_t *package, flat_list_t **dst);
+int get_rls_from_full_doc(const str_t *xcap_root, const str_t *uri, xcap_query_params_t *xcap_params, const str_t *package, flat_list_t **dst);
+int get_resource_list_from_full_doc(const str_t *xcap_root, const str_t *user, xcap_query_params_t *xcap_params, const char *list_name, flat_list_t **dst);
 /* TODO: int get_resource_list(const str_t *xcap_root, const str_t *user, xcap_query_t *xcap_params, const str_t *list_name, flat_list_t **dst); */
 void free_flat_list(flat_list_t *list);
 

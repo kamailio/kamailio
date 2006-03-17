@@ -42,7 +42,7 @@ static size_t write_data_func(void *ptr, size_t size, size_t nmemb, void *stream
 	return s;
 }
 
-int xcap_query(xcap_query_t *query, char **buf, int *bsize)
+int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bsize)
 {
 	CURLcode res = -1;
 	CURL *handle;
@@ -51,18 +51,20 @@ int xcap_query(xcap_query_t *query, char **buf, int *bsize)
 	int i;
 	long auth_methods;
 	
-	if (!query) return -1;
+	if (!uri) return -1;
 	if (!buf) return -1;
 
 	i = 0;
-	if (query->auth_user) i += strlen(query->auth_user);
-	if (query->auth_pass) i += strlen(query->auth_pass);
+	if (params) {
+		if (params->auth_user) i += strlen(params->auth_user);
+		if (params->auth_pass) i += strlen(params->auth_pass);
+	}
 	if (i > 0) {
 		/* do authentication */
 		auth = (char *)cds_malloc(i + 2);
 		if (!auth) return -1;
-		sprintf(auth, "%s:%s", query->auth_user ? query->auth_user: "",
-				query->auth_pass ? query->auth_pass: "");
+		sprintf(auth, "%s:%s", params->auth_user ? params->auth_user: "",
+				params->auth_pass ? params->auth_pass: "");
 	}
 
 	auth_methods = CURLAUTH_BASIC | CURLAUTH_DIGEST;
@@ -71,7 +73,7 @@ int xcap_query(xcap_query_t *query, char **buf, int *bsize)
 	
 	handle = curl_easy_init();
 	if (handle) {
-		curl_easy_setopt(handle, CURLOPT_URL, query->uri);
+		curl_easy_setopt(handle, CURLOPT_URL, uri);
 		
 		/* do not store data into a file - store them in memory */
 		curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_data_func);
@@ -89,9 +91,11 @@ int xcap_query(xcap_query_t *query, char **buf, int *bsize)
 		curl_easy_setopt(handle, CURLOPT_USERPWD, auth);
 
 		/* SSL */
-		if (query->enable_unverified_ssl_peer) {
-			curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, 0);
-			curl_easy_setopt(handle, CURLOPT_SSL_VERIFYHOST, 0);
+		if (params) {
+			if (params->enable_unverified_ssl_peer) {
+				curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, 0);
+				curl_easy_setopt(handle, CURLOPT_SSL_VERIFYHOST, 0);
+			}
 		}
 		
 		/* follow redirects (needed for apache mod_speling - case insesitive names) */
@@ -116,5 +120,35 @@ int xcap_query(xcap_query_t *query, char **buf, int *bsize)
 	dstr_destroy(&data);
 	if (auth) cds_free(auth);
 	return res;
+}
+
+void free_xcap_params_content(xcap_query_params_t *params)
+{
+	if (params) {
+		if (params->auth_user) cds_free(params->auth_user);
+		if (params->auth_pass) cds_free(params->auth_pass);
+		memset(params, 0, sizeof(*params));
+	}
+}
+
+int dup_xcap_params(xcap_query_params_t *dst, xcap_query_params_t *src)
+{
+	if (dst) memset(dst, 0, sizeof(*dst));
+	
+	if (src && dst) {
+		if (src->auth_user) {
+			dst->auth_user = zt_strdup(src->auth_user);
+			if (!dst->auth_user) return -1;
+		}
+		if (src->auth_pass) {
+			dst->auth_pass = zt_strdup(src->auth_pass);
+			if (!dst->auth_pass) {
+				free_xcap_params_content(dst);
+				return -2;
+			}
+		}
+	}
+	
+	return 0;
 }
 

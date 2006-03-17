@@ -243,7 +243,7 @@ static int xcap_test(const char *xcap_root, const char *uri)
 int test_flat(const str_t *xcap_root, const char *uri)
 {
 	str_t u = zt2str((char *)uri);
-	xcap_query_t xcap;
+	xcap_query_params_t xcap;
 	flat_list_t *list = NULL;
 	str_t p = zt2str("presence");
 	
