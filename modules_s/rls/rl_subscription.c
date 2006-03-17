@@ -18,7 +18,6 @@
 #include "../../parser/hf.h"
 #include "../../parser/parse_from.h"
 #include "../../data_lump_rpl.h"
-#include "qsa_rls.h"
 
 /* shared data - access due to tracing */
 typedef struct {
@@ -206,10 +205,10 @@ str_t * rls_get_uri(rl_subscription_t *s)
 	if (!s) return NULL;
 	
 	if (s->type == rls_external_subscription) {
-		return &((s)->external.record_id);
+		return &((s)->u.external.record_id);
 	}
 	else {
-		if (s->internal.s) return &s->internal.s->record_id;
+		return s->u.internal.record_id;
 	}
 	return NULL;
 }
@@ -222,7 +221,8 @@ str_t * rls_get_package(rl_subscription_t *s)
 	if (!s) return NULL;
 	
 	if (s->type == rls_external_subscription)
-		package = &((s)->external.package);
+		package = &((s)->u.external.package);
+	else package = s->u.internal.package;
 	if (!package) package = &presence;
 
 	return package;
@@ -234,17 +234,15 @@ str_t * rls_get_subscriber(rl_subscription_t *subscription)
 	
 	switch (subscription->type) {
 		case rls_external_subscription:
-			return &subscription->external.subscriber;
+			return &subscription->u.external.subscriber;
 		case rls_internal_subscription:
-			if (subscription->internal.s)
-				return &subscription->internal.s->subscriber_id;
-			break;
+			return subscription->u.internal.subscriber_id;
 	}
 
 	return NULL;
 }
 
-int add_virtual_subscriptions(rl_subscription_t *ss, flat_list_t *flat, rls_create_params_t *params)
+int add_virtual_subscriptions(rl_subscription_t *ss, flat_list_t *flat)
 {
 	flat_list_t *e;
 	/* xcap_query_t xcap; */
@@ -262,7 +260,7 @@ int add_virtual_subscriptions(rl_subscription_t *ss, flat_list_t *flat, rls_crea
 		if (s.s) s.len = strlen(s.s);
 		else s.len = 0;
 
-		res = vs_create(&s, rls_get_package(ss), &vs, e->names, ss);
+		res = vs_create(&s, &vs, e->names, ss);
 		
 		if (res != RES_OK) {
 			/* FIXME: remove already added members? */
@@ -276,36 +274,24 @@ int add_virtual_subscriptions(rl_subscription_t *ss, flat_list_t *flat, rls_crea
 	return RES_OK;
 }
 
-int create_virtual_subscriptions(rl_subscription_t *ss, rls_create_params_t *params)
+int create_virtual_subscriptions(rl_subscription_t *ss)
 {
 	flat_list_t *flat = NULL;
-	xcap_query_t xcap;
 	int res = 0;
 	str_t *ss_uri = NULL;
 	str_t *ss_package = NULL;
-	str_t *xcap_root = NULL;
-	
-	if (params) xcap_root = &params->xcap_root;
 	
 	ss_uri = rls_get_uri(ss);
 	ss_package = rls_get_package(ss);
 
-	/* XCAP query */
-	memset(&xcap, 0, sizeof(xcap));
-	/* DEBUG_LOG("doing XCAP query\n"); */
-	if (reduce_xcap_needs) {
-		res = get_rls_from_full_doc(xcap_root, ss_uri, &xcap, 
-			ss_package, &flat);
-	}
-	else {
-		res = get_rls(xcap_root, ss_uri, &xcap, 
-			ss_package, &flat);
-	}
+	res = xcap_query_rls_services(&ss->xcap_root, 
+		&ss->xcap_params,
+		ss_uri, ss_package, &flat);
 			
 	if (res != RES_OK) return res;
 	
 	/* go through flat list and find/create virtual subscriptions */
-	res = add_virtual_subscriptions(ss, flat, params);
+	res = add_virtual_subscriptions(ss, flat);
 	DEBUG_LOG("rli_create_content(): freeing flat list\n");
 	free_flat_list(flat);
 	return RES_OK;
@@ -321,12 +307,10 @@ rl_subscription_t *rls_alloc_subscription(rls_subscription_type_t type)
 		LOG(L_ERR, "rls_alloc_subscription(): can't allocate memory\n");
 		return NULL;
 	}
-	s->external.status = subscription_uninitialized;
-	s->external.usr_data = s;
-	s->internal.s = NULL;
-	s->internal.next = NULL;
-	s->internal.prev = NULL;
-	s->internal.rls = s;
+	memset(s, 0, sizeof(*s));
+	
+	s->u.external.status = subscription_uninitialized;
+	s->u.external.usr_data = s;
 	s->doc_version = 0;
 	s->changed = 0;
 	s->type = type;
@@ -335,12 +319,16 @@ rl_subscription_t *rls_alloc_subscription(rls_subscription_type_t type)
 	/* s->first_vs = NULL;
 	s->last_vs = NULL; */
 	str_clear(&s->from_uid);
+	str_clear(&s->xcap_root);
 	ptr_vector_init(&s->vs, 4);
 	
 	return s;
 }
 
-int rls_create_subscription(struct sip_msg *m, rl_subscription_t **dst, flat_list_t *flat, rls_create_params_t *params)
+int rls_create_subscription(struct sip_msg *m, 
+		rl_subscription_t **dst, 
+		flat_list_t *flat, 
+		rls_create_params_t *params)
 {
 	rl_subscription_t *s;
 	str from_uid = STR_NULL;
@@ -355,16 +343,29 @@ int rls_create_subscription(struct sip_msg *m, rl_subscription_t **dst, flat_lis
 		return RES_MEMORY_ERR;
 	}
 	generate_db_id(&s->dbid, s);
-			
-	res = sm_init_subscription_nolock(rls_manager, &s->external, m);
+
+	res = sm_init_subscription_nolock(rls_manager, &s->u.external, m);
 	if (res != RES_OK) {
 		rls_free(s);
 		return res;
 	}
+	
+	if (params) {
+		if (str_dup(&s->xcap_root, &params->xcap_root) < 0) {
+			ERR("can't duplicate xcap_root\n");
+			rls_free(s);
+			return -1;
+		}
+		if (dup_xcap_params(&s->xcap_params, &params->xcap_params) < 0) {
+			ERR("can't duplicate xcap_params\n");
+			rls_free(s);
+			return -1;
+		}
+	}		
 
 	/* store pointer to this RL subscription as user data 
 	 * of (low level) subscription */
-	s->external.usr_data = s;
+	s->u.external.usr_data = s;
 	if (get_from_uid(&from_uid, m) < 0) str_clear(&s->from_uid);
 	else str_dup(&s->from_uid, &from_uid);
 			
@@ -374,7 +375,7 @@ int rls_create_subscription(struct sip_msg *m, rl_subscription_t **dst, flat_lis
 		return res;
 	}*/
 	
-	res = add_virtual_subscriptions(s, flat, params);
+	res = add_virtual_subscriptions(s, flat);
 	if (res != 0) {
 		rls_free(s);
 		return res;
@@ -419,7 +420,7 @@ int rls_refresh_subscription(struct sip_msg *m, rl_subscription_t *s)
 	if (!s) return RES_INTERNAL_ERR;
 	if (s->type != rls_external_subscription) return RES_INTERNAL_ERR;
 
-	res = sm_refresh_subscription_nolock(rls_manager, &s->external, m);
+	res = sm_refresh_subscription_nolock(rls_manager, &s->u.external, m);
 
 	if (use_db) rls_db_update(s);
 
@@ -442,31 +443,26 @@ void rls_free(rl_subscription_t *s)
 	
 	if (!s) return;
 
-	switch (s->type) {
-		case rls_external_subscription:
-			DEBUG_LOG("rls_free(): %.*s\n", FMT_STR(s->external.record_id));
-			break;
-		case rls_internal_subscription:
-			if (s->internal.s)
-				DEBUG_LOG("rls_free(): internal s. %.*s\n", FMT_STR(s->internal.s->record_id));
-			else DEBUG_LOG("rls_free(): internal s. ???\n");
-			break;
-	}
-
 	if (use_db) rls_db_remove(s);
-
-	if (s->type == rls_external_subscription)
-		sm_release_subscription_nolock(rls_manager, &s->external);
-	else {
-		release_internal_subscription(s);
-	}
-
+	
 	cnt = ptr_vector_size(&s->vs);
 	for (i = 0; i < cnt; i++) {
 		vs = ptr_vector_get(&s->vs, i);
 		if (!vs) continue;
 		vs_free(vs);
 	}
+
+	if (s->type == rls_external_subscription) {
+		sm_release_subscription_nolock(rls_manager, &s->u.external);
+		str_free_content(&s->xcap_root); /* free ONLY for external subscriptions */
+		free_xcap_params_content(&s->xcap_params);
+	}
+	else {
+		/* release_internal_subscription(s); */
+		/* don't free xcap_root because it is "linked" to "parent" subscription */
+		/* don't free xcap_params */
+	}
+
 	ptr_vector_destroy(&s->vs);
 	str_free_content(&s->from_uid);
 	mem_free(s);
@@ -502,24 +498,24 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 	int exp_time = 0;
 	char expiration[32];
 	
-	dlg = s->external.dialog;
+	dlg = s->u.external.dialog;
 	if (!dlg) return -1;
 
 	str_clear(&doc);
 	str_clear(&content_type);
-	if (sm_subscription_pending(&s->external) != 0) {
+	if (sm_subscription_pending(&s->u.external) != 0) {
 		/* create the document only for non-pending subscriptions */
 		if (create_rlmi_document(&doc, &content_type, s, full_info) != 0) {
 			return -1;
 		}
 	}
 	
-	exp_time = sm_subscription_expires_in(rls_manager, &s->external);
+	exp_time = sm_subscription_expires_in(rls_manager, &s->u.external);
 	sprintf(expiration, ";expires=%d\r\n", exp_time);
 		
 	dstr_init(&dstr, 256);
 	dstr_append_zt(&dstr, "Subscription-State: ");
-	switch (s->external.status) {
+	switch (s->u.external.status) {
 		case subscription_active: 
 				dstr_append_zt(&dstr, "active");
 				dstr_append_zt(&dstr, expiration);
@@ -543,7 +539,7 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 				LOG(L_ERR, "sending NOTIFY for an unitialized subscription!\n");
 				break;
 	}
-	dstr_append_str(&dstr, &s->external.contact);
+	dstr_append_str(&dstr, &s->u.external.contact);
 	
 	dstr_append_zt(&dstr, "Event: ");
 	dstr_append_str(&dstr, rls_get_package(s));
@@ -559,7 +555,7 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 			dlg->rem_uri.len, 
 			ZSW(dlg->rem_uri.s), s); */
 	
-	if (sm_subscription_terminated(&s->external) == 0) {
+	if (sm_subscription_terminated(&s->u.external) == 0) {
 		/* doesn't matter if delivered or not, it will be freed otherwise !!! */
 		res = tmb.t_request_within(&method, &headers, &doc, dlg, 0, 0);
 	}
@@ -592,7 +588,7 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 static list_presence_info_t* rls2list_presence_info(rl_subscription_t *s)
 {
 	list_presence_info_t *info;
-	info = create_list_presence_info(&s->internal.s->record_id);
+	info = create_list_presence_info(s->u.internal.record_id);
 	if (!info) return info;
 
 	str_clear(&info->pres_doc);
@@ -608,13 +604,14 @@ static int rls_generate_notify_int(rl_subscription_t *s)
 	/* generate internal notification */
 	client_notify_info_t *info;
 	mq_message_t *msg;
+	int res;
 	static str_t notifier_name = { s: "rls", len: 3 };
 	
-	DEBUG_LOG("generating internal list notify\n");
+	/* TRACE("generating internal list notify\n"); */
 
-	if (!s->internal.s) return 1;
+	if (!s->u.internal.vs) return 1;
 
-	DEBUG_LOG(" ... creating message\n");
+	/* TRACE(" ... creating message\n"); */
 	msg = create_message_ex(sizeof(client_notify_info_t));
 	if (!msg) {
 		ERROR_LOG("can't create internal notify message!\n");
@@ -623,18 +620,18 @@ static int rls_generate_notify_int(rl_subscription_t *s)
 	set_data_destroy_function(msg, (destroy_function_f)free_client_notify_info_content);
 	info = (client_notify_info_t*)msg->data;
 
-	DEBUG_LOG(" ... setting info\n");
-	str_dup(&info->record_id, &s->internal.s->record_id);
-	str_dup(&info->package, &s->internal.s->package->name);
-	str_dup(&info->notifier, &notifier_name);
-	DEBUG_LOG(" ... setting list presence info\n");
+	/* TRACE(" ... setting info\n"); */
+	str_dup(&info->record_id, s->u.internal.record_id);
+	str_dup(&info->package, s->u.internal.package);
+	str_dup(&info->notifier, &notifier_name); 
+	/* TRACE(" ... setting list presence info\n"); */
 	info->data = rls2list_presence_info(s);
 	info->data_len = sizeof(list_presence_info_t);
 	info->destroy_func = (destroy_function_f)free_list_presence_info;
 
-	DEBUG_LOG(" ... before notify_subscriber\n");
-	notify_subscriber(s->internal.s, msg);
-	DEBUG_LOG(" ... after notify_subscriber\n");
+	/* TRACE(" ... before notify_subscriber (%p)\n", s->u.internal.vs); */
+	res = push_message(&s->u.internal.vs->mq, msg);
+	/* TRACE(" ... after notify_subscriber (res = %d)\n", res); */
 	return 0;
 }
 
@@ -664,13 +661,63 @@ int rls_prepare_subscription_response(rl_subscription_t *s, struct sip_msg *m) {
 	
 	if (!add_lump_rpl(m, hdr, strlen(hdr), LUMP_RPL_HDR)) return -1;
 	
-	return sm_prepare_subscription_response(rls_manager, &s->external, m);
+	return sm_prepare_subscription_response(rls_manager, &s->u.external, m);
 }
 
 /** returns the count of seconds remaining to subscription expiration */
 int rls_subscription_expires_in(rl_subscription_t *s) 
 {
 	if (s->type == rls_external_subscription) 
-		return sm_subscription_expires_in(rls_manager, &s->external);
+		return sm_subscription_expires_in(rls_manager, &s->u.external);
 	else return -1;
 }
+
+/* static str_t notifier_name = { s: "rls", len: 3 }; */
+/* static str_t pres_list_package = { s: "presence.list", len: 13 };
+
+int is_presence_list_package(const str_t *package)
+{
+	return (str_case_equals(package, &pres_list_package) == 0);
+}*/
+
+int rls_create_internal_subscription(virtual_subscription_t *vs, 
+		rl_subscription_t **dst, 
+		flat_list_t *flat)
+{
+	rl_subscription_t *rls;
+	
+	/* try to make subscription and release it if internal subscription 
+	 * not created */
+
+	if (dst) *dst = NULL;
+
+	rls = rls_alloc_subscription(rls_internal_subscription);
+	if (!rls) {
+		ERR("processing INTERNAL RLS subscription - memory allocation error\n");
+		return -1;
+	}
+
+	rls->u.internal.record_id = &vs->uri; /* !!! NEVER !!! free this */
+	rls->u.internal.package = rls_get_package(vs->subscription); /* !!! NEVER !!! free this */
+	rls->u.internal.subscriber_id = rls_get_subscriber(vs->subscription); /* !!! NEVER !!! free this */
+	rls->xcap_root = vs->subscription->xcap_root; /* !!! NEVER free this !!! */
+	rls->xcap_params = vs->subscription->xcap_params; /* !!! NEVER free this !!! */
+	rls->u.internal.vs = vs;
+	if (dst) *dst = rls;
+
+	DBG("creating internal subscription to %.*s (VS %p)\n",
+			FMT_STR(*rls->u.internal.record_id), 
+			rls->u.internal.vs);
+
+	if (add_virtual_subscriptions(rls, flat) != 0) {
+		rls_free(rls);
+		if (dst) *dst = NULL;
+		return -1;
+	}
+
+	/* generate first notification for accepted subscription */
+	rls_generate_notify(rls, 1); /* FIXME : really ????? */
+
+	return 0;
+}
+

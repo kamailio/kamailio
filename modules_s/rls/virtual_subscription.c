@@ -10,7 +10,6 @@
 #include <presence/pres_doc.h>
 #include <presence/pidf.h>
 #include <cds/list.h>
-#include "qsa_rls.h"
 
 /* shared structure holding the data */
 typedef struct {
@@ -68,31 +67,33 @@ static void process_notify_info(virtual_subscription_t *vs, client_notify_info_t
 	presentity_info_t *pinfo;
 	list_presence_info_t *linfo;
 
-	DBG("Processing internal notification\n");
-
 	if ((!vs) || (!info)) return;
 	
-	DBG("Processing internal notification (2)\n");
+/*	TRACE("Processing internal notification from %.*s\n", 
+			FMT_STR(info->notifier)); */
 
-	if (is_presence_list_package(&info->package)) {
-		DBG("Processing internal list notification\n");
+/*	if (is_presence_list_package(&info->package)) {*/
+	if (str_cmp_zt(&info->notifier, "rls") == 0) {
+		/* TRACE("Processing internal list notification\n"); */
 		
 		linfo = (list_presence_info_t*)info->data;	/* TODO: test for "presence" package? */
 		if (!linfo) return;
 		
 		/* release old document if set */
-		DEBUG_LOG(" ... freeing old documents\n");
+		/* TRACE(" ... freeing old documents\n"); */
 		str_free_content(&vs->state_document); 		
 		str_free_content(&vs->content_type);
 		
 		/* create_presence_rlmi_document(linfo, &vs->state_document, &vs->content_type); */
-		DEBUG_LOG(" ... duplicating documents\n");
+		/* TRACE(" ... duplicating documents\n"); */
 		str_dup(&vs->state_document, &linfo->pres_doc);
 		str_dup(&vs->content_type, &linfo->content_type);
 		
 		vs->status = subscription_active;
 	}
 	else {
+		/* TRACE("Processing internal NON-list notification\n"); */
+		
 		pinfo = (presentity_info_t*)info->data;	/* TODO: test for "presence" package? */
 		if (!pinfo) return;
 		
@@ -113,8 +114,12 @@ static int process_vs_messages(virtual_subscription_t *vs)
 	int cnt = 0;
 	client_notify_info_t *info;
 	mq_message_t *msg;
-	
-	if ((!vs->local_subscription_pres) && (!vs->local_subscription_list)) return 0;
+
+	/* TRACE("processing messages for VS (%p)\n", vs); */
+	if ((!vs->local_subscription_pres) && (!vs->local_subscription_list)) {
+		WARN("VS %p should not receive messages\n", vs);
+		return 0;
+	}
 
 	while (!is_msg_queue_empty(&vs->mq)) {
 		msg = pop_message(&vs->mq);
@@ -138,7 +143,7 @@ static void mark_as_modified(virtual_subscription_t *vs)
 
 	switch (rls->type) {
 		case rls_external_subscription:
-			if (sm_subscription_pending(&rls->external) == 0) {
+			if (sm_subscription_pending(&rls->u.external) == 0) {
 				/* pending subscription will not be notified */
 				return; 
 			}
@@ -230,15 +235,27 @@ static int remove_from_vs_list(virtual_subscription_t *vs)
 	return RES_OK;
 }
 
-static int create_internal_subscriptions(virtual_subscription_t *vs)
+int xcap_query_rls_services(const str_t *xcap_root, 
+		xcap_query_params_t *xcap_params,
+		const str *uri, const str *package, 
+		flat_list_t **dst)
+{
+	if (dst) *dst = NULL;
+	
+	if (reduce_xcap_needs)
+		return get_rls_from_full_doc(xcap_root, uri, xcap_params, package, dst);
+	else
+		return get_rls(xcap_root, uri, xcap_params, package, dst);
+}
+
+static int create_subscriptions(virtual_subscription_t *vs)
 {
 	/* create concrete local subscription */
 	str *package = NULL;
-	str list_package;
 	str *subscriber = NULL;
-	
+	flat_list_t *flat = NULL;
+
 	package = rls_get_package(vs->subscription);
-	subscriber = rls_get_subscriber(vs->subscription);
 
 	DEBUG_LOG("creating local subscription to %.*s\n", FMT_STR(vs->uri));
 	if (msg_queue_init(&vs->mq) != 0) {
@@ -246,43 +263,39 @@ static int create_internal_subscriptions(virtual_subscription_t *vs)
 		return -1;
 	}
 
-	vs->local_subscription_pres = subscribe(vsd->domain, 
-			package, 
-			&vs->uri, subscriber, &vs->mq, vs);
-	if (!vs->local_subscription_pres) {
-		LOG(L_ERR, "can't create local subscription (pres)!\n");
-		return -1;
-	}
-	
-	/* FIXME: list_package should be computed from package */
-	if (package) {
-		str append = STR_STATIC_INIT(".list");
-		list_package.len = package->len + append.len;
-		list_package.s = (char *)mem_alloc(list_package.len);
-		if (list_package.s) {
-			if (package->s) memcpy(list_package.s, package->s, package->len);
-			memcpy(list_package.s + package->len, append.s, append.len);
+	if (xcap_query_rls_services(&vs->subscription->xcap_root,
+				&vs->subscription->xcap_params,
+				&vs->uri, package, &flat) == 0) {
+		/* it is resource list -> do internal subscription to RLS */
+		if (rls_create_internal_subscription(vs,
+					&vs->local_subscription_list, flat) != 0) {
+			ERR("can't create internal subscription\n");
+			free_flat_list(flat);
+			return -1;
 		}
-		else list_package.len = 0;
+		free_flat_list(flat);
 	}
-	else str_clear(&list_package);
-	
-	if (list_package.len > 0) {
-		vs->local_subscription_list = subscribe(vsd->domain, 
-				&list_package, 
+	else {
+		subscriber = rls_get_subscriber(vs->subscription);
+		/* not RLS record -> do QSA subscription to given package */
+		vs->local_subscription_pres = subscribe(vsd->domain, 
+				package, 
 				&vs->uri, subscriber, &vs->mq, vs);
-		mem_free(list_package.s);
-		if (!vs->local_subscription_list) {
-			LOG(L_ERR, "can't create local subscription (list)!\n");
+		if (!vs->local_subscription_pres) {
+			LOG(L_ERR, "can't create local subscription (pres)!\n");
 			return -1;
 		}
 	}
+	
 	return 0;
 }
 
 /******** VS manipulation ********/
 
-int vs_create(str *uri, str *package, virtual_subscription_t **dst, display_name_t *dnames, rl_subscription_t *subscription)
+int vs_create(str *uri, 
+		virtual_subscription_t **dst, 
+		display_name_t *dnames, 
+		rl_subscription_t *subscription)
 {
 	int res;
 	display_name_t *d;
@@ -310,7 +323,6 @@ int vs_create(str *uri, str *package, virtual_subscription_t **dst, display_name
 	memcpy((*dst)->uri_str, uri->s, uri->len);
 	(*dst)->uri.s = (*dst)->uri_str;
 	(*dst)->uri.len = uri->len;
-/*	str_dup(&(*dst)->package, package); */
 	(*dst)->state_document.len = 0;
 	(*dst)->state_document.s = NULL;
 	(*dst)->content_type.len = 0;
@@ -325,7 +337,7 @@ int vs_create(str *uri, str *package, virtual_subscription_t **dst, display_name
 
 	/*LOG(L_TRACE, "created Virtual Subscription to %.*s\n", uri->len, uri->s);*/
 	
-	res = create_internal_subscriptions(*dst);
+	res = create_subscriptions(*dst);
 	if (res != 0) {
 		vs_free(*dst);
 		return res;
@@ -404,7 +416,7 @@ void vs_free(virtual_subscription_t *vs)
 		if (vs->local_subscription_pres)
 			unsubscribe(vsd->domain, vs->local_subscription_pres);
 		if (vs->local_subscription_list) 
-			unsubscribe(vsd->domain, vs->local_subscription_list);
+			rls_remove(vs->local_subscription_list);
 		
 		if (vs->local_subscription_pres || vs->local_subscription_list) {
 			msg_queue_destroy(&vs->mq);

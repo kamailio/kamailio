@@ -1,3 +1,11 @@
+2006-03-17
+	* changed parameters of XCAP queries
+
+2006-03-16
+	* internal RLS subscriptions rewritten (i.e. nested lists handling)
+	* added xcap_root and xcap_params into rl_subscription structure (needed
+	for requeries, future XCAP notifications, ...)
+
 2006-03-15
 	* removed parameter "mode" (now is query done before handle_subscription
 	function and nested subscriptions can not be handled as "simple"

@@ -196,14 +196,14 @@ int rls_db_add(rl_subscription_t *s)
 	int_val(vals[n], s->doc_version);
 	
 	cols[++n] = "status";
-	int_val(vals[n], s->external.status);
+	int_val(vals[n], s->u.external.status);
 	
 	t = time(NULL);
 	t += rls_subscription_expires_in(s);
 	cols[++n] = "expires";
 	time_val(vals[n], t);
 	
-	if (dlg_func.dlg2str(s->external.dialog, &dialog) != 0) {	
+	if (dlg_func.dlg2str(s->u.external.dialog, &dialog) != 0) {	
 		LOG(L_ERR, "Error while serializing dialog\n");
 		return -1;
 	}
@@ -211,16 +211,16 @@ int rls_db_add(rl_subscription_t *s)
 	blob_val(vals[n], dialog);
 	
 	cols[++n] = "contact";
-	string_val(vals[n], s->external.contact);
+	string_val(vals[n], s->u.external.contact);
 	
 	cols[++n] = "uri";
-	string_val(vals[n], s->external.record_id);
+	string_val(vals[n], s->u.external.record_id);
 	
 	cols[++n] = "package";
-	string_val(vals[n], s->external.package);
+	string_val(vals[n], s->u.external.package);
 	
 	cols[++n] = "w_uri";
-	string_val(vals[n], s->external.subscriber);
+	string_val(vals[n], s->u.external.subscriber);
 	
 	cols[++n] = "id";
 	string_val_ex(vals[n], s->dbid, strlen(s->dbid));
@@ -298,14 +298,14 @@ int rls_db_update(rl_subscription_t *s)
 	int_val(vals[n], s->doc_version);
 	
 	cols[++n] = "status";
-	int_val(vals[n], s->external.status);
+	int_val(vals[n], s->u.external.status);
 	
 	t = time(NULL);
 	t += rls_subscription_expires_in(s);
 	cols[++n] = "expires";
 	time_val(vals[n], t);
 	
-	if (dlg_func.dlg2str(s->external.dialog, &dialog) != 0) {	
+	if (dlg_func.dlg2str(s->u.external.dialog, &dialog) != 0) {	
 		LOG(L_ERR, "Error while serializing dialog\n");
 		return -1;
 	}
@@ -313,16 +313,16 @@ int rls_db_update(rl_subscription_t *s)
 	blob_val(vals[n], dialog);
 	
 	cols[++n] = "contact";
-	string_val(vals[n], s->external.contact);
+	string_val(vals[n], s->u.external.contact);
 	
 	cols[++n] = "uri";
-	string_val(vals[n], s->external.record_id);
+	string_val(vals[n], s->u.external.record_id);
 	
 	cols[++n] = "package";
-	string_val(vals[n], s->external.package);
+	string_val(vals[n], s->u.external.package);
 	
 	cols[++n] = "w_uri";
-	string_val(vals[n], s->external.subscriber);
+	string_val(vals[n], s->u.external.subscriber);
 	
 	if (rls_dbf.update(rls_db, keys, ops, k_vals, 
 				cols, vals, 1, n + 1) < 0) {
@@ -441,7 +441,7 @@ int db_load_vs(db_con_t *rls_db, rl_subscription_t *s)
 			get_str_val(row_vals[0], id);
 			get_str_val(row_vals[1], uri);
 			
-			r = vs_create(&uri, rls_get_package(s), &vs, NULL, s) | r;
+			r = vs_create(&uri, &vs, NULL, s) | r;
 			if ((r != 0) || (!vs)) { r = -1; break; }
 			
 			strcpy(vs->dbid, id.s);
@@ -526,7 +526,7 @@ int db_load_rls()
 			if (expires != 0) expires_after = expires - time(NULL);
 			else expires_after = 0;
 			dlg = dlg2str(&dialog);
-			sm_init_subscription_nolock_ex(rls_manager, &s->external, 
+			sm_init_subscription_nolock_ex(rls_manager, &s->u.external, 
 					dlg,
 					status,
 					&contact,

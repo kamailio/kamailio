@@ -35,9 +35,12 @@ static rls_xcap_query_t query = {
 /* clears last data stored from one of query_... functions */
 static void clear_last_query()
 {
-	str_clear(&query.params.xcap_root);
-	if (query.flat_list) free_flat_list(query.flat_list);
-	query.flat_list = NULL;
+	if (query.flat_list) {
+		free_flat_list(query.flat_list);
+		query.flat_list = NULL;
+		/* str_clear(&query.params.xcap_root); */
+		memset(&query.params, 0, sizeof(query.params));
+	}
 }
 
 
@@ -292,7 +295,7 @@ static int handle_new_subscription(struct sip_msg *m, rls_xcap_query_t *query, i
 	rls_generate_notify(s, 1);	
 
 	/* free subscription if only polling */
-	if (sm_subscription_terminated(&s->external) == 0) {
+	if (sm_subscription_terminated(&s->u.external) == 0) {
 		rls_remove(s);
 	}
 	
@@ -360,7 +363,7 @@ static int handle_renew_subscription(struct sip_msg *m, int send_error_responses
 	rls_generate_notify(s, 1);	
 
 	/* free subscription if only polling */
-	if (sm_subscription_terminated(&s->external) == 0) {
+	if (sm_subscription_terminated(&s->u.external) == 0) {
 		rls_remove(s);
 	}
 	
@@ -458,9 +461,9 @@ static int get_dst_uri(struct sip_msg* _m, str* dst_uri)
 int query_rls_services(struct sip_msg* _m, char *a, char *b)
 {
 	str uri;
-	int res;
-	static str package = STR_STATIC_INIT("presence"); /* TODO: take package from Event header */
-	xcap_query_t xcap;
+	static str package = STR_STATIC_INIT("presence"); 
+	/* TODO: take package from Event header or allow packages
+	 * given as parameter? */
 	
 	clear_last_query();
 	
@@ -469,25 +472,15 @@ int query_rls_services(struct sip_msg* _m, char *a, char *b)
 		return -1;
 	}
 	
-	memset(&xcap, 0, sizeof(xcap));
-
 	if (get_dst_uri(_m, &uri) < 0) {
 		ERR("can't get destination URI\n");
 		clear_last_query();
 		return -1;
 	}
 	
-	if (reduce_xcap_needs) {
-		res = get_rls_from_full_doc(&query.params.xcap_root, 
-				&uri, &xcap, 
-				&package, &query.flat_list);
-	}
-	else {
-		res = get_rls(&query.params.xcap_root, &uri, &xcap, 
-			&package, &query.flat_list);
-	}
-	
-	if (res < 0) {
+	if (xcap_query_rls_services(&query.params.xcap_root, 
+				&query.params.xcap_params,
+				&uri, &package, &query.flat_list) < 0) {
 		ERR("XCAP query problems\n");
 		clear_last_query();
 		return -1;
@@ -501,7 +494,6 @@ int query_rls_services(struct sip_msg* _m, char *a, char *b)
 int query_resource_list(struct sip_msg* _m, char *list_name, char *b)
 {
 	int res;
-	xcap_query_t xcap;
 	str_t uid;
 	
 	clear_last_query();
@@ -511,8 +503,6 @@ int query_resource_list(struct sip_msg* _m, char *list_name, char *b)
 		return -1;
 	}
 	
-	memset(&xcap, 0, sizeof(xcap));
-
 	if (get_from_uid(&uid, _m) < 0) {
 		ERR("can't get From uid\n");
 		clear_last_query();
@@ -520,7 +510,8 @@ int query_resource_list(struct sip_msg* _m, char *list_name, char *b)
 	}
 	
 	res = get_resource_list_from_full_doc(&query.params.xcap_root,
-			&uid, &xcap, list_name, &query.flat_list);
+			&uid, &query.params.xcap_params, 
+			list_name, &query.flat_list);
 	/* TODO: add function for real XCAP server */
 	
 	if (res < 0) {

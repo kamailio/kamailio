@@ -30,7 +30,7 @@ int get_user_from_uri(str *uri, str *user)
 static int xcap_get_pres_rules(str *uid, 
 		cp_ruleset_t **dst, auth_params_t *params)
 {
-	xcap_query_t xcap;
+	xcap_query_params_t xcap;
 	int res;
 	/* str u; */
 	

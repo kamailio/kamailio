@@ -35,7 +35,7 @@ typedef struct _rl_subscription_t rl_subscription_t;
 
 typedef struct {
 	str_t xcap_root;
-	/* ... auth data for XCAP server ... */
+	xcap_query_params_t xcap_params;
 } rls_create_params_t;
 
 typedef struct {
@@ -46,7 +46,7 @@ typedef struct {
 typedef struct _virtual_subscription_t {
 	/* local subscription data */
 	subscription_t *local_subscription_pres;
-	subscription_t *local_subscription_list;
+	rl_subscription_t *local_subscription_list;
 	msg_queue_t mq;
 	
 	vector_t display_names;
@@ -77,21 +77,33 @@ typedef enum {
 	rls_external_subscription 
 } rls_subscription_type_t;
 
-typedef struct _internal_rl_subscription_t {
-	subscription_t *s;
-	struct _internal_rl_subscription_t *next, *prev;
-	rl_subscription_t *rls; /* pointer to its rl subscription */
-} internal_rl_subscription_t;
+typedef struct {
+	str *package; /* points to "parent" subscription */
+	str *record_id; /* NEVER free this - it points into VS data */
+	str *subscriber_id; /* NEVER free this - it points into "parent" subscription */
+	
+	/* created from this virtual subscription */
+	virtual_subscription_t *vs;
+
+} internal_subscription_data_t;
 
 /** subscription to the list of resources */
 struct _rl_subscription_t {
 	rls_subscription_type_t type;
 
-	/* data of external subscription */
-	subscription_data_t external;
+	/* XCAP server settings (needed for reloading internal subscriptions
+	 * from DB, XCAP notifications, ...) */
+	str xcap_root;
+	xcap_query_params_t xcap_params;
+	
+	union {
+		/* data of external subscription */
+		subscription_data_t external;
 
-	/* data of internal subscription */
-	internal_rl_subscription_t internal;
+		/* data of internal subscription (pointer to "parent" 
+		 * virtual subscription) */
+		internal_subscription_data_t internal;
+	} u;
 	
 	/** sequence number of NOTIFY */
 	int doc_version;
@@ -123,7 +135,13 @@ int rls_destroy();
 void rls_lock();
 void rls_unlock();
 
-int rls_create_subscription(struct sip_msg *m, rl_subscription_t **dst, flat_list_t *flat, rls_create_params_t *params);
+int rls_create_subscription(struct sip_msg *m, 
+		rl_subscription_t **dst, 
+		flat_list_t *flat, 
+		rls_create_params_t *params);
+int rls_create_internal_subscription(virtual_subscription_t *vs, 
+		rl_subscription_t **dst, 
+		flat_list_t *flat);
 int rls_refresh_subscription(struct sip_msg *m, rl_subscription_t *s);
 int rls_find_subscription(str *from_tag, str *to_tag, str *call_id, rl_subscription_t **dst);
 void rls_free(rl_subscription_t *s); /* removes from memory only */
@@ -138,10 +156,11 @@ int rls_prepare_subscription_response(rl_subscription_t *s, struct sip_msg *m);
 int vs_init();
 int vs_destroy();
 
-int vs_create(str *uri, str *package, virtual_subscription_t **dst, display_name_t *dnames, rl_subscription_t *subscription);
+int vs_create(str *uri, virtual_subscription_t **dst, display_name_t *dnames, rl_subscription_t *subscription);
 int vs_add_display_name(virtual_subscription_t *vs, const char *name, const char *lang);
 void vs_free(virtual_subscription_t *vs);
-int create_virtual_subscriptions(rl_subscription_t *ss, rls_create_params_t *params);
+int create_virtual_subscriptions(rl_subscription_t *ss);
+int add_virtual_subscriptions(rl_subscription_t *ss, flat_list_t *flat);
 
 /* database operations */
 int rls_db_add(rl_subscription_t *s);
@@ -158,5 +177,10 @@ int rls_subscription_expires_in(rl_subscription_t *s);
 /* allocates and initializes structure */
 rl_subscription_t *rls_alloc_subscription(rls_subscription_type_t type);
 
+/* XCAP queries */
+int xcap_query_rls_services(const str_t *xcap_root, 
+		xcap_query_params_t *xcap_params,
+		const str *uri, const str *package, 
+		flat_list_t **dst);
 
 #endif

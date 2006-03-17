@@ -1,3 +1,6 @@
+2006-03-17
+	* changed XCAP query parameters
+
 2006-03-02
 	* improved robustness of libs (CDS, presence) and PA
 	* cosmetical changes

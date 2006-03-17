@@ -19,7 +19,6 @@
 
 #include "time_event_manager.h"
 #include <time.h>
-#include "qsa_rls.h"
 
 MODULE_VERSION
 
@@ -284,8 +283,6 @@ int rls_mod_init(void)
 		use_db = 1;
 	}
 
-	if (rls_qsa_interface_init() != 0) return -1;
-
 	/* once-shot timer for reloading data from DB -
 	 * needed because it can trigger database operations
 	 * in other modules and they mostly intialize their 
@@ -330,9 +327,6 @@ void rls_mod_destroy(void)
 	char *s;*/
 
 	DEBUG_LOG("RLS module cleanup\n");
-
-	DEBUG_LOG(" ... qsa interface\n");
-	rls_qsa_interface_destroy();
 
 	/* destroy used XCAP servers */
 /*	DEBUG_LOG(" ... xcap servers\n");
