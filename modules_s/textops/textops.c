@@ -928,6 +928,8 @@ static int find_hf_value_idx(struct sip_msg* msg, struct hname_data* hname, stru
 		idx = hname->idx;
 		do {
 			res = find_next_hf(msg, hname, hf);
+fprintf(stderr, "RES: %d\n", res);
+			
 			if (res < 0) return -1;
 			if (*hf) {
 				if (val) {
@@ -990,8 +992,8 @@ static int find_hf_value_idx(struct sip_msg* msg, struct hname_data* hname, stru
 		}
 	}
 	else
-		return -1;
-	return *hf?1:-1;
+		return -1;	
+	return *hf?1:0;
 }
 
 static int find_hf_value_param(struct hname_data* hname, str* param_area, str* value, str* lump_upd, str* lump_del) {
@@ -1465,12 +1467,13 @@ static int insupddel_hf_value_f(struct sip_msg* msg, char* _hname, char* _val) {
 		case hnoInsert:
 			/* if !HNF_IDX is possible parse only until first hname header but not trivial for HDR_OTHER_T header, not implemented */
 			res = find_hf_value_idx(msg, hname, &hf, &hval1, &hval2);
+fprintf(stderr, "INSERT %d ,'%.*s'\n", res, hname->hname.len, hname->hname.s);
 			if (res < 0) return res;
-
 			if (hf && (hname->flags & HNF_IDX) == 0) {
 				return insert_header_lump(msg, hf->name.s, 1, &hname->hname, &val);
 			}
 			else if (!hf && hname->idx == 1) {
+fprintf(stderr, "INSERT HDR\n");
 				return insert_header_lump(msg, msg->unparsed, 1, &hname->hname, &val);
 			}
 			else if (hf) {
@@ -1786,7 +1789,7 @@ static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
 			}
 			else {
 				r = find_hf_value_idx(msg, hname, &hf, &hval1, &hval2);
-				if (r >= 0) {
+				if (r > 0) {
 					get_uri_and_skip_until_params(&hval1, res);
 					if (res->len && *res->s == '<') {
 						res->s++;   	/* strip < & > */
@@ -1797,7 +1800,7 @@ static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
 			break;
 		case hnoGetValue:
 			r = find_hf_value_idx(msg, hname, &hf, &hval1, &hval2);
-			if (r >= 0) {
+			if (r > 0) {
 				if (hname->param.len) {
 					str d1, d2;
 					get_uri_and_skip_until_params(&hval1, &huri);
@@ -1812,7 +1815,7 @@ static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
 			break;
 		case hnoGetValue2:
 			r = find_hf_value_idx(msg, hname, &hf, 0, 0);
-			if (r >= 0) {
+			if (r > 0) {
 				if (hname->param.len) {
 					str d1, d2;
 					char c;
