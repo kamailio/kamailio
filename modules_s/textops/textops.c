@@ -928,8 +928,6 @@ static int find_hf_value_idx(struct sip_msg* msg, struct hname_data* hname, stru
 		idx = hname->idx;
 		do {
 			res = find_next_hf(msg, hname, hf);
-fprintf(stderr, "RES: %d\n", res);
-			
 			if (res < 0) return -1;
 			if (*hf) {
 				if (val) {
@@ -1467,13 +1465,11 @@ static int insupddel_hf_value_f(struct sip_msg* msg, char* _hname, char* _val) {
 		case hnoInsert:
 			/* if !HNF_IDX is possible parse only until first hname header but not trivial for HDR_OTHER_T header, not implemented */
 			res = find_hf_value_idx(msg, hname, &hf, &hval1, &hval2);
-fprintf(stderr, "INSERT %d ,'%.*s'\n", res, hname->hname.len, hname->hname.s);
 			if (res < 0) return res;
 			if (hf && (hname->flags & HNF_IDX) == 0) {
 				return insert_header_lump(msg, hf->name.s, 1, &hname->hname, &val);
 			}
 			else if (!hf && hname->idx == 1) {
-fprintf(stderr, "INSERT HDR\n");
 				return insert_header_lump(msg, msg->unparsed, 1, &hname->hname, &val);
 			}
 			else if (hf) {
