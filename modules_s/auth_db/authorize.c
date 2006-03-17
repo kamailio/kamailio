@@ -62,6 +62,13 @@ static inline int get_ha1(struct username* username, str* realm,
 	str result;
 	int n, nc, i;
 
+#ifndef SUPPORT_EMPTY_AUTHNAME
+	/* sanity check first to avoid unnecessary DB lookups */
+	if (username->user.len == 0) {
+		return 1;
+	}
+#endif
+
 	val = 0; /* Fixes gcc warning */
 	col = pkg_malloc(sizeof(*col) * (credentials_n + 2));
 	if (col == NULL) {
