@@ -1,36 +1,12 @@
-Template: openser/start_on_boot
+Template: openser##PKGVER##/start_on_boot
 Type: boolean
 Default: true
 Description: Should OpenSER start on boot?
  Select 'Yes' here if you want OpenSER to automatically start on boot.
  If you choose 'No', OpenSER will not start on boot and will have to be
  started manually by typing '/etc/init.d/openser start'. 
- 
- Selecting 'No' is also needed if OpenSER is running on a high availability
- cluster system under the control of software like 'heartbeat' which is
- responsible for starting the applications on the active node of the cluster.
- If this is your case, then please select 'No' to this question.
 
-Template: openser/master_node
-Type: boolean
-Default: false
-Description: Is this the master node of a cluster?
- You have selected that OpenSER should not be started on boot which may mean
- that it is running on a cluster system under the supervision of software like
- heartbeat. If this is the case and this node is the master node, then please
- select 'Yes' here. If OpenSER is running on a cluster system and is the slave
- node, then select 'No' here.
- If OpenSER is not running on a cluster system, but you have chosen not to
- start at boot for other reasons and do not understand what these cluster
- system references are about, then answer 'No' here.
- 
- The result of selecting 'Yes' here is that even though OpenSER is not to
- be started on boot, it will still be started after this install, upgrade or
- reconfiguration task will be concluded. This is needed if OpenSER runs on
- the master node of a cluster system, to avoid the active server not being
- restarted after an install, upgrade or reconfigure operation.
-
-Template: openser/memory_ammount
+Template: openser##PKGVER##/memory_ammount
 Type: string
 Default: 32
 Description: Amount of memory for the OpenSER server (in Mb)
@@ -42,15 +18,15 @@ Description: Amount of memory for the OpenSER server (in Mb)
  it is recommended to increase this ammount to a more appropriate value like
  256 or 512 Mb. If you are unsure what to select, choose a lower value like
  64 or 128, which can be increased later (if openser gives error messages
- about insufficient memory), by running 'dpkg-reconfigure openser-tls'.
+ about insufficient memory), by running 'dpkg-reconfigure openser'.
 
-Template: openser/memory_warning
+Template: openser##PKGVER##/memory_warning
 Type: note
 Description: Invalid ammount of memory!
  The ammount of memory should be a positive number representing the number of
- Mb that OpenSER will have allocated at runtime.
+ MegaBytes that OpenSER will have allocated at runtime.
 
-Template: openser/dump_core
+Template: openser##PKGVER##/dump_core
 Type: boolean
 Default: false
 Description: Should OpenSER dump a core when it crashes?

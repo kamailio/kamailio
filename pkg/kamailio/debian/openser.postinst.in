@@ -2,7 +2,7 @@
 #
 # $Id$
 
-PKG=openser-tls
+PKG=openser##PKGVER##
 DEFAULTS=/etc/default/openser
 HOMEDIR=/var/run/openser
 
@@ -69,14 +69,6 @@ if [ "$RET" = true ]; then
     START_ON_BOOT=yes
 else
     START_ON_BOOT=no
-fi
-
-RET=
-db_get openser/master_node || true
-if [ "$RET" = true ]; then
-    MASTER_NODE=yes
-else
-    MASTER_NODE=no
 fi
 
 RET=
@@ -162,13 +154,6 @@ if [ $START_ON_BOOT = "yes" ]; then
     fi
 else
     update-rc.d -f openser remove >/dev/null
-    if [ $MASTER_NODE = "yes" -a -x "/etc/init.d/openser" ]; then
-        if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
-            invoke-rc.d openser start || exit 0
-        else
-            /etc/init.d/openser start || exit 0
-        fi
-    fi
 fi
 
 db_stop

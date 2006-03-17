@@ -1,0 +1,68 @@
+Debian Packaging of OpenSER
+===========================
+
+Overview
+--------
+
+The packaging system for OpenSER uses templates to generate the files required
+by Debian packaging system. The templates give the possibility to generate
+different types of OpenSER packages, at this moment can be built packages
+with or without TLS support.
+
+Builiding OpenSER Debian packages including TLS support
+-------------------------------------------------------
+
+This is default option for Debian packages. The simplest way is to go in
+'sip-server' (the source directory) folder and do 'make deb'.
+
+If you are not happy with the commnads issued by 'make deb' then go in
+'sip-server' folder and run following commands:
+
+  # ln -s packaging/debian
+  # cd debian
+  # make
+  # cd ..
+
+Now the files needed by Debian packaging system are generated. You can start
+building the Debian packages in your way. At the end you can clean the 'debian'
+folder with:
+
+  # cd debian
+  # make clean
+  # cd ..
+  # rm debian
+
+Builiding OpenSER Debian packages without TLS support
+-----------------------------------------------------
+
+The simplest way is to go in 'sip-server' folder and do 'make deb-notls'.
+
+If you want to do a custom building process, then go in in 'sip-server' folder
+and run following commands:
+
+  # ln -s packaging/debian
+  # cd debian
+  # make notls
+  # cd ..
+
+Now the files needed by Debian packaging system are generated. You can start
+building the Debian packages in your way. At the end you can clean the 'debian'
+folder with:
+
+  # cd debian
+  # make clean
+  # cd ..
+  # rm debian
+
+Passing parameters to Debian packaging application
+--------------------------------------------------
+
+'make deb' and 'make deb-notls' use 'dpkg-buildpackage -rfakeroot -tc' command
+to build Debian packages. You can pass additional parameters to
+'dpkg-buildpackage' via 'DEBBUILD_EXTRA_OPTIONS' environment variable.
+
+For example: 'DEBBUILD_EXTRA_OPTIONS="-us -uc" make deb' will build the packages
+whitout signing them. For the list with the parameters you can give, see
+'man dpkg-buildpackage'.
+
+

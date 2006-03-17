@@ -1,0 +1,74 @@
+#!/bin/sh
+
+DEFAULTS=/etc/default/openser
+
+set -e
+
+. /usr/share/debconf/confmodule
+
+db_version 2.0
+db_capb backup
+
+# Read in config values that may have been manually modified and update the
+# debconf values. 
+if [ -f $DEFAULTS ]; then
+    . $DEFAULTS || true
+    
+    MEMORY=$((`echo $MEMORY | sed -e 's/[^0-9]//g'`))
+    
+    case "$DUMP_CORE" in
+        yes)
+           DUMP_CORE="true"
+           ;;
+        no)
+           DUMP_CORE="false"
+           ;;
+        *)
+           DUMP_CORE="ignore"
+           ;;
+    esac
+    
+    if [ $MEMORY -gt 0 ]; then
+       db_set openser##PKGVER##/memory_ammount "$MEMORY"
+    fi
+    if [ $DUMP_CORE != "ignore" ]; then
+       db_set openser##PKGVER##/dump_core "$DUMP_CORE"
+    fi
+fi
+
+# Use a state machine to be able to move back/forth between the options
+STATE=1
+while true; do
+  case "$STATE" in
+    1)
+       db_input medium openser##PKGVER##/start_on_boot || true
+       FORWARD=2
+	   BACKWARD=1
+       ;;
+    2)
+       db_input medium openser##PKGVER##/memory_ammount || true
+       db_get openser##PKGVER##/memory_ammount || true
+       MEM=`echo $RET | sed -e 's/[^0-9]//g'`
+       if [ $(($MEM)) -le 0 ]; then
+          db_input medium openser##PKGVER##/memory_warning || true
+          FORWARD=2
+       fi
+       FORWARD=3
+	   BACKWARD=2
+       ;;
+    3)
+       db_input medium openser##PKGVER##/dump_core || true
+       FORWARD=4
+	   BACKWARD=3
+       ;;
+    *)
+       break
+       ;;
+  esac
+  if db_go; then
+     STATE=$FORWARD
+  else
+     STATE=$BACKWARD
+  fi
+done
+

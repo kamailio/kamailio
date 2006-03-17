@@ -39,7 +39,8 @@ if [ "$1" = "purge" ] ; then
 	# remove user/group on purge
 	userdel -r openser &>/dev/null || true
 	# remove /etc/openser if empty
-	rmdir /etc/openser || true
+	rm -rf /etc/openser || true
+	rm -rf /etc/default/openser || true
 fi
 
 exit 0
