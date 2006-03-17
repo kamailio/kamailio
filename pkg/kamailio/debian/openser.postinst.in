@@ -48,7 +48,7 @@ case "$1" in
 esac
 
 
-# deb_helper is not used here to avoid automatically starting openser after
+# 'debhelper' is not used here to avoid automatically starting openser after
 # the installation. Instead we will use the user supplied answer about
 # starting on boot
 
