@@ -43,6 +43,7 @@ extern str i_user;
 
 #include "../../usr_avp.h"
 extern avp_ident_t user_part_avp_ident;
+extern avp_ident_t next_route_avp_ident;
 
 extern int append_fromtag;
 extern int enable_double_rr;

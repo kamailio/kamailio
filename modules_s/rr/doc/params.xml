@@ -109,7 +109,34 @@ route{
 	</example>
     </section>
 
-    <section id="cookie_secret">
+    <section id="next_route_avp">
+	<title><varname>next_route_avp</varname> (string)</title>
+	<para>
+	    If this parameter is set, the loose_route call stores the URI
+	    of the next hop in the AVP, which is identified by the
+	    parameter value. It can be then utilized in the routing script.	    
+	</para>
+	<para>
+	    Default value is NULL (do not insert next route into avps).
+	</para>
+	<example>
+	    <title>Set <varname>next_route_avp</varname> parameter, later use</title>
+	    <programlisting>
+...
+modparam("rr", "next_route_avp", "route_next")
+...
+route{
+...
+	loose_route();
+	
+	if ($route_next=~"101.102.103.1[0-9][0-9]") {
+		t_relay();
+	}
+	    </programlisting>
+	</example>
+    </section>
+    
+	<section id="cookie_secret">
 	<title><varname>cookie_secret</varname> (string)</title>
 	<para>
 	    Secret to distinguish cookies from different servers.

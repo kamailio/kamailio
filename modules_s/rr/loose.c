@@ -234,6 +234,18 @@ static inline void store_user_in_avps(str* user)
 	
 }
 
+
+static inline void store_next_route_in_avps(str* uri)
+{
+	avp_value_t val;
+
+	if (next_route_avp_ident.name.s.s && next_route_avp_ident.name.s.len && uri && uri->s && uri->len) {
+		val.s = *uri;
+		add_avp(next_route_avp_ident.flags | AVP_NAME_STR | AVP_VAL_STR, next_route_avp_ident.name, val);
+	}	
+	
+}
+
 /*
  * Find and parse next Route header field
  */
@@ -827,7 +839,8 @@ static inline int after_strict(struct sip_msg* _m)
 		LOG(L_ERR, "after_strict: Error while parsing URI\n");
 		return RR_ERROR;
 	}
-
+	
+	store_next_route_in_avps(uri);
 	if (is_strict(&puri.params)) {
 		DBG("after_strict: Next hop: '%.*s' is strict router\n", uri->len, ZSW(uri->s));
 		     /* Previous hop was a strict router and the next hop is strict
@@ -1011,7 +1024,8 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 #endif
 		DBG("after_loose: Topmost URI is NOT myself\n");
 	}
-
+	
+	store_next_route_in_avps(uri);
 	DBG("after_loose: URI to be processed: '%.*s'\n", uri->len, ZSW(uri->s));
 	if (is_strict(&puri.params)) {
 		DBG("after_loose: Next URI is a strict router\n");

@@ -63,8 +63,10 @@ int enable_full_lr = 0;   /* Disabled by default */
 int add_username = 0;     /* Do not add username by default */
 char *cookie_filter = 0;  /* filter cookies restored in loose_route, potential security problem */
 str user_part_avp = STR_NULL;  /* AVP identification where user part of Route URI is stored after loose/strict routing */
+str next_route_avp = STR_NULL; /* AVP identification where next route (if exists) would be stored after loose/strict routing */
 static str crc_secret_str = STR_NULL;
 avp_ident_t user_part_avp_ident;
+avp_ident_t next_route_avp_ident;
 
 MODULE_VERSION
 
@@ -107,6 +109,7 @@ static param_export_t params[] ={
 	{"cookie_filter",    PARAM_STRING, &cookie_filter   },
 	{"cookie_secret",    PARAM_STR,    &crc_secret_str  },
 	{"user_part_avp",    PARAM_STR,    &user_part_avp   },	
+	{"next_route_avp",   PARAM_STR,    &next_route_avp  },
 	{0, 0, 0 }
 };
 
@@ -141,6 +144,13 @@ static int mod_init(void)
 	if (user_part_avp.s && user_part_avp.len) {
 		if (parse_avp_ident(&user_part_avp, &user_part_avp_ident)!=0) {
 			ERR("modparam \"user_part_avp\" : error while parsing\n");
+			return E_CFG; 
+		}
+	}
+	memset (&next_route_avp_ident, 0, sizeof(avp_ident_t));
+	if (next_route_avp.s && next_route_avp.len) {
+		if (parse_avp_ident(&next_route_avp, &next_route_avp_ident)!=0) {
+			ERR("modparam \"next_route_avp\" : error while parsing\n");
 			return E_CFG; 
 		}
 	}
