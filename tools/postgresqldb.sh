@@ -339,7 +339,7 @@ INSERT INTO version VALUES ( 'server_monitoring_agg', '1');
 INSERT INTO version VALUES ( 'silo', '4');
 INSERT INTO version VALUES ( 'speed_dial', '2');
 INSERT INTO version VALUES ( 'subscriber', '5');
-INSERT INTO version VALUES ( 'trusted', '1');
+INSERT INTO version VALUES ( 'trusted', '3');
 INSERT INTO version VALUES ( 'uri', '1');
 INSERT INTO version VALUES ( 'usr_preferences', '2');
 INSERT INTO version VALUES ( 'usr_preferences_types', '1');
@@ -757,8 +757,9 @@ CREATE INDEX user_2_subs_indx ON subscriber ($USERCOL);
 CREATE TABLE trusted (
   src_ip varchar(39) NOT NULL,
   proto varchar(4) NOT NULL,
-  from_pattern varchar(64) NOT NULL,
-  PRIMARY KEY (src_ip, proto, from_pattern)
+  from_pattern varchar(64) default NULL,
+  tag varchar(32) default NULL,
+  INDEX ip_addr (src_ip)
 ) $TABLE_TYPE;
 
 
