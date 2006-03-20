@@ -30,7 +30,7 @@ static str presence_events_package = { s: "presence", len: 8 };
 /* package for internal subscriptions */
 static str presence_qsa_package = { s: "presence", len: 8 };
 /* b2b UA notifier name*/
-static str notifier_name = STR_STATIC_INIT("presence_b2b");
+/* static str notifier_name = STR_STATIC_INIT("presence_b2b"); */
 
 static int handle_presence_subscriptions = 0;
 
@@ -82,8 +82,6 @@ static void presence_notification_cb(struct sip_msg *m, void *param)
 	char *body;
 	int len = 0;
 	presentity_info_t *p = NULL;
-	mq_message_t *msg;
-	client_notify_info_t *info;
 	
 	if (!subscription) return;
 	DBG("received notification for %.*s\n", 
@@ -101,33 +99,11 @@ static void presence_notification_cb(struct sip_msg *m, void *param)
 		}
 	}
 
-	/* create message */
-	msg = create_message_ex(sizeof(client_notify_info_t));
-	if (!msg) {
-		ERR("can't create notify message!\n");
-		free_presentity_info(p);
-		return; 
-	}
-
-	TRACE("subscription: %p\n", subscription);
-	TRACE("package: %p\n", subscription->package);
-	if (!subscription->package)
-		TRACE("package: not set!!!!\n");
-	TRACE("package name: %p, len %d\n", 
-			subscription->package->name.s, subscription->package->name.len);
-	
-	set_data_destroy_function(msg, (destroy_function_f)free_client_notify_info_content);
-	info = (client_notify_info_t*)msg->data;
-
-	str_dup(&info->package, &subscription->package->name);
-	str_dup(&info->record_id, &subscription->record_id);
-	str_dup(&info->notifier, &notifier_name);
-	info->data = p;
-	info->data_len = sizeof(*p);
-	info->destroy_func = (destroy_function_f)free_presentity_info;
-	
 	/* send the message to internal subscriber */
-	notify_subscriber(subscription, msg);
+	notify_subscriber(subscription, 
+			PRESENTITY_INFO_TYPE,
+			p, sizeof(*p),
+			(destroy_function_f)free_presentity_info);
 }
 
 static events_subscription_t *create_presence_subscription(subscription_t *subscription)

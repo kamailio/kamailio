@@ -19,186 +19,11 @@
 #include "../../parser/parse_from.h"
 #include "../../data_lump_rpl.h"
 
-/* shared data - access due to tracing */
-typedef struct {
-	rl_subscription_t *first;
-	rl_subscription_t *last;
-	/* hash, ... */
-} rls_data_t;
-
-static rls_data_t *rls = NULL;
-static gen_lock_t *rls_mutex = NULL;
 subscription_manager_t *rls_manager = NULL;
 
 #define METHOD_NOTIFY "NOTIFY"
 
-static int get_user_from_uri(str_t *uri, str_t *user)
-{
-	char *a;
-	char *d;
-	char *s;
-
-	/* we can't use SER's parser - the uri may have not the protocol prefix! */
-	
-	str_clear(user);
-	if (uri->len > 0) {
-		d = strchr(uri->s, ':');
-		if (d) s = d + 1;
-		else s = uri->s;
-		a = strchr(s, '@');
-		if (a) {
-			user->s = s;
-			user->len = a - s;
-			return 0;
-		}
-	}
-	return -1;
-}
-
-/************* subscription callback functions ************/
-
-static int send_notify_cb(struct _subscription_data_t *s)
-{
-	if (s) 
-		rls_generate_notify((rl_subscription_t *)s->usr_data, 1);
-	return 0;
-}
-
-static int terminate_subscription_cb(struct _subscription_data_t *s)
-{
-	if (s) rls_remove((rl_subscription_t*)s->usr_data);
-	return 0;
-}
-
-static authorization_result_t authorize_implicit(struct _subscription_data_t *s)
-{
-	str_t user, list;
-	str_t list_user, list_rest;
-	str_t appendix = { s: "-list", len: 5 };
-	
-	if (get_user_from_uri(&s->subscriber, &user) != 0) 
-		return auth_unresolved; /* we can't decide - it is not "implicit" uri */
-	if (get_user_from_uri(&s->record_id, &list) != 0)
-		return auth_unresolved; /* we can't decide - it is not "implicit" uri */
-	
-	if (list.len <= appendix.len)
-		return auth_unresolved; /* we can't decide - it is not "implicit" uri */
-	
-	list_rest.len = appendix.len;
-	list_rest.s = list.s + list.len - appendix.len;
-	if (str_case_equals(&list_rest, &appendix) != 0) 
-		return auth_unresolved; /* we can't decide - it is not "implicit" uri */
-
-	/* now we know, that it ends with implicit uri ending */
-	
-	list_user.s = list.s;
-	list_user.len = list.len - appendix.len;
-	if (str_case_equals(&user, &list_user) != 0) return auth_rejected;
-	else return auth_granted;
-}
-
-static authorization_result_t authorize_subscription_cb(struct _subscription_data_t *s)
-{
-	switch (rls_auth_params.type) {
-		case rls_auth_none:
-			return auth_granted; /* ! no auth done ! */
-		case rls_auth_implicit:
-			return authorize_implicit(s);
-		case rls_auth_xcap:
-			LOG(L_ERR, "XCAP auth for resource lists not done yet!\n");
-			return auth_unresolved;
-	}
-	return auth_unresolved;
-}
-
-/************* global functions ************/
-
-void rls_lock()
-{
-	/* FIXME: solve locking more efficiently - locking whole RLS in 
-	 * all cases of manipulating internal structures is not good
-	 * solution */
-	lock_get(rls_mutex);
-}
-
-void rls_unlock()
-{
-	lock_release(rls_mutex);
-}
-
-int rls_init()
-{
-	rls = (rls_data_t*)mem_alloc(sizeof(rls_data_t));
-	if (!rls) {
-		LOG(L_ERR, "rls_init(): memory allocation error\n");
-		return -1;
-	}
-	rls->first = NULL;
-	rls->last = NULL;
-	
-	rls_mutex = lock_alloc();
-	if (!rls_mutex) {
-		LOG(L_ERR, "rls_init(): Can't initialize mutex\n");
-		return -1;
-	}
-	lock_init(rls_mutex);
-
-	rls_manager = sm_create(send_notify_cb, 
-			terminate_subscription_cb, 
-			authorize_subscription_cb,
-			rls_mutex,
-			rls_min_expiration,	/* min expiration time in seconds */
-			rls_max_expiration, /* max expiration time in seconds */
-			rls_default_expiration /* default expiration time in seconds */
-			);
-	
-	return 0;
-}
-
-int rls_destroy()
-{
-	DEBUG_LOG("rls_destroy() called\n");
-	/* FIXME: destroy the whole rl_subscription list */
-	/* sm_destroy(rls_manager); */
-
-	if (rls_mutex) {
-		lock_destroy(rls_mutex);
-		lock_dealloc(rls_mutex);
-	}
-	if (rls) {
-		mem_free(rls);
-		rls = NULL;
-	}
-	return 0;
-}
-
 /************* Helper functions for RL subscription manipulation ************/
-
-/* static int get_user_from_list_uri(str_t *uri, str_t *user)
-{
-	str_t list, list_rest;
-	str_t appendix = { s: "-list", len: 5 };
-
-	if (!uri) return -1;
-	if (get_user_from_uri(uri, &list) != 0) return -1;
-
-	if (user) *user = list;
-	
-	/ * remove suffix -list * /
-	if (list.len <= appendix.len) 
-		return 1; / * it is not something like xxx-list@... * /
-
-	list_rest.len = appendix.len;
-	list_rest.s = list.s + list.len - appendix.len;
-	if (str_case_equals(&list_rest, &appendix) != 0) 
-		return 1; / * it is not something like xxx-list@... * /
-
-	if (user) {
-		user->s = list.s;
-		user->len = list.len - appendix.len;
-	}
-	return 0;
-} */
 
 str_t * rls_get_uri(rl_subscription_t *s)
 {
@@ -314,6 +139,7 @@ rl_subscription_t *rls_alloc_subscription(rls_subscription_type_t type)
 	s->doc_version = 0;
 	s->changed = 0;
 	s->type = type;
+	s->enable_generate_notify = 0;
 	s->dbid[0] = 0;
 
 	/* s->first_vs = NULL;
@@ -343,6 +169,7 @@ int rls_create_subscription(struct sip_msg *m,
 		return RES_MEMORY_ERR;
 	}
 	generate_db_id(&s->dbid, s);
+	s->enable_generate_notify = 0;
 
 	res = sm_init_subscription_nolock(rls_manager, &s->u.external, m);
 	if (res != RES_OK) {
@@ -387,6 +214,8 @@ int rls_create_subscription(struct sip_msg *m,
 			return RES_INTERNAL_ERR; /* FIXME RES_DB_ERR */
 		}
 	}
+
+	s->enable_generate_notify = 1;
 	
 	*dst = s;
 	return RES_OK;
@@ -397,7 +226,6 @@ int rls_find_subscription(str *from_tag, str *to_tag, str *call_id, rl_subscript
 	subscription_data_t *s;
 	int res;
 
-	/* FIXME: hashing ! */
 	*dst = NULL;
 	res = sm_find_subscription(rls_manager, from_tag, to_tag, call_id, &s);
 	if ((res == RES_OK) && (s)) {
@@ -571,7 +399,7 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 		/* rls_lock(); the callback locks this mutex ! */
 		if (res < 0) {
 			/* does this mean, that the callback was not called ??? */
-			LOG(L_ERR, "rls_generate_notify(): t_request_within FAILED: %d! Freeing RL subscription.\n", res);
+			ERR("t_request_within FAILED: %d! Freeing RL subscription.\n", res);
 			rls_remove(s); /* ?????? */
 		}
 	}
@@ -585,10 +413,10 @@ static int rls_generate_notify_ext(rl_subscription_t *s, int full_info)
 	return res;
 }
 
-static list_presence_info_t* rls2list_presence_info(rl_subscription_t *s)
+/* static raw_presence_info_t* rls2raw_presence_info(rl_subscription_t *s)
 {
-	list_presence_info_t *info;
-	info = create_list_presence_info(s->u.internal.record_id);
+	raw_presence_info_t *info;
+	info = create_raw_presence_info(s->u.internal.record_id);
 	if (!info) return info;
 
 	str_clear(&info->pres_doc);
@@ -597,41 +425,25 @@ static list_presence_info_t* rls2list_presence_info(rl_subscription_t *s)
 	create_rlmi_document(&info->pres_doc, &info->content_type, s, 1);
 
 	return info;
-}
+} */
 
 static int rls_generate_notify_int(rl_subscription_t *s)
 {
 	/* generate internal notification */
-	client_notify_info_t *info;
-	mq_message_t *msg;
-	int res;
-	static str_t notifier_name = { s: "rls", len: 3 };
+	str_t doc, content_type;
 	
 	/* TRACE("generating internal list notify\n"); */
 
 	if (!s->u.internal.vs) return 1;
+	
+	/* raw = rls2raw_presence_info(s); */
+	create_rlmi_document(&doc, &content_type, s, 1);
+	
+	/* documents are given to VS (we don't care about them
+	 * more - no free, ... */
+	process_internal_notify(s->u.internal.vs,
+			&doc, &content_type);
 
-	/* TRACE(" ... creating message\n"); */
-	msg = create_message_ex(sizeof(client_notify_info_t));
-	if (!msg) {
-		ERROR_LOG("can't create internal notify message!\n");
-		return -1; 
-	}
-	set_data_destroy_function(msg, (destroy_function_f)free_client_notify_info_content);
-	info = (client_notify_info_t*)msg->data;
-
-	/* TRACE(" ... setting info\n"); */
-	str_dup(&info->record_id, s->u.internal.record_id);
-	str_dup(&info->package, s->u.internal.package);
-	str_dup(&info->notifier, &notifier_name); 
-	/* TRACE(" ... setting list presence info\n"); */
-	info->data = rls2list_presence_info(s);
-	info->data_len = sizeof(list_presence_info_t);
-	info->destroy_func = (destroy_function_f)free_list_presence_info;
-
-	/* TRACE(" ... before notify_subscriber (%p)\n", s->u.internal.vs); */
-	res = push_message(&s->u.internal.vs->mq, msg);
-	/* TRACE(" ... after notify_subscriber (res = %d)\n", res); */
 	return 0;
 }
 
@@ -639,9 +451,14 @@ int rls_generate_notify(rl_subscription_t *s, int full_info)
 {
 	/* !!! the main mutex must be locked here !!! */
 	if (!s) {
-		LOG(L_ERR, "rls_generate_notify(): called with <null> subscription\n");
+		ERR("called with <null> subscription\n");
 		return -1;
 	}
+	
+	if (!s->enable_generate_notify) {
+		/* disabled */
+		return 0;
+	} 
 	
 	switch (s->type) {
 		case rls_external_subscription:
@@ -697,6 +514,7 @@ int rls_create_internal_subscription(virtual_subscription_t *vs,
 		return -1;
 	}
 
+	rls->enable_generate_notify = 0;
 	rls->u.internal.record_id = &vs->uri; /* !!! NEVER !!! free this */
 	rls->u.internal.package = rls_get_package(vs->subscription); /* !!! NEVER !!! free this */
 	rls->u.internal.subscriber_id = rls_get_subscriber(vs->subscription); /* !!! NEVER !!! free this */
@@ -715,8 +533,9 @@ int rls_create_internal_subscription(virtual_subscription_t *vs,
 		return -1;
 	}
 
-	/* generate first notification for accepted subscription */
-	rls_generate_notify(rls, 1); /* FIXME : really ????? */
+	rls->enable_generate_notify = 1;
+
+	rls_generate_notify(rls, 1);
 
 	return 0;
 }

@@ -10,6 +10,8 @@
 #include <presence/pres_doc.h>
 #include <presence/pidf.h>
 #include <cds/list.h>
+#include "rls_data.h"
+#include "rls_auth.h"
 
 /* shared structure holding the data */
 typedef struct {
@@ -20,8 +22,6 @@ typedef struct {
 } vs_data_t;
 
 static vs_data_t *vsd = NULL;
-
-static void vs_timer_cb(unsigned int ticks, void *param);
 
 /******** global functions (initialization) ********/
 
@@ -41,11 +41,6 @@ int vs_init()
 	}
 	DEBUG_LOG("QSA (vs) domain: %p\n", vsd->domain);
 	
-	/* register a SER timer */
-	if (register_timer(vs_timer_cb, NULL, 10) < 0) {
-		LOG(L_ERR, "vs_init(): can't register timer\n");
-		return -1;
-	}
 	return 0;
 }
 
@@ -62,80 +57,78 @@ int vs_destroy()
 }
 
 /******** Helper functions ********/
-static void process_notify_info(virtual_subscription_t *vs, client_notify_info_t *info) 
+void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *info) 
 {
 	presentity_info_t *pinfo;
-	list_presence_info_t *linfo;
+	raw_presence_info_t *raw;
 
 	if ((!vs) || (!info)) return;
 	
-/*	TRACE("Processing internal notification from %.*s\n", 
-			FMT_STR(info->notifier)); */
+	TRACE("Processing notification for VS %p\n", vs);
 
-/*	if (is_presence_list_package(&info->package)) {*/
-	if (str_cmp_zt(&info->notifier, "rls") == 0) {
-		/* TRACE("Processing internal list notification\n"); */
-		
-		linfo = (list_presence_info_t*)info->data;	/* TODO: test for "presence" package? */
-		if (!linfo) return;
-		
-		/* release old document if set */
-		/* TRACE(" ... freeing old documents\n"); */
-		str_free_content(&vs->state_document); 		
-		str_free_content(&vs->content_type);
-		
-		/* create_presence_rlmi_document(linfo, &vs->state_document, &vs->content_type); */
-		/* TRACE(" ... duplicating documents\n"); */
-		str_dup(&vs->state_document, &linfo->pres_doc);
-		str_dup(&vs->content_type, &linfo->content_type);
-		
-		vs->status = subscription_active;
+	/* release old document if set */
+	/* TRACE(" ... freeing old documents\n"); */
+	str_free_content(&vs->state_document); 		
+	str_free_content(&vs->content_type);
+			
+	switch (info->data_type) {
+		case PRESENTITY_RAW_INFO:
+			/* TRACE("Processing raw notification\n"); */
+			
+			raw = (raw_presence_info_t*)info->data;
+			if (!raw) return;
+			
+			/* create_presence_rlmi_document(linfo, &vs->state_document, &vs->content_type); */
+			/* TRACE(" ... duplicating documents\n"); */
+			str_dup(&vs->state_document, &raw->pres_doc);
+			str_dup(&vs->content_type, &raw->content_type);
+			
+			vs->status = subscription_active;
+			break;
+		case PRESENTITY_INFO_TYPE:
+			/* TRACE("Processing structured notification\n"); */
+			
+			pinfo = (presentity_info_t*)info->data;
+			if (!pinfo) return;
+			
+			create_pidf_document(pinfo, &vs->state_document, &vs->content_type);
+			vs->status = subscription_active;
+			
+			/* DEBUG_LOG("created pidf document:\n %.*s\n", FMT_STR(vs->state_document)); */
+			break;
+		default:
+			ERR("received unacceptable notification (%d)\n", info->data_type);
+			return;
 	}
-	else {
-		/* TRACE("Processing internal NON-list notification\n"); */
-		
-		pinfo = (presentity_info_t*)info->data;	/* TODO: test for "presence" package? */
-		if (!pinfo) return;
-		
-		/* release old document if set */
-		str_free_content(&vs->state_document); 		
-		str_free_content(&vs->content_type);
-		
-		create_pidf_document(pinfo, &vs->state_document, &vs->content_type);
-		vs->status = subscription_active;
-		
-		/* DEBUG_LOG("created pidf document:\n %.*s\n", FMT_STR(vs->state_document)); */
-	}
+
+	rls_generate_notify(vs->subscription, 1);
 }
 
-/* returns positive value if status of this VS changed */
-static int process_vs_messages(virtual_subscription_t *vs)
+void process_internal_notify(virtual_subscription_t *vs, 
+		str_t *new_state_document,
+		str_t *new_content_type) 
 {
-	int cnt = 0;
-	client_notify_info_t *info;
-	mq_message_t *msg;
-
-	/* TRACE("processing messages for VS (%p)\n", vs); */
-	if ((!vs->local_subscription_pres) && (!vs->local_subscription_list)) {
-		WARN("VS %p should not receive messages\n", vs);
-		return 0;
-	}
-
-	while (!is_msg_queue_empty(&vs->mq)) {
-		msg = pop_message(&vs->mq);
-		if (!msg) continue;
-		info = (client_notify_info_t *)msg->data;
-		if (info) {
-			DEBUG_LOG("received NOTIFY MESSAGE for %.*s from %.*s\n", 
-					FMT_STR(info->record_id), FMT_STR(info->notifier));
-			process_notify_info(vs, info);
-			cnt++;
-		}
-		DEBUG_LOG(" ... freeing message\n");
-		free_message(msg);
-	}
-	return cnt;
+	if (!vs) return;
+	
+	TRACE("Processing internal notification for VS %p\n", vs);
+		
+	/* free old_documents */
+	str_free_content(&vs->state_document); 		
+	str_free_content(&vs->content_type);
+	
+	/* don't copy documents - use them directly - 
+	 * see rls_generate_notify_int */
+	if (new_state_document) vs->state_document = *new_state_document;
+	else str_clear(&vs->state_document);
+	if (new_content_type) vs->content_type = *new_content_type;
+	else str_clear(&vs->content_type);
+	
+	/* propagate notification */
+	rls_generate_notify(vs->subscription, 1);
+	vs->subscription->changed = 0;
 }
+
+#if 0
 
 static void mark_as_modified(virtual_subscription_t *vs)
 {
@@ -158,21 +151,6 @@ static void mark_as_modified(virtual_subscription_t *vs)
 	vs->subscription->changed++;
 	DEBUG_LOG("RL subscription status changed (%p, %d)\n", 
 		rls, rls->changed);
-}
-
-static void notify_all_modified()
-{
-	virtual_subscription_t *vs;
-
-	vs = vsd->first;
-	while (vs) {
-		if (vs->subscription->changed > 0) {
-			DEBUG_LOG("RL subscription generate notify\n");
-			rls_generate_notify(vs->subscription, 1);
-			vs->subscription->changed = 0;
-		}
-		vs = vs->next;
-	}
 }
 
 static void vs_timer_cb(unsigned int ticks, void *param)
@@ -208,6 +186,23 @@ static void vs_timer_cb(unsigned int ticks, void *param)
 	stop = time(NULL);
 
 	if (stop - start > 1) WARN("vs_timer_cb took %d secs\n", (int) (stop - start));
+}
+
+#endif
+
+void notify_all_modified_vs()
+{
+	virtual_subscription_t *vs;
+
+	vs = vsd->first;
+	while (vs) {
+		if (vs->subscription->changed > 0) {
+			DEBUG_LOG("RL subscription generate notify\n");
+			rls_generate_notify(vs->subscription, 1);
+			vs->subscription->changed = 0;
+		}
+		vs = vs->next;
+	}
 }
 
 static int add_to_vs_list(virtual_subscription_t *vs)
@@ -258,10 +253,6 @@ static int create_subscriptions(virtual_subscription_t *vs)
 	package = rls_get_package(vs->subscription);
 
 	DEBUG_LOG("creating local subscription to %.*s\n", FMT_STR(vs->uri));
-	if (msg_queue_init(&vs->mq) != 0) {
-		LOG(L_ERR, "can't initialize message queue!\n");
-		return -1;
-	}
 
 	if (xcap_query_rls_services(&vs->subscription->xcap_root,
 				&vs->subscription->xcap_params,
@@ -274,13 +265,17 @@ static int create_subscriptions(virtual_subscription_t *vs)
 			return -1;
 		}
 		free_flat_list(flat);
+		
+		vs->status = subscription_active;
+		/* FIXME: rls_authorize_subscription(vs->local_subscription_list); */
 	}
 	else {
 		subscriber = rls_get_subscriber(vs->subscription);
 		/* not RLS record -> do QSA subscription to given package */
 		vs->local_subscription_pres = subscribe(vsd->domain, 
 				package, 
-				&vs->uri, subscriber, &vs->mq, vs);
+				&vs->uri, subscriber, 
+				&rls->notify_mq, vs);
 		if (!vs->local_subscription_pres) {
 			LOG(L_ERR, "can't create local subscription (pres)!\n");
 			return -1;
@@ -335,7 +330,7 @@ int vs_create(str *uri,
 
 	add_to_vs_list(*dst);
 
-	/*LOG(L_TRACE, "created Virtual Subscription to %.*s\n", uri->len, uri->s);*/
+	TRACE("created VS %p to %.*s\n", *dst, uri->len, uri->s);
 	
 	res = create_subscriptions(*dst);
 	if (res != 0) {
@@ -397,13 +392,20 @@ void vs_free(virtual_subscription_t *vs)
 	vs_display_name_t dn;
 	
 	if (vs) {
-		remove_from_vs_list(vs);
+		if (vs->local_subscription_pres)
+			unsubscribe(vsd->domain, vs->local_subscription_pres);
+		if (vs->local_subscription_list) 
+			rls_remove(vs->local_subscription_list);
 		
-/*		if ( (vs->package.len > 0) && (vs->package.s) ) 
-			mem_free(vs->package.s);*/
+		destroy_vs_notifications(vs);
+		
+		remove_from_vs_list(vs);
 		
 		str_free_content(&vs->state_document);
 		str_free_content(&vs->content_type);
+
+		/* if ( (vs->package.len > 0) && (vs->package.s) ) 
+		mem_free(vs->package.s); */
 		
 		cnt = vector_size(&vs->display_names);
 		for (i = 0; i < cnt; i++) {
@@ -412,15 +414,6 @@ void vs_free(virtual_subscription_t *vs)
 			if (dn.lang.s && (dn.lang.len > 0)) mem_free(dn.lang.s);
 		}
 		vector_destroy(&vs->display_names);
-
-		if (vs->local_subscription_pres)
-			unsubscribe(vsd->domain, vs->local_subscription_pres);
-		if (vs->local_subscription_list) 
-			rls_remove(vs->local_subscription_list);
-		
-		if (vs->local_subscription_pres || vs->local_subscription_list) {
-			msg_queue_destroy(&vs->mq);
-		}
 
 		mem_free(vs);
 /*		LOG(L_TRACE, "Virtual Subscription freed\n");*/

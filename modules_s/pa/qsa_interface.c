@@ -14,7 +14,7 @@
 static notifier_domain_t *domain = NULL;
 static notifier_t *notifier = NULL;
 
-static str_t notifier_name = { s: "pa", len: 2 };
+/* static str_t notifier_name = { s: "pa", len: 2 }; */
 static str_t presence_package = { s: "presence", len: 8 };
 
 static int pa_subscribe(notifier_t *n, subscription_t *subscription);
@@ -307,8 +307,6 @@ presentity_info_t *presentity2presentity_info(presentity_t *p)
 
 int notify_internal_watcher(presentity_t *p, internal_pa_subscription_t *ss)
 {
-	client_notify_info_t *info;
-	mq_message_t *msg;
 	presentity_info_t *pinfo;
 
 	/* notify only accepted watchers */
@@ -321,26 +319,10 @@ int notify_internal_watcher(presentity_t *p, internal_pa_subscription_t *ss)
 		return -1; 
 	}
 	
-	msg = create_message_ex(sizeof(client_notify_info_t));
-	if (!msg) {
-		ERROR_LOG("can't create notify message!\n");
-		free_presentity_info(pinfo);
-		return -1; 
-	}
-	set_data_destroy_function(msg, (destroy_function_f)free_client_notify_info_content);
-	info = (client_notify_info_t*)msg->data;
-
-	str_dup(&info->package, &ss->subscription->package->name); /* ? */
-	str_dup(&info->record_id, &p->uri);
-	str_dup(&info->notifier, &notifier_name);
-	info->data = pinfo;
-	info->data_len = sizeof(*pinfo);
-	info->destroy_func = (destroy_function_f)free_presentity_info;
-
-	/* push_message(ss->subscription->dst, msg); */
-	notify_subscriber(ss->subscription, msg);
-	
-	return 0;
+	return notify_subscriber(ss->subscription, 
+			PRESENTITY_INFO_TYPE,
+			pinfo, sizeof(pinfo),
+			(destroy_function_f)free_presentity_info);
 }
 	
 int notify_qsa_watchers(presentity_t *p)

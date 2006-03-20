@@ -5,6 +5,7 @@
 #include "../../db/db.h"
 #include "rl_subscription.h"
 #include "../dialog/dlg_mod.h"
+#include "rls_data.h"
 
 typedef enum {
 	rls_mode_full, /* according to drafts */

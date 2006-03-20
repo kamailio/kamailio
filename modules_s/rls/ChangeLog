@@ -1,3 +1,10 @@
+2006-03-20
+	* multiple message queues (one for each virtual subscription) replaced by
+	only one message queue for QSA notifications shared by all virtual
+	subscriptions
+	* xcap_root for resource list subscription stored into database (needed
+	for subscription recreation)
+
 2006-03-17
 	* changed parameters of XCAP queries
 

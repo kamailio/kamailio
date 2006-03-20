@@ -222,6 +222,9 @@ int rls_db_add(rl_subscription_t *s)
 	cols[++n] = "w_uri";
 	string_val(vals[n], s->u.external.subscriber);
 	
+	cols[++n] = "xcap_root";
+	string_val(vals[n], s->xcap_root);
+	
 	cols[++n] = "id";
 	string_val_ex(vals[n], s->dbid, strlen(s->dbid));
 	
@@ -323,6 +326,9 @@ int rls_db_update(rl_subscription_t *s)
 	
 	cols[++n] = "w_uri";
 	string_val(vals[n], s->u.external.subscriber);
+	
+	cols[++n] = "xcap_root";
+	string_val(vals[n], s->xcap_root);
 	
 	if (rls_dbf.update(rls_db, keys, ops, k_vals, 
 				cols, vals, 1, n + 1) < 0) {
@@ -469,7 +475,8 @@ int db_load_rls()
 	db_key_t result_cols[] = { 
 		"id", "doc_version", "dialog",
 		"expires", "status", "contact",
-		"uri", "package", "w_uri"
+		"uri", "package", "w_uri",
+		"xcap_root"
 	};
 
 	if (!use_db) return 0;
@@ -505,6 +512,7 @@ int db_load_rls()
 			str uri = STR_NULL;
 			str package = STR_NULL;
 			str w_uri = STR_NULL;
+			str xcap_root = STR_NULL;
 			subscription_status_t status;
 			time_t expires = 0;
 			int expires_after;
@@ -512,7 +520,8 @@ int db_load_rls()
 
 			s = rls_alloc_subscription(rls_external_subscription);
 			if (!s) { r = -1; break; }
-			
+		
+			s->enable_generate_notify = 0;
 			get_str_val(row_vals[0], id);
 			strcpy(s->dbid, id.s);
 			get_int_val(row_vals[1], s->doc_version);
@@ -523,6 +532,7 @@ int db_load_rls()
 			get_str_val(row_vals[6], uri);
 			get_str_val(row_vals[7], package);
 			get_str_val(row_vals[8], w_uri);
+			get_str_val(row_vals[9], xcap_root);
 			if (expires != 0) expires_after = expires - time(NULL);
 			else expires_after = 0;
 			dlg = dlg2str(&dialog);
@@ -537,9 +547,19 @@ int db_load_rls()
 					s);
 			DEBUG_LOG("  created RLS to %.*s from %.*s\n", 
 					FMT_STR(uri), FMT_STR(w_uri));
+
+			if (str_dup(&s->xcap_root, &xcap_root) < 0) {
+				ERR("can't set xcap root\n");
+				rls_free(s);
+				s = 0;
+				r = -1;
+				break;
+			}
 		
 			/* load virtual subscriptions */
 			db_load_vs(rls_db, s);	
+			
+			s->enable_generate_notify = 1;
 		}
 
 		rls_dbf.free_result(rls_db, res);

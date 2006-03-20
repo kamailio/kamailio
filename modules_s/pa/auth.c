@@ -5,7 +5,7 @@
 #include <xcap/pres_rules.h>
 #include <cds/logger.h>
 
-int get_user_from_uri(str *uri, str *user)
+/* static int get_user_from_uri(str *uri, str *user)
 {
 	char *a;
 	char *d;
@@ -24,7 +24,7 @@ int get_user_from_uri(str *uri, str *user)
 		}
 	}
 	return -1;
-}
+} */
 
 /* Authorization */
 static int xcap_get_pres_rules(str *uid, 

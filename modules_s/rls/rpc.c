@@ -1,5 +1,6 @@
 #include "rpc.h"
 #include "rl_subscription.h"
+#include "rls_data.h"
 #include "../../dprint.h"
 
 #include <unistd.h>
@@ -14,19 +15,68 @@
 
 #define rpc_lf(rpc, c)	rpc->add(c, "s","")
 
+static void trace_vs(rpc_t *rpc, void *c, virtual_subscription_t *vs)
+{
+	rpc->printf(c, " Virtual subscriptions:");
+	rpc_lf(rpc, c);
+	
+	rpc->printf(c, " -> URI = %.*s", FMT_STR(vs->uri));
+	rpc_lf(rpc, c);
+	rpc->printf(c, " -> status = %d", vs->status);
+	rpc_lf(rpc, c);
+	
+	rpc->printf(c, " -> document = %.*s", FMT_STR(vs->state_document));
+	rpc_lf(rpc, c);
+
+	rpc_lf(rpc, c);
+}
+
+static void rls_trace_subscription(rpc_t *rpc, void *c, rl_subscription_t *s)
+{
+	virtual_subscription_t *vs;
+	int cnt, i;
+	
+	switch (s->type) {
+		case rls_internal_subscription:
+			rpc->printf(c, "URI = %.*s", FMT_STR(*s->u.internal.record_id));
+			rpc_lf(rpc, c);
+			break;
+		case rls_external_subscription:
+			rpc->printf(c, "URI = %.*s", FMT_STR(s->u.external.record_id));
+			rpc_lf(rpc, c);
+			break;
+	}
+
+	cnt = ptr_vector_size(&s->vs);
+	for (i = 0; i < cnt; i++) {
+		vs = ptr_vector_get(&s->vs, i);
+		if (!vs) continue;
+		trace_vs(rpc, c, vs);
+	}
+	
+	rpc_lf(rpc, c);
+}
+
 static void rls_trace(rpc_t *rpc, void *c)
 {
 	int i = 0;
 	subscription_data_t *s;
+	rl_subscription_t *rs;
 	
 	rpc->add(c, "s", "RLS Trace:");
 
-	if (rls_manager) {
-		s = rls_manager->first;
-		while (s) {
-			s = s->next;
-			i++;
-		}
+	if (!rls) {
+		rpc->printf(c, "problems");
+		rpc->send(c);
+		return;
+	}
+	
+	s = rls_manager->first;
+	while (s) {
+		i++;
+		rs = (rl_subscription_t*)(s->usr_data);
+		rls_trace_subscription(rpc, c, rs);
+		s = s->next;
 	}
 	rpc->printf(c, "subscription count: %d", i);
 	rpc_lf(rpc, c);
