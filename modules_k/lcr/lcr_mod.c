@@ -1432,13 +1432,17 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	    LOG(L_ERR, "next_gw(): No memory for new R-URI.\n");
 	    return -1;
 	}
-	strip_char = memchr(gw_uri_val.s.s, '|', gw_uri_val.s.len);
 	at_char = memchr(gw_uri_val.s.s, '@', gw_uri_val.s.len);
-	if (!strip_char || strip_char > at_char)
-		strip = 0;
 	if (!at_char) {
 	    pkg_free(new_ruri.s);
 	    LOG(L_ERR, "next_gw(): No @ in gateway URI.\n");
+	    return -1;
+	}
+	strip_char = memchr(gw_uri_val.s.s, '|', gw_uri_val.s.len);
+	if (!strip_char || strip_char > at_char) {
+	    pkg_free(new_ruri.s);
+	    LOG(L_ERR, "next_gw(): No strip character | "
+		"before @ in gateway URI.\n");
 	    return -1;
 	}
 	at = new_ruri.s;
@@ -1489,11 +1493,19 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	    LOG(L_ERR, "next_gw(): No @ in gateway URI.\n");
 	    return -1;
 	}
+	strip_char = memchr(gw_uri_val.s.s, '|', gw_uri_val.s.len);
+	if (!strip_char || strip_char > at_char) {
+	    pkg_free(new_ruri.s);
+	    LOG(L_ERR, "next_gw(): No strip character | "
+		"before @ in gateway URI.\n");
+	    return -1;
+	}
 	at = new_ruri.s;
-	memcpy(at, gw_uri_val.s.s, at_char - gw_uri_val.s.s);
-	at = at + (at_char - gw_uri_val.s.s);
-	memcpy(at, ruri_user_val.s.s, ruri_user_val.s.len);
-	at = at + ruri_user_val.s.len;
+	memcpy(at, gw_uri_val.s.s, strip_char - gw_uri_val.s.s);
+	sscanf(strip_char+1,"%d",&strip);
+	at = at + (strip_char - gw_uri_val.s.s);
+	memcpy(at, ruri_user_val.s.s + strip, ruri_user_val.s.len - strip);
+	at = at + ruri_user_val.s.len - strip;
 	memcpy(at, at_char, gw_uri_val.s.len - (at_char - gw_uri_val.s.s));
 	at = at + gw_uri_val.s.len - (at_char - gw_uri_val.s.s);
 	*at = '\0';
