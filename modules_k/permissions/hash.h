@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include "../../parser/msg_parser.h"
 #include "../../str.h"
+#include "../../usr_avp.h"
 
 #define PERM_HASH_SIZE 128
 
@@ -38,8 +39,21 @@ struct trusted_list {
 	str src_ip;                 /* Source IP of SIP message */
 	int proto;                  /* Protocol -- UDP, TCP, TLS, or SCTP */
 	char *pattern;              /* Pattern matching From header field */
+	str tag;                    /* Tag to be assigned to AVP */
 	struct trusted_list *next;  /* Next element in the list */
 };
+
+
+/*
+ * Parse and init tag avp specification
+ */
+int init_tag_avp(char *tag_avp_param);
+
+
+/*
+ * Gets tag avp specs
+ */
+void get_tag_avp(int_str *tag_avp_p, int *tag_avp_type_p);
 
 
 /*
@@ -64,7 +78,8 @@ void destroy_hash_table(struct trusted_list** table);
  * Add <src_ip, proto, pattern> into hash table, where proto is integer
  * representation of string argument proto.
  */
-int hash_table_insert(struct trusted_list** hash_table, char* src_ip, char* proto, char* pattern);
+int hash_table_insert(struct trusted_list** hash_table, char* src_ip,
+		      char* proto, char* pattern, char* tag);
 
 
 /* 

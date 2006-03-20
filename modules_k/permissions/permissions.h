@@ -53,6 +53,7 @@ extern char* trusted_table; /* Name of trusted table */
 extern char* source_col;    /* Name of source address column */
 extern char* proto_col;     /* Name of protocol column */
 extern char* from_col;      /* Name of from pattern column */
+extern char* tag_col;       /* Name of tag column */
 
 
 #define DISABLE_CACHE 0

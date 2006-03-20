@@ -29,6 +29,7 @@
 #include "permissions.h"
 #include "parse_config.h"
 #include "trusted.h"
+#include "hash.h"
 #include "../../mem/mem.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
@@ -59,6 +60,8 @@ char* trusted_table = "trusted";   /* Name of trusted table */
 char* source_col = "src_ip";       /* Name of source address column */
 char* proto_col = "proto";         /* Name of protocol column */
 char* from_col = "from_pattern";   /* Name of from pattern column */
+char* tag_col = "tag";             /* Name of tag column */
+char* tag_avp_param = 0;           /* Peer tag AVP spec */
 
 
 /*
@@ -118,6 +121,8 @@ static param_export_t params[] = {
 	{"source_col",         STR_PARAM, &source_col        },
 	{"proto_col",          STR_PARAM, &proto_col         },
 	{"from_col",           STR_PARAM, &from_col          },
+	{"tag_col",            STR_PARAM, &tag_col           },
+	{"peer_tag_avp",       STR_PARAM, &tag_avp_param     },
         {0, 0, 0}
 };
 
@@ -459,6 +464,12 @@ static int mod_init(void)
 
 	if (init_trusted() != 0) {
 		LOG(L_ERR, "Error while initializing allow_trusted function\n");
+	}
+	
+	if (init_tag_avp( tag_avp_param) < 0) {
+	    LOG(L_ERR,"ERROR:permissions:mod_init: "
+		"failed to process tag AVP\n");
+	    return -1;
 	}
 	
 	rules_num = 1;

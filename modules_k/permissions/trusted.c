@@ -40,8 +40,9 @@
 #include "../../mem/shm_mem.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
+#include "../../usr_avp.h"
 
-#define TABLE_VERSION 1
+#define TABLE_VERSION 3
 
 struct trusted_list ***hash_table;     /* Pointer to current hash table pointer */
 struct trusted_list **hash_table_1;   /* Pointer to hash table 1 */
@@ -50,6 +51,7 @@ struct trusted_list **hash_table_2;   /* Pointer to hash table 2 */
 
 static db_con_t* db_handle = 0;
 static db_func_t perm_dbf;
+
 
 /*
  * Initialize data structures
@@ -135,6 +137,7 @@ int init_trusted(void)
 	if (hash_table_1) free_hash_table(hash_table_1);
 	if (hash_table_2) free_hash_table(hash_table_2);
 	if (hash_table) shm_free(hash_table);
+	perm_dbf.close(db_handle);
 	return -1;
 }
 
@@ -246,12 +249,13 @@ static inline int match_proto(char *proto_string, int proto_int)
  */
 static int match_res(struct sip_msg* msg, db_res_t* _r)
 {
-	int i;
+        int i, tag_avp_type;
 	str uri;
 	char uri_string[MAX_URI_SIZE+1];
 	db_row_t* row;
 	db_val_t* val;
 	regex_t preg;
+	int_str tag_avp, avp_val;
 
 	if (parse_from_header(msg) < 0) return -1;
 	uri = get_from(msg)->uri;
@@ -266,12 +270,15 @@ static int match_res(struct sip_msg* msg, db_res_t* _r)
 		
 	for(i = 0; i < RES_ROW_N(_r); i++) {
 	    val = ROW_VALUES(row + i);
-	    if ((ROW_N(row + i) == 2) &&
+	    if ((ROW_N(row + i) == 3) &&
 		(VAL_TYPE(val) == DB_STRING) && !VAL_NULL(val) &&
 		match_proto((char *)VAL_STRING(val), msg->rcv.proto) &&
 		(VAL_NULL(val + 1) ||
-		 ((VAL_TYPE(val + 1) == DB_STRING) && !VAL_NULL(val + 1)))) {
-		if (VAL_NULL(val + 1)) return 1;
+		 ((VAL_TYPE(val + 1) == DB_STRING) && !VAL_NULL(val + 1))) &&
+		(VAL_NULL(val + 2) ||
+		 ((VAL_TYPE(val + 2) == DB_STRING) && !VAL_NULL(val + 2))))
+	    {
+		if (VAL_NULL(val + 1)) goto found;
 		if (regcomp(&preg, (char *)VAL_STRING(val + 1), REG_NOSUB)) {
 		    LOG(L_ERR, "match_res(): Error in regular expression\n");
 		    continue;
@@ -281,11 +288,24 @@ static int match_res(struct sip_msg* msg, db_res_t* _r)
 		    continue;
 		} else {
 		    regfree(&preg);
-		    return 1;
+		    goto found;
 		}
 	    }
 	}
 	return -1;
+
+found:
+	get_tag_avp(&tag_avp, &tag_avp_type);
+	if (tag_avp.n && !VAL_NULL(val + 2)) {
+	    avp_val.s.s = (char *)VAL_STRING(val + 2);
+	    avp_val.s.len = strlen(avp_val.s.s);
+	    if (add_avp(tag_avp_type|AVP_VAL_STR, tag_avp, avp_val) != 0) {
+		LOG(L_ERR, "match_res(): ERROR: setting of "
+		    "tag_avp failed\n");
+		return -1;
+	    }
+	}
+	return 1;
 }
 
 
@@ -302,7 +322,7 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 	
 	db_key_t keys[1];
 	db_val_t vals[1];
-	db_key_t cols[2];
+	db_key_t cols[3];
 
 	if (!db_url) {
 		LOG(L_ERR, "allow_trusted(): ERROR set db_mode parameter of permissions module first !\n");
@@ -313,6 +333,7 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 		keys[0] = source_col;
 		cols[0] = proto_col;
 		cols[1] = from_col;
+		cols[2] = tag_col;
 
 		if (perm_dbf.use_table(db_handle, trusted_table) < 0) {
 			LOG(L_ERR, "allow_trusted(): Error while trying to use trusted table\n");
@@ -323,8 +344,9 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 		VAL_NULL(vals) = 0;
 		VAL_STRING(vals) = ip_addr2a(&(_msg->rcv.src_ip));
 
-		if (perm_dbf.query(db_handle, keys, 0, vals, cols, 1, 2, 0, &res) < 0){
+		if (perm_dbf.query(db_handle, keys, 0, vals, cols, 1, 3, 0, &res) < 0){
 			LOG(L_ERR, "allow_trusted(): Error while querying database\n");
+			perm_dbf.close(db_handle);
 			return -1;
 		}
 
@@ -352,7 +374,7 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
  */
 int reload_trusted_table(void)
 {
-	db_key_t cols[3];
+	db_key_t cols[4];
 	db_res_t* res;
 	db_row_t* row;
 	db_val_t* val;
@@ -363,6 +385,9 @@ int reload_trusted_table(void)
 	cols[0] = source_col;
 	cols[1] = proto_col;
 	cols[2] = from_col;
+	cols[3] = tag_col;
+
+	char *pattern, *tag;
 
 	if (perm_dbf.use_table(db_handle, trusted_table) < 0) {
 		LOG(L_ERR, "ERROR: permissions: reload_trusted_table():"
@@ -370,7 +395,7 @@ int reload_trusted_table(void)
 		return -1;
 	}
 
-	if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 3, 0, &res) < 0) {
+	if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 4, 0, &res) < 0) {
 		LOG(L_ERR, "ERROR: permissions: reload_trusted_table():"
 				" Error while querying database\n");
 		return -1;
@@ -391,41 +416,39 @@ int reload_trusted_table(void)
 		
 	for (i = 0; i < RES_ROW_N(res); i++) {
 	    val = ROW_VALUES(row + i);
-	    if ((ROW_N(row + i) == 3) &&
+	    if ((ROW_N(row + i) == 4) &&
 		(VAL_TYPE(val) == DB_STRING) && !VAL_NULL(val) &&
 		(VAL_TYPE(val + 1) == DB_STRING) && !VAL_NULL(val + 1) &&
 		(VAL_NULL(val + 2) ||
-		 ((VAL_TYPE(val + 2) == DB_STRING) && !VAL_NULL(val + 2)))) {
+		 ((VAL_TYPE(val + 2) == DB_STRING) && !VAL_NULL(val + 2))) &&
+		(VAL_NULL(val + 3) ||
+		 ((VAL_TYPE(val + 3) == DB_STRING) && !VAL_NULL(val + 3)))) {
 		if (VAL_NULL(val + 2)) {
-		    if (hash_table_insert(new_hash_table,
-					  (char *)VAL_STRING(val),
-					  (char *)VAL_STRING(val + 1),
-					  0) == -1) {
-			LOG(L_ERR, "ERROR: permissions: "
-			    "trusted_reload(): Hash table problem\n");
-			perm_dbf.free_result(db_handle, res);
-			perm_dbf.close(db_handle);
-			return -1;
-		    }
+		    pattern = 0;
 		} else {
-		    if (hash_table_insert(new_hash_table,
-					  (char *)VAL_STRING(val),
-					  (char *)VAL_STRING(val + 1),
-					  (char *)VAL_STRING(val + 2)) == -1) {
-			LOG(L_ERR, "ERROR: permissions: "
-			    "trusted_reload(): Hash table problem\n");
-			perm_dbf.free_result(db_handle, res);
-			perm_dbf.close(db_handle);
-			return -1;
-		    }
+		    pattern = (char *)VAL_STRING(val + 2);
 		}
-		DBG("Tuple <%s, %s, %s> inserted into trusted hash table\n",
-		    VAL_STRING(val), VAL_STRING(val + 1), VAL_STRING(val + 2));
+		if (VAL_NULL(val + 3)) {
+		    tag = 0;
+		} else {
+		    tag = (char *)VAL_STRING(val + 3);
+		}
+		if (hash_table_insert(new_hash_table,
+				      (char *)VAL_STRING(val),
+				      (char *)VAL_STRING(val + 1),
+				      pattern, tag) == -1) {
+		    LOG(L_ERR, "ERROR: permissions: "
+			"trusted_reload(): Hash table problem\n");
+		    perm_dbf.free_result(db_handle, res);
+		    return -1;
+		}
+		DBG("Tuple <%s, %s, %s, %s> inserted into trusted hash "
+		    "table\n", VAL_STRING(val), VAL_STRING(val + 1),
+		    pattern, tag);
 	    } else {
 		LOG(L_ERR, "ERROR: permissions: trusted_reload():"
 		    " Database problem\n");
 		perm_dbf.free_result(db_handle, res);
-		perm_dbf.close(db_handle);
 		return -1;
 	    }
 	}

@@ -490,6 +490,48 @@ modparam("permissions", "from_col", "regexp")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>tag_col</varname> (string)</title>
+		<para>
+		Name of trusted table column containing a string
+		that is added as value to peer_tag AVP if peer_tag AVP
+                has been defined and if the peer matches.
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>tag</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tag_col</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "tag_col", "peer_tag")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>peer_tag_avp</varname> (string)</title>
+		<para>
+		AVP spec of peer tag AVP.  If defined, the AVP will be
+                set as side effect of allow_trusted() call to not NULL
+                tag column value of the matching peer.
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>undefined</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>peer_tag_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "peer_tag_avp", "i:707")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
@@ -781,10 +823,13 @@ if (allow_refer_to("rules.allow", "rules.deny")) {
 		</title>
 		<para>
 		Checks based on request's source address, transport
-				protocol, and From URI if request can be trusted without
-				authentication.  Returns 1 if a match is found
-				as described in <xref linkend="sec-trusted-requests">
-				and -1 otherwise.
+		protocol, and From URI if request can be trusted without
+		authentication.  Returns 1 if a match is found
+		as described in <xref linkend="sec-trusted-requests">
+		and -1 otherwise.  If a match is found
+		and peer_tag_avp has been defined, adds a
+                non-NULL tag column value of the
+		matching peer to AVP peer_tag_avp.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.

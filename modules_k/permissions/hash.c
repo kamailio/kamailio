@@ -1,9 +1,7 @@
 /*
- * $Id$
- *
  * Hash functions for cached trusted table
  *
- * Copyright (C) 2003 Juha Heinanen
+ * Copyright (C) 2003-2006 Juha Heinanen
  *
  * This file is part of openser, a free SIP server.
  *
@@ -28,10 +26,45 @@
 #include "../../parser/parse_from.h"
 #include "../../ut.h"
 #include "../../hash_func.h"
+#include "../../usr_avp.h"
 #include "hash.h"
-
+#include "trusted.h"
 
 #define perm_hash(_s)  core_hash( &(_s), 0, PERM_HASH_SIZE)
+
+/* tag AVP specs */
+static int     tag_avp_type = 0;
+static int_str tag_avp = (int_str)0;
+static str     tag_str;
+
+
+/*
+ * Parse and set tag AVP specs
+ */
+int init_tag_avp(char *tag_avp_param)
+{
+    if (tag_avp_param && *tag_avp_param) {
+	tag_str.s = tag_avp_param;
+	tag_str.len = strlen(tag_str.s);
+	if (parse_avp_spec( &tag_str, &tag_avp_type, &tag_avp)<0) {
+	    LOG(L_CRIT,"ERROR:permissions:init_tag_avp: "
+		"invalid tag AVP spec \"%s\"\n", tag_avp_param);
+	    return -1;
+	}
+    }
+    return 0;
+}
+
+
+/*
+ * Gets tag avp specs
+ */
+void get_tag_avp(int_str *tag_avp_p, int *tag_avp_type_p)
+{
+	*tag_avp_p = tag_avp;
+	*tag_avp_type_p = tag_avp_type;
+}
+
 
 /*
  * Create and initialize a hash table
@@ -67,11 +100,11 @@ void free_hash_table(struct trusted_list** table)
 
 
 /* 
- * Add <src_ip, proto, pattern> into hash table, where proto is integer
+ * Add <src_ip, proto, pattern, tag> into hash table, where proto is integer
  * representation of string argument proto.
  */
 int hash_table_insert(struct trusted_list** hash_table, char* src_ip, 
-													char* proto, char* pattern)
+		      char* proto, char* pattern, char* tag)
 {
 	struct trusted_list *np;
 	unsigned int hash_val;
@@ -117,8 +150,8 @@ int hash_table_insert(struct trusted_list** hash_table, char* src_ip,
 	if (pattern) {
 	    np->pattern = (char *) shm_malloc(strlen(pattern)+1);
 	    if (np->pattern == NULL) {
-		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory for pattern "
-		    "string\n");
+		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory "
+		    "for pattern string\n");
 		shm_free(np->src_ip.s);
 		shm_free(np);
 		return -1;
@@ -126,6 +159,23 @@ int hash_table_insert(struct trusted_list** hash_table, char* src_ip,
 	    (void) strcpy(np->pattern, pattern);
 	} else {
 	    np->pattern = 0;
+	}
+
+	if (tag) {
+	    np->tag.len = strlen(tag);
+	    np->tag.s = (char *) shm_malloc((np->tag.len) + 1);
+	    if (np->tag.s == NULL) {
+		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory "
+		    "for pattern string\n");
+		shm_free(np->src_ip.s);
+		shm_free(np->pattern);
+		shm_free(np);
+		return -1;
+	    }
+	    (void) strcpy(np->tag.s, tag);
+	} else {
+	    np->tag.len = 0;
+	    np->tag.s = 0;
 	}
 
 	hash_val = perm_hash(np->src_ip);
@@ -138,7 +188,7 @@ int hash_table_insert(struct trusted_list** hash_table, char* src_ip,
 
 /* 
  * Check if an entry exists in hash table that has given src_ip and protocol
- * value and pattern that matches to From URI.
+ * value and pattern that matches to From URI.  If, assign 
  */
 int match_hash_table(struct trusted_list** table, struct sip_msg* msg)
 {
@@ -147,6 +197,7 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg)
 	regex_t preg;
 	struct trusted_list *np;
 	str src_ip;
+	int_str val;
 
 	src_ip.s = ip_addr2a(&msg->rcv.src_ip);
 	src_ip.len = strlen(src_ip.s);
@@ -164,7 +215,7 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg)
 	    if ((np->src_ip.len == src_ip.len) && 
 		(strncasecmp(np->src_ip.s, src_ip.s, src_ip.len) == 0) &&
 		((np->proto == PROTO_NONE) || (np->proto == msg->rcv.proto))) {
-		if (!(np->pattern)) return 1;
+		if (!(np->pattern)) goto found;
 		if (regcomp(&preg, np->pattern, REG_NOSUB)) {
 		    LOG(L_ERR, "match_hash_table(): Error in regular expression\n");
 		    return -1;
@@ -173,11 +224,21 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg)
 		    regfree(&preg);
 		} else {
 		    regfree(&preg);
-		    return 1;
+		    goto found;
 		}
 	    }
 	}
 	return -1;
+found:
+	if (tag_avp.n && np->tag.s) {
+	    val.s = np->tag;
+	    if (add_avp(tag_avp_type|AVP_VAL_STR, tag_avp, val) != 0) {
+		LOG(L_ERR, "match_hash_table(): ERROR: setting of "
+		    "tag_avp failed\n");
+		return -1;
+	    }
+	}
+	return 1;
 }
 
 
@@ -188,20 +249,24 @@ void hash_table_print(struct trusted_list** hash_table, FILE* reply_file)
 {
 	int i;
 	struct trusted_list *np;
+	char *pattern, *tag;
 
 	for (i = 0; i < PERM_HASH_SIZE; i++) {
 		np = hash_table[i];
 		while (np) {
 		    if (np->pattern) {
-			fprintf(reply_file, "%4d <%.*s, %d, %s>\n", i,
-				np->src_ip.len, ZSW(np->src_ip.s),
-				np->proto,
-				np->pattern);
+			pattern = np->pattern;
 		    } else {
-			fprintf(reply_file, "%4d <%.*s, %d, NULL>\n", i,
-				np->src_ip.len, ZSW(np->src_ip.s),
-				np->proto);
-		    }			
+			pattern = "NULL";
+		    }
+		    if (np->tag.len > 0) {
+			tag = np->tag.s;
+		    } else {
+			tag = "NULL";
+		    }
+		    fprintf(reply_file, "%4d <%.*s, %d, %s, %s>\n", i,
+			    np->src_ip.len, ZSW(np->src_ip.s),
+			    np->proto, pattern, tag);
 		    np = np->next;
 		}
 	}
@@ -222,6 +287,7 @@ void empty_hash_table(struct trusted_list **hash_table)
 		while (np) {
 			shm_free(np->src_ip.s);
 			if (np->pattern) shm_free(np->pattern);
+			if (np->tag.s) shm_free(np->tag.s);
 			next = np->next;
 			shm_free(np);
 			np = next;
