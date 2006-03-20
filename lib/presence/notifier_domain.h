@@ -32,8 +32,6 @@
 #include <cds/msg_queue.h>
 #include <cds/ref_cntr.h>
 
-#include <presence/client_notify_info.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

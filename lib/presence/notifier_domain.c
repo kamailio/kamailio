@@ -424,21 +424,65 @@ void unsubscribe(notifier_domain_t *domain, subscription_t *s)
 	release_subscription(s); 
 }
 
-void notify_subscriber(subscription_t *s, mq_message_t *msg)
+/* void notify_subscriber(subscription_t *s, mq_message_t *msg) */
+int notify_subscriber(subscription_t *s, 
+		int data_type, 
+		void *data, int data_len, 
+		destroy_function_f data_destroy)
 {
+	int ok = 1;
 	int sent = 0;
+	mq_message_t *msg = NULL;
+	client_notify_info_t* info = NULL;
+
+	if (!s) {
+		ERROR_LOG("BUG: sending notify for <null> subscription\n");
+		ok = 0;
+	}
 	
-	if (s) {
+	if (ok) {
+		msg = create_message_ex(sizeof(client_notify_info_t));
+		if (!msg) {
+			ERROR_LOG("can't create notify message!\n");
+			ok = 0; 
+		}
+	}
+	
+	if (ok) {
+		set_data_destroy_function(msg, (destroy_function_f)free_client_notify_info_content);
+		info = (client_notify_info_t*)msg->data;
+		
+		info->subscription = s;
+		info->data_type = data_type;
+		info->data = data;
+		info->data_len = data_len;
+		info->destroy_func = data_destroy;
+		
 		lock_subscription_data(s);
 		if (s->dst) {
-			push_message(s->dst, msg);
-			sent = 1;
+			if (push_message(s->dst, msg) < 0) ok = 0;
+			else sent = 1;
 		}
 		unlock_subscription_data(s);
 	}
 	
 	if (!sent) {
 		/* free unsent messages */
-		free_message(msg);
+		if (msg) free_message(msg);
+		else if (data_destroy && data) data_destroy(data);
 	}
+
+	if (ok) return 0;
+	else return 1; /* !!! Warning: data are destroyed !!! */
 }
+
+void free_client_notify_info_content(client_notify_info_t *info)
+{
+	DEBUG_LOG(" ... freeing notify info content\n");
+/*	str_free_content(&info->package);
+	str_free_content(&info->record_id);
+	str_free_content(&info->notifier); */
+	DEBUG_LOG(" ... calling destroy func on data\n");
+	if (info->destroy_func) info->destroy_func(info->data);
+}
+

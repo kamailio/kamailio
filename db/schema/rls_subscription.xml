@@ -66,6 +66,12 @@
 		<size>&uri_len;</size>
 	</column>
 	
+	<column>
+		<name>xcap_root</name>
+		<type>string</type>
+		<size>255</size>
+	</column>
+	
     <index>
 		<name>rls_subscription_key</name>
 		<colref linkend="rls_subscription.id"/>

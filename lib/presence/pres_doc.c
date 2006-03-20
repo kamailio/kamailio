@@ -165,32 +165,31 @@ void free_presentity_info(presentity_info_t *p)
 	cds_free(p);
 }
 
-list_presence_info_t *create_list_presence_info(const str_t *uri)
+raw_presence_info_t *create_raw_presence_info(const str_t *uri)
 {
-	list_presence_info_t *p;
+	raw_presence_info_t *p;
 	int len = 0;
 	
 	if (!is_str_empty(uri)) len = uri->len;
-	p = (list_presence_info_t*)cds_malloc(sizeof(list_presence_info_t) + len);
+	p = (raw_presence_info_t*)cds_malloc(sizeof(raw_presence_info_t) + len);
 	if (!p) {
 		ERROR_LOG("can't allocate memory for list presence info\n");
 		return p;
 	}
-	p->list_uri.len = len;
+	p->uri.len = len;
 	if (len > 0) {
-		p->list_uri.s = p->uri_data;
-		memcpy(p->list_uri.s, uri->s, len);
+		p->uri.s = p->uri_data;
+		memcpy(p->uri.s, uri->s, len);
 	}
-	else p->list_uri.s = NULL;
+	else p->uri.s = NULL;
 	
-	/* ptr_vector_init(&p->presentity_infos, 8); */
 	str_clear(&p->pres_doc);
 	str_clear(&p->content_type);
 	
 	return p;
 }
 
-void free_list_presence_info(list_presence_info_t *p)
+void free_raw_presence_info(raw_presence_info_t *p)
 {
 	if (p) {
 		DEBUG_LOG(" ... freeing doc\n");

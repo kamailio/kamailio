@@ -396,6 +396,7 @@ CREATE TABLE rls_subscription (
     uri string(255) NOT NULL,
     package string(128) NOT NULL,
     w_uri string(255) NOT NULL,
+    xcap_root string(255) NOT NULL,
     rls_subscription_key UNIQUE (id, )
 );
 

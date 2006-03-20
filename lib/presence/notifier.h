@@ -59,8 +59,27 @@ void accept_subscription(subscription_t *s);
  * don't need it) */
 void release_subscription(subscription_t *s);
 
+/** This structure is sent via message queue
+ * to client. It must contain all information
+ * for processing the status info. */
+
+typedef struct {
+	/* replacement for record_id, package, ... it is much more efficient */
+	subscription_t *subscription; 
+	int data_type;
+	void *data;
+	int data_len;
+	destroy_function_f destroy_func; /* function used to destroy data */
+} client_notify_info_t;
+
+
+void free_client_notify_info_content(client_notify_info_t *info);
+
 /* notifications SHOULD be sent through this method */
-void notify_subscriber(subscription_t *s, mq_message_t *msg);
+int notify_subscriber(subscription_t *s, 
+		int data_type, 
+		void *data, int data_len, 
+		destroy_function_f data_destroy);
 
 #ifdef __cplusplus
 }
