@@ -61,16 +61,14 @@ void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *
 {
 	presentity_info_t *pinfo;
 	raw_presence_info_t *raw;
+	str_t new_doc = STR_NULL;
+	str_t new_type = STR_NULL;
+	int changed = 0;
 
 	if ((!vs) || (!info)) return;
 	
 	TRACE("Processing notification for VS %p\n", vs);
 
-	/* release old document if set */
-	/* TRACE(" ... freeing old documents\n"); */
-	str_free_content(&vs->state_document); 		
-	str_free_content(&vs->content_type);
-			
 	switch (info->data_type) {
 		case PRESENTITY_RAW_INFO:
 			/* TRACE("Processing raw notification\n"); */
@@ -80,8 +78,8 @@ void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *
 			
 			/* create_presence_rlmi_document(linfo, &vs->state_document, &vs->content_type); */
 			/* TRACE(" ... duplicating documents\n"); */
-			str_dup(&vs->state_document, &raw->pres_doc);
-			str_dup(&vs->content_type, &raw->content_type);
+			new_doc = raw->pres_doc;
+			new_type = raw->content_type;
 			
 			vs->status = subscription_active;
 			break;
@@ -91,17 +89,42 @@ void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *
 			pinfo = (presentity_info_t*)info->data;
 			if (!pinfo) return;
 			
-			create_pidf_document(pinfo, &vs->state_document, &vs->content_type);
+			if (create_pidf_document(pinfo, &new_doc, &new_type) < 0) {
+				ERR("can't create PIDF document\n");
+				str_free_content(&vs->state_document); 		
+				str_free_content(&vs->content_type);
+				return;
+			}
 			vs->status = subscription_active;
 			
 			/* DEBUG_LOG("created pidf document:\n %.*s\n", FMT_STR(vs->state_document)); */
 			break;
 		default:
 			ERR("received unacceptable notification (%d)\n", info->data_type);
+			str_free_content(&vs->state_document); 		
+			str_free_content(&vs->content_type);
 			return;
 	}
-
-	rls_generate_notify(vs->subscription, 1);
+	
+	if (str_case_equals(&vs->state_document, &new_doc) == 0) {
+		TRACE("new document is equal to the older one\n");
+	}
+	else {
+		str_free_content(&vs->state_document);
+		str_dup(&vs->state_document, &new_doc);
+		changed = 1;
+	}
+	
+	if (str_case_equals(&vs->content_type, &new_type) == 0) {
+		TRACE("new content-type is equal to the older one\n");
+	}
+	else {
+		str_free_content(&vs->content_type);
+		str_dup(&vs->content_type, &new_type);
+		changed = 1;
+	}
+	
+	if (changed) rls_generate_notify(vs->subscription, 1);
 }
 
 void process_internal_notify(virtual_subscription_t *vs, 

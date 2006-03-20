@@ -4,6 +4,9 @@
 	subscriptions
 	* xcap_root for resource list subscription stored into database (needed
 	for subscription recreation)
+	* notification is not propagated if document and content type didn't
+	change (non-internal subscriptions only) -> reduced count of NOTIFY
+	messages to the subscriber
 
 2006-03-17
 	* changed parameters of XCAP queries
