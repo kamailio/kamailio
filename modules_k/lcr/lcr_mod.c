@@ -65,7 +65,7 @@ MODULE_VERSION
  * an backwards incompatible way
  */
 #define GW_TABLE_VERSION 3
-#define LCR_TABLE_VERSION 1
+#define LCR_TABLE_VERSION 2
 
 /* usr_avp flag for sequential forking */
 #define Q_FLAG      (1<<2)
