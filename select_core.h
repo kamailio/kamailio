@@ -44,6 +44,7 @@ enum {
 	SEL_PARAM_BRANCH, SEL_PARAM_RPORT, SEL_PARAM_I, SEL_PARAM_ALIAS
        };
 
+SELECT_F(select_ruri)
 SELECT_F(select_from)
 SELECT_F(select_from_uri)
 SELECT_F(select_from_tag)
@@ -92,6 +93,8 @@ SELECT_F(select_cseq_method)
 SELECT_F(select_cseq_num)
 
 static select_row_t select_core[] = {
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("ruri"), select_ruri, 0},
+	{ select_ruri, SEL_PARAM_STR, STR_NULL, select_any_uri, NESTED},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("from"), select_from, 0},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("f"), select_from, 0},
 	{ select_from, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_from_uri, 0},
