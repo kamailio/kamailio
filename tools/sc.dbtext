@@ -946,7 +946,7 @@ case $1 in
 		echo "dbaliases:1" >> $VER_FILE
 		echo "gw:3" >> $VER_FILE
 		echo "gw_grp:1" >> $VER_FILE
-		echo "lcr:1" >> $VER_FILE
+		echo "lcr:2" >> $VER_FILE
 		
 		echo -e "DBText files created.\n\nRemeber to set the DBTEXT_PATH variable (read usage)\n"
 		;;
