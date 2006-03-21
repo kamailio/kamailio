@@ -304,7 +304,7 @@ INSERT INTO version VALUES ( 'speed_dial', '2');
 INSERT INTO version VALUES ( 'dbaliases', '1');
 INSERT INTO version VALUES ( 'gw', '3');
 INSERT INTO version VALUES ( 'gw_grp', '1');
-INSERT INTO version VALUES ( 'lcr', '1');
+INSERT INTO version VALUES ( 'lcr', '2');
 
 #
 # Table structure for table 'acc' -- accounted calls
@@ -745,7 +745,7 @@ CREATE TABLE gw_grp (
 
 CREATE TABLE lcr (
   prefix varchar(16) NOT NULL,
-  from_uri varchar(128) NOT NULL DEFAULT '%',
+  from_uri varchar(128) DEFAULT NULL,
   grp_id INT UNSIGNED NOT NULL,
   priority TINYINT UNSIGNED NOT NULL,
   KEY (prefix),

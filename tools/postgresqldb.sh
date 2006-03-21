@@ -327,7 +327,7 @@ INSERT INTO version VALUES ( 'grp', '2');
 INSERT INTO version VALUES ( 're_grp', '1');
 INSERT INTO version VALUES ( 'gw', '3');
 INSERT INTO version VALUES ( 'gw_grp', '1');
-INSERT INTO version VALUES ( 'lcr', '1');
+INSERT INTO version VALUES ( 'lcr', '2');
 INSERT INTO version VALUES ( 'location', '1003');
 INSERT INTO version VALUES ( 'missed_calls', '2');
 INSERT INTO version VALUES ( 'pending', '4');
@@ -518,7 +518,7 @@ CREATE TABLE gw_grp (
 
 CREATE TABLE lcr (
   prefix varchar(16) NOT NULL,
-  from_uri varchar(128) NOT NULL DEFAULT '%',
+  from_uri varchar(128) DEFAULT NULL,
   grp_id INT CHECK (grp_id > 0) NOT NULL,
   priority SMALLINT CHECK (priority >= 0 and priority < 256) NOT NULL
 );
