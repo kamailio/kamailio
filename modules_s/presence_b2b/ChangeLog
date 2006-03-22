@@ -1,5 +1,7 @@
 2006-03-22
 	* using get_content_length instead of strlen(body)
+	* added "Content-Length: 0" into outgoing SUBSCRIBE requests (such message
+	is otherwise not parsed by SER when using TCP transport)
 
 2006-03-21
 	* subscription status propagation through QSA

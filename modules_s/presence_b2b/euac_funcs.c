@@ -159,20 +159,20 @@ static void subscribe_cb(struct cell* t, int type, struct tmcb_params* params)
 
 const char *proto2uri_param(int proto)
 {
-	static char *none = "";
-	/* static char *udp = ";transport=udp"; */
+	static char *udp = "";
+/*	static char *udp = ";transport=udp"; */
 	static char *tcp = ";transport=tcp";
 	static char *tls = ";transport=tls";
 	static char *sctp = ";transport=sctp";
 	
 	switch (proto) {
 		case PROTO_NONE:
-		case PROTO_UDP: return none;
+		case PROTO_UDP: return udp;
 		case PROTO_TCP: return tcp;
 		case PROTO_TLS: return tls;
 		case PROTO_SCTP: return sctp;
 	}
-	return none;
+	return udp;
 }
 
 /* returns length of added string */

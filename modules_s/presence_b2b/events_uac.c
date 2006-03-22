@@ -65,6 +65,10 @@ events_uac_t *create_events_uac(str *remote_uri, str *local_uri, const str *even
 	dstr_append_zt(&dstr, "Event: ");
 	dstr_append_str(&dstr, events);
 	dstr_append_zt(&dstr, "\r\n");
+
+	/* needed for SUBSCRIBE via TCP - if not given the message is not parsed by ser!!! */
+	dstr_append_zt(&dstr, "Content-Length: 0\r\n"); 
+	
 	if (other_headers) dstr_append_str(&dstr, other_headers);
 	/* should get Accpet headers as parameter too? */
 	if (dstr_get_str(&dstr, &uac->headers) != 0) {
