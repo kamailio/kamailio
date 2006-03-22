@@ -1750,6 +1750,7 @@ static int sel_hf_value_name(str* res, select_t* s, struct sip_msg* msg) {
 	}
 
 	res->len = 0;
+	res->s = retbuf_tail;
 	hname = s->params[1].v.p;
 
 	switch (hname->oper) {
