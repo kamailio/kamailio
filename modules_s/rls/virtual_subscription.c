@@ -64,10 +64,29 @@ void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *
 	str_t new_doc = STR_NULL;
 	str_t new_type = STR_NULL;
 	int changed = 0;
-
+	subscription_status_t old_status;
+	
 	if ((!vs) || (!info)) return;
 	
-	TRACE("Processing notification for VS %p\n", vs);
+	DBG("Processing notification for VS %p\n", vs);
+	/* FIXME: put information from more sources together ? */
+
+	old_status = vs->status;
+	switch (info->status) {
+		case qsa_subscription_active:
+			vs->status = subscription_active;
+			break;
+		case qsa_subscription_pending:
+			vs->status = subscription_pending;
+			break;
+		case qsa_subscription_rejected:
+			vs->status = subscription_terminated;
+			break;
+		case qsa_subscription_terminated:
+			vs->status = subscription_terminated;
+			break;
+	}
+	if (old_status != vs->status) changed = 1;
 
 	switch (info->data_type) {
 		case PRESENTITY_RAW_INFO:
@@ -87,7 +106,11 @@ void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *
 			/* TRACE("Processing structured notification\n"); */
 			
 			pinfo = (presentity_info_t*)info->data;
-			if (!pinfo) return;
+			if (!pinfo) {
+				str_clear(&new_doc);
+				str_clear(&new_type);
+				break;	
+			}
 			
 			if (create_pidf_document(pinfo, &new_doc, &new_type) < 0) {
 				ERR("can't create PIDF document\n");
@@ -107,7 +130,7 @@ void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *
 	}
 	
 	if (str_case_equals(&vs->state_document, &new_doc) == 0) {
-		TRACE("new document is equal to the older one\n");
+		/* TRACE("new document is equal to the older one\n"); */
 	}
 	else {
 		str_free_content(&vs->state_document);
@@ -116,7 +139,7 @@ void process_rls_notification(virtual_subscription_t *vs, client_notify_info_t *
 	}
 	
 	if (str_case_equals(&vs->content_type, &new_type) == 0) {
-		TRACE("new content-type is equal to the older one\n");
+		/* TRACE("new content-type is equal to the older one\n"); */
 	}
 	else {
 		str_free_content(&vs->content_type);
@@ -133,7 +156,7 @@ void process_internal_notify(virtual_subscription_t *vs,
 {
 	if (!vs) return;
 	
-	TRACE("Processing internal notification for VS %p\n", vs);
+	DBG("Processing internal notification for VS %p\n", vs);
 		
 	/* free old_documents */
 	str_free_content(&vs->state_document); 		

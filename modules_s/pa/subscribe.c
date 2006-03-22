@@ -527,6 +527,12 @@ static int create_watcher(struct sip_msg* _m, struct presentity* _p, struct watc
 		set_watcher_terminated_status(*_w);
 	}
 	
+	(*_w)->flags |= WFLAG_SUBSCRIPTION_CHANGED;
+	
+	/* changed only when presence watcher added  */
+	if (et == EVENT_PRESENCE)
+		_p->flags |= PFLAG_WATCHERINFO_CHANGED;
+	
 	return 0;
 }
 
@@ -592,7 +598,7 @@ int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 		release_presentity(*_p);
 		return res;
 	}
-
+		
 	return 0;
 }
 
@@ -830,6 +836,8 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	}
 
 	is_renewal = has_to_tag(_m);
+	if (is_renewal) TRACE("handling renewal subscription\n");
+	else TRACE("handling new subscription\n");
 
 	d = (struct pdomain*)_domain;
 
@@ -879,16 +887,6 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	  LOG(L_ERR, "handle_subscription(): Error while sending reply\n");
 	  unlock_pdomain(d);
 	  return -3;
-	}
-
-	if (p) {
-		/* changed at least expiration times of watcher, they should be
-		 * present in watcher info notifications => sending notifications
-		 * is needed ! */
-		p->flags |= PFLAG_WATCHERINFO_CHANGED; 
-	}
-	if (w) {
-		w->flags |= WFLAG_SUBSCRIPTION_CHANGED;
 	}
 
 	DBG("handle_subscription about to return 1: w->event_package=%d w->accept=%d p->flags=%x w->flags=%x w=%p\n",

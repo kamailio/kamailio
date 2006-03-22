@@ -12,6 +12,8 @@
 #include <presence/pres_doc.h>
 #include <presence/pidf.h>
 
+#include "../../parser/parse_content.h"
+
 /* typedef struct {
 	subscription_t *s;
 	enum { internal_subscribe, internal_unsubscribe } action;
@@ -76,34 +78,95 @@ static events_subscription_t *find_presence_subscription(subscription_t *subscri
 	return es;
 }
 
-static void presence_notification_cb(struct sip_msg *m, void *param)
+static qsa_subscription_status_t get_subscription_status(struct sip_msg *m)
+{
+	struct hdr_field *h;
+	static str ss = STR_STATIC_INIT("Subscription-State");
+	static str terminated = STR_STATIC_INIT("terminated");
+	static str active = STR_STATIC_INIT("active");
+	static str pending = STR_STATIC_INIT("pending");
+
+	/* FIXME: correct Subscription-Status parsing */
+	if (parse_headers(m, HDR_EOH_F, 0) == -1) {
+		ERR("can't parse message\n");
+		return qsa_subscription_pending;
+	}
+	h = m->headers;
+	while (h) {
+		/* try to find Subscription-Status with "terminated" */
+		if (str_nocase_equals(&h->name, &ss) == 0) {
+			if (str_str(&h->body, &terminated)) return qsa_subscription_terminated;
+			if (str_str(&h->body, &active)) return qsa_subscription_active;
+			if (str_str(&h->body, &pending)) return qsa_subscription_pending;
+			else return qsa_subscription_pending;
+		}
+		h = h->next;
+	}
+	/* header not found */
+	return qsa_subscription_pending;
+}
+
+static void presence_notification_cb(events_uac_t *uac, 
+		struct sip_msg *m, 
+		void *param)
 {
 	subscription_t *subscription = (subscription_t*)param;
-	char *body;
+	char *body = NULL;
 	int len = 0;
 	presentity_info_t *p = NULL;
+	qsa_subscription_status_t status = qsa_subscription_active;
 	
 	if (!subscription) return;
 	DBG("received notification for %.*s\n", 
 			FMT_STR(subscription->record_id));
 	
 	/* get body */
-	body = get_body(m);
-	len = strlen(body); /* FIXME: use content-lenght instead */
+	if (m) {
+		body = get_body(m);
 		
-	/* parse as PIDF if given */
-	if (len > 0) {
-		if (parse_pidf_document(&p, body, len) != 0) {
-			ERR("can't parse PIDF document\n");
-			return;
+		if (parse_headers(m, HDR_CONTENTLENGTH_F, 0) < 0) len = 0;
+		else {
+			if (m->content_length) len = get_content_length(m);
+		}
+		
+		status = get_subscription_status(m);
+		
+		/* parse as PIDF if given */
+		if (len > 0) {
+			if (parse_pidf_document(&p, body, len) != 0) {
+				ERR("can't parse PIDF document\n");
+				return;
+			}
+		}
+		else TRACE("received empty notification - s: %p, usr data: %p\n",
+				subscription, subscription->subscriber_data);
+	}
+	else {
+		/* notify about status */
+		switch (uac->status) {
+			case euac_unconfirmed:
+			case euac_unconfirmed_destroy: 
+				status = qsa_subscription_pending;
+				break;
+			case euac_confirmed:
+			case euac_resubscription: 
+			case euac_resubscription_destroy: 
+			case euac_predestroyed:
+				status = qsa_subscription_active;
+				break;
+			case euac_destroyed:
+			case euac_waiting:
+			case euac_waiting_for_termination:
+				status = qsa_subscription_terminated;
+				break;
 		}
 	}
-
+	
 	/* send the message to internal subscriber */
-	notify_subscriber(subscription, 
+	notify_subscriber(subscription, presence_notifier,
 			PRESENTITY_INFO_TYPE,
-			p, sizeof(*p),
-			(destroy_function_f)free_presentity_info);
+			p, (destroy_function_f)free_presentity_info,
+			status);
 }
 
 static events_subscription_t *create_presence_subscription(subscription_t *subscription)

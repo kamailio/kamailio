@@ -32,9 +32,12 @@ typedef enum {
 	euac_destroyed,               /* 8 */
 } events_uac_status_t;
 
-typedef void (*notify_callback_func)(struct sip_msg *, void *param);
+struct _events_uac_t;
+typedef struct _events_uac_t events_uac_t;
+	
+typedef void (*notify_callback_func)(events_uac_t *uac, struct sip_msg *, void *param);
 
-typedef struct _events_uac_t {
+struct _events_uac_t {
 	/* SUBSCRIBE-NOTIFY dialog */
 	dlg_t *dialog;
 
@@ -66,7 +69,7 @@ typedef struct _events_uac_t {
 
 	/* debugging */
 	char id[64];
-} events_uac_t;
+};
 
 /* creates structure in shm and adds it into internal list */
 events_uac_t *create_events_uac(str *remote_uri, str *local_uri, 

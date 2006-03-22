@@ -7,7 +7,7 @@
 #define mem_alloc	cds_malloc
 #define mem_free	cds_free
 
-/* #define TRACE(...)		TRACE_LOG("presence_b2b: " __VA_ARGS__) */
-#define TRACE(args...)
+#define TRACE(...)		TRACE_LOG("presence_b2b: " __VA_ARGS__)
+/* #define TRACE(args...) */
 
 #endif

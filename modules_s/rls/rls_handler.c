@@ -231,7 +231,7 @@ static int handle_new_subscription(struct sip_msg *m, rls_xcap_query_t *query, i
 	
 	rls_lock();
 
-	DEBUG_LOG("handle_new_subscription(rls)\n");
+	TRACE("handle_new_subscription(rls)\n");
 	/* create a new subscription structure */
 	res = rls_create_subscription(m, &s, query->flat_list, params);
 	if (res != RES_OK) {
@@ -317,7 +317,7 @@ static int handle_renew_subscription(struct sip_msg *m, int send_error_responses
 	call_id = NULL;
 	if (m->callid) call_id = &m->callid->body;
 	
-	DEBUG_LOG("handle_renew_subscription(rls)\n");
+	TRACE("handle_renew_subscription(rls)\n");
 	
 	rls_lock();
 	

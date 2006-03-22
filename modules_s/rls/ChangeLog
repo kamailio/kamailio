@@ -1,3 +1,6 @@
+2006-03-21
+	* accepts subscription status through QSA
+
 2006-03-20
 	* multiple message queues (one for each virtual subscription) replaced by
 	only one message queue for QSA notifications shared by all virtual

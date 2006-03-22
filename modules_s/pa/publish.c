@@ -699,7 +699,7 @@ int process_published_presentity_info(presentity_t *presentity, presentity_info_
 static int publish_presence(struct sip_msg* _m, struct presentity* presentity)
 {
 	char *body = get_body(_m);
-	int body_len = strlen(body);
+	int body_len = 0;
 	int msg_expires = default_expires;
 	time_t expires = 0;
 	str etag;
@@ -707,6 +707,7 @@ static int publish_presence(struct sip_msg* _m, struct presentity* presentity)
 	int content_type = -1;
 	
 	if (_m->content_type) content_type = get_content_type(_m);
+	if (_m->content_length) body_len = get_content_length(_m);
 	
 	if (_m->expires) {
 		if (_m->expires->parsed) {

@@ -144,7 +144,7 @@ static void subscribe_cb(struct cell* t, int type, struct tmcb_params* params)
 		return;
 	}
 
-	/* TRACE("%d response on SUBSCRIBE %p\n", params->code, uac); */
+	TRACE("%d response on SUBSCRIBE %p\n", params->code, uac);
 
 	action = act_4xx;
 	if ((params->code >= 100) && (params->code < 200)) action = act_1xx;
@@ -243,6 +243,8 @@ int new_subscription(events_uac_t *uac, str *contact_to_send, int failover_time)
 	str hdr = STR_NULL;
 	str *uri;
 	
+	TRACE("sending new SUBSCRIBE request\n");
+	
 	if (!is_str_empty(contact_to_send)) uri = contact_to_send;
 	else uri = &uac->remote_uri;
 		
@@ -311,6 +313,8 @@ int renew_subscription(events_uac_t *uac, int expires, int failover_time)
 	char tmp[256];
 	str tmps;
 
+	TRACE("sending renewal SUBSCRIBE request\n");
+	
 	tmps.len = sprintf(tmp, "Expires: %d\r\n", expires);
 	tmps.s = tmp;
 	contact_len = get_contact_hdr(tmps.s + tmps.len, 
@@ -355,14 +359,14 @@ void do_notification(events_uac_t *uac, struct sip_msg *m)
 {
 	DBG("received notification\n");
 
-	if (!m) return;
-	
-	if (euac_internals->tmb.t_reply(m, 200, "OK") == -1) {
-		ERR("Error while sending response!\n");
+	if (m) {
+		if (euac_internals->tmb.t_reply(m, 200, "OK") == -1) {
+			ERR("Error while sending response!\n");
+		}
 	}
 
 	if (uac) {
-		if (uac->cb) uac->cb(m, uac->cbp);
+		if (uac->cb) uac->cb(uac, m, uac->cbp);
 	}
 }
 

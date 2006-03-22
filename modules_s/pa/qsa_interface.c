@@ -310,19 +310,35 @@ int notify_internal_watcher(presentity_t *p, internal_pa_subscription_t *ss)
 	presentity_info_t *pinfo;
 
 	/* notify only accepted watchers */
-	if ((ss->status == WS_PENDING) || (ss->status == WS_REJECTED)) 
-		return 1;
-	
-	pinfo = presentity2presentity_info(p);
-	if (!pinfo) {
-		ERROR_LOG("can't create presentity info from presentity!\n");
-		return -1; 
+	switch (ss->status) {
+		case WS_PENDING:
+				return notify_subscriber(ss->subscription, notifier, 
+							PRESENTITY_INFO_TYPE,
+							NULL, NULL, qsa_subscription_pending);
+		case WS_REJECTED:
+				return notify_subscriber(ss->subscription, notifier, 
+							PRESENTITY_INFO_TYPE,
+							NULL, NULL, qsa_subscription_rejected);
+
+		case WS_PENDING_TERMINATED:
+		case WS_TERMINATED:
+				return notify_subscriber(ss->subscription, notifier,
+							PRESENTITY_INFO_TYPE,
+							NULL, NULL, qsa_subscription_terminated);
+		case WS_ACTIVE:
+				pinfo = presentity2presentity_info(p);
+				if (!pinfo) {
+					ERROR_LOG("can't create presentity info from presentity!\n");
+					return -1; 
+				}
+				
+				return notify_subscriber(ss->subscription, notifier, 
+						PRESENTITY_INFO_TYPE,
+						pinfo, (destroy_function_f)free_presentity_info,
+						qsa_subscription_active);
 	}
-	
-	return notify_subscriber(ss->subscription, 
-			PRESENTITY_INFO_TYPE,
-			pinfo, sizeof(pinfo),
-			(destroy_function_f)free_presentity_info);
+
+	return 0;
 }
 	
 int notify_qsa_watchers(presentity_t *p)

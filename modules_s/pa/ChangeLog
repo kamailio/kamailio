@@ -1,3 +1,16 @@
+2006-03-22
+	* using get_content_length instead of strlen(body)
+
+2006-03-21
+	* flag (PFLAG_WATCHERINFO_CHANGED, WFLAG_SUBSCRIPTION_CHANGED) settings in
+	internals, not in handle_subscription
+	* sets subscription status for internal subscriptions (QSA)
+
+2006-03-20
+	* setting flag PFLAG_WATCHERINFO_CHANGED only for new subscriptions
+	because we don't send expiration in watcherinfo documents and thus it is
+	only "spamming" if we send watcherinfo for resubscriptions too
+
 2006-03-17
 	* changed XCAP query parameters
 

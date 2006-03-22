@@ -46,6 +46,11 @@ static int get_resubscribe_time(struct sip_msg *m)
 	return expiration;
 }
 
+static void send_error_notification(events_uac_t *uac)
+{
+	/* sends innternal notification about arror status */
+}
+
 static void confirm_dialog(events_uac_t *uac, struct sip_msg *m)
 {
 	/* remove dialog from, unconfirmed */
@@ -118,6 +123,7 @@ void do_step_unconfirmed(euac_action_t action, struct sip_msg *m, events_uac_t *
 					if (new_subscription(uac, &contact, failover_timeout) != 0) {
 						/* error */
 						uac->status = euac_waiting;
+						send_error_notification(uac);
 						euac_set_timer(uac, resubscribe_timeout_on_err);
 					}
 					str_free_content(&contact);
@@ -125,6 +131,7 @@ void do_step_unconfirmed(euac_action_t action, struct sip_msg *m, events_uac_t *
 				else { 
 					/* redirect, but no contact given => process like error */
 					uac->status = euac_waiting;
+					send_error_notification(uac);
 					euac_set_timer(uac, resubscribe_timeout_on_err);
 				}
 				break;
@@ -134,6 +141,7 @@ void do_step_unconfirmed(euac_action_t action, struct sip_msg *m, events_uac_t *
 				accept_response(uac, action);
 				euac_clear_timer(uac);
 				destroy_unconfirmed_dialog(uac);
+				send_error_notification(uac);
 				euac_set_timer(uac, resubscribe_timeout_on_err);
 				break;
 		case act_destroy:
@@ -255,6 +263,7 @@ void do_step_confirmed(euac_action_t action, struct sip_msg *m, events_uac_t *ua
 				uac->status = euac_waiting;
 				euac_clear_timer(uac);
 				destroy_confirmed_dialog(uac);
+				send_error_notification(uac);
 				euac_set_timer(uac, resubscribe_timeout_on_err);
 				break;
 			}
@@ -293,6 +302,7 @@ void do_step_resubscription(euac_action_t action, struct sip_msg *m, events_uac_
 					if (new_subscription(uac, &contact, failover_timeout) != 0) {
 						/* error */
 						uac->status = euac_waiting;
+						send_error_notification(uac);
 						euac_set_timer(uac, resubscribe_timeout_on_err);
 					}
 					str_free_content(&contact);
@@ -300,6 +310,7 @@ void do_step_resubscription(euac_action_t action, struct sip_msg *m, events_uac_
 				else { 
 					/* redirect, but no contact given => process like error */
 					uac->status = euac_waiting;
+					send_error_notification(uac);
 					euac_set_timer(uac, resubscribe_timeout_on_err);
 				}
 				break;
@@ -309,6 +320,7 @@ void do_step_resubscription(euac_action_t action, struct sip_msg *m, events_uac_
 				accept_response(uac, action);
 				euac_clear_timer(uac);
 				destroy_confirmed_dialog(uac);
+				send_error_notification(uac);
 				euac_set_timer(uac, resubscribe_timeout_on_err);
 				break;
 		case act_destroy:
@@ -468,8 +480,8 @@ void do_step_waiting(euac_action_t action, struct sip_msg *m, events_uac_t *uac)
  * add reference before this call)!!! */
 void euac_do_step(euac_action_t action, struct sip_msg *m, events_uac_t *uac)
 {
-	TRACE("STEP [%s]: %d ---(%d)---> ...\n", 
-			uac->id, uac->status, action);
+/*	TRACE("STEP [%s]: %d ---(%d)---> ...\n", 
+			uac->id, uac->status, action); */
 	
 	switch (uac->status) {
 		case euac_unconfirmed:
