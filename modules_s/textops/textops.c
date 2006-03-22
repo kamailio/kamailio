@@ -1129,7 +1129,7 @@ static int insert_header_lump(struct sip_msg* msg, char* msg_position, int lump_
 		return -1;
 	}
 
-	len=hname->len+2+val->len+1;
+	len=hname->len+2+val->len+2;
 
 	s = (char*)pkg_malloc(len);
 	if (!s) {
@@ -1141,7 +1141,8 @@ static int insert_header_lump(struct sip_msg* msg, char* msg_position, int lump_
 	s[hname->len] = ':';
 	s[hname->len+1] = ' ';
 	memcpy(s+hname->len+2, val->s, val->len);
-	s[hname->len+2+val->len] = '\n';
+	s[hname->len+2+val->len] = '\r';
+	s[hname->len+2+val->len+1] = '\n';
 
 	if ( (lump_before?insert_new_lump_before(anchor, s, len, 0):insert_new_lump_after(anchor, s, len, 0)) == 0) {
 		LOG(L_ERR, "ERROR: textops: insert_header_lump(): Can't insert lump\n");
