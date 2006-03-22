@@ -1,3 +1,6 @@
+2006-03-21
+	* subscription status propagation through QSA
+
 2006-03-20
 	* extra information (record_id, package, ...) in QSA notificaltions
 	(client_notify_info_t) replaced by pointer to subscription [may be a bit

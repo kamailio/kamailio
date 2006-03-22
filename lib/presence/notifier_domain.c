@@ -426,9 +426,11 @@ void unsubscribe(notifier_domain_t *domain, subscription_t *s)
 
 /* void notify_subscriber(subscription_t *s, mq_message_t *msg) */
 int notify_subscriber(subscription_t *s, 
+		notifier_t *n,
 		int data_type, 
-		void *data, int data_len, 
-		destroy_function_f data_destroy)
+		void *data, 
+		destroy_function_f data_destroy,
+		qsa_subscription_status_t status)
 {
 	int ok = 1;
 	int sent = 0;
@@ -455,7 +457,7 @@ int notify_subscriber(subscription_t *s,
 		info->subscription = s;
 		info->data_type = data_type;
 		info->data = data;
-		info->data_len = data_len;
+		info->status = status;
 		info->destroy_func = data_destroy;
 		
 		lock_subscription_data(s);
