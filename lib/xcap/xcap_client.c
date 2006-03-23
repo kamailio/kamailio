@@ -30,6 +30,7 @@
 #include <xcap/xcap_client.h>
 #include <cds/dstring.h>
 #include <cds/memory.h>
+#include <cds/logger.h>
 #include <curl/curl.h>
 
 static size_t write_data_func(void *ptr, size_t size, size_t nmemb, void *stream)
@@ -37,7 +38,10 @@ static size_t write_data_func(void *ptr, size_t size, size_t nmemb, void *stream
 	int s = size * nmemb;
 /*	TRACE_LOG("%d bytes writen\n", s);*/
 	if (s != 0) {
-		if (dstr_append((dstring_t*)stream, ptr, s) != 0) return 0;
+		if (dstr_append((dstring_t*)stream, ptr, s) != 0) {
+			ERROR_LOG("can't append %d bytes into data buffer\n", s);
+			return 0;
+		}
 	}
 	return s;
 }
@@ -74,6 +78,7 @@ int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bs
 	handle = curl_easy_init();
 	if (handle) {
 		curl_easy_setopt(handle, CURLOPT_URL, uri);
+		/* TRACE_LOG("uri: %s\n", uri ? uri : "<null>"); */
 		
 		/* do not store data into a file - store them in memory */
 		curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_data_func);
@@ -101,22 +106,29 @@ int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bs
 		/* follow redirects (needed for apache mod_speling - case insesitive names) */
 		curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1);
 		
+		/* FIXME: experimetns */
+		curl_easy_setopt(handle, CURLOPT_TCP_NODELAY, 1);
+		curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 10);
+		
 		/* Accept headers */
 		
 		res = curl_easy_perform(handle);
 		curl_easy_cleanup(handle);
 	}
+	else ERROR_LOG("can't initialize curl handle\n");
 	if (res == 0) {
 		*bsize = dstr_get_data_length(&data);
 		if (*bsize) {
 			*buf = (char*)cds_malloc(*bsize);
 			if (!*buf) {
+				ERROR_LOG("can't allocate %d bytes\n", *bsize);
 				res = -1;
 				*bsize = 0;
 			}
 			else dstr_get_data(&data, *buf);
 		}
 	}
+	else ERROR_LOG("curl error: %d\n", res);
 	dstr_destroy(&data);
 	if (auth) cds_free(auth);
 	return res;

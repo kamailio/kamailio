@@ -31,7 +31,7 @@
 #include <stdio.h>
 
 #define ERROR_LOG(a,args...)		do{printf(a,##args);}while(0)
-#DEFINE dEBUG_LOG(a,args...)		do{printf(a,##args);}while(0)
+#define DEBUG_LOG(a,args...)		do{printf(a,##args);}while(0)
 #define TRACE_LOG(a,args...)		do{printf(a,##args);}while(0)
 #define WARN_LOG(a,args...)			do{printf(a,##args);}while(0)
 #define FLUSH_LOG()					do{fflush(stdout);}while(0)
