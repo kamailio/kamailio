@@ -118,7 +118,7 @@ int destroy_events_uac(events_uac_t *uac)
 	lock_events_uac();
 	euac_internals->destroy_cnt++;
 
-	 TRACE("destroying uac %d from: %d\n", 
+	 DBG("destroying uac %d from: %d\n", 
 		euac_internals->destroy_cnt,
 		euac_internals->create_cnt);
 	

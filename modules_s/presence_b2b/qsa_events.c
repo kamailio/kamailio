@@ -138,7 +138,7 @@ static void presence_notification_cb(events_uac_t *uac,
 				return;
 			}
 		}
-		else TRACE("received empty notification - s: %p, usr data: %p\n",
+		else DBG("received empty notification - s: %p, usr data: %p\n",
 				subscription, subscription->subscriber_data);
 	}
 	else {
@@ -229,7 +229,7 @@ static int presence_subscribe(notifier_t *n, subscription_t *subscription)
 
 	if (!handle_presence_subscriptions) return 0;
 	
-	TRACE("internal subscribe to presence_b2b for %.*s [%.*s]\n", 
+	DBG("internal subscribe to presence_b2b for %.*s [%.*s]\n", 
 			FMT_STR(subscription->record_id),
 			FMT_STR(subscription->package->name));
 
@@ -250,7 +250,7 @@ static int presence_subscribe(notifier_t *n, subscription_t *subscription)
 
 	unlock_events_qsa();
 	
-	TRACE("internal subscribe to presence_b2b finished\n");
+	DBG("internal subscribe to presence_b2b finished\n");
 	
 	return 0;
 }
@@ -261,7 +261,7 @@ static void presence_unsubscribe(notifier_t *n, subscription_t *subscription)
 	
 	if (!handle_presence_subscriptions) return;
 	
-	TRACE("internal unsubscribe to presence_b2b for %.*s [%.*s]\n", 
+	DBG("internal unsubscribe to presence_b2b for %.*s [%.*s]\n", 
 			FMT_STR(subscription->record_id),
 			FMT_STR(subscription->package->name));
 
@@ -286,7 +286,7 @@ static void presence_unsubscribe(notifier_t *n, subscription_t *subscription)
 	
 	unlock_events_qsa();
 	
-	TRACE("internal unsubscribe to presence_b2b finished\n");
+	DBG("internal unsubscribe to presence_b2b finished\n");
 }
 
 /************************************************************/

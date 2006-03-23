@@ -113,7 +113,7 @@ static int pa_subscribe(notifier_t *n, subscription_t *subscription)
 
 	if (pres_uri2uid(&uid, &subscription->record_id) != 0) {
 		/* can't convert uri to uid */
-		TRACE_LOG("can't convert URI to UID for internal PA subscription\n");
+		INFO("can't convert URI to UID for internal PA subscription\n");
 		return -1;
 	}
 

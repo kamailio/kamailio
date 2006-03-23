@@ -836,8 +836,8 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	}
 
 	is_renewal = has_to_tag(_m);
-	if (is_renewal) TRACE("handling renewal subscription\n");
-	else TRACE("handling new subscription\n");
+	if (is_renewal) DBG("handling renewal subscription\n");
+	else DBG("handling new subscription\n");
 
 	d = (struct pdomain*)_domain;
 

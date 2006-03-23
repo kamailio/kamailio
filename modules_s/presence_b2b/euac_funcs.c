@@ -144,7 +144,7 @@ static void subscribe_cb(struct cell* t, int type, struct tmcb_params* params)
 		return;
 	}
 
-	TRACE("%d response on SUBSCRIBE %p\n", params->code, uac);
+	DBG("%d response on SUBSCRIBE %p\n", params->code, uac);
 
 	action = act_4xx;
 	if ((params->code >= 100) && (params->code < 200)) action = act_1xx;
@@ -196,7 +196,7 @@ static int get_contact_hdr(char *dst, int max_size, dlg_t *dialog)
 	len = snprintf(dst, max_size, "Contact: <sip:%.*s:%d%s>\r\n", 
 			FMT_STR(send_sock->address_str), port, proto);
 
-	/* TRACE("%.*s (len = %d)\n", len, dst, len); */
+	/* DBG("%.*s (len = %d)\n", len, dst, len); */
 	return len;
 }
 
@@ -243,7 +243,7 @@ int new_subscription(events_uac_t *uac, str *contact_to_send, int failover_time)
 	str hdr = STR_NULL;
 	str *uri;
 	
-	TRACE("sending new SUBSCRIBE request\n");
+	DBG("sending new SUBSCRIBE request\n");
 	
 	if (!is_str_empty(contact_to_send)) uri = contact_to_send;
 	else uri = &uac->remote_uri;
@@ -313,7 +313,7 @@ int renew_subscription(events_uac_t *uac, int expires, int failover_time)
 	char tmp[256];
 	str tmps;
 
-	TRACE("sending renewal SUBSCRIBE request\n");
+	DBG("sending renewal SUBSCRIBE request\n");
 	
 	tmps.len = sprintf(tmp, "Expires: %d\r\n", expires);
 	tmps.s = tmp;
